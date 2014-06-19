@@ -22,6 +22,10 @@
 #ifndef __SCTK_ETHREAD_INTERNALS_H_
 #define __SCTK_ETHREAD_INTERNALS_H_
 
+#ifdef __MIC__
+	#include <immintrin.h>
+#endif
+	
 #include <errno.h>
 #include "sctk_debug.h"
 #include "sctk_ethread.h"
@@ -1440,24 +1444,51 @@ extern "C"
 /* Idle function is called here to avoid deadlocks.
  * Actually, when calling sctk_thread_yield(), the polling
  * function is not called. */
-//#ifdef MPC_Message_Passing
-//	    sctk_notify_idle_message ();
-//#endif
-# if 0
-	if ((vp->ready_queue_used == NULL) &&
-	    (vp->incomming_queue == NULL) &&
-	    (vp->ready_queue == NULL) && (vp->poll_list == NULL))
-	  {
-	    sctk_cpu_relax();
-	  } else {
-	  if ((vp->ready_queue_used == NULL) &&
-	      (vp->incomming_queue == NULL) &&
-	      (vp->ready_queue == NULL) )
-	    {
-	      sctk_cpu_relax();
-	    } 
-	}
+#ifdef MPC_Message_Passing
+    #ifdef __MIC__
+        if ((vp->ready_queue_used == NULL) &&
+           (vp->incomming_queue == NULL) &&
+           (vp->ready_queue == NULL) && (vp->poll_list == NULL))
+        {
+            int i = 0; 
+            while((vp->ready_queue_used == NULL) &&
+                      (vp->incomming_queue == NULL) &&
+                      (vp->ready_queue == NULL))
+        {
+                    _mm_delay_32(4000);
+                    i++;
+                    if(i >= 10000) break;
+            }
+         }
+    else 
+    {    
+            if ((vp->ready_queue_used == NULL) &&
+                    (vp->incomming_queue == NULL) &&
+                    (vp->ready_queue == NULL) )
+            {
+                _mm_delay_32(400);
+            }
+        }     
+    #else
+            sctk_notify_idle_message ();
+    #endif
 #endif
+# if 0
+    if ((vp->ready_queue_used == NULL) &&
+        (vp->incomming_queue == NULL) &&
+        (vp->ready_queue == NULL) && (vp->poll_list == NULL))
+      {
+        sctk_cpu_relax();
+      } else {
+      if ((vp->ready_queue_used == NULL) &&
+          (vp->incomming_queue == NULL) &&
+          (vp->ready_queue == NULL) )
+        {
+          sctk_cpu_relax();
+        } 
+    }
+#endif
+
       }
     /** ** **/
     sctk_free_idle_thread_dbg (th_data) ;
