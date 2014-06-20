@@ -196,6 +196,14 @@ static int __INTERNAL__PMPI_Alltoall (void *, int, MPI_Datatype, void *, int,
 static int __INTERNAL__PMPI_Alltoallv (void *, int *, int *, MPI_Datatype,
 				       void *, int *, int *, MPI_Datatype,
 				       MPI_Comm);
+				       
+/* Neighbor collectives */
+static int __INTERNAL__PMPI_Neighbor_allgather(void *, int , MPI_Datatype , void *, int , MPI_Datatype , MPI_Comm );
+static int __INTERNAL__PMPI_Neighbor_allgatherv(void *, int , MPI_Datatype , void *, int [], int [], MPI_Datatype , MPI_Comm );
+static int __INTERNAL__PMPI_Neighbor_alltoall(void *, int , MPI_Datatype , void *, int , MPI_Datatype , MPI_Comm );
+static int __INTERNAL__PMPI_Neighbor_alltoallv(void *, int [], int [], MPI_Datatype , void *, int [], int [], MPI_Datatype , MPI_Comm );
+static int __INTERNAL__PMPI_Neighbor_alltoallw(void *, int [], MPI_Aint [], MPI_Datatype [], void *, int [], MPI_Aint [], MPI_Datatype [], MPI_Comm comm);
+  
 static int __INTERNAL__PMPI_Reduce (void *, void *, int, MPI_Datatype, MPI_Op,
 				    int, MPI_Comm);
 static int __INTERNAL__PMPI_Op_create (MPI_User_function *, int, MPI_Op *);
@@ -4120,6 +4128,32 @@ __INTERNAL__PMPI_Alltoallw(void *sendbuf, int *sendcnts, int *sdispls, MPI_Datat
 {
 	return PMPC_Alltoallw (sendbuf, sendcnts, sdispls, sendtypes, recvbuf,
 			    recvcnts, rdispls, recvtypes, comm);
+}
+
+/* Neighbor collectives */
+static int __INTERNAL__PMPI_Neighbor_allgather(void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm)
+{
+	return PMPC_Neighbor_allgather(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm);
+}
+
+static int __INTERNAL__PMPI_Neighbor_allgatherv(void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcounts[], int displs[], MPI_Datatype recvtype, MPI_Comm comm)
+{
+	return PMPC_Neighbor_allgatherv(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, comm);
+}
+
+static int __INTERNAL__PMPI_Neighbor_alltoall(void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm)
+{
+	return PMPC_Neighbor_alltoall(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm);
+}
+
+static int __INTERNAL__PMPI_Neighbor_alltoallv(void *sendbuf, int sendcounts[], int sdispls[], MPI_Datatype sendtype, void *recvbuf, int recvcounts[], int rdispls[], MPI_Datatype recvtype, MPI_Comm comm)
+{
+	return PMPC_Neighbor_alltoallv(sendbuf, sendcounts, sdispls, sendtype, recvbuf, recvcounts, rdispls, recvtype, comm);
+}
+
+static int __INTERNAL__PMPI_Neighbor_alltoallw(void *sendbuf, int sendcounts[], MPI_Aint sdispls[], MPI_Datatype sendtypes[], void *recvbuf, int recvcounts[], MPI_Aint rdispls[], MPI_Datatype recvtypes[], MPI_Comm comm)
+{
+	PMPC_Neighbor_alltoallw(sendbuf, sendcounts, sdispls, sendtypes, recvbuf, recvcounts, rdispls, recvtypes, comm);
 }
 
 typedef struct
@@ -9659,6 +9693,38 @@ int PMPI_Alltoallw(void *sendbuf, int *sendcnts, int *sdispls, MPI_Datatype *sen
 	res = __INTERNAL__PMPI_Alltoallw (sendbuf, sendcnts, sdispls, sendtypes, recvbuf, recvcnts, rdispls, recvtypes, comm);
 	SCTK__MPI_Check_retrun_val (res, comm);
 }
+
+/* Neighbors collectives */
+int PMPI_Neighbor_allgather(void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm)
+{
+	int res = MPI_ERR_INTERN;
+	res = __INTERNAL__PMPI_Neighbor_allgather(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm);
+}
+
+int PMPI_Neighbor_allgatherv(void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcounts[], int displs[], MPI_Datatype recvtype, MPI_Comm comm)
+{
+	int res = MPI_ERR_INTERN;
+	res = __INTERNAL__PMPI_Neighbor_allgatherv(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, comm);
+}
+
+int PMPI_Neighbor_alltoall(void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm)
+{
+	int res = MPI_ERR_INTERN;
+	res = __INTERNAL__PMPI_Neighbor_alltoall(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm);
+}
+
+int PMPI_Neighbor_alltoallv(void *sendbuf, int sendcounts[], int sdispls[], MPI_Datatype sendtype, void *recvbuf, int recvcounts[], int rdispls[], MPI_Datatype recvtype, MPI_Comm comm)
+{
+	int res = MPI_ERR_INTERN;
+	res = __INTERNAL__PMPI_Neighbor_alltoallv(sendbuf, sendcounts, sdispls, sendtype, recvbuf, recvcounts, rdispls, recvtype, comm);
+}
+
+int PMPI_Neighbor_alltoallw(void *sendbuf, int sendcounts[], MPI_Aint sdispls[], MPI_Datatype sendtypes[], void *recvbuf, int recvcounts[], MPI_Aint rdispls[], MPI_Datatype recvtypes[], MPI_Comm comm)
+{
+	int res = MPI_ERR_INTERN;
+	res = __INTERNAL__PMPI_Neighbor_alltoallw(sendbuf, sendcounts, sdispls, sendtypes, recvbuf, recvcounts, rdispls, recvtypes, comm);
+}
+
 
 int
 PMPI_Reduce (void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,

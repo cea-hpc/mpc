@@ -518,6 +518,14 @@ typedef int (MPI_Delete_function) (MPI_Comm, int, void *, void *);
 	MPI_Fint MPI_Info_c2f(MPI_Info info);
 	MPI_Errhandler MPI_Errhandler_f2c(MPI_Fint errhandler);
 	MPI_Fint MPI_Errhandler_c2f(MPI_Errhandler errhandler);
+  
+  /* Neighbors collectives */
+  int MPI_Neighbor_allgather(void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm);
+  int MPI_Neighbor_allgatherv(void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcounts[], int displs[], MPI_Datatype recvtype, MPI_Comm comm);
+  int MPI_Neighbor_alltoall(void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm);
+  int MPI_Neighbor_alltoallv(void *sendbuf, int sendcounts[], int sdispls[], MPI_Datatype sendtype, void *recvbuf, int recvcounts[], int rdispls[], MPI_Datatype recvtype, MPI_Comm comm);
+  int MPI_Neighbor_alltoallw(void *sendbuf, int sendcounts[], MPI_Aint sdispls[], MPI_Datatype sendtypes[], void *recvbuf, int recvcounts[], MPI_Aint rdispls[], MPI_Datatype recvtypes[], MPI_Comm comm);
+
 /* Here are the bindings of the profiling routines */
 #if !defined(MPI_BUILD_PROFILING)
   //~ not implemented
@@ -846,6 +854,12 @@ typedef int (MPI_Delete_function) (MPI_Comm, int, void *, void *);
 	MPI_Errhandler PMPI_Errhandler_f2c(MPI_Fint errhandler);
 	MPI_Fint PMPI_Errhandler_c2f(MPI_Errhandler errhandler);
 
+  /* Neighbors collectives */
+  int PMPI_Neighbor_allgather(void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm);
+  int PMPI_Neighbor_allgatherv(void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcounts[], int displs[], MPI_Datatype recvtype, MPI_Comm comm);
+  int PMPI_Neighbor_alltoall(void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm);
+  int PMPI_Neighbor_alltoallv(void *sendbuf, int sendcounts[], int sdispls[], MPI_Datatype sendtype, void *recvbuf, int recvcounts[], int rdispls[], MPI_Datatype recvtype, MPI_Comm comm);
+  int PMPI_Neighbor_alltoallw(void *sendbuf, int sendcounts[], MPI_Aint sdispls[], MPI_Datatype sendtypes[], void *recvbuf, int recvcounts[], MPI_Aint rdispls[], MPI_Datatype recvtypes[], MPI_Comm comm);
 
 #define MPI_THREAD_SINGLE 0
 #define MPI_THREAD_FUNNELED 1

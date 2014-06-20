@@ -4038,6 +4038,104 @@ PMPC_Allgather (void *sendbuf, mpc_msg_count sendcount,
   return res;
 }
 
+
+/* Neighbors collectives */
+static inline int __MPC_Neighbor_allgather(void *sendbuf, mpc_msg_count sendcount, MPC_Datatype sendtype, void *recvbuf, mpc_msg_count recvcount, MPC_Datatype recvtype, MPC_Comm comm, sctk_task_specific_t * task_specific)
+{
+	MPC_ERROR_SUCESS ();
+}
+
+int PMPC_Neighbor_allgather(void *sendbuf, mpc_msg_count sendcount, MPC_Datatype sendtype, void *recvbuf, mpc_msg_count recvcount, MPC_Datatype recvtype, MPC_Comm comm)
+{
+	int res = MPC_ERR_INTERN;
+	sctk_task_specific_t *task_specific;
+	SCTK_PROFIL_START (MPC_Neighbor_allgather);
+	task_specific = __MPC_get_task_specific ();
+#ifdef MPC_LOG_DEBUG
+	mpc_log_debug (comm, "MPC_Neighbor_allgather send %p,%lu,%d recv %p,%lu,%d",sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype);
+#endif
+	res = __MPC_Neighbor_allgather (sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, task_specific);
+	SCTK_PROFIL_END (MPC_Neighbor_allgather);
+	return res;
+}
+
+static inline int __MPC_Neighbor_allgatherv(void *sendbuf, mpc_msg_count sendcount, MPC_Datatype sendtype, void *recvbuf, mpc_msg_count recvcounts[], mpc_msg_count displs[], MPC_Datatype recvtype, MPC_Comm comm, sctk_task_specific_t * task_specific)
+{
+	MPC_ERROR_SUCESS ();
+}
+
+int PMPC_Neighbor_allgatherv(void *sendbuf, mpc_msg_count sendcount, MPC_Datatype sendtype, void *recvbuf, mpc_msg_count recvcounts[], mpc_msg_count displs[], MPC_Datatype recvtype, MPC_Comm comm)
+{
+	int res = MPC_ERR_INTERN;
+	sctk_task_specific_t *task_specific;
+	SCTK_PROFIL_START (MPC_Neighbor_allgatherv);
+	task_specific = __MPC_get_task_specific ();
+#ifdef MPC_LOG_DEBUG
+	mpc_log_debug (comm, "MPC_Neighbor_allgatherv send %p,%lu,%d recv %p,%p,%p,%d",(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype);
+#endif
+	res = __MPC_Neighbor_allgatherv (sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, comm, task_specific);
+	SCTK_PROFIL_END (MPC_Neighbor_allgatherv);
+	return res;
+}
+
+static inline int __MPC_Neighbor_alltoall(void *sendbuf, mpc_msg_count sendcount, MPC_Datatype sendtype, void *recvbuf, mpc_msg_count recvcount, MPC_Datatype recvtype, MPC_Comm comm, sctk_task_specific_t * task_specific)
+{
+	MPC_ERROR_SUCESS ();
+}
+
+int PMPC_Neighbor_alltoall(void *sendbuf, mpc_msg_count sendcount, MPC_Datatype sendtype, void *recvbuf, mpc_msg_count recvcount, MPC_Datatype recvtype, MPC_Comm comm)
+{
+	int res = MPC_ERR_INTERN;
+	sctk_task_specific_t *task_specific;
+	SCTK_PROFIL_START (MPC_Neighbor_alltoall);
+	task_specific = __MPC_get_task_specific ();
+#ifdef MPC_LOG_DEBUG
+	mpc_log_debug (comm, "MPC_Neighbor_alltoall send %p,%lu,%d recv %p,%lu,%d",sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype);
+#endif
+	res = __MPC_Neighbor_alltoall (sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, task_specific);
+	SCTK_PROFIL_END (MPC_Neighbor_alltoall);
+	return res;
+	
+}
+
+static inline int __MPC_Neighbor_alltoallv(void *sendbuf, mpc_msg_count sendcounts[], mpc_msg_count sdispls[], MPC_Datatype sendtype, void *recvbuf, mpc_msg_count recvcounts[], mpc_msg_count rdispls[], MPC_Datatype recvtype, MPC_Comm comm, sctk_task_specific_t * task_specific)
+{
+	MPC_ERROR_SUCESS ();
+}
+
+int PMPC_Neighbor_alltoallv(void *sendbuf, mpc_msg_count sendcounts[], mpc_msg_count sdispls[], MPC_Datatype sendtype, void *recvbuf, mpc_msg_count recvcounts[], mpc_msg_count rdispls[], MPC_Datatype recvtype, MPC_Comm comm)
+{
+	int res = MPC_ERR_INTERN;
+	sctk_task_specific_t *task_specific;
+	SCTK_PROFIL_START (MPC_Neighbor_alltoallv);
+	task_specific = __MPC_get_task_specific ();
+#ifdef MPC_LOG_DEBUG
+	mpc_log_debug (comm, "MPC_Neighbor_alltoallv send %p,%p,%d recv %p,%p,%p,%d",(sendbuf, sendcounts, sendtype, recvbuf, recvcounts, displs, recvtype);
+#endif
+	res = __MPC_Neighbor_alltoallv (sendbuf, sendcounts, sdispls, sendtype, recvbuf, recvcounts, rdispls, recvtype, comm, task_specific);
+	SCTK_PROFIL_END (MPC_Neighbor_alltoallv);
+	return res;
+}
+
+static inline int __MPC_Neighbor_alltoallw(void *sendbuf, mpc_msg_count sendcounts[], MPC_Aint sdispls[], MPC_Datatype sendtypes[], void *recvbuf, mpc_msg_count recvcounts[], MPC_Aint rdispls[], MPC_Datatype recvtypes[], MPC_Comm comm, sctk_task_specific_t * task_specific)
+{
+	MPC_ERROR_SUCESS ();
+}
+
+int PMPC_Neighbor_alltoallw(void *sendbuf, mpc_msg_count sendcounts[], MPC_Aint sdispls[], MPC_Datatype sendtypes[], void *recvbuf, mpc_msg_count recvcounts[], MPC_Aint rdispls[], MPC_Datatype recvtypes[], MPC_Comm comm)
+{
+	int res = MPC_ERR_INTERN;
+	sctk_task_specific_t *task_specific;
+	SCTK_PROFIL_START (MPC_Neighbor_alltoallw);
+	task_specific = __MPC_get_task_specific ();
+#ifdef MPC_LOG_DEBUG
+	mpc_log_debug (comm, "MPC_Neighbor_alltoallw send %p,%p,%p,%p recv %p,%p,%p,%p",(sendbuf, sendcounts, sdispls, sendtypes, recvbuf, recvcounts, rdispls, recvtypes);
+#endif
+	res = __MPC_Neighbor_alltoallw (sendbuf, sendcounts, sdispls, sendtypes, recvbuf, recvcounts, rdispls, recvtypes, comm, task_specific);
+	SCTK_PROFIL_END (MPC_Neighbor_alltoallw);
+	return res;
+}
+
 int
 PMPC_Scatterv (void *sendbuf,
 	       mpc_msg_count * sendcnts,

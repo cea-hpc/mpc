@@ -215,6 +215,24 @@
 #pragma weak MPI_Alltoallv = PMPI_Alltoallv
 #pragma weak mpi_alltoallv_ = pmpi_alltoallv_
 #pragma weak mpi_alltoallv__ = pmpi_alltoallv__
+
+/* Neighbor collectives */
+#pragma weak MPI_Neighbor_allgather = PMPI_Neighbor_allgather
+#pragma weak mpi_neighbor_allgather_ = pmpi_neighbor_allgather_
+#pragma weak mpi_neighbor_allgather__ = pmpi_neighbor_allgather__
+#pragma weak MPI_Neighbor_allgatherv = PMPI_Neighbor_allgatherv
+#pragma weak mpi_neighbor_allgatherv_ = pmpi_neighbor_allgatherv_
+#pragma weak mpi_neighbor_allgatherv__ = pmpi_neighbor_allgatherv__
+#pragma weak MPI_Neighbor_alltoall = PMPI_Neighbor_alltoall
+#pragma weak mpi_neighbor_alltoall_ = pmpi_neighbor_alltoall_
+#pragma weak mpi_neighbor_alltoall__ = pmpi_neighbor_alltoall__
+#pragma weak MPI_Neighbor_alltoallv = PMPI_Neighbor_alltoallv
+#pragma weak mpi_neighbor_alltoallv_ = pmpi_neighbor_alltoallv_
+#pragma weak mpi_neighbor_alltoallv__ = pmpi_neighbor_alltoallv__
+#pragma weak MPI_Neighbor_alltoallw = PMPI_Neighbor_alltoallw
+#pragma weak mpi_neighbor_alltoallw_ = pmpi_neighbor_alltoallw_
+#pragma weak mpi_neighbor_alltoallw__ = pmpi_neighbor_alltoallw__
+
 #pragma weak MPI_Reduce = PMPI_Reduce
 #pragma weak mpi_reduce_ = pmpi_reduce_
 #pragma weak mpi_reduce__ = pmpi_reduce__
