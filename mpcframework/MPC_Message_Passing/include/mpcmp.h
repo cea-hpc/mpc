@@ -703,13 +703,6 @@ enum MPIR_Combiner_enum {
 		     const MPC_Datatype *, void *, const mpc_msg_count *,
 		     const mpc_msg_count *, const MPC_Datatype *, MPC_Comm);
 
-  /* Neighbor collectives */
-  int PMPC_Neighbor_allgather(void *, mpc_msg_count , MPC_Datatype , void *, mpc_msg_count , MPC_Datatype , MPC_Comm );
-  int PMPC_Neighbor_allgatherv(void *, mpc_msg_count , MPC_Datatype , void *, mpc_msg_count *, mpc_msg_count *, MPC_Datatype , MPC_Comm );
-  int PMPC_Neighbor_alltoall(void *, mpc_msg_count , MPC_Datatype , void *, mpc_msg_count , MPC_Datatype , MPC_Comm );
-  int PMPC_Neighbor_alltoallv(void *, mpc_msg_count *, mpc_msg_count *, MPC_Datatype , void *, mpc_msg_count *, mpc_msg_count *, MPC_Datatype , MPC_Comm );
-  int PMPC_Neighbor_alltoallw(void *, mpc_msg_count *, MPC_Aint [], MPC_Datatype [], void *, mpc_msg_count *, MPC_Aint [], MPC_Datatype [], MPC_Comm comm);
-
   /*Groups */
   int PMPC_Comm_group (MPC_Comm, MPC_Group *);
   int PMPC_Comm_remote_group (MPC_Comm, MPC_Group *);
