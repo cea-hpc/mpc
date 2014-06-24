@@ -112,7 +112,7 @@ esac
 use_mpc_privat="true"
 
 # Regular flags and compiler (C, C++ or fortran)
-if test "${BINUTILS_PREFIX}" != "disabled" && test "$use_mpc_privat" = "true"
+if test "${BINUTILS_PREFIX}" != "disabled" -a "$use_mpc_privat" = "true" -a "${CC}" != "gcc" -a "${CC}" != "gcc";
 then
 cat <<EOF >> $1
 CFLAGS="\`\${MPC_RPREFIX}/${MPC_SUBPREFIX}/bin/mpc_cflags $2\`"
@@ -491,7 +491,7 @@ for i in \$@ ; do
     fi
 
     if test "\$i" = "-fopenmp" -o "\$i" = "-openmp" ; then
-	CURRENT_ARG="${CURRENT_ARG} -B \${MPC_RPREFIX}/\${MPC_SUBPREFIX}"
+	CURRENT_ARG="\${CURRENT_ARG} -B \${MPC_RPREFIX}/\${MPC_SUBPREFIX}"
     fi
 
     if test "\$i" = "-compilers" ; then
