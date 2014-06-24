@@ -125,6 +125,7 @@ meta.types = {
 		send_msg: {mode: 'param', name: "send_msg", type: "funcptr", doc: "", dflt: "sctk_network_send_message_default", },
 		network_mode: {mode: 'param', name: "network_mode", type: "string", doc: "", dflt: "default", },
 		dyn_reordering: {mode: 'param', name: "dyn_reordering", type: "bool", doc: "", dflt: "false", },
+		enable_idle_polling: {mode: 'param', name: "enable_idle_polling", type: "bool", doc: "Enable usage of polling during idle.", dflt: "false", },
 	}},
 	mpc : {type: 'struct', name: "mpc", childs: {
 		log_debug: {mode: 'param', name: "log_debug", type: "bool", doc: "Print debug messages", dflt: "false", },
@@ -149,6 +150,7 @@ meta.types = {
 		max_alive_sections: {mode: 'param', name: "max_alive_sections", type: "int", doc: "Maximum number of alive sections construct", dflt: "3", },
 		max_alive_single: {mode: 'param', name: "max_alive_single", type: "int", doc: "Maximum number of alive single construct", dflt: "3", },
 		warn_nested: {mode: 'param', name: "warn_nested", type: "bool", doc: "Emit warning when entering nested parallelism", dflt: "false", },
+		mode: {mode: 'param', name: "mode", type: "string", doc: "MPI/OpenMP hybrid mode (simple-mixed, alternating)", dflt: "simple-mixed", },
 	}},
 	profiler : {type: 'struct', name: "profiler", childs: {
 		file_prefix: {mode: 'param', name: "file_prefix", type: "string", doc: "Prefix of MPC Profiler outputs", dflt: "mpc_profile", },

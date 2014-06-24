@@ -201,6 +201,7 @@
 			<param name="send_msg" type="funcptr" default="sctk_network_send_message_default" doc=""/>
 			<param name="network_mode" type="string" default="default" doc=""/>
 			<param name="dyn_reordering" type="bool" default="false" doc=""/>
+			<param name="enable_idle_polling" type="bool" default="false" doc="Enable usage of polling during idle."/>
 		</struct>
 
 		<struct name="mpc" doc="Options for MPC Message Passing">
@@ -235,6 +236,7 @@
 			<param name="max_alive_sections" type="int" default="3" doc="Maximum number of alive sections construct"/>
 			<param name="max_alive_single" type="int" default="3" doc="Maximum number of alive single construct"/>
 			<param name="warn_nested" type="bool" default="false" doc="Emit warning when entering nested parallelism"/>
+			<param name="mode" type="string" default="simple-mixed" doc="MPI/OpenMP hybrid mode (simple-mixed, alternating)"/>
 		</struct>
 	</usertypes>
 	<modules>

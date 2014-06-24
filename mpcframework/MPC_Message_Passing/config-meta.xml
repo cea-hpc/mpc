@@ -110,6 +110,7 @@
 			<param name="send_msg" type="funcptr" default="sctk_network_send_message_default" doc=""/>
 			<param name="network_mode" type="string" default="default" doc=""/>
 			<param name="dyn_reordering" type="bool" default="false" doc=""/>
+			<param name="enable_idle_polling" type="bool" default="false" doc="Enable usage of polling during idle."/>
 		</struct>
 
 		<struct name="mpc" doc="Options for MPC Message Passing">

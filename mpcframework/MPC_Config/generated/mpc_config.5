@@ -623,6 +623,10 @@ Type is string. Default value is default.
 Type is bool. Default value is false. 
 .Pp dyn_reordering
 
+.It Cm enable_idle_polling
+Type is bool. Default value is false. 
+.Pp enable_idle_polling
+Enable usage of polling during idle.
 .El
 .Sh ENTRIES OF TYPE mpc
 Options for MPC Message Passing
@@ -717,6 +721,10 @@ Maximum number of alive single construct
 Type is bool. Default value is false. 
 .Pp warn_nested
 Emit warning when entering nested parallelism
+.It Cm mode
+Type is string. Default value is simple-mixed. 
+.Pp mode
+MPI/OpenMP hybrid mode (simple-mixed, alternating)
 .El
 .Sh ENTRIES OF TYPE profiler
 Options for the internal MPC Profiler
