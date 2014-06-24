@@ -252,9 +252,7 @@ sctk_get_module_file_decr (size_t m, size_t module_size)
       memset (tls_module, 0, module_size);
       sctk_init_module (m, tls_module, module_size);
 	
-	  size = write (fd, tls_module, module_size);
-	  fprintf(stderr, "fd = %d, size = %d, size_written = %d\n", fd, module_size, size);
-      assume(size == module_size);
+	  assume(write (fd, tls_module, module_size) == module_size);
       free (tls_module);
       remove (name);
       if(res_write != module_size){
