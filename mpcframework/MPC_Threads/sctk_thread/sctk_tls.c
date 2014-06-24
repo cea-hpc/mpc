@@ -214,14 +214,9 @@ sctk_get_module_file_decr (size_t m, size_t module_size)
   static sctk_spinlock_t lock = 0;
   static int *fds = NULL;
   static size_t size = 0;
-  static int use_cow = 1;
   int fd = -1;
   size_t i;
   char *tls_module;
-
-  if(use_cow == 0){
-    return -1;
-  }
 
   sctk_spinlock_lock (&(lock));
   if (size <= m)
