@@ -591,7 +591,7 @@ export CC
 addarg=no
 CFLAGS="\`\${MPC_RPREFIX}/${MPC_SUBPREFIX}/bin/mpc_cflags c\` -mmic"
 export CFLAGS
-LDFLAGS="\`\${MPC_RPREFIX}/${MPC_SUBPREFIX}/bin/mpc_ldflags c\`"
+LDFLAGS="\`\${MPC_RPREFIX}/${MPC_SUBPREFIX}/bin/mpc_ldflags c\` -mmic"
 export LDFLAGS
 EOF
 		;;
@@ -634,7 +634,7 @@ export CC
 addarg=no
 CFLAGS="\`\${MPC_RPREFIX}/${MPC_SUBPREFIX}/bin/mpc_cflags c\` -mmic"
 export CFLAGS
-LDFLAGS="\`\${MPC_RPREFIX}/${MPC_SUBPREFIX}/bin/mpc_ldflags c\`"	
+LDFLAGS="\`\${MPC_RPREFIX}/${MPC_SUBPREFIX}/bin/mpc_ldflags c\` -mmic"	
 export LDFLAGS
 EOF
 		;;
