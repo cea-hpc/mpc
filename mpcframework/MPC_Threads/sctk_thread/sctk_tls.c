@@ -233,27 +233,33 @@ sctk_get_module_file_decr (size_t m, size_t module_size)
   if (fd == -1)
     {
       static char name[4096];
+      size_t res_write;
       sprintf (name, "/tmp/cp_on_write_get_module_file_decr_%d_module_%lu",
 	       getpid (), m);
 
       remove (name);
       fd = open (name, O_CREAT | O_RDWR | O_TRUNC,S_IRWXU);
       /* assert (fd > 0); */
-	  if (fd <= 0)
-	  {
+      if (fd <= 0)
+	{
       	  remove (name);
-		  sctk_spinlock_unlock(&(lock));
-		  return -1;
-	  }
+	  sctk_spinlock_unlock(&(lock));
+	  return -1;
+	}
 
       tls_module = sctk_malloc (module_size);
 
       memset (tls_module, 0, module_size);
       sctk_init_module (m, tls_module, module_size);
 	
-	  assume(write (fd, tls_module, module_size) == module_size);
+      /* assume(write (fd, tls_module, module_size) == module_size); */
+      res_write = write (fd, tls_module, module_size);
       free (tls_module);
       remove (name);
+      if(res_write != module_size){
+	close(fd);
+	fd = -1;
+      }
 
       fds[m] = fd;
     }
