@@ -243,6 +243,7 @@ void sctk_runtime_config_struct_init_low_level_comm(void * struct_ptr)
 	*(void **) &(obj->send_msg.value) = sctk_runtime_config_get_symbol("sctk_network_send_message_default");
 	obj->network_mode = "default";
 	obj->dyn_reordering = false;
+	obj->enable_idle_polling = false;
 }
 
 /*******************  FUNCTION  *********************/
@@ -277,6 +278,7 @@ void sctk_runtime_config_struct_init_openmp(void * struct_ptr)
 	obj->max_alive_sections = 3;
 	obj->max_alive_single = 3;
 	obj->warn_nested = false;
+	obj->mode = "simple-mixed";
 }
 
 /*******************  FUNCTION  *********************/

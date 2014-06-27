@@ -244,6 +244,15 @@ TODO("Polling Idle disabled")
 #endif
 }
 
+static void
+sctk_network_notify_idle_message_multirail_ib_polling (){
+  int i;
+
+  for(i = 0; i < rails_nb; i++){
+    rails[i]->notify_idle_message(rails[i]);
+   }
+}
+
  void
 sctk_network_notify_idle_message_multirail_ib_wait_send (){
   int i;
@@ -356,7 +365,14 @@ void sctk_network_init_multirail_ib(int rail_id, int max_rails){
     sctk_network_notify_recv_message_set(sctk_network_notify_recv_message_multirail_ib);
     sctk_network_notify_matching_message_set(sctk_network_notify_matching_message_multirail_ib);
     sctk_network_notify_perform_message_set(sctk_network_notify_perform_message_multirail_ib);
-    sctk_network_notify_idle_message_set(sctk_network_notify_idle_message_multirail_ib);
+
+    if (sctk_runtime_config_get()->modules.low_level_comm.enable_idle_polling == 1) {
+      sctk_warning("Idle polling enabled");
+      sctk_network_notify_idle_message_set(sctk_network_notify_idle_message_multirail_ib_polling);
+    } else {
+      sctk_network_notify_idle_message_set(sctk_network_notify_idle_message_multirail_ib);
+    }
+
     sctk_network_notify_any_source_message_set(sctk_network_notify_any_source_message_multirail_ib);
   }
   init_once=1;

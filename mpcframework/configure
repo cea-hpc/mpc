@@ -541,6 +541,21 @@ SCTK_CC="`tmp_cross_gen $SCTK_CC`"
 SCTK_CXX="`tmp_cross_gen $SCTK_CXX`"
 SCTK_F77="`tmp_cross_gen $SCTK_F77`"
 
+for i in ${COMPILER_LIST} ; 
+do
+	if test "${i}" != "gcc" -a "${i}" != "icc"; 
+	then 
+		SCTK_CC=`echo "${MPC_RPREFIX}/${MPC_SUBPREFIX}/bin/mpc-gcc_$i"`
+		SCTK_CXX=`echo "${MPC_RPREFIX}/${MPC_SUBPREFIX}/bin/mpc-g++_$i"`
+		SCTK_F77=`echo "${MPC_RPREFIX}/${MPC_SUBPREFIX}/bin/mpc-gfortran_$i"`
+		SCTK_GCC="${SCTK_CC}"
+		echo "sctk_cc = '${SCTK_CC}'" 2>&1
+		echo "sctk_cxx = '${SCTK_CXX}'" 2>&1
+		echo "sctk_f77 = '${SCTK_F77}'" 2>&1
+		echo "sctk_gcc = '${SCTK_GCC}'" 2>&1
+	fi   
+done
+
 if test "$SCTK_OS" = "" ; then
 SCTK_OS="`uname`"
 fi

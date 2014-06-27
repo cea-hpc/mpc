@@ -251,6 +251,7 @@
       </xs:element>
       <xs:element minOccurs="0" name="network_mode" type="xs:string"/>
       <xs:element minOccurs="0" name="dyn_reordering" type="xs:boolean"/>
+      <xs:element minOccurs="0" name="enable_idle_polling" type="xs:boolean"/>
     </xs:all>
   </xs:complexType>
 <!-- ********************************************************* -->
@@ -281,6 +282,7 @@
       <xs:element minOccurs="0" name="max_alive_sections" type="xs:integer"/>
       <xs:element minOccurs="0" name="max_alive_single" type="xs:integer"/>
       <xs:element minOccurs="0" name="warn_nested" type="xs:boolean"/>
+      <xs:element minOccurs="0" name="mode" type="xs:string"/>
     </xs:all>
   </xs:complexType>
 <!-- ********************************************************* -->

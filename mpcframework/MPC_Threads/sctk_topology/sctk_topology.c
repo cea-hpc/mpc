@@ -194,6 +194,7 @@ sctk_restrict_topology ()
   int rank ;
   sctk_only_once();
 
+ restart_restrict:
   if (sctk_enable_smt_capabilities)
   {
     int i;
@@ -228,7 +229,13 @@ sctk_restrict_topology ()
     }
     /* restrict the topology to physical CPUs */
     err = hwloc_topology_restrict(topology, cpuset, HWLOC_RESTRICT_FLAG_ADAPT_DISTANCES);
-    assume(!err);
+    if(err){
+      hwloc_bitmap_free(cpuset);
+      hwloc_bitmap_free(set);
+      sctk_enable_smt_capabilities = 1;
+      sctk_warning ("Topology reduction issue");
+      goto restart_restrict;
+    }
     hwloc_bitmap_copy(topology_cpuset, cpuset);
 
     hwloc_bitmap_free(cpuset);
@@ -238,6 +245,15 @@ sctk_restrict_topology ()
 
 	pin_processor_bitmap = hwloc_bitmap_alloc();
   hwloc_bitmap_zero(pin_processor_bitmap);
+  
+#ifdef __MIC__
+	{
+		#warning "MIC OPTIM"
+		sctk_update_topology (240 , 4 ) ;
+	}
+	/* sctk_update_topology_2 (240,0); */
+#endif
+  
   char* pinning_env = getenv("MPC_PIN_PROCESSOR_LIST");
   if (pinning_env != NULL ) {
 	  sctk_expand_pin_processor_list(pinning_env);
@@ -430,6 +446,13 @@ void sctk_topology_init_cpu(){
 sctk_topology_init ()
 {
   char* xml_path;
+#ifdef __MIC__
+	{
+		#warning "MIC OPTIM"
+		sctk_enable_smt_capabilities = 1;
+	}
+#endif
+
 #ifdef MPC_Message_Passing
   if(sctk_process_number > 1){
     sctk_pmi_init();

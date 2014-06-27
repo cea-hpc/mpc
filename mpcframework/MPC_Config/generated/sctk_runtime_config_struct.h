@@ -325,6 +325,8 @@ struct sctk_runtime_config_struct_low_level_comm
 	char * network_mode;
 	/****/
 	bool dyn_reordering;
+	/**Enable usage of polling during idle.**/
+	bool enable_idle_polling;
 };
 
 /******************************** STRUCTURE *********************************/
@@ -375,6 +377,8 @@ struct sctk_runtime_config_struct_openmp
 	int max_alive_single;
 	/**Emit warning when entering nested parallelism**/
 	bool warn_nested;
+	/**MPI/OpenMP hybrid mode (simple-mixed, alternating)**/
+	char * mode;
 };
 
 /******************************** STRUCTURE *********************************/
