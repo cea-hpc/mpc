@@ -594,6 +594,8 @@ fi
 
 ######################################################
 #Generate main mpcvars.sh
+cp ${PROJECT_SOURCE_DIR}/tools/Architectures.sh ${PREFIX}/.Architectures.sh
+
 echo "#!/bin/sh" > "${PREFIX}/mpcvars.sh"
 cat <<EOF >> "${PREFIX}/mpcvars.sh"
 MPC_INSTALL_DIR_PREFIX="${PREFIX}"
@@ -613,17 +615,20 @@ fi
 SCRIPTPATH=\$(dirname "\$SCRIPT")
 MPC_RPREFIX="\$SCRIPTPATH"
 export MPC_RPREFIX
+. "\${MPC_RPREFIX}/.Architectures.sh"
 
 uname=\`uname -m\`
 if test "\$#" = "1" -a "\$0" != "bash" ; then
-	echo "load \$1 module (\${MPC_RPREFIX})"
-    . "\${MPC_RPREFIX}/\$1/\$1/bin/mpcvars.sh"
-    MPC_SUBPREFIX="/\$1/\$1/"
+	getArchDirectory module "\$1"
+	echo "load \${module} module (\${MPC_RPREFIX})"
+    . "\${MPC_RPREFIX}/\${module}/\${module}/bin/mpcvars.sh"
+    MPC_SUBPREFIX="/\${module}/\${module}/"
     export MPC_SUBPREFIX
 else
-	echo "load \${uname} module (\${MPC_RPREFIX})"
-    . "\${MPC_RPREFIX}/\${uname}/\${uname}/bin/mpcvars.sh"
-    MPC_SUBPREFIX="/\${uname}/\${uname}/"
+	getArchDirectory module "\${uname}"
+	echo "load \${module} module (\${MPC_RPREFIX})"
+    . "\${MPC_RPREFIX}/\${module}/\${module}/bin/mpcvars.sh"
+    MPC_SUBPREFIX="/\${module}/\${module}/"
     export MPC_SUBPREFIX
 fi
 
@@ -642,16 +647,19 @@ endif
 
 set scriptpath="\`dirname \${script_fn}\`"
 setenv MPC_RPREFIX \$scriptpath
+source "\${MPC_RPREFIX}/.Architectures.sh"
 
 set uname=\`uname -m\`
 if ( "\$#argv" == "1" ) then
-	echo "load \$argv[1] module (\${MPC_RPREFIX})"
-    source "\${MPC_RPREFIX}/\$argv[1]/\$argv[1]/bin/mpcvars.csh"
-    setenv MPC_SUBPREFIX "/\$argv[1]/\$argv[1]/"
+	getArchDirectory module "\$argv[1]"
+	echo "load \${module} module (\${MPC_RPREFIX})"
+    source "\${MPC_RPREFIX}/\${module}/\${module}/bin/mpcvars.csh"
+    setenv MPC_SUBPREFIX "/\${module}/\${module}/"
 else
-	echo "load \${uname} module (\${MPC_RPREFIX})"
-    source "\${MPC_RPREFIX}/\${uname}/\${uname}/bin/mpcvars.csh"
-    setenv MPC_SUBPREFIX "/\${uname}/\${uname}/"
+	getArchDirectory module "${uname}"
+	echo "load \${module} module (\${MPC_RPREFIX})"
+    source "\${MPC_RPREFIX}/\${module}/\${module}/bin/mpcvars.csh"
+    setenv MPC_SUBPREFIX "/\${module}/\${module}/"
 endif
 
 EOF
