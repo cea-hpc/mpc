@@ -4197,7 +4197,6 @@ static int __INTERNAL__PMPI_Neighbor_allgather_cart(void *sendbuf, int sendcount
     }
 	
     return PMPI_Waitall (nreqs, reqs, MPI_STATUSES_IGNORE);
-	
 }
 
 static int __INTERNAL__PMPI_Neighbor_allgather_graph(void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm)
@@ -4352,32 +4351,408 @@ static int __INTERNAL__PMPI_Neighbor_allgatherv_graph(void *sendbuf, int sendcou
 
 static int __INTERNAL__PMPI_Neighbor_alltoall_cart(void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm)
 {
-	return MPI_SUCCESS;
+	MPI_Aint rdextent;
+	MPI_Aint sdextent;
+    int rank;
+	MPI_Request * reqs;
+	mpi_topology_per_comm_t* topo;
+	mpc_mpi_per_communicator_t* tmp;
+	int rc = MPI_SUCCESS, dim, nreqs=0, i;
+	PMPI_Comm_rank(comm, &rank);
+	
+	PMPI_Type_extent(recvtype, &rdextent);
+	PMPI_Type_extent(recvtype, &sdextent);
+	tmp = mpc_mpc_get_per_comm_data(comm);
+	topo = &(tmp->topo);
+	reqs = sctk_malloc((4*(topo->data.cart.ndims))*sizeof(MPI_Request *));
+
+    for (dim = 0, nreqs = 0; dim < topo->data.cart.ndims ; ++dim) 
+    {
+        int srank = MPI_PROC_NULL, drank = MPI_PROC_NULL;
+        
+        if (topo->data.cart.dims[dim] > 1) {
+            PMPI_Cart_shift(comm, dim, 1, &srank, &drank);
+        } else if (1 == topo->data.cart.dims[dim] && topo->data.cart.periods[dim]) {
+            srank = drank = rank;
+        }
+
+        if (srank != MPI_PROC_NULL)  
+        {
+            rc = PMPI_Irecv(recvbuf, recvcount, recvtype, srank, 2, comm, &reqs[nreqs]);
+            if (rc != MPI_SUCCESS) 
+				break;
+            nreqs++;
+        }
+
+        recvbuf = (char *) recvbuf + rdextent * recvcount;
+
+        if (drank != MPI_PROC_NULL) 
+        {
+            rc = PMPI_Irecv(recvbuf, recvcount, recvtype, drank, 2, comm, &reqs[nreqs]);                        
+            if (rc != MPI_SUCCESS) 
+				break;
+            nreqs++;
+        }
+
+        recvbuf = (char *) recvbuf + rdextent * recvcount;
+    }
+
+    if (rc != MPI_SUCCESS) 
+	{
+        return rc;
+    }
+
+    for (dim = 0 ; dim < topo->data.cart.ndims ; ++dim) {
+        int srank = MPI_PROC_NULL, drank = MPI_PROC_NULL;
+
+        if (topo->data.cart.dims[dim] > 1) {
+            PMPI_Cart_shift(comm, dim, 1, &srank, &drank);
+        } else if (1 == topo->data.cart.dims[dim] && topo->data.cart.periods[dim]) {
+            srank = drank = rank;
+        }
+
+        if (srank != MPI_PROC_NULL)  
+        {
+            rc = PMPI_Isend((void *)sendbuf, sendcount, sendtype, srank, 2, comm, &reqs[nreqs]);
+            if (rc != MPI_SUCCESS) 
+				break;
+            nreqs++;
+        }
+
+        sendbuf = (const char *) sendbuf + sdextent * sendcount;
+
+        if (drank != MPI_PROC_NULL) 
+        {
+            rc = PMPI_Isend((void *)sendbuf, sendcount, sendtype, drank, 2, comm, &reqs[nreqs]);
+            if (rc != MPI_SUCCESS) 
+				break;
+            nreqs++;
+        }
+
+        sendbuf = (const char *) sendbuf + sdextent * sendcount;
+    }
+
+    if (rc != MPI_SUCCESS) 
+	{
+        return rc;
+    }
+
+    return PMPI_Waitall (nreqs, reqs, MPI_STATUSES_IGNORE);
 }
 
 static int __INTERNAL__PMPI_Neighbor_alltoall_graph(void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm)
 {
-	return MPI_SUCCESS;
+	int i = 0;
+	int rc = MPI_SUCCESS;
+	int degree;
+	int neighbor;
+	int rank; 
+	const int *edges;
+	MPI_Aint rdextent;
+	MPI_Aint sdextent;
+	MPI_Request * reqs;
+	mpi_topology_per_comm_t* topo;
+	mpc_mpi_per_communicator_t* tmp;
+	
+	PMPI_Comm_rank(comm, &rank);
+	tmp = mpc_mpc_get_per_comm_data(comm);
+	topo = &(tmp->topo);
+	PMPI_Graph_neighbors_count(comm, rank, &degree);
+	
+	edges = topo->data.graph.edges;
+    if (rank > 0) {
+        edges += topo->data.graph.index[rank - 1];
+    }
+    
+    PMPI_Type_extent(recvtype, &rdextent);
+    PMPI_Type_extent(sendtype, &sdextent);
+    reqs = sctk_malloc((2*degree)*sizeof(MPI_Request *));
+
+    for (neighbor = 0; neighbor < degree ; ++neighbor) 
+    {
+        rc = PMPI_Irecv(recvbuf, recvcount, recvtype, edges[neighbor], 1, comm, &reqs[i]);
+        if (rc != MPI_SUCCESS) break;
+        i++;
+        recvbuf = (char *) recvbuf + rdextent * recvcount;
+    }
+
+    for (neighbor = 0 ; neighbor < degree ; ++neighbor) 
+    {
+        rc = PMPI_Isend((void *)sendbuf, sendcount, sendtype, edges[neighbor], 1, comm, &reqs[i]);             
+        if (rc != MPI_SUCCESS) break;
+        i++;
+        sendbuf = (const char *) sendbuf + sdextent * sendcount;
+    }
+
+    if (rc != MPI_SUCCESS) {
+        return rc;
+    }
+
+    return PMPI_Waitall(degree*2, reqs, MPI_STATUSES_IGNORE);
 }
 
 static int __INTERNAL__PMPI_Neighbor_alltoallv_cart(void *sendbuf, int sendcounts[], int sdispls[], MPI_Datatype sendtype, void *recvbuf, int recvcounts[], int rdispls[], MPI_Datatype recvtype, MPI_Comm comm)
 {
-	return MPI_SUCCESS;
+	MPI_Aint rdextent;
+	MPI_Aint sdextent;
+    int rank;
+	MPI_Request * reqs;
+	mpi_topology_per_comm_t* topo;
+	mpc_mpi_per_communicator_t* tmp;
+	int rc = MPI_SUCCESS, dim, nreqs=0, i;
+	PMPI_Comm_rank(comm, &rank);
+	
+	PMPI_Type_extent(recvtype, &rdextent);
+	PMPI_Type_extent(recvtype, &sdextent);
+	tmp = mpc_mpc_get_per_comm_data(comm);
+	topo = &(tmp->topo);
+	reqs = sctk_malloc((4*(topo->data.cart.ndims))*sizeof(MPI_Request *));
+
+    for (dim = 0, nreqs = 0, i = 0; dim < topo->data.cart.ndims ; ++dim, i +=2) 
+    {
+        int srank = MPI_PROC_NULL, drank = MPI_PROC_NULL;
+        
+        if (topo->data.cart.dims[dim] > 1) {
+            PMPI_Cart_shift(comm, dim, 1, &srank, &drank);
+        } else if (1 == topo->data.cart.dims[dim] && topo->data.cart.periods[dim]) {
+            srank = drank = rank;
+        }
+
+        if (srank != MPI_PROC_NULL)  
+        {
+            rc = PMPI_Irecv((char *) recvbuf + rdispls[i] * rdextent, recvcounts[i], recvtype, srank, 2, comm, &reqs[nreqs]);
+            if (rc != MPI_SUCCESS) 
+				break;
+            nreqs++;
+        }
+
+        if (drank != MPI_PROC_NULL) 
+        {
+            rc = PMPI_Irecv((char *) recvbuf + rdispls[i+1] * rdextent, recvcounts[i+1], recvtype, drank, 2, comm, &reqs[nreqs]);
+            if (rc != MPI_SUCCESS) 
+				break;
+            nreqs++;
+        }
+    }
+
+    if (rc != MPI_SUCCESS) 
+	{
+        return rc;
+    }
+
+    for (dim = 0, i = 0; dim < topo->data.cart.ndims ; ++dim, i += 2) {
+        int srank = MPI_PROC_NULL, drank = MPI_PROC_NULL;
+
+        if (topo->data.cart.dims[dim] > 1) {
+            PMPI_Cart_shift(comm, dim, 1, &srank, &drank);
+        } else if (1 == topo->data.cart.dims[dim] && topo->data.cart.periods[dim]) {
+            srank = drank = rank;
+        }
+
+        if (srank != MPI_PROC_NULL)  
+        {
+            rc = PMPI_Isend((char *) sendbuf + sdispls[i] * sdextent, sendcounts[i], sendtype, srank, 2, comm, &reqs[nreqs]);
+            if (rc != MPI_SUCCESS) 
+				break;
+            nreqs++;
+        }
+
+        if (drank != MPI_PROC_NULL) 
+        {
+            rc = PMPI_Isend((char *) sendbuf + sdispls[i+1] * sdextent, sendcounts[i+1], sendtype, drank, 2, comm, &reqs[nreqs]);
+            if (rc != MPI_SUCCESS) 
+				break;
+            nreqs++;
+        }
+    }
+
+    if (rc != MPI_SUCCESS) 
+	{
+        return rc;
+    }
+
+    return PMPI_Waitall (nreqs, reqs, MPI_STATUSES_IGNORE);
 }
 
 static int __INTERNAL__PMPI_Neighbor_alltoallv_graph(void *sendbuf, int sendcounts[], int sdispls[], MPI_Datatype sendtype, void *recvbuf, int recvcounts[], int rdispls[], MPI_Datatype recvtype, MPI_Comm comm)
 {
-	return MPI_SUCCESS;
+	int i = 0;
+	int rc = MPI_SUCCESS;
+	int degree;
+	int neighbor;
+	int rank; 
+	const int *edges;
+	MPI_Aint rdextent;
+	MPI_Aint sdextent;
+	MPI_Request * reqs;
+	mpi_topology_per_comm_t* topo;
+	mpc_mpi_per_communicator_t* tmp;
+	
+	PMPI_Comm_rank(comm, &rank);
+	tmp = mpc_mpc_get_per_comm_data(comm);
+	topo = &(tmp->topo);
+	PMPI_Graph_neighbors_count(comm, rank, &degree);
+	
+	edges = topo->data.graph.edges;
+    if (rank > 0) {
+        edges += topo->data.graph.index[rank - 1];
+    }
+    
+    PMPI_Type_extent(recvtype, &rdextent);
+    PMPI_Type_extent(sendtype, &sdextent);
+    reqs = sctk_malloc((2*degree)*sizeof(MPI_Request *));
+
+    for (neighbor = 0; neighbor < degree ; ++neighbor) 
+    {
+        rc = PMPI_Irecv((char *) recvbuf + rdispls[neighbor] * rdextent, recvcounts[neighbor], recvtype, edges[neighbor], 1, comm, &reqs[i]);
+        if (rc != MPI_SUCCESS) break;
+        i++;
+    }
+    
+    if (rc != MPI_SUCCESS) {
+        return rc;
+    }
+
+    for (neighbor = 0 ; neighbor < degree ; ++neighbor) 
+    {
+        rc = PMPI_Isend((char *) sendbuf + sdispls[neighbor] * sdextent, sendcounts[neighbor], sendtype, edges[neighbor], 1, comm, &reqs[i]);             
+        if (rc != MPI_SUCCESS) break;
+        i++;
+    }
+
+    if (rc != MPI_SUCCESS) {
+        return rc;
+    }
+
+    return PMPI_Waitall(degree*2, reqs, MPI_STATUSES_IGNORE);
 }
 
 static int __INTERNAL__PMPI_Neighbor_alltoallw_cart(void *sendbuf, int sendcounts[], MPI_Aint sdispls[], MPI_Datatype sendtypes[], void *recvbuf, int recvcounts[], MPI_Aint rdispls[], MPI_Datatype recvtypes[], MPI_Comm comm)
 {
-	return MPI_SUCCESS;
+    int rank;
+	MPI_Request * reqs;
+	mpi_topology_per_comm_t* topo;
+	mpc_mpi_per_communicator_t* tmp;
+	int rc = MPI_SUCCESS, dim, nreqs=0, i;
+	PMPI_Comm_rank(comm, &rank);
+	
+	tmp = mpc_mpc_get_per_comm_data(comm);
+	topo = &(tmp->topo);
+	reqs = sctk_malloc((4*(topo->data.cart.ndims))*sizeof(MPI_Request *));
+
+    for (dim = 0, nreqs = 0, i = 0; dim < topo->data.cart.ndims ; ++dim, i +=2) 
+    {
+        int srank = MPI_PROC_NULL, drank = MPI_PROC_NULL;
+        
+        if (topo->data.cart.dims[dim] > 1) {
+            PMPI_Cart_shift(comm, dim, 1, &srank, &drank);
+        } else if (1 == topo->data.cart.dims[dim] && topo->data.cart.periods[dim]) {
+            srank = drank = rank;
+        }
+
+        if (srank != MPI_PROC_NULL)  
+        {
+            rc = PMPI_Irecv((char *) recvbuf + rdispls[i], recvcounts[i], recvtypes[i], srank, 2, comm, &reqs[nreqs]);
+            if (rc != MPI_SUCCESS) 
+				break;
+            nreqs++;
+        }
+
+        if (drank != MPI_PROC_NULL) 
+        {
+            rc = PMPI_Irecv((char *) recvbuf + rdispls[i+1], recvcounts[i+1], recvtypes[i+1], drank, 2, comm, &reqs[nreqs]);
+            if (rc != MPI_SUCCESS) 
+				break;
+            nreqs++;
+        }
+    }
+
+    if (rc != MPI_SUCCESS) 
+	{
+        return rc;
+    }
+
+    for (dim = 0, i = 0; dim < topo->data.cart.ndims ; ++dim, i += 2) {
+        int srank = MPI_PROC_NULL, drank = MPI_PROC_NULL;
+
+        if (topo->data.cart.dims[dim] > 1) {
+            PMPI_Cart_shift(comm, dim, 1, &srank, &drank);
+        } else if (1 == topo->data.cart.dims[dim] && topo->data.cart.periods[dim]) {
+            srank = drank = rank;
+        }
+
+        if (srank != MPI_PROC_NULL)  
+        {
+            rc = PMPI_Isend((char *) sendbuf + sdispls[i], sendcounts[i], sendtypes[i], srank, 2, comm, &reqs[nreqs]);
+            if (rc != MPI_SUCCESS) 
+				break;
+            nreqs++;
+        }
+
+        if (drank != MPI_PROC_NULL) 
+        {
+            rc = PMPI_Isend((char *) sendbuf + sdispls[i+1], sendcounts[i+1], sendtypes[i+1], drank, 2, comm, &reqs[nreqs]);
+            if (rc != MPI_SUCCESS) 
+				break;
+            nreqs++;
+        }
+    }
+
+    if (rc != MPI_SUCCESS) 
+	{
+        return rc;
+    }
+
+    return PMPI_Waitall (nreqs, reqs, MPI_STATUSES_IGNORE);
 }
 
 static int __INTERNAL__PMPI_Neighbor_alltoallw_graph(void *sendbuf, int sendcounts[], MPI_Aint sdispls[], MPI_Datatype sendtypes[], void *recvbuf, int recvcounts[], MPI_Aint rdispls[], MPI_Datatype recvtypes[], MPI_Comm comm)
 {
-	return MPI_SUCCESS;
+	int i = 0;
+	int rc = MPI_SUCCESS;
+	int degree;
+	int neighbor;
+	int rank; 
+	const int *edges;
+	MPI_Request * reqs;
+	mpi_topology_per_comm_t* topo;
+	mpc_mpi_per_communicator_t* tmp;
+	
+	PMPI_Comm_rank(comm, &rank);
+	tmp = mpc_mpc_get_per_comm_data(comm);
+	topo = &(tmp->topo);
+	PMPI_Graph_neighbors_count(comm, rank, &degree);
+	
+	edges = topo->data.graph.edges;
+    if (rank > 0) {
+        edges += topo->data.graph.index[rank - 1];
+    }
+    
+    reqs = sctk_malloc((2*degree)*sizeof(MPI_Request *));
+
+    for (neighbor = 0; neighbor < degree ; ++neighbor) 
+    {
+        rc = PMPI_Irecv((char *) recvbuf + rdispls[neighbor], recvcounts[neighbor], recvtypes[neighbor], edges[neighbor], 1, comm, &reqs[i]);
+        if (rc != MPI_SUCCESS) break;
+        i++;
+    }
+    
+    if (rc != MPI_SUCCESS) {
+        return rc;
+    }
+
+    for (neighbor = 0 ; neighbor < degree ; ++neighbor) 
+    {
+        rc = PMPI_Isend((char *) sendbuf + sdispls[neighbor], sendcounts[neighbor], sendtypes[neighbor], edges[neighbor], 1, comm, &reqs[i]);             
+        if (rc != MPI_SUCCESS) break;
+        i++;
+    }
+
+    if (rc != MPI_SUCCESS) {
+        return rc;
+    }
+
+    return PMPI_Waitall(degree*2, reqs, MPI_STATUSES_IGNORE);
 }
 
 typedef struct
