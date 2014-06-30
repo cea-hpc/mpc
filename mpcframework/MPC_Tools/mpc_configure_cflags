@@ -30,7 +30,7 @@ EOF
 
 header_sh >> bin/mpc_cflags
 
-FLAGS=""
+FLAGS="$SCTK_LDFLAGS"
 for i in $MODULE_LIST; do
 FLAGS="$FLAGS -DMPC_MODULE_$i"
 done
