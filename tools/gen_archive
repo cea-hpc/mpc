@@ -39,7 +39,7 @@ do_check()
 }
 
 ##################### SECTION ####################
-if test ! -f mpc/.MPC_version && test ! -d tools && test ! -d mpc; then
+if test ! -f mpcframework/.MPC_version && test ! -d tools && test ! -d mpcframework; then
 	echo "Please run this script from the root directory of MPC" 1>&2
 	exit 1
 fi
@@ -51,7 +51,7 @@ if test ! -f .git && test ! -f .gitattributes; then
 fi
 
 ##################### SECTION ####################
-VERSION=$(cd ./mpc && ./MPC_Tools/mpc_print_version)
+VERSION=$(cd ./mpcframework && ./MPC_Tools/mpc_print_version)
 echo "MPC version is $VERSION"
 
 echo "Generate archive..."
