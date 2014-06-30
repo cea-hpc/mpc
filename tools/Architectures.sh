@@ -57,26 +57,29 @@ getArch()
 	eval "${A_out}=0"
 }
 
+
 getArchDirectory()
 {
     #extract parameter
     A_out="${1}"
-	checkString="${2}"
+    checkString="${2}"
 
-	getArchList archList
-	for arch in ${archList}; do
-		getAliasList aliasList "${arch}"
-		for alias in ${aliasList}; do
-			if test -d "${MPC_RPREFIX}/${alias}";
-			then
-				eval "${A_out}=\"${alias}\""		
-				return 
-			fi
-		done
-	done
-	eval "${A_out}=0"
+    getArchList archList
+    for arch in ${archList}; do
+        getAliasList aliasList "${arch}"
+        value=`echo "${aliasList}" | grep "${checkString}"`
+        if [ "${value}" != "" ]; then
+            for alias in ${aliasList}; do
+                if test -d "${MPC_RPREFIX}/${alias}";
+                then
+                    eval "${A_out}=\"${alias}\""        
+                    return 
+                fi
+            done
+        fi
+    done
+    eval "${A_out}=0"
 }
-
 
 getBinaryTarget()
 {
