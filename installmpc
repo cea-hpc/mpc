@@ -595,6 +595,8 @@ fi
 ######################################################
 #Generate main mpcvars.sh
 cp ${PROJECT_SOURCE_DIR}/tools/Architectures.sh ${PREFIX}/.Architectures.sh
+cp ${PROJECT_SOURCE_DIR}/.config.arch.txt ${PREFIX}/.config.arch.txt
+sed -i -e "s/PROJECT_SOURCE_DIR/MPC_INSTALL_DIR_PREFIX/g" ${PREFIX}/.config.arch.txt
 
 echo "#!/bin/sh" > "${PREFIX}/mpcvars.sh"
 cat <<EOF >> "${PREFIX}/mpcvars.sh"
