@@ -245,6 +245,15 @@ sctk_restrict_topology ()
 
 	pin_processor_bitmap = hwloc_bitmap_alloc();
   hwloc_bitmap_zero(pin_processor_bitmap);
+  
+#ifdef __MIC__
+	{
+		#warning "MIC OPTIM"
+		sctk_update_topology (240 , 4 ) ;
+	}
+	/* sctk_update_topology_2 (240,0); */
+#endif
+  
   char* pinning_env = getenv("MPC_PIN_PROCESSOR_LIST");
   if (pinning_env != NULL ) {
 	  sctk_expand_pin_processor_list(pinning_env);
@@ -379,10 +388,27 @@ sctk_get_cpu_intern ()
   assume(ret!=-1);
   assume(!hwloc_bitmap_iszero(set));
 
-  /* Check if only one CPU in the CPU set. Maybe there is a simpler function
-   * to do that */
-  if(sctk_xml_specific_path == NULL)
-  assume (hwloc_bitmap_first(set) ==  hwloc_bitmap_last(set));
+
+  /* Check if HWLOC_XMLFILE env variable is set. This variable aims at modifing 
+   *  a fake topology to test the runtime bahivior. On the downside, hwloc 
+   *  disables binding. */
+  
+  int isset_hwloc_xmlfile =  (getenv ("HWLOC_XMLFILE") != NULL);
+
+  /* Check if HWLOC_THISSYSTEM env variable is set. This variable aims at asserting 
+   *  that the topology loaded with the HWLOC_XMLFILE env variable is the same as
+   *  this system. */
+
+  int isset_hwloc_thissystem = 0;
+  char* hwloc_thissystem = getenv ("HWLOC_THISSYSTEM");
+  if (hwloc_thissystem != NULL) isset_hwloc_thissystem =  (strcmp ( hwloc_thissystem , "1") == 0);
+
+  if ( !isset_hwloc_xmlfile || (isset_hwloc_xmlfile && isset_hwloc_thissystem) ) {
+    /* Check if only one CPU in the CPU set. Maybe there is a simpler function
+     * to do that */
+    if(sctk_xml_specific_path == NULL)  
+      assume (hwloc_bitmap_first(set) ==  hwloc_bitmap_last(set));
+  }
 
   hwloc_obj_t pu = hwloc_get_obj_inside_cpuset_by_type(topology, set, HWLOC_OBJ_PU, 0);
 
@@ -420,6 +446,13 @@ void sctk_topology_init_cpu(){
 sctk_topology_init ()
 {
   char* xml_path;
+#ifdef __MIC__
+	{
+		#warning "MIC OPTIM"
+		sctk_enable_smt_capabilities = 1;
+	}
+#endif
+
 #ifdef MPC_Message_Passing
   if(sctk_process_number > 1){
     sctk_pmi_init();

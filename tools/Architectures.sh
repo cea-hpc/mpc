@@ -18,7 +18,7 @@ getAliasList()
 	outvar="${1}"	
 	arch="${2}"
 
-	aliasList=`cat "${PROJECT_SOURCE_DIR}/config.arch.txt" | grep "^${arch} " | cut -f 2 -d ';' | xargs echo`
+	aliasList=`cat "${PROJECT_SOURCE_DIR}/.config.arch.txt" | grep "^${arch} " | cut -f 2 -d ';' | xargs echo`
 	aliasList="${arch} ${aliasList}"
 
 	eval "${outvar}=\"${aliasList}\""
@@ -33,7 +33,7 @@ getArchList()
 	#extract parameter
 	outvar="${1}"	
 
-	archList=`cat "${PROJECT_SOURCE_DIR}/config.arch.txt" | cut -f 1 -d ';' |  sed -e "s/^#[0-9A-Za-z_\-\ #]*//g" | xargs echo`
+	archList=`cat "${PROJECT_SOURCE_DIR}/.config.arch.txt" | cut -f 1 -d ';' |  sed -e "s/^#[0-9A-Za-z_\-\ #]*//g" | xargs echo`
 	eval "${outvar}=\"${archList}\""
 }
 
@@ -57,6 +57,29 @@ getArch()
 	eval "${A_out}=0"
 }
 
+
+getArchDirectory()
+{
+    #extract parameter
+    A_out="${1}"
+    checkString="${2}"
+
+    getArchList archList
+    for arch in ${archList}; do
+        getAliasList aliasList "${arch}"
+        value=`echo "${aliasList}" | grep "${checkString}"`
+        if [ "${value}" != "" ]; then
+            for alias in ${aliasList}; do
+                if test -d "${MPC_RPREFIX}/${alias}";
+                then
+                    eval "${A_out}=\"${alias}\""        
+                    return 
+                fi
+            done
+        fi
+    done
+    eval "${A_out}=0"
+}
 
 getBinaryTarget()
 {

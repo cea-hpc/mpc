@@ -446,7 +446,7 @@ for arg in "$@" ; do
 done
 
 # include architecture finder
-. "${MPC_BIN_DIR}/mpcrun_opt/Architectures.sh"
+. "${MPC_RPREFIX}/.Architectures.sh"
 
 if test "$BINARY" != ""; then
     # find architecture

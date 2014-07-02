@@ -30,7 +30,7 @@ EOF
 
 header_sh >> bin/mpc_cflags
 
-FLAGS=""
+FLAGS="$SCTK_LDFLAGS"
 for i in $MODULE_LIST; do
 FLAGS="$FLAGS -DMPC_MODULE_$i"
 done
@@ -40,11 +40,11 @@ if test "\$1" != "fortran" ; then
 EOF
 if test "${SCTK_MIC}" = "1" ; then
 cat <<EOF >> bin/mpc_cflags
-echo "-I${SCTK_INCLUDE_DIR} $FLAGS -L${SCTK_ARCH_LIBRARY_PATH} -Wl,-rpath=${SCTK_ARCH_LIBRARY_PATH}"
+echo "-I${SCTK_INCLUDE_DIR} -I${SCTK_INCLUDE_DIR}/../ $FLAGS -L${SCTK_ARCH_LIBRARY_PATH} -Wl,-rpath=${SCTK_ARCH_LIBRARY_PATH}"
 EOF
 else
 cat <<EOF >> bin/mpc_cflags
-echo "-I${SCTK_INCLUDE_DIR} $FLAGS"
+echo "-I${SCTK_INCLUDE_DIR} -I${SCTK_INCLUDE_DIR}/../ $FLAGS"
 EOF
 fi
 
@@ -54,11 +54,11 @@ EOF
 
 if test "${SCTK_MIC}" = "1" ; then
 cat <<EOF >> bin/mpc_cflags
-echo "-I${SCTK_INCLUDE_DIR} $FLAGS -L${SCTK_ARCH_LIBRARY_PATH} -Wl,-rpath=${SCTK_ARCH_LIBRARY_PATH}"
+echo "-I${SCTK_INCLUDE_DIR} -I${SCTK_INCLUDE_DIR}/../ $FLAGS -L${SCTK_ARCH_LIBRARY_PATH} -Wl,-rpath=${SCTK_ARCH_LIBRARY_PATH}"
 EOF
 else
 cat <<EOF >> bin/mpc_cflags
-echo "-I${SCTK_INCLUDE_DIR} $FLAGS"
+echo "-I${SCTK_INCLUDE_DIR} -I${SCTK_INCLUDE_DIR}/../ $FLAGS"
 EOF
 fi
 
