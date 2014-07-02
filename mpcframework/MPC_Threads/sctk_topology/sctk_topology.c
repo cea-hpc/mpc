@@ -446,11 +446,13 @@ void sctk_topology_init_cpu(){
 sctk_topology_init ()
 {
   char* xml_path;
+#if 0
 #ifdef __MIC__
 	{
 		#warning "MIC OPTIM"
 		sctk_enable_smt_capabilities = 1;
 	}
+#endif
 #endif
 
 #ifdef MPC_Message_Passing
