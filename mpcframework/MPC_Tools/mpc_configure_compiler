@@ -295,7 +295,7 @@ cat << EOF >> $1
 
     # Update compiler arguments
     if [ \$addarg = yes ] ; then
-        allargs="\$allargs \$qarg"
+        allargs="\$allargs '\$qarg'"
 EOF
 
 cat << EOF >> $1
