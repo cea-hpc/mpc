@@ -30,10 +30,11 @@ EOF
 
 header_sh >> bin/mpc_cflags
 
-FLAGS="$SCTK_LDFLAGS"
+FLAGS="$SCTK_CFLAGS"
 for i in $MODULE_LIST; do
 FLAGS="$FLAGS -DMPC_MODULE_$i"
 done
+
 
 cat <<EOF >> bin/mpc_cflags
 if test "\$1" != "fortran" ; then
