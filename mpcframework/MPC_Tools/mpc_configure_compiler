@@ -112,14 +112,23 @@ esac
 use_mpc_privat="true"
 
 # Regular flags and compiler (C, C++ or fortran)
-if test "${BINUTILS_PREFIX}" != "disabled" -a "$use_mpc_privat" = "true" -a "${CC}" != "gcc" -a "${CC}" != "gcc";
+if test "${BINUTILS_PREFIX}" != "disabled" -a "$use_mpc_privat" = "true" -a "${CC}" != "gcc" -a "${CC}" != "icc";
 then
 cat <<EOF >> $1
 CFLAGS="\`\${MPC_RPREFIX}/${MPC_SUBPREFIX}/bin/mpc_cflags $2\`"
 LDFLAGS="\`\${MPC_RPREFIX}/${MPC_SUBPREFIX}/bin/mpc_ldflags $2\` -B\${MPC_RPREFIX}/${MPC_SUBPREFIX}/bin"
 CC=$CC
 EOF
-else
+elif test "${CC}" = "icc";
+then
+cat <<EOF >> $1
+MPC_USE_INTEL_COMPILER=1
+export MPC_USE_INTEL_COMPILER
+CFLAGS="\`\${MPC_RPREFIX}/${MPC_SUBPREFIX}/bin/mpc_cflags $2\`"
+LDFLAGS="\`\${MPC_RPREFIX}/${MPC_SUBPREFIX}/bin/mpc_ldflags $2\`"
+CC=$CC
+EOF
+else 
 cat <<EOF >> $1
 CFLAGS="\`\${MPC_RPREFIX}/${MPC_SUBPREFIX}/bin/mpc_cflags $2\`"
 LDFLAGS="\`\${MPC_RPREFIX}/${MPC_SUBPREFIX}/bin/mpc_ldflags $2\`"
