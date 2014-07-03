@@ -620,6 +620,9 @@ else
 fi
 
 SCRIPTPATH=\$(dirname "\$SCRIPT")
+MPC_INSTALL_DIR_PREFIX="\$SCRIPTPATH"
+export MPC_INSTALL_DIR_PREFIX
+
 MPC_RPREFIX="\$SCRIPTPATH"
 export MPC_RPREFIX
 . "\${MPC_RPREFIX}/.Architectures.sh"
@@ -653,6 +656,8 @@ else
 endif
 
 set scriptpath="\`dirname \${script_fn}\`"
+setenv MPC_INSTALL_DIR_PREFIX \$scriptpath
+
 setenv MPC_RPREFIX \$scriptpath
 source "\${MPC_RPREFIX}/.Architectures.sh"
 
