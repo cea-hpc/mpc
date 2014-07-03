@@ -97,6 +97,9 @@ SCTK_CC_DEP=$SCTK_CC_DEP
 SCTK_OS=${SCTK_OS}
 SCTK_ARCH=${SCTK_ARCH}
 MPC_AUTO_KILL_TIMEOUT=300
+SCTK_LIRARY_PATH=$SCTK_LIRARY_PATH
+LD_LIBRARY_PATH=$LD_LIBRARY_PATH
+
 
 EOF
 
@@ -117,6 +120,7 @@ echo "export M_PWD"  >> Makefile
 echo "export MPC_MAKEFILE"  >> Makefile
 echo "export DIR_DEST_EXE"  >> Makefile
 echo "export SCTK_CC_DEP"  >> Makefile
+echo "export LD_LIBRARY_PATH"  >> Makefile
 echo "export MPC_AUTO_KILL_TIMEOUT"  >> Makefile
 echo "" >> Makefile
 

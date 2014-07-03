@@ -536,6 +536,7 @@ SCTK_GCC="`tmp_cross_gen $SCTK_GCC`"
 SCTK_CC="`tmp_cross_gen $SCTK_CC`"
 SCTK_CXX="`tmp_cross_gen $SCTK_CXX`"
 SCTK_F77="`tmp_cross_gen $SCTK_F77`"
+SCTK_LIRARY_PATH=""
 
 for i in ${COMPILER_LIST} ; 
 do
@@ -549,8 +550,21 @@ do
 		echo "sctk_cxx = '${SCTK_CXX}'" 2>&1
 		echo "sctk_f77 = '${SCTK_F77}'" 2>&1
 		echo "sctk_gcc = '${SCTK_GCC}'" 2>&1
+
+		SCTK_LIRARY_PATH="${MPC_RPREFIX}/${MPC_SUBPREFIX}/libsgcc/lib"
+		
 	fi   
 done
+
+if test "$SCTK_LIRARY_PATH" != "" ; then 
+    if test "$LD_LIBRARY_PATH" != "" ; then 
+	LD_LIBRARY_PATH=$SCTK_LIRARY_PATH:$LD_LIBRARY_PATH
+    else
+	LD_LIBRARY_PATH=$SCTK_LIRARY_PATH
+    fi
+fi
+
+export LD_LIBRARY_PATH
 
 if test "$SCTK_OS" = "" ; then
 SCTK_OS="`uname`"
