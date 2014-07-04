@@ -41,6 +41,7 @@ extern "C"
 
 #include <stdlib.h>
 #include <unistd.h>
+#include <stdio.h>
 
   int PMPC_Main (int argc, char **argv);
   int PMPC_User_Main (int argc, char **argv);
@@ -322,6 +323,12 @@ enum MPIR_Combiner_enum {
   int MPC_Initialized (int *flag);
   int MPC_Finalize (void);
   int MPC_Abort (MPC_Comm, int);
+
+  typedef enum {MPC_HAVE_OPTION_HLS,MPC_HAVE_OPTION_ETLS_COW,MPC_HAVE_OPTION_ETLS_OPTIMIZED,MPC_HAVE_OPTION_END} MPC_Config_Status_t;
+
+  int MPC_Config_Status(MPC_Config_Status_t option);
+  void MPC_Config_Status_Print(FILE* fd);
+  char* MPC_Config_Status_Name(MPC_Config_Status_t option);
 
   /* MPI Topology informations */
   int MPC_Comm_rank (MPC_Comm comm, int *rank);

@@ -46,6 +46,17 @@ void hwloc_obj_add_info(hwloc_obj_t obj, const char *name, const char *value);
 #if defined(SCTK_USE_TLS)
 __thread void *sctk_extls = NULL;
 
+
+#if defined (SCTK_USE_OPTIMIZED_TLS)
+int MPC_Config_Status_MPC_HAVE_OPTION_ETLS_OPTIMIZED(){
+  return 1;
+}
+#else
+int MPC_Config_Status_MPC_HAVE_OPTION_ETLS_OPTIMIZED(){
+  return 0;
+}
+#endif
+
 #if defined (SCTK_USE_OPTIMIZED_TLS)
 /* to set GS register */
 #include <asm/prctl.h> /* ARCH_SET_GS */
@@ -207,6 +218,17 @@ sctk_init_module (size_t m, char *module, size_t size)
 }
 
 #define SCTK_COW_TLS
+
+#if defined(SCTK_COW_TLS)
+int MPC_Config_Status_MPC_HAVE_OPTION_ETLS_COW(){
+  return 1;
+}
+#else
+int MPC_Config_Status_MPC_HAVE_OPTION_ETLS_COW(){
+  return 0;
+}
+#endif
+
 static inline int
 sctk_get_module_file_decr (size_t m, size_t module_size)
 {
@@ -468,6 +490,17 @@ TODO("Liberation des extls")
  */
 
 #define MAX(a,b) ((a)>=(b)?(a):(b))
+
+
+#ifdef MPC_DISABLE_HLS
+int MPC_Config_Status_MPC_HAVE_OPTION_HLS(){
+  return 0;
+}
+#else
+int MPC_Config_Status_MPC_HAVE_OPTION_HLS(){
+  return 1;
+}
+#endif
 
 void sctk_hls_build_repository ()
 {
@@ -1096,4 +1129,13 @@ sctk_extls_delete ()
 {
 }
 
+int MPC_Config_Status_MPC_HAVE_OPTION_HLS(){
+  return 0;
+}
+int MPC_Config_Status_MPC_HAVE_OPTION_ETLS_COW(){
+  return 0;
+}
+int MPC_Config_Status_MPC_HAVE_OPTION_ETLS_OPTIMIZED(){
+  return 0;
+}
 #endif
