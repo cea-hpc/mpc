@@ -63,7 +63,49 @@
 #endif
 
 #endif
+ /************************************************************************/
+ /*MPC STATUS                                                            */
+ /************************************************************************/
+int MPC_Config_Status_MPC_HAVE_OPTION_HLS();
+int MPC_Config_Status_MPC_HAVE_OPTION_ETLS_COW();
+int MPC_Config_Status_MPC_HAVE_OPTION_ETLS_OPTIMIZED();
 
+int MPC_Config_Status(MPC_Config_Status_t option){
+  int res = 0;
+
+  if(option == MPC_HAVE_OPTION_HLS){
+    res = MPC_Config_Status_MPC_HAVE_OPTION_HLS();
+  }
+  if(option == MPC_HAVE_OPTION_ETLS_COW){
+    res = MPC_Config_Status_MPC_HAVE_OPTION_ETLS_COW();
+  }
+  if(option == MPC_HAVE_OPTION_ETLS_OPTIMIZED){
+    res = MPC_Config_Status_MPC_HAVE_OPTION_ETLS_OPTIMIZED();
+  }
+
+  return res;
+}
+
+void MPC_Config_Status_Print(FILE* fd){
+  int i ; 
+  fprintf(fd,"MPC Status:\n");
+  for(i = 0; i < MPC_HAVE_OPTION_END; i++){
+    fprintf(fd,"\t- %s %d\n",MPC_Config_Status_Name(i),MPC_Config_Status(i));
+  }
+}
+
+char* MPC_Config_Status_Name(MPC_Config_Status_t option){
+  if(option == MPC_HAVE_OPTION_HLS){
+    return "MPC_HAVE_OPTION_HLS";
+  }
+  if(option == MPC_HAVE_OPTION_ETLS_COW){
+    return "MPC_HAVE_OPTION_ETLS_COW";
+  }
+  if(option == MPC_HAVE_OPTION_ETLS_OPTIMIZED){
+    return "MPC_HAVE_OPTION_ETLS_OPTIMIZED";
+  }
+  return "Unknown Option";
+}
  /************************************************************************/
  /*GLOBAL VARIABLES                                                      */
  /************************************************************************/
