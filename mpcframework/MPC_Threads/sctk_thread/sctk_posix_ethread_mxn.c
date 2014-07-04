@@ -243,6 +243,11 @@ sctk_ethread_mxn_sched_get_priority_min (int policy)
   return __sctk_ethread_sched_get_priority_min (policy);
 }
 
+static int
+sctk_ethread_mxn_attr_setschedparam(){
+  return 0;
+}
+
 
 /*mutex attr*/
 static int
@@ -606,8 +611,11 @@ sctk_posix_ethread_mxn ()
   /*sched prio */
   sctk_add_func_type (sctk_ethread_mxn, sched_get_priority_min, int (*)(int));
   sctk_add_func_type (sctk_ethread_mxn, sched_get_priority_max, int (*)(int));
-
-
+  sctk_add_func_type (sctk_ethread_mxn, attr_setschedparam, 
+		      int (*)(sctk_thread_attr_t * restrict ,
+			      const struct sched_param *restrict
+			      ));
+  
 
   /*mutex attr */
   sctk_add_func_type (sctk_ethread_mxn, mutexattr_init,
