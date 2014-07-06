@@ -112,6 +112,20 @@ sctk_ethread_attr_getstack (sctk_ethread_attr_t * attr, void **addr,
 }
 
 static int
+sctk_ethread_attr_setguardsize (sctk_ethread_attr_t * attr,
+				    size_t guardsize)
+{
+  return __sctk_ethread_attr_setguardsize (attr, guardsize);
+}
+
+static int
+sctk_ethread_attr_getguardsize (sctk_ethread_attr_t * attr,
+				    size_t* guardsize)
+{
+  return __sctk_ethread_attr_getguardsize (attr, guardsize);
+}
+
+static int
 sctk_ethread_attr_destroy (sctk_ethread_attr_t * attr)
 {
   int ret;
@@ -581,6 +595,11 @@ sctk_posix_ethread ()
 		      int (*)(const sctk_thread_attr_t *, void **, size_t *));
   sctk_add_func_type (sctk_ethread, attr_setstack,
 		      int (*)(sctk_thread_attr_t *, void *, size_t));
+  sctk_add_func_type (sctk_ethread, attr_setguardsize,
+		      int (*)(sctk_thread_attr_t *, size_t));
+  sctk_add_func_type (sctk_ethread, attr_getguardsize,
+		      int (*)(const sctk_thread_attr_t *, size_t *));
+
 
   /*gestion du cancel */
   sctk_add_func_type (sctk_ethread, testcancel, void (*)(void));
