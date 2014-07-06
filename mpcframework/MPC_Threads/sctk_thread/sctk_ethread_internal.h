@@ -1292,6 +1292,15 @@ extern "C"
 /*     sctk_report_death (cur); */
 /*     sctk_thread_remove (); */
 /*     sctk_ethread_set_status (cur, sctk_thread_undef_status); */
+    
+    if(cur->attr.guardsize != 0){
+      int res;
+      res = mprotect(cur->stack, cur->stack_size, PROT_READ | PROT_WRITE);    
+      if(res != 0){
+	perror("mprotect error");
+	/* not_reachable(); */
+      }
+    }
 
     new_task = vp->idle;
 
@@ -1608,6 +1617,7 @@ extern "C"
 
     stack = attr->stack;
     stack_size = attr->stack_size;
+
     /*Consitency_check */
     /*    assume (attr->priority == 0); */
     if (attr->priority != 0)
@@ -1640,6 +1650,12 @@ extern "C"
       }
 
     th_data->attr = *attr;
+    if ((attr->guardsize != 0) && (stack == NULL)) {
+      th_data->attr.guardsize = attr->guardsize;
+    } else {
+      th_data->attr.guardsize = 0;
+    }
+
     sctk_nodebug ("Thread data %p create stack", th_data);
 
     if (stack == NULL)
@@ -1680,6 +1696,15 @@ extern "C"
 	th_data->attr.stack_size = stack_size;
 */
       }
+
+    if(th_data->attr.guardsize != 0){
+      int res;
+      res = mprotect((char*)stack + stack_size - th_data->attr.guardsize ,th_data->attr.guardsize, PROT_NONE);      
+      if(res != 0){
+	perror("mprotect error");
+	/* not_reachable(); */
+      }
+    }
 
     if (status == ethread_ready)
       {

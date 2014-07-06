@@ -81,13 +81,14 @@ extern "C"
     char *stack;
     int stack_size;
     unsigned int binding;
+    size_t guardsize;
   } sctk_ethread_attr_intern_t;
 #define SCTK_ETHREAD_ATTR_INIT {0,		\
       SCTK_ETHREAD_CREATE_JOINABLE,		\
       SCTK_ETHREAD_SCHED_OTHER,			\
       SCTK_ETHREAD_EXPLICIT_SCHED,		\
       SCTK_ETHREAD_SCOPE_PROCESS,               \
-      NULL,SCTK_ETHREAD_THREAD_STACK_SIZE,-1}
+      NULL,SCTK_ETHREAD_THREAD_STACK_SIZE,-1,0}
 
   typedef enum
   {

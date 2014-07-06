@@ -117,6 +117,21 @@ sctk_ethread_mxn_attr_getstack (sctk_ethread_attr_t * attr, void **addr,
 }
 
 static int
+sctk_ethread_mxn_attr_setguardsize (sctk_ethread_attr_t * attr,
+				    size_t guardsize)
+{
+  return __sctk_ethread_attr_setguardsize (attr, guardsize);
+}
+
+static int
+sctk_ethread_mxn_attr_getguardsize (sctk_ethread_attr_t * attr,
+				    size_t* guardsize)
+{
+  return __sctk_ethread_attr_getguardsize (attr, guardsize);
+}
+
+
+static int
 sctk_ethread_mxn_attr_destroy (sctk_ethread_attr_t * attr)
 {
   int ret;
@@ -580,6 +595,11 @@ sctk_posix_ethread_mxn ()
   sctk_add_func_type (sctk_ethread_mxn, attr_setstack,
 		      int (*)(sctk_thread_attr_t *, void *, size_t));
 
+  sctk_add_func_type (sctk_ethread_mxn, attr_setguardsize,
+		      int (*)(sctk_thread_attr_t *, size_t));
+  sctk_add_func_type (sctk_ethread_mxn, attr_getguardsize,
+		      int (*)(const sctk_thread_attr_t *, size_t *));
+
   /*gestion du cancel */
   sctk_add_func_type (sctk_ethread_mxn, testcancel, void (*)(void));
   sctk_add_func_type (sctk_ethread_mxn, cancel, int (*)(sctk_thread_t));
@@ -613,8 +633,7 @@ sctk_posix_ethread_mxn ()
   sctk_add_func_type (sctk_ethread_mxn, sched_get_priority_max, int (*)(int));
   sctk_add_func_type (sctk_ethread_mxn, attr_setschedparam, 
 		      int (*)(sctk_thread_attr_t * restrict ,
-			      const struct sched_param *restrict
-			      ));
+			      const struct sched_param *restrict));
   
 
   /*mutex attr */

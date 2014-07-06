@@ -212,6 +212,28 @@ extern "C"
   }
 
   static inline int
+  __sctk_ethread_attr_setguardsize (sctk_ethread_attr_t * attr,
+				    size_t guardsize)
+  {
+    sctk_ethread_check_attr (attr);
+    if (attr == NULL)
+      return SCTK_EINVAL;
+    attr->ptr->guardsize = guardsize;
+    return 0;
+  }
+
+  static inline int
+  __sctk_ethread_attr_getguardsize (sctk_ethread_attr_t * attr,
+				    size_t* guardsize)
+  {  
+    sctk_ethread_check_attr (attr);
+    if (attr == NULL)
+      return SCTK_EINVAL;
+    *guardsize = attr->ptr->guardsize;
+    return 0;
+  }
+
+  static inline int
     __sctk_ethread_attr_setscope2 (sctk_ethread_attr_t * attr, int scope)
   {
     sctk_ethread_check_attr (attr);
