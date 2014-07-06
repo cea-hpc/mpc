@@ -46,6 +46,12 @@ extern "C"
 {
 #endif
 
+
+  void* sctk_align_ptr_to_page(void* ptr);
+  size_t sctk_align_size_to_page(size_t size);
+
+
+
 #define SCTK_ACTIVITY_DOWN(vp) vp->idle_activity++
 #define SCTK_ACTIVITY_UP(vp) vp->activity++
 
@@ -1295,7 +1301,15 @@ extern "C"
     
     if(cur->attr.guardsize != 0){
       int res;
-      res = mprotect(cur->stack, cur->stack_size, PROT_READ | PROT_WRITE);    
+      char* start_point; 
+
+      start_point = sctk_align_ptr_to_page((char*)cur->stack);
+      if((size_t)start_point < (size_t)cur->stack){
+	start_point = sctk_align_ptr_to_page((char*)cur->stack + sctk_align_size_to_page(1));
+      }
+ 
+      res = mprotect(start_point,
+		     sctk_align_size_to_page(cur->attr.guardsize), PROT_READ | PROT_WRITE);    
       if(res != 0){
 	perror("mprotect error");
 	/* not_reachable(); */
@@ -1651,7 +1665,7 @@ extern "C"
 
     th_data->attr = *attr;
     if ((attr->guardsize != 0) && (stack == NULL)) {
-      th_data->attr.guardsize = attr->guardsize;
+      th_data->attr.guardsize = sctk_align_size_to_page(attr->guardsize);
     } else {
       th_data->attr.guardsize = 0;
     }
@@ -1666,6 +1680,7 @@ extern "C"
 	  stack_size = SCTK_ETHREAD_STACK_SIZE;
 	if (stack == NULL)
 	  {
+	    stack_size = sctk_align_size_to_page(stack_size);
 	    stack = (char *) __sctk_malloc (stack_size + 8, tmp.tls);
 	    if (stack == NULL)
 	      {
@@ -1699,7 +1714,17 @@ extern "C"
 
     if(th_data->attr.guardsize != 0){
       int res;
-      res = mprotect((char*)stack + stack_size - th_data->attr.guardsize ,th_data->attr.guardsize, PROT_NONE);      
+      char* start_point; 
+
+      start_point = sctk_align_ptr_to_page((char*)stack);
+      if((size_t)start_point < (size_t)stack){
+	start_point = sctk_align_ptr_to_page((char*)stack + sctk_align_size_to_page(1));
+      }
+
+      fprintf(stderr,"Stack %p size %lu guards %lu point %p\n",stack,stack_size,sctk_align_size_to_page(th_data->attr.guardsize), start_point);
+      
+      res = mprotect(start_point,
+		     sctk_align_size_to_page(th_data->attr.guardsize), PROT_NONE);      
       if(res != 0){
 	perror("mprotect error");
 	/* not_reachable(); */
