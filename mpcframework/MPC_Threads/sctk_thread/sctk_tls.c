@@ -386,6 +386,18 @@ __sctk__tls_get_addr__generic_scope ( size_t module_id,
   return res;
 }
 
+void* sctk_align_ptr_to_page(void* ptr){
+  ptr = (char*)ptr - ((size_t) ptr % page_size);
+  return ptr;
+}
+
+size_t sctk_align_size_to_page(size_t size){
+  if(size % page_size == 0){
+    return size;
+  }
+  size += page_size - (size % page_size);  
+  return size;
+}
 
 size_t sctk_extls_size(){
   page_size = getpagesize ();
