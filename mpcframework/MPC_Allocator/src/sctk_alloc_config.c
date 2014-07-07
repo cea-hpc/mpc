@@ -88,7 +88,7 @@ SCTK_STATIC void sctk_alloc_config_init_static_defaults(struct sctk_runtime_conf
 
 	#ifdef __MIC__
 	config->keep_mem           = 64*1024*1024;//64MB
-	#endif //__MIC__
+	#endif
 
 	#ifdef HAVE_HWLOC
 	/** @todo set true when no mode bugs out of MPC. **/

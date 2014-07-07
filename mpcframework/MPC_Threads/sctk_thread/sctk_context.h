@@ -84,8 +84,8 @@ Need to check this in more depth for futur version ( > 2.4.0-1).
 #endif
 
 #ifdef __MIC__
-	#undef DONOTHAVE_CONTEXTS
-	#define DONOTHAVE_CONTEXTS
+	//#undef DONOTHAVE_CONTEXTS
+	//#define DONOTHAVE_CONTEXTS
 #endif
 
 #ifdef DONOTHAVE_CONTEXTS

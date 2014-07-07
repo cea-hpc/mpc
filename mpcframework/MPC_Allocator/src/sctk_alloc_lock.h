@@ -38,7 +38,7 @@
 
 #ifdef __MIC__
 	#define SCTK_ALLOC_USE_INTERNAL_LOCKS
-#endif //__MIC__
+#endif
 
 /************************** MACROS *************************/
 //Can't use pthread mutex into MPC as we are called before thread init, so use spinlocks.
