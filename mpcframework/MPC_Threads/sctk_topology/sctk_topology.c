@@ -101,7 +101,7 @@ sctk_update_topology (
   if (hwloc_bitmap_iszero(pin_processor_bitmap)) {
 	  for( i=index_first_processor; i < processor_number; ++i)
 	  {
-		  hwloc_obj_t pu = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, i);
+		  hwloc_obj_t pu = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, i%processor_number);
 		  hwloc_cpuset_t set = hwloc_bitmap_dup(pu->cpuset);
 		  hwloc_bitmap_singlify(set);
 		  hwloc_bitmap_or(cpuset, cpuset, set);
@@ -248,7 +248,11 @@ sctk_restrict_topology ()
   
 #ifdef __MIC__
 	{
+<<<<<<< HEAD
 		sctk_update_topology (sctk_processor_number_on_node, get_pu_number_by_core(topology, 0)) ;
+=======
+		sctk_update_topology (240, 4) ;
+>>>>>>> MIC: correct seg fault problems with MIC optim. DONOTHAVE_CONTEXTS still does not work.
 	}
 #endif
 
