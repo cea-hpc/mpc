@@ -10304,6 +10304,20 @@ int PMPI_Neighbor_allgather(void *sendbuf, int sendcount, MPI_Datatype sendtype,
 	topo = &(tmp->topo);
 	__INTERNAL__PMPI_Comm_rank (comm, &rank);
 	
+	if (recvtype == MPI_DATATYPE_NULL) {	
+		MPI_ERROR_REPORT(comm,MPI_ERR_TYPE,"recvtype must be a valid type");
+	} else if (recvcount < 0) {
+		MPI_ERROR_REPORT(comm,MPI_ERR_COUNT,"recvcount must be superior or equal to zero");
+	} 
+    
+    if(sctk_is_inter_comm (comm)){
+		if (sendcount == 0 && recvcount == 0)
+			return MPI_SUCCESS;
+	} else {
+		if (recvcount == 0)
+			return MPI_SUCCESS;
+	}
+	
 	sctk_spinlock_lock (&(topo->lock));
 		if (topo->type == MPI_CART)
 		{
@@ -10327,15 +10341,43 @@ int PMPI_Neighbor_allgather(void *sendbuf, int sendcount, MPI_Datatype sendtype,
 
 int PMPI_Neighbor_allgatherv(void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcounts[], int displs[], MPI_Datatype recvtype, MPI_Comm comm)
 {
-	int rank;
+	int i, rank, size;
 	int res = MPI_ERR_INTERN;
 	mpc_mpi_per_communicator_t* tmp;
 	mpi_topology_per_comm_t* topo;
+	__INTERNAL__PMPI_Comm_size (comm, &size);
 	
 	tmp = mpc_mpc_get_per_comm_data(comm);
 	topo = &(tmp->topo);
 	__INTERNAL__PMPI_Comm_rank (comm, &rank);
 	
+	if (!(topo->type == MPI_CART || topo->type == MPI_GRAPH)) {
+		MPI_ERROR_REPORT(comm,MPI_ERR_TYPE,"Topology must be MPI_CART or MPI_GRAPH");
+	} else if (recvtype == MPI_DATATYPE_NULL) {	
+		MPI_ERROR_REPORT(comm,MPI_ERR_TYPE,"recvtype must be a valid type");
+	}
+	
+	for (i = 0; i < size; ++i) {
+	  if (recvcounts[i] < 0) {
+		MPI_ERROR_REPORT(comm,MPI_ERR_COUNT,"recvcounts must be superior or equal to zero");
+	  }
+	}
+
+	if (NULL == displs) {
+	  MPI_ERROR_REPORT(comm,MPI_ERR_BUFFER,"displs must be valid");
+	}
+       
+    if ( !sctk_is_inter_comm (comm) ) {
+        for (i = 0; i < size; ++i) {
+            if (recvcounts[i] != 0) {
+                break;
+            }
+        }
+        if (i >= size) {
+            return MPI_SUCCESS;
+        }
+    }
+    
 	sctk_spinlock_lock (&(topo->lock));
 		if (topo->type == MPI_CART)
 		{
@@ -10368,6 +10410,18 @@ int PMPI_Neighbor_alltoall(void *sendbuf, int sendcount, MPI_Datatype sendtype, 
 	topo = &(tmp->topo);
 	__INTERNAL__PMPI_Comm_rank (comm, &rank);
 	
+	if (!(topo->type == MPI_CART || topo->type == MPI_GRAPH)) {
+		MPI_ERROR_REPORT(comm,MPI_ERR_TYPE,"Topology must be MPI_CART or MPI_GRAPH");
+	} else if (recvtype == MPI_DATATYPE_NULL) {	
+		MPI_ERROR_REPORT(comm,MPI_ERR_TYPE,"recvtype must be a valid type");
+	} else if (recvcount < 0) {
+		MPI_ERROR_REPORT(comm,MPI_ERR_COUNT,"recvcount must be superior or equal to zero");
+	} 
+	
+	if (sendcount == 0 && recvcount == 0) {
+        return MPI_SUCCESS;
+    }
+    
 	sctk_spinlock_lock (&(topo->lock));
 		if (topo->type == MPI_CART)
 		{
@@ -10389,7 +10443,7 @@ int PMPI_Neighbor_alltoall(void *sendbuf, int sendcount, MPI_Datatype sendtype, 
 
 int PMPI_Neighbor_alltoallv(void *sendbuf, int sendcounts[], int sdispls[], MPI_Datatype sendtype, void *recvbuf, int recvcounts[], int rdispls[], MPI_Datatype recvtype, MPI_Comm comm)
 {
-	int rank;
+	int i, rank, size;
 	int res = MPI_ERR_INTERN;
 	mpc_mpi_per_communicator_t* tmp;
 	mpi_topology_per_comm_t* topo;
@@ -10398,6 +10452,22 @@ int PMPI_Neighbor_alltoallv(void *sendbuf, int sendcounts[], int sdispls[], MPI_
 	topo = &(tmp->topo);
 	__INTERNAL__PMPI_Comm_rank (comm, &rank);
 	
+	if (!(topo->type == MPI_CART || topo->type == MPI_GRAPH)) {
+		MPI_ERROR_REPORT(comm,MPI_ERR_TYPE,"Topology must be MPI_CART or MPI_GRAPH");
+	} else if ((NULL == sendcounts) || (NULL == sdispls) || (NULL == recvcounts) || (NULL == rdispls)) {
+		MPI_ERROR_REPORT (comm, MPI_ERR_ARG, "Invalid arg");
+	}
+    
+    __INTERNAL__PMPI_Comm_rank (comm, &size);
+    for (i = 0; i < size; i++) 
+    {
+		if (recvcounts[i] < 0) {
+			MPI_ERROR_REPORT(comm,MPI_ERR_COUNT,"recvcounts must be superior or equal to zero");
+		} else if (MPI_DATATYPE_NULL == recvtype) {
+			MPI_ERROR_REPORT(comm,MPI_ERR_TYPE,"recvtype must be a valid type");
+		}
+	}
+           
 	sctk_spinlock_lock (&(topo->lock));
 		if (topo->type == MPI_CART)
 		{
@@ -10419,7 +10489,7 @@ int PMPI_Neighbor_alltoallv(void *sendbuf, int sendcounts[], int sdispls[], MPI_
 
 int PMPI_Neighbor_alltoallw(void *sendbuf, int sendcounts[], MPI_Aint sdispls[], MPI_Datatype sendtypes[], void *recvbuf, int recvcounts[], MPI_Aint rdispls[], MPI_Datatype recvtypes[], MPI_Comm comm)
 {
-	int rank;
+	int i, rank, size;
 	int res = MPI_ERR_INTERN;
 	mpc_mpi_per_communicator_t* tmp;
 	mpi_topology_per_comm_t* topo;
@@ -10427,6 +10497,21 @@ int PMPI_Neighbor_alltoallw(void *sendbuf, int sendcounts[], MPI_Aint sdispls[],
 	tmp = mpc_mpc_get_per_comm_data(comm);
 	topo = &(tmp->topo);
 	__INTERNAL__PMPI_Comm_rank (comm, &rank);
+	
+	if ((NULL == sendcounts) || (NULL == sdispls) || (NULL == sendtypes) || 
+	    (NULL == recvcounts) || (NULL == rdispls) || (NULL == recvtypes)) {
+        MPI_ERROR_REPORT (comm, MPI_ERR_ARG, "Invalid arg");
+    }
+    
+    __INTERNAL__PMPI_Comm_rank (comm, &size);
+    for (i = 0; i < size; i++) 
+    {
+		if (recvcounts[i] < 0) {
+			MPI_ERROR_REPORT(comm,MPI_ERR_COUNT,"recvcounts must be superior or equal to zero");
+		} else if (MPI_DATATYPE_NULL == recvtypes[i] || recvtypes == NULL) {
+			MPI_ERROR_REPORT(comm,MPI_ERR_TYPE,"recvtypes must be valid types");
+		}
+	}
 	
 	sctk_spinlock_lock (&(topo->lock));
 		if (topo->type == MPI_CART)
