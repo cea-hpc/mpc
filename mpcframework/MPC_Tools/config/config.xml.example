@@ -50,7 +50,7 @@
 					<allreduce_arity_max>8</allreduce_arity_max>
 					<allreduce_max_size>1024</allreduce_max_size>
 					<allreduce_check_threshold>8192</allreduce_check_threshold>
-					<collectives_init_hook>sctk_collectives_init_opt_messages</collectives_init_hook>
+					<collectives_init_hook>sctk_collectives_init_opt_noalloc_split_messages</collectives_init_hook>
 				</inter_thread_comm>
 				<low_level_comm>
 					<checksum>true</checksum>
