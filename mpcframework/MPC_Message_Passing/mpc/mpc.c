@@ -4109,7 +4109,11 @@ PMPC_Scatterv (void *sendbuf,
 	}
 	else
 	{
-		__MPC_Irecv (recvbuf, recvcnt, recvtype, root, MPC_SCATTERV_TAG, comm, &request, task_specific);
+		if((recvbuf == MPC_IN_PLACE) && (rank == root)){
+		  request = mpc_request_null;
+		} else {
+		  __MPC_Irecv (recvbuf, recvcnt, recvtype, root, MPC_SCATTERV_TAG, comm, &request, task_specific);
+		}
 
 
 		if (rank == root)
@@ -4121,7 +4125,11 @@ PMPC_Scatterv (void *sendbuf,
 			{
 				for (j = 0; (i < size) && (j < MPC_MAX_CONCURENT);)
 				{
-					__MPC_Isend (((char *) sendbuf) + (displs[i] * send_type_size), sendcnts[i], sendtype, i, MPC_SCATTERV_TAG, comm, &(sendrequest[j]), task_specific);
+				  if((recvbuf == MPC_IN_PLACE) && (i == root)){
+				    sendrequest[j] = mpc_request_null;
+				  } else {
+				    __MPC_Isend (((char *) sendbuf) + (displs[i] * send_type_size), sendcnts[i], sendtype, i, MPC_SCATTERV_TAG, comm, &(sendrequest[j]), task_specific);
+				  }
 					i++;
 					j++;
 				}
@@ -4211,8 +4219,12 @@ PMPC_Scatter (void *sendbuf,
 	}
 	else
 	{
-		__MPC_Irecv (recvbuf, recvcnt, recvtype, root, MPC_SCATTER_TAG, comm, &request, task_specific);
 		__MPC_Comm_rank_size (comm, &rank, &size, task_specific);
+		if((recvbuf == MPC_IN_PLACE) && (rank == root)){
+		  request = mpc_request_null;
+		} else {
+		  __MPC_Irecv (recvbuf, recvcnt, recvtype, root, MPC_SCATTER_TAG, comm, &request, task_specific);
+		}
 
 		if (rank == root)
 		{
@@ -4223,7 +4235,11 @@ PMPC_Scatter (void *sendbuf,
 			{
 				for (j = 0; (i < size) && (j < MPC_MAX_CONCURENT);)
 				{
-					__MPC_Isend (((char *) sendbuf) + (i * sendcnt *dsize), sendcnt, sendtype, i, MPC_SCATTER_TAG, comm, &(sendrequest[j]), task_specific);
+				  if((recvbuf == MPC_IN_PLACE) && (i == root)){
+				    sendrequest[j] = mpc_request_null;
+				  } else {	
+				    __MPC_Isend (((char *) sendbuf) + (i * sendcnt *dsize), sendcnt, sendtype, i, MPC_SCATTER_TAG, comm, &(sendrequest[j]), task_specific);
+				  }
 					i++;
 					j++;
 				}
