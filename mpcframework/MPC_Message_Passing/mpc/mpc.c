@@ -3655,89 +3655,97 @@ __MPC_Gatherv (void *sendbuf, mpc_msg_count sendcnt, MPC_Datatype sendtype,
 	       mpc_msg_count * displs, MPC_Datatype recvtype, int root,
 	       MPC_Comm comm, sctk_task_specific_t * task_specific)
 {
-	int i;
-	int j;
-	int rank;
-	int size;
-	MPC_Request request;
-	MPC_Request recvrequest[MPC_MAX_CONCURENT];
+  int i;
+  int j;
+  int rank;
+  int size;
+  MPC_Request request;
+  MPC_Request recvrequest[MPC_MAX_CONCURENT];
 
-	mpc_check_comm (comm, comm);
-	__MPC_Comm_rank_size (comm, &rank, &size, task_specific);
-	mpc_check_task (root, comm, size);
-	mpc_check_buf (sendbuf, comm);
-	mpc_check_count (sendcnt, comm);
-	mpc_check_type (sendtype, comm);
+  mpc_check_comm (comm, comm);
+  __MPC_Comm_rank_size (comm, &rank, &size, task_specific);
+  mpc_check_task (root, comm, size);
+  mpc_check_buf (sendbuf, comm);
+  mpc_check_count (sendcnt, comm);
+  mpc_check_type (sendtype, comm);
 
-	if(sctk_is_inter_comm(comm))
+  if(sctk_is_inter_comm(comm))
+    {
+      if(root == MPC_PROC_NULL)
 	{
-		if(root == MPC_PROC_NULL)
-		{
-			MPC_ERROR_SUCESS ();
-		}
-		else if(root == MPC_ROOT)
-		{
-			size_t recv_type_size;
-			mpc_check_buf (recvbuf, comm);
-			mpc_check_type (recvtype, comm);
-
-			recv_type_size = __MPC_Get_datatype_size (recvtype, task_specific);
-			i = 0;
-			while (i < size)
-			{
-				for (j = 0; (i < size) && (j < MPC_MAX_CONCURENT);)
-				{
-					__MPC_Irecv (((char *) recvbuf) + (displs[i] * recv_type_size), recvcnts[i],
-					recvtype, i, MPC_GATHERV_TAG, comm, &(recvrequest[j]), task_specific);
-					i++;
-					j++;
-				}
-				j--;
-				for (; j >= 0; j--)
-				{
-					__MPC_Wait (&(recvrequest[j]), MPC_STATUS_IGNORE);
-				}
-			}
-		}
-		else
-		{
-			__MPC_Isend (sendbuf, sendcnt, sendtype, root, MPC_GATHERV_TAG, comm, &request, task_specific);
-			__MPC_Wait (&(request), MPC_STATUS_IGNORE);
-		}
+	  MPC_ERROR_SUCESS ();
 	}
-	else
+      else if(root == MPC_ROOT)
 	{
-		__MPC_Isend (sendbuf, sendcnt, sendtype, root, MPC_GATHERV_TAG, comm, &request, task_specific);
+	  size_t recv_type_size;
+	  mpc_check_buf (recvbuf, comm);
+	  mpc_check_type (recvtype, comm);
 
-		if (rank == root)
+	  recv_type_size = __MPC_Get_datatype_size (recvtype, task_specific);
+	  i = 0;
+	  while (i < size)
+	    {
+	      for (j = 0; (i < size) && (j < MPC_MAX_CONCURENT);)
 		{
-			size_t recv_type_size;
-			mpc_check_buf (recvbuf, comm);
-			mpc_check_type (recvtype, comm);
-
-			recv_type_size = __MPC_Get_datatype_size (recvtype, task_specific);
-			i = 0;
-			while (i < size)
-			{
-				for (j = 0; (i < size) && (j < MPC_MAX_CONCURENT);)
-				{
-					__MPC_Irecv (((char *) recvbuf) + (displs[i] * recv_type_size), recvcnts[i],
-					recvtype, i, MPC_GATHERV_TAG, comm, &(recvrequest[j]), task_specific);
-					i++;
-					j++;
-				}
-				j--;
-				__MPC_Waitall(j+1,recvrequest,MPC_STATUSES_IGNORE);
-/* 				for (; j >= 0; j--) */
-/* 				{ */
-/* 					__MPC_Wait (&(recvrequest[j]), MPC_STATUS_IGNORE); */
-/* 				} */
-			}
+		  __MPC_Irecv (((char *) recvbuf) + (displs[i] * recv_type_size), recvcnts[i],
+			       recvtype, i, MPC_GATHERV_TAG, comm, &(recvrequest[j]), task_specific);
+		  i++;
+		  j++;
 		}
-
-		__MPC_Wait (&(request), MPC_STATUS_IGNORE);
+	      j--;
+	      for (; j >= 0; j--)
+		{
+		  __MPC_Wait (&(recvrequest[j]), MPC_STATUS_IGNORE);
+		}
+	    }
 	}
-	MPC_ERROR_SUCESS ();
+      else
+	{
+	  __MPC_Isend (sendbuf, sendcnt, sendtype, root, MPC_GATHERV_TAG, comm, &request, task_specific);
+	  __MPC_Wait (&(request), MPC_STATUS_IGNORE);
+	}
+    }
+  else
+    {
+      if((sendbuf == MPC_IN_PLACE) && (rank == root)){
+	request = mpc_request_null;
+      } else {
+	__MPC_Isend (sendbuf, sendcnt, sendtype, root, MPC_GATHERV_TAG, comm, &request, task_specific);
+      }
+
+      if (rank == root)
+	{
+	  size_t recv_type_size;
+	  mpc_check_buf (recvbuf, comm);
+	  mpc_check_type (recvtype, comm);
+
+	  recv_type_size = __MPC_Get_datatype_size (recvtype, task_specific);
+	  i = 0;
+	  while (i < size)
+	    {
+	      for (j = 0; (i < size) && (j < MPC_MAX_CONCURENT);)
+		{
+		  if((sendbuf == MPC_IN_PLACE) && (i == root)){
+		    recvrequest[j] = mpc_request_null;
+		  } else {		
+		    __MPC_Irecv (((char *) recvbuf) + (displs[i] * recv_type_size), recvcnts[i],
+				 recvtype, i, MPC_GATHERV_TAG, comm, &(recvrequest[j]), task_specific);
+		  }
+		  i++;
+		  j++;
+		}
+	      j--;
+	      __MPC_Waitall(j+1,recvrequest,MPC_STATUSES_IGNORE);
+	      /* 				for (; j >= 0; j--) */
+	      /* 				{ */
+	      /* 					__MPC_Wait (&(recvrequest[j]), MPC_STATUS_IGNORE); */
+	      /* 				} */
+	    }
+	}
+
+      __MPC_Wait (&(request), MPC_STATUS_IGNORE);
+    }
+  MPC_ERROR_SUCESS ();
 }
 
 int
