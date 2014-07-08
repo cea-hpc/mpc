@@ -444,11 +444,6 @@ void sctk_topology_init_cpu(){
 sctk_topology_init ()
 {
   char* xml_path;
-#ifdef __MIC__
-	{
-		sctk_enable_smt_capabilities = 1;
-	}
-#endif
 
 #ifdef MPC_Message_Passing
   if(sctk_process_number > 1){

@@ -475,6 +475,12 @@ sctk_def_enable_smt (char *arg)
 }
 
   static void
+sctk_def_disable_smt (char *arg)
+{
+	sctk_enable_smt_capabilities = 0;
+}
+
+  static void
 sctk_def_share_node (char *arg)
 {
   sctk_share_node_capabilities = 1;
@@ -572,6 +578,7 @@ sctk_threat_arg (char *word)
   sctk_add_arg_eq ("--process-number", sctk_def_process_nb);
   sctk_add_arg_eq ("--node-number", sctk_def_node_nb);
   sctk_add_arg_eq ("--enable-smt", sctk_def_enable_smt);
+  sctk_add_arg_eq ("--disable-smt", sctk_def_disable_smt);
   sctk_add_arg_eq ("--share-node", sctk_def_share_node);
 
   sctk_add_arg_eq ("--profiling", sctk_set_profiling);
@@ -878,6 +885,11 @@ void sctk_init_mpc_runtime(){
   sctk_check_point_restart_mode = sctk_runtime_config_get()->modules.launcher.checkpoint;
   sctk_migration_mode = sctk_runtime_config_get()->modules.launcher.migration;
 
+	/* forece smt on MIC */
+	#ifdef __MIC__
+		sctk_enable_smt_capabilities = 1;
+	#endif
+	
     /*   sctk_exception_catch (11); */
 
     /*   sctk_set_execuatble_name (argv[0]); */
