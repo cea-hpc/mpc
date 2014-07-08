@@ -657,17 +657,16 @@ endif
 
 set scriptpath="\`dirname \${script_fn}\`"
 setenv MPC_INSTALL_DIR_PREFIX \$scriptpath
-
 setenv MPC_RPREFIX \$scriptpath
 
 set uname=\`uname -m\`
 if ( "\$#argv" == "1" ) then
-	set module="$argv[1]"
+	set module="\$argv[1]"
 	echo "load \${module} module (\${MPC_RPREFIX})"
     source "\${MPC_RPREFIX}/\${module}/\${module}/bin/mpcvars.csh"
     setenv MPC_SUBPREFIX "/\${module}/\${module}/"
 else
-	set module="${uname}"
+	set module="\${uname}"
 	echo "load \${module} module (\${MPC_RPREFIX})"
     source "\${MPC_RPREFIX}/\${module}/\${module}/bin/mpcvars.csh"
     setenv MPC_SUBPREFIX "/\${module}/\${module}/"
