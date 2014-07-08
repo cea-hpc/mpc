@@ -581,6 +581,7 @@ enum MPIR_Combiner_enum {
   /*MPI compatibility*/
 #define MPC_BSEND_OVERHEAD 0
 #define MPC_BOTTOM ((void*)0)
+#define MPC_IN_PLACE ((void*)-1)
 
   typedef long MPC_Aint;
 

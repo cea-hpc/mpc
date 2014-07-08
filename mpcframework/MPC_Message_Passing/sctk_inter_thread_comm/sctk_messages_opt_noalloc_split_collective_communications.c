@@ -441,7 +441,9 @@ static void sctk_allreduce_opt_noalloc_split_messages_intern (const void *buffer
       }
     }
 
-    memcpy(buffer_out,buffer_in,size);
+    if(buffer_in != MPC_IN_PLACE){
+      memcpy(buffer_out,buffer_in,size);
+    }
 
     assume(size > 0);
 
