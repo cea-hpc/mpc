@@ -95,7 +95,7 @@ else
 	export LD_LIBRARY_PATH
 fi
 
-if test -d "\${MPC_ROOT}/lib64" ; then
+if test -d "\${MPCROOT}/lib64" ; then
 	LD_LIBRARY_PATH="\${MPCROOT}/lib64:\${LD_LIBRARY_PATH}"
 	export LD_LIBRARY_PATH
 fi
@@ -116,7 +116,7 @@ else
 	export LD_LIBRARY_PATH
 fi
 
-if test -d "\${MPC_ROOT}/lib64" ; then
+if test -d "\${MPCROOT}/lib64" ; then
 	LD_LIBRARY_PATH="\${MPCROOT}/lib64:${ADD_TO_LIBRARY_PATH}:\${LD_LIBRARY_PATH}"
 	export LD_LIBRARY_PATH
 fi
@@ -179,7 +179,7 @@ else
    setenv LD_LIBRARY_PATH "\${MPCROOT}/lib"
 endif
 
-if ( -d "\${MPC_ROOT}/lib64" ) then
+if ( -d "\${MPCROOT}/lib64" ) then
    setenv LD_LIBRARY_PATH "\${MPCROOT}/lib64:\${LD_LIBRARY_PATH}"
 endif
 
@@ -197,7 +197,7 @@ else
    setenv LD_LIBRARY_PATH "\${MPCROOT}/lib:${ADD_TO_LIBRARY_PATH}"
 endif
 
-if ( -d "\${MPC_ROOT}/lib64" ) then
+if ( -d "\${MPCROOT}/lib64" ) then
    setenv LD_LIBRARY_PATH "\${MPCROOT}/lib64:${ADD_TO_LIBRARY_PATH}:\${LD_LIBRARY_PATH}"
 endif
 
