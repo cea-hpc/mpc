@@ -140,7 +140,11 @@ static void sctk_allreduce_simple (const void *buffer_in, void *buffer_out,
     }
 
     if(tmp->allreduce.allreduce_simple.done == 0){
-      memcpy(tmp->allreduce.allreduce_simple.buffer,buffer_in,size);
+      if(buffer_in != MPC_IN_PLACE){
+	memcpy(tmp->allreduce.allreduce_simple.buffer,buffer_in,size);
+      } else {
+	memcpy(tmp->allreduce.allreduce_simple.buffer,buffer_out,size);
+      }
     } else {
       func(buffer_in,tmp->allreduce.allreduce_simple.buffer,elem_number,data_type);
     }
