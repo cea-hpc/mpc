@@ -99,9 +99,9 @@ sctk_update_topology (
 
   hwloc_bitmap_zero(cpuset);
   if (hwloc_bitmap_iszero(pin_processor_bitmap)) {
-	  for( i=index_first_processor; i < index_first_processor+processor_number; ++i)
+	  for( i=index_first_processor; i < processor_number; ++i)
 	  {
-		  hwloc_obj_t pu = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, i%processor_number);
+		  hwloc_obj_t pu = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, i);
 		  hwloc_cpuset_t set = hwloc_bitmap_dup(pu->cpuset);
 		  hwloc_bitmap_singlify(set);
 		  hwloc_bitmap_or(cpuset, cpuset, set);
