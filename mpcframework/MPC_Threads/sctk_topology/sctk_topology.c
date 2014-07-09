@@ -248,10 +248,10 @@ sctk_restrict_topology ()
   
 #ifdef __MIC__
 	{
-		sctk_update_topology (240, 4) ;
+		sctk_update_topology (get_pu_number(), get_pu_number_by_core(0)) ;
 	}
 #endif
-  
+
   char* pinning_env = getenv("MPC_PIN_PROCESSOR_LIST");
   if (pinning_env != NULL ) {
 	  sctk_expand_pin_processor_list(pinning_env);
@@ -436,6 +436,41 @@ sctk_get_cpu ()
 
 void sctk_topology_init_cpu(){
   sctk_get_cpu_val = -1;
+}
+
+int get_pu_number()
+{
+	int core_number;
+	hwloc_topology_t topology;
+	hwloc_topology_init(&topology);
+	hwloc_topology_load(topology);
+
+	int depth = hwloc_get_type_depth(topology, HWLOC_OBJ_PU);
+	if(depth == HWLOC_TYPE_DEPTH_UNKNOWN)
+	{
+		core_number = -1;
+	}
+	else
+	{
+		core_number = hwloc_get_nbobjs_by_depth(topology, depth);
+	}
+
+	hwloc_topology_destroy(topology);
+	return core_number;
+}
+
+int get_pu_number_by_core(int core)
+{
+	int core_number;
+	hwloc_topology_t topology;
+	hwloc_topology_init(&topology);
+	hwloc_topology_load(topology);
+
+	hwloc_obj_t obj_pu_per_core = hwloc_get_obj_by_type(topology, HWLOC_OBJ_CORE, core);
+	int pu_per_core = obj_pu_per_core->arity;
+
+	hwloc_topology_destroy(topology);
+	return pu_per_core;
 }
 
 /*! \brief Initialize the topology module
