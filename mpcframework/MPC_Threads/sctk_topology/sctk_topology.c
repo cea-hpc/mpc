@@ -248,7 +248,7 @@ sctk_restrict_topology ()
   
 #ifdef __MIC__
 	{
-		sctk_update_topology (get_pu_number(), get_pu_number_by_core(0)) ;
+		sctk_update_topology (sctk_processor_number_on_node, get_pu_number_by_core(0)) ;
 	}
 #endif
 
