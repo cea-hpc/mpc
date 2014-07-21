@@ -10073,9 +10073,10 @@ PMPI_Gather (void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 	     int root, MPI_Comm comm)
 {
   int res = MPI_ERR_INTERN;
-  int size;
+  int size, rank;
   mpi_check_comm (comm, comm);
   __INTERNAL__PMPI_Comm_size (comm, &size);
+  __INTERNAL__PMPI_Comm_rank (comm, &rank);
 	mpi_check_root(root,size,comm);
 	mpi_check_buf (sendbuf, comm);
 	mpi_check_count (sendcnt, comm);
@@ -10088,6 +10089,20 @@ PMPI_Gather (void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 	  MPI_ERROR_REPORT(comm,MPI_ERR_COMM,"");
 	}
 	
+	if ((0 == sendcnt && MPI_ROOT != root && 
+			(rank != root ||
+				(rank == root && MPI_IN_PLACE != sendbuf)
+			)
+		) ||
+		(rank == root && MPI_IN_PLACE == sendbuf && 0 == recvcnt) || 
+			(0 == recvcnt && 
+				(MPI_ROOT == root || MPI_PROC_NULL == root)
+			)
+		) 
+	{
+		return MPI_SUCCESS;
+	}
+
   res =
     __INTERNAL__PMPI_Gather (sendbuf, sendcnt, sendtype, recvbuf, recvcnt,
 			     recvtype, root, comm);
@@ -10147,12 +10162,14 @@ PMPI_Scatter (void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 	if(sctk_is_inter_comm (comm)){
 	  MPI_ERROR_REPORT(comm,MPI_ERR_COMM,"");
 	}
-	if ((rank != root && MPI_IN_PLACE == sendbuf) ||
-        (rank == root && MPI_IN_PLACE == recvbuf)) 
+	
+	if ((rank != root && MPI_IN_PLACE == recvbuf) ||
+        (rank == root && MPI_IN_PLACE == sendbuf)) 
     {
         MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
     }
-    if ((0 == recvcnt && MPI_ROOT != root &&
+    
+	if ((0 == recvcnt && MPI_ROOT != root &&
 			(rank != root ||
 				(rank == root && MPI_IN_PLACE != recvbuf)
 			)
@@ -10165,6 +10182,7 @@ PMPI_Scatter (void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 	{
         return MPI_SUCCESS;
     }
+	
  res =
     __INTERNAL__PMPI_Scatter (sendbuf, sendcnt, sendtype, recvbuf, recvcnt,
 			      recvtype, root, comm);
@@ -10192,8 +10210,8 @@ PMPI_Scatterv (void *sendbuf, int *sendcnts, int *displs,
 	if(sctk_is_inter_comm (comm)){
 	  MPI_ERROR_REPORT(comm,MPI_ERR_COMM,"");
 	}
-	if ((rank != root && MPI_IN_PLACE == sendbuf) ||
-        (rank == root && MPI_IN_PLACE == recvbuf)) 
+	if ((rank != root && MPI_IN_PLACE == recvbuf) ||
+        (rank == root && MPI_IN_PLACE == sendbuf)) 
     {
         MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
     }
