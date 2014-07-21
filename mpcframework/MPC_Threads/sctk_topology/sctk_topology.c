@@ -248,7 +248,7 @@ sctk_restrict_topology ()
   
 #ifdef __MIC__
 	{
-		sctk_update_topology (sctk_processor_number_on_node, get_pu_number_by_core(0)) ;
+		sctk_update_topology (sctk_processor_number_on_node, get_pu_number_by_core(topology, 0)) ;
 	}
 #endif
 
@@ -459,17 +459,13 @@ int get_pu_number()
 	return core_number;
 }
 
-int get_pu_number_by_core(int core)
+int get_pu_number_by_core(hwloc_topology_t topology, int core)
 {
 	int core_number;
-	hwloc_topology_t topology;
-	hwloc_topology_init(&topology);
-	hwloc_topology_load(topology);
 
 	hwloc_obj_t obj_pu_per_core = hwloc_get_obj_by_type(topology, HWLOC_OBJ_CORE, core);
 	int pu_per_core = obj_pu_per_core->arity;
 
-	hwloc_topology_destroy(topology);
 	return pu_per_core;
 }
 
