@@ -10118,7 +10118,7 @@ PMPI_Gatherv (void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 	if ((rank != root && MPI_IN_PLACE == sendbuf) ||
         (rank == root && MPI_IN_PLACE == recvbuf)) 
     {
-        return MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
+        MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
     }
  res =
     __INTERNAL__PMPI_Gatherv (sendbuf, sendcnt, sendtype, recvbuf, recvcnts,
@@ -10150,7 +10150,7 @@ PMPI_Scatter (void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 	if ((rank != root && MPI_IN_PLACE == sendbuf) ||
         (rank == root && MPI_IN_PLACE == recvbuf)) 
     {
-        return MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
+        MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
     }
     if ((0 == recvcnt && MPI_ROOT != root &&
 			(rank != root ||
@@ -10195,7 +10195,7 @@ PMPI_Scatterv (void *sendbuf, int *sendcnts, int *displs,
 	if ((rank != root && MPI_IN_PLACE == sendbuf) ||
         (rank == root && MPI_IN_PLACE == recvbuf)) 
     {
-        return MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
+        MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
     }
   res =
     __INTERNAL__PMPI_Scatterv (sendbuf, sendcnts, displs, sendtype, recvbuf,
@@ -10590,9 +10590,10 @@ PMPI_Reduce (void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
 	     MPI_Op op, int root, MPI_Comm comm)
 {
   int res = MPI_ERR_INTERN;
-  int size;
+  int size, rank;
    mpi_check_comm (comm, comm);
   __INTERNAL__PMPI_Comm_size (comm, &size);
+  __INTERNAL__PMPI_Comm_rank (comm, &rank);
 	mpi_check_root(root,size,comm);
 	mpi_check_buf (sendbuf, comm);
 	mpi_check_buf (recvbuf, comm);
