@@ -10048,7 +10048,11 @@ PMPI_Bcast (void *buffer, int count, MPI_Datatype datatype, int root,
         if(sctk_is_inter_comm (comm)){
           MPI_ERROR_REPORT(comm,MPI_ERR_COMM,"");
         }
-
+        
+	if (MPI_IN_PLACE == buffer) {
+          MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
+      }
+      
   __INTERNAL__PMPI_Comm_size (comm, &size);
 	if((root < 0) || (root >= size)){
 		MPI_ERROR_REPORT(comm,MPI_ERR_ROOT,"");
@@ -10096,9 +10100,10 @@ PMPI_Gatherv (void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 	      MPI_Datatype recvtype, int root, MPI_Comm comm)
 {
   int res = MPI_ERR_INTERN;
-  int size;
+  int size, rank;
   mpi_check_comm (comm, comm);
   __INTERNAL__PMPI_Comm_size (comm, &size);
+  __INTERNAL__PMPI_Comm_rank (comm, &rank);
 	mpi_check_root(root,size,comm);
 	mpi_check_buf (sendbuf, comm);
 	mpi_check_count (sendcnt, comm);
@@ -10110,6 +10115,11 @@ PMPI_Gatherv (void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 	if(sctk_is_inter_comm (comm)){
 	  MPI_ERROR_REPORT(comm,MPI_ERR_COMM,"");
 	}
+	if ((rank != root && MPI_IN_PLACE == sendbuf) ||
+        (rank == root && MPI_IN_PLACE == recvbuf)) 
+    {
+        return MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
+    }
  res =
     __INTERNAL__PMPI_Gatherv (sendbuf, sendcnt, sendtype, recvbuf, recvcnts,
 			      displs, recvtype, root, comm);
@@ -10122,9 +10132,10 @@ PMPI_Scatter (void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 	      MPI_Comm comm)
 {
   int res = MPI_ERR_INTERN;
-  int size;
+  int size, rank;
   mpi_check_comm (comm, comm);
   __INTERNAL__PMPI_Comm_size (comm, &size);
+  __INTERNAL__PMPI_Comm_rank (comm, &rank);
 	mpi_check_root(root,size,comm);
 	mpi_check_buf (sendbuf, comm);
 	mpi_check_count (sendcnt, comm);
@@ -10136,6 +10147,24 @@ PMPI_Scatter (void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 	if(sctk_is_inter_comm (comm)){
 	  MPI_ERROR_REPORT(comm,MPI_ERR_COMM,"");
 	}
+	if ((rank != root && MPI_IN_PLACE == sendbuf) ||
+        (rank == root && MPI_IN_PLACE == recvbuf)) 
+    {
+        return MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
+    }
+    if ((0 == recvcnt && MPI_ROOT != root &&
+			(rank != root ||
+				(rank == root && MPI_IN_PLACE != recvbuf)
+			)
+		) ||
+		(rank == root && MPI_IN_PLACE == recvbuf && 0 == sendcnt) ||
+			(0 == sendcnt && 
+				(MPI_ROOT == root || MPI_PROC_NULL == root)
+			)
+		) 
+	{
+        return MPI_SUCCESS;
+    }
  res =
     __INTERNAL__PMPI_Scatter (sendbuf, sendcnt, sendtype, recvbuf, recvcnt,
 			      recvtype, root, comm);
@@ -10148,9 +10177,10 @@ PMPI_Scatterv (void *sendbuf, int *sendcnts, int *displs,
 	       MPI_Datatype recvtype, int root, MPI_Comm comm)
 {
   int res = MPI_ERR_INTERN;
-  int size;
+  int size, rank;
   mpi_check_comm (comm, comm);
   __INTERNAL__PMPI_Comm_size (comm, &size);
+   __INTERNAL__PMPI_Comm_rank (comm, &rank);
 	mpi_check_root(root,size,comm);
 	mpi_check_buf (sendbuf, comm);
 //	mpi_check_count (sendcnt, comm);
@@ -10162,7 +10192,11 @@ PMPI_Scatterv (void *sendbuf, int *sendcnts, int *displs,
 	if(sctk_is_inter_comm (comm)){
 	  MPI_ERROR_REPORT(comm,MPI_ERR_COMM,"");
 	}
-
+	if ((rank != root && MPI_IN_PLACE == sendbuf) ||
+        (rank == root && MPI_IN_PLACE == recvbuf)) 
+    {
+        return MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
+    }
   res =
     __INTERNAL__PMPI_Scatterv (sendbuf, sendcnts, displs, sendtype, recvbuf,
 			       recvcnt, recvtype, root, comm);
@@ -10229,6 +10263,9 @@ PMPI_Alltoall (void *sendbuf, int sendcount, MPI_Datatype sendtype,
 	if(sctk_is_inter_comm (comm)){
 	  MPI_ERROR_REPORT(comm,MPI_ERR_COMM,"");
 	}
+	if (MPI_IN_PLACE == recvbuf) {
+            MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
+        }
   res =
     __INTERNAL__PMPI_Alltoall (sendbuf, sendcount, sendtype, recvbuf,
 			       recvcount, recvtype, comm);
@@ -10258,6 +10295,13 @@ PMPI_Alltoallv (void *sendbuf, int *sendcnts, int *sdispls,
 	if(sctk_is_inter_comm (comm)){
 	  MPI_ERROR_REPORT(comm,MPI_ERR_COMM,"");
 	}
+	if (MPI_IN_PLACE == sendbuf) {
+            sendcnts = recvcnts;
+            sdispls = rdispls;
+            sendtype = recvtype;
+        }
+    if (MPI_IN_PLACE == recvbuf)
+		MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
   res =
     __INTERNAL__PMPI_Alltoallv (sendbuf, sendcnts, sdispls, sendtype, recvbuf,
 				recvcnts, rdispls, recvtype, comm);
@@ -10287,6 +10331,14 @@ int PMPI_Alltoallw(void *sendbuf, int *sendcnts, int *sdispls, MPI_Datatype *sen
 //	mpi_check_type (recvtype, comm);
 	if(sctk_is_inter_comm (comm)){
 	  MPI_ERROR_REPORT(comm,MPI_ERR_COMM,"");
+	}
+	if (MPI_IN_PLACE == sendbuf) {
+            sendcnts = recvcnts;
+            sdispls    = rdispls;
+            sendtypes  = recvtypes;
+        }
+    if (MPI_IN_PLACE == recvbuf) {
+		MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
 	}
 	res = __INTERNAL__PMPI_Alltoallw (sendbuf, sendcnts, sdispls, sendtypes, recvbuf, recvcnts, rdispls, recvtypes, comm);
 	SCTK__MPI_Check_retrun_val (res, comm);
@@ -10550,6 +10602,14 @@ PMPI_Reduce (void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
 	if(sctk_is_inter_comm (comm)){
 	  MPI_ERROR_REPORT(comm,MPI_ERR_COMM,"");
 	}
+	if ((rank != root && MPI_IN_PLACE == sendbuf) ||
+        (rank == root && ((MPI_IN_PLACE == recvbuf) || (sendbuf == recvbuf)))) 
+    {
+        MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
+    }
+	if (0 == count) {
+        return MPI_SUCCESS;
+    }
   res =
     __INTERNAL__PMPI_Reduce (sendbuf, recvbuf, count, datatype, op, root,
 			     comm);
@@ -10594,6 +10654,13 @@ PMPI_Allreduce (void *sendbuf, void *recvbuf, int count,
   mpi_check_type (datatype, comm);
 	mpi_check_op (op, datatype,comm);
   sctk_nodebug ("Entering ALLREDUCE %d", comm);
+  if( MPI_IN_PLACE == recvbuf ) 
+    {
+	    MPI_ERROR_REPORT(comm, MPI_ERR_BUFFER, "");
+    }
+    if (0 == count) {
+        return MPI_SUCCESS;
+    }
   res =
     __INTERNAL__PMPI_Allreduce (sendbuf, recvbuf, count, datatype, op, comm);
   SCTK__MPI_Check_retrun_val (res, comm);
