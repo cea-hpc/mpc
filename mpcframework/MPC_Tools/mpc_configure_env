@@ -52,6 +52,13 @@ cat <<EOF >> ${OUTPUT_FILE}
 MPI_ROOT="\${MPCROOT}"
 export MPI_ROOT
 
+#Delete previous entry if exists
+mpc_rprefix=\`echo "\$MPC_RPREFIX" | sed -e 's/\//\\\\\\\\\//g'\`
+PATH=\`echo \${PATH} | awk -v RS=: -v ORS=: '/'"\$mpc_rprefix"'/ {next} {print}' | sed 's/:*$//'\`
+LD_LIBRARY_PATH=\`echo \${LD_LIBRARY_PATH} | awk -v RS=: -v ORS=: '/'"\$mpc_rprefix"'/ {next} {print}' | sed 's/:*$//'\`
+LIBRARY_PATH=\`echo \${LIBRARY_PATH} | awk -v RS=: -v ORS=: '/'"\$mpc_rprefix"'/ {next} {print}' | sed 's/:*$//'\`
+MANPATH=\`echo \${MANPATH} | awk -v RS=: -v ORS=: '/'"\$mpc_rprefix"'/ {next} {print}' | sed 's/:*$//'\`
+
 if test -z "\${PATH}" ; then
 	PATH="\${MPCROOT}/bin"
 	export PATH
