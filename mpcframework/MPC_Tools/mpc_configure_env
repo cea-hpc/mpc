@@ -54,12 +54,9 @@ export MPI_ROOT
 
 #Delete previous entry if exists
 mpc_rprefix=\`echo "\$MPC_RPREFIX" | sed -e 's/\//\\\\\\\\\//g'\`
-PATH=\`echo \${PATH} | awk -v RS=: -v ORS=: '/'"\$mpc_rprefix"'/ {next} {print}' | sed 's/:*$//'\`
-LD_LIBRARY_PATH=\`echo \${LD_LIBRARY_PATH} | awk -v RS=: -v ORS=: '/'"\$mpc_rprefix"'/ {next} {print}' | sed 's/:*$//'\`
-LIBRARY_PATH=\`echo \${LIBRARY_PATH} | awk -v RS=: -v ORS=: '/'"\$mpc_rprefix"'/ {next} {print}' | sed 's/:*$//'\`
-MANPATH=\`echo \${MANPATH} | awk -v RS=: -v ORS=: '/'"\$mpc_rprefix"'/ {next} {print}' | sed 's/:*$//'\`
 
 if test -z "\${PATH}" ; then
+	PATH=\`echo \${PATH} | awk -v RS=: -v ORS=: '/'"\$mpc_rprefix"'/ {next} {print}' | sed 's/:*$//'\`
 	PATH="\${MPCROOT}/bin"
 	export PATH
 else
@@ -74,6 +71,7 @@ fi
 # fi
 
 if test -z "\${MANPATH}" ; then
+	MANPATH=\`echo \${MANPATH} | awk -v RS=: -v ORS=: '/'"\$mpc_rprefix"'/ {next} {print}' | sed 's/:*$//'\`
 	MANPATH="\${MPCROOT}/man"
 	export MANPATH
 else
@@ -82,6 +80,7 @@ else
 fi
 
 if test -z "\${LIBRARY_PATH}" ; then
+	LIBRARY_PATH=\`echo \${LIBRARY_PATH} | awk -v RS=: -v ORS=: '/'"\$mpc_rprefix"'/ {next} {print}' | sed 's/:*$//'\`
 	LIBRARY_PATH="\${MPCROOT}/lib"
 	export LIBRARY_PATH
 else
@@ -95,6 +94,7 @@ if test "${ADD_TO_LIBRARY_PATH}" = "" ; then
 
 cat <<EOF >> ${OUTPUT_FILE}
 if test -z "\${LD_LIBRARY_PATH}" ; then
+	LD_LIBRARY_PATH=\`echo \${LD_LIBRARY_PATH} | awk -v RS=: -v ORS=: '/'"\$mpc_rprefix"'/ {next} {print}' | sed 's/:*$//'\`
 	LD_LIBRARY_PATH="\${MPCROOT}/lib"
 	export LD_LIBRARY_PATH
 else
@@ -116,6 +116,7 @@ EOF
 else
 cat <<EOF >> ${OUTPUT_FILE}
 if test -z "\${LD_LIBRARY_PATH}" ; then
+	LD_LIBRARY_PATH=\`echo \${LD_LIBRARY_PATH} | awk -v RS=: -v ORS=: '/'"\$mpc_rprefix"'/ {next} {print}' | sed 's/:*$//'\`
 	LD_LIBRARY_PATH="\${MPCROOT}/lib:${ADD_TO_LIBRARY_PATH}"
 	export LD_LIBRARY_PATH
 else
@@ -151,7 +152,10 @@ cat <<EOF >> ${OUTPUT_FILE}
 set MPCROOT="`echo \\${MPC_RPREFIX}/${MPC_SUBPREFIX}`"
 setenv MPI_ROOT "\${MPCROOT}"
 
+set mpc_rprefix=\`echo "\$MPC_RPREFIX" | sed -e 's/\//\\\\\//g'\`
+
 if (\$?PATH) then
+   set PATH=\`echo \${PATH} | awk -v RS=: -v ORS=: '/'"\$mpc_rprefix"'/ {next} {print}' | sed 's/:*$//'\`
    setenv PATH "\${PATH}:\${MPCROOT}/bin"
 else
    setenv PATH "\${MPCROOT}/bin"
@@ -163,13 +167,15 @@ endif
 #    setenv CPATH "\${MPCROOT}/include"
 # endif
 
-if (\$?MANPATH) then
+if (\$?MANPATiH) then
+  set MANPATH=\`echo \${MANPATH} | awk -v RS=: -v ORS=: '/'"\$mpc_rprefix"'/ {next} {print}' | sed 's/:*$//'\`
   setenv MANPATH "\${MPCROOT}/man:\${MANPATH}"
 else
   setenv MANPATH "\${MPCROOT}/man"
 endif
 
-if (\$?LIBRARY_PATH) then
+if (\$?LIBRARY_iPATH) then
+   set LIBRARY_PATH=\`echo \${LIBRARY_PATH} | awk -v RS=: -v ORS=: '/'"\$mpc_rprefix"'/ {next} {print}' | sed 's/:*$//'\`
    setenv LIBRARY_PATH "\${MPCROOT}/lib:\${LIBRARY_PATH}"
 else
    setenv LIBRARY_PATH "\${MPCROOT}/lib"
@@ -180,7 +186,8 @@ EOF
 if test "${ADD_TO_LIBRARY_PATH}" = "" ; then
 
 cat <<EOF >> ${OUTPUT_FILE}
-if (\$?LD_LIBRARY_PATH) then
+if (\$?LD_LIBRARY_PATiH) then
+   set LD_LIBRARY_PATH=\`echo \${LD_LIBRARY_PATH} | awk -v RS=: -v ORS=: '/'"\$mpc_rprefix"'/ {next} {print}' | sed 's/:*$//'\`
    setenv LD_LIBRARY_PATH "\${MPCROOT}/lib:\${LD_LIBRARY_PATH}"
 else
    setenv LD_LIBRARY_PATH "\${MPCROOT}/lib"
@@ -199,6 +206,7 @@ EOF
 else
 cat <<EOF >> ${OUTPUT_FILE}
 if (\$?LD_LIBRARY_PATH) then
+   set LD_LIBRARY_PATH=\`echo \${LD_LIBRARY_PATH} | awk -v RS=: -v ORS=: '/'"\$mpc_rprefix"'/ {next} {print}' | sed 's/:*$//'\`
    setenv LD_LIBRARY_PATH "\${MPCROOT}/lib:${ADD_TO_LIBRARY_PATH}:\${LD_LIBRARY_PATH}"
 else
    setenv LD_LIBRARY_PATH "\${MPCROOT}/lib:${ADD_TO_LIBRARY_PATH}"
