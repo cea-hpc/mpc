@@ -500,6 +500,24 @@ typedef int (MPI_Delete_function) (MPI_Comm, int, void *, void *);
   int MPI_Comm_get_name (MPI_Comm, char *, int *);
   int MPI_Comm_set_name (MPI_Comm, char *);
 
+	MPI_Comm MPI_Comm_f2c(MPI_Fint comm);
+	MPI_Fint MPI_Comm_c2f(MPI_Comm comm);
+	MPI_Datatype MPI_Type_f2c(MPI_Fint datatype);
+	MPI_Fint MPI_Type_c2f(MPI_Datatype datatype);
+	MPI_Group MPI_Group_f2c(MPI_Fint group);
+	MPI_Fint MPI_Group_c2f(MPI_Group group);
+	MPI_Request MPI_Request_f2c(MPI_Fint request);
+	MPI_Fint MPI_Request_c2f(MPI_Request request);
+	MPI_File MPI_File_f2c(MPI_Fint file);
+	MPI_Fint MPI_File_c2f(MPI_File file);
+	MPI_Win MPI_Win_f2c(MPI_Fint win);
+	MPI_Fint MPI_Win_c2f(MPI_Win win);
+	MPI_Op MPI_Op_f2c(MPI_Fint op);
+	MPI_Fint MPI_Op_c2f(MPI_Op op);
+	MPI_Info MPI_Info_f2c(MPI_Fint info);
+	MPI_Fint MPI_Info_c2f(MPI_Info info);
+	MPI_Errhandler MPI_Errhandler_f2c(MPI_Fint errhandler);
+	MPI_Fint MPI_Errhandler_c2f(MPI_Errhandler errhandler);
 /* Here are the bindings of the profiling routines */
 #if !defined(MPI_BUILD_PROFILING)
   //~ not implemented

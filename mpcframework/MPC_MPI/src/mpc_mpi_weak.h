@@ -442,7 +442,7 @@
 #pragma weak mpi_query_thread__ = pmpi_query_thread__
 
 #pragma weak MPI_Comm_f2c = PMPI_Comm_f2c
-#pragma weak MPI_Errhandler_c2f = PMPI_Errhandler_c2f
+#pragma weak MPI_Comm_c2f = PMPI_Comm_c2f
 #pragma weak MPI_Type_f2c = PMPI_Type_f2c
 #pragma weak MPI_Type_c2f = PMPI_Type_c2f
 #pragma weak MPI_Group_f2c = PMPI_Group_f2c
