@@ -208,6 +208,7 @@ do
 			;;
 		################# COMPILER ##################
 		--compiler=*)
+			GCC_PREFIX='disabled'
 			extractParamValue 'MPC_COMPILER' 'compiler' "$arg"
 			;;
 		############### MPCFRAMEWORK ################
