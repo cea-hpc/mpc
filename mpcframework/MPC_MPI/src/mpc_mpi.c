@@ -3987,16 +3987,13 @@ __INTERNAL__PMPI_Allgather (void *sendbuf, int sendcount,
       int size;
       __INTERNAL__PMPI_Comm_size (comm, &size);
 
-      __INTERNAL__PMPI_Gather (sendbuf, sendcount, sendtype, recvbuf,
-			       recvcount, recvtype, root, comm);
-      __INTERNAL__PMPI_Bcast (recvbuf, size * recvcount, recvtype, root,
-			      comm);
+      __INTERNAL__PMPI_Gather (sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm);
+      __INTERNAL__PMPI_Bcast (recvbuf, size * recvcount, recvtype, root, comm);
       return MPI_SUCCESS;
     }
   else
     {
-      return PMPC_Allgather (sendbuf, sendcount, sendtype, recvbuf, recvcount,
-			    recvtype, comm);
+      return PMPC_Allgather (sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm); 
     }
 }
 static int
@@ -4012,9 +4009,8 @@ __INTERNAL__PMPI_Allgatherv (void *sendbuf, int sendcount,
       MPI_Aint dsize;
 
       __INTERNAL__PMPI_Comm_size (comm, &size);
-      __INTERNAL__PMPI_Gatherv (sendbuf, sendcount, sendtype,
-				recvbuf, recvcounts, displs, recvtype, root,
-				comm);
+      __INTERNAL__PMPI_Gatherv (sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, root, comm);
+	    
       size--;
 /*       __INTERNAL__PMPI_Pack_size(1,recvtype,comm,&dsize); */
       __INTERNAL__PMPI_Type_extent (recvtype, &dsize);
@@ -4029,8 +4025,7 @@ __INTERNAL__PMPI_Allgatherv (void *sendbuf, int sendcount,
     }
   else
     {
-      return PMPC_Allgatherv (sendbuf, sendcount, sendtype, recvbuf,
-			     recvcounts, displs, recvtype, comm);
+      return PMPC_Allgatherv (sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, comm);
     }
 }
 static int
@@ -5116,9 +5111,15 @@ __INTERNAL__PMPI_Reduce_scatter (void *sendbuf, void *recvbuf, int *recvcnts,
 
   for (i = 0; i < size; i++)
     {
-      res =
-	__INTERNAL__PMPI_Reduce (((char *) sendbuf) + (acc * dsize), recvbuf,
-				 recvcnts[i], datatype, op, i, comm);
+      if (sendbuf == MPI_IN_PLACE)
+	  {
+		sendbuf = recvbuf;
+		res = __INTERNAL__PMPI_Reduce (sendbuf, recvbuf, recvcnts[i], datatype, op, i, comm);
+	  }
+	  else
+	  {
+	  	res = __INTERNAL__PMPI_Reduce (((char *) sendbuf) + (acc * dsize), recvbuf, recvcnts[i], datatype, op, i, comm);
+	  }
       if (res != MPI_SUCCESS)
 	{
 	  return res;

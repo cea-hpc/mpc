@@ -3824,6 +3824,16 @@ PMPC_Allgatherv (void *sendbuf, mpc_msg_count sendcount,
 	}
 	else
 	{
+		if (sendbuf == MPC_IN_PLACE) {
+			int i=0;
+			size_t extent;
+			PMPC_Type_size(recvtype, &extent);
+			sendtype = recvtype;
+			sendbuf = (char*)recvbuf;
+			for (i = 0; i < rank; ++i) {
+				sendbuf += (recvcounts[i] * extent);
+			}
+		}
 		__MPC_Gatherv (sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, root, comm, task_specific);
 		size--;
 		dsize = __MPC_Get_datatype_size (recvtype, task_specific);
@@ -4013,6 +4023,13 @@ __MPC_Allgather (void *sendbuf, mpc_msg_count sendcount,
 	}
 	else
 	{
+		if (MPC_IN_PLACE == sendbuf && rank != 0) {
+			size_t extent;
+			PMPC_Type_size (recvtype, &extent);
+			sendbuf = ((char*) recvbuf) + (rank * extent * recvcount);
+			sendtype = recvtype;
+			sendcount = recvcount;
+		} 
 		__MPC_Gather (sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm, task_specific);
 		__MPC_Bcast (recvbuf, size * recvcount, recvtype, root, comm, task_specific);
 	}
