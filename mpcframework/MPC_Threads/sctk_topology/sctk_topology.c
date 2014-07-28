@@ -248,11 +248,7 @@ sctk_restrict_topology ()
   
 #ifdef __MIC__
 	{
-<<<<<<< HEAD
 		sctk_update_topology (sctk_processor_number_on_node, get_pu_number_by_core(topology, 0)) ;
-=======
-		sctk_update_topology (240, 4) ;
->>>>>>> MIC: correct seg fault problems with MIC optim. DONOTHAVE_CONTEXTS still does not work.
 	}
 #endif
 
