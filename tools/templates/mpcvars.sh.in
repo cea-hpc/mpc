@@ -50,5 +50,7 @@ else
     export MPC_HOST_SUBPREFIX
     MPC_TARGET_SUBPREFIX="${target}" 
     export MPC_TARGET_SUBPREFIX
+    MPC_SUBPREFIX="${host}/${target}"
+    export MPC_SUBPREFIX
 fi
 
