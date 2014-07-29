@@ -4933,7 +4933,7 @@ __INTERNAL__PMPI_Reduce (void *sendbuf, void *recvbuf, int count,
 	MPI_Request request_recv;
 	
 	if (sendbuf == MPI_IN_PLACE)
-		request_send = mpc_request_null;
+		request_send = MPI_REQUEST_NULL;
 	else
 		res = __INTERNAL__PMPI_Isend (sendbuf, count, datatype, 0, -3, comm, &request_send);
 		
@@ -10247,7 +10247,7 @@ PMPI_Allgather (void *sendbuf, int sendcount, MPI_Datatype sendtype,
 	}
 	else
 	{
-		if ((MPI_IN_PLACE != sendbuf && 0 == sendcnt) || (0 == recvcnt)) {
+		if ((MPI_IN_PLACE != sendbuf && 0 == sendcount) || (0 == recvcount)) {
             return MPI_SUCCESS;
 		}
 	}
@@ -10293,7 +10293,7 @@ PMPI_Alltoall (void *sendbuf, int sendcount, MPI_Datatype sendtype,
 	       MPI_Comm comm)
 {
   int res = MPI_ERR_INTERN;
-  if (0 == sendcnt && 0 == recvcnt) {
+  if (sendcount == 0 && recvcount == 0) {
         return MPI_SUCCESS;
     }
 	mpi_check_comm (comm, comm);
@@ -10307,7 +10307,7 @@ PMPI_Alltoall (void *sendbuf, int sendcount, MPI_Datatype sendtype,
 	  MPI_ERROR_REPORT(comm,MPI_ERR_COMM,"");
 	}
 	if (MPI_IN_PLACE == sendbuf) {
-		sendcnt = recvcnt;
+		sendcount = recvcount;
         sendtype = recvtype;
     }
 	if (MPI_IN_PLACE == recvbuf) {
