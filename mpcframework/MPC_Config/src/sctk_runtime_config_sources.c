@@ -570,16 +570,19 @@ void sctk_runtime_config_sources_open(struct sctk_runtime_config_sources * confi
 	char * def_sys_path = NULL;
 	def_sys_path = (char *)malloc(1024*sizeof(char));
 	strcat(def_sys_path, mpc_rprefix); 
+	strcat(def_sys_path, "/");
 	strcat(def_sys_path, mpc_subprefix);
 	strcat(def_sys_path, "/share/mpc/config.xml");
 	char * def_sys_path_fallback = NULL;
 	def_sys_path_fallback = (char *)malloc(1024*sizeof(char));
 	strcat(def_sys_path_fallback, mpc_rprefix); 
+	strcat(def_sys_path_fallback, "/");
 	strcat(def_sys_path_fallback, mpc_subprefix);
 	strcat(def_sys_path_fallback, "/share/mpc/config.xml.example");
 	char * def_schema_path = NULL;
 	def_schema_path = (char *)malloc(1024*sizeof(char));
 	strcat(def_schema_path, mpc_rprefix); 
+	strcat(def_schema_path, "/");
 	strcat(def_schema_path, mpc_subprefix);
 	strcat(def_schema_path, "/share/mpc/mpc-config.xsd");
 
