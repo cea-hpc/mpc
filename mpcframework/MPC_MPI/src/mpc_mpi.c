@@ -8390,7 +8390,7 @@ __INTERNAL__PMPI_Error_string (int errorcode, char *string, int *resultlen)
 			MPI_Error_string_convert (MPI_ERR_BAD_FILE , "Invalid file name (eg, path name too long");
 			MPI_Error_string_convert (MPI_ERR_ACCESS , "Permission denied");
 			MPI_Error_string_convert (MPI_ERR_NO_SPACE , "Not enough space");
-			MPI_Error_string_convert (MPI_ERR_QUORA , "Quota exceeded");
+			MPI_Error_string_convert (MPI_ERR_QUOTA , "Quota exceeded");
 			MPI_Error_string_convert (MPI_ERR_READ_ONLY , "Read-only file or file system");
 			MPI_Error_string_convert (MPI_ERR_FILE_IN_USE , "File operation could not be completed, \
 				as the file is currently open by some process");
