@@ -220,8 +220,8 @@ extern "C"
   typedef MPC_Status MPI_Status;
   typedef MPC_Handler_function MPI_Handler_function;
   typedef int MPI_Fint;
-	typedef int MPI_File;
-	typedef int MPI_Info;
+  typedef int MPI_File;
+  typedef MPC_Info MPI_Info;
 
 //~ not implemented
 		typedef int MPI_Win;
@@ -526,14 +526,7 @@ typedef int (MPI_Delete_function) (MPI_Comm, int, void *, void *);
   int MPI_Neighbor_alltoallv(void *sendbuf, int sendcounts[], int sdispls[], MPI_Datatype sendtype, void *recvbuf, int recvcounts[], int rdispls[], MPI_Datatype recvtype, MPI_Comm comm);
   int MPI_Neighbor_alltoallw(void *sendbuf, int sendcounts[], MPI_Aint sdispls[], MPI_Datatype sendtypes[], void *recvbuf, int recvcounts[], MPI_Aint rdispls[], MPI_Datatype recvtypes[], MPI_Comm comm);
 
-/* Here are the bindings of the profiling routines */
-#if !defined(MPI_BUILD_PROFILING)
-  //~ not implemented
-  
-  /*
-  int PMPI_Alloc_mem (MPI_Aint, MPI_Info , void *);
-  int PMPI_Free_mem (void *);
-  
+  /* MPI Info Management */
   int PMPI_Info_set( MPI_Info, const char *, const char * );
   int PMPI_Info_free( MPI_Info * );
   int PMPI_Info_create( MPI_Info * );
@@ -543,6 +536,16 @@ typedef int (MPI_Delete_function) (MPI_Comm, int, void *, void *);
   int PMPI_Info_get_nkeys (MPI_Info, int *);
   int PMPI_Info_get_nthkey (MPI_Info, int, char *);
   int PMPI_Info_get_valuelen (MPI_Info, char *, int *, int *);
+
+
+/* Here are the bindings of the profiling routines */
+
+#if !defined(MPI_BUILD_PROFILING)
+  //~ not implemented
+ 
+  /*
+  int PMPI_Alloc_mem (MPI_Aint, MPI_Info , void *);
+  int PMPI_Free_mem (void *);
   
   int PMPI_Type_dup(MPI_Datatype , MPI_Datatype *);
   int PMPI_Type_get_name(MPI_Datatype , char *, int *);
@@ -618,45 +621,7 @@ typedef int (MPI_Delete_function) (MPI_Comm, int, void *, void *);
   int PMPI_Grequest_start (MPI_Grequest_query_function *, MPI_Grequest_free_function *, MPI_Grequest_cancel_function *, void *, MPI_Request *);
   int PMPI_Grequest_complete (MPI_Request);
   */
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
+
   
   //~ end
   
@@ -835,24 +800,24 @@ typedef int (MPI_Delete_function) (MPI_Comm, int, void *, void *);
   /* MPI-2 functions */
   int PMPI_Comm_get_name (MPI_Comm, char *, int *);
   int PMPI_Comm_set_name (MPI_Comm, char *);
-	MPI_Comm PMPI_Comm_f2c(MPI_Fint comm);
-	MPI_Fint PMPI_Comm_c2f(MPI_Comm comm);
-	MPI_Datatype PMPI_Type_f2c(MPI_Fint datatype);
-	MPI_Fint PMPI_Type_c2f(MPI_Datatype datatype);
-	MPI_Group PMPI_Group_f2c(MPI_Fint group);
-	MPI_Fint PMPI_Group_c2f(MPI_Group group);
-	MPI_Request PMPI_Request_f2c(MPI_Fint request);
-	MPI_Fint PMPI_Request_c2f(MPI_Request request);
-	MPI_File PMPI_File_f2c(MPI_Fint file);
-	MPI_Fint PMPI_File_c2f(MPI_File file);
-	MPI_Win PMPI_Win_f2c(MPI_Fint win);
-	MPI_Fint PMPI_Win_c2f(MPI_Win win);
-	MPI_Op PMPI_Op_f2c(MPI_Fint op);
-	MPI_Fint PMPI_Op_c2f(MPI_Op op);
-	MPI_Info PMPI_Info_f2c(MPI_Fint info);
-	MPI_Fint PMPI_Info_c2f(MPI_Info info);
-	MPI_Errhandler PMPI_Errhandler_f2c(MPI_Fint errhandler);
-	MPI_Fint PMPI_Errhandler_c2f(MPI_Errhandler errhandler);
+  MPI_Comm PMPI_Comm_f2c(MPI_Fint comm);
+  MPI_Fint PMPI_Comm_c2f(MPI_Comm comm);
+  MPI_Datatype PMPI_Type_f2c(MPI_Fint datatype);
+  MPI_Fint PMPI_Type_c2f(MPI_Datatype datatype);
+  MPI_Group PMPI_Group_f2c(MPI_Fint group);
+  MPI_Fint PMPI_Group_c2f(MPI_Group group);
+  MPI_Request PMPI_Request_f2c(MPI_Fint request);
+  MPI_Fint PMPI_Request_c2f(MPI_Request request);
+  MPI_File PMPI_File_f2c(MPI_Fint file);
+  MPI_Fint PMPI_File_c2f(MPI_File file);
+  MPI_Win PMPI_Win_f2c(MPI_Fint win);
+  MPI_Fint PMPI_Win_c2f(MPI_Win win);
+  MPI_Op PMPI_Op_f2c(MPI_Fint op);
+  MPI_Fint PMPI_Op_c2f(MPI_Op op);
+  MPI_Info PMPI_Info_f2c(MPI_Fint info);
+  MPI_Fint PMPI_Info_c2f(MPI_Info info);
+  MPI_Errhandler PMPI_Errhandler_f2c(MPI_Fint errhandler);
+  MPI_Fint PMPI_Errhandler_c2f(MPI_Errhandler errhandler);
 
   /* Neighbors collectives */
   int PMPI_Neighbor_allgather(void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm);

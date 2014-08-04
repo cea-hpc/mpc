@@ -5958,6 +5958,54 @@ PMPC_User_Main (int argc, char **argv)
 #endif
 }
 
+/* MPI Info management */
+
+int PMPC_Info_set( MPC_Info info, const char *key, const char *value )
+{
+	return MPC_SUCCESS;
+}
+
+int PMPC_Info_get(MPC_Info info, const char *key, int valuelen, char *value, int *flag)
+{
+	return MPC_SUCCESS;
+}
+
+int PMPC_Info_free( MPC_Info *info )
+{
+	return MPC_SUCCESS;
+}
+
+int PMPC_Info_dup( MPC_Info info, MPC_Info *newinfo )
+{
+	return MPC_SUCCESS;
+}
+
+int PMPC_Info_delete( MPC_Info info, const char *key )
+{
+	return MPC_SUCCESS;
+}
+
+int PMPC_Info_create( MPC_Info *info )
+{
+	return MPC_SUCCESS;
+}
+
+int PMPC_Info_get_nkeys( MPC_Info info, int *nkeys )
+{
+	return MPC_SUCCESS;
+}
+
+int PMPC_Info_get_nthkey( MPC_Info info, int n, char *key )
+{
+	return MPC_SUCCESS;
+}
+
+int PMPC_Info_get_valuelen(MPC_Info info, char *key, int *valuelen, int *flag)
+{
+	return MPC_SUCCESS;
+}
+
+
 /********************************************************************/
 /*    Network functions. These functions are not a part of the      */
 /*    MPI standard.                                                 */

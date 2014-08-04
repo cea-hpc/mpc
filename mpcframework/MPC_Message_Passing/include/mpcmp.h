@@ -230,6 +230,11 @@ extern "C"
   } MPC_Status;
 #define MPC_STATUS_INIT {MPC_ANY_SOURCE,MPC_ANY_TAG,MPC_SUCCESS,0,0}
 
+/* Here we define the type of an MPC_Info as an int
+ * this type is alliased to MPI_Info at mpc_mpi.h:224
+ */
+typedef int MPC_Info;
+
 #define MPC_CREATE_INTERN_FUNC(name) extern  const MPC_Op MPC_##name
 
     MPC_CREATE_INTERN_FUNC (SUM);
@@ -578,6 +583,20 @@ enum MPIR_Combiner_enum {
 		      MPC_Request * request);
   void *tmp_malloc (size_t size);
 
+  /* MPI Info management */
+  
+  int MPC_Info_set( MPC_Info, const char *, const char * );
+  int MPC_Info_free( MPC_Info * );
+  int MPC_Info_create( MPC_Info * );
+  int MPC_Info_delete( MPC_Info , const char * );
+  int MPC_Info_get(MPC_Info , const char *, int , char *, int *);
+  int MPC_Info_dup( MPC_Info , MPC_Info * );
+  int MPC_Info_get_nkeys (MPC_Info, int *);
+  int MPC_Info_get_nthkey (MPC_Info, int, char *);
+  int MPC_Info_get_valuelen (MPC_Info, char *, int *, int *);
+
+
+
   /*MPI compatibility*/
 #define MPC_BSEND_OVERHEAD 0
 #define MPC_BOTTOM ((void*)0)
@@ -822,6 +841,20 @@ enum MPIR_Combiner_enum {
 		      MPC_Request * request);
   int PMPC_Irecv_pack (int source, int tag, MPC_Comm comm,
 		      MPC_Request * request);
+
+
+  /* MPI Info management */
+  
+  int PMPC_Info_set( MPC_Info, const char *, const char * );
+  int PMPC_Info_free( MPC_Info * );
+  int PMPC_Info_create( MPC_Info * );
+  int PMPC_Info_delete( MPC_Info , const char * );
+  int PMPC_Info_get(MPC_Info , const char *, int , char *, int *);
+  int PMPC_Info_dup( MPC_Info , MPC_Info * );
+  int PMPC_Info_get_nkeys (MPC_Info, int *);
+  int PMPC_Info_get_nthkey (MPC_Info, int, char *);
+  int PMPC_Info_get_valuelen (MPC_Info, char *, int *, int *);
+
 
   /* Send/Recv message using the signalization network */
   void MPC_Send_signalization_network(int dest_process, int tag, void *buff, size_t size);

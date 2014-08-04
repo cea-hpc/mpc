@@ -509,7 +509,7 @@ static inline void PMPC_Set_op(struct sctk_mpi_ops_s *ops){
 }
 
 /*
-  ERRORS HANDELING
+  ERRORS HANDLING
 */
 static inline int
 SCTK__MPI_ERROR_REPORT__ (MPC_Comm comm, int error, char *message, char *file,
@@ -4415,7 +4415,7 @@ static int __INTERNAL__PMPI_Neighbor_alltoall_cart(void *sendbuf, int sendcount,
             nreqs++;
         }
 
-        sendbuf = (const char *) sendbuf + sdextent * sendcount;
+        sendbuf = (char *) sendbuf + sdextent * sendcount;
 
         if (drank != MPI_PROC_NULL) 
         {
@@ -4425,7 +4425,7 @@ static int __INTERNAL__PMPI_Neighbor_alltoall_cart(void *sendbuf, int sendcount,
             nreqs++;
         }
 
-        sendbuf = (const char *) sendbuf + sdextent * sendcount;
+        sendbuf = (char *) sendbuf + sdextent * sendcount;
     }
 
     if (rc != MPI_SUCCESS) 
@@ -4477,7 +4477,7 @@ static int __INTERNAL__PMPI_Neighbor_alltoall_graph(void *sendbuf, int sendcount
         rc = PMPI_Isend((void *)sendbuf, sendcount, sendtype, edges[neighbor], 1, comm, &reqs[i]);             
         if (rc != MPI_SUCCESS) break;
         i++;
-        sendbuf = (const char *) sendbuf + sdextent * sendcount;
+        sendbuf = (char *) sendbuf + sdextent * sendcount;
     }
 
     if (rc != MPI_SUCCESS) {
@@ -11808,107 +11808,150 @@ int MPC_Mpi_win_dup_fn( MPI_Comm comm, int comm_keyval, void* extra_state, void*
 }
 
 /* MPI-2 - Language interoperability - Transfer of Handles*/
-	MPI_Comm PMPI_Comm_f2c(MPI_Fint comm)
-	{
-		return (MPI_Comm)comm;
-	}
+MPI_Comm PMPI_Comm_f2c(MPI_Fint comm)
+{
+	return (MPI_Comm)comm;
+}
 
-	MPI_Fint PMPI_Comm_c2f(MPI_Comm comm)
-	{
-		return (MPI_Fint)comm;
-	}
+MPI_Fint PMPI_Comm_c2f(MPI_Comm comm)
+{
+	return (MPI_Fint)comm;
+}
 
-	MPI_Datatype PMPI_Type_f2c(MPI_Fint datatype)
-	{
-		return (MPI_Datatype)datatype;
-	}
+MPI_Datatype PMPI_Type_f2c(MPI_Fint datatype)
+{
+	return (MPI_Datatype)datatype;
+}
 
-	MPI_Fint PMPI_Type_c2f(MPI_Datatype datatype)
-	{
-		return (MPI_Fint)datatype;
-	}
+MPI_Fint PMPI_Type_c2f(MPI_Datatype datatype)
+{
+	return (MPI_Fint)datatype;
+}
 
-	MPI_Group PMPI_Group_f2c(MPI_Fint group)
-	{
-		return (MPI_Group)group;
-	}
+MPI_Group PMPI_Group_f2c(MPI_Fint group)
+{
+	return (MPI_Group)group;
+}
 
-	MPI_Fint PMPI_Group_c2f(MPI_Group group)
-	{
-		return (MPI_Fint)group;
-	}
+MPI_Fint PMPI_Group_c2f(MPI_Group group)
+{
+	return (MPI_Fint)group;
+}
 
-	MPI_Request PMPI_Request_f2c(MPI_Fint request)
-	{
-		return (MPI_Request)request;
-	}
+MPI_Request PMPI_Request_f2c(MPI_Fint request)
+{
+	return (MPI_Request)request;
+}
 
-	MPI_Fint PMPI_Request_c2f(MPI_Request request)
-	{
-		return (MPI_Fint)request;
-	}
+MPI_Fint PMPI_Request_c2f(MPI_Request request)
+{
+	return (MPI_Fint)request;
+}
 
-	MPI_File PMPI_File_f2c(MPI_Fint file)
-	{
-		return (MPI_File)file;
-	}
+MPI_File PMPI_File_f2c(MPI_Fint file)
+{
+	return (MPI_File)file;
+}
 
-	MPI_Fint PMPI_File_c2f(MPI_File file)
-	{
-		return (MPI_Fint)file;
-	}
+MPI_Fint PMPI_File_c2f(MPI_File file)
+{
+	return (MPI_Fint)file;
+}
 
-	MPI_Win PMPI_Win_f2c(MPI_Fint win)
-	{
-		return (MPI_Win)win;
-	}
+MPI_Win PMPI_Win_f2c(MPI_Fint win)
+{
+	return (MPI_Win)win;
+}
 
-	MPI_Fint PMPI_Win_c2f(MPI_Win win)
-	{
-		return (MPI_Fint)win;
-	}
+MPI_Fint PMPI_Win_c2f(MPI_Win win)
+{
+	return (MPI_Fint)win;
+}
 
-	MPI_Op PMPI_Op_f2c(MPI_Fint op)
-	{
-		return (MPI_Op)op;
-	}
+MPI_Op PMPI_Op_f2c(MPI_Fint op)
+{
+	return (MPI_Op)op;
+}
 
-	MPI_Fint PMPI_Op_c2f(MPI_Op op)
-	{
-		return (MPI_Fint)op;
-	}
+MPI_Fint PMPI_Op_c2f(MPI_Op op)
+{
+	return (MPI_Fint)op;
+}
 
-	MPI_Info PMPI_Info_f2c(MPI_Fint info)
-	{
-		return (MPI_Info)info;
-	}
+MPI_Info PMPI_Info_f2c(MPI_Fint info)
+{
+	return (MPI_Info)info;
+}
 
-	MPI_Fint PMPI_Info_c2f(MPI_Info info)
-	{
-		return (MPI_Fint)info;
-	}
+MPI_Fint PMPI_Info_c2f(MPI_Info info)
+{
+	return (MPI_Fint)info;
+}
 
-	MPI_Errhandler PMPI_Errhandler_f2c(MPI_Fint errhandler)
-	{
-		return (MPI_Errhandler)errhandler;
-	}
+MPI_Errhandler PMPI_Errhandler_f2c(MPI_Fint errhandler)
+{
+	return (MPI_Errhandler)errhandler;
+}
 
-	MPI_Fint PMPI_Errhandler_c2f(MPI_Errhandler errhandler)
-	{
-		return (MPI_Fint)errhandler;
-	}
+MPI_Fint PMPI_Errhandler_c2f(MPI_Errhandler errhandler)
+{
+	return (MPI_Fint)errhandler;
+}
+
+/*********************** 
+*  MPI Info Management *
+***********************/
+
+
+int PMPI_Info_set( MPI_Info info, const char *key, const char *value )
+{
+	return PMPC_Info_set( (MPC_Info)info, key, value );
+}
+
+int PMPI_Info_get(MPI_Info info, const char *key, int valuelen, char *value, int *flag)
+{
+	return PMPC_Info_get( (MPC_Info)info, key, valuelen, value, flag );
+}
+
+int PMPI_Info_free( MPI_Info *info )
+{
+	return PMPC_Info_free( (MPC_Info *)info );
+}
+
+int PMPI_Info_dup( MPI_Info info, MPI_Info *newinfo )
+{
+	return PMPC_Info_dup( (MPC_Info) info , (MPC_Info * ) newinfo );
+}
+
+int PMPI_Info_delete( MPI_Info info, const char *key )
+{
+	return PMPC_Info_delete( (MPC_Info) info , key );
+}
+
+int PMPI_Info_create( MPI_Info *info )
+{
+	return PMPC_Info_create( (MPC_Info *) info );
+}
+
+int PMPI_Info_get_nkeys( MPI_Info info, int *nkeys )
+{
+	return PMPC_Info_get_nkeys( (MPC_Info) info, nkeys );
+}
+
+int PMPI_Info_get_nthkey( MPI_Info info, int n, char *key )
+{
+	return PMPC_Info_get_nthkey( (MPC_Info) info, n , key );
+}
+
+int PMPI_Info_get_valuelen(MPI_Info info, char *key, int *valuelen, int *flag)
+{
+	return PMPI_Info_get_valuelen( (MPC_Info) info , key , valuelen , flag );
+}
+
+
 //~ not implemented
-/*
-int PMPI_Info_set( MPI_Info info, const char *key, const char *value ){return MPI_SUCCESS;}
-int PMPI_Info_get(MPI_Info info, const char *key, int valuelen, char *value, int *flag){return MPI_SUCCESS;}
-int PMPI_Info_free( MPI_Info *info ){return MPI_SUCCESS;}
-int PMPI_Info_dup( MPI_Info info, MPI_Info *newinfo ){return MPI_SUCCESS;}
-int PMPI_Info_delete( MPI_Info info, const char *key ){return MPI_SUCCESS;}
-int PMPI_Info_create( MPI_Info *info ){return MPI_SUCCESS;}
-int PMPI_Info_get_nkeys( MPI_Info info, int *nkeys ){return MPI_SUCCESS;}
-int PMPI_Info_get_nthkey( MPI_Info info, int n, char *key ){return MPI_SUCCESS;}
-int PMPI_Info_get_valuelen(MPI_Info info, char *key, int *valuelen, int *flag){return MPI_SUCCESS;}
 
+/*
 int PMPI_Type_dup(MPI_Datatype oldtype, MPI_Datatype *newtype){return MPI_SUCCESS;}
 int PMPI_Type_get_name(MPI_Datatype datatype, char *type_name, int *resultlen){return MPI_SUCCESS;}
 int PMPI_Type_set_name(MPI_Datatype datatype, const char *type_name){return MPI_SUCCESS;}

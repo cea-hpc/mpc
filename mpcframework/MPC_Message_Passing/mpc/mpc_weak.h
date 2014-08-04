@@ -163,4 +163,13 @@
 #pragma weak MPC_Add_pack_default_absolute = PMPC_Add_pack_default_absolute
 #pragma weak MPC_Isend_pack = PMPC_Isend_pack
 #pragma weak MPC_Irecv_pack = PMPC_Irecv_pack
-
+  /* MPI_Info management */
+#pragma weak MPC_Info_create = PMPC_Info_create
+#pragma weak MPC_Info_delete = PMPC_Info_delete
+#pragma weak MPC_Info_dup = PMPC_Info_dup
+#pragma weak MPC_Info_free = PMPC_Info_free
+#pragma weak MPC_Info_set = PMPC_Info_set
+#pragma weak MPC_Info_get = PMPC_Info_get
+#pragma weak MPC_Info_get_nkeys = PMPC_Info_get_nkeys
+#pragma weak MPC_Info_get_nthkey = PMPC_Info_get_nthkey
+#pragma weak MPC_Info_get_valuelen = PMPC_Info_get_valuelen

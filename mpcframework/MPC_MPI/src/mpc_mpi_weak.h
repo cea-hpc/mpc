@@ -478,15 +478,6 @@
 #pragma weak MPI_Errhandler_f2c = PMPI_Errhandler_f2c
 #pragma weak MPI_Errhandler_c2f = PMPI_Errhandler_c2f
 
-	//~ not implemented
-
-/*
-#pragma weak MPI_Win_set_attr = PMPI_Win_set_attr
-#pragma weak MPI_Win_get_attr = PMPI_Win_get_attr
-#pragma weak MPI_Win_free_keyval = PMPI_Win_free_keyval
-#pragma weak MPI_Win_delete_attr = PMPI_Win_delete_attr
-#pragma weak MPI_Win_create_keyval = PMPI_Win_create_keyval
-
 #pragma weak MPI_Info_create = PMPI_Info_create
 #pragma weak MPI_Info_delete = PMPI_Info_delete
 #pragma weak MPI_Info_dup = PMPI_Info_dup
@@ -496,6 +487,15 @@
 #pragma weak MPI_Info_get_nkeys = PMPI_Info_get_nkeys
 #pragma weak MPI_Info_get_nthkey = PMPI_Info_get_nthkey
 #pragma weak MPI_Info_get_valuelen = PMPI_Info_get_valuelen
+
+//~ not implemented
+
+/*
+#pragma weak MPI_Win_set_attr = PMPI_Win_set_attr
+#pragma weak MPI_Win_get_attr = PMPI_Win_get_attr
+#pragma weak MPI_Win_free_keyval = PMPI_Win_free_keyval
+#pragma weak MPI_Win_delete_attr = PMPI_Win_delete_attr
+#pragma weak MPI_Win_create_keyval = PMPI_Win_create_keyval
 
 #pragma weak MPI_Type_dup = PMPI_Type_dup
 #pragma weak MPI_Type_set_name = PMPI_Type_set_name
