@@ -56,7 +56,7 @@ if test -z "\${PATH}" ; then
 	PATH="\${MPCROOT}/bin"
 	export PATH
 else
-	PATH="\${MPCROOT}/bin:\${PATH}"
+	PATH="\${PATH}:\${MPCROOT}/bin"
 	export PATH
 fi
 

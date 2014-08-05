@@ -472,18 +472,18 @@ if test "`uname -m`" != "${arch_bin}" -a "{MPCRUN_CONFIG_FILE}" = ""; then
 	exit 1
 fi
 
+# Here we prepend the PATH which is normally postpended
+# we do this as we can't override the whole prefix with
+# mpc binaries as it can cause version mismatches
+export SCTK_BINDIR="${prefix}/bin/"
+export PATH="${SCTK_BINDIR}:${PATH}"
+
+
 # load MPC Hydra launcher if not k1om architecture
 if test "${arch_bin}" = "k1om"; then 
     echo "k1om architecture detected" >&2
 else
     echo "${arch_bin} architecture detected" >&2
-    # setup complete hydra path. Exported to be used into mpcrun_opt/* scripts
-    if test "$SCTK_HYDRA" != ""; then 
-	if [ $SCTK_HYDRA -eq 1 ] && [ ! -z "$SCTK_HYDRA_PREFIX" ]; then
-		export SCTK_HYDRA_BINDIR="${prefix}/bin/"
-		export PATH="${SCTK_HYDRA_BINDIR}:${PATH}"
-	fi
-    fi
 fi
 
 if test "$PROCESS_NB" = "0" ; then

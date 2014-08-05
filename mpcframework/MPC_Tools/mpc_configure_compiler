@@ -677,7 +677,10 @@ EOF
 fi
 cat <<EOF >> $1
 
-eval "\${MPC_RPREFIX}/\${MPC_TARGET_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/bin/$3 \$ADD_FLAG_PRIVATIZE \$COMPILER_ARGS"
+#Here we prepend the path which is normally postpended in order
+#to override binutils during the compilation
+export PATH=\${MPC_RPREFIX}/${MPC_SUBPREFIX}/bin/:\${PATH}
+
 
 EOF
 
