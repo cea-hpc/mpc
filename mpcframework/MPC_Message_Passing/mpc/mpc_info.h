@@ -203,7 +203,11 @@ int MPC_Info_cell_delete( struct MPC_Info_cell * cell , char * key );
  *  This structure is in charge of matching the
  *  opaque int (aka MPI_Info or MPC_Info) identifier
  *  usign this trick we do not have to do any conversion when
- *  going back and forth the fortran interface */
+ *  going back and forth the fortran interface 
+ * 
+ *  This factory is placed in the \ref sctk_task_specific_s structure
+ * 
+ * */
 struct MPC_Info_factory
 {
 	int current_id; /**< Id which is incremented each time a new MPI_Info object is created */
@@ -211,14 +215,47 @@ struct MPC_Info_factory
 };
 
 /* Init and Release */
-int MPC_Info_factory_init( struct MPC_Info_factory * fact );
-int MPC_Info_factory_release( struct MPC_Info_factory * fact );
+/** \brief Initialises the MPC_Info factory
+ *  \param fact A pointer to the factory
+ */
+void MPC_Info_factory_init( struct MPC_Info_factory * fact );
+
+/** \brief releases the MPC_Info factory
+ *  \param fact A pointer to the factory
+ * 
+ *  \warning After this call every MPI_Info are released.
+ * 
+ */
+void MPC_Info_factory_release( struct MPC_Info_factory * fact );
 
 
 /* Methods */
 
+/** \brief Creates a new MPC_Info_cell associated with an unique ID
+ *  
+ *  \param fact A pointer to the factory
+ * 
+ *  \return The id of the newly created factory
+ * 
+ */
 int MPC_Info_factory_create( struct MPC_Info_factory * fact );
+
+/** \brief Deletes and MPI_Info from the factory
+ *  
+ *  \param fact A pointer to the factory
+ *  \param id The unique ID to delete
+ * 
+ *  \return 0 on success ,  1 on error
+ */
 int MPC_Info_factory_delete(  struct MPC_Info_factory * fact, int id );
+
+/** \brief Translates an MPI_Info/MPC_Info id to a pointer to an \ref MPC_Info_cell
+ * 
+ * 	\param fact A pointer to the factory
+ *  \param id The Unique Id to lookup
+ * 
+ * 	\return A pointer to the MPC_Info_cell matching the ID , NULL if not found
+ */
 struct MPC_Info_cell * MPC_Info_factory_resolve(   struct MPC_Info_factory * fact , int id );
 
 

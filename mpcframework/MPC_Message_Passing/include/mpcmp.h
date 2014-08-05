@@ -583,7 +583,18 @@ enum MPIR_Combiner_enum {
 		      MPC_Request * request);
   void *tmp_malloc (size_t size);
 
+
+
   /* MPI Info management */
+ 
+/* Matches the one of MPI_INFO_NULL @ mpc_mpi.h:207 */
+#define MPC_INFO_NULL (-1)
+/* Maximum length for keys and values
+ * they are both defined for MPC and MPI variants */
+/*1 MB */
+#define MPC_MAX_INFO_VAL 1048576
+#define MPC_MAX_INFO_KEY 255
+
   
   int MPC_Info_set( MPC_Info, const char *, const char * );
   int MPC_Info_free( MPC_Info * );

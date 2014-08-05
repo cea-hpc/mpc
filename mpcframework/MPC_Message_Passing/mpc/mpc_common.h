@@ -24,6 +24,8 @@
 #define MAX_MPC_BUFFERED_SIZE (128 * sizeof(long))
 #include <uthash.h>
 
+#include "mpc_info.h"
+
 typedef struct mpc_buffered_msg_s
 {
   sctk_thread_ptp_message_t header;
@@ -105,6 +107,10 @@ struct sctk_task_specific_s
   struct mpc_mpi_data_s* mpc_mpi_data;
 
   struct sctk_internal_ptp_s* my_ptp_internal;
+  
+  /* This structures is used to store the association
+   * between MPI_Infos structs and their ID */
+  struct MPC_Info_factory info_fact;
 
   int init_done;  /* =1 if the task has called MPI_Init() */
   int finalize_done; /* =1 if the task has already called MPI_Finalize()  */

@@ -203,8 +203,16 @@ extern "C"
 #define MPI_GROUP_EMPTY ((MPI_Group)0)
 #define MPI_GROUP_NULL ((MPI_Group)-1)
 
+/* MPI_Info definitions */
+/* Matches the one of MPI_INFO_NULL @ mpc_mpi.h:207 */
+#define MPI_INFO_NULL (-1)
+/* Maximum length for keys and values
+ * they are both defined for MPC and MPI variants */
+/*1 MB */
+#define MPI_MAX_INFO_VAL 1048576
+#define MPI_MAX_INFO_KEY 255
+
 /* Other Null Handles */
-#define MPI_INFO_NULL ((MPI_Info)-1)
 #define MPI_FILE_NULL ((MPI_File)-1)
 #define MPI_WIN_NULL ((MPI_Win)-1)
 
@@ -221,6 +229,8 @@ extern "C"
   typedef MPC_Handler_function MPI_Handler_function;
   typedef int MPI_Fint;
   typedef int MPI_File;
+  
+  /* MPI_Info Definitions */
   typedef MPC_Info MPI_Info;
 
 //~ not implemented

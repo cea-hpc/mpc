@@ -69,8 +69,7 @@ void MPC_Info_key_release( struct MPC_Info_key * tofree )
 	/* Break the chain */
 	tofree->prev = NULL;
 	tofree->next = NULL;
-	
-	/* When going up free the entry itself */
+
 	sctk_free( tofree );
 }
 
@@ -160,6 +159,7 @@ struct MPC_Info_key * MPC_Info_key_get_nth( struct MPC_Info_key * head, int n )
 	
 	while( current )
 	{
+		sctk_nodebug("%p ==> %s (P : %p , N : %p )\n", current, current->key , current->prev, current->next );
 		/* Is it the nth key ? */
 		if( cnt == n )
 			return current;
@@ -182,6 +182,7 @@ int MPC_Info_key_count( struct MPC_Info_key * head )
 	
 	while( current )
 	{
+		sctk_nodebug("%p ==> %s (P : %p , N : %p )\n", current, current->key , current->prev, current->next );
 		/* Go to next */
 		cnt++;
 		current = current->next;	
@@ -208,8 +209,10 @@ struct MPC_Info_key * MPC_Info_key_pop( struct MPC_Info_key * topop )
 	
 	if( topop->prev )
 	{
-		next = topop->prev;
+		prev = topop->prev;
 	}
+	
+	sctk_nodebug("TOPOP : %p %s  P : %p  N : %p \n", topop, topop->key, prev, next );
 	
 	/* Update links */
 	
@@ -256,9 +259,13 @@ struct MPC_Info_key * MPC_Info_key_delete( struct MPC_Info_key * head, char * ke
 	struct MPC_Info_key *ret;
 	
 	if( topop == head )
+	{
 		ret = topop->next;
+	}
 	else
+	{
 		ret = head;
+	}
 
 	MPC_Info_key_release( topop );	
 	
@@ -294,6 +301,7 @@ void MPC_Info_cell_release( struct MPC_Info_cell * cell )
 	cell->id = 0;
 
 	MPC_Info_key_release_recursive( cell->keys );
+	sctk_free( cell );
 }
 
 
@@ -312,7 +320,6 @@ int MPC_Info_cell_get( struct MPC_Info_cell * cell , char * key , char * dest, i
 	if( !entry )
 	{
 		*flag = 0;
-		dest[0] = '\0';
 		return 1;
 	}
 	else
@@ -340,6 +347,8 @@ int MPC_Info_cell_set( struct MPC_Info_cell * cell , char * key, char * value, i
 	
 	/* Otherwise directly set / create the new entry */
 	cell->keys = MPC_Info_key_set(  cell->keys, key, value );
+	
+	return 0;
 }
 
 /* Methods */
@@ -351,4 +360,74 @@ int MPC_Info_cell_delete( struct MPC_Info_cell * cell , char * key )
 	
 	/* 1 is the error case */
 	return !did_delete;
+}
+
+/*******************
+* MPC_Info_factory *
+*******************/
+
+/* Init and Release */
+void MPC_Info_factory_init( struct MPC_Info_factory * fact )
+{
+	fact->current_id = 0;
+	fact->infos = NULL;
+}
+
+void MPC_Info_factory_release( struct MPC_Info_factory * fact )
+{
+	struct MPC_Info_cell *current, *tmp;	
+
+	HASH_ITER(hh, fact->infos, current, tmp) {
+		HASH_DEL(fact->infos, current);  
+		MPC_Info_cell_release(current);
+	}
+}
+
+
+/* Methods */
+
+int MPC_Info_factory_create( struct MPC_Info_factory * fact )
+{
+	struct MPC_Info_cell * new_cell = MPC_Info_cell_init( fact->current_id );
+	
+	if( ! new_cell )
+	{
+		return -1;
+	}
+
+	int my_id = fact->current_id;
+	fact->current_id++;
+	
+	HASH_ADD_INT( fact->infos, id, new_cell );
+	
+	return my_id;
+}
+
+int MPC_Info_factory_delete(  struct MPC_Info_factory * fact, int id )
+{
+	struct MPC_Info_cell *cell;
+
+    HASH_FIND_INT(fact->infos, &id, cell); 
+	
+	if(!cell)
+	{
+		return 1;
+	}
+	else
+	{
+		HASH_DEL(fact->infos, cell);
+		MPC_Info_cell_release( cell );
+	}
+
+	return 0;
+}
+
+
+struct MPC_Info_cell * MPC_Info_factory_resolve(   struct MPC_Info_factory * fact , int id )
+{
+	struct MPC_Info_cell *cell;
+
+    HASH_FIND_INT(fact->infos, &id, cell); 
+    
+    return cell;
 }
