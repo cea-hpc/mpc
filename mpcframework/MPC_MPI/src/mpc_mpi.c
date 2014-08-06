@@ -11945,7 +11945,7 @@ int PMPI_Info_get_nthkey( MPI_Info info, int n, char *key )
 
 int PMPI_Info_get_valuelen(MPI_Info info, char *key, int *valuelen, int *flag)
 {
-	return PMPI_Info_get_valuelen( (MPC_Info) info , key , valuelen , flag );
+	return PMPC_Info_get_valuelen( (MPC_Info) info , key , valuelen , flag );
 }
 
 
