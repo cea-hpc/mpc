@@ -507,96 +507,129 @@ void __MPC_delete_thread_specific(){
 #endif
 }
 
-static inline void
-__MPC_init_task_specific_t (sctk_task_specific_t * tmp)
+ /************************************************************************/
+ /* Task specific                                                        */
+ /************************************************************************/
+
+/** \brief Initalizes a structure of type \ref sctk_task_specific_t
+ */
+static inline void __MPC_init_task_specific_t (sctk_task_specific_t * tmp)
 {
-  unsigned long i;
-  mpc_per_communicator_t* per_comm_tmp;
+	/* First empty the whole sctk_task_specific_t */
+	memset (tmp, 0, sizeof (sctk_task_specific_t));
+	
+	/* Set task id */
+	tmp->task_id = sctk_get_task_rank();
 
-  tmp->task_id = sctk_get_task_rank ();
+	/* Initialize derived datatypes to 0 */
+	int i;
 
-  for (i = 0; i < sctk_user_data_types_max; i++)
-    {
-      tmp->user_types.user_types[i] = 0;
-    }
+	for (i = 0; i < sctk_user_data_types_max; i++)
+	{
+		tmp->user_types.user_types[i] = 0;
+	}
 
-  for (i = 0; i < sctk_user_data_types_max; i++)
-    {
-      tmp->user_types_struct.user_types_struct[i] = 0;
-    }
+	for (i = 0; i < sctk_user_data_types_max; i++)
+	{
+		tmp->user_types_struct.user_types_struct[i] = 0;
+	}
 
-  per_comm_tmp = sctk_thread_createspecific_mpc_per_comm();
-  sctk_thread_addspecific_mpc_per_comm(tmp,per_comm_tmp,MPC_COMM_WORLD);
-  per_comm_tmp = sctk_thread_createspecific_mpc_per_comm();
-  sctk_thread_addspecific_mpc_per_comm(tmp,per_comm_tmp,MPC_COMM_SELF);
+	/* Set initial per communicator data */
+	mpc_per_communicator_t* per_comm_tmp;
 
-/*   tmp->keys = NULL; */
-/*   tmp->requests = NULL; */
-/*   tmp->buffers = NULL; */
-/*   tmp->errors = NULL; */
-/*   tmp->comm_type = NULL; */
-/*   tmp->op = NULL; */
-/*   tmp->groups = NULL; */
+	/* COMM_WORLD */
+	per_comm_tmp = sctk_thread_createspecific_mpc_per_comm();
+	sctk_thread_addspecific_mpc_per_comm(tmp,per_comm_tmp,MPC_COMM_WORLD);
+	
+	/* COMM_SELF */
+	per_comm_tmp = sctk_thread_createspecific_mpc_per_comm();
+	sctk_thread_addspecific_mpc_per_comm(tmp,per_comm_tmp,MPC_COMM_SELF);
 
-  __MPC_init_thread_specific();
+	/* Propagate initialization the the thread context */
+	__MPC_init_thread_specific();
 
-  tmp->init_done = 0;
-  tmp->finalize_done = 0;
-  tmp->thread_level = -1;
+	/* Set MPI status informations */
+	tmp->init_done = 0;
+	tmp->finalize_done = 0;
+	tmp->thread_level = -1;
 
-  tmp->my_ptp_internal = sctk_get_internal_ptp(tmp->task_id);
-  
-  /* Create the MPI_Info factory */
-  MPC_Info_factory_init( &tmp->info_fact );
+	tmp->my_ptp_internal = sctk_get_internal_ptp(tmp->task_id);
+
+	/* Create the MPI_Info factory */
+	MPC_Info_factory_init( &tmp->info_fact );
 }
 
-static void
-__MPC_init_task_specific ()
+/** \brief Relases a structure of type \ref sctk_task_specific_t
+ */
+static inline void __MPC_release_task_specific_t (sctk_task_specific_t * tmp)
 {
-  sctk_task_specific_t *tmp;
-
-  tmp =
-    (sctk_task_specific_t *) sctk_thread_getspecific_mpc (sctk_task_specific);
-  sctk_assert (tmp == NULL);
-
-  tmp = (sctk_task_specific_t *) sctk_malloc (sizeof (sctk_task_specific_t));
-  memset (tmp, 0, sizeof (sctk_task_specific_t));
-  __MPC_init_task_specific_t (tmp);
-
-
-  sctk_thread_setspecific_mpc (sctk_task_specific, tmp);
+	/* Deleta the MPI_Info factory */
+	MPC_Info_factory_release( &tmp->info_fact );
 }
 
-static void
-__MPC_delete_task_specific ()
+/** \brief Creation point for MPI task context in an \ref sctk_task_specific_t
+ * 
+ * Called from \ref sctk_user_main this function allocates and initialises
+ * an sctk_task_specific_t. It also takes care of storing it in the host
+ * thread context.
+ */
+static void __MPC_setup_task_specific ()
 {
-  sctk_task_specific_t *tmp;
+	/* Retrieve the task ctx pointer */
+	sctk_task_specific_t *tmp;
+	tmp = (sctk_task_specific_t *) sctk_thread_getspecific_mpc (sctk_task_specific);
 
-  tmp =
-    (sctk_task_specific_t *) sctk_thread_getspecific_mpc (sctk_task_specific);
+	/* Make sure that it is not already present */
+	sctk_assert (tmp == NULL);
 
-  sctk_thread_setspecific_mpc (sctk_task_specific, NULL);
+	/* If not allocate a new sctk_task_specific_t */
+	tmp = (sctk_task_specific_t *) sctk_malloc (sizeof (sctk_task_specific_t));
+	/* And initalize it */
+	__MPC_init_task_specific_t (tmp);
 
-  /* Deleta the MPI_Info factory */
-  MPC_Info_factory_release( &tmp->info_fact );
-
-  sctk_free (tmp);
+	/* Set the sctk_task_specific key in thread CTX */
+	sctk_thread_setspecific_mpc (sctk_task_specific, tmp);
 }
 
-void
-__MPC_reinit_task_specific (struct sctk_task_specific_s *tmp)
+/** \brief Releases and frees task ctx
+ *  Also called from  \ref sctk_user_main this function releases
+ *  MPI task ctx and remove them from host thread keys
+ */
+static void __MPC_delete_task_specific ()
 {
-  sctk_thread_setspecific_mpc (sctk_task_specific, tmp);
+	/* Retrieve the ctx pointer */
+	sctk_task_specific_t *tmp;
+	tmp =  (sctk_task_specific_t *) sctk_thread_getspecific_mpc (sctk_task_specific);
+
+	/* Remove the ctx reference in the host thread */
+	sctk_thread_setspecific_mpc (sctk_task_specific, NULL);
+
+	/* Release the task ctx */
+	__MPC_release_task_specific_t( tmp );
+
+	/* Free the task ctx */
+	sctk_free (tmp);
 }
 
-struct sctk_task_specific_s *
-__MPC_get_task_specific ()
+/** \brief Set current thread task specific context
+ *  \param tmp New value to be set
+ */
+void __MPC_reinit_task_specific (struct sctk_task_specific_s *tmp)
+{
+	sctk_thread_setspecific_mpc (sctk_task_specific, tmp);
+}
+
+struct sctk_task_specific_s * __MPC_get_task_specific ()
 {
   struct sctk_task_specific_s *tmp;
   tmp = (struct sctk_task_specific_s *)
     sctk_thread_getspecific_mpc (sctk_task_specific);
   return tmp;
 }
+
+ /************************************************************************/
+ /* Error Reporting                                                      */
+ /************************************************************************/
 
 static inline int
 __MPC_ERROR_REPORT__ (MPC_Comm comm, int error, char *message, char *file,
@@ -1355,35 +1388,45 @@ PMPC_Is_derived_datatype (MPC_Datatype datatype, int *res,
 			  mpc_pack_absolute_indexes_t * lb, int *is_lb,
 			  mpc_pack_absolute_indexes_t * ub, int *is_ub)
 {
-  sctk_task_specific_t *task_specific;
+	/* 
+	 * Initialize output arguments
+	 * assuming it is not a derived datatype
+	 */
+	 
+	*res = 0; /*< Not a derived datatype */
+	*ends = NULL; /*< No ends */
+	*begins = NULL; /* No begins */
+	*count = 1; /* Just a single element */
 
-  *res = 0;
-  *ends = NULL;
-  *begins = NULL;
-  *count = 1;
+	if ((datatype >= sctk_user_data_types + sctk_user_data_types_max)
+	&& (datatype < sctk_user_data_types + 2 * sctk_user_data_types_max))
+	{
+		/* Retrieve task specific context */
+		sctk_task_specific_t *task_specific;
+		task_specific = __MPC_get_task_specific ();
+		
+		sctk_spinlock_lock (&(task_specific->user_types_struct.lock));
+		
+		sctk_derived_type_t **user_types;
+		user_types = task_specific->user_types_struct.user_types_struct;
 
-  if ((datatype >= sctk_user_data_types + sctk_user_data_types_max) &&
-      (datatype < sctk_user_data_types + 2 * sctk_user_data_types_max))
-    {
-      sctk_derived_type_t **user_types;
-      task_specific = __MPC_get_task_specific ();
-      sctk_spinlock_lock (&(task_specific->user_types_struct.lock));
-      user_types = task_specific->user_types_struct.user_types_struct;
+		sctk_nodebug("datatype(%d) - sctk_user_data_types(%d) - sctk_user_data_types_max(%d) ==  %d-%d-%d == %d",
+		datatype, sctk_user_data_types, sctk_user_data_types_max, datatype, sctk_user_data_types, sctk_user_data_types_max, datatype - sctk_user_data_types - sctk_user_data_types_max);
+		*res = 1;
+		*ends = user_types[datatype - sctk_user_data_types - sctk_user_data_types_max]->ends;
+		*begins = user_types[datatype - sctk_user_data_types - sctk_user_data_types_max]->begins;
+		*count = user_types[datatype - sctk_user_data_types - sctk_user_data_types_max]->count;
 
-sctk_nodebug("datatype(%d) - sctk_user_data_types(%d) - sctk_user_data_types_max(%d) ==  %d-%d-%d == %d",
-datatype, sctk_user_data_types, sctk_user_data_types_max, datatype, sctk_user_data_types, sctk_user_data_types_max, datatype - sctk_user_data_types - sctk_user_data_types_max);
-      *res = 1;
-      *ends = user_types[datatype - sctk_user_data_types - sctk_user_data_types_max]->ends;
-      *begins = user_types[datatype - sctk_user_data_types - sctk_user_data_types_max]->begins;
-      *count = user_types[datatype - sctk_user_data_types - sctk_user_data_types_max]->count;
-
-      *lb = user_types[datatype - sctk_user_data_types - sctk_user_data_types_max]->lb;
-      *ub = user_types[datatype - sctk_user_data_types - sctk_user_data_types_max]->ub;
-      *is_lb = user_types[datatype - sctk_user_data_types - sctk_user_data_types_max]->is_lb;
-      *is_ub = user_types[datatype - sctk_user_data_types - sctk_user_data_types_max]->is_ub;
-      sctk_spinlock_unlock (&(task_specific->user_types_struct.lock));
-    }
-  MPC_ERROR_SUCESS ();
+		*lb = user_types[datatype - sctk_user_data_types - sctk_user_data_types_max]->lb;
+		*ub = user_types[datatype - sctk_user_data_types - sctk_user_data_types_max]->ub;
+		*is_lb = user_types[datatype - sctk_user_data_types - sctk_user_data_types_max]->is_lb;
+		*is_ub = user_types[datatype - sctk_user_data_types - sctk_user_data_types_max]->is_ub;
+		
+		
+		sctk_spinlock_unlock (&(task_specific->user_types_struct.lock));
+	}
+	
+	MPC_ERROR_SUCESS ();
 }
 
 /*Initialisation*/
@@ -1994,7 +2037,7 @@ sctk_user_main (int argc, char **argv)
 
   sctk_mpc_verify_request_compatibility();
 
-  __MPC_init_task_specific ();
+  __MPC_setup_task_specific ();
 
   __MPC_Barrier (MPC_COMM_WORLD);
   if(sctk_runtime_config_get()->modules.mpc.hard_checking){

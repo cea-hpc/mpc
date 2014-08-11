@@ -20,34 +20,28 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#define MAX_MPC_BUFFERED_MSG 32
-#define MAX_MPC_BUFFERED_SIZE (128 * sizeof(long))
-#include <uthash.h>
+#ifndef MPC_COMMON_H
+#define MPC_COMMON_H
 
+#include <uthash.h>
 #include "mpc_info.h"
 
-typedef struct mpc_buffered_msg_s
-{
-  sctk_thread_ptp_message_t header;
-  /* Completion flag to use if the user do not provide a valid request */
-  int completion_flag;
-  /* MPC_Request if the message is buffered  */
-  MPC_Request request;
-  long buf[(MAX_MPC_BUFFERED_SIZE / sizeof (long)) + 1];
-} mpc_buffered_msg_t;
+/************************************************************************/
+/* Datatypes definition                                                 */
+/************************************************************************/
 
 typedef struct
 {
-  size_t size;
-  size_t nb_elements;
-  mpc_pack_absolute_indexes_t *begins;
-  mpc_pack_absolute_indexes_t *ends;
-  unsigned long count;
-  unsigned long ref_count;
-  mpc_pack_absolute_indexes_t lb;
-  mpc_pack_absolute_indexes_t ub;
-  int is_lb;
-  int is_ub;
+	size_t size;
+	size_t nb_elements;
+	mpc_pack_absolute_indexes_t *begins;
+	mpc_pack_absolute_indexes_t *ends;
+	unsigned long count;
+	unsigned long ref_count;
+	mpc_pack_absolute_indexes_t lb;
+	mpc_pack_absolute_indexes_t ub;
+	int is_lb;
+	int is_ub;
 } sctk_derived_type_t;
 
 typedef struct 
@@ -56,27 +50,62 @@ typedef struct
 	size_t size;
 	size_t count;
 	sctk_datatype_t datatype;
-  int used;
+	int used;
 } sctk_other_datatype_t;
 
-#define MPC_DECL_TYPE_PROTECTED(data_type, name_type) typedef struct {data_type; sctk_spinlock_t lock;} name_type##_t
-#define MPC_USE_TYPE(name_type) name_type##_t name_type
 
-MPC_DECL_TYPE_PROTECTED (sctk_datatype_t user_types[sctk_user_data_types_max],
-			 user_types);
-			 
-MPC_DECL_TYPE_PROTECTED (sctk_other_datatype_t other_user_types[sctk_user_data_types_max],
-			 other_user_types);
-			 
-MPC_DECL_TYPE_PROTECTED (sctk_derived_type_t *
-			 user_types_struct[sctk_user_data_types_max],
-			 user_types_struct);
+typedef struct 
+{
+	sctk_datatype_t user_types[sctk_user_data_types_max];
+	sctk_spinlock_t lock;
+} user_types_t;
 
-MPC_DECL_TYPE_PROTECTED (mpc_buffered_msg_t buffer[MAX_MPC_BUFFERED_MSG];
-			 volatile int buffer_rank, buffer);
-MPC_DECL_TYPE_PROTECTED (mpc_buffered_msg_t
-			 buffer_async[MAX_MPC_BUFFERED_MSG];
-			 volatile int buffer_async_rank, buffer_async);
+typedef struct 
+{
+	sctk_other_datatype_t other_user_types[sctk_user_data_types_max];
+	sctk_spinlock_t lock;
+} other_user_types_t;
+
+typedef struct 
+{
+	sctk_derived_type_t * user_types_struct[sctk_user_data_types_max];
+	sctk_spinlock_t lock;
+} user_types_struct_t;
+
+/************************************************************************/
+/* Buffers definition                                                   */
+/************************************************************************/
+ 
+#define MAX_MPC_BUFFERED_MSG 32
+#define MAX_MPC_BUFFERED_SIZE (128 * sizeof(long))
+
+typedef struct mpc_buffered_msg_s
+{
+	sctk_thread_ptp_message_t header;
+	/* Completion flag to use if the user do not provide a valid request */
+	int completion_flag;
+	/* MPC_Request if the message is buffered  */
+	MPC_Request request;
+	long buf[(MAX_MPC_BUFFERED_SIZE / sizeof (long)) + 1];
+} mpc_buffered_msg_t;
+
+typedef struct 
+{
+	mpc_buffered_msg_t buffer[MAX_MPC_BUFFERED_MSG];
+	volatile int buffer_rank;
+	sctk_spinlock_t lock;
+} buffer_t;
+
+typedef struct 
+{
+	mpc_buffered_msg_t buffer_async[MAX_MPC_BUFFERED_MSG];
+	volatile int buffer_async_rank;
+	sctk_spinlock_t lock;
+} buffer_async_t;
+
+/************************************************************************/
+/* Per communicator context                                             */
+/************************************************************************/
 
 struct mpc_mpi_per_communicator_s;
 
@@ -93,40 +122,63 @@ typedef struct {
   UT_hash_handle hh;
 }mpc_per_communicator_t;
 
-struct sctk_task_specific_s
+/************************************************************************/
+/* Per task context                                                     */
+/************************************************************************/
+
+/**
+ *  \brief Describes the context of an MPI task
+ *  
+ *  This data structure is initialised by \ref __MPC_init_task_specific_t and
+ * 	released by \ref __MPC_release_task_specific_t. Initial setup is done
+ *  in \ref __MPC_setup_task_specific called in \ref sctk_user_main.
+ * 
+ */
+typedef struct sctk_task_specific_s
 {
-  int task_id;
+	/* ID */
+	int task_id; /**< MPI comm rank of the task */
 
-  MPC_USE_TYPE (user_types);
-  MPC_USE_TYPE (other_user_types);
-  MPC_USE_TYPE (user_types_struct);
+	/* Status */
+	int init_done;  /**< =1 if the task has called MPI_Init() */
+	int finalize_done; /**< =1 if the task has already called MPI_Finalize()  */
+	int thread_level;
 
-  mpc_per_communicator_t*per_communicator;
-  sctk_spinlock_t per_communicator_lock;
+	/* Types */
+	user_types_t user_types;
+	other_user_types_t other_user_types;
+	user_types_struct_t user_types_struct;
 
-  struct mpc_mpi_data_s* mpc_mpi_data;
+	/* Communicator handling */
+	mpc_per_communicator_t*per_communicator;
+	sctk_spinlock_t per_communicator_lock;
 
-  struct sctk_internal_ptp_s* my_ptp_internal;
-  
-  /* This structures is used to store the association
-   * between MPI_Infos structs and their ID */
-  struct MPC_Info_factory info_fact;
+	/* TODO */
+	struct mpc_mpi_data_s* mpc_mpi_data;
+	struct sctk_internal_ptp_s* my_ptp_internal;
 
-  int init_done;  /* =1 if the task has called MPI_Init() */
-  int finalize_done; /* =1 if the task has already called MPI_Finalize()  */
-  int thread_level;
-};
+	/* MPI_Info handling */
+	struct MPC_Info_factory info_fact; /**< This structure is used to store the association between MPI_Infos structs and their ID */
+} sctk_task_specific_t;
 
-mpc_per_communicator_t* sctk_thread_getspecific_mpc_per_comm(struct sctk_task_specific_s* task_specific,sctk_communicator_t comm);
+/** \brief Retrieves current thread task specific context
+ */
 struct sctk_task_specific_s *__MPC_get_task_specific ();
 
-typedef struct sctk_task_specific_s sctk_task_specific_t;
+/** \brief Retrieves a given per communicator context from task CTX
+ */
+mpc_per_communicator_t* sctk_thread_getspecific_mpc_per_comm(struct sctk_task_specific_s* task_specific,sctk_communicator_t comm);
 
+
+/************************************************************************/
+/* Per thread context                                                   */
+/************************************************************************/
 
 struct sctk_thread_specific_s
 {
-  MPC_USE_TYPE (buffer);
-  MPC_USE_TYPE (buffer_async);
+  buffer_t buffer;
+  buffer_async_t buffer_async;
 };
 typedef struct sctk_thread_specific_s sctk_thread_specific_t;
 
+#endif /* MPC_COMMON_H */
