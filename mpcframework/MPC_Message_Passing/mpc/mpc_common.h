@@ -56,19 +56,19 @@ typedef struct
 
 typedef struct 
 {
-	sctk_datatype_t user_types[sctk_user_data_types_max];
+	sctk_datatype_t user_types[SCTK_USER_DATA_TYPES_MAX];
 	sctk_spinlock_t lock;
 } user_types_t;
 
 typedef struct 
 {
-	sctk_other_datatype_t other_user_types[sctk_user_data_types_max];
+	sctk_other_datatype_t other_user_types[SCTK_USER_DATA_TYPES_MAX];
 	sctk_spinlock_t lock;
 } other_user_types_t;
 
 typedef struct 
 {
-	sctk_derived_type_t * user_types_struct[sctk_user_data_types_max];
+	sctk_derived_type_t * user_types_struct[SCTK_USER_DATA_TYPES_MAX];
 	sctk_spinlock_t lock;
 } user_types_struct_t;
 

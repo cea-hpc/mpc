@@ -310,8 +310,8 @@ static int __INTERNAL__PMPI_Query_thread (int *);
 static inline int
 sctk_is_derived_type (MPI_Datatype data_in)
 {
-  if ((data_in >= sctk_user_data_types + sctk_user_data_types_max) &&
-      (data_in < sctk_user_data_types + 2 * sctk_user_data_types_max))
+  if ((data_in >= SCTK_USER_DATA_TYPES + SCTK_USER_DATA_TYPES_MAX) &&
+      (data_in < SCTK_USER_DATA_TYPES + 2 * SCTK_USER_DATA_TYPES_MAX))
     {
       return 1;
     }
@@ -568,11 +568,11 @@ __sctk_init_mpi_errors ()
 #define MPI_ERROR_SUCESS() return MPI_SUCCESS
 
 #define mpi_check_type(datatype,comm)		\
-  if ((datatype >= sctk_user_data_types_max) && (sctk_is_derived_type(datatype) != 1)) \
+  if ((datatype >= SCTK_USER_DATA_TYPES_MAX) && (sctk_is_derived_type(datatype) != 1)) \
     MPI_ERROR_REPORT (comm, MPI_ERR_TYPE, "");
 
 #define mpi_check_type_create(datatype,comm)		\
-  if ((datatype >= sctk_user_data_types_max) && (sctk_is_derived_type(datatype) != 1) && ((datatype != MPI_UB) && (datatype != MPI_LB))) \
+  if ((datatype >= SCTK_USER_DATA_TYPES_MAX) && (sctk_is_derived_type(datatype) != 1) && ((datatype != MPI_UB) && (datatype != MPI_LB))) \
     MPI_ERROR_REPORT (comm, MPI_ERR_TYPE, "");
 
 static int is_finalized = 0;
@@ -732,7 +732,7 @@ static int mpi_check_op_type_func_MPI_MAXLOC(MPI_Datatype datatype){
 
 static int mpi_check_op_type(MPI_Op op, MPI_Datatype datatype){
 #if 1
-	if((op <= MPI_MAXLOC) && (datatype < sctk_user_data_types)){
+	if((op <= MPI_MAXLOC) && (datatype < SCTK_USER_DATA_TYPES)){
 		switch(op){
 			mpi_check_op_type_func(MPI_SUM);
 			mpi_check_op_type_func(MPI_MAX);
@@ -3432,7 +3432,7 @@ static int __INTERNAL__PMPI_Get_elements (MPI_Status * status, MPI_Datatype data
 
 	if (data_size != 0)
 	{
-		if (datatype - sctk_user_data_types < sctk_user_data_types_max)
+		if (datatype - SCTK_USER_DATA_TYPES < SCTK_USER_DATA_TYPES_MAX)
 		{
 			sctk_task_specific_t *task_specific;
 			sctk_other_datatype_t *other_user_types;
@@ -3444,8 +3444,8 @@ static int __INTERNAL__PMPI_Get_elements (MPI_Status * status, MPI_Datatype data
 			sctk_spinlock_lock (&(task_specific->other_user_types.lock));
 			other_user_types = task_specific->other_user_types.other_user_types;
 			sctk_assert (other_user_types != NULL);
-			count = other_user_types[datatype - sctk_user_data_types].count;
-			data_in = other_user_types[datatype - sctk_user_data_types].datatype;
+			count = other_user_types[datatype - SCTK_USER_DATA_TYPES].count;
+			data_in = other_user_types[datatype - SCTK_USER_DATA_TYPES].datatype;
 			res = __INTERNAL__PMPI_Type_size (data_in, &data_in_size);
 			sctk_spinlock_unlock (&(task_specific->other_user_types.lock));
 
@@ -3467,15 +3467,15 @@ static int __INTERNAL__PMPI_Get_elements (MPI_Status * status, MPI_Datatype data
 			*elements = 0;
 
 			sctk_spinlock_lock (&(task_specific->user_types_struct.lock));
-			sctk_assert (datatype - sctk_user_data_types - sctk_user_data_types_max < sctk_user_data_types_max);
+			sctk_assert (datatype - SCTK_USER_DATA_TYPES - SCTK_USER_DATA_TYPES_MAX < SCTK_USER_DATA_TYPES_MAX);
 			user_types = task_specific->user_types_struct.user_types_struct;
-			sctk_assert (user_types[datatype - sctk_user_data_types - sctk_user_data_types_max] != NULL);
-			count = user_types[datatype - sctk_user_data_types - sctk_user_data_types_max]->nb_elements;
+			sctk_assert (user_types[datatype - SCTK_USER_DATA_TYPES - SCTK_USER_DATA_TYPES_MAX] != NULL);
+			count = user_types[datatype - SCTK_USER_DATA_TYPES - SCTK_USER_DATA_TYPES_MAX]->nb_elements;
 
-			for(i = 0; i < user_types[datatype - sctk_user_data_types - sctk_user_data_types_max]->count; i++){
+			for(i = 0; i < user_types[datatype - SCTK_USER_DATA_TYPES - SCTK_USER_DATA_TYPES_MAX]->count; i++){
 			  (*elements)++;
-			  size -= user_types[datatype - sctk_user_data_types - sctk_user_data_types_max]->ends[i] -
-			    user_types[datatype - sctk_user_data_types - sctk_user_data_types_max]->begins[i] + 1;
+			  size -= user_types[datatype - SCTK_USER_DATA_TYPES - SCTK_USER_DATA_TYPES_MAX]->ends[i] -
+			    user_types[datatype - SCTK_USER_DATA_TYPES - SCTK_USER_DATA_TYPES_MAX]->begins[i] + 1;
 
 			  if(size <= 0){
 			    break;
@@ -9921,7 +9921,7 @@ PMPI_Type_free (MPI_Datatype * datatype)
   MPI_Comm comm = MPI_COMM_WORLD;
   int res = MPI_ERR_INTERN;
   mpi_check_type (*datatype, MPI_COMM_WORLD);
-  if(*datatype < sctk_user_data_types){
+  if(*datatype < SCTK_USER_DATA_TYPES){
     MPI_ERROR_REPORT (comm, MPI_ERR_TYPE, "");
   }
   res = __INTERNAL__PMPI_Type_free (datatype);
@@ -9956,7 +9956,7 @@ PMPI_Pack (void *inbuf,
 	} else if(incount == 0) {
 		return MPI_SUCCESS;
 	}
-	if(datatype < sctk_user_data_types_max){
+	if(datatype < SCTK_USER_DATA_TYPES_MAX){
 	  if(outcount < incount){
 	    MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
 	  }

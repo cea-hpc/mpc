@@ -524,12 +524,12 @@ static inline void __MPC_init_task_specific_t (sctk_task_specific_t * tmp)
 	/* Initialize derived datatypes to 0 */
 	int i;
 
-	for (i = 0; i < sctk_user_data_types_max; i++)
+	for (i = 0; i < SCTK_USER_DATA_TYPES_MAX; i++)
 	{
 		tmp->user_types.user_types[i] = 0;
 	}
 
-	for (i = 0; i < sctk_user_data_types_max; i++)
+	for (i = 0; i < SCTK_USER_DATA_TYPES_MAX; i++)
 	{
 		tmp->user_types_struct.user_types_struct[i] = 0;
 	}
@@ -679,7 +679,7 @@ MPC_CREATE_INTERN_FUNC (MINLOC);
 MPC_CREATE_INTERN_FUNC (MAXLOC);
 
 #define mpc_check_type(datatype,comm)		\
-  if (datatype >= sctk_user_data_types_max)	\
+  if (datatype >= SCTK_USER_DATA_TYPES_MAX)	\
     MPC_ERROR_REPORT (comm, MPC_ERR_TYPE, "");
 
 TODO("To optimize")
@@ -752,7 +752,7 @@ __mpc_check_task_msg__ (int task, int max_rank)
   mpc_check_task_msg_size(dest,comm," destination",rs);	\
   mpc_check_tag(tag,comm)
 
-static size_t mpc_common_types[sctk_user_data_types];
+static size_t mpc_common_types[SCTK_USER_DATA_TYPES];
 
 
 sctk_thread_key_t
@@ -1059,8 +1059,8 @@ int __MPC_Barrier (MPC_Comm comm)
 static inline int
 sctk_is_derived_type (MPC_Datatype data_in)
 {
-  if ((data_in >= sctk_user_data_types + sctk_user_data_types_max) &&
-      (data_in < sctk_user_data_types + 2 * sctk_user_data_types_max))
+  if ((data_in >= SCTK_USER_DATA_TYPES + SCTK_USER_DATA_TYPES_MAX) &&
+      (data_in < SCTK_USER_DATA_TYPES + 2 * SCTK_USER_DATA_TYPES_MAX))
     {
       return 1;
     }
@@ -1086,23 +1086,23 @@ PMPC_Type_free (MPC_Datatype * datatype_p)
 		MPC_ERROR_REPORT (MPC_COMM_WORLD, MPC_ERR_TYPE, "");
 	}
 
-	if (datatype < sctk_user_data_types)
+	if (datatype < SCTK_USER_DATA_TYPES)
 	{
 		SCTK_PROFIL_END (MPC_Type_free);
 /* 		return MPC_SUCCESS; */
 		MPC_ERROR_REPORT (MPC_COMM_WORLD, MPC_ERR_TYPE, "");
 	}
-	else if (datatype - sctk_user_data_types < sctk_user_data_types_max)
+	else if (datatype - SCTK_USER_DATA_TYPES < SCTK_USER_DATA_TYPES_MAX)
 	{
 		sctk_other_datatype_t *other_user_types;
 		sctk_spinlock_lock (&(task_specific->other_user_types.lock));
 		other_user_types = task_specific->other_user_types.other_user_types;
 		sctk_assert (other_user_types != NULL);
-		other_user_types[datatype - sctk_user_data_types].id_rank = 0;
-		other_user_types[datatype - sctk_user_data_types].used = 0;
-		other_user_types[datatype - sctk_user_data_types].size = 0;
-		other_user_types[datatype - sctk_user_data_types].count = 0;
-		other_user_types[datatype - sctk_user_data_types].datatype = 0;
+		other_user_types[datatype - SCTK_USER_DATA_TYPES].id_rank = 0;
+		other_user_types[datatype - SCTK_USER_DATA_TYPES].used = 0;
+		other_user_types[datatype - SCTK_USER_DATA_TYPES].size = 0;
+		other_user_types[datatype - SCTK_USER_DATA_TYPES].count = 0;
+		other_user_types[datatype - SCTK_USER_DATA_TYPES].datatype = 0;
 		sctk_spinlock_unlock (&(task_specific->other_user_types.lock));
 	}
 	else
@@ -1111,19 +1111,19 @@ PMPC_Type_free (MPC_Datatype * datatype_p)
 		sctk_derived_type_t **user_types;
 		sctk_derived_type_t *t;
 
-		sctk_assert (datatype - sctk_user_data_types - sctk_user_data_types_max < sctk_user_data_types_max);
+		sctk_assert (datatype - SCTK_USER_DATA_TYPES - SCTK_USER_DATA_TYPES_MAX < SCTK_USER_DATA_TYPES_MAX);
 		sctk_spinlock_lock (&(task_specific->user_types_struct.lock));
 			user_types = task_specific->user_types_struct.user_types_struct;
 			sctk_assert (user_types != NULL);
-			sctk_assert (user_types[datatype - sctk_user_data_types - sctk_user_data_types_max] != NULL);
-			t = user_types[datatype - sctk_user_data_types - sctk_user_data_types_max];
+			sctk_assert (user_types[datatype - SCTK_USER_DATA_TYPES - SCTK_USER_DATA_TYPES_MAX] != NULL);
+			t = user_types[datatype - SCTK_USER_DATA_TYPES - SCTK_USER_DATA_TYPES_MAX];
 			t->ref_count--;
 			if (t->ref_count == 0)
 			{
 				sctk_free (t->begins);
 				sctk_free (t->ends);
 				sctk_free (t);
-				user_types[datatype - sctk_user_data_types - sctk_user_data_types_max] = NULL;
+				user_types[datatype - SCTK_USER_DATA_TYPES - SCTK_USER_DATA_TYPES_MAX] = NULL;
 			}
 		sctk_spinlock_unlock (&(task_specific->user_types_struct.lock));
 	}
@@ -1152,18 +1152,18 @@ __MPC_Get_datatype_size (MPC_Datatype datatype,
     {
       return 1;
     }
-  if (datatype < sctk_user_data_types)
+  if (datatype < SCTK_USER_DATA_TYPES)
     {
       return mpc_common_types[datatype];
     }
-  else if (datatype - sctk_user_data_types < sctk_user_data_types_max)
+  else if (datatype - SCTK_USER_DATA_TYPES < SCTK_USER_DATA_TYPES_MAX)
     {
       sctk_other_datatype_t *other_user_types;
       size_t res;
       sctk_spinlock_lock (&(task_specific->other_user_types.lock));
       other_user_types = task_specific->other_user_types.other_user_types;
       sctk_assert (other_user_types != NULL);
-      res = other_user_types[datatype - sctk_user_data_types].size;
+      res = other_user_types[datatype - SCTK_USER_DATA_TYPES].size;
       sctk_spinlock_unlock (&(task_specific->other_user_types.lock));
       return res;
     }
@@ -1172,15 +1172,15 @@ __MPC_Get_datatype_size (MPC_Datatype datatype,
       size_t res;
       sctk_derived_type_t **user_types;
       sctk_spinlock_lock (&(task_specific->user_types_struct.lock));
-		  sctk_nodebug ("%lu relative datatype max %d", datatype - sctk_user_data_types - sctk_user_data_types_max, sctk_user_data_types_max);
-		  sctk_assert (datatype - sctk_user_data_types - sctk_user_data_types_max < sctk_user_data_types_max);
+		  sctk_nodebug ("%lu relative datatype max %d", datatype - SCTK_USER_DATA_TYPES - SCTK_USER_DATA_TYPES_MAX, SCTK_USER_DATA_TYPES_MAX);
+		  sctk_assert (datatype - SCTK_USER_DATA_TYPES - SCTK_USER_DATA_TYPES_MAX < SCTK_USER_DATA_TYPES_MAX);
 
 		  user_types = task_specific->user_types_struct.user_types_struct;
 
 		  sctk_assert (user_types != NULL);
-		  sctk_assert (user_types[datatype - sctk_user_data_types - sctk_user_data_types_max] != NULL);
+		  sctk_assert (user_types[datatype - SCTK_USER_DATA_TYPES - SCTK_USER_DATA_TYPES_MAX] != NULL);
 
-		  res = user_types[datatype - sctk_user_data_types - sctk_user_data_types_max]->size;
+		  res = user_types[datatype - SCTK_USER_DATA_TYPES - SCTK_USER_DATA_TYPES_MAX]->size;
 		  sctk_nodebug("Datatype_size = %d", res);
       sctk_spinlock_unlock (&(task_specific->user_types_struct.lock));
       return res;
@@ -1208,11 +1208,11 @@ PMPC_Sizeof_datatype (MPC_Datatype * datatype, size_t size, size_t count, MPC_Da
   task_specific = __MPC_get_task_specific ();
   sctk_spinlock_lock (&(task_specific->other_user_types.lock));
   other_user_types = task_specific->other_user_types.other_user_types;
-  for (i = 0; i < sctk_user_data_types_max; i++)
+  for (i = 0; i < SCTK_USER_DATA_TYPES_MAX; i++)
     {
       if (other_user_types[i].used == 0)
 	{
-	  *datatype = (sctk_user_data_types + i);
+	  *datatype = (SCTK_USER_DATA_TYPES + i);
 	  other_user_types[i].id_rank = i;
 	  other_user_types[i].used = 1;
 	  other_user_types[i].size = size;
@@ -1233,15 +1233,15 @@ int
 PMPC_Derived_use (MPC_Datatype datatype)
 {
   sctk_task_specific_t *task_specific;
-  if ((datatype >= sctk_user_data_types + sctk_user_data_types_max) &&
-      (datatype < sctk_user_data_types + 2 * sctk_user_data_types_max))
+  if ((datatype >= SCTK_USER_DATA_TYPES + SCTK_USER_DATA_TYPES_MAX) &&
+      (datatype < SCTK_USER_DATA_TYPES + 2 * SCTK_USER_DATA_TYPES_MAX))
     {
       sctk_derived_type_t **user_types;
       task_specific = __MPC_get_task_specific ();
       sctk_spinlock_lock (&(task_specific->user_types_struct.lock));
       user_types = task_specific->user_types_struct.user_types_struct;
-      user_types[datatype - sctk_user_data_types -
-		 sctk_user_data_types_max]->ref_count++;
+      user_types[datatype - SCTK_USER_DATA_TYPES -
+		 SCTK_USER_DATA_TYPES_MAX]->ref_count++;
       sctk_spinlock_unlock (&(task_specific->user_types_struct.lock));
     }
   MPC_ERROR_SUCESS ();
@@ -1262,14 +1262,14 @@ PMPC_Derived_datatype (MPC_Datatype * datatype,
 	task_specific = __MPC_get_task_specific ();
 	sctk_spinlock_lock (&(task_specific->user_types_struct.lock));
 	user_types = task_specific->user_types_struct.user_types_struct;
-	for (i = 0; i < sctk_user_data_types_max; i++)
+	for (i = 0; i < SCTK_USER_DATA_TYPES_MAX; i++)
     {
 		if (user_types[i] == NULL)
 		{
 			unsigned long j;
 			sctk_derived_type_t *t;
-			*datatype = (sctk_user_data_types + sctk_user_data_types_max + i);
-			sctk_nodebug("datatype = %d + %d + %d = %d", sctk_user_data_types, sctk_user_data_types_max, i, *datatype);
+			*datatype = (SCTK_USER_DATA_TYPES + SCTK_USER_DATA_TYPES_MAX + i);
+			sctk_nodebug("datatype = %d + %d + %d = %d", SCTK_USER_DATA_TYPES, SCTK_USER_DATA_TYPES_MAX, i, *datatype);
 			t = (sctk_derived_type_t *) sctk_malloc (sizeof (sctk_derived_type_t));
 			t->begins = (mpc_pack_absolute_indexes_t *) sctk_malloc (count * sizeof(mpc_pack_absolute_indexes_t));
 			t->ends = (mpc_pack_absolute_indexes_t *) sctk_malloc (count * sizeof(mpc_pack_absolute_indexes_t));
@@ -1280,7 +1280,7 @@ PMPC_Derived_datatype (MPC_Datatype * datatype,
 			user_types[i] = t;
 			t->size = 0;
 			t->nb_elements = count;
-			sctk_nodebug ("Create type %d with count %lu", sctk_user_data_types + sctk_user_data_types_max + i, count);
+			sctk_nodebug ("Create type %d with count %lu", SCTK_USER_DATA_TYPES + SCTK_USER_DATA_TYPES_MAX + i, count);
 			t->count = count;
 			t->ref_count = 1;
 			for (j = 0; j < count; j++)
@@ -1316,15 +1316,15 @@ PMPC_Copy_in_buffer (void *inbuffer, void *outbuffer, int count,
       task_specific = __MPC_get_task_specific ();
       sctk_spinlock_lock (&(task_specific->user_types_struct.lock));
       tmp = (char *) outbuffer;
-      sctk_assert (datatype - sctk_user_data_types -
-		   sctk_user_data_types_max < sctk_user_data_types_max);
+      sctk_assert (datatype - SCTK_USER_DATA_TYPES -
+		   SCTK_USER_DATA_TYPES_MAX < SCTK_USER_DATA_TYPES_MAX);
       user_types = task_specific->user_types_struct.user_types_struct;
       sctk_assert (user_types != NULL);
       sctk_assert (user_types
-		   [datatype - sctk_user_data_types -
-		    sctk_user_data_types_max] != NULL);
-      t = user_types[datatype - sctk_user_data_types -
-		     sctk_user_data_types_max];
+		   [datatype - SCTK_USER_DATA_TYPES -
+		    SCTK_USER_DATA_TYPES_MAX] != NULL);
+      t = user_types[datatype - SCTK_USER_DATA_TYPES -
+		     SCTK_USER_DATA_TYPES_MAX];
       for (j = 0; j < count; j++)
 	{
 	  size_t size;
@@ -1355,15 +1355,15 @@ PMPC_Copy_from_buffer (void *inbuffer, void *outbuffer, int count,
       task_specific = __MPC_get_task_specific ();
       sctk_spinlock_lock (&(task_specific->user_types_struct.lock));
       tmp = (char *) inbuffer;
-      sctk_assert (datatype - sctk_user_data_types -
-		   sctk_user_data_types_max < sctk_user_data_types_max);
+      sctk_assert (datatype - SCTK_USER_DATA_TYPES -
+		   SCTK_USER_DATA_TYPES_MAX < SCTK_USER_DATA_TYPES_MAX);
       user_types = task_specific->user_types_struct.user_types_struct;
       sctk_assert (user_types != NULL);
       sctk_assert (user_types
-		   [datatype - sctk_user_data_types -
-		    sctk_user_data_types_max] != NULL);
-      t = user_types[datatype - sctk_user_data_types -
-		     sctk_user_data_types_max];
+		   [datatype - SCTK_USER_DATA_TYPES -
+		    SCTK_USER_DATA_TYPES_MAX] != NULL);
+      t = user_types[datatype - SCTK_USER_DATA_TYPES -
+		     SCTK_USER_DATA_TYPES_MAX];
       for (j = 0; j < count; j++)
 	{
 	  size_t size;
@@ -1398,8 +1398,8 @@ PMPC_Is_derived_datatype (MPC_Datatype datatype, int *res,
 	*begins = NULL; /* No begins */
 	*count = 1; /* Just a single element */
 
-	if ((datatype >= sctk_user_data_types + sctk_user_data_types_max)
-	&& (datatype < sctk_user_data_types + 2 * sctk_user_data_types_max))
+	if ((datatype >= SCTK_USER_DATA_TYPES + SCTK_USER_DATA_TYPES_MAX)
+	&& (datatype < SCTK_USER_DATA_TYPES + 2 * SCTK_USER_DATA_TYPES_MAX))
 	{
 		/* Retrieve task specific context */
 		sctk_task_specific_t *task_specific;
@@ -1410,17 +1410,17 @@ PMPC_Is_derived_datatype (MPC_Datatype datatype, int *res,
 		sctk_derived_type_t **user_types;
 		user_types = task_specific->user_types_struct.user_types_struct;
 
-		sctk_nodebug("datatype(%d) - sctk_user_data_types(%d) - sctk_user_data_types_max(%d) ==  %d-%d-%d == %d",
-		datatype, sctk_user_data_types, sctk_user_data_types_max, datatype, sctk_user_data_types, sctk_user_data_types_max, datatype - sctk_user_data_types - sctk_user_data_types_max);
+		sctk_nodebug("datatype(%d) - SCTK_USER_DATA_TYPES(%d) - SCTK_USER_DATA_TYPES_MAX(%d) ==  %d-%d-%d == %d",
+		datatype, SCTK_USER_DATA_TYPES, SCTK_USER_DATA_TYPES_MAX, datatype, SCTK_USER_DATA_TYPES, SCTK_USER_DATA_TYPES_MAX, datatype - SCTK_USER_DATA_TYPES - SCTK_USER_DATA_TYPES_MAX);
 		*res = 1;
-		*ends = user_types[datatype - sctk_user_data_types - sctk_user_data_types_max]->ends;
-		*begins = user_types[datatype - sctk_user_data_types - sctk_user_data_types_max]->begins;
-		*count = user_types[datatype - sctk_user_data_types - sctk_user_data_types_max]->count;
+		*ends = user_types[datatype - SCTK_USER_DATA_TYPES - SCTK_USER_DATA_TYPES_MAX]->ends;
+		*begins = user_types[datatype - SCTK_USER_DATA_TYPES - SCTK_USER_DATA_TYPES_MAX]->begins;
+		*count = user_types[datatype - SCTK_USER_DATA_TYPES - SCTK_USER_DATA_TYPES_MAX]->count;
 
-		*lb = user_types[datatype - sctk_user_data_types - sctk_user_data_types_max]->lb;
-		*ub = user_types[datatype - sctk_user_data_types - sctk_user_data_types_max]->ub;
-		*is_lb = user_types[datatype - sctk_user_data_types - sctk_user_data_types_max]->is_lb;
-		*is_ub = user_types[datatype - sctk_user_data_types - sctk_user_data_types_max]->is_ub;
+		*lb = user_types[datatype - SCTK_USER_DATA_TYPES - SCTK_USER_DATA_TYPES_MAX]->lb;
+		*ub = user_types[datatype - SCTK_USER_DATA_TYPES - SCTK_USER_DATA_TYPES_MAX]->ub;
+		*is_lb = user_types[datatype - SCTK_USER_DATA_TYPES - SCTK_USER_DATA_TYPES_MAX]->is_lb;
+		*is_ub = user_types[datatype - SCTK_USER_DATA_TYPES - SCTK_USER_DATA_TYPES_MAX]->is_ub;
 		
 		
 		sctk_spinlock_unlock (&(task_specific->user_types_struct.lock));
@@ -1965,7 +1965,7 @@ void  MPC_Task_hook(int rank)
 }
 #endif
 
-#define mpc_init(name,t) mpc_common_types[name] = sizeof(t) ; sctk_assert(name >=0 ); sctk_assert(name < sctk_user_data_types)
+#define mpc_init(name,t) mpc_common_types[name] = sizeof(t) ; sctk_assert(name >=0 ); sctk_assert(name < SCTK_USER_DATA_TYPES)
 
 void
 __MPC_init_types ()
@@ -2448,7 +2448,7 @@ __MPC_Allreduce (void *sendbuf, void *recvbuf, mpc_msg_count count,
   __MPC_Comm_rank(comm, &rank, task_specific);
 
   sctk_nodebug ("Allreduce on %d with type %d", comm, datatype);
-  if ((op.u_func == NULL) && (datatype < sctk_user_data_types))
+  if ((op.u_func == NULL) && (datatype < SCTK_USER_DATA_TYPES))
     {
       func = op.func;
 
