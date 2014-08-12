@@ -139,7 +139,7 @@ extern "C"
   int sctk_get_init_vp (int i);
   void __MPC_init_types (void);
 
-#define SCTK_USER_DATA_TYPES 50
+#define SCTK_COMMON_DATA_TYPE_COUNT 50
 #define SCTK_USER_DATA_TYPES_MAX 265
 
   extern volatile unsigned sctk_long_long sctk_timer;

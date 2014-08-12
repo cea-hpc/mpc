@@ -307,19 +307,6 @@ static int __INTERNAL__PMPI_Comm_set_name (MPI_Comm, char *);
 static int __INTERNAL__PMPI_Init_thread (int *, char ***, int, int *);
 static int __INTERNAL__PMPI_Query_thread (int *);
 
-static inline int
-sctk_is_derived_type (MPI_Datatype data_in)
-{
-  if ((data_in >= SCTK_USER_DATA_TYPES + SCTK_USER_DATA_TYPES_MAX) &&
-      (data_in < SCTK_USER_DATA_TYPES + 2 * SCTK_USER_DATA_TYPES_MAX))
-    {
-      return 1;
-    }
-  else
-    {
-      return 0;
-    }
-}
 
 typedef struct
 {
@@ -568,11 +555,11 @@ __sctk_init_mpi_errors ()
 #define MPI_ERROR_SUCESS() return MPI_SUCCESS
 
 #define mpi_check_type(datatype,comm)		\
-  if ((datatype >= SCTK_USER_DATA_TYPES_MAX) && (sctk_is_derived_type(datatype) != 1)) \
+  if ((datatype >= SCTK_USER_DATA_TYPES_MAX) && (sctk_datatype_is_derived(datatype) != 1)) \
     MPI_ERROR_REPORT (comm, MPI_ERR_TYPE, "");
 
 #define mpi_check_type_create(datatype,comm)		\
-  if ((datatype >= SCTK_USER_DATA_TYPES_MAX) && (sctk_is_derived_type(datatype) != 1) && ((datatype != MPI_UB) && (datatype != MPI_LB))) \
+  if ((datatype >= SCTK_USER_DATA_TYPES_MAX) && (sctk_datatype_is_derived(datatype) != 1) && ((datatype != MPI_UB) && (datatype != MPI_LB))) \
     MPI_ERROR_REPORT (comm, MPI_ERR_TYPE, "");
 
 static int is_finalized = 0;
@@ -732,7 +719,7 @@ static int mpi_check_op_type_func_MPI_MAXLOC(MPI_Datatype datatype){
 
 static int mpi_check_op_type(MPI_Op op, MPI_Datatype datatype){
 #if 1
-	if((op <= MPI_MAXLOC) && (datatype < SCTK_USER_DATA_TYPES)){
+	if((op <= MPI_MAXLOC) && ( sctk_datatype_is_common( datatype) )){
 		switch(op){
 			mpi_check_op_type_func(MPI_SUM);
 			mpi_check_op_type_func(MPI_MAX);
@@ -1025,7 +1012,7 @@ __INTERNAL__PMPI_Send (void *buf, int count, MPI_Datatype datatype, int dest,
 		       int tag, MPI_Comm comm)
 {
   sctk_nodebug ("SEND buf %p type %d", buf, datatype);
-  if (sctk_is_derived_type (datatype) && (count != 0))
+  if (sctk_datatype_is_derived (datatype) && (count != 0))
     {
       int res;
 
@@ -1119,7 +1106,7 @@ __INTERNAL__PMPI_Recv (void *buf, int count, MPI_Datatype datatype,
 		       MPI_Status * status)
 {
   sctk_nodebug ("RECV buf %p", buf);
-  if (sctk_is_derived_type (datatype))
+  if (sctk_datatype_is_derived (datatype))
     {
       int res;
 
@@ -1258,7 +1245,7 @@ static int
 __INTERNAL__PMPI_Ssend (void *buf, int count, MPI_Datatype datatype, int dest,
 			int tag, MPI_Comm comm)
 {
-  if (sctk_is_derived_type (datatype) && (count != 0))
+  if (sctk_datatype_is_derived (datatype) && (count != 0))
     {
       return __INTERNAL__PMPI_Send (buf, count, datatype, dest, tag, comm);
     }
@@ -1283,7 +1270,7 @@ static int
 __INTERNAL__PMPI_Rsend (void *buf, int count, MPI_Datatype datatype, int dest,
 			int tag, MPI_Comm comm)
 {
-  if (sctk_is_derived_type (datatype) && (count != 0))
+  if (sctk_datatype_is_derived (datatype) && (count != 0))
     {
       return __INTERNAL__PMPI_Send (buf, count, datatype, dest, tag, comm);
     }
@@ -1598,7 +1585,7 @@ __INTERNAL__PMPI_Isend_test_req (void *buf, int count, MPI_Datatype datatype,
 				 int dest, int tag, MPI_Comm comm,
 				 MPI_Request * request, int is_valid_request)
 {
-  if (sctk_is_derived_type (datatype) && (count != 0))
+  if (sctk_datatype_is_derived (datatype) && (count != 0))
   {
     int res;
 
@@ -1718,7 +1705,7 @@ __INTERNAL__PMPI_Issend_test_req (void *buf, int count, MPI_Datatype datatype,
 				  int dest, int tag, MPI_Comm comm,
 				  MPI_Request * request, int is_valid_request)
 {
-  if (sctk_is_derived_type (datatype) && (count != 0))
+  if (sctk_datatype_is_derived (datatype) && (count != 0))
     {
       return __INTERNAL__PMPI_Isend_test_req (buf, count, datatype, dest, tag,
 					      comm, request,
@@ -1756,7 +1743,7 @@ __INTERNAL__PMPI_Irsend_test_req (void *buf, int count, MPI_Datatype datatype,
 				  int dest, int tag, MPI_Comm comm,
 				  MPI_Request * request, int is_valid_request)
 {
-  if (sctk_is_derived_type (datatype))
+  if (sctk_datatype_is_derived (datatype))
     {
       return __INTERNAL__PMPI_Isend_test_req (buf, count, datatype, dest, tag,
 					      comm, request,
@@ -1789,7 +1776,7 @@ __INTERNAL__PMPI_Irecv_test_req (void *buf, int count, MPI_Datatype datatype,
 				 int source, int tag, MPI_Comm comm,
 				 MPI_Request * request, int is_valid_request)
 {
-  if (sctk_is_derived_type (datatype))
+  if (sctk_datatype_is_derived (datatype))
     {
       int res;
 
@@ -2636,7 +2623,7 @@ static int
 __INTERNAL__PMPI_Type_contiguous (int count, MPI_Datatype data_in,
 				  MPI_Datatype * data_out)
 {
-  if (sctk_is_derived_type (data_in))
+  if (sctk_datatype_is_derived (data_in))
     {
       int res;
       mpc_pack_absolute_indexes_t *begins_in;
@@ -2687,7 +2674,7 @@ __INTERNAL__PMPI_Type_contiguous (int count, MPI_Datatype data_in,
       PMPC_Type_size (data_in, &size);
       size = size * count;
       sctk_nodebug("SIZE = %d", size);
-      return PMPC_Sizeof_datatype (data_out, size, count, &data_in);
+      return PMPC_Type_hcontiguous(data_out, size, count, &data_in);
     }
 }
 static int
@@ -2698,7 +2685,7 @@ __INTERNAL__PMPI_Type_vector (int count,
 {
   unsigned long stride_t;
   stride_t = (unsigned long) stride;
-  if (sctk_is_derived_type (old_type))
+  if (sctk_datatype_is_derived (old_type))
     {
       int res;
       mpc_pack_absolute_indexes_t *begins_in;
@@ -2801,7 +2788,7 @@ __INTERNAL__PMPI_Type_hvector (int count,
 {
   unsigned long stride_t;
   stride_t = (unsigned long) stride;
-  if (sctk_is_derived_type (old_type))
+  if (sctk_datatype_is_derived (old_type))
     {
       int res;
       mpc_pack_absolute_indexes_t *begins_in;
@@ -2903,7 +2890,7 @@ __INTERNAL__PMPI_Type_hvector (int count,
 
 static int __INTERNAL__PMPI_Type_indexed (int count, int blocklens[], int indices[], MPI_Datatype old_type, MPI_Datatype * newtype)
 {
-	if (sctk_is_derived_type (old_type))
+	if (sctk_datatype_is_derived (old_type))
 	{
 		int res;
 		mpc_pack_absolute_indexes_t *begins_in;
@@ -3008,7 +2995,7 @@ __INTERNAL__PMPI_Type_hindexed (int count,
 				MPI_Aint indices[],
 				MPI_Datatype old_type, MPI_Datatype * newtype)
 {
-  if (sctk_is_derived_type (old_type))
+  if (sctk_datatype_is_derived (old_type))
     {
       int res;
       mpc_pack_absolute_indexes_t *begins_in;
@@ -3138,7 +3125,7 @@ static int __INTERNAL__PMPI_Type_struct(int count, int blocklens[], MPI_Aint ind
 			mpc_pack_absolute_indexes_t lb, ub;
 			unsigned long count_in;
 
-			if (sctk_is_derived_type(old_types[i]))
+			if (sctk_datatype_is_derived(old_types[i]))
 			{
 				PMPC_Is_derived_datatype(old_types[i], &res, &begins_in, &ends_in, &count_in, &lb, &is_lb, &ub, &is_ub);
 			}
@@ -3166,7 +3153,7 @@ static int __INTERNAL__PMPI_Type_struct(int count, int blocklens[], MPI_Aint ind
 			unsigned long local_count_out = 0;
 			unsigned long prev_count_out = 0;
 
-			if (sctk_is_derived_type(old_types[i]))
+			if (sctk_datatype_is_derived(old_types[i]))
 			{
 				PMPC_Is_derived_datatype(old_types[i], &res, &begins_in, &ends_in, &count_in, &lb, &is_lb, &ub, &is_ub);
 				__INTERNAL__PMPI_Type_extent(old_types[i], (MPI_Aint *) &extent);
@@ -3432,22 +3419,24 @@ static int __INTERNAL__PMPI_Get_elements (MPI_Status * status, MPI_Datatype data
 
 	if (data_size != 0)
 	{
-		if (datatype - SCTK_USER_DATA_TYPES < SCTK_USER_DATA_TYPES_MAX)
+		if ( sctk_datatype_is_contiguous( datatype ) )
 		{
 			sctk_task_specific_t *task_specific;
-			sctk_other_datatype_t *other_user_types;
+			sctk_contiguous_datatype_t *contiguous_user_types;
 			MPI_Datatype data_in;
 			int data_in_size;
 			size_t count;
 			task_specific = __MPC_get_task_specific ();
 
-			sctk_spinlock_lock (&(task_specific->other_user_types.lock));
-			other_user_types = task_specific->other_user_types.other_user_types;
-			sctk_assert (other_user_types != NULL);
-			count = other_user_types[datatype - SCTK_USER_DATA_TYPES].count;
-			data_in = other_user_types[datatype - SCTK_USER_DATA_TYPES].datatype;
+			sctk_spinlock_lock (&(task_specific->contiguous_user_types.lock));
+			contiguous_user_types = task_specific->contiguous_user_types.contiguous_user_types;
+			sctk_assert (contiguous_user_types != NULL);
+			
+			count = contiguous_user_types[ MPC_TYPE_MAP_TO_CONTIGUOUS( datatype) ].count;
+			data_in = contiguous_user_types[ MPC_TYPE_MAP_TO_CONTIGUOUS( datatype) ].datatype;
+			
 			res = __INTERNAL__PMPI_Type_size (data_in, &data_in_size);
-			sctk_spinlock_unlock (&(task_specific->other_user_types.lock));
+			sctk_spinlock_unlock (&(task_specific->contiguous_user_types.lock));
 
 			size = status->count;
 			*elements = size/data_in_size;
@@ -3455,10 +3444,10 @@ static int __INTERNAL__PMPI_Get_elements (MPI_Status * status, MPI_Datatype data
 			  return res;
 			}
 		}
-		else if(sctk_is_derived_type(datatype))
+		else if(sctk_datatype_is_derived(datatype))
 		{
 			size_t count;
-			sctk_derived_type_t **user_types;
+			sctk_derived_datatype_t **user_types;
 			sctk_task_specific_t *task_specific;
 			unsigned long i;
 			task_specific = __MPC_get_task_specific ();
@@ -3467,15 +3456,18 @@ static int __INTERNAL__PMPI_Get_elements (MPI_Status * status, MPI_Datatype data
 			*elements = 0;
 
 			sctk_spinlock_lock (&(task_specific->user_types_struct.lock));
-			sctk_assert (datatype - SCTK_USER_DATA_TYPES - SCTK_USER_DATA_TYPES_MAX < SCTK_USER_DATA_TYPES_MAX);
+			sctk_assert ( MPC_TYPE_MAP_TO_DERIVED(datatype) < SCTK_USER_DATA_TYPES_MAX);
 			user_types = task_specific->user_types_struct.user_types_struct;
-			sctk_assert (user_types[datatype - SCTK_USER_DATA_TYPES - SCTK_USER_DATA_TYPES_MAX] != NULL);
-			count = user_types[datatype - SCTK_USER_DATA_TYPES - SCTK_USER_DATA_TYPES_MAX]->nb_elements;
+			
+			sctk_derived_datatype_t * target_type = user_types[MPC_TYPE_MAP_TO_DERIVED(datatype)];
+			
+			sctk_assert ( target_type != NULL);
 
-			for(i = 0; i < user_types[datatype - SCTK_USER_DATA_TYPES - SCTK_USER_DATA_TYPES_MAX]->count; i++){
+			count = target_type->nb_elements;
+
+			for(i = 0; i < count; i++){
 			  (*elements)++;
-			  size -= user_types[datatype - SCTK_USER_DATA_TYPES - SCTK_USER_DATA_TYPES_MAX]->ends[i] -
-			    user_types[datatype - SCTK_USER_DATA_TYPES - SCTK_USER_DATA_TYPES_MAX]->begins[i] + 1;
+			  size -= target_type->ends[i] - target_type->begins[i] + 1;
 
 			  if(size <= 0){
 			    break;
@@ -3516,7 +3508,7 @@ __INTERNAL__PMPI_Pack (void *inbuf,
 		       MPI_Comm comm)
 {
   int copied = 0;
-  if (sctk_is_derived_type (datatype))
+  if (sctk_datatype_is_derived (datatype))
     {
       int res;
       mpc_pack_absolute_indexes_t *begins_in;
@@ -3589,7 +3581,7 @@ __INTERNAL__PMPI_Unpack (void *inbuf,
 {
 	int copied = 0;
 	sctk_nodebug("MPI_Unpack insise = %d, position = %d, outcount = %d, datatype = %d, comm = %d", insize, *position, outcount, datatype, comm);
-	if (sctk_is_derived_type (datatype))
+	if (sctk_datatype_is_derived (datatype))
     {
       int res;
       mpc_pack_absolute_indexes_t *begins_out;
@@ -3653,7 +3645,7 @@ __INTERNAL__PMPI_Pack_size (int incount, MPI_Datatype datatype, MPI_Comm comm,
 {
   *size = 0;
   sctk_nodebug ("incount size %d", incount);
-  if (sctk_is_derived_type (datatype))
+  if (sctk_datatype_is_derived (datatype))
     {
       int res;
       mpc_pack_absolute_indexes_t *begins_in;
@@ -3704,7 +3696,7 @@ __INTERNAL__PMPI_Bcast (void *buffer, int count, MPI_Datatype datatype,
 {
   int res;
 
-  if (sctk_is_derived_type (datatype))
+  if (sctk_datatype_is_derived (datatype))
     {
       int rank;
       int size;
@@ -3744,7 +3736,7 @@ __INTERNAL__PMPI_Gather (void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 			 void *recvbuf, int recvcnt, MPI_Datatype recvtype,
 			 int root, MPI_Comm comm)
 {
-  if (sctk_is_derived_type (sendtype) || sctk_is_derived_type (recvtype))
+  if (sctk_datatype_is_derived (sendtype) || sctk_datatype_is_derived (recvtype))
     {
       MPI_Aint dsize;
       int size;
@@ -3803,7 +3795,7 @@ __INTERNAL__PMPI_Gatherv (void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 			  void *recvbuf, int *recvcnts, int *displs,
 			  MPI_Datatype recvtype, int root, MPI_Comm comm)
 {
-  if (sctk_is_derived_type (sendtype) || sctk_is_derived_type (recvtype))
+  if (sctk_datatype_is_derived (sendtype) || sctk_datatype_is_derived (recvtype))
     {
       MPI_Aint dsize;
       int size;
@@ -3861,7 +3853,7 @@ __INTERNAL__PMPI_Scatter (void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 			  void *recvbuf, int recvcnt, MPI_Datatype recvtype,
 			  int root, MPI_Comm comm)
 {
-  if (sctk_is_derived_type (sendtype) || sctk_is_derived_type (recvtype))
+  if (sctk_datatype_is_derived (sendtype) || sctk_datatype_is_derived (recvtype))
     {
       int size;
       int rank;
@@ -3921,7 +3913,7 @@ __INTERNAL__PMPI_Scatterv (void *sendbuf, int *sendcnts, int *displs,
 			   MPI_Datatype sendtype, void *recvbuf, int recvcnt,
 			   MPI_Datatype recvtype, int root, MPI_Comm comm)
 {
-  if (sctk_is_derived_type (sendtype) || sctk_is_derived_type (recvtype))
+  if (sctk_datatype_is_derived (sendtype) || sctk_datatype_is_derived (recvtype))
     {
       int size;
       int rank;
@@ -3982,7 +3974,7 @@ __INTERNAL__PMPI_Allgather (void *sendbuf, int sendcount,
 			    int recvcount, MPI_Datatype recvtype,
 			    MPI_Comm comm)
 {
-  if (sctk_is_derived_type (sendtype) || sctk_is_derived_type (recvtype))
+  if (sctk_datatype_is_derived (sendtype) || sctk_datatype_is_derived (recvtype))
     {
       int root = 0;
       int size;
@@ -4003,7 +3995,7 @@ __INTERNAL__PMPI_Allgatherv (void *sendbuf, int sendcount,
 			     int *recvcounts, int *displs,
 			     MPI_Datatype recvtype, MPI_Comm comm)
 {
-  if (sctk_is_derived_type (sendtype) || sctk_is_derived_type (recvtype))
+  if (sctk_datatype_is_derived (sendtype) || sctk_datatype_is_derived (recvtype))
     {
       int size;
       int root = 0;
@@ -4035,7 +4027,7 @@ __INTERNAL__PMPI_Alltoall (void *sendbuf, int sendcount,
 			   int recvcount, MPI_Datatype recvtype,
 			   MPI_Comm comm)
 {
-  if (sctk_is_derived_type (sendtype) || sctk_is_derived_type (recvtype))
+  if (sctk_datatype_is_derived (sendtype) || sctk_datatype_is_derived (recvtype))
     {
 TODO("Should be optimized like PMPC_Alltoall")
       int i;
@@ -4082,7 +4074,7 @@ __INTERNAL__PMPI_Alltoallv (void *sendbuf, int *sendcnts, int *sdispls,
 			    int *recvcnts, int *rdispls,
 			    MPI_Datatype recvtype, MPI_Comm comm)
 {
-  if (sctk_is_derived_type (sendtype) || sctk_is_derived_type (recvtype))
+  if (sctk_datatype_is_derived (sendtype) || sctk_datatype_is_derived (recvtype))
     {
 TODO("Should be optimized like PMPC_Alltoallv")
       int i;
@@ -4920,8 +4912,8 @@ __INTERNAL__PMPI_Reduce (void *sendbuf, void *recvbuf, int count,
 
   assume(recvbuf != NULL);
 
-  /* fprintf(stderr,"Reduce %d %d\n",sctk_is_derived_type (datatype),mpi_op->commute == 0); */
-  if (sctk_is_derived_type (datatype) || (mpi_op->commute == 0))
+  /* fprintf(stderr,"Reduce %d %d\n",sctk_datatype_is_derived (datatype),mpi_op->commute == 0); */
+  if (sctk_datatype_is_derived (datatype) || (mpi_op->commute == 0))
     {
       int size;
       int rank;
@@ -5077,7 +5069,7 @@ __INTERNAL__PMPI_Allreduce (void *sendbuf, void *recvbuf, int count,
 
   mpi_op = sctk_convert_to_mpc_op (op);
   mpc_op = mpi_op->op;
-  if (sctk_is_derived_type (datatype) || (mpi_op->commute == 0))
+  if (sctk_datatype_is_derived (datatype) || (mpi_op->commute == 0))
     {
       __INTERNAL__PMPI_Reduce (sendbuf, recvbuf, count, datatype, op, 0,
 			       comm);
@@ -9921,7 +9913,8 @@ PMPI_Type_free (MPI_Datatype * datatype)
   MPI_Comm comm = MPI_COMM_WORLD;
   int res = MPI_ERR_INTERN;
   mpi_check_type (*datatype, MPI_COMM_WORLD);
-  if(*datatype < SCTK_USER_DATA_TYPES){
+  
+  if( sctk_datatype_is_common(*datatype) ){
     MPI_ERROR_REPORT (comm, MPI_ERR_TYPE, "");
   }
   res = __INTERNAL__PMPI_Type_free (datatype);
@@ -9956,6 +9949,7 @@ PMPI_Pack (void *inbuf,
 	} else if(incount == 0) {
 		return MPI_SUCCESS;
 	}
+	
 	if(datatype < SCTK_USER_DATA_TYPES_MAX){
 	  if(outcount < incount){
 	    MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");

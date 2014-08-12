@@ -157,7 +157,7 @@ extern "C"
     SCTK_PROFIL_KEY (MPC_Scatterv);
     SCTK_PROFIL_KEY (MPC_Send);
     SCTK_PROFIL_KEY (MPC_Sendrecv);
-    SCTK_PROFIL_KEY (MPC_Sizeof_datatype);
+    SCTK_PROFIL_KEY (MPC_Type_hcontiguous);
     SCTK_PROFIL_KEY (MPC_Ssend);
     SCTK_PROFIL_KEY (MPC_Test);
     SCTK_PROFIL_KEY (MPC_Test_no_check);

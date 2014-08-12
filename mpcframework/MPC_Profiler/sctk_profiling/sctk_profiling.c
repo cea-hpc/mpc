@@ -166,7 +166,7 @@ sctk_profiling_init_keys ()
   SCTK_PROF_INIT_KEY (MPC_Scatterv);
   SCTK_PROF_INIT_KEY (MPC_Send);
   SCTK_PROF_INIT_KEY (MPC_Sendrecv);
-  SCTK_PROF_INIT_KEY (MPC_Sizeof_datatype);
+  SCTK_PROF_INIT_KEY (MPC_Type_hcontiguous);
   SCTK_PROF_INIT_KEY (MPC_Ssend);
   SCTK_PROF_INIT_KEY (MPC_Test);
   SCTK_PROF_INIT_KEY (MPC_Test_no_check);

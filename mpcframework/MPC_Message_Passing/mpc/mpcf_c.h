@@ -496,9 +496,9 @@ void ffunc (mpc_type_size) (MPC_Datatype * a, size_t * b, int *err)
   *err = MPC_Type_size (*a, b);
 }
 
-void ffunc (mpc_sizeof_datatype) (MPC_Datatype * a, size_t * b, int *err)
+void ffunc (MPC_Type_hcontiguous) (MPC_Datatype * a, size_t * b, int *err)
 {
-  *err = MPC_Sizeof_datatype (a, *b);
+  *err = MPC_Type_hcontiguous (a, *b);
 }
 
 void ffunc (mpc_type_free) (MPC_Datatype * datatype, int *err)

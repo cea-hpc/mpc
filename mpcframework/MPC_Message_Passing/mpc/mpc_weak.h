@@ -121,7 +121,7 @@
 #pragma weak MPC_Wtick = PMPC_Wtick
   /*Types */
 #pragma weak MPC_Type_size = PMPC_Type_size
-#pragma weak MPC_Sizeof_datatype = PMPC_Sizeof_datatype
+#pragma weak MPC_Type_hcontiguous = PMPC_Type_hcontiguous
 #pragma weak MPC_Type_free = PMPC_Type_free
 #pragma weak MPC_Copy_in_buffer = PMPC_Copy_in_buffer
 #pragma weak MPC_Copy_from_buffer = PMPC_Copy_from_buffer
