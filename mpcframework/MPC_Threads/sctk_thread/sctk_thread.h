@@ -137,7 +137,6 @@ extern "C"
   int sctk_thread_get_vp (void);
   int sctk_get_init_vp_and_nbvp (int i, int *nbVp);
   int sctk_get_init_vp (int i);
-  void __MPC_init_types (void);
 
 #define SCTK_COMMON_DATA_TYPE_COUNT 50
 #define SCTK_USER_DATA_TYPES_MAX 265
@@ -145,7 +144,6 @@ extern "C"
   extern volatile unsigned sctk_long_long sctk_timer;
 
   extern struct sctk_alloc_chain *sctk_thread_tls;
-  void __MPC_init_types (void);
 
 #define sctk_time_interval 10	/*millisecondes */
   int sctk_is_restarted (void);

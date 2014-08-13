@@ -73,6 +73,7 @@ MonoDomain *domain;
 #include "sctk_multirail_ib.h"
 #include "sctk_ib_prof.h"
 #include <sctk_low_level_comm.h>
+#include "mpc_datatypes.h"
 #endif
 #include <errno.h>
 extern int errno;
@@ -2195,7 +2196,7 @@ sctk_start_func (void *(*run) (void *), void *arg)
 	int thread_to_join = 0;
 
 #ifdef MPC_Message_Passing
-	__MPC_init_types ();
+	sctk_common_datatype_init();
 #endif
 
 	sctk_thread_key_create (&_sctk_thread_handler_key, (void (*)(void *)) NULL);

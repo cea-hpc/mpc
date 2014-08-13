@@ -495,10 +495,8 @@ enum MPIR_Combiner_enum {
   int MPC_Type_free (MPC_Datatype * datatype);
 
   /*MPC specific function */
-  int MPC_Copy_in_buffer (void *inbuffer, void *outbuffer, int count,
-			  MPC_Datatype datatype);
-  int MPC_Copy_from_buffer (void *inbuffer, void *outbuffer, int count,
-			    MPC_Datatype datatype);
+  int MPC_Copy_in_buffer (void *inbuffer, void *outbuffer, MPC_Datatype datatype);
+  int MPC_Copy_from_buffer (void *inbuffer, void *outbuffer, MPC_Datatype datatype);
 
   int MPC_Derived_datatype (MPC_Datatype * datatype,
 			    mpc_pack_absolute_indexes_t * begins,
@@ -770,15 +768,13 @@ enum MPIR_Combiner_enum {
 
   /*Types */
   int PMPC_Type_size (MPC_Datatype, size_t *);
-  int PMPC_Type_hcontiguous (MPC_Datatype *, size_t, size_t count, MPC_Datatype *data_in);
+  int PMPC_Type_hcontiguous (MPC_Datatype *outtype, size_t count, MPC_Datatype *data_in);
   int __MPC_Barrier (MPC_Comm comm);
   int PMPC_Type_free (MPC_Datatype * datatype);
 
   /*MPC specific function */
-  int PMPC_Copy_in_buffer (void *inbuffer, void *outbuffer, int count,
-			  MPC_Datatype datatype);
-  int PMPC_Copy_from_buffer (void *inbuffer, void *outbuffer, int count,
-			    MPC_Datatype datatype);
+  int PMPC_Copy_in_buffer (void *inbuffer, void *outbuffer, MPC_Datatype datatype);
+  int PMPC_Copy_from_buffer (void *inbuffer, void *outbuffer, MPC_Datatype datatype);
 
   int PMPC_Derived_datatype (MPC_Datatype * datatype,
 			    mpc_pack_absolute_indexes_t * begins,

@@ -2670,11 +2670,7 @@ __INTERNAL__PMPI_Type_contiguous (int count, MPI_Datatype data_in,
     }
   else
     {
-      size_t size;
-      PMPC_Type_size (data_in, &size);
-      size = size * count;
-      sctk_nodebug("SIZE = %d", size);
-      return PMPC_Type_hcontiguous(data_out, size, count, &data_in);
+      return PMPC_Type_hcontiguous(data_out, count, &data_in);
     }
 }
 static int
@@ -3455,9 +3451,9 @@ static int __INTERNAL__PMPI_Get_elements (MPI_Status * status, MPI_Datatype data
 
 			*elements = 0;
 
-			sctk_spinlock_lock (&(task_specific->user_types_struct.lock));
+			sctk_spinlock_lock (&(task_specific->derived_user_types.lock));
 			sctk_assert ( MPC_TYPE_MAP_TO_DERIVED(datatype) < SCTK_USER_DATA_TYPES_MAX);
-			user_types = task_specific->user_types_struct.user_types_struct;
+			user_types = task_specific->derived_user_types.derived_user_types;
 			
 			sctk_derived_datatype_t * target_type = user_types[MPC_TYPE_MAP_TO_DERIVED(datatype)];
 			
@@ -3474,7 +3470,7 @@ static int __INTERNAL__PMPI_Get_elements (MPI_Status * status, MPI_Datatype data
 			  }
 			}
 
-			sctk_spinlock_unlock (&(task_specific->user_types_struct.lock));
+			sctk_spinlock_unlock (&(task_specific->derived_user_types.lock));
 		}
 		else
 		{
