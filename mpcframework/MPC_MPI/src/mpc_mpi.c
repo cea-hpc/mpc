@@ -3459,7 +3459,7 @@ static int __INTERNAL__PMPI_Get_elements (MPI_Status * status, MPI_Datatype data
 			
 			sctk_assert ( target_type != NULL);
 
-			count = target_type->nb_elements;
+			count = target_type->count;
 
 			for(i = 0; i < count; i++){
 			  (*elements)++;

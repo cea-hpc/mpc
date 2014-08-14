@@ -67,34 +67,78 @@ typedef struct
 } sctk_contiguous_datatype_t;
 
 /** \brief sctk_contiguous_datatype_t initializer
- *  \this function is called from \ref PMPC_Type_hcontiguous
+ *  this function is called from \ref PMPC_Type_hcontiguous
+ *
+ *  \param type Type to be initialized
+ *  \param id_rank unique identifier of the  type which is also its offset in the contiguous type array
+ *  \param size Total size of the contiguous block 
+ *  \param count Number of element 
+ *  \param source original datatype id
+ * 
  */
-void sctk_contiguous_datatype_init( sctk_contiguous_datatype_t * type , size_t id_rank , size_t size, size_t count, sctk_datatype_t datatype );
+void sctk_contiguous_datatype_init( sctk_contiguous_datatype_t * type , size_t id_rank , size_t element_size, size_t count, sctk_datatype_t datatype );
+
+/** \brief Releases a contiguous datatype
+ *  
+ *  \param type This is the datatype to be freed
+ * 
+ *	\warning This call does not free the container
+ */
 void sctk_contiguous_datatype_release( sctk_contiguous_datatype_t * type );
 
 /************************************************************************/
 /* Derived Datatype                                                     */
 /************************************************************************/
 
-
+/** \brief More general datatype used to describe more complex datatypes
+ * 
+ *  Here a datatype is described as a list of segments which can themselves
+ *  gather several types.
+ * 
+ */
 typedef struct
 {
-	size_t size;
-	size_t nb_elements;
-	mpc_pack_absolute_indexes_t *begins;
-	mpc_pack_absolute_indexes_t *ends;
-	unsigned long count;
-	unsigned long ref_count;
-	mpc_pack_absolute_indexes_t lb;
-	mpc_pack_absolute_indexes_t ub;
-	int is_lb;
-	int is_ub;
+	/* Context */
+	size_t size; /**< Total size of the datatype */
+	unsigned long count; /**< Number of elements in the datatype */
+	unsigned long ref_count; /**< Ref counter to manage freeing */
+	/* Content */
+	mpc_pack_absolute_indexes_t *begins; /**< Begin offsets */
+	mpc_pack_absolute_indexes_t *ends; /**< End offsets */
+	/* Bounds */
+	mpc_pack_absolute_indexes_t lb; /**< Lower bound offset  */
+	int is_lb; /**< Does type has a lower bound */
+	mpc_pack_absolute_indexes_t ub; /**< Upper bound offset */
+	int is_ub; /**< Does type has an upper bound */
 } sctk_derived_datatype_t;
 
+
+/** \brief Initializes a derived datatype
+ *  
+ * This function allocates a derived datatype
+ * 
+ * \param type Datatype to build
+ * \param count number of offsets to store
+ * \param begins list of starting offsets in the datatype
+ * \param ends list of end offsets in the datatype
+ * \param lb offset of type lower bound
+ * \param is_lb tells if the type has a lowerbound
+ * \param ub offset for type upper bound
+ * \param is_b tells if the type has an upper bound
+ * 
+ */
 void sctk_derived_datatype_init( sctk_derived_datatype_t * type ,  unsigned long count,
                                  mpc_pack_absolute_indexes_t * begins,  mpc_pack_absolute_indexes_t * ends,
                                  mpc_pack_absolute_indexes_t lb, int is_lb,
 						         mpc_pack_absolute_indexes_t ub, int is_ub);
+
+/** \brief Releases a derived datatype
+ * 
+ *  \param type Type to be released
+ *  
+ *  \warning This call frees the container when the refcounter reaches 0
+ * 
+ */
 void sctk_derived_datatype_release( sctk_derived_datatype_t * type );
 
 /************************************************************************/

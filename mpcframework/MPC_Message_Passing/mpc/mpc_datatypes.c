@@ -126,7 +126,6 @@ void sctk_derived_datatype_init( sctk_derived_datatype_t * type ,  unsigned long
 
 			/* Fill the rest of the structure */
 			type->size = 0;
-			type->nb_elements = count;
 			type->count = count;
 			type->ref_count = 1;
 			
