@@ -24,7 +24,7 @@
 #define MPC_DATATYPES_H
 
 #include <stdlib.h>
-
+#include "sctk_atomics.h"
 #include "sctk_thread.h"
 #include "sctk_collective_communications.h" /* sctk_datatype_t */
 #include "mpcmp.h" /* mpc_pack_absolute_indexes_t */
@@ -61,9 +61,10 @@ typedef struct
 {
 	size_t id_rank; /**< Identifier of the contiguous type which is also its offset in the contiguous type table*/
 	size_t size; /**< Total size of the contiguous type */
+	size_t element_size; /**< Size of an element of type */
 	size_t count; /**< Number of elements of type "datatype" in the type */
 	sctk_datatype_t datatype; /**< Type packed within the datatype */
-	int used; /**< Flag telling if the datatype slot is free for use */
+	OPA_int_t ref_count; /**< Flag telling if the datatype slot is free for use */
 } sctk_contiguous_datatype_t;
 
 /** \brief sctk_contiguous_datatype_t initializer
@@ -71,7 +72,7 @@ typedef struct
  *
  *  \param type Type to be initialized
  *  \param id_rank unique identifier of the  type which is also its offset in the contiguous type array
- *  \param size Total size of the contiguous block 
+ *  \param element_size Size of a datatype element
  *  \param count Number of element 
  *  \param source original datatype id
  * 
@@ -79,10 +80,9 @@ typedef struct
 void sctk_contiguous_datatype_init( sctk_contiguous_datatype_t * type , size_t id_rank , size_t element_size, size_t count, sctk_datatype_t datatype );
 
 /** \brief Releases a contiguous datatype
- *  
  *  \param type This is the datatype to be freed
  * 
- *	\warning This call does not free the container
+ *	\warning This call does not free the container it empties the content whent the refcounter reaches 0
  */
 void sctk_contiguous_datatype_release( sctk_contiguous_datatype_t * type );
 
@@ -101,10 +101,11 @@ typedef struct
 	/* Context */
 	size_t size; /**< Total size of the datatype */
 	unsigned long count; /**< Number of elements in the datatype */
-	unsigned long ref_count; /**< Ref counter to manage freeing */
+	OPA_int_t ref_count; /**< Ref counter to manage freeing */
 	/* Content */
 	mpc_pack_absolute_indexes_t *begins; /**< Begin offsets */
 	mpc_pack_absolute_indexes_t *ends; /**< End offsets */
+	sctk_datatype_t * datatypes; /**< Datatypes for each block */
 	/* Bounds */
 	mpc_pack_absolute_indexes_t lb; /**< Lower bound offset  */
 	int is_lb; /**< Does type has a lower bound */
@@ -121,14 +122,18 @@ typedef struct
  * \param count number of offsets to store
  * \param begins list of starting offsets in the datatype
  * \param ends list of end offsets in the datatype
+ * \param datatypes List of datatypes for individual blocks
  * \param lb offset of type lower bound
  * \param is_lb tells if the type has a lowerbound
  * \param ub offset for type upper bound
  * \param is_b tells if the type has an upper bound
  * 
  */
-void sctk_derived_datatype_init( sctk_derived_datatype_t * type ,  unsigned long count,
-                                 mpc_pack_absolute_indexes_t * begins,  mpc_pack_absolute_indexes_t * ends,
+void sctk_derived_datatype_init( sctk_derived_datatype_t * type , 
+								 unsigned long count,
+                                 mpc_pack_absolute_indexes_t * begins,
+                                 mpc_pack_absolute_indexes_t * ends,
+                                 sctk_datatype_t * datatypes,
                                  mpc_pack_absolute_indexes_t lb, int is_lb,
 						         mpc_pack_absolute_indexes_t ub, int is_ub);
 
@@ -257,6 +262,8 @@ static inline int sctk_datatype_is_derived (MPC_Datatype data_in)
 /** Takes a local derived offset and translates it to a local offset */
 #define MPC_TYPE_MAP_FROM_DERIVED( a ) ( a + SCTK_USER_DATA_TYPES_MAX + SCTK_COMMON_DATA_TYPE_COUNT)
 
+/** \brief Macro to obtain the total number of datatypes */
+#define MPC_TYPE_COUNT (SCTK_COMMON_DATA_TYPE_COUNT + 2 * SCTK_COMMON_DATA_TYPE_COUNT)
 
 
 

@@ -24,6 +24,7 @@
 
 #include "mpc_reduction.h"
 #include <string.h>
+#include "mpcmp.h"
 
 /************************************************************************/
 /* Common Datatype                                                      */
@@ -87,34 +88,52 @@ size_t sctk_common_datatype_get_size( MPC_Datatype datatype )
 /* Contiguous Datatype                                                  */
 /************************************************************************/
 
-void sctk_contiguous_datatype_init( sctk_contiguous_datatype_t * type , size_t id_rank , size_t size, size_t count, sctk_datatype_t datatype )
+void sctk_contiguous_datatype_init( sctk_contiguous_datatype_t * type , size_t id_rank , size_t element_size, size_t count, sctk_datatype_t datatype )
 {
+	sctk_debug( "Cont create");
 	type->id_rank = id_rank;
-	type->size = size;
-	type->count = count;
+	type->size = element_size * count;
+	type->count =  count;
+	type->element_size = element_size;
 	type->datatype = datatype;
-	type->used = 1;
+	OPA_store_int(&type->ref_count, 1);
 }
 
 void sctk_contiguous_datatype_release( sctk_contiguous_datatype_t * type )
 {
-	memset( type, 0 , sizeof( sctk_contiguous_datatype_t ) );
+	sctk_debug( "Cont free REF : %d", sctk_atomics_load_int( &type->ref_count ) );
+	
+	if( OPA_decr_and_test_int(&type->ref_count) )
+	{
+		/* Counter == 0 then free */
+		memset( type, 0 , sizeof( sctk_contiguous_datatype_t ) );
+	}
 }
 
 /************************************************************************/
 /* Derived Datatype                                                     */
 /************************************************************************/
-void sctk_derived_datatype_init( sctk_derived_datatype_t * type ,  unsigned long count,
-                                 mpc_pack_absolute_indexes_t * begins,  mpc_pack_absolute_indexes_t * ends,
+void sctk_derived_datatype_init( sctk_derived_datatype_t * type ,
+								 unsigned long count,
+                                 mpc_pack_absolute_indexes_t * begins,
+                                 mpc_pack_absolute_indexes_t * ends,
+                                 sctk_datatype_t * datatypes,
                                  mpc_pack_absolute_indexes_t lb, int is_lb,
-						         mpc_pack_absolute_indexes_t ub, int is_ub)
+						         mpc_pack_absolute_indexes_t ub, int is_ub )
 {
-	
+			sctk_debug( "Derived create");
 			/* We now allocate the offset pairs */
 			type->begins = (mpc_pack_absolute_indexes_t *) sctk_malloc (count * sizeof(mpc_pack_absolute_indexes_t));
 			type->ends = (mpc_pack_absolute_indexes_t *) sctk_malloc (count * sizeof(mpc_pack_absolute_indexes_t));
+			
+			/*EXPAT*/
+			if( datatypes )
+				type->datatypes = (sctk_datatype_t *) sctk_malloc (count * sizeof(sctk_datatype_t));
+			else
+				type->datatypes = NULL;
 
-			if( !type->begins || !type->ends )
+			/*EXPAT*/
+			if( !type->begins || !type->ends /*|| !type->datatypes*/ )
 			{
 				sctk_fatal("Failled to allocate derived type content" );
 			}
@@ -123,11 +142,15 @@ void sctk_derived_datatype_init( sctk_derived_datatype_t * type ,  unsigned long
 
 			memcpy (type->begins, begins, count * sizeof (mpc_pack_absolute_indexes_t));
 			memcpy (type->ends, ends, count * sizeof (mpc_pack_absolute_indexes_t));
+			
+			/*EXPAT*/
+			if( datatypes )
+				memcpy (type->datatypes, datatypes, count * sizeof (sctk_datatype_t));
 
 			/* Fill the rest of the structure */
 			type->size = 0;
 			type->count = count;
-			type->ref_count = 1;
+			OPA_store_int(&type->ref_count, 1);
 			
 			/* Here we compute the total size of the type
 			 * by summing sections */
@@ -147,11 +170,47 @@ void sctk_derived_datatype_init( sctk_derived_datatype_t * type ,  unsigned long
 
 void sctk_derived_datatype_release( sctk_derived_datatype_t * type )
 {
-	type->ref_count--;
-	if (type->ref_count == 0)
+	sctk_debug( "Derived free REF : %d", sctk_atomics_load_int( &type->ref_count ) );
+	
+	
+	/* Here we decrement the refcounter atomically */
+	if ( OPA_decr_and_test_int(&type->ref_count) )
 	{
+		/*EXPAT*/
+		if( type->datatypes )
+		{
+			/* First call free on each embedded derived type
+			 * but we must do this only once per type, therefore
+			 * we accumulate counter for each type and only
+			 * call on those which are non-zero */
+			 short is_datatype_present[ MPC_TYPE_COUNT ];
+			 memset( is_datatype_present, 0 , sizeof( short ) * MPC_TYPE_COUNT );
+			
+			/* Accumulate present datatypes */
+			int i;
+			for( i = 0 ; i < type->count ; i++ )
+			{
+				if( sctk_datatype_kind( type->datatypes[i] ) == MPC_DATATYPES_UNKNOWN )
+				{
+					sctk_fatal ( "An erroneous datatype was provided");
+				}
+				
+				is_datatype_present[ type->datatypes[i] ] = 1;
+			}
+			
+			/* Increment the refcounters of present datatypes */
+			for( i = 0 ; i < type->count ; i++ )
+			{
+				if( is_datatype_present[ i ] )
+					PMPC_Type_free( &type->datatypes[i] );
+			}
+		}
+		
+		
+		/* Counter == 0 then free */
 		sctk_free (type->begins);
 		sctk_free (type->ends);
+		sctk_free (type->datatypes);
 		
 		memset( type, 0 , sizeof( sctk_derived_datatype_t ) );
 		

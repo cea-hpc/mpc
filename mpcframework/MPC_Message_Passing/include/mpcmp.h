@@ -74,7 +74,7 @@ extern "C"
 /* #define MPC_STATUS_SIZE 80 */
 /* #define MPC_REQUEST_SIZE 30 */
 
-/*   typedef unsigned long MPC_Datatype; */
+  /* Has to match an sctk_datatype_t */
   typedef unsigned int MPC_Datatype;
   typedef void (*MPC_Op_f) (const void *, void *, size_t, MPC_Datatype);
   typedef void (MPC_User_function) (void *, void *, int *, MPC_Datatype *);
@@ -501,18 +501,21 @@ enum MPIR_Combiner_enum {
   int MPC_Derived_datatype (MPC_Datatype * datatype,
 			    mpc_pack_absolute_indexes_t * begins,
 			    mpc_pack_absolute_indexes_t * ends,
+			    MPC_Datatype * types,
 			    unsigned long count,
 			    mpc_pack_absolute_indexes_t lb, int is_lb,
 			    mpc_pack_absolute_indexes_t ub, int is_ub);
 
-  int MPC_Is_derived_datatype (MPC_Datatype datatype, int *res,
-			       mpc_pack_absolute_indexes_t ** begins,
-			       mpc_pack_absolute_indexes_t ** ends,
-			       unsigned long *count,
-			       mpc_pack_absolute_indexes_t * lb, int *is_lb,
-			       mpc_pack_absolute_indexes_t * ub, int *is_ub);
+int MPC_Is_derived_datatype (MPC_Datatype datatype, int *res,
+							  mpc_pack_absolute_indexes_t ** begins,
+							  mpc_pack_absolute_indexes_t ** ends,
+							  MPC_Datatype **datatypes,
+							  unsigned long *count,
+							  mpc_pack_absolute_indexes_t * lb, int *is_lb,
+							  mpc_pack_absolute_indexes_t * ub, int *is_ub);
 
-  int MPC_Derived_use (MPC_Datatype datatype);
+  int MPC_Type_convert_to_derived( MPC_Datatype in_datatype, MPC_Datatype * out_datatype );
+  int MPC_Type_use (MPC_Datatype datatype);
 /*   int MPC_Get_keys (void **keys); */
 /*   int MPC_Set_keys (void *keys); */
 /*   int MPC_Get_requests (void **requests); */
@@ -779,18 +782,21 @@ enum MPIR_Combiner_enum {
   int PMPC_Derived_datatype (MPC_Datatype * datatype,
 			    mpc_pack_absolute_indexes_t * begins,
 			    mpc_pack_absolute_indexes_t * ends,
+			    MPC_Datatype * types,
 			    unsigned long count,
 			    mpc_pack_absolute_indexes_t lb, int is_lb,
 			    mpc_pack_absolute_indexes_t ub, int is_ub);
 
-  int PMPC_Is_derived_datatype (MPC_Datatype datatype, int *res,
-			       mpc_pack_absolute_indexes_t ** begins,
-			       mpc_pack_absolute_indexes_t ** ends,
-			       unsigned long *count,
-			       mpc_pack_absolute_indexes_t * lb, int *is_lb,
-			       mpc_pack_absolute_indexes_t * ub, int *is_ub);
+	int PMPC_Is_derived_datatype (MPC_Datatype datatype, int *res,
+								  mpc_pack_absolute_indexes_t ** begins,
+								  mpc_pack_absolute_indexes_t ** ends,
+								  MPC_Datatype **datatypes,
+								  unsigned long *count,
+								  mpc_pack_absolute_indexes_t * lb, int *is_lb,
+								  mpc_pack_absolute_indexes_t * ub, int *is_ub);
 
-  int PMPC_Derived_use (MPC_Datatype datatype);
+  int PMPC_Type_convert_to_derived( MPC_Datatype in_datatype, MPC_Datatype * out_datatype );
+  int PMPC_Type_use (MPC_Datatype datatype);
 /*   int PMPC_Get_keys (void **keys); */
 /*   int PMPC_Set_keys (void *keys); */
 /*   int PMPC_Get_requests (void **requests); */
