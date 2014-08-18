@@ -452,6 +452,7 @@ header_sh >> $1
 if test "$4" = "intel"; then
 cat <<EOF >> $1
 ADD_FLAG_PRIVATIZE="$2"
+MPC_USE_INTEL_COMPILER="1"
 EOF
 else
 if test "${COMPILER_LIST}" != "" ; then
