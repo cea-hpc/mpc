@@ -509,7 +509,6 @@ enum MPIR_Combiner_enum {
 int MPC_Is_derived_datatype (MPC_Datatype datatype, int *res,
 							  mpc_pack_absolute_indexes_t ** begins,
 							  mpc_pack_absolute_indexes_t ** ends,
-							  MPC_Datatype **datatypes,
 							  unsigned long *count,
 							  mpc_pack_absolute_indexes_t * lb, int *is_lb,
 							  mpc_pack_absolute_indexes_t * ub, int *is_ub);
@@ -790,7 +789,6 @@ int MPC_Is_derived_datatype (MPC_Datatype datatype, int *res,
 	int PMPC_Is_derived_datatype (MPC_Datatype datatype, int *res,
 								  mpc_pack_absolute_indexes_t ** begins,
 								  mpc_pack_absolute_indexes_t ** ends,
-								  MPC_Datatype **datatypes,
 								  unsigned long *count,
 								  mpc_pack_absolute_indexes_t * lb, int *is_lb,
 								  mpc_pack_absolute_indexes_t * ub, int *is_ub);

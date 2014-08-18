@@ -96,14 +96,16 @@ void sctk_contiguous_datatype_init( sctk_contiguous_datatype_t * type , size_t i
 	type->count =  count;
 	type->element_size = element_size;
 	type->datatype = datatype;
-	OPA_store_int(&type->ref_count, 1);
+	type->ref_count = 1;
 }
 
 void sctk_contiguous_datatype_release( sctk_contiguous_datatype_t * type )
 {
 	sctk_debug( "Cont free REF : %d", sctk_atomics_load_int( &type->ref_count ) );
 	
-	if( OPA_decr_and_test_int(&type->ref_count) )
+	type->ref_count--;
+	
+	if( type->ref_count == 0 )
 	{
 		/* Counter == 0 then free */
 		memset( type, 0 , sizeof( sctk_contiguous_datatype_t ) );
@@ -150,7 +152,7 @@ void sctk_derived_datatype_init( sctk_derived_datatype_t * type ,
 			/* Fill the rest of the structure */
 			type->size = 0;
 			type->count = count;
-			OPA_store_int(&type->ref_count, 1);
+			type->ref_count = 1;
 			
 			/* Here we compute the total size of the type
 			 * by summing sections */
@@ -173,8 +175,10 @@ void sctk_derived_datatype_release( sctk_derived_datatype_t * type )
 	sctk_debug( "Derived free REF : %d", sctk_atomics_load_int( &type->ref_count ) );
 	
 	
-	/* Here we decrement the refcounter atomically */
-	if ( OPA_decr_and_test_int(&type->ref_count) )
+	/* Here we decrement the refcounter */
+	type->ref_count--;
+	
+	if ( type->ref_count == 0 )
 	{
 		/*EXPAT*/
 		if( type->datatypes )
@@ -198,7 +202,7 @@ void sctk_derived_datatype_release( sctk_derived_datatype_t * type )
 				is_datatype_present[ type->datatypes[i] ] = 1;
 			}
 			
-			/* Increment the refcounters of present datatypes */
+			/* Decrement the refcounters of present datatypes */
 			for( i = 0 ; i < type->count ; i++ )
 			{
 				if( is_datatype_present[ i ] )
@@ -216,4 +220,85 @@ void sctk_derived_datatype_release( sctk_derived_datatype_t * type )
 		
 		sctk_free (type);
 	}
+}
+
+
+/************************************************************************/
+/* Datatype  Array                                                      */
+/************************************************************************/
+
+void Datatype_Array_init( struct Datatype_Array * da )
+{
+	int i;
+
+	for (i = 0; i < SCTK_USER_DATA_TYPES_MAX; i++)
+	{
+		da->derived_user_types[i] = NULL;
+		memset( &da->contiguous_user_types[i] , 0 , sizeof( sctk_contiguous_datatype_t) );
+	}
+	
+	da->datatype_lock = 0; 
+}
+
+
+int Datatype_Array_type_can_be_released( struct Datatype_Array * da, MPC_Datatype datatype )
+{
+	sctk_contiguous_datatype_t * cont = NULL;
+	sctk_derived_datatype_t * deriv = NULL;
+	
+	switch( sctk_datatype_kind( datatype ) )
+	{
+		case MPC_DATATYPES_COMMON:
+			return 0;
+		case MPC_DATATYPES_CONTIGUOUS :
+			cont = Datatype_Array_get_contiguous_datatype( da, datatype );
+			return SCTK_CONTIGUOUS_DATATYPE_IS_IN_USE( cont );
+		case MPC_DATATYPES_DERIVED:
+			deriv = Datatype_Array_get_derived_datatype( da, datatype );
+			return (deriv!=NULL)?1:0;
+		case MPC_DATATYPES_UNKNOWN:
+			return 0;
+	}
+	
+}
+
+
+void Datatype_Array_release( struct Datatype_Array * da )
+{
+	int i;
+
+	for( i = 0 ; i < (2 * SCTK_USER_DATA_TYPES_MAX + SCTK_COMMON_DATA_TYPE_COUNT) ; i++ )
+	{
+		int to_release = Datatype_Array_type_can_be_released( da, i ) ;
+		
+		if( to_release )
+		{
+			sctk_warning("Freeing unfreed datatype [%d] did you call MPI_Type_free on all your MPI_Datatypes ?", i );
+			MPC_Datatype tmp = i;
+			PMPC_Type_free( &tmp );
+		}
+	}
+}
+
+sctk_contiguous_datatype_t *  Datatype_Array_get_contiguous_datatype( struct Datatype_Array * da ,  MPC_Datatype datatype)
+{
+	assume( sctk_datatype_is_contiguous( datatype ) );
+
+	/* Return the pointed sctk_contiguous_datatype_t */ 
+	return &(da->contiguous_user_types[ MPC_TYPE_MAP_TO_CONTIGUOUS( datatype ) ]);	
+}
+
+
+sctk_derived_datatype_t * Datatype_Array_get_derived_datatype( struct Datatype_Array * da  ,  MPC_Datatype datatype)
+{
+	assume( sctk_datatype_is_derived( datatype ) );
+	
+	return da->derived_user_types[ MPC_TYPE_MAP_TO_DERIVED(datatype) ];
+}
+
+void Datatype_Array_set_derived_datatype( struct Datatype_Array * da ,  MPC_Datatype datatype, sctk_derived_datatype_t * value )
+{
+	assume( sctk_datatype_is_derived( datatype ) );
+	
+	da->derived_user_types[ MPC_TYPE_MAP_TO_DERIVED(datatype) ] = value;
 }

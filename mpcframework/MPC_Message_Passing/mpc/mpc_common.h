@@ -28,21 +28,6 @@
 #include "mpc_datatypes.h"
 
 /************************************************************************/
-/* Datatypes containers                                                 */
-/************************************************************************/
-typedef struct 
-{
-	sctk_contiguous_datatype_t contiguous_user_types[SCTK_USER_DATA_TYPES_MAX];
-	sctk_spinlock_t lock;
-} contiguous_user_types_t;
-
-typedef struct 
-{
-	sctk_derived_datatype_t * derived_user_types[SCTK_USER_DATA_TYPES_MAX];
-	sctk_spinlock_t lock;
-} derived_user_types_t;
-
-/************************************************************************/
 /* Buffers definition                                                   */
 /************************************************************************/
  
@@ -114,9 +99,9 @@ typedef struct sctk_task_specific_s
 	int finalize_done; /**< =1 if the task has already called MPI_Finalize()  */
 	int thread_level;
 
-	/* Types */
-	contiguous_user_types_t contiguous_user_types; /**< Lockable array containing contiguous datatypes */
-	derived_user_types_t derived_user_types;  /**< Lockable array containing derived datatypes */
+	/* Data-types */
+	struct Datatype_Array datatype_array;
+
 
 	/* Communicator handling */
 	mpc_per_communicator_t*per_communicator;
@@ -134,6 +119,25 @@ typedef struct sctk_task_specific_s
 /** \brief Retrieves current thread task specific context
  */
 struct sctk_task_specific_s *__MPC_get_task_specific ();
+
+/** \brief Unlock the datatype array
+ */
+static inline void sctk_datatype_lock( sctk_task_specific_t *task_specific )
+{
+	sctk_assert( task_specific != NULL );
+	Datatype_Array_lock( &task_specific->datatype_array );
+}
+
+/** \brief Lock the datatype array
+ */
+static inline void sctk_datatype_unlock( sctk_task_specific_t *task_specific )
+{
+	sctk_assert( task_specific != NULL );
+	Datatype_Array_unlock( &task_specific->datatype_array );
+}
+
+sctk_contiguous_datatype_t * sctk_task_specific_get_contiguous_datatype( sctk_task_specific_t *task_specific, MPC_Datatype datatype );
+sctk_derived_datatype_t * sctk_task_specific_get_derived_datatype(  sctk_task_specific_t *task_specific, MPC_Datatype datatype );
 
 /** \brief Retrieves a given per communicator context from task CTX
  */

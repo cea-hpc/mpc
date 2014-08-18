@@ -28,6 +28,7 @@
 #include "sctk_thread.h"
 #include "sctk_collective_communications.h" /* sctk_datatype_t */
 #include "mpcmp.h" /* mpc_pack_absolute_indexes_t */
+#include "sctk_spinlock.h"
 
 /************************************************************************/
 /* Common Datatype                                                      */
@@ -64,7 +65,7 @@ typedef struct
 	size_t element_size; /**< Size of an element of type */
 	size_t count; /**< Number of elements of type "datatype" in the type */
 	sctk_datatype_t datatype; /**< Type packed within the datatype */
-	OPA_int_t ref_count; /**< Flag telling if the datatype slot is free for use */
+	unsigned int ref_count; /**< Flag telling if the datatype slot is free for use */
 } sctk_contiguous_datatype_t;
 
 /** \brief sctk_contiguous_datatype_t initializer
@@ -86,6 +87,10 @@ void sctk_contiguous_datatype_init( sctk_contiguous_datatype_t * type , size_t i
  */
 void sctk_contiguous_datatype_release( sctk_contiguous_datatype_t * type );
 
+/** \brief Theses macros allow us to manipulate the contiguous datatype refcounter more simply */
+#define SCTK_CONTIGUOUS_DATATYPE_IS_FREE( datatype_ptr ) (!(sctk_atomics_load_int( &datatype_ptr->ref_count )))
+#define SCTK_CONTIGUOUS_DATATYPE_IS_IN_USE( datatype_ptr ) (sctk_atomics_load_int( &datatype_ptr->ref_count ))
+
 /************************************************************************/
 /* Derived Datatype                                                     */
 /************************************************************************/
@@ -101,7 +106,7 @@ typedef struct
 	/* Context */
 	size_t size; /**< Total size of the datatype */
 	unsigned long count; /**< Number of elements in the datatype */
-	OPA_int_t ref_count; /**< Ref counter to manage freeing */
+	unsigned int  ref_count; /**< Ref counter to manage freeing */
 	/* Content */
 	mpc_pack_absolute_indexes_t *begins; /**< Begin offsets */
 	mpc_pack_absolute_indexes_t *ends; /**< End offsets */
@@ -266,9 +271,88 @@ static inline int sctk_datatype_is_derived (MPC_Datatype data_in)
 #define MPC_TYPE_COUNT (SCTK_COMMON_DATA_TYPE_COUNT + 2 * SCTK_COMMON_DATA_TYPE_COUNT)
 
 
+/************************************************************************/
+/* Datatype  Array                                                      */
+/************************************************************************/
 
+/** \brief This structure gathers contiguous and derived datatypes in the same lockable structure
+ * 
+ *  This structure is the entry point for user defined datatypes
+ *  it is inintialized in \ref sctk_task_specific_t
+ */
+struct Datatype_Array
+{
+	sctk_contiguous_datatype_t contiguous_user_types[SCTK_USER_DATA_TYPES_MAX]; /**< Contiguous datatype array */
+	sctk_derived_datatype_t * derived_user_types[SCTK_USER_DATA_TYPES_MAX];  /**< Derived datatype array */
+	sctk_spinlock_t datatype_lock; /**< A lock protecting both datatypes types */
+};
 
+/** \brief Initializes the datatype array
+ *  
+ *  This sets every datatype to not initialized
+ * 
+ *  \param da A pointer to the datatype array to be initialized
+ */
+void Datatype_Array_init( struct Datatype_Array * da );
 
+/** \brief Helper funtion to release only allocated datatypes 
+ * 
+ *  \param da A pointer to the datatype array
+ *  \param datatype The datatype to be freed
+ */
+int Datatype_Array_type_can_be_released( struct Datatype_Array * da, MPC_Datatype datatype );
+
+/** \brief Releases the datatype array and types not previously freed
+ *  \param da A pointer to the datatype array
+ */
+void Datatype_Array_release( struct Datatype_Array * da );
+
+/** \brief Locks the datatype array 
+ *  \param da A pointer to the datatype array we want to lock
+ */
+static inline void Datatype_Array_lock( struct Datatype_Array * da )
+{
+	sctk_spinlock_lock (&da->datatype_lock);
+}
+
+/** \brief Unlocks the datatype array 
+ *  \param da A pointer to the datatype array we want to unlock
+ */
+static inline void Datatype_Array_unlock( struct Datatype_Array * da )
+{
+	sctk_spinlock_unlock (&da->datatype_lock);
+}
+
+/** \brief Returns a pointer to a contiguous datatype
+ *  \param da A pointer to the datatype array
+ *  \param datatype The datatype ID we want to retrieve
+ * 
+ *  \return Returns the cell of the requested datatype (allocated or not !)
+ * 
+ *  \warning The datatype must be a contiguous datatype note that event unallocated datatypes are returned !
+ */
+sctk_contiguous_datatype_t *  Datatype_Array_get_contiguous_datatype( struct Datatype_Array * da ,  MPC_Datatype datatype);
+
+/** \brief Returns a pointer to a derived datatype
+ *  \param da A pointer to the datatype array
+ *  \param datatype The datatype ID we want to retrieve
+ * 
+ *  \return NULL id not allocated a valid pointer otherwise
+ * 
+ *  \warning The datatype must be a derived datatype
+ */
+sctk_derived_datatype_t * Datatype_Array_get_derived_datatype( struct Datatype_Array * da  ,  MPC_Datatype datatype);
+
+/** \brief Sets a pointer to a contiguous datatype in the datatype array
+ *  \param da A pointer to the datatype array
+ *  \param datatype The datatype ID we want to set
+ *  \param value the pointer to the datatype array
+ * 
+ *  \return NULL id not allocated a valid pointer otherwise
+ * 
+ *  \warning The datatype must be a derived datatype
+ */
+void Datatype_Array_set_derived_datatype( struct Datatype_Array * da ,  MPC_Datatype datatype, sctk_derived_datatype_t * value );
 
 
 #endif /* MPC_DATATYPES_H */
