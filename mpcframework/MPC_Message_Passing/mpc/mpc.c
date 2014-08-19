@@ -1216,6 +1216,8 @@ static inline size_t __MPC_Get_datatype_size (MPC_Datatype datatype, sctk_task_s
 	
 	
 	size_t ret;
+	sctk_contiguous_datatype_t *contiguous_type_target;
+	sctk_derived_datatype_t * derived_type_target;
 	
 	/* Compute the size in function of the datatype */
 	switch( sctk_datatype_kind( datatype ) )
@@ -1229,16 +1231,11 @@ static inline size_t __MPC_Get_datatype_size (MPC_Datatype datatype, sctk_task_s
 		case MPC_DATATYPES_CONTIGUOUS:
 			/* Contiguous datatype size */
 			
-			/* Lock contiguous type array */
-			sctk_datatype_lock( task_specific );
-
 			/* Get a pointer to the type of interest */
-			sctk_contiguous_datatype_t *contiguous_type_target = sctk_task_specific_get_contiguous_datatype(task_specific, datatype);
+			contiguous_type_target = sctk_task_specific_get_contiguous_datatype(task_specific, datatype);
 			/* Extract its size field */
 			ret = contiguous_type_target->size;
-		
-			/* Unlock the contiguous datatype array */
-			sctk_datatype_unlock( task_specific );
+
 			/* Return */
 			return ret;
 		break;
@@ -1246,11 +1243,9 @@ static inline size_t __MPC_Get_datatype_size (MPC_Datatype datatype, sctk_task_s
 		case MPC_DATATYPES_DERIVED:
 			/* Derived datatype size */
 			
-			/* Lock the derived datatype array */
-			sctk_datatype_lock( task_specific );
 			
 			/* Get a pointer to the object of interest */
-			sctk_derived_datatype_t * derived_type_target = sctk_task_specific_get_derived_datatype(task_specific, datatype);
+			derived_type_target = sctk_task_specific_get_derived_datatype(task_specific, datatype);
 			
 			/* Is it allocated ? */
 			if( !derived_type_target )
@@ -1261,9 +1256,7 @@ static inline size_t __MPC_Get_datatype_size (MPC_Datatype datatype, sctk_task_s
 			
 			/* Extract the size field */
 			ret = derived_type_target->size;
-		
-			/* Unlock the derived datatype array */
-			sctk_datatype_unlock( task_specific );
+
 			/* Return */
 			return ret;
 		break;
@@ -1618,9 +1611,7 @@ int PMPC_Copy_in_buffer (void *inbuffer, void *outbuffer, MPC_Datatype datatype)
 		
 		/* Retrieve task ctx */
 		sctk_task_specific_t *task_specific = __MPC_get_task_specific ();
-		
-		/* Lock derived datatype array */
-		sctk_datatype_lock( task_specific );
+
 		tmp = (char *) outbuffer;
 
 		/* Get a pointer to the target type */
@@ -1641,9 +1632,7 @@ int PMPC_Copy_in_buffer (void *inbuffer, void *outbuffer, MPC_Datatype datatype)
 			/* Increment offset in packed block */
 			tmp += size;
 		}
-		
-		/* Unlock derived datatype array */
-		sctk_datatype_unlock( task_specific );
+
 	}
 	else
 	{
@@ -1667,9 +1656,7 @@ int PMPC_Copy_from_buffer (void *inbuffer, void *outbuffer, MPC_Datatype datatyp
 		
 		/* Retrieve task ctx */
 		sctk_task_specific_t *task_specific = __MPC_get_task_specific ();
-		
-		/* Lock derived datatype array */
-		sctk_datatype_lock( task_specific );
+
 		
 		tmp = (char *) inbuffer;
 		
@@ -1693,8 +1680,6 @@ int PMPC_Copy_from_buffer (void *inbuffer, void *outbuffer, MPC_Datatype datatyp
 			tmp += size;
 		}
 		
-		/* Unlock derived datatype array */
-		sctk_datatype_unlock( task_specific );
 	}
 	else
 	{
@@ -1731,9 +1716,6 @@ int MPC_Is_derived_datatype (MPC_Datatype datatype, int *res, sctk_derived_datat
 		sctk_task_specific_t *task_specific;
 		task_specific = __MPC_get_task_specific ();
 		
-		/* Lock the derived datatype array */
-		sctk_datatype_lock( task_specific );
-		
 		sctk_nodebug("datatype(%d) - SCTK_COMMON_DATA_TYPE_COUNT(%d) - SCTK_USER_DATA_TYPES_MAX(%d) ==  %d-%d-%d == %d",
 		datatype, SCTK_COMMON_DATA_TYPE_COUNT , SCTK_USER_DATA_TYPES_MAX, datatype, SCTK_COMMON_DATA_TYPE_COUNT , SCTK_USER_DATA_TYPES_MAX, MPC_TYPE_MAP_TO_DERIVED( datatype ));
 		
@@ -1751,8 +1733,6 @@ int MPC_Is_derived_datatype (MPC_Datatype datatype, int *res, sctk_derived_datat
 		/* Copy its content to out arguments */
 		memcpy( output_datatype , target_type , sizeof( sctk_derived_datatype_t ) );
 		
-		/* Unlock the array */
-		sctk_datatype_unlock( task_specific );
 	}
 	
 	MPC_ERROR_SUCESS ();
