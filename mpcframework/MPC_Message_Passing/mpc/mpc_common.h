@@ -144,6 +144,9 @@ sctk_derived_datatype_t * sctk_task_specific_get_derived_datatype(  sctk_task_sp
 mpc_per_communicator_t* sctk_thread_getspecific_mpc_per_comm(struct sctk_task_specific_s* task_specific,sctk_communicator_t comm);
 
 
+int MPC_Is_derived_datatype (MPC_Datatype datatype, int *res, sctk_derived_datatype_t *output_datatype );
+
+
 /************************************************************************/
 /* Per thread context                                                   */
 /************************************************************************/

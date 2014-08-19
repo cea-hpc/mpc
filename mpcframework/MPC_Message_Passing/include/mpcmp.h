@@ -506,13 +506,6 @@ enum MPIR_Combiner_enum {
 			    mpc_pack_absolute_indexes_t lb, int is_lb,
 			    mpc_pack_absolute_indexes_t ub, int is_ub);
 
-int MPC_Is_derived_datatype (MPC_Datatype datatype, int *res,
-							  mpc_pack_absolute_indexes_t ** begins,
-							  mpc_pack_absolute_indexes_t ** ends,
-							  unsigned long *count,
-							  mpc_pack_absolute_indexes_t * lb, int *is_lb,
-							  mpc_pack_absolute_indexes_t * ub, int *is_ub);
-
   int MPC_Type_convert_to_derived( MPC_Datatype in_datatype, MPC_Datatype * out_datatype );
   int MPC_Type_use (MPC_Datatype datatype);
 /*   int MPC_Get_keys (void **keys); */
@@ -785,13 +778,6 @@ int MPC_Is_derived_datatype (MPC_Datatype datatype, int *res,
 			    unsigned long count,
 			    mpc_pack_absolute_indexes_t lb, int is_lb,
 			    mpc_pack_absolute_indexes_t ub, int is_ub);
-
-	int PMPC_Is_derived_datatype (MPC_Datatype datatype, int *res,
-								  mpc_pack_absolute_indexes_t ** begins,
-								  mpc_pack_absolute_indexes_t ** ends,
-								  unsigned long *count,
-								  mpc_pack_absolute_indexes_t * lb, int *is_lb,
-								  mpc_pack_absolute_indexes_t * ub, int *is_ub);
 
   int PMPC_Type_convert_to_derived( MPC_Datatype in_datatype, MPC_Datatype * out_datatype );
   int PMPC_Type_use (MPC_Datatype datatype);

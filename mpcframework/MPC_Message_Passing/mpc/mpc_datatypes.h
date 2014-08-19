@@ -88,8 +88,8 @@ void sctk_contiguous_datatype_init( sctk_contiguous_datatype_t * type , size_t i
 void sctk_contiguous_datatype_release( sctk_contiguous_datatype_t * type );
 
 /** \brief Theses macros allow us to manipulate the contiguous datatype refcounter more simply */
-#define SCTK_CONTIGUOUS_DATATYPE_IS_FREE( datatype_ptr ) (!(sctk_atomics_load_int( &datatype_ptr->ref_count )))
-#define SCTK_CONTIGUOUS_DATATYPE_IS_IN_USE( datatype_ptr ) (sctk_atomics_load_int( &datatype_ptr->ref_count ))
+#define SCTK_CONTIGUOUS_DATATYPE_IS_FREE( datatype_ptr ) (!datatype_ptr->ref_count)
+#define SCTK_CONTIGUOUS_DATATYPE_IS_IN_USE( datatype_ptr ) (datatype_ptr->ref_count)
 
 /************************************************************************/
 /* Derived Datatype                                                     */

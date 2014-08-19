@@ -1106,6 +1106,8 @@ int PMPC_Type_free (MPC_Datatype * datatype_p)
 	/* Dereference the datatype pointer for convenience */
 	MPC_Datatype datatype = *datatype_p;
 	
+	sctk_debug("TYPE FREE %d\n", *datatype_p );
+	
 	SCTK_PROFIL_START (MPC_Type_free);
 	
 	/* Retrieve task context */
@@ -1338,8 +1340,11 @@ int PMPC_Type_hcontiguous (MPC_Datatype * datatype, size_t count, MPC_Datatype *
 			/* Initialize the datatype */
 			sctk_contiguous_datatype_init( current_type , new_id , size, count, *data_in );
 
+
+			#if 0
 			/* Increment target datatype refcounter here we do it once as there is only a single datatype */
 			PMPC_Type_use( *data_in );
+			#endif
 
 			/* Unlock the array */
 			sctk_datatype_unlock( task_specific );
@@ -1477,7 +1482,10 @@ int PMPC_Derived_datatype (MPC_Datatype * datatype,
 			/* Now we register the datatype pointer in the derived datatype array */
 			sctk_task_specific_set_derived_datatype( task_specific, new_id , new_type);
 			
+			sctk_debug("NEW type %d\n", *new_type );
+			
 			/*EXPAT*/
+			#if 0
 			if( types )
 			{
 				/* Now we increment the embedded type refcounter only once per freed datatype
@@ -1510,6 +1518,7 @@ int PMPC_Derived_datatype (MPC_Datatype * datatype,
 			{
 				sctk_debug("No types array");
 			}
+			#endif
 			
 			/* We unlock the derived datatype array */
 			sctk_datatype_unlock( task_specific );
@@ -1521,7 +1530,7 @@ int PMPC_Derived_datatype (MPC_Datatype * datatype,
     
 	/* If we are here we did not find any slot so we abort you might think of increasing
 	 * SCTK_USER_DATA_TYPES_MAX if you app needs more than 265 datatypes =) */
-	sctk_fatal ("Not enough datatypes allowed : you requested to many contiguous types (forgot to free ?)");
+	sctk_fatal ("Not enough datatypes allowed : you requested to many derived types (forgot to free ?)");
 }
 
 /** \brief this function is used to convert a datatype to a derived datatype
@@ -1563,15 +1572,9 @@ int PMPC_Type_convert_to_derived( MPC_Datatype in_datatype, MPC_Datatype * out_d
 		/* Retrieve previous datatype if the type is contiguous */
 		if( sctk_datatype_is_contiguous( in_datatype ) )
 		{
-			/* Lock the array */
-			sctk_datatype_lock( task_specific );
-			
 			/* Now set the previous type from contiguous datatype inner datatype (avoids stacking types) */
 			sctk_contiguous_datatype_t *contig_datatype = sctk_task_specific_get_contiguous_datatype( task_specific, in_datatype );
 			datatypes_out[0] = contig_datatype->datatype;
-
-			/* Unlock the array */
-			sctk_datatype_unlock( task_specific );
 		}
 		else if( sctk_datatype_is_common( in_datatype ) )
 		{
@@ -1585,7 +1588,7 @@ int PMPC_Type_convert_to_derived( MPC_Datatype in_datatype, MPC_Datatype * out_d
 		}
 
 		/* Lets now initialize the new derived datatype */
-		PMPC_Derived_datatype (out_datatype, begins_out, ends_out, NULL, 1, 0, 0, 0, 0);
+		PMPC_Derived_datatype (out_datatype, begins_out, ends_out, datatypes_out, 1, 0, 0, 0, 0);
 
 		/* Free temporary buffers */
 		/* EXPAT */
@@ -1701,36 +1704,25 @@ int PMPC_Copy_from_buffer (void *inbuffer, void *outbuffer, MPC_Datatype datatyp
 	MPC_ERROR_SUCESS ();
 }
 
+
 /** \brief Extract derived datatype informations
- *  On non derived datatypes res is set to 0.
+ *  On non derived datatypes res is set to 0
+ *  and datatype contains garbage
  * 
  *  \param datatype Datatype to analyze
  *  \param res set to 0 if not a derived datatype, 1 if derived
- *  \param begins pointer to set to the begins list
- *  \param ends pointer to set  to the ends list
- *  \param count where to store the count value
- *  \param lb where to store the lower bound
- *  \param is_lb where to store if the type hase a lower bound
- *  \param ub where to store the upper bound
- *  \param is_ub where to store if the type hase an upper bound
+ *  \param output_datatype A derived datatype filled with all the informations
  * 
  */
-int PMPC_Is_derived_datatype (MPC_Datatype datatype, int *res,
-							  mpc_pack_absolute_indexes_t ** begins,
-							  mpc_pack_absolute_indexes_t ** ends,
-							  unsigned long *count,
-							  mpc_pack_absolute_indexes_t * lb, int *is_lb,
-							  mpc_pack_absolute_indexes_t * ub, int *is_ub)
+int MPC_Is_derived_datatype (MPC_Datatype datatype, int *res, sctk_derived_datatype_t *output_datatype )
 {
 	/* 
-	 * Initialize output arguments
+	 * Initialize output argument
 	 * assuming it is not a derived datatype
 	 */
-	 
-	*res = 0; /*< Not a derived datatype */
-	*ends = NULL; /*< No ends */
-	*begins = NULL; /* No begins */
-	*count = 1; /* Just a single element */
+	*res = 0;
+	memset( output_datatype, 0 , sizeof( sctk_derived_datatype_t ) );
+	output_datatype->count = 1;
 
 	/* Check whether the datatype ID falls in the derived range ID */
 	if ( sctk_datatype_is_derived( datatype ) )
@@ -1757,14 +1749,7 @@ int PMPC_Is_derived_datatype (MPC_Datatype datatype, int *res,
 		*res = 1;
 		
 		/* Copy its content to out arguments */
-		*ends = target_type->ends;
-		*begins = target_type->begins;
-		*count = target_type->count;
-
-		*lb = target_type->lb;
-		*ub = target_type->ub;
-		*is_lb = target_type->is_lb;
-		*is_ub = target_type->is_ub;
+		memcpy( output_datatype , target_type , sizeof( sctk_derived_datatype_t ) );
 		
 		/* Unlock the array */
 		sctk_datatype_unlock( task_specific );

@@ -126,7 +126,6 @@
 #pragma weak MPC_Copy_in_buffer = PMPC_Copy_in_buffer
 #pragma weak MPC_Copy_from_buffer = PMPC_Copy_from_buffer
 #pragma weak MPC_Derived_datatype = PMPC_Derived_datatype
-#pragma weak MPC_Is_derived_datatype = PMPC_Is_derived_datatype
 #pragma weak MPC_Type_convert_to_derived = PMPC_Type_convert_to_derived
 #pragma weak MPC_Type_use = PMPC_Type_use
 /* #pragma weak MPC_Get_keys = PMPC_Get_keys */

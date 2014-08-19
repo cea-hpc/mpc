@@ -101,7 +101,7 @@ void sctk_contiguous_datatype_init( sctk_contiguous_datatype_t * type , size_t i
 
 void sctk_contiguous_datatype_release( sctk_contiguous_datatype_t * type )
 {
-	sctk_debug( "Cont free REF : %d", sctk_atomics_load_int( &type->ref_count ) );
+	sctk_debug( "Cont free REF : %d", type->ref_count );
 	
 	type->ref_count--;
 	
@@ -172,7 +172,7 @@ void sctk_derived_datatype_init( sctk_derived_datatype_t * type ,
 
 void sctk_derived_datatype_release( sctk_derived_datatype_t * type )
 {
-	sctk_debug( "Derived free REF : %d", sctk_atomics_load_int( &type->ref_count ) );
+	sctk_debug( "Derived free REF : %d", type->ref_count );
 	
 	
 	/* Here we decrement the refcounter */
@@ -181,6 +181,7 @@ void sctk_derived_datatype_release( sctk_derived_datatype_t * type )
 	if ( type->ref_count == 0 )
 	{
 		/*EXPAT*/
+		#if 0
 		if( type->datatypes )
 		{
 			/* First call free on each embedded derived type
@@ -205,11 +206,12 @@ void sctk_derived_datatype_release( sctk_derived_datatype_t * type )
 			/* Decrement the refcounters of present datatypes */
 			for( i = 0 ; i < type->count ; i++ )
 			{
-				if( is_datatype_present[ i ] )
+				/* Make sure not to free common datatypes */
+				if( is_datatype_present[ i ] && !sctk_datatype_is_common( i ) )
 					PMPC_Type_free( &type->datatypes[i] );
 			}
 		}
-		
+		#endif
 		
 		/* Counter == 0 then free */
 		sctk_free (type->begins);
