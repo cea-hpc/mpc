@@ -537,15 +537,16 @@ typedef int (MPI_Delete_function) (MPI_Comm, int, void *, void *);
   int MPI_Neighbor_alltoallw(void *sendbuf, int sendcounts[], MPI_Aint sdispls[], MPI_Datatype sendtypes[], void *recvbuf, int recvcounts[], MPI_Aint rdispls[], MPI_Datatype recvtypes[], MPI_Comm comm);
 
   /* MPI Info Management */
-  int PMPI_Info_set( MPI_Info, const char *, const char * );
-  int PMPI_Info_free( MPI_Info * );
-  int PMPI_Info_create( MPI_Info * );
-  int PMPI_Info_delete( MPI_Info , const char * );
-  int PMPI_Info_get(MPI_Info , const char *, int , char *, int *);
-  int PMPI_Info_dup( MPI_Info , MPI_Info * );
-  int PMPI_Info_get_nkeys (MPI_Info, int *);
-  int PMPI_Info_get_nthkey (MPI_Info, int, char *);
-  int PMPI_Info_get_valuelen (MPI_Info, char *, int *, int *);
+  int MPI_Info_set( MPI_Info, const char *, const char * );
+  int MPI_Info_free( MPI_Info * );
+  int MPI_Info_create( MPI_Info * );
+  int MPI_Info_delete( MPI_Info , const char * );
+  int MPI_Info_get(MPI_Info , const char *, int , char *, int *);
+  int MPI_Info_dup( MPI_Info , MPI_Info * );
+  int MPI_Info_get_nkeys (MPI_Info, int *);
+  int MPI_Info_get_nthkey (MPI_Info, int, char *);
+  int MPI_Info_get_valuelen (MPI_Info, char *, int *, int *);
+
 
 
 /* Here are the bindings of the profiling routines */
@@ -802,6 +803,18 @@ typedef int (MPI_Delete_function) (MPI_Comm, int, void *, void *);
   int PMPI_Finalized( int * );
   int PMPI_Initialized (int *);
   int PMPI_Abort (MPI_Comm, int);
+
+  /* MPI Info Management */
+  int PMPI_Info_set( MPI_Info, const char *, const char * );
+  int PMPI_Info_free( MPI_Info * );
+  int PMPI_Info_create( MPI_Info * );
+  int PMPI_Info_delete( MPI_Info , const char * );
+  int PMPI_Info_get(MPI_Info , const char *, int , char *, int *);
+  int PMPI_Info_dup( MPI_Info , MPI_Info * );
+  int PMPI_Info_get_nkeys (MPI_Info, int *);
+  int PMPI_Info_get_nthkey (MPI_Info, int, char *);
+  int PMPI_Info_get_valuelen (MPI_Info, char *, int *, int *);
+
 
   /* Note that we may need to define a @PCONTROL_LIST@ depending on whether
      stdargs are supported */
