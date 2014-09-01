@@ -173,3 +173,6 @@
 #pragma weak MPC_Info_get_nkeys = PMPC_Info_get_nkeys
 #pragma weak MPC_Info_get_nthkey = PMPC_Info_get_nthkey
 #pragma weak MPC_Info_get_valuelen = PMPC_Info_get_valuelen
+ /* Generic requests */
+#pragma weak MPC_Grequest_start = PMPC_Grequest_start
+#pragma weak MPC_Grequest_complete = PMPC_Grequest_complete

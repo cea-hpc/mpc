@@ -89,6 +89,17 @@ extern "C"
   } MPC_Op;
 #define MPC_OP_INIT {NULL,NULL}
 
+  typedef struct
+  {
+    int MPC_SOURCE;
+    int MPC_TAG;
+    int MPC_ERROR;
+    int cancelled;
+    mpc_msg_count count;
+  } MPC_Status;
+#define MPC_STATUS_INIT {MPC_ANY_SOURCE,MPC_ANY_TAG,MPC_SUCCESS,0,0}
+
+
   typedef struct MPC_Header{
     int source;
     int destination;
@@ -100,15 +111,36 @@ extern "C"
   }MPC_Header;
 
   struct sctk_thread_ptp_message_s;
+
+
+  /* Generalized requests functions */
+  
+  typedef int MPC_Grequest_query_function( void * extra_state, MPC_Status *status );
+  typedef int MPC_Grequest_cancel_function( void * extra_state, int complete );
+  typedef int MPC_Grequest_free_function( void * extra_state );
+
+  /* Request definition */
   typedef struct
   {
+	int request_type;
     MPC_Header header;
     volatile int completion_flag;
     struct sctk_thread_ptp_message_s* msg;
     int is_null;
     int need_check_in_wait;
-    int request_type;
     int truncated;
+    
+    /* Generalized Request context  */
+    MPC_Grequest_query_function * query_fn;
+    MPC_Grequest_cancel_function * cancel_fn;
+    MPC_Grequest_free_function * free_fn;
+    void * extra_state;
+    /* MPI_Grequest_complete takes a compy of the struct
+     * not a refference however we have to change a value
+     * in the source struct which is being pulled therefore
+     * we have to do this hack by saving a pointer to the
+     * request inside the request */
+    void * pointer_to_source_request;
   } MPC_Request;
 
   extern MPC_Request mpc_request_null;
@@ -220,15 +252,7 @@ extern "C"
 #define MPC_ALLTOALLV_TAG -7
 #define MPC_BROADCAST_INTERCOMM_TAG -8
 
-  typedef struct
-  {
-    int MPC_SOURCE;
-    int MPC_TAG;
-    int MPC_ERROR;
-    int cancelled;
-    mpc_msg_count count;
-  } MPC_Status;
-#define MPC_STATUS_INIT {MPC_ANY_SOURCE,MPC_ANY_TAG,MPC_SUCCESS,0,0}
+
 
 /* Here we define the type of an MPC_Info as an int
  * this type is alliased to MPI_Info at mpc_mpi.h:224
@@ -600,6 +624,13 @@ enum MPIR_Combiner_enum {
   int MPC_Info_get_valuelen (MPC_Info, char *, int *, int *);
 
 
+/* Generalized Requests */
+
+  int MPC_Grequest_start( MPC_Grequest_query_function *query_fn, MPC_Grequest_free_function * free_fn,
+						  MPC_Grequest_cancel_function * cancel_fn, void *extra_state, MPC_Request * request);
+    
+  int MPC_Grequest_complete(  MPC_Request request); 
+
 
   /*MPI compatibility*/
 #define MPC_BSEND_OVERHEAD 0
@@ -851,6 +882,13 @@ enum MPIR_Combiner_enum {
   int PMPC_Info_get_nkeys (MPC_Info, int *);
   int PMPC_Info_get_nthkey (MPC_Info, int, char *);
   int PMPC_Info_get_valuelen (MPC_Info, char *, int *, int *);
+
+  /* Generalized Requests */
+
+  int PMPC_Grequest_start( MPC_Grequest_query_function *query_fr, MPC_Grequest_free_function * free_fn,
+						  MPC_Grequest_cancel_function * cancel_fn, void *extra_state, MPC_Request * request);
+    
+  int PMPC_Grequest_complete(  MPC_Request request); 
 
 
   /* Send/Recv message using the signalization network */

@@ -488,6 +488,9 @@
 #pragma weak MPI_Info_get_nthkey = PMPI_Info_get_nthkey
 #pragma weak MPI_Info_get_valuelen = PMPI_Info_get_valuelen
 
+#pragma weak MPI_Grequest_start = PMPI_Grequest_start
+#pragma weak MPI_Grequest_complete = PMPI_Grequest_complete
+
 //~ not implemented
 
 /*

@@ -546,7 +546,19 @@ typedef int (MPI_Delete_function) (MPI_Comm, int, void *, void *);
   int MPI_Info_get_nkeys (MPI_Info, int *);
   int MPI_Info_get_nthkey (MPI_Info, int, char *);
   int MPI_Info_get_valuelen (MPI_Info, char *, int *, int *);
+ 
+  /* Generalized requests functions */
+  
+  typedef int MPI_Grequest_query_function( void * extra_state, MPI_Status *status );
+  typedef int MPI_Grequest_cancel_function( void * extra_state, int complete );
+  typedef int MPI_Grequest_free_function( void * extra_state );
+  
+  /* Generalized Requests */
 
+  int MPI_Grequest_start( MPI_Grequest_query_function *query_fn, MPI_Grequest_free_function * free_fn,
+						  MPI_Grequest_cancel_function * cancel_fn, void *extra_state, MPI_Request * request);
+    
+  int MPI_Grequest_complete(  MPI_Request request); 
 
 
 /* Here are the bindings of the profiling routines */
@@ -815,6 +827,12 @@ typedef int (MPI_Delete_function) (MPI_Comm, int, void *, void *);
   int PMPI_Info_get_nthkey (MPI_Info, int, char *);
   int PMPI_Info_get_valuelen (MPI_Info, char *, int *, int *);
 
+  /* Generalized Requests */
+
+  int PMPI_Grequest_start( MPI_Grequest_query_function *query_fn, MPI_Grequest_free_function * free_fn,
+						  MPI_Grequest_cancel_function * cancel_fn, void *extra_state, MPI_Request * request);
+    
+  int PMPI_Grequest_complete(  MPI_Request request); 
 
   /* Note that we may need to define a @PCONTROL_LIST@ depending on whether
      stdargs are supported */

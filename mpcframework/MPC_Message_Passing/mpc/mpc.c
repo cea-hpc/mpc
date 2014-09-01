@@ -308,25 +308,41 @@ static inline void sctk_mpc_verify_request_compatibility()
   /*     assume ((int) mpc_req.completion_flag == (int) sctk_req.completion_flag); */
 }
 
-static inline void sctk_mpc_commit_status_from_request(MPC_Request * request, MPC_Status * status){
-  if (status != MPC_STATUS_IGNORE)
-    {
-      status->MPC_SOURCE = request->header.source;
-      status->MPC_TAG = request->header.message_tag;
-      status->MPC_ERROR = MPC_SUCCESS;
-      if(request->truncated){
-	status->MPC_ERROR = MPC_ERR_TRUNCATE;
-      }
-      status->count = request->header.msg_size;
-      if (request->completion_flag == SCTK_MESSAGE_CANCELED)
+static inline void sctk_mpc_commit_status_from_request(MPC_Request * request, MPC_Status * status)
+{
+	if( request->request_type == REQUEST_GENERALIZED )
 	{
-	  status->cancelled = 1;
+		MPC_Status static_status;
+		
+		/* You must provide a valid status to the querry function */
+		if( status == MPC_STATUS_IGNORE )
+			status = &static_status;
+		
+		/* Fill in the status info */
+		(request->query_fn)( request->extra_state, status );
+		/* Free the request */
+		(request->free_fn)( request->extra_state );
 	}
-      else
+	else if (status != MPC_STATUS_IGNORE)
 	{
-	  status->cancelled = 0;
+		status->MPC_SOURCE = request->header.source;
+		status->MPC_TAG = request->header.message_tag;
+		status->MPC_ERROR = MPC_SUCCESS;
+		
+		if(request->truncated){
+			status->MPC_ERROR = MPC_ERR_TRUNCATE;
+		}
+		status->count = request->header.msg_size;
+		
+		if (request->completion_flag == SCTK_MESSAGE_CANCELED)
+		{
+			status->cancelled = 1;
+		}
+		else
+		{
+			status->cancelled = 0;
+		}
 	}
-    }
 }
 
 static inline
@@ -334,26 +350,37 @@ sctk_communicator_t sctk_mpc_get_communicator_from_request(MPC_Request * request
   return ((sctk_request_t *) request)->header.communicator;
 }
 
-static inline
-void sctk_mpc_perform_messages(MPC_Request * request){
-  struct sctk_perform_messages_s _wait;
+static inline void sctk_mpc_perform_messages(MPC_Request * request)
+{
+	struct sctk_perform_messages_s _wait;
 
-  sctk_perform_messages_wait_init(&_wait, request, 0);
-  sctk_perform_messages_wait_init_request_type(&_wait);
+	if( request->request_type == REQUEST_GENERALIZED )
+	{
+		/* Nothing to do here as progress is done by the application */
+		return;
+	}
 
-  sctk_perform_messages(&_wait);
+	sctk_perform_messages_wait_init(&_wait, request, 0);
+	sctk_perform_messages_wait_init_request_type(&_wait);
+
+	sctk_perform_messages(&_wait);
 }
 
 static inline int sctk_mpc_completion_flag(MPC_Request * request){
-  return request->completion_flag;
+	return request->completion_flag;
 }
 
 static inline void sctk_mpc_init_request_null(){
   mpc_request_null.is_null = 1;
   mpc_request_null.msg = NULL;
-  mpc_request_null.request_type = 0;
+  mpc_request_null.request_type = REQUEST_NULL;
   mpc_request_null.completion_flag = SCTK_MESSAGE_DONE;
   mpc_request_null.truncated = 0;
+  mpc_request_null.query_fn = NULL;
+  mpc_request_null.cancel_fn = NULL;
+  mpc_request_null.free_fn = NULL;
+  mpc_request_null.extra_state = NULL;
+  mpc_request_null.pointer_to_source_request = (void *)&mpc_request_null;
 }
 
 static inline void sctk_mpc_init_request (MPC_Request * request, MPC_Comm comm, int src, int request_type){
@@ -369,6 +396,11 @@ static inline void sctk_mpc_init_request (MPC_Request * request, MPC_Comm comm, 
       request->is_null = 0;
       request->truncated = 0;
       request->msg = NULL;
+      request->query_fn = NULL;
+      request->cancel_fn = NULL;
+      request->free_fn = NULL;
+      request->extra_state = NULL;
+      request->pointer_to_source_request = (void *)request;
     }
 }
 
@@ -423,18 +455,19 @@ static inline void sctk_mpc_set_header_in_message(sctk_thread_ptp_message_t *
 }
 
 static inline void sctk_mpc_wait_message (MPC_Request * request){
-  if(sctk_mpc_message_is_null(request) == 0){
-    sctk_wait_message(request);
-  }
+	if(sctk_mpc_message_is_null(request) == 0){
+		sctk_wait_message(request);
+	}
 }
 
 static inline void sctk_mpc_wait_all (const int task, const sctk_communicator_t com){
   sctk_wait_all(task,com);
 }
 
-static inline void sctk_mpc_cancel_message (MPC_Request * msg){
-  sctk_cancel_message(msg);
+static inline int sctk_mpc_cancel_message (MPC_Request * msg){
+  return sctk_cancel_message(msg);
 }
+
 
 /************************************************************************/
 /*FUNCTIONS                                                             */
@@ -1087,6 +1120,49 @@ int __MPC_Barrier (MPC_Comm comm)
 
 	MPC_ERROR_SUCESS ();
 }
+
+
+/************************************************************************/
+/* GENERALIZED REQUESTS                                                 */
+/************************************************************************/
+
+int PMPC_Grequest_start( MPC_Grequest_query_function *query_fn, MPC_Grequest_free_function * free_fn,
+					  MPC_Grequest_cancel_function * cancel_fn, void *extra_state, MPC_Request * request)
+{
+	if( request == NULL )
+		MPC_ERROR_REPORT( MPC_COMM_SELF, MPC_ERR_ARG, "Bad request passed to MPC_Grequest_start" );
+	
+	/* Init as a NULL request */
+	memcpy( request, &mpc_request_null, sizeof( MPC_Request ) );
+	
+	/* Change type */
+	request->request_type = REQUEST_GENERALIZED;
+	/* Set not null as we want to be waited */
+	request->is_null = 0;
+	/* Fill in generalized request CTX */
+	request->pointer_to_source_request = (void *)request;
+	request->query_fn = query_fn;
+	request->free_fn = free_fn;
+	request->cancel_fn = cancel_fn;
+	request->extra_state = extra_state;
+	
+	/* We set the request as pending */
+	request->completion_flag = SCTK_MESSAGE_PENDING;
+	
+	MPC_ERROR_SUCESS()
+}
+
+int PMPC_Grequest_complete( MPC_Request request )
+{
+	/* We have to do this as request complete takes
+	 * a copy of the request ... but we want
+	 * to modify the orifinal request which is being polled ... */
+	((MPC_Request *)request.pointer_to_source_request)->completion_flag = SCTK_MESSAGE_DONE;
+	
+	MPC_ERROR_SUCESS()
+}
+
+
 
 /************************************************************************/
 /* Datatype Handling                                                    */
@@ -2818,24 +2894,24 @@ PMPC_Irecv (void *buf, mpc_msg_count count, MPC_Datatype datatype,
   SCTK_PROFIL_END (MPC_Irecv);
   return res;
 }
-static inline int
-__MPC_Wait (MPC_Request * request, MPC_Status * status)
+static inline int __MPC_Wait (MPC_Request * request, MPC_Status * status)
 {
-  if (sctk_mpc_get_message_source(request) == MPC_PROC_NULL)
-    {
-      sctk_mpc_message_set_is_null(request,1);
-    }
-  if (sctk_mpc_message_is_null(request) != 1)
-    {
-      sctk_mpc_wait_message (request);
-      sctk_mpc_message_set_is_null(request,1);
-    }
-  sctk_mpc_commit_status_from_request(request,status);
-  MPC_ERROR_SUCESS ();
+	if (sctk_mpc_get_message_source(request) == MPC_PROC_NULL)
+	{
+		sctk_mpc_message_set_is_null(request,1);
+	}
+	
+	if (sctk_mpc_message_is_null(request) != 1)
+	{
+		sctk_mpc_wait_message (request);
+		sctk_mpc_message_set_is_null(request,1);
+	}
+	
+	sctk_mpc_commit_status_from_request(request,status);
+	MPC_ERROR_SUCESS ();
 }
 
-static inline int
-__MPC_Test (MPC_Request * request, int *flag, MPC_Status * status)
+static inline int __MPC_Test (MPC_Request * request, int *flag, MPC_Status * status)
 {
 	mpc_check_comm (sctk_mpc_get_communicator_from_request(request), MPC_COMM_WORLD);
 	*flag = 0;
@@ -2868,8 +2944,7 @@ __MPC_Test (MPC_Request * request, int *flag, MPC_Status * status)
 	MPC_ERROR_SUCESS ();
 }
 
-static inline int
-__MPC_Test_check (MPC_Request * request, int *flag, MPC_Status * status)
+static inline int __MPC_Test_check (MPC_Request * request, int *flag, MPC_Status * status)
 {
   if (sctk_mpc_completion_flag(request) != SCTK_MESSAGE_PENDING)
     {
@@ -2895,16 +2970,16 @@ __MPC_Test_check (MPC_Request * request, int *flag, MPC_Status * status)
   MPC_ERROR_SUCESS ();
 }
 
-static inline int
-__MPC_Test_check_light (MPC_Request * request)
+static inline int __MPC_Test_check_light (MPC_Request * request)
 {
-  if (sctk_mpc_completion_flag(request) != SCTK_MESSAGE_PENDING)
-    {
-      return 1; 
-    }
-  sctk_mpc_perform_messages (request);
+	if (sctk_mpc_completion_flag(request) != SCTK_MESSAGE_PENDING)
+	{
+		return 1; 
+	}
+	
+	sctk_mpc_perform_messages (request);
 
-  return sctk_mpc_completion_flag(request);
+	return sctk_mpc_completion_flag(request);
 }
 
 static inline int
@@ -2923,8 +2998,7 @@ __MPC_Test_no_check (MPC_Request * request, int *flag, MPC_Status * status)
   MPC_ERROR_SUCESS ();
 }
 
-int
-PMPC_Wait (MPC_Request * request, MPC_Status * status)
+int PMPC_Wait (MPC_Request * request, MPC_Status * status)
 {
   int res;
   SCTK_PROFIL_START (MPC_Wait);
@@ -2943,83 +3017,93 @@ struct wfv_waitall_s{
   MPC_Status *array_of_statuses;
 };
 
-static inline void wfv_waitall (void *arg) {
-  struct wfv_waitall_s *args = (struct wfv_waitall_s*) arg;
-  int flag = 1;
-  int i;
+static inline void wfv_waitall (void *arg)
+{
+	struct wfv_waitall_s *args = (struct wfv_waitall_s*) arg;
+	int flag = 1;
+	int i;
 
-  for (i = 0; i < args->count; i++)
-  {
-    flag = flag & __MPC_Test_check_light (&(args->array_of_requests[i]));
-  }
+	for (i = 0; i < args->count; i++)
+	{
+		flag = flag & __MPC_Test_check_light (&(args->array_of_requests[i]));
+	}
 
-  /* All requests received */
-  if (flag) {
-    for (i = 0; i < args->count; i++)
-    {
-      MPC_Status *status;
-      MPC_Request *request;
+	/* All requests received */
+	if (flag) 
+	{
+		for (i = 0; i < args->count; i++)
+		{
+			MPC_Status *status;
+			MPC_Request *request;
 
-      request = &(args->array_of_requests[i]);
-      if(args->array_of_statuses != NULL){
-        status = &(args->array_of_statuses[i]);
+			request = &(args->array_of_requests[i]);
 
-        sctk_mpc_commit_status_from_request(request,status);
-        sctk_nodebug ("source %d\n", status->MPC_SOURCE);
-        sctk_mpc_message_set_is_null(request ,1);
-      }
-    }
-    args->ret = 1;
-  }
+			if(args->array_of_statuses != NULL)
+			{
+				status = &(args->array_of_statuses[i]);
+				sctk_mpc_commit_status_from_request(request,status);
+				sctk_nodebug ("source %d\n", status->MPC_SOURCE);
+				sctk_mpc_message_set_is_null(request ,1);
+			}
+		}
+		
+		args->ret = 1;
+	}
 }
 
-static inline int
-__MPC_Waitall (mpc_msg_count count,
-	       MPC_Request array_of_requests[],
-	       MPC_Status array_of_statuses[])
+static inline int __MPC_Waitall (mpc_msg_count count,
+								 MPC_Request array_of_requests[],
+								 MPC_Status array_of_statuses[])
 {
-  int i;
-  int flag = 1;
-  double start, end;
-  int show = 1;
+	int i;
+	int flag = 1;
+	double start, end;
+	int show = 1;
 
-  sctk_nodebug ("waitall count %d\n", count);
-  start = MPC_Wtime();
+	sctk_nodebug ("waitall count %d\n", count);
+	start = MPC_Wtime();
 
-  for (i = 0; i < count; i++) {
-    int tmp_flag = 0;
-    MPC_Status *status;
-    MPC_Request *request;
-    if(array_of_statuses != NULL){
-      status = &(array_of_statuses[i]);
-    } else {
-      status = MPC_STATUS_IGNORE;
-    }
-    request = &(array_of_requests[i]);
-    __MPC_Test_check (request, &tmp_flag,
-        status);
+	for (i = 0 ; i < count ; i++) 
+	{
+		int tmp_flag = 0;
+		MPC_Status *status;
+		MPC_Request *request;
+		
+		if(array_of_statuses != NULL)
+		{
+			status = &(array_of_statuses[i]);
+		}
+		else
+		{
+			status = MPC_STATUS_IGNORE;
+		}
+		
+		request = &(array_of_requests[i]);
+		
+		__MPC_Test_check (request, &tmp_flag, status);
 
-    if (tmp_flag && status != MPC_STATUS_IGNORE) {
-      sctk_mpc_message_set_is_null(request,1);
-    }
+		if (tmp_flag && status != MPC_STATUS_IGNORE) {
+			sctk_mpc_message_set_is_null(request,1);
+		}
 
-    flag = flag & tmp_flag;
-  }
-  if (flag == 1) MPC_ERROR_SUCESS();
+		flag = flag & tmp_flag;
+	}
+	
+	if (flag == 1)
+		MPC_ERROR_SUCESS();
 
-  /* XXX: Waitall has been ported for using wait_for_value_and_poll
-   * because it provides better results than thread_yield.
-   * It performs well at least on Infiniband on NAS  */
-  struct wfv_waitall_s wfv;
-  wfv.ret = 0;
-  wfv.array_of_requests = array_of_requests;
-  wfv.array_of_statuses = array_of_statuses;
-  wfv.count = count;
-  sctk_inter_thread_perform_idle
-    ((int *) &(wfv.ret), 1 ,
-     (void(*)(void*))wfv_waitall,(void*)&wfv);
+	/* XXX: Waitall has been ported for using wait_for_value_and_poll
+	* because it provides better results than thread_yield.
+	* It performs well at least on Infiniband on NAS  */
+	struct wfv_waitall_s wfv;
+	wfv.ret = 0;
+	wfv.array_of_requests = array_of_requests;
+	wfv.array_of_statuses = array_of_statuses;
+	wfv.count = count;
+	sctk_inter_thread_perform_idle((int *) &(wfv.ret), 1 ,
+								   (void(*)(void*))wfv_waitall,(void*)&wfv);
 
-  MPC_ERROR_SUCESS ();
+	MPC_ERROR_SUCESS ();
 }
 
 int
@@ -3576,8 +3660,8 @@ PMPC_Test_cancelled (MPC_Status * status, int *flag)
 int
 PMPC_Cancel (MPC_Request * request)
 {
-  sctk_mpc_cancel_message (request);
-  MPC_ERROR_SUCESS ();
+  int ret = sctk_mpc_cancel_message (request);
+  return ret;
 }
 
 
@@ -3713,8 +3797,7 @@ __MPC_Probe (int source, int tag, MPC_Comm comm, MPC_Status * status,
   MPC_ERROR_SUCESS ();
 }
 
-int
-PMPC_Probe (int source, int tag, MPC_Comm comm, MPC_Status * status)
+int PMPC_Probe (int source, int tag, MPC_Comm comm, MPC_Status * status)
 {
   int res;
   sctk_task_specific_t *task_specific;
@@ -5856,18 +5939,25 @@ PMPC_Wtick ()
 }
 
 /*Requests*/
-int
-PMPC_Request_free (MPC_Request * request)
+int PMPC_Request_free (MPC_Request * request)
 {
-#ifdef MPC_LOG_DEBUG
-  mpc_log_debug (MPC_COMM_WORLD, "MPC_Request_free req=%p", request);
-#endif
+	#ifdef MPC_LOG_DEBUG
+	mpc_log_debug (MPC_COMM_WORLD, "MPC_Request_free req=%p", request);
+	#endif
+
+	int ret = MPC_SUCCESS;
 
 	sctk_debug("wait for message");
-    /* Firstly wait the message before freeing */
-    sctk_mpc_wait_message(request);
-  *request = mpc_request_null;
-  MPC_ERROR_SUCESS ();
+	/* Firstly wait the message before freeing */
+	sctk_mpc_wait_message(request);
+
+	if( request->request_type == REQUEST_GENERALIZED )
+	{
+		ret = (request->free_fn)( request->extra_state );
+	}
+
+	*request = mpc_request_null;
+	return ret;
 }
 
 

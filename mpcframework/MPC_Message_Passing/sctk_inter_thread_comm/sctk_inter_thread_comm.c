@@ -45,22 +45,47 @@
 #define SCTK_DISABLE_TASK_ENGINE
 
 TODO("sctk_cancel_message: need to be implemented")
-  void sctk_cancel_message (sctk_request_t * msg){
-	if( msg->msg == NULL){
-		return;
-        }
-	if(msg->request_type == REQUEST_RECV){
-  	  msg->msg->sctk_msg_get_specific_message_tag = cancel_recv_specific_message_tag;
-	} else if(msg->request_type == REQUEST_SEND) { 
-	  if(sctk_is_net_message (msg->msg->sctk_msg_get_destination)){
-	    sctk_error("Try to cancel a network message for %d from UNIX process %d",msg->msg->sctk_msg_get_destination,sctk_process_rank);
-	    not_implemented();
-  	  }
-	  msg->msg->sctk_msg_get_specific_message_tag = cancel_send_specific_message_tag;
-	} else { 
-	  not_reachable();
+  
+int sctk_cancel_message (sctk_request_t * msg)
+{
+	int ret = MPC_SUCCESS;
+
+	switch( msg->request_type)
+	{
+		case REQUEST_GENERALIZED :
+			/* Call the cancel handler with a flag telling if the request was completed
+			 * which is our case is the same as not pending anymore */
+			ret = (msg->cancel_fn)( msg->extra_state, (msg->completion_flag != SCTK_MESSAGE_PENDING) );
+			
+			if( ret != MPC_SUCCESS )
+				return ret;
+		break;
+		case REQUEST_RECV:
+			if( msg->msg == NULL)
+				return;
+			
+			msg->msg->sctk_msg_get_specific_message_tag = cancel_recv_specific_message_tag;
+		break;
+		case REQUEST_SEND:
+			if( msg->msg == NULL)
+				return;
+		
+			if(sctk_is_net_message (msg->msg->sctk_msg_get_destination))
+			{
+				sctk_error("Try to cancel a network message for %d from UNIX process %d",msg->msg->sctk_msg_get_destination,sctk_process_rank);
+				not_implemented();
+			}
+			msg->msg->sctk_msg_get_specific_message_tag = cancel_send_specific_message_tag;
+		break;
+		default:
+			not_reachable();
+		break;
 	}
-	msg->completion_flag = SCTK_MESSAGE_CANCELED;	
+	
+	
+	msg->completion_flag = SCTK_MESSAGE_CANCELED;
+	
+	return ret;
 }
 
 /********************************************************************/
@@ -1867,60 +1892,64 @@ static inline int sctk_try_perform_messages_for_pair(sctk_internal_ptp_t* pair){
 
 void sctk_perform_messages_wait_init(
     struct sctk_perform_messages_s * wait, sctk_request_t * request, int blocking) {
-  wait->request = request;
-  int * remote_process = &wait->remote_process;
-  int * source_task_id = &wait->source_task_id;
-  /* If we are in a MPI_Wait function or similar */
-  wait->blocking = blocking;
-  sctk_internal_ptp_t **recv_ptp = &wait->recv_ptp;
-  sctk_internal_ptp_t **send_ptp = &wait->send_ptp;
-  sctk_comm_dest_key_t recv_key;
-  sctk_comm_dest_key_t send_key;
-  int remote_task;
-  /* key.comm = request->header.communicator; */
-  recv_key.destination = request->header.glob_destination;
-  send_key.destination = request->header.glob_source;
+	wait->request = request;
+	int * remote_process = &wait->remote_process;
+	int * source_task_id = &wait->source_task_id;
+	/* If we are in a MPI_Wait function or similar */
+	wait->blocking = blocking;
+	sctk_internal_ptp_t **recv_ptp = &wait->recv_ptp;
+	sctk_internal_ptp_t **send_ptp = &wait->send_ptp;
+	sctk_comm_dest_key_t recv_key;
+	sctk_comm_dest_key_t send_key;
+	int remote_task;
+	/* key.comm = request->header.communicator; */
+	recv_key.destination = request->header.glob_destination;
+	send_key.destination = request->header.glob_source;
 
-  sctk_ptp_table_read_lock();
-  /* Searching for the pending list corresponding to the
-   * dest task */
-  sctk_ptp_table_find(recv_key, *recv_ptp);
-  sctk_ptp_table_find(send_key, *send_ptp);
-  sctk_ptp_table_read_unlock();
+	sctk_ptp_table_read_lock();
+	/* Searching for the pending list corresponding to the
+	* dest task */
+	sctk_ptp_table_find(recv_key, *recv_ptp);
+	sctk_ptp_table_find(send_key, *send_ptp);
+	sctk_ptp_table_read_unlock();
 
-  /* Compute the rank of the remote process */
-  if(request->header.source != MPC_ANY_SOURCE && request->header.communicator != MPC_COMM_NULL){
-    /* Convert task rank to process rank */
-    *source_task_id = sctk_get_comm_world_rank (request->header.communicator,request->header.source);
-    *remote_process = sctk_get_process_rank_from_task_rank(*source_task_id);
-    sctk_nodebug("remote process=%d source=%d comm=%d", *remote_process, request->header.source, request->header.communicator);
-  } else {
-    *remote_process = -1;
-    *source_task_id = -1;
-  }
+	/* Compute the rank of the remote process */
+	if(request->header.source != MPC_ANY_SOURCE && request->header.communicator != MPC_COMM_NULL)
+	{
+		/* Convert task rank to process rank */
+		*source_task_id = sctk_get_comm_world_rank (request->header.communicator,request->header.source);
+		*remote_process = sctk_get_process_rank_from_task_rank(*source_task_id);
+		sctk_nodebug("remote process=%d source=%d comm=%d", *remote_process, request->header.source, request->header.communicator);
+	} else {
+		*remote_process = -1;
+		*source_task_id = -1;
+	}
 }
 
 /*
  *  Function called when the message to receive is already completed
  */
-static void sctk_perform_messages_done(struct sctk_perform_messages_s * wait) {
-    const sctk_request_t* request = wait->request;
-    const sctk_internal_ptp_t *recv_ptp = wait->recv_ptp;
-    const int remote_process = wait->remote_process;
-    const int source_task_id = wait->source_task_id;
+static void sctk_perform_messages_done(struct sctk_perform_messages_s * wait)
+{
+	const sctk_request_t* request = wait->request;
+	const sctk_internal_ptp_t *recv_ptp = wait->recv_ptp;
+	const int remote_process = wait->remote_process;
+	const int source_task_id = wait->source_task_id;
 
-  /* The message is marked as done.
-   * However, we need to poll if it is a inter-process message
-   * and if we are waiting for a SEND request. If we do not do this,
-   * we might overflow the number of send buffers waiting to be released
-   */
-  if (request->header.source == MPC_ANY_SOURCE) {
-    sctk_network_notify_any_source_message (request->header.glob_source, 0);
-  } else if (request->request_type == REQUEST_SEND && !recv_ptp) {
-    /* This call may INCREASE the latency in the send... */
-//    sctk_network_notify_perform_message (remote_process, source_task_id,
-//        request->header.glob_source, 0);
-  }
+	/* The message is marked as done.
+	* However, we need to poll if it is a inter-process message
+	* and if we are waiting for a SEND request. If we do not do this,
+	* we might overflow the number of send buffers waiting to be released
+	*/
+	if (request->header.source == MPC_ANY_SOURCE)
+	{
+		sctk_network_notify_any_source_message (request->header.glob_source, 0);
+	} else if (request->request_type == REQUEST_SEND && !recv_ptp)
+	{
+	/* This call may INCREASE the latency in the send... */
+	//    sctk_network_notify_perform_message (remote_process, source_task_id,
+	//        request->header.glob_source, 0);
+	}
 }
 
 static void sctk_perform_messages_wait_for_value_and_poll(void* a){
@@ -1967,29 +1996,42 @@ void sctk_inter_thread_perform_idle (volatile int *data, int value,
 }
 
 void sctk_wait_message(sctk_request_t * request){
-  struct sctk_perform_messages_s _wait;
-  
-  if(request->completion_flag == SCTK_MESSAGE_CANCELED){
-    return;
-  }
+	struct sctk_perform_messages_s _wait;
 
-  sctk_perform_messages_wait_init(&_wait, request, 1);
-  /* Find the PTPs lists */
-  if(request->completion_flag != SCTK_MESSAGE_DONE){
+	if(request->completion_flag == SCTK_MESSAGE_CANCELED){
+		return;
+	}
+	
+	if( request->request_type == REQUEST_GENERALIZED )
+	{
+		/* Here we just have to wait for the flag to be set to SCTK_MESSAGE_DONE
+		 * in by the MPC_Grequest_complete function */
+		sctk_inter_thread_perform_idle(	(int *) &(request->completion_flag), SCTK_MESSAGE_DONE , NULL, NULL);
+	}
+	else
+	{
+		sctk_perform_messages_wait_init(&_wait, request, 1);
 
-    sctk_perform_messages_wait_init_request_type(&_wait);
-    sctk_nodebug("Wait from %d to %d (req %p %d) (%p - %p) %d",
-        request->header.glob_source, request->header.glob_destination, request, request->request_type, _wait.send_ptp, _wait.recv_ptp, request->header.message_tag);
+		/* Find the PTPs lists */
+		if(request->completion_flag != SCTK_MESSAGE_DONE)
+		{
+			sctk_perform_messages_wait_init_request_type(&_wait);
+			sctk_nodebug("Wait from %d to %d (req %p %d) (%p - %p) %d",
+			request->header.glob_source, request->header.glob_destination, request, request->request_type, _wait.send_ptp, _wait.recv_ptp, request->header.message_tag);
 
-    sctk_inter_thread_perform_idle(
-        (int *) &(_wait.request->completion_flag),SCTK_MESSAGE_DONE ,
-        (void(*)(void*))sctk_perform_messages_wait_for_value_and_poll, &_wait);
-  } else {
-    sctk_perform_messages_done(&_wait);
-  }
+			sctk_inter_thread_perform_idle(
+			(int *) &(_wait.request->completion_flag),SCTK_MESSAGE_DONE ,
+			(void(*)(void*))sctk_perform_messages_wait_for_value_and_poll, &_wait);
+		} 
+		else 
+		{
+			sctk_perform_messages_done(&_wait);
+		}
 
-  sctk_nodebug("Wait DONE from %d to %d (req %p %d) (%p - %p)",
-      request->header.glob_source, request->header.glob_destination, request, request->request_type, _wait.send_ptp, _wait.recv_ptp);
+		sctk_nodebug("Wait DONE from %d to %d (req %p %d) (%p - %p)",
+		request->header.glob_source, request->header.glob_destination, request, request->request_type, _wait.send_ptp, _wait.recv_ptp);
+		
+	}
 }
 
 /*

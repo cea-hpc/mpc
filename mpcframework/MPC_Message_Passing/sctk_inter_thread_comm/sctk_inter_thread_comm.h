@@ -107,7 +107,8 @@ extern "C"
     REQUEST_SEND = 1,
     REQUEST_RECV = 2,
     REQUEST_SEND_COLL = 3,
-    REQUEST_RECV_COLL = 4
+    REQUEST_RECV_COLL = 4,
+    REQUEST_GENERALIZED = 5
   } sctk_request_type_t;
 
   typedef struct sctk_thread_message_header_s
@@ -345,7 +346,7 @@ typedef struct {
   void sctk_recv_message_try_check (sctk_thread_ptp_message_t * msg,struct sctk_internal_ptp_s* tmp,int perform_check);
   struct sctk_internal_ptp_s* sctk_get_internal_ptp(int glob_id);
   int sctk_is_net_message (int dest);
-  void sctk_cancel_message (sctk_request_t * msg);
+  int sctk_cancel_message (sctk_request_t * msg);
   void sctk_ptp_per_task_init (int i);
   void sctk_unregister_thread (const int i);
 
