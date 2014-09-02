@@ -1123,16 +1123,31 @@ int __MPC_Barrier (MPC_Comm comm)
 
 
 /************************************************************************/
-/* GENERALIZED REQUESTS                                                 */
+/* Generalized Requests                                                 */
 /************************************************************************/
 
+
+/** \brief This function starts a generic request
+*
+* \param query_fn Query function called to fill the status object
+* \param free_fn Free function which frees extra arg
+* \param cancel_fn Function called when the request is canceled
+* \param extra_state Extra context passed to every handlers
+* \param request New request to be created
+*
+* \warning Generalized Requests are not progressed by MPI the user are
+*          in charge of providing the progress mechanism.
+*
+* Once the operation completes, the user has to call \ref PMPC_Grequest_complete
+*
+*/
 int PMPC_Grequest_start( MPC_Grequest_query_function *query_fn, MPC_Grequest_free_function * free_fn,
 					  MPC_Grequest_cancel_function * cancel_fn, void *extra_state, MPC_Request * request)
 {
 	if( request == NULL )
 		MPC_ERROR_REPORT( MPC_COMM_SELF, MPC_ERR_ARG, "Bad request passed to MPC_Grequest_start" );
 	
-	/* Init as a NULL request */
+	/* Initialized as a NULL request */
 	memcpy( request, &mpc_request_null, sizeof( MPC_Request ) );
 	
 	/* Change type */
@@ -1152,16 +1167,18 @@ int PMPC_Grequest_start( MPC_Grequest_query_function *query_fn, MPC_Grequest_fre
 	MPC_ERROR_SUCESS()
 }
 
+/** \brief Flag a Generalized Request as finished
+* \param request Request we want to finish
+*/
 int PMPC_Grequest_complete( MPC_Request request )
 {
 	/* We have to do this as request complete takes
 	 * a copy of the request ... but we want
-	 * to modify the orifinal request which is being polled ... */
+	 * to modify the original request which is being polled ... */
 	((MPC_Request *)request.pointer_to_source_request)->completion_flag = SCTK_MESSAGE_DONE;
 	
 	MPC_ERROR_SUCESS()
 }
-
 
 
 /************************************************************************/
