@@ -119,6 +119,14 @@ extern "C"
   typedef int MPC_Grequest_cancel_function( void * extra_state, int complete );
   typedef int MPC_Grequest_free_function( void * extra_state );
 
+  /* Extended Generalized requests functions */
+  
+  typedef int MPCX_Grequest_poll_fn( void * extra_state , MPC_Status * status );
+  typedef int MPCX_Grequest_wait_fn( int count, void * arry_of_states, double timeout, MPC_Status * status );
+
+  /* Generalized Request classes */
+  typedef int MPIX_Request_class;
+  
   /* Request definition */
   typedef struct
   {
@@ -135,8 +143,12 @@ extern "C"
     MPC_Grequest_cancel_function * cancel_fn;
     MPC_Grequest_free_function * free_fn;
     void * extra_state;
-    /* MPI_Grequest_complete takes a compy of the struct
-     * not a refference however we have to change a value
+    /* Extended Request */
+    MPCX_Grequest_poll_fn * poll_fn;
+    MPCX_Grequest_wait_fn * wait_fn;
+
+    /* MPI_Grequest_complete takes a copy of the struct
+     * not a reference however we have to change a value
      * in the source struct which is being pulled therefore
      * we have to do this hack by saving a pointer to the
      * request inside the request */
@@ -632,6 +644,27 @@ enum MPIR_Combiner_enum {
   int MPC_Grequest_complete(  MPC_Request request); 
 
 
+/* Extended Generalized Requests */
+
+int MPCX_Grequest_start(MPC_Grequest_query_function *query_fn,
+                        MPC_Grequest_free_function * free_fn,
+                        MPC_Grequest_cancel_function * cancel_fn, 
+                        MPCX_Grequest_poll_fn * poll_fn, 
+                        void *extra_state, 
+                        MPC_Request * request);
+
+
+/* Extended Generalized Requests Classes */
+
+int MPCX_GRequest_class_create( MPC_Grequest_query_function * query_fn,
+				MPC_Grequest_cancel_function * cancel_fn,
+				MPC_Grequest_free_function * free_fn,
+				MPCX_Grequest_poll_fn * poll_fn,
+				MPCX_Grequest_wait_fn * wait_fn,
+				MPIX_Request_class * new_class );
+
+int MPCX_Grequest_class_allocate( MPIX_Request_class target_class, void *extra_state, MPC_Request *request );
+
   /*MPI compatibility*/
 #define MPC_BSEND_OVERHEAD 0
 #define MPC_BOTTOM ((void*)0)
@@ -890,7 +923,26 @@ enum MPIR_Combiner_enum {
     
   int PMPC_Grequest_complete(  MPC_Request request); 
 
+  /* Extended Generalized Requests */
 
+  int PMPCX_Grequest_start(MPC_Grequest_query_function *query_fn,
+                          MPC_Grequest_free_function * free_fn,
+                          MPC_Grequest_cancel_function * cancel_fn, 
+                          MPCX_Grequest_poll_fn * poll_fn, 
+                          void *extra_state, 
+                          MPC_Request * request);
+
+  /* Extended Generalized Requests Classes */
+  int PMPCX_GRequest_class_create( MPC_Grequest_query_function * query_fn,
+				 MPC_Grequest_cancel_function * cancel_fn,
+				 MPC_Grequest_free_function * free_fn,
+				 MPCX_Grequest_poll_fn * poll_fn,
+				 MPCX_Grequest_wait_fn * wait_fn,
+				 MPIX_Request_class * new_class );
+  
+  int PMPCX_Grequest_class_allocate( MPIX_Request_class target_class, void *extra_state, MPC_Request *request );
+  
+  
   /* Send/Recv message using the signalization network */
   void MPC_Send_signalization_network(int dest_process, int tag, void *buff, size_t size);
   void MPC_Recv_signalization_network(int src_process, int tag, void *buff, size_t size);

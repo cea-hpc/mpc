@@ -258,13 +258,8 @@ extern "C"
 		typedef MPI_Comm_errhandler_function MPI_Comm_errhandler_fn;
 		//~ typedef MPI_File_errhandler_function MPI_File_errhandler_fn;
 		typedef MPI_Win_errhandler_function MPI_Win_errhandler_fn;
-		
-		/* Typedefs for generalized requests */
-		typedef int (MPI_Grequest_cancel_function)(void *, int); 
-		typedef int (MPI_Grequest_free_function)(void *); 
-		typedef int (MPI_Grequest_query_function)(void *, MPI_Status *); 
-		typedef int (MPIX_Grequest_poll_function)(void *, MPI_Status *);
-		typedef int (MPIX_Grequest_wait_function)(int, void **, double, MPI_Status *);
+
+
 //~ End
 
   typedef struct
@@ -560,6 +555,17 @@ typedef int (MPI_Delete_function) (MPI_Comm, int, void *, void *);
     
   int MPI_Grequest_complete(  MPI_Request request); 
 
+  /* Extended Generalized Requests Functions */
+  typedef int MPIX_Grequest_poll_fn(void * extra_arg, MPI_Status *status);
+  typedef int MPIX_Grequest_wait_fn(int count, void **array_of_args, double, MPI_Status *status);
+  
+  /* Extended Generalized Requests */
+  int MPIX_Grequest_start(MPI_Grequest_query_function *query_fn,
+                          MPI_Grequest_free_function * free_fn,
+           		  MPI_Grequest_cancel_function * cancel_fn, 
+           		  MPIX_Grequest_poll_fn * poll_fn, 
+           		  void *extra_state, 
+           		  MPI_Request * request);
 
 /* Here are the bindings of the profiling routines */
 
@@ -834,6 +840,15 @@ typedef int (MPI_Delete_function) (MPI_Comm, int, void *, void *);
     
   int PMPI_Grequest_complete(  MPI_Request request); 
 
+  /* Extended Generalized Requests */
+  int PMPIX_Grequest_start(MPI_Grequest_query_function *query_fn,
+                          MPI_Grequest_free_function * free_fn,
+           		  MPI_Grequest_cancel_function * cancel_fn, 
+           		  MPIX_Grequest_poll_fn * poll_fn, 
+           		  void *extra_state, 
+           		  MPI_Request * request);
+  
+  
   /* Note that we may need to define a @PCONTROL_LIST@ depending on whether
      stdargs are supported */
   int PMPI_Pcontrol (const int, ...);

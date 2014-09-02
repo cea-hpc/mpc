@@ -407,7 +407,7 @@ int MPC_Info_factory_delete(  struct MPC_Info_factory * fact, int id )
 {
 	struct MPC_Info_cell *cell;
 
-    HASH_FIND_INT(fact->infos, &id, cell); 
+	HASH_FIND_INT(fact->infos, &id, cell); 
 	
 	if(!cell)
 	{

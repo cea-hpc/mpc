@@ -26,6 +26,7 @@
 #include <uthash.h>
 #include "mpc_info.h"
 #include "mpc_datatypes.h"
+#include "mpc_extended_request.h"
 
 /************************************************************************/
 /* Buffers definition                                                   */
@@ -102,6 +103,8 @@ typedef struct sctk_task_specific_s
 	/* Data-types */
 	struct Datatype_Array datatype_array;
 
+	/* Extended Request Class handling */
+	struct GRequest_context grequest_context;
 
 	/* Communicator handling */
 	mpc_per_communicator_t*per_communicator;
@@ -119,6 +122,10 @@ typedef struct sctk_task_specific_s
 /** \brief Retrieves current thread task specific context
  */
 struct sctk_task_specific_s *__MPC_get_task_specific ();
+
+/** \brief This function can be used to retrieve the task specific
+ */
+sctk_thread_key_t mpc_get_sctk_task_specific_key();
 
 /** \brief Unlock the datatype array
  */

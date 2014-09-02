@@ -491,6 +491,7 @@
 #pragma weak MPI_Grequest_start = PMPI_Grequest_start
 #pragma weak MPI_Grequest_complete = PMPI_Grequest_complete
 
+#pragma weak MPIX_Grequest_start = PMPIX_Grequest_start
 //~ not implemented
 
 /*

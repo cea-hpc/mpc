@@ -124,6 +124,25 @@ MPC_Request mpc_request_null;
 __thread struct sctk_thread_specific_s *sctk_message_passing;
 
 
+/** \brief Intitializes thread context keys
+ * This function is called in sctk_thread.c:2212
+ * by sctk_start_func
+ */
+void sctk_mpc_init_keys ()
+{
+  sctk_thread_key_create (&sctk_func_key, NULL);
+  sctk_thread_key_create (&sctk_check_point_key, NULL);
+  sctk_thread_key_create (&sctk_task_specific, NULL);
+  
+  fprintf(stderr, "My ts key : %d\n", sctk_task_specific);
+  
+}
+
+sctk_thread_key_t mpc_get_sctk_task_specific_key()
+{
+	return sctk_task_specific;
+}
+
 
 static inline void *
 sctk_thread_getspecific_mpc (sctk_thread_key_t key)
@@ -131,8 +150,7 @@ sctk_thread_getspecific_mpc (sctk_thread_key_t key)
   return sctk_thread_getspecific (key);
 }
 
-static inline void
-sctk_thread_setspecific_mpc (sctk_thread_key_t key, void *tmp)
+static inline void sctk_thread_setspecific_mpc (sctk_thread_key_t key, void *tmp)
 {
   sctk_thread_setspecific (key, tmp);
 }
@@ -583,14 +601,20 @@ static inline void __MPC_init_task_specific_t (sctk_task_specific_t * tmp)
 
 	/* Create the MPI_Info factory */
 	MPC_Info_factory_init( &tmp->info_fact );
+	
+	/* Create the context class handling structure */
+	GRequest_context_init( &tmp->grequest_context );
 }
 
 /** \brief Relases a structure of type \ref sctk_task_specific_t
  */
 static inline void __MPC_release_task_specific_t (sctk_task_specific_t * tmp)
 {
-	/* Deleta the MPI_Info factory */
+	/* Release the MPI_Info factory */
 	MPC_Info_factory_release( &tmp->info_fact );
+	
+	/* Release the context class handling structure */
+	GRequest_context_release( &tmp->grequest_context );
 }
 
 /** \brief Creation point for MPI task context in an \ref sctk_task_specific_t
@@ -650,10 +674,9 @@ void __MPC_reinit_task_specific (struct sctk_task_specific_s *tmp)
 
 struct sctk_task_specific_s * __MPC_get_task_specific ()
 {
-  struct sctk_task_specific_s *tmp;
-  tmp = (struct sctk_task_specific_s *)
-    sctk_thread_getspecific_mpc (sctk_task_specific);
-  return tmp;
+	struct sctk_task_specific_s *tmp;
+	tmp = (struct sctk_task_specific_s *) sctk_thread_getspecific_mpc (sctk_task_specific);
+	return tmp;
 }
 
 /** \brief Retrieves a pointer to a contiguous datatype from its datatype ID
@@ -825,15 +848,6 @@ sctk_thread_key_t
 sctk_get_check_point_key ()
 {
   return sctk_check_point_key;
-}
-
-void
-sctk_mpc_init_keys ()
-{
-  sctk_thread_key_create (&sctk_func_key, NULL);
-  sctk_thread_key_create (&sctk_check_point_key, NULL);
-
-  sctk_thread_key_create (&sctk_task_specific, NULL);
 }
 
 /* int */
@@ -1122,6 +1136,128 @@ int __MPC_Barrier (MPC_Comm comm)
 }
 
 
+
+/************************************************************************/
+/* Extended Generalized Requests                                        */
+/************************************************************************/
+
+/** \brief This function handles request starting for every generalized request types
+ * 
+ *  \param query_fn Function used to fill in the status information
+ *  \param free_fn Function used to free the extra_state dummy object
+ *  \param cancel_fn Function called when the request is cancelled
+ *  \param poll_fn Polling function called by the MPI runtime (CAN BE NULL)
+ *  \param wait_fn Wait function called when the runtime waits several requests of the same type (CAN BE NULL)
+ *  \param extra_state Extra pointer passed to every handler
+ *  \param request The request object we are creating (output)
+ */
+int PMPCX_Grequest_start_generic( MPC_Grequest_query_function *query_fn,
+				  MPC_Grequest_free_function * free_fn,
+				  MPC_Grequest_cancel_function * cancel_fn, 
+				  MPCX_Grequest_poll_fn * poll_fn, 
+				  MPCX_Grequest_wait_fn * wait_fn,
+				  void *extra_state, 
+				  MPC_Request * request)
+{
+	if( request == NULL )
+		MPC_ERROR_REPORT( MPC_COMM_SELF, MPC_ERR_ARG, "Bad request passed to MPC_Grequest_start" );
+	
+	/* Initialized as a NULL request */
+	memcpy( request, &mpc_request_null, sizeof( MPC_Request ) );
+	
+	/* Change type */
+	request->request_type = REQUEST_GENERALIZED;
+	/* Set not null as we want to be waited */
+	request->is_null = 0;
+	/* Fill in generalized request CTX */
+	request->pointer_to_source_request = (void *)request;
+	request->query_fn = query_fn;
+	request->free_fn = free_fn;
+	request->cancel_fn = cancel_fn;
+	request->poll_fn = poll_fn;
+	request->wait_fn = wait_fn;
+	request->extra_state = extra_state;
+	
+	/* We set the request as pending */
+	request->completion_flag = SCTK_MESSAGE_PENDING;
+	
+	MPC_ERROR_SUCESS()
+}
+
+/** \brief Starts a generalized request with a polling function
+ * 
+ *  \param query_fn Function used to fill in the status information
+ *  \param free_fn Function used to free the extra_state dummy object
+ *  \param cancel_fn Function called when the request is cancelled
+ *  \param poll_fn Polling function called by the MPI runtime
+ *  \param extra_state Extra pointer passed to every handler
+ *  \param request The request object we are creating (output)
+ */
+int PMPCX_Grequest_start(MPC_Grequest_query_function *query_fn,
+                         MPC_Grequest_free_function * free_fn,
+           		 MPC_Grequest_cancel_function * cancel_fn, 
+           		 MPCX_Grequest_poll_fn * poll_fn, 
+           		 void *extra_state, 
+           		 MPC_Request * request)
+{
+	return PMPCX_Grequest_start_generic( query_fn, free_fn, cancel_fn, poll_fn, NULL, extra_state, request );
+}
+/************************************************************************/
+/* Extended Generalized Requests Request Classes                        */
+/************************************************************************/
+
+/** \brief This creates a request class which can be referred to later on
+ * 
+ *  \param query_fn Function used to fill in the status information
+ *  \param free_fn Function used to free the extra_state dummy object
+ *  \param cancel_fn Function called when the request is cancelled
+ *  \param poll_fn Polling function called by the MPI runtime (CAN BE NULL)
+ *  \param wait_fn Wait function called when the runtime waits several requests of the same type (CAN BE NULL)
+ *  \param new_class The identifier of the class we are creating (output)
+ */
+int PMPCX_GRequest_class_create( MPC_Grequest_query_function * query_fn,
+				 MPC_Grequest_cancel_function * cancel_fn,
+				 MPC_Grequest_free_function * free_fn,
+				 MPCX_Grequest_poll_fn * poll_fn,
+				 MPCX_Grequest_wait_fn * wait_fn,
+				 MPIX_Request_class * new_class )
+{
+	/* Retrieve task context */
+	struct sctk_task_specific_s *task_specific = __MPC_get_task_specific ();
+	assume( task_specific != NULL );
+	struct GRequest_context *class_ctx = &task_specific->grequest_context;
+	
+	/* Register the class */
+	return GRequest_context_add_class(  class_ctx, query_fn, cancel_fn, free_fn, poll_fn, wait_fn, new_class );
+}
+
+/** \brief Create a request linked to an \ref MPIX_Request_class type
+ * 
+ *  \param target_class Identifier of the class of work we launch as created by \ref PMPIX_GRequest_class_create
+ *  \param extra_state Extra pointer passed to every handler
+ *  \param request The request object we are creating (output)
+ */
+int PMPCX_Grequest_class_allocate( MPIX_Request_class target_class, void *extra_state, MPC_Request *request )
+{
+	/* Retrieve task context */
+	struct sctk_task_specific_s *task_specific = __MPC_get_task_specific ();
+	assume( task_specific != NULL );
+	struct GRequest_context *class_ctx = &task_specific->grequest_context;	
+	
+	/* Retrieve task description */
+	MPIX_GRequest_class_t *class_desc = GRequest_context_get_class( class_ctx, target_class );
+	
+	/* Not found */
+	if( ! class_desc )
+		MPC_ERROR_REPORT( MPC_COMM_SELF, MPC_ERR_ARG, "Bad MPIX_Request_class passed to PMPIX_Grequest_class_allocate" );
+	
+	return PMPCX_Grequest_start_generic( class_desc->query_fn, class_desc->free_fn, 
+					     class_desc->cancel_fn, class_desc->poll_fn, 
+					     class_desc->wait_fn, extra_state, request );
+}
+
+
+
 /************************************************************************/
 /* Generalized Requests                                                 */
 /************************************************************************/
@@ -1144,27 +1280,7 @@ int __MPC_Barrier (MPC_Comm comm)
 int PMPC_Grequest_start( MPC_Grequest_query_function *query_fn, MPC_Grequest_free_function * free_fn,
 					  MPC_Grequest_cancel_function * cancel_fn, void *extra_state, MPC_Request * request)
 {
-	if( request == NULL )
-		MPC_ERROR_REPORT( MPC_COMM_SELF, MPC_ERR_ARG, "Bad request passed to MPC_Grequest_start" );
-	
-	/* Initialized as a NULL request */
-	memcpy( request, &mpc_request_null, sizeof( MPC_Request ) );
-	
-	/* Change type */
-	request->request_type = REQUEST_GENERALIZED;
-	/* Set not null as we want to be waited */
-	request->is_null = 0;
-	/* Fill in generalized request CTX */
-	request->pointer_to_source_request = (void *)request;
-	request->query_fn = query_fn;
-	request->free_fn = free_fn;
-	request->cancel_fn = cancel_fn;
-	request->extra_state = extra_state;
-	
-	/* We set the request as pending */
-	request->completion_flag = SCTK_MESSAGE_PENDING;
-	
-	MPC_ERROR_SUCESS()
+	return PMPCX_Grequest_start_generic(query_fn, free_fn, cancel_fn, NULL, NULL, extra_state, request);
 }
 
 /** \brief Flag a Generalized Request as finished
@@ -1214,7 +1330,7 @@ int PMPC_Type_free (MPC_Datatype * datatype_p)
 		MPC_ERROR_REPORT (MPC_COMM_WORLD, MPC_ERR_TYPE, "");
 	}
 
-	/* Choose what to do in function of the datatype king */
+	/* Choose what to do in function of the datatype kind */
 	switch( sctk_datatype_kind( datatype ) )
 	{
 		case MPC_DATATYPES_COMMON:

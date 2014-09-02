@@ -454,12 +454,11 @@ mpc_mpi_per_communicator_t* mpc_mpc_get_per_comm_data(sctk_communicator_t comm){
   return tmp->mpc_mpi_per_communicator;
 }
 
-static inline
-mpc_mpi_data_t* mpc_mpc_get_per_task_data(){
-  struct sctk_task_specific_s * task_specific;
-  task_specific = __MPC_get_task_specific ();
-
-  return task_specific->mpc_mpi_data;
+static inline mpc_mpi_data_t * mpc_mpc_get_per_task_data()
+{
+	struct sctk_task_specific_s * task_specific;
+	task_specific = __MPC_get_task_specific ();
+	return task_specific->mpc_mpi_data;
 }
 
 static inline void PMPC_Get_requests(struct MPI_request_struct_s **requests){
@@ -2727,13 +2726,14 @@ __INTERNAL__PMPI_Sendrecv_replace (void *buf, int count,
 }
 
 /************************************************************************/
-/* GENERALIZED REQUESTS                                                 */
+/* Generalized Requests                                                 */
 /************************************************************************/
 
 int PMPI_Grequest_start( MPI_Grequest_query_function *query_fn, MPI_Grequest_free_function * free_fn,
 					  MPI_Grequest_cancel_function * cancel_fn, void *extra_state, MPI_Request * request)
 {
 	MPC_Request *new_request = __sctk_new_mpc_request (request);
+	
 	return PMPC_Grequest_start( query_fn, free_fn, cancel_fn, extra_state, new_request );
 }
 
@@ -2744,7 +2744,20 @@ int PMPI_Grequest_complete(  MPI_Request request )
 	return PMPC_Grequest_complete( *mpc_req );
 }
 
+/************************************************************************/
+/* Extended Generalized Requests                                        */
+/************************************************************************/
 
+  int PMPIX_Grequest_start(MPI_Grequest_query_function *query_fn,
+                          MPI_Grequest_free_function * free_fn,
+           		  MPI_Grequest_cancel_function * cancel_fn, 
+           		  MPIX_Grequest_poll_fn * poll_fn, 
+           		  void *extra_state, 
+           		  MPI_Request * request)
+  {
+	  MPC_Request *new_request = __sctk_new_mpc_request (request);
+	  return PMPCX_Grequest_start(query_fn, free_fn, cancel_fn, poll_fn, extra_state, new_request);
+  }
 
 /************************************************************************/
 /* Datatype Handling                                                    */
