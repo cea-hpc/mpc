@@ -1220,7 +1220,7 @@ int PMPCX_GRequest_class_create( MPC_Grequest_query_function * query_fn,
 				 MPC_Grequest_free_function * free_fn,
 				 MPCX_Grequest_poll_fn * poll_fn,
 				 MPCX_Grequest_wait_fn * wait_fn,
-				 MPIX_Request_class * new_class )
+				 MPCX_Request_class * new_class )
 {
 	/* Retrieve task context */
 	struct sctk_task_specific_s *task_specific = __MPC_get_task_specific ();
@@ -1231,13 +1231,13 @@ int PMPCX_GRequest_class_create( MPC_Grequest_query_function * query_fn,
 	return GRequest_context_add_class(  class_ctx, query_fn, cancel_fn, free_fn, poll_fn, wait_fn, new_class );
 }
 
-/** \brief Create a request linked to an \ref MPIX_Request_class type
+/** \brief Create a request linked to an \ref MPCX_Request_class type
  * 
  *  \param target_class Identifier of the class of work we launch as created by \ref PMPIX_GRequest_class_create
  *  \param extra_state Extra pointer passed to every handler
  *  \param request The request object we are creating (output)
  */
-int PMPCX_Grequest_class_allocate( MPIX_Request_class target_class, void *extra_state, MPC_Request *request )
+int PMPCX_Grequest_class_allocate( MPCX_Request_class target_class, void *extra_state, MPC_Request *request )
 {
 	/* Retrieve task context */
 	struct sctk_task_specific_s *task_specific = __MPC_get_task_specific ();
@@ -1245,11 +1245,11 @@ int PMPCX_Grequest_class_allocate( MPIX_Request_class target_class, void *extra_
 	struct GRequest_context *class_ctx = &task_specific->grequest_context;	
 	
 	/* Retrieve task description */
-	MPIX_GRequest_class_t *class_desc = GRequest_context_get_class( class_ctx, target_class );
+	MPCX_GRequest_class_t *class_desc = GRequest_context_get_class( class_ctx, target_class );
 	
 	/* Not found */
 	if( ! class_desc )
-		MPC_ERROR_REPORT( MPC_COMM_SELF, MPC_ERR_ARG, "Bad MPIX_Request_class passed to PMPIX_Grequest_class_allocate" );
+		MPC_ERROR_REPORT( MPC_COMM_SELF, MPC_ERR_ARG, "Bad MPCX_Request_class passed to PMPIX_Grequest_class_allocate" );
 	
 	return PMPCX_Grequest_start_generic( class_desc->query_fn, class_desc->free_fn, 
 					     class_desc->cancel_fn, class_desc->poll_fn, 

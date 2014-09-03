@@ -492,6 +492,9 @@
 #pragma weak MPI_Grequest_complete = PMPI_Grequest_complete
 
 #pragma weak MPIX_Grequest_start = PMPIX_Grequest_start
+#pragma weak MPIX_GRequest_class_create = PMPIX_GRequest_class_create
+#pragma weak MPIX_Grequest_class_allocate = PMPIX_Grequest_class_allocate
+
 //~ not implemented
 
 /*

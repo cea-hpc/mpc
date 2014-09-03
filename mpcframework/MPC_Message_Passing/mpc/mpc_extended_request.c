@@ -30,7 +30,7 @@ void GRequest_context_init( struct GRequest_context * ctx )
 
 void GRequest_context_release( struct GRequest_context * ctx )
 {
-	MPIX_GRequest_class_t *current, *tmp;	
+	MPCX_GRequest_class_t *current, *tmp;	
 	
 	HASH_ITER(hh, ctx->classes, current, tmp) {
 		HASH_DEL(ctx->classes, current);  
@@ -46,10 +46,10 @@ int GRequest_context_add_class( struct GRequest_context *ctx,
 				     MPC_Grequest_free_function * free_fn,
 				     MPCX_Grequest_poll_fn * poll_fn,
 				     MPCX_Grequest_wait_fn * wait_fn,
-				     MPIX_Request_class * new_class )
+				     MPCX_Request_class * new_class )
 {
 	/* Allocate a new entry */
-	MPIX_GRequest_class_t * pnew_class = calloc( 1, sizeof(  MPIX_GRequest_class_t ) );
+	MPCX_GRequest_class_t * pnew_class = calloc( 1, sizeof(  MPCX_GRequest_class_t ) );
 	
 	/* Fill its content */
 	pnew_class->query_fn = query_fn;
@@ -64,7 +64,7 @@ int GRequest_context_add_class( struct GRequest_context *ctx,
 	HASH_ADD_INT( ctx->classes, class_id, pnew_class );
 	
 	/* Set the new_class id */
-	*new_class =  (MPIX_Request_class)pnew_class->class_id;
+	*new_class =  (MPCX_Request_class)pnew_class->class_id;
 	
 	/* Increment Id */
 	ctx->current_id++;
@@ -73,9 +73,9 @@ int GRequest_context_add_class( struct GRequest_context *ctx,
 }
 
 
-MPIX_GRequest_class_t  * GRequest_context_get_class( struct GRequest_context *ctx, MPIX_Request_class requested_class )
+MPCX_GRequest_class_t  * GRequest_context_get_class( struct GRequest_context *ctx, MPCX_Request_class requested_class )
 {
-	MPIX_GRequest_class_t * pclass;
+	MPCX_GRequest_class_t * pclass;
 
 	HASH_FIND_INT(ctx->classes, &requested_class, pclass); 
 		

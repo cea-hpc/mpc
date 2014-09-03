@@ -122,10 +122,10 @@ extern "C"
   /* Extended Generalized requests functions */
   
   typedef int MPCX_Grequest_poll_fn( void * extra_state , MPC_Status * status );
-  typedef int MPCX_Grequest_wait_fn( int count, void * arry_of_states, double timeout, MPC_Status * status );
+  typedef int MPCX_Grequest_wait_fn( int count, void ** array_of_states, double timeout, MPC_Status * status );
 
   /* Generalized Request classes */
-  typedef int MPIX_Request_class;
+  typedef int MPCX_Request_class;
   
   /* Request definition */
   typedef struct
@@ -661,9 +661,9 @@ int MPCX_GRequest_class_create( MPC_Grequest_query_function * query_fn,
 				MPC_Grequest_free_function * free_fn,
 				MPCX_Grequest_poll_fn * poll_fn,
 				MPCX_Grequest_wait_fn * wait_fn,
-				MPIX_Request_class * new_class );
+				MPCX_Request_class * new_class );
 
-int MPCX_Grequest_class_allocate( MPIX_Request_class target_class, void *extra_state, MPC_Request *request );
+int MPCX_Grequest_class_allocate( MPCX_Request_class target_class, void *extra_state, MPC_Request *request );
 
   /*MPI compatibility*/
 #define MPC_BSEND_OVERHEAD 0
@@ -934,13 +934,13 @@ int MPCX_Grequest_class_allocate( MPIX_Request_class target_class, void *extra_s
 
   /* Extended Generalized Requests Classes */
   int PMPCX_GRequest_class_create( MPC_Grequest_query_function * query_fn,
-				 MPC_Grequest_cancel_function * cancel_fn,
-				 MPC_Grequest_free_function * free_fn,
-				 MPCX_Grequest_poll_fn * poll_fn,
-				 MPCX_Grequest_wait_fn * wait_fn,
-				 MPIX_Request_class * new_class );
+				   MPC_Grequest_cancel_function * cancel_fn,
+				   MPC_Grequest_free_function * free_fn,
+				   MPCX_Grequest_poll_fn * poll_fn,
+				   MPCX_Grequest_wait_fn * wait_fn,
+				   MPCX_Request_class * new_class );
   
-  int PMPCX_Grequest_class_allocate( MPIX_Request_class target_class, void *extra_state, MPC_Request *request );
+  int PMPCX_Grequest_class_allocate( MPCX_Request_class target_class, void *extra_state, MPC_Request *request );
   
   
   /* Send/Recv message using the signalization network */

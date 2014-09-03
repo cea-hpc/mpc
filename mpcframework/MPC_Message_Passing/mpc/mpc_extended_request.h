@@ -25,7 +25,7 @@
 #include "mpcmp.h"
 #include "uthash.h"
 
-typedef struct MPIX_GRequest_class_s
+typedef struct MPCX_GRequest_class_s
 {
 	int class_id; /**< Unique identifier of this request class */
 
@@ -37,13 +37,13 @@ typedef struct MPIX_GRequest_class_s
 	MPCX_Grequest_wait_fn * wait_fn;
 	
 	UT_hash_handle hh; /**< This dummy data structure is required by UTHash is order to make this data structure hashable */
-}MPIX_GRequest_class_t;
+}MPCX_GRequest_class_t;
 
 
 
 struct GRequest_context
 {
-	MPIX_GRequest_class_t * classes;
+	MPCX_GRequest_class_t * classes;
 	int current_id;
 };
 
@@ -58,10 +58,10 @@ int GRequest_context_add_class( struct GRequest_context *ctx,
 				     MPC_Grequest_free_function * free_fn,
 				     MPCX_Grequest_poll_fn * poll_fn,
 				     MPCX_Grequest_wait_fn * wait_fn,
-				     MPIX_Request_class * new_class );
+				     MPCX_Request_class * new_class );
 
 
-MPIX_GRequest_class_t * GRequest_context_get_class( struct GRequest_context *ctx, MPIX_Request_class requested_class );
+MPCX_GRequest_class_t * GRequest_context_get_class( struct GRequest_context *ctx, MPCX_Request_class requested_class );
 
 
 #endif /* MPC_X_REQUESTS_H */

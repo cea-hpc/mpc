@@ -232,6 +232,8 @@ extern "C"
   
   /* MPI_Info Definitions */
   typedef MPC_Info MPI_Info;
+  
+
 
 //~ not implemented
 		typedef int MPI_Win;
@@ -557,8 +559,7 @@ typedef int (MPI_Delete_function) (MPI_Comm, int, void *, void *);
 
   /* Extended Generalized Requests Functions */
   typedef int MPIX_Grequest_poll_fn(void * extra_arg, MPI_Status *status);
-  typedef int MPIX_Grequest_wait_fn(int count, void **array_of_args, double, MPI_Status *status);
-  
+
   /* Extended Generalized Requests */
   int MPIX_Grequest_start(MPI_Grequest_query_function *query_fn,
                           MPI_Grequest_free_function * free_fn,
@@ -567,6 +568,22 @@ typedef int (MPI_Delete_function) (MPI_Comm, int, void *, void *);
            		  void *extra_state, 
            		  MPI_Request * request);
 
+  
+  /* Extended Generalized Request Class */
+  typedef int MPIX_Request_class;
+  typedef int MPIX_Grequest_wait_fn(int count, void **array_of_states, double, MPI_Status *status);
+  
+  int MPIX_GRequest_class_create( MPI_Grequest_query_function * query_fn,
+				 MPI_Grequest_cancel_function * cancel_fn,
+				 MPI_Grequest_free_function * free_fn,
+				 MPIX_Grequest_poll_fn * poll_fn,
+				 MPIX_Grequest_wait_fn * wait_fn,
+				 MPIX_Request_class * new_class );
+  
+  int MPIX_Grequest_class_allocate( MPIX_Request_class target_class, void *extra_state, MPI_Request *request );
+
+  
+  
 /* Here are the bindings of the profiling routines */
 
 #if !defined(MPI_BUILD_PROFILING)
@@ -840,6 +857,7 @@ typedef int (MPI_Delete_function) (MPI_Comm, int, void *, void *);
     
   int PMPI_Grequest_complete(  MPI_Request request); 
 
+
   /* Extended Generalized Requests */
   int PMPIX_Grequest_start(MPI_Grequest_query_function *query_fn,
                           MPI_Grequest_free_function * free_fn,
@@ -848,7 +866,18 @@ typedef int (MPI_Delete_function) (MPI_Comm, int, void *, void *);
            		  void *extra_state, 
            		  MPI_Request * request);
   
+   /* Extended Generalized Request Class */
   
+  int PMPIX_GRequest_class_create( MPI_Grequest_query_function * query_fn,
+				 MPI_Grequest_cancel_function * cancel_fn,
+				 MPI_Grequest_free_function * free_fn,
+				 MPIX_Grequest_poll_fn * poll_fn,
+				 MPIX_Grequest_wait_fn * wait_fn,
+				 MPIX_Request_class * new_class );
+  
+  int PMPIX_Grequest_class_allocate( MPIX_Request_class target_class, void *extra_state, MPI_Request *request );
+
+   
   /* Note that we may need to define a @PCONTROL_LIST@ depending on whether
      stdargs are supported */
   int PMPI_Pcontrol (const int, ...);
@@ -927,7 +956,7 @@ typedef int (MPI_Delete_function) (MPI_Comm, int, void *, void *);
 
   /* Extended Collective Operations */
   int MPI_Alltoallw (void *, int[], int[], MPI_Datatype[], void *, int[], int[], MPI_Datatype[], MPI_Comm);
-  int MPI_Exscan (void *, void *, int, MPI_Datatype, MPI_Op, MPI_Comm);
+  
 
   /* External Interfaces */
   int MPI_Add_error_class (int *);

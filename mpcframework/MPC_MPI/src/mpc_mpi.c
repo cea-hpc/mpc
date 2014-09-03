@@ -2760,6 +2760,26 @@ int PMPI_Grequest_complete(  MPI_Request request )
   }
 
 /************************************************************************/
+/* Extended Generalized Requests Class                                  */
+/************************************************************************/
+
+int PMPIX_GRequest_class_create( MPI_Grequest_query_function * query_fn,
+				 MPI_Grequest_cancel_function * cancel_fn,
+				 MPI_Grequest_free_function * free_fn,
+				 MPIX_Grequest_poll_fn * poll_fn,
+				 MPIX_Grequest_wait_fn * wait_fn,
+				 MPIX_Request_class * new_class )
+{
+	return PMPCX_GRequest_class_create(query_fn, cancel_fn, free_fn, poll_fn, wait_fn, new_class );
+}
+  
+int PMPIX_Grequest_class_allocate( MPIX_Request_class target_class, void *extra_state, MPI_Request *request )
+{
+	MPC_Request *new_request = __sctk_new_mpc_request (request);
+	return PMPCX_Grequest_class_allocate( target_class, extra_state, new_request );
+}
+
+/************************************************************************/
 /* Datatype Handling                                                    */
 /************************************************************************/
 
