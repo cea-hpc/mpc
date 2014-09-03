@@ -428,6 +428,7 @@ typedef int (MPI_Delete_function) (MPI_Comm, int, void *, void *);
 		    MPI_Comm);
   int MPI_Alltoallv (void *, int *, int *, MPI_Datatype, void *, int *, int *,
 		     MPI_Datatype, MPI_Comm);
+  int MPI_Exscan (void *, void *, int, MPI_Datatype, MPI_Op, MPI_Comm);
   int MPI_Reduce (void *, void *, int, MPI_Datatype, MPI_Op, int, MPI_Comm);
   int MPI_Op_create (MPI_User_function *, int, MPI_Op *);
   int MPI_Op_free (MPI_Op *);
