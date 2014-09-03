@@ -2784,6 +2784,7 @@ __MPC_Isend (void *buf, mpc_msg_count count, MPC_Datatype datatype,
 	//~ {
 		//~ mpc_check_msg (src, dest, tag, comm, com_size);
 	//~ }
+
   sctk_mpc_init_request(request,comm,src, REQUEST_SEND);
   msg = sctk_create_header (src,sctk_message_contiguous);
   d_size = __MPC_Get_datatype_size (datatype, task_specific);
@@ -3151,7 +3152,7 @@ int PMPC_Wait (MPC_Request * request, MPC_Status * status)
 struct wfv_waitall_s{
   int ret;
   mpc_msg_count count;
-  MPC_Request *array_of_requests;
+  MPC_Request **array_of_requests;
   MPC_Status *array_of_statuses;
 };
 
@@ -3163,7 +3164,7 @@ static inline void wfv_waitall (void *arg)
 
 	for (i = 0; i < args->count; i++)
 	{
-		flag = flag & __MPC_Test_check_light (&(args->array_of_requests[i]));
+		flag = flag & __MPC_Test_check_light (args->array_of_requests[i]);
 	}
 
 	/* All requests received */
@@ -3174,7 +3175,7 @@ static inline void wfv_waitall (void *arg)
 			MPC_Status *status;
 			MPC_Request *request;
 
-			request = &(args->array_of_requests[i]);
+			request = args->array_of_requests[i];
 
 			if(args->array_of_statuses != NULL)
 			{
@@ -3280,10 +3281,18 @@ static inline int __MPC_Waitall_Grequest (mpc_msg_count count,
 	return 0;
 }
 
-
-static inline int __MPC_Waitall (mpc_msg_count count,
-				 MPC_Request array_of_requests[],
-				 MPC_Status array_of_statuses[])
+/** \brief Internal MPI_Waitall implementation relying on pointer to requests
+ * 
+ *  This function is needed in order to call the MPC interface from
+ *  the MPI one without having to rely on a set of MPI_Tests as before
+ *  now the progress from MPI_Waitall functions can also be polled
+ * 
+ *  \warning This function is not MPI_Waitall (see the MPC_Request * parray_of_requests[] argument)
+ * 
+ */
+int __MPC_Waitallp (mpc_msg_count count,
+		   MPC_Request * parray_of_requests[],
+		   MPC_Status array_of_statuses[])
 {
 	int i;
 	int flag = 1;
@@ -3297,7 +3306,7 @@ static inline int __MPC_Waitall (mpc_msg_count count,
 	{
 		MPC_ERROR_SUCESS()
 	}
-	
+
 	
 	for (i = 0 ; i < count ; i++) 
 	{
@@ -3314,7 +3323,8 @@ static inline int __MPC_Waitall (mpc_msg_count count,
 			status = MPC_STATUS_IGNORE;
 		}
 		
-		request = &(array_of_requests[i]);
+		
+		request = parray_of_requests[i];
 		
 		__MPC_Test_check (request, &tmp_flag, status);
 
@@ -3333,7 +3343,7 @@ static inline int __MPC_Waitall (mpc_msg_count count,
 	* It performs well at least on Infiniband on NAS  */
 	struct wfv_waitall_s wfv;
 	wfv.ret = 0;
-	wfv.array_of_requests = array_of_requests;
+	wfv.array_of_requests = parray_of_requests;
 	wfv.array_of_statuses = array_of_statuses;
 	wfv.count = count;
 	sctk_inter_thread_perform_idle((int *) &(wfv.ret), 1 , (void(*)(void*))wfv_waitall,(void*)&wfv);
@@ -3341,25 +3351,59 @@ static inline int __MPC_Waitall (mpc_msg_count count,
 	MPC_ERROR_SUCESS ();
 }
 
-int
-PMPC_Waitall (mpc_msg_count count,
+
+#define PMPC_WAIT_ALL_STATIC_TRSH 32
+
+int PMPC_Waitall (mpc_msg_count count,
 	      MPC_Request array_of_requests[], MPC_Status array_of_statuses[])
 {
-  int res;
+	int res;
+	int i;
 
-  SCTK_PROFIL_START (MPC_Waitall);
+	SCTK_PROFIL_START (MPC_Waitall);
 
-#ifdef MPC_LOG_DEBUG
-  int i;
-  for (i = 0; i < count; i++)
-    {
-      mpc_log_debug (MPC_COMM_WORLD, "MPC_Waitall position=%d req=%p", i,
-		     array_of_requests[i]);
-    }
-#endif
-  res = __MPC_Waitall (count, array_of_requests, array_of_statuses);
-  SCTK_PROFIL_END (MPC_Waitall);
-  return res;
+	#ifdef MPC_LOG_DEBUG
+	int i;
+	for (i = 0; i < count; i++)
+	{
+		mpc_log_debug (MPC_COMM_WORLD, "MPC_Waitall position=%d req=%p", i,
+		array_of_requests[i]);
+	}
+	#endif
+
+	/* Here we are preparing the array of pointer to request
+	 * in order to call the __MPC_Waitallp function
+	 * it might be an extra cost but it allows the use of
+	 * the __MPC_Waitallp function from MPI_Waitall */
+	MPC_Request  ** parray_of_requests;
+	MPC_Request * static_parray_of_requests[PMPC_WAIT_ALL_STATIC_TRSH];
+
+	if( count < PMPC_WAIT_ALL_STATIC_TRSH )
+	{
+		parray_of_requests = static_parray_of_requests;
+	}
+	else
+	{
+		parray_of_requests = sctk_malloc( sizeof( MPC_Request *  ) * count );
+		assume( parray_of_requests != NULL );
+	}
+	
+	/* Fill in the array of requests */
+	for( i = 0 ; i < count ; i++ )
+		parray_of_requests[i] = &(array_of_requests[i]);
+
+	/* Call the pointer based waitall */
+	res = __MPC_Waitallp (count, parray_of_requests, array_of_statuses);
+
+	/* Do we need to free the temporary request pointer array */
+	if( PMPC_WAIT_ALL_STATIC_TRSH <= count )
+	{
+		sctk_free( parray_of_requests );
+	}
+
+
+	SCTK_PROFIL_END (MPC_Waitall);
+	return res;
 }
 
 int
@@ -4580,7 +4624,7 @@ __MPC_Gatherv (void *sendbuf, mpc_msg_count sendcnt, MPC_Datatype sendtype,
 		  j++;
 		}
 	      j--;
-	      __MPC_Waitall(j+1,recvrequest,MPC_STATUSES_IGNORE);
+	     PMPC_Waitall(j+1,recvrequest,MPC_STATUSES_IGNORE);
 	      /* 				for (; j >= 0; j--) */
 	      /* 				{ */
 	      /* 					__MPC_Wait (&(recvrequest[j]), MPC_STATUS_IGNORE); */
@@ -4773,7 +4817,7 @@ __MPC_Gather (void *sendbuf, mpc_msg_count sendcnt, MPC_Datatype sendtype,
 		  j++;
 		}
 	      j--;
-	      __MPC_Waitall(j+1,recvrequest,MPC_STATUSES_IGNORE);
+	      PMPC_Waitall(j+1,recvrequest,MPC_STATUSES_IGNORE);
 	      /* 		  for (; j >= 0; j--) */
 	      /* 			{ */
 	      /* 			  __MPC_Wait (&(recvrequest[j]), MPC_STATUS_IGNORE); */
@@ -4996,7 +5040,7 @@ PMPC_Scatterv (void *sendbuf,
 					j++;
 				}
 				j--;
-                  __MPC_Waitall(j+1,sendrequest,MPC_STATUSES_IGNORE);
+                  PMPC_Waitall(j+1,sendrequest,MPC_STATUSES_IGNORE);
 /*
 				for (; j >= 0; j--)
 				{
@@ -5106,7 +5150,7 @@ PMPC_Scatter (void *sendbuf,
 					j++;
 				}
 				j--;
-                  __MPC_Waitall(j+1,sendrequest,MPC_STATUSES_IGNORE);
+                  PMPC_Waitall(j+1,sendrequest,MPC_STATUSES_IGNORE);
 /*
 				for (; j >= 0; j--)
 				{
@@ -5217,7 +5261,7 @@ PMPC_Alltoall (void *sendbuf, mpc_msg_count sendcount, MPC_Datatype sendtype,
 				dst = (rank-i-ii+size) % size;
 				__MPC_Isend (((char *) sendbuf) + (dst * sendcount * d_send), sendcount, sendtype, dst, MPC_ALLTOALL_TAG, comm, &requests[i+ss], task_specific);
 			}
-    __MPC_Waitall(2*ss,requests,MPC_STATUSES_IGNORE);
+    PMPC_Waitall(2*ss,requests,MPC_STATUSES_IGNORE);
 		}
 	}
 	SCTK_PROFIL_END (MPC_Alltoall);
@@ -5321,7 +5365,7 @@ PMPC_Alltoallv (void *sendbuf,
 				sctk_nodebug("[%d] Recv from %d", rank, dst);
 				__MPC_Isend (((char *) sendbuf) + (sdispls[dst] * d_send), sendcnts[dst], sendtype, dst, MPC_ALLTOALLV_TAG, comm, &requests[i+ss], task_specific);
 			}
-			__MPC_Waitall(2*ss,requests,MPC_STATUS_IGNORE);
+			PMPC_Waitall(2*ss,requests,MPC_STATUS_IGNORE);
 		}
 	}
 
@@ -5442,7 +5486,7 @@ PMPC_Alltoallw (const void *sendbuf, const int sendcounts[],
                 }
             }
 
-            __MPC_Waitall(outstanding_requests, reqarray, starray);
+            PMPC_Waitall(outstanding_requests, reqarray, starray);
         }
 	}
 

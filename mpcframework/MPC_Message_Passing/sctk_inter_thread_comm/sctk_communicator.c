@@ -1616,6 +1616,7 @@ int sctk_get_process_rank_from_task_rank(int rank)
 	} 
 	else 
 	{
+		INFO("Something is really wrong here: several getenvs in the critical path !");
 		if((getenv("SCTK_MIC_NB_TASK") != NULL) || 
 		   (getenv("SCTK_HOST_NB_TASK") != NULL) ||
 		   (getenv("SCTK_NB_HOST") != NULL) ||

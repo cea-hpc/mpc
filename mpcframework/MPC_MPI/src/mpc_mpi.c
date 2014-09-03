@@ -2092,62 +2092,69 @@ static int __INTERNAL__PMPI_Testany (int count, MPI_Request * array_of_requests,
   return MPI_SUCCESS;
 }
 
+#define PMPI_WAIT_ALL_STATIC_TRSH 32
+
 static int __INTERNAL__PMPI_Waitall (int count, MPI_Request * array_of_requests, MPI_Status * array_of_statuses)
 {
 	int flag = 0;
 	int i;
 
+	/* Set the MPI_Status to MPI_SUCCESS */
 	if(array_of_statuses != MPC_STATUSES_IGNORE){
 	  for (i = 0; i < count; i++)
 	    {
 	      array_of_statuses[i].MPI_ERROR = MPI_SUCCESS;
 	    }
 	}
-
-	while (!flag)
+	
+	/* Convert MPI resquests to MPC ones */
+	
+	/* Prepare an array for MPC requests */
+	MPC_Request ** mpc_array_of_requests;
+	MPC_Request * static_array_of_requests[PMPI_WAIT_ALL_STATIC_TRSH];
+	
+	if( count < PMPI_WAIT_ALL_STATIC_TRSH )
 	{
-		int done = 0;
-		int loc_flag;
-		for (i = 0; i < count; i++)
-		{
-			int tmp;
-
-			if (array_of_requests[i] == MPI_REQUEST_NULL)
-			{
-				done++;
-				loc_flag = 0;
-				tmp = MPI_SUCCESS;
-			}
-			else
-			{
-				MPC_Request *req;
-				req = __sctk_convert_mpc_request (&(array_of_requests[i]));
-				if (req == &MPC_REQUEST_NULL)
-				{
-					done++;
-					loc_flag = 0;
-					tmp = MPI_SUCCESS;
-				}
-				else
-				{
-					tmp = PMPC_Test (req, &loc_flag, (array_of_statuses == MPC_STATUSES_IGNORE) ? MPC_STATUS_IGNORE:&(array_of_statuses[i]));
-				}
-			}
-			if (loc_flag)
-			{
-				__sctk_delete_mpc_request (&(array_of_requests[i]));
-				done++;
-			}
-			if (tmp != MPI_SUCCESS)
-			{
-				return tmp;
-			}
-		}
-		flag = (done == count);
-		/* XXX: we should place it at another place */
-		if (!flag)
-			sctk_thread_yield ();
+		mpc_array_of_requests = static_array_of_requests;
 	}
+	else
+	{
+		mpc_array_of_requests = sctk_malloc(sizeof(MPC_Request *) * count);
+		assume( mpc_array_of_requests != NULL );
+	}
+	
+	/* Fill the array with those requests */
+	for( i = 0 ; i < count ; i++ )
+	{
+		/* Handle NULL requests */
+		if( array_of_requests[i] == MPI_REQUEST_NULL )
+		{
+			mpc_array_of_requests[i] = &MPC_REQUEST_NULL;
+		}
+		else
+		{
+			mpc_array_of_requests[i] = __sctk_convert_mpc_request (&(array_of_requests[i]));
+		}
+
+	}
+	
+	/* Call the MPC waitall implementation */
+	int ret = __MPC_Waitallp (count,  mpc_array_of_requests, (MPC_Status *)array_of_statuses);
+	
+	/* Something bad hapenned ? */
+	if( ret != MPI_SUCCESS )
+		return ret;
+	 
+	/* Delete the MPI requests */
+	for( i = 0 ; i < count ; i++ )
+		__sctk_delete_mpc_request (&(array_of_requests[i]));
+	
+	/* If needed free the mpc_array_of_requests */
+	if( PMPI_WAIT_ALL_STATIC_TRSH <= count )
+	{
+		sctk_free(mpc_array_of_requests);
+	}
+	
 	return MPI_SUCCESS;
 }
 

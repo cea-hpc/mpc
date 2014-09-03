@@ -165,4 +165,12 @@ struct sctk_thread_specific_s
 };
 typedef struct sctk_thread_specific_s sctk_thread_specific_t;
 
+/************************************************************************/
+/* Non Generic MPI interface function                                   */
+/************************************************************************/
+
+int __MPC_Waitallp (mpc_msg_count count,
+		   MPC_Request * parray_of_requests[],
+		   MPC_Status array_of_statuses[]);
+
 #endif /* MPC_COMMON_H */
