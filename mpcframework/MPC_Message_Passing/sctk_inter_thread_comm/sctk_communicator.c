@@ -1596,6 +1596,38 @@ int sctk_get_node_rank_from_task_rank(const int rank)
 	return -1;
 }
 
+/************************* sctk_get_process_rank_from_task_rank variables ************************/
+
+/* This section makes sure we are loading the variables needed by
+ * sctk_get_process_rank_from_task_rank only once */
+
+/* Bolean telling if the variables were loaded */
+static int sctk_get_process_rank_from_task_rank_context_init_done = 0;
+/* getenv("SCTK_MIC_NB_TASK") != NULL) */
+static char * SCTK_MIC_NB_TASK = NULL;
+/* getenv("SCTK_HOST_NB_TASK") */
+static char * SCTK_HOST_NB_TASK = NULL;
+/* getenv("SCTK_NB_HOST") */
+static char * SCTK_NB_HOST = NULL;
+/* getenv("SCTK_NB_MIC") */
+static char * SCTK_NB_MIC = NULL;
+
+/** @brief This function loads the parameters needed by \ref sctk_get_process_rank_from_task_rank once for all
+ */
+static inline void sctk_get_process_rank_from_task_rank_setup_context()
+{
+	if( sctk_get_process_rank_from_task_rank_context_init_done )
+		return;
+	
+	SCTK_MIC_NB_TASK = getenv("SCTK_MIC_NB_TASK");
+	SCTK_HOST_NB_TASK = getenv("SCTK_HOST_NB_TASK");
+	SCTK_NB_HOST = getenv("SCTK_NB_HOST");
+	SCTK_NB_MIC = getenv("SCTK_NB_MIC");
+	
+	sctk_get_process_rank_from_task_rank_context_init_done = 1;
+}
+
+
 /************************* FUNCTION ************************/
 /** 
  * This method get the rank of the process which handle the given task.
@@ -1616,19 +1648,22 @@ int sctk_get_process_rank_from_task_rank(int rank)
 	} 
 	else 
 	{
-		INFO("Something is really wrong here: several getenvs in the critical path !");
-		if((getenv("SCTK_MIC_NB_TASK") != NULL) || 
-		   (getenv("SCTK_HOST_NB_TASK") != NULL) ||
-		   (getenv("SCTK_NB_HOST") != NULL) ||
-		   (getenv("SCTK_NB_MIC") != NULL))
+		/* Here we rely on the variables SCTK_* which are loaded 
+		 * from the environment by the following function */
+		sctk_get_process_rank_from_task_rank_setup_context();
+		
+		if( (SCTK_MIC_NB_TASK != NULL) || 
+		    (SCTK_HOST_NB_TASK != NULL) ||
+		    (SCTK_NB_HOST != NULL) ||
+		    (SCTK_NB_MIC != NULL ) )
 		{
 			int i, node_rank, sum_proc_node=0, sum_task_node=0, node_number, nb_processes_on_node;
 			int *process_from_node = NULL;
 			int host_number, mic_nb_task, host_nb_task;
 			
-			host_number = (getenv("SCTK_NB_HOST") != NULL) ? atoi(getenv("SCTK_NB_HOST")) : 0;
-			mic_nb_task = (getenv("SCTK_MIC_NB_TASK") != NULL) ? atoi(getenv("SCTK_MIC_NB_TASK")) : 0;
-			host_nb_task = (getenv("SCTK_HOST_NB_TASK") != NULL) ? atoi(getenv("SCTK_HOST_NB_TASK")) : 0;
+			host_number = (SCTK_NB_HOST != NULL) ? atoi(SCTK_NB_HOST) : 0;
+			mic_nb_task = (SCTK_MIC_NB_TASK != NULL) ? atoi(SCTK_MIC_NB_TASK) : 0;
+			host_nb_task = (SCTK_HOST_NB_TASK != NULL) ? atoi(SCTK_HOST_NB_TASK) : 0;
 			
 			node_rank = sctk_get_node_rank_from_task_rank(rank);
 			struct process_nb_from_node_rank * sctk_process_number_from_node_rank;
