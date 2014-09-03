@@ -29,6 +29,7 @@
 #include "sctk_debug.h"
 #include "sctk_topology.h"
 #include "sctk_tls.h"
+#include <sctk_ethread_internal.h>
 #include "sctk_route.h"
 #include "mpcthread.h"
 #include <mpcmp.h>
@@ -397,6 +398,8 @@ static inline void sctk_mpc_init_request_null(){
   mpc_request_null.query_fn = NULL;
   mpc_request_null.cancel_fn = NULL;
   mpc_request_null.free_fn = NULL;
+  mpc_request_null.wait_fn = NULL;
+  mpc_request_null.poll_fn = NULL;
   mpc_request_null.extra_state = NULL;
   mpc_request_null.pointer_to_source_request = (void *)&mpc_request_null;
 }
@@ -416,6 +419,8 @@ static inline void sctk_mpc_init_request (MPC_Request * request, MPC_Comm comm, 
       request->msg = NULL;
       request->query_fn = NULL;
       request->cancel_fn = NULL;
+      request->wait_fn = NULL;
+      request->poll_fn = NULL;
       request->free_fn = NULL;
       request->extra_state = NULL;
       request->pointer_to_source_request = (void *)request;
@@ -3184,9 +3189,101 @@ static inline void wfv_waitall (void *arg)
 	}
 }
 
+/** \brief This function is used to perform a batch wait over ExGrequest classes 
+ * It relies on the wait_fn provided at \ref MPCX_GRequest_class_create
+ * but in order to use it we must make sure that all the requests are of 
+ * the same type, to do so we check if they have the same wait_fn.
+ * 
+ * We try not to be intrusive as we are in the waitall critical path
+ * therefore we are progressivelly testing for our conditions
+ */
+static inline int __MPC_Waitall_Grequest (mpc_msg_count count,
+				          MPC_Request * parray_of_requests[],
+				          MPC_Status array_of_statuses[])
+{
+	int i;
+	int all_of_the_same_class = 0;
+	MPCX_Grequest_wait_fn * ref_wait = NULL;
+	
+	/* Do we have at least two requests ? */
+	if( 2 < count )
+	{
+		/* Are we looking at generalized requests ? */
+		if( parray_of_requests[0]->request_type == REQUEST_GENERALIZED )
+		{
+			ref_wait = parray_of_requests[0]->wait_fn;
+			
+			/* Are we playing with extended Grequest classes ? */
+			if( ref_wait )
+			{
+				/* Does the first two match ? */
+				if( ref_wait == parray_of_requests[1]->wait_fn )
+				{
+					/* Consider they all match now check the rest */
+					all_of_the_same_class = 1;
+					
+					for( i = 0 ; i < count ; i++ )
+					{
+						/* Can we find a different one ? */
+						if( parray_of_requests[i]->wait_fn != ref_wait )
+						{
+							all_of_the_same_class = 0;
+							break;
+						}
+					}
+					
+				}
+			}
+		}
+		
+	}
+	
+	/* Yes we can perform the batch wait */
+	if( all_of_the_same_class )
+	{
+		MPC_Status tmp_status;
+		/* Prepare the state array */
+		void ** array_of_states = sctk_malloc(sizeof(void *) * count );
+		assume( array_of_states != NULL );
+		for( i = 0 ; i  < count ; i++ )
+			array_of_states[i] = parray_of_requests[i]->extra_state;
+		
+		/* Call the batch wait function */
+		/* Here the timeout parameter is not obvious as for example
+		 * ROMIO relies on Wtime which is not constrained by the norm
+		 * is is just monotonous. Whe should have a scaling function 
+		 * which depends on the time source to be fair */
+		(ref_wait)( count, array_of_states , 1e9, &tmp_status );
+		
+		sctk_free( array_of_states);
+		
+		/* Update the statuses */
+		if( array_of_statuses != MPC_STATUSES_IGNORE )
+		{
+			/* here we do a for loop as we only checked that the wait function
+			 * was identical we are not sure that the XGrequests classes werent
+			 * different ones */
+			for( i = 0 ; i < count ; i++ )
+			{
+				(parray_of_requests[i]->query_fn)( parray_of_requests[i]->extra_state, &array_of_statuses[i]  );
+			}
+		}
+		
+		/* Free the requests */
+		for( i = 0 ; i < count ; i++ )
+			(parray_of_requests[i]->free_fn)( parray_of_requests[i]->extra_state  );
+		
+		
+		return 1;
+	}
+	
+	return 0;
+}
+
+
 static inline int __MPC_Waitall (mpc_msg_count count,
-								 MPC_Request array_of_requests[],
-								 MPC_Status array_of_statuses[])
+				 MPC_Request array_of_requests[],
+				 MPC_Status array_of_statuses[])
 {
 	int i;
 	int flag = 1;
@@ -3196,6 +3293,12 @@ static inline int __MPC_Waitall (mpc_msg_count count,
 	sctk_nodebug ("waitall count %d\n", count);
 	start = MPC_Wtime();
 
+	if( __MPC_Waitall_Grequest ( count, parray_of_requests, array_of_statuses) )
+	{
+		MPC_ERROR_SUCESS()
+	}
+	
+	
 	for (i = 0 ; i < count ; i++) 
 	{
 		int tmp_flag = 0;
@@ -3233,8 +3336,7 @@ static inline int __MPC_Waitall (mpc_msg_count count,
 	wfv.array_of_requests = array_of_requests;
 	wfv.array_of_statuses = array_of_statuses;
 	wfv.count = count;
-	sctk_inter_thread_perform_idle((int *) &(wfv.ret), 1 ,
-								   (void(*)(void*))wfv_waitall,(void*)&wfv);
+	sctk_inter_thread_perform_idle((int *) &(wfv.ret), 1 , (void(*)(void*))wfv_waitall,(void*)&wfv);
 
 	MPC_ERROR_SUCESS ();
 }
