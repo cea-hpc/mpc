@@ -1027,6 +1027,40 @@ void sctk_communicator_self_init()
 }
 
 
+/************************* sctk_get_process env variables ************************/
+
+/* This section makes sure we are loading the variables needed by
+ * several function in this file only once */
+
+/* Bolean telling if the variables were loaded */
+static int sctk_get_process_rank_from_task_rank_context_init_done = 0;
+/* getenv("SCTK_MIC_NB_TASK") != NULL) */
+static char * SCTK_MIC_NB_TASK = NULL;
+/* getenv("SCTK_HOST_NB_TASK") */
+static char * SCTK_HOST_NB_TASK = NULL;
+/* getenv("SCTK_NB_HOST") */
+static char * SCTK_NB_HOST = NULL;
+/* getenv("SCTK_NB_MIC") */
+static char * SCTK_NB_MIC = NULL;
+
+/** @brief This function loads the parameters needed by \ref sctk_get_process_rank_from_task_rank,
+/**        \ref sctk_get_node_rank_from_task_rank and \ref sctk_communicator_world_init once for all
+ */
+static inline void sctk_get_process_setup_env()
+{
+	if( sctk_get_process_rank_from_task_rank_context_init_done )
+		return;
+	
+	SCTK_MIC_NB_TASK = getenv("SCTK_MIC_NB_TASK");
+	SCTK_HOST_NB_TASK = getenv("SCTK_HOST_NB_TASK");
+	SCTK_NB_HOST = getenv("SCTK_NB_HOST");
+	SCTK_NB_MIC = getenv("SCTK_NB_MIC");
+	
+	sctk_get_process_rank_from_task_rank_context_init_done = 1;
+}
+
+
+
 /************************* FUNCTION ************************/
 /** 
  * This method initializes the MPI_COMM_WORLD communicator.
@@ -1043,16 +1077,18 @@ void sctk_communicator_world_init(const int nb_task)
 
 	pos = sctk_process_rank;
 	
-	if((getenv("SCTK_MIC_NB_TASK") != NULL) || 
-	   (getenv("SCTK_HOST_NB_TASK") != NULL) ||
-	   (getenv("SCTK_NB_HOST") != NULL) ||
-	   (getenv("SCTK_NB_MIC") != NULL))
+	sctk_get_process_setup_env();
+	
+	if((SCTK_MIC_NB_TASK != NULL) || 
+	   (SCTK_HOST_NB_TASK != NULL) ||
+	   (SCTK_NB_HOST != NULL) ||
+	   (SCTK_NB_MIC != NULL))
 	{
 		int node_rank,process_on_node_rank,process_on_node_number;
 		int host_number, mic_nb_task, host_nb_task;
-		host_number = (getenv("SCTK_NB_HOST") != NULL) ? atoi(getenv("SCTK_NB_HOST")) : 0;
-		mic_nb_task = (getenv("SCTK_MIC_NB_TASK") != NULL) ? atoi(getenv("SCTK_MIC_NB_TASK")) : 0;
-		host_nb_task = (getenv("SCTK_HOST_NB_TASK") != NULL) ? atoi(getenv("SCTK_HOST_NB_TASK")) : 0;
+		host_number = (SCTK_NB_HOST != NULL) ? atoi(SCTK_NB_HOST) : 0;
+		mic_nb_task = (SCTK_MIC_NB_TASK != NULL) ? atoi(SCTK_MIC_NB_TASK) : 0;
+		host_nb_task = (SCTK_HOST_NB_TASK != NULL) ? atoi(SCTK_HOST_NB_TASK) : 0;
 		sctk_pmi_get_node_rank(&node_rank);
 		sctk_pmi_get_process_on_node_rank(&process_on_node_rank);
 		sctk_pmi_get_process_on_node_number(&process_on_node_number);
@@ -1571,18 +1607,21 @@ void sctk_get_rank_size_total (const sctk_communicator_t communicator, int *rank
 	*rank = sctk_get_rank(communicator,glob_rank);
 }
 
+
 int sctk_get_node_rank_from_task_rank(const int rank)
 {
-	if((getenv("SCTK_MIC_NB_TASK") != NULL) || 
-		   (getenv("SCTK_HOST_NB_TASK") != NULL) ||
-		   (getenv("SCTK_NB_HOST") != NULL) ||
-		   (getenv("SCTK_NB_MIC") != NULL))
+	sctk_get_process_setup_env();
+	
+	if( (SCTK_MIC_NB_TASK != NULL) || 
+	    (SCTK_HOST_NB_TASK != NULL) ||
+	    (SCTK_NB_HOST != NULL) ||
+            (SCTK_NB_MIC != NULL))
 	{
 		int host_number, mic_nb_task, host_nb_task;
 		
-		host_number = (getenv("SCTK_NB_HOST") != NULL) ? atoi(getenv("SCTK_NB_HOST")) : 0;
-		mic_nb_task = (getenv("SCTK_MIC_NB_TASK") != NULL) ? atoi(getenv("SCTK_MIC_NB_TASK")) : 0;
-		host_nb_task = (getenv("SCTK_HOST_NB_TASK") != NULL) ? atoi(getenv("SCTK_HOST_NB_TASK")) : 0;
+		host_number = (SCTK_NB_HOST != NULL) ? atoi(SCTK_NB_HOST) : 0;
+		mic_nb_task = (SCTK_MIC_NB_TASK != NULL) ? atoi(SCTK_MIC_NB_TASK) : 0;
+		host_nb_task = (SCTK_HOST_NB_TASK != NULL) ? atoi(SCTK_HOST_NB_TASK) : 0;
 		
 		if( rank > ((host_number*host_nb_task) -1))
 		{
@@ -1594,37 +1633,6 @@ int sctk_get_node_rank_from_task_rank(const int rank)
 		}
 	}
 	return -1;
-}
-
-/************************* sctk_get_process_rank_from_task_rank variables ************************/
-
-/* This section makes sure we are loading the variables needed by
- * sctk_get_process_rank_from_task_rank only once */
-
-/* Bolean telling if the variables were loaded */
-static int sctk_get_process_rank_from_task_rank_context_init_done = 0;
-/* getenv("SCTK_MIC_NB_TASK") != NULL) */
-static char * SCTK_MIC_NB_TASK = NULL;
-/* getenv("SCTK_HOST_NB_TASK") */
-static char * SCTK_HOST_NB_TASK = NULL;
-/* getenv("SCTK_NB_HOST") */
-static char * SCTK_NB_HOST = NULL;
-/* getenv("SCTK_NB_MIC") */
-static char * SCTK_NB_MIC = NULL;
-
-/** @brief This function loads the parameters needed by \ref sctk_get_process_rank_from_task_rank once for all
- */
-static inline void sctk_get_process_rank_from_task_rank_setup_context()
-{
-	if( sctk_get_process_rank_from_task_rank_context_init_done )
-		return;
-	
-	SCTK_MIC_NB_TASK = getenv("SCTK_MIC_NB_TASK");
-	SCTK_HOST_NB_TASK = getenv("SCTK_HOST_NB_TASK");
-	SCTK_NB_HOST = getenv("SCTK_NB_HOST");
-	SCTK_NB_MIC = getenv("SCTK_NB_MIC");
-	
-	sctk_get_process_rank_from_task_rank_context_init_done = 1;
 }
 
 
@@ -1650,7 +1658,7 @@ int sctk_get_process_rank_from_task_rank(int rank)
 	{
 		/* Here we rely on the variables SCTK_* which are loaded 
 		 * from the environment by the following function */
-		sctk_get_process_rank_from_task_rank_setup_context();
+		sctk_get_process_setup_env();
 		
 		if( (SCTK_MIC_NB_TASK != NULL) || 
 		    (SCTK_HOST_NB_TASK != NULL) ||
