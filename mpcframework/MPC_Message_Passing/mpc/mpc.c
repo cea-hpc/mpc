@@ -3092,28 +3092,35 @@ static inline int __MPC_Test (MPC_Request * request, int *flag, MPC_Status * sta
 
 static inline int __MPC_Test_check (MPC_Request * request, int *flag, MPC_Status * status)
 {
-  if (sctk_mpc_completion_flag(request) != SCTK_MESSAGE_PENDING)
-    {
-      *flag = 1;
-      sctk_mpc_commit_status_from_request(request,status);
-      MPC_ERROR_SUCESS ();
-    }
+	if( sctk_mpc_message_is_null( request ) )
+	{
+		*flag = 1;
+		MPC_ERROR_SUCESS ();
+	}
+	
+	if (sctk_mpc_completion_flag(request) != SCTK_MESSAGE_PENDING)
+	{
+		*flag = 1;
+		sctk_mpc_commit_status_from_request(request,status);
+		MPC_ERROR_SUCESS ();
+	}
 
-  mpc_check_comm (sctk_mpc_get_communicator_from_request(request), MPC_COMM_WORLD);
-  *flag = 0;
+	mpc_check_comm (sctk_mpc_get_communicator_from_request(request), MPC_COMM_WORLD);
+	*flag = 0;
 
-  sctk_mpc_perform_messages(request);
+	sctk_mpc_perform_messages(request);
 
-  if (sctk_mpc_completion_flag(request) != SCTK_MESSAGE_PENDING)
-    {
-      *flag = 1;
-      sctk_mpc_commit_status_from_request(request,status);
-    }
+	if (sctk_mpc_completion_flag(request) != SCTK_MESSAGE_PENDING)
+	{
+		*flag = 1;
+		sctk_mpc_commit_status_from_request(request,status);
+	}
 
-  if((status != MPC_STATUS_IGNORE) && (*flag == 0)){
-    status->MPC_ERROR = MPC_ERR_PENDING;
-  }
-  MPC_ERROR_SUCESS ();
+	if((status != MPC_STATUS_IGNORE) && (*flag == 0)){
+		status->MPC_ERROR = MPC_ERR_PENDING;
+	}
+	
+	MPC_ERROR_SUCESS ();
 }
 
 static inline int __MPC_Test_check_light (MPC_Request * request)
@@ -3297,11 +3304,15 @@ static inline int __MPC_Waitall_Grequest (mpc_msg_count count,
  *  \warning This function is not MPI_Waitall (see the MPC_Request * parray_of_requests[] argument)
  * 
  */
+
+#define MAX_TRIALS_WAITALL 5
+
 int __MPC_Waitallp (mpc_msg_count count,
 		   MPC_Request * parray_of_requests[],
 		   MPC_Status array_of_statuses[])
 {
 	int i;
+	int trials;
 	int flag = 1;
 	double start, end;
 	int show = 1;
@@ -3315,35 +3326,44 @@ int __MPC_Waitallp (mpc_msg_count count,
 	}
 
 	
-	for (i = 0 ; i < count ; i++) 
+	trials = 0;
+	
+	while( trials < MAX_TRIALS_WAITALL  )
 	{
-		int tmp_flag = 0;
-		MPC_Status *status;
-		MPC_Request *request;
-		
-		if(array_of_statuses != NULL)
+		for (i = 0 ; i < count ; i++) 
 		{
-			status = &(array_of_statuses[i]);
-		}
-		else
-		{
-			status = MPC_STATUS_IGNORE;
-		}
-		
-		
-		request = parray_of_requests[i];
-		
-		__MPC_Test_check (request, &tmp_flag, status);
+			int tmp_flag = 0;
+			MPC_Status *status;
+			MPC_Request *request;
+			
+			if(array_of_statuses != NULL)
+			{
+				status = &(array_of_statuses[(i + trials)%count]);
+			}
+			else
+			{
+				status = MPC_STATUS_IGNORE;
+			}
+			
+			
+			request = parray_of_requests[(i + trials)%count];
+			
+			__MPC_Test_check (request, &tmp_flag, status);
 
-		if (tmp_flag && status != MPC_STATUS_IGNORE) {
-			sctk_mpc_message_set_is_null(request,1);
-		}
+			if (tmp_flag && status != MPC_STATUS_IGNORE) {
+				sctk_mpc_message_set_is_null(request,1);
+			}
 
-		flag = flag & tmp_flag;
+			flag = flag & tmp_flag;
+		}
+		
+		if (flag == 1)
+			MPC_ERROR_SUCESS();
+		
+		trials++;
 	}
 	
-	if (flag == 1)
-		MPC_ERROR_SUCESS();
+
 
 	/* XXX: Waitall has been ported for using wait_for_value_and_poll
 	* because it provides better results than thread_yield.
