@@ -189,9 +189,9 @@ Need to check this in more depth for futur version ( > 2.4.0-1).
     void *sctk_tls_trace_local;
     void *mpc_user_tls_1;
     void *sctk_extls;
-	void *sctk_hls_generation;
+    void *sctk_hls_generation;
 #if defined (SCTK_USE_OPTIMIZED_TLS)
-	void *sctk_tls_module;
+    void *sctk_tls_module;
 #endif
     void *sctk_message_passing;
     /* profiling TLS */

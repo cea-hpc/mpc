@@ -34,7 +34,6 @@ extern "C"
 #include <sctk_keywords.h>
 #include <sctk_config.h>
 #include <assert.h>
-
 #include "sctk_bool.h"
 #include "sctk_keywords.h"
 
@@ -174,6 +173,10 @@ extern "C"
   {
   }
 #endif
+
+
+/* Some Debug Helpers */
+#define CRASH() do{ ((void (*)())0x0)();}while(0)
 
 //If inline is not supported, disable assertions
 

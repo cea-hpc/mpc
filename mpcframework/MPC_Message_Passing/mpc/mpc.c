@@ -124,31 +124,20 @@ MPC_Request mpc_request_null;
 
 __thread struct sctk_thread_specific_s *sctk_message_passing;
 
-
 /** \brief Intitializes thread context keys
  * This function is called in sctk_thread.c:2212
  * by sctk_start_func
  */
 void sctk_mpc_init_keys ()
 {
-  sctk_thread_key_create (&sctk_func_key, NULL);
-  sctk_thread_key_create (&sctk_check_point_key, NULL);
-  sctk_thread_key_create (&sctk_task_specific, NULL);
-  
-  fprintf(stderr, "My ts key : %d\n", sctk_task_specific);
-  
+	sctk_thread_key_create (&sctk_func_key, NULL);
+	sctk_thread_key_create (&sctk_check_point_key, NULL);
+	sctk_thread_key_create (&sctk_task_specific, NULL);
 }
 
-sctk_thread_key_t mpc_get_sctk_task_specific_key()
+static inline void * sctk_thread_getspecific_mpc (sctk_thread_key_t key)
 {
-	return sctk_task_specific;
-}
-
-
-static inline void *
-sctk_thread_getspecific_mpc (sctk_thread_key_t key)
-{
-  return sctk_thread_getspecific (key);
+	return sctk_thread_getspecific (key);
 }
 
 static inline void sctk_thread_setspecific_mpc (sctk_thread_key_t key, void *tmp)
@@ -364,9 +353,8 @@ static inline void sctk_mpc_commit_status_from_request(MPC_Request * request, MP
 	}
 }
 
-static inline
-sctk_communicator_t sctk_mpc_get_communicator_from_request(MPC_Request * request){
-  return ((sctk_request_t *) request)->header.communicator;
+static inline sctk_communicator_t sctk_mpc_get_communicator_from_request(MPC_Request * request){
+	return ((sctk_request_t *) request)->header.communicator;
 }
 
 static inline void sctk_mpc_perform_messages(MPC_Request * request)
@@ -646,9 +634,10 @@ static void __MPC_setup_task_specific ()
 
 	/* If not allocate a new sctk_task_specific_t */
 	tmp = (sctk_task_specific_t *) sctk_malloc (sizeof (sctk_task_specific_t));
+	
 	/* And initalize it */
 	__MPC_init_task_specific_t (tmp);
-
+	
 	/* Set the sctk_task_specific key in thread CTX */
 	sctk_thread_setspecific_mpc (sctk_task_specific, tmp);
 }
@@ -3164,10 +3153,10 @@ int PMPC_Wait (MPC_Request * request, MPC_Status * status)
 }
 
 struct wfv_waitall_s{
-  int ret;
-  mpc_msg_count count;
-  MPC_Request **array_of_requests;
-  MPC_Status *array_of_statuses;
+	int ret;
+	mpc_msg_count count;
+	MPC_Request **array_of_requests;
+	MPC_Status *array_of_statuses;
 };
 
 static inline void wfv_waitall (void *arg)
@@ -3325,11 +3314,29 @@ int __MPC_Waitallp (mpc_msg_count count,
 		MPC_ERROR_SUCESS()
 	}
 
+	/* We have to detect generalized requests as we are not able
+	 * to progress them in the pooling function as we have no 
+	 * MPI context therefore we force a non-pooled progress
+	 * when we have generalized requests*/
+	int contains_generalized = 0;
+	
+	for( i = 0 ; i < count ; i++ )
+	{
+		if( parray_of_requests[i]->request_type == REQUEST_GENERALIZED )
+		{
+			contains_generalized = 1;
+			break;
+		}
+	}
 	
 	trials = 0;
-	
-	while( trials < MAX_TRIALS_WAITALL  )
+	while( (trials < MAX_TRIALS_WAITALL) /* Cassical oportunistic pooling */
+	    || ( contains_generalized && ( flag == 0 ) ) ) /* Here we force the local pooling because of generalized requests 
+							      This will happen only if classical and generalized requests are
+							      mixed or if the wait_fn is not the same for all requests */
 	{
+		flag = 1;
+		
 		for (i = 0 ; i < count ; i++) 
 		{
 			int tmp_flag = 0;
@@ -3345,12 +3352,14 @@ int __MPC_Waitallp (mpc_msg_count count,
 				status = MPC_STATUS_IGNORE;
 			}
 			
-			
 			request = parray_of_requests[(i + trials)%count];
 			
 			__MPC_Test_check (request, &tmp_flag, status);
 
-			if (tmp_flag && status != MPC_STATUS_IGNORE) {
+			/* We set this flag in order to prevent the status
+			 * from being updated repetitivelly in __MPC_Test_check */
+			if (tmp_flag)
+			{
 				sctk_mpc_message_set_is_null(request,1);
 			}
 
@@ -3359,7 +3368,9 @@ int __MPC_Waitallp (mpc_msg_count count,
 		
 		if (flag == 1)
 			MPC_ERROR_SUCESS();
-		
+
+		sched_yield();
+
 		trials++;
 	}
 	

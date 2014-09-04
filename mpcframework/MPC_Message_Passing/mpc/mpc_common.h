@@ -27,6 +27,8 @@
 #include "mpc_info.h"
 #include "mpc_datatypes.h"
 #include "mpc_extended_request.h"
+#include "sctk_tls.h"
+#include "sctk_debug.h"
 
 /************************************************************************/
 /* Buffers definition                                                   */
@@ -122,10 +124,6 @@ typedef struct sctk_task_specific_s
 /** \brief Retrieves current thread task specific context
  */
 struct sctk_task_specific_s *__MPC_get_task_specific ();
-
-/** \brief This function can be used to retrieve the task specific
- */
-sctk_thread_key_t mpc_get_sctk_task_specific_key();
 
 /** \brief Unlock the datatype array
  */

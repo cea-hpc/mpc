@@ -1995,29 +1995,6 @@ void sctk_inter_thread_perform_idle (volatile int *data, int value,
 #endif
 }
 
-/** \brief This structure is only used in \ref generalized_request_poll_trampoline
- *  Its role is to forward the context to the poll function
- *  simply by putting them in a structure
- */
-struct Generalized_Request_poll_ctx
-{
-	MPCX_Grequest_poll_fn * poll_fn;
-	void * extra_state;
-	MPC_Status status;
-	struct sctk_task_specific_s * task_specific;
-};
-
-/** \brief Function calling the extended request polling function */
-void generalized_request_poll_trampoline( void * pctx )
-{
-	struct Generalized_Request_poll_ctx * ctx = (struct Generalized_Request_poll_ctx*) pctx;
-	
-
-	(ctx->poll_fn)( ctx->extra_state, &ctx->status );
-}
-
-
-
 void sctk_wait_message(sctk_request_t * request)
 {
 	struct sctk_perform_messages_s _wait;
@@ -2030,18 +2007,13 @@ void sctk_wait_message(sctk_request_t * request)
 	{
 		if( request->poll_fn )
 		{
-			/* Here we have to poll with a function */
-			
-			/* Pack current work to go through the trampoline */
-			struct Generalized_Request_poll_ctx poll_ctx;
-			poll_ctx.poll_fn = request->poll_fn;
-			poll_ctx.extra_state = request->extra_state;
-			/* We must save this one as we have no thread context in the handler */
-			poll_ctx.task_specific = __MPC_get_task_specific ();
-
-			/* Poll on the trampoline wit the given context */
-			sctk_inter_thread_perform_idle(	(int *) &(request->completion_flag), SCTK_MESSAGE_DONE ,
-							generalized_request_poll_trampoline, (void*)&poll_ctx);
+			/* Here we don't rely on pooling as we have problems with
+			 * the MPI context */
+			while( ! request->completion_flag )
+			{
+				MPC_Status status;
+				(request->poll_fn)( request->extra_state, &status );
+			}
 		}
 		else
 		{
