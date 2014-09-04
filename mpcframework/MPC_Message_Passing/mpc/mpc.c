@@ -375,7 +375,14 @@ static inline void sctk_mpc_perform_messages(MPC_Request * request)
 
 	if( request->request_type == REQUEST_GENERALIZED )
 	{
-		/* Nothing to do here as progress is done by the application */
+		/* Try to poll the request */
+		if(  request->poll_fn != NULL )
+		{
+			MPC_Status tmp_status;
+			(request->poll_fn)( request->extra_state, &tmp_status );
+		}
+		
+		/* We are done here */
 		return;
 	}
 
