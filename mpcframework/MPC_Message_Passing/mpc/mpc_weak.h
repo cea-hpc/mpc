@@ -186,3 +186,6 @@
 #pragma weak MPC_Status_set_cancelled = PMPC_Status_set_cancelled
 #pragma weak MPC_Request_get_status = PMPC_Request_get_status
 #pragma weak MPC_Test_cancelled = PMPC_Test_cancelled
+
+#pragma weak MPC_Type_set_name = PMPC_Type_set_name
+#pragma weak MPC_Type_get_name = PMPC_Type_get_name

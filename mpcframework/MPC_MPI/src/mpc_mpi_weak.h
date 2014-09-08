@@ -498,6 +498,8 @@
 #pragma weak MPI_Request_get_status = PMPI_Request_get_status
 #pragma weak MPI_Test_cancelled = PMPI_Test_cancelled
 
+#pragma weak MPI_Type_set_name = PMPI_Type_set_name
+#pragma weak MPI_Type_get_name = PMPI_Type_get_name
 
 //~ not implemented
 

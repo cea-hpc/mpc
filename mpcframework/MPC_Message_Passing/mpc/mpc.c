@@ -1392,6 +1392,52 @@ int PMPC_Type_free (MPC_Datatype * datatype_p)
 	MPC_ERROR_SUCESS ();
 }
 
+/** \brief Set a name to an MPC_Datatype
+ *  \param datatype Datatype to be named
+ *  \param name Name to be set
+ */
+int PMPC_Type_set_name( MPC_Datatype datatype, char *name )
+{
+	if( sctk_datype_set_name( datatype, name ) )
+	{
+		MPC_ERROR_REPORT( MPC_COMM_SELF, MPC_ERR_INTERN, "Could not set name");
+	}
+	
+	MPC_ERROR_SUCESS();
+}
+
+/** \brief Set a name to an MPC_Datatype
+ *  \param datatype Datatype to get the name of
+ *  \param name Datatype name (OUT)
+ *  \param resultlen Maximum length of the target buffer (OUT)
+ */
+int PMPC_Type_get_name( MPC_Datatype datatype, char *name, int * resultlen )
+{
+	char * retname = sctk_datype_get_name( datatype );
+	
+	if( !retname )
+	{
+		/* Return an empty string */
+		sprintf(name, "");
+		*resultlen = 0;
+	}
+	else
+	{
+		sprintf(name, "%s" , retname );
+		*resultlen = strlen( name );
+	}
+	
+	MPC_ERROR_SUCESS();
+}
+
+
+
+
+
+
+
+
+
 /** \brief Retrieves datatype size
  *  
  *  Returns the right size field in function of datype kind

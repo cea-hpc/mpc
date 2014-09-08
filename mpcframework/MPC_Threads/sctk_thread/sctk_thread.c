@@ -2196,7 +2196,7 @@ sctk_start_func (void *(*run) (void *), void *arg)
 	int thread_to_join = 0;
 
 #ifdef MPC_Message_Passing
-	sctk_common_datatype_init();
+	sctk_datatype_init();
 #endif
 
 	sctk_thread_key_create (&_sctk_thread_handler_key, (void (*)(void *)) NULL);
@@ -2565,11 +2565,13 @@ sctk_start_func (void *(*run) (void *), void *arg)
 	sctk_thread_running = 0;
 
 	#ifdef MPC_Message_Passing
+	
 	#ifdef MPC_USE_INFINIBAND
-  if(sctk_network_is_ib_used() ){
-	  sctk_network_finalize_multirail_ib();
-  }
+	if(sctk_network_is_ib_used() ){
+		sctk_network_finalize_multirail_ib();
+	}
 	#endif
+	sctk_datatype_release();
 	sctk_ignore_sigpipe();
 	sctk_communicator_delete ();
 	#endif

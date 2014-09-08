@@ -22,19 +22,42 @@
 /* ######################################################################## */
 #include "mpc_datatypes.h"
 
+#include "uthash.h"
 #include "mpc_reduction.h"
 #include <string.h>
 #include "mpcmp.h"
+#include <stdint.h>
+
+/************************************************************************/
+/* Datatype Init and Release                                            */
+/************************************************************************/
+
+void sctk_datatype_init()
+{
+	sctk_common_datatype_init();
+}
+
+void sctk_datatype_release()
+{
+	sctk_datype_name_release();
+}
+
+
 
 /************************************************************************/
 /* Common Datatype                                                      */
 /************************************************************************/
 
 /** Common datatypes sizes ar initialized in \ref sctk_common_datatype_init */
-static size_t __sctk_common_type_sizes[SCTK_COMMON_DATA_TYPE_COUNT ];
+static size_t __sctk_common_type_sizes[SCTK_COMMON_DATA_TYPE_COUNT];
 
-
-#define SCTK_INIT_TYPE_SIZE(datatype,t) __sctk_common_type_sizes[datatype] = sizeof(t) ; sctk_assert(datatype >=0 ); sctk_assert( sctk_datatype_is_common( datatype ) )
+#define tostring(a) #a
+/* The norm imposes it to be the datatype name (a bit sad ) 3.0 p. 284 */
+#define type_name( datatype , t ) datatype
+#define SCTK_INIT_TYPE_SIZE(datatype,t) __sctk_common_type_sizes[datatype] = sizeof(t) ; \
+					sctk_assert(datatype >=0 ); \
+					sctk_assert( sctk_datatype_is_common( datatype ) );\
+					sctk_datype_set_name_nocheck( datatype, tostring( type_name(datatype, t ) ) );
 
 void sctk_common_datatype_init()
 {
@@ -60,6 +83,7 @@ void sctk_common_datatype_init()
   SCTK_INIT_TYPE_SIZE (MPC_REAL4, float);
   SCTK_INIT_TYPE_SIZE (MPC_REAL8, double);
   SCTK_INIT_TYPE_SIZE (MPC_REAL16, long double);
+  SCTK_INIT_TYPE_SIZE (MPC_REAL16, long double);
   SCTK_INIT_TYPE_SIZE (MPC_FLOAT_INT, mpc_float_int);
   SCTK_INIT_TYPE_SIZE (MPC_LONG_INT, mpc_long_int);
   SCTK_INIT_TYPE_SIZE (MPC_DOUBLE_INT, mpc_double_int);
@@ -69,6 +93,7 @@ void sctk_common_datatype_init()
   SCTK_INIT_TYPE_SIZE (MPC_COMPLEX, mpc_float_float);
   SCTK_INIT_TYPE_SIZE (MPC_2DOUBLE_PRECISION, mpc_double_double);
   SCTK_INIT_TYPE_SIZE (MPC_DOUBLE_COMPLEX, mpc_double_double);
+  SCTK_INIT_TYPE_SIZE (MPC_UINT64_T, uint64_t );
   __sctk_common_type_sizes[MPC_PACKED] = 0;
 }
 
@@ -83,6 +108,9 @@ size_t sctk_common_datatype_get_size( MPC_Datatype datatype )
 	
 	return __sctk_common_type_sizes[ datatype ];
 }
+
+
+
 
 /************************************************************************/
 /* Contiguous Datatype                                                  */
@@ -298,4 +326,91 @@ void Datatype_Array_set_derived_datatype( struct Datatype_Array * da ,  MPC_Data
 	assume( sctk_datatype_is_derived( datatype ) );
 	
 	da->derived_user_types[ MPC_TYPE_MAP_TO_DERIVED(datatype) ] = value;
+}
+
+/************************************************************************/
+/* Datatype  Naming                                                     */
+/************************************************************************/
+
+
+/** \brief Static variable used to store type names */
+struct Datatype_name_cell * datatype_names = NULL;
+/** \brief Lock protecting \ref datatype_names */
+sctk_spinlock_t datatype_names_lock = SCTK_SPINLOCK_INITIALIZER;
+
+static inline struct Datatype_name_cell * sctk_datype_get_name_cell( MPC_Datatype datatype )
+{
+	struct Datatype_name_cell *cell;
+	
+	sctk_spinlock_lock(&datatype_names_lock);
+	HASH_FIND_INT(datatype_names, &datatype, cell);
+	sctk_spinlock_unlock(&datatype_names_lock);
+	
+	return cell;
+}
+
+
+
+int sctk_datype_set_name_nocheck( MPC_Datatype datatype, char * name )
+{
+	/* First locate a previous cell */
+	struct Datatype_name_cell * cell = sctk_datype_get_name_cell( datatype );
+	
+	if( cell )
+	{
+		/* If present free it */
+		sctk_free( cell );
+	}
+	
+	/* Create a new cell */
+	struct Datatype_name_cell * new_cell = sctk_malloc( sizeof( struct Datatype_name_cell ) );
+	assume( new_cell != NULL );
+	snprintf(new_cell->name, MPC_MAX_OBJECT_NAME, "%s" , name);
+	
+	/* Save it */
+	sctk_spinlock_lock(&datatype_names_lock);
+	HASH_ADD_INT( datatype_names, datatype, new_cell );
+	sctk_spinlock_unlock(&datatype_names_lock);
+	
+	return 0;
+}
+
+
+
+int sctk_datype_set_name( MPC_Datatype datatype, char * name )
+{
+	switch( sctk_datatype_kind(datatype) )
+	{
+		case MPC_DATATYPES_CONTIGUOUS:
+		case MPC_DATATYPES_DERIVED:
+			return sctk_datype_set_name_nocheck( datatype, name );
+		break;
+		case MPC_DATATYPES_COMMON:
+			sctk_error("You are not allowed to set a name to common datatype");
+		break;
+		case MPC_DATATYPES_UNKNOWN:
+			sctk_error("Unknown datatype");
+	}
+	
+	return 1;
+}
+
+char * sctk_datype_get_name( MPC_Datatype datatype )
+{
+	struct Datatype_name_cell *cell = sctk_datype_get_name_cell( datatype );
+	
+	if( !cell )
+		return NULL;
+	
+	return cell->name;
+}
+
+void sctk_datype_name_release()
+{
+	struct Datatype_name_cell *current, *tmp;	
+
+	HASH_ITER(hh, datatype_names, current, tmp) {
+		HASH_DEL(datatype_names, current);  
+		sctk_free(current);
+	}
 }

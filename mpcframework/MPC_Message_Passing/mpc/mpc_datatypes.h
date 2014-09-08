@@ -31,6 +31,19 @@
 #include "sctk_spinlock.h"
 
 /************************************************************************/
+/* Datatype Init and Release                                            */
+/************************************************************************/
+/** \brief Entry Point in the datatype code
+ * Called from sctk_thread.c
+ */
+void sctk_datatype_init();
+
+/** \brief Exit Point in the datatype code
+ * Called from sctk_thread.c
+ */
+void sctk_datatype_release();
+
+/************************************************************************/
 /* Common Datatype                                                      */
 /************************************************************************/
 
@@ -270,7 +283,6 @@ static inline int sctk_datatype_is_derived (MPC_Datatype data_in)
 /** \brief Macro to obtain the total number of datatypes */
 #define MPC_TYPE_COUNT (SCTK_COMMON_DATA_TYPE_COUNT + 2 * SCTK_COMMON_DATA_TYPE_COUNT)
 
-
 /************************************************************************/
 /* Datatype  Array                                                      */
 /************************************************************************/
@@ -354,5 +366,55 @@ sctk_derived_datatype_t * Datatype_Array_get_derived_datatype( struct Datatype_A
  */
 void Datatype_Array_set_derived_datatype( struct Datatype_Array * da ,  MPC_Datatype datatype, sctk_derived_datatype_t * value );
 
+
+/************************************************************************/
+/* Datatype  Naming                                                     */
+/************************************************************************/
+
+/** \brief This struct is used to store the name given to a datatype
+ * 
+ *  We privileged an hash table instead of a static  array to
+ *  save memory as type naming is really a secondary feature
+ *  (Here we need it for MPICH Datatype tests)
+ */
+struct Datatype_name_cell
+{
+	MPC_Datatype datatype;
+	char name[MPC_MAX_OBJECT_NAME]; /**< Name given to the datatype */
+	UT_hash_handle hh; /**< This dummy data structure is required by UTHash is order to make this data structure hashable */
+};
+
+
+/** \brief Set a name to a given datatype
+ *  \param datatype Type which has to be named
+ *  \param name Name we want to give
+ *  \return 1 on error 0 otherwise
+ * 
+ *  This version is used internally to set common data-type
+ *  name we add it as we do not want the MPI_Type_set_name
+ *  to allow this behaviour
+ * 
+ */
+int sctk_datype_set_name_nocheck( MPC_Datatype datatype, char * name );
+
+/** \brief Set a name to a given datatype
+ *  \param datatype Type which has to be named
+ *  \param name Name we want to give
+ *  \return 1 on error 0 otherwise
+ * 
+ */
+int sctk_datype_set_name( MPC_Datatype datatype, char * name );
+
+
+/** \brief Returns the name of a data-type
+ *  \param datatype Requested data-type
+ *  \return NULL if no name the name otherwise
+ */
+char * sctk_datype_get_name( MPC_Datatype datatype );
+
+
+/** \brief Release Data-types names
+ */
+void sctk_datype_name_release();
 
 #endif /* MPC_DATATYPES_H */

@@ -61,7 +61,8 @@ extern "C"
 
 /* Misc */
 #define MPI_MAX_PROCESSOR_NAME MPC_MAX_PROCESSOR_NAME
-#define MPI_MAX_NAME_STRING 256
+#define MPI_MAX_NAME_STRING MPC_MAX_OBJECT_NAME
+#define MPI_MAX_OBJECT_NAME MPC_MAX_OBJECT_NAME
 
 /* Communication Parameters */
 #define MPI_SOURCE MPC_SOURCE
@@ -189,6 +190,7 @@ extern "C"
 #define MPI_SIGNED_CHAR MPC_SIGNED_CHAR
 #define MPI_LONG_DOUBLE_INT MPC_LONG_DOUBLE_INT
 #define MPI_REAL MPC_FLOAT
+#define MPI_UINT64_T MPC_UINT64_T
 
 /************************************************************************/
 /* MPI_* Defines                                                        */
@@ -449,6 +451,8 @@ int MPI_Get_elements (MPI_Status *, MPI_Datatype, int *);
 int MPI_Pack (void *, int, MPI_Datatype, void *, int, int *, MPI_Comm);
 int MPI_Unpack (void *, int, int *, void *, int, MPI_Datatype, MPI_Comm);
 int MPI_Pack_size (int, MPI_Datatype, MPI_Comm, int *);
+int MPI_Type_set_name( MPI_Datatype datatype, char *name );
+int MPI_Type_get_name( MPI_Datatype datatype, char *name, int * resultlen );
 
 /* Collective Operations */
 int MPI_Barrier (MPI_Comm);
@@ -704,6 +708,8 @@ int PMPI_Get_elements (MPI_Status *, MPI_Datatype, int *);
 int PMPI_Pack (void *, int, MPI_Datatype, void *, int, int *, MPI_Comm);
 int PMPI_Unpack (void *, int, int *, void *, int, MPI_Datatype, MPI_Comm);
 int PMPI_Pack_size (int, MPI_Datatype, MPI_Comm, int *);
+int PMPI_Type_set_name( MPI_Datatype datatype, char *name );
+int PMPI_Type_get_name( MPI_Datatype datatype, char *name, int * resultlen );
 
 /* Collective Operations */
 int PMPI_Barrier (MPI_Comm);

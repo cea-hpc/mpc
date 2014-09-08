@@ -10063,6 +10063,17 @@ PMPI_Pack_size (int incount, MPI_Datatype datatype, MPI_Comm comm, int *size)
   SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
+int PMPI_Type_set_name( MPI_Datatype datatype, char *name )
+{
+	return PMPC_Type_set_name(datatype, name);
+}
+
+int PMPI_Type_get_name( MPI_Datatype datatype, char *name, int * resultlen )
+{
+	return PMPC_Type_get_name(datatype, name, resultlen);
+}
+
+
 int
 PMPI_Barrier (MPI_Comm comm)
 {

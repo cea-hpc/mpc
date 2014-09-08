@@ -253,6 +253,7 @@ typedef struct
 #define MPC_COMM_NULL ((MPC_Comm)(-1))
 #define MPC_MAX_PROCESSOR_NAME 255
 #define MPC_ROOT -4
+#define MPC_MAX_OBJECT_NAME 256
 
 /********************************************************************/
 /*Special TAGS                                                      */
@@ -336,6 +337,9 @@ typedef int MPC_Info;
 #define MPC_LONG_DOUBLE_INT 32
 #define MPC_UNSIGNED_LONG_LONG_INT 33
 #define MPC_UNSIGNED_LONG_LONG 33
+#define MPC_UINT64_T 34
+
+
 /* for the datatype decoders */
 enum MPIR_Combiner_enum {
     MPI_COMBINER_NAMED            = 1,
@@ -531,6 +535,9 @@ enum MPIR_Combiner_enum {
   int MPC_Type_hcontiguous (MPC_Datatype *, size_t);
   int MPC_Type_free (MPC_Datatype * datatype);
 
+  int MPC_Type_set_name( MPC_Datatype datatype, char *name );
+  int MPC_Type_get_name( MPC_Datatype datatype, char *name, int * resultlen );
+  
   /*MPC specific function */
   int MPC_Copy_in_buffer (void *inbuffer, void *outbuffer, MPC_Datatype datatype);
   int MPC_Copy_from_buffer (void *inbuffer, void *outbuffer, MPC_Datatype datatype);
@@ -839,6 +846,9 @@ int MPC_Test_cancelled (MPC_Status *, int *);
   int PMPC_Type_hcontiguous (MPC_Datatype *outtype, size_t count, MPC_Datatype *data_in);
   int __MPC_Barrier (MPC_Comm comm);
   int PMPC_Type_free (MPC_Datatype * datatype);
+  
+  int PMPC_Type_set_name( MPC_Datatype datatype, char *name );
+  int PMPC_Type_get_name( MPC_Datatype datatype, char *name, int * resultlen );
 
   /*MPC specific function */
   int PMPC_Copy_in_buffer (void *inbuffer, void *outbuffer, MPC_Datatype datatype);
