@@ -733,12 +733,6 @@ void ffunc (pmpi_cancel) (MPI_Request * request, int *res)
 
 }
 
-void ffunc (pmpi_test_cancelled) (MPI_Status * status, int *flag, int *res)
-{
-  *res = MPI_Test_cancelled (status, flag);
-
-}
-
 void ffunc (pmpi_send_init) (void *buf, int *count, MPI_Datatype * datatype,
 			     int *dest, int *tag, MPI_Comm * comm,
 			     MPI_Request * request, int *res)
@@ -1709,3 +1703,30 @@ void ffunc (pmpi_info_get_valuelen)( MPI_Info info, const char *key SCTK_CHAR_MI
 	sctk_free( ckey );
 }
 
+
+/* MPI Status Modification and Query */
+
+void ffunc (pmpi_status_set_elements)(MPI_Status *status, MPI_Datatype datatype, int count,  int *res )
+{
+	*res = MPI_Status_set_elements( status, datatype , count );
+}
+
+void ffunc (pmpi_status_set_elements_x)(MPI_Status *status, MPI_Datatype datatype, MPI_Count count,  int *res)
+{
+	*res = MPI_Status_set_elements_x( status, datatype , count );
+}
+
+void ffunc(pmpi_status_set_cancelled)(MPI_Status *status, int cancelled,  int *res)
+{
+	*res = MPI_Status_set_cancelled( status, cancelled );
+}
+
+void ffunc(pmpi_request_get_status)(MPI_Request request, int * flag, MPI_Status * status, int *res)
+{
+	*res = MPI_Request_get_status( request, flag, status );
+}
+
+void ffunc (pmpi_test_cancelled) (MPI_Status * status, int *flag, int *res)
+{
+  *res = MPI_Test_cancelled (status, flag);
+}
