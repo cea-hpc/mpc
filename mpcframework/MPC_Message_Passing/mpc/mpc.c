@@ -1348,10 +1348,10 @@ int PMPC_Type_free (MPC_Datatype * datatype_p)
 			sctk_datatype_lock( task_specific );
 			/* Retrieve a pointer to the type to be freed */
 			sctk_contiguous_datatype_t * continuous_type_target = sctk_task_specific_get_contiguous_datatype( task_specific, datatype );
-			/* Free it */
-			sctk_contiguous_datatype_release( continuous_type_target );
 			/* Unlock type array */
 			sctk_datatype_unlock( task_specific );
+			/* Free it */
+			sctk_contiguous_datatype_release( continuous_type_target );
 		break;
 		
 		case MPC_DATATYPES_DERIVED:
@@ -1361,6 +1361,8 @@ int PMPC_Type_free (MPC_Datatype * datatype_p)
 			sctk_datatype_lock( task_specific );
 			/* Retrieve a pointer to the type to be freed */
 			sctk_derived_datatype_t * derived_type_target = sctk_task_specific_get_derived_datatype( task_specific, datatype );
+			/* Unlock the derived type array */
+			sctk_datatype_unlock( task_specific );
 			
 			/* Check if it is really allocated */
 			if( !derived_type_target )
@@ -1375,8 +1377,6 @@ int PMPC_Type_free (MPC_Datatype * datatype_p)
 			/* Set the pointer to the freed datatype to NULL in the derived datatype array */
 			sctk_task_specific_set_derived_datatype( task_specific, datatype , NULL);
 			
-			/* Unlock the derived type array */
-			sctk_datatype_unlock( task_specific );
 		break;
 		
 		case MPC_DATATYPES_UNKNOWN:
@@ -1710,7 +1710,7 @@ int PMPC_Derived_datatype (MPC_Datatype * datatype,
 				}
 				
 				/* Increment the refcounters of present datatypes */
-				for( j = 0 ; j < count ; j++ )
+				for( j = 0 ; j < MPC_TYPE_COUNT ; j++ )
 				{
 					if( is_datatype_present[ j ] )
 						PMPC_Type_use( j );
@@ -1767,15 +1767,8 @@ int PMPC_Type_convert_to_derived( MPC_Datatype in_datatype, MPC_Datatype * out_d
 		ends_out[0] = type_size - 1;
 		
 		/* Retrieve previous datatype if the type is contiguous */
-		if( sctk_datatype_is_contiguous( in_datatype ) )
+		if( sctk_datatype_is_contiguous( in_datatype ) || sctk_datatype_is_common( in_datatype ) )
 		{
-			/* Now set the previous type from contiguous datatype inner datatype (avoids stacking types) */
-			sctk_contiguous_datatype_t *contig_datatype = sctk_task_specific_get_contiguous_datatype( task_specific, in_datatype );
-			datatypes_out[0] = contig_datatype->datatype;
-		}
-		else if( sctk_datatype_is_common( in_datatype ) )
-		{
-			/* We have a common datatype */
 			datatypes_out[0] = in_datatype;
 		}
 		else
@@ -4128,7 +4121,7 @@ int PMPC_Get_count (MPC_Status * status, MPC_Datatype datatype, mpc_msg_count * 
 {
 	int res = MPC_SUCCESS;
 	unsigned long size;
-	int data_size;
+	size_t data_size;
 
 	if (status == MPC_STATUS_IGNORE)
 	{
