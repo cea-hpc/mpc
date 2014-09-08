@@ -256,9 +256,9 @@ int Datatype_Array_type_can_be_released( struct Datatype_Array * da, MPC_Datatyp
 		case MPC_DATATYPES_UNKNOWN:
 			return 0;
 	}
-	
-}
 
+	return 0;
+}
 
 void Datatype_Array_release( struct Datatype_Array * da )
 {
