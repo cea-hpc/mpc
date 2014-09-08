@@ -89,14 +89,14 @@ extern "C"
   } MPC_Op;
 #define MPC_OP_INIT {NULL,NULL}
 
-  typedef struct
-  {
-    int MPC_SOURCE;
-    int MPC_TAG;
-    int MPC_ERROR;
-    int cancelled;
-    mpc_msg_count count;
-  } MPC_Status;
+typedef struct
+{
+	int MPC_SOURCE;		/**< Source of the Message */
+	int MPC_TAG;		/**< Tag of the message */
+	int MPC_ERROR;		/**< Did we encounter an error */
+	int cancelled;		/**< Was the message canceled */
+	mpc_msg_count size;	/**< Size of the message */
+} MPC_Status;
 #define MPC_STATUS_INIT {MPC_ANY_SOURCE,MPC_ANY_TAG,MPC_SUCCESS,0,0}
 
 

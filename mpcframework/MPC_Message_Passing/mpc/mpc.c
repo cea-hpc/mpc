@@ -340,7 +340,8 @@ static inline void sctk_mpc_commit_status_from_request(MPC_Request * request, MP
 		if(request->truncated){
 			status->MPC_ERROR = MPC_ERR_TRUNCATE;
 		}
-		status->count = request->header.msg_size;
+
+		status->size = request->header.msg_size;
 		
 		if (request->completion_flag == SCTK_MESSAGE_CANCELED)
 		{
@@ -1544,10 +1545,9 @@ int PMPC_Type_hcontiguous (MPC_Datatype * datatype, size_t count, MPC_Datatype *
 			sctk_contiguous_datatype_init( current_type , new_id , size, count, *data_in );
 
 
-			#if 0
 			/* Increment target datatype refcounter here we do it once as there is only a single datatype */
 			PMPC_Type_use( *data_in );
-			#endif
+
 
 			/* Unlock the array */
 			sctk_datatype_unlock( task_specific );
@@ -1687,8 +1687,7 @@ int PMPC_Derived_datatype (MPC_Datatype * datatype,
 			
 			sctk_debug("NEW type %d\n", *new_type );
 			
-			/*EXPAT*/
-			#if 0
+
 			if( types )
 			{
 				/* Now we increment the embedded type refcounter only once per freed datatype
@@ -1717,11 +1716,6 @@ int PMPC_Derived_datatype (MPC_Datatype * datatype,
 						PMPC_Type_use( j );
 				}
 			}
-			else
-			{
-				sctk_debug("No types array");
-			}
-			#endif
 			
 			/* We unlock the derived datatype array */
 			sctk_datatype_unlock( task_specific );
@@ -3839,86 +3833,84 @@ __MPC_Send (void *restrict buf, mpc_msg_count count, MPC_Datatype datatype,
   __MPC_Probe (int source, int tag, MPC_Comm comm, MPC_Status * status,
         sctk_task_specific_t * task_specific);
 
-  int
-  PMPC_Recv (void *buf, mpc_msg_count count, MPC_Datatype datatype, int source,
-      int tag, MPC_Comm comm, MPC_Status * status)
-  {
-    MPC_Request request;
-    sctk_thread_ptp_message_t *msg;
-    int src;
-    int size;
-    size_t msg_size;
-    sctk_task_specific_t *task_specific;
-    char tmp;
-    SCTK_PROFIL_START (MPC_Recv);
-    task_specific = __MPC_get_task_specific ();
+int PMPC_Recv (void *buf, mpc_msg_count count, MPC_Datatype datatype, int source, int tag, MPC_Comm comm, MPC_Status * status)
+{
+	MPC_Request request;
+	sctk_thread_ptp_message_t *msg;
+	int src;
+	int size;
+	size_t msg_size;
+	sctk_task_specific_t *task_specific;
+	char tmp;
+	SCTK_PROFIL_START (MPC_Recv);
+	task_specific = __MPC_get_task_specific ();
 
-    mpc_check_comm (comm, comm);
-    mpc_check_count (count, comm);
-    if (count == 0)
-      {
-        buf = &tmp;
-      }
-    mpc_check_buf (buf, comm);
-    mpc_check_type (datatype, comm);
+	mpc_check_comm (comm, comm);
+	mpc_check_count (count, comm);
+	
+	if (count == 0)
+	{
+		buf = &tmp;
+	}
+	
+	mpc_check_buf (buf, comm);
+	mpc_check_type (datatype, comm);
 
-#ifdef MPC_LOG_DEBUG
-    mpc_log_debug (comm,
-      "MPC_Recv ptr=%p count=%lu type=%d source=%d tag=%d",
-      buf, count, datatype, source, tag);
-#endif
-    sctk_nodebug ("MPC_Recv ptr=%p count=%lu type=%d source=%d tag=%d",
-      buf, count, datatype, source, tag);
+	#ifdef MPC_LOG_DEBUG
+		mpc_log_debug (comm, "MPC_Recv ptr=%p count=%lu type=%d source=%d tag=%d", buf, count, datatype, source, tag);
+	#endif
+	
+	sctk_nodebug ("MPC_Recv ptr=%p count=%lu type=%d source=%d tag=%d", buf, count, datatype, source, tag);
 
-    if (source == MPC_PROC_NULL)
-      {
-        if (status != MPC_STATUS_IGNORE)
-    {
-      status->MPC_SOURCE = MPC_PROC_NULL;
-      status->MPC_TAG = MPC_ANY_TAG;
-      status->MPC_ERROR = MPC_SUCCESS;
-      status->count = 0;
-    }
-        SCTK_PROFIL_END (MPC_Recv);
-        MPC_ERROR_SUCESS ();
-      }
+	if (source == MPC_PROC_NULL)
+	{
+		if (status != MPC_STATUS_IGNORE)
+		{
+			status->MPC_SOURCE = MPC_PROC_NULL;
+			status->MPC_TAG = MPC_ANY_TAG;
+			status->MPC_ERROR = MPC_SUCCESS;
+			status->size = 0;
+		}
+		SCTK_PROFIL_END (MPC_Recv);
+		MPC_ERROR_SUCESS ();
+	}
 
-    __MPC_Comm_rank_size (comm, &src, &size, task_specific);
+	__MPC_Comm_rank_size (comm, &src, &size, task_specific);
 
-    //~ if(sctk_is_inter_comm(comm))
+	//~ if(sctk_is_inter_comm(comm))
 	//~ {
-		//~ int remote_size;
-		//~ PMPC_Comm_remote_size(comm, &remote_size);
-		//~ mpc_check_msg_size_inter (source, src, tag, comm, size, remote_size);
+	//~ int remote_size;
+	//~ PMPC_Comm_remote_size(comm, &remote_size);
+	//~ mpc_check_msg_size_inter (source, src, tag, comm, size, remote_size);
 	//~ }
 	//~ else
 	//~ {
-		//~ mpc_check_msg_size (source, src, tag, comm, size);
+	//~ mpc_check_msg_size (source, src, tag, comm, size);
 	//~ }
 
 
-    msg_size = count * __MPC_Get_datatype_size (datatype, task_specific);
+	msg_size = count * __MPC_Get_datatype_size (datatype, task_specific);
 
-    sctk_mpc_init_request(&request,comm,src, REQUEST_RECV);
-    msg = sctk_create_header (src,sctk_message_contiguous);
+	sctk_mpc_init_request(&request,comm,src, REQUEST_RECV);
+	msg = sctk_create_header (src,sctk_message_contiguous);
 
-    sctk_add_adress_in_message (msg, buf,msg_size);
+	sctk_add_adress_in_message (msg, buf,msg_size);
 
-    sctk_mpc_set_header_in_message (msg, tag, comm, source, src, &request,
-            msg_size,pt2pt_specific_message_tag);
+	sctk_mpc_set_header_in_message (msg, tag, comm, source, src, &request,
+	msg_size,pt2pt_specific_message_tag);
 
-    sctk_recv_message (msg,task_specific->my_ptp_internal, 1);
-    sctk_nodebug("recv request.is_null %d",request.is_null);
-    sctk_mpc_wait_message (&request);
+	sctk_recv_message (msg,task_specific->my_ptp_internal, 1);
+	sctk_nodebug("recv request.is_null %d",request.is_null);
+	sctk_mpc_wait_message (&request);
 
-    sctk_nodebug ("count = %d", msg_size);
-    sctk_nodebug ("req count = %d", request.header.msg_size);
+	sctk_nodebug ("count = %d", msg_size);
+	sctk_nodebug ("req count = %d", request.header.msg_size);
 
-    sctk_mpc_commit_status_from_request(&request,status);
-    SCTK_PROFIL_END (MPC_Recv);
-    sctk_nodebug("exit recv comm %d", comm);
-    MPC_ERROR_SUCESS ();
-  }
+	sctk_mpc_commit_status_from_request(&request,status);
+	SCTK_PROFIL_END (MPC_Recv);
+	sctk_nodebug("exit recv comm %d", comm);
+	MPC_ERROR_SUCESS ();
+}
 
   int
   PMPC_Sendrecv (void *sendbuf, mpc_msg_count sendcount, MPC_Datatype sendtype,
@@ -3982,92 +3974,98 @@ PMPC_Cancel (MPC_Request * request)
 }
 
 
-static inline int
-MPC_Iprobe_inter (const int source, const int destination,
-		  const int tag, const MPC_Comm comm,
-		  int *flag, MPC_Status * status)
+static inline int MPC_Iprobe_inter (const int source, const int destination,
+				    const int tag, const MPC_Comm comm,
+				    int *flag, MPC_Status * status)
 {
-  sctk_thread_message_header_t msg;
-  MPC_Status status_init = MPC_STATUS_INIT;
+	sctk_thread_message_header_t msg;
+	MPC_Status status_init = MPC_STATUS_INIT;
 
-  mpc_check_comm (comm, comm);
-  *status = status_init;
-  *flag = 0;
+	mpc_check_comm (comm, comm);
+	*status = status_init;
+	*flag = 0;
 
-  sctk_assert (status != MPC_STATUS_IGNORE);
-  if ((source == MPC_ANY_SOURCE) && (tag == MPC_ANY_TAG))
-    {
-      sctk_probe_any_source_any_tag (destination, comm, flag, &msg);
-      status->MPC_SOURCE = msg.source;
-      status->MPC_TAG = msg.message_tag;
-      status->count = (mpc_msg_count) msg.msg_size;
-      status->MPC_ERROR = MPC_ERR_PENDING;
-      MPC_ERROR_SUCESS ();
-    }
-  if ((source != MPC_ANY_SOURCE) && (tag != MPC_ANY_TAG))
-    {
-      msg.message_tag = tag;
-      sctk_probe_source_tag (destination, source, comm, flag, &msg);
-      status->MPC_SOURCE = msg.source;
-      status->MPC_TAG = msg.message_tag;
-      status->count = (mpc_msg_count) msg.msg_size;
-      status->MPC_ERROR = MPC_ERR_PENDING;
-      MPC_ERROR_SUCESS ();
-    }
-  if ((source != MPC_ANY_SOURCE) && (tag == MPC_ANY_TAG))
-    {
-      sctk_probe_source_any_tag (destination, source, comm, flag, &msg);
-      status->MPC_SOURCE = msg.source;
-      status->MPC_TAG = msg.message_tag;
-      status->count = (mpc_msg_count) msg.msg_size;
-      status->MPC_ERROR = MPC_ERR_PENDING;
-      MPC_ERROR_SUCESS ();
-    }
-  if ((source == MPC_ANY_SOURCE) && (tag != MPC_ANY_TAG))
-    {
-      msg.message_tag = tag;
-      sctk_probe_any_source_tag (destination, comm, flag, &msg);
-      status->MPC_SOURCE = msg.source;
-      status->MPC_TAG = msg.message_tag;
-      status->count = (mpc_msg_count) msg.msg_size;
-      status->MPC_ERROR = MPC_ERR_PENDING;
-      MPC_ERROR_SUCESS ();
-    }
+	sctk_assert (status != MPC_STATUS_IGNORE);
+	
+	if ((source == MPC_ANY_SOURCE) && (tag == MPC_ANY_TAG))
+		{
+		sctk_probe_any_source_any_tag (destination, comm, flag, &msg);
+		status->MPC_SOURCE = msg.source;
+		status->MPC_TAG = msg.message_tag;
+		status->size = (mpc_msg_count) msg.msg_size;
+		status->MPC_ERROR = MPC_ERR_PENDING;
+		MPC_ERROR_SUCESS ();
+	}
+	
+	if ((source != MPC_ANY_SOURCE) && (tag != MPC_ANY_TAG))
+	{
+		msg.message_tag = tag;
+		sctk_probe_source_tag (destination, source, comm, flag, &msg);
+		status->MPC_SOURCE = msg.source;
+		status->MPC_TAG = msg.message_tag;
+		status->size = (mpc_msg_count) msg.msg_size;
+		status->MPC_ERROR = MPC_ERR_PENDING;
+		MPC_ERROR_SUCESS ();
+	}
+	
+	if ((source != MPC_ANY_SOURCE) && (tag == MPC_ANY_TAG))
+	{
+		sctk_probe_source_any_tag (destination, source, comm, flag, &msg);
+		status->MPC_SOURCE = msg.source;
+		status->MPC_TAG = msg.message_tag;
+		status->size = (mpc_msg_count) msg.msg_size;
+		status->MPC_ERROR = MPC_ERR_PENDING;
+		MPC_ERROR_SUCESS ();
+	}
+	
+	if ((source == MPC_ANY_SOURCE) && (tag != MPC_ANY_TAG))
+	{
+		msg.message_tag = tag;
+		sctk_probe_any_source_tag (destination, comm, flag, &msg);
+		status->MPC_SOURCE = msg.source;
+		status->MPC_TAG = msg.message_tag;
+		status->size = (mpc_msg_count) msg.msg_size;
+		status->MPC_ERROR = MPC_ERR_PENDING;
+		MPC_ERROR_SUCESS ();
+	}
 
-  /*handler for MPC_PROC_NULL*/
-  if (source == MPC_PROC_NULL)
-    {
-      *flag = 1;
-      status->MPC_SOURCE = MPC_PROC_NULL;
-      status->MPC_TAG = MPC_ANY_TAG;
-      status->count = 0;
-      status->MPC_ERROR = MPC_SUCCESS;
-      MPC_ERROR_SUCESS ();
-    }
+	/*handler for MPC_PROC_NULL*/
+	if (source == MPC_PROC_NULL)
+	{
+		*flag = 1;
+		status->MPC_SOURCE = MPC_PROC_NULL;
+		status->MPC_TAG = MPC_ANY_TAG;
+		status->size = 0;
+		status->MPC_ERROR = MPC_SUCCESS;
+		MPC_ERROR_SUCESS ();
+	}
 
-  fprintf (stderr, "source = %d tag = %d\n", source, tag);
-  not_reachable ();
-  MPC_ERROR_SUCESS ();
+	fprintf (stderr, "source = %d tag = %d\n", source, tag);
+	not_reachable ();
+	MPC_ERROR_SUCESS ();
 }
 
-int
-PMPC_Iprobe (int source, int tag, MPC_Comm comm, int *flag,
-	     MPC_Status * status)
+int PMPC_Iprobe (int source, int tag, MPC_Comm comm, int *flag, MPC_Status * status)
 {
-  int destination;
-  int res;
-  sctk_task_specific_t *task_specific;
-  SCTK_PROFIL_START (MPC_Iprobe);
-  task_specific = __MPC_get_task_specific ();
-  mpc_check_comm (comm, comm);
-  __MPC_Comm_rank (comm, &destination, task_specific);
-  res = MPC_Iprobe_inter (source, destination, tag, comm, flag, status);
-#ifdef MPC_LOG_DEBUG
-  mpc_log_debug (comm, "MPC_Iprobe source=%d tag=%d flag=%d", source, tag,
-		 *flag);
-#endif
-  SCTK_PROFIL_END (MPC_Iprobe);
-  return res;
+	int destination;
+	int res;
+	
+	sctk_task_specific_t *task_specific;
+	SCTK_PROFIL_START (MPC_Iprobe);
+	
+	task_specific = __MPC_get_task_specific ();
+	
+	mpc_check_comm (comm, comm);
+	__MPC_Comm_rank (comm, &destination, task_specific);
+	
+	res = MPC_Iprobe_inter (source, destination, tag, comm, flag, status);
+	
+	#ifdef MPC_LOG_DEBUG
+		mpc_log_debug (comm, "MPC_Iprobe source=%d tag=%d flag=%d", source, tag, *flag);
+	#endif
+		
+	SCTK_PROFIL_END (MPC_Iprobe);
+	return res;
 }
 
 typedef struct
@@ -4126,27 +4124,45 @@ int PMPC_Probe (int source, int tag, MPC_Comm comm, MPC_Status * status)
   return res;
 }
 
-int
-PMPC_Get_count (MPC_Status * status, MPC_Datatype datatype,
-		mpc_msg_count * count)
+int PMPC_Get_count (MPC_Status * status, MPC_Datatype datatype, mpc_msg_count * count)
 {
-  SCTK_PROFIL_START (MPC_Get_count);
-  size_t size;
-  mpc_msg_count res;
-  sctk_task_specific_t *task_specific;
-  task_specific = __MPC_get_task_specific ();
-  sctk_assert (status != MPC_STATUS_IGNORE);
-  sctk_nodebug ("%d %d", datatype, MPC_PACKED);
-  size = __MPC_Get_datatype_size (datatype, task_specific);
-  res = status->count / (mpc_msg_count) size;
-  sctk_nodebug ("%lu / %lu = %lu", status->count, size, res);
-  if (status->count % (mpc_msg_count) size != 0)
-    {
-      res = MPC_UNDEFINED;
-    }
-  *count = res;
-  SCTK_PROFIL_END (MPC_Get_count);
-  MPC_ERROR_SUCESS ();
+	int res = MPC_SUCCESS;
+	unsigned long size;
+	int data_size;
+
+	if (status == MPC_STATUS_IGNORE)
+	{
+		MPC_ERROR_REPORT (MPC_COMM_WORLD, MPC_ERR_IN_STATUS, "Invalid status");
+	}
+
+	res = PMPC_Type_size (datatype, &data_size);
+	
+	if (res != MPC_SUCCESS)
+	{
+		return res;
+	}
+
+	if (data_size != 0)
+	{
+		size = status->size;
+		sctk_nodebug ("Get_count : count %d, data_type %d (size %d)", size, datatype, data_size);
+		
+		if (size % data_size == 0)
+		{
+			size = size / data_size;
+			*count = size;
+		}
+		else
+		{
+			*count = MPC_UNDEFINED;
+		}
+	}
+	else
+	{
+		*count = 0;
+	}
+
+	return res;
 }
 
 

@@ -1313,43 +1313,7 @@ __INTERNAL__PMPI_Recv (void *buf, int count, MPI_Datatype datatype,
 
 static int __INTERNAL__PMPI_Get_count (MPI_Status * status, MPI_Datatype datatype, int *count)
 {
-	int res = MPI_SUCCESS;
-	unsigned long size;
-	int data_size;
-
-	if (status == MPC_STATUS_IGNORE)
-	{
-		MPI_ERROR_REPORT (MPI_COMM_WORLD, MPI_ERR_IN_STATUS, "Invalid status");
-	}
-
-	res = __INTERNAL__PMPI_Type_size (datatype, &data_size);
-	
-	if (res != MPI_SUCCESS)
-	{
-		return res;
-	}
-
-	if (data_size != 0)
-	{
-		size = status->count;
-		sctk_nodebug ("Get_count : count %d, data_type %d (size %d)", size, datatype, data_size);
-		
-		if (size % data_size == 0)
-		{
-			size = size / data_size;
-			*count = size;
-		}
-		else
-		{
-			*count = MPI_UNDEFINED;
-		}
-	}
-	else
-	{
-		*count = 0;
-	}
-
-	return res;
+	return  PMPC_Get_count(status, datatype, count);
 }
 
 static int
@@ -3386,13 +3350,15 @@ static int __INTERNAL__PMPI_Type_extent (MPI_Datatype datatype, MPI_Aint * exten
    by MPI_Type_size is specified as an int, not an MPI_Aint */
 static int __INTERNAL__PMPI_Type_size (MPI_Datatype datatype, int *size)
 {
-  size_t tmp_size;
-  int real_val;
-  int res;
-  res = PMPC_Type_size (datatype, &tmp_size);
-  real_val = tmp_size;
-  *size = real_val;
-  return res;
+	size_t tmp_size;
+	int real_val;
+	int res;
+	
+	res = PMPC_Type_size (datatype, &tmp_size);
+	
+	real_val = tmp_size;
+	*size = real_val;
+	return res;
 }
 
 /* MPI_Type_count was withdrawn in MPI 1.1 */
@@ -3495,96 +3461,133 @@ static int __INTERNAL__PMPI_Get_elements (MPI_Status * status, MPI_Datatype data
 	unsigned long size;
 	int data_size;
 
-	if (NULL == status || MPI_STATUSES_IGNORE == status ||  MPI_STATUS_IGNORE == status || NULL == elements) {
+	/* First check if the status is valid */
+	if (NULL == status || MPI_STATUSES_IGNORE == status ||  MPI_STATUS_IGNORE == status || NULL == elements)
+	{
 		MPI_ERROR_REPORT (MPI_COMM_WORLD, MPI_ERR_ARG, "Invalid argument");
-	} else if (MPI_DATATYPE_NULL == datatype) {
+	}
+	
+	/* Now check the data-type */
+	else if (MPI_DATATYPE_NULL == datatype)
+	{
 		MPI_ERROR_REPORT (MPI_COMM_WORLD, MPI_ERR_TYPE, "Invalid type");
 	}
 
+	/* Get type size */
 	res = __INTERNAL__PMPI_Type_size (datatype, &data_size);
+	
 	if (res != MPI_SUCCESS) {
-      return res;
-    }
+		return res;
+	}
 
-	if (data_size != 0)
+	
+	MPI_Datatype data_in;
+	int data_in_size;
+	size_t count;
+	sctk_task_specific_t *task_specific;
+	unsigned long i;
+
+	*elements = 0;
+	
+	/* If size is NULL we have no element */
+	if (data_size == 0)
 	{
-		if ( sctk_datatype_is_contiguous( datatype ) )
-		{
-			MPI_Datatype data_in;
-			int data_in_size;
-			size_t count;
+		return res;
+	}
+	
+	/* If we are here our type has a size
+	 * we can now count the number of elements*/
+	switch( sctk_datatype_kind( datatype ) )
+	{
+		case MPC_DATATYPES_CONTIGUOUS:
+			/* A contiguous datatype is made of several
+			 * elements of a single type next to each other
+			 * we have to find out how many elements of this
+			 * type are here */
+			task_specific = __MPC_get_task_specific ();
 			
-			sctk_task_specific_t *task_specific = __MPC_get_task_specific ();
-
+			/* First retrieve the contiguous type descriptor */
 			sctk_datatype_lock( task_specific );
-
 			sctk_contiguous_datatype_t *contiguous_user_types = sctk_task_specific_get_contiguous_datatype( task_specific, datatype );
-
+			/* Number of entries in the contiguous type */
 			count = contiguous_user_types->count;
+			/* Input type */
 			data_in = contiguous_user_types->datatype;
-			
-			res = __INTERNAL__PMPI_Type_size (data_in, &data_in_size);
-			
 			sctk_datatype_unlock( task_specific );
-
-			size = status->count;
 			
-			*elements = size/data_in_size;
-			if (res != MPI_SUCCESS) {
-			  return res;
-			}
-		}
-		else if(sctk_datatype_is_derived(datatype))
-		{
-			size_t count;
+			/* Retrieve the size of the input type */
+			res = __INTERNAL__PMPI_Type_size (data_in, &data_in_size);
 
-			unsigned long i;
-			sctk_task_specific_t * task_specific = __MPC_get_task_specific ();
-			size = status->count;
+			/* This is the size we received */
+			size = status->size;
+
+			*elements = size/data_in_size;
+			
+			if (res != MPI_SUCCESS) {
+				return res;
+			}
+		break;
+		
+		case MPC_DATATYPES_DERIVED:
+			task_specific = __MPC_get_task_specific ();
+			
+			/* This is the size we received */
+			size = status->size;
 
 			*elements = 0;
 
+			/* Retrieve the derived datatype */
 			sctk_datatype_lock( task_specific );
-
 			sctk_assert ( MPC_TYPE_MAP_TO_DERIVED(datatype) < SCTK_USER_DATA_TYPES_MAX);	
-						
 			sctk_derived_datatype_t *target_type = sctk_task_specific_get_derived_datatype(  task_specific, datatype );
-			
 			sctk_assert ( target_type != NULL);
-
+			sctk_datatype_unlock( task_specific );
+			
+			/* Retrieve the number of block in the datatype */
 			count = target_type->count;
 
-			for(i = 0; i < count; i++){
-			  (*elements)++;
-			  size -= target_type->ends[i] - target_type->begins[i] + 1;
+			INFO("This value is false as types are flatenned");
+			
+			/* Count the number of elements by substracting
+			 * individual blocks from total size until reaching 0 */
+			for(i = 0; i < count; i++)
+			{
+				(*elements)++;
+				size -= target_type->ends[i] - target_type->begins[i] + 1;
 
-			  if(size <= 0){
-			    break;
-			  }
+				if(size <= 0)
+				{
+					break;
+				}
 			}
-
-			sctk_datatype_unlock( task_specific );
-		}
-		else
-		{
-			size = status->count;
+		break;
+		
+		case MPC_DATATYPES_COMMON:
+			/* This is the size we received */
+			size = status->size;
+			
 			sctk_nodebug ("Normal type : count %d, data_type %d (size %d)", size, datatype, data_size);
+			
+			/* Check if we have an exact number of object */
 			if (size % data_size == 0)
 			{
+				/* If so elements can be directly computed */
 				size = size / data_size;
 				*elements = size;
 			}
 			else
 			{
+				/* Here we can say nothing as the size is not
+				 * a multiple of the data-type size */ 
 				*elements = MPI_UNDEFINED;
 			}
-		}
+			break;
+		
+		default:
+			not_reachable();
 	}
-	else
-	{
-		sctk_nodebug("element = 0");
-		*elements = 0;
-	}
+
+
 	INFO("behave as get_count")
 	return res;
 }
@@ -8670,70 +8673,71 @@ PMPI_Send (void *buf, int count, MPI_Datatype datatype, int dest, int tag,
   SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
-int
-PMPI_Recv (void *buf, int count, MPI_Datatype datatype, int source, int tag,
+int PMPI_Recv (void *buf, int count, MPI_Datatype datatype, int source, int tag,
 	   MPI_Comm comm, MPI_Status * status)
 {
-  sctk_nodebug("MPI_Recv count %d, datatype %d, source %d, tag %d, comm %d", count, datatype, source, tag, comm);
-  int res = MPI_ERR_INTERN;
-  if(source == MPC_PROC_NULL)
-  {
-	res = MPI_SUCCESS;
-	MPI_Status empty_status;
-	empty_status.MPC_SOURCE = MPI_PROC_NULL;
-    empty_status.MPC_TAG = MPI_ANY_TAG;
-    empty_status.MPC_ERROR = MPI_SUCCESS;
-    empty_status.cancelled = 0;
-    empty_status.count = 0;
-    *status = empty_status;
-	SCTK_MPI_CHECK_RETURN_VAL (res, comm);
-  }
-  SCTK__MPI_INIT_STATUS (status);
-  {
-    int size;
-    mpi_check_comm (comm, comm);
-    mpi_check_type (datatype, comm);
-    mpi_check_count (count, comm);
-    sctk_nodebug ("tag %d", tag);
-    mpi_check_tag (tag, comm);
-    __INTERNAL__PMPI_Comm_size (comm, &size);
-    if(sctk_is_inter_comm(comm) == 0){
-      mpi_check_rank (source, size, comm);
-    }
-    //~ if(sctk_is_inter_comm(comm))
-    //~ {
+	sctk_nodebug("MPI_Recv count %d, datatype %d, source %d, tag %d, comm %d", count, datatype, source, tag, comm);
+	int res = MPI_ERR_INTERN;
+	if(source == MPC_PROC_NULL)
+	{
+		res = MPI_SUCCESS;
+		MPI_Status empty_status;
+		empty_status.MPC_SOURCE = MPI_PROC_NULL;
+		empty_status.MPC_TAG = MPI_ANY_TAG;
+		empty_status.MPC_ERROR = MPI_SUCCESS;
+		empty_status.cancelled = 0;
+		empty_status.size = 0;
+		*status = empty_status;
+		SCTK_MPI_CHECK_RETURN_VAL (res, comm);
+	}
+	SCTK__MPI_INIT_STATUS (status);
+	{
+		int size;
+		mpi_check_comm (comm, comm);
+		mpi_check_type (datatype, comm);
+		mpi_check_count (count, comm);
+		sctk_nodebug ("tag %d", tag);
+		mpi_check_tag (tag, comm);
+		__INTERNAL__PMPI_Comm_size (comm, &size);
+		if(sctk_is_inter_comm(comm) == 0)
+		{
+			mpi_check_rank (source, size, comm);
+		}
+		//~ if(sctk_is_inter_comm(comm))
+		//~ {
 		//~ if(sctk_is_in_local_group(comm))
 		//~ {
-			//~ int remote_size;
-			//~ __INTERNAL__PMPI_Comm_remote_size(comm, &remote_size);
-			//~ mpi_check_rank (source, remote_size, comm);
+		//~ int remote_size;
+		//~ __INTERNAL__PMPI_Comm_remote_size(comm, &remote_size);
+		//~ mpi_check_rank (source, remote_size, comm);
 		//~ }
 		//~ else
 		//~ {
-			//~ mpi_check_rank (source, size, comm);
-		//~ }
-	//~ }
-	//~ else
 		//~ mpi_check_rank (source, size, comm);
-    if (count != 0)
-      {
-	mpi_check_buf (buf, comm);
-      }
-  }
-  res =
-    __INTERNAL__PMPI_Recv (buf, count, datatype, source, tag, comm, status);
+		//~ }
+		//~ }
+		//~ else
+		//~ mpi_check_rank (source, size, comm);
+		if (count != 0)
+		{
+			mpi_check_buf (buf, comm);
+		}
+	}
+	
+	res = __INTERNAL__PMPI_Recv (buf, count, datatype, source, tag, comm, status);
 
-  if(status != MPI_STATUS_IGNORE){
-    if(status->MPI_ERROR != MPI_SUCCESS){
-      res = status->MPI_ERROR;
-    }
-  }
+	if(status != MPI_STATUS_IGNORE)
+	{
+		if(status->MPI_ERROR != MPI_SUCCESS)
+		{
+			res = status->MPI_ERROR;
+		}
+	}
 
-  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
+	SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
-int
-PMPI_Get_count (MPI_Status * status, MPI_Datatype datatype, int *count)
+int PMPI_Get_count (MPI_Status * status, MPI_Datatype datatype, int *count)
 {
 	MPI_Comm comm = MPI_COMM_WORLD;
 	int res = MPI_ERR_INTERN;
@@ -9152,56 +9156,61 @@ PMPI_Irecv (void *buf, int count, MPI_Datatype datatype, int source,
   SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
-int
-PMPI_Wait (MPI_Request * request, MPI_Status * status)
+int PMPI_Wait (MPI_Request * request, MPI_Status * status)
 {
 	sctk_nodebug("entering MPI_Wait request = %d", *request);
-  MPI_Comm comm = MPI_COMM_WORLD;
-  int res = MPI_ERR_INTERN;
+	MPI_Comm comm = MPI_COMM_WORLD;
+	int res = MPI_ERR_INTERN;
 
-  if(*request == MPI_REQUEST_NULL)
-  {
-	res = MPI_SUCCESS;
-	status->MPC_SOURCE = MPI_PROC_NULL;
-	status->MPC_TAG = MPI_ANY_TAG;
-	status->MPC_ERROR = MPI_SUCCESS;
-	status->count = 0;
+	if(*request == MPI_REQUEST_NULL)
+	{
+		res = MPI_SUCCESS;
+		status->MPC_SOURCE = MPI_PROC_NULL;
+		status->MPC_TAG = MPI_ANY_TAG;
+		status->MPC_ERROR = MPI_SUCCESS;
+		status->size = 0;
+		SCTK_MPI_CHECK_RETURN_VAL (res, comm);
+	}
+
+	res = __INTERNAL__PMPI_Wait (request, status);
+	
+	if(status != MPI_STATUS_IGNORE)
+	{
+		if(status->MPI_ERROR != MPI_SUCCESS)
+		{
+			res = status->MPI_ERROR;
+		}
+	}
+
 	SCTK_MPI_CHECK_RETURN_VAL (res, comm);
-  }
-
-  res = __INTERNAL__PMPI_Wait (request, status);
-  if(status != MPI_STATUS_IGNORE){
-    if(status->MPI_ERROR != MPI_SUCCESS){
-      res = status->MPI_ERROR;
-    }
-  }
-
-  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
-int
-PMPI_Test (MPI_Request * request, int *flag, MPI_Status * status)
+int PMPI_Test (MPI_Request * request, int *flag, MPI_Status * status)
 {
-  MPI_Comm comm = MPI_COMM_WORLD;
-  int res = MPI_ERR_INTERN;
-  if(*request == MPI_REQUEST_NULL)
-  {
-	res = MPI_SUCCESS;
-	status->MPC_SOURCE = MPI_PROC_NULL;
-	status->MPC_TAG = MPI_ANY_TAG;
-	status->MPC_ERROR = MPI_SUCCESS;
-	status->count = 0;
-	*flag = 1;
-	return res;
-  }
-  res = __INTERNAL__PMPI_Test (request, flag, status);
-  if(status != MPI_STATUS_IGNORE){
-    if((status->MPI_ERROR != MPI_SUCCESS) && (status->MPI_ERROR != MPI_ERR_PENDING)){
-      res = status->MPI_ERROR;
-    }
-  }
+	MPI_Comm comm = MPI_COMM_WORLD;
+	int res = MPI_ERR_INTERN;
+	if(*request == MPI_REQUEST_NULL)
+	{
+		res = MPI_SUCCESS;
+		status->MPC_SOURCE = MPI_PROC_NULL;
+		status->MPC_TAG = MPI_ANY_TAG;
+		status->MPC_ERROR = MPI_SUCCESS;
+		status->size = 0;
+		*flag = 1;
+		return res;
+	}
+	
+	res = __INTERNAL__PMPI_Test (request, flag, status);
+	
+	if(status != MPI_STATUS_IGNORE)
+	{
+		if((status->MPI_ERROR != MPI_SUCCESS) && (status->MPI_ERROR != MPI_ERR_PENDING))
+		{
+			res = status->MPI_ERROR;
+		}
+	}
 
-  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
+	SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -10016,11 +10025,11 @@ PMPI_Type_free (MPI_Datatype * datatype)
 int
 PMPI_Get_elements (MPI_Status * status, MPI_Datatype datatype, int *elements)
 {
-  MPI_Comm comm = MPI_COMM_WORLD;
-  int res = MPI_ERR_INTERN;
-  mpi_check_type(datatype,comm);
-  res = __INTERNAL__PMPI_Get_elements (status, datatype, elements);
-  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
+	MPI_Comm comm = MPI_COMM_WORLD;
+	int res = MPI_ERR_INTERN;
+	mpi_check_type(datatype,comm);
+	res = __INTERNAL__PMPI_Get_elements (status, datatype, elements);
+	SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
