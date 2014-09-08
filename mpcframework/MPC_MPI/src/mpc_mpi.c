@@ -1318,20 +1318,22 @@ static int __INTERNAL__PMPI_Get_count (MPI_Status * status, MPI_Datatype datatyp
 	int data_size;
 
 	if (status == MPC_STATUS_IGNORE)
-    {
+	{
 		MPI_ERROR_REPORT (MPI_COMM_WORLD, MPI_ERR_IN_STATUS, "Invalid status");
-    }
+	}
 
 	res = __INTERNAL__PMPI_Type_size (datatype, &data_size);
+	
 	if (res != MPI_SUCCESS)
-    {
+	{
 		return res;
-    }
+	}
 
 	if (data_size != 0)
-    {
+	{
 		size = status->count;
 		sctk_nodebug ("Get_count : count %d, data_type %d (size %d)", size, datatype, data_size);
+		
 		if (size % data_size == 0)
 		{
 			size = size / data_size;
@@ -1341,11 +1343,11 @@ static int __INTERNAL__PMPI_Get_count (MPI_Status * status, MPI_Datatype datatyp
 		{
 			*count = MPI_UNDEFINED;
 		}
-    }
+	}
 	else
-    {
+	{
 		*count = 0;
-    }
+	}
 
 	return res;
 }
@@ -8609,8 +8611,8 @@ __INTERNAL__PMPI_Abort (MPI_Comm comm, int val)
  * an MPI function is different than MPI_SUCCESS.
  * We could add an additional MPC mode in order to fail in the case of a wrong returned value.
  */
-#define SCTK__MPI_Check_retrun_val(res,comm)do{if(res == MPI_SUCCESS){return res;} else {MPI_ERROR_REPORT(comm,res,"Generic error retrun");}}while(0)
-//~ #define SCTK__MPI_Check_retrun_val(res, comm) return res
+#define SCTK_MPI_CHECK_RETURN_VAL(res,comm)do{if(res == MPI_SUCCESS){return res;} else {MPI_ERROR_REPORT(comm,res,"Generic error retrun");}}while(0)
+//~ #define SCTK_MPI_CHECK_RETURN_VAL(res, comm) return res
 
 static inline void
 SCTK__MPI_INIT_STATUS (MPI_Status * status)
@@ -8631,7 +8633,7 @@ PMPI_Send (void *buf, int count, MPI_Datatype datatype, int dest, int tag,
   if(dest == MPC_PROC_NULL)
   {
 	res = MPI_SUCCESS;
-	SCTK__MPI_Check_retrun_val (res, comm);
+	SCTK_MPI_CHECK_RETURN_VAL (res, comm);
   }
   {
     int size;
@@ -8665,7 +8667,7 @@ PMPI_Send (void *buf, int count, MPI_Datatype datatype, int dest, int tag,
       }
   }
   res = __INTERNAL__PMPI_Send (buf, count, datatype, dest, tag, comm);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -8684,7 +8686,7 @@ PMPI_Recv (void *buf, int count, MPI_Datatype datatype, int source, int tag,
     empty_status.cancelled = 0;
     empty_status.count = 0;
     *status = empty_status;
-	SCTK__MPI_Check_retrun_val (res, comm);
+	SCTK_MPI_CHECK_RETURN_VAL (res, comm);
   }
   SCTK__MPI_INIT_STATUS (status);
   {
@@ -8727,28 +8729,28 @@ PMPI_Recv (void *buf, int count, MPI_Datatype datatype, int source, int tag,
     }
   }
 
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
 PMPI_Get_count (MPI_Status * status, MPI_Datatype datatype, int *count)
 {
-  MPI_Comm comm = MPI_COMM_WORLD;
-  int res = MPI_ERR_INTERN;
-  mpi_check_type (datatype, MPI_COMM_WORLD);
+	MPI_Comm comm = MPI_COMM_WORLD;
+	int res = MPI_ERR_INTERN;
+	mpi_check_type (datatype, MPI_COMM_WORLD);
 
-  if (status == NULL)
-    {
-      MPI_ERROR_REPORT (MPI_COMM_WORLD, MPI_ERR_IN_STATUS, "");
-    }
+	if (status == NULL)
+	{
+		MPI_ERROR_REPORT (MPI_COMM_WORLD, MPI_ERR_IN_STATUS, "");
+	}
 
-  if (count == NULL)
-    {
-      MPI_ERROR_REPORT (MPI_COMM_WORLD, MPI_ERR_COUNT, "");
-    }
+	if (count == NULL)
+	{
+		MPI_ERROR_REPORT (MPI_COMM_WORLD, MPI_ERR_COUNT, "");
+	}
 
-  res = __INTERNAL__PMPI_Get_count (status, datatype, count);
-  SCTK__MPI_Check_retrun_val (res, comm);
+	res = __INTERNAL__PMPI_Get_count (status, datatype, count);
+	SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -8759,7 +8761,7 @@ PMPI_Bsend (void *buf, int count, MPI_Datatype datatype, int dest, int tag,
   if(dest == MPC_PROC_NULL)
   {
 	res = MPI_SUCCESS;
-	SCTK__MPI_Check_retrun_val (res, comm);
+	SCTK_MPI_CHECK_RETURN_VAL (res, comm);
   }
   {
     int size;
@@ -8793,7 +8795,7 @@ PMPI_Bsend (void *buf, int count, MPI_Datatype datatype, int dest, int tag,
       }
   }
   res = __INTERNAL__PMPI_Bsend (buf, count, datatype, dest, tag, comm);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -8804,7 +8806,7 @@ PMPI_Ssend (void *buf, int count, MPI_Datatype datatype, int dest, int tag,
   if(dest == MPC_PROC_NULL)
   {
 	res = MPI_SUCCESS;
-	SCTK__MPI_Check_retrun_val (res, comm);
+	SCTK_MPI_CHECK_RETURN_VAL (res, comm);
   }
   {
     int size;
@@ -8838,7 +8840,7 @@ PMPI_Ssend (void *buf, int count, MPI_Datatype datatype, int dest, int tag,
       }
   }
   res = __INTERNAL__PMPI_Ssend (buf, count, datatype, dest, tag, comm);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -8849,7 +8851,7 @@ PMPI_Rsend (void *buf, int count, MPI_Datatype datatype, int dest, int tag,
   if(dest == MPC_PROC_NULL)
   {
 	res = MPI_SUCCESS;
-	SCTK__MPI_Check_retrun_val (res, comm);
+	SCTK_MPI_CHECK_RETURN_VAL (res, comm);
   }
   {
     int size;
@@ -8883,7 +8885,7 @@ PMPI_Rsend (void *buf, int count, MPI_Datatype datatype, int dest, int tag,
       }
   }
   res = __INTERNAL__PMPI_Rsend (buf, count, datatype, dest, tag, comm);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -8892,7 +8894,7 @@ PMPI_Buffer_attach (void *buffer, int size)
   MPI_Comm comm = MPI_COMM_WORLD;
   int res = MPI_ERR_INTERN;
   res = __INTERNAL__PMPI_Buffer_attach (buffer, size);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -8901,7 +8903,7 @@ PMPI_Buffer_detach (void *buffer, int *size)
   MPI_Comm comm = MPI_COMM_WORLD;
   int res = MPI_ERR_INTERN;
   res = __INTERNAL__PMPI_Buffer_detach (buffer, size);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -8914,7 +8916,7 @@ PMPI_Isend (void *buf, int count, MPI_Datatype datatype, int dest, int tag,
   if(dest == MPC_PROC_NULL)
   {
 	res = MPI_SUCCESS;
-	SCTK__MPI_Check_retrun_val (res, comm);
+	SCTK_MPI_CHECK_RETURN_VAL (res, comm);
   }
 
   {
@@ -8952,7 +8954,7 @@ PMPI_Isend (void *buf, int count, MPI_Datatype datatype, int dest, int tag,
   mpi_check_type (datatype, comm);
   res =
     __INTERNAL__PMPI_Isend (buf, count, datatype, dest, tag, comm, request);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -8964,7 +8966,7 @@ PMPI_Ibsend (void *buf, int count, MPI_Datatype datatype, int dest, int tag,
   if(dest == MPC_PROC_NULL)
   {
 	  res = MPI_SUCCESS;
-	  SCTK__MPI_Check_retrun_val (res, comm);
+	  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
   }
 
   {
@@ -9001,7 +9003,7 @@ PMPI_Ibsend (void *buf, int count, MPI_Datatype datatype, int dest, int tag,
   }
   res =
     __INTERNAL__PMPI_Ibsend (buf, count, datatype, dest, tag, comm, request);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -9013,7 +9015,7 @@ PMPI_Issend (void *buf, int count, MPI_Datatype datatype, int dest, int tag,
   if(dest == MPC_PROC_NULL)
   {
 	  res = MPI_SUCCESS;
-	  SCTK__MPI_Check_retrun_val (res, comm);
+	  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
   }
 
   {
@@ -9049,7 +9051,7 @@ PMPI_Issend (void *buf, int count, MPI_Datatype datatype, int dest, int tag,
   }
   res =
     __INTERNAL__PMPI_Issend (buf, count, datatype, dest, tag, comm, request);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -9061,7 +9063,7 @@ PMPI_Irsend (void *buf, int count, MPI_Datatype datatype, int dest, int tag,
   if(dest == MPC_PROC_NULL)
   {
 	res = MPI_SUCCESS;
-	SCTK__MPI_Check_retrun_val (res, comm);
+	SCTK_MPI_CHECK_RETURN_VAL (res, comm);
   }
 
   {
@@ -9097,7 +9099,7 @@ PMPI_Irsend (void *buf, int count, MPI_Datatype datatype, int dest, int tag,
   }
   res =
     __INTERNAL__PMPI_Irsend (buf, count, datatype, dest, tag, comm, request);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -9109,7 +9111,7 @@ PMPI_Irecv (void *buf, int count, MPI_Datatype datatype, int source,
   if(source == MPC_PROC_NULL)
   {
 	res = MPI_SUCCESS;
-	SCTK__MPI_Check_retrun_val (res, comm);
+	SCTK_MPI_CHECK_RETURN_VAL (res, comm);
   }
 
   {
@@ -9147,7 +9149,7 @@ PMPI_Irecv (void *buf, int count, MPI_Datatype datatype, int source,
   res =
     __INTERNAL__PMPI_Irecv (buf, count, datatype, source, tag, comm, request);
 
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -9164,7 +9166,7 @@ PMPI_Wait (MPI_Request * request, MPI_Status * status)
 	status->MPC_TAG = MPI_ANY_TAG;
 	status->MPC_ERROR = MPI_SUCCESS;
 	status->count = 0;
-	SCTK__MPI_Check_retrun_val (res, comm);
+	SCTK_MPI_CHECK_RETURN_VAL (res, comm);
   }
 
   res = __INTERNAL__PMPI_Wait (request, status);
@@ -9174,7 +9176,7 @@ PMPI_Wait (MPI_Request * request, MPI_Status * status)
     }
   }
 
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -9199,7 +9201,7 @@ PMPI_Test (MPI_Request * request, int *flag, MPI_Status * status)
     }
   }
 
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -9212,10 +9214,10 @@ PMPI_Request_free (MPI_Request * request)
     res = MPI_ERR_REQUEST;
   } else if(MPI_REQUEST_NULL == *request) {
 	sctk_nodebug("request MPI_REQUEST_NULL");
-	SCTK__MPI_Check_retrun_val (res, comm);  
+	SCTK_MPI_CHECK_RETURN_VAL (res, comm);  
   } else
 	res = __INTERNAL__PMPI_Request_free (request);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -9232,7 +9234,7 @@ PMPI_Waitany (int count, MPI_Request array_of_requests[], int *index,
     }
   }
 
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -9249,7 +9251,7 @@ PMPI_Testany (int count, MPI_Request array_of_requests[], int *index,
     }
   }
 
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -9272,7 +9274,7 @@ PMPI_Waitall (int count, MPI_Request array_of_requests[],
     }
   }
 
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -9294,7 +9296,7 @@ PMPI_Testall (int count, MPI_Request array_of_requests[], int *flag,
     }
   }
 
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -9317,7 +9319,7 @@ PMPI_Waitsome (int incount, MPI_Request array_of_requests[],
     }
   }
 
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int PMPI_Testsome (int incount, MPI_Request array_of_requests[], int *outcount, int array_of_indices[], MPI_Status array_of_statuses[])
@@ -9355,7 +9357,7 @@ int PMPI_Testsome (int incount, MPI_Request array_of_requests[], int *outcount, 
     }
   }
 
-	SCTK__MPI_Check_retrun_val (res, comm);
+	SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -9377,7 +9379,7 @@ PMPI_Iprobe (int source, int tag, MPI_Comm comm, int *flag,
 /*     } */
 /*   }  */
 
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -9398,7 +9400,7 @@ PMPI_Probe (int source, int tag, MPI_Comm comm, MPI_Status * status)
 /*     } */
 /*   }  */
 
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -9408,10 +9410,10 @@ PMPI_Cancel (MPI_Request * request)
   int res = MPI_ERR_INTERN;
   if(MPI_REQUEST_NULL == *request) {
         sctk_nodebug("request MPI_REQUEST_NULL");
-        SCTK__MPI_Check_retrun_val (MPI_ERR_REQUEST, comm);
+        SCTK_MPI_CHECK_RETURN_VAL (MPI_ERR_REQUEST, comm);
   }
   res = __INTERNAL__PMPI_Cancel (request);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -9420,7 +9422,7 @@ PMPI_Test_cancelled (MPI_Status * status, int *flag)
   MPI_Comm comm = MPI_COMM_WORLD;
   int res = MPI_ERR_INTERN;
   res = __INTERNAL__PMPI_Test_cancelled (status, flag);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -9462,7 +9464,7 @@ PMPI_Send_init (void *buf, int count, MPI_Datatype datatype, int dest,
   res =
     __INTERNAL__PMPI_Send_init (buf, count, datatype, dest, tag, comm,
 				request);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -9504,7 +9506,7 @@ PMPI_Bsend_init (void *buf, int count, MPI_Datatype datatype,
   res =
     __INTERNAL__PMPI_Bsend_init (buf, count, datatype, dest, tag, comm,
 				 request);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -9546,7 +9548,7 @@ PMPI_Ssend_init (void *buf, int count, MPI_Datatype datatype, int dest,
   res =
     __INTERNAL__PMPI_Ssend_init (buf, count, datatype, dest, tag, comm,
 				 request);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -9588,7 +9590,7 @@ PMPI_Rsend_init (void *buf, int count, MPI_Datatype datatype, int dest,
   res =
     __INTERNAL__PMPI_Rsend_init (buf, count, datatype, dest, tag, comm,
 				 request);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -9630,7 +9632,7 @@ PMPI_Recv_init (void *buf, int count, MPI_Datatype datatype, int source,
   res =
     __INTERNAL__PMPI_Recv_init (buf, count, datatype, source, tag, comm,
 				request);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -9642,7 +9644,7 @@ PMPI_Start (MPI_Request * request)
     MPI_ERROR_REPORT(comm,MPI_ERR_REQUEST,"");
   }
   res = __INTERNAL__PMPI_Start (request);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -9657,7 +9659,7 @@ PMPI_Startall (int count, MPI_Request array_of_requests[])
   }
   }
   res = __INTERNAL__PMPI_Startall (count, array_of_requests);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -9699,7 +9701,7 @@ PMPI_Sendrecv (void *sendbuf, int sendcount, MPI_Datatype sendtype,
     }
   }
 
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -9730,7 +9732,7 @@ PMPI_Sendrecv_replace (void *buf, int count, MPI_Datatype datatype,
     }
   }
 
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -9742,7 +9744,7 @@ PMPI_Type_contiguous (int count,
   mpi_check_type_create(old_type,comm);
   mpi_check_count(count,comm);
   res = __INTERNAL__PMPI_Type_contiguous (count, old_type, new_type_p);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -9760,7 +9762,7 @@ PMPI_Type_vector (int count,
   res =
     __INTERNAL__PMPI_Type_vector (count, blocklength, stride, old_type,
 				  newtype_p);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -9779,7 +9781,7 @@ PMPI_Type_hvector (int count,
   res =
     __INTERNAL__PMPI_Type_hvector (count, blocklen, stride, old_type,
 				   newtype_p);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -9798,7 +9800,7 @@ PMPI_Type_create_hvector (int count,
   res =
     __INTERNAL__PMPI_Type_hvector (count, blocklen, stride, old_type,
 				   newtype_p);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -9824,7 +9826,7 @@ PMPI_Type_indexed (int count,
   res =
     __INTERNAL__PMPI_Type_indexed (count, blocklens, indices, old_type,
 				   newtype);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -9849,7 +9851,7 @@ PMPI_Type_hindexed (int count,
   res =
     __INTERNAL__PMPI_Type_hindexed (count, blocklens, indices, old_type,
 				    newtype);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -9874,7 +9876,7 @@ PMPI_Type_create_hindexed (int count,
   res =
     __INTERNAL__PMPI_Type_hindexed (count, blocklens, indices, old_type,
 				    newtype);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -9902,7 +9904,7 @@ PMPI_Type_struct (int count,
   res =
     __INTERNAL__PMPI_Type_struct (count, blocklens, indices, old_types,
 				  newtype);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -9930,7 +9932,7 @@ PMPI_Type_create_struct (int count,
   res =
     __INTERNAL__PMPI_Type_struct (count, blocklens, indices, old_types,
 				  newtype);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -9939,7 +9941,7 @@ PMPI_Address (void *location, MPI_Aint * address)
   MPI_Comm comm = MPI_COMM_WORLD;
   int res = MPI_ERR_INTERN;
   res = __INTERNAL__PMPI_Address (location, address);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
   /* We could add __attribute__((deprecated)) to routines like MPI_Type_extent */
@@ -9950,7 +9952,7 @@ PMPI_Type_extent (MPI_Datatype datatype, MPI_Aint * extent)
   int res = MPI_ERR_INTERN;
   mpi_check_type_create(datatype,comm);
   res = __INTERNAL__PMPI_Type_extent (datatype, extent);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
   /* See the 1.1 version of the Standard.  The standard made an
@@ -9963,7 +9965,7 @@ PMPI_Type_size (MPI_Datatype datatype, int *size)
   int res = MPI_ERR_INTERN;
   mpi_check_type_create(datatype,comm);
   res = __INTERNAL__PMPI_Type_size (datatype, size);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
   /* MPI_Type_count was withdrawn in MPI 1.1 */
@@ -9974,7 +9976,7 @@ PMPI_Type_lb (MPI_Datatype datatype, MPI_Aint * displacement)
   int res = MPI_ERR_INTERN;
   mpi_check_type_create(datatype,comm);
   res = __INTERNAL__PMPI_Type_lb (datatype, displacement);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -9984,7 +9986,7 @@ PMPI_Type_ub (MPI_Datatype datatype, MPI_Aint * displacement)
   int res = MPI_ERR_INTERN;
   mpi_check_type_create(datatype,comm);
   res = __INTERNAL__PMPI_Type_ub (datatype, displacement);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -9994,7 +9996,7 @@ PMPI_Type_commit (MPI_Datatype * datatype)
   int res = MPI_ERR_INTERN;
   mpi_check_type_create(*datatype,comm);
   res = __INTERNAL__PMPI_Type_commit (datatype);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -10008,7 +10010,7 @@ PMPI_Type_free (MPI_Datatype * datatype)
     MPI_ERROR_REPORT (comm, MPI_ERR_TYPE, "");
   }
   res = __INTERNAL__PMPI_Type_free (datatype);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -10018,7 +10020,7 @@ PMPI_Get_elements (MPI_Status * status, MPI_Datatype datatype, int *elements)
   int res = MPI_ERR_INTERN;
   mpi_check_type(datatype,comm);
   res = __INTERNAL__PMPI_Get_elements (status, datatype, elements);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -10046,7 +10048,7 @@ PMPI_Pack (void *inbuf,
 	  }
 	}
 	res = __INTERNAL__PMPI_Pack (inbuf, incount, datatype, outbuf, outcount, position, comm);
-	SCTK__MPI_Check_retrun_val (res, comm);
+	SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -10066,7 +10068,7 @@ PMPI_Unpack (void *inbuf,
 	  MPI_ERROR_REPORT(comm,MPI_ERR_TYPE,"");
 	}
 	res = __INTERNAL__PMPI_Unpack (inbuf, insize, position, outbuf, outcount, datatype, comm);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -10077,7 +10079,7 @@ PMPI_Pack_size (int incount, MPI_Datatype datatype, MPI_Comm comm, int *size)
   mpi_check_type(datatype,comm);
   mpi_check_count(incount,comm);
   res = __INTERNAL__PMPI_Pack_size (incount, datatype, comm, size);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -10092,7 +10094,7 @@ PMPI_Barrier (MPI_Comm comm)
 #endif
   sctk_nodebug ("Entering BARRIER %d", comm);
   res = __INTERNAL__PMPI_Barrier (comm);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -10125,7 +10127,7 @@ PMPI_Bcast (void *buffer, int count, MPI_Datatype datatype, int root,
 
   sctk_nodebug ("Entering BCAST %d with count %d", comm, count);
   res = __INTERNAL__PMPI_Bcast (buffer, count, datatype, root, comm);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -10168,7 +10170,7 @@ PMPI_Gather (void *sendbuf, int sendcnt, MPI_Datatype sendtype,
   res =
     __INTERNAL__PMPI_Gather (sendbuf, sendcnt, sendtype, recvbuf, recvcnt,
 			     recvtype, root, comm);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -10202,7 +10204,7 @@ PMPI_Gatherv (void *sendbuf, int sendcnt, MPI_Datatype sendtype,
  res =
     __INTERNAL__PMPI_Gatherv (sendbuf, sendcnt, sendtype, recvbuf, recvcnts,
 			      displs, recvtype, root, comm);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -10251,7 +10253,7 @@ PMPI_Scatter (void *sendbuf, int sendcnt, MPI_Datatype sendtype,
  res =
     __INTERNAL__PMPI_Scatter (sendbuf, sendcnt, sendtype, recvbuf, recvcnt,
 			      recvtype, root, comm);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -10285,7 +10287,7 @@ PMPI_Scatterv (void *sendbuf, int *sendcnts, int *displs,
   res =
     __INTERNAL__PMPI_Scatterv (sendbuf, sendcnts, displs, sendtype, recvbuf,
 			       recvcnt, recvtype, root, comm);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -10325,7 +10327,7 @@ PMPI_Allgather (void *sendbuf, int sendcount, MPI_Datatype sendtype,
   res =
     __INTERNAL__PMPI_Allgather (sendbuf, sendcount, sendtype, recvbuf,
 				recvcount, recvtype, comm);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -10352,7 +10354,7 @@ PMPI_Allgatherv (void *sendbuf, int sendcount, MPI_Datatype sendtype,
   res =
     __INTERNAL__PMPI_Allgatherv (sendbuf, sendcount, sendtype, recvbuf,
 				 recvcounts, displs, recvtype, comm);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -10386,7 +10388,7 @@ PMPI_Alltoall (void *sendbuf, int sendcount, MPI_Datatype sendtype,
   res =
     __INTERNAL__PMPI_Alltoall (sendbuf, sendcount, sendtype, recvbuf,
 			       recvcount, recvtype, comm);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -10424,7 +10426,7 @@ PMPI_Alltoallv (void *sendbuf, int *sendcnts, int *sdispls,
   res =
     __INTERNAL__PMPI_Alltoallv (sendbuf, sendcnts, sdispls, sendtype, recvbuf,
 				recvcnts, rdispls, recvtype, comm);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int PMPI_Alltoallw(void *sendbuf, int *sendcnts, int *sdispls, MPI_Datatype *sendtypes,
@@ -10462,7 +10464,7 @@ int PMPI_Alltoallw(void *sendbuf, int *sendcnts, int *sdispls, MPI_Datatype *sen
 		MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
 	}
 	res = __INTERNAL__PMPI_Alltoallw (sendbuf, sendcnts, sdispls, sendtypes, recvbuf, recvcnts, rdispls, recvtypes, comm);
-	SCTK__MPI_Check_retrun_val (res, comm);
+	SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 /* Neighbors collectives */
@@ -10737,7 +10739,7 @@ PMPI_Reduce (void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
   res =
     __INTERNAL__PMPI_Reduce (sendbuf, recvbuf, count, datatype, op, root,
 			     comm);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -10746,7 +10748,7 @@ PMPI_Op_create (MPI_User_function * function, int commute, MPI_Op * op)
   MPI_Comm comm = MPI_COMM_WORLD;
   int res = MPI_ERR_INTERN;
   res = __INTERNAL__PMPI_Op_create (function, commute, op);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -10758,7 +10760,7 @@ PMPI_Op_free (MPI_Op * op)
     MPI_ERROR_REPORT(comm,MPI_ERR_OP,"");
   }
   res = __INTERNAL__PMPI_Op_free (op);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -10789,7 +10791,7 @@ PMPI_Allreduce (void *sendbuf, void *recvbuf, int count,
     }
   res =
     __INTERNAL__PMPI_Allreduce (sendbuf, recvbuf, count, datatype, op, comm);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -10823,7 +10825,7 @@ PMPI_Reduce_scatter (void *sendbuf, void *recvbuf, int *recvcnts,
   res =
     __INTERNAL__PMPI_Reduce_scatter (sendbuf, recvbuf, recvcnts, datatype, op,
 				     comm);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -10855,7 +10857,7 @@ PMPI_Reduce_scatter_block (void *sendbuf, void *recvbuf, int recvcnt,
     __INTERNAL__PMPI_Reduce_scatter_block (sendbuf, recvbuf, recvcnt, datatype, op,
 				     comm);
 
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -10877,7 +10879,7 @@ PMPI_Scan (void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
   mpi_check_type (datatype, comm);
 	mpi_check_op (op, datatype,comm);
   res = __INTERNAL__PMPI_Scan (sendbuf, recvbuf, count, datatype, op, comm);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -10899,7 +10901,7 @@ PMPI_Exscan (void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
   mpi_check_type (datatype, comm);
 	mpi_check_op (op, datatype,comm);
   res = __INTERNAL__PMPI_Exscan (sendbuf, recvbuf, count, datatype, op, comm);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -10912,7 +10914,7 @@ PMPI_Group_size (MPI_Group group, int *size)
   }
 
   res = __INTERNAL__PMPI_Group_size (group, size);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -10925,7 +10927,7 @@ PMPI_Group_rank (MPI_Group group, int *rank)
   }
 
   res = __INTERNAL__PMPI_Group_rank (group, rank);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -10940,7 +10942,7 @@ PMPI_Group_translate_ranks (MPI_Group group1, int n, int *ranks1,
 
   res = __INTERNAL__PMPI_Group_translate_ranks (group1, n, ranks1, group2, ranks2);
   sctk_nodebug("RES = %d", res);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -10953,7 +10955,7 @@ PMPI_Group_compare (MPI_Group group1, MPI_Group group2, int *result)
   }
 
   res = __INTERNAL__PMPI_Group_compare (group1, group2, result);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -10963,7 +10965,7 @@ PMPI_Comm_group (MPI_Comm comm, MPI_Group * group)
   int res = MPI_ERR_INTERN;
   mpi_check_comm (comm, comm); 
   res = __INTERNAL__PMPI_Comm_group (comm, group);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -10976,7 +10978,7 @@ PMPI_Group_union (MPI_Group group1, MPI_Group group2, MPI_Group * newgroup)
   }
 
   res = __INTERNAL__PMPI_Group_union (group1, group2, newgroup);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -10990,7 +10992,7 @@ PMPI_Group_intersection (MPI_Group group1, MPI_Group group2,
   }
 
   res = __INTERNAL__PMPI_Group_intersection (group1, group2, newgroup);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -11003,7 +11005,7 @@ PMPI_Group_difference (MPI_Group group1, MPI_Group group2,
 	MPI_ERROR_REPORT (comm, MPI_ERR_GROUP, "");
   }
   res = __INTERNAL__PMPI_Group_difference (group1, group2, newgroup);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -11022,7 +11024,7 @@ PMPI_Group_incl (MPI_Group group, int n, int *ranks, MPI_Group * newgroup)
   }
 
   res = __INTERNAL__PMPI_Group_incl (group, n, ranks, newgroup);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -11035,7 +11037,7 @@ PMPI_Group_excl (MPI_Group group, int n, int *ranks, MPI_Group * newgroup)
   }
 
   res = __INTERNAL__PMPI_Group_excl (group, n, ranks, newgroup);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -11053,7 +11055,7 @@ PMPI_Group_range_incl (MPI_Group group, int n, int ranges[][3],
   }
 
   res = __INTERNAL__PMPI_Group_range_incl (group, n, ranges, newgroup);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -11070,7 +11072,7 @@ PMPI_Group_range_excl (MPI_Group group, int n, int ranges[][3],
   }
 
   res = __INTERNAL__PMPI_Group_range_excl (group, n, ranges, newgroup);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -11083,7 +11085,7 @@ PMPI_Group_free (MPI_Group * group)
   }
 
   res = __INTERNAL__PMPI_Group_free (group);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -11093,7 +11095,7 @@ PMPI_Comm_size (MPI_Comm comm, int *size)
   int res = MPI_ERR_INTERN;
   mpi_check_comm (comm, comm);
   res = __INTERNAL__PMPI_Comm_size (comm, size);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -11103,7 +11105,7 @@ PMPI_Comm_rank (MPI_Comm comm, int *rank)
   int res = MPI_ERR_INTERN;
   mpi_check_comm (comm, comm);
   res = __INTERNAL__PMPI_Comm_rank (comm, rank);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -11125,7 +11127,7 @@ PMPI_Comm_compare (MPI_Comm comm1, MPI_Comm comm2, int *result)
 	mpi_check_comm (comm1, comm1);
 	mpi_check_comm (comm2, comm2);
 	res = __INTERNAL__PMPI_Comm_compare (comm1, comm2, result);
-	SCTK__MPI_Check_retrun_val (res, comm);
+	SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -11139,7 +11141,7 @@ PMPI_Comm_dup (MPI_Comm comm, MPI_Comm * newcomm)
       MPI_ERROR_REPORT (comm, MPI_ERR_COMM, "");
     }
   res = __INTERNAL__PMPI_Comm_dup (comm, newcomm);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -11157,7 +11159,7 @@ PMPI_Comm_create (MPI_Comm comm, MPI_Group group, MPI_Comm * newcomm)
       MPI_ERROR_REPORT (comm, MPI_ERR_GROUP, "");
     }
   res = __INTERNAL__PMPI_Comm_create (comm, group, newcomm);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -11187,7 +11189,7 @@ PMPI_Intercomm_create (MPI_Comm local_comm, int local_leader,
       MPI_ERROR_REPORT (comm, MPI_ERR_COMM, "");
     }
   res = __INTERNAL__PMPI_Intercomm_create (local_comm, local_leader, peer_comm, remote_leader, tag, newintercomm);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -11202,7 +11204,7 @@ PMPI_Comm_split (MPI_Comm comm, int color, int key, MPI_Comm * newcomm)
     }
   res = __INTERNAL__PMPI_Comm_split (comm, color, key, newcomm);
   sctk_nodebug ("SPLIT Com %d Color %d, key %d newcomm %d", comm, color, key, *newcomm);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -11226,7 +11228,7 @@ PMPI_Comm_free (MPI_Comm * comm)
 
   mpi_check_comm (*comm, *comm);
   res = __INTERNAL__PMPI_Comm_free (comm);
-  SCTK__MPI_Check_retrun_val (res, *comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, *comm);
 }
 
 int
@@ -11236,7 +11238,7 @@ PMPI_Comm_test_inter (MPI_Comm comm, int *flag)
   int res = MPI_ERR_INTERN;
   mpi_check_comm (comm, comm);
   res = __INTERNAL__PMPI_Comm_test_inter (comm, flag);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -11249,7 +11251,7 @@ PMPI_Comm_remote_size (MPI_Comm comm, int *size)
     MPI_ERROR_REPORT (comm, MPI_ERR_COMM, "");
   }
   res = __INTERNAL__PMPI_Comm_remote_size (comm, size);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -11263,7 +11265,7 @@ PMPI_Comm_remote_group (MPI_Comm comm, MPI_Group * group)
   }
 
   res = __INTERNAL__PMPI_Comm_remote_group (comm, group);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -11279,7 +11281,7 @@ PMPI_Intercomm_merge (MPI_Comm intercomm, int high, MPI_Comm * newintracomm)
   }
 
   res = __INTERNAL__PMPI_Intercomm_merge (intercomm, high, newintracomm);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -11291,7 +11293,7 @@ PMPI_Keyval_create (MPI_Copy_function * copy_fn,
   int res = MPI_ERR_INTERN;
   res =
     __INTERNAL__PMPI_Keyval_create (copy_fn, delete_fn, keyval, extra_state);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -11305,7 +11307,7 @@ PMPI_Keyval_free (int *keyval)
   }
 
   res = __INTERNAL__PMPI_Keyval_free (keyval);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -11314,7 +11316,7 @@ PMPI_Attr_put (MPI_Comm comm, int keyval, void *attr_value)
   int res = MPI_ERR_INTERN;
   mpi_check_comm (comm, comm);
   res = __INTERNAL__PMPI_Attr_put (comm, keyval, attr_value);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -11323,7 +11325,7 @@ PMPI_Attr_get (MPI_Comm comm, int keyval, void *attr_value, int *flag)
   int res = MPI_ERR_INTERN;
   mpi_check_comm (comm, comm);
   res = __INTERNAL__PMPI_Attr_get (comm, keyval, attr_value, flag);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -11332,7 +11334,7 @@ PMPI_Attr_delete (MPI_Comm comm, int keyval)
   int res = MPI_ERR_INTERN;
   mpi_check_comm (comm, comm);
   res = __INTERNAL__PMPI_Attr_delete (comm, keyval);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -11341,7 +11343,7 @@ PMPI_Topo_test (MPI_Comm comm, int *topo_type)
   int res = MPI_ERR_INTERN;
   mpi_check_comm (comm, comm);
   res = __INTERNAL__PMPI_Topo_test (comm, topo_type);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -11384,7 +11386,7 @@ PMPI_Cart_create (MPI_Comm comm_old, int ndims, int *dims, int *periods,
   res =
     __INTERNAL__PMPI_Cart_create (comm_old, ndims, dims, periods, reorder,
 				  comm_cart);
-  SCTK__MPI_Check_retrun_val (res, comm_old);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm_old);
 }
 
 int
@@ -11399,7 +11401,7 @@ PMPI_Dims_create (int nnodes, int ndims, int *dims)
   }
 
   res = __INTERNAL__PMPI_Dims_create (nnodes, ndims, dims);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -11440,7 +11442,7 @@ PMPI_Graph_create (MPI_Comm comm_old, int nnodes, int *index, int *edges,
   res =
     __INTERNAL__PMPI_Graph_create (comm_old, nnodes, index, edges, reorder,
 				   comm_graph);
-  SCTK__MPI_Check_retrun_val (res, comm_old);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm_old);
 }
 
 int
@@ -11450,7 +11452,7 @@ PMPI_Graphdims_get (MPI_Comm comm, int *nnodes, int *nedges)
   int res = MPI_ERR_INTERN;
   mpi_check_comm (comm, comm);
   res = __INTERNAL__PMPI_Graphdims_get (comm, nnodes, nedges);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -11461,7 +11463,7 @@ PMPI_Graph_get (MPI_Comm comm, int maxindex, int maxedges,
   int res = MPI_ERR_INTERN;
   mpi_check_comm (comm, comm);
   res = __INTERNAL__PMPI_Graph_get (comm, maxindex, maxedges, index, edges);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -11471,7 +11473,7 @@ PMPI_Cartdim_get (MPI_Comm comm, int *ndims)
   int res = MPI_ERR_INTERN;
   mpi_check_comm (comm, comm);
   res = __INTERNAL__PMPI_Cartdim_get (comm, ndims);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -11490,7 +11492,7 @@ PMPI_Cart_get (MPI_Comm comm, int maxdims, int *dims, int *periods,
   }
 
   res = __INTERNAL__PMPI_Cart_get (comm, maxdims, dims, periods, coords);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -11500,7 +11502,7 @@ PMPI_Cart_rank (MPI_Comm comm, int *coords, int *rank)
   int res = MPI_ERR_INTERN;
   mpi_check_comm (comm, comm);
   res = __INTERNAL__PMPI_Cart_rank (comm, coords, rank, 0);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -11510,7 +11512,7 @@ PMPI_Cart_coords (MPI_Comm comm, int rank, int maxdims, int *coords)
   int res = MPI_ERR_INTERN;
   mpi_check_comm (comm, comm);
   res = __INTERNAL__PMPI_Cart_coords (comm, rank, maxdims, coords, 0);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -11519,7 +11521,7 @@ PMPI_Graph_neighbors_count (MPI_Comm comm, int rank, int *nneighbors)
   int res = MPI_ERR_INTERN;
   mpi_check_comm (comm, comm);
   res = __INTERNAL__PMPI_Graph_neighbors_count (comm, rank, nneighbors);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -11530,7 +11532,7 @@ PMPI_Graph_neighbors (MPI_Comm comm, int rank, int maxneighbors,
   mpi_check_comm (comm, comm);
   res =
     __INTERNAL__PMPI_Graph_neighbors (comm, rank, maxneighbors, neighbors);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -11544,7 +11546,7 @@ PMPI_Cart_shift (MPI_Comm comm, int direction, int displ, int *source,
   }
 
   res = __INTERNAL__PMPI_Cart_shift (comm, direction, displ, source, dest);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -11554,7 +11556,7 @@ PMPI_Cart_sub (MPI_Comm comm, int *remain_dims, MPI_Comm * comm_new)
   int res = MPI_ERR_INTERN;
   mpi_check_comm (comm, comm);
   res = __INTERNAL__PMPI_Cart_sub (comm, remain_dims, comm_new);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -11588,7 +11590,7 @@ PMPI_Cart_map (MPI_Comm comm_old, int ndims, int *dims, int *periods,
   }
 
   res = __INTERNAL__PMPI_Cart_map (comm_old, ndims, dims, periods, newrank);
-  SCTK__MPI_Check_retrun_val (res, comm_old);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm_old);
 }
 
 int
@@ -11619,7 +11621,7 @@ PMPI_Graph_map (MPI_Comm comm_old, int nnodes, int *index, int *edges,
   }
 
   res = __INTERNAL__PMPI_Graph_map (comm_old, nnodes, index, edges, newrank);
-  SCTK__MPI_Check_retrun_val (res, comm_old);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm_old);
 }
 
 int
@@ -11628,7 +11630,7 @@ PMPI_Get_processor_name (char *name, int *resultlen)
   MPI_Comm comm = MPI_COMM_WORLD;
   int res = MPI_ERR_INTERN;
   res = __INTERNAL__PMPI_Get_processor_name (name, resultlen);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -11637,7 +11639,7 @@ PMPI_Get_version (int *version, int *subversion)
   MPI_Comm comm = MPI_COMM_WORLD;
   int res = MPI_ERR_INTERN;
   res = __INTERNAL__PMPI_Get_version (version, subversion);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -11647,7 +11649,7 @@ PMPI_Errhandler_create (MPI_Handler_function * function,
   MPI_Comm comm = MPI_COMM_WORLD;
   int res = MPI_ERR_INTERN;
   res = __INTERNAL__PMPI_Errhandler_create (function, errhandler);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -11656,7 +11658,7 @@ PMPI_Errhandler_set (MPI_Comm comm, MPI_Errhandler errhandler)
   int res = MPI_ERR_INTERN;
   mpi_check_comm (comm, comm);
   res = __INTERNAL__PMPI_Errhandler_set (comm, errhandler);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -11665,7 +11667,7 @@ PMPI_Errhandler_get (MPI_Comm comm, MPI_Errhandler * errhandler)
   int res = MPI_ERR_INTERN;
   mpi_check_comm (comm, comm);
   res = __INTERNAL__PMPI_Errhandler_get (comm, errhandler);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -11674,7 +11676,7 @@ PMPI_Errhandler_free (MPI_Errhandler * errhandler)
   MPI_Comm comm = MPI_COMM_WORLD;
   int res = MPI_ERR_INTERN;
   res = __INTERNAL__PMPI_Errhandler_free (errhandler);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -11683,7 +11685,7 @@ PMPI_Error_string (int errorcode, char *string, int *resultlen)
   MPI_Comm comm = MPI_COMM_WORLD;
   int res = MPI_ERR_INTERN;
   res = __INTERNAL__PMPI_Error_string (errorcode, string, resultlen);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -11692,7 +11694,7 @@ PMPI_Error_class (int errorcode, int *errorclass)
   MPI_Comm comm = MPI_COMM_WORLD;
   int res = MPI_ERR_INTERN;
   res = __INTERNAL__PMPI_Error_class (errorcode, errorclass);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 double
@@ -11717,7 +11719,7 @@ PMPI_Query_thread (int *provided)
   MPI_Comm comm = MPI_COMM_WORLD;
   int res = MPI_ERR_INTERN;
   res = __INTERNAL__PMPI_Query_thread (provided);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 
@@ -11727,7 +11729,7 @@ PMPI_Init_thread (int *argc, char ***argv, int required, int *provided)
   MPI_Comm comm = MPI_COMM_WORLD;
   int res = MPI_ERR_INTERN;
   res = __INTERNAL__PMPI_Init_thread (argc, argv, required, provided);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -11736,7 +11738,7 @@ PMPI_Init (int *argc, char ***argv)
   MPI_Comm comm = MPI_COMM_WORLD;
   int res = MPI_ERR_INTERN;
   res = __INTERNAL__PMPI_Init (argc, argv);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -11745,7 +11747,7 @@ PMPI_Finalize (void)
   MPI_Comm comm = MPI_COMM_WORLD;
   int res = MPI_ERR_INTERN;
   res = __INTERNAL__PMPI_Finalize ();
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -11754,7 +11756,7 @@ PMPI_Finalized (int *flag)
   MPI_Comm comm = MPI_COMM_WORLD;
   int res = MPI_ERR_INTERN;
   res = __INTERNAL__PMPI_Finalized (flag);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -11763,7 +11765,7 @@ PMPI_Initialized (int *flag)
   MPI_Comm comm = MPI_COMM_WORLD;
   int res = MPI_ERR_INTERN;
   res = __INTERNAL__PMPI_Initialized (flag);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -11773,7 +11775,7 @@ PMPI_Abort (MPI_Comm comm, int errorcode)
   mpi_check_comm (comm, comm);
 
   res = __INTERNAL__PMPI_Abort (comm, errorcode);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 
@@ -11792,7 +11794,7 @@ PMPI_Comm_get_name (MPI_Comm comm, char *comm_name, int *resultlen)
   int res = MPI_ERR_INTERN;
   mpi_check_comm (comm, comm);
   res = __INTERNAL__PMPI_Comm_get_name (comm, comm_name, resultlen);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
@@ -11801,7 +11803,7 @@ PMPI_Comm_set_name (MPI_Comm comm, char *comm_name)
   int res = MPI_ERR_INTERN;
   mpi_check_comm (comm, comm);
   res = __INTERNAL__PMPI_Comm_set_name (comm, comm_name);
-  SCTK__MPI_Check_retrun_val (res, comm);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int MPC_Mpi_null_delete_fn( MPI_Datatype datatype, int type_keyval, void* attribute_val_out, void* extra_state )
