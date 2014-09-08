@@ -55,6 +55,8 @@ extern "C"
 
   typedef unsigned int mpc_pack_indexes_t;
   typedef unsigned long mpc_pack_absolute_indexes_t;
+  
+  typedef long MPC_Count;
 
   typedef int MPC_Comm;
   typedef struct
@@ -462,7 +464,6 @@ enum MPIR_Combiner_enum {
 		    MPC_Status *);
 
   /*Status */
-  int MPC_Test_cancelled (MPC_Status *, int *);
   int MPC_Cancel (MPC_Request *);
 
   /*Gather */
@@ -665,6 +666,15 @@ int MPCX_GRequest_class_create( MPC_Grequest_query_function * query_fn,
 
 int MPCX_Grequest_class_allocate( MPCX_Request_class target_class, void *extra_state, MPC_Request *request );
 
+
+/* Status Modification and query */
+int MPC_Status_set_elements(MPC_Status *, MPC_Datatype , int );
+int MPC_Status_set_elements_x(MPC_Status *, MPC_Datatype , MPC_Count );
+int MPC_Status_set_cancelled (MPC_Status *, int);
+int MPC_Request_get_status (MPC_Request, int *, MPC_Status *);
+int MPC_Test_cancelled (MPC_Status *, int *);
+
+
   /*MPI compatibility*/
 #define MPC_BSEND_OVERHEAD 0
 #define MPC_BOTTOM ((void*)0)
@@ -758,7 +768,6 @@ int MPCX_Grequest_class_allocate( MPCX_Request_class target_class, void *extra_s
 		    MPC_Status *);
 
   /*Status */
-  int PMPC_Test_cancelled (MPC_Status *, int *);
   int PMPC_Cancel (MPC_Request *);
 
   /*Gather */
@@ -941,7 +950,13 @@ int MPCX_Grequest_class_allocate( MPCX_Request_class target_class, void *extra_s
 				   MPCX_Request_class * new_class );
   
   int PMPCX_Grequest_class_allocate( MPCX_Request_class target_class, void *extra_state, MPC_Request *request );
-  
+
+  /* Status Modification and query */
+  int PMPC_Status_set_elements(MPC_Status *, MPC_Datatype , int );
+  int PMPC_Status_set_elements_x(MPC_Status *, MPC_Datatype , MPC_Count );
+  int PMPC_Status_set_cancelled (MPC_Status *, int);
+  int PMPC_Request_get_status (MPC_Request, int *, MPC_Status *);
+  int PMPC_Test_cancelled (MPC_Status *, int *);
   
   /* Send/Recv message using the signalization network */
   void MPC_Send_signalization_network(int dest_process, int tag, void *buff, size_t size);

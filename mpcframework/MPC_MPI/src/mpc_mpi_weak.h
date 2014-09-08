@@ -95,9 +95,6 @@
 #pragma weak MPI_Cancel = PMPI_Cancel
 #pragma weak mpi_cancel_ = pmpi_cancel_
 #pragma weak mpi_cancel__ = pmpi_cancel__
-#pragma weak MPI_Test_cancelled = PMPI_Test_cancelled
-#pragma weak mpi_test_cancelled_ = pmpi_test_cancelled_
-#pragma weak mpi_test_cancelled__ = pmpi_test_cancelled__
 #pragma weak MPI_Send_init = PMPI_Send_init
 #pragma weak mpi_send_init_ = pmpi_send_init_
 #pragma weak mpi_send_init__ = pmpi_send_init__
@@ -494,6 +491,13 @@
 #pragma weak MPIX_Grequest_start = PMPIX_Grequest_start
 #pragma weak MPIX_GRequest_class_create = PMPIX_GRequest_class_create
 #pragma weak MPIX_Grequest_class_allocate = PMPIX_Grequest_class_allocate
+
+#pragma weak MPI_Status_set_elements = PMPI_Status_set_elements
+#pragma weak MPI_Status_set_elements_x = PMPI_Status_set_elements_x
+#pragma weak MPI_Status_set_cancelled = PMPI_Status_set_cancelled
+#pragma weak MPI_Request_get_status = PMPI_Request_get_status
+#pragma weak MPI_Test_cancelled = PMPI_Test_cancelled
+
 
 //~ not implemented
 

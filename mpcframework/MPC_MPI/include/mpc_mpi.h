@@ -406,7 +406,6 @@ int MPI_Testsome (int, MPI_Request *, int *, int *, MPI_Status *);
 int MPI_Iprobe (int, int, MPI_Comm, int *, MPI_Status *);
 int MPI_Probe (int, int, MPI_Comm, MPI_Status *);
 int MPI_Cancel (MPI_Request *);
-int MPI_Test_cancelled (MPI_Status *, int *);
 int MPI_Send_init (void *, int, MPI_Datatype, int, int, MPI_Comm,  MPI_Request *);
 int MPI_Bsend_init (void *, int, MPI_Datatype, int, int, MPI_Comm,  MPI_Request *);
 int MPI_Ssend_init (void *, int, MPI_Datatype, int, int, MPI_Comm,  MPI_Request *);
@@ -417,6 +416,13 @@ int MPI_Startall (int, MPI_Request *);
 int MPI_Sendrecv (void *, int, MPI_Datatype, int, int, void *, int,  MPI_Datatype, int, int, MPI_Comm, MPI_Status *);
 int MPI_Sendrecv_replace (void *, int, MPI_Datatype, int, int, int, int, MPI_Comm, MPI_Status *);
   
+/* Status Modification and query */
+int MPI_Status_set_elements(MPI_Status *, MPI_Datatype , int );
+int MPI_Status_set_elements_x(MPI_Status *, MPI_Datatype , MPI_Count );
+int MPI_Status_set_cancelled (MPI_Status *, int);
+int MPI_Request_get_status (MPI_Request, int *, MPI_Status *);
+int MPI_Test_cancelled (MPI_Status *, int *);
+
 /* Datatype Management & Packs */
 int MPI_Type_contiguous (int, MPI_Datatype, MPI_Datatype *);
 int MPI_Type_vector (int, int, int, MPI_Datatype, MPI_Datatype *);
@@ -654,7 +660,6 @@ int PMPI_Waitsome (int, MPI_Request *, int *, int *, MPI_Status *);
 int PMPI_Testsome (int, MPI_Request *, int *, int *, MPI_Status *);
 int PMPI_Iprobe (int, int, MPI_Comm, int *, MPI_Status *);
 int PMPI_Probe (int, int, MPI_Comm, MPI_Status *);
-int PMPI_Cancel (MPI_Request *);
 int PMPI_Test_cancelled (MPI_Status *, int *);
 int PMPI_Send_init (void *, int, MPI_Datatype, int, int, MPI_Comm,  MPI_Request *);
 int PMPI_Bsend_init (void *, int, MPI_Datatype, int, int, MPI_Comm,  MPI_Request *);
@@ -665,7 +670,14 @@ int PMPI_Start (MPI_Request *);
 int PMPI_Startall (int, MPI_Request *);
 int PMPI_Sendrecv (void *, int, MPI_Datatype, int, int, void *, int,  MPI_Datatype, int, int, MPI_Comm, MPI_Status *);
 int PMPI_Sendrecv_replace (void *, int, MPI_Datatype, int, int, int, int, MPI_Comm, MPI_Status *);
-  
+
+/* Status Modification and query */
+int PMPI_Status_set_elements(MPI_Status *, MPI_Datatype , int );
+int PMPI_Status_set_elements_x(MPI_Status *, MPI_Datatype , MPI_Count );
+int PMPI_Status_set_cancelled (MPI_Status *, int);
+int PMPI_Request_get_status (MPI_Request, int *, MPI_Status *);
+int PMPI_Test_cancelled (MPI_Status *, int *);
+
 /* Datatype Management & Packs */
 int PMPI_Type_contiguous (int, MPI_Datatype, MPI_Datatype *);
 int PMPI_Type_vector (int, int, int, MPI_Datatype, MPI_Datatype *);
@@ -926,12 +938,6 @@ int MPI_Comm_set_info(MPI_Comm , MPI_Info );
 int MPI_Comm_get_info(MPI_Comm , MPI_Info * );
 int MPI_Comm_call_errhandler (MPI_Comm, int);
 int MPI_Comm_create_errhandler (MPI_Comm_errhandler_fn *, MPI_Errhandler *);
-
-/* Status Modification */
-int MPI_Status_set_elements(MPI_Status *, MPI_Datatype , int );
-int MPI_Status_set_elements_x(MPI_Status *, MPI_Datatype , MPI_Count );
-int MPI_Status_set_cancelled (MPI_Status *, int);
-int MPI_Request_get_status (MPI_Request, int *, MPI_Status *);
 
 /* Process Creation and Management */
 int MPI_Close_port (char *);

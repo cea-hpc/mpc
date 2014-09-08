@@ -81,7 +81,6 @@
 #pragma weak MPC_Recv = PMPC_Recv
 #pragma weak MPC_Sendrecv = PMPC_Sendrecv
    /*Status */
-#pragma weak MPC_Test_cancelled = PMPC_Test_cancelled
 #pragma weak MPC_Cancel = PMPC_Cancel
     /*Gather */
 #pragma weak MPC_Gather = PMPC_Gather
@@ -181,3 +180,9 @@
 /* Extended Generalized Requests Classes */
 #pragma weak MPCX_GRequest_class_create = PMPCX_GRequest_class_create
 #pragma weak MPCX_Grequest_class_allocate = PMPCX_Grequest_class_allocate
+
+#pragma weak MPC_Status_set_elements = PMPC_Status_set_elements
+#pragma weak MPC_Status_set_elements_x = PMPC_Status_set_elements_x
+#pragma weak MPC_Status_set_cancelled = PMPC_Status_set_cancelled
+#pragma weak MPC_Request_get_status = PMPC_Request_get_status
+#pragma weak MPC_Test_cancelled = PMPC_Test_cancelled

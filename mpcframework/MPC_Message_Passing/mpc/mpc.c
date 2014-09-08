@@ -3952,15 +3952,48 @@ int PMPC_Recv (void *buf, mpc_msg_count count, MPC_Datatype datatype, int source
   MPC_ERROR_SUCESS ();
 }
 
-int
-PMPC_Test_cancelled (MPC_Status * status, int *flag)
+/************************************************************************/
+/* MPI Status Modification and Query                                    */
+/************************************************************************/
+
+int PMPC_Status_set_elements_x(MPC_Status * status, MPC_Datatype datatype, MPC_Count count )
 {
-  *flag = (status->cancelled == 1);
-  MPC_ERROR_SUCESS ();
+	size_t elem_size = 0;
+	PMPC_Type_size (datatype, &elem_size);
+	status->size = elem_size * count;
+
+	MPC_ERROR_SUCESS();
 }
 
-int
-PMPC_Cancel (MPC_Request * request)
+int PMPC_Status_set_elements(MPC_Status * status, MPC_Datatype datatype, int count)
+{
+	return MPC_Status_set_elements_x(status, datatype, count );
+}
+
+int PMPC_Status_set_cancelled (MPC_Status * status, int cancelled)
+{
+	status->cancelled = cancelled;
+	MPC_ERROR_SUCESS();
+}
+
+int PMPC_Request_get_status (MPC_Request request, int * flag, MPC_Status *status)
+{
+	sctk_mpc_commit_status_from_request(&request,status);
+	
+	*flag = (request.completion_flag == SCTK_MESSAGE_DONE);
+	
+	MPC_ERROR_SUCESS()
+}
+
+int PMPC_Test_cancelled (MPC_Status * status, int *flag)
+{
+	*flag = (status->cancelled == 1);
+	MPC_ERROR_SUCESS ();
+}
+
+
+
+int PMPC_Cancel (MPC_Request * request)
 {
   int ret = sctk_mpc_cancel_message (request);
   return ret;

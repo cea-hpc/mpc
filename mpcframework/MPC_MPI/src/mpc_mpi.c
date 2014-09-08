@@ -2307,11 +2307,10 @@ __INTERNAL__PMPI_Cancel (MPI_Request * request)
   return res;
 }
 
-static int
-__INTERNAL__PMPI_Test_cancelled (MPI_Status * status, int *flag)
+static int __INTERNAL__PMPI_Test_cancelled (MPI_Status * status, int *flag)
 {
-  PMPC_Test_cancelled (status, flag);
-  return MPI_SUCCESS;
+	PMPC_Test_cancelled (status, flag);
+	return MPI_SUCCESS;
 }
 
 static int
@@ -9382,15 +9381,6 @@ PMPI_Cancel (MPI_Request * request)
 }
 
 int
-PMPI_Test_cancelled (MPI_Status * status, int *flag)
-{
-  MPI_Comm comm = MPI_COMM_WORLD;
-  int res = MPI_ERR_INTERN;
-  res = __INTERNAL__PMPI_Test_cancelled (status, flag);
-  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
-}
-
-int
 PMPI_Send_init (void *buf, int count, MPI_Datatype datatype, int dest,
 		int tag, MPI_Comm comm, MPI_Request * request)
 {
@@ -9698,6 +9688,51 @@ PMPI_Sendrecv_replace (void *buf, int count, MPI_Datatype datatype,
   }
 
   SCTK_MPI_CHECK_RETURN_VAL (res, comm);
+}
+
+/************************************************************************/
+/* MPI Status Modification and Query                                    */
+/************************************************************************/
+int PMPI_Status_set_elements(MPI_Status *status, MPI_Datatype datatype, int count )
+{
+	MPI_Comm comm = MPI_COMM_WORLD;
+	int res = MPI_ERR_INTERN;
+	res = PMPC_Status_set_elements(status, datatype, count );
+	SCTK_MPI_CHECK_RETURN_VAL (res, comm);
+}
+
+int PMPI_Status_set_elements_x(MPI_Status *status, MPI_Datatype datatype, MPI_Count count)
+{
+	MPI_Comm comm = MPI_COMM_WORLD;
+	int res = MPI_ERR_INTERN;
+	res = PMPC_Status_set_elements_x(status, datatype, count );
+	SCTK_MPI_CHECK_RETURN_VAL (res, comm);
+}
+
+int PMPI_Status_set_cancelled (MPI_Status *status, int cancelled)
+{
+	MPI_Comm comm = MPI_COMM_WORLD;
+	int res = MPI_ERR_INTERN;
+	res = PMPC_Status_set_cancelled (status, cancelled);
+	SCTK_MPI_CHECK_RETURN_VAL (res, comm);
+}
+
+int PMPI_Request_get_status (MPI_Request request, int *flag, MPI_Status *status)
+{
+	MPC_Request *mpc_request =  __sctk_convert_mpc_request(&request);
+	
+	MPI_Comm comm = MPI_COMM_WORLD;
+	int res = MPI_ERR_INTERN;
+	res = PMPC_Request_get_status(*mpc_request, flag, status);
+	SCTK_MPI_CHECK_RETURN_VAL (res, comm);
+}
+
+int PMPI_Test_cancelled (MPI_Status * status, int *flag)
+{
+	MPI_Comm comm = MPI_COMM_WORLD;
+	int res = MPI_ERR_INTERN;
+	res = __INTERNAL__PMPI_Test_cancelled (status, flag);
+	SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 /************************************************************************/
