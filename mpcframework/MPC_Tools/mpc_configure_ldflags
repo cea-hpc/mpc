@@ -34,15 +34,20 @@ header_sh >> bin/mpc_ldflags
 
 cat <<EOF >> bin/mpc_ldflags
 
+
 FLAGS="-Wl,-rpath,${SCTK_LIB_DIR} -Wl,-rpath,${SCTK_LIB_DIR}/../lib64 -lmpc_tdb_remote_static $SCTK_LDFLAGS "
 
 if test "\$MPC_USE_INTEL_COMPILER" = "1"; then
+MPC_DO_NOT_USE_GNU_LM="1"
+fi 
+
+if test "\$MPC_DO_NOT_USE_GNU_LM" = "1"; then
 NEW_FLAGS=""
 for i in \$FLAGS; do
 if test "\$i" = "-lm" ; then
 NEW_FLAGS="\$NEW_FLAGS"
 else
-NEW_FLAGS="\$NEW_FLAGS \$i"
+NEW_FLAGS="\$NEW_FLAGS '\$i'"
 fi
 done
 FLAGS="\$NEW_FLAGS"
