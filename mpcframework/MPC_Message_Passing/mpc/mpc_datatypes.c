@@ -26,7 +26,9 @@
 #include "mpc_reduction.h"
 #include <string.h>
 #include "mpcmp.h"
-#include <stdint.h>
+#include <sctk_ethread_internal.h>
+#include "sctk_stdint.h"
+#include "sctk_wchar.h"
 
 /************************************************************************/
 /* Datatype Init and Release                                            */
@@ -83,7 +85,6 @@ void sctk_common_datatype_init()
   SCTK_INIT_TYPE_SIZE (MPC_REAL4, float);
   SCTK_INIT_TYPE_SIZE (MPC_REAL8, double);
   SCTK_INIT_TYPE_SIZE (MPC_REAL16, long double);
-  SCTK_INIT_TYPE_SIZE (MPC_REAL16, long double);
   SCTK_INIT_TYPE_SIZE (MPC_FLOAT_INT, mpc_float_int);
   SCTK_INIT_TYPE_SIZE (MPC_LONG_INT, mpc_long_int);
   SCTK_INIT_TYPE_SIZE (MPC_DOUBLE_INT, mpc_double_int);
@@ -93,7 +94,19 @@ void sctk_common_datatype_init()
   SCTK_INIT_TYPE_SIZE (MPC_COMPLEX, mpc_float_float);
   SCTK_INIT_TYPE_SIZE (MPC_2DOUBLE_PRECISION, mpc_double_double);
   SCTK_INIT_TYPE_SIZE (MPC_DOUBLE_COMPLEX, mpc_double_double);
-  SCTK_INIT_TYPE_SIZE (MPC_UINT64_T, uint64_t );
+  SCTK_INIT_TYPE_SIZE (MPC_INT8_T, sctk_int8_t );
+  SCTK_INIT_TYPE_SIZE (MPC_UINT8_T, sctk_uint8_t );
+  SCTK_INIT_TYPE_SIZE (MPC_INT16_T, sctk_int16_t );
+  SCTK_INIT_TYPE_SIZE (MPC_UINT16_T, sctk_uint16_t );
+  SCTK_INIT_TYPE_SIZE (MPC_INT32_T, sctk_int32_t );
+  SCTK_INIT_TYPE_SIZE (MPC_UINT32_T, sctk_uint32_t );
+  SCTK_INIT_TYPE_SIZE (MPC_INT64_T, sctk_int64_t );
+  SCTK_INIT_TYPE_SIZE (MPC_UINT64_T, sctk_uint64_t );
+  SCTK_INIT_TYPE_SIZE (MPC_COMPLEX8, mpc_float_float );
+  SCTK_INIT_TYPE_SIZE (MPC_COMPLEX16, mpc_double_double );
+  SCTK_INIT_TYPE_SIZE (MPC_COMPLEX32, mpc_longdouble_longdouble );
+  SCTK_INIT_TYPE_SIZE (MPC_WCHAR, sctk_wchar_t );
+  
   __sctk_common_type_sizes[MPC_PACKED] = 0;
 }
 
@@ -245,6 +258,28 @@ void sctk_derived_datatype_release( sctk_derived_datatype_t * type )
 		
 		sctk_free (type);
 	}
+}
+
+
+void sctk_derived_datatype_true_extent( sctk_derived_datatype_t * type , mpc_pack_absolute_indexes_t * true_lb, mpc_pack_absolute_indexes_t * true_ub)
+{
+	mpc_pack_absolute_indexes_t min_index, max_index;
+	int min_set = 0, max_set = 0;
+	
+	int i;
+	
+	for( i = 0 ; i < type->count ; i++ )
+	{
+		if( !min_set || ( type->begins[i] < min_index ) )
+			min_index = type->begins[i];
+		
+		if( !max_set || ( max_index < type->ends[i] ) )
+			max_index = type->ends[i];
+		
+	}
+	
+	*true_lb = min_index;
+	*true_ub = max_index;
 }
 
 

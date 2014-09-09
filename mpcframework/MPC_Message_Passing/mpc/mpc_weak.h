@@ -189,3 +189,5 @@
 
 #pragma weak MPC_Type_set_name = PMPC_Type_set_name
 #pragma weak MPC_Type_get_name = PMPC_Type_get_name
+#pragma weak MPC_Type_dup = PMPC_Type_dup
+#pragma weak MPC_Type_get_true_extent = PMPC_Type_get_true_extent

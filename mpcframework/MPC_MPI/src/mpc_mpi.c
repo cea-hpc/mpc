@@ -169,6 +169,7 @@ static int __INTERNAL__PMPI_Type_extent (MPI_Datatype, MPI_Aint *);
 static int __INTERNAL__PMPI_Type_size (MPI_Datatype, int *);
 static int __INTERNAL__PMPI_Type_lb (MPI_Datatype, MPI_Aint *);
 static int __INTERNAL__PMPI_Type_ub (MPI_Datatype, MPI_Aint *);
+static int __INTERNAL__PMPI_Type_create_resized(MPI_Datatype old_type, MPI_Aint lb, MPI_Aint extent, MPI_Datatype *new_type);
 static int __INTERNAL__PMPI_Type_commit (MPI_Datatype *);
 static int __INTERNAL__PMPI_Type_free (MPI_Datatype *);
 static int __INTERNAL__PMPI_Get_elements (MPI_Status *, MPI_Datatype, int *);
@@ -2983,6 +2984,63 @@ static int __INTERNAL__PMPI_Type_indexed (int count, int blocklens[], int indice
 	return res;
 }
 
+/** \brief This function creates a sequence of contiguous blocks each with their offset but with the same length
+ * 	\param count Number of blocks
+ * 	\param blocklength length of every blocks
+ * 	\param indices Offset of each block in old_type size multiples
+ * 	\param old_type Input data-type
+ * 	\param newtype_p New vector data-type
+ */
+static int __INTERNAL__PMPI_Type_create_hindexed_block(int count, int blocklength, MPI_Aint indices[], MPI_Datatype old_type, MPI_Datatype *newtype)
+{
+	/* Here we just artificially create an array of blocklength to call __INTERNAL__PMPI_Type_indexed */
+	int * blocklength_array = sctk_malloc( count * sizeof( int ) );
+	assume( blocklength_array != NULL );
+	
+	/* Call the orignal indexed function */
+	int res = __INTERNAL__PMPI_Type_hindexed(count, blocklength_array, indices, old_type,  newtype);
+	
+	/* Free the tmp buffer */
+	sctk_free( blocklength_array );
+	
+	return res;
+}
+
+
+/** \brief This function creates a sequence of contiguous blocks each with their offset but with the same length
+ * 	\param count Number of blocks
+ * 	\param blocklength length of every blocks
+ * 	\param indices Offset of each block in old_type size multiples
+ * 	\param old_type Input data-type
+ * 	\param newtype_p New vector data-type
+ */
+static int __INTERNAL__PMPI_Type_create_indexed_block(int count, int blocklength, int indices[], MPI_Datatype old_type, MPI_Datatype *newtype)
+{
+	/* Convert the indices to bytes */
+	MPI_Aint extent;
+	/* Retrieve type extent */
+	__INTERNAL__PMPI_Type_extent(old_type, &extent);
+	
+	/* Create a temporary offset array */
+	MPI_Aint * byte_offsets = sctk_malloc (count * sizeof (MPI_Aint));
+	assume( byte_offsets != NULL );
+	
+	int i;
+	/* Fill it with by converting type based indices to bytes */
+	for( i = 0 ; i < count ; i++ )
+		byte_offsets[i] = indices[i] * extent;
+	
+	/* Call the orignal indexed function */
+	int res = __INTERNAL__PMPI_Type_create_hindexed_block (count, blocklength, byte_offsets, old_type,  newtype);
+	
+	/* Free the temporary byte offset */
+	sctk_free( byte_offsets );
+	
+	return res;
+}
+
+
+
 /** \brief This function creates a sequence of contiguous blocks each with their offset and length
  * 	\param count Number of blocks
  * 	\param blocklen length of individual blocks
@@ -3279,15 +3337,52 @@ static int __INTERNAL__PMPI_Type_struct(int count, int blocklens[], MPI_Aint ind
 	return MPI_SUCCESS;
 }
 
-
-static int
-__INTERNAL__PMPI_Address (void *location, MPI_Aint * address)
+static int __INTERNAL__PMPI_Type_create_resized(MPI_Datatype old_type, MPI_Aint lb, MPI_Aint extent, MPI_Datatype *new_type)
 {
-  *address = (MPI_Aint) location;
-  return MPI_SUCCESS;
+	if( sctk_datatype_is_derived(old_type) )
+	{
+		int derived_ret;
+		sctk_derived_datatype_t input_datatype;
+		/* Retrieve input datatype informations */
+		MPC_Is_derived_datatype (old_type, &derived_ret, &input_datatype);
+		
+		/* Duplicate it with updated bounds in new_type */
+		PMPC_Derived_datatype ( new_type,
+					input_datatype.begins,
+					input_datatype.ends,
+					input_datatype.datatypes,
+					input_datatype.count,
+					lb, 1,
+					lb + extent, 1);
+		
+		return MPI_SUCCESS;
+	}
+	else
+	{
+		/* Here tPMPI_Type_create_resized only handles derived data-types */
+		int res;
+		MPI_Datatype data_out;
+		
+		/* Convert the contiguous/common type to a derived one */
+		PMPC_Type_convert_to_derived( old_type, &data_out );
+		
+		/* Call the hindexed function again */
+		res = __INTERNAL__PMPI_Type_create_resized (data_out, lb, extent, new_type);
+		
+		/* Free the temporary type */
+		__INTERNAL__PMPI_Type_free (&data_out);
+
+		return res;
+	}
 }
 
-/* We could add __attribute__((deprecated)) to routines like MPI_Type_extent */
+
+static int __INTERNAL__PMPI_Address (void *location, MPI_Aint * address)
+{
+	*address = (MPI_Aint) location;
+	return MPI_SUCCESS;
+}
+
 static int __INTERNAL__PMPI_Type_extent (MPI_Datatype datatype, MPI_Aint * extent)
 {
 	MPI_Aint UB;
@@ -3398,14 +3493,12 @@ __INTERNAL__PMPI_Type_ub (MPI_Datatype datatype, MPI_Aint * displacement)
 	return MPI_SUCCESS;
 }
 
-static int
-__INTERNAL__PMPI_Type_commit (MPI_Datatype * datatype)
+static int __INTERNAL__PMPI_Type_commit (MPI_Datatype * datatype)
 {
   return MPI_SUCCESS;
 }
 
-static int
-__INTERNAL__PMPI_Type_free (MPI_Datatype * datatype)
+static int __INTERNAL__PMPI_Type_free (MPI_Datatype * datatype)
 {
   return PMPC_Type_free (datatype);
 }
@@ -9847,6 +9940,51 @@ int PMPI_Type_hindexed (int count, int blocklens[],  MPI_Aint indices[], MPI_Dat
 	SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
+
+int PMPI_Type_create_indexed_block(int count, int blocklength, int indices[], MPI_Datatype old_type, MPI_Datatype *newtype)
+{
+	MPI_Comm comm = MPI_COMM_WORLD;
+	int res = MPI_ERR_INTERN;
+	int i;
+	mpi_check_count(count,comm);
+	
+	if(indices == NULL)
+	{
+		MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
+	}
+	
+	if( blocklength < 0)
+	{
+		MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
+	}
+
+	mpi_check_type_create(old_type,comm);
+	res = __INTERNAL__PMPI_Type_create_indexed_block(count, blocklength, indices, old_type, newtype);
+	SCTK_MPI_CHECK_RETURN_VAL (res, comm);	
+}
+
+int PMPI_Type_create_hindexed_block(int count, int blocklength, MPI_Aint indices[], MPI_Datatype old_type, MPI_Datatype *newtype)
+{
+	MPI_Comm comm = MPI_COMM_WORLD;
+	int res = MPI_ERR_INTERN;
+	int i;
+	mpi_check_count(count,comm);
+	
+	if(indices == NULL)
+	{
+		MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
+	}
+	
+	if( blocklength < 0)
+	{
+		MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
+	}
+
+	mpi_check_type_create(old_type,comm);
+	res = __INTERNAL__PMPI_Type_create_hindexed_block(count, blocklength, indices, old_type, newtype);
+	SCTK_MPI_CHECK_RETURN_VAL (res, comm);	
+}
+
 int PMPI_Type_create_hindexed (int count, int blocklens[], MPI_Aint indices[],  MPI_Datatype old_type, MPI_Datatype * newtype)
 {
 	MPI_Comm comm = MPI_COMM_WORLD;
@@ -9930,6 +10068,14 @@ int PMPI_Address (void *location, MPI_Aint * address)
 	SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
+int PMPI_Get_address(const void *location, MPI_Aint *address)
+{
+	MPI_Comm comm = MPI_COMM_WORLD;
+	int res = MPI_ERR_INTERN;
+	res = __INTERNAL__PMPI_Address (location, address);
+	SCTK_MPI_CHECK_RETURN_VAL (res, comm);
+}
+
   /* We could add __attribute__((deprecated)) to routines like MPI_Type_extent */
 int PMPI_Type_extent (MPI_Datatype datatype, MPI_Aint * extent)
 {
@@ -9938,6 +10084,23 @@ int PMPI_Type_extent (MPI_Datatype datatype, MPI_Aint * extent)
 	mpi_check_type_create(datatype,comm);
 	res = __INTERNAL__PMPI_Type_extent (datatype, extent);
 	SCTK_MPI_CHECK_RETURN_VAL (res, comm);
+}
+
+int PMPI_Type_get_extent(MPI_Datatype datatype, MPI_Aint *lb, MPI_Aint *extent)
+{
+	MPI_Comm comm = MPI_COMM_WORLD;
+	int res = MPI_ERR_INTERN;
+	mpi_check_type_create(datatype,comm);
+	
+	__INTERNAL__PMPI_Type_lb (datatype, lb);
+	res = __INTERNAL__PMPI_Type_extent (datatype, extent);
+	
+	SCTK_MPI_CHECK_RETURN_VAL (res, comm);
+}
+
+int PMPI_Type_get_true_extent(MPI_Datatype datatype, MPI_Aint *true_lb, MPI_Aint *true_extent)
+{
+	return PMPC_Type_get_true_extent( datatype, true_lb, true_extent );
 }
 
   /* See the 1.1 version of the Standard.  The standard made an
@@ -9971,6 +10134,15 @@ int PMPI_Type_ub (MPI_Datatype datatype, MPI_Aint * displacement)
 	SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
+int PMPI_Type_create_resized(MPI_Datatype old_type, MPI_Aint lb, MPI_Aint extent, MPI_Datatype *new_type)
+{
+	MPI_Comm comm = MPI_COMM_WORLD;
+	int res = MPI_ERR_INTERN;
+	mpi_check_type_create(old_type,comm);
+	res = __INTERNAL__PMPI_Type_create_resized( old_type, lb, extent, new_type );
+	SCTK_MPI_CHECK_RETURN_VAL (res, comm);
+}
+
 int PMPI_Type_commit (MPI_Datatype * datatype)
 {
 	MPI_Comm comm = MPI_COMM_WORLD;
@@ -9995,6 +10167,11 @@ int PMPI_Type_free (MPI_Datatype * datatype)
 	SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
+int PMPI_Type_dup( MPI_Datatype old_type, MPI_Datatype *newtype )
+{
+	return PMPC_Type_dup(old_type, newtype);
+}
+
 int PMPI_Get_elements (MPI_Status * status, MPI_Datatype datatype, int *elements)
 {
 	MPI_Comm comm = MPI_COMM_WORLD;
@@ -10002,6 +10179,43 @@ int PMPI_Get_elements (MPI_Status * status, MPI_Datatype datatype, int *elements
 	mpi_check_type(datatype,comm);
 	res = __INTERNAL__PMPI_Get_elements (status, datatype, elements);
 	SCTK_MPI_CHECK_RETURN_VAL (res, comm);
+}
+
+int PMPI_Type_match_size(int typeclass, int size, MPI_Datatype *rtype)
+{
+	/* This structure directly comes from the standard */
+	switch(typeclass) 
+	{
+		case MPI_TYPECLASS_REAL: 
+			switch(size)
+			{
+				case 4: *rtype = MPI_REAL4; return MPI_SUCCESS;
+				case 8: *rtype = MPI_REAL8; return MPI_SUCCESS;
+				case 16: *rtype = MPI_REAL16; return MPI_SUCCESS;
+				default: MPI_ERROR_REPORT(MPI_COMM_SELF, MPI_ERR_ARG, "Bad size provided to MPI_Type_match_size (MPI_TYPECLASS_REAL)");
+			}
+		case MPI_TYPECLASS_INTEGER: 
+			switch(size)
+			{
+				case 1: *rtype = MPI_INTEGER1; return MPI_SUCCESS;
+				case 2: *rtype = MPI_INTEGER2; return MPI_SUCCESS;
+				case 4: *rtype = MPI_INTEGER4; return MPI_SUCCESS;
+				case 8: *rtype = MPI_INTEGER8; return MPI_SUCCESS;
+				default: MPI_ERROR_REPORT(MPI_COMM_SELF, MPI_ERR_ARG, "Bad size provided to MPI_Type_match_size (MPI_TYPECLASS_INTEGER)");
+			}
+		case MPI_TYPECLASS_COMPLEX: 
+			switch(size)
+			{
+				case 8: *rtype = MPI_COMPLEX8; return MPI_SUCCESS;
+				case 16: *rtype = MPI_COMPLEX16; return MPI_SUCCESS;
+				case 32: *rtype = MPI_COMPLEX32; return MPI_SUCCESS;
+				default: MPI_ERROR_REPORT(MPI_COMM_SELF, MPI_ERR_ARG, "Bad size provided to MPI_Type_match_size (MPI_TYPECLASS_COMPLEX)");
+			}
+		default:
+			MPI_ERROR_REPORT(MPI_COMM_SELF, MPI_ERR_ARG, "Bad Type class provided to MPI_Type_match_size");
+	}
+
+	return MPI_SUCCESS;
 }
 
 int
@@ -11276,6 +11490,14 @@ PMPI_Intercomm_merge (MPI_Comm intercomm, int high, MPI_Comm * newintracomm)
   SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
+
+int PMPI_Comm_set_errhandler(MPI_Comm comm, MPI_Errhandler errhandler)
+{
+	TODO("PMPI_Comm_set_errhandler is dummy");
+	return MPI_SUCCESS;
+}
+
+
 int
 PMPI_Keyval_create (MPI_Copy_function * copy_fn,
 		    MPI_Delete_function * delete_fn,
@@ -12047,8 +12269,6 @@ int PMPI_Alloc_mem (MPI_Aint size, MPI_Info info, void *baseptr){return MPI_SUCC
 int PMPI_Free_mem (void *base){return MPI_SUCCESS;}
 
 int PMPI_Type_create_resized(MPI_Datatype oldtype, MPI_Aint lb, MPI_Aint extent, MPI_Datatype *newtype){return MPI_SUCCESS;}
-int PMPI_Type_get_true_extent(MPI_Datatype datatype, MPI_Aint *true_lb, MPI_Aint *true_extent){return MPI_SUCCESS;}
-int PMPI_Type_get_extent(MPI_Datatype datatype, MPI_Aint *lb, MPI_Aint *extent){return MPI_SUCCESS;}
 
 
 int PMPI_Comm_set_errhandler(MPI_Comm comm, MPI_Errhandler errhandler){return MPI_SUCCESS;}

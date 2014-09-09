@@ -201,6 +201,14 @@ if test "$SCTK_SCTK_CHECK_HEADER_RES" = 0; then
   SCTK_CHECK_OPTION "-DHAVE_STDINT_H"
 fi
 
+
+#Check for wchar.h
+SCTK_CHECK_HEADER wchar.h
+
+if test "$SCTK_SCTK_CHECK_HEADER_RES" = 0; then
+  SCTK_CHECK_OPTION "-DHAVE_WCHAR_H"
+fi
+
 begin_section Valgrind
 check_debug
 end_section

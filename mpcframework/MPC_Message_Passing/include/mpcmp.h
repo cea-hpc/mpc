@@ -55,7 +55,7 @@ extern "C"
 
   typedef unsigned int mpc_pack_indexes_t;
   typedef unsigned long mpc_pack_absolute_indexes_t;
-  
+  typedef long MPC_Aint;
   typedef long MPC_Count;
 
   typedef int MPC_Comm;
@@ -337,7 +337,20 @@ typedef int MPC_Info;
 #define MPC_LONG_DOUBLE_INT 32
 #define MPC_UNSIGNED_LONG_LONG_INT 33
 #define MPC_UNSIGNED_LONG_LONG 33
-#define MPC_UINT64_T 34
+
+#define MPC_INT8_T 34
+#define MPC_UINT8_T 35
+#define MPC_INT16_T 36
+#define MPC_UINT16_T 37
+#define MPC_INT32_T 38
+#define MPC_UINT32_T 39
+#define MPC_INT64_T 40
+#define MPC_UINT64_T 41
+
+#define MPC_COMPLEX8 42
+#define MPC_COMPLEX16 43
+#define MPC_COMPLEX32 44
+#define MPC_WCHAR 45
 
 
 /* for the datatype decoders */
@@ -534,7 +547,7 @@ enum MPIR_Combiner_enum {
   int MPC_Type_size (MPC_Datatype, size_t *);
   int MPC_Type_hcontiguous (MPC_Datatype *, size_t);
   int MPC_Type_free (MPC_Datatype * datatype);
-
+  int MPC_Type_dup( MPC_Datatype old_type, MPC_Datatype * new_type ); 
   int MPC_Type_set_name( MPC_Datatype datatype, char *name );
   int MPC_Type_get_name( MPC_Datatype datatype, char *name, int * resultlen );
   
@@ -550,6 +563,9 @@ enum MPIR_Combiner_enum {
 			    mpc_pack_absolute_indexes_t lb, int is_lb,
 			    mpc_pack_absolute_indexes_t ub, int is_ub);
 
+  
+  int MPC_Type_get_true_extent(MPC_Datatype datatype, MPC_Aint *true_lb, MPC_Aint *true_extent);
+  
   int MPC_Type_convert_to_derived( MPC_Datatype in_datatype, MPC_Datatype * out_datatype );
   int MPC_Type_use (MPC_Datatype datatype);
 /*   int MPC_Get_keys (void **keys); */
@@ -687,7 +703,7 @@ int MPC_Test_cancelled (MPC_Status *, int *);
 #define MPC_BOTTOM ((void*)0)
 #define MPC_IN_PLACE ((void*)-1)
 
-  typedef long MPC_Aint;
+
 
 
     /* Profiling Functions */
@@ -846,7 +862,7 @@ int MPC_Test_cancelled (MPC_Status *, int *);
   int PMPC_Type_hcontiguous (MPC_Datatype *outtype, size_t count, MPC_Datatype *data_in);
   int __MPC_Barrier (MPC_Comm comm);
   int PMPC_Type_free (MPC_Datatype * datatype);
-  
+  int PMPC_Type_dup( MPC_Datatype old_type, MPC_Datatype * new_type ); 
   int PMPC_Type_set_name( MPC_Datatype datatype, char *name );
   int PMPC_Type_get_name( MPC_Datatype datatype, char *name, int * resultlen );
 
@@ -862,6 +878,7 @@ int MPC_Test_cancelled (MPC_Status *, int *);
 			    mpc_pack_absolute_indexes_t lb, int is_lb,
 			    mpc_pack_absolute_indexes_t ub, int is_ub);
 
+  int PMPC_Type_get_true_extent(MPC_Datatype datatype, MPC_Aint *true_lb, MPC_Aint *true_extent);
   int PMPC_Type_convert_to_derived( MPC_Datatype in_datatype, MPC_Datatype * out_datatype );
   int PMPC_Type_use (MPC_Datatype datatype);
 /*   int PMPC_Get_keys (void **keys); */

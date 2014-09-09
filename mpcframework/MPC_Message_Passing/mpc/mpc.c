@@ -1406,6 +1406,45 @@ int PMPC_Type_set_name( MPC_Datatype datatype, char *name )
 	MPC_ERROR_SUCESS();
 }
 
+/** \brief Duplicate a  datatype
+ *  \param old_type Type to be duplicated
+ *  \param new_type Copy of old_type
+ */
+int PMPC_Type_dup( MPC_Datatype old_type, MPC_Datatype * new_type )
+{
+	sctk_derived_datatype_t * derived_type_target;
+	sctk_task_specific_t * task_specific = __MPC_get_task_specific ();
+	
+	switch( sctk_datatype_kind( old_type ) )
+	{
+		case MPC_DATATYPES_COMMON:
+			/* Common datatypes can be copied
+			 * directly as they are never freed */
+			 *new_type = old_type;
+		break;
+		case MPC_DATATYPES_CONTIGUOUS:
+			/* Create a type consisting in one entry of the contiguous block */
+			PMPC_Type_hcontiguous (new_type, 1, &old_type);
+		break;
+		case MPC_DATATYPES_DERIVED:
+			/* Here we just build a copy of the derived data-type */
+			derived_type_target = sctk_task_specific_get_derived_datatype(task_specific, old_type);
+			PMPC_Derived_datatype ( new_type,
+						derived_type_target->begins,
+						derived_type_target->ends,
+						derived_type_target->datatypes,
+						derived_type_target->count,
+						derived_type_target->lb, derived_type_target->is_lb,
+						derived_type_target->ub, derived_type_target->is_ub);
+		break;
+		case MPC_DATATYPES_UNKNOWN:
+			MPC_ERROR_REPORT( MPC_COMM_SELF, MPC_ERR_ARG, "Bad data-type");
+		break;
+	}
+	
+	MPC_ERROR_SUCESS();
+}
+
 /** \brief Set a name to an MPC_Datatype
  *  \param datatype Datatype to get the name of
  *  \param name Datatype name (OUT)
@@ -1429,13 +1468,6 @@ int PMPC_Type_get_name( MPC_Datatype datatype, char *name, int * resultlen )
 	
 	MPC_ERROR_SUCESS();
 }
-
-
-
-
-
-
-
 
 
 /** \brief Retrieves datatype size
@@ -1528,6 +1560,41 @@ static inline size_t __MPC_Get_datatype_size (MPC_Datatype datatype, sctk_task_s
 	/* We shall never arrive here ! */
 	sctk_fatal("This error shall never be reached");
 }
+
+
+
+int PMPC_Type_get_true_extent(MPC_Datatype datatype, MPC_Aint *true_lb, MPC_Aint *true_extent)
+{
+	sctk_derived_datatype_t * derived_type_target;
+	sctk_task_specific_t * task_specific = __MPC_get_task_specific ();
+	mpc_pack_absolute_indexes_t tmp_true_lb;
+	mpc_pack_absolute_indexes_t tmp_true_ub;
+	
+	switch( sctk_datatype_kind(datatype) )
+	{
+		case MPC_DATATYPES_COMMON:
+		case MPC_DATATYPES_CONTIGUOUS:
+			tmp_true_lb = 0;
+			tmp_true_ub = __MPC_Get_datatype_size (datatype, task_specific );
+		break;
+		case MPC_DATATYPES_DERIVED:
+			derived_type_target = sctk_task_specific_get_derived_datatype(task_specific, datatype);
+			sctk_derived_datatype_true_extent( derived_type_target , &tmp_true_lb , &tmp_true_ub);
+		break;
+		case MPC_DATATYPES_UNKNOWN:
+			MPC_ERROR_REPORT( MPC_COMM_SELF, MPC_ERR_ARG, "Bad data-type");
+		break;
+	}
+	
+	*true_lb = tmp_true_lb;
+	*true_extent = ( tmp_true_ub - tmp_true_lb );
+	
+	MPC_ERROR_SUCESS();
+}
+
+
+
+
 
 /** \brief Compute the size of a \ref MPC_Datatype
  *  \param datatype target datatype
@@ -1677,13 +1744,13 @@ int PMPC_Type_use (MPC_Datatype datatype)
  * \param is_b tells if the type has an upper bound
  * 
  */
-int PMPC_Derived_datatype (MPC_Datatype * datatype,
-						   mpc_pack_absolute_indexes_t * begins,
-						   mpc_pack_absolute_indexes_t * ends,
-						   MPC_Datatype * types,
-						   unsigned long count,
-						   mpc_pack_absolute_indexes_t lb, int is_lb,
-						   mpc_pack_absolute_indexes_t ub, int is_ub)
+int PMPC_Derived_datatype ( MPC_Datatype * datatype,
+			    mpc_pack_absolute_indexes_t * begins,
+			    mpc_pack_absolute_indexes_t * ends,
+			    MPC_Datatype * types,
+			    unsigned long count,
+			    mpc_pack_absolute_indexes_t lb, int is_lb,
+			    mpc_pack_absolute_indexes_t ub, int is_ub)
 {
 	SCTK_PROFIL_START (MPC_Derived_datatype);
 	

@@ -149,6 +149,7 @@
 #pragma weak MPI_Type_create_struct = PMPI_Type_create_struct
 #pragma weak mpi_type_create_struct_ = pmpi_type_create_struct_
 #pragma weak mpi_type_create_struct__ = pmpi_type_create_struct__
+#pragma weak MPI_Get_address  = PMPI_Get_address
 #pragma weak MPI_Address = PMPI_Address
 #pragma weak mpi_address_ = pmpi_address_
 #pragma weak mpi_address__ = pmpi_address__
@@ -329,6 +330,7 @@
 #pragma weak MPI_Intercomm_merge = PMPI_Intercomm_merge
 #pragma weak mpi_intercomm_merge_ = pmpi_intercomm_merge_
 #pragma weak mpi_intercomm_merge__ = pmpi_intercomm_merge__
+#pragma weak  MPI_Comm_set_errhandler = PMPI_Comm_set_errhandler
 #pragma weak MPI_Keyval_create = PMPI_Keyval_create
 #pragma weak mpi_keyval_create_ = pmpi_keyval_create_
 #pragma weak mpi_keyval_create__ = pmpi_keyval_create__
@@ -501,6 +503,14 @@
 #pragma weak MPI_Type_set_name = PMPI_Type_set_name
 #pragma weak MPI_Type_get_name = PMPI_Type_get_name
 
+#pragma weak MPI_Type_dup = PMPI_Type_dup
+#pragma weak MPI_Type_get_extent = PMPI_Type_get_extent
+#pragma weak MPI_Type_create_resized = PMPI_Type_create_resized
+#pragma weak MPI_Type_get_true_extent = PMPI_Type_get_true_extent
+#pragma weak MPI_Type_create_indexed_block = PMPI_Type_create_indexed_block
+#pragma weak MPI_Type_create_hindexed_block = PMPI_Type_create_hindexed_block
+#pragma weak MPI_Type_match_size = PMPI_Type_match_size
+
 //~ not implemented
 
 /*
@@ -514,7 +524,7 @@
 #pragma weak MPI_Type_set_name = PMPI_Type_set_name
 #pragma weak MPI_Type_get_name = PMPI_Type_get_name
 #pragma weak MPI_Type_get_extent = PMPI_Type_get_extent
-#pragma weak MPI_Type_create_resized = PMPI_Type_create_resized
+
 #pragma weak MPI_Type_get_true_extent = PMPI_Type_get_true_extent
 
 #pragma weak MPI_Win_create = PMPI_Win_create
@@ -544,7 +554,7 @@
 #pragma weak MPI_Type_get_contents = PMPI_Type_get_contents
 
 #pragma weak MPI_Type_create_darray = PMPI_Type_create_darray
-#pragma weak MPI_Get_address  = PMPI_Get_address
+
 #pragma weak MPI_Type_create_struct = PMPI_Type_create_struct
 
 #pragma weak MPI_Status_set_elements = PMPI_Status_set_elements

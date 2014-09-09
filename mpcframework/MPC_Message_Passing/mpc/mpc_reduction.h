@@ -51,11 +51,18 @@ extern "C"
     float val;
     float pos;
   } mpc_float_float;
+  
   typedef struct
   {
     double val;
     double pos;
   } mpc_double_double;
+  
+  typedef struct
+  {
+    long double val;
+    long double pos;
+  } mpc_longdouble_longdouble;
 
   void mpc_no_exec (const void *in, void *inout, size_t size,
 		    MPC_Datatype datatype, int line, char *file);

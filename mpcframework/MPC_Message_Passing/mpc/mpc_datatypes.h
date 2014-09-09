@@ -148,12 +148,12 @@ typedef struct
  * 
  */
 void sctk_derived_datatype_init( sctk_derived_datatype_t * type , 
-								 unsigned long count,
+				 unsigned long count,
                                  mpc_pack_absolute_indexes_t * begins,
                                  mpc_pack_absolute_indexes_t * ends,
                                  sctk_datatype_t * datatypes,
                                  mpc_pack_absolute_indexes_t lb, int is_lb,
-						         mpc_pack_absolute_indexes_t ub, int is_ub);
+				 mpc_pack_absolute_indexes_t ub, int is_ub);
 
 /** \brief Releases a derived datatype
  * 
@@ -163,6 +163,13 @@ void sctk_derived_datatype_init( sctk_derived_datatype_t * type ,
  * 
  */
 void sctk_derived_datatype_release( sctk_derived_datatype_t * type );
+
+/** \brief Get the minimum offset of a derieved datatype (ignoring LB)
+ *  \param type Type which true lb is requested
+ *  \param true_lb the true lb of the datatype
+ *  \param size size true LB to true UB
+ */
+void sctk_derived_datatype_true_extent( sctk_derived_datatype_t * type , mpc_pack_absolute_indexes_t * true_lb, mpc_pack_absolute_indexes_t * true_ub);
 
 /************************************************************************/
 /* Datatype ID range calculations                                       */

@@ -190,7 +190,23 @@ extern "C"
 #define MPI_SIGNED_CHAR MPC_SIGNED_CHAR
 #define MPI_LONG_DOUBLE_INT MPC_LONG_DOUBLE_INT
 #define MPI_REAL MPC_FLOAT
+#define MPI_INT8_T MPC_INT8_T
+#define MPI_UINT8_T MPC_UINT8_T
+#define MPI_INT16_T MPC_INT16_T
+#define MPI_UINT16_T MPC_UINT16_T
+#define MPI_INT32_T MPC_INT32_T
+#define MPI_UINT32_T MPC_UINT32_T
+#define MPI_INT64_T MPC_INT64_T
 #define MPI_UINT64_T MPC_UINT64_T
+#define MPI_COMPLEX8 MPC_COMPLEX8
+#define MPI_COMPLEX16 MPC_COMPLEX16
+#define MPI_COMPLEX32 MPC_COMPLEX32
+#define MPI_WCHAR MPC_WCHAR
+
+/* Data-type classes */
+#define MPI_TYPECLASS_INTEGER 1
+#define MPI_TYPECLASS_REAL 2
+#define MPI_TYPECLASS_COMPLEX 3
 
 /************************************************************************/
 /* MPI_* Defines                                                        */
@@ -433,9 +449,12 @@ int MPI_Type_create_hvector (int, int, MPI_Aint, MPI_Datatype, MPI_Datatype *);
 int MPI_Type_indexed (int, int *, int *, MPI_Datatype, MPI_Datatype *);
 int MPI_Type_hindexed (int, int *, MPI_Aint *, MPI_Datatype, MPI_Datatype *);
 int MPI_Type_create_hindexed (int, int *, MPI_Aint *, MPI_Datatype, MPI_Datatype *);
+int MPI_Type_create_indexed_block(int count, int blocklength, int indices[], MPI_Datatype old_type, MPI_Datatype *newtype);
+int MPI_Type_create_hindexed_block(int count, int blocklength, MPI_Aint indices[], MPI_Datatype old_type, MPI_Datatype *newtype);
 int MPI_Type_struct (int, int *, MPI_Aint *, MPI_Datatype *, MPI_Datatype *);
 int MPI_Type_create_struct (int, int *, MPI_Aint *, MPI_Datatype *, MPI_Datatype *);
 int MPI_Address (void *, MPI_Aint *);
+int MPI_Get_address(const void *location, MPI_Aint *address);
 /* We could add __attribute__((deprecated)) to routines like MPI_Type_extent */
 int MPI_Type_extent (MPI_Datatype, MPI_Aint *);
 /* See the 1.1 version of the Standard.  The standard made an
@@ -448,11 +467,15 @@ int MPI_Type_ub (MPI_Datatype, MPI_Aint *);
 int MPI_Type_commit (MPI_Datatype *);
 int MPI_Type_free (MPI_Datatype *);
 int MPI_Get_elements (MPI_Status *, MPI_Datatype, int *);
+int MPI_Type_match_size(int typeclass, int size, MPI_Datatype *rtype);
 int MPI_Pack (void *, int, MPI_Datatype, void *, int, int *, MPI_Comm);
 int MPI_Unpack (void *, int, int *, void *, int, MPI_Datatype, MPI_Comm);
 int MPI_Pack_size (int, MPI_Datatype, MPI_Comm, int *);
 int MPI_Type_set_name( MPI_Datatype datatype, char *name );
 int MPI_Type_get_name( MPI_Datatype datatype, char *name, int * resultlen );
+int MPI_Type_dup( MPI_Datatype old_type, MPI_Datatype *newtype );
+int MPI_Type_get_extent(MPI_Datatype datatype, MPI_Aint *lb, MPI_Aint *extent);
+int MPI_Type_get_true_extent(MPI_Datatype datatype, MPI_Aint *true_lb, MPI_Aint *true_extent);
 
 /* Collective Operations */
 int MPI_Barrier (MPI_Comm);
@@ -504,6 +527,7 @@ int MPI_Comm_remote_size (MPI_Comm, int *);
 int MPI_Comm_remote_group (MPI_Comm, MPI_Group *);
 int MPI_Intercomm_create (MPI_Comm, int, MPI_Comm, int, int, MPI_Comm *);
 int MPI_Intercomm_merge (MPI_Comm, int, MPI_Comm *);
+int MPI_Comm_set_errhandler(MPI_Comm comm, MPI_Errhandler errhandler);
   
 /* Keyval and Attr */
 int MPI_Keyval_create (MPI_Copy_function *, MPI_Delete_function *, int *, void *);
@@ -689,12 +713,15 @@ int PMPI_Type_hvector (int, int, MPI_Aint, MPI_Datatype, MPI_Datatype *);
 int PMPI_Type_create_hvector (int, int, MPI_Aint, MPI_Datatype, MPI_Datatype *);
 int PMPI_Type_indexed (int, int *, int *, MPI_Datatype, MPI_Datatype *);
 int PMPI_Type_hindexed (int, int *, MPI_Aint *, MPI_Datatype, MPI_Datatype *);
+int PMPI_Type_create_indexed_block(int count, int blocklength, int indices[], MPI_Datatype old_type, MPI_Datatype *newtype);
+int PMPI_Type_create_hindexed_block(int count, int blocklength, MPI_Aint indices[], MPI_Datatype old_type, MPI_Datatype *newtype);
 int PMPI_Type_create_hindexed (int, int *, MPI_Aint *, MPI_Datatype, MPI_Datatype *);
 int PMPI_Type_struct (int, int *, MPI_Aint *, MPI_Datatype *, MPI_Datatype *);
 int PMPI_Type_create_struct (int, int *, MPI_Aint *, MPI_Datatype *, MPI_Datatype *);
 int PMPI_Address (void *, MPI_Aint *);
+int PMPI_Get_address(const void *location, MPI_Aint *address);
 /* We could add __attribute__((deprecated)) to routines like MPI_Type_extent */
-int PMPI_Type_extent (MPI_Datatype, MPI_Aint *);
+int PMPI_Type_get_extent(MPI_Datatype datatype, MPI_Aint *lb, MPI_Aint *extent);
 /* See the 1.1 version of the Standard.  The standard made an
 unfortunate choice here, however, it is the standard.  The size returned
 by MPI_Type_size is specified as an int, not an MPI_Aint */
@@ -705,11 +732,15 @@ int PMPI_Type_ub (MPI_Datatype, MPI_Aint *);
 int PMPI_Type_commit (MPI_Datatype *);
 int PMPI_Type_free (MPI_Datatype *);
 int PMPI_Get_elements (MPI_Status *, MPI_Datatype, int *);
+int PMPI_Type_match_size(int typeclass, int size, MPI_Datatype *rtype);
 int PMPI_Pack (void *, int, MPI_Datatype, void *, int, int *, MPI_Comm);
 int PMPI_Unpack (void *, int, int *, void *, int, MPI_Datatype, MPI_Comm);
 int PMPI_Pack_size (int, MPI_Datatype, MPI_Comm, int *);
 int PMPI_Type_set_name( MPI_Datatype datatype, char *name );
 int PMPI_Type_get_name( MPI_Datatype datatype, char *name, int * resultlen );
+int PMPI_Type_dup( MPI_Datatype old_type, MPI_Datatype *newtype );
+int PMPI_Type_extent(MPI_Datatype datatype, MPI_Aint *extent);
+int PMPI_Type_get_true_extent(MPI_Datatype datatype, MPI_Aint *true_lb, MPI_Aint *true_extent);
 
 /* Collective Operations */
 int PMPI_Barrier (MPI_Comm);
@@ -761,6 +792,7 @@ int PMPI_Comm_remote_size (MPI_Comm, int *);
 int PMPI_Comm_remote_group (MPI_Comm, MPI_Group *);
 int PMPI_Intercomm_create (MPI_Comm, int, MPI_Comm, int, int, MPI_Comm *);
 int PMPI_Intercomm_merge (MPI_Comm, int, MPI_Comm *);
+int PMPI_Comm_set_errhandler(MPI_Comm comm, MPI_Errhandler errhandler);
   
 /* Keyval and Attr */
 int PMPI_Keyval_create (MPI_Copy_function *, MPI_Delete_function *, int *, void *);
