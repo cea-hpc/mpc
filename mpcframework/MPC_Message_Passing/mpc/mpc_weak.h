@@ -192,3 +192,4 @@
 #pragma weak MPC_Type_dup = PMPC_Type_dup
 #pragma weak MPC_Type_get_true_extent = PMPC_Type_get_true_extent
 #pragma weak MPC_Type_get_envelope = PMPC_Type_get_envelope
+#pragma weak MPC_Type_get_contents = PMPC_Type_get_contents

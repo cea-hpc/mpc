@@ -488,6 +488,48 @@ static inline int sctk_mpc_cancel_message (MPC_Request * msg){
 }
 
 
+/** \brief This function allows the retrieval of a data-type context 
+ *  \param datatype Target datatype
+ *  \return NULL on error the context otherwise
+ */
+static inline struct Datatype_context * sctk_retrieve_datatype_ctx( MPC_Datatype datatype )
+{
+	sctk_task_specific_t *task_specific;
+	task_specific = __MPC_get_task_specific ();
+	
+	sctk_contiguous_datatype_t *target_contiguous_type;
+	sctk_derived_datatype_t *target_derived_type;
+	
+	switch( sctk_datatype_kind( datatype ) )
+	{
+		case MPC_DATATYPES_COMMON:
+			/* Nothing to do here */
+			return NULL;
+		break;
+		
+		case MPC_DATATYPES_CONTIGUOUS :
+
+			/* Get a pointer to the type of interest */
+			target_contiguous_type = sctk_task_specific_get_contiguous_datatype( task_specific, datatype );
+			return &target_contiguous_type->context;
+		break;
+		
+		case MPC_DATATYPES_DERIVED :
+					
+			/* Get a pointer to the type of interest */
+			target_derived_type = sctk_task_specific_get_derived_datatype( task_specific, datatype );
+			return &target_derived_type->context;
+		break;
+		
+		case MPC_DATATYPES_UNKNOWN:
+			return NULL;
+		break;
+	}
+	
+	return NULL;
+}
+
+
 /************************************************************************/
 /*FUNCTIONS                                                             */
 /************************************************************************/
@@ -1418,7 +1460,7 @@ int PMPC_Type_dup( MPC_Datatype old_type, MPC_Datatype * new_type )
 	switch( sctk_datatype_kind( old_type ) )
 	{
 		case MPC_DATATYPES_COMMON:
-			/* We dup name datatypes in contiguous ones in order
+			/* We dup common datatypes in contiguous ones in order
 			 * to have a context where to put the DUP combiner */
 		case MPC_DATATYPES_CONTIGUOUS:
 			/* Create a type consisting in one entry of the contiguous block */
@@ -1441,7 +1483,10 @@ int PMPC_Type_dup( MPC_Datatype old_type, MPC_Datatype * new_type )
 	}
 	
 	/* Set type context */
-	MPC_Datatype_set_context( *new_type, 0, 0 , MPC_COMBINER_DUP);
+	struct Datatype_External_context dtctx;
+	sctk_datatype_external_context_clear( &dtctx );
+	dtctx.combiner = MPC_COMBINER_DUP;
+	MPC_Datatype_set_context( *new_type, &dtctx);
 	
 	MPC_ERROR_SUCESS();
 }
@@ -1470,6 +1515,8 @@ int PMPC_Type_get_name( MPC_Datatype datatype, char *name, int * resultlen )
 	MPC_ERROR_SUCESS();
 }
 
+
+
 /** \brief This call is used to fill the envelope of an MPI type
  *  
  *  \param ctx Source context 
@@ -1482,45 +1529,81 @@ int PMPC_Type_get_name( MPC_Datatype datatype, char *name, int * resultlen )
  */
 int PMPC_Type_get_envelope(MPC_Datatype datatype, int *num_integers, int *num_addresses, int *num_datatypes, int *combiner)
 {
-	sctk_task_specific_t *task_specific;
-	task_specific = __MPC_get_task_specific ();
-	
-	sctk_contiguous_datatype_t *target_contiguous_type;
-	sctk_derived_datatype_t *target_derived_type;
-	
-	switch( sctk_datatype_kind( datatype ) )
+	/* Handle the common data-type case */
+	if( sctk_datatype_is_common(datatype) )
 	{
-		case MPC_DATATYPES_COMMON:
-			/* Nothing to do here */
-			*combiner = MPC_COMBINER_NAMED;
-			*num_integers = 0;
-			*num_addresses = 0;
-			*num_datatypes = 0;
-		break;
+		*num_integers = 0;
+		*num_addresses = 0;
+		*num_datatypes = 0;
+		*combiner = MPC_COMBINER_NAMED;
 		
-		case MPC_DATATYPES_CONTIGUOUS :
-
-			/* Get a pointer to the type of interest */
-			target_contiguous_type = sctk_task_specific_get_contiguous_datatype( task_specific, datatype );
-			/* Save the context */
-			sctk_datatype_fill_envelope( &target_contiguous_type->context , num_integers, num_addresses , num_datatypes , combiner );
-		break;
-		
-		case MPC_DATATYPES_DERIVED :
-					
-			/* Get a pointer to the type of interest */
-			target_derived_type = sctk_task_specific_get_derived_datatype( task_specific, datatype );
-			/* Save the context */
-			sctk_datatype_fill_envelope( &target_derived_type->context , num_integers, num_addresses , num_datatypes , combiner );
-		break;
-		
-		case MPC_DATATYPES_UNKNOWN:
-			MPC_ERROR_REPORT( MPC_COMM_WORLD, MPC_ERR_INTERN, "This datatype is unknown");
-		break;
+		MPC_ERROR_SUCESS();
 	}
+	
+	
+	
+	struct Datatype_context * dctx = sctk_retrieve_datatype_ctx( datatype );
+	
+	if( !dctx )
+	{
+		MPC_ERROR_REPORT( MPC_COMM_WORLD, MPC_ERR_INTERN, "This datatype is unknown");
+	}
+	
+	sctk_datatype_fill_envelope( dctx , num_integers, num_addresses , num_datatypes , combiner );
 
 	MPC_ERROR_SUCESS();
 }
+
+
+int PMPC_Type_get_contents( MPC_Datatype datatype, 
+			    int max_integers,
+			    int max_addresses,
+			    int max_datatypes,
+			    int array_of_integers[],
+			    MPC_Aint array_of_addresses[],
+			    MPC_Datatype array_of_datatypes[])
+{
+	/* First make sure we were not called on a common type */
+	if( sctk_datatype_is_common(datatype) )
+	{
+		MPC_ERROR_REPORT( MPC_COMM_SELF, MPC_ERR_ARG, "Cannot call MPI_Type_get_contents on a defaut datatype");
+	}
+	
+	/* Retrieve the context */
+	struct Datatype_context * dctx = sctk_retrieve_datatype_ctx( datatype );
+
+	assume( dctx != NULL );
+	
+	/* Then make sure the user actually called MPI_Get_envelope
+	* with the same datatype or that we have enough room */
+	int n_int = 0;
+	int n_addr = 0;
+	int n_type = 0;
+	int dummy_combiner;
+
+	sctk_datatype_fill_envelope( dctx, &n_int, &n_addr, &n_type, &dummy_combiner);
+
+	if( ( max_integers < n_int )
+	||  ( max_addresses < n_addr )
+	||  ( max_datatypes  < n_type ) )
+	{
+		/* Not enough room */
+		MPC_ERROR_REPORT( MPC_COMM_SELF, MPC_ERR_ARG, "Cannot call MPI_Type_get_contents as it would overflow target arrays");
+	}
+	
+	/* Now we just copy back the content from the context */
+	if( array_of_integers )
+		*array_of_integers= dctx->array_of_integers;
+	
+	if( array_of_addresses )
+		*array_of_addresses= dctx->array_of_addresses;
+	
+	if( array_of_datatypes )
+		*array_of_datatypes= dctx->array_of_types;
+
+	MPC_ERROR_SUCESS();
+}
+
 
 
 /** \brief Retrieves datatype size
@@ -2099,7 +2182,7 @@ int MPC_Is_derived_datatype (MPC_Datatype datatype, int *res, sctk_derived_datat
 }
 
 
-int MPC_Datatype_set_context( MPC_Datatype datatype, int count , int ndims , MPC_Type_combiner combiner)
+int MPC_Datatype_set_context( MPC_Datatype datatype,  struct Datatype_External_context * dctx )
 {
 	sctk_task_specific_t *task_specific;
 	task_specific = __MPC_get_task_specific ();
@@ -2115,19 +2198,17 @@ int MPC_Datatype_set_context( MPC_Datatype datatype, int count , int ndims , MPC
 		break;
 		
 		case MPC_DATATYPES_CONTIGUOUS :
-
 			/* Get a pointer to the type of interest */
 			target_contiguous_type = sctk_task_specific_get_contiguous_datatype( task_specific, datatype );
 			/* Save the context */
-			sctk_datatype_context_set( &target_contiguous_type->context , combiner, count, ndims );
+			sctk_datatype_context_set( &target_contiguous_type->context , dctx );
 		break;
 		
 		case MPC_DATATYPES_DERIVED :
-					
 			/* Get a pointer to the type of interest */
 			target_derived_type = sctk_task_specific_get_derived_datatype( task_specific, datatype );
 			/* Save the context */
-			sctk_datatype_context_set( &target_derived_type->context , combiner, count, ndims );
+			sctk_datatype_context_set( &target_derived_type->context , dctx );
 		break;
 		
 		case MPC_DATATYPES_UNKNOWN:

@@ -511,6 +511,7 @@
 #pragma weak MPI_Type_create_hindexed_block = PMPI_Type_create_hindexed_block
 #pragma weak MPI_Type_match_size = PMPI_Type_match_size
 #pragma weak MPI_Type_get_envelope = PMPI_Type_get_envelope
+#pragma weak MPI_Type_get_contents = PMPI_Type_get_contents
 
 //~ not implemented
 

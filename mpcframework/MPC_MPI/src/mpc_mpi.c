@@ -2825,7 +2825,12 @@ static int __INTERNAL__PMPI_Type_contiguous (int count, MPI_Datatype data_in,  M
 		PMPC_Derived_datatype (data_out, begins_out, ends_out, datatypes, count_out, input_datatype.lb,	input_datatype.is_lb, new_ub, input_datatype.is_ub);
 
 		/* Set its context */
-		MPC_Datatype_set_context( *data_out, count, 0 , MPI_COMBINER_CONTIGUOUS);
+		struct Datatype_External_context dtctx;
+		sctk_datatype_external_context_clear( &dtctx );
+		dtctx.combiner = MPI_COMBINER_CONTIGUOUS;
+		dtctx.count = count;
+		dtctx.oldtype = data_in;
+		MPC_Datatype_set_context( *data_out, &dtctx);
 		
 		/* Free temporary buffers */
 		sctk_free (datatypes);
@@ -2862,7 +2867,14 @@ static int __INTERNAL__PMPI_Type_vector (int count, int blocklen, int stride, MP
 	int res =  __INTERNAL__PMPI_Type_hvector( count, blocklen,  stride_t, old_type,  newtype_p);
 	
 	/* Set its context to overide the one from hvector */
-	MPC_Datatype_set_context( *newtype_p, count, 0 , MPI_COMBINER_VECTOR);
+	struct Datatype_External_context dtctx;
+	sctk_datatype_external_context_clear( &dtctx );
+	dtctx.combiner = MPI_COMBINER_VECTOR;
+	dtctx.count = count;
+	dtctx.blocklength = blocklen;
+	dtctx.stride = stride;
+	dtctx.oldtype = old_type;
+	MPC_Datatype_set_context( *newtype_p, &dtctx);
 	
 	return res;
 }
@@ -2935,7 +2947,14 @@ static int __INTERNAL__PMPI_Type_hvector (int count,
 		PMPC_Derived_datatype (newtype_p, begins_out, ends_out, datatypes, count_out, input_datatype.lb, input_datatype.is_lb, new_ub, input_datatype.is_ub);
 
 		/* Set its context */
-		MPC_Datatype_set_context( *newtype_p, count, 0 , MPI_COMBINER_HVECTOR);
+		struct Datatype_External_context dtctx;
+		sctk_datatype_external_context_clear( &dtctx );
+		dtctx.combiner = MPI_COMBINER_HVECTOR;
+		dtctx.count = count;
+		dtctx.blocklength = blocklen;
+		dtctx.stride_addr = stride;
+		dtctx.oldtype = old_type;
+		MPC_Datatype_set_context( *newtype_p, &dtctx);
 		
 		/* Free temporary arrays */
 		sctk_free (begins_out);
@@ -2990,8 +3009,15 @@ static int __INTERNAL__PMPI_Type_indexed (int count, int blocklens[], int indice
 	int res =  __INTERNAL__PMPI_Type_hindexed (count, blocklens, byte_offsets, old_type, newtype);
 	
 	/* Set its context to overide the one from hdindexed */
-	MPC_Datatype_set_context( *newtype, count, 0 , MPI_COMBINER_INDEXED);
-	
+	struct Datatype_External_context dtctx;
+	sctk_datatype_external_context_clear( &dtctx );
+	dtctx.combiner = MPI_COMBINER_INDEXED;
+	dtctx.count = count;
+	dtctx.array_of_blocklenght = blocklens;
+	dtctx.array_of_displacements = indices;
+	dtctx.oldtype = old_type;
+	MPC_Datatype_set_context( *newtype, &dtctx);
+
 	/* Release the temporary byte offset array */
 	sctk_free( byte_offsets );
 	
@@ -3015,7 +3041,14 @@ static int __INTERNAL__PMPI_Type_create_hindexed_block(int count, int blocklengt
 	int res = __INTERNAL__PMPI_Type_hindexed(count, blocklength_array, indices, old_type,  newtype);
 	
 	/* Set its context to overide the one from hdindexed */
-	MPC_Datatype_set_context( *newtype, count, 0 , MPI_COMBINER_HINDEXED_BLOCK);
+	struct Datatype_External_context dtctx;
+	sctk_datatype_external_context_clear( &dtctx );
+	dtctx.combiner = MPI_COMBINER_HINDEXED_BLOCK;
+	dtctx.count = count;
+	dtctx.blocklength = blocklength;
+	dtctx.array_of_displacements_addr = indices;
+	dtctx.oldtype = old_type;
+	MPC_Datatype_set_context( *newtype, &dtctx);
 	
 	/* Free the tmp buffer */
 	sctk_free( blocklength_array );
@@ -3052,7 +3085,14 @@ static int __INTERNAL__PMPI_Type_create_indexed_block(int count, int blocklength
 	
 		
 	/* Set its context to overide the one from hdindexed block */
-	MPC_Datatype_set_context( *newtype, count, 0 , MPI_COMBINER_INDEXED_BLOCK);
+	struct Datatype_External_context dtctx;
+	sctk_datatype_external_context_clear( &dtctx );
+	dtctx.combiner = MPI_COMBINER_INDEXED_BLOCK;
+	dtctx.count = count;
+	dtctx.blocklength = blocklength;
+	dtctx.array_of_displacements = indices;
+	dtctx.oldtype = old_type;
+	MPC_Datatype_set_context( *newtype, &dtctx);
 	
 	/* Free the temporary byte offset */
 	sctk_free( byte_offsets );
@@ -3154,7 +3194,14 @@ static int __INTERNAL__PMPI_Type_hindexed (int count,
 		PMPC_Derived_datatype (newtype, begins_out, ends_out, datatypes, count_out, new_lb,	input_datatype.is_lb, new_ub, input_datatype.is_ub);
 
 		/* Set its context */
-		MPC_Datatype_set_context( *newtype, count, 0 , MPI_COMBINER_HINDEXED);
+		struct Datatype_External_context dtctx;
+		sctk_datatype_external_context_clear( &dtctx );
+		dtctx.combiner = MPI_COMBINER_HINDEXED;
+		dtctx.count = count;
+		dtctx.array_of_blocklenght = blocklens;
+		dtctx.array_of_displacements_addr = indices;
+		dtctx.oldtype = old_type;
+		MPC_Datatype_set_context( *newtype, &dtctx);
 		
 		/* Free temporary arrays */
 		sctk_free (begins_out);
@@ -3348,7 +3395,14 @@ static int __INTERNAL__PMPI_Type_struct(int count, int blocklens[], MPI_Aint ind
 	assert(res == MPI_SUCCESS);
 
 	/* Set its context */
-	MPC_Datatype_set_context( *newtype, count, 0 , MPI_COMBINER_STRUCT );
+	struct Datatype_External_context dtctx;
+	sctk_datatype_external_context_clear( &dtctx );
+	dtctx.combiner = MPI_COMBINER_STRUCT;
+	dtctx.count = count;
+	dtctx.array_of_blocklenght = blocklens;
+	dtctx.array_of_displacements = indices;
+	dtctx.array_of_types = old_types;
+	MPC_Datatype_set_context( *newtype, &dtctx);
 	
 	/*   sctk_nodebug("new_type %d",* newtype); */
 	/*   sctk_nodebug("final new_lb %d,%d new_ub %d %d",new_lb,new_is_lb,new_ub,new_is_ub); */
@@ -3381,6 +3435,14 @@ static int __INTERNAL__PMPI_Type_create_resized(MPI_Datatype old_type, MPI_Aint 
 					input_datatype.count,
 					lb, 1,
 					lb + extent, 1);
+		
+		struct Datatype_External_context dtctx;
+		sctk_datatype_external_context_clear( &dtctx );
+		dtctx.combiner = MPI_COMBINER_RESIZED;
+		dtctx.lb = lb;
+		dtctx.extent = extent;
+		dtctx.oldtype = old_type;
+		MPC_Datatype_set_context( *new_type, &dtctx);
 		
 		return MPI_SUCCESS;
 	}
@@ -10133,6 +10195,17 @@ int PMPI_Type_get_true_extent(MPI_Datatype datatype, MPI_Aint *true_lb, MPI_Aint
 int PMPI_Type_get_envelope(MPI_Datatype datatype, int *num_integers, int *num_addresses, int *num_datatypes, int *combiner)
 {
 	return PMPC_Type_get_envelope(datatype, num_integers, num_addresses, num_datatypes, combiner);
+}
+
+int PMPI_Type_get_contents( MPI_Datatype datatype, 
+		       	    int max_integers,
+			    int max_addresses,
+			    int max_datatypes,
+			    int array_of_integers[],
+			    MPI_Aint array_of_addresses[],
+			    MPI_Datatype array_of_datatypes[])
+{
+	return PMPC_Type_get_contents(datatype, max_integers,max_addresses,max_datatypes,array_of_integers,array_of_addresses,array_of_datatypes);
 }
 
   /* See the 1.1 version of the Standard.  The standard made an

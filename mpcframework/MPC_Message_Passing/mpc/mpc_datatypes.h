@@ -52,19 +52,93 @@ void sctk_datatype_release();
  * and MPI_Get_contents */
 struct Datatype_context
 {
+	/* MPI_get_envelope */
+	MPC_Type_combiner combiner; /**< Combiner used to build the datatype */
 	int count; /**< Number of item (as given in the data-type call) */
 	int ndims; /**< Number of dimensions (as given in the data-type call) */
-	MPC_Type_combiner combiner; /**< Combiner used to build the datatype */
+
+	/* These three arrays are those returned by MPI_Type_get_contents
+	 * they are defined in the standard as a pack of the 
+	 * parameters provided uppon type creation  */
+	int * array_of_integers; /** An array of integers */
+	MPC_Aint * array_of_addresses; /* An array of addresses */
+	MPC_Datatype * array_of_types; /** An array of types */
+
+	
 };
+
+/** \brief Clears the context
+ *  \param ctx Context to clear
+ */
+void sctk_datatype_context_clear( struct Datatype_context * ctx );
+
+/** \brief This structure is used to pass the parameters to \ref sctk_datatype_context_set
+ *  
+ *  We use a structure as we don't want to polute the calling context
+ *  with all the variants comming from the shape of the callers.
+ *  Here the calling type function just set what's needed and
+ *  leave the rest NULL. To be sure that errors will be easy to check
+ *  the called must call \ref sctk_datatype_external_context_clear to
+ *  allow further initialization checks.
+ * 
+ *  We took the names directly from the standard in order
+ *  to make things easier. See standard p. 120 -> 123
+ *  here in 3.0
+ * 
+ */
+struct Datatype_External_context
+{
+	MPC_Type_combiner combiner;
+	int count;
+	int size;
+	int rank;
+	int ndims;
+	int order;
+	int p;
+	int r;
+	MPC_Datatype oldtype;
+	int blocklength;
+	int stride;
+	MPC_Aint stride_addr;
+	MPC_Aint lb;
+	MPC_Aint extent;
+	int * array_of_gsizes;
+	int * array_of_distribs;
+	int * array_of_dargs;
+	int * array_of_psizes;
+	int * array_of_blocklenght;
+	int * array_of_sizes;
+	int * array_of_subsizes;
+	int * array_of_starts;
+	int * array_of_displacements;
+	MPC_Aint * array_of_displacements_addr;
+	MPC_Datatype * array_of_types;
+};
+
+/** \brief Clears the external context
+ *  \param ctx Context to clear
+ */
+void sctk_datatype_external_context_clear( struct Datatype_External_context * ctx );
 
 /** \brief Setup the datatype context
  *  
  *  \param ctx Context to fill
- *  \param combiner Combiner used to build the datatype
- *  \param count Number of item (as given in the data-type call)
- *  \param ndims Number of dimensions (as given in the data-type call)
+ *  \param dctx Datatype context
+ * 
+ *  Note that it is this function which actually generate
+ *  the data returned by \ref MPI_Type_Get_contents
+ *  and store them in the \ref Datatype_context structure.
+ *  We have no shuch structure for common data-types as it
+ *  is not allowed to call \ref MPI_Type_Get_contents on them
  */
-void sctk_datatype_context_set( struct Datatype_context * ctx , MPC_Type_combiner combiner, int count, int ndims );
+void sctk_datatype_context_set( struct Datatype_context * ctx , struct Datatype_External_context * dctx );
+
+
+/** \brief Frees the data stored in a data-type context
+ *  \param ctx Context to free
+ */
+void sctk_datatype_context_free( struct Datatype_context * ctx );
+
 
 /** \brief This call is used to fill the envelope of an MPI type
  *  
@@ -170,6 +244,7 @@ typedef struct
 	int is_lb; /**< Does type has a lower bound */
 	mpc_pack_absolute_indexes_t ub; /**< Upper bound offset */
 	int is_ub; /**< Does type has an upper bound */
+	/* Context */
 	struct Datatype_context context; /**< Saves the creation context for MPI_get_envelope & MPI_Get_contents */
 } sctk_derived_datatype_t;
 
@@ -319,14 +394,14 @@ static inline int sctk_datatype_is_derived (MPC_Datatype data_in)
  * 
  *  */
 
-/** Takes a global contiguous type and computes its local offset */
+/** \brief Takes a global contiguous type and computes its local offset */
 #define MPC_TYPE_MAP_TO_CONTIGUOUS( type ) ( type - SCTK_COMMON_DATA_TYPE_COUNT)
-/** Takes a local contiguous offset and translates it to a local offset */
+/** \brief Takes a local contiguous offset and translates it to a local offset */
 #define MPC_TYPE_MAP_FROM_CONTIGUOUS( type ) ( type + SCTK_COMMON_DATA_TYPE_COUNT)
 
-/** Takes a global derived type and computes its local offset */
+/** \brief Takes a global derived type and computes its local offset */
 #define MPC_TYPE_MAP_TO_DERIVED( a ) ( a - SCTK_USER_DATA_TYPES_MAX - SCTK_COMMON_DATA_TYPE_COUNT)
-/** Takes a local derived offset and translates it to a local offset */
+/** \brief Takes a local derived offset and translates it to a local offset */
 #define MPC_TYPE_MAP_FROM_DERIVED( a ) ( a + SCTK_USER_DATA_TYPES_MAX + SCTK_COMMON_DATA_TYPE_COUNT)
 
 /** \brief Macro to obtain the total number of datatypes */

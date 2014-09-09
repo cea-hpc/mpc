@@ -206,6 +206,7 @@ extern "C"
 
 /* Datatype decoders */
 
+#define MPI_COMBINER_UNKNOWN MPC_COMBINER_UNKNOWN
 #define MPI_COMBINER_NAMED MPC_COMBINER_NAMED
 #define MPI_COMBINER_DUP MPC_COMBINER_DUP
 #define MPI_COMBINER_CONTIGUOUS MPC_COMBINER_CONTIGUOUS
@@ -500,6 +501,13 @@ int MPI_Type_dup( MPI_Datatype old_type, MPI_Datatype *newtype );
 int MPI_Type_get_extent(MPI_Datatype datatype, MPI_Aint *lb, MPI_Aint *extent);
 int MPI_Type_get_true_extent(MPI_Datatype datatype, MPI_Aint *true_lb, MPI_Aint *true_extent);
 int MPI_Type_get_envelope(MPI_Datatype datatype, int *num_integers, int *num_addresses, int *num_datatypes, int *combiner);
+int MPI_Type_get_contents( MPI_Datatype datatype, 
+			   int max_integers,
+			   int max_addresses,
+			   int max_datatypes,
+			   int array_of_integers[],
+			   MPI_Aint array_of_addresses[],
+			   MPI_Datatype array_of_datatypes[]);
 
 /* Collective Operations */
 int MPI_Barrier (MPI_Comm);
@@ -766,7 +774,13 @@ int PMPI_Type_dup( MPI_Datatype old_type, MPI_Datatype *newtype );
 int PMPI_Type_extent(MPI_Datatype datatype, MPI_Aint *extent);
 int PMPI_Type_get_true_extent(MPI_Datatype datatype, MPI_Aint *true_lb, MPI_Aint *true_extent);
 int PMPI_Type_get_envelope(MPI_Datatype datatype, int *num_integers, int *num_addresses, int *num_datatypes, int *combiner);
-
+int PMPI_Type_get_contents( MPI_Datatype datatype, 
+		       	    int max_integers,
+			    int max_addresses,
+			    int max_datatypes,
+			    int array_of_integers[],
+			    MPI_Aint array_of_addresses[],
+			    MPI_Datatype array_of_datatypes[]);
 
 /* Collective Operations */
 int PMPI_Barrier (MPI_Comm);

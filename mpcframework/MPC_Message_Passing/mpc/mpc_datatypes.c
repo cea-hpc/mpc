@@ -148,6 +148,9 @@ void sctk_contiguous_datatype_init( sctk_contiguous_datatype_t * type , size_t i
 	type->element_size = element_size;
 	type->datatype = datatype;
 	type->ref_count = 1;
+	
+	/* Clear context */
+	sctk_datatype_context_clear( &type->context );
 }
 
 void sctk_contiguous_datatype_release( sctk_contiguous_datatype_t * type )
@@ -158,6 +161,7 @@ void sctk_contiguous_datatype_release( sctk_contiguous_datatype_t * type )
 	
 	if( type->ref_count == 0 )
 	{
+		sctk_datatype_context_free( &type->context );
 		/* Counter == 0 then free */
 		memset( type, 0 , sizeof( sctk_contiguous_datatype_t ) );
 	}
@@ -214,6 +218,9 @@ void sctk_derived_datatype_init( sctk_derived_datatype_t * type ,
 	type->lb = lb;
 	type->is_ub = is_ub;
 	type->is_lb = is_lb;
+	
+	/* Clear context */
+	sctk_datatype_context_clear( &type->context );
 }
 
 
@@ -263,6 +270,8 @@ void sctk_derived_datatype_release( sctk_derived_datatype_t * type )
 		sctk_free (type->begins);
 		sctk_free (type->ends);
 		sctk_free (type->datatypes);
+		
+		sctk_datatype_context_free( &type->context );
 		
 		memset( type, 0 , sizeof( sctk_derived_datatype_t ) );
 		
@@ -446,14 +455,293 @@ void sctk_datype_name_release()
 /* Datatype  Context                                                    */
 /************************************************************************/
 
-void sctk_datatype_context_set( struct Datatype_context * ctx , MPC_Type_combiner combiner, int count, int ndims )
+void sctk_datatype_context_clear( struct Datatype_context * ctx )
 {
-	assume( ctx != NULL );
-	
-	ctx->combiner = combiner;
-	ctx->count = count;
-	ctx->ndims = ndims;
+	memset( ctx, 0, sizeof( struct Datatype_context ) );	
 }
+
+void sctk_datatype_external_context_clear( struct Datatype_External_context * ctx )
+{
+	memset( ctx, 0, sizeof( struct Datatype_External_context ) );	
+}
+
+/*
+ * Some allocation helpers
+ */
+
+static inline int * please_allocate_an_array_of_integers( int count )
+{
+	if( count == 0 )
+		return NULL;
+
+	int * ret = sctk_malloc( sizeof( int ) * count );
+	assume( ret != NULL );
+	return ret;
+}
+
+static inline MPC_Aint * please_allocate_an_array_of_addresses( int count )
+{
+	if( count == 0 )
+		return NULL;
+
+	MPC_Aint * ret = sctk_malloc( sizeof( MPC_Aint ) * count );
+	assume( ret != NULL );
+	return ret;
+}
+
+static inline MPC_Datatype * please_allocate_an_array_of_datatypes( int count )
+{
+	if( count == 0 )
+		return NULL;
+
+	MPC_Datatype * ret = sctk_malloc( sizeof( MPC_Datatype ) * count );
+	assume( ret != NULL );
+	return ret;
+}
+
+void sctk_datatype_context_set( struct Datatype_context * ctx , struct Datatype_External_context * dctx  )
+{
+	/* Do we have a context and a type context */
+	assume( ctx != NULL );
+	assume( dctx != NULL );
+	/* Is the type context initalized */
+	assume( dctx->combiner != MPC_COMBINER_UNKNOWN );
+	
+	/* First clear the target type context */
+	sctk_datatype_context_clear( ctx );
+	
+	/* Save the combiner which is always needed */
+	ctx->combiner = dctx->combiner;
+	
+	/* Save size computing values before calling get envelope */
+	ctx->count = dctx->count;
+	ctx->ndims = dctx->ndims;
+	
+	/* Allocate the arrays according to the envelope */
+	int n_int = 0;
+	int n_addr = 0;
+	int n_type = 0;
+	int dummy_combiner;
+	
+	/* The context is not yet fully initialized but we can
+	 * already switch the data-type as we have just set it */
+	sctk_datatype_fill_envelope( ctx, &n_int, &n_addr, &n_type, &dummy_combiner);
+
+	/* We call all allocs as if count == 0 it returns NULL */
+	ctx->array_of_integers = please_allocate_an_array_of_integers( n_int );
+	ctx->array_of_addresses = please_allocate_an_array_of_addresses( n_addr );
+	ctx->array_of_types = please_allocate_an_array_of_datatypes( n_type );
+	
+	int i = 0;
+	int cnt = 0;
+
+	/* Retrieve type dependent information */
+	switch( ctx->combiner )
+	{
+		case MPC_COMBINER_NAMED:
+			sctk_fatal("ERROR : You are setting a context on a common data-type");
+		break;
+		case MPC_COMBINER_DUP:
+			ctx->array_of_types[0] = dctx->oldtype;
+		break;
+		case MPC_COMBINER_CONTIGUOUS:
+			ctx->array_of_integers[0] = ctx->count;
+			ctx->array_of_types[0] = dctx->oldtype;
+		case MPC_COMBINER_VECTOR:
+			ctx->array_of_integers[0] = ctx->count;
+			ctx->array_of_integers[1] = dctx->blocklength;
+			ctx->array_of_integers[0] = dctx->stride;
+			ctx->array_of_types[0] = dctx->oldtype;
+		break;
+		case MPC_COMBINER_HVECTOR:
+			ctx->array_of_integers[0] = ctx->count;
+			ctx->array_of_integers[1] = dctx->blocklength;
+			ctx->array_of_addresses[0] = dctx->stride_addr;
+			ctx->array_of_types[0] = dctx->oldtype;
+		break;
+		case MPC_COMBINER_INDEXED:
+			ctx->array_of_integers[0] = ctx->count;
+			
+			cnt = 0;
+			for( i = 1 ; i <= ctx->count ; i++ )
+			{
+				ctx->array_of_integers[i] = dctx->array_of_blocklenght[cnt];
+				cnt++;
+			}
+			
+			cnt = 0;
+			for( i = (ctx->count + 1) ; i <= (ctx->count * 2) ; i++ )
+			{
+				ctx->array_of_integers[i] = dctx->array_of_displacements[cnt];
+				cnt++;
+			}
+			
+			ctx->array_of_types[0] = dctx->oldtype;
+		break;
+		case MPC_COMBINER_HINDEXED:
+			ctx->array_of_integers[0] = ctx->count;
+			
+			cnt = 0;
+			for( i = 1 ; i <= ctx->count ; i++ )
+			{
+				ctx->array_of_integers[i] = dctx->array_of_blocklenght[cnt];
+				cnt++;
+			}
+			
+			cnt = 0;
+			for( i = 0 ; i < ctx->count ; i++ )
+			{
+				ctx->array_of_addresses[i] = dctx->array_of_displacements_addr[cnt];
+				cnt++;
+			}
+			
+			ctx->array_of_types[0] = dctx->oldtype;
+		break;
+		case MPC_COMBINER_INDEXED_BLOCK:
+			ctx->array_of_integers[0] = ctx->count;
+			ctx->array_of_integers[1] = dctx->blocklength;
+			
+			cnt = 0;
+			for( i = 2 ; i <= ( ctx->count + 1 ) ; i++ )
+			{
+				ctx->array_of_integers[i] = dctx->array_of_displacements[cnt];
+				cnt++;
+			}
+			
+			ctx->array_of_types[0] = dctx->oldtype;
+		break;
+		case MPC_COMBINER_HINDEXED_BLOCK:
+			ctx->array_of_integers[0] = ctx->count;
+			ctx->array_of_integers[1] = dctx->blocklength;
+			
+			cnt = 0;
+			for( i = 2 ; i <= ( ctx->count + 1 ) ; i++ )
+			{
+				ctx->array_of_addresses[i] = dctx->array_of_displacements_addr[cnt];
+				cnt++;
+			}
+			
+			ctx->array_of_types[0] = dctx->oldtype;
+		break;
+		case MPC_COMBINER_STRUCT:
+			ctx->array_of_integers[0] = ctx->count;
+
+			cnt = 0;
+			for( i = 1 ; i <= ctx->count ; i++ )
+			{
+				ctx->array_of_integers[i] = dctx->array_of_blocklenght[cnt];
+				cnt++;
+			}
+
+			cnt = 0;
+			for( i = 0 ; i < ctx->count ; i++ )
+			{
+				ctx->array_of_addresses[i] = dctx->array_of_displacements[cnt];
+				cnt++;
+			}
+
+			cnt = 0;
+			for( i = 0 ; i < ctx->count ; i++ )
+			{
+				ctx->array_of_types[i] = dctx->array_of_types[cnt];
+				cnt++;
+			}
+		break;
+		case MPC_COMBINER_SUBARRAY:
+			ctx->array_of_integers[0] = ctx->ndims;
+			
+			cnt = 0;
+			for( i = 1 ; i <= ctx->ndims ; i++ )
+			{
+				ctx->array_of_integers[i] = dctx->array_of_sizes[cnt];
+				cnt++;
+			}
+			
+			cnt = 0;
+			for( i = (ctx->ndims + 1) ; i <= (2 * ctx->ndims) ; i++ )
+			{
+				ctx->array_of_integers[i] = dctx->array_of_subsizes[cnt];
+				cnt++;
+			}
+			
+			cnt = 0;
+			for( i = (2 * ctx->ndims + 1) ; i <= (3 * ctx->ndims) ; i++ )
+			{
+				ctx->array_of_integers[i] = dctx->array_of_starts[cnt];
+				cnt++;
+			}
+			
+			ctx->array_of_integers[3 * ctx->ndims + 1] = dctx->order;
+			ctx->array_of_types[0] = dctx->oldtype;
+		break;
+		case MPC_COMBINER_DARRAY:
+			ctx->array_of_integers[0] = dctx->size;
+			ctx->array_of_integers[1] = dctx->rank;
+			ctx->array_of_integers[2] = dctx->ndims;
+		
+			cnt = 0;
+			for( i = 3 ; i <= (ctx->ndims + 2) ; i++ )
+			{
+				ctx->array_of_integers[i] = dctx->array_of_gsizes[cnt];
+				cnt++;
+			}
+		
+			cnt = 0;
+			for( i = (ctx->ndims + 3) ; i <= (2 * ctx->ndims + 2) ; i++ )
+			{
+				ctx->array_of_integers[i] = dctx->array_of_distribs[cnt];
+				cnt++;
+			}
+		
+			cnt = 0;
+			for( i = (2 * ctx->ndims + 3) ; i <= (3 * ctx->ndims + 2) ; i++ )
+			{
+				ctx->array_of_integers[i] = dctx->array_of_dargs[cnt];
+				cnt++;
+			}
+		
+			cnt = 0;
+			for( i = (2 * ctx->ndims + 3) ; i <= (4 * ctx->ndims + 2) ; i++ )
+			{
+				ctx->array_of_integers[i] = dctx->array_of_psizes[cnt];
+				cnt++;
+			}
+			
+			ctx->array_of_integers[4 * ctx->ndims + 3] = dctx->order;
+			ctx->array_of_types[0] = dctx->oldtype;
+		break;
+		case MPC_COMBINER_F90_REAL:
+		case MPC_COMBINER_F90_COMPLEX:
+			ctx->array_of_integers[0] = dctx->p;
+			ctx->array_of_integers[1] = dctx->r;
+		break;
+		case MPC_COMBINER_F90_INTEGER:
+			ctx->array_of_integers[1] = dctx->r;
+		break;
+		case MPC_COMBINER_RESIZED:
+			ctx->array_of_addresses[0] = dctx->lb;
+			ctx->array_of_addresses[1] = dctx->extent;
+			ctx->array_of_types[0] = dctx->oldtype;
+		break;
+		
+		default:
+			return 1;
+	}
+
+}
+
+
+void sctk_datatype_context_free( struct Datatype_context * ctx )
+{
+	sctk_free( ctx->array_of_integers );
+	sctk_free( ctx->array_of_addresses );
+	sctk_free( ctx->array_of_types );
+	
+	sctk_datatype_context_clear(ctx);
+}
+
+
+
 
 int sctk_datatype_fill_envelope( struct Datatype_context * ctx , int * num_integers, int * num_addresses , int * num_datatypes , int * combiner )
 {

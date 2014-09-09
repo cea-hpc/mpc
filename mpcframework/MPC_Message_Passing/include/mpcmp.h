@@ -359,6 +359,7 @@ typedef int MPC_Info;
 
 typedef enum
 {
+    MPC_COMBINER_UNKNOWN	  = 0,
     MPC_COMBINER_NAMED            = 1,
     MPC_COMBINER_DUP              = 2,
     MPC_COMBINER_CONTIGUOUS       = 3,
@@ -552,6 +553,13 @@ typedef enum
   int MPC_Type_set_name( MPC_Datatype datatype, char *name );
   int MPC_Type_get_name( MPC_Datatype datatype, char *name, int * resultlen );
   int MPC_Type_get_envelope(MPC_Datatype datatype, int *num_integers, int *num_addresses, int *num_datatypes, int *combiner);
+  int MPC_Type_get_contents( MPC_Datatype datatype, 
+			     int max_integers,
+			     int max_addresses,
+			     int max_datatypes,
+			     int array_of_integers[],
+			     MPC_Aint array_of_addresses[],
+			     MPC_Datatype array_of_datatypes[]);
   
   /*MPC specific function */
   int MPC_Copy_in_buffer (void *inbuffer, void *outbuffer, MPC_Datatype datatype);
@@ -868,7 +876,13 @@ int MPC_Test_cancelled (MPC_Status *, int *);
   int PMPC_Type_set_name( MPC_Datatype datatype, char *name );
   int PMPC_Type_get_name( MPC_Datatype datatype, char *name, int * resultlen );
   int PMPC_Type_get_envelope(MPC_Datatype datatype, int *num_integers, int *num_addresses, int *num_datatypes, int *combiner);
-
+  int PMPC_Type_get_contents( MPC_Datatype datatype, 
+			      int max_integers,
+			      int max_addresses,
+			      int max_datatypes,
+			      int array_of_integers[],
+			      MPC_Aint array_of_addresses[],
+			      MPC_Datatype array_of_datatypes[]);
   /*MPC specific function */
   int PMPC_Copy_in_buffer (void *inbuffer, void *outbuffer, MPC_Datatype datatype);
   int PMPC_Copy_from_buffer (void *inbuffer, void *outbuffer, MPC_Datatype datatype);
