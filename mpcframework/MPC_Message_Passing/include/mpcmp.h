@@ -330,6 +330,7 @@ typedef int MPC_Info;
 #define MPC_INTEGER2 25
 #define MPC_INTEGER4 26
 #define MPC_INTEGER8 27
+
 #define MPC_REAL4 28
 #define MPC_REAL8 29
 #define MPC_REAL16 30
@@ -352,6 +353,7 @@ typedef int MPC_Info;
 #define MPC_COMPLEX32 44
 #define MPC_WCHAR 45
 
+#define MPC_INTEGER16 46
 
 /* for the datatype decoders */
 enum MPIR_Combiner_enum {

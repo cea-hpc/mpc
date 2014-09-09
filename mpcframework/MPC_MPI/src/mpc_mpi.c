@@ -10201,6 +10201,7 @@ int PMPI_Type_match_size(int typeclass, int size, MPI_Datatype *rtype)
 				case 2: *rtype = MPI_INTEGER2; return MPI_SUCCESS;
 				case 4: *rtype = MPI_INTEGER4; return MPI_SUCCESS;
 				case 8: *rtype = MPI_INTEGER8; return MPI_SUCCESS;
+				case 16:  *rtype = MPI_INTEGER16; return MPI_SUCCESS;
 				default: MPI_ERROR_REPORT(MPI_COMM_SELF, MPI_ERR_ARG, "Bad size provided to MPI_Type_match_size (MPI_TYPECLASS_INTEGER)");
 			}
 		case MPI_TYPECLASS_COMPLEX: 

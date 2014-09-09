@@ -53,13 +53,22 @@ void sctk_datatype_release()
 /** Common datatypes sizes ar initialized in \ref sctk_common_datatype_init */
 static size_t __sctk_common_type_sizes[SCTK_COMMON_DATA_TYPE_COUNT];
 
+/* We need this funtions are MPI_* types are macro replaced by MPC_* ones
+ * and the standard wants MPI_* so we replace ... */
+void sctk_common_datatype_set_name_helper( MPC_Datatype datatype, char * name )
+{
+	char * tmp = strdup( name );
+	tmp[2] = 'I';
+	sctk_datype_set_name( datatype, tmp );
+	free( tmp );
+}
+
+
 #define tostring(a) #a
-/* The norm imposes it to be the datatype name (a bit sad ) 3.0 p. 284 */
-#define type_name( datatype , t ) datatype
 #define SCTK_INIT_TYPE_SIZE(datatype,t) __sctk_common_type_sizes[datatype] = sizeof(t) ; \
 					sctk_assert(datatype >=0 ); \
 					sctk_assert( sctk_datatype_is_common( datatype ) );\
-					sctk_datype_set_name_nocheck( datatype, tostring( type_name(datatype, t ) ) );
+					sctk_common_datatype_set_name_helper( datatype, #datatype );
 
 void sctk_common_datatype_init()
 {
@@ -76,12 +85,13 @@ void sctk_common_datatype_init()
   SCTK_INIT_TYPE_SIZE (MPC_UNSIGNED, unsigned int);
   SCTK_INIT_TYPE_SIZE (MPC_UNSIGNED_LONG, unsigned long);
   SCTK_INIT_TYPE_SIZE (MPC_LONG_DOUBLE, long double);
-  SCTK_INIT_TYPE_SIZE (MPC_LONG_LONG_INT, long long);
-  SCTK_INIT_TYPE_SIZE (MPC_UNSIGNED_LONG_LONG_INT, unsigned long long);
+  SCTK_INIT_TYPE_SIZE (MPC_LONG_LONG, long long);
+  SCTK_INIT_TYPE_SIZE (MPC_UNSIGNED_LONG_LONG, unsigned long long);
   SCTK_INIT_TYPE_SIZE (MPC_INTEGER1, sctk_int8_t);
   SCTK_INIT_TYPE_SIZE (MPC_INTEGER2, sctk_int16_t);
   SCTK_INIT_TYPE_SIZE (MPC_INTEGER4, sctk_int32_t);
   SCTK_INIT_TYPE_SIZE (MPC_INTEGER8, sctk_int64_t);
+  SCTK_INIT_TYPE_SIZE (MPC_INTEGER16, sctk_int64_t[2] );
   SCTK_INIT_TYPE_SIZE (MPC_REAL4, float);
   SCTK_INIT_TYPE_SIZE (MPC_REAL8, double);
   SCTK_INIT_TYPE_SIZE (MPC_REAL16, long double);
@@ -386,7 +396,7 @@ static inline struct Datatype_name_cell * sctk_datype_get_name_cell( MPC_Datatyp
 
 
 
-int sctk_datype_set_name_nocheck( MPC_Datatype datatype, char * name )
+int sctk_datype_set_name( MPC_Datatype datatype, char * name )
 {
 	/* First locate a previous cell */
 	struct Datatype_name_cell * cell = sctk_datype_get_name_cell( datatype );
@@ -396,11 +406,12 @@ int sctk_datype_set_name_nocheck( MPC_Datatype datatype, char * name )
 		/* If present free it */
 		sctk_free( cell );
 	}
-	
+
 	/* Create a new cell */
 	struct Datatype_name_cell * new_cell = sctk_malloc( sizeof( struct Datatype_name_cell ) );
 	assume( new_cell != NULL );
 	snprintf(new_cell->name, MPC_MAX_OBJECT_NAME, "%s" , name);
+	new_cell->datatype = datatype;
 	
 	/* Save it */
 	sctk_spinlock_lock(&datatype_names_lock);
@@ -411,29 +422,10 @@ int sctk_datype_set_name_nocheck( MPC_Datatype datatype, char * name )
 }
 
 
-
-int sctk_datype_set_name( MPC_Datatype datatype, char * name )
-{
-	switch( sctk_datatype_kind(datatype) )
-	{
-		case MPC_DATATYPES_CONTIGUOUS:
-		case MPC_DATATYPES_DERIVED:
-			return sctk_datype_set_name_nocheck( datatype, name );
-		break;
-		case MPC_DATATYPES_COMMON:
-			sctk_error("You are not allowed to set a name to common datatype");
-		break;
-		case MPC_DATATYPES_UNKNOWN:
-			sctk_error("Unknown datatype");
-	}
-	
-	return 1;
-}
-
 char * sctk_datype_get_name( MPC_Datatype datatype )
 {
 	struct Datatype_name_cell *cell = sctk_datype_get_name_cell( datatype );
-	
+
 	if( !cell )
 		return NULL;
 	
