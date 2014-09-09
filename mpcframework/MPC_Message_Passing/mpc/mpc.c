@@ -6588,55 +6588,51 @@ __MPC_Add_pack (void *buf, mpc_msg_count count,
   MPC_ERROR_SUCESS ();
 }
 
-static inline int
-__MPC_Add_pack_absolute (void *buf, mpc_msg_count count,
-			 mpc_pack_absolute_indexes_t * begins,
-			 mpc_pack_absolute_indexes_t * ends,
-			 MPC_Datatype datatype, MPC_Request * request,
-			 sctk_task_specific_t * task_specific)
+static inline int __MPC_Add_pack_absolute( void *buf, mpc_msg_count count,
+					   mpc_pack_absolute_indexes_t * begins,
+					   mpc_pack_absolute_indexes_t * ends,
+					   MPC_Datatype datatype, 
+					   MPC_Request * request,
+					   sctk_task_specific_t * task_specific )
 {
-  sctk_thread_ptp_message_t *msg;
-  int i;
-  size_t data_size;
-  size_t total = 0;
+	sctk_thread_ptp_message_t *msg;
+	int i;
+	size_t data_size;
+	size_t total = 0;
 
-  data_size = __MPC_Get_datatype_size (datatype, task_specific);
+	data_size = __MPC_Get_datatype_size (datatype, task_specific);
 
-  sctk_nodebug ("TYPE numer %d size %lu, count = %d", datatype, data_size, count);
+	sctk_nodebug ("TYPE numer %d size %lu, count = %d", datatype, data_size, count);
 
-  if (request == NULL)
-    {
-      MPC_ERROR_REPORT (MPC_COMM_WORLD, MPC_ERR_REQUEST, "");
-    }
-  if (begins == NULL)
-    {
-      MPC_ERROR_REPORT (MPC_COMM_WORLD, MPC_ERR_ARG, "");
-    }
-  if (ends == NULL)
-    {
-      MPC_ERROR_REPORT (MPC_COMM_WORLD, MPC_ERR_ARG, "");
-    }
-  if (count == 0)
-    {
-      MPC_ERROR_REPORT (MPC_COMM_WORLD, MPC_ERR_ARG, "");
-    }
+	if (request == NULL)
+	{
+		MPC_ERROR_REPORT (MPC_COMM_WORLD, MPC_ERR_REQUEST, "");
+	}
+	if (begins == NULL)
+	{
+		MPC_ERROR_REPORT (MPC_COMM_WORLD, MPC_ERR_ARG, "");
+	}
+	if (ends == NULL)
+	{
+		MPC_ERROR_REPORT (MPC_COMM_WORLD, MPC_ERR_ARG, "");
+	}
 
-  msg = sctk_mpc_get_message_in_request(request);
+	msg = sctk_mpc_get_message_in_request(request);
 
-  sctk_add_pack_in_message_absolute (msg, buf, count, data_size,
-				       begins, ends);
+	sctk_add_pack_in_message_absolute (msg, buf, count, data_size,
+	begins, ends);
 
-  sctk_mpc_register_message_in_request(request,msg);
+	sctk_mpc_register_message_in_request(request,msg);
 
-  /*Compute message size */
-  for (i = 0; i < count; i++)
-    {
-      total += ends[i] - begins[i] + 1;
-    }
+	/*Compute message size */
+	for (i = 0; i < count; i++)
+	{
+	total += ends[i] - begins[i] + 1;
+	}
 
-  sctk_mpc_add_to_message_size(request,total * data_size);
+	sctk_mpc_add_to_message_size(request,total * data_size);
 
-  MPC_ERROR_SUCESS ();
+	MPC_ERROR_SUCESS ();
 }
 
 int
