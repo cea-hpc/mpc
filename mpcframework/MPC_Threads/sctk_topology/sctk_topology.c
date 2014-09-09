@@ -99,9 +99,17 @@ sctk_update_topology (
 
   hwloc_bitmap_zero(cpuset);
   if (hwloc_bitmap_iszero(pin_processor_bitmap)) {
-	  for( i=index_first_processor; i < processor_number; ++i)
+	  #ifdef __MIC__
+	  	for( i=index_first_processor; i < processor_number; ++i)
+	  #else
+	  	for( i=index_first_processor; i < index_first_processor+processor_number; ++i)
+	  #endif
 	  {
-		  hwloc_obj_t pu = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, i%processor_number);
+		  #ifdef __MIC__
+		  	hwloc_obj_t pu = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, i%processor_number);
+		  #else
+		  	hwloc_obj_t pu = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, i);
+		  #endif
 		  hwloc_cpuset_t set = hwloc_bitmap_dup(pu->cpuset);
 		  hwloc_bitmap_singlify(set);
 		  hwloc_bitmap_or(cpuset, cpuset, set);
@@ -117,6 +125,7 @@ sctk_update_topology (
 
 	  hwloc_bitmap_copy(cpuset, pin_processor_bitmap);
   }
+
   err = hwloc_topology_restrict(topology, cpuset, HWLOC_RESTRICT_FLAG_ADAPT_DISTANCES);
   assume(!err);
   hwloc_bitmap_copy(topology_cpuset, cpuset);
