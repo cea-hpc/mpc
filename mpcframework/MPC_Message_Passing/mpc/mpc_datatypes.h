@@ -44,6 +44,46 @@ void sctk_datatype_init();
 void sctk_datatype_release();
 
 /************************************************************************/
+/* Datatype  Context                                                    */
+/************************************************************************/
+
+/** \brief This datastructure is used to store the definition
+ * of a datatype in order to reproduce it using MPI_Get_envelope
+ * and MPI_Get_contents */
+struct Datatype_context
+{
+	int count; /**< Number of item (as given in the data-type call) */
+	int ndims; /**< Number of dimensions (as given in the data-type call) */
+	MPC_Type_combiner combiner; /**< Combiner used to build the datatype */
+};
+
+/** \brief Setup the datatype context
+ *  
+ *  \param ctx Context to fill
+ *  \param combiner Combiner used to build the datatype
+ *  \param count Number of item (as given in the data-type call)
+ *  \param ndims Number of dimensions (as given in the data-type call)
+ */
+void sctk_datatype_context_set( struct Datatype_context * ctx , MPC_Type_combiner combiner, int count, int ndims );
+
+/** \brief This call is used to fill the envelope of an MPI type
+ *  
+ *  \param ctx Source context 
+ *  \param num_integers Number of input integers [OUT]
+ *  \param num_adresses Number of input addresses [OUT]
+ *  \param num_datatypes Number of input datatypes [OUT]
+ *  \param combiner Combiner used to build the datatype [OUT]
+ *  
+ *  This function is directly directed by the standard
+ *  which defines the output values page 120-123
+ *  of the standard as ni, na, nd.
+ * 
+ */
+int sctk_datatype_fill_envelope( struct Datatype_context * ctx , int * num_integers, int * num_addresses , int * num_datatypes , int * combiner );
+
+
+
+/************************************************************************/
 /* Common Datatype                                                      */
 /************************************************************************/
 
@@ -79,6 +119,7 @@ typedef struct
 	size_t count; /**< Number of elements of type "datatype" in the type */
 	sctk_datatype_t datatype; /**< Type packed within the datatype */
 	unsigned int ref_count; /**< Flag telling if the datatype slot is free for use */
+	struct Datatype_context context; /**< Saves the creation context for MPI_get_envelope & MPI_Get_contents */
 } sctk_contiguous_datatype_t;
 
 /** \brief sctk_contiguous_datatype_t initializer
@@ -129,6 +170,7 @@ typedef struct
 	int is_lb; /**< Does type has a lower bound */
 	mpc_pack_absolute_indexes_t ub; /**< Upper bound offset */
 	int is_ub; /**< Does type has an upper bound */
+	struct Datatype_context context; /**< Saves the creation context for MPI_get_envelope & MPI_Get_contents */
 } sctk_derived_datatype_t;
 
 

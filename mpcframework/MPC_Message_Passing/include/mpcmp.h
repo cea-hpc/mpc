@@ -363,21 +363,18 @@ typedef enum
     MPC_COMBINER_DUP              = 2,
     MPC_COMBINER_CONTIGUOUS       = 3,
     MPC_COMBINER_VECTOR           = 4,
-    MPC_COMBINER_HVECTOR_INTEGER  = 5,
-    MPC_COMBINER_HVECTOR          = 6,
-    MPC_COMBINER_INDEXED          = 7,
-    MPC_COMBINER_HINDEXED_INTEGER = 8,
-    MPC_COMBINER_HINDEXED         = 9,
-    MPC_COMBINER_INDEXED_BLOCK    = 10,
-    MPC_COMBINER_HINDEXED_BLOCK   = 11,
-    MPC_COMBINER_STRUCT_INTEGER   = 12,
-    MPC_COMBINER_STRUCT           = 13,
-    MPC_COMBINER_SUBARRAY         = 14,
-    MPC_COMBINER_DARRAY           = 15,
-    MPC_COMBINER_F90_REAL         = 16,
-    MPC_COMBINER_F90_COMPLEX      = 17,
-    MPC_COMBINER_F90_INTEGER      = 18,
-    MPC_COMBINER_RESIZED          = 19
+    MPC_COMBINER_HVECTOR          = 5,
+    MPC_COMBINER_INDEXED          = 6,
+    MPC_COMBINER_HINDEXED         = 7,
+    MPC_COMBINER_INDEXED_BLOCK    = 8,
+    MPC_COMBINER_HINDEXED_BLOCK   = 9,
+    MPC_COMBINER_STRUCT           = 10,
+    MPC_COMBINER_SUBARRAY         = 11,
+    MPC_COMBINER_DARRAY           = 12,
+    MPC_COMBINER_F90_REAL         = 13,
+    MPC_COMBINER_F90_COMPLEX      = 14,
+    MPC_COMBINER_F90_INTEGER      = 15,
+    MPC_COMBINER_RESIZED          = 16
 }MPC_Type_combiner;
 
   /*Initialisation */
@@ -554,6 +551,7 @@ typedef enum
   int MPC_Type_dup( MPC_Datatype old_type, MPC_Datatype * new_type ); 
   int MPC_Type_set_name( MPC_Datatype datatype, char *name );
   int MPC_Type_get_name( MPC_Datatype datatype, char *name, int * resultlen );
+  int MPC_Type_get_envelope(MPC_Datatype datatype, int *num_integers, int *num_addresses, int *num_datatypes, int *combiner);
   
   /*MPC specific function */
   int MPC_Copy_in_buffer (void *inbuffer, void *outbuffer, MPC_Datatype datatype);
@@ -869,6 +867,7 @@ int MPC_Test_cancelled (MPC_Status *, int *);
   int PMPC_Type_dup( MPC_Datatype old_type, MPC_Datatype * new_type ); 
   int PMPC_Type_set_name( MPC_Datatype datatype, char *name );
   int PMPC_Type_get_name( MPC_Datatype datatype, char *name, int * resultlen );
+  int PMPC_Type_get_envelope(MPC_Datatype datatype, int *num_integers, int *num_addresses, int *num_datatypes, int *combiner);
 
   /*MPC specific function */
   int PMPC_Copy_in_buffer (void *inbuffer, void *outbuffer, MPC_Datatype datatype);

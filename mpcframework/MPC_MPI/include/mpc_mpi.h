@@ -210,14 +210,11 @@ extern "C"
 #define MPI_COMBINER_DUP MPC_COMBINER_DUP
 #define MPI_COMBINER_CONTIGUOUS MPC_COMBINER_CONTIGUOUS
 #define MPI_COMBINER_VECTOR MPC_COMBINER_VECTOR
-#define MPI_COMBINER_HVECTOR_INTEGER MPC_COMBINER_HVECTOR_INTEGER
 #define MPI_COMBINER_HVECTOR MPC_COMBINER_HVECTOR
 #define MPI_COMBINER_INDEXED MPC_COMBINER_INDEXED
-#define MPI_COMBINER_HINDEXED_INTEGER MPC_COMBINER_HINDEXED_INTEGER
 #define MPI_COMBINER_HINDEXED MPC_COMBINER_HINDEXED
 #define MPI_COMBINER_INDEXED_BLOCK MPC_COMBINER_INDEXED_BLOCK
 #define MPI_COMBINER_HINDEXED_BLOCK MPC_COMBINER_HINDEXED_BLOCK
-#define MPI_COMBINER_STRUCT_INTEGER MPC_COMBINER_STRUCT_INTEGER
 #define MPI_COMBINER_STRUCT MPC_COMBINER_STRUCT
 #define MPI_COMBINER_SUBARRAY MPC_COMBINER_SUBARRAY
 #define MPI_COMBINER_DARRAY MPC_COMBINER_DARRAY
@@ -502,6 +499,7 @@ int MPI_Type_get_name( MPI_Datatype datatype, char *name, int * resultlen );
 int MPI_Type_dup( MPI_Datatype old_type, MPI_Datatype *newtype );
 int MPI_Type_get_extent(MPI_Datatype datatype, MPI_Aint *lb, MPI_Aint *extent);
 int MPI_Type_get_true_extent(MPI_Datatype datatype, MPI_Aint *true_lb, MPI_Aint *true_extent);
+int MPI_Type_get_envelope(MPI_Datatype datatype, int *num_integers, int *num_addresses, int *num_datatypes, int *combiner);
 
 /* Collective Operations */
 int MPI_Barrier (MPI_Comm);
@@ -767,6 +765,8 @@ int PMPI_Type_get_name( MPI_Datatype datatype, char *name, int * resultlen );
 int PMPI_Type_dup( MPI_Datatype old_type, MPI_Datatype *newtype );
 int PMPI_Type_extent(MPI_Datatype datatype, MPI_Aint *extent);
 int PMPI_Type_get_true_extent(MPI_Datatype datatype, MPI_Aint *true_lb, MPI_Aint *true_extent);
+int PMPI_Type_get_envelope(MPI_Datatype datatype, int *num_integers, int *num_addresses, int *num_datatypes, int *combiner);
+
 
 /* Collective Operations */
 int PMPI_Barrier (MPI_Comm);

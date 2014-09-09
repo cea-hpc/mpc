@@ -441,3 +441,113 @@ void sctk_datype_name_release()
 		sctk_free(current);
 	}
 }
+
+/************************************************************************/
+/* Datatype  Context                                                    */
+/************************************************************************/
+
+void sctk_datatype_context_set( struct Datatype_context * ctx , MPC_Type_combiner combiner, int count, int ndims )
+{
+	assume( ctx != NULL );
+	
+	ctx->combiner = combiner;
+	ctx->count = count;
+	ctx->ndims = ndims;
+}
+
+int sctk_datatype_fill_envelope( struct Datatype_context * ctx , int * num_integers, int * num_addresses , int * num_datatypes , int * combiner )
+{
+	if( !ctx )
+		return 1;
+	
+	*combiner = ctx->combiner;
+	
+	
+	switch( ctx->combiner )
+	{
+		case MPC_COMBINER_NAMED:
+			/* Calling MPI get contents
+			 * is invalid for this combiner */
+			*num_integers = 0;
+			*num_addresses = 0;
+			*num_datatypes = 0;
+		break;
+		case MPC_COMBINER_DUP:
+			*num_integers = 0;
+			*num_addresses = 0;
+			*num_datatypes = 1;
+		break;
+		case MPC_COMBINER_CONTIGUOUS:
+			*num_integers = 1;
+			*num_addresses = 0;
+			*num_datatypes = 1;
+		break;
+		case MPC_COMBINER_VECTOR:
+			*num_integers = 3;
+			*num_addresses = 0;
+			*num_datatypes = 1;
+		break;
+		case MPC_COMBINER_HVECTOR:
+			*num_integers = 2;
+			*num_addresses = 1;
+			*num_datatypes = 1;
+		break;
+		case MPC_COMBINER_INDEXED:
+			*num_integers = 2 * ctx->count + 1;
+			*num_addresses = 0;
+			*num_datatypes = 1;
+		break;
+		case MPC_COMBINER_HINDEXED:
+			*num_integers = ctx->count + 1;
+			*num_addresses = ctx->count;
+			*num_datatypes = 1;
+		break;
+		case MPC_COMBINER_INDEXED_BLOCK:
+			*num_integers = ctx->count + 2;
+			*num_addresses = 0;
+			*num_datatypes = 1;
+		break;
+		case MPC_COMBINER_HINDEXED_BLOCK:
+			*num_integers = 2;
+			*num_addresses = ctx->count;
+			*num_datatypes = 1;
+		break;
+		case MPC_COMBINER_STRUCT:
+			*num_integers = ctx->count +1;
+			*num_addresses = ctx->count;
+			*num_datatypes = ctx->count;
+		break;
+		case MPC_COMBINER_SUBARRAY:
+			*num_integers = 3 * ctx->ndims + 2;
+			*num_addresses = 0;
+			*num_datatypes = 1;
+		break;
+		case MPC_COMBINER_DARRAY:
+			*num_integers = 4 * ctx->ndims + 4;
+			*num_addresses = 0;
+			*num_datatypes = 1;
+		break;
+		case MPC_COMBINER_F90_REAL:
+		case MPC_COMBINER_F90_COMPLEX:
+			*num_integers = 2;
+			*num_addresses = 0;
+			*num_datatypes = 0;
+		break;
+		case MPC_COMBINER_F90_INTEGER:
+			*num_integers = 1;
+			*num_addresses = 0;
+			*num_datatypes = 0;
+		break;
+		case MPC_COMBINER_RESIZED:
+			*num_integers = 0;
+			*num_addresses = 2;
+			*num_datatypes = 1;
+		break;
+		
+		default:
+			return 1;
+	}
+	
+	
+	return 0;
+}

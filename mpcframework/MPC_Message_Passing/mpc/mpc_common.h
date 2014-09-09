@@ -151,6 +151,7 @@ mpc_per_communicator_t* sctk_thread_getspecific_mpc_per_comm(struct sctk_task_sp
 
 int MPC_Is_derived_datatype (MPC_Datatype datatype, int *res, sctk_derived_datatype_t *output_datatype );
 
+int MPC_Datatype_set_context( MPC_Datatype datatype, int count , int ndims , MPC_Type_combiner combiner);
 
 /************************************************************************/
 /* Per thread context                                                   */
@@ -161,6 +162,7 @@ struct sctk_thread_specific_s
   buffer_t buffer;
   buffer_async_t buffer_async;
 };
+
 typedef struct sctk_thread_specific_s sctk_thread_specific_t;
 
 /************************************************************************/

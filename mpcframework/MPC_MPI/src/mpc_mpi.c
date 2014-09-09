@@ -2824,6 +2824,9 @@ static int __INTERNAL__PMPI_Type_contiguous (int count, MPI_Datatype data_in,  M
 		/* Actually create the new datatype */
 		PMPC_Derived_datatype (data_out, begins_out, ends_out, datatypes, count_out, input_datatype.lb,	input_datatype.is_lb, new_ub, input_datatype.is_ub);
 
+		/* Set its context */
+		MPC_Datatype_set_context( *data_out, count, 0 , MPI_COMBINER_CONTIGUOUS);
+		
 		/* Free temporary buffers */
 		sctk_free (datatypes);
 		sctk_free (begins_out);
@@ -2856,7 +2859,12 @@ static int __INTERNAL__PMPI_Type_vector (int count, int blocklen, int stride, MP
 	unsigned long stride_t = stride * extent ;
 	
 	/* Call the hvector function */
-	return __INTERNAL__PMPI_Type_hvector( count, blocklen,  stride_t, old_type,  newtype_p);
+	int res =  __INTERNAL__PMPI_Type_hvector( count, blocklen,  stride_t, old_type,  newtype_p);
+	
+	/* Set its context to overide the one from hvector */
+	MPC_Datatype_set_context( *newtype_p, count, 0 , MPI_COMBINER_VECTOR);
+	
+	return res;
 }
 
 /** \brief This function creates a vector datatype with a stride in bytes
@@ -2926,6 +2934,9 @@ static int __INTERNAL__PMPI_Type_hvector (int count,
 		/* Create the derived datatype */
 		PMPC_Derived_datatype (newtype_p, begins_out, ends_out, datatypes, count_out, input_datatype.lb, input_datatype.is_lb, new_ub, input_datatype.is_ub);
 
+		/* Set its context */
+		MPC_Datatype_set_context( *newtype_p, count, 0 , MPI_COMBINER_HVECTOR);
+		
 		/* Free temporary arrays */
 		sctk_free (begins_out);
 		sctk_free (ends_out);
@@ -2978,6 +2989,9 @@ static int __INTERNAL__PMPI_Type_indexed (int count, int blocklens[], int indice
 	/* Call the byte offseted version of type_indexed */
 	int res =  __INTERNAL__PMPI_Type_hindexed (count, blocklens, byte_offsets, old_type, newtype);
 	
+	/* Set its context to overide the one from hdindexed */
+	MPC_Datatype_set_context( *newtype, count, 0 , MPI_COMBINER_INDEXED);
+	
 	/* Release the temporary byte offset array */
 	sctk_free( byte_offsets );
 	
@@ -2999,6 +3013,9 @@ static int __INTERNAL__PMPI_Type_create_hindexed_block(int count, int blocklengt
 	
 	/* Call the orignal indexed function */
 	int res = __INTERNAL__PMPI_Type_hindexed(count, blocklength_array, indices, old_type,  newtype);
+	
+	/* Set its context to overide the one from hdindexed */
+	MPC_Datatype_set_context( *newtype, count, 0 , MPI_COMBINER_HINDEXED_BLOCK);
 	
 	/* Free the tmp buffer */
 	sctk_free( blocklength_array );
@@ -3032,6 +3049,10 @@ static int __INTERNAL__PMPI_Type_create_indexed_block(int count, int blocklength
 	
 	/* Call the orignal indexed function */
 	int res = __INTERNAL__PMPI_Type_create_hindexed_block (count, blocklength, byte_offsets, old_type,  newtype);
+	
+		
+	/* Set its context to overide the one from hdindexed block */
+	MPC_Datatype_set_context( *newtype, count, 0 , MPI_COMBINER_INDEXED_BLOCK);
 	
 	/* Free the temporary byte offset */
 	sctk_free( byte_offsets );
@@ -3132,6 +3153,9 @@ static int __INTERNAL__PMPI_Type_hindexed (int count,
 		/* Create the derived datatype */
 		PMPC_Derived_datatype (newtype, begins_out, ends_out, datatypes, count_out, new_lb,	input_datatype.is_lb, new_ub, input_datatype.is_ub);
 
+		/* Set its context */
+		MPC_Datatype_set_context( *newtype, count, 0 , MPI_COMBINER_HINDEXED);
+		
 		/* Free temporary arrays */
 		sctk_free (begins_out);
 		sctk_free (ends_out);
@@ -3323,6 +3347,9 @@ static int __INTERNAL__PMPI_Type_struct(int count, int blocklens[], MPI_Aint ind
 	res = PMPC_Derived_datatype(newtype, begins_out, ends_out, datatypes, glob_count_out, new_lb, new_is_lb, new_ub, new_is_ub);
 	assert(res == MPI_SUCCESS);
 
+	/* Set its context */
+	MPC_Datatype_set_context( *newtype, count, 0 , MPI_COMBINER_STRUCT );
+	
 	/*   sctk_nodebug("new_type %d",* newtype); */
 	/*   sctk_nodebug("final new_lb %d,%d new_ub %d %d",new_lb,new_is_lb,new_ub,new_is_ub); */
 	/*   { */
@@ -10101,6 +10128,11 @@ int PMPI_Type_get_extent(MPI_Datatype datatype, MPI_Aint *lb, MPI_Aint *extent)
 int PMPI_Type_get_true_extent(MPI_Datatype datatype, MPI_Aint *true_lb, MPI_Aint *true_extent)
 {
 	return PMPC_Type_get_true_extent( datatype, true_lb, true_extent );
+}
+
+int PMPI_Type_get_envelope(MPI_Datatype datatype, int *num_integers, int *num_addresses, int *num_datatypes, int *combiner)
+{
+	return PMPC_Type_get_envelope(datatype, num_integers, num_addresses, num_datatypes, combiner);
 }
 
   /* See the 1.1 version of the Standard.  The standard made an
