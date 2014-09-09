@@ -355,28 +355,30 @@ typedef int MPC_Info;
 
 #define MPC_INTEGER16 46
 
-/* for the datatype decoders */
-enum MPIR_Combiner_enum {
-    MPI_COMBINER_NAMED            = 1,
-    MPI_COMBINER_DUP              = 2,
-    MPI_COMBINER_CONTIGUOUS       = 3,
-    MPI_COMBINER_VECTOR           = 4,
-    MPI_COMBINER_HVECTOR_INTEGER  = 5,
-    MPI_COMBINER_HVECTOR          = 6,
-    MPI_COMBINER_INDEXED          = 7,
-    MPI_COMBINER_HINDEXED_INTEGER = 8,
-    MPI_COMBINER_HINDEXED         = 9,
-    MPI_COMBINER_INDEXED_BLOCK    = 10,
-    MPI_COMBINER_HINDEXED_BLOCK   = 11,
-    MPI_COMBINER_STRUCT_INTEGER   = 12,
-    MPI_COMBINER_STRUCT           = 13,
-    MPI_COMBINER_SUBARRAY         = 14,
-    MPI_COMBINER_DARRAY           = 15,
-    MPI_COMBINER_F90_REAL         = 16,
-    MPI_COMBINER_F90_COMPLEX      = 17,
-    MPI_COMBINER_F90_INTEGER      = 18,
-    MPI_COMBINER_RESIZED          = 19
-};
+/* Datatype decoders */
+
+typedef enum
+{
+    MPC_COMBINER_NAMED            = 1,
+    MPC_COMBINER_DUP              = 2,
+    MPC_COMBINER_CONTIGUOUS       = 3,
+    MPC_COMBINER_VECTOR           = 4,
+    MPC_COMBINER_HVECTOR_INTEGER  = 5,
+    MPC_COMBINER_HVECTOR          = 6,
+    MPC_COMBINER_INDEXED          = 7,
+    MPC_COMBINER_HINDEXED_INTEGER = 8,
+    MPC_COMBINER_HINDEXED         = 9,
+    MPC_COMBINER_INDEXED_BLOCK    = 10,
+    MPC_COMBINER_HINDEXED_BLOCK   = 11,
+    MPC_COMBINER_STRUCT_INTEGER   = 12,
+    MPC_COMBINER_STRUCT           = 13,
+    MPC_COMBINER_SUBARRAY         = 14,
+    MPC_COMBINER_DARRAY           = 15,
+    MPC_COMBINER_F90_REAL         = 16,
+    MPC_COMBINER_F90_COMPLEX      = 17,
+    MPC_COMBINER_F90_INTEGER      = 18,
+    MPC_COMBINER_RESIZED          = 19
+}MPC_Type_combiner;
 
   /*Initialisation */
   int MPC_Init (int *argc, char ***argv);
