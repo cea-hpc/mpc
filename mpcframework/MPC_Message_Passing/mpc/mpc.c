@@ -1841,6 +1841,8 @@ int PMPC_Type_use (MPC_Datatype datatype)
 	sctk_contiguous_datatype_t *target_contiguous_type;
 	sctk_derived_datatype_t *target_derived_type;
 
+	
+	
 	switch( sctk_datatype_kind( datatype ) )
 	{
 		case MPC_DATATYPES_COMMON:
@@ -1854,6 +1856,7 @@ int PMPC_Type_use (MPC_Datatype datatype)
 			target_contiguous_type = sctk_task_specific_get_contiguous_datatype( task_specific, datatype );
 			/* Increment the refcounter */
 			target_contiguous_type->ref_count++;
+			sctk_error("Type %d Refcount %d" , datatype, target_contiguous_type->ref_count);
 
 		break;
 		
@@ -1863,6 +1866,7 @@ int PMPC_Type_use (MPC_Datatype datatype)
 			target_derived_type = sctk_task_specific_get_derived_datatype( task_specific, datatype );
 			/* Increment the refcounter */
 			target_derived_type->ref_count ++;
+			sctk_error("Type %d Refcount %d" , datatype, target_derived_type->ref_count);
 
 		break;
 		
@@ -1947,36 +1951,6 @@ int PMPC_Derived_datatype ( MPC_Datatype * datatype,
 			
 			sctk_debug("NEW type %d\n", *new_type );
 			
-
-			if( types )
-			{
-				/* Now we increment the embedded type refcounter only once per freed datatype
-				 * to do so we walk the datatype array while incrementing a counter at the
-				 * target type offset, later on we just have to refcount the which are non-zero
-				 *  */
-				 short is_datatype_present[ MPC_TYPE_COUNT ];
-				 memset( is_datatype_present, 0 , sizeof( short ) * MPC_TYPE_COUNT );
-				
-				/* Accumulate present datatypes */
-				int j;
-				for( j = 0 ; j < count ; j++ )
-				{
-					if( sctk_datatype_kind( types[j] ) == MPC_DATATYPES_UNKNOWN )
-					{
-						sctk_fatal ( "An erroneous datatype was provided");
-					}
-					
-					is_datatype_present[ types[j] ] = 1;
-				}
-				
-				/* Increment the refcounters of present datatypes */
-				for( j = 0 ; j < MPC_TYPE_COUNT ; j++ )
-				{
-					if( is_datatype_present[ j ] )
-						PMPC_Type_use( j );
-				}
-			}
-			
 			/* We unlock the derived datatype array */
 			sctk_datatype_unlock( task_specific );
 			
@@ -2027,15 +2001,8 @@ int PMPC_Type_convert_to_derived( MPC_Datatype in_datatype, MPC_Datatype * out_d
 		ends_out[0] = type_size - 1;
 		
 		/* Retrieve previous datatype if the type is contiguous */
-		if( sctk_datatype_is_contiguous( in_datatype ) || sctk_datatype_is_common( in_datatype ) )
-		{
-			datatypes_out[0] = in_datatype;
-		}
-		else
-		{
-			/* If we are here the datatype was erroneous */
-			MPC_ERROR_REPORT (MPC_COMM_WORLD, MPC_ERR_ARG, "Failed to retrieve this derived datatype");
-		}
+		datatypes_out[0] = in_datatype;
+
 
 		/* Lets now initialize the new derived datatype */
 		PMPC_Derived_datatype (out_datatype, begins_out, ends_out, datatypes_out, 1, 0, 0, 0, 0);

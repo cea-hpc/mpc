@@ -758,6 +758,30 @@ void sctk_datatype_context_set( struct Datatype_context * ctx , struct Datatype_
 			not_reachable();
 	}
 
+	
+	/* Now we increment the embedded type refcounter only once per freed datatype
+	* to do so we walk the datatype array while incrementing a counter at the
+	* target type offset, later on we just have to refcount the which are non-zero
+	*  */
+	int is_datatype_present[ MPC_TYPE_COUNT ];
+	memset( is_datatype_present, 0 , sizeof( int ) * MPC_TYPE_COUNT );
+
+	/* Accumulate present datatypes */
+	int j;
+	for( j = 0 ; j < n_type ; j++ )
+	{
+		is_datatype_present[ ctx->array_of_types[j] ] = 1;
+	}
+
+	/* Increment the refcounters of present datatypes */
+	for( j = 0 ; j < MPC_TYPE_COUNT ; j++ )
+	{
+		if( is_datatype_present[ j ] )
+		{
+			PMPC_Type_use( j );
+		}
+	}
+
 }
 
 
