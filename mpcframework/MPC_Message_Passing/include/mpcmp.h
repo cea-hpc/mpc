@@ -54,7 +54,7 @@ extern "C"
   typedef int mpc_msg_count;
 
   typedef unsigned int mpc_pack_indexes_t;
-  typedef unsigned long mpc_pack_absolute_indexes_t;
+  typedef long mpc_pack_absolute_indexes_t;
   typedef long MPC_Aint;
   typedef long MPC_Count;
 

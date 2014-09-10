@@ -174,6 +174,7 @@ void sctk_contiguous_datatype_release( sctk_contiguous_datatype_t * type )
 /************************************************************************/
 /* Derived Datatype                                                     */
 /************************************************************************/
+
 void sctk_derived_datatype_init( sctk_derived_datatype_t * type ,
 				 unsigned long count,
                                  mpc_pack_absolute_indexes_t * begins,
@@ -214,6 +215,7 @@ void sctk_derived_datatype_init( sctk_derived_datatype_t * type ,
 	unsigned long j;
 	for (j = 0; j < count; j++)
 	{
+		sctk_nodebug("( %d / %d ) => B : %d  E : %d ",j, count - 1 , type->begins[j], type->ends[j]);
 		type->size += type->ends[j] - type->begins[j] + 1;
 	}
 	
@@ -883,7 +885,9 @@ static inline void Datatype_layout_fill( struct Datatype_layout * l, MPC_Datatyp
 {
 	assume( l != NULL );
 	l->type = datatype;
-	MPC_Type_size (datatype, &l->size);
+	size_t size;
+	MPC_Type_size (datatype, &size);
+	l->size = (MPC_Aint) size;
 	
 }
 

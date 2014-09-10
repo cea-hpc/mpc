@@ -3037,6 +3037,10 @@ static int __INTERNAL__PMPI_Type_create_hindexed_block(int count, int blocklengt
 	int * blocklength_array = sctk_malloc( count * sizeof( int ) );
 	assume( blocklength_array != NULL );
 	
+	int i;
+	for( i = 0 ; i < count ; i++ )
+		blocklength_array[i] = blocklength;
+	
 	/* Call the orignal indexed function */
 	int res = __INTERNAL__PMPI_Type_hindexed(count, blocklength_array, indices, old_type,  newtype);
 	
@@ -3558,7 +3562,7 @@ __INTERNAL__PMPI_Type_ub (MPI_Datatype datatype, MPI_Aint * displacement)
 			{
 				if ((mpc_pack_absolute_indexes_t) * displacement < input_datatype.ends[i])
 				{
-				*displacement = (MPI_Aint) input_datatype.ends[i];
+					*displacement = (MPI_Aint) input_datatype.ends[i];
 				}
 				sctk_nodebug ("Current ub %lu, %lu", input_datatype.ends[i], *displacement);
 			}

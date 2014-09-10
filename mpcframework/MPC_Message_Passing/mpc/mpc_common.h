@@ -24,6 +24,7 @@
 #define MPC_COMMON_H
 
 #include <uthash.h>
+#include "mpcmp.h"
 #include "mpc_info.h"
 #include "mpc_datatypes.h"
 #include "mpc_extended_request.h"
@@ -172,5 +173,6 @@ typedef struct sctk_thread_specific_s sctk_thread_specific_t;
 int __MPC_Waitallp (mpc_msg_count count,
 		   MPC_Request * parray_of_requests[],
 		   MPC_Status array_of_statuses[]);
+
 
 #endif /* MPC_COMMON_H */

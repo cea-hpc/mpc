@@ -6803,8 +6803,7 @@ static inline int __MPC_Add_pack_absolute( void *buf, mpc_msg_count count,
 
 	msg = sctk_mpc_get_message_in_request(request);
 
-	sctk_add_pack_in_message_absolute (msg, buf, count, data_size,
-	begins, ends);
+	sctk_add_pack_in_message_absolute (msg, buf, count, data_size,	begins, ends);
 
 	sctk_mpc_register_message_in_request(request,msg);
 
