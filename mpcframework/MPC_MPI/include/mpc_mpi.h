@@ -203,6 +203,10 @@ extern "C"
 #define MPI_COMPLEX32 MPC_COMPLEX32
 #define MPI_WCHAR MPC_WCHAR
 #define MPI_INTEGER16 MPC_INTEGER16
+#define MPI_AINT MPC_AINT
+#define MPI_OFFSET MPC_OFFSET
+#define MPI_COUNT MPC_COUNT
+
 
 /* Datatype decoders */
 

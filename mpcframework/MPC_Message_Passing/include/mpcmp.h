@@ -354,6 +354,9 @@ typedef int MPC_Info;
 #define MPC_WCHAR 45
 
 #define MPC_INTEGER16 46
+#define MPC_AINT 49
+#define MPC_OFFSET 50
+#define MPC_COUNT 51
 
 /* Datatype decoders */
 

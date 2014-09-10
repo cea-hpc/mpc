@@ -1374,6 +1374,7 @@ int PMPC_Type_free (MPC_Datatype * datatype_p)
 		MPC_ERROR_REPORT (MPC_COMM_WORLD, MPC_ERR_TYPE, "");
 	}
 
+
 	/* Choose what to do in function of the datatype kind */
 	switch( sctk_datatype_kind( datatype ) )
 	{
@@ -1394,6 +1395,7 @@ int PMPC_Type_free (MPC_Datatype * datatype_p)
 			sctk_datatype_unlock( task_specific );
 			/* Free it */
 			sctk_contiguous_datatype_release( continuous_type_target );
+
 		break;
 		
 		case MPC_DATATYPES_DERIVED:
@@ -1410,14 +1412,17 @@ int PMPC_Type_free (MPC_Datatype * datatype_p)
 			if( !derived_type_target )
 			{
 				/* ERROR */
-				MPC_ERROR_REPORT (MPC_COMM_WORLD, MPC_ERR_ARG, "Tried to retrieve an uninitialized datatype");
+				MPC_ERROR_REPORT (MPC_COMM_WORLD, MPC_ERR_ARG, "Tried to release an uninitialized datatype");
 			}
 			
 			/* Free it  (not that the container is also freed in this function */
-			sctk_derived_datatype_release( derived_type_target );
+			if( sctk_derived_datatype_release( derived_type_target ) )
+			{
+				/* Set the pointer to the freed datatype to NULL in the derived datatype array */
+				sctk_task_specific_set_derived_datatype( task_specific, datatype , NULL);
+			}
 			
-			/* Set the pointer to the freed datatype to NULL in the derived datatype array */
-			sctk_task_specific_set_derived_datatype( task_specific, datatype , NULL);
+			
 			
 		break;
 		
@@ -1593,13 +1598,20 @@ int PMPC_Type_get_contents( MPC_Datatype datatype,
 	
 	/* Now we just copy back the content from the context */
 	if( array_of_integers )
-		*array_of_integers= dctx->array_of_integers;
+		memcpy( array_of_integers, dctx->array_of_integers, n_int * sizeof( int ) );
+
 	
 	if( array_of_addresses )
-		*array_of_addresses= dctx->array_of_addresses;
+		memcpy( array_of_addresses, dctx->array_of_addresses, n_addr * sizeof( MPC_Aint ) );
+	
+	
+	/* Flag the datatypes as duplicated */
+	int i;
+	for( i = 0 ; i < n_type ; i++ )
+		PMPC_Type_use( dctx->array_of_types[i] );
 	
 	if( array_of_datatypes )
-		*array_of_datatypes= dctx->array_of_types;
+		memcpy( array_of_datatypes, dctx->array_of_types, n_type * sizeof( MPC_Datatype ) );
 
 	MPC_ERROR_SUCESS();
 }

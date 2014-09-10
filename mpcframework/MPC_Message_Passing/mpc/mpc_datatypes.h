@@ -279,7 +279,7 @@ void sctk_derived_datatype_init( sctk_derived_datatype_t * type ,
  *  \warning This call frees the container when the refcounter reaches 0
  * 
  */
-void sctk_derived_datatype_release( sctk_derived_datatype_t * type );
+int sctk_derived_datatype_release( sctk_derived_datatype_t * type );
 
 /** \brief Get the minimum offset of a derieved datatype (ignoring LB)
  *  \param type Type which true lb is requested

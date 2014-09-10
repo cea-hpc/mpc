@@ -116,6 +116,10 @@ void sctk_common_datatype_init()
   SCTK_INIT_TYPE_SIZE (MPC_COMPLEX16, mpc_double_double );
   SCTK_INIT_TYPE_SIZE (MPC_COMPLEX32, mpc_longdouble_longdouble );
   SCTK_INIT_TYPE_SIZE (MPC_WCHAR, sctk_wchar_t );
+  SCTK_INIT_TYPE_SIZE (MPC_AINT, MPC_Aint );
+  sctk_warning("Temporary datatype while not adding MPIIO");
+  SCTK_INIT_TYPE_SIZE (MPC_OFFSET, MPC_Aint );
+  SCTK_INIT_TYPE_SIZE (MPC_COUNT, MPC_Count );
   
   __sctk_common_type_sizes[MPC_PACKED] = 0;
 }
@@ -224,7 +228,7 @@ void sctk_derived_datatype_init( sctk_derived_datatype_t * type ,
 }
 
 
-void sctk_derived_datatype_release( sctk_derived_datatype_t * type )
+int sctk_derived_datatype_release( sctk_derived_datatype_t * type )
 {
 	sctk_debug( "Derived free REF : %d", type->ref_count );
 	
@@ -276,7 +280,11 @@ void sctk_derived_datatype_release( sctk_derived_datatype_t * type )
 		memset( type, 0 , sizeof( sctk_derived_datatype_t ) );
 		
 		sctk_free (type);
+	
+		return 1;
 	}
+	
+	return 0;
 }
 
 
@@ -499,6 +507,8 @@ static inline MPC_Datatype * please_allocate_an_array_of_datatypes( int count )
 	return ret;
 }
 
+#define CHECK_OVERFLOW( cnt , limit ) do{ assume( cnt < limit ); } while(0)
+
 void sctk_datatype_context_set( struct Datatype_context * ctx , struct Datatype_External_context * dctx  )
 {
 	/* Do we have a context and a type context */
@@ -507,8 +517,10 @@ void sctk_datatype_context_set( struct Datatype_context * ctx , struct Datatype_
 	/* Is the type context initalized */
 	assume( dctx->combiner != MPC_COMBINER_UNKNOWN );
 	
-	/* First clear the target type context */
-	sctk_datatype_context_clear( ctx );
+	/* First we check if there is no previously allocated array
+	 * as it might happen as some datatype constructors
+	 * are built on top of other datatypes */
+	sctk_datatype_context_free( ctx );
 	
 	/* Save the combiner which is always needed */
 	ctx->combiner = dctx->combiner;
@@ -527,6 +539,7 @@ void sctk_datatype_context_set( struct Datatype_context * ctx , struct Datatype_
 	 * already switch the data-type as we have just set it */
 	sctk_datatype_fill_envelope( ctx, &n_int, &n_addr, &n_type, &dummy_combiner);
 
+	
 	/* We call all allocs as if count == 0 it returns NULL */
 	ctx->array_of_integers = please_allocate_an_array_of_integers( n_int );
 	ctx->array_of_addresses = please_allocate_an_array_of_addresses( n_addr );
@@ -550,7 +563,7 @@ void sctk_datatype_context_set( struct Datatype_context * ctx , struct Datatype_
 		case MPC_COMBINER_VECTOR:
 			ctx->array_of_integers[0] = ctx->count;
 			ctx->array_of_integers[1] = dctx->blocklength;
-			ctx->array_of_integers[0] = dctx->stride;
+			ctx->array_of_integers[2] = dctx->stride;
 			ctx->array_of_types[0] = dctx->oldtype;
 		break;
 		case MPC_COMBINER_HVECTOR:
@@ -565,6 +578,7 @@ void sctk_datatype_context_set( struct Datatype_context * ctx , struct Datatype_
 			cnt = 0;
 			for( i = 1 ; i <= ctx->count ; i++ )
 			{
+				CHECK_OVERFLOW( i , n_int );
 				ctx->array_of_integers[i] = dctx->array_of_blocklenght[cnt];
 				cnt++;
 			}
@@ -572,6 +586,7 @@ void sctk_datatype_context_set( struct Datatype_context * ctx , struct Datatype_
 			cnt = 0;
 			for( i = (ctx->count + 1) ; i <= (ctx->count * 2) ; i++ )
 			{
+				CHECK_OVERFLOW( i , n_int );
 				ctx->array_of_integers[i] = dctx->array_of_displacements[cnt];
 				cnt++;
 			}
@@ -584,6 +599,7 @@ void sctk_datatype_context_set( struct Datatype_context * ctx , struct Datatype_
 			cnt = 0;
 			for( i = 1 ; i <= ctx->count ; i++ )
 			{
+				CHECK_OVERFLOW( i , n_int );
 				ctx->array_of_integers[i] = dctx->array_of_blocklenght[cnt];
 				cnt++;
 			}
@@ -591,6 +607,7 @@ void sctk_datatype_context_set( struct Datatype_context * ctx , struct Datatype_
 			cnt = 0;
 			for( i = 0 ; i < ctx->count ; i++ )
 			{
+				CHECK_OVERFLOW( i , n_addr );
 				ctx->array_of_addresses[i] = dctx->array_of_displacements_addr[cnt];
 				cnt++;
 			}
@@ -604,6 +621,7 @@ void sctk_datatype_context_set( struct Datatype_context * ctx , struct Datatype_
 			cnt = 0;
 			for( i = 2 ; i <= ( ctx->count + 1 ) ; i++ )
 			{
+				CHECK_OVERFLOW( i , n_int );
 				ctx->array_of_integers[i] = dctx->array_of_displacements[cnt];
 				cnt++;
 			}
@@ -615,8 +633,9 @@ void sctk_datatype_context_set( struct Datatype_context * ctx , struct Datatype_
 			ctx->array_of_integers[1] = dctx->blocklength;
 			
 			cnt = 0;
-			for( i = 2 ; i <= ( ctx->count + 1 ) ; i++ )
+			for( i = 0 ; i < ctx->count ; i++ )
 			{
+				CHECK_OVERFLOW( i , n_addr );
 				ctx->array_of_addresses[i] = dctx->array_of_displacements_addr[cnt];
 				cnt++;
 			}
@@ -629,6 +648,7 @@ void sctk_datatype_context_set( struct Datatype_context * ctx , struct Datatype_
 			cnt = 0;
 			for( i = 1 ; i <= ctx->count ; i++ )
 			{
+				CHECK_OVERFLOW( i , n_int );
 				ctx->array_of_integers[i] = dctx->array_of_blocklenght[cnt];
 				cnt++;
 			}
@@ -636,6 +656,7 @@ void sctk_datatype_context_set( struct Datatype_context * ctx , struct Datatype_
 			cnt = 0;
 			for( i = 0 ; i < ctx->count ; i++ )
 			{
+				CHECK_OVERFLOW( i , n_addr );
 				ctx->array_of_addresses[i] = dctx->array_of_displacements[cnt];
 				cnt++;
 			}
@@ -643,6 +664,7 @@ void sctk_datatype_context_set( struct Datatype_context * ctx , struct Datatype_
 			cnt = 0;
 			for( i = 0 ; i < ctx->count ; i++ )
 			{
+				CHECK_OVERFLOW( i , n_type );
 				ctx->array_of_types[i] = dctx->array_of_types[cnt];
 				cnt++;
 			}
@@ -653,6 +675,7 @@ void sctk_datatype_context_set( struct Datatype_context * ctx , struct Datatype_
 			cnt = 0;
 			for( i = 1 ; i <= ctx->ndims ; i++ )
 			{
+				CHECK_OVERFLOW( i , n_int );
 				ctx->array_of_integers[i] = dctx->array_of_sizes[cnt];
 				cnt++;
 			}
@@ -660,6 +683,7 @@ void sctk_datatype_context_set( struct Datatype_context * ctx , struct Datatype_
 			cnt = 0;
 			for( i = (ctx->ndims + 1) ; i <= (2 * ctx->ndims) ; i++ )
 			{
+				CHECK_OVERFLOW( i , n_int );
 				ctx->array_of_integers[i] = dctx->array_of_subsizes[cnt];
 				cnt++;
 			}
@@ -667,6 +691,7 @@ void sctk_datatype_context_set( struct Datatype_context * ctx , struct Datatype_
 			cnt = 0;
 			for( i = (2 * ctx->ndims + 1) ; i <= (3 * ctx->ndims) ; i++ )
 			{
+				CHECK_OVERFLOW( i , n_int );
 				ctx->array_of_integers[i] = dctx->array_of_starts[cnt];
 				cnt++;
 			}
@@ -682,6 +707,7 @@ void sctk_datatype_context_set( struct Datatype_context * ctx , struct Datatype_
 			cnt = 0;
 			for( i = 3 ; i <= (ctx->ndims + 2) ; i++ )
 			{
+				CHECK_OVERFLOW( i , n_int );
 				ctx->array_of_integers[i] = dctx->array_of_gsizes[cnt];
 				cnt++;
 			}
@@ -689,6 +715,7 @@ void sctk_datatype_context_set( struct Datatype_context * ctx , struct Datatype_
 			cnt = 0;
 			for( i = (ctx->ndims + 3) ; i <= (2 * ctx->ndims + 2) ; i++ )
 			{
+				CHECK_OVERFLOW( i , n_int );
 				ctx->array_of_integers[i] = dctx->array_of_distribs[cnt];
 				cnt++;
 			}
@@ -696,6 +723,7 @@ void sctk_datatype_context_set( struct Datatype_context * ctx , struct Datatype_
 			cnt = 0;
 			for( i = (2 * ctx->ndims + 3) ; i <= (3 * ctx->ndims + 2) ; i++ )
 			{
+				CHECK_OVERFLOW( i , n_int );
 				ctx->array_of_integers[i] = dctx->array_of_dargs[cnt];
 				cnt++;
 			}
@@ -703,6 +731,7 @@ void sctk_datatype_context_set( struct Datatype_context * ctx , struct Datatype_
 			cnt = 0;
 			for( i = (2 * ctx->ndims + 3) ; i <= (4 * ctx->ndims + 2) ; i++ )
 			{
+				CHECK_OVERFLOW( i , n_int );
 				ctx->array_of_integers[i] = dctx->array_of_psizes[cnt];
 				cnt++;
 			}
@@ -723,9 +752,8 @@ void sctk_datatype_context_set( struct Datatype_context * ctx , struct Datatype_
 			ctx->array_of_addresses[1] = dctx->extent;
 			ctx->array_of_types[0] = dctx->oldtype;
 		break;
-		
-		default:
-			return 1;
+		case MPC_COMBINER_UNKNOWN:
+			not_reachable();
 	}
 
 }
