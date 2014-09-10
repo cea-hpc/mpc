@@ -3595,7 +3595,7 @@ static int __INTERNAL__PMPI_Type_free (MPI_Datatype * datatype)
 static int __INTERNAL__PMPI_Get_elements (MPI_Status * status, MPI_Datatype datatype, int *elements)
 {
 	int res = MPI_SUCCESS;
-	unsigned long size;
+	long long int size;
 	int data_size;
 
 	/* First check if the status is valid */
@@ -3680,21 +3680,58 @@ static int __INTERNAL__PMPI_Get_elements (MPI_Status * status, MPI_Datatype data
 			sctk_assert ( target_type != NULL);
 			sctk_datatype_unlock( task_specific );
 			
-			/* Retrieve the number of block in the datatype */
-			count = target_type->count;
-
-			INFO("This value is false as types are flatenned");
+			/* Try to rely on the datype layout */
+			struct Datatype_layout *layout = sctk_datatype_layout( &target_type->context, &count );
 			
-			/* Count the number of elements by substracting
-			 * individual blocks from total size until reaching 0 */
-			for(i = 0; i < count; i++)
+			int done = 0;
+			
+			if( layout )
 			{
-				(*elements)++;
-				size -= target_type->ends[i] - target_type->begins[i] + 1;
-
-				if(size <= 0)
+				while( !done )
 				{
-					break;
+				
+					sctk_warning("count : %d  size : %d done : %d", count, size, done);
+					for(i = 0; i < count; i++)
+					{
+						sctk_warning("BLOCK SIZE  : %d", layout[i].size );
+						
+						size -= layout[i].size;
+						
+						(*elements)++;
+
+						if(size <= 0)
+						{	
+							done = 1;
+							break;
+						}
+					}
+				
+				}
+				
+				sctk_free(layout);
+			}
+			else
+			{
+				/* Retrieve the number of block in the datatype */
+				count = target_type->count;
+
+				while( !done )
+				{
+					
+					/* Count the number of elements by substracting
+					* individual blocks from total size until reaching 0 */
+					for(i = 0; i < count; i++)
+					{
+						size -= target_type->ends[i] - target_type->begins[i] + 1;
+						
+						(*elements)++;
+
+						if(size <= 0)
+						{
+							done = 1;
+							break;
+						}
+					}
 				}
 			}
 		break;

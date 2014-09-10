@@ -867,3 +867,101 @@ int sctk_datatype_fill_envelope( struct Datatype_context * ctx , int * num_integ
 	
 	return 0;
 }
+
+/************************************************************************/
+/* Datatype  Layout                                                     */
+/************************************************************************/
+
+static inline struct Datatype_layout * please_allocate_layout( int count )
+{
+	struct Datatype_layout * ret = sctk_malloc( sizeof( struct Datatype_layout ) * count );
+	assume( ret != NULL );
+	return ret;
+}
+
+static inline void Datatype_layout_fill( struct Datatype_layout * l, MPC_Datatype datatype )
+{
+	assume( l != NULL );
+	l->type = datatype;
+	MPC_Type_size (datatype, &l->size);
+	
+}
+
+struct Datatype_layout * sctk_datatype_layout( struct Datatype_context * ctx, size_t * ly_count )
+{
+	struct Datatype_layout *ret = NULL;
+	
+	size_t count = 0;
+	size_t ndims = 0;
+	int i, cnt, j;
+	*ly_count = 0;
+	
+	switch( ctx->combiner )
+	{
+		case MPC_COMBINER_RESIZED:
+		case MPC_COMBINER_DUP:
+		case MPC_COMBINER_VECTOR:
+		case MPC_COMBINER_HVECTOR:
+		case MPC_COMBINER_DARRAY:
+		case MPC_COMBINER_SUBARRAY:
+		case MPC_COMBINER_INDEXED_BLOCK:
+		case MPC_COMBINER_HINDEXED_BLOCK:
+			/* Here no surprises the size is always the same */
+			ret = please_allocate_layout( 1 );
+			*ly_count = 1;
+			Datatype_layout_fill( &ret[0] , ctx->array_of_types[0] );
+		break;
+		case MPC_COMBINER_INDEXED:
+		case MPC_COMBINER_HINDEXED:
+		case MPC_COMBINER_STRUCT:
+			/* We have to handle the case of structs where each element can have a size 
+			   and also empty blocklength for indexed types */
+			count = ctx->array_of_integers[0];
+			
+			/* Compute the number of blocks */
+			int number_of_blocks = 0;
+			
+			for( i = 1 ; i <= count ; i++ )
+			{
+				number_of_blocks += ctx->array_of_integers[i + 1] + 1;
+			}
+
+			sctk_nodebug("Num block : %d", number_of_blocks);
+			
+			/* Allocate blocks */
+			ret = please_allocate_layout( number_of_blocks );
+			
+			cnt = 0;
+			for( i = 0 ; i < count ; i++ )
+			{
+				sctk_nodebug("CTX : BL : %d   T : %d", ctx->array_of_integers[i + 1], ctx->array_of_types[i]);
+				
+				/* Here we don't consider empty blocks as elements */
+				if( ctx->array_of_integers[i + 1] == 0 )
+				{
+					/* We ignore blocks of length 0 */
+					continue;
+				}
+				
+				/* And we copy all the individual blocks */
+				for( j = 0 ; j < ctx->array_of_integers[i + 1] ; j++ )
+				{
+					sctk_nodebug("CUR : %d", cnt);
+					Datatype_layout_fill( &ret[cnt] , ctx->array_of_types[i] );
+					cnt++;
+				}
+			}
+			
+			*ly_count = cnt;
+		break;
+
+		case MPC_COMBINER_CONTIGUOUS:
+		case MPC_COMBINER_NAMED:
+		case MPC_COMBINER_F90_REAL:
+		case MPC_COMBINER_F90_COMPLEX:
+		case MPC_COMBINER_F90_INTEGER:
+			return NULL;
+	}
+	
+	return ret;
+}

@@ -155,6 +155,24 @@ void sctk_datatype_context_free( struct Datatype_context * ctx );
  */
 int sctk_datatype_fill_envelope( struct Datatype_context * ctx , int * num_integers, int * num_addresses , int * num_datatypes , int * combiner );
 
+/************************************************************************/
+/* Datatype  Layout                                                     */
+/************************************************************************/
+
+/** \brief This structure is used to retrieve datatype layout from its context
+ *  It is particularly useful in get_elements
+ */
+struct Datatype_layout
+{
+	MPC_Datatype type;
+	MPC_Aint size;
+};
+
+/** \brief Retrieve a type layout from its context 
+ *  \param ctx Target datatype context
+ *  \return NULL on error a list of datatype blocks otherwise
+ */
+struct Datatype_layout * sctk_datatype_layout( struct Datatype_context * ctx, size_t * ly_count );
 
 
 /************************************************************************/
