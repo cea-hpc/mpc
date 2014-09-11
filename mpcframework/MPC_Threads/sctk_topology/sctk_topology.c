@@ -99,9 +99,17 @@ sctk_update_topology (
 
   hwloc_bitmap_zero(cpuset);
   if (hwloc_bitmap_iszero(pin_processor_bitmap)) {
-	  for( i=index_first_processor; i < index_first_processor+processor_number; ++i)
+	  #ifdef __MIC__
+	  	for( i=index_first_processor; i < processor_number; ++i)
+	  #else
+	  	for( i=index_first_processor; i < index_first_processor+processor_number; ++i)
+	  #endif
 	  {
-		  hwloc_obj_t pu = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, i);
+		  #ifdef __MIC__
+		  	hwloc_obj_t pu = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, i%processor_number);
+		  #else
+		  	hwloc_obj_t pu = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, i);
+		  #endif
 		  hwloc_cpuset_t set = hwloc_bitmap_dup(pu->cpuset);
 		  hwloc_bitmap_singlify(set);
 		  hwloc_bitmap_or(cpuset, cpuset, set);
@@ -117,6 +125,7 @@ sctk_update_topology (
 
 	  hwloc_bitmap_copy(cpuset, pin_processor_bitmap);
   }
+
   err = hwloc_topology_restrict(topology, cpuset, HWLOC_RESTRICT_FLAG_ADAPT_DISTANCES);
   assume(!err);
   hwloc_bitmap_copy(topology_cpuset, cpuset);
@@ -248,12 +257,10 @@ sctk_restrict_topology ()
   
 #ifdef __MIC__
 	{
-		#warning "MIC OPTIM"
-		sctk_update_topology (240 , 4 ) ;
+		sctk_update_topology (sctk_processor_number_on_node, get_pu_number_by_core(topology, 0)) ;
 	}
-	/* sctk_update_topology_2 (240,0); */
 #endif
-  
+
   char* pinning_env = getenv("MPC_PIN_PROCESSOR_LIST");
   if (pinning_env != NULL ) {
 	  sctk_expand_pin_processor_list(pinning_env);
@@ -440,20 +447,43 @@ void sctk_topology_init_cpu(){
   sctk_get_cpu_val = -1;
 }
 
+int get_pu_number()
+{
+	int core_number;
+	hwloc_topology_t topology;
+	hwloc_topology_init(&topology);
+	hwloc_topology_load(topology);
+
+	int depth = hwloc_get_type_depth(topology, HWLOC_OBJ_PU);
+	if(depth == HWLOC_TYPE_DEPTH_UNKNOWN)
+	{
+		core_number = -1;
+	}
+	else
+	{
+		core_number = hwloc_get_nbobjs_by_depth(topology, depth);
+	}
+
+	hwloc_topology_destroy(topology);
+	return core_number;
+}
+
+int get_pu_number_by_core(hwloc_topology_t topology, int core)
+{
+	int core_number;
+
+	hwloc_obj_t obj_pu_per_core = hwloc_get_obj_by_type(topology, HWLOC_OBJ_CORE, core);
+	int pu_per_core = obj_pu_per_core->arity;
+
+	return pu_per_core;
+}
+
 /*! \brief Initialize the topology module
 */
   void
 sctk_topology_init ()
 {
   char* xml_path;
-#if 0
-#ifdef __MIC__
-	{
-		#warning "MIC OPTIM"
-		sctk_enable_smt_capabilities = 1;
-	}
-#endif
-#endif
 
 #ifdef MPC_Message_Passing
   if(sctk_process_number > 1){

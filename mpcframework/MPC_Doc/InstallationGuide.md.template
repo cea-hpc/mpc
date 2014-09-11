@@ -61,7 +61,7 @@ Cross-compilation Installation guide
 
         $ ./installmpc --prefix=$HOME/install-mpc --target=mic --compiler=icc  
           --arch-library-path=(Path to Intel lib for mic architecture) --disable-mpc-gcc 
-          --disable-mpc-gdb
+          --disable-mpc-gdb --with-sysroot=(path to the MPSS directory)
         
     __--target=mic__: specify the target architecture. You can either use _--target=mic_ or _--target=k1om_.  
     __--compiler=icc__: specify the compiler to be used by MPC. Here _icc_ has to be selected.  

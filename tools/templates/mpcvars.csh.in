@@ -1,0 +1,55 @@
+#!/bin/csh
+set MPC_INSTALL_DIR_PREFIX="@PREFIX@"
+
+set called=($_)
+if ( "$called" != "" ) then
+	set script_fn=`readlink -f $called[2]`
+else
+	set script_fn=`readlink -f $0`
+endif
+
+if ($?MPC_RPREFIX) then
+	set mpc_rprefix=`echo "$MPC_RPREFIX" | sed -e 's/\//\\\//g'`
+	if ($?PATH) then
+		set PATH=`echo ${PATH} | awk -v RS=: -v ORS=: '/'"$mpc_rprefix"'/ {next} {print}' | sed 's/:*$//'`
+	endif
+	if ($?MANPATH) then
+		set MANPATH=`echo ${MANPATH} | awk -v RS=: -v ORS=: '/'"$mpc_rprefix"'/ {next} {print}' | sed 's/:*$//'`
+	endif
+	if ($?LIBRARY_PATH) then
+		set LIBRARY_PATH=`echo ${LIBRARY_PATH} | awk -v RS=: -v ORS=: '/'"$mpc_rprefix"'/ {next} {print}' | sed 's/:*$//'`
+	endif
+	if ($?LD_LIBRARY_PATH) then
+		set LD_LIBRARY_PATH=`echo ${LD_LIBRARY_PATH} | awk -v RS=: -v ORS=: '/'"$mpc_rprefix"'/ {next} {print}' | sed 's/:*$//'`
+	endif
+endif
+
+set scriptpath="`dirname ${script_fn}`"
+setenv MPC_INSTALL_DIR_PREFIX $scriptpath
+setenv MPC_RPREFIX $scriptpath
+
+set uname=`uname -m`
+if ( "$#argv" == "1" ) then
+	set module="$argv[1]"
+	if ( -d "$MPC_RPREFIX/$module" ) then
+		echo "load ${module} module (${MPC_RPREFIX})"
+    	source "${MPC_RPREFIX}/${module}/${module}/bin/mpcvars.csh"
+    	setenv MPC_SUBPREFIX "/${module}/${module}/"
+	else
+		echo "#####################################################################"
+		echo "# You don't have any installation for the architecture $argv[1]"
+		echo "#####################################################################"
+	endif
+else
+	set module="${uname}"
+	if ( -d "$MPC_RPREFIX/$module" ) then
+		echo "load ${module} module (${MPC_RPREFIX})"
+    	source "${MPC_RPREFIX}/${module}/${module}/bin/mpcvars.csh"
+    	setenv MPC_SUBPREFIX "/${module}/${module}/"
+	else
+		echo "#####################################################################"
+		echo "# You don't have any installation for the architecture $uname"
+		echo "#####################################################################"
+	endif
+endif
+

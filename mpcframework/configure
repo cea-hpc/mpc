@@ -282,12 +282,8 @@ for arg in "$@" ; do
     SCTK_F77=ifort
     SCTK_CFLAGS="$SCTK_CFLAGS -mmic -Wl,-rpath=${SCTK_ARCH_LIBRARY_PATH}"
     SCTK_LDFLAGS="$SCTK_LDFLAGS -mmic "
-    #SCTK_AR=/usr/linux-k1om-4.7/bin/x86_64-k1om-linux-ar
-    #SCTK_LD=/usr/linux-k1om-4.7/bin/x86_64-k1om-linux-ld
-    #SCTK_AR=`echo "${SCTK_PREFIX}" | sed -re 's#'"${MPC_TARGET}"'|'"${MPC_HOST}"'#'"${MPC_HOST}"'#g'`/bin/x86_64-k1om-linux-ar
-    #SCTK_LD=`echo "${SCTK_PREFIX}" | sed -re 's#'"${MPC_TARGET}"'|'"${MPC_HOST}"'#'"${MPC_HOST}"'#g'`/bin/x86_64-k1om-linux-ld
-    SCTK_AR=`echo "${SCTK_PREFIX}" | sed '0,/'"${MPC_TARGET}"'/s/'"${MPC_TARGET}"'/'"${MPC_HOST}"'/'`/bin/x86_64-k1om-linux-ar
-    SCTK_LD=`echo "${SCTK_PREFIX}" | sed '0,/'"${MPC_TARGET}"'/s/'"${MPC_TARGET}"'/'"${MPC_HOST}"'/'`/bin/x86_64-k1om-linux-ld
+    SCTK_AR=`echo "${SCTK_PREFIX}" | sed '0,/'"${MPC_TARGET}"'/s/'"${MPC_TARGET}"'/'"${MPC_HOST}"'/'`/bin/ar
+    SCTK_LD=`echo "${SCTK_PREFIX}" | sed '0,/'"${MPC_TARGET}"'/s/'"${MPC_TARGET}"'/'"${MPC_HOST}"'/'`/bin/ld
     ;;
     --arch-library-path=*)
     SCTK_ARCH_LIBRARY_PATH="`echo A$arg | sed -e 's/A--arch-library-path=//g'`"

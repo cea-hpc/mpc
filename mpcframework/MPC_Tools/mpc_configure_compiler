@@ -112,17 +112,17 @@ esac
 use_mpc_privat="true"
 
 # Regular flags and compiler (C, C++ or fortran)
-if test "${BINUTILS_PREFIX}" != "disabled" -a "$use_mpc_privat" = "true" -a "${CC}" != "gcc" -a "${CC}" != "gcc";
+if test "${BINUTILS_PREFIX}" != "disabled" -a "$use_mpc_privat" = "true" -a "${CC}" != "gcc";
 then
 cat <<EOF >> $1
-CFLAGS="\`\${MPC_RPREFIX}/${MPC_SUBPREFIX}/bin/mpc_cflags $2\`"
-LDFLAGS="\`\${MPC_RPREFIX}/${MPC_SUBPREFIX}/bin/mpc_ldflags $2\` -B\${MPC_RPREFIX}/${MPC_SUBPREFIX}/bin"
+CFLAGS="\`\${MPC_RPREFIX}/\${MPC_TARGET_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/bin/mpc_cflags $2\`"
+LDFLAGS="\`\${MPC_RPREFIX}/\${MPC_TARGET_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/bin/mpc_ldflags $2\` -B\${MPC_RPREFIX}/\${MPC_HOST_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/bin"
 CC=$CC
 EOF
-else
+else 
 cat <<EOF >> $1
-CFLAGS="\`\${MPC_RPREFIX}/${MPC_SUBPREFIX}/bin/mpc_cflags $2\`"
-LDFLAGS="\`\${MPC_RPREFIX}/${MPC_SUBPREFIX}/bin/mpc_ldflags $2\`"
+CFLAGS="\`\${MPC_RPREFIX}/\${MPC_TARGET_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/bin/mpc_cflags $2\`"
+LDFLAGS="\`\${MPC_RPREFIX}/\${MPC_TARGET_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/bin/mpc_ldflags $2\`"
 CC=$CC
 EOF
 fi
@@ -130,7 +130,7 @@ fi
 
 # More variable definitions (Library path, show and different shades of args)
 cat << EOF >> $1
-#LIB_PATH="-Wl,-rpath,\${MPC_RPREFIX}/${MPC_SUBPREFIX}/lib ${LIB_PATH}"
+#LIB_PATH="-Wl,-rpath,\${MPC_RPREFIX}/\${MPC_TARGET_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/lib ${LIB_PATH}"
 if test "\$MPC_MAKEFILE" != "" ; then 
 LIB_PATH=""
 fi
@@ -247,9 +247,9 @@ cat << EOF >> $1
 	addarg=no
 	
 	echo "loading \${TARGET} options..."
-	if test -f "`echo "\\${MPC_RPREFIX}/${MPC_SUBPREFIX}" | sed -re 's#'"${MPC_HOST}"'|'"${MPC_TARGET}"'#\${TARGET}#g'`/.target_options"; then
-		. `echo "\\${MPC_RPREFIX}/${MPC_SUBPREFIX}" | sed -re 's#'"${MPC_HOST}"'|'"${MPC_TARGET}"'#\${TARGET}#g'`/.target_options
-		cat `echo "\\${MPC_RPREFIX}/${MPC_SUBPREFIX}" | sed -re 's#'"${MPC_HOST}"'|'"${MPC_TARGET}"'#\${TARGET}#g'`/.target_options
+	if test -f "`echo "\\${MPC_RPREFIX}/\${MPC_TARGET_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}" | sed -re 's#'"${MPC_HOST}"'|'"${MPC_TARGET}"'#\${TARGET}#g'`/.target_options"; then
+		. `echo "\\${MPC_RPREFIX}/\${MPC_TARGET_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}" | sed -re 's#'"${MPC_HOST}"'|'"${MPC_TARGET}"'#\${TARGET}#g'`/.target_options
+		cat `echo "\\${MPC_RPREFIX}/\${MPC_TARGET_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}" | sed -re 's#'"${MPC_HOST}"'|'"${MPC_TARGET}"'#\${TARGET}#g'`/.target_options
 	else
 		echo "This architecture is not supported"
 		exit 1
@@ -295,7 +295,7 @@ cat << EOF >> $1
 
     # Update compiler arguments
     if [ \$addarg = yes ] ; then
-        allargs="\$allargs \$qarg"
+        allargs="\$allargs '\$qarg'"
 EOF
 
 cat << EOF >> $1
@@ -492,7 +492,7 @@ for i in "\$@" ; do
     fi
 
     if test "\$i" = "-fopenmp" -o "\$i" = "-openmp" ; then
-	CURRENT_ARG="\${CURRENT_ARG} -B \${MPC_RPREFIX}/\${MPC_SUBPREFIX}"
+	CURRENT_ARG="\${CURRENT_ARG} -B \${MPC_RPREFIX}/\${MPC_TARGET_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}"
     fi
 
     if test "\$i" = "-compilers" ; then
@@ -540,7 +540,7 @@ for i in "\$@" ; do
 done
 
 EOF
-if test "$4" = "intel"; then
+if test "$4" = "intel" -o "${CC}" = "icc"; then
 cat <<EOF >> $1
 MPC_USE_INTEL_COMPILER=1
 export MPC_USE_INTEL_COMPILER
@@ -548,7 +548,7 @@ EOF
 fi
 cat <<EOF >> $1
 
-eval "\${MPC_RPREFIX}/${MPC_SUBPREFIX}/bin/$3 \$ADD_FLAG_PRIVATIZE \$COMPILER_ARGS"
+eval "\${MPC_RPREFIX}/\${MPC_TARGET_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/bin/$3 \$ADD_FLAG_PRIVATIZE \$COMPILER_ARGS"
 
 EOF
 
@@ -556,86 +556,86 @@ EOF
 
 #fill target options for mpc_cc
 #for the host
-if test "`echo ${MPC_RPREFIX}/${MPC_SUBPREFIX}/ | grep "${SCTK_ARCH}"`" = ""; then
-	if test ! -d "${MPC_RPREFIX}/${MPC_SUBPREFIX}/"; then
-			mkdir -p "${MPC_RPREFIX}/${MPC_SUBPREFIX}/"
+if test "`echo ${MPC_RPREFIX}/${MPC_TARGET_SUBPREFIX}/${MPC_TARGET_SUBPREFIX}/ | grep "${SCTK_ARCH}"`" = ""; then
+	if test ! -d "${MPC_RPREFIX}/${MPC_TARGET_SUBPREFIX}/${MPC_TARGET_SUBPREFIX}/"; then
+			mkdir -p "${MPC_RPREFIX}/${MPC_TARGET_SUBPREFIX}/${MPC_TARGET_SUBPREFIX}/"
 	fi
 	
-	if test -f "\${MPC_RPREFIX}/${MPC_SUBPREFIX}/.target_options"; then
-		rm "${MPC_RPREFIX}/${MPC_SUBPREFIX}/.target_options"
-		touch "${MPC_RPREFIX}/${MPC_SUBPREFIX}/.target_options"
+	if test -f "\${MPC_RPREFIX}/\${MPC_TARGET_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/.target_options"; then
+		rm "${MPC_RPREFIX}/${MPC_TARGET_SUBPREFIX}/${MPC_TARGET_SUBPREFIX}/.target_options"
+		touch "${MPC_RPREFIX}/${MPC_TARGET_SUBPREFIX}/${MPC_TARGET_SUBPREFIX}/.target_options"
 	else
-		touch "${MPC_RPREFIX}/${MPC_SUBPREFIX}/.target_options"
+		touch "${MPC_RPREFIX}/${MPC_TARGET_SUBPREFIX}/${MPC_TARGET_SUBPREFIX}/.target_options"
 	fi
 	case `uname -m` in
 		x86_64)
-cat <<EOF >> "${MPC_RPREFIX}/${MPC_SUBPREFIX}/.target_options"
+cat <<EOF >> "${MPC_RPREFIX}/${MPC_TARGET_SUBPREFIX}/${MPC_TARGET_SUBPREFIX}/.target_options"
 #!/bin/sh
 SCTK_MIC=0
 export SCTK_MIC
 CC=`head -n 1 \${MPC_RPREFIX}/.c_compilers`
 export CC
 addarg=no
-CFLAGS="\`\${MPC_RPREFIX}/${MPC_SUBPREFIX}/bin/mpc_cflags c\`"
+CFLAGS="\`\${MPC_RPREFIX}/\${MPC_TARGET_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/bin/mpc_cflags c\`"
 export CFLAGS
-LDFLAGS="\`\${MPC_RPREFIX}/${MPC_SUBPREFIX}/bin/mpc_ldflags c\`"	
+LDFLAGS="\`\${MPC_RPREFIX}/\${MPC_TARGET_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/bin/mpc_ldflags c\`"	
 export LDFLAGS
 EOF
 		;;
 		k1om)
-cat <<EOF >> "${MPC_RPREFIX}/${MPC_SUBPREFIX}/.target_options"
+cat <<EOF >> "${MPC_RPREFIX}/${MPC_TARGET_SUBPREFIX}/${MPC_TARGET_SUBPREFIX}/.target_options"
 #!/bin/sh
 SCTK_MIC=1
 export SCTK_MIC
 CC=icc
 export CC
 addarg=no
-CFLAGS="\`\${MPC_RPREFIX}/${MPC_SUBPREFIX}/bin/mpc_cflags c\` -mmic"
+CFLAGS="\`\${MPC_RPREFIX}/\${MPC_TARGET_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/bin/mpc_cflags c\` -mmic"
 export CFLAGS
-LDFLAGS="\`\${MPC_RPREFIX}/${MPC_SUBPREFIX}/bin/mpc_ldflags c\` -mmic"
+LDFLAGS="\`\${MPC_RPREFIX}/\${MPC_TARGET_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/bin/mpc_ldflags c\` -mmic -B\${MPC_RPREFIX}/\${MPC_HOST_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/bin"
 export LDFLAGS
 EOF
 		;;
 	esac
 else
 #for the target
-	if test ! -d "${MPC_RPREFIX}/${MPC_SUBPREFIX}/"; then
-		mkdir -p "${MPC_RPREFIX}/${MPC_SUBPREFIX}/"
+	if test ! -d "${MPC_RPREFIX}/${MPC_TARGET_SUBPREFIX}/${MPC_TARGET_SUBPREFIX}/"; then
+		mkdir -p "${MPC_RPREFIX}/${MPC_TARGET_SUBPREFIX}/${MPC_TARGET_SUBPREFIX}/"
 	fi
 	
-	if test -f "${MPC_RPREFIX}/${MPC_SUBPREFIX}/.target_options"; then
-		rm "${MPC_RPREFIX}/${MPC_SUBPREFIX}/.target_options"
-		touch "${MPC_RPREFIX}/${MPC_SUBPREFIX}/.target_options"
+	if test -f "${MPC_RPREFIX}/${MPC_TARGET_SUBPREFIX}/${MPC_TARGET_SUBPREFIX}/.target_options"; then
+		rm "${MPC_RPREFIX}/${MPC_TARGET_SUBPREFIX}/${MPC_TARGET_SUBPREFIX}/.target_options"
+		touch "${MPC_RPREFIX}/${MPC_TARGET_SUBPREFIX}/${MPC_TARGET_SUBPREFIX}/.target_options"
 	else
-		touch "${MPC_RPREFIX}/${MPC_SUBPREFIX}/.target_options"
+		touch "${MPC_RPREFIX}/${MPC_TARGET_SUBPREFIX}/${MPC_TARGET_SUBPREFIX}/.target_options"
 	fi
 	#for the target
 	case "${SCTK_ARCH}" in 
 		x86_64)
-cat <<EOF >> "${MPC_RPREFIX}/${MPC_SUBPREFIX}/.target_options"
+cat <<EOF >> "${MPC_RPREFIX}/${MPC_TARGET_SUBPREFIX}/${MPC_TARGET_SUBPREFIX}/.target_options"
 #!/bin/sh
 SCTK_MIC=0
 export SCTK_MIC
 CC=`head -n 1 \${MPC_RPREFIX}/.c_compilers`
 export CC
 addarg=no
-CFLAGS="\`\${MPC_RPREFIX}/${MPC_SUBPREFIX}/bin/mpc_cflags c\`"
+CFLAGS="\`\${MPC_RPREFIX}/\${MPC_TARGET_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/bin/mpc_cflags c\`"
 export CFLAGS
-LDFLAGS="\`\${MPC_RPREFIX}/${MPC_SUBPREFIX}/bin/mpc_ldflags c\`"	
+LDFLAGS="\`\${MPC_RPREFIX}/\${MPC_TARGET_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/bin/mpc_ldflags c\`"	
 export LDFLAGS
 EOF
 		;;
 		k1om)
-cat <<EOF >> "${MPC_RPREFIX}/${MPC_SUBPREFIX}/.target_options"
+cat <<EOF >> "${MPC_RPREFIX}/${MPC_TARGET_SUBPREFIX}/${MPC_TARGET_SUBPREFIX}/.target_options"
 #!/bin/sh
 SCTK_MIC=1
 export SCTK_MIC
 CC=icc
 export CC
 addarg=no
-CFLAGS="\`\${MPC_RPREFIX}/${MPC_SUBPREFIX}/bin/mpc_cflags c\` -mmic"
+CFLAGS="\`\${MPC_RPREFIX}/\${MPC_TARGET_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/bin/mpc_cflags c\` -mmic"
 export CFLAGS
-LDFLAGS="\`\${MPC_RPREFIX}/${MPC_SUBPREFIX}/bin/mpc_ldflags c\` -mmic"	
+LDFLAGS="\`\${MPC_RPREFIX}/\${MPC_TARGET_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/bin/mpc_ldflags c\` -mmic -B\${MPC_RPREFIX}/\${MPC_HOST_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/bin"	
 export LDFLAGS
 EOF
 		;;
@@ -654,11 +654,11 @@ if test "${COMPILER_LIST}" != "" ; then
     # Generate C compiler
     #
     begin_section Generate C Compiler: mpc_cc_$i
-      CC=`echo "\\${MPC_RPREFIX}/${MPC_SUBPREFIX}/bin/mpc-gcc_$i"`
+      CC=`echo "\\${MPC_RPREFIX}/\${MPC_TARGET_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/bin/mpc-gcc_$i"`
 #      if test "${SCTK_ARCH}" = "x86_64" ; then
-#	LIB_PATH="-Wl,-rpath,\${MPC_RPREFIX}/${MPC_SUBPREFIX}/../gcc/lib64"
+#	LIB_PATH="-Wl,-rpath,\${MPC_RPREFIX}/\${MPC_TARGET_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/../gcc/lib64"
 #      else
-#	LIB_PATH="-Wl,-rpath,\${MPC_RPREFIX}/${MPC_SUBPREFIX}/../gcc/lib"
+#	LIB_PATH="-Wl,-rpath,\${MPC_RPREFIX}/\${MPC_TARGET_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/../gcc/lib"
 #      fi
 	  
 	  if test "${i}" = "gcc" ; then
@@ -682,7 +682,7 @@ if test "${COMPILER_LIST}" != "" ; then
     # Generate C++ compiler
     #
     begin_section Generate C++ Compiler: mpc_cxx_${i}
-	  CC=`echo "\\${MPC_RPREFIX}/${MPC_SUBPREFIX}/bin/mpc-g++_$i"`
+	  CC=`echo "\\${MPC_RPREFIX}/\${MPC_TARGET_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/bin/mpc-g++_$i"`
       if test "${i}" = "gcc" ; then
 		CC=g++
 	  fi
@@ -697,7 +697,7 @@ if test "${COMPILER_LIST}" != "" ; then
     #
     if test "$SCTK_FORTRAN" = "1" ; then 
       begin_section Generate Fortran77 Compiler: mpc_f77_${i}
-	CC=`echo "\\${MPC_RPREFIX}/${MPC_SUBPREFIX}/bin/mpc-gfortran_$i"`
+	CC=`echo "\\${MPC_RPREFIX}/\${MPC_TARGET_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/bin/mpc-gfortran_$i"`
 	if test "${i}" = "gcc" ; then
 		CC=gfortran
 	fi

@@ -1059,7 +1059,7 @@ void sctk_communicator_world_init(const int nb_task)
 		
 		sctk_nodebug("host_number = %d, mic_nb_task = %d, host_nb_task = %d", host_number, mic_nb_task, host_nb_task);
 		
-		#if __MIC__
+		#if __MIC2__
 			local_tasks = mic_nb_task/process_on_node_number;
 			if ((mic_nb_task % process_on_node_number) > process_on_node_rank)
 			{

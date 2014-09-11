@@ -87,9 +87,14 @@ getBinaryTarget()
         BT_out="${1}"
         binary="${2}"
 
-	archDetected="`readelf -h ${binary} | grep "Machine:" | cut -f 2 -d ':'`"
+    #check readelf exists
+    ret="`command -v readelf >/dev/null 2>&1 || echo 'readelf does no exist'`"
+    
+    if [ "${ret}" = "" ]; then
+        archDetected="`readelf -h ${binary} | grep 'Machine:' | cut -f 2 -d ':'`"
+        getArch outTmp "${archDetected}"
+    fi
 
-	getArch outTmp "${archDetected}"
-
-	eval "${BT_out}=\"${outTmp}\""
+    eval "${BT_out}=\"${outTmp}\""
 }
+

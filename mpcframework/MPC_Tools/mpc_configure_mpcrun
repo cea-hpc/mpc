@@ -39,6 +39,7 @@ header_sh >> bin/mpcrun
 cat <<EOF >> bin/mpcrun
 
 prefix=\${MPC_RPREFIX}/${MPC_SUBPREFIX}
+MPC_INSTALL_DIR_PREFIX=${MPC_RPREFIX}
 exec_prefix=\${MPC_RPREFIX}/${MPC_SUBPREFIX}/bin
 MPC_BIN_DIR=\${MPC_RPREFIX}/${MPC_SUBPREFIX}/bin
 MPC_LIB_DIR=\${MPC_RPREFIX}/${MPC_SUBPREFIX}/lib

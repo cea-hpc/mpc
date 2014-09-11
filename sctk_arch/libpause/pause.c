@@ -26,7 +26,11 @@
 #if defined(SCTK_i686_ARCH_SCTK) || defined(SCTK_x86_64_ARCH_SCTK)
 static inline void __sctk_cpu_relax ()
 {
-  __asm__ __volatile__ ("rep;nop":::"memory");
+  #ifdef __MIC__
+    _mm_delay_32(400);
+  #else
+    __asm__ __volatile__ ("rep;nop":::"memory");
+  #endif
 }
 #elif defined(SCTK_ia64_ARCH_SCTK)
 static inline void __sctk_cpu_relax ()

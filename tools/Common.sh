@@ -682,6 +682,14 @@ registerPackage()
 			target)
 				ALL_PACKAGES_TARGET="${ALL_PACKAGES_TARGET} ${1}"
 			;;
+			all)
+				if test "`echo \"${ALL_PACKAGES_HOST} \" | grep \"${1}\"`" = ""; then
+					ALL_PACKAGES_HOST="${ALL_PACKAGES_HOST} ${1}"
+				fi
+				if test "`echo \"${ALL_PACKAGES_TARGET} \" | grep \"${1}\"`" = ""; then
+					ALL_PACKAGES_TARGET="${ALL_PACKAGES_TARGET} ${1}"
+				fi
+			;;
 		esac
 }
 

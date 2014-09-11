@@ -56,7 +56,8 @@ Defaults for the options are specified in brackets.
 # Cross-compilation
   --target=*                              : Specify architecture for target
   --host=*                                : Specify architecture for host
-  --arch-library-path                     : Specify path for architecture libraries
+  --arch-library-path=*                   : Specify path for architecture libraries
+  --with-sysroot=*                        : Specify path for sysroot (MPSS for MIC)
 
 # Features
   --disable-color                         : Disable colors in display

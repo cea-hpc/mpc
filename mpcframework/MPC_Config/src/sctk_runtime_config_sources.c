@@ -563,25 +563,34 @@ void sctk_runtime_config_sources_open(struct sctk_runtime_config_sources * confi
 	const char * tmp;
 	const char * mpc_rprefix = getenv("MPC_RPREFIX");
 	const char * mpc_subprefix = getenv("MPC_SUBPREFIX");
+    const char * mpc_target_subprefix = getenv("MPC_TARGET_SUBPREFIX");
 
 	assume_m((mpc_rprefix != NULL), "You need to source the mpcvars.sh file in the root of your install path");
 	assume_m((mpc_subprefix != NULL),"You need to source the mpcvars.sh file in the root of your install path");
-	
+
+    char * mpc_destprefix = NULL;
+    mpc_destprefix  = (char *)malloc(1024*sizeof(char));
+    strcat(mpc_destprefix, "/");
+    strcat(mpc_destprefix, mpc_target_subprefix);
+    strcat(mpc_destprefix, "/");
+    strcat(mpc_destprefix, mpc_target_subprefix);
 	char * def_sys_path = NULL;
 	def_sys_path = (char *)malloc(1024*sizeof(char));
 	strcat(def_sys_path, mpc_rprefix); 
-	strcat(def_sys_path, mpc_subprefix);
+	strcat(def_sys_path, mpc_destprefix);
 	strcat(def_sys_path, "/share/mpc/config.xml");
 	char * def_sys_path_fallback = NULL;
 	def_sys_path_fallback = (char *)malloc(1024*sizeof(char));
 	strcat(def_sys_path_fallback, mpc_rprefix); 
-	strcat(def_sys_path_fallback, mpc_subprefix);
+	strcat(def_sys_path_fallback, mpc_destprefix);
 	strcat(def_sys_path_fallback, "/share/mpc/config.xml.example");
 	char * def_schema_path = NULL;
 	def_schema_path = (char *)malloc(1024*sizeof(char));
 	strcat(def_schema_path, mpc_rprefix); 
-	strcat(def_schema_path, mpc_subprefix);
+	strcat(def_schema_path, mpc_destprefix);
 	strcat(def_schema_path, "/share/mpc/mpc-config.xsd");
+
+    free(mpc_destprefix);
 
 	/* errors */
 	assert(config_sources != NULL);
