@@ -77,7 +77,7 @@ extern "C"
 /* #define MPC_REQUEST_SIZE 30 */
 
   /* Has to match an sctk_datatype_t */
-  typedef unsigned int MPC_Datatype;
+  typedef int MPC_Datatype;
   typedef void (*MPC_Op_f) (const void *, void *, size_t, MPC_Datatype);
   typedef void (MPC_User_function) (void *, void *, int *, MPC_Datatype *);
 
@@ -550,6 +550,7 @@ typedef enum
 
   /*Types */
   int MPC_Type_size (MPC_Datatype, size_t *);
+  int MPC_Type_is_allocated (MPC_Datatype datatype, int * flag );
   int MPC_Type_hcontiguous (MPC_Datatype *, size_t);
   int MPC_Type_free (MPC_Datatype * datatype);
   int MPC_Type_dup( MPC_Datatype old_type, MPC_Datatype * new_type ); 
@@ -872,6 +873,7 @@ int MPC_Test_cancelled (MPC_Status *, int *);
 
   /*Types */
   int PMPC_Type_size (MPC_Datatype, size_t *);
+  int PMPC_Type_is_allocated (MPC_Datatype datatype, int * flag );
   int PMPC_Type_hcontiguous (MPC_Datatype *outtype, size_t count, MPC_Datatype *data_in);
   int __MPC_Barrier (MPC_Comm comm);
   int PMPC_Type_free (MPC_Datatype * datatype);

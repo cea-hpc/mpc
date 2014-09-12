@@ -29,7 +29,7 @@
 #include <sctk_spinlock.h>
 #include <sctk_thread.h>
 
-typedef unsigned int sctk_datatype_t;
+typedef int sctk_datatype_t;
 #define sctk_null_data_type ((sctk_datatype_t)(-1))
 struct sctk_internal_collectives_struct_s;
 

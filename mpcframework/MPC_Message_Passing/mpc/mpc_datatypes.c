@@ -176,6 +176,7 @@ void sctk_contiguous_datatype_release( sctk_contiguous_datatype_t * type )
 /************************************************************************/
 
 void sctk_derived_datatype_init( sctk_derived_datatype_t * type ,
+				 MPC_Datatype id,
 				 unsigned long count,
                                  mpc_pack_absolute_indexes_t * begins,
                                  mpc_pack_absolute_indexes_t * ends,
@@ -185,7 +186,10 @@ void sctk_derived_datatype_init( sctk_derived_datatype_t * type ,
 				 mpc_pack_absolute_indexes_t ub,
 				 int is_ub )
 {
-	sctk_debug( "Derived create");
+	sctk_debug( "Derived create ID %d", id);
+	/* Set the interger id */
+	type->id = id;
+	
 	/* We now allocate the offset pairs */
 	type->begins = (mpc_pack_absolute_indexes_t *) sctk_malloc (count * sizeof(mpc_pack_absolute_indexes_t));
 	type->ends = (mpc_pack_absolute_indexes_t *) sctk_malloc (count * sizeof(mpc_pack_absolute_indexes_t));
@@ -232,7 +236,7 @@ void sctk_derived_datatype_init( sctk_derived_datatype_t * type ,
 
 int sctk_derived_datatype_release( sctk_derived_datatype_t * type )
 {
-	sctk_debug( "Derived free REF : %d", type->ref_count );
+	sctk_debug( "Derived %d free REF : %d", type->id, type->ref_count );
 	
 	
 	/* Here we decrement the refcounter */
@@ -248,28 +252,49 @@ int sctk_derived_datatype_release( sctk_derived_datatype_t * type )
 		short is_datatype_present[ MPC_TYPE_COUNT ];
 		memset( is_datatype_present, 0 , sizeof( short ) * MPC_TYPE_COUNT );
 		
-		/* Accumulate present datatypes */
+		
+		/* We now have to decrement the refcounter 
+		 * First we try to get the layout and if we fail we
+		 * abort as it means that this datatype has
+		 * no layout and was not handled in set_context */
+
+		/* Try to rely on the datype layout */
 		int i;
-		for( i = 0 ; i < type->count ; i++ )
+		size_t count;
+		struct Datatype_layout *layout = sctk_datatype_layout( &type->context, &count );
+
+		if( layout )
 		{
-			if( sctk_datatype_kind( type->datatypes[i] ) == MPC_DATATYPES_UNKNOWN )
+			int to_free[MPC_TYPE_COUNT];
+			
+			memset( to_free, 0, sizeof( int ) * MPC_TYPE_COUNT );
+			
+			
+			for(i = 0; i < count; i++)
 			{
-				sctk_fatal ( "An erroneous datatype was provided");
+				/* We cannot free common datatypes */
+				if( !sctk_datatype_is_common(layout[i].type)
+				&&  !sctk_datatype_is_boundary(layout[i].type ))
+					to_free[layout[i].type] = 1;
 			}
 			
-			is_datatype_present[ type->datatypes[i] ] = 1;
-		}
-		
-		/* Decrement the refcounters of present datatypes */
-		for( i = 0 ; i < MPC_TYPE_COUNT; i++ )
-		{
-			/* Make sure not to free common datatypes */
-			if( is_datatype_present[i]  && !sctk_datatype_is_common(i) )
+			sctk_free(layout);
+			
+			/* Now free each type only once */
+			for(i = 0; i < MPC_TYPE_COUNT; i++)
 			{
-				MPC_Datatype tmp_type = (unsigned int)i;
-				PMPC_Type_free( &tmp_type );
+				if( to_free[i] )
+				{
+					MPC_Datatype tmp = i;
+					PMPC_Type_free( &tmp );
+				}
 			}
 		}
+		else
+		{
+			sctk_fatal("We found a derived datatype %d with no layout", type->id); 
+		}
+		
 		
 		
 		/* Counter == 0 then free */
@@ -330,11 +355,11 @@ void Datatype_Array_init( struct Datatype_Array * da )
 }
 
 
-int Datatype_Array_type_can_be_released( struct Datatype_Array * da, MPC_Datatype datatype )
+int Datatype_is_allocated( struct Datatype_Array * da, MPC_Datatype datatype )
 {
 	sctk_contiguous_datatype_t * cont = NULL;
 	sctk_derived_datatype_t * deriv = NULL;
-	
+
 	switch( sctk_datatype_kind( datatype ) )
 	{
 		case MPC_DATATYPES_COMMON:
@@ -352,19 +377,30 @@ int Datatype_Array_type_can_be_released( struct Datatype_Array * da, MPC_Datatyp
 	return 0;
 }
 
+
+
+
+
 void Datatype_Array_release( struct Datatype_Array * da )
 {
-	int i;
+	int i, j;
+	int did_free = 0;
 
-	for( i = 0 ; i < (2 * SCTK_USER_DATA_TYPES_MAX + SCTK_COMMON_DATA_TYPE_COUNT) ; i++ )
+	/* Handle derived datatypes */
+	
+	sctk_derived_datatype_t * deriv = NULL;
+	
+	/* Now we can free all datatypes */
+	for( i = 0 ; i < MPC_TYPE_COUNT ; i++ )
 	{
-		int to_release = Datatype_Array_type_can_be_released( da, i ) ;
+		int to_release = Datatype_is_allocated( da, i ) ;
 		
 		if( to_release )
 		{
 			sctk_warning("Freeing unfreed datatype [%d] did you call MPI_Type_free on all your MPI_Datatypes ?", i );
 			MPC_Datatype tmp = i;
 			PMPC_Type_free( &tmp );
+			did_free = 1;
 		}
 	}
 }
@@ -525,6 +561,7 @@ void sctk_datatype_context_set( struct Datatype_context * ctx , struct Datatype_
 	sctk_datatype_context_free( ctx );
 	
 	/* Save the combiner which is always needed */
+	sctk_debug("Setting combiner to %d\n", dctx->combiner );
 	ctx->combiner = dctx->combiner;
 	
 	/* Save size computing values before calling get envelope */
@@ -770,6 +807,11 @@ void sctk_datatype_context_set( struct Datatype_context * ctx , struct Datatype_
 	int j;
 	for( j = 0 ; j < n_type ; j++ )
 	{
+		/* As UB and LB are negative it would break
+		 * everyting in the array */
+		if( sctk_datatype_is_boundary( ctx->array_of_types[j]) )
+			continue;
+
 		is_datatype_present[ ctx->array_of_types[j] ] = 1;
 	}
 
@@ -778,6 +820,7 @@ void sctk_datatype_context_set( struct Datatype_context * ctx , struct Datatype_
 	{
 		if( is_datatype_present[ j ] )
 		{
+			sctk_debug("ref to %d", j );
 			PMPC_Type_use( j );
 		}
 	}
@@ -905,12 +948,12 @@ static inline struct Datatype_layout * please_allocate_layout( int count )
 	return ret;
 }
 
-static inline void Datatype_layout_fill( struct Datatype_layout * l, MPC_Datatype datatype )
+static inline int Datatype_layout_fill( struct Datatype_layout * l, MPC_Datatype datatype )
 {
 	assume( l != NULL );
 	l->type = datatype;
 	size_t size;
-	MPC_Type_size (datatype, &size);
+	PMPC_Type_size (datatype, &size);
 	l->size = (MPC_Aint) size;
 	
 }
@@ -923,9 +966,11 @@ struct Datatype_layout * sctk_datatype_layout( struct Datatype_context * ctx, si
 	size_t ndims = 0;
 	int i, cnt, j;
 	*ly_count = 0;
+	int is_allocated = 0;
 	
 	switch( ctx->combiner )
 	{
+		case MPC_COMBINER_CONTIGUOUS:
 		case MPC_COMBINER_RESIZED:
 		case MPC_COMBINER_DUP:
 		case MPC_COMBINER_VECTOR:
@@ -934,13 +979,13 @@ struct Datatype_layout * sctk_datatype_layout( struct Datatype_context * ctx, si
 		case MPC_COMBINER_SUBARRAY:
 		case MPC_COMBINER_INDEXED_BLOCK:
 		case MPC_COMBINER_HINDEXED_BLOCK:
+		case MPC_COMBINER_INDEXED:
+		case MPC_COMBINER_HINDEXED:
 			/* Here no surprises the size is always the same */
 			ret = please_allocate_layout( 1 );
 			*ly_count = 1;
 			Datatype_layout_fill( &ret[0] , ctx->array_of_types[0] );
 		break;
-		case MPC_COMBINER_INDEXED:
-		case MPC_COMBINER_HINDEXED:
 		case MPC_COMBINER_STRUCT:
 			/* We have to handle the case of structs where each element can have a size 
 			   and also empty blocklength for indexed types */
@@ -970,11 +1015,23 @@ struct Datatype_layout * sctk_datatype_layout( struct Datatype_context * ctx, si
 					/* We ignore blocks of length 0 */
 					continue;
 				}
-				
+	
 				/* And we copy all the individual blocks */
 				for( j = 0 ; j < ctx->array_of_integers[i + 1] ; j++ )
 				{
 					sctk_nodebug("CUR : %d", cnt);
+					
+					/* Here we avoid reporting types which are not allocated
+					 * in the layout as sometimes user only partially free
+					 * datatypes but composed datatypes are looking from
+					 * them in their layout when being freed and of course
+					 * cannot find them. This is here just to solve random
+					 * free order problems where the refcounting cannot be used */
+					PMPC_Type_is_allocated (ctx->array_of_types[i], &is_allocated );
+					
+					if( !is_allocated )
+						continue;
+					
 					Datatype_layout_fill( &ret[cnt] , ctx->array_of_types[i] );
 					cnt++;
 				}
@@ -983,7 +1040,6 @@ struct Datatype_layout * sctk_datatype_layout( struct Datatype_context * ctx, si
 			*ly_count = cnt;
 		break;
 
-		case MPC_COMBINER_CONTIGUOUS:
 		case MPC_COMBINER_NAMED:
 		case MPC_COMBINER_F90_REAL:
 		case MPC_COMBINER_F90_COMPLEX:

@@ -249,6 +249,7 @@ void sctk_contiguous_datatype_release( sctk_contiguous_datatype_t * type );
  */
 typedef struct
 {
+	MPC_Datatype id; /**< Integer ID (useful  for debug) */
 	/* Context */
 	size_t size; /**< Total size of the datatype */
 	unsigned long count; /**< Number of elements in the datatype */
@@ -272,6 +273,7 @@ typedef struct
  * This function allocates a derived datatype
  * 
  * \param type Datatype to build
+ * \param id Integer id of the new datatype (for debug)
  * \param count number of offsets to store
  * \param begins list of starting offsets in the datatype
  * \param ends list of end offsets in the datatype
@@ -282,7 +284,8 @@ typedef struct
  * \param is_b tells if the type has an upper bound
  * 
  */
-void sctk_derived_datatype_init( sctk_derived_datatype_t * type , 
+void sctk_derived_datatype_init( sctk_derived_datatype_t * type ,
+				 MPC_Datatype id,
 				 unsigned long count,
                                  mpc_pack_absolute_indexes_t * begins,
                                  mpc_pack_absolute_indexes_t * ends,
@@ -374,13 +377,28 @@ static inline int sctk_datatype_is_contiguous( MPC_Datatype datatype )
 static inline int sctk_datatype_is_derived (MPC_Datatype data_in)
 {
 	if ((data_in >= SCTK_COMMON_DATA_TYPE_COUNT + SCTK_USER_DATA_TYPES_MAX) 
-	&& (data_in < SCTK_COMMON_DATA_TYPE_COUNT + 2 * SCTK_USER_DATA_TYPES_MAX))
+	&& (data_in < (SCTK_COMMON_DATA_TYPE_COUNT + 2 * SCTK_USER_DATA_TYPES_MAX)))
 	{
 		return 1;
 	}
 
 	return 0;
 }
+
+/** \brief Returns 1 if the datatype is a boundary (UB or LB)
+ */
+static inline int sctk_datatype_is_boundary (MPC_Datatype data_in)
+{
+	if ((data_in == MPC_UB)
+	||  (data_in == MPC_LB))
+	{
+		return 1;
+	}
+
+	return 0;
+}
+
+
 
 /** \brief This functions retuns the \ref MPC_Datatype_kind of an MPC_Datatype
  * 

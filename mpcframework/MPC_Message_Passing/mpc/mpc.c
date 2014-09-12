@@ -1359,7 +1359,7 @@ int PMPC_Type_free (MPC_Datatype * datatype_p)
 	/* Dereference the datatype pointer for convenience */
 	MPC_Datatype datatype = *datatype_p;
 	
-	sctk_debug("TYPE FREE %d\n", *datatype_p );
+	sctk_debug("TYPE FREE %d\n", datatype );
 	
 	SCTK_PROFIL_START (MPC_Type_free);
 	
@@ -1371,7 +1371,7 @@ int PMPC_Type_free (MPC_Datatype * datatype_p)
 	{
 		/* ERROR */
 		SCTK_PROFIL_END (MPC_Type_free);
-		MPC_ERROR_REPORT (MPC_COMM_WORLD, MPC_ERR_TYPE, "");
+		MPC_ERROR_REPORT (MPC_COMM_WORLD, MPC_ERR_TYPE, "You tried to free an MPI_DATATYPE_NULL or MPI_PACKED datatype");
 	}
 
 
@@ -1381,7 +1381,7 @@ int PMPC_Type_free (MPC_Datatype * datatype_p)
 		case MPC_DATATYPES_COMMON:
 			/* You are not supposed to free predefined datatypes */
 			SCTK_PROFIL_END (MPC_Type_free);
-			MPC_ERROR_REPORT (MPC_COMM_WORLD, MPC_ERR_TYPE, "");
+			MPC_ERROR_REPORT (MPC_COMM_WORLD, MPC_ERR_TYPE, "You are not allowed to free a COMMON datatype");
 		break;
 		
 		case MPC_DATATYPES_CONTIGUOUS:
@@ -1400,13 +1400,15 @@ int PMPC_Type_free (MPC_Datatype * datatype_p)
 		
 		case MPC_DATATYPES_DERIVED:
 			/* Free a derived datatype */
-		
+			
 			/* Lock the derived type array */
 			sctk_datatype_lock( task_specific );
 			/* Retrieve a pointer to the type to be freed */
 			sctk_derived_datatype_t * derived_type_target = sctk_task_specific_get_derived_datatype( task_specific, datatype );
 			/* Unlock the derived type array */
 			sctk_datatype_unlock( task_specific );
+			
+			sctk_debug("Free derived [%d] contructor %d", datatype, derived_type_target->context.combiner );
 			
 			/* Check if it is really allocated */
 			if( !derived_type_target )
@@ -1688,7 +1690,7 @@ static inline size_t __MPC_Get_datatype_size (MPC_Datatype datatype, sctk_task_s
 			if( !derived_type_target )
 			{
 				/* ERROR */
-				sctk_fatal("Tried to retrieve an uninitialized datatype");
+				sctk_fatal("Tried to retrieve an uninitialized datatype %d", datatype);
 			}
 			
 			/* Extract the size field */
@@ -1741,7 +1743,39 @@ int PMPC_Type_get_true_extent(MPC_Datatype datatype, MPC_Aint *true_lb, MPC_Aint
 }
 
 
+/** \brief Checks if a datatype has already been released
+ *  \param datatype target datatype
+ *  \param flag 1 if the type is allocated [OUT]
+ */
+int PMPC_Type_is_allocated (MPC_Datatype datatype, int * flag )
+{
+	sctk_task_specific_t * task_specific = __MPC_get_task_specific ();
 
+	sctk_derived_datatype_t * derived_type_target;
+	sctk_contiguous_datatype_t * contiguous_type_target;
+	
+	*flag = 0;
+	
+	switch( sctk_datatype_kind(datatype) )
+	{
+		case MPC_DATATYPES_COMMON:
+			*flag = 1;
+		break;
+		case MPC_DATATYPES_CONTIGUOUS:
+			contiguous_type_target = sctk_task_specific_get_contiguous_datatype(task_specific, datatype);
+			*flag = SCTK_CONTIGUOUS_DATATYPE_IS_IN_USE( contiguous_type_target );
+		break;
+		case MPC_DATATYPES_DERIVED:
+			derived_type_target = sctk_task_specific_get_derived_datatype(task_specific, datatype);
+			*flag = (derived_type_target != NULL);
+		break;
+		case MPC_DATATYPES_UNKNOWN:
+			*flag = 0;
+		break;	
+	}
+	
+	MPC_ERROR_SUCESS ();
+}
 
 
 /** \brief Compute the size of a \ref MPC_Datatype
@@ -1856,7 +1890,7 @@ int PMPC_Type_use (MPC_Datatype datatype)
 			target_contiguous_type = sctk_task_specific_get_contiguous_datatype( task_specific, datatype );
 			/* Increment the refcounter */
 			target_contiguous_type->ref_count++;
-			sctk_error("Type %d Refcount %d" , datatype, target_contiguous_type->ref_count);
+			sctk_nodebug("Type %d Refcount %d" , datatype, target_contiguous_type->ref_count);
 
 		break;
 		
@@ -1866,7 +1900,7 @@ int PMPC_Type_use (MPC_Datatype datatype)
 			target_derived_type = sctk_task_specific_get_derived_datatype( task_specific, datatype );
 			/* Increment the refcounter */
 			target_derived_type->ref_count ++;
-			sctk_error("Type %d Refcount %d" , datatype, target_derived_type->ref_count);
+			sctk_nodebug("Type %d Refcount %d" , datatype, target_derived_type->ref_count);
 
 		break;
 		
@@ -1917,7 +1951,7 @@ int PMPC_Derived_datatype ( MPC_Datatype * datatype,
 	
 	int i;
 	for (i = 0; i < SCTK_USER_DATA_TYPES_MAX; i++)
-    {
+	{
 		/* For each datatype */
 		sctk_derived_datatype_t * current_user_type = sctk_task_specific_get_derived_datatype( task_specific, MPC_TYPE_MAP_FROM_DERIVED( i ) );
 		
@@ -1944,7 +1978,7 @@ int PMPC_Derived_datatype ( MPC_Datatype * datatype,
 			}
 			
 			/* And we call the datatype initializer */
-			sctk_derived_datatype_init( new_type ,  count,  begins,  ends, types, lb, is_lb,  ub, is_ub);
+			sctk_derived_datatype_init( new_type , new_id,  count,  begins,  ends, types, lb, is_lb,  ub, is_ub);
 			
 			/* Now we register the datatype pointer in the derived datatype array */
 			sctk_task_specific_set_derived_datatype( task_specific, new_id , new_type);
@@ -2007,6 +2041,14 @@ int PMPC_Type_convert_to_derived( MPC_Datatype in_datatype, MPC_Datatype * out_d
 		/* Lets now initialize the new derived datatype */
 		PMPC_Derived_datatype (out_datatype, begins_out, ends_out, datatypes_out, 1, 0, 0, 0, 0);
 
+		struct Datatype_External_context dtctx;
+		sctk_datatype_external_context_clear( &dtctx );
+		dtctx.combiner = MPC_COMBINER_CONTIGUOUS;
+		dtctx.count = 1;
+		dtctx.oldtype = in_datatype;
+		MPC_Datatype_set_context( *out_datatype, &dtctx);
+		
+		
 		/* Free temporary buffers */
 		sctk_free (begins_out);
 		sctk_free (ends_out);

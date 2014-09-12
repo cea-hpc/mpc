@@ -128,7 +128,7 @@ extern "C"
   } sctk_thread_message_header_t;
 
   typedef unsigned int sctk_pack_indexes_t;
-  typedef unsigned long sctk_pack_absolute_indexes_t;
+  typedef long sctk_pack_absolute_indexes_t;
   typedef int sctk_count_t;
 
   typedef struct{
