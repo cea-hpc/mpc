@@ -563,18 +563,20 @@ void sctk_runtime_config_sources_open(struct sctk_runtime_config_sources * confi
 	const char * tmp;
 	const char * mpc_rprefix = getenv("MPC_RPREFIX");
 	const char * mpc_subprefix = getenv("MPC_SUBPREFIX");
-    const char * mpc_target_subprefix = getenv("MPC_TARGET_SUBPREFIX");
+	const char * mpc_target_subprefix = getenv("MPC_TARGET_SUBPREFIX");
 
 	assume_m((mpc_rprefix != NULL), "You need to source the mpcvars.sh file in the root of your install path");
 	assume_m((mpc_subprefix != NULL),"You need to source the mpcvars.sh file in the root of your install path");
+	assume_m((mpc_target_subprefix != NULL),"You need to source the mpcvars.sh file in the root of your install path");
 
-    char * mpc_destprefix = NULL;
-    mpc_destprefix  = (char *)malloc(1024*sizeof(char));
-    mpc_destprefix[0]='\0'; 
-    strcat(mpc_destprefix, "/");
-    strcat(mpc_destprefix, mpc_target_subprefix);
-    strcat(mpc_destprefix, "/");
-    strcat(mpc_destprefix, mpc_target_subprefix);
+	char * mpc_destprefix = NULL;
+	mpc_destprefix  = (char *)malloc(1024*sizeof(char));
+	mpc_destprefix[0]='\0'; 
+	strcat(mpc_destprefix, "/");
+	strcat(mpc_destprefix, mpc_target_subprefix);
+	strcat(mpc_destprefix, "/");
+	strcat(mpc_destprefix, mpc_target_subprefix);
+	
 	char * def_sys_path = NULL;
 	def_sys_path = (char *)malloc(1024*sizeof(char));
 	def_sys_path[0]='\0'; 
