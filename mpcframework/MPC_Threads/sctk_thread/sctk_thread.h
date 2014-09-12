@@ -138,8 +138,6 @@ extern "C"
   int sctk_get_init_vp_and_nbvp (int i, int *nbVp);
   int sctk_get_init_vp (int i);
 
-#define SCTK_COMMON_DATA_TYPE_COUNT 70
-#define SCTK_USER_DATA_TYPES_MAX 500
 
   extern volatile unsigned sctk_long_long sctk_timer;
 

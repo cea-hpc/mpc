@@ -36,10 +36,10 @@ extern "C"
      } mpc_##t##_int\
 
   MPC_CREATE_TYPE (float);
-    MPC_CREATE_TYPE (long);
-    MPC_CREATE_TYPE (double);
-    MPC_CREATE_TYPE (short);
-    MPC_CREATE_TYPE (int);
+  MPC_CREATE_TYPE (long);
+  MPC_CREATE_TYPE (double);
+  MPC_CREATE_TYPE (short);
+  MPC_CREATE_TYPE (int);
 
   typedef struct {
        long double val;

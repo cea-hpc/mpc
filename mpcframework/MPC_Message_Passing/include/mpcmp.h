@@ -51,6 +51,15 @@ extern "C"
 #define MPC_THREAD_SERIALIZED 2
 #define  MPC_THREAD_MULTIPLE 3
 
+  
+  
+#define SCTK_COMMON_DATA_TYPE_COUNT 70
+#define SCTK_USER_DATA_TYPES_MAX 260
+#define SCTK_DERIVED_DATATYPE_BASE (SCTK_COMMON_DATA_TYPE_COUNT + SCTK_USER_DATA_TYPES_MAX)
+  
+/** \brief Macro to obtain the total number of datatypes */
+#define MPC_TYPE_COUNT (SCTK_COMMON_DATA_TYPE_COUNT + 2 * SCTK_USER_DATA_TYPES_MAX)
+  
   typedef int mpc_msg_count;
 
   typedef unsigned int mpc_pack_indexes_t;
@@ -305,40 +314,18 @@ typedef int MPC_Info;
 #define MPC_UNSIGNED  9
 #define MPC_UNSIGNED_LONG  10
 #define MPC_LONG_DOUBLE  11
-#define MPC_LONG_LONG_INT  12
 #define MPC_LONG_LONG 12
 #define MPC_PACKED 13
-#define MPC_FLOAT_INT 14
-/*    struct { float, int } */
-#define MPC_LONG_INT 15
-/*    struct { long, int } */
-#define MPC_DOUBLE_INT 16
-/*    struct { double, int } */
-#define MPC_SHORT_INT 17
-/*    struct { short, int } */
-#define MPC_2INT 18
-/*    struct { int, int }*/
-#define MPC_2FLOAT 19
-#define MPC_COMPLEX 20
-/*    struct { float, float }*/
-#define MPC_2DOUBLE_PRECISION 21
-/*    struct { double, double }*/
 #define MPC_LOGICAL 22
-#define MPC_DOUBLE_COMPLEX 23
-
 #define MPC_INTEGER1 24
 #define MPC_INTEGER2 25
 #define MPC_INTEGER4 26
 #define MPC_INTEGER8 27
-
 #define MPC_REAL4 28
 #define MPC_REAL8 29
 #define MPC_REAL16 30
 #define MPC_SIGNED_CHAR 31
-#define MPC_LONG_DOUBLE_INT 32
-#define MPC_UNSIGNED_LONG_LONG_INT 33
 #define MPC_UNSIGNED_LONG_LONG 33
-
 #define MPC_INT8_T 34
 #define MPC_UINT8_T 35
 #define MPC_INT16_T 36
@@ -347,16 +334,46 @@ typedef int MPC_Info;
 #define MPC_UINT32_T 39
 #define MPC_INT64_T 40
 #define MPC_UINT64_T 41
-
-#define MPC_COMPLEX8 42
-#define MPC_COMPLEX16 43
-#define MPC_COMPLEX32 44
 #define MPC_WCHAR 45
-
 #define MPC_INTEGER16 46
 #define MPC_AINT 49
 #define MPC_OFFSET 50
 #define MPC_COUNT 51
+
+/* BE VERY CAREFUL HERE /!\/!\/!\/!\/!\/!\/!\/!\
+ *  You have to note that these types
+ *  are offseted of SCTK_DERIVED_DATATYPE_BASE
+ *  actually making them derived ones.
+ *  As common ones they are initialized in
+ *  \ref sctk_common_datatype_init however
+ *  they are derived ones !
+ * 
+ * See how the value is incremented and how MPC_STRUCT_DATATYPE_COUNT
+ * is the last value plus 1.
+ * 
+ */
+#define MPC_FLOAT_INT (SCTK_DERIVED_DATATYPE_BASE)
+#define MPC_LONG_INT (SCTK_DERIVED_DATATYPE_BASE + 1)
+#define MPC_DOUBLE_INT  (SCTK_DERIVED_DATATYPE_BASE + 2)
+#define MPC_SHORT_INT  (SCTK_DERIVED_DATATYPE_BASE + 3)
+#define MPC_2INT  (SCTK_DERIVED_DATATYPE_BASE + 4)
+#define MPC_2FLOAT  (SCTK_DERIVED_DATATYPE_BASE + 5)
+#define MPC_COMPLEX  (SCTK_DERIVED_DATATYPE_BASE + 6)
+#define MPC_2DOUBLE_PRECISION  (SCTK_DERIVED_DATATYPE_BASE + 7)
+#define MPC_LONG_DOUBLE_INT  (SCTK_DERIVED_DATATYPE_BASE + 8)
+#define MPC_UNSIGNED_LONG_LONG_INT  (SCTK_DERIVED_DATATYPE_BASE + 9)
+#define MPC_COMPLEX8  (SCTK_DERIVED_DATATYPE_BASE + 10)
+#define MPC_COMPLEX16  (SCTK_DERIVED_DATATYPE_BASE + 11)
+#define MPC_COMPLEX32  (SCTK_DERIVED_DATATYPE_BASE + 12)
+#define MPC_DOUBLE_COMPLEX  (SCTK_DERIVED_DATATYPE_BASE + 13)
+#define MPC_LONG_LONG_INT   (SCTK_DERIVED_DATATYPE_BASE + 14)
+/* /!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\
+ * If you change anything in this section update MPC_STRUCT_DATATYPE_COUNT
+ * otherwise the first derived datatype created
+ * will overwrite your last datatype
+ * /!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\
+ */
+#define MPC_STRUCT_DATATYPE_COUNT 15
 
 /* Datatype decoders */
 

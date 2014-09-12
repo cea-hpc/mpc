@@ -29,6 +29,14 @@
 #include <sctk_ethread_internal.h>
 #include "sctk_stdint.h"
 #include "sctk_wchar.h"
+#include "mpc_common.h"
+
+/************************************************************************/
+/* GLOBALS                                                              */
+/************************************************************************/
+
+/** Common datatypes sizes ar initialized in \ref sctk_common_datatype_init */
+static size_t * __sctk_common_type_sizes;
 
 /************************************************************************/
 /* Datatype Init and Release                                            */
@@ -36,12 +44,15 @@
 
 void sctk_datatype_init()
 {
+	__sctk_common_type_sizes = sctk_malloc( sizeof( size_t ) * SCTK_COMMON_DATA_TYPE_COUNT );
+	assume( __sctk_common_type_sizes != NULL );
 	sctk_common_datatype_init();
 }
 
 void sctk_datatype_release()
 {
 	sctk_datype_name_release();
+	sctk_free( __sctk_common_type_sizes );
 }
 
 
@@ -49,9 +60,6 @@ void sctk_datatype_release()
 /************************************************************************/
 /* Common Datatype                                                      */
 /************************************************************************/
-
-/** Common datatypes sizes ar initialized in \ref sctk_common_datatype_init */
-static size_t __sctk_common_type_sizes[SCTK_COMMON_DATA_TYPE_COUNT];
 
 /* We need this funtions are MPI_* types are macro replaced by MPC_* ones
  * and the standard wants MPI_* so we replace ... */
@@ -64,6 +72,41 @@ void sctk_common_datatype_set_name_helper( MPC_Datatype datatype, char * name )
 }
 
 
+
+
+
+
+#define MPC_FLOAT_INT (SCTK_DERIVED_DATATYPE_BASE)
+#define MPC_LONG_INT (SCTK_DERIVED_DATATYPE_BASE + 1)
+#define MPC_DOUBLE_INT  (SCTK_DERIVED_DATATYPE_BASE + 2)
+#define MPC_SHORT_INT  (SCTK_DERIVED_DATATYPE_BASE + 3)
+#define MPC_2INT  (SCTK_DERIVED_DATATYPE_BASE + 4)
+#define MPC_2FLOAT  (SCTK_DERIVED_DATATYPE_BASE + 5)
+#define MPC_COMPLEX  (SCTK_DERIVED_DATATYPE_BASE + 6)
+#define MPC_2DOUBLE_PRECISION  (SCTK_DERIVED_DATATYPE_BASE + 7)
+#define MPC_LONG_DOUBLE_INT  (SCTK_DERIVED_DATATYPE_BASE + 8)
+#define MPC_UNSIGNED_LONG_LONG_INT  (SCTK_DERIVED_DATATYPE_BASE + 9)
+#define MPC_COMPLEX8  (SCTK_DERIVED_DATATYPE_BASE + 10)
+#define MPC_COMPLEX16  (SCTK_DERIVED_DATATYPE_BASE + 11)
+#define MPC_COMPLEX32  (SCTK_DERIVED_DATATYPE_BASE + 12)
+#define MPC_DOUBLE_COMPLEX  (SCTK_DERIVED_DATATYPE_BASE + 13)
+#define MPC_LONG_LONG_INT   (SCTK_DERIVED_DATATYPE_BASE + 14)
+
+void init_composed_common_types()
+{
+	struct sctk_task_specific_s *ts = __MPC_get_task_specific ();
+	
+	sctk_derived_datatype_t *type = NULL;
+	
+	Datatype_Array_get_derived_datatype( &ts->datatype_array  ,  MPC_FLOAT_INT);
+	struct { float a ; int b; } foo;
+	MPC_Aint disp = ((char *)b - (char *)a);
+	
+	
+	
+	
+}
+
 #define tostring(a) #a
 #define SCTK_INIT_TYPE_SIZE(datatype,t) __sctk_common_type_sizes[datatype] = sizeof(t) ; \
 					sctk_assert(datatype >=0 ); \
@@ -72,56 +115,56 @@ void sctk_common_datatype_set_name_helper( MPC_Datatype datatype, char * name )
 
 void sctk_common_datatype_init()
 {
-  SCTK_INIT_TYPE_SIZE (MPC_CHAR, char);
-  SCTK_INIT_TYPE_SIZE (MPC_LOGICAL, int);
-  SCTK_INIT_TYPE_SIZE (MPC_BYTE, unsigned char);
-  SCTK_INIT_TYPE_SIZE (MPC_SHORT, short);
-  SCTK_INIT_TYPE_SIZE (MPC_INT, int);
-  SCTK_INIT_TYPE_SIZE (MPC_LONG, long);
-  SCTK_INIT_TYPE_SIZE (MPC_FLOAT, float);
-  SCTK_INIT_TYPE_SIZE (MPC_DOUBLE, double);
-  SCTK_INIT_TYPE_SIZE (MPC_UNSIGNED_CHAR, unsigned char);
-  SCTK_INIT_TYPE_SIZE (MPC_UNSIGNED_SHORT, unsigned short);
-  SCTK_INIT_TYPE_SIZE (MPC_UNSIGNED, unsigned int);
-  SCTK_INIT_TYPE_SIZE (MPC_UNSIGNED_LONG, unsigned long);
-  SCTK_INIT_TYPE_SIZE (MPC_LONG_DOUBLE, long double);
-  SCTK_INIT_TYPE_SIZE (MPC_LONG_LONG, long long);
-  SCTK_INIT_TYPE_SIZE (MPC_UNSIGNED_LONG_LONG, unsigned long long);
-  SCTK_INIT_TYPE_SIZE (MPC_INTEGER1, sctk_int8_t);
-  SCTK_INIT_TYPE_SIZE (MPC_INTEGER2, sctk_int16_t);
-  SCTK_INIT_TYPE_SIZE (MPC_INTEGER4, sctk_int32_t);
-  SCTK_INIT_TYPE_SIZE (MPC_INTEGER8, sctk_int64_t);
-  SCTK_INIT_TYPE_SIZE (MPC_INTEGER16, sctk_int64_t[2] );
-  SCTK_INIT_TYPE_SIZE (MPC_REAL4, float);
-  SCTK_INIT_TYPE_SIZE (MPC_REAL8, double);
-  SCTK_INIT_TYPE_SIZE (MPC_REAL16, long double);
-  SCTK_INIT_TYPE_SIZE (MPC_FLOAT_INT, mpc_float_int);
-  SCTK_INIT_TYPE_SIZE (MPC_LONG_INT, mpc_long_int);
-  SCTK_INIT_TYPE_SIZE (MPC_DOUBLE_INT, mpc_double_int);
-  SCTK_INIT_TYPE_SIZE (MPC_SHORT_INT, mpc_short_int);
-  SCTK_INIT_TYPE_SIZE (MPC_2INT, mpc_int_int);
-  SCTK_INIT_TYPE_SIZE (MPC_2FLOAT, mpc_float_float);
-  SCTK_INIT_TYPE_SIZE (MPC_COMPLEX, mpc_float_float);
-  SCTK_INIT_TYPE_SIZE (MPC_2DOUBLE_PRECISION, mpc_double_double);
-  SCTK_INIT_TYPE_SIZE (MPC_DOUBLE_COMPLEX, mpc_double_double);
-  SCTK_INIT_TYPE_SIZE (MPC_INT8_T, sctk_int8_t );
-  SCTK_INIT_TYPE_SIZE (MPC_UINT8_T, sctk_uint8_t );
-  SCTK_INIT_TYPE_SIZE (MPC_INT16_T, sctk_int16_t );
-  SCTK_INIT_TYPE_SIZE (MPC_UINT16_T, sctk_uint16_t );
-  SCTK_INIT_TYPE_SIZE (MPC_INT32_T, sctk_int32_t );
-  SCTK_INIT_TYPE_SIZE (MPC_UINT32_T, sctk_uint32_t );
-  SCTK_INIT_TYPE_SIZE (MPC_INT64_T, sctk_int64_t );
-  SCTK_INIT_TYPE_SIZE (MPC_UINT64_T, sctk_uint64_t );
-  SCTK_INIT_TYPE_SIZE (MPC_COMPLEX8, mpc_float_float );
-  SCTK_INIT_TYPE_SIZE (MPC_COMPLEX16, mpc_double_double );
-  SCTK_INIT_TYPE_SIZE (MPC_COMPLEX32, mpc_longdouble_longdouble );
-  SCTK_INIT_TYPE_SIZE (MPC_WCHAR, sctk_wchar_t );
-  SCTK_INIT_TYPE_SIZE (MPC_AINT, MPC_Aint );
-  sctk_warning("Temporary datatype while not adding MPIIO");
-  SCTK_INIT_TYPE_SIZE (MPC_OFFSET, MPC_Aint );
-  SCTK_INIT_TYPE_SIZE (MPC_COUNT, MPC_Count );
-  
-  __sctk_common_type_sizes[MPC_PACKED] = 0;
+	SCTK_INIT_TYPE_SIZE (MPC_CHAR, char);
+	SCTK_INIT_TYPE_SIZE (MPC_LOGICAL, int);
+	SCTK_INIT_TYPE_SIZE (MPC_BYTE, unsigned char);
+	SCTK_INIT_TYPE_SIZE (MPC_SHORT, short);
+	SCTK_INIT_TYPE_SIZE (MPC_INT, int);
+	SCTK_INIT_TYPE_SIZE (MPC_LONG, long);
+	SCTK_INIT_TYPE_SIZE (MPC_FLOAT, float);
+	SCTK_INIT_TYPE_SIZE (MPC_DOUBLE, double);
+	SCTK_INIT_TYPE_SIZE (MPC_UNSIGNED_CHAR, unsigned char);
+	SCTK_INIT_TYPE_SIZE (MPC_UNSIGNED_SHORT, unsigned short);
+	SCTK_INIT_TYPE_SIZE (MPC_UNSIGNED, unsigned int);
+	SCTK_INIT_TYPE_SIZE (MPC_UNSIGNED_LONG, unsigned long);
+	SCTK_INIT_TYPE_SIZE (MPC_LONG_DOUBLE, long double);
+	SCTK_INIT_TYPE_SIZE (MPC_LONG_LONG, long long);
+	SCTK_INIT_TYPE_SIZE (MPC_UNSIGNED_LONG_LONG, unsigned long long);
+	SCTK_INIT_TYPE_SIZE (MPC_INTEGER1, sctk_int8_t);
+	SCTK_INIT_TYPE_SIZE (MPC_INTEGER2, sctk_int16_t);
+	SCTK_INIT_TYPE_SIZE (MPC_INTEGER4, sctk_int32_t);
+	SCTK_INIT_TYPE_SIZE (MPC_INTEGER8, sctk_int64_t);
+	SCTK_INIT_TYPE_SIZE (MPC_INTEGER16, sctk_int64_t[2] );
+	SCTK_INIT_TYPE_SIZE (MPC_REAL4, float);
+	SCTK_INIT_TYPE_SIZE (MPC_REAL8, double);
+	SCTK_INIT_TYPE_SIZE (MPC_REAL16, long double);
+	SCTK_INIT_TYPE_SIZE (MPC_FLOAT_INT, mpc_float_int);
+	SCTK_INIT_TYPE_SIZE (MPC_LONG_INT, mpc_long_int);
+	SCTK_INIT_TYPE_SIZE (MPC_DOUBLE_INT, mpc_double_int);
+	SCTK_INIT_TYPE_SIZE (MPC_SHORT_INT, mpc_short_int);
+	SCTK_INIT_TYPE_SIZE (MPC_2INT, mpc_int_int);
+	SCTK_INIT_TYPE_SIZE (MPC_2FLOAT, mpc_float_float);
+	SCTK_INIT_TYPE_SIZE (MPC_COMPLEX, mpc_float_float);
+	SCTK_INIT_TYPE_SIZE (MPC_2DOUBLE_PRECISION, mpc_double_double);
+	SCTK_INIT_TYPE_SIZE (MPC_DOUBLE_COMPLEX, mpc_double_double);
+	SCTK_INIT_TYPE_SIZE (MPC_INT8_T, sctk_int8_t );
+	SCTK_INIT_TYPE_SIZE (MPC_UINT8_T, sctk_uint8_t );
+	SCTK_INIT_TYPE_SIZE (MPC_INT16_T, sctk_int16_t );
+	SCTK_INIT_TYPE_SIZE (MPC_UINT16_T, sctk_uint16_t );
+	SCTK_INIT_TYPE_SIZE (MPC_INT32_T, sctk_int32_t );
+	SCTK_INIT_TYPE_SIZE (MPC_UINT32_T, sctk_uint32_t );
+	SCTK_INIT_TYPE_SIZE (MPC_INT64_T, sctk_int64_t );
+	SCTK_INIT_TYPE_SIZE (MPC_UINT64_T, sctk_uint64_t );
+	SCTK_INIT_TYPE_SIZE (MPC_COMPLEX8, mpc_float_float );
+	SCTK_INIT_TYPE_SIZE (MPC_COMPLEX16, mpc_double_double );
+	SCTK_INIT_TYPE_SIZE (MPC_COMPLEX32, mpc_longdouble_longdouble );
+	SCTK_INIT_TYPE_SIZE (MPC_WCHAR, sctk_wchar_t );
+	SCTK_INIT_TYPE_SIZE (MPC_AINT, MPC_Aint );
+	sctk_warning("Temporary datatype while not adding MPIIO");
+	SCTK_INIT_TYPE_SIZE (MPC_OFFSET, MPC_Aint );
+	SCTK_INIT_TYPE_SIZE (MPC_COUNT, MPC_Count );
+
+	__sctk_common_type_sizes[MPC_PACKED] = 0;
 }
 
 
@@ -187,7 +230,7 @@ void sctk_derived_datatype_init( sctk_derived_datatype_t * type ,
 				 int is_ub )
 {
 	sctk_debug( "Derived create ID %d", id);
-	/* Set the interger id */
+	/* Set the integer id */
 	type->id = id;
 	
 	/* We now allocate the offset pairs */
@@ -344,6 +387,7 @@ void sctk_derived_datatype_true_extent( sctk_derived_datatype_t * type , mpc_pac
 void Datatype_Array_init( struct Datatype_Array * da )
 {
 	int i;
+	
 
 	for (i = 0; i < SCTK_USER_DATA_TYPES_MAX; i++)
 	{
@@ -376,9 +420,6 @@ int Datatype_is_allocated( struct Datatype_Array * da, MPC_Datatype datatype )
 
 	return 0;
 }
-
-
-
 
 
 void Datatype_Array_release( struct Datatype_Array * da )
@@ -460,6 +501,7 @@ int sctk_datype_set_name( MPC_Datatype datatype, char * name )
 	{
 		/* If present free it */
 		sctk_free( cell );
+		HASH_DEL(datatype_names, cell); 
 	}
 
 	/* Create a new cell */
@@ -492,7 +534,7 @@ void sctk_datype_name_release()
 	struct Datatype_name_cell *current, *tmp;	
 
 	HASH_ITER(hh, datatype_names, current, tmp) {
-		HASH_DEL(datatype_names, current);  
+		HASH_DEL(datatype_names, current); 
 		sctk_free(current);
 	}
 }

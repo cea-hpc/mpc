@@ -440,8 +440,7 @@ static inline int sctk_datatype_is_boundary (MPC_Datatype data_in)
 /** \brief Takes a local derived offset and translates it to a local offset */
 #define MPC_TYPE_MAP_FROM_DERIVED( a ) ( a + SCTK_USER_DATA_TYPES_MAX + SCTK_COMMON_DATA_TYPE_COUNT)
 
-/** \brief Macro to obtain the total number of datatypes */
-#define MPC_TYPE_COUNT (SCTK_COMMON_DATA_TYPE_COUNT + 2 * SCTK_USER_DATA_TYPES_MAX)
+
 
 /************************************************************************/
 /* Datatype  Array                                                      */

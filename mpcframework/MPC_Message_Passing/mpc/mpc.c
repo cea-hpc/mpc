@@ -1913,6 +1913,47 @@ int PMPC_Type_use (MPC_Datatype datatype)
 	MPC_ERROR_SUCESS ();
 }
 
+int PMPC_Derived_datatype_on_slot ( sctk_derived_datatype_t * current_user_type,
+				    int id,
+				    mpc_pack_absolute_indexes_t * begins,
+				    mpc_pack_absolute_indexes_t * ends,
+				    MPC_Datatype * types,
+			     	    unsigned long count,
+				    mpc_pack_absolute_indexes_t lb, int is_lb,
+				    mpc_pack_absolute_indexes_t ub, int is_ub)
+{		
+	sctk_task_specific_t *task_specific = __MPC_get_task_specific ();
+
+	sctk_nodebug("datatype = %d + %d + %d = %d", SCTK_COMMON_DATA_TYPE_COUNT , SCTK_USER_DATA_TYPES_MAX, i, *datatype);
+	
+	/* Here we allocate the new derived datatype */
+	sctk_derived_datatype_t * new_type = (sctk_derived_datatype_t *) sctk_malloc (sizeof (sctk_derived_datatype_t));
+	
+	if( !new_type )
+	{
+		sctk_fatal("Failled to allocate a new derived type" );
+	}
+	
+	/* And we call the datatype initializer */
+	sctk_derived_datatype_init( new_type , id,  count,  begins,  ends, types, lb, is_lb,  ub, is_ub);
+	
+	/* Now we register the datatype pointer in the derived datatype array */
+	sctk_task_specific_set_derived_datatype( task_specific, id , new_type);
+	
+	sctk_debug("NEW type %d\n", *new_type );
+	
+	/* We unlock the derived datatype array */
+	sctk_datatype_unlock( task_specific );
+	
+	SCTK_PROFIL_END (MPC_Derived_datatype);
+	MPC_ERROR_SUCESS ();
+}
+
+
+
+
+
+
 
 /** \brief Derived datatype constructor
  *  
@@ -1950,7 +1991,10 @@ int PMPC_Derived_datatype ( MPC_Datatype * datatype,
 	sctk_datatype_lock( task_specific );
 	
 	int i;
-	for (i = 0; i < SCTK_USER_DATA_TYPES_MAX; i++)
+	/* Here we jump the first MPC_STRUCT_DATATYPE_COUNT items
+	 * as they are reserved for common datatypes which are actually
+	 * derived ones */
+	for (i = MPC_STRUCT_DATATYPE_COUNT; i < SCTK_USER_DATA_TYPES_MAX; i++)
 	{
 		/* For each datatype */
 		sctk_derived_datatype_t * current_user_type = sctk_task_specific_get_derived_datatype( task_specific, MPC_TYPE_MAP_FROM_DERIVED( i ) );
@@ -1958,38 +2002,16 @@ int PMPC_Derived_datatype ( MPC_Datatype * datatype,
 		/* Is the slot free ? */
 		if( current_user_type == NULL)
 		{
-			/* Yes ! */
-			
 			/* Here we compute an ID falling in the derived datatype range
-			 * this range it the converted back to a local id using MPC_TYPE_MAP_TO_DERIVED( datatype) */
+			* this range it the converted back to a local id using MPC_TYPE_MAP_TO_DERIVED( datatype) */
 			int new_id = MPC_TYPE_MAP_FROM_DERIVED( i );
 			
 			/* Set the new ID in the target datatype */
+			sctk_debug("NEW ID : %d", new_id );
 			*datatype = new_id;
-			
-			sctk_nodebug("datatype = %d + %d + %d = %d", SCTK_COMMON_DATA_TYPE_COUNT , SCTK_USER_DATA_TYPES_MAX, i, *datatype);
-			
-			/* Here we allocate the new derived datatype */
-			sctk_derived_datatype_t * new_type = (sctk_derived_datatype_t *) sctk_malloc (sizeof (sctk_derived_datatype_t));
-			
-			if( !new_type )
-			{
-				sctk_fatal("Failled to allocate a new derived type" );
-			}
-			
-			/* And we call the datatype initializer */
-			sctk_derived_datatype_init( new_type , new_id,  count,  begins,  ends, types, lb, is_lb,  ub, is_ub);
-			
-			/* Now we register the datatype pointer in the derived datatype array */
-			sctk_task_specific_set_derived_datatype( task_specific, new_id , new_type);
-			
-			sctk_debug("NEW type %d\n", *new_type );
-			
-			/* We unlock the derived datatype array */
-			sctk_datatype_unlock( task_specific );
-			
-			SCTK_PROFIL_END (MPC_Derived_datatype);
-			MPC_ERROR_SUCESS ();
+
+	
+			return  PMPC_Derived_datatype_on_slot ( current_user_type, new_id, begins, ends, types, count,lb,  is_lb, ub,  is_ub);
 		}
     }
     

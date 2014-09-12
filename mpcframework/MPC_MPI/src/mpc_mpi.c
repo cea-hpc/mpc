@@ -3075,6 +3075,8 @@ static int __INTERNAL__PMPI_Type_create_indexed_block(int count, int blocklength
 	/* Retrieve type extent */
 	__INTERNAL__PMPI_Type_extent(old_type, &extent);
 	
+	sctk_error("NEWTYPE BEFFORE %d" , *newtype );
+	
 	/* Create a temporary offset array */
 	MPI_Aint * byte_offsets = sctk_malloc (count * sizeof (MPI_Aint));
 	assume( byte_offsets != NULL );
@@ -3084,9 +3086,12 @@ static int __INTERNAL__PMPI_Type_create_indexed_block(int count, int blocklength
 	for( i = 0 ; i < count ; i++ )
 		byte_offsets[i] = indices[i] * extent;
 	
+	sctk_error("NEWTYPE BEFFORE %d" , *newtype );
+	
 	/* Call the orignal indexed function */
 	int res = __INTERNAL__PMPI_Type_create_hindexed_block (count, blocklength, byte_offsets, old_type,  newtype);
 	
+	sctk_error("NEWTYPE AFTER %d" , *newtype );
 		
 	/* Set its context to overide the one from hdindexed block */
 	struct Datatype_External_context dtctx;
@@ -10088,6 +10093,8 @@ int PMPI_Type_create_indexed_block(int count, int blocklength, int indices[], MP
 		MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
 	}
 
+	sctk_error("HERE I AM" );
+	
 	mpi_check_type_create(old_type,comm);
 	res = __INTERNAL__PMPI_Type_create_indexed_block(count, blocklength, indices, old_type, newtype);
 	SCTK_MPI_CHECK_RETURN_VAL (res, comm);	
