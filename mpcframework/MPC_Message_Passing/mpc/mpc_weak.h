@@ -193,5 +193,6 @@
 #pragma weak MPC_Type_get_true_extent = PMPC_Type_get_true_extent
 #pragma weak MPC_Type_get_envelope = PMPC_Type_get_envelope
 #pragma weak MPC_Type_get_contents = PMPC_Type_get_contents
+#pragma weak MPC_Type_commit = PMPC_Type_commit
 #pragma weak MPC_Type_is_allocated = PMPC_Type_is_allocated
 

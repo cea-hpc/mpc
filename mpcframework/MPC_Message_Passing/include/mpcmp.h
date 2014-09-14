@@ -54,7 +54,7 @@ extern "C"
   
   
 #define SCTK_COMMON_DATA_TYPE_COUNT 70
-#define SCTK_USER_DATA_TYPES_MAX 260
+#define SCTK_USER_DATA_TYPES_MAX 800
 #define SCTK_DERIVED_DATATYPE_BASE (SCTK_COMMON_DATA_TYPE_COUNT + SCTK_USER_DATA_TYPES_MAX)
   
 /** \brief Macro to obtain the total number of datatypes */
@@ -581,6 +581,8 @@ typedef enum
 			     int array_of_integers[],
 			     MPC_Aint array_of_addresses[],
 			     MPC_Datatype array_of_datatypes[]);
+  int MPC_Type_commit( MPC_Datatype * type );
+  
   
   /*MPC specific function */
   int MPC_Copy_in_buffer (void *inbuffer, void *outbuffer, MPC_Datatype datatype);
@@ -905,6 +907,7 @@ int MPC_Test_cancelled (MPC_Status *, int *);
 			      int array_of_integers[],
 			      MPC_Aint array_of_addresses[],
 			      MPC_Datatype array_of_datatypes[]);
+  int PMPC_Type_commit( MPC_Datatype * type );
   /*MPC specific function */
   int PMPC_Copy_in_buffer (void *inbuffer, void *outbuffer, MPC_Datatype datatype);
   int PMPC_Copy_from_buffer (void *inbuffer, void *outbuffer, MPC_Datatype datatype);

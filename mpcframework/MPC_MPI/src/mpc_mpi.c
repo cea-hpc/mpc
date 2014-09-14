@@ -3485,6 +3485,14 @@ static int __INTERNAL__PMPI_Type_extent (MPI_Datatype datatype, MPI_Aint * exten
 {
 	MPI_Aint UB;
 	MPI_Aint LB;
+	
+	/* Special cases */
+	if (datatype == MPI_DATATYPE_NULL)
+	{
+		/* Here we return 0 for data-type null
+		 * in order to pass the struct-zero-count test */
+		return 0;
+	}
 
 	__INTERNAL__PMPI_Type_lb (datatype, &LB);
 	__INTERNAL__PMPI_Type_ub (datatype, &UB);
@@ -3593,7 +3601,7 @@ __INTERNAL__PMPI_Type_ub (MPI_Datatype datatype, MPI_Aint * displacement)
 
 static int __INTERNAL__PMPI_Type_commit (MPI_Datatype * datatype)
 {
-  return MPI_SUCCESS;
+  return PMPC_Type_commit(datatype);
 }
 
 static int __INTERNAL__PMPI_Type_free (MPI_Datatype * datatype)
@@ -9973,6 +9981,9 @@ int PMPI_Type_contiguous (int count, MPI_Datatype old_type, MPI_Datatype * new_t
 	int res = MPI_ERR_INTERN;
 	mpi_check_type_create(old_type,comm);
 	mpi_check_count(count,comm);
+	
+	*new_type_p = MPC_DATATYPE_NULL;
+	
 	res = __INTERNAL__PMPI_Type_contiguous (count, old_type, new_type_p);
 	SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
@@ -9983,9 +9994,11 @@ int PMPI_Type_vector (int count, int blocklength, int stride, MPI_Datatype old_t
 	int res = MPI_ERR_INTERN;
 	mpi_check_type_create(old_type,comm);
 	
+	*newtype_p = MPC_DATATYPE_NULL;
+	
 	if(blocklength < 0)
 	{
-		MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
+		MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"Error negative block lengths provided");
 	}
 	
 	mpi_check_count(count,comm);
@@ -10000,11 +10013,14 @@ int PMPI_Type_hvector (int count, int blocklen, MPI_Aint stride, MPI_Datatype ol
 	int res = MPI_ERR_INTERN;
 	mpi_check_type_create(old_type,comm);
 	mpi_check_count(count,comm);
+	
+	*newtype_p = MPC_DATATYPE_NULL;
 
 	if(blocklen < 0)
 	{
-		MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
+		MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"Error negative block lengths provided");
 	}
+	
 	res = __INTERNAL__PMPI_Type_hvector (count, blocklen, stride, old_type, newtype_p);
 	SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
@@ -10016,9 +10032,11 @@ int PMPI_Type_create_hvector (int count, int blocklen, MPI_Aint stride, MPI_Data
 	mpi_check_type_create(old_type,comm);
 	mpi_check_count(count,comm);
 	
+	*newtype_p = MPC_DATATYPE_NULL;
+	
 	if(blocklen < 0)
 	{
-		MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
+		MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"Error negative block lengths provided");
 	}
 	
 	res = __INTERNAL__PMPI_Type_hvector (count, blocklen, stride, old_type, newtype_p);
@@ -10032,16 +10050,18 @@ int PMPI_Type_indexed (int count, int blocklens[], int indices[], MPI_Datatype o
 	int i;
 	mpi_check_count(count,comm);
 	
+	*newtype = MPC_DATATYPE_NULL;
+	
 	if((blocklens == NULL) || (indices == NULL))
 	{
-		MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
+		return MPI_SUCCESS;
 	}
 	
 	for(i = 0; i < count; i++)
 	{
 		if(blocklens[i] < 0)
 		{
-			MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
+			MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"Error negative block lengths provided");
 		}
 	}
 
@@ -10057,16 +10077,18 @@ int PMPI_Type_hindexed (int count, int blocklens[],  MPI_Aint indices[], MPI_Dat
 	int i;
 	mpi_check_count(count,comm);
 	
+	*newtype = MPC_DATATYPE_NULL;
+	
 	if((blocklens == NULL) || (indices == NULL))
 	{
-		MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
+		return MPI_SUCCESS;
 	}
 	
 	for(i = 0; i < count; i++)
 	{
 		if(blocklens[i] < 0)
 		{
-			MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
+			MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"Error negative block lengths provided");
 		}
 	}
 	
@@ -10083,17 +10105,18 @@ int PMPI_Type_create_indexed_block(int count, int blocklength, int indices[], MP
 	int i;
 	mpi_check_count(count,comm);
 	
+	*newtype = MPC_DATATYPE_NULL;
+	
 	if(indices == NULL)
 	{
-		MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
+		return MPI_SUCCESS;
 	}
 	
 	if( blocklength < 0)
 	{
-		MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
+		MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"Error negative block lengths provided");
 	}
 
-	sctk_error("HERE I AM" );
 	
 	mpi_check_type_create(old_type,comm);
 	res = __INTERNAL__PMPI_Type_create_indexed_block(count, blocklength, indices, old_type, newtype);
@@ -10107,14 +10130,17 @@ int PMPI_Type_create_hindexed_block(int count, int blocklength, MPI_Aint indices
 	int i;
 	mpi_check_count(count,comm);
 	
+	
+	*newtype = MPC_DATATYPE_NULL;
+	
 	if(indices == NULL)
 	{
-		MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
+		return MPI_SUCCESS;
 	}
 	
 	if( blocklength < 0)
 	{
-		MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
+		MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"Error negative block lengths provided");
 	}
 
 	mpi_check_type_create(old_type,comm);
@@ -10129,16 +10155,18 @@ int PMPI_Type_create_hindexed (int count, int blocklens[], MPI_Aint indices[],  
 	int i;
 	mpi_check_count(count,comm);
 
+	*newtype = MPC_DATATYPE_NULL;
+	
 	if((blocklens == NULL) || (indices == NULL))
 	{
-		MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
+		return MPI_SUCCESS;
 	}
 
 	for(i = 0; i < count; i++)
 	{
 		if(blocklens[i] < 0)
 		{
-			MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
+			MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"Error negative block lengths provided");
 		}
 	}
 	mpi_check_type_create(old_type,comm);
@@ -10147,15 +10175,17 @@ int PMPI_Type_create_hindexed (int count, int blocklens[], MPI_Aint indices[],  
 }
 
 int PMPI_Type_struct (int count, int blocklens[], MPI_Aint indices[], MPI_Datatype old_types[], MPI_Datatype * newtype)
-	{
+{
 	MPI_Comm comm = MPI_COMM_WORLD;
 	int res = MPI_ERR_INTERN;
 	int i;
 	mpi_check_count(count,comm);
+	
+	*newtype = MPC_DATATYPE_NULL;
 
 	if((old_types == NULL) || (indices == NULL) || (blocklens == NULL))
 	{
-		MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
+		return MPI_SUCCESS;
 	}
 
 	for(i = 0; i < count; i++)
@@ -10163,7 +10193,7 @@ int PMPI_Type_struct (int count, int blocklens[], MPI_Aint indices[], MPI_Dataty
 		mpi_check_type_create(old_types[i],comm); 
 		if(blocklens[i] < 0)
 		{
-			MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
+			MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"Error negative block lengths provided");
 		}
 	}
 
@@ -10179,9 +10209,11 @@ int PMPI_Type_create_struct (int count, int blocklens[], MPI_Aint indices[], MPI
 	int i;
 	mpi_check_count(count,comm);
 
+	*newtype = MPC_DATATYPE_NULL;
+	
 	if((old_types == NULL) || (indices == NULL) || (blocklens == NULL))
 	{
-		MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
+		return MPI_SUCCESS;
 	}
 
 	for(i = 0; i < count; i++)

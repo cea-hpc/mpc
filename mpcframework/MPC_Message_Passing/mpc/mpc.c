@@ -647,6 +647,7 @@ static inline void __MPC_init_task_specific_t (sctk_task_specific_t * tmp)
 	
 	/* Create the context class handling structure */
 	GRequest_context_init( &tmp->grequest_context );
+	
 }
 
 /** \brief Relases a structure of type \ref sctk_task_specific_t
@@ -683,6 +684,9 @@ static void __MPC_setup_task_specific ()
 	
 	/* Set the sctk_task_specific key in thread CTX */
 	sctk_thread_setspecific_mpc (sctk_task_specific, tmp);
+	
+	/* Initialize composed datatypes */
+	init_composed_common_types();
 }
 
 /** \brief Releases and frees task ctx
@@ -1366,12 +1370,20 @@ int PMPC_Type_free (MPC_Datatype * datatype_p)
 	/* Retrieve task context */
 	sctk_task_specific_t *task_specific = __MPC_get_task_specific ();
 	
+	if(datatype == MPC_DATATYPE_NULL)
+	{
+		/* Edge case nothing to do here */
+		MPC_ERROR_SUCESS();
+	}
+	
+	
+	
 	/* Is the datatype NULL or PACKED ? */
-	if ((datatype == MPC_DATATYPE_NULL) || (datatype == MPC_PACKED))
+	if ( datatype == MPC_PACKED )
 	{
 		/* ERROR */
 		SCTK_PROFIL_END (MPC_Type_free);
-		MPC_ERROR_REPORT (MPC_COMM_WORLD, MPC_ERR_TYPE, "You tried to free an MPI_DATATYPE_NULL or MPI_PACKED datatype");
+		MPC_ERROR_REPORT (MPC_COMM_WORLD, MPC_ERR_TYPE, "You tried to free an MPI_PACKED datatype");
 	}
 
 
@@ -1633,7 +1645,11 @@ static inline size_t __MPC_Get_datatype_size (MPC_Datatype datatype, sctk_task_s
 {
 	/* Special cases */
 	if (datatype == MPC_DATATYPE_NULL)
-		sctk_fatal("Cannot compute the size of a null datatype");
+	{
+		/* Here we return 0 for data-type null
+		 * in order to pass the struct-zero-count test */
+		return 0;
+	}
 
 	/* Upper bound measures 0 by definition */
 	if (datatype == MPC_UB)
@@ -1719,6 +1735,17 @@ int PMPC_Type_get_true_extent(MPC_Datatype datatype, MPC_Aint *true_lb, MPC_Aint
 	sctk_task_specific_t * task_specific = __MPC_get_task_specific ();
 	mpc_pack_absolute_indexes_t tmp_true_lb;
 	mpc_pack_absolute_indexes_t tmp_true_ub;
+	
+	/* Special cases */
+	if (datatype == MPC_DATATYPE_NULL)
+	{
+		/* Here we return 0 for data-type null
+		 * in order to pass the struct-zero-count test */
+		*true_lb = 0;
+		*true_extent = 0;
+		MPC_ERROR_SUCESS();
+	}
+	
 	
 	switch( sctk_datatype_kind(datatype) )
 	{
@@ -1860,6 +1887,46 @@ int PMPC_Type_hcontiguous (MPC_Datatype * datatype, size_t count, MPC_Datatype *
 	return -1;
 }
 
+
+int PMPC_Type_commit( MPC_Datatype * datatype )
+{
+	sctk_task_specific_t *task_specific = __MPC_get_task_specific ();
+	sctk_derived_datatype_t *target_derived_type;
+	
+
+	switch( sctk_datatype_kind( *datatype ) )
+	{
+		case MPC_DATATYPES_COMMON:
+		case MPC_DATATYPES_CONTIGUOUS :
+			/* Nothing to do here */
+			MPC_ERROR_SUCESS();
+		break;
+		
+		case MPC_DATATYPES_DERIVED :
+					
+			/* Get a pointer to the type of interest */
+			target_derived_type = sctk_task_specific_get_derived_datatype( task_specific, *datatype );
+			
+			/* OPTIMIZE */
+			
+			
+			MPC_ERROR_SUCESS();
+		break;
+		
+		case MPC_DATATYPES_UNKNOWN:
+			MPC_ERROR_REPORT( MPC_COMM_WORLD, MPC_ERR_INTERN, "This datatype is unknown");
+		break;
+	}
+
+
+	
+	
+	
+	MPC_ERROR_SUCESS();
+}
+
+
+
 /** \brief This function increases the refcounter for a datatype
  * 
  *  \param datatype Target datatype
@@ -1924,8 +1991,6 @@ int PMPC_Derived_datatype_on_slot ( sctk_derived_datatype_t * current_user_type,
 {		
 	sctk_task_specific_t *task_specific = __MPC_get_task_specific ();
 
-	sctk_nodebug("datatype = %d + %d + %d = %d", SCTK_COMMON_DATA_TYPE_COUNT , SCTK_USER_DATA_TYPES_MAX, i, *datatype);
-	
 	/* Here we allocate the new derived datatype */
 	sctk_derived_datatype_t * new_type = (sctk_derived_datatype_t *) sctk_malloc (sizeof (sctk_derived_datatype_t));
 	

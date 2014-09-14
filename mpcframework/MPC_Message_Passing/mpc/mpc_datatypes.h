@@ -192,7 +192,10 @@ void sctk_common_datatype_init();
  *  \param datatype target common datatype
  *  \return datatype size
  */
-size_t sctk_common_datatype_get_size( MPC_Datatype datatype );  
+size_t sctk_common_datatype_get_size( MPC_Datatype datatype );
+
+
+void init_composed_common_types();
 
 
 /************************************************************************/

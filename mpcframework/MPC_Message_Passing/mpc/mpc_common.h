@@ -154,6 +154,15 @@ int MPC_Is_derived_datatype (MPC_Datatype datatype, int *res, sctk_derived_datat
 
 int MPC_Datatype_set_context( MPC_Datatype datatype,  struct Datatype_External_context * dctx );
 
+int PMPC_Derived_datatype_on_slot ( sctk_derived_datatype_t * current_user_type,
+				    int id,
+				    mpc_pack_absolute_indexes_t * begins,
+				    mpc_pack_absolute_indexes_t * ends,
+				    MPC_Datatype * types,
+			     	    unsigned long count,
+				    mpc_pack_absolute_indexes_t lb, int is_lb,
+				    mpc_pack_absolute_indexes_t ub, int is_ub);
+
 /************************************************************************/
 /* Per thread context                                                   */
 /************************************************************************/
