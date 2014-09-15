@@ -312,6 +312,22 @@ int sctk_derived_datatype_release( sctk_derived_datatype_t * type );
  */
 void sctk_derived_datatype_true_extent( sctk_derived_datatype_t * type , mpc_pack_absolute_indexes_t * true_lb, mpc_pack_absolute_indexes_t * true_ub);
 
+/** \brief This stucture is used to optimize a derived datatype
+ *  It is easier to manipulate pairs of begin and ends instead of two arrays
+ */
+struct Derived_datatype_cell
+{
+	mpc_pack_absolute_indexes_t * begin;
+	mpc_pack_absolute_indexes_t * end;
+	char ignore;
+};
+
+
+/** \brief Try to optimize a derived datatype (called by \ref PMPC_Commit)
+ *  \param target_type Type to be optimized
+ */
+int sctk_derived_datatype_optimize( sctk_derived_datatype_t * target_type );
+
 /************************************************************************/
 /* Datatype ID range calculations                                       */
 /************************************************************************/

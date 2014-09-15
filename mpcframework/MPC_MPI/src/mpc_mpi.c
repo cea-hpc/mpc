@@ -580,7 +580,7 @@ TODO("to optimize")
   if(buf == NULL)					\
     MPI_ERROR_REPORT(comm,MPI_ERR_BUFFER,"A NULL message buffer was provided"); \
   if( buf == MPI_BOTTOM ) \
-      buf = NULL; /* Here we remove 1 from buff to restore pointer arithmetic */
+      buf = NULL; /* Here we remove 1 from buff to restore pointer artihmetic */
 
 #define mpi_check_count(count,comm)				\
   if(count < 0)							\

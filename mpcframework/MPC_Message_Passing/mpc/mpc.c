@@ -1920,7 +1920,7 @@ int PMPC_Type_commit( MPC_Datatype * datatype )
 			target_derived_type = sctk_task_specific_get_derived_datatype( task_specific, *datatype );
 			
 			/* OPTIMIZE */
-			
+			sctk_derived_datatype_optimize( target_derived_type );
 			
 			MPC_ERROR_SUCESS();
 		break;

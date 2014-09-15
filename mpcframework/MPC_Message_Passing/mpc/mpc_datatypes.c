@@ -513,6 +513,80 @@ void sctk_derived_datatype_true_extent( sctk_derived_datatype_t * type , mpc_pac
 }
 
 
+int sctk_derived_datatype_optimize( sctk_derived_datatype_t * target_type )
+{
+	/* Extract cout */
+	MPC_Aint count = target_type->count;
+	
+	
+	/* Do we have at least two blocks */
+	if( count <= 1 )
+		return MPC_SUCCESS;
+	
+	/* Extract the layout in cells */
+	struct Derived_datatype_cell * cells = sctk_malloc( sizeof( struct Derived_datatype_cell ) * count);
+	
+	assume( cells != NULL );
+	
+	MPC_Aint i, j;
+	
+	for( i = 0; i < count ; i++ )
+	{
+		cells[i].begin = target_type->begins[i];
+		cells[i].end = target_type->ends[i];
+		cells[i].ignore = 0;
+	}
+	
+	MPC_Aint new_count = count;
+	
+	
+	for( i = 0; i < count ; i++ )
+	{
+		
+		for( j = i + 1 ; j < count ; j++ )
+		{
+			//sctk_warning("%d == %d", (cells[i].end + 1 ), cells[j].begin );
+			if( (cells[i].end + 1 ) == cells[j].begin )
+			{
+				CRASH();
+				/* If cells are contiguous we merge with
+				 * the previous cell */
+				cells[j].ignore = 1;
+				cells[i].end = cells[j].end;
+				new_count--;
+				/* Jump to next cell */
+				i = j + 1;
+			}
+			else
+			{
+				break;
+			}
+			
+		}
+		
+	}
+	
+	if( count != new_count )
+	{
+		sctk_error("OLD %d new %d", count, new_count );
+	}
+	
+	/* Copy back the content */
+	for( i = 0; i < count ; i++ )
+	{
+		if( cells[i].ignore )
+			continue;
+		
+		target_type->begins[i] = cells[i].begin;
+		target_type->ends[i] = cells[i].end;
+	}
+	
+	
+	sctk_free(cells);
+	
+}
+
+
 /************************************************************************/
 /* Datatype  Array                                                      */
 /************************************************************************/
