@@ -349,7 +349,7 @@ typedef int MPIX_Grequest_wait_fn(int count, void **array_of_states, double, MPI
 
 /* NOT IMPLEMENTED >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
 typedef int MPI_Win;
-typedef long MPI_Count;
+typedef MPC_Count MPI_Count;
 typedef long MPI_Offset;
 /* C functions */
 //~ typedef void (MPC_Handler_function) ( MPI_Comm *, int *, ... );
@@ -512,6 +512,10 @@ int MPI_Type_get_contents( MPI_Datatype datatype,
 			   int array_of_integers[],
 			   MPI_Aint array_of_addresses[],
 			   MPI_Datatype array_of_datatypes[]);
+int MPI_Type_size_x(MPI_Datatype datatype, MPI_Count *size);
+int MPI_Type_get_extent_x(MPI_Datatype datatype, MPI_Count *lb, MPI_Count *extent);
+int MPI_Type_get_true_extent_x(MPI_Datatype datatype, MPI_Count *true_lb, MPI_Count *true_extent);
+int MPI_Get_elements_x (MPI_Status * status, MPI_Datatype datatype, MPI_Count *elements);
 
 /* Collective Operations */
 int MPI_Barrier (MPI_Comm);
@@ -785,6 +789,10 @@ int PMPI_Type_get_contents( MPI_Datatype datatype,
 			    int array_of_integers[],
 			    MPI_Aint array_of_addresses[],
 			    MPI_Datatype array_of_datatypes[]);
+int PMPI_Type_size_x(MPI_Datatype datatype, MPI_Count *size);
+int PMPI_Type_get_extent_x(MPI_Datatype datatype, MPI_Count *lb, MPI_Count *extent);
+int PMPI_Type_get_true_extent_x(MPI_Datatype datatype, MPI_Count *true_lb, MPI_Count *true_extent);
+int PMPI_Get_elements_x (MPI_Status * status, MPI_Datatype datatype, MPI_Count *elements);
 
 /* Collective Operations */
 int PMPI_Barrier (MPI_Comm);

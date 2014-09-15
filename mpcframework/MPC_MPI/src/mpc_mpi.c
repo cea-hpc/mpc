@@ -172,7 +172,7 @@ static int __INTERNAL__PMPI_Type_ub (MPI_Datatype, MPI_Aint *);
 static int __INTERNAL__PMPI_Type_create_resized(MPI_Datatype old_type, MPI_Aint lb, MPI_Aint extent, MPI_Datatype *new_type);
 static int __INTERNAL__PMPI_Type_commit (MPI_Datatype *);
 static int __INTERNAL__PMPI_Type_free (MPI_Datatype *);
-static int __INTERNAL__PMPI_Get_elements (MPI_Status *, MPI_Datatype, int *);
+static int __INTERNAL__PMPI_Get_elements_x (MPI_Status *, MPI_Datatype, MPI_Count *);
 static int __INTERNAL__PMPI_Pack (void *, int, MPI_Datatype, void *, int,
 				  int *, MPI_Comm);
 static int __INTERNAL__PMPI_Unpack (void *, int, int *, void *, int,
@@ -3520,6 +3520,23 @@ static int __INTERNAL__PMPI_Type_size (MPI_Datatype datatype, int *size)
 	return res;
 }
 
+static int __INTERNAL__PMPI_Type_size_x (MPI_Datatype datatype, MPI_Count *size)
+{
+	size_t tmp_size;
+	MPI_Count real_val;
+	int res;
+	
+	res = PMPC_Type_size (datatype, &tmp_size);
+	
+	real_val = tmp_size;
+	*size = real_val;
+	return res;
+}
+
+
+
+
+
 /* MPI_Type_count was withdrawn in MPI 1.1 */
 static int __INTERNAL__PMPI_Type_lb (MPI_Datatype datatype, MPI_Aint * displacement)
 {
@@ -3612,7 +3629,7 @@ static int __INTERNAL__PMPI_Type_free (MPI_Datatype * datatype)
   return PMPC_Type_free (datatype);
 }
 
-static int __INTERNAL__PMPI_Get_elements (MPI_Status * status, MPI_Datatype datatype, int *elements)
+static int __INTERNAL__PMPI_Get_elements_x (MPI_Status * status, MPI_Datatype datatype, MPI_Count *elements)
 {
 	int res = MPI_SUCCESS;
 	long long int size;
@@ -3710,10 +3727,10 @@ static int __INTERNAL__PMPI_Get_elements (MPI_Status * status, MPI_Datatype data
 				while( !done )
 				{
 				
-					sctk_warning("count : %d  size : %d done : %d", count, size, done);
+					sctk_nodebug("count : %d  size : %d done : %d", count, size, done);
 					for(i = 0; i < count; i++)
 					{
-						sctk_warning("BLOCK SIZE  : %d", layout[i].size );
+						sctk_nodebug("BLOCK SIZE  : %d", layout[i].size );
 						
 						size -= layout[i].size;
 						
@@ -10270,7 +10287,17 @@ int PMPI_Type_get_extent(MPI_Datatype datatype, MPI_Aint *lb, MPI_Aint *extent)
 	SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
+int PMPI_Type_get_extent_x(MPI_Datatype datatype, MPI_Count *lb, MPI_Count *extent)
+{
+	return PMPI_Type_get_extent( datatype, lb, extent );
+}
+
 int PMPI_Type_get_true_extent(MPI_Datatype datatype, MPI_Aint *true_lb, MPI_Aint *true_extent)
+{
+	return PMPC_Type_get_true_extent( datatype, true_lb, true_extent );
+}
+
+int PMPI_Type_get_true_extent_x(MPI_Datatype datatype, MPI_Count *true_lb, MPI_Count *true_extent)
 {
 	return PMPC_Type_get_true_extent( datatype, true_lb, true_extent );
 }
@@ -10300,6 +10327,15 @@ int PMPI_Type_size (MPI_Datatype datatype, int *size)
 	int res = MPI_ERR_INTERN;
 	mpi_check_type_create(datatype,comm);
 	res = __INTERNAL__PMPI_Type_size (datatype, size);
+	SCTK_MPI_CHECK_RETURN_VAL (res, comm);
+}
+
+int PMPI_Type_size_x(MPI_Datatype datatype, MPI_Count *size)
+{
+	MPI_Comm comm = MPI_COMM_WORLD;
+	int res = MPI_ERR_INTERN;
+	mpi_check_type_create(datatype,comm);
+	res = __INTERNAL__PMPI_Type_size_x(datatype, size);
 	SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
@@ -10365,7 +10401,24 @@ int PMPI_Get_elements (MPI_Status * status, MPI_Datatype datatype, int *elements
 	MPI_Comm comm = MPI_COMM_WORLD;
 	int res = MPI_ERR_INTERN;
 	mpi_check_type(datatype,comm);
-	res = __INTERNAL__PMPI_Get_elements (status, datatype, elements);
+	
+	MPI_Count tmp_elements = 0;
+	
+	res = __INTERNAL__PMPI_Get_elements_x (status, datatype, &tmp_elements);
+	
+	*elements = tmp_elements;
+	
+	SCTK_MPI_CHECK_RETURN_VAL (res, comm);
+}
+
+int PMPI_Get_elements_x (MPI_Status * status, MPI_Datatype datatype, MPI_Count *elements)
+{
+	MPI_Comm comm = MPI_COMM_WORLD;
+	int res = MPI_ERR_INTERN;
+	mpi_check_type(datatype,comm);
+
+	res = __INTERNAL__PMPI_Get_elements_x (status, datatype, &elements);
+	
 	SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
