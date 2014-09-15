@@ -554,8 +554,8 @@ __sctk_init_mpi_errors ()
 #define MPI_ERROR_SUCESS() return MPI_SUCCESS
 
 #define mpi_check_type(datatype,comm)		\
-  if ((datatype >= SCTK_USER_DATA_TYPES_MAX) && (sctk_datatype_is_derived(datatype) != 1)) \
-    MPI_ERROR_REPORT (comm, MPI_ERR_TYPE, "");
+  if ( ((datatype >= SCTK_USER_DATA_TYPES_MAX) && (sctk_datatype_is_derived(datatype) != 1)) || (datatype == MPI_DATATYPE_NULL) ) \
+    MPI_ERROR_REPORT (comm, MPI_ERR_TYPE, "Bad datatype provided");
 
 #define mpi_check_type_create(datatype,comm)		\
   if ((datatype >= SCTK_USER_DATA_TYPES_MAX) && (sctk_datatype_is_derived(datatype) != 1) && ((datatype != MPI_UB) && (datatype != MPI_LB))) \
@@ -568,41 +568,43 @@ TODO("to optimize")
 #define mpi_check_comm(com,comm)			\
   if((is_finalized != 0) || (is_initialized != 1)) MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_OTHER,""); \
   else if (com == MPI_COMM_NULL)				\
-    MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_COMM,"");		\
+    MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_COMM,"Error in communicator");		\
   else if(mpc_mpc_get_per_comm_data(com) == NULL)	\
-    MPI_ERROR_REPORT(comm,MPI_ERR_COMM,"")
+    MPI_ERROR_REPORT(comm,MPI_ERR_COMM,"Error in communicator")
 
 #define mpi_check_status(status,comm)		\
   if(status == MPI_STATUS_IGNORE)	\
-    MPI_ERROR_REPORT(comm,MPI_ERR_IN_STATUS,"")
+    MPI_ERROR_REPORT(comm,MPI_ERR_IN_STATUS,"Error status is MPI_STATUS_IGNORE")
 
 #define mpi_check_buf(buf,comm)					\
-  if((buf == NULL) && (buf != MPI_BOTTOM))					\
-    MPI_ERROR_REPORT(comm,MPI_ERR_BUFFER,"")
+  if(buf == NULL)					\
+    MPI_ERROR_REPORT(comm,MPI_ERR_BUFFER,"A NULL message buffer was provided"); \
+  if( buf == MPI_BOTTOM ) \
+      buf = NULL; /* Here we remove 1 from buff to restore pointer arithmetic */
 
 #define mpi_check_count(count,comm)				\
   if(count < 0)							\
-    MPI_ERROR_REPORT(comm,MPI_ERR_COUNT,"")
+    MPI_ERROR_REPORT(comm,MPI_ERR_COUNT,"Error count cannot be negative")
 
 #define mpi_check_rank(task,max_rank,comm)		\
   if((((task < 0) || (task >= max_rank)) && (sctk_is_inter_comm (comm) == 0)) && (task != MPI_ANY_SOURCE) && (task != MPI_PROC_NULL)) \
-    MPI_ERROR_REPORT(comm,MPI_ERR_RANK,"")
+    MPI_ERROR_REPORT(comm,MPI_ERR_RANK,"Error bad rank provided")
 
 #define mpi_check_rank_send(task,max_rank,comm)		\
   if((((task < 0) || (task >= max_rank)) && (sctk_is_inter_comm (comm) == 0)) && (task != MPI_PROC_NULL)) \
-    MPI_ERROR_REPORT(comm,MPI_ERR_RANK,"")
+    MPI_ERROR_REPORT(comm,MPI_ERR_RANK,"Error bad rank provided")
 
 #define mpi_check_root(task,max_rank,comm)		\
   if(((task < 0) || (task >= max_rank)) && (task != MPI_PROC_NULL))		\
-    MPI_ERROR_REPORT(comm,MPI_ERR_ROOT,"")
+    MPI_ERROR_REPORT(comm,MPI_ERR_ROOT,"Error bad root rank provided")
 
 #define mpi_check_tag(tag,comm)				\
   if(((tag < 0) || (tag > MPI_TAG_UB_VALUE)) && (tag != MPI_ANY_TAG))	\
-    MPI_ERROR_REPORT(comm,MPI_ERR_TAG,"")
+    MPI_ERROR_REPORT(comm,MPI_ERR_TAG,"Error bad tag provided")
 
 #define mpi_check_tag_send(tag,comm)				\
   if(((tag < 0) || (tag > MPI_TAG_UB_VALUE)))	\
-    MPI_ERROR_REPORT(comm,MPI_ERR_TAG,"")
+    MPI_ERROR_REPORT(comm,MPI_ERR_TAG,"Error bad tag provided")
 
 #define mpi_check_op_type_func(t) case t: return mpi_check_op_type_func_##t(datatype)
 #define mpi_check_op_type_func_notavail(t) case t: return 1 

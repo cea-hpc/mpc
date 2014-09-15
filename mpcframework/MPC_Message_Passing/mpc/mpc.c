@@ -585,12 +585,19 @@ void __MPC_delete_thread_specific(){
     sctk_spinlock_lock (&(tmp->buffer.lock));
     for (i = 0; i < MAX_MPC_BUFFERED_MSG; i++)
       {
+	sctk_nodebug("WAIT message %d type %d src %d dest %d tag %d size %ld", i, 
+			tmp->buffer.buffer[i].request.request_type, 
+			tmp->buffer.buffer[i].request.header.source, 
+		tmp->buffer.buffer[i].request.header.destination,
+		tmp->buffer.buffer[i].request.header.message_tag,
+		tmp->buffer.buffer[i].request.header.msg_size);
 	sctk_mpc_wait_message (&(tmp->buffer.buffer[i].request));
       }
     sctk_spinlock_unlock (&(tmp->buffer.lock));
     sctk_spinlock_lock (&(tmp->buffer_async.lock));
     for (i = 0; i < MAX_MPC_BUFFERED_MSG; i++)
       {
+	sctk_nodebug("WAIT message ASYNC %d", i);
 	sctk_mpc_wait_message (&
 			       (tmp->buffer_async.buffer_async[i].
 				request));
@@ -2938,13 +2945,13 @@ sctk_user_main (int argc, char **argv)
 
   MPC_Checkpoint_restart_end ();
 
-  sctk_nodebug ("Wait for pending messages");
+  sctk_debug ("Wait for pending messages");
 
   __MPC_get_task_specific ();
 
   __MPC_delete_thread_specific();
 
-  sctk_nodebug ("All message done");
+  sctk_debug ("All message done");
 
   __MPC_Barrier (MPC_COMM_WORLD);
 
