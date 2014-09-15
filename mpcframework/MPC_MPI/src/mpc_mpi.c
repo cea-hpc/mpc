@@ -3252,6 +3252,7 @@ static int __INTERNAL__PMPI_Type_struct(int count, int blocklens[], MPI_Aint ind
 
 	unsigned long my_count_out = 0;
 	
+
 	// find malloc size
 	for (i = 0; i < count; i++)
 	{
@@ -3266,10 +3267,12 @@ static int __INTERNAL__PMPI_Type_struct(int count, int blocklens[], MPI_Aint ind
 			{
 				MPC_Is_derived_datatype(old_types[i], &derived_ret, &input_datatype);
 				count_in = input_datatype.count;
+				sctk_nodebug("[%d]Derived length %d", old_types[i], count_in);
 			}
 			else
 			{
 				count_in = 1;
+				sctk_nodebug("[%d]Contiguous length %d",old_types[i], count_in);
 			}
 
 			my_count_out += count_in * blocklens[i];
@@ -3369,8 +3372,8 @@ static int __INTERNAL__PMPI_Type_struct(int count, int blocklens[], MPI_Aint ind
 						ends_out[glob_count_out] = ends_in[0] + stride_t + (extent * j);
 						datatypes[glob_count_out] = old_types[i];
 
-						sctk_nodebug(" begins_out[%lu] = %lu", glob_count_out, begins_out[glob_count_out]);
-						sctk_nodebug(" ends_out[%lu] = %lu", glob_count_out, ends_out[glob_count_out]);
+						sctk_debug(" begins_out[%lu] = %lu", glob_count_out, begins_out[glob_count_out]);
+						sctk_debug(" ends_out[%lu] = %lu", glob_count_out, ends_out[glob_count_out]);
 
 						glob_count_out++;
 				}
@@ -10221,7 +10224,7 @@ int PMPI_Type_create_struct (int count, int blocklens[], MPI_Aint indices[], MPI
 		mpi_check_type_create(old_types[i],comm); 
 		if(blocklens[i] < 0)
 		{
-			MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
+			MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"Bad datatype provided to PMPI_Type_create_struct");
 		} 
 	}
 

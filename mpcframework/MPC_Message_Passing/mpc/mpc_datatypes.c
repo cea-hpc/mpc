@@ -76,9 +76,6 @@ void sctk_common_datatype_set_name_helper( MPC_Datatype datatype, char * name )
 void __init_a_composed_common_types(MPC_Datatype target_type, MPC_Aint disp, MPC_Datatype type_a, MPC_Datatype type_b )
 {
 	struct sctk_task_specific_s *ts = __MPC_get_task_specific ();
-	
-	/* Here we allocate the new derived datatype */
-	sctk_derived_datatype_t * type = Datatype_Array_get_derived_datatype( &ts->datatype_array, target_type );
 
 	/* Compute data-type sizes */
 	size_t sa, sb;
@@ -120,7 +117,7 @@ void __init_a_composed_common_types(MPC_Datatype target_type, MPC_Aint disp, MPC
 	displacements[1] = begins[1];
 
 	/* Create the derived data-type */
-	PMPC_Derived_datatype_on_slot( type, target_type, begins, ends, types, 2, 0, 0, 0, 0);
+	PMPC_Derived_datatype_on_slot( target_type, begins, ends, types, 2, 0, 0, 0, 0);
 
 	/* Fill its context */
 	struct Datatype_External_context dtctx;

@@ -1893,7 +1893,12 @@ int PMPC_Type_commit( MPC_Datatype * datatype )
 	sctk_task_specific_t *task_specific = __MPC_get_task_specific ();
 	sctk_derived_datatype_t *target_derived_type;
 	
-
+	if( *datatype == MPC_DATATYPE_NULL )
+	{
+		MPC_ERROR_REPORT( MPC_COMM_WORLD, MPC_ERR_ARG, "You are trying to commit a NULL data-type");
+	}
+	
+	
 	switch( sctk_datatype_kind( *datatype ) )
 	{
 		case MPC_DATATYPES_COMMON:
@@ -1980,8 +1985,7 @@ int PMPC_Type_use (MPC_Datatype datatype)
 	MPC_ERROR_SUCESS ();
 }
 
-int PMPC_Derived_datatype_on_slot ( sctk_derived_datatype_t * current_user_type,
-				    int id,
+int PMPC_Derived_datatype_on_slot ( int id,
 				    mpc_pack_absolute_indexes_t * begins,
 				    mpc_pack_absolute_indexes_t * ends,
 				    MPC_Datatype * types,
@@ -2076,7 +2080,7 @@ int PMPC_Derived_datatype ( MPC_Datatype * datatype,
 			*datatype = new_id;
 
 	
-			return  PMPC_Derived_datatype_on_slot ( current_user_type, new_id, begins, ends, types, count,lb,  is_lb, ub,  is_ub);
+			return  PMPC_Derived_datatype_on_slot ( new_id, begins, ends, types, count,lb,  is_lb, ub,  is_ub);
 		}
     }
     
