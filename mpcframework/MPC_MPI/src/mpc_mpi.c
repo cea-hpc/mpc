@@ -1732,17 +1732,17 @@ __INTERNAL__PMPI_Isend_test_req (void *buf, int count, MPI_Datatype datatype,
 
 			{
 				mpc_pack_absolute_indexes_t *tmp;
-				tmp = sctk_malloc (derived_datatype.count * 2 * sizeof (mpc_pack_absolute_indexes_t));
+				tmp = sctk_malloc (derived_datatype.opt_count * 2 * sizeof (mpc_pack_absolute_indexes_t));
 				__sctk_add_in_mpc_request (request, tmp);
 				
-				memcpy (tmp, derived_datatype.begins, derived_datatype.count * sizeof (mpc_pack_absolute_indexes_t));
-				memcpy (&(tmp[derived_datatype.count]), derived_datatype.ends, derived_datatype.count * sizeof (mpc_pack_absolute_indexes_t));
+				memcpy (tmp, derived_datatype.opt_begins, derived_datatype.opt_count * sizeof (mpc_pack_absolute_indexes_t));
+				memcpy (&(tmp[derived_datatype.opt_count]), derived_datatype.opt_ends, derived_datatype.opt_count * sizeof (mpc_pack_absolute_indexes_t));
 				
-				derived_datatype.begins = tmp;
-				derived_datatype.ends = &(tmp[derived_datatype.count]);
+				derived_datatype.opt_begins = tmp;
+				derived_datatype.opt_ends = &(tmp[derived_datatype.opt_count]);
 			}
 
-			res = PMPC_Add_pack_absolute (buf, derived_datatype.count, derived_datatype.begins, derived_datatype.ends, MPC_CHAR,	__sctk_convert_mpc_request (request));
+			res = PMPC_Add_pack_absolute (buf, derived_datatype.opt_count, derived_datatype.opt_begins, derived_datatype.opt_ends, MPC_CHAR,	__sctk_convert_mpc_request (request));
 		
 			if (res != MPI_SUCCESS)
 			{
@@ -1913,18 +1913,18 @@ static int __INTERNAL__PMPI_Irecv_test_req (void *buf, int count, MPI_Datatype d
 
 			{
 				mpc_pack_absolute_indexes_t *tmp;
-				tmp = sctk_malloc (derived_datatype.count * 2 * sizeof (mpc_pack_absolute_indexes_t));
+				tmp = sctk_malloc (derived_datatype.opt_count * 2 * sizeof (mpc_pack_absolute_indexes_t));
 				__sctk_add_in_mpc_request (request, tmp);
 
-				memcpy (tmp, derived_datatype.begins, derived_datatype.count * sizeof (mpc_pack_absolute_indexes_t));
-				memcpy (&(tmp[derived_datatype.count]), derived_datatype.ends, derived_datatype.count * sizeof (mpc_pack_absolute_indexes_t));
+				memcpy (tmp, derived_datatype.opt_begins, derived_datatype.opt_count * sizeof (mpc_pack_absolute_indexes_t));
+				memcpy (&(tmp[derived_datatype.opt_count]), derived_datatype.opt_ends, derived_datatype.opt_count * sizeof (mpc_pack_absolute_indexes_t));
 
-				derived_datatype.begins = tmp;
-				derived_datatype.ends = &(tmp[derived_datatype.count]);
+				derived_datatype.opt_begins = tmp;
+				derived_datatype.opt_ends = &(tmp[derived_datatype.opt_count]);
 			}
 
 			res =
-			PMPC_Add_pack_absolute (buf, derived_datatype.count, derived_datatype.begins, derived_datatype.ends, MPC_CHAR, __sctk_convert_mpc_request (request));
+			PMPC_Add_pack_absolute (buf, derived_datatype.opt_count, derived_datatype.opt_begins, derived_datatype.opt_ends, MPC_CHAR, __sctk_convert_mpc_request (request));
 			if (res != MPI_SUCCESS)
 			{
 				return res;
@@ -3553,12 +3553,12 @@ static int __INTERNAL__PMPI_Type_lb (MPI_Datatype datatype, MPI_Aint * displacem
 	{
 		if (input_datatype.is_lb == 0)
 		{
-			*displacement = (MPI_Aint) input_datatype.begins[0];
-			for (i = 0; i < input_datatype.count; i++)
+			*displacement = (MPI_Aint) input_datatype.opt_begins[0];
+			for (i = 0; i < input_datatype.opt_count; i++)
 			{
-				if ((mpc_pack_absolute_indexes_t) * displacement > input_datatype.begins[i])
+				if ((mpc_pack_absolute_indexes_t) * displacement > input_datatype.opt_begins[i])
 				{
-					*displacement = (MPI_Aint) input_datatype.begins[i];
+					*displacement = (MPI_Aint) input_datatype.opt_begins[i];
 				}
 			}
 		}
@@ -3591,15 +3591,15 @@ __INTERNAL__PMPI_Type_ub (MPI_Datatype datatype, MPI_Aint * displacement)
 	{
 		if (input_datatype.is_ub == 0)
 		{
-			*displacement = (MPI_Aint) input_datatype.ends[0];
+			*displacement = (MPI_Aint) input_datatype.opt_ends[0];
 			
-			for (i = 0; i < input_datatype.count; i++)
+			for (i = 0; i < input_datatype.opt_count; i++)
 			{
-				if ((mpc_pack_absolute_indexes_t) * displacement < input_datatype.ends[i])
+				if ((mpc_pack_absolute_indexes_t) * displacement < input_datatype.opt_ends[i])
 				{
-					*displacement = (MPI_Aint) input_datatype.ends[i];
+					*displacement = (MPI_Aint) input_datatype.opt_ends[i];
 				}
-				sctk_nodebug ("Current ub %lu, %lu", input_datatype.ends[i], *displacement);
+				sctk_nodebug ("Current ub %lu, %lu", input_datatype.opt_ends[i], *displacement);
 			}
 			
 			e = 1;
@@ -3828,20 +3828,20 @@ __INTERNAL__PMPI_Pack (void *inbuf,
 
 		for (j = 0; j < incount; j++)
 		{
-			for (i = 0; i < input_datatype.count; i++)
+			for (i = 0; i < input_datatype.opt_count; i++)
 			{
 				unsigned long size;
-				size = input_datatype.ends[i] - input_datatype.begins[i] + 1;
+				size = input_datatype.opt_ends[i] - input_datatype.opt_begins[i] + 1;
 				
-				sctk_nodebug ("Pack %lu->%lu, ==> %lu %lu", input_datatype.begins[i] + extent * j, input_datatype.ends[i] + extent * j, *position, size);
+				sctk_nodebug ("Pack %lu->%lu, ==> %lu %lu", input_datatype.opt_begins[i] + extent * j, input_datatype.opt_ends[i] + extent * j, *position, size);
 				
 				if (size != 0)
 				{
-					memcpy (&(((char *) outbuf)[*position]), &(((char *) inbuf)[input_datatype.begins[i]]), size);
+					memcpy (&(((char *) outbuf)[*position]), &(((char *) inbuf)[input_datatype.opt_begins[i]]), size);
 				}
 				
 				copied += size;
-				sctk_nodebug ("Pack %lu->%lu, ==> %lu %lu done", input_datatype.begins[i] + extent * j, input_datatype.ends[i] + extent * j, *position, size);
+				sctk_nodebug ("Pack %lu->%lu, ==> %lu %lu done", input_datatype.opt_begins[i] + extent * j, input_datatype.opt_ends[i] + extent * j, *position, size);
 				*position = *position + size;
 				assume (copied <= outcount);
 			}
@@ -3901,17 +3901,17 @@ __INTERNAL__PMPI_Unpack (void *inbuf,
 		MPC_Is_derived_datatype (datatype, &derived_ret, &output_datatype);
 		for (j = 0; j < outcount; j++)
 		{
-			for (i = 0; i < output_datatype.count; i++)
+			for (i = 0; i < output_datatype.opt_count; i++)
 			{
 				size_t size;
-				size = output_datatype.ends[i] - output_datatype.begins[i] + 1;
+				size = output_datatype.opt_ends[i] - output_datatype.opt_begins[i] + 1;
 				copied += size;
-				sctk_nodebug ("Unpack %lu %lu, ==> %lu->%lu", *position, size, output_datatype.begins[i] + extent * j, output_datatype.ends[i] + extent * j);
+				sctk_nodebug ("Unpack %lu %lu, ==> %lu->%lu", *position, size, output_datatype.opt_begins[i] + extent * j, output_datatype.ends[i] + extent * j);
 				if (size != 0)
 				{
-					memcpy (&(((char *) outbuf)[output_datatype.begins[i]]), &(((char *) inbuf)[*position]), size);
+					memcpy (&(((char *) outbuf)[output_datatype.opt_begins[i]]), &(((char *) inbuf)[*position]), size);
 				}
-				sctk_nodebug ("Unpack %lu %lu, ==> %lu->%lu done", *position, size, output_datatype.begins[i] + extent * j, output_datatype.ends[i] + extent * j);
+				sctk_nodebug ("Unpack %lu %lu, ==> %lu->%lu done", *position, size, output_datatype.opt_begins[i] + extent * j, output_datatype.opt_ends[i] + extent * j);
 				*position = *position + size;
 				/* just to display the data size */
 				int tmp;
@@ -3969,13 +3969,13 @@ __INTERNAL__PMPI_Pack_size (int incount, MPI_Datatype datatype, MPI_Comm comm,
 		
 		for (j = 0; j < incount; j++)
 		{
-			for (i = 0; i < input_datatype.count; i++)
+			for (i = 0; i < input_datatype.opt_count; i++)
 			{
 				size_t sizet;
-				sizet = input_datatype.ends[i] - input_datatype.begins[i] + 1;
+				sizet = input_datatype.opt_ends[i] - input_datatype.opt_begins[i] + 1;
 				*size = *size + sizet;
 				sctk_nodebug ("PACK derived part size %d, %lu-%lu", sizet,
-				input_datatype.begins[i], input_datatype.ends[i]);
+				input_datatype.opt_begins[i], input_datatype.opt_ends[i]);
 			}
 		}
 		

@@ -2016,7 +2016,7 @@ int PMPC_Derived_datatype_on_slot ( int id,
 	/* Now we register the datatype pointer in the derived datatype array */
 	sctk_task_specific_set_derived_datatype( task_specific, id , new_type);
 	
-	sctk_debug("NEW type %d\n", *new_type );
+	sctk_debug("NEW type %d\n", id );
 	
 	/* We unlock the derived datatype array */
 	sctk_datatype_unlock( task_specific );
@@ -2185,11 +2185,11 @@ int PMPC_Copy_in_buffer (void *inbuffer, void *outbuffer, MPC_Datatype datatype)
 		}
 		
 		/* Copy ach block one by one in the pack */
-		for (j = 0; j < t->count; j++)
+		for (j = 0; j < t->opt_count; j++)
 		{
 			size_t size;
 			/* Sizeof block */
-			size = t->ends[j] - t->begins[j] + 1;
+			size = t->opt_ends[j] - t->opt_begins[j] + 1;
 			memcpy (tmp, ((char *) inbuffer) + t->begins[j], size);
 			/* Increment offset in packed block */
 			tmp += size;
@@ -2231,11 +2231,11 @@ int PMPC_Copy_from_buffer (void *inbuffer, void *outbuffer, MPC_Datatype datatyp
 		}
 		
 		/* Unpack each block at the correct offset */
-		for (j = 0; j < t->count; j++)
+		for (j = 0; j < t->opt_count; j++)
 		{
 			size_t size;
 			/* Sizeof block */
-			size = t->ends[j] - t->begins[j] + 1;
+			size = t->opt_ends[j] - t->opt_begins[j] + 1;
 			/* Copy at offset */
 			memcpy (((char *) outbuffer) + t->begins[j], tmp, size);
 			/* Move in the contiguous block */

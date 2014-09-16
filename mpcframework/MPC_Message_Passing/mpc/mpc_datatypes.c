@@ -367,6 +367,8 @@ void sctk_derived_datatype_init( sctk_derived_datatype_t * type ,
 	type->begins = (mpc_pack_absolute_indexes_t *) sctk_malloc (count * sizeof(mpc_pack_absolute_indexes_t));
 	type->ends = (mpc_pack_absolute_indexes_t *) sctk_malloc (count * sizeof(mpc_pack_absolute_indexes_t));
 	
+	type->opt_begins = type->begins;
+	type->opt_ends = type->ends;
 
 	type->datatypes = (sctk_datatype_t *) sctk_malloc (count * sizeof(sctk_datatype_t));
 
@@ -385,6 +387,8 @@ void sctk_derived_datatype_init( sctk_derived_datatype_t * type ,
 	/* Fill the rest of the structure */
 	type->size = 0;
 	type->count = count;
+	/* At the beginning before optimization opt_count == count */
+	type->opt_count = count;
 	type->ref_count = 1;
 	
 	/* Here we compute the total size of the type
@@ -474,8 +478,16 @@ int sctk_derived_datatype_release( sctk_derived_datatype_t * type )
 		
 		
 		/* Counter == 0 then free */
+		if( type->opt_begins != type->begins )
+			sctk_free (type->opt_begins);
+		
+		if( type->opt_ends != type->ends )
+			sctk_free (type->opt_ends);
+		
 		sctk_free (type->begins);
 		sctk_free (type->ends);
+		
+		
 		sctk_free (type->datatypes);
 		
 		sctk_datatype_context_free( &type->context );
@@ -534,28 +546,27 @@ int sctk_derived_datatype_optimize( sctk_derived_datatype_t * target_type )
 	{
 		cells[i].begin = target_type->begins[i];
 		cells[i].end = target_type->ends[i];
+		cells[i].type = target_type->datatypes[i];
 		cells[i].ignore = 0;
 	}
 	
 	MPC_Aint new_count = count;
 	
-	
 	for( i = 0; i < count ; i++ )
 	{
-		
-		for( j = i + 1 ; j < count ; j++ )
+		if( cells[i].ignore )
+			continue;
+
+		for( j = (i + 1) ; j < count ; j++ )
 		{
-			//sctk_warning("%d == %d", (cells[i].end + 1 ), cells[j].begin );
-			if( (cells[i].end + 1 ) == cells[j].begin )
+			sctk_nodebug("[%d]{%d,%d} <=> [%d]{%d,%d} (%d == %d)[%d]", i, cells[i].begin , cells[i].end, j, cells[j].begin, cells[j].end,  cells[i].end +1 , cells[j].begin, (cells[i].end +1) == cells[j].begin );
+			if((cells[i].end + 1 ) == cells[j].begin)
 			{
-				CRASH();
 				/* If cells are contiguous we merge with
 				 * the previous cell */
 				cells[j].ignore = 1;
 				cells[i].end = cells[j].end;
 				new_count--;
-				/* Jump to next cell */
-				i = j + 1;
 			}
 			else
 			{
@@ -566,24 +577,40 @@ int sctk_derived_datatype_optimize( sctk_derived_datatype_t * target_type )
 		
 	}
 	
+	assume( new_count != 0 );
+	
 	if( count != new_count )
 	{
 		sctk_error("OLD %d new %d", count, new_count );
+
+		target_type->opt_begins = sctk_malloc( sizeof( mpc_pack_absolute_indexes_t ) * new_count );
+		target_type->opt_ends = sctk_malloc( sizeof( mpc_pack_absolute_indexes_t ) * new_count );
+		
+		assume( target_type->opt_begins != NULL );
+		assume( target_type->opt_ends != NULL );
 	}
 	
 	/* Copy back the content */
+	
+	int cnt = 0;
 	for( i = 0; i < count ; i++ )
 	{
 		if( cells[i].ignore )
 			continue;
 		
-		target_type->begins[i] = cells[i].begin;
-		target_type->ends[i] = cells[i].end;
+		sctk_nodebug("{%d - %d}",  cells[i].begin, cells[i].end);
+		target_type->opt_begins[cnt] = cells[i].begin;
+		target_type->opt_ends[cnt] = cells[i].end;
+		cnt++;
 	}
 	
+	assume( cnt == new_count );
+	
+	target_type->opt_count = new_count;
 	
 	sctk_free(cells);
 	
+	return MPC_SUCCESS;
 }
 
 
@@ -817,6 +844,7 @@ void sctk_datatype_context_set( struct Datatype_context * ctx , struct Datatype_
 	sctk_debug("Setting combiner to %d\n", dctx->combiner );
 	ctx->combiner = dctx->combiner;
 	
+
 	/* Save size computing values before calling get envelope */
 	ctx->count = dctx->count;
 	ctx->ndims = dctx->ndims;
@@ -1209,6 +1237,7 @@ static inline int Datatype_layout_fill( struct Datatype_layout * l, MPC_Datatype
 	PMPC_Type_size (datatype, &size);
 	l->size = (MPC_Aint) size;
 	
+	return MPC_SUCCESS;
 }
 
 struct Datatype_layout * sctk_datatype_layout( struct Datatype_context * ctx, size_t * ly_count )

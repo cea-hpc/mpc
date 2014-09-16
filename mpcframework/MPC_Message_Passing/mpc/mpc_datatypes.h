@@ -237,7 +237,7 @@ void sctk_contiguous_datatype_init( sctk_contiguous_datatype_t * type , size_t i
 void sctk_contiguous_datatype_release( sctk_contiguous_datatype_t * type );
 
 /** \brief Theses macros allow us to manipulate the contiguous datatype refcounter more simply */
-#define SCTK_CONTIGUOUS_DATATYPE_IS_FREE( datatype_ptr ) (!datatype_ptr->ref_count)
+#define SCTK_CONTIGUOUS_DATATYPE_IS_FREE( datatype_ptr ) (datatype_ptr->ref_count == 0)
 #define SCTK_CONTIGUOUS_DATATYPE_IS_IN_USE( datatype_ptr ) (datatype_ptr->ref_count)
 
 /************************************************************************/
@@ -257,15 +257,25 @@ typedef struct
 	size_t size; /**< Total size of the datatype */
 	unsigned long count; /**< Number of elements in the datatype */
 	unsigned int  ref_count; /**< Ref counter to manage freeing */
+	
+	MPC_Datatype internal_type; /**< This is the internal type when types are built on top of each other */
+	
 	/* Content */
 	mpc_pack_absolute_indexes_t *begins; /**< Begin offsets */
 	mpc_pack_absolute_indexes_t *ends; /**< End offsets */
+	
+	/* Optimized Content */
+	unsigned long opt_count; /**< Number of blocks with optimization */
+	mpc_pack_absolute_indexes_t *opt_begins; /**< Begin offsets with optimization */
+	mpc_pack_absolute_indexes_t *opt_ends; /**< End offsets with optimization */
 	sctk_datatype_t * datatypes; /**< Datatypes for each block */
+	
 	/* Bounds */
 	mpc_pack_absolute_indexes_t lb; /**< Lower bound offset  */
 	int is_lb; /**< Does type has a lower bound */
 	mpc_pack_absolute_indexes_t ub; /**< Upper bound offset */
 	int is_ub; /**< Does type has an upper bound */
+	
 	/* Context */
 	struct Datatype_context context; /**< Saves the creation context for MPI_get_envelope & MPI_Get_contents */
 } sctk_derived_datatype_t;
@@ -317,9 +327,10 @@ void sctk_derived_datatype_true_extent( sctk_derived_datatype_t * type , mpc_pac
  */
 struct Derived_datatype_cell
 {
-	mpc_pack_absolute_indexes_t * begin;
-	mpc_pack_absolute_indexes_t * end;
-	char ignore;
+	mpc_pack_absolute_indexes_t begin;
+	mpc_pack_absolute_indexes_t end;
+	MPC_Datatype type;
+	short ignore;
 };
 
 
