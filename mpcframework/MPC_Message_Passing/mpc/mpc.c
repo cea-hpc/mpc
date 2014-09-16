@@ -2093,7 +2093,7 @@ int PMPC_Derived_datatype ( MPC_Datatype * datatype,
     
 	/* If we are here we did not find any slot so we abort you might think of increasing
 	 * SCTK_USER_DATA_TYPES_MAX if you app needs more than 265 datatypes =) */
-	sctk_fatal ("Not enough datatypes allowed : you requested to many derived types (forgot to free ?)");
+	sctk_fatal ("Not enough datatypes allowed : you requested too many derived types (forgot to free ?)");
 }
 
 /** \brief this function is used to convert a datatype to a derived datatype

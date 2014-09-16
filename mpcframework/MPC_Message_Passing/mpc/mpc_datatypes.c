@@ -318,7 +318,6 @@ size_t sctk_common_datatype_get_size( MPC_Datatype datatype )
 
 void sctk_contiguous_datatype_init( sctk_contiguous_datatype_t * type , size_t id_rank , size_t element_size, size_t count, sctk_datatype_t datatype )
 {
-	sctk_debug( "Cont create");
 	type->id_rank = id_rank;
 	type->size = element_size * count;
 	type->count =  count;
@@ -332,8 +331,6 @@ void sctk_contiguous_datatype_init( sctk_contiguous_datatype_t * type , size_t i
 
 void sctk_contiguous_datatype_release( sctk_contiguous_datatype_t * type )
 {
-	sctk_debug( "Cont free REF : %d", type->ref_count );
-	
 	type->ref_count--;
 	
 	if( type->ref_count == 0 )
@@ -410,6 +407,7 @@ void sctk_derived_datatype_init( sctk_derived_datatype_t * type ,
 	
 	/* Clear context */
 	sctk_datatype_context_clear( &type->context );
+
 }
 
 
@@ -456,7 +454,6 @@ int sctk_derived_datatype_release( sctk_derived_datatype_t * type )
 				&&  !sctk_datatype_is_boundary(layout[i].type ))
 					to_free[layout[i].type] = 1;
 			}
-			
 
 			sctk_free(layout);
 			
@@ -474,7 +471,6 @@ int sctk_derived_datatype_release( sctk_derived_datatype_t * type )
 		{
 			sctk_fatal("We found a derived datatype %d with no layout", type->id); 
 		}
-		
 		
 		
 		/* Counter == 0 then free */
@@ -581,7 +577,7 @@ int sctk_derived_datatype_optimize( sctk_derived_datatype_t * target_type )
 	
 	if( count != new_count )
 	{
-		sctk_error("OLD %d new %d", count, new_count );
+		sctk_info("Datatype Optimizer : merged %.4g of copies %s", (count  - new_count) * 100.0 / count , (new_count == 1 )?"[Type is now Contiguous]":"" );
 
 		target_type->opt_begins = sctk_malloc( sizeof( mpc_pack_absolute_indexes_t ) * new_count );
 		target_type->opt_ends = sctk_malloc( sizeof( mpc_pack_absolute_indexes_t ) * new_count );
