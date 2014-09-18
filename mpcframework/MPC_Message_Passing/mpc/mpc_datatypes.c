@@ -249,6 +249,42 @@ void init_composed_common_types()
 	
 }
 
+
+void release_composed_common_types()
+{
+	MPC_Datatype tmp;
+	tmp = MPC_FLOAT_INT;
+	PMPC_Type_free( &tmp );
+	tmp = MPC_LONG_INT;
+	PMPC_Type_free( &tmp );
+	tmp = MPC_DOUBLE_INT;
+	PMPC_Type_free( &tmp );
+	tmp = MPC_SHORT_INT;
+	PMPC_Type_free( &tmp );
+	tmp = MPC_2INT;
+	PMPC_Type_free( &tmp );
+	tmp = MPC_2FLOAT;
+	PMPC_Type_free( &tmp );
+	tmp = MPC_COMPLEX;
+	PMPC_Type_free( &tmp );
+	tmp = MPC_COMPLEX8;
+	PMPC_Type_free( &tmp );
+	tmp = MPC_2DOUBLE_PRECISION;
+	PMPC_Type_free( &tmp );
+	tmp = MPC_COMPLEX16;
+	PMPC_Type_free( &tmp );
+	tmp = MPC_DOUBLE_COMPLEX;
+	PMPC_Type_free( &tmp );
+	tmp = MPC_LONG_DOUBLE_INT;
+	PMPC_Type_free( &tmp );
+	tmp = MPC_UNSIGNED_LONG_LONG_INT;
+	PMPC_Type_free( &tmp );
+	tmp = MPC_COMPLEX32;
+	PMPC_Type_free( &tmp );
+	tmp = MPC_LONG_LONG_INT;
+	PMPC_Type_free( &tmp );
+}
+
 #define tostring(a) #a
 #define SCTK_INIT_TYPE_SIZE(datatype,t) __sctk_common_type_sizes[datatype] = sizeof(t) ; \
 					sctk_assert(datatype >=0 ); \

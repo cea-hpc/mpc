@@ -706,6 +706,9 @@ static void __MPC_delete_task_specific ()
 	sctk_task_specific_t *tmp;
 	tmp =  (sctk_task_specific_t *) sctk_thread_getspecific_mpc (sctk_task_specific);
 
+	/* Free composed datatypes */
+	release_composed_common_types();
+	
 	/* Free the type array */
 	Datatype_Array_release( &tmp->datatype_array );
 
@@ -715,6 +718,7 @@ static void __MPC_delete_task_specific ()
 	/* Release the task ctx */
 	__MPC_release_task_specific_t( tmp );
 
+	
 	/* Free the task ctx */
 	sctk_free (tmp);
 }

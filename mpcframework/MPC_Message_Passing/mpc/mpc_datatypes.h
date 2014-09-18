@@ -194,9 +194,15 @@ void sctk_common_datatype_init();
  */
 size_t sctk_common_datatype_get_size( MPC_Datatype datatype );
 
-
+/** \brief Initialize Common data-types based on derived ones
+ *  This is called at mpi tasc context creation
+ */
 void init_composed_common_types();
 
+/** \brief Release Common data-types based on derived ones
+ *  This is called at mpi tasc context free
+ */
+void release_composed_common_types();
 
 /************************************************************************/
 /* Contiguous Datatype                                                  */
