@@ -52,6 +52,11 @@ void sctk_datatype_release();
  * and MPI_Get_contents */
 struct Datatype_context
 {
+	/* Internal ref-counting handling */
+		
+	MPC_Datatype internal_type; /**< This is the internal type when types are built on top of each other happens for hvector and hindexed */
+	
+	
 	/* MPI_get_envelope */
 	MPC_Type_combiner combiner; /**< Combiner used to build the datatype */
 	int count; /**< Number of item (as given in the data-type call) */
@@ -263,9 +268,7 @@ typedef struct
 	size_t size; /**< Total size of the datatype */
 	unsigned long count; /**< Number of elements in the datatype */
 	unsigned int  ref_count; /**< Ref counter to manage freeing */
-	
-	MPC_Datatype internal_type; /**< This is the internal type when types are built on top of each other */
-	
+
 	/* Content */
 	mpc_pack_absolute_indexes_t *begins; /**< Begin offsets */
 	mpc_pack_absolute_indexes_t *ends; /**< End offsets */

@@ -485,10 +485,15 @@ int sctk_derived_datatype_release( sctk_derived_datatype_t * type )
 			
 			for(i = 0; i < count; i++)
 			{
-				/* We cannot free common datatypes */
-				if( !sctk_datatype_is_common(layout[i].type)
-				&&  !sctk_datatype_is_boundary(layout[i].type ))
-					to_free[layout[i].type] = 1;
+				to_free[layout[i].type] = 1;
+			}
+
+			if( count )
+			{
+				if( type->context.internal_type != layout[0].type )
+				{
+					to_free[type->context.internal_type] = 1;
+				}
 			}
 
 			sctk_free(layout);
@@ -496,7 +501,13 @@ int sctk_derived_datatype_release( sctk_derived_datatype_t * type )
 			/* Now free each type only once */
 			for(i = 0; i < MPC_TYPE_COUNT; i++)
 			{
-				if( to_free[i] )
+				int not_released_yet = 0;
+				PMPC_Type_is_allocated ( i, & not_released_yet );
+		
+				if( to_free[i] 
+				&&  not_released_yet
+				&&  !sctk_datatype_is_common(i)
+				&&  !sctk_datatype_is_boundary(i) )
 				{
 					MPC_Datatype tmp = i;
 					PMPC_Type_free( &tmp );
@@ -700,9 +711,10 @@ void Datatype_Array_release( struct Datatype_Array * da )
 	/* Now we can free all datatypes */
 	for( i = 0 ; i < MPC_TYPE_COUNT ; i++ )
 	{
-		int to_release = Datatype_is_allocated( da, i ) ;
+		int to_release = 0;
+		PMPC_Type_is_allocated ( i, & to_release );
 		
-		if( to_release )
+		if( to_release && !sctk_datatype_is_common(i) )
 		{
 			sctk_warning("Freeing unfreed datatype [%d] did you call MPI_Type_free on all your MPI_Datatypes ?", i );
 			MPC_Datatype tmp = i;
@@ -815,7 +827,8 @@ void sctk_datype_name_release()
 
 void sctk_datatype_context_clear( struct Datatype_context * ctx )
 {
-	memset( ctx, 0, sizeof( struct Datatype_context ) );	
+	memset( ctx, 0, sizeof( struct Datatype_context ) );
+	ctx->internal_type = MPC_DATATYPE_NULL;
 }
 
 void sctk_datatype_external_context_clear( struct Datatype_External_context * ctx )
@@ -923,6 +936,10 @@ void sctk_datatype_context_set( struct Datatype_context * ctx , struct Datatype_
 			ctx->array_of_integers[1] = dctx->blocklength;
 			ctx->array_of_addresses[0] = dctx->stride_addr;
 			ctx->array_of_types[0] = dctx->oldtype;
+			/* Here we save the datatype as it might be
+			 * removed from the context when data-types are
+			 * created on top of each other */
+			ctx->internal_type =  dctx->oldtype;
 		break;
 		case MPC_COMBINER_INDEXED:
 			ctx->array_of_integers[0] = ctx->count;
@@ -965,6 +982,10 @@ void sctk_datatype_context_set( struct Datatype_context * ctx , struct Datatype_
 			}
 			
 			ctx->array_of_types[0] = dctx->oldtype;
+			/* Here we save the datatype as it might be
+			 * removed from the context when data-types are
+			 * created on top of each other */
+			ctx->internal_type =  dctx->oldtype;
 		break;
 		case MPC_COMBINER_INDEXED_BLOCK:
 			ctx->array_of_integers[0] = ctx->count;
@@ -1146,8 +1167,6 @@ void sctk_datatype_context_free( struct Datatype_context * ctx )
 	sctk_free( ctx->array_of_integers );
 	sctk_free( ctx->array_of_addresses );
 	sctk_free( ctx->array_of_types );
-	
-	sctk_datatype_context_clear(ctx);
 }
 
 

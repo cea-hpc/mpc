@@ -3726,6 +3726,11 @@ static int __INTERNAL__PMPI_Get_elements_x (MPI_Status * status, MPI_Datatype da
 			
 			if( layout )
 			{
+				if( ! count )
+				{
+					sctk_fatal("We found an empty layout");
+				}
+				
 				while( !done )
 				{
 				

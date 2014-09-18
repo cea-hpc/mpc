@@ -1430,15 +1430,16 @@ int PMPC_Type_free (MPC_Datatype * datatype_p)
 			sctk_derived_datatype_t * derived_type_target = sctk_task_specific_get_derived_datatype( task_specific, datatype );
 			/* Unlock the derived type array */
 			sctk_datatype_unlock( task_specific );
-			
-			sctk_debug("Free derived [%d] contructor %d", datatype, derived_type_target->context.combiner );
-			
+
 			/* Check if it is really allocated */
 			if( !derived_type_target )
 			{
 				/* ERROR */
 				MPC_ERROR_REPORT (MPC_COMM_WORLD, MPC_ERR_ARG, "Tried to release an uninitialized datatype");
 			}
+
+			sctk_debug("Free derived [%d] contructor %d", datatype, derived_type_target->context.combiner );
+			
 			
 			/* Free it  (not that the container is also freed in this function */
 			if( sctk_derived_datatype_release( derived_type_target ) )
