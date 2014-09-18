@@ -308,6 +308,16 @@ extern "C"
 #define MPI_LASTUSEDCODE MPI_KEYVAL_INVALID
 #define MPI_APPNUM MPI_KEYVAL_INVALID
 
+/* Ordering defines */
+#define MPI_DISTRIBUTE_DFLT_DARG 100
+#define MPI_DISTRIBUTE_BLOCK 101
+#define MPI_DISTRIBUTE_CYCLIC 102
+#define MPI_DISTRIBUTE_NONE 1
+
+#define MPI_ORDER_C 200
+#define MPI_ORDER_FORTRAN 201
+
+
 /************************************************************************/
 /*  Type Definitions                                                    */
 /************************************************************************/
@@ -482,7 +492,7 @@ int MPI_Type_create_hindexed_block(int count, int blocklength, MPI_Aint indices[
 int MPI_Type_struct (int, int *, MPI_Aint *, MPI_Datatype *, MPI_Datatype *);
 int MPI_Type_create_struct (int, int *, MPI_Aint *, MPI_Datatype *, MPI_Datatype *);
 int MPI_Address (void *, MPI_Aint *);
-int MPI_Get_address(const void *location, MPI_Aint *address);
+int MPI_Get_address(void *location, MPI_Aint *address);
 /* We could add __attribute__((deprecated)) to routines like MPI_Type_extent */
 int MPI_Type_extent (MPI_Datatype, MPI_Aint *);
 /* See the 1.1 version of the Standard.  The standard made an
@@ -516,6 +526,23 @@ int MPI_Type_size_x(MPI_Datatype datatype, MPI_Count *size);
 int MPI_Type_get_extent_x(MPI_Datatype datatype, MPI_Count *lb, MPI_Count *extent);
 int MPI_Type_get_true_extent_x(MPI_Datatype datatype, MPI_Count *true_lb, MPI_Count *true_extent);
 int MPI_Get_elements_x (MPI_Status * status, MPI_Datatype datatype, MPI_Count *elements);
+int MPI_Type_create_darray (int size,
+			     int rank,
+			     int ndims,
+			     int array_of_gsizes[],
+			     int array_of_distribs[],
+			     int array_of_dargs[],
+			     int array_of_psizes[],
+			     int order,
+			     MPI_Datatype oldtype,
+			     MPI_Datatype *newtype);
+int MPI_Type_create_subarray (int ndims,
+			       int array_of_sizes[],
+			       int array_of_subsizes[],
+			       int array_of_starts[],
+			       int order,
+			       MPI_Datatype oldtype,
+			       MPI_Datatype * new_type);
 
 /* Collective Operations */
 int MPI_Barrier (MPI_Comm);
@@ -759,7 +786,7 @@ int PMPI_Type_create_hindexed (int, int *, MPI_Aint *, MPI_Datatype, MPI_Datatyp
 int PMPI_Type_struct (int, int *, MPI_Aint *, MPI_Datatype *, MPI_Datatype *);
 int PMPI_Type_create_struct (int, int *, MPI_Aint *, MPI_Datatype *, MPI_Datatype *);
 int PMPI_Address (void *, MPI_Aint *);
-int PMPI_Get_address(const void *location, MPI_Aint *address);
+int PMPI_Get_address( void *location, MPI_Aint *address);
 /* We could add __attribute__((deprecated)) to routines like MPI_Type_extent */
 int PMPI_Type_get_extent(MPI_Datatype datatype, MPI_Aint *lb, MPI_Aint *extent);
 /* See the 1.1 version of the Standard.  The standard made an
@@ -793,6 +820,23 @@ int PMPI_Type_size_x(MPI_Datatype datatype, MPI_Count *size);
 int PMPI_Type_get_extent_x(MPI_Datatype datatype, MPI_Count *lb, MPI_Count *extent);
 int PMPI_Type_get_true_extent_x(MPI_Datatype datatype, MPI_Count *true_lb, MPI_Count *true_extent);
 int PMPI_Get_elements_x (MPI_Status * status, MPI_Datatype datatype, MPI_Count *elements);
+int PMPI_Type_create_darray (int size,
+			     int rank,
+			     int ndims,
+			     int array_of_gsizes[],
+			     int array_of_distribs[],
+			     int array_of_dargs[],
+			     int array_of_psizes[],
+			     int order,
+			     MPI_Datatype oldtype,
+			     MPI_Datatype *newtype);
+int PMPI_Type_create_subarray (int ndims,
+			       int array_of_sizes[],
+			       int array_of_subsizes[],
+			       int array_of_starts[],
+			       int order,
+			       MPI_Datatype oldtype,
+			       MPI_Datatype * new_type);
 
 /* Collective Operations */
 int PMPI_Barrier (MPI_Comm);
@@ -1000,7 +1044,7 @@ int MPI_Type_get_attr (MPI_Datatype, int, void *, int *);
 int MPI_Type_create_indexed_block (int, int, int *, MPI_Datatype, MPI_Datatype *);
 int MPI_Type_get_envelope (MPI_Datatype, int *, int *, int *, int *);
 int MPI_Type_get_contents (MPI_Datatype, int, int, int, int *, MPI_Aint *, MPI_Datatype *);
-int MPI_Type_create_darray (int, int, int, int[], int[], int[], int[], int, MPI_Datatype, MPI_Datatype *);
+
 int MPI_Get_address (void *, MPI_Aint *);
 int MPI_Type_size_x(MPI_Datatype , MPI_Count *);
 int MPI_Type_get_extent_x(MPI_Datatype , MPI_Count *, MPI_Count *);
@@ -1008,7 +1052,8 @@ int MPI_Type_get_true_extent_x(MPI_Datatype , MPI_Count *, MPI_Count *);
 int MPI_Get_elements_x(const MPI_Status *, MPI_Datatype , MPI_Count *);
 int MPI_Type_create_hindexed_block(int , int , const MPI_Aint *, MPI_Datatype , MPI_Datatype * );
 int MPI_Type_match_size (int, int, MPI_Datatype *);
-int MPI_Type_create_subarray (int, int[], int[], int[], int, MPI_Datatype, MPI_Datatype *);
+
+
 int MPI_Pack_external_size (char *, int, MPI_Datatype, MPI_Aint *);
 int MPI_Pack_external (char *, void *, int, MPI_Datatype, void *, MPI_Aint, MPI_Aint *);
 int MPI_Unpack_external (char *, void *, MPI_Aint, MPI_Aint *, void *, int, MPI_Datatype);

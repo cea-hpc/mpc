@@ -125,7 +125,7 @@ void __init_a_composed_common_types(MPC_Datatype target_type, MPC_Aint disp, MPC
 	dtctx.combiner = MPC_COMBINER_STRUCT;
 	dtctx.count = 2;
 	dtctx.array_of_blocklenght = blocklengths;
-	dtctx.array_of_displacements = displacements;
+	dtctx.array_of_displacements_addr = displacements;
 	dtctx.array_of_types = types;
 	MPC_Datatype_set_context( target_type, &dtctx);
 
@@ -624,7 +624,7 @@ int sctk_derived_datatype_optimize( sctk_derived_datatype_t * target_type )
 	
 	if( count != new_count )
 	{
-		sctk_info("Datatype Optimizer : merged %.4g of copies %s", (count  - new_count) * 100.0 / count , (new_count == 1 )?"[Type is now Contiguous]":"" );
+		sctk_info("Datatype Optimizer : merged %.4g percent of copies %s", (count  - new_count) * 100.0 / count , (new_count == 1 )?"[Type is now Contiguous]":"" );
 
 		target_type->opt_begins = sctk_malloc( sizeof( mpc_pack_absolute_indexes_t ) * new_count );
 		target_type->opt_ends = sctk_malloc( sizeof( mpc_pack_absolute_indexes_t ) * new_count );
@@ -1030,7 +1030,7 @@ void sctk_datatype_context_set( struct Datatype_context * ctx , struct Datatype_
 			for( i = 0 ; i < ctx->count ; i++ )
 			{
 				CHECK_OVERFLOW( i , n_addr );
-				ctx->array_of_addresses[i] = dctx->array_of_displacements[cnt];
+				ctx->array_of_addresses[i] = dctx->array_of_displacements_addr[cnt];
 				cnt++;
 			}
 
@@ -1041,6 +1041,21 @@ void sctk_datatype_context_set( struct Datatype_context * ctx , struct Datatype_
 				ctx->array_of_types[i] = dctx->array_of_types[cnt];
 				cnt++;
 			}
+			
+			/* Here we save the datatype as it might be
+			 * removed from the context when data-types are
+			 * created on top of each other.
+			 * 
+			 * What we do here is VERY ugly ! the only
+			 * type which are built on top of struct are
+			 * darray an subarray and they are built as follows:
+			 * 
+			 * LB CONTENT UB
+			 * 
+			 * Here we just store a reference to the content in
+			 * order to free it later */
+			if( n_type == 3 && dctx->array_of_types[0] == MPC_LB && dctx->array_of_types[2] == MPC_UB)
+				ctx->internal_type =  dctx->array_of_types[1];
 		break;
 		case MPC_COMBINER_SUBARRAY:
 			ctx->array_of_integers[0] = ctx->ndims;
@@ -1317,7 +1332,18 @@ struct Datatype_layout * sctk_datatype_layout( struct Datatype_context * ctx, si
 			/* Here no surprises the size is always the same */
 			ret = please_allocate_layout( 1 );
 			*ly_count = 1;
-			Datatype_layout_fill( &ret[0] , ctx->array_of_types[0] );
+			
+			PMPC_Type_is_allocated (ctx->array_of_types[0], &is_allocated );
+					
+			if( !is_allocated )
+			{
+				ret[0].size = 0;
+				ret[0].type = MPC_DATATYPE_NULL;
+			}
+			else
+			{
+				Datatype_layout_fill( &ret[0] , ctx->array_of_types[0] );
+			}
 		break;
 		case MPC_COMBINER_STRUCT:
 			/* We have to handle the case of structs where each element can have a size 
@@ -1379,6 +1405,7 @@ struct Datatype_layout * sctk_datatype_layout( struct Datatype_context * ctx, si
 		case MPC_COMBINER_F90_REAL:
 		case MPC_COMBINER_F90_COMPLEX:
 		case MPC_COMBINER_F90_INTEGER:
+		case MPC_COMBINER_UNKNOWN:
 			return NULL;
 	}
 	

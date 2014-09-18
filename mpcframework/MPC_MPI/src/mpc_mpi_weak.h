@@ -486,23 +486,18 @@
 #pragma weak MPI_Info_get_nkeys = PMPI_Info_get_nkeys
 #pragma weak MPI_Info_get_nthkey = PMPI_Info_get_nthkey
 #pragma weak MPI_Info_get_valuelen = PMPI_Info_get_valuelen
-
 #pragma weak MPI_Grequest_start = PMPI_Grequest_start
 #pragma weak MPI_Grequest_complete = PMPI_Grequest_complete
-
 #pragma weak MPIX_Grequest_start = PMPIX_Grequest_start
 #pragma weak MPIX_GRequest_class_create = PMPIX_GRequest_class_create
 #pragma weak MPIX_Grequest_class_allocate = PMPIX_Grequest_class_allocate
-
 #pragma weak MPI_Status_set_elements = PMPI_Status_set_elements
 #pragma weak MPI_Status_set_elements_x = PMPI_Status_set_elements_x
 #pragma weak MPI_Status_set_cancelled = PMPI_Status_set_cancelled
 #pragma weak MPI_Request_get_status = PMPI_Request_get_status
 #pragma weak MPI_Test_cancelled = PMPI_Test_cancelled
-
 #pragma weak MPI_Type_set_name = PMPI_Type_set_name
 #pragma weak MPI_Type_get_name = PMPI_Type_get_name
-
 #pragma weak MPI_Type_dup = PMPI_Type_dup
 #pragma weak MPI_Type_get_extent = PMPI_Type_get_extent
 #pragma weak MPI_Type_create_resized = PMPI_Type_create_resized
@@ -512,12 +507,12 @@
 #pragma weak MPI_Type_match_size = PMPI_Type_match_size
 #pragma weak MPI_Type_get_envelope = PMPI_Type_get_envelope
 #pragma weak MPI_Type_get_contents = PMPI_Type_get_contents
-
 #pragma weak MPI_Type_size_x = PMPI_Type_size_x
 #pragma weak MPI_Type_get_extent_x = PMPI_Type_get_extent_x
 #pragma weak MPI_Type_get_true_extent_x = PMPI_Type_get_true_extent_x
 #pragma weak MPI_Get_elements_x = PMPI_Get_elements_x
-
+#pragma weak MPI_Type_create_darray = PMPI_Type_create_darray
+#pragma weak MPI_Type_create_subarray = PMPI_Type_create_subarray
 
 //~ not implemented
 

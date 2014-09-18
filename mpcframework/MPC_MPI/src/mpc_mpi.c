@@ -38,6 +38,7 @@
 #include "sctk_alloc.h"
 #include <string.h>
 #include <uthash.h>
+#include "mpi_array_types.h"
 
 #ifndef SCTK_DO_NOT_HAVE_WEAK_SYMBOLS
 #include "mpc_mpi_weak.h"
@@ -173,6 +174,23 @@ static int __INTERNAL__PMPI_Type_create_resized(MPI_Datatype old_type, MPI_Aint 
 static int __INTERNAL__PMPI_Type_commit (MPI_Datatype *);
 static int __INTERNAL__PMPI_Type_free (MPI_Datatype *);
 static int __INTERNAL__PMPI_Get_elements_x (MPI_Status *, MPI_Datatype, MPI_Count *);
+int __INTERNAL__PMPI_Type_create_darray (int size,
+					 int rank,
+					 int ndims,
+					 int array_of_gsizes[],
+					 int array_of_distribs[],
+					 int array_of_dargs[],
+					 int array_of_psizes[],
+					 int order,
+					 MPI_Datatype oldtype,
+					 MPI_Datatype *newtype);
+int __INTERNAL__PMPI_Type_create_subarray (int ndims,
+					   int array_of_sizes[],
+					   int array_of_subsizes[],
+					   int array_of_starts[],
+					   int order,
+					   MPI_Datatype oldtype,
+					   MPI_Datatype * new_type);
 static int __INTERNAL__PMPI_Pack (void *, int, MPI_Datatype, void *, int,
 				  int *, MPI_Comm);
 static int __INTERNAL__PMPI_Unpack (void *, int, int *, void *, int,
@@ -779,7 +797,7 @@ typedef struct MPI_internal_request_s
 	MPC_Request req;	/**< Request to be stored */
 	int used; 	/**< Is the request slot in use */
 	volatile struct MPI_internal_request_s *next;
-	int rank; 	/**< Offset in the tab array from  struct \ref MPI_request_struct_s
+	int rank; 	/**< Offset in the tab array from  struct \ref MPI_request_struct_s */
 
 	/* Persitant */
 	MPI_Persistant_t persistant;
@@ -3414,7 +3432,7 @@ static int __INTERNAL__PMPI_Type_struct(int count, int blocklens[], MPI_Aint ind
 	dtctx.combiner = MPI_COMBINER_STRUCT;
 	dtctx.count = count;
 	dtctx.array_of_blocklenght = blocklens;
-	dtctx.array_of_displacements = indices;
+	dtctx.array_of_displacements_addr = indices;
 	dtctx.array_of_types = old_types;
 	MPC_Datatype_set_context( *newtype, &dtctx);
 	
@@ -3480,6 +3498,72 @@ static int __INTERNAL__PMPI_Type_create_resized(MPI_Datatype old_type, MPI_Aint 
 }
 
 
+int __INTERNAL__PMPI_Type_create_darray (int size,
+					 int rank,
+					 int ndims,
+					 int array_of_gsizes[],
+					 int array_of_distribs[],
+					 int array_of_dargs[],
+					 int array_of_psizes[],
+					 int order,
+					 MPI_Datatype oldtype,
+					 MPI_Datatype *newtype)
+{
+	int res = sctk_Type_create_darray( size, rank, ndims,  array_of_gsizes,
+					   array_of_distribs,  array_of_dargs, array_of_psizes,
+					   order, oldtype,   newtype );
+	
+	if( res != MPI_SUCCESS )
+		return res;
+	
+	/* Fill its context */
+	struct Datatype_External_context dtctx;
+	sctk_datatype_external_context_clear( &dtctx );
+	dtctx.combiner = MPI_COMBINER_DARRAY;
+	dtctx.size = size;
+	dtctx.rank = rank;
+	dtctx.array_of_gsizes = array_of_gsizes;
+	dtctx.array_of_distribs = array_of_distribs;
+	dtctx.array_of_dargs = array_of_dargs;
+	dtctx.array_of_psizes = array_of_psizes;
+	dtctx.order = order;
+	dtctx.oldtype = oldtype;
+	MPC_Datatype_set_context( *newtype, &dtctx);
+	
+	return MPI_SUCCESS;
+}
+
+int __INTERNAL__PMPI_Type_create_subarray (int ndims,
+					   int array_of_sizes[],
+					   int array_of_subsizes[],
+					   int array_of_starts[],
+					   int order,
+					   MPI_Datatype oldtype,
+					   MPI_Datatype * new_type)
+{
+	/* Create the subarray */
+	int res = sctk_Type_create_subarray( ndims,  array_of_sizes,  array_of_subsizes, array_of_starts,  order, oldtype,  new_type);
+
+	if( res != MPI_SUCCESS )
+		return res;
+	
+	/* Fill its context */
+	struct Datatype_External_context dtctx;
+	sctk_datatype_external_context_clear( &dtctx );
+	dtctx.combiner = MPI_COMBINER_SUBARRAY;
+	dtctx.ndims = ndims;
+	dtctx.array_of_sizes = array_of_sizes;
+	dtctx.array_of_subsizes = array_of_subsizes;
+	dtctx.array_of_starts = array_of_starts;
+	dtctx.order = order;
+	dtctx.oldtype = oldtype;
+	MPC_Datatype_set_context( *new_type, &dtctx);
+	
+	return res;
+}
+
+
+
 static int __INTERNAL__PMPI_Address (void *location, MPI_Aint * address)
 {
 	*address = (MPI_Aint) location;
@@ -3527,7 +3611,7 @@ static int __INTERNAL__PMPI_Type_size_x (MPI_Datatype datatype, MPI_Count *size)
 	size_t tmp_size;
 	MPI_Count real_val;
 	int res;
-	
+
 	res = PMPC_Type_size (datatype, &tmp_size);
 	
 	real_val = tmp_size;
@@ -3806,9 +3890,9 @@ static int __INTERNAL__PMPI_Get_elements_x (MPI_Status * status, MPI_Datatype da
 	}
 
 
-	INFO("behave as get_count")
 	return res;
 }
+
 
 static int
 __INTERNAL__PMPI_Pack (void *inbuf,
@@ -10264,7 +10348,7 @@ int PMPI_Address (void *location, MPI_Aint * address)
 	SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
-int PMPI_Get_address(const void *location, MPI_Aint *address)
+int PMPI_Get_address( void *location, MPI_Aint *address)
 {
 	MPI_Comm comm = MPI_COMM_WORLD;
 	int res = MPI_ERR_INTERN;
@@ -10424,7 +10508,52 @@ int PMPI_Get_elements_x (MPI_Status * status, MPI_Datatype datatype, MPI_Count *
 	int res = MPI_ERR_INTERN;
 	mpi_check_type(datatype,comm);
 
-	res = __INTERNAL__PMPI_Get_elements_x (status, datatype, &elements);
+	res = __INTERNAL__PMPI_Get_elements_x (status, datatype, elements);
+	
+	SCTK_MPI_CHECK_RETURN_VAL (res, comm);
+}
+
+int PMPI_Type_create_darray (int size,
+			     int rank,
+			     int ndims,
+			     int array_of_gsizes[],
+			     int array_of_distribs[],
+			     int array_of_dargs[],
+			     int array_of_psizes[],
+			     int order,
+			     MPI_Datatype oldtype,
+			     MPI_Datatype *newtype)
+{
+	MPI_Comm comm = MPI_COMM_WORLD;
+	int res = MPI_ERR_INTERN;
+	mpi_check_type(oldtype,comm);
+	
+	int csize;
+	__INTERNAL__PMPI_Comm_size (comm, &csize);
+	mpi_check_rank(rank, size, comm);
+	
+	
+	res = __INTERNAL__PMPI_Type_create_darray(size, rank, ndims, array_of_gsizes, array_of_distribs,
+						  array_of_dargs, array_of_psizes, order, oldtype, newtype);
+	
+	SCTK_MPI_CHECK_RETURN_VAL (res, comm);
+}
+
+int PMPI_Type_create_subarray (int ndims,
+			       int array_of_sizes[],
+			       int array_of_subsizes[],
+			       int array_of_starts[],
+			       int order,
+			       MPI_Datatype oldtype,
+			       MPI_Datatype * new_type)
+{
+	MPI_Comm comm = MPI_COMM_WORLD;
+	int res = MPI_ERR_INTERN;
+	mpi_check_type(oldtype,comm);
+	
+	res = __INTERNAL__PMPI_Type_create_subarray ( ndims, array_of_sizes, array_of_subsizes,
+						      array_of_starts, order, oldtype, new_type);
+	
 	
 	SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
@@ -12562,8 +12691,6 @@ int PMPI_Pack_external_size(char *datarep, int incount, MPI_Datatype datatype, M
 int PMPI_Pack_external(char *datarep, void *inbuf, int incount, MPI_Datatype datatype, void *outbuf, MPI_Aint outsize, MPI_Aint *position){return MPI_SUCCESS;}
 int PMPI_Unpack_external(char *datarep, void *inbuf, MPI_Aint insize, MPI_Aint *position, void *outbuf, int outcount, MPI_Datatype datatype){return MPI_SUCCESS;}
 
-int PMPI_Type_create_subarray(int ndims, int *array_of_sizes, int *array_of_subsizes,
-							 int *array_of_starts, int order, MPI_Datatype oldtype, MPI_Datatype *newtype){return MPI_SUCCESS;}
 int PMPI_Type_match_size(int typeclass, int size, MPI_Datatype *type){return MPI_SUCCESS;}
 int PMPI_Reduce_scatter_block(void *sendbuf, void *recvbuf, int recvcount, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm){return MPI_SUCCESS;}
 int PMPI_Comm_dup_with_info(MPI_Comm comm, MPI_Info info, MPI_Comm * newcomm){return MPI_SUCCESS;}
