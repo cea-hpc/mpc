@@ -1437,7 +1437,8 @@ int PMPC_Type_free (MPC_Datatype * datatype_p)
 				/* ERROR */
 				MPC_ERROR_REPORT (MPC_COMM_WORLD, MPC_ERR_ARG, "Tried to release an uninitialized datatype");
 			}
-
+			
+						
 			sctk_debug("Free derived [%d] contructor %d", datatype, derived_type_target->context.combiner );
 			
 			

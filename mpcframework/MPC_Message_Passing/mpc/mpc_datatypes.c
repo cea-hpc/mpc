@@ -624,7 +624,7 @@ int sctk_derived_datatype_optimize( sctk_derived_datatype_t * target_type )
 	
 	if( count != new_count )
 	{
-		sctk_info("Datatype Optimizer : merged %.4g percent of copies %s", (count  - new_count) * 100.0 / count , (new_count == 1 )?"[Type is now Contiguous]":"" );
+		sctk_info("Datatype Optimizer : merged %.4g percents of copies %s", (count  - new_count) * 100.0 / count , (new_count == 1 )?"[Type is now Contiguous]":"" );
 
 		target_type->opt_begins = sctk_malloc( sizeof( mpc_pack_absolute_indexes_t ) * new_count );
 		target_type->opt_ends = sctk_malloc( sizeof( mpc_pack_absolute_indexes_t ) * new_count );
@@ -1145,7 +1145,7 @@ void sctk_datatype_context_set( struct Datatype_context * ctx , struct Datatype_
 	}
 
 	
-	/* Now we increment the embedded type refcounter only once per freed datatype
+	/* Now we increment the embedded type refcounter only once per allocated datatype
 	* to do so we walk the datatype array while incrementing a counter at the
 	* target type offset, later on we just have to refcount the which are non-zero
 	*  */
@@ -1169,7 +1169,6 @@ void sctk_datatype_context_set( struct Datatype_context * ctx , struct Datatype_
 	{
 		if( is_datatype_present[ j ] )
 		{
-			sctk_debug("ref to %d", j );
 			PMPC_Type_use( j );
 		}
 	}
