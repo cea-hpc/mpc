@@ -3419,8 +3419,6 @@ __MPC_Send (void *restrict buf, mpc_msg_count count, MPC_Datatype datatype,
       sctk_spinlock_lock (&(thread_specific->buffer.lock));
       buffer_rank = thread_specific->buffer.buffer_rank;
       tmp_buf = &(thread_specific->buffer.buffer[buffer_rank]);
-      thread_specific->buffer.buffer_rank =
-        (buffer_rank + 1) % MAX_MPC_BUFFERED_MSG;
       TODO("To optimize")
         if (sctk_mpc_completion_flag(&(tmp_buf->request)) != SCTK_MESSAGE_DONE)
         {
@@ -3436,6 +3434,8 @@ __MPC_Send (void *restrict buf, mpc_msg_count count, MPC_Datatype datatype,
         }
         else
         {
+	  thread_specific->buffer.buffer_rank =
+	    (buffer_rank + 1) % MAX_MPC_BUFFERED_MSG;
           msg = &(tmp_buf->header);
           sctk_init_header(msg,src,sctk_message_contiguous,sctk_no_free_header,sctk_message_copy);
           sctk_mpc_init_request(&(tmp_buf->request),comm,src, REQUEST_SEND);

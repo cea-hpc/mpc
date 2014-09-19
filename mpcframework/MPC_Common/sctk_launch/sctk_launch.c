@@ -529,15 +529,27 @@ sctk_use_network (char *arg)
 
 static void sctk_set_profiling( char * arg )
 {
+  /* fprintf(stderr,"BEFORE |%s| |%s|\n",sctk_profiling_outputs,arg); */
 #ifdef MPC_Profiler
-	if( sctk_profile_renderer_check_render_list( arg ) )
-	{
-		sctk_error( "Provided profiling output syntax is not correct: %s", arg );
-		abort();
-	}
+  if(strcmp(arg,"undef") != 0){
+    char* val;
+    
+    val = calloc(strlen(arg) + 10,sizeof(char));
+    
+    memcpy(val,arg,strlen(arg));
 
-	sctk_profiling_outputs = arg;
+    if( sctk_profile_renderer_check_render_list( val ) )
+      {
+	sctk_error( "Provided profiling output syntax is not correct: %s", val );
+	abort();
+      }
+    
+    /* fprintf(stderr,"SET %s %s %d\n",sctk_profiling_outputs,arg,strcmp(arg,"undef")); */
+    sctk_profiling_outputs = val;
+  }
 #endif
+  /* fprintf(stderr,"AFTER %s %s\n",sctk_profiling_outputs,arg); */
+  
 }
 
   static void
@@ -878,7 +890,7 @@ void sctk_init_mpc_runtime(){
   sctk_verbosity = sctk_runtime_config_get()->modules.launcher.verbosity;
   sctk_launcher_mode = sctk_runtime_config_get()->modules.launcher.launcher;
   sctk_version_details_val = sctk_runtime_config_get()->modules.launcher.vers_details;
-  sctk_profiling_outputs = sctk_runtime_config_get()->modules.launcher.profiling;
+  sctk_profiling_outputs = sctk_runtime_config_get()->modules.launcher.profiling; 
   sctk_enable_smt_capabilities = sctk_runtime_config_get()->modules.launcher.enable_smt;
   sctk_share_node_capabilities = sctk_runtime_config_get()->modules.launcher.share_node;
   sctk_restart_mode = sctk_runtime_config_get()->modules.launcher.restart;

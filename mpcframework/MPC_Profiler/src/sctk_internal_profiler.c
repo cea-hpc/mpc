@@ -152,6 +152,8 @@ void sctk_internal_profiler_render()
 	int rank = 0;
 	MPC_Comm_rank( MPC_COMM_WORLD, &rank );
 
+	/* fprintf(stderr,"%s \n",sctk_profiling_outputs); */
+
 	/* End Program */
 	sctk_profile_meta_end_compute(&sctk_internal_profiler_meta);
 

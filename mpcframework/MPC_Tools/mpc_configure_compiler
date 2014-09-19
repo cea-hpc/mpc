@@ -112,7 +112,7 @@ esac
 use_mpc_privat="true"
 
 # Regular flags and compiler (C, C++ or fortran)
-if test "${BINUTILS_PREFIX}" != "disabled" -a "$use_mpc_privat" = "true" -a "${CC}" != "gcc";
+if test "${BINUTILS_PREFIX}" != "disabled" -a "$use_mpc_privat" = "true" ;
 then
 cat <<EOF >> $1
 CFLAGS="\`\${MPC_RPREFIX}/\${MPC_TARGET_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/bin/mpc_cflags $2\`"
@@ -229,7 +229,7 @@ EOF
 cat << EOF >> $1
 
 	-fmpc-privatize)
-    if test "\${CC}" = "icc"; then
+    if test "\${CC}" = "g++"; then
         addarg=no
     elif test "\${CC}" = "gcc"; then
         addarg=no
@@ -492,7 +492,7 @@ for i in "\$@" ; do
     fi
 
     if test "\$i" = "-fopenmp" -o "\$i" = "-openmp" ; then
-	CURRENT_ARG="\${CURRENT_ARG} -B \${MPC_RPREFIX}/\${MPC_TARGET_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}"
+	CURRENT_ARG="\${CURRENT_ARG} -B\${MPC_RPREFIX}/\${MPC_SUBPREFIX}"
     fi
 
     if test "\$i" = "-compilers" ; then
@@ -741,7 +741,7 @@ ln -s mpc_gcc bin/mpc_cc
 begin_section Generate Default C++ Compiler: mpc_cxx_default
   CC="$SCTK_CXX"
   LIB_PATH=""
-  printf_compiler bin/mpc_cxx_default c++
+  printf_compiler bin/mpc_cxx_default c++ 
 end_section
 
 # Create the link to the default compiler
