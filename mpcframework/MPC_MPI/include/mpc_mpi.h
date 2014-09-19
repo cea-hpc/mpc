@@ -773,6 +773,10 @@ double MPI_Wtick (void);
 int MPI_Query_thread (int *);
 
 /* Profiling */
+  
+  int MPIX_Swap(void **sendrecv_buf , int remote_rank, MPI_Count size , MPI_Comm comm);
+  int MPIX_Exchange(void **send_buf , void **recvbuff, int remote_rank, MPI_Count size , MPI_Comm comm);
+  
 /* Note that we may need to define a @PCONTROL_LIST@ depending on whether
 stdargs are supported */
 int MPI_Pcontrol (const int, ...);

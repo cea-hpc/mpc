@@ -235,6 +235,8 @@ static inline void fortran_check_binds_resolve() {
 */
 static int __INTERNAL__PMPI_Send (void *, int, MPI_Datatype, int, int,
 				  MPI_Comm);
+static int __INTERNAL__PMPIX_Swap(void **sendrecv_buf , int remote_rank, MPI_Count size , MPI_Comm comm);
+static int __INTERNAL__PMPIX_Exchange(void **send_buf , void **recvbuff, int remote_rank, MPI_Count size , MPI_Comm comm);
 static int __INTERNAL__PMPI_Recv (void *, int, MPI_Datatype, int, int,
 				  MPI_Comm, MPI_Status *);
 static int __INTERNAL__PMPI_Get_count (MPI_Status *, MPI_Datatype, int *);
@@ -1440,6 +1442,103 @@ __INTERNAL__PMPI_Send (void *buf, int count, MPI_Datatype datatype, int dest,
 
                 return PMPC_Send(buf, count, datatype, dest, tag, comm);
         }
+}
+
+static int __INTERNAL__PMPIX_Exchange(void **send_buf , void **recvbuff, int remote_rank, MPI_Count size , MPI_Comm comm)
+{
+	int res =  MPI_ERR_INTERN;
+	
+	/* First resolve the source and dest rank
+	 * in the comm_world */
+	int remote = sctk_get_comm_world_rank ((const sctk_communicator_t) comm, remote_rank);
+	
+	/* Now check if we are on the same node for both communications */
+	if( !sctk_is_net_message( remote ) )
+	{
+		/* Perform the zero-copy message */
+		
+		/* Exchange pointers */
+		res = __INTERNAL__PMPI_Sendrecv (  send_buf, sizeof( void *), MPI_BYTE, remote_rank, 58740,
+						   recvbuff, sizeof( void *),  MPI_BYTE, remote_rank, 58740,
+						   comm, MPI_STATUS_IGNORE);
+		
+		if( res != MPI_SUCCESS )
+			return res;
+		
+		sctk_debug("SWAPPING EX!");
+	}
+	else
+	{
+		/* Fallback to sendrecv */
+		/* We have to do a standard sendrecv */
+		res = __INTERNAL__PMPI_Sendrecv ( *send_buf, size, MPI_BYTE, remote_rank, 58740,
+						       *recvbuff, size,  MPI_BYTE, remote_rank, 58740,
+						       comm, MPI_STATUS_IGNORE);
+		
+		sctk_debug("COPYING EX!");
+		
+		if( res != MPI_SUCCESS )
+			return res;
+	}
+	
+	return MPI_SUCCESS;
+}
+
+
+
+static int __INTERNAL__PMPIX_Swap(void **sendrecv_buf , int remote_rank, MPI_Count size , MPI_Comm comm)
+{
+	int res =  MPI_ERR_INTERN;
+	
+	/* First resolve the source and dest rank
+	 * in the comm_world */
+	int remote = sctk_get_comm_world_rank ((const sctk_communicator_t) comm, remote_rank);
+	
+	/* Now check if we are on the same node for both communications */
+	if( !sctk_is_net_message( remote ) )
+	{
+		/* Perform the zero-copy message */
+		
+		void * tmp_ptr = NULL;
+		
+		/* Exchange pointers */
+		res = __INTERNAL__PMPI_Sendrecv (  sendrecv_buf, sizeof( void *), MPI_BYTE, remote_rank, 58740,
+						   &tmp_ptr, sizeof( void *),  MPI_BYTE, remote_rank, 58740,
+						   comm, MPI_STATUS_IGNORE);
+		
+		if( res != MPI_SUCCESS )
+			return res;
+		
+		sctk_debug("SWAPPING ");
+		
+		/* Replace by the remote ptr */
+		*sendrecv_buf = tmp_ptr;
+	}
+	else
+	{
+		/* Allocate a temporary buffer for the copy */
+		void *tmp_buff = sctk_malloc( size );
+		
+		assume( tmp_buff != NULL );
+		
+		/* We have to do a standard sendrecv */
+		res = __INTERNAL__PMPI_Sendrecv ( *sendrecv_buf, size, MPI_BYTE, remote_rank, 58740,
+						       tmp_buff, size,  MPI_BYTE, remote_rank, 58740,
+						       comm, MPI_STATUS_IGNORE);
+		
+		sctk_debug("COPYING !");
+		
+		if( res != MPI_SUCCESS )
+			return res;
+		
+		/* Copy from the source buffer to the target one */
+		memcpy(*sendrecv_buf, tmp_buff, size );
+		
+		sctk_free( tmp_buff );
+		
+	}
+	
+	return MPI_SUCCESS;
 }
 
 
@@ -14365,6 +14464,63 @@ inline void
 SCTK__MPI_INIT_REQUEST (MPI_Request * request)
 {
   *request = MPI_REQUEST_NULL;
+}
+
+/** \brief Swap an ALLOCATED segment in place using zero-copy if possible
+ *  \param sendrecv_buf Adress of the pointer to the buffer used to send and receive data
+ *  \param remote_rank Rank which is part of the exchange
+ *  \param size Total size of the message in bytes
+ *  \param comm Target communicator
+ */
+int PMPIX_Swap (void **sendrecv_buf , int remote_rank, MPI_Count size , MPI_Comm comm)
+{
+	int res = MPI_ERR_INTERN;
+	if(remote_rank == MPC_PROC_NULL)
+	{
+		res = MPI_SUCCESS;
+		SCTK_MPI_CHECK_RETURN_VAL (res, comm);
+	}
+	
+	{
+		int size;
+		mpi_check_comm (comm, comm);
+		__INTERNAL__PMPI_Comm_size (comm, &size);
+		if(sctk_is_inter_comm(comm) == 0)
+			mpi_check_rank_send (remote_rank, size, comm);
+	}
+	
+	res = __INTERNAL__PMPIX_Swap(sendrecv_buf , remote_rank, size , comm);
+	
+	SCTK_MPI_CHECK_RETURN_VAL (res, comm);
+}
+
+/** \brief Swap between two ALLOCATED segment in place using zero-copy if possible
+ *  \param send_buf Adress of the pointer to the buffer used to send data
+ *  \param recvbuff Adress of the pointer to the buffer used to receive data
+ *  \param remote_rank Rank which is part of the exchange
+ *  \param size Total size of the message in bytes
+ *  \param comm Target communicator
+ */
+int PMPIX_Exchange(void **send_buf , void **recvbuff, int remote_rank, MPI_Count size , MPI_Comm comm)
+{
+	int res = MPI_ERR_INTERN;
+	if(remote_rank == MPC_PROC_NULL)
+	{
+		res = MPI_SUCCESS;
+		SCTK_MPI_CHECK_RETURN_VAL (res, comm);
+	}
+	
+	{
+		int size;
+		mpi_check_comm (comm, comm);
+		__INTERNAL__PMPI_Comm_size (comm, &size);
+		if(sctk_is_inter_comm(comm) == 0)
+			mpi_check_rank_send (remote_rank, size, comm);
+	}
+	
+	res = __INTERNAL__PMPIX_Exchange(send_buf, recvbuff , remote_rank, size , comm);
+	
+	SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 static inline int PMPI_Send_p(void *buf, int count, MPI_Datatype datatype,

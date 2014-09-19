@@ -46,6 +46,8 @@
 #pragma weak MPI_Buffer_detach = PMPI_Buffer_detach
 #pragma weak mpi_buffer_detach_ = pmpi_buffer_detach_
 #pragma weak mpi_buffer_detach__ = pmpi_buffer_detach__
+#pragma weak MPIX_Swap = PMPIX_Swap
+#pragma weak MPIX_Exchange = PMPIX_Exchange
 #pragma weak MPI_Isend = PMPI_Isend
 #pragma weak mpi_isend_ = pmpi_isend_
 #pragma weak mpi_isend__ = pmpi_isend__
