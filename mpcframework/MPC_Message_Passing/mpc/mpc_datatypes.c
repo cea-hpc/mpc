@@ -136,7 +136,7 @@ void init_composed_common_types()
 	MPC_Aint disp;
 	MPC_Datatype tmp;
 	/* MPC_FLOAT_INT (SCTK_DERIVED_DATATYPE_BASE */
-	struct { float a ; int b; } foo_0;
+	mpc_float_int foo_0;
 	disp = ((char *)&foo_0.b - (char *)&foo_0.a);
 	__init_a_composed_common_types( MPC_FLOAT_INT, disp, MPC_FLOAT, MPC_INT );
 	sctk_common_datatype_set_name_helper( MPC_FLOAT_INT, "MPI_FLOAT_INT" );
@@ -144,7 +144,7 @@ void init_composed_common_types()
 	PMPC_Type_commit( &tmp );
 	
 	/* MPC_LONG_INT (SCTK_DERIVED_DATATYPE_BASE + 1 */
-	struct { long a ; int b; } foo_1;
+	mpc_long_int foo_1;
 	disp = ((char *)&foo_1.b - (char *)&foo_1.a);
 	__init_a_composed_common_types( MPC_LONG_INT, disp, MPC_LONG, MPC_INT );
 	sctk_common_datatype_set_name_helper( MPC_LONG_INT, "MPI_LONG_INT" );
@@ -152,7 +152,7 @@ void init_composed_common_types()
 	PMPC_Type_commit( &tmp );
 	
 	/* MPC_DOUBLE_INT  (SCTK_DERIVED_DATATYPE_BASE + 2 */
-	struct { double a ; int b; } foo_2;
+	mpc_double_int foo_2;
 	disp = ((char *)&foo_2.b - (char *)&foo_2.a);
 	__init_a_composed_common_types( MPC_DOUBLE_INT, disp, MPC_DOUBLE, MPC_INT );
 	sctk_common_datatype_set_name_helper( MPC_DOUBLE_INT, "MPI_DOUBLE_INT" );
@@ -160,7 +160,7 @@ void init_composed_common_types()
 	PMPC_Type_commit( &tmp );
 	
 	/* MPC_SHORT_INT  (SCTK_DERIVED_DATATYPE_BASE + 3 */
-	struct { short a ; int b; } foo_3;
+	mpc_short_int foo_3;
 	disp = ((char *)&foo_3.b - (char *)&foo_3.a);
 	__init_a_composed_common_types( MPC_SHORT_INT, disp, MPC_SHORT, MPC_INT );
 	sctk_common_datatype_set_name_helper( MPC_SHORT_INT, "MPI_SHORT_INT" );
@@ -168,7 +168,7 @@ void init_composed_common_types()
 	PMPC_Type_commit( &tmp );
 	
 	/* MPC_2INT  (SCTK_DERIVED_DATATYPE_BASE + 4 */
-	struct { int a ; int b; } foo_4;
+	mpc_int_int foo_4;
 	disp = ((char *)&foo_4.b - (char *)&foo_4.a);
 	__init_a_composed_common_types( MPC_2INT, disp, MPC_INT, MPC_INT );
 	sctk_common_datatype_set_name_helper( MPC_2INT, "MPI_2INT" );
@@ -176,7 +176,7 @@ void init_composed_common_types()
 	PMPC_Type_commit( &tmp );
 	
 	/* MPC_2FLOAT  (SCTK_DERIVED_DATATYPE_BASE + 5 */
-	struct { float a ; float b; } foo_5;
+	mpc_float_float foo_5;
 	disp = ((char *)&foo_5.b - (char *)&foo_5.a);
 	__init_a_composed_common_types( MPC_2FLOAT, disp, MPC_FLOAT, MPC_FLOAT );
 	sctk_common_datatype_set_name_helper( MPC_2FLOAT, "MPI_2FLOAT" );
@@ -196,7 +196,7 @@ void init_composed_common_types()
 	PMPC_Type_commit( &tmp );
 	
 	/* MPC_2DOUBLE_PRECISION  (SCTK_DERIVED_DATATYPE_BASE + 7 */
-	struct { double a ; double b; } foo_6;
+	mpc_double_double foo_6;
 	disp = ((char *)&foo_6.b - (char *)&foo_6.a);
 	__init_a_composed_common_types( MPC_2DOUBLE_PRECISION, disp, MPC_DOUBLE, MPC_DOUBLE );
 	sctk_common_datatype_set_name_helper( MPC_2DOUBLE_PRECISION, "MPI_2DOUBLE_PRECISION" );
@@ -216,7 +216,7 @@ void init_composed_common_types()
 	PMPC_Type_commit( &tmp );
 	
 	/* MPC_LONG_DOUBLE_INT  (SCTK_DERIVED_DATATYPE_BASE + 8 */
-	struct { long double a ; int b; } foo_7;
+	mpc_long_double_int foo_7;
 	disp = ((char *)&foo_7.b - (char *)&foo_7.a);
 	__init_a_composed_common_types( MPC_LONG_DOUBLE_INT, disp, MPC_LONG_DOUBLE, MPC_INT );
 	sctk_common_datatype_set_name_helper( MPC_LONG_DOUBLE_INT, "MPI_LONG_DOUBLE_INT" );
@@ -224,7 +224,7 @@ void init_composed_common_types()
 	PMPC_Type_commit( &tmp );
 	
 	/* MPC_UNSIGNED_LONG_LONG_INT  (SCTK_DERIVED_DATATYPE_BASE + 9 */
-	struct { unsigned long long a ; int b; } foo_8;
+	mpc_unsigned_long_long_int foo_8;
 	disp = ((char *)&foo_8.b - (char *)&foo_8.a);
 	__init_a_composed_common_types( MPC_UNSIGNED_LONG_LONG_INT, disp, MPC_UNSIGNED_LONG_LONG, MPC_INT );
 	sctk_common_datatype_set_name_helper( MPC_UNSIGNED_LONG_LONG_INT, "MPI_UNSIGNED_LONG_LONG_INT" );
@@ -232,7 +232,7 @@ void init_composed_common_types()
 	PMPC_Type_commit( &tmp );
 	
 	/* MPC_COMPLEX32  (SCTK_DERIVED_DATATYPE_BASE + 12 */
-	struct { long double a ; long double b; } foo_9;
+	mpc_longdouble_longdouble foo_9;
 	disp = ((char *)&foo_9.b - (char *)&foo_9.a);
 	__init_a_composed_common_types( MPC_COMPLEX32, disp, MPC_LONG_DOUBLE, MPC_LONG_DOUBLE );
 	sctk_common_datatype_set_name_helper( MPC_COMPLEX32, "MPI_COMPLEX32" );
@@ -240,7 +240,7 @@ void init_composed_common_types()
 	PMPC_Type_commit( &tmp );
 
 	/* MPC_LONG_LONG_INT   (SCTK_DERIVED_DATATYPE_BASE + 14 */
-	struct { long long a ; int b; } foo_10;
+	mpc_long_long_int foo_10;
 	disp = ((char *)&foo_10.b - (char *)&foo_10.a);
 	__init_a_composed_common_types( MPC_LONG_LONG_INT, disp, MPC_LONG_LONG, MPC_INT );
 	sctk_common_datatype_set_name_helper( MPC_LONG_LONG_INT, "MPI_LONG_LONG_INT" );

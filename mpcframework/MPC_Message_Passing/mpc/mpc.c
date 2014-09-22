@@ -4724,10 +4724,8 @@ MPC_Op_tmp (void *in, void *inout, size_t size, MPC_Datatype t)
       ADD_FUNC_HANDLER(func,MPC_UNSIGNED,op);           \
       ADD_FUNC_HANDLER(func,MPC_UNSIGNED_LONG,op);      \
       ADD_FUNC_HANDLER(func,MPC_LONG_DOUBLE,op);        \
-      ADD_FUNC_HANDLER(func,MPC_LONG_LONG_INT,op);      \
-      ADD_FUNC_HANDLER(func,MPC_UNSIGNED_LONG_LONG_INT,op);      \
-      ADD_FUNC_HANDLER(func,MPC_COMPLEX,op);		\
-      ADD_FUNC_HANDLER(func,MPC_DOUBLE_COMPLEX,op);	\
+      ADD_FUNC_HANDLER(func,MPC_DOUBLE_COMPLEX,op);        \
+      ADD_FUNC_HANDLER(func,MPC_COMPLEX,op);        \
     default:not_reachable();				\
     }							\
   }
@@ -4748,8 +4746,6 @@ MPC_Op_tmp (void *in, void *inout, size_t size, MPC_Datatype t)
       ADD_FUNC_HANDLER(func,MPC_UNSIGNED_SHORT,op);	\
       ADD_FUNC_HANDLER(func,MPC_UNSIGNED,op);		\
       ADD_FUNC_HANDLER(func,MPC_UNSIGNED_LONG,op);	\
-      ADD_FUNC_HANDLER(func,MPC_LONG_LONG_INT,op);	\
-      ADD_FUNC_HANDLER(func,MPC_UNSIGNED_LONG_LONG_INT,op);      \
       ADD_FUNC_HANDLER(func,MPC_LOGICAL,op);		\
     default:not_reachable();				\
     }							\
@@ -4765,13 +4761,19 @@ MPC_Op_tmp (void *in, void *inout, size_t size, MPC_Datatype t)
       ADD_FUNC_HANDLER(func,MPC_SHORT_INT,op);		\
       ADD_FUNC_HANDLER(func,MPC_2INT,op);		\
       ADD_FUNC_HANDLER(func,MPC_2FLOAT,op);		\
+      ADD_FUNC_HANDLER(func,MPC_COMPLEX,op);		\
       ADD_FUNC_HANDLER(func,MPC_2DOUBLE_PRECISION,op);	\
+      ADD_FUNC_HANDLER(func,MPC_COMPLEX8,op);	\
+      ADD_FUNC_HANDLER(func,MPC_COMPLEX16,op);	\
+      ADD_FUNC_HANDLER(func,MPC_DOUBLE_COMPLEX,op);	\
+      ADD_FUNC_HANDLER(func,MPC_COMPLEX32,op);	\
+      ADD_FUNC_HANDLER(func,MPC_UNSIGNED_LONG_LONG_INT,op);	\
+      ADD_FUNC_HANDLER(func,MPC_LONG_LONG_INT,op);	\
     default:not_reachable();				\
     }							\
   }
 
-MPC_Op_f
-sctk_get_common_function (MPC_Datatype datatype, MPC_Op op)
+MPC_Op_f sctk_get_common_function (MPC_Datatype datatype, MPC_Op op)
 {
   MPC_Op_f func;
 
@@ -4805,97 +4807,72 @@ sctk_get_common_function (MPC_Datatype datatype, MPC_Op op)
   return func;
 }
 
-static inline int
-__MPC_Allreduce (void *sendbuf, void *recvbuf, mpc_msg_count count,
-		 MPC_Datatype datatype, MPC_Op op, MPC_Comm comm,
-		 sctk_task_specific_t * task_specific)
+static inline int __MPC_Allreduce (void *sendbuf, void *recvbuf, mpc_msg_count count,
+				   MPC_Datatype datatype, MPC_Op op, MPC_Comm comm,
+				   sctk_task_specific_t * task_specific)
 {
-  MPC_Op_f func;
-  int root, rank;
-  mpc_check_comm (comm, comm);
-  mpc_check_count (count, comm);
-  mpc_check_type (datatype, comm);
-  __MPC_Comm_rank(comm, &rank, task_specific);
+	MPC_Op_f func;
+	int root, rank;
+	mpc_check_comm (comm, comm);
+	mpc_check_count (count, comm);
+	mpc_check_type (datatype, comm);
+	__MPC_Comm_rank(comm, &rank, task_specific);
 
-  sctk_nodebug ("Allreduce on %d with type %d", comm, datatype);
-  if ((op.u_func == NULL) && ( sctk_datatype_is_common( datatype) ))
-    {
-      func = op.func;
-
-      /*Internals function */
-      COMPAT_DATA_TYPE (func, MPC_SUM_func)
-      else
-	COMPAT_DATA_TYPE (func, MPC_MAX_func)
+	sctk_nodebug ("Allreduce on %d with type %d", comm, datatype);
+	if ((op.u_func == NULL) && ( sctk_datatype_is_common( datatype) || sctk_datatype_is_struct_datatype(datatype) ) )
+	{
+		func  = sctk_get_common_function (datatype, op);
+	}
 	else
-	  COMPAT_DATA_TYPE (func, MPC_MIN_func)
-	  else
-	    COMPAT_DATA_TYPE (func, MPC_PROD_func)
-	    else
-	      COMPAT_DATA_TYPE2 (func, MPC_BAND_func)
-	      else
-		COMPAT_DATA_TYPE2 (func, MPC_LAND_func)
+	{
+		assume (op.u_func != NULL);
+		/*User define function */
+		sctk_thread_setspecific_mpc (sctk_func_key, (void *) op.u_func);
+		func = (MPC_Op_f) MPC_Op_tmp;
+		sctk_nodebug ("User reduce");
+	}
+
+	/* inter comm */
+	if(sctk_is_inter_comm(comm))
+	{
+		/* local group */
+		if(sctk_is_in_local_group(comm))
+		{
+			/* reduce receiving from remote group*/
+			root = (rank == 0) ? MPC_ROOT : MPC_PROC_NULL;
+			PMPC_Reduce(sendbuf, recvbuf, count, datatype, op, root, comm);
+
+			/* reduce sending to remote group */
+			root = 0;
+			PMPC_Reduce(sendbuf, recvbuf, count, datatype, op, root, comm);
+		}
+		/* remote group */
 		else
-		  COMPAT_DATA_TYPE2 (func, MPC_BXOR_func)
-		  else
-		    COMPAT_DATA_TYPE2 (func, MPC_LXOR_func)
-		    else
-		      COMPAT_DATA_TYPE2 (func, MPC_BOR_func)
-		      else
-			COMPAT_DATA_TYPE2 (func, MPC_LOR_func)
-			else
-			  COMPAT_DATA_TYPE3 (func, MPC_MAXLOC_func)
-			  else
-			    COMPAT_DATA_TYPE3 (func, MPC_MINLOC_func)
-			      sctk_nodebug ("Internal reduce");
-    }
-  else
-    {
-      assume (op.u_func != NULL);
-      /*User define function */
-      sctk_thread_setspecific_mpc (sctk_func_key, (void *) op.u_func);
-      func = (MPC_Op_f) MPC_Op_tmp;
-      sctk_nodebug ("User reduce");
-    }
+		{
+			/* reduce sending to local group */
+			root = 0;
+			PMPC_Reduce(sendbuf, recvbuf, count, datatype, op, root, comm);
 
-  /* inter comm */
-  if(sctk_is_inter_comm(comm))
-    {
-      /* local group */
-      if(sctk_is_in_local_group(comm))
-	{
-	  /* reduce receiving from remote group*/
-	  root = (rank == 0) ? MPC_ROOT : MPC_PROC_NULL;
-	  PMPC_Reduce(sendbuf, recvbuf, count, datatype, op, root, comm);
-
-	  /* reduce sending to remote group */
-	  root = 0;
-	  PMPC_Reduce(sendbuf, recvbuf, count, datatype, op, root, comm);
+			/* reduce receiving from local group */
+			root = (rank == 0) ? MPC_ROOT : MPC_PROC_NULL;
+			PMPC_Reduce(sendbuf, recvbuf, count, datatype, op, root, comm);
+		}
+		
+		/* broadcast intracomm */
+		__MPC_Bcast(recvbuf, count, datatype, 0, sctk_get_local_comm_id(comm), task_specific);
 	}
-      /* remote group */
-      else
+	else
 	{
-	  /* reduce sending to local group */
-	  root = 0;
-	  PMPC_Reduce(sendbuf, recvbuf, count, datatype, op, root, comm);
-
-	  /* reduce receiving from local group */
-	  root = (rank == 0) ? MPC_ROOT : MPC_PROC_NULL;
-	  PMPC_Reduce(sendbuf, recvbuf, count, datatype, op, root, comm);
+		sctk_all_reduce(sendbuf,
+		recvbuf,
+		__MPC_Get_datatype_size (datatype, task_specific),
+		count,
+		func,
+		(sctk_communicator_t) comm,
+		(sctk_datatype_t) datatype);
 	}
-      /* broadcast intracomm */
-      __MPC_Bcast(recvbuf, count, datatype, 0, sctk_get_local_comm_id(comm), task_specific);
-    }
-  else
-    {
-      sctk_all_reduce(sendbuf,
-		      recvbuf,
-		      __MPC_Get_datatype_size (datatype, task_specific),
-		      count,
-		      func,
-		      (sctk_communicator_t) comm,
-		      (sctk_datatype_t) datatype);
-    }
-  MPC_ERROR_SUCESS ();
+	
+	MPC_ERROR_SUCESS ();
 }
 
 int

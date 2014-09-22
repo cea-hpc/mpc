@@ -424,6 +424,19 @@ static inline int sctk_datatype_is_derived (MPC_Datatype data_in)
 	return 0;
 }
 
+/** \brief Returns 1 if datatype is a stuct datatype datatype
+ */
+static inline int sctk_datatype_is_struct_datatype (MPC_Datatype data_in)
+{
+	if ((data_in >= SCTK_COMMON_DATA_TYPE_COUNT + SCTK_USER_DATA_TYPES_MAX) 
+	&& (data_in < ( SCTK_COMMON_DATA_TYPE_COUNT + SCTK_USER_DATA_TYPES_MAX + MPC_STRUCT_DATATYPE_COUNT)))
+	{
+		return 1;
+	}
+
+	return 0;
+}
+
 /** \brief Returns 1 if the datatype is a boundary (UB or LB)
  */
 static inline int sctk_datatype_is_boundary (MPC_Datatype data_in)
