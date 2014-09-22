@@ -46,9 +46,9 @@ bool sctk_runtime_config_map_entry_to_bool(xmlNodePtr node)
 {
 	bool res;
 	xmlChar * value = xmlNodeGetContent(node);
-	if (xmlStrcmp(value,BAD_CAST("true")) == 0) {
+	if (xmlStrcmp(value,BAD_CAST("true")) == 0 || xmlStrcmp(value,BAD_CAST("0")) == 0 ) {
 		res = true;
-	} else if (xmlStrcmp(value,BAD_CAST("false")) == 0) {
+	} else if (xmlStrcmp(value,BAD_CAST("false")) == 0 || xmlStrcmp(value,BAD_CAST("1")) == 0) {
 		res = false;
 	} else {
 		sctk_fatal("Invalid boolean value (true|false) : %s",value);
