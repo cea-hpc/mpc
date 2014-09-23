@@ -7202,7 +7202,7 @@ __INTERNAL__PMPI_Cart_create (MPI_Comm comm_old, int ndims, int *dims,
   for (i = 0; i < ndims; i++)
     {
 	  if(dims[i] <= 0)
-		MPI_ERROR_REPORT (comm_old, MPI_ERR_DIMS, "One of the dimensions is equal or less than zero");
+		MPI_ERROR_REPORT (comm_old, MPI_ERR_ARG, "One of the dimensions is equal or less than zero");
       nb_tasks *= dims[i];
       sctk_nodebug ("dims[%d] = %d", i, dims[i]);
     }
@@ -11269,11 +11269,19 @@ PMPI_Cart_create (MPI_Comm comm_old, int ndims, int *dims, int *periods,
   int size;
   int sum = 1;
   __INTERNAL__PMPI_Comm_size (comm_old, &size);
-  if((ndims <= 0) || (ndims > size)){
-        MPI_ERROR_REPORT (comm_old, MPI_ERR_ARG, "");
+  
+  if(ndims < 0)
+  {
+    MPI_ERROR_REPORT (comm_old, MPI_ERR_ARG, "");
   }
+  else if (ndims >= 1 && 
+	  (dims == NULL || periods == NULL || comm_cart == NULL))
+  {
+	MPI_ERROR_REPORT (comm_old, MPI_ERR_ARG, "");
+  }
+
   for(i = 0; i < ndims; i++){
-          if(dims[i] <= 0){
+          if(dims[i] < 0){
                 MPI_ERROR_REPORT (comm_old, MPI_ERR_DIMS, "");
           }
           if(dims[i] > size){
@@ -11282,7 +11290,7 @@ PMPI_Cart_create (MPI_Comm comm_old, int ndims, int *dims, int *periods,
         sum *= dims[i];
   }
   if(sum > size){
-        MPI_ERROR_REPORT (comm_old, MPI_ERR_DIMS, "");
+        MPI_ERROR_REPORT (comm_old, MPI_ERR_ARG, "");
   }
 
   }
