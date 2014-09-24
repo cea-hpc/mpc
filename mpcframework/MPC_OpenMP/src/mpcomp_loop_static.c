@@ -211,6 +211,7 @@ __mpcomp_static_loop_init(mpcomp_thread_t *t,
 									  lb, b, incr, 
 									  chunk_size );
 
+
 	     /* No chunk -> exit the 'for' loop */
 	     if ( t->static_nb_chunks <= 0 )
 		  return 0;
@@ -247,6 +248,9 @@ int __mpcomp_static_loop_begin (long lb, long b, long incr, long chunk_size,
      if (chunk_size == 0) {
 	  __mpcomp_static_schedule_get_single_chunk (lb, b, incr, from, to);
      } else {
+	  /* As the loop_next function consider a chunk as already been realised
+	     we need to initialize to 0 minus 1 */
+	  t->static_current_chunk = -1 ;
 	  return __mpcomp_static_loop_next (from, to);
      }
      return 1;
@@ -275,6 +279,7 @@ int __mpcomp_static_loop_next (long *from, long *to)
      __mpcomp_get_specific_chunk_per_rank(rank, nb_threads, t->info.loop_lb,
 					  t->info.loop_b, t->info.loop_incr, t->info.loop_chunk_size,
 					  t->static_current_chunk, from, to);
+
      
      return 1;
 }
@@ -322,7 +327,7 @@ int __mpcomp_ordered_static_loop_next(long *from, long *to)
      
      t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
      sctk_assert(t != NULL);
-     
+
      t->current_ordered_iteration = *from;
      
      return res;
