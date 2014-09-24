@@ -734,7 +734,7 @@ int MPC_Test_cancelled (MPC_Status *, int *);
   /*MPI compatibility*/
 #define MPC_BSEND_OVERHEAD 0
 /* We consider that the adress 1  is never used */
-#define MPC_BOTTOM ((void*)1)
+#define MPC_BOTTOM ((void*)0)
 #define MPC_IN_PLACE ((void*)-1)
 
 
