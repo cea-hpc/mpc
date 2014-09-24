@@ -991,7 +991,7 @@ void __mpcomp_ordered_begin()
      t = (mpcomp_thread_t *) sctk_openmp_thread_tls;
      sctk_assert(t != NULL); 
 
-	 sctk_nodebug( "[%d] __mpcomp_ordered_begin: enter w/ iteration %d and team %d",
+     sctk_nodebug( "[%d] __mpcomp_ordered_begin: enter w/ iteration %d and team %d",
 			 t->rank, t->current_ordered_iteration, t->instance->team->next_ordered_offset ) ;
 
      /* First iteration of the loop -> initialize 'next_ordered_offset' */
@@ -1034,7 +1034,7 @@ void __mpcomp_ordered_begin()
 
 	  }
      }
-     
+
      sctk_nodebug( "__mpcomp_ordered_begin[%d]: Allowed to schedule iteration %d",
 		   info->rank, info->current_ordered_iteration ) ;
 }
