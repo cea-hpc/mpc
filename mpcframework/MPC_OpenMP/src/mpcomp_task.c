@@ -1325,5 +1325,35 @@ void __mpcomp_taskyield()
 {
      /* Actually, do nothing */
 }
+#else /* MPCOMP_TASK */
+/* 
+ * Creation of an OpenMP task 
+ * Called when encountering an 'omp task' construct 
+ */
+void __mpcomp_task(void *(*fn) (void *), void *data, void (*cpyfn) (void *, void *),
+		   long arg_size, long arg_align, bool if_clause, unsigned flags)
+{
+     fn(data);
+}
+
+/* 
+ * Wait for the completion of the current task's children
+ * Called when encountering a taskwait construct
+ * Do nothing here as task are executed directly
+ */
+void __mpcomp_taskwait()
+{
+}
+
+/*                                                                                                                                                                                  
+ * The current may be suspended in favor of execution of                                                                                                                            
+ * a different task                                                                                                                                                                
+ * Called when encountering a taskyield construct                                                                                                                                   
+ */
+void __mpcomp_taskyield()
+{
+     /* Actually, do nothing */
+}
+
 
 #endif /* MPCOMP_TASK */
