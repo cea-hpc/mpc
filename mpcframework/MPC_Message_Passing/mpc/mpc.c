@@ -1381,10 +1381,9 @@ int PMPC_Type_free (MPC_Datatype * datatype_p)
 	/* Retrieve task context */
 	sctk_task_specific_t *task_specific = __MPC_get_task_specific ();
 	
-	if(datatype == MPC_DATATYPE_NULL)
+	if(datatype == MPC_DATATYPE_NULL || datatype == MPC_LB || datatype == MPC_UB)
 	{
-		/* Edge case nothing to do here */
-		MPC_ERROR_SUCESS();
+		return MPC_ERR_TYPE;
 	}
 	
 	

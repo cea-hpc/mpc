@@ -3576,12 +3576,7 @@ static int __INTERNAL__PMPI_Type_extent (MPI_Datatype datatype, MPI_Aint * exten
 	MPI_Aint LB;
 	
 	/* Special cases */
-	if (datatype == MPI_DATATYPE_NULL)
-	{
-		/* Here we return 0 for data-type null
-		 * in order to pass the struct-zero-count test */
-		return 0;
-	}
+	mpi_check_type( datatype, MPI_COMM_WORLD );
 
 	__INTERNAL__PMPI_Type_lb (datatype, &LB);
 	__INTERNAL__PMPI_Type_ub (datatype, &UB);
@@ -3728,10 +3723,7 @@ static int __INTERNAL__PMPI_Get_elements_x (MPI_Status * status, MPI_Datatype da
 	}
 	
 	/* Now check the data-type */
-	else if (MPI_DATATYPE_NULL == datatype)
-	{
-		MPI_ERROR_REPORT (MPI_COMM_WORLD, MPI_ERR_TYPE, "Invalid type");
-	}
+	mpi_check_type( datatype, MPI_COMM_WORLD );
 
 	/* Get type size */
 	res = __INTERNAL__PMPI_Type_size (datatype, &data_size);
@@ -10112,6 +10104,8 @@ int PMPI_Type_contiguous (int count, MPI_Datatype old_type, MPI_Datatype * new_t
 	
 	*new_type_p = MPC_DATATYPE_NULL;
 	
+	mpi_check_type( old_type, MPI_COMM_WORLD );
+	
 	res = __INTERNAL__PMPI_Type_contiguous (count, old_type, new_type_p);
 	SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
@@ -10123,6 +10117,8 @@ int PMPI_Type_vector (int count, int blocklength, int stride, MPI_Datatype old_t
 	mpi_check_type_create(old_type,comm);
 	
 	*newtype_p = MPC_DATATYPE_NULL;
+	
+	mpi_check_type( old_type, MPI_COMM_WORLD );
 	
 	if(blocklength < 0)
 	{
@@ -10144,6 +10140,9 @@ int PMPI_Type_hvector (int count, int blocklen, MPI_Aint stride, MPI_Datatype ol
 	
 	*newtype_p = MPC_DATATYPE_NULL;
 
+	mpi_check_type( old_type, MPI_COMM_WORLD );
+	
+	
 	if(blocklen < 0)
 	{
 		MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"Error negative block lengths provided");
@@ -10162,6 +10161,8 @@ int PMPI_Type_create_hvector (int count, int blocklen, MPI_Aint stride, MPI_Data
 	
 	*newtype_p = MPC_DATATYPE_NULL;
 	
+	mpi_check_type( old_type, MPI_COMM_WORLD );
+	
 	if(blocklen < 0)
 	{
 		MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"Error negative block lengths provided");
@@ -10179,6 +10180,8 @@ int PMPI_Type_indexed (int count, int blocklens[], int indices[], MPI_Datatype o
 	mpi_check_count(count,comm);
 	
 	*newtype = MPC_DATATYPE_NULL;
+	
+	mpi_check_type( old_type, MPI_COMM_WORLD );
 	
 	if((blocklens == NULL) || (indices == NULL))
 	{
@@ -10206,6 +10209,9 @@ int PMPI_Type_hindexed (int count, int blocklens[],  MPI_Aint indices[], MPI_Dat
 	mpi_check_count(count,comm);
 	
 	*newtype = MPC_DATATYPE_NULL;
+	
+	mpi_check_type( old_type, MPI_COMM_WORLD );
+	
 	
 	if((blocklens == NULL) || (indices == NULL))
 	{
@@ -10235,6 +10241,9 @@ int PMPI_Type_create_indexed_block(int count, int blocklength, int indices[], MP
 	
 	*newtype = MPC_DATATYPE_NULL;
 	
+	mpi_check_type( old_type, MPI_COMM_WORLD );
+	
+	
 	if(indices == NULL)
 	{
 		return MPI_SUCCESS;
@@ -10261,6 +10270,8 @@ int PMPI_Type_create_hindexed_block(int count, int blocklength, MPI_Aint indices
 	
 	*newtype = MPC_DATATYPE_NULL;
 	
+	mpi_check_type( old_type, MPI_COMM_WORLD );
+	
 	if(indices == NULL)
 	{
 		return MPI_SUCCESS;
@@ -10284,6 +10295,8 @@ int PMPI_Type_create_hindexed (int count, int blocklens[], MPI_Aint indices[],  
 	mpi_check_count(count,comm);
 
 	*newtype = MPC_DATATYPE_NULL;
+	
+	mpi_check_type( old_type, MPI_COMM_WORLD );
 	
 	if((blocklens == NULL) || (indices == NULL))
 	{
@@ -10311,6 +10324,7 @@ int PMPI_Type_struct (int count, int blocklens[], MPI_Aint indices[], MPI_Dataty
 	
 	*newtype = MPC_DATATYPE_NULL;
 
+	
 	if((old_types == NULL) || (indices == NULL) || (blocklens == NULL))
 	{
 		return MPI_SUCCESS;
@@ -10318,6 +10332,8 @@ int PMPI_Type_struct (int count, int blocklens[], MPI_Aint indices[], MPI_Dataty
 
 	for(i = 0; i < count; i++)
 	{
+		mpi_check_type( old_types[i], MPI_COMM_WORLD );
+		
 		mpi_check_type_create(old_types[i],comm); 
 		if(blocklens[i] < 0)
 		{
@@ -10346,6 +10362,8 @@ int PMPI_Type_create_struct (int count, int blocklens[], MPI_Aint indices[], MPI
 
 	for(i = 0; i < count; i++)
 	{
+		mpi_check_type( old_types[i], MPI_COMM_WORLD );
+		
 		mpi_check_type_create(old_types[i],comm); 
 		if(blocklens[i] < 0)
 		{
@@ -10433,6 +10451,7 @@ int PMPI_Type_size (MPI_Datatype datatype, int *size)
 {
 	MPI_Comm comm = MPI_COMM_WORLD;
 	int res = MPI_ERR_INTERN;
+	mpi_check_type(datatype,comm);
 	mpi_check_type_create(datatype,comm);
 	res = __INTERNAL__PMPI_Type_size (datatype, size);
 	SCTK_MPI_CHECK_RETURN_VAL (res, comm);
@@ -10442,6 +10461,7 @@ int PMPI_Type_size_x(MPI_Datatype datatype, MPI_Count *size)
 {
 	MPI_Comm comm = MPI_COMM_WORLD;
 	int res = MPI_ERR_INTERN;
+	mpi_check_type(datatype,comm);
 	mpi_check_type_create(datatype,comm);
 	res = __INTERNAL__PMPI_Type_size_x(datatype, size);
 	SCTK_MPI_CHECK_RETURN_VAL (res, comm);
@@ -10452,6 +10472,7 @@ int PMPI_Type_lb (MPI_Datatype datatype, MPI_Aint * displacement)
 {
 	MPI_Comm comm = MPI_COMM_WORLD;
 	int res = MPI_ERR_INTERN;
+	mpi_check_type(datatype,comm);
 	mpi_check_type_create(datatype,comm);
 	res = __INTERNAL__PMPI_Type_lb (datatype, displacement);
 	SCTK_MPI_CHECK_RETURN_VAL (res, comm);
@@ -10461,6 +10482,7 @@ int PMPI_Type_ub (MPI_Datatype datatype, MPI_Aint * displacement)
 {
 	MPI_Comm comm = MPI_COMM_WORLD;
 	int res = MPI_ERR_INTERN;
+	mpi_check_type(datatype,comm);
 	mpi_check_type_create(datatype,comm);
 	res = __INTERNAL__PMPI_Type_ub (datatype, displacement);
 	SCTK_MPI_CHECK_RETURN_VAL (res, comm);
@@ -10470,6 +10492,7 @@ int PMPI_Type_create_resized(MPI_Datatype old_type, MPI_Aint lb, MPI_Aint extent
 {
 	MPI_Comm comm = MPI_COMM_WORLD;
 	int res = MPI_ERR_INTERN;
+	mpi_check_type(old_type,comm);
 	mpi_check_type_create(old_type,comm);
 	res = __INTERNAL__PMPI_Type_create_resized( old_type, lb, extent, new_type );
 	SCTK_MPI_CHECK_RETURN_VAL (res, comm);
@@ -10479,6 +10502,7 @@ int PMPI_Type_commit (MPI_Datatype * datatype)
 {
 	MPI_Comm comm = MPI_COMM_WORLD;
 	int res = MPI_ERR_INTERN;
+	mpi_check_type(*datatype,comm);
 	mpi_check_type_create(*datatype,comm);
 	res = __INTERNAL__PMPI_Type_commit (datatype);
 	SCTK_MPI_CHECK_RETURN_VAL (res, comm);
@@ -10488,6 +10512,7 @@ int PMPI_Type_free (MPI_Datatype * datatype)
 {
 	MPI_Comm comm = MPI_COMM_WORLD;
 	int res = MPI_ERR_INTERN;
+	
 	mpi_check_type (*datatype, MPI_COMM_WORLD);
 
 	if( sctk_datatype_is_common(*datatype) )
