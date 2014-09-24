@@ -3094,8 +3094,7 @@ static int __INTERNAL__PMPI_Type_create_indexed_block(int count, int blocklength
 	/* Retrieve type extent */
 	__INTERNAL__PMPI_Type_extent(old_type, &extent);
 	
-	sctk_error("NEWTYPE BEFFORE %d" , *newtype );
-	
+
 	/* Create a temporary offset array */
 	MPI_Aint * byte_offsets = sctk_malloc (count * sizeof (MPI_Aint));
 	assume( byte_offsets != NULL );
@@ -3104,14 +3103,10 @@ static int __INTERNAL__PMPI_Type_create_indexed_block(int count, int blocklength
 	/* Fill it with by converting type based indices to bytes */
 	for( i = 0 ; i < count ; i++ )
 		byte_offsets[i] = indices[i] * extent;
-	
-	sctk_error("NEWTYPE BEFFORE %d" , *newtype );
-	
+
 	/* Call the orignal indexed function */
 	int res = __INTERNAL__PMPI_Type_create_hindexed_block (count, blocklength, byte_offsets, old_type,  newtype);
 	
-	sctk_error("NEWTYPE AFTER %d" , *newtype );
-		
 	/* Set its context to overide the one from hdindexed block */
 	struct Datatype_External_context dtctx;
 	sctk_datatype_external_context_clear( &dtctx );
@@ -3175,6 +3170,7 @@ static int __INTERNAL__PMPI_Type_hindexed (int count,
 		unsigned long step = 0;
 		long int new_ub  = input_datatype.ub ;
 		long int new_lb = input_datatype.lb;
+		
 	
 		for (i = 0; i < count; i++)
 		{
@@ -3271,6 +3267,9 @@ static int __INTERNAL__PMPI_Type_struct(int count, int blocklens[], MPI_Aint ind
 
 	unsigned long my_count_out = 0;
 	
+	if( ! count )
+		new_lb = 0;
+	
 
 	// find malloc size
 	for (i = 0; i < count; i++)
@@ -3297,6 +3296,8 @@ static int __INTERNAL__PMPI_Type_struct(int count, int blocklens[], MPI_Aint ind
 			my_count_out += count_in * blocklens[i];
 		}
 	}
+	
+	
 	
 	sctk_nodebug("my_count_out = %d", my_count_out);
 	mpc_pack_absolute_indexes_t * begins_out = sctk_malloc(my_count_out * sizeof(mpc_pack_absolute_indexes_t));
@@ -3421,6 +3422,7 @@ static int __INTERNAL__PMPI_Type_struct(int count, int blocklens[], MPI_Aint ind
 		sctk_nodebug("%d new_lb %d new_ub %d", i, new_lb, new_ub);
 	}
 /* 	fprintf(stderr,"End Type\n"); */
+
 
 	res = PMPC_Derived_datatype(newtype, begins_out, ends_out, datatypes, glob_count_out, new_lb, new_is_lb, new_ub, new_is_ub);
 	assert(res == MPI_SUCCESS);
@@ -3580,6 +3582,7 @@ static int __INTERNAL__PMPI_Type_extent (MPI_Datatype datatype, MPI_Aint * exten
 	__INTERNAL__PMPI_Type_lb (datatype, &LB);
 	__INTERNAL__PMPI_Type_ub (datatype, &UB);
 
+
 	*extent = (MPI_Aint) ((unsigned long) UB - (unsigned long) LB);
 	return MPI_SUCCESS;
 }
@@ -3629,8 +3632,9 @@ static int __INTERNAL__PMPI_Type_lb (MPI_Datatype datatype, MPI_Aint * displacem
 	
 	if (derived_ret)
 	{
-		if (input_datatype.is_lb == 0)
+		if ( (input_datatype.is_lb == 0) && input_datatype.count )
 		{
+			
 			*displacement = (MPI_Aint) input_datatype.opt_begins[0];
 			for (i = 0; i < input_datatype.opt_count; i++)
 			{
@@ -3667,7 +3671,7 @@ __INTERNAL__PMPI_Type_ub (MPI_Datatype datatype, MPI_Aint * displacement)
 	
 	if (derived_ret)
 	{
-		if (input_datatype.is_ub == 0)
+		if ( (input_datatype.is_ub == 0)  && input_datatype.count )
 		{
 			*displacement = (MPI_Aint) input_datatype.opt_ends[0];
 			
@@ -10241,12 +10245,7 @@ int PMPI_Type_create_indexed_block(int count, int blocklength, int indices[], MP
 	*newtype = MPC_DATATYPE_NULL;
 	
 	mpi_check_type( old_type, MPI_COMM_WORLD );
-	
-	
-	if(indices == NULL)
-	{
-		return MPI_SUCCESS;
-	}
+
 	
 	if( blocklength < 0)
 	{
@@ -10270,11 +10269,6 @@ int PMPI_Type_create_hindexed_block(int count, int blocklength, MPI_Aint indices
 	*newtype = MPC_DATATYPE_NULL;
 	
 	mpi_check_type( old_type, MPI_COMM_WORLD );
-	
-	if(indices == NULL)
-	{
-		return MPI_SUCCESS;
-	}
 	
 	if( blocklength < 0)
 	{
@@ -10354,10 +10348,6 @@ int PMPI_Type_create_struct (int count, int blocklens[], MPI_Aint indices[], MPI
 
 	*newtype = MPC_DATATYPE_NULL;
 	
-	if((old_types == NULL) || (indices == NULL) || (blocklens == NULL))
-	{
-		return MPI_SUCCESS;
-	}
 
 	for(i = 0; i < count; i++)
 	{
