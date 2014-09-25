@@ -54,7 +54,7 @@ extern "C"
   
   
 #define SCTK_COMMON_DATA_TYPE_COUNT 70
-#define SCTK_USER_DATA_TYPES_MAX 800
+#define SCTK_USER_DATA_TYPES_MAX 400
 #define SCTK_DERIVED_DATATYPE_BASE (SCTK_COMMON_DATA_TYPE_COUNT + SCTK_USER_DATA_TYPES_MAX)
   
 /** \brief Macro to obtain the total number of datatypes */
