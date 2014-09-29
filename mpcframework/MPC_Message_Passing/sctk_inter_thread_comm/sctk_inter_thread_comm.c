@@ -49,7 +49,7 @@ TODO("sctk_cancel_message: need to be implemented")
 int sctk_cancel_message (sctk_request_t * msg)
 {
 	int ret = MPC_SUCCESS;
-
+	
 	switch( msg->request_type)
 	{
 		case REQUEST_GENERALIZED :
@@ -62,13 +62,13 @@ int sctk_cancel_message (sctk_request_t * msg)
 		break;
 		case REQUEST_RECV:
 			if( msg->msg == NULL)
-				return;
+				return ret;
 			
 			msg->msg->sctk_msg_get_specific_message_tag = cancel_recv_specific_message_tag;
 		break;
 		case REQUEST_SEND:
 			if( msg->msg == NULL)
-				return;
+				return ret;
 		
 			if(sctk_is_net_message (msg->msg->sctk_msg_get_destination))
 			{

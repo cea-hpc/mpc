@@ -322,7 +322,7 @@ MPC_PROD_func_MPC_COMPLEX (const mpc_float_float * mpc_restrict in,
     mpc_redution_check_type(datatype,t);				\
     for(i = 0; i < size; i++){						\
       if (inout[i].a < in[i].a)					\
-	inout[i] = in[i];						\
+			inout[i] = in[i];						\
     }									\
   }									\
   void MPC_MINLOC_func_##t(const tt*  mpc_restrict in ,tt* mpc_restrict inout ,size_t size ,MPC_Datatype datatype){ \
@@ -330,7 +330,7 @@ MPC_PROD_func_MPC_COMPLEX (const mpc_float_float * mpc_restrict in,
     mpc_redution_check_type(datatype,t);				\
     for(i = 0; i < size; i++){						\
       if (inout[i].a > in[i].a)					\
-	inout[i] = in[i];						\
+			inout[i] = in[i];						\
     }									\
   }
 

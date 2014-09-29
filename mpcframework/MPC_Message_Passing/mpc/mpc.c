@@ -2373,6 +2373,7 @@ int PMPC_Init_thread (int *argc, char ***argv, int required, int *provided)
   const int res = PMPC_Init (argc, argv);
   if (res == MPC_SUCCESS) {
     sctk_task_specific_t *task_specific;
+    task_specific = __MPC_get_task_specific ();
     task_specific->thread_level = required;
     *provided = required;
   }
@@ -2383,6 +2384,7 @@ int PMPC_Init_thread (int *argc, char ***argv, int required, int *provided)
 int PMPC_Query_thread (int *provided)
 {
   sctk_task_specific_t *task_specific;
+  task_specific = __MPC_get_task_specific ();
   if (task_specific->thread_level == -1) {
     return MPC_ERR_OTHER;
   }
@@ -4752,25 +4754,26 @@ MPC_Op_tmp (void *in, void *inout, size_t size, MPC_Datatype t)
 
 
 #define COMPAT_DATA_TYPE3(op,func)			\
-  if(op == func){					\
-    switch(datatype){					\
-      ADD_FUNC_HANDLER(func,MPC_FLOAT_INT,op);		\
-      ADD_FUNC_HANDLER(func,MPC_LONG_INT,op);		\
-      ADD_FUNC_HANDLER(func,MPC_DOUBLE_INT,op);		\
-      ADD_FUNC_HANDLER(func,MPC_SHORT_INT,op);		\
-      ADD_FUNC_HANDLER(func,MPC_2INT,op);		\
-      ADD_FUNC_HANDLER(func,MPC_2FLOAT,op);		\
-      ADD_FUNC_HANDLER(func,MPC_COMPLEX,op);		\
-      ADD_FUNC_HANDLER(func,MPC_2DOUBLE_PRECISION,op);	\
-      ADD_FUNC_HANDLER(func,MPC_COMPLEX8,op);	\
-      ADD_FUNC_HANDLER(func,MPC_COMPLEX16,op);	\
-      ADD_FUNC_HANDLER(func,MPC_DOUBLE_COMPLEX,op);	\
-      ADD_FUNC_HANDLER(func,MPC_COMPLEX32,op);	\
-      ADD_FUNC_HANDLER(func,MPC_UNSIGNED_LONG_LONG_INT,op);	\
-      ADD_FUNC_HANDLER(func,MPC_LONG_LONG_INT,op);	\
-    default:not_reachable();				\
-    }							\
-  }
+	if(op == func){	\
+		sctk_error(#op);				\
+		switch(datatype){					\
+			ADD_FUNC_HANDLER(func,MPC_FLOAT_INT,op);		\
+			ADD_FUNC_HANDLER(func,MPC_LONG_INT,op);		\
+			ADD_FUNC_HANDLER(func,MPC_DOUBLE_INT,op);		\
+			ADD_FUNC_HANDLER(func,MPC_SHORT_INT,op);		\
+			ADD_FUNC_HANDLER(func,MPC_2INT,op);		\
+			ADD_FUNC_HANDLER(func,MPC_2FLOAT,op);		\
+			ADD_FUNC_HANDLER(func,MPC_COMPLEX,op);		\
+			ADD_FUNC_HANDLER(func,MPC_2DOUBLE_PRECISION,op);	\
+			ADD_FUNC_HANDLER(func,MPC_COMPLEX8,op);	\
+			ADD_FUNC_HANDLER(func,MPC_COMPLEX16,op);	\
+			ADD_FUNC_HANDLER(func,MPC_DOUBLE_COMPLEX,op);	\
+			ADD_FUNC_HANDLER(func,MPC_COMPLEX32,op);	\
+			ADD_FUNC_HANDLER(func,MPC_UNSIGNED_LONG_LONG_INT,op);	\
+			ADD_FUNC_HANDLER(func,MPC_LONG_LONG_INT,op);	\
+			default:not_reachable();				\
+		}					\
+	}
 
 MPC_Op_f sctk_get_common_function (MPC_Datatype datatype, MPC_Op op)
 {
@@ -4779,29 +4782,29 @@ MPC_Op_f sctk_get_common_function (MPC_Datatype datatype, MPC_Op op)
   func = op.func;
 
   /*Internals function */
-  COMPAT_DATA_TYPE (func, MPC_SUM_func)
-  else
-    COMPAT_DATA_TYPE (func, MPC_MAX_func)
-    else
-      COMPAT_DATA_TYPE (func, MPC_MIN_func)
-      else
-	COMPAT_DATA_TYPE (func, MPC_PROD_func)
+	COMPAT_DATA_TYPE (func, MPC_SUM_func)
 	else
-	  COMPAT_DATA_TYPE2 (func, MPC_BAND_func)
-	  else
-	    COMPAT_DATA_TYPE2 (func, MPC_LAND_func)
-	    else
-	      COMPAT_DATA_TYPE2 (func, MPC_BXOR_func)
-	      else
+		COMPAT_DATA_TYPE (func, MPC_MAX_func)
+	else
+		COMPAT_DATA_TYPE (func, MPC_MIN_func)
+	else
+		COMPAT_DATA_TYPE (func, MPC_PROD_func)
+	else
+		COMPAT_DATA_TYPE2 (func, MPC_BAND_func)
+	else
+		COMPAT_DATA_TYPE2 (func, MPC_LAND_func)
+	else
+		COMPAT_DATA_TYPE2 (func, MPC_BXOR_func)
+	else
 		COMPAT_DATA_TYPE2 (func, MPC_LXOR_func)
-		else
-		  COMPAT_DATA_TYPE2 (func, MPC_BOR_func)
-		  else
-		    COMPAT_DATA_TYPE2 (func, MPC_LOR_func)
-		    else
-		      COMPAT_DATA_TYPE3 (func, MPC_MAXLOC_func)
-		      else
-			COMPAT_DATA_TYPE3 (func, MPC_MINLOC_func) sctk_nodebug ("Internal reduce");
+	else
+		COMPAT_DATA_TYPE2 (func, MPC_BOR_func)
+	else
+		COMPAT_DATA_TYPE2 (func, MPC_LOR_func)
+	else
+		COMPAT_DATA_TYPE3 (func, MPC_MAXLOC_func)
+	else
+		COMPAT_DATA_TYPE3 (func, MPC_MINLOC_func)
 
   return func;
 }
