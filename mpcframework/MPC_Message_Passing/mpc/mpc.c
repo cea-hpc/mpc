@@ -828,7 +828,7 @@ MPC_CREATE_INTERN_FUNC (MINLOC);
 MPC_CREATE_INTERN_FUNC (MAXLOC);
 
 #define mpc_check_type(datatype,comm)		\
-  if (datatype >= (SCTK_USER_DATA_TYPES_MAX*2))	\
+  if ( sctk_datatype_is_derived(datatype) && !sctk_datatype_is_struct_datatype(datatype)  )	\
     MPC_ERROR_REPORT (comm, MPC_ERR_TYPE, "");
 
 TODO("To optimize")
@@ -1779,6 +1779,35 @@ int PMPC_Type_get_true_extent(MPC_Datatype datatype, MPC_Aint *true_lb, MPC_Aint
 	*true_extent = ( tmp_true_ub - tmp_true_lb );
 	
 	MPC_ERROR_SUCESS();
+}
+
+/** \brief This function aims at handling the particular case of struct derived data-type size
+ *  \param datatype Target data-type
+ *  \param size size to set
+ * 
+ *  This is needed as some struct data-type have additionnal padding
+ *  and we define it this way after setting the correct offsets
+ */
+int PMPC_Type_set_size(MPC_Datatype datatype, size_t size )
+{
+	sctk_task_specific_t * task_specific = __MPC_get_task_specific ();
+
+	sctk_derived_datatype_t * derived_type_target;
+
+	switch( sctk_datatype_kind(datatype) )
+	{
+		case MPC_DATATYPES_COMMON:
+		case MPC_DATATYPES_CONTIGUOUS:
+		case MPC_DATATYPES_UNKNOWN:
+			MPC_ERROR_REPORT( MPC_COMM_SELF, MPC_ERR_ARG, "Bad data-type this can only be done on derived types");
+		break;
+		case MPC_DATATYPES_DERIVED:
+			derived_type_target = sctk_task_specific_get_derived_datatype(task_specific, datatype);
+			derived_type_target->size = size;
+		break;
+	}
+	
+	MPC_ERROR_SUCESS ();
 }
 
 
@@ -4755,7 +4784,6 @@ MPC_Op_tmp (void *in, void *inout, size_t size, MPC_Datatype t)
 
 #define COMPAT_DATA_TYPE3(op,func)			\
 	if(op == func){	\
-		sctk_error(#op);				\
 		switch(datatype){					\
 			ADD_FUNC_HANDLER(func,MPC_FLOAT_INT,op);		\
 			ADD_FUNC_HANDLER(func,MPC_LONG_INT,op);		\
@@ -4805,6 +4833,13 @@ MPC_Op_f sctk_get_common_function (MPC_Datatype datatype, MPC_Op op)
 		COMPAT_DATA_TYPE3 (func, MPC_MAXLOC_func)
 	else
 		COMPAT_DATA_TYPE3 (func, MPC_MINLOC_func)
+	else
+	{
+		sctk_error("No such operation");
+		abort();
+	}
+
+	
 
   return func;
 }
@@ -4819,6 +4854,7 @@ static inline int __MPC_Allreduce (void *sendbuf, void *recvbuf, mpc_msg_count c
 	mpc_check_count (count, comm);
 	mpc_check_type (datatype, comm);
 	__MPC_Comm_rank(comm, &rank, task_specific);
+
 
 	sctk_nodebug ("Allreduce on %d with type %d", comm, datatype);
 	if ((op.u_func == NULL) && ( sctk_datatype_is_common( datatype) || sctk_datatype_is_struct_datatype(datatype) ) )

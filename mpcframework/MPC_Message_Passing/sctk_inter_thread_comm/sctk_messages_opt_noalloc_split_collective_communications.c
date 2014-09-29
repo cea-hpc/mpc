@@ -365,6 +365,13 @@ void sctk_broadcast_opt_noalloc_split_messages_init(struct sctk_internal_collect
 
 #define ALLREDUCE_ALLOC_BUFFER_COMMUNICATORS 10
 
+struct di
+{
+	double a;
+	int b;
+};
+
+
 static void sctk_allreduce_opt_noalloc_split_messages_intern (const void *buffer_in, void *buffer_out,
 						const size_t elem_size,
 						const size_t elem_number,
@@ -401,6 +408,7 @@ static void sctk_allreduce_opt_noalloc_split_messages_intern (const void *buffer
     if(ALLREDUCE_ARRITY < 2){
       ALLREDUCE_ARRITY = 2;
     }
+    
     if(ALLREDUCE_ARRITY > allreduce_arity_max){
       ALLREDUCE_ARRITY = allreduce_arity_max;
     }

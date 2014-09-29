@@ -256,7 +256,9 @@ extern "C"
 #define MPI_BXOR 9
 #define MPI_MINLOC 10
 #define MPI_MAXLOC 11
+#define MAX_MPI_DEFINED_OP 12
 #define MPI_OP_NULL ((MPI_Op)-1)
+
 
 /* Group Handling */
 #define MPI_GROUP_EMPTY ((MPI_Group)0)

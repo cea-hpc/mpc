@@ -162,6 +162,7 @@ int PMPC_Derived_datatype_on_slot ( int id,
 				    mpc_pack_absolute_indexes_t lb, int is_lb,
 				    mpc_pack_absolute_indexes_t ub, int is_ub);
 
+int PMPC_Type_set_size(MPC_Datatype datatype, size_t size );
 /************************************************************************/
 /* Per thread context                                                   */
 /************************************************************************/

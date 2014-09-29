@@ -572,7 +572,7 @@ __sctk_init_mpi_errors ()
 #define MPI_ERROR_SUCESS() return MPI_SUCCESS
 
 #define mpi_check_type(datatype,comm)		\
-  if ( ((datatype >= SCTK_USER_DATA_TYPES_MAX) && (sctk_datatype_is_derived(datatype) != 1)) || (datatype == MPI_DATATYPE_NULL) ) \
+  if (datatype == MPI_DATATYPE_NULL) \
     MPI_ERROR_REPORT (comm, MPI_ERR_TYPE, "Bad datatype provided");
 
 #define mpi_check_type_create(datatype,comm)		\
@@ -3575,7 +3575,7 @@ static int __INTERNAL__PMPI_Type_extent (MPI_Datatype datatype, MPI_Aint * exten
 {
 	MPI_Aint UB;
 	MPI_Aint LB;
-	
+
 	/* Special cases */
 	mpi_check_type( datatype, MPI_COMM_WORLD );
 
@@ -3926,9 +3926,13 @@ __INTERNAL__PMPI_Pack (void *inbuf,
 				
 				copied += size;
 				sctk_nodebug ("Pack %lu->%lu, ==> %lu %lu done", input_datatype.opt_begins[i] + extent * j, input_datatype.opt_ends[i] + extent * j, *position, size);
+
+				
 				*position = *position + size;
+				
 				assume (copied <= outcount);
 			}
+			
 			inbuf = (char *) inbuf + extent;
 		}
 
@@ -5149,76 +5153,78 @@ typedef struct
   sctk_spinlock_t lock;
 } ;
 
-#define MAX_MPI_DEFINED_OP 12
-
 static sctk_op_t defined_op[MAX_MPI_DEFINED_OP];
 
-#define sctk_add_op(operation) defined_op[MPI_##operation].op = MPC_##operation;defined_op[MPI_##operation].used = 1;defined_op[MPI_##operation].commute = 1
+#define sctk_add_op(operation) defined_op[MPI_##operation].op = MPC_##operation; \
+                               defined_op[MPI_##operation].used = 1;\
+                               defined_op[MPI_##operation].commute = 1;
 
 static void
 __sctk_init_mpi_op ()
 {
-  sctk_mpi_ops_t *ops;
-  static sctk_thread_mutex_t lock = SCTK_THREAD_MUTEX_INITIALIZER;
-  static volatile int done = 0;
-  int i;
+	sctk_mpi_ops_t *ops;
+	static sctk_thread_mutex_t lock = SCTK_THREAD_MUTEX_INITIALIZER;
+	static volatile int done = 0;
+	int i;
 
-  ops = (sctk_mpi_ops_t *) sctk_malloc (sizeof (sctk_mpi_ops_t));
-  ops->size = 0;
-  ops->ops = NULL;
-  ops->lock = 0;
+	ops = (sctk_mpi_ops_t *) sctk_malloc (sizeof (sctk_mpi_ops_t));
+	ops->size = 0;
+	ops->ops = NULL;
+	ops->lock = 0;
 
-  sctk_thread_mutex_lock (&lock);
-  if (done == 0)
-    {
-      for (i = 0; i < MAX_MPI_DEFINED_OP; i++)
+	sctk_thread_mutex_lock (&lock);
+	if (done == 0)
 	{
-	  defined_op[i].used = 0;
+		for (i = 0; i < MAX_MPI_DEFINED_OP; i++)
+		{
+			defined_op[i].used = 0;
+		}
+
+		sctk_add_op (SUM);
+		sctk_add_op (MAX);
+		sctk_add_op (MIN);
+		sctk_add_op (PROD);
+		sctk_add_op (LAND);
+		sctk_add_op (BAND);
+		sctk_add_op (LOR);
+		sctk_add_op (BOR);
+		sctk_add_op (LXOR);
+		sctk_add_op (BXOR);
+		sctk_add_op (MINLOC);
+		sctk_add_op (MAXLOC);
+		done = 1;
 	}
+	sctk_thread_mutex_unlock (&lock);
+	
+	#ifdef MPC_PosixAllocator
+	sctk_add_global_var (defined_op, sizeof (defined_op));
+	#endif
 
-      sctk_add_op (SUM);
-      sctk_add_op (MAX);
-      sctk_add_op (MIN);
-      sctk_add_op (PROD);
-      sctk_add_op (LAND);
-      sctk_add_op (BAND);
-      sctk_add_op (LOR);
-      sctk_add_op (BOR);
-      sctk_add_op (LXOR);
-      sctk_add_op (BXOR);
-      sctk_add_op (MINLOC);
-      sctk_add_op (MAXLOC);
-      done = 1;
-    }
-  sctk_thread_mutex_unlock (&lock);
-#ifdef MPC_PosixAllocator
-  sctk_add_global_var (defined_op, sizeof (defined_op));
-#endif
-
-  PMPC_Set_op (ops);
+	PMPC_Set_op (ops);
 }
 
-static sctk_op_t *
-sctk_convert_to_mpc_op (MPI_Op op)
+static sctk_op_t * sctk_convert_to_mpc_op (MPI_Op op)
 {
-  sctk_mpi_ops_t *ops;
-  sctk_op_t *tmp;
-  if (op < MAX_MPI_DEFINED_OP)
-    {
-      assume (defined_op[op].used == 1);
-      return &(defined_op[op]);
-    }
-  PMPC_Get_op ( &ops);
-  sctk_spinlock_lock (&(ops->lock));
+	sctk_mpi_ops_t *ops;
+	sctk_op_t *tmp;
+	
+	if (op < MAX_MPI_DEFINED_OP)
+	{
+		assume (defined_op[op].used == 1);
+		return &(defined_op[op]);
+	}
+	
+	PMPC_Get_op ( &ops);
+	sctk_spinlock_lock (&(ops->lock));
 
-  op -= MAX_MPI_DEFINED_OP;
-  assume (op < ops->size);
-  assume (ops->ops[op].used == 1);
+	op -= MAX_MPI_DEFINED_OP;
+	assume (op < ops->size);
+	assume (ops->ops[op].used == 1);
 
-  tmp = &(ops->ops[op]);
+	tmp = &(ops->ops[op]);
 
-  sctk_spinlock_unlock (&(ops->lock));
-  return tmp;
+	sctk_spinlock_unlock (&(ops->lock));
+	return tmp;
 }
 
 static inline int
@@ -5309,6 +5315,7 @@ __INTERNAL__PMPI_Reduce (void *sendbuf, void *recvbuf, int count,
 	MPC_Op mpc_op;
 	sctk_op_t *mpi_op;
 
+	
 	mpi_op = sctk_convert_to_mpc_op (op);
 	mpc_op = mpi_op->op;
 
@@ -11323,15 +11330,13 @@ int PMPI_Neighbor_alltoallw(void *sendbuf, int sendcounts[], MPI_Aint sdispls[],
 }
 
 
-int
-PMPI_Reduce (void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
-	     MPI_Op op, int root, MPI_Comm comm)
+int PMPI_Reduce (void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm)
 {
-  int res = MPI_ERR_INTERN;
-  int size, rank;
-   mpi_check_comm (comm, comm);
-  __INTERNAL__PMPI_Comm_size (comm, &size);
-  __INTERNAL__PMPI_Comm_rank (comm, &rank);
+	int res = MPI_ERR_INTERN;
+	int size, rank;
+	mpi_check_comm (comm, comm);
+	__INTERNAL__PMPI_Comm_size (comm, &size);
+	__INTERNAL__PMPI_Comm_rank (comm, &rank);
 	mpi_check_root(root,size,comm);
 	mpi_check_buf (sendbuf, comm);
 	mpi_check_buf (recvbuf, comm);
@@ -11339,22 +11344,21 @@ PMPI_Reduce (void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
 	mpi_check_type (datatype, comm);
 	mpi_check_op (op, datatype,comm);
 #ifndef ENABLE_COLLECTIVES_ON_INTERCOMM
+	
 	if(sctk_is_inter_comm (comm)){
-	  MPI_ERROR_REPORT(comm,MPI_ERR_COMM,"");
+		MPI_ERROR_REPORT(comm,MPI_ERR_COMM,"");
 	}
 #endif
-	if ((rank != root && MPI_IN_PLACE == sendbuf) ||
-        (rank == root && ((MPI_IN_PLACE == recvbuf) || (sendbuf == recvbuf)))) 
-    {
-        MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
-    }
+	|| (rank == root && ((MPI_IN_PLACE == recvbuf)
+	|| (sendbuf == recvbuf))) ) 
+	{
+		MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
+	}
 	if (0 == count) {
-        return MPI_SUCCESS;
-    }
-  res =
-    __INTERNAL__PMPI_Reduce (sendbuf, recvbuf, count, datatype, op, root,
-			     comm);
-  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
+		return MPI_SUCCESS;
+	}
+	res = __INTERNAL__PMPI_Reduce (sendbuf, recvbuf, count, datatype, op, root, comm);
+	SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
