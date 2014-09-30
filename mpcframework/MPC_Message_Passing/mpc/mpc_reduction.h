@@ -53,6 +53,7 @@ MPC_DEFINED_FUNCS(MPC_BYTE, unsigned char,name);			\
 MPC_DEFINED_FUNCS(MPC_SHORT, short,name);				\
 MPC_DEFINED_FUNCS(MPC_INT, int,name);				\
 MPC_DEFINED_FUNCS(MPC_LONG, long,name);				\
+MPC_DEFINED_FUNCS(MPC_LONG_LONG, long,name);				\
 MPC_DEFINED_FUNCS(MPC_FLOAT, float,name);				\
 MPC_DEFINED_FUNCS(MPC_DOUBLE, double,name);				\
 MPC_DEFINED_FUNCS(MPC_UNSIGNED_CHAR, unsigned char,name);		\
