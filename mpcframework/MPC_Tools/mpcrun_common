@@ -407,27 +407,27 @@ for arg in "$@" ; do
     --arch-library-path=*)
     SCTK_ARCH_LIBRARY_PATH="`echo A$arg | sed -e 's/A--arch-library-path=//g'`"
     export SCTK_ARCH_LIBRARY_PATH
-    echo "Arch library path updated : $SCTK_ARCH_LIBRARY_PATH"
+    echo "Arch library path updated : $SCTK_ARCH_LIBRARY_PATH" >&2
     ;;
     --mic-nb-task=*)
     SCTK_MIC_NB_TASK="`echo A$arg | sed -e 's/A--mic-nb-task=//g'`"
     export SCTK_MIC_NB_TASK
-    echo "run with $SCTK_MIC_NB_TASK task(s) per MIC"
+    echo "run with $SCTK_MIC_NB_TASK task(s) per MIC" >&2
     ;;
     --host-nb-task=*)
     SCTK_HOST_NB_TASK="`echo A$arg | sed -e 's/A--host-nb-task=//g'`"
     export SCTK_HOST_NB_TASK
-    echo "run with $SCTK_HOST_NB_TASK task(s) per host"
+    echo "run with $SCTK_HOST_NB_TASK task(s) per host" >&2
     ;;
     --nb-mic=*)
     SCTK_NB_MIC="`echo A$arg | sed -e 's/A--nb-mic=//g'`"
     export SCTK_NB_MIC
-    echo "run with $SCTK_NB_MIC MIC(s)"
+    echo "run with $SCTK_NB_MIC MIC(s)" >&2
     ;;
     --nb-host=*)
     SCTK_NB_HOST="`echo A$arg | sed -e 's/A--nb-host=//g'`"
     export SCTK_NB_HOST
-    echo "run with $SCTK_NB_HOST host(s)"
+    echo "run with $SCTK_NB_HOST host(s)" >&2
     ;;
     --mic-config=*)
     MPCRUN_CONFIG_FILE="`echo A$arg | sed -e 's/A--mic-config=//g'`"
@@ -474,9 +474,9 @@ fi
 
 # load MPC Hydra launcher if not k1om architecture
 if test "${arch_bin}" = "k1om"; then 
-    echo "k1om architecture detected"
+    echo "k1om architecture detected" >&2
 else
-    echo "${arch_bin} architecture detected"
+    echo "${arch_bin} architecture detected" >&2
     # setup complete hydra path. Exported to be used into mpcrun_opt/* scripts
     if test "$SCTK_HYDRA" != ""; then 
 	if [ $SCTK_HYDRA -eq 1 ] && [ ! -z "$SCTK_HYDRA_PREFIX" ]; then
