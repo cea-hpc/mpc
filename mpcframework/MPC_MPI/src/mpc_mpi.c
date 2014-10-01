@@ -45,6 +45,7 @@
 
 TODO("Optimize algorithme for derived types")
 
+/* #define ENABLE_COLLECTIVES_ON_INTERCOMM */
 
 static int __INTERNAL__PMPI_Attr_set_fortran (int keyval);
 
@@ -10031,9 +10032,11 @@ PMPI_Barrier (MPI_Comm comm)
 {
   int res = MPI_ERR_INTERN;
   mpi_check_comm (comm, comm);
+#ifndef ENABLE_COLLECTIVES_ON_INTERCOMM
   if(sctk_is_inter_comm (comm)){
     MPI_ERROR_REPORT(comm,MPI_ERR_COMM,"");
   }
+#endif
   sctk_nodebug ("Entering BARRIER %d", comm);
   res = __INTERNAL__PMPI_Barrier (comm);
   SCTK__MPI_Check_retrun_val (res, comm);
@@ -10048,9 +10051,11 @@ PMPI_Bcast (void *buffer, int count, MPI_Datatype datatype, int root,
   
         mpi_check_comm(comm, comm);
 
+#ifndef ENABLE_COLLECTIVES_ON_INTERCOMM
         if(sctk_is_inter_comm (comm)){
           MPI_ERROR_REPORT(comm,MPI_ERR_COMM,"");
         }
+#endif
         
 	if (MPI_IN_PLACE == buffer) {
           MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
@@ -10088,10 +10093,11 @@ PMPI_Gather (void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 	mpi_check_count (recvcnt, comm);
 	mpi_check_type (recvtype, comm);
 	mpi_check_tag (root, comm);
+#ifndef ENABLE_COLLECTIVES_ON_INTERCOMM
 	if(sctk_is_inter_comm (comm)){
 	  MPI_ERROR_REPORT(comm,MPI_ERR_COMM,"");
 	}
-	
+#endif
 	if ((0 == sendcnt && MPI_ROOT != root && 
 			(rank != root ||
 				(rank == root && MPI_IN_PLACE != sendbuf)
@@ -10130,9 +10136,11 @@ PMPI_Gatherv (void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 //	mpi_check_count (recvcnt, comm);
 	mpi_check_type (recvtype, comm);
 	mpi_check_tag (root, comm);
+#ifndef ENABLE_COLLECTIVES_ON_INTERCOMM
 	if(sctk_is_inter_comm (comm)){
 	  MPI_ERROR_REPORT(comm,MPI_ERR_COMM,"");
 	}
+#endif
 	if ((rank != root && MPI_IN_PLACE == sendbuf) ||
         (rank == root && MPI_IN_PLACE == recvbuf)) 
     {
@@ -10162,10 +10170,11 @@ PMPI_Scatter (void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 	mpi_check_count (recvcnt, comm);
 	mpi_check_type (recvtype, comm);
 	mpi_check_tag (root, comm);
+#ifndef ENABLE_COLLECTIVES_ON_INTERCOMM
 	if(sctk_is_inter_comm (comm)){
 	  MPI_ERROR_REPORT(comm,MPI_ERR_COMM,"");
 	}
-	
+#endif
 	if ((rank != root && MPI_IN_PLACE == recvbuf) ||
         (rank == root && MPI_IN_PLACE == sendbuf)) 
     {
@@ -10210,9 +10219,11 @@ PMPI_Scatterv (void *sendbuf, int *sendcnts, int *displs,
 	mpi_check_count (recvcnt, comm);
 	mpi_check_type (recvtype, comm);
 	mpi_check_tag (root, comm);
+#ifndef ENABLE_COLLECTIVES_ON_INTERCOMM
 	if(sctk_is_inter_comm (comm)){
 	  MPI_ERROR_REPORT(comm,MPI_ERR_COMM,"");
 	}
+#endif
 	if ((rank != root && MPI_IN_PLACE == recvbuf) ||
         (rank == root && MPI_IN_PLACE == sendbuf)) 
     {
@@ -10242,8 +10253,10 @@ PMPI_Allgather (void *sendbuf, int sendcount, MPI_Datatype sendtype,
 	  {
 		return MPI_SUCCESS;
 	  }
+#ifndef ENABLE_COLLECTIVES_ON_INTERCOMM
 	  else
 		MPI_ERROR_REPORT(comm,MPI_ERR_COMM,"");
+#endif
 	}
 	else
 	{
@@ -10275,9 +10288,11 @@ PMPI_Allgatherv (void *sendbuf, int sendcount, MPI_Datatype sendtype,
 	mpi_check_buf (recvbuf, comm);
 //	mpi_check_count (recvcnt, comm);
 	mpi_check_type (recvtype, comm);
+#ifndef ENABLE_COLLECTIVES_ON_INTERCOMM
 	if(sctk_is_inter_comm (comm)){
 	  MPI_ERROR_REPORT(comm,MPI_ERR_COMM,"");
 	}
+#endif
 	if (MPI_IN_PLACE == recvbuf) {
 	  MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
 	}
@@ -10303,9 +10318,11 @@ PMPI_Alltoall (void *sendbuf, int sendcount, MPI_Datatype sendtype,
 	mpi_check_buf (recvbuf, comm);
 	mpi_check_count (recvcount, comm);
 	mpi_check_type (recvtype, comm);
+#ifndef ENABLE_COLLECTIVES_ON_INTERCOMM
 	if(sctk_is_inter_comm (comm)){
 	  MPI_ERROR_REPORT(comm,MPI_ERR_COMM,"");
 	}
+#endif
 	if (MPI_IN_PLACE == sendbuf) {
 		sendcount = recvcount;
         sendtype = recvtype;
@@ -10339,9 +10356,11 @@ PMPI_Alltoallv (void *sendbuf, int *sendcnts, int *sdispls,
 	mpi_check_buf (recvbuf, comm);
 //	mpi_check_count (recvcnt, comm);
 	mpi_check_type (recvtype, comm);
+#ifndef ENABLE_COLLECTIVES_ON_INTERCOMM
 	if(sctk_is_inter_comm (comm)){
 	  MPI_ERROR_REPORT(comm,MPI_ERR_COMM,"");
 	}
+#endif
 	if (MPI_IN_PLACE == sendbuf) {
             sendcnts = recvcnts;
             sdispls = rdispls;
@@ -10376,9 +10395,11 @@ int PMPI_Alltoallw(void *sendbuf, int *sendcnts, int *sdispls, MPI_Datatype *sen
 	mpi_check_buf (recvbuf, comm);
 //	mpi_check_count (recvcnt, comm);
 //	mpi_check_type (recvtype, comm);
+#ifndef ENABLE_COLLECTIVES_ON_INTERCOMM
 	if(sctk_is_inter_comm (comm)){
 	  MPI_ERROR_REPORT(comm,MPI_ERR_COMM,"");
 	}
+#endif
 	if (MPI_IN_PLACE == sendbuf) {
             sendcnts = recvcnts;
             sdispls    = rdispls;
@@ -10647,9 +10668,11 @@ PMPI_Reduce (void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
 	mpi_check_count (count, comm);
 	mpi_check_type (datatype, comm);
 	mpi_check_op (op, datatype,comm);
+#ifndef ENABLE_COLLECTIVES_ON_INTERCOMM
 	if(sctk_is_inter_comm (comm)){
 	  MPI_ERROR_REPORT(comm,MPI_ERR_COMM,"");
 	}
+#endif
 	if ((rank != root && MPI_IN_PLACE == sendbuf) ||
         (rank == root && ((MPI_IN_PLACE == recvbuf) || (sendbuf == recvbuf)))) 
     {
@@ -10692,9 +10715,11 @@ PMPI_Allreduce (void *sendbuf, void *recvbuf, int count,
   int res = MPI_ERR_INTERN;
   mpi_check_comm (comm, comm);
 
+#ifndef ENABLE_COLLECTIVES_ON_INTERCOMM
   if(sctk_is_inter_comm (comm)){
     MPI_ERROR_REPORT(comm,MPI_ERR_COMM,"");
   }
+#endif
 
   mpi_check_buf (sendbuf, comm);
   mpi_check_buf (recvbuf, comm);
@@ -10726,9 +10751,11 @@ PMPI_Reduce_scatter (void *sendbuf, void *recvbuf, int *recvcnts,
 	  MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
   }
   
+#ifndef ENABLE_COLLECTIVES_ON_INTERCOMM
   if(sctk_is_inter_comm (comm)){
     MPI_ERROR_REPORT(comm,MPI_ERR_COMM,"");
   }
+#endif
 
 	mpi_check_buf (sendbuf, comm);
 	mpi_check_buf (recvbuf, comm);
@@ -10756,9 +10783,11 @@ PMPI_Reduce_scatter_block (void *sendbuf, void *recvbuf, int recvcnt,
   int * recvcnts;
         mpi_check_comm (comm, comm);
 
+#ifndef ENABLE_COLLECTIVES_ON_INTERCOMM
         if(sctk_is_inter_comm (comm)){
           MPI_ERROR_REPORT(comm,MPI_ERR_COMM,"");
         }
+#endif
 
 	mpi_check_buf (sendbuf, comm);
 	mpi_check_buf (recvbuf, comm);
@@ -10783,9 +10812,11 @@ PMPI_Scan (void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
   int res = MPI_ERR_INTERN;
   mpi_check_comm (comm, comm);
 
+#ifndef ENABLE_COLLECTIVES_ON_INTERCOMM
         if(sctk_is_inter_comm (comm)){
           MPI_ERROR_REPORT(comm,MPI_ERR_COMM,"");
         }
+#endif
 
   mpi_check_buf (sendbuf, comm);
   mpi_check_buf (recvbuf, comm);
@@ -10803,9 +10834,11 @@ PMPI_Exscan (void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
   int res = MPI_ERR_INTERN;
   mpi_check_comm (comm, comm);
 
+#ifndef ENABLE_COLLECTIVES_ON_INTERCOMM
         if(sctk_is_inter_comm (comm)){
           MPI_ERROR_REPORT(comm,MPI_ERR_COMM,"");
         }
+#endif
 
   mpi_check_buf (sendbuf, comm);
   mpi_check_buf (recvbuf, comm);
