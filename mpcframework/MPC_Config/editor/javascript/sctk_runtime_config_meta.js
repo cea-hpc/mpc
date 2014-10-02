@@ -25,7 +25,7 @@ meta.types = {
 		launcher: {mode: 'param', name: "launcher", type: "string", doc: "Define which launcher to use", dflt: "none", },
 		max_try: {mode: 'param', name: "max_try", type: "int", doc: "Define the max number of tries to access the topology file before failing", dflt: "10", },
 		vers_details: {mode: 'param', name: "vers_details", type: "bool", doc: "Print the MPC version number", dflt: "false", },
-		profiling: {mode: 'param', name: "profiling", type: "string", doc: "Select the type of outputs for the profiling", dflt: "none", },
+		profiling: {mode: 'param', name: "profiling", type: "string", doc: "Select the type of outputs for the profiling", dflt: "stdout", },
 		enable_smt: {mode: 'param', name: "enable_smt", type: "bool", doc: "Enable usage of hyperthreaded cores if available on current architecture.", dflt: "false", },
 		share_node: {mode: 'param', name: "share_node", type: "bool", doc: "Enable the restriction on CPU number to share node", dflt: "false", },
 		restart: {mode: 'param', name: "restart", type: "bool", doc: "Restart MPC from a previous checkpoint", dflt: "false", },

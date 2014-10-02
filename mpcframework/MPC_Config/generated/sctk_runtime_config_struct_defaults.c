@@ -63,7 +63,7 @@ void sctk_runtime_config_struct_init_launcher(void * struct_ptr)
 	obj->launcher = "none";
 	obj->max_try = 10;
 	obj->vers_details = false;
-	obj->profiling = "none";
+	obj->profiling = "stdout";
 	obj->enable_smt = false;
 	obj->share_node = false;
 	obj->restart = false;

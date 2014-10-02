@@ -18,7 +18,7 @@
 			<param name="launcher" type="string" default="none" doc="Define which launcher to use"/>
 			<param name="max_try" type="int" default="10" doc="Define the max number of tries to access the topology file before failing"/>
 			<param name="vers_details" type="bool" default="false" doc="Print the MPC version number"/>
-			<param name="profiling" type="string" default="none" doc="Select the type of outputs for the profiling"/>
+			<param name="profiling" type="string" default="stdout" doc="Select the type of outputs for the profiling"/>
 			<param name="enable_smt" type="bool" default="false" doc="Enable usage of hyperthreaded cores if available on current architecture."/>
 			<param name="share_node" type="bool" default="false" doc="Enable the restriction on CPU number to share node"/>
 			<param name="restart" type="bool" default="false" doc="Restart MPC from a previous checkpoint"/>
