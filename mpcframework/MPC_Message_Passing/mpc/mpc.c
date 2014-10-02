@@ -37,6 +37,7 @@
 #include "sctk_collective_communications.h"
 #include "sctk_stdint.h"
 #include "sctk_atomics.h"
+#include "sctk_accessor.h"
 #include "sctk_runtime_config.h"
 
  /*#define MPC_LOG_DEBUG*/
@@ -435,6 +436,23 @@ static inline void sctk_mpc_cancel_message (MPC_Request * msg){
 /************************************************************************/
 /*FUNCTIONS                                                             */
 /************************************************************************/
+
+/** \brief Return 0 if the process is the process root */
+int MPC_Is_process_root()
+{
+	if( sctk_get_local_task_rank() == 0 )
+		return 1;
+	
+	return 0;
+}
+
+
+/** \brief Returns 1 in MPC (has to be overrided in the app by a weask symbol) */
+int MPC_Is_present()
+{
+	return 1;
+}
+
 
 void __MPC_init_thread_specific(){
 #if defined(SCTK_USE_TLS)
