@@ -45,7 +45,7 @@
 
 TODO("Optimize algorithme for derived types")
 
-/* #define ENABLE_COLLECTIVES_ON_INTERCOMM */
+#define ENABLE_COLLECTIVES_ON_INTERCOMM 
 
 static int __INTERNAL__PMPI_Attr_set_fortran (int keyval);
 
