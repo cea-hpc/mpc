@@ -199,6 +199,34 @@ static inline mpcomp_node_t * __mpcomp_wakeup_leaf(
 	return n ;
 }
 
+static inline void
+ __mpcomp_sendtosleep_mvp(
+     mpcomp_mvp_t * mvp
+     )
+{
+     	switch( mvp->threads[0].info.combined_pragma ) {
+		case MPCOMP_COMBINED_NONE:
+			sctk_debug( "__mpcomp_sendtosleep_mvp: No combined parallel" ) ;
+			break ;
+		case MPCOMP_COMBINED_SECTION:
+			sctk_debug( "__mpcomp_sendtosleep_mvp: Combined parallel/sections w/ %d section(s)",
+				   mvp->threads[0].info.nb_sections	) ;
+			break ;
+		case MPCOMP_COMBINED_STATIC_LOOP:
+			sctk_debug( "__mpcomp_sendtosleep_mvp: Combined parallel/loop" ) ;
+			break ;
+		case MPCOMP_COMBINED_DYN_LOOP:
+			sctk_debug( "__mpcomp_sendtosleep_mvp: Combined parallel/loop" ) ;
+			__mpcomp_dynamic_loop_end_nowait(
+					&(mvp->threads[0])
+					) ;
+			break ;
+		default:
+			not_implemented() ;
+			break ;
+	}
+}
+
 void __mpcomp_start_parallel_region(int arg_num_threads, void *(*func)
     (void *), void *shared) {
   mpcomp_thread_t * t ;
@@ -249,7 +277,6 @@ void __mpcomp_start_parallel_region(int arg_num_threads, void *(*func)
 		  t->info.icvs.nthreads_var, 
 		  (t->children_instance == NULL)?1:t->children_instance->nb_mvps, 
 		  arg_num_threads ) ;
-
 
 
   /* First level of parallel region (no nesting and more than 1 thread) */
@@ -466,6 +493,8 @@ void * mpcomp_slave_mvp_node( void * arg ) {
 
     sctk_nodebug( "mpcomp_slave_mvp_node: end of in-order scheduling" ) ;
 
+    __mpcomp_sendtosleep_mvp( mvp ) ;
+
     /* Implicit barrier */
     __mpcomp_internal_half_barrier( mvp ) ;
 
@@ -501,6 +530,8 @@ void * mpcomp_slave_mvp_leaf( void * arg ) {
     in_order_scheduler( mvp ) ;
 
     sctk_debug( "mpcomp_slave_mvp_leaf: +++ STOP +++" ) ;
+
+    __mpcomp_sendtosleep_mvp( mvp ) ;
 
     /* Half barrier */
     __mpcomp_internal_half_barrier( mvp ) ;
@@ -860,6 +891,7 @@ __mpcomp_start_parallel_dynamic_loop (int arg_num_threads,
 				&(n->children.leaf[0]->threads[0].info.new_root->barrier)) != 
 			n->children.leaf[0]->threads[0].info.new_root->barrier_num_threads ) 
     {
+
 #if MPCOMP_TASK
 	 __mpcomp_task_schedule(); /* Look for tasks remaining */
 #endif //MPCOMP_TASK
@@ -874,6 +906,8 @@ __mpcomp_start_parallel_dynamic_loop (int arg_num_threads,
 
     /* Update team info for last values */
 	__mpcomp_save_team_info( instance->team, &(n->children.leaf[0]->threads[0]) ) ;
+
+	__mpcomp_dynamic_loop_end_nowait() ;
 
     /* Restore the previous OpenMP info */
     sctk_openmp_thread_tls = t ;
@@ -967,6 +1001,7 @@ __mpcomp_start_parallel_dynamic_loop (int arg_num_threads,
 		  __mpcomp_dynamic_loop_init(target_t,lb,b,incr,chunk_size);
 		  func(shared) ;
 
+		  __mpcomp_dynamic_loop_end_nowait();
 		  sctk_openmp_thread_tls = t;
 
 	  }
