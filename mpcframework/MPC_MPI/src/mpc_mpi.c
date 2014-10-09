@@ -11349,7 +11349,7 @@ int PMPI_Reduce (void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
 		MPI_ERROR_REPORT(comm,MPI_ERR_COMM,"");
 	}
 #endif
-	|| (rank == root && ((MPI_IN_PLACE == recvbuf)
+	if( (rank == root && ((MPI_IN_PLACE == recvbuf)
 	|| (sendbuf == recvbuf))) ) 
 	{
 		MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
