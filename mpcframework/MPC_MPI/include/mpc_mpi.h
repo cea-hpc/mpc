@@ -140,6 +140,7 @@ extern "C"
 #define MPI_ERR_IO MPC_ERR_IO
 #define MPI_ERR_LASTCODE MPC_ERR_LASTCODE
 #define MPI_NOT_IMPLEMENTED MPC_NOT_IMPLEMENTED
+#define MPIR_ERRORS_THROW_EXCEPTIONS MPCR_ERRORS_THROW_EXCEPTIONS
 
 /* Data-type Handling */
 #define MPI_DATATYPE_NULL MPC_DATATYPE_NULL
@@ -228,6 +229,14 @@ extern "C"
 #define MPI_COMBINER_F90_INTEGER MPC_COMBINER_F90_INTEGER
 #define MPI_COMBINER_RESIZED MPC_COMBINER_RESIZED
 
+/* These are deprecated MPI 1.0 constants in MPI 3.0
+ * however they are never returned by get envelope but as ROMIO uses them */
+ 
+#define MPI_COMBINER_HINDEXED_INTEGER MPC_COMBINER_HINDEXED_INTEGER
+#define MPI_COMBINER_STRUCT_INTEGER MPC_COMBINER_STRUCT_INTEGER
+#define MPI_COMBINER_HVECTOR_INTEGER MPC_COMBINER_HVECTOR_INTEGER
+
+
 /************************************************************************/
 /* MPI_* Defines                                                        */
 /************************************************************************/
@@ -270,7 +279,7 @@ extern "C"
 /* Maximum length for keys and values
 * they are both defined for MPC and MPI variants */
 /*1 MB */
-#define MPI_MAX_INFO_VAL 1048576
+#define MPI_MAX_INFO_VAL 1024
 #define MPI_MAX_INFO_KEY 255
 
 /* Other Null Handles */
@@ -356,13 +365,13 @@ typedef int MPI_Grequest_free_function( void * extra_state );
 typedef int MPIX_Grequest_poll_fn(void * extra_arg, MPI_Status *status);
 
 /* Extended Generalized Request Class */
-typedef int MPIX_Request_class;
+typedef int MPIX_Grequest_class;
 typedef int MPIX_Grequest_wait_fn(int count, void **array_of_states, double, MPI_Status *status);
 
 /* NOT IMPLEMENTED >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
 typedef int MPI_Win;
 typedef MPC_Count MPI_Count;
-typedef long MPI_Offset;
+typedef long MPI_Count;
 /* C functions */
 //~ typedef void (MPC_Handler_function) ( MPI_Comm *, int *, ... );
 typedef int (MPI_Comm_copy_attr_function)(MPI_Comm, int, void *, void *, void *, int *);
@@ -373,11 +382,9 @@ typedef int (MPI_Win_copy_attr_function)(MPI_Win, int, void *, void *, void *,in
 typedef int (MPI_Win_delete_attr_function)(MPI_Win, int, void *, void *);
 /* added in MPI-2.2 */
 typedef void (MPI_Comm_errhandler_function)(MPI_Comm *, int *, ...);
-//~ typedef void (MPI_File_errhandler_function)(MPI_File *, int *, ...);
 typedef void (MPI_Win_errhandler_function)(MPI_Win *, int *, ...);
 /* names that were added in MPI-2.0 and deprecated in MPI-2.2 */
 typedef MPI_Comm_errhandler_function MPI_Comm_errhandler_fn;
-//~ typedef MPI_File_errhandler_function MPI_File_errhandler_fn;
 typedef MPI_Win_errhandler_function MPI_Win_errhandler_fn;
 /* END OF NOT IMPLEMENTED <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
 
@@ -651,8 +658,6 @@ MPI_Group MPI_Group_f2c(MPI_Fint group);
 MPI_Fint MPI_Group_c2f(MPI_Group group);
 MPI_Request MPI_Request_f2c(MPI_Fint request);
 MPI_Fint MPI_Request_c2f(MPI_Request request);
-MPI_File MPI_File_f2c(MPI_Fint file);
-MPI_Fint MPI_File_c2f(MPI_File file);
 MPI_Win MPI_Win_f2c(MPI_Fint win);
 MPI_Fint MPI_Win_c2f(MPI_Win win);
 MPI_Op MPI_Op_f2c(MPI_Fint op);
@@ -697,13 +702,13 @@ int MPIX_Grequest_start(MPI_Grequest_query_function *query_fn,
 			MPI_Request * request);
 
 /* Extended Generalized Request Class */
-int MPIX_GRequest_class_create( MPI_Grequest_query_function * query_fn,
+int MPIX_Grequest_class_create( MPI_Grequest_query_function * query_fn,
 				MPI_Grequest_cancel_function * cancel_fn,
 				MPI_Grequest_free_function * free_fn,
 				MPIX_Grequest_poll_fn * poll_fn,
 				MPIX_Grequest_wait_fn * wait_fn,
-				MPIX_Request_class * new_class );
-int MPIX_Grequest_class_allocate( MPIX_Request_class target_class, void *extra_state, MPI_Request *request );
+				MPIX_Grequest_class * new_class );
+int MPIX_Grequest_class_allocate( MPIX_Grequest_class target_class, void *extra_state, MPI_Request *request );
 
 
 
@@ -840,6 +845,10 @@ int PMPI_Type_create_subarray (int ndims,
 			       MPI_Datatype oldtype,
 			       MPI_Datatype * new_type);
 
+int PMPI_Pack_external_size (char *, int, MPI_Datatype, MPI_Aint *);
+int PMPI_Pack_external (char *, void *, int, MPI_Datatype, void *, MPI_Aint, MPI_Aint *);
+int PMPI_Unpack_external (char *, void *, MPI_Aint, MPI_Aint *, void *, int, MPI_Datatype);
+
 /* Collective Operations */
 int PMPI_Barrier (MPI_Comm);
 int PMPI_Bcast (void *, int, MPI_Datatype, int, MPI_Comm);
@@ -944,9 +953,9 @@ MPI_Fint PMPI_Type_c2f(MPI_Datatype datatype);
 MPI_Group PMPI_Group_f2c(MPI_Fint group);
 MPI_Fint PMPI_Group_c2f(MPI_Group group);
 MPI_Request PMPI_Request_f2c(MPI_Fint request);
-MPI_Fint PMPI_Request_c2f(MPI_Request request);
 MPI_File PMPI_File_f2c(MPI_Fint file);
 MPI_Fint PMPI_File_c2f(MPI_File file);
+MPI_Fint PMPI_Request_c2f(MPI_Request request);
 MPI_Win PMPI_Win_f2c(MPI_Fint win);
 MPI_Fint PMPI_Win_c2f(MPI_Win win);
 MPI_Op PMPI_Op_f2c(MPI_Fint op);
@@ -991,13 +1000,13 @@ int PMPIX_Grequest_start(MPI_Grequest_query_function *query_fn,
 			MPI_Request * request);
 
 /* Extended Generalized Request Class */
-int PMPIX_GRequest_class_create( MPI_Grequest_query_function * query_fn,
-				MPI_Grequest_cancel_function * cancel_fn,
+int PMPIX_Grequest_class_create( MPI_Grequest_query_function * query_fn,
 				MPI_Grequest_free_function * free_fn,
+				MPI_Grequest_cancel_function * cancel_fn,
 				MPIX_Grequest_poll_fn * poll_fn,
 				MPIX_Grequest_wait_fn * wait_fn,
-				MPIX_Request_class * new_class );
-int PMPIX_Grequest_class_allocate( MPIX_Request_class target_class, void *extra_state, MPI_Request *request );
+				MPIX_Grequest_class * new_class );
+int PMPIX_Grequest_class_allocate( MPIX_Grequest_class  target_class, void *extra_state, MPI_Request *request );
 
 
 #endif /* MPI_BUILD_PROFILING */
@@ -1056,10 +1065,6 @@ int MPI_Type_create_hindexed_block(int , int , const MPI_Aint *, MPI_Datatype , 
 int MPI_Type_match_size (int, int, MPI_Datatype *);
 
 
-int MPI_Pack_external_size (char *, int, MPI_Datatype, MPI_Aint *);
-int MPI_Pack_external (char *, void *, int, MPI_Datatype, void *, MPI_Aint, MPI_Aint *);
-int MPI_Unpack_external (char *, void *, MPI_Aint, MPI_Aint *, void *, int, MPI_Datatype);
-
 /* Communicator Management */
 int MPI_Comm_set_errhandler(MPI_Comm , MPI_Errhandler );
 int MPI_Comm_free_keyval (int *);
@@ -1108,9 +1113,8 @@ int MPI_Alltoallw (void *, int[], int[], MPI_Datatype[], void *, int[], int[], M
   
 #endif /* Not Implemented */
 
-
-
-
+/* For ROMIO compatibility */
+#define MPICH_ATTR_POINTER_WITH_TYPE_TAG(a,b) 
 
 #ifdef __cplusplus
 }

@@ -489,7 +489,7 @@
 #pragma weak MPI_Grequest_start = PMPI_Grequest_start
 #pragma weak MPI_Grequest_complete = PMPI_Grequest_complete
 #pragma weak MPIX_Grequest_start = PMPIX_Grequest_start
-#pragma weak MPIX_GRequest_class_create = PMPIX_GRequest_class_create
+#pragma weak MPIX_Grequest_class_create = PMPIX_Grequest_class_create
 #pragma weak MPIX_Grequest_class_allocate = PMPIX_Grequest_class_allocate
 #pragma weak MPI_Status_set_elements = PMPI_Status_set_elements
 #pragma weak MPI_Status_set_elements_x = PMPI_Status_set_elements_x
@@ -513,6 +513,7 @@
 #pragma weak MPI_Get_elements_x = PMPI_Get_elements_x
 #pragma weak MPI_Type_create_darray = PMPI_Type_create_darray
 #pragma weak MPI_Type_create_subarray = PMPI_Type_create_subarray
+
 
 //~ not implemented
 

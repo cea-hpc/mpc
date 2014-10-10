@@ -2754,17 +2754,17 @@ int PMPI_Grequest_complete(  MPI_Request request )
 /* Extended Generalized Requests Class                                  */
 /************************************************************************/
 
-int PMPIX_GRequest_class_create( MPI_Grequest_query_function * query_fn,
-				 MPI_Grequest_cancel_function * cancel_fn,
+int PMPIX_Grequest_class_create( MPI_Grequest_query_function * query_fn,
 				 MPI_Grequest_free_function * free_fn,
+				 MPI_Grequest_cancel_function * cancel_fn,
 				 MPIX_Grequest_poll_fn * poll_fn,
 				 MPIX_Grequest_wait_fn * wait_fn,
-				 MPIX_Request_class * new_class )
+				 MPIX_Grequest_class * new_class )
 {
 	return PMPCX_GRequest_class_create(query_fn, cancel_fn, free_fn, poll_fn, wait_fn, new_class );
 }
   
-int PMPIX_Grequest_class_allocate( MPIX_Request_class target_class, void *extra_state, MPI_Request *request )
+int PMPIX_Grequest_class_allocate( MPIX_Grequest_class target_class, void *extra_state, MPI_Request *request )
 {
 	MPC_Request *new_request = __sctk_new_mpc_request (request);
 	return PMPCX_Grequest_class_allocate( target_class, extra_state, new_request );
@@ -11061,8 +11061,7 @@ int PMPI_Type_match_size(int typeclass, int size, MPI_Datatype *rtype)
 	return MPI_SUCCESS;
 }
 
-int
-PMPI_Pack (void *inbuf,
+int PMPI_Pack(void *inbuf,
 	   int incount,
 	   MPI_Datatype datatype,
 	   void *outbuf, int outcount, int *position, MPI_Comm comm)
@@ -11089,8 +11088,7 @@ PMPI_Pack (void *inbuf,
 	SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
-int
-PMPI_Unpack (void *inbuf,
+int PMPI_Unpack (void *inbuf,
 	     int insize,
 	     int *position,
 	     void *outbuf, int outcount, MPI_Datatype datatype, MPI_Comm comm)
@@ -11109,8 +11107,7 @@ PMPI_Unpack (void *inbuf,
   SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
-int
-PMPI_Pack_size (int incount, MPI_Datatype datatype, MPI_Comm comm, int *size)
+int PMPI_Pack_size (int incount, MPI_Datatype datatype, MPI_Comm comm, int *size)
 {
   int res = MPI_ERR_INTERN;
   mpi_check_comm(comm,comm);
@@ -11119,6 +11116,7 @@ PMPI_Pack_size (int incount, MPI_Datatype datatype, MPI_Comm comm, int *size)
   res = __INTERNAL__PMPI_Pack_size (incount, datatype, comm, size);
   SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
+
 
 int PMPI_Type_set_name( MPI_Datatype datatype, char *name )
 {
@@ -12988,15 +12986,6 @@ MPI_Fint PMPI_Request_c2f(MPI_Request request)
 	return (MPI_Fint)request;
 }
 
-MPI_File PMPI_File_f2c(MPI_Fint file)
-{
-	return (MPI_File)file;
-}
-
-MPI_Fint PMPI_File_c2f(MPI_File file)
-{
-	return (MPI_Fint)file;
-}
 
 MPI_Win PMPI_Win_f2c(MPI_Fint win)
 {

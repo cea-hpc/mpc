@@ -252,7 +252,12 @@ typedef struct
 #define MPC_ERR_INTERN                 17  /* Internal error code    */
 
 #define MPC_ERR_LASTCODE               55
-#define MPC_NOT_IMPLEMENTED            56
+
+#define MPCR_ERRORS_THROW_EXCEPTIONS   56
+
+#define MPC_NOT_IMPLEMENTED            57
+
+
 
 #define MPC_STATUS_IGNORE NULL
 #define MPC_STATUSES_IGNORE NULL
@@ -395,7 +400,13 @@ typedef enum
     MPC_COMBINER_F90_REAL         = 13,
     MPC_COMBINER_F90_COMPLEX      = 14,
     MPC_COMBINER_F90_INTEGER      = 15,
-    MPC_COMBINER_RESIZED          = 16
+    MPC_COMBINER_RESIZED          = 16,
+    /* *_INTEGER COMBINER ARE DEPRECATED
+     * in MPI 3.0 consequently they
+     * are never returned by get_envelope */
+    MPC_COMBINER_HINDEXED_INTEGER = 17,
+    MPC_COMBINER_STRUCT_INTEGER = 18,
+    MPC_COMBINER_HVECTOR_INTEGER = 19
 }MPC_Type_combiner;
 
   /*Initialisation */
