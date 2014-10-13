@@ -1120,7 +1120,7 @@ void sctk_datatype_context_set( struct Datatype_context * ctx , struct Datatype_
 			}
 		
 			cnt = 0;
-			for( i = (2 * ctx->ndims + 3) ; i <= (4 * ctx->ndims + 2) ; i++ )
+			for( i = (3 * ctx->ndims + 3) ; i <= (4 * ctx->ndims + 2) ; i++ )
 			{
 				CHECK_OVERFLOW( i , n_int );
 				ctx->array_of_integers[i] = dctx->array_of_psizes[cnt];

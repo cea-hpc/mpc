@@ -1560,18 +1560,16 @@ int PMPC_Type_get_name( MPC_Datatype datatype, char *name, int * resultlen )
  */
 int PMPC_Type_get_envelope(MPC_Datatype datatype, int *num_integers, int *num_addresses, int *num_datatypes, int *combiner)
 {
+	*num_integers = 0;
+	*num_addresses = 0;
+	*num_datatypes = 0;
+
 	/* Handle the common data-type case */
 	if( sctk_datatype_is_common(datatype) || sctk_datatype_is_boundary( datatype ) )
 	{
-		*num_integers = 0;
-		*num_addresses = 0;
-		*num_datatypes = 0;
-		*combiner = MPC_COMBINER_NAMED;
-		
+		*combiner = MPC_COMBINER_NAMED;	
 		MPC_ERROR_SUCESS();
 	}
-	
-	
 	
 	struct Datatype_context * dctx = sctk_retrieve_datatype_ctx( datatype );
 	

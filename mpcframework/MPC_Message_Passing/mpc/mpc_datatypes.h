@@ -461,7 +461,7 @@ static inline int sctk_datatype_is_boundary (MPC_Datatype data_in)
  {
 	MPC_Datatype_kind ret = MPC_DATATYPES_UNKNOWN;
 	
-	if ( sctk_datatype_is_common( datatype ) )
+	if ( sctk_datatype_is_common( datatype ) || sctk_datatype_is_boundary( datatype ) )
 	{
 		ret = MPC_DATATYPES_COMMON;
 	}

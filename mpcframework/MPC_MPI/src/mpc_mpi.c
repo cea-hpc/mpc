@@ -2841,28 +2841,27 @@ static int __INTERNAL__PMPI_Type_contiguous (int count, MPI_Datatype data_in,  M
 
 		/* Actually create the new datatype */
 		PMPC_Derived_datatype (data_out, begins_out, ends_out, datatypes, count_out, input_datatype.lb,	input_datatype.is_lb, new_ub, input_datatype.is_ub);
-
-		/* Set its context */
-		struct Datatype_External_context dtctx;
-		sctk_datatype_external_context_clear( &dtctx );
-		dtctx.combiner = MPI_COMBINER_CONTIGUOUS;
-		dtctx.count = count;
-		dtctx.oldtype = data_in;
-		MPC_Datatype_set_context( *data_out, &dtctx);
-		
+	
 		/* Free temporary buffers */
 		sctk_free (datatypes);
 		sctk_free (begins_out);
 		sctk_free (ends_out);
-		
-
-		return MPI_SUCCESS;
 	}
 	else
 	{
 		/* Here we handle contiguous or common datatypes which can be replicated directly */
-		return PMPC_Type_hcontiguous(data_out, count, &data_in);
+		PMPC_Type_hcontiguous(data_out, count, &data_in);
 	}
+	
+	/* Set its context */
+	struct Datatype_External_context dtctx;
+	sctk_datatype_external_context_clear( &dtctx );
+	dtctx.combiner = MPI_COMBINER_CONTIGUOUS;
+	dtctx.count = count;
+	dtctx.oldtype = data_in;
+	MPC_Datatype_set_context( *data_out, &dtctx);
+	
+	return MPI_SUCCESS;
 }
 
 /** \brief This function creates a vector datatype
@@ -3923,6 +3922,7 @@ int __INTERNAL__PMPI_Type_create_darray (int size,
 	sctk_datatype_external_context_clear( &dtctx );
 	dtctx.combiner = MPI_COMBINER_DARRAY;
 	dtctx.size = size;
+	dtctx.ndims = ndims;
 	dtctx.rank = rank;
 	dtctx.array_of_gsizes = array_of_gsizes;
 	dtctx.array_of_distribs = array_of_distribs;
