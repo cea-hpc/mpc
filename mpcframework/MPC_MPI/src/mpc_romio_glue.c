@@ -83,3 +83,36 @@ int PMPI_Comm_call_errhandler(
 	
 	
 }
+
+
+/* Default error handling implementation.
+ *
+ * Note that only MPI_ERRORS_ARE_FATAL and MPI_ERRORS_RETURN are
+ * handled correctly; other handlers cause an abort.
+ */
+
+int MPIO_Err_create_code(int lastcode, int fatal, const char fcname[],
+			 int line, int error_class, const char generic_msg[],
+			 const char specific_msg[], ... )
+{
+    va_list Argp;
+    int idx = 0;
+    char *buf;
+
+    buf = (char *) sctk_malloc(1024);
+    if (buf != NULL) {
+	idx += snprintf(buf, 1023, "%s (line %d): ", fcname, line);
+	if (specific_msg == NULL) {
+	    snprintf(&buf[idx], 1023 - idx, "%s\n", generic_msg);
+	}
+	else {
+	    va_start(Argp, specific_msg);
+	    vsnprintf(&buf[idx], 1023 - idx, specific_msg, Argp);
+	    va_end(Argp);
+	}
+	fprintf(stderr, "%s", buf);
+	sctk_free(buf);
+    }
+
+    return error_class;
+}
