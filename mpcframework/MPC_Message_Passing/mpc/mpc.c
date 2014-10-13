@@ -1561,7 +1561,7 @@ int PMPC_Type_get_name( MPC_Datatype datatype, char *name, int * resultlen )
 int PMPC_Type_get_envelope(MPC_Datatype datatype, int *num_integers, int *num_addresses, int *num_datatypes, int *combiner)
 {
 	/* Handle the common data-type case */
-	if( sctk_datatype_is_common(datatype) )
+	if( sctk_datatype_is_common(datatype) || sctk_datatype_is_boundary( datatype ) )
 	{
 		*num_integers = 0;
 		*num_addresses = 0;
@@ -1988,6 +1988,8 @@ int PMPC_Type_use (MPC_Datatype datatype)
 	sctk_contiguous_datatype_t *target_contiguous_type;
 	sctk_derived_datatype_t *target_derived_type;
 
+	if( sctk_datatype_is_boundary( datatype ) )
+		MPC_ERROR_SUCESS ();
 	
 	
 	switch( sctk_datatype_kind( datatype ) )
