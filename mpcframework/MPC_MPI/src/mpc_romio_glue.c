@@ -1,6 +1,8 @@
 #include "mpc_mpi.h"
 #include "sctk_debug.h"
 #include <string.h>
+#include "mpc_datatypes.h"
+#include "mpc_common.h"
 
 int MPIR_Err_create_code_valist(int a, int b, const char c[], int d, int e, 
 				const char f[], const char g[], va_list args )
@@ -33,6 +35,39 @@ void MPIR_Err_get_string( int errcode, char *msg, int maxlen, MPIR_Err_get_class
 		snprintf( msg, maxlen, "%s", buff );
 }
 
+void MPIR_Datatype_iscontig(MPI_Datatype datatype, int *flag)
+{
+	sctk_task_specific_t *task_specific;
+	
+	*flag = 0;
+	
+	switch( sctk_datatype_kind( datatype ) )
+	{
+		case MPC_DATATYPES_CONTIGUOUS:
+			*flag = 1;
+		break;
+		
+		case MPC_DATATYPES_DERIVED:
+			task_specific = __MPC_get_task_specific ();	
+			sctk_derived_datatype_t *target_type = sctk_task_specific_get_derived_datatype(  task_specific, datatype );
+			assume( target_type != NULL );
+			
+			if( target_type->opt_count == 1 )
+				*flag = 1;
+
+		break;
+		
+		case MPC_DATATYPES_COMMON:
+			*flag = 1;
+		break;
+		default:
+			not_reachable();
+	}
+
+}
+
+
+
 
 struct MPID_Comm;
 int MPID_Abort(struct MPID_Comm *comm, int mpi_errno, int exit_code, const char *error_msg)
@@ -48,12 +83,12 @@ int MPIR_Status_set_bytes( MPI_Status status, MPI_Datatype datatype, size_t size
 }
 
 
-int PMPI_File_set_errhandler(  void * file,  MPI_Errhandler errhandler )
+int PMPI_File_set_errhandler( void * file,  MPI_Errhandler errhandler )
 {
 	
 	
 	
-	
+	return MPI_SUCCESS;
 }
 
 
@@ -75,13 +110,10 @@ int MPIR_File_call_cxx_errhandler( void *fh, int *errorcode,
 }
 
 
-int PMPI_Comm_call_errhandler(
-  MPI_Comm comm,
-  int errorcode
-)
+int PMPI_Comm_call_errhandler( MPI_Comm comm, int errorcode )
 {
 	
-	
+	return MPI_SUCCESS;
 }
 
 

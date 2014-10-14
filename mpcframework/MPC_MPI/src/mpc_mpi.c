@@ -11485,7 +11485,6 @@ int PMPI_Pack_size (int incount, MPI_Datatype datatype, MPI_Comm comm, int *size
 int PMPI_Pack_external_size (char *datarep , int incount, MPI_Datatype datatype, MPI_Aint *size)
 {
 	int res = MPI_ERR_INTERN;
-	
 	res = __INTERNAL__PMPI_Pack_external_size(datarep, incount, datatype, size );
 	
 	SCTK_MPI_CHECK_RETURN_VAL (res, MPI_COMM_SELF);
