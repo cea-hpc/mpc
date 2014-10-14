@@ -7387,31 +7387,27 @@ __INTERNAL__PMPI_Intercomm_merge (MPI_Comm intercomm, int high,
 	return __INTERNAL__PMPI_Comm_create_from_intercomm (intercomm, new_group, newintracomm);
 }
 
-/*
-  Attributes
-*/
+/************************************************************************/
+/* Attribute Handling                                                   */
+/************************************************************************/
 
 static int MPI_TAG_UB_VALUE = 512*1024*1024;
 static char *MPI_HOST_VALUE[4096];
 static int MPI_IO_VALUE = 0;
 static int MPI_WTIME_IS_GLOBAL_VALUE = 0;
 
-typedef int (MPI_Copy_function_fortran) (MPI_Comm *, int *, int *, int *,
-					 int *, int *, int *);
-typedef int (MPI_Delete_function_fortran) (MPI_Comm *, int *, int *, int *,
-					   int *);
+typedef int (MPI_Copy_function_fortran) (MPI_Comm *, int *, int *, int *, int *, int *, int *);
+typedef int (MPI_Delete_function_fortran) (MPI_Comm *, int *, int *, int *, int *);
 
-static void *defines_attr_tab[MPI_MAX_KEY_DEFINED] = {
-  (void *) &MPI_TAG_UB_VALUE /*MPI_TAG_UB */ ,
-  &MPI_HOST_VALUE,
-  &MPI_IO_VALUE,
-  &MPI_WTIME_IS_GLOBAL_VALUE
+static void *defines_attr_tab[MPI_MAX_KEY_DEFINED] = 
+{
+	(void *) &MPI_TAG_UB_VALUE /*MPI_TAG_UB */ ,
+	&MPI_HOST_VALUE,
+	&MPI_IO_VALUE,
+	&MPI_WTIME_IS_GLOBAL_VALUE
 };
 
-static int
-__INTERNAL__PMPI_Keyval_create (MPI_Copy_function * copy_fn,
-				MPI_Delete_function * delete_fn,
-				int *keyval, void *extra_state)
+static int __INTERNAL__PMPI_Keyval_create (MPI_Copy_function * copy_fn, MPI_Delete_function * delete_fn, int *keyval, void *extra_state)
 {
 	int i;
 	mpc_mpi_data_t* tmp;
@@ -7420,14 +7416,14 @@ __INTERNAL__PMPI_Keyval_create (MPI_Copy_function * copy_fn,
 	sctk_nodebug("number = %d, max_number = %d", tmp->number, tmp->max_number);
 	sctk_spinlock_lock(&(tmp->lock));
 	if (tmp->number >= tmp->max_number)
-    {
+	{
 		tmp->max_number += 100;
 		tmp->attrs_fn = sctk_realloc ((void *) (tmp->attrs_fn), tmp->max_number * sizeof (MPI_Caching_key_t));
 		for (i = tmp->number; i < tmp->max_number; i++)
 		{
 			tmp->attrs_fn[i].used = 0;
 		}
-    }
+	}
 
 	*keyval = tmp->number;
 	tmp->number++;
@@ -7443,47 +7439,47 @@ __INTERNAL__PMPI_Keyval_create (MPI_Copy_function * copy_fn,
 	return MPI_SUCCESS;
 }
 
-static int
-__INTERNAL__PMPI_Keyval_free (int *keyval)
+static int __INTERNAL__PMPI_Keyval_free (int *keyval)
 {
-  TODO("Optimize to free memory")
-  *keyval = MPI_KEYVAL_INVALID;
-  return MPI_SUCCESS;
+	TODO("Optimize to free memory")
+	*keyval = MPI_KEYVAL_INVALID;
+	return MPI_SUCCESS;
 }
 
-static int
-__INTERNAL__PMPI_Attr_set_fortran (int keyval)
+static int __INTERNAL__PMPI_Attr_set_fortran (int keyval)
 {
-  int res = MPI_SUCCESS;
-  MPI_Comm comm = MPI_COMM_WORLD;
-  mpc_mpi_data_t* tmp;
+	int res = MPI_SUCCESS;
+	MPI_Comm comm = MPI_COMM_WORLD;
+	mpc_mpi_data_t* tmp;
 
-  tmp = mpc_mpc_get_per_task_data();
+	tmp = mpc_mpc_get_per_task_data();
 
-  if ((keyval >= 0) && (keyval < MPI_MAX_KEY_DEFINED))
-    {
-      MPI_ERROR_REPORT (comm, MPI_ERR_INTERN, "");
-    }
-  keyval -= MPI_MAX_KEY_DEFINED;
+	if ((keyval >= 0) && (keyval < MPI_MAX_KEY_DEFINED))
+	{
+		MPI_ERROR_REPORT (comm, MPI_ERR_INTERN, "");
+	}
 
-  if (keyval < 0)
-    {
-      MPI_ERROR_REPORT (comm, MPI_ERR_INTERN, "");
-    }
-  sctk_spinlock_lock(&(tmp->lock));
-  if (tmp->attrs_fn[keyval].used == 0)
-    {
-	  sctk_spinlock_unlock(&(tmp->lock));
-      MPI_ERROR_REPORT (comm, MPI_ERR_INTERN, "");
-    }
+	keyval -= MPI_MAX_KEY_DEFINED;
 
-  tmp->attrs_fn[keyval].fortran_key = 1;
-  sctk_spinlock_unlock(&(tmp->lock));
-  return res;
+	if (keyval < 0)
+	{
+		MPI_ERROR_REPORT (comm, MPI_ERR_INTERN, "");
+	}
+
+	sctk_spinlock_lock(&(tmp->lock));
+	
+	if (tmp->attrs_fn[keyval].used == 0)
+	{
+		sctk_spinlock_unlock(&(tmp->lock));
+		MPI_ERROR_REPORT (comm, MPI_ERR_INTERN, "");
+	}
+
+	tmp->attrs_fn[keyval].fortran_key = 1;
+	sctk_spinlock_unlock(&(tmp->lock));
+	return res;
 }
 
-static int
-__INTERNAL__PMPI_Attr_put (MPI_Comm comm, int keyval, void *attr_value)
+static int __INTERNAL__PMPI_Attr_put (MPI_Comm comm, int keyval, void *attr_value)
 {
 	int res = MPI_SUCCESS;
 	mpc_mpi_data_t* tmp;
@@ -7494,36 +7490,21 @@ __INTERNAL__PMPI_Attr_put (MPI_Comm comm, int keyval, void *attr_value)
 	keyval -= MPI_MAX_KEY_DEFINED;
 
 	if (keyval < 0)
-    {
+	{
 		sctk_nodebug("wrong keyval");
 		MPI_ERROR_REPORT (comm, MPI_ERR_KEYVAL, "");
-    }
+	}
 
 	sctk_spinlock_lock(&(tmp->lock));
 	if (tmp->attrs_fn[keyval].used == 0)
-    {
+	{
 		sctk_nodebug("not used");
 		sctk_spinlock_unlock(&(tmp->lock));
 		MPI_ERROR_REPORT (comm, MPI_ERR_KEYVAL, "");
-    }
+	}
 
 	tmp_per_comm = mpc_mpc_get_per_comm_data(comm);
 	sctk_spinlock_lock(&(tmp_per_comm->lock));
-
-	if((tmp_per_comm->key_vals != NULL) && (tmp_per_comm->key_vals[keyval].flag == 1))
-	{
-		sctk_spinlock_unlock(&(tmp_per_comm->lock));
-		sctk_spinlock_unlock(&(tmp->lock));
-		res = __INTERNAL__PMPI_Attr_delete (comm, keyval + MPI_MAX_KEY_DEFINED);
-		sctk_spinlock_lock(&(tmp->lock));
-		sctk_spinlock_lock(&(tmp_per_comm->lock));
-		if(res != MPI_SUCCESS)
-		{
-			sctk_spinlock_unlock(&(tmp_per_comm->lock));
-			sctk_spinlock_unlock(&(tmp->lock));
-			return res;
-		}
-    }
 
 	if(tmp_per_comm->max_number <= keyval)
 	{
@@ -7540,9 +7521,36 @@ __INTERNAL__PMPI_Attr_put (MPI_Comm comm, int keyval, void *attr_value)
 
 		tmp_per_comm->max_number = keyval+1;
 	}
+	
+	if((tmp_per_comm->key_vals != NULL) && (tmp_per_comm->key_vals[keyval].flag == 1))
+	{
+		sctk_spinlock_unlock(&(tmp_per_comm->lock));
+		sctk_spinlock_unlock(&(tmp->lock));
+		res = __INTERNAL__PMPI_Attr_delete (comm, keyval + MPI_MAX_KEY_DEFINED);
+		sctk_spinlock_lock(&(tmp->lock));
+		sctk_spinlock_lock(&(tmp_per_comm->lock));
+		if(res != MPI_SUCCESS)
+		{
+			sctk_spinlock_unlock(&(tmp_per_comm->lock));
+			sctk_spinlock_unlock(&(tmp->lock));
+			return res;
+		}
+	}
 
-    sctk_nodebug("put %d for keyval %d", *((int *)attr_value), keyval);
-    tmp_per_comm->key_vals[keyval].attr = (void *) attr_value;
+	if (tmp->attrs_fn[keyval].fortran_key == 0)
+	{
+		sctk_nodebug("put %d for keyval %d", *((int *)attr_value), keyval);
+		tmp_per_comm->key_vals[keyval].attr = (void *) attr_value;
+	}
+	else
+	{
+		int val;
+		long long_val;
+		val = (*((int *) attr_value));
+		long_val = (long) val;
+		tmp_per_comm->key_vals[keyval].attr = (void *) long_val;
+	}
+
 	tmp_per_comm->key_vals[keyval].flag = 1;
 
 	sctk_spinlock_unlock(&(tmp_per_comm->lock));
@@ -7550,9 +7558,7 @@ __INTERNAL__PMPI_Attr_put (MPI_Comm comm, int keyval, void *attr_value)
 	return res;
 }
 
-static int
-__INTERNAL__PMPI_Attr_get (MPI_Comm comm, int keyval, void *attr_value,
-			   int *flag)
+static int __INTERNAL__PMPI_Attr_get (MPI_Comm comm, int keyval, void *attr_value,   int *flag)
 {
 	int res = MPI_SUCCESS;
 	mpc_mpi_data_t* tmp;
@@ -7564,19 +7570,19 @@ __INTERNAL__PMPI_Attr_get (MPI_Comm comm, int keyval, void *attr_value,
 	attr = (void **) attr_value;
 
 	if ((keyval >= 0) && (keyval < MPI_MAX_KEY_DEFINED))
-    {
+	{
 		*flag = 1;
 		*attr = defines_attr_tab[keyval];
 		return MPI_SUCCESS;
-    }
+	}
 
 	keyval -= MPI_MAX_KEY_DEFINED;
 
 	/* wrong keyval */
 	if (keyval < 0)
-    {
+	{
 		MPI_ERROR_REPORT (comm, MPI_ERR_KEYVAL, "");
-    }
+	}
 
 	/* get TLS var for checking if keyval exist */
 	tmp = mpc_mpc_get_per_task_data();
@@ -7584,11 +7590,11 @@ __INTERNAL__PMPI_Attr_get (MPI_Comm comm, int keyval, void *attr_value,
 
 	/* it doesn-t exist */
 	if (tmp->attrs_fn[keyval].used == 0)
-    {
+		{
 		*flag = 0;
 		sctk_spinlock_unlock(&(tmp->lock));
 		MPI_ERROR_REPORT (comm, MPI_ERR_INTERN, "");
-    }
+	}
 
 	/* get TLS var to check attributes for keyval */
 	tmp_per_comm = mpc_mpc_get_per_comm_data(comm);
@@ -7621,39 +7627,37 @@ __INTERNAL__PMPI_Attr_get (MPI_Comm comm, int keyval, void *attr_value,
 	return res;
 }
 
-static int
-__INTERNAL__PMPI_Attr_delete (MPI_Comm comm, int keyval)
+static int __INTERNAL__PMPI_Attr_delete (MPI_Comm comm, int keyval)
 {
-  int res = MPI_SUCCESS;
-  mpc_mpi_data_t* tmp;
-  mpc_mpi_per_communicator_t* tmp_per_comm;
-  if ((keyval >= 0) && (keyval < MPI_MAX_KEY_DEFINED))
-    {
-      return MPI_ERR_KEYVAL;
-    }
-  keyval -= MPI_MAX_KEY_DEFINED;
-
-  tmp = mpc_mpc_get_per_task_data();
-  sctk_spinlock_lock(&(tmp->lock));
-
-  if ((tmp == NULL) || (keyval < 0))
-    {
-      sctk_spinlock_unlock(&(tmp->lock));
-      return MPI_ERR_ARG;
-    }
-  if ((tmp->attrs_fn[keyval].used == 0) )
-    {
-      sctk_spinlock_unlock(&(tmp->lock));
-      return MPI_ERR_ARG;
-    }
-
-  tmp_per_comm = mpc_mpc_get_per_comm_data(comm);
-  sctk_spinlock_lock(&(tmp_per_comm->lock));
-
-  if (tmp_per_comm->key_vals[keyval].flag == 1)
-    {
-      if (tmp->attrs_fn[keyval].delete_fn != NULL)
+	int res = MPI_SUCCESS;
+	mpc_mpi_data_t* tmp;
+	mpc_mpi_per_communicator_t* tmp_per_comm;
+	if ((keyval >= 0) && (keyval < MPI_MAX_KEY_DEFINED))
 	{
+	return MPI_ERR_KEYVAL;
+	}
+	keyval -= MPI_MAX_KEY_DEFINED;
+
+	tmp = mpc_mpc_get_per_task_data();
+	sctk_spinlock_lock(&(tmp->lock));
+
+	if ((tmp == NULL) || (keyval < 0))
+	{
+	sctk_spinlock_unlock(&(tmp->lock));
+	return MPI_ERR_ARG;
+	}
+	if ((tmp->attrs_fn[keyval].used == 0) )
+	{
+	sctk_spinlock_unlock(&(tmp->lock));
+	return MPI_ERR_ARG;
+	}
+
+	tmp_per_comm = mpc_mpc_get_per_comm_data(comm);
+	sctk_spinlock_lock(&(tmp_per_comm->lock));
+
+	if (tmp_per_comm->key_vals[keyval].flag == 1)
+	{
+<<<<<<< HEAD
 	  if (tmp->attrs_fn[keyval].fortran_key == 0)
 	    {
 	      res =
@@ -7672,59 +7676,82 @@ __INTERNAL__PMPI_Attr_delete (MPI_Comm comm, int keyval)
 	      ((MPI_Delete_function_fortran *) tmp->attrs_fn[keyval].
            delete_fn) (&comm, &fort_key, (int*)tmp_per_comm->key_vals[keyval].attr, ext, &res);
 	    }
+=======
+		if (tmp->attrs_fn[keyval].delete_fn != NULL)
+		{
+			if (tmp->attrs_fn[keyval].fortran_key == 0)
+			{
+				res = tmp->attrs_fn[keyval].delete_fn (comm, keyval + MPI_MAX_KEY_DEFINED, 
+								       tmp_per_comm->key_vals[keyval].attr,
+								       tmp->attrs_fn[keyval].extra_state );
+			}
+			else
+			{
+				int fort_key;
+				int val;
+				long long_val;
+				int *ext;
+				long_val = (long) (tmp_per_comm->key_vals[keyval].attr);
+				val = (int) long_val;
+				fort_key = keyval + MPI_MAX_KEY_DEFINED;
+				ext = (int *) (tmp->attrs_fn[keyval].extra_state);
+
+				((MPI_Delete_function_fortran *) tmp->attrs_fn[keyval].delete_fn) (&comm, &fort_key, &val, ext, &res);
+			}
+		}
+>>>>>>> MPC : Fix overflows as spotted by efence
 	}
-    }
 
 	if(res == MPI_SUCCESS)
 	{
 		tmp_per_comm->key_vals[keyval].attr = NULL;
 		tmp_per_comm->key_vals[keyval].flag = 0;
 	}
-  sctk_spinlock_unlock(&(tmp_per_comm->lock));
-  sctk_spinlock_unlock(&(tmp->lock));
-  return res;
+
+	sctk_spinlock_unlock(&(tmp_per_comm->lock));
+	sctk_spinlock_unlock(&(tmp->lock));
+	return res;
 }
 
-static int
-SCTK__MPI_Attr_clean_communicator (MPI_Comm comm)
+static int SCTK__MPI_Attr_clean_communicator (MPI_Comm comm)
 {
-  int res = MPI_SUCCESS;
-  int i;
-  mpc_mpi_data_t* tmp;
-  mpc_mpi_per_communicator_t* tmp_per_comm;
+	int res = MPI_SUCCESS;
+	int i;
+	mpc_mpi_data_t* tmp;
+	mpc_mpi_per_communicator_t* tmp_per_comm;
 
 
-  tmp = mpc_mpc_get_per_task_data();
-  sctk_spinlock_lock(&(tmp->lock));
-  tmp_per_comm = mpc_mpc_get_per_comm_data(comm);
-  sctk_spinlock_lock(&(tmp_per_comm->lock));
+	tmp = mpc_mpc_get_per_task_data();
+	sctk_spinlock_lock(&(tmp->lock));
+	tmp_per_comm = mpc_mpc_get_per_comm_data(comm);
+	sctk_spinlock_lock(&(tmp_per_comm->lock));
 
-  for (i = 0; i < tmp_per_comm->max_number; i++)
-    {
-      if (tmp_per_comm->key_vals[i].flag == 1)
+	for (i = 0; i < tmp_per_comm->max_number; i++)
 	{
-	  sctk_spinlock_unlock(&(tmp_per_comm->lock));
-	  sctk_spinlock_unlock(&(tmp->lock));
-	  res = __INTERNAL__PMPI_Attr_delete (comm, i + MPI_MAX_KEY_DEFINED);
-	  sctk_spinlock_lock(&(tmp->lock));
-	  sctk_spinlock_lock(&(tmp_per_comm->lock));
+		if (tmp_per_comm->key_vals[i].flag == 1)
+		{
+			sctk_spinlock_unlock(&(tmp_per_comm->lock));
+			sctk_spinlock_unlock(&(tmp->lock));
+			res = __INTERNAL__PMPI_Attr_delete (comm, i + MPI_MAX_KEY_DEFINED);
+			sctk_spinlock_lock(&(tmp->lock));
+			sctk_spinlock_lock(&(tmp_per_comm->lock));
 
-	  if (res != MPI_SUCCESS)
-	    {
-	      sctk_spinlock_unlock(&(tmp_per_comm->lock));
-	      sctk_spinlock_unlock(&(tmp->lock));
-	      return res;
-	    }
+			if (res != MPI_SUCCESS)
+			{
+				sctk_spinlock_unlock(&(tmp_per_comm->lock));
+				sctk_spinlock_unlock(&(tmp->lock));
+				return res;
+			}
 
+		}
 	}
-    }
-  sctk_spinlock_unlock(&(tmp_per_comm->lock));
-  sctk_spinlock_unlock(&(tmp->lock));
-  return res;
+	
+	sctk_spinlock_unlock(&(tmp_per_comm->lock));
+	sctk_spinlock_unlock(&(tmp->lock));
+	return res;
 }
 
-static int
-SCTK__MPI_Attr_communicator_dup (MPI_Comm old, MPI_Comm new)
+static int SCTK__MPI_Attr_communicator_dup (MPI_Comm prev , MPI_Comm newcomm)
 {
   int res = MPI_SUCCESS;
   mpc_mpi_data_t* tmp;
@@ -7734,10 +7761,10 @@ SCTK__MPI_Attr_communicator_dup (MPI_Comm old, MPI_Comm new)
 
   tmp = mpc_mpc_get_per_task_data();
   sctk_spinlock_lock(&(tmp->lock));
-  tmp_per_comm_old = mpc_mpc_get_per_comm_data(old);
+  tmp_per_comm_old = mpc_mpc_get_per_comm_data(prev);
   sctk_spinlock_lock(&(tmp_per_comm_old->lock));
 
-  tmp_per_comm_new = mpc_mpc_get_per_comm_data(new);
+  tmp_per_comm_new = mpc_mpc_get_per_comm_data(newcomm);
   tmp_per_comm_new->key_vals = sctk_malloc(tmp_per_comm_old->max_number*sizeof(MPI_Caching_key_value_t));
   tmp_per_comm_new->max_number = tmp_per_comm_old->max_number;
 
@@ -7761,16 +7788,32 @@ SCTK__MPI_Attr_communicator_dup (MPI_Comm old, MPI_Comm new)
 	      if (tmp->attrs_fn[i].fortran_key == 0)
 		{
 		  res =
-		    cpy (old, i + MPI_MAX_KEY_DEFINED,
+		    cpy (prev, i + MPI_MAX_KEY_DEFINED,
 			 tmp->attrs_fn[i].extra_state,
 			 tmp_per_comm_old->key_vals[i].attr, (void *) (&arg), &flag);
 		}
 	      else
 		{
+<<<<<<< HEAD
           int fort_key = i + MPI_MAX_KEY_DEFINED;
           int *ext = (int *) (tmp->attrs_fn[i].extra_state);
           int val = tmp_per_comm_old->key_vals[i].attr;
           ((MPI_Copy_function_fortran *) cpy) (&old, &fort_key, ext, &val, &arg, &flag, &res);
+=======
+		  int fort_key;
+		  int val;
+		  int *ext;
+		  int val_out;
+		  long long_val;
+		  long_val = (long) (tmp_per_comm_old->key_vals[i].attr);
+		  val = (int) long_val;
+		  fort_key = i + MPI_MAX_KEY_DEFINED;
+		  ext = (int *) (tmp->attrs_fn[i].extra_state);
+		  sctk_nodebug ("%d val", val);
+		  ((MPI_Copy_function_fortran *) cpy) (&prev, &fort_key, ext, &val, &val_out, &flag, &res);
+		  sctk_nodebug ("%d val_out", val_out);
+		  arg = &val_out;
+>>>>>>> MPC : Fix overflows as spotted by efence
 		}
 	      sctk_nodebug ("i = %d Copy %d %ld->%ld flag %d", i, i + MPI_MAX_KEY_DEFINED,
 			    (unsigned long) tmp_per_comm_old->key_vals[i].attr,
@@ -7780,7 +7823,7 @@ SCTK__MPI_Attr_communicator_dup (MPI_Comm old, MPI_Comm new)
 			sctk_spinlock_unlock(&(tmp_per_comm_old->lock));
 			sctk_spinlock_unlock(&(tmp->lock));
 			sctk_nodebug("arg = %d", *(((int *)arg)));
-			__INTERNAL__PMPI_Attr_put (new, i + MPI_MAX_KEY_DEFINED, arg);
+			__INTERNAL__PMPI_Attr_put (newcomm, i + MPI_MAX_KEY_DEFINED, arg);
 			sctk_spinlock_lock(&(tmp->lock));
 			sctk_spinlock_lock(&(tmp_per_comm_old->lock));
 		}
@@ -7805,101 +7848,81 @@ static void __sctk_init_mpi_topo_per_comm (mpc_mpi_per_communicator_t* tmp){
   sprintf (tmp->topo.names, "undefined");
 }
 
-static void
-__sctk_init_mpi_topo ()
+static void __sctk_init_mpi_topo ()
 {
 }
 
-static int
-SCTK__MPI_Comm_communicator_dup (MPI_Comm comm, MPI_Comm newcomm)
+static int SCTK__MPI_Comm_communicator_dup (MPI_Comm comm, MPI_Comm newcomm)
 {
-  mpc_mpi_per_communicator_t* tmp;
-  mpi_topology_per_comm_t* topo_old;
-  mpi_topology_per_comm_t* topo_new;
+	mpc_mpi_per_communicator_t* tmp;
+	mpi_topology_per_comm_t* topo_old;
+	mpi_topology_per_comm_t* topo_new;
 
-  tmp = mpc_mpc_get_per_comm_data(comm);
-  topo_old = &(tmp->topo);
-  tmp = mpc_mpc_get_per_comm_data(newcomm);
-  topo_new = &(tmp->topo);
+	tmp = mpc_mpc_get_per_comm_data(comm);
+	topo_old = &(tmp->topo);
+	tmp = mpc_mpc_get_per_comm_data(newcomm);
+	topo_new = &(tmp->topo);
 
-  sctk_spinlock_lock (&(topo_old->lock));
+	sctk_spinlock_lock (&(topo_old->lock));
 
-  if (topo_old->type == MPI_CART)
-    {
-      topo_new->type = MPI_CART;
-      topo_new->data.cart.ndims =
-	topo_old->data.cart.ndims;
-      topo_new->data.cart.reorder =
-	topo_old->data.cart.reorder;
-      topo_new->data.cart.dims =
-	sctk_malloc (topo_old->data.cart.ndims * sizeof (int));
-      memcpy (topo_new->data.cart.dims,
-	      topo_old->data.cart.dims,
-	      topo_old->data.cart.ndims * sizeof (int));
-      topo_new->data.cart.periods =
-	sctk_malloc (topo_old->data.cart.ndims * sizeof (int));
-      memcpy (topo_new->data.cart.periods,
-	      topo_old->data.cart.periods,
-	      topo_old->data.cart.ndims * sizeof (int));
-    }
+	if (topo_old->type == MPI_CART)
+	{
+		topo_new->type = MPI_CART;
+		topo_new->data.cart.ndims = topo_old->data.cart.ndims;
+		topo_new->data.cart.reorder = topo_old->data.cart.reorder;
+		topo_new->data.cart.dims = sctk_malloc (topo_old->data.cart.ndims * sizeof (int));
+		memcpy (topo_new->data.cart.dims, topo_old->data.cart.dims, topo_old->data.cart.ndims * sizeof (int));
+		topo_new->data.cart.periods = sctk_malloc (topo_old->data.cart.ndims * sizeof (int));
+		memcpy (topo_new->data.cart.periods, topo_old->data.cart.periods, topo_old->data.cart.ndims * sizeof (int));
+	}
 
-  if (topo_old->type == MPI_GRAPH)
-    {
-      topo_new->type = MPI_GRAPH;
+	if (topo_old->type == MPI_GRAPH)
+	{
+		topo_new->type = MPI_GRAPH;
 
-      topo_new->data.graph.nnodes =
-	topo_old->data.graph.nnodes;
-      topo_new->data.graph.reorder =
-	topo_old->data.graph.reorder;
-      topo_new->data.graph.index =
-	sctk_malloc (topo_old->data.graph.nnodes * sizeof (int));
-      memcpy (topo_new->data.graph.index,
-	      topo_old->data.graph.index,
-	      topo_old->data.graph.nnodes * sizeof (int));
-      topo_new->data.graph.edges =
-	sctk_malloc (topo_old->data.graph.nnodes * sizeof (int));
-      memcpy (topo_new->data.graph.edges,
-	      topo_old->data.graph.edges,
-	      topo_old->data.graph.nnodes * sizeof (int));
+		topo_new->data.graph.nnodes = topo_old->data.graph.nnodes;
+		topo_new->data.graph.reorder = topo_old->data.graph.reorder;
+		topo_new->data.graph.index = sctk_malloc (topo_old->data.graph.nnodes * sizeof (int));
+		memcpy (topo_new->data.graph.index, topo_old->data.graph.index, topo_old->data.graph.nnodes * sizeof (int));
+		topo_new->data.graph.edges = sctk_malloc (topo_old->data.graph.nnodes * sizeof (int));
+		memcpy (topo_new->data.graph.edges, topo_old->data.graph.edges, topo_old->data.graph.nnodes * sizeof (int));
 
-      topo_new->data.graph.nedges =
-	topo_old->data.graph.nedges;
-      topo_new->data.graph.nindex =
-	topo_old->data.graph.nindex;
-    }
+		topo_new->data.graph.nedges = topo_old->data.graph.nedges;
+		topo_new->data.graph.nindex = topo_old->data.graph.nindex;
+	}
 
-  sctk_spinlock_unlock (&(topo_old->lock));
+	sctk_spinlock_unlock (&(topo_old->lock));
 
-  return MPI_SUCCESS;
+	return MPI_SUCCESS;
 }
 
-static int
-SCTK__MPI_Comm_communicator_free (MPI_Comm comm)
+static int SCTK__MPI_Comm_communicator_free (MPI_Comm comm)
 {
-  mpc_mpi_per_communicator_t* tmp;
-  mpi_topology_per_comm_t* topo;
+	mpc_mpi_per_communicator_t* tmp;
+	mpi_topology_per_comm_t* topo;
 
-  tmp = mpc_mpc_get_per_comm_data(comm);
-  topo = &(tmp->topo);
+	tmp = mpc_mpc_get_per_comm_data(comm);
+	topo = &(tmp->topo);
 
-  sctk_spinlock_lock (&(topo->lock));
+	sctk_spinlock_lock (&(topo->lock));
 
-  if (topo->type == MPI_CART)
-    {
-      sctk_free (topo->data.cart.dims);
-      sctk_free (topo->data.cart.periods);
-    }
-  if (topo->type == MPI_GRAPH)
-    {
-      sctk_free (topo->data.graph.index);
-      sctk_free (topo->data.graph.edges);
-    }
+	if (topo->type == MPI_CART)
+	{
+		sctk_free (topo->data.cart.dims);
+		sctk_free (topo->data.cart.periods);
+	}
+	
+	if (topo->type == MPI_GRAPH)
+	{
+		sctk_free (topo->data.graph.index);
+		sctk_free (topo->data.graph.edges);
+	}
 
-  sctk_spinlock_unlock (&(topo->lock));
+	sctk_spinlock_unlock (&(topo->lock));
 
-  sctk_free(tmp->key_vals);
-  sctk_free(tmp);
-  return MPI_SUCCESS;
+	sctk_free(tmp->key_vals);
+	sctk_free(tmp);
+	return MPI_SUCCESS;
 }
 
 static int

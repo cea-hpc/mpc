@@ -54,7 +54,7 @@ extern "C"
   
   
 #define SCTK_COMMON_DATA_TYPE_COUNT 70
-#define SCTK_USER_DATA_TYPES_MAX 250
+#define SCTK_USER_DATA_TYPES_MAX 500
 #define SCTK_DERIVED_DATATYPE_BASE (SCTK_COMMON_DATA_TYPE_COUNT + SCTK_USER_DATA_TYPES_MAX)
   
 /** \brief Macro to obtain the total number of datatypes */
@@ -339,6 +339,7 @@ typedef int MPC_Info;
 #define MPC_AINT 49
 #define MPC_OFFSET 50
 #define MPC_COUNT 51
+#define MPC_LONG_LONG_INT 52
 
 /* BE VERY CAREFUL HERE /!\/!\/!\/!\/!\/!\/!\/!\
  *  You have to note that these types
@@ -366,14 +367,13 @@ typedef int MPC_Info;
 #define MPC_COMPLEX16  (SCTK_DERIVED_DATATYPE_BASE + 11)
 #define MPC_COMPLEX32  (SCTK_DERIVED_DATATYPE_BASE + 12)
 #define MPC_DOUBLE_COMPLEX  (SCTK_DERIVED_DATATYPE_BASE + 13)
-#define MPC_LONG_LONG_INT   (SCTK_DERIVED_DATATYPE_BASE + 14)
 /* /!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\
  * If you change anything in this section update MPC_STRUCT_DATATYPE_COUNT
  * otherwise the first derived datatype created
  * will overwrite your last datatype
  * /!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\
  */
-#define MPC_STRUCT_DATATYPE_COUNT 15
+#define MPC_STRUCT_DATATYPE_COUNT 14
 
 /* Datatype decoders */
 

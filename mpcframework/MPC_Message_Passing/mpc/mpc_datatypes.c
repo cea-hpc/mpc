@@ -104,7 +104,7 @@ void __init_a_composed_common_types(MPC_Datatype target_type, MPC_Aint disp, MPC
 	types[1] = type_b;
 
 	int * blocklengths = sctk_malloc( 2 * sizeof( int ) );
-	int * displacements = sctk_malloc( 2 * sizeof( int ) );
+	int * displacements = sctk_malloc( 2 * sizeof( void * ) );
 	
 	assume( blocklengths != NULL );
 	assume( displacements != NULL );
@@ -241,15 +241,6 @@ void init_composed_common_types()
 	sctk_common_datatype_set_name_helper( MPC_COMPLEX32, "MPI_COMPLEX32" );
 	tmp = MPC_COMPLEX32;
 	PMPC_Type_commit( &tmp );
-
-	/* MPC_LONG_LONG_INT   (SCTK_DERIVED_DATATYPE_BASE + 14 */
-	mpc_long_long_int foo_10;
-	disp = ((char *)&foo_10.b - (char *)&foo_10.a);
-	__init_a_composed_common_types( MPC_LONG_LONG_INT, disp, MPC_LONG_LONG, MPC_INT  , sizeof(mpc_long_long_int));
-	sctk_common_datatype_set_name_helper( MPC_LONG_LONG_INT, "MPI_LONG_LONG_INT" );
-	tmp = MPC_LONG_LONG_INT;
-	PMPC_Type_commit( &tmp );
-	
 }
 
 
@@ -283,8 +274,6 @@ void release_composed_common_types()
 	tmp = MPC_UNSIGNED_LONG_LONG_INT;
 	PMPC_Type_free( &tmp );
 	tmp = MPC_COMPLEX32;
-	PMPC_Type_free( &tmp );
-	tmp = MPC_LONG_LONG_INT;
 	PMPC_Type_free( &tmp );
 }
 
@@ -332,6 +321,7 @@ void sctk_common_datatype_init()
 	sctk_warning("Temporary datatype while not adding MPIIO");
 	SCTK_INIT_TYPE_SIZE (MPC_OFFSET, MPC_Aint );
 	SCTK_INIT_TYPE_SIZE (MPC_COUNT, MPC_Count );
+	SCTK_INIT_TYPE_SIZE (MPC_LONG_LONG_INT, long long int );
 
 	__sctk_common_type_sizes[MPC_PACKED] = 0;
 }
@@ -780,8 +770,8 @@ int sctk_datype_set_name( MPC_Datatype datatype, char * name )
 	if( cell )
 	{
 		/* If present free it */
+		HASH_DEL(datatype_names, cell);
 		sctk_free( cell );
-		HASH_DEL(datatype_names, cell); 
 	}
 
 	/* Create a new cell */
@@ -928,6 +918,7 @@ void sctk_datatype_context_set( struct Datatype_context * ctx , struct Datatype_
 		case MPC_COMBINER_CONTIGUOUS:
 			ctx->array_of_integers[0] = ctx->count;
 			ctx->array_of_types[0] = dctx->oldtype;
+			break;
 		case MPC_COMBINER_VECTOR:
 			ctx->array_of_integers[0] = ctx->count;
 			ctx->array_of_integers[1] = dctx->blocklength;

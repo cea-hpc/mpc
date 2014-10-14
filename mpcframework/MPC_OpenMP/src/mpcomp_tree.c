@@ -487,7 +487,7 @@ int __mpcomp_build_tree( mpcomp_instance_t * instance, int n_leaves, int depth, 
 	  sctk_debug( "__mpcomp_build_tree: number of cpus: %d", nb_cpus ) ;
 
 	  /* Grab the right order to allocate microVPs (sctk_get_neighborhood) */
-	  order = sctk_malloc( nb_cpus * sizeof( int ) );
+	  order = sctk_malloc( (nb_cpus + 1) * sizeof( int ) );
 	  sctk_assert( order != NULL );
 
 	  sctk_get_neighborhood_topology(instance->topology, current_mpc_vp, nb_cpus, order );
