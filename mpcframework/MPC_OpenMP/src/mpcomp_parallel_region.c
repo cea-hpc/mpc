@@ -753,7 +753,7 @@ __mpcomp_start_sections_parallel_region (int arg_num_threads,
 		  mpcomp_thread_t * target_t ;
 
 		  sctk_debug( "__mpcomp_start_sections_parallel_region:"
-				  " #mVPs for target instance = %d\n", instance->nb_mvps ) ;
+				  " #mVPs for target instance = %d", instance->nb_mvps ) ;
 
 		  target_t = &(instance->mvps[0]->threads[0]);
 		  sctk_assert( target_t != NULL ) ;
