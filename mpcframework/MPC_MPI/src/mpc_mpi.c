@@ -9409,7 +9409,10 @@ int PMPI_Recv (void *buf, int count, MPI_Datatype datatype, int source, int tag,
 		empty_status.MPC_ERROR = MPI_SUCCESS;
 		empty_status.cancelled = 0;
 		empty_status.size = 0;
-		*status = empty_status;
+             
+		if(status != MPI_STATUS_IGNORE)
+			*status = empty_status;
+
 		SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 	}
 	SCTK__MPI_INIT_STATUS (status);
