@@ -953,8 +953,6 @@ MPI_Fint PMPI_Type_c2f(MPI_Datatype datatype);
 MPI_Group PMPI_Group_f2c(MPI_Fint group);
 MPI_Fint PMPI_Group_c2f(MPI_Group group);
 MPI_Request PMPI_Request_f2c(MPI_Fint request);
-MPI_File PMPI_File_f2c(MPI_Fint file);
-MPI_Fint PMPI_File_c2f(MPI_File file);
 MPI_Fint PMPI_Request_c2f(MPI_Request request);
 MPI_Win PMPI_Win_f2c(MPI_Fint win);
 MPI_Fint PMPI_Win_c2f(MPI_Win win);

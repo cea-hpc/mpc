@@ -466,8 +466,6 @@
 #pragma weak MPI_Group_c2f = PMPI_Group_c2f
 #pragma weak MPI_Request_f2c = PMPI_Request_f2c
 #pragma weak MPI_Request_c2f = PMPI_Request_c2f
-#pragma weak MPI_File_f2c = PMPI_File_f2c
-#pragma weak MPI_File_c2f = PMPI_File_c2f
 #pragma weak MPI_Win_f2c = PMPI_Win_f2c
 #pragma weak MPI_Win_c2f = PMPI_Win_c2f
 #pragma weak MPI_Op_f2c = PMPI_Op_f2c
