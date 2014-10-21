@@ -24169,7 +24169,7 @@ done
 
 
 
-ac_config_files="$ac_config_files Makefile libcontext/Makefile libpause/Makefile libtimer/Makefile include/sctk_config_arch.h"
+ac_config_files="$ac_config_files Makefile libcontext/Makefile libpause/Makefile libtimer/Makefile libmicrotask/Makefile include/sctk_config_arch.h"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -24769,6 +24769,7 @@ do
     "libcontext/Makefile") CONFIG_FILES="$CONFIG_FILES libcontext/Makefile" ;;
     "libpause/Makefile") CONFIG_FILES="$CONFIG_FILES libpause/Makefile" ;;
     "libtimer/Makefile") CONFIG_FILES="$CONFIG_FILES libtimer/Makefile" ;;
+    "libmicrotask/Makefile") CONFIG_FILES="$CONFIG_FILES libmicrotask/Makefile" ;;
     "include/sctk_config_arch.h") CONFIG_FILES="$CONFIG_FILES include/sctk_config_arch.h" ;;
 
   *) { { $as_echo "$as_me:$LINENO: error: invalid argument: $ac_config_target" >&5

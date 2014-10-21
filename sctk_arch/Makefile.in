@@ -13,9 +13,9 @@ TESTBIN=$(TESTFILES:@srcdir@/%.c=%)
 HFILES=$(wildcard @srcdir@/include/*.h)
 DESTHFILES=$(HFILES:@srcdir@/%=%)
 
-all:lib/libsctk_arch_pause.so lib/libsctk_arch_context.so lib/libsctk_arch_timer.so $(DESTHFILES)
-	$(CC) $(LDFLAGS) -fPIC -shared libpause/*.o libcontext/*.o libtimer/*.o  -o lib/libsctk_arch.so
-	$(AR) rcu lib/libsctk_arch.a libpause/*.o libcontext/*.o libtimer/*.o
+all:lib/libsctk_arch_pause.so lib/libsctk_arch_context.so lib/libsctk_arch_timer.so lib/libsctk_arch_microtask.so $(DESTHFILES)
+	$(CC) $(LDFLAGS) -fPIC -shared libpause/*.o libcontext/*.o libtimer/*.o libmicrotask/*.o -o lib/libsctk_arch.so
+	$(AR) rcu lib/libsctk_arch.a libpause/*.o libcontext/*.o libtimer/*.o libmicrotask/*.o
 
 lib/libsctk_arch_context.so:
 	$(MAKE) -C libcontext
@@ -25,6 +25,9 @@ lib/libsctk_arch_pause.so:
 
 lib/libsctk_arch_timer.so:
 	$(MAKE) -C libtimer
+
+lib/libsctk_arch_microtask.so:
+	$(MAKE) -C libmicrotask
 
 clean:
 	rm libpause/*.o libcontext/*.o libtimer/*.o lib/*.a test/test* lib/*.so $(DESTHFILES)

@@ -325,4 +325,4 @@ AC_CHECK_FUNCS(sched_get_priority_min )
 
 
 
-AC_OUTPUT(Makefile libcontext/Makefile libpause/Makefile libtimer/Makefile include/sctk_config_arch.h)
+AC_OUTPUT(Makefile libcontext/Makefile libpause/Makefile libtimer/Makefile libmicrotask/Makefile include/sctk_config_arch.h)
