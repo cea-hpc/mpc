@@ -42,7 +42,9 @@
     abort();					\
   }
 
+#if 0
 ABORT_FUNC_OMP(__kmpc_for_static_init_4,"Mix Intel OpenMP runtime with MPC")
+#endif
 ABORT_FUNC_OMP(GOMP_parallel_start,"Mix GCC OpenMP runtime with MPC")
 
 /* Schedule type */
@@ -343,7 +345,7 @@ TODO( "If OMP_NUM_THREADS is 0, let it equal to 0 by default and handle it later
   /***** PRINT SUMMARY (only first MPI rank) ******/
   if (getenv ("MPC_DISABLE_BANNER") == NULL && sctk_process_rank == 0) {
     fprintf (stderr,
-	"MPC OpenMP version %d.%d\n",
+	"MPC OpenMP version %d.%d (Intel compatibility)\n",
 	SCTK_OMP_VERSION_MAJOR, SCTK_OMP_VERSION_MINOR);
 #if MPCOMP_TASK
     fprintf (stderr, "\tTasking on\n" ) ;
