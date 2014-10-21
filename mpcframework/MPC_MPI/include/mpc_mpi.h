@@ -293,6 +293,9 @@ extern "C"
 #define MPI_FILE_NULL ((MPI_File)-1)
 #define MPI_WIN_NULL ((MPI_Win)-1)
 
+#ifdef ROMIO_COMP
+#define MPI_FILE_NULL ((void *)0)
+#endif 
 
 #define MPI_BSEND_OVERHEAD (2*sizeof(mpi_buffer_overhead_t))
 
