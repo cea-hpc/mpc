@@ -318,7 +318,6 @@ void sctk_common_datatype_init()
 	SCTK_INIT_TYPE_SIZE (MPC_UINT64_T, sctk_uint64_t );
 	SCTK_INIT_TYPE_SIZE (MPC_WCHAR, sctk_wchar_t );
 	SCTK_INIT_TYPE_SIZE (MPC_AINT, MPC_Aint );
-	sctk_warning("Temporary datatype while not adding MPIIO");
 	SCTK_INIT_TYPE_SIZE (MPC_OFFSET, MPC_Aint );
 	SCTK_INIT_TYPE_SIZE (MPC_COUNT, MPC_Count );
 	SCTK_INIT_TYPE_SIZE (MPC_LONG_LONG_INT, long long int );
@@ -385,7 +384,7 @@ void sctk_derived_datatype_init( sctk_derived_datatype_t * type ,
 				 mpc_pack_absolute_indexes_t ub,
 				 int is_ub )
 {
-	sctk_debug( "Derived create ID %d", id);
+	sctk_nodebug( "Derived create ID %d", id);
 	/* Set the integer id */
 	type->id = id;
 	
@@ -442,7 +441,7 @@ void sctk_derived_datatype_init( sctk_derived_datatype_t * type ,
 
 int sctk_derived_datatype_release( sctk_derived_datatype_t * type )
 {
-	sctk_debug( "Derived %d free REF : %d", type->id, type->ref_count );
+	sctk_nodebug( "Derived %d free REF : %d", type->id, type->ref_count );
 	
 	
 	/* Here we decrement the refcounter */
@@ -879,7 +878,7 @@ void sctk_datatype_context_set( struct Datatype_context * ctx , struct Datatype_
 	sctk_datatype_context_free( ctx );
 	
 	/* Save the combiner which is always needed */
-	sctk_debug("Setting combiner to %d\n", dctx->combiner );
+	sctk_nodebug("Setting combiner to %d\n", dctx->combiner );
 	ctx->combiner = dctx->combiner;
 	
 

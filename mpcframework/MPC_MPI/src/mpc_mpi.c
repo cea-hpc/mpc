@@ -3390,9 +3390,6 @@ static int __INTERNAL__PMPI_Type_struct(int count, int blocklens[], MPI_Aint ind
 						ends_out[glob_count_out] = ends_in[0] + stride_t + (extent * j);
 						datatypes[glob_count_out] = old_types[i];
 
-						sctk_debug(" begins_out[%lu] = %lu", glob_count_out, begins_out[glob_count_out]);
-						sctk_debug(" ends_out[%lu] = %lu", glob_count_out, ends_out[glob_count_out]);
-
 						glob_count_out++;
 				}
 				sctk_nodebug("simple type %d new_lb %d new_ub %d", i, new_lb, new_ub);

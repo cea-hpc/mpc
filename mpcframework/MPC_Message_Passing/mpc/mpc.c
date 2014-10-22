@@ -1374,8 +1374,6 @@ int PMPC_Type_free (MPC_Datatype * datatype_p)
 	/* Dereference the datatype pointer for convenience */
 	MPC_Datatype datatype = *datatype_p;
 	
-	sctk_debug("TYPE FREE %d\n", datatype );
-	
 	SCTK_PROFIL_START (MPC_Type_free);
 	
 	/* Retrieve task context */
@@ -1438,7 +1436,7 @@ int PMPC_Type_free (MPC_Datatype * datatype_p)
 			}
 			
 						
-			sctk_debug("Free derived [%d] contructor %d", datatype, derived_type_target->context.combiner );
+			sctk_nodebug("Free derived [%d] contructor %d", datatype, derived_type_target->context.combiner );
 			
 			
 			/* Free it  (not that the container is also freed in this function */
@@ -2049,9 +2047,7 @@ int PMPC_Derived_datatype_on_slot ( int id,
 	
 	/* Now we register the datatype pointer in the derived datatype array */
 	sctk_task_specific_set_derived_datatype( task_specific, id , new_type);
-	
-	sctk_debug("NEW type %d\n", id );
-	
+
 	/* We unlock the derived datatype array */
 	sctk_datatype_unlock( task_specific );
 	
@@ -2117,7 +2113,6 @@ int PMPC_Derived_datatype ( MPC_Datatype * datatype,
 			int new_id = MPC_TYPE_MAP_FROM_DERIVED( i );
 			
 			/* Set the new ID in the target datatype */
-			sctk_debug("NEW ID : %d", new_id );
 			*datatype = new_id;
 
 	
