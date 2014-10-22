@@ -35,7 +35,7 @@ header_sh >> bin/mpc_ldflags
 cat <<EOF >> bin/mpc_ldflags
 
 
-FLAGS="-Wl,-rpath,${SCTK_LIB_DIR} -Wl,-rpath,${SCTK_LIB_DIR}/../lib64 -lmpc_tdb_remote_static $SCTK_LDFLAGS "
+FLAGS="-Wl,-rpath,${SCTK_LIB_DIR} -Wl,-rpath,${SCTK_LIB_DIR}/../lib64 -lmpc_tdb_remote_static $SCTK_LDFLAGS ${SCTK_LIB_DIR}/libromio.a"
 
 if test "\$MPC_USE_INTEL_COMPILER" = "1"; then
 MPC_DO_NOT_USE_GNU_LM="1"
