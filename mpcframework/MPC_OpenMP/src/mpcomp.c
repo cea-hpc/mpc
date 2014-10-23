@@ -460,7 +460,7 @@ void __mpcomp_init() {
 		/* Compute the number of cores for this task */
 		sctk_get_init_vp_and_nbvp(task_rank, &nb_mvps);
 
-		sctk_debug( "__mpcomm_init: #mvps = %d", nb_mvps ) ;
+		sctk_debug( "__mpcomp_init: #mvps = %d", nb_mvps ) ;
 
 		/* Consider the env variable if between 1 and the number
 		 * of cores for this task */
@@ -470,12 +470,12 @@ void __mpcomp_init() {
 	}
 
 	if ( sctk_get_local_task_rank() == 0 ) {
-	  sctk_debug( "__mpcomm_init: "
+	  sctk_debug( "__mpcomp_init: "
 	      "MPI rank=%d, process_rank=%d, local_task_rank=%d => %d mvp(s) out of %d core(s) A",
 	      task_rank, sctk_get_local_process_rank(), sctk_get_local_task_rank(),
 	      sctk_get_processor_number(), sctk_get_processor_number() ) ;
 	} else {
-	sctk_debug( "__mpcomm_init: "
+	sctk_debug( "__mpcomp_init: "
 	    "MPI rank=%d, process_rank=%d, local_task_rank=%d => %d mvp(s) out of %d core(s)",
 	    task_rank, sctk_get_local_process_rank(), sctk_get_local_task_rank(),
 	   nb_mvps, sctk_get_processor_number() ) ;
@@ -546,6 +546,13 @@ void __mpcomp_exit()
 void __mpcomp_instance_init( mpcomp_instance_t * instance, int nb_mvps,
 	   struct mpcomp_team_s * team	) {
 
+	/* TODO Field to update: 
+	 * tree_depth, tree_base, tree_cumulative, topology,
+	 * tree_level_size, tree_array_size, tree_array_first_rank 
+	 */
+
+
+
 	sctk_nodebug( "__mpcomp_instance_init: Entering..." ) ;
 
 	/* Assign the current team */
@@ -583,6 +590,8 @@ void __mpcomp_instance_init( mpcomp_instance_t * instance, int nb_mvps,
 
 		instance->nb_mvps = 1 ;
 
+		instance->root = NULL ;
+
 		__mpcomp_thread_init( &(instance->mvps[0]->threads[0]), icvs, instance ) ;
 
 	}
@@ -603,21 +612,118 @@ void in_order_scheduler( mpcomp_mvp_t * mvp ) {
      */
 
   int i ;
+	mpcomp_thread_t * t ;
 
-    sctk_nodebug( "in_order_scheduler: Starting to schedule %d thread(s)", mvp->nb_threads ) ;
+	sctk_assert( mvp != NULL ) ;
+
+	sctk_nodebug( "in_order_scheduler: Starting to schedule %d thread(s)", mvp->nb_threads ) ;
+
+	/* Save previous TLS */
+	t = sctk_openmp_thread_tls ;
+	// t can be NULL for worker thread
+  // sctk_assert( t != NULL ) ;
 
   for ( i = 0 ; i < mvp->nb_threads ; i++ ) {
     /* TODO handle out of order */
-
 
     sctk_openmp_thread_tls = &mvp->threads[i];
 
     sctk_assert( ((mpcomp_thread_t *)sctk_openmp_thread_tls)->instance != NULL ) ;
     sctk_assert( ((mpcomp_thread_t *)sctk_openmp_thread_tls)->instance->team != NULL ) ;
-    sctk_assert( mvp != NULL);  
+    sctk_assert( mvp->threads[i].info.func != NULL ) ;
+
+#if 0
+	/* TODO debugging scenario only */
+		sctk_debug( "in_order_scheduler: before print shared value %d %d",
+				((int *)mvp->threads[i].info.shared)[0],
+				((int *)mvp->threads[i].info.shared)[1]
+				) ;
+
+		if ( ((int *)mvp->threads[i].info.shared)[1] == 21 ) {
+			((int *)mvp->threads[i].info.shared)[0]++ ;
+		}
+#endif
+
+		/* Handle beginning of combined parallel region */
+		switch( mvp->threads[i].info.combined_pragma ) {
+			case MPCOMP_COMBINED_NONE:
+				sctk_debug( "in_order_scheduler: BEGIN - No combined parallel" ) ;
+				break ;
+			case MPCOMP_COMBINED_SECTION:
+				sctk_debug( "in_order_scheduler: BEGIN - Combined parallel/sections w/ %d section(s)",
+						mvp->threads[i].info.nb_sections	) ;
+				__mpcomp_sections_init( 
+						&(mvp->threads[i]),
+						mvp->threads[i].info.nb_sections ) ;
+				break ;
+			case MPCOMP_COMBINED_STATIC_LOOP:
+				sctk_debug( "in_order_scheduler: BEGIN - Combined parallel/loop" ) ;
+				__mpcomp_static_loop_init(
+						&(mvp->threads[i]),
+						mvp->threads[i].info.loop_lb,
+						mvp->threads[i].info.loop_b,
+						mvp->threads[i].info.loop_incr,
+						mvp->threads[i].info.loop_chunk_size
+						) ;
+				break ;
+			case MPCOMP_COMBINED_DYN_LOOP:
+				sctk_debug( "in_order_scheduler: BEGIN - Combined parallel/loop" ) ;
+				__mpcomp_dynamic_loop_init(
+						&(mvp->threads[i]),
+						mvp->threads[i].info.loop_lb,
+						mvp->threads[i].info.loop_b,
+						mvp->threads[i].info.loop_incr,
+						mvp->threads[i].info.loop_chunk_size
+						) ;
+				break ;
+			default:
+				not_implemented() ;
+				break ;
+		}
+
     mvp->threads[i].info.func( mvp->threads[i].info.shared ) ;
+
+		/* Handle ending of combined parallel region */
+		switch( mvp->threads[i].info.combined_pragma ) {
+			case MPCOMP_COMBINED_NONE:
+				sctk_debug( "in_order_scheduler: END - No combined parallel" ) ;
+				break ;
+			case MPCOMP_COMBINED_SECTION:
+				sctk_debug( "in_order_scheduler: END - Combined parallel/sections w/ %d section(s)",
+						mvp->threads[i].info.nb_sections	) ;
+				break ;
+			case MPCOMP_COMBINED_STATIC_LOOP:
+				sctk_debug( "in_order_scheduler: END - Combined parallel/loop" ) ;
+				break ;
+			case MPCOMP_COMBINED_DYN_LOOP:
+				sctk_debug( "in_order_scheduler: END - Combined parallel/loop" ) ;
+				__mpcomp_dynamic_loop_end_nowait(
+						&(mvp->threads[i])
+						) ;
+				break ;
+			default:
+				not_implemented() ;
+				break ;
+		}
+
+#if 0
+	/* TODO debugging scenario only */
+		sctk_debug( "in_order_scheduler: print shared value %d %d",
+				((int *)mvp->threads[i].info.shared)[0],
+				((int *)mvp->threads[i].info.shared)[1]
+				) ;
+
+		if ( ((int *)mvp->threads[i].info.shared)[1] == 21 ) {
+			((int *)mvp->threads[i].info.shared)[0]++ ;
+		}
+#endif
+
+
     mvp->threads[i].done = 1 ;
   }
+
+	/* Restore previous TLS */
+	sctk_openmp_thread_tls = t ;
 }
 
 /* Create contextes for non-terminated threads of the same microVP */
@@ -977,86 +1083,88 @@ mpcomp_get_wtick (void)
   return 10e-6;
 }
 
-void __mpcomp_flush() 
+void 
+__mpcomp_flush() 
 {
 /* TODO TEMP only return, but need to handle oversubscribing */
 }
 
 
 
-void __mpcomp_ordered_begin()
+	void 
+__mpcomp_ordered_begin()
 {
-     mpcomp_thread_t *t;
+	mpcomp_thread_t *t;
 
-     __mpcomp_init();
-     
-     t = (mpcomp_thread_t *) sctk_openmp_thread_tls;
-     sctk_assert(t != NULL); 
+	__mpcomp_init();
 
-     sctk_nodebug( "[%d] __mpcomp_ordered_begin: enter w/ iteration %d and team %d",
-			 t->rank, t->current_ordered_iteration, t->instance->team->next_ordered_offset ) ;
+	t = (mpcomp_thread_t *) sctk_openmp_thread_tls;
+	sctk_assert(t != NULL); 
 
-     /* First iteration of the loop -> initialize 'next_ordered_offset' */
-     if (t->current_ordered_iteration == t->info.loop_lb) {
-	  t->instance->team->next_ordered_offset = 0;
-     } else {
-	  /* Do we have to wait for the right iteration? */
-	  if (t->current_ordered_iteration != 
-	      (t->info.loop_lb + t->info.loop_incr * 
-		   t->instance->team->next_ordered_offset)) {
-	       mpcomp_mvp_t *mvp;
-	       
-	       sctk_nodebug("__mpcomp_ordered_begin[%d]: Waiting to schedule iteration %d",
-			    t->rank, t->current_ordered_iteration);
-	       
-	       /* Grab the corresponding microVP */
-	       mvp = t->mvp;
+	sctk_nodebug( "[%d] __mpcomp_ordered_begin: enter w/ iteration %d and team %d",
+			t->rank, t->current_ordered_iteration, t->instance->team->next_ordered_offset ) ;
 
-		   while ( t->current_ordered_iteration != 
-				   (t->info.loop_lb + t->info.loop_incr * 
-					t->instance->team->next_ordered_offset) )
-		   {
-			   sctk_thread_yield();
-		   }
+	/* First iteration of the loop -> initialize 'next_ordered_offset' */
+	if (t->current_ordered_iteration == t->info.loop_lb) {
+		t->instance->team->next_ordered_offset = 0;
+	} else {
+		/* Do we have to wait for the right iteration? */
+		if (t->current_ordered_iteration != 
+				(t->info.loop_lb + t->info.loop_incr * 
+				 t->instance->team->next_ordered_offset)) {
+			mpcomp_mvp_t *mvp;
+
+			sctk_nodebug("__mpcomp_ordered_begin[%d]: Waiting to schedule iteration %d",
+					t->rank, t->current_ordered_iteration);
+
+			/* Grab the corresponding microVP */
+			mvp = t->mvp;
+
+			while ( t->current_ordered_iteration != 
+					(t->info.loop_lb + t->info.loop_incr * 
+					 t->instance->team->next_ordered_offset) )
+			{
+				sctk_thread_yield();
+			}
 #if 0	       
-	       TODO("use correct primitives")
-	       mpcomp_fork_when_blocked (my_vp, info->step);
-	       
-	       /* Spin while the condition is not satisfied */
-	       mpcomp_macro_scheduler (my_vp, info->step);
-	       while ( info->current_ordered_iteration != 
-		       (info->loop_lb + info->loop_incr * team->next_ordered_offset) ) {
-		    mpcomp_macro_scheduler (my_vp, info->step);
-		    if ( info->current_ordered_iteration != 
-			 (info->loop_lb + info->loop_incr * team->next_ordered_offset) ) {
-			 sctk_thread_yield ();
-		    }
-	       }
+			TODO("use correct primitives")
+				mpcomp_fork_when_blocked (my_vp, info->step);
+
+			/* Spin while the condition is not satisfied */
+			mpcomp_macro_scheduler (my_vp, info->step);
+			while ( info->current_ordered_iteration != 
+					(info->loop_lb + info->loop_incr * team->next_ordered_offset) ) {
+				mpcomp_macro_scheduler (my_vp, info->step);
+				if ( info->current_ordered_iteration != 
+						(info->loop_lb + info->loop_incr * team->next_ordered_offset) ) {
+					sctk_thread_yield ();
+				}
+			}
 #endif
 
-	  }
-     }
+		}
+	}
 
-     sctk_nodebug( "__mpcomp_ordered_begin[%d]: Allowed to schedule iteration %d",
-		   info->rank, info->current_ordered_iteration ) ;
+	sctk_nodebug( "__mpcomp_ordered_begin[%d]: Allowed to schedule iteration %d",
+			t->rank, t->current_ordered_iteration ) ;
 }
 
 
 
 void __mpcomp_ordered_end()
 {
-     mpcomp_thread_t *t;
-     
-     t = (mpcomp_thread_t *) sctk_openmp_thread_tls;
-     sctk_assert(t != NULL); 
-     
-     t->current_ordered_iteration += t->info.loop_incr ;
-     if ( (t->info.loop_incr > 0 && t->current_ordered_iteration >= t->info.loop_b) ||
-	  (t->info.loop_incr < 0 && t->current_ordered_iteration <= t->info.loop_b) ) {
-	  t->instance->team->next_ordered_offset = -1 ;
-     } else {
-	  t->instance->team->next_ordered_offset++ ;
-     }
+	mpcomp_thread_t *t;
+
+	t = (mpcomp_thread_t *) sctk_openmp_thread_tls;
+	sctk_assert(t != NULL); 
+
+	t->current_ordered_iteration += t->info.loop_incr ;
+	if ( (t->info.loop_incr > 0 && t->current_ordered_iteration >= t->info.loop_b) ||
+			(t->info.loop_incr < 0 && t->current_ordered_iteration <= t->info.loop_b) ) {
+		t->instance->team->next_ordered_offset = -1 ;
+	} else {
+		t->instance->team->next_ordered_offset++ ;
+	}
 }
 
 void

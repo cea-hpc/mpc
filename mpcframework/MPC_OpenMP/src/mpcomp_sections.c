@@ -77,7 +77,7 @@ static int __mpcomp_sections_internal_next( mpcomp_thread_t * t,
 
 
 void __mpcomp_sections_init( mpcomp_thread_t * t, int nb_sections ) {
-  mpcomp_team_t *team ;	/* Info on the team */
+  mpcomp_team_t *team ;	/* Info on the team TODO remove this variable */
   long num_threads ;
 
   /* Number of threads in the current team */
@@ -120,6 +120,9 @@ __mpcomp_sections_begin (int nb_sections)
   /* Grab the thread info */
   t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
   sctk_assert( t != NULL ) ;
+
+	sctk_debug( "[%d] __mpcomp_sections_begin: entering w/ %d section(s)",
+			t->rank, nb_sections ) ;
 
   __mpcomp_sections_init( t, nb_sections ) ;
 

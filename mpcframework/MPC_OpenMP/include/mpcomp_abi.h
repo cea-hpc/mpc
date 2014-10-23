@@ -173,7 +173,7 @@ extern "C"
  */
 
 /* See p34 for variable definition */
-  void __mpcomp_static_schedule_get_single_chunk (long lb, long b, long incr, long
+  int __mpcomp_static_schedule_get_single_chunk (long lb, long b, long incr, long
 						  *from, long *to);
 
 /* 

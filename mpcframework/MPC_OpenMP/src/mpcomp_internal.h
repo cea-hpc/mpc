@@ -319,10 +319,13 @@ typedef struct mpcomp_thread_s
 
 	struct mpcomp_instance_s *instance; /* Current instance (team + tree) */
 
+
 	/* -- SINGLE/SECTIONS CONSTRUCT -- */
 	int single_sections_current ;
 	int single_sections_target_current ; /* When should we stop the current sections construct? */
 	int single_sections_start_current ; /* When started the last sections construct? */
+
+	struct mpcomp_thread_s * father ; /* Father thread  TODO: use it for ancestors */
 
 	/* LOOP CONSTRUCT */
 
@@ -337,6 +340,8 @@ typedef struct mpcomp_thread_s
 	int for_dyn_total ;
 	int * for_dyn_target ; /* Coordinates of target thread to steal */
 	int * for_dyn_shift ; /* Shift of target thread to steal */
+	int for_dyn_last_loop_iteration ; /* WORKAROUND (pr35196.c)
+																			 Did we just execute the last iteration of the original loop? */
 
 	/* ORDERED CONSTRUCT */
 	int current_ordered_iteration; 
@@ -558,8 +563,10 @@ typedef struct mpcomp_thread_s
 	  t->done = 0;
 	  t->instance = instance;
 	  t->children_instance = NULL;
+	  t->father = NULL ;
 
 	  /* -- SINGLE CONSTRUCT -- */
+	  // t->single_sections_current = 0 ;
 	  t->single_sections_target_current = 0 ;
 	  t->single_sections_start_current = 0 ;
 
@@ -570,6 +577,7 @@ typedef struct mpcomp_thread_s
 	       sctk_atomics_store_int(&(t->for_dyn_remain[i].i), -1);
 	  t->for_dyn_target = NULL ; /* Initialized during the first steal */
 	  t->for_dyn_shift = NULL ; /* Initialized during the first steal */
+		t->for_dyn_last_loop_iteration = 0 ; /* WORKAROUND (pr35196.c) */
 
 #if MPCOMP_TASK
 	  t->tasking_init_done = 0;

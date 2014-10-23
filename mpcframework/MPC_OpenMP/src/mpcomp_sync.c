@@ -43,13 +43,19 @@ TODO("Wrong atomic behavior in case of OpenMP oversubscribing")
 void
 __mpcomp_atomic_begin ()
 {
+	sctk_debug( "__mpcomp_atomic_begin: entering..." ) ;
   sctk_spinlock_lock (&(global_atomic_lock));
+	sctk_debug( "__mpcomp_atomic_begin: exiting..." ) ;
 }
 
 void
 __mpcomp_atomic_end ()
 {
+	sctk_debug( "__mpcomp_atomic_end: entering..." ) ;
+
   sctk_spinlock_unlock (&(global_atomic_lock));
+
+	sctk_debug( "__mpcomp_atomic_end: exiting..." ) ;
 }
 
 

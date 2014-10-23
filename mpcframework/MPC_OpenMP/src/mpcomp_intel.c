@@ -380,22 +380,47 @@ __kmpc_fork_call(ident_t * loc, kmp_int32 argc, kmpc_micro microtask, ...)
 void
 __kmpc_serialized_parallel(ident_t *loc, kmp_int32 global_tid) 
 {
+  mpcomp_thread_t * t ;
+	mpcomp_new_parallel_region_info_t info ;
 
   sctk_debug( "__kmpc_serialized_parallel: entering (%d) ...", global_tid ) ;
 
-  /* TODO check mpcomp_parallel_region w/ 1 thread */
+  /* Grab the thread info */
+  t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
+  sctk_assert( t != NULL ) ;
 
-  not_implemented() ;
+	info.func = NULL ; /* No function to call */
+	info.shared = NULL ;
+	info.num_threads = 1 ;
+	info.new_root = NULL ;
+	info.icvs = t->info.icvs ; 
+	info.combined_pragma = MPCOMP_COMBINED_NONE;
+
+	__mpcomp_internal_begin_parallel_region( 1, info ) ;
+
+	/* Save the current tls */
+	t->children_instance->mvps[0]->threads[0].father = sctk_openmp_thread_tls ;
+
+	/* Switch TLS to nested thread for region-body execution */
+	sctk_openmp_thread_tls = &(t->children_instance->mvps[0]->threads[0]) ;
 }
 
 void
 __kmpc_end_serialized_parallel(ident_t *loc, kmp_int32 global_tid) 
 {
+  mpcomp_thread_t * t ;
+
   sctk_debug( "__kmpc_end_serialized_parallel: entering (%d)...", global_tid ) ;
 
-  /* TODO check mpcomp_parallel_region w/ 1 thread */
+  /* Grab the thread info */
+  t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
+  sctk_assert( t != NULL ) ;
 
-  not_implemented() ;
+	/* Restore the previous thread info */
+	sctk_openmp_thread_tls = t->father ;
+
+	__mpcomp_internal_end_parallel_region( t->instance ) ;
+
 }
 
 void
