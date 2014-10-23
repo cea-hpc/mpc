@@ -2793,7 +2793,7 @@ static int __INTERNAL__PMPI_Type_contiguous (unsigned long count, MPI_Datatype d
 	dtctx.combiner = MPI_COMBINER_CONTIGUOUS;
 	dtctx.count = count;
 	dtctx.oldtype = data_in;
-	
+		
 	/* If source datatype is a derived datatype we have to create a new derived datatype */
 	if (sctk_datatype_is_derived (data_in))
 	{
@@ -2846,8 +2846,12 @@ static int __INTERNAL__PMPI_Type_contiguous (unsigned long count, MPI_Datatype d
 		/* Update new type upperbound */
 		long new_ub = input_datatype.ub + extent * (count - 1);
 
+		/* Handle the NULL count case */
+		if( !count )
+			new_ub = 0;
+		
 		/* Actually create the new datatype */
-		PMPC_Derived_datatype (data_out, begins_out, ends_out, datatypes, count_out, input_datatype.lb,	input_datatype.is_lb, new_ub, input_datatype.is_ub);
+		PMPC_Derived_datatype (data_out, begins_out, ends_out, datatypes, count_out, input_datatype.lb,	input_datatype.is_lb, new_ub, input_datatype.is_ub, &dtctx);
 	
 		MPC_Datatype_set_context( *data_out, &dtctx);
 		/* Free temporary buffers */
@@ -2913,6 +2917,15 @@ static int __INTERNAL__PMPI_Type_hvector (int count,
 	unsigned long stride_t;
 	
 	stride_t = (unsigned long) stride;
+
+	/* Set its context */
+	struct Datatype_External_context dtctx;
+	sctk_datatype_external_context_clear( &dtctx );
+	dtctx.combiner = MPI_COMBINER_HVECTOR;
+	dtctx.count = count;
+	dtctx.blocklength = blocklen;
+	dtctx.stride_addr = stride;
+	dtctx.oldtype = old_type;
 	
 	/* Is it a derived data-type ? */
 	if (sctk_datatype_is_derived (old_type))
@@ -2926,9 +2939,14 @@ static int __INTERNAL__PMPI_Type_hvector (int count,
 		/* Compute the extent */
 		__INTERNAL__PMPI_Type_extent (old_type, (MPI_Aint *) & extent);
 
-		/*  Handle the contiguous case */
-		if( ((blocklen * extent) == stride) && ( 0 <= stride ) )
-			return __INTERNAL__PMPI_Type_contiguous (count * blocklen, old_type,  newtype_p);
+		/*  Handle the contiguous case or Handle count == 0 */
+		if( (((blocklen * extent) == stride) && ( 0 <= stride ))
+		|| (count == 0 ) )
+		{
+			int ret = __INTERNAL__PMPI_Type_contiguous (count * blocklen, old_type,  newtype_p);
+			MPC_Datatype_set_context( *newtype_p, &dtctx);
+			return ret;
+		}
 		
 		sctk_nodebug ("extend %lu, count %d, blocklen %d, stide %lu", extent, count, blocklen, stride);
 
@@ -2963,19 +2981,9 @@ static int __INTERNAL__PMPI_Type_hvector (int count,
 
 		/* Compute the new upper bound */
 		int new_ub = input_datatype.ub + extent * stride * (count - 1) + extent * (blocklen - 1);
-
+		
 		/* Create the derived datatype */
-		PMPC_Derived_datatype (newtype_p, begins_out, ends_out, datatypes, count_out, input_datatype.lb, input_datatype.is_lb, new_ub, input_datatype.is_ub);
-
-		/* Set its context */
-		struct Datatype_External_context dtctx;
-		sctk_datatype_external_context_clear( &dtctx );
-		dtctx.combiner = MPI_COMBINER_HVECTOR;
-		dtctx.count = count;
-		dtctx.blocklength = blocklen;
-		dtctx.stride_addr = stride;
-		dtctx.oldtype = old_type;
-		MPC_Datatype_set_context( *newtype_p, &dtctx);
+		PMPC_Derived_datatype (newtype_p, begins_out, ends_out, datatypes, count_out, input_datatype.lb, input_datatype.is_lb, new_ub, input_datatype.is_ub, &dtctx);
 		
 		/* Free temporary arrays */
 		sctk_free (begins_out);
@@ -3139,6 +3147,15 @@ static int __INTERNAL__PMPI_Type_hindexed (int count,
 					  MPI_Aint indices[],
 					  MPI_Datatype old_type, MPI_Datatype * newtype)
 {
+	/* Set its context */
+	struct Datatype_External_context dtctx;
+	sctk_datatype_external_context_clear( &dtctx );
+	dtctx.combiner = MPI_COMBINER_HINDEXED;
+	dtctx.count = count;
+	dtctx.array_of_blocklenght = blocklens;
+	dtctx.array_of_displacements_addr = indices;
+	dtctx.oldtype = old_type;
+		
 	/* Is it a derived data-type ? */
 	if (sctk_datatype_is_derived (old_type))
 	{
@@ -3152,6 +3169,15 @@ static int __INTERNAL__PMPI_Type_hindexed (int count,
 		unsigned long extent;
 		__INTERNAL__PMPI_Type_extent (old_type, (MPI_Aint *) & extent);
 
+		/*  Handle the contiguous case or Handle count == 0 */
+		if( count == 0 )
+		{
+			int ret = __INTERNAL__PMPI_Type_contiguous ( 0, old_type, newtype);
+			MPC_Datatype_set_context( *newtype, &dtctx);
+			return ret;
+		}
+		
+		
 		/* Compute the total number of blocks */
 		unsigned long count_out = 0;
 		int i;
@@ -3215,19 +3241,10 @@ static int __INTERNAL__PMPI_Type_hindexed (int count,
 				}
 			}
 		}
-
+	
 		/* Create the derived datatype */
-		PMPC_Derived_datatype (newtype, begins_out, ends_out, datatypes, count_out, new_lb,	input_datatype.is_lb, new_ub, input_datatype.is_ub);
+		PMPC_Derived_datatype (newtype, begins_out, ends_out, datatypes, count_out, new_lb,	input_datatype.is_lb, new_ub, input_datatype.is_ub, &dtctx);
 
-		/* Set its context */
-		struct Datatype_External_context dtctx;
-		sctk_datatype_external_context_clear( &dtctx );
-		dtctx.combiner = MPI_COMBINER_HINDEXED;
-		dtctx.count = count;
-		dtctx.array_of_blocklenght = blocklens;
-		dtctx.array_of_displacements_addr = indices;
-		dtctx.oldtype = old_type;
-		MPC_Datatype_set_context( *newtype, &dtctx);
 		
 		/* Free temporary arrays */
 		sctk_free (begins_out);
@@ -3266,12 +3283,11 @@ static int __INTERNAL__PMPI_Type_struct(int count, int blocklens[], MPI_Aint ind
 	int new_is_lb = 0;
 	mpc_pack_absolute_indexes_t new_ub = 0;
 	int new_is_ub = 0;
-
 	unsigned long my_count_out = 0;
 	
 	if( ! count )
 		new_lb = 0;
-	
+
 
 	// find malloc size
 	for (i = 0; i < count; i++)
@@ -3423,9 +3439,6 @@ static int __INTERNAL__PMPI_Type_struct(int count, int blocklens[], MPI_Aint ind
 /* 	fprintf(stderr,"End Type\n"); */
 
 
-	res = PMPC_Derived_datatype(newtype, begins_out, ends_out, datatypes, glob_count_out, new_lb, new_is_lb, new_ub, new_is_ub);
-	assert(res == MPI_SUCCESS);
-
 	/* Set its context */
 	struct Datatype_External_context dtctx;
 	sctk_datatype_external_context_clear( &dtctx );
@@ -3434,7 +3447,10 @@ static int __INTERNAL__PMPI_Type_struct(int count, int blocklens[], MPI_Aint ind
 	dtctx.array_of_blocklenght = blocklens;
 	dtctx.array_of_displacements_addr = indices;
 	dtctx.array_of_types = old_types;
-	MPC_Datatype_set_context( *newtype, &dtctx);
+
+	res = PMPC_Derived_datatype(newtype, begins_out, ends_out, datatypes, glob_count_out, new_lb, new_is_lb, new_ub, new_is_ub, &dtctx);
+	assert(res == MPI_SUCCESS);
+
 	
 	/*   sctk_nodebug("new_type %d",* newtype); */
 	/*   sctk_nodebug("final new_lb %d,%d new_ub %d %d",new_lb,new_is_lb,new_ub,new_is_ub); */
@@ -3459,6 +3475,13 @@ static int __INTERNAL__PMPI_Type_create_resized(MPI_Datatype old_type, MPI_Aint 
 		/* Retrieve input datatype informations */
 		MPC_Is_derived_datatype (old_type, &derived_ret, &input_datatype);
 		
+		struct Datatype_External_context dtctx;
+		sctk_datatype_external_context_clear( &dtctx );
+		dtctx.combiner = MPI_COMBINER_RESIZED;
+		dtctx.lb = lb;
+		dtctx.extent = extent;
+		dtctx.oldtype = old_type;
+		
 		/* Duplicate it with updated bounds in new_type */
 		PMPC_Derived_datatype ( new_type,
 					input_datatype.begins,
@@ -3466,15 +3489,8 @@ static int __INTERNAL__PMPI_Type_create_resized(MPI_Datatype old_type, MPI_Aint 
 					input_datatype.datatypes,
 					input_datatype.count,
 					lb, 1,
-					lb + extent, 1);
+					lb + extent, 1, &dtctx);
 		
-		struct Datatype_External_context dtctx;
-		sctk_datatype_external_context_clear( &dtctx );
-		dtctx.combiner = MPI_COMBINER_RESIZED;
-		dtctx.lb = lb;
-		dtctx.extent = extent;
-		dtctx.oldtype = old_type;
-		MPC_Datatype_set_context( *new_type, &dtctx);
 		
 		return MPI_SUCCESS;
 	}
@@ -3640,7 +3656,7 @@ int sctk_Type_create_darray(int size, int rank, int ndims,
     types[1] = type_new;
     types[2] = MPI_UB;
     
-    MPI_Type_struct(3, blklens, disps, types, newtype);
+    PMPI_Type_struct(3, blklens, disps, types, newtype);
 
     MPI_Type_free(&type_new);
     sctk_free(st_offsets);
@@ -3766,7 +3782,7 @@ static int sctk_MPIOI_Type_cyclic(int *array_of_gsizes, int dim, int ndims, int 
 	blklens[0] = 1;
 	blklens[1] = rem;
 
-	MPI_Type_struct(2, blklens, disps, types, &type_tmp);
+	PMPI_Type_struct(2, blklens, disps, types, &type_tmp);
 
 	MPI_Type_free(type_new);
 	*type_new = type_tmp;
@@ -3783,7 +3799,7 @@ static int sctk_MPIOI_Type_cyclic(int *array_of_gsizes, int dim, int ndims, int 
         types[2] = MPI_UB;
         disps[2] = orig_extent * (MPI_Aint)array_of_gsizes[dim];
         blklens[0] = blklens[1] = blklens[2] = 1;
-        MPI_Type_struct(3, blklens, disps, types, &type_tmp);
+        PMPI_Type_struct(3, blklens, disps, types, &type_tmp);
         MPI_Type_free(type_new);
         *type_new = type_tmp;
 
@@ -3889,7 +3905,7 @@ int sctk_Type_create_subarray(int ndims,
     types[1] = tmp1;
     types[2] = MPI_UB;
     
-    MPI_Type_struct(3, blklens, disps, types, newtype);
+    PMPI_Type_struct(3, blklens, disps, types, newtype);
 
     MPI_Type_free(&tmp1);
 
@@ -3911,10 +3927,13 @@ int __INTERNAL__PMPI_Type_create_darray (int size,
 					 MPI_Datatype oldtype,
 					 MPI_Datatype *newtype)
 {
+	*newtype = MPC_DATATYPE_NULL;
+	
+
 	int res = sctk_Type_create_darray( size, rank, ndims,  array_of_gsizes,
 					   array_of_distribs,  array_of_dargs, array_of_psizes,
 					   order, oldtype,   newtype );
-	
+
 	if( res != MPI_SUCCESS )
 		return res;
 	
@@ -3986,6 +4005,9 @@ static int __INTERNAL__PMPI_Type_extent (MPI_Datatype datatype, MPI_Aint * exten
 
 
 	*extent = (MPI_Aint) ((unsigned long) UB - (unsigned long) LB);
+	
+	sctk_nodebug("UB %d LB %d EXTENT %d", UB, LB,  *extent );
+	
 	return MPI_SUCCESS;
 }
 
@@ -10760,9 +10782,11 @@ int PMPI_Type_struct (int count, int blocklens[], MPI_Aint indices[], MPI_Dataty
 
 	for(i = 0; i < count; i++)
 	{
+
 		mpi_check_type( old_types[i], MPI_COMM_WORLD );
-		
+
 		mpi_check_type_create(old_types[i],comm); 
+
 		if(blocklens[i] < 0)
 		{
 			MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"Error negative block lengths provided");
@@ -10779,10 +10803,12 @@ int PMPI_Type_create_struct (int count, int blocklens[], MPI_Aint indices[], MPI
 	MPI_Comm comm = MPI_COMM_WORLD;
 	int res = MPI_ERR_INTERN;
 	int i;
-	mpi_check_count(count,comm);
-
-	*newtype = MPC_DATATYPE_NULL;
 	
+	
+	mpi_check_count(count,comm);
+	
+	
+	*newtype = MPC_DATATYPE_NULL;
 
 	for(i = 0; i < count; i++)
 	{
@@ -10794,6 +10820,8 @@ int PMPI_Type_create_struct (int count, int blocklens[], MPI_Aint indices[], MPI
 			MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"Bad datatype provided to PMPI_Type_create_struct");
 		} 
 	}
+	
+	
 
 	res = __INTERNAL__PMPI_Type_struct (count, blocklens, indices, old_types, newtype);
 	SCTK_MPI_CHECK_RETURN_VAL (res, comm);

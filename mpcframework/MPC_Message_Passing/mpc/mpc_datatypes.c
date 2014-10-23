@@ -419,6 +419,7 @@ void sctk_derived_datatype_init( sctk_derived_datatype_t * type ,
 	/* Here we compute the total size of the type
 		* by summing sections */
 	unsigned long j;
+	
 	for (j = 0; j < count; j++)
 	{
 		sctk_nodebug("( %d / %d ) => B : %d  E : %d ",j, count - 1 , type->begins[j], type->ends[j]);

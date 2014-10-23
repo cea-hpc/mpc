@@ -923,13 +923,15 @@ int MPC_Test_cancelled (MPC_Status *, int *);
   int PMPC_Copy_in_buffer (void *inbuffer, void *outbuffer, MPC_Datatype datatype);
   int PMPC_Copy_from_buffer (void *inbuffer, void *outbuffer, MPC_Datatype datatype);
 
+  struct Datatype_External_context;
   int PMPC_Derived_datatype (MPC_Datatype * datatype,
 			    mpc_pack_absolute_indexes_t * begins,
 			    mpc_pack_absolute_indexes_t * ends,
 			    MPC_Datatype * types,
 			    unsigned long count,
 			    mpc_pack_absolute_indexes_t lb, int is_lb,
-			    mpc_pack_absolute_indexes_t ub, int is_ub);
+			    mpc_pack_absolute_indexes_t ub, int is_ub,
+			    struct Datatype_External_context *ectx );
 
   int PMPC_Type_get_true_extent(MPC_Datatype datatype, MPC_Aint *true_lb, MPC_Aint *true_extent);
   int PMPC_Type_convert_to_derived( MPC_Datatype in_datatype, MPC_Datatype * out_datatype );

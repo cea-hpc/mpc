@@ -1512,9 +1512,7 @@ int PMPC_Type_dup( MPC_Datatype old_type, MPC_Datatype * new_type )
 						derived_type_target->datatypes,
 						derived_type_target->count,
 						derived_type_target->lb, derived_type_target->is_lb,
-						derived_type_target->ub, derived_type_target->is_ub);
-			
-			MPC_Datatype_set_context( *new_type, &dtctx);
+						derived_type_target->ub, derived_type_target->is_ub, &dtctx);
 		break;
 		case MPC_DATATYPES_UNKNOWN:
 			MPC_ERROR_REPORT( MPC_COMM_SELF, MPC_ERR_ARG, "Bad data-type");
@@ -1940,7 +1938,7 @@ int __INTERNAL__PMPC_Type_hcontiguous (MPC_Datatype * datatype, size_t count, MP
 			MPC_Datatype_set_context( *datatype, ctx);
 			
 			/* Increment target datatype refcounter here we do it once as there is only a single datatype */
-			PMPC_Type_use( *data_in );
+			//PMPC_Type_use( *data_in );
 
 			/* Unlock the array */
 			sctk_datatype_unlock( task_specific );
@@ -2137,7 +2135,8 @@ int PMPC_Derived_datatype ( MPC_Datatype * datatype,
 			    MPC_Datatype * types,
 			    unsigned long count,
 			    mpc_pack_absolute_indexes_t lb, int is_lb,
-			    mpc_pack_absolute_indexes_t ub, int is_ub)
+			    mpc_pack_absolute_indexes_t ub, int is_ub,
+			    struct Datatype_External_context *ectx )
 {
 	SCTK_PROFIL_START (MPC_Derived_datatype);
 	
@@ -2152,6 +2151,34 @@ int PMPC_Derived_datatype ( MPC_Datatype * datatype,
 	sctk_datatype_lock( task_specific );
 	
 	int i;
+	
+	/* First try to find a data-type with the same footprint */
+	for (i = MPC_STRUCT_DATATYPE_COUNT; i < SCTK_USER_DATA_TYPES_MAX; i++)
+	{
+		/* For each datatype */
+		sctk_derived_datatype_t * current_user_type = sctk_task_specific_get_derived_datatype( task_specific, MPC_TYPE_MAP_FROM_DERIVED( i ) );
+		
+		/* Is the slot NOT free ? */
+		if( current_user_type != NULL)
+		{
+			/* If types match */
+			if( Datatype_context_match( ectx, &current_user_type->context ) )
+			{
+				/* Add a reference to this data-type and we are done */
+				PMPC_Type_use( MPC_TYPE_MAP_FROM_DERIVED(i) );
+				
+				*datatype = MPC_TYPE_MAP_FROM_DERIVED(i);
+				
+				sctk_datatype_unlock( task_specific );
+				MPC_ERROR_SUCESS ();
+			}
+		}
+		
+	}
+	
+	
+	
+	
 	/* Here we jump the first MPC_STRUCT_DATATYPE_COUNT items
 	 * as they are reserved for common datatypes which are actually
 	 * derived ones */
@@ -2171,7 +2198,10 @@ int PMPC_Derived_datatype ( MPC_Datatype * datatype,
 			*datatype = new_id;
 
 	
-			return  PMPC_Derived_datatype_on_slot ( new_id, begins, ends, types, count,lb,  is_lb, ub,  is_ub);
+			int ret =  PMPC_Derived_datatype_on_slot ( new_id, begins, ends, types, count,lb,  is_lb, ub,  is_ub);
+			MPC_Datatype_set_context( new_id, ectx);
+			
+			return ret;
 		}
     }
     
@@ -2219,17 +2249,15 @@ int PMPC_Type_convert_to_derived( MPC_Datatype in_datatype, MPC_Datatype * out_d
 		/* Retrieve previous datatype if the type is contiguous */
 		datatypes_out[0] = in_datatype;
 
-
-		/* Lets now initialize the new derived datatype */
-		PMPC_Derived_datatype (out_datatype, begins_out, ends_out, datatypes_out, 1, 0, 0, 0, 0);
-
+		/* FILL ctx */
 		struct Datatype_External_context dtctx;
 		sctk_datatype_external_context_clear( &dtctx );
 		dtctx.combiner = MPC_COMBINER_CONTIGUOUS;
 		dtctx.count = 1;
 		dtctx.oldtype = in_datatype;
-		MPC_Datatype_set_context( *out_datatype, &dtctx);
-		
+
+		/* Lets now initialize the new derived datatype */
+		PMPC_Derived_datatype (out_datatype, begins_out, ends_out, datatypes_out, 1, 0, 0, 0, 0, &dtctx);
 		
 		/* Free temporary buffers */
 		sctk_free (begins_out);

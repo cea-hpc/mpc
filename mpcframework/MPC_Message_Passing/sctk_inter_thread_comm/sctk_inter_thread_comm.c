@@ -1028,7 +1028,12 @@ sctk_copy_buffer_absolute_absolute (sctk_pack_absolute_indexes_t * restrict in_b
 		unsigned long j;
 		unsigned long in_i;
 		unsigned long in_j;
-		sctk_nodebug ("sctk_copy_buffer_absolute_absolute mpc_pack");
+		sctk_nodebug ("sctk_copy_buffer_absolute_absolute mpc_pack %p", in_begins);
+		
+		/* Empty message */
+		if( !in_sizes )
+			return;
+		
 		if (in_begins == NULL)
 		{
 			in_begins = tmp_begin;
