@@ -1486,14 +1486,22 @@ int PMPC_Type_dup( MPC_Datatype old_type, MPC_Datatype * new_type )
 	sctk_derived_datatype_t * derived_type_target;
 	sctk_task_specific_t * task_specific = __MPC_get_task_specific ();
 	
+	/* Set type context */
+	struct Datatype_External_context dtctx;
+	sctk_datatype_external_context_clear( &dtctx );
+	dtctx.combiner = MPC_COMBINER_DUP;
+	dtctx.oldtype = old_type;
+	
 	switch( sctk_datatype_kind( old_type ) )
 	{
 		case MPC_DATATYPES_COMMON:
 			/* We dup common datatypes in contiguous ones in order
 			 * to have a context where to put the DUP combiner */
 		case MPC_DATATYPES_CONTIGUOUS:
-			/* Create a type consisting in one entry of the contiguous block */
-			PMPC_Type_hcontiguous (new_type, 1, &old_type);
+			/* Create a type consisting in one entry of the contiguous block
+			   here as the combiner is set to be a dup it wont reuse the previous
+			   contiguous that we are dupping from unless it has already been duped */
+			__INTERNAL__PMPC_Type_hcontiguous (new_type, 1, &old_type, &dtctx);
 		break;
 		case MPC_DATATYPES_DERIVED:
 			/* Here we just build a copy of the derived data-type */
@@ -1505,17 +1513,14 @@ int PMPC_Type_dup( MPC_Datatype old_type, MPC_Datatype * new_type )
 						derived_type_target->count,
 						derived_type_target->lb, derived_type_target->is_lb,
 						derived_type_target->ub, derived_type_target->is_ub);
+			
+			MPC_Datatype_set_context( *new_type, &dtctx);
 		break;
 		case MPC_DATATYPES_UNKNOWN:
 			MPC_ERROR_REPORT( MPC_COMM_SELF, MPC_ERR_ARG, "Bad data-type");
 		break;
 	}
-	
-	/* Set type context */
-	struct Datatype_External_context dtctx;
-	sctk_datatype_external_context_clear( &dtctx );
-	dtctx.combiner = MPC_COMBINER_DUP;
-	MPC_Datatype_set_context( *new_type, &dtctx);
+
 	
 	MPC_ERROR_SUCESS();
 }
@@ -1859,14 +1864,15 @@ int PMPC_Type_size (MPC_Datatype datatype, size_t * size)
 }
 
 /** \brief This function is the generic initializer for sctk_contiguous_datatype_t
- *  Creates a contiguous datatypes of count data_in
+ *  Creates a contiguous datatypes of count data_in while checking for unicity
  * 
  *  \param datatype Output datatype to be created
  *  \param count Number of entries of type data_in
  *  \param data_in Type of the entry to be created
+ *  \param ctx Context of the new data-type in order to allow unicity check
  * 
  */
-int PMPC_Type_hcontiguous (MPC_Datatype * datatype, size_t count, MPC_Datatype *data_in)
+int __INTERNAL__PMPC_Type_hcontiguous (MPC_Datatype * datatype, size_t count, MPC_Datatype *data_in, struct Datatype_External_context * ctx)
 {
 	SCTK_PROFIL_START (PMPC_Type_hcontiguous);
 	
@@ -1884,8 +1890,32 @@ int PMPC_Type_hcontiguous (MPC_Datatype * datatype, size_t count, MPC_Datatype *
 	size_t size;
 	PMPC_Type_size (*data_in, &size);
 	
-	/* Now lets try to find a free slot in the array */
+	
 	int i;
+	/* First see if such a datatype is not already allocated */
+	for (i = 0; i < SCTK_USER_DATA_TYPES_MAX; i++)
+	{
+		/* For each contiguous type slot */
+		sctk_contiguous_datatype_t *current_type = sctk_task_specific_get_contiguous_datatype( task_specific, MPC_TYPE_MAP_FROM_CONTIGUOUS(i) );
+		
+		/* We are only interested in allocated types */
+		if ( SCTK_CONTIGUOUS_DATATYPE_IS_FREE(current_type) )
+			continue;
+		
+		/* If types match */
+		if( Datatype_context_match( ctx, &current_type->context ) )
+		{
+			/* Add a reference to this data-type and we are done */
+			PMPC_Type_use( MPC_TYPE_MAP_FROM_CONTIGUOUS(i) );
+			
+			sctk_datatype_unlock( task_specific );
+			MPC_ERROR_SUCESS ();
+		}
+		
+	}
+	
+	/* We did not find a previously defined type with the same footprint
+	 * Now lets try to find a free slot in the array */
 	for (i = 0; i < SCTK_USER_DATA_TYPES_MAX; i++)
 	{
 		/* For each contiguous type slot */
@@ -1904,6 +1934,9 @@ int PMPC_Type_hcontiguous (MPC_Datatype * datatype, size_t count, MPC_Datatype *
 			/* Initialize the datatype */
 			sctk_contiguous_datatype_init( current_type , new_id , size, count, *data_in );
 
+			/* Set context */
+			MPC_Datatype_set_context( *datatype, ctx);
+			
 			/* Increment target datatype refcounter here we do it once as there is only a single datatype */
 			PMPC_Type_use( *data_in );
 
@@ -1922,6 +1955,26 @@ int PMPC_Type_hcontiguous (MPC_Datatype * datatype, size_t count, MPC_Datatype *
 	sctk_fatal ("Not enough datatypes allowed : you requested to many contiguous types (forgot to free ?)");
 	
 	return -1;
+}
+
+/** \brief This function is the generic initializer for sctk_contiguous_datatype_t
+ *  Creates a contiguous datatypes of count data_in
+ * 
+ *  \param datatype Output datatype to be created
+ *  \param count Number of entries of type data_in
+ *  \param data_in Type of the entry to be created
+ * 
+ */
+int PMPC_Type_hcontiguous (MPC_Datatype * datatype, size_t count, MPC_Datatype *data_in)
+{
+	/* HERE WE SET A DEFAULT CONTEXT */
+	struct Datatype_External_context dtctx;
+	sctk_datatype_external_context_clear( &dtctx );
+	dtctx.combiner = MPC_COMBINER_CONTIGUOUS;
+	dtctx.count = count;
+	dtctx.oldtype = *data_in;
+	
+	return __INTERNAL__PMPC_Type_hcontiguous (datatype, count, data_in, &dtctx);
 }
 
 

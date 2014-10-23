@@ -149,6 +149,7 @@ sctk_derived_datatype_t * sctk_task_specific_get_derived_datatype(  sctk_task_sp
  */
 mpc_per_communicator_t* sctk_thread_getspecific_mpc_per_comm(struct sctk_task_specific_s* task_specific,sctk_communicator_t comm);
 
+int __INTERNAL__PMPC_Type_hcontiguous (MPC_Datatype * datatype, size_t count, MPC_Datatype *data_in, struct Datatype_External_context * ctx);
 
 int MPC_Is_derived_datatype (MPC_Datatype datatype, int *res, sctk_derived_datatype_t *output_datatype );
 

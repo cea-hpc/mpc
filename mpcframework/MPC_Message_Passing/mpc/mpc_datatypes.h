@@ -125,6 +125,17 @@ struct Datatype_External_context
  */
 void sctk_datatype_external_context_clear( struct Datatype_External_context * ctx );
 
+
+/** \brief Function used to factorize data-types by checking their equality
+ *  
+ *  \param ref The datatype external ctx to be checked
+ *  \param candidate The datatype we check against
+ *  \return 1 if datatypes are equal 0 otherwise
+ */
+int Datatype_context_match( struct Datatype_External_context * eref, struct Datatype_context * candidate );
+
+
+
 /** \brief Setup the datatype context
  *  
  *  \param ctx Context to fill

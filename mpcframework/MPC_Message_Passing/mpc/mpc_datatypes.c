@@ -817,6 +817,73 @@ void sctk_datype_name_release()
 /* Datatype  Context                                                    */
 /************************************************************************/
 
+static int Datatype_context_check_envelope( struct Datatype_context * ref, struct Datatype_context * candidate )
+{
+	int num_integers = 0;
+	int num_addresses = 0;
+	int num_datatypes = 0;
+	int dummy_combiner = MPC_COMBINER_UNKNOWN;
+	
+	/* Retrieve envelope */
+	sctk_datatype_fill_envelope( ref , &num_integers, &num_addresses , &num_datatypes , &dummy_combiner );
+	
+	/* Now compare each array */
+	
+	/* Type is generally the shortest */
+	int i;
+	
+	for( i = 0 ; i < num_datatypes ; i++ )
+	{
+		if( ref->array_of_types[i] != candidate->array_of_types[i] )
+			return 0;
+	}
+	
+	/* Now integers */
+	
+	for( i = 0 ; i < num_integers ; i++ )
+	{
+		if( ref->array_of_integers[i] != candidate->array_of_integers[i] )
+			return 0;
+	}
+	
+	/* And addresses */
+	
+	for( i = 0 ; i < num_addresses ; i++ )
+	{
+		if( ref->array_of_addresses[i] != candidate->array_of_addresses[i] )
+			return 0;
+	}
+	
+	sctk_nodebug("TYPE MATCH");
+	
+	/* Here equality has been  verified */
+	return 1;
+}
+
+
+int Datatype_context_match( struct Datatype_External_context * eref, struct Datatype_context * candidate )
+{
+	if( !eref || !candidate )
+		return 0;
+	
+	/* No need to fill if at least combiner are not the same */
+	if( eref->combiner != candidate->combiner )
+		return 0;
+	
+	struct Datatype_context ref;
+	sctk_datatype_context_clear(&ref);
+	sctk_datatype_context_set( &ref , eref );
+	
+	/* Now check if combiners are equal */
+	int ret =  Datatype_context_check_envelope( &ref, candidate );
+
+	/* Release the temporary context */
+	sctk_datatype_context_free( &ref );
+	
+	return ret;
+}
+
+
 void sctk_datatype_context_clear( struct Datatype_context * ctx )
 {
 	memset( ctx, 0, sizeof( struct Datatype_context ) );

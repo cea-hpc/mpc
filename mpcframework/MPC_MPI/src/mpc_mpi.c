@@ -2787,6 +2787,13 @@ int PMPIX_Grequest_class_allocate( MPIX_Grequest_class target_class, void *extra
  */
 static int __INTERNAL__PMPI_Type_contiguous (unsigned long count, MPI_Datatype data_in,  MPI_Datatype * data_out)
 {
+	/* Set its context */
+	struct Datatype_External_context dtctx;
+	sctk_datatype_external_context_clear( &dtctx );
+	dtctx.combiner = MPI_COMBINER_CONTIGUOUS;
+	dtctx.count = count;
+	dtctx.oldtype = data_in;
+	
 	/* If source datatype is a derived datatype we have to create a new derived datatype */
 	if (sctk_datatype_is_derived (data_in))
 	{
@@ -2842,6 +2849,7 @@ static int __INTERNAL__PMPI_Type_contiguous (unsigned long count, MPI_Datatype d
 		/* Actually create the new datatype */
 		PMPC_Derived_datatype (data_out, begins_out, ends_out, datatypes, count_out, input_datatype.lb,	input_datatype.is_lb, new_ub, input_datatype.is_ub);
 	
+		MPC_Datatype_set_context( *data_out, &dtctx);
 		/* Free temporary buffers */
 		sctk_free (datatypes);
 		sctk_free (begins_out);
@@ -2850,16 +2858,8 @@ static int __INTERNAL__PMPI_Type_contiguous (unsigned long count, MPI_Datatype d
 	else
 	{
 		/* Here we handle contiguous or common datatypes which can be replicated directly */
-		PMPC_Type_hcontiguous(data_out, count, &data_in);
+		__INTERNAL__PMPC_Type_hcontiguous (data_out, count, &data_in, &dtctx);
 	}
-	
-	/* Set its context */
-	struct Datatype_External_context dtctx;
-	sctk_datatype_external_context_clear( &dtctx );
-	dtctx.combiner = MPI_COMBINER_CONTIGUOUS;
-	dtctx.count = count;
-	dtctx.oldtype = data_in;
-	MPC_Datatype_set_context( *data_out, &dtctx);
 	
 	return MPI_SUCCESS;
 }
