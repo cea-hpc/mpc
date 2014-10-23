@@ -34,8 +34,16 @@ header_sh >> bin/mpc_ldflags
 
 cat <<EOF >> bin/mpc_ldflags
 
+ROMIO=""
 
-FLAGS="-Wl,-rpath,${SCTK_LIB_DIR} -Wl,-rpath,${SCTK_LIB_DIR}/../lib64 -lmpc_tdb_remote_static $SCTK_LDFLAGS ${SCTK_LIB_DIR}/libromio.a"
+#Only use romio if it is intalled
+#because we use the same compiler
+#to build romio itself
+if test -e "${SCTK_LIB_DIR}/libromio.a"; then
+	ROMIO="${SCTK_LIB_DIR}/libromio.a"
+fi
+
+FLAGS="-Wl,-rpath,${SCTK_LIB_DIR} -Wl,-rpath,${SCTK_LIB_DIR}/../lib64 -lmpc_tdb_remote_static $SCTK_LDFLAGS \${ROMIO}"
 
 if test "\$MPC_USE_INTEL_COMPILER" = "1"; then
 MPC_DO_NOT_USE_GNU_LM="1"
