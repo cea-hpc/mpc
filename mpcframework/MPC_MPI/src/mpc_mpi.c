@@ -152,7 +152,7 @@ static int __INTERNAL__PMPI_Sendrecv (void *, int, MPI_Datatype, int, int,
 static int __INTERNAL__PMPI_Sendrecv_replace (void *, int, MPI_Datatype, int,
 					      int, int, int, MPI_Comm,
 					      MPI_Status *);
-static int __INTERNAL__PMPI_Type_contiguous (int, MPI_Datatype,
+static int __INTERNAL__PMPI_Type_contiguous (unsigned long, MPI_Datatype,
 					     MPI_Datatype *);
 static int __INTERNAL__PMPI_Type_vector (int, int, int, MPI_Datatype,
 					 MPI_Datatype *);
@@ -2785,7 +2785,7 @@ int PMPIX_Grequest_class_allocate( MPIX_Grequest_class target_class, void *extra
  *  \param data_out The output type
  * 
  */
-static int __INTERNAL__PMPI_Type_contiguous (int count, MPI_Datatype data_in,  MPI_Datatype * data_out)
+static int __INTERNAL__PMPI_Type_contiguous (unsigned long count, MPI_Datatype data_in,  MPI_Datatype * data_out)
 {
 	/* If source datatype is a derived datatype we have to create a new derived datatype */
 	if (sctk_datatype_is_derived (data_in))
@@ -2837,7 +2837,7 @@ static int __INTERNAL__PMPI_Type_contiguous (int count, MPI_Datatype data_in,  M
 		}
 
 		/* Update new type upperbound */
-		int new_ub = input_datatype.ub + extent * (count - 1);
+		long new_ub = input_datatype.ub + extent * (count - 1);
 
 		/* Actually create the new datatype */
 		PMPC_Derived_datatype (data_out, begins_out, ends_out, datatypes, count_out, input_datatype.lb,	input_datatype.is_lb, new_ub, input_datatype.is_ub);
@@ -2926,6 +2926,10 @@ static int __INTERNAL__PMPI_Type_hvector (int count,
 		/* Compute the extent */
 		__INTERNAL__PMPI_Type_extent (old_type, (MPI_Aint *) & extent);
 
+		/*  Handle the contiguous case */
+		if( ((blocklen * extent) == stride) && ( 0 <= stride ) )
+			return __INTERNAL__PMPI_Type_contiguous (count * blocklen, old_type,  newtype_p);
+		
 		sctk_nodebug ("extend %lu, count %d, blocklen %d, stide %lu", extent, count, blocklen, stride);
 
 		/* The vector is created by repeating the input blocks
