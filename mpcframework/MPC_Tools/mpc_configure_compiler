@@ -283,8 +283,18 @@ cat << EOF >> $1
         # quotes (we try to quote all arguments in case they include
         # any spaces)
     *\"*)
+EOF
+
+if test "${1#*"bin/mpc_cxx"}" != "$1"; then
+	cat << EOF >> $1
     qarg="'"\$arg"'"
-    ;;
+else
+	cat << EOF >> $1
+	qarg="\$arg"
+fi
+
+cat << EOF >> $1
+	;;
     *\'*)
     qarg='\"'"\$arg"'\"'
     ;;
