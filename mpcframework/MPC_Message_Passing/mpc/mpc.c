@@ -1908,6 +1908,8 @@ int __INTERNAL__PMPC_Type_hcontiguous (MPC_Datatype * datatype, size_t count, MP
 			/* Add a reference to this data-type and we are done */
 			PMPC_Type_use( MPC_TYPE_MAP_FROM_CONTIGUOUS(i) );
 			
+			*datatype = MPC_TYPE_MAP_FROM_CONTIGUOUS(i);
+			
 			sctk_datatype_unlock( task_specific );
 			MPC_ERROR_SUCESS ();
 		}
