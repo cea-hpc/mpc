@@ -288,9 +288,11 @@ EOF
 if test "${1#*"bin/mpc_cxx"}" != "$1"; then
 	cat << EOF >> $1
     qarg="'"\$arg"'"
+EOF
 else
 	cat << EOF >> $1
 	qarg="\$arg"
+EOF
 fi
 
 cat << EOF >> $1
