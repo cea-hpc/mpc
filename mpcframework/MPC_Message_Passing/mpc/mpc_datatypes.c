@@ -833,10 +833,32 @@ static int Datatype_context_check_envelope( struct Datatype_context * ref, struc
 	/* Type is generally the shortest */
 	int i;
 	
+	/*
 	for( i = 0 ; i < num_datatypes ; i++ )
 	{
 		if( ref->array_of_types[i] != candidate->array_of_types[i] )
+		sctk_error("DT %d == %d", ref->array_of_types[i] ,candidate->array_of_types[i] );
+	}
+	
+
+	for( i = 0 ; i < num_integers ; i++ )
+	{
+		sctk_error("INT %d == %d", ref->array_of_integers[i] ,candidate->array_of_integers[i] );
+	}
+
+	for( i = 0 ; i < num_addresses ; i++ )
+	{
+		sctk_error("AD %d == %d", ref->array_of_addresses[i] ,candidate->array_of_addresses[i] );
+	}
+	*/
+
+	
+	for( i = 0 ; i < num_datatypes ; i++ )
+	{
+		if( ref->array_of_types[i] != candidate->array_of_types[i] )
+		{
 			return 0;
+		}
 	}
 	
 	/* Now integers */
@@ -855,7 +877,7 @@ static int Datatype_context_check_envelope( struct Datatype_context * ref, struc
 			return 0;
 	}
 	
-	sctk_nodebug("TYPE MATCH");
+	//sctk_error("TYPE MATCH");
 	
 	/* Here equality has been  verified */
 	return 1;
@@ -870,7 +892,6 @@ int Datatype_context_match( struct Datatype_External_context * eref, struct Data
 	/* No need to fill if at least combiner are not the same */
 	if( eref->combiner != candidate->combiner )
 		return 0;
-	
 	struct Datatype_context ref;
 	sctk_datatype_context_clear(&ref);
 	sctk_datatype_context_set( &ref , eref );

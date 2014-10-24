@@ -154,6 +154,8 @@ static int __INTERNAL__PMPI_Sendrecv_replace (void *, int, MPI_Datatype, int,
 					      MPI_Status *);
 static int __INTERNAL__PMPI_Type_contiguous (unsigned long, MPI_Datatype,
 					     MPI_Datatype *);
+static int __INTERNAL__PMPI_Type_contiguous_inherits (unsigned long, MPI_Datatype,
+					     MPI_Datatype *, struct Datatype_External_context * ctx );
 static int __INTERNAL__PMPI_Type_vector (int, int, int, MPI_Datatype,
 					 MPI_Datatype *);
 static int __INTERNAL__PMPI_Type_hvector (int, int, MPI_Aint, MPI_Datatype,
@@ -575,7 +577,7 @@ __sctk_init_mpi_errors ()
     MPI_ERROR_REPORT (comm, MPI_ERR_TYPE, "Bad datatype provided");
 
 #define mpi_check_type_create(datatype,comm)		\
-  if ((datatype >= SCTK_USER_DATA_TYPES_MAX) && (sctk_datatype_is_derived(datatype) != 1) && ((datatype != MPI_UB) && (datatype != MPI_LB))) \
+  if ((datatype >= SCTK_USER_DATA_TYPES_MAX) && (sctk_datatype_is_derived(datatype) != 1) && (sctk_datatype_is_contiguous(datatype) != 1) && ((datatype != MPI_UB) && (datatype != MPI_LB))) \
     MPI_ERROR_REPORT (comm, MPI_ERR_TYPE, "");
 
 static int is_finalized = 0;
@@ -2774,25 +2776,36 @@ int PMPIX_Grequest_class_allocate( MPIX_Grequest_class target_class, void *extra
 /* Datatype Handling                                                    */
 /************************************************************************/
 
-/** \brief This function creates a contiguous MPI_Datatype
+/** \brief This function creates a contiguous MPI_Datatype with possible CTX inheritance
  *  
  *  Such datatype is obtained by directly appending  count copies of data_in type
- *  
- *  If the source datatype is A[ ]B and count is 3 we obtain A[ ]BA[ ]BA[ ]B
+    HERE CONTEXT CAN BE OVERRIDED (for example to be a contiguous vector)
  *  
  *  \param count Number of elements of type data_in in the data_out type
  *  \param data_in The type to be replicated count times
  *  \param data_out The output type
+ *  \param ctx THe context is is inherited from (in case another datatype is built-on top of it)
  * 
  */
-static int __INTERNAL__PMPI_Type_contiguous (unsigned long count, MPI_Datatype data_in,  MPI_Datatype * data_out)
+static int __INTERNAL__PMPI_Type_contiguous_inherits (unsigned long count, MPI_Datatype data_in,  MPI_Datatype * data_out, struct Datatype_External_context *ref_dtctx)
 {
-	/* Set its context */
-	struct Datatype_External_context dtctx;
-	sctk_datatype_external_context_clear( &dtctx );
-	dtctx.combiner = MPI_COMBINER_CONTIGUOUS;
-	dtctx.count = count;
-	dtctx.oldtype = data_in;
+/* Set its context */
+	struct Datatype_External_context *dtctx = NULL;
+	
+	struct Datatype_External_context local_dtctx;
+	sctk_datatype_external_context_clear( &local_dtctx );
+	local_dtctx.combiner = MPI_COMBINER_CONTIGUOUS;
+	local_dtctx.count = count;
+	local_dtctx.oldtype = data_in;
+	
+	if( ref_dtctx == NULL )
+	{
+		dtctx = &local_dtctx;
+	}
+	else
+	{
+		dtctx = ref_dtctx;
+	}
 		
 	/* If source datatype is a derived datatype we have to create a new derived datatype */
 	if (sctk_datatype_is_derived (data_in))
@@ -2851,9 +2864,9 @@ static int __INTERNAL__PMPI_Type_contiguous (unsigned long count, MPI_Datatype d
 			new_ub = 0;
 		
 		/* Actually create the new datatype */
-		PMPC_Derived_datatype (data_out, begins_out, ends_out, datatypes, count_out, input_datatype.lb,	input_datatype.is_lb, new_ub, input_datatype.is_ub, &dtctx);
+		PMPC_Derived_datatype (data_out, begins_out, ends_out, datatypes, count_out, input_datatype.lb,	input_datatype.is_lb, new_ub, input_datatype.is_ub, dtctx);
 	
-		MPC_Datatype_set_context( *data_out, &dtctx);
+		MPC_Datatype_set_context( *data_out, dtctx);
 		/* Free temporary buffers */
 		sctk_free (datatypes);
 		sctk_free (begins_out);
@@ -2862,10 +2875,28 @@ static int __INTERNAL__PMPI_Type_contiguous (unsigned long count, MPI_Datatype d
 	else
 	{
 		/* Here we handle contiguous or common datatypes which can be replicated directly */
-		__INTERNAL__PMPC_Type_hcontiguous (data_out, count, &data_in, &dtctx);
+		__INTERNAL__PMPC_Type_hcontiguous (data_out, count, &data_in, dtctx);
 	}
 	
 	return MPI_SUCCESS;
+}
+
+
+/** \brief This function creates a contiguous MPI_Datatype
+ *  
+ *  Such datatype is obtained by directly appending  count copies of data_in type
+ *  
+ *  If the source datatype is A[ ]B and count is 3 we obtain A[ ]BA[ ]BA[ ]B
+ *  
+ *  \param count Number of elements of type data_in in the data_out type
+ *  \param data_in The type to be replicated count times
+ *  \param data_out The output type
+ * 
+ */
+static int __INTERNAL__PMPI_Type_contiguous (unsigned long count, MPI_Datatype data_in,  MPI_Datatype * data_out )
+{
+	/* Here we set the ctx to NULL in order to create a contiguous type (no overriding) */
+	return __INTERNAL__PMPI_Type_contiguous_inherits (count,  data_in, data_out, NULL);
 }
 
 /** \brief This function creates a vector datatype
@@ -2881,12 +2912,6 @@ static int __INTERNAL__PMPI_Type_vector (int count, int blocklen, int stride, MP
 	/* Retrieve type extent */
 	__INTERNAL__PMPI_Type_extent(old_type, &extent);
 	
-	/* Compute the stride in bytes */
-	unsigned long stride_t = stride * extent ;
-	
-	/* Call the hvector function */
-	int res =  __INTERNAL__PMPI_Type_hvector( count, blocklen,  stride_t, old_type,  newtype_p);
-	
 	/* Set its context to overide the one from hvector */
 	struct Datatype_External_context dtctx;
 	sctk_datatype_external_context_clear( &dtctx );
@@ -2895,6 +2920,23 @@ static int __INTERNAL__PMPI_Type_vector (int count, int blocklen, int stride, MP
 	dtctx.blocklength = blocklen;
 	dtctx.stride = stride;
 	dtctx.oldtype = old_type;
+
+
+	if( (blocklen == stride) && ( 0 <= stride ) )
+	{
+		int ret = __INTERNAL__PMPI_Type_contiguous_inherits (count * blocklen, old_type,  newtype_p, &dtctx);
+		MPC_Datatype_set_context( *newtype_p, &dtctx);
+		return ret;
+	}
+		
+	
+	/* Compute the stride in bytes */
+	unsigned long stride_t = stride * extent ;
+	
+	/* Call the hvector function */
+	int res =  __INTERNAL__PMPI_Type_hvector( count, blocklen,  stride_t, old_type,  newtype_p);
+	
+
 	MPC_Datatype_set_context( *newtype_p, &dtctx);
 	
 	return res;
@@ -2943,7 +2985,7 @@ static int __INTERNAL__PMPI_Type_hvector (int count,
 		if( (((blocklen * extent) == stride) && ( 0 <= stride ))
 		|| (count == 0 ) )
 		{
-			int ret = __INTERNAL__PMPI_Type_contiguous (count * blocklen, old_type,  newtype_p);
+			int ret = __INTERNAL__PMPI_Type_contiguous_inherits (count * blocklen, old_type,  newtype_p, &dtctx);
 			MPC_Datatype_set_context( *newtype_p, &dtctx);
 			return ret;
 		}
@@ -3172,7 +3214,7 @@ static int __INTERNAL__PMPI_Type_hindexed (int count,
 		/*  Handle the contiguous case or Handle count == 0 */
 		if( count == 0 )
 		{
-			int ret = __INTERNAL__PMPI_Type_contiguous ( 0, old_type, newtype);
+			int ret = __INTERNAL__PMPI_Type_contiguous_inherits ( 0, old_type, newtype, &dtctx);
 			MPC_Datatype_set_context( *newtype, &dtctx);
 			return ret;
 		}
@@ -10804,7 +10846,6 @@ int PMPI_Type_create_struct (int count, int blocklens[], MPI_Aint indices[], MPI
 	int res = MPI_ERR_INTERN;
 	int i;
 	
-	
 	mpi_check_count(count,comm);
 	
 	
@@ -10813,7 +10854,6 @@ int PMPI_Type_create_struct (int count, int blocklens[], MPI_Aint indices[], MPI
 	for(i = 0; i < count; i++)
 	{
 		mpi_check_type( old_types[i], MPI_COMM_WORLD );
-		
 		mpi_check_type_create(old_types[i],comm); 
 		if(blocklens[i] < 0)
 		{

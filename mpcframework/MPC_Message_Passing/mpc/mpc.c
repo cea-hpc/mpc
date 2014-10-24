@@ -1861,6 +1861,67 @@ int PMPC_Type_size (MPC_Datatype datatype, size_t * size)
 	MPC_ERROR_SUCESS ();
 }
 
+
+static inline int sctk_datatype_check_contiguous( sctk_task_specific_t *task_specific , struct Datatype_External_context * ctx, MPC_Datatype * datatype )
+{
+	int i;
+	/* see if such a datatype is not already allocated */
+	for (i = 0; i < SCTK_USER_DATA_TYPES_MAX; i++)
+	{
+		/* For each contiguous type slot */
+		sctk_contiguous_datatype_t *current_type = sctk_task_specific_get_contiguous_datatype( task_specific, MPC_TYPE_MAP_FROM_CONTIGUOUS(i) );
+		
+		/* We are only interested in allocated types */
+		if ( SCTK_CONTIGUOUS_DATATYPE_IS_FREE(current_type) )
+			continue;
+
+		/* If types match */
+		if( Datatype_context_match( ctx, &current_type->context ) )
+		{
+			/* Add a reference to this data-type and we are done */
+			PMPC_Type_use( MPC_TYPE_MAP_FROM_CONTIGUOUS(i) );
+			
+			*datatype = MPC_TYPE_MAP_FROM_CONTIGUOUS(i);
+			
+			return 1;
+		}
+		
+	}
+
+	return 0;
+}
+
+static inline int sctk_datatype_check_derived( sctk_task_specific_t *task_specific , struct Datatype_External_context * ctx, MPC_Datatype * datatype )
+{
+	int i;
+	
+	/* try to find a data-type with the same footprint in derived  */
+	for (i = MPC_STRUCT_DATATYPE_COUNT; i < SCTK_USER_DATA_TYPES_MAX; i++)
+	{
+		/* For each datatype */
+		sctk_derived_datatype_t * current_user_type = sctk_task_specific_get_derived_datatype( task_specific, MPC_TYPE_MAP_FROM_DERIVED( i ) );
+		
+		/* Is the slot NOT free ? */
+		if( current_user_type != NULL)
+		{
+
+			/* If types match */
+			if( Datatype_context_match( ctx, &current_user_type->context ) )
+			{
+				/* Add a reference to this data-type and we are done */
+				PMPC_Type_use( MPC_TYPE_MAP_FROM_DERIVED(i) );
+	
+				*datatype = MPC_TYPE_MAP_FROM_DERIVED(i);
+				
+				return 1;
+			}
+		}
+		
+	}
+	
+	return 0;
+}
+
 /** \brief This function is the generic initializer for sctk_contiguous_datatype_t
  *  Creates a contiguous datatypes of count data_in while checking for unicity
  * 
@@ -1890,28 +1951,11 @@ int __INTERNAL__PMPC_Type_hcontiguous (MPC_Datatype * datatype, size_t count, MP
 	
 	
 	int i;
-	/* First see if such a datatype is not already allocated */
-	for (i = 0; i < SCTK_USER_DATA_TYPES_MAX; i++)
+
+	if( sctk_datatype_check_contiguous( task_specific, ctx, datatype ) )
 	{
-		/* For each contiguous type slot */
-		sctk_contiguous_datatype_t *current_type = sctk_task_specific_get_contiguous_datatype( task_specific, MPC_TYPE_MAP_FROM_CONTIGUOUS(i) );
-		
-		/* We are only interested in allocated types */
-		if ( SCTK_CONTIGUOUS_DATATYPE_IS_FREE(current_type) )
-			continue;
-		
-		/* If types match */
-		if( Datatype_context_match( ctx, &current_type->context ) )
-		{
-			/* Add a reference to this data-type and we are done */
-			PMPC_Type_use( MPC_TYPE_MAP_FROM_CONTIGUOUS(i) );
-			
-			*datatype = MPC_TYPE_MAP_FROM_CONTIGUOUS(i);
-			
-			sctk_datatype_unlock( task_specific );
-			MPC_ERROR_SUCESS ();
-		}
-		
+		sctk_datatype_unlock( task_specific );
+		MPC_ERROR_SUCESS();
 	}
 	
 	/* We did not find a previously defined type with the same footprint
@@ -2152,32 +2196,21 @@ int PMPC_Derived_datatype ( MPC_Datatype * datatype,
 	
 	int i;
 	
-	/* First try to find a data-type with the same footprint */
-	for (i = MPC_STRUCT_DATATYPE_COUNT; i < SCTK_USER_DATA_TYPES_MAX; i++)
+	/* Here we check against contiguous as in some case
+	 * a derived datatype can be stored directly as a 
+	 * contiguous one */
+	if( sctk_datatype_check_contiguous( task_specific, ectx, datatype ) )
 	{
-		/* For each datatype */
-		sctk_derived_datatype_t * current_user_type = sctk_task_specific_get_derived_datatype( task_specific, MPC_TYPE_MAP_FROM_DERIVED( i ) );
-		
-		/* Is the slot NOT free ? */
-		if( current_user_type != NULL)
-		{
-			/* If types match */
-			if( Datatype_context_match( ectx, &current_user_type->context ) )
-			{
-				/* Add a reference to this data-type and we are done */
-				PMPC_Type_use( MPC_TYPE_MAP_FROM_DERIVED(i) );
-				
-				*datatype = MPC_TYPE_MAP_FROM_DERIVED(i);
-				
-				sctk_datatype_unlock( task_specific );
-				MPC_ERROR_SUCESS ();
-			}
-		}
-		
+		sctk_datatype_unlock( task_specific );
+		MPC_ERROR_SUCESS();
 	}
 	
-	
-	
+	/* We did not find it lets now look at contiguous */
+	if( sctk_datatype_check_derived( task_specific, ectx, datatype ) )
+	{
+		sctk_datatype_unlock( task_specific );
+		MPC_ERROR_SUCESS();
+	}
 	
 	/* Here we jump the first MPC_STRUCT_DATATYPE_COUNT items
 	 * as they are reserved for common datatypes which are actually
