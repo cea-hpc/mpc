@@ -580,6 +580,11 @@ printSummary
 genMakefile
 createRootMakefile
 
+#Create the MPC env run file 
+applyOnTemplate "${PROJECT_TEMPLATE_DIR}/mpc_env.sh.in" > ${PROJECT_BUILD_DIR}/mpc_env.sh
+chmod +x  ${PROJECT_BUILD_DIR}/mpc_env.sh
+
+
 #Made verbose if seq
 if [ "$MAKE_J" = "1" ] || [ -z "$MAKE_J" ]; then
 	if [ -z "$STEP_WRAPPER_VERBOSE" ]; then 

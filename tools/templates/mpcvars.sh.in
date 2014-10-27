@@ -1,4 +1,15 @@
 #!/bin/sh
+
+# NOTE TO MPC DEVELOPPERS ONLY
+# =============================
+# /!\ If you add new things here please
+# make sure they are also in mpc_env.sh.in
+# as this file might be used when
+# bootstrapping MPC dependencies (ROMIO)
+# during the external dep. setup process 
+# (see the Makefile.generic.autotools.mpc) wrapper
+# END OF NOTE
+
 MPC_INSTALL_DIR_PREFIX="@PREFIX@"
 SHELL_NAME="${0}"
 if test "${0}"  = "-bash"; then

@@ -1,0 +1,42 @@
+#!/bin/sh
+MPC_INSTALL_DIR_PREFIX="@PREFIX@"
+
+export MPC_INSTALL_DIR_PREFIX
+
+MPC_RPREFIX="@PREFIX@"
+export MPC_RPREFIX
+
+host=$1
+target=$2
+
+. "${MPC_RPREFIX}/${target}/${target}/bin/mpcvars.sh"
+
+MPC_HOST_SUBPREFIX="${host}"
+export MPC_HOST_SUBPREFIX
+MPC_TARGET_SUBPREFIX="${target}" 
+export MPC_TARGET_SUBPREFIX
+MPC_SUBPREFIX="${host}/${target}"
+export MPC_SUBPREFIX
+
+#Remove host and target from args 
+shift
+shift
+
+
+#Now make sure we keep quotes when
+#executing the subscript
+CMD=""
+
+for i in "$@"
+do
+ echo $i | grep "\s" > /dev/null
+ if test "x${?}" = "x0"; then
+	CMD="${CMD} '${i}'"
+ else
+	CMD="${CMD} ${i}"
+ fi
+done
+
+
+eval $CMD
+
