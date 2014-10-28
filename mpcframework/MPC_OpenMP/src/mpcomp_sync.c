@@ -38,6 +38,8 @@ static sctk_spinlock_t global_atomic_lock = SCTK_SPINLOCK_INITIALIZER;
 static sctk_thread_mutex_t global_critical_lock =
   SCTK_THREAD_MUTEX_INITIALIZER;
 
+static sctk_spinlock_t global_allocate_named_lock = SCTK_SPINLOCK_INITIALIZER;
+
 void
 __mpcomp_atomic_begin ()
 {
@@ -91,15 +93,22 @@ __mpcomp_named_critical_begin (void **l)
 	sctk_assert( l ) ;
 
 	if ( *l == NULL ) {
+	  sctk_spinlock_lock( &(global_allocate_named_lock) ) ;
+	  if ( *l == NULL ) {
+	    sctk_thread_mutex_t * temp_l ;
 		sctk_nodebug( "[%d] __mpcomp_named_critical_begin: should allocated lock",
 				((mpcomp_thread_t *)sctk_openmp_thread_tls)->rank );
 
 
-		*l = malloc( sizeof( sctk_thread_mutex_t ) ) ;
+		temp_l = malloc( sizeof( sctk_thread_mutex_t ) ) ;
+		sctk_assert( temp_l ) ;
+
+		sctk_thread_mutex_init( temp_l, NULL ) ;
+
+		*l = temp_l ;
 		sctk_assert( *l ) ;
-
-		sctk_thread_mutex_init( (sctk_thread_mutex_t *)*l, NULL ) ;
-
+	  }
+	  sctk_spinlock_unlock( &(global_allocate_named_lock) ) ;
 	}
 
 	sctk_nodebug ("[%d] __mpcomp_named_critical_begin: Before lock",
