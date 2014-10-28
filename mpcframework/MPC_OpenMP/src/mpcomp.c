@@ -588,6 +588,8 @@ void __mpcomp_instance_init( mpcomp_instance_t * instance, int nb_mvps,
 		instance->mvps[0] = (mpcomp_mvp_t *)sctk_malloc( 1 * sizeof( mpcomp_mvp_t ) ) ;
 		sctk_assert( instance->mvps[0] != NULL ) ;
 
+		instance->mvps[0]->min_index = 0 ;
+
 		instance->nb_mvps = 1 ;
 
 		instance->root = NULL ;
@@ -632,32 +634,20 @@ void in_order_scheduler( mpcomp_mvp_t * mvp ) {
     sctk_assert( ((mpcomp_thread_t *)sctk_openmp_thread_tls)->instance->team != NULL ) ;
     sctk_assert( mvp->threads[i].info.func != NULL ) ;
 
-#if 0
-	/* TODO debugging scenario only */
-		sctk_debug( "in_order_scheduler: before print shared value %d %d",
-				((int *)mvp->threads[i].info.shared)[0],
-				((int *)mvp->threads[i].info.shared)[1]
-				) ;
-
-		if ( ((int *)mvp->threads[i].info.shared)[1] == 21 ) {
-			((int *)mvp->threads[i].info.shared)[0]++ ;
-		}
-#endif
-
 		/* Handle beginning of combined parallel region */
 		switch( mvp->threads[i].info.combined_pragma ) {
 			case MPCOMP_COMBINED_NONE:
-				sctk_debug( "in_order_scheduler: BEGIN - No combined parallel" ) ;
+				sctk_nodebug( "in_order_scheduler: BEGIN - No combined parallel" ) ;
 				break ;
 			case MPCOMP_COMBINED_SECTION:
-				sctk_debug( "in_order_scheduler: BEGIN - Combined parallel/sections w/ %d section(s)",
+				sctk_nodebug( "in_order_scheduler: BEGIN - Combined parallel/sections w/ %d section(s)",
 						mvp->threads[i].info.nb_sections	) ;
 				__mpcomp_sections_init( 
 						&(mvp->threads[i]),
 						mvp->threads[i].info.nb_sections ) ;
 				break ;
 			case MPCOMP_COMBINED_STATIC_LOOP:
-				sctk_debug( "in_order_scheduler: BEGIN - Combined parallel/loop" ) ;
+				sctk_nodebug( "in_order_scheduler: BEGIN - Combined parallel/loop" ) ;
 				__mpcomp_static_loop_init(
 						&(mvp->threads[i]),
 						mvp->threads[i].info.loop_lb,
@@ -667,7 +657,7 @@ void in_order_scheduler( mpcomp_mvp_t * mvp ) {
 						) ;
 				break ;
 			case MPCOMP_COMBINED_DYN_LOOP:
-				sctk_debug( "in_order_scheduler: BEGIN - Combined parallel/loop" ) ;
+				sctk_nodebug( "in_order_scheduler: BEGIN - Combined parallel/loop" ) ;
 				__mpcomp_dynamic_loop_init(
 						&(mvp->threads[i]),
 						mvp->threads[i].info.loop_lb,
@@ -686,17 +676,17 @@ void in_order_scheduler( mpcomp_mvp_t * mvp ) {
 		/* Handle ending of combined parallel region */
 		switch( mvp->threads[i].info.combined_pragma ) {
 			case MPCOMP_COMBINED_NONE:
-				sctk_debug( "in_order_scheduler: END - No combined parallel" ) ;
+				sctk_nodebug( "in_order_scheduler: END - No combined parallel" ) ;
 				break ;
 			case MPCOMP_COMBINED_SECTION:
-				sctk_debug( "in_order_scheduler: END - Combined parallel/sections w/ %d section(s)",
+				sctk_nodebug( "in_order_scheduler: END - Combined parallel/sections w/ %d section(s)",
 						mvp->threads[i].info.nb_sections	) ;
 				break ;
 			case MPCOMP_COMBINED_STATIC_LOOP:
-				sctk_debug( "in_order_scheduler: END - Combined parallel/loop" ) ;
+				sctk_nodebug( "in_order_scheduler: END - Combined parallel/loop" ) ;
 				break ;
 			case MPCOMP_COMBINED_DYN_LOOP:
-				sctk_debug( "in_order_scheduler: END - Combined parallel/loop" ) ;
+				sctk_nodebug( "in_order_scheduler: END - Combined parallel/loop" ) ;
 				__mpcomp_dynamic_loop_end_nowait(
 						&(mvp->threads[i])
 						) ;
@@ -706,17 +696,6 @@ void in_order_scheduler( mpcomp_mvp_t * mvp ) {
 				break ;
 		}
 
-#if 0
-	/* TODO debugging scenario only */
-		sctk_debug( "in_order_scheduler: print shared value %d %d",
-				((int *)mvp->threads[i].info.shared)[0],
-				((int *)mvp->threads[i].info.shared)[1]
-				) ;
-
-		if ( ((int *)mvp->threads[i].info.shared)[1] == 21 ) {
-			((int *)mvp->threads[i].info.shared)[0]++ ;
-		}
-#endif
 
 
     mvp->threads[i].done = 1 ;

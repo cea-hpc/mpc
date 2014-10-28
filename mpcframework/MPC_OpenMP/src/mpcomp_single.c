@@ -139,27 +139,35 @@ __mpcomp_do_single_copyprivate_end (void *data)
 	__mpcomp_barrier() ;
 }
 
-#if 0
 
-void __mpcomp_single_coherency_entering_parallel_region( 
-    mpcomp_team_t * team_info ) {
-  /* Count the number of STOP symbol inside SINGLE variables */
-  int i ;
-  int count_single_stop = 0 ;
-  int index_single_stop = -1 ;
-
-  for ( i = 0 ; i <= MPCOMP_MAX_ALIVE_SINGLE ; i++ ) {
-    sctk_nodebug( "Value of single[%d] -> %d", i, sctk_atomics_load_int(
-	  &(team_info->single_nb_threads_entered[i].i) ) ) ;
-    if ( sctk_atomics_load_int( 
-	  &(team_info->single_nb_threads_entered[i].i) )
-	== MPCOMP_MAX_THREADS ) {
-      count_single_stop++ ;
-      index_single_stop = i ;
-    }
-  }
-  sctk_assert( count_single_stop == 1 ) ;
-  sctk_assert( index_single_stop == team_info->info.single_current ) ;
+void __mpcomp_single_coherency_entering_parallel_region( ) {
 }
 
-#endif
+void __mpcomp_single_coherency_end_barrier( ) {
+	int i ;
+  mpcomp_thread_t *t ;	/* Info on the current thread */
+  long num_threads ;
+
+  /* Grab the thread info */
+  t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
+  sctk_assert( t != NULL ) ;
+
+  /* Number of threads in the current team */
+  num_threads = t->info.num_threads;
+  sctk_assert( num_threads > 0 ) ;
+
+	for ( i = 0 ; i < num_threads ; i++ ) {
+  mpcomp_thread_t *target_t ;	
+
+	target_t = &(t->instance->mvps[i]->threads[0]) ;
+	sctk_debug( 
+				"__mpcomp_single_coherency_entering_parallel_region: "
+				"thread %d single_sections_current:%d single_sections_last_current:%d",
+				target_t->rank,
+				target_t->single_sections_current,
+				sctk_atomics_load_int( &(t->instance->team->single_sections_last_current) ) ) ;
+
+	
+	}
+}
+

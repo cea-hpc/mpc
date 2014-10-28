@@ -69,7 +69,7 @@ __mpcomp_wakeup_mvp(
 	mvp->threads[0].for_dyn_current = 
 		mvp->info.for_dyn_current_save ;
 
-	sctk_debug( "__mpcomp_wakeup_mvp: "
+	sctk_nodebug( "__mpcomp_wakeup_mvp: "
 			"value of single_sections_current %d and for_dyn_current %d",
 			mvp->info.single_sections_current_save,
 		 mvp->info.for_dyn_current_save ) ;
@@ -173,7 +173,7 @@ static inline mpcomp_node_t * __mpcomp_wakeup_node(
 			}
 		}
 
-		sctk_debug( "__mpcomp_wakeup_node: nb_children_involved=%d", 
+		sctk_nodebug( "__mpcomp_wakeup_node: nb_children_involved=%d", 
 				nb_children_involved ) ;
 
 		/* Update the number of threads for the barrier */
@@ -183,7 +183,7 @@ static inline mpcomp_node_t * __mpcomp_wakeup_node(
 			if ( master ) {
 				/* Only one subtree => bypass */
 				instance->team->info.new_root = n->children.node[0] ;
-				sctk_debug( "__mpcomp_wakeup_node: ... moving root" ) ;
+				sctk_debug( "__mpcomp_wakeup_node: Bypassing root" ) ;
 			}
 		} else {
 			/* Wake up children and transfer information */
@@ -229,7 +229,7 @@ static inline mpcomp_node_t * __mpcomp_wakeup_leaf(
 			nb_children_involved++ ;
 		}
 	}
-	sctk_debug( "__mpcomp_wakeup_leaf: nb_leaves_involved=%d", 
+	sctk_nodebug( "__mpcomp_wakeup_leaf: nb_leaves_involved=%d", 
 			nb_children_involved ) ;
     n->barrier_num_threads = nb_children_involved ;
     for ( i = 1 ; i < n->nb_children ; i++ ) {
@@ -240,7 +240,7 @@ static inline mpcomp_node_t * __mpcomp_wakeup_leaf(
 			n->children.leaf[i]->info = instance->team->info ;
 #endif
 
-			sctk_debug( "__mpcomp_wakeup_leaf: waking up leaf %d", 
+			sctk_nodebug( "__mpcomp_wakeup_leaf: waking up leaf %d", 
 					i ) ;
 
 			n->children.leaf[i]->slave_running = 1 ;
@@ -306,7 +306,7 @@ void __mpcomp_internal_begin_parallel_region(int arg_num_threads,
 
 	sctk_assert( num_threads > 0 ) ;
 
-  sctk_debug( 
+  sctk_nodebug( 
 		  "__mpcomp_internal_begin_parallel_region: "
 		  "Number of threads %d (default %d, #mvps %d arg:%d)",
 		  num_threads, 
@@ -359,7 +359,7 @@ void __mpcomp_internal_begin_parallel_region(int arg_num_threads,
 		__mpcomp_wakeup_mvp( n->children.leaf[0], n ) ;
 	} else {
 
-		sctk_debug( 
+		sctk_nodebug( 
 				"__mpcomp_internal_begin_parallel_region: "
 				"1 thread -> fille MVPs 0 out of %d",
 				instance->nb_mvps ) ;
@@ -388,7 +388,7 @@ void __mpcomp_internal_end_parallel_region( mpcomp_instance_t * instance )
 	mpcomp_node_t * root ;
 	mpcomp_thread_t * master ;
 
-  sctk_debug( 
+  sctk_nodebug( 
 		  "__mpcomp_internal_end_parallel_region: entering..."
 			) ;
 
@@ -417,7 +417,7 @@ void __mpcomp_internal_end_parallel_region( mpcomp_instance_t * instance )
     }
     sctk_atomics_store_int( &(root->barrier) , 0 ) ;
 
-  sctk_debug( 
+  sctk_nodebug( 
 		  "__mpcomp_internal_end_parallel_region: final barrier done..."
 			) ;
 
@@ -429,16 +429,6 @@ void __mpcomp_internal_end_parallel_region( mpcomp_instance_t * instance )
     /* Update team info for last values */
 	__mpcomp_save_team_info( instance->team, master ) ;
 
-#if 0
-		sctk_debug( "__mpcomp_internal_end_parallel_region: print shared value %d %d",
-				((int *)master->info.shared)[0],
-				((int *)master->info.shared)[1]
-				) ;
-
-		if ( ((int *)master->info.shared)[1] == 21 ) {
-			((int *)master->info.shared)[0]++ ;
-		}
-#endif
 }
 
 void 
@@ -448,7 +438,7 @@ __mpcomp_start_parallel_region(int arg_num_threads, void *(*func)
   mpcomp_thread_t * t ;
 	mpcomp_new_parallel_region_info_t info ;
 
-  sctk_debug( 
+  sctk_nodebug( 
       "__mpcomp_start_parallel_region: === ENTER PARALLEL REGION ===" ) ;
 
   /* Initialize OpenMP environment */
@@ -466,20 +456,20 @@ __mpcomp_start_parallel_region(int arg_num_threads, void *(*func)
 
 	__mpcomp_internal_begin_parallel_region( arg_num_threads, info ) ;
 
-  sctk_debug( 
+  sctk_nodebug( 
 		  "__mpcomp_start_parallel_region: calling in order scheduler..."
 			) ;
 
 	/* Start scheduling */
 	in_order_scheduler(t->children_instance->mvps[0]) ;
 
-  sctk_debug( 
+  sctk_nodebug( 
 		  "__mpcomp_start_parallel_region: finish in order scheduler..."
 			) ;
 
 	__mpcomp_internal_end_parallel_region( t->children_instance ) ;
 
-  sctk_debug( 
+  sctk_nodebug( 
       "__mpcomp_start_parallel_region: === EXIT PARALLEL REGION ===\n" ) ;
 
 }
@@ -905,14 +895,14 @@ void * mpcomp_slave_mvp_leaf( void * arg ) {
     sctk_thread_wait_for_value_and_poll( (int*)&(mvp->slave_running), 1, NULL, NULL ) ;
     mvp->slave_running = 0 ;
 
-	sctk_debug( "mpcomp_slave_mvp_leaf: +++ START +++" ) ;
+	sctk_nodebug( "mpcomp_slave_mvp_leaf: +++ START +++" ) ;
 
 	__mpcomp_wakeup_mvp( mvp, mvp->father ) ;
 
     /* Run */
     in_order_scheduler( mvp ) ;
 
-    sctk_debug( "mpcomp_slave_mvp_leaf: +++ STOP +++" ) ;
+    sctk_nodebug( "mpcomp_slave_mvp_leaf: +++ STOP +++" ) ;
 
     __mpcomp_sendtosleep_mvp( mvp ) ;
 

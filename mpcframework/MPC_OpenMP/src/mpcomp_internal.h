@@ -48,17 +48,14 @@ extern "C"
 #define MPCOMP_MAX_THREADS_PER_MICROVP	8
 
 
-/* Maximum number of alive 'for dynamic' construct */
-// #define MPCOMP_MAX_ALIVE_FOR_DYN 	1023
+/* Maximum number of alive 'for dynamic' and 'for guided'  construct */
 #define MPCOMP_MAX_ALIVE_FOR_DYN 	3
-/* Maximum number of alive 'for guided' construct */
-#define MPCOMP_MAX_ALIVE_FOR_GUIDED 	1023
 
 
 #define MPCOMP_NOWAIT_STOP_SYMBOL	(-2)
 
 /* Uncomment to enable coherency checking */
-// #define MPCOMP_COHERENCY_CHECKING 1
+#define MPCOMP_COHERENCY_CHECKING 1
 #define MPCOMP_OVERFLOW_CHECKING 0
 
 #define MPCOMP_COMBINED_NONE 0
@@ -804,7 +801,7 @@ typedef struct mpcomp_thread_s
 	 void __mpcomp_sections_init( mpcomp_thread_t * t, int nb_sections ) ;
 
      /* mpcomp_single.c */
-     void __mpcomp_single_coherency_entering_parallel_region(mpcomp_team_t *team_info);
+     void __mpcomp_single_coherency_entering_parallel_region();
 
      /* Stack primitives */
      mpcomp_stack_t * __mpcomp_create_stack(int max_elements);

@@ -43,8 +43,8 @@ __mpcomp_barrier (void)
      t = (mpcomp_thread_t *) sctk_openmp_thread_tls;
      sctk_assert(t != NULL);
 
-	 sctk_debug( "[%d] __mpcomp_barrier: Entering w/ %d thread(s)", 
-			 t->rank, t->info.num_threads ) ;
+     sctk_nodebug( "[%d] __mpcomp_barrier: Entering w/ %d thread(s)", 
+	 t->rank, t->info.num_threads ) ;
      
      if (t->info.num_threads == 1) {
 	  return;
@@ -54,8 +54,8 @@ __mpcomp_barrier (void)
      mvp = t->mvp;
      sctk_assert(mvp != NULL);
 
-	 sctk_debug( "[%d] __mpcomp_barrier: t->mvp = %p", 
-			 t->rank, t->mvp ) ;
+     sctk_nodebug( "[%d] __mpcomp_barrier: t->mvp = %p", 
+	 t->rank, t->mvp ) ;
      
      /* Call the real barrier */
      __mpcomp_internal_full_barrier(mvp);
@@ -112,53 +112,70 @@ b, b+1, c->barrier_num_threads );
 void
 __mpcomp_internal_full_barrier (mpcomp_mvp_t *mvp)
 {
-     mpcomp_node_t *c;
-     long b;
-     long b_done;
-	 mpcomp_node_t * new_root ;
+	mpcomp_node_t *c;
+	long b;
+	long b_done;
+	mpcomp_node_t * new_root ;
 
-	 // printf( "!!!!!!!!!!!__mpcomp_internal_full_barrier!!!!!!!!!!!!!!!\n" ) ;
+#if 0
+			/* TODO DEBUGGING PURPOSE */
+			if ( mvp->threads[0].for_dyn_shift != NULL &&
+					mvp->threads[0].for_dyn_shift[1] != 0 ) {
+				fprintf( stderr, "[0] __mpcomp_internal_full_barrier: shift[1] = %d\n",
+					 mvp->threads[0].for_dyn_shift[1]	) ;
+				// not_reachable() ;
+			}
+#endif
 
-     c = mvp->father;
-	 sctk_assert( c != NULL ) ;
 
-	 new_root = c->instance->team->info.new_root ;
-	 sctk_assert( new_root != NULL ) ;
-     
-     /* TODO: check if we need sctk_atomics_write_barrier() */
-     
-     /* Step 0: TODO finish the barrier whithin the current micro VP */
-     
-     /* Step 1: Climb in the tree */
-     b_done = c->barrier_done; /* Move out of sync region? */
-     b = sctk_atomics_fetch_and_incr_int(&(c->barrier));
-  
-	 while ((b+1) == c->barrier_num_threads && c != new_root ) {
-	  sctk_atomics_store_int(&(c->barrier), 0);
-	  c = c->father;
-	  b = sctk_atomics_fetch_and_incr_int(&(c->barrier));
-     }
-     
-     /* Step 2 - Wait for the barrier to be done */
-     if (c != new_root || (c == new_root && (b+1) != c->barrier_num_threads)) {	  
-	  /* Wait for c->barrier == c->barrier_num_threads */
-	  while (b_done == c->barrier_done) {
-	       sctk_thread_yield();
+
+	c = mvp->father;
+	sctk_assert( c != NULL ) ;
+
+	new_root = c->instance->team->info.new_root ;
+	sctk_assert( new_root != NULL ) ;
+
+	/* TODO: check if we need sctk_atomics_write_barrier() */
+
+	/* Step 0: TODO finish the barrier whithin the current micro VP */
+
+	/* Step 1: Climb in the tree */
+	b_done = c->barrier_done; /* Move out of sync region? */
+	b = sctk_atomics_fetch_and_incr_int(&(c->barrier));
+
+	while ((b+1) == c->barrier_num_threads && c != new_root ) {
+		sctk_atomics_store_int(&(c->barrier), 0);
+		c = c->father;
+		b = sctk_atomics_fetch_and_incr_int(&(c->barrier));
+	}
+
+	/* Step 2 - Wait for the barrier to be done */
+	if (c != new_root || (c == new_root && (b+1) != c->barrier_num_threads)) {	  
+		/* Wait for c->barrier == c->barrier_num_threads */
+		while (b_done == c->barrier_done) {
+			sctk_thread_yield();
 #if MPCOMP_TASK
-	       __mpcomp_task_schedule(); /* Look for tasks remaining */
+			__mpcomp_task_schedule(); /* Look for tasks remaining */
 #endif /* MPCOMP_TASK */
-	  }
-     } else {
-#if MPCOMP_TASK
-	  __mpcomp_task_schedule(); /* Look for tasks remaining */
-#endif /* MPCOMP_TASK */
-	  sctk_atomics_store_int(&(c->barrier), 0);
-	  c->barrier_done++ ; /* No need to lock I think... */
-     }
+		}
+	} else {
 
-     /* Step 3 - Go down */
-     while ( c->child_type != MPCOMP_CHILDREN_LEAF ) {
-	  c = c->children.node[mvp->tree_rank[c->depth]];
-	  c->barrier_done++; /* No need to lock I think... */
-     }
+#if MPCOMP_TASK
+		__mpcomp_task_schedule(); /* Look for tasks remaining */
+#endif /* MPCOMP_TASK */
+		sctk_atomics_store_int(&(c->barrier), 0);
+
+#if MPCOMP_COHERENCY_CHECKING
+		__mpcomp_for_dyn_coherency_end_barrier() ;
+		__mpcomp_single_coherency_end_barrier() ;
+#endif
+
+		c->barrier_done++ ; /* No need to lock I think... */
+	}
+
+	/* Step 3 - Go down */
+	while ( c->child_type != MPCOMP_CHILDREN_LEAF ) {
+		c = c->children.node[mvp->tree_rank[c->depth]];
+		c->barrier_done++; /* No need to lock I think... */
+	}
 }
