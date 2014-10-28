@@ -38,57 +38,89 @@ static sctk_spinlock_t global_atomic_lock = SCTK_SPINLOCK_INITIALIZER;
 static sctk_thread_mutex_t global_critical_lock =
   SCTK_THREAD_MUTEX_INITIALIZER;
 
-TODO("Wrong atomic behavior in case of OpenMP oversubscribing")
-
 void
 __mpcomp_atomic_begin ()
 {
-	sctk_debug( "__mpcomp_atomic_begin: entering..." ) ;
+	sctk_nodebug( "__mpcomp_atomic_begin: entering..." ) ;
+	
   sctk_spinlock_lock (&(global_atomic_lock));
-	sctk_debug( "__mpcomp_atomic_begin: exiting..." ) ;
+
+	sctk_nodebug( "__mpcomp_atomic_begin: exiting..." ) ;
 }
 
 void
 __mpcomp_atomic_end ()
 {
-	sctk_debug( "__mpcomp_atomic_end: entering..." ) ;
+	sctk_nodebug( "__mpcomp_atomic_end: entering..." ) ;
 
   sctk_spinlock_unlock (&(global_atomic_lock));
 
-	sctk_debug( "__mpcomp_atomic_end: exiting..." ) ;
+	sctk_nodebug( "__mpcomp_atomic_end: exiting..." ) ;
 }
 
 
-//#warning "Wrong critical behavior in case of OpenMP oversubscribing"
-INFO("Wrong critical behavior in case of OpenMP oversubscribing")
+INFO("Wrong atomic/critical behavior in case of OpenMP oversubscribing")
 
 void
 __mpcomp_anonymous_critical_begin ()
 {
-  sctk_nodebug ("__mpcomp_anonymous_critical_begin: Before lock");
+  sctk_nodebug ("[%d] __mpcomp_anonymous_critical_begin: Before lock",
+			((mpcomp_thread_t *)sctk_openmp_thread_tls)->rank );
+
   sctk_thread_mutex_lock (&global_critical_lock);
-  sctk_nodebug ("__mpcomp_anonymous_critical_begin: After lock");
+
+  sctk_nodebug ("[%d] __mpcomp_anonymous_critical_begin: After lock",
+			((mpcomp_thread_t *)sctk_openmp_thread_tls)->rank );
 }
 
 void
 __mpcomp_anonymous_critical_end ()
 {
-  sctk_nodebug ("__mpcomp_anonymous_critical_end: Before unlock");
+  sctk_nodebug ("[%d] __mpcomp_anonymous_critical_end: Before unlock",
+			((mpcomp_thread_t *)sctk_openmp_thread_tls)->rank );
+
   sctk_thread_mutex_unlock (&global_critical_lock);
-  sctk_nodebug ("__mpcomp_anonymous_critical_end: Before unlock");
+
+  sctk_nodebug ("[%d] __mpcomp_anonymous_critical_end: Before unlock",
+			((mpcomp_thread_t *)sctk_openmp_thread_tls)->rank );
 }
 
 void
 __mpcomp_named_critical_begin (void **l)
 {
-  /* TODO check if l==NULL, then allocate memory and lock */
-  TODO("OpenMP: Named critical acts as anonymous critical")
-  sctk_thread_mutex_lock (&global_critical_lock);
+	sctk_assert( l ) ;
+
+	if ( *l == NULL ) {
+		sctk_nodebug( "[%d] __mpcomp_named_critical_begin: should allocated lock",
+				((mpcomp_thread_t *)sctk_openmp_thread_tls)->rank );
+
+
+		*l = malloc( sizeof( sctk_thread_mutex_t ) ) ;
+		sctk_assert( *l ) ;
+
+		sctk_thread_mutex_init( (sctk_thread_mutex_t *)*l, NULL ) ;
+
+	}
+
+	sctk_nodebug ("[%d] __mpcomp_named_critical_begin: Before lock",
+			((mpcomp_thread_t *)sctk_openmp_thread_tls)->rank );
+
+	sctk_thread_mutex_lock ( (sctk_thread_mutex_t *)*l );
+
+	sctk_nodebug ("[%d] __mpcomp_named_critical_begin: After lock",
+			((mpcomp_thread_t *)sctk_openmp_thread_tls)->rank );
 }
 
 void
 __mpcomp_named_critical_end (void **l)
 {
-  /* TODO unlock *l */
-  sctk_thread_mutex_unlock (&global_critical_lock);
+	sctk_assert( l ) ;
+	sctk_assert( *l ) ;
+
+	sctk_nodebug ("[%d] __mpcomp_named_critical_end: Before unlock",
+			((mpcomp_thread_t *)sctk_openmp_thread_tls)->rank );
+	sctk_thread_mutex_unlock ((sctk_thread_mutex_t *)*l );
+
+	sctk_nodebug ("[%d] __mpcomp_named_critical_end: After unlock",
+			((mpcomp_thread_t *)sctk_openmp_thread_tls)->rank );
 }
