@@ -160,7 +160,7 @@ void __mpcomp_single_coherency_end_barrier( ) {
   mpcomp_thread_t *target_t ;	
 
 	target_t = &(t->instance->mvps[i]->threads[0]) ;
-	sctk_debug( 
+	sctk_nodebug( 
 				"__mpcomp_single_coherency_entering_parallel_region: "
 				"thread %d single_sections_current:%d single_sections_last_current:%d",
 				target_t->rank,
