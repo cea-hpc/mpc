@@ -169,7 +169,7 @@ __mpcomp_dynamic_loop_get_chunk_from_rank( mpcomp_thread_t * t,
 	int num_threads;
 
 
-	sctk_nodebug(
+	sctk_debug(
 			"[%d] __mpcomp_dynamic_loop_get_chunk_from_rank: "
 			"Get chunk from thread %d (current %d) "
 			"to thread %d (current %d)", 
@@ -302,7 +302,7 @@ __mpcomp_dynamic_loop_init(mpcomp_thread_t *t,
 	/* Compute the index of the dynamic for construct */
 	index = (t->for_dyn_current) % (MPCOMP_MAX_ALIVE_FOR_DYN + 1);
 
-	sctk_nodebug( "[%d] __mpcomp_dynamic_loop_init:"
+	sctk_debug( "[%d] __mpcomp_dynamic_loop_init:"
 			"Entering for loop %ld -> %ld [%ld] (CS:%ld) with for_dyn_current %d",
 			t->rank, lb, b, incr, chunk_size, t->for_dyn_current ) ;
 
@@ -461,6 +461,13 @@ __mpcomp_dynamic_loop_next (long *from, long *to)
 	 * Stop if the current thread already executed 
 	 * the last iteration of the current loop */
 	if ( t->for_dyn_last_loop_iteration == 1 ) {
+		/* Re-initialize the target to steal */
+		for ( i = 0 ; i < t->instance->tree_depth ; i++ ) {
+			t->for_dyn_target[i] = t->mvp->tree_rank[i] ;
+		}
+		for ( i = 0 ; i < t->instance->tree_depth ; i++ ) {
+			t->for_dyn_shift[i] = 0 ;
+		}
 		return 0 ;
 	}
 
@@ -587,11 +594,17 @@ do_increase:
 	*/
 	/* TODO DEBUGGING PURPOSE */
 	if ( t->for_dyn_shift[1] != 0 ) {
+	  sctk_debug( "[%d] __mpcomp_dynamic_loop_next: exit - shift[1] = %d",
+	      t->rank, t->for_dyn_shift[1]    ) ; 
+	  /*
 		fprintf( stderr, "[%d] __mpcomp_dynamic_loop_next: exit - shift[1] = %d\n",
 				t->rank, t->for_dyn_shift[1]	) ;
+				*/
 		// not_reachable() ;
 	} 
 #endif
+	sctk_debug( "[%d] __mpcomp_dynamic_loop_next: exit - shift[1] = %d",
+	    t->rank, t->for_dyn_shift[1]    ) ; 
 
 	return 0 ;
 }
@@ -693,6 +706,9 @@ __mpcomp_dynamic_loop_end_nowait ()
 	/* Grab the thread info */
 	t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
 	sctk_assert( t != NULL ) ;
+
+	sctk_debug( "[%d] __mpcomp_dynamic_loop_end_nowait: entering...",
+	    t->rank ) ;
 
 #if 0
 			/* TODO DEBUGGING PURPOSE */
@@ -856,7 +872,7 @@ __mpcomp_for_dyn_coherency_end_barrier()
      t = (mpcomp_thread_t *) sctk_openmp_thread_tls;
      sctk_assert(t != NULL);
 
-		 sctk_nodebug( "[%d] __mpcomp_for_dyn_coherency_checking_end_barrier: "
+		 sctk_debug( "[%d] __mpcomp_for_dyn_coherency_checking_end_barrier: "
 				 "Checking for %d thread(s)...",
 				 t->rank, t->info.num_threads ) ;
 
@@ -890,7 +906,7 @@ __mpcomp_for_dyn_coherency_end_barrier()
 		 }
 		 
 		 if ( n != 1 ) {
-			 /* This arrau should contain exactly 1 MPCOMP_MAX_ALIVE_FOR_DYN */
+			 /* This array should contain exactly 1 MPCOMP_MAX_ALIVE_FOR_DYN */
 			 not_reachable() ;
 		 }
 
@@ -920,6 +936,30 @@ __mpcomp_for_dyn_coherency_end_barrier()
 				 }
 			 }
 
+			 /* Checking for_dyn_target */
+			 /* for_dyn_tarfer can be NULL if there were no dynamic loop
+				* since the beginning of the program
+				*/
+			 if ( target_t->for_dyn_target!= NULL ) {
+				 for ( j = 0 ; j < instance->tree_depth ; j++ ) 
+				 {
+					 if ( target_t->for_dyn_target[j] != target_t->mvp->tree_rank[j] ) {
+						 sctk_debug( "[%d] __mpcomp_for_dyn_coherency_checking_end_barrier: "
+								 "error rank %d has target[%d] = %d (depth: %d, max_depth: %d, for_dyn_current=%d)",
+								 t->rank,
+								 target_t->rank, j, 
+								 target_t->for_dyn_target[j],
+								instance->tree_depth, 
+								team->info.new_root->depth,
+							 target_t->for_dyn_current	) ;
+
+						 not_reachable() ;
+					 }
+
+
+				 } 
+			 }
+
 			 /* Checking for_dyn_shift */
 			 /* for_dyn_shift can be NULL if there were no dynamic loop
 				* since the beginning of the program
@@ -940,6 +980,128 @@ __mpcomp_for_dyn_coherency_end_barrier()
 
 						 not_reachable() ;
 					 }
+				 } 
+			 }
+
+		 }
+
+}
+
+void
+__mpcomp_for_dyn_coherency_end_parallel_region( mpcomp_instance_t * instance ) 
+{
+     mpcomp_thread_t *t_first ;
+		 mpcomp_team_t * team ;
+		 int i ;
+		 int n ;
+
+		 team = instance->team ;
+		 sctk_assert( team != NULL ) ;
+
+		 sctk_debug( "[X] __mpcomp_for_dyn_coherency_checking_end_barrier: "
+				 "Checking for %d thread(s)...",
+				 team->info.num_threads ) ;
+
+
+		 /* Check team coherency */
+		 n = 0 ;
+		 for ( i = 0 ; i < MPCOMP_MAX_ALIVE_FOR_DYN + 1 ; i++ ) {
+			 switch( sctk_atomics_load_int( &team->for_dyn_nb_threads_exited[i].i) ) {
+				 case 0:
+					 break ;
+				 case MPCOMP_NOWAIT_STOP_SYMBOL:
+					 n++ ;
+					 break ;
+				 default:
+					 /* This array should contain only '0' and 
+						* one MPCOMP_MAX_ALIVE_FOR_DYN */
+					 not_reachable() ;
+					 break ;
+			 }
+
+			 sctk_nodebug( "[X] __mpcomp_for_dyn_coherency_checking_end_barrier: "
+					 "TEAM - FOR_DYN - nb_threads_exited[%d] = %d"
+					 ,
+					 i, team->for_dyn_nb_threads_exited[i].i ) ;
+					
+		 }
+		 
+		 if ( n != 1 ) {
+			 /* This array should contain exactly 1 MPCOMP_MAX_ALIVE_FOR_DYN */
+			 not_reachable() ;
+		 }
+
+		 /* Check tree coherency */
+
+		 /* Check thread coherency */
+		 t_first = &(instance->mvps[0]->threads[0]) ;
+		 for ( i = 0 ; i < team->info.num_threads ; i++ )
+		 {
+			 mpcomp_thread_t * target_t ;
+			 int j ;
+
+			 target_t = &(instance->mvps[i]->threads[0]) ;
+
+			 sctk_debug( "[X] __mpcomp_for_dyn_coherency_checking_end_barrier: "
+					 "Checking thread %d...",
+					 target_t->rank ) ;
+
+			 /* Checking for_dyn_current */
+			 if ( t_first->for_dyn_current != target_t->for_dyn_current ) {
+				 not_reachable() ;
+			 }
+
+			 /* Checking for_dyn_remain */
+			 for ( j = 0 ; j < MPCOMP_MAX_ALIVE_FOR_DYN+1 ; j++ ) {
+				 if ( sctk_atomics_load_int( &(target_t->for_dyn_remain[j].i) ) != -1 ) {
+					 not_reachable() ;
+				 }
+			 }
+
+			 /* Checking for_dyn_target */
+			 /* for_dyn_tarfer can be NULL if there were no dynamic loop
+				* since the beginning of the program
+				*/
+			 if ( target_t->for_dyn_target!= NULL ) {
+				 for ( j = 0 ; j < instance->tree_depth ; j++ ) 
+				 {
+					 if ( target_t->for_dyn_target[j] != target_t->mvp->tree_rank[j] ) {
+						 sctk_debug( "[X] __mpcomp_for_dyn_coherency_checking_end_barrier: "
+								 "error rank %d has target[%d] = %d (depth: %d, max_depth: %d, for_dyn_current=%d)",
+								 target_t->rank, j, 
+								 target_t->for_dyn_target[j],
+								instance->tree_depth, 
+								team->info.new_root->depth,
+							 target_t->for_dyn_current	) ;
+
+						 not_reachable() ;
+					 }
+
+
+				 } 
+			 }
+
+			 /* Checking for_dyn_shift */
+			 /* for_dyn_shift can be NULL if there were no dynamic loop
+				* since the beginning of the program
+				*/
+			 if ( target_t->for_dyn_shift != NULL ) {
+				 // for ( j = t->info.new_root->depth ; j < instance->tree_depth ; j++ ) 
+				 for ( j = 0 ; j < instance->tree_depth ; j++ ) 
+				 {
+					 if ( target_t->for_dyn_shift[j] != 0 ) {
+						 sctk_debug( "[X] __mpcomp_for_dyn_coherency_checking_end_barrier: "
+								 "error rank %d has shift[%d] = %d (depth: %d, max_depth: %d, for_dyn_current=%d)",
+								 target_t->rank, j, 
+								 target_t->for_dyn_shift[j],
+								instance->tree_depth, 
+								team->info.new_root->depth,
+							 target_t->for_dyn_current	) ;
+
+						 not_reachable() ;
+					 }
+
+
 				 } 
 			 }
 

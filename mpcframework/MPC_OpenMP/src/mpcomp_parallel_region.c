@@ -429,6 +429,11 @@ void __mpcomp_internal_end_parallel_region( mpcomp_instance_t * instance )
     /* Update team info for last values */
 	__mpcomp_save_team_info( instance->team, master ) ;
 
+#if MPCOMP_COHERENCY_CHECKING
+		__mpcomp_for_dyn_coherency_end_parallel_region( instance ) ;
+		__mpcomp_single_coherency_end_barrier() ;
+#endif
+
 }
 
 void 
