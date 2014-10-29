@@ -41,6 +41,9 @@ void MPIR_Datatype_iscontig(MPI_Datatype datatype, int *flag)
 	
 	*flag = 0;
 	
+	if( sctk_datatype_is_boundary(datatype) )
+		return;
+	
 	switch( sctk_datatype_kind( datatype ) )
 	{
 		case MPC_DATATYPES_CONTIGUOUS:
@@ -52,7 +55,7 @@ void MPIR_Datatype_iscontig(MPI_Datatype datatype, int *flag)
 			sctk_derived_datatype_t *target_type = sctk_task_specific_get_derived_datatype(  task_specific, datatype );
 			assume( target_type != NULL );
 			
-			if( target_type->opt_count == 1 )
+			if( (target_type->count == 0) ||  (target_type->opt_count == 1) )
 				*flag = 1;
 
 		break;
@@ -65,6 +68,64 @@ void MPIR_Datatype_iscontig(MPI_Datatype datatype, int *flag)
 	}
 
 }
+
+
+int MPCX_Type_flatten( MPI_Datatype datatype, long int ** blocklen, long int ** indices , MPI_Count * count )
+{
+	sctk_task_specific_t *task_specific = __MPC_get_task_specific ();
+	sctk_derived_datatype_t *target_derived_type;
+	sctk_contiguous_datatype_t *contiguous_type;
+	
+	if( datatype == MPI_DATATYPE_NULL )
+	{
+		*count = 0;
+		return MPI_SUCCESS;
+	}
+	
+	
+	switch( sctk_datatype_kind( datatype ) )
+	{
+		case MPC_DATATYPES_COMMON:
+			*count = 1;
+			*blocklen = malloc( sizeof( long int ) );
+			*indices = malloc( sizeof( long int ) );
+			(*indices)[0] = 0;
+			(*blocklen)[0] = sctk_common_datatype_get_size( datatype );
+		break;
+		case MPC_DATATYPES_CONTIGUOUS :
+			contiguous_type = sctk_task_specific_get_contiguous_datatype( task_specific, datatype );
+			*count = 1;
+			*blocklen = malloc( sizeof( long int ) );
+			*indices = malloc( sizeof( long int ) );
+			(*indices)[0] = 0;
+			(*blocklen)[0] = contiguous_type->size;
+		break;
+		
+		case MPC_DATATYPES_DERIVED :
+			target_derived_type = sctk_task_specific_get_derived_datatype( task_specific, datatype );
+			
+			*count = target_derived_type->opt_count;
+			*blocklen = malloc( *count * sizeof( long int ) );
+			*indices = malloc( *count * sizeof( long int ) );
+			
+			int i;
+			
+			for( i = 0 ; i < *count ; i++ )
+			{
+				(*indices)[i] = target_derived_type->opt_begins[ i ];
+				(*blocklen)[i] = target_derived_type->opt_ends[ i ] - target_derived_type->opt_begins[ i ] + 1;
+			}
+			
+		break;
+		
+		case MPC_DATATYPES_UNKNOWN:
+			sctk_fatal("CANNOT PROCESS AN UNKNOWN DATATYPE");
+		break;
+	}
+
+	return MPI_SUCCESS;
+}
+
 
 
 
