@@ -406,7 +406,8 @@ typedef enum
      * are never returned by get_envelope */
     MPC_COMBINER_HINDEXED_INTEGER = 17,
     MPC_COMBINER_STRUCT_INTEGER = 18,
-    MPC_COMBINER_HVECTOR_INTEGER = 19
+    MPC_COMBINER_HVECTOR_INTEGER = 19,
+    MPC_COMBINER_COUNT__
 }MPC_Type_combiner;
 
   /*Initialisation */
@@ -593,7 +594,7 @@ typedef enum
 			     MPC_Aint array_of_addresses[],
 			     MPC_Datatype array_of_datatypes[]);
   int MPC_Type_commit( MPC_Datatype * type );
-  
+  int MPCX_Type_debug( MPC_Datatype type );
   
   /*MPC specific function */
   int MPC_Copy_in_buffer (void *inbuffer, void *outbuffer, MPC_Datatype datatype);

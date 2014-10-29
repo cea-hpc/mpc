@@ -1569,6 +1569,9 @@ int PMPC_Type_get_envelope(MPC_Datatype datatype, int *num_integers, int *num_ad
 	if( sctk_datatype_is_common(datatype) || sctk_datatype_is_boundary( datatype ) )
 	{
 		*combiner = MPC_COMBINER_NAMED;	
+		*num_integers = 0;
+		*num_addresses = 0;
+		*num_datatypes = 0;
 		MPC_ERROR_SUCESS();
 	}
 	
@@ -2064,6 +2067,44 @@ int PMPC_Type_commit( MPC_Datatype * datatype )
 	MPC_ERROR_SUCESS();
 }
 
+
+int MPCX_Type_debug( MPC_Datatype datatype )
+{
+	sctk_task_specific_t *task_specific = __MPC_get_task_specific ();
+	sctk_derived_datatype_t *target_derived_type;
+	sctk_contiguous_datatype_t *contiguous_type;
+	
+	if( datatype == MPC_DATATYPE_NULL )
+	{
+		sctk_error("=============ERROR==================");
+		sctk_error("MPC_DATATYPE_NULL");
+		sctk_error("====================================");
+		MPC_ERROR_SUCESS();
+	}
+	
+	
+	switch( sctk_datatype_kind( datatype ) )
+	{
+		case MPC_DATATYPES_COMMON:
+			sctk_common_datatype_display( datatype );
+		break;
+		case MPC_DATATYPES_CONTIGUOUS :
+			contiguous_type = sctk_task_specific_get_contiguous_datatype( task_specific, datatype );
+			sctk_contiguous_datatype_display( contiguous_type );
+		break;
+		
+		case MPC_DATATYPES_DERIVED :
+			target_derived_type = sctk_task_specific_get_derived_datatype( task_specific, datatype );
+			sctk_derived_datatype_display( target_derived_type );
+		break;
+		
+		case MPC_DATATYPES_UNKNOWN:
+			MPC_ERROR_REPORT( MPC_COMM_WORLD, MPC_ERR_INTERN, "This datatype is unknown");
+		break;
+	}
+
+	MPC_ERROR_SUCESS();
+}
 
 
 /** \brief This function increases the refcounter for a datatype

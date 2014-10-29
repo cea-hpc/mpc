@@ -38,6 +38,42 @@
 /** Common datatypes sizes ar initialized in \ref sctk_common_datatype_init */
 static size_t * __sctk_common_type_sizes;
 
+static const char * const type_combiner_names[MPC_COMBINER_COUNT__] =
+{
+    "MPC_COMBINER_UNKNOWN",
+    "MPC_COMBINER_NAMED",
+    "MPC_COMBINER_DUP",
+    "MPC_COMBINER_CONTIGUOUS",
+    "MPC_COMBINER_VECTOR",
+    "MPC_COMBINER_HVECTOR",
+    "MPC_COMBINER_INDEXED",
+    "MPC_COMBINER_HINDEXED",
+    "MPC_COMBINER_INDEXED_BLOCK",
+    "MPC_COMBINER_HINDEXED_BLOCK",
+    "MPC_COMBINER_STRUCT",
+    "MPC_COMBINER_SUBARRAY",
+    "MPC_COMBINER_DARRAY",
+    "MPC_COMBINER_F90_REAL",
+    "MPC_COMBINER_F90_COMPLEX",
+    "MPC_COMBINER_F90_INTEGER",
+    "MPC_COMBINER_RESIZED",
+    "MPC_COMBINER_HINDEXED_INTEGER",
+    "MPC_COMBINER_STRUCT_INTEGER",
+    "MPC_COMBINER_HVECTOR_INTEGER"
+};
+
+
+const char * const sctk_datype_combiner(MPC_Type_combiner combiner)
+{
+	if( (combiner < MPC_COMBINER_COUNT__) && ( 0 <= combiner ) )
+	{
+		return type_combiner_names[ combiner ];
+	}
+	
+	return type_combiner_names[ MPC_COMBINER_UNKNOWN ];
+}
+
+
 /************************************************************************/
 /* Datatype Init and Release                                            */
 /************************************************************************/
@@ -54,8 +90,6 @@ void sctk_datatype_release()
 	sctk_datype_name_release();
 	sctk_free( __sctk_common_type_sizes );
 }
-
-
 
 /************************************************************************/
 /* Common Datatype                                                      */
@@ -104,7 +138,7 @@ void __init_a_composed_common_types(MPC_Datatype target_type, MPC_Aint disp, MPC
 	types[1] = type_b;
 
 	int * blocklengths = sctk_malloc( 2 * sizeof( int ) );
-	int * displacements = sctk_malloc( 2 * sizeof( void * ) );
+	MPC_Aint * displacements = sctk_malloc( 2 * sizeof( void * ) );
 	
 	assume( blocklengths != NULL );
 	assume( displacements != NULL );
@@ -337,7 +371,19 @@ size_t sctk_common_datatype_get_size( MPC_Datatype datatype )
 	return __sctk_common_type_sizes[ datatype ];
 }
 
-
+void sctk_common_datatype_display( MPC_Datatype datatype )
+{
+	if( !sctk_datatype_is_common( datatype ) )
+	{
+		sctk_error("Unknown datatype provided to %s\n", __FUNCTION__ );
+		abort();
+	}
+	
+	sctk_error("=============COMMON=================");
+	sctk_error("NAME %s", sctk_datype_get_name( datatype ) );
+	sctk_error("SIZE %ld",__sctk_common_type_sizes[ datatype ]);
+	sctk_error("====================================");
+}
 
 
 /************************************************************************/
@@ -367,6 +413,47 @@ void sctk_contiguous_datatype_release( sctk_contiguous_datatype_t * type )
 		/* Counter == 0 then free */
 		memset( type, 0 , sizeof( sctk_contiguous_datatype_t ) );
 	}
+}
+
+void sctk_contiguous_datatype_display( sctk_contiguous_datatype_t * target_type )
+{
+	sctk_error("=============CONTIGUOUS==================");
+	sctk_error("ID_RANK %ld", target_type->id_rank );
+	sctk_error("REF_COUNT %ld", target_type->ref_count );
+	sctk_error("SIZE %ld", target_type->size );
+	sctk_error("ELEM SIZE %ld", target_type->element_size );
+	sctk_error("COUNT %ld", target_type->count );
+	sctk_error("DTYPE %d", target_type->datatype );
+	
+	
+	int ni, na, nd, c;
+
+	sctk_datatype_fill_envelope( &target_type->context , &ni, &na , &nd , &c );
+	sctk_error("COMBINER : %s[%d]", sctk_datype_combiner(c), c );
+	
+	int i;
+	
+	printf("INT : [");
+	for( i = 0 ; i < ni ; i++ )
+	{
+		printf("[%d] %d , ", i, target_type->context.array_of_integers[i] );
+	}
+	printf("]\n");
+	
+	printf("ADD : [");
+	for( i = 0 ; i < na ; i++ )
+	{
+		printf("[%d] %ld , ", i, target_type->context.array_of_addresses[i] );
+	}
+	printf("]\n");
+	
+	printf("TYP : [");
+	for( i = 0 ; i < nd ; i++ )
+	{
+		printf("[%d] %d , ", i, target_type->context.array_of_types[i] );
+	}
+	printf("]\n");
+	sctk_error("==============================================");
 }
 
 /************************************************************************/
@@ -647,6 +734,47 @@ int sctk_derived_datatype_optimize( sctk_derived_datatype_t * target_type )
 	sctk_free(cells);
 	
 	return MPC_SUCCESS;
+}
+
+
+void sctk_derived_datatype_display( sctk_derived_datatype_t * target_type )
+{
+	sctk_error("============DERIVED===================");
+	sctk_error("TYPE %d", target_type->id );
+	sctk_error("SIZE %ld", target_type->size );
+	sctk_error("REF_COUNT %ld", target_type->ref_count );
+	sctk_error("COUNT %ld", target_type->count );
+	sctk_error("OPT_COUNT %ld", target_type->opt_count );
+	
+	
+	int ni, na, nd, c;
+
+	sctk_datatype_fill_envelope( &target_type->context , &ni, &na , &nd , &c );
+	sctk_error("COMBINER : %s[%d]", sctk_datype_combiner(c), c );
+	
+	int i;
+	
+	printf("INT : [");
+	for( i = 0 ; i < ni ; i++ )
+	{
+		printf("[%d] %d , ", i, target_type->context.array_of_integers[i] );
+	}
+	printf("]\n");
+	
+	printf("ADD : [");
+	for( i = 0 ; i < na ; i++ )
+	{
+		printf("[%d] %ld , ", i, target_type->context.array_of_addresses[i] );
+	}
+	printf("]\n");
+	
+	printf("TYP : [");
+	for( i = 0 ; i < nd ; i++ )
+	{
+		printf("[%d] %d , ", i, target_type->context.array_of_types[i] );
+	}
+	printf("]\n");
+	sctk_error("==============================================");
 }
 
 
@@ -1222,6 +1350,10 @@ void sctk_datatype_context_set( struct Datatype_context * ctx , struct Datatype_
 			ctx->array_of_addresses[1] = dctx->extent;
 			ctx->array_of_types[0] = dctx->oldtype;
 		break;
+		case MPC_COMBINER_HINDEXED_INTEGER:
+		case MPC_COMBINER_STRUCT_INTEGER:
+		case MPC_COMBINER_HVECTOR_INTEGER:
+		case MPC_COMBINER_COUNT__:
 		case MPC_COMBINER_UNKNOWN:
 			not_reachable();
 	}
@@ -1357,7 +1489,11 @@ int sctk_datatype_fill_envelope( struct Datatype_context * ctx , int * num_integ
 			*num_datatypes = 1;
 		break;
 		
-		default:
+		case MPC_COMBINER_HINDEXED_INTEGER:
+		case MPC_COMBINER_STRUCT_INTEGER:
+		case MPC_COMBINER_HVECTOR_INTEGER:
+		case MPC_COMBINER_COUNT__:
+		case MPC_COMBINER_UNKNOWN:
 			return 1;
 	}
 	
@@ -1486,6 +1622,10 @@ struct Datatype_layout * sctk_datatype_layout( struct Datatype_context * ctx, si
 		case MPC_COMBINER_F90_REAL:
 		case MPC_COMBINER_F90_COMPLEX:
 		case MPC_COMBINER_F90_INTEGER:
+		case MPC_COMBINER_HINDEXED_INTEGER:
+		case MPC_COMBINER_STRUCT_INTEGER:
+		case MPC_COMBINER_HVECTOR_INTEGER:
+		case MPC_COMBINER_COUNT__:
 		case MPC_COMBINER_UNKNOWN:
 			return NULL;
 	}
