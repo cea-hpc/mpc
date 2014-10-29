@@ -90,14 +90,18 @@
 
 /* KMP_OS.H */
 
-typedef int kmp_int32 ;
-typedef unsigned int kmp_uint32 ;
-typedef long long kmp_int64 ;
-typedef unsigned long long kmp_uint64 ;
-typedef double kmp_real64 ;
+typedef char               kmp_int8;
+typedef unsigned char      kmp_uint8;
+typedef short              kmp_int16;
+typedef unsigned short     kmp_uint16;
+typedef int                kmp_int32;
+typedef unsigned int       kmp_uint32;
+typedef long long          kmp_int64;
+typedef unsigned long long kmp_uint64;
 
 
-
+typedef float   kmp_real32;
+typedef double  kmp_real64;
 
 /* KMP.H */
 
@@ -740,12 +744,14 @@ __kmpc_critical(ident_t *loc, kmp_int32 global_tid, kmp_critical_name *crit)
       (*crit)[0], (*crit)[1], (*crit)[2], (*crit)[3],
       (*crit)[4], (*crit)[5], (*crit)[6], (*crit)[7]
       ) ;
+  /* TODO Handle named critical */
 __mpcomp_anonymous_critical_begin () ;
 }
 
 void
 __kmpc_end_critical(ident_t *loc, kmp_int32 global_tid, kmp_critical_name *crit)
 {
+  /* TODO Handle named critical */
   __mpcomp_anonymous_critical_end () ;
 }
 
@@ -771,25 +777,28 @@ __kmpc_for_static_init_4( ident_t *loc, kmp_int32 gtid, kmp_int32 schedtype,
     kmp_int32 * pstride, kmp_int32 incr, kmp_int32 chunk ) 
 {
   long from, to ;
+  mpcomp_thread_t *t;
 
-  sctk_debug( "[%d] __kmpc_for_static_init_4: <%s>",
-      ((mpcomp_thread_t *) sctk_openmp_thread_tls)->rank,
-      loc->psource ) ;
+     t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
+     sctk_assert(t != NULL);   
+
+
+  sctk_debug( "[%d] __kmpc_for_static_init_4: <%s> "
+      "schedtype=%d, %d? %d -> %d incl. [%d], incr=%d chunk=%d *plastiter=%d *pstride=%d"
+      ,
+      ((mpcomp_thread_t *) sctk_openmp_thread_tls)->rank, 
+      loc->psource,
+      schedtype, *plastiter, *plower, *pupper, *pstride, incr, chunk, *plastiter, *pstride
+      ) ;
 
   switch( schedtype ) {
     case kmp_sch_static:
-      sctk_debug( "[%d] __kmpc_for_static_init_4: "
-	  "schedtype=%d, %d? %d -> %d incl. [%d], incr=%d chunk=%d "
-	  ,
-	  ((mpcomp_thread_t *) sctk_openmp_thread_tls)->rank, 
-	  schedtype, *plastiter, *plower, *pupper, *pstride, incr, chunk
-	  ) ;
 
       /* Get the single chunk for the current thread */
       __mpcomp_static_schedule_get_single_chunk( *plower, *pupper+incr, incr,
 	  &from, &to ) ;
 
-      sctk_debug( "[%d] Results for __kmpc_for_static_init_4: "
+      sctk_debug( "[%d] Results for __kmpc_for_static_init_4 (kmp_sch_static): "
 	  "%ld -> %ld excl %ld incl [%d]"
 	  ,
 	  ((mpcomp_thread_t *) sctk_openmp_thread_tls)->rank, 
@@ -799,13 +808,51 @@ __kmpc_for_static_init_4( ident_t *loc, kmp_int32 gtid, kmp_int32 schedtype,
       /* Remarks:
 	 - MPC chunk has not-inclusive upper bound while Intel runtime includes
 	 upper bound for calculation 
-	 - Need to case from long to int because MPC handles everything has a long
+	 - Need to cast from long to int because MPC handles everything has a long
 	 (like GCC) while Intel creates different functions
 	 */
       *plower=(kmp_int32)from ;
       *pupper=(kmp_int32)to-incr;
+
+      //* TODO what about pstride and plastiter? */
       // *pstride = incr ;
       // *plastiter = 1 ;
+      break ;
+    case kmp_sch_static_chunked:
+
+      sctk_assert( chunk >= 1 ) ;
+
+
+      // span = chunk * incr;
+      *pstride = (chunk * incr) * t->info.num_threads ;
+      *plower = *plower + ((chunk * incr)* t->rank );
+      *pupper = *plower + (chunk * incr) - incr;
+
+
+      /* __mpcomp_static_schedule_get_specific_chunk( *plower, *pupper+incr, incr,
+	  chunk, 0, &from, &to ) ;
+	  */
+
+      sctk_debug( "[%d] Results for __kmpc_for_static_init_4 (kmp_sch_static_chunked): "
+	  "%ld -> %ld excl %ld incl [%d]"
+	  ,
+	  ((mpcomp_thread_t *) sctk_openmp_thread_tls)->rank, 
+	  *plower, *pupper, *pupper-incr, incr
+	  ) ;
+
+      /* Remarks:
+	 - MPC chunk has not-inclusive upper bound while Intel runtime includes
+	 upper bound for calculation 
+	 - Need to cast from long to int because MPC handles everything has a long
+	 (like GCC) while Intel creates different functions
+	 */
+      // *plower=(kmp_int32)from ;
+      // *pupper=(kmp_int32)to-incr;
+
+      /* TODO what should we do w/ plastiter? */
+      /* TODO what if the number of chunk is > 1? */
+
+      // not_implemented() ;
       break ;
     default:
       not_implemented() ;
@@ -899,6 +946,12 @@ __kmpc_dispatch_init_4(ident_t *loc, kmp_int32 gtid, enum sched_type schedule,
       __mpcomp_dynamic_loop_init( 
 	  ((mpcomp_thread_t *) sctk_openmp_thread_tls),
 	  (long)lb, (long)ub+(long)st, (long)st, (long)chunk ) ;
+      break ;
+    case kmp_ord_static_chunked:
+      __mpcomp_static_loop_init(
+	  ((mpcomp_thread_t *) sctk_openmp_thread_tls),
+	  (long)lb, (long)ub+(long)st, (long)st, (long)chunk
+	  ) ;
       break ;
     default:
       not_implemented() ;
@@ -1309,82 +1362,6 @@ not_implemented() ;
 }
 
 
-/********************************
-  * ATOMIC_OPERATIONS
-  *******************************/
-
-void
-__kmpc_atomic_fixed4_add( ident_t * loc, int global_tid, kmp_int32 * lhs, kmp_int32 rhs )
-{
-
-  sctk_debug( "[%d] __kmpc_atomic_fixed4_add: "
-      "Add %d",
-      ((mpcomp_thread_t *) sctk_openmp_thread_tls)->rank, rhs ) ;
-
-  __mpcomp_atomic_begin() ;
-
-  *lhs += rhs ;
-
-  __mpcomp_atomic_end() ;
-
-  /* TODO: use assembly functions by Intel if available */
-}
-
-
-void 
-__kmpc_atomic_fixed4_wr(  ident_t *id_ref, int gtid, kmp_int32   * lhs, kmp_int32   rhs ) 
-{
-  sctk_debug( "[%d] __kmpc_atomic_fixed4_wr: "
-      "Write %d",
-      ((mpcomp_thread_t *) sctk_openmp_thread_tls)->rank, rhs ) ;
-
-  __mpcomp_atomic_begin() ;
-
-  *lhs = rhs ;
-
-  __mpcomp_atomic_end() ;
-
-  /* TODO: use assembly functions by Intel if available */
-}
-
-void 
-__kmpc_atomic_fixed8_add(  ident_t *id_ref, int gtid, kmp_int64 * lhs, kmp_int64 rhs )
-{
-  sctk_debug( "[%d] __kmpc_atomic_fixed8_add: "
-      "Add %ld",
-      ((mpcomp_thread_t *) sctk_openmp_thread_tls)->rank, rhs ) ;
-
-  __mpcomp_atomic_begin() ;
-
-  *lhs += rhs ;
-
-  __mpcomp_atomic_end() ;
-  /* TODO: use assembly functions by Intel if available */
-}
-
-void 
-__kmpc_atomic_float8_add(  ident_t *id_ref, int gtid, kmp_real64 * lhs, kmp_real64 rhs )
-{
-  sctk_debug( "[%d] (ASM) __kmpc_atomic_float8_add: "
-      "Add %g",
-      ((mpcomp_thread_t *) sctk_openmp_thread_tls)->rank, rhs ) ;
-
-  __kmp_test_then_add_real64( lhs, rhs ) ;
-
-  /* TODO check how we can add this function to asssembly-dedicated module */
-
-#if 0
-  __mpcomp_atomic_begin() ;
-
-  *lhs += rhs ;
-
-  __mpcomp_atomic_end() ;
-#endif
-
-
-  /* TODO: use assembly functions by Intel if available */
-}
-
 
 
 
@@ -1519,3 +1496,164 @@ __kmpc_test_nest_lock( ident_t *loc, kmp_int32 gtid, void **user_lock )
 
 
 
+/********************************
+  * ATOMIC_OPERATIONS
+  *******************************/
+
+void
+__kmpc_atomic_fixed4_add( ident_t * loc, int global_tid, kmp_int32 * lhs, kmp_int32 rhs )
+{
+
+  sctk_nodebug( "[%d] __kmpc_atomic_fixed4_add: "
+      "Add %d",
+      ((mpcomp_thread_t *) sctk_openmp_thread_tls)->rank, rhs ) ;
+
+  __mpcomp_atomic_begin() ;
+
+  *lhs += rhs ;
+
+  __mpcomp_atomic_end() ;
+
+  /* TODO: use assembly functions by Intel if available */
+}
+
+
+void 
+__kmpc_atomic_fixed4_wr(  ident_t *id_ref, int gtid, kmp_int32   * lhs, kmp_int32   rhs ) 
+{
+  sctk_nodebug( "[%d] __kmpc_atomic_fixed4_wr: "
+      "Write %d",
+      ((mpcomp_thread_t *) sctk_openmp_thread_tls)->rank, rhs ) ;
+
+  __mpcomp_atomic_begin() ;
+
+  *lhs = rhs ;
+
+  __mpcomp_atomic_end() ;
+
+  /* TODO: use assembly functions by Intel if available */
+}
+
+void 
+__kmpc_atomic_fixed8_add(  ident_t *id_ref, int gtid, kmp_int64 * lhs, kmp_int64 rhs )
+{
+  sctk_nodebug( "[%d] __kmpc_atomic_fixed8_add: "
+      "Add %ld",
+      ((mpcomp_thread_t *) sctk_openmp_thread_tls)->rank, rhs ) ;
+
+  __mpcomp_atomic_begin() ;
+
+  *lhs += rhs ;
+
+  __mpcomp_atomic_end() ;
+  /* TODO: use assembly functions by Intel if available */
+}
+
+void 
+__kmpc_atomic_float8_add(  ident_t *id_ref, int gtid, kmp_real64 * lhs, kmp_real64 rhs )
+{
+  sctk_nodebug( "[%d] (ASM) __kmpc_atomic_float8_add: "
+      "Add %g",
+      ((mpcomp_thread_t *) sctk_openmp_thread_tls)->rank, rhs ) ;
+
+  __kmp_test_then_add_real64( lhs, rhs ) ;
+
+  /* TODO check how we can add this function to asssembly-dedicated module */
+
+#if 0
+  __mpcomp_atomic_begin() ;
+
+  *lhs += rhs ;
+
+  __mpcomp_atomic_end() ;
+#endif
+
+
+  /* TODO: use assembly functions by Intel if available */
+}
+
+
+#define NON_IMPLEMENTED_ATOMIC(TYPE_ID,OP_ID,TYPE, RET_TYPE) \
+  RET_TYPE __kmpc_atomic_##TYPE_ID##_##OP_ID( ident_t *id_ref, int gtid, TYPE * lhs, TYPE rhs ) \
+{                                                                                         \
+  not_implemented(); \
+}
+
+// Routines for ATOMIC 4-byte operands addition and subtraction
+// NON_IMPLEMENTED_ATOMIC( fixed4, add, kmp_int32,   void )  // __kmpc_atomic_fixed4_add
+NON_IMPLEMENTED_ATOMIC( fixed4, sub, kmp_int32,   void )  // __kmpc_atomic_fixed4_sub
+NON_IMPLEMENTED_ATOMIC( float4, add, kmp_real32,  void )  // __kmpc_atomic_float4_add
+NON_IMPLEMENTED_ATOMIC( float4, sub, kmp_real32,  void )  // __kmpc_atomic_float4_sub
+
+// Routines for ATOMIC 8-byte operands addition and subtraction
+// NON_IMPLEMENTED_ATOMIC( fixed8, add, kmp_int64,   void )  // __kmpc_atomic_fixed8_add
+NON_IMPLEMENTED_ATOMIC( fixed8, sub, kmp_int64,   void )  // __kmpc_atomic_fixed8_sub
+// NON_IMPLEMENTED_ATOMIC( float8, add, kmp_real64,  void )  // __kmpc_atomic_float8_add
+NON_IMPLEMENTED_ATOMIC( float8, sub, kmp_real64,  void )  // __kmpc_atomic_float8_sub
+
+// ------------------------------------------------------------------------
+// Routines for ATOMIC integer operands, other operators
+// ------------------------------------------------------------------------
+NON_IMPLEMENTED_ATOMIC( fixed1,  add, kmp_int8,   void )  // __kmpc_atomic_fixed1_add
+NON_IMPLEMENTED_ATOMIC( fixed1, andb, kmp_int8,   void )  // __kmpc_atomic_fixed1_andb
+NON_IMPLEMENTED_ATOMIC( fixed1,  div, kmp_int8,   void )  // __kmpc_atomic_fixed1_div
+NON_IMPLEMENTED_ATOMIC( fixed1u, div, kmp_uint8,  void )  // __kmpc_atomic_fixed1u_div
+NON_IMPLEMENTED_ATOMIC( fixed1,  mul, kmp_int8,   void )  // __kmpc_atomic_fixed1_mul
+NON_IMPLEMENTED_ATOMIC( fixed1,  orb, kmp_int8,   void )  // __kmpc_atomic_fixed1_orb
+NON_IMPLEMENTED_ATOMIC( fixed1,  shl, kmp_int8,   void )  // __kmpc_atomic_fixed1_shl
+NON_IMPLEMENTED_ATOMIC( fixed1,  shr, kmp_int8,   void )  // __kmpc_atomic_fixed1_shr
+NON_IMPLEMENTED_ATOMIC( fixed1u, shr, kmp_uint8,  void )  // __kmpc_atomic_fixed1u_shr
+NON_IMPLEMENTED_ATOMIC( fixed1,  sub, kmp_int8,   void )  // __kmpc_atomic_fixed1_sub
+NON_IMPLEMENTED_ATOMIC( fixed1,  xor, kmp_int8,   void )  // __kmpc_atomic_fixed1_xor
+NON_IMPLEMENTED_ATOMIC( fixed2,  add, kmp_int16,  void )  // __kmpc_atomic_fixed2_add
+NON_IMPLEMENTED_ATOMIC( fixed2, andb, kmp_int16,  void )  // __kmpc_atomic_fixed2_andb
+NON_IMPLEMENTED_ATOMIC( fixed2,  div, kmp_int16,  void )  // __kmpc_atomic_fixed2_div
+NON_IMPLEMENTED_ATOMIC( fixed2u, div, kmp_uint16, void )  // __kmpc_atomic_fixed2u_div
+NON_IMPLEMENTED_ATOMIC( fixed2,  mul, kmp_int16,  void )  // __kmpc_atomic_fixed2_mul
+NON_IMPLEMENTED_ATOMIC( fixed2,  orb, kmp_int16,  void )  // __kmpc_atomic_fixed2_orb
+NON_IMPLEMENTED_ATOMIC( fixed2,  shl, kmp_int16,  void )  // __kmpc_atomic_fixed2_shl
+NON_IMPLEMENTED_ATOMIC( fixed2,  shr, kmp_int16,  void )  // __kmpc_atomic_fixed2_shr
+NON_IMPLEMENTED_ATOMIC( fixed2u, shr, kmp_uint16, void )  // __kmpc_atomic_fixed2u_shr
+NON_IMPLEMENTED_ATOMIC( fixed2,  sub, kmp_int16,  void )  // __kmpc_atomic_fixed2_sub
+NON_IMPLEMENTED_ATOMIC( fixed2,  xor, kmp_int16,  void )  // __kmpc_atomic_fixed2_xor
+NON_IMPLEMENTED_ATOMIC( fixed4, andb, kmp_int32,  void )  // __kmpc_atomic_fixed4_andb
+NON_IMPLEMENTED_ATOMIC( fixed4,  div, kmp_int32,  void )  // __kmpc_atomic_fixed4_div
+NON_IMPLEMENTED_ATOMIC( fixed4u, div, kmp_uint32, void )  // __kmpc_atomic_fixed4u_div
+NON_IMPLEMENTED_ATOMIC( fixed4,  mul, kmp_int32,  void )  // __kmpc_atomic_fixed4_mul
+NON_IMPLEMENTED_ATOMIC( fixed4,  orb, kmp_int32,  void )  // __kmpc_atomic_fixed4_orb
+NON_IMPLEMENTED_ATOMIC( fixed4,  shl, kmp_int32,  void )  // __kmpc_atomic_fixed4_shl
+NON_IMPLEMENTED_ATOMIC( fixed4,  shr, kmp_int32,  void )  // __kmpc_atomic_fixed4_shr
+NON_IMPLEMENTED_ATOMIC( fixed4u, shr, kmp_uint32, void )  // __kmpc_atomic_fixed4u_shr
+NON_IMPLEMENTED_ATOMIC( fixed4,  xor, kmp_int32,  void )  // __kmpc_atomic_fixed4_xor
+NON_IMPLEMENTED_ATOMIC( fixed8, andb, kmp_int64,  void )  // __kmpc_atomic_fixed8_andb
+NON_IMPLEMENTED_ATOMIC( fixed8,  div, kmp_int64,  void )  // __kmpc_atomic_fixed8_div
+NON_IMPLEMENTED_ATOMIC( fixed8u, div, kmp_uint64, void )  // __kmpc_atomic_fixed8u_div
+NON_IMPLEMENTED_ATOMIC( fixed8,  mul, kmp_int64,  void )  // __kmpc_atomic_fixed8_mul
+NON_IMPLEMENTED_ATOMIC( fixed8,  orb, kmp_int64,  void )  // __kmpc_atomic_fixed8_orb
+NON_IMPLEMENTED_ATOMIC( fixed8,  shl, kmp_int64,  void )  // __kmpc_atomic_fixed8_shl
+NON_IMPLEMENTED_ATOMIC( fixed8,  shr, kmp_int64,  void )  // __kmpc_atomic_fixed8_shr
+NON_IMPLEMENTED_ATOMIC( fixed8u, shr, kmp_uint64, void )  // __kmpc_atomic_fixed8u_shr
+NON_IMPLEMENTED_ATOMIC( fixed8,  xor, kmp_int64,  void )  // __kmpc_atomic_fixed8_xor
+NON_IMPLEMENTED_ATOMIC( float4,  div, kmp_real32, void )  // __kmpc_atomic_float4_div
+NON_IMPLEMENTED_ATOMIC( float4,  mul, kmp_real32, void )  // __kmpc_atomic_float4_mul
+NON_IMPLEMENTED_ATOMIC( float8,  div, kmp_real64, void )  // __kmpc_atomic_float8_div
+NON_IMPLEMENTED_ATOMIC( float8,  mul, kmp_real64, void )  // __kmpc_atomic_float8_mul
+
+/* ------------------------------------------------------------------------ */
+/* Routines for C/C++ Reduction operators && and ||                         */
+/* ------------------------------------------------------------------------ */
+NON_IMPLEMENTED_ATOMIC( fixed1, andl, char,       void )   // __kmpc_atomic_fixed1_andl
+NON_IMPLEMENTED_ATOMIC( fixed1,  orl, char,       void )   // __kmpc_atomic_fixed1_orl
+NON_IMPLEMENTED_ATOMIC( fixed2, andl, short,      void )   // __kmpc_atomic_fixed2_andl
+NON_IMPLEMENTED_ATOMIC( fixed2,  orl, short,      void )   // __kmpc_atomic_fixed2_orl
+NON_IMPLEMENTED_ATOMIC( fixed4, andl, kmp_int32,  void )   // __kmpc_atomic_fixed4_andl
+NON_IMPLEMENTED_ATOMIC( fixed4,  orl, kmp_int32,  void )   // __kmpc_atomic_fixed4_orl
+NON_IMPLEMENTED_ATOMIC( fixed8, andl, kmp_int64,  void )   // __kmpc_atomic_fixed8_andl
+NON_IMPLEMENTED_ATOMIC( fixed8,  orl, kmp_int64,  void )   // __kmpc_atomic_fixed8_orl
+
+/* ------------------------------------------------------------------------- */
+/* Routines for Fortran operators that matched no one in C:                  */
+/* MAX, MIN, .EQV., .NEQV.                                                   */
+/* Operators .AND., .OR. are covered by __kmpc_atomic_*_{andl,orl}           */
+/* Intrinsics IAND, IOR, IEOR are covered by __kmpc_atomic_*_{andb,orb,xor}  */
+/* ------------------------------------------------------------------------- */
