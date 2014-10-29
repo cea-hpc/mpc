@@ -63,6 +63,8 @@ __mpcomp_atomic_end ()
 
 INFO("Wrong atomic/critical behavior in case of OpenMP oversubscribing")
 
+TODO("BUG w/ nested anonymous critical (and maybe named critical) -> need nested locks")
+
 void
 __mpcomp_anonymous_critical_begin ()
 {
