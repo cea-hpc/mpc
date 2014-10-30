@@ -500,7 +500,8 @@ __kmpc_in_parallel(ident_t * loc)
 void
 __kmpc_flush(ident_t *loc, ...) 
 {
-  not_implemented() ;
+  __sync_synchronize() ;
+  // not_implemented() ;
 }
 
 void
@@ -778,6 +779,7 @@ __kmpc_for_static_init_4( ident_t *loc, kmp_int32 gtid, kmp_int32 schedtype,
 {
   long from, to ;
   mpcomp_thread_t *t;
+  int res ;
 
      t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
      sctk_assert(t != NULL);   
@@ -795,9 +797,11 @@ __kmpc_for_static_init_4( ident_t *loc, kmp_int32 gtid, kmp_int32 schedtype,
     case kmp_sch_static:
 
       /* Get the single chunk for the current thread */
-      __mpcomp_static_schedule_get_single_chunk( *plower, *pupper+incr, incr,
+      res = __mpcomp_static_schedule_get_single_chunk( *plower, *pupper+incr, incr,
 	  &from, &to ) ;
 
+      /* Chunk to execute? */
+      if ( res ) {
       sctk_debug( "[%d] Results for __kmpc_for_static_init_4 (kmp_sch_static): "
 	  "%ld -> %ld excl %ld incl [%d]"
 	  ,
@@ -813,6 +817,12 @@ __kmpc_for_static_init_4( ident_t *loc, kmp_int32 gtid, kmp_int32 schedtype,
 	 */
       *plower=(kmp_int32)from ;
       *pupper=(kmp_int32)to-incr;
+
+      } else {
+	/* No chunk */
+	*pupper=*pupper+incr;
+	*plower=*pupper;
+      }
 
       //* TODO what about pstride and plastiter? */
       // *pstride = incr ;
@@ -919,6 +929,10 @@ __kmpc_for_static_init_8u( ident_t *loc, kmp_int32 gtid, kmp_int32 schedtype,
     kmp_int64 * pstride, kmp_int64 incr, kmp_int64 chunk ) 
 {
   /* TODO: the same as unsigned long long in GCC... */
+
+  sctk_debug( "__kmpc_for_static_init_8u: siweof long = %d, sizeof long long %d",
+      sizeof( long ), sizeof( long long ) ) ;
+
   not_implemented() ;
 }
 

@@ -1012,10 +1012,11 @@ mpcomp_get_thread_num (void)
 
   __mpcomp_init ();
 
-  sctk_nodebug( "mpcomp_get_thread_num: entering" ) ;
-
   t = sctk_openmp_thread_tls ;
   sctk_assert( t != NULL ) ;
+
+  sctk_debug( "[%d] mpcomp_get_thread_num: entering",
+		 t->rank	) ;
 
   return t->rank;
 
@@ -1036,8 +1037,8 @@ mpcomp_get_max_threads (void)
   t = sctk_openmp_thread_tls ;
   sctk_assert( t != NULL ) ;
 
- sctk_nodebug("[%d, %p] mpcomp_get_max_threads: getting %d thread(s)",
-		 t->rank, t, t->info.icvs.nthreads_var) ;
+ sctk_debug("[%d] mpcomp_get_max_threads: getting %d thread(s)",
+		 t->rank, t->info.icvs.nthreads_var) ;
 
   return t->info.icvs.nthreads_var;
 }
