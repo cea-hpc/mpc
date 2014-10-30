@@ -138,9 +138,19 @@ int MPID_Abort(struct MPID_Comm *comm, int mpi_errno, int exit_code, const char 
 }
 
 
-int MPIR_Status_set_bytes( MPI_Status status, MPI_Datatype datatype, size_t size )
+int MPIR_Status_set_bytes(MPI_Status *status, MPI_Datatype datatype, MPI_Count nbytes)
 {
-	return MPI_Status_set_elements(&status, MPI_BYTE, size);
+	MPI_Count type_size;
+	PMPI_Type_size_x(datatype, &type_size);
+	
+	MPI_Count count = 0;
+	
+	if( type_size != 0 )
+	{
+		count = nbytes / type_size;
+	}
+	
+	return PMPI_Status_set_elements_x(status, datatype, count);
 }
 
 
