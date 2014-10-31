@@ -177,7 +177,7 @@ int MPIR_File_call_cxx_errhandler( void *fh, int *errorcode,
 			   void (*c_errhandler)(void  *, int *, ... ) )
 {
 	
-	
+	return MPI_SUCCESS;
 }
 
 
@@ -219,3 +219,22 @@ int MPIO_Err_create_code(int lastcode, int fatal, const char fcname[],
 
     return error_class;
 }
+
+
+sctk_spinlock_t mpio_strided_lock;
+
+void MPIO_lock_strided()
+{
+	sctk_spinlock_lock(&mpio_strided_lock);
+}
+
+
+void MPIO_unlock_strided()
+{
+	sctk_spinlock_unlock(&mpio_strided_lock);
+}
+
+
+
+
+
