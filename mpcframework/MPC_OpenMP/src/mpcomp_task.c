@@ -634,6 +634,7 @@ void __mpcomp_task(void *(*fn) (void *), void *data, void (*cpyfn) (void *, void
      
      sctk_atomics_incr_int(&(t->instance->team->nb_tasks));
 
+
      if (t->info.num_threads == 1)
      	  nb_delayed = 0;
      else {
@@ -642,10 +643,17 @@ void __mpcomp_task(void *(*fn) (void *), void *data, void (*cpyfn) (void *, void
      	  nb_delayed = sctk_atomics_load_int(&(new_list->nb_elements));
      }
 
+		 sctk_debug( "[%d] __mpcomp_task: new task (n_threads=%ld, current_task=%s, current_task_depth=%d, "
+				 "nb_delayed=%d)",
+				 t->rank, t->info.num_threads, (t->current_task)?"yes":"no",
+				 (t->current_task)?t->current_task->depth:0 ,
+				 (t->info.num_threads == 1)?0:sctk_atomics_load_int(&(new_list->nb_elements))
+				 ) ;
+
      if (!if_clause
 	 || (t->current_task && mpcomp_task_property_isset (t->current_task->property, MPCOMP_TASK_FINAL))
-	 || t->info.num_threads == 1
-	 || nb_delayed > MPCOMP_TASK_MAX_DELAYED
+	 || (t->info.num_threads == 1)
+	 || (nb_delayed > MPCOMP_TASK_MAX_DELAYED)
 	 || (t->current_task && t->current_task->depth > 8/*t->instance->team->task_nesting_max*/)) {
 	  /* Execute directly */
 //	  fn(data);
@@ -671,6 +679,11 @@ void __mpcomp_task(void *(*fn) (void *), void *data, void (*cpyfn) (void *, void
 	  task.icvs = t->info.icvs;
 	  task.thread = t;
 
+		sctk_debug( "[%d] __mpcomp_task: sequential task w/ args size %d",
+				t->rank, arg_size + arg_align - 1 ) ;
+
+		// fn (data);
+#if 1
 	  if (cpyfn != NULL) {
 	       /* If cpyfn is given, use it to copy args */
 	       char tmp[arg_size + arg_align - 1];
@@ -682,6 +695,10 @@ void __mpcomp_task(void *(*fn) (void *), void *data, void (*cpyfn) (void *, void
 	  } else {
 	       fn (data);
 	  }
+#endif
+
+		sctk_debug( "[%d] __mpcomp_task: end of sequential task",
+				t->rank ) ;
 	  
 	  /* Replace current task */
 	  t->current_task = prev_task;
@@ -719,6 +736,10 @@ void __mpcomp_task(void *(*fn) (void *), void *data, void (*cpyfn) (void *, void
 	  }
 
 	  parent = task->parent;
+
+		sctk_nodebug( "task_depth = %d", task->depth ) ;
+
+		sctk_assert( task->depth <= 8+1 ) ;
 
 	  //sctk_assert(__mpcomp_task_check_circular_link(task) == 0);
 

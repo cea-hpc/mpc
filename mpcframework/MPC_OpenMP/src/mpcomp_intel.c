@@ -361,10 +361,19 @@ __kmpc_fork_call(ident_t * loc, kmp_int32 argc, kmpc_micro microtask, ...)
   int i ;
   void ** args_copy ;
   wrapper_t w ;
+  mpcomp_thread_t *t;
 
   sctk_debug( "__kmpc_fork_call: entering w/ %d arg(s)...", argc ) ;
 
+  /* Handle orphaned directive (initialize OpenMP environment) */
+  __mpcomp_init() ;
+
+  /* Grab info on the current thread */
+  t = (mpcomp_thread_t *) sctk_openmp_thread_tls;
+  sctk_assert(t != NULL);
+
   args_copy = (void **)malloc( argc * sizeof( void * ) ) ;
+  sctk_assert( args_copy ) ;
 
   va_start( args, microtask ) ;
 
@@ -378,7 +387,10 @@ __kmpc_fork_call(ident_t * loc, kmp_int32 argc, kmpc_micro microtask, ...)
   w.argc = argc ;
   w.args = args_copy ;
 
-  __mpcomp_start_parallel_region( -1, wrapper_function, &w ) ;
+  __mpcomp_start_parallel_region( t->push_num_threads, wrapper_function, &w ) ;
+
+  /* restore the number of threads w/ num_threads clause */
+  t->push_num_threads = -1 ;
 }
 
 void
@@ -430,14 +442,20 @@ __kmpc_end_serialized_parallel(ident_t *loc, kmp_int32 global_tid)
 void
 __kmpc_push_num_threads( ident_t *loc, kmp_int32 global_tid, kmp_int32 num_threads )
 {
+  mpcomp_thread_t * t ;
 
   sctk_debug( "__kmpc_push_num_threads: pushing %d thread(s)", num_threads ) ;
 
-  mpcomp_set_num_threads(num_threads) ;
+  /* Handle orphaned directive (initialize OpenMP environment) */
+  __mpcomp_init() ;
 
-  /* TODO this is not completly correct regarding OpenMP standard... */
-  /* TODO check if the bug with too large numn_threads() appears in 
-     final version of the runtime... */
+  /* Grab the thread info */
+  t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
+  sctk_assert( t != NULL ) ;
+
+  sctk_assert( t->push_num_threads == -1 ) ;
+
+  t->push_num_threads = num_threads ;
 }
 
 void 
@@ -500,8 +518,10 @@ __kmpc_in_parallel(ident_t * loc)
 void
 __kmpc_flush(ident_t *loc, ...) 
 {
+  /* TODO depending on the compiler, call the right function
+   * Maybe need to do the same for mpcomp_flush...
+   */
   __sync_synchronize() ;
-  // not_implemented() ;
 }
 
 void
@@ -884,37 +904,76 @@ __kmpc_for_static_init_8( ident_t *loc, kmp_int32 gtid, kmp_int32 schedtype,
     kmp_int64 * pstride, kmp_int64 incr, kmp_int64 chunk ) 
 {
   long from, to ;
+  mpcomp_thread_t *t;
+  int res ;
+
+  t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
+  sctk_assert(t != NULL);   
+
+  sctk_debug( "[%d] __kmpc_for_static_init_8: "
+      "schedtype=%d, %d? %ld -> %ld incl. [%ld], incr=%ld chunk=%ld "
+      ,
+      ((mpcomp_thread_t *) sctk_openmp_thread_tls)->rank, 
+      schedtype, *plastiter, *plower, *pupper, *pstride, incr, chunk
+      ) ;
 
   switch( schedtype ) {
     case kmp_sch_static:
-      sctk_debug( "[%d] __kmpc_for_static_init_8: "
-	  "schedtype=%d, %d? %ld -> %ld incl. [%ld], incr=%ld chunk=%ld "
-	  ,
-	  ((mpcomp_thread_t *) sctk_openmp_thread_tls)->rank, 
-	  schedtype, *plastiter, *plower, *pupper, *pstride, incr, chunk
-	  ) ;
 
       /* Get the single chunk for the current thread */
-      __mpcomp_static_schedule_get_single_chunk( *plower, *pupper+incr, incr,
+      res = __mpcomp_static_schedule_get_single_chunk( *plower, *pupper+incr, incr,
 	  &from, &to ) ;
 
-      sctk_debug( "[%d] Results for __kmpc_for_static_init_8: "
-	  "%ld -> %ld [%ld]"
+      if ( res ) {
+	sctk_debug( "[%d] Results for __kmpc_for_static_init_8: "
+	    "%ld -> %ld [%ld]"
+	    ,
+	    ((mpcomp_thread_t *) sctk_openmp_thread_tls)->rank, 
+	    from, to, incr
+	    ) ;
+
+	/* Remarks:
+	   - MPC chunk has not-inclusive upper bound while Intel runtime includes
+	   upper bound for calculation 
+	   - Need to case from long to int because MPC handles everything has a long
+	   (like GCC) while Intel creates different functions
+	   */
+	*plower=(kmp_int64)from ;
+	*pupper=(kmp_int64)to-incr;
+      } else {
+	/* No chunk */
+	*pupper=*pupper+incr;
+	*plower=*pupper;
+      }
+      // *pstride = incr ;
+      // *plastiter = 1 ;
+      break ;
+    case kmp_sch_static_chunked:
+
+      sctk_assert( chunk >= 1 ) ;
+
+      *pstride = (chunk * incr) * t->info.num_threads ;
+      *plower = *plower + ((chunk * incr)* t->rank );
+      *pupper = *plower + (chunk * incr) - incr;
+
+
+      sctk_debug( "[%d] Results for __kmpc_for_static_init_8 (kmp_sch_static_chunked): "
+	  "%ld -> %ld excl %ld incl [%d]"
 	  ,
 	  ((mpcomp_thread_t *) sctk_openmp_thread_tls)->rank, 
-	  from, to, incr
+	  *plower, *pupper, *pupper-incr, incr
 	  ) ;
 
       /* Remarks:
 	 - MPC chunk has not-inclusive upper bound while Intel runtime includes
 	 upper bound for calculation 
-	 - Need to case from long to int because MPC handles everything has a long
+	 - Need to cast from long to int because MPC handles everything has a long
 	 (like GCC) while Intel creates different functions
 	 */
-      *plower=(kmp_int64)from ;
-      *pupper=(kmp_int64)to-incr;
-      // *pstride = incr ;
-      // *plastiter = 1 ;
+
+      /* TODO what should we do w/ plastiter? */
+      /* TODO what if the number of chunk is > 1? */
+
       break ;
     default:
       not_implemented() ;
@@ -1671,3 +1730,124 @@ NON_IMPLEMENTED_ATOMIC( fixed8,  orl, kmp_int64,  void )   // __kmpc_atomic_fixe
 /* Operators .AND., .OR. are covered by __kmpc_atomic_*_{andl,orl}           */
 /* Intrinsics IAND, IOR, IEOR are covered by __kmpc_atomic_*_{andb,orb,xor}  */
 /* ------------------------------------------------------------------------- */
+
+#if 0
+  MIN_MAX_COMPXCHG( fixed1,  max, char,        8, <, 1i, 0, KMP_ARCH_X86 ) // __kmpc_atomic_fixed1_max
+  MIN_MAX_COMPXCHG( fixed1,  min, char,        8, >, 1i, 0, KMP_ARCH_X86 ) // __kmpc_atomic_fixed1_min
+  MIN_MAX_COMPXCHG( fixed2,  max, short,      16, <, 2i, 1, KMP_ARCH_X86 ) // __kmpc_atomic_fixed2_max
+  MIN_MAX_COMPXCHG( fixed2,  min, short,      16, >, 2i, 1, KMP_ARCH_X86 ) // __kmpc_atomic_fixed2_min
+  MIN_MAX_COMPXCHG( fixed4,  max, kmp_int32,  32, <, 4i, 3, 0 )            // __kmpc_atomic_fixed4_max
+  MIN_MAX_COMPXCHG( fixed4,  min, kmp_int32,  32, >, 4i, 3, 0 )            // __kmpc_atomic_fixed4_min
+  MIN_MAX_COMPXCHG( fixed8,  max, kmp_int64,  64, <, 8i, 7, KMP_ARCH_X86 ) // __kmpc_atomic_fixed8_max
+  MIN_MAX_COMPXCHG( fixed8,  min, kmp_int64,  64, >, 8i, 7, KMP_ARCH_X86 ) // __kmpc_atomic_fixed8_min
+  MIN_MAX_COMPXCHG( float4,  max, kmp_real32, 32, <, 4r, 3, KMP_ARCH_X86 ) // __kmpc_atomic_float4_max
+  MIN_MAX_COMPXCHG( float4,  min, kmp_real32, 32, >, 4r, 3, KMP_ARCH_X86 ) // __kmpc_atomic_float4_min
+  MIN_MAX_COMPXCHG( float8,  max, kmp_real64, 64, <, 8r, 7, KMP_ARCH_X86 ) // __kmpc_atomic_float8_max
+  MIN_MAX_COMPXCHG( float8,  min, kmp_real64, 64, >, 8r, 7, KMP_ARCH_X86 ) // __kmpc_atomic_float8_min
+#if KMP_HAVE_QUAD
+  MIN_MAX_CRITICAL( float16, max,     QUAD_LEGACY,      <, 16r,   1 )            // __kmpc_atomic_float16_max
+  MIN_MAX_CRITICAL( float16, min,     QUAD_LEGACY,      >, 16r,   1 )            // __kmpc_atomic_float16_min
+#if ( KMP_ARCH_X86 )
+      MIN_MAX_CRITICAL( float16, max_a16, Quad_a16_t,     <, 16r,   1 )            // __kmpc_atomic_float16_max_a16
+      MIN_MAX_CRITICAL( float16, min_a16, Quad_a16_t,     >, 16r,   1 )            // __kmpc_atomic_float16_min_a16
+#endif
+#endif
+
+  ATOMIC_CMPXCHG(  fixed1, neqv, kmp_int8,   8,   ^, 1i, 0, KMP_ARCH_X86 ) // __kmpc_atomic_fixed1_neqv
+  ATOMIC_CMPXCHG(  fixed2, neqv, kmp_int16, 16,   ^, 2i, 1, KMP_ARCH_X86 ) // __kmpc_atomic_fixed2_neqv
+  ATOMIC_CMPXCHG(  fixed4, neqv, kmp_int32, 32,   ^, 4i, 3, KMP_ARCH_X86 ) // __kmpc_atomic_fixed4_neqv
+  ATOMIC_CMPXCHG(  fixed8, neqv, kmp_int64, 64,   ^, 8i, 7, KMP_ARCH_X86 ) // __kmpc_atomic_fixed8_neqv
+  ATOMIC_CMPX_EQV( fixed1, eqv,  kmp_int8,   8,  ^~, 1i, 0, KMP_ARCH_X86 ) // __kmpc_atomic_fixed1_eqv
+  ATOMIC_CMPX_EQV( fixed2, eqv,  kmp_int16, 16,  ^~, 2i, 1, KMP_ARCH_X86 ) // __kmpc_atomic_fixed2_eqv
+  ATOMIC_CMPX_EQV( fixed4, eqv,  kmp_int32, 32,  ^~, 4i, 3, KMP_ARCH_X86 ) // __kmpc_atomic_fixed4_eqv
+  ATOMIC_CMPX_EQV( fixed8, eqv,  kmp_int64, 64,  ^~, 8i, 7, KMP_ARCH_X86 ) // __kmpc_atomic_fixed8_eqv
+  
+#endif
+
+NON_IMPLEMENTED_ATOMIC( fixed1,  max_cpt, char,       void ) // __kmpc_atomic_fixed1_max_cpt
+NON_IMPLEMENTED_ATOMIC( fixed1,  min_cpt, char,       void ) // __kmpc_atomic_fixed1_min_cpt
+NON_IMPLEMENTED_ATOMIC( fixed2,  max_cpt, short,      void ) // __kmpc_atomic_fixed2_max_cpt
+NON_IMPLEMENTED_ATOMIC( fixed2,  min_cpt, short,      void ) // __kmpc_atomic_fixed2_min_cpt
+NON_IMPLEMENTED_ATOMIC( fixed4,  max_cpt, kmp_int32,  void ) // __kmpc_atomic_fixed4_max_cpt
+NON_IMPLEMENTED_ATOMIC( fixed4,  min_cpt, kmp_int32,  void ) // __kmpc_atomic_fixed4_min_cpt
+NON_IMPLEMENTED_ATOMIC( fixed8,  max_cpt, kmp_int64,  void ) // __kmpc_atomic_fixed8_max_cpt
+NON_IMPLEMENTED_ATOMIC( fixed8,  min_cpt, kmp_int64,  void ) // __kmpc_atomic_fixed8_min_cpt
+NON_IMPLEMENTED_ATOMIC( float4,  max_cpt, kmp_real32, void ) // __kmpc_atomic_float4_max_cpt
+NON_IMPLEMENTED_ATOMIC( float4,  min_cpt, kmp_real32, void ) // __kmpc_atomic_float4_min_cpt
+NON_IMPLEMENTED_ATOMIC( float8,  max_cpt, kmp_real64, void ) // __kmpc_atomic_float8_max_cpt
+NON_IMPLEMENTED_ATOMIC( float8,  min_cpt, kmp_real64, void ) // __kmpc_atomic_float8_min_cpt
+
+#if 0
+#if KMP_HAVE_QUAD
+  MIN_MAX_CRITICAL_CPT( float16, max_cpt, QUAD_LEGACY,    <, 16r,   1 )     // __kmpc_atomic_float16_max_cpt
+  MIN_MAX_CRITICAL_CPT( float16, min_cpt, QUAD_LEGACY,    >, 16r,   1 )     // __kmpc_atomic_float16_min_cpt
+#if ( KMP_ARCH_X86 )
+      MIN_MAX_CRITICAL_CPT( float16, max_a16_cpt, Quad_a16_t, <, 16r,  1 )  // __kmpc_atomic_float16_max_a16_cpt
+      MIN_MAX_CRITICAL_CPT( float16, min_a16_cpt, Quad_a16_t, >, 16r,  1 )  // __kmpc_atomic_float16_mix_a16_cpt
+#endif
+#endif
+#endif
+
+NON_IMPLEMENTED_ATOMIC( fixed1, neqv_cpt, kmp_int8,  void ) // __kmpc_atomic_fixed1_neqv_cpt
+NON_IMPLEMENTED_ATOMIC( fixed2, neqv_cpt, kmp_int16, void ) // __kmpc_atomic_fixed2_neqv_cpt
+NON_IMPLEMENTED_ATOMIC( fixed4, neqv_cpt, kmp_int32, void ) // __kmpc_atomic_fixed4_neqv_cpt
+NON_IMPLEMENTED_ATOMIC( fixed8, neqv_cpt, kmp_int64, void ) // __kmpc_atomic_fixed8_neqv_cpt
+NON_IMPLEMENTED_ATOMIC( fixed1, eqv_cpt,  kmp_int8,  void ) // __kmpc_atomic_fixed1_eqv_cpt
+NON_IMPLEMENTED_ATOMIC( fixed2, eqv_cpt,  kmp_int16, void ) // __kmpc_atomic_fixed2_eqv_cpt
+NON_IMPLEMENTED_ATOMIC( fixed4, eqv_cpt,  kmp_int32, void ) // __kmpc_atomic_fixed4_eqv_cpt
+NON_IMPLEMENTED_ATOMIC( fixed8, eqv_cpt,  kmp_int64, void ) // __kmpc_atomic_fixed8_eqv_cpt
+
+#if 0                                                
+// routines for long double type                      
+  ATOMIC_CRITICAL_CPT( float10, add_cpt, long double,     +, 10r,   1 )            // __kmpc_atomic_float10_add_cpt
+  ATOMIC_CRITICAL_CPT( float10, sub_cpt, long double,     -, 10r,   1 )            // __kmpc_atomic_float10_sub_cpt
+  ATOMIC_CRITICAL_CPT( float10, mul_cpt, long double,     *, 10r,   1 )            // __kmpc_atomic_float10_mul_cpt
+ATOMIC_CRITICAL_CPT( float10, div_cpt, long double,     /, 10r,   1 )            // __kmpc_atomic_float10_div_cpt
+#if KMP_HAVE_QUAD
+  // routines for _Quad type
+  ATOMIC_CRITICAL_CPT( float16, add_cpt, QUAD_LEGACY,     +, 16r,   1 )            // __kmpc_atomic_float16_add_cpt
+  ATOMIC_CRITICAL_CPT( float16, sub_cpt, QUAD_LEGACY,     -, 16r,   1 )            // __kmpc_atomic_float16_sub_cpt
+  ATOMIC_CRITICAL_CPT( float16, mul_cpt, QUAD_LEGACY,     *, 16r,   1 )            // __kmpc_atomic_float16_mul_cpt
+  ATOMIC_CRITICAL_CPT( float16, div_cpt, QUAD_LEGACY,     /, 16r,   1 )            // __kmpc_atomic_float16_div_cpt
+#if ( KMP_ARCH_X86 )
+  ATOMIC_CRITICAL_CPT( float16, add_a16_cpt, Quad_a16_t, +, 16r,  1 )          // __kmpc_atomic_float16_add_a16_cpt
+  ATOMIC_CRITICAL_CPT( float16, sub_a16_cpt, Quad_a16_t, -, 16r,  1 )          // __kmpc_atomic_float16_sub_a16_cpt
+  ATOMIC_CRITICAL_CPT( float16, mul_a16_cpt, Quad_a16_t, *, 16r,  1 )          // __kmpc_atomic_float16_mul_a16_cpt
+ATOMIC_CRITICAL_CPT( float16, div_a16_cpt, Quad_a16_t, /, 16r,  1 )          // __kmpc_atomic_float16_div_a16_cpt
+#endif
+#endif
+
+  // routines for complex types
+
+  // cmplx4 routines to return void
+  ATOMIC_CRITICAL_CPT_WRK( cmplx4,  add_cpt, kmp_cmplx32, +, 8c,    1 )            // __kmpc_atomic_cmplx4_add_cpt
+  ATOMIC_CRITICAL_CPT_WRK( cmplx4,  sub_cpt, kmp_cmplx32, -, 8c,    1 )            // __kmpc_atomic_cmplx4_sub_cpt
+  ATOMIC_CRITICAL_CPT_WRK( cmplx4,  mul_cpt, kmp_cmplx32, *, 8c,    1 )            // __kmpc_atomic_cmplx4_mul_cpt
+ATOMIC_CRITICAL_CPT_WRK( cmplx4,  div_cpt, kmp_cmplx32, /, 8c,    1 )            // __kmpc_atomic_cmplx4_div_cpt
+
+  ATOMIC_CRITICAL_CPT( cmplx8,  add_cpt, kmp_cmplx64, +, 16c,   1 )            // __kmpc_atomic_cmplx8_add_cpt
+  ATOMIC_CRITICAL_CPT( cmplx8,  sub_cpt, kmp_cmplx64, -, 16c,   1 )            // __kmpc_atomic_cmplx8_sub_cpt
+  ATOMIC_CRITICAL_CPT( cmplx8,  mul_cpt, kmp_cmplx64, *, 16c,   1 )            // __kmpc_atomic_cmplx8_mul_cpt
+  ATOMIC_CRITICAL_CPT( cmplx8,  div_cpt, kmp_cmplx64, /, 16c,   1 )            // __kmpc_atomic_cmplx8_div_cpt
+  ATOMIC_CRITICAL_CPT( cmplx10, add_cpt, kmp_cmplx80, +, 20c,   1 )            // __kmpc_atomic_cmplx10_add_cpt
+  ATOMIC_CRITICAL_CPT( cmplx10, sub_cpt, kmp_cmplx80, -, 20c,   1 )            // __kmpc_atomic_cmplx10_sub_cpt
+  ATOMIC_CRITICAL_CPT( cmplx10, mul_cpt, kmp_cmplx80, *, 20c,   1 )            // __kmpc_atomic_cmplx10_mul_cpt
+ATOMIC_CRITICAL_CPT( cmplx10, div_cpt, kmp_cmplx80, /, 20c,   1 )            // __kmpc_atomic_cmplx10_div_cpt
+#if KMP_HAVE_QUAD
+  ATOMIC_CRITICAL_CPT( cmplx16, add_cpt, CPLX128_LEG, +, 32c,   1 )            // __kmpc_atomic_cmplx16_add_cpt
+  ATOMIC_CRITICAL_CPT( cmplx16, sub_cpt, CPLX128_LEG, -, 32c,   1 )            // __kmpc_atomic_cmplx16_sub_cpt
+  ATOMIC_CRITICAL_CPT( cmplx16, mul_cpt, CPLX128_LEG, *, 32c,   1 )            // __kmpc_atomic_cmplx16_mul_cpt
+  ATOMIC_CRITICAL_CPT( cmplx16, div_cpt, CPLX128_LEG, /, 32c,   1 )            // __kmpc_atomic_cmplx16_div_cpt
+#if ( KMP_ARCH_X86 )
+  ATOMIC_CRITICAL_CPT( cmplx16, add_a16_cpt, kmp_cmplx128_a16_t, +, 32c,   1 )   // __kmpc_atomic_cmplx16_add_a16_cpt
+  ATOMIC_CRITICAL_CPT( cmplx16, sub_a16_cpt, kmp_cmplx128_a16_t, -, 32c,   1 )   // __kmpc_atomic_cmplx16_sub_a16_cpt
+  ATOMIC_CRITICAL_CPT( cmplx16, mul_a16_cpt, kmp_cmplx128_a16_t, *, 32c,   1 )   // __kmpc_atomic_cmplx16_mul_a16_cpt
+ATOMIC_CRITICAL_CPT( cmplx16, div_a16_cpt, kmp_cmplx128_a16_t, /, 32c,   1 )   // __kmpc_atomic_cmplx16_div_a16_cpt
+#endif
+#endif
+
+
+
+
+
+#endif

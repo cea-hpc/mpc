@@ -316,6 +316,7 @@ typedef struct mpcomp_thread_s
 
 	struct mpcomp_instance_s *instance; /* Current instance (team + tree) */
 
+	long push_num_threads ;	/** Number of threads for Intel parallel region */
 
 	/* -- SINGLE/SECTIONS CONSTRUCT -- */
 	int single_sections_current ;
@@ -560,6 +561,7 @@ typedef struct mpcomp_thread_s
 	  t->done = 0;
 	  t->instance = instance;
 	  t->children_instance = NULL;
+	  t->push_num_threads = -1 ;
 	  t->father = NULL ;
 
 	  /* -- SINGLE CONSTRUCT -- */
