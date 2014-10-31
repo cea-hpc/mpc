@@ -38,7 +38,6 @@ typedef struct {float a ; float b;} mpc_float_float;
 typedef struct {double a ; double b;} mpc_double_double;
 typedef struct {long double a;int b;} mpc_long_double_int;
 typedef struct { unsigned long long a ; int b; } mpc_unsigned_long_long_int;
-typedef struct { long long a ; int b; } mpc_long_long_int;
 typedef struct {long double a;long double b;} mpc_longdouble_longdouble;
 
 void mpc_no_exec (const void *in, void *inout, size_t size, MPC_Datatype datatype, int line, char *file);
@@ -74,7 +73,7 @@ MPC_DEFINED_FUNCS(MPC_COMPLEX16,mpc_double_double ,name)	;		\
 MPC_DEFINED_FUNCS(MPC_DOUBLE_COMPLEX,mpc_double_double ,name)	;		\
 MPC_DEFINED_FUNCS(MPC_COMPLEX32,mpc_longdouble_longdouble ,name)	;		\
 MPC_DEFINED_FUNCS(MPC_UNSIGNED_LONG_LONG_INT,mpc_unsigned_long_long_int ,name)	;		\
-MPC_DEFINED_FUNCS(MPC_LONG_LONG_INT,mpc_long_long_int ,name)	;		\
+MPC_DEFINED_FUNCS(MPC_LONG_LONG_INT,long long int ,name)	;		\
 MPC_DEFINED_FUNCS(MPC_LOGICAL, int,name);				\
 MPC_DEFINED_FUNCS(MPC_2DOUBLE_PRECISION,mpc_double_double ,name);	\
 MPC_DEFINED_FUNCS(MPC_REAL4,float,name);				\
