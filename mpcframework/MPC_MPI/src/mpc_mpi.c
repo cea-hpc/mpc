@@ -2150,7 +2150,7 @@ static int __INTERNAL__PMPI_Waitsome (int incount, MPI_Request * array_of_reques
 
   do
     {
-      sctk_thread_yield ();
+      //      sctk_thread_yield ();
       __INTERNAL__PMPI_Testsome (incount, array_of_requests, outcount, array_of_indices, array_of_statuses);
     }while (*outcount == MPI_UNDEFINED);
 
@@ -3738,7 +3738,7 @@ __INTERNAL__PMPI_Bcast (void *buffer, int count, MPI_Datatype datatype,
   return res;
 }
 
-#define MPI_MAX_CONCURENT 10
+#define MPI_MAX_CONCURENT 100
 static int
 __INTERNAL__PMPI_Gather (void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 			 void *recvbuf, int recvcnt, MPI_Datatype recvtype,
