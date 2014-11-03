@@ -570,6 +570,7 @@ void sctk_runtime_config_sources_open(struct sctk_runtime_config_sources * confi
 
     char * mpc_destprefix = NULL;
     mpc_destprefix  = (char *)malloc(1024*sizeof(char));
+    mpc_destprefix[0]='\0'; 
     strcat(mpc_destprefix, "/");
     strcat(mpc_destprefix, mpc_target_subprefix);
     strcat(mpc_destprefix, "/");
