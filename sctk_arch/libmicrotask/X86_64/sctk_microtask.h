@@ -43,6 +43,10 @@ int __kmp_invoke_microtask(
     void (*pkfn) (int * global_tid, int * bound_tid, ...), 
     int gtid, int npr, int argc, void *argv[] );
 
+
+int __kmp_xchg_fixed32( volatile int * p, int d ) ;
+int __kmp_test_then_add32( volatile int * addr, int data ) ;
+long __kmp_test_then_add64( volatile long * addr, long data ) ;
 double __kmp_test_then_add_real64( volatile double *addr, double data );
 
 #endif

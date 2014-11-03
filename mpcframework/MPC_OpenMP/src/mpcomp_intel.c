@@ -231,6 +231,9 @@ typedef struct wrapper {
   * FUNCTIONS
   *******************************/
 
+extern int __kmp_xchg_fixed32( volatile int * p, int d ) ;
+extern int __kmp_test_then_add32( volatile int * addr, int data ) ;
+extern long __kmp_test_then_add64( volatile long * addr, long data ) ;
 extern double __kmp_test_then_add_real64( volatile double *addr, double data ); 
 
 extern int __kmp_invoke_microtask( 
@@ -1581,6 +1584,9 @@ __kmpc_atomic_fixed4_add( ident_t * loc, int global_tid, kmp_int32 * lhs, kmp_in
       "Add %d",
       ((mpcomp_thread_t *) sctk_openmp_thread_tls)->rank, rhs ) ;
 
+  __kmp_test_then_add32( lhs, rhs ) ;
+
+#if 0
   __mpcomp_atomic_begin() ;
 
   *lhs += rhs ;
@@ -1588,6 +1594,8 @@ __kmpc_atomic_fixed4_add( ident_t * loc, int global_tid, kmp_int32 * lhs, kmp_in
   __mpcomp_atomic_end() ;
 
   /* TODO: use assembly functions by Intel if available */
+#endif
+
 }
 
 
@@ -1598,6 +1606,9 @@ __kmpc_atomic_fixed4_wr(  ident_t *id_ref, int gtid, kmp_int32   * lhs, kmp_int3
       "Write %d",
       ((mpcomp_thread_t *) sctk_openmp_thread_tls)->rank, rhs ) ;
 
+  __kmp_xchg_fixed32( lhs, rhs ) ;
+
+#if 0
   __mpcomp_atomic_begin() ;
 
   *lhs = rhs ;
@@ -1605,7 +1616,9 @@ __kmpc_atomic_fixed4_wr(  ident_t *id_ref, int gtid, kmp_int32   * lhs, kmp_int3
   __mpcomp_atomic_end() ;
 
   /* TODO: use assembly functions by Intel if available */
+#endif
 }
+
 
 void 
 __kmpc_atomic_fixed8_add(  ident_t *id_ref, int gtid, kmp_int64 * lhs, kmp_int64 rhs )
@@ -1614,12 +1627,16 @@ __kmpc_atomic_fixed8_add(  ident_t *id_ref, int gtid, kmp_int64 * lhs, kmp_int64
       "Add %ld",
       ((mpcomp_thread_t *) sctk_openmp_thread_tls)->rank, rhs ) ;
 
+  __kmp_test_then_add64( lhs, rhs ) ;
+
+#if 0
   __mpcomp_atomic_begin() ;
 
   *lhs += rhs ;
 
   __mpcomp_atomic_end() ;
   /* TODO: use assembly functions by Intel if available */
+#endif
 }
 
 void 
