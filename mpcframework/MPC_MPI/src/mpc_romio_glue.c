@@ -234,6 +234,19 @@ void MPIO_unlock_strided()
 	sctk_spinlock_unlock(&mpio_strided_lock);
 }
 
+sctk_spinlock_t mpio_shared_lock;
+
+void MPIO_lock_shared()
+{
+	sctk_spinlock_lock(&mpio_shared_lock);
+}
+
+
+void MPIO_unlock_shared()
+{
+	sctk_spinlock_unlock(&mpio_shared_lock);
+}
+
 
 
 
