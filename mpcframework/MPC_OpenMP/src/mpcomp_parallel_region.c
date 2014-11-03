@@ -179,6 +179,10 @@ static inline mpcomp_node_t * __mpcomp_wakeup_node(
 		/* Update the number of threads for the barrier */
 		n->barrier_num_threads = nb_children_involved ;
 
+		/* TODO test not valid for non-compact affinity
+		 * need to move root while nb_children == 1, then stop
+		 */
+
 		if ( nb_children_involved == 1 ) {
 			if ( master ) {
 				/* Only one subtree => bypass */
