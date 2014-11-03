@@ -1838,7 +1838,10 @@ sctk_communicator_t sctk_duplicate_communicator (const sctk_communicator_t origi
 			tmp->new_comm->remote_leader = -1;
 			tmp->new_comm->remote_comm = NULL;
 		}
+		new_tmp = tmp->new_comm;
+		tmp->new_comm = NULL;
 		sctk_spinlock_unlock(&(tmp->creation_lock));
+		
 		sctk_barrier (origin_communicator);
 		if(rank == 0)
 		{
@@ -1851,18 +1854,12 @@ sctk_communicator_t sctk_duplicate_communicator (const sctk_communicator_t origi
 			local_root = 0;
 		}
 
-		new_tmp = tmp->new_comm;
-		
 		sctk_nodebug("new id DUP INTRA for rank %d, local_root %d, has_zero %d", rank, local_root, tmp->has_zero);
-		comm = sctk_communicator_get_new_id(local_root,rank,origin_communicator,new_tmp);
+		new_tmp->id = sctk_communicator_get_new_id(local_root,rank,origin_communicator,new_tmp);
 		
-		sctk_get_internal_communicator(comm);
-		assume(comm >= 0);
-		sctk_collectives_init_hook(comm);
-
-		sctk_barrier (origin_communicator);
-		tmp->new_comm = NULL;
-		sctk_barrier (origin_communicator);
+		sctk_get_internal_communicator(new_tmp->id);
+		assume(new_tmp->id >= 0);
+		sctk_collectives_init_hook(new_tmp->id);
 
 		assume(new_tmp->id != origin_communicator);
 		
@@ -1989,11 +1986,11 @@ sctk_communicator_t sctk_duplicate_communicator (const sctk_communicator_t origi
 		}
 		
 		sctk_nodebug("new id DUP INTER for rank %d, local_root %d, has_zero %d", rank, local_root, tmp->has_zero);
-		comm = sctk_communicator_get_new_id_from_intercomm(local_root, rank, local_leader, remote_leader, origin_communicator, new_tmp);
-		sctk_nodebug("comm %d duplicated =============> (%d - %d)", origin_communicator, comm, new_tmp->id); 
-		sctk_get_internal_communicator(comm);
-		assume(comm >= 0);
-		sctk_collectives_init_hook(comm);
+		new_tmp->id = sctk_communicator_get_new_id_from_intercomm(local_root, rank, local_leader, remote_leader, origin_communicator, new_tmp);
+		sctk_nodebug("comm %d duplicated =============> (%d - %d)", origin_communicator, new_tmp->id, new_tmp->id);
+		sctk_get_internal_communicator(new_tmp->id);
+		assume(new_tmp->id >= 0);
+		sctk_collectives_init_hook(new_tmp->id);
 		
 		if(tmp->new_comm != NULL)
 			tmp->new_comm = NULL;
