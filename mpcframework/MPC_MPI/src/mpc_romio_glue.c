@@ -3,12 +3,16 @@
 #include <string.h>
 #include "mpc_datatypes.h"
 #include "mpc_common.h"
+#include "uthash.h"
+
+/************************************************************************/
+/* ERROR Handling                                                       */
+/************************************************************************/
 
 int MPIR_Err_create_code_valist(int a, int b, const char c[], int d, int e, 
 				const char f[], const char g[], va_list args )
 {
-
-
+	return MPI_SUCCESS;
 }
 
 int MPIR_Err_is_fatal(int a)
@@ -34,6 +38,89 @@ void MPIR_Err_get_string( int errcode, char *msg, int maxlen, MPIR_Err_get_class
 	if( strlen( buff ) )
 		snprintf( msg, maxlen, "%s", buff );
 }
+
+
+struct MPID_Comm;
+int MPID_Abort(struct MPID_Comm *comm, int mpi_errno, int exit_code, const char *error_msg)
+{
+	sctk_error("FATAL : %d [exit : %d ] : %s", mpi_errno, exit_code, error_msg );
+	MPI_Abort( MPI_COMM_WORLD, mpi_errno );
+	return MPI_SUCCESS;
+}
+
+
+int PMPI_File_set_errhandler( void * file,  MPI_Errhandler errhandler )
+{
+	return MPI_SUCCESS;
+}
+
+int PMPI_File_get_errhandler(void * file, MPI_Errhandler *errhandler)
+{
+	return MPI_SUCCESS;
+}
+
+
+void MPIR_Get_file_error_routine( MPI_Errhandler a, 
+				  void (**errr)(void * , int * , ...), 
+				  int * b)
+{
+	
+	
+	
+}
+
+
+int MPIR_File_call_cxx_errhandler( void *fh, int *errorcode, 
+			   void (*c_errhandler)(void  *, int *, ... ) )
+{
+	
+	return MPI_SUCCESS;
+}
+
+
+int PMPI_Comm_call_errhandler( MPI_Comm comm, int errorcode )
+{
+	
+	return MPI_SUCCESS;
+}
+
+
+/* Default error handling implementation.
+ *
+ * Note that only MPI_ERRORS_ARE_FATAL and MPI_ERRORS_RETURN are
+ * handled correctly; other handlers cause an abort.
+ */
+
+int MPIO_Err_create_code(int lastcode, int fatal, const char fcname[],
+			 int line, int error_class, const char generic_msg[],
+			 const char specific_msg[], ... )
+{
+    va_list Argp;
+    int idx = 0;
+    char *buf;
+
+    buf = (char *) sctk_malloc(1024);
+    if (buf != NULL) {
+	idx += snprintf(buf, 1023, "%s (line %d): ", fcname, line);
+	if (specific_msg == NULL) {
+	    snprintf(&buf[idx], 1023 - idx, "%s\n", generic_msg);
+	}
+	else {
+	    va_start(Argp, specific_msg);
+	    vsnprintf(&buf[idx], 1023 - idx, specific_msg, Argp);
+	    va_end(Argp);
+	}
+	fprintf(stderr, "%s", buf);
+	sctk_free(buf);
+    }
+
+    return error_class;
+}
+
+
+/************************************************************************/
+/* Datatype Optimization                                                */
+/************************************************************************/
 
 void MPIR_Datatype_iscontig(MPI_Datatype datatype, int *flag)
 {
@@ -130,13 +217,6 @@ int MPCX_Type_flatten( MPI_Datatype datatype, long int ** blocklen, long int ** 
 
 
 
-struct MPID_Comm;
-int MPID_Abort(struct MPID_Comm *comm, int mpi_errno, int exit_code, const char *error_msg)
-{
-	sctk_error("FATAL : %d [exit : %d ] : %s", mpi_errno, exit_code, error_msg );
-	MPI_Abort( MPI_COMM_WORLD, mpi_errno );
-}
-
 
 int MPIR_Status_set_bytes(MPI_Status *status, MPI_Datatype datatype, MPI_Count nbytes)
 {
@@ -153,72 +233,9 @@ int MPIR_Status_set_bytes(MPI_Status *status, MPI_Datatype datatype, MPI_Count n
 	return PMPI_Status_set_elements_x(status, datatype, count);
 }
 
-
-int PMPI_File_set_errhandler( void * file,  MPI_Errhandler errhandler )
-{
-	
-	
-	
-	return MPI_SUCCESS;
-}
-
-
-void MPIR_Get_file_error_routine( MPI_Errhandler a, 
-				  void (**errr)(void * , int * , ...), 
-				  int * b)
-{
-	
-	
-	
-}
-
-
-int MPIR_File_call_cxx_errhandler( void *fh, int *errorcode, 
-			   void (*c_errhandler)(void  *, int *, ... ) )
-{
-	
-	return MPI_SUCCESS;
-}
-
-
-int PMPI_Comm_call_errhandler( MPI_Comm comm, int errorcode )
-{
-	
-	return MPI_SUCCESS;
-}
-
-
-/* Default error handling implementation.
- *
- * Note that only MPI_ERRORS_ARE_FATAL and MPI_ERRORS_RETURN are
- * handled correctly; other handlers cause an abort.
- */
-
-int MPIO_Err_create_code(int lastcode, int fatal, const char fcname[],
-			 int line, int error_class, const char generic_msg[],
-			 const char specific_msg[], ... )
-{
-    va_list Argp;
-    int idx = 0;
-    char *buf;
-
-    buf = (char *) sctk_malloc(1024);
-    if (buf != NULL) {
-	idx += snprintf(buf, 1023, "%s (line %d): ", fcname, line);
-	if (specific_msg == NULL) {
-	    snprintf(&buf[idx], 1023 - idx, "%s\n", generic_msg);
-	}
-	else {
-	    va_start(Argp, specific_msg);
-	    vsnprintf(&buf[idx], 1023 - idx, specific_msg, Argp);
-	    va_end(Argp);
-	}
-	fprintf(stderr, "%s", buf);
-	sctk_free(buf);
-    }
-
-    return error_class;
-}
+/************************************************************************/
+/* Locks                                                                */
+/************************************************************************/
 
 
 sctk_spinlock_t mpio_strided_lock;
@@ -247,7 +264,92 @@ void MPIO_unlock_shared()
 	sctk_spinlock_unlock(&mpio_shared_lock);
 }
 
+/************************************************************************/
+/* Dummy IO requests                                                    */
+/************************************************************************/
 
+int PMPIO_Wait(void *r, MPI_Status *s)
+{
+	return MPI_SUCCESS;
+}
+
+int PMPIO_Test(void * r, int * c, MPI_Status *s)
+{
+	return MPI_SUCCESS;
+}
+
+
+/************************************************************************/
+/* C2F/F2C Functions                                                    */
+/************************************************************************/
+
+/* These requests conversion functions are needed because
+ * the fortran interface in ROMIO reffers to the old IOWait
+ * requests, therefore we just have to remap these calls to
+ * the classical request management functions as MPIO_Requests
+ * are in fact normal MPI_Requests */
+
+MPI_Fint PMPIO_Request_c2f( MPI_Request request )
+{
+	return MPI_Request_c2f( request );
+}
+
+
+MPI_Request PMPIO_Request_f2c(MPI_Fint rid )
+{
+	return MPI_Request_f2c( rid );
+}
+
+/* File Pointers */
+
+unsigned int MPI_File_fortran_id = 0;
+
+struct MPI_File_Fortran_cell
+{
+	int id;
+	void * fh;
+	UT_hash_handle hh;
+};
+
+struct MPI_File_Fortran_cell * mpi_file_lookup_table = NULL;
+sctk_spinlock_t mpi_file_lookup_table_lock = SCTK_SPINLOCK_INITIALIZER;
+
+MPI_Fint MPIO_File_c2f(void * fh)
+{
+	MPI_Fint ret = 0;
+	
+	sctk_spinlock_lock( &mpi_file_lookup_table_lock );
+
+	struct MPI_File_Fortran_cell * new_cell = NULL;
+	new_cell = malloc( sizeof( struct MPI_File_Fortran_cell ) );
+	assume( new_cell != NULL );
+	new_cell->fh = fh;
+	new_cell->id = ++MPI_File_fortran_id;
+	ret = new_cell->id;
+	HASH_ADD_INT( mpi_file_lookup_table, id, new_cell );
+
+	sctk_spinlock_unlock( &mpi_file_lookup_table_lock );
+	
+	return ret;
+}
+
+void * MPIO_File_f2c(int fid)
+{
+	void * ret = NULL;
+	
+	sctk_spinlock_lock( &mpi_file_lookup_table_lock );
+	
+	struct MPI_File_Fortran_cell * previous_cell = NULL;
+	
+	HASH_FIND_INT( mpi_file_lookup_table, &fid, previous_cell );
+	
+	if( previous_cell )
+		ret = previous_cell->fh;
+	
+	sctk_spinlock_unlock( &mpi_file_lookup_table_lock );
+	
+	return ret;
+}
 
 
 
