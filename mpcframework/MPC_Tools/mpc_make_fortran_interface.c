@@ -475,8 +475,8 @@ main_mpi (int argc, char **argv)
   MPI_INTEGER_VAL ("MPI_BSEND_OVERHEAD", (int) ((2 * sizeof(mpi_buffer_overhead_t)) / 4));
   assert ((2 * sizeof(mpi_buffer_overhead_t)) % 4 == 0);
 
-  printf("       DOUBLE PRECISION MPI_WTIME, MPI_WTICK\n");
-  printf("       DOUBLE PRECISION PMPI_WTIME, PMPI_WTICK\n");
+  printf("EXTERNAL MPI_WTIME, MPI_WTICK , PMPI_WTICK, PMPI_WTIME\n");
+  printf("DOUBLE PRECISION MPI_WTIME, MPI_WTICK , PMPI_WTICK, PMPI_WTIME\n");
   return 0;
 }
 #endif
