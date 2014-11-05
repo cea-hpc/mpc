@@ -1812,7 +1812,7 @@ void ffunc (pmpi_unpack_external) (char * datarep  SCTK_CHAR_MIXED (len), void *
 
 /* MPI_Info Handling */
 
-void ffunc (pmpi_info_set)( MPI_Info info, const char * key SCTK_CHAR_MIXED(len1) , const char * value SCTK_CHAR_MIXED(len2),  int *res SCTK_CHAR_END (len1) SCTK_CHAR_END (len2))
+void ffunc (pmpi_info_set)( MPI_Info * info, const char * key SCTK_CHAR_MIXED(len1) , const char * value SCTK_CHAR_MIXED(len2),  int *res SCTK_CHAR_END (len1) SCTK_CHAR_END (len2))
 {
 	char *ckey, *ckeyptr;
 	char *cvalue, *cvalueptr;
@@ -1820,7 +1820,7 @@ void ffunc (pmpi_info_set)( MPI_Info info, const char * key SCTK_CHAR_MIXED(len1
 	ckey = sctk_char_fortran_to_c ((char *)key, len1, &ckeyptr);
 	cvalue = sctk_char_fortran_to_c ((char *)value, len2, &cvalueptr);
 	
-	*res = MPI_Info_set( info, ckey, cvalue);
+	*res = MPI_Info_set( *info, ckey, cvalue);
 	
 	sctk_free( ckeyptr );
 	sctk_free( cvalueptr );
@@ -1836,12 +1836,12 @@ void ffunc (pmpi_info_create)( MPI_Info * info,  int *res )
 	*res = MPI_Info_create( info );
 }
 
-void ffunc (pmpi_info_delete)( MPI_Info info, const char *key SCTK_CHAR_MIXED(size),  int *res SCTK_CHAR_END (size) )
+void ffunc (pmpi_info_delete)( MPI_Info * info, const char *key SCTK_CHAR_MIXED(size),  int *res SCTK_CHAR_END (size) )
 {
 	char *ckey, *ptr;
 	ckey = sctk_char_fortran_to_c ((char *)key, size, &ptr);
 	
-	*res = MPI_Info_delete( info , ckey);
+	*res = MPI_Info_delete( *info , ckey);
 	
 	sctk_free( ptr );
 }
@@ -1851,21 +1851,21 @@ void ffunc (pmpi_info_get)( MPI_Info * info, const char *key SCTK_CHAR_MIXED(siz
 	char *ckey, *ptr;
 	ckey = sctk_char_fortran_to_c ((char *)key, size, &ptr);
 	
-	*res = MPI_Info_get(info , ckey, valuelen , value, flag);
+	*res = MPI_Info_get( *info , ckey, valuelen , value, flag);
 	sctk_free( ptr );
 	sctk_char_c_to_fortran (value, len2);
 }
 
 
-void ffunc (pmpi_info_dup)( MPI_Info info, MPI_Info * out,  int *res )
+void ffunc (pmpi_info_dup)( MPI_Info * info, MPI_Info * out,  int *res )
 {
-	*res = MPI_Info_dup( info, out );
+	*res = MPI_Info_dup( *info, out );
 }
 
 
-void ffunc (pmpi_info_get_nkeys)( MPI_Info info, int * out,  int *res )
+void ffunc (pmpi_info_get_nkeys)( MPI_Info * info, int * out,  int *res )
 {
-	*res = MPI_Info_get_nkeys( info, out );
+	*res = MPI_Info_get_nkeys( *info, out );
 }
 
 
@@ -1876,12 +1876,12 @@ void ffunc (pmpi_info_get_nthkey)( MPI_Info * info, int * n, char * out SCTK_CHA
 	
 }
 
-void ffunc (pmpi_info_get_valuelen)( MPI_Info info, const char *key SCTK_CHAR_MIXED(size), int * value_len, int * flag,  int *res SCTK_CHAR_END (size))
+void ffunc (pmpi_info_get_valuelen)( MPI_Info * info, const char *key SCTK_CHAR_MIXED(size), int * value_len, int * flag,  int *res SCTK_CHAR_END (size))
 {
 	char *ckey, *ptr;
 	ckey = sctk_char_fortran_to_c ((char *)key, size, &ptr);
 	
-	*res = MPI_Info_get_valuelen( info, ckey, value_len, flag );
+	*res = MPI_Info_get_valuelen( *info, ckey, value_len, flag );
 	
 	sctk_free( ptr );
 }
