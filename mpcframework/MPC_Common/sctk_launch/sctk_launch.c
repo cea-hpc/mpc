@@ -830,12 +830,15 @@ auto_kill_func (void *arg)
   int timeout = *(int*)arg;
   if (timeout > 0)
   {
-    if (sctk_runtime_config_get()->modules.launcher.banner)
+    if (sctk_runtime_config_get()->modules.launcher.banner && !sctk_is_in_fortran)
     {
       sctk_noalloc_fprintf (stderr, "Autokill in %ds\n", timeout);
     }
 	sleep (timeout);
-    sctk_noalloc_fprintf (stderr, "TIMEOUT reached\n");
+	
+	if( !sctk_is_in_fortran )
+		sctk_noalloc_fprintf (stderr, "TIMEOUT reached\n");
+	
     abort ();
     exit (-1);
   }
