@@ -40,7 +40,11 @@ ROMIO=""
 #because we use the same compiler
 #to build romio itself
 if test -e "${SCTK_LIB_DIR}/libromio.a"; then
-	ROMIO="${SCTK_LIB_DIR}/libromio.a"
+	#Here we make sure not to link romio during the
+	#bootstrap at it would link ROMIO against ROMIO
+	if test "x\${MPC_BOOTSTRAP}" != "xyes"; then
+		ROMIO="-L${SCTK_LIB_DIR}/ -lromio"
+	fi
 fi
 
 FLAGS="-Wl,-rpath,${SCTK_LIB_DIR} -Wl,-rpath,${SCTK_LIB_DIR}/../lib64 -lmpc_tdb_remote_static $SCTK_LDFLAGS \${ROMIO}"
