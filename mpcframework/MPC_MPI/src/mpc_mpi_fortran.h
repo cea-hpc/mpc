@@ -151,6 +151,16 @@ void ffunc (mpi_type_vector) (int *count,
 			      int *stride, MPI_Datatype * old_type,
 			      MPI_Datatype * newtype_p, int *res);
 
+void ffunc (mpi_type_create_subarray) (int ndims,
+					int * array_of_sizes,
+					int * array_of_subsizes,
+					int * array_of_starts,
+					int order,
+					MPI_Datatype oldtype,
+					MPI_Datatype * new_type,
+					int * ret );
+
+
 void ffunc (mpi_type_hvector) (int *count,
 			       int *blocklen,
 			       MPI_Aint * stride,
@@ -831,6 +841,19 @@ void ffunc (pmpi_type_vector) (int *count,
   *res =
     MPI_Type_vector (*count, *blocklength, *stride, *old_type, newtype_p);
 
+}
+
+
+void ffunc (pmpi_type_create_subarray) (int * ndims,
+					int * array_of_sizes,
+					int * array_of_subsizes,
+					int * array_of_starts,
+					int * order,
+					int * oldtype,
+					int * new_type, int * ret )
+{
+	*ret = MPI_Type_create_subarray( *ndims, array_of_sizes, array_of_subsizes, array_of_starts,
+					*order, *oldtype , new_type );
 }
 
 void ffunc (pmpi_type_create_hvector) (int *count,
