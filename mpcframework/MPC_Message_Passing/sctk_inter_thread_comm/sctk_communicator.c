@@ -1805,7 +1805,6 @@ sctk_communicator_t sctk_duplicate_communicator (const sctk_communicator_t origi
 	{
 		sctk_internal_communicator_t * new_tmp;
 		int local_root = 0;
-		sctk_communicator_t comm;
 
 		sctk_barrier (origin_communicator);
 
@@ -1838,10 +1837,16 @@ sctk_communicator_t sctk_duplicate_communicator (const sctk_communicator_t origi
 			tmp->new_comm->remote_leader = -1;
 			tmp->new_comm->remote_comm = NULL;
 		}
-		new_tmp = tmp->new_comm;
-		tmp->new_comm = NULL;
-		sctk_spinlock_unlock(&(tmp->creation_lock));
 		
+		new_tmp = tmp->new_comm;
+		
+		if( tmp->is_comm_self )
+		{
+			tmp->new_comm = NULL;
+		}
+		
+		
+		sctk_spinlock_unlock(&(tmp->creation_lock));
 		sctk_barrier (origin_communicator);
 		if(rank == 0)
 		{
@@ -1860,6 +1865,13 @@ sctk_communicator_t sctk_duplicate_communicator (const sctk_communicator_t origi
 		sctk_get_internal_communicator(new_tmp->id);
 		assume(new_tmp->id >= 0);
 		sctk_collectives_init_hook(new_tmp->id);
+
+		if( origin_communicator != MPC_COMM_SELF )
+		{
+			sctk_barrier (origin_communicator);
+			tmp->new_comm = NULL;
+			sctk_barrier (origin_communicator);
+		}
 
 		assume(new_tmp->id != origin_communicator);
 		
@@ -1880,7 +1892,6 @@ sctk_communicator_t sctk_duplicate_communicator (const sctk_communicator_t origi
 		assume(tmp->remote_comm != NULL);
 		sctk_internal_communicator_t * new_tmp;
 		sctk_internal_communicator_t * remote_tmp;
-		sctk_communicator_t comm;
 		int local_root = 0, local_leader = 0, remote_leader = 0;
 		
 		if(sctk_is_in_local_group(origin_communicator))
@@ -1987,7 +1998,7 @@ sctk_communicator_t sctk_duplicate_communicator (const sctk_communicator_t origi
 		
 		sctk_nodebug("new id DUP INTER for rank %d, local_root %d, has_zero %d", rank, local_root, tmp->has_zero);
 		new_tmp->id = sctk_communicator_get_new_id_from_intercomm(local_root, rank, local_leader, remote_leader, origin_communicator, new_tmp);
-		sctk_nodebug("comm %d duplicated =============> (%d - %d)", origin_communicator, new_tmp->id, new_tmp->id);
+		sctk_nodebug("comm %d duplicated =============> (%d - %d)", origin_communicator, new_tmp->id, new_tmp->id); 
 		sctk_get_internal_communicator(new_tmp->id);
 		assume(new_tmp->id >= 0);
 		sctk_collectives_init_hook(new_tmp->id);
