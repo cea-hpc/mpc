@@ -6,176 +6,96 @@
 #include "uthash.h"
 
 /************************************************************************/
-/* ERROR Handling                                                       */
-/************************************************************************/
-
-int MPIR_Err_create_code_valist(int a, int b, const char c[], int d, int e, 
-				const char f[], const char g[], va_list args )
-{
-	return MPI_SUCCESS;
-}
-
-int MPIR_Err_is_fatal(int a)
-{
-	return 0;
-}
-
-typedef int (* MPIR_Err_get_class_string_func_t)(int error, char *str, int length);
-
-void MPIR_Err_get_string( int errcode, char *msg, int maxlen, MPIR_Err_get_class_string_func_t fcname )
-{
-	char buff[128];
-	int len;
-	
-	if( !msg )
-		return;
-	
-	buff[0] = '\0';
-	msg[0] = '\0';
-	
-	PMPC_Error_string (errcode, buff, &len);
-
-	if( strlen( buff ) )
-		snprintf( msg, maxlen, "%s", buff );
-}
-
-
-struct MPID_Comm;
-int MPID_Abort(struct MPID_Comm *comm, int mpi_errno, int exit_code, const char *error_msg)
-{
-	sctk_error("FATAL : %d [exit : %d ] : %s", mpi_errno, exit_code, error_msg );
-	MPI_Abort( MPI_COMM_WORLD, mpi_errno );
-	return MPI_SUCCESS;
-}
-
-
-int PMPI_File_set_errhandler( void * file,  MPI_Errhandler errhandler )
-{
-	return MPI_SUCCESS;
-}
-
-int PMPI_File_get_errhandler(void * file, MPI_Errhandler *errhandler)
-{
-	return MPI_SUCCESS;
-}
-
-
-void MPIR_Get_file_error_routine( MPI_Errhandler a, 
-				  void (**errr)(void * , int * , ...), 
-				  int * b)
-{
-	
-	
-	
-}
-
-
-int MPIR_File_call_cxx_errhandler( void *fh, int *errorcode, 
-			   void (*c_errhandler)(void  *, int *, ... ) )
-{
-	
-	return MPI_SUCCESS;
-}
-
-
-int PMPI_Comm_call_errhandler( MPI_Comm comm, int errorcode )
-{
-	
-	return MPI_SUCCESS;
-}
-
-
-/* Default error handling implementation.
- *
- * Note that only MPI_ERRORS_ARE_FATAL and MPI_ERRORS_RETURN are
- * handled correctly; other handlers cause an abort.
- */
-
-int MPIO_Err_create_code(int lastcode, int fatal, const char fcname[],
-			 int line, int error_class, const char generic_msg[],
-			 const char specific_msg[], ... )
-{
-    va_list Argp;
-    int idx = 0;
-    char *buf;
-
-    buf = (char *) sctk_malloc(1024);
-    if (buf != NULL) {
-	idx += snprintf(buf, 1023, "%s (line %d): ", fcname, line);
-	if (specific_msg == NULL) {
-	    snprintf(&buf[idx], 1023 - idx, "%s\n", generic_msg);
-	}
-	else {
-	    va_start(Argp, specific_msg);
-	    vsnprintf(&buf[idx], 1023 - idx, specific_msg, Argp);
-	    va_end(Argp);
-	}
-	fprintf(stderr, "%s", buf);
-	sctk_free(buf);
-    }
-
-    return error_class;
-}
-
-
-/************************************************************************/
 /* Datatype Optimization                                                */
 /************************************************************************/
-
+/** \brief This function is used in ROMIO in order to dermine if a data-type is contiguous
+ *  We implement it here as it is much faster to do it with the
+ *  knowledge of data-type internals
+ * 
+ *  \param datatype Type to be tested
+ *  \param flag OUT 1 of cont. 0 otherwize
+ */
 void MPIR_Datatype_iscontig(MPI_Datatype datatype, int *flag)
 {
 	sctk_task_specific_t *task_specific;
 	
 	*flag = 0;
 	
+	/* UB or LB are not contiguous */
 	if( sctk_datatype_is_boundary(datatype) )
 		return;
 	
 	switch( sctk_datatype_kind( datatype ) )
 	{
+		/* CONT and COMMON are contiguous by definition */
 		case MPC_DATATYPES_CONTIGUOUS:
 			*flag = 1;
-		break;
-		
-		case MPC_DATATYPES_DERIVED:
-			task_specific = __MPC_get_task_specific ();	
-			sctk_derived_datatype_t *target_type = sctk_task_specific_get_derived_datatype(  task_specific, datatype );
-			assume( target_type != NULL );
-			
-			if( (target_type->count == 0) ||  (target_type->opt_count == 1) )
-				*flag = 1;
-
 		break;
 		
 		case MPC_DATATYPES_COMMON:
 			*flag = 1;
 		break;
+		
+		/* For dereived dat-types we have to check */
+		case MPC_DATATYPES_DERIVED:
+			task_specific = __MPC_get_task_specific ();	
+			sctk_derived_datatype_t *target_type = sctk_task_specific_get_derived_datatype(  task_specific, datatype );
+			assume( target_type != NULL );
+			
+			/* If there is no block (0 size) or one block in the optimized representation
+			 * then this data-type is contiguous */
+			if( (target_type->count == 0) ||  (target_type->opt_count == 1) )
+				*flag = 1;
+
+		break;
+		
+		
 		default:
 			not_reachable();
 	}
 
 }
 
-
+/** \brief MPC type flattening function for ROMIO
+ *  ROMIO has at his core data-type flattening, using this function we make it
+ *  faster as we already stor ethe internal layout. And also more reliable
+ *  as the recursive implementation ion ROMIO chrashed in some cases (darray).
+ * 
+ *  \param datatype Data-type to be flattened
+ *  \param blocklen OUT size of blocks
+ *  \param indices OUT offsets of block starts
+ *  \param count OUT number of entries
+ */
 int MPCX_Type_flatten( MPI_Datatype datatype, long int ** blocklen, long int ** indices , MPI_Count * count )
 {
 	sctk_task_specific_t *task_specific = __MPC_get_task_specific ();
 	sctk_derived_datatype_t *target_derived_type;
 	sctk_contiguous_datatype_t *contiguous_type;
 	
+	/* Nothing to do */
 	if( datatype == MPI_DATATYPE_NULL )
 	{
 		*count = 0;
 		return MPI_SUCCESS;
 	}
 	
-	
+	/* Here we decide what to do in function of the data-type kind:
+	 * 
+	 * Common and contiguous :
+	 * 	=> Return start at 0 and the extent
+	 * Derived:
+	 * 	=> Extract the flattened representation from MPC
+	 */ 
 	switch( sctk_datatype_kind( datatype ) )
 	{
 		case MPC_DATATYPES_COMMON:
 			*count = 1;
 			*blocklen = malloc( sizeof( long int ) );
 			*indices = malloc( sizeof( long int ) );
+			
+			assume( *blocklen != NULL );
+			assume( *indices != NULL );
+			
 			(*indices)[0] = 0;
 			(*blocklen)[0] = sctk_common_datatype_get_size( datatype );
 		break;
@@ -184,6 +104,10 @@ int MPCX_Type_flatten( MPI_Datatype datatype, long int ** blocklen, long int ** 
 			*count = 1;
 			*blocklen = malloc( sizeof( long int ) );
 			*indices = malloc( sizeof( long int ) );
+			
+			assume( *blocklen != NULL );
+			assume( *indices != NULL );
+			
 			(*indices)[0] = 0;
 			(*blocklen)[0] = contiguous_type->size;
 		break;
@@ -191,12 +115,18 @@ int MPCX_Type_flatten( MPI_Datatype datatype, long int ** blocklen, long int ** 
 		case MPC_DATATYPES_DERIVED :
 			target_derived_type = sctk_task_specific_get_derived_datatype( task_specific, datatype );
 			
+			/* Note that we extract the optimized version of the data-type */
 			*count = target_derived_type->opt_count;
 			*blocklen = malloc( *count * sizeof( long int ) );
 			*indices = malloc( *count * sizeof( long int ) );
 			
+			assume( *blocklen != NULL );
+			assume( *indices != NULL );
+			
 			int i;
 			
+			/* Here we create start, len pairs from begins/ends pairs
+			 * note +1 in the extent as those boundaries are INCLUSIVE ! */
 			for( i = 0 ; i < *count ; i++ )
 			{
 				(*indices)[i] = target_derived_type->opt_begins[ i ];
@@ -215,9 +145,14 @@ int MPCX_Type_flatten( MPI_Datatype datatype, long int ** blocklen, long int ** 
 
 
 
-
-
-
+/** \brief This function is an extension to the standard used to fill a status from a size
+ *  
+ *  This routine directly computes the count from a size 
+ * 
+ *  \param status Status to be filled
+ *  \param datatype Datatype stored in the status
+ *  \param nbytes Size in bytes of datatype kind stored
+ */
 int MPIR_Status_set_bytes(MPI_Status *status, MPI_Datatype datatype, MPI_Count nbytes)
 {
 	MPI_Count type_size;
@@ -237,7 +172,13 @@ int MPIR_Status_set_bytes(MPI_Status *status, MPI_Datatype datatype, MPI_Count n
 /* Locks                                                                */
 /************************************************************************/
 
+/* Here we gathered the locks which are required by ROMIO
+ * in order to guarantee writing thread safety during
+ * both strided and shared lock. The reason they have 
+ * to be in MPC is that in ROMIO locks would be privatized
+ * as global variables and it is not what we want. */
 
+/* STRIDED LOCK */
 sctk_spinlock_t mpio_strided_lock;
 
 void MPIO_lock_strided()
@@ -251,6 +192,7 @@ void MPIO_unlock_strided()
 	sctk_spinlock_unlock(&mpio_strided_lock);
 }
 
+/* SHARED LOCK */
 sctk_spinlock_t mpio_shared_lock;
 
 void MPIO_lock_shared()
@@ -267,6 +209,10 @@ void MPIO_unlock_shared()
 /************************************************************************/
 /* Dummy IO requests                                                    */
 /************************************************************************/
+/* These two functions are just reffered to in the FORTRAN
+ * interface where the IO_Wait and IO_Tests bindings are 
+ * defined, we do not expect them to be called as we rely
+ * on extended requests. Therefore we just directly return */
 
 int PMPIO_Wait(void *r, MPI_Status *s)
 {
@@ -351,5 +297,110 @@ void * MPIO_File_f2c(int fid)
 	return ret;
 }
 
+/************************************************************************/
+/* ERROR Handling                                                       */
+/************************************************************************/
+
+int MPIR_Err_create_code_valist(int a, int b, const char c[], int d, int e, 
+				const char f[], const char g[], va_list args )
+{
+	return MPI_SUCCESS;
+}
+
+int MPIR_Err_is_fatal(int a)
+{
+	return 0;
+}
+
+typedef int (* MPIR_Err_get_class_string_func_t)(int error, char *str, int length);
+
+void MPIR_Err_get_string( int errcode, char *msg, int maxlen, MPIR_Err_get_class_string_func_t fcname )
+{
+	char buff[128];
+	int len;
+	
+	if( !msg )
+		return;
+	
+	buff[0] = '\0';
+	msg[0] = '\0';
+	
+	PMPC_Error_string (errcode, buff, &len);
+
+	if( strlen( buff ) )
+		snprintf( msg, maxlen, "%s", buff );
+}
+
+
+struct MPID_Comm;
+int MPID_Abort(struct MPID_Comm *comm, int mpi_errno, int exit_code, const char *error_msg)
+{
+	sctk_error("FATAL : %d [exit : %d ] : %s", mpi_errno, exit_code, error_msg );
+	MPI_Abort( MPI_COMM_WORLD, mpi_errno );
+	return MPI_SUCCESS;
+}
+
+
+int PMPI_File_set_errhandler( void * file,  MPI_Errhandler errhandler )
+{
+	return MPI_SUCCESS;
+}
+
+int PMPI_File_get_errhandler(void * file, MPI_Errhandler *errhandler)
+{
+	return MPI_SUCCESS;
+}
+
+
+void MPIR_Get_file_error_routine( MPI_Errhandler a, 
+				  void (**errr)(void * , int * , ...), 
+				  int * b)
+{
+	
+	
+	
+}
+
+
+int MPIR_File_call_cxx_errhandler( void *fh, int *errorcode, 
+			   void (*c_errhandler)(void  *, int *, ... ) )
+{
+	
+	return MPI_SUCCESS;
+}
+
+
+int PMPI_Comm_call_errhandler( MPI_Comm comm, int errorcode )
+{
+	
+	return MPI_SUCCESS;
+}
+
+
+int MPIO_Err_create_code(int lastcode, int fatal, const char fcname[],
+			 int line, int error_class, const char generic_msg[],
+			 const char specific_msg[], ... )
+{
+    va_list Argp;
+    int idx = 0;
+    char *buf;
+
+    buf = (char *) sctk_malloc(1024);
+    if (buf != NULL) {
+	idx += snprintf(buf, 1023, "%s (line %d): ", fcname, line);
+	if (specific_msg == NULL) {
+	    snprintf(&buf[idx], 1023 - idx, "%s\n", generic_msg);
+	}
+	else {
+	    va_start(Argp, specific_msg);
+	    vsnprintf(&buf[idx], 1023 - idx, specific_msg, Argp);
+	    va_end(Argp);
+	}
+	fprintf(stderr, "%s", buf);
+	sctk_free(buf);
+    }
+
+    return error_class;
+}
 
 
