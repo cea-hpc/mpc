@@ -36,16 +36,31 @@ FLAGS="$FLAGS -DMPC_MODULE_$i"
 done
 
 
+
+
+cat <<EOF >> bin/mpc_cflags
+ROMIO=""
+
+#Only use romio if it is intalled
+#because we use the same compiler
+#to build romio itself
+if test -e "${SCTK_LIB_DIR}/libromio.a"; then
+	if test "x\${MPC_BOOTSTRAP}" != "xyes"; then
+		ROMIO="-include mpio.h"
+	fi
+fi
+EOF
+
 cat <<EOF >> bin/mpc_cflags
 if test "\$1" != "fortran" ; then
 EOF
 if test "${SCTK_MIC}" = "1" ; then
 cat <<EOF >> bin/mpc_cflags
-echo "-I${SCTK_INCLUDE_DIR} -I${SCTK_INCLUDE_DIR}/../ $FLAGS -L${SCTK_ARCH_LIBRARY_PATH} -Wl,-rpath=${SCTK_ARCH_LIBRARY_PATH}"
+echo "-I${SCTK_INCLUDE_DIR} -I${SCTK_INCLUDE_DIR}/../ \$ROMIO $FLAGS -L${SCTK_ARCH_LIBRARY_PATH} -Wl,-rpath=${SCTK_ARCH_LIBRARY_PATH}"
 EOF
 else
 cat <<EOF >> bin/mpc_cflags
-echo "-I${SCTK_INCLUDE_DIR} -I${SCTK_INCLUDE_DIR}/../ $FLAGS"
+echo "-I${SCTK_INCLUDE_DIR} -I${SCTK_INCLUDE_DIR}/../ \$ROMIO  $FLAGS"
 EOF
 fi
 
@@ -55,11 +70,11 @@ EOF
 
 if test "${SCTK_MIC}" = "1" ; then
 cat <<EOF >> bin/mpc_cflags
-echo "-I${SCTK_INCLUDE_DIR} -I${SCTK_INCLUDE_DIR}/../ $FLAGS -L${SCTK_ARCH_LIBRARY_PATH} -Wl,-rpath=${SCTK_ARCH_LIBRARY_PATH}"
+echo "-I${SCTK_INCLUDE_DIR} -I${SCTK_INCLUDE_DIR}/../ \$ROMIO  $FLAGS -L${SCTK_ARCH_LIBRARY_PATH} -Wl,-rpath=${SCTK_ARCH_LIBRARY_PATH}"
 EOF
 else
 cat <<EOF >> bin/mpc_cflags
-echo "-I${SCTK_INCLUDE_DIR} -I${SCTK_INCLUDE_DIR}/../ $FLAGS"
+echo "-I${SCTK_INCLUDE_DIR} -I${SCTK_INCLUDE_DIR}/../ \$ROMIO  $FLAGS"
 EOF
 fi
 
