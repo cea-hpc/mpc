@@ -906,29 +906,40 @@ Model.generateStructXML = function(hh_struct, struct_js) {
 	var childs_js = struct_js.childs;
 	var childs_keys = Object.keys(childs_js);
 
-	for (var i in childs_keys) {
+	for (var i in childs_keys) 
+	{
 		var current_child_mode = childs_js[childs_keys[i]].mode;
 		var current_child_type = childs_js[childs_keys[i]].type;
 		var choice = current_child_mode ? current_child_mode : current_child_type;
-		if (current_child_mode == 'param') {
-			if (isBasicType(current_child_type) || current_child_type == 'struct') {
+		if (current_child_mode == 'param') 
+		{
+			if (isBasicType(current_child_type) || current_child_type == 'struct') 
+			{
 				xml.push(Model.generateXML[current_child_mode](hh_struct[childs_keys[i]] || hh_struct.childs[childs_keys[i]], 
 						childs_js[childs_keys[i]]));
 			}
-			else if (Object.keys(meta.types).indexOf(current_child_type) != -1) {
+			else if (Object.keys(meta.types).indexOf(current_child_type) != -1) 
+			{
 				var meta_js = meta.types[current_child_type];
-				if (meta_js.type = 'union') {
+				if (meta_js.type = 'union') 
+				{
 					xml.push(Model.generateUnionXML(hh_struct[childs_keys[i]], childs_js[childs_keys[i]]));
 				}
-				else {
+				else 
+				{
 					xml.push(Model.generateXML[meta.types[current_child_type]](hh_struct[childs_keys[i]], childs_js[childs_keys[i]]));
 				}
 			}
+			else
+			{
+				xml.push(Model.generateXML[current_child_mode](hh_struct[childs_keys[i]] || hh_struct.childs[childs_keys[i]], 
+						childs_js[childs_keys[i]]));
+			}
 		}
-		else {
+		else 
+		{
 			xml.push(Model.generateXML[choice](hh_struct[childs_keys[i]], childs_js[childs_keys[i]]));
 		}
-		
 	}
 
 	return xml.join('');

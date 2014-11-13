@@ -179,12 +179,17 @@ View.createComboboxField = function (profile_name, module_name, var_name, module
 	var values = (module.type == "size") ? ["B", "KB", "MB", "GB", "TB", "PB"] : meta.enum[module.type].values;
 
 	var isSelected = false;
+
 	for (var i in values) {
 		html += "<option value='" + values[i] + "'";
-
 		if (values[i] == (module.value ? module.value.match(/[a-zA-Z]+/g)[0] : module.dflt.match(/[a-zA-Z]+/g)[0])) {
 			isSelected = true;
-			html += " selected";
+			html += " selected=\"selected\"";
+		}
+		else if(values[i] == module.value)
+		{
+			isSelected = true;
+			html += " selected=\"selected\"";	
 		}
 
 		html += ">" + values[i] + "</option>";
@@ -682,6 +687,7 @@ View.printDriver = function(driver_name, element, clicked_element) {
 		output.push("<span>Driver: " + name + "</span>");
 		output.push("</th><tr></thead>");
 		output.push("<tbody id='test3_vars'>");
+
 		for (var i in list_elements) {
 			if (isBasicType(driver.value.childs[list_elements[i]].type)) {
 				output.push(View.createView[driver.value.childs[list_elements[i]].type]("configs", driver_name,
