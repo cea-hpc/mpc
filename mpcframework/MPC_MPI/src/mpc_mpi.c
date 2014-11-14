@@ -1947,7 +1947,7 @@ static int __INTERNAL__PMPI_Waitany (int count, MPI_Request * array_of_requests,
 	while (!flag)
     {
 		__INTERNAL__PMPI_Testany (count, array_of_requests, index, &flag, status);
-      if (!flag) sctk_thread_yield ();
+      /* if (!flag) sctk_thread_yield (); */
     }
 	return MPI_SUCCESS;
 }
