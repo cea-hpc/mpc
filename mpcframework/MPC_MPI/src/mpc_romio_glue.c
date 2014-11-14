@@ -179,7 +179,7 @@ int MPIR_Status_set_bytes(MPI_Status *status, MPI_Datatype datatype, MPI_Count n
  * as global variables and it is not what we want. */
 
 /* STRIDED LOCK */
-sctk_spinlock_t mpio_strided_lock;
+sctk_spinlock_t mpio_strided_lock = 0;
 
 void MPIO_lock_strided()
 {
@@ -193,7 +193,7 @@ void MPIO_unlock_strided()
 }
 
 /* SHARED LOCK */
-sctk_spinlock_t mpio_shared_lock;
+sctk_spinlock_t mpio_shared_lock = 0;
 
 void MPIO_lock_shared()
 {
@@ -205,6 +205,7 @@ void MPIO_unlock_shared()
 {
 	sctk_spinlock_unlock(&mpio_shared_lock);
 }
+
 
 /************************************************************************/
 /* Dummy IO requests                                                    */
@@ -340,16 +341,6 @@ int MPID_Abort(struct MPID_Comm *comm, int mpi_errno, int exit_code, const char 
 	return MPI_SUCCESS;
 }
 
-
-int PMPI_File_set_errhandler( void * file,  MPI_Errhandler errhandler )
-{
-	return MPI_SUCCESS;
-}
-
-int PMPI_File_get_errhandler(void * file, MPI_Errhandler *errhandler)
-{
-	return MPI_SUCCESS;
-}
 
 
 void MPIR_Get_file_error_routine( MPI_Errhandler a, 
