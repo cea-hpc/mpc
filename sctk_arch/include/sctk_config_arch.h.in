@@ -127,6 +127,7 @@ typedef void* sctk_thread_t;
 /*Real size 40 of pthread_mutex_t*/
 typedef struct {long word_long[5];} sctk_thread_mutex_t;
 #define SCTK_THREAD_MUTEX_INITIALIZER {{0,0,0,0,0}}
+#define SCTK_THREAD_MUTEX_RECURSIVE_INITIALIZER {{0,0,0,0,1}}
 /*Real size 4 of pthread_mutexattr_t*/
 typedef int sctk_thread_mutexattr_t;
 #define sctk_thread_mutexattr_t_is_contiguous
