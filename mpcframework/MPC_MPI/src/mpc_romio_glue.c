@@ -361,13 +361,6 @@ int MPIR_File_call_cxx_errhandler( void *fh, int *errorcode,
 }
 
 
-int PMPI_Comm_call_errhandler( MPI_Comm comm, int errorcode )
-{
-	
-	return MPI_SUCCESS;
-}
-
-
 int MPIO_Err_create_code(int lastcode, int fatal, const char fcname[],
 			 int line, int error_class, const char generic_msg[],
 			 const char specific_msg[], ... )
