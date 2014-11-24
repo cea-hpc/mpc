@@ -36,6 +36,7 @@
 #include "sctk_spinlock.h"
 #include "sctk_communicator.h"
 #include "sctk_alloc.h"
+#include <mpc_extern32.h>
 #include <string.h>
 #include <uthash.h>
 
@@ -197,6 +198,13 @@ static int __INTERNAL__PMPI_Pack (void *, int, MPI_Datatype, void *, int,
 static int __INTERNAL__PMPI_Unpack (void *, int, int *, void *, int,
 				    MPI_Datatype, MPI_Comm);
 static int __INTERNAL__PMPI_Pack_size (int, MPI_Datatype, MPI_Comm, int *);
+
+
+int __INTERNAL__PMPI_Pack_external_size (char *datarep , int incount, MPI_Datatype datatype, MPI_Aint *size);
+int __INTERNAL__PMPI_Pack_external (char *datarep , void *inbuf, int incount, MPI_Datatype datatype, void * outbuf, MPI_Aint outsize, MPI_Aint * position);
+int __INTERNAL__PMPI_Unpack_external (char * datarep, void * inbuf, MPI_Aint insize, MPI_Aint * position, void * outbuf, int outcount, MPI_Datatype datatype);
+
+
 static int __INTERNAL__PMPI_Barrier (MPI_Comm);
 static int __INTERNAL__PMPI_Bcast (void *, int, MPI_Datatype, int, MPI_Comm);
 static int __INTERNAL__PMPI_Gather (void *, int, MPI_Datatype, void *, int,
@@ -4545,6 +4553,86 @@ __INTERNAL__PMPI_Pack_size (int incount, MPI_Datatype datatype, MPI_Comm comm,
 		return MPI_SUCCESS;
 	}
 }
+
+
+int __INTERNAL__PMPI_Pack_external_size (char *datarep , int incount, MPI_Datatype datatype, MPI_Aint *size)
+{
+	/* First create a "count" contiguous type */
+	MPI_Datatype contiguous_type;
+	PMPI_Type_contiguous (incount, datatype, &contiguous_type);
+	
+	
+	sctk_task_specific_t *task_specific;
+	
+	/* Now generate the final size according to the internal type
+	 * derived or contiguous one */
+	switch( sctk_datatype_kind( contiguous_type ) )
+	{
+		case MPC_DATATYPES_CONTIGUOUS:
+			task_specific = __MPC_get_task_specific ();
+			sctk_datatype_lock( task_specific );
+			sctk_contiguous_datatype_t *contiguous_user_types = sctk_task_specific_get_contiguous_datatype( task_specific, datatype );
+			sctk_datatype_unlock( task_specific );
+			
+			/* For contiguous it is count times the external extent */
+			*size = MPC_Extern32_common_type_size( contiguous_user_types->datatype ) * contiguous_user_types->count;
+			
+		break;
+		
+		case MPC_DATATYPES_DERIVED:
+			task_specific = __MPC_get_task_specific ();
+		
+			sctk_datatype_lock( task_specific );
+			sctk_derived_datatype_t *derived_user_types = sctk_task_specific_get_derived_datatype( task_specific, datatype );
+			sctk_datatype_unlock( task_specific );
+		
+			int i;
+			MPI_Datatype local_type;
+			MPI_Aint count;
+			MPI_Aint extent;
+			
+			*size = 0;
+			
+			/* For derived, we work block by block */
+			for( i = 0 ; i < derived_user_types->count ; i++ )
+			{
+				/* Get type extent */
+				__INTERNAL__PMPI_Type_extent (derived_user_types->datatypes[i], &extent);
+				
+				if( ! extent )
+					continue;
+				
+				/* Compute count */
+				count = (derived_user_types->ends[i] - derived_user_types->begins[i] + 1) / extent;
+				
+				/* Add count times external size */
+				*size +=  MPC_Extern32_common_type_size( derived_user_types->datatypes[i] ) * count;
+			}
+			
+		
+		break;
+		
+		default:
+			sctk_fatal("__INTERNAL__PMPI_Pack_external_size unreachable");
+	}
+	
+	return MPI_SUCCESS;
+}
+
+int __INTERNAL__PMPI_Pack_external (char *datarep , void *inbuf, int incount, MPI_Datatype datatype, void * outbuf, MPI_Aint outsize, MPI_Aint * position)
+{
+	
+	return MPI_SUCCESS;
+}
+
+int __INTERNAL__PMPI_Unpack_external (char * datarep, void * inbuf, MPI_Aint insize, MPI_Aint * position, void * outbuf, int outcount, MPI_Datatype datatype)
+{
+	
+	return MPI_SUCCESS;
+}
+
+
+
 
 static int
 __INTERNAL__PMPI_Barrier (MPI_Comm comm)
@@ -11178,6 +11266,32 @@ int PMPI_Pack_size (int incount, MPI_Datatype datatype, MPI_Comm comm, int *size
 }
 
 
+/************************************************************************/
+/* MPI Pack external Support                                            */
+/************************************************************************/
+
+int PMPI_Pack_external_size (char *datarep , int incount, MPI_Datatype datatype, MPI_Aint *size)
+{
+	int res = MPI_ERR_INTERN;
+	
+	SCTK_MPI_CHECK_RETURN_VAL (res, MPI_COMM_SELF);
+}
+
+int PMPI_Pack_external (char *datarep , void *inbuf, int incount, MPI_Datatype datatype, void * outbuf, MPI_Aint outsize, MPI_Aint * position)
+{
+	int res = MPI_ERR_INTERN;
+	SCTK_MPI_CHECK_RETURN_VAL (res, MPI_COMM_SELF);
+}
+
+int PMPI_Unpack_external (char * datarep, void * inbuf, MPI_Aint insize, MPI_Aint * position, void * outbuf, int outcount, MPI_Datatype datatype)
+{
+	int res = MPI_ERR_INTERN;
+	SCTK_MPI_CHECK_RETURN_VAL (res, MPI_COMM_SELF);
+}
+
+
+
+
 int PMPI_Type_set_name( MPI_Datatype datatype, char *name )
 {
 	return PMPC_Type_set_name(datatype, name);
@@ -12202,6 +12316,22 @@ PMPI_Comm_size (MPI_Comm comm, int *size)
   SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
+
+int PMPI_Comm_set_errhandler(MPI_Comm comm, MPI_Errhandler errhandler)
+{
+	TODO("PMPI_Comm_set_errhandler is dummy");
+	return MPI_SUCCESS;
+}
+
+
+
+int PMPI_Comm_call_errhandler( MPI_Comm comm, int errorcode )
+{
+	
+	return MPI_SUCCESS;
+}
+
+
 int
 PMPI_Comm_rank (MPI_Comm comm, int *rank)
 {
@@ -12388,12 +12518,6 @@ PMPI_Intercomm_merge (MPI_Comm intercomm, int high, MPI_Comm * newintracomm)
   SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
-
-int PMPI_Comm_set_errhandler(MPI_Comm comm, MPI_Errhandler errhandler)
-{
-	TODO("PMPI_Comm_set_errhandler is dummy");
-	return MPI_SUCCESS;
-}
 
 
 int
@@ -13098,6 +13222,27 @@ MPI_Fint PMPI_Errhandler_c2f(MPI_Errhandler errhandler)
 	return (MPI_Fint)errhandler;
 }
 
+/*********************************** 
+*  Dummy One-Sided Communicationst *
+************************************/
+
+int PMPI_Free_mem (void *ptr)
+{
+	free( ptr );
+	
+	return MPI_SUCCESS;
+}
+
+int PMPI_Alloc_mem(MPI_Aint size, MPI_Info info, void *baseptr)
+{
+	*((void **)baseptr) = malloc( size );
+	assume( *((void **)baseptr) );
+	
+	return MPI_SUCCESS;
+}
+
+
+
 /*********************** 
 *  MPI Info Management *
 ***********************/
@@ -13147,6 +13292,11 @@ int PMPI_Info_get_valuelen(MPI_Info info, char *key, int *valuelen, int *flag)
 {
 	return PMPC_Info_get_valuelen( (MPC_Info) info , key , valuelen , flag );
 }
+
+
+
+
+
 
 
 //~ not implemented

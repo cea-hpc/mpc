@@ -355,6 +355,12 @@ void sctk_common_datatype_init()
 	SCTK_INIT_TYPE_SIZE (MPC_OFFSET, MPC_Aint );
 	SCTK_INIT_TYPE_SIZE (MPC_COUNT, MPC_Count );
 	SCTK_INIT_TYPE_SIZE (MPC_LONG_LONG_INT, long long int );
+	SCTK_INIT_TYPE_SIZE (MPC_C_BOOL, char );
+	SCTK_INIT_TYPE_SIZE (MPC_CHARACTER, char );
+	SCTK_INIT_TYPE_SIZE (MPC_INTEGER, int );
+	SCTK_INIT_TYPE_SIZE (MPC_REAL, float );
+	SCTK_INIT_TYPE_SIZE (MPC_DOUBLE_PRECISION, double );
+
 
 	__sctk_common_type_sizes[MPC_PACKED] = 0;
 }

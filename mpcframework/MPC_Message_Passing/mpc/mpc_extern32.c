@@ -21,3 +21,17 @@
 /* ######################################################################## */
 #include "mpc_extern32.h"
 
+
+static inline int sctk_is_float_datatype( MPC_Datatype type)
+{
+    return ((type == MPC_FLOAT) || 
+	    (type == MPC_DOUBLE) ||
+            (type == MPC_LONG_DOUBLE) ||
+            (type == MPC_DOUBLE_PRECISION) ||
+            (type == MPC_COMPLEX) ||
+            (type == MPC_DOUBLE_COMPLEX) ||
+            (type == MPC_REAL4) ||
+            (type == MPC_REAL8) || 
+            (type == MPC_REAL16));
+}
+
