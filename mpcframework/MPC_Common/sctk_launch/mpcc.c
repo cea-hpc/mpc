@@ -39,6 +39,47 @@ extern char ** environ;
 #endif
 
 
+#include <dlfcn.h>
+
+static void run_libgfortran_symbol(char* sym)
+{
+    void (*ptr_func)(void) = NULL; 
+    static void *handle = NULL;
+      handle = dlopen("libgfortran.so",RTLD_LAZY);
+      if (handle == NULL)
+      {
+        fprintf(stderr,"dlopen(\"libgfortran.so\") failed\n%s\n", dlerror());
+        abort();
+      }
+      ptr_func = dlsym(handle,sym);
+      if (ptr_func == NULL)
+      {
+        fprintf(stderr,"dlsym(%s) failed\n%s\n",sym, dlerror());
+        abort();
+      }
+    ptr_func();
+    dlclose(handle);
+}
+
+/* Set up the modified libgfortran if needed */
+static void local_libgfortran_init()
+{
+    /* init function for the modified libgfortran */
+    if (sctk_is_in_fortran == 1)
+    {
+      run_libgfortran_symbol("_gfortran_init_units");
+    }
+}
+/* Clear the modified libgfortran if needed */
+static void local_libgfortran_close()
+{
+    /* init function for the modified libgfortran */
+    if (sctk_is_in_fortran == 1)
+    {
+        run_libgfortran_symbol("_gfortran_close_units");
+    }
+}
+
 static int
 intern_main (int argc, char **argv)
 {
@@ -58,13 +99,25 @@ intern_main (int argc, char **argv)
 int
 mpc_user_main (int argc, char **argv,char** envp)
 {
-  return mpc_user_main__ (argc, argv,envp);
+  int res = 0;
+  /* Set up the modified libgfortran if needed */
+  local_libgfortran_init();
+  res = mpc_user_main__ (argc, argv,envp);
+  /* Clear up the modified libgfortran if needed */
+  local_libgfortran_close();
+  return res;
 }
 #else
 int
 mpc_user_main (int argc, char **argv)
 {
-  return mpc_user_main__ (argc, argv);
+  int res = 0;
+  /* Set up the modified libgfortran if needed */
+  local_libgfortran_init();
+  res = mpc_user_main__ (argc, argv);
+  /* Clear up the modified libgfortran if needed */
+  local_libgfortran_close();
+  return res;
 }
 #endif
 
