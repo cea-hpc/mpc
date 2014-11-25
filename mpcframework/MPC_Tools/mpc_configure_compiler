@@ -148,6 +148,7 @@ allargs=""
 output_filename=""
 output_file=""
 next_arg_is_output=no
+OUTPUT_FILE_ARGS=""
 EOF
 
 #
@@ -168,8 +169,9 @@ cat << EOF >> $1
     if [ \$next_arg_is_output = yes ] ; then
       output_filename=\$qarg
       next_arg_is_output=no
+      OUTPUT_FILE_ARGS="-o \$qarg"
 
-      allargs="\$allargs \$qarg"
+#       allargs="\$allargs \$qarg"
       continue
     fi
 
@@ -213,7 +215,7 @@ cat << EOF >> $1
 
     -o)
     next_arg_is_output=yes
-    addarg_cpp=no
+    addarg=no
     ;;
 
 EOF
@@ -337,9 +339,124 @@ fi
 
 if test "$2" = "fortran" ; then 
 cat <<EOF >> $1
-    \$Show \$CC \$LIB_PATH \$FORTRAN_OBJ \$LDFLAGS \$FFLAGS \$CFLAGS \$allargs \$LDFLAGS 
+
+    # Indicates if symbol exists in object file
+    has_symbol ()
+    {
+        if [ -f "\${1}" ]
+        then
+            # Be strict here to ensure we get the symbol and not a symbol beginning with name
+            TEST=\$(nm "\${1}" | tr -s " " | cut -d " " -f3 | grep -E '^'"\${2}"'\$' | wc -l)
+            if [ \${TEST} -eq 1 ]
+            then
+                return 0
+            fi
+        fi
+        return 1
+    }
+
+    # Renames a symbol in an object file
+    rename_sym ()
+    {
+        objcopy --redefine-sym \${2}=\${3} "\${1}"
+    }
+
+    # Renames the fortran entry point and associated symbols. also removes the main symbol
+    rename_main_symbols ()
+    {
+        rename_sym "\${1}" "MAIN__" "mpc_user_main_"
+        objcopy --globalize-symbol="mpc_user_main_" "\${1}"
+        # And ._omp.fn* in case of OpenMP
+        index=0
+        while has_symbol "\${1}" "MAIN__._omp_fn.\${index}"
+        do
+            rename_sym "\${1}" "MAIN__._omp_fn.\${index}" "mpc_user_main_._omp_fn.\${index}"
+            index=\$((\${index}+1))
+        done
+        # Remove the main
+        objcopy --strip-symbol main "\${1}"
+    }
+
+    # Checks if a file has given extention
+    has_ext ()
+    {
+        BN=\$(basename "\${1}")
+        BN2=\$(basename "\${1}" "\${2}")
+        # If different, the file has the right extension
+        if [ "\${BN}" != "\${BN2}" ]
+        then
+            return 0
+        fi
+        return 1
+    }
+
+    # Get the file extention
+    get_ext ()
+    {
+        printf ".%s" \$(echo "\${1}" | rev | cut -d "." -f1 | rev)
+    }
+
+    SOURCE_FILES=""
+    OBJECT_FILES=""
+    ARGS_NO_SOURCES=""
+    # First walk through objects and modify the main one and identify sourcefiles given on link command line
+    for arg in \$allargs
+    do
+        addarg=1
+        unquotedarg="\$(eval echo \$arg)"
+        #Is it a file ?
+        if [ -f "\$unquotedarg" ]
+        then
+            #Is is an object file ?
+            if has_ext "\${unquotedarg}" ".o"
+            then
+                #It is an object file, but is it the main ?
+                if has_symbol "\${unquotedarg}" "MAIN__"
+                then
+                    #This is main, rename the symbol(s)
+                    \$Show rename_main_symbols "\${unquotedarg}"
+                fi
+            else
+                #This is a file, but not an object... is it a Fortran source file ?
+                file_ext=\$(get_ext "\${unquotedarg}")
+                for ext in .f .F .f90 .F90 .for .FOR .fpp .FPP .r
+                do
+                    if has_ext "\${unquotedarg}" "\${ext}"
+                    then
+                        addarg=0
+                        # This is a Fortran source file, store it...
+                        SOURCE_FILES="\${SOURCE_FILES} \${unquotedarg}"
+                        break
+                    fi
+                done
+            fi
+        fi
+        if [ \${addarg} -eq 1 ]
+        then
+            ARGS_NO_SOURCES="\${ARGS_NO_SOURCES} \${arg}"
+        fi
+    done
+
+    # If there are some source files on command line
+    if [ ! -z "\${SOURCE_FILES}" ]
+    then
+        for source_file in \${SOURCE_FILES}
+        do
+            object_file=\$(mktemp --suffix=.o)
+            \$Show \$CC \$LIB_PATH \$LDFLAGS \$FFLAGS \$CFLAGS \${ARGS_NO_SOURCES} \$LDFLAGS "\${source_file}" -c -o "\${object_file}"
+            # Is this object (ie. source file) main ?
+            if has_symbol "\${object_file}" "MAIN__"
+            then
+                #This is main, rename the symbol(s) (not reached is Show is echo...)
+                \$Show rename_main_symbols "\${object_file}"
+            fi
+            OBJECT_FILES="\${OBJECT_FILES} '\${object_file}'"
+        done
+    fi
+    \$Show \$CC \$LIB_PATH \$FORTRAN_OBJ \$LDFLAGS \$FFLAGS \$CFLAGS \$ARGS_NO_SOURCES \${OBJECT_FILES} \$LDFLAGS \${OUTPUT_FILE_ARGS}
     rc=\$?
-    if test "\$rc" != "0" ; then 
+    \$Show rm -f \$FORTRAN_OBJ \${OBJECT_FILES} \$FORTRAN_START
+    if test "\$rc" != "0" ; then
         exit \$rc
     fi
 EOF
@@ -382,14 +499,14 @@ cat <<EOF >> $1
 
     global_dir_lib="\`dirname \${output_filename}\`"
     
-    \$Show \$CC -L\$global_dir_lib -Wl,-rpath=\$global_dir_lib -l\`basename \${output_filename}\` \$LIB_PATH \$LDFLAGS \$global_local_args \$CFLAGS  \$LDFLAGS 
+    \$Show \$CC -L\$global_dir_lib -Wl,-rpath=\$global_dir_lib -l\`basename \${output_filename}\` \$LIB_PATH \$LDFLAGS \$global_local_args \$CFLAGS  \$LDFLAGS \${OUTPUT_FILE_ARGS}  
     rc=\$?
 EOF
 else
 cat <<EOF >> $1
-    \$Show \$CC \$LIB_PATH \$LDFLAGS \$CFLAGS \$allargs \$LDFLAGS 
+    \$Show \$CC \$LIB_PATH \$LDFLAGS \$CFLAGS \$allargs \$LDFLAGS \${OUTPUT_FILE_ARGS} 
     # The first \$LDFLAGS should be removed, but still some issues... 
-    # \$Show \$CC \$LIB_PATH \$CFLAGS \$allargs \$LDFLAGS 
+    # \$Show \$CC \$LIB_PATH \$CFLAGS \$allargs \$LDFLAGS \${OUTPUT_FILE_ARGS} 
     rc=\$?
 EOF
 fi
@@ -397,7 +514,7 @@ fi
 
 if test "$2" = "fortran" ; then 
 cat <<EOF >> $1
-    rm \$FORTRAN_OBJ
+    \$Show rm -f \$FORTRAN_OBJ
 EOF
 fi
 
@@ -406,18 +523,18 @@ else
 EOF
 if test "$2" = "fortran" ; then 
 cat <<EOF >> $1
-    \$Show \$CC \$FFLAGS \$CFLAGS \$allargs
+    \$Show \$CC \$FFLAGS \$CFLAGS \$allargs \${OUTPUT_FILE_ARGS}
     rc=\$?
 EOF
 else
 if test "$3" = "global" ; then 
 cat <<EOF >> $1
-    \$Show \$CC \$CFLAGS \$allargs -fpic 
+    \$Show \$CC \$CFLAGS \$allargs -fpic \${OUTPUT_FILE_ARGS}
     rc=\$?
 EOF
 else
 cat <<EOF >> $1
-    \$Show \$CC \$CFLAGS \$allargs
+    \$Show \$CC \$CFLAGS \$allargs \${OUTPUT_FILE_ARGS}
     rc=\$?
 EOF
 fi
