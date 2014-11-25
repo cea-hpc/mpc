@@ -7722,26 +7722,6 @@ static int __INTERNAL__PMPI_Attr_delete (MPI_Comm comm, int keyval)
 
 	if (tmp_per_comm->key_vals[keyval].flag == 1)
 	{
-<<<<<<< HEAD
-	  if (tmp->attrs_fn[keyval].fortran_key == 0)
-	    {
-	      res =
-		tmp->attrs_fn[keyval].delete_fn (comm,
-						  keyval +
-						  MPI_MAX_KEY_DEFINED,
-						  tmp_per_comm->key_vals[keyval].
-						  attr,
-						  tmp->attrs_fn[keyval].
-						  extra_state);
-	    }
-	  else
-	    {
-          int fort_key = keyval + MPI_MAX_KEY_DEFINED;
-          int *ext = (int *) (tmp->attrs_fn[keyval].extra_state);
-	      ((MPI_Delete_function_fortran *) tmp->attrs_fn[keyval].
-           delete_fn) (&comm, &fort_key, (int*)tmp_per_comm->key_vals[keyval].attr, ext, &res);
-	    }
-=======
 		if (tmp->attrs_fn[keyval].delete_fn != NULL)
 		{
 			if (tmp->attrs_fn[keyval].fortran_key == 0)
@@ -7764,7 +7744,6 @@ static int __INTERNAL__PMPI_Attr_delete (MPI_Comm comm, int keyval)
 				((MPI_Delete_function_fortran *) tmp->attrs_fn[keyval].delete_fn) (&comm, &fort_key, &val, ext, &res);
 			}
 		}
->>>>>>> MPC : Fix overflows as spotted by efence
 	}
 
 	if(res == MPI_SUCCESS)
@@ -7859,12 +7838,6 @@ static int SCTK__MPI_Attr_communicator_dup (MPI_Comm prev , MPI_Comm newcomm)
 		}
 	      else
 		{
-<<<<<<< HEAD
-          int fort_key = i + MPI_MAX_KEY_DEFINED;
-          int *ext = (int *) (tmp->attrs_fn[i].extra_state);
-          int val = tmp_per_comm_old->key_vals[i].attr;
-          ((MPI_Copy_function_fortran *) cpy) (&old, &fort_key, ext, &val, &arg, &flag, &res);
-=======
 		  int fort_key;
 		  int val;
 		  int *ext;
@@ -7878,7 +7851,6 @@ static int SCTK__MPI_Attr_communicator_dup (MPI_Comm prev , MPI_Comm newcomm)
 		  ((MPI_Copy_function_fortran *) cpy) (&prev, &fort_key, ext, &val, &val_out, &flag, &res);
 		  sctk_nodebug ("%d val_out", val_out);
 		  arg = &val_out;
->>>>>>> MPC : Fix overflows as spotted by efence
 		}
 	      sctk_nodebug ("i = %d Copy %d %ld->%ld flag %d", i, i + MPI_MAX_KEY_DEFINED,
 			    (unsigned long) tmp_per_comm_old->key_vals[i].attr,
