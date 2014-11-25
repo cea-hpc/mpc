@@ -1091,7 +1091,6 @@ static inline MPC_Datatype * please_allocate_an_array_of_datatypes( int count )
 
 #define CHECK_OVERFLOW( cnt , limit ) do{ assume( cnt < limit ); } while(0)
 
-
 void sctk_datatype_context_set( struct Datatype_context * ctx , struct Datatype_External_context * dctx  )
 {
 	__sctk_datatype_context_set( ctx , dctx, 1 );

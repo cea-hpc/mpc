@@ -182,24 +182,6 @@ static inline void BASIC_convert(int type_byte_size, char *src, char *dest)
 
 
 /*
-  http://www.mpi-forum.org/docs/mpi-20-html/node200.htm
-
-  When converting a larger size integer to a smaller size integer,
-  only the less significant bytes are moved. Care must be taken to
-  preserve the sign bit value. This allows no conversion errors if the
-  data range is within the range of the smaller size integer. ( End of
-  advice to implementors.)
-*/
-static inline void BASIC_mixed_convert( int type_byte_size, char * dest, char * src )
-{
-	if( IS_BIG_ENDIAN )
-	{
-		BASIC_convert( type_byte_size, src, dest );
-	}
-}
-
-
-/*
   Notes on the IEEE floating point format
   ---------------------------------------
 
@@ -333,7 +315,7 @@ static void FLOAT_convert(int type_byte_size,char * src, char * dest)
 			{                                     
 				BASIC_convert128(src, dest);   
 			}                                     
-			break;                                
+			break;
 		}
 	}
 	else
@@ -423,6 +405,6 @@ static inline size_t MPC_Extern32_common_type_size( MPC_Datatype common_type )
 
 }
 
-
+void MPC_Extern32_encode( MPC_Datatype * typevector , int type_vector_size, char * buff, MPC_Aint max_size );
 
 #endif
