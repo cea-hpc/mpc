@@ -493,6 +493,67 @@ void ffunc (mpi_comm_get_name) (MPI_Comm * a, char *b SCTK_CHAR_MIXED (size),
 void ffunc (mpi_comm_set_name) (MPI_Comm * a, char *b SCTK_CHAR_MIXED (size),
 				int *res SCTK_CHAR_END (size));
 
+void ffunc (mpi_null_delete_fn) (MPI_Datatype datatype, int type_keyval,
+                                 void* attribute_val_out, void* extra_state)
+{
+  MPC_Mpi_null_delete_fn(datatype, type_keyval, attribute_val_out, extra_state);
+}
+
+void ffunc (mpi_null_copy_fn) (MPI_Comm comm, int comm_keyval, void* extra_state, void* attribute_val_in, void* attribute_val_out, int* flag)
+{
+   MPC_Mpi_null_copy_fn(comm, comm_keyval, extra_state, attribute_val_in, attribute_val_out, flag);
+}
+
+void ffunc (mpi_dup_fn) (MPI_Comm comm, int comm_keyval, void* extra_state, void* attribute_val_in, void* attribute_val_out, int* flag)
+{
+  MPC_Mpi_dup_fn(comm, comm_keyval, extra_state, attribute_val_in, attribute_val_out, flag);
+}
+
+void ffunc (mpi_type_null_delete_fn) (MPI_Datatype datatype, int type_keyval, void* attribute_val_out, void* extra_state)
+{
+  MPC_Mpi_type_null_delete_fn(datatype, type_keyval, attribute_val_out, extra_state);
+}
+
+void ffunc (mpi_type_null_copy_fn) (MPI_Comm comm, int comm_keyval, void* extra_state, void* attribute_val_in, void* attribute_val_out, int* flag)
+{
+  MPC_Mpi_type_null_copy_fn(comm, comm_keyval, extra_state, attribute_val_in, attribute_val_out, flag);
+}
+
+void ffunc (mpi_type_dup_fn) (MPI_Comm comm, int comm_keyval, void* extra_state, void* attribute_val_in, void* attribute_val_out, int* flag)
+{
+  MPC_Mpi_type_dup_fn(comm, comm_keyval, extra_state, attribute_val_in, attribute_val_out, flag);
+}
+
+void ffunc(mpi_comm_null_delete_fn) (MPI_Datatype datatype, int type_keyval, void* attribute_val_out, void* extra_state)
+{
+  MPC_Mpi_comm_null_delete_fn(datatype, type_keyval, attribute_val_out, extra_state);
+}
+
+void ffunc(mpi_comm_null_copy_fn) (MPI_Comm comm, int comm_keyval, void* extra_state, void* attribute_val_in, void* attribute_val_out, int* flag)
+{
+  MPC_Mpi_comm_null_copy_fn(comm, comm_keyval, extra_state, attribute_val_in, attribute_val_out, flag);
+}
+
+void ffunc(mpi_comm_dup_fn) (MPI_Comm comm, int comm_keyval, void* extra_state, void* attribute_val_in, void* attribute_val_out, int* flag)
+{
+  MPC_Mpi_comm_dup_fn(comm, comm_keyval, extra_state, attribute_val_in, attribute_val_out, flag);
+}
+
+void ffunc(mpi_win_null_delete_fn) (MPI_Datatype datatype, int type_keyval, void* attribute_val_out, void* extra_state)
+{
+  MPC_Mpi_win_null_delete_fn(datatype, type_keyval, attribute_val_out, extra_state);
+}
+
+void ffunc(mpi_win_null_copy_fn) (MPI_Comm comm, int comm_keyval, void* extra_state, void* attribute_val_in, void* attribute_val_out, int* flag)
+{
+  MPC_Mpi_win_null_copy_fn(comm, comm_keyval, extra_state, attribute_val_in, attribute_val_out, flag);
+}
+
+void ffunc(mpi_win_dup_fn) (MPI_Comm comm, int comm_keyval, void* extra_state, void* attribute_val_in, void* attribute_val_out, int* flag)
+{
+  MPC_Mpi_win_dup_fn(comm, comm_keyval, extra_state, attribute_val_in, attribute_val_out, flag);
+}
+
 /*Fortran binding*/
 void ffunc (pmpi_send) (void *buf, int *count, MPI_Datatype * datatype,
 			int *dest, int *tag, MPI_Comm * comm, int *res)
