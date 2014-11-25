@@ -6732,20 +6732,8 @@ __INTERNAL__PMPI_Attr_put (MPI_Comm comm, int keyval, void *attr_value)
 		tmp_per_comm->max_number = keyval+1;
 	}
 
-	if (tmp->attrs_fn[keyval].fortran_key == 0)
-    {
-		sctk_nodebug("put %d for keyval %d", *((int *)attr_value), keyval);
-		tmp_per_comm->key_vals[keyval].attr = (void *) attr_value;
-    }
-	else
-    {
-		int val;
-		long long_val;
-		val = (*((int *) attr_value));
-		long_val = (long) val;
-		tmp_per_comm->key_vals[keyval].attr = (void *) long_val;
-    }
-
+    sctk_nodebug("put %d for keyval %d", *((int *)attr_value), keyval);
+    tmp_per_comm->key_vals[keyval].attr = (void *) attr_value;
 	tmp_per_comm->key_vals[keyval].flag = 1;
 
 	sctk_spinlock_unlock(&(tmp_per_comm->lock));
@@ -6808,7 +6796,7 @@ __INTERNAL__PMPI_Attr_get (MPI_Comm comm, int keyval, void *attr_value,
 		*flag = 0;
 		*attr = NULL;
 	}
-	else if(tmp_per_comm->key_vals[keyval].attr == NULL)
+    else if(tmp_per_comm->key_vals[keyval].flag == 0)
 	{
 		*flag = 0;
 		*attr = NULL;
@@ -6816,9 +6804,8 @@ __INTERNAL__PMPI_Attr_get (MPI_Comm comm, int keyval, void *attr_value,
 	else /* we found one */
 	{
 		*flag = 1;
-		tmp_per_comm->key_vals[keyval].flag = 1;
-		*attr = tmp_per_comm->key_vals[keyval].attr;
-	}
+        *attr = tmp_per_comm->key_vals[keyval].attr;
+    }
 
 	sctk_spinlock_unlock(&(tmp_per_comm->lock));
 	sctk_spinlock_unlock(&(tmp->lock));
@@ -6871,17 +6858,10 @@ __INTERNAL__PMPI_Attr_delete (MPI_Comm comm, int keyval)
 	    }
 	  else
 	    {
-	      int fort_key;
-	      int val;
-	      long long_val;
-	      int *ext;
-	      long_val = (long) (tmp_per_comm->key_vals[keyval].attr);
-	      val = (int) long_val;
-	      fort_key = keyval + MPI_MAX_KEY_DEFINED;
-	      ext = (int *) (tmp->attrs_fn[keyval].extra_state);
-
+          int fort_key = keyval + MPI_MAX_KEY_DEFINED;
+          int *ext = (int *) (tmp->attrs_fn[keyval].extra_state);
 	      ((MPI_Delete_function_fortran *) tmp->attrs_fn[keyval].
-	       delete_fn) (&comm, &fort_key, &val, ext, &res);
+           delete_fn) (&comm, &fort_key, (int*)tmp_per_comm->key_vals[keyval].attr, ext, &res);
 	    }
 	}
     }
@@ -6978,21 +6958,10 @@ SCTK__MPI_Attr_communicator_dup (MPI_Comm old, MPI_Comm new)
 		}
 	      else
 		{
-		  int fort_key;
-		  int val;
-		  int *ext;
-		  int val_out;
-		  long long_val;
-		  long_val = (long) (tmp_per_comm_old->key_vals[i].attr);
-		  val = (int) long_val;
-		  fort_key = i + MPI_MAX_KEY_DEFINED;
-		  ext = (int *) (tmp->attrs_fn[i].extra_state);
-		  sctk_nodebug ("%d val", val);
-		  ((MPI_Copy_function_fortran *) cpy) (&old, &fort_key, ext,
-						       &val, &val_out, &flag,
-						       &res);
-		  sctk_nodebug ("%d val_out", val_out);
-		  arg = &val_out;
+          int fort_key = i + MPI_MAX_KEY_DEFINED;
+          int *ext = (int *) (tmp->attrs_fn[i].extra_state);
+          int val = tmp_per_comm_old->key_vals[i].attr;
+          ((MPI_Copy_function_fortran *) cpy) (&old, &fort_key, ext, &val, &arg, &flag, &res);
 		}
 	      sctk_nodebug ("i = %d Copy %d %ld->%ld flag %d", i, i + MPI_MAX_KEY_DEFINED,
 			    (unsigned long) tmp_per_comm_old->key_vals[i].attr,
