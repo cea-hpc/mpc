@@ -35,7 +35,7 @@
 /* GLOBALS                                                              */
 /************************************************************************/
 
-/** Common datatypes sizes ar initialized in \ref sctk_common_datatype_init */
+/** Common datatypes sizes are initialized in \ref sctk_common_datatype_init */
 static size_t * __sctk_common_type_sizes;
 
 static const char * const type_combiner_names[MPC_COMBINER_COUNT__] =
@@ -571,6 +571,9 @@ int sctk_derived_datatype_release( sctk_derived_datatype_t * type )
 			
 			for(i = 0; i < count; i++)
 			{
+				if( sctk_datatype_is_boundary(layout[i].type) )
+					continue;
+				
 				to_free[layout[i].type] = 1;
 			}
 
@@ -1028,7 +1031,8 @@ int Datatype_context_match( struct Datatype_External_context * eref, struct Data
 		return 0;
 	struct Datatype_context ref;
 	sctk_datatype_context_clear(&ref);
-	sctk_datatype_context_set( &ref , eref );
+	
+	__sctk_datatype_context_set( &ref , eref, 0  );
 	
 	/* Now check if combiners are equal */
 	int ret =  Datatype_context_check_envelope( &ref, candidate );
@@ -1087,7 +1091,13 @@ static inline MPC_Datatype * please_allocate_an_array_of_datatypes( int count )
 
 #define CHECK_OVERFLOW( cnt , limit ) do{ assume( cnt < limit ); } while(0)
 
+
 void sctk_datatype_context_set( struct Datatype_context * ctx , struct Datatype_External_context * dctx  )
+{
+	__sctk_datatype_context_set( ctx , dctx, 1 );
+}
+
+void __sctk_datatype_context_set( struct Datatype_context * ctx , struct Datatype_External_context * dctx, int enable_refcounting  )
 {
 	/* Do we have a context and a type context */
 	assume( ctx != NULL );
@@ -1364,6 +1374,9 @@ void sctk_datatype_context_set( struct Datatype_context * ctx , struct Datatype_
 			not_reachable();
 	}
 
+	if( ! enable_refcounting )
+		return;
+	
 	
 	/* Now we increment the embedded type refcounter only once per allocated datatype
 	* to do so we walk the datatype array while incrementing a counter at the

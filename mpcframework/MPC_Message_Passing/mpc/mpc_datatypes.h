@@ -154,7 +154,8 @@ int Datatype_context_match( struct Datatype_External_context * eref, struct Data
  *  is not allowed to call \ref MPI_Type_Get_contents on them
  */
 void sctk_datatype_context_set( struct Datatype_context * ctx , struct Datatype_External_context * dctx );
-
+/* This is the same function but with the possibility of disabling refcounting (to use in type match) */
+void __sctk_datatype_context_set( struct Datatype_context * ctx , struct Datatype_External_context * dctx, int enable_refcounting  );
 
 /** \brief Frees the data stored in a data-type context
  *  \param ctx Context to free

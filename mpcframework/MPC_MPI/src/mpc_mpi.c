@@ -2873,8 +2873,7 @@ static int __INTERNAL__PMPI_Type_contiguous_inherits (unsigned long count, MPI_D
 		
 		/* Actually create the new datatype */
 		PMPC_Derived_datatype (data_out, begins_out, ends_out, datatypes, count_out, input_datatype.lb,	input_datatype.is_lb, new_ub, input_datatype.is_ub, dtctx);
-	
-		MPC_Datatype_set_context( *data_out, dtctx);
+
 		/* Free temporary buffers */
 		sctk_free (datatypes);
 		sctk_free (begins_out);
