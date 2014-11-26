@@ -371,7 +371,7 @@ typedef int MPIX_Grequest_wait_fn(int count, void **array_of_states, double, MPI
 /* NOT IMPLEMENTED >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
 typedef int MPI_Win;
 typedef MPC_Count MPI_Count;
-typedef long MPI_Count;
+/*typedef long MPI_Count;*/
 /* C functions */
 //~ typedef void (MPC_Handler_function) ( MPI_Comm *, int *, ... );
 typedef int (MPI_Comm_copy_attr_function)(MPI_Comm, int, void *, void *, void *, int *);
