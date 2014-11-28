@@ -115,7 +115,8 @@ extern "C"
     SCTK_PROFIL_KEY (MPC_Comm_size);
     SCTK_PROFIL_KEY (MPC_Comm_split);
     SCTK_PROFIL_KEY (MPC_Default_pack);
-    SCTK_PROFIL_KEY (MPC_Errhandler_create);
+    SCTK_PROFIL_KEY (MPC_Derived_datatype);
+	SCTK_PROFIL_KEY (MPC_Errhandler_create);
     SCTK_PROFIL_KEY (MPC_Errhandler_free);
     SCTK_PROFIL_KEY (MPC_Errhandler_get);
     SCTK_PROFIL_KEY (MPC_Errhandler_set);

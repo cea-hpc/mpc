@@ -124,6 +124,7 @@ sctk_profiling_init_keys ()
   SCTK_PROF_INIT_KEY (MPC_Comm_size);
   SCTK_PROF_INIT_KEY (MPC_Comm_split);
   SCTK_PROF_INIT_KEY (MPC_Default_pack);
+  SCTK_PROF_INIT_KEY (MPC_Derived_datatype);
   SCTK_PROF_INIT_KEY (MPC_Errhandler_create);
   SCTK_PROF_INIT_KEY (MPC_Errhandler_free);
   SCTK_PROF_INIT_KEY (MPC_Errhandler_get);

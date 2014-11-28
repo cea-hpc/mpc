@@ -2128,7 +2128,8 @@ int PMPC_Derived_datatype_on_slot ( int id,
 			     	    unsigned long count,
 				    mpc_pack_absolute_indexes_t lb, int is_lb,
 				    mpc_pack_absolute_indexes_t ub, int is_ub)
-{		
+{	
+	SCTK_PROFIL_START(MPC_Derived_datatype);
 	sctk_task_specific_t *task_specific = __MPC_get_task_specific ();
 
 	/* Here we allocate the new derived datatype */
