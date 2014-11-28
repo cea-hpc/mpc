@@ -128,6 +128,7 @@ do
 			;;
 		--disable-mpc-hydra)
 		    HYDRA_PREFIX='disabled'
+			HYDRA_SIMPLE_PREFIX='disabled'
 			;;  
 		################# SCTK_ARCH #################
 		--with-sctk-arch=*)
@@ -217,6 +218,9 @@ do
 			;;
 		--enable-mpc-debug)
 			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --enable-debug --enable-debug-messages --enable-MPC_Debugger"
+			;;
+		--with-slurm)
+			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --with-slurm"
 			;;
 		##################### MPC ###################
 		--with-mpc=*)
