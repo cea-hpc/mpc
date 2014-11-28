@@ -1933,7 +1933,7 @@ static inline int sctk_datatype_check_derived( sctk_task_specific_t *task_specif
  */
 int __INTERNAL__PMPC_Type_hcontiguous (MPC_Datatype * datatype, size_t count, MPC_Datatype *data_in, struct Datatype_External_context * ctx)
 {
-	SCTK_PROFIL_START (PMPC_Type_hcontiguous);
+	SCTK_PROFIL_START (MPC_Type_hcontiguous);
 	
 	/* Retrieve task specific context */
 	sctk_task_specific_t *task_specific;
