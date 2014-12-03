@@ -573,6 +573,7 @@ void __mpcomp_instance_init( mpcomp_instance_t * instance, int nb_mvps,
 		__mpcomp_restrict_topology(&restrictedTopology, instance->nb_mvps);
 		__mpcomp_flatten_topology(restrictedTopology, &flatTopology);
 		instance->topology = flatTopology;
+		hwloc_topology_destroy(restrictedTopology);
 
 		if ( OMP_TREE == NULL ) {
 			__mpcomp_build_default_tree( instance ) ;

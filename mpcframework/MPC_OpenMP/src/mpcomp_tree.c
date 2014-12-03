@@ -26,34 +26,42 @@
 #include "mpcomp.h"
 #include "mpcomp_internal.h"
 
-#if HWLOC_API_VERSION < 0x00010800
 /* Duplicate the entire topology 'oldtopology' into 'newtopology' */
-int hwloc_topology_dup (hwloc_topology_t * newtopology, hwloc_topology_t *oldtopology)
+int mpcomp_topology_dup (hwloc_topology_t * newtopology, hwloc_topology_t oldtopology)
 {
+     hwloc_topology_t new;
      char *xmlBuffer; 
      int bufLen;
      int err;
 
+   /* Initialize new topology object */
+     err = hwloc_topology_init(&new);
+     if (err) {
+	  sctk_debug("Error on initializing topology");
+	  return -1;
+     }
+
      /* Save 'oldtopology' in a xml buffer */
-     err = hwloc_topology_export_xmlbuffer(*oldtopology, &xmlBuffer, &bufLen);
+     err = hwloc_topology_export_xmlbuffer(oldtopology, &xmlBuffer, &bufLen);
      if (err) {
 	  perror("Export topology in xmlbuffer");
 	  return -1;
      }
 
      /* Copy the topology saved in xml buffer inside 'newtopology' */
-     err = hwloc_topology_set_xmlbuffer(*newtopology, xmlBuffer, bufLen);
+     err = hwloc_topology_set_xmlbuffer(new, xmlBuffer, bufLen);
      if (err) {
 	  perror("Set topology with xmlbuffer");
 	  return -1;
      }
      
      /* Free allocated xml buffer */
-     hwloc_free_xmlbuffer(*oldtopology, xmlBuffer);
+     hwloc_free_xmlbuffer(oldtopology, xmlBuffer);
 
+     *newtopology = new;
      return 0;
 }
-#endif
+
 
 static int mpcomp_get_global_index_from_cpu (hwloc_topology_t topo, const int vp)
 {
@@ -109,15 +117,8 @@ int __mpcomp_flatten_topology(hwloc_topology_t topology, hwloc_topology_t *flatT
      int err;
      int ignoredTypes[HWLOC_OBJ_TYPE_MAX];
 
-     /* Initialize flat topology object */
-     err = hwloc_topology_init(flatTopology);
-     if (err) {
-	  sctk_debug("Error on initializing topology");
-	  return 1;
-     }
-
      /* Duplicate 'topology' to flat topology */
-     err = hwloc_topology_dup(flatTopology, &topology);
+     err = mpcomp_topology_dup(flatTopology, topology);
      if (err) {
 	  sctk_debug("Error on duplicating topology");
 	  return 1;
@@ -199,14 +200,8 @@ int __mpcomp_restrict_topology(hwloc_topology_t *restrictedTopology, int nb_mvps
   sctk_print_specific_topology( stderr, topology ) ;
 #endif
 
-     /* Allocate topology object */
-     if ((err = hwloc_topology_init(restrictedTopology))) {
-	  sctk_debug("restrict_topology(): init topology error");
-	  return -1;
-     }
-
      /* Duplicate current topology object */
-     if ((err = hwloc_topology_dup(restrictedTopology, &topology))) {
+     if ((err = mpcomp_topology_dup(restrictedTopology, topology))) {
 	  sctk_debug("restrict_topology(): dup topology error");
 	  return -1;
      }
@@ -307,7 +302,7 @@ int mpcomp_ignore_all_keep_structure(hwloc_topology_t *topology)
 int *__mpcomp_compute_topo_tree_array(hwloc_topology_t topology, int *depth, int *index)
 {
      hwloc_topology_t simple_topology;
-     int d;
+     int d, err;
      int *tree;
      
      if (!depth || !index) {
@@ -315,16 +310,28 @@ int *__mpcomp_compute_topo_tree_array(hwloc_topology_t topology, int *depth, int
 	  return NULL;
      }
 
-     /* Create a temporary topology */
-     hwloc_topology_init(&simple_topology);
-     
      /* Duplicate current topology object */
-     hwloc_topology_dup(&simple_topology, &topology);
+     err = mpcomp_topology_dup(&simple_topology, topology);
+     if (err) {
+	  printf("Error on duplicating topology\n");
+	  sctk_debug("Error on duplicating topology");
+	  return NULL;
+     }
 
      /* Delete unessential levels */
-     mpcomp_ignore_all_keep_structure(&simple_topology);
+     err = mpcomp_ignore_all_keep_structure(&simple_topology);
+     if (err) {
+	  printf("Error on modifying topology (ignore_all_keep_structure)\n");
+	  sctk_debug("Error on modifying topology (ignore_all_keep_structure)");
+	  return NULL;
+     }
 
-     hwloc_topology_load(simple_topology);
+     err = hwloc_topology_load(simple_topology);
+     if (err) {
+	  printf("Error on loading topology\n");
+	  sctk_debug("Error on loading topology");
+	  return NULL;
+     }
 
      /* Remove 1 because we would like the depth including only nodes (not leaves) */
      *depth = hwloc_topology_get_depth(simple_topology) - 1;
@@ -350,6 +357,11 @@ int *__mpcomp_compute_topo_tree_array(hwloc_topology_t topology, int *depth, int
 
      /* Release temporary topology structure */
      hwloc_topology_destroy(simple_topology);
+     if (err) {
+	  printf("Error on destroying topology\n");
+	  sctk_debug("Error on destroying topology");
+	  return NULL;
+     }
 
      return tree;
 }
