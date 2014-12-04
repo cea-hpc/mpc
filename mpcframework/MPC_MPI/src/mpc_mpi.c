@@ -6241,7 +6241,7 @@ __sctk_new_mpc_group_internal (MPI_Group * group)
     {
       long old_size;
       long i;
-      old_size = groups->max_size;
+	  old_size = groups->max_size;
       groups->max_size += 10;
       groups->tab =
 	sctk_realloc (groups->tab,
@@ -6491,17 +6491,30 @@ __INTERNAL__PMPI_Group_compare (MPI_Group mpi_group1, MPI_Group mpi_group2,
 	int is_similar = 1;
 	MPC_Group group1;
 	MPC_Group group2;
-	group1 = __sctk_convert_mpc_group (mpi_group1);
-	group2 = __sctk_convert_mpc_group (mpi_group2);
 
 	*result = MPI_UNEQUAL;
 
-	if (group1->task_nb != group2->task_nb)
+	if (mpi_group1 == mpi_group2)
+	{
+		*result = MPI_IDENT;
+		return MPI_SUCCESS;
+	}
+
+	if (mpi_group1 == MPI_GROUP_EMPTY || mpi_group2 == MPI_GROUP_EMPTY)
 	{
 		*result = MPI_UNEQUAL;
 		return MPI_SUCCESS;
 	}
 
+	group1 = __sctk_convert_mpc_group (mpi_group1);
+	group2 = __sctk_convert_mpc_group (mpi_group2);
+	
+	if (group1->task_nb != group2->task_nb)
+	{
+		*result = MPI_UNEQUAL;
+		return MPI_SUCCESS;
+	}
+	
 	for (i = 0; i < group1->task_nb; i++)
 	{
 		if (group1->task_list_in_global_ranks[i] != group2->task_list_in_global_ranks[i])
@@ -8729,6 +8742,12 @@ __INTERNAL__PMPI_Cart_shift (MPI_Comm comm, int direction, int displ,
   sctk_spinlock_lock (&(topo->lock));
 
   __INTERNAL__PMPI_Comm_rank (comm, &rank);
+	
+  if (displ == 0)
+  {
+	  *dest = *source = rank;
+	  return MPI_SUCCESS;
+  }
 
   if (topo->type != MPI_CART)
     {
@@ -12640,8 +12659,13 @@ PMPI_Cart_shift (MPI_Comm comm, int direction, int displ, int *source,
 {
   int res = MPI_ERR_INTERN;
   mpi_check_comm (comm, comm);
-  if(displ <= 0){
-        MPI_ERROR_REPORT (comm, MPI_ERR_ARG, "");
+  if(direction < 0){
+        MPI_ERROR_REPORT (comm, MPI_ERR_DIMS, "");
+  }
+
+  if (source == NULL || dest == NULL)
+  {
+	  MPI_ERROR_REPORT (comm, MPI_ERR_ARG, "");
   }
 
   res = __INTERNAL__PMPI_Cart_shift (comm, direction, displ, source, dest);
