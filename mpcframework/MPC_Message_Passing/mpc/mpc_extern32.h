@@ -403,8 +403,54 @@ static inline size_t MPC_Extern32_common_type_size( MPC_Datatype common_type )
 		
 	}
 
+	return 0;
 }
 
-void MPC_Extern32_encode( MPC_Datatype * typevector , int type_vector_size, char * buff, MPC_Aint max_size );
+/** \brief This function returns 1 if the type is unsigned
+ *  \param common_type Type which signedness is requested
+ *
+ *  \return 1 if signed
+ *
+ *  \warning the data-type mush be a common one !
+ */
+static inline int MPC_Unsigned_type( MPC_Datatype common_type )
+{
+	if( !sctk_datatype_is_common( common_type ) )
+	{
+		sctk_fatal( "MPC_Extern32_common_type_size only handle common types");
+	}
 
+
+	/* Note that MPC_COMPLEX(8,16,32) are
+	 * handled through MPC_C_COMPLEX* (alias) */
+	
+	switch( common_type )
+	{
+		case MPC_UNSIGNED_CHAR:
+		case MPC_UINT8_T:
+		case MPC_UNSIGNED_SHORT:
+		case MPC_UINT16_T:
+		case MPC_UNSIGNED:
+		case MPC_UNSIGNED_LONG:
+		case MPC_UINT32_T:
+		case MPC_UNSIGNED_LONG_LONG_INT:
+		case MPC_UINT64_T:
+			return 1;
+		break;
+		default:
+			return 0;
+		break;
+	}
+	
+	return 0;
+}
+
+
+void MPC_Extern32_convert( MPC_Datatype * typevector ,
+						   int type_vector_size, 
+						   char * native_buff, 
+						   MPC_Aint max_native_size, 
+						   char * extern_buff, 
+						   MPC_Aint max_extern_size , 
+						   int encode );
 #endif

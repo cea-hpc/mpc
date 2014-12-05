@@ -42,12 +42,12 @@ static inline void uinteger_8_16( uint8_t in, uint16_t * out )
 	*out = in;
 }
 
-static inline void uinteger_8_32( uint8_t in, uint16_t * out )
+static inline void uinteger_8_32( uint8_t in, uint32_t * out )
 {
 	*out = in;
 }
 
-static inline void uinteger_8_64( uint8_t in, uint16_t * out )
+static inline void uinteger_8_64( uint8_t in, uint64_t * out )
 {
 	*out = in;
 }
@@ -375,7 +375,7 @@ void sctk_integer_convert_width( void * in, size_t in_size, int unsgn, void * ou
 
 
 
-static inline void MPC_Extern32_convert( MPC_Datatype type, char * inout )
+static inline void MPC_Extern32_encode( MPC_Datatype type, char * in, char * out )
 {
 	if( !sctk_datatype_is_common(type) )
 	{
@@ -383,30 +383,95 @@ static inline void MPC_Extern32_convert( MPC_Datatype type, char * inout )
 		sctk_fatal("Cannot convert a non-common data-type");
 	}
 	
+	/* Prepare for width Conversion */
 	size_t type_size = sctk_common_datatype_get_size( type );
+	size_t type_extern_size = MPC_Extern32_common_type_size( type );
 	
-	char tmpbuff[512];
-	assume( type_size < 512 );
-	memcpy( tmpbuff, inout, type_size );
-	
-	if( sctk_is_float_datatype( type ) )
+	if( type_size != type_extern_size )
 	{
-		FLOAT_convert(type_size, tmpbuff, inout);
+		if( sctk_is_float_datatype( type ) )
+		{
+			sctk_warning("UNEXPECTED: Float size conversion %d -> %d", type_size, type_extern_size );
+		}
+		else
+		{
+			sctk_integer_convert_width( (void *) in, type_size*8, MPC_Unsigned_type( type ), (void *)out, type_extern_size*8 );
+		}
 	}
 	else
 	{
-		BASIC_convert(type_size, tmpbuff, inout);
+		memcpy( out, in, type_extern_size );
+	}
+	
+	/* At this point data should be in the OUT buffer */
+	
+	/* Put in a tmp buff on stack */
+	char tmpbuff[512];
+	assume( type_size < 512 );
+	memcpy( tmpbuff, out, type_extern_size );
+	
+	/* Apply indianess conversion on the OUT buffer (on the extern type) */
+	if( sctk_is_float_datatype( type ) )
+	{
+		FLOAT_convert(type_extern_size, tmpbuff, out);
+	}
+	else
+	{
+		BASIC_convert(type_extern_size, tmpbuff, out);
+	}
+}
+
+static inline void MPC_Extern32_decode( MPC_Datatype type, char * in, char * out )
+{
+	
+	size_t type_size = sctk_common_datatype_get_size( type );
+	size_t type_extern_size = MPC_Extern32_common_type_size( type );
+
+	/* Apply indianess conversion and store in OUT */
+	if( sctk_is_float_datatype( type ) )
+	{
+		FLOAT_convert(type_extern_size, in, out);
+	}
+	else
+	{
+		BASIC_convert(type_extern_size, in, out);
+	}	
+	
+	/* Prepare for width Conversion */
+	char tmpbuff[512];
+	assume( type_extern_size < 512 );
+
+			
+	if( type_size != type_extern_size )
+	{
+		if( sctk_is_float_datatype( type ) )
+		{
+			sctk_warning("UNEXPECTED: Float size conversion %d -> %d", type_size, type_extern_size );
+		}
+		else
+		{
+			memcpy( tmpbuff, out, type_extern_size );
+			sctk_integer_convert_width( (void *) tmpbuff, type_extern_size*8, MPC_Unsigned_type( type ), (void *)out,  type_size*8);
+		}
 	}
 }
 
 
 
-void MPC_Extern32_encode( MPC_Datatype * typevector , int type_vector_size, char * buff, MPC_Aint max_size )
+void MPC_Extern32_convert( MPC_Datatype * typevector ,
+						   int type_vector_size, 
+						   char * native_buff, 
+						   MPC_Aint max_native_size, 
+						   char * extern_buff, 
+						   MPC_Aint max_extern_size , 
+						   int encode )
 {
 	int typeIdx = 0;
 	MPC_Aint current_offset = 0;
+	MPC_Aint extern_offset = 0;
 	
-	char * current_entry = buff;
+	char * current_entry = native_buff;
+	char * current_extern_entry = extern_buff;
 	
 	while( 1 )
 	{
@@ -414,17 +479,31 @@ void MPC_Extern32_encode( MPC_Datatype * typevector , int type_vector_size, char
 		typeIdx = ( typeIdx + 1 ) % type_vector_size;
 		
 		/* Apply conversion */
-		MPC_Extern32_convert( current_type, current_entry );
 		
+		if( encode )
+		{
+			MPC_Extern32_encode( current_type, current_entry, current_extern_entry);
+		}
+		else
+		{
+			MPC_Extern32_decode( current_type, current_extern_entry, current_entry );
+		}
+		
+		/* Move in the input */
 		current_offset += sctk_common_datatype_get_size( current_type );
-		current_entry = buff + current_offset;
+		current_entry = native_buff + current_offset;
 		
-		if( max_size <= current_offset )
+		/* Move in the output */
+		extern_offset += MPC_Extern32_common_type_size( typevector[ typeIdx ] );
+		current_extern_entry = extern_buff + extern_offset;
+	
+		
+		if( max_native_size <= current_offset )
+			break;
+	
+		if( max_extern_size <= extern_offset )
 			break;
 	}
-	
-	
-	
-	
 }
+
 

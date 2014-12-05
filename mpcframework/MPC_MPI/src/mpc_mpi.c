@@ -4692,28 +4692,26 @@ int __INTERNAL__PMPI_Pack_external (char *datarep , void *inbuf, int incount, MP
 {
 	if( !strcmp( datarep, "external32" ) )
 	{
-		/* First of all check if we can do the conversion
-		 * Here as in MPICH we expect the external32 rep
-		 * to have the same data-type size than the native one. */
-		
 		int pack_size = 0;
 		MPI_Aint ext_pack_size = 0;
 		MPI_Pack_external_size ( datarep , incount, datatype, &ext_pack_size);
 		MPI_Pack_size( incount, datatype, MPI_COMM_WORLD, &pack_size );
-		
-		if( pack_size != ext_pack_size )
-		{
-			sctk_fatal("MPI_Pack_external: Conversion to type which external size differs is not supported");
-		}
+
+		sctk_error(" PACK NATIVE %d EXTERNAL %d", pack_size, ext_pack_size );
 
 		int pos = 0;
 		/* MPI_Pack takes an integer output size */
-		int int_outsize = outsize;
+		int int_outsize = pack_size;
+		
+		char * native_pack_buff = sctk_malloc( pack_size );
+		memset( native_pack_buff, 0 , pack_size );
+		assume( native_pack_buff != NULL );
 		
 		/* Just pack */
-		PMPI_Pack(inbuf, incount,  datatype, outbuf, int_outsize, &pos, MPI_COMM_WORLD);
-		*position = pos;
-		
+		PMPI_Pack(inbuf, incount,  datatype, native_pack_buff, int_outsize, &pos, MPI_COMM_WORLD);
+
+		*position += ext_pack_size;
+
 		/* We now have a contiguous vector gathering data-types
 		 * Now apply the conversion first by extracting the datatype vector
 		 * and then by converting */
@@ -4726,8 +4724,15 @@ int __INTERNAL__PMPI_Pack_external (char *datarep , void *inbuf, int incount, MP
 		type_vector = sctk_datatype_get_typemask( datatype, &type_vector_count, &static_type );
 		
 		/* And now apply the encoding */
-		MPC_Extern32_encode( type_vector , type_vector_count, outbuf, outsize );
+		MPC_Extern32_convert( type_vector ,
+							  type_vector_count,
+							  native_pack_buff, 
+						      pack_size, 
+						      outbuf, 
+						      ext_pack_size , 
+							  1);
 
+		sctk_free( native_pack_buff );
 	}
 	else
 	{
@@ -4742,19 +4747,14 @@ int __INTERNAL__PMPI_Unpack_external (char * datarep, void * inbuf, MPI_Aint ins
 {
 	if( !strcmp( datarep, "external32" ) )
 	{
-		/* First of all check if we can do the conversion
-		 * Here as in MPICH we expect the external32 rep
-		 * to have the same data-type size than the native one */
-		
 		int pack_size = 0;
 		MPI_Aint ext_pack_size = 0;
 		MPI_Pack_external_size ( datarep , outcount, datatype, &ext_pack_size);
 		MPI_Pack_size( outcount, datatype, MPI_COMM_WORLD, &pack_size );
-		
-		if( pack_size != ext_pack_size )
-		{
-			sctk_fatal("MPI_Unpack_external: Conversion to type which external size differs is not supported");
-		}
+
+		char * native_pack_buff = sctk_malloc( pack_size );
+		memset( native_pack_buff, 0 , pack_size );
+		assume( native_pack_buff != NULL );
 		
 		/* We start with a contiguous vector gathering data-types
 		 * first extracting the datatype vector
@@ -4769,13 +4769,21 @@ int __INTERNAL__PMPI_Unpack_external (char * datarep, void * inbuf, MPI_Aint ins
 		type_vector = sctk_datatype_get_typemask( datatype, &type_vector_count, &static_type );
 		
 		/* And now apply the encoding */
-		MPC_Extern32_encode( type_vector , type_vector_count, inbuf, insize );
-		
+		MPC_Extern32_convert( type_vector ,
+							  type_vector_count,
+							  native_pack_buff, 
+						      pack_size, 
+						      inbuf, 
+						      ext_pack_size , 
+							  0);
+	
 		/* Now we just have to unpack the converted content */
 		int pos = 0;
-		PMPI_Unpack (inbuf, insize, &pos, outbuf, outcount, datatype, MPI_COMM_WORLD);
+		PMPI_Unpack (native_pack_buff, insize, &pos, outbuf, outcount, datatype, MPI_COMM_WORLD);
 		
 		*position = pos;
+		
+		sctk_free( native_pack_buff );
 	}
 	else
 	{
