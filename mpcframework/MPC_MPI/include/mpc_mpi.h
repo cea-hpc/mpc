@@ -351,7 +351,6 @@ typedef int MPI_Group;
 typedef MPC_Status MPI_Status;
 typedef MPC_Handler_function MPI_Handler_function;
 typedef int MPI_Fint;
-typedef int MPI_File;
 
 /* MPI type combiner */
 typedef MPC_Type_combiner MPI_Type_combiner;
