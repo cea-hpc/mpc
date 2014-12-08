@@ -4889,9 +4889,11 @@ MPC_Op_tmp (void *in, void *inout, size_t size, MPC_Datatype t)
   if(op == func){                                       \
     switch(datatype){                                   \
       ADD_FUNC_HANDLER(func,MPC_CHAR,op);               \
+      ADD_FUNC_HANDLER(func,MPC_CHARACTER,op);               \
       ADD_FUNC_HANDLER(func,MPC_BYTE,op);               \
       ADD_FUNC_HANDLER(func,MPC_SHORT,op);              \
       ADD_FUNC_HANDLER(func,MPC_INT,op);                \
+      ADD_FUNC_HANDLER(func,MPC_INTEGER,op);                \
       ADD_FUNC_HANDLER(func,MPC_LONG,op);               \
       ADD_FUNC_HANDLER(func,MPC_FLOAT,op);              \
       ADD_FUNC_HANDLER(func,MPC_INTEGER1,op);           \
