@@ -1778,7 +1778,7 @@ int PMPC_Type_get_true_extent(MPC_Datatype datatype, MPC_Aint *true_lb, MPC_Aint
 	}
 	
 	*true_lb = tmp_true_lb;
-	*true_extent = ( tmp_true_ub - tmp_true_lb );
+	*true_extent = ( tmp_true_ub - tmp_true_lb ) + 1;
 	
 	MPC_ERROR_SUCESS();
 }

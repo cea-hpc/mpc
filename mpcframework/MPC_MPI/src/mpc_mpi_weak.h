@@ -524,10 +524,25 @@
 #pragma weak mpi_type_get_contents__ = pmpi_type_get_contents__
 
 #pragma weak MPI_Type_get_extent = PMPI_Type_get_extent
-#pragma weak MPI_Type_create_resized = PMPI_Type_create_resized
+#pragma weak mpi_type_get_extent_ = pmpi_type_get_extent_
+#pragma weak mpi_type_get_extent__ = pmpi_type_get_extent__
+
 #pragma weak MPI_Type_get_true_extent = PMPI_Type_get_true_extent
-#pragma weak MPI_Type_create_indexed_block = PMPI_Type_create_indexed_block
+#pragma weak mpi_type_get_true_extent_ = pmpi_type_get_true_extent_
+#pragma weak mpi_type_get_true_extent__ = pmpi_type_get_true_extent__
+
+#pragma weak MPI_Type_create_resized = PMPI_Type_create_resized
+#pragma weak mpi_type_create_resized_ = pmpi_type_create_resized_
+#pragma weak mpi_type_create_resized__ = pmpi_type_create_resized__
+
 #pragma weak MPI_Type_create_hindexed_block = PMPI_Type_create_hindexed_block
+#pragma weak mpi_type_create_hindexed_block_ = pmpi_type_create_hindexed_block_
+#pragma weak mpi_type_create_hindexed_block__ = pmpi_type_create_hindexed_block__
+
+#pragma weak MPI_Type_create_indexed_block = PMPI_Type_create_indexed_block
+#pragma weak mpi_type_create_indexed_block_ = pmpi_type_create_indexed_block_
+#pragma weak mpi_type_create_indexed_block__ = pmpi_type_create_indexed_block__
+
 #pragma weak MPI_Type_match_size = PMPI_Type_match_size
 
 

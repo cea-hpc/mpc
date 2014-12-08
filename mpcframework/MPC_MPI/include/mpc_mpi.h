@@ -293,6 +293,7 @@ extern "C"
 #define MPI_FILE_NULL ((MPI_File)-1)
 #define MPI_WIN_NULL ((MPI_Win)-1)
 
+
 #define MPI_BSEND_OVERHEAD (2*sizeof(mpi_buffer_overhead_t))
 
 #define MPI_ERRHANDLER_NULL ((MPI_Errhandler)0)
@@ -558,6 +559,10 @@ int MPI_Type_create_subarray (int ndims,
 			       int order,
 			       MPI_Datatype oldtype,
 			       MPI_Datatype * new_type);
+int MPI_Type_create_resized (MPI_Datatype, MPI_Aint , MPI_Aint , MPI_Datatype *);
+int MPI_Pack_external_size (char *datarep , int incount, MPI_Datatype datatype, MPI_Aint *size);
+int MPI_Pack_external (char *datarep , void *inbuf, int incount, MPI_Datatype datatype, void * outbuf, MPI_Aint outsize, MPI_Aint * position);
+int MPI_Unpack_external (char * datarep, void * inbuf, MPI_Aint insize, MPI_Aint * position, void * outbuf, int outcount, MPI_Datatype datatype);
 
 /* Collective Operations */
 int MPI_Barrier (MPI_Comm);
@@ -610,7 +615,8 @@ int MPI_Comm_remote_group (MPI_Comm, MPI_Group *);
 int MPI_Intercomm_create (MPI_Comm, int, MPI_Comm, int, int, MPI_Comm *);
 int MPI_Intercomm_merge (MPI_Comm, int, MPI_Comm *);
 int MPI_Comm_set_errhandler(MPI_Comm comm, MPI_Errhandler errhandler);
-  
+int MPI_Comm_call_errhandler( MPI_Comm comm, int errorcode );
+
 /* Keyval and Attr */
 int MPI_Keyval_create (MPI_Copy_function *, MPI_Delete_function *, int *, void *);
 int MPI_Keyval_free (int *);
@@ -716,6 +722,10 @@ int MPIX_Grequest_class_create( MPI_Grequest_query_function * query_fn,
 				MPIX_Grequest_class * new_class );
 int MPIX_Grequest_class_allocate( MPIX_Grequest_class target_class, void *extra_state, MPI_Request *request );
 
+/* Dummy One-Sided Communications */
+
+int MPI_Free_mem (void *ptr);
+int MPI_Alloc_mem(MPI_Aint size, MPI_Info info, void *baseptr);
 
 
 
@@ -906,6 +916,7 @@ int PMPI_Comm_remote_group (MPI_Comm, MPI_Group *);
 int PMPI_Intercomm_create (MPI_Comm, int, MPI_Comm, int, int, MPI_Comm *);
 int PMPI_Intercomm_merge (MPI_Comm, int, MPI_Comm *);
 int PMPI_Comm_set_errhandler(MPI_Comm comm, MPI_Errhandler errhandler);
+int PMPI_Comm_call_errhandler( MPI_Comm comm, int errorcode );
   
 /* Keyval and Attr */
 int PMPI_Keyval_create (MPI_Copy_function *, MPI_Delete_function *, int *, void *);
@@ -1012,6 +1023,10 @@ int PMPIX_Grequest_class_create( MPI_Grequest_query_function * query_fn,
 				MPIX_Grequest_class * new_class );
 int PMPIX_Grequest_class_allocate( MPIX_Grequest_class  target_class, void *extra_state, MPI_Request *request );
 
+/* Dummy One-Sided Communications */
+
+int PMPI_Free_mem (void *ptr);
+int PMPI_Alloc_mem(MPI_Aint size, MPI_Info info, void *baseptr);
 
 #endif /* MPI_BUILD_PROFILING */
 
@@ -1021,8 +1036,7 @@ int PMPIX_Grequest_class_allocate( MPIX_Grequest_class  target_class, void *extr
 /************************************************************************/
 
 /* One-Sided Communications */
-int MPI_Alloc_mem (MPI_Aint, MPI_Info , void *);
-int MPI_Free_mem (void *);
+
 int MPI_Win_set_attr(MPI_Win , int , void *);
 int MPI_Win_get_attr(MPI_Win , int , void *, int *);
 int MPI_Win_free_keyval(int *);
@@ -1119,6 +1133,7 @@ int MPI_Alltoallw (void *, int[], int[], MPI_Datatype[], void *, int[], int[], M
 
 /* For ROMIO compatibility */
 #define MPICH_ATTR_POINTER_WITH_TYPE_TAG(a,b) 
+#define MPI_AINT_FMT_HEX_SPEC "%X"
 
 #ifdef __cplusplus
 }

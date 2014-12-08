@@ -913,6 +913,24 @@ void ffunc (pmpi_type_struct) (int *count,
   *res = MPI_Type_struct (*count, blocklens, indices, old_types, newtype);
 }
 
+void ffunc (pmpi_type_create_hindexed_block) (int *count,
+						int * blocklen,
+						MPI_Aint indices[],
+						MPI_Datatype * old_type,
+						MPI_Datatype * newtype, int *res)
+{
+  *res = MPI_Type_create_hindexed_block (*count, *blocklen, indices, *old_type, newtype);
+}
+
+void ffunc (pmpi_type_create_indexed_block) (int *count,
+						int * blocklen,
+						int indices[],
+						MPI_Datatype * old_type,
+						MPI_Datatype * newtype, int *res)
+{
+  *res = MPI_Type_create_indexed_block (*count, *blocklen, indices, *old_type, newtype);
+}
+
 void ffunc (pmpi_type_create_struct) (int *count,
 			       int blocklens[],
 			       MPI_Aint indices[],
@@ -922,6 +940,12 @@ void ffunc (pmpi_type_create_struct) (int *count,
   *res = MPI_Type_create_struct (*count, blocklens, indices, old_types, newtype);
 
 }
+void ffunc (pmpi_type_create_resized)  (MPI_Datatype *oldtype , MPI_Aint * lb , MPI_Aint  * extent , MPI_Datatype * newtype, int *res )
+{
+	* res = MPI_Type_create_resized( *oldtype, *lb , *extent, newtype );
+}
+
+
 
 void ffunc (pmpi_address) (void *location, MPI_Aint * address, int *res)
 {
@@ -934,7 +958,16 @@ void ffunc (pmpi_type_extent) (MPI_Datatype * datatype, MPI_Aint * extent,
 			       int *res)
 {
   *res = MPI_Type_extent (*datatype, extent);
+}
 
+void ffunc (pmpi_type_get_extent) (MPI_Datatype * datatype, MPI_Aint *lb, MPI_Aint * extent,  int *res)
+{
+  *res = MPI_Type_get_extent (*datatype, lb, extent);
+}
+
+void ffunc (pmpi_type_get_true_extent) (MPI_Datatype * datatype, MPI_Aint *lb, MPI_Aint * extent,  int *res)
+{
+  *res = MPI_Type_get_true_extent (*datatype, lb, extent);
 }
 
   /* See the 1.1 version of the Standard.  The standard made an 
@@ -945,7 +978,6 @@ void ffunc (pmpi_type_size) (MPI_Datatype * datatype, int *size, int *res)
   *res = MPI_Type_size (*datatype, size);
 
 }
-
 
 
 void ffunc (pmpi_type_get_envelope)(MPI_Datatype * datatype, int *num_integers, int *num_addresses, int *num_datatypes, int *combiner, int *res )
