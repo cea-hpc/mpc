@@ -1535,7 +1535,7 @@ int PMPC_Type_get_name( MPC_Datatype datatype, char *name, int * resultlen )
 	if( !retname )
 	{
 		/* Return an empty string */
-		sprintf(name, "");
+		name[0] = '\0';
 		*resultlen = 0;
 	}
 	else
