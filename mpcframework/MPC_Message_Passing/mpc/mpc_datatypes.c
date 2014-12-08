@@ -342,6 +342,7 @@ void sctk_common_datatype_init()
 	SCTK_INIT_TYPE_SIZE (MPC_REAL4, float);
 	SCTK_INIT_TYPE_SIZE (MPC_REAL8, double);
 	SCTK_INIT_TYPE_SIZE (MPC_REAL16, long double);
+	SCTK_INIT_TYPE_SIZE (MPC_SIGNED_CHAR, char);
 	SCTK_INIT_TYPE_SIZE (MPC_INT8_T, sctk_int8_t );
 	SCTK_INIT_TYPE_SIZE (MPC_UINT8_T, sctk_uint8_t );
 	SCTK_INIT_TYPE_SIZE (MPC_INT16_T, sctk_int16_t );
@@ -362,7 +363,9 @@ void sctk_common_datatype_init()
 	SCTK_INIT_TYPE_SIZE (MPC_DOUBLE_PRECISION, double );
 
 
+	/* Special cases */
 	__sctk_common_type_sizes[MPC_PACKED] = 0;
+	sctk_common_datatype_set_name_helper( MPC_PACKED, "MPI_PACKED");
 }
 
 

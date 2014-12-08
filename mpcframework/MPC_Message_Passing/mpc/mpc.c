@@ -1529,8 +1529,17 @@ int PMPC_Type_dup( MPC_Datatype old_type, MPC_Datatype * new_type )
  *  \param resultlen Maximum length of the target buffer (OUT)
  */
 int PMPC_Type_get_name( MPC_Datatype datatype, char *name, int * resultlen )
-{
+{	
 	char * retname = sctk_datype_get_name( datatype );
+	
+	if( datatype == MPC_UB )
+	{
+		retname = "MPI_UB";
+	}
+	else if( datatype == MPC_LB )
+	{
+		retname = "MPI_LB";
+	}
 	
 	if( !retname )
 	{

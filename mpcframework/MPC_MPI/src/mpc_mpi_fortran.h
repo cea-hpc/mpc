@@ -970,6 +970,7 @@ void ffunc (pmpi_type_get_true_extent) (MPI_Datatype * datatype, MPI_Aint *lb, M
   *res = MPI_Type_get_true_extent (*datatype, lb, extent);
 }
 
+
   /* See the 1.1 version of the Standard.  The standard made an 
      unfortunate choice here, however, it is the standard.  The size returned 
      by MPI_Type_size is specified as an int, not an MPI_Aint */
@@ -1629,6 +1630,11 @@ void ffunc (pmpi_errhandler_free) (MPI_Errhandler * errhandler, int *res)
 {
   *res = MPI_Errhandler_free (errhandler);
 
+}
+
+void ffunc (pmpi_comm_set_errhandler) (MPI_Comm * comm, MPI_Errhandler * errhandler, int *res)
+{
+  *res = MPI_Comm_set_errhandler (*comm, errhandler);
 }
 
 void ffunc (pmpi_error_string) (int *errorcode, char *string, int *resultlen,
