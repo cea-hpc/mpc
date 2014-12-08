@@ -515,14 +515,22 @@
 #pragma weak mpi_type_dup_ = pmpi_type_dup_
 #pragma weak mpi_type_dup__ = pmpi_type_dup__
 
+#pragma weak MPI_Type_get_envelope = PMPI_Type_get_envelope
+#pragma weak mpi_type_get_envelope_ = pmpi_type_get_envelope_
+#pragma weak mpi_type_get_envelope__ = pmpi_type_get_envelope__
+
+#pragma weak MPI_Type_get_contents = PMPI_Type_get_contents
+#pragma weak mpi_type_get_contents_ = pmpi_type_get_contents_
+#pragma weak mpi_type_get_contents__ = pmpi_type_get_contents__
+
 #pragma weak MPI_Type_get_extent = PMPI_Type_get_extent
 #pragma weak MPI_Type_create_resized = PMPI_Type_create_resized
 #pragma weak MPI_Type_get_true_extent = PMPI_Type_get_true_extent
 #pragma weak MPI_Type_create_indexed_block = PMPI_Type_create_indexed_block
 #pragma weak MPI_Type_create_hindexed_block = PMPI_Type_create_hindexed_block
 #pragma weak MPI_Type_match_size = PMPI_Type_match_size
-#pragma weak MPI_Type_get_envelope = PMPI_Type_get_envelope
-#pragma weak MPI_Type_get_contents = PMPI_Type_get_contents
+
+
 #pragma weak MPI_Type_size_x = PMPI_Type_size_x
 #pragma weak MPI_Type_get_extent_x = PMPI_Type_get_extent_x
 #pragma weak MPI_Type_get_true_extent_x = PMPI_Type_get_true_extent_x

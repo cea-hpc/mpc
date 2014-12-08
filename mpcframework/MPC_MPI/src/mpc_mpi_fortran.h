@@ -946,6 +946,29 @@ void ffunc (pmpi_type_size) (MPI_Datatype * datatype, int *size, int *res)
 
 }
 
+
+
+void ffunc (pmpi_type_get_envelope)(MPI_Datatype * datatype, int *num_integers, int *num_addresses, int *num_datatypes, int *combiner, int *res )
+{
+	*res = MPI_Type_get_envelope( *datatype, num_integers, num_addresses, num_datatypes, combiner );
+}
+
+void ffunc (pmpi_type_get_contents) (   MPI_Datatype * datatype, 
+					int * max_integers,
+					int * max_addresses,
+					int * max_datatypes,
+					int array_of_integers[],
+					MPI_Aint array_of_addresses[],
+					MPI_Datatype array_of_datatypes[],
+					int * res)
+{
+	*res = MPI_Type_get_contents( *datatype, *max_integers, *max_addresses, *max_datatypes, array_of_integers, array_of_addresses, array_of_datatypes);
+}
+
+
+int;
+
+
   /* MPI_Type_count was withdrawn in MPI 1.1 */
 void ffunc (pmpi_type_lb) (MPI_Datatype * datatype, MPI_Aint * displacement,
 			   int *res)
@@ -1643,7 +1666,6 @@ void ffunc (pmpi_get_address) (char *location, MPI_Aint *address, int *res)
 {
     *res = MPI_Get_address(location, address);
 }
-
 
 void ffunc (pmpi_comm_get_name) (MPI_Comm * a, char *b SCTK_CHAR_MIXED (size),
 				 int *c, int *res SCTK_CHAR_END (size))
