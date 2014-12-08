@@ -1639,6 +1639,11 @@ void ffunc (pmpi_pcontrol) (const int level, ...)
 {
   not_implemented ();
 }
+void ffunc (pmpi_get_address) (char *location, MPI_Aint *address, int *res)
+{
+    *res = MPI_Get_address(location, address);
+}
+
 
 void ffunc (pmpi_comm_get_name) (MPI_Comm * a, char *b SCTK_CHAR_MIXED (size),
 				 int *c, int *res SCTK_CHAR_END (size))

@@ -149,7 +149,6 @@
 #pragma weak MPI_Type_create_struct = PMPI_Type_create_struct
 #pragma weak mpi_type_create_struct_ = pmpi_type_create_struct_
 #pragma weak mpi_type_create_struct__ = pmpi_type_create_struct__
-#pragma weak MPI_Get_address  = PMPI_Get_address
 #pragma weak MPI_Address = PMPI_Address
 #pragma weak mpi_address_ = pmpi_address_
 #pragma weak mpi_address__ = pmpi_address__
@@ -454,6 +453,10 @@
 #pragma weak MPI_Comm_set_name = PMPI_Comm_set_name
 #pragma weak mpi_comm_set_name_ = pmpi_comm_set_name_
 #pragma weak mpi_comm_set_name__ = pmpi_comm_set_name__
+
+#pragma weak MPI_Get_address = PMPI_Get_address
+#pragma weak mpi_get_address_ = pmpi_get_address_
+#pragma weak mpi_get_address__ = pmpi_get_address__
 
 #pragma weak MPI_Init_thread = PMPI_Init_thread
 #pragma weak mpi_init_thread_ = pmpi_init_thread_
