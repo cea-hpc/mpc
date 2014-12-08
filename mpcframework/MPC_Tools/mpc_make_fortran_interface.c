@@ -333,8 +333,6 @@ main_mpi (int argc, char **argv)
   MPI_INTEGER_VAL ("MPI_SIMILAR", MPI_SIMILAR);
   MPI_INTEGER_VAL ("MPI_UNEQUAL", MPI_UNEQUAL);
 
-  MPI_INTEGER_VAL ("MPI_STATUS_IGNORE", (size_t)MPI_STATUS_IGNORE);
-  MPI_INTEGER_VAL ("MPI_STATUSES_IGNORE", (size_t)MPI_STATUSES_IGNORE);
   MPI_INTEGER_VAL ("MPI_ANY_TAG", MPI_ANY_TAG);
   MPI_INTEGER_VAL ("MPI_ANY_SOURCE", MPI_ANY_SOURCE);
   MPI_INTEGER_VAL ("MPI_PROC_NULL", MPI_PROC_NULL);
@@ -520,6 +518,8 @@ main_mpi (int argc, char **argv)
   MPI_INTEGER_VAL ("MPI_BSEND_OVERHEAD", (int) ((2 * sizeof(mpi_buffer_overhead_t)) / 4));
   assert ((2 * sizeof(mpi_buffer_overhead_t)) % 4 == 0);
 
+  printf("       integer MPI_STATUS_IGNORE(MPI_STATUS_SIZE)\n");
+  printf("       integer MPI_STATUSES_IGNORE(MPI_STATUS_SIZE, 1)\n");
   printf("       EXTERNAL MPI_WTIME, MPI_WTICK , PMPI_WTICK, PMPI_WTIME\n");
   printf("       DOUBLE PRECISION MPI_WTIME, MPI_WTICK , PMPI_WTICK, PMPI_WTIME\n");
   return 0;

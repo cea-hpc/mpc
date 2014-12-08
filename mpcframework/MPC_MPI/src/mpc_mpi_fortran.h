@@ -809,7 +809,6 @@ void ffunc (pmpi_sendrecv) (void *sendbuf, int *sendcount,
   *res =
     MPI_Sendrecv (sendbuf, *sendcount, *sendtype, *dest, *sendtag, recvbuf,
 		   *recvcount, *recvtype, *source, *recvtag, *comm, status);
-
 }
 
 void ffunc (pmpi_sendrecv_replace) (void *buf, int *count,
