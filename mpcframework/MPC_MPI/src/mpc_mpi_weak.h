@@ -443,6 +443,10 @@
 #pragma weak mpi_pcontrol_ = pmpi_pcontrol_
 #pragma weak mpi_pcontrol__ = pmpi_pcontrol__
 
+#pragma weak MPI_Comm_get_attr = PMPI_Attr_get
+#pragma weak mpi_comm_get_attr_ = pmpi_attr_get_
+#pragma weak mpi_comm_get_attr_ = pmpi_attr_get__
+
 #pragma weak MPI_Comm_get_name = PMPI_Comm_get_name
 #pragma weak mpi_comm_get_name_ = pmpi_comm_get_name_
 #pragma weak mpi_comm_get_name__ = pmpi_comm_get_name__
@@ -494,9 +498,20 @@
 #pragma weak MPI_Status_set_cancelled = PMPI_Status_set_cancelled
 #pragma weak MPI_Request_get_status = PMPI_Request_get_status
 #pragma weak MPI_Test_cancelled = PMPI_Test_cancelled
+
+
 #pragma weak MPI_Type_set_name = PMPI_Type_set_name
+#pragma weak mpi_type_set_name_ = pmpi_type_set_name_
+#pragma weak mpi_type_set_name__ = pmpi_type_set_name__
+
 #pragma weak MPI_Type_get_name = PMPI_Type_get_name
+#pragma weak mpi_type_get_name_ = pmpi_type_get_name_
+#pragma weak mpi_type_get_name__ = pmpi_type_get_name__
+
 #pragma weak MPI_Type_dup = PMPI_Type_dup
+#pragma weak mpi_type_dup_ = pmpi_type_dup_
+#pragma weak mpi_type_dup__ = pmpi_type_dup__
+
 #pragma weak MPI_Type_get_extent = PMPI_Type_get_extent
 #pragma weak MPI_Type_create_resized = PMPI_Type_create_resized
 #pragma weak MPI_Type_get_true_extent = PMPI_Type_get_true_extent

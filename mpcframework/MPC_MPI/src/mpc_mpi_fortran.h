@@ -912,7 +912,6 @@ void ffunc (pmpi_type_struct) (int *count,
 			       MPI_Datatype * newtype, int *res)
 {
   *res = MPI_Type_struct (*count, blocklens, indices, old_types, newtype);
-
 }
 
 void ffunc (pmpi_type_create_struct) (int *count,
@@ -972,6 +971,12 @@ void ffunc (pmpi_type_commit) (MPI_Datatype * datatype, int *res)
 void ffunc (pmpi_type_free) (MPI_Datatype * datatype, int *res)
 {
   *res = MPI_Type_free (datatype);
+
+}
+
+void ffunc (pmpi_type_dup) (MPI_Datatype * src, MPI_Datatype * dst, int *res)
+{
+  *res = MPI_Type_dup (*src , dst);
 
 }
 
@@ -1411,6 +1416,7 @@ void ffunc (pmpi_attr_get) (MPI_Comm * comm, int *keyval, void *attr_value,
 
 }
 
+
 void ffunc (pmpi_attr_delete) (MPI_Comm * comm, int *keyval, int *res)
 {
   *res = MPI_Attr_delete (*comm, *keyval);
@@ -1650,6 +1656,25 @@ void ffunc (pmpi_comm_set_name) (MPI_Comm * a, char *b SCTK_CHAR_MIXED (size),
   *res = MPI_Comm_set_name (*a, tmp);
   sctk_free (tmp);
 }
+
+
+/* Type naming */
+
+void ffunc (pmpi_type_get_name) (MPI_Datatype * a, char *b SCTK_CHAR_MIXED (size), int *c, int *res SCTK_CHAR_END (size))
+{
+  *res = MPI_Type_get_name (*a, b, c);
+  sctk_char_c_to_fortran (b, size);
+}
+
+void ffunc (pmpi_type_set_name) (MPI_Datatype * datatype, char *name SCTK_CHAR_MIXED (size), int *res SCTK_CHAR_END (size))
+{
+  char *tmp;
+  tmp = sctk_char_fortran_to_c (name, size);
+  *res =  MPI_Type_set_name( *datatype, tmp );
+  sctk_free (tmp);
+}
+
+
 
 /* MPI_Info Handling */
 
