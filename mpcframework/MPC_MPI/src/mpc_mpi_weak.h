@@ -588,8 +588,16 @@
 #pragma weak mpi_type_create_subarray__ = pmpi_type_create_subarray__
 
 #pragma weak MPI_Pack_external_size = PMPI_Pack_external_size
+#pragma weak mpi_pack_external_size_ = pmpi_pack_external_size_
+#pragma weak mpi_pack_external_size__ = pmpi_pack_external_size__
+
 #pragma weak MPI_Pack_external = PMPI_Pack_external
+#pragma weak mpi_pack_external_ = pmpi_pack_external_
+#pragma weak mpi_pack_external__ = pmpi_pack_external__
+
 #pragma weak MPI_Unpack_external = PMPI_Unpack_external
+#pragma weak mpi_unpack_external_ = pmpi_unpack_external_
+#pragma weak mpi_unpack_external__ = pmpi_unpack_external__
 
 #pragma weak  MPI_Free_mem = PMPI_Free_mem
 #pragma weak  MPI_Alloc_mem = PMPI_Alloc_mem

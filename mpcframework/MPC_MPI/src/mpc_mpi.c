@@ -50,20 +50,19 @@ TODO("Optimize algorithme for derived types")
 
 static int __INTERNAL__PMPI_Attr_set_fortran (int keyval);
 
-static char *
-sctk_char_fortran_to_c (char *buf, long int size)
+char * sctk_char_fortran_to_c (char *buf, int size)
 {
-  char *tmp;
-  long int i;
-  tmp = sctk_malloc (size + 1);
-TODO("check memory liberation")
+	char *tmp;
+	long int i;
+	tmp = sctk_malloc (size + 1);
+	TODO("check memory liberation")
 
-  for (i = 0; i < size; i++)
-    {
-      tmp[i] = buf[i];
-    }
-  tmp[i] = '\0';
-  return tmp;
+	for (i = 0; i < size; i++)
+	{
+	tmp[i] = buf[i];
+	}
+	tmp[i] = '\0';
+	return tmp;
 }
 
 static void
@@ -4697,7 +4696,7 @@ int __INTERNAL__PMPI_Pack_external (char *datarep , void *inbuf, int incount, MP
 		MPI_Pack_external_size ( datarep , incount, datatype, &ext_pack_size);
 		MPI_Pack_size( incount, datatype, MPI_COMM_WORLD, &pack_size );
 
-		sctk_error(" PACK NATIVE %d EXTERNAL %d", pack_size, ext_pack_size );
+		sctk_error(" PACK %d NATIVE %d EXTERNAL %d",datatype, pack_size, ext_pack_size );
 
 		int pos = 0;
 		/* MPI_Pack takes an integer output size */

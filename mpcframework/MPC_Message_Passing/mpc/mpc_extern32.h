@@ -370,6 +370,8 @@ static inline size_t MPC_Extern32_common_type_size( MPC_Datatype common_type )
 		case MPC_INTEGER2:
 			return 2;
 		case MPC_INT:
+		case MPC_INTEGER:
+		case MPC_LOGICAL:
 		case MPC_UNSIGNED:
 		case MPC_LONG:
 		case MPC_UNSIGNED_LONG:
@@ -383,6 +385,7 @@ static inline size_t MPC_Extern32_common_type_size( MPC_Datatype common_type )
 		case MPC_LONG_LONG_INT:
 		case MPC_UNSIGNED_LONG_LONG_INT:
 		case MPC_DOUBLE:
+		case MPC_DOUBLE_PRECISION:
 		case MPC_INT64_T:
 		case MPC_UINT64_T:
 		case MPC_AINT:

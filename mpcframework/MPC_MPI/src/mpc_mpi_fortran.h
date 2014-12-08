@@ -22,6 +22,9 @@
 
 TODO("Handle the case of MPI_Aint which are not int fortran")
 
+
+char * sctk_char_fortran_to_c (char *buf, int size);
+
 void ffunc (mpi_send) (void *buf, int *count, MPI_Datatype * datatype,
 		       int *dest, int *tag, MPI_Comm * comm, int *res);
 
@@ -1735,6 +1738,30 @@ void ffunc (pmpi_type_set_name) (MPI_Datatype * datatype, char *name SCTK_CHAR_M
   char *tmp;
   tmp = sctk_char_fortran_to_c (name, size);
   *res =  MPI_Type_set_name( *datatype, tmp );
+  sctk_free (tmp);
+}
+
+/* Pack External */
+
+void ffunc (pmpi_pack_external_size) (char * datarep SCTK_CHAR_MIXED (len),  int * incount, MPI_Datatype * datatype, MPI_Aint *size, int * res SCTK_CHAR_END (len))
+{
+  char * tmp = sctk_char_fortran_to_c (datarep, len);
+  *res = PMPI_Pack_external_size (tmp, *incount , *datatype, size);
+  sctk_free (tmp);
+}
+
+
+void ffunc (pmpi_pack_external) (char * datarep  SCTK_CHAR_MIXED (len), void *inbuf, int * incount, MPI_Datatype * datatype, void * outbuf, MPI_Aint * outsize, MPI_Aint * position, int * res SCTK_CHAR_END (len))
+{
+  char * tmp = sctk_char_fortran_to_c (datarep, len);
+  *res = PMPI_Pack_external(tmp, inbuf, *incount , *datatype, outbuf, *outsize, position );
+  sctk_free (tmp);
+}
+
+void ffunc (pmpi_unpack_external) (char * datarep  SCTK_CHAR_MIXED (len), void *inbuf, int * insize, MPI_Aint * position, void * outbuf, int * outcount, MPI_Datatype * datatype, int * res SCTK_CHAR_END (len))
+{
+  char * tmp = sctk_char_fortran_to_c (datarep, len);
+  *res = PMPI_Unpack_external(tmp, inbuf, *insize , position, outbuf, *outcount, *datatype );
   sctk_free (tmp);
 }
 
