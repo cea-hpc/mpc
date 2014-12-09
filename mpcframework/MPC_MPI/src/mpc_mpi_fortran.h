@@ -1017,18 +1017,22 @@ int;
 
 
   /* MPI_Type_count was withdrawn in MPI 1.1 */
-void ffunc (pmpi_type_lb) (MPI_Datatype * datatype, MPI_Aint * displacement,
+void ffunc (pmpi_type_lb) (MPI_Datatype * datatype, int * displacement,
 			   int *res)
 {
-  *res = MPI_Type_lb (*datatype, displacement);
+  MPI_Aint caint;
+  *res = MPI_Type_lb (*datatype, &caint);
+  *displacement = (int) caint;
+  
 
 }
 
-void ffunc (pmpi_type_ub) (MPI_Datatype * datatype, MPI_Aint * displacement,
+void ffunc (pmpi_type_ub) (MPI_Datatype * datatype, int * displacement,
 			   int *res)
 {
-  *res = MPI_Type_ub (*datatype, displacement);
-
+  MPI_Aint caint;
+  *res = MPI_Type_ub (*datatype, &caint);
+  *displacement = (int) caint;
 }
 
 void ffunc (pmpi_type_commit) (MPI_Datatype * datatype, int *res)
