@@ -909,11 +909,22 @@ void ffunc (pmpi_type_create_hindexed) (int *count,
 
 void ffunc (pmpi_type_struct) (int *count,
 			       int blocklens[],
-			       MPI_Aint indices[],
+			       int indices[],
 			       MPI_Datatype old_types[],
 			       MPI_Datatype * newtype, int *res)
 {
-  *res = MPI_Type_struct (*count, blocklens, indices, old_types, newtype);
+  MPI_Aint * indices_ai = sctk_malloc( *count * sizeof( MPI_Aint ) );
+  assume( indices_ai != NULL );
+	
+  int i;
+  for( i = 0 ; i < *count ; i++ )
+  {
+	  indices_ai[i] = (MPI_Aint) indices[i];
+  }
+	
+  *res = MPI_Type_struct (*count, blocklens, indices_ai, old_types, newtype);
+  
+  sctk_free( indices_ai );
 }
 
 void ffunc (pmpi_type_create_hindexed_block) (int *count,
