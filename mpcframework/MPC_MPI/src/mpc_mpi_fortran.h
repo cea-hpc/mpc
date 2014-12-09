@@ -1755,13 +1755,17 @@ void ffunc (pmpi_pack_external) (char * datarep  SCTK_CHAR_MIXED (len), void *in
 {
   char * tmp = sctk_char_fortran_to_c (datarep, len);
   *res = PMPI_Pack_external(tmp, inbuf, *incount , *datatype, outbuf, *outsize, position );
+  sctk_nodebug("PACK %s in %p incount %d data %d out %p outsize %d pos %d", tmp, inbuf, *incount, *datatype, outbuf, *outsize, *position );
   sctk_free (tmp);
+   
+
 }
 
 void ffunc (pmpi_unpack_external) (char * datarep  SCTK_CHAR_MIXED (len), void *inbuf, int * insize, MPI_Aint * position, void * outbuf, int * outcount, MPI_Datatype * datatype, int * res SCTK_CHAR_END (len))
 {
   char * tmp = sctk_char_fortran_to_c (datarep, len);
   *res = PMPI_Unpack_external(tmp, inbuf, *insize , position, outbuf, *outcount, *datatype );
+  sctk_nodebug("UNPACK %s in %p incount %d data %d out %p outsize %d pos %d", tmp, inbuf, *insize, *datatype, outbuf, *outcount, *position );
   sctk_free (tmp);
 }
 

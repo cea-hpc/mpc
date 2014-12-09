@@ -160,7 +160,7 @@ static inline void BASIC_convert(int type_byte_size, char *src, char *dest)
 		switch(type_byte_size)                     
 		{                                          
 			case 1:                                
-			    dest = src;                        
+			    *dest = *src;                        
 			    break;                             
 			case 2:                                
 			    BASIC_convert16(src, dest);        

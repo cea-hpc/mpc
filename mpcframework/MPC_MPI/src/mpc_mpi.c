@@ -25,6 +25,7 @@
 #include <sctk_debug.h>
 #include <sctk_spinlock.h>
 #include "sctk_thread.h"
+#include <sctk_ethread_internal.h>
 #include "sctk_communicator.h"
 #include "sctk_collective_communications.h"
 #include "mpc_reduction.h"
@@ -4696,8 +4697,6 @@ int __INTERNAL__PMPI_Pack_external (char *datarep , void *inbuf, int incount, MP
 		MPI_Pack_external_size ( datarep , incount, datatype, &ext_pack_size);
 		MPI_Pack_size( incount, datatype, MPI_COMM_WORLD, &pack_size );
 
-		sctk_error(" PACK %d NATIVE %d EXTERNAL %d",datatype, pack_size, ext_pack_size );
-
 		int pos = 0;
 		/* MPI_Pack takes an integer output size */
 		int int_outsize = pack_size;
@@ -4724,13 +4723,13 @@ int __INTERNAL__PMPI_Pack_external (char *datarep , void *inbuf, int incount, MP
 		
 		/* And now apply the encoding */
 		MPC_Extern32_convert( type_vector ,
-							  type_vector_count,
-							  native_pack_buff, 
-						      pack_size, 
-						      outbuf, 
-						      ext_pack_size , 
-							  1);
-
+					type_vector_count,
+					native_pack_buff, 
+					pack_size, 
+					outbuf, 
+					ext_pack_size , 
+					1);
+		
 		sctk_free( native_pack_buff );
 	}
 	else
@@ -4750,7 +4749,7 @@ int __INTERNAL__PMPI_Unpack_external (char * datarep, void * inbuf, MPI_Aint ins
 		MPI_Aint ext_pack_size = 0;
 		MPI_Pack_external_size ( datarep , outcount, datatype, &ext_pack_size);
 		MPI_Pack_size( outcount, datatype, MPI_COMM_WORLD, &pack_size );
-
+		
 		char * native_pack_buff = sctk_malloc( pack_size );
 		memset( native_pack_buff, 0 , pack_size );
 		assume( native_pack_buff != NULL );
@@ -4769,19 +4768,19 @@ int __INTERNAL__PMPI_Unpack_external (char * datarep, void * inbuf, MPI_Aint ins
 		
 		/* And now apply the encoding */
 		MPC_Extern32_convert( type_vector ,
-							  type_vector_count,
-							  native_pack_buff, 
-						      pack_size, 
-						      inbuf, 
-						      ext_pack_size , 
-							  0);
-	
+					type_vector_count,
+					native_pack_buff, 
+					pack_size, 
+					inbuf, 
+					ext_pack_size , 
+					0);
+		
 		/* Now we just have to unpack the converted content */
 		int pos = 0;
 		PMPI_Unpack (native_pack_buff, insize, &pos, outbuf, outcount, datatype, MPI_COMM_WORLD);
 		
 		*position = pos;
-		
+
 		sctk_free( native_pack_buff );
 	}
 	else
