@@ -518,7 +518,7 @@ void sctk_derived_datatype_init( sctk_derived_datatype_t * type ,
 	
 	for (j = 0; j < count; j++)
 	{
-		sctk_nodebug("( %d / %d ) => B : %d  E : %d D : %d ",j, count - 1 , type->begins[j], type->ends[j], type->datatypes[j]);
+		sctk_debug("( %d / %d ) => B : %d  E : %d D : %d ",j, count - 1 , type->begins[j], type->ends[j], type->datatypes[j]);
 		type->size += type->ends[j] - type->begins[j] + 1;
 	}
 	

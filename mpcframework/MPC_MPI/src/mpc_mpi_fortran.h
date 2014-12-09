@@ -183,7 +183,7 @@ void ffunc (mpi_type_indexed) (int *count,
 
 void ffunc (mpi_type_hindexed) (int *count,
 				int blocklens[],
-				MPI_Aint indices[],
+				int indices[],
 				MPI_Datatype * old_type,
 				MPI_Datatype * newtype, int *res);
 
@@ -889,12 +889,22 @@ void ffunc (pmpi_type_indexed) (int *count,
 
 void ffunc (pmpi_type_hindexed) (int *count,
 				 int blocklens[],
-				 MPI_Aint indices[],
+				 int indices[],
 				 MPI_Datatype * old_type,
 				 MPI_Datatype * newtype, int *res)
 {
-  *res = MPI_Type_hindexed (*count, blocklens, indices, *old_type, newtype);
+  MPI_Aint * indices_ai = sctk_malloc( *count * sizeof( MPI_Aint ) );
+  assume( indices_ai != NULL );
+	
+  int i;
+  for( i = 0 ; i < *count ; i++ )
+  {
+	  indices_ai[i] = (MPI_Aint) indices[i];
+  }
+		
+  *res = MPI_Type_hindexed (*count, blocklens, indices_ai, *old_type, newtype);
 
+  sctk_free( indices_ai );
 }
 
 void ffunc (pmpi_type_create_hindexed) (int *count,
