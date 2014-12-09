@@ -51,23 +51,44 @@ TODO("Optimize algorithme for derived types")
 
 static int __INTERNAL__PMPI_Attr_set_fortran (int keyval);
 
-char * sctk_char_fortran_to_c (char *buf, int size)
+char * sctk_char_fortran_to_c (char *buf, int size, char ** free_ptr)
 {
 	char *tmp;
 	long int i;
 	tmp = sctk_malloc (size + 1);
 	TODO("check memory liberation")
-
+	assume( tmp != NULL );
+	*free_ptr = tmp;
+	
 	for (i = 0; i < size; i++)
 	{
 	tmp[i] = buf[i];
 	}
 	tmp[i] = '\0';
+	
+	/* Trim */
+
+	while( *tmp == ' ')
+	{
+		tmp++;
+	}
+	
+	int len = strlen( tmp );
+	
+	char *begin = tmp;
+	
+	while( (tmp[len - 1] == ' ') && (&tmp[len] != begin) )
+	{
+		tmp[len - 1] = '\0';
+		len--;
+	}
+		
+	
+	
 	return tmp;
 }
 
-static void
-sctk_char_c_to_fortran (char *buf, long int size)
+void sctk_char_c_to_fortran (char *buf, int size)
 {
   long int i;
   for (i = strlen (buf); i < size; i++)

@@ -703,7 +703,7 @@ typedef enum
  * they are both defined for MPC and MPI variants */
 /*1 MB */
 #define MPC_MAX_INFO_VAL 1048576
-#define MPC_MAX_INFO_KEY 255
+#define MPC_MAX_INFO_KEY 256
 
   
   int MPC_Info_set( MPC_Info, const char *, const char * );
