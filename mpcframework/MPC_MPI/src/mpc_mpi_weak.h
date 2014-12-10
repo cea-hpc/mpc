@@ -329,7 +329,6 @@
 #pragma weak MPI_Intercomm_merge = PMPI_Intercomm_merge
 #pragma weak mpi_intercomm_merge_ = pmpi_intercomm_merge_
 #pragma weak mpi_intercomm_merge__ = pmpi_intercomm_merge__
-#pragma weak  MPI_Comm_set_errhandler = PMPI_Comm_set_errhandler
 #pragma weak MPI_Comm_call_errhandler = PMPI_Comm_call_errhandler
 #pragma weak MPI_Keyval_create = PMPI_Keyval_create
 #pragma weak mpi_keyval_create_ = pmpi_keyval_create_
