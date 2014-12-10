@@ -4913,6 +4913,7 @@ MPC_Op_tmp (void *in, void *inout, size_t size, MPC_Datatype t)
       ADD_FUNC_HANDLER(func,MPC_REAL8,op);              \
       ADD_FUNC_HANDLER(func,MPC_REAL16,op);             \
       ADD_FUNC_HANDLER(func,MPC_DOUBLE,op);             \
+      ADD_FUNC_HANDLER(func,MPC_DOUBLE_PRECISION,op);             \
       ADD_FUNC_HANDLER(func,MPC_UNSIGNED_CHAR,op);      \
       ADD_FUNC_HANDLER(func,MPC_UNSIGNED_SHORT,op);     \
       ADD_FUNC_HANDLER(func,MPC_UNSIGNED,op);           \
