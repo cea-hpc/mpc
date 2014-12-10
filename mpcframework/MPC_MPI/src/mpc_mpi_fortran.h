@@ -208,7 +208,7 @@ void ffunc (mpi_type_create_struct) (int *count,
 void ffunc (mpi_address) (void *location, MPI_Aint * address, int *res);
 
   /* We could add __attribute__((deprecated)) to routines like MPI_Type_extent */
-void ffunc (mpi_type_extent) (MPI_Datatype * datatype, MPI_Aint * extent,
+void ffunc (mpi_type_extent) (MPI_Datatype * datatype, int * extent,
 			      int *res);
 
   /* See the 1.1 version of the Standard.  The standard made an 
@@ -979,10 +979,12 @@ void ffunc (pmpi_address) (void *location, MPI_Aint * address, int *res)
 }
 
   /* We could add __attribute__((deprecated)) to routines like MPI_Type_extent */
-void ffunc (pmpi_type_extent) (MPI_Datatype * datatype, MPI_Aint * extent,
+void ffunc (pmpi_type_extent) (MPI_Datatype * datatype, int * extent,
 			       int *res)
 {
-  *res = MPI_Type_extent (*datatype, extent);
+  MPI_Aint cextent;
+  *res = MPI_Type_extent (*datatype, &cextent);
+  *extent = (int) cextent;
 }
 
 void ffunc (pmpi_type_get_extent) (MPI_Datatype * datatype, MPI_Aint *lb, MPI_Aint * extent,  int *res)
