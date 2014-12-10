@@ -8745,8 +8745,7 @@ __INTERNAL__PMPI_Cart_shift (MPI_Comm comm, int direction, int displ,
 	
   if (displ == 0)
   {
-	  *dest = *source = rank;
-	  return MPI_SUCCESS;
+	  MPI_ERROR_REPORT (comm, MPI_ERR_ARG, "Displacement must be < 0 or > 0");
   }
 
   if (topo->type != MPI_CART)
