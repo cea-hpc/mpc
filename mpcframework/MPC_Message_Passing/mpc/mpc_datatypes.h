@@ -47,6 +47,12 @@ void sctk_datatype_release();
 /* Datatype  Context                                                    */
 /************************************************************************/
 
+/** \brief Retrieve a combiner name
+ *  \param combiner Target combiner
+ *  \return a static char describing the combiner
+ */
+const char * const sctk_datype_combiner(MPC_Type_combiner combiner);
+
 /** \brief This datastructure is used to store the definition
  * of a datatype in order to reproduce it using MPI_Get_envelope
  * and MPI_Get_contents */
@@ -148,7 +154,8 @@ int Datatype_context_match( struct Datatype_External_context * eref, struct Data
  *  is not allowed to call \ref MPI_Type_Get_contents on them
  */
 void sctk_datatype_context_set( struct Datatype_context * ctx , struct Datatype_External_context * dctx );
-
+/* This is the same function but with the possibility of disabling refcounting (to use in type match) */
+void __sctk_datatype_context_set( struct Datatype_context * ctx , struct Datatype_External_context * dctx, int enable_refcounting  );
 
 /** \brief Frees the data stored in a data-type context
  *  \param ctx Context to free
@@ -220,6 +227,11 @@ void init_composed_common_types();
  */
 void release_composed_common_types();
 
+/** \brief Display debug informations about a common datatype
+ *  \param target_type Type to be displayed
+ */
+void sctk_common_datatype_display( MPC_Datatype datatype );
+
 /************************************************************************/
 /* Contiguous Datatype                                                  */
 /************************************************************************/
@@ -261,6 +273,15 @@ void sctk_contiguous_datatype_release( sctk_contiguous_datatype_t * type );
 /** \brief Theses macros allow us to manipulate the contiguous datatype refcounter more simply */
 #define SCTK_CONTIGUOUS_DATATYPE_IS_FREE( datatype_ptr ) (datatype_ptr->ref_count == 0)
 #define SCTK_CONTIGUOUS_DATATYPE_IS_IN_USE( datatype_ptr ) (datatype_ptr->ref_count)
+
+
+/** \brief Display debug informations about a contiguous datatype
+ *  \param target_type Type to be displayed
+ */
+void sctk_contiguous_datatype_display( sctk_contiguous_datatype_t * target_type );
+
+
+
 
 /************************************************************************/
 /* Derived Datatype                                                     */
@@ -358,6 +379,14 @@ struct Derived_datatype_cell
  *  \param target_type Type to be optimized
  */
 int sctk_derived_datatype_optimize( sctk_derived_datatype_t * target_type );
+
+/** \brief Display debug informations about a derived datatype
+ *  \param target_type Type to be displayed
+ */
+void sctk_derived_datatype_display( sctk_derived_datatype_t * target_type );
+
+
+
 
 /************************************************************************/
 /* Datatype ID range calculations                                       */
@@ -587,6 +616,7 @@ sctk_derived_datatype_t * Datatype_Array_get_derived_datatype( struct Datatype_A
  *  \warning The datatype must be a derived datatype
  */
 void Datatype_Array_set_derived_datatype( struct Datatype_Array * da ,  MPC_Datatype datatype, sctk_derived_datatype_t * value );
+
 
 
 /************************************************************************/

@@ -732,12 +732,23 @@ static int main_result = 0;
 run (sctk_startup_args_t * arg)
 {
   int argc;
-  char **argv;
+  char **argv, **argv_safe;
   int i;
 
   argc = arg->argc;
   argv = (char **) sctk_malloc ((argc + 1) * sizeof (char *));
 
+  assume( argv!= NULL );
+  
+  /* We create this extra argv array
+  * to prevent the case where a (strange)
+  * program modifies the argv[i] pointers
+  * preventing them to be freed at exit */
+  argv_safe =  (char *) sctk_malloc ((argc + 1) * sizeof (char *));
+  assume( argv_safe != NULL );
+    
+  
+  
   sctk_nodebug ("creation argv %d", argc);
   for (i = 0; i < argc; i++)
   {
@@ -745,8 +756,10 @@ run (sctk_startup_args_t * arg)
     int k;
     char *tmp;
     sctk_nodebug ("%d %s", i, arg->argv[i]);
-    tmp =
-      (char *) sctk_malloc ((strlen (arg->argv[i]) + 1) * sizeof (char));
+    
+    tmp =  (char *) sctk_malloc ((strlen (arg->argv[i]) + 1) * sizeof (char));
+    assume( tmp != NULL );
+  
     j = 0;
     k = 0;
     while (arg->argv[i][j] != '\0')
@@ -767,7 +780,13 @@ run (sctk_startup_args_t * arg)
       }
     }
     tmp[k] = arg->argv[i][j];
+    
     argv[i] = tmp;
+    /* Here we store the pointer to
+     * be able to free it later on
+     * even in case of modification */
+    argv_safe[i] = tmp;
+    
     sctk_nodebug ("%d %s done", i, argv[i]);
   }
   sctk_nodebug ("creation argv done");
@@ -777,9 +796,13 @@ run (sctk_startup_args_t * arg)
   main_result = sctk_user_main (argc, argv);
   for (i = 0; i < argc; i++)
   {
-    sctk_free (argv[i]);
+    /* Here we free using the copy
+     * of the array to be sure we have
+     * a valid pointer */  
+    sctk_free (argv_safe[i]);
   }
   sctk_free (argv);
+  sctk_free (argv_safe);
 
   return NULL;
 }
@@ -830,12 +853,15 @@ auto_kill_func (void *arg)
   int timeout = *(int*)arg;
   if (timeout > 0)
   {
-    if (sctk_runtime_config_get()->modules.launcher.banner)
+    if (sctk_runtime_config_get()->modules.launcher.banner && !sctk_is_in_fortran)
     {
       sctk_noalloc_fprintf (stderr, "Autokill in %ds\n", timeout);
     }
 	sleep (timeout);
-    sctk_noalloc_fprintf (stderr, "TIMEOUT reached\n");
+	
+	if( !sctk_is_in_fortran )
+		sctk_noalloc_fprintf (stderr, "TIMEOUT reached\n");
+	
     abort ();
     exit (-1);
   }

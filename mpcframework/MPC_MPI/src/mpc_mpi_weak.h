@@ -149,7 +149,6 @@
 #pragma weak MPI_Type_create_struct = PMPI_Type_create_struct
 #pragma weak mpi_type_create_struct_ = pmpi_type_create_struct_
 #pragma weak mpi_type_create_struct__ = pmpi_type_create_struct__
-#pragma weak MPI_Get_address  = PMPI_Get_address
 #pragma weak MPI_Address = PMPI_Address
 #pragma weak mpi_address_ = pmpi_address_
 #pragma weak mpi_address__ = pmpi_address__
@@ -330,7 +329,7 @@
 #pragma weak MPI_Intercomm_merge = PMPI_Intercomm_merge
 #pragma weak mpi_intercomm_merge_ = pmpi_intercomm_merge_
 #pragma weak mpi_intercomm_merge__ = pmpi_intercomm_merge__
-#pragma weak  MPI_Comm_set_errhandler = PMPI_Comm_set_errhandler
+#pragma weak MPI_Comm_call_errhandler = PMPI_Comm_call_errhandler
 #pragma weak MPI_Keyval_create = PMPI_Keyval_create
 #pragma weak mpi_keyval_create_ = pmpi_keyval_create_
 #pragma weak mpi_keyval_create__ = pmpi_keyval_create__
@@ -443,6 +442,10 @@
 #pragma weak mpi_pcontrol_ = pmpi_pcontrol_
 #pragma weak mpi_pcontrol__ = pmpi_pcontrol__
 
+#pragma weak MPI_Comm_get_attr = PMPI_Attr_get
+#pragma weak mpi_comm_get_attr_ = pmpi_attr_get_
+#pragma weak mpi_comm_get_attr_ = pmpi_attr_get__
+
 #pragma weak MPI_Comm_get_name = PMPI_Comm_get_name
 #pragma weak mpi_comm_get_name_ = pmpi_comm_get_name_
 #pragma weak mpi_comm_get_name__ = pmpi_comm_get_name__
@@ -450,6 +453,10 @@
 #pragma weak MPI_Comm_set_name = PMPI_Comm_set_name
 #pragma weak mpi_comm_set_name_ = pmpi_comm_set_name_
 #pragma weak mpi_comm_set_name__ = pmpi_comm_set_name__
+
+#pragma weak MPI_Get_address = PMPI_Get_address
+#pragma weak mpi_get_address_ = pmpi_get_address_
+#pragma weak mpi_get_address__ = pmpi_get_address__
 
 #pragma weak MPI_Init_thread = PMPI_Init_thread
 #pragma weak mpi_init_thread_ = pmpi_init_thread_
@@ -476,14 +483,41 @@
 #pragma weak MPI_Errhandler_c2f = PMPI_Errhandler_c2f
 
 #pragma weak MPI_Info_create = PMPI_Info_create
+#pragma weak mpi_info_create_ = pmpi_info_create_
+#pragma weak mpi_info_create__ = pmpi_info_create__
+
 #pragma weak MPI_Info_delete = PMPI_Info_delete
+#pragma weak mpi_info_delete_ = pmpi_info_delete_
+#pragma weak mpi_info_delete__ = pmpi_info_delete__
+
 #pragma weak MPI_Info_dup = PMPI_Info_dup
+#pragma weak mpi_info_dup_ = pmpi_info_dup_
+#pragma weak mpi_info_dup__ = pmpi_info_dup__
+
 #pragma weak MPI_Info_free = PMPI_Info_free
+#pragma weak mpi_info_free_ = pmpi_info_free_
+#pragma weak mpi_info_free__ = pmpi_info_free__
+
 #pragma weak MPI_Info_set = PMPI_Info_set
+#pragma weak mpi_info_set_ = pmpi_info_set_
+#pragma weak mpi_info_set__ = pmpi_info_set__
+
 #pragma weak MPI_Info_get = PMPI_Info_get
+#pragma weak mpi_info_get_ = pmpi_info_get_
+#pragma weak mpi_info_get__ = pmpi_info_get__
+
 #pragma weak MPI_Info_get_nkeys = PMPI_Info_get_nkeys
+#pragma weak mpi_info_get_nkeys_ = pmpi_info_get_nkeys_
+#pragma weak mpi_info_get_nkeys__ = pmpi_info_get_nkeys__
+
 #pragma weak MPI_Info_get_nthkey = PMPI_Info_get_nthkey
+#pragma weak mpi_info_get_nthkey_ = pmpi_info_get_nthkey_
+#pragma weak mpi_info_get_nthkey__ = pmpi_info_get_nthkey__
+
 #pragma weak MPI_Info_get_valuelen = PMPI_Info_get_valuelen
+#pragma weak mpi_info_get_valuelen_ = pmpi_info_get_valuelen_
+#pragma weak mpi_info_get_valuelen__ = pmpi_info_get_valuelen__
+
 #pragma weak MPI_Grequest_start = PMPI_Grequest_start
 #pragma weak MPI_Grequest_complete = PMPI_Grequest_complete
 #pragma weak MPIX_Grequest_start = PMPIX_Grequest_start
@@ -494,24 +528,78 @@
 #pragma weak MPI_Status_set_cancelled = PMPI_Status_set_cancelled
 #pragma weak MPI_Request_get_status = PMPI_Request_get_status
 #pragma weak MPI_Test_cancelled = PMPI_Test_cancelled
+
+
 #pragma weak MPI_Type_set_name = PMPI_Type_set_name
+#pragma weak mpi_type_set_name_ = pmpi_type_set_name_
+#pragma weak mpi_type_set_name__ = pmpi_type_set_name__
+
 #pragma weak MPI_Type_get_name = PMPI_Type_get_name
+#pragma weak mpi_type_get_name_ = pmpi_type_get_name_
+#pragma weak mpi_type_get_name__ = pmpi_type_get_name__
+
 #pragma weak MPI_Type_dup = PMPI_Type_dup
-#pragma weak MPI_Type_get_extent = PMPI_Type_get_extent
-#pragma weak MPI_Type_create_resized = PMPI_Type_create_resized
-#pragma weak MPI_Type_get_true_extent = PMPI_Type_get_true_extent
-#pragma weak MPI_Type_create_indexed_block = PMPI_Type_create_indexed_block
-#pragma weak MPI_Type_create_hindexed_block = PMPI_Type_create_hindexed_block
-#pragma weak MPI_Type_match_size = PMPI_Type_match_size
+#pragma weak mpi_type_dup_ = pmpi_type_dup_
+#pragma weak mpi_type_dup__ = pmpi_type_dup__
+
 #pragma weak MPI_Type_get_envelope = PMPI_Type_get_envelope
+#pragma weak mpi_type_get_envelope_ = pmpi_type_get_envelope_
+#pragma weak mpi_type_get_envelope__ = pmpi_type_get_envelope__
+
 #pragma weak MPI_Type_get_contents = PMPI_Type_get_contents
+#pragma weak mpi_type_get_contents_ = pmpi_type_get_contents_
+#pragma weak mpi_type_get_contents__ = pmpi_type_get_contents__
+
+#pragma weak MPI_Type_get_extent = PMPI_Type_get_extent
+#pragma weak mpi_type_get_extent_ = pmpi_type_get_extent_
+#pragma weak mpi_type_get_extent__ = pmpi_type_get_extent__
+
+#pragma weak MPI_Type_get_true_extent = PMPI_Type_get_true_extent
+#pragma weak mpi_type_get_true_extent_ = pmpi_type_get_true_extent_
+#pragma weak mpi_type_get_true_extent__ = pmpi_type_get_true_extent__
+
+#pragma weak MPI_Type_create_resized = PMPI_Type_create_resized
+#pragma weak mpi_type_create_resized_ = pmpi_type_create_resized_
+#pragma weak mpi_type_create_resized__ = pmpi_type_create_resized__
+
+#pragma weak MPI_Type_create_hindexed_block = PMPI_Type_create_hindexed_block
+#pragma weak mpi_type_create_hindexed_block_ = pmpi_type_create_hindexed_block_
+#pragma weak mpi_type_create_hindexed_block__ = pmpi_type_create_hindexed_block__
+
+#pragma weak MPI_Type_create_indexed_block = PMPI_Type_create_indexed_block
+#pragma weak mpi_type_create_indexed_block_ = pmpi_type_create_indexed_block_
+#pragma weak mpi_type_create_indexed_block__ = pmpi_type_create_indexed_block__
+
+#pragma weak MPI_Type_match_size = PMPI_Type_match_size
+
+#pragma weak  MPI_Comm_set_errhandler = PMPI_Comm_set_errhandler
+#pragma weak  mpi_comm_set_errhandler_ = pmpi_comm_set_errhandler_
+#pragma weak  mpi_comm_set_errhandler__ = pmpi_comm_set_errhandler__
+
 #pragma weak MPI_Type_size_x = PMPI_Type_size_x
 #pragma weak MPI_Type_get_extent_x = PMPI_Type_get_extent_x
 #pragma weak MPI_Type_get_true_extent_x = PMPI_Type_get_true_extent_x
 #pragma weak MPI_Get_elements_x = PMPI_Get_elements_x
 #pragma weak MPI_Type_create_darray = PMPI_Type_create_darray
-#pragma weak MPI_Type_create_subarray = PMPI_Type_create_subarray
 
+#pragma weak MPI_Type_create_subarray = PMPI_Type_create_subarray
+#pragma weak mpi_type_create_subarray_ = pmpi_type_create_subarray_
+#pragma weak mpi_type_create_subarray__ = pmpi_type_create_subarray__
+
+#pragma weak MPI_Pack_external_size = PMPI_Pack_external_size
+#pragma weak mpi_pack_external_size_ = pmpi_pack_external_size_
+#pragma weak mpi_pack_external_size__ = pmpi_pack_external_size__
+
+#pragma weak MPI_Pack_external = PMPI_Pack_external
+#pragma weak mpi_pack_external_ = pmpi_pack_external_
+#pragma weak mpi_pack_external__ = pmpi_pack_external__
+
+#pragma weak MPI_Unpack_external = PMPI_Unpack_external
+#pragma weak mpi_unpack_external_ = pmpi_unpack_external_
+#pragma weak mpi_unpack_external__ = pmpi_unpack_external__
+
+#pragma weak  MPI_Free_mem = PMPI_Free_mem
+#pragma weak  MPI_Alloc_mem = PMPI_Alloc_mem
 
 //~ not implemented
 

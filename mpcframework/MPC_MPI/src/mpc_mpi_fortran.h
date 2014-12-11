@@ -22,6 +22,10 @@
 
 TODO("Handle the case of MPI_Aint which are not int fortran")
 
+
+char * sctk_char_fortran_to_c (char *buf, int size, char ** free_ptr );
+void sctk_char_c_to_fortran (char *buf, int size);
+
 void ffunc (mpi_send) (void *buf, int *count, MPI_Datatype * datatype,
 		       int *dest, int *tag, MPI_Comm * comm, int *res);
 
@@ -151,9 +155,18 @@ void ffunc (mpi_type_vector) (int *count,
 			      int *stride, MPI_Datatype * old_type,
 			      MPI_Datatype * newtype_p, int *res);
 
+void ffunc (mpi_type_create_subarray) (int * ndims,
+					int * array_of_sizes,
+					int * array_of_subsizes,
+					int * array_of_starts,
+					int * order,
+					MPI_Datatype * oldtype,
+					MPI_Datatype * new_type, int * ret );
+
+
 void ffunc (mpi_type_hvector) (int *count,
 			       int *blocklen,
-			       MPI_Aint * stride,
+			       int * stride,
 			       MPI_Datatype * old_type,
 			       MPI_Datatype * newtype_p, int *res);
 
@@ -171,7 +184,7 @@ void ffunc (mpi_type_indexed) (int *count,
 
 void ffunc (mpi_type_hindexed) (int *count,
 				int blocklens[],
-				MPI_Aint indices[],
+				int indices[],
 				MPI_Datatype * old_type,
 				MPI_Datatype * newtype, int *res);
 
@@ -195,7 +208,7 @@ void ffunc (mpi_type_create_struct) (int *count,
 void ffunc (mpi_address) (void *location, MPI_Aint * address, int *res);
 
   /* We could add __attribute__((deprecated)) to routines like MPI_Type_extent */
-void ffunc (mpi_type_extent) (MPI_Datatype * datatype, MPI_Aint * extent,
+void ffunc (mpi_type_extent) (MPI_Datatype * datatype, int * extent,
 			      int *res);
 
   /* See the 1.1 version of the Standard.  The standard made an 
@@ -800,7 +813,6 @@ void ffunc (pmpi_sendrecv) (void *sendbuf, int *sendcount,
   *res =
     MPI_Sendrecv (sendbuf, *sendcount, *sendtype, *dest, *sendtag, recvbuf,
 		   *recvcount, *recvtype, *source, *recvtag, *comm, status);
-
 }
 
 void ffunc (pmpi_sendrecv_replace) (void *buf, int *count,
@@ -833,6 +845,19 @@ void ffunc (pmpi_type_vector) (int *count,
 
 }
 
+
+void ffunc (pmpi_type_create_subarray) (int * ndims,
+					int * array_of_sizes,
+					int * array_of_subsizes,
+					int * array_of_starts,
+					int * order,
+					MPI_Datatype * oldtype,
+					MPI_Datatype * new_type, int * ret )
+{
+	*ret = MPI_Type_create_subarray( *ndims, array_of_sizes, array_of_subsizes, array_of_starts,
+					*order, *oldtype , new_type );
+}
+
 void ffunc (pmpi_type_create_hvector) (int *count,
 				int *blocklen,
 				MPI_Aint * stride,
@@ -845,11 +870,12 @@ void ffunc (pmpi_type_create_hvector) (int *count,
 
 void ffunc (pmpi_type_hvector) (int *count,
 				int *blocklen,
-				MPI_Aint * stride,
+				int * stride,
 				MPI_Datatype * old_type,
 				MPI_Datatype * newtype_p, int *res)
 {
-  *res = MPI_Type_hvector (*count, *blocklen, *stride, *old_type, newtype_p);
+  MPI_Aint cstride = (MPI_Aint) *stride;
+  *res = MPI_Type_hvector (*count, *blocklen, cstride, *old_type, newtype_p);
 
 }
 
@@ -865,12 +891,22 @@ void ffunc (pmpi_type_indexed) (int *count,
 
 void ffunc (pmpi_type_hindexed) (int *count,
 				 int blocklens[],
-				 MPI_Aint indices[],
+				 int indices[],
 				 MPI_Datatype * old_type,
 				 MPI_Datatype * newtype, int *res)
 {
-  *res = MPI_Type_hindexed (*count, blocklens, indices, *old_type, newtype);
+  MPI_Aint * indices_ai = sctk_malloc( *count * sizeof( MPI_Aint ) );
+  assume( indices_ai != NULL );
+	
+  int i;
+  for( i = 0 ; i < *count ; i++ )
+  {
+	  indices_ai[i] = (MPI_Aint) indices[i];
+  }
+		
+  *res = MPI_Type_hindexed (*count, blocklens, indices_ai, *old_type, newtype);
 
+  sctk_free( indices_ai );
 }
 
 void ffunc (pmpi_type_create_hindexed) (int *count,
@@ -885,12 +921,40 @@ void ffunc (pmpi_type_create_hindexed) (int *count,
 
 void ffunc (pmpi_type_struct) (int *count,
 			       int blocklens[],
-			       MPI_Aint indices[],
+			       int indices[],
 			       MPI_Datatype old_types[],
 			       MPI_Datatype * newtype, int *res)
 {
-  *res = MPI_Type_struct (*count, blocklens, indices, old_types, newtype);
+  MPI_Aint * indices_ai = sctk_malloc( *count * sizeof( MPI_Aint ) );
+  assume( indices_ai != NULL );
+	
+  int i;
+  for( i = 0 ; i < *count ; i++ )
+  {
+	  indices_ai[i] = (MPI_Aint) indices[i];
+  }
+	
+  *res = MPI_Type_struct (*count, blocklens, indices_ai, old_types, newtype);
+  
+  sctk_free( indices_ai );
+}
 
+void ffunc (pmpi_type_create_hindexed_block) (int *count,
+						int * blocklen,
+						MPI_Aint indices[],
+						MPI_Datatype * old_type,
+						MPI_Datatype * newtype, int *res)
+{
+  *res = MPI_Type_create_hindexed_block (*count, *blocklen, indices, *old_type, newtype);
+}
+
+void ffunc (pmpi_type_create_indexed_block) (int *count,
+						int * blocklen,
+						int indices[],
+						MPI_Datatype * old_type,
+						MPI_Datatype * newtype, int *res)
+{
+  *res = MPI_Type_create_indexed_block (*count, *blocklen, indices, *old_type, newtype);
 }
 
 void ffunc (pmpi_type_create_struct) (int *count,
@@ -902,6 +966,12 @@ void ffunc (pmpi_type_create_struct) (int *count,
   *res = MPI_Type_create_struct (*count, blocklens, indices, old_types, newtype);
 
 }
+void ffunc (pmpi_type_create_resized)  (MPI_Datatype *oldtype , MPI_Aint * lb , MPI_Aint  * extent , MPI_Datatype * newtype, int *res )
+{
+	* res = MPI_Type_create_resized( *oldtype, *lb , *extent, newtype );
+}
+
+
 
 void ffunc (pmpi_address) (void *location, MPI_Aint * address, int *res)
 {
@@ -910,12 +980,24 @@ void ffunc (pmpi_address) (void *location, MPI_Aint * address, int *res)
 }
 
   /* We could add __attribute__((deprecated)) to routines like MPI_Type_extent */
-void ffunc (pmpi_type_extent) (MPI_Datatype * datatype, MPI_Aint * extent,
+void ffunc (pmpi_type_extent) (MPI_Datatype * datatype, int * extent,
 			       int *res)
 {
-  *res = MPI_Type_extent (*datatype, extent);
-
+  MPI_Aint cextent;
+  *res = MPI_Type_extent (*datatype, &cextent);
+  *extent = (int) cextent;
 }
+
+void ffunc (pmpi_type_get_extent) (MPI_Datatype * datatype, MPI_Aint *lb, MPI_Aint * extent,  int *res)
+{
+  *res = MPI_Type_get_extent (*datatype, lb, extent);
+}
+
+void ffunc (pmpi_type_get_true_extent) (MPI_Datatype * datatype, MPI_Aint *lb, MPI_Aint * extent,  int *res)
+{
+  *res = MPI_Type_get_true_extent (*datatype, lb, extent);
+}
+
 
   /* See the 1.1 version of the Standard.  The standard made an 
      unfortunate choice here, however, it is the standard.  The size returned 
@@ -926,19 +1008,45 @@ void ffunc (pmpi_type_size) (MPI_Datatype * datatype, int *size, int *res)
 
 }
 
+
+void ffunc (pmpi_type_get_envelope)(MPI_Datatype * datatype, int *num_integers, int *num_addresses, int *num_datatypes, int *combiner, int *res )
+{
+	*res = MPI_Type_get_envelope( *datatype, num_integers, num_addresses, num_datatypes, combiner );
+}
+
+void ffunc (pmpi_type_get_contents) (   MPI_Datatype * datatype, 
+					int * max_integers,
+					int * max_addresses,
+					int * max_datatypes,
+					int array_of_integers[],
+					MPI_Aint array_of_addresses[],
+					MPI_Datatype array_of_datatypes[],
+					int * res)
+{
+	*res = MPI_Type_get_contents( *datatype, *max_integers, *max_addresses, *max_datatypes, array_of_integers, array_of_addresses, array_of_datatypes);
+}
+
+
+int;
+
+
   /* MPI_Type_count was withdrawn in MPI 1.1 */
-void ffunc (pmpi_type_lb) (MPI_Datatype * datatype, MPI_Aint * displacement,
+void ffunc (pmpi_type_lb) (MPI_Datatype * datatype, int * displacement,
 			   int *res)
 {
-  *res = MPI_Type_lb (*datatype, displacement);
+  MPI_Aint caint;
+  *res = MPI_Type_lb (*datatype, &caint);
+  *displacement = (int) caint;
+  
 
 }
 
-void ffunc (pmpi_type_ub) (MPI_Datatype * datatype, MPI_Aint * displacement,
+void ffunc (pmpi_type_ub) (MPI_Datatype * datatype, int * displacement,
 			   int *res)
 {
-  *res = MPI_Type_ub (*datatype, displacement);
-
+  MPI_Aint caint;
+  *res = MPI_Type_ub (*datatype, &caint);
+  *displacement = (int) caint;
 }
 
 void ffunc (pmpi_type_commit) (MPI_Datatype * datatype, int *res)
@@ -950,6 +1058,12 @@ void ffunc (pmpi_type_commit) (MPI_Datatype * datatype, int *res)
 void ffunc (pmpi_type_free) (MPI_Datatype * datatype, int *res)
 {
   *res = MPI_Type_free (datatype);
+
+}
+
+void ffunc (pmpi_type_dup) (MPI_Datatype * src, MPI_Datatype * dst, int *res)
+{
+  *res = MPI_Type_dup (*src , dst);
 
 }
 
@@ -1389,6 +1503,7 @@ void ffunc (pmpi_attr_get) (MPI_Comm * comm, int *keyval, void *attr_value,
 
 }
 
+
 void ffunc (pmpi_attr_delete) (MPI_Comm * comm, int *keyval, int *res)
 {
   *res = MPI_Attr_delete (*comm, *keyval);
@@ -1549,6 +1664,11 @@ void ffunc (pmpi_errhandler_free) (MPI_Errhandler * errhandler, int *res)
 
 }
 
+void ffunc (pmpi_comm_set_errhandler) (MPI_Comm * comm, MPI_Errhandler * errhandler, int *res)
+{
+  *res = MPI_Comm_set_errhandler (*comm, errhandler);
+}
+
 void ffunc (pmpi_error_string) (int *errorcode, char *string, int *resultlen,
 				int *res)
 {
@@ -1612,6 +1732,10 @@ void ffunc (pmpi_pcontrol) (const int level, ...)
 {
   not_implemented ();
 }
+void ffunc (pmpi_get_address) (char *location, MPI_Aint *address, int *res)
+{
+    *res = MPI_Get_address(location, address);
+}
 
 void ffunc (pmpi_comm_get_name) (MPI_Comm * a, char *b SCTK_CHAR_MIXED (size),
 				 int *c, int *res SCTK_CHAR_END (size))
@@ -1623,26 +1747,76 @@ void ffunc (pmpi_comm_get_name) (MPI_Comm * a, char *b SCTK_CHAR_MIXED (size),
 void ffunc (pmpi_comm_set_name) (MPI_Comm * a, char *b SCTK_CHAR_MIXED (size),
 				 int *res SCTK_CHAR_END (size))
 {
-  char *tmp;
-  tmp = sctk_char_fortran_to_c (b, size);
+  char *tmp, *ptr;
+  tmp = sctk_char_fortran_to_c (b, size, &ptr);
   *res = MPI_Comm_set_name (*a, tmp);
-  sctk_free (tmp);
+  sctk_free (ptr);
 }
+
+
+/* Type naming */
+
+void ffunc (pmpi_type_get_name) (MPI_Datatype * a, char *b SCTK_CHAR_MIXED (size), int *c, int *res SCTK_CHAR_END (size))
+{
+  *res = MPI_Type_get_name (*a, b, c);
+  sctk_char_c_to_fortran (b, size);
+}
+
+void ffunc (pmpi_type_set_name) (MPI_Datatype * datatype, char *name SCTK_CHAR_MIXED (size), int *res SCTK_CHAR_END (size))
+{
+  char *tmp, *ptr;
+  tmp = sctk_char_fortran_to_c (name, size, &ptr);
+  *res =  MPI_Type_set_name( *datatype, tmp );
+  sctk_free (ptr);
+}
+
+/* Pack External */
+
+void ffunc (pmpi_pack_external_size) (char * datarep SCTK_CHAR_MIXED (len),  int * incount, MPI_Datatype * datatype, MPI_Aint *size, int * res SCTK_CHAR_END (len))
+{
+  char * tmp , *ptr;
+  tmp = sctk_char_fortran_to_c (datarep, len, &ptr);
+  *res = PMPI_Pack_external_size (tmp, *incount , *datatype, size);
+  sctk_free (ptr);
+}
+
+
+void ffunc (pmpi_pack_external) (char * datarep  SCTK_CHAR_MIXED (len), void *inbuf, int * incount, MPI_Datatype * datatype, void * outbuf, MPI_Aint * outsize, MPI_Aint * position, int * res SCTK_CHAR_END (len))
+{
+  char * tmp , * ptr;
+  tmp = sctk_char_fortran_to_c (datarep, len, &ptr);
+  *res = PMPI_Pack_external(tmp, inbuf, *incount , *datatype, outbuf, *outsize, position );
+  sctk_nodebug("PACK %s in %p incount %d data %d out %p outsize %d pos %d", tmp, inbuf, *incount, *datatype, outbuf, *outsize, *position );
+  sctk_free (ptr);
+   
+
+}
+
+void ffunc (pmpi_unpack_external) (char * datarep  SCTK_CHAR_MIXED (len), void *inbuf, int * insize, MPI_Aint * position, void * outbuf, int * outcount, MPI_Datatype * datatype, int * res SCTK_CHAR_END (len))
+{
+  char * tmp , *ptr;
+  tmp = sctk_char_fortran_to_c (datarep, len, &ptr);
+  *res = PMPI_Unpack_external(tmp, inbuf, *insize , position, outbuf, *outcount, *datatype );
+  sctk_nodebug("UNPACK %s in %p incount %d data %d out %p outsize %d pos %d", tmp, inbuf, *insize, *datatype, outbuf, *outcount, *position );
+  sctk_free (ptr);
+}
+
+
 
 /* MPI_Info Handling */
 
-void ffunc (pmpi_info_set)( MPI_Info info, const char * key SCTK_CHAR_MIXED(len1) , const char * value SCTK_CHAR_MIXED(len2),  int *res SCTK_CHAR_END (len1) SCTK_CHAR_END (len2))
+void ffunc (pmpi_info_set)( MPI_Info * info, const char * key SCTK_CHAR_MIXED(len1) , const char * value SCTK_CHAR_MIXED(len2),  int *res SCTK_CHAR_END (len1) SCTK_CHAR_END (len2))
 {
-	char *ckey;
-	char *cvalue;
+	char *ckey, *ckeyptr;
+	char *cvalue, *cvalueptr;
 	
-	ckey = sctk_char_fortran_to_c ((char *)key, len1);
-	cvalue = sctk_char_fortran_to_c ((char *)value, len2);
+	ckey = sctk_char_fortran_to_c ((char *)key, len1, &ckeyptr);
+	cvalue = sctk_char_fortran_to_c ((char *)value, len2, &cvalueptr);
 	
-	*res = MPI_Info_set( info, ckey, cvalue);
+	*res = MPI_Info_set( *info, ckey, cvalue);
 	
-	sctk_free( ckey );
-	sctk_free( cvalue );
+	sctk_free( ckeyptr );
+	sctk_free( cvalueptr );
 }
 
 void ffunc (pmpi_info_free)( MPI_Info * info,  int *res )
@@ -1655,52 +1829,54 @@ void ffunc (pmpi_info_create)( MPI_Info * info,  int *res )
 	*res = MPI_Info_create( info );
 }
 
-void ffunc (pmpi_info_delete)( MPI_Info info, const char *key SCTK_CHAR_MIXED(size),  int *res SCTK_CHAR_END (size) )
+void ffunc (pmpi_info_delete)( MPI_Info * info, const char *key SCTK_CHAR_MIXED(size),  int *res SCTK_CHAR_END (size) )
 {
-	char *ckey;
-	ckey = sctk_char_fortran_to_c ((char *)key, size);
+	char *ckey, *ptr;
+	ckey = sctk_char_fortran_to_c ((char *)key, size, &ptr);
 	
-	*res = MPI_Info_delete( info , ckey);
+	*res = MPI_Info_delete( *info , ckey);
 	
-	sctk_free( ckey );
+	sctk_free( ptr );
 }
 
-void ffunc (pmpi_info_get)( MPI_Info info, const char *key SCTK_CHAR_MIXED(size), int valuelen, char * value, int * flag, int *res SCTK_CHAR_END (size) )
+void ffunc (pmpi_info_get)( MPI_Info * info, const char *key SCTK_CHAR_MIXED(size), int valuelen, char * value SCTK_CHAR_MIXED(len2), int * flag, int *res SCTK_CHAR_END (size) SCTK_CHAR_END(len2) )
 {
-	char *ckey;
-	ckey = sctk_char_fortran_to_c ((char *)key, size);
+	char *ckey, *ptr;
+	ckey = sctk_char_fortran_to_c ((char *)key, size, &ptr);
 	
-	*res = MPI_Info_get(info , ckey, valuelen , value, flag);
-	
-	sctk_free( ckey );
-}
-
-
-void ffunc (pmpi_info_dup)( MPI_Info info, MPI_Info * out,  int *res )
-{
-	*res = MPI_Info_dup( info, out );
+	*res = MPI_Info_get( *info , ckey, valuelen , value, flag);
+	sctk_free( ptr );
+	sctk_char_c_to_fortran (value, len2);
 }
 
 
-void ffunc (pmpi_info_get_nkeys)( MPI_Info info, int * out,  int *res )
+void ffunc (pmpi_info_dup)( MPI_Info * info, MPI_Info * out,  int *res )
 {
-	*res = MPI_Info_get_nkeys( info, out );
+	*res = MPI_Info_dup( *info, out );
 }
 
 
-void ffunc (pmpi_info_get_nthkey)( MPI_Info info, int n, char * out,  int *res )
+void ffunc (pmpi_info_get_nkeys)( MPI_Info * info, int * out,  int *res )
 {
-	*res = MPI_Info_get_nthkey( info, n, out );
+	*res = MPI_Info_get_nkeys( *info, out );
 }
 
-void ffunc (pmpi_info_get_valuelen)( MPI_Info info, const char *key SCTK_CHAR_MIXED(size), int * value_len, int * flag,  int *res SCTK_CHAR_END (size))
+
+void ffunc (pmpi_info_get_nthkey)( MPI_Info * info, int * n, char * out SCTK_CHAR_MIXED(size),  int *res SCTK_CHAR_END (size) )
 {
-	char *ckey;
-	ckey = sctk_char_fortran_to_c ((char *)key, size);
+	*res = MPI_Info_get_nthkey( *info, *n, out );
+	sctk_char_c_to_fortran (out, size);
 	
-	*res = MPI_Info_get_valuelen( info, ckey, value_len, flag );
+}
+
+void ffunc (pmpi_info_get_valuelen)( MPI_Info * info, const char *key SCTK_CHAR_MIXED(size), int * value_len, int * flag,  int *res SCTK_CHAR_END (size))
+{
+	char *ckey, *ptr;
+	ckey = sctk_char_fortran_to_c ((char *)key, size, &ptr);
 	
-	sctk_free( ckey );
+	*res = MPI_Info_get_valuelen( *info, ckey, value_len, flag );
+	
+	sctk_free( ptr );
 }
 
 

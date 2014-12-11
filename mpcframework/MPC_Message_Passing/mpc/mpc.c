@@ -1529,13 +1529,22 @@ int PMPC_Type_dup( MPC_Datatype old_type, MPC_Datatype * new_type )
  *  \param resultlen Maximum length of the target buffer (OUT)
  */
 int PMPC_Type_get_name( MPC_Datatype datatype, char *name, int * resultlen )
-{
+{	
 	char * retname = sctk_datype_get_name( datatype );
+	
+	if( datatype == MPC_UB )
+	{
+		retname = "MPI_UB";
+	}
+	else if( datatype == MPC_LB )
+	{
+		retname = "MPI_LB";
+	}
 	
 	if( !retname )
 	{
 		/* Return an empty string */
-		sprintf(name, "");
+		name[0] = '\0';
 		*resultlen = 0;
 	}
 	else
@@ -1569,6 +1578,9 @@ int PMPC_Type_get_envelope(MPC_Datatype datatype, int *num_integers, int *num_ad
 	if( sctk_datatype_is_common(datatype) || sctk_datatype_is_boundary( datatype ) )
 	{
 		*combiner = MPC_COMBINER_NAMED;	
+		*num_integers = 0;
+		*num_addresses = 0;
+		*num_datatypes = 0;
 		MPC_ERROR_SUCESS();
 	}
 	
@@ -1775,7 +1787,7 @@ int PMPC_Type_get_true_extent(MPC_Datatype datatype, MPC_Aint *true_lb, MPC_Aint
 	}
 	
 	*true_lb = tmp_true_lb;
-	*true_extent = ( tmp_true_ub - tmp_true_lb );
+	*true_extent = ( tmp_true_ub - tmp_true_lb ) + 1;
 	
 	MPC_ERROR_SUCESS();
 }
@@ -2064,6 +2076,44 @@ int PMPC_Type_commit( MPC_Datatype * datatype )
 	MPC_ERROR_SUCESS();
 }
 
+
+int MPCX_Type_debug( MPC_Datatype datatype )
+{
+	sctk_task_specific_t *task_specific = __MPC_get_task_specific ();
+	sctk_derived_datatype_t *target_derived_type;
+	sctk_contiguous_datatype_t *contiguous_type;
+	
+	if( datatype == MPC_DATATYPE_NULL )
+	{
+		sctk_error("=============ERROR==================");
+		sctk_error("MPC_DATATYPE_NULL");
+		sctk_error("====================================");
+		MPC_ERROR_SUCESS();
+	}
+	
+	
+	switch( sctk_datatype_kind( datatype ) )
+	{
+		case MPC_DATATYPES_COMMON:
+			sctk_common_datatype_display( datatype );
+		break;
+		case MPC_DATATYPES_CONTIGUOUS :
+			contiguous_type = sctk_task_specific_get_contiguous_datatype( task_specific, datatype );
+			sctk_contiguous_datatype_display( contiguous_type );
+		break;
+		
+		case MPC_DATATYPES_DERIVED :
+			target_derived_type = sctk_task_specific_get_derived_datatype( task_specific, datatype );
+			sctk_derived_datatype_display( target_derived_type );
+		break;
+		
+		case MPC_DATATYPES_UNKNOWN:
+			MPC_ERROR_REPORT( MPC_COMM_WORLD, MPC_ERR_INTERN, "This datatype is unknown");
+		break;
+	}
+
+	MPC_ERROR_SUCESS();
+}
 
 
 /** \brief This function increases the refcounter for a datatype
@@ -4848,9 +4898,11 @@ MPC_Op_tmp (void *in, void *inout, size_t size, MPC_Datatype t)
   if(op == func){                                       \
     switch(datatype){                                   \
       ADD_FUNC_HANDLER(func,MPC_CHAR,op);               \
+      ADD_FUNC_HANDLER(func,MPC_CHARACTER,op);               \
       ADD_FUNC_HANDLER(func,MPC_BYTE,op);               \
       ADD_FUNC_HANDLER(func,MPC_SHORT,op);              \
       ADD_FUNC_HANDLER(func,MPC_INT,op);                \
+      ADD_FUNC_HANDLER(func,MPC_INTEGER,op);                \
       ADD_FUNC_HANDLER(func,MPC_LONG,op);               \
       ADD_FUNC_HANDLER(func,MPC_FLOAT,op);              \
       ADD_FUNC_HANDLER(func,MPC_INTEGER1,op);           \
@@ -4861,10 +4913,12 @@ MPC_Op_tmp (void *in, void *inout, size_t size, MPC_Datatype t)
       ADD_FUNC_HANDLER(func,MPC_REAL8,op);              \
       ADD_FUNC_HANDLER(func,MPC_REAL16,op);             \
       ADD_FUNC_HANDLER(func,MPC_DOUBLE,op);             \
+      ADD_FUNC_HANDLER(func,MPC_DOUBLE_PRECISION,op);             \
       ADD_FUNC_HANDLER(func,MPC_UNSIGNED_CHAR,op);      \
       ADD_FUNC_HANDLER(func,MPC_UNSIGNED_SHORT,op);     \
       ADD_FUNC_HANDLER(func,MPC_UNSIGNED,op);           \
       ADD_FUNC_HANDLER(func,MPC_UNSIGNED_LONG,op);      \
+      ADD_FUNC_HANDLER(func,MPC_LONG_LONG_INT,op);      \
       ADD_FUNC_HANDLER(func,MPC_LONG_DOUBLE,op);        \
       ADD_FUNC_HANDLER(func,MPC_LONG_LONG,op);        \
       ADD_FUNC_HANDLER(func,MPC_DOUBLE_COMPLEX,op);        \
@@ -4911,7 +4965,6 @@ MPC_Op_tmp (void *in, void *inout, size_t size, MPC_Datatype t)
 			ADD_FUNC_HANDLER(func,MPC_DOUBLE_COMPLEX,op);	\
 			ADD_FUNC_HANDLER(func,MPC_COMPLEX32,op);	\
 			ADD_FUNC_HANDLER(func,MPC_UNSIGNED_LONG_LONG_INT,op);	\
-			ADD_FUNC_HANDLER(func,MPC_LONG_LONG_INT,op);	\
 			default:not_reachable();				\
 		}					\
 	}

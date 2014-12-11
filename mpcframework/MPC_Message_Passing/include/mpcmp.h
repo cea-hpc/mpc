@@ -345,6 +345,12 @@ typedef int MPC_Info;
 #define MPC_OFFSET 50
 #define MPC_COUNT 51
 #define MPC_LONG_LONG_INT 52
+#define MPC_C_BOOL 53
+#define MPC_CHARACTER 54
+#define MPC_INTEGER 55
+#define MPC_REAL 56
+#define MPC_DOUBLE_PRECISION 57
+
 
 /* BE VERY CAREFUL HERE /!\/!\/!\/!\/!\/!\/!\/!\
  *  You have to note that these types
@@ -380,6 +386,12 @@ typedef int MPC_Info;
  */
 #define MPC_STRUCT_DATATYPE_COUNT 14
 
+/* Aliased struct data-types */
+#define MPC_C_COMPLEX MPC_COMPLEX
+#define MPC_C_FLOAT_COMPLEX MPC_COMPLEX8
+#define MPC_C_DOUBLE_COMPLEX MPC_COMPLEX16
+#define MPC_C_LONG_DOUBLE_COMPLEX MPC_COMPLEX32
+
 /* Datatype decoders */
 
 typedef enum
@@ -406,7 +418,8 @@ typedef enum
      * are never returned by get_envelope */
     MPC_COMBINER_HINDEXED_INTEGER = 17,
     MPC_COMBINER_STRUCT_INTEGER = 18,
-    MPC_COMBINER_HVECTOR_INTEGER = 19
+    MPC_COMBINER_HVECTOR_INTEGER = 19,
+    MPC_COMBINER_COUNT__
 }MPC_Type_combiner;
 
   /*Initialisation */
@@ -593,7 +606,7 @@ typedef enum
 			     MPC_Aint array_of_addresses[],
 			     MPC_Datatype array_of_datatypes[]);
   int MPC_Type_commit( MPC_Datatype * type );
-  
+  int MPCX_Type_debug( MPC_Datatype type );
   
   /*MPC specific function */
   int MPC_Copy_in_buffer (void *inbuffer, void *outbuffer, MPC_Datatype datatype);
@@ -690,7 +703,7 @@ typedef enum
  * they are both defined for MPC and MPI variants */
 /*1 MB */
 #define MPC_MAX_INFO_VAL 1048576
-#define MPC_MAX_INFO_KEY 255
+#define MPC_MAX_INFO_KEY 256
 
   
   int MPC_Info_set( MPC_Info, const char *, const char * );

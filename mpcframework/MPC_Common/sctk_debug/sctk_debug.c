@@ -39,7 +39,7 @@
 #include <sctk_debugger.h>
 #endif
 
-#define WRITE_BUFFER_SIZE (4*1024*1024)
+#define WRITE_BUFFER_SIZE (4*1024)
 #define SMALL_BUFFER_SIZE (4*1024)
 static bool sctk_have_shell_colors;
 
