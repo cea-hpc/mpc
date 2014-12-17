@@ -380,7 +380,7 @@ int MPIO_Err_create_code(int lastcode, int fatal, const char fcname[],
 	    vsnprintf(&buf[idx], 1023 - idx, specific_msg, Argp);
 	    va_end(Argp);
 	}
-	fprintf(stderr, "%s", buf);
+	fprintf(stderr, "%s\n", buf);
 	sctk_free(buf);
     }
 
