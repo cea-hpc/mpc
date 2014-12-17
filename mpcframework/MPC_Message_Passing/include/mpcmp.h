@@ -148,6 +148,7 @@ typedef struct
     int is_null;
     int need_check_in_wait;
     int truncated;
+	int status_error;
     
     /* Generalized Request context  */
     MPC_Grequest_query_function * query_fn;

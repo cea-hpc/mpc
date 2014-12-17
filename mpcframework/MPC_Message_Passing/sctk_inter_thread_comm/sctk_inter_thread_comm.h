@@ -45,6 +45,9 @@ extern "C"
 #define SCTK_MESSAGE_DONE 1
 #define SCTK_MESSAGE_CANCELED 2
 
+  /* Not using datatypes */
+#define MPC_DATATYPE_IGNORE NULL
+
   /* Message for a process */
 #define MASK_PROCESS_SPECIFIC 1<<9
   /* A control message */
@@ -123,7 +126,7 @@ extern "C"
     int glob_destination;
     char use_message_numbering;
     specific_message_tag_t specific_message_tag;
-
+	MPC_Datatype datatype;
     size_t msg_size;
   } sctk_thread_message_header_t;
 
@@ -321,7 +324,8 @@ typedef struct {
 				   const int destination,
 				   sctk_request_t * request,
 				   const size_t count,
-				   specific_message_tag_t specific_message_tag);
+				   specific_message_tag_t specific_message_tag,
+				   MPC_Datatype datatype);
   void sctk_wait_message (sctk_request_t * request);
   void sctk_wait_all (const int task, const sctk_communicator_t com);
   void sctk_probe_source_any_tag (int destination, int source,

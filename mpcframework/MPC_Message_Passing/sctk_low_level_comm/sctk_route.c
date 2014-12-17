@@ -483,7 +483,7 @@ void sctk_route_messages_send(int myself,int dest, specific_message_tag_t specif
 		   sctk_message_copy);
   sctk_add_adress_in_message(&(msg_req->msg),buffer,size);
   sctk_set_header_in_message (&(msg_req->msg), tag, communicator, myself, dest,
-			      &(msg_req->request), size,specific_message_tag);
+			      &(msg_req->request), size,specific_message_tag, MPC_DATATYPE_IGNORE);
   sctk_send_message (&(msg_req->msg));
   sctk_wait_message (&(msg_req->request));
 }
@@ -499,7 +499,7 @@ void sctk_route_messages_recv(int src, int myself,specific_message_tag_t specifi
 		   sctk_message_copy);
   sctk_add_adress_in_message(&(msg_req->msg),buffer,size);
   sctk_set_header_in_message (&(msg_req->msg), tag, communicator,  src,myself,
-			      &(msg_req->request), size,specific_message_tag);
+			      &(msg_req->request), size,specific_message_tag, MPC_DATATYPE_IGNORE);
   sctk_recv_message (&(msg_req->msg),NULL, 1);
   sctk_wait_message (&(msg_req->request));
 }

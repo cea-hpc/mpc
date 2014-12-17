@@ -23,6 +23,7 @@
 #include <sctk_inter_thread_comm.h>
 #include <sctk_low_level_comm.h>
 #include <sctk_communicator.h>
+#include <mpc_datatypes.h>
 #include <sctk.h>
 #include <sctk_debug.h>
 #include <sctk_spinlock.h>
@@ -1527,6 +1528,7 @@ void sctk_request_init_request(sctk_request_t * request, int completion,
   request->is_null = 0;
   request->completion_flag = completion;
   request->request_type = request_type;
+  request->status_error = MPC_SUCCESS;
 }
 
 void sctk_set_header_in_message (sctk_thread_ptp_message_t *
@@ -1536,12 +1538,13 @@ void sctk_set_header_in_message (sctk_thread_ptp_message_t *
 				 const int destination,
 				 sctk_request_t * request,
 				 const size_t count,
-				 specific_message_tag_t specific_message_tag)
+				 specific_message_tag_t specific_message_tag,
+				 MPC_Datatype datatype)
 {
 	msg->tail.request = request;
 	msg->sctk_msg_get_source = source;
 	msg->sctk_msg_get_destination = destination;
-
+	
 	if(IS_PROCESS_SPECIFIC_MESSAGE_TAG(specific_message_tag))
 	{
 		if(source != MPC_ANY_SOURCE)
@@ -1597,6 +1600,7 @@ void sctk_set_header_in_message (sctk_thread_ptp_message_t *
 	}
 
 	msg->body.header.communicator = communicator;
+	msg->body.header.datatype = datatype;
 	msg->body.header.message_tag = message_tag;
 	msg->body.header.specific_message_tag = specific_message_tag;
 
@@ -1711,37 +1715,55 @@ sctk_add_pack_in_message_absolute (sctk_thread_ptp_message_t *
  * from a list of 'send' pending messages for a recv request
  */
 __thread int inc;
-static inline
-sctk_msg_list_t* sctk_perform_messages_search_matching(
-    sctk_internal_ptp_list_pending_t *pending_list, sctk_thread_message_header_t* header){
-  sctk_msg_list_t* ptr_found;
-  sctk_msg_list_t* tmp;
+static inline sctk_msg_list_t* sctk_perform_messages_search_matching(
+sctk_internal_ptp_list_pending_t *pending_list, sctk_thread_message_header_t* header)
+{
+	sctk_msg_list_t* ptr_found;
+	sctk_msg_list_t* tmp;
 
-  /* Loop on all  pending messages */
-  DL_FOREACH_SAFE(pending_list->list,ptr_found,tmp){
-	sctk_thread_message_header_t* header_found;
-	sctk_assert(ptr_found->msg != NULL);
-	header_found = &(ptr_found->msg->body.header);
+	/* Loop on all  pending messages */
+	DL_FOREACH_SAFE(pending_list->list,ptr_found,tmp)
+	{
+		sctk_thread_message_header_t* header_found;
+		sctk_assert(ptr_found->msg != NULL);
+		header_found = &(ptr_found->msg->body.header);
 
-	/* Match the communicator, the tag, the source and the specific message tag */
-	if((header->communicator == header_found->communicator) &&
-	   (header->specific_message_tag == header_found->specific_message_tag) &&
-	   ((header->source == header_found->source) || (header->source == MPC_ANY_SOURCE))&&
-	   ((header->message_tag == header_found->message_tag) || ((header->message_tag == MPC_ANY_TAG) && (header_found->message_tag >= 0)))){
-	  /* Message found. We delete it  */
-	  DL_DELETE(pending_list->list,ptr_found);
+		/* Match the communicator, the tag, the source and the specific message tag */
+		if(	(header->communicator == header_found->communicator) &&
+			(header->specific_message_tag == header_found->specific_message_tag) &&
+			((header->source == header_found->source) || (header->source == MPC_ANY_SOURCE))&&
+			((header->message_tag == header_found->message_tag) || ((header->message_tag == MPC_ANY_TAG) && (header_found->message_tag >= 0))))
+		{
+			/* update the status with ERR_TYPE if datatypes don't match*/
+			if (header->datatype != header_found->datatype)
+			{
+				if( !sctk_datatype_is_derived(header->datatype) && !sctk_datatype_is_derived(header_found->datatype) )
+				{
+					fprintf(stderr, "request = %p\n", ptr_found->msg->tail.request);
+					if (ptr_found->msg->tail.request == NULL)
+					{
+						sctk_request_t req;
+						ptr_found->msg->tail.request = &req;
+					}
+					ptr_found->msg->tail.request->status_error = MPC_ERR_TYPE;
+					return ptr_found;
+				}
+			}
+			
+			/* Message found. We delete it  */
+			DL_DELETE(pending_list->list,ptr_found);
+			/* We return the pointer to the request */
+			return ptr_found;
 
-	  /* We return the pointer to the request */
-	  return ptr_found;
+		}	
+
+		/* Check for canceled send messages*/
+		if(header_found->specific_message_tag == cancel_send_specific_message_tag){
+			/* Message found. We delete it  */
+			DL_DELETE(pending_list->list,ptr_found);
+		}
 	}
-
-	/* Check for canceled send messages*/
-	if(header_found->specific_message_tag == cancel_send_specific_message_tag){
-	  /* Message found. We delete it  */
-          DL_DELETE(pending_list->list,ptr_found);
-	}
-  }
-  return NULL;
+	return NULL;
 }
 
 /*
@@ -1803,7 +1825,15 @@ static inline int sctk_perform_messages_matching_from_recv_msg(sctk_internal_ptp
   }
 
   /* We found a send request which corresponds to the recv request 'ptr_recv' */
-  if(ptr_send != NULL){
+  if(ptr_send != NULL)
+  {	
+	if (ptr_send->msg->tail.request != NULL)
+	{
+		if (ptr_send->msg->tail.request->status_error != MPC_SUCCESS)
+  		{
+	    	ptr_recv->msg->tail.request->status_error = ptr_send->msg->tail.request->status_error;
+  		}
+	}
     DL_DELETE(pair->lists.pending_recv.list, ptr_recv);
 
     /* If the remote source is on a another node, we call the

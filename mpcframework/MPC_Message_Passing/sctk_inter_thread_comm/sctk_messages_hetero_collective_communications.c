@@ -74,7 +74,7 @@ static void sctk_hetero_messages_send(const sctk_communicator_t communicator,int
 		   sctk_message_copy);
   sctk_add_adress_in_message(&(msg_req->msg),buffer,size);
   sctk_set_header_in_message (&(msg_req->msg), tag, communicator, myself, dest,
-			      &(msg_req->request), size,specific_message_tag);
+			      &(msg_req->request), size,specific_message_tag, MPC_DATATYPE_IGNORE);
   msg_req->msg.tail.need_check_in_wait = /* copy_in_send */1;
   sctk_send_message_try_check (&(msg_req->msg),check);
 }
@@ -87,7 +87,7 @@ static void sctk_hetero_messages_recv(const sctk_communicator_t communicator,int
 		   sctk_message_copy);
   sctk_add_adress_in_message(&(msg_req->msg),buffer,size);
   sctk_set_header_in_message (&(msg_req->msg), tag, communicator,  src,myself,
-			      &(msg_req->request), size,specific_message_tag);
+			      &(msg_req->request), size,specific_message_tag, MPC_DATATYPE_IGNORE);
   msg_req->msg.tail.need_check_in_wait = /* copy_in_recv */1;
   sctk_recv_message_try_check (&(msg_req->msg),ptp_internal,check);
 }
