@@ -1161,7 +1161,7 @@ static inline void __sctk_delete_mpc_request (MPI_Request * req)
 
 	/* Deactivate the request */
 	tmp->is_active = 0;
-
+	
 	/* Can the request be freed ? */
 	if (tmp->freeable == 1)
 	{
@@ -2545,7 +2545,6 @@ ____INTERNAL__PMPI_Start (MPI_Request * request)
 {
   int res = 0;
   MPI_internal_request_t *req;
-
   req = __sctk_convert_mpc_request_internal (request);
   if(req->is_active != 0)
 	return MPI_ERR_REQUEST;
@@ -2553,8 +2552,8 @@ ____INTERNAL__PMPI_Start (MPI_Request * request)
 
   if(req->req.request_type == REQUEST_NULL)
   {
-    *request = MPI_REQUEST_NULL;
-    return MPI_SUCCESS;
+    req->is_active = 0; 
+	return MPI_SUCCESS;
   }
 
 /*   __sctk_init_mpc_request_internal(req); */
@@ -2614,7 +2613,6 @@ ____INTERNAL__PMPI_Start (MPI_Request * request)
     default:
       not_reachable ();
     }
-
   return res;
 }
 
