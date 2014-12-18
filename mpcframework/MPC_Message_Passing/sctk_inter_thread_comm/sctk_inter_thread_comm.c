@@ -1739,7 +1739,6 @@ sctk_internal_ptp_list_pending_t *pending_list, sctk_thread_message_header_t* he
 			{
 				if( !sctk_datatype_is_derived(header->datatype) && !sctk_datatype_is_derived(header_found->datatype) )
 				{
-					fprintf(stderr, "request = %p\n", ptr_found->msg->tail.request);
 					if (ptr_found->msg->tail.request == NULL)
 					{
 						sctk_request_t req;

@@ -7892,11 +7892,9 @@ static int __INTERNAL__PMPI_Attr_put (MPI_Comm comm, int keyval, void *attr_valu
 	}
 	else
 	{
-		int val;
-		long long_val;
-		val = (*((int *) attr_value));
-		long_val = (long) val;
-		tmp_per_comm->key_vals[keyval].attr = (void *) long_val;
+		long tmp = 0;
+		tmp = tmp + *(long *)attr_value;
+		tmp_per_comm->key_vals[keyval].attr = (void *)tmp;
 	}
 
 	tmp_per_comm->key_vals[keyval].flag = 1;
@@ -7967,7 +7965,17 @@ static int __INTERNAL__PMPI_Attr_get (MPI_Comm comm, int keyval, void *attr_valu
 	else /* we found one */
 	{
 		*flag = 1;
-        *attr = tmp_per_comm->key_vals[keyval].attr;
+		if (tmp->attrs_fn[keyval].fortran_key == 0)
+		{
+        	*attr = tmp_per_comm->key_vals[keyval].attr;
+		}
+		else
+		{
+			long tmp;
+			tmp = (long)tmp_per_comm->key_vals[keyval].attr;
+			int val = (int)tmp;
+			*attr = (int *)&tmp;
+		}
     }
 
 	sctk_spinlock_unlock(&(tmp_per_comm->lock));

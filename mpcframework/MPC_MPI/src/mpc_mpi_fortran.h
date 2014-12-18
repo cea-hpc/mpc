@@ -1486,20 +1486,19 @@ void ffunc (pmpi_keyval_free) (int *keyval, int *res)
 
 }
 
-void ffunc (pmpi_attr_put) (MPI_Comm * comm, int *keyval, void *attr_value,
+void ffunc (pmpi_attr_put) (MPI_Comm * comm, int *keyval, int *attr_value,
 			    int *res)
 {
-  *res = MPI_Attr_put (*comm, *keyval, attr_value);
-
+  *res = MPI_Attr_put (*comm, *keyval, (void *)attr_value);
 }
 
-void ffunc (pmpi_attr_get) (MPI_Comm * comm, int *keyval, void *attr_value,
+void ffunc (pmpi_attr_get) (MPI_Comm * comm, int *keyval, int *attr_value,
 			    int *flag, int *res)
 {
-  int *attr = NULL;
+  void *attr = NULL;
   *res = MPI_Attr_get (*comm, *keyval, &attr, flag);
   if (attr != NULL)
-    *(int*)attr_value = *attr;
+    *attr_value = (*((int *)attr));
 
 }
 
