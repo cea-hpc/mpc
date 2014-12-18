@@ -1735,7 +1735,11 @@ sctk_internal_ptp_list_pending_t *pending_list, sctk_thread_message_header_t* he
 			((header->message_tag == header_found->message_tag) || ((header->message_tag == MPC_ANY_TAG) && (header_found->message_tag >= 0))))
 		{
 			/* update the status with ERR_TYPE if datatypes don't match*/
-			if (header->datatype != header_found->datatype)
+			if (header->datatype != header_found->datatype && 
+				header->datatype != MPC_PACKED && header_found->datatype != MPC_PACKED &&
+				header->msg_size > 0 && 
+				header_found->msg_size > 0
+				)
 			{
 				if( !sctk_datatype_is_derived(header->datatype) && !sctk_datatype_is_derived(header_found->datatype) )
 				{
