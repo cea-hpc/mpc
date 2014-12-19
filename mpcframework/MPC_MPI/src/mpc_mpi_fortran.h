@@ -1495,11 +1495,7 @@ void ffunc (pmpi_attr_put) (MPI_Comm * comm, int *keyval, int *attr_value,
 void ffunc (pmpi_attr_get) (MPI_Comm * comm, int *keyval, int *attr_value,
 			    int *flag, int *res)
 {
-  void *attr = NULL;
-  *res = MPI_Attr_get (*comm, *keyval, &attr, flag);
-  if (attr != NULL)
-    *attr_value = (*((int *)attr));
-
+  *res = MPI_Attr_get (*comm, *keyval, (void *)attr_value, flag);
 }
 
 

@@ -7892,6 +7892,7 @@ static int __INTERNAL__PMPI_Attr_put (MPI_Comm comm, int keyval, void *attr_valu
 	{
 		long tmp = 0;
 		tmp = tmp + *(long *)attr_value;
+/*	fprintf(stderr,"Put %ld\n",tmp);*/
 		tmp_per_comm->key_vals[keyval].attr = (void *)tmp;
 	}
 
@@ -7971,8 +7972,10 @@ static int __INTERNAL__PMPI_Attr_get (MPI_Comm comm, int keyval, void *attr_valu
 		{
 			long tmp;
 			tmp = (long)tmp_per_comm->key_vals[keyval].attr;
-			int val = (int)tmp;
-			*attr = (int *)&tmp;
+			/*int val = (int)tmp;
+        fprintf(stderr,"Put %ld %d\n",tmp,val);*/
+
+			*attr = (void*)tmp;
 		}
     }
 
