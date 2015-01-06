@@ -68,6 +68,10 @@
   extern char ** environ;
 #endif
 
+#ifdef MPC_AIO_ENABLED
+#include "sctk_aio.h"
+#endif
+
 #define SCTK_LAUNCH_MAX_ARG 4096
 static char *sctk_save_argument[SCTK_LAUNCH_MAX_ARG];
 static int sctk_initial_argc = 0;
@@ -694,6 +698,9 @@ sctk_env_init (int *argc, char ***argv)
 sctk_env_exit ()
 {
   sctk_topology_destroy();
+#ifdef MPC_AIO_ENABLED
+  sctk_aio_threads_release();
+#endif
   sctk_leave ();
   return 0;
 }

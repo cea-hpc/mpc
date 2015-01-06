@@ -35,6 +35,7 @@ SCTK_CHECK_HEADER ctype.h
 if test "${SCTK_OS}/${SCTK_ARCH}" = "Linux/ia64"; then
 SCTK_CHECK_HEADER features.h
 fi
+
 SCTK_CHECK_HEADER limits.h
 SCTK_CHECK_HEADER malloc.h
 SCTK_CHECK_HEADER math.h
@@ -42,10 +43,14 @@ SCTK_CHECK_HEADER pthread.h
 SCTK_CHECK_HEADER sched.h
 SCTK_CHECK_HEADER stdarg.h
 SCTK_CHECK_HEADER stdio.h
+SCTK_CHECK_HEADER errno.h
+SCTK_CHECK_HEADER fcntl.h
 SCTK_CHECK_HEADER stdlib.h
 SCTK_CHECK_HEADER string.h
 SCTK_CHECK_HEADER sys/stat.h
 SCTK_CHECK_HEADER sys/time.h
+SCTK_CHECK_HEADER aio.h
+SCTK_CHECK_HEADER time.h
 SCTK_CHECK_HEADER sys/types.h
 SCTK_CHECK_HEADER unistd.h
 SCTK_CHECK_HEADER setjmp.h
@@ -129,8 +134,81 @@ if test "$SCTK_SCTK_CHECK_HEADER_RES" = 0 ; then
 else
     result no
 fi
+end_section
+
+begin_section "AIO TLS Bug detection" 
+
+SCTK_MSG_CHECKING "if test file compiles"
+
+cat  << EOF  > ${SCTK_CONF_C}
+#include <aio.h>
+#include <fcntl.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <string.h>
+#include <errno.h>
+#include <stdio.h>
+__thread long long int tls_large_array[16000];
+int main( int argc, char ** argv ){
+	return 1;
+	int gret = 0;
+	char buff[512];
+	int fd = open( "./TEST.dat", O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR );
+	if( fd < 0 ) return 1;
+	struct aiocb cb;
+	memset( &cb, 0, sizeof( struct aiocb  ) );
+	cb.aio_fildes = fd;
+	cb.aio_buf = buff;
+	cb.aio_nbytes = 512;
+	cb.aio_offset = 0;
+	int ret = aio_write( &cb );
+	if( ret < 0 ){
+		if( errno == EINVAL ){
+			printf("AIO implementation is subject to the TLS BUG\n");
+			gret = 1;
+		}
+	}
+	
+	while( aio_error( &cb ) == EINPROGRESS ){}
+	
+	close( fd );
+	unlink( "./TEST.dat" );
+	return gret;
+}
+EOF
+
+echo "File ${SCTK_CONF_C}" >> ${SCTK_CONF_LOG} 2>&1
+cat ${SCTK_CONF_C} >> ${SCTK_CONF_LOG} 2>&1
+echo "$SCTK_CC $SCTK_CFLAGS ${SCTK_CONF_C} -o ${SCTK_CONF_BIN} -lrt">> ${SCTK_CONF_LOG} 2>&1
+eval "$SCTK_CC $SCTK_CFLAGS ${SCTK_CONF_C} -o ${SCTK_CONF_BIN} -lrt">> ${SCTK_CONF_LOG} 2>&1
+SCTK_SCTK_CHECK_HEADER_RES="$?"
+rm ${SCTK_CONF_C} >> ${SCTK_CONF_LOG} 2>&1
+
+MPC_AIO_ENABLED="0"
+
+if test "$SCTK_SCTK_CHECK_HEADER_RES" = 0 ; then
+    result yes
+    
+    SCTK_MSG_CHECKING "if AIO TLS bug is fixed in current libc"
+    echo "${SCTK_CONF_BIN}">> ${SCTK_CONF_LOG} 2>&1
+	eval "${SCTK_CONF_BIN}">> ${SCTK_CONF_LOG} 2>&1
+	SCTK_SCTK_CHECK_HEADER_RES="$?"
+	rm ${SCTK_CONF_BIN} >> ${SCTK_CONF_LOG} 2>&1
+	if test "$SCTK_SCTK_CHECK_HEADER_RES" = 1 ; then
+		result no
+		SCTK_CHECK_OPTION   -DMPC_AIO_ENABLED
+		MPC_AIO_ENABLED="1"
+	else
+		result yes
+    fi
+   
+else
+    result no
+fi
+
 
 end_section
+
 
 if test "${SCTK_OS}" = "Linux"; then
 begin_section Address randomize

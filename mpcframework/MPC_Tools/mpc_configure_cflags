@@ -35,8 +35,10 @@ for i in $MODULE_LIST; do
 FLAGS="$FLAGS -DMPC_MODULE_$i"
 done
 
-
-
+#This flag is set in MPC_Common sysdep for MPC AIO
+if test "x$MPC_AIO_ENABLED" = "x1"; then
+		FLAGS="$FLAGS  -DMPC_AIO_ENABLED"
+fi
 
 cat <<EOF >> bin/mpc_cflags
 ROMIO=""

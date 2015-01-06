@@ -1,4 +1,4 @@
-# Makefile generated with ../MPC_Tools/mpc_gen_makefile Thu Sep 19 16:10:17 CEST 2013
+# Makefile generated with ../MPC_Tools/mpc_gen_makefile mardi 6 janvier 2015, 12:33:24 (UTC+0100)
 ############################# MPC License ##############################
 # Wed Nov 19 15:19:19 CET 2008                                         #
 # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          #
@@ -32,6 +32,15 @@ DEP_libdict=$(FILES_libdict:libdict/%.c=$(M_PWD)/BUILD_MPC_Common/lib/%.d)
 SFILES_libdict=$(wildcard libdict/*.S)
 SOBJ_libdict=$(SFILES_libdict:libdict/%.S=$(M_PWD)/BUILD_MPC_Common/lib/%.o)
 SDEP_libdict=$(SFILES_libdict:libdict/%.S=$(M_PWD)/BUILD_MPC_Common/lib/%.d)
+
+
+FILES_aio=$(wildcard sctk_aio/*.c)
+OBJ_aio=$(FILES_aio:sctk_aio/%.c=$(M_PWD)/BUILD_MPC_Common/lib/%.o)
+DEP_aio=$(FILES_aio:sctk_aio/%.c=$(M_PWD)/BUILD_MPC_Common/lib/%.d)
+
+SFILES_aio=$(wildcard sctk_aio/*.S)
+SOBJ_aio=$(SFILES_aio:sctk_aio/%.S=$(M_PWD)/BUILD_MPC_Common/lib/%.o)
+SDEP_aio=$(SFILES_aio:sctk_aio/%.S=$(M_PWD)/BUILD_MPC_Common/lib/%.d)
 
 
 FILES_alloc=$(wildcard sctk_alloc/*.c)
@@ -118,6 +127,9 @@ SDEP_spinlock=$(SFILES_spinlock:sctk_spinlock/%.S=$(M_PWD)/BUILD_MPC_Common/lib/
 FFILES_libdict=$(wildcard libdict/*.f)
 FOBJ_libdict=$(FFILES_libdict:libdict/%.f=$(M_PWD)/BUILD_MPC_Common/lib/%_f.o)
 
+FFILES_aio=$(wildcard sctk_aio/*.f)
+FOBJ_aio=$(FFILES_aio:sctk_aio/%.f=$(M_PWD)/BUILD_MPC_Common/lib/%_f.o)
+
 FFILES_alloc=$(wildcard sctk_alloc/*.f)
 FOBJ_alloc=$(FFILES_alloc:sctk_alloc/%.f=$(M_PWD)/BUILD_MPC_Common/lib/%_f.o)
 
@@ -145,10 +157,11 @@ FOBJ_optim=$(FFILES_optim:sctk_optim/$(SCTK_ARCH_OPTIM)/%.f=$(M_PWD)/BUILD_MPC_C
 FFILES_spinlock=$(wildcard sctk_spinlock/*.f)
 FOBJ_spinlock=$(FFILES_spinlock:sctk_spinlock/%.f=$(M_PWD)/BUILD_MPC_Common/lib/%_f.o)
 
-all: $(OBJ_libdict) $(FOBJ_libdict) $(SOBJ_libdict) $(OBJ_alloc) $(FOBJ_alloc) $(SOBJ_alloc) $(OBJ_asm) $(FOBJ_asm) $(SOBJ_asm) $(OBJ_basic) $(FOBJ_basic) $(SOBJ_basic) $(OBJ_datastructures) $(FOBJ_datastructures) $(SOBJ_datastructures) $(OBJ_debug) $(FOBJ_debug) $(SOBJ_debug) $(OBJ_helpers) $(FOBJ_helpers) $(SOBJ_helpers) $(OBJ_launch) $(FOBJ_launch) $(SOBJ_launch) $(OBJ_optim) $(FOBJ_optim) $(SOBJ_optim) $(OBJ_spinlock) $(FOBJ_spinlock) $(SOBJ_spinlock)
+all: $(OBJ_libdict) $(FOBJ_libdict) $(SOBJ_libdict) $(OBJ_aio) $(FOBJ_aio) $(SOBJ_aio) $(OBJ_alloc) $(FOBJ_alloc) $(SOBJ_alloc) $(OBJ_asm) $(FOBJ_asm) $(SOBJ_asm) $(OBJ_basic) $(FOBJ_basic) $(SOBJ_basic) $(OBJ_datastructures) $(FOBJ_datastructures) $(SOBJ_datastructures) $(OBJ_debug) $(FOBJ_debug) $(SOBJ_debug) $(OBJ_helpers) $(FOBJ_helpers) $(SOBJ_helpers) $(OBJ_launch) $(FOBJ_launch) $(SOBJ_launch) $(OBJ_optim) $(FOBJ_optim) $(SOBJ_optim) $(OBJ_spinlock) $(FOBJ_spinlock) $(SOBJ_spinlock)
 
 $(M_PWD)/include_modules/MPC_Common:
 	@../MPC_Tools/mpc_prepare_includes $(MPC_SOURCE_DIR)MPC_Common/libdict $(M_PWD)/include_modules
+	@../MPC_Tools/mpc_prepare_includes $(MPC_SOURCE_DIR)MPC_Common/sctk_aio $(M_PWD)/include_modules
 	@../MPC_Tools/mpc_prepare_includes $(MPC_SOURCE_DIR)MPC_Common/sctk_alloc $(M_PWD)/include_modules
 	@../MPC_Tools/mpc_prepare_includes $(MPC_SOURCE_DIR)MPC_Common/sctk_asm $(M_PWD)/include_modules
 	@../MPC_Tools/mpc_prepare_includes $(MPC_SOURCE_DIR)MPC_Common/sctk_basic $(M_PWD)/include_modules
@@ -164,7 +177,7 @@ prepare_includes:$(M_PWD)/include_modules/MPC_Common
 
 
 ifneq ($(SCTK_MAKE_NO_DEP),yes)
-DEPENDS=$(DEP_libdict) $(DEP_alloc) $(DEP_asm) $(DEP_basic) $(DEP_datastructures) $(DEP_debug) $(DEP_helpers) $(DEP_launch) $(DEP_optim) $(DEP_spinlock) 
+DEPENDS=$(DEP_libdict) $(DEP_aio) $(DEP_alloc) $(DEP_asm) $(DEP_basic) $(DEP_datastructures) $(DEP_debug) $(DEP_helpers) $(DEP_launch) $(DEP_optim) $(DEP_spinlock) 
 
 $(DEPENDS):Makefile 
 endif
@@ -173,6 +186,11 @@ ifneq ($(SCTK_MAKE_NO_DEP),yes)
 $(DEP_libdict):$(M_PWD)/BUILD_MPC_Common/lib/%.d:libdict/%.c
 	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.d,libdict/%.c,$@)"
 	@$(CC) $(SCTK_CC_DEP) $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.d,libdict/%.c,$@) | \
+		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
+
+$(DEP_aio):$(M_PWD)/BUILD_MPC_Common/lib/%.d:sctk_aio/%.c
+	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.d,sctk_aio/%.c,$@)"
+	@$(CC) $(SCTK_CC_DEP) $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.d,sctk_aio/%.c,$@) | \
 		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
 
 $(DEP_alloc):$(M_PWD)/BUILD_MPC_Common/lib/%.d:sctk_alloc/%.c
@@ -225,6 +243,10 @@ $(DEP_libdict):$(M_PWD)/BUILD_MPC_Common/lib/%.d:libdict/%.c
 	@echo "    Generate fake dependencies $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.d,libdict/%.c,$@)"
 	@echo "$(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.d,libdict/%.c,$@)" > $@
 
+$(DEP_aio):$(M_PWD)/BUILD_MPC_Common/lib/%.d:sctk_aio/%.c
+	@echo "    Generate fake dependencies $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.d,sctk_aio/%.c,$@)"
+	@echo "$(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.d,sctk_aio/%.c,$@)" > $@
+
 $(DEP_alloc):$(M_PWD)/BUILD_MPC_Common/lib/%.d:sctk_alloc/%.c
 	@echo "    Generate fake dependencies $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.d,sctk_alloc/%.c,$@)"
 	@echo "$(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.d,sctk_alloc/%.c,$@)" > $@
@@ -267,6 +289,10 @@ $(OBJ_libdict):%.o:%.d
 	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,libdict/%.c,$@)"
 	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,libdict/%.c,$@) -o $@
 
+$(OBJ_aio):%.o:%.d
+	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,sctk_aio/%.c,$@)"
+	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,sctk_aio/%.c,$@) -o $@
+
 $(OBJ_alloc):%.o:%.d
 	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,sctk_alloc/%.c,$@)"
 	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,sctk_alloc/%.c,$@) -o $@
@@ -306,6 +332,11 @@ $(OBJ_spinlock):%.o:%.d
 $(SDEP_libdict):$(M_PWD)/BUILD_MPC_Common/lib/%.d:libdict/%.S
 	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.d,libdict/%.S,$@)"
 	@$(GCC) -M $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.d,libdict/%.S,$@) | \
+		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
+
+$(SDEP_aio):$(M_PWD)/BUILD_MPC_Common/lib/%.d:sctk_aio/%.S
+	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.d,sctk_aio/%.S,$@)"
+	@$(GCC) -M $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.d,sctk_aio/%.S,$@) | \
 		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
 
 $(SDEP_alloc):$(M_PWD)/BUILD_MPC_Common/lib/%.d:sctk_alloc/%.S
@@ -357,6 +388,10 @@ $(SOBJ_libdict):%.o:%.d
 	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,libdict/%.S,$@)"
 	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,libdict/%.S,$@) -o $@
 
+$(SOBJ_aio):%.o:%.d
+	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,sctk_aio/%.S,$@)"
+	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,sctk_aio/%.S,$@) -o $@
+
 $(SOBJ_alloc):%.o:%.d
 	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,sctk_alloc/%.S,$@)"
 	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,sctk_alloc/%.S,$@) -o $@
@@ -396,6 +431,10 @@ $(SOBJ_spinlock):%.o:%.d
 $(FOBJ_libdict):$(M_PWD)/BUILD_MPC_Common/lib/%_f.o:libdict/%.f
 	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%_f.o,libdict/%.f,$@)"
 	@$(F77) -c $(FFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%_f.o,libdict/%.f,$@) -o $@
+
+$(FOBJ_aio):$(M_PWD)/BUILD_MPC_Common/lib/%_f.o:sctk_aio/%.f
+	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%_f.o,sctk_aio/%.f,$@)"
+	@$(F77) -c $(FFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%_f.o,sctk_aio/%.f,$@) -o $@
 
 $(FOBJ_alloc):$(M_PWD)/BUILD_MPC_Common/lib/%_f.o:sctk_alloc/%.f
 	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%_f.o,sctk_alloc/%.f,$@)"
