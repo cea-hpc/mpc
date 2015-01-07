@@ -27,6 +27,7 @@ if test "$SCTK_OS" = "Linux" ; then
 SCTK_CHECK_HEADER linux/unistd.h
 fi
 SCTK_CHECK_HEADER pthread.h
+SCTK_CHECK_HEADER aio.h
 SCTK_CHECK_HEADER sched.h
 SCTK_CHECK_HEADER semaphore.h
 SCTK_CHECK_HEADER setjmp.h

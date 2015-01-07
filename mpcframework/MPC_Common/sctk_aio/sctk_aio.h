@@ -26,7 +26,6 @@
 
 #include <aio.h>
 
-
 int sctk_aio_read( struct aiocb * cb );
 int sctk_aio_write( struct aiocb * cb );
 int sctk_aio_fsync( int op, struct aiocb * cb );
