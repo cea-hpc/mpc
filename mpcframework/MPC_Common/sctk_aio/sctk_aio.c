@@ -37,7 +37,7 @@
 #define MAX_SCTK_AIO_THREADS 16
 
 /************************************************************************/
-/* AIO Job List                                                             */
+/* AIO Job List                                                         */
 /************************************************************************/
 
 struct sctk_aio_jobcell
@@ -50,7 +50,7 @@ struct sctk_aio_joblist
 {
 	struct sctk_aio_jobcell * head;
 	struct sctk_aio_jobcell * tail;
-	
+	long long int counter;
 	pthread_mutex_t joblistlock;
 };
 
@@ -70,6 +70,7 @@ int sctk_aio_joblist_init( struct sctk_aio_joblist * jl )
 {
 	jl->head = NULL;
 	jl->tail = NULL;
+	jl->counter = 0;
 	
 	if( pthread_mutex_init( &jl->joblistlock , NULL) < 0 )
 	{
@@ -93,6 +94,8 @@ int sctk_aio_joblist_release( struct sctk_aio_joblist * jl )
 		perror("pthread_mutex_init");
 		return 1;
 	}
+	
+	jl->counter = 0;
 	
 	return 0;
 }
@@ -156,6 +159,8 @@ int sctk_aio_joblist_push( struct sctk_aio_joblist * jl, struct aiocb * job )
 			{
 				jl->tail = new_cell;
 			}
+			
+			jl->counter++;
 	
 	pthread_mutex_unlock( &jl->joblistlock );
 	
@@ -179,6 +184,8 @@ struct aiocb *  sctk_aio_joblist_pop( struct sctk_aio_joblist * jl )
 		/* Last_Elem */
 		if( !jl->tail )
 			jl->head = NULL;
+		
+		jl->counter--;
 
 sctk_aio_POP_END:
 	pthread_mutex_unlock( &jl->joblistlock );
@@ -828,22 +835,24 @@ int sctk_aio_cancel( int fd, struct aiocb * cb )
 int sctk_aio_suspend( const struct aiocb * const aiocb_list[], int nitems, const struct timespec * timeout )
 {
 	int ret = 0;
+
+	/* Just in case (not to deadlock)
+	 * as there could be a RC between the job counter
+	 * and the moment we enter the condition wait */
 	
+	struct timespec loc_timeout;
+	loc_timeout.tv_sec = 0;
+	loc_timeout.tv_nsec = 10000000; /* 10 ms spinning */
+	
+	if( !timeout )
+		timeout = &loc_timeout;
+
 	while( 1 )
 	{
-		pthread_mutex_lock( &sctk_aio_threads.scondlock );
-		ret = pthread_cond_timedwait( &sctk_aio_threads.scond, &sctk_aio_threads.scondlock, timeout );
-		pthread_mutex_unlock( &sctk_aio_threads.scondlock );
-		
-		if( ret == ETIMEDOUT )
-			return EAGAIN;
-		
-		/* Note that here we do not handle signals (no EINTR error) */
-		
 		int i;
 		int status;
 		
-		/* Check if it is one of the request of interest which ended */
+		/* Check if is one of the request of interest has ended */
 		for( i = 0 ; i  < nitems; i++ )
 		{
 			sctk_aio_get_error( (struct aiocb *)&aiocb_list[i], &status );
@@ -853,7 +862,15 @@ int sctk_aio_suspend( const struct aiocb * const aiocb_list[], int nitems, const
 				return 0;
 			}
 		}
+
+		pthread_mutex_lock( &sctk_aio_threads.scondlock );
+		ret = pthread_cond_timedwait( &sctk_aio_threads.scond, &sctk_aio_threads.scondlock, timeout );
+		pthread_mutex_unlock( &sctk_aio_threads.scondlock );
 		
+		if( (ret == ETIMEDOUT) && (timeout != &loc_timeout) )
+			return EAGAIN;
+		
+		/* Note that here we do not handle signals (no EINTR error) */
 	}
 	
 	if( ret == 0 )

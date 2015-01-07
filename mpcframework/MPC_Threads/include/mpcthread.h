@@ -653,21 +653,6 @@ int mpc_thread_mutex_unlock (sctk_thread_mutex_t * mutex);
 #define usleep sctk_thread_usleep
 #define nanosleep  sctk_thread_nanosleep
 
-#ifdef MPC_AIO_ENABLED
-/* Here we override the AIO library as it can be subject to a TLS
- * bug on older libcs therefore, we reimplemented it in MPC */
-
-#define aio_read sctk_aio_read
-#define aio_write sctk_aio_write
-#define aio_fsync sctk_aio_fsync
-#define aio_error sctk_aio_error
-#define aio_return sctk_aio_return
-#define aio_cancel sctk_aio_cancel
-#define aio_suspend sctk_aio_suspend
-#define lio_listio sctk_aio_lio_listio
-
-#endif
-
 #ifdef __cplusplus
 }
 #endif
