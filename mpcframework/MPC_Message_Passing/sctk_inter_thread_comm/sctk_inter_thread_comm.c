@@ -1749,7 +1749,7 @@ sctk_internal_ptp_list_pending_t *pending_list, sctk_thread_message_header_t* he
 						ptr_found->msg->tail.request = &req;
 					}
 					ptr_found->msg->tail.request->status_error = MPC_ERR_TYPE;
-					return ptr_found;
+					//		return ptr_found;
 				}
 			}
 			
