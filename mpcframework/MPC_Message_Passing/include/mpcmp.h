@@ -351,7 +351,7 @@ typedef int MPC_Info;
 #define MPC_INTEGER 55
 #define MPC_REAL 56
 #define MPC_DOUBLE_PRECISION 57
-
+#define MPC_UNSIGNED_LONG_LONG_INT  58
 
 /* BE VERY CAREFUL HERE /!\/!\/!\/!\/!\/!\/!\/!\
  *  You have to note that these types
@@ -374,18 +374,17 @@ typedef int MPC_Info;
 #define MPC_COMPLEX  (SCTK_DERIVED_DATATYPE_BASE + 6)
 #define MPC_2DOUBLE_PRECISION  (SCTK_DERIVED_DATATYPE_BASE + 7)
 #define MPC_LONG_DOUBLE_INT  (SCTK_DERIVED_DATATYPE_BASE + 8)
-#define MPC_UNSIGNED_LONG_LONG_INT  (SCTK_DERIVED_DATATYPE_BASE + 9)
-#define MPC_COMPLEX8  (SCTK_DERIVED_DATATYPE_BASE + 10)
-#define MPC_COMPLEX16  (SCTK_DERIVED_DATATYPE_BASE + 11)
-#define MPC_COMPLEX32  (SCTK_DERIVED_DATATYPE_BASE + 12)
-#define MPC_DOUBLE_COMPLEX  (SCTK_DERIVED_DATATYPE_BASE + 13)
+#define MPC_COMPLEX8  (SCTK_DERIVED_DATATYPE_BASE + 9)
+#define MPC_COMPLEX16  (SCTK_DERIVED_DATATYPE_BASE + 10)
+#define MPC_COMPLEX32  (SCTK_DERIVED_DATATYPE_BASE + 11)
+#define MPC_DOUBLE_COMPLEX  (SCTK_DERIVED_DATATYPE_BASE + 12)
 /* /!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\
  * If you change anything in this section update MPC_STRUCT_DATATYPE_COUNT
  * otherwise the first derived datatype created
  * will overwrite your last datatype
  * /!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\
  */
-#define MPC_STRUCT_DATATYPE_COUNT 14
+#define MPC_STRUCT_DATATYPE_COUNT 13
 
 /* Aliased struct data-types */
 #define MPC_C_COMPLEX MPC_COMPLEX

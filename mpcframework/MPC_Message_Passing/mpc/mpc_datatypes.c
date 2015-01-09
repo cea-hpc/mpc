@@ -307,8 +307,9 @@ void release_composed_common_types()
 	PMPC_Type_free( &tmp );
 	tmp = MPC_LONG_DOUBLE_INT;
 	PMPC_Type_free( &tmp );
-	tmp = MPC_UNSIGNED_LONG_LONG_INT;
+/*	tmp = MPC_UNSIGNED_LONG_LONG_INT;
 	PMPC_Type_free( &tmp );
+*/
 	tmp = MPC_COMPLEX32;
 	PMPC_Type_free( &tmp );
 }

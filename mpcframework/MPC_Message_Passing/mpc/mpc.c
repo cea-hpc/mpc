@@ -5028,6 +5028,8 @@ static inline int __MPC_Allreduce (void *sendbuf, void *recvbuf, mpc_msg_count c
 	__MPC_Comm_rank(comm, &rank, task_specific);
 
 
+	fprintf(stderr,"Allreduce type %d op %d\n",datatype,op);
+
 	sctk_nodebug ("Allreduce on %d with type %d", comm, datatype);
 	if ((op.u_func == NULL) && ( sctk_datatype_is_common( datatype) || sctk_datatype_is_struct_datatype(datatype) ) )
 	{
