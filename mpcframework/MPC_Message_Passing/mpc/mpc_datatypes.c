@@ -261,12 +261,14 @@ void init_composed_common_types()
 	PMPC_Type_commit( &tmp );
 	
 	/* MPC_UNSIGNED_LONG_LONG_INT  (SCTK_DERIVED_DATATYPE_BASE + 9 */
+	/*
 	mpc_unsigned_long_long_int foo_8;
 	disp = ((char *)&foo_8.b - (char *)&foo_8.a);
 	__init_a_composed_common_types( MPC_UNSIGNED_LONG_LONG_INT, disp, MPC_UNSIGNED_LONG_LONG, MPC_INT , sizeof(mpc_unsigned_long_long_int) );
 	sctk_common_datatype_set_name_helper( MPC_UNSIGNED_LONG_LONG_INT, "MPI_UNSIGNED_LONG_LONG_INT" );
 	tmp = MPC_UNSIGNED_LONG_LONG_INT;
 	PMPC_Type_commit( &tmp );
+	*/
 	
 	/* MPC_COMPLEX32  (SCTK_DERIVED_DATATYPE_BASE + 12 */
 	mpc_longdouble_longdouble foo_9;
