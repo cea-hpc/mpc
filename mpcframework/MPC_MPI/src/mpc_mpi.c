@@ -7984,6 +7984,31 @@ static int __INTERNAL__PMPI_Attr_get (MPI_Comm comm, int keyval, void *attr_valu
 	return res;
 }
 
+/*
+ *        (void *) &MPI_TAG_UB_VALUE  ,
+        &MPI_HOST_VALUE,
+        &MPI_IO_VALUE,
+        &MPI_WTIME_IS_GLOBAL_VALUE
+ * */
+
+static int __INTERNAL__PMPI_Attr_get_fortran (MPI_Comm comm, int keyval, void *attr_value,   int *flag){
+	void **attr;
+	attr = (void **) attr_value;
+	
+        if ((keyval >= 0) && (keyval < MPI_MAX_KEY_DEFINED))
+        {	
+		long tmp;
+                *flag = 1;
+                *attr = defines_attr_tab[keyval];
+		tmp = (long)defines_attr_tab[keyval];
+                *attr = (void*)tmp;
+
+                return MPI_SUCCESS;
+        } else {
+                return __INTERNAL__PMPI_Attr_get(comm,keyval,attr_value,flag);
+        }
+}
+
 static int __INTERNAL__PMPI_Attr_delete (MPI_Comm comm, int keyval)
 {
 	int res = MPI_SUCCESS;
@@ -12758,6 +12783,15 @@ PMPI_Attr_get (MPI_Comm comm, int keyval, void *attr_value, int *flag)
   int res = MPI_ERR_INTERN;
   mpi_check_comm (comm, comm);
   res = __INTERNAL__PMPI_Attr_get (comm, keyval, attr_value, flag);
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
+}
+
+int
+PMPI_Attr_get_fortran (MPI_Comm comm, int keyval, void *attr_value, int *flag)
+{
+  int res = MPI_ERR_INTERN;
+  mpi_check_comm (comm, comm);
+  res = __INTERNAL__PMPI_Attr_get_fortran (comm, keyval, attr_value, flag);
   SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 

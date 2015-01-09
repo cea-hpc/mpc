@@ -340,6 +340,7 @@
 #pragma weak mpi_attr_put_ = pmpi_attr_put_
 #pragma weak mpi_attr_put__ = pmpi_attr_put__
 #pragma weak MPI_Attr_get = PMPI_Attr_get
+#pragma weak MPI_Attr_get_fortran = PMPI_Attr_get_fortran
 #pragma weak mpi_attr_get_ = pmpi_attr_get_
 #pragma weak mpi_attr_get__ = pmpi_attr_get__
 #pragma weak MPI_Attr_delete = PMPI_Attr_delete
