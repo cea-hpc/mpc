@@ -6218,6 +6218,8 @@ __INTERNAL__PMPI_Allreduce (void *sendbuf, void *recvbuf, int count,
    MPC_Op mpc_op;
   sctk_op_t *mpi_op;
 
+  /*fprintf(stderr,"All reduce type %d op %d\n",datatype,op);*/
+
   mpi_op = sctk_convert_to_mpc_op (op);
   mpc_op = mpi_op->op;
   if (sctk_datatype_is_derived (datatype) || (mpi_op->commute == 0))

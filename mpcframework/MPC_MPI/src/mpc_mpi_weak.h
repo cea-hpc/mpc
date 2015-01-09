@@ -528,8 +528,10 @@
 #pragma weak MPI_Status_set_elements_x = PMPI_Status_set_elements_x
 #pragma weak MPI_Status_set_cancelled = PMPI_Status_set_cancelled
 #pragma weak MPI_Request_get_status = PMPI_Request_get_status
-#pragma weak MPI_Test_cancelled = PMPI_Test_cancelled
 
+#pragma weak MPI_Test_cancelled = PMPI_Test_cancelled
+#pragma weak mpi_test_cancelled_ = pmpi_test_cancelled_
+#pragma weak mpi_test_cancelled__ = pmpi_test_cancelled__
 
 #pragma weak MPI_Type_set_name = PMPI_Type_set_name
 #pragma weak mpi_type_set_name_ = pmpi_type_set_name_
