@@ -1495,7 +1495,7 @@ void ffunc (pmpi_attr_put) (MPI_Comm * comm, int *keyval, int *attr_value,
 void ffunc (pmpi_attr_get) (MPI_Comm * comm, int *keyval, int *attr_value,
 			    int *flag, int *res)
 {
-  *res = MPI_Attr_get_fortran (*comm, *keyval, (void *)attr_value, flag);
+  *res = MPI_Attr_get_fortran (*comm, *keyval, attr_value, flag);
 }
 
 

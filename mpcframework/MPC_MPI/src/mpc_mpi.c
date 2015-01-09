@@ -311,6 +311,7 @@ static int __INTERNAL__PMPI_Keyval_create (MPI_Copy_function *,
 static int __INTERNAL__PMPI_Keyval_free (int *);
 static int __INTERNAL__PMPI_Attr_put (MPI_Comm, int, void *);
 static int __INTERNAL__PMPI_Attr_get (MPI_Comm, int, void *, int *);
+static int __INTERNAL__PMPI_Attr_get_fortran (MPI_Comm, int, int *, int *);
 static int __INTERNAL__PMPI_Attr_delete (MPI_Comm, int);
 static int __INTERNAL__PMPI_Topo_test (MPI_Comm, int *);
 static int __INTERNAL__PMPI_Cart_create (MPI_Comm, int, int *, int *, int,
@@ -7991,21 +7992,15 @@ static int __INTERNAL__PMPI_Attr_get (MPI_Comm comm, int keyval, void *attr_valu
         &MPI_WTIME_IS_GLOBAL_VALUE
  * */
 
-static int __INTERNAL__PMPI_Attr_get_fortran (MPI_Comm comm, int keyval, void *attr_value,   int *flag){
-	void **attr;
-	attr = (void **) attr_value;
-	
+static int __INTERNAL__PMPI_Attr_get_fortran (MPI_Comm comm, int keyval, int *attr_value,   int *flag){
         if ((keyval >= 0) && (keyval < MPI_MAX_KEY_DEFINED))
         {	
 		long tmp;
                 *flag = 1;
-                *attr = defines_attr_tab[keyval];
-		tmp = (long)defines_attr_tab[keyval];
-                *attr = (void*)tmp;
-
+		*attr_value = *((int*)(defines_attr_tab[keyval]));
                 return MPI_SUCCESS;
         } else {
-                return __INTERNAL__PMPI_Attr_get(comm,keyval,attr_value,flag);
+                return __INTERNAL__PMPI_Attr_get(comm,keyval,(void*)attr_value,flag);
         }
 }
 
@@ -12787,7 +12782,7 @@ PMPI_Attr_get (MPI_Comm comm, int keyval, void *attr_value, int *flag)
 }
 
 int
-PMPI_Attr_get_fortran (MPI_Comm comm, int keyval, void *attr_value, int *flag)
+PMPI_Attr_get_fortran (MPI_Comm comm, int keyval, int *attr_value, int *flag)
 {
   int res = MPI_ERR_INTERN;
   mpi_check_comm (comm, comm);
