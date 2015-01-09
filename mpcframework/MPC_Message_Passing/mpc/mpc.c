@@ -4929,6 +4929,7 @@ MPC_Op_tmp (void *in, void *inout, size_t size, MPC_Datatype t)
       ADD_FUNC_HANDLER(func,MPC_LONG_LONG,op);        \
       ADD_FUNC_HANDLER(func,MPC_DOUBLE_COMPLEX,op);        \
       ADD_FUNC_HANDLER(func,MPC_COMPLEX,op);        \
+      ADD_FUNC_HANDLER(func,MPC_UNSIGNED_LONG_LONG_INT,op);   \
     default:not_reachable();				\
     }							\
   }
@@ -4970,7 +4971,6 @@ MPC_Op_tmp (void *in, void *inout, size_t size, MPC_Datatype t)
 			ADD_FUNC_HANDLER(func,MPC_COMPLEX16,op);	\
 			ADD_FUNC_HANDLER(func,MPC_DOUBLE_COMPLEX,op);	\
 			ADD_FUNC_HANDLER(func,MPC_COMPLEX32,op);	\
-			ADD_FUNC_HANDLER(func,MPC_UNSIGNED_LONG_LONG_INT,op);	\
 			default:not_reachable();				\
 		}					\
 	}

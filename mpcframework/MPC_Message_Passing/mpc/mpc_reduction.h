@@ -30,15 +30,19 @@ extern "C"
 #include "sctk_stdint.h"
 
 typedef struct {float a ; int b;} mpc_float_int;
-typedef struct {long a ; int b;} mpc_long_int;
 typedef struct {double a ; int b;} mpc_double_int;
+typedef struct {long a ; int b;} mpc_long_int;
 typedef struct {short a ; int b;} mpc_short_int;
 typedef struct {int a ; int b;} mpc_int_int;
 typedef struct {float a ; float b;} mpc_float_float;
 typedef struct {double a ; double b;} mpc_double_double;
 typedef struct {long double a;int b;} mpc_long_double_int;
-typedef struct { unsigned long long a ; int b; } mpc_unsigned_long_long_int;
 typedef struct {long double a;long double b;} mpc_longdouble_longdouble;
+
+typedef unsigned long long int mpc_unsigned_long_long_int;
+typedef mpc_unsigned_long_long_int mpc_unsigned_long_long;
+typedef long long mpc_long_long;
+typedef mpc_long_long  mpc_long_long_int;
 
 void mpc_no_exec (const void *in, void *inout, size_t size, MPC_Datatype datatype, int line, char *file);
 
@@ -54,7 +58,7 @@ MPC_DEFINED_FUNCS(MPC_SHORT, short,name);				\
 MPC_DEFINED_FUNCS(MPC_INT, int,name);				\
 MPC_DEFINED_FUNCS(MPC_INTEGER, int,name);				\
 MPC_DEFINED_FUNCS(MPC_LONG, long,name);				\
-MPC_DEFINED_FUNCS(MPC_LONG_LONG, long,name);				\
+MPC_DEFINED_FUNCS(MPC_LONG_LONG, mpc_long_long,name);				\
 MPC_DEFINED_FUNCS(MPC_FLOAT, float,name);				\
 MPC_DEFINED_FUNCS(MPC_DOUBLE, double,name);				\
 MPC_DEFINED_FUNCS(MPC_DOUBLE_PRECISION, double,name);				\
@@ -76,7 +80,7 @@ MPC_DEFINED_FUNCS(MPC_COMPLEX16,mpc_double_double ,name)	;		\
 MPC_DEFINED_FUNCS(MPC_DOUBLE_COMPLEX,mpc_double_double ,name)	;		\
 MPC_DEFINED_FUNCS(MPC_COMPLEX32,mpc_longdouble_longdouble ,name)	;		\
 MPC_DEFINED_FUNCS(MPC_UNSIGNED_LONG_LONG_INT,mpc_unsigned_long_long_int ,name)	;		\
-MPC_DEFINED_FUNCS(MPC_LONG_LONG_INT,long long int ,name)	;		\
+MPC_DEFINED_FUNCS(MPC_LONG_LONG_INT, mpc_long_long_int ,name)	;		\
 MPC_DEFINED_FUNCS(MPC_LOGICAL, int,name);				\
 MPC_DEFINED_FUNCS(MPC_2DOUBLE_PRECISION,mpc_double_double ,name);	\
 MPC_DEFINED_FUNCS(MPC_REAL4,float,name);				\
