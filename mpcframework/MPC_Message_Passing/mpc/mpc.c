@@ -4915,6 +4915,7 @@ MPC_Op_tmp (void *in, void *inout, size_t size, MPC_Datatype t)
       ADD_FUNC_HANDLER(func,MPC_INTEGER2,op);           \
       ADD_FUNC_HANDLER(func,MPC_INTEGER4,op);           \
       ADD_FUNC_HANDLER(func,MPC_INTEGER8,op);           \
+      ADD_FUNC_HANDLER(func,MPC_REAL,op);              \
       ADD_FUNC_HANDLER(func,MPC_REAL4,op);              \
       ADD_FUNC_HANDLER(func,MPC_REAL8,op);              \
       ADD_FUNC_HANDLER(func,MPC_REAL16,op);             \
@@ -4941,6 +4942,7 @@ MPC_Op_tmp (void *in, void *inout, size_t size, MPC_Datatype t)
       ADD_FUNC_HANDLER(func,MPC_BYTE,op);		\
       ADD_FUNC_HANDLER(func,MPC_SHORT,op);		\
       ADD_FUNC_HANDLER(func,MPC_INT,op);		\
+      ADD_FUNC_HANDLER(func,MPC_INTEGER,op);           \
       ADD_FUNC_HANDLER(func,MPC_INTEGER1,op);           \
       ADD_FUNC_HANDLER(func,MPC_INTEGER2,op);           \
       ADD_FUNC_HANDLER(func,MPC_INTEGER4,op);           \
@@ -5027,8 +5029,6 @@ static inline int __MPC_Allreduce (void *sendbuf, void *recvbuf, mpc_msg_count c
 	mpc_check_type (datatype, comm);
 	__MPC_Comm_rank(comm, &rank, task_specific);
 
-
-	fprintf(stderr,"Allreduce type %d op %d\n",datatype,op);
 
 	sctk_nodebug ("Allreduce on %d with type %d", comm, datatype);
 	if ((op.u_func == NULL) && ( sctk_datatype_is_common( datatype) || sctk_datatype_is_struct_datatype(datatype) ) )

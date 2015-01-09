@@ -12138,7 +12138,6 @@ int PMPI_Reduce (void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
 	mpi_check_op (op, datatype,comm);
 
 
-	fprintf(stderr,"%d %d\n",op,datatype);
 
 #ifndef ENABLE_COLLECTIVES_ON_INTERCOMM
 	
