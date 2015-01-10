@@ -293,6 +293,9 @@ void ffunc (mpi_alltoallv) (void *sendbuf, int *sendcnts, int *sdispls,
 			    MPI_Datatype * recvtype, MPI_Comm * comm,
 			    int *res);
 
+void ffunc (mpi_alltoallw) (void *sendbuf, int *sendcnts, int *sdispls, MPI_Datatype *sendtypes,
+			    void *recvbuf, int *recvcnts, int *rdispls, MPI_Datatype *recvtypes, MPI_Comm comm);
+
 /* Neighbor collectives */
 void ffunc (mpi_neighbor_allgather) (const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm);
 void ffunc (mpi_neighbor_allgatherv) (const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int recvcounts[], const int displs[], MPI_Datatype recvtype, MPI_Comm comm);
@@ -1205,6 +1208,15 @@ void ffunc (pmpi_alltoallv) (void *sendbuf, int *sendcnts, int *sdispls,
   *res =
     MPI_Alltoallv (sendbuf, sendcnts, sdispls, *sendtype, recvbuf, recvcnts,
 		    rdispls, *recvtype, *comm);
+
+}
+
+void ffunc (pmpi_alltoallw) (void *sendbuf, int *sendcnts, int *sdispls, MPI_Datatype *sendtypes,
+			     void *recvbuf, int *recvcnts, int *rdispls, MPI_Datatype *recvtypes, MPI_Comm *comm,int *res)
+{
+  *res =
+    MPI_Alltoallw (sendbuf, sendcnts, sdispls, sendtypes, recvbuf, recvcnts,
+		    rdispls, recvtypes, *comm);
 
 }
 

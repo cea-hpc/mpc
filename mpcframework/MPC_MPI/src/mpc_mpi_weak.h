@@ -212,6 +212,9 @@
 #pragma weak MPI_Alltoallv = PMPI_Alltoallv
 #pragma weak mpi_alltoallv_ = pmpi_alltoallv_
 #pragma weak mpi_alltoallv__ = pmpi_alltoallv__
+#pragma weak MPI_Alltoallw = PMPI_Alltoallw
+#pragma weak mpi_alltoallw_ = pmpi_alltoallw_
+#pragma weak mpi_alltoallw__ = pmpi_alltoallw__
 
 /* Neighbor collectives */
 #pragma weak MPI_Neighbor_allgather = PMPI_Neighbor_allgather
