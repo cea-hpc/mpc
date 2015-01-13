@@ -131,10 +131,6 @@ static void sctk_network_not_implemented_warn(char* name){
   }
 }
 
-const struct sctk_runtime_config_struct_networks * sctk_net_get_config() {
-  return (struct sctk_runtime_config_struct_networks*) &sctk_runtime_config_get()->networks;
-}
-
 void
 sctk_net_init_pmi() {
   if(sctk_process_number > 1){
@@ -146,137 +142,230 @@ sctk_net_init_pmi() {
   }
 }
 
-void
-sctk_net_init_driver (char* name)
+/************************************************************************/
+/* Config Helpers                                                       */
+/************************************************************************/
+
+/** \brief Get a pointer to the global network configuration
+*   \return the network config (static struct)
+*/
+static inline  const struct sctk_runtime_config_struct_networks * sctk_net_get_config() {
+	return (struct sctk_runtime_config_struct_networks*) &sctk_runtime_config_get()->networks;
+}
+
+/** \brief Get a pointer to a given CLI configuration
+*   \param name Name of the requested configuration
+*   \return The configuration or NULL
+*/
+static inline struct sctk_runtime_config_struct_net_cli_option * sctk_get_net_config_by_name( char * name )
+{
+	int k = 0;
+	struct sctk_runtime_config_struct_net_cli_option * ret = NULL;
+	
+	for (k=0; k<sctk_net_get_config()->cli_options_size; ++k)
+	{
+		if (strcmp(name, sctk_net_get_config()->cli_options[k].name) == 0)
+		{
+			ret = &sctk_net_get_config()->cli_options[k];
+			break;
+		}
+	}
+	
+	return ret;
+}
+
+/** \brief Get a pointer to a given rail
+*   \param name Name of the requested rail
+*   \return The rail or NULL
+*/
+static inline struct sctk_runtime_config_struct_net_rail * sctk_get_rail_config_by_name( char * name )
+{
+	int l = 0;
+	struct sctk_runtime_config_struct_net_rail * ret = NULL;
+	
+	for (l=0; l<sctk_net_get_config()->rails_size; ++l)
+	{
+		if (strcmp(name, sctk_net_get_config()->rails[l].name) == 0)
+		{
+			ret = &sctk_net_get_config()->rails[l];
+			break;
+		}
+	}
+	
+	return ret;
+}
+
+/** \brief Get a pointer to a driver config
+*   \param name Name of the requested driver config
+*   \return The driver config or NULL
+*/
+static inline struct sctk_runtime_config_struct_net_driver_config * sctk_get_driver_config_by_name( char * name )
+{
+	int j = 0;
+	struct sctk_runtime_config_struct_net_driver_config * ret = NULL;
+	
+	for (j=0; j<sctk_net_get_config()->configs_size; ++j)
+	{
+		if (strcmp(name, sctk_net_get_config()->configs[j].name) == 0)
+		{
+			ret = &sctk_net_get_config()->configs[j];
+			break;
+		}
+	}
+
+	return ret;
+}
+
+
+
+/************************************************************************/
+/* Network INIT                                                         */
+/************************************************************************/
+
+/** \brief Init MPC network configuration
+ * 
+ *   This function also loads the default configuration from the command
+ *   line including rails and network backends
+ * 
+ *  \param name Name of the configuration from the command line (can be NULL)
+ */
+void sctk_net_init_driver (char* name)
 {
  restart:
+	if( sctk_process_number == 1 )
+	{
+		/* Nothing to do */
+		return;
+	}
 
-  if(sctk_process_number > 1){
-    int j, k, l;
-    int rails_nb = 0;
-    struct sctk_runtime_config_struct_net_cli_option * cli_option = NULL;
-    char * option_name = sctk_runtime_config_get()->modules.low_level_comm.network_mode;
+	int j, k, l;
+	int rails_nb = 0;
+	struct sctk_runtime_config_struct_net_cli_option * cli_option = NULL;
+	
+	/* Retrieve default network from config */
+	char * option_name = sctk_runtime_config_get()->modules.low_level_comm.network_mode;
 
-    if (name != NULL) {
-      option_name = name;
-    }
+	/* If we have a network name from the command line (through sctk_launch.c)  */
+	if (name != NULL)
+	{
+		option_name = name;
+	}
 
-    sctk_nodebug("Run with driver %s", option_name);
-    for (k=0; k<sctk_net_get_config()->cli_options_size; ++k) {
-      if (strcmp(option_name, sctk_net_get_config()->cli_options[k].name) == 0) {
-        cli_option = &sctk_net_get_config()->cli_options[k];
-        break;
-      }
-    }
+	/* Here we retrieve the network configuration from the network list
+	   according to its name */
+	sctk_nodebug("Run with driver %s", option_name);
 
-    if (cli_option == NULL) {
-      sctk_error("No configuration found for the network '%s'. Please check you '-net=' argument"
-          " and your configuration file", option_name);
-      sctk_abort();
-    }
+	cli_option = sctk_get_net_config_by_name( option_name );
 
-    /* Set the number of rails used for the routing interface */
-    sctk_route_set_rail_nb(cli_option->rails_size);
+	if (cli_option == NULL) 
+	{
+		/* We did not find this name in the network configurations */
+		sctk_error("No configuration found for the network '%s'. Please check you '-net=' argument"
+			   " and your configuration file", option_name);
+		sctk_abort();
+	}
 
-    /* Compute the number of rails for each type:
-     * TODO: I think we could simplify this loop ... */
-    int nb_rails_infiniband = 0;
-    int nb_rails_tcp = 0;
-    int nb_rails_tcpoib = 0;
+	/* Set the number of rails used for the routing interface */
+	sctk_route_set_rail_nb(cli_option->rails_size);
 
-    for (k=0; k<cli_option->rails_size; ++k) {
-      struct sctk_runtime_config_struct_net_rail * rail = NULL;
-      for (l=0; l<sctk_net_get_config()->rails_size; ++l){
-        if (strcmp(cli_option->rails[k], sctk_net_get_config()->rails[l].name) == 0) {
-          rail = &sctk_net_get_config()->rails[l];
-          break;
-        }
-      }
+	/* Compute the number of rails for each type:
+	* TODO: I think we could simplify this loop ... */
+	int nb_rails_infiniband = 0;
+	int nb_rails_tcp = 0;
+	int nb_rails_tcpoib = 0;
 
-      if (rail == NULL) {
-        sctk_error("Rail with name '%s' not found in config!", cli_option->rails[k]);
-        sctk_abort();
-      }
+	for (k=0; k<cli_option->rails_size; ++k)
+	{
+		/* Get the rail */
+		struct sctk_runtime_config_struct_net_rail * rail = sctk_get_rail_config_by_name( cli_option->rails[k] );
+		
+		if (rail == NULL) {
+			sctk_error("Rail with name '%s' not found in config!", cli_option->rails[k]);
+			sctk_abort();
+		}
 
-      /* Try to find the rail associated to the configuration */
-      for (j=0; j<sctk_net_get_config()->configs_size; ++j) {
-        if (strcmp(rail->config, sctk_net_get_config()->configs[j].name) == 0) {
-          char* topology = rail->topology;
+		/* Try to find the driver associated to the configuration */
+		struct sctk_runtime_config_struct_net_driver_config * driver = sctk_get_driver_config_by_name( rail->config );
+		
+		if (driver == NULL) {
+			sctk_error("Driver with name '%s' not found in config!", rail->config);
+			continue;
+		}
 
-          /* Switch on the driver to use */
-          switch (sctk_net_get_config()->configs[j].driver.type) {
-#ifdef MPC_USE_INFINIBAND
-            case SCTK_RTCFG_net_driver_infiniband: /* INFINIBAND */
-              nb_rails_infiniband ++ ;
-              break;
-#endif
-            case SCTK_RTCFG_net_driver_tcp: /* TCP */
-              nb_rails_tcp ++ ;
-              break;
-            case SCTK_RTCFG_net_driver_tcpoib: /* TCP */
-              nb_rails_tcpoib ++ ;
-              break;
-            default:
-              sctk_network_not_implemented_warn(option_name);
-              name = "tcp";
-	      goto restart;
-              break;
-          }
-        }
-      }
-    }
-    
-    /* End of rails computing. Now allocate ! */
+		/* Switch on the driver to use */
+		switch (driver->driver.type)
+		{
+			#ifdef MPC_USE_INFINIBAND
+			case SCTK_RTCFG_net_driver_infiniband: /* INFINIBAND */
+				nb_rails_infiniband++ ;
+			break;
+			#endif
+			case SCTK_RTCFG_net_driver_tcp: /* TCP */
+				nb_rails_tcp++ ;
+			break;
+			case SCTK_RTCFG_net_driver_tcpoib: /* TCP */
+				nb_rails_tcpoib++ ;
+			break;
+			default:
+				sctk_network_not_implemented_warn(option_name);
+				name = "tcp";
+				goto restart;
+			break;
+		}
 
-    for (k=0; k<cli_option->rails_size; ++k) {
-      struct sctk_runtime_config_struct_net_rail * rail = NULL;
-      for (l=0; l<sctk_net_get_config()->rails_size; ++l){
-        if (strcmp(cli_option->rails[k], sctk_net_get_config()->rails[l].name) == 0) {
-          rail = &sctk_net_get_config()->rails[l];
-          break;
-        }
-      }
+	}
 
-      if (rail == NULL) {
-        sctk_error("Rail with name '%s' not found in config!", cli_option->rails[k]);
-        sctk_abort();
-      }
-      sctk_nodebug("Found rail '%s' to init", rail->name);
+	/* End of rails computing. Now allocate ! */
 
-      /* Try to find the rail associated to the configuration */
-      for (j=0; j<sctk_net_get_config()->configs_size; ++j) {
-        if (strcmp(rail->config, sctk_net_get_config()->configs[j].name) == 0) {
-          char* topology = rail->topology;
-          /* Set infos for the current rail */
-          sctk_route_set_rail_infos(k, rail,
-            &sctk_net_get_config()->configs[j]);
+	for (k=0; k<cli_option->rails_size; ++k)
+	{
+		/* For each RAIL */
+		struct sctk_runtime_config_struct_net_rail * rail = sctk_get_rail_config_by_name( cli_option->rails[k] );
 
-          /* Switch on the driver to use */
-          switch (sctk_net_get_config()->configs[j].driver.type) {
-#ifdef MPC_USE_INFINIBAND
-            case SCTK_RTCFG_net_driver_infiniband: /* INFINIBAND */
-              sctk_network_init_multirail_ib(k, nb_rails_infiniband);
-              break;
-#endif
-            case SCTK_RTCFG_net_driver_tcp: /* TCP */
-              sctk_network_init_multirail_tcp(k, nb_rails_tcp);
-              break;
-            case SCTK_RTCFG_net_driver_tcpoib: /* TCP */
-              sctk_network_init_multirail_tcpoib(k, nb_rails_tcpoib);
-              break;
-            default:
-              sctk_network_not_implemented(option_name);
-              break;
-          }
-          /* Increment the number of rails used */
-          rails_nb++;
-        }
-      }
-    }
+		if (rail == NULL)
+		{
+			sctk_error("Rail with name '%s' not found in config!", cli_option->rails[k]);
+			sctk_abort();
+		}
+		
+		sctk_nodebug("Found rail '%s' to init", rail->name);
 
-    sctk_route_finalize();
-    sctk_checksum_init();
-  }
+		/* For this rail retrieve the config */
+		struct sctk_runtime_config_struct_net_driver_config * driver = sctk_get_driver_config_by_name( rail->config );
+		
+		if (driver == NULL) {
+			sctk_error("Driver with name '%s' not found in config!", rail->config);
+			continue;
+		}
+
+		/* Set infos for the current rail */
+		sctk_route_set_rail_infos(k, rail, driver);
+
+		/* Switch on the driver to use */
+		switch (driver->driver.type)
+		{
+			#ifdef MPC_USE_INFINIBAND
+			case SCTK_RTCFG_net_driver_infiniband: /* INFINIBAND */
+				sctk_network_init_multirail_ib(k, nb_rails_infiniband);
+			break;
+			#endif
+			case SCTK_RTCFG_net_driver_tcp: /* TCP */
+				sctk_network_init_multirail_tcp(k, nb_rails_tcp);
+			break;
+			case SCTK_RTCFG_net_driver_tcpoib: /* TCP */
+				sctk_network_init_multirail_tcpoib(k, nb_rails_tcpoib);
+			break;
+			default:
+				sctk_network_not_implemented(option_name);
+			break;
+		}
+		/* Increment the number of rails used */
+		rails_nb++;
+	}
+
+	sctk_route_finalize();
+	sctk_checksum_init();
+  
 }
 
 
