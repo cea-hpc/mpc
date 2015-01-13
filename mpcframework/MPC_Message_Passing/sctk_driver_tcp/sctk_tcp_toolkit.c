@@ -37,114 +37,236 @@
 #include <netdb.h>
 #include <sctk_spinlock.h>
 #include <sctk_net_tools.h>
-
-
+#include <errno.h>
 
 /************ SOCKET MANIPULATION ****************/
-static int
-sctk_tcp_connect_to (char *name_init,sctk_rail_info_t* rail)
+
+static int sctk_tcp_connect_to (char *name_init, sctk_rail_info_t* rail)
 {
-  int clientsock_fd;
-  struct sockaddr_in serv_addr;
-  struct hostent *server;
-  char* ip;
-  char name[MAX_STRING_SIZE];
-  int portno = -1;
-  int i;
-  sprintf(name,"%s",name_init);
+	int clientsock_fd;
+	struct sockaddr_in serv_addr;
+	struct hostent *server;
+	char* ip;
+	char name[MAX_STRING_SIZE];
+	char * portno = NULL;
+	int i;
 
-  for(i = 0; i < MAX_STRING_SIZE; i++){
-    if(name[i] == ':'){
-      name[i] = '\0';
-      name_init[i] = '\0';
-      sctk_nodebug("Port no %s",name + (i+1));
-      portno = atoi(name + (i+1));
-      break;
-    }
-  }
-
-  sctk_nodebug ("Try connection to |%s| on port %d type %d", name, portno,AF_INET);
-
-  clientsock_fd = socket (AF_INET, SOCK_STREAM, 0);
-  if (clientsock_fd < 0)
-    sctk_error ("ERROR opening socket");
-
-  if(rail->network.tcp.sctk_use_tcp_o_ib){
-    sprintf(name,"%s-ib0",name_init);
-  } else {
-    sprintf(name,"%s-ib0",name_init);
-    server = gethostbyname  (name);
-    if (server == NULL)
-    {
 	sprintf(name,"%s",name_init);
-    }
-/*    sctk_warning("Use hostname %s",name);*/
-  }
-  sctk_nodebug("Connect to %s",name);
 
-  server = gethostbyname (name);
-  if (server == NULL)
-    {
-      fprintf (stderr, "ERROR, no such host %s\n",name);
-      exit (-1);
-    }
-  ip = (char *) server->h_addr;
+	/* Extract server name and port */
+	
+	for(i = 0; i < MAX_STRING_SIZE; i++)
+	{
+		if(name[i] == ':')
+		{
+			name[i] = '\0';
+			name_init[i] = '\0';
+			sctk_nodebug("Port no %s",name + (i+1));
+			portno = name + (i+1);
+			
+			break;
+		}
+	}
 
-  memset ((char *) &serv_addr, 0, sizeof (serv_addr));
-  serv_addr.sin_family = AF_INET;
-  memmove ((char *) &serv_addr.sin_addr.s_addr,
-	   ip, server->h_length);
-  serv_addr.sin_port = htons ((unsigned short) portno);
-  if (connect
-      (clientsock_fd, (struct sockaddr *) (&serv_addr),
-       sizeof (serv_addr)) < 0)
-    {
-      perror ("ERROR connecting");
-      abort ();
-    }
-/*   sctk_print_getsockname(clientsock_fd); */
+	/* Rely on IP over IB if possible */
+	
+	if(rail->network.tcp.sctk_use_tcp_o_ib)
+	{
+		sprintf(name,"%s-ib0",name_init);
+	}
+	else
+	{
+		/* Try the hostname */
+		sprintf(name,"%s",name_init);
 
-  sctk_nodebug ("Try connection to %s on port %d done", name, portno);
-  return clientsock_fd;
+		/* Make suer it resolves */
+		server = gethostbyname(name);
+		
+		if (server == NULL)
+		{
+			/* If host fails to resolve fallback to IP over IB */
+			sprintf(name,"%s-ib0",name_init);
+		}
+	}
+	
+	/* Start Name Resolution */
+	
+	sctk_nodebug ("Try connection to |%s| on port %s type %d", name, portno,AF_INET);
+	struct addrinfo *results;
+
+	/* First use getaddrinfo to extract connection type */
+	int ret = getaddrinfo( name, portno, NULL, &results);
+
+	if( ret != 0 )
+	{
+		printf("Error resolving name : %s\n", gai_strerror(ret) );
+		return -1;
+	}
+
+	struct addrinfo *current = results;
+
+	int connected = 0;
+
+	/* Walk getaddrinfo configurations */
+	while( current )
+	{
+		errno = 0;
+		/* First open a socket */
+		clientsock_fd = socket( current->ai_family, current->ai_socktype, current->ai_protocol );
+
+		if( clientsock_fd < 0 )
+		{
+			perror( "socket" );
+		}
+		else
+		{
+			/* Modify the socket to force the flush of messages. Increase the
+			* performance for short messages. See http://www.ibm.com/developerworks/library/l-hisock/index.html */
+			int one = 1;
+			if (setsockopt(clientsock_fd, IPPROTO_TCP, TCP_NODELAY, &one, sizeof(one)) == -1 )
+			{
+				sctk_error("Cannot modify the socket options!");
+			}
+			
+			/* Try to connect */
+			errno = 0;
+			if(connect(clientsock_fd, current->ai_addr, current->ai_addrlen) != -1)
+			{
+				connected = 1;
+				/* We are connected all ok */
+				break;
+			}
+			else
+			{
+				perror("connect");
+			}
+
+			close( clientsock_fd );
+		}
+
+		/* Lets try next connection type */
+		current = current->ai_next;
+	}
+
+	freeaddrinfo(results);
+
+	/* Did we fail ? */
+	if( connected == 0 )
+	{
+		sctk_error("Failed to connect to %s:%s\n", name, portno);
+		sctk_abort();
+	}
+	
+	return clientsock_fd;
 }
 
-static void
-sctk_client_create_recv_socket (sctk_rail_info_t* rail)
+static void sctk_client_create_recv_socket (sctk_rail_info_t* rail)
 {
-  struct sockaddr_in serv_addr;
+	errno = 0;
 
-  rail->network.tcp.sockfd = socket (AF_INET, SOCK_STREAM, 0);
+	/* Use a portable way of setting a listening port */
+	struct addrinfo hints, *results;
 
-  /* Modify the socket to force the flush of messages. Increase the
-   * performance for short messages. See http://www.ibm.com/developerworks/library/l-hisock/index.html */
-  int one = 1;
-  if (setsockopt(rail->network.tcp.sockfd, IPPROTO_TCP, TCP_NODELAY, &one, sizeof(one)) == -1 ){
-    sctk_error("Cannot modify the socket options!");
-    sctk_abort();
-  }
+	/* Initialize addrinfo struct */
+	memset( &hints, 0, sizeof( struct addrinfo ) );
+	hints.ai_family = AF_UNSPEC; /* Any network */
+	hints.ai_socktype = SOCK_STREAM; /* Stream TCP socket */
+	hints.ai_flags = AI_PASSIVE; /* We are going to bind this socket */
 
-  if (rail->network.tcp.sockfd < 0){
-    sctk_error ("ERROR opening socket");
-    sctk_abort();
-  }
+	/* We set port "0" in order to get a free port without linear scanning */
+	int ret = getaddrinfo( NULL, "0", &hints, &results);
 
-  memset ((char *) &serv_addr, 0, sizeof (serv_addr));
+	if( ret != 0 )
+	{
+		printf("Failed to create a bindable socket : %s\n", gai_strerror(ret) );
+		sctk_abort();
+	}
 
-  rail->network.tcp.portno = 1023;
-  sctk_nodebug ("Looking for an available port\n");
-  do
-    {
-      rail->network.tcp.portno++;
-      serv_addr.sin_family = AF_INET;
-      serv_addr.sin_addr.s_addr = INADDR_ANY;
-      serv_addr.sin_port = htons ((unsigned short) rail->network.tcp.portno);
+	struct addrinfo *current = results;
 
-    }
-  while (bind (rail->network.tcp.sockfd, (struct sockaddr *) &serv_addr,
-	       sizeof (serv_addr)) < 0);
-  sctk_nodebug ("Looking for an available port found %d\n", portno);
+	/* Init socket id to -1 */
+	rail->network.tcp.sockfd = -1;
+	
+	/* Iterate over results picking the first working candidate */
+	while( current )
+	{
+		errno = 0;
+		/* First try to open a socket */
+		rail->network.tcp.sockfd = socket( current->ai_family, current->ai_socktype, current->ai_protocol );
 
-  listen (rail->network.tcp.sockfd, 10);
+		if( rail->network.tcp.sockfd < 0 )
+		{
+			perror( "socket" );
+		}
+		else
+		{
+			/* Modify the socket to force the flush of messages. Increase the
+			* performance for short messages. See http://www.ibm.com/developerworks/library/l-hisock/index.html */
+			int one = 1;
+			if (setsockopt(rail->network.tcp.sockfd, IPPROTO_TCP, TCP_NODELAY, &one, sizeof(one)) == -1 )
+			{
+				sctk_error("Cannot modify the socket options!");
+			}
+
+			errno = 0;
+			
+			/* Bind the socket to the port */
+			if (bind(rail->network.tcp.sockfd, current->ai_addr, current->ai_addrlen) != -1)
+			{
+					/* Start listening on that port */
+					if (listen(rail->network.tcp.sockfd,  512) != -1)
+					{
+							/* As we are bound to "0" we want to get the actual port */
+							struct sockaddr_in socket_infos;
+							socklen_t infolen = sizeof(struct sockaddr);
+							
+							if(getsockname(rail->network.tcp.sockfd, (struct sockaddr*)&socket_infos, &infolen) == -1 )
+							{
+								perror( "getsockname" );
+								sctk_abort();
+							}
+							else
+							{
+								if( infolen == sizeof(struct sockaddr_in) )
+								{
+									rail->network.tcp.portno = ntohs(socket_infos.sin_port);
+								}
+								else
+								{
+									sctk_error("Could not retrieve port number\n");
+									close(rail->network.tcp.sockfd);
+									sctk_abort();
+								}
+							}   
+
+							break;
+			
+					}
+					else
+					{
+						perror("listen");
+						close(rail->network.tcp.sockfd);
+						
+					}
+			}
+			else
+			{
+				perror("bind");
+				close(rail->network.tcp.sockfd);
+			}
+		}
+		
+		current = current->ai_next;
+	}
+
+	freeaddrinfo(results);
+
+	/* Did we fail ? */
+	if( rail->network.tcp.sockfd < 0 )
+	{
+		sctk_error("Failed to set a listening socket\n");
+		sctk_abort();
+	}
 }
 
 /************ ROUTES ****************/
