@@ -27,29 +27,37 @@ extern "C"
 {
 #endif
 
-#ifndef __SCTK_ROUTE_H_
-#error "sctk_route must be included before sctk_tcp.h"
-#endif
-
 #include <sctk_spinlock.h>
 
 #define MAX_STRING_SIZE 2048
-  typedef struct {
-    sctk_spinlock_t lock;
-    int fd;
-  }sctk_tcp_data_t;
-  
-  typedef struct {
-    int sctk_use_tcp_o_ib;
-    int sockfd;
-    int portno;
-    int rail;
-    char connection_infos[MAX_STRING_SIZE];
-    size_t connection_infos_size;
-    void* (*tcp_thread)(struct sctk_route_table_s*);
-  }sctk_tcp_rail_info_t;
 
-  void sctk_network_init_tcp(sctk_rail_info_t* rail,int sctk_use_tcp_o_ib);
+/** \brief ROUTE level data structure for TCP
+*
+*   This structure is stored in each \ref sctk_route_table_s structure
+*   using the \ref sctk_route_info_spec_t union
+*/
+typedef struct
+{
+	sctk_spinlock_t lock;	/**< Client socket write lock */
+	int fd;			/**< Client socket */
+}sctk_tcp_route_info_t;
+  
+/** \brief RAIL level info data structure for TCP
+ *  
+ *  This structure is stored in each \ref sctk_rail_info_s structure
+ *  using the \ref sctk_rail_info_spec_t union
+ */
+typedef struct
+{
+	int sctk_use_tcp_o_ib; 				/**< set to 1 if the TCP connection targets TCP over IB */
+	int sockfd;					/**< Listening socket file descriptor */
+	int portno;					/**< Listening socket port number */
+	char connection_infos[MAX_STRING_SIZE];		/**< Connection info for this listening socket */
+	size_t connection_infos_size;			/**< Length of the connection_info field */
+	void* (*tcp_thread)(struct sctk_route_table_s*);/**< Function to call when registering a route (RDMA/MULTIRAIL/TCP) */
+}sctk_tcp_rail_info_t;
+
+ void sctk_network_init_tcp(sctk_rail_info_t* rail,int sctk_use_tcp_o_ib);
 
 #ifdef __cplusplus
 }

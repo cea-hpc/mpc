@@ -40,6 +40,10 @@ struct sctk_ib_data_s;
 #define MIN_SIZE_DIM 4
 
 
+/************************************************************************/
+/* sctk_Node_t                                                          */
+/************************************************************************/
+
 /**
 * \brief Implements a static Node
 *
@@ -48,14 +52,64 @@ struct sctk_ib_data_s;
 */
 typedef struct sctk_Node_t
 {
-int c[MAX_SCTK_FAST_NODE_DIM]; /*!< Node storage */
-int neigh[MAX_SCTK_FAST_NODE_DIM][4]; /*!< Node neigbours storage */
-sctk_uint8_t breakdown[MAX_SCTK_FAST_NODE_DIM*2];
-sctk_uint8_t d;                           /*!< Node dimension */
-int id;						 /*!< Node ident */
+	int c[MAX_SCTK_FAST_NODE_DIM];				/**< Node storage */
+	int neigh[MAX_SCTK_FAST_NODE_DIM][4];			/**< Node neigbours storage */
+	sctk_uint8_t breakdown[MAX_SCTK_FAST_NODE_DIM*2];
+	sctk_uint8_t d;                        			/**< Node dimension */
+	int id;							/**< Node ident */
 }sctk_Node_t;
 
+/**
+* \brief Zero a Node
+* \param Node pointer to sctk_Node_t
+*
+* This call will set all the dimensions
+* of the given tupple to 0
+*/
+inline void sctk_Node_zero ( sctk_Node_t *Node );
 
+/**
+* \brief Display a Node to stdout
+* \param Node pointer to sctk_Node_t
+*/
+inline void sctk_Node_print (sctk_Node_t *Node );
+
+/**
+* \brief Initialize a Node
+* \param Node pointer to an sctk_Node_t
+* \param int the ident of the node
+*/
+void sctk_Node_init (sctk_Node_t *Node, int id);
+
+/**
+* \brief Compute the id (~rank) of a given coordinate in the Torus
+* \param coord coordinates
+* \return id associated to these coordinates
+*
+* Once the sctk_Torus_t is initialized this call is thread safe
+* This call will abort if check are enabled and entries invalid
+*/
+int sctk_Node_id ( sctk_Node_t *coord );
+
+/**
+* \brief Release a Node
+* \param Node pointer to sctk_Node_t
+*
+* This call just set the dimension to 0
+* making the Node unusable
+*/
+inline void sctk_Node_release ( sctk_Node_t *Node );
+
+/**
+* \brief Set a Node by copy
+* \param Node pointer to sctk_Node_t, it will be updated
+* \param Node pointer to sctk_Node_t
+*/
+inline void sctk_Node_set_from ( sctk_Node_t *Node, sctk_Node_t *NodeToCopy );
+
+/************************************************************************/
+/* sctk_Torus_t                                                         */
+/************************************************************************/
 
 /**
 * \brief Implements a Torus topology
@@ -70,46 +124,99 @@ int id;						 /*!< Node ident */
 */
 typedef struct sctk_Torus_t
 {
-	int node_count;             /*!< Number of nodes in the Torus */
-	sctk_uint8_t dimension;               /*!< Torus dimension */
-	sctk_uint8_t size_last_dimension;	 /*!<minimum number of ranks for the last dimension*/
-	int node_regular; 			 /*!<node_count when it is a perfect torus*/
-	int node_left; 			 /*!<zero when it is a perfect torus*/
-	sctk_Node_t last_node;		/*!<useful when it is an imperfect torus*/
+	int node_count;            		/**< Number of nodes in the Torus */
+	sctk_uint8_t dimension;               	/**< Torus dimension */
+	sctk_uint8_t size_last_dimension;	/**< minimum number of ranks for the last dimension  */
+	int node_regular; 			/**< node_count when it is a perfect torus */
+	int node_left; 			 	/**< zero when it is a perfect torus */
+	sctk_Node_t last_node;			/**< useful when it is an imperfect torus */
 
 }sctk_Torus_t;
 
+/**
+* \brief Initialize a Torus or torus topology
+* \param node_count number of nodes in the Torus (task count in MPI)
+* \param dimension dimension of the Torus/torus ( from 1 to MAX_SCTK_FAST_NODE_DIM )
+* This call can handle any non null node_count.
+*
+*/
+void sctk_Torus_init ( int node_count, sctk_uint8_t dimension);
 
-typedef struct
-{
-	int destination;
-	int rail;
-}sctk_route_key_t;
+
+/**
+* \brief Compute the distance between two Nodes
+* \param a integer, the value of the coordinate of the first node
+* \param b integer, the value of the coordinate of the second node
+* \param sdim integer, the size of the current dimension
+* \return distance beetween a and b
+*
+*/
+inline int sctk_Torus_Node_distance (int a, int b ,unsigned sdim);
 
 
+/**
+* \brief Release a sctk_Torus_t
+* After this call any call reffering the Torus
+* is likely to fail ...
+*
+*/
+void sctk_Torus_release ();
+
+/**
+* \brief search the next node for the route
+* \param dest node destination of message
+* \return the id of the nearest node
+*/
+int sctk_Torus_route_next(sctk_Node_t *dest);
+
+/*
+* Utilities
+*/
+
+/**
+* \brief give a neighbour of a node
+* \param unsigned int the dimension which is different between the cuurent node and its neighbour
+* \param unsigned int 0 it's the "left" neigbour, 1 is the "right"
+* \return the coordinate of the neighbour in the dimension i
+*/
+int sctk_Torus_neighbour_dimension(unsigned i,unsigned j);
+
+/************************************************************************/
+/* Rail Info                                                            */
+/************************************************************************/
+
+/** \brief Network dependent RAIL informations */
 typedef union
 {
-	/* TCP */
-	sctk_tcp_data_t tcp;
-	/* IB */
-	sctk_ib_data_t ib;
-}sctk_route_data_t;
-
-typedef union
-{
-	/* TCP */
-	sctk_tcp_rail_info_t tcp;
-	/* IB */
-	sctk_ib_rail_info_t ib;
+	sctk_tcp_rail_info_t tcp;	/**< TCP Rail Info */
+	sctk_ib_rail_info_t ib;		/**< IB Rail Info */
 }sctk_rail_info_spec_t;
 
+/** This structure gathers all informations linked to a network rail
+ * 
+ *  All rails informations are stored in the sctk_route file 
+ *  using the \ref sctk_route_set_rail_infos function
+ */
 struct sctk_rail_info_s
 {
-	sctk_rail_info_spec_t network;
-	/* Initialize structure which are specific to MPI tasks */
+	/* Global Info */
+	int rail_number; /**< ID of this rail */
+	char* network_name; /**< Name of this rail */
+	/* Network Infos */
+	sctk_rail_info_spec_t network;	/**< Network dependent rail info */
+	char* topology_name; /**< Name of the target topology */
+	char on_demand;	/**< If the rail allows on demand-connexions */
+	/* Configuration Info */
+	struct sctk_runtime_config_struct_net_rail * runtime_config_rail; /**< Rail config */
+	struct sctk_runtime_config_struct_net_driver_config * runtime_config_driver_config; /**< Driver config */
+	
+	/* HOOKS */
+	
+	/* Task Init and release */
 	void (*finalize_task) (struct sctk_rail_info_s*);
 	void (*initialize_task) (struct sctk_rail_info_s*);
 	void (*initialize_leader_task) (struct sctk_rail_info_s*);
+	/* Network interactions */
 	void (*send_message) (sctk_thread_ptp_message_t *,struct sctk_rail_info_s*);
 	void (*notify_recv_message) (sctk_thread_ptp_message_t * ,struct sctk_rail_info_s*);
 	void (*notify_matching_message) (sctk_thread_ptp_message_t * ,struct sctk_rail_info_s*);
@@ -117,49 +224,61 @@ struct sctk_rail_info_s
 	void (*notify_idle_message) (struct sctk_rail_info_s*);
 	void (*notify_any_source_message) (int, int, struct sctk_rail_info_s*);
 	int (*send_message_from_network) (sctk_thread_ptp_message_t * );
+	/* Connection management */
 	void(*connect_to)(int,int,sctk_rail_info_t*);
 	void(*connect_from)(int,int,sctk_rail_info_t*);
+	/* Routing */
 	int (*route)(int , sctk_rail_info_t* );
 	void (*route_init)(sctk_rail_info_t*);
-	char* network_name;
-	char* topology_name;
-	char on_demand;
-	/* If the rail allows on demand-connexions */
-	int rail_number;
-	/* Infos from runtime config */
-	struct sctk_runtime_config_struct_net_rail * runtime_config_rail;
-	struct sctk_runtime_config_struct_net_driver_config * runtime_config_driver_config;
 };
 
+void sctk_route_set_rail_nb(int nb);
+void sctk_route_set_rail_infos(int rail, struct sctk_runtime_config_struct_net_rail * runtime_config_rail,
+					 struct sctk_runtime_config_struct_net_driver_config * runtime_config_driver_config);
+int sctk_route_get_rail_nb();
+sctk_rail_info_t* sctk_route_get_rail(int i);
+
+/************************************************************************/
+/* Route Info                                                           */
+/************************************************************************/
+
+/** \brief Route type */
 typedef enum
 {
-	ROUTE_ORIGIN_DYNAMIC  = 111,
-	ROUTE_ORIGIN_STATIC   = 222
+	ROUTE_ORIGIN_DYNAMIC  = 111, /**< Route has been created dynamically */
+	ROUTE_ORIGIN_STATIC   = 222  /**< Route has been created statically */
 } sctk_route_origin_t;
 
+/** \brief Route lookup key */
+typedef struct
+{
+	int destination;
+	int rail;
+}sctk_route_key_t;
+
+/** \brief Network dependent ROUTE informations */
+typedef union
+{
+	sctk_tcp_route_info_t tcp; /**< TCP route info */
+	sctk_ib_data_t ib; /**< IB route info */
+}sctk_route_info_spec_t;
+
+/** \brief Route table entry
+ *  Describes a network endpoint
+ */
 typedef struct sctk_route_table_s
 {
-	sctk_route_key_t key;
-
-	sctk_route_data_t data;
-
-	sctk_rail_info_t* rail;
-
 	UT_hash_handle hh;
-
-	/* Origin of the route entry: static or dynamic route */
-	sctk_route_origin_t origin;
-
-	/* State of the route */
-	OPA_int_t state;
-	/* If a message "out of memory" has already been sent to the
-	* process to notice him that we are out of memory */
-	OPA_int_t low_memory_mode_local;
-	/* If the remote process is running out of memory */
-	OPA_int_t low_memory_mode_remote;
-	/* Return if the process is the initiator of the remote creation.
-	* if 'is_initiator == CHAR_MAX, value not set */
-	char is_initiator;
+	sctk_route_key_t key;
+	sctk_route_info_spec_t data;
+	sctk_rail_info_t* rail;
+	sctk_route_origin_t origin;       /**< Origin of the route entry: static or dynamic route */
+	OPA_int_t state; 		  /**< State of the route */
+	OPA_int_t low_memory_mode_local;  /**< If a message "out of memory" has already been sent to the
+					   *   process to notice him that we are out of memory */
+	OPA_int_t low_memory_mode_remote; /**< If the remote process is running out of memory */
+	char is_initiator;		  /**< Return if the process is the initiator of the remote creation.
+					   * if 'is_initiator == CHAR_MAX, value not set */
 	sctk_spinlock_t lock;
 } sctk_route_table_t;
 
@@ -188,17 +307,10 @@ int sctk_route_is_low_memory_mode_local(sctk_route_table_t* tmp);
 void sctk_route_set_low_memory_mode_local(sctk_route_table_t* tmp, int low);
 
 /* Function for getting a route */
-  sctk_route_table_t* sctk_get_route(int dest, sctk_rail_info_t* rail);
+sctk_route_table_t* sctk_get_route(int dest, sctk_rail_info_t* rail);
 sctk_route_table_t* sctk_get_route_to_process(int dest, sctk_rail_info_t* rail);
 inline sctk_route_table_t* sctk_get_route_to_process_no_ondemand(int dest, sctk_rail_info_t* rail);
 inline sctk_route_table_t* sctk_get_route_to_process_static(int dest, sctk_rail_info_t* rail);
-
-void sctk_route_set_rail_nb(int nb);
-void sctk_route_set_rail_infos(int rail,
-    struct sctk_runtime_config_struct_net_rail * runtime_config_rail,
-    struct sctk_runtime_config_struct_net_driver_config * runtime_config_driver_config);
-int sctk_route_get_rail_nb();
-sctk_rail_info_t* sctk_route_get_rail(int i);
 sctk_route_table_t* sctk_get_route_to_process_no_route(int dest, sctk_rail_info_t* rail);
 
 /* Routes */
@@ -210,11 +322,11 @@ void sctk_route_init_in_rail(sctk_rail_info_t* rail, char* topology);
 void sctk_route_finalize();
 int sctk_route_is_finalized();
 
+/************************************************************************/
+/* On-Demand                                                            */
+/************************************************************************/
 
-/*-----------------------------------------------------------
- *  For ondemand
- *----------------------------------------------------------*/
-/* State of the QP */
+/** \brief State of the QP */
 typedef enum sctk_route_state_e 
 {
   STATE_CONNECTED     = 111,
@@ -250,107 +362,7 @@ __UNUSED__ static sctk_route_origin_t sctk_route_get_origin(sctk_route_table_t *
 /* Signalization rails: getters and setters */
 void sctk_route_set_signalization_rail(sctk_rail_info_t* rail);
 sctk_rail_info_t* sctk_route_get_signalization_rail();
-/* Torus and Node functions */
-
-/**
-* \brief Zero a Node
-* \param Node pointer to sctk_Node_t
-*
-* This call will set all the dimensions
-* of the given tupple to 0
-*
-*/
-inline void sctk_Node_zero ( sctk_Node_t *Node );
-
-	/**
-* \brief Display a Node to stdout
-* \param Node pointer to sctk_Node_t
-*
-*/
-inline void sctk_Node_print (sctk_Node_t *Node );
-
-/**
-* \brief Initialize a Node
-	* \param Node pointer to an sctk_Node_t
-* \param int the ident of the node
-*
-*/
-void sctk_Node_init (sctk_Node_t *Node, int id);
-
-/**
-* \brief Compute the id (~rank) of a given coordinate in the Torus
-* \param coord coordinates
-* \return id associated to these coordinates
-*
-* Once the sctk_Torus_t is initialized this call is thread safe
-* This call will abort if check are enabled and entries invalid
-*
-*/
-int sctk_Node_id ( sctk_Node_t *coord );
-
-/**
-* \brief Release a Node
-* \param Node pointer to sctk_Node_t
-*
-* This call just set the dimension to 0
-* making the Node unusable
-*
-*/
-inline void sctk_Node_release ( sctk_Node_t *Node );
-
-/**
-* \brief Set a Node by copy
-* \param Node pointer to sctk_Node_t, it will be updated
-* \param Node pointer to sctk_Node_t
-*
-*/
-inline void sctk_Node_set_from ( sctk_Node_t *Node, sctk_Node_t *NodeToCopy );
-
-/**
-* \brief Initialize a Torus or torus topology
-* \param node_count number of nodes in the Torus (task count in MPI)
-* \param dimension dimension of the Torus/torus ( from 1 to MAX_SCTK_FAST_NODE_DIM )
-* This call can handle any non null node_count.
-*
-*/
-void sctk_Torus_init ( int node_count, sctk_uint8_t dimension);
-
-/**
-* \brief Release a sctk_Torus_t
-* After this call any call reffering the Torus
-* is likely to fail ...
-*
-*/
-void sctk_Torus_release ();
-
-/**
-* \brief search the next node for the route
-* \param dest node destination of message
-* \return the id of the nearest node
-*/
-int sctk_Torus_route_next(sctk_Node_t *dest);
-
-/*
-* Utilities
-*/
-
-/**
-* \brief give a neighbour of a node
-* \param unsigned int the dimension which is different between the cuurent node and its neighbour
-* \param unsigned int 0 it's the "left" neigbour, 1 is the "right"
-* \return the coordinate of the neighbour in the dimension i
-*/
-int sctk_Torus_neighbour_dimension(unsigned i,unsigned j);
 
 
-/**
-* \brief Compute the distance between two Nodes
-* \param a integer, the value of the coordinate of the first node
-* \param b integer, the value of the coordinate of the second node
-* \param sdim integer, the size of the current dimension
-* \return distance beetween a and b
-*
-*/
-inline int sctk_Node_distance (int a, int b ,unsigned sdim);
 
 #endif

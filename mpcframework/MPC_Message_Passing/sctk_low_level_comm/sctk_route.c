@@ -699,7 +699,7 @@ inline void sctk_Node_set_from ( sctk_Node_t *Node, sctk_Node_t *NodeToCopy )
 		}
     }
 
-inline int sctk_Node_distance (int a, int b ,unsigned sdim)
+inline int sctk_Torus_Node_distance (int a, int b ,unsigned sdim)
     {
 
         int tmp = 0;
@@ -1127,7 +1127,7 @@ int sctk_Torus_route_next(sctk_Node_t *dest){
 						else
 							sizeDim = size;
 
-						dist = sctk_Node_distance (node.neigh[i][j*2+1], dest->c[i], sizeDim);
+						dist = sctk_Torus_Node_distance (node.neigh[i][j*2+1], dest->c[i], sizeDim);
 						/*if((node.neigh[i][j*2] == 65 || node.neigh[i][j*2] == 5)&& sctk_process_rank==4){
 							printf("%d -> %d (%d %d %d)\n",j,dist,node.neigh[i][j*2+1], dest->c[i],sizeDim);
 						}*/
