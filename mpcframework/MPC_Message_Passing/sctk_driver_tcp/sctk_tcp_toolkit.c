@@ -17,6 +17,7 @@
 /* #                                                                      # */
 /* # Authors:                                                             # */
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
+/* #   - BESNARD Jean-Baptiste jbbesnard@paratools                        # */
 /* #                                                                      # */
 /* ######################################################################## */
 
@@ -39,7 +40,9 @@
 #include <sctk_net_tools.h>
 #include <errno.h>
 
-/************ SOCKET MANIPULATION ****************/
+/********************************************************************/
+/* Connection Setup                                                 */
+/********************************************************************/
 
 static int sctk_tcp_connect_to (char *name_init, sctk_rail_info_t* rail)
 {
@@ -216,30 +219,30 @@ static void sctk_client_create_recv_socket (sctk_rail_info_t* rail)
 					/* Start listening on that port */
 					if (listen(rail->network.tcp.sockfd,  512) != -1)
 					{
-							/* As we are bound to "0" we want to get the actual port */
-							struct sockaddr_in socket_infos;
-							socklen_t infolen = sizeof(struct sockaddr);
-							
-							if(getsockname(rail->network.tcp.sockfd, (struct sockaddr*)&socket_infos, &infolen) == -1 )
+						/* As we are bound to "0" we want to get the actual port */
+						struct sockaddr_in socket_infos;
+						socklen_t infolen = sizeof(struct sockaddr);
+						
+						if(getsockname(rail->network.tcp.sockfd, (struct sockaddr*)&socket_infos, &infolen) == -1 )
+						{
+							perror( "getsockname" );
+							sctk_abort();
+						}
+						else
+						{
+							if( infolen == sizeof(struct sockaddr_in) )
 							{
-								perror( "getsockname" );
-								sctk_abort();
+								rail->network.tcp.portno = ntohs(socket_infos.sin_port);
 							}
 							else
 							{
-								if( infolen == sizeof(struct sockaddr_in) )
-								{
-									rail->network.tcp.portno = ntohs(socket_infos.sin_port);
-								}
-								else
-								{
-									sctk_error("Could not retrieve port number\n");
-									close(rail->network.tcp.sockfd);
-									sctk_abort();
-								}
-							}   
+								sctk_error("Could not retrieve port number\n");
+								close(rail->network.tcp.sockfd);
+								sctk_abort();
+							}
+						}   
 
-							break;
+						break;
 			
 					}
 					else
@@ -269,7 +272,10 @@ static void sctk_client_create_recv_socket (sctk_rail_info_t* rail)
 	}
 }
 
-/************ ROUTES ****************/
+/********************************************************************/
+/* Route Initializer                                                */
+/********************************************************************/
+
 static void sctk_tcp_add_static_route(int dest, int fd,sctk_rail_info_t* rail,
 				      void* (*tcp_thread)(sctk_route_table_t*))
 {
@@ -298,7 +304,10 @@ static void sctk_tcp_add_static_route(int dest, int fd,sctk_rail_info_t* rail,
 	sctk_user_thread_create (&pidt, &attr,(void*(*)(void*))tcp_thread , new_route);
 }
 
-/************ INTER_THEAD_COMM HOOOKS ****************/
+/********************************************************************/
+/* Route Hooks (Dynamic routes)                                     */
+/********************************************************************/
+
 static void sctk_network_connection_to_tcp(int from, int to,sctk_rail_info_t* rail){
 	int dest_socket;
 	char dest_connection_infos[MAX_STRING_SIZE];
@@ -327,21 +336,24 @@ static void sctk_network_connection_from_tcp(int from, int to,sctk_rail_info_t* 
 	sctk_tcp_add_static_route(to,src_socket,rail,(void * (*)(sctk_route_table_t *))(rail->network.tcp.tcp_thread));
 }
 
-/************ INIT ****************/
+/********************************************************************/
+/* TCP Ring Init Function                                           */
+/********************************************************************/
+
 void sctk_network_init_tcp_all(sctk_rail_info_t* rail,int sctk_use_tcp_o_ib,
 			       void* (*tcp_thread)(sctk_route_table_t*),
 			       int (*route)(int , sctk_rail_info_t* ),
 			       void(*route_init)(sctk_rail_info_t*))
 {
-	char dest_connection_infos[MAX_STRING_SIZE];
-	int dest_rank;
-	int dest_socket = -1;
-	int src_rank;
-	int src_socket = -1;
+	char right_rank_connection_infos[MAX_STRING_SIZE];
+	int right_rank;
+	int right_socket = -1;
+	int left_rank;
+	int left_socket = -1;
 
 	assume(rail->send_message_from_network != NULL);
 
-	/* Fill in rail info */
+	/* Fill in common rail info */
 	rail->route = route;
 	rail->connect_to = sctk_network_connection_to_tcp;
 	rail->connect_from = sctk_network_connection_from_tcp;
@@ -361,8 +373,8 @@ void sctk_network_init_tcp_all(sctk_rail_info_t* rail,int sctk_use_tcp_o_ib,
 	assume(rail->network.tcp.connection_infos_size < MAX_STRING_SIZE);
 
 	/* BUILD a TCP bootstrap ring */
-	dest_rank = (sctk_process_rank + 1) % sctk_process_number;
-	src_rank = (sctk_process_rank + sctk_process_number - 1) % sctk_process_number;
+	right_rank = (sctk_process_rank + 1) % sctk_process_number;
+	left_rank = (sctk_process_rank + sctk_process_number - 1) % sctk_process_number;
 
 	sctk_nodebug("Connection Infos (%d): %s",sctk_process_rank,rail->network.tcp.connection_infos);
 
@@ -372,9 +384,9 @@ void sctk_network_init_tcp_all(sctk_rail_info_t* rail,int sctk_use_tcp_o_ib,
 	sctk_pmi_barrier();
 
 	/* Retrieve Connection info to dest rank from the PMI */
-	assume(sctk_pmi_get_connection_info(dest_connection_infos,MAX_STRING_SIZE,rail->rail_number,dest_rank) == 0);
+	assume(sctk_pmi_get_connection_info(right_rank_connection_infos,MAX_STRING_SIZE,rail->rail_number,right_rank) == 0);
 
-	sctk_nodebug("DEST Connection Infos(%d) to %d: %s",sctk_process_rank,dest_rank,dest_connection_infos);
+	sctk_nodebug("DEST Connection Infos(%d) to %d: %s",sctk_process_rank,right_rank,right_rank_connection_infos);
 
 	sctk_pmi_barrier();
 
@@ -383,16 +395,16 @@ void sctk_network_init_tcp_all(sctk_rail_info_t* rail,int sctk_use_tcp_o_ib,
 	{
 		if(sctk_process_rank % 2 == 0)
 		{
-			sctk_nodebug("Connect to %d",dest_rank);
-			dest_socket = sctk_tcp_connect_to(dest_connection_infos,rail);
-			if(dest_socket < 0){
+			sctk_nodebug("Connect to %d",right_rank);
+			right_socket = sctk_tcp_connect_to(right_rank_connection_infos,rail);
+			if(right_socket < 0){
 				perror("Connection error");
 				sctk_abort();
 			}
 			
 			sctk_nodebug("Wait connection");
-			src_socket = accept (rail->network.tcp.sockfd, NULL,0);
-			if(src_socket < 0){
+			left_socket = accept (rail->network.tcp.sockfd, NULL,0);
+			if(left_socket < 0){
 				perror("Connection error");
 				sctk_abort();
 			}
@@ -400,15 +412,15 @@ void sctk_network_init_tcp_all(sctk_rail_info_t* rail,int sctk_use_tcp_o_ib,
 		else
 		{
 			sctk_nodebug("Wait connection");
-			src_socket = accept (rail->network.tcp.sockfd, NULL,0);
-			if(src_socket < 0){
+			left_socket = accept (rail->network.tcp.sockfd, NULL,0);
+			if(left_socket < 0){
 				perror("Connection error");
 				sctk_abort();
 			}
 			
-			sctk_nodebug("Connect to %d",dest_rank);
-			dest_socket = sctk_tcp_connect_to(dest_connection_infos,rail);
-			if(dest_socket < 0)
+			sctk_nodebug("Connect to %d",right_rank);
+			right_socket = sctk_tcp_connect_to(right_rank_connection_infos,rail);
+			if(right_socket < 0)
 			{
 				perror("Connection error");
 				sctk_abort();
@@ -420,9 +432,9 @@ void sctk_network_init_tcp_all(sctk_rail_info_t* rail,int sctk_use_tcp_o_ib,
 		/* Here particular case of two processes (not to loop) */
 		if(sctk_process_rank % 2 == 0)
 		{
-			sctk_nodebug("Connect to %d",dest_rank);
-			dest_socket = sctk_tcp_connect_to(dest_connection_infos,rail);
-			if(dest_socket < 0){
+			sctk_nodebug("Connect to %d",right_rank);
+			right_socket = sctk_tcp_connect_to(right_rank_connection_infos,rail);
+			if(right_socket < 0){
 				perror("Connection error");
 				sctk_abort();
 			}
@@ -430,8 +442,8 @@ void sctk_network_init_tcp_all(sctk_rail_info_t* rail,int sctk_use_tcp_o_ib,
 		else
 		{
 			sctk_nodebug("Wait connection");
-			dest_socket = accept (rail->network.tcp.sockfd, NULL,0);
-			if(dest_socket < 0){
+			right_socket = accept (rail->network.tcp.sockfd, NULL,0);
+			if(right_socket < 0){
 				perror("Connection error");
 				sctk_abort();
 			}
@@ -441,10 +453,11 @@ void sctk_network_init_tcp_all(sctk_rail_info_t* rail,int sctk_use_tcp_o_ib,
 	sctk_pmi_barrier();
 
 	/* We are all done, now register the routes and create the polling threads */
-	sctk_tcp_add_static_route(dest_rank,dest_socket,rail,tcp_thread);
+	sctk_tcp_add_static_route(right_rank,right_socket,rail,tcp_thread);
 	
-	if(sctk_process_number > 2){
-		sctk_tcp_add_static_route(src_rank,src_socket,rail,tcp_thread);
+	if(sctk_process_number > 2)
+	{
+		sctk_tcp_add_static_route(left_rank,left_socket,rail,tcp_thread);
 	}
 
 	sctk_pmi_barrier();

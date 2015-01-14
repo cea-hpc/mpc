@@ -32,114 +32,157 @@
 #include <sctk_multirail_ib.h>
 #include <sctk_route.h>
 
-int sctk_is_net_migration_available(){
-  if(sctk_migration_mode == 1){
-    not_implemented();
-  }
-  return sctk_migration_mode;
-}
+/************************************************************************/
+/* Network Hooks                                                        */
+/************************************************************************/
 
 /********** SEND ************/
-void sctk_network_send_message_default (sctk_thread_ptp_message_t * msg){
-  not_reachable();
+
+void sctk_network_send_message_default (sctk_thread_ptp_message_t * msg)
+{
+	not_reachable();
 }
 static void (*sctk_network_send_message_ptr) (sctk_thread_ptp_message_t *) = sctk_network_send_message_default;
-void sctk_network_send_message (sctk_thread_ptp_message_t * msg){
-  sctk_network_send_message_ptr(msg);
+
+void sctk_network_send_message (sctk_thread_ptp_message_t * msg)
+{
+	sctk_network_send_message_ptr(msg);
 }
-void sctk_network_send_message_set(void (*sctk_network_send_message_val) (sctk_thread_ptp_message_t *)){
-  sctk_network_send_message_ptr = sctk_network_send_message_val;
+
+void sctk_network_send_message_set(void (*sctk_network_send_message_val) (sctk_thread_ptp_message_t *))
+{
+	sctk_network_send_message_ptr = sctk_network_send_message_val;
 }
 
 /********** NOTIFY_RECV ************/
-void sctk_network_notify_recv_message_default (sctk_thread_ptp_message_t * msg){
+
+void sctk_network_notify_recv_message_default (sctk_thread_ptp_message_t * msg)
+{
 
 }
+
 static void (*sctk_network_notify_recv_message_ptr) (sctk_thread_ptp_message_t *) = sctk_network_notify_recv_message_default;
-void sctk_network_notify_recv_message (sctk_thread_ptp_message_t * msg){
-  sctk_network_notify_recv_message_ptr(msg);
+
+void sctk_network_notify_recv_message (sctk_thread_ptp_message_t * msg)
+{
+	sctk_network_notify_recv_message_ptr(msg);
 }
-void sctk_network_notify_recv_message_set(void (*sctk_network_notify_recv_message_val) (sctk_thread_ptp_message_t *)){
-  sctk_network_notify_recv_message_ptr = sctk_network_notify_recv_message_val;
+
+void sctk_network_notify_recv_message_set(void (*sctk_network_notify_recv_message_val) (sctk_thread_ptp_message_t *))
+{
+	sctk_network_notify_recv_message_ptr = sctk_network_notify_recv_message_val;
 }
 
 /********** NOTIFY_MATCHING ************/
-void sctk_network_notify_matching_message_default (sctk_thread_ptp_message_t * msg){
+
+void sctk_network_notify_matching_message_default (sctk_thread_ptp_message_t * msg)
+{
 
 }
+
 static void (*sctk_network_notify_matching_message_ptr) (sctk_thread_ptp_message_t *) = sctk_network_notify_matching_message_default;
-void sctk_network_notify_matching_message (sctk_thread_ptp_message_t * msg){
-  sctk_network_notify_matching_message_ptr(msg);
+
+void sctk_network_notify_matching_message (sctk_thread_ptp_message_t * msg)
+{
+	sctk_network_notify_matching_message_ptr(msg);
 }
-void sctk_network_notify_matching_message_set(void (*sctk_network_notify_matching_message_val) (sctk_thread_ptp_message_t *)){
-  sctk_network_notify_matching_message_ptr = sctk_network_notify_matching_message_val;
+
+void sctk_network_notify_matching_message_set(void (*sctk_network_notify_matching_message_val) (sctk_thread_ptp_message_t *))
+{
+	sctk_network_notify_matching_message_ptr = sctk_network_notify_matching_message_val;
 }
 
 /********** NOTIFY_PERFORM ************/
-static void sctk_network_notify_perform_message_default (int remote_proces, int remote_task_id, int polling_task_id, int blocking){
+
+static void sctk_network_notify_perform_message_default (int remote_proces, int remote_task_id, int polling_task_id, int blocking)
+{
 
 }
-static void (*sctk_network_notify_perform_message_ptr) (int,int,int,int) =
-  sctk_network_notify_perform_message_default;
-void sctk_network_notify_perform_message (int remote_process, int remote_task_id, int polling_task_id, int blocking){
-  sctk_network_notify_perform_message_ptr(remote_process, remote_task_id, polling_task_id, blocking);
+
+static void (*sctk_network_notify_perform_message_ptr) (int,int,int,int) =  sctk_network_notify_perform_message_default;
+
+void sctk_network_notify_perform_message (int remote_process, int remote_task_id, int polling_task_id, int blocking)
+{
+	sctk_network_notify_perform_message_ptr(remote_process, remote_task_id, polling_task_id, blocking);
 }
-void sctk_network_notify_perform_message_set(void (*sctk_network_notify_perform_message_val) (int,int,int,int)){
-  sctk_network_notify_perform_message_ptr = sctk_network_notify_perform_message_val;
+
+void sctk_network_notify_perform_message_set(void (*sctk_network_notify_perform_message_val) (int,int,int,int))
+{
+	sctk_network_notify_perform_message_ptr = sctk_network_notify_perform_message_val;
 }
 
 /********** NOTIFY_IDLE ************/
-void sctk_network_notify_idle_message_default (){
+
+void sctk_network_notify_idle_message_default ()
+{
 
 }
+
 static void (*sctk_network_notify_idle_message_ptr) () = sctk_network_notify_idle_message_default;
-void sctk_network_notify_idle_message (){
-  sctk_network_notify_idle_message_ptr();
+
+void sctk_network_notify_idle_message ()
+{
+	sctk_network_notify_idle_message_ptr();
 }
-void sctk_network_notify_idle_message_set(void (*sctk_network_notify_idle_message_val) ()){
-  sctk_network_notify_idle_message_ptr = sctk_network_notify_idle_message_val;
+
+void sctk_network_notify_idle_message_set(void (*sctk_network_notify_idle_message_val) ())
+{
+	sctk_network_notify_idle_message_ptr = sctk_network_notify_idle_message_val;
 }
 
 /********** NOTIFY_ANY_SOURCE ************/
-static void sctk_network_notify_any_source_message_default (int polling_task_id,int blocking){
+
+static void sctk_network_notify_any_source_message_default (int polling_task_id,int blocking)
+{
 
 }
-static void (*sctk_network_notify_any_source_message_ptr) (int,int) =
-  sctk_network_notify_idle_message_default;
-void sctk_network_notify_any_source_message (int polling_task_id,int blocking){
-  sctk_network_notify_any_source_message_ptr(polling_task_id,blocking);
-}
-void sctk_network_notify_any_source_message_set(void (*sctk_network_notify_any_source_message_val) (int polling_task_id,int blocking)){
-  sctk_network_notify_any_source_message_ptr = sctk_network_notify_any_source_message_val;
-}
 
-#define FIRST_TRY_DRIVER(dr_name,func,topo) if(strcmp(name,SCTK_STRING(dr_name)) == 0){func(name,topo)
-#define TRY_DRIVER(dr_name,func,topo) } else if(strcmp(name,SCTK_STRING(dr_name)) == 0){func(name,topo)
-#define DEFAUT_DRIVER() } else {sctk_network_not_implemented(name);}(void)(0)
+static void (*sctk_network_notify_any_source_message_ptr) (int,int) =  sctk_network_notify_idle_message_default;
 
-static void sctk_network_not_implemented(char* name){
-  sctk_error("No configuration found for the network '%s'. Please check you '-net=' argument"
-    " and your configuration file", name);
-  sctk_abort();
+void sctk_network_notify_any_source_message (int polling_task_id,int blocking)
+{
+	sctk_network_notify_any_source_message_ptr(polling_task_id,blocking);
 }
 
-static void sctk_network_not_implemented_warn(char* name){
-  if(sctk_process_rank == 0){
-    sctk_warning("No configuration found for the network '%s'. Please check you '-net=' argument"
-		 " and your configuration file. FALLBACK to TCP", name);
-    /* sctk_abort(); */
-  }
+void sctk_network_notify_any_source_message_set(void (*sctk_network_notify_any_source_message_val) (int polling_task_id,int blocking))
+{
+	sctk_network_notify_any_source_message_ptr = sctk_network_notify_any_source_message_val;
 }
 
-void
-sctk_net_init_pmi() {
-  if(sctk_process_number > 1){
-    /* Initialize topology informations from PMI */
-    sctk_pmi_get_process_rank(&sctk_process_rank);
-    sctk_pmi_get_process_number(&sctk_process_number);
-    sctk_pmi_get_process_on_node_rank(&sctk_local_process_rank);
-    sctk_pmi_get_process_on_node_number(&sctk_local_process_number);
-  }
+/************************************************************************/
+/* Net Error Messages                                                   */
+/************************************************************************/
+
+static void sctk_network_not_implemented(char* name)
+{
+	sctk_error("No configuration found for the network '%s'. Please check you '-net=' argument"
+		   " and your configuration file", name);
+	sctk_abort();
+}
+
+static void sctk_network_not_implemented_warn(char* name)
+{
+	if(sctk_process_rank == 0){
+		sctk_warning("No configuration found for the network '%s'. Please check you '-net=' argument"
+			      " and your configuration file. FALLBACK to TCP", name);
+	/* sctk_abort(); */
+	}
+}
+
+/************************************************************************/
+/* PMI Init                                                             */
+/************************************************************************/
+
+void sctk_net_init_pmi()
+{
+	if(sctk_process_number > 1)
+	{
+		/* Initialize topology informations from PMI */
+		sctk_pmi_get_process_rank(&sctk_process_rank);
+		sctk_pmi_get_process_number(&sctk_process_number);
+		sctk_pmi_get_process_on_node_rank(&sctk_local_process_rank);
+		sctk_pmi_get_process_on_node_number(&sctk_local_process_number);
+	}
 }
 
 /************************************************************************/
@@ -149,7 +192,8 @@ sctk_net_init_pmi() {
 /** \brief Get a pointer to the global network configuration
 *   \return the network config (static struct)
 */
-static inline  const struct sctk_runtime_config_struct_networks * sctk_net_get_config() {
+static inline  const struct sctk_runtime_config_struct_networks * sctk_net_get_config()
+{
 	return (struct sctk_runtime_config_struct_networks*) &sctk_runtime_config_get()->networks;
 }
 
@@ -268,8 +312,7 @@ void sctk_net_init_driver (char* name)
 	/* Set the number of rails used for the routing interface */
 	sctk_route_set_rail_nb(cli_option->rails_size);
 
-	/* Compute the number of rails for each type:
-	* TODO: I think we could simplify this loop ... */
+	/* Compute the number of rails for each type: */
 	int nb_rails_infiniband = 0;
 	int nb_rails_tcp = 0;
 	int nb_rails_tcpoib = 0;
@@ -370,28 +413,45 @@ void sctk_net_init_driver (char* name)
 
 
 /********************************************************************/
-/* Hybrid MPI+X                                                    */
+/* Hybrid MPI+X                                                     */
 /********************************************************************/
 static int is_mode_hybrid = 0;
 
-int sctk_net_is_mode_hybrid () {
-  return is_mode_hybrid;
+int sctk_net_is_mode_hybrid ()
+{
+	return is_mode_hybrid;
 }
 
-int sctk_net_set_mode_hybrid () {
-  is_mode_hybrid = 1;
-  return 0;
+int sctk_net_set_mode_hybrid ()
+{
+	is_mode_hybrid = 1;
+	return 0;
 }
 /********************************************************************/
 /* Memory Allocator                                                 */
 /********************************************************************/
-size_t sctk_net_memory_allocation_hook(size_t size_origin) {
-  size_t aligned_size;
-#ifdef MPC_USE_INFINIBAND
-  if (sctk_network_is_ib_used()) {
-    return sctk_network_memory_allocator_hook_ib (size_origin);
-  }
-#endif
-  return 0;
+
+size_t sctk_net_memory_allocation_hook(size_t size_origin)
+{
+	size_t aligned_size;
+	#ifdef MPC_USE_INFINIBAND
+	if (sctk_network_is_ib_used())
+	{
+		return sctk_network_memory_allocator_hook_ib (size_origin);
+	}
+	#endif
+	return 0;
 }
 
+/********************************************************************/
+/* Migration                                                        */
+/********************************************************************/
+
+int sctk_is_net_migration_available()
+{
+	if(sctk_migration_mode == 1){
+		not_implemented();
+	}
+	
+	return sctk_migration_mode;
+}

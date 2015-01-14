@@ -46,12 +46,12 @@ volatile int sctk_online_program = 1;
 ssize_t sctk_safe_read(int fd, void* buf, size_t count)
 {
 	/* vars */
-	int tmp, nb_total_sent_bytes = 0;
+	int tmp, nb_total_received_bytes = 0;
 	int res = count;
 
 	/* loop until read all */
-	while (nb_total_sent_bytes < count) {
-		tmp = read(fd, (char *)buf + nb_total_sent_bytes, count - nb_total_sent_bytes);
+	while (nb_total_received_bytes < count) {
+		tmp = read(fd, (char *)buf + nb_total_received_bytes, count - nb_total_received_bytes);
 
 		/* check errors */
 		if (tmp == 0) {
@@ -69,12 +69,13 @@ ssize_t sctk_safe_read(int fd, void* buf, size_t count)
 		}
 
 		/* update size counter */
-		nb_total_sent_bytes += tmp;
+		nb_total_received_bytes += tmp;
 	};
 
 	if(sctk_online_program == 0) {
 		exit(0);
 	}
+	
 	return res;
 }
 

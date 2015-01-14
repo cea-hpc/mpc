@@ -29,119 +29,139 @@
 #include <sctk_tcp.h>
 #include <opa_primitives.h>
 
+/************************************************************************/
+/* Multirail TCP context                                                */
+/************************************************************************/
+
 static int rails_nb = 0;
 static sctk_rail_info_t** rails = NULL;
 
-TODO("sctk_tcp_rdma has no header ??")
-extern void sctk_network_init_tcp_rdma(sctk_rail_info_t* rail,int sctk_use_tcp_o_ib);
+/************************************************************************/
+/* Network Hooks                                                        */
+/************************************************************************/
 
-static void
-sctk_network_send_message_multirail_tcp (sctk_thread_ptp_message_t * msg){
-  int i ;
-  if(sctk_prepare_send_message_to_network_reorder(msg) == 0){
-    /*
-      Reordering available : we can use multirail
-    */
-    i = 0;
-    TODO("Use a smart multirail")
-    if( (rails_nb >= 2) && (msg->sctk_msg_get_msg_size > 32768) ){
-      i = 1;
-    }
-  } else {
-    /*
-      No reodering: we can't use multirail fall back to rail 0
-    */
-    i = 0;
-  }
-  rails[i]->send_message(msg,rails[i]);
+static void sctk_network_send_message_multirail_tcp (sctk_thread_ptp_message_t * msg)
+{
+	int i ;
+
+	if(sctk_prepare_send_message_to_network_reorder(msg) == 0)
+	{
+		/* Reordering available : we can use multirail */
+		i = 0;
+		
+		TODO("Use a smart multirail")
+		if( (rails_nb >= 2) && (msg->sctk_msg_get_msg_size > 32768) )
+		{
+			i = 1;
+		}
+	}
+	else
+	{
+		/* No reodering: we can't use multirail fall back to rail 0 */
+		i = 0;
+	}
+
+	rails[i]->send_message(msg,rails[i]);
 }
 
-static void
-sctk_network_notify_recv_message_multirail_tcp (sctk_thread_ptp_message_t * msg){
-  int i;
-  for(i = 0; i < rails_nb; i++){
-    rails[i]->notify_recv_message(msg,rails[i]);
-  }
+static void sctk_network_notify_recv_message_multirail_tcp (sctk_thread_ptp_message_t * msg)
+{
+	int i;
+	for(i = 0; i < rails_nb; i++){
+		rails[i]->notify_recv_message(msg,rails[i]);
+	}
 }
 
-static void
-sctk_network_notify_matching_message_multirail_tcp (sctk_thread_ptp_message_t * msg){
-  int i;
-  for(i = 0; i < rails_nb; i++){
-    rails[i]->notify_matching_message(msg,rails[i]);
-  }
+static void sctk_network_notify_matching_message_multirail_tcp (sctk_thread_ptp_message_t * msg)
+{
+	int i;
+	for(i = 0; i < rails_nb; i++){
+		rails[i]->notify_matching_message(msg,rails[i]);
+	}
 }
 
-static void
-sctk_network_notify_perform_message_multirail_tcp (int remote, int remote_task_id, int polling_task_id, int blocking){
-  int i;
-  for(i = 0; i < rails_nb; i++){
-    rails[i]->notify_perform_message(remote,remote_task_id,polling_task_id, blocking, rails[i]);
-  }
+static void sctk_network_notify_perform_message_multirail_tcp (int remote, int remote_task_id, int polling_task_id, int blocking)
+{
+	int i;
+	for(i = 0; i < rails_nb; i++){
+		rails[i]->notify_perform_message(remote,remote_task_id,polling_task_id, blocking, rails[i]);
+	}
 }
 
-static void
-sctk_network_notify_idle_message_multirail_tcp (){
-  int i;
-  for(i = 0; i < rails_nb; i++){
-    rails[i]->notify_idle_message(rails[i]);
-  }
+static void sctk_network_notify_idle_message_multirail_tcp ()
+{
+	int i;
+	for(i = 0; i < rails_nb; i++){
+		rails[i]->notify_idle_message(rails[i]);
+	}
 }
 
-static void
-sctk_network_notify_any_source_message_multirail_tcp (int polling_task_id, int blocking){
-  int i;
-  for(i = 0; i < rails_nb; i++){
-    rails[i]->notify_any_source_message(polling_task_id, blocking, rails[i]);
-  }
+static void sctk_network_notify_any_source_message_multirail_tcp (int polling_task_id, int blocking)
+{
+	int i;
+	for(i = 0; i < rails_nb; i++){
+		rails[i]->notify_any_source_message(polling_task_id, blocking, rails[i]);
+	}
 }
 
-static
-int sctk_send_message_from_network_multirail_tcp (sctk_thread_ptp_message_t * msg){
-  if(sctk_send_message_from_network_reorder(msg) == REORDER_NO_NUMBERING){
-    /*
-      No reordering
-    */
-    sctk_send_message_try_check(msg,1);
-  }
-  return 1;
+static int sctk_send_message_from_network_multirail_tcp (sctk_thread_ptp_message_t * msg)
+{
+	if(sctk_send_message_from_network_reorder(msg) == REORDER_NO_NUMBERING)
+	{
+		/* No reordering */
+		sctk_send_message_try_check(msg,1);
+	}
+	return 1;
 }
 
-/************ INIT ****************/
-static
-void sctk_network_init_multirail_tcp_all(int rail_id, int tcpoib){
-  static int init_once = 0;
+/************************************************************************/
+/* Multirail TCP Init                                                   */
+/************************************************************************/
 
-/*   sctk_set_dynamic_reordering_buffer_creation(); */
-  rails = sctk_realloc(rails, (rails_nb+1)*sizeof(sctk_rail_info_t*));
-  /* Initialize the newly allocated memory */
-  memset((rails+rails_nb), 0, sizeof(sctk_rail_info_t*));
+static void __sctk_network_init_multirail_tcp_all(int rail_id, int tcpoib)
+{
+	static int init_once = 0;
 
-  rails[rails_nb] = sctk_route_get_rail(rail_id);
-  struct sctk_runtime_config_struct_net_rail * rail = rails[rails_nb]->runtime_config_rail;
-  struct sctk_runtime_config_struct_net_driver_config * config = rails[rails_nb]->runtime_config_driver_config;
+	rails = sctk_realloc(rails, (rails_nb+1)*sizeof(sctk_rail_info_t*));
+	
+	/* Initialize the newly allocated memory */
+	memset((rails+rails_nb), 0, sizeof(sctk_rail_info_t*));
+	rails[rails_nb] = sctk_route_get_rail(rail_id);
+	
+	/* Retrieve pointers to rail config */
+	struct sctk_runtime_config_struct_net_rail * rail_config = rails[rails_nb]->runtime_config_rail;
 
-  /* STANDARD TCP */
-  rails[rails_nb] = sctk_route_get_rail(rails_nb);
-  rails[rails_nb]->rail_number = rails_nb;
-  rails[rails_nb]->send_message_from_network = sctk_send_message_from_network_multirail_tcp;
-  sctk_route_init_in_rail(rails[rails_nb],rail->topology);
-  sctk_network_init_tcp(rails[rails_nb],tcpoib);
+	/* STANDARD TCP */
+	rails[rails_nb]->rail_number = rail_id;
+	rails[rails_nb]->send_message_from_network = sctk_send_message_from_network_multirail_tcp;
 
-  rails_nb++;
-  if (init_once == 0) {
-    sctk_network_send_message_set(sctk_network_send_message_multirail_tcp);
-    sctk_network_notify_recv_message_set(sctk_network_notify_recv_message_multirail_tcp);
-    sctk_network_notify_matching_message_set(sctk_network_notify_matching_message_multirail_tcp);
-    sctk_network_notify_perform_message_set(sctk_network_notify_perform_message_multirail_tcp);
-    sctk_network_notify_idle_message_set(sctk_network_notify_idle_message_multirail_tcp);
-    sctk_network_notify_any_source_message_set(sctk_network_notify_any_source_message_multirail_tcp);
-  }
-  init_once = 1;
+	sctk_route_init_in_rail(rails[rails_nb],rail_config->topology);
+	sctk_network_init_tcp(rails[rails_nb],tcpoib);
+
+	rails_nb++;
+	
+	if (init_once == 0)
+	{
+		sctk_network_send_message_set(sctk_network_send_message_multirail_tcp);
+		sctk_network_notify_recv_message_set(sctk_network_notify_recv_message_multirail_tcp);
+		sctk_network_notify_matching_message_set(sctk_network_notify_matching_message_multirail_tcp);
+		sctk_network_notify_perform_message_set(sctk_network_notify_perform_message_multirail_tcp);
+		sctk_network_notify_idle_message_set(sctk_network_notify_idle_message_multirail_tcp);
+		sctk_network_notify_any_source_message_set(sctk_network_notify_any_source_message_multirail_tcp);
+	}
+	init_once = 1;
 }
-void sctk_network_init_multirail_tcp(int rail_id, int max_rails){
-  sctk_network_init_multirail_tcp_all(rail_id,0);
+
+/************************************************************************/
+/* Multirail TCP Init (Entry Points)                                    */
+/************************************************************************/
+
+void sctk_network_init_multirail_tcp(int rail_id, int max_rails)
+{
+	__sctk_network_init_multirail_tcp_all(rail_id,0);
 }
-void sctk_network_init_multirail_tcpoib(int rail_id, int max_rails){
-  sctk_network_init_multirail_tcp_all(rail_id,1);
+
+void sctk_network_init_multirail_tcpoib(int rail_id, int max_rails)
+{
+	__sctk_network_init_multirail_tcp_all(rail_id,1);
 }
