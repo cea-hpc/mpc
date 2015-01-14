@@ -618,7 +618,7 @@ sctk_ib_qp_state_rts_attr(struct sctk_ib_rail_info_s* rail_ib,
 }
 
   struct ibv_qp_attr
-sctk_ib_qp_state_reset_attr(struct sctk_ib_rail_info_s* rail_ib,
+sctk_ib_qp_STATE_RESET_attr(struct sctk_ib_rail_info_s* rail_ib,
     sctk_uint32_t psn, int *flags)
 {
   struct ibv_qp_attr attr;
@@ -795,7 +795,7 @@ sctk_ib_qp_allocate_reset(struct sctk_ib_rail_info_s* rail_ib,
   sctk_route_table_t *route_table = remote->route_table;
   int flags;
 
-  attr = sctk_ib_qp_state_reset_attr(rail_ib, remote->psn, &flags);
+  attr = sctk_ib_qp_STATE_RESET_attr(rail_ib, remote->psn, &flags);
   sctk_nodebug("Modify QR RESET for rank %d", remote->rank);
   sctk_ib_qp_modify(remote, &attr, flags);
 

@@ -68,20 +68,20 @@ static void sctk_ib_cm_change_state(sctk_rail_info_t* rail,
 
   switch ( sctk_route_get_origin(route_table) ) {
 
-    case route_origin_static: /* Static route */
+    case ROUTE_ORIGIN_STATIC: /* Static route */
       ROUTE_LOCK(route_table);
-      sctk_route_set_state(route_table, state_connected);
+      sctk_route_set_state(route_table, STATE_CONNECTED);
       ROUTE_UNLOCK(route_table);
 
       sctk_ib_debug("[%d] Static QP connected to process %d", rail->rail_number,remote->rank);
       break;
 
-    case route_origin_dynamic: /* Dynamic route */
+    case ROUTE_ORIGIN_DYNAMIC: /* Dynamic route */
       ROUTE_LOCK(route_table);
-      sctk_route_set_state(route_table, state_connected);
+      sctk_route_set_state(route_table, STATE_CONNECTED);
       ROUTE_UNLOCK(route_table);
 
-      if (state_before_connexion == state_reconnecting)
+      if (state_before_connexion == STATE_RECONNECTING)
         sctk_ib_debug("[%d] OD QP reconnected to process %d", rail->rail_number,remote->rank);
       else
         sctk_ib_debug("[%d] OD QP connected to process %d", rail->rail_number,remote->rank);
@@ -106,22 +106,22 @@ static void sctk_ib_cm_change_state_to_rtr(sctk_rail_info_t* rail,
   LOAD_DEVICE(rail_ib);
 
   if (type == CONNECTION) {
-      state = sctk_ibuf_rdma_cas_remote_state_rtr(remote, state_connecting, state_connected);
+      state = sctk_ibuf_rdma_cas_remote_state_rtr(remote, STATE_CONNECTING, STATE_CONNECTED);
       sprintf(txt, SCTK_COLOR_GREEN(RTR CONNECTED));
-      assume(state == state_connecting);
+      assume(state == STATE_CONNECTING);
       sctk_ib_prof_qp_write(remote->rank, 0, sctk_get_time_stamp(), PROF_QP_RDMA_CONNECTED);
   } else if (type == RESIZING) {
     if (remote->rdma.pool->resizing_request.recv_keys.nb == 0) {  /* We deconnect */
       /* Change the state of the route */
-      state = sctk_ibuf_rdma_cas_remote_state_rtr(remote, state_flushed, state_deconnected);
+      state = sctk_ibuf_rdma_cas_remote_state_rtr(remote, STATE_FLUSHED, STATE_DECONNECTED);
       sprintf(txt, SCTK_COLOR_RED(RTR DECONNECTED));
       sctk_ib_prof_qp_write(remote->rank, 0, sctk_get_time_stamp(), PROF_QP_RDMA_DISCONNECTED);
     } else { /* We connect */
-      state = sctk_ibuf_rdma_cas_remote_state_rtr(remote, state_flushed, state_connected);
+      state = sctk_ibuf_rdma_cas_remote_state_rtr(remote, STATE_FLUSHED, STATE_CONNECTED);
       sprintf(txt, SCTK_COLOR_BLUE(RTR RESIZED));
       sctk_ib_prof_qp_write(remote->rank, 0, sctk_get_time_stamp(), PROF_QP_RDMA_RESIZING);
     }
-    assume(state == state_flushed);
+    assume(state == STATE_FLUSHED);
   }else not_reachable();
 
   sctk_ib_debug("%s with process %d (nb:%d->%d, size:%d->%d rdma_connections:%d allocated:%.0fko)", txt,
@@ -144,21 +144,21 @@ static void sctk_ib_cm_change_state_to_rts(sctk_rail_info_t* rail,
   char txt[256];
 
   if (type == CONNECTION) {
-    state = sctk_ibuf_rdma_cas_remote_state_rts(remote, state_connecting, state_connected);
+    state = sctk_ibuf_rdma_cas_remote_state_rts(remote, STATE_CONNECTING, STATE_CONNECTED);
     sprintf(txt, SCTK_COLOR_GREEN(RTS CONNECTED));
-    assume(state == state_connecting);
+    assume(state == STATE_CONNECTING);
     sctk_ib_prof_qp_write(remote->rank, 0, sctk_get_time_stamp(), PROF_QP_RDMA_CONNECTED);
   } else if (type == RESIZING) {
     if (remote->rdma.pool->resizing_request.send_keys.nb == 0) {  /* We deconnect */
-      state = sctk_ibuf_rdma_cas_remote_state_rts(remote, state_flushed, state_deconnected);
+      state = sctk_ibuf_rdma_cas_remote_state_rts(remote, STATE_FLUSHED, STATE_DECONNECTED);
       sprintf(txt, SCTK_COLOR_RED(RTS DISCONNECTED));
       sctk_ib_prof_qp_write(remote->rank, 0, sctk_get_time_stamp(), PROF_QP_RDMA_DISCONNECTED);
     } else { /* We connect */
-      state = sctk_ibuf_rdma_cas_remote_state_rts(remote, state_flushed, state_connected);
+      state = sctk_ibuf_rdma_cas_remote_state_rts(remote, STATE_FLUSHED, STATE_CONNECTED);
       sprintf(txt, SCTK_COLOR_BLUE(RTS RESIZED));
       sctk_ib_prof_qp_write(remote->rank, 0, sctk_get_time_stamp(), PROF_QP_RDMA_RESIZING);
     }
-    assume(state == state_flushed);
+    assume(state == STATE_FLUSHED);
   }else not_reachable();
 
   /* Change the state of the route */
@@ -230,8 +230,8 @@ void sctk_ib_cm_connect_ring (sctk_rail_info_t* rail,
     sctk_add_static_route(src_rank, route_table_src, rail);
 
     /* Change to connected */
-    sctk_ib_cm_change_state(rail, route_table_dest, state_connected);
-    sctk_ib_cm_change_state(rail, route_table_src, state_connected);
+    sctk_ib_cm_change_state(rail, route_table_dest, STATE_CONNECTED);
+    sctk_ib_cm_change_state(rail, route_table_src, STATE_CONNECTED);
   } else {
     sctk_nodebug("Send msg to rail %d", rail->rail_number);
     /* create remote for dest */
@@ -252,7 +252,7 @@ void sctk_ib_cm_connect_ring (sctk_rail_info_t* rail,
     sctk_add_static_route(dest_rank, route_table_dest, rail);
 
     /* Change to connected */
-    sctk_ib_cm_change_state(rail, route_table_dest, state_connected);
+    sctk_ib_cm_change_state(rail, route_table_dest, STATE_CONNECTED);
   }
 
   sctk_nodebug("Recv from %d, send to %d", src_rank, dest_rank);
@@ -297,7 +297,7 @@ void sctk_ib_cm_connect_to(int from, int to,sctk_rail_info_t* rail){
   /* Add route */
   sctk_add_static_route(from, route_table, rail);
   /* Change to connected */
-  sctk_ib_cm_change_state(rail, route_table, state_connected);
+  sctk_ib_cm_change_state(rail, route_table, STATE_CONNECTED);
 }
 
 void sctk_ib_cm_connect_from(int from, int to,sctk_rail_info_t* rail){
@@ -338,7 +338,7 @@ void sctk_ib_cm_connect_from(int from, int to,sctk_rail_info_t* rail){
   /* Add route */
   sctk_add_static_route(to, route_table, rail);
   /* Change to connected */
-  sctk_ib_cm_change_state(rail, route_table, state_connected);
+  sctk_ib_cm_change_state(rail, route_table, STATE_CONNECTED);
 }
 
 /* Helper macro: I'm bored to write always the same lines :-) */
@@ -363,7 +363,7 @@ static inline void sctk_ib_cm_on_demand_recv_done(RAIL_ARGS, void* done, int src
   sctk_ib_qp_allocate_rts(rail_ib_targ, remote);
 
   /* Change to connected */
-  sctk_ib_cm_change_state(rail_targ, route_table, state_connected);
+  sctk_ib_cm_change_state(rail_targ, route_table, STATE_CONNECTED);
 }
 
 static inline void sctk_ib_cm_on_demand_recv_ack(RAIL_ARGS, void* ack, int src) {
@@ -393,7 +393,7 @@ static inline void sctk_ib_cm_on_demand_recv_ack(RAIL_ARGS, void* ack, int src) 
       CM_OD_DONE_TAG+CM_MASK_TAG, &done,sizeof(sctk_ib_cm_done_t));
 
   /* Change to connected */
-  sctk_ib_cm_change_state(rail_targ, route_table, state_connected);
+  sctk_ib_cm_change_state(rail_targ, route_table, STATE_CONNECTED);
 }
 
 int sctk_ib_cm_on_demand_recv_request(RAIL_ARGS, void* request, int src) {
@@ -408,8 +408,8 @@ int sctk_ib_cm_on_demand_recv_request(RAIL_ARGS, void* request, int src) {
   ib_assume(route_table);
 
   ROUTE_LOCK(route_table);
-  if (sctk_route_get_state(route_table) == state_deconnected) {
-    sctk_route_set_state(route_table, state_connecting);
+  if (sctk_route_get_state(route_table) == STATE_DECONNECTED) {
+    sctk_route_set_state(route_table, STATE_CONNECTING);
   }
   ROUTE_UNLOCK(route_table);
 
@@ -455,8 +455,8 @@ sctk_route_table_t *sctk_ib_cm_on_demand_request(int dest,sctk_rail_info_t* rail
   ib_assume(route_table);
 
   ROUTE_LOCK(route_table);
-  if (sctk_route_get_state(route_table) == state_deconnected) {
-    sctk_route_set_state(route_table, state_connecting);
+  if (sctk_route_get_state(route_table) == STATE_DECONNECTED) {
+    sctk_route_set_state(route_table, STATE_CONNECTING);
     send_request = 1;
   }
   ROUTE_UNLOCK(route_table);
@@ -490,13 +490,13 @@ sctk_route_table_t *sctk_ib_cm_on_demand_request(int dest,sctk_rail_info_t* rail
 int sctk_ib_cm_on_demand_rdma_check_request(
     sctk_rail_info_t* rail_targ, struct sctk_ib_qp_s *remote) {
   int send_request = 0;
-  ib_assume(sctk_route_get_state(remote->route_table) == state_connected);
+  ib_assume(sctk_route_get_state(remote->route_table) == STATE_CONNECTED);
 
   /* If several threads call this function, only 1 will send a request to
    * the remote process */
   ROUTE_LOCK(remote->route_table);
-  if (sctk_ibuf_rdma_get_remote_state_rts(remote) == state_deconnected) {
-    sctk_ibuf_rdma_set_remote_state_rts(remote, state_connecting);
+  if (sctk_ibuf_rdma_get_remote_state_rts(remote) == STATE_DECONNECTED) {
+    sctk_ibuf_rdma_set_remote_state_rts(remote, STATE_CONNECTING);
     send_request = 1;
   }
   ROUTE_UNLOCK(remote->route_table);
@@ -516,7 +516,7 @@ int sctk_ib_cm_on_demand_rdma_request(
   LOAD_TARG();
   LOAD_DEVICE(rail_ib_targ);
   /* If we need to send the request */
-  ib_assume(sctk_route_get_state(remote->route_table) == state_connected);
+  ib_assume(sctk_route_get_state(remote->route_table) == STATE_CONNECTED);
 
 
   /* If we are the first to access the route and if the state
@@ -545,7 +545,7 @@ int sctk_ib_cm_on_demand_rdma_request(
     sctk_nodebug("[%d] Cannot connect to remote %d", rail_targ->rail_number, remote->rank);
     /* We reset the state to deconnected */
     /* FIXME: state to reset */
-    sctk_ibuf_rdma_set_remote_state_rts(remote, state_deconnected);
+    sctk_ibuf_rdma_set_remote_state_rts(remote, STATE_DECONNECTED);
   }
 
   return 1;
@@ -631,12 +631,12 @@ static inline void sctk_ib_cm_on_demand_rdma_recv_request(RAIL_ARGS, void* reque
   ib_assume(route_table);
   /* We assume the route is connected */
   struct sctk_ib_qp_s *remote = route_table->data.ib.remote;
-  ib_assume(sctk_route_get_state(route_table) == state_connected);
+  ib_assume(sctk_route_get_state(route_table) == STATE_CONNECTED);
 
 
   ROUTE_LOCK(route_table);
-  if (sctk_ibuf_rdma_get_remote_state_rtr(remote) == state_deconnected) {
-    sctk_ibuf_rdma_set_remote_state_rtr(remote, state_connecting);
+  if (sctk_ibuf_rdma_get_remote_state_rtr(remote) == STATE_DECONNECTED) {
+    sctk_ibuf_rdma_set_remote_state_rtr(remote, STATE_CONNECTING);
   }
   ROUTE_UNLOCK(route_table);
 
@@ -702,7 +702,7 @@ int sctk_ib_cm_resizing_rdma_request(sctk_rail_info_t* rail_targ,
     struct sctk_ib_qp_s *remote, int entry_size, int entry_nb){
 
   /* Assume that the route is in a flushed state */
-  ib_assume (sctk_ibuf_rdma_get_remote_state_rts(remote) == state_flushed);
+  ib_assume (sctk_ibuf_rdma_get_remote_state_rts(remote) == STATE_FLUSHED);
   /* Assume there is no more pending messages */
   ib_assume(OPA_load_int(&remote->rdma.pool->busy_nb[REGION_SEND]) == 0);
 
@@ -727,9 +727,9 @@ int sctk_ib_cm_resizing_rdma_request(sctk_rail_info_t* rail_targ,
 void sctk_ib_cm_resizing_rdma_ack(sctk_rail_info_t* rail_targ,  struct sctk_ib_qp_s *remote,
     sctk_ib_cm_rdma_connection_t* send_keys){
 
-  ib_assume(sctk_route_get_state(remote->route_table) == state_connected);
+  ib_assume(sctk_route_get_state(remote->route_table) == STATE_CONNECTED);
   /* Assume that the route is in a flushed state */
-  ib_assume (sctk_ibuf_rdma_get_remote_state_rtr(remote) == state_flushed);
+  ib_assume (sctk_ibuf_rdma_get_remote_state_rtr(remote) == STATE_FLUSHED);
   /* Assume there is no more pending messages */
   ib_assume(OPA_load_int(&remote->rdma.pool->busy_nb[REGION_RECV]) == 0);
 
@@ -819,7 +819,7 @@ static inline int sctk_ib_cm_resizing_rdma_recv_request(RAIL_ARGS, void* request
   sctk_route_table_t *route_table = sctk_get_route_to_process_no_ondemand(src, rail_targ);
   ib_assume(route_table);
   /* We assume the route is connected */
-  ib_assume(sctk_route_get_state(route_table) == state_connected);
+  ib_assume(sctk_route_get_state(route_table) == STATE_CONNECTED);
   struct sctk_ib_qp_s *remote = route_table->data.ib.remote;
   ib_assume(remote);
 

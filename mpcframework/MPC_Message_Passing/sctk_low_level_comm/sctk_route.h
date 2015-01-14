@@ -133,8 +133,8 @@ struct sctk_rail_info_s
 
 typedef enum
 {
-	route_origin_dynamic  = 111,
-	route_origin_static   = 222
+	ROUTE_ORIGIN_DYNAMIC  = 111,
+	ROUTE_ORIGIN_STATIC   = 222
 } sctk_route_origin_t;
 
 typedef struct sctk_route_table_s
@@ -215,17 +215,18 @@ int sctk_route_is_finalized();
  *  For ondemand
  *----------------------------------------------------------*/
 /* State of the QP */
-typedef enum sctk_route_state_e {
-  state_connected     = 111,
-  state_flushing      = 222,
-  state_flushing_check= 233,
-  state_flushed       = 234,
-  state_deconnected   = 333,
-  state_connecting    = 666,
-  state_reconnecting  = 444,
-  state_reset         = 555,
-  state_resizing      = 777,
-  state_requesting      = 888,
+typedef enum sctk_route_state_e 
+{
+  STATE_CONNECTED     = 111,
+  STATE_FLUSHING      = 222,
+  STATE_FLUSHING_CHECK= 233,
+  STATE_FLUSHED       = 234,
+  STATE_DECONNECTED   = 333,
+  STATE_CONNECTING    = 666,
+  STATE_RECONNECTING  = 444,
+  STATE_RESET         = 555,
+  STATE_RESIZING      = 777,
+  STATE_REQUESTING      = 888,
 } sctk_route_state_t;
 
 __UNUSED__ static void sctk_route_set_state(sctk_route_table_t* tmp, sctk_route_state_t state){

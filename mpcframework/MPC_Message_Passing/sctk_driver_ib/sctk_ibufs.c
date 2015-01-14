@@ -222,12 +222,12 @@ sctk_ibuf_pick_send(struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *remote,
   s = *size;
   /***** RDMA CHANNEL *****/
   state = sctk_ibuf_rdma_get_remote_state_rts(remote);
-  if (state == state_connected) {
+  if (state == STATE_CONNECTED) {
     /* Double lock checking */
     sctk_spinlock_lock(&remote->rdma.flushing_lock);
     state = sctk_ibuf_rdma_get_remote_state_rts(remote);
 
-    if (state == state_connected) {
+    if (state == STATE_CONNECTED) {
       /* WARNING: 'free_nb' must be decremented just after
        * checking the state of the RDMA buffer. */
       OPA_incr_int(&remote->rdma.pool->busy_nb[REGION_SEND]);
@@ -251,7 +251,7 @@ sctk_ibuf_pick_send(struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *remote,
           sctk_nodebug("Picking from RDMA %d", ibuf->index);
 #ifdef DEBUG_IB_BUFS
           sctk_route_state_t state = sctk_ibuf_rdma_get_remote_state_rts(remote);
-          if ( (state != state_connected) && (state != state_flushing))  {
+          if ( (state != STATE_CONNECTED) && (state != STATE_FLUSHING))  {
             sctk_error("Got a wrong state : %d", state);
             not_reachable();
           }

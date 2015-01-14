@@ -112,7 +112,7 @@ sctk_network_send_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* 
    *  We switch between available protocols
    *
    * */
-  if ( ( (sctk_ibuf_rdma_get_remote_state_rts(remote) == state_connected) &&
+  if ( ( (sctk_ibuf_rdma_get_remote_state_rts(remote) == STATE_CONNECTED) &&
         (size+IBUF_GET_EAGER_SIZE+IBUF_RDMA_GET_SIZE <= sctk_ibuf_rdma_get_eager_limit(remote) ) )
       || (size+IBUF_GET_EAGER_SIZE <= config->eager_limit) )
   {

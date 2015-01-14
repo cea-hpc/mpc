@@ -296,7 +296,7 @@ static void sctk_tcp_add_static_route(int dest, int fd,sctk_rail_info_t* rail,
 	/* Add the new route */
 	sctk_add_static_route(dest,new_route,rail);
 	/* set the route as connected */
-	sctk_route_set_state(new_route, state_connected);
+	sctk_route_set_state(new_route, STATE_CONNECTED);
 
 	/* Launch the polling thread */
 	sctk_thread_attr_init (&attr);

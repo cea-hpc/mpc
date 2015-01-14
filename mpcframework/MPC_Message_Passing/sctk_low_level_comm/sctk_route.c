@@ -97,9 +97,9 @@ sctk_route_table_t *sctk_route_dynamic_safe_add(int dest, sctk_rail_info_t* rail
     tmp->is_initiator = is_initiator;
     HASH_ADD(hh,sctk_dynamic_route_table,key,sizeof(sctk_route_key_t),tmp);
     *added = 1;
-  } else if (sctk_route_get_state(tmp) == state_reconnecting) {
+  } else if (sctk_route_get_state(tmp) == STATE_RECONNECTING) {
     ROUTE_LOCK(tmp);
-    sctk_route_set_state(tmp, state_deconnected);
+    sctk_route_set_state(tmp, STATE_DECONNECTED);
     init_func(dest, rail, tmp, 1);
     sctk_route_set_low_memory_mode_local(tmp, 0);
     sctk_route_set_low_memory_mode_remote(tmp, 0);
@@ -146,12 +146,12 @@ void sctk_init_dynamic_route(int dest, sctk_route_table_t* tmp, sctk_rail_info_t
   /* sctk_assert (sctk_route_dynamic_search(dest, rail) == NULL); */
   sctk_route_set_low_memory_mode_local(tmp, 0);
   sctk_route_set_low_memory_mode_remote(tmp, 0);
-  sctk_route_set_state(tmp, state_deconnected);
+  sctk_route_set_state(tmp, STATE_DECONNECTED);
 
   tmp->is_initiator = CHAR_MAX;
   tmp->lock = SCTK_SPINLOCK_INITIALIZER;
 
-  tmp->origin = route_origin_dynamic;
+  tmp->origin = ROUTE_ORIGIN_DYNAMIC;
 }
 
 void sctk_add_dynamic_route(int dest, sctk_route_table_t* tmp, sctk_rail_info_t* rail){
@@ -167,12 +167,12 @@ void sctk_init_static_route(int dest, sctk_route_table_t* tmp, sctk_rail_info_t*
   /* FIXME: the following commented line may potentially break other modules (like TCP). */
   sctk_route_set_low_memory_mode_local(tmp, 0);
   sctk_route_set_low_memory_mode_remote(tmp, 0);
-  sctk_route_set_state(tmp, state_deconnected);
+  sctk_route_set_state(tmp, STATE_DECONNECTED);
 
   tmp->is_initiator = CHAR_MAX;
   tmp->lock = SCTK_SPINLOCK_INITIALIZER;
 
-  tmp->origin = route_origin_static;
+  tmp->origin = ROUTE_ORIGIN_STATIC;
 }
 
 void sctk_add_static_route(int dest, sctk_route_table_t* tmp, sctk_rail_info_t* rail){
@@ -202,7 +202,7 @@ void sctk_walk_all_routes(const sctk_rail_info_t* rail, void (*func) (const sctk
 
   /* We do not need to take a lock */
   HASH_ITER(hh, sctk_static_route_table,current_route, tmp) {
-    if ( sctk_route_get_state(current_route) == state_connected) {
+    if ( sctk_route_get_state(current_route) == STATE_CONNECTED) {
       if (sctk_route_cas_low_memory_mode_local(current_route, 0, 1) == 0) {
         utarray_push_back(routes, &current_route);
       }
@@ -211,7 +211,7 @@ void sctk_walk_all_routes(const sctk_rail_info_t* rail, void (*func) (const sctk
 
   sctk_spinlock_read_lock(&sctk_route_table_lock);
   HASH_ITER(hh, sctk_dynamic_route_table,current_route, tmp) {
-    if ( sctk_route_get_state(current_route) == state_connected) {
+    if ( sctk_route_get_state(current_route) == STATE_CONNECTED) {
       if (sctk_route_cas_low_memory_mode_local(current_route, 0, 1) == 0) {
         utarray_push_back(routes, &current_route);
       }
@@ -236,7 +236,7 @@ void sctk_walk_all_dynamic_routes(const sctk_rail_info_t* rail, void (*func) (co
 
   sctk_spinlock_read_lock(&sctk_route_table_lock);
   HASH_ITER(hh, sctk_dynamic_route_table,current_route, tmp) {
-    if ( sctk_route_get_state(current_route) == state_connected) {
+    if ( sctk_route_get_state(current_route) == STATE_CONNECTED) {
       if (sctk_route_cas_low_memory_mode_local(current_route, 0, 1) == 0) {
         utarray_push_back(routes, &current_route);
       }
@@ -286,7 +286,7 @@ sctk_route_table_t* sctk_get_route_to_process_no_route(int dest, sctk_rail_info_
     sctk_spinlock_read_unlock(&sctk_route_table_lock);
 
     /* If the route is deconnected, we do not use it*/
-    if (tmp && sctk_route_get_state(tmp) != state_connected) {
+    if (tmp && sctk_route_get_state(tmp) != STATE_CONNECTED) {
       tmp = NULL;
     }
   }
@@ -374,13 +374,13 @@ sctk_route_table_t* sctk_get_route_to_process(int dest, sctk_rail_info_t* rail){
         do {
           state = sctk_route_get_state(tmp);
 
-          if (state != state_deconnected && state != state_connected &&
-              state != state_reconnecting) {
+          if (state != STATE_DECONNECTED && state != STATE_CONNECTED &&
+              state != STATE_RECONNECTING) {
             sctk_network_notify_idle_message();
             sctk_thread_yield();
           }
-        } while(state != state_deconnected && state != state_connected &&
-            state != state_reconnecting);
+        } while(state != STATE_DECONNECTED && state != STATE_CONNECTED &&
+            state != STATE_RECONNECTING);
       }
       sctk_nodebug("QP in a KNOWN STATE");
 
@@ -388,12 +388,12 @@ sctk_route_table_t* sctk_get_route_to_process(int dest, sctk_rail_info_t* rail){
       tmp = sctk_ib_cm_on_demand_request(dest,rail);
       assume(tmp);
       /* If route not connected, so we wait for until it is connected */
-      while (sctk_route_get_state(tmp) != state_connected) {
+      while (sctk_route_get_state(tmp) != STATE_CONNECTED) {
         sctk_network_notify_idle_message();
-        if (sctk_route_get_state(tmp) != state_connected) {
+        if (sctk_route_get_state(tmp) != STATE_CONNECTED) {
           sctk_thread_yield();
         }
-//        __wait_state(rail, tmp, state_connected);
+//        __wait_state(rail, tmp, STATE_CONNECTED);
       }
 
       sctk_nodebug("Connected to process %d", dest);
