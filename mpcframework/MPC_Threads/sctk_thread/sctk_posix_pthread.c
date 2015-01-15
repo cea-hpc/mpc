@@ -21,9 +21,6 @@
 /* ######################################################################## */
 #include "sctk_config.h"
 #include "sctk_default_pthread_flags.h"
-#ifdef SCTK_USE_GC
-#include <gc.h>
-#endif
 
 #include <pthread.h>
 #include <semaphore.h>

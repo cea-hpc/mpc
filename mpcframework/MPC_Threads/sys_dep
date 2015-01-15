@@ -128,12 +128,6 @@ else
 fi
 end_section
 
-begin_section Mono
-SCTK_CHECK_HEADER_NOFAIL gc.h
-SCTK_CHECK_HEADER_NOFAIL mono/jit/jit.h
-SCTK_CHECK_HEADER_NOFAIL mono/metadata/threads.h
-end_section
-
 SCTK_CHECK_LIB_HWLOC
 
 begin_section Pthread

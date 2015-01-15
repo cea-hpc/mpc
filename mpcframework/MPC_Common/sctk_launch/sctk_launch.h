@@ -53,7 +53,6 @@ extern "C"
   void (*sctk_get_thread_val(void)) ();
   void sctk_set_net_val (void (*val) (int *, char ***));
 
-  extern char *sctk_mono_bin;
   extern bool sctk_enable_smt_capabilities;
   extern bool sctk_share_node_capabilities;
 

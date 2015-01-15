@@ -19,24 +19,9 @@
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
 /* #                                                                      # */
 /* ######################################################################## */
-#ifdef SCTK_USE_MONO
-#include <mono/jit/jit.h>
-#include <mpc.h>
-#include <unistd.h>
-#include <string.h>
-#include <mono/metadata/threads.h>
-
-/*  Global Var*/
-MonoAssembly *assembly;
-MonoDomain *domain;
-#endif
 
 #ifdef MPC_USE_INFINIBAND
 #include <sctk_ib_cp.h>
-#endif
-
-#ifdef SCTK_USE_GC
-#include <gc.h>
 #endif
 
 #undef sleep
@@ -80,67 +65,6 @@ extern int errno;
 typedef unsigned sctk_long_long sctk_timer_t;
 
 static sctk_thread_key_t _sctk_thread_handler_key;
-#ifdef SCTK_USE_MONO
-typedef struct
-{
-  int argc;
-  char **argv;
-} thread_arg;
-
-
-int
-mpc_user_main (int argc, char **argv)
-{
-
-  thread_arg structArg;
-  static sctk_thread_mutex_t mutex = SCTK_THREAD_MUTEX_INITIALIZER;
-  MonoThread *monoThread;
-  MPC_Init (&argc, &argv);
-
-  structArg.argc = argc;
-  structArg.argv = argv;
-
-  sctk_nodebug ("Avant lancement mono");
-  sctk_thread_mutex_lock (&mutex);
-  monoThread = mono_thread_attach (domain);
-  sctk_thread_mutex_unlock (&mutex);
-  mono_jit_exec (domain, assembly, structArg.argc, structArg.argv);
-
-  mono_thread_detach (monoThread);
-  MPC_Finalize ();
-  return 0;
-}
-static void
-sctk_mono_init (char *file)
-{
-  void *user_data = NULL;
-  user_data = (void *) file;
-  domain = mono_jit_init (file);
-  assembly = mono_domain_assembly_open (domain, file);
-
-  if (!assembly)
-    {
-      fprintf (stderr, "ERROR : Can't open Assembly %s\n", file);
-      exit (2);
-    }
-}
-static void
-sctk_mono_end ()
-{
-
-}
-#else
-static void
-sctk_mono_init (char *name)
-{
-  assume (name != NULL);
-}
-static void
-sctk_mono_end ()
-{
-
-}
-#endif
 
 /* #define SCTK_CHECK_CODE_RETURN */
 #ifdef SCTK_CHECK_CODE_RETURN
@@ -2219,8 +2143,6 @@ sctk_start_func (void *(*run) (void *), void *arg)
 
 	total_tasks_number = sctk_get_total_tasks_number();
 
-	sctk_mono_init (sctk_mono_bin);
-
 /* 	sprintf (name, "%s/Process_%d", sctk_store_dir, sctk_process_rank); */
 
 	/*Prepare free pages */
@@ -2578,7 +2500,6 @@ sctk_start_func (void *(*run) (void *), void *arg)
 
 	sctk_free (threads);
 
-	sctk_mono_end ();
 	remove (name);
 
 	sctk_runtime_config_clean_hash_tables();

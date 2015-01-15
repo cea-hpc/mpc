@@ -146,7 +146,6 @@ Profiling (if compiled with --enable-MPC_Profiler) :
 EOF
 }
 
-MPC_MONO="0"
 
 mpi_only=no
 BINARY=""
@@ -282,9 +281,6 @@ for arg in "$@" ; do
     ;;
     --show)
     show=echo
-    ;;
-    --mono)
-    MPC_MONO="1"
     ;;
     --noversion-details)
     VERSION_DETAILS=""
@@ -548,10 +544,6 @@ MPC_VERBOSE="--mpc-verbose=${MPC_VERBOSE}"
 MPC_PROFILING="--profiling=${MPC_PROFILING}"
 
 SCTK_ARGS="$SCTK_ARGS $VERSION_DETAILS $CHECKPOINT $RESTART $MIGRATION $MPC_VERBOSE $MPC_PROFILING"
-if test "$MPC_MONO" = "1" ; then
-SCTK_ARGS="$SCTK_ARGS --mono=$BINARY"
-BINARY="mpc_mono"
-fi
 
 SCTK_ARGS="$SCTK_ARGS --sctk_use_port_number=0 --sctk_use_host=0 --sctk-args-end--"
 
@@ -586,10 +578,6 @@ SCTK_ARGS="$SCTK_ARGS $arg"
 done
 
 MPC_STARTUP_ARGS="$SCTK_ARGS"
-if test "$MPC_MONO" != "1" ; then
-export MPC_STARTUP_ARGS
-SCTK_ARGS=""
-fi
 
 
 export MPC_DISABLE

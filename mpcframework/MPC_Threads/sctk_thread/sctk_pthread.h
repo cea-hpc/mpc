@@ -22,10 +22,6 @@
 #ifndef __SCTK_PTHREADS_H_
 #define __SCTK_PTHREADS_H_
 
-#ifdef SCTK_USE_GC
-#include <gc.h>
-#endif
-
 #include <pthread.h>
 
 #ifdef __cplusplus

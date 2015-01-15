@@ -78,7 +78,6 @@ bool sctk_check_point_restart_mode;
 bool sctk_migration_mode;
 #define MAX_TERM_LENGTH 80
 #define MAX_NAME_FORMAT 30
-char *sctk_mono_bin = "";
 /* const char *sctk_store_dir = "/dev/null"; */
 static char topology_name[SCTK_MAX_FILENAME_SIZE];
 
@@ -402,12 +401,6 @@ sctk_def_task_nb (char *arg)
 }
 
   static void
-sctk_def_mono (char *arg)
-{
-  sctk_mono_bin = arg;
-}
-
-  static void
 sctk_def_process_nb (char *arg)
 {
   sctk_process_nb_val = atoi (arg);
@@ -600,9 +593,6 @@ sctk_threat_arg (char *word)
   sctk_add_arg ("--checkpoint", sctk_checkpoint);
   sctk_add_arg ("--migration", sctk_migration);
   sctk_add_arg ("--restart", sctk_restart);
-
-  sctk_add_arg_eq ("--mono", sctk_def_mono);
-
 
   if (strcmp (word, "--sctk-args-end--") == 0)
     return -1;
