@@ -130,7 +130,6 @@ typedef struct sctk_Torus_t
 	int node_regular; 			/**< node_count when it is a perfect torus */
 	int node_left; 			 	/**< zero when it is a perfect torus */
 	sctk_Node_t last_node;			/**< useful when it is an imperfect torus */
-
 }sctk_Torus_t;
 
 /**
