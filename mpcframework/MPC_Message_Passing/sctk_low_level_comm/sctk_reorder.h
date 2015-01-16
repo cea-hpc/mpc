@@ -51,31 +51,35 @@ void sctk_add_dynamic_reorder_buffer(int dest);
 int sctk_send_message_from_network_reorder (struct sctk_thread_ptp_message_s * msg);
 int sctk_prepare_send_message_to_network_reorder (struct sctk_thread_ptp_message_s * msg);
 
-typedef struct {
-  int key;
-  struct sctk_thread_ptp_message_s* msg;
-  UT_hash_handle hh;
+typedef struct
+{
+	int key;
+	struct sctk_thread_ptp_message_s* msg;
+	UT_hash_handle hh;
 }sctk_reorder_buffer_t;
 
-typedef struct{
-  int destination;
+typedef struct
+{
+	int destination;
 }sctk_reorder_key_t;
 
-typedef struct sctk_reorder_table_s{
-  sctk_reorder_key_t key;
+typedef struct sctk_reorder_table_s
+{
+	sctk_reorder_key_t key;
 
-  OPA_int_t message_number_src;
-  OPA_int_t message_number_dest;
+	OPA_int_t message_number_src;
+	OPA_int_t message_number_dest;
 
-  sctk_spinlock_t lock;
-  volatile sctk_reorder_buffer_t* buffer;
+	sctk_spinlock_t lock;
+	volatile sctk_reorder_buffer_t* buffer;
 
-  UT_hash_handle hh;
+	UT_hash_handle hh;
 } sctk_reorder_table_t;
 
-typedef struct sctk_reorder_task_s {
-  sctk_reorder_table_t * table;
-  sctk_spinlock_t lock;
+typedef struct sctk_reorder_task_s
+{
+	sctk_reorder_table_t * table;
+	sctk_spinlock_t lock;
 } sctk_reorder_list_t;
 
 sctk_reorder_table_t* sctk_get_reorder(int dest);

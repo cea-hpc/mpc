@@ -37,7 +37,7 @@ struct sctk_ib_data_s;
 #define MAX_SCTK_FAST_NODE_DIM 10
 
 /** This statically defines the minimum number of ranks for each dimension */
-#define MIN_SIZE_DIM 4
+#define SCTK_TORUS_MIN_PROC_IN_DIM 4
 
 
 /************************************************************************/

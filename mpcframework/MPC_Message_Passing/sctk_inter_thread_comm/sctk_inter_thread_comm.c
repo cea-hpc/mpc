@@ -418,16 +418,17 @@ return;
     }									\
   }while(0)
 
-sctk_reorder_list_t * sctk_ptp_get_reorder_from_destination(int task) {
-  struct sctk_internal_ptp_s *internal_ptp;
-  sctk_comm_dest_key_t key;
-  key.destination = task;
+sctk_reorder_list_t * sctk_ptp_get_reorder_from_destination(int task)
+{
+	struct sctk_internal_ptp_s *internal_ptp;
+	sctk_comm_dest_key_t key;
+	key.destination = task;
 
-  sctk_ptp_table_read_lock();
-  sctk_ptp_table_find(key, internal_ptp);
-  sctk_ptp_table_read_unlock();
+	sctk_ptp_table_read_lock();
+	sctk_ptp_table_find(key, internal_ptp);
+	sctk_ptp_table_read_unlock();
 
-  return &(internal_ptp->reorder);
+	return &(internal_ptp->reorder);
 }
 
 
