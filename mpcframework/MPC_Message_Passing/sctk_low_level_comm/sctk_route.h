@@ -154,10 +154,6 @@ void sctk_Torus_init ( int node_count, sctk_uint8_t dimension);
 */
 inline int sctk_Torus_Node_distance (int a, int b ,unsigned sdim);
 
-  #ifdef MPC_USE_PORTALS
-  #endif
-
-
 /**
 * \brief Release a sctk_Torus_t
 * After this call any call reffering the Torus
