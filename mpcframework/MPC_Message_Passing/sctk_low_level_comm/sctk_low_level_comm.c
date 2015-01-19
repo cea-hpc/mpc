@@ -309,14 +309,19 @@ void sctk_net_init_driver (char* name)
 		sctk_abort();
 	}
 
-	/* Set the number of rails used for the routing interface */
-	sctk_route_set_rail_nb(cli_option->rails_size);
+
+	/* Allocate Rails Storage we need to do it at once as we are going to
+	 * distribute pointers to rails to every modules therefore, they
+	 * should not change during the whole execution */
+	sctk_route_allocate_rails( cli_option->rails_size );
+
 
 	/* Compute the number of rails for each type: */
 	int nb_rails_infiniband = 0;
 	int nb_rails_tcp = 0;
 	int nb_rails_tcpoib = 0;
     int nb_rails_portals = 0;
+
 
 	for (k=0; k<cli_option->rails_size; ++k)
 	{
@@ -367,9 +372,9 @@ void sctk_net_init_driver (char* name)
 	for (k=0; k<cli_option->rails_size; ++k)
 	{
 		/* For each RAIL */
-		struct sctk_runtime_config_struct_net_rail * rail = sctk_get_rail_config_by_name( cli_option->rails[k] );
+		struct sctk_runtime_config_struct_net_rail * rail_config_struct = sctk_get_rail_config_by_name( cli_option->rails[k] );
 
-		if (rail == NULL)
+		if (rail_config_struct == NULL)
 		{
 			sctk_error("Rail with name '%s' not found in config!", cli_option->rails[k]);
 			sctk_abort();
@@ -378,34 +383,34 @@ void sctk_net_init_driver (char* name)
 		sctk_nodebug("Found rail '%s' to init", rail->name);
 
 		/* For this rail retrieve the config */
-		struct sctk_runtime_config_struct_net_driver_config * driver = sctk_get_driver_config_by_name( rail->config );
+		struct sctk_runtime_config_struct_net_driver_config * driver_config = sctk_get_driver_config_by_name( rail_config_struct->config );
 		
-		if (driver == NULL) {
-			sctk_error("Driver with name '%s' not found in config!", rail->config);
+		if (driver_config == NULL) {
+			sctk_error("Driver with name '%s' not found in config!", rail_config_struct->config);
 			continue;
 		}
 
 		/* Set infos for the current rail */
-		sctk_route_set_rail_infos(k, rail, driver);
+		sctk_rail_info_t * new_rail = sctk_route_push_rail( rail_config_struct, driver_config );
 
 		/* Switch on the driver to use */
-		switch (driver->driver.type)
+		switch (driver_config->driver.type)
 		{
 			#ifdef MPC_USE_INFINIBAND
 			case SCTK_RTCFG_net_driver_infiniband: /* INFINIBAND */
-				sctk_network_init_multirail_ib(k, nb_rails_infiniband);
+				sctk_network_init_multirail_ib(new_rail, nb_rails_infiniband);
 			break;
 			#endif
 #ifdef MPC_USE_PORTALS
             case SCTK_RTCFG_net_driver_portals: /* TCP */
-              sctk_network_init_multirail_portals(k, nb_rails_portals);
+              sctk_network_init_multirail_portals(new_rail, nb_rails_portals);
               break;
 #endif
 			case SCTK_RTCFG_net_driver_tcp: /* TCP */
-				sctk_network_init_multirail_tcp(k, nb_rails_tcp);
+				sctk_network_init_multirail_tcp(new_rail, nb_rails_tcp);
 			break;
 			case SCTK_RTCFG_net_driver_tcpoib: /* TCP */
-				sctk_network_init_multirail_tcpoib(k, nb_rails_tcpoib);
+				sctk_network_init_multirail_tcpoib(new_rail, nb_rails_tcpoib);
 			break;
 			default:
 				sctk_network_not_implemented(option_name);

@@ -118,7 +118,7 @@ static int sctk_send_message_from_network_multirail_tcp (sctk_thread_ptp_message
 /* Multirail TCP Init                                                   */
 /************************************************************************/
 
-static void __sctk_network_init_multirail_tcp_all(int rail_id, int tcpoib)
+static void __sctk_network_init_multirail_tcp_all(sctk_rail_info_t * new_rail, int tcpoib)
 {
 	static int init_once = 0;
 
@@ -126,13 +126,13 @@ static void __sctk_network_init_multirail_tcp_all(int rail_id, int tcpoib)
 	
 	/* Initialize the newly allocated memory */
 	memset((rails+rails_nb), 0, sizeof(sctk_rail_info_t*));
-	rails[rails_nb] = sctk_route_get_rail(rail_id);
+	
+	rails[rails_nb] = new_rail;
 	
 	/* Retrieve pointers to rail config */
 	struct sctk_runtime_config_struct_net_rail * rail_config = rails[rails_nb]->runtime_config_rail;
 
 	/* STANDARD TCP */
-	rails[rails_nb]->rail_number = rail_id;
 	rails[rails_nb]->send_message_from_network = sctk_send_message_from_network_multirail_tcp;
 
 	sctk_route_init_in_rail(rails[rails_nb],rail_config->topology);
@@ -156,12 +156,12 @@ static void __sctk_network_init_multirail_tcp_all(int rail_id, int tcpoib)
 /* Multirail TCP Init (Entry Points)                                    */
 /************************************************************************/
 
-void sctk_network_init_multirail_tcp(int rail_id, int max_rails)
+void sctk_network_init_multirail_tcp(sctk_rail_info_t * new_rail, int max_rails)
 {
-	__sctk_network_init_multirail_tcp_all(rail_id,0);
+	__sctk_network_init_multirail_tcp_all(new_rail,0);
 }
 
-void sctk_network_init_multirail_tcpoib(int rail_id, int max_rails)
+void sctk_network_init_multirail_tcpoib(sctk_rail_info_t * new_rail, int max_rails)
 {
-	__sctk_network_init_multirail_tcp_all(rail_id,1);
+	__sctk_network_init_multirail_tcp_all(new_rail,1);
 }

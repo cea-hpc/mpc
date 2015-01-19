@@ -556,7 +556,7 @@ static inline void sctk_ib_cm_on_demand_rdma_done_recv(RAIL_ARGS, void* done, in
   sctk_ib_cm_rdma_connection_t *recv_keys = (sctk_ib_cm_rdma_connection_t*) done;
 
   /* get the route to process */
-  sctk_route_table_t *route_table = sctk_get_route_to_process_no_route(src, rail_targ);
+  sctk_route_table_t *route_table = sctk_get_route_to_process_no_routing(src, rail_targ);
   ib_assume(route_table);
   struct sctk_ib_qp_s *remote = route_table->data.ib.remote;
   ib_assume(remote);
@@ -576,7 +576,7 @@ static inline void sctk_ib_cm_on_demand_rdma_recv_ack(RAIL_ARGS, void* ack, int 
   sctk_ib_cm_rdma_connection_t *recv_keys = (sctk_ib_cm_rdma_connection_t*) ack;
 
   /* get the route to process */
-  sctk_route_table_t *route_table = sctk_get_route_to_process_no_route(src, rail_targ);
+  sctk_route_table_t *route_table = sctk_get_route_to_process_no_routing(src, rail_targ);
   ib_assume(route_table);
   struct sctk_ib_qp_s *remote = route_table->data.ib.remote;
   ib_assume(remote);
@@ -627,7 +627,7 @@ static inline void sctk_ib_cm_on_demand_rdma_recv_request(RAIL_ARGS, void* reque
   memset(&send_keys, 0, sizeof(sctk_ib_cm_rdma_connection_t));
 
   /* get the route to process */
-  sctk_route_table_t *route_table = sctk_get_route_to_process_no_route(src, rail_targ);
+  sctk_route_table_t *route_table = sctk_get_route_to_process_no_routing(src, rail_targ);
   ib_assume(route_table);
   /* We assume the route is connected */
   struct sctk_ib_qp_s *remote = route_table->data.ib.remote;
@@ -747,7 +747,7 @@ static inline void sctk_ib_cm_resizing_rdma_done_recv(RAIL_ARGS, void* done, int
   sctk_ib_cm_rdma_connection_t *recv_keys = (sctk_ib_cm_rdma_connection_t*) done;
 
   /* get the route to process */
-  sctk_route_table_t *route_table = sctk_get_route_to_process_no_route(src, rail_targ);
+  sctk_route_table_t *route_table = sctk_get_route_to_process_no_routing(src, rail_targ);
   ib_assume(route_table);
   struct sctk_ib_qp_s *remote = route_table->data.ib.remote;
   ib_assume(remote);

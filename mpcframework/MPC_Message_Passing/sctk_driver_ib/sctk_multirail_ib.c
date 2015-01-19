@@ -300,93 +300,89 @@ int sctk_send_message_from_network_multirail_ib (sctk_thread_ptp_message_t * msg
 }
 
 /************ INIT ****************/
-void sctk_network_init_multirail_ib(int rail_id, int max_rails){
-  static int init_once = 0;
+void sctk_network_init_multirail_ib( sctk_rail_info_t * new_rail , int max_rails)
+{
+	static int init_once = 0;
 
-  rails = sctk_realloc(rails, (rails_nb+1)*sizeof(sctk_rail_info_t*));
-  /* Initialize the newly allocated memory */
-  memset((rails+rails_nb), 0, sizeof(sctk_rail_info_t*));
-  is_ib_used = 1;
+	/* Realloc local multirail counter */
+	rails = sctk_realloc(rails, (rails_nb+1)*sizeof(sctk_rail_info_t*));
+	/* Initialize the newly allocated memory */
+	memset((rails+rails_nb), 0, sizeof(sctk_rail_info_t*));
+	is_ib_used = 1;
+	/* Store a pointer to the new rail in local multirail */
+	rails[rails_nb] = new_rail;
+	/* Retrieve config pointers */
+	struct sctk_runtime_config_struct_net_rail * rail_config = rails[rails_nb]->runtime_config_rail;
+	struct sctk_runtime_config_struct_net_driver_config * config = rails[rails_nb]->runtime_config_driver_config;
 
-  rails[rails_nb] = sctk_route_get_rail(rail_id);
-  struct sctk_runtime_config_struct_net_rail * rail = rails[rails_nb]->runtime_config_rail;
-  struct sctk_runtime_config_struct_net_driver_config * config = rails[rails_nb]->runtime_config_driver_config;
-  rails[rails_nb]->rail_number = rail_id; /* WARNING with rails_nb */
-  rails[rails_nb]->send_message_from_network = sctk_send_message_from_network_multirail_ib;
-  sctk_route_init_in_rail(rails[rails_nb],rail->topology);
-  /* Initialize the IB rail ID */
+	/* Set the message from net function */
+	rails[rails_nb]->send_message_from_network = sctk_send_message_from_network_multirail_ib;
+	/* Register topology */
+	sctk_route_init_in_rail(rails[rails_nb],rail_config->topology);
+	
+	/* Initialize the IB rail ID */
 
-  #if 0
-  int previous_binding;
-  {
-    if (config->driver.value.infiniband.network_type == 1)
-      if ( (max_rails - 1) == 4) {
-        previous_binding = sctk_bind_to_cpu(rail_id*32 % 128);
-      } else if ( (max_rails - 1) == 2 ) {
-        previous_binding = sctk_bind_to_cpu(rail_id*8);
-      } else if ( (max_rails - 1) == 16 ) {
-        previous_binding = sctk_bind_to_cpu(rail_id*8 % 128);
-      } else if ( (max_rails - 1) == 1 ) {
-        previous_binding = sctk_bind_to_cpu(0);
-      } else {
-        not_implemented();
-      }
-    else
-      previous_binding = sctk_bind_to_cpu(0);
-  static int init_once = 0;
-  #endif
+	if (config->driver.value.infiniband.network_type == 1)
+	{
+		rails[rails_nb]->send_message_from_network = sctk_send_message_from_network_multirail_ib;
+		sctk_route_init_in_rail(rails[rails_nb],rail_config->topology);
+		
+		/* MPI IB network */
+		if (strcmp(rail_config->topology, "ondemand") && strcmp(rail_config->topology, "fully"))
+		{
+			sctk_error("IB requires the 'ondemand' or the 'fully' topology for the data network! Exiting... Topology provided: %s", rail_config->topology);
+			sctk_abort();
+		}
+		
+		sctk_network_ib_set_rail_data(rails_nb);
+		sctk_network_init_mpi_ib(rails[rails_nb], rails_nb);
+	}
+	else if ( config->driver.value.infiniband.network_type == 0)
+	{
+		/* Fallback IB network */
+		sctk_network_ib_set_rail_signalization(rails_nb);
+		sctk_network_init_fallback_ib(rails[rails_nb], rails_nb);
+		
+		if (strcmp(rail_config->topology, "ring") && strcmp(rail_config->topology, "torus"))
+		{
+			sctk_error("IB requires the 'ring' or the 'torus' topology for the signalization network! Exiting... Topology provided: %s", rail_config->topology);
+			sctk_abort();
+		}
+	}
+	else
+	{
+		sctk_error("You must provide a network's type equivalent to 'data' or 'signalization'. Value provided:%d", config->driver.value.infiniband.network_type);
+		sctk_abort();
+	}
 
-  if (config->driver.value.infiniband.network_type == 1) {
-  rails[rails_nb]->send_message_from_network = sctk_send_message_from_network_multirail_ib;
-  sctk_route_init_in_rail(rails[rails_nb],rail->topology);
-    /* MPI IB network */
-    if (strcmp(rail->topology, "ondemand") && strcmp(rail->topology, "fully")) {
-      sctk_error("IB requires the 'ondemand' or the 'fully' topology for the data network! Exiting... Topology provided: %s", rail->topology);
-      sctk_abort();
-    }
-    sctk_network_ib_set_rail_data(rails_nb);
-    sctk_network_init_mpi_ib(rails[rails_nb], rails_nb);
-  } else if ( config->driver.value.infiniband.network_type == 0) {
-    /* Fallback IB network */
-    sctk_network_ib_set_rail_signalization(rails_nb);
-    sctk_network_init_fallback_ib(rails[rails_nb], rails_nb);
-    if (strcmp(rail->topology, "ring") && strcmp(rail->topology, "torus")) {
-      sctk_error("IB requires the 'ring' or the 'torus' topology for the signalization network! Exiting... Topology provided: %s", rail->topology);
-      sctk_abort();
-    }
-  } else {
-    sctk_error("You must provide a network's type equivalent to 'data' or 'signalization'. Value provided:%d", config->driver.value.infiniband.network_type);
-    sctk_abort();
-  }
+	if (init_once == 0)
+	{
+		sctk_ib_prof_init();
+		sctk_network_send_message_set(sctk_network_send_message_multirail_ib);
+		sctk_network_notify_recv_message_set(sctk_network_notify_recv_message_multirail_ib);
+		sctk_network_notify_matching_message_set(sctk_network_notify_matching_message_multirail_ib);
+		sctk_network_notify_perform_message_set(sctk_network_notify_perform_message_multirail_ib);
 
-  if (init_once == 0) {
-    sctk_ib_prof_init();
-    sctk_network_send_message_set(sctk_network_send_message_multirail_ib);
-    sctk_network_notify_recv_message_set(sctk_network_notify_recv_message_multirail_ib);
-    sctk_network_notify_matching_message_set(sctk_network_notify_matching_message_multirail_ib);
-    sctk_network_notify_perform_message_set(sctk_network_notify_perform_message_multirail_ib);
+		if (sctk_runtime_config_get()->modules.low_level_comm.enable_idle_polling == 1)
+		{
+			sctk_warning("Idle polling enabled");
+			sctk_network_notify_idle_message_set(sctk_network_notify_idle_message_multirail_ib_polling);
+		}
+		else
+		{
+			sctk_network_notify_idle_message_set(sctk_network_notify_idle_message_multirail_ib);
+		}
 
-    if (sctk_runtime_config_get()->modules.low_level_comm.enable_idle_polling == 1) {
-      sctk_warning("Idle polling enabled");
-      sctk_network_notify_idle_message_set(sctk_network_notify_idle_message_multirail_ib_polling);
-    } else {
-      sctk_network_notify_idle_message_set(sctk_network_notify_idle_message_multirail_ib);
-    }
+		sctk_network_notify_any_source_message_set(sctk_network_notify_any_source_message_multirail_ib);
+	}
+	init_once=1;
 
-    sctk_network_notify_any_source_message_set(sctk_network_notify_any_source_message_multirail_ib);
-  }
-  init_once=1;
+	sctk_ib_topology_init_task(rails[rails_nb], sctk_thread_get_vp());
+	rails[rails_nb]->initialize_leader_task(rails[rails_nb]);
+	
+	/* Increment the rail counter */
+	rails_nb++;
 
-  sctk_ib_topology_init_task(rails[rails_nb], sctk_thread_get_vp());
-  rails[rails_nb]->initialize_leader_task(rails[rails_nb]);
-  rails_nb++;
-
-#if 0
-  {
-    /* Revert to CPU 0 */
-    sctk_bind_to_cpu(previous_binding);
-  }
-#endif
 }
 
 char sctk_network_is_ib_used() {

@@ -33,10 +33,12 @@ extern "C"
 
 #include <sctk_spinlock.h>
 #include "sctk_runtime_config.h"
+#include "sctk_route.h"
+
 
 struct sctk_rail_info_s;
 
-void sctk_network_init_multirail_ib(int rail_id, int max_rails);
+void sctk_network_init_multirail_ib(sctk_rail_info_t * new_rail , int max_rails);
 void sctk_network_init_ib(char* name, char* topology);
 
 /* Initialize */

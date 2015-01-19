@@ -170,7 +170,7 @@ extern "C"
 		
 	}sctk_portals_rail_info_t;
 
-void sctk_network_init_multirail_portals(int rail_id, int max_rails);
+void sctk_network_init_multirail_portals(sctk_rail_info_t * new_rail , int max_rails);
 #if 0
 	void sctk_network_init_portals(char* name, char* topology);
 #endif 

@@ -236,9 +236,9 @@ struct sctk_rail_info_s
 	void (*route_init)(sctk_rail_info_t*);
 };
 
-void sctk_route_set_rail_nb(int nb);
-void sctk_route_set_rail_infos(int rail, struct sctk_runtime_config_struct_net_rail * runtime_config_rail,
-					 struct sctk_runtime_config_struct_net_driver_config * runtime_config_driver_config);
+void sctk_route_allocate_rails(int count );
+sctk_rail_info_t * sctk_route_push_rail( struct sctk_runtime_config_struct_net_rail * runtime_config_rail,
+										 struct sctk_runtime_config_struct_net_driver_config * runtime_config_driver_config );
 int sctk_route_get_rail_nb();
 sctk_rail_info_t* sctk_route_get_rail(int i);
 
@@ -318,7 +318,7 @@ sctk_route_table_t* sctk_get_route(int dest, sctk_rail_info_t* rail);
 sctk_route_table_t* sctk_get_route_to_process(int dest, sctk_rail_info_t* rail);
 inline sctk_route_table_t* sctk_get_route_to_process_no_ondemand(int dest, sctk_rail_info_t* rail);
 inline sctk_route_table_t* sctk_get_route_to_process_static(int dest, sctk_rail_info_t* rail);
-sctk_route_table_t* sctk_get_route_to_process_no_route(int dest, sctk_rail_info_t* rail);
+sctk_route_table_t* sctk_get_route_to_process_no_routing(int dest, sctk_rail_info_t* rail);
 
 /* Routes */
 void sctk_route_messages_send(int myself,int dest, specific_message_tag_t specific_message_tag, int tag, void* buffer,size_t size);

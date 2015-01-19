@@ -41,6 +41,7 @@
 static sctk_rail_info_t* rails = NULL;
 /** Number of rails */
 static int rail_number = 0;
+static int rail_current_id = 0;
 
 /************************************************************************/
 /* Routes Storage                                                       */
@@ -536,24 +537,35 @@ void sctk_route_finalize()
 /* Rail Init and Getters                                                */
 /************************************************************************/
 
-void sctk_route_set_rail_nb(int nb)
+void sctk_route_allocate_rails(int count )
 {
-	rails = sctk_malloc(nb*sizeof(sctk_rail_info_t));
-	memset(rails, 0, nb*sizeof(sctk_rail_info_t));
-	rail_number = nb;
+	rails = sctk_calloc( count , sizeof(sctk_rail_info_t));
+	assume( rails != NULL );
+	rail_number=count;
 }
 
-void sctk_route_set_rail_infos(int rail,
-                               struct sctk_runtime_config_struct_net_rail * runtime_config_rail,
-                               struct sctk_runtime_config_struct_net_driver_config * runtime_config_driver_config)
+sctk_rail_info_t * sctk_route_push_rail( struct sctk_runtime_config_struct_net_rail * runtime_config_rail,
+										 struct sctk_runtime_config_struct_net_driver_config * runtime_config_driver_config )
 {
-	rails[rail].runtime_config_rail = runtime_config_rail;
-	rails[rail].runtime_config_driver_config = runtime_config_driver_config;
+	if( rail_current_id == rail_number )
+	{
+		sctk_fatal("Error : Rail overflow detected\n");
+	}
+		
+	sctk_rail_info_t * new_rail = &rails[rail_current_id];
+	
+	new_rail->runtime_config_rail = runtime_config_rail;
+	new_rail->runtime_config_driver_config = runtime_config_driver_config;
+	new_rail->rail_number = rail_current_id;
+
+	rail_current_id++;
+	
+	return new_rail;
 }
 
 int sctk_route_get_rail_nb()
 {
-  return rail_number;
+	return rail_number;
 }
 
 

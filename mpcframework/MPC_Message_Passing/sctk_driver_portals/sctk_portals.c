@@ -1403,34 +1403,37 @@ void sctk_send_message_from_network_portals (sctk_thread_ptp_message_t * msg){
 /************ INIT ****************/
 static int rails_nb = 0;
 
-void sctk_network_init_multirail_portals(int rail_id, int max_rails){
-  static int init_once = 0;
+void sctk_network_init_multirail_portals(sctk_rail_info_t * new_rail, int max_rails)
+{
+	static int init_once = 0;
 
-/*   sctk_set_dynamic_reordering_buffer_creation(); */
-  rails = sctk_realloc(rails, (rails_nb+1)*sizeof(sctk_rail_info_t*));
-  /* Initialize the newly allocated memory */
-  memset((rails+rails_nb), 0, sizeof(sctk_rail_info_t*));
+	/* Register in local rails */
+	/*   sctk_set_dynamic_reordering_buffer_creation(); */
+	rails = sctk_realloc(rails, (rails_nb+1)*sizeof(sctk_rail_info_t*));
+	/* Initialize the newly allocated memory */
+	memset((rails+rails_nb), 0, sizeof(sctk_rail_info_t*));
 
-  rails[rails_nb] = sctk_route_get_rail(rail_id);
-  struct sctk_runtime_config_struct_net_rail * rail = rails[rails_nb]->runtime_config_rail;
-  struct sctk_runtime_config_struct_net_driver_config * config = rails[rails_nb]->runtime_config_driver_config;
+	/* Fill in content */
+	rails[rails_nb] = new_rail;
+	struct sctk_runtime_config_struct_net_rail * rail_config = rails[rails_nb]->runtime_config_rail;
+	struct sctk_runtime_config_struct_net_driver_config * driver_config = rails[rails_nb]->runtime_config_driver_config;
 
-  rails[rails_nb] = sctk_route_get_rail(rails_nb);
-  rails[rails_nb]->rail_number = rails_nb;
-  rails[rails_nb]->send_message_from_network = sctk_send_message_from_network_portals;
-  sctk_route_init_in_rail(rails[rails_nb],rail->topology);
-  sctk_network_init_portals_rail(rails[rails_nb]);
+	rails[rails_nb]->send_message_from_network = sctk_send_message_from_network_portals;
+	
+	sctk_route_init_in_rail(rails[rails_nb],rail_config->topology);
+	sctk_network_init_portals_rail(rails[rails_nb]);
 
-  rails_nb++;
-  if (init_once == 0) {
-	  sctk_network_send_message_set(sctk_network_send_message_portals);
-	  sctk_network_notify_recv_message_set(sctk_network_notify_recv_message_portals);
-	  sctk_network_notify_matching_message_set(sctk_network_notify_matching_message_portals);
-	  sctk_network_notify_perform_message_set(sctk_network_notify_perform_message_portals);
-	  sctk_network_notify_idle_message_set(sctk_network_notify_idle_message_portals);
-	  sctk_network_notify_any_source_message_set(sctk_network_notify_any_source_message_portals);
-  }
-  init_once = 1;
+	/* One new rail has been registered */
+	rails_nb++;
+	if (init_once == 0) {
+	sctk_network_send_message_set(sctk_network_send_message_portals);
+	sctk_network_notify_recv_message_set(sctk_network_notify_recv_message_portals);
+	sctk_network_notify_matching_message_set(sctk_network_notify_matching_message_portals);
+	sctk_network_notify_perform_message_set(sctk_network_notify_perform_message_portals);
+	sctk_network_notify_idle_message_set(sctk_network_notify_idle_message_portals);
+	sctk_network_notify_any_source_message_set(sctk_network_notify_any_source_message_portals);
+	}
+	init_once = 1;
 }
 
 #if 0

@@ -28,9 +28,10 @@ extern "C"
 #endif
 
 #include <sctk_spinlock.h>
+#include "sctk_route.h"
 
-void sctk_network_init_multirail_tcp(int rail_id, int max_rails);
-void sctk_network_init_multirail_tcpoib(int rail_id, int max_rails);
+void sctk_network_init_multirail_tcp(sctk_rail_info_t * new_rail, int max_rails);
+void sctk_network_init_multirail_tcpoib(sctk_rail_info_t * new_rail, int max_rails);
 
 #ifdef __cplusplus
 }
