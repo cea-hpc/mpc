@@ -41,9 +41,8 @@ struct sctk_ib_data_s;
 /** This statically defines the minimum number of ranks for each dimension */
 #define SCTK_TORUS_MIN_PROC_IN_DIM 4
 
-
 /************************************************************************/
-/* sctk_Node_t                                                          */
+/* sctk_Torus_t                                                         */
 /************************************************************************/
 
 /**
@@ -61,57 +60,7 @@ typedef struct sctk_Node_t
 	int id;							/**< Node ident */
 }sctk_Node_t;
 
-/**
-* \brief Zero a Node
-* \param Node pointer to sctk_Node_t
-*
-* This call will set all the dimensions
-* of the given tupple to 0
-*/
-inline void sctk_Node_zero ( sctk_Node_t *Node );
 
-/**
-* \brief Display a Node to stdout
-* \param Node pointer to sctk_Node_t
-*/
-inline void sctk_Node_print (sctk_Node_t *Node );
-
-/**
-* \brief Initialize a Node
-* \param Node pointer to an sctk_Node_t
-* \param int the ident of the node
-*/
-void sctk_Node_init (sctk_Node_t *Node, int id);
-
-/**
-* \brief Compute the id (~rank) of a given coordinate in the Torus
-* \param coord coordinates
-* \return id associated to these coordinates
-*
-* Once the sctk_Torus_t is initialized this call is thread safe
-* This call will abort if check are enabled and entries invalid
-*/
-int sctk_Node_id ( sctk_Node_t *coord );
-
-/**
-* \brief Release a Node
-* \param Node pointer to sctk_Node_t
-*
-* This call just set the dimension to 0
-* making the Node unusable
-*/
-inline void sctk_Node_release ( sctk_Node_t *Node );
-
-/**
-* \brief Set a Node by copy
-* \param Node pointer to sctk_Node_t, it will be updated
-* \param Node pointer to sctk_Node_t
-*/
-inline void sctk_Node_set_from ( sctk_Node_t *Node, sctk_Node_t *NodeToCopy );
-
-/************************************************************************/
-/* sctk_Torus_t                                                         */
-/************************************************************************/
 
 /**
 * \brief Implements a Torus topology
@@ -131,8 +80,11 @@ typedef struct sctk_Torus_t
 	sctk_uint8_t size_last_dimension;	/**< minimum number of ranks for the last dimension  */
 	int node_regular; 			/**< node_count when it is a perfect torus */
 	int node_left; 			 	/**< zero when it is a perfect torus */
-	sctk_Node_t last_node;			/**< useful when it is an imperfect torus */
+	sctk_Node_t last_node;		 /**< useful when it is an imperfect torus */
+	sctk_Node_t local_node;		 /**< useful when it is an imperfect torus */
 }sctk_Torus_t;
+
+
 
 /**
 * \brief Initialize a Torus or torus topology
@@ -180,6 +132,55 @@ int sctk_Torus_route_next(sctk_Node_t *dest);
 * \return the coordinate of the neighbour in the dimension i
 */
 int sctk_Torus_neighbour_dimension(unsigned i,unsigned j);
+
+/**
+* \brief Zero a Node
+* \param Node pointer to sctk_Node_t
+*
+* This call will set all the dimensions
+* of the given tupple to 0
+*/
+inline void sctk_Node_zero ( sctk_Node_t *Node );
+
+/**
+* \brief Display a Node to stdout
+* \param Node pointer to sctk_Node_t
+*/
+inline void sctk_Node_print (sctk_Node_t *Node );
+
+/**
+* \brief Initialize a Node
+* \param Node pointer to an sctk_Node_t
+* \param int the ident of the node
+*/
+void sctk_Node_init (sctk_Torus_t * torus, sctk_Node_t *Node, int id);
+
+/**
+* \brief Compute the id (~rank) of a given coordinate in the Torus
+* \param coord coordinates
+* \return id associated to these coordinates
+*
+* Once the sctk_Torus_t is initialized this call is thread safe
+* This call will abort if check are enabled and entries invalid
+*/
+int sctk_Node_id ( sctk_Torus_t *torus, sctk_Node_t *coord );
+
+/**
+* \brief Release a Node
+* \param Node pointer to sctk_Node_t
+*
+* This call just set the dimension to 0
+* making the Node unusable
+*/
+inline void sctk_Node_release ( sctk_Node_t *Node );
+
+/**
+* \brief Set a Node by copy
+* \param Node pointer to sctk_Node_t, it will be updated
+* \param Node pointer to sctk_Node_t
+*/
+inline void sctk_Node_set_from ( sctk_Node_t *Node, sctk_Node_t *NodeToCopy );
+
 
 /************************************************************************/
 /* Rail Info                                                            */
