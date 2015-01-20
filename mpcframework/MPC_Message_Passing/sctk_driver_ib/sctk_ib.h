@@ -142,18 +142,18 @@ __UNUSED__ static char* sctk_ib_protocol_print(sctk_ib_protocol_t prot)
 }
 
 
-/* 2 first bits: not_set, zerocopy, recopy */
-/* third bit: if matched */
+/* 2 first bits: SCTK_IB_RDMA_NOT_SET, SCTK_IB_RDMA_ZEROCOPY, SCTK_IB_RDMA_RECOPY */
+/* third bit: if SCTK_IB_RDMA_MATCH */
 /* forth bit: if done  */
 /* free from 1<<4 */
 typedef volatile enum sctk_ib_rdma_status_e
 {
-	not_set = 1,
-	zerocopy = 2,
-	recopy = 3,
-	match = 4,
-	done = 8,
-	allocating = 1<<4,
+	SCTK_IB_RDMA_NOT_SET = 1,
+	SCTK_IB_RDMA_ZEROCOPY = 2,
+	SCTK_IB_RDMA_RECOPY = 3,
+	SCTK_IB_RDMA_MATCH = 4,
+	SCTK_IB_RDMA_DONE = 8,
+	SCTK_IB_RDMA_ALLOCATION = 1<<4,
 } sctk_ib_rdma_status_t;
 
 #define MASK_BASE   0x03

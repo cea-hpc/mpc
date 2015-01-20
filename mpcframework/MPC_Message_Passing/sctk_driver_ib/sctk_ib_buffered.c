@@ -160,13 +160,13 @@ void sctk_ib_buffered_free_msg(void* arg) {
   ib_assume(entry);
 
   switch(entry->status & MASK_BASE) {
-    case recopy:
+    case SCTK_IB_RDMA_RECOPY:
       sctk_nodebug("Free payload %p from entry %p", entry->payload, entry);
       sctk_free(entry->payload);
       PROF_INC(rail, ib_free_mem);
       break;
 
-    case zerocopy:
+    case SCTK_IB_RDMA_ZEROCOPY:
     /* Nothing to do */
       break;
 
@@ -191,19 +191,19 @@ void sctk_ib_buffered_copy(sctk_message_to_copy_t* tmp){
   entry->copy_ptr = tmp;
   sctk_nodebug("Copy status (%p): %d", entry, entry->status);
   switch (entry->status & MASK_BASE) {
-    case not_set:
+    case SCTK_IB_RDMA_NOT_SET:
       sctk_nodebug("Message directly copied (entry:%p)", entry);
       if (recv->tail.message_type == sctk_message_contiguous) {
         entry->payload = recv->tail.message.contiguous.addr;
         /* Add matching OK */
-        entry->status = zerocopy | match;
+        entry->status = SCTK_IB_RDMA_ZEROCOPY | SCTK_IB_RDMA_MATCH;
         sctk_spinlock_unlock(&entry->lock);
         break;
       }
-    case recopy:
+    case SCTK_IB_RDMA_RECOPY:
       sctk_nodebug("Message recopied");
       /* transfer done */
-      if ( (entry->status & MASK_DONE) == done) {
+      if ( (entry->status & MASK_DONE) == SCTK_IB_RDMA_DONE) {
         sctk_spinlock_unlock(&entry->lock);
         /* The message is done. All buffers have been received */
         sctk_nodebug("Message recopied free from copy %d (%p)", entry->status, entry);
@@ -213,7 +213,7 @@ void sctk_ib_buffered_copy(sctk_message_to_copy_t* tmp){
       } else {
         sctk_nodebug("Matched");
         /* Add matching OK */
-        entry->status |= match;
+        entry->status |= SCTK_IB_RDMA_MATCH;
         sctk_nodebug("1 Matched ? %p %d", entry, entry->status & MASK_MATCH);
         sctk_spinlock_unlock(&entry->lock);
       }
@@ -257,7 +257,7 @@ sctk_ib_buffered_get_entry(sctk_rail_info_t* rail, sctk_ib_qp_t *remote, sctk_ib
     /* Add msg to hashtable */
     entry->key = key;
     entry->total = buffered->nb;
-    entry->status = not_set;
+    entry->status = SCTK_IB_RDMA_NOT_SET;
     sctk_nodebug("Not set: %d (%p)", entry->status, entry);
     entry->lock = SCTK_SPINLOCK_INITIALIZER;
     entry->current_copied_lock = SCTK_SPINLOCK_INITIALIZER;
@@ -271,14 +271,14 @@ sctk_ib_buffered_get_entry(sctk_rail_info_t* rail, sctk_ib_qp_t *remote, sctk_ib
     rail->send_message_from_network(&entry->msg);
 
     sctk_spinlock_lock(&entry->lock);
-    /* Should be 'not_set' or 'zerocopy' */
-    if ( (entry->status & MASK_BASE) == not_set) {
+    /* Should be 'SCTK_IB_RDMA_NOT_SET' or 'SCTK_IB_RDMA_ZEROCOPY' */
+    if ( (entry->status & MASK_BASE) == SCTK_IB_RDMA_NOT_SET) {
       sctk_nodebug("We recopy the message");
       entry->payload = sctk_malloc(body->header.msg_size);
       ib_assume(entry->payload);
       PROF_INC(rail, ib_alloc_mem);
-      entry->status |= recopy;
-    } else if ( (entry->status & MASK_BASE) != zerocopy) not_reachable();
+      entry->status |= SCTK_IB_RDMA_RECOPY;
+    } else if ( (entry->status & MASK_BASE) != SCTK_IB_RDMA_ZEROCOPY) not_reachable();
     sctk_spinlock_unlock(&entry->lock);
   }
   sctk_spinlock_unlock(&remote->ib_buffered.lock);
@@ -338,9 +338,9 @@ sctk_ib_buffered_poll_recv(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
     sctk_spinlock_lock(&entry->lock);
     sctk_nodebug("2 - Matched ? %p %d", entry, entry->status & MASK_MATCH);
     switch(entry->status & MASK_BASE) {
-      case recopy:
+      case SCTK_IB_RDMA_RECOPY:
         /* Message matched */
-        if ( (entry->status & MASK_MATCH) == match) {
+        if ( (entry->status & MASK_MATCH) == SCTK_IB_RDMA_MATCH) {
           sctk_spinlock_unlock(&entry->lock);
           ib_assume(entry->copy_ptr);
           /* The message is done. All buffers have been received */
@@ -350,13 +350,13 @@ sctk_ib_buffered_poll_recv(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
           PROF_INC(rail, ib_free_mem);
         } else {
           sctk_nodebug("Free done:%p", entry);
-          entry->status |= done;
+          entry->status |= SCTK_IB_RDMA_DONE;
           sctk_spinlock_unlock(&entry->lock);
         }
         break;
-      case zerocopy:
+      case SCTK_IB_RDMA_ZEROCOPY:
         /* Message matched */
-        if ( (entry->status & MASK_MATCH) == match) {
+        if ( (entry->status & MASK_MATCH) == SCTK_IB_RDMA_MATCH) {
           sctk_spinlock_unlock(&entry->lock);
           ib_assume(entry->copy_ptr);
           sctk_message_completion_and_free(entry->copy_ptr->msg_send,

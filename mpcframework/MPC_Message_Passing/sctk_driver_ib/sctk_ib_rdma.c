@@ -105,7 +105,7 @@ void sctk_ib_rdma_prepare_send_msg (sctk_ib_rail_info_t* rail_ib,
 
     rdma->local.addr = msg->tail.message.contiguous.addr;
     rdma->local.size = msg->tail.message.contiguous.size;
-    rdma->local.status = zerocopy;
+    rdma->local.status = SCTK_IB_RDMA_ZEROCOPY;
   } else {
     size_t page_size;
     aligned_size = size - sizeof(sctk_thread_ptp_message_body_t);
@@ -119,7 +119,7 @@ void sctk_ib_rdma_prepare_send_msg (sctk_ib_rail_info_t* rail_ib,
 
     rdma->local.addr = aligned_addr;
     rdma->local.size = aligned_size;
-    rdma->local.status = recopy;
+    rdma->local.status = SCTK_IB_RDMA_RECOPY;
   }
 
   /* Register MMU */
@@ -440,7 +440,7 @@ void sctk_ib_rdma_net_copy(sctk_message_to_copy_t* tmp){
    * we can initiate a RDMA data transfert */
   sctk_spinlock_lock(&send_header->rdma.lock);
   /* If the message has not yet been handled */
-  if (send_header->rdma.local.status == not_set) {
+  if (send_header->rdma.local.status == SCTK_IB_RDMA_NOT_SET) {
 
     if (recv->tail.message_type == sctk_message_contiguous) {
 
@@ -449,14 +449,14 @@ void sctk_ib_rdma_net_copy(sctk_message_to_copy_t* tmp){
 
       send_header->rdma.local.addr  = recv->tail.message.contiguous.addr;
       send_header->rdma.local.size  = recv->tail.message.contiguous.size;
-      send_header->rdma.local.status       = zerocopy;
+      send_header->rdma.local.status       = SCTK_IB_RDMA_ZEROCOPY;
       sctk_nodebug("Zerocopy. (Send:%p Recv:%p)", send, recv);
       sctk_ib_rdma_prepare_recv_zerocopy(send_header->rdma.rail, send);
       sctk_ib_rdma_send_ack(send_header->rdma.rail, send);
       send_header->rdma.copy_ptr = tmp;
       send_header->rdma.local.ready = 1;
     } else { /* not contiguous message */
-      send_header->rdma.local.status       = recopy;
+      send_header->rdma.local.status       = SCTK_IB_RDMA_RECOPY;
       sctk_ib_rdma_prepare_recv_recopy(send_header->rdma.rail, send);
       sctk_nodebug("Msg %p recopied from buffer %p", tmp->msg_send, send_header->rdma.local.addr);
       send_header->rdma.copy_ptr = tmp;
@@ -467,7 +467,7 @@ void sctk_ib_rdma_net_copy(sctk_message_to_copy_t* tmp){
     sctk_nodebug("Copy_ptr: %p (free:%p, ptr:%p)", tmp, send->tail.free_memory,
         send_header->rdma.local.addr);
 
-  } else if (send_header->rdma.local.status == recopy) {
+  } else if (send_header->rdma.local.status == SCTK_IB_RDMA_RECOPY) {
       send_header->rdma.copy_ptr = tmp;
       send_header->rdma.local.ready = 1;
   } else not_reachable();
@@ -537,7 +537,7 @@ sctk_ib_rdma_recv_req(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
   msg->tail.message_type = sctk_message_network;
   /* Remote addr initially set to NULL */
   rdma->lock        = SCTK_SPINLOCK_INITIALIZER;
-  rdma->local.status      = not_set;
+  rdma->local.status      = SCTK_IB_RDMA_NOT_SET;
   rdma->requested_size  = rdma_req->requested_size;
 
   {
@@ -611,16 +611,16 @@ sctk_ib_rdma_recv_done_remote_imm(sctk_rail_info_t* rail, int imm_data) {
 
   sctk_nodebug("msg: %p - Rail: %p (%p) copy_ptr:%p (send:%p recv:%p)", dest_msg_header, rail, ibuf, rdma->copy_ptr, send, recv);
 
-  /* If recopy, we delete the temporary msg copy */
+  /* If SCTK_IB_RDMA_RECOPY, we delete the temporary msg copy */
   sctk_nodebug("MSG DONE REMOTE");
-  if (rdma->local.status == recopy) {
-  sctk_nodebug("MSG with addr %p completed, recopy to %p (checksum:%lu)", send->tail.ib.rdma.local.addr,
+  if (rdma->local.status == SCTK_IB_RDMA_RECOPY) {
+  sctk_nodebug("MSG with addr %p completed, SCTK_IB_RDMA_RECOPY to %p (checksum:%lu)", send->tail.ib.rdma.local.addr,
       recv->tail.message.contiguous.addr,
       sctk_checksum_buffer(rdma->local.addr,rdma->copy_ptr->msg_recv));
     sctk_net_message_copy_from_buffer(rdma->local.addr,
         rdma->copy_ptr , 0);
     sctk_nodebug("FREE: %p", rdma->local.addr);
-    /* If we recopy, we can delete the temp buffer */
+    /* If we SCTK_IB_RDMA_RECOPY, we can delete the temp buffer */
     sctk_free(rdma->local.addr);
     PROF_INC(rail, ib_free_mem);
    }
@@ -659,16 +659,16 @@ sctk_ib_rdma_recv_done_remote(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
 
   sctk_nodebug("msg: %p - Rail: %p (%p-%p) copy_ptr:%p (send:%p recv:%p)", dest_msg_header, rail, ibuf, rdma_done, rdma->copy_ptr, send, recv);
 
-  /* If recopy, we delete the temporary msg copy */
+  /* If SCTK_IB_RDMA_RECOPY, we delete the temporary msg copy */
   sctk_nodebug("MSG DONE REMOTE %p ", dest_msg_header);
-  if (dest_msg_header->tail.ib.rdma.local.status == recopy) {
-  sctk_nodebug("MSG with addr %p completed, recopy to %p (checksum:%lu)", send->tail.ib.rdma.local.addr,
+  if (dest_msg_header->tail.ib.rdma.local.status == SCTK_IB_RDMA_RECOPY) {
+  sctk_nodebug("MSG with addr %p completed, SCTK_IB_RDMA_RECOPY to %p (checksum:%lu)", send->tail.ib.rdma.local.addr,
       recv->tail.message.contiguous.addr,
       sctk_checksum_buffer(dest_msg_header->tail.ib.rdma.local.addr,dest_msg_header->tail.ib.rdma.copy_ptr->msg_recv));
     sctk_net_message_copy_from_buffer(dest_msg_header->tail.ib.rdma.local.addr,
         dest_msg_header->tail.ib.rdma.copy_ptr , 0);
     sctk_nodebug("FREE: %p", dest_msg_header->tail.ib.rdma.local.addr);
-    /* If we recopy, we can delete the temp buffer */
+    /* If we SCTK_IB_RDMA_RECOPY, we can delete the temp buffer */
     sctk_free(dest_msg_header->tail.ib.rdma.local.addr);
     PROF_INC(rail, ib_free_mem);
    }
@@ -687,7 +687,7 @@ sctk_ib_rdma_recv_done_local(sctk_rail_info_t* rail, sctk_thread_ptp_message_t* 
   sctk_ib_mmu_unregister( &msg->tail.ib.rdma.remote_rail->network.ib,
     msg->tail.ib.rdma.local.mmu_entry);
 
-  if (msg->tail.ib.rdma.local.status == recopy){
+  if (msg->tail.ib.rdma.local.status == SCTK_IB_RDMA_RECOPY){
     /* Unregister MMU and free message */
     sctk_nodebug("FREE PTR: %p", msg->tail.ib.rdma.local.addr);
     sctk_free(msg->tail.ib.rdma.local.addr);
