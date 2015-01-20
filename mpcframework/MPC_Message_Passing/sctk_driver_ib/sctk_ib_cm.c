@@ -186,7 +186,7 @@ void sctk_ib_cm_connect_ring (sctk_rail_info_t* rail,
   int dest_rank;
   int src_rank;
   sctk_route_table_t *route_table_src, *route_table_dest;
-  sctk_ib_data_t *route_dest, *route_src;
+  sctk_ib_route_info_t *route_dest, *route_src;
   sctk_ib_cm_qp_connection_t keys;
 
   ib_assume(rail->send_message_from_network != NULL);

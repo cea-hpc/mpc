@@ -264,7 +264,7 @@ typedef struct
 typedef union
 {
 	sctk_tcp_route_info_t tcp; /**< TCP route info */
-	sctk_ib_data_t ib; /**< IB route info */
+	sctk_ib_route_info_t ib; /**< IB route info */
 #ifdef MPC_USE_PORTALS
 	sctk_portals_data_t portals; /**< Portals route info */
 #endif

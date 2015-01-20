@@ -55,7 +55,7 @@ void
 sctk_ib_init_remote(int dest, sctk_rail_info_t* rail, struct sctk_route_table_s* route_table, int ondemand)
 {
 	sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
-	sctk_ib_data_t *route_ib;
+	sctk_ib_route_info_t *route_ib;
 
 	route_ib=&route_table->data.ib;
 
@@ -68,7 +68,7 @@ sctk_ib_init_remote(int dest, sctk_rail_info_t* rail, struct sctk_route_table_s*
 sctk_route_table_t * sctk_ib_create_remote()
 {
 	sctk_route_table_t* tmp;
-	sctk_ib_data_t *route_ib;
+	sctk_ib_route_info_t *route_ib;
 
 	tmp = sctk_malloc(sizeof(sctk_route_table_t));
 	memset(tmp,0,sizeof(sctk_route_table_t));

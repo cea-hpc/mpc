@@ -60,7 +60,7 @@ sctk_network_send_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* 
   sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
   LOAD_CONFIG(rail_ib);
   sctk_route_table_t* tmp;
-  sctk_ib_data_t *route_data;
+  sctk_ib_route_info_t *route_data;
   sctk_ib_qp_t *remote;
   sctk_ibuf_t *ibuf;
   size_t size;

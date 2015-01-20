@@ -105,10 +105,10 @@ typedef struct sctk_ib_rail_info_s
 	char * network_type;
 } sctk_ib_rail_info_t;
 
-typedef struct sctk_ib_data_s
+typedef struct sctk_ib_route_info_s
 {
 	struct sctk_ib_qp_s * remote;
-} sctk_ib_data_t;
+} sctk_ib_route_info_t;
 
 /* ib protocol used */
 typedef enum sctk_ib_protocol_e
