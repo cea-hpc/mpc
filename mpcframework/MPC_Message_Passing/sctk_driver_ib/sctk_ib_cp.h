@@ -33,42 +33,36 @@
 #include <sctk_ibufs.h>
 #include "sctk_ib_polling.h"
 
-enum cp_counters_e{
-  matched = 0,
-  not_matched,
-};
-
 extern __thread int task_node_number;
 
-typedef struct sctk_ib_cp_task_s{
-  UT_hash_handle hh_vp;
-  UT_hash_handle hh_all;
-  int ready;
-  int vp;
-  /* numa node */
-  int node;
-  /* rank is the key of HT */
-  int rank;
-  /* local pending ibufs for the current task  */
-  sctk_ibuf_t * volatile local_ibufs_list;
-  sctk_spinlock_t local_ibufs_list_lock;
-  char dummy[64];
-  /* global pending ibufs for the current task  */
-  sctk_ibuf_t * volatile * global_ibufs_list;
-  sctk_spinlock_t *global_ibufs_list_lock;
+typedef struct sctk_ib_cp_task_s
+{
+	UT_hash_handle hh_vp;
+	UT_hash_handle hh_all;
+	int ready;
+	int vp;
+	int node;				/**< numa node */
+	int rank;				/**< rank is the key of HT */
+	sctk_ibuf_t * volatile local_ibufs_list; /**< local pending ibufs for the current task  */
+	sctk_spinlock_t local_ibufs_list_lock;
+	char dummy[64];
+	sctk_ibuf_t * volatile * global_ibufs_list;		/**< global pending ibufs for the current task  */
+	sctk_spinlock_t *global_ibufs_list_lock;
+	/* Counters */
+	OPA_int_t c[64];	
+	/* Timers */
+	sctk_spinlock_t lock_timers;
+	double time_stolen;
+	double time_steals;
+	double time_own;
+	
+	/* Tasks linked together on NUMA */
+	struct sctk_ib_cp_task_s* prev;
+	struct sctk_ib_cp_task_s* next;
 
-  /* Counters */
-  OPA_int_t c[64];
-  /* Timers */
-  sctk_spinlock_t lock_timers;
-  double time_stolen;
-  double time_steals;
-  double time_own;
-  /* Tasks linked together on NUMA */
-  struct sctk_ib_cp_task_s* prev;
-  struct sctk_ib_cp_task_s* next;
-  char pad[128];
+	char pad[128];
 } sctk_ib_cp_task_t;
+
 #define CP_PROF_INC(t,x) do {   \
   OPA_incr_int(&t->c[x]);        \
 } while(0)
