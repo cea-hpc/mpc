@@ -41,51 +41,38 @@
 #define ACK_CANCEL  333
 typedef struct sctk_ibuf_rdma_s
 {
-  /* Lock for allocating pool */
-  sctk_spinlock_t lock;
-  char dummy1[64];
-  sctk_spinlock_t polling_lock;
-  char dummy2[64];
-
-  struct sctk_ibuf_rdma_pool_s *pool;
-
-  /* If remote is RTR. Type: sctk_route_state_t */
-  OPA_int_t state_rtr;
-  /* If remote is RTS. Type: sctk_route_state_t */
-  OPA_int_t state_rts;
-
-  sctk_spinlock_t pending_data_lock;
-  /* Number of resizing */
-  OPA_int_t       resizing_nb;
-  /* Number of Connection cancels */
-  OPA_int_t       cancel_nb;
-  char dummy3[64];
-
-  /* Max number of pending requests.
-   * We this, we can get an approximation of the number
-   * of slots to create for the RDMA */
-  int max_pending_data;
-  int previous_max_pending_data;
-  /* If the process is the initiator of the request */
-  char is_initiator;
-  /* Counters */
-  OPA_int_t miss_nb;     /* Number of RDMA miss */
-  OPA_int_t hits_nb;     /* Number of RDMA hits */
-  sctk_spinlock_t flushing_lock; /* Lock while flushing */
-
-  char dummy[64];
-  sctk_spinlock_t stats_lock;
-  /* Cumulative sum of msg sizes */
-  size_t messages_size;
-  /* Number of messages exchanged */
-  size_t messages_nb;
-  double creation_timestamp;
+	sctk_spinlock_t lock;			/**< Lock for allocating pool */
+	char dummy1[64];
+	sctk_spinlock_t polling_lock;
+	char dummy2[64];
+	struct sctk_ibuf_rdma_pool_s *pool;
+	OPA_int_t state_rtr; 			/**< If remote is RTR. Type: sctk_route_state_t */
+	OPA_int_t state_rts;			/**< If remote is RTS. Type: sctk_route_state_t */
+	sctk_spinlock_t pending_data_lock;
+	OPA_int_t       resizing_nb;	/**< Number of resizing */
+	OPA_int_t       cancel_nb; 		/**< Number of Connection cancels */
+	char dummy3[64];
+	int max_pending_data;			/**< Max number of pending requests.
+									 * We this, we can get an approximation of the number
+									 * of slots to create for the RDMA */
+	int previous_max_pending_data;  /**< If the process is the initiator of the request */
+	char is_initiator;
+	/* Counters */
+	OPA_int_t miss_nb;    			 /**< Number of RDMA miss */
+	OPA_int_t hits_nb;     			 /**< Number of RDMA hits */
+	sctk_spinlock_t flushing_lock;   /**< Lock while flushing */
+	char dummy[64];
+	sctk_spinlock_t stats_lock;
+	size_t messages_size;			/**< Cumulative sum of msg sizes */
+	size_t messages_nb;				/**< Number of messages exchanged */
+	double creation_timestamp;
 } sctk_ibuf_rdma_t;
 
 #define IBV_SR_SAMPLES 1000
 /* Structure which stores some information about SR protocol
  * TODO: ideally, we should move some variables from ib_qp_s to here... */
-typedef struct sctk_ibuf_sr_s {
+typedef struct sctk_ibuf_sr_s
+{
   /* Empty */
 } sctk_ibuf_sr_t;
 
@@ -94,7 +81,7 @@ typedef struct sctk_ib_qp_s
 {
 	struct ibv_qp           *qp;        /**< queue pair */
 	sctk_uint32_t           rq_psn;     /**< starting receive packet sequence number
-										(should match remote QP's sq_psn) */
+							(should match remote QP's sq_psn) */
 	sctk_uint32_t           psn;        /**< packet sequence number */
 	sctk_uint32_t           dest_qp_num;/**< destination qp number */
 	int                     rank;       /**< Process rank associated to the QP */
@@ -119,15 +106,15 @@ typedef struct sctk_ib_qp_s
 	int local_ack;						   /**< ACK for the local peers */
 	int remote_ack;						   /**< ACK for the remote peers */
 	int unsignaled_counter;			  	   /**< The number of unsignaled messages sent.
-										    * \warning the number of unsignaled messages cannot
-											* excess the max number of send entries in  QP */
+								* \warning the number of unsignaled messages cannot
+								* excess the max number of send entries in  QP */
 	struct sctk_ib_buffered_table_s ib_buffered; /**< List of pending buffered messages */
 	struct sctk_ibuf_rdma_s rdma; 				/**< Structure for ibuf rdma */
 	struct sctk_ibuf_sr_s sr;
 	struct 
 	{
-		int nb;
-		int size_ibufs;
+	int nb;
+	int size_ibufs;
 	} od_request; 							/**< Structs for requests */
 	int ondemand;							/**< Is remote dynamically created ? */
 	int R;									/**< Bit for clock algorithm */
