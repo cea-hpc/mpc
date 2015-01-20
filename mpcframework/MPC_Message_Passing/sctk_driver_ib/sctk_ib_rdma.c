@@ -188,7 +188,7 @@ sctk_ibuf_t* sctk_ib_rdma_prepare_req(sctk_rail_info_t* rail,
       msg->sctk_msg_get_glob_destination, rdma_req->remote_rail, msg->sctk_msg_get_glob_source);
 
   /* Initialization of the buffer */
-  IBUF_SET_PROTOCOL(ibuf->buffer, rdma_protocol);
+  IBUF_SET_PROTOCOL(ibuf->buffer, SCTK_IB_RDMA_PROTOCOL);
 
   sctk_nodebug("Request size: %d", IBUF_GET_RDMA_REQ_SIZE);
   sctk_nodebug("Req sent (size:%lu, requested:%d, ibuf:%p)", IBUF_GET_RDMA_REQ_SIZE,
@@ -227,7 +227,7 @@ static inline sctk_ibuf_t* sctk_ib_rdma_prepare_ack(sctk_rail_info_t* rail,
   rdma_ack->ht_key = rdma->ht_key;
 
   /* Initialization of the buffer */
-  IBUF_SET_PROTOCOL(ibuf->buffer, rdma_protocol);
+  IBUF_SET_PROTOCOL(ibuf->buffer, SCTK_IB_RDMA_PROTOCOL);
   IBUF_SET_RDMA_TYPE(rdma_header, rdma_ack_type);
 
   sctk_nodebug("Send RDMA ACK message: %lu %u", rdma_ack->addr, rdma_ack->rkey);
@@ -256,7 +256,7 @@ sctk_ib_rdma_prepare_data_write(sctk_rail_info_t* rail,
 
   IBUF_SET_DEST_TASK(ibuf->buffer, rdma->glob_destination);
   IBUF_SET_SRC_TASK(ibuf->buffer, rdma->glob_source);
-  IBUF_SET_PROTOCOL(ibuf->buffer, rdma_protocol);
+  IBUF_SET_PROTOCOL(ibuf->buffer, SCTK_IB_RDMA_PROTOCOL);
   IBUF_SET_RDMA_TYPE(rdma_header, rdma_data_write_type);
 
   sctk_debug("Write from %p (%lu) to %p (%lu)",
@@ -301,7 +301,7 @@ sctk_ib_rdma_prepare_data_write(sctk_rail_info_t* rail,
 
   IBUF_SET_DEST_TASK(ibuf->buffer, rdma->glob_destination);
   IBUF_SET_SRC_TASK(ibuf->buffer, rdma->glob_source);
-  IBUF_SET_PROTOCOL(ibuf->buffer, rdma_protocol);
+  IBUF_SET_PROTOCOL(ibuf->buffer, SCTK_IB_RDMA_PROTOCOL);
   IBUF_SET_RDMA_TYPE(rdma_header, rdma_data_write_type);
 
   sctk_nodebug("Write from %p (%lu) to %p (%lu)",
@@ -361,7 +361,7 @@ sctk_ib_rdma_prepare_done_write(sctk_rail_info_t* rail, sctk_ibuf_t *incoming_ib
   IBUF_SET_DEST_TASK(ibuf->buffer, rdma->glob_destination);
   IBUF_SET_SRC_TASK(ibuf->buffer, rdma->glob_source);
 
-  IBUF_SET_PROTOCOL(ibuf->buffer, rdma_protocol);
+  IBUF_SET_PROTOCOL(ibuf->buffer, SCTK_IB_RDMA_PROTOCOL);
   IBUF_SET_RDMA_TYPE(rdma_header, rdma_done_type);
 
   sctk_ib_qp_send_ibuf(rail_ib, rdma->remote_peer, ibuf, 0);
@@ -529,7 +529,7 @@ sctk_ib_rdma_recv_req(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
   /* We reinit the header before calculating the source */
   sctk_rebuild_header(msg);
   sctk_reinit_header(msg, sctk_ib_rdma_net_free_recv, sctk_ib_rdma_net_copy);
-  msg->tail.ib.protocol = rdma_protocol;
+  msg->tail.ib.protocol = SCTK_IB_RDMA_PROTOCOL;
   rdma = &msg->tail.ib.rdma;
   rdma->local.req_timestamp = sctk_ib_prof_get_time_stamp();
 

@@ -127,7 +127,7 @@ int sctk_ib_buffered_prepare_msg(sctk_rail_info_t* rail,
     buffered->index = buffer_index;
     buffered->payload_size = payload_size;
     buffered->copied = msg_copied;
-    IBUF_SET_PROTOCOL(ibuf->buffer, buffered_protocol);
+    IBUF_SET_PROTOCOL(ibuf->buffer, SCTK_IB_BUFFERED_PROTOCOL);
     msg_copied += payload_size;
 
     IBUF_SET_DEST_TASK(ibuf->buffer, msg->sctk_msg_get_glob_destination);
@@ -245,7 +245,7 @@ sctk_ib_buffered_get_entry(sctk_rail_info_t* rail, sctk_ib_qp_t *remote, sctk_ib
     PROF_INC(rail, ib_alloc_mem);
     /* Copy message header */
     memcpy(&entry->msg.body, body, sizeof(sctk_thread_ptp_message_body_t));
-    entry->msg.tail.ib.protocol = buffered_protocol;
+    entry->msg.tail.ib.protocol = SCTK_IB_BUFFERED_PROTOCOL;
     entry->msg.tail.ib.buffered.entry = entry;
     entry->msg.tail.ib.buffered.rail = rail;
     /* Prepare matching */

@@ -924,7 +924,7 @@ sctk_ib_qp_send_ibuf(struct sctk_ib_rail_info_s* rail_ib,
     sctk_ib_qp_t *remote, sctk_ibuf_t* ibuf, int is_control_message) {
 
 #ifdef IB_DEBUG
-  if(IBUF_GET_PROTOCOL(ibuf->buffer)  ==  null_protocol) {
+  if(IBUF_GET_PROTOCOL(ibuf->buffer)  ==  SCTK_IB_NULL_PROTOCOL) {
     sctk_ib_toolkit_print_backtrace();
     not_reachable();
   }

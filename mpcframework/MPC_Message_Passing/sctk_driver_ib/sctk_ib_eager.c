@@ -138,7 +138,7 @@ sctk_ibuf_t* sctk_ib_eager_prepare_msg(sctk_ib_rail_info_t* rail_ib,
 
   eager_header = IBUF_GET_EAGER_HEADER(ibuf->buffer);
   eager_header->payload_size = size - sizeof(sctk_thread_ptp_message_body_t);
-  IBUF_SET_PROTOCOL(ibuf->buffer, eager_protocol);
+  IBUF_SET_PROTOCOL(ibuf->buffer, SCTK_IB_EAGER_PROTOCOL);
 
   return ibuf;
 }

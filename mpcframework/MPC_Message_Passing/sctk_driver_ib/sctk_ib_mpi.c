@@ -178,16 +178,16 @@ int sctk_network_poll_send_ibuf(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf,  cons
 	/* Switch on the protocol of the received message */
 	switch (IBUF_GET_PROTOCOL(ibuf->buffer))
 	{
-		case eager_protocol:
+		case SCTK_IB_EAGER_PROTOCOL:
 			release_ibuf = 1;
 			break;
 
-		case rdma_protocol:
+		case SCTK_IB_RDMA_PROTOCOL:
 			release_ibuf = sctk_ib_rdma_poll_send(rail, ibuf);
 			sctk_nodebug("Received RMDA write send");
 			break;
 
-		case buffered_protocol:
+		case SCTK_IB_BUFFERED_PROTOCOL:
 			release_ibuf = 1;
 			break;
 
@@ -264,16 +264,16 @@ int sctk_network_poll_recv_ibuf(sctk_rail_info_t * rail, sctk_ibuf_t *ibuf, cons
 		/* Switch on the protocol of the received message */
 		switch (protocol)
 		{
-			case eager_protocol:
+			case SCTK_IB_EAGER_PROTOCOL:
 				sctk_ib_eager_poll_recv(rail, ibuf);
 				release_ibuf = 0;
 				break;
 
-			case rdma_protocol:
+			case SCTK_IB_RDMA_PROTOCOL:
 				release_ibuf = sctk_ib_rdma_poll_recv(rail, ibuf);
 				break;
 
-			case buffered_protocol:
+			case SCTK_IB_BUFFERED_PROTOCOL:
 				sctk_ib_buffered_poll_recv(rail, ibuf);
 				release_ibuf = 1;
 				break;

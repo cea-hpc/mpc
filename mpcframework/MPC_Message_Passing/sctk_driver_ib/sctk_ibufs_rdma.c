@@ -605,17 +605,17 @@ static void __poll_ibuf(sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *remote,
 
   const sctk_ib_protocol_t protocol = IBUF_GET_PROTOCOL(ibuf->buffer);
   switch (protocol) {
-    case eager_protocol:
+    case SCTK_IB_EAGER_PROTOCOL:
       sctk_ib_eager_poll_recv(rail, ibuf);
       release_ibuf = 0;
       break;
 
-    case rdma_protocol:
+    case SCTK_IB_RDMA_PROTOCOL:
       sctk_nodebug("RDMA received from RDMA channel");
       release_ibuf = sctk_ib_rdma_poll_recv(rail, ibuf);
       break;
 
-    case buffered_protocol:
+    case SCTK_IB_BUFFERED_PROTOCOL:
       sctk_ib_buffered_poll_recv(rail, ibuf);
       release_ibuf = 1;
       break;

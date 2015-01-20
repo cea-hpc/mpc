@@ -183,7 +183,7 @@ sctk_ibuf_pick_send_sr(struct sctk_ib_rail_info_s *rail_ib)
 
     sctk_spinlock_unlock(lock);
 
-    IBUF_SET_PROTOCOL(ibuf->buffer, null_protocol);
+    IBUF_SET_PROTOCOL(ibuf->buffer, SCTK_IB_NULL_PROTOCOL);
 
 #ifdef DEBUG_IB_BUFS
     assume(ibuf);
@@ -297,7 +297,7 @@ sctk_ibuf_pick_send(struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *remote,
 
     sctk_spinlock_unlock(lock);
 
-    IBUF_SET_PROTOCOL(ibuf->buffer, null_protocol);
+    IBUF_SET_PROTOCOL(ibuf->buffer, SCTK_IB_NULL_PROTOCOL);
     PROF_INC(rail_ib->rail, ib_ibuf_sr_nb);
 
 #ifdef DEBUG_IB_BUFS
@@ -506,7 +506,7 @@ void sctk_ibuf_release(
       if (ibuf->in_srq) { /* If buffer from SRQ */
         PROF_TIME_START(rail_ib->rail, ib_ibuf_sr_srq_release);
         ibuf->flag = FREE_FLAG;
-        IBUF_SET_PROTOCOL(ibuf->buffer, null_protocol);
+        IBUF_SET_PROTOCOL(ibuf->buffer, SCTK_IB_NULL_PROTOCOL);
 
         {
           sctk_ibuf_numa_t * closest_node = sctk_ibuf_get_closest_node(rail_ib);
@@ -543,7 +543,7 @@ TODO("Number of SRQ buffers in the cache -> in the configuration")
 #endif
         PROF_TIME_START(rail_ib->rail, ib_ibuf_sr_send_release);
         ibuf->flag = FREE_FLAG;
-        IBUF_SET_PROTOCOL(ibuf->buffer, null_protocol);
+        IBUF_SET_PROTOCOL(ibuf->buffer, SCTK_IB_NULL_PROTOCOL);
 
         OPA_incr_int(&node->free_nb);
         sctk_spinlock_lock(lock);
