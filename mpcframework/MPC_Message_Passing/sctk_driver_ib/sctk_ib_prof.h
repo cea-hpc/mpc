@@ -54,59 +54,61 @@
 extern __thread struct sctk_ib_prof_s * sctk_ib_profiler;
 extern __thread struct sctk_ib_prof_s * sctk_ib_profiler_start;
 
-typedef enum sctk_ib_prof_glob_counters_e {
-  ib_ibuf_rdma_size = 0,
-  ib_rdma_connection,
-  ib_rdma_resizing,
-  ib_rdma_deconnection,
-  IB_PROF_GLOB_COUNTERS_MAX
+typedef enum sctk_ib_prof_glob_counters_e
+{
+	SCTK_IB_IBUS_RDMA_SIZE = 0,
+	SCTK_IB_RDMA_CONNECTION,
+	SCTK_IB_RDMA_RESIZING,
+	SCTK_IB_RDMA_DECONNECTION,
+	IB_PROF_GLOB_COUNTERS_MAX
 } sctk_ib_prof_glob_counters_t;
 
 extern OPA_int_t sctk_ib_prof_glob_counters[IB_PROF_GLOB_COUNTERS_MAX];
+
 static const char *sctk_ib_prof_glob_counters_name[IB_PROF_GLOB_COUNTERS_MAX]  =
-  {
-    "ib_ibuf_rdma_size",
-    "ib_rdma_connection",
-    "ib_rdma_resizing",
-    "ib_ibuf_rdma_deconnection",
-  };
+{
+	"SCTK_IB_IBUS_RDMA_SIZE",
+	"SCTK_IB_RDMA_CONNECTION",
+	"SCTK_IB_RDMA_RESIZING",
+	"SCTK_IB_RDMA_DECONNECTION",
+};
 
 
-#define PROF_INC_GLOB(r,x)                                               \
+#define PROF_INC_GLOB(r,x) \
     OPA_incr_int(&sctk_ib_prof_glob_counters[x]);
 
-#define PROF_ADD_GLOB(r,x,y)                                             \
+#define PROF_ADD_GLOB(r,x,y) \
     OPA_add_int(&sctk_ib_prof_glob_counters[x], y);
 
-#define PROF_DECR_GLOB(r,x,y)                                             \
+#define PROF_DECR_GLOB(r,x,y)  \
     OPA_add_int(&sctk_ib_prof_glob_counters[x], -(y));
 
 // End global counters
 
-#define PROF_TIME_START(r, x)                                       \
-  SCTK_PROFIL_START_DECLARE(x);                                     \
-  /* if (r->rail_number == PROF_RAIL_NUMBER ) */ {                         \
-     SCTK_PROFIL_START_INIT(x);                                     \
+#define PROF_TIME_START(r, x) \
+  SCTK_PROFIL_START_DECLARE(x);  \
+  /* if (r->rail_number == PROF_RAIL_NUMBER ) */ {  \
+     SCTK_PROFIL_START_INIT(x);  \
   }
 
-#define PROF_TIME_END(r, x)                                         \
-  /* if (r->rail_number == PROF_RAIL_NUMBER ) */ {                         \
-    SCTK_PROFIL_END(x);                                        \
-  }                                                         \
+#define PROF_TIME_END(r, x)     \
+  /* if (r->rail_number == PROF_RAIL_NUMBER ) */ {     \
+    SCTK_PROFIL_END(x);   \
+  }  
 
-#define PROF_INC(r,x)                                               \
-  /* if (r->rail_number == PROF_RAIL_NUMBER ) */ {                         \
-    SCTK_COUNTER_INC(x, 1);                                    \
+#define PROF_INC(r,x)  \
+  /* if (r->rail_number == PROF_RAIL_NUMBER ) */ {      \
+    SCTK_COUNTER_INC(x, 1);      \
   }
 
-#define PROF_ADD(r,x,y)                                             \
-  /* if (r->rail_number == PROF_RAIL_NUMBER ) */ {                         \
-    SCTK_COUNTER_INC(x, y);                                    \
+#define PROF_ADD(r,x,y)     \
+  /* if (r->rail_number == PROF_RAIL_NUMBER ) */ {    \
+    SCTK_COUNTER_INC(x, y);   \
   }
 
-#define PROF_DECR(r,x,y)                                             \
-  /* if (r->rail_number == PROF_RAIL_NUMBER) */ {                         \
-    SCTK_COUNTER_DEC(x, y);                                    \
+#define PROF_DECR(r,x,y)    \
+  /* if (r->rail_number == PROF_RAIL_NUMBER) */ {   \
+    SCTK_COUNTER_DEC(x, y);    \
   }
 
 
@@ -178,8 +180,9 @@ void sctk_ib_prof_mem_write(double ts, double mem);
 #define sctk_ib_prof_mem_write(x,y) (void)(0)
 #define sctk_ib_prof_get_mem_used() 0
 #if 0
-static double sctk_ib_prof_get_mem_used() {
-  return 0;
+static double sctk_ib_prof_get_mem_used()
+{
+	return 0;
 }
 #endif
 #endif  /* SCTK_IB_PROF */

@@ -23,6 +23,7 @@
 /* #                                                                      # */
 /* ######################################################################## */
 #ifdef MPC_USE_INFINIBAND
+
 #include <sctk_debug.h>
 #include <sctk_net_tools.h>
 #include <sctk_ib.h>
@@ -51,8 +52,7 @@
 #include <sctk_io_helper.h>
 
 /* Initialize a new route table */
-void
-sctk_ib_init_remote(int dest, sctk_rail_info_t* rail, struct sctk_route_table_s* route_table, int ondemand)
+void sctk_ib_init_remote(int dest, sctk_rail_info_t* rail, struct sctk_route_table_s* route_table, int ondemand)
 {
 	sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
 	sctk_ib_route_info_t *route_ib;
@@ -81,30 +81,37 @@ sctk_route_table_t * sctk_ib_create_remote()
 
 char *sctk_ib_print_procotol(sctk_ib_protocol_t p)
 {
-  switch (p) {
-    case SCTK_IB_EAGER_PROTOCOL:
-      return "SCTK_IB_EAGER_PROTOCOL";
-    case SCTK_IB_RDMA_PROTOCOL:
-      return "SCTK_IB_RDMA_PROTOCOL";
-    case SCTK_IB_BUFFERED_PROTOCOL:
-      return "SCTK_IB_BUFFERED_PROTOCOL";
-    default: not_reachable();
-  }
-  return NULL;
+	switch (p)
+	{
+		case SCTK_IB_EAGER_PROTOCOL:
+			return "SCTK_IB_EAGER_PROTOCOL";
+		case SCTK_IB_RDMA_PROTOCOL:
+			return "SCTK_IB_RDMA_PROTOCOL";
+		case SCTK_IB_BUFFERED_PROTOCOL:
+			return "SCTK_IB_BUFFERED_PROTOCOL";
+		default: 
+			not_reachable();
+	}
+	return NULL;
 }
 
-void sctk_ib_print_msg(sctk_thread_ptp_message_t *msg) {
-  sctk_error("IB protocol: %s", sctk_ib_print_procotol(msg->tail.ib.protocol));
-  switch (msg->tail.ib.protocol) {
-    case SCTK_IB_EAGER_PROTOCOL:
-      break;
-    case SCTK_IB_RDMA_PROTOCOL:
-      sctk_ib_rdma_print(msg);
-      break;
-    case SCTK_IB_BUFFERED_PROTOCOL:
-      break;
-    default: not_reachable();
-  }
+void sctk_ib_print_msg(sctk_thread_ptp_message_t *msg)
+{
+	sctk_error("IB protocol: %s", sctk_ib_print_procotol(msg->tail.ib.protocol));
+	
+	switch (msg->tail.ib.protocol)
+	{
+		case SCTK_IB_EAGER_PROTOCOL:
+			break;
+		case SCTK_IB_RDMA_PROTOCOL:
+			sctk_ib_rdma_print(msg);
+		break;
+		case SCTK_IB_BUFFERED_PROTOCOL:
+			break;
+		default: 
+			not_reachable();
+	}
 
 }
+
 #endif

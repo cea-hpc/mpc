@@ -62,90 +62,101 @@ OPA_int_t sctk_ib_prof_glob_counters[IB_PROF_GLOB_COUNTERS_MAX];
 /*-----------------------------------------------------------
  *  FUNCTIONS
  *----------------------------------------------------------*/
-void sctk_ib_prof_init() {
-  sctk_nodebug("VP number: %d", sctk_get_cpu_number());
+void sctk_ib_prof_init()
+{
+	sctk_nodebug("VP number: %d", sctk_get_cpu_number());
 
-  /* Initialize QP usage profiling */
+	/* Initialize QP usage profiling */
 #ifdef SCTK_IB_QP_PROF
-  sctk_ib_prof_qp_init();
+	sctk_ib_prof_qp_init();
 #endif
 }
 
 #ifdef SCTK_IB_PROF
-double sctk_ib_prof_get_time_stamp() {
-  return sctk_get_time_stamp() - reference_clock;
+double sctk_ib_prof_get_time_stamp()
+{
+	return sctk_get_time_stamp() - reference_clock;
 }
 
-void sctk_ib_prof_init_reference_clock() {
-  if (reference_clock == -1) {
-    reference_clock = sctk_get_time_stamp();
-  }
+void sctk_ib_prof_init_reference_clock()
+{
+	if (reference_clock == -1)
+	{
+		reference_clock = sctk_get_time_stamp();
+	}
 }
 #endif
 
-void sctk_ib_prof_init_task(int rank, int vp) {
-  sctk_nodebug("Initialization with %d rails for rank %d", sctk_route_get_rail_nb(), rank);
-  sctk_ib_prof_qp_init_task(rank, vp);
+void sctk_ib_prof_init_task(int rank, int vp)
+{
+	sctk_nodebug("Initialization with %d rails for rank %d", sctk_route_get_rail_nb(), rank);
+	sctk_ib_prof_qp_init_task(rank, vp);
 }
 
 
-void sctk_ib_prof_finalize(sctk_ib_rail_info_t *rail_ib) {
-#ifdef SCTK_IB_PROF
+void sctk_ib_prof_finalize(sctk_ib_rail_info_t *rail_ib)
+{
+	#ifdef SCTK_IB_PROF
 
-#ifdef SCTK_IB_MEM_PROF
-  sctk_ib_prof_mem_finalize(rail_ib);
-#endif
+	#ifdef SCTK_IB_MEM_PROF
+	sctk_ib_prof_mem_finalize(rail_ib);
+	#endif
 
-#if 1
-  char line[1024];
-  char line_res[1024] = "\0";
-  sprintf(line, "%d ", sctk_process_rank);
-  strcat(line_res, line);
+	#if 1
+	char line[1024];
+	char line_res[1024] = "\0";
+	sprintf(line, "%d ", sctk_process_rank);
+	strcat(line_res, line);
 
-  int i;
-  for (i=0; i < IB_PROF_GLOB_COUNTERS_MAX; ++i) {
-    sprintf(line, "%s %d ",
-        sctk_ib_prof_glob_counters_name[i],
-        OPA_load_int(&sctk_ib_prof_glob_counters[i]));
-  strcat(line_res, line);
-  }
-  sprintf(line, "\n");
-  strcat(line_res, line);
-  fprintf(stderr, "%s", line_res);
-#endif
-#endif
+	int i;
+	for (i=0; i < IB_PROF_GLOB_COUNTERS_MAX; ++i)
+	{
+		sprintf(line, "%s %d ",
+			sctk_ib_prof_glob_counters_name[i],
+			OPA_load_int(&sctk_ib_prof_glob_counters[i]));
+		strcat(line_res, line);
+	}
+	sprintf(line, "\n");
+	strcat(line_res, line);
+	fprintf(stderr, "%s", line_res);
+	#endif
+	#endif
 }
 
 #if 0
-void * __mem_thread(void* arg) {
-  sctk_ib_rail_info_t *rail_ib = (sctk_ib_rail_info_t*) arg;
+void * __mem_thread(void* arg)
+{
+	sctk_ib_rail_info_t *rail_ib = (sctk_ib_rail_info_t*) arg;
 
-  while(1) {
-    mem_used = sctk_profiling_get_dataused();
+	while(1)
+	{
+		mem_used = sctk_profiling_get_dataused();
 
-    if (sctk_process_rank == 0) {
-      sctk_warning("Memory used for process %d: %.0fko-%.0fko", sctk_process_rank,
-          mem_used, IBV_MEM_USED_LIMIT);
+		if (sctk_process_rank == 0)
+		{
+			sctk_warning("Memory used for process %d: %.0fko-%.0fko", sctk_process_rank, mem_used, IBV_MEM_USED_LIMIT);
 
-      if (mem_used > IBV_MEM_USED_LIMIT) {
-        sctk_warning("Process %d in low memory mode :%.0fko", mem_used);
-        sctk_ibuf_rdma_save_memory(rail_ib, mem_used - IBV_MEM_USED_LIMIT);
-      }
-    }
-    sleep(1);
-  }
+			if (mem_used > IBV_MEM_USED_LIMIT)
+			{
+				sctk_warning("Process %d in low memory mode :%.0fko", mem_used);
+				sctk_ibuf_rdma_save_memory(rail_ib, mem_used - IBV_MEM_USED_LIMIT);
+			}
+		}
+		sleep(1);
+	}
 }
 
 #endif
 #if 0
 /* Process initialization */
-void sctk_ib_prof_mem_init(sctk_ib_rail_info_t *rail_ib) {
-  sctk_thread_t pidt;
-  sctk_thread_attr_t attr;
+void sctk_ib_prof_mem_init(sctk_ib_rail_info_t *rail_ib)
+{
+	sctk_thread_t pidt;
+	sctk_thread_attr_t attr;
 
-  sctk_thread_attr_init (&attr);
-  sctk_thread_attr_setscope (&attr, SCTK_THREAD_SCOPE_SYSTEM);
-  sctk_user_thread_create (&pidt, &attr, __mem_thread, (void*) rail_ib);
+	sctk_thread_attr_init (&attr);
+	sctk_thread_attr_setscope (&attr, SCTK_THREAD_SCOPE_SYSTEM);
+	sctk_user_thread_create (&pidt, &attr, __mem_thread, (void*) rail_ib);
 }
 #endif
 
@@ -164,119 +175,130 @@ void sctk_ib_prof_mem_init(sctk_ib_rail_info_t *rail_ib) {
 #define QP_PROF_OUTPUT_FILE "qp_prof_%d"
 static char QP_PROF_DONE = 0;
 
-struct sctk_ib_prof_qp_buff_s {
-  int proc;
-  size_t size;
-  double ts;
-  char from;
+struct sctk_ib_prof_qp_buff_s
+{
+	int proc;
+	size_t size;
+	double ts;
+	char from;
 };
 
-struct sctk_ib_prof_qp_s {
-  struct sctk_ib_prof_qp_buff_s buff[QP_PROF_BUFF_SIZE];
-  int head;
-  int fd;
-  int task_id;
+struct sctk_ib_prof_qp_s
+{
+	struct sctk_ib_prof_qp_buff_s buff[QP_PROF_BUFF_SIZE];
+	int head;
+	int fd;
+	int task_id;
 };
 
 struct sctk_ib_prof_qp_s * qp_prof = NULL;
 
-struct sctk_ib_prof_qp_s * sctk_ib_prof_qp_get(int vp)  {
-  return &qp_prof[vp];
+struct sctk_ib_prof_qp_s * sctk_ib_prof_qp_get(int vp)
+{
+	return &qp_prof[vp];
 }
 
 /* Process initialization */
-void sctk_ib_prof_qp_init() {
-  char dirname[256];
+void sctk_ib_prof_qp_init()
+{
+	char dirname[256];
 
-  sprintf(dirname, QP_PROF_DIR, sctk_get_process_rank());
-  sctk_debug("Creating dirname %s", dirname);
-  mkdir(dirname, S_IRWXU);
+	sprintf(dirname, QP_PROF_DIR, sctk_get_process_rank());
+	sctk_debug("Creating dirname %s", dirname);
+	mkdir(dirname, S_IRWXU);
 }
 
 
 /* Task initialization */
-void sctk_ib_prof_qp_init_task(int task_id, int vp) {
-  char pathname[256];
-  static sctk_spinlock_t lock = SCTK_SPINLOCK_INITIALIZER;
-  struct sctk_ib_prof_qp_s *tmp;
+void sctk_ib_prof_qp_init_task(int task_id, int vp)
+{
+	char pathname[256];
+	static sctk_spinlock_t lock = SCTK_SPINLOCK_INITIALIZER;
+	struct sctk_ib_prof_qp_s *tmp;
 
-  sctk_debug("Task initialization");
+	sctk_debug("Task initialization");
 
-  sctk_spinlock_lock(&lock);
-  if (qp_prof == NULL) {
-    int vp_number;
-    vp_number = sctk_get_cpu_number();
-    assume(vp_number >= 1);
-    qp_prof = sctk_malloc (vp_number * sizeof(struct sctk_ib_prof_qp_s));
-    assume (qp_prof);
-    memset(qp_prof, 0, vp_number * sizeof(struct sctk_ib_prof_qp_s));
-  }
-  sctk_spinlock_unlock(&lock);
+	sctk_spinlock_lock(&lock);
+	if (qp_prof == NULL) 
+	{
+		int vp_number;
+		vp_number = sctk_get_cpu_number();
+		assume(vp_number >= 1);
+		qp_prof = sctk_malloc (vp_number * sizeof(struct sctk_ib_prof_qp_s));
+		assume (qp_prof);
+		memset(qp_prof, 0, vp_number * sizeof(struct sctk_ib_prof_qp_s));
+	}
+	sctk_spinlock_unlock(&lock);
 
-  tmp = sctk_ib_prof_qp_get(vp);
+	tmp = sctk_ib_prof_qp_get(vp);
 
-  sprintf(pathname, QP_PROF_DIR"/"QP_PROF_OUTPUT_FILE, sctk_get_process_rank(), task_id);
-  tmp->fd = open(pathname, O_WRONLY | O_CREAT | O_TRUNC, S_IRWXU);
-  assume (tmp->fd != -1);
+	sprintf(pathname, QP_PROF_DIR"/"QP_PROF_OUTPUT_FILE, sctk_get_process_rank(), task_id);
+	tmp->fd = open(pathname, O_WRONLY | O_CREAT | O_TRUNC, S_IRWXU);
+	assume (tmp->fd != -1);
 
-  tmp->task_id = task_id;
-  tmp->head = 0;
+	tmp->task_id = task_id;
+	tmp->head = 0;
 
-  /* Tasks synchronization */
-  sctk_terminaison_barrier (task_id);
-  sctk_terminaison_barrier (task_id);
-  sctk_terminaison_barrier (task_id);
-  sctk_terminaison_barrier (task_id);
-  sctk_ib_prof_qp_write(-1, 0, sctk_get_time_stamp(), PROF_QP_SYNC);
+	/* Tasks synchronization */
+	sctk_terminaison_barrier (task_id);
+	sctk_terminaison_barrier (task_id);
+	sctk_terminaison_barrier (task_id);
+	sctk_terminaison_barrier (task_id);
+	sctk_ib_prof_qp_write(-1, 0, sctk_get_time_stamp(), PROF_QP_SYNC);
 }
 
 /*
  * Flush the buffer to the file
  */
-void sctk_ib_prof_qp_flush() {
-  struct sctk_ib_prof_qp_s *tmp;
-  tmp = sctk_ib_prof_qp_get(sctk_thread_get_vp());
+void sctk_ib_prof_qp_flush()
+{
+	struct sctk_ib_prof_qp_s *tmp;
+	tmp = sctk_ib_prof_qp_get(sctk_thread_get_vp());
 
-  sctk_nodebug("Dumping file with %lu elements", tmp->head);
-  write(tmp->fd, tmp->buff,
-      tmp->head * sizeof(struct sctk_ib_prof_qp_buff_s));
-  tmp->head = 0;
+	sctk_nodebug("Dumping file with %lu elements", tmp->head);
+	write(tmp->fd, tmp->buff,
+				   tmp->head * sizeof(struct sctk_ib_prof_qp_buff_s));
+	tmp->head = 0;
 }
 
 /* Write a new prof line */
-void sctk_ib_prof_qp_write(int proc, size_t size, double ts, char from) {
+void sctk_ib_prof_qp_write(int proc, size_t size, double ts, char from)
+{
 
-  struct sctk_ib_prof_qp_s *tmp;
-  tmp = sctk_ib_prof_qp_get(sctk_thread_get_vp());
-  assume(tmp);
+	struct sctk_ib_prof_qp_s *tmp;
+	tmp = sctk_ib_prof_qp_get(sctk_thread_get_vp());
+	assume(tmp);
 
-  /* We flush */
-  if (tmp->head > (QP_PROF_BUFF_SIZE - 1)) {
-    sctk_ib_prof_qp_flush();
-  }
+	/* We flush */
+	if (tmp->head > (QP_PROF_BUFF_SIZE - 1)) 
+	{
+		sctk_ib_prof_qp_flush();
+	}
 
 
-  if (from == PROF_QP_CREAT) {
-    sctk_debug("CREATION FOUND for rank %d on vp %d!!!", proc, sctk_thread_get_vp());
-  }
+	if (from == PROF_QP_CREAT) 
+	{
+		sctk_debug("CREATION FOUND for rank %d on vp %d!!!", proc, sctk_thread_get_vp());
+	}
 
-  tmp->buff[tmp->head].proc = proc;
-  tmp->buff[tmp->head].size = size;
-  tmp->buff[tmp->head].ts = ts;
-  tmp->buff[tmp->head].from = from;
-  tmp->head ++;
+	tmp->buff[tmp->head].proc = proc;
+	tmp->buff[tmp->head].size = size;
+	tmp->buff[tmp->head].ts = ts;
+	tmp->buff[tmp->head].from = from;
+	tmp->head ++;
 }
 
 /* Finalize a task */
-void sctk_ib_prof_qp_finalize_task(int task_id) {
-  struct sctk_ib_prof_qp_s *tmp;
-  tmp = sctk_ib_prof_qp_get(sctk_thread_get_vp());
-  /* End marker */
-  sctk_ib_prof_qp_write(-1, 0, sctk_get_time_stamp(), PROF_QP_SYNC);
-  sctk_nodebug("End of task %d (head:%d)", task_id, tmp->head);
-  sctk_ib_prof_qp_flush();
-  sctk_nodebug("FLUSHED End of task %d (head:%d)", task_id, tmp->head);
-  close(tmp->fd);
+void sctk_ib_prof_qp_finalize_task(int task_id)
+{
+	struct sctk_ib_prof_qp_s *tmp;
+	tmp = sctk_ib_prof_qp_get(sctk_thread_get_vp());
+	/* End marker */
+	sctk_ib_prof_qp_write(-1, 0, sctk_get_time_stamp(), PROF_QP_SYNC);
+	sctk_nodebug("End of task %d (head:%d)", task_id, tmp->head);
+	sctk_ib_prof_qp_flush();
+	sctk_nodebug("FLUSHED End of task %d (head:%d)", task_id, tmp->head);
+	close(tmp->fd);
 }
 #endif
 
@@ -292,15 +314,17 @@ void sctk_ib_prof_qp_finalize_task(int task_id) {
 /* Name of files */
 #define MEM_PROF_OUTPUT_FILE "mem_prof"
 
-struct sctk_ib_prof_mem_buff_s {
-  double ts;
-  double mem;
+struct sctk_ib_prof_mem_buff_s
+{
+	double ts;
+	double mem;
 };
 
-struct sctk_ib_prof_mem_s {
-  struct sctk_ib_prof_mem_buff_s *buff;
-  int head;
-  int fd;
+struct sctk_ib_prof_mem_s
+{
+	struct sctk_ib_prof_mem_buff_s *buff;
+	int head;
+	int fd;
 };
 
 struct sctk_ib_prof_mem_s * mem_prof;
@@ -308,72 +332,82 @@ struct sctk_ib_prof_mem_s * mem_prof;
 /*
  * Flush the buffer to the file
  */
-void sctk_ib_prof_mem_flush() {
-  sctk_nodebug("Dumping file with %lu elements", mem_prof->head);
-  write(mem_prof->fd, mem_prof->buff,
-      mem_prof->head * sizeof(struct sctk_ib_prof_mem_buff_s));
-  mem_prof->head = 0;
+void sctk_ib_prof_mem_flush()
+{
+	sctk_nodebug("Dumping file with %lu elements", mem_prof->head);
+	write(mem_prof->fd, mem_prof->buff,
+						mem_prof->head * sizeof(struct sctk_ib_prof_mem_buff_s));
+	mem_prof->head = 0;
 }
 
 /* Write a new prof line */
-void sctk_ib_prof_mem_write(double ts, double mem) {
+void sctk_ib_prof_mem_write(double ts, double mem)
+{
 
-  /* We flush */
-  if (mem_prof->head > (MEM_PROF_BUFF_SIZE - 1)) {
-    sctk_ib_prof_mem_flush();
-  }
+	/* We flush */
+	if (mem_prof->head > (MEM_PROF_BUFF_SIZE - 1))
+	{
+		sctk_ib_prof_mem_flush();
+	}
 
-  if (sctk_process_rank == 0) {
-    sctk_warning("[%d] Memory used: %fMB", sctk_process_rank, mem/1024.0/1024.0);
-  }
-  mem_prof->buff[mem_prof->head].ts = ts;
-  mem_prof->buff[mem_prof->head].mem = mem;
-  mem_prof->head ++;
+	if (sctk_process_rank == 0)
+	{
+		sctk_warning("[%d] Memory used: %fMB", sctk_process_rank, mem/1024.0/1024.0);
+	}
+
+	mem_prof->buff[mem_prof->head].ts = ts;
+	mem_prof->buff[mem_prof->head].mem = mem;
+	mem_prof->head ++;
 }
 
-void * __mem_thread(void* arg) {
-  sctk_ib_rail_info_t *rail_ib = (sctk_ib_rail_info_t*) arg;
+void * __mem_thread(void* arg)
+{
+	sctk_ib_rail_info_t *rail_ib = (sctk_ib_rail_info_t*) arg;
 
-  while(1) {
-    sctk_ib_prof_mem_write(sctk_get_time_stamp(), sctk_profiling_get_dataused());
-    sleep(1);
-  }
+	while(1)
+	{
+		sctk_ib_prof_mem_write(sctk_get_time_stamp(), sctk_profiling_get_dataused());
+		sleep(1);
+	}
 }
+
 /* Process initialization */
-void sctk_ib_prof_mem_init(sctk_ib_rail_info_t *rail_ib) {
-  char pathname[256];
-  sctk_thread_t pidt;
-  sctk_thread_attr_t attr;
+void sctk_ib_prof_mem_init(sctk_ib_rail_info_t *rail_ib)
+{
+	char pathname[256];
+	sctk_thread_t pidt;
+	sctk_thread_attr_t attr;
 
-  mem_prof = sctk_malloc ( sizeof(struct sctk_ib_prof_mem_s) );
-  mem_prof->buff = sctk_malloc (MEM_PROF_BUFF_SIZE * sizeof(struct sctk_ib_prof_mem_buff_s));
+	mem_prof = sctk_malloc ( sizeof(struct sctk_ib_prof_mem_s) );
+	mem_prof->buff = sctk_malloc (MEM_PROF_BUFF_SIZE * sizeof(struct sctk_ib_prof_mem_buff_s));
 
-#if 1
-  char dirname[256];
+	#if 1
+	char dirname[256];
 
-  sprintf(dirname, MEM_PROF_DIR, sctk_get_process_rank());
-  sctk_debug("Creating dirname %s", dirname);
-  mkdir(dirname, S_IRWXU);
-#endif
+	sprintf(dirname, MEM_PROF_DIR, sctk_get_process_rank());
+	sctk_debug("Creating dirname %s", dirname);
+	mkdir(dirname, S_IRWXU);
+	#endif
 
-  sprintf(pathname, MEM_PROF_DIR"/"MEM_PROF_OUTPUT_FILE, sctk_get_process_rank());
-  mem_prof->fd = open(pathname, O_WRONLY | O_CREAT | O_TRUNC, S_IRWXU);
-  assume (mem_prof->fd != -1);
+	sprintf(pathname, MEM_PROF_DIR"/"MEM_PROF_OUTPUT_FILE, sctk_get_process_rank());
+	mem_prof->fd = open(pathname, O_WRONLY | O_CREAT | O_TRUNC, S_IRWXU);
+	assume (mem_prof->fd != -1);
 
 
-  mem_prof->head = 0;
+	mem_prof->head = 0;
 
-  sctk_thread_attr_init (&attr);
-  sctk_thread_attr_setscope (&attr, SCTK_THREAD_SCOPE_SYSTEM);
-  sctk_user_thread_create (&pidt, &attr, __mem_thread, (void*) rail_ib);
+	sctk_thread_attr_init (&attr);
+	sctk_thread_attr_setscope (&attr, SCTK_THREAD_SCOPE_SYSTEM);
+	sctk_user_thread_create (&pidt, &attr, __mem_thread, (void*) rail_ib);
 }
 
 /* Process finalization */
-void sctk_ib_prof_mem_finalize(sctk_ib_rail_info_t *rail_ib) {
-  /* End marker */
-  sctk_ib_prof_mem_write(sctk_get_time_stamp(), PROF_QP_SYNC);
-  sctk_ib_prof_mem_flush();
-  close(mem_prof->fd);
+void sctk_ib_prof_mem_finalize(sctk_ib_rail_info_t *rail_ib)
+{
+	/* End marker */
+	sctk_ib_prof_mem_write(sctk_get_time_stamp(), PROF_QP_SYNC);
+	sctk_ib_prof_mem_flush();
+	close(mem_prof->fd);
 }
 
 #endif

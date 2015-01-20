@@ -137,8 +137,8 @@ sctk_ibuf_rdma_region_resize(struct sctk_ib_rail_info_s *rail_ib,sctk_ib_qp_t* r
    * has been made */
   assume(region->buffer_addr);
 
-  PROF_DECR_GLOB(rail_ib->rail, ib_ibuf_rdma_size, (region->nb * sizeof(sctk_ibuf_t)) );
-  PROF_DECR_GLOB(rail_ib->rail, ib_ibuf_rdma_size, (region->nb * region->size_ibufs) );
+  PROF_DECR_GLOB(rail_ib->rail, SCTK_IB_IBUS_RDMA_SIZE, (region->nb * sizeof(sctk_ibuf_t)) );
+  PROF_DECR_GLOB(rail_ib->rail, SCTK_IB_IBUS_RDMA_SIZE, (region->nb * region->size_ibufs) );
 
   /* Check if all ibufs are really free */
 #ifdef IB_DEBUG
@@ -190,14 +190,14 @@ sctk_ibuf_rdma_region_resize(struct sctk_ib_rail_info_s *rail_ib,sctk_ib_qp_t* r
   ib_assume(ptr);
   /* FIXME: is the memset here really usefull? */
   /* memset(ptr, 0, nb_ibufs * size_ibufs); */
-  PROF_ADD_GLOB(rail_ib->rail, ib_ibuf_rdma_size, nb_ibufs * size_ibufs);
+  PROF_ADD_GLOB(rail_ib->rail, SCTK_IB_IBUS_RDMA_SIZE, nb_ibufs * size_ibufs);
 
   ib_assume(region->ibuf);
   ibuf = realloc(region->ibuf, nb_ibufs * sizeof(sctk_ibuf_t));
   ib_assume(ibuf);
   /* FIXME: is the memset here really usefull? */
   /* memset (ibuf, 0, nb_ibufs * sizeof(sctk_ibuf_t)); */
-  PROF_ADD_GLOB(rail_ib->rail, ib_ibuf_rdma_size, nb_ibufs * sizeof(sctk_ibuf_t));
+  PROF_ADD_GLOB(rail_ib->rail, SCTK_IB_IBUS_RDMA_SIZE, nb_ibufs * sizeof(sctk_ibuf_t));
 
   ib_assume(nb_ibufs > 0);
   /* save previous values */
@@ -261,8 +261,8 @@ sctk_ibuf_rdma_region_free(struct sctk_ib_rail_info_s *rail_ib,sctk_ib_qp_t* rem
     sctk_ibuf_region_t *region, enum sctk_ibuf_channel channel, int nb_ibufs, int size_ibufs) {
   LOAD_DEVICE(rail_ib);
 
-  PROF_DECR_GLOB(rail_ib->rail, ib_ibuf_rdma_size, (region->nb * sizeof(sctk_ibuf_t)) );
-  PROF_DECR_GLOB(rail_ib->rail, ib_ibuf_rdma_size, (region->nb * region->size_ibufs) );
+  PROF_DECR_GLOB(rail_ib->rail, SCTK_IB_IBUS_RDMA_SIZE, (region->nb * sizeof(sctk_ibuf_t)) );
+  PROF_DECR_GLOB(rail_ib->rail, SCTK_IB_IBUS_RDMA_SIZE, (region->nb * region->size_ibufs) );
 
   { /* Free the buffers */
     ib_assume(region->buffer_addr);
@@ -323,12 +323,12 @@ sctk_ibuf_rdma_region_reinit(struct sctk_ib_rail_info_s *rail_ib,sctk_ib_qp_t* r
   /* If we need to free the region */
   if (nb_ibufs == 0) {
     sctk_ibuf_rdma_region_free(rail_ib, remote, region, channel, nb_ibufs, size_ibufs);
-    PROF_INC_GLOB(rail_ib->rail, ib_rdma_deconnection);
+    PROF_INC_GLOB(rail_ib->rail, SCTK_IB_RDMA_DECONNECTION);
   } else { /* If we need to resize the region */
 //    PROF_TIME_START(rail_ib->rail, ib_resize_rdma);
     sctk_ibuf_rdma_region_resize(rail_ib, remote, region, channel, nb_ibufs, size_ibufs);
 //    PROF_TIME_END(rail_ib->rail, ib_resize_rdma);
-    PROF_INC_GLOB(rail_ib->rail, ib_rdma_resizing);
+    PROF_INC_GLOB(rail_ib->rail, SCTK_IB_RDMA_RESIZING);
   }
 }
 
@@ -350,13 +350,13 @@ sctk_ibuf_rdma_region_init(struct sctk_ib_rail_info_s *rail_ib,sctk_ib_qp_t* rem
   sctk_posix_memalign( (void**) &ptr, mmu->page_size, nb_ibufs * size_ibufs);
   ib_assume(ptr);
   memset(ptr, 0, nb_ibufs * size_ibufs);
-  PROF_ADD_GLOB(rail_ib->rail, ib_ibuf_rdma_size, nb_ibufs * size_ibufs);
+  PROF_ADD_GLOB(rail_ib->rail, SCTK_IB_IBUS_RDMA_SIZE, nb_ibufs * size_ibufs);
 
   /* XXX: replace by memalign_on_node */
    sctk_posix_memalign(&ibuf, mmu->page_size, nb_ibufs * sizeof(sctk_ibuf_t));
   ib_assume(ibuf);
   memset (ibuf, 0, nb_ibufs * sizeof(sctk_ibuf_t));
-  PROF_ADD_GLOB(rail_ib->rail, ib_ibuf_rdma_size, nb_ibufs * sizeof(sctk_ibuf_t));
+  PROF_ADD_GLOB(rail_ib->rail, SCTK_IB_IBUS_RDMA_SIZE, nb_ibufs * sizeof(sctk_ibuf_t));
 
   region->size_ibufs_previous = 0;
   region->nb_previous = 0;
@@ -413,7 +413,7 @@ sctk_ibuf_rdma_region_init(struct sctk_ib_rail_info_s *rail_ib,sctk_ib_qp_t* rem
   /* Set clock-pointer */
   if (clock_pointer == NULL) clock_pointer = region;
   CDL_PREPEND(rdma_region_list, region);
-  PROF_INC_GLOB(rail_ib->rail, ib_rdma_connection);
+  PROF_INC_GLOB(rail_ib->rail, SCTK_IB_RDMA_CONNECTION);
   sctk_spinlock_write_unlock(&rdma_region_list_lock);
 
   sctk_nodebug("Head=%p(%d) Tail=%p(%d)", region->head, region->head->index,

@@ -47,166 +47,173 @@ typedef struct sctk_ib_polling_s{
 #define  POLL_CQ_SKIPPED -2
 
 #define HOSTNAME 2048
-#define POLL_INIT(x) do {   \
-  (x)->recv_other = 0;        \
-  (x)->recv_own = 0;          \
-  (x)->recv = 0;              \
-  (x)->recv_cq = 0; } while(0)
+#define POLL_INIT(x) do { (x)->recv_other = 0;        \
+						  (x)->recv_own = 0;          \
+						  (x)->recv = 0;              \
+						  (x)->recv_cq = 0; } while(0)
 
-#define POLL_RECV_OWN(x) do { \
-  (x)->recv_own ++;                   \
-  (x)->recv ++; } while(0)
+#define POLL_RECV_OWN(x) do { (x)->recv_own ++;                   \
+							  (x)->recv ++; } while(0)
 
-#define POLL_RECV_OTHER(x) do { \
-  (x)->recv_other ++;                   \
-  (x)->recv ++; } while(0)
+#define POLL_RECV_OTHER(x) do { (x)->recv_other ++;                   \
+								(x)->recv ++; } while(0)
 
-#define POLL_RECV_CQ(x) do { \
-  (x)->recv_cq ++;                   \
-  (x)->recv ++; } while(0)
+#define POLL_RECV_CQ(x) do { (x)->recv_cq ++;                   \
+							 (x)->recv ++; } while(0)
 
-#define POLL_RECV_CQ(x) do { \
-  (x)->recv_cq ++;                   \
-  (x)->recv ++; } while(0)
+#define POLL_RECV_CQ(x) do { (x)->recv_cq ++;                   \
+							 (x)->recv ++; } while(0)
 
 #define POLL_GET_RECV(x) ((x)->recv)
 
 #define POLL_GET_RECV_CQ(x) ((x)->recv_cq)
 #define POLL_SET_RECV_CQ(x, y) ((x)->recv_cq = y)
 
-__UNUSED__  static inline char *
-sctk_ib_polling_print_status (enum ibv_wc_status status)
+__UNUSED__  static inline char * sctk_ib_polling_print_status (enum ibv_wc_status status)
 {
-  switch (status) {
-    case IBV_WC_SUCCESS:
-      return ("IBV_WC_SUCCESS: success");
-      break;
-    case IBV_WC_LOC_LEN_ERR:
-      return ("IBV_WC_LOC_LEN_ERR: local length error");
-      break;
-    case IBV_WC_LOC_QP_OP_ERR:
-      return ("IBV_WC_LOC_QP_OP_ERR: local QP op error");
-      break;
-    case IBV_WC_LOC_EEC_OP_ERR:
-      return ("IBV_WC_LOC_EEC_OP_ERR: local EEC op error");
-      break;
-    case IBV_WC_LOC_PROT_ERR:
-      return ("IBV_WC_LOC_PROT_ERR: local protection error");
-      break;
-    case IBV_WC_WR_FLUSH_ERR:
-      return ("IBV_WC_WR_FLUSH_ERR: write flush error");
-      break;
-    case IBV_WC_MW_BIND_ERR:
-      return ("IBV_WC_MW_BIND_ERR: MW bind error");
-      break;
-    case IBV_WC_BAD_RESP_ERR:
-      return ("IBV_WC_BAD_RESP_ERR: bad response error");
-      break;
-    case IBV_WC_LOC_ACCESS_ERR:
-      return ("IBV_WC_LOC_ACCESS_ERR: local access error");
-      break;
-    case IBV_WC_REM_INV_REQ_ERR:
-      return ("IBV_WC_REM_INV_REQ_ERR: remote invalid request error");
-      break;
-    case IBV_WC_REM_ACCESS_ERR:
-      return ("IBV_WC_REM_ACCESS_ERR: remote access error");
-      break;
-    case IBV_WC_REM_OP_ERR:
-      return ("IBV_WC_REM_OP_ERR: remote op error");
-      break;
-    case IBV_WC_RETRY_EXC_ERR:
-      return ("IBV_WC_RETRY_EXC_ERR: retry exceded error");
-      break;
-    case IBV_WC_RNR_RETRY_EXC_ERR:
-      return ("IBV_WC_RNR_RETRY_EXC_ERR: RNR retry exceded error");
-      break;
-    case IBV_WC_LOC_RDD_VIOL_ERR:
-      return ("IBV_WC_LOC_RDD_VIOL_ERR: local RDD violation error");
-      break;
-    case IBV_WC_REM_INV_RD_REQ_ERR:
-      return ("IBV_WC_REM_INV_RD_REQ_ERR: remote invalid read request error");
-      break;
-    case IBV_WC_REM_ABORT_ERR:
-      return ("IBV_WC_REM_ABORT_ERR: remote abort error");
-      break;
-    case IBV_WC_INV_EECN_ERR:
-      return ("IBV_WC_INV_EECN_ERR: invalid EECN error");
-      break;
-    case IBV_WC_INV_EEC_STATE_ERR:
-      return ("IBV_WC_INV_EEC_STATE_ERR: invalid EEC state error");
-      break;
-    case IBV_WC_FATAL_ERR:
-      return ("IBV_WC_FATAL_ERR: fatal error");
-      break;
-    case IBV_WC_RESP_TIMEOUT_ERR:
-      return ("IBV_WC_RESP_TIMEOUT_ERR: response timeout error");
-      break;
-    case IBV_WC_GENERAL_ERR:
-      return ("IBV_WC_GENERAL_ERR: general error");
-      break;
-  }
-  return ("ERROR NOT KNOWN");
+	switch (status)
+	{
+		case IBV_WC_SUCCESS:
+			return ("IBV_WC_SUCCESS: success");
+			break;
+		case IBV_WC_LOC_LEN_ERR:
+			return ("IBV_WC_LOC_LEN_ERR: local length error");
+			break;
+		case IBV_WC_LOC_QP_OP_ERR:
+			return ("IBV_WC_LOC_QP_OP_ERR: local QP op error");
+			break;
+		case IBV_WC_LOC_EEC_OP_ERR:
+			return ("IBV_WC_LOC_EEC_OP_ERR: local EEC op error");
+			break;
+		case IBV_WC_LOC_PROT_ERR:
+			return ("IBV_WC_LOC_PROT_ERR: local protection error");
+			break;
+		case IBV_WC_WR_FLUSH_ERR:
+			return ("IBV_WC_WR_FLUSH_ERR: write flush error");
+			break;
+		case IBV_WC_MW_BIND_ERR:
+			return ("IBV_WC_MW_BIND_ERR: MW bind error");
+			break;
+		case IBV_WC_BAD_RESP_ERR:
+			return ("IBV_WC_BAD_RESP_ERR: bad response error");
+			break;
+		case IBV_WC_LOC_ACCESS_ERR:
+			return ("IBV_WC_LOC_ACCESS_ERR: local access error");
+			break;
+		case IBV_WC_REM_INV_REQ_ERR:
+			return ("IBV_WC_REM_INV_REQ_ERR: remote invalid request error");
+			break;
+		case IBV_WC_REM_ACCESS_ERR:
+			return ("IBV_WC_REM_ACCESS_ERR: remote access error");
+			break;
+		case IBV_WC_REM_OP_ERR:
+			return ("IBV_WC_REM_OP_ERR: remote op error");
+			break;
+		case IBV_WC_RETRY_EXC_ERR:
+			return ("IBV_WC_RETRY_EXC_ERR: retry exceded error");
+			break;
+		case IBV_WC_RNR_RETRY_EXC_ERR:
+			return ("IBV_WC_RNR_RETRY_EXC_ERR: RNR retry exceded error");
+			break;
+		case IBV_WC_LOC_RDD_VIOL_ERR:
+			return ("IBV_WC_LOC_RDD_VIOL_ERR: local RDD violation error");
+			break;
+		case IBV_WC_REM_INV_RD_REQ_ERR:
+			return ("IBV_WC_REM_INV_RD_REQ_ERR: remote invalid read request error");
+			break;
+		case IBV_WC_REM_ABORT_ERR:
+			return ("IBV_WC_REM_ABORT_ERR: remote abort error");
+			break;
+		case IBV_WC_INV_EECN_ERR:
+			return ("IBV_WC_INV_EECN_ERR: invalid EECN error");
+			break;
+		case IBV_WC_INV_EEC_STATE_ERR:
+			return ("IBV_WC_INV_EEC_STATE_ERR: invalid EEC state error");
+			break;
+		case IBV_WC_FATAL_ERR:
+			return ("IBV_WC_FATAL_ERR: fatal error");
+			break;
+		case IBV_WC_RESP_TIMEOUT_ERR:
+			return ("IBV_WC_RESP_TIMEOUT_ERR: response timeout error");
+			break;
+		case IBV_WC_GENERAL_ERR:
+			return ("IBV_WC_GENERAL_ERR: general error");
+			break;
+	}
+
+	return ("ERROR NOT KNOWN");
 }
 
 
-__UNUSED__ static inline void
-sctk_ib_polling_check_wc(struct sctk_ib_rail_info_s* rail_ib,
-    struct ibv_wc wc) {
-  struct sctk_runtime_config_struct_net_driver_infiniband *config = (rail_ib)->config;
-  struct sctk_ibuf_s* ibuf;
-  char host[HOSTNAME];
-  char ibuf_desc[4096];
+__UNUSED__ static inline void sctk_ib_polling_check_wc(struct sctk_ib_rail_info_s* rail_ib,  struct ibv_wc wc)
+{
+	struct sctk_runtime_config_struct_net_driver_infiniband *config = (rail_ib)->config;
+	struct sctk_ibuf_s* ibuf;
+	char host[HOSTNAME];
+	char ibuf_desc[4096];
 
-  if (wc.status != IBV_WC_SUCCESS) {
-    ibuf = (struct sctk_ibuf_s*) wc.wr_id;
-    assume(ibuf);
-    gethostname(host, HOSTNAME);
+	if (wc.status != IBV_WC_SUCCESS)
+	{
+		ibuf = (struct sctk_ibuf_s*) wc.wr_id;
+		assume(ibuf);
+		gethostname(host, HOSTNAME);
 
-    if (config->quiet_crash){
-      sctk_error ("\nIB - PROCESS %d CRASHED (%s): %s",
-          sctk_process_rank, host, sctk_ib_polling_print_status(wc.status));
-    } else {
-      sctk_ibuf_print(ibuf, ibuf_desc);
-      sctk_error ("\nIB - FATAL ERROR FROM PROCESS %d (%s)\n"
-          "################################\n"
-          "Work ID is   : %d\n"
-          "Status       : %s\n"
-          "ERROR Vendor : %d\n"
-          "Byte_len     : %d\n"
-          "Dest process : %d\n"
-          "######### IBUF DESC ############\n"
-          "%s\n"
-          "################################",
-          sctk_process_rank, host,
-          wc.wr_id, sctk_ib_polling_print_status(wc.status),
-          wc.vendor_err, wc.byte_len,
-          /* Remote can be NULL if the buffer comes from SRQ */
-          (ibuf->remote) ? ibuf->remote->rank : 0,
-          ibuf_desc);
-    }
-    sctk_abort();
-  }
+		if (config->quiet_crash)
+		{
+			sctk_error ("\nIB - PROCESS %d CRASHED (%s): %s",
+			sctk_process_rank, host, sctk_ib_polling_print_status(wc.status));
+		}
+		else
+		{
+			sctk_ibuf_print(ibuf, ibuf_desc);
+			sctk_error ("\nIB - FATAL ERROR FROM PROCESS %d (%s)\n"
+						"################################\n"
+						"Work ID is   : %d\n"
+						"Status       : %s\n"
+						"ERROR Vendor : %d\n"
+						"Byte_len     : %d\n"
+						"Dest process : %d\n"
+						"######### IBUF DESC ############\n"
+						"%s\n"
+						"################################", sctk_process_rank,
+															host, 
+															wc.wr_id, 
+															sctk_ib_polling_print_status(wc.status), 	
+															wc.vendor_err, 
+															wc.byte_len,
+															/* Remote can be NULL if the buffer comes from SRQ */
+															(ibuf->remote) ? ibuf->remote->rank : 0,
+															ibuf_desc);
+		}
+
+		sctk_abort();
+	}
 }
 
 #define WC_COUNT 100
-__UNUSED__ static inline void sctk_ib_cq_poll(sctk_rail_info_t* rail,
-    struct ibv_cq *cq, const int poll_nb, struct sctk_ib_polling_s *poll,
-    int (*ptr_func)(sctk_rail_info_t* rail, struct ibv_wc*, struct sctk_ib_polling_s *poll))
+__UNUSED__ static inline void sctk_ib_cq_poll(sctk_rail_info_t* rail,  
+											  struct ibv_cq *cq, 
+											  const int poll_nb, 
+											  struct sctk_ib_polling_s *poll,  
+											  int (*ptr_func)(sctk_rail_info_t* rail, struct ibv_wc*, struct sctk_ib_polling_s *poll))
 {
-  sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
-  struct ibv_wc wc[WC_COUNT];
-  int res = 0;
-  int i;
+	sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
+	struct ibv_wc wc[WC_COUNT];
+	int res = 0;
+	int i;
 
-  do {
-    res = ibv_poll_cq (cq, WC_COUNT, wc);
-    if (res) sctk_nodebug("Polled %d msgs from cq", res);
-    for (i = 0; i < res; ++i) {
-      sctk_ib_polling_check_wc(rail_ib, wc[i]);
-      ptr_func(rail, &wc[i], poll);
-      POLL_RECV_CQ(poll);
-    }
-  } while(res == WC_COUNT);
+	do 
+	{
+		res = ibv_poll_cq (cq, WC_COUNT, wc);
+		if (res) 
+			sctk_nodebug("Polled %d msgs from cq", res);
+		for (i = 0; i < res; ++i) 
+		{
+			sctk_ib_polling_check_wc(rail_ib, wc[i]);
+			ptr_func(rail, &wc[i], poll);
+			POLL_RECV_CQ(poll);
+		}
+	} while(res == WC_COUNT);
 }
 
 #endif
