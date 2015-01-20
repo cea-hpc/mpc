@@ -49,130 +49,131 @@ char* steal_names[2] = {
 
 void sctk_ib_config_check(sctk_ib_rail_info_t *rail_ib)
 {
-  LOAD_CONFIG(rail_ib);
+	LOAD_CONFIG(rail_ib);
 
-  /* TODO: MMU cache is buggy and do not intercept free calls */
-  if ( (sctk_process_rank == 0)
-      && (config->mmu_cache_enabled == 1) ) {
-    sctk_error("MMU cache enabled: use it at your own risk!");
-  }
+	/* TODO: MMU cache is buggy and do not intercept free calls */
+	if ( (sctk_process_rank == 0)
+	&& (config->mmu_cache_enabled == 1) )
+	{
+		sctk_error("MMU cache enabled: use it at your own risk!");
+	}
 
-  if ( (sctk_process_rank == 0)
-      && (config->low_memory) ) {
-    sctk_error("LOW mem module enabled: use it at your own risk!");
-  }
+	if ( (sctk_process_rank == 0)
+	&& (config->low_memory) )
+	{
+		sctk_error("LOW mem module enabled: use it at your own risk!");
+	}
 
-  /* Good conf, we return */
-  return;
+	/* Good conf, we return */
+	return;
 }
 
 #define EXPERIMENTAL(str) #str" (experimental)"
 void sctk_ib_config_print(sctk_ib_rail_info_t *rail_ib)
 {
   LOAD_CONFIG(rail_ib);
-  if (sctk_process_rank == 0) {
-    fprintf(stderr,
-        "############# IB configuration for %s\n"
-        "eager_limit      = %d\n"
-        "buffered_limit = %d\n"
-        "max_rdma_connections = %d\n"
-        "rdma_min_size = %d\n"
-        "rdma_max_size = %d\n"
-        "rdma_min_nb = %d\n"
-        "rdma_max_nb = %d\n"
-        "rdma_resizing_min_size, = %d\n"
-        "rdma_resizing_max_size = %d\n"
-        "rdma_resizing_min_nb = %d\n"
-        "rdma_resizing_max_nb = %d\n"
-        "rdma_resizing    = %d\n"
-        "qp_tx_depth      = %d\n"
-        "qp_rx_depth      = %d\n"
-        "max_sg_sq        = %d\n"
-        "max_sg_rq        = %d\n"
-        "max_inline       = %d\n"
-        "init_ibufs        = %d\n"
-        "init_recv_ibufs        = %d\n"
-        "max_srq_ibufs_posted    = %d\n"
-        "max_srq_ibufs    = %d\n"
-        "size_ibufs_chunk = %d\n"
-        "size_recv_ibufs_chunk = %d\n"
-        "srq_credit_limit = %d\n"
-        "srq_credit_thread_limit = %d\n"
-        "rdvz_protocol    = %d\n"
-        "wc_in_number     = %d\n"
-        "wc_out_number    = %d\n"
-        "init_mr          = %d\n"
-        "mmu_cache_enabled = %d\n"
-        "mmu_cache_entries = %d\n"
-        "adm_port         = %d\n"
-        "rdma_depth       = %d\n"
-        "rdma_dest_depth  = %d\n"
-        "quiet_crash      = %d\n"
-        "async_thread     = %d\n"
-        EXPERIMENTAL(steal)"            = %d\n"
-        "Stealing desc        = %s\n"
-        EXPERIMENTAL(low_memory)"            = %d\n"
-        "#############\n",
-        rail_ib->network_type,
-        config->eager_limit,
-        config->buffered_limit,
-        config->max_rdma_connections,
-        config->rdma_min_size,
-        config->rdma_max_size,
-        config->rdma_min_nb,
-        config->rdma_max_nb,
-        config->rdma_resizing_min_size,
-        config->rdma_resizing_max_size,
-        config->rdma_resizing_min_nb,
-        config->rdma_resizing_max_nb,
-
-        config->rdma_resizing,
-        config->qp_tx_depth,
-        config->qp_rx_depth,
-        config->max_sg_sq,
-        config->max_sg_rq,
-        config->max_inline,
-        config->init_ibufs,
-        config->init_recv_ibufs,
-        config->max_srq_ibufs_posted,
-        config->max_srq_ibufs,
-        config->size_ibufs_chunk,
-        config->size_recv_ibufs_chunk,
-        config->srq_credit_limit,
-        config->srq_credit_thread_limit,
-        config->rdvz_protocol,
-        config->wc_in_number,
-        config->wc_out_number,
-        config->init_mr,
-        config->mmu_cache_enabled,
-        config->mmu_cache_entries,
-        config->adm_port,
-        config->rdma_depth,
-        config->rdma_dest_depth,
-        config->quiet_crash,
-        config->async_thread,
-        config->steal, steal_names[config->steal],
-        config->low_memory);
+  if (sctk_process_rank == 0)
+  {
+		fprintf(stderr, "############# IB configuration for %s\n"
+						"eager_limit      = %d\n"
+						"buffered_limit = %d\n"
+						"max_rdma_connections = %d\n"
+						"rdma_min_size = %d\n"
+						"rdma_max_size = %d\n"
+						"rdma_min_nb = %d\n"
+						"rdma_max_nb = %d\n"
+						"rdma_resizing_min_size, = %d\n"
+						"rdma_resizing_max_size = %d\n"
+						"rdma_resizing_min_nb = %d\n"
+						"rdma_resizing_max_nb = %d\n"
+						"rdma_resizing    = %d\n"
+						"qp_tx_depth      = %d\n"
+						"qp_rx_depth      = %d\n"
+						"max_sg_sq        = %d\n"
+						"max_sg_rq        = %d\n"
+						"max_inline       = %d\n"
+						"init_ibufs        = %d\n"
+						"init_recv_ibufs        = %d\n"
+						"max_srq_ibufs_posted    = %d\n"
+						"max_srq_ibufs    = %d\n"
+						"size_ibufs_chunk = %d\n"
+						"size_recv_ibufs_chunk = %d\n"
+						"srq_credit_limit = %d\n"
+						"srq_credit_thread_limit = %d\n"
+						"rdvz_protocol    = %d\n"
+						"wc_in_number     = %d\n"
+						"wc_out_number    = %d\n"
+						"init_mr          = %d\n"
+						"mmu_cache_enabled = %d\n"
+						"mmu_cache_entries = %d\n"
+						"adm_port         = %d\n"
+						"rdma_depth       = %d\n"
+						"rdma_dest_depth  = %d\n"
+						"quiet_crash      = %d\n"
+						"async_thread     = %d\n"
+						EXPERIMENTAL(steal)"            = %d\n"
+						"Stealing desc        = %s\n"
+						EXPERIMENTAL(low_memory)"            = %d\n"
+						"#############\n",  rail_ib->network_type,
+											config->eager_limit,
+											config->buffered_limit,
+											config->max_rdma_connections,
+											config->rdma_min_size,
+											config->rdma_max_size,
+											config->rdma_min_nb,
+											config->rdma_max_nb,
+											config->rdma_resizing_min_size,
+											config->rdma_resizing_max_size,
+											config->rdma_resizing_min_nb,
+											config->rdma_resizing_max_nb,
+											config->rdma_resizing,
+											config->qp_tx_depth,
+											config->qp_rx_depth,
+											config->max_sg_sq,
+											config->max_sg_rq,
+											config->max_inline,
+											config->init_ibufs,
+											config->init_recv_ibufs,
+											config->max_srq_ibufs_posted,
+											config->max_srq_ibufs,
+											config->size_ibufs_chunk,
+											config->size_recv_ibufs_chunk,
+											config->srq_credit_limit,
+											config->srq_credit_thread_limit,
+											config->rdvz_protocol,
+											config->wc_in_number,
+											config->wc_out_number,
+											config->init_mr,
+											config->mmu_cache_enabled,
+											config->mmu_cache_entries,
+											config->adm_port,
+											config->rdma_depth,
+											config->rdma_dest_depth,
+											config->quiet_crash,
+											config->async_thread,
+											config->steal, steal_names[config->steal],
+											config->low_memory);
   }
 }
 
-void sctk_ib_config_mutate(sctk_ib_rail_info_t *rail_ib) {
-  LOAD_CONFIG(rail_ib);
+void sctk_ib_config_mutate(sctk_ib_rail_info_t *rail_ib)
+{
+	LOAD_CONFIG(rail_ib);
 
-  config->eager_limit       = ALIGN_ON (config->eager_limit + IBUF_GET_EAGER_SIZE, 64);
-  config->buffered_limit  = (config->buffered_limit + sizeof(sctk_thread_ptp_message_body_t));
+	config->eager_limit       = ALIGN_ON (config->eager_limit + IBUF_GET_EAGER_SIZE, 64);
+	config->buffered_limit  = (config->buffered_limit + sizeof(sctk_thread_ptp_message_body_t));
 }
 
 void sctk_ib_config_init(sctk_ib_rail_info_t *rail_ib, char* network_name)
 {
-  LOAD_CONFIG(rail_ib);
+	LOAD_CONFIG(rail_ib);
 
-  rail_ib->config = &rail_ib->rail->runtime_config_driver_config->driver.value.infiniband;
-  sctk_ib_config_mutate(rail_ib);
-  rail_ib->network_type = strdup(network_name);
+	rail_ib->config = &rail_ib->rail->runtime_config_driver_config->driver.value.infiniband;
+	sctk_ib_config_mutate(rail_ib);
+	rail_ib->network_type = strdup(network_name);
 
-  //Check if the variables are well set
-  sctk_ib_config_check(rail_ib);
+	//Check if the variables are well set
+	sctk_ib_config_check(rail_ib);
 }
 
 #endif

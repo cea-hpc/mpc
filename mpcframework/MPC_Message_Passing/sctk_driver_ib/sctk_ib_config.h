@@ -29,18 +29,17 @@
 
 #include "infiniband/verbs.h"
 
-//#define IBV_RDVZ_WRITE_PROTOCOL (1)
-//#define IBV_RDVZ_READ_PROTOCOL (2)
-#if 0
+/* Config Struct For Reference
+
 typedef struct sctk_ib_config_s
 {
-  /* Network name */
+  / Network name /
   char *network_name;
-  /* MMU */
+  / MMU /
   unsigned int  size_mr_chunk;
   unsigned int  mmu_cache_enabled;
   unsigned int  mmu_cache_entries;
-  /* IBUFS */
+  / IBUFS /
   unsigned int  init_ibufs;
   unsigned int  init_recv_ibufs;
 
@@ -79,7 +78,7 @@ typedef struct sctk_ib_config_s
   unsigned int  match;
   unsigned int  async_thread;
 
-  /* For RDMA */
+  / For RDMA /
   unsigned int  rdma_min_size;
   unsigned int  rdma_max_size;
   unsigned int  rdma_min_nb;
@@ -90,12 +89,14 @@ typedef struct sctk_ib_config_s
   unsigned int  rdma_resizing_min_nb;
   unsigned int  rdma_resizing_max_nb;
 
-  /* DEVICE */
+  / DEVICE /
   struct ibv_device_attr *device_attr;
-} sctk_ib_config_t;
-#endif
+} sctk_ib_config_t; 
+
+*/
 
 struct sctk_ib_rail_info_s;
+
 void sctk_ib_config_init(struct sctk_ib_rail_info_s *rail_ib, char *network_name);
 void sctk_ib_config_print(struct sctk_ib_rail_info_s *rail_ib);
 
