@@ -71,7 +71,7 @@ typedef struct {
 
 static void sctk_opt_messages_send(const sctk_communicator_t communicator,int myself,int dest,int tag, void* buffer,size_t size,
 				   specific_message_tag_t specific_message_tag, sctk_opt_messages_t* msg_req, int check,int copy_in_send){
-  sctk_init_header(&(msg_req->msg),myself,sctk_message_contiguous,sctk_free_opt_messages, sctk_message_copy);
+  sctk_init_header(&(msg_req->msg),myself,SCTK_MESSAGE_CONTIGUOUS,sctk_free_opt_messages, sctk_message_copy);
   sctk_add_adress_in_message(&(msg_req->msg),buffer,size);
   msg_req->request.request_type = REQUEST_SEND_COLL;
   sctk_set_header_in_message (&(msg_req->msg), tag, communicator, myself, dest, &(msg_req->request), size,specific_message_tag, MPC_DATATYPE_IGNORE);
@@ -87,7 +87,7 @@ static void sctk_opt_messages_recv(const sctk_communicator_t communicator,int sr
 				   specific_message_tag_t specific_message_tag, sctk_opt_messages_t* msg_req,struct sctk_internal_ptp_s* ptp_internal, int check,
 				   int copy_in_recv){
 
-  sctk_init_header(&(msg_req->msg),myself,sctk_message_contiguous,sctk_free_opt_messages, sctk_message_copy);
+  sctk_init_header(&(msg_req->msg),myself,SCTK_MESSAGE_CONTIGUOUS,sctk_free_opt_messages, sctk_message_copy);
   sctk_add_adress_in_message(&(msg_req->msg),buffer,size);
   msg_req->request.request_type = REQUEST_RECV_COLL;
   sctk_set_header_in_message (&(msg_req->msg), tag, communicator,  src,myself, &(msg_req->request), size,specific_message_tag, MPC_DATATYPE_IGNORE);

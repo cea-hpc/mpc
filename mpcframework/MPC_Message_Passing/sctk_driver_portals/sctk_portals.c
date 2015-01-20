@@ -180,18 +180,18 @@ void sctk_portals_message_copy(sctk_message_to_copy_t* tmp){
 	ptrmsg->md.length 	 = recv->body.header.msg_size;
 	int aligned_size,page_size;
 	switch(recv->tail.message_type){//type of the message
-	    case sctk_message_contiguous: 
+	    case SCTK_MESSAGE_CONTIGUOUS: 
 	    	ptrmsg->md.start  	 = recv->tail.message.contiguous.addr;
 			ptrmsg->md.length 	 = recv->tail.message.contiguous.size;
 
 	    	break;
 	    
-	    case sctk_message_network: 
+	    case SCTK_MESSAGE_NETWORK: 
 			ptrmsg->md.start  	 = (char*)recv + sizeof(sctk_thread_ptp_message_t);
 	    	break;
 	    
-	    case sctk_message_pack: 
-	    case sctk_message_pack_absolute: 
+	    case SCTK_MESSAGE_PACK: 
+	    case SCTK_MESSAGE_PACK_ABSOLUTE: 
 	    	aligned_size = recv->body.header.msg_size;
 			page_size = getpagesize();
 			if(posix_memalign((void**) &ptrmsg->buffer, page_size, aligned_size)!=0){
@@ -442,7 +442,7 @@ void ListAppendMsg(sctk_portals_rail_info_t* portals_info,sctk_thread_ptp_messag
 				currList->events[pos].msg.me.length 	= msg->body.header.msg_size; 
 				int aligned_size,page_size;
 				switch(msg->tail.message_type){ //type of the message
-				    case sctk_message_contiguous: 
+				    case SCTK_MESSAGE_CONTIGUOUS: 
 				    	currList->events[pos].msg.me.start  	= msg->tail.message.contiguous.addr;//then we have to send the message
 						currList->events[pos].msg.me.length 	= msg->tail.message.contiguous.size;
 
@@ -453,13 +453,13 @@ void ListAppendMsg(sctk_portals_rail_info_t* portals_info,sctk_thread_ptp_messag
 		    			}
 				    	break;
 				    
-				    case sctk_message_network: 
+				    case SCTK_MESSAGE_NETWORK: 
 						currList->events[pos].msg.me.start		= (char*)msg + sizeof(sctk_thread_ptp_message_t);
 				    	break;
 				    
-				    case sctk_message_pack: 
+				    case SCTK_MESSAGE_PACK: 
 				    	sctk_nodebug("dealing with pack");
-				    case sctk_message_pack_absolute: 
+				    case SCTK_MESSAGE_PACK_ABSOLUTE: 
 
 
 				    	aligned_size = msg->body.header.msg_size;
@@ -614,7 +614,7 @@ void ListAppendMsgReq(sctk_rail_info_t* rail,ptl_event_t* event,int peer_idThrea
 			currList->events[pos].ptrmsg.msg_send->tail.portals_message_info_t 	= &currList->events[pos];//save the event datas
 			currList->events[pos].ptrmsg.msg_send->tail.portals_info_t			= portals_info;//save the rail info
 
-			currList->events[pos].ptrmsg.msg_send->tail.message_type = sctk_message_contiguous;
+			currList->events[pos].ptrmsg.msg_send->tail.message_type = SCTK_MESSAGE_CONTIGUOUS;
 			sctk_spinlock_unlock(&portals_info->lock[peer_idThread]);
 
 			rail->send_message_from_network(currList->events[pos].ptrmsg.msg_send);
@@ -648,17 +648,17 @@ void ListFree(sctk_portals_rail_info_t* portals_info,sctk_EventQ_t* EvQ,int list
 				
 
 				switch(currList->events[pos].ptrmsg.msg_send->tail.message_type){
-				    case sctk_message_contiguous: 
+				    case SCTK_MESSAGE_CONTIGUOUS: 
 						
 
 				    	break;
 				    
-				    case sctk_message_network: 
+				    case SCTK_MESSAGE_NETWORK: 
 				    	
 				    	break;
 				    
-				    case sctk_message_pack: 
-				    case sctk_message_pack_absolute:
+				    case SCTK_MESSAGE_PACK: 
+				    case SCTK_MESSAGE_PACK_ABSOLUTE:
 
 				    	currList->events[pos].msg.buffer = NULL;
 				    	break;
@@ -681,17 +681,17 @@ void ListFree(sctk_portals_rail_info_t* portals_info,sctk_EventQ_t* EvQ,int list
 				sctk_nodebug("entering smcf %p %p",currList->events[pos].ptrmsg.msg_send->body.completion_flag,currList->events[pos].ptrmsg.msg_recv->body.completion_flag);
 				
 				switch(currList->events[pos].ptrmsg.msg_recv->tail.message_type){
-				    case sctk_message_contiguous: 
+				    case SCTK_MESSAGE_CONTIGUOUS: 
 						
 
 				    	break;
 				    
-				    case sctk_message_network: 
+				    case SCTK_MESSAGE_NETWORK: 
 
 				    	break;
 				    
-				    case sctk_message_pack: 
-				    case sctk_message_pack_absolute: 
+				    case SCTK_MESSAGE_PACK: 
+				    case SCTK_MESSAGE_PACK_ABSOLUTE: 
 				    	sctk_net_message_copy_from_buffer(currList->events[pos].msg.buffer,&(currList->events[pos].ptrmsg), 0);
 
 				    	currList->events[pos].msg.buffer = NULL;

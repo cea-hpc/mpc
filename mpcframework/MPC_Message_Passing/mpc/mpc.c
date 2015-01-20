@@ -3421,7 +3421,7 @@ __MPC_Isend (void *buf, mpc_msg_count count, MPC_Datatype datatype,
 	//~ }
 
   sctk_mpc_init_request(request,comm,src, REQUEST_SEND);
-  msg = sctk_create_header (src,sctk_message_contiguous);
+  msg = sctk_create_header (src,SCTK_MESSAGE_CONTIGUOUS);
   d_size = __MPC_Get_datatype_size (datatype, task_specific);
   msg_size = count * d_size;
 
@@ -3510,7 +3510,7 @@ __MPC_Issend (void *buf, mpc_msg_count count, MPC_Datatype datatype,
 		//~ mpc_check_msg (src, dest, tag, comm, com_size);
 	//~ }
   sctk_mpc_init_request(request,comm,src, REQUEST_SEND);
-  msg = sctk_create_header (src,sctk_message_contiguous);
+  msg = sctk_create_header (src,SCTK_MESSAGE_CONTIGUOUS);
   d_size = __MPC_Get_datatype_size (datatype, task_specific);
   msg_size = count * d_size;
 
@@ -3639,7 +3639,7 @@ __MPC_Irecv (void *buf, mpc_msg_count count, MPC_Datatype datatype,
       mpc_check_tag (tag, comm);
     }
 
-  msg = sctk_create_header (src,sctk_message_contiguous);
+  msg = sctk_create_header (src,SCTK_MESSAGE_CONTIGUOUS);
   d_size = __MPC_Get_datatype_size (datatype, task_specific);
   sctk_add_adress_in_message (msg, buf, count * d_size);
   sctk_mpc_set_header_in_message (msg, tag, comm, source, src,
@@ -4301,7 +4301,7 @@ __MPC_Ssend (void *buf, mpc_msg_count count, MPC_Datatype datatype,
 
   msg_size = count * __MPC_Get_datatype_size (datatype, task_specific);
 
-  msg = sctk_create_header (src,sctk_message_contiguous);
+  msg = sctk_create_header (src,SCTK_MESSAGE_CONTIGUOUS);
   sctk_add_adress_in_message (msg, buf,msg_size);
   sctk_mpc_init_request(&request,comm,src, REQUEST_SEND);
 
@@ -4376,7 +4376,7 @@ __MPC_Send (void *restrict buf, mpc_msg_count count, MPC_Datatype datatype,
     if ((msg_size > MAX_MPC_BUFFERED_SIZE) || (sctk_is_net_message (dest)) || mpc_disable_buffering)
     {
       msg = &header;
-      sctk_init_header(msg,src,sctk_message_contiguous,sctk_no_free_header,sctk_message_copy);
+      sctk_init_header(msg,src,SCTK_MESSAGE_CONTIGUOUS,sctk_no_free_header,sctk_message_copy);
       sctk_mpc_init_request(&request,comm,src, REQUEST_SEND);
       sctk_add_adress_in_message(msg,buf,msg_size);
       sctk_mpc_set_header_in_message (msg, tag, comm, src, dest,
@@ -4396,7 +4396,7 @@ __MPC_Send (void *restrict buf, mpc_msg_count count, MPC_Datatype datatype,
         if (sctk_mpc_completion_flag(&(tmp_buf->request)) != SCTK_MESSAGE_DONE)
         {
           msg = &header;
-          sctk_init_header(msg,src,sctk_message_contiguous,sctk_no_free_header,sctk_message_copy);
+          sctk_init_header(msg,src,SCTK_MESSAGE_CONTIGUOUS,sctk_no_free_header,sctk_message_copy);
           sctk_spinlock_unlock (&(thread_specific->buffer.lock));
           sctk_mpc_init_request(&request,comm,src, REQUEST_SEND);
           sctk_add_adress_in_message(msg,buf,msg_size);
@@ -4410,7 +4410,7 @@ __MPC_Send (void *restrict buf, mpc_msg_count count, MPC_Datatype datatype,
 	  thread_specific->buffer.buffer_rank =
 	    (buffer_rank + 1) % MAX_MPC_BUFFERED_MSG;
           msg = &(tmp_buf->header);
-          sctk_init_header(msg,src,sctk_message_contiguous,sctk_no_free_header,sctk_message_copy);
+          sctk_init_header(msg,src,SCTK_MESSAGE_CONTIGUOUS,sctk_no_free_header,sctk_message_copy);
           sctk_mpc_init_request(&(tmp_buf->request),comm,src, REQUEST_SEND);
           sctk_nodebug ("Copied message |%s| -> |%s| %d", buf, tmp_buf->buf, msg_size);
           sctk_add_adress_in_message(msg,tmp_buf->buf,msg_size);
@@ -4538,7 +4538,7 @@ int PMPC_Recv (void *buf, mpc_msg_count count, MPC_Datatype datatype, int source
 	msg_size = count * __MPC_Get_datatype_size (datatype, task_specific);
 
 	sctk_mpc_init_request(&request,comm,src, REQUEST_RECV);
-	msg = sctk_create_header (src,sctk_message_contiguous);
+	msg = sctk_create_header (src,SCTK_MESSAGE_CONTIGUOUS);
 
 	sctk_add_adress_in_message (msg, buf,msg_size);
 
@@ -7056,7 +7056,7 @@ PMPC_Open_pack (MPC_Request * request)
 
   __MPC_Comm_rank (MPC_COMM_WORLD, &src, task_specific);
 
-  msg = sctk_create_header (src,sctk_message_pack_undefined);
+  msg = sctk_create_header (src,SCTK_MESSAGE_PACK_UNDEFINED);
 
   sctk_mpc_register_message_in_request(request,msg);
   sctk_mpc_init_message_size(request);
@@ -7086,7 +7086,7 @@ PMPC_Default_pack (mpc_msg_count count,
 
   __MPC_Comm_rank (MPC_COMM_WORLD, &src, task_specific);
 
-  msg = sctk_create_header (src,sctk_message_pack);
+  msg = sctk_create_header (src,SCTK_MESSAGE_PACK);
   msg->tail.default_pack.std.count = count;
   msg->tail.default_pack.std.begins = begins;
   msg->tail.default_pack.std.ends = ends;
@@ -7120,7 +7120,7 @@ PMPC_Default_pack_absolute (mpc_msg_count count,
 
   __MPC_Comm_rank (MPC_COMM_WORLD, &src, task_specific);
 
-  msg = sctk_create_header (src,sctk_message_pack_absolute);
+  msg = sctk_create_header (src,SCTK_MESSAGE_PACK_ABSOLUTE);
   msg->tail.default_pack.absolute.count = count;
   msg->tail.default_pack.absolute.begins = begins;
   msg->tail.default_pack.absolute.ends = ends;

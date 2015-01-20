@@ -35,7 +35,7 @@
   {
 TODO("Deal with partial reception")
     switch(msg->tail.message_type){
-    case sctk_message_contiguous: {
+    case SCTK_MESSAGE_CONTIGUOUS: {
       size_t size;
 
       size = msg->body.header.msg_size;
@@ -44,7 +44,7 @@ TODO("Deal with partial reception")
       sctk_safe_read(fd,msg->tail.message.contiguous.addr,size);
       break;
     }
-    case sctk_message_network: {
+    case SCTK_MESSAGE_NETWORK: {
       size_t size;
       void* body;
 
@@ -54,7 +54,7 @@ TODO("Deal with partial reception")
       sctk_safe_read(fd,body,size);
       break;
     }
-    case sctk_message_pack: {
+    case SCTK_MESSAGE_PACK: {
       size_t i;
       size_t j;
       size_t size;
@@ -74,7 +74,7 @@ TODO("Deal with partial reception")
 	}
       break;
     }
-  case sctk_message_pack_absolute: {
+  case SCTK_MESSAGE_PACK_ABSOLUTE: {
     size_t i;
     size_t j;
     size_t size;
@@ -103,7 +103,7 @@ TODO("Deal with partial reception")
 			     int fd)
   {
     switch(msg->tail.message_type){
-    case sctk_message_contiguous: {
+    case SCTK_MESSAGE_CONTIGUOUS: {
       size_t size;
 
       size = msg->body.header.msg_size;
@@ -112,7 +112,7 @@ TODO("Deal with partial reception")
       sctk_safe_write(fd,msg->tail.message.contiguous.addr,size);
       break;
     }
-    case sctk_message_network: {
+    case SCTK_MESSAGE_NETWORK: {
       size_t size;
       void* body;
 
@@ -122,7 +122,7 @@ TODO("Deal with partial reception")
       sctk_safe_write(fd,body,size);
       break;
     }
-    case sctk_message_pack: {
+    case SCTK_MESSAGE_PACK: {
       size_t i;
       size_t j;
       size_t size;
@@ -142,7 +142,7 @@ TODO("Deal with partial reception")
 	  }
       break;
     }
-  case sctk_message_pack_absolute: {
+  case SCTK_MESSAGE_PACK_ABSOLUTE: {
     size_t i;
     size_t j;
     size_t size;
@@ -170,7 +170,7 @@ TODO("Deal with partial reception")
 				char *buffer)
   {
     switch(msg->tail.message_type){
-    case sctk_message_contiguous: {
+    case SCTK_MESSAGE_CONTIGUOUS: {
       size_t size;
 
       size = msg->body.header.msg_size;
@@ -182,7 +182,7 @@ TODO("Deal with partial reception")
       buffer += size;
       break;
     }
-    case sctk_message_network: {
+    case SCTK_MESSAGE_NETWORK: {
       size_t size;
       void* body;
 
@@ -193,7 +193,7 @@ TODO("Deal with partial reception")
       buffer += size;
       break;
     }
-    case sctk_message_pack: {
+    case SCTK_MESSAGE_PACK: {
       size_t i;
       size_t j;
       size_t size;
@@ -214,7 +214,7 @@ TODO("Deal with partial reception")
 	  }
       break;
     }
-  case sctk_message_pack_absolute: {
+  case SCTK_MESSAGE_PACK_ABSOLUTE: {
     size_t i;
     size_t j;
     size_t size;
@@ -325,7 +325,7 @@ int sctk_net_copy_frag_msg (
   size_t tmp_size;
 
   switch(msg->tail.message_type){
-    case sctk_message_contiguous:
+    case SCTK_MESSAGE_CONTIGUOUS:
       {
         size_t size;
         size = msg->body.header.msg_size;
@@ -339,7 +339,7 @@ int sctk_net_copy_frag_msg (
             tmp_size);
         break;
       }
-    case sctk_message_network:
+    case SCTK_MESSAGE_NETWORK:
       {
         size_t size;
         void* body;
@@ -352,7 +352,7 @@ int sctk_net_copy_frag_msg (
         buffer += size;
         break;
       }
-    case sctk_message_pack:
+    case SCTK_MESSAGE_PACK:
       {
         size_t i;
         size_t j;
@@ -371,7 +371,7 @@ int sctk_net_copy_frag_msg (
           }
         break;
       }
-    case sctk_message_pack_absolute:
+    case SCTK_MESSAGE_PACK_ABSOLUTE:
       {
         size_t i;
         size_t j;
@@ -503,7 +503,7 @@ void sctk_net_message_copy(sctk_message_to_copy_t* tmp)
 
 	switch(recv->tail.message_type)
 	{
-		case sctk_message_contiguous: 
+		case SCTK_MESSAGE_CONTIGUOUS: 
 		{
 			size_t size;
 			size = send->body.header.msg_size;
@@ -514,7 +514,7 @@ void sctk_net_message_copy(sctk_message_to_copy_t* tmp)
 			sctk_message_completion_and_free(send,recv);
 			break;
 		}
-		case sctk_message_pack: 
+		case SCTK_MESSAGE_PACK: 
 		{
 			size_t i;
 			size_t j;
@@ -562,7 +562,7 @@ void sctk_net_message_copy(sctk_message_to_copy_t* tmp)
 			sctk_message_completion_and_free(send,recv);
 			break;
 		}
-		case sctk_message_pack_absolute: 
+		case SCTK_MESSAGE_PACK_ABSOLUTE: 
 		{
 			size_t i;
 			size_t j;
@@ -624,7 +624,7 @@ void sctk_net_message_copy_from_buffer(char* body,
   recv = tmp->msg_recv;
 
   switch(recv->tail.message_type){
-  case sctk_message_contiguous: {
+  case SCTK_MESSAGE_CONTIGUOUS: {
     size_t size;
     size = send->body.header.msg_size;
     size = sctk_min(send->body.header.msg_size, recv->tail.message.contiguous.size);
@@ -635,7 +635,7 @@ void sctk_net_message_copy_from_buffer(char* body,
     if(free_headers) sctk_message_completion_and_free(send,recv);
     break;
   }
-  case sctk_message_pack: {
+  case SCTK_MESSAGE_PACK: {
     size_t i;
     size_t j;
     size_t size;
@@ -666,7 +666,7 @@ void sctk_net_message_copy_from_buffer(char* body,
     if(free_headers) sctk_message_completion_and_free(send,recv);
     break;
   }
-  case sctk_message_pack_absolute: {
+  case SCTK_MESSAGE_PACK_ABSOLUTE: {
     size_t i;
     size_t j;
     size_t size;

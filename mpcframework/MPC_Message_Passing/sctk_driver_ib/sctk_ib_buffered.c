@@ -81,7 +81,7 @@ int sctk_ib_buffered_prepare_msg(sctk_rail_info_t* rail,
   void *payload;
   int number;
 
-  if (msg->tail.message_type != sctk_message_contiguous) {
+  if (msg->tail.message_type != SCTK_MESSAGE_CONTIGUOUS) {
     payload = sctk_ib_buffered_send_non_contiguous_msg(rail, remote, msg, size);
     assume(payload);
   } else {
@@ -141,7 +141,7 @@ int sctk_ib_buffered_prepare_msg(sctk_rail_info_t* rail,
   } while ( msg_copied < size);
 
   /* We free the temp copy */
-  if (msg->tail.message_type != sctk_message_contiguous) {
+  if (msg->tail.message_type != SCTK_MESSAGE_CONTIGUOUS) {
     assume(payload);
     sctk_free(payload);
   }
@@ -185,7 +185,7 @@ void sctk_ib_buffered_copy(sctk_message_to_copy_t* tmp){
   rail = send->tail.ib.buffered.rail;
   entry = send->tail.ib.buffered.entry;
   ib_assume(entry);
-  //ib_assume(recv->tail.message_type == sctk_message_contiguous);
+  //ib_assume(recv->tail.message_type == SCTK_MESSAGE_CONTIGUOUS);
 
   sctk_spinlock_lock(&entry->lock);
   entry->copy_ptr = tmp;
@@ -193,7 +193,7 @@ void sctk_ib_buffered_copy(sctk_message_to_copy_t* tmp){
   switch (entry->status & MASK_BASE) {
     case SCTK_IB_RDMA_NOT_SET:
       sctk_nodebug("Message directly copied (entry:%p)", entry);
-      if (recv->tail.message_type == sctk_message_contiguous) {
+      if (recv->tail.message_type == SCTK_MESSAGE_CONTIGUOUS) {
         entry->payload = recv->tail.message.contiguous.addr;
         /* Add matching OK */
         entry->status = SCTK_IB_RDMA_ZEROCOPY | SCTK_IB_RDMA_MATCH;
@@ -250,7 +250,7 @@ sctk_ib_buffered_get_entry(sctk_rail_info_t* rail, sctk_ib_qp_t *remote, sctk_ib
     entry->msg.tail.ib.buffered.rail = rail;
     /* Prepare matching */
     entry->msg.body.completion_flag = NULL;
-    entry->msg.tail.message_type = sctk_message_network;
+    entry->msg.tail.message_type = SCTK_MESSAGE_NETWORK;
     sctk_rebuild_header(&entry->msg);
     sctk_reinit_header(&entry->msg, sctk_ib_buffered_free_msg,
         sctk_ib_buffered_copy);

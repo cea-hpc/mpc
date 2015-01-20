@@ -101,7 +101,7 @@ static void* sctk_tcp_rdma_thread(sctk_route_table_t* tmp)
 			msg->tail.route_table = tmp;
 
 			msg->body.completion_flag = NULL;
-			msg->tail.message_type = sctk_message_network;
+			msg->tail.message_type = SCTK_MESSAGE_NETWORK;
 
 			sctk_rebuild_header(msg);
 			sctk_reinit_header(msg,sctk_free,sctk_tcp_rdma_message_copy);

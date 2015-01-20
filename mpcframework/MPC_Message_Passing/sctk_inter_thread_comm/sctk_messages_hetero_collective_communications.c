@@ -70,7 +70,7 @@ typedef struct {
 static void sctk_hetero_messages_send(const sctk_communicator_t communicator,int myself,int dest,int tag, void* buffer,size_t size,
 				   specific_message_tag_t specific_message_tag, sctk_hetero_messages_t* msg_req, int check,int copy_in_send){
 
-  sctk_init_header(&(msg_req->msg),myself,sctk_message_contiguous,sctk_free_hetero_messages,
+  sctk_init_header(&(msg_req->msg),myself,SCTK_MESSAGE_CONTIGUOUS,sctk_free_hetero_messages,
 		   sctk_message_copy);
   sctk_add_adress_in_message(&(msg_req->msg),buffer,size);
   sctk_set_header_in_message (&(msg_req->msg), tag, communicator, myself, dest,
@@ -83,7 +83,7 @@ static void sctk_hetero_messages_recv(const sctk_communicator_t communicator,int
 				   specific_message_tag_t specific_message_tag, sctk_hetero_messages_t* msg_req,struct sctk_internal_ptp_s* ptp_internal, int check,
 				   int copy_in_recv){
 
-  sctk_init_header(&(msg_req->msg),myself,sctk_message_contiguous,sctk_free_hetero_messages,
+  sctk_init_header(&(msg_req->msg),myself,SCTK_MESSAGE_CONTIGUOUS,sctk_free_hetero_messages,
 		   sctk_message_copy);
   sctk_add_adress_in_message(&(msg_req->msg),buffer,size);
   sctk_set_header_in_message (&(msg_req->msg), tag, communicator,  src,myself,

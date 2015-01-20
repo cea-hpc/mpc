@@ -97,7 +97,7 @@ void sctk_ib_rdma_prepare_send_msg (sctk_ib_rail_info_t* rail_ib,
   size_t aligned_size = 0;
 
   /* Do not allocate memory if contiguous message */
-  if (msg->tail.message_type == sctk_message_contiguous) {
+  if (msg->tail.message_type == SCTK_MESSAGE_CONTIGUOUS) {
 
     sctk_ib_rdma_align_msg(msg->tail.message.contiguous.addr,
         msg->tail.message.contiguous.size,
@@ -442,7 +442,7 @@ void sctk_ib_rdma_net_copy(sctk_message_to_copy_t* tmp){
   /* If the message has not yet been handled */
   if (send_header->rdma.local.status == SCTK_IB_RDMA_NOT_SET) {
 
-    if (recv->tail.message_type == sctk_message_contiguous) {
+    if (recv->tail.message_type == SCTK_MESSAGE_CONTIGUOUS) {
 
       /* XXX: Check if the size requested is the size of the message posted */
 //      assume(send_header->rdma.requested_size == recv->tail.message.contiguous.size);
@@ -534,7 +534,7 @@ sctk_ib_rdma_recv_req(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
   rdma->local.req_timestamp = sctk_ib_prof_get_time_stamp();
 
   msg->body.completion_flag = NULL;
-  msg->tail.message_type = sctk_message_network;
+  msg->tail.message_type = SCTK_MESSAGE_NETWORK;
   /* Remote addr initially set to NULL */
   rdma->lock        = SCTK_SPINLOCK_INITIALIZER;
   rdma->local.status      = SCTK_IB_RDMA_NOT_SET;

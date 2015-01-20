@@ -171,11 +171,11 @@ typedef struct
 
 typedef enum
 {
-	sctk_message_contiguous,
-	sctk_message_pack,
-	sctk_message_pack_absolute,
-	sctk_message_pack_undefined,
-	sctk_message_network
+	SCTK_MESSAGE_CONTIGUOUS,
+	SCTK_MESSAGE_PACK,
+	SCTK_MESSAGE_PACK_ABSOLUTE,
+	SCTK_MESSAGE_PACK_UNDEFINED,
+	SCTK_MESSAGE_NETWORK
 } sctk_message_type_t;
 
 typedef union

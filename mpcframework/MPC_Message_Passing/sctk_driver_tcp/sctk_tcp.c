@@ -78,7 +78,7 @@ static void* sctk_tcp_thread(sctk_route_table_t* tmp)
 		}
 
 		msg->body.completion_flag = NULL;
-		msg->tail.message_type = sctk_message_network;
+		msg->tail.message_type = SCTK_MESSAGE_NETWORK;
 		
 		if(msg->sctk_msg_get_communicator < 0)
 		{

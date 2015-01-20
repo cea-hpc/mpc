@@ -36,7 +36,7 @@ unsigned long sctk_checksum_message(sctk_thread_ptp_message_t *send,
   if (!checksum_enabled) return 0;
 
   switch(recv->tail.message_type){
-  case sctk_message_contiguous: {
+  case SCTK_MESSAGE_CONTIGUOUS: {
     size_t size;
     size = send->body.header.msg_size;
     if(size > recv->tail.message.contiguous.size){
@@ -45,7 +45,7 @@ unsigned long sctk_checksum_message(sctk_thread_ptp_message_t *send,
     adler = adler32(adler, (unsigned char*) recv->tail.message.contiguous.addr, size);
     break;
   }
-  case sctk_message_network: {
+  case SCTK_MESSAGE_NETWORK: {
     size_t size;
     void* body;
 
@@ -56,7 +56,7 @@ unsigned long sctk_checksum_message(sctk_thread_ptp_message_t *send,
     break;
     }
 
-  case sctk_message_pack: {
+  case SCTK_MESSAGE_PACK: {
     size_t i;
     size_t j;
     size_t size;
@@ -72,7 +72,7 @@ unsigned long sctk_checksum_message(sctk_thread_ptp_message_t *send,
 	}
     break;
   }
-  case sctk_message_pack_absolute: {
+  case SCTK_MESSAGE_PACK_ABSOLUTE: {
     size_t i;
     size_t j;
     size_t size;
@@ -99,7 +99,7 @@ unsigned long sctk_checksum_buffer(char* body,
   if (!checksum_enabled) return 0;
 
   switch(msg->tail.message_type){
-  case sctk_message_contiguous: {
+  case SCTK_MESSAGE_CONTIGUOUS: {
     size_t size;
     size = msg->body.header.msg_size;
     if(size > msg->tail.message.contiguous.size){
@@ -110,7 +110,7 @@ unsigned long sctk_checksum_buffer(char* body,
 
     break;
   }
-  case sctk_message_pack: {
+  case SCTK_MESSAGE_PACK: {
     size_t i;
     size_t j;
     size_t size;
@@ -125,7 +125,7 @@ unsigned long sctk_checksum_buffer(char* body,
 	}
     break;
   }
-  case sctk_message_pack_absolute: {
+  case SCTK_MESSAGE_PACK_ABSOLUTE: {
     size_t i;
     size_t j;
     size_t size;

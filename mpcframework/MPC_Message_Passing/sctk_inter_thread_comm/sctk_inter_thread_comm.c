@@ -628,13 +628,13 @@ inline void sctk_message_copy(sctk_message_to_copy_t* tmp)
 	send = tmp->msg_send;
 	recv = tmp->msg_recv;
 
-	assume(send->tail.message_type == sctk_message_contiguous);
+	assume(send->tail.message_type == SCTK_MESSAGE_CONTIGUOUS);
 
 	switch(recv->tail.message_type)
 	{
-		case sctk_message_contiguous:
+		case SCTK_MESSAGE_CONTIGUOUS:
 		{
-			sctk_nodebug("sctk_message_contiguous - sctk_message_contiguous");
+			sctk_nodebug("SCTK_MESSAGE_CONTIGUOUS - SCTK_MESSAGE_CONTIGUOUS");
 			size_t size;
 			size = sctk_min(send->tail.message.contiguous.size, recv->tail.message.contiguous.size);
 
@@ -643,9 +643,9 @@ inline void sctk_message_copy(sctk_message_to_copy_t* tmp)
 			sctk_message_completion_and_free(send,recv);
 			break;
 		}
-		case sctk_message_pack:
+		case SCTK_MESSAGE_PACK:
 		{
-			sctk_nodebug("sctk_message_contiguous - sctk_message_pack size %d", send->tail.message.contiguous.size);
+			sctk_nodebug("SCTK_MESSAGE_CONTIGUOUS - SCTK_MESSAGE_PACK size %d", send->tail.message.contiguous.size);
 			size_t i;
 			size_t j;
 			size_t size;
@@ -688,9 +688,9 @@ inline void sctk_message_copy(sctk_message_to_copy_t* tmp)
 			sctk_message_completion_and_free(send,recv);
 			break;
 		}
-		case sctk_message_pack_absolute:
+		case SCTK_MESSAGE_PACK_ABSOLUTE:
 		{
-			sctk_nodebug("sctk_message_contiguous - sctk_message_pack_absolute size %d", send->tail.message.contiguous.size);
+			sctk_nodebug("SCTK_MESSAGE_CONTIGUOUS - SCTK_MESSAGE_PACK_ABSOLUTE size %d", send->tail.message.contiguous.size);
 			size_t i;
 			size_t j;
 			size_t size;
@@ -1100,13 +1100,13 @@ inline void sctk_message_copy_pack(sctk_message_to_copy_t* tmp)
 	send = tmp->msg_send;
 	recv = tmp->msg_recv;
 
-	assume(send->tail.message_type == sctk_message_pack);
+	assume(send->tail.message_type == SCTK_MESSAGE_PACK);
 
 	switch(recv->tail.message_type)
 	{
-		case sctk_message_pack:
+		case SCTK_MESSAGE_PACK:
 		{
-			sctk_nodebug("sctk_message_pack - sctk_message_pack");
+			sctk_nodebug("SCTK_MESSAGE_PACK - SCTK_MESSAGE_PACK");
 			size_t i;
 			for (i = 0; i < send->tail.message.pack.count; i++)
 			{
@@ -1124,9 +1124,9 @@ inline void sctk_message_copy_pack(sctk_message_to_copy_t* tmp)
 			sctk_message_completion_and_free(send,recv);
 			break;
 		}
-		case sctk_message_pack_absolute:
+		case SCTK_MESSAGE_PACK_ABSOLUTE:
 		{
-			sctk_nodebug("sctk_message_pack - sctk_message_pack_absolute");
+			sctk_nodebug("SCTK_MESSAGE_PACK - SCTK_MESSAGE_PACK_ABSOLUTE");
 			size_t i;
 			for (i = 0; i < send->tail.message.pack.count; i++)
 			{
@@ -1144,9 +1144,9 @@ inline void sctk_message_copy_pack(sctk_message_to_copy_t* tmp)
 			sctk_message_completion_and_free(send,recv);
 			break;
 		}
-		case sctk_message_contiguous:
+		case SCTK_MESSAGE_CONTIGUOUS:
 		{
-			sctk_nodebug("sctk_message_pack - sctk_message_contiguous");
+			sctk_nodebug("SCTK_MESSAGE_PACK - SCTK_MESSAGE_CONTIGUOUS");
 			size_t i;
 			size_t j;
 			size_t size;
@@ -1185,13 +1185,13 @@ inline void sctk_message_copy_pack_absolute(sctk_message_to_copy_t* tmp)
 	send = tmp->msg_send;
 	recv = tmp->msg_recv;
 
-	assume(send->tail.message_type == sctk_message_pack_absolute);
+	assume(send->tail.message_type == SCTK_MESSAGE_PACK_ABSOLUTE);
 
 	switch(recv->tail.message_type)
 	{
-		case sctk_message_pack:
+		case SCTK_MESSAGE_PACK:
 		{
-			sctk_nodebug("sctk_message_pack_absolute - sctk_message_pack");
+			sctk_nodebug("SCTK_MESSAGE_PACK_ABSOLUTE - SCTK_MESSAGE_PACK");
 			size_t i;
 			for (i = 0; i < send->tail.message.pack.count; i++)
 			{
@@ -1209,9 +1209,9 @@ inline void sctk_message_copy_pack_absolute(sctk_message_to_copy_t* tmp)
 			sctk_message_completion_and_free(send,recv);
 			break;
 		}
-		case sctk_message_pack_absolute:
+		case SCTK_MESSAGE_PACK_ABSOLUTE:
 		{
-			sctk_nodebug("sctk_message_pack_absolute - sctk_message_pack_absolute count == %d", send->tail.message.pack.count);
+			sctk_nodebug("SCTK_MESSAGE_PACK_ABSOLUTE - SCTK_MESSAGE_PACK_ABSOLUTE count == %d", send->tail.message.pack.count);
 			size_t i;
 			for (i = 0; i < send->tail.message.pack.count; i++)
 			{
@@ -1229,9 +1229,9 @@ inline void sctk_message_copy_pack_absolute(sctk_message_to_copy_t* tmp)
 			sctk_message_completion_and_free(send,recv);
 			break;
 		}
-		case sctk_message_contiguous:
+		case SCTK_MESSAGE_CONTIGUOUS:
 		{
-			sctk_nodebug("sctk_message_pack_absolute - sctk_message_contiguous");
+			sctk_nodebug("SCTK_MESSAGE_PACK_ABSOLUTE - SCTK_MESSAGE_CONTIGUOUS");
 			size_t i;
 			size_t j;
 			size_t size;
@@ -1468,10 +1468,10 @@ void sctk_init_header (sctk_thread_ptp_message_t *tmp, const int myself,
   tmp->tail.internal_ptp = NULL;
 
   sctk_reinit_header(tmp,free_memory,message_copy);
-  if(tmp->tail.message_type == sctk_message_pack){
+  if(tmp->tail.message_type == SCTK_MESSAGE_PACK){
     sctk_reinit_header(tmp,sctk_free_pack,sctk_message_copy_pack);
   }
-  if(tmp->tail.message_type == sctk_message_pack_absolute){
+  if(tmp->tail.message_type == SCTK_MESSAGE_PACK_ABSOLUTE){
     sctk_reinit_header(tmp,sctk_free_pack,sctk_message_copy_pack_absolute);
   }
 }
@@ -1503,7 +1503,7 @@ sctk_add_adress_in_message (sctk_thread_ptp_message_t *
 			      restrict msg, void *restrict addr,
 			      const size_t size){
   switch(msg->tail.message_type){
-  case sctk_message_contiguous: {
+  case SCTK_MESSAGE_CONTIGUOUS: {
     sctk_add_adress_in_message_contiguous (msg,addr,size);
     break;
   }
@@ -1642,7 +1642,7 @@ void sctk_free_pack(void* tmp){
 
   msg = tmp;
 
-  if(msg->tail.message_type == sctk_message_pack_absolute){
+  if(msg->tail.message_type == SCTK_MESSAGE_PACK_ABSOLUTE){
     sctk_free(msg->tail.message.pack.list.absolute);
   } else {
     sctk_free(msg->tail.message.pack.list.std);
@@ -1657,11 +1657,11 @@ sctk_add_pack_in_message (sctk_thread_ptp_message_t * msg,
 			  sctk_pack_indexes_t * begins,
 			  sctk_pack_indexes_t * ends){
   int step;
-  if(msg->tail.message_type == sctk_message_pack_undefined){
-    msg->tail.message_type = sctk_message_pack;
+  if(msg->tail.message_type == SCTK_MESSAGE_PACK_UNDEFINED){
+    msg->tail.message_type = SCTK_MESSAGE_PACK;
     sctk_reinit_header(msg,sctk_free_pack,sctk_message_copy_pack);
   }
-  assume(msg->tail.message_type == sctk_message_pack);
+  assume(msg->tail.message_type == SCTK_MESSAGE_PACK);
 
   if(msg->tail.message.pack.count >= msg->tail.message.pack.max_count){
     msg->tail.message.pack.max_count += SCTK_PACK_REALLOC_STEP;
@@ -1688,12 +1688,12 @@ sctk_add_pack_in_message_absolute (sctk_thread_ptp_message_t *
 				   begins,
 				   sctk_pack_absolute_indexes_t * ends){
   int step;
-  if(msg->tail.message_type == sctk_message_pack_undefined){
-    msg->tail.message_type = sctk_message_pack_absolute;
+  if(msg->tail.message_type == SCTK_MESSAGE_PACK_UNDEFINED){
+    msg->tail.message_type = SCTK_MESSAGE_PACK_ABSOLUTE;
     sctk_reinit_header(msg,sctk_free_pack,sctk_message_copy_pack_absolute);
   }
 
-  assume(msg->tail.message_type == sctk_message_pack_absolute);
+  assume(msg->tail.message_type == SCTK_MESSAGE_PACK_ABSOLUTE);
 
   if(msg->tail.message.pack.count >= msg->tail.message.pack.max_count){
     msg->tail.message.pack.max_count += SCTK_PACK_REALLOC_STEP;

@@ -218,7 +218,7 @@ sctk_ib_eager_recv(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf, int recopy,
   }
 
   msg->body.completion_flag = NULL;
-  msg->tail.message_type = sctk_message_network;
+  msg->tail.message_type = SCTK_MESSAGE_NETWORK;
   msg->tail.ib.eager.recopied = recopy;
   msg->tail.ib.eager.ibuf = ibuf;
   msg->tail.ib.protocol = protocol;
