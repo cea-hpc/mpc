@@ -33,66 +33,8 @@
 #include "sctk_ibufs.h"
 #include "sctk_route.h"
 #include "sctk_ib_cm.h"
+#include "sctk_ib_device.h"
 
-#include <infiniband/verbs.h>
-#include <inttypes.h>
-
-#include "sctk_runtime_config_struct.h"
-
-struct sctk_ib_qp_s;
-/* Structure related to ondemand
- * connexions */
-typedef struct sctk_ib_qp_ondemand_s {
-  struct sctk_ib_qp_s *qp_list;
-  /* 'Hand' of the clock */
-  struct sctk_ib_qp_s *qp_list_ptr;
-  sctk_spinlock_t lock;
-} sctk_ib_qp_ondemand_t;
-
-/* Structure associated to a device */
-/* XXX: Put it in a file called sctk_ib_device.c */
-typedef struct sctk_ib_device_s
-{
-  /* Devices */
-  struct ibv_device        **dev_list;
-  /* Number of devices */
-  int                     dev_nb;
-  /* Selected device */
-  struct ibv_device       *dev;
-  /* Selected device index */
-  int                     dev_index;
-  struct ibv_context      *context;  /* context */
-  /* Attributs of the device */
-  struct ibv_device_attr  dev_attr;
-  /* Port attributs */
-  struct ibv_port_attr    port_attr;
-  /* XXX: do not add other fields here or the code segfaults.
-   * Maybe a restriction of IB in the memory alignement */
-  /* ID of the device */
-  unsigned int id;
-  struct ibv_pd           *pd;       /* protection domain */
-  struct ibv_srq          *srq;      /* shared received quue */
-  struct ibv_cq           *send_cq;  /* outgoing completion queues */
-  struct ibv_cq           *recv_cq;  /* incoming completion queues */
-
-  struct ibv_comp_channel * send_comp_channel;
-  struct ibv_comp_channel * recv_comp_channel;
-
-  struct sctk_ib_qp_ondemand_s ondemand;
-
-  char pad1[64];
-  sctk_spinlock_t cq_polling_lock;
-  char pad2[64];
-
-  /* Link rate & data rate*/
-  char link_rate[64];
-  int link_width;
-  int data_rate;
-
-  /* For eager RDMA channel */
-  int eager_rdma_connections;
-
-} sctk_ib_device_t;
 
 #define ACK_UNSET   111
 #define ACK_OK      222
@@ -204,15 +146,6 @@ sctk_ib_cm_qp_connection_t sctk_ib_qp_keys_convert( char* msg);
 /*-----------------------------------------------------------
  *  FUNCTIONS
  *----------------------------------------------------------*/
-sctk_ib_device_t *sctk_ib_device_init(struct sctk_ib_rail_info_s* rail_ib);
-sctk_ib_device_t *sctk_ib_device_open(struct sctk_ib_rail_info_s* rail_ib, int rail_nb);
-
-struct ibv_pd* sctk_ib_pd_init(sctk_ib_device_t *device);
-
-struct ibv_comp_channel * sctk_ib_comp_channel_init(sctk_ib_device_t* device);
-
-struct ibv_cq* sctk_ib_cq_init(sctk_ib_device_t* device,
-    struct sctk_runtime_config_struct_net_driver_infiniband *config, struct ibv_comp_channel * comp_chan);
 
 char* sctk_ib_cq_print_status (enum ibv_wc_status status);
 

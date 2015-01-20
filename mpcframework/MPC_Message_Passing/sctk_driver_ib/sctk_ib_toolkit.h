@@ -91,5 +91,14 @@ __UNUSED__ static void sctk_ib_debug(const char *fmt, ...)
 #define LOAD_PROFILER(x)    sctk_ib_prof_t* profiler = (x)->profiler;
 
 
+/* Error handler */
+#define SCTK_IB_ABORT_WITH_ERRNO(...)                           \
+		sctk_error(__VA_ARGS__"(errno: %s)", strerror(errno));      \
+		sctk_abort();
+
+#define SCTK_IB_ABORT(...)        \
+		sctk_error(__VA_ARGS__);      \
+		sctk_abort();
+
 #endif
 #endif
