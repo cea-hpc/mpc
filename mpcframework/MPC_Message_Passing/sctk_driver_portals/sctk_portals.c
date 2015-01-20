@@ -870,7 +870,7 @@ sctk_network_send_message_portals_rail (sctk_thread_ptp_message_t * msg,sctk_rai
   	int fd;
 
 
-  	if(msg->body.header.specific_message_tag == process_specific_message_tag){ 
+  	if(msg->body.header.specific_message_tag == SCTK_PROCESS_SPECIFIC_MESSAGE_TAG){ 
   		tmp = sctk_get_route_to_process(msg->sctk_msg_get_destination,rail);//proc
   	} else {
   		tmp = sctk_get_route(msg->sctk_msg_get_glob_destination,rail);//task

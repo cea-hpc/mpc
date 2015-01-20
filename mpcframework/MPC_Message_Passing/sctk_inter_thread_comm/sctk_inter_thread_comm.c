@@ -66,7 +66,7 @@ int sctk_cancel_message (sctk_request_t * msg)
 			if( msg->msg == NULL)
 				return ret;
 			
-			msg->msg->sctk_msg_get_specific_message_tag = cancel_recv_specific_message_tag;
+			msg->msg->sctk_msg_get_specific_message_tag = SCTK_RECV_SPECIFIC_MESSAGE_TAG;
 		break;
 		case REQUEST_SEND:
 			if( msg->msg == NULL)
@@ -77,7 +77,7 @@ int sctk_cancel_message (sctk_request_t * msg)
 				sctk_error("Try to cancel a network message for %d from UNIX process %d",msg->msg->sctk_msg_get_destination,sctk_process_rank);
 				not_implemented();
 			}
-			msg->msg->sctk_msg_get_specific_message_tag = cancel_send_specific_message_tag;
+			msg->msg->sctk_msg_get_specific_message_tag = SCTK_SEND_SPECIFIC_MESSAGE_TAG;
 		break;
 		default:
 			not_reachable();
@@ -1775,7 +1775,7 @@ sctk_internal_ptp_list_pending_t *pending_list, sctk_thread_message_header_t* he
 		}	
 
 		/* Check for canceled send messages*/
-		if(header_found->specific_message_tag == cancel_send_specific_message_tag){
+		if(header_found->specific_message_tag == SCTK_SEND_SPECIFIC_MESSAGE_TAG){
 			/* Message found. We delete it  */
 			DL_DELETE(pending_list->list,ptr_found);
 		}
@@ -1836,7 +1836,7 @@ static inline int sctk_perform_messages_matching_from_recv_msg(sctk_internal_ptp
   ptr_send = sctk_perform_messages_search_matching(
       &pair->lists.pending_send, &(msg->body.header));
 
-  if(msg->body.header.specific_message_tag == cancel_recv_specific_message_tag){
+  if(msg->body.header.specific_message_tag == SCTK_RECV_SPECIFIC_MESSAGE_TAG){
     DL_DELETE(pair->lists.pending_recv.list, ptr_recv);
     assume(ptr_send == NULL);
   }
@@ -2441,7 +2441,7 @@ void sctk_probe_source_tag_func (int destination, int source,int tag,
   msg->destination = destination;
   msg->message_tag = tag;
   msg->communicator = comm;
-  msg->specific_message_tag = pt2pt_specific_message_tag;
+  msg->specific_message_tag = SCTK_P2P_SPECIFIC_MESSAGE_TAG;
 
   world_destination = sctk_get_comm_world_rank (comm,destination);
   dest_key.destination = world_destination;

@@ -74,27 +74,27 @@ struct sctk_internal_ptp_s;
 
 typedef enum
 {
-	pt2pt_specific_message_tag = 1,
-	barrier_specific_message_tag = 2,
-	broadcast_specific_message_tag = 3,
-	allreduce_specific_message_tag = 4,
+	SCTK_P2P_SPECIFIC_MESSAGE_TAG = 1,
+	SCTK_BARRIER_SPECIFIC_MESSAGE_TAG = 2,
+	SCTK_BROADCAST_SPECIFIC_MESSAGE_TAG = 3,
+	SCTK_ALLREDUCE_SPECIFIC_MESSAGE_TAG = 4,
 
-	cancel_send_specific_message_tag = 5,
-	cancel_recv_specific_message_tag = 6,
+	SCTK_SEND_SPECIFIC_MESSAGE_TAG = 5,
+	SCTK_RECV_SPECIFIC_MESSAGE_TAG = 6,
 
 	/* Process specific */
-	process_specific_message_tag = MASK_PROCESS_SPECIFIC,
+	SCTK_PROCESS_SPECIFIC_MESSAGE_TAG = MASK_PROCESS_SPECIFIC,
 	/* On demand */
-	ondemand_specific_message_tag =  MASK_PROCESS_SPECIFIC_ONDEMAND,
+	SCTK_ONDEMAND_SPECIFIC_MESSAGE_TAG =  MASK_PROCESS_SPECIFIC_ONDEMAND,
 	/* Low memory */
-	low_mem_specific_message_tag =  MASK_PROCESS_SPECIFIC_LOW_MEM,
+	SCTK_LOWMEM_SPECIFIC_MESSAGE_TAG =  MASK_PROCESS_SPECIFIC_LOW_MEM,
 	/* User */
-	user_specific_message_tag =  MASK_PROCESS_SPECIFIC_USER,
+	SCTK_USER_SPECIFIC_MESSAGE_TAG =  MASK_PROCESS_SPECIFIC_USER,
 
 	/* Collective */
-	allreduce_hetero_specific_message_tage = MASK_PROCESS_SPECIFIC_W_ORDERING | allreduce_specific_message_tag,
-	broadcast_hetero_specific_message_tage = MASK_PROCESS_SPECIFIC_W_ORDERING | broadcast_specific_message_tag,
-	barrier_hetero_specific_message_tage = MASK_PROCESS_SPECIFIC_W_ORDERING | broadcast_specific_message_tag,
+	SCTK_ALLREDUCE_HETERO_SPECIFIC_MESSAGE_TAG = MASK_PROCESS_SPECIFIC_W_ORDERING | SCTK_ALLREDUCE_SPECIFIC_MESSAGE_TAG,
+	SCTK_BROADCAST_HETERO_SPECIFIC_MESSAGE_TAG = MASK_PROCESS_SPECIFIC_W_ORDERING | SCTK_BROADCAST_SPECIFIC_MESSAGE_TAG,
+	SCTK_BARRIER_HETERO_SPECIFIC_MESSAGE_TAG = MASK_PROCESS_SPECIFIC_W_ORDERING | SCTK_BROADCAST_SPECIFIC_MESSAGE_TAG,
 }specific_message_tag_t;
 
 typedef enum

@@ -313,7 +313,7 @@ static void sctk_network_connection_to_tcp(int from, int to,sctk_rail_info_t* ra
 	char dest_connection_infos[MAX_STRING_SIZE];
 
 	/*Recv connection informations*/
-	sctk_route_messages_recv(from,to,process_specific_message_tag, 0,dest_connection_infos,MAX_STRING_SIZE);
+	sctk_route_messages_recv(from,to,SCTK_PROCESS_SPECIFIC_MESSAGE_TAG, 0,dest_connection_infos,MAX_STRING_SIZE);
 
 	/*Recv id from the connected process*/
 	dest_socket = sctk_tcp_connect_to(dest_connection_infos,rail);
@@ -324,7 +324,7 @@ static void sctk_network_connection_to_tcp(int from, int to,sctk_rail_info_t* ra
 static void sctk_network_connection_from_tcp(int from, int to,sctk_rail_info_t* rail){
 	int src_socket;
 	/*Send connection informations*/
-	sctk_route_messages_send(from,to,process_specific_message_tag, 0,rail->network.tcp.connection_infos,MAX_STRING_SIZE);
+	sctk_route_messages_send(from,to,SCTK_PROCESS_SPECIFIC_MESSAGE_TAG, 0,rail->network.tcp.connection_infos,MAX_STRING_SIZE);
 
 	src_socket = accept (rail->network.tcp.sockfd, NULL,0);
 	

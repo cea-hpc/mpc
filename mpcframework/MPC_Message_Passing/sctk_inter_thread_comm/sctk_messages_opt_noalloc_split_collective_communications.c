@@ -168,7 +168,7 @@ static void sctk_barrier_opt_noalloc_split_messages(const sctk_communicator_t co
 				src = myself;
       for(j = 1; j < barrier_arity; j++){
 	if((src + (j*(i/barrier_arity))) < total){
-	  sctk_opt_noalloc_split_messages_recv(communicator,src + (j*(i/barrier_arity)),myself,0,&c,1,barrier_specific_message_tag,sctk_opt_noalloc_split_messages_get_item(&table),ptp_internal,1,1);
+	  sctk_opt_noalloc_split_messages_recv(communicator,src + (j*(i/barrier_arity)),myself,0,&c,1,SCTK_BARRIER_SPECIFIC_MESSAGE_TAG,sctk_opt_noalloc_split_messages_get_item(&table),ptp_internal,1,1);
 					}
 				}
 				sctk_opt_noalloc_split_messages_wait(&table);
@@ -180,8 +180,8 @@ static void sctk_barrier_opt_noalloc_split_messages(const sctk_communicator_t co
 				dest = (myself / i) * i;
 				if(dest >= 0)
 				{
-					sctk_opt_noalloc_split_messages_send(communicator,myself,dest,0,&c,1,barrier_specific_message_tag,sctk_opt_noalloc_split_messages_get_item(&table),0,1);
-					sctk_opt_noalloc_split_messages_recv(communicator,dest,myself,1,&c,1,barrier_specific_message_tag,sctk_opt_noalloc_split_messages_get_item(&table),ptp_internal,0,1);
+					sctk_opt_noalloc_split_messages_send(communicator,myself,dest,0,&c,1,SCTK_BARRIER_SPECIFIC_MESSAGE_TAG,sctk_opt_noalloc_split_messages_get_item(&table),0,1);
+					sctk_opt_noalloc_split_messages_recv(communicator,dest,myself,1,&c,1,SCTK_BARRIER_SPECIFIC_MESSAGE_TAG,sctk_opt_noalloc_split_messages_get_item(&table),ptp_internal,0,1);
 					sctk_opt_noalloc_split_messages_wait(&table);
 					break;
 				}
@@ -198,7 +198,7 @@ static void sctk_barrier_opt_noalloc_split_messages(const sctk_communicator_t co
 				dest = myself;
       for(j = 1; j < barrier_arity; j++){
 	if((dest + (j*(i/barrier_arity))) < total){
-	  sctk_opt_noalloc_split_messages_send(communicator,myself,dest+(j*(i/barrier_arity)),1,&c,1,barrier_specific_message_tag,sctk_opt_noalloc_split_messages_get_item(&table),1,1);
+	  sctk_opt_noalloc_split_messages_send(communicator,myself,dest+(j*(i/barrier_arity)),1,&c,1,SCTK_BARRIER_SPECIFIC_MESSAGE_TAG,sctk_opt_noalloc_split_messages_get_item(&table),1,1);
 					}
 				}
 			}
@@ -236,7 +236,7 @@ static void sctk_barrier_opt_noalloc_split_messages(const sctk_communicator_t co
 									65536,
 									&c,
 									1,
-									broadcast_specific_message_tag,
+									SCTK_BROADCAST_SPECIFIC_MESSAGE_TAG,
 									sctk_opt_noalloc_split_messages_get_item(&table),
 									(size<broadcast_check_threshold),
 									(size<broadcast_check_threshold));
@@ -249,7 +249,7 @@ static void sctk_barrier_opt_noalloc_split_messages(const sctk_communicator_t co
 									65536,
 									&c,
 									1,
-									broadcast_specific_message_tag,
+									SCTK_BROADCAST_SPECIFIC_MESSAGE_TAG,
 									sctk_opt_noalloc_split_messages_get_item(&table),
 									ptp_internal,
 									1,
@@ -323,7 +323,7 @@ void sctk_broadcast_opt_noalloc_split_messages (void *buffer, const size_t size,
 				dest = (related_myself/i) * i;
 				if(dest >= 0)
 				{
-					sctk_opt_noalloc_split_messages_recv(communicator,(dest+root)%total,myself,root,buffer,size,broadcast_specific_message_tag,sctk_opt_noalloc_split_messages_get_item(&table),ptp_internal,1,1);
+					sctk_opt_noalloc_split_messages_recv(communicator,(dest+root)%total,myself,root,buffer,size,SCTK_BROADCAST_SPECIFIC_MESSAGE_TAG,sctk_opt_noalloc_split_messages_get_item(&table),ptp_internal,1,1);
 					sctk_opt_noalloc_split_messages_wait(&table);
 				break;
 				}
@@ -341,7 +341,7 @@ void sctk_broadcast_opt_noalloc_split_messages (void *buffer, const size_t size,
 				{
 					if((dest + (j*(i/BROADCAST_ARRITY)))< total)
 					{
-						sctk_opt_noalloc_split_messages_send(communicator,myself,(dest+root+(j*(i/BROADCAST_ARRITY))) % total,root,buffer,size,broadcast_specific_message_tag,
+						sctk_opt_noalloc_split_messages_send(communicator,myself,(dest+root+(j*(i/BROADCAST_ARRITY))) % total,root,buffer,size,SCTK_BROADCAST_SPECIFIC_MESSAGE_TAG,
 				   sctk_opt_noalloc_split_messages_get_item(&table),(size<broadcast_check_threshold),(size<broadcast_check_threshold));
 					}
 				}
@@ -476,7 +476,7 @@ static void sctk_allreduce_opt_noalloc_split_messages_intern (const void *buffer
         for(j = 1; j < ALLREDUCE_ARRITY; j++){
           if((src + (j*(i/ALLREDUCE_ARRITY))) < total){
             sctk_nodebug("Recv from %d",src + (j*(i/ALLREDUCE_ARRITY)));
-            sctk_opt_noalloc_split_messages_recv(communicator,src + (j*(i/ALLREDUCE_ARRITY)),myself,0,buffer_table[j-1],size,allreduce_specific_message_tag,
+            sctk_opt_noalloc_split_messages_recv(communicator,src + (j*(i/ALLREDUCE_ARRITY)),myself,0,buffer_table[j-1],size,SCTK_ALLREDUCE_SPECIFIC_MESSAGE_TAG,
                 sctk_opt_noalloc_split_messages_get_item(&table),ptp_internal,0,0);
           }
         }
@@ -493,9 +493,9 @@ static void sctk_allreduce_opt_noalloc_split_messages_intern (const void *buffer
         if(dest >= 0){
           memcpy(buffer_tmp,buffer_out,size);
           sctk_nodebug("Leaf send to %d",dest);
-          sctk_opt_noalloc_split_messages_send(communicator,myself,dest,0,buffer_tmp,size,allreduce_specific_message_tag,sctk_opt_noalloc_split_messages_get_item(&table),1,1);
+          sctk_opt_noalloc_split_messages_send(communicator,myself,dest,0,buffer_tmp,size,SCTK_ALLREDUCE_SPECIFIC_MESSAGE_TAG,sctk_opt_noalloc_split_messages_get_item(&table),1,1);
           sctk_nodebug("Leaf Recv from %d",dest);
-          sctk_opt_noalloc_split_messages_recv(communicator,dest,myself,1,buffer_out,size,allreduce_specific_message_tag,sctk_opt_noalloc_split_messages_get_item(&table),ptp_internal,1,1);
+          sctk_opt_noalloc_split_messages_recv(communicator,dest,myself,1,buffer_out,size,SCTK_ALLREDUCE_SPECIFIC_MESSAGE_TAG,sctk_opt_noalloc_split_messages_get_item(&table),ptp_internal,1,1);
           sctk_opt_noalloc_split_messages_wait(&table);
           break;
         }
@@ -512,7 +512,7 @@ static void sctk_allreduce_opt_noalloc_split_messages_intern (const void *buffer
         for(j = 1; j < ALLREDUCE_ARRITY; j++){
           if((dest + (j*(i/ALLREDUCE_ARRITY))) < total){
             sctk_nodebug("send to %d",dest+(j*(i/ALLREDUCE_ARRITY)));
-            sctk_opt_noalloc_split_messages_send(communicator,myself,dest+(j*(i/ALLREDUCE_ARRITY)),1,buffer_out,size,allreduce_specific_message_tag,sctk_opt_noalloc_split_messages_get_item(&table),
+            sctk_opt_noalloc_split_messages_send(communicator,myself,dest+(j*(i/ALLREDUCE_ARRITY)),1,buffer_out,size,SCTK_ALLREDUCE_SPECIFIC_MESSAGE_TAG,sctk_opt_noalloc_split_messages_get_item(&table),
                 (size<allreduce_check_threshold),(size<allreduce_check_threshold));
           }
         }

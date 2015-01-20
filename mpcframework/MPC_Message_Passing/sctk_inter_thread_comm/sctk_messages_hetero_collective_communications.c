@@ -178,7 +178,7 @@ void sctk_barrier_hetero_messages_inter(const sctk_communicator_t communicator,
           sctk_hetero_messages_recv(communicator,
               process_array[src + (j*(i/barrier_arity))],
               process_array[myself],
-              0,&c,1,barrier_hetero_specific_message_tage,sctk_hetero_messages_get_item(&table),ptp_internal,1,1);
+              0,&c,1,SCTK_BARRIER_HETERO_SPECIFIC_MESSAGE_TAG,sctk_hetero_messages_get_item(&table),ptp_internal,1,1);
         }
       }
       sctk_hetero_messages_wait(&table);
@@ -191,12 +191,12 @@ void sctk_barrier_hetero_messages_inter(const sctk_communicator_t communicator,
         sctk_hetero_messages_send(communicator,
             process_array[myself],
             process_array[dest],
-            0,&c,1,barrier_hetero_specific_message_tage,sctk_hetero_messages_get_item(&table),0,1);
+            0,&c,1,SCTK_BARRIER_HETERO_SPECIFIC_MESSAGE_TAG,sctk_hetero_messages_get_item(&table),0,1);
         sctk_nodebug("recv %d to %d", dest, myself);
         sctk_hetero_messages_recv(communicator,
             process_array[dest],
             process_array[myself],
-            1,&c,1,barrier_hetero_specific_message_tage,sctk_hetero_messages_get_item(&table),ptp_internal,0,1);
+            1,&c,1,SCTK_BARRIER_HETERO_SPECIFIC_MESSAGE_TAG,sctk_hetero_messages_get_item(&table),ptp_internal,0,1);
         sctk_hetero_messages_wait(&table);
         break;
       }
@@ -216,7 +216,7 @@ void sctk_barrier_hetero_messages_inter(const sctk_communicator_t communicator,
           sctk_hetero_messages_send(communicator,
               process_array[myself],
               process_array[dest+(j*(i/barrier_arity))],
-              1,&c,1,barrier_hetero_specific_message_tage,sctk_hetero_messages_get_item(&table),1,1);
+              1,&c,1,SCTK_BARRIER_HETERO_SPECIFIC_MESSAGE_TAG,sctk_hetero_messages_get_item(&table),1,1);
         }
       }
     }
@@ -285,7 +285,7 @@ void sctk_broadcast_hetero_messages_inter (void *buffer, const size_t size,
     sctk_hetero_messages_table_t table;
     int BROADCAST_ARRITY = 2;
     struct sctk_internal_ptp_s* ptp_internal;
-    int specific_tag = broadcast_hetero_specific_message_tage;
+    int specific_tag = SCTK_BROADCAST_HETERO_SPECIFIC_MESSAGE_TAG;
     int *process_array;
     int root;
 
@@ -469,7 +469,7 @@ static void sctk_allreduce_hetero_messages_intern_inter (const void *buffer_in, 
   int myself;
   int *myself_ptr;
   size_t size = elem_size * elem_number;
-  int specific_tag = allreduce_hetero_specific_message_tage;
+  int specific_tag = SCTK_ALLREDUCE_HETERO_SPECIFIC_MESSAGE_TAG;
   int total = sctk_get_process_nb_in_array(communicator);
   int i;
   int *process_array;
