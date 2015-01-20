@@ -26,6 +26,12 @@
 /********************************* INCLUDES *********************************/
 #include <unistd.h>
 
+/********************************* DEFINES *********************************/
+
+/**< This values is used in some network drivers 
+ * (particularly when dealing with the PMI ) */
+#define MAX_STRING_SIZE  2048
+
 /********************************* FUNCTION *********************************/
 ssize_t sctk_safe_read(int fd,void * buf,size_t count);
 ssize_t sctk_safe_write(int fd,const void * buf,size_t count);

@@ -28,8 +28,8 @@ extern "C"
 #endif
 
 #include <sctk_spinlock.h>
+#include <sctk_io_helper.h>
 
-#define MAX_STRING_SIZE 2048
 
 /** \brief ROUTE level data structure for TCP
 *

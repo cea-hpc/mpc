@@ -48,8 +48,7 @@
 #include <sctk_route.h>
 #include <sctk_ibufs_rdma.h>
 #include <sctk_multirail_ib.h>
-
-#define MAX_STRING_SIZE  2048
+#include <sctk_io_helper.h>
 
 /* Initialize a new route table */
 void

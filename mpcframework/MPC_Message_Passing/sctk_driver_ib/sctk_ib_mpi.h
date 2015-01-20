@@ -36,11 +36,11 @@ extern "C"
 #include <sctk_route.h>
 #include <sctk_ibufs.h>
 #include <sctk_spinlock.h>
+#include <sctk_io_helper.h>
 
     struct sctk_ibuf_s;
     struct sctk_ib_polling_s;
 
-#define MAX_STRING_SIZE 2048
 void sctk_network_init_mpi_ib(sctk_rail_info_t* rail, int ib_rail_nb);
 
 int sctk_network_poll_recv_ibuf(const sctk_rail_info_t const* rail, sctk_ibuf_t *ibuf,
