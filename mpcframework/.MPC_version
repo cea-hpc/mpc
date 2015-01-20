@@ -1,6 +1,6 @@
 #Version of MPC library
 MAJOR="2"
 MINOR="5"
-REVISION="2"
-PRE_RELEASE=""
+REVISION="3"
+PRE_RELEASE="_devel"
 
