@@ -3082,81 +3082,125 @@ void  MPC_Task_hook(int rank)
 extern char ** environ;
 #endif
 
-int
-/* main (int argc, char **argv) */
-sctk_user_main (int argc, char **argv)
+
+/** \brief Function used to create a temporary run directory
+ */
+ static inline void sctk_move_to_temp_dir_if_requested_from_env()
+ {
+	char * do_move_to_temp = getenv("MPC_MOVE_TO_TEMP");
+	
+	if( do_move_to_temp == NULL )
+	{
+		/* Nothing to do */
+		return;
+	}
+	 
+	/* Retrieve task rank */
+	int rank;
+	PMPC_Comm_rank( MPC_COMM_WORLD, &rank );
+
+	char currentdir[800];
+	char tmpdir[1000];
+
+	/* If root rank create the temp dir */
+	if( rank == 0 )
+	{
+		//First enter a sandbox DIR
+		getcwd(currentdir, 800);
+		snprintf(tmpdir, 1000, "%s/XXXXXX", currentdir );
+		mkdtemp(tmpdir);
+		sctk_warning("Creating temp directory %s", tmpdir);
+	}
+
+	/* Broadcast the path to all tasks */
+	PMPC_Bcast( (void *)tmpdir, 1000, MPC_CHAR, 0,   MPC_COMM_WORLD );
+	
+	/* Only the root of each process does the chdir */
+	if( sctk_get_local_task_rank() == 0 )
+	{
+		chdir(tmpdir);
+	}
+ }
+
+
+
+
+/* main (int argc, char **argv) */ 
+int sctk_user_main (int argc, char **argv)
 {
-  int result;
+	int result;
 
-  sctk_mpc_init_request_null();
+	sctk_mpc_init_request_null();
 
-  sctk_size_checking_eq (MPC_COMM_WORLD, SCTK_COMM_WORLD,
-			 "MPC_COMM_WORLD", "SCTK_COMM_WORLD", __FILE__,
-			 __LINE__);
-  sctk_size_checking_eq (MPC_COMM_SELF, SCTK_COMM_SELF,
-			 "MPC_COMM_SELF", "SCTK_COMM_SELF", __FILE__,
-			 __LINE__);
-  sctk_check_equal_types (MPC_Datatype, sctk_datatype_t);
-  sctk_check_equal_types (sctk_communicator_t, MPC_Comm);
-  sctk_check_equal_types (sctk_pack_indexes_t, mpc_pack_indexes_t);
-  sctk_check_equal_types (sctk_pack_absolute_indexes_t,
-			  mpc_pack_absolute_indexes_t);
-  sctk_check_equal_types (sctk_count_t, mpc_msg_count);
-  sctk_check_equal_types (sctk_thread_key_t, mpc_thread_key_t);
+	sctk_size_checking_eq (MPC_COMM_WORLD, SCTK_COMM_WORLD, "MPC_COMM_WORLD", "SCTK_COMM_WORLD", __FILE__, __LINE__);
+	sctk_size_checking_eq (MPC_COMM_SELF, SCTK_COMM_SELF, "MPC_COMM_SELF", "SCTK_COMM_SELF", __FILE__, __LINE__);
+	
+	sctk_check_equal_types (MPC_Datatype, sctk_datatype_t);
+	sctk_check_equal_types (sctk_communicator_t, MPC_Comm);
+	sctk_check_equal_types (sctk_pack_indexes_t, mpc_pack_indexes_t);
+	sctk_check_equal_types (sctk_pack_absolute_indexes_t, mpc_pack_absolute_indexes_t);
+	sctk_check_equal_types (sctk_count_t, mpc_msg_count);
+	sctk_check_equal_types (sctk_thread_key_t, mpc_thread_key_t);
 
-  sctk_mpc_verify_request_compatibility();
+	sctk_mpc_verify_request_compatibility();
 
-  __MPC_setup_task_specific ();
+	__MPC_setup_task_specific ();
 
-  __MPC_Barrier (MPC_COMM_WORLD);
-  if(sctk_runtime_config_get()->modules.mpc.hard_checking){
-    MPC_Hard_Check();
-  }
-  __MPC_Barrier (MPC_COMM_WORLD);
+	__MPC_Barrier (MPC_COMM_WORLD);
+	
+	if(sctk_runtime_config_get()->modules.mpc.hard_checking)
+	{
+		MPC_Hard_Check();
+	}
+
+	__MPC_Barrier (MPC_COMM_WORLD);
 
 
 #ifndef SCTK_DO_NOT_HAVE_WEAK_SYMBOLS
-  MPC_Task_hook(sctk_get_task_rank());
+	MPC_Task_hook(sctk_get_task_rank());
 #endif
 
-  MPC_Checkpoint_restart_init ();
+	MPC_Checkpoint_restart_init ();
 
 #ifdef MPC_OpenMP
-  __mpcomp_init() ;
+	__mpcomp_init() ;
 #endif
-  __MPC_Barrier (MPC_COMM_WORLD);
+
+	sctk_move_to_temp_dir_if_requested_from_env();
+
+	__MPC_Barrier (MPC_COMM_WORLD);
 
 #ifdef HAVE_ENVIRON_VAR
-  result = mpc_user_main (argc, argv,environ);
+	result = mpc_user_main (argc, argv,environ);
 #else
-  result = mpc_user_main (argc, argv);
+	result = mpc_user_main (argc, argv);
 #endif
 
-  __MPC_Barrier (MPC_COMM_WORLD);
+	__MPC_Barrier (MPC_COMM_WORLD);
 
 #ifdef MPC_Profiler
 	sctk_internal_profiler_render();
 #endif
 
 #ifdef MPC_OpenMP
-  __mpcomp_exit() ;
+	__mpcomp_exit() ;
 #endif
 
-  MPC_Checkpoint_restart_end ();
+	MPC_Checkpoint_restart_end ();
 
-  sctk_debug ("Wait for pending messages");
+	sctk_debug ("Wait for pending messages");
 
-  __MPC_get_task_specific ();
+	__MPC_get_task_specific ();
 
-  __MPC_delete_thread_specific();
+	__MPC_delete_thread_specific();
 
-  sctk_debug ("All message done");
+	sctk_debug ("All message done");
 
-  __MPC_Barrier (MPC_COMM_WORLD);
+	__MPC_Barrier (MPC_COMM_WORLD);
 
-  __MPC_delete_task_specific ();
+	__MPC_delete_task_specific ();
 
-  return result;
+	return result;
 }
 
 
