@@ -210,8 +210,8 @@ void sctk_ib_buffered_copy(sctk_message_to_copy_t* tmp)
 				/* Add matching OK */
 				entry->status = SCTK_IB_RDMA_ZEROCOPY | SCTK_IB_RDMA_MATCH;
 				sctk_spinlock_unlock(&entry->lock);
+				break;
 			}
-			break;
 		case SCTK_IB_RDMA_RECOPY:
 			sctk_nodebug("Message recopied");
 			/* transfer done */
