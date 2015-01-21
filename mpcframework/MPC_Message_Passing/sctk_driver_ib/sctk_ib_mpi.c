@@ -323,7 +323,7 @@ static int sctk_network_poll_recv(sctk_rail_info_t* rail, struct ibv_wc* wc,  st
 	ibuf->polled_timestamp = sctk_ib_prof_get_time_stamp();
 	/* We *MUST* recopy some informations to the ibuf */
 	ibuf->wc = *wc;
-	ibuf->cq = recv_cq;
+	ibuf->cq = SCTK_IB_RECV_CQ;
 	ibuf->rail = rail;
 
 	/* If this is an immediate message, we process it */
@@ -335,7 +335,7 @@ static int sctk_network_poll_recv(sctk_rail_info_t* rail, struct ibv_wc* wc,  st
 	if (IBUF_GET_CHANNEL(ibuf) & RC_SR_CHANNEL)
 	{
 		dest_task = IBUF_GET_DEST_TASK(ibuf->buffer);
-		ibuf->cq = recv_cq;
+		ibuf->cq = SCTK_IB_RECV_CQ;
 		if (sctk_ib_cp_handle_message(rail, ibuf, dest_task, dest_task) == 0)
 		{
 			return sctk_network_poll_recv_ibuf(rail, ibuf, 0, poll);
@@ -398,7 +398,7 @@ static int sctk_network_poll_send(sctk_rail_info_t* rail, struct ibv_wc* wc, str
 
 	/* We *MUST* recopy some informations to the ibuf */
 	ibuf->wc = *wc;
-	ibuf->cq = send_cq;
+	ibuf->cq = SCTK_IB_SEND_CQ;
 	ibuf->rail = rail;
 
 	/* Decrease the number of pending requests */

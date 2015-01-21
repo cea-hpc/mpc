@@ -284,7 +284,7 @@ static inline int __cp_poll(const sctk_rail_info_t const* rail, struct sctk_ib_p
 				PROF_TIME_START(rail, cp_time_own);
 				#endif
 				/* Run the polling function according to the type of message */
-				if (ibuf->cq == recv_cq)
+				if (ibuf->cq == SCTK_IB_RECV_CQ)
 				{
 					//          SCTK_PROFIL_END_WITH_VALUE(ib_ibuf_recv_polled,
 					//            (sctk_ib_prof_get_time_stamp() - ibuf->polled_timestamp));
@@ -388,7 +388,7 @@ static inline int __cp_steal(const struct sctk_rail_info_s const* rail,struct sc
 				#endif
 
 				/* Run the polling function */
-				if (ibuf->cq == recv_cq)
+				if (ibuf->cq == SCTK_IB_RECV_CQ)
 				{
 					/* Profile the time to handle an ibuf once it has been polled
 					* from the CQ */
