@@ -242,5 +242,13 @@ void sctk_runtime_config_override_by_getenv_openmp(struct sctk_runtime_config * 
         }
     }
 
+    /******* OMP_MODE *******/
+	if ((tmp = getenv("OMP_MODE")) != NULL)
+	{
+		config->modules.openmp.mode = tmp;
+	}
+
+
+
 
 }

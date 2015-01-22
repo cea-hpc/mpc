@@ -239,7 +239,7 @@ TODO( "If OMP_NUM_THREADS is 0, let it equal to 0 by default and handle it later
   OMP_DYNAMIC = sctk_runtime_config_get()->modules.openmp.adjustment ? 1 : 0;
 
   /******* OMP_PROC_BIND *********/
-  OMP_DYNAMIC = sctk_runtime_config_get()->modules.openmp.proc_bind ? 1 : 0;
+  OMP_PROC_BIND = sctk_runtime_config_get()->modules.openmp.proc_bind ? 1 : 0;
 
   /******* OMP_NESTED *********/
   OMP_NESTED = sctk_runtime_config_get()->modules.openmp.nested ? 1 : 0;
@@ -267,6 +267,77 @@ TODO( "If OMP_NUM_THREADS is 0, let it equal to 0 by default and handle it later
 
   /******* OMP_WARN_NESTED *******/
   OMP_WARN_NESTED = sctk_runtime_config_get()->modules.openmp.warn_nested ;
+
+  /******* OMP_MODE *******/
+  env = sctk_runtime_config_get()->modules.openmp.mode ;
+  OMP_MODE = MPCOMP_MODE_SIMPLE_MIXED ;
+  if ( env != NULL )
+  {
+    int ok = 0 ;
+
+	/* Handling MPCOMP_MODE_SIMPLE_MIXED */
+	if ( strncmp (env, "simple-mixed", strlen("simple-mixed") ) == 0 
+		||
+		strncmp (env, "SIMPLE-MIXED", strlen("SIMPLE-MIXED") ) == 0
+		||
+		strncmp (env, "simple_mixed", strlen("simple_mixed") ) == 0
+		||
+		strncmp (env, "SIMPLE_MIXED", strlen("SIMPLE_MIXED") ) == 0
+		) 
+	{
+	  OMP_MODE = MPCOMP_MODE_SIMPLE_MIXED ;
+      ok = 1 ;
+	}
+
+	/* Handling MPCOMP_MODE_OVERSUBSCRIBED_MIXED */
+	if ( strncmp (env, "alternating", strlen("alternating") ) == 0 
+		||
+		strncmp (env, "ALTERNATING", strlen("ALTERNATING") ) == 0
+		) 
+	{
+	  OMP_MODE = MPCOMP_MODE_ALTERNATING ;
+      ok = 1 ;
+	}
+
+	/* Handling MPCOMP_MODE_ALTERNATING */
+	if ( strncmp (env, "oversubscribed-mixed", strlen("oversubscribed-mixed") ) == 0 
+		||
+		strncmp (env, "OVERSUBSCRIBED-MIXED", strlen("OVERSUBSCRIBED-MIXED") ) == 0
+		||
+		strncmp (env, "oversubscribed_mixed", strlen("oversubscribed_mixed") ) == 0
+		||
+		strncmp (env, "OVERSUBSCRIBED_MIXED", strlen("OVERSUBSCRIBED_MIXED") ) == 0
+		) 
+	{
+	  OMP_MODE = MPCOMP_MODE_OVERSUBSCRIBED_MIXED ;
+      ok = 1 ;
+	}
+
+	/* Handling MPCOMP_MODE_FULLY_MIXED */
+	if ( strncmp (env, "fully-mixed", strlen("fully-mixed") ) == 0 
+		||
+		strncmp (env, "FULLY-MIXED", strlen("FULLY-MIXED") ) == 0
+		||
+		strncmp (env, "fully_mixed", strlen("fully_mixed") ) == 0
+		||
+		strncmp (env, "FULLY_MIXED", strlen("FULLY_MIXED") ) == 0
+		) 
+	{
+	  OMP_MODE = MPCOMP_MODE_FULLY_MIXED ;
+      ok = 1 ;
+	}
+
+	if ( ok ) 
+	{
+	} else {
+      fprintf (stderr,
+	  "Warning: Unknown mode <%s> (must be SIMPLE_MIXED, ALTERNATING, OVERSUBSCRIBED_MIXED or FULLY_MIXED),"
+	  " fallback to default mode <%d>\n", env,
+	  OMP_MODE);
+	}
+
+  }
+
 
   /******* OMP_TREE *********/
   env = sctk_runtime_config_get()->modules.openmp.tree ;
@@ -345,12 +416,12 @@ TODO( "If OMP_NUM_THREADS is 0, let it equal to 0 by default and handle it later
   /***** PRINT SUMMARY (only first MPI rank) ******/
   if (getenv ("MPC_DISABLE_BANNER") == NULL && sctk_process_rank == 0) {
     fprintf (stderr,
-	"MPC OpenMP version %d.%d (Intel compatibility)\n",
+	"MPC OpenMP version %d.%d (Intel and Patched GCC compatibility)\n",
 	SCTK_OMP_VERSION_MAJOR, SCTK_OMP_VERSION_MINOR);
 #if MPCOMP_TASK
-    fprintf (stderr, "\tTasking on\n" ) ;
+    fprintf (stderr, "\tOpenMP 3 Tasking on\n" ) ;
 #else
-    fprintf (stderr, "\tTasking off\n" ) ;
+    fprintf (stderr, "\tOpenMP 3 Tasking off\n" ) ;
 #endif
     fprintf (stderr, "\tOMP_SCHEDULE %d\n", OMP_SCHEDULE);
 	if ( OMP_NUM_THREADS == 0 ) {
@@ -375,6 +446,26 @@ TODO( "If OMP_NUM_THREADS is 0, let it equal to 0 by default and handle it later
 	  fprintf( stderr, "]\n" ) ;
 	} else {
 	  fprintf( stderr, "\tOMP_TREE default\n" ) ;
+	}
+
+	fprintf( stderr, "\tMode for hybrid MPI+OpenMP parallelism " ) ;
+	switch ( OMP_MODE ) 
+	{
+	  case MPCOMP_MODE_SIMPLE_MIXED:
+		fprintf( stderr, "SIMPLE_MIXED\n" ) ;
+		break ;
+	  case MPCOMP_MODE_OVERSUBSCRIBED_MIXED:
+		fprintf( stderr, "OVERSUBSCRIBED_MIXED\n" ) ;
+		break ;
+	  case MPCOMP_MODE_ALTERNATING:
+		fprintf( stderr, "ALTERNATING\n" ) ;
+		break ;
+	  case MPCOMP_MODE_FULLY_MIXED:
+		fprintf( stderr, "FULLY_MIXED\n" ) ;
+		break ;
+	  default:
+		not_reachable() ;
+		break ;
 	}
 #if MPCOMP_MALLOC_ON_NODE
     fprintf( stderr, "\tNUMA allocation for tree nodes\n" ) ;
@@ -457,16 +548,39 @@ void __mpcomp_init() {
 		/* No parallel OpenMP if MPI has not been initialized yet */
 		nb_mvps = 1 ;
 	} else {
-		/* Compute the number of cores for this task */
-		sctk_get_init_vp_and_nbvp(task_rank, &nb_mvps);
+	  sctk_debug( "__mpcomp_init: sctk_get_task_rank = %d", task_rank) ;
 
-		sctk_debug( "__mpcomp_init: #mvps = %d", nb_mvps ) ;
+	  /* Compute the number of microVPs according to Hybrid Mode */
+	  switch( OMP_MODE ) 
+	  {
+		case MPCOMP_MODE_SIMPLE_MIXED:
+		  /* Compute the number of cores for this task */
+		  sctk_get_init_vp_and_nbvp(task_rank, &nb_mvps);
 
-		/* Consider the env variable if between 1 and the number
-		 * of cores for this task */
-		if ( OMP_MICROVP_NUMBER > 0 && OMP_MICROVP_NUMBER <= nb_mvps ) {
+		  sctk_debug( "__mpcomp_init: SIMPLE_MIXED -> #mvps = %d", nb_mvps ) ;
+
+		  /* Consider the env variable if between 1 and the number
+		   * of cores for this task */
+		  if ( OMP_MICROVP_NUMBER > 0 && OMP_MICROVP_NUMBER <= nb_mvps ) {
 			nb_mvps = OMP_MICROVP_NUMBER ;
-		}
+		  }
+		  break ;
+		case MPCOMP_MODE_ALTERNATING:
+		  nb_mvps = 1 ;
+		  if ( sctk_get_local_task_rank() == 0 ) {
+			nb_mvps = sctk_get_processor_number() ;
+		  }
+		  break ;
+		case MPCOMP_MODE_OVERSUBSCRIBED_MIXED:
+		  not_implemented() ;
+		  break ;
+		case MPCOMP_MODE_FULLY_MIXED:
+		  nb_mvps = sctk_get_processor_number() ;
+		  break ;
+		default :
+		  not_reachable() ;
+		  break ;
+	  }
 	}
 
 	if ( sctk_get_local_task_rank() == 0 ) {
@@ -1016,7 +1130,7 @@ mpcomp_get_thread_num (void)
   t = sctk_openmp_thread_tls ;
   sctk_assert( t != NULL ) ;
 
-  sctk_debug( "[%d] mpcomp_get_thread_num: entering",
+  sctk_nodebug( "[%d] mpcomp_get_thread_num: entering",
 		 t->rank	) ;
 
   return t->rank;

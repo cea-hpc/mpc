@@ -146,7 +146,9 @@ extern "C"
 
      typedef enum mpcomp_mode_t {
        MPCOMP_MODE_SIMPLE_MIXED,
-       MPCOMP_MODE_ALTERNATING
+	   MPCOMP_MODE_OVERSUBSCRIBED_MIXED,
+       MPCOMP_MODE_ALTERNATING,
+	   MPCOMP_MODE_FULLY_MIXED
      } mpcomp_mode_t ;
 
 
