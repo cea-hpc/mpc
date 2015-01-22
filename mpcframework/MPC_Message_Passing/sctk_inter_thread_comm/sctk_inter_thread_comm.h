@@ -36,41 +36,30 @@ extern "C"
 {
 #endif
 
-struct sctk_request_s;
-struct sctk_ib_msg_header_s;
-struct mpc_buffered_msg_s;
-struct sctk_internal_ptp_s;
-
-#define SCTK_MESSAGE_PENDING 0
-#define SCTK_MESSAGE_DONE 1
-#define SCTK_MESSAGE_CANCELED 2
 
 /** Not using datatypes */
 #define MPC_DATATYPE_IGNORE NULL
+
+
+/* Defines if we are in a full MPI mode */
+//#define SCTK_ENABLE_SPINNING
+
+/************************************************************************/
+/* Specific Message Tagging	                                          */
+/************************************************************************/
+
 /** Message for a process */
 #define MASK_PROCESS_SPECIFIC 1<<9
 /** A control message */
 #define MASK_CONTROL_MESSAGE  1<<10
 /** Message for a process with ordering */
 #define MASK_PROCESS_SPECIFIC_W_ORDERING (1<<31 | MASK_PROCESS_SPECIFIC)
-
-#define IS_PROCESS_SPECIFIC_MESSAGE_TAG_WITH_ORDERING(x) ( (MASK_PROCESS_SPECIFIC_W_ORDERING & x) == (MASK_PROCESS_SPECIFIC_W_ORDERING))
-
-#define IS_PROCESS_SPECIFIC_MESSAGE_TAG(x) ( (MASK_PROCESS_SPECIFIC & x) == (MASK_PROCESS_SPECIFIC) )
 /** For ondemand connexions */
 #define MASK_PROCESS_SPECIFIC_ONDEMAND (1<<29 | MASK_PROCESS_SPECIFIC | MASK_CONTROL_MESSAGE)
-#define IS_PROCESS_SPECIFIC_ONDEMAND(x) ( (MASK_PROCESS_SPECIFIC_ONDEMAND & x) == (MASK_PROCESS_SPECIFIC_ONDEMAND) )
 /** For low memory consumption */
 #define MASK_PROCESS_SPECIFIC_LOW_MEM (1<<28 | MASK_PROCESS_SPECIFIC | MASK_CONTROL_MESSAGE)
-#define IS_PROCESS_SPECIFIC_LOW_MEM(x) ( (MASK_PROCESS_SPECIFIC_LOW_MEM & x) == (MASK_PROCESS_SPECIFIC_LOW_MEM) )
 /** For user connexions */
 #define MASK_PROCESS_SPECIFIC_USER (1<<27 | MASK_PROCESS_SPECIFIC | MASK_CONTROL_MESSAGE)
-#define IS_PROCESS_SPECIFIC_USER(x) ( (MASK_PROCESS_SPECIFIC_USER & x) == (MASK_PROCESS_SPECIFIC_USER) )
-/** Is the message a control message ? */
-#define IS_PROCESS_SPECIFIC_CONTROL_MESSAGE(x) ( (MASK_CONTROL_MESSAGE & x) == (MASK_CONTROL_MESSAGE) )
-
-/* Defines if we are in a full MPI mode */
-//#define SCTK_ENABLE_SPINNING
 
 typedef enum
 {
@@ -97,171 +86,70 @@ typedef enum
 	SCTK_BARRIER_HETERO_SPECIFIC_MESSAGE_TAG = MASK_PROCESS_SPECIFIC_W_ORDERING | SCTK_BROADCAST_SPECIFIC_MESSAGE_TAG,
 }specific_message_tag_t;
 
+
+
+/** Message for a process with ordering and a tag */
+#define IS_PROCESS_SPECIFIC_MESSAGE_TAG_WITH_ORDERING(x) ( (MASK_PROCESS_SPECIFIC_W_ORDERING & x) == (MASK_PROCESS_SPECIFIC_W_ORDERING))
+#define IS_PROCESS_SPECIFIC_MESSAGE_TAG(x) ( (MASK_PROCESS_SPECIFIC & x) == (MASK_PROCESS_SPECIFIC) )
+
+#define IS_PROCESS_SPECIFIC_ONDEMAND(x) ( (MASK_PROCESS_SPECIFIC_ONDEMAND & x) == (MASK_PROCESS_SPECIFIC_ONDEMAND) )
+
+#define IS_PROCESS_SPECIFIC_LOW_MEM(x) ( (MASK_PROCESS_SPECIFIC_LOW_MEM & x) == (MASK_PROCESS_SPECIFIC_LOW_MEM) )
+/** Is the message an user connexions ? */
+#define IS_PROCESS_SPECIFIC_USER(x) ( (MASK_PROCESS_SPECIFIC_USER & x) == (MASK_PROCESS_SPECIFIC_USER) )
+/** Is the message a control message ? */
+#define IS_PROCESS_SPECIFIC_CONTROL_MESSAGE(x) ( (MASK_CONTROL_MESSAGE & x) == (MASK_CONTROL_MESSAGE) )
+
+
+/************************************************************************/
+/* sctk_request_t		                                          */
+/************************************************************************/
 typedef enum
 {
-	REQUEST_NULL = 0,
-	REQUEST_SEND = 1,
-	REQUEST_RECV = 2,
-	REQUEST_SEND_COLL = 3,
-	REQUEST_RECV_COLL = 4,
-	REQUEST_GENERALIZED = 5
+	REQUEST_NULL,
+	REQUEST_SEND,
+	REQUEST_RECV,
+	REQUEST_SEND_COLL,
+	REQUEST_RECV_COLL,
+	REQUEST_GENERALIZED
 } sctk_request_type_t;
-
-typedef struct sctk_thread_message_header_s
-{
-	int source;
-	int destination;
-	sctk_communicator_t communicator;
-	int message_tag;
-	int message_number;
-	int source_task;
-	int destination_task;
-	char use_message_numbering;
-	specific_message_tag_t specific_message_tag;
-	MPC_Datatype datatype;
-	size_t msg_size;
-} sctk_thread_message_header_t;
-
-typedef unsigned int sctk_pack_indexes_t;
-typedef long sctk_pack_absolute_indexes_t;
-typedef int sctk_count_t;
-
-typedef struct
-{
-	size_t size;
-	void* addr;
-}sctk_message_contiguous_t;
-
-typedef struct
-{
-	sctk_count_t count;
-	sctk_pack_indexes_t *begins;
-	sctk_pack_indexes_t *ends;
-	void* addr;
-	size_t elem_size;
-}sctk_message_pack_std_list_t;
-
-typedef struct
-{
-	sctk_count_t count;
-	sctk_pack_absolute_indexes_t *begins;
-	sctk_pack_absolute_indexes_t *ends;
-	void* addr;
-	size_t elem_size;
-}sctk_message_pack_absolute_list_t;
-
-typedef union
-{
-	sctk_message_pack_absolute_list_t* absolute;
-	sctk_message_pack_std_list_t* std;
-}sctk_message_pack_list_t;
-
-typedef union
-{
-	sctk_message_pack_absolute_list_t absolute;
-	sctk_message_pack_std_list_t std;
-}sctk_message_pack_default_t;
-
-typedef struct
-{
-	size_t count;
-	size_t max_count;
-	sctk_message_pack_list_t list;
-}sctk_message_pack_t;
-
-typedef enum
-{
-	SCTK_MESSAGE_CONTIGUOUS,
-	SCTK_MESSAGE_PACK,
-	SCTK_MESSAGE_PACK_ABSOLUTE,
-	SCTK_MESSAGE_PACK_UNDEFINED,
-	SCTK_MESSAGE_NETWORK
-} sctk_message_type_t;
-
-typedef union
-{
-	sctk_message_contiguous_t contiguous;
-	sctk_message_pack_t pack;
-} sctk_message_t;
 
 typedef MPC_Request sctk_request_t;
 
-struct sctk_thread_ptp_message_s;
+void sctk_wait_message (sctk_request_t * request);
+int sctk_cancel_message (sctk_request_t * msg);
 
-typedef volatile struct sctk_msg_list_s
+/************************************************************************/
+/* sctk_thread_message_header_t                                         */
+/************************************************************************/
+
+/** P2P message header */
+typedef struct sctk_thread_message_header_s
 {
-	struct sctk_thread_ptp_message_s * msg;
-	volatile struct sctk_msg_list_s *prev, *next;
-}sctk_msg_list_t;
+	/* Process */
+	int source; /**< Source Process */
+	int destination; /**< Destination Process */
+	/* Task */
+	int source_task; /**< Source Task id */
+	int destination_task; /**< Destination Task ID */
+	/* Context */
+	int message_tag; /**< Message TAG */
+	specific_message_tag_t specific_message_tag; /**< Specific tag for control messages */
+	sctk_communicator_t communicator; /**< Message communicator */
+	/* Ordering */
+	int message_number; /**< Message order (for reorder) */
+	char use_message_numbering; /**< Should this message be reordered */
+	/* Content */
+	MPC_Datatype datatype; /**< Caried data-type (for matching check) */
+	size_t msg_size; /**< Message size */
+} sctk_thread_message_header_t;
 
-typedef struct sctk_message_to_copy_s
-{
-	struct sctk_thread_ptp_message_s * msg_send;
-	struct sctk_thread_ptp_message_s * msg_recv;
-	struct sctk_message_to_copy_s * prev, *next;
-}sctk_message_to_copy_t;
+void sctk_probe_source_any_tag (int destination, int source, const sctk_communicator_t comm, int *status, sctk_thread_message_header_t * msg);
+void sctk_probe_any_source_any_tag (int destination, const sctk_communicator_t comm, int *status, sctk_thread_message_header_t * msg);
+void sctk_probe_source_tag (int destination, int source, const sctk_communicator_t comm, int *status, sctk_thread_message_header_t * msg);
+void sctk_probe_any_source_tag (int destination, const sctk_communicator_t comm, int *status, sctk_thread_message_header_t * msg);
 
-/*Data to tranfers in inter-process communications*/
-typedef struct
-{
-	sctk_thread_message_header_t header;
-	volatile int* volatile completion_flag;
-	/* XXX:Specific to checksum */
-	unsigned long checksum;
-}sctk_thread_ptp_message_body_t;
-
-typedef struct
-{
-	sctk_spinlock_t lock;
-	volatile sctk_msg_list_t* list;
-} sctk_internal_ptp_list_completing_t;
-
-/*Data not to tranfers in inter-process communications*/
-typedef struct
-{
-	char remote_source;
-	char remote_destination;
-
-	int need_check_in_wait;
-
-	sctk_request_t * request;
-
-	/*Message data*/
-	sctk_message_type_t message_type;
-	sctk_message_t message;
-	sctk_message_pack_default_t default_pack;
-
-	/*Storage structs*/
-	sctk_msg_list_t distant_list;
-	sctk_message_to_copy_t copy_list;
-
-	struct sctk_internal_ptp_s * internal_ptp;
-
-	/*Destructor*/
-	void (*free_memory)(void*);
-
-	/*Copy operator*/
-	void (*message_copy)(sctk_message_to_copy_t*);
-
-	/*Reoder buffer struct*/
-	sctk_reorder_buffer_t reorder;
-
-	/* If the message has been buffered during the
-	* Send function. If it is, we need to free the async
-	* buffer when completing the message */
-	struct mpc_buffered_msg_s * buffer_async;
-
-	/* RDMA infos */
-	void* rdma_src;
-	void* route_table;
-
-	/* Portals infos */
-	void* portals_message_info_t;
-	void* portals_info_t;
-
-	/* XXX:Specific to IB */
-	struct sctk_ib_msg_header_s ib;
-}sctk_thread_ptp_message_tail_t;
+/** sctk_thread_message_header_t GETTERS and Setters */
 
 #define SCTK_MSG_USE_MESSAGE_NUMBERING( msg ) msg->body.header.use_message_numbering
 #define SCTK_MSG_USE_MESSAGE_NUMBERING_SET( msg , num ) do{ msg->body.header.use_message_numbering = num; }while(0)
@@ -296,6 +184,187 @@ typedef struct
 #define SCTK_MSG_COMPLETION_FLAG( msg ) msg->body.completion_flag
 #define SCTK_MSG_COMPLETION_FLAG_SET( msg , completion ) do{ msg->body.completion_flag = completion; }while(0)
 
+/************************************************/
+
+
+/************************************************************************/
+/* Message Content Descriptors                                          */
+/************************************************************************/
+
+typedef unsigned int sctk_pack_indexes_t;
+typedef long sctk_pack_absolute_indexes_t;
+typedef int sctk_count_t;
+
+typedef enum
+{
+	SCTK_MESSAGE_CONTIGUOUS,
+	SCTK_MESSAGE_PACK,
+	SCTK_MESSAGE_PACK_ABSOLUTE,
+	SCTK_MESSAGE_PACK_UNDEFINED,
+	SCTK_MESSAGE_NETWORK
+} sctk_message_type_t;
+
+/** SCTK_MESSAGE_CONTIGUOUS */
+typedef struct
+{
+	size_t size;
+	void* addr;
+}sctk_message_contiguous_t;
+
+/** SCTK_MESSAGE_PACK */
+typedef struct
+{
+	sctk_count_t count;
+	sctk_pack_indexes_t *begins;
+	sctk_pack_indexes_t *ends;
+	void* addr;
+	size_t elem_size;
+}sctk_message_pack_std_list_t;
+
+/** SCTK_MESSAGE_PACK_ABSOLUTE */
+typedef struct
+{
+	sctk_count_t count;
+	sctk_pack_absolute_indexes_t *begins;
+	sctk_pack_absolute_indexes_t *ends;
+	void* addr;
+	size_t elem_size;
+}sctk_message_pack_absolute_list_t;
+
+/** Content for list of packs */
+typedef union
+{
+	sctk_message_pack_absolute_list_t* absolute;
+	sctk_message_pack_std_list_t* std;
+}sctk_message_pack_list_t;
+
+typedef struct
+{
+	size_t count;
+	size_t max_count;
+	sctk_message_pack_list_t list;
+}sctk_message_pack_t;
+
+/** Content single packed message */
+typedef union
+{
+	sctk_message_pack_absolute_list_t absolute;
+	sctk_message_pack_std_list_t std;
+}sctk_message_pack_default_t;
+
+/** Message Content descriptor */
+typedef union
+{
+	sctk_message_contiguous_t contiguous; /** Contiguous case */
+	sctk_message_pack_t pack; /** Packed case */
+} sctk_message_t;
+
+/************************************************************************/
+/* Message List                                                         */
+/************************************************************************/
+
+struct sctk_thread_ptp_message_s;
+
+typedef volatile struct sctk_msg_list_s
+{
+	struct sctk_thread_ptp_message_s * msg;
+	volatile struct sctk_msg_list_s *prev, *next;
+}sctk_msg_list_t;
+
+/************************************************************************/
+/* Message Copy                                                         */
+/************************************************************************/
+
+typedef struct sctk_message_to_copy_s
+{
+	struct sctk_thread_ptp_message_s * msg_send;
+	struct sctk_thread_ptp_message_s * msg_recv;
+	struct sctk_message_to_copy_s * prev, *next;
+}sctk_message_to_copy_t;
+
+void sctk_message_copy(sctk_message_to_copy_t* tmp);
+void sctk_message_copy_pack(sctk_message_to_copy_t* tmp);
+void sctk_message_copy_pack_absolute(sctk_message_to_copy_t* tmp);
+
+/************************************************************************/
+/* Message Content                                                      */
+/************************************************************************/
+
+typedef enum
+{
+	SCTK_MESSAGE_PENDING=0,
+	SCTK_MESSAGE_DONE=1,
+	SCTK_MESSAGE_CANCELED=2
+}sctk_completion_flag_t;
+
+
+/*Data to tranfers in inter-process communications*/
+typedef struct
+{
+	sctk_thread_message_header_t header;
+	volatile int* volatile completion_flag;
+	/* XXX:Specific to checksum */
+	unsigned long checksum;
+}sctk_thread_ptp_message_body_t;
+
+int sctk_determine_src_process_from_header (sctk_thread_ptp_message_body_t * body);
+void sctk_determine_task_source_and_destination_from_header ( sctk_thread_ptp_message_body_t* body, int *source_task, int *destination_task);
+
+struct mpc_buffered_msg_s;
+struct sctk_internal_ptp_s;
+
+/*Data not to tranfers in inter-process communications*/
+typedef struct
+{
+	char remote_source;
+	char remote_destination;
+
+	int need_check_in_wait;
+
+	sctk_request_t * request;
+
+	/*Message data*/
+	sctk_message_type_t message_type;
+	sctk_message_t message;
+	sctk_message_pack_default_t default_pack;
+
+	/*Storage structs*/
+	sctk_msg_list_t distant_list;
+	sctk_message_to_copy_t copy_list;
+
+	struct sctk_internal_ptp_s * internal_ptp;
+
+	/*Destructor*/
+	void (*free_memory)(void*);
+
+	/*Copy operator*/
+	void (*message_copy)(sctk_message_to_copy_t*);
+
+	/*Reorder buffer struct*/
+	sctk_reorder_buffer_t reorder;
+
+	/* If the message has been buffered during the
+	* Send function. If it is, we need to free the async
+	* buffer when completing the message */
+	struct mpc_buffered_msg_s * buffer_async;
+
+	/* RDMA infos */
+	void* rdma_src;
+	void* route_table;
+
+	/* Portals infos */
+	void* portals_message_info_t;
+	void* portals_info_t;
+
+	/* XXX:Specific to IB */
+	struct sctk_ib_msg_header_s ib;
+}sctk_thread_ptp_message_tail_t;
+
+
+/************************************************************************/
+/* sctk_thread_ptp_message_t Point to Point message descriptor          */
+/************************************************************************/
+
 typedef struct sctk_thread_ptp_message_s
 {
 	sctk_thread_ptp_message_body_t body;
@@ -307,6 +376,42 @@ typedef struct sctk_thread_ptp_message_s
 	/* If the entry comes from a buffered list */
 	char from_buffered;
 }sctk_thread_ptp_message_t;
+
+
+void sctk_init_header (sctk_thread_ptp_message_t *tmp, const int myself, sctk_message_type_t msg_type, void (*free_memory)(void*),
+void (*message_copy)(sctk_message_to_copy_t*));
+void sctk_reinit_header (sctk_thread_ptp_message_t *tmp, void (*free_memory)(void*),
+void (*message_copy)(sctk_message_to_copy_t*));
+sctk_thread_ptp_message_t *sctk_create_header (const int myself,sctk_message_type_t msg_type);
+void sctk_add_adress_in_message (sctk_thread_ptp_message_t * restrict msg, void *restrict addr, const size_t size);
+void sctk_add_pack_in_message (sctk_thread_ptp_message_t * msg, void *adr, const sctk_count_t nb_items, 
+							     const size_t elem_size, 
+							     sctk_pack_indexes_t * begins, 
+							     sctk_pack_indexes_t * ends);
+void sctk_add_pack_in_message_absolute (sctk_thread_ptp_message_t * msg, void *adr, 
+							   const sctk_count_t nb_items, 
+							   const size_t elem_size, 
+							   sctk_pack_absolute_indexes_t * begins, 
+							   sctk_pack_absolute_indexes_t * ends);
+void sctk_set_header_in_message (sctk_thread_ptp_message_t * msg, const int message_tag, 
+						      const sctk_communicator_t communicator, 
+						      const int source, 
+						      const int destination, 
+						      sctk_request_t * request, 
+						      const size_t count, 
+						      specific_message_tag_t specific_message_tag, 
+						      MPC_Datatype datatype);
+void sctk_send_message (sctk_thread_ptp_message_t * msg);
+void sctk_send_message_try_check (sctk_thread_ptp_message_t * msg,int perform_check);
+void sctk_recv_message (sctk_thread_ptp_message_t * msg, struct sctk_internal_ptp_s* tmp, int need_check);
+void sctk_recv_message_try_check (sctk_thread_ptp_message_t * msg,struct sctk_internal_ptp_s* tmp,int perform_check);
+void sctk_message_completion_and_free(sctk_thread_ptp_message_t* send, sctk_thread_ptp_message_t* recv);
+void sctk_complete_and_free_message (sctk_thread_ptp_message_t * msg);
+void sctk_rebuild_header (sctk_thread_ptp_message_t * msg);
+
+/************************************************************************/
+/* Message Progess                                                      */
+/************************************************************************/
 
 typedef struct sctk_perform_messages_s
 {
@@ -321,77 +426,28 @@ typedef struct sctk_perform_messages_s
 } sctk_perform_messages_t;
 
 
+void sctk_perform_messages_wait_init( struct sctk_perform_messages_s * wait, sctk_request_t * request, int blocking);
 /**
 Check if the message if completed according to the message passed as a request
 */
 void sctk_perform_messages(struct sctk_perform_messages_s * wait);
 void sctk_perform_messages_wait_init_request_type(struct sctk_perform_messages_s * wait);
-void sctk_init_header (sctk_thread_ptp_message_t *tmp, const int myself,
-sctk_message_type_t msg_type, void (*free_memory)(void*),
-void (*message_copy)(sctk_message_to_copy_t*));
-void sctk_reinit_header (sctk_thread_ptp_message_t *tmp, void (*free_memory)(void*),
-void (*message_copy)(sctk_message_to_copy_t*));
-sctk_thread_ptp_message_t *sctk_create_header (const int myself,sctk_message_type_t msg_type);
-void sctk_add_adress_in_message (sctk_thread_ptp_message_t * restrict msg, void *restrict addr, const size_t size);
 
-void sctk_add_pack_in_message (sctk_thread_ptp_message_t * msg, void *adr, 
-							   const sctk_count_t nb_items, 
-							   const size_t elem_size, 
-							   sctk_pack_indexes_t * begins, 
-							   sctk_pack_indexes_t * ends);
+/************************************************************************/
+/* General Functions                                                    */
+/************************************************************************/
 
-void sctk_add_pack_in_message_absolute (sctk_thread_ptp_message_t * msg,
-							   void *adr, 
-							   const sctk_count_t nb_items, 
-							   const size_t elem_size, 
-							   sctk_pack_absolute_indexes_t * begins, 
-							   sctk_pack_absolute_indexes_t * ends);
-
-void sctk_set_header_in_message (sctk_thread_ptp_message_t * msg,
-								 const int message_tag, 
-								 const sctk_communicator_t communicator, 
-								 const int source, 
-								 const int destination, 
-								 sctk_request_t * request, 
-								 const size_t count, 
-								 specific_message_tag_t specific_message_tag, 
-								 MPC_Datatype datatype);
-
-void sctk_wait_message (sctk_request_t * request);
 void sctk_wait_all (const int task, const sctk_communicator_t com);
-void sctk_probe_source_any_tag (int destination, int source, const sctk_communicator_t comm, int *status, sctk_thread_message_header_t * msg);
-void sctk_probe_any_source_any_tag (int destination, const sctk_communicator_t comm, int *status, sctk_thread_message_header_t * msg);
-void sctk_probe_source_tag (int destination, int source, const sctk_communicator_t comm, int *status, sctk_thread_message_header_t * msg);
-void sctk_probe_any_source_tag (int destination, const sctk_communicator_t comm, int *status, sctk_thread_message_header_t * msg);
-void sctk_send_message (sctk_thread_ptp_message_t * msg);
-void sctk_send_message_try_check (sctk_thread_ptp_message_t * msg,int perform_check);
-void sctk_recv_message (sctk_thread_ptp_message_t * msg, struct sctk_internal_ptp_s* tmp, int need_check);
-void sctk_recv_message_try_check (sctk_thread_ptp_message_t * msg,struct sctk_internal_ptp_s* tmp,int perform_check);
 struct sctk_internal_ptp_s* sctk_get_internal_ptp(int glob_id);
 int sctk_is_net_message (int dest);
-int sctk_cancel_message (sctk_request_t * msg);
 void sctk_ptp_per_task_init (int i);
 void sctk_unregister_thread (const int i);
-
-void sctk_message_copy(sctk_message_to_copy_t* tmp);
-void sctk_message_copy_pack(sctk_message_to_copy_t* tmp);
-void sctk_message_copy_pack_absolute(sctk_message_to_copy_t* tmp);
 void sctk_notify_idle_message ();
 void sctk_notify_idle_message_inter ();
-void sctk_message_completion_and_free(sctk_thread_ptp_message_t* send,
-sctk_thread_ptp_message_t* recv);
-void sctk_complete_and_free_message (sctk_thread_ptp_message_t * msg);
-void sctk_rebuild_header (sctk_thread_ptp_message_t * msg);
-int sctk_determine_src_process_from_header (sctk_thread_ptp_message_body_t * body);
-void sctk_determine_task_source_and_destination_from_header ( sctk_thread_ptp_message_body_t* body, int *source_task, int *destination_task);
-
-void sctk_perform_messages_wait_init(
-struct sctk_perform_messages_s * wait, sctk_request_t * request, int blocking);
-
 sctk_reorder_list_t * sctk_ptp_get_reorder_from_destination(int task);
+void sctk_inter_thread_perform_idle (volatile int *data, int value, void (*func) (void *), void *arg);
 
-void sctk_inter_thread_perform_idle (volatile int *data, int value,
-void (*func) (void *), void *arg);
+
 #ifdef __cplusplus
 }
 #endif
