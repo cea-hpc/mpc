@@ -31,30 +31,32 @@ extern volatile int sctk_online_program;
 /* Inter Thread Comm Hooks                                          */
 /********************************************************************/
 
-static void* sctk_tcp_thread(sctk_route_table_t* tmp)
+static void *sctk_tcp_thread ( sctk_route_table_t *tmp )
 {
 	int fd = tmp->data.tcp.fd;
 
-	sctk_nodebug("Rail %d from %d launched",tmp->rail->rail_number, tmp->key.destination);
+	sctk_nodebug ( "Rail %d from %d launched", tmp->rail->rail_number, tmp->key.destination );
 
-	while(1)
+	while ( 1 )
 	{
-		sctk_thread_ptp_message_t * msg;
-		void* body;
+		sctk_thread_ptp_message_t *msg;
+		void *body;
 		size_t size;
 		ssize_t res;
 
-		res = sctk_safe_read(fd,(char*)&size,sizeof(size_t));
-		sctk_nodebug("Got msg of size %d (online:%d)", res, sctk_online_program);
-		if(res < sizeof(size_t))
+		res = sctk_safe_read ( fd, ( char * ) &size, sizeof ( size_t ) );
+		sctk_nodebug ( "Got msg of size %d (online:%d)", res, sctk_online_program );
+
+		if ( res < sizeof ( size_t ) )
 		{
 			return NULL;
 		}
-		
-		if(size < sizeof(sctk_thread_ptp_message_body_t))
+
+		if ( size < sizeof ( sctk_thread_ptp_message_body_t ) )
 		{
 			return NULL;
 		}
+
 		/* Stupid tests which block the 'fully connected' mode...
 		* Is there any reason here to do that ? */
 		/* if(sctk_online_program == 0){
@@ -64,89 +66,89 @@ static void* sctk_tcp_thread(sctk_route_table_t* tmp)
 		sched_yield();
 		} */
 
-		size = size - sizeof(sctk_thread_ptp_message_body_t) + sizeof(sctk_thread_ptp_message_t);
-		msg = sctk_malloc(size);
-		body = (char*)msg + sizeof(sctk_thread_ptp_message_t);
+		size = size - sizeof ( sctk_thread_ptp_message_body_t ) + sizeof ( sctk_thread_ptp_message_t );
+		msg = sctk_malloc ( size );
+		body = ( char * ) msg + sizeof ( sctk_thread_ptp_message_t );
 
 		/* Recv header*/
-		sctk_nodebug("Read %d",sizeof(sctk_thread_ptp_message_body_t));
-		res = sctk_safe_read(fd,(char*)msg,sizeof(sctk_thread_ptp_message_body_t));
-		
-		if(res != sizeof(sctk_thread_ptp_message_body_t))
+		sctk_nodebug ( "Read %d", sizeof ( sctk_thread_ptp_message_body_t ) );
+		res = sctk_safe_read ( fd, ( char * ) msg, sizeof ( sctk_thread_ptp_message_body_t ) );
+
+		if ( res != sizeof ( sctk_thread_ptp_message_body_t ) )
 		{
 			return NULL;
 		}
 
-		SCTK_MSG_COMPLETION_FLAG_SET( msg , NULL );
+		SCTK_MSG_COMPLETION_FLAG_SET ( msg , NULL );
 		msg->tail.message_type = SCTK_MESSAGE_NETWORK;
-		
-		if(SCTK_MSG_COMMUNICATOR( msg ) < 0)
+
+		if ( SCTK_MSG_COMMUNICATOR ( msg ) < 0 )
 		{
 			return NULL;
 		}
 
 		/* Recv body*/
-		size = size - sizeof(sctk_thread_ptp_message_t);
-		sctk_safe_read(fd,(char*)body,size);
+		size = size - sizeof ( sctk_thread_ptp_message_t );
+		sctk_safe_read ( fd, ( char * ) body, size );
 
-		sctk_rebuild_header(msg);
-		sctk_reinit_header(msg,sctk_free,sctk_net_message_copy);
+		sctk_rebuild_header ( msg );
+		sctk_reinit_header ( msg, sctk_free, sctk_net_message_copy );
 
-		sctk_nodebug("MSG RECV|%s|", (char*)body);
+		sctk_nodebug ( "MSG RECV|%s|", ( char * ) body );
 
-		sctk_nodebug("Msg recved");
-		tmp->rail->send_message_from_network(msg);
+		sctk_nodebug ( "Msg recved" );
+		tmp->rail->send_message_from_network ( msg );
 	}
 
 	return NULL;
 }
 
-static void sctk_network_send_message_tcp (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* rail)
+static void sctk_network_send_message_tcp ( sctk_thread_ptp_message_t *msg, sctk_rail_info_t *rail )
 {
-	sctk_route_table_t* tmp;
+	sctk_route_table_t *tmp;
 	size_t size;
 	int fd;
 
-	sctk_nodebug("send message through rail %d",rail->rail_number);
+	sctk_nodebug ( "send message through rail %d", rail->rail_number );
 
-	if( IS_PROCESS_SPECIFIC_MESSAGE_TAG(SCTK_MSG_SPECIFIC_TAG( msg )) )
+	if ( IS_PROCESS_SPECIFIC_MESSAGE_TAG ( SCTK_MSG_SPECIFIC_TAG ( msg ) ) )
 	{
-		tmp = sctk_get_route_to_process( SCTK_MSG_DEST_PROCESS( msg ), rail);
-	} 
+		tmp = sctk_get_route_to_process ( SCTK_MSG_DEST_PROCESS ( msg ), rail );
+	}
 	else
 	{
-		tmp = sctk_get_route( SCTK_MSG_DEST_TASK( msg ),rail);
+		tmp = sctk_get_route ( SCTK_MSG_DEST_TASK ( msg ), rail );
 	}
 
-	sctk_nodebug("Send message to %d", tmp->key.destination);
+	sctk_nodebug ( "Send message to %d", tmp->key.destination );
 
-	sctk_spinlock_lock(&(tmp->data.tcp.lock));
+	sctk_spinlock_lock ( & ( tmp->data.tcp.lock ) );
 
 	fd = tmp->data.tcp.fd;
 
-	size = SCTK_MSG_SIZE( msg ) + sizeof(sctk_thread_ptp_message_body_t);
+	size = SCTK_MSG_SIZE ( msg ) + sizeof ( sctk_thread_ptp_message_body_t );
 
-	sctk_safe_write(fd,(char*)&size,sizeof(size_t));
+	sctk_safe_write ( fd, ( char * ) &size, sizeof ( size_t ) );
 
-	sctk_safe_write(fd,(char*)msg,sizeof(sctk_thread_ptp_message_body_t));
+	sctk_safe_write ( fd, ( char * ) msg, sizeof ( sctk_thread_ptp_message_body_t ) );
 
-	sctk_net_write_in_fd(msg,fd);
-	sctk_spinlock_unlock(&(tmp->data.tcp.lock));
+	sctk_net_write_in_fd ( msg, fd );
+	sctk_spinlock_unlock ( & ( tmp->data.tcp.lock ) );
 
-	sctk_complete_and_free_message(msg);
+	sctk_complete_and_free_message ( msg );
 }
 
-static void sctk_network_notify_recv_message_tcp (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* rail)
+static void sctk_network_notify_recv_message_tcp ( sctk_thread_ptp_message_t *msg, sctk_rail_info_t *rail )
 {
 
 }
 
-static void sctk_network_notify_matching_message_tcp (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* rail)
+static void sctk_network_notify_matching_message_tcp ( sctk_thread_ptp_message_t *msg, sctk_rail_info_t *rail )
 {
 
 }
 
-static void sctk_network_notify_perform_message_tcp (int remote,int remote_task_id,int polling_task_id, int blocking, sctk_rail_info_t* rail)
+static void sctk_network_notify_perform_message_tcp ( int remote, int remote_task_id, int polling_task_id, int blocking, sctk_rail_info_t *rail )
 {
 
 }
@@ -156,7 +158,7 @@ static void sctk_network_notify_idle_message_tcp ()
 
 }
 
-static void sctk_network_notify_any_source_message_tcp (int polling_task_id, int blocking, sctk_rail_info_t* rail)
+static void sctk_network_notify_any_source_message_tcp ( int polling_task_id, int blocking, sctk_rail_info_t *rail )
 {
 
 }
@@ -165,7 +167,7 @@ static void sctk_network_notify_any_source_message_tcp (int polling_task_id, int
 /* TCP Init                                                         */
 /********************************************************************/
 
-void sctk_network_init_tcp(sctk_rail_info_t* rail,int sctk_use_tcp_o_ib)
+void sctk_network_init_tcp ( sctk_rail_info_t *rail, int sctk_use_tcp_o_ib )
 {
 	/* Register Hooks in rail */
 	rail->send_message = sctk_network_send_message_tcp;
@@ -174,9 +176,9 @@ void sctk_network_init_tcp(sctk_rail_info_t* rail,int sctk_use_tcp_o_ib)
 	rail->notify_perform_message = sctk_network_notify_perform_message_tcp;
 	rail->notify_idle_message = sctk_network_notify_idle_message_tcp;
 	rail->notify_any_source_message = sctk_network_notify_any_source_message_tcp;
-	
+
 	/* Handle the IPoIB case */
-	if(sctk_use_tcp_o_ib == 0)
+	if ( sctk_use_tcp_o_ib == 0 )
 	{
 		rail->network_name = "TCP";
 	}
@@ -186,5 +188,5 @@ void sctk_network_init_tcp(sctk_rail_info_t* rail,int sctk_use_tcp_o_ib)
 	}
 
 	/* Actually initialize the network (note TCP kind specific functions) */
-	sctk_network_init_tcp_all(rail,sctk_use_tcp_o_ib,sctk_tcp_thread,rail->route,rail->route_init);
+	sctk_network_init_tcp_all ( rail, sctk_use_tcp_o_ib, sctk_tcp_thread, rail->route, rail->route_init );
 }

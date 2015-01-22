@@ -30,155 +30,208 @@
 
 static bool checksum_enabled;
 
-unsigned long sctk_checksum_message(sctk_thread_ptp_message_t *send,
-    sctk_thread_ptp_message_t *recv) {
-  unsigned long adler = 0;
-  if (!checksum_enabled) return 0;
+unsigned long sctk_checksum_message ( sctk_thread_ptp_message_t *send,
+                                      sctk_thread_ptp_message_t *recv )
+{
+	unsigned long adler = 0;
 
-  switch(recv->tail.message_type){
-  case SCTK_MESSAGE_CONTIGUOUS: {
-    size_t size;
-    size = SCTK_MSG_SIZE( send );
-    if(size > recv->tail.message.contiguous.size){
-      size = recv->tail.message.contiguous.size;
-    }
-    adler = adler32(adler, (unsigned char*) recv->tail.message.contiguous.addr, size);
-    break;
-  }
-  case SCTK_MESSAGE_NETWORK: {
-    size_t size;
-    void* body;
+	if ( !checksum_enabled )
+		return 0;
 
-    size = SCTK_MSG_SIZE( recv );
-    body = (char*)recv + sizeof(sctk_thread_ptp_message_t);
-
-    adler = adler32(adler, (unsigned char*) body, size);
-    break;
-    }
-
-  case SCTK_MESSAGE_PACK: {
-    size_t i;
-    size_t j;
-    size_t size;
-    for (i = 0; i < recv->tail.message.pack.count; i++)
-      for (j = 0; j < recv->tail.message.pack.list.std[i].count; j++)
+	switch ( recv->tail.message_type )
 	{
-	  size = (recv->tail.message.pack.list.std[i].ends[j] -
-		  recv->tail.message.pack.list.std[i].begins[j] +
-		  1) * recv->tail.message.pack.list.std[i].elem_size;
-    adler = adler32(adler, ((unsigned char *) (recv->tail.message.pack.list.std[i].addr)) +
-		 recv->tail.message.pack.list.std[i].begins[j] *
-		 recv->tail.message.pack.list.std[i].elem_size,size);
+		case SCTK_MESSAGE_CONTIGUOUS:
+		{
+			size_t size;
+			size = SCTK_MSG_SIZE ( send );
+
+			if ( size > recv->tail.message.contiguous.size )
+			{
+				size = recv->tail.message.contiguous.size;
+			}
+
+			adler = adler32 ( adler, ( unsigned char * ) recv->tail.message.contiguous.addr, size );
+			break;
+		}
+
+		case SCTK_MESSAGE_NETWORK:
+		{
+			size_t size;
+			void *body;
+
+			size = SCTK_MSG_SIZE ( recv );
+			body = ( char * ) recv + sizeof ( sctk_thread_ptp_message_t );
+
+			adler = adler32 ( adler, ( unsigned char * ) body, size );
+			break;
+		}
+
+		case SCTK_MESSAGE_PACK:
+		{
+			size_t i;
+			size_t j;
+			size_t size;
+
+			for ( i = 0; i < recv->tail.message.pack.count; i++ )
+				for ( j = 0; j < recv->tail.message.pack.list.std[i].count; j++ )
+				{
+					size = ( recv->tail.message.pack.list.std[i].ends[j] -
+					         recv->tail.message.pack.list.std[i].begins[j] +
+					         1 ) * recv->tail.message.pack.list.std[i].elem_size;
+					adler = adler32 ( adler, ( ( unsigned char * ) ( recv->tail.message.pack.list.std[i].addr ) ) +
+					                  recv->tail.message.pack.list.std[i].begins[j] *
+					                  recv->tail.message.pack.list.std[i].elem_size, size );
+				}
+
+			break;
+		}
+
+		case SCTK_MESSAGE_PACK_ABSOLUTE:
+		{
+			size_t i;
+			size_t j;
+			size_t size;
+
+			for ( i = 0; i < recv->tail.message.pack.count; i++ )
+				for ( j = 0; j < recv->tail.message.pack.list.absolute[i].count; j++ )
+				{
+					size = ( recv->tail.message.pack.list.absolute[i].ends[j] -
+					         recv->tail.message.pack.list.absolute[i].begins[j] +
+					         1 ) * recv->tail.message.pack.list.absolute[i].elem_size;
+					adler = adler32 ( adler, ( ( unsigned char * ) ( recv->tail.message.pack.list.absolute[i].addr ) ) +
+					                  recv->tail.message.pack.list.absolute[i].begins[j] *
+					                  recv->tail.message.pack.list.absolute[i].elem_size, size );
+				}
+
+			break;
+		}
+
+		default:
+			not_reachable();
 	}
-    break;
-  }
-  case SCTK_MESSAGE_PACK_ABSOLUTE: {
-    size_t i;
-    size_t j;
-    size_t size;
-    for (i = 0; i < recv->tail.message.pack.count; i++)
-      for (j = 0; j < recv->tail.message.pack.list.absolute[i].count; j++)
-	{
-	  size = (recv->tail.message.pack.list.absolute[i].ends[j] -
-		  recv->tail.message.pack.list.absolute[i].begins[j] +
-		  1) * recv->tail.message.pack.list.absolute[i].elem_size;
-	  adler = adler32(adler, ((unsigned char *) (recv->tail.message.pack.list.absolute[i].addr)) +
-		 recv->tail.message.pack.list.absolute[i].begins[j] *
-		 recv->tail.message.pack.list.absolute[i].elem_size,size);
-	}
-    break;
-  }
-  default: not_reachable();
-  }
-  return adler;
+
+	return adler;
 }
 
-unsigned long sctk_checksum_buffer(char* body,
-  sctk_thread_ptp_message_t *msg) {
-  uLong adler = 0;
-  if (!checksum_enabled) return 0;
+unsigned long sctk_checksum_buffer ( char *body,
+                                     sctk_thread_ptp_message_t *msg )
+{
+	uLong adler = 0;
 
-  switch(msg->tail.message_type){
-  case SCTK_MESSAGE_CONTIGUOUS: {
-    size_t size;
-    size = SCTK_MSG_SIZE( msg );
-    if(size > msg->tail.message.contiguous.size){
-      size = msg->tail.message.contiguous.size;
-    }
+	if ( !checksum_enabled )
+		return 0;
 
-    adler = adler32(adler, (unsigned char*) body, size);
-
-    break;
-  }
-  case SCTK_MESSAGE_PACK: {
-    size_t i;
-    size_t j;
-    size_t size;
-    for (i = 0; i < msg->tail.message.pack.count; i++)
-      for (j = 0; j < msg->tail.message.pack.list.std[i].count; j++)
+	switch ( msg->tail.message_type )
 	{
-	  size = (msg->tail.message.pack.list.std[i].ends[j] -
-		  msg->tail.message.pack.list.std[i].begins[j] +
-		  1) * msg->tail.message.pack.list.std[i].elem_size;
-    adler = adler32(adler, (unsigned char*) body, size);
-	  body += size;
+		case SCTK_MESSAGE_CONTIGUOUS:
+		{
+			size_t size;
+			size = SCTK_MSG_SIZE ( msg );
+
+			if ( size > msg->tail.message.contiguous.size )
+			{
+				size = msg->tail.message.contiguous.size;
+			}
+
+			adler = adler32 ( adler, ( unsigned char * ) body, size );
+
+			break;
+		}
+
+		case SCTK_MESSAGE_PACK:
+		{
+			size_t i;
+			size_t j;
+			size_t size;
+
+			for ( i = 0; i < msg->tail.message.pack.count; i++ )
+				for ( j = 0; j < msg->tail.message.pack.list.std[i].count; j++ )
+				{
+					size = ( msg->tail.message.pack.list.std[i].ends[j] -
+					         msg->tail.message.pack.list.std[i].begins[j] +
+					         1 ) * msg->tail.message.pack.list.std[i].elem_size;
+					adler = adler32 ( adler, ( unsigned char * ) body, size );
+					body += size;
+				}
+
+			break;
+		}
+
+		case SCTK_MESSAGE_PACK_ABSOLUTE:
+		{
+			size_t i;
+			size_t j;
+			size_t size;
+
+			for ( i = 0; i < msg->tail.message.pack.count; i++ )
+				for ( j = 0; j < msg->tail.message.pack.list.absolute[i].count; j++ )
+				{
+					size = ( msg->tail.message.pack.list.absolute[i].ends[j] -
+					         msg->tail.message.pack.list.absolute[i].begins[j] +
+					         1 ) * msg->tail.message.pack.list.absolute[i].elem_size;
+
+					adler = adler32 ( adler, ( unsigned char * ) body, size );
+					body += size;
+				}
+
+			break;
+		}
+
+		default:
+			not_reachable();
 	}
-    break;
-  }
-  case SCTK_MESSAGE_PACK_ABSOLUTE: {
-    size_t i;
-    size_t j;
-    size_t size;
-    for (i = 0; i < msg->tail.message.pack.count; i++)
-      for (j = 0; j < msg->tail.message.pack.list.absolute[i].count; j++)
+
+	return adler;
+}
+
+
+void sctk_checksum_register ( sctk_thread_ptp_message_t *msg )
+{
+	msg->body.checksum = sctk_checksum_message ( msg, msg );
+}
+void sctk_checksum_unregister ( sctk_thread_ptp_message_t *msg )
+{
+	msg->body.checksum = 0;
+}
+
+unsigned long sctk_checksum_verify ( sctk_thread_ptp_message_t *send, sctk_thread_ptp_message_t *recv )
+{
+	unsigned long adler = 0;
+
+	if ( !checksum_enabled )
+		return 0;
+
+	/* If Checksum != 0, we verify it because the user asked for it */
+	if ( send->body.checksum )
 	{
-	  size = (msg->tail.message.pack.list.absolute[i].ends[j] -
-		  msg->tail.message.pack.list.absolute[i].begins[j] +
-		  1) * msg->tail.message.pack.list.absolute[i].elem_size;
+		adler = sctk_checksum_message ( send, recv );
 
-    adler = adler32(adler, (unsigned char*) body, size);
-	  body += size;
-	}
-    break;
-  }
-  default: not_reachable();
-  }
-  return adler;
-}
-
-
-void sctk_checksum_register(sctk_thread_ptp_message_t *msg) {
-  msg->body.checksum = sctk_checksum_message(msg, msg);
-}
-void sctk_checksum_unregister(sctk_thread_ptp_message_t *msg) {
-  msg->body.checksum = 0;
-}
-
-unsigned long sctk_checksum_verify(sctk_thread_ptp_message_t *send, sctk_thread_ptp_message_t *recv) {
-  unsigned long adler = 0;
-  if (!checksum_enabled) return 0;
-
-  /* If Checksum != 0, we verify it because the user asked for it */
-  if (send->body.checksum) {
-    adler = sctk_checksum_message(send, recv);
-    if (adler != send->body.checksum) {
+		if ( adler != send->body.checksum )
+		{
 #ifdef MPC_USE_INFINIBAND
-      sctk_ib_print_msg(send);
+			sctk_ib_print_msg ( send );
 #endif
-      sctk_error("Got wrong checksum (got:%lu, expected:%lu)", adler, send->body.checksum);
-      sctk_abort();
-    }
-  }
-  return adler;
+			sctk_error ( "Got wrong checksum (got:%lu, expected:%lu)", adler, send->body.checksum );
+			sctk_abort();
+		}
+	}
+
+	return adler;
 }
 
-void sctk_checksum_init() {
-  if (sctk_process_rank == 0) {
-    fprintf(stderr, SCTK_COLOR_RED_BOLD(WARNING: inter-node message checking enabled!)"\n");
-  }
-  checksum_enabled = sctk_runtime_config_get()->modules.low_level_comm.checksum;
+void sctk_checksum_init()
+{
+	if ( sctk_process_rank == 0 )
+	{
+	fprintf ( stderr, SCTK_COLOR_RED_BOLD ( WARNING: inter - node message checking enabled! ) "\n" );
+	}
+
+	checksum_enabled = sctk_runtime_config_get()->modules.low_level_comm.checksum;
 }
 #else
-void sctk_checksum_init() { /* nothing to do */ }
+void sctk_checksum_init()
+{
+	/* nothing to do */
+}
 
 #endif

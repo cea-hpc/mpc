@@ -46,7 +46,7 @@ typedef struct sctk_ib_qp_ondemand_s
 /** Structure associated to a device */
 typedef struct sctk_ib_device_s
 {
-	
+
 	struct ibv_device **dev_list; 		/**< Devices */
 	int                     dev_nb;		/**< Number of devices */
 	struct ibv_device       *dev;			/**< Selected device */
@@ -56,15 +56,15 @@ typedef struct sctk_ib_device_s
 	struct ibv_port_attr    port_attr;		/**< Port attributes */
 	/* XXX: do not add other fields here or the code segfaults.
 	* Maybe a restriction of IB in the memory alignement */
-	
+
 	unsigned int id;		     /**< ID of the device */
 	struct ibv_pd           *pd;       /**< protection domain */
 	struct ibv_srq          *srq;      /**< shared received quue */
 	struct ibv_cq           *send_cq;  /**< outgoing completion queues */
 	struct ibv_cq           *recv_cq;  /**< incoming completion queues */
 
-	struct ibv_comp_channel * send_comp_channel;
-	struct ibv_comp_channel * recv_comp_channel;
+	struct ibv_comp_channel *send_comp_channel;
+	struct ibv_comp_channel *recv_comp_channel;
 
 	struct sctk_ib_qp_ondemand_s ondemand;
 
@@ -77,23 +77,23 @@ typedef struct sctk_ib_device_s
 	int link_width;
 	int data_rate;
 
-	
+
 	int eager_rdma_connections; 		/**< For eager RDMA channel */
 } sctk_ib_device_t;
 
 
 
-sctk_ib_device_t *sctk_ib_device_init(struct sctk_ib_rail_info_s* rail_ib);
+sctk_ib_device_t *sctk_ib_device_init ( struct sctk_ib_rail_info_s *rail_ib );
 
-sctk_ib_device_t *sctk_ib_device_open(struct sctk_ib_rail_info_s* rail_ib, int rail_nb);
+sctk_ib_device_t *sctk_ib_device_open ( struct sctk_ib_rail_info_s *rail_ib, int rail_nb );
 
-struct ibv_pd* sctk_ib_pd_init(sctk_ib_device_t *device);
+struct ibv_pd *sctk_ib_pd_init ( sctk_ib_device_t *device );
 
-struct ibv_comp_channel * sctk_ib_comp_channel_init(sctk_ib_device_t* device);
+struct ibv_comp_channel *sctk_ib_comp_channel_init ( sctk_ib_device_t *device );
 
-struct ibv_cq* sctk_ib_cq_init(sctk_ib_device_t* device,
-			 struct sctk_runtime_config_struct_net_driver_infiniband *config,
-			 struct ibv_comp_channel * comp_chan);
+struct ibv_cq *sctk_ib_cq_init ( sctk_ib_device_t *device,
+                                 struct sctk_runtime_config_struct_net_driver_infiniband *config,
+                                 struct ibv_comp_channel *comp_chan );
 
 
 #endif /* SCTK_IB_DEVICE */

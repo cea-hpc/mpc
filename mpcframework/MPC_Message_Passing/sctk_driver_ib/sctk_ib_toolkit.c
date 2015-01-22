@@ -34,23 +34,25 @@
 
 
 #define BT_SIZE 100
-  void
-sctk_ib_toolkit_print_backtrace(void)
+void
+sctk_ib_toolkit_print_backtrace ( void )
 {
-  int j, nptrs;
-  void *buffer[BT_SIZE];
-  char **strings;
+	int j, nptrs;
+	void *buffer[BT_SIZE];
+	char **strings;
 
-  nptrs = backtrace(buffer, BT_SIZE);
+	nptrs = backtrace ( buffer, BT_SIZE );
 
-  strings = backtrace_symbols(buffer, nptrs);
-  if (strings == NULL) {
-    perror("backtrace_symbols");
-    exit(EXIT_FAILURE);
-  }
+	strings = backtrace_symbols ( buffer, nptrs );
 
-  for (j = 0; j < nptrs; j++)
-    fprintf(stderr, "%s\n", strings[j]);
+	if ( strings == NULL )
+	{
+		perror ( "backtrace_symbols" );
+		exit ( EXIT_FAILURE );
+	}
 
-  free(strings);
+	for ( j = 0; j < nptrs; j++ )
+		fprintf ( stderr, "%s\n", strings[j] );
+
+	free ( strings );
 }

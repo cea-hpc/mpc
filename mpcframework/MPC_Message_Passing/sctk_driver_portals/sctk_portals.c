@@ -102,8 +102,7 @@ void test_event_type ( ptl_event_t *event, int rank, const char *type )
 			sctk_nodebug ( "LINK" );
 			break;
 
-		default
-				:
+		default:
 			sctk_nodebug ( "%p %d UNKNOWN\n", event, event->type );
 	}
 }
@@ -239,8 +238,7 @@ void sctk_portals_message_copy ( sctk_message_to_copy_t *tmp )
 			ptrmsg->md.start 	= ptrmsg->buffer;
 			break;
 
-		default
-				:
+		default:
 			not_reachable();
 			break;
 
@@ -569,8 +567,7 @@ void ListAppendMsg ( sctk_portals_rail_info_t *portals_info, sctk_thread_ptp_mes
 
 						break;
 
-					default
-							:
+					default:
 						not_reachable();
 						break;
 
@@ -787,8 +784,7 @@ void ListFree ( sctk_portals_rail_info_t *portals_info, sctk_EventQ_t *EvQ, int 
 						currList->events[pos].msg.buffer = NULL;
 						break;
 
-					default
-							:
+					default:
 						not_reachable();
 						break;
 
@@ -825,8 +821,7 @@ void ListFree ( sctk_portals_rail_info_t *portals_info, sctk_EventQ_t *EvQ, int 
 						currList->events[pos].msg.buffer = NULL;
 						break;
 
-					default
-							:
+					default:
 						not_reachable();
 						break;
 

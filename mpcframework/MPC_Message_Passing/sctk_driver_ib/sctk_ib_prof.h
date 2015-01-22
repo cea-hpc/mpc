@@ -51,16 +51,16 @@
 #include <mpc_profiler.h>
 #define PROF_DECL(type, name) type name
 
-extern __thread struct sctk_ib_prof_s * sctk_ib_profiler;
-extern __thread struct sctk_ib_prof_s * sctk_ib_profiler_start;
+extern __thread struct sctk_ib_prof_s *sctk_ib_profiler;
+extern __thread struct sctk_ib_prof_s *sctk_ib_profiler_start;
 
 typedef enum sctk_ib_prof_glob_counters_e
 {
-	SCTK_IB_IBUS_RDMA_SIZE = 0,
-	SCTK_IB_RDMA_CONNECTION,
-	SCTK_IB_RDMA_RESIZING,
-	SCTK_IB_RDMA_DECONNECTION,
-	IB_PROF_GLOB_COUNTERS_MAX
+    SCTK_IB_IBUS_RDMA_SIZE = 0,
+    SCTK_IB_RDMA_CONNECTION,
+    SCTK_IB_RDMA_RESIZING,
+    SCTK_IB_RDMA_DECONNECTION,
+    IB_PROF_GLOB_COUNTERS_MAX
 } sctk_ib_prof_glob_counters_t;
 
 extern OPA_int_t sctk_ib_prof_glob_counters[IB_PROF_GLOB_COUNTERS_MAX];
@@ -94,7 +94,7 @@ static const char *sctk_ib_prof_glob_counters_name[IB_PROF_GLOB_COUNTERS_MAX]  =
 #define PROF_TIME_END(r, x)     \
   /* if (r->rail_number == PROF_RAIL_NUMBER ) */ {     \
     SCTK_PROFIL_END(x);   \
-  }  
+  }
 
 #define PROF_INC(r,x)  \
   /* if (r->rail_number == PROF_RAIL_NUMBER ) */ {      \
@@ -133,9 +133,9 @@ double sctk_ib_prof_get_time_stamp();
 #define PROF_ADD_GLOB(r,x,y) (void)(0)
 #endif
 
-void sctk_ib_prof_init_task(int rank, int vp);
+void sctk_ib_prof_init_task ( int rank, int vp );
 void sctk_ib_prof_init();
-void sctk_ib_prof_finalize(sctk_ib_rail_info_t *rail_ib);
+void sctk_ib_prof_finalize ( sctk_ib_rail_info_t *rail_ib );
 
 /*
  * QP profiling
@@ -151,10 +151,10 @@ void sctk_ib_prof_finalize(sctk_ib_rail_info_t *rail_ib);
 #ifdef SCTK_IB_QP_PROF
 /* QP profiling */
 void sctk_ib_prof_qp_init();
-void sctk_ib_prof_qp_init_task(int task_id, int vp);
+void sctk_ib_prof_qp_init_task ( int task_id, int vp );
 void sctk_ib_prof_qp_flush();
-void sctk_ib_prof_qp_finalize_task(int task_id);
-void sctk_ib_prof_qp_write(int proc, size_t size, double ts, char from);
+void sctk_ib_prof_qp_finalize_task ( int task_id );
+void sctk_ib_prof_qp_write ( int proc, size_t size, double ts, char from );
 #else
 /* QP profiling */
 #define sctk_ib_prof_qp_init(x) (void)(0)
@@ -171,9 +171,9 @@ void sctk_ib_prof_qp_write(int proc, size_t size, double ts, char from);
 /* TODO: no more working. Should be fixed */
 #ifdef SCTK_IB_MEM_PROF
 double sctk_ib_prof_get_mem_used();
-void sctk_ib_prof_mem_init(sctk_ib_rail_info_t *rail_ib);
+void sctk_ib_prof_mem_init ( sctk_ib_rail_info_t *rail_ib );
 void sctk_ib_prof_mem_flush();
-void sctk_ib_prof_mem_write(double ts, double mem);
+void sctk_ib_prof_mem_write ( double ts, double mem );
 #else
 #define sctk_ib_prof_mem_init(x) (void)(0)
 #define sctk_ib_prof_mem_flush(x) (void)(0)

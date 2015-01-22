@@ -29,10 +29,10 @@ struct sctk_thread_ptp_message_s;
 struct sctk_ib_buffered_table_s;
 
 /*NOT THREAD SAFE use to add a route at initialisation time*/
-void sctk_add_static_reorder_buffer(int dest);
+void sctk_add_static_reorder_buffer ( int dest );
 
 /*THREAD SAFE use to add a route at compute time*/
-void sctk_add_dynamic_reorder_buffer(int dest);
+void sctk_add_dynamic_reorder_buffer ( int dest );
 
 /*
  * Return values for sctk_send_message_from_network_reorder
@@ -48,20 +48,20 @@ void sctk_add_dynamic_reorder_buffer(int dest);
 /* Message not found */
 #define REORDER_NOT_FOUND 3
 
-int sctk_send_message_from_network_reorder (struct sctk_thread_ptp_message_s * msg);
-int sctk_prepare_send_message_to_network_reorder (struct sctk_thread_ptp_message_s * msg);
+int sctk_send_message_from_network_reorder ( struct sctk_thread_ptp_message_s *msg );
+int sctk_prepare_send_message_to_network_reorder ( struct sctk_thread_ptp_message_s *msg );
 
 typedef struct
 {
 	int key;
-	struct sctk_thread_ptp_message_s* msg;
+	struct sctk_thread_ptp_message_s *msg;
 	UT_hash_handle hh;
-}sctk_reorder_buffer_t;
+} sctk_reorder_buffer_t;
 
 typedef struct
 {
 	int destination;
-}sctk_reorder_key_t;
+} sctk_reorder_key_t;
 
 typedef struct sctk_reorder_table_s
 {
@@ -71,21 +71,21 @@ typedef struct sctk_reorder_table_s
 	OPA_int_t message_number_dest;
 
 	sctk_spinlock_t lock;
-	volatile sctk_reorder_buffer_t* buffer;
+	volatile sctk_reorder_buffer_t *buffer;
 
 	UT_hash_handle hh;
 } sctk_reorder_table_t;
 
 typedef struct sctk_reorder_task_s
 {
-	sctk_reorder_table_t * table;
+	sctk_reorder_table_t *table;
 	sctk_spinlock_t lock;
 } sctk_reorder_list_t;
 
-sctk_reorder_table_t* sctk_get_reorder(int dest);
+sctk_reorder_table_t *sctk_get_reorder ( int dest );
 
-sctk_reorder_table_t* sctk_get_reorder_to_process(int dest);
+sctk_reorder_table_t *sctk_get_reorder_to_process ( int dest );
 
-void sctk_reorder_list_init( sctk_reorder_list_t * reorder);
+void sctk_reorder_list_init ( sctk_reorder_list_t *reorder );
 
 #endif

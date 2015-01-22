@@ -44,14 +44,14 @@ struct sctk_ib_rail_info_s;
 /** Enumeration for entry status  */
 typedef enum sctk_ib_mmu_entry_status_e
 {
-	SCTK_IBV_ENTRY_FREE = 111,
-	SCTK_IBV_ENTRY_USED = 222,
+    SCTK_IBV_ENTRY_FREE = 111,
+    SCTK_IBV_ENTRY_USED = 222,
 } sctk_ib_mmu_entry_status_t;
 
 typedef enum sctk_ib_mmu_cached_status_e
 {
-	MMU_NOT_CACHED = 111,
-	MMU_CACHED = 222,
+    MMU_NOT_CACHED = 111,
+    MMU_CACHED = 222,
 } sctk_ib_mmu_cached_status_t;
 
 typedef struct sctk_ib_mmu_ht_key_s
@@ -64,11 +64,11 @@ typedef struct sctk_ib_mmu_ht_key_s
 typedef struct sctk_ib_mmu_entry_s
 {
 	/* For DL list */
-	struct sctk_ib_mmu_entry_s* prev;
-	struct sctk_ib_mmu_entry_s* next;
+	struct sctk_ib_mmu_entry_s *prev;
+	struct sctk_ib_mmu_entry_s *next;
 	/* status of the slot */
 	sctk_ib_mmu_entry_status_t status;    	  /**< status of entry */
-	struct sctk_ib_mmu_region_s* region;  	  /**< first region */
+	struct sctk_ib_mmu_region_s *region;  	  /**< first region */
 	//  void *ptr;                			  /**< ptr to the MR */
 	//  size_t size;              			  /**< size of the MR */
 	struct ibv_mr *mr;        				  /**< MR */
@@ -81,11 +81,11 @@ typedef struct sctk_ib_mmu_entry_s
 } sctk_ib_mmu_entry_t;
 
 
-sctk_ib_mmu_entry_t *sctk_ib_mmu_register ( struct sctk_ib_rail_info_s *rail_ib, void *ptr, size_t size);
-sctk_ib_mmu_entry_t *sctk_ib_mmu_register_no_cache( struct sctk_ib_rail_info_s *rail_ib, void *ptr, size_t size);
+sctk_ib_mmu_entry_t *sctk_ib_mmu_register ( struct sctk_ib_rail_info_s *rail_ib, void *ptr, size_t size );
+sctk_ib_mmu_entry_t *sctk_ib_mmu_register_no_cache ( struct sctk_ib_rail_info_s *rail_ib, void *ptr, size_t size );
 
-void ctk_ib_mmu_unregister (struct sctk_ib_rail_info_s *rail_ib,  sctk_ib_mmu_entry_t *mmu_entry);
-void sctk_ib_mmu_unregister (struct sctk_ib_rail_info_s *rail_ib, sctk_ib_mmu_entry_t *mmu_entry);
+void ctk_ib_mmu_unregister ( struct sctk_ib_rail_info_s *rail_ib,  sctk_ib_mmu_entry_t *mmu_entry );
+void sctk_ib_mmu_unregister ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_mmu_entry_t *mmu_entry );
 
 
 
@@ -94,16 +94,16 @@ void sctk_ib_mmu_unregister (struct sctk_ib_rail_info_s *rail_ib, sctk_ib_mmu_en
 typedef struct sctk_ib_mmu_region_s
 {
 	/* For DL list */
-	struct sctk_ib_mmu_region_s* next;
-	struct sctk_ib_mmu_region_s* prev;
+	struct sctk_ib_mmu_region_s *next;
+	struct sctk_ib_mmu_region_s *prev;
 	unsigned int nb;	 				/**< Number of MMU entries in region */
-	sctk_ib_mmu_entry_t* mmu_entry;
+	sctk_ib_mmu_entry_t *mmu_entry;
 } sctk_ib_mmu_region_t;
 
 typedef struct sctk_ib_cache_s
 {
-	hb_tree* hb_entries; 					/**< Libdict structure to store the MMU cache tree */
-	sctk_ib_mmu_entry_t* lru_entries;		/** LRU list of entries in cache */
+	hb_tree *hb_entries; 					/**< Libdict structure to store the MMU cache tree */
+	sctk_ib_mmu_entry_t *lru_entries;		/** LRU list of entries in cache */
 	sctk_spin_rwlock_t lock;
 	unsigned int entries_nb;
 } sctk_ib_cache_t;
@@ -115,16 +115,16 @@ typedef struct sctk_ib_mmu_s
 	unsigned int nb;     					 /**< Total Number of  mmu entries */
 	int free_nb;    						 /**< Number of free mmu entries */
 	size_t page_size; 						 /**< size of a system page */
-	sctk_ib_mmu_entry_t*  free_entry;
+	sctk_ib_mmu_entry_t  *free_entry;
 	sctk_ib_cache_t cache;
-	struct sctk_ib_topology_numa_node_s * node;
+	struct sctk_ib_topology_numa_node_s *node;
 } sctk_ib_mmu_t;
 
 struct sctk_ib_topology_numa_node_s;
 
-void sctk_ib_mmu_init(struct sctk_ib_rail_info_s *rail_ib, struct sctk_ib_mmu_s * mmu, struct sctk_ib_topology_numa_node_s * node);
-void sctk_ib_mmu_alloc(struct sctk_ib_rail_info_s *rail_ib, struct sctk_ib_mmu_s * mmu, const unsigned int nb_entries);
-sctk_ib_mmu_t * sctk_ib_mmu_get_mmu_from_vp( struct sctk_ib_rail_info_s *rail_ib );
+void sctk_ib_mmu_init ( struct sctk_ib_rail_info_s *rail_ib, struct sctk_ib_mmu_s *mmu, struct sctk_ib_topology_numa_node_s *node );
+void sctk_ib_mmu_alloc ( struct sctk_ib_rail_info_s *rail_ib, struct sctk_ib_mmu_s *mmu, const unsigned int nb_entries );
+sctk_ib_mmu_t *sctk_ib_mmu_get_mmu_from_vp ( struct sctk_ib_rail_info_s *rail_ib );
 
 #endif
 #endif

@@ -43,22 +43,22 @@ typedef struct sctk_ib_cp_task_s
 	int vp;
 	int node;				/**< numa node */
 	int rank;				/**< rank is the key of HT */
-	sctk_ibuf_t * volatile local_ibufs_list; /**< local pending ibufs for the current task  */
+	sctk_ibuf_t *volatile local_ibufs_list;  /**< local pending ibufs for the current task  */
 	sctk_spinlock_t local_ibufs_list_lock;
 	char dummy[64];
-	sctk_ibuf_t * volatile * global_ibufs_list;		/**< global pending ibufs for the current task  */
+	sctk_ibuf_t *volatile *global_ibufs_list;		/**< global pending ibufs for the current task  */
 	sctk_spinlock_t *global_ibufs_list_lock;
 	/* Counters */
-	OPA_int_t c[64];	
+	OPA_int_t c[64];
 	/* Timers */
 	sctk_spinlock_t lock_timers;
 	double time_stolen;
 	double time_steals;
 	double time_own;
-	
+
 	/* Tasks linked together on NUMA */
-	struct sctk_ib_cp_task_s* prev;
-	struct sctk_ib_cp_task_s* next;
+	struct sctk_ib_cp_task_s *prev;
+	struct sctk_ib_cp_task_s *next;
 
 	char pad[128];
 } sctk_ib_cp_task_t;
@@ -80,26 +80,26 @@ typedef struct sctk_ib_cp_task_s
  *----------------------------------------------------------*/
 struct sctk_rail_info_s;
 
-void sctk_ib_cp_init(struct sctk_ib_rail_info_s* rail_ib);
+void sctk_ib_cp_init ( struct sctk_ib_rail_info_s *rail_ib );
 
-void sctk_ib_cp_init_task(int rank, int vp);
+void sctk_ib_cp_init_task ( int rank, int vp );
 
-void sctk_ib_cp_finalize_task(int rank);
+void sctk_ib_cp_finalize_task ( int rank );
 
-int sctk_ib_cp_handle_message(struct sctk_rail_info_s *rail, sctk_ibuf_t *ibuf, int dest_task, int target_task);
+int sctk_ib_cp_handle_message ( struct sctk_rail_info_s *rail, sctk_ibuf_t *ibuf, int dest_task, int target_task );
 
-int sctk_ib_cp_poll(struct sctk_rail_info_s * rail, struct sctk_ib_polling_s *poll,
-    int task_id);
+int sctk_ib_cp_poll ( struct sctk_rail_info_s *rail, struct sctk_ib_polling_s *poll,
+                      int task_id );
 
-void sctk_ib_cp_poll_all(const struct sctk_rail_info_s const* rail, struct sctk_ib_polling_s *poll);
+void sctk_ib_cp_poll_all ( const struct sctk_rail_info_s const *rail, struct sctk_ib_polling_s *poll );
 
-int sctk_ib_cp_steal(const struct sctk_rail_info_s const* rail, struct sctk_ib_polling_s *poll, char other_numa);
+int sctk_ib_cp_steal ( const struct sctk_rail_info_s const *rail, struct sctk_ib_polling_s *poll, char other_numa );
 
-sctk_ib_cp_task_t *sctk_ib_cp_get_task(int rank);
+sctk_ib_cp_task_t *sctk_ib_cp_get_task ( int rank );
 
 sctk_ib_cp_task_t *sctk_ib_cp_get_polling_task();
 
-int sctk_ib_cp_poll_global_list(const struct sctk_rail_info_s const * rail, struct sctk_ib_polling_s *poll);
+int sctk_ib_cp_poll_global_list ( const struct sctk_rail_info_s const *rail, struct sctk_ib_polling_s *poll );
 
 int sctk_ib_cp_get_nb_pending_msg();
 /*-----------------------------------------------------------

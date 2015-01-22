@@ -34,11 +34,11 @@ struct sctk_rail_info_s;
 
 /** \brief This function creates the async event processing thread for each rail
  * \param rail_ib Target rail
- * 
+ *
  * In this function a system_scope thread processing IB asynchronous calls
  * is created. It allows the monitoring of card events for rail context.
  */
-void sctk_ib_async_init(struct sctk_rail_info_s *rail_ib);
+void sctk_ib_async_init ( struct sctk_rail_info_s *rail_ib );
 
 #endif
 #endif

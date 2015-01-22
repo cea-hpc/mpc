@@ -27,45 +27,48 @@
 /*Barrier                                                               */
 /************************************************************************/
 
-typedef struct {
-  volatile int done /* = 0 */;
-  sctk_thread_mutex_t lock/*  = SCTK_THREAD_MUTEX_INITIALIZER */;
-  sctk_thread_cond_t cond/* = SCTK_THREAD_COND_INITIALIZER */;
+typedef struct
+{
+	volatile int done /* = 0 */;
+	sctk_thread_mutex_t lock/*  = SCTK_THREAD_MUTEX_INITIALIZER */;
+	sctk_thread_cond_t cond/* = SCTK_THREAD_COND_INITIALIZER */;
 } sctk_barrier_simple_t;
 
-void sctk_barrier_simple_init(struct sctk_internal_collectives_struct_s * tmp, sctk_communicator_t id);
+void sctk_barrier_simple_init ( struct sctk_internal_collectives_struct_s *tmp, sctk_communicator_t id );
 
 /************************************************************************/
 /*Broadcast                                                             */
 /************************************************************************/
 
-typedef struct {
-  volatile int done /* = 0 */;
-  sctk_thread_mutex_t lock/*  = SCTK_THREAD_MUTEX_INITIALIZER */;
-  sctk_thread_cond_t cond/* = SCTK_THREAD_COND_INITIALIZER */;
-  void* buffer;
-  size_t size;
+typedef struct
+{
+	volatile int done /* = 0 */;
+	sctk_thread_mutex_t lock/*  = SCTK_THREAD_MUTEX_INITIALIZER */;
+	sctk_thread_cond_t cond/* = SCTK_THREAD_COND_INITIALIZER */;
+	void *buffer;
+	size_t size;
 } sctk_broadcast_simple_t;
 
-void sctk_broadcast_simple_init(struct sctk_internal_collectives_struct_s * tmp, sctk_communicator_t id);
+void sctk_broadcast_simple_init ( struct sctk_internal_collectives_struct_s *tmp, sctk_communicator_t id );
 
 /************************************************************************/
 /*Allreduce                                                             */
 /************************************************************************/
 
-typedef struct {
-  volatile int done /* = 0 */;
-  sctk_thread_mutex_t lock/*  = SCTK_THREAD_MUTEX_INITIALIZER */;
-  sctk_thread_cond_t cond/* = SCTK_THREAD_COND_INITIALIZER */;
-  void* buffer;
-  size_t size;
+typedef struct
+{
+	volatile int done /* = 0 */;
+	sctk_thread_mutex_t lock/*  = SCTK_THREAD_MUTEX_INITIALIZER */;
+	sctk_thread_cond_t cond/* = SCTK_THREAD_COND_INITIALIZER */;
+	void *buffer;
+	size_t size;
 } sctk_allreduce_simple_t;
 
-void sctk_allreduce_simple_init(struct sctk_internal_collectives_struct_s * tmp, sctk_communicator_t id);
+void sctk_allreduce_simple_init ( struct sctk_internal_collectives_struct_s *tmp, sctk_communicator_t id );
 
 /************************************************************************/
 /*Init                                                                  */
 /************************************************************************/
-void sctk_collectives_init_simple (sctk_communicator_t id);
+void sctk_collectives_init_simple ( sctk_communicator_t id );
 
 #endif

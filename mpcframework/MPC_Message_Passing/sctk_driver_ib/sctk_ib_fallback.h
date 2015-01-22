@@ -41,7 +41,7 @@ extern "C"
 struct sctk_ibuf_s;
 struct sctk_ib_polling_s;
 
-void sctk_network_init_fallback_ib(sctk_rail_info_t* rail, int ib_rail_nb);
+void sctk_network_init_fallback_ib ( sctk_rail_info_t *rail, int ib_rail_nb );
 
 #ifdef __cplusplus
 }

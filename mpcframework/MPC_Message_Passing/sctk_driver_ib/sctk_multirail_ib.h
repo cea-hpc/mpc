@@ -38,24 +38,24 @@ extern "C"
 
 struct sctk_rail_info_s;
 
-void sctk_network_init_multirail_ib(sctk_rail_info_t * new_rail , int max_rails);
-void sctk_network_init_ib(char* name, char* topology);
+void sctk_network_init_multirail_ib ( sctk_rail_info_t *new_rail , int max_rails );
+void sctk_network_init_ib ( char *name, char *topology );
 
 /* Initialize */
-void sctk_network_initialize_task_multirail_ib (int rank, int vp);
+void sctk_network_initialize_task_multirail_ib ( int rank, int vp );
 
 /* Finalize */
 void sctk_network_finalize_multirail_ib ();
-void sctk_network_finalize_task_multirail_ib (int rank);
-struct sctk_rail_info_s** sctk_network_get_rails();
+void sctk_network_finalize_task_multirail_ib ( int rank );
+struct sctk_rail_info_s **sctk_network_get_rails();
 char sctk_network_is_ib_used();
 
 int sctk_network_ib_get_rail_signalization();
 int sctk_network_ib_get_rails_nb();
-size_t sctk_network_memory_allocator_hook_ib (size_t size);
+size_t sctk_network_memory_allocator_hook_ib ( size_t size );
 
 
-int sctk_network_select_send_rail(struct sctk_thread_ptp_message_s * msg);
+int sctk_network_select_send_rail ( struct sctk_thread_ptp_message_s *msg );
 int sctk_network_select_recv_rail();
 #ifdef __cplusplus
 }

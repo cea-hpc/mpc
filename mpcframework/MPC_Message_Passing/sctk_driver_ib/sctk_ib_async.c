@@ -56,148 +56,149 @@
 /********************************************************************/
 
 /** \brief This functions continuously probes async messages from the HCA
- * 
+ *
  * It is running in its own system scope thread
  */
-void* async_thread(void* arg)
+void *async_thread ( void *arg )
 {
-	sctk_rail_info_t *rail = (sctk_rail_info_t*) arg;
+	sctk_rail_info_t *rail = ( sctk_rail_info_t * ) arg;
 	sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
-	LOAD_CONFIG(rail_ib);
-	LOAD_DEVICE(rail_ib);
+	LOAD_CONFIG ( rail_ib );
+	LOAD_DEVICE ( rail_ib );
 	struct ibv_async_event event;
 	struct ibv_srq_attr mod_attr;
 	int rc;
 
-	sctk_ib_nodebug("Async thread running on context %p", device->context);
-	while(1)
+	sctk_ib_nodebug ( "Async thread running on context %p", device->context );
+
+	while ( 1 )
 	{
 		/* Get an async event from the card (this is a blocking call) */
-		if(ibv_get_async_event((struct ibv_context*) device->context, &event))
+		if ( ibv_get_async_event ( ( struct ibv_context * ) device->context, &event ) )
 		{
-			sctk_error("[async thread] cannot get event");
+			sctk_error ( "[async thread] cannot get event" );
 		}
 
 		/* All these events are described in the Mellanox RDMA verbs API
 		 * they correspond to asynchronous  events produced by the card */
-		switch (event.event_type)
+		switch ( event.event_type )
 		{
-			/* Completion Queue Overrun => Triggers  IBV_EVENT_QP_FATAL */
+				/* Completion Queue Overrun => Triggers  IBV_EVENT_QP_FATAL */
 			case IBV_EVENT_CQ_ERR:
-				DESC_EVENT(config, "IBV_EVENT_CQ_ERR", "CQ is in error (CQ overrun)", 1, 1);
+				DESC_EVENT ( config, "IBV_EVENT_CQ_ERR", "CQ is in error (CQ overrun)", 1, 1 );
 				break;
 
-			/* A fatal event occured on the QP */
+				/* A fatal event occured on the QP */
 			case IBV_EVENT_QP_FATAL:
-				DESC_EVENT(config, "IBV_EVENT_QP_FATAL", "Error occurred on a QP and it transitioned to error state", 1, 1);
+				DESC_EVENT ( config, "IBV_EVENT_QP_FATAL", "Error occurred on a QP and it transitioned to error state", 1, 1 );
 				break;
 
-			/* RDMA Layer detected a transport error violation (unsuported or reserved opcode) */
+				/* RDMA Layer detected a transport error violation (unsuported or reserved opcode) */
 			case IBV_EVENT_QP_REQ_ERR:
-				DESC_EVENT(config, "IBV_EVENT_QP_REQ_ERR", "Invalid Request Local Work Queue Error", 1, 1);
+				DESC_EVENT ( config, "IBV_EVENT_QP_REQ_ERR", "Invalid Request Local Work Queue Error", 1, 1 );
 				break;
 
-			/* Request error :
-			 * - Misaligned atomic request
-			 * - Too many RDMA read or atomic
-			 * - R_Key violation
-			 * - Length error without data */
+				/* Request error :
+				 * - Misaligned atomic request
+				 * - Too many RDMA read or atomic
+				 * - R_Key violation
+				 * - Length error without data */
 			case IBV_EVENT_QP_ACCESS_ERR:
-				DESC_EVENT(config, "IBV_EVENT_QP_ACCESS_ERR", "Local access violation error", 1, 1);
+				DESC_EVENT ( config, "IBV_EVENT_QP_ACCESS_ERR", "Local access violation error", 1, 1 );
 				break;
 
-			/* In RC (sometimes in UD) this events notifies new connection on the QP */
+				/* In RC (sometimes in UD) this events notifies new connection on the QP */
 			case IBV_EVENT_COMM_EST:
-				DESC_EVENT(config, "IBV_EVENT_COMM_EST", "Communication was established on a QP", -1, 0);
+				DESC_EVENT ( config, "IBV_EVENT_COMM_EST", "Communication was established on a QP", -1, 0 );
 				break;
 
-			/* The send queue is empty and can be modified */
+				/* The send queue is empty and can be modified */
 			case IBV_EVENT_SQ_DRAINED:
-				DESC_EVENT(config, "IBV_EVENT_SQ_DRAINED", "Send Queue was drained of outstanding messages in progress", 1, 0);
+				DESC_EVENT ( config, "IBV_EVENT_SQ_DRAINED", "Send Queue was drained of outstanding messages in progress", 1, 0 );
 				break;
 
-			/* The QP sucessfully migrated to an alternative path */
+				/* The QP sucessfully migrated to an alternative path */
 			case IBV_EVENT_PATH_MIG:
-				DESC_EVENT(config, "IBV_EVENT_PATH_MIG", "A connection failed to migrate to the alternate path", 1, 0);
+				DESC_EVENT ( config, "IBV_EVENT_PATH_MIG", "A connection failed to migrate to the alternate path", 1, 0 );
 				break;
 
-			/* Path migration change has failed */
+				/* Path migration change has failed */
 			case IBV_EVENT_PATH_MIG_ERR:
-				DESC_EVENT(config,"IBV_EVENT_PATH_MIG_ERR", "A connection failed to migrate to the alternate path", 1, 0);
+				DESC_EVENT ( config, "IBV_EVENT_PATH_MIG_ERR", "A connection failed to migrate to the alternate path", 1, 0 );
 				break;
 
-			/* Catastrophic error happened in the HCA, close the process NOW */
+				/* Catastrophic error happened in the HCA, close the process NOW */
 			case IBV_EVENT_DEVICE_FATAL:
-				DESC_EVENT(config, "IBV_EVENT_DEVICE_FATAL", "Error occurred on a QP and it transitioned to error state", 1, 1);
+				DESC_EVENT ( config, "IBV_EVENT_DEVICE_FATAL", "Error occurred on a QP and it transitioned to error state", 1, 1 );
 				break;
 
-			/* This event is trigered when a port state is modified 
-			 * ( generated only if IBV_DEVICE_PORT_ACTIVE_EVENT is set in the dev_cap.device_cap_flag ) */
+				/* This event is trigered when a port state is modified
+				 * ( generated only if IBV_DEVICE_PORT_ACTIVE_EVENT is set in the dev_cap.device_cap_flag ) */
 			case IBV_EVENT_PORT_ACTIVE:
-				DESC_EVENT(config, "IBV_EVENT_PORT_ACTIVE", "Link became active on a port", 1, 0);
+				DESC_EVENT ( config, "IBV_EVENT_PORT_ACTIVE", "Link became active on a port", 1, 0 );
 				break;
 
-			/* Trigerred when a port is disconnected (link failure) */
+				/* Trigerred when a port is disconnected (link failure) */
 			case IBV_EVENT_PORT_ERR:
-				DESC_EVENT(config, "IBV_EVENT_PORT_ERR", "Link became unavailable on a port ", 1, 1);
+				DESC_EVENT ( config, "IBV_EVENT_PORT_ERR", "Link became unavailable on a port ", 1, 1 );
 				break;
 
-			/* LID has been changed values cached from ibv_query_port() must be flushed */
+				/* LID has been changed values cached from ibv_query_port() must be flushed */
 			case IBV_EVENT_LID_CHANGE:
-				DESC_EVENT(config, "IBV_EVENT_LID_CHANGE", "LID was changed on a port", 1, 0);
+				DESC_EVENT ( config, "IBV_EVENT_LID_CHANGE", "LID was changed on a port", 1, 0 );
 				break;
 
-			/* Pkey has been changed */
+				/* Pkey has been changed */
 			case IBV_EVENT_PKEY_CHANGE:
-				DESC_EVENT(config, "IBV_EVENT_PKEY_CHANGE", "P_Key table was changed on a port", 1, 0);
+				DESC_EVENT ( config, "IBV_EVENT_PKEY_CHANGE", "P_Key table was changed on a port", 1, 0 );
 				break;
 
-			/* SM was changed on a port */
+				/* SM was changed on a port */
 			case IBV_EVENT_SM_CHANGE:
-				DESC_EVENT(config, "IBV_EVENT_SM_CHANGE", "SM was changed on a port", 1, 0);
+				DESC_EVENT ( config, "IBV_EVENT_SM_CHANGE", "SM was changed on a port", 1, 0 );
 				break;
 
-			/* SRQ encountered a serious error */
+				/* SRQ encountered a serious error */
 			case IBV_EVENT_SRQ_ERR:
-				DESC_EVENT(config, "IBV_EVENT_SRQ_ERR", "Error occurred on an SRQ", 1, 1);
+				DESC_EVENT ( config, "IBV_EVENT_SRQ_ERR", "Error occurred on an SRQ", 1, 1 );
 				break;
 
-			/* event triggered when the limit given by ibv_srq_credit_thread_limit is reached */
+				/* event triggered when the limit given by ibv_srq_credit_thread_limit is reached */
 			case IBV_EVENT_SRQ_LIMIT_REACHED:
-				DESC_EVENT(config, "IBV_EVENT_SRQ_LIMIT_REACHED","SRQ limit was reached", 1, 0);
+				DESC_EVENT ( config, "IBV_EVENT_SRQ_LIMIT_REACHED", "SRQ limit was reached", 1, 0 );
 
 				/* We re-arm the limit for the SRQ. */
 				config->max_srq_ibufs_posted += 100;
-				sctk_ibuf_srq_check_and_post(rail_ib);
+				sctk_ibuf_srq_check_and_post ( rail_ib );
 
 				mod_attr.srq_limit = config->srq_credit_thread_limit;
 				config->srq_credit_limit = config->max_srq_ibufs_posted / 2;
-				sctk_debug("Update with max_qr %d and srq_limit %d",
-				config->max_srq_ibufs_posted, mod_attr.srq_limit);
-				rc = ibv_modify_srq(device->srq, &mod_attr, IBV_SRQ_LIMIT);
-				assume(rc == 0);
+				sctk_debug ( "Update with max_qr %d and srq_limit %d",
+				             config->max_srq_ibufs_posted, mod_attr.srq_limit );
+				rc = ibv_modify_srq ( device->srq, &mod_attr, IBV_SRQ_LIMIT );
+				assume ( rc == 0 );
 				break;
 
-			/* The QP associated with an SRQ transitionned to the ERR state and no more WQE will be consumed from the SRQ by this QP */
+				/* The QP associated with an SRQ transitionned to the ERR state and no more WQE will be consumed from the SRQ by this QP */
 			case IBV_EVENT_QP_LAST_WQE_REACHED:
-				DESC_EVENT(config, "IBV_EVENT_QP_LAST_WQE_REACHED","Last WQE Reached on a QP associated with an SRQ CQ events", 1, 1);
+				DESC_EVENT ( config, "IBV_EVENT_QP_LAST_WQE_REACHED", "Last WQE Reached on a QP associated with an SRQ CQ events", 1, 1 );
 				break;
 
-			/* SM requested re-registration (only is supported by device) */
+				/* SM requested re-registration (only is supported by device) */
 			case IBV_EVENT_CLIENT_REREGISTER:
-				DESC_EVENT(config, "IBV_EVENT_CLIENT_REREGISTER","SM sent a CLIENT_REREGISTER request to a port CA events", 1, 0);
+				DESC_EVENT ( config, "IBV_EVENT_CLIENT_REREGISTER", "SM sent a CLIENT_REREGISTER request to a port CA events", 1, 0 );
 				break;
 
 			default:
-				DESC_EVENT(config, "UNKNOWN_EVENT","unknown event received", 1, 0);
+				DESC_EVENT ( config, "UNKNOWN_EVENT", "unknown event received", 1, 0 );
 				break;
 		}
 
 		/* Acknowledge ASYNC event */
-		ibv_ack_async_event(&event);
+		ibv_ack_async_event ( &event );
 	}
 
-	sctk_nodebug("Async thread exits...");
+	sctk_nodebug ( "Async thread exits..." );
 	return NULL;
 }
 
@@ -206,21 +207,21 @@ void* async_thread(void* arg)
 /* Async thread Init                                                */
 /********************************************************************/
 
-void sctk_ib_async_init(sctk_rail_info_t *rail)
+void sctk_ib_async_init ( sctk_rail_info_t *rail )
 {
 	sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
-	LOAD_CONFIG(rail_ib);
+	LOAD_CONFIG ( rail_ib );
 
 	/* Activate or not the async thread */
-	if (config->async_thread)
+	if ( config->async_thread )
 	{
 		sctk_thread_attr_t attr;
 		sctk_thread_t pidt;
 
-		sctk_thread_attr_init (&attr);
+		sctk_thread_attr_init ( &attr );
 		/* The thread *MUST* be in a system scope (calls a blocking call) */
-		sctk_thread_attr_setscope (&attr, SCTK_THREAD_SCOPE_SYSTEM);
-		sctk_user_thread_create (&pidt, &attr, async_thread, rail);
+		sctk_thread_attr_setscope ( &attr, SCTK_THREAD_SCOPE_SYSTEM );
+		sctk_user_thread_create ( &pidt, &attr, async_thread, rail );
 	}
 }
 

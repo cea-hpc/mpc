@@ -27,35 +27,38 @@
 /*Barrier                                                               */
 /************************************************************************/
 
-typedef struct {
-  int dummy;
+typedef struct
+{
+	int dummy;
 } sctk_barrier_opt_noalloc_split_messages_t;
 
-void sctk_barrier_opt_noalloc_split_messages_init(struct sctk_internal_collectives_struct_s * tmp, sctk_communicator_t id);
+void sctk_barrier_opt_noalloc_split_messages_init ( struct sctk_internal_collectives_struct_s *tmp, sctk_communicator_t id );
 
 /************************************************************************/
 /*Broadcast                                                             */
 /************************************************************************/
 
-typedef struct {
-  int dummy;
+typedef struct
+{
+	int dummy;
 } sctk_broadcast_opt_noalloc_split_messages_t;
 
-void sctk_broadcast_opt_noalloc_split_messages_init(struct sctk_internal_collectives_struct_s * tmp, sctk_communicator_t id);
+void sctk_broadcast_opt_noalloc_split_messages_init ( struct sctk_internal_collectives_struct_s *tmp, sctk_communicator_t id );
 
 /************************************************************************/
 /*Allreduce                                                             */
 /************************************************************************/
 
-typedef struct {
-  int dummy;
+typedef struct
+{
+	int dummy;
 } sctk_allreduce_opt_noalloc_split_messages_t;
 
-void sctk_allreduce_opt_noalloc_split_messages_init(struct sctk_internal_collectives_struct_s * tmp, sctk_communicator_t id);
+void sctk_allreduce_opt_noalloc_split_messages_init ( struct sctk_internal_collectives_struct_s *tmp, sctk_communicator_t id );
 
 /************************************************************************/
 /*Init                                                                  */
 /************************************************************************/
-void sctk_collectives_init_opt_noalloc_split_messages (sctk_communicator_t id);
+void sctk_collectives_init_opt_noalloc_split_messages ( sctk_communicator_t id );
 
 #endif

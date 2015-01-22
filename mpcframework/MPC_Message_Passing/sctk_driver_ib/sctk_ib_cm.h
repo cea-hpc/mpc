@@ -61,96 +61,103 @@ struct sctk_thread_ptp_message_body_s;
 
 #define CM_SET_REQUEST(r,x) (r->request_id = x)
 #define CM_GET_REQUEST(r) (r->request_id)
-enum sctk_ib_cm_change_state_type_e {
-  CONNECTION = 111,
-  RESIZING = 222,
+enum sctk_ib_cm_change_state_type_e
+{
+    CONNECTION = 111,
+    RESIZING = 222,
 };
 
 /* ACK */
-typedef struct {
-  int rail_id;  /* rail id. *MUST* be the first field */
-  int ack;
+typedef struct
+{
+	int rail_id;  /* rail id. *MUST* be the first field */
+	int ack;
 } sctk_ib_cm_ack_t;
 
 /* DONE */
-typedef struct {
-  int rail_id;  /* rail id. *MUST* be the first field */
-  int done;
+typedef struct
+{
+	int rail_id;  /* rail id. *MUST* be the first field */
+	int done;
 } sctk_ib_cm_done_t;
 
 /* QP */
-typedef struct {
-  int rail_id;  /* rail id. *MUST* be the first field */
-  sctk_uint16_t lid;
-  sctk_uint32_t qp_num;
-  sctk_uint32_t psn;
+typedef struct
+{
+	int rail_id;  /* rail id. *MUST* be the first field */
+	sctk_uint16_t lid;
+	sctk_uint32_t qp_num;
+	sctk_uint32_t psn;
 } sctk_ib_cm_qp_connection_t;
 
-typedef struct {
-  int rail_id;  /* rail id. *MUST* be the first field */
+typedef struct
+{
+	int rail_id;  /* rail id. *MUST* be the first field */
 } sctk_ib_cm_qp_deconnection_t;
 
 /* RDMA connection and resizing */
-typedef struct {
-  int rail_id;  /* rail id. *MUST* be the first field */
-  int connected;
-  int size;   /* Size of a slot */
-  int nb;     /* Number of slots */
-  sctk_uint32_t rkey;
-  void *addr;
+typedef struct
+{
+	int rail_id;  /* rail id. *MUST* be the first field */
+	int connected;
+	int size;   /* Size of a slot */
+	int nb;     /* Number of slots */
+	sctk_uint32_t rkey;
+	void *addr;
 } sctk_ib_cm_rdma_connection_t;
 
-typedef struct {
-  int rail_id;  /* rail id. *MUST* be the first field */
+typedef struct
+{
+	int rail_id;  /* rail id. *MUST* be the first field */
 } sctk_ib_cm_rdma_deconnection_t;
 
 /*-----------------------------------------------------------
  *  FUNCTIONS
  *----------------------------------------------------------*/
 /* Ring connexion */
-void sctk_ib_cm_connect_ring (sctk_rail_info_t* rail,
-			       int (*route)(int , sctk_rail_info_t* ),
-			       void(*route_init)(sctk_rail_info_t*));
+void sctk_ib_cm_connect_ring ( sctk_rail_info_t *rail,
+                               int ( *route ) ( int , sctk_rail_info_t * ),
+                               void ( *route_init ) ( sctk_rail_info_t * ) );
 
 /* Fully-connected */
-void sctk_ib_cm_connect_to(int from, int to, struct sctk_rail_info_s* rail);
-void sctk_ib_cm_connect_from(int from, int to,sctk_rail_info_t* rail);
+void sctk_ib_cm_connect_to ( int from, int to, struct sctk_rail_info_s *rail );
+void sctk_ib_cm_connect_from ( int from, int to, sctk_rail_info_t *rail );
 
 /* On-demand connexions */
-int sctk_ib_cm_on_demand_recv_check(sctk_thread_ptp_message_body_t *msg);
-int sctk_ib_cm_on_demand_recv(struct sctk_rail_info_s *rail,
-    sctk_thread_ptp_message_t *msg, struct sctk_ibuf_s* ibuf, int recopy);
-sctk_route_table_t *sctk_ib_cm_on_demand_request(int dest,sctk_rail_info_t* rail);
+int sctk_ib_cm_on_demand_recv_check ( sctk_thread_ptp_message_body_t *msg );
+int sctk_ib_cm_on_demand_recv ( struct sctk_rail_info_s *rail,
+                                sctk_thread_ptp_message_t *msg, struct sctk_ibuf_s *ibuf, int recopy );
+sctk_route_table_t *sctk_ib_cm_on_demand_request ( int dest, sctk_rail_info_t *rail );
 
-void sctk_ib_cm_deco_ack(sctk_rail_info_t* rail,
-    sctk_route_table_t* route_table, int ack);
+void sctk_ib_cm_deco_ack ( sctk_rail_info_t *rail,
+                           sctk_route_table_t *route_table, int ack );
 
 /* RDMA resizing */
-int sctk_ib_cm_resizing_rdma_request(sctk_rail_info_t* rail_targ, struct sctk_ib_qp_s *remote,
-    int entry_size, int entry_nb);
-void sctk_ib_cm_resizing_rdma_ack(sctk_rail_info_t* rail_targ,  struct sctk_ib_qp_s *remote,
-    sctk_ib_cm_rdma_connection_t* send_keys);
+int sctk_ib_cm_resizing_rdma_request ( sctk_rail_info_t *rail_targ, struct sctk_ib_qp_s *remote,
+                                       int entry_size, int entry_nb );
+void sctk_ib_cm_resizing_rdma_ack ( sctk_rail_info_t *rail_targ,  struct sctk_ib_qp_s *remote,
+                                    sctk_ib_cm_rdma_connection_t *send_keys );
 
 /*-----------------------------------------------------------
  *  On demand QP deconnexion
  *----------------------------------------------------------*/
 /* Recv */
-void sctk_ib_cm_deco_request_recv(sctk_rail_info_t *rail, void* payload, int src);
-void sctk_ib_cm_deco_ack_recv(sctk_rail_info_t *rail, void* ack, int src);
-void sctk_ib_cm_deco_done_ack_recv(sctk_rail_info_t *rail, void* ack, int src);
-void sctk_ib_cm_deco_done_request_recv(sctk_rail_info_t *rail, void* ack, int src);
+void sctk_ib_cm_deco_request_recv ( sctk_rail_info_t *rail, void *payload, int src );
+void sctk_ib_cm_deco_ack_recv ( sctk_rail_info_t *rail, void *ack, int src );
+void sctk_ib_cm_deco_done_ack_recv ( sctk_rail_info_t *rail, void *ack, int src );
+void sctk_ib_cm_deco_done_request_recv ( sctk_rail_info_t *rail, void *ack, int src );
 
 /* Send */
-void sctk_ib_cm_deco_request_send(sctk_rail_info_t* rail, sctk_route_table_t* route_table);
-void sctk_ib_cm_deco_done_request_send(sctk_rail_info_t* rail, sctk_route_table_t* route_table);
-void sctk_ib_cm_deco_ack_send(sctk_rail_info_t* rail, sctk_route_table_t* route_table, int ack);
-void sctk_ib_cm_deco_done_ack_send(sctk_rail_info_t* rail, sctk_route_table_t* route_table, int ack);
+void sctk_ib_cm_deco_request_send ( sctk_rail_info_t *rail, sctk_route_table_t *route_table );
+void sctk_ib_cm_deco_done_request_send ( sctk_rail_info_t *rail, sctk_route_table_t *route_table );
+void sctk_ib_cm_deco_ack_send ( sctk_rail_info_t *rail, sctk_route_table_t *route_table, int ack );
+void sctk_ib_cm_deco_done_ack_send ( sctk_rail_info_t *rail, sctk_route_table_t *route_table, int ack );
 
-int sctk_ib_cm_on_demand_rdma_check_request(
-    sctk_rail_info_t* rail_targ, struct sctk_ib_qp_s *remote);
+int sctk_ib_cm_on_demand_rdma_check_request (
+    sctk_rail_info_t *rail_targ, struct sctk_ib_qp_s *remote );
 
-int sctk_ib_cm_on_demand_rdma_request(
-    sctk_rail_info_t* rail_targ, struct sctk_ib_qp_s *remote,
-    int entry_size, int entry_nb);
+int sctk_ib_cm_on_demand_rdma_request (
+    sctk_rail_info_t *rail_targ, struct sctk_ib_qp_s *remote,
+    int entry_size, int entry_nb );
 #endif
 #endif

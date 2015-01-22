@@ -57,7 +57,7 @@ extern "C"
  *----------------------------------------------------------*/
 
 
-  /* For not used fuctions (disable compiler warning */
+/* For not used fuctions (disable compiler warning */
 #ifdef __GNUC__
 #define __UNUSED__ __attribute__ ((__unused__))
 #else
@@ -102,42 +102,46 @@ typedef struct sctk_ib_rail_info_s
 	struct sctk_thread_ptp_message_s *eager_buffered_ptp_message;
 	sctk_spinlock_t eager_lock_buffered_ptp_message;
 	/* Type of the network */
-	char * network_type;
+	char *network_type;
 } sctk_ib_rail_info_t;
 
 typedef struct sctk_ib_route_info_s
 {
-	struct sctk_ib_qp_s * remote;
+	struct sctk_ib_qp_s *remote;
 } sctk_ib_route_info_t;
 
 /* ib protocol used */
 typedef enum sctk_ib_protocol_e
 {
-	SCTK_IB_EAGER_PROTOCOL        = 111,
-	SCTK_IB_BUFFERED_PROTOCOL     = 222,
-	SCTK_IB_RDMA_PROTOCOL         = 333,
-	SCTK_IB_NULL_PROTOCOL         = 444,
+    SCTK_IB_EAGER_PROTOCOL        = 111,
+    SCTK_IB_BUFFERED_PROTOCOL     = 222,
+    SCTK_IB_RDMA_PROTOCOL         = 333,
+    SCTK_IB_NULL_PROTOCOL         = 444,
 } sctk_ib_protocol_t;
 
-__UNUSED__ static char* sctk_ib_protocol_print(sctk_ib_protocol_t prot)
+__UNUSED__ static char *sctk_ib_protocol_print ( sctk_ib_protocol_t prot )
 {
-	switch(prot)
+	switch ( prot )
 	{
-	case SCTK_IB_EAGER_PROTOCOL: 
-		return "SCTK_IB_EAGER_PROTOCOL";
-		break;
-	case SCTK_IB_BUFFERED_PROTOCOL:
-		return "SCTK_IB_BUFFERED_PROTOCOL";
-		break;
-	case SCTK_IB_RDMA_PROTOCOL:
-		return "SCTK_IB_RDMA_PROTOCOL";
-		break;
-	case SCTK_IB_NULL_PROTOCOL:
-		return "SCTK_IB_NULL_PROTOCOL";
-		break;
-	default:
-		return "null";
-		break;
+		case SCTK_IB_EAGER_PROTOCOL:
+			return "SCTK_IB_EAGER_PROTOCOL";
+			break;
+
+		case SCTK_IB_BUFFERED_PROTOCOL:
+			return "SCTK_IB_BUFFERED_PROTOCOL";
+			break;
+
+		case SCTK_IB_RDMA_PROTOCOL:
+			return "SCTK_IB_RDMA_PROTOCOL";
+			break;
+
+		case SCTK_IB_NULL_PROTOCOL:
+			return "SCTK_IB_NULL_PROTOCOL";
+			break;
+
+		default:
+			return "null";
+			break;
 	}
 }
 
@@ -153,8 +157,9 @@ typedef volatile enum sctk_ib_rdma_status_e
 	SCTK_IB_RDMA_RECOPY = 3,
 	SCTK_IB_RDMA_MATCH = 4,
 	SCTK_IB_RDMA_DONE = 8,
-	SCTK_IB_RDMA_ALLOCATION = 1<<4,
-} sctk_ib_rdma_status_t;
+	SCTK_IB_RDMA_ALLOCATION = 1 << 4,
+}
+sctk_ib_rdma_status_t;
 
 #define MASK_BASE   0x03
 #define MASK_MATCH  0x04
@@ -222,11 +227,11 @@ typedef struct sctk_ib_msg_header_s
 			/* Ibuf to release */
 			struct sctk_ibuf_s *ibuf;
 		} eager;
-		
+
 		struct
 		{
-			struct sctk_ib_buffered_entry_s* entry;
-			struct sctk_rail_info_s* rail;
+			struct sctk_ib_buffered_entry_s *entry;
+			struct sctk_rail_info_s *rail;
 			int ready;
 		} buffered;
 		struct sctk_ib_header_rdma_s rdma;
@@ -235,12 +240,12 @@ typedef struct sctk_ib_msg_header_s
 
 /* XXX: Should not be declared here but in CM */
 struct sctk_route_table_s *sctk_ib_create_remote();
-void sctk_ib_init_remote(int dest, struct sctk_rail_info_s* rail, struct sctk_route_table_s* route_table, int ondemand);
+void sctk_ib_init_remote ( int dest, struct sctk_rail_info_s *rail, struct sctk_route_table_s *route_table, int ondemand );
 
-void sctk_ib_add_static_route(int dest, struct sctk_route_table_s *tmp, struct sctk_rail_info_s* rail);
-void sctk_ib_add_dynamic_route(int dest, struct sctk_route_table_s *tmp, struct sctk_rail_info_s* rail);
-int sctk_ib_route_dynamic_is_connected(struct sctk_route_table_s *tmp);
-void sctk_ib_route_dynamic_set_connected(struct sctk_route_table_s *tmp, int connected);
+void sctk_ib_add_static_route ( int dest, struct sctk_route_table_s *tmp, struct sctk_rail_info_s *rail );
+void sctk_ib_add_dynamic_route ( int dest, struct sctk_route_table_s *tmp, struct sctk_rail_info_s *rail );
+int sctk_ib_route_dynamic_is_connected ( struct sctk_route_table_s *tmp );
+void sctk_ib_route_dynamic_set_connected ( struct sctk_route_table_s *tmp, int connected );
 
 /* IB header: generic */
 #define IBUF_GET_EAGER_HEADER(buffer) \
@@ -287,7 +292,7 @@ void sctk_ib_route_dynamic_set_connected(struct sctk_route_table_s *tmp, int con
 #define IBUF_GET_RDMA_DATA_READ_SIZE (IBUF_GET_RDMA_SIZE + sizeof(sctk_ib_rdma_data_read_t))
 #define IBUF_GET_RDMA_DATA_WRITE_SIZE (IBUF_GET_RDMA_SIZE + sizeof(sctk_ib_rdma_data_write_t))
 
-void sctk_network_free_msg(struct sctk_thread_ptp_message_s *msg);
+void sctk_network_free_msg ( struct sctk_thread_ptp_message_s *msg );
 /* For getting stats from network usage */
 
 #ifdef __cplusplus

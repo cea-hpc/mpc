@@ -37,97 +37,104 @@
 #include "utlist.h"
 
 /* XXX: Packed structures */
-typedef enum sctk_ib_rdma_type_e {
-  rdma_req_type = 111,
-  rdma_ack_type = 222,
-  rdma_done_type = 333,
-  rdma_data_read_type = 444,
-  rdma_data_write_type = 555,
-} __attribute__ ((packed))
+typedef enum sctk_ib_rdma_type_e
+{
+    rdma_req_type = 111,
+    rdma_ack_type = 222,
+    rdma_done_type = 333,
+    rdma_data_read_type = 444,
+    rdma_data_write_type = 555,
+} __attribute__ ( ( packed ) )
 sctk_ib_rdma_type_t;
 
-typedef struct sctk_ib_rdma_s {
-  size_t payload_size;
-  sctk_ib_rdma_type_t type;
-} __attribute__ ((packed))
+typedef struct sctk_ib_rdma_s
+{
+	size_t payload_size;
+	sctk_ib_rdma_type_t type;
+} __attribute__ ( ( packed ) )
 sctk_ib_rdma_t;
 
 /*
  * ACK
  */
-typedef struct sctk_ib_rdma_ack_s {
-  void* addr;
-  size_t size;
-  sctk_uint32_t  rkey;
-  sctk_thread_ptp_message_t* src_msg_header;
-  sctk_thread_ptp_message_t* dest_msg_header;
-  int ht_key;
-} __attribute__ ((packed))
+typedef struct sctk_ib_rdma_ack_s
+{
+	void *addr;
+	size_t size;
+	sctk_uint32_t  rkey;
+	sctk_thread_ptp_message_t *src_msg_header;
+	sctk_thread_ptp_message_t *dest_msg_header;
+	int ht_key;
+} __attribute__ ( ( packed ) )
 sctk_ib_rdma_ack_t;
 
 /*
  * REQ
  */
-typedef struct sctk_ib_rdma_req_s {
-  /* MPC header of msg */
-  sctk_thread_ptp_message_body_t msg_header;
-  /* remote MPC header */
-  sctk_thread_ptp_message_t* dest_msg_header;
-  size_t requested_size;
-  sctk_message_type_t message_type;
-  int source;
-  int source_task;
-  int remote_rail;
-} __attribute__ ((packed))
+typedef struct sctk_ib_rdma_req_s
+{
+	/* MPC header of msg */
+	sctk_thread_ptp_message_body_t msg_header;
+	/* remote MPC header */
+	sctk_thread_ptp_message_t *dest_msg_header;
+	size_t requested_size;
+	sctk_message_type_t message_type;
+	int source;
+	int source_task;
+	int remote_rail;
+} __attribute__ ( ( packed ) )
 sctk_ib_rdma_req_t;
 
 /*
  * DATA READ
  */
-typedef struct sctk_ib_rdma_data_read_s {
-  sctk_thread_ptp_message_t* dest_msg_header;
-} __attribute__ ((packed))
+typedef struct sctk_ib_rdma_data_read_s
+{
+	sctk_thread_ptp_message_t *dest_msg_header;
+} __attribute__ ( ( packed ) )
 sctk_ib_rdma_data_read_t;
 
 /*
  * DATA WRITE
  */
-typedef struct sctk_ib_rdma_data_write_s {
-  sctk_thread_ptp_message_t* src_msg_header;
-} __attribute__ ((packed))
+typedef struct sctk_ib_rdma_data_write_s
+{
+	sctk_thread_ptp_message_t *src_msg_header;
+} __attribute__ ( ( packed ) )
 sctk_ib_rdma_data_write_t;
 
 
 /*
  * DONE
  */
-typedef struct sctk_ib_rdma_done_s {
-  sctk_thread_ptp_message_t* dest_msg_header;
-} __attribute__ ((packed))
+typedef struct sctk_ib_rdma_done_s
+{
+	sctk_thread_ptp_message_t *dest_msg_header;
+} __attribute__ ( ( packed ) )
 sctk_ib_rdma_done_t;
 
 /*-----------------------------------------------------------
  *  FUNCTIONS
  *----------------------------------------------------------*/
 
-sctk_ibuf_t* sctk_ib_rdma_prepare_req(sctk_rail_info_t* rail,
-    sctk_ib_qp_t* remote, sctk_thread_ptp_message_t * msg, size_t size,
-    int low_memory_mode);
+sctk_ibuf_t *sctk_ib_rdma_prepare_req ( sctk_rail_info_t *rail,
+                                        sctk_ib_qp_t *remote, sctk_thread_ptp_message_t *msg, size_t size,
+                                        int low_memory_mode );
 
 int
-sctk_ib_rdma_poll_recv(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf);
+sctk_ib_rdma_poll_recv ( sctk_rail_info_t *rail, sctk_ibuf_t *ibuf );
 
 int
-sctk_ib_rdma_poll_send(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf);
+sctk_ib_rdma_poll_send ( sctk_rail_info_t *rail, sctk_ibuf_t *ibuf );
 
-void sctk_ib_rdma_prepare_send_msg (sctk_ib_rail_info_t* rail_ib,
-    sctk_thread_ptp_message_t * msg, size_t size);
-void sctk_ib_rdma_print(sctk_thread_ptp_message_t* msg);
+void sctk_ib_rdma_prepare_send_msg ( sctk_ib_rail_info_t *rail_ib,
+                                     sctk_thread_ptp_message_t *msg, size_t size );
+void sctk_ib_rdma_print ( sctk_thread_ptp_message_t *msg );
 
-sctk_ibuf_t* sctk_ib_rdma_eager_prepare_msg(sctk_ib_rail_info_t* rail_ib,
-    sctk_ib_qp_t* remote, sctk_thread_ptp_message_t * msg, size_t size);
+sctk_ibuf_t *sctk_ib_rdma_eager_prepare_msg ( sctk_ib_rail_info_t *rail_ib,
+                                              sctk_ib_qp_t *remote, sctk_thread_ptp_message_t *msg, size_t size );
 
 sctk_thread_ptp_message_t *
-sctk_ib_rdma_recv_done_remote_imm(sctk_rail_info_t* rail, int imm_data);
+sctk_ib_rdma_recv_done_remote_imm ( sctk_rail_info_t *rail, int imm_data );
 #endif
 #endif

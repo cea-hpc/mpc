@@ -79,12 +79,13 @@ typedef int SCTK_PMI_BOOL;
  *
 */
 #define SCTK_PMI_NAME_SIZE 1024
-typedef struct{
-  int port_nb; /*!< TCP port used for communications*/
-  char name[SCTK_PMI_NAME_SIZE]; /*!< Name of the host or IP adress*/
+typedef struct
+{
+	int port_nb; /*!< TCP port used for communications*/
+	char name[SCTK_PMI_NAME_SIZE]; /*!< Name of the host or IP adress*/
 } sctk_pmi_tcp_t;
 
-sctk_pmi_tcp_t * host_list;
+sctk_pmi_tcp_t *host_list;
 
 /******************************************************************************
 INITIALIZATION/FINALIZE
@@ -103,7 +104,7 @@ int sctk_pmi_finalize();
 /*! \brief Get the job id
  * @param id Pointer to store the job id
 */
-int sctk_pmi_get_job_id(int* id);
+int sctk_pmi_get_job_id ( int *id );
 
 /******************************************************************************
 SYNCHRONIZATION
@@ -122,64 +123,64 @@ INFORMATION DIFFUSION
  * @param size Size in bytes of the information
  * @param tag An identifier to distinguish information
 */
-int sctk_pmi_put_connection_info(void* info, size_t size, int tag);
+int sctk_pmi_put_connection_info ( void *info, size_t size, int tag );
 /*! \brief Get information required for connection initialization
  * @param info The place to store the information to retrieve
  * @param size Size in bytes of the information
  * @param tag An identifier to distinguish information
  * @param rank Rank of the process the information comes from
 */
-int sctk_pmi_get_connection_info(void* info, size_t size, int tag, int rank);
+int sctk_pmi_get_connection_info ( void *info, size_t size, int tag, int rank );
 
 /*! \brief Register information required for connection initialization
  * @param info The information to store
  * @param size Size in bytes of the information
  * @param tag A key string to distinguish information
 */
-int sctk_pmi_put_connection_info_str(void* info, size_t size, char tag[]);
+int sctk_pmi_put_connection_info_str ( void *info, size_t size, char tag[] );
 /*! \brief Get information required for connection initialization
  * @param info The place to store the information to retrieve
  * @param size Size in bytes of the information
  * @param tag A key string to distinguish information
 */
-int sctk_pmi_get_connection_info_str(void* info, size_t size, char tag[]);
+int sctk_pmi_get_connection_info_str ( void *info, size_t size, char tag[] );
 
 
 /******************************************************************************
 NUMBERING/TOPOLOGY INFORMATION
 ******************************************************************************/
 
-int sctk_pmi_get_process_number_from_node_rank(struct process_nb_from_node_rank ** process_number_from_node_rank);
+int sctk_pmi_get_process_number_from_node_rank ( struct process_nb_from_node_rank **process_number_from_node_rank );
 
 /*! \brief Get the number of processes
  * @param size Pointer to store the number of processes
 */
-int sctk_pmi_get_process_number(int* size);
+int sctk_pmi_get_process_number ( int *size );
 
 /*! \brief Get the rank of this process
  * @param rank Pointer to store the rank of the process
 */
-int sctk_pmi_get_process_rank(int* rank);
+int sctk_pmi_get_process_rank ( int *rank );
 
 /*! \brief Get the number of nodes
  * @param size Pointer to store the number of nodes
 */
-int sctk_pmi_get_node_number(int* size);
+int sctk_pmi_get_node_number ( int *size );
 
 /*! \brief Get the rank of this node
  * @param rank Pointer to store the rank of the node
 */
-int sctk_pmi_get_node_rank(int* rank);
+int sctk_pmi_get_node_rank ( int *rank );
 
 /*! \brief Get the number of processes on the current node
  * @param size Pointer to store the number of processes
 */
-int sctk_pmi_get_process_on_node_number(int* size);
+int sctk_pmi_get_process_on_node_number ( int *size );
 
 /*! \brief Get the rank of this process on the current node
  * @param rank Pointer to store the rank of the process
 */
-int sctk_pmi_get_process_on_node_rank(int* rank);
+int sctk_pmi_get_process_on_node_rank ( int *rank );
 
 /******************************************************************************
 PT2PT COMMUNICATIONS
@@ -189,14 +190,14 @@ PT2PT COMMUNICATIONS
  * @param size Size of the message
  * @param dest Destination of the message
 */
-int sctk_pmi_send(void* info, size_t size, int dest);
+int sctk_pmi_send ( void *info, size_t size, int dest );
 
 /*! \brief Receive a message
  * @param info The message
  * @param size Size of the message
  * @param src Source of the message
 */
-int sctk_pmi_recv(void* info, size_t size, int src);
+int sctk_pmi_recv ( void *info, size_t size, int src );
 
 
 int sctk_pmi_get_max_key_len();

@@ -28,26 +28,26 @@ extern "C"
 
 #include "sctk_low_level_comm.h"
 #include "sctk_io_helper.h"
-  void sctk_net_copy_in_buffer (sctk_thread_ptp_message_t * msg,
-				       char *buffer);
+void sctk_net_copy_in_buffer ( sctk_thread_ptp_message_t *msg,
+                               char *buffer );
 
-  void* sctk_net_if_one_msg_in_buffer (sctk_thread_ptp_message_t * msg);
+void *sctk_net_if_one_msg_in_buffer ( sctk_thread_ptp_message_t *msg );
 
-  size_t sctk_net_determine_message_size (sctk_thread_ptp_message_t *msg);
+size_t sctk_net_determine_message_size ( sctk_thread_ptp_message_t *msg );
 
-  int sctk_net_copy_frag_msg (
-      const sctk_thread_ptp_message_t * msg,
-     char *buffer,
-      const size_t curr_copy,
-      const size_t max_copy );
-  void sctk_net_write_in_fd (sctk_thread_ptp_message_t * msg,
-			     int fd);
-  void sctk_net_read_in_fd (sctk_thread_ptp_message_t * msg,
-			    int fd);
-  void sctk_net_message_copy(sctk_message_to_copy_t* tmp);
+int sctk_net_copy_frag_msg (
+    const sctk_thread_ptp_message_t *msg,
+    char *buffer,
+    const size_t curr_copy,
+    const size_t max_copy );
+void sctk_net_write_in_fd ( sctk_thread_ptp_message_t *msg,
+                            int fd );
+void sctk_net_read_in_fd ( sctk_thread_ptp_message_t *msg,
+                           int fd );
+void sctk_net_message_copy ( sctk_message_to_copy_t *tmp );
 
-void sctk_net_message_copy_from_buffer(char* body,
-  sctk_message_to_copy_t* tmp, char free_headers);
+void sctk_net_message_copy_from_buffer ( char *body,
+                                         sctk_message_to_copy_t *tmp, char free_headers );
 #ifdef __cplusplus
 }
 #endif

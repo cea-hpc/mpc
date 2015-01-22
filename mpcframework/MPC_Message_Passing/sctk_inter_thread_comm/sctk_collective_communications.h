@@ -45,79 +45,83 @@ struct sctk_internal_collectives_struct_s;
 /*Barrier                                                               */
 /************************************************************************/
 
-typedef union {
-  sctk_barrier_simple_t barrier_simple;
-  sctk_barrier_opt_messages_t barrier_opt_messages;
-  sctk_barrier_opt_noalloc_split_messages_t barrier_opt_noalloc_split_messages;
-  sctk_barrier_hetero_messages_t barrier_hetero_messages;
+typedef union
+{
+	sctk_barrier_simple_t barrier_simple;
+	sctk_barrier_opt_messages_t barrier_opt_messages;
+	sctk_barrier_opt_noalloc_split_messages_t barrier_opt_noalloc_split_messages;
+	sctk_barrier_hetero_messages_t barrier_hetero_messages;
 } sctk_barrier_t;
 
-void sctk_barrier(const sctk_communicator_t communicator);
+void sctk_barrier ( const sctk_communicator_t communicator );
 
 /************************************************************************/
 /*Broadcast                                                             */
 /************************************************************************/
 
-typedef union {
-  sctk_broadcast_simple_t broadcast_simple;
-  sctk_broadcast_opt_messages_t broadcast_opt_messages;
-  sctk_broadcast_opt_noalloc_split_messages_t broadcast_opt_noalloc_split_messages;
-  sctk_broadcast_hetero_messages_t broadcast_hetero_messages;
+typedef union
+{
+	sctk_broadcast_simple_t broadcast_simple;
+	sctk_broadcast_opt_messages_t broadcast_opt_messages;
+	sctk_broadcast_opt_noalloc_split_messages_t broadcast_opt_noalloc_split_messages;
+	sctk_broadcast_hetero_messages_t broadcast_hetero_messages;
 } sctk_broadcast_t;
 
-void sctk_broadcast (void *buffer, const size_t size,
-		     const int root, const sctk_communicator_t com_id);
+void sctk_broadcast ( void *buffer, const size_t size,
+                      const int root, const sctk_communicator_t com_id );
 
 /************************************************************************/
 /*Allreduce                                                             */
 /************************************************************************/
 
-typedef union {
-  sctk_allreduce_simple_t allreduce_simple;
-  sctk_allreduce_opt_messages_t allreduce_opt_messages;
-  sctk_allreduce_opt_noalloc_split_messages_t allreduce_opt_noalloc_split_messages;
-  sctk_allreduce_hetero_messages_t allreduce_hetero_messages;
+typedef union
+{
+	sctk_allreduce_simple_t allreduce_simple;
+	sctk_allreduce_opt_messages_t allreduce_opt_messages;
+	sctk_allreduce_opt_noalloc_split_messages_t allreduce_opt_noalloc_split_messages;
+	sctk_allreduce_hetero_messages_t allreduce_hetero_messages;
 } sctk_allreduce_t;
 
-void sctk_all_reduce (const void *buffer_in, void *buffer_out,
-		      const size_t elem_size,
-		      const size_t elem_number,
-		      MPC_Op_f func,
-		      const sctk_communicator_t communicator,
-		      const sctk_datatype_t data_type);
+void sctk_all_reduce ( const void *buffer_in, void *buffer_out,
+                       const size_t elem_size,
+                       const size_t elem_number,
+                       MPC_Op_f func,
+                       const sctk_communicator_t communicator,
+                       const sctk_datatype_t data_type );
 
 /************************************************************************/
 /*Collectives struct                                                    */
 /************************************************************************/
 
-typedef struct sctk_internal_collectives_struct_s{
-  sctk_barrier_t barrier;
-  void (*barrier_func)(const sctk_communicator_t ,
-		       struct sctk_internal_collectives_struct_s *);
+typedef struct sctk_internal_collectives_struct_s
+{
+	sctk_barrier_t barrier;
+	void ( *barrier_func ) ( const sctk_communicator_t ,
+	                         struct sctk_internal_collectives_struct_s * );
 
-  sctk_broadcast_t broadcast;
-  void (*broadcast_func) (void *, const size_t ,
-			  const int , const sctk_communicator_t,
-			  struct sctk_internal_collectives_struct_s *);
+	sctk_broadcast_t broadcast;
+	void ( *broadcast_func ) ( void *, const size_t ,
+	                           const int , const sctk_communicator_t,
+	                           struct sctk_internal_collectives_struct_s * );
 
-  sctk_allreduce_t allreduce;
-  void (*allreduce_func) (const void *, void *,
-			  const size_t ,
-			  const size_t ,
-			  MPC_Op_f func,
-			  const sctk_communicator_t ,
-			  const sctk_datatype_t ,
-			  struct sctk_internal_collectives_struct_s *);
+	sctk_allreduce_t allreduce;
+	void ( *allreduce_func ) ( const void *, void *,
+	                           const size_t ,
+	                           const size_t ,
+	                           MPC_Op_f func,
+	                           const sctk_communicator_t ,
+	                           const sctk_datatype_t ,
+	                           struct sctk_internal_collectives_struct_s * );
 } sctk_internal_collectives_struct_t;
 
-void sctk_collectives_init (sctk_communicator_t id,
-			    void (*barrier)(sctk_internal_collectives_struct_t *, sctk_communicator_t id),
-			    void (*broadcast)(sctk_internal_collectives_struct_t *, sctk_communicator_t id),
-			    void (*allreduce)(sctk_internal_collectives_struct_t *, sctk_communicator_t id));
+void sctk_collectives_init ( sctk_communicator_t id,
+                             void ( *barrier ) ( sctk_internal_collectives_struct_t *, sctk_communicator_t id ),
+                             void ( *broadcast ) ( sctk_internal_collectives_struct_t *, sctk_communicator_t id ),
+                             void ( *allreduce ) ( sctk_internal_collectives_struct_t *, sctk_communicator_t id ) );
 
-extern void (*sctk_collectives_init_hook)(sctk_communicator_t id);
+extern void ( *sctk_collectives_init_hook ) ( sctk_communicator_t id );
 
 void
-sctk_terminaison_barrier (const int id);
+sctk_terminaison_barrier ( const int id );
 
 #endif

@@ -40,47 +40,47 @@
 #define SCTK_IB_MODULE_NAME "NONE"
 #endif
 
-void sctk_ib_toolkit_print_backtrace(void);
+void sctk_ib_toolkit_print_backtrace ( void );
 
 #ifdef SCTK_IB_MODULE_DEBUG
-__UNUSED__ static void sctk_ib_debug(const char *fmt, ...)
+__UNUSED__ static void sctk_ib_debug ( const char *fmt, ... )
 {
-  va_list ap;
-  char buff[SMALL_BUFFER_SIZE];
+	va_list ap;
+	char buff[SMALL_BUFFER_SIZE];
 
-  if (sctk_get_verbosity() >= 2)
-  {
-    va_start (ap, fmt);
+	if ( sctk_get_verbosity() >= 2 )
+	{
+		va_start ( ap, fmt );
 #ifdef HAVE_SHELL_COLORS
-    snprintf (buff, SMALL_BUFFER_SIZE,
-        "%s "SCTK_COLOR_RED_BOLD([%5s])" %s\n", sctk_print_debug_infos(),
-        SCTK_IB_MODULE_NAME, fmt);
+		snprintf ( buff, SMALL_BUFFER_SIZE,
+		           "%s "SCTK_COLOR_RED_BOLD ( [ % 5s] ) " %s\n", sctk_print_debug_infos(),
+		           SCTK_IB_MODULE_NAME, fmt );
 #else
-    snprintf (buff, SMALL_BUFFER_SIZE,
-        "%s [%5s] %s\n", sctk_print_debug_infos(),
-        SCTK_IB_MODULE_NAME_STR), fmt);
+		snprintf ( buff, SMALL_BUFFER_SIZE,
+		           "%s [%5s] %s\n", sctk_print_debug_infos(),
+		           SCTK_IB_MODULE_NAME_STR ), fmt );
 #endif
 
-    sctk_noalloc_vfprintf (stderr, buff, ap);
-    va_end (ap);
-  }
+		sctk_noalloc_vfprintf ( stderr, buff, ap );
+		va_end ( ap );
+	}
 }
 #else
 #if defined(__GNU_COMPILER) || defined(__INTEL_COMPILER)
 #define sctk_ib_debug(fmt,...) (void)(0)
 #else
-  static inline void sctk_ib_debug (const char *fmt, ...)
-  {
-  }
+static inline void sctk_ib_debug ( const char *fmt, ... )
+{
+}
 #endif
 #endif
 
 #if defined(__GNU_COMPILER) || defined(__INTEL_COMPILER)
 #define sctk_ib_nodebug(fmt,...) (void)(0)
 #else
-  static inline void sctk_ib_nodebug (const char *fmt, ...)
-  {
-  }
+static inline void sctk_ib_nodebug ( const char *fmt, ... )
+{
+}
 #endif
 #define LOAD_RAIL(x) sctk_ib_rail_info_t *rail_ib = &(x)->network.ib;
 #define LOAD_CONFIG(x) struct sctk_runtime_config_struct_net_driver_infiniband *config = (x)->config;

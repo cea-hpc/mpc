@@ -25,22 +25,23 @@
 #include "sctk_ib_device.h"
 #include "sctk_ib_toolkit.h"
 
-sctk_ib_device_t *sctk_ib_device_init(struct sctk_ib_rail_info_s* rail_ib)
+sctk_ib_device_t *sctk_ib_device_init ( struct sctk_ib_rail_info_s *rail_ib )
 {
-	struct ibv_device** dev_list;
-	sctk_ib_device_t* device;
+	struct ibv_device **dev_list;
+	sctk_ib_device_t *device;
 	int devices_nb;
 
-	dev_list = ibv_get_device_list (&devices_nb);
+	dev_list = ibv_get_device_list ( &devices_nb );
+
 	/* Check parameters */
-	if (!dev_list)
+	if ( !dev_list )
 	{
-		SCTK_IB_ABORT("No IB devices found.");
+		SCTK_IB_ABORT ( "No IB devices found." );
 	}
-	
-	device = sctk_malloc(sizeof(sctk_ib_device_t));
-	
-	ib_assume(device);
+
+	device = sctk_malloc ( sizeof ( sctk_ib_device_t ) );
+
+	ib_assume ( device );
 
 	rail_ib->device = device;
 	rail_ib->device->dev_list = dev_list;
@@ -58,10 +59,10 @@ sctk_ib_device_t *sctk_ib_device_init(struct sctk_ib_rail_info_s* rail_ib)
 
 
 
-sctk_ib_device_t *sctk_ib_device_open(struct sctk_ib_rail_info_s* rail_ib, int rail_nb)
+sctk_ib_device_t *sctk_ib_device_open ( struct sctk_ib_rail_info_s *rail_ib, int rail_nb )
 {
-	LOAD_DEVICE(rail_ib);
-	struct ibv_device** dev_list = device->dev_list;
+	LOAD_DEVICE ( rail_ib );
+	struct ibv_device **dev_list = device->dev_list;
 	int devices_nb = device->dev_nb;
 	int link_width = -1;
 	char *link_rate_string = "unknown";
@@ -71,14 +72,15 @@ sctk_ib_device_t *sctk_ib_device_open(struct sctk_ib_rail_info_s* rail_ib, int r
 
 
 	/* If the rail number is -1, so we try to estimate which IB card is the closest */
-	if (rail_nb == -1)
+	if ( rail_nb == -1 )
 	{
-		for (i=0; i < devices_nb; ++i)
+		for ( i = 0; i < devices_nb; ++i )
 		{
 			int ret;
 
-			ret = sctk_topology_is_ib_device_close_from_cpu(dev_list[i], sctk_get_cpu());
-			if (ret != 0)
+			ret = sctk_topology_is_ib_device_close_from_cpu ( dev_list[i], sctk_get_cpu() );
+
+			if ( ret != 0 )
 			{
 				rail_nb = i;
 				break;
@@ -86,89 +88,122 @@ sctk_ib_device_t *sctk_ib_device_open(struct sctk_ib_rail_info_s* rail_ib, int r
 		}
 
 		/* If no rail open, we open the first one */
-		if (rail_nb == -1)
+		if ( rail_nb == -1 )
 		{
-			sctk_error("Cannot determine the closest IB card from the thread allocating the structures. Use the card 0");
+			sctk_error ( "Cannot determine the closest IB card from the thread allocating the structures. Use the card 0" );
 			rail_nb = 0;
 		}
 	}
 
 
-	if (rail_nb >= devices_nb)
+	if ( rail_nb >= devices_nb )
 	{
-		SCTK_IB_ABORT("Cannot open rail. You asked rail %d on %d", rail_nb, devices_nb);
+		SCTK_IB_ABORT ( "Cannot open rail. You asked rail %d on %d", rail_nb, devices_nb );
 	}
 
-	sctk_ib_nodebug("Opening rail %d on %d", rail_nb, devices_nb);
+	sctk_ib_nodebug ( "Opening rail %d on %d", rail_nb, devices_nb );
 
-	device->context = ibv_open_device (dev_list[rail_nb]);
-	if (!device->context)
+	device->context = ibv_open_device ( dev_list[rail_nb] );
+
+	if ( !device->context )
 	{
-		SCTK_IB_ABORT_WITH_ERRNO("Cannot get device context.");
+		SCTK_IB_ABORT_WITH_ERRNO ( "Cannot get device context." );
 	}
 
-	if ( ibv_query_device(device->context, &device->dev_attr) != 0)
+	if ( ibv_query_device ( device->context, &device->dev_attr ) != 0 )
 	{
-		SCTK_IB_ABORT_WITH_ERRNO("Unable to get device attr.");
+		SCTK_IB_ABORT_WITH_ERRNO ( "Unable to get device attr." );
 	}
 
-	if (ibv_query_port(device->context, 1, &device->port_attr) != 0)
+	if ( ibv_query_port ( device->context, 1, &device->port_attr ) != 0 )
 	{
-		SCTK_IB_ABORT("Unable to get port attr");
+		SCTK_IB_ABORT ( "Unable to get port attr" );
 	}
 
 	/* Get the link width */
-	switch(device->port_attr.active_width)
+	switch ( device->port_attr.active_width )
 	{
-		case 1: link_width = 1; break;
-		case 2: link_width = 4; break;
-		case 4: link_width = 8; break;
-		case 8: link_width = 12; break;
+		case 1:
+			link_width = 1;
+			break;
+
+		case 2:
+			link_width = 4;
+			break;
+
+		case 4:
+			link_width = 8;
+			break;
+
+		case 8:
+			link_width = 12;
+			break;
 	}
 
 	/* Get the link rate */
-	switch(device->port_attr.active_speed)
+	switch ( device->port_attr.active_speed )
 	{
-		case 0x01: link_rate = 2;  link_rate_string = "SDR"; break;
-		case 0x02: link_rate = 4;  link_rate_string = "DDR"; break;
-		case 0x04: link_rate = 8;  link_rate_string = "QDR"; break;
-		case 0x08: link_rate = 14; link_rate_string = "FDR"; break;
-		case 0x10: link_rate = 25; link_rate_string = "EDR"; break;
+		case 0x01:
+			link_rate = 2;
+			link_rate_string = "SDR";
+			break;
+
+		case 0x02:
+			link_rate = 4;
+			link_rate_string = "DDR";
+			break;
+
+		case 0x04:
+			link_rate = 8;
+			link_rate_string = "QDR";
+			break;
+
+		case 0x08:
+			link_rate = 14;
+			link_rate_string = "FDR";
+			break;
+
+		case 0x10:
+			link_rate = 25;
+			link_rate_string = "EDR";
+			break;
 	}
-	
+
 	data_rate = link_width * link_rate;
 
 	rail_ib->device->data_rate = data_rate;
 	rail_ib->device->link_width = link_width;
-	strcpy(rail_ib->device->link_rate, link_rate_string);
+	strcpy ( rail_ib->device->link_rate, link_rate_string );
 
-	sctk_nodebug("device %d", device->dev_attr.max_qp_wr);
-	srand48 (getpid () * time (NULL));
+	sctk_nodebug ( "device %d", device->dev_attr.max_qp_wr );
+	srand48 ( getpid () * time ( NULL ) );
 	rail_ib->device->dev_index = rail_nb;
 	rail_ib->device->dev = dev_list[rail_nb];
 	return device;
 }
 
 
-struct ibv_pd* sctk_ib_pd_init(sctk_ib_device_t *device)
+struct ibv_pd *sctk_ib_pd_init ( sctk_ib_device_t *device )
 {
-	device->pd = ibv_alloc_pd(device->context);
-	if (!device->pd)
+	device->pd = ibv_alloc_pd ( device->context );
+
+	if ( !device->pd )
 	{
-		SCTK_IB_ABORT("Cannot get IB protection domain.");
+		SCTK_IB_ABORT ( "Cannot get IB protection domain." );
 	}
+
 	return device->pd;
 }
 
-struct ibv_comp_channel * sctk_ib_comp_channel_init(sctk_ib_device_t* device)
+struct ibv_comp_channel *sctk_ib_comp_channel_init ( sctk_ib_device_t *device )
 {
-	struct ibv_comp_channel * comp_channel;
+	struct ibv_comp_channel *comp_channel;
 
-	comp_channel = ibv_create_comp_channel(device->context);
-	
-	if (!comp_channel)
+	comp_channel = ibv_create_comp_channel ( device->context );
+
+	if ( !comp_channel )
 	{
-		SCTK_IB_ABORT_WITH_ERRNO("Cannot create Completion Channel.");
+		SCTK_IB_ABORT_WITH_ERRNO ( "Cannot create Completion Channel." );
 	}
 
 	return comp_channel;
@@ -177,26 +212,28 @@ struct ibv_comp_channel * sctk_ib_comp_channel_init(sctk_ib_device_t* device)
 
 /** \brief Create a completion queue and associate it a completion channel.
 */
-struct ibv_cq* sctk_ib_cq_init(sctk_ib_device_t* device, 
-			 struct sctk_runtime_config_struct_net_driver_infiniband *config,
-			 struct ibv_comp_channel * comp_channel)
+struct ibv_cq *sctk_ib_cq_init ( sctk_ib_device_t *device,
+                                 struct sctk_runtime_config_struct_net_driver_infiniband *config,
+                                 struct ibv_comp_channel *comp_channel )
 {
 	struct ibv_cq *cq;
-	cq = ibv_create_cq (device->context, config->cq_depth, NULL,
-	comp_channel, 0);
+	cq = ibv_create_cq ( device->context, config->cq_depth, NULL,
+	                     comp_channel, 0 );
 
-	if (!cq)
+	if ( !cq )
 	{
-		SCTK_IB_ABORT_WITH_ERRNO("Cannot create Completion Queue.");
+		SCTK_IB_ABORT_WITH_ERRNO ( "Cannot create Completion Queue." );
 	}
 
-	if (comp_channel != NULL)
+	if ( comp_channel != NULL )
 	{
-		int ret = ibv_req_notify_cq(cq, 0);
-		if (ret != 0)
+		int ret = ibv_req_notify_cq ( cq, 0 );
+
+		if ( ret != 0 )
 		{
-			SCTK_IB_ABORT_WITH_ERRNO("Couldn't request CQ notification");
+			SCTK_IB_ABORT_WITH_ERRNO ( "Couldn't request CQ notification" );
 		}
 	}
+
 	return cq;
 }
