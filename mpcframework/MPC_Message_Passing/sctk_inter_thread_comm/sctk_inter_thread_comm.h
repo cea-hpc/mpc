@@ -114,8 +114,8 @@ typedef struct sctk_thread_message_header_s
 	sctk_communicator_t communicator;
 	int message_tag;
 	int message_number;
-	int glob_source;
-	int glob_destination;
+	int source_task;
+	int destination_task;
 	char use_message_numbering;
 	specific_message_tag_t specific_message_tag;
 	MPC_Datatype datatype;
@@ -263,17 +263,38 @@ typedef struct
 	struct sctk_ib_msg_header_s ib;
 }sctk_thread_ptp_message_tail_t;
 
-#define sctk_msg_get_use_message_numbering body.header.use_message_numbering
-#define sctk_msg_get_source body.header.source
-#define sctk_msg_get_destination body.header.destination
-#define sctk_msg_get_glob_source body.header.glob_source
-#define sctk_msg_get_glob_destination body.header.glob_destination
-#define sctk_msg_get_communicator body.header.communicator
-#define sctk_msg_get_message_tag body.header.message_tag
-#define sctk_msg_get_message_number body.header.message_number
-#define sctk_msg_get_specific_message_tag body.header.specific_message_tag
-#define sctk_msg_get_msg_size body.header.msg_size
-#define sctk_msg_get_completion_flag body.completion_flag
+#define SCTK_MSG_USE_MESSAGE_NUMBERING( msg ) msg->body.header.use_message_numbering
+#define SCTK_MSG_USE_MESSAGE_NUMBERING_SET( msg , num ) do{ msg->body.header.use_message_numbering = num; }while(0)
+
+#define SCTK_MSG_SRC_PROCESS( msg ) msg->body.header.source
+#define SCTK_MSG_SRC_PROCESS_SET( msg , src ) do{ msg->body.header.source = src; }while(0)
+
+#define SCTK_MSG_DEST_PROCESS( msg ) msg->body.header.destination
+#define SCTK_MSG_DEST_PROCESS_SET( msg , dest ) do{ msg->body.header.destination = dest; }while(0)
+
+#define SCTK_MSG_SRC_TASK( msg ) msg->body.header.source_task
+#define SCTK_MSG_SRC_TASK_SET( msg , src ) do{ msg->body.header.source_task = src; }while(0)
+
+#define SCTK_MSG_DEST_TASK( msg ) msg->body.header.destination_task
+#define SCTK_MSG_DEST_TASK_SET( msg , dest ) do{ msg->body.header.destination_task = dest; }while(0)
+
+#define SCTK_MSG_COMMUNICATOR( msg ) msg->body.header.communicator
+#define SCTK_MSG_COMMUNICATOR_SET( msg , comm ) do{ msg->body.header.communicator = comm; }while(0)
+
+#define SCTK_MSG_TAG( msg ) msg->body.header.message_tag
+#define SCTK_MSG_TAG_SET( msg , tag ) do{ msg->body.header.message_tag = tag; }while(0)
+
+#define SCTK_MSG_NUMBER( msg ) msg->body.header.message_number
+#define SCTK_MSG_NUMBER_SET( msg , number ) do{ msg->body.header.message_number = number; }while(0)
+
+#define SCTK_MSG_SPECIFIC_TAG( msg ) msg->body.header.specific_message_tag
+#define SCTK_MSG_SPECIFIC_TAG_SET( msg , specific_tag ) do{ msg->body.header.specific_message_tag = specific_tag; }while(0)
+
+#define SCTK_MSG_SIZE( msg ) msg->body.header.msg_size
+#define SCTK_MSG_SIZE_SET( msg , size ) do{ msg->body.header.msg_size = size; }while(0)
+
+#define SCTK_MSG_COMPLETION_FLAG( msg ) msg->body.completion_flag
+#define SCTK_MSG_COMPLETION_FLAG_SET( msg , completion ) do{ msg->body.completion_flag = completion; }while(0)
 
 typedef struct sctk_thread_ptp_message_s
 {
@@ -362,8 +383,7 @@ sctk_thread_ptp_message_t* recv);
 void sctk_complete_and_free_message (sctk_thread_ptp_message_t * msg);
 void sctk_rebuild_header (sctk_thread_ptp_message_t * msg);
 int sctk_determine_src_process_from_header (sctk_thread_ptp_message_body_t * body);
-void sctk_determine_glob_source_and_destination_from_header (
-sctk_thread_ptp_message_body_t* body, int *glob_source, int *glob_destination);
+void sctk_determine_task_source_and_destination_from_header ( sctk_thread_ptp_message_body_t* body, int *source_task, int *destination_task);
 
 void sctk_perform_messages_wait_init(
 struct sctk_perform_messages_s * wait, sctk_request_t * request, int blocking);

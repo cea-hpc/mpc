@@ -177,7 +177,7 @@ void sctk_portals_message_copy(sctk_message_to_copy_t* tmp){
 	ptl_handle_ni_t* ni_h 			= &portals_info->ni_handle_phys;//get the network interface
 	set_Match_Ignore_Bits(&match,&ignore,ptrmsg->my_idThread,ptrmsg->tag);
 	
-	ptrmsg->md.length 	 = recv->body.header.msg_size;
+	ptrmsg->md.length 	 = SCTK_MSG_SIZE( recv );
 	int aligned_size,page_size;
 	switch(recv->tail.message_type){//type of the message
 	    case SCTK_MESSAGE_CONTIGUOUS: 
@@ -192,7 +192,7 @@ void sctk_portals_message_copy(sctk_message_to_copy_t* tmp){
 	    
 	    case SCTK_MESSAGE_PACK: 
 	    case SCTK_MESSAGE_PACK_ABSOLUTE: 
-	    	aligned_size = recv->body.header.msg_size;
+	    	aligned_size = SCTK_MSG_SIZE( recv );
 			page_size = getpagesize();
 			if(posix_memalign((void**) &ptrmsg->buffer, page_size, aligned_size)!=0){
 				sctk_error("error allocation memalign");
@@ -394,10 +394,10 @@ void ListAppendMsg(sctk_portals_rail_info_t* portals_info,sctk_thread_ptp_messag
     int peer_idThread; 
 
 
-	my_idThread = sctk_get_local_id(msg->body.header.source);//id of source
-	peer_idThread = sctk_get_local_id(msg->body.header.destination);//id of destination
+	my_idThread = sctk_get_local_id(SCTK_MSG_SRC_PROCESS( msg ));//id of source
+	peer_idThread = sctk_get_local_id(SCTK_MSG_DEST_PROCESS( msg ));//id of destination
 	
-	set_Match_Ignore_Bits(&match,&ignore,peer_idThread,msg->body.header.message_tag);//set the match and ignore 
+	set_Match_Ignore_Bits(&match,&ignore,peer_idThread, SCTK_MSG_TAG( msg ));//set the match and ignore 
 	ptl_handle_ni_t* ni_h 	= &(portals_info->ni_handle_phys);//network interface
 
 	sctk_spinlock_lock(&portals_info->lock[my_idThread]);//to be thread safe
@@ -424,7 +424,7 @@ void ListAppendMsg(sctk_portals_rail_info_t* portals_info,sctk_thread_ptp_messag
     		currList->events[pos].msg.type 				= type;//read or write
 
     		currList->events[pos].msg.my_idThread 		= my_idThread;
-    		currList->events[pos].msg.tag				= msg->body.header.message_tag;
+    		currList->events[pos].msg.tag				= SCTK_MSG_TAG( msg );
 			currList->events[pos].msg.peer_idThread 	= peer_idThread;
 			
 			
@@ -439,7 +439,7 @@ void ListAppendMsg(sctk_portals_rail_info_t* portals_info,sctk_thread_ptp_messag
 
     			
     			  
-				currList->events[pos].msg.me.length 	= msg->body.header.msg_size; 
+				currList->events[pos].msg.me.length 	= SCTK_MSG_SIZE( msg ); 
 				int aligned_size,page_size;
 				switch(msg->tail.message_type){ //type of the message
 				    case SCTK_MESSAGE_CONTIGUOUS: 
@@ -462,7 +462,7 @@ void ListAppendMsg(sctk_portals_rail_info_t* portals_info,sctk_thread_ptp_messag
 				    case SCTK_MESSAGE_PACK_ABSOLUTE: 
 
 
-				    	aligned_size = msg->body.header.msg_size;
+				    	aligned_size = SCTK_MSG_SIZE( msg );
     					page_size = getpagesize();
 
    						if(posix_memalign((void**) &currList->events[pos].msg.buffer, page_size, aligned_size)!=0){
@@ -610,7 +610,7 @@ void ListAppendMsgReq(sctk_rail_info_t* rail,ptl_event_t* event,int peer_idThrea
 			sctk_rebuild_header(currList->events[pos].ptrmsg.msg_send);//rebuild
 			sctk_reinit_header(currList->events[pos].ptrmsg.msg_send,sctk_portals_free,sctk_portals_message_copy);
 			
-			currList->events[pos].ptrmsg.msg_send->body.completion_flag 			= NULL;
+			SCTK_MSG_COMPLETION_FLAG_SET( currList->events[pos].ptrmsg.msg_send , NULL );
 			currList->events[pos].ptrmsg.msg_send->tail.portals_message_info_t 	= &currList->events[pos];//save the event datas
 			currList->events[pos].ptrmsg.msg_send->tail.portals_info_t			= portals_info;//save the rail info
 
@@ -678,7 +678,7 @@ void ListFree(sctk_portals_rail_info_t* portals_info,sctk_EventQ_t* EvQ,int list
 				currList->nb_elems_headers++;
 				/* the read is done so we can free memory */ 
 
-				sctk_nodebug("entering smcf %p %p",currList->events[pos].ptrmsg.msg_send->body.completion_flag,currList->events[pos].ptrmsg.msg_recv->body.completion_flag);
+				sctk_nodebug("entering smcf %p %p", SCTK_MSG_COMPLETION_FLAG( currList->events[pos].ptrmsg.msg_send)  , SCTK_MSG_COMPLETION_FLAG( currList->events[pos].ptrmsg.msg_recv) );
 				
 				switch(currList->events[pos].ptrmsg.msg_recv->tail.message_type){
 				    case SCTK_MESSAGE_CONTIGUOUS: 
@@ -870,29 +870,29 @@ sctk_network_send_message_portals_rail (sctk_thread_ptp_message_t * msg,sctk_rai
   	int fd;
 
 
-  	if(msg->body.header.specific_message_tag == SCTK_PROCESS_SPECIFIC_MESSAGE_TAG){ 
-  		tmp = sctk_get_route_to_process(msg->sctk_msg_get_destination,rail);//proc
+  	if(SCTK_MSG_SPECIFIC_TAG( msg ) == SCTK_PROCESS_SPECIFIC_MESSAGE_TAG){ 
+  		tmp = sctk_get_route_to_process( SCTK_MSG_DEST_PROCESS( msg ) ,rail);//proc
   	} else {
-  		tmp = sctk_get_route(msg->sctk_msg_get_glob_destination,rail);//task
+  		tmp = sctk_get_route SCTK_MSG_DEST_TASK( msg ),rail);//task
   	}
 
 	sctk_nodebug("my %d dest %d",rail->network.portals.my_id.phys.pid,tmp->data.portals.id.phys.pid);
-  	sctk_nodebug("send from %d to %d", msg->body.header.source, msg->body.header.destination);
+  	sctk_nodebug("send from %d to %d", SCTK_MSG_SRC_PROCESS( msg ), SCTK_MSG_DEST_PROCESS( msg ));
   	
 	
-	if(sctk_get_peer_process_rank(msg->body.header.source) != sctk_process_rank){
+	if(sctk_get_peer_process_rank(SCTK_MSG_SRC_PROCESS( msg )) != sctk_process_rank){
 		sctk_Event_t* event 			= (sctk_Event_t*)msg->tail.portals_message_info_t;//get the evenet datas
 		sctk_portals_message_t* ptrmsg 	= &event->msg;//get the struct message of portals
     	int index = ptrmsg->peer_idThread;
     	
 		sctk_spinlock_lock(&rail->network.portals.lock[index]);//to be thread safe
 		
-		sctk_nodebug("%d =/ %d",sctk_get_peer_process_rank(msg->body.header.source),sctk_process_rank);
-		if(msg->tail.message.contiguous.size == msg->body.header.msg_size){
+		sctk_nodebug("%d =/ %d",sctk_get_peer_process_rank(SCTK_MSG_SRC_PROCESS( msg )),sctk_process_rank);
+		if(msg->tail.message.contiguous.size == SCTK_MSG_SIZE( msg )){
     		sctk_nodebug("useless");
     	}
     	else
-    		msg->tail.message.contiguous.size = msg->body.header.msg_size;
+    		msg->tail.message.contiguous.size = SCTK_MSG_SIZE( msg );
     	ptl_ct_event_t ctc;
     	
     	

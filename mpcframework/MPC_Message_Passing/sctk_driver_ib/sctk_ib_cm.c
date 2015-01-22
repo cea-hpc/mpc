@@ -903,13 +903,13 @@ int sctk_ib_cm_on_demand_recv(sctk_rail_info_t *rail,  sctk_thread_ptp_message_t
 	rail_targ = sctk_route_get_rail(rail_id);
 	rail_sign = sctk_route_get_rail(sctk_network_ib_get_rail_signalization());
 
-	process_dest = msg->sctk_msg_get_destination;
-	process_src = msg->sctk_msg_get_source;
+	process_dest = SCTK_MSG_DEST_PROCESS( msg );
+	process_src = SCTK_MSG_SRC_PROCESS( msg );
 	/* If destination of the message */
 	if (process_dest == sctk_process_rank)
 	{
-		sctk_nodebug("[%d] Receiving OD connexion from %d to %d (%d)", rail_targ->rail_number, process_src, process_dest, msg->body.header.message_tag ^ CM_MASK_TAG);
-		switch (msg->body.header.message_tag ^ CM_MASK_TAG)
+		sctk_nodebug("[%d] Receiving OD connexion from %d to %d (%d)", rail_targ->rail_number, process_src, process_dest, SCTK_MSG_TAG( msg ) ^ CM_MASK_TAG);
+		switch (SCTK_MSG_TAG( msg ) ^ CM_MASK_TAG)
 		{
 			/* QP connection */
 			case CM_OD_REQ_TAG:
@@ -951,7 +951,7 @@ int sctk_ib_cm_on_demand_recv(sctk_rail_info_t *rail,  sctk_thread_ptp_message_t
 				break;
 
 			default:
-				sctk_error("Invalid CM request: %d (%d - %d)", msg->body.header.message_tag ^ CM_MASK_TAG, msg->body.header.message_tag & CM_MASK_TAG, msg->body.header.message_tag);
+				sctk_error("Invalid CM request: %d (%d - %d)", SCTK_MSG_TAG( msg ) ^ CM_MASK_TAG, SCTK_MSG_TAG( msg ) & CM_MASK_TAG, SCTK_MSG_TAG( msg ));
 				not_reachable();
 				break;
 

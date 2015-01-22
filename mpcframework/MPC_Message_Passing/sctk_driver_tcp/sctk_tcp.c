@@ -77,10 +77,10 @@ static void* sctk_tcp_thread(sctk_route_table_t* tmp)
 			return NULL;
 		}
 
-		msg->body.completion_flag = NULL;
+		SCTK_MSG_COMPLETION_FLAG_SET( msg , NULL );
 		msg->tail.message_type = SCTK_MESSAGE_NETWORK;
 		
-		if(msg->sctk_msg_get_communicator < 0)
+		if(SCTK_MSG_COMMUNICATOR( msg ) < 0)
 		{
 			return NULL;
 		}
@@ -109,13 +109,13 @@ static void sctk_network_send_message_tcp (sctk_thread_ptp_message_t * msg,sctk_
 
 	sctk_nodebug("send message through rail %d",rail->rail_number);
 
-	if( IS_PROCESS_SPECIFIC_MESSAGE_TAG(msg->body.header.specific_message_tag) )
+	if( IS_PROCESS_SPECIFIC_MESSAGE_TAG(SCTK_MSG_SPECIFIC_TAG( msg )) )
 	{
-		tmp = sctk_get_route_to_process(msg->sctk_msg_get_destination,rail);
+		tmp = sctk_get_route_to_process( SCTK_MSG_DEST_PROCESS( msg ), rail);
 	} 
 	else
 	{
-		tmp = sctk_get_route(msg->sctk_msg_get_glob_destination,rail);
+		tmp = sctk_get_route( SCTK_MSG_DEST_TASK( msg ),rail);
 	}
 
 	sctk_nodebug("Send message to %d", tmp->key.destination);
@@ -124,7 +124,7 @@ static void sctk_network_send_message_tcp (sctk_thread_ptp_message_t * msg,sctk_
 
 	fd = tmp->data.tcp.fd;
 
-	size = msg->body.header.msg_size + sizeof(sctk_thread_ptp_message_body_t);
+	size = SCTK_MSG_SIZE( msg ) + sizeof(sctk_thread_ptp_message_body_t);
 
 	sctk_safe_write(fd,(char*)&size,sizeof(size_t));
 

@@ -135,10 +135,10 @@ int sctk_network_select_send_rail(sctk_thread_ptp_message_t * msg) {
 #if 0
   if (rails_nb == 17)
   {
-    if(msg->sctk_msg_get_glob_destination < 0) {
+    if( SCTK_MSG_DEST_TASK( msg ) < 0) {
       assume(0);
     } else {
-     i = (msg->sctk_msg_get_glob_destination % 128) / 8;
+     i = (SCTK_MSG_DEST_TASK( msg ) % 128) / 8;
     }
   }
 #endif
@@ -146,21 +146,21 @@ int sctk_network_select_send_rail(sctk_thread_ptp_message_t * msg) {
   if (rails_nb == 5)
   {
     int glob_dest;
-    glob_dest = msg->sctk_msg_get_glob_destination;
+    glob_dest = SCTK_MSG_DEST_TASK( msg );
     i = (glob_dest % 128) / 32;
 
-    sctk_nodebug("Message with comm %d to rail %d (dest:%d numa_dest:%d glob_dest:%d)", msg->sctk_msg_get_communicator, i, msg->sctk_msg_get_destination, msg->sctk_msg_get_glob_destination, glob_dest );
+    sctk_nodebug("Message with comm %d to rail %d (dest:%d numa_dest:%d glob_dest:%d)", SCTK_MSG_COMMUNICATOR( msg ), i, SCTK_MSG_DEST_PROCESS( msg ), SCTK_MSG_DEST_TASK( msg ), glob_dest );
   }
   else if (rails_nb == 17)
   {
     int glob_dest;
-    glob_dest = msg->sctk_msg_get_glob_destination;
+    glob_dest = SCTK_MSG_DEST_TASK( msg );
     i = (glob_dest % 128) / 8;
   }
   else if (rails_nb == 3)
   {
     int glob_dest;
-    glob_dest = msg->sctk_msg_get_glob_destination;
+    glob_dest = SCTK_MSG_DEST_TASK( msg );
     i = (glob_dest % 16) / 8;
   }
   else {
@@ -180,7 +180,7 @@ sctk_network_send_message_multirail_ib (sctk_thread_ptp_message_t * msg){
 #endif
   sctk_prepare_send_message_to_network_reorder(msg);
 
-  const specific_message_tag_t tag = msg->body.header.specific_message_tag;
+  const specific_message_tag_t tag = SCTK_MSG_SPECIFIC_TAG( msg );
   if (IS_PROCESS_SPECIFIC_CONTROL_MESSAGE(tag)) {
     i = sctk_network_ib_get_rail_signalization();
   } else {

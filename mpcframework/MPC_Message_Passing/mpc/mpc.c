@@ -433,15 +433,15 @@ static inline sctk_thread_ptp_message_t* sctk_mpc_get_message_in_request(MPC_Req
 }
 
 static inline void sctk_mpc_init_message_size(MPC_Request * request){
-  request->msg->body.header.msg_size = 0;
+  request->SCTK_MSG_SIZE( msg ) = 0;
 }
 
 static inline void sctk_mpc_add_to_message_size(MPC_Request * request, size_t size){
-  request->msg->body.header.msg_size += size;
+  request->SCTK_MSG_SIZE( msg ) += size;
 }
 
 static inline size_t sctk_mpc_get_message_size(MPC_Request * request){
-  return request->msg->body.header.msg_size;
+  return request->SCTK_MSG_SIZE( msg );
 }
 
 static inline int sctk_mpc_get_message_source(MPC_Request * request){
@@ -4307,7 +4307,7 @@ __MPC_Ssend (void *buf, mpc_msg_count count, MPC_Datatype datatype,
 
   sctk_mpc_set_header_in_message (msg, tag, comm, src, dest, &request, msg_size,SCTK_P2P_SPECIFIC_MESSAGE_TAG, datatype);
 
-  sctk_nodebug ("count = %d, datatype = %d", msg->body.header.msg_size, datatype);
+  sctk_nodebug ("count = %d, datatype = %d", SCTK_MSG_SIZE( msg ), datatype);
   sctk_send_message (msg);
   sctk_mpc_wait_message (&request);
   MPC_ERROR_SUCESS ();

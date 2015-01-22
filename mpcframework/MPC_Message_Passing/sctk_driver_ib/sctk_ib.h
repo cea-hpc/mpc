@@ -174,8 +174,8 @@ typedef struct sctk_ib_header_rdma_s
 	struct sctk_ib_qp_s *remote_peer;
 	struct sctk_message_to_copy_s *copy_ptr;
 	/* For collaborative polling: src and dest of msg */
-	int glob_source;
-	int glob_destination;
+	int source_task;
+	int destination_task;
 	/* Local structure */
 	struct
 	{

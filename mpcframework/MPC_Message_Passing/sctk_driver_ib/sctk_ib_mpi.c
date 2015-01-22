@@ -61,19 +61,19 @@ sctk_network_send_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* 
 	sctk_ibuf_t *ibuf;
 	size_t size;
 	char is_control_message = 0;
-	specific_message_tag_t tag = msg->body.header.specific_message_tag;
+	specific_message_tag_t tag = SCTK_MSG_SPECIFIC_TAG( msg );
 
 	PROF_TIME_START(rail, ib_send_message);
 
 	sctk_nodebug("send message through rail %d from %d to %d (%d to %d) size:%lu tag:%d",rail->rail_number,
-					msg->sctk_msg_get_source,
-					msg->sctk_msg_get_destination,
-					msg->sctk_msg_get_glob_source,
-					msg->sctk_msg_get_glob_destination,
-					msg->body.header.msg_size,
-					msg->sctk_msg_get_message_tag);
+					SCTK_MSG_SRC_PROCESS( msg ),
+					SCTK_MSG_DEST_PROCESS( msg ),
+					SCTK_MSG_SRC_TASK( msg ),
+					SCTK_MSG_DEST_TASK( msg ),
+					SCTK_MSG_SIZE( msg ),
+					SCTK_MSG_TAG( msg ));
 	
-	sctk_nodebug("Send message with tag %d", msg->sctk_msg_get_specific_message_tag);
+	sctk_nodebug("Send message with tag %d", SCTK_MSG_SPECIFIC_TAG( msg ) );
 	
 	/* Determine the route to used */
 	if( IS_PROCESS_SPECIFIC_MESSAGE_TAG(tag))
@@ -82,30 +82,30 @@ sctk_network_send_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* 
 		{
 			is_control_message = 1;
 			/* send a message with no_ondemand connexion */
-			tmp = sctk_get_route_to_process_static(msg->sctk_msg_get_destination,rail);
-			sctk_nodebug("Send control message to process %d", msg->sctk_msg_get_destination);
+			tmp = sctk_get_route_to_process_static(SCTK_MSG_DEST_PROCESS( msg ),rail);
+			sctk_nodebug("Send control message to process %d", SCTK_MSG_DEST_PROCESS( msg ));
 		}
 		else
 		{
 			/* send a message to a PROCESS with a possible ondemand connexion if the peer doest not
 			* exist.  */
-			tmp = sctk_get_route_to_process(msg->sctk_msg_get_destination,rail);
-			sctk_nodebug("Send to process %d", msg->sctk_msg_get_destination);
+			tmp = sctk_get_route_to_process(SCTK_MSG_DEST_PROCESS( msg ),rail);
+			sctk_nodebug("Send to process %d", SCTK_MSG_DEST_PROCESS( msg ));
 		}
 	}
 	else
 	{
 		/* send a message to a TASK with a possible ondemand connexion if the peer doest not
 		* exist.  */
-		sctk_nodebug("Connexion to %d", msg->sctk_msg_get_glob_destination);
-		tmp = sctk_get_route(msg->sctk_msg_get_glob_destination,rail);
+		sctk_nodebug("Connexion to %d", SCTK_MSG_DEST_TASK( msg ));
+		tmp = sctk_get_route(SCTK_MSG_DEST_TASK( msg ),rail);
 	}
 
 	route_data=&tmp->data.ib;
 	remote=route_data->remote;
 
 	/* Check if the remote task is in low mem mode */
-	size = msg->body.header.msg_size + sizeof(sctk_thread_ptp_message_body_t);
+	size = SCTK_MSG_SIZE( msg ) + sizeof(sctk_thread_ptp_message_body_t);
 
 	if (is_control_message && size + IBUF_GET_EAGER_SIZE > config->eager_limit)
 	{
@@ -121,7 +121,8 @@ sctk_network_send_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* 
 	*  We switch between available protocols
 	*
 	* */
-	if ( ( (sctk_ibuf_rdma_get_remote_state_rts(remote) == STATE_CONNECTED) && (size+IBUF_GET_EAGER_SIZE+IBUF_RDMA_GET_SIZE <= sctk_ibuf_rdma_get_eager_limit(remote) ) )
+	if ( ( (sctk_ibuf_rdma_get_remote_state_rts(remote) == STATE_CONNECTED) 
+	&& (size+IBUF_GET_EAGER_SIZE+IBUF_RDMA_GET_SIZE <= sctk_ibuf_rdma_get_eager_limit(remote) ) )
 	|| (size+IBUF_GET_EAGER_SIZE <= config->eager_limit) )
 	{
 		sctk_nodebug("Eager");
@@ -282,12 +283,6 @@ int sctk_network_poll_recv_ibuf(sctk_rail_info_t * rail, sctk_ibuf_t *ibuf, cons
 				not_reachable();
 		}
 	}
-
-	sctk_nodebug("Message received for %d from %d (task:%d), glob_dest:%d",
-	sctk_get_process_rank_from_task_rank(msg->sctk_msg_get_glob_source),
-	sctk_get_process_rank_from_task_rank(msg->sctk_msg_get_source),
-	msg->sctk_msg_get_glob_source,
-	msg->sctk_msg_get_glob_destination);
 
 	if (release_ibuf)
 	{

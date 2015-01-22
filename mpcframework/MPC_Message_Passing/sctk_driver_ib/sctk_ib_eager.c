@@ -143,8 +143,8 @@ sctk_ibuf_t* sctk_ib_eager_prepare_msg(sctk_ib_rail_info_t* rail_ib,  sctk_ib_qp
 	if (ibuf == NULL)
 		return NULL;
 
-	IBUF_SET_DEST_TASK(ibuf->buffer, msg->sctk_msg_get_glob_destination);
-	IBUF_SET_SRC_TASK(ibuf->buffer, msg->sctk_msg_get_glob_source);
+	IBUF_SET_DEST_TASK(ibuf->buffer, SCTK_MSG_DEST_TASK( msg ));
+	IBUF_SET_SRC_TASK(ibuf->buffer, SCTK_MSG_SRC_TASK( msg ));
 	IBUF_SET_POISON(ibuf->buffer);
 
 	PROF_TIME_START(rail_ib->rail, ib_ibuf_memcpy);
@@ -241,7 +241,7 @@ static sctk_thread_ptp_message_t* sctk_ib_eager_recv(sctk_rail_info_t* rail, sct
 		memcpy(msg, IBUF_GET_EAGER_MSG_HEADER(ibuf->buffer), sizeof(sctk_thread_ptp_message_body_t));
 	}
 
-	msg->body.completion_flag = NULL;
+	SCTK_MSG_COMPLETION_FLAG_SET( msg , NULL );
 	msg->tail.message_type = SCTK_MESSAGE_NETWORK;
 	msg->tail.ib.eager.recopied = recopy;
 	msg->tail.ib.eager.ibuf = ibuf;

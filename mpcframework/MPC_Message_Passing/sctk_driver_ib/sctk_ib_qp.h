@@ -49,18 +49,18 @@ typedef struct sctk_ibuf_rdma_s
 	OPA_int_t state_rtr; 			/**< If remote is RTR. Type: sctk_route_state_t */
 	OPA_int_t state_rts;			/**< If remote is RTS. Type: sctk_route_state_t */
 	sctk_spinlock_t pending_data_lock;
-	OPA_int_t       resizing_nb;	/**< Number of resizing */
-	OPA_int_t       cancel_nb; 		/**< Number of Connection cancels */
+	OPA_int_t       resizing_nb;			/**< Number of resizing */
+	OPA_int_t       cancel_nb; 			/**< Number of Connection cancels */
 	char dummy3[64];
 	int max_pending_data;			/**< Max number of pending requests.
-									 * We this, we can get an approximation of the number
-									 * of slots to create for the RDMA */
-	int previous_max_pending_data;  /**< If the process is the initiator of the request */
+						* We this, we can get an approximation of the number
+						* of slots to create for the RDMA */
+	int previous_max_pending_data;  		/**< If the process is the initiator of the request */
 	char is_initiator;
 	/* Counters */
 	OPA_int_t miss_nb;    			 /**< Number of RDMA miss */
 	OPA_int_t hits_nb;     			 /**< Number of RDMA hits */
-	sctk_spinlock_t flushing_lock;   /**< Lock while flushing */
+	sctk_spinlock_t flushing_lock;   		/**< Lock while flushing */
 	char dummy[64];
 	sctk_spinlock_t stats_lock;
 	size_t messages_size;			/**< Cumulative sum of msg sizes */
@@ -98,26 +98,26 @@ typedef struct sctk_ib_qp_s
 	struct sctk_ib_qp_s *prev;
 	struct sctk_ib_qp_s *next;
 	/* ---------------- */
-	sctk_spinlock_t lock_send;             /**< Lock for sending messages */
+	sctk_spinlock_t lock_send;		/**< Lock for sending messages */
 	char dummy [64];
-	sctk_spinlock_t flushing_lock; 		   /**< Lock for flushing messages */
+	sctk_spinlock_t flushing_lock; 	/**< Lock for flushing messages */
 	int is_flushing_initiator;
-	OPA_int_t deco_canceled;	           /**< If a QP deconnexion should be canceled */
-	int local_ack;						   /**< ACK for the local peers */
-	int remote_ack;						   /**< ACK for the remote peers */
-	int unsignaled_counter;			  	   /**< The number of unsignaled messages sent.
-								* \warning the number of unsignaled messages cannot
-								* excess the max number of send entries in  QP */
+	OPA_int_t deco_canceled;	          /**< If a QP deconnexion should be canceled */
+	int local_ack;			/**< ACK for the local peers */
+	int remote_ack;			/**< ACK for the remote peers */
+	int unsignaled_counter;		/**< The number of unsignaled messages sent.
+					 * \warning the number of unsignaled messages cannot
+					 * excess the max number of send entries in  QP */
 	struct sctk_ib_buffered_table_s ib_buffered; /**< List of pending buffered messages */
-	struct sctk_ibuf_rdma_s rdma; 				/**< Structure for ibuf rdma */
+	struct sctk_ibuf_rdma_s rdma; 	     /**< Structure for ibuf rdma */
 	struct sctk_ibuf_sr_s sr;
 	struct 
 	{
 	int nb;
 	int size_ibufs;
-	} od_request; 							/**< Structs for requests */
-	int ondemand;							/**< Is remote dynamically created ? */
-	int R;									/**< Bit for clock algorithm */
+	} od_request; 			/**< Structs for requests */
+	int ondemand;			/**< Is remote dynamically created ? */
+	int R;				/**< Bit for clock algorithm */
 } sctk_ib_qp_t;
 
 void sctk_ib_qp_key_create_value(char *msg, size_t size, sctk_ib_cm_qp_connection_t* keys);

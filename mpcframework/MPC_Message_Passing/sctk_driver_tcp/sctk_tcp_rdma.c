@@ -100,7 +100,7 @@ static void* sctk_tcp_rdma_thread(sctk_route_table_t* tmp)
 			sctk_safe_read(fd,&(msg->tail.rdma_src),sizeof(void*));
 			msg->tail.route_table = tmp;
 
-			msg->body.completion_flag = NULL;
+			SCTK_MSG_COMPLETION_FLAG_SET( msg , NULL );
 			msg->tail.message_type = SCTK_MESSAGE_NETWORK;
 
 			sctk_rebuild_header(msg);
@@ -155,14 +155,14 @@ static void sctk_network_send_message_tcp_rdma (sctk_thread_ptp_message_t * msg,
 	sctk_route_table_t* tmp;
 	int fd;
 	
-	if(IS_PROCESS_SPECIFIC_MESSAGE_TAG(msg->body.header.specific_message_tag))
+	if(IS_PROCESS_SPECIFIC_MESSAGE_TAG(SCTK_MSG_SPECIFIC_TAG( msg )))
 	{
 		not_reachable();
 	}
 
 	sctk_nodebug("send message through rail %d",rail->rail_number);
 
-	tmp = sctk_get_route(msg->sctk_msg_get_glob_destination,rail);
+	tmp = sctk_get_route(SCTK_MSG_DEST_TASK( msg ),rail);
 
 	sctk_spinlock_lock(&(tmp->data.tcp.lock));
 

@@ -111,7 +111,7 @@ int sctk_ib_buffered_prepare_msg(sctk_rail_info_t* rail,
 
 		ib_assume(buffer_size >= sizeof( sctk_thread_ptp_message_body_t));
 		memcpy(&buffered->msg, msg, sizeof(sctk_thread_ptp_message_body_t));
-		sctk_nodebug("Send number %d, src:%d, dest:%d", msg->sctk_msg_get_message_number, msg->sctk_msg_get_glob_source, msg->sctk_msg_get_glob_destination);
+		sctk_nodebug("Send number %d, src:%d, dest:%d", SCTK_MSG_NUMBER( msg ), SCTK_MSG_SRC_TASK( msg ), SCTK_MSG_DEST_TASK( msg ));
 
 		if (msg_copied + buffer_size > size)
 		{
@@ -128,7 +128,7 @@ int sctk_ib_buffered_prepare_msg(sctk_rail_info_t* rail,
 		PROF_TIME_END(rail_ib->rail, ib_buffered_memcpy);
 
 		sctk_nodebug("Send message %d to %d (msg_copied:%lu pyload_size:%lu header:%lu, buffer_size:%lu number:%lu)",
-		buffer_index, remote->rank, msg_copied, payload_size, IBUF_GET_BUFFERED_SIZE, buffer_size, msg->sctk_msg_get_message_number);
+		buffer_index, remote->rank, msg_copied, payload_size, IBUF_GET_BUFFERED_SIZE, buffer_size, SCTK_MSG_NUMBER( msg ));
 		/* Initialization of the buffer */
 		buffered->index = buffer_index;
 		buffered->payload_size = payload_size;
@@ -136,8 +136,8 @@ int sctk_ib_buffered_prepare_msg(sctk_rail_info_t* rail,
 		IBUF_SET_PROTOCOL(ibuf->buffer, SCTK_IB_BUFFERED_PROTOCOL);
 		msg_copied += payload_size;
 
-		IBUF_SET_DEST_TASK(ibuf->buffer, msg->sctk_msg_get_glob_destination);
-		IBUF_SET_SRC_TASK(ibuf->buffer, msg->sctk_msg_get_glob_source);
+		IBUF_SET_DEST_TASK(ibuf->buffer, SCTK_MSG_DEST_TASK( msg ));
+		IBUF_SET_SRC_TASK(ibuf->buffer, SCTK_MSG_SRC_TASK( msg ));
 
 		/* Recalculate size and send */
 		sctk_ibuf_prepare(rail_ib, remote, ibuf, payload_size + IBUF_GET_BUFFERED_SIZE);

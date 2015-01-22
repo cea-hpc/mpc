@@ -38,7 +38,7 @@ TODO("Deal with partial reception")
     case SCTK_MESSAGE_CONTIGUOUS: {
       size_t size;
 
-      size = msg->body.header.msg_size;
+      size = SCTK_MSG_SIZE( msg );
 
       sctk_nodebug("MSG SEND |%s|", (char*)msg->tail.message.contiguous.addr);
       sctk_safe_read(fd,msg->tail.message.contiguous.addr,size);
@@ -48,7 +48,7 @@ TODO("Deal with partial reception")
       size_t size;
       void* body;
 
-      size = msg->body.header.msg_size;
+      size = SCTK_MSG_SIZE( msg );
       body = (char*)msg + sizeof(sctk_thread_ptp_message_t);
 
       sctk_safe_read(fd,body,size);
@@ -58,7 +58,7 @@ TODO("Deal with partial reception")
       size_t i;
       size_t j;
       size_t size;
-      size = msg->body.header.msg_size;
+      size = SCTK_MSG_SIZE( msg );
       if(size > 0)
       {
       for (i = 0; i < msg->tail.message.pack.count; i++)
@@ -78,7 +78,7 @@ TODO("Deal with partial reception")
     size_t i;
     size_t j;
     size_t size;
-    size = msg->body.header.msg_size;
+    size = SCTK_MSG_SIZE( msg );
       if(size > 0)
       {
 		for (i = 0; i < msg->tail.message.pack.count; i++)
@@ -106,7 +106,7 @@ TODO("Deal with partial reception")
     case SCTK_MESSAGE_CONTIGUOUS: {
       size_t size;
 
-      size = msg->body.header.msg_size;
+      size = SCTK_MSG_SIZE( msg );
 
       sctk_nodebug("MSG SEND |%s|", (char*)msg->tail.message.contiguous.addr);
       sctk_safe_write(fd,msg->tail.message.contiguous.addr,size);
@@ -116,7 +116,7 @@ TODO("Deal with partial reception")
       size_t size;
       void* body;
 
-      size = msg->body.header.msg_size;
+      size = SCTK_MSG_SIZE( msg );
       body = (char*)msg + sizeof(sctk_thread_ptp_message_t);
 
       sctk_safe_write(fd,body,size);
@@ -126,7 +126,7 @@ TODO("Deal with partial reception")
       size_t i;
       size_t j;
       size_t size;
-      size = msg->body.header.msg_size;
+      size = SCTK_MSG_SIZE( msg );
       if(size > 0)
       {
 		  for (i = 0; i < msg->tail.message.pack.count; i++)
@@ -146,7 +146,7 @@ TODO("Deal with partial reception")
     size_t i;
     size_t j;
     size_t size;
-    size = msg->body.header.msg_size;
+    size = SCTK_MSG_SIZE( msg );
       if(size > 0)
       {
 		for (i = 0; i < msg->tail.message.pack.count; i++)
@@ -173,7 +173,7 @@ TODO("Deal with partial reception")
     case SCTK_MESSAGE_CONTIGUOUS: {
       size_t size;
 
-      size = msg->body.header.msg_size;
+      size = SCTK_MSG_SIZE( msg );
     sctk_nodebug("SEND size %lu %lu", size,
         adler32(0, (unsigned char*) msg->tail.message.contiguous.addr, size));
 
@@ -186,7 +186,7 @@ TODO("Deal with partial reception")
       size_t size;
       void* body;
 
-      size = msg->body.header.msg_size;
+      size = SCTK_MSG_SIZE( msg );
       body = (char*)msg + sizeof(sctk_thread_ptp_message_t);
 
       memcpy(buffer,body,size);
@@ -197,7 +197,7 @@ TODO("Deal with partial reception")
       size_t i;
       size_t j;
       size_t size;
-      size = msg->body.header.msg_size;
+      size = SCTK_MSG_SIZE( msg );
       if(size > 0)
       {
 		  for (i = 0; i < msg->tail.message.pack.count; i++)
@@ -218,7 +218,7 @@ TODO("Deal with partial reception")
     size_t i;
     size_t j;
     size_t size;
-    size = msg->body.header.msg_size;
+    size = SCTK_MSG_SIZE( msg );
 	if(size > 0)
 	{
 		for (i = 0; i < msg->tail.message.pack.count; i++)
@@ -296,7 +296,7 @@ TODO("Deal with partial reception")
   size_t sctk_net_determine_message_size (sctk_thread_ptp_message_t *
 						 msg)
   {
-    return msg->body.header.msg_size;
+    return SCTK_MSG_SIZE( msg );
   }
 
 static  inline void
@@ -328,7 +328,7 @@ int sctk_net_copy_frag_msg (
     case SCTK_MESSAGE_CONTIGUOUS:
       {
         size_t size;
-        size = msg->body.header.msg_size;
+        size = SCTK_MSG_SIZE( msg );
 
         if ( (size - curr_copy) > max_copy)
           tmp_size = max_copy;
@@ -345,7 +345,7 @@ int sctk_net_copy_frag_msg (
         void* body;
         not_implemented();
 
-        size = msg->body.header.msg_size;
+        size = SCTK_MSG_SIZE( msg );
         body = (char*)msg + sizeof(sctk_thread_ptp_message_t);
 
         memcpy(buffer,body,size);
@@ -496,8 +496,8 @@ void sctk_net_message_copy(sctk_message_to_copy_t* tmp)
 	recv = tmp->msg_recv;
 
 	body = (char*)send + sizeof(sctk_thread_ptp_message_t);
-
-	send->body.completion_flag = NULL;
+	
+	SCTK_MSG_COMPLETION_FLAG_SET( send , NULL );
 
 	sctk_nodebug("MSG |%s|", (char*)body);
 
@@ -506,8 +506,8 @@ void sctk_net_message_copy(sctk_message_to_copy_t* tmp)
 		case SCTK_MESSAGE_CONTIGUOUS: 
 		{
 			size_t size;
-			size = send->body.header.msg_size;
-			size = sctk_min(send->body.header.msg_size, recv->tail.message.contiguous.size);
+			size = SCTK_MSG_SIZE( send );
+			size = sctk_min( SCTK_MSG_SIZE( send ), recv->tail.message.contiguous.size);
 
 			memcpy(recv->tail.message.contiguous.addr,body, size);
 
@@ -521,7 +521,7 @@ void sctk_net_message_copy(sctk_message_to_copy_t* tmp)
 			size_t size;
 			size_t total = 0;
 			size_t recv_size = 0;
-			size = send->body.header.msg_size;
+			size = SCTK_MSG_SIZE( send );
 			if(size > 0)
 			{
 				for (i = 0; i < recv->tail.message.pack.count; i++)
@@ -536,7 +536,7 @@ void sctk_net_message_copy(sctk_message_to_copy_t* tmp)
 				}
 				
 				/* MPI 1.3 : The length of the received message must be less than or equal to the length of the receive buffer */
-				assume(send->body.header.msg_size <= recv_size);
+				assume(SCTK_MSG_SIZE( send ) <= recv_size);
 				char skip = 0;
 				for (i = 0; ((i < recv->tail.message.pack.count) && !skip); i++)
 				{
@@ -545,17 +545,17 @@ void sctk_net_message_copy(sctk_message_to_copy_t* tmp)
 						size = (recv->tail.message.pack.list.std[i].ends[j] - 
 							recv->tail.message.pack.list.std[i].begins[j] + 1) * 
 							recv->tail.message.pack.list.std[i].elem_size;
-						if(total + size > send->body.header.msg_size)
+						if(total + size > SCTK_MSG_SIZE( send ))
 						{
 							skip = 1;
-							size = send->body.header.msg_size - total;
+							size = SCTK_MSG_SIZE( send ) - total;
 						}
 						memcpy(((char *) (recv->tail.message.pack.list.std[i].addr)) + 
 							recv->tail.message.pack.list.std[i].begins[j] * 
 							recv->tail.message.pack.list.std[i].elem_size,body,size);
 						body += size;
 						total += size;
-						assume(total <= send->body.header.msg_size);
+						assume(total <= SCTK_MSG_SIZE( send ));
 					}
 				}
 			}
@@ -569,7 +569,7 @@ void sctk_net_message_copy(sctk_message_to_copy_t* tmp)
 			size_t size;
 			size_t total = 0;
 			size_t recv_size = 0;
-			size = send->body.header.msg_size;
+			size = SCTK_MSG_SIZE( send );
 			if(size > 0)
 			{
 				for (i = 0; i < recv->tail.message.pack.count; i++)
@@ -584,7 +584,7 @@ void sctk_net_message_copy(sctk_message_to_copy_t* tmp)
 				}
 				
 				/* MPI 1.3 : The length of the received message must be less than or equal to the length of the receive buffer */
-				assume(send->body.header.msg_size <= recv_size);
+				assume(SCTK_MSG_SIZE( send ) <= recv_size);
 				char skip = 0;
 				for (i = 0; ((i < recv->tail.message.pack.count) && !skip); i++)
 				{
@@ -593,17 +593,17 @@ void sctk_net_message_copy(sctk_message_to_copy_t* tmp)
 						size = (recv->tail.message.pack.list.absolute[i].ends[j] - 
 							recv->tail.message.pack.list.absolute[i].begins[j] + 1) * 
 							recv->tail.message.pack.list.absolute[i].elem_size;
-						if(total + size > send->body.header.msg_size)
+						if(total + size > SCTK_MSG_SIZE( send ))
 						{
 							skip = 1;
-							size = send->body.header.msg_size - total;
+							size = SCTK_MSG_SIZE( send ) - total;
 						}
 						memcpy(((char *) (recv->tail.message.pack.list.absolute[i].addr)) + 
 							recv->tail.message.pack.list.absolute[i].begins[j] * 
 							recv->tail.message.pack.list.absolute[i].elem_size,body,size);
 						body += size;
 						total += size;
-						assume(total <= send->body.header.msg_size);
+						assume(total <= SCTK_MSG_SIZE( send ));
 					}
 				}
 			}
@@ -626,8 +626,8 @@ void sctk_net_message_copy_from_buffer(char* body,
   switch(recv->tail.message_type){
   case SCTK_MESSAGE_CONTIGUOUS: {
     size_t size;
-    size = send->body.header.msg_size;
-    size = sctk_min(send->body.header.msg_size, recv->tail.message.contiguous.size);
+    size = SCTK_MSG_SIZE( send );
+    size = sctk_min(SCTK_MSG_SIZE( send ), recv->tail.message.contiguous.size);
 
     memcpy(recv->tail.message.contiguous.addr,body, size);
     sctk_nodebug("RECV size %lu-%lu %lu %p", size, recv->tail.message.contiguous.size, adler32(0, (unsigned char*) recv->tail.message.contiguous.addr, size), recv);
@@ -639,7 +639,7 @@ void sctk_net_message_copy_from_buffer(char* body,
     size_t i;
     size_t j;
     size_t size;
-    size = send->body.header.msg_size;
+    size = SCTK_MSG_SIZE( send );
     if(size > 0)
       {
 	size_t total = 0;
@@ -650,17 +650,17 @@ void sctk_net_message_copy_from_buffer(char* body,
 	      size = (recv->tail.message.pack.list.std[i].ends[j] -
 		      recv->tail.message.pack.list.std[i].begins[j] +
 		      1) * recv->tail.message.pack.list.std[i].elem_size;
-	      if(total + size > send->body.header.msg_size)
+	      if(total + size > SCTK_MSG_SIZE( send ))
 		{
 		  skip = 1;
-		  size = send->body.header.msg_size - total;
+		  size = SCTK_MSG_SIZE( send ) - total;
 		}
 	      memcpy(((char *) (recv->tail.message.pack.list.std[i].addr)) +
 		     recv->tail.message.pack.list.std[i].begins[j] *
 		     recv->tail.message.pack.list.std[i].elem_size,body,size);
 	      body += size;
 	      total += size;
-	      assume(total <= send->body.header.msg_size);
+	      assume(total <= SCTK_MSG_SIZE( send ));
 	    }
       }
     if(free_headers) sctk_message_completion_and_free(send,recv);
@@ -670,7 +670,7 @@ void sctk_net_message_copy_from_buffer(char* body,
     size_t i;
     size_t j;
     size_t size;
-    size = send->body.header.msg_size;
+    size = SCTK_MSG_SIZE( send );
     if(size > 0)
       {
 	size_t total = 0;
@@ -681,17 +681,17 @@ void sctk_net_message_copy_from_buffer(char* body,
 	      size = (recv->tail.message.pack.list.absolute[i].ends[j] -
 		      recv->tail.message.pack.list.absolute[i].begins[j] +
 		      1) * recv->tail.message.pack.list.absolute[i].elem_size;
-	      if(total + size > send->body.header.msg_size)
+	      if(total + size > SCTK_MSG_SIZE( send ))
 		{
 		  skip = 1;
-		  size = send->body.header.msg_size - total;
+		  size = SCTK_MSG_SIZE( send ) - total;
 		}
 	      memcpy(((char *) (recv->tail.message.pack.list.absolute[i].addr)) +
 		     recv->tail.message.pack.list.absolute[i].begins[j] *
 		     recv->tail.message.pack.list.absolute[i].elem_size,body,size);
 	      body += size;
 	      total += size;
-	      assume(total <= send->body.header.msg_size);
+	      assume(total <= SCTK_MSG_SIZE( send ));
 	    }
       }
     if(free_headers) sctk_message_completion_and_free(send,recv);

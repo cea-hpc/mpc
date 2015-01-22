@@ -50,7 +50,7 @@ static void sctk_network_send_message_multirail_tcp (sctk_thread_ptp_message_t *
 		i = 0;
 		
 		TODO("Use a smart multirail")
-		if( (rails_nb >= 2) && (msg->sctk_msg_get_msg_size > 32768) )
+		if( (rails_nb >= 2) && ( SCTK_MSG_SIZE( msg ) > 32768) )
 		{
 			i = 1;
 		}

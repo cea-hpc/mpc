@@ -118,8 +118,8 @@ typedef struct
   typedef struct MPC_Header{
     int source;
     int destination;
-    int glob_destination;
-    int glob_source;
+    int destination_task;
+    int source_task;
     int message_tag;
     MPC_Comm communicator;
     mpc_msg_count msg_size;
