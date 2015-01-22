@@ -95,85 +95,93 @@ extern "C"
     } } while (0)
 
 
-  typedef struct {
-    ptl_process_t id;//to route
-  }sctk_portals_data_t;
-  
-	typedef struct portals_message_s{
-		
-		ptl_md_t md;
-		ptl_handle_md_t md_handle;
-		ptl_me_t me;
-		ptl_handle_me_t me_handle;
-		
-		uint8_t  allocs;
-		ptl_process_t peer;
-		ptl_match_bits_t match_bits;
-		ptl_match_bits_t ignore_bits;
-		void* buffer;
-		unsigned peer_idThread;
-		unsigned my_idThread;
-		int type;
-		int tag;
-		int append_pos;
-		int append_list;
-	}sctk_portals_message_t;
-  
-  
-	typedef struct sctk_Event_s{
-		unsigned used;
-		//int vp;
-		ptl_pt_index_t pt_index;
-		sctk_portals_message_t msg;
-		sctk_message_to_copy_t ptrmsg;
-	}sctk_Event_t;
+typedef struct
+{
+	ptl_process_t id;//to route
+} sctk_portals_data_t;
 
-	typedef struct sctk_EventL_s{
-		unsigned 			    nb_elems;
-		unsigned 			    nb_elems_headers;
-		sctk_Event_t 			events[SIZE_QUEUE_EVENTS];
-		struct sctk_EventL_s* 	next;
-	}sctk_EventL_t;
+typedef struct portals_message_s
+{
+
+	ptl_md_t md;
+	ptl_handle_md_t md_handle;
+	ptl_me_t me;
+	ptl_handle_me_t me_handle;
+
+	uint8_t  allocs;
+	ptl_process_t peer;
+	ptl_match_bits_t match_bits;
+	ptl_match_bits_t ignore_bits;
+	void *buffer;
+	unsigned peer_idThread;
+	unsigned my_idThread;
+	int type;
+	int tag;
+	int append_pos;
+	int append_list;
+} sctk_portals_message_t;
 
 
-	typedef struct sctk_EventQ_s{
-		unsigned SizeMsgList;
-		sctk_EventL_t ListMsg;
+typedef struct sctk_Event_s
+{
+	unsigned used;
+	//int vp;
+	ptl_pt_index_t pt_index;
+	sctk_portals_message_t msg;
+	sctk_message_to_copy_t ptrmsg;
+} sctk_Event_t;
 
-	}sctk_EventQ_t;
-	
-	typedef struct sctk_ProcsL_s{
-		unsigned 			nb_elems;
-		ptl_process_t 		Procs[SIZE_QUEUE_PROCS];
-		struct sctk_ProcsL_s* 	next;
-	}sctk_ProcsL_t;
+typedef struct sctk_EventL_s
+{
+	unsigned 			    nb_elems;
+	unsigned 			    nb_elems_headers;
+	sctk_Event_t 			events[SIZE_QUEUE_EVENTS];
+	struct sctk_EventL_s 	*next;
+} sctk_EventL_t;
 
 
-	typedef struct sctk_ProcsQ_s{
-		unsigned SizeList;
-		sctk_ProcsL_t List;
+typedef struct sctk_EventQ_s
+{
+	unsigned SizeMsgList;
+	sctk_EventL_t ListMsg;
 
-	}sctk_ProcsQ_t;
-  
-	typedef struct {
-		
-        
-		ptl_ni_limits_t 	actual;
-		ptl_handle_ni_t 	ni_handle_phys;
-		ptl_process_t 		my_id;
-		int 				ntasks;
-		ptl_pt_index_t*		pt_index;
-		sctk_EventQ_t*		EvQ;				//event list, one by thread
-		ptl_handle_eq_t*	eq_h;
-		sctk_spinlock_t* 	lock;				//event list, one by thread
-		ptl_ct_event_t 		zeroCounter;
-		
-	}sctk_portals_rail_info_t;
+} sctk_EventQ_t;
 
-void sctk_network_init_multirail_portals(sctk_rail_info_t * new_rail , int max_rails);
+typedef struct sctk_ProcsL_s
+{
+	unsigned 			nb_elems;
+	ptl_process_t 		Procs[SIZE_QUEUE_PROCS];
+	struct sctk_ProcsL_s 	*next;
+} sctk_ProcsL_t;
+
+
+typedef struct sctk_ProcsQ_s
+{
+	unsigned SizeList;
+	sctk_ProcsL_t List;
+
+} sctk_ProcsQ_t;
+
+typedef struct
+{
+
+
+	ptl_ni_limits_t 	actual;
+	ptl_handle_ni_t 	ni_handle_phys;
+	ptl_process_t 		my_id;
+	int 				ntasks;
+	ptl_pt_index_t		*pt_index;
+	sctk_EventQ_t		*EvQ;				//event list, one by thread
+	ptl_handle_eq_t	*eq_h;
+	sctk_spinlock_t 	*lock;				//event list, one by thread
+	ptl_ct_event_t 		zeroCounter;
+
+} sctk_portals_rail_info_t;
+
+void sctk_network_init_multirail_portals ( sctk_rail_info_t *new_rail , int max_rails );
 #if 0
-	void sctk_network_init_portals(char* name, char* topology);
-#endif 
+void sctk_network_init_portals ( char *name, char *topology );
+#endif
 #ifdef __cplusplus
 }
 #endif
