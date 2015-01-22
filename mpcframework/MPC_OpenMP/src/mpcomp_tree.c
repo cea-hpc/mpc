@@ -645,6 +645,8 @@ int __mpcomp_build_tree( mpcomp_instance_t * instance, int n_leaves, int depth, 
 			 instance->mvps[current_mvp]->slave_running = 0 ;
 
 			 if ( target_node != root ) {
+			   sctk_nodebug( "__mpcomp_build_tree: Creating mVPs #%d on VP #%d (index core %d)", 
+			       current_mvp, target_vp, mpcomp_get_global_index_from_cpu(instance->topology, target_vp)  ) ;
 			      if ( i == 0 ) {
 				   sctk_assert( target_node != NULL );
 				   /* The first child is spinning on a node */
@@ -653,6 +655,7 @@ int __mpcomp_build_tree( mpcomp_instance_t * instance, int n_leaves, int depth, 
 					sctk_user_thread_create (&(instance->mvps[current_mvp]->pid), 
 								 &__attr, mpcomp_slave_mvp_node, instance->mvps[current_mvp]);
 				   sctk_assert (res == 0);
+				   // sctk_thread_yield();
 			      }
 			      else {
 				   /* The other children are regular leaves */
@@ -661,6 +664,7 @@ int __mpcomp_build_tree( mpcomp_instance_t * instance, int n_leaves, int depth, 
 					sctk_user_thread_create (&(instance->mvps[current_mvp]->pid), 
 								 &__attr, mpcomp_slave_mvp_leaf, instance->mvps[current_mvp]);
 				   sctk_assert (res == 0);
+				   // sctk_thread_yield();
 			      }
 			 } else {
 			      /* Special case when depth==1, the current node is root */

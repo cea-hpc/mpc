@@ -838,6 +838,8 @@ void * mpcomp_slave_mvp_node( void * arg ) {
   mpcomp_node_t * n ; /* Spinning node + Traversing node */
   int num_threads ;
 
+  sctk_debug( "mpcomp_slave_mvp_node: Entering..." ) ;
+
   /* Get the current microVP */
   mvp = (mpcomp_mvp_t *)arg ;
   sctk_assert( mvp != NULL ) ;
@@ -851,6 +853,8 @@ void * mpcomp_slave_mvp_node( void * arg ) {
     /* Spinning on the designed node */
     sctk_thread_wait_for_value_and_poll( (int*)&(n->slave_running), 1, NULL, NULL ) ;
     n->slave_running = 0 ;
+
+	sctk_nodebug( "mpcomp_slave_mvp_node: +++ START parallel region +++" ) ;
 
 #if MPCOMP_TRANSFER_INFO_ON_NODES
 	sctk_assert( n->father != NULL ) ;
@@ -892,6 +896,8 @@ void * mpcomp_slave_mvp_node( void * arg ) {
 void * mpcomp_slave_mvp_leaf( void * arg ) {
   mpcomp_mvp_t * mvp ;
 
+  sctk_debug( "mpcomp_slave_mvp_leaf: Entering..." ) ;
+
   /* Grab the current microVP */
   mvp = (mpcomp_mvp_t *)arg ;
 
@@ -904,7 +910,7 @@ void * mpcomp_slave_mvp_leaf( void * arg ) {
     sctk_thread_wait_for_value_and_poll( (int*)&(mvp->slave_running), 1, NULL, NULL ) ;
     mvp->slave_running = 0 ;
 
-	sctk_nodebug( "mpcomp_slave_mvp_leaf: +++ START +++" ) ;
+	sctk_nodebug( "mpcomp_slave_mvp_leaf: +++ START parallel region +++" ) ;
 
 	__mpcomp_wakeup_mvp( mvp, mvp->father ) ;
 
