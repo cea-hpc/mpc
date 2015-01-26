@@ -386,6 +386,8 @@ extern "C"
 #define MPI_ORDER_C 200
 #define MPI_ORDER_FORTRAN 201
 
+/* Halo */
+#define MPI_HALO_NULL (-1)
 
 /* for comm_split method */
 #define MPI_COMM_TYPE_SHARED MPC_COMM_TYPE_SHARED
@@ -467,6 +469,10 @@ typedef int MPIX_Grequest_poll_fn(void * extra_arg, MPI_Status *status);
 /* Extended Generalized Request Class */
 typedef int MPIX_Grequest_class;
 typedef int MPIX_Grequest_wait_fn(int count, void **array_of_states, double, MPI_Status *status);
+
+/* Halo */
+typedef int MPI_Halo;
+typedef int MPI_Halo_exchange;
 
 /* NOT IMPLEMENTED >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
 typedef int MPI_Win;
@@ -776,7 +782,27 @@ int MPI_Query_thread (int *);
   
   int MPIX_Swap(void **sendrecv_buf , int remote_rank, MPI_Count size , MPI_Comm comm);
   int MPIX_Exchange(void **send_buf , void **recvbuff, int remote_rank, MPI_Count size , MPI_Comm comm);
-  
+ 
+/* Halo */
+
+int MPIX_Halo_cell_init( MPI_Halo * halo, char * label, MPI_Datatype type, int count );
+int MPIX_Halo_cell_release( MPI_Halo * halo );
+
+int MPIX_Halo_cell_set( MPI_Halo halo, void * ptr );
+int MPIX_Halo_cell_get( MPI_Halo halo, void ** ptr );
+
+/* Halo Exchange */
+
+int MPIX_Halo_exchange_init( MPI_Halo_exchange * ex );
+int MPIX_Halo_exchange_release( MPI_Halo_exchange * ex );
+
+int MPIX_Halo_exchange_commit( MPI_Halo_exchange ex );
+int MPIX_Halo_exchange( MPI_Halo_exchange ex );
+int MPIX_Halo_iexchange( MPI_Halo_exchange ex );
+int MPIX_Halo_iexchange_wait( MPI_Halo_exchange ex );
+int MPIX_Halo_cell_bind_local( MPI_Halo_exchange ex, MPI_Halo halo );
+int MPIX_Halo_cell_bind_remote( MPI_Halo_exchange ex, MPI_Halo halo, int remote, char * remote_label );
+ 
 /* Note that we may need to define a @PCONTROL_LIST@ depending on whether
 stdargs are supported */
 int MPI_Pcontrol (const int, ...);
@@ -1614,6 +1640,27 @@ int PMPIX_Grequest_class_allocate( MPIX_Grequest_class  target_class, void *extr
 
 int PMPI_Free_mem (void *ptr);
 int PMPI_Alloc_mem(MPI_Aint size, MPI_Info info, void *baseptr);
+
+
+/* Halo */
+
+int PMPIX_Halo_cell_init( MPI_Halo * halo, char * label, MPI_Datatype type, int count );
+int PMPIX_Halo_cell_release( MPI_Halo * halo );
+
+int PMPIX_Halo_cell_set( MPI_Halo halo, void * ptr );
+int PMPIX_Halo_cell_get( MPI_Halo halo, void ** ptr );
+
+/* Halo Exchange */
+
+int PMPIX_Halo_exchange_init( MPI_Halo_exchange * ex );
+int PMPIX_Halo_exchange_release( MPI_Halo_exchange * ex );
+
+int PMPIX_Halo_exchange_commit( MPI_Halo_exchange ex );
+int PMPIX_Halo_exchange( MPI_Halo_exchange ex );
+int PMPIX_Halo_iexchange( MPI_Halo_exchange ex );
+int PMPIX_Halo_iexchange_wait( MPI_Halo_exchange ex );
+int PMPIX_Halo_cell_bind_local( MPI_Halo_exchange ex, MPI_Halo halo );
+int PMPIX_Halo_cell_bind_remote( MPI_Halo_exchange ex, MPI_Halo halo, int remote, char * remote_label );
 
 /* This is the MPI Tools Interface */
 

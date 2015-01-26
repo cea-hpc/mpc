@@ -680,9 +680,18 @@
 #pragma weak mpi_type_free_keyval_ = pmpi_type_free_keyval_
 #pragma weak mpi_type_free_keyval__ = pmpi_type_free_keyval__
 
-/************************************************************************/
-/*  NOT IMPLEMENTED                                                     */
-/************************************************************************/
+#pragma weak  MPIX_Halo_cell_init = PMPIX_Halo_cell_init
+#pragma weak  MPIX_Halo_cell_release = PMPIX_Halo_cell_release
+#pragma weak  MPIX_Halo_cell_set = PMPIX_Halo_cell_set
+#pragma weak  MPIX_Halo_cell_get = PMPIX_Halo_cell_get
+#pragma weak  MPIX_Halo_exchange_init = PMPIX_Halo_exchange_init
+#pragma weak  MPIX_Halo_exchange_release = PMPIX_Halo_exchange_release
+#pragma weak  MPIX_Halo_exchange_commit = PMPIX_Halo_exchange_commit
+#pragma weak  MPIX_Halo_exchange = PMPIX_Halo_exchange
+#pragma weak  MPIX_Halo_iexchange = PMPIX_Halo_iexchange
+#pragma weak  MPIX_Halo_iexchange_wait = PMPIX_Halo_iexchange_wait
+#pragma weak  MPIX_Halo_cell_bind_local = PMPIX_Halo_cell_bind_local
+#pragma weak  MPIX_Halo_cell_bind_remote = PMPIX_Halo_cell_bind_remote
 
 // PROFILER MPI_ONE_SIDED MPI One-sided communications
 /* Communicator Management */

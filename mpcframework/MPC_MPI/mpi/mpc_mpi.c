@@ -25,6 +25,7 @@
 
 #include "sctk_ht.h"
 #include "sctk_handle.h"
+#include "mpc_mpi_halo.h"
 
 #ifndef SCTK_DO_NOT_HAVE_WEAK_SYMBOLS
 #include "mpc_mpi_weak.h"
@@ -469,6 +470,29 @@ static int __INTERNAL__PMPI_Comm_get_name (MPI_Comm, char *, int *);
 static int __INTERNAL__PMPI_Comm_set_name (MPI_Comm, char *);
 static int __INTERNAL__PMPI_Init_thread (int *, char ***, int, int *);
 static int __INTERNAL__PMPI_Query_thread (int *);
+
+/* Halo */
+
+static int __INTERNAL__PMPIX_Halo_cell_init( MPI_Halo * halo, char * label, MPI_Datatype type, int count );
+static int __INTERNAL__PMPIX__Halo_cell_release( MPI_Halo * halo );
+
+static int __INTERNAL__PMPIX__Halo_cell_set( MPI_Halo halo, void * ptr );
+static int __INTERNAL__PMPIX__Halo_cell_get( MPI_Halo halo, void ** ptr );
+
+/* Halo Exchange */
+
+static int __INTERNAL__PMPIX__Halo_exchange_init( MPI_Halo_exchange * ex );
+static int __INTERNAL__PMPIX__Halo_exchange_release( MPI_Halo_exchange * ex );
+
+static int __INTERNAL__PMPIX__Halo_exchange_commit( MPI_Halo_exchange ex );
+static int __INTERNAL__PMPIX__Halo_exchange( MPI_Halo_exchange ex );
+static int __INTERNAL__PMPIX__Halo_iexchange( MPI_Halo_exchange ex );
+static int __INTERNAL__PMPIX_Halo_iexchange_wait( MPI_Halo_exchange ex );
+
+static int __INTERNAL__PMPIX__Halo_cell_bind_local( MPI_Halo_exchange ex, MPI_Halo halo );
+static int __INTERNAL__PMPIX__Halo_cell_bind_remote( MPI_Halo_exchange ex, MPI_Halo halo, int remote, char * remote_label );
+
+
 
 
 typedef struct
@@ -1351,6 +1375,39 @@ inline void __sctk_delete_mpc_request (MPI_Request * req,
           }
         }
         sctk_spinlock_unlock(&(tmp->lock));
+}
+
+/************************************************************************/
+/* Halo storage Handling                                                */
+/************************************************************************/
+
+static volatile int __sctk_halo_initialized = 0;
+sctk_spinlock_t __sctk_halo_initialized_lock = 0;
+static struct sctk_mpi_halo_context __sctk_halo_context;
+
+/** \brief Halo Context getter for MPI */
+static inline struct sctk_mpi_halo_context * sctk_halo_context_get()
+{
+	return &__sctk_halo_context;
+}
+
+/** \brief Function called in \ref MPI_Init Initialized halo context once
+ */
+static inline void __sctk_init_mpc_halo ()
+{
+	sctk_spinlock_lock( &__sctk_halo_initialized_lock );
+	
+	if( __sctk_halo_initialized )
+	{
+		sctk_spinlock_unlock( &__sctk_halo_initialized_lock );
+		return;
+	}
+	
+	sctk_mpi_halo_context_init( sctk_halo_context_get() );
+	
+	__sctk_halo_initialized = 1;
+	
+	sctk_spinlock_unlock( &__sctk_halo_initialized_lock );
 }
 
 
@@ -14361,6 +14418,7 @@ static int __INTERNAL__PMPI_Init(int *argc, char ***argv) {
     __sctk_init_mpi_op();
     __sctk_init_mpc_group();
     fortran_check_binds_resolve();
+     __sctk_init_mpc_halo ();
 
     sctk_spinlock_lock(&(task_specific->per_communicator_lock));
     HASH_ITER(hh, task_specific->per_communicator, per_communicator,
@@ -14440,6 +14498,203 @@ static int
 __INTERNAL__PMPI_Abort (MPI_Comm comm, int val)
 {
   return PMPC_Abort (comm, val);
+}
+
+
+
+/* Halo */
+
+static int __INTERNAL__PMPIX_Halo_cell_init( MPI_Halo * halo, char * label, MPI_Datatype type, int count )
+{
+	int new_id = 0;
+	struct sctk_mpi_halo_s * new_cell = sctk_mpi_halo_context_new( sctk_halo_context_get(),  &new_id );
+	*halo = new_id;
+	
+	sctk_mpi_halo_init( new_cell , label , type, count );
+	
+	return MPI_SUCCESS;
+}
+
+static int __INTERNAL__PMPIX__Halo_cell_release( MPI_Halo * halo )
+{
+	struct sctk_mpi_halo_s * cell = sctk_mpi_halo_context_get( sctk_halo_context_get(),  *halo );
+	
+	if( !cell )
+		return MPI_ERR_ARG;
+	
+	/* Remove cell from array */
+	sctk_mpi_halo_context_set( sctk_halo_context_get(),  *halo, NULL );
+	
+	sctk_mpi_halo_release( cell );
+
+	*halo = MPI_HALO_NULL;
+
+	return MPI_SUCCESS;	
+}
+
+
+static int __INTERNAL__PMPIX__Halo_cell_set( MPI_Halo halo, void * ptr )
+{
+	struct sctk_mpi_halo_s * cell = sctk_mpi_halo_context_get( sctk_halo_context_get(),  halo );
+	
+	if( !cell )
+		return MPI_ERR_ARG;
+	
+	if( sctk_mpi_halo_set( cell, ptr ) )
+	{
+		return MPI_ERR_INTERN;
+	}
+	
+	return MPI_SUCCESS;
+}
+
+static int __INTERNAL__PMPIX__Halo_cell_get( MPI_Halo halo, void ** ptr )
+{
+	struct sctk_mpi_halo_s * cell = sctk_mpi_halo_context_get( sctk_halo_context_get(),  halo );
+	
+	if( !cell )
+		return MPI_ERR_ARG;
+	
+	if( sctk_mpi_halo_get( cell, ptr ) )
+	{
+		return MPI_ERR_INTERN;
+	}
+	
+	return MPI_SUCCESS;
+}
+
+
+/* Halo Exchange */
+
+static int __INTERNAL__PMPIX__Halo_exchange_init( MPI_Halo_exchange * ex )
+{
+	int new_id = 0;
+	struct sctk_mpi_halo_exchange_s * new_ex = sctk_mpi_halo_context_exchange_new( sctk_halo_context_get(),  &new_id );
+	*ex = new_id;
+	
+	sctk_mpi_halo_exchange_init( new_ex );
+	
+	return MPI_SUCCESS;
+}
+
+static int __INTERNAL__PMPIX__Halo_exchange_release( MPI_Halo_exchange * ex )
+{
+	struct sctk_mpi_halo_exchange_s * exentry = sctk_mpi_halo_context_exchange_get( sctk_halo_context_get(),  *ex );
+		
+	if( !exentry )
+		return MPI_ERR_ARG;
+	
+	sctk_mpi_halo_context_exchange_set( sctk_halo_context_get(),  *ex, NULL );
+	
+	if( sctk_mpi_halo_exchange_release( exentry ) )
+	{
+		return MPI_ERR_INTERN;
+	}
+	
+	*ex = MPI_HALO_NULL;
+	
+	return MPI_SUCCESS;
+}
+
+static int __INTERNAL__PMPIX__Halo_exchange_commit( MPI_Halo_exchange ex )
+{
+	struct sctk_mpi_halo_exchange_s * exentry = sctk_mpi_halo_context_exchange_get( sctk_halo_context_get(),  ex );
+		
+	if( !exentry )
+		return MPI_ERR_ARG;
+	
+	if( sctk_mpi_halo_exchange_commit( exentry ) )
+	{
+		return MPI_ERR_INTERN;
+	}
+
+	return MPI_SUCCESS;
+}
+
+static int __INTERNAL__PMPIX__Halo_exchange( MPI_Halo_exchange ex )
+{
+	struct sctk_mpi_halo_exchange_s * exentry = sctk_mpi_halo_context_exchange_get( sctk_halo_context_get(),  ex );
+		
+	if( !exentry )
+		return MPI_ERR_ARG;
+	
+	if( sctk_mpi_halo_exchange_blocking( exentry ) )
+	{
+		return MPI_ERR_INTERN;
+	}
+
+	return MPI_SUCCESS;
+}
+
+static int __INTERNAL__PMPIX__Halo_iexchange( MPI_Halo_exchange ex )
+{
+	struct sctk_mpi_halo_exchange_s * exentry = sctk_mpi_halo_context_exchange_get( sctk_halo_context_get(),  ex );
+		
+	if( !exentry )
+		return MPI_ERR_ARG;
+	
+	if( sctk_mpi_halo_iexchange( exentry ) )
+	{
+		return MPI_ERR_INTERN;
+	}
+
+	return MPI_SUCCESS;
+}
+
+static int __INTERNAL__PMPIX_Halo_iexchange_wait( MPI_Halo_exchange ex )
+{
+	struct sctk_mpi_halo_exchange_s * exentry = sctk_mpi_halo_context_exchange_get( sctk_halo_context_get(),  ex );
+		
+	if( !exentry )
+		return MPI_ERR_ARG;
+	
+	if( sctk_mpi_halo_exchange_wait( exentry ) )
+	{
+		return MPI_ERR_INTERN;
+	}
+
+	return MPI_SUCCESS;
+}
+
+
+static int __INTERNAL__PMPIX__Halo_cell_bind_local( MPI_Halo_exchange ex, MPI_Halo halo )
+{
+	struct sctk_mpi_halo_exchange_s * exentry = sctk_mpi_halo_context_exchange_get( sctk_halo_context_get(),  ex );
+		
+	if( !exentry )
+		return MPI_ERR_ARG;
+	
+	struct sctk_mpi_halo_s * cell = sctk_mpi_halo_context_get( sctk_halo_context_get(),  halo );
+	
+	if( !cell )
+		return MPI_ERR_ARG;
+	
+	if( sctk_mpi_halo_bind_local( exentry, cell) )
+	{
+		return MPI_ERR_INTERN;
+	}
+
+	return MPI_SUCCESS;
+}
+
+static int __INTERNAL__PMPIX__Halo_cell_bind_remote( MPI_Halo_exchange ex, MPI_Halo halo, int remote, char * remote_label )
+{
+	struct sctk_mpi_halo_exchange_s * exentry = sctk_mpi_halo_context_exchange_get( sctk_halo_context_get(),  ex );
+		
+	if( !exentry )
+		return MPI_ERR_ARG;
+	
+	struct sctk_mpi_halo_s * cell = sctk_mpi_halo_context_get( sctk_halo_context_get(),  halo );
+	
+	if( !cell )
+		return MPI_ERR_ARG;
+
+	if( sctk_mpi_halo_bind_remote( exentry, cell, remote, remote_label) )
+	{
+		return MPI_ERR_INTERN;
+	}
+
+	return MPI_SUCCESS;
 }
 
 /*
@@ -19137,8 +19392,7 @@ int PMPI_Info_get_valuelen(MPI_Info info, char *key, int *valuelen, int *flag)
 	return PMPC_Info_get_valuelen( (MPC_Info) info , key , valuelen , flag );
 }
 
-
-/************************* 
+/*************************
 *  MPI Keyval Management *
 *************************/
 
@@ -19148,16 +19402,10 @@ int PMPI_Comm_create_keyval(MPI_Comm_copy_attr_function *comm_copy_attr_fn, MPI_
 	return  __INTERNAL__PMPI_Comm_create_keyval(comm_copy_attr_fn, comm_delete_attr_fn, comm_keyval, extra_state);
 }
 
-
-
 int PMPI_Comm_free_keyval(int *comm_keyval)
 {
 	return __INTERNAL__PMPI_Comm_free_keyval (comm_keyval);
 }
-
-/************************* 
-*  MPI Keyval Management *
-*************************/
 
 
 int PMPI_Comm_set_attr(MPI_Comm comm, int comm_keyval, void *attribute_val)
@@ -19170,13 +19418,85 @@ int PMPI_Comm_get_attr(MPI_Comm comm, int comm_keyval, void *attribute_val, int 
 {
 	return MPI_SUCCESS;
 
+
 }
+
 
 int PMPI_Comm_delete_attr(MPI_Comm comm, int comm_keyval)
 {
 	return MPI_SUCCESS;
 
 }
+
+/********************************* 
+*  MPI_Halo Extra halo interface *
+*********************************/
+int PMPIX_Halo_cell_init( MPI_Halo * halo, char * label, MPI_Datatype type, int count )
+{
+	return __INTERNAL__PMPIX_Halo_cell_init( halo, label, type, count );
+}
+
+int PMPIX_Halo_cell_release( MPI_Halo * halo )
+{
+	return __INTERNAL__PMPIX__Halo_cell_release( halo );
+}
+
+
+int PMPIX_Halo_cell_set( MPI_Halo halo, void * ptr )
+{
+	return __INTERNAL__PMPIX__Halo_cell_set( halo , ptr );
+}
+
+int PMPIX_Halo_cell_get( MPI_Halo halo, void ** ptr )
+{
+	return __INTERNAL__PMPIX__Halo_cell_get( halo, ptr );
+}
+
+/* Halo Exchange */
+
+int PMPIX_Halo_exchange_init( MPI_Halo_exchange * ex )
+{
+	return __INTERNAL__PMPIX__Halo_exchange_init( ex );
+}
+
+int PMPIX_Halo_exchange_release( MPI_Halo_exchange * ex )
+{
+	return __INTERNAL__PMPIX__Halo_exchange_release( ex );
+}
+
+
+
+int PMPIX_Halo_exchange_commit( MPI_Halo_exchange ex )
+{
+	return __INTERNAL__PMPIX__Halo_exchange_commit( ex );
+}
+
+int PMPIX_Halo_exchange( MPI_Halo_exchange ex )
+{
+	return __INTERNAL__PMPIX__Halo_exchange( ex );
+}
+
+int PMPIX_Halo_iexchange( MPI_Halo_exchange ex )
+{
+	return __INTERNAL__PMPIX__Halo_iexchange( ex );
+}
+
+int PMPIX_Halo_iexchange_wait( MPI_Halo_exchange ex )
+{
+	return __INTERNAL__PMPIX_Halo_iexchange_wait( ex );
+}
+
+
+int PMPIX_Halo_cell_bind_local( MPI_Halo_exchange ex, MPI_Halo halo )
+{
+	return __INTERNAL__PMPIX__Halo_cell_bind_local( ex, halo );
+}
+
+int PMPIX_Halo_cell_bind_remote( MPI_Halo_exchange ex, MPI_Halo halo, int remote, char * remote_label )
+{
+	return __INTERNAL__PMPIX__Halo_cell_bind_remote( ex, halo, remote, remote_label );
+}
+
 
 /************************************************************************/
 /*  The MPI Tools Inteface                                              */
