@@ -1886,6 +1886,22 @@ void ffunc (pmpi_info_get_valuelen)( MPI_Info * info, const char *key SCTK_CHAR_
 	sctk_free( ptr );
 }
 
+void ffunc (pmpi_alloc_mem)(MPI_Aint size, MPI_Info info, void *baseptr, int *res)
+{
+	*res = MPI_Alloc_mem(size, info, baseptr);
+}
+
+void ffunc (pmpi_free_mem)(void *ptr, int *res)
+{
+	*res = MPI_Free_mem(ptr);
+}
+
+void ffunc (pmpi_type_match_size)(int typeclass, int size, MPI_Datatype *rtype, int *res){not_implemented();}
+void ffunc (pmpi_type_size_x)(MPI_Datatype datatype, MPI_Count *size, int *res){not_implemented();}
+void ffunc (pmpi_type_get_extent_x)(MPI_Datatype datatype, MPI_Count *lb, MPI_Count *extent, int *res){not_implemented();}
+void ffunc (pmpi_type_get_true_extent_x)(MPI_Datatype datatype, MPI_Count *true_lb, MPI_Count *true_extent, int *res){not_implemented();}
+void ffunc (pmpi_get_elements_x)(MPI_Status * status, MPI_Datatype datatype, MPI_Count *elements, int *res){not_implemented();}
+void ffunc (pmpi_type_create_darray)(int size,int rank,int ndims,int array_of_gsizes[],int array_of_distribs[],int array_of_dargs[],int array_of_psizes[],int order,MPI_Datatype oldtype,MPI_Datatype *newtype, int *res){not_implemented();}
 
 /* MPI Status Modification and Query */
 
@@ -1913,3 +1929,193 @@ void ffunc (pmpi_test_cancelled) (MPI_Status * status, int *flag, int *res)
 {
   *res = MPI_Test_cancelled (status, flag);
 }
+
+/************************************************************************/
+/*  NOT IMPLEMENTED                                                     */
+/************************************************************************/
+/* Generalized Requests */
+void ffunc (pmpi_grequest_start)( MPI_Grequest_query_function *query_fn,MPI_Grequest_free_function * free_fn,MPI_Grequest_cancel_function * cancel_fn,void *extra_state,MPI_Request * request, int *res){not_implemented();}
+void ffunc (pmpi_grequest_complete)(  MPI_Request request, int *res){not_implemented();}
+/* Extended Generalized Requests */
+void ffunc (pmpix_grequest_start)(MPI_Grequest_query_function *query_fn,MPI_Grequest_free_function * free_fn,MPI_Grequest_cancel_function * cancel_fn,MPIX_Grequest_poll_fn * poll_fn,void *extra_state,MPI_Request * request, int *res){not_implemented();}
+/* Extended Generalized Request Class */
+void ffunc (pmpix_grequest_class_create)( MPI_Grequest_query_function * query_fn,MPI_Grequest_free_function * free_fn,MPI_Grequest_cancel_function * cancel_fn,MPIX_Grequest_poll_fn * poll_fn,MPIX_Grequest_wait_fn * wait_fn,MPIX_Grequest_class * new_class, int *res){not_implemented();}
+void ffunc (pmpix_grequest_class_allocate)( MPIX_Grequest_class  target_class, void *extra_state, MPI_Request *request, int *res){not_implemented();}
+
+/* One-sided communications */
+void ffunc (pmpi_win_set_attr)(MPI_Win win, int win_keyval, void *attribute_val, int *res){not_implemented();}
+void ffunc (pmpi_win_get_attr)(MPI_Win win, int win_keyval, void *attribute_val, int *flag, int *res){not_implemented();}
+void ffunc (pmpi_win_free_keyval)(int *win_keyval, int *res){not_implemented();}
+void ffunc (pmpi_win_delete_attr)(MPI_Win win, int win_keyval, int *res){not_implemented();}
+void ffunc (pmpi_win_create_keyval)(MPI_Win_copy_attr_function *win_copy_attr_fn, MPI_Win_delete_attr_function *win_delete_attr_fn, int *win_keyval, void *extra_state, int *res){not_implemented();}
+void ffunc (pmpi_win_create)(void *base, MPI_Aint size, int disp_unit, MPI_Info info, MPI_Comm comm, MPI_Win *win){not_implemented();}
+void ffunc (pmpi_win_free)(MPI_Win * win, int *res){not_implemented();}
+void ffunc (pmpi_win_fence)(int assert, MPI_Win win, int *res){not_implemented();}
+void ffunc (pmpi_win_start)(MPI_Group group, int assert, MPI_Win win, int *res){not_implemented();}
+void ffunc (pmpi_win_complete)(MPI_Win win, int *res){not_implemented();}
+void ffunc (pmpi_win_lock)(int lock_type, int rank, int assert, MPI_Win win, int *res){not_implemented();}
+void ffunc (pmpi_win_unlock)(int rank, MPI_Win win, int *res){not_implemented();}
+void ffunc (pmpi_win_post)(MPI_Group group, int assert, MPI_Win win, int *res){not_implemented();}
+void ffunc (pmpi_win_wait)(MPI_Win win, int *res){not_implemented();}
+void ffunc (pmpi_win_allocate)(MPI_Aint size, int disp_unit, MPI_Info info, MPI_Comm comm, void *baseptr, MPI_Win *win, int *res){not_implemented();}
+void ffunc (pmpi_win_test)(MPI_Win win, int *flag, int *res){not_implemented();}
+void ffunc (pmpi_win_set_name)(MPI_Win win, const char *win_name, int *res){not_implemented();}
+void ffunc (pmpi_win_get_name)(MPI_Win win, char *win_name, int *resultlen, int *res){not_implemented();}
+void ffunc (pmpi_win_create_errhandler)(MPI_Win_errhandler_function *win_errhandler_fn,MPI_Errhandler *errhandler, int *res){not_implemented();}
+void ffunc (pmpi_win_set_errhandler)(MPI_Win win, MPI_Errhandler errhandler, int *res){not_implemented();}
+void ffunc (pmpi_win_get_errhandler)(MPI_Win win, MPI_Errhandler *errhandler, int *res){not_implemented();}
+void ffunc (pmpi_win_get_group)(MPI_Win win, MPI_Group *group, int *res){not_implemented();}
+void ffunc (pmpi_win_call_errhandler)(MPI_Win win, int errorcode, int *res){not_implemented();}
+void ffunc (pmpi_win_allocate_shared)(MPI_Aint size, int disp_unit, MPI_Info info, MPI_Comm comm,void *baseptr, MPI_Win *win, int *res){not_implemented();}
+void ffunc (pmpi_win_create_dynamic)(MPI_Info info, MPI_Comm comm, MPI_Win *win, int *res){not_implemented();}
+void ffunc (pmpi_win_shared_query)(MPI_Win win, int rank, MPI_Aint *size, int *disp_unit, void *baseptr, int *res){not_implemented();}
+void ffunc (pmpi_win_lock_all)(int assert, MPI_Win win, int *res){not_implemented();}
+void ffunc (pmpi_win_unlock_all)(MPI_Win win, int *res){not_implemented();}
+void ffunc (pmpi_win_sync)(MPI_Win win, int *res){not_implemented();}
+void ffunc (pmpi_win_attach)(MPI_Win win, void *base, MPI_Aint size, int *res){not_implemented();}
+void ffunc (pmpi_win_detach)(MPI_Win win, const void *base, int *res){not_implemented();}
+void ffunc (pmpi_win_flush)(int rank, MPI_Win win, int *res){not_implemented();}
+void ffunc (pmpi_win_flush_all)(MPI_Win win, int *res){not_implemented();}
+void ffunc (pmpi_win_set_info)(MPI_Win win, MPI_Info info, int *res){not_implemented();}
+void ffunc (pmpi_win_get_info)(MPI_Win win, MPI_Info *info_used, int *res){not_implemented();}
+void ffunc (pmpi_get_accumulate)(const void *origin_addr, int origin_count,MPI_Datatype origin_datatype, void *result_addr, int result_count,MPI_Datatype result_datatype, int target_rank, MPI_Aint target_disp,int target_count, MPI_Datatype target_datatype, MPI_Op op, MPI_Win win, int *res){not_implemented();}
+
+void ffunc (pmpi_fetch_and_op)(const void *origin_addr, void *result_addr,MPI_Datatype datatype, int target_rank, MPI_Aint target_disp,MPI_Op op, MPI_Win win, int *res){not_implemented();}
+
+void ffunc (pmpi_compare_and_swap)(const void *origin_addr, const void *compare_addr,void *result_addr, MPI_Datatype datatype, int target_rank,MPI_Aint target_disp, MPI_Win win, int *res){not_implemented();}
+
+void ffunc (pmpi_rput)(const void *origin_addr, int origin_count, MPI_Datatype origin_datatype, int target_rank, MPI_Aint target_disp,int target_count, MPI_Datatype target_datatype, MPI_Win win, MPI_Request *request, int *res){not_implemented();}
+
+void ffunc (pmpi_rget)(void *origin_addr, int origin_count, MPI_Datatype origin_datatype, int target_rank, MPI_Aint target_disp,int target_count, MPI_Datatype target_datatype, MPI_Win win, MPI_Request *request, int *res){not_implemented();}
+
+void ffunc (pmpi_raccumulate)(const void *origin_addr, int origin_count, MPI_Datatype origin_datatype, int target_rank, MPI_Aint target_disp, int target_count, MPI_Datatype target_datatype, MPI_Op op, MPI_Win win,MPI_Request *request, int *res){not_implemented();}
+
+void ffunc (pmpi_rget_accumulate)(const void *origin_addr, int origin_count,MPI_Datatype origin_datatype, void *result_addr, int result_count,MPI_Datatype result_datatype, int target_rank, MPI_Aint target_disp,int target_count, MPI_Datatype target_datatype, MPI_Op op, MPI_Win win,MPI_Request *request, int *res){not_implemented();}
+
+void ffunc (pmpi_accumulate)(const void *origin_addr, int origin_count, MPI_Datatype origin_datatype, int target_rank, MPI_Aint target_disp, int target_count, MPI_Datatype target_datatype, MPI_Op op, MPI_Win win, int *res){not_implemented();}
+
+void ffunc (pmpi_get)(void *origin_addr, int origin_count, MPI_Datatype origin_datatype, int target_rank, MPI_Aint target_disp, int target_count, MPI_Datatype target_datatype, MPI_Win win, int *res){not_implemented();}
+
+void ffunc (pmpi_put)(const void *origin_addr, int origin_count, MPI_Datatype origin_datatype, int target_rank, MPI_Aint target_disp,int target_count, MPI_Datatype target_datatype, MPI_Win win, int *res){not_implemented();}
+
+/* Communicator Management */
+void ffunc (pmpi_comm_set_attr)(MPI_Comm comm, int comm_keyval, void *attribute_val, int *res){not_implemented();}
+void ffunc (pmpi_comm_get_attr)(MPI_Comm comm, int comm_keyval, void *attribute_val, int *flag, int *res){not_implemented();}
+void ffunc (pmpi_comm_free_keyval)(int *comm_keyval, int *res){not_implemented();}
+void ffunc (pmpi_comm_delete_attr)(MPI_Comm comm, int comm_keyval, int *res){not_implemented();}
+void ffunc (pmpi_comm_create_keyval)(MPI_Comm_copy_attr_function *comm_copy_attr_fn, MPI_Comm_delete_attr_function *comm_delete_attr_fn, int *comm_keyval, void *extra_state, int *res){not_implemented();}
+void ffunc (pmpi_comm_idup)(MPI_Comm comm, MPI_Comm *newcomm, MPI_Request *request, int *res){not_implemented();}
+void ffunc (pmpi_comm_dup_with_info)(MPI_Comm comm, MPI_Info info, MPI_Comm * newcomm, int *res){not_implemented();}
+void ffunc (pmpi_comm_split_type)(MPI_Comm comm, int split_type, int key, MPI_Info info, MPI_Comm * newcomm, int *res){not_implemented();}
+void ffunc (pmpi_comm_set_info)(MPI_Comm comm, MPI_Info info, int *res){not_implemented();}
+void ffunc (pmpi_comm_get_info)(MPI_Comm comm, MPI_Info * info_used, int *res){not_implemented();}
+void ffunc (pmpi_comm_create_errhandler)(MPI_Comm_errhandler_function *function, MPI_Errhandler *errhandler, int *res){not_implemented();}
+void ffunc (pmpi_comm_get_errhandler)(MPI_Comm comm, MPI_Errhandler *errhandler, int *res){not_implemented();}
+void ffunc (pmpi_comm_create_group)(MPI_Comm comm, MPI_Group group, int tag, MPI_Comm * newcomm, int *res){not_implemented();}
+void ffunc (pmpi_comm_call_errhandler)(MPI_Comm comm, int errorcode, int *res){not_implemented();}
+
+/* datatype handling */
+void ffunc (pmpi_type_set_attr)(MPI_Datatype datatype, int type_keyval, void *attribute_val, int *res){not_implemented();}
+void ffunc (pmpi_type_get_attr)(MPI_Datatype datatype, int type_keyval, void *attribute_val, int *flag, int *res){not_implemented();}
+void ffunc (pmpi_type_free_keyval)(int *type_keyval, int *res){not_implemented();}
+void ffunc (pmpi_type_delete_attr)(MPI_Datatype datatype, int type_keyval, int *res){not_implemented();}
+void ffunc (pmpi_type_create_keyval)(MPI_Type_copy_attr_function *type_copy_attr_fn, MPI_Type_delete_attr_function *type_delete_attr_fn, int *type_keyval, void *extra_state, int *res){not_implemented();}
+
+void ffunc (pmpi_add_error_class)(int *errorclass, int *res){not_implemented();}
+void ffunc (pmpi_add_error_code)(int errorclass, int *errorcode, int *res){not_implemented();}
+void ffunc (pmpi_add_error_string)(int errorcode, char *string, int *res){not_implemented();}
+void ffunc (pmpi_is_thread_main)(int *flag, int *res){not_implemented();}
+void ffunc (pmpi_get_library_version)(char *version, int *resultlen, int *res){not_implemented();}
+
+/* Process Creation and Management */
+void ffunc (pmpi_close_port)(const char *port_name, int *res){not_implemented();}
+void ffunc (pmpi_comm_accept)(const char *port_name, MPI_Info info, int root, MPI_Comm comm,MPI_Comm *newcomm, int *res){not_implemented();}
+void ffunc (pmpi_comm_connect)(const char *port_name, MPI_Info info, int root, MPI_Comm comm, MPI_Comm *newcomm, int *res){not_implemented();}
+void ffunc (pmpi_comm_disconnect)(MPI_Comm * comm, int *res){not_implemented();}
+void ffunc (pmpi_comm_get_parent)(MPI_Comm *parent, int *res){not_implemented();}
+void ffunc (pmpi_comm_join)(int fd, MPI_Comm *intercomm, int *res){not_implemented();}
+void ffunc (pmpi_comm_spawn)(const char *command, char *argv[], int maxprocs, MPI_Info info,int root, MPI_Comm comm, MPI_Comm *intercomm,int array_of_errcodes[], int *res){not_implemented();}
+void ffunc (pmpi_comm_spawn_multiple)(int count, char *array_of_commands[],char **array_of_argv[], const int array_of_maxprocs[],const MPI_Info array_of_info[], int root, MPI_Comm comm,MPI_Comm *intercomm, int array_of_errcodes[], int *res){not_implemented();}
+void ffunc (pmpi_lookup_name)(const char *service_name, MPI_Info info, char *port_name, int *res){not_implemented();}
+void ffunc (pmpi_open_port)(MPI_Info info, char *port_name, int *res){not_implemented();}
+void ffunc (pmpi_publish_name)(const char *service_name, MPI_Info info, const char *port_name, int *res){not_implemented();}
+void ffunc (pmpi_unpublish_name)(const char *service_name, MPI_Info info, const char *port_name, int *res){not_implemented();}
+
+/* non blocking coll */
+void ffunc (pmpi_iallreduce) (const void *sendbuf, void *recvbuf, int count,MPI_Datatype datatype, MPI_Op op, MPI_Comm comm,MPI_Request *request, int *res){not_implemented();}
+void ffunc (pmpi_ibarrier)(MPI_Comm comm, MPI_Request *request, int *res){not_implemented();}
+void ffunc (pmpi_ibcast)(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, MPI_Request *request, int *res){not_implemented();}
+void ffunc (pmpi_igather)(const void *sendbuf, int sendcount, MPI_Datatype sendtype,void *recvbuf, int recvcount, MPI_Datatype recvtype,int root, MPI_Comm comm, MPI_Request *request, int *res){not_implemented();}
+void ffunc (pmpi_igatherv)(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int recvcounts[], const int displs[], MPI_Datatype recvtype, int root, MPI_Comm comm, MPI_Request *request, int *res){not_implemented();}
+void ffunc (pmpi_iscatter)(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPI_Request *request, int *res){not_implemented();}
+void ffunc (pmpi_iscatterv)(const void *sendbuf, const int sendcounts[], const int displs[], MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPI_Request *request, int *res){not_implemented();}
+void ffunc (pmpi_iallgather)(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPI_Request *request, int *res){not_implemented();}
+void ffunc (pmpi_iallgatherv)(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int recvcounts[], const int displs[], MPI_Datatype recvtype, MPI_Comm comm, MPI_Request *request, int *res){not_implemented();}
+void ffunc (pmpi_ialltoall)(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPI_Request *request, int *res){not_implemented();}
+void ffunc (pmpi_ialltoallv)(const void *sendbuf, const int sendcounts[], const int sdispls[], MPI_Datatype sendtype, void *recvbuf, const int recvcounts[], const int rdispls[], MPI_Datatype recvtype, MPI_Comm comm, MPI_Request *request, int *res){not_implemented();}
+void ffunc (pmpi_ialltoallw)(const void *sendbuf, const int sendcounts[], const int sdispls[], const MPI_Datatype sendtypes[], void *recvbuf, const int recvcounts[], const int rdispls[], const MPI_Datatype recvtypes[], MPI_Comm comm, MPI_Request *request, int *res){not_implemented();}
+void ffunc (pmpi_ireduce)(const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm, MPI_Request *request, int *res){not_implemented();}
+void ffunc (pmpi_ireduce_scatter)(const void *sendbuf, void *recvbuf, const int recvcounts[], MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Request *request, int *res){not_implemented();}
+void ffunc (pmpi_ireduce_scatter_block)(const void *sendbuf, void *recvbuf, int recvcount, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Request *request, int *res){not_implemented();}
+void ffunc (pmpi_iscan)(const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Request *request, int *res){not_implemented();}
+void ffunc (pmpi_iexscan)(const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Request *request, int *res){not_implemented();}
+
+/* Dist graph operations */
+void ffunc (pmpi_dist_graph_neighbors_count)(MPI_Comm comm, int *indegree, int *outdegree, int *weighted, int *res){not_implemented();}
+void ffunc (pmpi_dist_graph_neighbors)(MPI_Comm comm, int maxindegree, int sources[], int sourceweights[], int maxoutdegree, int destinations[], int destweights[], int *res){not_implemented();}
+void ffunc (pmpi_dist_graph_create)(MPI_Comm comm_old, int n, const int sources[],const int degrees[], const int destinations[],const int weights[],MPI_Info info, int reorder, MPI_Comm *comm_dist_graph, int *res){not_implemented();}
+void ffunc (pmpi_dist_graph_create_adjacent)(MPI_Comm comm_old,int indegree, const int sources[],const int sourceweights[],int outdegree, const int destinations[],const int destweights[],MPI_Info info, int reorder, MPI_Comm *comm_dist_graph, int *res){not_implemented();}
+
+/* collectives */
+void ffunc (pmpi_reduce_local)(const void *inbuf, void *inoutbuf, int count, MPI_Datatype datatype, MPI_Op op, int *res){not_implemented();}
+
+/* Error handling */
+void ffunc (pmpi_file_create_errhandler)(MPI_File_errhandler_function *file_errhandler_fn, MPI_Errhandler *errhandler, int *res){not_implemented();}
+void ffunc (pmpi_file_call_errhandler)(void * fh, int errorcode, int *res){not_implemented();}
+
+/* MPI_T methods */
+void ffunc (pmpi_t_init_thread)(int required, int *provided, int *res){not_implemented();}
+void ffunc (pmpi_t_finalize)(int *res){not_implemented();}
+
+void ffunc (pmpi_t_pvar_read)(MPI_T_pvar_session session, MPI_T_pvar_handle handle, void *buf, int *res){not_implemented();}
+void ffunc (pmpi_t_pvar_write)(MPI_T_pvar_session session, MPI_T_pvar_handle handle, void *buf, int *res){not_implemented();}
+void ffunc (pmpi_t_pvar_reset)(MPI_T_pvar_session session, MPI_T_pvar_handle handle, int *res){not_implemented();}
+void ffunc (pmpi_t_pvar_get_num)(int *num_pvar, int *res){not_implemented();}
+void ffunc (pmpi_t_pvar_get_info)(int pvar_index, char *name, int *name_len, int *verbosity, int *var_class, MPI_Datatype *datatype, MPI_T_enum *enumtype, char *desc, int *desc_len, int *binding, int *readonly, int *continuous, int *atomic, int *res){not_implemented();}
+void ffunc (pmpi_t_pvar_session_create)(MPI_T_pvar_session *session, int *res){not_implemented();}
+void ffunc (pmpi_t_pvar_session_free)(MPI_T_pvar_session *session, int *res){not_implemented();}
+void ffunc (pmpi_t_pvar_handle_alloc)(MPI_T_pvar_session session, int pvar_index, void *obj_handle, MPI_T_pvar_handle *handle, int *count, int *res){not_implemented();}
+void ffunc (pmpi_t_pvar_handle_free)(MPI_T_pvar_session session, MPI_T_pvar_handle *handle, int *res){not_implemented();}
+void ffunc (pmpi_t_pvar_start)(MPI_T_pvar_session session, MPI_T_pvar_handle handle, int *res){not_implemented();}
+void ffunc (pmpi_t_pvar_stop)(MPI_T_pvar_session session, MPI_T_pvar_handle handle, int *res){not_implemented();}
+
+void ffunc (pmpi_t_cvar_read)(MPI_T_cvar_handle handle, void *buf, int *res){not_implemented();}
+void ffunc (pmpi_t_cvar_write)(MPI_T_cvar_handle handle, void *buf, int *res){not_implemented();}
+void ffunc (pmpi_t_cvar_get_num)(int *num_cvar, int *res){not_implemented();}
+void ffunc (pmpi_t_cvar_get_info)(int cvar_index, char *name, int *name_len,int *verbosity, MPI_Datatype *datatype, MPI_T_enum *enumtype,char *desc, int *desc_len, int *binding, int *scope, int *res){not_implemented();}
+void ffunc (pmpi_t_cvar_handle_alloc)(int cvar_index, void *obj_handle, MPI_T_cvar_handle *handle, int *count, int *res){not_implemented();}
+void ffunc (pmpi_t_cvar_handle_free)(MPI_T_cvar_handle *handle, int *res){not_implemented();}
+
+void ffunc (pmpi_t_category_get_pvars)(int cat_index, int len, int indices[], int *res){not_implemented();}
+void ffunc (pmpi_t_category_get_num)(int *num_cat, int *res){not_implemented();}
+void ffunc (pmpi_t_category_get_categories)(int cat_index, int len, int indices[], int *res){not_implemented();}
+void ffunc (pmpi_t_category_get_info)(int cat_index, char *name, int *name_len, char *desc,int *desc_len, int *num_cvars, int *num_pvars, int *num_categories, int *res){not_implemented();}
+void ffunc (pmpi_t_category_get_cvars)(int cat_index, int len, int indices[], int *res){not_implemented();}
+
+void ffunc (pmpi_t_enum_get_info)(MPI_T_enum enumtype, int *num, char *name, int *name_len, int *res){not_implemented();}
+
+/* MPIX methods */
+void ffunc (pmpix_comm_failure_ack)( MPI_Comm comm, int *res ){not_implemented();}
+void ffunc (pmpix_comm_failure_get_acked)( MPI_Comm comm, MPI_Group *failedgrp, int *res ){not_implemented();}
+void ffunc (pmpix_comm_agree)(MPI_Comm comm, int *flag, int *res){not_implemented();}
+void ffunc (pmpix_comm_revoke)(MPI_Comm comm, int *res){not_implemented();}
+void ffunc (pmpix_comm_shrink)(MPI_Comm comm, MPI_Comm *newcomm, int *res){not_implemented();}
+
+/* probe and cancel */
+void ffunc (pmpi_mprobe)(int source, int tag, MPI_Comm comm, MPI_Message *message, MPI_Status *status, int *res){not_implemented();}
+void ffunc (pmpi_mrecv)(void *buf, int count, MPI_Datatype datatype, MPI_Message *message, MPI_Status *status, int *res){not_implemented();}
+void ffunc (pmpi_imrecv)(void *buf, int count, MPI_Datatype datatype, MPI_Message *message, MPI_Request *request, int *res){not_implemented();}
+void ffunc (pmpi_improbe)(int source, int tag, MPI_Comm comm, int *flag, MPI_Message *message, MPI_Status *status, int *res){not_implemented();}
+/************************************************************************/
+/*  END NOT IMPLEMENTED                                                     */
+/************************************************************************/

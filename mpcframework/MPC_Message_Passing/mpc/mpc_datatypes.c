@@ -246,7 +246,7 @@ void init_composed_common_types()
 	tmp = MPC_COMPLEX16;
 	PMPC_Type_commit( &tmp );
 	
-	/* MPC_DOUBLE_COMPLEX  (SCTK_DERIVED_DATATYPE_BASE + 13 */
+	/* MPC_DOUBLE_COMPLEX  (SCTK_DERIVED_DATATYPE_BASE + 12 */
 	__init_a_composed_common_types( MPC_DOUBLE_COMPLEX, disp, MPC_DOUBLE, MPC_DOUBLE  , sizeof(mpc_double_double));
 	sctk_common_datatype_set_name_helper( MPC_DOUBLE_COMPLEX, "MPI_DOUBLE_COMPLEX" );
 	tmp = MPC_DOUBLE_COMPLEX;
@@ -258,6 +258,22 @@ void init_composed_common_types()
 	__init_a_composed_common_types( MPC_LONG_DOUBLE_INT, disp, MPC_LONG_DOUBLE, MPC_INT  , sizeof(mpc_long_double_int));
 	sctk_common_datatype_set_name_helper( MPC_LONG_DOUBLE_INT, "MPI_LONG_DOUBLE_INT" );
 	tmp = MPC_LONG_DOUBLE_INT;
+	PMPC_Type_commit( &tmp );
+					
+	/* MPC_2INTEGER  (SCTK_DERIVED_DATATYPE_BASE + 13 */
+	mpc_integer_integer foo_13;
+	disp = ((char *)&foo_13.b - (char *)&foo_13.a);
+	__init_a_composed_common_types( MPC_2INTEGER, disp, MPC_INTEGER, MPC_INTEGER , sizeof(mpc_integer_integer) );
+	sctk_common_datatype_set_name_helper( MPC_2INTEGER, "MPI_2INTEGER" );
+	tmp = MPC_2INTEGER;
+	PMPC_Type_commit( &tmp );
+	
+	/* MPC_2REAL  (SCTK_DERIVED_DATATYPE_BASE + 14 */
+	mpc_real_real foo_14;
+	disp = ((char *)&foo_14.b - (char *)&foo_14.a);
+	__init_a_composed_common_types( MPC_2REAL, disp, MPC_REAL, MPC_REAL, sizeof(mpc_real_real) );
+	sctk_common_datatype_set_name_helper( MPC_2REAL, "MPI_2REAL" );
+	tmp = MPC_2REAL;
 	PMPC_Type_commit( &tmp );
 	
 	/* MPC_UNSIGNED_LONG_LONG_INT  (SCTK_DERIVED_DATATYPE_BASE + 9 */

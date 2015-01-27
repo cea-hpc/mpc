@@ -13525,107 +13525,181 @@ int PMPI_Info_get_valuelen(MPI_Info info, char *key, int *valuelen, int *flag)
 
 
 
+/************************************************************************/
+/*  NOT IMPLEMENTED                                                     */
+/************************************************************************/
 
-//~ not implemented
+/* One-sided communications */
+int PMPI_Win_set_attr(MPI_Win win, int win_keyval, void *attribute_val){not_implemented();}
+int PMPI_Win_get_attr(MPI_Win win, int win_keyval, void *attribute_val, int *flag){not_implemented();}
+int PMPI_Win_free_keyval(int *win_keyval){not_implemented();}
+int PMPI_Win_delete_attr(MPI_Win win, int win_keyval){not_implemented();}
+int PMPI_Win_create_keyval(MPI_Win_copy_attr_function *win_copy_attr_fn, MPI_Win_delete_attr_function *win_delete_attr_fn, int *win_keyval, void *extra_state){not_implemented();}
+int PMPI_Win_create(void *base, MPI_Aint size, int disp_unit, MPI_Info info, MPI_Comm comm, MPI_Win *win){not_implemented();}
+int PMPI_Win_free(MPI_Win * win){not_implemented();}
+int PMPI_Win_fence(int assert, MPI_Win win){not_implemented();}
+int PMPI_Win_start(MPI_Group group, int assert, MPI_Win win){not_implemented();}
+int PMPI_Win_complete(MPI_Win win){not_implemented();}
+int PMPI_Win_lock(int lock_type, int rank, int assert, MPI_Win win){not_implemented();}
+int PMPI_Win_unlock(int rank, MPI_Win win){not_implemented();}
+int PMPI_Win_post(MPI_Group group, int assert, MPI_Win win){not_implemented();}
+int PMPI_Win_wait(MPI_Win win){not_implemented();}
+int PMPI_Win_allocate(MPI_Aint size, int disp_unit, MPI_Info info, MPI_Comm comm, void *baseptr, MPI_Win *win){not_implemented();}
+int PMPI_Win_test(MPI_Win win, int *flag){not_implemented();}
+int PMPI_Win_set_name(MPI_Win win, const char *win_name){not_implemented();}
+int PMPI_Win_get_name(MPI_Win win, char *win_name, int *resultlen){not_implemented();}
+int PMPI_Win_create_errhandler(MPI_Win_errhandler_function *win_errhandler_fn,MPI_Errhandler *errhandler){not_implemented();}
+int PMPI_Win_set_errhandler(MPI_Win win, MPI_Errhandler errhandler){not_implemented();}
+int PMPI_Win_get_errhandler(MPI_Win win, MPI_Errhandler *errhandler){not_implemented();}
+int PMPI_Win_get_group(MPI_Win win, MPI_Group *group){not_implemented();}
+int PMPI_Win_call_errhandler(MPI_Win win, int errorcode){not_implemented();}
+int PMPI_Win_allocate_shared(MPI_Aint size, int disp_unit, MPI_Info info, MPI_Comm comm,void *baseptr, MPI_Win *win){not_implemented();}
+int PMPI_Win_create_dynamic(MPI_Info info, MPI_Comm comm, MPI_Win *win){not_implemented();}
+int PMPI_Win_shared_query(MPI_Win win, int rank, MPI_Aint *size, int *disp_unit, void *baseptr){not_implemented();}
+int PMPI_Win_lock_all(int assert, MPI_Win win){not_implemented();}
+int PMPI_Win_unlock_all(MPI_Win win){not_implemented();}
+int PMPI_Win_sync(MPI_Win win){not_implemented();}
+int PMPI_Win_attach(MPI_Win win, void *base, MPI_Aint size){not_implemented();}
+int PMPI_Win_detach(MPI_Win win, const void *base){not_implemented();}
+int PMPI_Win_flush(int rank, MPI_Win win){not_implemented();}
+int PMPI_Win_flush_all(MPI_Win win){not_implemented();}
+int PMPI_Win_set_info(MPI_Win win, MPI_Info info){not_implemented();}
+int PMPI_Win_get_info(MPI_Win win, MPI_Info *info_used){not_implemented();}
+int PMPI_Get_accumulate(const void *origin_addr, int origin_count,MPI_Datatype origin_datatype, void *result_addr, int result_count,MPI_Datatype result_datatype, int target_rank, MPI_Aint target_disp,int target_count, MPI_Datatype target_datatype, MPI_Op op, MPI_Win win){not_implemented();}
+int PMPI_Fetch_and_op(const void *origin_addr, void *result_addr,MPI_Datatype datatype, int target_rank, MPI_Aint target_disp,MPI_Op op, MPI_Win win){not_implemented();}
+int PMPI_Compare_and_swap(const void *origin_addr, const void *compare_addr,void *result_addr, MPI_Datatype datatype, int target_rank,MPI_Aint target_disp, MPI_Win win){not_implemented();}
+int PMPI_Rput(const void *origin_addr, int origin_count, MPI_Datatype origin_datatype, int target_rank, MPI_Aint target_disp,int target_count, MPI_Datatype target_datatype, MPI_Win win, MPI_Request *request){not_implemented();}
+int PMPI_Rget(void *origin_addr, int origin_count, MPI_Datatype origin_datatype, int target_rank, MPI_Aint target_disp,int target_count, MPI_Datatype target_datatype, MPI_Win win, MPI_Request *request){not_implemented();}
+int PMPI_Raccumulate(const void *origin_addr, int origin_count, MPI_Datatype origin_datatype, int target_rank, MPI_Aint target_disp, int target_count, MPI_Datatype target_datatype, MPI_Op op, MPI_Win win,MPI_Request *request){not_implemented();}
+int PMPI_Rget_accumulate(const void *origin_addr, int origin_count,MPI_Datatype origin_datatype, void *result_addr, int result_count,MPI_Datatype result_datatype, int target_rank, MPI_Aint target_disp,int target_count, MPI_Datatype target_datatype, MPI_Op op, MPI_Win win,MPI_Request *request){not_implemented();}
 
-/*
-int PMPI_Type_dup(MPI_Datatype oldtype, MPI_Datatype *newtype){return MPI_SUCCESS;}
-int PMPI_Type_get_name(MPI_Datatype datatype, char *type_name, int *resultlen){return MPI_SUCCESS;}
-int PMPI_Type_set_name(MPI_Datatype datatype, const char *type_name){return MPI_SUCCESS;}
-
-int PMPI_Win_set_attr(MPI_Win win, int win_keyval, void *attribute_val){return MPI_SUCCESS;}
-int PMPI_Win_get_attr(MPI_Win win, int win_keyval, void *attribute_val, int *flag){return MPI_SUCCESS;}
-int PMPI_Win_free_keyval(int *win_keyval){return MPI_SUCCESS;}
-int PMPI_Win_delete_attr(MPI_Win win, int win_keyval){return MPI_SUCCESS;}
-int PMPI_Win_create_keyval(MPI_Win_copy_attr_function *win_copy_attr_fn,
-						   MPI_Win_delete_attr_function *win_delete_attr_fn, int *win_keyval, void *extra_state){return MPI_SUCCESS;}
-int PMPI_Win_create(void *base, MPI_Aint size, int disp_unit, MPI_Info info, MPI_Comm comm, MPI_Win *win){return MPI_SUCCESS;}
-int PMPI_Win_free(MPI_Win * win){return MPI_SUCCESS;}
-
-int PMPI_Alloc_mem (MPI_Aint size, MPI_Info info, void *baseptr){return MPI_SUCCESS;}
-int PMPI_Free_mem (void *base){return MPI_SUCCESS;}
-
-int PMPI_Type_create_resized(MPI_Datatype oldtype, MPI_Aint lb, MPI_Aint extent, MPI_Datatype *newtype){return MPI_SUCCESS;}
-
-
-int PMPI_Comm_set_errhandler(MPI_Comm comm, MPI_Errhandler errhandler){return MPI_SUCCESS;}
-int PMPI_Finalized( int *flag ){return MPI_SUCCESS;}
-
-int PMPI_Comm_set_attr(MPI_Comm comm, int comm_keyval, void *attribute_val){return MPI_SUCCESS;}
-int PMPI_Comm_get_attr(MPI_Comm comm, int comm_keyval, void *attribute_val, int *flag){return MPI_SUCCESS;}
-int PMPI_Comm_free_keyval(int *comm_keyval){return MPI_SUCCESS;}
-int PMPI_Comm_delete_attr(MPI_Comm comm, int comm_keyval){return MPI_SUCCESS;}
-int PMPI_Comm_create_keyval(MPI_Comm_copy_attr_function *comm_copy_attr_fn,
-						   MPI_Comm_delete_attr_function *comm_delete_attr_fn, int *comm_keyval, void *extra_state){return MPI_SUCCESS;}
-
-int PMPI_Type_set_attr(MPI_Datatype datatype, int type_keyval, void *attribute_val){return MPI_SUCCESS;}
-int PMPI_Type_get_attr(MPI_Datatype datatype, int type_keyval, void *attribute_val, int *flag){return MPI_SUCCESS;}
-int PMPI_Type_free_keyval(int *type_keyval){return MPI_SUCCESS;}
-int PMPI_Type_delete_attr(MPI_Datatype datatype, int type_keyval){return MPI_SUCCESS;}
-int PMPI_Type_create_keyval(MPI_Type_copy_attr_function *type_copy_attr_fn,
-						   MPI_Type_delete_attr_function *type_delete_attr_fn, int *type_keyval, void *extra_state){return MPI_SUCCESS;}
-
-int PMPI_Type_create_indexed_block(int count, int blocklength, int array_of_displacements[], MPI_Datatype oldtype, MPI_Datatype *newtype){return MPI_SUCCESS;}
-int PMPI_Type_get_envelope(MPI_Datatype datatype, int *num_integers, int *num_addresses, int *num_datatypes, int *combiner){return MPI_SUCCESS;}
-int PMPI_Type_get_contents(MPI_Datatype datatype, int max_integers, int max_addresses, int max_datatypes,
-						  int array_of_integers[], MPI_Aint array_of_addresses[], MPI_Datatype array_of_datatypes[]){return MPI_SUCCESS;}
-
-int PMPI_Type_create_darray(int size, int rank, int ndims, int array_of_gsizes[], int array_of_distribs[], int array_of_dargs[],
-                           int array_of_psizes[], int order, MPI_Datatype oldtype, MPI_Datatype *newtype){return MPI_SUCCESS;}
-int PMPI_Get_address( void *location, MPI_Aint *address ){return MPI_SUCCESS;}
-int PMPI_Type_create_struct(int count, int array_of_blocklengths[], MPI_Aint array_of_displacements[],
-						   MPI_Datatype array_of_types[], MPI_Datatype *newtype){return MPI_SUCCESS;}
-
-int PMPI_Status_set_elements(MPI_Status *status, MPI_Datatype datatype, int count){return MPI_SUCCESS;}
-
-int PMPI_Type_size_x(MPI_Datatype datatype, MPI_Count *size){return MPI_SUCCESS;}
-int PMPI_Type_get_extent_x(MPI_Datatype datatype, MPI_Count *lb, MPI_Count *extent){return MPI_SUCCESS;}
-int PMPI_Type_get_true_extent_x(MPI_Datatype datatype, MPI_Count *true_lb, MPI_Count *true_extent){return MPI_SUCCESS;}
-int PMPI_Get_elements_x(const MPI_Status *status, MPI_Datatype datatype, MPI_Count *count){return MPI_SUCCESS;}
-int PMPI_Status_set_elements_x(MPI_Status *status, MPI_Datatype datatype, MPI_Count count){return MPI_SUCCESS;}
-
-int PMPI_Type_create_hindexed_block(int count, int blocklength, const MPI_Aint array_of_displacements[],
-								   MPI_Datatype oldtype, MPI_Datatype * newtype){return MPI_SUCCESS;}
-int PMPI_Pack_external_size(char *datarep, int incount, MPI_Datatype datatype, MPI_Aint *size){return MPI_SUCCESS;}
-int PMPI_Pack_external(char *datarep, void *inbuf, int incount, MPI_Datatype datatype, void *outbuf, MPI_Aint outsize, MPI_Aint *position){return MPI_SUCCESS;}
-int PMPI_Unpack_external(char *datarep, void *inbuf, MPI_Aint insize, MPI_Aint *position, void *outbuf, int outcount, MPI_Datatype datatype){return MPI_SUCCESS;}
-
-int PMPI_Type_match_size(int typeclass, int size, MPI_Datatype *type){return MPI_SUCCESS;}
-int PMPI_Reduce_scatter_block(void *sendbuf, void *recvbuf, int recvcount, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm){return MPI_SUCCESS;}
-int PMPI_Comm_dup_with_info(MPI_Comm comm, MPI_Info info, MPI_Comm * newcomm){return MPI_SUCCESS;}
-int PMPI_Comm_split_type(MPI_Comm comm, int split_type, int key, MPI_Info info, MPI_Comm * newcomm){return MPI_SUCCESS;}
-int PMPI_Comm_set_info(MPI_Comm comm, MPI_Info info){return MPI_SUCCESS;}
-int PMPI_Comm_get_info(MPI_Comm comm, MPI_Info * info_used){return MPI_SUCCESS;}
-int PMPI_Add_error_class(int *errorclass){return MPI_SUCCESS;}
-int PMPI_Add_error_code(int errorclass, int *errorcode){return MPI_SUCCESS;}
-int PMPI_Add_error_string(int errorcode, char *string){return MPI_SUCCESS;}
-int PMPI_Comm_call_errhandler(MPI_Comm comm, int errorcode){return MPI_SUCCESS;}
-int PMPI_Comm_create_errhandler(MPI_Comm_errhandler_function *function, MPI_Errhandler *errhandler){return MPI_SUCCESS;}
-int PMPI_Is_thread_main(int *flag){return MPI_SUCCESS;}
-int PMPI_Query_thread( int *provided ){return MPI_SUCCESS;}
-int PMPI_Get_library_version(char *version, int *resultlen){return MPI_SUCCESS;}
-int PMPI_Request_get_status(MPI_Request request, int *flag, MPI_Status *status){return MPI_SUCCESS;}
-int PMPI_Status_set_cancelled(MPI_Status *status, int flag){return MPI_SUCCESS;}
-int PMPI_Grequest_start( MPI_Grequest_query_function *query_fn, MPI_Grequest_free_function *free_fn,
-						MPI_Grequest_cancel_function *cancel_fn, void *extra_state, MPI_Request *request ){return MPI_SUCCESS;}
-
-int PMPI_Grequest_complete(MPI_Request request){return MPI_SUCCESS;}
-*/
+int PMPI_Accumulate(const void *origin_addr, int origin_count, MPI_Datatype origin_datatype, int target_rank, MPI_Aint target_disp, int target_count, MPI_Datatype target_datatype, MPI_Op op, MPI_Win win){not_implemented();}
+int PMPI_Get(void *origin_addr, int origin_count, MPI_Datatype origin_datatype, int target_rank, MPI_Aint target_disp, int target_count, MPI_Datatype target_datatype, MPI_Win win){not_implemented();}
+int PMPI_Put(const void *origin_addr, int origin_count, MPI_Datatype origin_datatype, int target_rank, MPI_Aint target_disp,int target_count, MPI_Datatype target_datatype, MPI_Win win){not_implemented();}
 
 
+/* Communicator Management */
+int PMPI_Comm_set_attr(MPI_Comm comm, int comm_keyval, void *attribute_val){not_implemented();}
+int PMPI_Comm_get_attr(MPI_Comm comm, int comm_keyval, void *attribute_val, int *flag){not_implemented();}
+int PMPI_Comm_free_keyval(int *comm_keyval){not_implemented();}
+int PMPI_Comm_delete_attr(MPI_Comm comm, int comm_keyval){not_implemented();}
+int PMPI_Comm_create_keyval(MPI_Comm_copy_attr_function *comm_copy_attr_fn, MPI_Comm_delete_attr_function *comm_delete_attr_fn, int *comm_keyval, void *extra_state){not_implemented();}
+int PMPI_Comm_idup(MPI_Comm comm, MPI_Comm *newcomm, MPI_Request *request){not_implemented();}
+int PMPI_Comm_dup_with_info(MPI_Comm comm, MPI_Info info, MPI_Comm * newcomm){not_implemented();}
+int PMPI_Comm_split_type(MPI_Comm comm, int split_type, int key, MPI_Info info, MPI_Comm * newcomm){not_implemented();}
+int PMPI_Comm_set_info(MPI_Comm comm, MPI_Info info){not_implemented();}
+int PMPI_Comm_get_info(MPI_Comm comm, MPI_Info * info_used){not_implemented();}
+int PMPI_Comm_create_errhandler(MPI_Comm_errhandler_function *function, MPI_Errhandler *errhandler){not_implemented();}
+int PMPI_Comm_get_errhandler(MPI_Comm comm, MPI_Errhandler *errhandler){not_implemented();}
+int PMPI_Comm_create_group(MPI_Comm comm, MPI_Group group, int tag, MPI_Comm * newcomm){not_implemented();}
+
+/* datatype handling */
+int PMPI_Type_set_attr(MPI_Datatype datatype, int type_keyval, void *attribute_val){not_implemented();}
+int PMPI_Type_get_attr(MPI_Datatype datatype, int type_keyval, void *attribute_val, int *flag){not_implemented();}
+int PMPI_Type_free_keyval(int *type_keyval){not_implemented();}
+int PMPI_Type_delete_attr(MPI_Datatype datatype, int type_keyval){not_implemented();}
+int PMPI_Type_create_keyval(MPI_Type_copy_attr_function *type_copy_attr_fn, MPI_Type_delete_attr_function *type_delete_attr_fn, int *type_keyval, void *extra_state){not_implemented();}
+
+int PMPI_Add_error_class(int *errorclass){not_implemented();}
+int PMPI_Add_error_code(int errorclass, int *errorcode){not_implemented();}
+int PMPI_Add_error_string(int errorcode, char *string){not_implemented();}
+int PMPI_Is_thread_main(int *flag){not_implemented();}
+int PMPI_Get_library_version(char *version, int *resultlen){not_implemented();}
+
+/* Process Creation and Management */
+int PMPI_Close_port(const char *port_name){not_implemented();}
+int PMPI_Comm_accept(const char *port_name, MPI_Info info, int root, MPI_Comm comm,MPI_Comm *newcomm){not_implemented();}
+int PMPI_Comm_connect(const char *port_name, MPI_Info info, int root, MPI_Comm comm, MPI_Comm *newcomm){not_implemented();}
+int PMPI_Comm_disconnect(MPI_Comm * comm){not_implemented();}
+int PMPI_Comm_get_parent(MPI_Comm *parent){not_implemented();}
+int PMPI_Comm_join(int fd, MPI_Comm *intercomm){not_implemented();}
+int PMPI_Comm_spawn(const char *command, char *argv[], int maxprocs, MPI_Info info,int root, MPI_Comm comm, MPI_Comm *intercomm,int array_of_errcodes[]){not_implemented();}
+int PMPI_Comm_spawn_multiple(int count, char *array_of_commands[],char **array_of_argv[], const int array_of_maxprocs[],const MPI_Info array_of_info[], int root, MPI_Comm comm,MPI_Comm *intercomm, int array_of_errcodes[]){not_implemented();}
+int PMPI_Lookup_name(const char *service_name, MPI_Info info, char *port_name){not_implemented();}
+int PMPI_Open_port(MPI_Info info, char *port_name){not_implemented();}
+int PMPI_Publish_name(const char *service_name, MPI_Info info, const char *port_name){not_implemented();}
+int PMPI_Unpublish_name(const char *service_name, MPI_Info info, const char *port_name){not_implemented();}
 
 
+/* non blocking coll */
+int PMPI_Iallreduce (const void *sendbuf, void *recvbuf, int count,MPI_Datatype datatype, MPI_Op op, MPI_Comm comm,MPI_Request *request){not_implemented();}
+int PMPI_Ibarrier(MPI_Comm comm, MPI_Request *request){not_implemented();}
+int PMPI_Ibcast(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, MPI_Request *request){not_implemented();}
+int PMPI_Igather(const void *sendbuf, int sendcount, MPI_Datatype sendtype,void *recvbuf, int recvcount, MPI_Datatype recvtype,int root, MPI_Comm comm, MPI_Request *request){not_implemented();}
+int PMPI_Igatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int recvcounts[], const int displs[], MPI_Datatype recvtype, int root, MPI_Comm comm, MPI_Request *request){not_implemented();}
+int PMPI_Iscatter(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPI_Request *request){not_implemented();}
+int PMPI_Iscatterv(const void *sendbuf, const int sendcounts[], const int displs[], MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPI_Request *request){not_implemented();}
+int PMPI_Iallgather(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPI_Request *request){not_implemented();}
+int PMPI_Iallgatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int recvcounts[], const int displs[], MPI_Datatype recvtype, MPI_Comm comm, MPI_Request *request){not_implemented();}
+int PMPI_Ialltoall(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPI_Request *request){not_implemented();}
+int PMPI_Ialltoallv(const void *sendbuf, const int sendcounts[], const int sdispls[], MPI_Datatype sendtype, void *recvbuf, const int recvcounts[], const int rdispls[], MPI_Datatype recvtype, MPI_Comm comm, MPI_Request *request){not_implemented();}
+int PMPI_Ialltoallw(const void *sendbuf, const int sendcounts[], const int sdispls[], const MPI_Datatype sendtypes[], void *recvbuf, const int recvcounts[], const int rdispls[], const MPI_Datatype recvtypes[], MPI_Comm comm, MPI_Request *request){not_implemented();}
+int PMPI_Ireduce(const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm, MPI_Request *request){not_implemented();}
+int PMPI_Ireduce_scatter(const void *sendbuf, void *recvbuf, const int recvcounts[], MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Request *request){not_implemented();}
+int PMPI_Ireduce_scatter_block(const void *sendbuf, void *recvbuf, int recvcount, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Request *request){not_implemented();}
+int PMPI_Iscan(const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Request *request){not_implemented();}
+int PMPI_Iexscan(const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Request *request){not_implemented();}
 
+/* Dist graph operations */
+int PMPI_Dist_graph_neighbors_count(MPI_Comm comm, int *indegree, int *outdegree, int *weighted){not_implemented();}
+int PMPI_Dist_graph_neighbors(MPI_Comm comm, int maxindegree, int sources[], int sourceweights[], int maxoutdegree, int destinations[], int destweights[]){not_implemented();}
+int PMPI_Dist_graph_create(MPI_Comm comm_old, int n, const int sources[],const int degrees[], const int destinations[],const int weights[],MPI_Info info, int reorder, MPI_Comm *comm_dist_graph){not_implemented();}
+int PMPI_Dist_graph_create_adjacent(MPI_Comm comm_old,int indegree, const int sources[],const int sourceweights[],int outdegree, const int destinations[],const int destweights[],MPI_Info info, int reorder, MPI_Comm *comm_dist_graph){not_implemented();}
 
+/* collectives */
+int PMPI_Reduce_local(const void *inbuf, void *inoutbuf, int count, MPI_Datatype datatype, MPI_Op op){not_implemented();}
 
+/* Error handling */
+int PMPI_File_create_errhandler(MPI_File_errhandler_function *file_errhandler_fn, MPI_Errhandler *errhandler){not_implemented();}
+int PMPI_File_call_errhandler(void * fh, int errorcode){not_implemented();}
 
+/* MPI_T methods */
+int PMPI_T_init_thread(int required, int *provided){not_implemented();}
+int PMPI_T_finalize(void){not_implemented();}
 
+int PMPI_T_pvar_read(MPI_T_pvar_session session, MPI_T_pvar_handle handle, void *buf){not_implemented();}
+int PMPI_T_pvar_write(MPI_T_pvar_session session, MPI_T_pvar_handle handle, void *buf){not_implemented();}
+int PMPI_T_pvar_reset(MPI_T_pvar_session session, MPI_T_pvar_handle handle){not_implemented();}
+int PMPI_T_pvar_get_num(int *num_pvar){not_implemented();}
+int PMPI_T_pvar_get_info(int pvar_index, char *name, int *name_len, int *verbosity, int *var_class, MPI_Datatype *datatype, MPI_T_enum *enumtype, char *desc, int *desc_len, int *binding, int *readonly, int *continuous, int *atomic){not_implemented();}
+int PMPI_T_pvar_session_create(MPI_T_pvar_session *session){not_implemented();}
+int PMPI_T_pvar_session_free(MPI_T_pvar_session *session){not_implemented();}
+int PMPI_T_pvar_handle_alloc(MPI_T_pvar_session session, int pvar_index, void *obj_handle, MPI_T_pvar_handle *handle, int *count){not_implemented();}
+int PMPI_T_pvar_handle_free(MPI_T_pvar_session session, MPI_T_pvar_handle *handle){not_implemented();}
+int PMPI_T_pvar_start(MPI_T_pvar_session session, MPI_T_pvar_handle handle){not_implemented();}
+int PMPI_T_pvar_stop(MPI_T_pvar_session session, MPI_T_pvar_handle handle){not_implemented();}
 
+int PMPI_T_cvar_read(MPI_T_cvar_handle handle, void *buf){not_implemented();}
+int PMPI_T_cvar_write(MPI_T_cvar_handle handle, void *buf){not_implemented();}
+int PMPI_T_cvar_get_num(int *num_cvar){not_implemented();}
+int PMPI_T_cvar_get_info(int cvar_index, char *name, int *name_len,int *verbosity, MPI_Datatype *datatype, MPI_T_enum *enumtype,char *desc, int *desc_len, int *binding, int *scope){not_implemented();}
+int PMPI_T_cvar_handle_alloc(int cvar_index, void *obj_handle, MPI_T_cvar_handle *handle, int *count){not_implemented();}
+int PMPI_T_cvar_handle_free(MPI_T_cvar_handle *handle){not_implemented();}
 
+int PMPI_T_category_get_pvars(int cat_index, int len, int indices[]){not_implemented();}
+int PMPI_T_category_get_num(int *num_cat){not_implemented();}
+int PMPI_T_category_get_categories(int cat_index, int len, int indices[]){not_implemented();}
+int PMPI_T_category_get_info(int cat_index, char *name, int *name_len, char *desc,int *desc_len, int *num_cvars, int *num_pvars, int *num_categories){not_implemented();}
+int PMPI_T_category_get_cvars(int cat_index, int len, int indices[]){not_implemented();}
 
+int PMPI_T_enum_get_info(MPI_T_enum enumtype, int *num, char *name, int *name_len){not_implemented();}
 
+/* MPIX methods */
+int PMPIX_Comm_failure_ack( MPI_Comm comm ){not_implemented();}
+int PMPIX_Comm_failure_get_acked( MPI_Comm comm, MPI_Group *failedgrp ){not_implemented();}
+int PMPIX_Comm_agree(MPI_Comm comm, int *flag){not_implemented();}
+int PMPIX_Comm_revoke(MPI_Comm comm){not_implemented();}
+int PMPIX_Comm_shrink(MPI_Comm comm, MPI_Comm *newcomm){not_implemented();}
 
-//~ end
+/* probe and cancel */
+int PMPI_Mprobe(int source, int tag, MPI_Comm comm, MPI_Message *message, MPI_Status *status){not_implemented();}
+int PMPI_Mrecv(void *buf, int count, MPI_Datatype datatype, MPI_Message *message, MPI_Status *status){not_implemented();}
+int PMPI_Imrecv(void *buf, int count, MPI_Datatype datatype, MPI_Message *message, MPI_Request *request){not_implemented();}
+int PMPI_Improbe(int source, int tag, MPI_Comm comm, int *flag, MPI_Message *message, MPI_Status *status){not_implemented();}
+/************************************************************************/
+/* END NOT IMPLEMENTED                                                     */
+/************************************************************************/
+
 #ifndef SCTK_DO_NOT_HAVE_WEAK_SYMBOLS
 INFO("Default mpc_user_main__ has been removed because of TLS compilation...")
 #if 0

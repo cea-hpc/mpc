@@ -60,13 +60,14 @@ extern "C"
 /** \brief Macro to obtain the total number of datatypes */
 #define MPC_TYPE_COUNT (SCTK_COMMON_DATA_TYPE_COUNT + 2 * SCTK_USER_DATA_TYPES_MAX)
   
+  typedef int MPC_Message;
+  
   typedef int mpc_msg_count;
 
   typedef unsigned int mpc_pack_indexes_t;
   typedef long mpc_pack_absolute_indexes_t;
   typedef long MPC_Aint;
   typedef long MPC_Count;
-
   typedef int MPC_Comm;
   typedef struct
   {
@@ -269,6 +270,8 @@ typedef struct
 #define MPC_MAX_PROCESSOR_NAME 255
 #define MPC_ROOT -4
 #define MPC_MAX_OBJECT_NAME 256
+#define MPC_MAX_LIBRARY_VERSION_STRING 8192
+
 
 /********************************************************************/
 /*Special TAGS                                                      */
@@ -353,6 +356,9 @@ typedef int MPC_Info;
 #define MPC_DOUBLE_PRECISION 57
 #define MPC_UNSIGNED_LONG_LONG_INT  58
 
+/* for comm_split method */
+#define MPC_COMM_TYPE_SHARED 1
+
 /* BE VERY CAREFUL HERE /!\/!\/!\/!\/!\/!\/!\/!\
  *  You have to note that these types
  *  are offseted of SCTK_DERIVED_DATATYPE_BASE
@@ -378,6 +384,9 @@ typedef int MPC_Info;
 #define MPC_COMPLEX16  (SCTK_DERIVED_DATATYPE_BASE + 10)
 #define MPC_COMPLEX32  (SCTK_DERIVED_DATATYPE_BASE + 11)
 #define MPC_DOUBLE_COMPLEX  (SCTK_DERIVED_DATATYPE_BASE + 12)
+#define MPC_2INTEGER (SCTK_DERIVED_DATATYPE_BASE + 13)
+#define MPC_2REAL (SCTK_DERIVED_DATATYPE_BASE + 14)
+
 /* /!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\
  * If you change anything in this section update MPC_STRUCT_DATATYPE_COUNT
  * otherwise the first derived datatype created
@@ -391,6 +400,12 @@ typedef int MPC_Info;
 #define MPC_C_FLOAT_COMPLEX MPC_COMPLEX8
 #define MPC_C_DOUBLE_COMPLEX MPC_COMPLEX16
 #define MPC_C_LONG_DOUBLE_COMPLEX MPC_COMPLEX32
+
+/* Predefined MPI datatypes corresponding to both C and Fortran datatypes */
+#define MPC_CXX_BOOL 59
+#define MPC_CXX_FLOAT_COMPLEX MPC_COMPLEX8
+#define MPC_CXX_DOUBLE_COMPLEX MPC_COMPLEX16
+#define MPC_CXX_LONG_DOUBLE_COMPLEX MPC_COMPLEX32
 
 /* Datatype decoders */
 

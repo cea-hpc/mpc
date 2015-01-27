@@ -48,12 +48,20 @@ extern "C"
 
 #define MPI_CART (-2)
 #define MPI_GRAPH (-3)
+#define MPI_DIST_GRAPH (-4)
 
 /* Results of the compare operations. */
 #define MPI_IDENT     0
 #define MPI_CONGRUENT 1
 #define MPI_SIMILAR   2
 #define MPI_UNEQUAL   3
+
+#define MPI_LOCK_EXCLUSIVE  234
+#define MPI_LOCK_SHARED     235
+
+/* Other constants */
+#define MPI_UNWEIGHTED ((void *) 2)
+#define MPI_WEIGHTS_EMPTY ((void *) 3)
 
 /************************************************************************/
 /* MPI_* to MPC_* converters                                            */
@@ -63,7 +71,7 @@ extern "C"
 #define MPI_MAX_PROCESSOR_NAME MPC_MAX_PROCESSOR_NAME
 #define MPI_MAX_NAME_STRING MPC_MAX_OBJECT_NAME
 #define MPI_MAX_OBJECT_NAME MPC_MAX_OBJECT_NAME
-
+#define MPI_MAX_LIBRARY_VERSION_STRING MPC_MAX_LIBRARY_VERSION_STRING
 /* Communication Parameters */
 #define MPI_SOURCE MPC_SOURCE
 #define MPI_TAG MPC_TAG
@@ -215,7 +223,8 @@ extern "C"
 #define MPI_CHARACTER MPC_CHARACTER
 #define MPI_DOUBLE_PRECISION MPC_DOUBLE_PRECISION
 
-
+#define MPI_2INTEGER MPC_2INTEGER
+#define MPI_2REAL MPC_2REAL
 /* Datatype decoders */
 
 #define MPI_COMBINER_UNKNOWN MPC_COMBINER_UNKNOWN
@@ -235,6 +244,13 @@ extern "C"
 #define MPI_COMBINER_F90_COMPLEX MPC_COMBINER_F90_COMPLEX
 #define MPI_COMBINER_F90_INTEGER MPC_COMBINER_F90_INTEGER
 #define MPI_COMBINER_RESIZED MPC_COMBINER_RESIZED
+
+/* Predefined MPI datatypes corresponding to both C and Fortran datatypes */
+
+#define MPI_CXX_BOOL MPC_CXX_BOOL
+#define MPI_CXX_FLOAT_COMPLEX MPC_CXX_FLOAT_COMPLEX
+#define MPI_CXX_DOUBLE_COMPLEX MPC_CXX_DOUBLE_COMPLEX
+#define MPI_CXX_LONG_DOUBLE_COMPLEX MPC_CXX_LONG_DOUBLE_COMPLEX
 
 /* These are deprecated MPI 1.0 constants in MPI 3.0
  * however they are never returned by get envelope but as ROMIO uses them */
@@ -272,7 +288,9 @@ extern "C"
 #define MPI_BXOR 9
 #define MPI_MINLOC 10
 #define MPI_MAXLOC 11
-#define MAX_MPI_DEFINED_OP 12
+#define MPI_REPLACE 13
+#define MPI_NO_OP 14
+#define MAX_MPI_DEFINED_OP 13
 #define MPI_OP_NULL ((MPI_Op)-1)
 
 
@@ -283,6 +301,7 @@ extern "C"
 /* MPI_Info definitions */
 /* Matches the one of MPI_INFO_NULL @ mpc_mpi.h:207 */
 #define MPI_INFO_NULL (-1)
+#define MPI_INFO_ENV (0)
 /* Maximum length for keys and values
 * they are both defined for MPC and MPI variants */
 /*1 MB */
@@ -292,6 +311,8 @@ extern "C"
 /* Other Null Handles */
 #define MPI_FILE_NULL ((MPI_File)-1)
 #define MPI_WIN_NULL ((MPI_Win)-1)
+#define MPI_MESSAGE_NULL ((MPI_Message) MPI_REQUEST_NULL)
+#define MPI_MESSAGE_NO_PROC -2
 
 #ifdef ROMIO_COMP
 #define MPI_FILE_NULL ((void *)0)
@@ -330,6 +351,14 @@ extern "C"
 #define MPI_LASTUSEDCODE MPI_KEYVAL_INVALID
 #define MPI_APPNUM MPI_KEYVAL_INVALID
 
+/* In addition, there are 5 predefined window attributes that are
+ *    defined for every window */
+#define MPI_WIN_BASE          1
+#define MPI_WIN_SIZE          2
+#define MPI_WIN_DISP_UNIT     3
+#define MPI_WIN_CREATE_FLAVOR 4
+#define MPI_WIN_MODEL         5
+
 /* Ordering defines */
 #define MPI_DISTRIBUTE_DFLT_DARG 100
 #define MPI_DISTRIBUTE_BLOCK 101
@@ -338,6 +367,154 @@ extern "C"
 
 #define MPI_ORDER_C 200
 #define MPI_ORDER_FORTRAN 201
+
+/* asserts for one-sided communication */
+#define MPI_MODE_NOCHECK      1
+#define MPI_MODE_NOSTORE      2
+#define MPI_MODE_NOPUT        3
+#define MPI_MODE_NOPRECEDE    4
+#define MPI_MODE_NOSUCCEED    5 
+
+/* for comm_split method */
+#define MPI_COMM_TYPE_SHARED MPC_COMM_TYPE_SHARED
+
+/*
+ * * MPI-2 One-Sided Communications asserts   
+ */
+#define MPI_MODE_NOCHECK             1
+#define MPI_MODE_NOPRECEDE           2
+#define MPI_MODE_NOPUT               4
+#define MPI_MODE_NOSTORE             8
+#define MPI_MODE_NOSUCCEED          16
+
+#define MPI_WIN_FLAVOR_CREATE        1
+#define MPI_WIN_FLAVOR_ALLOCATE      2
+#define MPI_WIN_FLAVOR_DYNAMIC       3
+#define MPI_WIN_FLAVOR_SHARED        4
+
+#define MPI_WIN_UNIFIED              0
+#define MPI_WIN_SEPARATE             1
+
+/* Others definitions */
+#define MPI_MAX_PORT_NAME      256
+#define MPI_ARGV_NULL (char **)0
+#define MPI_ARGVS_NULL (char ***)0
+#define MPI_ERRCODES_IGNORE (int *)0
+
+/* MPI_T definitions (NOT IMPLEMENTED)*/
+typedef int MPI_T_pvar_session;
+typedef int MPI_T_pvar_handle;
+typedef int MPI_T_cvar_handle;
+typedef int MPI_T_enum;
+
+#define MPI_T_ENUM_NULL ((MPI_T_enum)NULL)
+#define MPI_T_CVAR_HANDLE_NULL  ((MPI_T_cvar_handle)NULL)
+#define MPI_T_PVAR_HANDLE_NULL  ((MPI_T_pvar_handle)NULL)
+#define MPI_T_PVAR_SESSION_NULL ((MPI_T_pvar_session)NULL)
+
+MPI_T_pvar_handle MPI_T_PVAR_ALL_HANDLES;
+
+/* the MPI_T_ interface requires that these VERBOSITY constants occur in this
+ * relative order with increasing values */
+typedef enum MPIR_T_verbosity_t {
+    /* don't name-shift this if/when MPI_T_ is accepted, this is an MPICH-only
+     * extension */
+    MPIX_T_VERBOSITY_INVALID = 0,
+
+    /* arbitrarily shift values to aid debugging and reduce accidental errors */
+    MPI_T_VERBOSITY_USER_BASIC = 221,
+    MPI_T_VERBOSITY_USER_DETAIL,
+    MPI_T_VERBOSITY_USER_ALL,
+
+    MPI_T_VERBOSITY_TUNER_BASIC,
+    MPI_T_VERBOSITY_TUNER_DETAIL,
+    MPI_T_VERBOSITY_TUNER_ALL,
+
+    MPI_T_VERBOSITY_MPIDEV_BASIC,
+    MPI_T_VERBOSITY_MPIDEV_DETAIL,
+    MPI_T_VERBOSITY_MPIDEV_ALL
+} MPIR_T_verbosity_t;
+
+typedef enum MPIR_T_bind_t {
+    /* don't name-shift this if/when MPI_T_ is accepted, this is an MPICH-only
+     * extension */
+    MPIX_T_BIND_INVALID = 0,
+
+    /* arbitrarily shift values to aid debugging and reduce accidental errors */
+    MPI_T_BIND_NO_OBJECT = 9700,
+    MPI_T_BIND_MPI_COMM,
+    MPI_T_BIND_MPI_DATATYPE,
+    MPI_T_BIND_MPI_ERRHANDLER,
+    MPI_T_BIND_MPI_FILE,
+    MPI_T_BIND_MPI_GROUP,
+    MPI_T_BIND_MPI_OP,
+    MPI_T_BIND_MPI_REQUEST,
+    MPI_T_BIND_MPI_WIN,
+    MPI_T_BIND_MPI_MESSAGE,
+    MPI_T_BIND_MPI_INFO
+} MPIR_T_bind_t;
+
+typedef enum MPIR_T_scope_t {
+    /* don't name-shift this if/when MPI_T_ is accepted, this is an MPICH-only
+     * extension */
+    MPIX_T_SCOPE_INVALID = 0,
+
+    /* arbitrarily shift values to aid debugging and reduce accidental errors */
+    MPI_T_SCOPE_CONSTANT = 60438,
+    MPI_T_SCOPE_READONLY,
+    MPI_T_SCOPE_LOCAL,
+    MPI_T_SCOPE_GROUP,
+    MPI_T_SCOPE_GROUP_EQ,
+    MPI_T_SCOPE_ALL,
+    MPI_T_SCOPE_ALL_EQ
+} MPIR_T_scope_t;
+
+typedef enum MPIR_T_pvar_class_t {
+    /* don't name-shift this if/when MPI_T_ is accepted, this is an MPICH-only
+     * extension */
+    MPIX_T_PVAR_CLASS_INVALID = 0,
+
+    /* arbitrarily shift values to aid debugging and reduce accidental errors */
+    MPIR_T_PVAR_CLASS_FIRST = 240,
+    MPI_T_PVAR_CLASS_STATE = MPIR_T_PVAR_CLASS_FIRST,
+    MPI_T_PVAR_CLASS_LEVEL,
+    MPI_T_PVAR_CLASS_SIZE,
+    MPI_T_PVAR_CLASS_PERCENTAGE,
+    MPI_T_PVAR_CLASS_HIGHWATERMARK,
+    MPI_T_PVAR_CLASS_LOWWATERMARK,
+    MPI_T_PVAR_CLASS_COUNTER,
+    MPI_T_PVAR_CLASS_AGGREGATE,
+    MPI_T_PVAR_CLASS_TIMER,
+    MPI_T_PVAR_CLASS_GENERIC,
+    MPIR_T_PVAR_CLASS_LAST,
+    MPIR_T_PVAR_CLASS_NUMBER = MPIR_T_PVAR_CLASS_LAST - MPIR_T_PVAR_CLASS_FIRST
+} MPIR_T_pvar_class_t;
+
+/* Return codes for functions in the MPI Tool Information Interface */
+#define MPI_T_ERR_MEMORY            59  /* Out of memory */
+#define MPI_T_ERR_NOT_INITIALIZED   60  /* Interface not initialized */
+#define MPI_T_ERR_CANNOT_INIT       61  /* Interface not in the state to
+                                           be initialized */
+#define MPI_T_ERR_INVALID_INDEX     62  /* The index is invalid or
+                                           has been deleted  */
+#define MPI_T_ERR_INVALID_ITEM      63  /* Item index queried is out of range */
+#define MPI_T_ERR_INVALID_HANDLE    64  /* The handle is invalid */
+#define MPI_T_ERR_OUT_OF_HANDLES    65  /* No more handles available */
+#define MPI_T_ERR_OUT_OF_SESSIONS   66  /* No more sessions available */
+#define MPI_T_ERR_INVALID_SESSION   67  /* Session argument is not valid */
+#define MPI_T_ERR_CVAR_SET_NOT_NOW  68  /* Cvar can't be set at this moment */
+#define MPI_T_ERR_CVAR_SET_NEVER    69  /* Cvar can't be set until
+                                           end of execution */
+#define MPI_T_ERR_PVAR_NO_STARTSTOP 70  /* Pvar can't be started or stopped */
+#define MPI_T_ERR_PVAR_NO_WRITE     71  /* Pvar can't be written or reset */
+#define MPI_T_ERR_PVAR_NO_ATOMIC    72  /* Pvar can't be R/W atomically */
+
+/* Error not implemented */
+#define MPIX_ERR_PROC_FAILED          101 /* Process failure */
+#define MPIX_ERR_PROC_FAILED_PENDING  102 /* A failure has caused this request
+                                           * to be pending */
+#define MPIX_ERR_REVOKED              103 /* The communciation object has been revoked */
+#define MPICH_ERR_LAST_MPIX           103
 
 
 /************************************************************************/
@@ -380,8 +557,15 @@ typedef int MPIX_Grequest_wait_fn(int count, void **array_of_states, double, MPI
 
 /* NOT IMPLEMENTED >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
 typedef int MPI_Win;
-typedef MPC_Count MPI_Count;
-/*typedef long MPI_Count;*/
+typedef long MPI_Count;
+
+typedef MPC_Message MPI_Message;
+
+/* added in MPI-2.2 */
+typedef void (MPI_File_errhandler_function)(void *, int *, ...);
+/* names that were added in MPI-2.0 and deprecated in MPI-2.2 */
+typedef MPI_File_errhandler_function MPI_File_errhandler_fn;
+ 
 /* C functions */
 //~ typedef void (MPC_Handler_function) ( MPI_Comm *, int *, ... );
 typedef int (MPI_Comm_copy_attr_function)(MPI_Comm, int, void *, void *, void *, int *);
@@ -617,8 +801,6 @@ int MPI_Comm_remote_size (MPI_Comm, int *);
 int MPI_Comm_remote_group (MPI_Comm, MPI_Group *);
 int MPI_Intercomm_create (MPI_Comm, int, MPI_Comm, int, int, MPI_Comm *);
 int MPI_Intercomm_merge (MPI_Comm, int, MPI_Comm *);
-int MPI_Comm_set_errhandler(MPI_Comm comm, MPI_Errhandler errhandler);
-int MPI_Comm_call_errhandler( MPI_Comm comm, int errorcode );
 
 /* Keyval and Attr */
 int MPI_Keyval_create (MPI_Copy_function *, MPI_Delete_function *, int *, void *);
@@ -1033,13 +1215,11 @@ int PMPI_Alloc_mem(MPI_Aint size, MPI_Info info, void *baseptr);
 
 #endif /* MPI_BUILD_PROFILING */
 
-#if 0
 /************************************************************************/
 /*  NOT IMPLEMENTED                                                     */
 /************************************************************************/
 
 /* One-Sided Communications */
-
 int MPI_Win_set_attr(MPI_Win , int , void *);
 int MPI_Win_get_attr(MPI_Win , int , void *, int *);
 int MPI_Win_free_keyval(int *);
@@ -1059,12 +1239,36 @@ int MPI_Win_post (MPI_Group, int, MPI_Win);
 int MPI_Win_start (MPI_Group, int, MPI_Win);
 int MPI_Win_test (MPI_Win, int *);
 int MPI_Win_unlock (int, MPI_Win);
-
+int MPI_Win_allocate(MPI_Aint, int, MPI_Info, MPI_Comm, void *, MPI_Win *);
+int MPI_Win_set_name(MPI_Win, const char *);
+int MPI_Win_get_name(MPI_Win, char *, int *);
+int MPI_Win_set_errhandler(MPI_Win, MPI_Errhandler);
+int MPI_Win_get_errhandler(MPI_Win, MPI_Errhandler *);
+int MPI_Win_call_errhandler(MPI_Win win, int errorcode);
+int MPI_Win_allocate_shared(MPI_Aint , int , MPI_Info , MPI_Comm ,void *, MPI_Win *);
+int MPI_Win_create_errhandler(MPI_Win_errhandler_function *,MPI_Errhandler *);
+int MPI_Win_create_dynamic(MPI_Info , MPI_Comm , MPI_Win *);
+int MPI_Win_shared_query(MPI_Win , int , MPI_Aint *, int *, void *);
+int MPI_Win_lock_all(int , MPI_Win );
+int MPI_Win_unlock_all(MPI_Win win);
+int MPI_Win_sync(MPI_Win win);
+int MPI_Win_attach(MPI_Win , void *, MPI_Aint );
+int MPI_Win_detach(MPI_Win , const void *);
+int MPI_Win_flush(int , MPI_Win );
+int MPI_Win_flush_all(MPI_Win);
+int MPI_Win_set_info(MPI_Win, MPI_Info);
+int MPI_Win_get_info(MPI_Win, MPI_Info *);
+int MPI_Get_accumulate(const void *, int ,MPI_Datatype , void *, int ,MPI_Datatype , int , MPI_Aint ,int , MPI_Datatype , MPI_Op , MPI_Win );
+int MPI_Fetch_and_op(const void *, void *,MPI_Datatype , int , MPI_Aint ,MPI_Op , MPI_Win );
+int MPI_Compare_and_swap(const void *, const void *,void *, MPI_Datatype , int ,MPI_Aint , MPI_Win );
+int MPI_Rput(const void *, int , MPI_Datatype , int , MPI_Aint ,int , MPI_Datatype , MPI_Win , MPI_Request *);
+int MPI_Rget(void *, int , MPI_Datatype , int , MPI_Aint ,int , MPI_Datatype , MPI_Win , MPI_Request *);
+int MPI_Raccumulate(const void *, int , MPI_Datatype , int , MPI_Aint , int , MPI_Datatype , MPI_Op , MPI_Win ,MPI_Request *);
+int MPI_Rget_accumulate(const void *, int ,MPI_Datatype , void *, int ,MPI_Datatype , int , MPI_Aint ,int , MPI_Datatype , MPI_Op , MPI_Win ,MPI_Request *);
 
 /* Datatype Handling & Packs */
 int MPI_Type_dup(MPI_Datatype , MPI_Datatype *);
 int MPI_Type_get_name(MPI_Datatype , char *, int *);
-int MPI_Type_set_name(MPI_Datatype , const char *);
 int MPI_Type_create_resized (MPI_Datatype, MPI_Aint , MPI_Aint , MPI_Datatype *);
 int MPI_Type_get_true_extent(MPI_Datatype , MPI_Aint *, MPI_Aint *);
 int MPI_Type_get_extent(MPI_Datatype , MPI_Aint *, MPI_Aint *);
@@ -1081,8 +1285,6 @@ int MPI_Get_address (void *, MPI_Aint *);
 int MPI_Type_size_x(MPI_Datatype , MPI_Count *);
 int MPI_Type_get_extent_x(MPI_Datatype , MPI_Count *, MPI_Count *);
 int MPI_Type_get_true_extent_x(MPI_Datatype , MPI_Count *, MPI_Count *);
-int MPI_Get_elements_x(const MPI_Status *, MPI_Datatype , MPI_Count *);
-int MPI_Type_create_hindexed_block(int , int , const MPI_Aint *, MPI_Datatype , MPI_Datatype * );
 int MPI_Type_match_size (int, int, MPI_Datatype *);
 
 
@@ -1100,18 +1302,22 @@ int MPI_Comm_split_type(MPI_Comm , int , int , MPI_Info , MPI_Comm * );
 int MPI_Comm_set_info(MPI_Comm , MPI_Info );
 int MPI_Comm_get_info(MPI_Comm , MPI_Info * );
 int MPI_Comm_call_errhandler (MPI_Comm, int);
+int MPI_Comm_get_errhandler(MPI_Comm , MPI_Errhandler *);
 int MPI_Comm_create_errhandler (MPI_Comm_errhandler_fn *, MPI_Errhandler *);
+int MPI_Comm_idup(MPI_Comm comm, MPI_Comm *newcomm, MPI_Request *request);
+int MPI_Comm_create_group(MPI_Comm , MPI_Group , int , MPI_Comm * );
+int MPI_Comm_set_errhandler(MPI_Comm , MPI_Errhandler );
 
 /* Process Creation and Management */
 int MPI_Close_port (char *);
 int MPI_Comm_accept (char *, MPI_Info, int, MPI_Comm, MPI_Comm *);
-int MPI_Comm_connect (char *, MPI_Info, int, MPI_Comm, MPI_Comm *);
+int MPI_Comm_connect(const char *, MPI_Info , int , MPI_Comm , MPI_Comm *);
 int MPI_Comm_disconnect (MPI_Comm *);
 int MPI_Comm_get_parent (MPI_Comm *);
 int MPI_Comm_join (int, MPI_Comm *);
 int MPI_Comm_spawn (char *, char *[], int, MPI_Info, int, MPI_Comm, MPI_Comm *, int[]);
 int MPI_Comm_spawn_multiple (int, char *[], char **[], int[], MPI_Info[], int, MPI_Comm, MPI_Comm *, int[]);
-int MPI_Lookup_name (char *, MPI_Info, char *);
+int MPI_Lookup_name(const char *, MPI_Info , char *);
 int MPI_Open_port (MPI_Info, char *);
 int MPI_Publish_name (char *, MPI_Info, char *);
 int MPI_Unpublish_name (char *, MPI_Info, char *);
@@ -1128,11 +1334,88 @@ int MPI_Get_library_version(char *, int *);
   
 /* Collectives */
 int MPI_Reduce_scatter_block(void *, void *, int , MPI_Datatype , MPI_Op , MPI_Comm );
+int MPI_Reduce_local(const void *, void *, int, MPI_Datatype, MPI_Op);
 
 /* Extended Collective Operations */
 int MPI_Alltoallw (void *, int[], int[], MPI_Datatype[], void *, int[], int[], MPI_Datatype[], MPI_Comm);
-  
-#endif /* Not Implemented */
+
+/* non blocking collectives */
+int MPI_Iallreduce (const void *sendbuf, void *recvbuf, int count,MPI_Datatype datatype, MPI_Op op, MPI_Comm comm,MPI_Request *request);
+int MPI_Ibarrier(MPI_Comm comm, MPI_Request *request);
+int MPI_Ibcast(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, MPI_Request *request);
+int MPI_Igather(const void *sendbuf, int sendcount, MPI_Datatype sendtype,void *recvbuf, int recvcount, MPI_Datatype recvtype,int root, MPI_Comm comm, MPI_Request *request);
+int MPI_Igatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int recvcounts[], const int displs[], MPI_Datatype recvtype, int root, MPI_Comm comm, MPI_Request *request);
+int MPI_Iscatter(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPI_Request *request);
+int MPI_Iscatterv(const void *sendbuf, const int sendcounts[], const int displs[], MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPI_Request *request);
+int MPI_Iallgather(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPI_Request *request);
+int MPI_Iallgatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int recvcounts[], const int displs[], MPI_Datatype recvtype, MPI_Comm comm, MPI_Request *request);
+int MPI_Ialltoall(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPI_Request *request);
+int MPI_Ialltoallv(const void *sendbuf, const int sendcounts[], const int sdispls[], MPI_Datatype sendtype, void *recvbuf, const int recvcounts[], const int rdispls[], MPI_Datatype recvtype, MPI_Comm comm, MPI_Request *request);
+int MPI_Ialltoallw(const void *sendbuf, const int sendcounts[], const int sdispls[], const MPI_Datatype sendtypes[], void *recvbuf, const int recvcounts[], const int rdispls[], const MPI_Datatype recvtypes[], MPI_Comm comm, MPI_Request *request);
+int MPI_Ireduce(const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm, MPI_Request *request);
+int MPI_Ireduce_scatter(const void *sendbuf, void *recvbuf, const int recvcounts[], MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Request *request);
+int MPI_Ireduce_scatter_block(const void *sendbuf, void *recvbuf, int recvcount, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Request *request);
+int MPI_Iscan(const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Request *request);
+int MPI_Iexscan(const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Request *request);
+
+/* dist graph operations */
+int MPI_Dist_graph_neighbors_count(MPI_Comm , int *, int *, int *);
+int MPI_Dist_graph_neighbors(MPI_Comm , int , int [], int [], int , int [], int []);
+int MPI_Dist_graph_create(MPI_Comm , int , const int [],const int [], const int [],const int [],MPI_Info , int , MPI_Comm *);
+int MPI_Dist_graph_create_adjacent(MPI_Comm ,int , const int [],const int [],int , const int [],const int [],MPI_Info , int , MPI_Comm *);
+
+/* Error handling */
+int MPI_File_create_errhandler(MPI_File_errhandler_function *, MPI_Errhandler *);
+int PMPI_File_create_errhandler(MPI_File_errhandler_function *file_errhandler_fn, MPI_Errhandler *errhandler);
+int MPI_File_call_errhandler(void * , int );
+
+/* MPI_T methods */
+int MPI_T_init_thread(int , int *);
+int MPI_T_finalize(void);
+
+int MPI_T_pvar_read(MPI_T_pvar_session , MPI_T_pvar_handle , void *);
+int MPI_T_pvar_write(MPI_T_pvar_session , MPI_T_pvar_handle , void *);
+int MPI_T_pvar_reset(MPI_T_pvar_session , MPI_T_pvar_handle );
+int MPI_T_pvar_get_num(int *);
+int MPI_T_pvar_get_info(int , char *, int *, int *, int *, MPI_Datatype *, MPI_T_enum *, char *, int *, int *, int *, int *, int *);
+int MPI_T_pvar_session_create(MPI_T_pvar_session *);
+int MPI_T_pvar_session_free(MPI_T_pvar_session *);
+int MPI_T_pvar_handle_alloc(MPI_T_pvar_session , int , void *, MPI_T_pvar_handle *, int *);
+int MPI_T_pvar_handle_free(MPI_T_pvar_session , MPI_T_pvar_handle *);
+int MPI_T_pvar_start(MPI_T_pvar_session , MPI_T_pvar_handle );
+int MPI_T_pvar_stop(MPI_T_pvar_session , MPI_T_pvar_handle );
+
+int MPI_T_cvar_read(MPI_T_cvar_handle , void *);
+int MPI_T_cvar_write(MPI_T_cvar_handle , void *);
+int MPI_T_cvar_get_num(int *);
+int MPI_T_cvar_get_info(int , char *, int *,int *, MPI_Datatype *, MPI_T_enum *,char *, int *, int *, int *);
+int MPI_T_cvar_handle_alloc(int , void *, MPI_T_cvar_handle *, int *);
+int MPI_T_cvar_handle_free(MPI_T_cvar_handle *);
+
+int MPI_T_category_get_pvars(int , int , int []);
+int MPI_T_category_get_num(int *);
+int MPI_T_category_get_categories(int , int , int []);
+int MPI_T_category_get_info(int , char *, int *, char *,int *, int *, int *, int *);
+int MPI_T_category_get_cvars(int , int , int []);
+
+int MPI_T_enum_get_info(MPI_T_enum , int *, char *, int *);
+
+/* MPIX methods */
+int MPIX_Comm_failure_ack( MPI_Comm  );
+int MPIX_Comm_failure_get_acked( MPI_Comm , MPI_Group * );
+int MPIX_Comm_agree(MPI_Comm , int *);
+int MPIX_Comm_revoke(MPI_Comm );
+int MPIX_Comm_shrink(MPI_Comm , MPI_Comm *);
+
+/* probe and cancel */
+int MPI_Mprobe(int , int , MPI_Comm , MPI_Message *, MPI_Status *);
+int MPI_Mrecv(void *, int , MPI_Datatype , MPI_Message *, MPI_Status *);
+int MPI_Imrecv(void *, int , MPI_Datatype , MPI_Message *, MPI_Request *);
+int MPI_Improbe(int , int , MPI_Comm , int *, MPI_Message *, MPI_Status *);
+/************************************************************************/
+/* END NOT IMPLEMENTED                                                     */
+/************************************************************************/
+
 
 /* For ROMIO compatibility */
 #define MPICH_ATTR_POINTER_WITH_TYPE_TAG(a,b) 
