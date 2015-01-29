@@ -412,7 +412,7 @@ typedef int MPI_T_enum;
 #define MPI_T_PVAR_HANDLE_NULL  ((MPI_T_pvar_handle)NULL)
 #define MPI_T_PVAR_SESSION_NULL ((MPI_T_pvar_session)NULL)
 
-MPI_T_pvar_handle MPI_T_PVAR_ALL_HANDLES;
+extern MPI_T_pvar_handle MPI_T_PVAR_ALL_HANDLES;
 
 /* the MPI_T_ interface requires that these VERBOSITY constants occur in this
  * relative order with increasing values */
