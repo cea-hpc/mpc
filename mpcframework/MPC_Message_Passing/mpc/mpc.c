@@ -475,9 +475,11 @@ static inline void sctk_mpc_set_header_in_message(sctk_thread_ptp_message_t *
 }
 
 static inline void sctk_mpc_wait_message (MPC_Request * request){
+	SCTK_PROFIL_START (sctk_mpc_wait_message);
 	if(sctk_mpc_message_is_null(request) == 0){
 		sctk_wait_message(request);
 	}
+	SCTK_PROFIL_END (sctk_mpc_wait_message);
 }
 
 static inline void sctk_mpc_wait_all (const int task, const sctk_communicator_t com){
@@ -4528,6 +4530,7 @@ int PMPC_Recv (void *buf, mpc_msg_count count, MPC_Datatype datatype, int source
 	//~ mpc_check_msg_size (source, src, tag, comm, size);
 	//~ }
 
+	SCTK_PROFIL_START (MPC_Recv_init_message);
 	msg_size = count * __MPC_Get_datatype_size (datatype, task_specific);
 
 	sctk_mpc_init_request(&request,comm,src, REQUEST_RECV);
@@ -4540,6 +4543,8 @@ int PMPC_Recv (void *buf, mpc_msg_count count, MPC_Datatype datatype, int source
 	
 	sctk_recv_message (msg,task_specific->my_ptp_internal, 1);
 	sctk_nodebug("recv request.is_null %d",request.is_null);
+	SCTK_PROFIL_END (MPC_Recv_init_message);
+
 	sctk_mpc_wait_message (&request);
 	
 	if (request.status_error != MPC_SUCCESS)

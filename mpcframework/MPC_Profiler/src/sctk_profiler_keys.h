@@ -124,6 +124,8 @@ PROBE( MPI, NO_PARENT, MPI Interface)
                 PROBE (MPC_Test_message_pair,MPI_INTERNAL,MPC_Test_message_pair)
                 PROBE (MPC_Test_message_pair_try,MPI_INTERNAL,MPC_Test_message_pair_try)
                 PROBE (MPC_Test_message_pair_try_lock,MPI_INTERNAL,MPC_Test_message_pair_try_lock)
+		PROBE( MPC_Recv_init_message, MPI_INTERNAL,  MPC_Recv_init_message)
+		PROBE( sctk_mpc_wait_message, MPI_INTERNAL,  sctk_mpc_wait_message)
 
 
 

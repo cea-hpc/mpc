@@ -1920,9 +1920,9 @@ static inline int sctk_try_perform_messages_for_pair(sctk_internal_ptp_t* pair){
   SCTK_PROFIL_START (MPC_Test_message_pair_try);
   /* If the lock has not been taken, we continue */
   if (pair->lists.pending_lock == 0) {
-    return sctk_perform_messages_for_pair(pair);
+    res = sctk_perform_messages_for_pair(pair);
   } else {
-    return -1;
+    res = -1;
   }
   SCTK_PROFIL_END (MPC_Test_message_pair_try);
   return res;

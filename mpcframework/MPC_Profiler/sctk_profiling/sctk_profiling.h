@@ -116,7 +116,7 @@ extern "C"
     SCTK_PROFIL_KEY (MPC_Comm_split);
     SCTK_PROFIL_KEY (MPC_Default_pack);
     SCTK_PROFIL_KEY (MPC_Derived_datatype);
-	SCTK_PROFIL_KEY (MPC_Errhandler_create);
+    SCTK_PROFIL_KEY (MPC_Errhandler_create);
     SCTK_PROFIL_KEY (MPC_Errhandler_free);
     SCTK_PROFIL_KEY (MPC_Errhandler_get);
     SCTK_PROFIL_KEY (MPC_Errhandler_set);
@@ -152,6 +152,8 @@ extern "C"
     SCTK_PROFIL_KEY (MPC_Processor_number);
     SCTK_PROFIL_KEY (MPC_Processor_rank);
     SCTK_PROFIL_KEY (MPC_Recv);
+    SCTK_PROFIL_KEY (MPC_Recv_init_message);
+    SCTK_PROFIL_KEY (sctk_mpc_wait_message);
     SCTK_PROFIL_KEY (MPC_Reduce);
     SCTK_PROFIL_KEY (MPC_Rsend);
     SCTK_PROFIL_KEY (MPC_Scatter);

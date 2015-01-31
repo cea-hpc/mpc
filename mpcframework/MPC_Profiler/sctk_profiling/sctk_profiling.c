@@ -161,6 +161,8 @@ sctk_profiling_init_keys ()
   SCTK_PROF_INIT_KEY (MPC_Processor_number);
   SCTK_PROF_INIT_KEY (MPC_Processor_rank);
   SCTK_PROF_INIT_KEY (MPC_Recv);
+  SCTK_PROF_INIT_KEY (MPC_Recv_init_message);
+  SCTK_PROF_INIT_KEY (sctk_mpc_wait_message);
   SCTK_PROF_INIT_KEY (MPC_Reduce);
   SCTK_PROF_INIT_KEY (MPC_Rsend);
   SCTK_PROF_INIT_KEY (MPC_Scatter);
