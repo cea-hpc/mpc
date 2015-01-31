@@ -225,19 +225,22 @@ static inline void sctk_ptp_tasks_insert(sctk_message_to_copy_t* tmp,
 static inline void sctk_internal_ptp_merge_pending(sctk_internal_ptp_message_lists_t* lists){
 #ifndef SCTK_DISABLE_REENTRANCE
   if(lists->incomming_send.list != NULL){
-    sctk_spinlock_lock(&(lists->incomming_send.lock));
-    DL_CONCAT(lists->pending_send.list,(sctk_msg_list_t*)lists->incomming_send.list);
-    lists->incomming_send.list = NULL;
-    sctk_spinlock_unlock(&(lists->incomming_send.lock));
+    if(sctk_spinlock_trylock(&(lists->incomming_send.lock)) == 0){
+      DL_CONCAT(lists->pending_send.list,(sctk_msg_list_t*)lists->incomming_send.list);
+      lists->incomming_send.list = NULL;
+      sctk_spinlock_unlock(&(lists->incomming_send.lock));
+      lists->changed = 1;
+    }
   }
   if(lists->incomming_recv.list != NULL){
-    sctk_spinlock_lock(&(lists->incomming_recv.lock));
-    DL_CONCAT(lists->pending_recv.list,(sctk_msg_list_t*)lists->incomming_recv.list);
-    lists->incomming_recv.list = NULL;
-    sctk_spinlock_unlock(&(lists->incomming_recv.lock));
+    if(sctk_spinlock_trylock(&(lists->incomming_recv.lock)) == 0){
+      DL_CONCAT(lists->pending_recv.list,(sctk_msg_list_t*)lists->incomming_recv.list);
+      lists->incomming_recv.list = NULL;
+      sctk_spinlock_unlock(&(lists->incomming_recv.lock));
+      lists->changed = 1;
+    }
   }
   /* Change the flag. New messages have been inserted to the 'pending' lists */
-  lists->changed = 1;
 #endif
 }
 
@@ -1720,6 +1723,15 @@ sctk_internal_ptp_list_pending_t *pending_list, sctk_thread_message_header_t* he
 {
 	sctk_msg_list_t* ptr_found;
 	sctk_msg_list_t* tmp;
+	sctk_communicator_t communicator;
+	specific_message_tag_t specific_message_tag;
+	int source;
+	int message_tag;
+	
+	communicator = header->communicator;
+	specific_message_tag = header->specific_message_tag;
+	source = header->source;
+	message_tag = header->message_tag;
 
 	/* Loop on all  pending messages */
 	DL_FOREACH_SAFE(pending_list->list,ptr_found,tmp)
@@ -1729,10 +1741,10 @@ sctk_internal_ptp_list_pending_t *pending_list, sctk_thread_message_header_t* he
 		header_found = &(ptr_found->msg->body.header);
 
 		/* Match the communicator, the tag, the source and the specific message tag */
-		if(	(header->communicator == header_found->communicator) &&
-			(header->specific_message_tag == header_found->specific_message_tag) &&
-			((header->source == header_found->source) || (header->source == MPC_ANY_SOURCE))&&
-			((header->message_tag == header_found->message_tag) || ((header->message_tag == MPC_ANY_TAG) && (header_found->message_tag >= 0))))
+		if(	(communicator == header_found->communicator) &&
+			(specific_message_tag == header_found->specific_message_tag) &&
+			((source == header_found->source) || (source == MPC_ANY_SOURCE))&&
+			((message_tag == header_found->message_tag) || ((message_tag == MPC_ANY_TAG) && (header_found->message_tag >= 0))))
 		{
 			/* update the status with ERR_TYPE if datatypes don't match*/
 			if (header->datatype != header_found->datatype && 
@@ -1886,16 +1898,22 @@ static inline int sctk_perform_messages_for_pair(sctk_internal_ptp_t* pair){
 	 || (pair->lists.incomming_recv.list != NULL)
 #endif
 	 )){
-    if(pair->lists.changed || 1
+    if(
+#if 1
+       1
+#else
+       pair->lists.changed || 1
 #ifndef SCTK_DISABLE_REENTRANCE
        || (pair->lists.incomming_send.list != NULL)
        || (pair->lists.incomming_recv.list != NULL)
 #endif
+#endif
 ){
-      sctk_internal_ptp_lock_pending(&(pair->lists));
-      nb_messages_copied = sctk_perform_messages_for_pair_locked(pair);
-      pair->lists.changed = 0;
-      sctk_internal_ptp_unlock_pending(&(pair->lists));
+      if(sctk_internal_ptp_trylock_pending(&(pair->lists)) == 0){
+	nb_messages_copied = sctk_perform_messages_for_pair_locked(pair);
+	pair->lists.changed = 0;
+	sctk_internal_ptp_unlock_pending(&(pair->lists));
+      }
       }
     }
 #ifndef SCTK_DISABLE_TASK_ENGINE
