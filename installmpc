@@ -222,6 +222,10 @@ do
 		--with-slurm)
 			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --with-slurm"
 			;;
+		--disable-MPC_MPI)
+			ROMIO_PREFIX='disabled'		
+			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --disable-MPC_MPI"
+			;;
 		##################### MPC ###################
 		--with-mpc=*)
 			extractParamValue 'MPC_PREFIX' 'with-mpc' "$arg"
