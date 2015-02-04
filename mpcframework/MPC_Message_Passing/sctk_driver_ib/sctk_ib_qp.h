@@ -93,7 +93,7 @@ typedef struct sctk_ib_qp_s
 	unsigned int            free_nb;    /**< Number of pending entries free in QP */
 	sctk_spinlock_t         post_lock;  /**< Lock when posting an element */
 	OPA_int_t               pending_data; 	/**< Number of pending requests */
-	sctk_route_table_t      *route_table; /** Routes */
+	sctk_endpoint_t      *route_table; /** Routes */
 	/* For linked-list */
 	struct sctk_ib_qp_s *prev;
 	struct sctk_ib_qp_s *next;
@@ -156,7 +156,7 @@ struct ibv_qp_attr sctk_ib_qp_state_rts_attr ( struct sctk_ib_rail_info_s *rail_
 
 void sctk_ib_qp_modify ( sctk_ib_qp_t *remote, struct ibv_qp_attr *attr, int flags );
 
-void sctk_ib_qp_allocate_init ( struct sctk_ib_rail_info_s *rail_ib, int rank, sctk_ib_qp_t *remote, int ondemand, sctk_route_table_t *route );
+void sctk_ib_qp_allocate_init ( struct sctk_ib_rail_info_s *rail_ib, int rank, sctk_ib_qp_t *remote, int ondemand, sctk_endpoint_t *route );
 
 void sctk_ib_qp_allocate_rtr ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *remote, sctk_ib_cm_qp_connection_t *keys );
 
@@ -259,7 +259,7 @@ __UNUSED__ static inline int sctk_ib_qp_allocate_get_rts ( sctk_ib_qp_t *remote 
 }
 
 void sctk_ib_qp_select_victim ( struct sctk_ib_rail_info_s *rail_ib );
-void sctk_ib_qp_deco_victim ( struct sctk_ib_rail_info_s *rail_ib, sctk_route_table_t *route_table );
+void sctk_ib_qp_deco_victim ( struct sctk_ib_rail_info_s *rail_ib, sctk_endpoint_t *route_table );
 
 int sctk_ib_qp_check_flush ( struct sctk_ib_rail_info_s *rail_ib,  sctk_ib_qp_t *remote );
 

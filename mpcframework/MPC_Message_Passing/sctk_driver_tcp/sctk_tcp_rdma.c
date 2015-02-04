@@ -33,7 +33,7 @@ typedef enum
 
 static void sctk_tcp_rdma_message_copy ( sctk_message_to_copy_t *tmp )
 {
-	sctk_route_table_t *route;
+	sctk_endpoint_t *route;
 	int fd;
 
 	route = tmp->msg_send->tail.route_table;
@@ -56,7 +56,7 @@ static void sctk_tcp_rdma_message_copy ( sctk_message_to_copy_t *tmp )
 
 extern volatile int sctk_online_program;
 
-static void *sctk_tcp_rdma_thread ( sctk_route_table_t *tmp )
+static void *sctk_tcp_rdma_thread ( sctk_endpoint_t *tmp )
 {
 	int fd;
 	fd = tmp->data.tcp.fd;
@@ -157,7 +157,7 @@ static void *sctk_tcp_rdma_thread ( sctk_route_table_t *tmp )
 
 static void sctk_network_send_message_tcp_rdma ( sctk_thread_ptp_message_t *msg, sctk_rail_info_t *rail )
 {
-	sctk_route_table_t *tmp;
+	sctk_endpoint_t *tmp;
 	int fd;
 
 	if ( IS_PROCESS_SPECIFIC_MESSAGE_TAG ( SCTK_MSG_SPECIFIC_TAG ( msg ) ) )

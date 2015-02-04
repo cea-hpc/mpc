@@ -1020,7 +1020,7 @@ void notify ( sctk_rail_info_t *rail, int id )
 static void
 sctk_network_send_message_portals_rail ( sctk_thread_ptp_message_t *msg, sctk_rail_info_t *rail )
 {
-	sctk_route_table_t *tmp;
+	sctk_endpoint_t *tmp;
 	size_t size;
 	int fd;
 
@@ -1452,14 +1452,14 @@ void sctk_network_init_portals_rail ( sctk_rail_info_t *rail )
 		int val_max = sctk_pmi_get_max_val_len();
 		char key[key_max];
 		char val[key_max];
-		sctk_route_table_t *tmp;
+		sctk_endpoint_t *tmp;
 
 		snprintf ( key, key_max, "PORTALS-%d-%06d", rail->rail_number , dest_rank );
 		sctk_pmi_get_connection_info_str ( val, val_max, key );
 		sctk_nodebug ( "Got KEY %s\t%s", key, val ); //key is the process_rank ,val is the nid and pid encoded
 
-		tmp = sctk_malloc ( sizeof ( sctk_route_table_t ) );
-		memset ( tmp, 0, sizeof ( sctk_route_table_t ) );
+		tmp = sctk_malloc ( sizeof ( sctk_endpoint_t ) );
+		memset ( tmp, 0, sizeof ( sctk_endpoint_t ) );
 		/*Store connection info*/
 		decode ( val, & ( tmp->data.portals.id ),
 		         sizeof ( tmp->data.portals.id ) );
@@ -1497,14 +1497,14 @@ void sctk_network_init_portals_rail ( sctk_rail_info_t *rail )
 		int val_max = sctk_pmi_get_max_val_len();
 		char key[key_max];
 		char val[key_max];
-		sctk_route_table_t *tmp;
+		sctk_endpoint_t *tmp;
 
 		snprintf ( key, key_max, "PORTALS-%d-%06d", rail->rail_number , src_rank );
 		sctk_pmi_get_connection_info_str ( val, val_max, key );
 		sctk_nodebug ( "Got KEY %s\t%s", key, val ); //key is the process_rank ,val is the nid and pid encoded
 
-		tmp = sctk_malloc ( sizeof ( sctk_route_table_t ) );
-		memset ( tmp, 0, sizeof ( sctk_route_table_t ) );
+		tmp = sctk_malloc ( sizeof ( sctk_endpoint_t ) );
+		memset ( tmp, 0, sizeof ( sctk_endpoint_t ) );
 		/*Store connection info*/
 		decode ( val, & ( tmp->data.portals.id ),
 		         sizeof ( tmp->data.portals.id ) );

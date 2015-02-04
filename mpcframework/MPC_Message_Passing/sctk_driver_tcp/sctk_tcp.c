@@ -31,7 +31,7 @@ extern volatile int sctk_online_program;
 /* Inter Thread Comm Hooks                                          */
 /********************************************************************/
 
-static void *sctk_tcp_thread ( sctk_route_table_t *tmp )
+static void *sctk_tcp_thread ( sctk_endpoint_t *tmp )
 {
 	int fd = tmp->data.tcp.fd;
 
@@ -105,7 +105,7 @@ static void *sctk_tcp_thread ( sctk_route_table_t *tmp )
 
 static void sctk_network_send_message_tcp ( sctk_thread_ptp_message_t *msg, sctk_rail_info_t *rail )
 {
-	sctk_route_table_t *tmp;
+	sctk_endpoint_t *tmp;
 	size_t size;
 	int fd;
 

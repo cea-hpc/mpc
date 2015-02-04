@@ -280,16 +280,16 @@ static void sctk_client_create_recv_socket ( sctk_rail_info_t *rail )
 /********************************************************************/
 
 static void sctk_tcp_add_static_route ( int dest, int fd, sctk_rail_info_t *rail,
-                                        void * ( *tcp_thread ) ( sctk_route_table_t * ) )
+                                        void * ( *tcp_thread ) ( sctk_endpoint_t * ) )
 {
-	sctk_route_table_t *new_route;
+	sctk_endpoint_t *new_route;
 	sctk_thread_t pidt;
 	sctk_thread_attr_t attr;
 
 	/* Allocate a new route */
-	new_route = sctk_malloc ( sizeof ( sctk_route_table_t ) );
+	new_route = sctk_malloc ( sizeof ( sctk_endpoint_t ) );
 	assume ( new_route != NULL );
-	memset ( new_route, 0, sizeof ( sctk_route_table_t ) );
+	memset ( new_route, 0, sizeof ( sctk_endpoint_t ) );
 
 	sctk_nodebug ( "Register fd %d", fd );
 	new_route->data.tcp.fd = fd;
@@ -322,7 +322,7 @@ static void sctk_network_connection_to_tcp ( int from, int to, sctk_rail_info_t 
 	/*Recv id from the connected process*/
 	dest_socket = sctk_tcp_connect_to ( dest_connection_infos, rail );
 
-	sctk_tcp_add_static_route ( from, dest_socket, rail, ( void * ( * ) ( sctk_route_table_t * ) ) ( rail->network.tcp.tcp_thread ) );
+	sctk_tcp_add_static_route ( from, dest_socket, rail, ( void * ( * ) ( sctk_endpoint_t * ) ) ( rail->network.tcp.tcp_thread ) );
 }
 
 static void sctk_network_connection_from_tcp ( int from, int to, sctk_rail_info_t *rail )
@@ -339,7 +339,7 @@ static void sctk_network_connection_from_tcp ( int from, int to, sctk_rail_info_
 		sctk_abort();
 	}
 
-	sctk_tcp_add_static_route ( to, src_socket, rail, ( void * ( * ) ( sctk_route_table_t * ) ) ( rail->network.tcp.tcp_thread ) );
+	sctk_tcp_add_static_route ( to, src_socket, rail, ( void * ( * ) ( sctk_endpoint_t * ) ) ( rail->network.tcp.tcp_thread ) );
 }
 
 /********************************************************************/
@@ -347,7 +347,7 @@ static void sctk_network_connection_from_tcp ( int from, int to, sctk_rail_info_
 /********************************************************************/
 
 void sctk_network_init_tcp_all ( sctk_rail_info_t *rail, int sctk_use_tcp_o_ib,
-                                 void * ( *tcp_thread ) ( sctk_route_table_t * ),
+                                 void * ( *tcp_thread ) ( sctk_endpoint_t * ),
                                  int ( *route ) ( int , sctk_rail_info_t * ),
                                  void ( *route_init ) ( sctk_rail_info_t * ) )
 {

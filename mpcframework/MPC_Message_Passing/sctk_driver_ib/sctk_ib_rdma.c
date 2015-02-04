@@ -296,7 +296,7 @@ sctk_ib_rdma_prepare_data_write ( sctk_rail_info_t *rail,
 	                       rdma->remote_peer, ibuf, 0 );
 #else
 	int src_process;
-	sctk_route_table_t *route;
+	sctk_endpoint_t *route;
 	route = sctk_get_route_to_process ( rdma->remote_peer->rank, rdma->remote_rail );
 
 	ibuf = sctk_ibuf_pick_send_sr ( &rdma->remote_rail->network.ib );
@@ -576,7 +576,7 @@ sctk_ib_rdma_recv_req ( sctk_rail_info_t *rail, sctk_ibuf_t *ibuf )
 
 		/* Get the remote QP from the remote rail */
 		int src_process;
-		sctk_route_table_t *route;
+		sctk_endpoint_t *route;
 		src_process = sctk_determine_src_process_from_header ( &msg->body );
 		assume ( src_process != -1 );
 		route = sctk_get_route_to_process ( src_process, rdma->remote_rail );

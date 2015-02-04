@@ -38,11 +38,11 @@
 /************************************************************************/
 
 /** Here are stored the dynamic routes (hash table) */
-static sctk_route_table_t *sctk_dynamic_route_table = NULL;
+static sctk_endpoint_t *sctk_dynamic_route_table = NULL;
 /** This is the dynamic route lock */
 static sctk_spin_rwlock_t sctk_route_table_lock = SCTK_SPIN_RWLOCK_INITIALIZER;
 /** Here are stored the dynamic routes (hash table) -- no lock as they are read only */
-static sctk_route_table_t *sctk_static_route_table = NULL;
+static sctk_endpoint_t *sctk_static_route_table = NULL;
 /** This conditionnal lock is used during route initialization */
 static sctk_spin_rwlock_t sctk_route_table_init_lock = SCTK_SPIN_RWLOCK_INITIALIZER;
 static int sctk_route_table_init_lock_needed = 0;
@@ -54,28 +54,28 @@ static int sctk_route_table_init_lock_needed = 0;
 /* Routes Memory Status                                                 */
 /************************************************************************/
 
-int sctk_route_cas_low_memory_mode_local ( sctk_route_table_t *tmp, int oldv, int newv )
+int sctk_route_cas_low_memory_mode_local ( sctk_endpoint_t *tmp, int oldv, int newv )
 {
 	return ( int ) OPA_cas_int ( &tmp->low_memory_mode_local, oldv, newv );
 }
 
-int sctk_route_is_low_memory_mode_local ( sctk_route_table_t *tmp )
+int sctk_route_is_low_memory_mode_local ( sctk_endpoint_t *tmp )
 {
 	return ( int ) OPA_load_int ( &tmp->low_memory_mode_local );
 }
-void sctk_route_set_low_memory_mode_local ( sctk_route_table_t *tmp, int low )
+void sctk_route_set_low_memory_mode_local ( sctk_endpoint_t *tmp, int low )
 {
 	if ( low )
 		sctk_warning ( "Local process %d set to low level memory", tmp->key.destination );
 
 	OPA_store_int ( &tmp->low_memory_mode_local, low );
 }
-int sctk_route_is_low_memory_mode_remote ( sctk_route_table_t *tmp )
+int sctk_route_is_low_memory_mode_remote ( sctk_endpoint_t *tmp )
 {
 	return ( int ) OPA_load_int ( &tmp->low_memory_mode_remote );
 }
 
-void sctk_route_set_low_memory_mode_remote ( sctk_route_table_t *tmp, int low )
+void sctk_route_set_low_memory_mode_remote ( sctk_endpoint_t *tmp, int low )
 {
 	if ( low )
 		sctk_warning ( "Remote process %d set to low level memory", tmp->key.destination );
@@ -96,10 +96,10 @@ void sctk_route_set_low_memory_mode_remote ( sctk_route_table_t *tmp, int low )
  *  - added: if the entry has been created
  *  - is_initiator: if the current process is the initiator of the entry creation.
  */
-sctk_route_table_t *sctk_route_dynamic_safe_add ( int dest, sctk_rail_info_t *rail, sctk_route_table_t * ( *create_func ) (), void ( *init_func ) ( int dest, sctk_rail_info_t *rail, sctk_route_table_t *route_table, int ondemand ), int *added, char is_initiator )
+sctk_endpoint_t *sctk_route_dynamic_safe_add ( int dest, sctk_rail_info_t *rail, sctk_endpoint_t * ( *create_func ) (), void ( *init_func ) ( int dest, sctk_rail_info_t *rail, sctk_endpoint_t *route_table, int ondemand ), int *added, char is_initiator )
 {
 	sctk_route_key_t key;
-	sctk_route_table_t *tmp;
+	sctk_endpoint_t *tmp;
 	*added = 0;
 
 	key.destination = dest;
@@ -140,7 +140,7 @@ sctk_route_table_t *sctk_route_dynamic_safe_add ( int dest, sctk_rail_info_t *ra
 }
 
 /* Return if the process is the initiator of the connexion or not */
-char sctk_route_get_is_initiator ( sctk_route_table_t *route_table )
+char sctk_route_get_is_initiator ( sctk_endpoint_t *route_table )
 {
 	assume ( route_table );
 	int is_initiator;
@@ -152,10 +152,10 @@ char sctk_route_get_is_initiator ( sctk_route_table_t *route_table )
 	return is_initiator;
 }
 
-sctk_route_table_t *sctk_route_dynamic_search ( int dest, sctk_rail_info_t *rail )
+sctk_endpoint_t *sctk_route_dynamic_search ( int dest, sctk_rail_info_t *rail )
 {
 	sctk_route_key_t key;
-	sctk_route_table_t *tmp;
+	sctk_endpoint_t *tmp;
 
 	key.destination = dest;
 	key.rail = rail->rail_number;
@@ -168,7 +168,7 @@ sctk_route_table_t *sctk_route_dynamic_search ( int dest, sctk_rail_info_t *rail
 /************************************************************************/
 /* Route Initialization and Management                                  */
 /************************************************************************/
-void sctk_init_dynamic_route ( int dest, sctk_route_table_t *tmp, sctk_rail_info_t *rail )
+void sctk_init_dynamic_route ( int dest, sctk_endpoint_t *tmp, sctk_rail_info_t *rail )
 {
 	tmp->key.destination = dest;
 	tmp->key.rail = rail->rail_number;
@@ -185,14 +185,14 @@ void sctk_init_dynamic_route ( int dest, sctk_route_table_t *tmp, sctk_rail_info
 	tmp->origin = ROUTE_ORIGIN_DYNAMIC;
 }
 
-void sctk_add_dynamic_route ( int dest, sctk_route_table_t *tmp, sctk_rail_info_t *rail )
+void sctk_add_dynamic_route ( int dest, sctk_endpoint_t *tmp, sctk_rail_info_t *rail )
 {
 	sctk_spinlock_write_lock ( &sctk_route_table_lock );
 	HASH_ADD ( hh, sctk_dynamic_route_table, key, sizeof ( sctk_route_key_t ), tmp );
 	sctk_spinlock_write_unlock ( &sctk_route_table_lock );
 }
 
-void sctk_init_static_route ( int dest, sctk_route_table_t *tmp, sctk_rail_info_t *rail )
+void sctk_init_static_route ( int dest, sctk_endpoint_t *tmp, sctk_rail_info_t *rail )
 {
 	tmp->key.destination = dest;
 	tmp->key.rail = rail->rail_number;
@@ -208,7 +208,7 @@ void sctk_init_static_route ( int dest, sctk_route_table_t *tmp, sctk_rail_info_
 	tmp->origin = ROUTE_ORIGIN_STATIC;
 }
 
-void sctk_add_static_route ( int dest, sctk_route_table_t *tmp, sctk_rail_info_t *rail )
+void sctk_add_static_route ( int dest, sctk_endpoint_t *tmp, sctk_rail_info_t *rail )
 {
 	sctk_nodebug ( "Add process %d to static routes", dest );
 	/* FIXME: Ideally the initialization should not be in the 'add' function */
@@ -223,15 +223,15 @@ void sctk_add_static_route ( int dest, sctk_route_table_t *tmp, sctk_rail_info_t
 /* Route Walking                                                        */
 /************************************************************************/
 
-UT_icd ptr_icd = {sizeof ( sctk_route_table_t ** ), NULL, NULL, NULL};
+UT_icd ptr_icd = {sizeof ( sctk_endpoint_t ** ), NULL, NULL, NULL};
 
 /*
  * Walk through all registered routes and call the function 'func'.
  * Static and dynamic routes are involved
  */
-void sctk_walk_all_routes ( const sctk_rail_info_t *rail, void ( *func ) ( const sctk_rail_info_t *rail, sctk_route_table_t *table ) )
+void sctk_walk_all_routes ( const sctk_rail_info_t *rail, void ( *func ) ( const sctk_rail_info_t *rail, sctk_endpoint_t *table ) )
 {
-	sctk_route_table_t *current_route, *tmp, **tmp2;
+	sctk_endpoint_t *current_route, *tmp, **tmp2;
 	UT_array *routes;
 	utarray_new ( routes, &ptr_icd );
 
@@ -262,7 +262,7 @@ void sctk_walk_all_routes ( const sctk_rail_info_t *rail, void ( *func ) ( const
 
 	tmp2 = NULL;
 
-	while ( ( tmp2 = ( sctk_route_table_t ** ) utarray_next ( routes, tmp2 ) ) )
+	while ( ( tmp2 = ( sctk_endpoint_t ** ) utarray_next ( routes, tmp2 ) ) )
 	{
 		func ( rail, *tmp2 );
 	}
@@ -270,9 +270,9 @@ void sctk_walk_all_routes ( const sctk_rail_info_t *rail, void ( *func ) ( const
 
 /* Walk through all registered routes and call the function 'func'.
  * Only dynamic routes are involved */
-void sctk_walk_all_dynamic_routes ( const sctk_rail_info_t *rail, void ( *func ) ( const sctk_rail_info_t *rail, sctk_route_table_t *table ) )
+void sctk_walk_all_dynamic_routes ( const sctk_rail_info_t *rail, void ( *func ) ( const sctk_rail_info_t *rail, sctk_endpoint_t *table ) )
 {
-	sctk_route_table_t *current_route, *tmp, **tmp2;
+	sctk_endpoint_t *current_route, *tmp, **tmp2;
 	UT_array *routes;
 	utarray_new ( routes, &ptr_icd );
 
@@ -293,7 +293,7 @@ void sctk_walk_all_dynamic_routes ( const sctk_rail_info_t *rail, void ( *func )
 
 	tmp2 = NULL;
 
-	while ( ( tmp2 = ( sctk_route_table_t ** ) utarray_next ( routes, tmp2 ) ) )
+	while ( ( tmp2 = ( sctk_endpoint_t ** ) utarray_next ( routes, tmp2 ) ) )
 	{
 		func ( rail, *tmp2 );
 	}
@@ -305,10 +305,10 @@ void sctk_walk_all_dynamic_routes ( const sctk_rail_info_t *rail, void ( *func )
 /************************************************************************/
 
 /* Get a static route with no routing (can return NULL ) */
-static inline sctk_route_table_t *sctk_get_static_route_to_process_no_routing ( int dest, sctk_rail_info_t *rail )
+static inline sctk_endpoint_t *sctk_get_static_route_to_process_no_routing ( int dest, sctk_rail_info_t *rail )
 {
 	sctk_route_key_t key;
-	sctk_route_table_t *tmp;
+	sctk_endpoint_t *tmp;
 
 	key.destination = dest;
 	key.rail = rail->rail_number;
@@ -323,10 +323,10 @@ static inline sctk_route_table_t *sctk_get_static_route_to_process_no_routing ( 
 }
 
 /* Get a route (static / dynamic) with no routing (can return NULL) */
-sctk_route_table_t *sctk_get_route_to_process_no_routing ( int dest, sctk_rail_info_t *rail )
+sctk_endpoint_t *sctk_get_route_to_process_no_routing ( int dest, sctk_rail_info_t *rail )
 {
 	sctk_route_key_t key;
-	sctk_route_table_t *tmp;
+	sctk_endpoint_t *tmp;
 
 	key.destination = dest;
 	key.rail = rail->rail_number;
@@ -355,7 +355,7 @@ sctk_route_table_t *sctk_get_route_to_process_no_routing ( int dest, sctk_rail_i
 struct wait_connexion_args_s
 {
 	sctk_route_state_t state;
-	sctk_route_table_t *route_table;
+	sctk_endpoint_t *route_table;
 	sctk_rail_info_t *rail;
 	int done;
 };
@@ -378,7 +378,7 @@ void *__wait_connexion ( void *a )
 	return NULL;
 }
 
-static inline void __wait_state ( sctk_rail_info_t *rail, sctk_route_table_t *route_table, sctk_route_state_t state )
+static inline void __wait_state ( sctk_rail_info_t *rail, sctk_endpoint_t *route_table, sctk_route_state_t state )
 {
 	struct wait_connexion_args_s args;
 	args.route_table = route_table;
@@ -390,9 +390,9 @@ static inline void __wait_state ( sctk_rail_info_t *rail, sctk_route_table_t *ro
 }
 
 /* Get a route to a process only on static routes (does not create new routes => Relies on routing) */
-inline sctk_route_table_t *sctk_get_route_to_process_static ( int dest, sctk_rail_info_t *rail )
+inline sctk_endpoint_t *sctk_get_route_to_process_static ( int dest, sctk_rail_info_t *rail )
 {
-	sctk_route_table_t *tmp;
+	sctk_endpoint_t *tmp;
 	tmp = sctk_get_static_route_to_process_no_routing ( dest, rail );
 
 	if ( tmp == NULL )
@@ -406,9 +406,9 @@ inline sctk_route_table_t *sctk_get_route_to_process_static ( int dest, sctk_rai
 
 /* Get a route to a process with no ondemand connexions (relies on both static and dynamic routes without creating
  * routes => Relies on routing ) */
-inline sctk_route_table_t *sctk_get_route_to_process_no_ondemand ( int dest, sctk_rail_info_t *rail )
+inline sctk_endpoint_t *sctk_get_route_to_process_no_ondemand ( int dest, sctk_rail_info_t *rail )
 {
-	sctk_route_table_t *tmp;
+	sctk_endpoint_t *tmp;
 	/* Try to get a dynamic / static route until this process */
 	tmp = sctk_get_route_to_process_no_routing ( dest, rail );
 
@@ -424,9 +424,9 @@ inline sctk_route_table_t *sctk_get_route_to_process_no_ondemand ( int dest, sct
 }
 
 /* Get a route to process, creating the route if not present */
-sctk_route_table_t *sctk_get_route_to_process ( int dest, sctk_rail_info_t *rail )
+sctk_endpoint_t *sctk_get_route_to_process ( int dest, sctk_rail_info_t *rail )
 {
-	sctk_route_table_t *tmp;
+	sctk_endpoint_t *tmp;
 
 	/* Try to find a direct route with no routing */
 	tmp = sctk_get_route_to_process_no_routing ( dest, rail );
@@ -508,9 +508,9 @@ sctk_route_table_t *sctk_get_route_to_process ( int dest, sctk_rail_info_t *rail
 }
 
 /* Get the route to a given task (on demand mode) */
-sctk_route_table_t *sctk_get_route ( int dest, sctk_rail_info_t *rail )
+sctk_endpoint_t *sctk_get_route ( int dest, sctk_rail_info_t *rail )
 {
-	sctk_route_table_t *tmp;
+	sctk_endpoint_t *tmp;
 	int process;
 
 	process = sctk_get_process_rank_from_task_rank ( dest );
@@ -632,7 +632,7 @@ void sctk_route_fully_init ( sctk_rail_info_t *rail )
 			{
 				if ( to != from )
 				{
-					sctk_route_table_t *tmp;
+					sctk_endpoint_t *tmp;
 
 					if ( from == sctk_process_rank )
 					{
@@ -1505,7 +1505,7 @@ void sctk_route_torus_init ( sctk_rail_info_t *rail )
 						__sctk_local_node.neigh[i][j * 2 + 1] = __sctk_local_node.c[i];
 						neigh = sctk_Node_id ( &__sctk_torus, &__sctk_local_node );
 						__sctk_local_node.neigh[i][j * 2] = neigh;
-						sctk_route_table_t *tmp;
+						sctk_endpoint_t *tmp;
 
 						tmp = sctk_get_route_to_process_no_routing ( neigh, rail );
 
@@ -1545,7 +1545,7 @@ void sctk_route_torus_init ( sctk_rail_info_t *rail )
 						__sctk_local_node.neigh[i][j * 2 + 1] = __sctk_local_node.c[i];
 						neigh = sctk_Node_id ( &__sctk_torus, &__sctk_local_node );
 						__sctk_local_node.neigh[i][j * 2] = neigh;
-						sctk_route_table_t *tmp;
+						sctk_endpoint_t *tmp;
 
 						tmp = sctk_get_route_to_process_no_routing ( neigh, rail );
 

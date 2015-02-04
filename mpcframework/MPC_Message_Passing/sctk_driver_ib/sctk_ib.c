@@ -52,7 +52,7 @@
 #include <sctk_io_helper.h>
 
 /* Initialize a new route table */
-void sctk_ib_init_remote ( int dest, sctk_rail_info_t *rail, struct sctk_route_table_s *route_table, int ondemand )
+void sctk_ib_init_remote ( int dest, sctk_rail_info_t *rail, struct sctk_endpoint_s *route_table, int ondemand )
 {
 	sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
 	sctk_ib_route_info_t *route_ib;
@@ -65,13 +65,13 @@ void sctk_ib_init_remote ( int dest, sctk_rail_info_t *rail, struct sctk_route_t
 }
 
 /* Create a new route table */
-sctk_route_table_t *sctk_ib_create_remote()
+sctk_endpoint_t *sctk_ib_create_remote()
 {
-	sctk_route_table_t *tmp;
+	sctk_endpoint_t *tmp;
 	sctk_ib_route_info_t *route_ib;
 
-	tmp = sctk_malloc ( sizeof ( sctk_route_table_t ) );
-	memset ( tmp, 0, sizeof ( sctk_route_table_t ) );
+	tmp = sctk_malloc ( sizeof ( sctk_endpoint_t ) );
+	memset ( tmp, 0, sizeof ( sctk_endpoint_t ) );
 
 	route_ib = &tmp->data.ib;
 	route_ib->remote = sctk_ib_qp_new();

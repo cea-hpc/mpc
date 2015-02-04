@@ -324,7 +324,7 @@ void sctk_ib_buffered_poll_recv ( sctk_rail_info_t *rail, sctk_ibuf_t *ibuf )
 {
 	sctk_thread_ptp_message_body_t *body;
 	sctk_ib_buffered_t *buffered;
-	sctk_route_table_t *route_table;
+	sctk_endpoint_t *route_table;
 	sctk_ib_buffered_entry_t *entry = NULL;
 	sctk_ib_qp_t *remote;
 	size_t current_copied;

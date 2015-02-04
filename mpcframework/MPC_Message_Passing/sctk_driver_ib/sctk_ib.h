@@ -239,13 +239,13 @@ typedef struct sctk_ib_msg_header_s
 } sctk_ib_msg_header_t;
 
 /* XXX: Should not be declared here but in CM */
-struct sctk_route_table_s *sctk_ib_create_remote();
-void sctk_ib_init_remote ( int dest, struct sctk_rail_info_s *rail, struct sctk_route_table_s *route_table, int ondemand );
+struct sctk_endpoint_s *sctk_ib_create_remote();
+void sctk_ib_init_remote ( int dest, struct sctk_rail_info_s *rail, struct sctk_endpoint_s *route_table, int ondemand );
 
-void sctk_ib_add_static_route ( int dest, struct sctk_route_table_s *tmp, struct sctk_rail_info_s *rail );
-void sctk_ib_add_dynamic_route ( int dest, struct sctk_route_table_s *tmp, struct sctk_rail_info_s *rail );
-int sctk_ib_route_dynamic_is_connected ( struct sctk_route_table_s *tmp );
-void sctk_ib_route_dynamic_set_connected ( struct sctk_route_table_s *tmp, int connected );
+void sctk_ib_add_static_route ( int dest, struct sctk_endpoint_s *tmp, struct sctk_rail_info_s *rail );
+void sctk_ib_add_dynamic_route ( int dest, struct sctk_endpoint_s *tmp, struct sctk_rail_info_s *rail );
+int sctk_ib_route_dynamic_is_connected ( struct sctk_endpoint_s *tmp );
+void sctk_ib_route_dynamic_set_connected ( struct sctk_endpoint_s *tmp, int connected );
 
 /* IB header: generic */
 #define IBUF_GET_EAGER_HEADER(buffer) \

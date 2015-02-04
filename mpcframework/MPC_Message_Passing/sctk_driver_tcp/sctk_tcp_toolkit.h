@@ -29,7 +29,7 @@ extern "C"
 
 #include <sctk_route.h>
 void sctk_network_init_tcp_all ( sctk_rail_info_t *rail, int sctk_use_tcp_o_ib,
-                                 void * ( *tcp_thread ) ( sctk_route_table_t * ),
+                                 void * ( *tcp_thread ) ( sctk_endpoint_t * ),
                                  int ( *route ) ( int , sctk_rail_info_t * ),
                                  void ( *route_init ) () );
 

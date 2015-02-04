@@ -33,7 +33,7 @@ extern "C"
 
 /** \brief ROUTE level data structure for TCP
 *
-*   This structure is stored in each \ref sctk_route_table_s structure
+*   This structure is stored in each \ref sctk_endpoint_s structure
 *   using the \ref sctk_route_info_spec_t union
 */
 typedef struct
@@ -54,7 +54,7 @@ typedef struct
 	int portno;					/**< Listening socket port number */
 	char connection_infos[MAX_STRING_SIZE];		/**< Connection info for this listening socket */
 	size_t connection_infos_size;			/**< Length of the connection_info field */
-	void * ( *tcp_thread ) ( struct sctk_route_table_s * ); /**< Function to call when registering a route (RDMA/MULTIRAIL/TCP) */
+	void * ( *tcp_thread ) ( struct sctk_endpoint_s * ); /**< Function to call when registering a route (RDMA/MULTIRAIL/TCP) */
 } sctk_tcp_rail_info_t;
 
 void sctk_network_init_tcp ( sctk_rail_info_t *rail, int sctk_use_tcp_o_ib );

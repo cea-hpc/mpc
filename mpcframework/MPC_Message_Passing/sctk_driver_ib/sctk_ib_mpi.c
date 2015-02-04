@@ -55,7 +55,7 @@ sctk_network_send_message_ib ( sctk_thread_ptp_message_t *msg, sctk_rail_info_t 
 {
 	sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
 	LOAD_CONFIG ( rail_ib );
-	sctk_route_table_t *tmp;
+	sctk_endpoint_t *tmp;
 	sctk_ib_route_info_t *route_data;
 	sctk_ib_qp_t *remote;
 	sctk_ibuf_t *ibuf;
@@ -594,7 +594,7 @@ static void sctk_network_notify_perform_message_ib ( int remote_process, int rem
 	{
 		sctk_ib_qp_t *remote;
 		sctk_ib_route_info_t *route_data;
-		sctk_route_table_t *route =  sctk_get_route_to_process_no_ondemand ( remote_process, rail );
+		sctk_endpoint_t *route =  sctk_get_route_to_process_no_ondemand ( remote_process, rail );
 		ib_assume ( route );
 		int ret;
 
