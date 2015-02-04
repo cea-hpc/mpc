@@ -1649,7 +1649,7 @@ static int rails_nb = 0;
 
 	rails[rails_nb]->send_message_from_network = sctk_send_message_from_network_portals;
 
-	sctk_route_init_in_rail ( rails[rails_nb], rail_config->topology );
+	sctk_rail_init_route ( rails[rails_nb], rail_config->topology );
 	sctk_network_init_portals_rail ( rails[rails_nb] );
 
 	/* One new rail has been registered */
@@ -1682,7 +1682,7 @@ void sctk_network_init_portals ( char *name, char *topology )
 	rails[i] = sctk_rail_get_by_id ( i );
 	rails[i]->rail_number = i;
 	rails[i]->send_message_from_network = sctk_send_message_from_network_portals;
-	sctk_route_init_in_rail ( rails[i], topology );
+	sctk_rail_init_route ( rails[i], topology );
 	sctk_network_init_portals_rail ( rails[i] );
 
 	sctk_network_send_message_set ( sctk_network_send_message_portals );

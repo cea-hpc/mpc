@@ -96,4 +96,8 @@ sctk_rail_info_t * sctk_rail_get_by_id ( int i );
 void sctk_rail_commit();
 int sctk_rail_committed();
 
+
+void sctk_rail_init_route ( sctk_rail_info_t *rail, char *topology );
+
+
 #endif /* SCTK_RAIL_H */

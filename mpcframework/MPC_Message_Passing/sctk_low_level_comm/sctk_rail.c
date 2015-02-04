@@ -20,6 +20,9 @@
 /* #                                                                      # */
 /* ######################################################################## */
 #include "sctk_rail.h"
+#include "sctk_net_topology.h"
+
+#include <sctk_pmi.h>
 
 /************************************************************************/
 /* Rails Storage                                                        */
@@ -106,6 +109,49 @@ void sctk_rail_commit()
 int sctk_rail_committed()
 {
 	return is_route_finalized;
+}
+
+
+
+/************************************************************************/
+/* route_init                                                           */
+/************************************************************************/
+
+void sctk_rail_init_route ( sctk_rail_info_t *rail, char *topology )
+{
+	rail->on_demand = 0;
+
+	if ( strcmp ( "ring", topology ) == 0 )
+	{
+		rail->route = sctk_route_ring;
+		rail->route_init = sctk_route_ring_init;
+		rail->topology_name = "ring";
+	}
+	else
+		if ( strcmp ( "fully", topology ) == 0 )
+		{
+			rail->route = sctk_route_fully;
+			rail->route_init = sctk_route_fully_init;
+			rail->topology_name = "fully connected";
+		}
+		else
+			if ( strcmp ( "ondemand", topology ) == 0 )
+			{
+				rail->route = sctk_route_ondemand;
+				rail->route_init = sctk_route_ondemand_init;
+				rail->topology_name = "On-Demand connections";
+			}
+			else
+				if ( strcmp ( "torus", topology ) == 0 )
+				{
+					rail->route = sctk_route_torus;
+					rail->route_init = sctk_route_torus_init;
+					rail->topology_name = "torus";
+				}
+				else
+				{
+					not_reachable();
+				}
 }
 
 

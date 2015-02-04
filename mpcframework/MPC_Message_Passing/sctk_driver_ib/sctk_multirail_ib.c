@@ -390,14 +390,14 @@ void sctk_network_init_multirail_ib ( sctk_rail_info_t *new_rail , int max_rails
 	/* Set the message from net function */
 	rails[rails_nb]->send_message_from_network = sctk_send_message_from_network_multirail_ib;
 	/* Register topology */
-	sctk_route_init_in_rail ( rails[rails_nb], rail_config->topology );
+	sctk_rail_init_route ( rails[rails_nb], rail_config->topology );
 
 	/* Initialize the IB rail ID */
 
 	if ( config->driver.value.infiniband.network_type == 1 )
 	{
 		rails[rails_nb]->send_message_from_network = sctk_send_message_from_network_multirail_ib;
-		sctk_route_init_in_rail ( rails[rails_nb], rail_config->topology );
+		sctk_rail_init_route ( rails[rails_nb], rail_config->topology );
 
 		/* MPI IB network */
 		if ( strcmp ( rail_config->topology, "ondemand" ) && strcmp ( rail_config->topology, "fully" ) )
