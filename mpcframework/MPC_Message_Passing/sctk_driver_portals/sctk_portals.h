@@ -28,10 +28,6 @@ extern "C"
 {
 #endif
 
-#ifndef __SCTK_ROUTE_H_
-#error "sctk_route must be included before sctk_portals.h"
-#endif
-
 #ifdef MPC_USE_PORTALS
 #include <sctk_spinlock.h>
 #include <portals4.h>

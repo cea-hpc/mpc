@@ -1679,7 +1679,7 @@ void sctk_network_init_portals ( char *name, char *topology )
 	memset ( rails, 0, NB_RAILS * sizeof ( sctk_rail_info_t * ) );
 
 	i = 0;
-	rails[i] = sctk_route_get_rail ( i );
+	rails[i] = sctk_rail_get_by_id ( i );
 	rails[i]->rail_number = i;
 	rails[i]->send_message_from_network = sctk_send_message_from_network_portals;
 	sctk_route_init_in_rail ( rails[i], topology );

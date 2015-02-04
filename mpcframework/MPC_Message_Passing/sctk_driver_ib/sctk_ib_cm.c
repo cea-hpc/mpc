@@ -920,11 +920,11 @@ int sctk_ib_cm_on_demand_recv ( sctk_rail_info_t *rail,  sctk_thread_ptp_message
 
 	payload = IBUF_GET_EAGER_MSG_PAYLOAD ( ibuf->buffer );
 	int rail_id = * ( ( int * ) payload );
-	assume ( rail_id < sctk_route_get_rail_nb() );
+	assume ( rail_id < sctk_rail_count() );
 	TODO ( "OD connections only work with rail number 0! There is no support for multirail now" )
 
-	rail_targ = sctk_route_get_rail ( rail_id );
-	rail_sign = sctk_route_get_rail ( sctk_network_ib_get_rail_signalization() );
+	rail_targ = sctk_rail_get_by_id ( rail_id );
+	rail_sign = sctk_rail_get_by_id ( sctk_network_ib_get_rail_signalization() );
 
 	process_dest = SCTK_MSG_DEST_PROCESS ( msg );
 	process_src = SCTK_MSG_SRC_PROCESS ( msg );

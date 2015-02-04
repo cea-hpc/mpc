@@ -315,7 +315,7 @@ restart:
 	/* Allocate Rails Storage we need to do it at once as we are going to
 	 * distribute pointers to rails to every modules therefore, they
 	 * should not change during the whole execution */
-	sctk_route_allocate_rails ( cli_option->rails_size );
+	sctk_rail_allocate ( cli_option->rails_size );
 
 
 	/* Compute the number of rails for each type: */
@@ -401,7 +401,7 @@ restart:
 		}
 
 		/* Set infos for the current rail */
-		sctk_rail_info_t *new_rail = sctk_route_push_rail ( rail_config_struct, driver_config );
+		sctk_rail_info_t *new_rail = sctk_rail_push ( rail_config_struct, driver_config );
 
 		/* Switch on the driver to use */
 		switch ( driver_config->driver.type )
@@ -436,7 +436,7 @@ restart:
 		rails_nb++;
 	}
 
-	sctk_route_finalize();
+	sctk_rail_commit();
 	sctk_checksum_init();
 
 }

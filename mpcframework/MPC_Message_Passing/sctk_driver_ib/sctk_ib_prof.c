@@ -89,7 +89,7 @@ void sctk_ib_prof_init_reference_clock()
 
 void sctk_ib_prof_init_task ( int rank, int vp )
 {
-	sctk_nodebug ( "Initialization with %d rails for rank %d", sctk_route_get_rail_nb(), rank );
+	sctk_nodebug ( "Initialization with %d rails for rank %d", sctk_rail_count(), rank );
 	sctk_ib_prof_qp_init_task ( rank, vp );
 }
 

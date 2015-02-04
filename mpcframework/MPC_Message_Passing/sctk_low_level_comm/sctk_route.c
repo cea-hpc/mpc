@@ -34,16 +34,6 @@
 
 
 /************************************************************************/
-/* Rails Storage                                                        */
-/************************************************************************/
-
-/** Dynamic array storing rails */
-static sctk_rail_info_t *rails = NULL;
-/** Number of rails */
-static int rail_number = 0;
-static int rail_current_id = 0;
-
-/************************************************************************/
 /* Routes Storage                                                       */
 /************************************************************************/
 
@@ -58,8 +48,7 @@ static sctk_spin_rwlock_t sctk_route_table_init_lock = SCTK_SPIN_RWLOCK_INITIALI
 static int sctk_route_table_init_lock_needed = 0;
 #define TABLE_LOCK() if(sctk_route_table_init_lock_needed) sctk_spinlock_write_lock(&sctk_route_table_init_lock);
 #define TABLE_UNLOCK() if(sctk_route_table_init_lock_needed) sctk_spinlock_write_unlock(&sctk_route_table_init_lock);
-/** Set to 1 when routes have been committed by a call to \ref sctk_route_finalize */
-static int is_route_finalized = 0;
+
 
 /************************************************************************/
 /* Routes Memory Status                                                 */
@@ -132,6 +121,7 @@ sctk_route_table_t *sctk_route_dynamic_safe_add ( int dest, sctk_rail_info_t *ra
 		*added = 1;
 	}
 	else
+	{
 		if ( sctk_route_get_state ( tmp ) == STATE_RECONNECTING )
 		{
 			ROUTE_LOCK ( tmp );
@@ -143,6 +133,7 @@ sctk_route_table_t *sctk_route_dynamic_safe_add ( int dest, sctk_rail_info_t *ra
 			ROUTE_UNLOCK ( tmp );
 			*added = 1;
 		}
+	}
 
 	sctk_spinlock_write_unlock ( &sctk_route_table_lock );
 	return tmp;
@@ -525,77 +516,6 @@ sctk_route_table_t *sctk_get_route ( int dest, sctk_rail_info_t *rail )
 	process = sctk_get_process_rank_from_task_rank ( dest );
 	tmp = sctk_get_route_to_process ( process, rail );
 	return tmp;
-}
-
-
-/* Returs wether the route has been finalized */
-int sctk_route_is_finalized()
-{
-	return is_route_finalized;
-}
-
-/* Finalize routes (call the rail route init func ) */
-void sctk_route_finalize()
-{
-	char *net_name;
-	int i;
-	char *name_ptr;
-
-	net_name = sctk_malloc ( rail_number * 4096 );
-	name_ptr = net_name;
-
-	for ( i = 0; i < rail_number; i++ )
-	{
-		rails[i].route_init ( & ( rails[i] ) );
-		sprintf ( name_ptr, "\nRail %d/%d [%s (%s)]", i + 1, rail_number, rails[i].network_name, rails[i].topology_name );
-		name_ptr = net_name + strlen ( net_name );
-		sctk_pmi_barrier();
-	}
-
-	sctk_network_mode = net_name;
-	is_route_finalized = 1;
-}
-
-
-/************************************************************************/
-/* Rail Init and Getters                                                */
-/************************************************************************/
-
-void sctk_route_allocate_rails ( int count )
-{
-	rails = sctk_calloc ( count , sizeof ( sctk_rail_info_t ) );
-	assume ( rails != NULL );
-	rail_number = count;
-}
-
-sctk_rail_info_t *sctk_route_push_rail ( struct sctk_runtime_config_struct_net_rail *runtime_config_rail,
-                                         struct sctk_runtime_config_struct_net_driver_config *runtime_config_driver_config )
-{
-	if ( rail_current_id == rail_number )
-	{
-		sctk_fatal ( "Error : Rail overflow detected\n" );
-	}
-
-	sctk_rail_info_t *new_rail = &rails[rail_current_id];
-
-	new_rail->runtime_config_rail = runtime_config_rail;
-	new_rail->runtime_config_driver_config = runtime_config_driver_config;
-	new_rail->rail_number = rail_current_id;
-
-	rail_current_id++;
-
-	return new_rail;
-}
-
-int sctk_route_get_rail_nb()
-{
-	return rail_number;
-}
-
-
-sctk_rail_info_t *sctk_route_get_rail ( int i )
-{
-	return & ( rails[i] );
 }
 
 /************************************************************************/

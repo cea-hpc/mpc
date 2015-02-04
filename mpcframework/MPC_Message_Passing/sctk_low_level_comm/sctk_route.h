@@ -22,18 +22,12 @@
 #ifndef __SCTK_ROUTE_H_
 #define __SCTK_ROUTE_H_
 
-#include <sctk_inter_thread_comm.h>
-#include <sctk_runtime_config.h>
+
 #include <uthash.h>
 #include <math.h>
-#include <sctk_portals.h>
 
 
-typedef struct sctk_rail_info_s sctk_rail_info_t;
-struct sctk_ib_data_s;
-
-#include <sctk_tcp.h>
-#include <sctk_ib.h>
+#include <sctk_rail.h>
 
 /** This statically defines the maximum size of a Node */
 #define MAX_SCTK_FAST_NODE_DIM 10
@@ -183,66 +177,6 @@ inline void sctk_Node_set_from ( sctk_Node_t *Node, sctk_Node_t *NodeToCopy );
 
 
 /************************************************************************/
-/* Rail Info                                                            */
-/************************************************************************/
-
-/** \brief Network dependent RAIL informations */
-typedef union
-{
-	sctk_tcp_rail_info_t tcp;	/**< TCP Rail Info */
-	sctk_ib_rail_info_t ib;		/**< IB Rail Info */
-#ifdef MPC_USE_PORTAL
-	sctk_portals_rail_info_t portals; /**< Portals Info */
-#endif
-} sctk_rail_info_spec_t;
-
-/** This structure gathers all informations linked to a network rail
- *
- *  All rails informations are stored in the sctk_route file
- *  using the \ref sctk_route_set_rail_infos function
- */
-struct sctk_rail_info_s
-{
-	/* Global Info */
-	int rail_number; /**< ID of this rail */
-	char *network_name; /**< Name of this rail */
-	/* Network Infos */
-	sctk_rail_info_spec_t network;	/**< Network dependent rail info */
-	char *topology_name; /**< Name of the target topology */
-	char on_demand;	/**< If the rail allows on demand-connexions */
-	/* Configuration Info */
-	struct sctk_runtime_config_struct_net_rail *runtime_config_rail;  /**< Rail config */
-	struct sctk_runtime_config_struct_net_driver_config *runtime_config_driver_config;  /**< Driver config */
-
-	/* HOOKS */
-
-	/* Task Init and release */
-	void ( *finalize_task ) ( struct sctk_rail_info_s * );
-	void ( *initialize_task ) ( struct sctk_rail_info_s * );
-	void ( *initialize_leader_task ) ( struct sctk_rail_info_s * );
-	/* Network interactions */
-	void ( *send_message ) ( sctk_thread_ptp_message_t *, struct sctk_rail_info_s * );
-	void ( *notify_recv_message ) ( sctk_thread_ptp_message_t * , struct sctk_rail_info_s * );
-	void ( *notify_matching_message ) ( sctk_thread_ptp_message_t * , struct sctk_rail_info_s * );
-	void ( *notify_perform_message ) ( int , int, int, int, struct sctk_rail_info_s * );
-	void ( *notify_idle_message ) ( struct sctk_rail_info_s * );
-	void ( *notify_any_source_message ) ( int, int, struct sctk_rail_info_s * );
-	int ( *send_message_from_network ) ( sctk_thread_ptp_message_t * );
-	/* Connection management */
-	void ( *connect_to ) ( int, int, sctk_rail_info_t * );
-	void ( *connect_from ) ( int, int, sctk_rail_info_t * );
-	/* Routing */
-	int ( *route ) ( int , sctk_rail_info_t * );
-	void ( *route_init ) ( sctk_rail_info_t * );
-};
-
-void sctk_route_allocate_rails ( int count );
-sctk_rail_info_t *sctk_route_push_rail ( struct sctk_runtime_config_struct_net_rail *runtime_config_rail,
-                                         struct sctk_runtime_config_struct_net_driver_config *runtime_config_driver_config );
-int sctk_route_get_rail_nb();
-sctk_rail_info_t *sctk_route_get_rail ( int i );
-
-/************************************************************************/
 /* Route Info                                                           */
 /************************************************************************/
 
@@ -326,8 +260,7 @@ void sctk_route_messages_recv ( int src, int myself, specific_message_tag_t spec
 void sctk_walk_all_routes ( const sctk_rail_info_t *rail, void ( *func ) ( const sctk_rail_info_t *rail, sctk_route_table_t *table ) );
 
 void sctk_route_init_in_rail ( sctk_rail_info_t *rail, char *topology );
-void sctk_route_finalize();
-int sctk_route_is_finalized();
+
 
 /************************************************************************/
 /* On-Demand                                                            */
