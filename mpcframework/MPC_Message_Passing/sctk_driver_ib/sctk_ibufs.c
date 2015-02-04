@@ -220,7 +220,7 @@ sctk_ibuf_t *sctk_ibuf_pick_send ( struct sctk_ib_rail_info_s *rail_ib,
 	sctk_ibuf_t *ibuf = NULL;
 	size_t s;
 	size_t limit;
-	sctk_route_state_t state;
+	sctk_endpoint_state_t state;
 	PROF_TIME_START ( rail_ib->rail, ib_pick_send );
 
 	s = *size;
@@ -260,7 +260,7 @@ sctk_ibuf_t *sctk_ibuf_pick_send ( struct sctk_ib_rail_info_s *rail_ib,
 					PROF_INC ( rail_ib->rail, ib_ibuf_rdma_nb );
 					sctk_nodebug ( "Picking from RDMA %d", ibuf->index );
 #ifdef DEBUG_IB_BUFS
-					sctk_route_state_t state = sctk_ibuf_rdma_get_remote_state_rts ( remote );
+					sctk_endpoint_state_t state = sctk_ibuf_rdma_get_remote_state_rts ( remote );
 
 					if ( ( state != STATE_CONNECTED ) && ( state != STATE_FLUSHING ) )
 					{

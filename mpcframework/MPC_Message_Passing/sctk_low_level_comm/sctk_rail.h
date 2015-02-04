@@ -25,8 +25,10 @@
 #include <sctk_inter_thread_comm.h>
 #include <sctk_runtime_config.h>
 
-/* Used inside netork dependent rail info */
+/* Forward struct declarations */
 typedef struct sctk_rail_info_s sctk_rail_info_t;
+typedef struct sctk_route_table_s sctk_route_table_t; 
+typedef struct sctk_endpoint_s sctk_endpoint_t;
 
 /* Networks */
 #include <sctk_portals.h>
@@ -58,13 +60,18 @@ struct sctk_rail_info_s
 	/* Global Info */
 	int rail_number; /**< ID of this rail */
 	char *network_name; /**< Name of this rail */
+	
 	/* Network Infos */
 	sctk_rail_info_spec_t network;	/**< Network dependent rail info */
 	char *topology_name; /**< Name of the target topology */
 	char on_demand;	/**< If the rail allows on demand-connexions */
+	
 	/* Configuration Info */
 	struct sctk_runtime_config_struct_net_rail *runtime_config_rail;  /**< Rail config */
 	struct sctk_runtime_config_struct_net_driver_config *runtime_config_driver_config;  /**< Driver config */
+
+	/* Route table */
+	sctk_route_table_t * route_table;
 
 	/* HOOKS */
 
@@ -80,6 +87,7 @@ struct sctk_rail_info_s
 	void ( *notify_idle_message ) ( struct sctk_rail_info_s * );
 	void ( *notify_any_source_message ) ( int, int, struct sctk_rail_info_s * );
 	int ( *send_message_from_network ) ( sctk_thread_ptp_message_t * );
+	sctk_endpoint_t * ( *on_demand_connection ) ( struct sctk_rail_info_s * rail , int dest );
 	/* Connection management */
 	void ( *connect_to ) ( int, int, sctk_rail_info_t * );
 	void ( *connect_from ) ( int, int, sctk_rail_info_t * );
@@ -98,6 +106,21 @@ int sctk_rail_committed();
 
 
 void sctk_rail_init_route ( sctk_rail_info_t *rail, char *topology );
+
+/* ROUTES */
+
+
+void sctk_add_static_route ( int dest, sctk_endpoint_t *tmp, sctk_rail_info_t *rail );
+void sctk_add_dynamic_route ( int dest, sctk_endpoint_t *tmp, sctk_rail_info_t *rail );
+sctk_endpoint_t *sctk_route_dynamic_safe_add ( int dest, sctk_rail_info_t *rail, sctk_endpoint_t * ( *create_func ) (), void ( *init_func ) ( int dest, sctk_rail_info_t *rail, sctk_endpoint_t *route_table, int ondemand ), int *added, char is_initiator );
+
+sctk_endpoint_t *sctk_get_static_route_to_process_no_routing ( int dest, sctk_rail_info_t *rail );
+sctk_endpoint_t *sctk_get_route_to_process_no_routing ( int dest, sctk_rail_info_t *rail );
+sctk_endpoint_t *sctk_route_dynamic_search ( int dest, sctk_rail_info_t *rail );
+sctk_endpoint_t *sctk_get_route ( int dest, sctk_rail_info_t *rail );
+sctk_endpoint_t *sctk_get_route_to_process_no_ondemand ( int dest, sctk_rail_info_t *rail );
+sctk_endpoint_t *sctk_get_route_to_process_static ( int dest, sctk_rail_info_t *rail );
+sctk_endpoint_t *sctk_get_route_to_process ( int dest, sctk_rail_info_t *rail );
 
 
 #endif /* SCTK_RAIL_H */

@@ -174,6 +174,59 @@ exit:
 	PROF_TIME_END ( rail, ib_send_message );
 }
 
+
+sctk_endpoint_t * sctk_on_demand_connection_ib( struct sctk_rail_info_s * rail , int dest )
+{
+	sctk_endpoint_t * tmp = NULL;
+
+	sctk_nodebug ( "%d Trying to connect to process %d (remote:%p)", sctk_process_rank, dest, tmp );
+
+	/* Wait until we reach the 'deconnected' state */
+	tmp = sctk_route_dynamic_search ( dest, rail );
+
+	if ( tmp )
+	{
+		sctk_endpoint_state_t state;
+		state = sctk_endpoint_get_state ( tmp );
+		sctk_nodebug ( "Got state %d", state );
+
+		do
+		{
+			state = sctk_endpoint_get_state ( tmp );
+
+			if ( state != STATE_DECONNECTED && state != STATE_CONNECTED 
+			&& state != STATE_RECONNECTING )
+			{
+				sctk_network_notify_idle_message();
+				sctk_thread_yield();
+			}
+		}
+		while ( state != STATE_DECONNECTED && state != STATE_CONNECTED && state != STATE_RECONNECTING );
+	}
+
+	sctk_nodebug ( "QP in a KNOWN STATE" );
+
+	/* We send the request using the signalization rail */
+	tmp = sctk_ib_cm_on_demand_request ( dest, rail );
+	assume ( tmp );
+
+	/* If route not connected, so we wait for until it is connected */
+	while ( sctk_endpoint_get_state ( tmp ) != STATE_CONNECTED )
+	{
+		sctk_network_notify_idle_message();
+
+		if ( sctk_endpoint_get_state ( tmp ) != STATE_CONNECTED )
+		{
+			sctk_thread_yield();
+		}
+	}
+
+	sctk_nodebug ( "Connected to process %d", dest );
+	return tmp;
+}
+
+
+
 int sctk_network_poll_send_ibuf ( sctk_rail_info_t *rail, sctk_ibuf_t *ibuf,  const char from_cp, struct sctk_ib_polling_s *poll )
 {
 	sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
@@ -839,6 +892,7 @@ void sctk_network_init_mpi_ib ( sctk_rail_info_t *rail, int ib_rail_nb )
 	rail->notify_idle_message = sctk_network_notify_idle_message_ib;
 	rail->notify_any_source_message = sctk_network_notify_any_source_message_ib;
 	rail->network_name = network_name;
+	rail->on_demand_connection = sctk_on_demand_connection_ib;
 
 	sctk_ib_cm_connect_ring ( rail, rail->route, rail->route_init );
 }

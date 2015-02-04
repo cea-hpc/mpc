@@ -22,6 +22,7 @@
 #include "sctk_rail.h"
 #include "sctk_net_topology.h"
 
+#include <sctk_route.h>
 #include <sctk_pmi.h>
 
 /************************************************************************/
@@ -61,7 +62,7 @@ sctk_rail_info_t * sctk_rail_new ( struct sctk_runtime_config_struct_net_rail *r
 	new_rail->runtime_config_driver_config = runtime_config_driver_config;
 	new_rail->rail_number = rail_current_id;
 	
-	
+	new_rail->route_table = sctk_route_table_new();
 
 	rail_current_id++;
 
@@ -155,3 +156,198 @@ void sctk_rail_init_route ( sctk_rail_info_t *rail, char *topology )
 }
 
 
+/**************************/
+
+
+
+
+void sctk_add_static_route ( int dest, sctk_endpoint_t *tmp, sctk_rail_info_t *rail )
+{
+	sctk_endpoint_init_static ( tmp, dest, rail );
+	sctk_route_table_add_static_route ( rail->route_table, tmp );
+}
+
+
+
+void sctk_add_dynamic_route ( int dest, sctk_endpoint_t *tmp, sctk_rail_info_t *rail )
+{
+	sctk_route_table_add_dynamic_route (  rail->route_table, tmp );
+}
+
+
+/* Get a static route with no routing (can return NULL ) */
+sctk_endpoint_t *sctk_get_static_route_to_process_no_routing ( int dest, sctk_rail_info_t *rail )
+{
+	return sctk_route_table_get_static_route(   rail->route_table , dest );
+}
+
+/* Get a route (static / dynamic) with no routing (can return NULL) */
+sctk_endpoint_t *sctk_get_route_to_process_no_routing ( int dest, sctk_rail_info_t *rail )
+{
+	sctk_endpoint_t *tmp;
+	
+	/* First try static routes */
+	tmp = sctk_route_table_get_static_route(   rail->route_table , dest );
+
+	/* It it fails look for dynamic routes on current rail */
+	if ( tmp == NULL )
+	{
+		tmp = sctk_route_table_get_dynamic_route(   rail->route_table , dest );
+	}
+	
+	return tmp;
+}
+
+
+
+/*
+ * Return the route entry of the process 'dest'.
+ * If the entry is not found, it is created using the 'create_func' function and
+ * initialized using the 'init_funct' function.
+ *
+ * Return:
+ *  - added: if the entry has been created
+ *  - is_initiator: if the current process is the initiator of the entry creation.
+ */
+sctk_endpoint_t *sctk_route_dynamic_safe_add ( int dest, sctk_rail_info_t *rail, sctk_endpoint_t * ( *create_func ) (), void ( *init_func ) ( int dest, sctk_rail_info_t *rail, sctk_endpoint_t *route_table, int ondemand ), int *added, char is_initiator )
+{
+
+	*added = 0;
+
+	sctk_spinlock_write_lock ( &rail->route_table->dynamic_route_table_lock );
+	
+	sctk_endpoint_t * tmp =  sctk_route_table_get_dynamic_route( rail->route_table , dest );
+
+	/* Entry not found, we create it */
+	if ( tmp == NULL )
+	{
+		/* QP added on demand */
+		tmp = create_func();
+		init_func ( dest, rail, tmp, 1 );
+		
+		/* We init the entry and add it to the table */
+		sctk_endpoint_init_dynamic ( tmp, dest, rail );
+		tmp->is_initiator = is_initiator;
+		
+		sctk_route_table_add_dynamic_route (   rail->route_table, tmp );
+		*added = 1;
+	}
+	else
+	{
+		if ( sctk_endpoint_get_state ( tmp ) == STATE_RECONNECTING )
+		{
+			ROUTE_LOCK ( tmp );
+			sctk_endpoint_set_state ( tmp, STATE_DECONNECTED );
+			init_func ( dest, rail, tmp, 1 );
+			sctk_endpoint_set_low_memory_mode_local ( tmp, 0 );
+			sctk_endpoint_set_low_memory_mode_remote ( tmp, 0 );
+			tmp->is_initiator = is_initiator;
+			ROUTE_UNLOCK ( tmp );
+			*added = 1;
+		}
+	}
+
+	sctk_spinlock_write_unlock ( &rail->route_table->dynamic_route_table_lock );
+	return tmp;
+}
+
+
+sctk_endpoint_t *sctk_route_dynamic_search ( int dest, sctk_rail_info_t *rail )
+{
+	return  sctk_route_table_get_dynamic_route( rail->route_table, dest );
+}
+
+
+
+/* Get the route to a given task (on demand mode) */
+sctk_endpoint_t *sctk_get_route ( int dest, sctk_rail_info_t *rail )
+{
+	sctk_endpoint_t *tmp;
+	int process;
+
+	process = sctk_get_process_rank_from_task_rank ( dest );
+	tmp = sctk_get_route_to_process ( process, rail );
+	return tmp;
+}
+
+
+/* Get a route to a process with no ondemand connexions (relies on both static and dynamic routes without creating
+ * routes => Relies on routing ) */
+inline sctk_endpoint_t *sctk_get_route_to_process_no_ondemand ( int dest, sctk_rail_info_t *rail )
+{
+	sctk_endpoint_t *tmp;
+	/* Try to get a dynamic / static route until this process */
+	tmp = sctk_get_route_to_process_no_routing ( dest, rail );
+
+	if ( tmp == NULL )
+	{
+		/* Otherwise route until target process */
+		dest = rail->route ( dest, rail );
+		/* Use the same function which does not create new routes */
+		return sctk_get_route_to_process_no_ondemand ( dest, rail );
+	}
+
+	return tmp;
+}
+
+
+
+/* Get a route to a process only on static routes (does not create new routes => Relies on routing) */
+inline sctk_endpoint_t *sctk_get_route_to_process_static ( int dest, sctk_rail_info_t *rail )
+{
+	sctk_endpoint_t *tmp;
+	tmp = sctk_get_static_route_to_process_no_routing ( dest, rail );
+
+	if ( tmp == NULL )
+	{
+		dest = rail->route ( dest, rail );
+		return sctk_get_route_to_process_static ( dest, rail );
+	}
+
+	return tmp;
+}
+
+
+
+
+
+/* Get a route to process, creating the route if not present */
+sctk_endpoint_t *sctk_get_route_to_process ( int dest, sctk_rail_info_t *rail )
+{
+	sctk_endpoint_t *tmp;
+
+	/* Try to find a direct route with no routing */
+	tmp = sctk_get_route_to_process_no_routing ( dest, rail );
+
+	if ( tmp )
+	{
+		sctk_nodebug ( "Directly connected to %d", dest );
+	}
+	else
+	{
+		sctk_nodebug ( "NOT Directly connected to %d", dest );
+	}
+
+	if ( tmp == NULL )
+	{
+		/* Here we did not find a route therefore we instantiate it */
+
+		/* On demand enabled */
+		if ( rail->on_demand )
+		{
+			/* Network has an on-demand function */
+			if( rail->on_demand_connection )
+				return (rail->on_demand_connection)( rail, dest );
+		}
+		else
+		{
+
+			dest = rail->route ( dest, rail );
+			return sctk_get_route_to_process_no_ondemand ( dest, rail );
+
+		}
+
+	}
+
+	return tmp;
+}

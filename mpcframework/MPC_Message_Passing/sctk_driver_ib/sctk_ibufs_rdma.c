@@ -768,7 +768,7 @@ void sctk_ib_rdma_eager_walk_remotes ( sctk_ib_rail_info_t *rail, int ( func ) (
 		sctk_spinlock_lock ( &rdma_pool_list_lock );
 		DL_FOREACH_SAFE ( rdma_pool_list_to_merge, pool, tmp_pool )
 		{
-			sctk_route_state_t state = sctk_ibuf_rdma_get_remote_state_rtr ( pool->remote );
+			sctk_endpoint_state_t state = sctk_ibuf_rdma_get_remote_state_rtr ( pool->remote );
 
 			if ( ( state == STATE_CONNECTED ) )
 			{
@@ -795,7 +795,7 @@ static int
 sctk_ib_rdma_eager_poll_remote_locked ( sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *remote )
 {
 	/* We return if the remote is not connected to the RDMA channel */
-	sctk_route_state_t state = sctk_ibuf_rdma_get_remote_state_rtr ( remote );
+	sctk_endpoint_state_t state = sctk_ibuf_rdma_get_remote_state_rtr ( remote );
 
 	if ( ( state != STATE_CONNECTED ) && ( state != STATE_REQUESTING ) )
 		return REORDER_UNDEFINED;
@@ -900,7 +900,7 @@ int
 sctk_ib_rdma_eager_poll_remote ( sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *remote )
 {
 	/* We return if the remote is not connected to the RDMA channel */
-	sctk_route_state_t state = sctk_ibuf_rdma_get_remote_state_rtr ( remote );
+	sctk_endpoint_state_t state = sctk_ibuf_rdma_get_remote_state_rtr ( remote );
 
 	if ( ( state != STATE_CONNECTED ) && ( state != STATE_REQUESTING ) )
 		return REORDER_UNDEFINED;
@@ -1156,7 +1156,7 @@ size_t sctk_ibuf_rdma_region_get_allocated_size ( sctk_ib_qp_t *remote, int reg 
 
 	if ( reg == REGION_RECV )
 	{
-		sctk_route_state_t state = sctk_ibuf_rdma_get_remote_state_rtr ( remote );
+		sctk_endpoint_state_t state = sctk_ibuf_rdma_get_remote_state_rtr ( remote );
 
 		if ( state != STATE_DECONNECTED )
 		{
@@ -1166,7 +1166,7 @@ size_t sctk_ibuf_rdma_region_get_allocated_size ( sctk_ib_qp_t *remote, int reg 
 	else
 		if ( reg == REGION_SEND )
 		{
-			sctk_route_state_t state = sctk_ibuf_rdma_get_remote_state_rts ( remote );
+			sctk_endpoint_state_t state = sctk_ibuf_rdma_get_remote_state_rts ( remote );
 
 			if ( state != STATE_DECONNECTED )
 			{
@@ -1345,7 +1345,7 @@ void sctk_ibuf_rdma_check_remote ( sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *r
 	int determined_size;
 	int determined_nb;
 	/* We first get the state of the route */
-	const sctk_route_state_t state_rts = sctk_ibuf_rdma_get_remote_state_rts ( remote );
+	const sctk_endpoint_state_t state_rts = sctk_ibuf_rdma_get_remote_state_rts ( remote );
 
 	/* We profile only when the RDMA route is deconnected */
 	if ( config->max_rdma_connections != 0 && state_rts == STATE_DECONNECTED )
@@ -1378,7 +1378,7 @@ void sctk_ibuf_rdma_check_remote ( sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *r
 	else
 		if ( config->rdma_resizing && state_rts == STATE_CONNECTED )
 		{
-			sctk_route_state_t ret;
+			sctk_endpoint_state_t ret;
 
 			/* Check if we need to resize the RDMA */
 			if ( OPA_load_int ( &remote->rdma.miss_nb ) > IBV_RDMA_MAX_MISS )
@@ -1478,7 +1478,7 @@ int sctk_ibuf_rdma_check_flush_send ( sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t
 {
 	/* Check if the RDMA is in flushing mode and if all messages
 	 * have be flushed to the network */
-	sctk_route_state_t ret = sctk_ibuf_rdma_get_remote_state_rts ( remote );
+	sctk_endpoint_state_t ret = sctk_ibuf_rdma_get_remote_state_rts ( remote );
 
 	/* If we are in a flushing mode */
 	if ( ret == STATE_FLUSHING )
@@ -1531,7 +1531,7 @@ int sctk_ibuf_rdma_check_flush_recv ( sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t
 {
 	/* Check if the RDMA is in flushing mode and if all messages
 	 * have be flushed to the network */
-	sctk_route_state_t ret = sctk_ibuf_rdma_get_remote_state_rtr ( remote );
+	sctk_endpoint_state_t ret = sctk_ibuf_rdma_get_remote_state_rtr ( remote );
 
 	/* If we are in a flushing mode */
 	if ( ret == STATE_FLUSHING )
@@ -1598,7 +1598,7 @@ void sctk_ibuf_rdma_flush_recv ( sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *rem
 	while ( ret != REORDER_NOT_FOUND );
 
 	/* We need to change the state AFTER flushing the buffers */
-	sctk_route_state_t state;
+	sctk_endpoint_state_t state;
 	state = sctk_ibuf_rdma_cas_remote_state_rtr ( remote, STATE_CONNECTED, STATE_FLUSHING );
 
 	/* If we are in a requesting state, we swap to STATE_FLUSHING mode */
@@ -1624,7 +1624,7 @@ void sctk_ibuf_rdma_get_allocated_size_from_all_remotes (
     int *regions_nb )
 {
 	sctk_ibuf_region_t *region;
-	sctk_route_state_t state;
+	sctk_endpoint_state_t state;
 
 	*allocated_size = 0;
 	*regions_nb      = 0;
@@ -1669,7 +1669,7 @@ int sctk_ibuf_rdma_remote_normalize ( sctk_ib_rail_info_t *rail_ib, size_t mem_t
 	int regions_nb;
 	double average_size;
 	sctk_ibuf_region_t *region;
-	sctk_route_state_t state;
+	sctk_endpoint_state_t state;
 	sctk_ib_qp_t *remote;
 
 	sctk_spinlock_read_lock ( &rdma_region_list_lock );
@@ -1751,7 +1751,7 @@ sctk_ibuf_region_t *sctk_ibuf_rdma_remote_get_lru ( sctk_ib_rail_info_t *rail_ib
 {
 	sctk_ibuf_region_t *region;
 	sctk_ibuf_region_t *elected_region = NULL;
-	sctk_route_state_t state;
+	sctk_endpoint_state_t state;
 	sprintf ( name, "LRU" );
 
 	sctk_spinlock_read_lock ( &rdma_region_list_lock );
@@ -1825,7 +1825,7 @@ sctk_ibuf_region_t *sctk_ibuf_rdma_remote_get_max_allocated_size ( sctk_ib_rail_
 	sctk_ibuf_region_t *region;
 	size_t max = 0;
 	sctk_ibuf_region_t *max_region = NULL;
-	sctk_route_state_t state;
+	sctk_endpoint_state_t state;
 	sprintf ( name, "EMERGENCY" );
 
 	sctk_spinlock_read_lock ( &rdma_region_list_lock );
@@ -1895,7 +1895,7 @@ size_t sctk_ibuf_rdma_remote_disconnect ( sctk_ib_rail_info_t *rail_ib,
 			/* Try to change the state to flushing.
 			 * By changing the state of the remote to 'flushing', we automaticaly switch to SR */
 			sctk_spinlock_lock ( &remote->rdma.flushing_lock );
-			sctk_route_state_t ret =
+			sctk_endpoint_state_t ret =
 			    sctk_ibuf_rdma_cas_remote_state_rts ( remote, STATE_CONNECTED, STATE_FLUSHING );
 
 			/* If we are allowed to deconnect */
@@ -1919,7 +1919,7 @@ size_t sctk_ibuf_rdma_remote_disconnect ( sctk_ib_rail_info_t *rail_ib,
 			if ( region->channel == ( RDMA_CHANNEL | RECV_CHANNEL ) )
 			{
 				/* Change the state to 'requesting' */
-				sctk_route_state_t ret =
+				sctk_endpoint_state_t ret =
 				    sctk_ibuf_rdma_cas_remote_state_rtr ( remote, STATE_CONNECTED, STATE_REQUESTING );
 				memory_used = 0;
 			}
