@@ -44,7 +44,7 @@ void sctk_rail_allocate ( int count )
 	rail_number = count;
 }
 
-sctk_rail_info_t * sctk_rail_push ( struct sctk_runtime_config_struct_net_rail *runtime_config_rail,
+sctk_rail_info_t * sctk_rail_new ( struct sctk_runtime_config_struct_net_rail *runtime_config_rail,
                                          struct sctk_runtime_config_struct_net_driver_config *runtime_config_driver_config )
 {
 	if ( rail_current_id == rail_number )
@@ -57,6 +57,8 @@ sctk_rail_info_t * sctk_rail_push ( struct sctk_runtime_config_struct_net_rail *
 	new_rail->runtime_config_rail = runtime_config_rail;
 	new_rail->runtime_config_driver_config = runtime_config_driver_config;
 	new_rail->rail_number = rail_current_id;
+	
+	
 
 	rail_current_id++;
 

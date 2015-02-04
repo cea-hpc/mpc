@@ -46,8 +46,28 @@ static sctk_endpoint_t *sctk_static_route_table = NULL;
 /** This conditionnal lock is used during route initialization */
 static sctk_spin_rwlock_t sctk_route_table_init_lock = SCTK_SPIN_RWLOCK_INITIALIZER;
 static int sctk_route_table_init_lock_needed = 0;
+
 #define TABLE_LOCK() if(sctk_route_table_init_lock_needed) sctk_spinlock_write_lock(&sctk_route_table_init_lock);
 #define TABLE_UNLOCK() if(sctk_route_table_init_lock_needed) sctk_spinlock_write_unlock(&sctk_route_table_init_lock);
+
+typedef struct sctk_route_table_s
+{
+	/* Dynamic Routes */
+	sctk_endpoint_t * dynamic_route_table; /** Here are stored the dynamic routes (hash table) */
+	sctk_spin_rwlock_t dynamic_route_table_lock; /** This is the dynamic route lock */
+	/* Static Routes */
+	sctk_endpoint_t *static_route_table; /** Here are stored static routes (hash table) -- no lock as they are read only */
+}sctk_route_table_t;
+
+
+void sctk_route_table_init( sctk_route_table_t * table )
+{
+	table->dynamic_route_table = NULL;
+	sctk_spin_rwlock_t lck = SCTK_SPIN_RWLOCK_INITIALIZER;
+
+	table->dynamic_route_table_lock = lck;
+	table->static_route_table = NULL;	
+}
 
 
 /************************************************************************/

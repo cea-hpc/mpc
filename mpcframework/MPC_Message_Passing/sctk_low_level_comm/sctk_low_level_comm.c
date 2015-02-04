@@ -401,7 +401,7 @@ restart:
 		}
 
 		/* Set infos for the current rail */
-		sctk_rail_info_t *new_rail = sctk_rail_push ( rail_config_struct, driver_config );
+		sctk_rail_info_t *new_rail = sctk_rail_new ( rail_config_struct, driver_config );
 
 		/* Switch on the driver to use */
 		switch ( driver_config->driver.type )
