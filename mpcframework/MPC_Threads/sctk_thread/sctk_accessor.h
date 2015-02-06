@@ -38,6 +38,13 @@ extern "C"
     return (int) (sctk_thread_data_get ()->task_id);
   }
 
+  int sctk_get_total_tasks_number();
+
+  static inline int sctk_get_task_number (void)
+  {
+    return sctk_get_total_tasks_number();
+  }
+ 
   static inline int sctk_get_local_task_rank (void)
   {
     return (int) (sctk_thread_data_get ()->local_task_id);
