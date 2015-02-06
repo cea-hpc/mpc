@@ -361,7 +361,7 @@ sctk_endpoint_t * sctk_rail_add_or_reuse_route_dynamic ( sctk_rail_info_t *rail,
 
 	sctk_spinlock_write_lock ( &rail->route_table->dynamic_route_table_lock );
 	
-	sctk_endpoint_t * tmp =  sctk_route_table_get_dynamic_route( rail->route_table , dest );
+	sctk_endpoint_t * tmp =  sctk_route_table_get_dynamic_route_no_lock( rail->route_table , dest );
 
 	/* Entry not found, we create it */
 	if ( tmp == NULL )
@@ -374,7 +374,7 @@ sctk_endpoint_t * sctk_rail_add_or_reuse_route_dynamic ( sctk_rail_info_t *rail,
 		sctk_endpoint_init_dynamic ( tmp, dest, rail );
 		tmp->is_initiator = is_initiator;
 		
-		sctk_route_table_add_dynamic_route (   rail->route_table, tmp );
+		sctk_route_table_add_dynamic_route_no_lock(   rail->route_table, tmp );
 		*added = 1;
 	}
 	else

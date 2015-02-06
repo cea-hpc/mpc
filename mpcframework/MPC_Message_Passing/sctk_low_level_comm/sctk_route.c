@@ -146,12 +146,18 @@ void sctk_endpoint_init_dynamic ( sctk_endpoint_t *tmp, int dest, sctk_rail_info
 /************************************************************************/
 
 
+void sctk_route_table_add_dynamic_route_no_lock (  sctk_route_table_t * table, sctk_endpoint_t *tmp )
+{
+	assume( tmp->origin == ROUTE_ORIGIN_DYNAMIC );
+	HASH_ADD_INT( table->dynamic_route_table, dest, tmp );
+}
+
 void sctk_route_table_add_dynamic_route (  sctk_route_table_t * table, sctk_endpoint_t *tmp )
 {
 	assume( tmp->origin == ROUTE_ORIGIN_DYNAMIC );
 	
 	sctk_spinlock_write_lock ( &table->dynamic_route_table_lock );
-	HASH_ADD_INT( table->dynamic_route_table, dest, tmp );
+	sctk_route_table_add_dynamic_route_no_lock ( table,tmp );
 	sctk_spinlock_write_unlock ( &table->dynamic_route_table_lock  );
 }
 
@@ -183,21 +189,29 @@ sctk_endpoint_t * sctk_route_table_get_static_route(   sctk_route_table_t * tabl
 	return tmp;
 }
 
-sctk_endpoint_t * sctk_route_table_get_dynamic_route( sctk_route_table_t * table , int dest )
+sctk_endpoint_t * sctk_route_table_get_dynamic_route_no_lock( sctk_route_table_t * table , int dest )
 {
 	sctk_endpoint_t *tmp;
 
-	sctk_spinlock_read_lock ( &table->dynamic_route_table_lock );
 	HASH_FIND_INT ( table->dynamic_route_table, &dest, tmp );
-	sctk_spinlock_read_unlock ( &table->dynamic_route_table_lock );
-
+	
 	/* If the route is deconnected, we do not use it*/
 	if ( tmp && sctk_endpoint_get_state ( tmp ) != STATE_CONNECTED )
 	{
 		tmp = NULL;
 	}
 
-	sctk_nodebug ( "Get static route for %d -> %p", dest, tmp );
+	return tmp;
+}
+
+sctk_endpoint_t * sctk_route_table_get_dynamic_route( sctk_route_table_t * table , int dest )
+{
+	sctk_endpoint_t *tmp;
+
+	sctk_spinlock_read_lock ( &table->dynamic_route_table_lock );
+	tmp = sctk_route_table_get_dynamic_route_no_lock( table ,  dest );
+	sctk_spinlock_read_unlock ( &table->dynamic_route_table_lock );
+
 	return tmp;
 }
 
