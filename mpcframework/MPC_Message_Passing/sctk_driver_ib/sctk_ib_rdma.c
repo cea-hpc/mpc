@@ -297,7 +297,7 @@ sctk_ib_rdma_prepare_data_write ( sctk_rail_info_t *rail,
 #else
 	int src_process;
 	sctk_endpoint_t *route;
-	route = sctk_get_route_to_process ( rdma->remote_peer->rank, rdma->remote_rail );
+	route = sctk_rail_get_any_route_to_process_or_on_demand ( rdma->remote_peer->rank, rdma->remote_rail );
 
 	ibuf = sctk_ibuf_pick_send_sr ( &rdma->remote_rail->network.ib );
 	assume ( ibuf );
@@ -579,7 +579,7 @@ sctk_ib_rdma_recv_req ( sctk_rail_info_t *rail, sctk_ibuf_t *ibuf )
 		sctk_endpoint_t *route;
 		src_process = sctk_determine_src_process_from_header ( &msg->body );
 		assume ( src_process != -1 );
-		route = sctk_get_route_to_process ( src_process, rdma->remote_rail );
+		route = sctk_rail_get_any_route_to_process_or_on_demand ( src_process, rdma->remote_rail );
 		assume ( route );
 
 		sctk_nodebug ( "Got message on rail %d and reply on rail %d", rail->rail_number, rdma->remote_rail->rail_number );

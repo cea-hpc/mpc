@@ -1027,11 +1027,11 @@ sctk_network_send_message_portals_rail ( sctk_thread_ptp_message_t *msg, sctk_ra
 
 	if ( SCTK_MSG_SPECIFIC_TAG ( msg ) == SCTK_PROCESS_SPECIFIC_MESSAGE_TAG )
 	{
-		tmp = sctk_get_route_to_process ( SCTK_MSG_DEST_PROCESS ( msg ) , rail ); //proc
+		tmp = sctk_rail_get_any_route_to_process_or_on_demand ( SCTK_MSG_DEST_PROCESS ( msg ) , rail ); //proc
 	}
 	else
 	{
-		tmp = sctk_get_route SCTK_MSG_DEST_TASK ( msg ), rail ); //task
+		tmp = sctk_rail_get_any_route_to_task SCTK_MSG_DEST_TASK ( msg ), rail ); //task
 	}
 
 	sctk_nodebug ( "my %d dest %d", rail->network.portals.my_id.phys.pid, tmp->data.portals.id.phys.pid );
@@ -1464,7 +1464,7 @@ void sctk_network_init_portals_rail ( sctk_rail_info_t *rail )
 		decode ( val, & ( tmp->data.portals.id ),
 		         sizeof ( tmp->data.portals.id ) );
 		sctk_nodebug ( "Got id %lu\t%lu", tmp->data.portals.id.phys.nid, tmp->data.portals.id.phys.pid );
-		sctk_add_static_route ( dest_rank, tmp, rail );
+		sctk_rail_add_static_route ( dest_rank, tmp, rail );
 
 		ptl_md_t md;
 		ptl_handle_md_t md_handle;
@@ -1509,7 +1509,7 @@ void sctk_network_init_portals_rail ( sctk_rail_info_t *rail )
 		decode ( val, & ( tmp->data.portals.id ),
 		         sizeof ( tmp->data.portals.id ) );
 		sctk_nodebug ( "Got id %lu\t%lu", tmp->data.portals.id.phys.nid, tmp->data.portals.id.phys.pid );
-		sctk_add_static_route ( src_rank, tmp, rail );
+		sctk_rail_add_static_route ( src_rank, tmp, rail );
 
 		ptl_md_t md;
 		ptl_handle_md_t md_handle;

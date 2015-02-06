@@ -167,7 +167,7 @@ static void sctk_network_send_message_tcp_rdma ( sctk_thread_ptp_message_t *msg,
 
 	sctk_nodebug ( "send message through rail %d", rail->rail_number );
 
-	tmp = sctk_get_route ( SCTK_MSG_DEST_TASK ( msg ), rail );
+	tmp = sctk_rail_get_any_route_to_task ( SCTK_MSG_DEST_TASK ( msg ), rail );
 
 	sctk_spinlock_lock ( & ( tmp->data.tcp.lock ) );
 

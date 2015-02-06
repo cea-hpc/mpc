@@ -82,14 +82,14 @@ sctk_network_send_message_ib ( sctk_thread_ptp_message_t *msg, sctk_rail_info_t 
 		{
 			is_control_message = 1;
 			/* send a message with no_ondemand connexion */
-			tmp = sctk_get_route_to_process_static ( SCTK_MSG_DEST_PROCESS ( msg ), rail );
+			tmp = sctk_rail_get_static_route_to_process_or_forward ( SCTK_MSG_DEST_PROCESS ( msg ), rail );
 			sctk_nodebug ( "Send control message to process %d", SCTK_MSG_DEST_PROCESS ( msg ) );
 		}
 		else
 		{
 			/* send a message to a PROCESS with a possible ondemand connexion if the peer doest not
 			* exist.  */
-			tmp = sctk_get_route_to_process ( SCTK_MSG_DEST_PROCESS ( msg ), rail );
+			tmp = sctk_rail_get_any_route_to_process_or_on_demand ( SCTK_MSG_DEST_PROCESS ( msg ), rail );
 			sctk_nodebug ( "Send to process %d", SCTK_MSG_DEST_PROCESS ( msg ) );
 		}
 	}
@@ -98,7 +98,7 @@ sctk_network_send_message_ib ( sctk_thread_ptp_message_t *msg, sctk_rail_info_t 
 		/* send a message to a TASK with a possible ondemand connexion if the peer doest not
 		* exist.  */
 		sctk_nodebug ( "Connexion to %d", SCTK_MSG_DEST_TASK ( msg ) );
-		tmp = sctk_get_route ( SCTK_MSG_DEST_TASK ( msg ), rail );
+		tmp = sctk_rail_get_any_route_to_task ( SCTK_MSG_DEST_TASK ( msg ), rail );
 	}
 
 	route_data = &tmp->data.ib;
@@ -182,7 +182,7 @@ sctk_endpoint_t * sctk_on_demand_connection_ib( struct sctk_rail_info_s * rail ,
 	sctk_nodebug ( "%d Trying to connect to process %d (remote:%p)", sctk_process_rank, dest, tmp );
 
 	/* Wait until we reach the 'deconnected' state */
-	tmp = sctk_route_dynamic_search ( dest, rail );
+	tmp = sctk_rail_get_dynamic_route_to_process ( dest, rail );
 
 	if ( tmp )
 	{
@@ -647,7 +647,7 @@ static void sctk_network_notify_perform_message_ib ( int remote_process, int rem
 	{
 		sctk_ib_qp_t *remote;
 		sctk_ib_route_info_t *route_data;
-		sctk_endpoint_t *route =  sctk_get_route_to_process_no_ondemand ( remote_process, rail );
+		sctk_endpoint_t *route =  sctk_rail_get_any_route_to_process_or_forward ( remote_process, rail );
 		ib_assume ( route );
 		int ret;
 

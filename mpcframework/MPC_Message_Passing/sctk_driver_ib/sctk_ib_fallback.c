@@ -78,14 +78,14 @@ static void sctk_network_send_message_ib ( sctk_thread_ptp_message_t *msg, sctk_
 		{
 			is_control_message = 1;
 			/* send a message with no_ondemand connexion */
-			tmp = sctk_get_route_to_process_static ( SCTK_MSG_DEST_PROCESS ( msg ), rail );
+			tmp = sctk_rail_get_static_route_to_process_or_forward ( SCTK_MSG_DEST_PROCESS ( msg ), rail );
 			sctk_nodebug ( "Send control message to process %d", SCTK_MSG_DEST_PROCESS ( msg ) );
 		}
 		else
 		{
 			/* send a message to a PROCESS with a possible ondemand connexion if the peer doest not
 			* exist.  */
-			tmp = sctk_get_route_to_process ( SCTK_MSG_DEST_PROCESS ( msg ), rail );
+			tmp = sctk_rail_get_any_route_to_process_or_on_demand ( SCTK_MSG_DEST_PROCESS ( msg ), rail );
 			sctk_nodebug ( "Send to process %d", SCTK_MSG_DEST_PROCESS ( msg ) );
 		}
 
@@ -95,7 +95,7 @@ static void sctk_network_send_message_ib ( sctk_thread_ptp_message_t *msg, sctk_
 		/* send a message to a TASK with a possible ondemand connexion if the peer doest not
 		* exist.  */
 		sctk_nodebug ( "Connexion to %d", SCTK_MSG_DEST_TASK ( msg ) );
-		tmp = sctk_get_route ( SCTK_MSG_DEST_TASK ( msg ), rail );
+		tmp = sctk_rail_get_any_route_to_task ( SCTK_MSG_DEST_TASK ( msg ), rail );
 	}
 
 	route_data = &tmp->data.ib;

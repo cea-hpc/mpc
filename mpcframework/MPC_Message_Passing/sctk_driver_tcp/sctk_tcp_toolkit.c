@@ -297,7 +297,7 @@ static void sctk_tcp_add_static_route ( int dest, int fd, sctk_rail_info_t *rail
 	sctk_nodebug ( "register route to %d on rail %d", dest, rail->rail_number );
 
 	/* Add the new route */
-	sctk_add_static_route ( dest, new_route, rail );
+	sctk_rail_add_static_route ( dest, new_route, rail );
 	/* set the route as connected */
 	sctk_endpoint_set_state ( new_route, STATE_CONNECTED );
 
