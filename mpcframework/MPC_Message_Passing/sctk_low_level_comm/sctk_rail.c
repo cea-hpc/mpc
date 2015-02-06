@@ -427,9 +427,15 @@ inline sctk_endpoint_t * sctk_rail_get_any_route_to_process_or_forward ( sctk_ra
 	if ( tmp == NULL )
 	{
 		/* Otherwise route until target process */
-		dest = rail->route ( dest, rail );
+		int new_dest = rail->route ( dest, rail );
+		
+		if( new_dest == dest )
+		{
+			sctk_fatal("Routing loop identified");
+		}
+		
 		/* Use the same function which does not create new routes */
-		return sctk_rail_get_any_route_to_process_or_forward ( rail, dest );
+		return sctk_rail_get_any_route_to_process_or_forward ( rail, new_dest );
 	}
 
 	return tmp;
@@ -445,8 +451,14 @@ inline sctk_endpoint_t * sctk_rail_get_static_route_to_process_or_forward ( sctk
 
 	if ( tmp == NULL )
 	{
-		dest = rail->route ( dest, rail );
-		return sctk_rail_get_static_route_to_process_or_forward ( rail, dest );
+		int new_dest = rail->route ( dest, rail );
+		
+		if( new_dest == dest )
+		{
+			sctk_fatal("Routing loop identified");
+		}
+		
+		return sctk_rail_get_static_route_to_process_or_forward ( rail, new_dest );
 	}
 
 	return tmp;
@@ -487,8 +499,14 @@ sctk_endpoint_t * sctk_rail_get_any_route_to_process_or_on_demand ( sctk_rail_in
 		else
 		{
 
-			dest = rail->route ( dest, rail );
-			return sctk_rail_get_any_route_to_process_or_forward ( rail, dest );
+			int new_dest = rail->route ( dest, rail );
+			
+			if( new_dest == dest )
+			{
+				sctk_fatal("Routing loop identified");
+			}
+			
+			return sctk_rail_get_any_route_to_process_or_forward ( rail, new_dest );
 
 		}
 
