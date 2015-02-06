@@ -29,13 +29,7 @@
 /* Rails Storage                                                        */
 /************************************************************************/
 
-/** Dynamic array storing rails */
-static sctk_rail_info_t *rails = NULL;
-/** Number of rails */
-static int rail_number = 0;
-static int rail_current_id = 0;
-/** Set to 1 when routes have been committed by a call to \ref sctk_rail_commit */
-static int is_route_finalized = 0;
+static struct sctk_rail_array __rails = { NULL, 0, 0, 0 };
 
 /************************************************************************/
 /* Rail Init and Getters                                                */
@@ -43,41 +37,41 @@ static int is_route_finalized = 0;
 
 void sctk_rail_allocate ( int count )
 {
-	rails = sctk_calloc ( count , sizeof ( sctk_rail_info_t ) );
-	assume ( rails != NULL );
-	rail_number = count;
+	__rails.rails = sctk_calloc ( count , sizeof ( sctk_rail_info_t ) );
+	assume ( __rails.rails != NULL );
+	__rails.rail_number = count;
 }
 
 sctk_rail_info_t * sctk_rail_new ( struct sctk_runtime_config_struct_net_rail *runtime_config_rail,
                                          struct sctk_runtime_config_struct_net_driver_config *runtime_config_driver_config )
 {
-	if ( rail_current_id == rail_number )
+	if ( __rails.rail_current_id ==  sctk_rail_count() )
 	{
 		sctk_fatal ( "Error : Rail overflow detected\n" );
 	}
 
-	sctk_rail_info_t *new_rail = &rails[rail_current_id];
+	sctk_rail_info_t *new_rail = &__rails.rails[__rails.rail_current_id];
 
 	new_rail->runtime_config_rail = runtime_config_rail;
 	new_rail->runtime_config_driver_config = runtime_config_driver_config;
-	new_rail->rail_number = rail_current_id;
+	new_rail->rail_number = __rails.rail_current_id;
 	
 	new_rail->route_table = sctk_route_table_new();
 
-	rail_current_id++;
+	__rails.rail_current_id++;
 
 	return new_rail;
 }
 
 int sctk_rail_count()
 {
-	return rail_number;
+	return __rails.rail_number;
 }
 
 
 sctk_rail_info_t * sctk_rail_get_by_id ( int i )
 {
-	return & ( rails[i] );
+	return & ( __rails.rails[i] );
 }
 
 
@@ -89,19 +83,20 @@ void sctk_rail_commit()
 	int i;
 	char *name_ptr;
 
-	net_name = sctk_malloc ( rail_number * 4096 );
+	net_name = sctk_malloc ( 4096 );
 	name_ptr = net_name;
 
-	for ( i = 0; i < rail_number; i++ )
+	for ( i = 0; i <  sctk_rail_count(); i++ )
 	{
-		rails[i].route_init ( & ( rails[i] ) );
-		sprintf ( name_ptr, "\nRail %d/%d [%s (%s)]", i + 1, rail_number, rails[i].network_name, rails[i].topology_name );
+		sctk_rail_info_t *  rail = sctk_rail_get_by_id ( i );
+		rail->route_init( rail );
+		sprintf ( name_ptr, "\nRail %d/%d [%s (%s)]", i + 1,  sctk_rail_count(), rail->network_name, rail->topology_name );
 		name_ptr = net_name + strlen ( net_name );
 		sctk_pmi_barrier();
 	}
 
 	sctk_network_mode = net_name;
-	is_route_finalized = 1;
+	__rails.rails_committed = 1;
 }
 
 
@@ -109,7 +104,7 @@ void sctk_rail_commit()
 /* Returs wether the route has been finalized */
 int sctk_rail_committed()
 {
-	return is_route_finalized;
+	return __rails.rails_committed;
 }
 
 

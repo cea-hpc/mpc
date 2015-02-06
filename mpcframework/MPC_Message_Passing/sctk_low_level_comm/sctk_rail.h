@@ -101,6 +101,24 @@ struct sctk_rail_info_s
 	void ( *route_init ) ( sctk_rail_info_t * );
 };
 
+/* Rail  Array                                                          */
+
+
+/** This structure gathers all rails in an array */
+struct sctk_rail_array
+{
+	/** Dynamic array storing rails */
+	sctk_rail_info_t *rails ;
+	/** Number of rails */
+	int rail_number;
+	int rail_current_id;
+	/** Set to 1 when routes have been committed by a call to \ref sctk_rail_commit */
+	int rails_committed;
+};
+
+
+
+
 void sctk_rail_allocate ( int count );
 
 sctk_rail_info_t *sctk_rail_new ( struct sctk_runtime_config_struct_net_rail *runtime_config_rail,
