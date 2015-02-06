@@ -115,21 +115,21 @@ void sctk_rail_init_route ( sctk_rail_info_t *rail, char *topology );
 /* Add Routes to Rail                                                   */
 /************************************************************************/
 
-void sctk_rail_add_static_route ( int dest, sctk_endpoint_t *tmp, sctk_rail_info_t *rail );
-void sctk_rail_add_dynamic_route ( int dest, sctk_endpoint_t *tmp, sctk_rail_info_t *rail );
-sctk_endpoint_t * sctk_rail_add_or_reuse_route_dynamic ( int dest, sctk_rail_info_t *rail, sctk_endpoint_t * ( *create_func ) (), void ( *init_func ) ( int dest, sctk_rail_info_t *rail, sctk_endpoint_t *route_table, int ondemand ), int *added, char is_initiator );
+void sctk_rail_add_static_route ( sctk_rail_info_t *rail, int dest, sctk_endpoint_t *tmp  );
+void sctk_rail_add_dynamic_route ( sctk_rail_info_t *rail, int dest, sctk_endpoint_t *tmp );
+sctk_endpoint_t * sctk_rail_add_or_reuse_route_dynamic ( sctk_rail_info_t *rail, int dest, sctk_endpoint_t * ( *create_func ) (), void ( *init_func ) ( int dest, sctk_rail_info_t *rail, sctk_endpoint_t *route_table, int ondemand ), int *added, char is_initiator );
 
 /************************************************************************/
 /* Get Routes From RAIL                                                 */
 /************************************************************************/
 
-sctk_endpoint_t * sctk_rail_get_static_route_to_process ( int dest, sctk_rail_info_t *rail );
-sctk_endpoint_t * sctk_rail_get_any_route_to_process ( int dest, sctk_rail_info_t *rail );
-sctk_endpoint_t * sctk_rail_get_dynamic_route_to_process ( int dest, sctk_rail_info_t *rail );
-sctk_endpoint_t * sctk_rail_get_any_route_to_task ( int dest, sctk_rail_info_t *rail );
-sctk_endpoint_t * sctk_rail_get_any_route_to_process_or_forward ( int dest, sctk_rail_info_t *rail );
-sctk_endpoint_t * sctk_rail_get_static_route_to_process_or_forward ( int dest, sctk_rail_info_t *rail );
-sctk_endpoint_t * sctk_rail_get_any_route_to_process_or_on_demand ( int dest, sctk_rail_info_t *rail );
+sctk_endpoint_t * sctk_rail_get_static_route_to_process ( sctk_rail_info_t *rail, int dest );
+sctk_endpoint_t * sctk_rail_get_any_route_to_process (  sctk_rail_info_t *rail, int dest );
+sctk_endpoint_t * sctk_rail_get_dynamic_route_to_process ( sctk_rail_info_t *rail, int dest );
+sctk_endpoint_t * sctk_rail_get_any_route_to_task_or_on_demand ( sctk_rail_info_t *rail, int dest );
+sctk_endpoint_t * sctk_rail_get_any_route_to_process_or_forward ( sctk_rail_info_t *rail, int dest );
+sctk_endpoint_t * sctk_rail_get_static_route_to_process_or_forward (  sctk_rail_info_t *rail,  int dest );
+sctk_endpoint_t * sctk_rail_get_any_route_to_process_or_on_demand ( sctk_rail_info_t *rail, int dest );
 
 
 #endif /* SCTK_RAIL_H */

@@ -113,11 +113,11 @@ static void sctk_network_send_message_tcp ( sctk_thread_ptp_message_t *msg, sctk
 
 	if ( IS_PROCESS_SPECIFIC_MESSAGE_TAG ( SCTK_MSG_SPECIFIC_TAG ( msg ) ) )
 	{
-		tmp = sctk_rail_get_any_route_to_process_or_on_demand ( SCTK_MSG_DEST_PROCESS ( msg ), rail );
+		tmp = sctk_rail_get_any_route_to_process_or_on_demand ( rail, SCTK_MSG_DEST_PROCESS ( msg ) );
 	}
 	else
 	{
-		tmp = sctk_rail_get_any_route_to_task ( SCTK_MSG_DEST_TASK ( msg ), rail );
+		tmp = sctk_rail_get_any_route_to_task_or_on_demand ( rail, SCTK_MSG_DEST_TASK ( msg ) );
 	}
 
 	sctk_nodebug ( "Send message to %d", tmp->key.destination );

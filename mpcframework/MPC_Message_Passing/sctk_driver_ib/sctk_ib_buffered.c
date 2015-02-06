@@ -340,7 +340,7 @@ void sctk_ib_buffered_poll_recv ( sctk_rail_info_t *rail, sctk_ibuf_t *ibuf )
 	src_process = sctk_determine_src_process_from_header ( body );
 	ib_assume ( src_process != -1 );
 	/* Determine if the message is expected or not (good sequence number) */
-	route_table = sctk_rail_get_any_route_to_process_or_on_demand ( src_process, rail );
+	route_table = sctk_rail_get_any_route_to_process_or_on_demand ( rail, src_process );
 	ib_assume ( route_table );
 	remote = route_table->data.ib.remote;
 

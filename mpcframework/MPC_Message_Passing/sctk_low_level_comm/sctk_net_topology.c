@@ -101,7 +101,7 @@ void sctk_route_fully_init ( sctk_rail_info_t *rail )
 
 					if ( from == sctk_process_rank )
 					{
-						tmp = sctk_rail_get_any_route_to_process ( to, rail );
+						tmp = sctk_rail_get_any_route_to_process ( rail, to );
 
 						if ( tmp == NULL )
 						{
@@ -112,7 +112,7 @@ void sctk_route_fully_init ( sctk_rail_info_t *rail )
 
 					if ( to == sctk_process_rank )
 					{
-						tmp = sctk_rail_get_any_route_to_process ( from, rail );
+						tmp = sctk_rail_get_any_route_to_process ( rail, from );
 
 						if ( tmp == NULL )
 						{
@@ -957,7 +957,7 @@ void sctk_route_torus_init ( sctk_rail_info_t *rail )
 						__sctk_local_node.neigh[i][j * 2] = neigh;
 						sctk_endpoint_t *tmp;
 
-						tmp = sctk_rail_get_any_route_to_process ( neigh, rail );
+						tmp = sctk_rail_get_any_route_to_process ( rail, neigh );
 
 						if ( tmp == NULL )
 						{
@@ -997,7 +997,7 @@ void sctk_route_torus_init ( sctk_rail_info_t *rail )
 						__sctk_local_node.neigh[i][j * 2] = neigh;
 						sctk_endpoint_t *tmp;
 
-						tmp = sctk_rail_get_any_route_to_process ( neigh, rail );
+						tmp = sctk_rail_get_any_route_to_process ( rail, neigh );
 
 						if ( tmp == NULL )
 						{
