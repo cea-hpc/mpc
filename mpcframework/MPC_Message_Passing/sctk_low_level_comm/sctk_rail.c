@@ -24,6 +24,10 @@
 
 #include <sctk_route.h>
 #include <sctk_pmi.h>
+#include <sctk_accessor.h>
+
+#include <stdio.h>
+#include <unistd.h>
 
 /************************************************************************/
 /* Rails Storage                                                        */
@@ -83,7 +87,7 @@ void sctk_rail_commit()
 	int i;
 	char *name_ptr;
 
-	net_name = sctk_malloc ( 4096 );
+	net_name = sctk_malloc ( sctk_rail_count() * 4096 );
 	name_ptr = net_name;
 
 	for ( i = 0; i <  sctk_rail_count(); i++ )
@@ -106,6 +110,152 @@ int sctk_rail_committed()
 {
 	return __rails.rails_committed;
 }
+
+
+
+
+struct sctk_rail_dump_context
+{
+	FILE * file;
+	int is_static;
+};
+
+
+
+void __sctk_rail_dump_routes(  sctk_endpoint_t *table, void * arg  )
+{
+	int src = sctk_get_process_rank();
+	int dest = table->dest;
+	
+	struct sctk_rail_dump_context * ctx = (struct sctk_rail_dump_context *) arg;
+	
+	
+	if( ctx->is_static )
+	{
+		fprintf(ctx->file, "%d -> %d [color=\"red\"]\n", src, dest );
+	}
+	else
+	{
+		fprintf(ctx->file, "%d -> %d\n", src, dest );
+	}
+}
+
+
+void __sctk_rail_dump_routes_append_file_to_fd( FILE * fd, char * path_of_file_to_append )
+{
+	FILE * to_append = fopen( path_of_file_to_append, "r" );
+	
+	if( !to_append )
+	{
+		perror("fopen");
+		return;
+	}
+	
+	char c= ' ';
+	int ret;
+	
+	do
+	{
+		ret = fread ( &c, sizeof( char ), 1, to_append );
+		fprintf( fd, "%c", c );
+	
+	}while( ret == 1 );
+	
+	
+	fclose(  to_append );
+}
+
+
+
+/* Finalize Rails (call the rail route init func ) */
+void sctk_rail_dump_routes()
+{
+	int i;
+
+	int rank = sctk_get_process_rank();
+	int size = sctk_get_process_number();
+	int local_task_rank = sctk_get_local_task_rank();
+
+	if( local_task_rank )
+		return;
+
+	sctk_error(" %d / %d ", rank , size  );
+	char path[512];
+	
+	/* Each Proces fill its local data */
+	for ( i = 0; i <  sctk_rail_count(); i++ )
+	{
+		sctk_rail_info_t *  rail = sctk_rail_get_by_id ( i );
+		
+		snprintf( path, 512, "./%d.%s.dot.tmp", rank,  rail->network_name );
+		
+		FILE * f = fopen( path, "w" );
+		
+		if( !f )
+		{
+			perror( "fopen" );
+			return;
+		}
+		
+		struct sctk_rail_dump_context ctx;
+		
+		ctx.file = f;
+		
+		/* Walk static */
+		ctx.is_static = 1;
+		sctk_walk_all_static_routes ( rail->route_table, __sctk_rail_dump_routes, (void *)&ctx );
+		
+		/* Walk dynamic */
+		ctx.is_static = 0;
+		sctk_walk_all_dynamic_routes ( rail->route_table, __sctk_rail_dump_routes, (void *)&ctx );
+
+		fclose( f );
+	}
+	
+	sctk_pmi_barrier();
+	
+	/* Now process 0 unifies in a single .dot file */
+	if( !rank )
+	{
+		for ( i = 0; i <  sctk_rail_count(); i++ )
+		{
+			sctk_rail_info_t *  rail = sctk_rail_get_by_id ( i );
+			
+			printf("Merging %s\n", rail->network_name );
+			
+			snprintf( path, 512, "./%s.dot", rail->network_name );
+			
+			FILE * global_f = fopen( path, "w" );
+			
+			if( !global_f )
+			{
+				perror( "fopen" );
+				return;
+			}
+			
+			fprintf(global_f, "Digraph G\n{\n");
+			
+			int j;
+			
+			for( j = 0 ; j < size ; j++ )
+			{
+				
+				char tmp_path[512];
+				snprintf( tmp_path, 512, "./%d.%s.dot.tmp", j,  rail->network_name );
+				
+				printf("\t process %d (%s)\n", j , tmp_path);
+				
+				__sctk_rail_dump_routes_append_file_to_fd( global_f, tmp_path );
+				unlink( tmp_path );
+			}
+			
+			fprintf(global_f, "\n}\n");
+			
+			fclose( global_f );
+		}
+	}
+}
+
 
 
 

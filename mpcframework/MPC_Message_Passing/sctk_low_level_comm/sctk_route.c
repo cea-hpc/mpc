@@ -210,52 +210,9 @@ sctk_endpoint_t * sctk_route_table_get_dynamic_route( sctk_route_table_t * table
 
 UT_icd ptr_icd = {sizeof ( sctk_endpoint_t ** ), NULL, NULL, NULL};
 
-/*
- * Walk through all registered routes and call the function 'func'.
- * Static and dynamic routes are involved
- */
-void sctk_walk_all_routes ( sctk_route_table_t * table, void ( *func ) ( sctk_endpoint_t *table ) )
-{
-	sctk_endpoint_t *current_route, *tmp, **tmp2;
-	UT_array *routes;
-	utarray_new ( routes, &ptr_icd );
-
-	/* We do not need to take a lock */
-	HASH_ITER ( hh, table->static_route_table, current_route, tmp )
-	{
-		if ( sctk_endpoint_get_state ( current_route ) == STATE_CONNECTED )
-		{
-			if ( sctk_endpoint_cas_low_memory_mode_local ( current_route, 0, 1 ) == 0 )
-			{
-				utarray_push_back ( routes, &current_route );
-			}
-		}
-	}
-
-	sctk_spinlock_read_lock ( &table->dynamic_route_table_lock );
-	HASH_ITER ( hh, table->dynamic_route_table, current_route, tmp )
-	{
-		if ( sctk_endpoint_get_state ( current_route ) == STATE_CONNECTED )
-		{
-			if ( sctk_endpoint_cas_low_memory_mode_local ( current_route, 0, 1 ) == 0 )
-			{
-				utarray_push_back ( routes, &current_route );
-			}
-		}
-	}
-	sctk_spinlock_read_unlock ( &table->dynamic_route_table_lock );
-
-	tmp2 = NULL;
-
-	while ( ( tmp2 = ( sctk_endpoint_t ** ) utarray_next ( routes, tmp2 ) ) )
-	{
-		func ( *tmp2 );
-	}
-}
-
 /* Walk through all registered routes and call the function 'func'.
  * Only dynamic routes are involved */
-void sctk_walk_all_dynamic_routes ( sctk_route_table_t * table, void ( *func ) (  sctk_endpoint_t *table ) )
+void sctk_walk_all_dynamic_routes ( sctk_route_table_t * table, void ( *func ) (  sctk_endpoint_t *endpoint, void * arg  ), void * arg )
 {
 	sctk_endpoint_t *current_route, *tmp, **tmp2;
 	UT_array *routes;
@@ -280,7 +237,37 @@ void sctk_walk_all_dynamic_routes ( sctk_route_table_t * table, void ( *func ) (
 
 	while ( ( tmp2 = ( sctk_endpoint_t ** ) utarray_next ( routes, tmp2 ) ) )
 	{
-		func ( *tmp2 );
+		func ( *tmp2, arg );
+	}
+}
+
+
+/* Walk through all registered routes and call the function 'func'.
+ * Only dynamic routes are involved */
+void sctk_walk_all_static_routes( sctk_route_table_t * table, void ( *func ) (  sctk_endpoint_t *endpoint, void * arg  ), void * arg )
+{
+	sctk_endpoint_t *current_route, *tmp, **tmp2;
+	UT_array *routes;
+	utarray_new ( routes, &ptr_icd );
+
+	/* Do not walk on static routes */
+
+	HASH_ITER ( hh, table->static_route_table , current_route, tmp )
+	{
+		if ( sctk_endpoint_get_state ( current_route ) == STATE_CONNECTED )
+		{
+			if ( sctk_endpoint_cas_low_memory_mode_local ( current_route, 0, 1 ) == 0 )
+			{
+				utarray_push_back ( routes, &current_route );
+			}
+		}
+	}
+
+	tmp2 = NULL;
+
+	while ( ( tmp2 = ( sctk_endpoint_t ** ) utarray_next ( routes, tmp2 ) ) )
+	{
+		func ( *tmp2, arg );
 	}
 }
 

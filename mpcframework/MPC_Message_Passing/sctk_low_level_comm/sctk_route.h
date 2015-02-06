@@ -156,8 +156,14 @@ void sctk_route_table_add_dynamic_route (  sctk_route_table_t * table, sctk_endp
 sctk_endpoint_t * sctk_route_table_get_static_route(   sctk_route_table_t * table , int dest );
 sctk_endpoint_t * sctk_route_table_get_dynamic_route(   sctk_route_table_t * table , int dest );
 
-void sctk_walk_all_routes ( sctk_route_table_t * table, void ( *func ) ( sctk_endpoint_t *table ) );
-void sctk_walk_all_dynamic_routes ( sctk_route_table_t * table, void ( *func ) (  sctk_endpoint_t *table ) );
+void sctk_walk_all_dynamic_routes ( sctk_route_table_t * table, void ( *func ) (  sctk_endpoint_t *endpoint, void * arg  ), void * arg );
+void sctk_walk_all_static_routes( sctk_route_table_t * table, void ( *func ) (  sctk_endpoint_t *endpoint, void * arg  ), void * arg );
+
+static inline void sctk_walk_all_routes ( sctk_route_table_t * table, void ( *func ) ( sctk_endpoint_t *endpoint, void * arg ), void * arg )
+{
+	sctk_walk_all_static_routes ( table, func, arg );
+	sctk_walk_all_dynamic_routes ( table, func, arg );
+}
 
 /************************************************************************/
 /* Signalization rails: getters and setters                             */
