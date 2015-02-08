@@ -50,6 +50,7 @@
 					<allreduce_arity_max>8</allreduce_arity_max>
 					<allreduce_max_size>1024</allreduce_max_size>
 					<allreduce_check_threshold>8192</allreduce_check_threshold>
+					<ALLREDUCE_MAX_SLOT>65536</ALLREDUCE_MAX_SLOT>
 					<collectives_init_hook>sctk_collectives_init_opt_noalloc_split_messages</collectives_init_hook>
 				</inter_thread_comm>
 				<low_level_comm>
@@ -57,6 +58,7 @@
 					<send_msg>sctk_network_send_message_default</send_msg>
 					<network_mode>default</network_mode>
 					<dyn_reordering>false</dyn_reordering>
+					<enable_idle_polling>false</enable_idle_polling>
 				</low_level_comm>
 				<mpc>
 					<log_debug>false</log_debug>
@@ -68,12 +70,20 @@
 					<schedule>static</schedule>
 					<nb_threads>0</nb_threads>
 					<adjustment>false</adjustment>
+					<proc_bind>true</proc_bind>
 					<nested>false</nested>
+					<stack_size>0</stack_size>
+					<wait_policy>0</wait_policy>
+					<thread_limit>0</thread_limit>
+					<max_active_levels>0</max_active_levels>
+					<tree></tree>
 					<max_threads>64</max_threads>
 					<max_alive_for_dyn>7</max_alive_for_dyn>
 					<max_alive_for_guided>3</max_alive_for_guided>
 					<max_alive_sections>3</max_alive_sections>
 					<max_alive_single>3</max_alive_single>
+					<warn_nested>false</warn_nested>
+					<mode>simple-mixed</mode>
 				</openmp>
 				<profiler>
 					<file_prefix>mpc_profile</file_prefix>
@@ -280,4 +290,3 @@
 	<mappings>
 	</mappings>
 </mpc>
-
