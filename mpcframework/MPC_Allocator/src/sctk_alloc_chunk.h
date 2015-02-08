@@ -30,7 +30,7 @@ extern "C"
 
 /********************************* INCLUDES *********************************/
 #include "sctk_alloc_common.h"
-
+#include "sctk_stdint.h"
 /********************************** ENUM ************************************/
 /**
  * Constants to define the type of current block, currently, only small (<=256o) or large.
@@ -93,11 +93,11 @@ struct sctk_alloc_chunk_header_large
 	struct sctk_alloc_chunk_info info;
 	#else
 	/** Size of the bloc content (counting the header size). **/
-	sctk_size_t size:56;
+	sctk_uint64_t size:56;
 	/** Address of the bloc, this is a sort of canary to detect bugs. **/
 	unsigned char addr;
 	/** Size of previous bloc. **/
-	sctk_size_t prevSize:56;
+	sctk_uint64_t prevSize:56;
 	/**
 	 * Common part of the header, if is mostly used to determine the status and type of blocs
 	 * It must be at the end of the header for each header type.
@@ -128,7 +128,7 @@ struct sctk_alloc_chunk_header_padded
 	 * sctk_alloc_chunk_header_padded struct. So to get the previous header, we just need
 	 * to remove the padding from current header address, and call sctk_alloc_get_chunk().
 	**/
-	sctk_size_t padding:56;
+	sctk_uint64_t padding:56;
 	/**
 	 * Common part of the header, if is mostly used to determine the status and type of blocs
 	 * It must be at the end of the header for each header type.
