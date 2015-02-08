@@ -522,7 +522,7 @@ void ffunc (mpi_null_copy_fn) (MPI_Comm comm, int comm_keyval, void* extra_state
 
 void ffunc (mpi_dup_fn) (MPI_Comm comm, int comm_keyval, void* extra_state, void* attribute_val_in, void* attribute_val_out, int* flag)
 {
-  MPC_Mpi_dup_fn(comm, comm_keyval, extra_state, *(size_t*)attribute_val_in, attribute_val_out, flag);
+  MPC_Mpi_dup_fn(comm, comm_keyval, extra_state, (void*)(*((size_t*)attribute_val_in)), attribute_val_out, flag);
 }
 
 void ffunc (mpi_type_null_delete_fn) (MPI_Datatype datatype, int type_keyval, void* attribute_val_out, void* extra_state)
@@ -537,7 +537,7 @@ void ffunc (mpi_type_null_copy_fn) (MPI_Comm comm, int comm_keyval, void* extra_
 
 void ffunc (mpi_type_dup_fn) (MPI_Comm comm, int comm_keyval, void* extra_state, void* attribute_val_in, void* attribute_val_out, int* flag)
 {
-  MPC_Mpi_type_dup_fn(comm, comm_keyval, extra_state, *(size_t*)attribute_val_in, attribute_val_out, flag);
+  MPC_Mpi_type_dup_fn(comm, comm_keyval, extra_state, (void*)(*(size_t*)attribute_val_in), attribute_val_out, flag);
 }
 
 void ffunc(mpi_comm_null_delete_fn) (MPI_Datatype datatype, int type_keyval, void* attribute_val_out, void* extra_state)
@@ -552,7 +552,7 @@ void ffunc(mpi_comm_null_copy_fn) (MPI_Comm comm, int comm_keyval, void* extra_s
 
 void ffunc(mpi_comm_dup_fn) (MPI_Comm comm, int comm_keyval, void* extra_state, void* attribute_val_in, void* attribute_val_out, int* flag)
 {
-  MPC_Mpi_comm_dup_fn(comm, comm_keyval, extra_state, *(size_t*)attribute_val_in, attribute_val_out, flag);
+  MPC_Mpi_comm_dup_fn(comm, comm_keyval, extra_state, (void*)(*(size_t*)attribute_val_in), attribute_val_out, flag);
 }
 
 void ffunc(mpi_win_null_delete_fn) (MPI_Datatype datatype, int type_keyval, void* attribute_val_out, void* extra_state)
@@ -567,7 +567,7 @@ void ffunc(mpi_win_null_copy_fn) (MPI_Comm comm, int comm_keyval, void* extra_st
 
 void ffunc(mpi_win_dup_fn) (MPI_Comm comm, int comm_keyval, void* extra_state, void* attribute_val_in, void* attribute_val_out, int* flag)
 {
-  MPC_Mpi_win_dup_fn(comm, comm_keyval, extra_state, *(size_t*)attribute_val_in, attribute_val_out, flag);
+  MPC_Mpi_win_dup_fn(comm, comm_keyval, extra_state, (void*)(*(size_t*)attribute_val_in), attribute_val_out, flag);
 }
 
 /*Fortran binding*/
@@ -1030,7 +1030,6 @@ void ffunc (pmpi_type_get_contents) (   MPI_Datatype * datatype,
 }
 
 
-int;
 
 
   /* MPI_Type_count was withdrawn in MPI 1.1 */
@@ -1673,7 +1672,7 @@ void ffunc (pmpi_errhandler_free) (MPI_Errhandler * errhandler, int *res)
 
 void ffunc (pmpi_comm_set_errhandler) (MPI_Comm * comm, MPI_Errhandler * errhandler, int *res)
 {
-  *res = MPI_Comm_set_errhandler (*comm, errhandler);
+  *res = MPI_Comm_set_errhandler (*comm, *errhandler);
 }
 
 void ffunc (pmpi_error_string) (int *errorcode, char *string, int *resultlen,

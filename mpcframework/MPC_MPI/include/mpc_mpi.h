@@ -381,12 +381,13 @@ extern "C"
 /*
  * * MPI-2 One-Sided Communications asserts   
  */
+/*
 #define MPI_MODE_NOCHECK             1
 #define MPI_MODE_NOPRECEDE           2
 #define MPI_MODE_NOPUT               4
 #define MPI_MODE_NOSTORE             8
 #define MPI_MODE_NOSUCCEED          16
-
+*/
 #define MPI_WIN_FLAVOR_CREATE        1
 #define MPI_WIN_FLAVOR_ALLOCATE      2
 #define MPI_WIN_FLAVOR_DYNAMIC       3
