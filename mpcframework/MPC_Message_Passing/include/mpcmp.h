@@ -481,7 +481,6 @@ typedef enum
   int MPC_Local_task_rank( int *rank );
   int MPC_Local_task_number( int *number );
 
-  int MPC_Get_version (int *version, int *subversion);
   int MPC_Get_multithreading (char *name, int size);
   int MPC_Get_networking (char *name, int size);
   int MPC_Get_processor_name (char *name, int *resultlen);
@@ -802,7 +801,6 @@ int MPC_Test_cancelled (MPC_Status *, int *);
   int PMPC_Process_number (int *number);
   int PMPC_Local_process_rank (int *rank);
   int PMPC_Local_process_number (int *rank);
-  int PMPC_Get_version (int *version, int *subversion);
   int PMPC_Get_multithreading (char *name, int size);
   int PMPC_Get_networking (char *name, int size);
   int PMPC_Get_processor_name (char *name, int *resultlen);

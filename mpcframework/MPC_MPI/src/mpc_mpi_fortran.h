@@ -1895,6 +1895,13 @@ void ffunc (pmpi_free_mem)(void *ptr, int *res)
 	*res = MPI_Free_mem(ptr);
 }
 
+
+void ffunc (pmpi_is_thread_main)(int *flag, int *res)
+{
+	*res = MPI_Is_thread_main(flag);
+}
+
+
 void ffunc (pmpi_type_match_size)(int typeclass, int size, MPI_Datatype *rtype, int *res){not_implemented();}
 void ffunc (pmpi_type_size_x)(MPI_Datatype datatype, MPI_Count *size, int *res){not_implemented();}
 void ffunc (pmpi_type_get_extent_x)(MPI_Datatype datatype, MPI_Count *lb, MPI_Count *extent, int *res){not_implemented();}
@@ -2023,7 +2030,6 @@ void ffunc (pmpi_type_create_keyval)(MPI_Type_copy_attr_function *type_copy_attr
 void ffunc (pmpi_add_error_class)(int *errorclass, int *res){not_implemented();}
 void ffunc (pmpi_add_error_code)(int errorclass, int *errorcode, int *res){not_implemented();}
 void ffunc (pmpi_add_error_string)(int errorcode, char *string, int *res){not_implemented();}
-void ffunc (pmpi_is_thread_main)(int *flag, int *res){not_implemented();}
 void ffunc (pmpi_get_library_version)(char *version, int *resultlen, int *res){not_implemented();}
 
 /* Process Creation and Management */

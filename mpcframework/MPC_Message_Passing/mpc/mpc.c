@@ -1039,14 +1039,6 @@ sctk_get_check_point_key ()
 /* } */
 
 int
-PMPC_Get_version (int *version, int *subversion)
-{
-  *version = SCTK_VERSION_MAJOR;
-  *subversion = SCTK_VERSION_MINOR;
-  MPC_ERROR_SUCESS ();
-}
-
-int
 PMPC_Get_multithreading (char *name, int size)
 {
   memcpy (name, sctk_multithreading_mode, size - 2);

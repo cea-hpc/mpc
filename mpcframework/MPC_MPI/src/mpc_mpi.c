@@ -9319,7 +9319,9 @@ __INTERNAL__PMPI_Get_processor_name (char *name, int *resultlen)
 static int
 __INTERNAL__PMPI_Get_version (int *version, int *subversion)
 {
-  return PMPC_Get_version (version, subversion);
+	*version = MPI_VERSION;
+	*subversion = MPI_SUBVERSION;
+  	return MPI_SUCCESS;
 }
 
 static int
@@ -13253,6 +13255,13 @@ PMPI_Abort (MPI_Comm comm, int errorcode)
 }
 
 
+int PMPI_Is_thread_main(int *flag)
+{
+	sctk_task_specific_t *task_specific;
+	task_specific = __MPC_get_task_specific ();
+	*flag = task_specific->init_done;
+	return MPI_SUCCESS;
+}
   /* Note that we may need to define a @PCONTROL_LIST@ depending on whether
      stdargs are supported */
 int
@@ -13603,7 +13612,6 @@ int PMPI_Type_create_keyval(MPI_Type_copy_attr_function *type_copy_attr_fn, MPI_
 int PMPI_Add_error_class(int *errorclass){not_implemented();}
 int PMPI_Add_error_code(int errorclass, int *errorcode){not_implemented();}
 int PMPI_Add_error_string(int errorcode, char *string){not_implemented();}
-int PMPI_Is_thread_main(int *flag){not_implemented();}
 int PMPI_Get_library_version(char *version, int *resultlen){not_implemented();}
 
 /* Process Creation and Management */
