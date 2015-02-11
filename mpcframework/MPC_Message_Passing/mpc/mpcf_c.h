@@ -99,11 +99,6 @@ void ffunc (mpc_process_number) (int *number, int *err)
   *err = MPC_Process_number (number);
 }
 
-void ffunc (mpc_get_version) (int *version, int *subversion, int *err)
-{
-  *err = MPC_Get_version (version, subversion);
-}
-
 void ffunc (mpc_get_multithreading) (char *name, int *size, int *err)
 {
   *err = MPC_Get_multithreading (name, *size);
