@@ -194,12 +194,6 @@ sctk_endpoint_t * sctk_route_table_get_dynamic_route_no_lock( sctk_route_table_t
 	sctk_endpoint_t *tmp;
 
 	HASH_FIND_INT ( table->dynamic_route_table, &dest, tmp );
-	
-	/* If the route is deconnected, we do not use it*/
-	if ( tmp && sctk_endpoint_get_state ( tmp ) != STATE_CONNECTED )
-	{
-		tmp = NULL;
-	}
 
 	return tmp;
 }

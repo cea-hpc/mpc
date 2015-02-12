@@ -144,7 +144,7 @@ struct sctk_route_table_s
 	sctk_endpoint_t * dynamic_route_table; /** Here are stored the dynamic routes (hash table) */
 	sctk_spin_rwlock_t dynamic_route_table_lock; /** This is the dynamic route lock */
 	/* Static Routes */
-	sctk_endpoint_t *static_route_table; /** Here are stored static routes (hash table) -- no lock as they are read only */
+	sctk_endpoint_t * static_route_table; /** Here are stored static routes (hash table) -- no lock as they are read only */
 };
 
 
