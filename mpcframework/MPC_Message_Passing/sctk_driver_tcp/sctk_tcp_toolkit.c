@@ -64,25 +64,34 @@ static int sctk_tcp_connect_to ( char *name_init, sctk_rail_info_t *rail )
 		{
 			name[i] = '\0';
 			name_init[i] = '\0';
-			sctk_nodebug ( "Port no %s", name + ( i + 1 ) );
-			portno = name + ( i + 1 );
-
+			/* Make sure we hold the right port-no (from original buffer)
+			 * as it might be overwriten if we fallback network */
+			portno = name_init + ( i + 1 );
+			sctk_nodebug ( "%s Port no %s", name, portno );
 			break;
 		}
 	}
 
 	/* Rely on IP over IB if possible */
-
 	if ( rail->network.tcp.sctk_use_tcp_o_ib )
 	{
 		sprintf ( name, "%s-ib0", name_init );
+		
+		/* Make sure it resolves */
+		server = gethostbyname ( name );
+
+		if ( server == NULL )
+		{
+			/* If host fails to resolve fallback to Classical IP */
+			sprintf ( name, "%s", name_init );
+		}	
 	}
 	else
 	{
 		/* Try the hostname */
 		sprintf ( name, "%s", name_init );
 
-		/* Make suer it resolves */
+		/* Make sure it resolves */
 		server = gethostbyname ( name );
 
 		if ( server == NULL )
@@ -96,6 +105,7 @@ static int sctk_tcp_connect_to ( char *name_init, sctk_rail_info_t *rail )
 
 	sctk_nodebug ( "Try connection to |%s| on port %s type %d", name, portno, AF_INET );
 	struct addrinfo *results;
+
 
 	/* First use getaddrinfo to extract connection type */
 	int ret = getaddrinfo ( name, portno, NULL, &results );

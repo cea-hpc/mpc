@@ -30,6 +30,7 @@
 #include <sctk_low_level_comm.h>
 #include "sctk_ib_qp.h"
 #include <utarray.h>
+#include <sctk_multirail.h>
 
 /************************************************************************/
 /* Routes Storage                                                       */
@@ -150,6 +151,8 @@ void sctk_route_table_add_dynamic_route_no_lock (  sctk_route_table_t * table, s
 {
 	assume( tmp->origin == ROUTE_ORIGIN_DYNAMIC );
 	HASH_ADD_INT( table->dynamic_route_table, dest, tmp );
+	/* Register route in multi-rail */
+	sctk_multirail_destination_table_push_endpoint( tmp );
 }
 
 void sctk_route_table_add_dynamic_route (  sctk_route_table_t * table, sctk_endpoint_t *tmp )
@@ -164,10 +167,14 @@ void sctk_route_table_add_dynamic_route (  sctk_route_table_t * table, sctk_endp
 
 void sctk_route_table_add_static_route (  sctk_route_table_t * table, sctk_endpoint_t *tmp )
 {
+	sctk_error("New static route to %d", tmp->dest );
+	
 	assume( tmp->origin == ROUTE_ORIGIN_STATIC );
 	
 	sctk_spinlock_write_lock(&sctk_route_table_static_lock);
 	HASH_ADD_INT( table->dynamic_route_table, dest, tmp );
+	/* Register route in multi-rail */
+	sctk_multirail_destination_table_push_endpoint( tmp );
 	sctk_spinlock_write_unlock(&sctk_route_table_static_lock);
 }
 

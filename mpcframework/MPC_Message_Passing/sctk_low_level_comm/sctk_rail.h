@@ -30,11 +30,8 @@ typedef struct sctk_rail_info_s sctk_rail_info_t;
 typedef struct sctk_route_table_s sctk_route_table_t; 
 typedef struct sctk_endpoint_s sctk_endpoint_t;
 
-/* Networks */
-#include <sctk_portals.h>
-#include <sctk_tcp.h>
-#include <sctk_ib.h>
-
+/* Driver definitions */
+#include <sctk_drivers.h>
 
 /************************************************************************/
 /* Rail Info                                                            */
@@ -54,6 +51,8 @@ typedef union
 /************************************************************************/
 /* Rail                                                                 */
 /************************************************************************/
+
+typedef int (*rail_gate)( struct sctk_rail_info_s * rail,  sctk_thread_ptp_message_t * );
 
 /** This structure gathers all informations linked to a network rail
  *
@@ -86,6 +85,9 @@ struct sctk_rail_info_s
 	void ( *initialize_leader_task ) ( struct sctk_rail_info_s * );
 	/* Network interactions */
 	void ( *send_message ) ( sctk_thread_ptp_message_t *, struct sctk_rail_info_s * );
+	
+	void ( *send_message_endpoint ) ( sctk_thread_ptp_message_t *, sctk_endpoint_t * );
+	
 	void ( *notify_recv_message ) ( sctk_thread_ptp_message_t * , struct sctk_rail_info_s * );
 	void ( *notify_matching_message ) ( sctk_thread_ptp_message_t * , struct sctk_rail_info_s * );
 	void ( *notify_perform_message ) ( int , int, int, int, struct sctk_rail_info_s * );
@@ -99,6 +101,8 @@ struct sctk_rail_info_s
 	/* Routing */
 	int ( *route ) ( int , sctk_rail_info_t * );
 	void ( *route_init ) ( sctk_rail_info_t * );
+	/* Gate */
+	rail_gate gate;
 };
 
 /* Rail  Array                                                          */

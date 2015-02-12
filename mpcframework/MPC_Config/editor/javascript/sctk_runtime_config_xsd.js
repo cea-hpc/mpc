@@ -150,17 +150,37 @@
 -e </xs:restriction>\
 -e </xs:simpleType>\
 -e <!-- ********************************************************* -->\
+-e <xs:complexType name='user_type_net_driver_portals'>\
+-e <xs:all>\
+-e <xs:element minOccurs='0' name='fake_param' type='xs:integer'/>\
+-e </xs:all>\
+-e </xs:complexType>\
+-e <!-- ********************************************************* -->\
+-e <xs:complexType name='user_type_net_driver_tcp'>\
+-e <xs:all>\
+-e <xs:element minOccurs='0' name='tcpoib' type='xs:integer'/>\
+-e </xs:all>\
+-e </xs:complexType>\
+-e <!-- ********************************************************* -->\
+-e <xs:complexType name='user_type_net_driver_tcp_rdma'>\
+-e <xs:all>\
+-e <xs:element minOccurs='0' name='tcpoib' type='xs:integer'/>\
+-e </xs:all>\
+-e </xs:complexType>\
+-e <!-- ********************************************************* -->\
 -e <xs:complexType name='user_type_net_driver'>\
 -e <xs:choice>\
 -e <xs:element name='infiniband' type='user_type_net_driver_infiniband'/>\
+-e <xs:element name='portals' type='user_type_net_driver_portals'/>\
 -e <xs:element name='tcp' type='user_type_net_driver_tcp'/>\
--e <xs:element name='tcpoib' type='user_type_net_driver_tcp'/>\
+-e <xs:element name='tcprdma' type='user_type_net_driver_tcp_rdma'/>\
 -e </xs:choice>\
 -e </xs:complexType>\
 -e <!-- ********************************************************* -->\
 -e <xs:complexType name='user_type_net_driver_config'>\
 -e <xs:all>\
 -e <xs:element minOccurs='0' name='name' type='xs:string'/>\
+-e <xs:element minOccurs='0' name='driver' type='user_type_net_driver'/>\
 -e </xs:all>\
 -e </xs:complexType>\
 -e <!-- ********************************************************* -->\

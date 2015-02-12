@@ -145,44 +145,31 @@ config-meta.xml automatically.
             <name>tcp_config_mpi</name>
             <driver>
               <tcp>
-                <fake_param>0</fake_param>
+                <tcpoib>1</tcpoib>
               </tcp>
             </driver>
           </config>
-          <config>
-            <name>tcpoib_config_mpi</name>
-            <driver>
-              <tcpoib>
-                <fake_param>0</fake_param>
-              </tcpoib>
-            </driver>
-          </config>
-				</configs>
+         
+	  </configs>
 				<!-- rails contain complexe structures so default value cannot be setup into config-meta.xml -->
         <rails>
-					<rail>
-						<name>ib_mpi</name>
-						<device>0</device>
-						<topology>ondemand</topology>
-						<config>ib_config_mpi</config>
-					</rail>
-					<rail>
-						<name>ib_signalization</name>
-						<device>0</device>
-						<topology>torus</topology>
-						<config>ib_config_signalization</config>
+	<rail>
+		<name>ib_mpi</name>
+		<device>0</device>
+		<topology>ondemand</topology>
+		<config>ib_config_mpi</config>
+	</rail>
+	<rail>
+		<name>ib_signalization</name>
+		<device>0</device>
+		<topology>torus</topology>
+		<config>ib_config_signalization</config>
           </rail>
-					<rail>
-						<name>tcp_mpi</name>
-						<device>0</device>
-						<topology>fully</topology>
-						<config>tcp_config_mpi</config>
-          </rail>
-					<rail>
-						<name>tcpoib_mpi</name>
-						<device>0</device>
-						<topology>fully</topology>
-						<config>tcpoib_config_mpi</config>
+	<rail>
+		<name>tcp_mpi</name>
+		<device>0</device>
+		<topology>fully</topology>
+		<config>tcp_config_mpi</config>
           </rail>
         </rails>
 
@@ -198,12 +185,6 @@ config-meta.xml automatically.
             <name>tcp</name>
             <rails>
               <rail>tcp_mpi</rail>
-            </rails>
-          </cli_option>
-          <cli_option>
-            <name>tcpoib</name>
-            <rails>
-              <rail>tcpoib_mpi</rail>
             </rails>
           </cli_option>
           <cli_option>

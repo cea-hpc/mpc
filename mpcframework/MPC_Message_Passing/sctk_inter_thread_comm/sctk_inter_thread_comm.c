@@ -1747,8 +1747,8 @@ void sctk_set_header_in_message ( sctk_thread_ptp_message_t *
                                   MPC_Datatype datatype )
 {
 	msg->tail.request = request;
-	SCTK_MSG_SRC_PROCESS_SET ( msg, source );
-	SCTK_MSG_DEST_PROCESS_SET ( msg , destination );
+	SCTK_MSG_SRC_PROCESS_SET ( msg, sctk_get_process_rank_from_task_rank ( source ) );
+	SCTK_MSG_DEST_PROCESS_SET ( msg , sctk_get_process_rank_from_task_rank ( destination)  );
 
 	if ( IS_PROCESS_SPECIFIC_MESSAGE_TAG ( specific_message_tag ) )
 	{

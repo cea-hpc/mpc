@@ -741,7 +741,7 @@ int sctk_derived_datatype_optimize( sctk_derived_datatype_t * target_type )
 	
 	if( count != new_count )
 	{
-		sctk_info("Datatype Optimizer : merged %.4g percents of copies %s", (count  - new_count) * 100.0 / count , (new_count == 1 )?"[Type is now Contiguous]":"" );
+		sctk_nodebug("Datatype Optimizer : merged %.4g percents of copies %s", (count  - new_count) * 100.0 / count , (new_count == 1 )?"[Type is now Contiguous]":"" );
 
 		target_type->opt_begins = sctk_malloc( sizeof( mpc_pack_absolute_indexes_t ) * new_count );
 		target_type->opt_ends = sctk_malloc( sizeof( mpc_pack_absolute_indexes_t ) * new_count );

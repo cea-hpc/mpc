@@ -35,7 +35,7 @@ static void *sctk_tcp_thread ( sctk_endpoint_t *tmp )
 {
 	int fd = tmp->data.tcp.fd;
 
-	sctk_nodebug ( "Rail %d from %d launched", tmp->rail->rail_number, tmp->key.destination );
+	sctk_debug ( "Rail %d from %d launched", tmp->rail->rail_number, tmp->dest );
 
 	while ( 1 )
 	{
@@ -45,7 +45,7 @@ static void *sctk_tcp_thread ( sctk_endpoint_t *tmp )
 		ssize_t res;
 
 		res = sctk_safe_read ( fd, ( char * ) &size, sizeof ( size_t ) );
-		sctk_nodebug ( "Got msg of size %d (online:%d)", res, sctk_online_program );
+		//sctk_debug ( "Got msg of size %d (online:%d)", res, sctk_online_program );
 
 		if ( res < sizeof ( size_t ) )
 		{
@@ -71,7 +71,7 @@ static void *sctk_tcp_thread ( sctk_endpoint_t *tmp )
 		body = ( char * ) msg + sizeof ( sctk_thread_ptp_message_t );
 
 		/* Recv header*/
-		sctk_nodebug ( "Read %d", sizeof ( sctk_thread_ptp_message_body_t ) );
+		//sctk_debug ( "Read %d", sizeof ( sctk_thread_ptp_message_body_t ) );
 		res = sctk_safe_read ( fd, ( char * ) msg, sizeof ( sctk_thread_ptp_message_body_t ) );
 
 		if ( res != sizeof ( sctk_thread_ptp_message_body_t ) )
@@ -94,11 +94,13 @@ static void *sctk_tcp_thread ( sctk_endpoint_t *tmp )
 		sctk_rebuild_header ( msg );
 		sctk_reinit_header ( msg, sctk_free, sctk_net_message_copy );
 
-		sctk_nodebug ( "MSG RECV|%s|", ( char * ) body );
+		//sctk_nodebug ( "MSG RECV|%s|", ( char * ) body );
 
-		sctk_nodebug ( "Msg recved" );
+		//sctk_debug ( "Msg recved" );
 		tmp->rail->send_message_from_network ( msg );
 	}
+	
+	sctk_error("TCP THREAD LEAVING");
 
 	return NULL;
 }
@@ -138,6 +140,29 @@ static void sctk_network_send_message_tcp ( sctk_thread_ptp_message_t *msg, sctk
 	sctk_complete_and_free_message ( msg );
 }
 
+static void sctk_network_send_message_endpoint_tcp ( sctk_thread_ptp_message_t *msg, sctk_endpoint_t *endpoint )
+{
+	size_t size;
+	int fd;
+
+	sctk_debug ( "==> Send message to %d", endpoint->dest );
+
+	sctk_spinlock_lock ( & ( endpoint->data.tcp.lock ) );
+
+	fd = endpoint->data.tcp.fd;
+
+	size = SCTK_MSG_SIZE ( msg ) + sizeof ( sctk_thread_ptp_message_body_t );
+
+	sctk_safe_write ( fd, ( char * ) &size, sizeof ( size_t ) );
+
+	sctk_safe_write ( fd, ( char * ) msg, sizeof ( sctk_thread_ptp_message_body_t ) );
+
+	sctk_net_write_in_fd ( msg, fd );
+	sctk_spinlock_unlock ( & ( endpoint->data.tcp.lock ) );
+
+	sctk_complete_and_free_message ( msg );
+}
+
 static void sctk_network_notify_recv_message_tcp ( sctk_thread_ptp_message_t *msg, sctk_rail_info_t *rail )
 {
 
@@ -163,19 +188,41 @@ static void sctk_network_notify_any_source_message_tcp ( int polling_task_id, in
 
 }
 
+
+
+static int sctk_send_message_from_network_tcp ( sctk_thread_ptp_message_t *msg )
+{
+	if ( sctk_send_message_from_network_reorder ( msg ) == REORDER_NO_NUMBERING )
+	{
+		/* No reordering */
+		sctk_send_message_try_check ( msg, 1 );
+	}
+
+	return 1;
+}
+
+
+
 /********************************************************************/
 /* TCP Init                                                         */
 /********************************************************************/
 
-void sctk_network_init_tcp ( sctk_rail_info_t *rail, int sctk_use_tcp_o_ib )
+void sctk_network_init_tcp ( sctk_rail_info_t *rail )
 {
 	/* Register Hooks in rail */
 	rail->send_message = sctk_network_send_message_tcp;
+	rail->send_message_endpoint = sctk_network_send_message_endpoint_tcp;
 	rail->notify_recv_message = sctk_network_notify_recv_message_tcp;
 	rail->notify_matching_message = sctk_network_notify_matching_message_tcp;
 	rail->notify_perform_message = sctk_network_notify_perform_message_tcp;
 	rail->notify_idle_message = sctk_network_notify_idle_message_tcp;
 	rail->notify_any_source_message = sctk_network_notify_any_source_message_tcp;
+	rail->send_message_from_network = sctk_send_message_from_network_tcp;
+	
+	
+	sctk_rail_init_route ( rail, rail->runtime_config_rail->topology );
+
+	int sctk_use_tcp_o_ib = rail->runtime_config_driver_config->driver.value.tcp.tcpoib;
 
 	/* Handle the IPoIB case */
 	if ( sctk_use_tcp_o_ib == 0 )

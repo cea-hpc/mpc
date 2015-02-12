@@ -166,7 +166,15 @@ void sctk_runtime_config_struct_init_net_driver_tcp(void * struct_ptr)
 {
 	struct sctk_runtime_config_struct_net_driver_tcp * obj = struct_ptr;
 	/* Simple params : */
-	obj->fake_param = 0;
+	obj->tcpoib = 1;
+}
+
+/*******************  FUNCTION  *********************/
+void sctk_runtime_config_struct_init_net_driver_tcp_rdma(void * struct_ptr)
+{
+	struct sctk_runtime_config_struct_net_driver_tcp_rdma * obj = struct_ptr;
+	/* Simple params : */
+	obj->tcpoib = 1;
 }
 
 /*******************  FUNCTION  *********************/

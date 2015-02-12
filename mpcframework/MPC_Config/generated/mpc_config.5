@@ -474,15 +474,26 @@ Type is int. Default value is 0.
 Fake param.
 .El
 .Sh ENTRIES OF TYPE net_driver_tcp
-Declare a fake driver to test the configuration system.
+TCP-based driver
 .Pp
 It support parameters :
 .Pp
 .Bl -tag -width Ds
-.It Cm fake_param
-Type is int. Default value is 0. 
-.Pp fake_param
-Fake param.
+.It Cm tcpoib
+Type is int. Default value is 1. 
+.Pp tcpoib
+Enable TCP over Infiniband (if elligible).
+.El
+.Sh ENTRIES OF TYPE net_driver_tcp_rdma
+TCP-Based RDMA implementation
+.Pp
+It support parameters :
+.Pp
+.Bl -tag -width Ds
+.It Cm tcpoib
+Type is int. Default value is 1. 
+.Pp tcpoib
+Enable TCP over Infiniband (if elligible).
 .El
 .Sh OPTIONS OF NODE net_driver
 Define a specific configuration for a network driver to apply in rails.
@@ -492,12 +503,12 @@ It can contain a node of type :
 .Bl -tag -width Ds
 .It Cm infiniband
  of type net_driver_infiniband. 
-.It Cm tcp
- of type net_driver_tcp. 
-.It Cm tcpoib
- of type net_driver_tcp. 
 .It Cm portals
  of type net_driver_portals. 
+.It Cm tcp
+ of type net_driver_tcp. 
+.It Cm tcprdma
+ of type net_driver_tcp_rdma. 
 .El
 .Sh ENTRIES OF TYPE net_driver_config
 Contain a list of driver configuration reused by rail definitions.

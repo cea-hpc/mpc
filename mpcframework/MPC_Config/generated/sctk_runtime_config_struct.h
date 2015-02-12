@@ -220,10 +220,17 @@ struct sctk_runtime_config_struct_net_driver_portals
 };
 
 /******************************** STRUCTURE *********************************/
-/**Declare a fake driver to test the configuration system.**/
+/**TCP-based driver**/
 struct sctk_runtime_config_struct_net_driver_tcp
-{	/**Fake param.**/
-	int fake_param;
+{	/**Enable TCP over Infiniband (if elligible).**/
+	int tcpoib;
+};
+
+/******************************** STRUCTURE *********************************/
+/**TCP-Based RDMA implementation**/
+struct sctk_runtime_config_struct_net_driver_tcp_rdma
+{	/**Enable TCP over Infiniband (if elligible).**/
+	int tcpoib;
 };
 
 /********************************** ENUM ************************************/
@@ -232,9 +239,9 @@ enum sctk_runtime_config_struct_net_driver_type
 {
 	SCTK_RTCFG_net_driver_NONE,
 	SCTK_RTCFG_net_driver_infiniband,
-	SCTK_RTCFG_net_driver_tcp,
-	SCTK_RTCFG_net_driver_tcpoib,
 	SCTK_RTCFG_net_driver_portals,
+	SCTK_RTCFG_net_driver_tcp,
+	SCTK_RTCFG_net_driver_tcprdma,
 };
 
 /******************************** STRUCTURE *********************************/
@@ -244,9 +251,9 @@ struct sctk_runtime_config_struct_net_driver
 	enum sctk_runtime_config_struct_net_driver_type type;
 	union {
 		struct sctk_runtime_config_struct_net_driver_infiniband infiniband;
-		struct sctk_runtime_config_struct_net_driver_tcp tcp;
-		struct sctk_runtime_config_struct_net_driver_tcp tcpoib;
 		struct sctk_runtime_config_struct_net_driver_portals portals;
+		struct sctk_runtime_config_struct_net_driver_tcp tcp;
+		struct sctk_runtime_config_struct_net_driver_tcp_rdma tcprdma;
 	} value;
 };
 

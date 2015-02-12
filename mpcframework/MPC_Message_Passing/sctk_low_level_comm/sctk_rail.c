@@ -83,11 +83,13 @@ sctk_rail_info_t * sctk_rail_get_by_id ( int i )
 /* Finalize Rails (call the rail route init func ) */
 void sctk_rail_commit()
 {
+	sctk_error("COMMIT TOPO" );
+	
 	char *net_name;
 	int i;
 	char *name_ptr;
 
-	net_name = sctk_malloc ( sctk_rail_count() * 4096 );
+	net_name = sctk_malloc ( sctk_rail_count() * 1024 );
 	name_ptr = net_name;
 
 	for ( i = 0; i <  sctk_rail_count(); i++ )
@@ -98,6 +100,8 @@ void sctk_rail_commit()
 		name_ptr = net_name + strlen ( net_name );
 		sctk_pmi_barrier();
 	}
+
+	sctk_free( net_name );
 
 	sctk_network_mode = net_name;
 	__rails.rails_committed = 1;
@@ -265,6 +269,8 @@ void sctk_rail_dump_routes()
 
 void sctk_rail_init_route ( sctk_rail_info_t *rail, char *topology )
 {
+	sctk_error("SET TOPO %s", topology );
+	
 	rail->on_demand = 0;
 
 	if ( strcmp ( "ring", topology ) == 0 )

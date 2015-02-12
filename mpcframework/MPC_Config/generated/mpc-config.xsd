@@ -158,16 +158,22 @@
   <!-- ********************************************************* -->
   <xs:complexType name="user_type_net_driver_tcp">
     <xs:all>
-      <xs:element minOccurs="0" name="fake_param" type="xs:integer"/>
+      <xs:element minOccurs="0" name="tcpoib" type="xs:integer"/>
+    </xs:all>
+  </xs:complexType>
+  <!-- ********************************************************* -->
+  <xs:complexType name="user_type_net_driver_tcp_rdma">
+    <xs:all>
+      <xs:element minOccurs="0" name="tcpoib" type="xs:integer"/>
     </xs:all>
   </xs:complexType>
   <!-- ********************************************************* -->
   <xs:complexType name="user_type_net_driver">
     <xs:choice>
       <xs:element name="infiniband" type="user_type_net_driver_infiniband"/>
-      <xs:element name="tcp" type="user_type_net_driver_tcp"/>
-      <xs:element name="tcpoib" type="user_type_net_driver_tcp"/>
       <xs:element name="portals" type="user_type_net_driver_portals"/>
+      <xs:element name="tcp" type="user_type_net_driver_tcp"/>
+      <xs:element name="tcprdma" type="user_type_net_driver_tcp_rdma"/>
     </xs:choice>
   </xs:complexType>
   <!-- ********************************************************* -->

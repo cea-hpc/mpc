@@ -148,7 +148,7 @@ static void __sctk_network_init_multirail_tcp_all ( sctk_rail_info_t *new_rail, 
 	rails[rails_nb]->send_message_from_network = sctk_send_message_from_network_multirail_tcp;
 
 	sctk_rail_init_route ( rails[rails_nb], rail_config->topology );
-	sctk_network_init_tcp ( rails[rails_nb], tcpoib );
+	sctk_network_init_tcp ( rails[rails_nb] );
 
 	rails_nb++;
 

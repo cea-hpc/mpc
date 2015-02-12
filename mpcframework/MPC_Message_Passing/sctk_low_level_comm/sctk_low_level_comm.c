@@ -31,6 +31,7 @@
 #include <sctk_multirail_tcp.h>
 #include <sctk_multirail_ib.h>
 #include <sctk_route.h>
+#include <sctk_multirail.h>
 
 /************************************************************************/
 /* Network Hooks                                                        */
@@ -275,14 +276,16 @@ static inline struct sctk_runtime_config_struct_net_driver_config *sctk_get_driv
  *  \param name Name of the configuration from the command line (can be NULL)
  */
 void sctk_net_init_driver ( char *name )
-{
+{	
 restart:
-
 	if ( sctk_process_number == 1 )
 	{
 		/* Nothing to do */
 		return;
 	}
+
+	/* Initialize multi-rail engine */
+	sctk_multirail_destination_table_init();
 
 	int j, k, l;
 	int rails_nb = 0;
@@ -320,8 +323,6 @@ restart:
 
 	/* Compute the number of rails for each type: */
 	int nb_rails_infiniband = 0;
-	int nb_rails_tcp = 0;
-	int nb_rails_tcpoib = 0;
 	int nb_rails_portals = 0;
 
 
@@ -354,23 +355,14 @@ restart:
 				nb_rails_infiniband++ ;
 				break;
 #endif
-
-			case SCTK_RTCFG_net_driver_tcp: /* TCP */
-				nb_rails_tcp++ ;
-				break;
-
 			case SCTK_RTCFG_net_driver_portals: /* PORTALS */
 				nb_rails_portals ++ ;
 				break;
 
-			case SCTK_RTCFG_net_driver_tcpoib: /* TCP O IB*/
-				nb_rails_tcpoib++ ;
-				break;
-
 			default:
-				sctk_network_not_implemented_warn ( option_name );
-				name = "tcp";
-				goto restart;
+				//sctk_network_not_implemented_warn ( option_name );
+				//name = "tcp";
+				//goto restart;
 				break;
 		}
 
@@ -418,23 +410,25 @@ restart:
 				sctk_network_init_multirail_portals ( new_rail, nb_rails_portals );
 				break;
 #endif
+			case SCTK_RTCFG_net_driver_tcp:
+				sctk_network_init_tcp ( new_rail );
+			break;
+			
+			case SCTK_RTCFG_net_driver_tcprdma:
+				sctk_network_init_tcp_rdma( new_rail );
+			break;
 
-			case SCTK_RTCFG_net_driver_tcp: /* TCP */
-				sctk_network_init_multirail_tcp ( new_rail, nb_rails_tcp );
-				break;
-
-			case SCTK_RTCFG_net_driver_tcpoib: /* TCP */
-				sctk_network_init_multirail_tcpoib ( new_rail, nb_rails_tcpoib );
-				break;
 
 			default:
-				sctk_network_not_implemented ( option_name );
+				//sctk_network_not_implemented ( option_name );
 				break;
 		}
 
 		/* Increment the number of rails used */
 		rails_nb++;
 	}
+
+
 
 	sctk_rail_commit();
 	sctk_checksum_init();

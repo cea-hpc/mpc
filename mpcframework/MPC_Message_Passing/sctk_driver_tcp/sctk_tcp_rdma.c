@@ -212,7 +212,7 @@ static void sctk_network_notify_any_source_message_tcp_rdma ( int polling_task_i
 /* TCP RDMA Init                                                        */
 /************************************************************************/
 
-void sctk_network_init_tcp_rdma ( sctk_rail_info_t *rail, int sctk_use_tcp_o_ib )
+void sctk_network_init_tcp_rdma ( sctk_rail_info_t *rail )
 {
 	/* Init RDMA specific infos */
 	rail->send_message = sctk_network_send_message_tcp_rdma;
@@ -221,6 +221,8 @@ void sctk_network_init_tcp_rdma ( sctk_rail_info_t *rail, int sctk_use_tcp_o_ib 
 	rail->notify_perform_message = sctk_network_notify_perform_message_tcp_rdma;
 	rail->notify_idle_message = sctk_network_notify_idle_message_tcp_rdma;
 	rail->notify_any_source_message = sctk_network_notify_any_source_message_tcp_rdma;
+
+	int sctk_use_tcp_o_ib = rail->runtime_config_driver_config->driver.value.tcp.tcpoib;
 
 	/* Handle the IPoIB case */
 	if ( sctk_use_tcp_o_ib == 0 )

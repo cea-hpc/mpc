@@ -86,13 +86,16 @@ meta.types = {
 		fake_param: {mode: 'param', name: "fake_param", type: "int", doc: "Fake param.", dflt: "0", },
 	}},
 	net_driver_tcp : {type: 'struct', name: "net_driver_tcp", childs: {
-		fake_param: {mode: 'param', name: "fake_param", type: "int", doc: "Fake param.", dflt: "0", },
+		tcpoib: {mode: 'param', name: "tcpoib", type: "int", doc: "Enable TCP over Infiniband (if elligible).", dflt: "1", },
+	}},
+	net_driver_tcp_rdma : {type: 'struct', name: "net_driver_tcp_rdma", childs: {
+		tcpoib: {mode: 'param', name: "tcpoib", type: "int", doc: "Enable TCP over Infiniband (if elligible).", dflt: "1", },
 	}},
 	net_driver : {type: 'union', name: "net_driver", choice: {
 		infiniband: {name: "infiniband", type: "net_driver_infiniband"},
-		tcp: {name: "tcp", type: "net_driver_tcp"},
-		tcpoib: {name: "tcpoib", type: "net_driver_tcp"},
 		portals: {name: "portals", type: "net_driver_portals"},
+		tcp: {name: "tcp", type: "net_driver_tcp"},
+		tcprdma: {name: "tcprdma", type: "net_driver_tcp_rdma"},
 	}},
 	net_driver_config : {type: 'struct', name: "net_driver_config", childs: {
 		name: {mode: 'param', name: "name", type: "string", doc: "Name of the driver configuration to be referenced in rail definitions.", dflt: null},
