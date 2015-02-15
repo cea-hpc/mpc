@@ -5140,6 +5140,9 @@ PMPC_Allreduce (void *sendbuf, void *recvbuf, mpc_msg_count count,
   sctk_task_specific_t *task_specific;
   SCTK_PROFIL_START (MPC_Allreduce);
   task_specific = __MPC_get_task_specific ();
+  if(sendbuf == MPC_IN_PLACE){
+    sendbuf = recvbuf;
+  }
 #ifdef MPC_LOG_DEBUG
   mpc_log_debug (comm,
 		 "MPC_Allreduce send_ptr=%p recv_ptr=%p count=%lu, type=%d",
