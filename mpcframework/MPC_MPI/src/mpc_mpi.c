@@ -11778,9 +11778,11 @@ PMPI_Allgatherv (void *sendbuf, int sendcount, MPI_Datatype sendtype,
 {
   int res = MPI_ERR_INTERN;
 	mpi_check_comm (comm, comm);
-	mpi_check_buf (sendbuf, comm);
-	mpi_check_count (sendcount, comm);
-	mpi_check_type (sendtype, comm);
+    if(sendbuf != MPI_IN_PLACE){
+    	mpi_check_buf (sendbuf, comm);
+    	mpi_check_count (sendcount, comm);
+    	mpi_check_type (sendtype, comm);
+    }
 	mpi_check_buf (recvbuf, comm);
 //	mpi_check_count (recvcnt, comm);
 	mpi_check_type (recvtype, comm);

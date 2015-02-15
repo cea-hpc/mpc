@@ -5398,8 +5398,10 @@ PMPC_Allgatherv (void *sendbuf, mpc_msg_count sendcount,
   mpc_check_comm (comm, comm);
   mpc_check_buf (sendbuf, comm);
   mpc_check_buf (recvbuf, comm);
-  mpc_check_count (sendcount, comm);
-  mpc_check_type (sendtype, comm);
+  if(sendbuf != MPC_IN_PLACE) {
+    mpc_check_count (sendcount, comm);
+    mpc_check_type (sendtype, comm);
+  }
   mpc_check_type (recvtype, comm);
 #ifdef MPC_LOG_DEBUG
   mpc_log_debug (comm, "MPC_Allgatherv");
@@ -5446,6 +5448,7 @@ PMPC_Allgatherv (void *sendbuf, mpc_msg_count sendcount,
 			for (i = 0; i < rank; ++i) {
 				sendbuf += (recvcounts[i] * extent);
 			}
+            sendcount = recvcounts[rank];
 		}
 		__MPC_Gatherv (sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, root, comm, task_specific);
 		size--;
@@ -5588,7 +5591,8 @@ __MPC_Allgather (void *sendbuf, mpc_msg_count sendcount,
   mpc_check_count (recvcount, comm);
   mpc_check_type (sendtype, comm);
   mpc_check_type (recvtype, comm);
-  mpc_check_count (sendcount, comm);
+  if(sendbuf != MPC_IN_PLACE)
+    mpc_check_count (sendcount, comm);
   __MPC_Comm_rank_size(comm, &rank, &size, task_specific);
   remote_size = sctk_get_nb_task_remote(comm);
 
@@ -5636,7 +5640,7 @@ __MPC_Allgather (void *sendbuf, mpc_msg_count sendcount,
 	}
 	else
 	{
-		if (MPC_IN_PLACE == sendbuf && rank != 0) {
+		if (MPC_IN_PLACE == sendbuf) {
 			size_t extent;
 			PMPC_Type_size (recvtype, &extent);
 			sendbuf = ((char*) recvbuf) + (rank * extent * recvcount);
