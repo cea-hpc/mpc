@@ -5480,12 +5480,16 @@ __MPC_Gather (void *sendbuf, mpc_msg_count sendcnt, MPC_Datatype sendtype,
 
 	mpc_check_comm (comm, comm);
 	__MPC_Comm_rank_size (comm, &rank, &size, task_specific);
+
+    if(rank != root){
 	mpc_check_buf (sendbuf, comm);
 	mpc_check_count (sendcnt, comm);
+    mpc_check_type (sendtype, comm);
+    } else {
 	mpc_check_count (recvcount, comm);
-	mpc_check_type (sendtype, comm);
-	mpc_check_type (recvtype, comm);
-	mpc_check_buf (recvbuf, comm);
+    mpc_check_type (recvtype, comm);
+    mpc_check_buf (recvbuf, comm);
+    }
 	mpc_check_task (root, comm, size);
 
   if(sctk_is_inter_comm(comm))

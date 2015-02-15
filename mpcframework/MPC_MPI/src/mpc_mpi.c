@@ -4868,7 +4868,7 @@ __INTERNAL__PMPI_Gather (void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 			 void *recvbuf, int recvcnt, MPI_Datatype recvtype,
 			 int root, MPI_Comm comm)
 {
-  if (sctk_datatype_is_derived (sendtype) || sctk_datatype_is_derived (recvtype))
+  if (sctk_datatype_is_derived (sendtype) || sctk_datatype_is_derived (recvtype) || 1)
     {
       MPI_Aint dsize;
       int size;
@@ -4879,8 +4879,12 @@ __INTERNAL__PMPI_Gather (void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 
       __INTERNAL__PMPI_Comm_size (comm, &size);
       __INTERNAL__PMPI_Comm_rank (comm, &rank);
+
+    if (sendbuf != MPC_IN_PLACE) {
       __INTERNAL__PMPI_Isend (sendbuf, sendcnt, sendtype, root, -2, comm,
 			      &request);
+    }    else 
+    request = MPI_REQUEST_NULL;
 
       if (rank == root)
 	{
@@ -4892,10 +4896,15 @@ __INTERNAL__PMPI_Gather (void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 	    {
 	      for (j = 0; (i < size) && (j < MPI_MAX_CONCURENT);)
 		{
+        if ((sendbuf == MPC_IN_PLACE) && (rank == i))
+            recvrequest[j] = MPI_REQUEST_NULL;
+        else {
 		  __INTERNAL__PMPI_Irecv (((char *) recvbuf) +
 					  (i * recvcnt * dsize),
 					  recvcnt, recvtype, i, -2, comm,
 					  &(recvrequest[j]));
+        }
+
 		  i++;
 		  j++;
 		}
@@ -4918,6 +4927,7 @@ __INTERNAL__PMPI_Gather (void *sendbuf, int sendcnt, MPI_Datatype sendtype,
     }
   else
     {
+        not_rechable();
       return PMPC_Gather (sendbuf, sendcnt, sendtype, recvbuf, recvcnt,
 			 recvtype, root, comm);
     }
@@ -11619,12 +11629,15 @@ PMPI_Gather (void *sendbuf, int sendcnt, MPI_Datatype sendtype,
   __INTERNAL__PMPI_Comm_size (comm, &size);
   __INTERNAL__PMPI_Comm_rank (comm, &rank);
 	mpi_check_root(root,size,comm);
+    if(rank != root){
 	mpi_check_buf (sendbuf, comm);
 	mpi_check_count (sendcnt, comm);
 	mpi_check_type (sendtype, comm);
+    } else {
 	mpi_check_buf (recvbuf, comm);
 	mpi_check_count (recvcnt, comm);
 	mpi_check_type (recvtype, comm);
+    }
 	mpi_check_tag (root, comm);
 #ifndef ENABLE_COLLECTIVES_ON_INTERCOMM
 	if(sctk_is_inter_comm (comm)){
