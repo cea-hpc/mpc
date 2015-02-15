@@ -54,6 +54,7 @@ void MPC_##name##_func##_##t(const tt* in ,tt*inout ,size_t size ,MPC_Datatype d
 #define MPC_PROTOTYPES(name)						\
 void MPC_##name##_func(const void* in ,void*inout ,size_t size ,MPC_Datatype datatype); \
 MPC_DEFINED_FUNCS(MPC_CHAR, char,name);				\
+MPC_DEFINED_FUNCS(MPC_SIGNED_CHAR, char,name);             \
 MPC_DEFINED_FUNCS(MPC_CHARACTER, char,name);				\
 MPC_DEFINED_FUNCS(MPC_BYTE, unsigned char,name);			\
 MPC_DEFINED_FUNCS(MPC_SHORT, short,name);				\

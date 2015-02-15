@@ -671,7 +671,8 @@ static int mpi_check_op_type_func_MPI_(MPI_Datatype datatype){
 
 #define mpi_check_op_type_func_float()\
         mpi_check_op_type_func_notavail(MPC_FLOAT);\
-	mpi_check_op_type_func_notavail(MPC_DOUBLE)
+	mpi_check_op_type_func_notavail(MPC_DOUBLE);\
+    mpi_check_op_type_func_notavail(MPC_LONG_DOUBLE)
 
 
 static int mpi_check_op_type_func_MPI_SUM(MPI_Datatype datatype){

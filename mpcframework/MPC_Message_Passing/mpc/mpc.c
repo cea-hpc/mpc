@@ -4944,6 +4944,7 @@ MPC_Op_tmp (void *in, void *inout, size_t size, MPC_Datatype t)
 #define COMPAT_DATA_TYPE(op,func)                       \
   if(op == func){                                       \
     switch(datatype){                                   \
+      ADD_FUNC_HANDLER(func,MPC_SIGNED_CHAR,op);               \
       ADD_FUNC_HANDLER(func,MPC_CHAR,op);               \
       ADD_FUNC_HANDLER(func,MPC_CHARACTER,op);               \
       ADD_FUNC_HANDLER(func,MPC_BYTE,op);               \
@@ -4979,6 +4980,7 @@ MPC_Op_tmp (void *in, void *inout, size_t size, MPC_Datatype t)
 #define COMPAT_DATA_TYPE2(op,func)			\
   if(op == func){					\
     switch(datatype){					\
+      ADD_FUNC_HANDLER(func,MPC_SIGNED_CHAR,op);       \
       ADD_FUNC_HANDLER(func,MPC_CHAR,op);		\
       ADD_FUNC_HANDLER(func,MPC_BYTE,op);		\
       ADD_FUNC_HANDLER(func,MPC_SHORT,op);		\
@@ -4989,6 +4991,7 @@ MPC_Op_tmp (void *in, void *inout, size_t size, MPC_Datatype t)
       ADD_FUNC_HANDLER(func,MPC_INTEGER4,op);           \
       ADD_FUNC_HANDLER(func,MPC_INTEGER8,op);           \
       ADD_FUNC_HANDLER(func,MPC_LONG,op);		\
+      ADD_FUNC_HANDLER(func,MPC_LONG_LONG,op);       \
       ADD_FUNC_HANDLER(func,MPC_UNSIGNED_CHAR,op);	\
       ADD_FUNC_HANDLER(func,MPC_UNSIGNED_SHORT,op);	\
       ADD_FUNC_HANDLER(func,MPC_UNSIGNED,op);		\
