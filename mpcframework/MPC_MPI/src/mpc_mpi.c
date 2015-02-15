@@ -5972,6 +5972,10 @@ __INTERNAL__PMPI_Reduce_derived_no_commute (void *sendbuf, void *recvbuf, int co
 	void* tmp_buf;
 
 	tmp_buf = recvbuf;
+
+    if(sendbuf == MPI_IN_PLACE){
+        sendbuf = recvbuf;
+    }
 	
 	if(rank != root)
 	{
