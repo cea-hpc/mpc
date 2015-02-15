@@ -5970,18 +5970,20 @@ __INTERNAL__PMPI_Reduce_derived_no_commute (void *sendbuf, void *recvbuf, int co
 {
 	int res;
 	void* tmp_buf;
+    int allocated = 0; 
+    int is_MPI_IN_PLACE = 0;
 
 	tmp_buf = recvbuf;
 
-    if(sendbuf == MPI_IN_PLACE){
-        sendbuf = recvbuf;
-    }
-	
-	if(rank != root)
+	if((rank != root) || (sendbuf == MPI_IN_PLACE))
 	{
 		MPI_Aint dsize;
 		__INTERNAL__PMPI_Type_extent (datatype, &dsize);
 		tmp_buf = malloc(count*dsize);
+        if(sendbuf == MPI_IN_PLACE)
+            sendbuf = recvbuf;
+        allocated = 1;
+        is_MPI_IN_PLACE = 1;
 	}
 
 	if(rank == size-1)
@@ -6032,7 +6034,40 @@ __INTERNAL__PMPI_Reduce_derived_no_commute (void *sendbuf, void *recvbuf, int co
 		}
 	}
 	
-	if(rank != root){
+    if((rank == 0) && (root == 0))
+    if(is_MPI_IN_PLACE == 1){
+        MPI_Request request_send;
+        MPI_Request request_recv;
+        
+        res = __INTERNAL__PMPI_Isend (tmp_buf, count, datatype, 0, -3, comm, &request_send);
+
+        if (res != MPI_SUCCESS)
+        {
+            return res;
+        }
+        res = __INTERNAL__PMPI_Irecv (recvbuf, count, datatype, 0, -3, comm, &request_recv);
+        
+        if (res != MPI_SUCCESS)
+        {
+            return res;
+        }
+
+        res = __INTERNAL__PMPI_Wait (&(request_recv), MPI_STATUS_IGNORE);
+        
+        if (res != MPI_SUCCESS)
+        {
+            return res;
+        }
+        
+        res = __INTERNAL__PMPI_Wait (&(request_send), MPI_STATUS_IGNORE);
+        
+        if (res != MPI_SUCCESS)
+        {
+            return res;
+        }
+    }
+
+	if(allocated == 1){
 		free(tmp_buf);
 	}
 	
