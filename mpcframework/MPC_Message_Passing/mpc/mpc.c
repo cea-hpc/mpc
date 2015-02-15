@@ -5005,6 +5005,7 @@ MPC_Op_tmp (void *in, void *inout, size_t size, MPC_Datatype t)
 			ADD_FUNC_HANDLER(func,MPC_FLOAT_INT,op);		\
 			ADD_FUNC_HANDLER(func,MPC_LONG_INT,op);		\
 			ADD_FUNC_HANDLER(func,MPC_DOUBLE_INT,op);		\
+			ADD_FUNC_HANDLER(func,MPC_LONG_DOUBLE_INT,op);		\
 			ADD_FUNC_HANDLER(func,MPC_SHORT_INT,op);		\
 			ADD_FUNC_HANDLER(func,MPC_2INT,op);		\
 			ADD_FUNC_HANDLER(func,MPC_2FLOAT,op);		\
