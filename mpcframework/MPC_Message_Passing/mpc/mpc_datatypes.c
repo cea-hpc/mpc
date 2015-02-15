@@ -868,7 +868,7 @@ void Datatype_Array_release( struct Datatype_Array * da )
 		
 		if( to_release && !sctk_datatype_is_common(i) )
 		{
-			sctk_warning("Freeing unfreed datatype [%d] did you call MPI_Type_free on all your MPI_Datatypes ?", i );
+		  /*sctk_warning("Freeing unfreed datatype [%d] did you call MPI_Type_free on all your MPI_Datatypes ?", i );*/
 			MPC_Datatype tmp = i;
 			PMPC_Type_free( &tmp );
 			did_free = 1;
