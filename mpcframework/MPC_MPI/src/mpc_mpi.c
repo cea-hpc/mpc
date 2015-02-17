@@ -7800,6 +7800,9 @@ static int MPI_TAG_UB_VALUE = 512*1024*1024;
 static char *MPI_HOST_VALUE[4096];
 static int MPI_IO_VALUE = 0;
 static int MPI_WTIME_IS_GLOBAL_VALUE = 0;
+static int MPI_APPNUM_VALUE;
+static int MPI_UNIVERSE_SIZE_VALUE;
+static int MPI_LASTUSEDCODE_VALUE;
 
 typedef int (MPI_Copy_function_fortran) (MPI_Comm *, int *, int *, int *, int *, int *, int *);
 typedef int (MPI_Delete_function_fortran) (MPI_Comm *, int *, int *, int *, int *);
@@ -7809,7 +7812,11 @@ static void *defines_attr_tab[MPI_MAX_KEY_DEFINED] =
 	(void *) &MPI_TAG_UB_VALUE /*MPI_TAG_UB */ ,
 	&MPI_HOST_VALUE,
 	&MPI_IO_VALUE,
-	&MPI_WTIME_IS_GLOBAL_VALUE
+	&MPI_WTIME_IS_GLOBAL_VALUE,
+	&MPI_APPNUM_VALUE,
+	&MPI_UNIVERSE_SIZE_VALUE,
+	&MPI_LASTUSEDCODE_VALUE
+
 };
 
 static int __INTERNAL__PMPI_Keyval_create (MPI_Copy_function * copy_fn, MPI_Delete_function * delete_fn, int *keyval, void *extra_state)
@@ -9725,7 +9732,10 @@ __INTERNAL__PMPI_Init (int *argc, char ***argv)
 	tmp->topo.lock = lock;
       }
     sctk_spinlock_unlock(&(task_specific->per_communicator_lock));
-
+   
+    MPI_APPNUM_VALUE = 0;
+    MPI_LASTUSEDCODE_VALUE = MPI_ERR_LASTCODE;
+    __INTERNAL__PMPI_Comm_size (MPI_COMM_WORLD, &MPI_UNIVERSE_SIZE_VALUE);
     __INTERNAL__PMPI_Comm_rank (MPI_COMM_WORLD, &rank);
     __INTERNAL__PMPI_Barrier (MPI_COMM_WORLD);
   }

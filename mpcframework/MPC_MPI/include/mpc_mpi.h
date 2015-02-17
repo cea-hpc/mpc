@@ -347,9 +347,9 @@ extern "C"
 #define MPI_HOST 1
 #define MPI_IO 2
 #define MPI_WTIME_IS_GLOBAL 3
-#define MPI_UNIVERSE_SIZE MPI_KEYVAL_INVALID
-#define MPI_LASTUSEDCODE MPI_KEYVAL_INVALID
-#define MPI_APPNUM MPI_KEYVAL_INVALID
+#define MPI_APPNUM 4
+#define MPI_UNIVERSE_SIZE 5
+#define MPI_LASTUSEDCODE 6
 
 /* In addition, there are 5 predefined window attributes that are
  *    defined for every window */

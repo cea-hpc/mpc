@@ -253,11 +253,11 @@ typedef struct
 #define MPC_ERR_UNKNOWN                14  /* Unknown error */
 #define MPC_ERR_INTERN                 17  /* Internal error code    */
 
-#define MPC_ERR_LASTCODE               55
+#define MPCR_ERRORS_THROW_EXCEPTIONS   55
 
-#define MPCR_ERRORS_THROW_EXCEPTIONS   56
+#define MPC_NOT_IMPLEMENTED            56
 
-#define MPC_NOT_IMPLEMENTED            57
+#define MPC_ERR_LASTCODE               57
 
 
 
