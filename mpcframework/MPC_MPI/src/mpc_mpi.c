@@ -7615,24 +7615,30 @@ __INTERNAL__PMPI_Comm_dup (MPI_Comm comm, MPI_Comm * newcomm)
   res = PMPC_Comm_dup (comm, newcomm);
   if (res != MPI_SUCCESS)
     {
+	  *newcomm=MPI_COMM_NULL;
       return res;
     }
   res = __INTERNAL__PMPI_Errhandler_get (comm, &err);
   if (res != MPI_SUCCESS)
     {
+	  *newcomm=MPI_COMM_NULL;
       return res;
     }
   res = __INTERNAL__PMPI_Errhandler_set (*newcomm, err);
   if (res != MPI_SUCCESS)
     {
+	  *newcomm=MPI_COMM_NULL;
       return res;
     }
   res = SCTK__MPI_Attr_communicator_dup (comm, *newcomm);
   if (res != MPI_SUCCESS)
     {
+	  *newcomm=MPI_COMM_NULL;
       return res;
     }
   res = SCTK__MPI_Comm_communicator_dup (comm, *newcomm);
+  if (res != MPI_SUCCESS)
+	  *newcomm=MPI_COMM_NULL;
   return res;
 }
 
