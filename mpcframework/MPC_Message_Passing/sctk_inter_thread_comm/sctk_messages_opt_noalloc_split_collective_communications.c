@@ -76,7 +76,6 @@ typedef struct
 static void sctk_opt_noalloc_split_messages_send ( const sctk_communicator_t communicator, int myself, int dest, int tag, void *buffer, size_t size,
                                                    specific_message_tag_t specific_message_tag, sctk_opt_noalloc_split_messages_t *msg_req, int check, int copy_in_send )
 {
-	sctk_error("===> SEND FROM %d to %d", myself, dest );
 	sctk_init_header ( & ( msg_req->msg ), myself, SCTK_MESSAGE_CONTIGUOUS, sctk_free_opt_noalloc_split_messages, sctk_message_copy );
 	sctk_add_adress_in_message ( & ( msg_req->msg ), buffer, size );
 	msg_req->request.request_type = REQUEST_SEND_COLL;
@@ -93,7 +92,6 @@ static void sctk_opt_noalloc_split_messages_recv ( const sctk_communicator_t com
                                                    specific_message_tag_t specific_message_tag, sctk_opt_noalloc_split_messages_t *msg_req, struct sctk_internal_ptp_s *ptp_internal, int check,
                                                    int copy_in_recv )
 {
-	sctk_error("===> RECV FROM %d to %d", src, myself );
 	sctk_init_header ( & ( msg_req->msg ), myself, SCTK_MESSAGE_CONTIGUOUS, sctk_free_opt_noalloc_split_messages, sctk_message_copy );
 	sctk_add_adress_in_message ( & ( msg_req->msg ), buffer, size );
 	msg_req->request.request_type = REQUEST_RECV_COLL;
@@ -112,7 +110,6 @@ static void sctk_opt_noalloc_split_messages_wait ( sctk_opt_noalloc_split_messag
 
 	for ( i = 0; i < tab->nb_used; i++ )
 	{
-		sctk_nodebug ( "Wait for messag %d", i );
 		sctk_wait_message ( & ( tab->msg_req[i].request ) );
 	}
 
@@ -139,6 +136,7 @@ static sctk_opt_noalloc_split_messages_t *sctk_opt_noalloc_split_messages_get_it
 static void sctk_opt_noalloc_split_messages_init_items ( sctk_opt_noalloc_split_messages_table_t *tab )
 {
 	tab->nb_used = 0;
+	
 }
 
 /************************************************************************/
@@ -189,11 +187,9 @@ static void sctk_barrier_opt_noalloc_split_messages ( const sctk_communicator_t 
 					{
 						if ( ( src + ( j * ( i / barrier_arity ) ) ) < total )
 						{
-							sctk_debug("RECV A");
 							sctk_opt_noalloc_split_messages_recv ( communicator, src + ( j * ( i / barrier_arity ) ), myself, 0, &c, 1, SCTK_BARRIER_SPECIFIC_MESSAGE_TAG, sctk_opt_noalloc_split_messages_get_item ( &table ), ptp_internal, 1, 1 );
 						}
 					}
-
 					sctk_opt_noalloc_split_messages_wait ( &table );
 				}
 				else
@@ -204,9 +200,7 @@ static void sctk_barrier_opt_noalloc_split_messages ( const sctk_communicator_t 
 
 					if ( dest >= 0 )
 					{
-						sctk_debug("SND A");
 						sctk_opt_noalloc_split_messages_send ( communicator, myself, dest, 0, &c, 1, SCTK_BARRIER_SPECIFIC_MESSAGE_TAG, sctk_opt_noalloc_split_messages_get_item ( &table ), 0, 1 );
-						sctk_debug("RECV B");
 						sctk_opt_noalloc_split_messages_recv ( communicator, dest, myself, 1, &c, 1, SCTK_BARRIER_SPECIFIC_MESSAGE_TAG, sctk_opt_noalloc_split_messages_get_item ( &table ), ptp_internal, 0, 1 );
 						sctk_opt_noalloc_split_messages_wait ( &table );
 						break;
@@ -230,7 +224,6 @@ static void sctk_barrier_opt_noalloc_split_messages ( const sctk_communicator_t 
 				{
 					if ( ( dest + ( j * ( i / barrier_arity ) ) ) < total )
 					{
-						sctk_debug("SND B");
 						sctk_opt_noalloc_split_messages_send ( communicator, myself, dest + ( j * ( i / barrier_arity ) ), 1, &c, 1, SCTK_BARRIER_SPECIFIC_MESSAGE_TAG, sctk_opt_noalloc_split_messages_get_item ( &table ), 1, 1 );
 					}
 				}

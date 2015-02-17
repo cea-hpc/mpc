@@ -94,6 +94,9 @@ static void *sctk_tcp_thread ( sctk_endpoint_t *tmp )
 		sctk_rebuild_header ( msg );
 		sctk_reinit_header ( msg, sctk_free, sctk_net_message_copy );
 
+		sctk_info( "NET RECV  [%d -> %d] TASK [%d -> %d] (%d) %p",
+	               SCTK_MSG_SRC_PROCESS ( msg ), SCTK_MSG_DEST_PROCESS ( msg ), SCTK_MSG_SRC_TASK ( msg ), SCTK_MSG_DEST_TASK ( msg ),  SCTK_MSG_TAG ( msg ), msg->tail.request );
+
 		//sctk_nodebug ( "MSG RECV|%s|", ( char * ) body );
 
 		//sctk_debug ( "Msg recved" );
@@ -195,10 +198,19 @@ static int sctk_send_message_from_network_tcp ( sctk_thread_ptp_message_t *msg )
 	if ( sctk_send_message_from_network_reorder ( msg ) == REORDER_NO_NUMBERING )
 	{
 		/* No reordering */
+		sctk_error("NET PULL UP");
 		sctk_send_message_try_check ( msg, 1 );
 	}
 
 	return 1;
+}
+
+
+#include <stdlib.h>
+
+int sctk_send_message_gate( struct sctk_rail_info_s * rail,  sctk_thread_ptp_message_t * message )
+{
+	return (!(rand()%3));
 }
 
 
@@ -218,7 +230,7 @@ void sctk_network_init_tcp ( sctk_rail_info_t *rail )
 	rail->notify_idle_message = sctk_network_notify_idle_message_tcp;
 	rail->notify_any_source_message = sctk_network_notify_any_source_message_tcp;
 	rail->send_message_from_network = sctk_send_message_from_network_tcp;
-	
+	rail->gate = sctk_send_message_gate;
 	
 	sctk_rail_init_route ( rail, rail->runtime_config_rail->topology );
 

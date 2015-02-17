@@ -292,6 +292,7 @@ static void sctk_client_create_recv_socket ( sctk_rail_info_t *rail )
 static void sctk_tcp_add_static_route ( int dest, int fd, sctk_rail_info_t *rail,
                                         void * ( *tcp_thread ) ( sctk_endpoint_t * ) )
 {
+	sctk_error("ADD STATIC");
 	sctk_endpoint_t *new_route;
 	sctk_thread_t pidt;
 	sctk_thread_attr_t attr;
@@ -304,7 +305,7 @@ static void sctk_tcp_add_static_route ( int dest, int fd, sctk_rail_info_t *rail
 	sctk_nodebug ( "Register fd %d", fd );
 	new_route->data.tcp.fd = fd;
 
-	sctk_nodebug ( "register route to %d on rail %d", dest, rail->rail_number );
+	sctk_warning ( "register route to %d on rail %d", dest, rail->rail_number );
 
 	/* Add the new route */
 	sctk_rail_add_static_route (  rail, dest, new_route );
@@ -327,7 +328,11 @@ static void sctk_network_connection_to_tcp ( int from, int to, sctk_rail_info_t 
 	char dest_connection_infos[MAX_STRING_SIZE];
 
 	/*Recv connection informations*/
-	sctk_route_messages_recv ( from, to, SCTK_PROCESS_SPECIFIC_MESSAGE_TAG, 0, dest_connection_infos, MAX_STRING_SIZE );
+	sctk_route_messages_recv ( from, to, SCTK_PROCESS_SPECIFIC_MESSAGE_TAG_W_ORDERING, 0, dest_connection_infos, MAX_STRING_SIZE );
+
+	
+	sctk_error("TO TCP %d ===> %d (%s)", from, to, dest_connection_infos);
+
 
 	/*Recv id from the connected process*/
 	dest_socket = sctk_tcp_connect_to ( dest_connection_infos, rail );
@@ -337,9 +342,13 @@ static void sctk_network_connection_to_tcp ( int from, int to, sctk_rail_info_t 
 
 static void sctk_network_connection_from_tcp ( int from, int to, sctk_rail_info_t *rail )
 {
+
 	int src_socket;
 	/*Send connection informations*/
-	sctk_route_messages_send ( from, to, SCTK_PROCESS_SPECIFIC_MESSAGE_TAG, 0, rail->network.tcp.connection_infos, MAX_STRING_SIZE );
+	sctk_route_messages_send ( from, to, SCTK_PROCESS_SPECIFIC_MESSAGE_TAG_W_ORDERING, 0, rail->network.tcp.connection_infos, MAX_STRING_SIZE );
+
+	sctk_error("FROM TCP %d ===> %d", from, to);
+	
 
 	src_socket = accept ( rail->network.tcp.sockfd, NULL, 0 );
 

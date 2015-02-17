@@ -122,7 +122,7 @@ sctk_endpoint_list_t * sctk_endpoint_list_push( sctk_endpoint_list_t * list, sct
 			
 			if( new->prev )
 			{
-				new->prev->next = insertion_point;
+				new->prev->next = new;
 			}
 			else
 			{
@@ -291,31 +291,65 @@ static inline struct sctk_multirail_destination_table * sctk_multirail_destinati
 
 void sctk_multirail_send_message( sctk_thread_ptp_message_t *msg )
 {
-	sctk_multirail_destination_table_entry_t * routes = sctk_multirail_destination_table_acquire_routes( SCTK_MSG_DEST_PROCESS ( msg ) );
+	int retry;
+	int destination_process;
 	
-	if( ! routes )
+	/* If the message is based on signalization we directly rely on routing */
+	if( IS_PROCESS_SPECIFIC_MESSAGE_TAG ( SCTK_MSG_SPECIFIC_TAG ( msg ) ) )
 	{
-		sctk_error("NO ROUTE");
-		CRASH();
-		return;
+		sctk_multirail_destination_table_route_to_process( SCTK_MSG_DEST_PROCESS ( msg ), &destination_process );
 	}
-	
-	
-	sctk_endpoint_list_t *endpoints = routes->endpoints;
-	
-	sctk_endpoint_list_t *cur = endpoints;
+	else
+	{
+		destination_process = SCTK_MSG_DEST_PROCESS ( msg );
+	}
 
+	sctk_info("RAIL [ %d -> %d by %d ] [ %d -> %d ] ( size %d tag %d)", SCTK_MSG_SRC_PROCESS ( msg ), SCTK_MSG_DEST_PROCESS ( msg ), destination_process, SCTK_MSG_SRC_TASK ( msg ), SCTK_MSG_DEST_TASK ( msg ),  SCTK_MSG_SIZE( msg ) ,  SCTK_MSG_TAG( msg ) );
 	
-	while( cur )
+	
+	do
 	{
-		//sctk_warning("EDP : %d", cur->endpoint->dest);
-		cur = cur->next;
-	}
-	
-	(endpoints[0].endpoint->rail->send_message_endpoint)( msg, endpoints[0].endpoint );
-	
-	
-	sctk_multirail_destination_table_relax_routes( routes );
+		retry = 0;
+		
+		sctk_multirail_destination_table_entry_t * routes = sctk_multirail_destination_table_acquire_routes( destination_process );
+		
+		if( ! routes )
+		{
+			sctk_error("NO ROUTE");
+			CRASH();
+			return;
+		}
+		
+		
+		sctk_endpoint_list_t *endpoints = routes->endpoints;
+		
+		sctk_endpoint_list_t *cur = endpoints;
+
+		while( cur )
+		{
+			if( (cur->endpoint->rail->gate)( cur->endpoint->rail, msg ) )
+			{
+				sctk_warning("RAIL %d", cur->endpoint->rail->rail_number);
+				/* This route has been elected */
+				break;
+			}
+			
+			cur = cur->next;
+		}
+		
+		if( cur )
+		{
+			sctk_prepare_send_message_to_network_reorder ( msg );
+			(cur->endpoint->rail->send_message_endpoint)( msg, cur->endpoint );
+		}
+		else
+		{
+			retry = 1;
+		}
+		
+		sctk_multirail_destination_table_relax_routes( routes );
+
+	}while( retry );
 }
 
 
@@ -443,6 +477,7 @@ void sctk_multirail_destination_table_release()
 	
 }
 
+
 sctk_multirail_destination_table_entry_t * sctk_multirail_destination_table_acquire_routes(int destination )
 {
 	struct sctk_multirail_destination_table * table = sctk_multirail_destination_table_get();
@@ -480,7 +515,7 @@ void sctk_multirail_destination_table_push_endpoint(sctk_endpoint_t * endpoint )
 	struct sctk_multirail_destination_table * table = sctk_multirail_destination_table_get();
 	sctk_multirail_destination_table_entry_t * dest_entry = NULL;
 	
-	sctk_warning("Push endpoint to %d", endpoint->dest );
+	sctk_warning("Push endpoint from rail %d to %d", endpoint->rail->rail_number, endpoint->dest );
 	
 	sctk_spinlock_write_lock( &table->table_lock );
 	
@@ -492,6 +527,11 @@ void sctk_multirail_destination_table_push_endpoint(sctk_endpoint_t * endpoint )
 		/* There is no previous destination_table_entry */
 		dest_entry = sctk_multirail_destination_table_entry_new(endpoint->dest);
 		HASH_ADD_INT( table->destinations, destination, dest_entry );
+	}
+	else
+	{
+		sctk_warning("REUSE endpoint");
+		sctk_multirail_destination_table_entry_push_endpoint( dest_entry, endpoint );
 	}
 	
 	sctk_multirail_destination_table_entry_push_endpoint( dest_entry, endpoint );
@@ -518,3 +558,45 @@ void sctk_multirail_destination_table_pop_endpoint( sctk_endpoint_t * topop )
 }
 
 
+
+void sctk_multirail_destination_table_route_to_process( int destination, int * new_destination )
+{
+	struct sctk_multirail_destination_table * table = sctk_multirail_destination_table_get();
+	sctk_multirail_destination_table_entry_t * tmp;
+	sctk_multirail_destination_table_entry_t * entry;
+
+	int distance = -1;
+
+	sctk_spinlock_read_lock( &table->table_lock );
+
+
+	HASH_ITER(hh, table->destinations, entry, tmp)
+	{
+		sctk_warning( " %d --- %d" , destination, entry->destination  );
+		if( destination == entry->destination )
+		{
+			distance = 0;
+			*new_destination = destination;
+			break;
+		}
+		
+		int cdistance = entry->destination - destination;
+		
+		if( cdistance < 0 )
+			cdistance = -cdistance;
+		
+		if( ( distance < 0 ) || (cdistance < distance ) )
+		{
+			distance = cdistance;
+			*new_destination = entry->destination;
+		}
+	}
+	
+	sctk_spinlock_read_unlock( &table->table_lock );
+	
+	if( distance == -1 )
+	{
+		sctk_warning("No route to host %d ", destination);
+	}
+	
+}

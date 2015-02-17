@@ -90,6 +90,7 @@ void sctk_multirail_destination_table_relax_routes( sctk_multirail_destination_t
 
 void sctk_multirail_destination_table_push_endpoint(sctk_endpoint_t * endpoint );
 void sctk_multirail_destination_table_pop_endpoint(sctk_endpoint_t * topop );
+void sctk_multirail_destination_table_route_to_process( int destination, int * new_destination );
 
 
 #endif /* SCTK_MULTIRAIL */

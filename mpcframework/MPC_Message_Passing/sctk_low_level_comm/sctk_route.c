@@ -307,13 +307,17 @@ typedef struct
 	sctk_thread_ptp_message_t msg;
 } sctk_route_messages_t;
 
+
 void sctk_route_messages_send ( int myself, int dest, specific_message_tag_t specific_message_tag, int tag, void *buffer, size_t size )
 {
+	sctk_info("ROUTE SEND [ %d -> %d ] ( size %d)", myself, dest, size );
+	
 	sctk_communicator_t communicator = SCTK_COMM_WORLD;
 	sctk_route_messages_t msg;
 	sctk_route_messages_t *msg_req;
-
+	
 	msg_req = &msg;
+	
 	sctk_init_header ( & ( msg_req->msg ), myself, SCTK_MESSAGE_CONTIGUOUS, sctk_free_route_messages, sctk_message_copy );
 	sctk_add_adress_in_message ( & ( msg_req->msg ), buffer, size );
 	sctk_set_header_in_message ( & ( msg_req->msg ), tag, communicator, myself, dest,  & ( msg_req->request ), size, specific_message_tag, MPC_DATATYPE_IGNORE );
@@ -323,6 +327,8 @@ void sctk_route_messages_send ( int myself, int dest, specific_message_tag_t spe
 
 void sctk_route_messages_recv ( int src, int myself, specific_message_tag_t specific_message_tag, int tag, void *buffer, size_t size )
 {
+	sctk_info("ROUTE RECV [ %d -> %d ] ( size %d)", src, myself, size );
+	
 	sctk_communicator_t communicator = SCTK_COMM_WORLD;
 	sctk_route_messages_t msg;
 	sctk_route_messages_t *msg_req;

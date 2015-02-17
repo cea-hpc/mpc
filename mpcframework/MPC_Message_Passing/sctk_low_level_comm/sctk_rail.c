@@ -101,8 +101,6 @@ void sctk_rail_commit()
 		sctk_pmi_barrier();
 	}
 
-	sctk_free( net_name );
-
 	sctk_network_mode = net_name;
 	__rails.rails_committed = 1;
 }
@@ -191,7 +189,7 @@ void sctk_rail_dump_routes()
 	{
 		sctk_rail_info_t *  rail = sctk_rail_get_by_id ( i );
 		
-		snprintf( path, 512, "./%d.%s.dot.tmp", rank,  rail->network_name );
+		snprintf( path, 512, "./%d.%d.%s.dot.tmp", rank, i, rail->network_name );
 		
 		FILE * f = fopen( path, "w" );
 		
@@ -227,7 +225,7 @@ void sctk_rail_dump_routes()
 			
 			printf("Merging %s\n", rail->network_name );
 			
-			snprintf( path, 512, "./%s.dot", rail->network_name );
+			snprintf( path, 512, "./%d.%s.dot", i, rail->network_name );
 			
 			FILE * global_f = fopen( path, "w" );
 			
@@ -245,7 +243,7 @@ void sctk_rail_dump_routes()
 			{
 				
 				char tmp_path[512];
-				snprintf( tmp_path, 512, "./%d.%s.dot.tmp", j,  rail->network_name );
+				snprintf( tmp_path, 512, "./%d.%d.%s.dot.tmp", j, i,  rail->network_name );
 				
 				printf("\t process %d (%s)\n", j , tmp_path);
 				
