@@ -177,10 +177,112 @@
     </xs:choice>
   </xs:complexType>
   <!-- ********************************************************* -->
+  <xs:complexType name="user_type_gate_boolean">
+    <xs:all>
+      <xs:element minOccurs="0" name="value" type="xs:integer"/>
+      <xs:element minOccurs="0" name="gatefunc">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+    </xs:all>
+  </xs:complexType>
+  <!-- ********************************************************* -->
+  <xs:complexType name="user_type_gate_probabilistic">
+    <xs:all>
+      <xs:element minOccurs="0" name="probability" type="xs:integer"/>
+      <xs:element minOccurs="0" name="gatefunc">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+    </xs:all>
+  </xs:complexType>
+  <!-- ********************************************************* -->
+  <xs:complexType name="user_type_gate_min_size">
+    <xs:all>
+      <xs:element minOccurs="0" name="minsize">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[0-9]+[ ]?[K|M|G|T|P]?B"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+      <xs:element minOccurs="0" name="gatefunc">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+    </xs:all>
+  </xs:complexType>
+  <!-- ********************************************************* -->
+  <xs:complexType name="user_type_gate_max_size">
+    <xs:all>
+      <xs:element minOccurs="0" name="maxsize">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[0-9]+[ ]?[K|M|G|T|P]?B"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+      <xs:element minOccurs="0" name="gatefunc">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+    </xs:all>
+  </xs:complexType>
+  <!-- ********************************************************* -->
+  <xs:complexType name="user_type_gate_user">
+    <xs:all>
+      <xs:element minOccurs="0" name="gatefunc">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+    </xs:all>
+  </xs:complexType>
+  <!-- ********************************************************* -->
+  <xs:complexType name="user_type_net_gate">
+    <xs:choice>
+      <xs:element name="boolean" type="user_type_gate_boolean"/>
+      <xs:element name="probabilistic" type="user_type_gate_probabilistic"/>
+      <xs:element name="minsize" type="user_type_gate_min_size"/>
+      <xs:element name="maxsize" type="user_type_gate_max_size"/>
+      <xs:element name="user" type="user_type_gate_probabilistic"/>
+    </xs:choice>
+  </xs:complexType>
+  <!-- ********************************************************* -->
   <xs:complexType name="user_type_net_driver_config">
     <xs:all>
       <xs:element minOccurs="0" name="name" type="xs:string"/>
       <xs:element minOccurs="0" name="driver" type="user_type_net_driver"/>
+      <xs:element minOccurs="0" name="gates">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element minOccurs="0" maxOccurs="unbounded" name="gate" type="user_type_net_gate"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:all>
+  </xs:complexType>
+  <!-- ********************************************************* -->
+  <xs:complexType name="user_type_net_rail">
+    <xs:all>
+      <xs:element minOccurs="0" name="name" type="xs:string"/>
+      <xs:element minOccurs="0" name="device" type="xs:string"/>
+      <xs:element minOccurs="0" name="topology" type="xs:string"/>
+      <xs:element minOccurs="0" name="config" type="xs:string"/>
     </xs:all>
   </xs:complexType>
   <!-- ********************************************************* -->
@@ -194,15 +296,6 @@
           </xs:sequence>
         </xs:complexType>
       </xs:element>
-    </xs:all>
-  </xs:complexType>
-  <!-- ********************************************************* -->
-  <xs:complexType name="user_type_net_rail">
-    <xs:all>
-      <xs:element minOccurs="0" name="name" type="xs:string"/>
-      <xs:element minOccurs="0" name="device" type="xs:string"/>
-      <xs:element minOccurs="0" name="topology" type="xs:string"/>
-      <xs:element minOccurs="0" name="config" type="xs:string"/>
     </xs:all>
   </xs:complexType>
   <!-- ********************************************************* -->

@@ -37,6 +37,7 @@
 		<xsl:text>#include "sctk_runtime_config_mapper.h"&#10;</xsl:text>
 		<xsl:apply-templates select='config'/>
 		<xsl:call-template name="gen-main-reset-function"/>
+		<xsl:call-template name="gen-struct-default"/>
 	</xsl:template>
 
 	<!-- ********************************************************* -->
@@ -44,6 +45,7 @@
 		<xsl:text>&#10;/*******************  FUNCTION  *********************/&#10;</xsl:text>
 		<xsl:text>void sctk_runtime_config_reset(struct sctk_runtime_config * config)&#10;</xsl:text>
 		<xsl:text>{&#10;</xsl:text>
+		<xsl:text>&#9;memset(config, 0, sizeof(struct sctk_runtime_config));&#10;</xsl:text>
 		<xsl:text>&#9;sctk_handler = dlopen(0, RTLD_LAZY | RTLD_GLOBAL);&#10;</xsl:text>
 		<xsl:for-each select="config">
 			<xsl:for-each select="modules">
@@ -56,6 +58,7 @@
 					<xsl:value-of select="concat('&#9;sctk_runtime_config_enum_init_',@name,'();&#10;')"/>
 				</xsl:for-each>
 			</xsl:for-each>
+			
 		</xsl:for-each>
 		<xsl:text>&#09;sctk_runtime_config_struct_init_networks(&amp;config->networks);&#10;</xsl:text>
 		<xsl:text>&#09;dlclose(sctk_handler);&#10;</xsl:text>
@@ -76,6 +79,24 @@
 		<xsl:text>&#09;&#09;free(current_enum);&#10;</xsl:text>
 		<xsl:text>&#09;}&#10;</xsl:text>
 		<xsl:text>}&#10;&#10;</xsl:text>
+	</xsl:template>
+
+	<!-- ********************************************************* -->
+	<xsl:template name="gen-struct-default">
+		<xsl:text>&#10;/*******************  FUNCTION  *********************/&#10;</xsl:text>
+		<xsl:text>void sctk_runtime_config_reset_struct_default_if_needed(char * structname, void * ptr )&#10;</xsl:text>
+		<xsl:text>{&#10;</xsl:text>
+		<xsl:for-each select="config">
+			<xsl:for-each select="usertypes">
+				<xsl:for-each select="struct">
+					<xsl:value-of select="concat('&#9;if( !strcmp( structname , &quot;sctk_runtime_config_struct_',@name,'&quot;) )&#10;&#9;{&#10;')"/>
+					<xsl:value-of select="concat('&#9;&#9;sctk_runtime_config_struct_init_',@name,'( ptr );&#10;')"/>
+					<xsl:text>&#9;}&#10;&#10;</xsl:text>
+				</xsl:for-each>
+			</xsl:for-each>
+		</xsl:for-each>
+		<xsl:text>}&#10;&#10;</xsl:text>
+
 	</xsl:template>
 
 	<!-- ********************************************************* -->
@@ -100,9 +121,16 @@
 		<xsl:text>{&#10;&#09;</xsl:text>
 		<xsl:call-template name="gen-struct-name"/>
 		<xsl:text> * obj = struct_ptr;&#10;</xsl:text>
+		
+		<xsl:text>&#09;/* Make sure this element is not initialized yet       */&#10;</xsl:text>
+		<xsl:text>&#09;/* It allows us to know when we are facing dynamically */&#10;</xsl:text>
+		<xsl:text>&#09;/* allocated objects requiring an init                 */&#10;</xsl:text>
+		<xsl:text>&#09;if( obj->init_done != 0 ) return;&#10;&#10;</xsl:text>
+		
 		<xsl:text>&#09;/* Simple params : */&#10;</xsl:text>
 		<xsl:apply-templates select="param"/>
  		<xsl:apply-templates select="array"/>
+		<xsl:text>&#09;obj->init_done = 1;&#10;</xsl:text>
 		<xsl:text>}&#10;</xsl:text>
 	</xsl:template>
 
@@ -160,6 +188,7 @@
 					<xsl:with-param name="type"><xsl:value-of select='@type'/></xsl:with-param>
 				</xsl:call-template>
 			</xsl:otherwise>
+			<xsl:value-of select="concat('&#09;sctk_runtime_config_struct_init_',@type,'(&amp;obj->',@name,');&#10;')"/>	
 		</xsl:choose>
 	</xsl:template>
 

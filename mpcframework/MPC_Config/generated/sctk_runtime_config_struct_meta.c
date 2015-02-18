@@ -139,19 +139,46 @@ const struct sctk_runtime_config_entry_meta sctk_runtime_config_db[] = {
 	{"tcp"     , SCTK_CONFIG_META_TYPE_UNION_ENTRY  , SCTK_RTCFG_net_driver_tcp  , sizeof(struct sctk_runtime_config_struct_net_driver_tcp) , "sctk_runtime_config_struct_net_driver_tcp" , sctk_runtime_config_struct_init_net_driver_tcp},
 	{"tcprdma"     , SCTK_CONFIG_META_TYPE_UNION_ENTRY  , SCTK_RTCFG_net_driver_tcprdma  , sizeof(struct sctk_runtime_config_struct_net_driver_tcp_rdma) , "sctk_runtime_config_struct_net_driver_tcp_rdma" , sctk_runtime_config_struct_init_net_driver_tcp_rdma},
 	/* struct */
+	{"sctk_runtime_config_struct_gate_boolean" , SCTK_CONFIG_META_TYPE_STRUCT , 0  , sizeof(struct sctk_runtime_config_struct_gate_boolean) , NULL , sctk_runtime_config_struct_init_gate_boolean},
+	{"value"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_gate_boolean,value)  , sizeof(int) , "int" , NULL},
+	{"gatefunc"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_gate_boolean,gatefunc)  , sizeof(struct sctk_runtime_config_funcptr) , "funcptr" , NULL},
+	/* struct */
+	{"sctk_runtime_config_struct_gate_probabilistic" , SCTK_CONFIG_META_TYPE_STRUCT , 0  , sizeof(struct sctk_runtime_config_struct_gate_probabilistic) , NULL , sctk_runtime_config_struct_init_gate_probabilistic},
+	{"probability"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_gate_probabilistic,probability)  , sizeof(int) , "int" , NULL},
+	{"gatefunc"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_gate_probabilistic,gatefunc)  , sizeof(struct sctk_runtime_config_funcptr) , "funcptr" , NULL},
+	/* struct */
+	{"sctk_runtime_config_struct_gate_min_size" , SCTK_CONFIG_META_TYPE_STRUCT , 0  , sizeof(struct sctk_runtime_config_struct_gate_min_size) , NULL , sctk_runtime_config_struct_init_gate_min_size},
+	{"minsize"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_gate_min_size,minsize)  , sizeof(size_t) , "size_t" , NULL},
+	{"gatefunc"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_gate_min_size,gatefunc)  , sizeof(struct sctk_runtime_config_funcptr) , "funcptr" , NULL},
+	/* struct */
+	{"sctk_runtime_config_struct_gate_max_size" , SCTK_CONFIG_META_TYPE_STRUCT , 0  , sizeof(struct sctk_runtime_config_struct_gate_max_size) , NULL , sctk_runtime_config_struct_init_gate_max_size},
+	{"maxsize"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_gate_max_size,maxsize)  , sizeof(size_t) , "size_t" , NULL},
+	{"gatefunc"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_gate_max_size,gatefunc)  , sizeof(struct sctk_runtime_config_funcptr) , "funcptr" , NULL},
+	/* struct */
+	{"sctk_runtime_config_struct_gate_user" , SCTK_CONFIG_META_TYPE_STRUCT , 0  , sizeof(struct sctk_runtime_config_struct_gate_user) , NULL , sctk_runtime_config_struct_init_gate_user},
+	{"gatefunc"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_gate_user,gatefunc)  , sizeof(struct sctk_runtime_config_funcptr) , "funcptr" , NULL},
+	/* union */
+	{"sctk_runtime_config_struct_net_gate" , SCTK_CONFIG_META_TYPE_UNION , 0  , sizeof(struct sctk_runtime_config_struct_net_gate) , NULL , sctk_runtime_config_struct_init_net_gate},
+	{"boolean"     , SCTK_CONFIG_META_TYPE_UNION_ENTRY  , SCTK_RTCFG_net_gate_boolean  , sizeof(struct sctk_runtime_config_struct_gate_boolean) , "sctk_runtime_config_struct_gate_boolean" , sctk_runtime_config_struct_init_gate_boolean},
+	{"probabilistic"     , SCTK_CONFIG_META_TYPE_UNION_ENTRY  , SCTK_RTCFG_net_gate_probabilistic  , sizeof(struct sctk_runtime_config_struct_gate_probabilistic) , "sctk_runtime_config_struct_gate_probabilistic" , sctk_runtime_config_struct_init_gate_probabilistic},
+	{"minsize"     , SCTK_CONFIG_META_TYPE_UNION_ENTRY  , SCTK_RTCFG_net_gate_minsize  , sizeof(struct sctk_runtime_config_struct_gate_min_size) , "sctk_runtime_config_struct_gate_min_size" , sctk_runtime_config_struct_init_gate_min_size},
+	{"maxsize"     , SCTK_CONFIG_META_TYPE_UNION_ENTRY  , SCTK_RTCFG_net_gate_maxsize  , sizeof(struct sctk_runtime_config_struct_gate_max_size) , "sctk_runtime_config_struct_gate_max_size" , sctk_runtime_config_struct_init_gate_max_size},
+	{"user"     , SCTK_CONFIG_META_TYPE_UNION_ENTRY  , SCTK_RTCFG_net_gate_user  , sizeof(struct sctk_runtime_config_struct_gate_probabilistic) , "sctk_runtime_config_struct_gate_probabilistic" , sctk_runtime_config_struct_init_gate_probabilistic},
+	/* struct */
 	{"sctk_runtime_config_struct_net_driver_config" , SCTK_CONFIG_META_TYPE_STRUCT , 0  , sizeof(struct sctk_runtime_config_struct_net_driver_config) , NULL , sctk_runtime_config_struct_init_net_driver_config},
 	{"name"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_driver_config,name)  , sizeof(char *) , "char *" , NULL},
 	{"driver"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_driver_config,driver)  , sizeof(struct sctk_runtime_config_struct_net_driver) , "sctk_runtime_config_struct_net_driver" , sctk_runtime_config_struct_init_net_driver},
-	/* struct */
-	{"sctk_runtime_config_struct_net_cli_option" , SCTK_CONFIG_META_TYPE_STRUCT , 0  , sizeof(struct sctk_runtime_config_struct_net_cli_option) , NULL , sctk_runtime_config_struct_init_net_cli_option},
-	{"name"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_cli_option,name)  , sizeof(char *) , "char *" , NULL},
-	{"rails"     , SCTK_CONFIG_META_TYPE_ARRAY  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_cli_option,rails) , sizeof(char *) , "char *" , "rail"},
+	{"gates"     , SCTK_CONFIG_META_TYPE_ARRAY  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_driver_config,gates) , sizeof(struct sctk_runtime_config_struct_net_gate) , "sctk_runtime_config_struct_net_gate" , "gate"},
 	/* struct */
 	{"sctk_runtime_config_struct_net_rail" , SCTK_CONFIG_META_TYPE_STRUCT , 0  , sizeof(struct sctk_runtime_config_struct_net_rail) , NULL , sctk_runtime_config_struct_init_net_rail},
 	{"name"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_rail,name)  , sizeof(char *) , "char *" , NULL},
 	{"device"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_rail,device)  , sizeof(char *) , "char *" , NULL},
 	{"topology"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_rail,topology)  , sizeof(char *) , "char *" , NULL},
 	{"config"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_rail,config)  , sizeof(char *) , "char *" , NULL},
+	/* struct */
+	{"sctk_runtime_config_struct_net_cli_option" , SCTK_CONFIG_META_TYPE_STRUCT , 0  , sizeof(struct sctk_runtime_config_struct_net_cli_option) , NULL , sctk_runtime_config_struct_init_net_cli_option},
+	{"name"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_cli_option,name)  , sizeof(char *) , "char *" , NULL},
+	{"rails"     , SCTK_CONFIG_META_TYPE_ARRAY  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_cli_option,rails) , sizeof(char *) , "char *" , "rail"},
 	/* struct */
 	{"sctk_runtime_config_struct_networks" , SCTK_CONFIG_META_TYPE_STRUCT , 0  , sizeof(struct sctk_runtime_config_struct_networks) , NULL , sctk_runtime_config_struct_init_networks},
 	{"configs"     , SCTK_CONFIG_META_TYPE_ARRAY  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_networks,configs) , sizeof(struct sctk_runtime_config_struct_net_driver_config) , "sctk_runtime_config_struct_net_driver_config" , "config"},

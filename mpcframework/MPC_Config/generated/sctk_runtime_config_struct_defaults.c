@@ -32,6 +32,11 @@
 void sctk_runtime_config_struct_init_allocator(void * struct_ptr)
 {
 	struct sctk_runtime_config_struct_allocator * obj = struct_ptr;
+	/* Make sure this element is not initialized yet       */
+	/* It allows us to know when we are facing dynamically */
+	/* allocated objects requiring an init                 */
+	if( obj->init_done != 0 ) return;
+
 	/* Simple params : */
 	obj->numa_migration = false;
 	obj->realloc_factor = 2;
@@ -40,12 +45,18 @@ void sctk_runtime_config_struct_init_allocator(void * struct_ptr)
 	obj->strict = false;
 	obj->keep_mem = sctk_runtime_config_map_entry_parse_size("500MB");
 	obj->keep_max = sctk_runtime_config_map_entry_parse_size("8MB");
+	obj->init_done = 1;
 }
 
 /*******************  FUNCTION  *********************/
 void sctk_runtime_config_struct_init_launcher(void * struct_ptr)
 {
 	struct sctk_runtime_config_struct_launcher * obj = struct_ptr;
+	/* Make sure this element is not initialized yet       */
+	/* It allows us to know when we are facing dynamically */
+	/* allocated objects requiring an init                 */
+	if( obj->init_done != 0 ) return;
+
 	/* Simple params : */
 	obj->verbosity = 0;
 	obj->banner = true;
@@ -70,21 +81,33 @@ void sctk_runtime_config_struct_init_launcher(void * struct_ptr)
 	obj->checkpoint = false;
 	obj->migration = false;
 	obj->report = false;
+	obj->init_done = 1;
 }
 
 /*******************  FUNCTION  *********************/
 void sctk_runtime_config_struct_init_debugger(void * struct_ptr)
 {
 	struct sctk_runtime_config_struct_debugger * obj = struct_ptr;
+	/* Make sure this element is not initialized yet       */
+	/* It allows us to know when we are facing dynamically */
+	/* allocated objects requiring an init                 */
+	if( obj->init_done != 0 ) return;
+
 	/* Simple params : */
 	obj->colors = true;
 	obj->max_filename_size = 1024;
+	obj->init_done = 1;
 }
 
 /*******************  FUNCTION  *********************/
 void sctk_runtime_config_struct_init_net_driver_infiniband(void * struct_ptr)
 {
 	struct sctk_runtime_config_struct_net_driver_infiniband * obj = struct_ptr;
+	/* Make sure this element is not initialized yet       */
+	/* It allows us to know when we are facing dynamically */
+	/* allocated objects requiring an init                 */
+	if( obj->init_done != 0 ) return;
+
 	/* Simple params : */
 	obj->network_type = 0;
 	obj->adm_port = 0;
@@ -129,6 +152,7 @@ void sctk_runtime_config_struct_init_net_driver_infiniband(void * struct_ptr)
 	obj->rdma_resizing_min_nb = 8;
 	obj->rdma_resizing_max_nb = 32;
 	obj->size_recv_ibufs_chunk = 400;
+	obj->init_done = 1;
 }
 
 /*******************  FUNCTION  *********************/
@@ -157,24 +181,42 @@ void sctk_runtime_config_enum_init_ibv_rdvz_protocol()
 void sctk_runtime_config_struct_init_net_driver_portals(void * struct_ptr)
 {
 	struct sctk_runtime_config_struct_net_driver_portals * obj = struct_ptr;
+	/* Make sure this element is not initialized yet       */
+	/* It allows us to know when we are facing dynamically */
+	/* allocated objects requiring an init                 */
+	if( obj->init_done != 0 ) return;
+
 	/* Simple params : */
 	obj->fake_param = 0;
+	obj->init_done = 1;
 }
 
 /*******************  FUNCTION  *********************/
 void sctk_runtime_config_struct_init_net_driver_tcp(void * struct_ptr)
 {
 	struct sctk_runtime_config_struct_net_driver_tcp * obj = struct_ptr;
+	/* Make sure this element is not initialized yet       */
+	/* It allows us to know when we are facing dynamically */
+	/* allocated objects requiring an init                 */
+	if( obj->init_done != 0 ) return;
+
 	/* Simple params : */
 	obj->tcpoib = 1;
+	obj->init_done = 1;
 }
 
 /*******************  FUNCTION  *********************/
 void sctk_runtime_config_struct_init_net_driver_tcp_rdma(void * struct_ptr)
 {
 	struct sctk_runtime_config_struct_net_driver_tcp_rdma * obj = struct_ptr;
+	/* Make sure this element is not initialized yet       */
+	/* It allows us to know when we are facing dynamically */
+	/* allocated objects requiring an init                 */
+	if( obj->init_done != 0 ) return;
+
 	/* Simple params : */
 	obj->tcpoib = 1;
+	obj->init_done = 1;
 }
 
 /*******************  FUNCTION  *********************/
@@ -186,40 +228,153 @@ void sctk_runtime_config_struct_init_net_driver(void * struct_ptr)
 }
 
 /*******************  FUNCTION  *********************/
-void sctk_runtime_config_struct_init_net_driver_config(void * struct_ptr)
+void sctk_runtime_config_struct_init_gate_boolean(void * struct_ptr)
 {
-	struct sctk_runtime_config_struct_net_driver_config * obj = struct_ptr;
+	struct sctk_runtime_config_struct_gate_boolean * obj = struct_ptr;
+	/* Make sure this element is not initialized yet       */
+	/* It allows us to know when we are facing dynamically */
+	/* allocated objects requiring an init                 */
+	if( obj->init_done != 0 ) return;
+
 	/* Simple params : */
-	obj->name = NULL;
-	sctk_runtime_config_struct_init_net_driver(&obj->driver);
+	obj->value = 1;
+	obj->gatefunc.name = "sctk_rail_gate_boolean";
+	*(void **) &(obj->gatefunc.value) = sctk_runtime_config_get_symbol("sctk_rail_gate_boolean");
+	obj->init_done = 1;
 }
 
 /*******************  FUNCTION  *********************/
-void sctk_runtime_config_struct_init_net_cli_option(void * struct_ptr)
+void sctk_runtime_config_struct_init_gate_probabilistic(void * struct_ptr)
 {
-	struct sctk_runtime_config_struct_net_cli_option * obj = struct_ptr;
+	struct sctk_runtime_config_struct_gate_probabilistic * obj = struct_ptr;
+	/* Make sure this element is not initialized yet       */
+	/* It allows us to know when we are facing dynamically */
+	/* allocated objects requiring an init                 */
+	if( obj->init_done != 0 ) return;
+
+	/* Simple params : */
+	obj->probability = 50;
+	obj->gatefunc.name = "sctk_rail_gate_probabilistic";
+	*(void **) &(obj->gatefunc.value) = sctk_runtime_config_get_symbol("sctk_rail_gate_probabilistic");
+	obj->init_done = 1;
+}
+
+/*******************  FUNCTION  *********************/
+void sctk_runtime_config_struct_init_gate_min_size(void * struct_ptr)
+{
+	struct sctk_runtime_config_struct_gate_min_size * obj = struct_ptr;
+	/* Make sure this element is not initialized yet       */
+	/* It allows us to know when we are facing dynamically */
+	/* allocated objects requiring an init                 */
+	if( obj->init_done != 0 ) return;
+
+	/* Simple params : */
+	obj->minsize = 0;
+	obj->gatefunc.name = "sctk_rail_gate_minsize";
+	*(void **) &(obj->gatefunc.value) = sctk_runtime_config_get_symbol("sctk_rail_gate_minsize");
+	obj->init_done = 1;
+}
+
+/*******************  FUNCTION  *********************/
+void sctk_runtime_config_struct_init_gate_max_size(void * struct_ptr)
+{
+	struct sctk_runtime_config_struct_gate_max_size * obj = struct_ptr;
+	/* Make sure this element is not initialized yet       */
+	/* It allows us to know when we are facing dynamically */
+	/* allocated objects requiring an init                 */
+	if( obj->init_done != 0 ) return;
+
+	/* Simple params : */
+	obj->maxsize = 0;
+	obj->gatefunc.name = "sctk_rail_gate_maxsize";
+	*(void **) &(obj->gatefunc.value) = sctk_runtime_config_get_symbol("sctk_rail_gate_maxsize");
+	obj->init_done = 1;
+}
+
+/*******************  FUNCTION  *********************/
+void sctk_runtime_config_struct_init_gate_user(void * struct_ptr)
+{
+	struct sctk_runtime_config_struct_gate_user * obj = struct_ptr;
+	/* Make sure this element is not initialized yet       */
+	/* It allows us to know when we are facing dynamically */
+	/* allocated objects requiring an init                 */
+	if( obj->init_done != 0 ) return;
+
+	/* Simple params : */
+	obj->gatefunc.name = "sctk_rail_gate_true";
+	*(void **) &(obj->gatefunc.value) = sctk_runtime_config_get_symbol("sctk_rail_gate_true");
+	obj->init_done = 1;
+}
+
+/*******************  FUNCTION  *********************/
+void sctk_runtime_config_struct_init_net_gate(void * struct_ptr)
+{
+	struct sctk_runtime_config_struct_net_gate * obj = struct_ptr;
+	obj->type = SCTK_RTCFG_net_gate_NONE;
+	memset(&obj->value,0,sizeof(obj->value));
+}
+
+/*******************  FUNCTION  *********************/
+void sctk_runtime_config_struct_init_net_driver_config(void * struct_ptr)
+{
+	struct sctk_runtime_config_struct_net_driver_config * obj = struct_ptr;
+	/* Make sure this element is not initialized yet       */
+	/* It allows us to know when we are facing dynamically */
+	/* allocated objects requiring an init                 */
+	if( obj->init_done != 0 ) return;
+
 	/* Simple params : */
 	obj->name = NULL;
+	sctk_runtime_config_struct_init_net_driver(&obj->driver);
 	/* array */
-	obj->rails = NULL;
-	obj->rails_size = 0;
+	obj->gates = NULL;
+	obj->gates_size = 0;
+	obj->init_done = 1;
 }
 
 /*******************  FUNCTION  *********************/
 void sctk_runtime_config_struct_init_net_rail(void * struct_ptr)
 {
 	struct sctk_runtime_config_struct_net_rail * obj = struct_ptr;
+	/* Make sure this element is not initialized yet       */
+	/* It allows us to know when we are facing dynamically */
+	/* allocated objects requiring an init                 */
+	if( obj->init_done != 0 ) return;
+
 	/* Simple params : */
 	obj->name = NULL;
 	obj->device = NULL;
 	obj->topology = NULL;
 	obj->config = NULL;
+	obj->init_done = 1;
+}
+
+/*******************  FUNCTION  *********************/
+void sctk_runtime_config_struct_init_net_cli_option(void * struct_ptr)
+{
+	struct sctk_runtime_config_struct_net_cli_option * obj = struct_ptr;
+	/* Make sure this element is not initialized yet       */
+	/* It allows us to know when we are facing dynamically */
+	/* allocated objects requiring an init                 */
+	if( obj->init_done != 0 ) return;
+
+	/* Simple params : */
+	obj->name = NULL;
+	/* array */
+	obj->rails = NULL;
+	obj->rails_size = 0;
+	obj->init_done = 1;
 }
 
 /*******************  FUNCTION  *********************/
 void sctk_runtime_config_struct_init_networks(void * struct_ptr)
 {
 	struct sctk_runtime_config_struct_networks * obj = struct_ptr;
+	/* Make sure this element is not initialized yet       */
+	/* It allows us to know when we are facing dynamically */
+	/* allocated objects requiring an init                 */
+	if( obj->init_done != 0 ) return;
+
 	/* Simple params : */
 	/* array */
 	obj->configs = NULL;
@@ -230,12 +385,18 @@ void sctk_runtime_config_struct_init_networks(void * struct_ptr)
 	/* array */
 	obj->cli_options = NULL;
 	obj->cli_options_size = 0;
+	obj->init_done = 1;
 }
 
 /*******************  FUNCTION  *********************/
 void sctk_runtime_config_struct_init_inter_thread_comm(void * struct_ptr)
 {
 	struct sctk_runtime_config_struct_inter_thread_comm * obj = struct_ptr;
+	/* Make sure this element is not initialized yet       */
+	/* It allows us to know when we are facing dynamically */
+	/* allocated objects requiring an init                 */
+	if( obj->init_done != 0 ) return;
+
 	/* Simple params : */
 	obj->barrier_arity = 8;
 	obj->broadcast_arity_max = 32;
@@ -247,12 +408,18 @@ void sctk_runtime_config_struct_init_inter_thread_comm(void * struct_ptr)
 	obj->ALLREDUCE_MAX_SLOT = 65536;
 	obj->collectives_init_hook.name = "sctk_collectives_init_opt_noalloc_split_messages";
 	*(void **) &(obj->collectives_init_hook.value) = sctk_runtime_config_get_symbol("sctk_collectives_init_opt_noalloc_split_messages");
+	obj->init_done = 1;
 }
 
 /*******************  FUNCTION  *********************/
 void sctk_runtime_config_struct_init_low_level_comm(void * struct_ptr)
 {
 	struct sctk_runtime_config_struct_low_level_comm * obj = struct_ptr;
+	/* Make sure this element is not initialized yet       */
+	/* It allows us to know when we are facing dynamically */
+	/* allocated objects requiring an init                 */
+	if( obj->init_done != 0 ) return;
+
 	/* Simple params : */
 	obj->checksum = true;
 	obj->send_msg.name = "sctk_network_send_message_default";
@@ -260,22 +427,34 @@ void sctk_runtime_config_struct_init_low_level_comm(void * struct_ptr)
 	obj->network_mode = "default";
 	obj->dyn_reordering = false;
 	obj->enable_idle_polling = false;
+	obj->init_done = 1;
 }
 
 /*******************  FUNCTION  *********************/
 void sctk_runtime_config_struct_init_mpc(void * struct_ptr)
 {
 	struct sctk_runtime_config_struct_mpc * obj = struct_ptr;
+	/* Make sure this element is not initialized yet       */
+	/* It allows us to know when we are facing dynamically */
+	/* allocated objects requiring an init                 */
+	if( obj->init_done != 0 ) return;
+
 	/* Simple params : */
 	obj->log_debug = false;
 	obj->hard_checking = false;
 	obj->buffering = false;
+	obj->init_done = 1;
 }
 
 /*******************  FUNCTION  *********************/
 void sctk_runtime_config_struct_init_openmp(void * struct_ptr)
 {
 	struct sctk_runtime_config_struct_openmp * obj = struct_ptr;
+	/* Make sure this element is not initialized yet       */
+	/* It allows us to know when we are facing dynamically */
+	/* allocated objects requiring an init                 */
+	if( obj->init_done != 0 ) return;
+
 	/* Simple params : */
 	obj->vp = 0;
 	obj->schedule = "static";
@@ -295,12 +474,18 @@ void sctk_runtime_config_struct_init_openmp(void * struct_ptr)
 	obj->max_alive_single = 3;
 	obj->warn_nested = false;
 	obj->mode = "simple-mixed";
+	obj->init_done = 1;
 }
 
 /*******************  FUNCTION  *********************/
 void sctk_runtime_config_struct_init_profiler(void * struct_ptr)
 {
 	struct sctk_runtime_config_struct_profiler * obj = struct_ptr;
+	/* Make sure this element is not initialized yet       */
+	/* It allows us to know when we are facing dynamically */
+	/* allocated objects requiring an init                 */
+	if( obj->init_done != 0 ) return;
+
 	/* Simple params : */
 	obj->file_prefix = "mpc_profile";
 	obj->append_date = true;
@@ -314,21 +499,29 @@ void sctk_runtime_config_struct_init_profiler(void * struct_ptr)
 	obj->level_colors[4] = "#838383";
 	obj->level_colors[5] = "#5A5757";
 	obj->level_colors_size = 6;
+	obj->init_done = 1;
 }
 
 /*******************  FUNCTION  *********************/
 void sctk_runtime_config_struct_init_thread(void * struct_ptr)
 {
 	struct sctk_runtime_config_struct_thread * obj = struct_ptr;
+	/* Make sure this element is not initialized yet       */
+	/* It allows us to know when we are facing dynamically */
+	/* allocated objects requiring an init                 */
+	if( obj->init_done != 0 ) return;
+
 	/* Simple params : */
 	obj->spin_delay = 10;
 	obj->interval = 10;
 	obj->kthread_stack_size = sctk_runtime_config_map_entry_parse_size("10MB");
+	obj->init_done = 1;
 }
 
 /*******************  FUNCTION  *********************/
 void sctk_runtime_config_reset(struct sctk_runtime_config * config)
 {
+	memset(config, 0, sizeof(struct sctk_runtime_config));
 	sctk_handler = dlopen(0, RTLD_LAZY | RTLD_GLOBAL);
 	sctk_runtime_config_struct_init_allocator(&config->modules.allocator);
 	sctk_runtime_config_struct_init_launcher(&config->modules.launcher);
@@ -359,5 +552,121 @@ void sctk_runtime_config_clean_hash_tables()
 		HASH_DEL(enums_types, current_enum);
 		free(current_enum);
 	}
+}
+
+
+/*******************  FUNCTION  *********************/
+void sctk_runtime_config_reset_struct_default_if_needed(char * structname, void * ptr )
+{
+	if( !strcmp( structname , "sctk_runtime_config_struct_allocator") )
+	{
+		sctk_runtime_config_struct_init_allocator( ptr );
+	}
+
+	if( !strcmp( structname , "sctk_runtime_config_struct_launcher") )
+	{
+		sctk_runtime_config_struct_init_launcher( ptr );
+	}
+
+	if( !strcmp( structname , "sctk_runtime_config_struct_debugger") )
+	{
+		sctk_runtime_config_struct_init_debugger( ptr );
+	}
+
+	if( !strcmp( structname , "sctk_runtime_config_struct_net_driver_infiniband") )
+	{
+		sctk_runtime_config_struct_init_net_driver_infiniband( ptr );
+	}
+
+	if( !strcmp( structname , "sctk_runtime_config_struct_net_driver_portals") )
+	{
+		sctk_runtime_config_struct_init_net_driver_portals( ptr );
+	}
+
+	if( !strcmp( structname , "sctk_runtime_config_struct_net_driver_tcp") )
+	{
+		sctk_runtime_config_struct_init_net_driver_tcp( ptr );
+	}
+
+	if( !strcmp( structname , "sctk_runtime_config_struct_net_driver_tcp_rdma") )
+	{
+		sctk_runtime_config_struct_init_net_driver_tcp_rdma( ptr );
+	}
+
+	if( !strcmp( structname , "sctk_runtime_config_struct_gate_boolean") )
+	{
+		sctk_runtime_config_struct_init_gate_boolean( ptr );
+	}
+
+	if( !strcmp( structname , "sctk_runtime_config_struct_gate_probabilistic") )
+	{
+		sctk_runtime_config_struct_init_gate_probabilistic( ptr );
+	}
+
+	if( !strcmp( structname , "sctk_runtime_config_struct_gate_min_size") )
+	{
+		sctk_runtime_config_struct_init_gate_min_size( ptr );
+	}
+
+	if( !strcmp( structname , "sctk_runtime_config_struct_gate_max_size") )
+	{
+		sctk_runtime_config_struct_init_gate_max_size( ptr );
+	}
+
+	if( !strcmp( structname , "sctk_runtime_config_struct_gate_user") )
+	{
+		sctk_runtime_config_struct_init_gate_user( ptr );
+	}
+
+	if( !strcmp( structname , "sctk_runtime_config_struct_net_driver_config") )
+	{
+		sctk_runtime_config_struct_init_net_driver_config( ptr );
+	}
+
+	if( !strcmp( structname , "sctk_runtime_config_struct_net_rail") )
+	{
+		sctk_runtime_config_struct_init_net_rail( ptr );
+	}
+
+	if( !strcmp( structname , "sctk_runtime_config_struct_net_cli_option") )
+	{
+		sctk_runtime_config_struct_init_net_cli_option( ptr );
+	}
+
+	if( !strcmp( structname , "sctk_runtime_config_struct_networks") )
+	{
+		sctk_runtime_config_struct_init_networks( ptr );
+	}
+
+	if( !strcmp( structname , "sctk_runtime_config_struct_inter_thread_comm") )
+	{
+		sctk_runtime_config_struct_init_inter_thread_comm( ptr );
+	}
+
+	if( !strcmp( structname , "sctk_runtime_config_struct_low_level_comm") )
+	{
+		sctk_runtime_config_struct_init_low_level_comm( ptr );
+	}
+
+	if( !strcmp( structname , "sctk_runtime_config_struct_mpc") )
+	{
+		sctk_runtime_config_struct_init_mpc( ptr );
+	}
+
+	if( !strcmp( structname , "sctk_runtime_config_struct_openmp") )
+	{
+		sctk_runtime_config_struct_init_openmp( ptr );
+	}
+
+	if( !strcmp( structname , "sctk_runtime_config_struct_profiler") )
+	{
+		sctk_runtime_config_struct_init_profiler( ptr );
+	}
+
+	if( !strcmp( structname , "sctk_runtime_config_struct_thread") )
+	{
+		sctk_runtime_config_struct_init_thread( ptr );
+	}
+
 }
 

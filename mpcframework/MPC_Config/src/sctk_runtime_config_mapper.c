@@ -525,28 +525,39 @@ void sctk_runtime_config_map_value( const struct sctk_runtime_config_entry_meta 
 	is_plain_type = sctk_runtime_config_map_plain_type(value,type_name,node);
 
 	/* if not it's a composed type */
-	if ( ! is_plain_type ) {
-	  if (!strcmp(type_name, "funcptr")) {
-	    *(struct sctk_runtime_config_funcptr*) value = sctk_runtime_config_map_entry_to_funcptr(node);
-	  }
-	  else if (!strncmp(type_name, "enum", 4)) {
-	    *(int*) value = sctk_runtime_config_map_entry_to_enum(node, type_name);
-	  }
-	  else {
-      /* get the meta description of the type */
-      entry = sctk_runtime_config_get_meta_type(config_meta, type_name);
+	if ( ! is_plain_type )
+	{
+		if (!strcmp(type_name, "funcptr"))
+		{
+			*(struct sctk_runtime_config_funcptr*) value = sctk_runtime_config_map_entry_to_funcptr(node);
+		}
+		else if (!strncmp(type_name, "enum", 4))
+		{
+			*(int*) value = sctk_runtime_config_map_entry_to_enum(node, type_name);
+		}
+		else
+		{
+			/* get the meta description of the type */
+			entry = sctk_runtime_config_get_meta_type(config_meta, type_name);
 
-      /* check for errors and types */
-      if (entry == NULL) {
-        sctk_fatal("Can't find type information for : %s.",type_name);
-      } else if (entry->type == SCTK_CONFIG_META_TYPE_STRUCT) {
-        sctk_runtime_config_map_struct(config_meta,value,entry,node);
-      } else if (entry->type == SCTK_CONFIG_META_TYPE_UNION) {
-        sctk_runtime_config_map_union(config_meta,value,entry,node);
-      } else {
-        sctk_fatal("Unknown custom type : %s (%d)",type_name,entry->type);
-      }
-	  }
+			/* check for errors and types */
+			if (entry == NULL)
+			{
+				sctk_fatal("Can't find type information for : %s.",type_name);
+			}
+			else if (entry->type == SCTK_CONFIG_META_TYPE_STRUCT)
+			{
+				sctk_runtime_config_map_struct(config_meta,value,entry,node);
+			}
+			else if (entry->type == SCTK_CONFIG_META_TYPE_UNION)
+			{
+				sctk_runtime_config_map_union(config_meta,value,entry,node);
+			}
+			else
+			{
+			sctk_fatal("Unknown custom type : %s (%d)",type_name,entry->type);
+			}
+		}
 	}
 }
 
@@ -608,6 +619,11 @@ void sctk_runtime_config_map_struct( const struct sctk_runtime_config_entry_meta
 	assert(current != NULL);
 	assert(node != NULL);
 	assert(current->type == SCTK_CONFIG_META_TYPE_STRUCT);
+
+	/* Here we make sure that every struct we encounter has already been initialized
+	 * once with the default content. This is needed as for example rails and
+	 * drivers are defined dynamically, and cannot be filled statically */
+	sctk_runtime_config_reset_struct_default_if_needed( current->name, struct_ptr );
 
 	/* loop on all parameters of the struct */
 	node = xmlFirstElementChild(node);

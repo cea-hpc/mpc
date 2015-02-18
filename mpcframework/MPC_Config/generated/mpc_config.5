@@ -510,6 +510,94 @@ It can contain a node of type :
 .It Cm tcprdma
  of type net_driver_tcp_rdma. 
 .El
+.Sh ENTRIES OF TYPE gate_boolean
+This gate applies given thruth value to messages.
+.Pp
+It support parameters :
+.Pp
+.Bl -tag -width Ds
+.It Cm value
+Type is int. Default value is 1. 
+.Pp value
+whereas to accept input messages or not
+.It Cm gatefunc
+Type is function pointer. Default value is sctk_rail_gate_boolean. 
+.Pp gatefunc
+Function to be called for this gate
+.El
+.Sh ENTRIES OF TYPE gate_probabilistic
+This gate uses a given rail with a parametrized probability.
+.Pp
+It support parameters :
+.Pp
+.Bl -tag -width Ds
+.It Cm probability
+Type is int. Default value is 50. 
+.Pp probability
+Probability to choose this rail in percents (ralatively to this single rail, integer)
+.It Cm gatefunc
+Type is function pointer. Default value is sctk_rail_gate_probabilistic. 
+.Pp gatefunc
+Function to be called for this gate
+.El
+.Sh ENTRIES OF TYPE gate_min_size
+This gate uses a given rail if size is at least a given value.
+.Pp
+It support parameters :
+.Pp
+.Bl -tag -width Ds
+.It Cm minsize
+Type is size. 
+.Pp minsize
+Minimum size to choose this rail (with units)
+.It Cm gatefunc
+Type is function pointer. Default value is sctk_rail_gate_minsize. 
+.Pp gatefunc
+Function to be called for this gate
+.El
+.Sh ENTRIES OF TYPE gate_max_size
+This gate uses a given rail if size is at most a given value.
+.Pp
+It support parameters :
+.Pp
+.Bl -tag -width Ds
+.It Cm maxsize
+Type is size. 
+.Pp maxsize
+Maximum size to choose this rail (with units)
+.It Cm gatefunc
+Type is function pointer. Default value is sctk_rail_gate_maxsize. 
+.Pp gatefunc
+Function to be called for this gate
+.El
+.Sh ENTRIES OF TYPE gate_user
+This gate uses a given rail with a user defined function.
+.Pp
+It support parameters :
+.Pp
+.Bl -tag -width Ds
+.It Cm gatefunc
+Type is function pointer. Default value is sctk_rail_gate_true. 
+.Pp gatefunc
+Function to be called for this gate
+.El
+.Sh OPTIONS OF NODE net_gate
+Defines gates and their configuration.
+.Pp
+It can contain a node of type :
+.Pp
+.Bl -tag -width Ds
+.It Cm boolean
+ of type gate_boolean. 
+.It Cm probabilistic
+ of type gate_probabilistic. 
+.It Cm minsize
+ of type gate_min_size. 
+.It Cm maxsize
+ of type gate_max_size. 
+.It Cm user
+ of type gate_probabilistic. 
+.El
 .Sh ENTRIES OF TYPE net_driver_config
 Contain a list of driver configuration reused by rail definitions.
 .Pp
@@ -524,21 +612,10 @@ Name of the driver configuration to be referenced in rail definitions.
 Type is net_driver. 
 .Pp driver
 Define the related driver to use and its configuration.
-.El
-.Sh ENTRIES OF TYPE net_cli_option
-Define a specific configuration for a network provided by '-net'.
-.Pp
-It support parameters :
-.Pp
-.Bl -tag -width Ds
-.It Cm name
-Type is string. 
-.Pp name
-Define the name of the option.
-.It Cm rails
+.It Cm gates
 Type is array of . 
-.Pp rails
-Define the driver config to use for this rail.
+.Pp gates
+List of gates to be applied in this config.
 .El
 .Sh ENTRIES OF TYPE net_rail
 Define a rail which is a name, a device associate to a driver and a routing topology.
@@ -561,6 +638,21 @@ Define the network topology to apply on this rail.
 .It Cm config
 Type is string. 
 .Pp config
+Define the driver config to use for this rail.
+.El
+.Sh ENTRIES OF TYPE net_cli_option
+Define a specific configuration for a network provided by '-net'.
+.Pp
+It support parameters :
+.Pp
+.Bl -tag -width Ds
+.It Cm name
+Type is string. 
+.Pp name
+Define the name of the option.
+.It Cm rails
+Type is array of . 
+.Pp rails
 Define the driver config to use for this rail.
 .El
 .Sh ENTRIES OF TYPE networks

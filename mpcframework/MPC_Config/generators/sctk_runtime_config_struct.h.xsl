@@ -142,6 +142,7 @@
 		<xsl:value-of select="concat('/**',@doc,'**/&#10;')"/>
 		<xsl:value-of select="concat('struct sctk_runtime_config_struct_',@name,'&#10;')"/>
 		<xsl:text>{</xsl:text>
+		<xsl:text>&#09;int init_done;&#10;</xsl:text>
 		<xsl:apply-templates select="param"/>
 		<xsl:apply-templates select="array"/>
 		<xsl:text>};&#10;</xsl:text>

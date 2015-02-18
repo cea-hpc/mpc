@@ -329,7 +329,7 @@ void sctk_multirail_send_message( sctk_thread_ptp_message_t *msg )
 		{
 			if( (cur->endpoint->rail->gate)( cur->endpoint->rail, msg ) )
 			{
-				sctk_warning("RAIL %d", cur->endpoint->rail->rail_number);
+				//sctk_warning("RAIL %d", cur->endpoint->rail->rail_number);
 				/* This route has been elected */
 				break;
 			}

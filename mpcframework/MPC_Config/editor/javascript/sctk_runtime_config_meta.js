@@ -97,19 +97,46 @@ meta.types = {
 		tcp: {name: "tcp", type: "net_driver_tcp"},
 		tcprdma: {name: "tcprdma", type: "net_driver_tcp_rdma"},
 	}},
+	gate_boolean : {type: 'struct', name: "gate_boolean", childs: {
+		value: {mode: 'param', name: "value", type: "int", doc: "whereas to accept input messages or not", dflt: "1", },
+		gatefunc: {mode: 'param', name: "gatefunc", type: "funcptr", doc: "Function to be called for this gate", dflt: "sctk_rail_gate_boolean", },
+	}},
+	gate_probabilistic : {type: 'struct', name: "gate_probabilistic", childs: {
+		probability: {mode: 'param', name: "probability", type: "int", doc: "Probability to choose this rail in percents (ralatively to this single rail, integer)", dflt: "50", },
+		gatefunc: {mode: 'param', name: "gatefunc", type: "funcptr", doc: "Function to be called for this gate", dflt: "sctk_rail_gate_probabilistic", },
+	}},
+	gate_min_size : {type: 'struct', name: "gate_min_size", childs: {
+		minsize: {mode: 'param', name: "minsize", type: "size", doc: "Minimum size to choose this rail (with units)", dflt: null},
+		gatefunc: {mode: 'param', name: "gatefunc", type: "funcptr", doc: "Function to be called for this gate", dflt: "sctk_rail_gate_minsize", },
+	}},
+	gate_max_size : {type: 'struct', name: "gate_max_size", childs: {
+		maxsize: {mode: 'param', name: "maxsize", type: "size", doc: "Maximum size to choose this rail (with units)", dflt: null},
+		gatefunc: {mode: 'param', name: "gatefunc", type: "funcptr", doc: "Function to be called for this gate", dflt: "sctk_rail_gate_maxsize", },
+	}},
+	gate_user : {type: 'struct', name: "gate_user", childs: {
+		gatefunc: {mode: 'param', name: "gatefunc", type: "funcptr", doc: "Function to be called for this gate", dflt: "sctk_rail_gate_true", },
+	}},
+	net_gate : {type: 'union', name: "net_gate", choice: {
+		boolean: {name: "boolean", type: "gate_boolean"},
+		probabilistic: {name: "probabilistic", type: "gate_probabilistic"},
+		minsize: {name: "minsize", type: "gate_min_size"},
+		maxsize: {name: "maxsize", type: "gate_max_size"},
+		user: {name: "user", type: "gate_probabilistic"},
+	}},
 	net_driver_config : {type: 'struct', name: "net_driver_config", childs: {
 		name: {mode: 'param', name: "name", type: "string", doc: "Name of the driver configuration to be referenced in rail definitions.", dflt: null},
 		driver: {mode: 'param', name: "driver", type: "net_driver", doc: "Define the related driver to use and its configuration.", dflt: null},
-	}},
-	net_cli_option : {type: 'struct', name: "net_cli_option", childs: {
-		name: {mode: 'param', name: "name", type: "string", doc: "Define the name of the option.", dflt: null},
-		rails: {mode: 'array', name: "rails", type: "string", entryname: "rail", dflt: null},
+		gates: {mode: 'array', name: "gates", type: "net_gate", entryname: "gate", dflt: null},
 	}},
 	net_rail : {type: 'struct', name: "net_rail", childs: {
 		name: {mode: 'param', name: "name", type: "string", doc: "Define the name of current rail.", dflt: null},
 		device: {mode: 'param', name: "device", type: "string", doc: "Define the name of the device to use in this rail.", dflt: null},
 		topology: {mode: 'param', name: "topology", type: "string", doc: "Define the network topology to apply on this rail.", dflt: null},
 		config: {mode: 'param', name: "config", type: "string", doc: "Define the driver config to use for this rail.", dflt: null},
+	}},
+	net_cli_option : {type: 'struct', name: "net_cli_option", childs: {
+		name: {mode: 'param', name: "name", type: "string", doc: "Define the name of the option.", dflt: null},
+		rails: {mode: 'array', name: "rails", type: "string", entryname: "rail", dflt: null},
 	}},
 	networks : {type: 'struct', name: "networks", childs: {
 		configs: {mode: 'array', name: "configs", type: "net_driver_config", entryname: "config", dflt: null},

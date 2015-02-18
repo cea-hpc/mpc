@@ -39,7 +39,8 @@ struct sctk_runtime_config_funcptr
 /******************************** STRUCTURE *********************************/
 /**Options for MPC memory allocator.**/
 struct sctk_runtime_config_struct_allocator
-{	/**Enable or disable NUMA migration of allocator pages on thread migration.**/
+{	int init_done;
+	/**Enable or disable NUMA migration of allocator pages on thread migration.**/
 	bool numa_migration;
 	/**If the new segment is less than N time smaller than factor, realloc will allocate a new segment, otherwise it will keep the same one. Use 1 to force realloc every time (may be slower but consume less memory).**/
 	int realloc_factor;
@@ -58,7 +59,8 @@ struct sctk_runtime_config_struct_allocator
 /******************************** STRUCTURE *********************************/
 /**Options for MPC launcher.**/
 struct sctk_runtime_config_struct_launcher
-{	/**Default verbosity level from 0 to 3. Can be override by -vv on mpcrun.**/
+{	int init_done;
+	/**Default verbosity level from 0 to 3. Can be override by -vv on mpcrun.**/
 	int verbosity;
 	/**Display the MPC banner at launch time to print some informations about the topology. Can be override by MPC_DISABLE_BANNER.**/
 	bool banner;
@@ -107,7 +109,8 @@ struct sctk_runtime_config_struct_launcher
 /******************************** STRUCTURE *********************************/
 /**Options for MPC Debugger**/
 struct sctk_runtime_config_struct_debugger
-{	/**Print colored text in terminal**/
+{	int init_done;
+	/**Print colored text in terminal**/
 	bool colors;
 	/****/
 	int max_filename_size;
@@ -124,7 +127,8 @@ enum ibv_rdvz_protocol
 /******************************** STRUCTURE *********************************/
 /**Declare a fake driver to test the configuration system.**/
 struct sctk_runtime_config_struct_net_driver_infiniband
-{	/**Define a network's type (0=signalization, 1=data)**/
+{	int init_done;
+	/**Define a network's type (0=signalization, 1=data)**/
 	int network_type;
 	/**Defines the port number to use.**/
 	int adm_port;
@@ -215,21 +219,24 @@ struct sctk_runtime_config_struct_net_driver_infiniband
 /******************************** STRUCTURE *********************************/
 /**Declare a fake driver to test the configuration system.**/
 struct sctk_runtime_config_struct_net_driver_portals
-{	/**Fake param.**/
+{	int init_done;
+	/**Fake param.**/
 	int fake_param;
 };
 
 /******************************** STRUCTURE *********************************/
 /**TCP-based driver**/
 struct sctk_runtime_config_struct_net_driver_tcp
-{	/**Enable TCP over Infiniband (if elligible).**/
+{	int init_done;
+	/**Enable TCP over Infiniband (if elligible).**/
 	int tcpoib;
 };
 
 /******************************** STRUCTURE *********************************/
 /**TCP-Based RDMA implementation**/
 struct sctk_runtime_config_struct_net_driver_tcp_rdma
-{	/**Enable TCP over Infiniband (if elligible).**/
+{	int init_done;
+	/**Enable TCP over Infiniband (if elligible).**/
 	int tcpoib;
 };
 
@@ -258,29 +265,98 @@ struct sctk_runtime_config_struct_net_driver
 };
 
 /******************************** STRUCTURE *********************************/
-/**Contain a list of driver configuration reused by rail definitions.**/
-struct sctk_runtime_config_struct_net_driver_config
-{	/**Name of the driver configuration to be referenced in rail definitions.**/
-	char * name;
-	/**Define the related driver to use and its configuration.**/
-	struct sctk_runtime_config_struct_net_driver driver;
+/**This gate applies given thruth value to messages.**/
+struct sctk_runtime_config_struct_gate_boolean
+{	int init_done;
+	/**whereas to accept input messages or not**/
+	int value;
+	/**Function to be called for this gate**/
+	struct sctk_runtime_config_funcptr gatefunc;
 };
 
 /******************************** STRUCTURE *********************************/
-/**Define a specific configuration for a network provided by '-net'.**/
-struct sctk_runtime_config_struct_net_cli_option
-{	/**Define the name of the option.**/
+/**This gate uses a given rail with a parametrized probability.**/
+struct sctk_runtime_config_struct_gate_probabilistic
+{	int init_done;
+	/**Probability to choose this rail in percents (ralatively to this single rail, integer)**/
+	int probability;
+	/**Function to be called for this gate**/
+	struct sctk_runtime_config_funcptr gatefunc;
+};
+
+/******************************** STRUCTURE *********************************/
+/**This gate uses a given rail if size is at least a given value.**/
+struct sctk_runtime_config_struct_gate_min_size
+{	int init_done;
+	/**Minimum size to choose this rail (with units)**/
+	size_t minsize;
+	/**Function to be called for this gate**/
+	struct sctk_runtime_config_funcptr gatefunc;
+};
+
+/******************************** STRUCTURE *********************************/
+/**This gate uses a given rail if size is at most a given value.**/
+struct sctk_runtime_config_struct_gate_max_size
+{	int init_done;
+	/**Maximum size to choose this rail (with units)**/
+	size_t maxsize;
+	/**Function to be called for this gate**/
+	struct sctk_runtime_config_funcptr gatefunc;
+};
+
+/******************************** STRUCTURE *********************************/
+/**This gate uses a given rail with a user defined function.**/
+struct sctk_runtime_config_struct_gate_user
+{	int init_done;
+	/**Function to be called for this gate**/
+	struct sctk_runtime_config_funcptr gatefunc;
+};
+
+/********************************** ENUM ************************************/
+/**Defines gates and their configuration.**/
+enum sctk_runtime_config_struct_net_gate_type
+{
+	SCTK_RTCFG_net_gate_NONE,
+	SCTK_RTCFG_net_gate_boolean,
+	SCTK_RTCFG_net_gate_probabilistic,
+	SCTK_RTCFG_net_gate_minsize,
+	SCTK_RTCFG_net_gate_maxsize,
+	SCTK_RTCFG_net_gate_user,
+};
+
+/******************************** STRUCTURE *********************************/
+/**Defines gates and their configuration.**/
+struct sctk_runtime_config_struct_net_gate
+{
+	enum sctk_runtime_config_struct_net_gate_type type;
+	union {
+		struct sctk_runtime_config_struct_gate_boolean boolean;
+		struct sctk_runtime_config_struct_gate_probabilistic probabilistic;
+		struct sctk_runtime_config_struct_gate_min_size minsize;
+		struct sctk_runtime_config_struct_gate_max_size maxsize;
+		struct sctk_runtime_config_struct_gate_probabilistic user;
+	} value;
+};
+
+/******************************** STRUCTURE *********************************/
+/**Contain a list of driver configuration reused by rail definitions.**/
+struct sctk_runtime_config_struct_net_driver_config
+{	int init_done;
+	/**Name of the driver configuration to be referenced in rail definitions.**/
 	char * name;
-	/**Define the driver config to use for this rail.**/
-	char * * rails;
-	/** Number of elements in rails array. **/
-	int rails_size;
+	/**Define the related driver to use and its configuration.**/
+	struct sctk_runtime_config_struct_net_driver driver;
+	/**List of gates to be applied in this config.**/
+	struct sctk_runtime_config_struct_net_gate * gates;
+	/** Number of elements in gates array. **/
+	int gates_size;
 };
 
 /******************************** STRUCTURE *********************************/
 /**Define a rail which is a name, a device associate to a driver and a routing topology.**/
 struct sctk_runtime_config_struct_net_rail
-{	/**Define the name of current rail.**/
+{	int init_done;
+	/**Define the name of current rail.**/
 	char * name;
 	/**Define the name of the device to use in this rail.**/
 	char * device;
@@ -291,9 +367,22 @@ struct sctk_runtime_config_struct_net_rail
 };
 
 /******************************** STRUCTURE *********************************/
+/**Define a specific configuration for a network provided by '-net'.**/
+struct sctk_runtime_config_struct_net_cli_option
+{	int init_done;
+	/**Define the name of the option.**/
+	char * name;
+	/**Define the driver config to use for this rail.**/
+	char * * rails;
+	/** Number of elements in rails array. **/
+	int rails_size;
+};
+
+/******************************** STRUCTURE *********************************/
 /**Base structure to contain the network configuration**/
 struct sctk_runtime_config_struct_networks
-{	/**Define the configuration driver list to reuse in rail definitions.**/
+{	int init_done;
+	/**Define the configuration driver list to reuse in rail definitions.**/
 	struct sctk_runtime_config_struct_net_driver_config * configs;
 	/** Number of elements in configs array. **/
 	int configs_size;
@@ -310,7 +399,8 @@ struct sctk_runtime_config_struct_networks
 /******************************** STRUCTURE *********************************/
 /**Options for communication between threads**/
 struct sctk_runtime_config_struct_inter_thread_comm
-{	/****/
+{	int init_done;
+	/****/
 	int barrier_arity;
 	/****/
 	int broadcast_arity_max;
@@ -333,7 +423,8 @@ struct sctk_runtime_config_struct_inter_thread_comm
 /******************************** STRUCTURE *********************************/
 /****/
 struct sctk_runtime_config_struct_low_level_comm
-{	/****/
+{	int init_done;
+	/****/
 	bool checksum;
 	/****/
 	struct sctk_runtime_config_funcptr send_msg;
@@ -348,7 +439,8 @@ struct sctk_runtime_config_struct_low_level_comm
 /******************************** STRUCTURE *********************************/
 /**Options for MPC Message Passing**/
 struct sctk_runtime_config_struct_mpc
-{	/**Print debug messages**/
+{	int init_done;
+	/**Print debug messages**/
 	bool log_debug;
 	/****/
 	bool hard_checking;
@@ -359,7 +451,8 @@ struct sctk_runtime_config_struct_mpc
 /******************************** STRUCTURE *********************************/
 /**Options for MPC OpenMP.**/
 struct sctk_runtime_config_struct_openmp
-{	/**Number of VPs for each OpenMP team**/
+{	int init_done;
+	/**Number of VPs for each OpenMP team**/
 	int vp;
 	/**Runtime schedule type and chunck size**/
 	char * schedule;
@@ -400,7 +493,8 @@ struct sctk_runtime_config_struct_openmp
 /******************************** STRUCTURE *********************************/
 /**Options for the internal MPC Profiler**/
 struct sctk_runtime_config_struct_profiler
-{	/**Prefix of MPC Profiler outputs**/
+{	int init_done;
+	/**Prefix of MPC Profiler outputs**/
 	char * file_prefix;
 	/**Add a timestamp to profiles file names**/
 	bool append_date;
@@ -415,7 +509,8 @@ struct sctk_runtime_config_struct_profiler
 /******************************** STRUCTURE *********************************/
 /**Options for MPC threads.**/
 struct sctk_runtime_config_struct_thread
-{	/**Max number of accesses to the lock before calling thread_yield**/
+{	int init_done;
+	/**Max number of accesses to the lock before calling thread_yield**/
 	int spin_delay;
 	/****/
 	int interval;
