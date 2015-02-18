@@ -6104,8 +6104,6 @@ __INTERNAL__PMPI_Reduce (void *sendbuf, void *recvbuf, int count,
 	mpi_op = sctk_convert_to_mpc_op (op);
 	mpc_op = mpi_op->op;
 
-	assume(recvbuf != NULL);
-
 	/* fprintf(stderr,"Reduce %d %d\n",sctk_datatype_is_derived (datatype),mpi_op->commute == 0); */
 	if ((sctk_datatype_is_derived (datatype) && !sctk_datatype_is_struct_datatype(datatype)) || (mpi_op->commute == 0))
 	{
