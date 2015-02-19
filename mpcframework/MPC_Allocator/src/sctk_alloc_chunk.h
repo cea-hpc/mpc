@@ -30,7 +30,12 @@ extern "C"
 
 /********************************* INCLUDES *********************************/
 #include "sctk_alloc_common.h"
+#ifdef MPC_Common
 #include "sctk_stdint.h"
+#else
+#include <stdint.h>
+typedef uint64_t     sctk_uint64_t;
+#endif
 /********************************** ENUM ************************************/
 /**
  * Constants to define the type of current block, currently, only small (<=256o) or large.
