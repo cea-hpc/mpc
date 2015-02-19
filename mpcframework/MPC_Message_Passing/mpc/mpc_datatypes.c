@@ -323,6 +323,10 @@ void release_composed_common_types()
 	PMPC_Type_free( &tmp );
 	tmp = MPC_LONG_DOUBLE_INT;
 	PMPC_Type_free( &tmp );
+	tmp = MPC_2INTEGER;
+	PMPC_Type_free( &tmp );
+	tmp = MPC_2REAL;
+	PMPC_Type_free( &tmp );
 /*	tmp = MPC_UNSIGNED_LONG_LONG_INT;
 	PMPC_Type_free( &tmp );
 */

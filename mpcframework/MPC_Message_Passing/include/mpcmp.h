@@ -393,7 +393,7 @@ typedef int MPC_Info;
  * will overwrite your last datatype
  * /!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\
  */
-#define MPC_STRUCT_DATATYPE_COUNT 13
+#define MPC_STRUCT_DATATYPE_COUNT 15
 
 /* Aliased struct data-types */
 #define MPC_C_COMPLEX MPC_COMPLEX
