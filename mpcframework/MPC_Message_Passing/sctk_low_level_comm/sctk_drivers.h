@@ -16,24 +16,23 @@
 /* # terms.                                                               # */
 /* #                                                                      # */
 /* # Authors:                                                             # */
-/* #   - PERACHE Marc marc.perache@cea.fr                                 # */
+/* #   - BESNARD Jean-Baptiste jbbesnard@paratools.fr                     # */
 /* #                                                                      # */
 /* ######################################################################## */
+#ifndef SCTK_DRIVER_LIST_H
+#define SCTK_DRIVER_LIST_H
 
-#ifndef __SCTK_MULTIRAIL_TCP_H_
-#define __SCTK_MULTIRAIL_TCP_H_
-#ifdef __cplusplus
-extern "C"
-{
-#endif
 
-#include <sctk_spinlock.h>
-#include "sctk_route.h"
 
-void sctk_network_init_multirail_tcp ( sctk_rail_info_t *new_rail, int max_rails );
-void sctk_network_init_multirail_tcpoib ( sctk_rail_info_t *new_rail, int max_rails );
+/* Networks */
+#include <sctk_portals.h>
+#include <sctk_tcp.h>
+#include <sctk_ib.h>
 
-#ifdef __cplusplus
-}
-#endif
+
+
+
+
+
+
 #endif

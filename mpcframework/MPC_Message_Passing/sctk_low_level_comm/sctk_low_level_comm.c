@@ -28,7 +28,6 @@
 #include "sctk_runtime_config.h"
 
 /*Networks*/
-#include <sctk_multirail_tcp.h>
 #include <sctk_multirail_ib.h>
 #include <sctk_route.h>
 #include <sctk_multirail.h>
@@ -358,12 +357,6 @@ restart:
 			case SCTK_RTCFG_net_driver_portals: /* PORTALS */
 				nb_rails_portals ++ ;
 				break;
-
-			default:
-				//sctk_network_not_implemented_warn ( option_name );
-				//name = "tcp";
-				//goto restart;
-				break;
 		}
 
 	}
@@ -406,13 +399,13 @@ restart:
 
 			case SCTK_RTCFG_net_driver_infiniband: /* INFINIBAND */
 				sctk_network_init_multirail_ib ( new_rail, nb_rails_infiniband );
-				break;
+			break;
 #endif
 #ifdef MPC_USE_PORTALS
 
 			case SCTK_RTCFG_net_driver_portals: /* TCP */
 				sctk_network_init_multirail_portals ( new_rail, nb_rails_portals );
-				break;
+			break;
 #endif
 			case SCTK_RTCFG_net_driver_tcp:
 				sctk_network_init_tcp ( new_rail );

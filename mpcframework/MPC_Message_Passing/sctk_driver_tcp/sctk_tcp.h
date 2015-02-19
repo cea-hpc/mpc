@@ -30,7 +30,6 @@ extern "C"
 #include <sctk_spinlock.h>
 #include <sctk_io_helper.h>
 
-
 /** \brief ROUTE level data structure for TCP
 *
 *   This structure is stored in each \ref sctk_endpoint_s structure
