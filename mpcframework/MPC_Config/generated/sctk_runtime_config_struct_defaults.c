@@ -228,6 +228,21 @@ void sctk_runtime_config_struct_init_net_driver(void * struct_ptr)
 }
 
 /*******************  FUNCTION  *********************/
+void sctk_runtime_config_struct_init_net_driver_config(void * struct_ptr)
+{
+	struct sctk_runtime_config_struct_net_driver_config * obj = struct_ptr;
+	/* Make sure this element is not initialized yet       */
+	/* It allows us to know when we are facing dynamically */
+	/* allocated objects requiring an init                 */
+	if( obj->init_done != 0 ) return;
+
+	/* Simple params : */
+	obj->name = NULL;
+	sctk_runtime_config_struct_init_net_driver(&obj->driver);
+	obj->init_done = 1;
+}
+
+/*******************  FUNCTION  *********************/
 void sctk_runtime_config_struct_init_gate_boolean(void * struct_ptr)
 {
 	struct sctk_runtime_config_struct_gate_boolean * obj = struct_ptr;
@@ -269,7 +284,7 @@ void sctk_runtime_config_struct_init_gate_min_size(void * struct_ptr)
 	if( obj->init_done != 0 ) return;
 
 	/* Simple params : */
-	obj->minsize = 0;
+	obj->value = 0;
 	obj->gatefunc.name = "sctk_rail_gate_minsize";
 	*(void **) &(obj->gatefunc.value) = sctk_runtime_config_get_symbol("sctk_rail_gate_minsize");
 	obj->init_done = 1;
@@ -285,7 +300,7 @@ void sctk_runtime_config_struct_init_gate_max_size(void * struct_ptr)
 	if( obj->init_done != 0 ) return;
 
 	/* Simple params : */
-	obj->maxsize = 0;
+	obj->value = 0;
 	obj->gatefunc.name = "sctk_rail_gate_maxsize";
 	*(void **) &(obj->gatefunc.value) = sctk_runtime_config_get_symbol("sctk_rail_gate_maxsize");
 	obj->init_done = 1;
@@ -315,24 +330,6 @@ void sctk_runtime_config_struct_init_net_gate(void * struct_ptr)
 }
 
 /*******************  FUNCTION  *********************/
-void sctk_runtime_config_struct_init_net_driver_config(void * struct_ptr)
-{
-	struct sctk_runtime_config_struct_net_driver_config * obj = struct_ptr;
-	/* Make sure this element is not initialized yet       */
-	/* It allows us to know when we are facing dynamically */
-	/* allocated objects requiring an init                 */
-	if( obj->init_done != 0 ) return;
-
-	/* Simple params : */
-	obj->name = NULL;
-	sctk_runtime_config_struct_init_net_driver(&obj->driver);
-	/* array */
-	obj->gates = NULL;
-	obj->gates_size = 0;
-	obj->init_done = 1;
-}
-
-/*******************  FUNCTION  *********************/
 void sctk_runtime_config_struct_init_net_rail(void * struct_ptr)
 {
 	struct sctk_runtime_config_struct_net_rail * obj = struct_ptr;
@@ -343,9 +340,13 @@ void sctk_runtime_config_struct_init_net_rail(void * struct_ptr)
 
 	/* Simple params : */
 	obj->name = NULL;
+	obj->priority = 0;
 	obj->device = NULL;
 	obj->topology = NULL;
 	obj->config = NULL;
+	/* array */
+	obj->gates = NULL;
+	obj->gates_size = 0;
 	obj->init_done = 1;
 }
 
@@ -561,112 +562,154 @@ void sctk_runtime_config_reset_struct_default_if_needed(char * structname, void 
 	if( !strcmp( structname , "sctk_runtime_config_struct_allocator") )
 	{
 		sctk_runtime_config_struct_init_allocator( ptr );
+		return;
 	}
 
 	if( !strcmp( structname , "sctk_runtime_config_struct_launcher") )
 	{
 		sctk_runtime_config_struct_init_launcher( ptr );
+		return;
 	}
 
 	if( !strcmp( structname , "sctk_runtime_config_struct_debugger") )
 	{
 		sctk_runtime_config_struct_init_debugger( ptr );
+		return;
 	}
 
 	if( !strcmp( structname , "sctk_runtime_config_struct_net_driver_infiniband") )
 	{
 		sctk_runtime_config_struct_init_net_driver_infiniband( ptr );
+		return;
 	}
 
 	if( !strcmp( structname , "sctk_runtime_config_struct_net_driver_portals") )
 	{
 		sctk_runtime_config_struct_init_net_driver_portals( ptr );
+		return;
 	}
 
 	if( !strcmp( structname , "sctk_runtime_config_struct_net_driver_tcp") )
 	{
 		sctk_runtime_config_struct_init_net_driver_tcp( ptr );
+		return;
 	}
 
 	if( !strcmp( structname , "sctk_runtime_config_struct_net_driver_tcp_rdma") )
 	{
 		sctk_runtime_config_struct_init_net_driver_tcp_rdma( ptr );
-	}
-
-	if( !strcmp( structname , "sctk_runtime_config_struct_gate_boolean") )
-	{
-		sctk_runtime_config_struct_init_gate_boolean( ptr );
-	}
-
-	if( !strcmp( structname , "sctk_runtime_config_struct_gate_probabilistic") )
-	{
-		sctk_runtime_config_struct_init_gate_probabilistic( ptr );
-	}
-
-	if( !strcmp( structname , "sctk_runtime_config_struct_gate_min_size") )
-	{
-		sctk_runtime_config_struct_init_gate_min_size( ptr );
-	}
-
-	if( !strcmp( structname , "sctk_runtime_config_struct_gate_max_size") )
-	{
-		sctk_runtime_config_struct_init_gate_max_size( ptr );
-	}
-
-	if( !strcmp( structname , "sctk_runtime_config_struct_gate_user") )
-	{
-		sctk_runtime_config_struct_init_gate_user( ptr );
+		return;
 	}
 
 	if( !strcmp( structname , "sctk_runtime_config_struct_net_driver_config") )
 	{
 		sctk_runtime_config_struct_init_net_driver_config( ptr );
+		return;
+	}
+
+	if( !strcmp( structname , "sctk_runtime_config_struct_gate_boolean") )
+	{
+		sctk_runtime_config_struct_init_gate_boolean( ptr );
+		return;
+	}
+
+	if( !strcmp( structname , "sctk_runtime_config_struct_gate_probabilistic") )
+	{
+		sctk_runtime_config_struct_init_gate_probabilistic( ptr );
+		return;
+	}
+
+	if( !strcmp( structname , "sctk_runtime_config_struct_gate_min_size") )
+	{
+		sctk_runtime_config_struct_init_gate_min_size( ptr );
+		return;
+	}
+
+	if( !strcmp( structname , "sctk_runtime_config_struct_gate_max_size") )
+	{
+		sctk_runtime_config_struct_init_gate_max_size( ptr );
+		return;
+	}
+
+	if( !strcmp( structname , "sctk_runtime_config_struct_gate_user") )
+	{
+		sctk_runtime_config_struct_init_gate_user( ptr );
+		return;
 	}
 
 	if( !strcmp( structname , "sctk_runtime_config_struct_net_rail") )
 	{
 		sctk_runtime_config_struct_init_net_rail( ptr );
+		return;
 	}
 
 	if( !strcmp( structname , "sctk_runtime_config_struct_net_cli_option") )
 	{
 		sctk_runtime_config_struct_init_net_cli_option( ptr );
+		return;
 	}
 
 	if( !strcmp( structname , "sctk_runtime_config_struct_networks") )
 	{
 		sctk_runtime_config_struct_init_networks( ptr );
+		return;
 	}
 
 	if( !strcmp( structname , "sctk_runtime_config_struct_inter_thread_comm") )
 	{
 		sctk_runtime_config_struct_init_inter_thread_comm( ptr );
+		return;
 	}
 
 	if( !strcmp( structname , "sctk_runtime_config_struct_low_level_comm") )
 	{
 		sctk_runtime_config_struct_init_low_level_comm( ptr );
+		return;
 	}
 
 	if( !strcmp( structname , "sctk_runtime_config_struct_mpc") )
 	{
 		sctk_runtime_config_struct_init_mpc( ptr );
+		return;
 	}
 
 	if( !strcmp( structname , "sctk_runtime_config_struct_openmp") )
 	{
 		sctk_runtime_config_struct_init_openmp( ptr );
+		return;
 	}
 
 	if( !strcmp( structname , "sctk_runtime_config_struct_profiler") )
 	{
 		sctk_runtime_config_struct_init_profiler( ptr );
+		return;
 	}
 
 	if( !strcmp( structname , "sctk_runtime_config_struct_thread") )
 	{
 		sctk_runtime_config_struct_init_thread( ptr );
+		return;
 	}
 
+}
+
+
+/*******************  FUNCTION  *********************/
+void * sctk_runtime_config_get_union_value_offset(char * unionname, void * ptr )
+{
+	if( !strcmp( unionname , "sctk_runtime_config_struct_net_driver") )
+	{
+		struct sctk_runtime_config_struct_net_driver	* obj_net_driver = ptr;
+		return &(obj_net_driver->value);
+	}
+
+	if( !strcmp( unionname , "sctk_runtime_config_struct_net_gate") )
+	{
+		struct sctk_runtime_config_struct_net_gate	* obj_net_gate = ptr;
+		return &(obj_net_gate->value);
+	}
+
+	/* If not found assume sizeof (int) */
+	return (char *)ptr + sizeof(int);
 }
 

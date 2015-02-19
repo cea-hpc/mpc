@@ -19,6 +19,7 @@
 #                                                                      #
 # Authors:                                                             #
 #   - VALAT Sébastien sebastien.valat@cea.fr                           #
+#   - BESNARD Jean-Baptiste jbbesnard@paratools.fr                     #
 #                                                                      #
 ########################################################################
 -->
@@ -38,6 +39,12 @@
 		<xsl:apply-templates select='config'/>
 		<xsl:call-template name="gen-main-reset-function"/>
 		<xsl:call-template name="gen-struct-default"/>
+		<xsl:call-template name="gen-struct-offset"/>
+	</xsl:template>
+
+	<!-- ********************************************************* -->
+	<xsl:template name="gen-struct-name">
+		<xsl:value-of select="concat('struct sctk_runtime_config_struct_',@name)"/>
 	</xsl:template>
 
 	<!-- ********************************************************* -->
@@ -91,10 +98,35 @@
 				<xsl:for-each select="struct">
 					<xsl:value-of select="concat('&#9;if( !strcmp( structname , &quot;sctk_runtime_config_struct_',@name,'&quot;) )&#10;&#9;{&#10;')"/>
 					<xsl:value-of select="concat('&#9;&#9;sctk_runtime_config_struct_init_',@name,'( ptr );&#10;')"/>
+					<xsl:text>&#9;&#9;return;&#10;</xsl:text>
 					<xsl:text>&#9;}&#10;&#10;</xsl:text>
 				</xsl:for-each>
 			</xsl:for-each>
 		</xsl:for-each>
+		<xsl:text>}&#10;&#10;</xsl:text>
+
+	</xsl:template>
+
+	<!-- ********************************************************* -->
+	<xsl:template name="gen-struct-offset">
+		<xsl:text>&#10;/*******************  FUNCTION  *********************/&#10;</xsl:text>
+		<xsl:text>void * sctk_runtime_config_get_union_value_offset(char * unionname, void * ptr )&#10;</xsl:text>
+		<xsl:text>{&#10;</xsl:text>
+		<xsl:for-each select="config">
+			<xsl:for-each select="usertypes">
+				<xsl:for-each select="union">
+					<xsl:value-of select="concat('&#9;if( !strcmp( unionname , &quot;sctk_runtime_config_struct_',@name,'&quot;) )&#10;&#9;{&#10;')"/>
+					<xsl:text>&#9;&#9;</xsl:text>
+					<xsl:call-template name="gen-struct-name"/>
+					<xsl:value-of select="concat('&#9;* obj_',@name,' = ptr;&#10;')"/>
+					<xsl:value-of select="concat('&#9;&#9;return &amp;(obj_',@name,'->value);&#10;')"/>
+
+					<xsl:text>&#9;}&#10;&#10;</xsl:text>
+				</xsl:for-each>
+			</xsl:for-each>
+		</xsl:for-each>
+		<xsl:text>&#9;/* If not found assume sizeof (int) */&#10;</xsl:text>
+		<xsl:text>&#9;return (char *)ptr + sizeof(int);&#10;</xsl:text>
 		<xsl:text>}&#10;&#10;</xsl:text>
 
 	</xsl:template>
@@ -107,11 +139,6 @@
 	<!-- ********************************************************* -->
 	<xsl:template match="usertypes">
 		<xsl:apply-templates select='struct|union|enum'/>
-	</xsl:template>
-
-	<!-- ********************************************************* -->
-	<xsl:template name="gen-struct-name">
-		<xsl:value-of select="concat('struct sctk_runtime_config_struct_',@name)"/>
 	</xsl:template>
 
 	<!-- ********************************************************* -->

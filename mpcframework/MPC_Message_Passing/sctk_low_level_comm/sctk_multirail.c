@@ -22,6 +22,91 @@
 #include "sctk_multirail.h"
 #include "sctk_low_level_comm.h"
 
+#include <stdlib.h>
+
+/************************************************************************/
+/* Rail Gates                                                           */
+/************************************************************************/
+
+/* HERE ARE DEFAULT GATES */
+
+int sctk_rail_gate_boolean( sctk_rail_info_t * rail, sctk_thread_ptp_message_t * message , void * gate_config )
+{
+	struct sctk_runtime_config_struct_gate_boolean * conf = (struct sctk_runtime_config_struct_gate_boolean *)gate_config;
+	return conf->value;
+}
+
+int sctk_rail_gate_probabilistic( sctk_rail_info_t * rail, sctk_thread_ptp_message_t * message , void * gate_config )
+{
+	struct sctk_runtime_config_struct_gate_probabilistic * conf = (struct sctk_runtime_config_struct_gate_probabilistic *)gate_config;
+	
+	int num = ( rand() % 100 );
+
+	return ( num < conf->probability );
+}
+
+int sctk_rail_gate_minsize( sctk_rail_info_t * rail, sctk_thread_ptp_message_t * message , void * gate_config )
+{
+	struct sctk_runtime_config_struct_gate_min_size * conf = (struct sctk_runtime_config_struct_gate_min_size *)gate_config;
+	
+	size_t message_size = SCTK_MSG_SIZE( message );
+	
+	return ( conf->value < message_size );
+}
+
+int sctk_rail_gate_maxsize( sctk_rail_info_t * rail, sctk_thread_ptp_message_t * message , void * gate_config )
+{
+	struct sctk_runtime_config_struct_gate_max_size * conf = (struct sctk_runtime_config_struct_gate_max_size *)gate_config;
+	
+	size_t message_size = SCTK_MSG_SIZE( message );
+	
+	return ( message_size < conf->value );
+}
+
+struct sctk_gate_context
+{
+	int (*func)( sctk_rail_info_t * rail, sctk_thread_ptp_message_t * message , void * gate_config );
+	void * params;
+};
+
+
+static inline void sctk_gate_get_context( struct sctk_runtime_config_struct_net_gate * gate , struct sctk_gate_context * ctx )
+{
+	ctx->func = NULL;
+	ctx->params = NULL;
+
+	if( ! gate )
+		return;
+
+	switch( gate->type )
+	{
+		case SCTK_RTCFG_net_gate_boolean:
+			ctx->func = (int (*)( sctk_rail_info_t *, sctk_thread_ptp_message_t *, void *))gate->value.boolean.gatefunc.value;
+			ctx->params = (void *)&gate->value.boolean;
+		break;
+		case SCTK_RTCFG_net_gate_probabilistic:
+			ctx->func = (int (*)( sctk_rail_info_t *, sctk_thread_ptp_message_t *, void *))gate->value.probabilistic.gatefunc.value;
+			ctx->params = (void *)&gate->value.probabilistic;
+		break;
+		case SCTK_RTCFG_net_gate_minsize:
+			ctx->func = (int (*)( sctk_rail_info_t *, sctk_thread_ptp_message_t *, void *))gate->value.minsize.gatefunc.value;
+			ctx->params = (void *)&gate->value.minsize;		
+		break;
+		case SCTK_RTCFG_net_gate_maxsize:
+			ctx->func = (int (*)( sctk_rail_info_t *, sctk_thread_ptp_message_t *, void *))gate->value.maxsize.gatefunc.value;
+			ctx->params = (void *)&gate->value.maxsize;			
+		break;
+		case SCTK_RTCFG_net_gate_user:
+			ctx->func = (int (*)( sctk_rail_info_t *, sctk_thread_ptp_message_t *, void *))gate->value.user.gatefunc.value;
+			ctx->params = (void *)&gate->value.user;		
+		break;
+		
+		case SCTK_RTCFG_net_gate_NONE:
+		default:
+			sctk_fatal("No such gate type");
+	}
+}
+
 /************************************************************************/
 /* sctk_endpoint_list                                                   */
 /************************************************************************/
@@ -35,7 +120,7 @@ int sctk_endpoint_list_init_entry( sctk_endpoint_list_t * entry, sctk_endpoint_t
 	}
 	
 	/* TO CHANGE */
-	entry->priority = 1;
+	entry->priority = endpoint->rail->runtime_config_rail->priority;
 	
 	if( !endpoint->rail )
 	{
@@ -43,7 +128,8 @@ int sctk_endpoint_list_init_entry( sctk_endpoint_list_t * entry, sctk_endpoint_t
 		return 1;	
 	}
 	
-	entry->gate = endpoint->rail->gate;
+	entry->gates = endpoint->rail->runtime_config_rail->gates;
+	entry->gate_count = endpoint->rail->runtime_config_rail->gates_size;
 	
 	entry->endpoint = endpoint;
 
@@ -327,10 +413,26 @@ void sctk_multirail_send_message( sctk_thread_ptp_message_t *msg )
 
 		while( cur )
 		{
-			if( (cur->endpoint->rail->gate)( cur->endpoint->rail, msg ) )
+			int this_rail_has_been_elected = 1;
+			
+			int cur_gate;
+			
+			/* Note that no gate is equivalent to being elected */
+			for( cur_gate = 0 ; cur_gate < cur->gate_count ; cur_gate++ )
 			{
-				//sctk_warning("RAIL %d", cur->endpoint->rail->rail_number);
-				/* This route has been elected */
+				struct sctk_gate_context gate_ctx;
+				sctk_gate_get_context( &cur->gates[ cur_gate ] , &gate_ctx );
+				
+				if( ( gate_ctx.func )( cur->endpoint->rail, msg, gate_ctx.params ) == 0 )
+				{
+					this_rail_has_been_elected = 0;
+					break;
+				}
+				
+			}
+			
+			if( this_rail_has_been_elected )
+			{
 				break;
 			}
 			
@@ -339,11 +441,14 @@ void sctk_multirail_send_message( sctk_thread_ptp_message_t *msg )
 		
 		if( cur )
 		{
+			//sctk_error("RAIL %d", cur->endpoint->rail->rail_number );
 			sctk_prepare_send_message_to_network_reorder ( msg );
 			(cur->endpoint->rail->send_message_endpoint)( msg, cur->endpoint );
 		}
 		else
 		{
+			sctk_error("NO ELECTION");
+			CRASH();
 			retry = 1;
 		}
 		

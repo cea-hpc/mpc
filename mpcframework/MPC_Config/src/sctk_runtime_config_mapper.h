@@ -101,7 +101,7 @@ void sctk_runtime_config_map_struct( const struct sctk_runtime_config_entry_meta
                                      void * struct_ptr,const struct sctk_runtime_config_entry_meta * current,xmlNodePtr node);
 void sctk_runtime_config_map_union( const struct sctk_runtime_config_entry_meta *config_meta,
                                     void * value,const struct sctk_runtime_config_entry_meta * current,xmlNodePtr node);
-
+void* sctk_runtime_config_get_symbol(char * symbol_name);
 /********************************* FUNCTION *********************************/
 /* type supports */
 int sctk_runtime_config_map_entry_to_int(xmlNodePtr node);

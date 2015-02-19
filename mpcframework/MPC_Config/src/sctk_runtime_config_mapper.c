@@ -428,6 +428,8 @@ void sctk_runtime_config_map_array(const struct sctk_runtime_config_entry_meta *
 		*array = calloc(cnt,current->size);
 		*array_size = cnt;
 
+		sctk_error("ARRAY %p", *array);
+
 		/* loop on all child nodes */
 		int i = 0;
 		node = xmlFirstElementChild(node);
@@ -496,7 +498,7 @@ void sctk_runtime_config_map_union( const struct sctk_runtime_config_entry_meta 
 	*(int*)value = entry->offset;
 
 	/* skip enum to go to bas adress of next element */
-	value += sizeof(int);
+	value = sctk_runtime_config_get_union_value_offset(current->name, value );
 
 	/* call function to apply to good type */
 	sctk_runtime_config_map_value(config_meta,value,entry->inner_type,child);
@@ -529,6 +531,7 @@ void sctk_runtime_config_map_value( const struct sctk_runtime_config_entry_meta 
 	{
 		if (!strcmp(type_name, "funcptr"))
 		{
+			
 			*(struct sctk_runtime_config_funcptr*) value = sctk_runtime_config_map_entry_to_funcptr(node);
 		}
 		else if (!strncmp(type_name, "enum", 4))
@@ -696,6 +699,10 @@ void* sctk_runtime_config_get_symbol(char * symbol_name)
     char * msg = dlerror();
     sctk_warning("Fail to load config symbol %s : %s", symbol_name, msg);
   }
+  
+  
+  sctk_warning(" %s -- %p", symbol_name, symbol);
+  
   return symbol;
 }
 

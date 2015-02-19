@@ -19,6 +19,7 @@
 #                                                                      #
 # Authors:                                                             #
 #   - VALAT Sebastien sebastien.valat@cea.fr                           #
+#   - BESNARD Jean-Baptiste jbbesnard@paratools.fr                     #
 #                                                                      #
 ########################################################################
 -->
@@ -75,6 +76,7 @@
 		<xsl:apply-templates select="config/usertypes"/>
 		<xsl:text>void sctk_runtime_config_reset(struct sctk_runtime_config * config);&#10;</xsl:text>
 		<xsl:text>void sctk_runtime_config_reset_struct_default_if_needed(char * structname, void * ptr );&#10;</xsl:text>
+		<xsl:text>void * sctk_runtime_config_get_union_value_offset(char * unionname, void * ptr );&#10;</xsl:text>
 	</xsl:template>
 
 	<!-- ********************************************************* -->

@@ -510,6 +510,21 @@ It can contain a node of type :
 .It Cm tcprdma
  of type net_driver_tcp_rdma. 
 .El
+.Sh ENTRIES OF TYPE net_driver_config
+Contain a list of driver configuration reused by rail definitions.
+.Pp
+It support parameters :
+.Pp
+.Bl -tag -width Ds
+.It Cm name
+Type is string. 
+.Pp name
+Name of the driver configuration to be referenced in rail definitions.
+.It Cm driver
+Type is net_driver. 
+.Pp driver
+Define the related driver to use and its configuration.
+.El
 .Sh ENTRIES OF TYPE gate_boolean
 This gate applies given thruth value to messages.
 .Pp
@@ -546,9 +561,9 @@ This gate uses a given rail if size is at least a given value.
 It support parameters :
 .Pp
 .Bl -tag -width Ds
-.It Cm minsize
+.It Cm value
 Type is size. 
-.Pp minsize
+.Pp value
 Minimum size to choose this rail (with units)
 .It Cm gatefunc
 Type is function pointer. Default value is sctk_rail_gate_minsize. 
@@ -561,9 +576,9 @@ This gate uses a given rail if size is at most a given value.
 It support parameters :
 .Pp
 .Bl -tag -width Ds
-.It Cm maxsize
+.It Cm value
 Type is size. 
-.Pp maxsize
+.Pp value
 Maximum size to choose this rail (with units)
 .It Cm gatefunc
 Type is function pointer. Default value is sctk_rail_gate_maxsize. 
@@ -598,25 +613,6 @@ It can contain a node of type :
 .It Cm user
  of type gate_probabilistic. 
 .El
-.Sh ENTRIES OF TYPE net_driver_config
-Contain a list of driver configuration reused by rail definitions.
-.Pp
-It support parameters :
-.Pp
-.Bl -tag -width Ds
-.It Cm name
-Type is string. 
-.Pp name
-Name of the driver configuration to be referenced in rail definitions.
-.It Cm driver
-Type is net_driver. 
-.Pp driver
-Define the related driver to use and its configuration.
-.It Cm gates
-Type is array of . 
-.Pp gates
-List of gates to be applied in this config.
-.El
 .Sh ENTRIES OF TYPE net_rail
 Define a rail which is a name, a device associate to a driver and a routing topology.
 .Pp
@@ -627,6 +623,10 @@ It support parameters :
 Type is string. 
 .Pp name
 Define the name of current rail.
+.It Cm priority
+Type is int. Default value is 0. 
+.Pp priority
+Number which defines the order in which routes are tested (higher first).
 .It Cm device
 Type is string. 
 .Pp device
@@ -639,6 +639,10 @@ Define the network topology to apply on this rail.
 Type is string. 
 .Pp config
 Define the driver config to use for this rail.
+.It Cm gates
+Type is array of . 
+.Pp gates
+List of gates to be applied in this config.
 .El
 .Sh ENTRIES OF TYPE net_cli_option
 Define a specific configuration for a network provided by '-net'.

@@ -83,6 +83,16 @@
 		</union>
 
 		<!-- ############################## -->
+		<!-- #      DRIVERS  CONFIG       # -->
+		<!-- ############################## -->
+
+		<!-- define a network driver config -->
+		<struct name="net_driver_config" doc="Contain a list of driver configuration reused by rail definitions.">
+			<param name="name" type="string" doc="Name of the driver configuration to be referenced in rail definitions." />
+			<param name="driver" type="net_driver" doc="Define the related driver to use and its configuration." />
+		</struct>
+
+		<!-- ############################## -->
 		<!-- #         RAIL GATES         # -->
 		<!-- ############################## -->
 		
@@ -99,12 +109,12 @@
 		</struct>
 		
 		<struct name="gate_min_size" doc="This gate uses a given rail if size is at least a given value.">
-			<param name="minsize" type="size" doc="Minimum size to choose this rail (with units)"/>
+			<param name="value" type="size" doc="Minimum size to choose this rail (with units)"/>
 			<param name="gatefunc" type="funcptr" default="sctk_rail_gate_minsize" doc="Function to be called for this gate"/>
 		</struct>
 		
 		<struct name="gate_max_size" doc="This gate uses a given rail if size is at most a given value.">
-			<param name="maxsize" type="size" doc="Maximum size to choose this rail (with units)"/>
+			<param name="value" type="size" doc="Maximum size to choose this rail (with units)"/>
 			<param name="gatefunc" type="funcptr" default="sctk_rail_gate_maxsize" doc="Function to be called for this gate"/>
 		</struct>
 		
@@ -120,30 +130,21 @@
 			<choice name="maxsize" type="gate_max_size" />
 			<choice name="user" type="gate_probabilistic" />
 		</union>	
-
-
-		<!-- ############################## -->
-		<!-- #      DRIVERS  CONFIG       # -->
-		<!-- ############################## -->
-
-		<!-- define a network driver config -->
-		<struct name="net_driver_config" doc="Contain a list of driver configuration reused by rail definitions.">
-			<param name="name" type="string" doc="Name of the driver configuration to be referenced in rail definitions." />
-			<param name="driver" type="net_driver" doc="Define the related driver to use and its configuration." />
-			<array name="gates" entry-name="gate" type="net_gate" doc="List of gates to be applied in this config." />
-		</struct>
+		
 
 		<!-- ############################## -->
 		<!-- #          RAIL              # -->
 		<!-- ############################## -->
-			
+	
 
 		<!-- Structure for rail definition -->
 		<struct name="net_rail" doc="Define a rail which is a name, a device associate to a driver and a routing topology.">
 			<param name="name" type="string" doc="Define the name of current rail." />
+			<param name="priority" type="int" doc="Number which defines the order in which routes are tested (higher first)." default="0"  />
 			<param name="device" type="string" doc="Define the name of the device to use in this rail." />
 			<param name="topology" type="string" doc="Define the network topology to apply on this rail." />
 			<param name="config" type="string" doc="Define the driver config to use for this rail." />
+			<array name="gates" entry-name="gate" type="net_gate" doc="List of gates to be applied in this config." />
 		</struct>
 
 		<!-- ############################## -->

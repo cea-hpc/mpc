@@ -265,6 +265,16 @@ struct sctk_runtime_config_struct_net_driver
 };
 
 /******************************** STRUCTURE *********************************/
+/**Contain a list of driver configuration reused by rail definitions.**/
+struct sctk_runtime_config_struct_net_driver_config
+{	int init_done;
+	/**Name of the driver configuration to be referenced in rail definitions.**/
+	char * name;
+	/**Define the related driver to use and its configuration.**/
+	struct sctk_runtime_config_struct_net_driver driver;
+};
+
+/******************************** STRUCTURE *********************************/
 /**This gate applies given thruth value to messages.**/
 struct sctk_runtime_config_struct_gate_boolean
 {	int init_done;
@@ -289,7 +299,7 @@ struct sctk_runtime_config_struct_gate_probabilistic
 struct sctk_runtime_config_struct_gate_min_size
 {	int init_done;
 	/**Minimum size to choose this rail (with units)**/
-	size_t minsize;
+	size_t value;
 	/**Function to be called for this gate**/
 	struct sctk_runtime_config_funcptr gatefunc;
 };
@@ -299,7 +309,7 @@ struct sctk_runtime_config_struct_gate_min_size
 struct sctk_runtime_config_struct_gate_max_size
 {	int init_done;
 	/**Maximum size to choose this rail (with units)**/
-	size_t maxsize;
+	size_t value;
 	/**Function to be called for this gate**/
 	struct sctk_runtime_config_funcptr gatefunc;
 };
@@ -339,31 +349,23 @@ struct sctk_runtime_config_struct_net_gate
 };
 
 /******************************** STRUCTURE *********************************/
-/**Contain a list of driver configuration reused by rail definitions.**/
-struct sctk_runtime_config_struct_net_driver_config
-{	int init_done;
-	/**Name of the driver configuration to be referenced in rail definitions.**/
-	char * name;
-	/**Define the related driver to use and its configuration.**/
-	struct sctk_runtime_config_struct_net_driver driver;
-	/**List of gates to be applied in this config.**/
-	struct sctk_runtime_config_struct_net_gate * gates;
-	/** Number of elements in gates array. **/
-	int gates_size;
-};
-
-/******************************** STRUCTURE *********************************/
 /**Define a rail which is a name, a device associate to a driver and a routing topology.**/
 struct sctk_runtime_config_struct_net_rail
 {	int init_done;
 	/**Define the name of current rail.**/
 	char * name;
+	/**Number which defines the order in which routes are tested (higher first).**/
+	int priority;
 	/**Define the name of the device to use in this rail.**/
 	char * device;
 	/**Define the network topology to apply on this rail.**/
 	char * topology;
 	/**Define the driver config to use for this rail.**/
 	char * config;
+	/**List of gates to be applied in this config.**/
+	struct sctk_runtime_config_struct_net_gate * gates;
+	/** Number of elements in gates array. **/
+	int gates_size;
 };
 
 /******************************** STRUCTURE *********************************/

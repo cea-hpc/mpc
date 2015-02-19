@@ -26,6 +26,7 @@
 
 #include <sctk_route.h>
 #include <sctk_spinlock.h>
+#include <sctk_runtime_config_struct.h>
 
 /************************************************************************/
 /* sctk_endpoint_list                                                   */
@@ -35,7 +36,9 @@ typedef struct sctk_endpoint_list_s
 {
 	int priority;
 	sctk_endpoint_t * endpoint;
-	rail_gate gate;
+	
+	struct sctk_runtime_config_struct_net_gate * gates;
+	int gate_count;
 	
 	struct sctk_endpoint_list_s * next;
 	struct sctk_endpoint_list_s * prev;

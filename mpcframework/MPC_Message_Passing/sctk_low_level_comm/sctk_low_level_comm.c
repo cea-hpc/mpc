@@ -370,7 +370,11 @@ restart:
 
 	/* End of rails computing. Now allocate ! */
 
-	for ( k = 0; k < cli_option->rails_size; ++k )
+	/* HERE note that we are going in reverse order so that
+	 * rails are initialized in the same order than in the config
+	 * this is important if no priority is given to make sure
+	 * that the decalration order will be the gate order */
+	for ( k = (cli_option->rails_size - 1); 0 <= k ; k-- )
 	{
 		/* For each RAIL */
 		struct sctk_runtime_config_struct_net_rail *rail_config_struct = sctk_get_rail_config_by_name ( cli_option->rails[k] );

@@ -177,6 +177,13 @@
 -e </xs:choice>\
 -e </xs:complexType>\
 -e <!-- ********************************************************* -->\
+-e <xs:complexType name='user_type_net_driver_config'>\
+-e <xs:all>\
+-e <xs:element minOccurs='0' name='name' type='xs:string'/>\
+-e <xs:element minOccurs='0' name='driver' type='user_type_net_driver'/>\
+-e </xs:all>\
+-e </xs:complexType>\
+-e <!-- ********************************************************* -->\
 -e <xs:complexType name='user_type_gate_boolean'>\
 -e <xs:all>\
 -e <xs:element minOccurs='0' name='value' type='xs:integer'/>\
@@ -205,7 +212,7 @@
 -e <!-- ********************************************************* -->\
 -e <xs:complexType name='user_type_gate_min_size'>\
 -e <xs:all>\
--e <xs:element minOccurs='0' name='minsize'>\
+-e <xs:element minOccurs='0' name='value'>\
 -e <xs:simpleType>\
 -e <xs:restriction base='xs:string'>\
 -e <xs:pattern value='[0-9]+[ ]?[K|M|G|T|P]?B'/>\
@@ -224,7 +231,7 @@
 -e <!-- ********************************************************* -->\
 -e <xs:complexType name='user_type_gate_max_size'>\
 -e <xs:all>\
--e <xs:element minOccurs='0' name='maxsize'>\
+-e <xs:element minOccurs='0' name='value'>\
 -e <xs:simpleType>\
 -e <xs:restriction base='xs:string'>\
 -e <xs:pattern value='[0-9]+[ ]?[K|M|G|T|P]?B'/>\
@@ -263,10 +270,13 @@
 -e </xs:choice>\
 -e </xs:complexType>\
 -e <!-- ********************************************************* -->\
--e <xs:complexType name='user_type_net_driver_config'>\
+-e <xs:complexType name='user_type_net_rail'>\
 -e <xs:all>\
 -e <xs:element minOccurs='0' name='name' type='xs:string'/>\
--e <xs:element minOccurs='0' name='driver' type='user_type_net_driver'/>\
+-e <xs:element minOccurs='0' name='priority' type='xs:integer'/>\
+-e <xs:element minOccurs='0' name='device' type='xs:string'/>\
+-e <xs:element minOccurs='0' name='topology' type='xs:string'/>\
+-e <xs:element minOccurs='0' name='config' type='xs:string'/>\
 -e <xs:element minOccurs='0' name='gates'>\
 -e <xs:complexType>\
 -e <xs:sequence>\
@@ -274,15 +284,6 @@
 -e </xs:sequence>\
 -e </xs:complexType>\
 -e </xs:element>\
--e </xs:all>\
--e </xs:complexType>\
--e <!-- ********************************************************* -->\
--e <xs:complexType name='user_type_net_rail'>\
--e <xs:all>\
--e <xs:element minOccurs='0' name='name' type='xs:string'/>\
--e <xs:element minOccurs='0' name='device' type='xs:string'/>\
--e <xs:element minOccurs='0' name='topology' type='xs:string'/>\
--e <xs:element minOccurs='0' name='config' type='xs:string'/>\
 -e </xs:all>\
 -e </xs:complexType>\
 -e <!-- ********************************************************* -->\
