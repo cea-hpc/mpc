@@ -11648,6 +11648,11 @@ PMPI_Gather (void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 	mpi_check_count (sendcnt, comm);
 	mpi_check_type (sendtype, comm);
     } else {
+      if(MPI_IN_PLACE != sendbuf){
+	mpi_check_buf (sendbuf, comm);
+	mpi_check_count (sendcnt, comm);
+	mpi_check_type (sendtype, comm);
+      }
 	mpi_check_buf (recvbuf, comm);
 	mpi_check_count (recvcnt, comm);
 	mpi_check_type (recvtype, comm);
