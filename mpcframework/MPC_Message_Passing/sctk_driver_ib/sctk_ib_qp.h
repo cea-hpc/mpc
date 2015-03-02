@@ -170,7 +170,7 @@ struct ibv_srq *sctk_ib_srq_init ( struct sctk_ib_rail_info_s *rail_ib,  struct 
 
 struct ibv_srq_init_attr sctk_ib_srq_init_attr ( struct sctk_ib_rail_info_s *rail_ib );
 
-int sctk_ib_qp_send_ibuf ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *remote, sctk_ibuf_t *ibuf, int is_control_message );
+int sctk_ib_qp_send_ibuf ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *remote, sctk_ibuf_t *ibuf );
 
 void sctk_ib_qp_release_entry ( struct sctk_ib_rail_info_s *rail_ib,  sctk_ib_qp_t *remote );
 

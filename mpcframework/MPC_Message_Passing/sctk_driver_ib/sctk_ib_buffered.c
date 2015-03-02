@@ -141,7 +141,7 @@ int sctk_ib_buffered_prepare_msg ( sctk_rail_info_t *rail,
 
 		/* Recalculate size and send */
 		sctk_ibuf_prepare ( rail_ib, remote, ibuf, payload_size + IBUF_GET_BUFFERED_SIZE );
-		sctk_ib_qp_send_ibuf ( rail_ib, remote, ibuf, 0 );
+		sctk_ib_qp_send_ibuf ( rail_ib, remote, ibuf );
 
 		buffer_index++;
 	}

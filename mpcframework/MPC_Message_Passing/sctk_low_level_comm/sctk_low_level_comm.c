@@ -398,7 +398,7 @@ restart:
 #ifdef MPC_USE_INFINIBAND
 
 			case SCTK_RTCFG_net_driver_infiniband: /* INFINIBAND */
-				sctk_network_init_multirail_ib ( new_rail, nb_rails_infiniband );
+				sctk_network_init_mpi_ib ( new_rail );
 			break;
 #endif
 #ifdef MPC_USE_PORTALS

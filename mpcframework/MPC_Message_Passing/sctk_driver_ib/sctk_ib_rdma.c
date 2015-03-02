@@ -326,7 +326,7 @@ sctk_ib_rdma_prepare_data_write ( sctk_rail_info_t *rail,
 	                            IBV_SEND_SIGNALED, IBUF_RELEASE );
 
 	sctk_ib_qp_send_ibuf ( &rdma->remote_rail->network.ib,
-	                       route->data.ib.remote, ibuf, 0 );
+	                       route->data.ib.remote, ibuf);
 
 
 #endif
@@ -372,7 +372,7 @@ sctk_ib_rdma_prepare_done_write ( sctk_rail_info_t *rail, sctk_ibuf_t *incoming_
 	IBUF_SET_PROTOCOL ( ibuf->buffer, SCTK_IB_RDMA_PROTOCOL );
 	IBUF_SET_RDMA_TYPE ( rdma_header, rdma_done_type );
 
-	sctk_ib_qp_send_ibuf ( rail_ib, rdma->remote_peer, ibuf, 0 );
+	sctk_ib_qp_send_ibuf ( rail_ib, rdma->remote_peer, ibuf);
 #endif
 
 	return src_msg_header;
@@ -432,7 +432,7 @@ static void sctk_ib_rdma_send_ack ( sctk_rail_info_t *rail, sctk_thread_ptp_mess
 
 	/* Send message */
 	remote = send_header->rdma.remote_peer;
-	sctk_ib_qp_send_ibuf ( &rdma->remote_rail->network.ib, remote, ibuf, 0 );
+	sctk_ib_qp_send_ibuf ( &rdma->remote_rail->network.ib, remote, ibuf);
 	sctk_nodebug ( "Send ACK to rail %d for task %d", rdma->remote_rail->rail_number, SCTK_MSG_SRC_TASK ( msg ) );
 
 	send_header->rdma.local.send_ack_timestamp = sctk_ib_prof_get_time_stamp();

@@ -979,7 +979,7 @@ void sctk_ibuf_rdma_check_piggyback ( sctk_ib_rail_info_t *rail_ib, sctk_ibuf_re
 
 		/* Send the piggyback. This event will generate an event to
 		 * the CQ */
-		ret = sctk_ib_qp_send_ibuf ( rail_ib, remote, tail, 1 );
+		ret = sctk_ib_qp_send_ibuf ( rail_ib, remote, tail);
 		assume ( ret == 1 );
 	}
 	else

@@ -125,7 +125,7 @@ static void sctk_network_send_message_ib ( sctk_thread_ptp_message_t *msg, sctk_
 			goto buffered;
 
 		/* Send message */
-		sctk_ib_qp_send_ibuf ( rail_ib, remote, ibuf, is_control_message );
+		sctk_ib_qp_send_ibuf ( rail_ib, remote, ibuf );
 		sctk_complete_and_free_message ( msg );
 		PROF_INC ( rail_ib->rail, ib_eager_nb );
 		goto exit;

@@ -407,7 +407,7 @@ void sctk_network_init_multirail_ib ( sctk_rail_info_t *new_rail , int max_rails
 		}
 
 		sctk_network_ib_set_rail_data ( rails_nb );
-		sctk_network_init_mpi_ib ( rails[rails_nb], rails_nb );
+		sctk_network_init_mpi_ib ( rails[rails_nb] );
 	}
 	else
 		if ( config->driver.value.infiniband.network_type == 0 )

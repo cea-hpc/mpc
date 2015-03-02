@@ -133,7 +133,7 @@ sctk_network_send_message_ib ( sctk_thread_ptp_message_t *msg, sctk_rail_info_t 
 			goto buffered;
 
 		/* Send message */
-		sctk_ib_qp_send_ibuf ( rail_ib, remote, ibuf, is_control_message );
+		sctk_ib_qp_send_ibuf ( rail_ib, remote, ibuf );
 		sctk_complete_and_free_message ( msg );
 		PROF_INC ( rail_ib->rail, ib_eager_nb );
 
@@ -165,7 +165,86 @@ rdma:
 	ibuf = sctk_ib_rdma_prepare_req ( rail, remote, msg, size, -1 );
 
 	/* Send message */
-	sctk_ib_qp_send_ibuf ( rail_ib, remote, ibuf, 0 );
+	sctk_ib_qp_send_ibuf ( rail_ib, remote, ibuf);
+	sctk_ib_rdma_prepare_send_msg ( rail_ib, msg, size );
+	PROF_INC ( rail_ib->rail, ib_rdma_nb );
+exit:
+	{}
+
+	PROF_TIME_END ( rail, ib_send_message );
+}
+
+
+
+static void sctk_network_send_message_ib_endpoint ( sctk_thread_ptp_message_t *msg , sctk_endpoint_t *endpoint )
+{
+	sctk_rail_info_t * rail = endpoint->rail;
+	sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
+	LOAD_CONFIG ( rail_ib );
+	sctk_ib_route_info_t *route_data;
+	sctk_ib_qp_t *remote;
+	sctk_ibuf_t *ibuf;
+	size_t size;
+	specific_message_tag_t tag = SCTK_MSG_SPECIFIC_TAG ( msg );
+
+	route_data = &endpoint->data.ib;
+	remote = route_data->remote;
+
+	/* Check if the remote task is in low mem mode */
+	size = SCTK_MSG_SIZE ( msg ) + sizeof ( sctk_thread_ptp_message_body_t );
+
+	sctk_ib_prof_qp_write ( remote->rank, size, sctk_get_time_stamp(), PROF_QP_SEND );
+
+	/* *
+	*
+	*  We switch between available protocols
+	*
+	* */
+	if ( ( ( sctk_ibuf_rdma_get_remote_state_rts ( remote ) == STATE_CONNECTED )
+	        && ( size + IBUF_GET_EAGER_SIZE + IBUF_RDMA_GET_SIZE <= sctk_ibuf_rdma_get_eager_limit ( remote ) ) )
+	        || ( size + IBUF_GET_EAGER_SIZE <= config->eager_limit ) )
+	{
+		sctk_nodebug ( "Eager" );
+		ibuf = sctk_ib_eager_prepare_msg ( rail_ib, remote, msg, size, -1, 0 );
+
+		/* Actually, it is possible to get a NULL pointer for ibuf. We falback to buffered */
+		if ( ibuf == NULL )
+			goto buffered;
+
+		/* Send message */
+		sctk_ib_qp_send_ibuf ( rail_ib, remote, ibuf );
+		sctk_complete_and_free_message ( msg );
+		PROF_INC ( rail_ib->rail, ib_eager_nb );
+
+		/* Remote profiling */
+		sctk_ibuf_rdma_update_remote ( rail_ib, remote, size );
+		goto exit;
+	}
+
+buffered:
+
+	/***** BUFFERED EAGER CHANNEL *****/
+	if ( size <= config->buffered_limit )
+	{
+		sctk_nodebug ( "Buffered" );
+		sctk_ib_buffered_prepare_msg ( rail, remote, msg, size );
+		sctk_complete_and_free_message ( msg );
+		PROF_INC ( rail_ib->rail, ib_buffered_nb );
+
+		/* Remote profiling */
+		sctk_ibuf_rdma_update_remote ( rail_ib, remote, size );
+
+		goto exit;
+	}
+
+	/***** RDMA RENDEZVOUS CHANNEL *****/
+rdma:
+	{}
+	sctk_nodebug ( "Size of message: %lu", size );
+	ibuf = sctk_ib_rdma_prepare_req ( rail, remote, msg, size, -1 );
+
+	/* Send message */
+	sctk_ib_qp_send_ibuf ( rail_ib, remote, ibuf );
 	sctk_ib_rdma_prepare_send_msg ( rail_ib, msg, size );
 	PROF_INC ( rail_ib->rail, ib_rdma_nb );
 exit:
@@ -784,6 +863,24 @@ sctk_network_connection_from_ib ( int from, int to, sctk_rail_info_t *rail )
 	sctk_ib_cm_connect_from ( from, to, rail );
 }
 
+
+
+int sctk_send_message_from_network_mpi_ib ( sctk_thread_ptp_message_t *msg )
+{
+	int ret = sctk_send_message_from_network_reorder ( msg );
+
+	if ( ret == REORDER_NO_NUMBERING )
+	{
+		/*
+		  No reordering
+		*/
+		sctk_send_message_try_check ( msg, 1 );
+	}
+
+	return ret;
+}
+
+
 void sctk_network_initialize_leader_task_mpi_ib ( sctk_rail_info_t *rail )
 {
 	sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
@@ -816,16 +913,24 @@ void sctk_network_finalize_task_mpi_ib ( sctk_rail_info_t *rail )
 	sctk_ib_prof_finalize ( &rail->network.ib );
 }
 
-void sctk_network_init_mpi_ib ( sctk_rail_info_t *rail, int ib_rail_nb )
+
+void sctk_network_init_mpi_ib ( sctk_rail_info_t *rail )
 {
 	/* XXX: memory never freed */
 	char *network_name = sctk_malloc ( 256 );
+
+	/* Retrieve config pointers */
+	struct sctk_runtime_config_struct_net_rail *rail_config = rail->runtime_config_rail;
+	struct sctk_runtime_config_struct_net_driver_config *driver_config = rail->runtime_config_driver_config;
+
+	/* Register topology */
+	sctk_rail_init_route ( rail, rail_config->topology );
 
 	/* Infiniband Init */
 	sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
 	memset ( rail_ib, 0, sizeof ( sctk_ib_rail_info_t ) );
 	rail_ib->rail = rail;
-	rail_ib->rail_nb = ib_rail_nb;
+	rail_ib->rail_nb = rail->rail_number;
 
 	/* Profiler init */
 	sctk_ib_prof_mem_init ( rail_ib );
@@ -885,7 +990,7 @@ void sctk_network_init_mpi_ib ( sctk_rail_info_t *rail, int ib_rail_nb )
 
 	rail->connect_to = sctk_network_connection_to_ib;
 	rail->connect_from = sctk_network_connection_from_ib;
-	rail->send_message = sctk_network_send_message_ib;
+	rail->send_message = sctk_network_send_message_ib_endpoint;
 	rail->notify_recv_message = sctk_network_notify_recv_message_ib;
 	rail->notify_matching_message = sctk_network_notify_matching_message_ib;
 	rail->notify_perform_message = sctk_network_notify_perform_message_ib;
@@ -893,7 +998,12 @@ void sctk_network_init_mpi_ib ( sctk_rail_info_t *rail, int ib_rail_nb )
 	rail->notify_any_source_message = sctk_network_notify_any_source_message_ib;
 	rail->network_name = network_name;
 	rail->on_demand_connection = sctk_on_demand_connection_ib;
+	rail->send_message_from_network = sctk_send_message_from_network_mpi_ib;
 
+	/* Bootstrap a ring on this network */
 	sctk_ib_cm_connect_ring ( rail, rail->route, rail->route_init );
+	
+	sctk_ib_topology_init_task ( rail, sctk_thread_get_vp() );
+	rail->initialize_leader_task ( rail );
 }
 #endif

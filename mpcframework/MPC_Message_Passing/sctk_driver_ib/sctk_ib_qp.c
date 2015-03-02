@@ -788,9 +788,8 @@ static inline void __send_ibuf ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp
 }
 
 /* Send an ibuf to a remote.
- * is_control_message: if the message is a control message
  */
-int sctk_ib_qp_send_ibuf ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *remote, sctk_ibuf_t *ibuf, int is_control_message )
+int sctk_ib_qp_send_ibuf ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *remote, sctk_ibuf_t *ibuf )
 {
 #ifdef IB_DEBUG
 
