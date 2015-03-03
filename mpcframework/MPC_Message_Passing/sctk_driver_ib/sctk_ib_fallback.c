@@ -65,16 +65,15 @@ static void sctk_network_send_message_ib ( sctk_thread_ptp_message_t *msg, sctk_
 	sctk_ibuf_t *ibuf;
 	size_t size;
 	char is_control_message = 0;
-	specific_message_tag_t tag = SCTK_MSG_SPECIFIC_TAG ( msg );
+
 
 	sctk_nodebug ( "send message through rail %d to %d", rail->rail_number, SCTK_MSG_DEST_PROCESS ( msg ) );
-	sctk_nodebug ( "Send message with tag %d", SCTK_MSG_SPECIFIC_TAG ( msg ) );
 
 	/* Determine the route to used */
-	if ( IS_PROCESS_SPECIFIC_MESSAGE_TAG ( tag ) )
+	if ( 0 )
 	{
 
-		if ( IS_PROCESS_SPECIFIC_CONTROL_MESSAGE ( tag ) )
+		if ( 0 )
 		{
 			is_control_message = 1;
 			/* send a message with no_ondemand connexion */

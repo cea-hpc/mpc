@@ -56,6 +56,7 @@ typedef struct
 	void * ( *tcp_thread ) ( struct sctk_endpoint_s * ); /**< Function to call when registering a route (RDMA/MULTIRAIL/TCP) */
 } sctk_tcp_rail_info_t;
 
+
 void sctk_network_init_tcp ( sctk_rail_info_t *rail );
 
 #ifdef __cplusplus

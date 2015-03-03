@@ -217,9 +217,7 @@ sctk_network_send_message_multirail_ib ( sctk_thread_ptp_message_t *msg )
 #endif
 	sctk_prepare_send_message_to_network_reorder ( msg );
 
-	const specific_message_tag_t tag = SCTK_MSG_SPECIFIC_TAG ( msg );
-
-	if ( IS_PROCESS_SPECIFIC_CONTROL_MESSAGE ( tag ) )
+	if ( 0 )
 	{
 		i = sctk_network_ib_get_rail_signalization();
 	}

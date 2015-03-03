@@ -160,11 +160,6 @@ static void sctk_network_send_message_tcp_rdma ( sctk_thread_ptp_message_t *msg,
 	sctk_endpoint_t *tmp;
 	int fd;
 
-	if ( IS_PROCESS_SPECIFIC_MESSAGE_TAG ( SCTK_MSG_SPECIFIC_TAG ( msg ) ) )
-	{
-		not_reachable();
-	}
-
 	sctk_nodebug ( "send message through rail %d", rail->rail_number );
 
 	tmp = sctk_rail_get_any_route_to_task_or_on_demand ( rail, SCTK_MSG_DEST_TASK ( msg ) );

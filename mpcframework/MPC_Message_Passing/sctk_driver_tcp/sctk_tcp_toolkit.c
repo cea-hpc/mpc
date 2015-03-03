@@ -39,6 +39,7 @@
 #include <sctk_spinlock.h>
 #include <sctk_net_tools.h>
 #include <errno.h>
+#include <sctk_control_messages.h>
 
 /********************************************************************/
 /* Connection Setup                                                 */
@@ -154,6 +155,7 @@ static int sctk_tcp_connect_to ( char *name_init, sctk_rail_info_t *rail )
 			else
 			{
 				perror ( "connect" );
+				sctk_abort();
 			}
 
 			close ( clientsock_fd );
@@ -322,22 +324,35 @@ static void sctk_tcp_add_static_route ( int dest, int fd, sctk_rail_info_t *rail
 /* Route Hooks (Dynamic routes)                                     */
 /********************************************************************/
 
-static void sctk_network_connection_to_tcp ( int from, int to, sctk_rail_info_t *rail )
+struct sctk_tcp_connection_context
 {
-	int dest_socket;
+	int from;
+	int to;
 	char dest_connection_infos[MAX_STRING_SIZE];
+};
 
-	/*Recv connection informations*/
-	sctk_route_messages_recv ( from, to, SCTK_PROCESS_SPECIFIC_MESSAGE_TAG_W_ORDERING, 0, dest_connection_infos, MAX_STRING_SIZE );
 
-	
-	sctk_error("TO TCP %d ===> %d (%s)", from, to, dest_connection_infos);
 
+typedef enum
+{
+	SCTK_TCP_CONTROL_MESSAGE_ON_DEMAND
+}sctk_tcp_control_message_t;
+
+
+
+static void sctk_network_connection_to_ctx( sctk_rail_info_t *rail, struct sctk_tcp_connection_context * ctx )
+{
+	sctk_error("TO TCP %d ===> %d (%s)", ctx->from, ctx->to,  ctx->dest_connection_infos);
 
 	/*Recv id from the connected process*/
-	dest_socket = sctk_tcp_connect_to ( dest_connection_infos, rail );
+	int dest_socket = sctk_tcp_connect_to ( ctx->dest_connection_infos, rail );
 
-	sctk_tcp_add_static_route ( from, dest_socket, rail, ( void * ( * ) ( sctk_endpoint_t * ) ) ( rail->network.tcp.tcp_thread ) );
+	sctk_tcp_add_static_route ( ctx->from, dest_socket, rail, ( void * ( * ) ( sctk_endpoint_t * ) ) ( rail->network.tcp.tcp_thread ) );
+}
+
+static void sctk_network_connection_to_tcp ( int from, int to, sctk_rail_info_t *rail )
+{
+
 }
 
 static void sctk_network_connection_from_tcp ( int from, int to, sctk_rail_info_t *rail )
@@ -345,7 +360,14 @@ static void sctk_network_connection_from_tcp ( int from, int to, sctk_rail_info_
 
 	int src_socket;
 	/*Send connection informations*/
-	sctk_route_messages_send ( from, to, SCTK_PROCESS_SPECIFIC_MESSAGE_TAG_W_ORDERING, 0, rail->network.tcp.connection_infos, MAX_STRING_SIZE );
+	
+	struct sctk_tcp_connection_context ctx;
+	
+	ctx.from = from;
+	ctx.to = to;
+	snprintf( ctx.dest_connection_infos, MAX_STRING_SIZE, "%s", rail->network.tcp.connection_infos);
+	
+	sctk_control_messages_send ( to, SCTK_CONTROL_MESSAGE_RAIL, SCTK_TCP_CONTROL_MESSAGE_ON_DEMAND, 0, &ctx, sizeof( struct sctk_tcp_connection_context ) );
 
 	sctk_error("FROM TCP %d ===> %d", from, to);
 	
@@ -360,6 +382,22 @@ static void sctk_network_connection_from_tcp ( int from, int to, sctk_rail_info_
 
 	sctk_tcp_add_static_route ( to, src_socket, rail, ( void * ( * ) ( sctk_endpoint_t * ) ) ( rail->network.tcp.tcp_thread ) );
 }
+
+
+void tcp_control_message_handler( struct sctk_rail_info_s * rail, int source_process, int source_rank, char subtype, char param, void * data )
+{
+	sctk_tcp_control_message_t action = subtype;
+	
+	sctk_error("HERE IS CONTROL ======================");
+	
+	switch( action )
+	{
+		case SCTK_TCP_CONTROL_MESSAGE_ON_DEMAND :
+			sctk_network_connection_to_ctx( rail, (struct sctk_tcp_connection_context *) data );
+		break;
+	}
+}
+
 
 /********************************************************************/
 /* TCP Ring Init Function                                           */
@@ -380,8 +418,10 @@ void sctk_network_init_tcp_all ( sctk_rail_info_t *rail, int sctk_use_tcp_o_ib,
 
 	/* Fill in common rail info */
 	rail->route = route;
-	rail->connect_to = sctk_network_connection_to_tcp;
 	rail->connect_from = sctk_network_connection_from_tcp;
+	rail->connect_to = sctk_network_connection_to_tcp;
+	rail->control_message_handler = tcp_control_message_handler;
+	
 	rail->network.tcp.sctk_use_tcp_o_ib = sctk_use_tcp_o_ib;
 	rail->network.tcp.tcp_thread = tcp_thread;
 

@@ -381,7 +381,7 @@ void sctk_multirail_send_message( sctk_thread_ptp_message_t *msg )
 	int destination_process;
 	
 	/* If the message is based on signalization we directly rely on routing */
-	if( IS_PROCESS_SPECIFIC_MESSAGE_TAG ( SCTK_MSG_SPECIFIC_TAG ( msg ) ) )
+	if( sctk_is_process_specific_message ( SCTK_MSG_HEADER ( msg ) ) )
 	{
 		sctk_multirail_destination_table_route_to_process( SCTK_MSG_DEST_PROCESS ( msg ), &destination_process );
 	}
@@ -442,7 +442,12 @@ void sctk_multirail_send_message( sctk_thread_ptp_message_t *msg )
 		if( cur )
 		{
 			//sctk_error("RAIL %d", cur->endpoint->rail->rail_number );
+			
+			/* Prepare reordering */
 			sctk_prepare_send_message_to_network_reorder ( msg );
+			/* Set rail number in message */
+			SCTK_MSG_SET_RAIL_ID( msg, cur->endpoint->rail->rail_number );
+			/* Send the message */
 			(cur->endpoint->rail->send_message_endpoint)( msg, cur->endpoint );
 		}
 		else

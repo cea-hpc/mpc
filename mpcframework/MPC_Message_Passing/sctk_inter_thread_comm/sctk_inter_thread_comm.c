@@ -35,6 +35,7 @@
 #include <sctk_checksum.h>
 #include <mpc_common.h>
 #include <sctk_reorder.h>
+#include <sctk_control_messages.h>
 
 /********************************************************************/
 /* Macros for configuration                                         */
@@ -68,7 +69,7 @@ int sctk_cancel_message ( sctk_request_t *msg )
 			if ( msg->msg == NULL )
 				return ret;
 
-			SCTK_MSG_SPECIFIC_TAG_SET ( msg->msg , SCTK_RECV_SPECIFIC_MESSAGE_TAG );
+			SCTK_MSG_SPECIFIC_CLASS_SET ( msg->msg , SCTK_CANCELLED_RECV );
 			break;
 
 		case REQUEST_SEND:
@@ -81,7 +82,7 @@ int sctk_cancel_message ( sctk_request_t *msg )
 				not_implemented();
 			}
 
-			SCTK_MSG_SPECIFIC_TAG_SET ( msg->msg, SCTK_SEND_SPECIFIC_MESSAGE_TAG );
+			SCTK_MSG_SPECIFIC_CLASS_SET ( msg->msg, SCTK_CANCELLED_SEND );
 			break;
 
 		default:
@@ -1551,7 +1552,7 @@ int sctk_determine_src_process_from_header ( sctk_thread_ptp_message_body_t *bod
 	int src_process;
 	int task_number;
 
-	if ( IS_PROCESS_SPECIFIC_MESSAGE_TAG ( body->header.specific_message_tag ) )
+	if ( sctk_is_process_specific_message ( &body->header ) )
 	{
 		src_process = body->header.source;
 	}
@@ -1575,7 +1576,7 @@ int sctk_determine_src_process_from_header ( sctk_thread_ptp_message_body_t *bod
 /*  Determine what is the global source and destination of one message */
 void sctk_determine_task_source_and_destination_from_header ( sctk_thread_ptp_message_body_t *body, int *source_task, int *destination_task )
 {
-	if ( IS_PROCESS_SPECIFIC_MESSAGE_TAG ( body->header.specific_message_tag ) )
+	if ( sctk_is_process_specific_message ( &body->header ) )
 	{
 		if ( body->header.source != MPC_ANY_SOURCE )
 			*source_task = body->header.source;
@@ -1602,7 +1603,7 @@ void sctk_determine_task_source_and_destination_from_header ( sctk_thread_ptp_me
  */
 void sctk_rebuild_header ( sctk_thread_ptp_message_t *msg )
 {
-	if ( IS_PROCESS_SPECIFIC_MESSAGE_TAG ( SCTK_MSG_SPECIFIC_TAG ( msg ) ) )
+	if ( sctk_is_process_specific_message ( SCTK_MSG_HEADER( msg ) ) )
 	{
 		if ( SCTK_MSG_SRC_PROCESS ( msg ) != MPC_ANY_SOURCE )
 			SCTK_MSG_SRC_TASK_SET ( msg,  SCTK_MSG_SRC_PROCESS ( msg ) );
@@ -1644,7 +1645,7 @@ void sctk_reinit_header ( sctk_thread_ptp_message_t *tmp, void ( *free_memory ) 
 	tmp->tail.buffer_async = NULL;
 }
 
-void sctk_init_header ( sctk_thread_ptp_message_t *tmp, const int myself,
+void sctk_init_header ( sctk_thread_ptp_message_t *tmp,
                         sctk_message_type_t msg_type, void ( *free_memory ) ( void * ),
                         void ( *message_copy ) ( sctk_message_to_copy_t * ) )
 {
@@ -1676,7 +1677,7 @@ sctk_thread_ptp_message_t *sctk_create_header ( const int myself, sctk_message_t
 	/* Store if the buffer has been buffered */
 	const char from_buffered = tmp->from_buffered;
 	/* The copy and free functions will be set after */
-	sctk_init_header ( tmp, myself, msg_type, sctk_free_header, sctk_message_copy );
+	sctk_init_header ( tmp, msg_type, sctk_free_header, sctk_message_copy );
 	/* Restore it */
 	tmp->from_buffered = from_buffered;
 
@@ -1736,22 +1737,23 @@ void sctk_request_init_request ( sctk_request_t *request, int completion,
 	request->status_error = MPC_SUCCESS;
 }
 
-void sctk_set_header_in_message ( sctk_thread_ptp_message_t *
-                                  msg, const int message_tag,
+void sctk_set_header_in_message ( sctk_thread_ptp_message_t * msg,
+			    const int message_tag,
                                   const sctk_communicator_t communicator,
                                   const int source,
                                   const int destination,
                                   sctk_request_t *request,
                                   const size_t count,
-                                  specific_message_tag_t specific_message_tag,
+                                  sctk_message_class_t message_class,
                                   MPC_Datatype datatype )
 {
 	msg->tail.request = request;
 	
-	
+	/* Save message class */
+	SCTK_MSG_SPECIFIC_CLASS_SET( msg, message_class );
 
 	/* PROCESS SPECIFIC MESSAGES */
-	if ( IS_PROCESS_SPECIFIC_MESSAGE_TAG ( specific_message_tag ) )
+	if ( sctk_message_class_is_process_specific ( message_class ) )
 	{
 		/* Fill in Source and Dest Process Informations (NO conversion needed) */
 		SCTK_MSG_SRC_PROCESS_SET ( msg,  source );
@@ -1838,7 +1840,7 @@ void sctk_set_header_in_message ( sctk_thread_ptp_message_t *
 	SCTK_MSG_COMMUNICATOR_SET ( msg , communicator );
 	msg->body.header.datatype = datatype;
 	SCTK_MSG_TAG_SET ( msg, message_tag );
-	SCTK_MSG_SPECIFIC_TAG_SET ( msg, specific_message_tag );
+	SCTK_MSG_SPECIFIC_CLASS_SET ( msg, message_class );
 	SCTK_MSG_SIZE_SET( msg , count );
 	SCTK_MSG_USE_MESSAGE_NUMBERING_SET ( msg, 1 );
 
@@ -1968,7 +1970,7 @@ static inline sctk_msg_list_t *sctk_perform_messages_search_matching (
 
 		/* Match the communicator, the tag, the source and the specific message tag */
 		if (	( header->communicator == header_found->communicator ) &&
-		        ( header->specific_message_tag == header_found->specific_message_tag ) &&
+		        ( header->message_type.type == header_found->message_type.type ) &&
 		        ( ( header->source == header_found->source ) || ( header->source == MPC_ANY_SOURCE ) ) &&
 		        ( ( header->message_tag == header_found->message_tag ) || ( ( header->message_tag == MPC_ANY_TAG ) && ( header_found->message_tag >= 0 ) ) ) )
 		{
@@ -2000,7 +2002,7 @@ static inline sctk_msg_list_t *sctk_perform_messages_search_matching (
 		}
 
 		/* Check for canceled send messages*/
-		if ( header_found->specific_message_tag == SCTK_SEND_SPECIFIC_MESSAGE_TAG )
+		if ( header_found->message_type.type == SCTK_CANCELLED_SEND )
 		{
 			/* Message found. We delete it  */
 			DL_DELETE ( pending_list->list, ptr_found );
@@ -2029,7 +2031,7 @@ int sctk_perform_messages_probe_matching ( sctk_internal_ptp_t *pair,
 		header_send = & ( ptr_send->msg->body.header );
 
 		if ( ( header->communicator == header_send->communicator ) &&
-		        ( header->specific_message_tag == header_send->specific_message_tag ) &&
+		        ( header->message_type.type == header_send->message_type.type ) &&
 		        ( ( header->source == header_send->source ) || ( header->source == MPC_ANY_SOURCE ) ) &&
 		        ( ( header->message_tag == header_send->message_tag ) || ( ( header->message_tag == MPC_ANY_TAG ) && ( header_send->message_tag >= 0 ) ) ) )
 		{
@@ -2073,7 +2075,7 @@ static inline int sctk_perform_messages_matching_from_recv_msg ( sctk_internal_p
 	ptr_send = sctk_perform_messages_search_matching (
 	               &pair->lists.pending_send, & ( msg->body.header ) );
 
-	if ( SCTK_MSG_SPECIFIC_TAG ( msg ) == SCTK_RECV_SPECIFIC_MESSAGE_TAG )
+	if ( SCTK_MSG_SPECIFIC_CLASS ( msg ) == SCTK_CANCELLED_RECV )
 	{
 		DL_DELETE ( pair->lists.pending_recv.list, ptr_recv );
 		assume ( ptr_send == NULL );
@@ -2520,19 +2522,34 @@ void sctk_send_message_try_check ( sctk_thread_ptp_message_t *msg, int perform_c
 
 	/* The message is a process specific message and the process rank does not match
 	 * the current process rank */
-	if ( ( IS_PROCESS_SPECIFIC_MESSAGE_TAG ( SCTK_MSG_SPECIFIC_TAG ( msg ) ) ) &&
-	        ( SCTK_MSG_DEST_PROCESS ( msg ) != sctk_process_rank ) )
+	if( sctk_message_class_is_process_specific ( SCTK_MSG_SPECIFIC_CLASS( msg ) ) )
 	{
-
-		if ( msg->tail.request != NULL )
+		/* Process specific Message has not reached its destination */
+		if( SCTK_MSG_DEST_PROCESS ( msg ) != sctk_process_rank )
 		{
-			msg->tail.request->request_type = REQUEST_SEND;
-		}
 
-		msg->tail.remote_destination = 1;
-		sctk_warning ( "Need to forward the message fom %d to %d",  SCTK_MSG_SRC_PROCESS ( msg ),  SCTK_MSG_DEST_PROCESS ( msg ) );
-		/* We forward the message */
-		sctk_network_send_message ( msg );
+			if ( msg->tail.request != NULL )
+			{
+				msg->tail.request->request_type = REQUEST_SEND;
+			}
+
+			msg->tail.remote_destination = 1;
+			sctk_warning ( "Need to forward the message fom %d to %d",  SCTK_MSG_SRC_PROCESS ( msg ),  SCTK_MSG_DEST_PROCESS ( msg ) );
+			/* We forward the message */
+			sctk_network_send_message ( msg );
+		}
+		else
+		{
+			if( sctk_message_class_is_control_message( SCTK_MSG_SPECIFIC_CLASS( msg ) ) )
+			{
+				/* If we are on the right process with a control message */
+
+				/* Message is for local process call the handler (such message are never pending)
+				 * no need to perform a matching with a receive. However, the order is guaranteed
+				 * by the reorder prior to calling this function */
+				sctk_control_messages_incoming( msg );
+			}
+		}
 	}
 	else
 	{
@@ -2680,7 +2697,7 @@ void sctk_recv_message_try_check ( sctk_thread_ptp_message_t *msg, sctk_internal
 		sctk_ptp_table_find ( key, recv_ptp );
 	}
 
-	if ( !IS_PROCESS_SPECIFIC_MESSAGE_TAG ( SCTK_MSG_SPECIFIC_TAG ( msg ) ) )
+	if ( !sctk_is_process_specific_message ( SCTK_MSG_HEADER( msg ) ) )
 	{
 		if ( send_key.destination != -1 )
 		{
@@ -2786,7 +2803,8 @@ void sctk_probe_source_tag_func ( int destination, int source, int tag,
 	msg->destination = destination;
 	msg->message_tag = tag;
 	msg->communicator = comm;
-	msg->specific_message_tag = SCTK_P2P_SPECIFIC_MESSAGE_TAG;
+	
+	msg->message_type.type = SCTK_P2P_MESSAGE;
 
 	world_destination = sctk_get_comm_world_rank ( comm, destination );
 	dest_key.destination = world_destination;

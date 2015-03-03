@@ -52,8 +52,6 @@ typedef union
 /* Rail                                                                 */
 /************************************************************************/
 
-typedef int (*rail_gate)( struct sctk_rail_info_s * rail,  sctk_thread_ptp_message_t * );
-
 /** This structure gathers all informations linked to a network rail
  *
  *  All rails informations are stored in the sctk_route file
@@ -93,16 +91,22 @@ struct sctk_rail_info_s
 	void ( *notify_perform_message ) ( int , int, int, int, struct sctk_rail_info_s * );
 	void ( *notify_idle_message ) ( struct sctk_rail_info_s * );
 	void ( *notify_any_source_message ) ( int, int, struct sctk_rail_info_s * );
+	
 	int ( *send_message_from_network ) ( sctk_thread_ptp_message_t * );
 	sctk_endpoint_t * ( *on_demand_connection ) ( struct sctk_rail_info_s * rail , int dest );
+	
+	
+	void (*control_message_handler)( struct sctk_rail_info_s * rail, int source_process, int source_rank, char subtype, char param, void * data );
+	
 	/* Connection management */
+	
 	void ( *connect_to ) ( int, int, sctk_rail_info_t * );
 	void ( *connect_from ) ( int, int, sctk_rail_info_t * );
+	
 	/* Routing */
+	
 	int ( *route ) ( int , sctk_rail_info_t * );
 	void ( *route_init ) ( sctk_rail_info_t * );
-	/* Gate */
-	rail_gate gate;
 };
 
 /* Rail  Array                                                          */

@@ -324,6 +324,14 @@ restart:
 	int nb_rails_infiniband = 0;
 	int nb_rails_portals = 0;
 
+	if( 255 < cli_option->rails_size )
+	{
+		sctk_fatal("There cannot be more than 255 rails");
+		/* If you want to remove this limation make sure that 
+		 * the rail ID is encoded with a larger type in
+		 * struct sctk_control_message_header */
+	}
+
 
 	for ( k = 0; k < cli_option->rails_size; ++k )
 	{

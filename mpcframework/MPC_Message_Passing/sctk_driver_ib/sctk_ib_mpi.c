@@ -61,7 +61,6 @@ sctk_network_send_message_ib ( sctk_thread_ptp_message_t *msg, sctk_rail_info_t 
 	sctk_ibuf_t *ibuf;
 	size_t size;
 	char is_control_message = 0;
-	specific_message_tag_t tag = SCTK_MSG_SPECIFIC_TAG ( msg );
 
 	PROF_TIME_START ( rail, ib_send_message );
 
@@ -73,12 +72,10 @@ sctk_network_send_message_ib ( sctk_thread_ptp_message_t *msg, sctk_rail_info_t 
 	               SCTK_MSG_SIZE ( msg ),
 	               SCTK_MSG_TAG ( msg ) );
 
-	sctk_nodebug ( "Send message with tag %d", SCTK_MSG_SPECIFIC_TAG ( msg ) );
-
 	/* Determine the route to used */
-	if ( IS_PROCESS_SPECIFIC_MESSAGE_TAG ( tag ) )
+	if ( 0 )
 	{
-		if ( IS_PROCESS_SPECIFIC_CONTROL_MESSAGE ( tag ) )
+		if ( 0 )
 		{
 			is_control_message = 1;
 			/* send a message with no_ondemand connexion */
@@ -185,7 +182,6 @@ static void sctk_network_send_message_ib_endpoint ( sctk_thread_ptp_message_t *m
 	sctk_ib_qp_t *remote;
 	sctk_ibuf_t *ibuf;
 	size_t size;
-	specific_message_tag_t tag = SCTK_MSG_SPECIFIC_TAG ( msg );
 
 	route_data = &endpoint->data.ib;
 	remote = route_data->remote;

@@ -216,8 +216,6 @@ int sctk_prepare_send_message_to_network_reorder ( sctk_thread_ptp_message_t *ms
 
 	sctk_nodebug ( "Send message from %d to %d", src_task, dest_task );
 
-	sctk_nodebug ( "Send message with tag: %d %d %d", SCTK_MSG_SPECIFIC_TAG ( msg ), ( MASK_PROCESS_SPECIFIC | MASK_PROCESS_SPECIFIC_W_ORDERING ) & SCTK_MSG_SPECIFIC_TAG ( msg ), MASK_PROCESS_SPECIFIC | MASK_PROCESS_SPECIFIC_W_ORDERING );
-
 	/* Indirect messages */
 	int src_process;
 	src_process = sctk_get_process_rank_from_task_rank ( src_task );

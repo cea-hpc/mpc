@@ -16,27 +16,35 @@
 /* # terms.                                                               # */
 /* #                                                                      # */
 /* # Authors:                                                             # */
-/* #   - PERACHE Marc marc.perache@cea.fr                                 # */
+/* #   - BESNARD Jean-Baptiste jbbesnard@paratools.fr                     # */
 /* #                                                                      # */
 /* ######################################################################## */
 
-#ifndef __SCTK_TCP_TOOLKIT_H_
-#define __SCTK_TCP_TOOLKIT_H_
-#ifdef __cplusplus
-extern "C"
+#ifndef SCTK_CONTROL_MESSAGE_H
+#define SCTK_CONTROL_MESSAGE_H
+
+#include <sctk_inter_thread_comm.h>
+
+
+/************************************************************************/
+/* Control Messages Types                                               */
+/************************************************************************/
+
+/** This is the context of the control message engine */
+struct sctk_control_message_context
 {
-#endif
+	void (*sctk_user_control_message)( int source_process, int source_rank, char subtype, char param, void * data ); /**< This function is called when the application has registered a function */
+};
 
-#include <sctk_route.h>
+void sctk_control_message_context_set_user( void (*fn)( int , int , char , char , void * ) );
 
 
-void sctk_network_init_tcp_all ( sctk_rail_info_t *rail, int sctk_use_tcp_o_ib,
-                                 void * ( *tcp_thread ) ( sctk_endpoint_t * ),
-                                 int ( *route ) ( int , sctk_rail_info_t * ),
-                                 void ( *route_init ) () );
 
-#ifdef __cplusplus
-}
-#endif
-#endif
+/************************************************************************/
+/* Control Messages Interface                                           */
+/************************************************************************/
 
+void sctk_control_messages_send ( int dest, sctk_message_class_t message_class, int subtype, int param, void *buffer, size_t size );
+void sctk_control_messages_incoming( sctk_thread_ptp_message_t * msg );
+
+#endif /* SCTK_CONTROL_MESSAGE_H */

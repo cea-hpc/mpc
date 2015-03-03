@@ -1025,7 +1025,7 @@ sctk_network_send_message_portals_rail ( sctk_thread_ptp_message_t *msg, sctk_ra
 	int fd;
 
 
-	if ( SCTK_MSG_SPECIFIC_TAG ( msg ) == SCTK_PROCESS_SPECIFIC_MESSAGE_TAG )
+	if ( 0 )
 	{
 		tmp = sctk_rail_get_any_route_to_process_or_on_demand ( rail, SCTK_MSG_DEST_PROCESS ( msg ) ); //proc
 	}

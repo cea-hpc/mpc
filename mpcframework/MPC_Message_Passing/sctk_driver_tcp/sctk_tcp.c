@@ -67,7 +67,13 @@ static void *sctk_tcp_thread ( sctk_endpoint_t *tmp )
 		} */
 
 		size = size - sizeof ( sctk_thread_ptp_message_body_t ) + sizeof ( sctk_thread_ptp_message_t );
+		
+		sctk_error("NEW %ld", size);
+		
 		msg = sctk_malloc ( size );
+		
+		assume( msg != NULL );
+		
 		body = ( char * ) msg + sizeof ( sctk_thread_ptp_message_t );
 
 		/* Recv header*/
@@ -106,41 +112,6 @@ static void *sctk_tcp_thread ( sctk_endpoint_t *tmp )
 	sctk_error("TCP THREAD LEAVING");
 
 	return NULL;
-}
-
-static void sctk_network_send_message_tcp ( sctk_thread_ptp_message_t *msg, sctk_rail_info_t *rail )
-{
-	sctk_endpoint_t *tmp;
-	size_t size;
-	int fd;
-
-	sctk_nodebug ( "send message through rail %d", rail->rail_number );
-
-	if ( IS_PROCESS_SPECIFIC_MESSAGE_TAG ( SCTK_MSG_SPECIFIC_TAG ( msg ) ) )
-	{
-		tmp = sctk_rail_get_any_route_to_process_or_on_demand ( rail, SCTK_MSG_DEST_PROCESS ( msg ) );
-	}
-	else
-	{
-		tmp = sctk_rail_get_any_route_to_task_or_on_demand ( rail, SCTK_MSG_DEST_TASK ( msg ) );
-	}
-
-	sctk_nodebug ( "Send message to %d", tmp->key.destination );
-
-	sctk_spinlock_lock ( & ( tmp->data.tcp.lock ) );
-
-	fd = tmp->data.tcp.fd;
-
-	size = SCTK_MSG_SIZE ( msg ) + sizeof ( sctk_thread_ptp_message_body_t );
-
-	sctk_safe_write ( fd, ( char * ) &size, sizeof ( size_t ) );
-
-	sctk_safe_write ( fd, ( char * ) msg, sizeof ( sctk_thread_ptp_message_body_t ) );
-
-	sctk_net_write_in_fd ( msg, fd );
-	sctk_spinlock_unlock ( & ( tmp->data.tcp.lock ) );
-
-	sctk_complete_and_free_message ( msg );
 }
 
 static void sctk_network_send_message_endpoint_tcp ( sctk_thread_ptp_message_t *msg, sctk_endpoint_t *endpoint )
@@ -198,21 +169,11 @@ static int sctk_send_message_from_network_tcp ( sctk_thread_ptp_message_t *msg )
 	if ( sctk_send_message_from_network_reorder ( msg ) == REORDER_NO_NUMBERING )
 	{
 		/* No reordering */
-		sctk_error("NET PULL UP");
 		sctk_send_message_try_check ( msg, 1 );
 	}
 
 	return 1;
 }
-
-
-#include <stdlib.h>
-
-int sctk_send_message_gate( struct sctk_rail_info_s * rail,  sctk_thread_ptp_message_t * message )
-{
-	return (!(rand()%3));
-}
-
 
 
 /********************************************************************/
@@ -222,7 +183,6 @@ int sctk_send_message_gate( struct sctk_rail_info_s * rail,  sctk_thread_ptp_mes
 void sctk_network_init_tcp ( sctk_rail_info_t *rail )
 {
 	/* Register Hooks in rail */
-	rail->send_message = sctk_network_send_message_tcp;
 	rail->send_message_endpoint = sctk_network_send_message_endpoint_tcp;
 	rail->notify_recv_message = sctk_network_notify_recv_message_tcp;
 	rail->notify_matching_message = sctk_network_notify_matching_message_tcp;
@@ -230,8 +190,7 @@ void sctk_network_init_tcp ( sctk_rail_info_t *rail )
 	rail->notify_idle_message = sctk_network_notify_idle_message_tcp;
 	rail->notify_any_source_message = sctk_network_notify_any_source_message_tcp;
 	rail->send_message_from_network = sctk_send_message_from_network_tcp;
-	rail->gate = sctk_send_message_gate;
-	
+
 	sctk_rail_init_route ( rail, rail->runtime_config_rail->topology );
 
 	int sctk_use_tcp_o_ib = rail->runtime_config_driver_config->driver.value.tcp.tcpoib;

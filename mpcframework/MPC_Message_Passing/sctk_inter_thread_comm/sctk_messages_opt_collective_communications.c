@@ -73,12 +73,12 @@ typedef struct
 /************************************************************************/
 
 static void sctk_opt_messages_send ( const sctk_communicator_t communicator, int myself, int dest, int tag, void *buffer, size_t size,
-                                     specific_message_tag_t specific_message_tag, sctk_opt_messages_t *msg_req, int check, int copy_in_send )
+                                     sctk_message_class_t message_class, sctk_opt_messages_t *msg_req, int check, int copy_in_send )
 {
-	sctk_init_header ( & ( msg_req->msg ), myself, SCTK_MESSAGE_CONTIGUOUS, sctk_free_opt_messages, sctk_message_copy );
+	sctk_init_header ( & ( msg_req->msg ), SCTK_MESSAGE_CONTIGUOUS, sctk_free_opt_messages, sctk_message_copy );
 	sctk_add_adress_in_message ( & ( msg_req->msg ), buffer, size );
 	msg_req->request.request_type = REQUEST_SEND_COLL;
-	sctk_set_header_in_message ( & ( msg_req->msg ), tag, communicator, myself, dest, & ( msg_req->request ), size, specific_message_tag, MPC_DATATYPE_IGNORE );
+	sctk_set_header_in_message ( & ( msg_req->msg ), tag, communicator, myself, dest, & ( msg_req->request ), size, message_class, MPC_DATATYPE_IGNORE );
 
 	sctk_send_message ( & ( msg_req->msg ) );
 #if 0
@@ -88,14 +88,14 @@ static void sctk_opt_messages_send ( const sctk_communicator_t communicator, int
 }
 
 static void sctk_opt_messages_recv ( const sctk_communicator_t communicator, int src, int myself, int tag, void *buffer, size_t size,
-                                     specific_message_tag_t specific_message_tag, sctk_opt_messages_t *msg_req, struct sctk_internal_ptp_s *ptp_internal, int check,
+                                     sctk_message_class_t message_class, sctk_opt_messages_t *msg_req, struct sctk_internal_ptp_s *ptp_internal, int check,
                                      int copy_in_recv )
 {
 
-	sctk_init_header ( & ( msg_req->msg ), myself, SCTK_MESSAGE_CONTIGUOUS, sctk_free_opt_messages, sctk_message_copy );
+	sctk_init_header ( & ( msg_req->msg ), SCTK_MESSAGE_CONTIGUOUS, sctk_free_opt_messages, sctk_message_copy );
 	sctk_add_adress_in_message ( & ( msg_req->msg ), buffer, size );
 	msg_req->request.request_type = REQUEST_RECV_COLL;
-	sctk_set_header_in_message ( & ( msg_req->msg ), tag, communicator,  src, myself, & ( msg_req->request ), size, specific_message_tag, MPC_DATATYPE_IGNORE );
+	sctk_set_header_in_message ( & ( msg_req->msg ), tag, communicator,  src, myself, & ( msg_req->request ), size, message_class, MPC_DATATYPE_IGNORE );
 
 	sctk_recv_message ( & ( msg_req->msg ), ptp_internal, 1 );
 #if 0
@@ -189,7 +189,7 @@ static void sctk_barrier_opt_messages ( const sctk_communicator_t communicator, 
 					{
 						if ( ( src + ( j * ( i / barrier_arity ) ) ) < total )
 						{
-							sctk_opt_messages_recv ( communicator, src + ( j * ( i / barrier_arity ) ), myself, 0, &c, 1, SCTK_BARRIER_SPECIFIC_MESSAGE_TAG, sctk_opt_messages_get_item ( &table ), ptp_internal, 1, 1 );
+							sctk_opt_messages_recv ( communicator, src + ( j * ( i / barrier_arity ) ), myself, 0, &c, 1, SCTK_BARRIER_MESSAGE, sctk_opt_messages_get_item ( &table ), ptp_internal, 1, 1 );
 						}
 					}
 
@@ -203,8 +203,8 @@ static void sctk_barrier_opt_messages ( const sctk_communicator_t communicator, 
 
 					if ( dest >= 0 )
 					{
-						sctk_opt_messages_send ( communicator, myself, dest, 0, &c, 1, SCTK_BARRIER_SPECIFIC_MESSAGE_TAG, sctk_opt_messages_get_item ( &table ), 0, 1 );
-						sctk_opt_messages_recv ( communicator, dest, myself, 1, &c, 1, SCTK_BARRIER_SPECIFIC_MESSAGE_TAG, sctk_opt_messages_get_item ( &table ), ptp_internal, 0, 1 );
+						sctk_opt_messages_send ( communicator, myself, dest, 0, &c, 1, SCTK_BARRIER_MESSAGE, sctk_opt_messages_get_item ( &table ), 0, 1 );
+						sctk_opt_messages_recv ( communicator, dest, myself, 1, &c, 1, SCTK_BARRIER_MESSAGE, sctk_opt_messages_get_item ( &table ), ptp_internal, 0, 1 );
 						sctk_opt_messages_wait ( &table );
 						break;
 					}
@@ -227,7 +227,7 @@ static void sctk_barrier_opt_messages ( const sctk_communicator_t communicator, 
 				{
 					if ( ( dest + ( j * ( i / barrier_arity ) ) ) < total )
 					{
-						sctk_opt_messages_send ( communicator, myself, dest + ( j * ( i / barrier_arity ) ), 1, &c, 1, SCTK_BARRIER_SPECIFIC_MESSAGE_TAG, sctk_opt_messages_get_item ( &table ), 1, 1 );
+						sctk_opt_messages_send ( communicator, myself, dest + ( j * ( i / barrier_arity ) ), 1, &c, 1, SCTK_BARRIER_MESSAGE, sctk_opt_messages_get_item ( &table ), 1, 1 );
 					}
 				}
 			}
@@ -266,7 +266,7 @@ static void sctk_barrier_opt_messages ( const sctk_communicator_t communicator, 
 			                            65536,
 			                            &c,
 			                            1,
-			                            SCTK_BROADCAST_SPECIFIC_MESSAGE_TAG,
+			                            SCTK_BROADCAST_MESSAGE,
 			                            sctk_opt_messages_get_item ( &table ),
 			                            ( size < broadcast_check_threshold ),
 			                            ( size < broadcast_check_threshold ) );
@@ -280,7 +280,7 @@ static void sctk_barrier_opt_messages ( const sctk_communicator_t communicator, 
 			                            65536,
 			                            &c,
 			                            1,
-			                            SCTK_BROADCAST_SPECIFIC_MESSAGE_TAG,
+			                            SCTK_BROADCAST_MESSAGE,
 			                            sctk_opt_messages_get_item ( &table ),
 			                            ptp_internal,
 			                            1,
@@ -362,7 +362,7 @@ void sctk_broadcast_opt_messages ( void *buffer, const size_t size,
 
 				if ( dest >= 0 )
 				{
-					sctk_opt_messages_recv ( communicator, ( dest + root ) % total, myself, root, buffer, size, SCTK_BROADCAST_SPECIFIC_MESSAGE_TAG, sctk_opt_messages_get_item ( &table ), ptp_internal, 1, 1 );
+					sctk_opt_messages_recv ( communicator, ( dest + root ) % total, myself, root, buffer, size, SCTK_BROADCAST_MESSAGE, sctk_opt_messages_get_item ( &table ), ptp_internal, 1, 1 );
 					sctk_opt_messages_wait ( &table );
 					break;
 				}
@@ -381,7 +381,7 @@ void sctk_broadcast_opt_messages ( void *buffer, const size_t size,
 				{
 					if ( ( dest + ( j * ( i / BROADCAST_ARRITY ) ) ) < total )
 					{
-						sctk_opt_messages_send ( communicator, myself, ( dest + root + ( j * ( i / BROADCAST_ARRITY ) ) ) % total, root, buffer, size, SCTK_BROADCAST_SPECIFIC_MESSAGE_TAG,
+						sctk_opt_messages_send ( communicator, myself, ( dest + root + ( j * ( i / BROADCAST_ARRITY ) ) ) % total, root, buffer, size, SCTK_BROADCAST_MESSAGE,
 						                         sctk_opt_messages_get_item ( &table ), ( size < broadcast_check_threshold ), ( size < broadcast_check_threshold ) );
 					}
 				}
@@ -499,7 +499,7 @@ static void sctk_allreduce_opt_messages_intern ( const void *buffer_in, void *bu
 					if ( ( src + ( j * ( i / ALLREDUCE_ARRITY ) ) ) < total )
 					{
 						sctk_nodebug ( "Recv from %d", src + ( j * ( i / ALLREDUCE_ARRITY ) ) );
-						sctk_opt_messages_recv ( communicator, src + ( j * ( i / ALLREDUCE_ARRITY ) ), myself, 0, buffer_table[j - 1], size, SCTK_ALLREDUCE_SPECIFIC_MESSAGE_TAG,
+						sctk_opt_messages_recv ( communicator, src + ( j * ( i / ALLREDUCE_ARRITY ) ), myself, 0, buffer_table[j - 1], size, SCTK_ALLREDUCE_MESSAGE,
 						                         sctk_opt_messages_get_item ( &table ), ptp_internal, 0, 0 );
 					}
 				}
@@ -524,9 +524,9 @@ static void sctk_allreduce_opt_messages_intern ( const void *buffer_in, void *bu
 				{
 					memcpy ( buffer_tmp, buffer_out, size );
 					sctk_nodebug ( "Leaf send to %d", dest );
-					sctk_opt_messages_send ( communicator, myself, dest, 0, buffer_tmp, size, SCTK_ALLREDUCE_SPECIFIC_MESSAGE_TAG, sctk_opt_messages_get_item ( &table ), 1, 1 );
+					sctk_opt_messages_send ( communicator, myself, dest, 0, buffer_tmp, size, SCTK_ALLREDUCE_MESSAGE, sctk_opt_messages_get_item ( &table ), 1, 1 );
 					sctk_nodebug ( "Leaf Recv from %d", dest );
-					sctk_opt_messages_recv ( communicator, dest, myself, 1, buffer_out, size, SCTK_ALLREDUCE_SPECIFIC_MESSAGE_TAG, sctk_opt_messages_get_item ( &table ), ptp_internal, 1, 1 );
+					sctk_opt_messages_recv ( communicator, dest, myself, 1, buffer_out, size, SCTK_ALLREDUCE_MESSAGE, sctk_opt_messages_get_item ( &table ), ptp_internal, 1, 1 );
 					sctk_opt_messages_wait ( &table );
 					break;
 				}
@@ -549,7 +549,7 @@ static void sctk_allreduce_opt_messages_intern ( const void *buffer_in, void *bu
 					if ( ( dest + ( j * ( i / ALLREDUCE_ARRITY ) ) ) < total )
 					{
 						sctk_nodebug ( "send to %d", dest + ( j * ( i / ALLREDUCE_ARRITY ) ) );
-						sctk_opt_messages_send ( communicator, myself, dest + ( j * ( i / ALLREDUCE_ARRITY ) ), 1, buffer_out, size, SCTK_ALLREDUCE_SPECIFIC_MESSAGE_TAG, sctk_opt_messages_get_item ( &table ),
+						sctk_opt_messages_send ( communicator, myself, dest + ( j * ( i / ALLREDUCE_ARRITY ) ), 1, buffer_out, size, SCTK_ALLREDUCE_MESSAGE, sctk_opt_messages_get_item ( &table ),
 						                         ( size < allreduce_check_threshold ), ( size < allreduce_check_threshold ) );
 					}
 				}

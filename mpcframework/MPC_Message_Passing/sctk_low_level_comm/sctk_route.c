@@ -308,7 +308,7 @@ typedef struct
 } sctk_route_messages_t;
 
 
-void sctk_route_messages_send ( int myself, int dest, specific_message_tag_t specific_message_tag, int tag, void *buffer, size_t size )
+void sctk_route_messages_send ( int myself, int dest, sctk_message_class_t message_class, int tag, void *buffer, size_t size )
 {
 	sctk_info("ROUTE SEND [ %d -> %d ] ( size %d)", myself, dest, size );
 	
@@ -318,14 +318,14 @@ void sctk_route_messages_send ( int myself, int dest, specific_message_tag_t spe
 	
 	msg_req = &msg;
 	
-	sctk_init_header ( & ( msg_req->msg ), myself, SCTK_MESSAGE_CONTIGUOUS, sctk_free_route_messages, sctk_message_copy );
+	sctk_init_header ( & ( msg_req->msg ), SCTK_MESSAGE_CONTIGUOUS, sctk_free_route_messages, sctk_message_copy );
 	sctk_add_adress_in_message ( & ( msg_req->msg ), buffer, size );
-	sctk_set_header_in_message ( & ( msg_req->msg ), tag, communicator, myself, dest,  & ( msg_req->request ), size, specific_message_tag, MPC_DATATYPE_IGNORE );
+	sctk_set_header_in_message ( & ( msg_req->msg ), tag, communicator, myself, dest,  & ( msg_req->request ), size, message_class, MPC_DATATYPE_IGNORE );
 	sctk_send_message ( & ( msg_req->msg ) );
 	sctk_wait_message ( & ( msg_req->request ) );
 }
 
-void sctk_route_messages_recv ( int src, int myself, specific_message_tag_t specific_message_tag, int tag, void *buffer, size_t size )
+void sctk_route_messages_recv ( int src, int myself, sctk_message_class_t message_class, int tag, void *buffer, size_t size )
 {
 	sctk_info("ROUTE RECV [ %d -> %d ] ( size %d)", src, myself, size );
 	
@@ -335,9 +335,9 @@ void sctk_route_messages_recv ( int src, int myself, specific_message_tag_t spec
 
 	msg_req = &msg;
 
-	sctk_init_header ( & ( msg_req->msg ), myself, SCTK_MESSAGE_CONTIGUOUS, sctk_free_route_messages, sctk_message_copy );
+	sctk_init_header ( & ( msg_req->msg ), SCTK_MESSAGE_CONTIGUOUS, sctk_free_route_messages, sctk_message_copy );
 	sctk_add_adress_in_message ( & ( msg_req->msg ), buffer, size );
-	sctk_set_header_in_message ( & ( msg_req->msg ), tag, communicator,  src, myself,  & ( msg_req->request ), size, specific_message_tag, MPC_DATATYPE_IGNORE );
+	sctk_set_header_in_message ( & ( msg_req->msg ), tag, communicator,  src, myself,  & ( msg_req->request ), size, message_class, MPC_DATATYPE_IGNORE );
 	sctk_recv_message ( & ( msg_req->msg ), NULL, 1 );
 	sctk_wait_message ( & ( msg_req->request ) );
 }

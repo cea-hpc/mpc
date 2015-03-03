@@ -44,67 +44,6 @@ extern "C"
 /* Defines if we are in a full MPI mode */
 //#define SCTK_ENABLE_SPINNING
 
-/************************************************************************/
-/* Specific Message Tagging	                                          */
-/************************************************************************/
-
-/** Message for a process */
-#define MASK_PROCESS_SPECIFIC 1<<9
-/** A control message */
-#define MASK_CONTROL_MESSAGE  1<<10
-/** Message for a process with ordering */
-#define MASK_PROCESS_SPECIFIC_W_ORDERING (1<<31 | MASK_PROCESS_SPECIFIC)
-/** For ondemand connexions */
-#define MASK_PROCESS_SPECIFIC_ONDEMAND (1<<29 | MASK_PROCESS_SPECIFIC | MASK_CONTROL_MESSAGE)
-/** For low memory consumption */
-#define MASK_PROCESS_SPECIFIC_LOW_MEM (1<<28 | MASK_PROCESS_SPECIFIC | MASK_CONTROL_MESSAGE)
-/** For user connexions */
-#define MASK_PROCESS_SPECIFIC_USER (1<<27 | MASK_PROCESS_SPECIFIC | MASK_CONTROL_MESSAGE)
-
-typedef enum
-{
-	SCTK_P2P_SPECIFIC_MESSAGE_TAG = 1,
-	SCTK_BARRIER_SPECIFIC_MESSAGE_TAG = 2,
-	SCTK_BROADCAST_SPECIFIC_MESSAGE_TAG = 3,
-	SCTK_ALLREDUCE_SPECIFIC_MESSAGE_TAG = 4,
-
-	SCTK_SEND_SPECIFIC_MESSAGE_TAG = 5,
-	SCTK_RECV_SPECIFIC_MESSAGE_TAG = 6,
-
-	/* Process specific */
-	SCTK_PROCESS_SPECIFIC_MESSAGE_TAG = MASK_PROCESS_SPECIFIC,
-
-	/* Process specific */
-	SCTK_PROCESS_SPECIFIC_MESSAGE_TAG_W_ORDERING = MASK_PROCESS_SPECIFIC_W_ORDERING,
-	
-	/* On demand */
-	SCTK_ONDEMAND_SPECIFIC_MESSAGE_TAG =  MASK_PROCESS_SPECIFIC_ONDEMAND,
-	/* Low memory */
-	SCTK_LOWMEM_SPECIFIC_MESSAGE_TAG =  MASK_PROCESS_SPECIFIC_LOW_MEM,
-	/* User */
-	SCTK_USER_SPECIFIC_MESSAGE_TAG =  MASK_PROCESS_SPECIFIC_USER,
-
-	/* Collective */
-	SCTK_ALLREDUCE_HETERO_SPECIFIC_MESSAGE_TAG = MASK_PROCESS_SPECIFIC_W_ORDERING | SCTK_ALLREDUCE_SPECIFIC_MESSAGE_TAG,
-	SCTK_BROADCAST_HETERO_SPECIFIC_MESSAGE_TAG = MASK_PROCESS_SPECIFIC_W_ORDERING | SCTK_BROADCAST_SPECIFIC_MESSAGE_TAG,
-	SCTK_BARRIER_HETERO_SPECIFIC_MESSAGE_TAG = MASK_PROCESS_SPECIFIC_W_ORDERING | SCTK_BROADCAST_SPECIFIC_MESSAGE_TAG,
-}
-specific_message_tag_t;
-
-
-
-/** Message for a process with ordering and a tag */
-#define IS_PROCESS_SPECIFIC_MESSAGE_TAG_WITH_ORDERING(x) ( (MASK_PROCESS_SPECIFIC_W_ORDERING & x) == (MASK_PROCESS_SPECIFIC_W_ORDERING))
-#define IS_PROCESS_SPECIFIC_MESSAGE_TAG(x) ( (MASK_PROCESS_SPECIFIC & x) == (MASK_PROCESS_SPECIFIC) )
-
-#define IS_PROCESS_SPECIFIC_ONDEMAND(x) ( (MASK_PROCESS_SPECIFIC_ONDEMAND & x) == (MASK_PROCESS_SPECIFIC_ONDEMAND) )
-
-#define IS_PROCESS_SPECIFIC_LOW_MEM(x) ( (MASK_PROCESS_SPECIFIC_LOW_MEM & x) == (MASK_PROCESS_SPECIFIC_LOW_MEM) )
-/** Is the message an user connexions ? */
-#define IS_PROCESS_SPECIFIC_USER(x) ( (MASK_PROCESS_SPECIFIC_USER & x) == (MASK_PROCESS_SPECIFIC_USER) )
-/** Is the message a control message ? */
-#define IS_PROCESS_SPECIFIC_CONTROL_MESSAGE(x) ( (MASK_CONTROL_MESSAGE & x) == (MASK_CONTROL_MESSAGE) )
-
 
 /************************************************************************/
 /* sctk_request_t		                                          */
@@ -125,6 +64,105 @@ void sctk_wait_message ( sctk_request_t *request );
 int sctk_cancel_message ( sctk_request_t *msg );
 
 /************************************************************************/
+/* Messages Types                                               */
+/************************************************************************/
+
+/** This defines the type of a message */
+typedef enum
+{
+	SCTK_CANCELLED_SEND,
+	SCTK_CANCELLED_RECV,
+	
+	SCTK_P2P_MESSAGE,
+	
+	SCTK_BARRIER_MESSAGE,
+	SCTK_BROADCAST_MESSAGE,
+	SCTK_ALLREDUCE_MESSAGE,
+	
+	SCTK_ALLREDUCE_HETERO_MESSAGE,
+	SCTK_BROADCAST_HETERO_MESSAGE,
+	SCTK_BARRIER_HETERO_MESSAGE,
+	
+	SCTK_CONTROL_MESSAGE_RAIL, 		/**< This message goes to a rail */
+	SCTK_CONTROL_MESSAGE_PROCESS,		/**< This message goes to a process (\ref sctk_control_message_process_level) */
+	SCTK_CONTROL_MESSAGE_USER,		/**< This message goes to the application using an optionnal handler */
+	SCTK_CONTROL_MESSAGE_COUNT		/**< Just in case this value allows to track the number of control message types */
+}sctk_message_class_t;
+
+
+static inline int sctk_message_class_is_process_specific( sctk_message_class_t type )
+{
+	switch( type )
+	{
+		case SCTK_CANCELLED_SEND:
+		case SCTK_CANCELLED_RECV:
+		case SCTK_P2P_MESSAGE:
+		case SCTK_BARRIER_MESSAGE:
+		case SCTK_BROADCAST_MESSAGE:
+		case SCTK_ALLREDUCE_MESSAGE:
+			return 0;
+		
+		
+		
+		case SCTK_ALLREDUCE_HETERO_MESSAGE:
+		case SCTK_BROADCAST_HETERO_MESSAGE:
+		case SCTK_BARRIER_HETERO_MESSAGE:
+		case SCTK_CONTROL_MESSAGE_RAIL:
+		case SCTK_CONTROL_MESSAGE_PROCESS:
+		case SCTK_CONTROL_MESSAGE_USER:
+			return 1;
+		
+		case SCTK_CONTROL_MESSAGE_COUNT:
+			return 0;
+	}
+	
+	return 0;
+}
+
+static inline int sctk_message_class_is_control_message( sctk_message_class_t type )
+{
+	switch( type )
+	{
+		case SCTK_CANCELLED_SEND:
+		case SCTK_CANCELLED_RECV:
+		case SCTK_P2P_MESSAGE:
+		case SCTK_BARRIER_MESSAGE:
+		case SCTK_BROADCAST_MESSAGE:
+		case SCTK_ALLREDUCE_MESSAGE:
+		case SCTK_ALLREDUCE_HETERO_MESSAGE:
+		case SCTK_BROADCAST_HETERO_MESSAGE:
+		case SCTK_BARRIER_HETERO_MESSAGE:
+			return 0;
+		
+		case SCTK_CONTROL_MESSAGE_RAIL:
+		case SCTK_CONTROL_MESSAGE_PROCESS:
+		case SCTK_CONTROL_MESSAGE_USER:
+			return 1;
+		
+		case SCTK_CONTROL_MESSAGE_COUNT:
+			return 0;
+	}
+	
+	return 0;
+}
+
+/************************************************************************/
+/* Control Messages Header                                              */
+/************************************************************************/
+
+/** This is the content of a control message */
+struct sctk_control_message_header
+{
+	char type;			/**< Type of the message determining the action */
+	char subtype;			/**< Subtype of the message (can be freely set -- usually to do a switch) */
+	char param;			/**< Parameter value (depending on type and subtypes)
+					     for rails it is used to store rail number */
+	char rail_id;			/**< The id of the rail sending the message (set during multirail selection \ref sctk_multirail_send_message)
+					     it allows RAIL level messages to be routed accordingly */
+};
+
+
+/************************************************************************/
 /* sctk_thread_message_header_t                                         */
 /************************************************************************/
 
@@ -139,7 +177,7 @@ typedef struct sctk_thread_message_header_s
 	int destination_task; /**< Destination Task ID */
 	/* Context */
 	int message_tag; /**< Message TAG */
-	specific_message_tag_t specific_message_tag; /**< Specific tag for control messages */
+	struct sctk_control_message_header message_type;
 	sctk_communicator_t communicator; /**< Message communicator */
 	/* Ordering */
 	int message_number; /**< Message order (for reorder) */
@@ -180,8 +218,22 @@ void sctk_probe_any_source_tag ( int destination, const sctk_communicator_t comm
 #define SCTK_MSG_NUMBER( msg ) msg->body.header.message_number
 #define SCTK_MSG_NUMBER_SET( msg , number ) do{ msg->body.header.message_number = number; }while(0)
 
-#define SCTK_MSG_SPECIFIC_TAG( msg ) msg->body.header.specific_message_tag
-#define SCTK_MSG_SPECIFIC_TAG_SET( msg , specific_tag ) do{ msg->body.header.specific_message_tag = specific_tag; }while(0)
+#define SCTK_MSG_SPECIFIC_CLASS( msg ) msg->body.header.message_type.type
+#define SCTK_MSG_SPECIFIC_CLASS_SET( msg , specific_tag ) do{ msg->body.header.message_type.type = specific_tag; }while(0)
+
+#define SCTK_MSG_SPECIFIC_CLASS_SUBTYPE( msg ) msg->body.header.message_type.subtype
+#define SCTK_MSG_SPECIFIC_CLASS_SET_SUBTYPE( msg , sub_type ) do{ msg->body.header.message_type.subtype = sub_type; }while(0)
+
+#define SCTK_MSG_SPECIFIC_CLASS_PARAM( msg ) msg->body.header.message_type.subtype
+#define SCTK_MSG_SPECIFIC_CLASS_SET_PARAM( msg , param ) do{ msg->body.header.message_type.param = param; }while(0)
+
+#define SCTK_MSG_SPECIFIC_CLASS_RAILID( msg ) msg->body.header.message_type.rail_id
+#define SCTK_MSG_SPECIFIC_CLASS_SET_RAILID( msg , raildid ) do{ msg->body.header.message_type.rail_id = raildid; }while(0)
+
+#define SCTK_MSG_HEADER( msg ) &msg->body.header
+
+#define SCTK_MSG_RAIL_ID( msg ) msg->body.header.message_type.rail_id
+#define SCTK_MSG_SET_RAIL_ID( msg , id ) do{ msg->body.header.message_type.rail_id = id; }while(0)
 
 #define SCTK_MSG_SIZE( msg ) msg->body.header.msg_size
 #define SCTK_MSG_SIZE_SET( msg , size ) do{ msg->body.header.msg_size = size; }while(0)
@@ -383,7 +435,7 @@ typedef struct sctk_thread_ptp_message_s
 } sctk_thread_ptp_message_t;
 
 
-void sctk_init_header ( sctk_thread_ptp_message_t *tmp, const int myself, sctk_message_type_t msg_type, void ( *free_memory ) ( void * ),
+void sctk_init_header ( sctk_thread_ptp_message_t *tmp, sctk_message_type_t msg_type, void ( *free_memory ) ( void * ),
                         void ( *message_copy ) ( sctk_message_to_copy_t * ) );
 void sctk_reinit_header ( sctk_thread_ptp_message_t *tmp, void ( *free_memory ) ( void * ),
                           void ( *message_copy ) ( sctk_message_to_copy_t * ) );
@@ -404,7 +456,7 @@ void sctk_set_header_in_message ( sctk_thread_ptp_message_t *msg, const int mess
                                   const int destination,
                                   sctk_request_t *request,
                                   const size_t count,
-                                  specific_message_tag_t specific_message_tag,
+                                  sctk_message_class_t message_class,
                                   MPC_Datatype datatype );
 void sctk_send_message ( sctk_thread_ptp_message_t *msg );
 void sctk_send_message_try_check ( sctk_thread_ptp_message_t *msg, int perform_check );
@@ -451,6 +503,18 @@ void sctk_notify_idle_message ();
 void sctk_notify_idle_message_inter ();
 sctk_reorder_list_t *sctk_ptp_get_reorder_from_destination ( int task );
 void sctk_inter_thread_perform_idle ( volatile int *data, int value, void ( *func ) ( void * ), void *arg );
+
+
+/************************************************************************/
+/* Specific Message Tagging	                                          */
+/************************************************************************/
+
+/** Message for a process with ordering and a tag */
+static inline int sctk_is_process_specific_message( sctk_thread_message_header_t * header )
+{
+	sctk_message_class_t class = header->message_type.type;
+	return sctk_message_class_is_process_specific( class );
+}
 
 
 #ifdef __cplusplus
