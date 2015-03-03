@@ -29,16 +29,6 @@
 		<profile>
 			<name>default</name>
 			<modules>
-					<ALLREDUCE_MAX_SLOT>65536</ALLREDUCE_MAX_SLOT>
-					<enable_idle_polling>false</enable_idle_polling>
-					<proc_bind>true</proc_bind>
-					<stack_size>0</stack_size>
-					<wait_policy>0</wait_policy>
-					<thread_limit>0</thread_limit>
-					<max_active_levels>0</max_active_levels>
-					<tree></tree>
-					<warn_nested>false</warn_nested>
-					<mode>simple-mixed</mode>
 			</modules>
 			<networks>
 				<!-- net config contain complexe structures so default value cannot be setup into config-meta.xml -->
