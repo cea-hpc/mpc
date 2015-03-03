@@ -199,7 +199,7 @@ else
 printf "\t@\$(GCC) -M \$(GNU_CFLAGS) \$(patsubst \$(M_PWD)/BUILD_$DIR/lib/%%.d,$i/%%.c,\$@) | \\">> $FILE;
 echo "">> $FILE
 fi
-printf "\t\tsed \'s,\$(patsubst \$(M_PWD)/BUILD_$DIR/lib/%%.d,%%.o,\$@):,\$(patsubst %%.d,%%.o,\$@) \$@:,g\'> \$@ 2> /dev/null">> $FILE;echo "">> $FILE
+printf "\t\tsed 's,\$(patsubst \$(M_PWD)/BUILD_$DIR/lib/%%.d,%%.o,\$@):,\$(patsubst %%.d,%%.o,\$@) \$@:,g'> \$@ 2> /dev/null">> $FILE;echo "">> $FILE
 echo "" >> $FILE
 done
 echo "else" >> $FILE
@@ -239,7 +239,7 @@ fi
 printf "\$(SDEP_$NAME):\$(M_PWD)/BUILD_$DIR/lib/%%.d:${i}/%%.S">> $FILE;echo "">> $FILE
 printf "\t@echo \"    Generate dependencies \$(patsubst \$(M_PWD)/BUILD_$DIR/lib/%%.d,$i/%%.S,\$@)\"">> $FILE;echo "">> $FILE
 printf "\t@\$(GCC) -M \$(GNU_CFLAGS) \$(patsubst \$(M_PWD)/BUILD_$DIR/lib/%%.d,$i/%%.S,\$@) | \\">> $FILE;echo "">> $FILE
-printf "\t\tsed \'s,\$(patsubst \$(M_PWD)/BUILD_$DIR/lib/%%.d,%%.o,\$@):,\$(patsubst %%.d,%%.o,\$@) \$@:,g\'> \$@ 2> /dev/null">> $FILE;echo "">> $FILE
+printf "\t\tsed 's,\$(patsubst \$(M_PWD)/BUILD_$DIR/lib/%%.d,%%.o,\$@):,\$(patsubst %%.d,%%.o,\$@) \$@:,g'> \$@ 2> /dev/null">> $FILE;echo "">> $FILE
 echo "" >> $FILE
 done
 
