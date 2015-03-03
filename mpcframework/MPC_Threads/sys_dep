@@ -129,8 +129,6 @@ else
 fi
 end_section
 
-SCTK_CHECK_LIB_HWLOC
-
 begin_section Pthread
 check_pthread_flags 
 gen_pthread_config

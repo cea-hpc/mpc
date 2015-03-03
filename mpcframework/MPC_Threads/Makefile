@@ -1,4 +1,4 @@
-# Makefile generated with ../MPC_Tools/mpc_gen_makefile Thu May 22 15:42:13 CEST 2014
+# Makefile generated with ../MPC_Tools/mpc_gen_makefile mardi 3 mars 2015, 09:52:57 (UTC+0100)
 ############################# MPC License ##############################
 # Wed Nov 19 15:19:19 CET 2008                                         #
 # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          #
@@ -43,37 +43,24 @@ SOBJ_thread=$(SFILES_thread:sctk_thread/%.S=$(M_PWD)/BUILD_MPC_Threads/lib/%.o)
 SDEP_thread=$(SFILES_thread:sctk_thread/%.S=$(M_PWD)/BUILD_MPC_Threads/lib/%.d)
 
 
-FILES_topology=$(wildcard sctk_topology/*.c)
-OBJ_topology=$(FILES_topology:sctk_topology/%.c=$(M_PWD)/BUILD_MPC_Threads/lib/%.o)
-DEP_topology=$(FILES_topology:sctk_topology/%.c=$(M_PWD)/BUILD_MPC_Threads/lib/%.d)
-
-SFILES_topology=$(wildcard sctk_topology/*.S)
-SOBJ_topology=$(SFILES_topology:sctk_topology/%.S=$(M_PWD)/BUILD_MPC_Threads/lib/%.o)
-SDEP_topology=$(SFILES_topology:sctk_topology/%.S=$(M_PWD)/BUILD_MPC_Threads/lib/%.d)
-
-
 FFILES_include=$(wildcard include/*.f)
 FOBJ_include=$(FFILES_include:include/%.f=$(M_PWD)/BUILD_MPC_Threads/lib/%_f.o)
 
 FFILES_thread=$(wildcard sctk_thread/*.f)
 FOBJ_thread=$(FFILES_thread:sctk_thread/%.f=$(M_PWD)/BUILD_MPC_Threads/lib/%_f.o)
 
-FFILES_topology=$(wildcard sctk_topology/*.f)
-FOBJ_topology=$(FFILES_topology:sctk_topology/%.f=$(M_PWD)/BUILD_MPC_Threads/lib/%_f.o)
-
-all: $(OBJ_include) $(FOBJ_include) $(SOBJ_include) $(OBJ_thread) $(FOBJ_thread) $(SOBJ_thread) $(OBJ_topology) $(FOBJ_topology) $(SOBJ_topology)
+all: $(OBJ_include) $(FOBJ_include) $(SOBJ_include) $(OBJ_thread) $(FOBJ_thread) $(SOBJ_thread)
 
 $(M_PWD)/include_modules/MPC_Threads:
 	@../MPC_Tools/mpc_prepare_includes $(MPC_SOURCE_DIR)MPC_Threads/include $(M_PWD)/include_modules
 	@../MPC_Tools/mpc_prepare_includes $(MPC_SOURCE_DIR)MPC_Threads/sctk_thread $(M_PWD)/include_modules
-	@../MPC_Tools/mpc_prepare_includes $(MPC_SOURCE_DIR)MPC_Threads/sctk_topology $(M_PWD)/include_modules
 	@touch $@
 
 prepare_includes:$(M_PWD)/include_modules/MPC_Threads
 
 
 ifneq ($(SCTK_MAKE_NO_DEP),yes)
-DEPENDS=$(DEP_include) $(DEP_thread) $(DEP_topology) 
+DEPENDS=$(DEP_include) $(DEP_thread) 
 
 $(DEPENDS):Makefile 
 endif
@@ -89,11 +76,6 @@ $(DEP_thread):$(M_PWD)/BUILD_MPC_Threads/lib/%.d:sctk_thread/%.c
 	@$(CC) $(SCTK_CC_DEP) $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Threads/lib/%.d,sctk_thread/%.c,$@) | \
 		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_Threads/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
 
-$(DEP_topology):$(M_PWD)/BUILD_MPC_Threads/lib/%.d:sctk_topology/%.c
-	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_Threads/lib/%.d,sctk_topology/%.c,$@)"
-	@$(CC) $(SCTK_CC_DEP) $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Threads/lib/%.d,sctk_topology/%.c,$@) | \
-		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_Threads/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
-
 else
 $(DEP_include):$(M_PWD)/BUILD_MPC_Threads/lib/%.d:include/%.c
 	@echo "    Generate fake dependencies $(patsubst $(M_PWD)/BUILD_MPC_Threads/lib/%.d,include/%.c,$@)"
@@ -102,10 +84,6 @@ $(DEP_include):$(M_PWD)/BUILD_MPC_Threads/lib/%.d:include/%.c
 $(DEP_thread):$(M_PWD)/BUILD_MPC_Threads/lib/%.d:sctk_thread/%.c
 	@echo "    Generate fake dependencies $(patsubst $(M_PWD)/BUILD_MPC_Threads/lib/%.d,sctk_thread/%.c,$@)"
 	@echo "$(patsubst $(M_PWD)/BUILD_MPC_Threads/lib/%.d,sctk_thread/%.c,$@)" > $@
-
-$(DEP_topology):$(M_PWD)/BUILD_MPC_Threads/lib/%.d:sctk_topology/%.c
-	@echo "    Generate fake dependencies $(patsubst $(M_PWD)/BUILD_MPC_Threads/lib/%.d,sctk_topology/%.c,$@)"
-	@echo "$(patsubst $(M_PWD)/BUILD_MPC_Threads/lib/%.d,sctk_topology/%.c,$@)" > $@
 
 endif
 
@@ -117,10 +95,6 @@ $(OBJ_thread):%.o:%.d
 	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Threads/lib/%.o,sctk_thread/%.c,$@)"
 	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Threads/lib/%.o,sctk_thread/%.c,$@) -o $@
 
-$(OBJ_topology):%.o:%.d
-	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Threads/lib/%.o,sctk_topology/%.c,$@)"
-	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Threads/lib/%.o,sctk_topology/%.c,$@) -o $@
-
 $(SDEP_include):$(M_PWD)/BUILD_MPC_Threads/lib/%.d:include/%.S
 	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_Threads/lib/%.d,include/%.S,$@)"
 	@$(GCC) -M $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Threads/lib/%.d,include/%.S,$@) | \
@@ -131,11 +105,6 @@ $(SDEP_thread):$(M_PWD)/BUILD_MPC_Threads/lib/%.d:sctk_thread/%.S
 	@$(GCC) -M $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Threads/lib/%.d,sctk_thread/%.S,$@) | \
 		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_Threads/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
 
-$(SDEP_topology):$(M_PWD)/BUILD_MPC_Threads/lib/%.d:sctk_topology/%.S
-	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_Threads/lib/%.d,sctk_topology/%.S,$@)"
-	@$(GCC) -M $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Threads/lib/%.d,sctk_topology/%.S,$@) | \
-		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_Threads/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
-
 $(SOBJ_include):%.o:%.d
 	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Threads/lib/%.o,include/%.S,$@)"
 	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Threads/lib/%.o,include/%.S,$@) -o $@
@@ -144,10 +113,6 @@ $(SOBJ_thread):%.o:%.d
 	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Threads/lib/%.o,sctk_thread/%.S,$@)"
 	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Threads/lib/%.o,sctk_thread/%.S,$@) -o $@
 
-$(SOBJ_topology):%.o:%.d
-	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Threads/lib/%.o,sctk_topology/%.S,$@)"
-	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Threads/lib/%.o,sctk_topology/%.S,$@) -o $@
-
 $(FOBJ_include):$(M_PWD)/BUILD_MPC_Threads/lib/%_f.o:include/%.f
 	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Threads/lib/%_f.o,include/%.f,$@)"
 	@$(F77) -c $(FFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Threads/lib/%_f.o,include/%.f,$@) -o $@
@@ -155,10 +120,6 @@ $(FOBJ_include):$(M_PWD)/BUILD_MPC_Threads/lib/%_f.o:include/%.f
 $(FOBJ_thread):$(M_PWD)/BUILD_MPC_Threads/lib/%_f.o:sctk_thread/%.f
 	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Threads/lib/%_f.o,sctk_thread/%.f,$@)"
 	@$(F77) -c $(FFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Threads/lib/%_f.o,sctk_thread/%.f,$@) -o $@
-
-$(FOBJ_topology):$(M_PWD)/BUILD_MPC_Threads/lib/%_f.o:sctk_topology/%.f
-	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Threads/lib/%_f.o,sctk_topology/%.f,$@)"
-	@$(F77) -c $(FFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Threads/lib/%_f.o,sctk_topology/%.f,$@) -o $@
 
 
 ifneq ($(SCTK_MAKE_NO_DEP),yes)
