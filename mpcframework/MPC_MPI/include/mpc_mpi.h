@@ -367,12 +367,6 @@ extern "C"
 #define MPI_ORDER_C 200
 #define MPI_ORDER_FORTRAN 201
 
-/* asserts for one-sided communication */
-#define MPI_MODE_NOCHECK      1
-#define MPI_MODE_NOSTORE      2
-#define MPI_MODE_NOPUT        3
-#define MPI_MODE_NOPRECEDE    4
-#define MPI_MODE_NOSUCCEED    5 
 
 /* for comm_split method */
 #define MPI_COMM_TYPE_SHARED MPC_COMM_TYPE_SHARED
@@ -380,13 +374,14 @@ extern "C"
 /*
  * * MPI-2 One-Sided Communications asserts   
  */
-/*
-#define MPI_MODE_NOCHECK             1
-#define MPI_MODE_NOPRECEDE           2
-#define MPI_MODE_NOPUT               4
-#define MPI_MODE_NOSTORE             8
-#define MPI_MODE_NOSUCCEED          16
-*/
+
+/* asserts for one-sided communication */
+#define MPI_MODE_NOCHECK      1
+#define MPI_MODE_NOSTORE      2
+#define MPI_MODE_NOPUT        3
+#define MPI_MODE_NOPRECEDE    4
+#define MPI_MODE_NOSUCCEED    5 
+
 #define MPI_WIN_FLAVOR_CREATE        1
 #define MPI_WIN_FLAVOR_ALLOCATE      2
 #define MPI_WIN_FLAVOR_DYNAMIC       3
