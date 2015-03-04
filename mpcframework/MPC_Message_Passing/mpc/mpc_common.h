@@ -32,37 +32,6 @@
 #include "sctk_debug.h"
 
 /************************************************************************/
-/* Buffers definition                                                   */
-/************************************************************************/
- 
-#define MAX_MPC_BUFFERED_MSG 32
-#define MAX_MPC_BUFFERED_SIZE (128 * sizeof(long))
-
-typedef struct mpc_buffered_msg_s
-{
-	sctk_thread_ptp_message_t header;
-	/* Completion flag to use if the user do not provide a valid request */
-	int completion_flag;
-	/* MPC_Request if the message is buffered  */
-	MPC_Request request;
-	long buf[(MAX_MPC_BUFFERED_SIZE / sizeof (long)) + 1];
-} mpc_buffered_msg_t;
-
-typedef struct 
-{
-	mpc_buffered_msg_t buffer[MAX_MPC_BUFFERED_MSG];
-	volatile int buffer_rank;
-	sctk_spinlock_t lock;
-} buffer_t;
-
-typedef struct 
-{
-	mpc_buffered_msg_t buffer_async[MAX_MPC_BUFFERED_MSG];
-	volatile int buffer_async_rank;
-	sctk_spinlock_t lock;
-} buffer_async_t;
-
-/************************************************************************/
 /* Per communicator context                                             */
 /************************************************************************/
 
@@ -165,16 +134,50 @@ int PMPC_Derived_datatype_on_slot ( int id,
 
 int PMPC_Type_set_size(MPC_Datatype datatype, size_t size );
 /************************************************************************/
-/* Per thread context                                                   */
+/* Per thread context message buffers                                   */
 /************************************************************************/
 
-struct sctk_thread_specific_s
-{
-  buffer_t buffer;
-  buffer_async_t buffer_async;
-};
+#define MAX_MPC_BUFFERED_MSG 32
+#define MAX_MPC_BUFFERED_SIZE (128 * sizeof(long))
 
-typedef struct sctk_thread_specific_s sctk_thread_specific_t;
+typedef struct mpc_buffered_msg_s
+{
+	sctk_thread_ptp_message_t header;
+	/* Completion flag to use if the user do not provide a valid request */
+	int completion_flag;
+	/* MPC_Request if the message is buffered  */
+	MPC_Request request;
+	long buf[(MAX_MPC_BUFFERED_SIZE / sizeof (long)) + 1];
+} mpc_buffered_msg_t;
+
+typedef struct 
+{
+	mpc_buffered_msg_t buffer[MAX_MPC_BUFFERED_MSG];
+	volatile int buffer_rank;
+	sctk_spinlock_t lock;
+} sctk_buffer_t;
+
+typedef struct sctk_thread_buffer_pool_s
+{
+	sctk_buffer_t sync;
+	sctk_buffer_t async;
+}sctk_thread_buffer_pool_t;
+
+
+/************************************************************************/
+/* Per thread context	                                          */
+/************************************************************************/
+
+typedef struct sctk_thread_specific_s
+{
+	sctk_thread_buffer_pool_t buffer_pool;
+}sctk_thread_specific_t;
+
+sctk_thread_specific_t * sctk_get_thread_specific();
+void sctk_set_thread_specific( sctk_thread_specific_t * pointer );
+
+void MPC_Init_thread_specific();
+void MPC_Release_thread_specific();
 
 /************************************************************************/
 /* Non Generic MPI interface function                                   */

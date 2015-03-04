@@ -714,6 +714,10 @@ sctk_thread_create (sctk_thread_t * restrict __threadp,
   return res;
 }
 
+
+extern void MPC_Init_thread_specific();
+extern void MPC_Release_thread_specific();
+
 static void *
 sctk_thread_create_tmp_start_routine_user (sctk_thread_data_t * __arg)
 {
@@ -764,13 +768,13 @@ sctk_thread_create_tmp_start_routine_user (sctk_thread_data_t * __arg)
 
 
 #ifdef MPC_Message_Passing
-   __MPC_init_thread_specific();
+   MPC_Init_thread_specific();
 #endif
 
   res = tmp.__start_routine (tmp.__arg);
 
 #ifdef MPC_Message_Passing
-  __MPC_delete_thread_specific();
+  MPC_Release_thread_specific();
 #endif
 
   /** ** **/

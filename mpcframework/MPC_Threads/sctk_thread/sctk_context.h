@@ -193,7 +193,7 @@ Need to check this in more depth for futur version ( > 2.4.0-1).
 #if defined (SCTK_USE_OPTIMIZED_TLS)
     void *sctk_tls_module;
 #endif
-    void *sctk_message_passing;
+    void *___sctk_message_passing;
     /* profiling TLS */
     void *tls_trace_module;
     void *tls_args;

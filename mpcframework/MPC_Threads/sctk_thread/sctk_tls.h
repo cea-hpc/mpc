@@ -98,7 +98,7 @@ extern "C"
 #endif
 
 #ifdef MPC_Message_Passing
-  extern __thread struct sctk_thread_specific_s *sctk_message_passing;
+  extern __thread struct sctk_thread_specific_s * ___sctk_message_passing;
 #endif
 
 #if defined (SCTK_USE_OPTIMIZED_TLS)
@@ -138,7 +138,7 @@ extern "C"
 #endif
 
 #ifdef MPC_Message_Passing
-    tls_save (sctk_message_passing);
+    tls_save (___sctk_message_passing);
 #endif
     /* MPC Tracelib TLS */
     tls_save (tls_args);
@@ -170,7 +170,7 @@ extern "C"
 #endif
 
 #ifdef MPC_Message_Passing
-    tls_restore (sctk_message_passing);
+    tls_restore (___sctk_message_passing);
 #endif
     /* MPC Tracelib TLS */
     tls_restore (tls_args);
@@ -195,7 +195,7 @@ extern "C"
     /* tls_init (mpc_user_tls_1); */
     ucp->mpc_user_tls_1 = mpc_user_tls_1 ;
 #ifdef MPC_Message_Passing
-    tls_init (sctk_message_passing);
+    tls_init (___sctk_message_passing);
 #endif
     /* MPC Tracelib TLS */
     tls_init (tls_args);
