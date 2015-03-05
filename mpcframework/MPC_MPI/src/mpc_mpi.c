@@ -643,7 +643,7 @@ TODO("to optimize")
     MPI_ERROR_REPORT(comm,MPI_ERR_RANK,"Error bad rank provided")
 
 #define mpi_check_root(task,max_rank,comm)		\
-  if(((task < 0) || (task >= max_rank)) && (task != MPI_PROC_NULL))		\
+  if(((task < 0) || (task >= max_rank)) && (task != MPI_PROC_NULL) && (task != MPI_ROOT))		\
     MPI_ERROR_REPORT(comm,MPI_ERR_ROOT,"Error bad root rank provided")
 
 #define mpi_check_tag(tag,comm)				\
@@ -4927,7 +4927,7 @@ __INTERNAL__PMPI_Gather (void *sendbuf, int sendcnt, MPI_Datatype sendtype,
     }
   else
     {
-        not_rechable();
+	  not_rechable();
       return PMPC_Gather (sendbuf, sendcnt, sendtype, recvbuf, recvcnt,
 			 recvtype, root, comm);
     }
@@ -11619,9 +11619,7 @@ PMPI_Bcast (void *buffer, int count, MPI_Datatype datatype, int root,
       }
       
   __INTERNAL__PMPI_Comm_size (comm, &size);
-	if((root < 0) || (root >= size)){
-		MPI_ERROR_REPORT(comm,MPI_ERR_ROOT,"");
-        }
+	mpi_check_root(root,size,comm);
 	mpi_check_rank_send(root,size,comm);
 	mpi_check_buf (buffer, comm);
 	mpi_check_count (count, comm);
@@ -11657,7 +11655,6 @@ PMPI_Gather (void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 	mpi_check_count (recvcnt, comm);
 	mpi_check_type (recvtype, comm);
     }
-	mpi_check_tag (root, comm);
 #ifndef ENABLE_COLLECTIVES_ON_INTERCOMM
 	if(sctk_is_inter_comm (comm)){
 	  MPI_ERROR_REPORT(comm,MPI_ERR_COMM,"");
@@ -11700,7 +11697,6 @@ PMPI_Gatherv (void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 	mpi_check_buf (recvbuf, comm);
 //	mpi_check_count (recvcnt, comm);
 	mpi_check_type (recvtype, comm);
-	mpi_check_tag (root, comm);
 #ifndef ENABLE_COLLECTIVES_ON_INTERCOMM
 	if(sctk_is_inter_comm (comm)){
 	  MPI_ERROR_REPORT(comm,MPI_ERR_COMM,"");
@@ -11734,7 +11730,6 @@ PMPI_Scatter (void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 	mpi_check_buf (recvbuf, comm);
 	mpi_check_count (recvcnt, comm);
 	mpi_check_type (recvtype, comm);
-	mpi_check_tag (root, comm);
 #ifndef ENABLE_COLLECTIVES_ON_INTERCOMM
 	if(sctk_is_inter_comm (comm)){
 	  MPI_ERROR_REPORT(comm,MPI_ERR_COMM,"");
@@ -11783,7 +11778,6 @@ PMPI_Scatterv (void *sendbuf, int *sendcnts, int *displs,
 	mpi_check_buf (recvbuf, comm);
 	mpi_check_count (recvcnt, comm);
 	mpi_check_type (recvtype, comm);
-	mpi_check_tag (root, comm);
 #ifndef ENABLE_COLLECTIVES_ON_INTERCOMM
 	if(sctk_is_inter_comm (comm)){
 	  MPI_ERROR_REPORT(comm,MPI_ERR_COMM,"");
