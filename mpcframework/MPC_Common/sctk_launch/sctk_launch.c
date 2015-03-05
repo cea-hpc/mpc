@@ -562,7 +562,7 @@ sctk_def_use_host (char *arg)
 }
 
   static inline int
-sctk_threat_arg (char *word)
+sctk_proceed_arg (char *word)
 {
   sctk_add_arg_eq ("--directory", sctk_def_directory);
   sctk_add_arg ("--version-details", sctk_version_details);
@@ -659,7 +659,7 @@ sctk_env_init_intern (int *argc, char ***argv)
       {
         *argc = (*argc) - 1;
       }
-      if (sctk_threat_arg ((*argv)[i]) == -1)
+      if (sctk_proceed_arg ((*argv)[i]) == -1)
       {
         break;
       }

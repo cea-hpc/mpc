@@ -39,7 +39,7 @@ error_add(){
 ERRORS="`expr $ERRORS + 1`"
 }
 
-threat_dir(){
+proceed_dir(){
 rm *~ > /dev/null 2>&1
 for i in * ; do 
 DIR="`pwd`"
@@ -50,7 +50,7 @@ if test -d $i ; then
 if test "$i" != ".svn" && test "$i" != "PRIVATE_MPC_Tests" && test "$i" != "MPC_Extras" ; then 
 if test "$i" != ".tmp" ; then 
 cd $i
-threat_dir
+proceed_dir
 cd ..
 fi
 fi
@@ -73,7 +73,7 @@ fi
 
 LIC_DATE="`cat .MPC_License`"
 echo "$LIC_DATE"
-threat_dir
+proceed_dir
 
 for i in $FILES ; do 
 RES="`grep \"Copyright or (C) or Copr. Commissariat a l'Energie Atomique\" $i `"

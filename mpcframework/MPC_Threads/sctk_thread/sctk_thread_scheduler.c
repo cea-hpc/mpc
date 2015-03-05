@@ -260,7 +260,7 @@ static sctk_thread_generic_task_t* sctk_centralized_get_task(){
   return task;
 }
 
-static void sctk_centralized_add_task_to_threat(sctk_thread_generic_task_t* task){
+static void sctk_centralized_add_task_to_proceed(sctk_thread_generic_task_t* task){
   sctk_spinlock_lock(&sctk_centralized_task_list_lock);
   DL_APPEND(sctk_centralized_task_list,task);
   sctk_spinlock_unlock(&sctk_centralized_task_list_lock);
@@ -440,7 +440,7 @@ static sctk_thread_generic_task_t* sctk_multiple_queues_get_task(){
   return task;
 }
 
-static void sctk_multiple_queues_add_task_to_threat(sctk_thread_generic_task_t* task){
+static void sctk_multiple_queues_add_task_to_proceed(sctk_thread_generic_task_t* task){
   int core;
 
   core = core_id;
@@ -515,7 +515,7 @@ static void (*sctk_generic_add_to_list_intern)(sctk_thread_generic_scheduler_t* 
 static sctk_thread_generic_scheduler_t* (*sctk_generic_get_from_list)(void) = NULL;
 static sctk_thread_generic_scheduler_t* (*sctk_generic_get_from_list_pthread_init)(void) = NULL;
 static sctk_thread_generic_task_t* (*sctk_generic_get_task)(void) = NULL;
-static void (*sctk_generic_add_task_to_threat)(sctk_thread_generic_task_t* ) = NULL;
+static void (*sctk_generic_add_task_to_proceed)(sctk_thread_generic_task_t* ) = NULL;
 static void (*sctk_generic_concat_to_list)(sctk_thread_generic_scheduler_t* ,
 					   sctk_thread_generic_scheduler_generic_t*) = NULL;
 static void (*sctk_generic_poll_tasks)(sctk_thread_generic_scheduler_t* ) = NULL;
@@ -631,7 +631,7 @@ static void sctk_generic_add_task(sctk_thread_generic_task_t* task){
     sctk_thread_generic_register_spinlock_unlock(task->sched,&(task->sched->generic.lock));
     sctk_thread_generic_sched_yield(task->sched);
   } else {
-    sctk_generic_add_task_to_threat(task);
+    sctk_generic_add_task_to_proceed(task);
   }
 }
 
@@ -691,7 +691,7 @@ static inline void sctk_generic_sched_yield_intern(sctk_thread_generic_scheduler
     vp_data.sctk_generic_delegated_add = sched;
 
     if(vp_data.sctk_generic_delegated_task_list != NULL){ 
-      sctk_generic_add_task_to_threat(vp_data.sctk_generic_delegated_task_list);
+      sctk_generic_add_task_to_proceed(vp_data.sctk_generic_delegated_task_list);
       vp_data.sctk_generic_delegated_task_list = NULL;
     }
 
@@ -723,7 +723,7 @@ static inline void sctk_generic_sched_yield_intern(sctk_thread_generic_scheduler
 
       if(vp_data.sctk_generic_delegated_task_list != NULL){
 	sched->generic.is_idle_mode = 1;
-	sctk_generic_add_task_to_threat(vp_data.sctk_generic_delegated_task_list);
+	sctk_generic_add_task_to_proceed(vp_data.sctk_generic_delegated_task_list);
 	vp_data.sctk_generic_delegated_task_list = NULL;
       }
 
@@ -790,7 +790,7 @@ static inline void sctk_generic_sched_yield_intern(sctk_thread_generic_scheduler
   }
 
   if(vp_data.sctk_generic_delegated_task_list != NULL){ 
-    sctk_generic_add_task_to_threat(vp_data.sctk_generic_delegated_task_list);
+    sctk_generic_add_task_to_proceed(vp_data.sctk_generic_delegated_task_list);
     vp_data.sctk_generic_delegated_task_list = NULL;
   }
   
@@ -1002,7 +1002,7 @@ void sctk_thread_generic_scheduler_init(char* thread_type,char* scheduler_type, 
     sctk_generic_add_to_list_intern = sctk_centralized_add_to_list;
     sctk_generic_get_from_list = sctk_centralized_get_from_list;
     sctk_generic_get_task = sctk_centralized_get_task;
-    sctk_generic_add_task_to_threat = sctk_centralized_add_task_to_threat;
+    sctk_generic_add_task_to_proceed = sctk_centralized_add_task_to_proceed;
     sctk_generic_concat_to_list = sctk_centralized_concat_to_list;
     sctk_generic_poll_tasks = sctk_centralized_poll_tasks;
     sctk_thread_generic_wake_on_task_lock_p=sctk_centralized_thread_generic_wake_on_task_lock;
@@ -1030,7 +1030,7 @@ void sctk_thread_generic_scheduler_init(char* thread_type,char* scheduler_type, 
     sctk_generic_add_to_list_intern = sctk_multiple_queues_add_to_list;
     sctk_generic_get_from_list = sctk_multiple_queues_get_from_list;
     sctk_generic_get_task = sctk_multiple_queues_get_task;
-    sctk_generic_add_task_to_threat = sctk_multiple_queues_add_task_to_threat;
+    sctk_generic_add_task_to_proceed = sctk_multiple_queues_add_task_to_proceed;
     sctk_generic_concat_to_list = sctk_multiple_queues_concat_to_list;
     sctk_generic_poll_tasks = sctk_multiple_queues_poll_tasks;
     sctk_thread_generic_wake_on_task_lock_p=sctk_multiple_queues_thread_generic_wake_on_task_lock;

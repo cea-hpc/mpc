@@ -163,7 +163,7 @@ extern "C"
     volatile char thread_sigpending[SCTK_NSIG];
     volatile sigset_t thread_sigset;
 
-    volatile int nb_sig_threated;
+    volatile int nb_sig_proceeded;
 
     void* debug_p;
   } sctk_ethread_per_thread_t;

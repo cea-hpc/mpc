@@ -182,7 +182,7 @@ extern "C"
 #endif
 
   static inline int
-    __sctk_ethread_sched_threat_signals (sctk_ethread_per_thread_t *
+    __sctk_ethread_sched_proceed_signals (sctk_ethread_per_thread_t *
 					 restrict cur)
   {
 #ifndef WINDOWS_SYS
@@ -203,7 +203,7 @@ extern "C"
 	  }
       }
     sctk_spinlock_unlock (&(cur->spinlock));
-    cur->nb_sig_threated += done;
+    cur->nb_sig_proceeded += done;
     return done;
 #else
     return 0;
@@ -240,7 +240,7 @@ extern "C"
   {
     if (expect_false (cur->nb_sig_pending > 0))
       {
-	__sctk_ethread_sched_threat_signals (cur);
+	__sctk_ethread_sched_proceed_signals (cur);
       }
     if (expect_false (cur->cancel_status > 0))
       {
@@ -283,9 +283,9 @@ extern "C"
     sigset_t oldmask;
     sigset_t pending;
     int i;
-    cur->nb_sig_threated = 0;
+    cur->nb_sig_proceeded = 0;
     __sctk_ethread_sigmask (cur, SIG_SETMASK, set, &oldmask);
-    while (cur->nb_sig_threated == 0)
+    while (cur->nb_sig_proceeded == 0)
       {
 	sctk_thread_yield ();
 	sigpending (&pending);
@@ -296,7 +296,7 @@ extern "C"
 		&& (sigismember (&pending, i + 1) == 1))
 	      {
 		kthread_kill (kthread_self (), i + 1);
-		cur->nb_sig_threated = 1;
+		cur->nb_sig_proceeded = 1;
 	      }
 	  }
       }
