@@ -48,7 +48,7 @@ ROMIO=""
 #to build romio itself
 if test -e "${SCTK_LIB_DIR}/libromio.a"; then
 	if test "x\${MPC_BOOTSTRAP}" != "xyes"; then
-		ROMIO="-include mpio.h"
+		ROMIO="-DMPC_ROMIO_ENABLED"
 	fi
 fi
 EOF
