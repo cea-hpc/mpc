@@ -48,14 +48,12 @@ static void run_libgfortran_symbol(char* sym)
       handle = dlopen("libgfortran.so",RTLD_LAZY);
       if (handle == NULL)
       {
-        fprintf(stderr,"dlopen(\"libgfortran.so\") failed\n%s\n", dlerror());
-        abort();
+        return;
       }
       ptr_func = dlsym(handle,sym);
       if (ptr_func == NULL)
       {
-        fprintf(stderr,"dlsym(%s) failed\n%s\n",sym, dlerror());
-        abort();
+        return;
       }
     ptr_func();
     dlclose(handle);
