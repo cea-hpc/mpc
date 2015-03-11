@@ -309,7 +309,6 @@ extern "C"
 #define MPI_MAX_INFO_KEY 255
 
 /* Other Null Handles */
-#define MPI_FILE_NULL ((MPI_File)-1)
 #define MPI_WIN_NULL ((MPI_Win)-1)
 #define MPI_MESSAGE_NULL ((MPI_Message) MPI_REQUEST_NULL)
 #define MPI_MESSAGE_NO_PROC -2
