@@ -4927,7 +4927,7 @@ __INTERNAL__PMPI_Gather (void *sendbuf, int sendcnt, MPI_Datatype sendtype,
     }
   else
     {
-	  not_rechable();
+	  not_reachable();
       return PMPC_Gather (sendbuf, sendcnt, sendtype, recvbuf, recvcnt,
 			 recvtype, root, comm);
     }
