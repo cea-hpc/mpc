@@ -659,11 +659,38 @@ getPackageCompilationOptions()
 	options=`echo ${configForCompiler} | cut -f 6 -d ';'`
 	options="${all_options} ${options} `echo ${config} | cut -f 6 -d ';'`"
 	
-	case ${compiler} in
-		icc)
-			options="${options} CC=icc CXX=icpc F77=ifort"
-		;;
-	esac
+	
+	# Make sure the compiler was not manually set (useful for ROMIO)
+	# before setting it to ICC by force
+	COMPILER_OVERIDE_FLAG=0
+	
+
+	echo "${options}" | grep "CC=" 2>&1 > /dev/null
+	
+	if test ${?} -eq 0; then
+		COMPILER_OVERIDE_FLAG=1
+	fi	
+	
+	echo "${options}" | grep "FC=" 2>&1 > /dev/null
+	
+	if test ${?} -eq 0; then
+		COMPILER_OVERIDE_FLAG=1
+	fi
+	
+	echo "${options}" | grep "F77=" 2>&1 > /dev/null
+	
+	if test ${?} -eq 0; then
+		COMPILER_OVERIDE_FLAG=1
+	fi
+	
+	if test ${COMPILER_OVERIDE_FLAG} -eq 0; then
+		
+		case ${compiler} in
+			icc)
+				options="${options} CC=icc CXX=icpc F77=ifort"
+			;;
+		esac
+	fi
 
 	echo $options
 }	
