@@ -626,11 +626,30 @@ rm -rf include > /dev/null 2>&1
 rm -rf include_modules > /dev/null 2>&1
 
 mkdir -p include
+
+header > include/mpc_main.h
+echo "#ifndef ___MPC___GLOBAL_RENAMING__HEADER___FILE___" >> include/mpc_main.h
+echo "#define ___MPC___GLOBAL_RENAMING__HEADER___FILE___" >> include/mpc_main.h
+
+cat <<EOF >> include/mpc_main.h
+#ifndef MPC_NO_AUTO_MAIN_REDEF
+#undef main
+#ifdef __cplusplus
+#define main long mpc_user_main_dummy__ (); extern "C" int mpc_user_main__
+#else
+#define main mpc_user_main__
+#endif
+#endif
+EOF
+
+echo "#endif" >> include/mpc_main.h
+
 header > include/mpc.h
 echo "#ifndef ___MPC___GLOBAL___HEADER___FILE___" >> include/mpc.h
 echo "#define ___MPC___GLOBAL___HEADER___FILE___" >> include/mpc.h
 
 echo "#include <sctk_config.h>">> include/mpc.h
+echo "#include <mpc_main.h>">> include/mpc.h
 
 for module in $MODULES ; do
     MODULE_NAME="\$$module"

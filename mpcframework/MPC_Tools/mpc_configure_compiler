@@ -597,7 +597,7 @@ fi
 cat <<EOF >> $1
 COMPILER_ARGS=""
 
-for i in "\$@" ; do
+for i in "\$@" -fmpc-include ; do
     CURRENT_ARG="'\$i'"
     
     #This is used to add the mpc.h include
@@ -605,7 +605,7 @@ for i in "\$@" ; do
     #which does not necessarilly use mpc.h/mpi.h
     #common case being configure time
     if test "\$i" = "-fmpc-include" ; then
-        CURRENT_ARG="-include mpc.h"
+        CURRENT_ARG="-include mpc_main.h"
     fi
     if test "\$i" = "-fmpc-privatize" ; then
         ADD_FLAG_PRIVATIZE="$2"
