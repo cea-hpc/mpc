@@ -458,6 +458,7 @@ int sctk_aio_Process( struct aiocb * cb )
 				return 1;
 			}
 		break;
+#ifndef MPC_AIO_SYNC_IS_DUPLICATED
 		case O_DSYNC:
 			if( fdatasync( cb->aio_fildes ) < 0 )
 			{
@@ -466,6 +467,7 @@ int sctk_aio_Process( struct aiocb * cb )
 				return 1;
 			}
 		break;
+#endif
 		case LIO_NOP:
 			/* Nothing to do */
 			ret = 0;

@@ -150,7 +150,6 @@ cat  << EOF  > ${SCTK_CONF_C}
 #include <stdio.h>
 __thread long long int tls_large_array[16000];
 int main( int argc, char ** argv ){
-	return 1;
 	int gret = 0;
 	char buff[512];
 	int fd = open( "./TEST.dat", O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR );
@@ -194,16 +193,63 @@ if test "$SCTK_SCTK_CHECK_HEADER_RES" = 0 ; then
 	eval "${SCTK_CONF_BIN}">> ${SCTK_CONF_LOG} 2>&1
 	SCTK_SCTK_CHECK_HEADER_RES="$?"
 	rm ${SCTK_CONF_BIN} >> ${SCTK_CONF_LOG} 2>&1
+	
 	if test "$SCTK_SCTK_CHECK_HEADER_RES" = 1 ; then
 		result no
 		SCTK_CHECK_OPTION   -DMPC_AIO_ENABLED
 		MPC_AIO_ENABLED="1"
 	else
 		result yes
-    fi
+	fi
    
 else
     result no
+fi
+
+#If we enable AIO we must do an extra check
+if test "$MPC_AIO_ENABLED" = 1; then
+	SCTK_MSG_CHECKING "if O_SYNC is equal to O_DSYNC"
+
+cat  << EOF > ${SCTK_CONF_C}
+#include <aio.h>
+#include <fcntl.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <string.h>
+#include <errno.h>
+#include <stdio.h>
+
+int main( int argc, char ** argv ){
+	/* Here we will get a dupplicate error
+	 * if they are equal */
+	switch( argc )
+	{
+		case O_SYNC:
+			return 1;
+		case O_DSYNC:
+			return 0;
+	}
+	
+	return 0;
+}
+EOF
+
+	echo "File ${SCTK_CONF_C}" >> ${SCTK_CONF_LOG} 2>&1
+	echo "File ${SCTK_CONF_C}" >> ${SCTK_CONF_LOG} 2>&1
+	echo "$SCTK_CC $SCTK_CFLAGS ${SCTK_CONF_C} -o ${SCTK_CONF_BIN} -lrt">> ${SCTK_CONF_LOG} 2>&1
+	eval "$SCTK_CC $SCTK_CFLAGS ${SCTK_CONF_C} -o ${SCTK_CONF_BIN} -lrt">> ${SCTK_CONF_LOG} 2>&1
+	SCTK_SCTK_CHECK_HEADER_RES="$?"
+	rm ${SCTK_CONF_C} >> ${SCTK_CONF_LOG} 2>&1
+
+	if test "$SCTK_SCTK_CHECK_HEADER_RES" = 1 ; then
+		result yes
+		SCTK_CHECK_OPTION   -DMPC_AIO_SYNC_IS_DUPLICATED
+	else
+		result no
+	fi
+	
+		
+
 fi
 
 
