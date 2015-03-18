@@ -122,9 +122,6 @@
 			<param name="srq_credit_thread_limit" type="int" doc="Min number of free recv Eager buffers before the activation of the asynchronous thread. If this thread is activated too many times, the performance may be decreased." default="100" />
 			<param name="size_ibufs_chunk" type="int" doc="Number of new buffers allocated when no more buffers are available." default="100" />
 			<param name="init_mr" type="int" doc="Number of MMU entries allocated during the MPC initlization." default="400" />
-			<param name="size_mr_chunk" type="int" doc="Number of MMU entries allocated when no more MMU entries are available." default="200" />
-			<param name="mmu_cache_enabled" type="int" doc="Defines if the MMU cache is enabled." default="1" />
-			<param name="mmu_cache_entries" type="int" doc="Defines the number of MMU cache allowed." default="1" />
 			<param name="steal" type="int" doc="Defines if the steal in MPI is allowed " default="2" />
 			<param name="quiet_crash" type="int" doc="Defines if the Infiniband interface must crash quietly." default="0" />
 			<param name="async_thread" type="int" doc="Defines if the asynchronous may be started at the MPC initialization." default="0" />
@@ -143,6 +140,11 @@
 			<param name="rdma_resizing_min_nb" type="int" doc="Defines the minimum number of Eager RDMA buffers (resizing)" default="8" />
 			<param name="rdma_resizing_max_nb" type="int" doc="Defines the maximum number of Eager RDMA buffers (resizing)" default="32" />
 			<param name="size_recv_ibufs_chunk" type="int" doc="Defines the number of receive buffers allocated on the fly." default="400" />
+		</struct>
+		
+		<struct name="ib_global" doc="Global Parameters for IB common structs.">
+			<param name="mmu_cache_enabled" type="int" doc="Defines if the MMU cache is enabled." default="1" />
+			<param name="mmu_cache_size_global" type="int" doc="Number of MMU entries allocated when no more MMU entries are available." default="500" />
 		</struct>
 
 		<enum name="ibv_rdvz_protocol" doc="">
@@ -281,6 +283,7 @@
 			<param name="network_mode" type="string" default="default" doc=""/>
 			<param name="dyn_reordering" type="bool" default="false" doc=""/>
 			<param name="enable_idle_polling" type="bool" default="false" doc="Enable usage of polling during idle."/>
+			<param name="ib_global" type="ib_global" doc="Global parameters for IB" />
 		</struct>
 		
 		<!-- ############################## -->

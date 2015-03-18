@@ -102,9 +102,6 @@ const struct sctk_runtime_config_entry_meta sctk_runtime_config_db[] = {
 	{"srq_credit_thread_limit"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_driver_infiniband,srq_credit_thread_limit)  , sizeof(int) , "int" , NULL},
 	{"size_ibufs_chunk"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_driver_infiniband,size_ibufs_chunk)  , sizeof(int) , "int" , NULL},
 	{"init_mr"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_driver_infiniband,init_mr)  , sizeof(int) , "int" , NULL},
-	{"size_mr_chunk"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_driver_infiniband,size_mr_chunk)  , sizeof(int) , "int" , NULL},
-	{"mmu_cache_enabled"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_driver_infiniband,mmu_cache_enabled)  , sizeof(int) , "int" , NULL},
-	{"mmu_cache_entries"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_driver_infiniband,mmu_cache_entries)  , sizeof(int) , "int" , NULL},
 	{"steal"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_driver_infiniband,steal)  , sizeof(int) , "int" , NULL},
 	{"quiet_crash"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_driver_infiniband,quiet_crash)  , sizeof(int) , "int" , NULL},
 	{"async_thread"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_driver_infiniband,async_thread)  , sizeof(int) , "int" , NULL},
@@ -123,6 +120,10 @@ const struct sctk_runtime_config_entry_meta sctk_runtime_config_db[] = {
 	{"rdma_resizing_min_nb"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_driver_infiniband,rdma_resizing_min_nb)  , sizeof(int) , "int" , NULL},
 	{"rdma_resizing_max_nb"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_driver_infiniband,rdma_resizing_max_nb)  , sizeof(int) , "int" , NULL},
 	{"size_recv_ibufs_chunk"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_driver_infiniband,size_recv_ibufs_chunk)  , sizeof(int) , "int" , NULL},
+	/* struct */
+	{"sctk_runtime_config_struct_ib_global" , SCTK_CONFIG_META_TYPE_STRUCT , 0  , sizeof(struct sctk_runtime_config_struct_ib_global) , NULL , sctk_runtime_config_struct_init_ib_global},
+	{"mmu_cache_enabled"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_ib_global,mmu_cache_enabled)  , sizeof(int) , "int" , NULL},
+	{"mmu_cache_size_global"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_ib_global,mmu_cache_size_global)  , sizeof(int) , "int" , NULL},
 	/* struct */
 	{"sctk_runtime_config_struct_net_driver_portals" , SCTK_CONFIG_META_TYPE_STRUCT , 0  , sizeof(struct sctk_runtime_config_struct_net_driver_portals) , NULL , sctk_runtime_config_struct_init_net_driver_portals},
 	{"fake_param"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_driver_portals,fake_param)  , sizeof(int) , "int" , NULL},
@@ -203,6 +204,7 @@ const struct sctk_runtime_config_entry_meta sctk_runtime_config_db[] = {
 	{"network_mode"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_low_level_comm,network_mode)  , sizeof(char *) , "char *" , NULL},
 	{"dyn_reordering"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_low_level_comm,dyn_reordering)  , sizeof(bool) , "bool" , NULL},
 	{"enable_idle_polling"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_low_level_comm,enable_idle_polling)  , sizeof(bool) , "bool" , NULL},
+	{"ib_global"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_low_level_comm,ib_global)  , sizeof(struct sctk_runtime_config_struct_ib_global) , "sctk_runtime_config_struct_ib_global" , sctk_runtime_config_struct_init_ib_global},
 	/* struct */
 	{"sctk_runtime_config_struct_mpc" , SCTK_CONFIG_META_TYPE_STRUCT , 0  , sizeof(struct sctk_runtime_config_struct_mpc) , NULL , sctk_runtime_config_struct_init_mpc},
 	{"log_debug"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_mpc,log_debug)  , sizeof(bool) , "bool" , NULL},

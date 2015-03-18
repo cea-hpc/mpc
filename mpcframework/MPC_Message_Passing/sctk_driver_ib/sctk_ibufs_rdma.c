@@ -209,7 +209,7 @@ sctk_ibuf_rdma_region_resize ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t
 	/* Unregister the memory.
 	 * FIXME: ideally, we should use ibv_reregister() but this call is currently not
 	 * supported by the libverb. */
-	sctk_ib_mmu_unregister ( rail_ib, region->mmu_entry );
+	sctk_ib_mmu_entry_release ( region->mmu_entry );
 
 	/* Realloc a new memory region.
 	 * FIXME: Using realloc is a little bit useless here because we get an additional
@@ -252,7 +252,7 @@ sctk_ibuf_rdma_region_resize ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t
 	/* register buffers at once
 	 * FIXME: ideally, we should use ibv_reregister() but this call is currently not
 	 * supported by the libverb. */
-	region->mmu_entry = sctk_ib_mmu_register_no_cache ( rail_ib, ptr,
+	region->mmu_entry = sctk_ib_mmu_entry_new( rail_ib, ptr,
 	                                                    nb_ibufs * size_ibufs );
 	sctk_nodebug ( "Size_ibufs: %lu", size_ibufs );
 	sctk_nodebug ( "[%d] Reg %p registered for rank %d (channel:%d). lkey : %lu", rail_ib->rail->rail_number, ptr, remote->rank, channel, region->mmu_entry->mr->lkey );
@@ -395,7 +395,6 @@ void
 sctk_ibuf_rdma_region_init ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *remote,
                              sctk_ibuf_region_t *region, enum sctk_ibuf_channel channel, int nb_ibufs, int size_ibufs )
 {
-	sctk_ib_mmu_t *mmu = sctk_ib_mmu_get_mmu_from_vp ( rail_ib );
 	void *ptr = NULL;
 	void *ibuf;
 
@@ -403,13 +402,13 @@ sctk_ibuf_rdma_region_init ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *
 	ib_assume ( remote->rdma.pool );
 
 	/* XXX: replace by memalign_on_node */
-	sctk_posix_memalign ( ( void ** ) &ptr, mmu->page_size, nb_ibufs * size_ibufs );
+	sctk_posix_memalign ( ( void ** ) &ptr, getpagesize(), nb_ibufs * size_ibufs );
 	ib_assume ( ptr );
 	memset ( ptr, 0, nb_ibufs * size_ibufs );
 	PROF_ADD_GLOB ( rail_ib->rail, SCTK_IB_IBUS_RDMA_SIZE, nb_ibufs * size_ibufs );
 
 	/* XXX: replace by memalign_on_node */
-	sctk_posix_memalign ( &ibuf, mmu->page_size, nb_ibufs * sizeof ( sctk_ibuf_t ) );
+	sctk_posix_memalign ( &ibuf, getpagesize(), nb_ibufs * sizeof ( sctk_ibuf_t ) );
 	ib_assume ( ibuf );
 	memset ( ibuf, 0, nb_ibufs * sizeof ( sctk_ibuf_t ) );
 	PROF_ADD_GLOB ( rail_ib->rail, SCTK_IB_IBUS_RDMA_SIZE, nb_ibufs * sizeof ( sctk_ibuf_t ) );
@@ -433,7 +432,7 @@ sctk_ibuf_rdma_region_init ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *
 	sctk_nodebug ( "Channel: %d", region->channel );
 
 	/* register buffers at once */
-	region->mmu_entry = sctk_ib_mmu_register_no_cache ( rail_ib, ptr,
+	region->mmu_entry = sctk_ib_mmu_entry_new ( rail_ib, ptr,
 	                                                    nb_ibufs * size_ibufs );
 	sctk_nodebug ( "Reg %p registered. lkey : %lu", ptr, region->mmu_entry->mr->lkey );
 	sctk_nodebug ( "Size_ibufs: %lu", size_ibufs );

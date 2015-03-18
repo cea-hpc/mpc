@@ -29,7 +29,6 @@
 
 #include "sctk.h"
 #include "sctk_ibufs.h"
-#include "sctk_ib_mmu.h"
 
 #define LOAD_TOPO(rail_ib) \
   struct sctk_ib_topology_s * topo = rail_ib->topology;
@@ -41,7 +40,6 @@ typedef struct sctk_ib_topology_numa_node_s
 	int id;
 	sctk_spinlock_t polling_lock;
 	sctk_ibuf_numa_t ibufs;
-	sctk_ib_mmu_t mmu;
 	char padd[4096];
 } sctk_ib_topology_numa_node_t;
 

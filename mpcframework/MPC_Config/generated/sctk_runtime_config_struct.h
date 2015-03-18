@@ -172,12 +172,6 @@ struct sctk_runtime_config_struct_net_driver_infiniband
 	int size_ibufs_chunk;
 	/**Number of MMU entries allocated during the MPC initlization.**/
 	int init_mr;
-	/**Number of MMU entries allocated when no more MMU entries are available.**/
-	int size_mr_chunk;
-	/**Defines if the MMU cache is enabled.**/
-	int mmu_cache_enabled;
-	/**Defines the number of MMU cache allowed.**/
-	int mmu_cache_entries;
 	/**Defines if the steal in MPI is allowed **/
 	int steal;
 	/**Defines if the Infiniband interface must crash quietly.**/
@@ -214,6 +208,16 @@ struct sctk_runtime_config_struct_net_driver_infiniband
 	int rdma_resizing_max_nb;
 	/**Defines the number of receive buffers allocated on the fly.**/
 	int size_recv_ibufs_chunk;
+};
+
+/******************************** STRUCTURE *********************************/
+/**Global Parameters for IB common structs.**/
+struct sctk_runtime_config_struct_ib_global
+{	int init_done;
+	/**Defines if the MMU cache is enabled.**/
+	int mmu_cache_enabled;
+	/**Number of MMU entries allocated when no more MMU entries are available.**/
+	int mmu_cache_size_global;
 };
 
 /******************************** STRUCTURE *********************************/
@@ -436,6 +440,8 @@ struct sctk_runtime_config_struct_low_level_comm
 	bool dyn_reordering;
 	/**Enable usage of polling during idle.**/
 	bool enable_idle_polling;
+	/**Global parameters for IB**/
+	struct sctk_runtime_config_struct_ib_global ib_global;
 };
 
 /******************************** STRUCTURE *********************************/

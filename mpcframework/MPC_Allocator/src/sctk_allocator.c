@@ -1544,6 +1544,10 @@ SCTK_PUBLIC void sctk_alloc_chain_free(struct sctk_alloc_chain * chain,void * pt
 	}
 	assume_m(vchunk->state == SCTK_ALLOC_CHUNK_STATE_ALLOCATED,"Double free corruption.");
 
+#ifdef MPC_Message_Passing
+	sctk_net_memory_free_hook ( ptr , sctk_alloc_get_size(vchunk) );
+#endif
+
 	//check if huge bloc or not
 	/** @todo Split in two sub-functions **/
 	if (sctk_alloc_chain_is_huge_size(chain,sctk_alloc_get_size(vchunk)))

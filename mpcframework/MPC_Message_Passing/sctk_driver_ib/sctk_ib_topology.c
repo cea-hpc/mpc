@@ -95,8 +95,6 @@ void sctk_ib_topology_init_task ( struct sctk_rail_info_s *rail, int vp )
 		 * as they access to the TLS variable*/
 		sctk_ib_topology_init_tls ( rail_ib, node );
 
-		sctk_ib_mmu_init ( rail_ib, &node->mmu, node );
-		sctk_ibuf_node_set_mmu ( &node->ibufs, &node->mmu );
 		node->ibufs.numa_node = node;
 		sctk_ibuf_init_numa_node ( rail_ib, &node->ibufs, config->init_ibufs, 1 );
 		init->is_leader = 0;
@@ -125,8 +123,7 @@ void sctk_ib_topology_init_task ( struct sctk_rail_info_s *rail, int vp )
 		srq_node->id = nodes_nb;
 		srq_node->polling_lock = SCTK_SPINLOCK_INITIALIZER; /* Not needed */
 
-		sctk_ib_mmu_init ( rail_ib, &srq_node->mmu, node );
-		sctk_ibuf_node_set_mmu ( &srq_node->ibufs, &srq_node->mmu );
+
 		srq_node->ibufs.numa_node = srq_node;
 		sctk_ibuf_init_numa_node ( rail_ib, &srq_node->ibufs, config->init_recv_ibufs, 1 );
 		sctk_ibuf_pool_set_node_srq_buffers ( rail_ib, &srq_node->ibufs );

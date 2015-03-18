@@ -28,7 +28,7 @@
 #include "sctk_runtime_config.h"
 
 /*Networks*/
-#include <sctk_multirail_ib.h>
+#include <sctk_ib_mpi.h>
 #include <sctk_route.h>
 #include <sctk_multirail.h>
 
@@ -368,6 +368,14 @@ restart:
 		}
 
 	}
+	
+	/* Here we initialize Global objects */
+	
+	if( nb_rails_infiniband )
+	{
+		sctk_ib_mmu_init();
+	}
+	
 
 	/* End of rails computing. Now allocate ! */
 
@@ -460,6 +468,21 @@ int sctk_net_set_mode_hybrid ()
 /* Memory Allocator                                                 */
 /********************************************************************/
 
+TODO ( "The following value MUST be determined dynamically!!" )
+#define IB_MEM_THRESHOLD_ALIGNED_SIZE (256*1024) /* RDMA threshold */
+#define IB_MEM_ALIGNMENT        (4096) /* Page size */
+
+static inline size_t sctk_network_memory_allocator_hook_ib ( size_t size )
+{
+	if ( size > IB_MEM_THRESHOLD_ALIGNED_SIZE )
+	{
+		return ( ( size + ( IB_MEM_ALIGNMENT - 1 ) ) & ( ~ ( IB_MEM_ALIGNMENT - 1 ) ) );
+	}
+
+	return 0;
+}
+
+
 size_t sctk_net_memory_allocation_hook ( size_t size_origin )
 {
 	size_t aligned_size;
@@ -472,6 +495,21 @@ size_t sctk_net_memory_allocation_hook ( size_t size_origin )
 
 #endif
 	return 0;
+}
+
+int sctk_network_is_ib_used();
+
+void sctk_net_memory_free_hook ( void * ptr , size_t size )
+{
+	size_t aligned_size;
+#ifdef MPC_USE_INFINIBAND
+
+	if ( sctk_network_is_ib_used())
+	{
+		return sctk_network_memory_free_hook_ib ( ptr, size );
+	}
+
+#endif
 }
 
 /********************************************************************/

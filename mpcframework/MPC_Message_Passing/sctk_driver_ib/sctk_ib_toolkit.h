@@ -100,5 +100,7 @@ static inline void sctk_ib_nodebug ( const char *fmt, ... )
 		sctk_error(__VA_ARGS__);      \
 		sctk_abort();
 
+#define ALIGN_ON(x, align) ( (x + (align-1)) & (~(align-1)) )
+
 #endif
 #endif

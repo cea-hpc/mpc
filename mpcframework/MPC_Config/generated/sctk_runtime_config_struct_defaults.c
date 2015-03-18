@@ -131,9 +131,6 @@ void sctk_runtime_config_struct_init_net_driver_infiniband(void * struct_ptr)
 	obj->srq_credit_thread_limit = 100;
 	obj->size_ibufs_chunk = 100;
 	obj->init_mr = 400;
-	obj->size_mr_chunk = 200;
-	obj->mmu_cache_enabled = 1;
-	obj->mmu_cache_entries = 1;
 	obj->steal = 2;
 	obj->quiet_crash = 0;
 	obj->async_thread = 0;
@@ -152,6 +149,21 @@ void sctk_runtime_config_struct_init_net_driver_infiniband(void * struct_ptr)
 	obj->rdma_resizing_min_nb = 8;
 	obj->rdma_resizing_max_nb = 32;
 	obj->size_recv_ibufs_chunk = 400;
+	obj->init_done = 1;
+}
+
+/*******************  FUNCTION  *********************/
+void sctk_runtime_config_struct_init_ib_global(void * struct_ptr)
+{
+	struct sctk_runtime_config_struct_ib_global * obj = struct_ptr;
+	/* Make sure this element is not initialized yet       */
+	/* It allows us to know when we are facing dynamically */
+	/* allocated objects requiring an init                 */
+	if( obj->init_done != 0 ) return;
+
+	/* Simple params : */
+	obj->mmu_cache_enabled = 1;
+	obj->mmu_cache_size_global = 500;
 	obj->init_done = 1;
 }
 
@@ -428,6 +440,7 @@ void sctk_runtime_config_struct_init_low_level_comm(void * struct_ptr)
 	obj->network_mode = "default";
 	obj->dyn_reordering = false;
 	obj->enable_idle_polling = false;
+	sctk_runtime_config_struct_init_ib_global(&obj->ib_global);
 	obj->init_done = 1;
 }
 
@@ -580,6 +593,12 @@ void sctk_runtime_config_reset_struct_default_if_needed(char * structname, void 
 	if( !strcmp( structname , "sctk_runtime_config_struct_net_driver_infiniband") )
 	{
 		sctk_runtime_config_struct_init_net_driver_infiniband( ptr );
+		return;
+	}
+
+	if( !strcmp( structname , "sctk_runtime_config_struct_ib_global") )
+	{
+		sctk_runtime_config_struct_init_ib_global( ptr );
 		return;
 	}
 

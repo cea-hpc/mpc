@@ -54,9 +54,6 @@
 								<max_srq_ibufs>100</max_srq_ibufs>
 								<srq_credit_limit>100</srq_credit_limit>
 								<init_mr>10</init_mr>
-								<size_mr_chunk>10</size_mr_chunk>
-								<mmu_cache_enabled>0</mmu_cache_enabled>
-								<mmu_cache_entries>0</mmu_cache_entries>
 								<steal>0</steal>
 								<rdma_min_size>0</rdma_min_size>
 								<rdma_max_size>0</rdma_max_size>

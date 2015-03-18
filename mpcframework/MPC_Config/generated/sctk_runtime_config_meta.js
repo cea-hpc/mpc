@@ -60,9 +60,6 @@ meta.types = {
 		srq_credit_thread_limit: {mode: 'param', name: "srq_credit_thread_limit", type: "int", doc: "Min number of free recv Eager buffers before the activation of the asynchronous thread. If this thread is activated too many times, the performance may be decreased.", dflt: "100", },
 		size_ibufs_chunk: {mode: 'param', name: "size_ibufs_chunk", type: "int", doc: "Number of new buffers allocated when no more buffers are available.", dflt: "100", },
 		init_mr: {mode: 'param', name: "init_mr", type: "int", doc: "Number of MMU entries allocated during the MPC initlization.", dflt: "400", },
-		size_mr_chunk: {mode: 'param', name: "size_mr_chunk", type: "int", doc: "Number of MMU entries allocated when no more MMU entries are available.", dflt: "200", },
-		mmu_cache_enabled: {mode: 'param', name: "mmu_cache_enabled", type: "int", doc: "Defines if the MMU cache is enabled.", dflt: "1", },
-		mmu_cache_entries: {mode: 'param', name: "mmu_cache_entries", type: "int", doc: "Defines the number of MMU cache allowed.", dflt: "1", },
 		steal: {mode: 'param', name: "steal", type: "int", doc: "Defines if the steal in MPI is allowed ", dflt: "2", },
 		quiet_crash: {mode: 'param', name: "quiet_crash", type: "int", doc: "Defines if the Infiniband interface must crash quietly.", dflt: "0", },
 		async_thread: {mode: 'param', name: "async_thread", type: "int", doc: "Defines if the asynchronous may be started at the MPC initialization.", dflt: "0", },
@@ -81,6 +78,10 @@ meta.types = {
 		rdma_resizing_min_nb: {mode: 'param', name: "rdma_resizing_min_nb", type: "int", doc: "Defines the minimum number of Eager RDMA buffers (resizing)", dflt: "8", },
 		rdma_resizing_max_nb: {mode: 'param', name: "rdma_resizing_max_nb", type: "int", doc: "Defines the maximum number of Eager RDMA buffers (resizing)", dflt: "32", },
 		size_recv_ibufs_chunk: {mode: 'param', name: "size_recv_ibufs_chunk", type: "int", doc: "Defines the number of receive buffers allocated on the fly.", dflt: "400", },
+	}},
+	ib_global : {type: 'struct', name: "ib_global", childs: {
+		mmu_cache_enabled: {mode: 'param', name: "mmu_cache_enabled", type: "int", doc: "Defines if the MMU cache is enabled.", dflt: "1", },
+		mmu_cache_size_global: {mode: 'param', name: "mmu_cache_size_global", type: "int", doc: "Number of MMU entries allocated when no more MMU entries are available.", dflt: "500", },
 	}},
 	net_driver_portals : {type: 'struct', name: "net_driver_portals", childs: {
 		fake_param: {mode: 'param', name: "fake_param", type: "int", doc: "Fake param.", dflt: "0", },
@@ -161,6 +162,7 @@ meta.types = {
 		network_mode: {mode: 'param', name: "network_mode", type: "string", doc: "", dflt: "default", },
 		dyn_reordering: {mode: 'param', name: "dyn_reordering", type: "bool", doc: "", dflt: "false", },
 		enable_idle_polling: {mode: 'param', name: "enable_idle_polling", type: "bool", doc: "Enable usage of polling during idle.", dflt: "false", },
+		ib_global: {mode: 'param', name: "ib_global", type: "ib_global", doc: "Global parameters for IB", dflt: null},
 	}},
 	mpc : {type: 'struct', name: "mpc", childs: {
 		log_debug: {mode: 'param', name: "log_debug", type: "bool", doc: "Print debug messages", dflt: "false", },

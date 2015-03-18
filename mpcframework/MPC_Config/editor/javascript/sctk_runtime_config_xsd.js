@@ -119,9 +119,6 @@
 -e <xs:element minOccurs='0' name='srq_credit_thread_limit' type='xs:integer'/>\
 -e <xs:element minOccurs='0' name='size_ibufs_chunk' type='xs:integer'/>\
 -e <xs:element minOccurs='0' name='init_mr' type='xs:integer'/>\
--e <xs:element minOccurs='0' name='size_mr_chunk' type='xs:integer'/>\
--e <xs:element minOccurs='0' name='mmu_cache_enabled' type='xs:integer'/>\
--e <xs:element minOccurs='0' name='mmu_cache_entries' type='xs:integer'/>\
 -e <xs:element minOccurs='0' name='steal' type='xs:integer'/>\
 -e <xs:element minOccurs='0' name='quiet_crash' type='xs:integer'/>\
 -e <xs:element minOccurs='0' name='async_thread' type='xs:integer'/>\
@@ -140,6 +137,13 @@
 -e <xs:element minOccurs='0' name='rdma_resizing_min_nb' type='xs:integer'/>\
 -e <xs:element minOccurs='0' name='rdma_resizing_max_nb' type='xs:integer'/>\
 -e <xs:element minOccurs='0' name='size_recv_ibufs_chunk' type='xs:integer'/>\
+-e </xs:all>\
+-e </xs:complexType>\
+-e <!-- ********************************************************* -->\
+-e <xs:complexType name='user_type_ib_global'>\
+-e <xs:all>\
+-e <xs:element minOccurs='0' name='mmu_cache_enabled' type='xs:integer'/>\
+-e <xs:element minOccurs='0' name='mmu_cache_size_global' type='xs:integer'/>\
 -e </xs:all>\
 -e </xs:complexType>\
 -e <!-- ********************************************************* -->\
@@ -359,6 +363,7 @@
 -e <xs:element minOccurs='0' name='network_mode' type='xs:string'/>\
 -e <xs:element minOccurs='0' name='dyn_reordering' type='xs:boolean'/>\
 -e <xs:element minOccurs='0' name='enable_idle_polling' type='xs:boolean'/>\
+-e <xs:element minOccurs='0' name='ib_global' type='user_type_ib_global'/>\
 -e </xs:all>\
 -e </xs:complexType>\
 -e <!-- ********************************************************* -->\

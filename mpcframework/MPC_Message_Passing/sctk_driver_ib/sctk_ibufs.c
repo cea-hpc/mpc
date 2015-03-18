@@ -60,7 +60,6 @@ void sctk_ibuf_init_numa_node ( struct sctk_ib_rail_info_s *rail_ib,
 {
 	LOAD_CONFIG ( rail_ib );
 	LOAD_POOL ( rail_ib );
-	sctk_ib_mmu_t *mmu = node->mmu;
 	sctk_ibuf_region_t *region = NULL;
 	void *ptr = NULL;
 	void *ibuf;
@@ -90,13 +89,13 @@ void sctk_ibuf_init_numa_node ( struct sctk_ib_rail_info_s *rail_ib,
 	ib_assume ( region );
 
 	/* XXX: replaced by memalign_on_node */
-	sctk_posix_memalign ( ( void ** ) &ptr, mmu->page_size, nb_ibufs * config->eager_limit );
+	sctk_posix_memalign ( ( void ** ) &ptr, getpagesize(), nb_ibufs * config->eager_limit );
 	ib_assume ( ptr );
 	memset ( ptr, 0, nb_ibufs * config->eager_limit );
 	PROF_ADD ( rail_ib->rail, ib_ibuf_sr_size, nb_ibufs * config->eager_limit );
 
 	/* XXX: replaced by memalign_on_node */
-	sctk_posix_memalign ( &ibuf, mmu->page_size, nb_ibufs * sizeof ( sctk_ibuf_t ) );
+	sctk_posix_memalign ( &ibuf, getpagesize(), nb_ibufs * sizeof ( sctk_ibuf_t ) );
 	ib_assume ( ibuf );
 	memset ( ibuf, 0, nb_ibufs * sizeof ( sctk_ibuf_t ) );
 	PROF_ADD ( rail_ib->rail, ib_ibuf_sr_size, nb_ibufs * sizeof ( sctk_ibuf_t ) );
@@ -113,7 +112,7 @@ void sctk_ibuf_init_numa_node ( struct sctk_ib_rail_info_s *rail_ib,
 
 	/* register buffers at once
 	* FIXME: Always task on NUMA node 0 which firs-touch all pages... really bad */
-	region->mmu_entry = sctk_ib_mmu_register_no_cache ( rail_ib, ptr, nb_ibufs * config->eager_limit );
+	region->mmu_entry = sctk_ib_mmu_entry_new( rail_ib, ptr, nb_ibufs * config->eager_limit );
 	sctk_nodebug ( "Reg %p registered. lkey : %lu", ptr, region->mmu_entry->mr->lkey );
 
 	/* init all buffers - the last one */

@@ -44,7 +44,9 @@ void sctk_network_notify_idle_message_set ( void ( *sctk_network_notify_idle_mes
 
 void sctk_network_notify_any_source_message ( int polling_task_id, int blocking );
 void sctk_network_notify_any_source_message_set ( void ( *sctk_network_notify_perform_message_val ) ( int polling_task_id, int blocking ) );
+
 size_t sctk_net_memory_allocation_hook ( size_t size_origin );
+void sctk_net_memory_free_hook ( void * ptr , size_t size );
 
 int sctk_net_is_mode_hybrid ();
 int sctk_net_set_mode_hybrid ();

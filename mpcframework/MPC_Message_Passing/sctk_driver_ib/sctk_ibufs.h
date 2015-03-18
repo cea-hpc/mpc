@@ -138,7 +138,6 @@ typedef struct sctk_ibuf_numa_s
 	OPA_int_t free_nb;							  /**< Number of buffers free */
 	OPA_int_t free_srq_nb;						  /**< Number of SRQ buffers free */
 	int free_srq_cache_nb;						  /**< Number of SRQ buffers free in cache */
-	struct sctk_ib_mmu_s *mmu;					   /**< Pointer to the MMU used for the node */
 	struct sctk_ib_topology_numa_node_s *numa_node; /**< Pointer to the topological NUMA node structure */
 
 
@@ -178,7 +177,7 @@ typedef struct sctk_ibuf_region_s
 	int size_ibufs_previous;							/**< Size of the buffers (previous)*/
 	size_t allocated_size;								/**< Memory allocated for the region */
 	struct sctk_ib_rail_info_s *rail;					/**< A region is associated to a rail */
-	struct sctk_ib_mmu_entry_s *mmu_entry;				/**< MMU entry */
+	sctk_ib_mmu_entry_t *mmu_entry;				/**< MMU entry */
 	int             polled_nb;							/**< Number of messages polled */
 	struct sctk_ibuf_s *list;							/** List of buffers */
 	struct sctk_ibuf_s *ibuf;							/**< Pointer to the addr where ibufs are  allocated */
@@ -393,10 +392,6 @@ void sctk_ibuf_init_numa_node ( struct sctk_ib_rail_info_s *rail_ib,
                                 int nb_ibufs,
                                 char is_initial_allocation );
 
-__UNUSED__ static void sctk_ibuf_node_set_mmu ( struct sctk_ibuf_numa_s *node, struct sctk_ib_mmu_s *mmu )
-{
-	node->mmu = mmu;
-}
 
 #endif
 #endif

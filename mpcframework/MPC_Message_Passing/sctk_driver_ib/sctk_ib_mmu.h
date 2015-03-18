@@ -1,8 +1,6 @@
 /* ############################# MPC License ############################## */
 /* # Wed Nov 19 15:19:19 CET 2008                                         # */
 /* # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          # */
-/* # Copyright or (C) or Copr. 2010-2012 Université de Versailles         # */
-/* # St-Quentin-en-Yvelines                                               # */
 /* #                                                                      # */
 /* # IDDN.FR.001.230040.000.S.P.2007.000.10000                            # */
 /* # This file is part of the MPC Runtime.                                # */
@@ -18,113 +16,65 @@
 /* # terms.                                                               # */
 /* #                                                                      # */
 /* # Authors:                                                             # */
-/* #   - PERACHE Marc marc.perache@cea.fr                                 # */
-/* #   - DIDELOT Sylvain sylvain.didelot@exascale-computing.eu            # */
+/* #   - BESNARD Jean-Baptiste jbbesnard@paratools.fr                     # */
 /* #                                                                      # */
 /* ######################################################################## */
 
-#ifdef MPC_USE_INFINIBAND
-#ifndef __SCTK__IB_MMU_H_
-#define __SCTK__IB_MMU_H_
+#ifndef SCTK_ib_mmu_H
+#define SCTK_ib_mmu_H
 
-#include <uthash.h>
+#include <stdlib.h>
 #include <sctk_spinlock.h>
-#include <sctk_debug.h>
-#include <sctk_config.h>
-#include <stdint.h>
-#include "hb_tree.h"
+#include <sctk_rail.h>
 
-#define DEBUG_IB_MMU
 
-#define ALIGN_ON(x, align) ( (x + (align-1)) & (~(align-1)) )
+/** This is the actual payload */
+struct ibv_mr;
 
-struct sctk_ib_rail_info_s;
-struct sctk_ib_rail_info_s;
-
-/** Enumeration for entry status  */
-typedef enum sctk_ib_mmu_entry_status_e
-{
-    SCTK_IBV_ENTRY_FREE = 111,
-    SCTK_IBV_ENTRY_USED = 222,
-} sctk_ib_mmu_entry_status_t;
-
-typedef enum sctk_ib_mmu_cached_status_e
-{
-    MMU_NOT_CACHED = 111,
-    MMU_CACHED = 222,
-} sctk_ib_mmu_cached_status_t;
-
-typedef struct sctk_ib_mmu_ht_key_s
-{
-	void *ptr;
-	size_t size;
-} sctk_ib_mmu_ht_key_t;
-
-/** Entry to the soft MMU */
 typedef struct sctk_ib_mmu_entry_s
 {
-	/* For DL list */
-	struct sctk_ib_mmu_entry_s *prev;
-	struct sctk_ib_mmu_entry_s *next;
-	/* status of the slot */
-	sctk_ib_mmu_entry_status_t status;    	  /**< status of entry */
-	struct sctk_ib_mmu_region_s *region;  	  /**< first region */
-	//  void *ptr;                			  /**< ptr to the MR */
-	//  size_t size;              			  /**< size of the MR */
-	struct ibv_mr *mr;        				  /**< MR */
-	struct sctk_ib_mmu_s *mmu;				  /**< Pointer to the MMU the entry owns */
-	sctk_ib_mmu_cached_status_t cache_status; /**< Status of the entry in cache */
-	unsigned int registrations_nb; 			  /**< Number of registration. If 0, the entry can be erased from cache  */
-	sctk_ib_mmu_ht_key_t key;				  /**< UTHash key */
-	UT_hash_handle hh;						  /**< UTHash header */
-	struct sctk_ib_rail_info_s *rail_ib;      /**< IB Rail */
-} sctk_ib_mmu_entry_t;
+	/* Content */
+	void * addr; /** Adress of the pinned block */
+	size_t size; /** Size of the pinned block */
+	struct ibv_mr *mr; /** Pointer to the IBV memory region */
 
+	sctk_spin_rwlock_t entry_refcounter; /** Refcounter */	
 
-sctk_ib_mmu_entry_t *sctk_ib_mmu_register ( struct sctk_ib_rail_info_s *rail_ib, void *ptr, size_t size );
-sctk_ib_mmu_entry_t *sctk_ib_mmu_register_no_cache ( struct sctk_ib_rail_info_s *rail_ib, void *ptr, size_t size );
+	
+}sctk_ib_mmu_entry_t;
 
-void ctk_ib_mmu_unregister ( struct sctk_ib_rail_info_s *rail_ib,  sctk_ib_mmu_entry_t *mmu_entry );
-void sctk_ib_mmu_unregister ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_mmu_entry_t *mmu_entry );
+sctk_ib_mmu_entry_t * sctk_ib_mmu_entry_new( sctk_ib_rail_info_t *rail_ib, void * addr, size_t size );
+void sctk_ib_mmu_entry_release( sctk_ib_mmu_entry_t * release );
+
+int sctk_ib_mmu_entry_contains( sctk_ib_mmu_entry_t * entry, void * addr, size_t size );
+int sctk_ib_mmu_entry_intersects( sctk_ib_mmu_entry_t * entry, void * addr, size_t size );
+
+void sctk_ib_mmu_entry_acquire( sctk_ib_mmu_entry_t * entry );
+void sctk_ib_mmu_entry_relax( sctk_ib_mmu_entry_t * entry );
 
 
 
-
-/** Region of mmu entries */
-typedef struct sctk_ib_mmu_region_s
+/** This define the structure of an MMU */
+struct sctk_ib_mmu
 {
-	/* For DL list */
-	struct sctk_ib_mmu_region_s *next;
-	struct sctk_ib_mmu_region_s *prev;
-	unsigned int nb;	 				/**< Number of MMU entries in region */
-	sctk_ib_mmu_entry_t *mmu_entry;
-} sctk_ib_mmu_region_t;
+	int cache_enabled;
+	sctk_ib_mmu_entry_t ** cache; /** Static fast cache */
+	sctk_spinlock_t cache_lock; /** Lock for the MMU */
+	unsigned int cache_max_size; /** Maximum size of the slow cache from the config */
+};
 
-typedef struct sctk_ib_cache_s
-{
-	hb_tree *hb_entries; 					/**< Libdict structure to store the MMU cache tree */
-	sctk_ib_mmu_entry_t *lru_entries;		/** LRU list of entries in cache */
-	sctk_spin_rwlock_t lock;
-	unsigned int entries_nb;
-} sctk_ib_cache_t;
+void _sctk_ib_mmu_init( struct sctk_ib_mmu * mmu );
+void _sctk_ib_mmu_release( struct sctk_ib_mmu * mmu );
+sctk_ib_mmu_entry_t * _sctk_ib_mmu_pin(  struct sctk_ib_mmu * mmu,  sctk_ib_rail_info_t *rail_ib, void * addr, size_t size);
+int _sctk_ib_mmu_unpin(  struct sctk_ib_mmu * mmu, void * addr, size_t size);
 
-typedef struct sctk_ib_mmu_s
-{
-	struct sctk_ib_mmu_region_s *regions;
-	sctk_spinlock_t lock;    				 /**< MMU lock */
-	unsigned int nb;     					 /**< Total Number of  mmu entries */
-	int free_nb;    						 /**< Number of free mmu entries */
-	size_t page_size; 						 /**< size of a system page */
-	sctk_ib_mmu_entry_t  *free_entry;
-	sctk_ib_cache_t cache;
-	struct sctk_ib_topology_numa_node_s *node;
-} sctk_ib_mmu_t;
 
-struct sctk_ib_topology_numa_node_s;
+/** This is the topological interface */
+void sctk_ib_mmu_init();
+void sctk_ib_mmu_release();
+sctk_ib_mmu_entry_t * sctk_ib_mmu_pin( sctk_ib_rail_info_t *rail_ib, void * addr, size_t size);
+void sctk_ib_mmu_relax( sctk_ib_mmu_entry_t * handler );
+int sctk_ib_mmu_unpin(  void * addr, size_t size);
 
-void sctk_ib_mmu_init ( struct sctk_ib_rail_info_s *rail_ib, struct sctk_ib_mmu_s *mmu, struct sctk_ib_topology_numa_node_s *node );
-void sctk_ib_mmu_alloc ( struct sctk_ib_rail_info_s *rail_ib, struct sctk_ib_mmu_s *mmu, const unsigned int nb_entries );
-sctk_ib_mmu_t *sctk_ib_mmu_get_mmu_from_vp ( struct sctk_ib_rail_info_s *rail_ib );
 
-#endif
-#endif
+#endif /* SCTK_ib_mmu_H */

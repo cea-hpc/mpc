@@ -76,8 +76,7 @@ void sctk_ib_rdma_net_free_recv ( void *arg )
 	/* Unregister MMU and free message */
 	sctk_nodebug ( "Free MMu for msg: %p", msg );
 	assume ( rdma->local.mmu_entry );
-	sctk_ib_mmu_unregister ( &rdma->remote_rail->network.ib,
-	                         rdma->local.mmu_entry );
+	sctk_ib_mmu_relax ( rdma->local.mmu_entry );
 	sctk_nodebug ( "FREE: %p", msg );
 	sctk_spinlock_lock ( &recv_rdma_headers_lock );
 	HASH_DELETE ( hh, recv_rdma_headers, rdma );
@@ -129,8 +128,7 @@ void sctk_ib_rdma_prepare_send_msg ( sctk_ib_rail_info_t *rail_ib,
 	/* Register MMU */
 	PROF_TIME_START ( rail_ib->rail, send_mmu_register );
 	sctk_nodebug ( "[%d] register mmu", rail_ib->rail_nb );
-	rdma->local.mmu_entry =  sctk_ib_mmu_register (
-	                             &rdma->remote_rail->network.ib, aligned_addr, aligned_size );
+	rdma->local.mmu_entry =  sctk_ib_mmu_pin ( &rdma->remote_rail->network.ib, aligned_addr, aligned_size );
 	PROF_TIME_END ( rail_ib->rail, send_mmu_register );
 
 	/* Save addr and size */
@@ -422,7 +420,7 @@ static void sctk_ib_rdma_send_ack ( sctk_rail_info_t *rail, sctk_thread_ptp_mess
 	sctk_ib_header_rdma_t *rdma = &send_header->rdma;
 	/* Register MMU */
 	PROF_TIME_START ( rail_ib->rail, recv_mmu_register );
-	send_header->rdma.local.mmu_entry =  sctk_ib_mmu_register (
+	send_header->rdma.local.mmu_entry =  sctk_ib_mmu_pin (
 	                                         &rdma->remote_rail->network.ib, send_header->rdma.local.aligned_addr,
 	                                         send_header->rdma.local.aligned_size );
 	PROF_TIME_END ( rail_ib->rail, recv_mmu_register );
@@ -718,8 +716,7 @@ static inline void
 sctk_ib_rdma_recv_done_local ( sctk_rail_info_t *rail, sctk_thread_ptp_message_t *msg )
 {
 	assume ( msg->tail.ib.rdma.local.mmu_entry );
-	sctk_ib_mmu_unregister ( &msg->tail.ib.rdma.remote_rail->network.ib,
-	                         msg->tail.ib.rdma.local.mmu_entry );
+	sctk_ib_mmu_relax ( msg->tail.ib.rdma.local.mmu_entry );
 
 	if ( msg->tail.ib.rdma.local.status == SCTK_IB_RDMA_RECOPY )
 	{

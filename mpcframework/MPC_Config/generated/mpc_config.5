@@ -375,18 +375,6 @@ Number of new buffers allocated when no more buffers are available.
 Type is int. Default value is 400. 
 .Pp init_mr
 Number of MMU entries allocated during the MPC initlization.
-.It Cm size_mr_chunk
-Type is int. Default value is 200. 
-.Pp size_mr_chunk
-Number of MMU entries allocated when no more MMU entries are available.
-.It Cm mmu_cache_enabled
-Type is int. Default value is 1. 
-.Pp mmu_cache_enabled
-Defines if the MMU cache is enabled.
-.It Cm mmu_cache_entries
-Type is int. Default value is 1. 
-.Pp mmu_cache_entries
-Defines the number of MMU cache allowed.
 .It Cm steal
 Type is int. Default value is 2. 
 .Pp steal
@@ -461,6 +449,21 @@ Defines the maximum number of Eager RDMA buffers (resizing)
 Type is int. Default value is 400. 
 .Pp size_recv_ibufs_chunk
 Defines the number of receive buffers allocated on the fly.
+.El
+.Sh ENTRIES OF TYPE ib_global
+Global Parameters for IB common structs.
+.Pp
+It support parameters :
+.Pp
+.Bl -tag -width Ds
+.It Cm mmu_cache_enabled
+Type is int. Default value is 1. 
+.Pp mmu_cache_enabled
+Defines if the MMU cache is enabled.
+.It Cm mmu_cache_size_global
+Type is int. Default value is 500. 
+.Pp mmu_cache_size_global
+Number of MMU entries allocated when no more MMU entries are available.
 .El
 .Sh ENTRIES OF TYPE net_driver_portals
 Declare a fake driver to test the configuration system.
@@ -747,6 +750,10 @@ Type is bool. Default value is false.
 Type is bool. Default value is false. 
 .Pp enable_idle_polling
 Enable usage of polling during idle.
+.It Cm ib_global
+Type is ib_global. 
+.Pp ib_global
+Global parameters for IB
 .El
 .Sh ENTRIES OF TYPE mpc
 Options for MPC Message Passing

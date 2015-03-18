@@ -119,9 +119,6 @@
       <xs:element minOccurs="0" name="srq_credit_thread_limit" type="xs:integer"/>
       <xs:element minOccurs="0" name="size_ibufs_chunk" type="xs:integer"/>
       <xs:element minOccurs="0" name="init_mr" type="xs:integer"/>
-      <xs:element minOccurs="0" name="size_mr_chunk" type="xs:integer"/>
-      <xs:element minOccurs="0" name="mmu_cache_enabled" type="xs:integer"/>
-      <xs:element minOccurs="0" name="mmu_cache_entries" type="xs:integer"/>
       <xs:element minOccurs="0" name="steal" type="xs:integer"/>
       <xs:element minOccurs="0" name="quiet_crash" type="xs:integer"/>
       <xs:element minOccurs="0" name="async_thread" type="xs:integer"/>
@@ -140,6 +137,13 @@
       <xs:element minOccurs="0" name="rdma_resizing_min_nb" type="xs:integer"/>
       <xs:element minOccurs="0" name="rdma_resizing_max_nb" type="xs:integer"/>
       <xs:element minOccurs="0" name="size_recv_ibufs_chunk" type="xs:integer"/>
+    </xs:all>
+  </xs:complexType>
+  <!-- ********************************************************* -->
+  <xs:complexType name="user_type_ib_global">
+    <xs:all>
+      <xs:element minOccurs="0" name="mmu_cache_enabled" type="xs:integer"/>
+      <xs:element minOccurs="0" name="mmu_cache_size_global" type="xs:integer"/>
     </xs:all>
   </xs:complexType>
   <!-- ********************************************************* -->
@@ -359,6 +363,7 @@
       <xs:element minOccurs="0" name="network_mode" type="xs:string"/>
       <xs:element minOccurs="0" name="dyn_reordering" type="xs:boolean"/>
       <xs:element minOccurs="0" name="enable_idle_polling" type="xs:boolean"/>
+      <xs:element minOccurs="0" name="ib_global" type="user_type_ib_global"/>
     </xs:all>
   </xs:complexType>
   <!-- ********************************************************* -->

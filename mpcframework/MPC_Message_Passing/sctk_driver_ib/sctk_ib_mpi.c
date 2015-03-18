@@ -910,6 +910,14 @@ void sctk_network_finalize_task_mpi_ib ( sctk_rail_info_t *rail )
 }
 
 
+/* This hook is called by the allocator when freing a segment */
+void sctk_network_memory_free_hook_ib ( void * ptr, size_t size )
+{
+	sctk_ib_mmu_unpin(  ptr, size);
+}
+
+
+
 void sctk_network_init_mpi_ib ( sctk_rail_info_t *rail )
 {
 	/* XXX: memory never freed */

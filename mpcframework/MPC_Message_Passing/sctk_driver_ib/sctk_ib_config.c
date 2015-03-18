@@ -53,13 +53,6 @@ void sctk_ib_config_check ( sctk_ib_rail_info_t *rail_ib )
 {
 	LOAD_CONFIG ( rail_ib );
 
-	/* TODO: MMU cache is buggy and do not intercept free calls */
-	if ( ( sctk_process_rank == 0 )
-	        && ( config->mmu_cache_enabled == 1 ) )
-	{
-		sctk_error ( "MMU cache enabled: use it at your own risk!" );
-	}
-
 	if ( ( sctk_process_rank == 0 )
 	        && ( config->low_memory ) )
 	{
@@ -107,8 +100,6 @@ void sctk_ib_config_print ( sctk_ib_rail_info_t *rail_ib )
 		          "wc_in_number     = %d\n"
 		          "wc_out_number    = %d\n"
 		          "init_mr          = %d\n"
-		          "mmu_cache_enabled = %d\n"
-		          "mmu_cache_entries = %d\n"
 		          "adm_port         = %d\n"
 		          "rdma_depth       = %d\n"
 		          "rdma_dest_depth  = %d\n"
@@ -147,8 +138,6 @@ void sctk_ib_config_print ( sctk_ib_rail_info_t *rail_ib )
 		          config->wc_in_number,
 		          config->wc_out_number,
 		          config->init_mr,
-		          config->mmu_cache_enabled,
-		          config->mmu_cache_entries,
 		          config->adm_port,
 		          config->rdma_depth,
 		          config->rdma_dest_depth,
