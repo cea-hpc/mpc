@@ -460,10 +460,14 @@ It support parameters :
 Type is int. Default value is 1. 
 .Pp mmu_cache_enabled
 Defines if the MMU cache is enabled.
-.It Cm mmu_cache_size_global
-Type is int. Default value is 500. 
-.Pp mmu_cache_size_global
-Number of MMU entries allocated when no more MMU entries are available.
+.It Cm mmu_cache_entry_count
+Type is int. Default value is 1000. 
+.Pp mmu_cache_entry_count
+Number of entries to keep in the cache.
+.It Cm mmu_cache_maximum_size
+Type is size. Default value is 10GB. 
+.Pp mmu_cache_maximum_size
+Number of entries to keep in the cache.
 .El
 .Sh ENTRIES OF TYPE net_driver_portals
 Declare a fake driver to test the configuration system.

@@ -27,7 +27,8 @@
 #include <infiniband/verbs.h>
 #include <stdlib.h>
 #include <errno.h>
-
+#include <sys/time.h>
+#include <sys/resource.h>
 #include <stdlib.h>
 
 sctk_ib_mmu_entry_t * sctk_ib_mmu_entry_new( sctk_ib_rail_info_t *rail_ib, void * addr, size_t size )
@@ -56,6 +57,8 @@ sctk_ib_mmu_entry_t * sctk_ib_mmu_entry_new( sctk_ib_rail_info_t *rail_ib, void 
 	/* No one ows it yet */
 	sctk_spin_rwlock_t lckinit = SCTK_SPIN_RWLOCK_INITIALIZER;
 	new->entry_refcounter = lckinit;
+
+	new->free_on_relax = 0;
 
 	return new;
 }
@@ -142,6 +145,12 @@ void sctk_ib_mmu_entry_relax( sctk_ib_mmu_entry_t * entry )
 		return;
 	
 	sctk_spinlock_read_unlock( &entry->entry_refcounter );
+	
+	/* This is called when the entry was not pushed 
+	 * in the cache (case where all entries were in use
+	 * this is really an edge case */
+	if( entry->free_on_relax )
+		sctk_ib_mmu_entry_release( entry );
 }
 
 
@@ -160,19 +169,23 @@ void _sctk_ib_mmu_init( struct sctk_ib_mmu * mmu )
 	
 	if( mmu->cache_enabled )
 	{
-		mmu->cache_max_size = ib_global_config->mmu_cache_size_global;
+		mmu->cache_max_entry_count = ib_global_config->mmu_cache_entry_count;
 		
-		sctk_nodebug("CACHE IS %d", mmu->cache_max_size );
+		sctk_nodebug("CACHE IS %d", mmu->cache_max_entry_count );
 		
-		assume( mmu->cache_max_size != 0 );
-		mmu->cache = sctk_calloc( mmu->cache_max_size , sizeof( sctk_ib_mmu_entry_t * ));
+		assume( mmu->cache_max_entry_count != 0 );
+		mmu->cache = sctk_calloc( mmu->cache_max_entry_count , sizeof( sctk_ib_mmu_entry_t * ));
 	}
 	else
 	{
-		mmu->cache_max_size = 0;
+		mmu->cache_max_entry_count = 0;
 		mmu->cache = NULL;
 	}
 	
+
+	mmu->cache_maximum_size = ib_global_config->mmu_cache_maximum_size;
+	//17179869184llu;
+	mmu->current_size = 0;
 }
 
 void _sctk_ib_mmu_release( struct sctk_ib_mmu * mmu )
@@ -208,7 +221,7 @@ sctk_ib_mmu_entry_t * sctk_ib_mmu_get_entry_containing_no_lock( struct sctk_ib_m
 {
 	int i;
 
-	for( i = 0 ; i < mmu->cache_max_size ; i++ )
+	for( i = 0 ; i < mmu->cache_max_entry_count ; i++ )
 	{
 		sctk_ib_mmu_entry_acquire( mmu->cache[i] );
 
@@ -242,55 +255,100 @@ sctk_ib_mmu_entry_t * _sctk_ib_mmu_get_entry_containing( struct sctk_ib_mmu * mm
 	return ret;
 }
 
+static inline int _sctk_ib_mmu_try_to_release_and_replace_entry( struct sctk_ib_mmu * mmu, sctk_ib_mmu_entry_t * entry )
+{
+	int start_point = rand() % mmu->cache_max_entry_count;
 
+	int i;
+
+	for( i = start_point ; i <  ( start_point + mmu->cache_max_entry_count) ; i++ )
+	{
+		int index = i % mmu->cache_max_entry_count;
+		
+		/* Cell is free */
+		if( mmu->cache[index] )
+		{
+			/* Try to find entries with no current reader */
+			if( sctk_atomics_load_int( &mmu->cache[index]->entry_refcounter.reader_number) == 0 )
+			{
+				/* Remove */
+				mmu->current_size -= mmu->cache[index]->size;
+				sctk_ib_mmu_entry_release( mmu->cache[index] );
+				
+				/* Add */
+				if( entry )
+				{
+					mmu->current_size += entry->size;
+				}
+		
+				mmu->cache[index] = entry;
+				
+				return 1;
+			}
+		}
+	}
+	
+	return 0;
+}
+
+#define MMU_PUSH_MAX_TRIAL 50
 
 void _sctk_ib_mmu_push_entry( struct sctk_ib_mmu * mmu , sctk_ib_mmu_entry_t * entry )
 {
 	/* No cache means no storage */
 	if( !mmu->cache_enabled )
 		return;
-	
-	/* Warning YOU must enter here MMU LOCKED ! */
-	
-	int i;
-	
-	/* First try to register in fast cache */
-	for( i = 0 ; i < mmu->cache_max_size ; i++ )
+
+	/* Check if we are not over the memory limit (note that current entry is already
+	 * pinned at this moment this is why it also enters in the accounting  */
+	while( mmu->cache_maximum_size <= ( mmu->current_size + entry->size ) )
 	{
-		/* Cell is free */
-		if( !mmu->cache[i] )
-		{
-			mmu->cache[i] = entry;
-			/* We are done */
-			return;
-		}
+		/* Here we need to free some room (replacing by NULL) */
+		 _sctk_ib_mmu_try_to_release_and_replace_entry( mmu, NULL );
 	}
+
+	sctk_nodebug("Current MMU size %ld", mmu->current_size );
+
+	/* Warning YOU must enter here MMU LOCKED ! */
+	int trials = 0;
 	
-	/* If we are here all cells were in use
-	 * try to free a random one and return */
-
-	int start_point = rand() % mmu->cache_max_size;
-
-	for( i = start_point ; i <  ( start_point + mmu->cache_max_size) ; i++ )
+	while( trials < MMU_PUSH_MAX_TRIAL )
 	{
-		int index = i % mmu->cache_max_size;
+	
+		int i;
 		
-		/* Cell is free */
-		if( !mmu->cache[index] )
+		/* First try to register in cache */
+		for( i = 0 ; i < mmu->cache_max_entry_count ; i++ )
 		{
-			/* Try to find entries with no current reader */
-			if( sctk_atomics_load_int( &mmu->cache[index]->entry_refcounter.reader_number) == 0 )
+			/* Cell is free */
+			if( !mmu->cache[i] )
 			{
-				sctk_ib_mmu_entry_release( mmu->cache[index] );
+				/* Add */
 				mmu->cache[i] = entry;
+				mmu->current_size += entry->size;
+
+				/* We are done */
 				return;
 			}
 		}
+		
+		/* If we are here all cells were in use
+		 * try to free a random one and return */
+		 
+		if( _sctk_ib_mmu_try_to_release_and_replace_entry( mmu, entry ) )
+		{
+			/* We are done */
+			return;
+		}
+		
+		trials++;
 	}
 	
+	/* If we get here we put nothing in the cache as no entries were freed (all in use) */
 	
-	/* If we get here we put nothing in the cache as no entries were free */
-	
+	/* We store the fact that this entry will be freed on relax (this is a clear edge case
+	 * which can happen on caches with a very small count in case of slot scarcity) */
+	entry->free_on_relax = 1;
 }
 
 
@@ -354,7 +412,7 @@ int _sctk_ib_mmu_unpin(  struct sctk_ib_mmu * mmu, void * addr, size_t size)
 	/* Now release intersecting cells */
 	int i;
 
-	for( i = 0 ; i < mmu->cache_max_size ; i++ )
+	for( i = 0 ; i < mmu->cache_max_entry_count ; i++ )
 	{
 		/* Cell is in use */
 		if( mmu->cache[i] )
@@ -365,6 +423,7 @@ int _sctk_ib_mmu_unpin(  struct sctk_ib_mmu * mmu, void * addr, size_t size)
 			if( sctk_ib_mmu_entry_intersects( mmu->cache[i],  addr, size ) )
 			{
 				/* Free content */
+				mmu->current_size -= mmu->cache[i]->size;
 				sctk_ib_mmu_entry_release( mmu->cache[i] );
 				mmu->cache[i] = NULL;
 				ret = 0;

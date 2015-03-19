@@ -216,8 +216,10 @@ struct sctk_runtime_config_struct_ib_global
 {	int init_done;
 	/**Defines if the MMU cache is enabled.**/
 	int mmu_cache_enabled;
-	/**Number of MMU entries allocated when no more MMU entries are available.**/
-	int mmu_cache_size_global;
+	/**Number of entries to keep in the cache.**/
+	int mmu_cache_entry_count;
+	/**Number of entries to keep in the cache.**/
+	size_t mmu_cache_maximum_size;
 };
 
 /******************************** STRUCTURE *********************************/

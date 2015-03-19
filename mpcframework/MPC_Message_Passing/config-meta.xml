@@ -53,7 +53,8 @@
 		
 		<struct name="ib_global" doc="Global Parameters for IB common structs.">
 			<param name="mmu_cache_enabled" type="int" doc="Defines if the MMU cache is enabled." default="1" />
-			<param name="mmu_cache_size_global" type="int" doc="Number of MMU entries allocated when no more MMU entries are available." default="500" />
+			<param name="mmu_cache_entry_count" type="int" doc="Number of entries to keep in the cache." default="1000" />
+			<param name="mmu_cache_maximum_size" type="size" doc="Number of entries to keep in the cache." default="10GB" />
 		</struct>
 
 		<enum name="ibv_rdvz_protocol" doc="">

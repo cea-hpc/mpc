@@ -143,7 +143,14 @@
 -e <xs:complexType name='user_type_ib_global'>\
 -e <xs:all>\
 -e <xs:element minOccurs='0' name='mmu_cache_enabled' type='xs:integer'/>\
--e <xs:element minOccurs='0' name='mmu_cache_size_global' type='xs:integer'/>\
+-e <xs:element minOccurs='0' name='mmu_cache_entry_count' type='xs:integer'/>\
+-e <xs:element minOccurs='0' name='mmu_cache_maximum_size'>\
+-e <xs:simpleType>\
+-e <xs:restriction base='xs:string'>\
+-e <xs:pattern value='[0-9]+[ ]?[K|M|G|T|P]?B'/>\
+-e </xs:restriction>\
+-e </xs:simpleType>\
+-e </xs:element>\
 -e </xs:all>\
 -e </xs:complexType>\
 -e <!-- ********************************************************* -->\
