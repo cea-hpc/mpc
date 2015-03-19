@@ -304,8 +304,8 @@ sctk_ib_mmu_entry_t * _sctk_ib_mmu_pin(  struct sctk_ib_mmu * mmu,  sctk_ib_rail
 	
 	if( entry )
 	{
-			/* Value is already from local, just return */
-			return entry;
+		/* Value is already from local, just return */
+		return entry;
 	}
 
 
@@ -343,7 +343,6 @@ __thread int __already_inside_unpin = 0;
 int _sctk_ib_mmu_unpin(  struct sctk_ib_mmu * mmu, void * addr, size_t size)
 {
 	int ret = 1;
-
 	if( __already_inside_unpin )
 		return 0;
 

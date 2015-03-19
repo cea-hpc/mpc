@@ -506,6 +506,11 @@ SCTK_STATIC void sctk_alloc_mm_source_light_free_memory(struct sctk_alloc_mm_sou
 		sctk_alloc_mm_source_light_reg_in_cache(light_source,free_bloc);
 	} else {
 		SCTK_NO_PDEBUG("LMMSRC %p : Do munmap %p -> %llu",source,free_bloc,free_bloc->size);
+		
+#ifdef MPC_Message_Passing
+		sctk_net_memory_free_hook ( free_bloc , free_bloc->size );
+#endif
+
 		sctk_munmap(free_bloc,free_bloc->size);
 	}
 
@@ -530,6 +535,9 @@ SCTK_STATIC struct sctk_alloc_macro_bloc * sctk_alloc_mm_source_light_remap(stru
 
 	//use mremap
 	SCTK_NO_PDEBUG("LMMSRC : Use mremap : %p -> %llu",macro_bloc,size);
+#ifdef MPC_Message_Passing
+		sctk_net_memory_free_hook ( macro_bloc , macro_bloc->header.size );
+#endif
 	macro_bloc = mremap(macro_bloc,macro_bloc->header.size,size,MREMAP_MAYMOVE);
 
 	if (macro_bloc == MAP_FAILED)
