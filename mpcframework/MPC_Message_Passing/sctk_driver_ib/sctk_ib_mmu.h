@@ -54,24 +54,26 @@ void sctk_ib_mmu_entry_relax( sctk_ib_mmu_entry_t * entry );
 
 
 
-/** This define the structure of an MMU */
+/** This define the structure of an MMU (internal interface with _PREFIX) */
 struct sctk_ib_mmu
 {
 	int cache_enabled;
 	sctk_ib_mmu_entry_t ** cache; /** Static fast cache */
-	sctk_spinlock_t cache_lock; /** Lock for the MMU */
+	sctk_spin_rwlock_t cache_lock; /** Lock for the MMU */
 	unsigned int cache_max_size; /** Maximum size of the slow cache from the config */
 };
 
 void _sctk_ib_mmu_init( struct sctk_ib_mmu * mmu );
 void _sctk_ib_mmu_release( struct sctk_ib_mmu * mmu );
+
 sctk_ib_mmu_entry_t * _sctk_ib_mmu_pin(  struct sctk_ib_mmu * mmu,  sctk_ib_rail_info_t *rail_ib, void * addr, size_t size);
 int _sctk_ib_mmu_unpin(  struct sctk_ib_mmu * mmu, void * addr, size_t size);
 
+/** This is the main interface (abstracting storage) */
 
-/** This is the topological interface */
 void sctk_ib_mmu_init();
 void sctk_ib_mmu_release();
+
 sctk_ib_mmu_entry_t * sctk_ib_mmu_pin( sctk_ib_rail_info_t *rail_ib, void * addr, size_t size);
 void sctk_ib_mmu_relax( sctk_ib_mmu_entry_t * handler );
 int sctk_ib_mmu_unpin(  void * addr, size_t size);
