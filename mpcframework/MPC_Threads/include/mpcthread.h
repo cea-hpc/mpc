@@ -655,6 +655,13 @@ int mpc_thread_mutex_unlock (sctk_thread_mutex_t * mutex);
 
 #ifdef MPC_AIO_ENABLED
 
+/* Make sure that we have at least POSIX.1-2001
+ * (see FEATURE_TEST_MACROS(7)) to handle the sigevent
+ * data-structure required by AIO (otherwise do not include) */
+#if (_POSIX_C_SOURCE - 0) >= 200112L
+
+#include <signal.h>
+#include <time.h>
 #include <aio.h>
 
 /* Declare the MPC aio interface if enabled */
@@ -666,6 +673,8 @@ ssize_t sctk_aio_return( struct aiocb * cb );
 int sctk_aio_cancel( int fd, struct aiocb * cb );
 int sctk_aio_suspend( const struct aiocb * const aiocb_list[], int nitems, const struct timespec * timeout );
 int sctk_aio_lio_listio( int mode , struct aiocb * const aiocb_list[], int nitems, struct sigevent *sevp );
+
+#endif
 
 #endif
 
