@@ -389,6 +389,12 @@ void tcp_control_message_handler( struct sctk_rail_info_s * rail, int source_pro
 }
 
 
+void tcp_on_demand_connection_handler( sctk_rail_info_t *rail, int dest_process )
+{
+	sctk_network_connection_from_tcp ( sctk_get_process_rank(), dest_process, rail );
+}
+
+
 /********************************************************************/
 /* TCP Ring Init Function                                           */
 /********************************************************************/
@@ -411,7 +417,7 @@ void sctk_network_init_tcp_all ( sctk_rail_info_t *rail, int sctk_use_tcp_o_ib,
 	rail->connect_from = sctk_network_connection_from_tcp;
 	rail->connect_to = sctk_network_connection_to_tcp;
 	rail->control_message_handler = tcp_control_message_handler;
-	
+
 	rail->network.tcp.sctk_use_tcp_o_ib = sctk_use_tcp_o_ib;
 	rail->network.tcp.tcp_thread = tcp_thread;
 

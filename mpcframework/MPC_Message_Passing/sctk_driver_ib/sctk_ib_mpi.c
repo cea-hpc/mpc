@@ -928,7 +928,7 @@ void sctk_network_init_mpi_ib ( sctk_rail_info_t *rail )
 	struct sctk_runtime_config_struct_net_driver_config *driver_config = rail->runtime_config_driver_config;
 
 	/* Register topology */
-	sctk_rail_init_route ( rail, rail_config->topology );
+	sctk_rail_init_route ( rail, rail_config->topology, NULL );
 
 	/* Infiniband Init */
 	sctk_ib_rail_info_t *rail_ib = &rail->network.ib;

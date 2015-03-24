@@ -375,13 +375,119 @@ static inline struct sctk_multirail_destination_table * sctk_multirail_destinati
 /* sctk_multirail_hooks                                                 */
 /************************************************************************/
 
+void sctk_multirail_on_demand_connection( sctk_thread_ptp_message_t *msg )
+{
+	
+	int count = sctk_rail_count();
+	int i;
+	
+	int tab[64];
+	assume( count < 64 ); 
+	
+	memset( tab, 0, 64 * sizeof( int ) );
+	
+	/* Lets now test each rail to find the one accepting this 
+	 * message while being able to setup on demand-connections */
+	for( i = 0 ; i < count ; i++ )
+	{
+		sctk_rail_info_t * rail = sctk_rail_get_by_id ( i );
+		
+		
+		/* First we want only to check on-demand rails */
+		if( !rail->connect_on_demand )
+		{
+			/* No on-demand in this rail */
+			continue;
+		}
+		
+		/* ###############################################################################
+		 * Now we test gate functions to detect if this message is elligible on this rail
+		 * ############################################################################### */
+		
+		/* Retrieve data from CTX */
+		struct sctk_runtime_config_struct_net_gate * gates = rail->runtime_config_rail->gates;
+		int gate_count = rail->runtime_config_rail->gates_size;
+		
+		int priority = rail->runtime_config_rail->priority;
+		
+		int this_rail_has_been_elected = 1;
+		
+		/* Test all gates on this rail */
+		int j;
+		for( j = 0 ; j < gate_count; j++ )
+		{
+			struct sctk_gate_context gate_ctx;
+			sctk_gate_get_context( &gates[ j ], &gate_ctx );
+
+			if( ( gate_ctx.func )( rail, msg, gate_ctx.params ) == 0 )
+			{
+				/* This gate does not pass */
+				this_rail_has_been_elected = 0;
+				break;
+			}
+		
+		}
+		
+		/* ############################################################################### */
+		
+		/* If we are here the rail is ellected */
+		
+		if( this_rail_has_been_elected )
+		{
+			/* This rail passed the test save its priority 
+			 * to prepare the next phase of prority selection */
+			tab[i] = priority;
+		}
+	}
+	
+	/* Lets now connect to the rails passing the test with the highest priority */
+	int current_max = 0;
+	int max_offset = -1;
+
+	for( i = 0 ; i < count ; i++ )
+	{
+		if( ! tab[i] )
+			continue;
+		
+		if( current_max <= tab[i] )
+		{
+			/* This is the new BEST */
+			current_max = tab[i]; 
+			max_offset = i;
+		}
+		
+	}
+
+
+	if( max_offset < 0 )
+	{
+		/* No rail found */
+		sctk_fatal("No route to host == Make sure you have at least one on-demand rail able to satify any type of message");
+	}
+
+
+	/* If we are here we have elected the on-demand rail with the highest priority and matching this message
+	 * initiate the on-demand connection */
+	 
+	sctk_rail_info_t * elected_rail = sctk_rail_get_by_id ( max_offset );
+
+	(elected_rail->connect_on_demand)( elected_rail, SCTK_MSG_DEST_PROCESS ( msg ) );
+}
+
+
+
+
+
+
 void sctk_multirail_send_message( sctk_thread_ptp_message_t *msg )
 {
 	int retry;
 	int destination_process;
 	
+	int is_process_specific = sctk_is_process_specific_message ( SCTK_MSG_HEADER ( msg ) );
+	
 	/* If the message is based on signalization we directly rely on routing */
-	if( sctk_is_process_specific_message ( SCTK_MSG_HEADER ( msg ) ) )
+	if( is_process_specific )
 	{
 		sctk_multirail_destination_table_route_to_process( SCTK_MSG_DEST_PROCESS ( msg ), &destination_process );
 	}
@@ -390,28 +496,30 @@ void sctk_multirail_send_message( sctk_thread_ptp_message_t *msg )
 		destination_process = SCTK_MSG_DEST_PROCESS ( msg );
 	}
 
-	sctk_info("RAIL [ %d -> %d by %d ] [ %d -> %d ] ( size %d tag %d)", SCTK_MSG_SRC_PROCESS ( msg ), SCTK_MSG_DEST_PROCESS ( msg ), destination_process, SCTK_MSG_SRC_TASK ( msg ), SCTK_MSG_DEST_TASK ( msg ),  SCTK_MSG_SIZE( msg ) ,  SCTK_MSG_TAG( msg ) );
-	
-	
+	int no_existing_route_matched = 0;
+
 	do
 	{
 		retry = 0;
 		
-		sctk_multirail_destination_table_entry_t * routes = sctk_multirail_destination_table_acquire_routes( destination_process );
-		
-		if( ! routes )
+		if( no_existing_route_matched )
 		{
-			sctk_error("NO ROUTE");
-			CRASH();
-			return;
+			/* We have to do an on-demand connection */
+			sctk_multirail_on_demand_connection( msg );
 		}
 		
-		
-		sctk_endpoint_list_t *endpoints = routes->endpoints;
-		
-		sctk_endpoint_list_t *cur = endpoints;
+		sctk_multirail_destination_table_entry_t * routes = sctk_multirail_destination_table_acquire_routes( destination_process );
 
-		while( cur )
+
+		sctk_endpoint_list_t * cur = NULL;
+		
+		if( routes )
+		{
+			cur = routes->endpoints;
+		}
+		
+
+		while( cur && !is_process_specific )
 		{
 			int this_rail_has_been_elected = 1;
 			
@@ -452,10 +560,13 @@ void sctk_multirail_send_message( sctk_thread_ptp_message_t *msg )
 		}
 		else
 		{
-			sctk_error("NO ELECTION");
-			CRASH();
+			/* Here we found a route to this process
+			 * however, the gate function did not allow us in
+			 * therefore a new on-demand connection is needed */
+			no_existing_route_matched = 1;
 			retry = 1;
 		}
+
 		
 		sctk_multirail_destination_table_relax_routes( routes );
 
@@ -604,7 +715,6 @@ sctk_multirail_destination_table_entry_t * sctk_multirail_destination_table_acqu
 		/* Acquire entries in read */
 		sctk_spinlock_read_lock( &dest_entry->endpoints_lock );
 	}
-	
 	
 	sctk_spinlock_read_unlock( &table->table_lock );
 	

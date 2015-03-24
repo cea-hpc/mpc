@@ -149,6 +149,32 @@ void sctk_network_notify_any_source_message_set ( void ( *sctk_network_notify_an
 	sctk_network_notify_any_source_message_ptr = sctk_network_notify_any_source_message_val;
 }
 
+/********** ON-DEMAND CONNECTIONS ************/
+
+static void sctk_network_on_demand_connection_default ( int dest_task )
+{
+	sctk_fatal("Error this driver does not support ON-demand connection");
+}
+
+static void ( *sctk_network_on_demand_connection_ptr ) ( sctk_rail_info_t * , int ) =  sctk_network_on_demand_connection_default;
+sctk_rail_info_t * pointer_to_on_demand_rail = NULL;
+
+void sctk_network_on_demand_connection ( int dest_task  )
+{
+	sctk_network_on_demand_connection_ptr ( pointer_to_on_demand_rail, dest_task );
+}
+
+void sctk_network_on_demand_connection_set ( struct sctk_rail_info_s * rail, void ( *sctk_network_on_demand_connection_val ) ( int ) )
+{
+	if( pointer_to_on_demand_rail )
+	{
+		sctk_fatal("Error an On-demand rail is already registered for %s", rail->network_name );
+	}
+	
+	pointer_to_on_demand_rail = rail;
+	sctk_network_on_demand_connection_ptr = sctk_network_on_demand_connection_val;
+}
+
 /************************************************************************/
 /* Net Error Messages                                                   */
 /************************************************************************/

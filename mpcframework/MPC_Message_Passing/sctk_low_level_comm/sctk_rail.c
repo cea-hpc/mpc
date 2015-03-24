@@ -22,12 +22,16 @@
 #include "sctk_rail.h"
 #include "sctk_net_topology.h"
 
+#include "sctk_low_level_comm.h"
+
 #include <sctk_route.h>
 #include <sctk_pmi.h>
 #include <sctk_accessor.h>
 
 #include <stdio.h>
 #include <unistd.h>
+
+
 
 /************************************************************************/
 /* Rails Storage                                                        */
@@ -264,7 +268,7 @@ void sctk_rail_dump_routes()
 /* route_init                                                           */
 /************************************************************************/
 
-void sctk_rail_init_route ( sctk_rail_info_t *rail, char *topology )
+void sctk_rail_init_route ( sctk_rail_info_t *rail, char *topology, void (*on_demand)( struct sctk_rail_info_s * rail , int dest ) )
 {
 
 	rail->on_demand = 0;
@@ -288,6 +292,11 @@ void sctk_rail_init_route ( sctk_rail_info_t *rail, char *topology )
 				rail->route = sctk_route_ondemand;
 				rail->route_init = sctk_route_ondemand_init;
 				rail->topology_name = "On-Demand connections";
+				
+								
+				/* Register On demand Handler */
+				rail->connect_on_demand = on_demand;
+				
 			}
 			else
 				if ( strcmp ( "torus", topology ) == 0 )
@@ -298,7 +307,7 @@ void sctk_rail_init_route ( sctk_rail_info_t *rail, char *topology )
 				}
 				else
 				{
-					not_reachable();
+					sctk_fatal("No such topology %s", topology);
 				}
 }
 

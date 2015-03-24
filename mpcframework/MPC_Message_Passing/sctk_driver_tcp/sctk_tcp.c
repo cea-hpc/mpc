@@ -127,6 +127,9 @@ static void sctk_network_send_message_endpoint_tcp ( sctk_thread_ptp_message_t *
 		sctk_error("OUUUUT ERROR SIZE %ld\n", size );
 	}
 
+	if( !fd )
+		CRASH();
+
 	sctk_safe_write ( fd, ( char * ) &size, sizeof ( size_t ) );
 
 	sctk_safe_write ( fd, ( char * ) msg, sizeof ( sctk_thread_ptp_message_body_t ) );
@@ -191,7 +194,7 @@ void sctk_network_init_tcp ( sctk_rail_info_t *rail )
 	rail->notify_any_source_message = sctk_network_notify_any_source_message_tcp;
 	rail->send_message_from_network = sctk_send_message_from_network_tcp;
 
-	sctk_rail_init_route ( rail, rail->runtime_config_rail->topology );
+	sctk_rail_init_route ( rail, rail->runtime_config_rail->topology, tcp_on_demand_connection_handler );
 
 	int sctk_use_tcp_o_ib = rail->runtime_config_driver_config->driver.value.tcp.tcpoib;
 

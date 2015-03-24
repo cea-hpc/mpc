@@ -94,7 +94,7 @@ struct sctk_rail_info_s
 	
 	int ( *send_message_from_network ) ( sctk_thread_ptp_message_t * );
 	sctk_endpoint_t * ( *on_demand_connection ) ( struct sctk_rail_info_s * rail , int dest );
-	
+	void ( *connect_on_demand ) ( struct sctk_rail_info_s * rail , int dest );
 	
 	void (*control_message_handler)( struct sctk_rail_info_s * rail, int source_process, int source_rank, char subtype, char param, void * data );
 	
@@ -135,7 +135,7 @@ int sctk_rail_count();
 sctk_rail_info_t * sctk_rail_get_by_id ( int i );
 void sctk_rail_commit();
 int sctk_rail_committed();
-void sctk_rail_init_route ( sctk_rail_info_t *rail, char *topology );
+void sctk_rail_init_route ( sctk_rail_info_t *rail, char *topology, void (*on_demand)( struct sctk_rail_info_s * rail , int dest ) );
 void sctk_rail_dump_routes();
 
 /************************************************************************/
