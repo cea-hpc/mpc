@@ -56,20 +56,14 @@ static void *sctk_tcp_thread ( sctk_endpoint_t *tmp )
 		{
 			return NULL;
 		}
-
-		/* Stupid tests which block the 'fully connected' mode...
-		* Is there any reason here to do that ? */
-		/* if(sctk_online_program == 0){
-		return NULL;
+		
+		if( (1024*1024) < size )
+		{
+			sctk_error("ERROR SIZE %ld\n", size );
 		}
-		while(sctk_online_program == -1){
-		sched_yield();
-		} */
 
 		size = size - sizeof ( sctk_thread_ptp_message_body_t ) + sizeof ( sctk_thread_ptp_message_t );
-		
-		sctk_error("NEW %ld", size);
-		
+	
 		msg = sctk_malloc ( size );
 		
 		assume( msg != NULL );
@@ -101,7 +95,7 @@ static void *sctk_tcp_thread ( sctk_endpoint_t *tmp )
 		sctk_reinit_header ( msg, sctk_free, sctk_net_message_copy );
 
 		sctk_info( "NET RECV  [%d -> %d] TASK [%d -> %d] (%d) %p",
-	               SCTK_MSG_SRC_PROCESS ( msg ), SCTK_MSG_DEST_PROCESS ( msg ), SCTK_MSG_SRC_TASK ( msg ), SCTK_MSG_DEST_TASK ( msg ),  SCTK_MSG_TAG ( msg ), msg->tail.request );
+	               SCTK_MSG_SRC_PROCESS ( msg ), SCTK_MSG_DEST_PROCESS ( msg ), SCTK_MSG_SRC_TASK ( msg ), SCTK_MSG_DEST_TASK ( msg ),  SCTK_MSG_TAG ( msg ), msg->tail.internal_ptp );
 
 		//sctk_nodebug ( "MSG RECV|%s|", ( char * ) body );
 
@@ -126,6 +120,12 @@ static void sctk_network_send_message_endpoint_tcp ( sctk_thread_ptp_message_t *
 	fd = endpoint->data.tcp.fd;
 
 	size = SCTK_MSG_SIZE ( msg ) + sizeof ( sctk_thread_ptp_message_body_t );
+
+	
+	if( (1024*1024) < size )
+	{
+		sctk_error("OUUUUT ERROR SIZE %ld\n", size );
+	}
 
 	sctk_safe_write ( fd, ( char * ) &size, sizeof ( size_t ) );
 

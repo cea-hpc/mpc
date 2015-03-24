@@ -83,8 +83,7 @@ sctk_rail_info_t * sctk_rail_get_by_id ( int i )
 /* Finalize Rails (call the rail route init func ) */
 void sctk_rail_commit()
 {
-	sctk_error("COMMIT TOPO" );
-	
+
 	char *net_name;
 	int i;
 	char *name_ptr;
@@ -267,8 +266,7 @@ void sctk_rail_dump_routes()
 
 void sctk_rail_init_route ( sctk_rail_info_t *rail, char *topology )
 {
-	sctk_error("SET TOPO %s", topology );
-	
+
 	rail->on_demand = 0;
 
 	if ( strcmp ( "ring", topology ) == 0 )

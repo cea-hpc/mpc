@@ -101,7 +101,7 @@ void sctk_control_messages_send ( int dest, sctk_message_class_t message_class, 
 	
 	sctk_add_adress_in_message ( &msg, buffer, size );
 	
-	sctk_set_header_in_message ( &msg, tag, communicator, sctk_get_process_rank(), dest,  &request, size, message_class, MPC_DATATYPE_IGNORE );
+	sctk_set_header_in_message ( &msg, tag, communicator,  sctk_get_process_rank(), dest,  &request, size, message_class, MPC_DATATYPE_IGNORE );
 	
 	sctk_send_message ( &msg );
 	

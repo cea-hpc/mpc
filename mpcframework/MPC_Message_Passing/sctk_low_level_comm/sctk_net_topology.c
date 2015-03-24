@@ -86,8 +86,6 @@ void sctk_route_fully_init ( sctk_rail_info_t *rail )
 	sav_sctk_route = rail->route;
 	rail->route = sctk_route_ring;
 
-	sctk_error("ROUTE FULLY ( PROC %d / %d)", sctk_process_rank, sctk_process_number);
-
 	if ( 3 < sctk_process_number  )
 	{
 		int from;
@@ -108,10 +106,8 @@ void sctk_route_fully_init ( sctk_rail_info_t *rail )
 
 						if ( tmp == NULL )
 						{
-							sctk_error("!!! %d HOSTS %d",sctk_process_rank, to );
 							rail->connect_from ( from, to, rail );
 							SCTK_COUNTER_INC ( signalization_endpoints, 1 );
-							sctk_error("!!! %d HOSTS %d DONE",sctk_process_rank, to );
 						}
 						
 						
@@ -124,10 +120,8 @@ void sctk_route_fully_init ( sctk_rail_info_t *rail )
 
 						if ( tmp == NULL )
 						{
-							sctk_error("!!! %d CONNECT %d",sctk_process_rank, from );
 							rail->connect_to ( from, to, rail );
 							SCTK_COUNTER_INC ( signalization_endpoints, 1 );
-							sctk_error("!!! %d CONNECT %d DONE",sctk_process_rank, from );
 						}
 						
 						

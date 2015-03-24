@@ -624,23 +624,19 @@ void sctk_multirail_destination_table_push_endpoint(sctk_endpoint_t * endpoint )
 {
 	struct sctk_multirail_destination_table * table = sctk_multirail_destination_table_get();
 	sctk_multirail_destination_table_entry_t * dest_entry = NULL;
-	
-	sctk_warning("Push endpoint from rail %d to %d", endpoint->rail->rail_number, endpoint->dest );
-	
+
 	sctk_spinlock_write_lock( &table->table_lock );
 	
 	HASH_FIND_INT(table->destinations, &endpoint->dest, dest_entry);
 	
 	if( !dest_entry )
 	{
-		sctk_warning("New endpoint");
 		/* There is no previous destination_table_entry */
 		dest_entry = sctk_multirail_destination_table_entry_new(endpoint->dest);
 		HASH_ADD_INT( table->destinations, destination, dest_entry );
 	}
 	else
 	{
-		sctk_warning("REUSE endpoint");
 		sctk_multirail_destination_table_entry_push_endpoint( dest_entry, endpoint );
 	}
 	
@@ -682,7 +678,7 @@ void sctk_multirail_destination_table_route_to_process( int destination, int * n
 
 	HASH_ITER(hh, table->destinations, entry, tmp)
 	{
-		sctk_warning( " %d --- %d" , destination, entry->destination  );
+		//sctk_warning( " %d --- %d" , destination, entry->destination  );
 		if( destination == entry->destination )
 		{
 			distance = 0;

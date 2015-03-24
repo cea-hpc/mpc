@@ -294,7 +294,6 @@ static void sctk_client_create_recv_socket ( sctk_rail_info_t *rail )
 static void sctk_tcp_add_static_route ( int dest, int fd, sctk_rail_info_t *rail,
                                         void * ( *tcp_thread ) ( sctk_endpoint_t * ) )
 {
-	sctk_error("ADD STATIC");
 	sctk_endpoint_t *new_route;
 	sctk_thread_t pidt;
 	sctk_thread_attr_t attr;
@@ -306,8 +305,6 @@ static void sctk_tcp_add_static_route ( int dest, int fd, sctk_rail_info_t *rail
 
 	sctk_nodebug ( "Register fd %d", fd );
 	new_route->data.tcp.fd = fd;
-
-	sctk_warning ( "register route to %d on rail %d", dest, rail->rail_number );
 
 	/* Add the new route */
 	sctk_rail_add_static_route (  rail, dest, new_route );
@@ -342,8 +339,6 @@ typedef enum
 
 static void sctk_network_connection_to_ctx( sctk_rail_info_t *rail, struct sctk_tcp_connection_context * ctx )
 {
-	sctk_error("TO TCP %d ===> %d (%s)", ctx->from, ctx->to,  ctx->dest_connection_infos);
-
 	/*Recv id from the connected process*/
 	int dest_socket = sctk_tcp_connect_to ( ctx->dest_connection_infos, rail );
 
@@ -369,9 +364,6 @@ static void sctk_network_connection_from_tcp ( int from, int to, sctk_rail_info_
 	
 	sctk_control_messages_send ( to, SCTK_CONTROL_MESSAGE_RAIL, SCTK_TCP_CONTROL_MESSAGE_ON_DEMAND, 0, &ctx, sizeof( struct sctk_tcp_connection_context ) );
 
-	sctk_error("FROM TCP %d ===> %d", from, to);
-	
-
 	src_socket = accept ( rail->network.tcp.sockfd, NULL, 0 );
 
 	if ( src_socket < 0 )
@@ -387,9 +379,7 @@ static void sctk_network_connection_from_tcp ( int from, int to, sctk_rail_info_
 void tcp_control_message_handler( struct sctk_rail_info_s * rail, int source_process, int source_rank, char subtype, char param, void * data )
 {
 	sctk_tcp_control_message_t action = subtype;
-	
-	sctk_error("HERE IS CONTROL ======================");
-	
+
 	switch( action )
 	{
 		case SCTK_TCP_CONTROL_MESSAGE_ON_DEMAND :

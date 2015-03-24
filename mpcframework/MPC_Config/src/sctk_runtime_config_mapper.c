@@ -428,8 +428,6 @@ void sctk_runtime_config_map_array(const struct sctk_runtime_config_entry_meta *
 		*array = calloc(cnt,current->size);
 		*array_size = cnt;
 
-		sctk_error("ARRAY %p", *array);
-
 		/* loop on all child nodes */
 		int i = 0;
 		node = xmlFirstElementChild(node);
@@ -699,9 +697,6 @@ void* sctk_runtime_config_get_symbol(char * symbol_name)
     char * msg = dlerror();
     sctk_warning("Fail to load config symbol %s : %s", symbol_name, msg);
   }
-  
-  
-  sctk_warning(" %s -- %p", symbol_name, symbol);
   
   return symbol;
 }

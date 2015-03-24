@@ -61,6 +61,7 @@ typedef struct
 typedef struct
 {
 	int destination;
+	int is_process_specific;
 } sctk_reorder_key_t;
 
 typedef struct sctk_reorder_table_s

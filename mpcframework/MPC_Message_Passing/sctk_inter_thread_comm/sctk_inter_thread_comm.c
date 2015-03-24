@@ -1603,34 +1603,24 @@ void sctk_determine_task_source_and_destination_from_header ( sctk_thread_ptp_me
  */
 void sctk_rebuild_header ( sctk_thread_ptp_message_t *msg )
 {
+	msg->tail.need_check_in_wait = 1;
+	msg->tail.request = NULL;
+	msg->tail.internal_ptp = NULL;
+
 	if ( sctk_is_process_specific_message ( SCTK_MSG_HEADER( msg ) ) )
 	{
-		if ( SCTK_MSG_SRC_PROCESS ( msg ) != MPC_ANY_SOURCE )
-			SCTK_MSG_SRC_TASK_SET ( msg,  SCTK_MSG_SRC_PROCESS ( msg ) );
-		else
-			SCTK_MSG_SRC_TASK_SET ( msg , -1 );
-
-		SCTK_MSG_DEST_TASK_SET ( msg, -1 );
+		return;
 	}
 	else
 	{
-		if ( SCTK_MSG_SRC_PROCESS ( msg ) != MPC_ANY_SOURCE )
-		{
-			/* Convert the MPI source rank to MPI_COMM_WORLD according to the communicator */
-			//~  SCTK_MSG_SRC_TASK_SET( msg, sctk_get_comm_world_rank (SCTK_MSG_COMMUNICATOR( msg ), SCTK_MSG_SRC_PROCESS( msg )) );
-		}
-		else
+		if ( SCTK_MSG_SRC_PROCESS ( msg ) == MPC_ANY_SOURCE )
 		{
 			/* Source task not available */
 			SCTK_MSG_SRC_TASK_SET ( msg, -1 );
 		}
 
-		/* Convert the MPI source rank to MPI_COMM_WORLD according to the communicator */
-		//~  SCTK_MSG_DEST_TASK_SET( msg,  sctk_get_comm_world_rank (SCTK_MSG_COMMUNICATOR( msg ), SCTK_MSG_DEST_PROCESS( msg )) );
 	}
 
-	msg->tail.need_check_in_wait = 1;
-	msg->tail.request = NULL;
 }
 
 /*
@@ -1639,7 +1629,6 @@ void sctk_rebuild_header ( sctk_thread_ptp_message_t *msg )
 void sctk_reinit_header ( sctk_thread_ptp_message_t *tmp, void ( *free_memory ) ( void * ),
                           void ( *message_copy ) ( sctk_message_to_copy_t * ) )
 {
-
 	tmp->tail.free_memory = free_memory;
 	tmp->tail.message_copy = message_copy;
 	tmp->tail.buffer_async = NULL;
@@ -2534,7 +2523,7 @@ void sctk_send_message_try_check ( sctk_thread_ptp_message_t *msg, int perform_c
 			}
 
 			msg->tail.remote_destination = 1;
-			sctk_warning ( "Need to forward the message fom %d to %d",  SCTK_MSG_SRC_PROCESS ( msg ),  SCTK_MSG_DEST_PROCESS ( msg ) );
+			sctk_nodebug( "Need to forward the message fom %d to %d",  SCTK_MSG_SRC_PROCESS ( msg ),  SCTK_MSG_DEST_PROCESS ( msg ) );
 			/* We forward the message */
 			sctk_network_send_message ( msg );
 		}

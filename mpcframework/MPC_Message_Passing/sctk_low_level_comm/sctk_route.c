@@ -167,7 +167,7 @@ void sctk_route_table_add_dynamic_route (  sctk_route_table_t * table, sctk_endp
 
 void sctk_route_table_add_static_route (  sctk_route_table_t * table, sctk_endpoint_t *tmp )
 {
-	sctk_error("New static route to %d", tmp->dest );
+	sctk_nodebug("New static route to %d", tmp->dest );
 	
 	assume( tmp->origin == ROUTE_ORIGIN_STATIC );
 	
