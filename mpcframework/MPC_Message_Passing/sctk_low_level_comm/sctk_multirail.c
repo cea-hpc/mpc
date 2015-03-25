@@ -544,6 +544,11 @@ void sctk_multirail_on_demand_connection( sctk_thread_ptp_message_t *msg )
 	sctk_multirail_destination_table_entry_t * routes = NULL;
 	sctk_endpoint_t * previous_endpoint = sctk_multirail_ellect_endpoint( msg, dest_process, 0 /* Not Process Specific */, 1 /* For On-Demand */ , &routes );
 
+	/* We need to relax the routes before pushing the endpoint as the new entry
+	 * will end in the same endpoint list */ 	
+	sctk_multirail_destination_table_relax_routes( routes );
+	
+
 	/* Check if no previous */
 	if( ! previous_endpoint )
 	{
@@ -552,9 +557,7 @@ void sctk_multirail_on_demand_connection( sctk_thread_ptp_message_t *msg )
 		sctk_rail_info_t * elected_rail = sctk_rail_get_by_id ( max_offset );
 		(elected_rail->connect_on_demand)( elected_rail,  dest_process );
 	}
-	
-	sctk_multirail_destination_table_relax_routes( routes );
-	
+
 	sctk_spinlock_unlock( & on_demand_connection_lock );
 }
 
@@ -574,10 +577,12 @@ void sctk_multirail_send_message( sctk_thread_ptp_message_t *msg )
 	/* If the message is based on signalization we directly rely on routing */
 	if( is_process_specific )
 	{
+		/* Find the process to which to route to */
 		sctk_multirail_destination_table_route_to_process( SCTK_MSG_DEST_PROCESS ( msg ), &destination_process );
 	}
 	else
 	{
+		/* We want to reach the desitination of the Message */
 		destination_process = SCTK_MSG_DEST_PROCESS ( msg );
 	}
 
@@ -612,9 +617,9 @@ void sctk_multirail_send_message( sctk_thread_ptp_message_t *msg )
 		}
 		else
 		{
-			/* Here we found a route to this process
-			 * however, the gate function did not allow us in
-			 * therefore a new on-demand connection is needed */
+			/* Here we found no route to the process or
+			 * none mathed this message, we have to retry
+			 * while creating a new connection */
 			no_existing_route_matched = 1;
 			retry = 1;
 		}
