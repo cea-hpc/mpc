@@ -115,8 +115,9 @@ char sctk_endpoint_get_is_initiator ( sctk_endpoint_t *route_table )
 /* ENDPOINTS                                                            */
 /************************************************************************/
 
-static void sctk_endpoint_init ( sctk_endpoint_t *tmp,  int dest, sctk_rail_info_t *rail, sctk_route_origin_t origin )
+void sctk_endpoint_init ( sctk_endpoint_t *tmp,  int dest, sctk_rail_info_t *rail, sctk_route_origin_t origin )
 {
+	memset( tmp, 0, sizeof( sctk_endpoint_t ) );
 	tmp->dest = dest;
 	tmp->rail = rail;
 	/* FIXME: the following commented line may potentially break other modules (like TCP). */

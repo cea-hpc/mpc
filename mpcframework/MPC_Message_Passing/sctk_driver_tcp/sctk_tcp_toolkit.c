@@ -291,25 +291,36 @@ static void sctk_client_create_recv_socket ( sctk_rail_info_t *rail )
 /* Route Initializer                                                */
 /********************************************************************/
 
-static void sctk_tcp_add_static_route ( int dest, int fd, sctk_rail_info_t *rail,
-                                        void * ( *tcp_thread ) ( sctk_endpoint_t * ) )
+static void sctk_tcp_add_route ( int dest, int fd, sctk_rail_info_t *rail,
+					   void * ( *tcp_thread ) ( sctk_endpoint_t * ) , sctk_route_origin_t route_type )
 {
 	sctk_endpoint_t *new_route;
-	sctk_thread_t pidt;
-	sctk_thread_attr_t attr;
+
 
 	/* Allocate a new route */
 	new_route = sctk_malloc ( sizeof ( sctk_endpoint_t ) );
 	assume ( new_route != NULL );
-	memset ( new_route, 0, sizeof ( sctk_endpoint_t ) );
+	sctk_endpoint_init ( new_route,  dest, rail, route_type );
 
 	sctk_nodebug ( "Register fd %d", fd );
 	new_route->data.tcp.fd = fd;
+	new_route->data.tcp.lock = SCTK_SPINLOCK_INITIALIZER;
 
 	/* Add the new route */
-	sctk_rail_add_static_route (  rail, dest, new_route );
+	if( route_type == ROUTE_ORIGIN_STATIC )
+	{
+		sctk_rail_add_static_route (  rail, dest, new_route );
+	}
+	else
+	{
+		sctk_rail_add_dynamic_route(  rail, dest, new_route );
+	}
+	
 	/* set the route as connected */
 	sctk_endpoint_set_state ( new_route, STATE_CONNECTED );
+
+	sctk_thread_t pidt;
+	sctk_thread_attr_t attr;
 
 	/* Launch the polling thread */
 	sctk_thread_attr_init ( &attr );
@@ -332,27 +343,27 @@ struct sctk_tcp_connection_context
 
 typedef enum
 {
-	SCTK_TCP_CONTROL_MESSAGE_ON_DEMAND
+	SCTK_TCP_CONTROL_MESSAGE_ON_DEMAND_STATIC,
+	SCTK_TCP_CONTROL_MESSAGE_ON_DEMAND_DYNAMIC
 }sctk_tcp_control_message_t;
 
-
-
-static void sctk_network_connection_to_ctx( sctk_rail_info_t *rail, struct sctk_tcp_connection_context * ctx )
+static void sctk_network_connection_to_ctx( sctk_rail_info_t *rail, struct sctk_tcp_connection_context * ctx, sctk_route_origin_t route_type )
 {
 	/*Recv id from the connected process*/
 	int dest_socket = sctk_tcp_connect_to ( ctx->dest_connection_infos, rail );
 
-	sctk_tcp_add_static_route ( ctx->from, dest_socket, rail, ( void * ( * ) ( sctk_endpoint_t * ) ) ( rail->network.tcp.tcp_thread ) );
+	sctk_tcp_add_route ( ctx->from, dest_socket, rail, ( void * ( * ) ( sctk_endpoint_t * ) ) ( rail->network.tcp.tcp_thread ), route_type );
 }
+
 
 static void sctk_network_connection_to_tcp ( int from, int to, sctk_rail_info_t *rail )
 {
 
 }
 
-static void sctk_network_connection_from_tcp ( int from, int to, sctk_rail_info_t *rail )
-{
 
+static void __sctk_network_connection_from_tcp( int from, int to, sctk_rail_info_t *rail, sctk_route_origin_t route_type )
+{
 	int src_socket;
 	/*Send connection informations*/
 	
@@ -362,7 +373,14 @@ static void sctk_network_connection_from_tcp ( int from, int to, sctk_rail_info_
 	ctx.to = to;
 	snprintf( ctx.dest_connection_infos, MAX_STRING_SIZE, "%s", rail->network.tcp.connection_infos);
 	
-	sctk_control_messages_send ( to, SCTK_CONTROL_MESSAGE_RAIL, SCTK_TCP_CONTROL_MESSAGE_ON_DEMAND, 0, &ctx, sizeof( struct sctk_tcp_connection_context ) );
+	if( route_type == ROUTE_ORIGIN_STATIC )
+	{
+		sctk_control_messages_send ( to, SCTK_CONTROL_MESSAGE_RAIL, SCTK_TCP_CONTROL_MESSAGE_ON_DEMAND_STATIC, 0, &ctx, sizeof( struct sctk_tcp_connection_context ) );
+	}
+	else
+	{
+		sctk_control_messages_send ( to, SCTK_CONTROL_MESSAGE_RAIL, SCTK_TCP_CONTROL_MESSAGE_ON_DEMAND_DYNAMIC, 0, &ctx, sizeof( struct sctk_tcp_connection_context ) );
+	}
 
 	src_socket = accept ( rail->network.tcp.sockfd, NULL, 0 );
 
@@ -371,8 +389,17 @@ static void sctk_network_connection_from_tcp ( int from, int to, sctk_rail_info_
 		perror ( "Connection error" );
 		sctk_abort();
 	}
+	
+	sctk_tcp_add_route ( to, src_socket, rail, ( void * ( * ) ( sctk_endpoint_t * ) ) ( rail->network.tcp.tcp_thread ), route_type );
+}
 
-	sctk_tcp_add_static_route ( to, src_socket, rail, ( void * ( * ) ( sctk_endpoint_t * ) ) ( rail->network.tcp.tcp_thread ) );
+
+
+
+
+static void sctk_network_connection_from_tcp ( int from, int to, sctk_rail_info_t *rail )
+{
+	__sctk_network_connection_from_tcp( from, to, rail, ROUTE_ORIGIN_STATIC );
 }
 
 
@@ -382,8 +409,11 @@ void tcp_control_message_handler( struct sctk_rail_info_s * rail, int source_pro
 
 	switch( action )
 	{
-		case SCTK_TCP_CONTROL_MESSAGE_ON_DEMAND :
-			sctk_network_connection_to_ctx( rail, (struct sctk_tcp_connection_context *) data );
+		case SCTK_TCP_CONTROL_MESSAGE_ON_DEMAND_STATIC :
+			sctk_network_connection_to_ctx( rail, (struct sctk_tcp_connection_context *) data, ROUTE_ORIGIN_STATIC );
+		break;
+		case SCTK_TCP_CONTROL_MESSAGE_ON_DEMAND_DYNAMIC :
+			sctk_network_connection_to_ctx( rail, (struct sctk_tcp_connection_context *) data, ROUTE_ORIGIN_DYNAMIC );
 		break;
 	}
 }
@@ -391,7 +421,7 @@ void tcp_control_message_handler( struct sctk_rail_info_s * rail, int source_pro
 
 void tcp_on_demand_connection_handler( sctk_rail_info_t *rail, int dest_process )
 {
-	sctk_network_connection_from_tcp ( sctk_get_process_rank(), dest_process, rail );
+	__sctk_network_connection_from_tcp ( sctk_get_process_rank(), dest_process, rail, ROUTE_ORIGIN_DYNAMIC );
 }
 
 
@@ -525,11 +555,11 @@ void sctk_network_init_tcp_all ( sctk_rail_info_t *rail, int sctk_use_tcp_o_ib,
 	sctk_pmi_barrier();
 
 	/* We are all done, now register the routes and create the polling threads */
-	sctk_tcp_add_static_route ( right_rank, right_socket, rail, tcp_thread );
+	sctk_tcp_add_route ( right_rank, right_socket, rail, tcp_thread, ROUTE_ORIGIN_STATIC );
 
 	if ( sctk_process_number > 2 )
 	{
-		sctk_tcp_add_static_route ( left_rank, left_socket, rail, tcp_thread );
+		sctk_tcp_add_route ( left_rank, left_socket, rail, tcp_thread, ROUTE_ORIGIN_STATIC );
 	}
 
 	sctk_pmi_barrier();

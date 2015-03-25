@@ -319,7 +319,6 @@ void sctk_rail_init_route ( sctk_rail_info_t *rail, char *topology, void (*on_de
 
 void sctk_rail_add_static_route (sctk_rail_info_t *rail, int dest, sctk_endpoint_t *tmp )
 {
-	sctk_endpoint_init_static ( tmp, dest, rail );
 	sctk_route_table_add_static_route ( rail->route_table, tmp );
 }
 

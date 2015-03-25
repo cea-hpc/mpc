@@ -96,6 +96,7 @@ struct sctk_endpoint_s
 #define ROUTE_UNLOCK(r) sctk_spinlock_unlock(&(r)->lock)
 #define ROUTE_TRYLOCK(r) sctk_spinlock_trylock(&(r)->lock)
 
+void sctk_endpoint_init( sctk_endpoint_t *tmp,  int dest, sctk_rail_info_t *rail, sctk_route_origin_t origin );
 void sctk_endpoint_init_static ( sctk_endpoint_t *tmp, int dest, sctk_rail_info_t *rail );
 void sctk_endpoint_init_dynamic ( sctk_endpoint_t *tmp, int dest, sctk_rail_info_t *rail );
 
