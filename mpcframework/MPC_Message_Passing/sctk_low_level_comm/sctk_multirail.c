@@ -372,8 +372,76 @@ static inline struct sctk_multirail_destination_table * sctk_multirail_destinati
 
 
 /************************************************************************/
-/* sctk_multirail_hooks                                                 */
+/* Endpoint Election Logic                                              */
 /************************************************************************/
+
+sctk_endpoint_t * sctk_multirail_ellect_endpoint( sctk_thread_ptp_message_t *msg, int destination_process, int is_process_specific, int is_for_on_demand, sctk_multirail_destination_table_entry_t ** ext_routes )
+{
+	
+	sctk_multirail_destination_table_entry_t * routes = sctk_multirail_destination_table_acquire_routes( destination_process );
+	*ext_routes = routes;
+
+	sctk_endpoint_list_t * cur = NULL;
+	
+	if( routes )
+	{
+		cur = routes->endpoints;
+	}
+	
+	/* Note that in the case of process specific messages
+	 * we return the first matching route which is the
+	 * one of Highest priority */
+	while( cur && !is_process_specific )
+	{
+		int this_rail_has_been_elected = 1;
+		
+		int cur_gate;
+		
+		
+		/* First we want only to check on-demand rails */
+		if( !cur->endpoint->rail->connect_on_demand && is_for_on_demand )
+		{
+			/* No on-demand in this rail */
+			this_rail_has_been_elected = 0;
+		}
+		else
+		{
+			/* Note that no gate is equivalent to being elected */
+			for( cur_gate = 0 ; cur_gate < cur->gate_count ; cur_gate++ )
+			{
+				struct sctk_gate_context gate_ctx;
+				sctk_gate_get_context( &cur->gates[ cur_gate ] , &gate_ctx );
+				
+				if( ( gate_ctx.func )( cur->endpoint->rail, msg, gate_ctx.params ) == 0 )
+				{
+					this_rail_has_been_elected = 0;
+					break;
+				}
+				
+			}
+		}
+		
+		if( this_rail_has_been_elected )
+		{
+			break;
+		}
+		
+		cur = cur->next;
+	}
+	
+	if( !cur )
+		return NULL;
+	
+	
+	return cur->endpoint;
+}
+
+
+
+sctk_spinlock_t on_demand_connection_lock = SCTK_SPINLOCK_INITIALIZER;
+
+
+
 
 void sctk_multirail_on_demand_connection( sctk_thread_ptp_message_t *msg )
 {
@@ -465,18 +533,35 @@ void sctk_multirail_on_demand_connection( sctk_thread_ptp_message_t *msg )
 		sctk_fatal("No route to host == Make sure you have at least one on-demand rail able to satify any type of message");
 	}
 
+	/* Enter the critical section to guanrantee the uniqueness of the 
+	 * newly created rail by first checking if it is not already present */
+	sctk_spinlock_lock( & on_demand_connection_lock );
 
-	/* If we are here we have elected the on-demand rail with the highest priority and matching this message
-	 * initiate the on-demand connection */
-	 
-	sctk_rail_info_t * elected_rail = sctk_rail_get_by_id ( max_offset );
+	int dest_process = SCTK_MSG_DEST_PROCESS ( msg );
 
-	(elected_rail->connect_on_demand)( elected_rail, SCTK_MSG_DEST_PROCESS ( msg ) );
+	/* First retry to acquire a route for on-demand
+	 * in order to avoid double connections */
+	sctk_multirail_destination_table_entry_t * routes = NULL;
+	sctk_endpoint_t * previous_endpoint = sctk_multirail_ellect_endpoint( msg, dest_process, 0 /* Not Process Specific */, 1 /* For On-Demand */ , &routes );
+
+	/* Check if no previous */
+	if( ! previous_endpoint )
+	{
+		/* If we are here we have elected the on-demand rail with the highest priority and matching this message
+		 * initiate the on-demand connection */
+		sctk_rail_info_t * elected_rail = sctk_rail_get_by_id ( max_offset );
+		(elected_rail->connect_on_demand)( elected_rail,  dest_process );
+	}
+	
+	sctk_multirail_destination_table_relax_routes( routes );
+	
+	sctk_spinlock_unlock( & on_demand_connection_lock );
 }
 
 
-
-
+/************************************************************************/
+/* sctk_multirail_hooks                                                 */
+/************************************************************************/
 
 
 void sctk_multirail_send_message( sctk_thread_ptp_message_t *msg )
@@ -508,55 +593,22 @@ void sctk_multirail_send_message( sctk_thread_ptp_message_t *msg )
 			sctk_multirail_on_demand_connection( msg );
 		}
 		
-		sctk_multirail_destination_table_entry_t * routes = sctk_multirail_destination_table_acquire_routes( destination_process );
-
-
-		sctk_endpoint_list_t * cur = NULL;
+		/* We need to retrieve the route entry in order to be
+		 * able to relax it after use */
+		sctk_multirail_destination_table_entry_t * routes = NULL;
 		
-		if( routes )
-		{
-			cur = routes->endpoints;
-		}
+		sctk_endpoint_t * endpoint = sctk_multirail_ellect_endpoint( msg, destination_process, is_process_specific, 0 /* Not for On-Demand */ , &routes );
 		
-
-		while( cur && !is_process_specific )
-		{
-			int this_rail_has_been_elected = 1;
-			
-			int cur_gate;
-			
-			/* Note that no gate is equivalent to being elected */
-			for( cur_gate = 0 ; cur_gate < cur->gate_count ; cur_gate++ )
-			{
-				struct sctk_gate_context gate_ctx;
-				sctk_gate_get_context( &cur->gates[ cur_gate ] , &gate_ctx );
-				
-				if( ( gate_ctx.func )( cur->endpoint->rail, msg, gate_ctx.params ) == 0 )
-				{
-					this_rail_has_been_elected = 0;
-					break;
-				}
-				
-			}
-			
-			if( this_rail_has_been_elected )
-			{
-				break;
-			}
-			
-			cur = cur->next;
-		}
-		
-		if( cur )
+		if( endpoint )
 		{
 			//sctk_error("RAIL %d", cur->endpoint->rail->rail_number );
 			
 			/* Prepare reordering */
 			sctk_prepare_send_message_to_network_reorder ( msg );
 			/* Set rail number in message */
-			SCTK_MSG_SET_RAIL_ID( msg, cur->endpoint->rail->rail_number );
+			SCTK_MSG_SET_RAIL_ID( msg, endpoint->rail->rail_number );
 			/* Send the message */
-			(cur->endpoint->rail->send_message_endpoint)( msg, cur->endpoint );
+			(endpoint->rail->send_message_endpoint)( msg, endpoint );
 		}
 		else
 		{
@@ -567,7 +619,7 @@ void sctk_multirail_send_message( sctk_thread_ptp_message_t *msg )
 			retry = 1;
 		}
 
-		
+		/* Relax Routes */
 		sctk_multirail_destination_table_relax_routes( routes );
 
 	}while( retry );
