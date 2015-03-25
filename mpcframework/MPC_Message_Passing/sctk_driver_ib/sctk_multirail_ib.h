@@ -50,7 +50,6 @@ void sctk_network_finalize_task_multirail_ib ( int rank );
 struct sctk_rail_info_s **sctk_network_get_rails();
 char sctk_network_is_ib_used();
 
-int sctk_network_ib_get_rail_signalization();
 int sctk_network_ib_get_rails_nb();
 
 

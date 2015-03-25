@@ -110,7 +110,7 @@ void sctk_runtime_config_struct_init_net_driver_infiniband(void * struct_ptr)
 
 	/* Simple params : */
 	obj->network_type = 0;
-	obj->adm_port = 0;
+	obj->adm_port = 1;
 	obj->verbose_level = 0;
 	obj->eager_limit = 12288;
 	obj->buffered_limit = 262114;
@@ -331,8 +331,8 @@ void sctk_runtime_config_struct_init_gate_message_type(void * struct_ptr)
 	/* Simple params : */
 	obj->process = 1;
 	obj->common = 1;
-	obj->gatefunc.name = "sctk_rail_gate_maxsize";
-	*(void **) &(obj->gatefunc.value) = sctk_runtime_config_get_symbol("sctk_rail_gate_maxsize");
+	obj->gatefunc.name = "sctk_rail_gate_msgtype";
+	*(void **) &(obj->gatefunc.value) = sctk_runtime_config_get_symbol("sctk_rail_gate_msgtype");
 	obj->init_done = 1;
 }
 

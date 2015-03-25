@@ -32,6 +32,18 @@
 
 #define HAVE_SHELL_COLORS
 
+static char is_ib_used = 0;
+
+char sctk_network_is_ib_used()
+{
+	return is_ib_used;
+}
+
+void sctk_network_set_ib_used()
+{
+	is_ib_used = 1;
+}
+
 
 #define BT_SIZE 100
 void

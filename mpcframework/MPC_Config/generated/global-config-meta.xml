@@ -101,7 +101,7 @@
 		<!-- Structure for infiniband driver -->
 		<struct name="net_driver_infiniband" doc="Declare a fake driver to test the configuration system.">
 			<param name="network_type" type="int" doc="Define a network's type (0=signalization, 1=data)" default="0"/>
-			<param name="adm_port" type="int" doc="Defines the port number to use." default="0" />
+			<param name="adm_port" type="int" doc="Defines the port number to use." default="1" />
 			<param name="verbose_level" type="int" doc="Defines the verbose level of the Infiniband interface ." default="0" />
 			<param name="eager_limit" type="int" doc="Size of the eager buffers (short messages)." default="12288" />
 			<param name="buffered_limit" type="int" doc="Max size for using the Buffered protocol (message split into several Eager messages)." default="262114" />
@@ -215,7 +215,7 @@
 		<struct name="gate_message_type" doc="This gate can be used define which type of message can use a given rail.">
 			<param name="process" type="int" doc="Process Specific Messages can use this rail" default="1" />
 			<param name="common" type="int" doc="Common messages (MPI) can use this rail" default="1" />
-			<param name="gatefunc" type="funcptr" default="sctk_rail_gate_maxsize" doc="Function to be called for this gate"/>
+			<param name="gatefunc" type="funcptr" default="sctk_rail_gate_msgtype" doc="Function to be called for this gate"/>
 		</struct>
 
 		<struct name="gate_user" doc="This gate uses a given rail with a user defined function.">

@@ -772,6 +772,14 @@ static void sctk_network_notify_perform_message_ib ( int remote_process, int rem
 
 static void sctk_network_notify_idle_message_ib ( sctk_rail_info_t *rail )
 {
+	/* NOTIFY IDLE DISABLED */
+	return;
+	
+	/* ************************************************ */
+	/* ************************************************ */
+	/* ************************************************ */
+	/* ************************************************ */
+	/* ************************************************ */
 	sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
 	LOAD_CONFIG ( rail_ib );
 	struct sctk_ib_polling_s poll;
@@ -920,6 +928,8 @@ void sctk_network_memory_free_hook_ib ( void * ptr, size_t size )
 
 void sctk_network_init_mpi_ib ( sctk_rail_info_t *rail )
 {
+	sctk_network_set_ib_used();
+	
 	/* XXX: memory never freed */
 	char *network_name = sctk_malloc ( 256 );
 
@@ -975,7 +985,8 @@ void sctk_network_init_mpi_ib ( sctk_rail_info_t *rail )
 	}
 
 	sctk_ib_topology_init ( rail_ib );
-
+	sctk_ib_topology_init_task ( rail, sctk_thread_get_vp() );
+	
 	/* Initialize network */
 	int init_cpu = sctk_get_cpu();
 	sprintf ( network_name, "IB-MT (v2.0) MPI      %d/%d:%s - %dx %s (%d Gb/s) - %d]",
@@ -992,12 +1003,16 @@ void sctk_network_init_mpi_ib ( sctk_rail_info_t *rail )
 #endif
 
 	rail->initialize_task = sctk_network_initialize_task_mpi_ib;
+
 	rail->initialize_leader_task = sctk_network_initialize_leader_task_mpi_ib;
+	rail->initialize_leader_task ( rail );
+
 	rail->finalize_task = sctk_network_finalize_task_mpi_ib;
 
 	rail->connect_to = sctk_network_connection_to_ib;
 	rail->connect_from = sctk_network_connection_from_ib;
-	rail->send_message = sctk_network_send_message_ib_endpoint;
+	rail->send_message_endpoint = sctk_network_send_message_ib_endpoint;
+
 	rail->notify_recv_message = sctk_network_notify_recv_message_ib;
 	rail->notify_matching_message = sctk_network_notify_matching_message_ib;
 	rail->notify_perform_message = sctk_network_notify_perform_message_ib;
@@ -1007,10 +1022,9 @@ void sctk_network_init_mpi_ib ( sctk_rail_info_t *rail )
 	rail->on_demand_connection = sctk_on_demand_connection_ib;
 	rail->send_message_from_network = sctk_send_message_from_network_mpi_ib;
 
+
 	/* Bootstrap a ring on this network */
 	sctk_ib_cm_connect_ring ( rail );
-	
-	sctk_ib_topology_init_task ( rail, sctk_thread_get_vp() );
-	rail->initialize_leader_task ( rail );
+
 }
 #endif

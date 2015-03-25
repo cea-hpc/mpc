@@ -57,24 +57,38 @@ void sctk_ib_init_remote ( int dest, sctk_rail_info_t *rail, struct sctk_endpoin
 	sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
 	sctk_ib_route_info_t *route_ib;
 
+	/* Init endpoint */
+	sctk_route_origin_t origin = ROUTE_ORIGIN_STATIC;
+	
+	if( ondemand )
+	{
+		 origin = ROUTE_ORIGIN_DYNAMIC;
+	}
+		
+	sctk_endpoint_init( route_table,  dest, rail, origin );
+
+	/* Fill IB dependent CTX */
+
 	route_ib = &route_table->data.ib;
+	route_ib->remote = sctk_ib_qp_new();
 
 	sctk_nodebug ( "Initializing QP for dest %d", dest );
+	
+	/* Allocate QP */
 	sctk_ib_qp_allocate_init ( rail_ib, dest, route_ib->remote, ondemand, route_table );
+	
 	return;
 }
 
 /* Create a new route table */
-sctk_endpoint_t *sctk_ib_create_remote()
+sctk_endpoint_t * sctk_ib_create_remote()
 {
 	sctk_endpoint_t *tmp;
 	sctk_ib_route_info_t *route_ib;
 
 	tmp = sctk_malloc ( sizeof ( sctk_endpoint_t ) );
-	memset ( tmp, 0, sizeof ( sctk_endpoint_t ) );
 
-	route_ib = &tmp->data.ib;
-	route_ib->remote = sctk_ib_qp_new();
+	assume( tmp != NULL );
 
 	return tmp;
 }

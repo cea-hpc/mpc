@@ -292,7 +292,7 @@ Type is int. Default value is 0.
 .Pp network_type
 Define a network's type (0=signalization, 1=data)
 .It Cm adm_port
-Type is int. Default value is 0. 
+Type is int. Default value is 1. 
 .Pp adm_port
 Defines the port number to use.
 .It Cm verbose_level
@@ -607,7 +607,7 @@ Type is int. Default value is 1.
 .Pp common
 Common messages (MPI) can use this rail
 .It Cm gatefunc
-Type is function pointer. Default value is sctk_rail_gate_maxsize. 
+Type is function pointer. Default value is sctk_rail_gate_msgtype. 
 .Pp gatefunc
 Function to be called for this gate
 .El

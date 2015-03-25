@@ -42,7 +42,7 @@
 
 static int rails_nb = 0;
 static sctk_rail_info_t **rails = NULL;
-static char is_ib_used = 0;
+
 
 struct sctk_rail_info_s **sctk_network_get_rails()
 {
@@ -50,31 +50,12 @@ struct sctk_rail_info_s **sctk_network_get_rails()
 }
 
 static int ib_rail_data;          /* Data rail */
-static int ib_rail_signalization; /* Signalization rail */
 
 int sctk_network_ib_get_rails_nb()
 {
 	return rails_nb;
 }
 
-/* Return which rail is used for signalization */
-int sctk_network_ib_get_rail_signalization()
-{
-	return ib_rail_signalization;
-}
-/* Set which rail is used for MPI communications */
-void sctk_network_ib_set_rail_data ( int id )
-{
-	ib_rail_data = id;
-}
-/* Set which rail is used for signalization */
-void sctk_network_ib_set_rail_signalization ( int id )
-{
-	sctk_only_once();
-	ib_rail_signalization = id;
-	/* Set the rail as a signalization rail */
-	sctk_route_set_signalization_rail ( rails[id] );
-}
 
 /*-------------------------------------------------------------------
  * Rail selection
@@ -213,14 +194,7 @@ sctk_network_send_message_multirail_ib ( sctk_thread_ptp_message_t *msg )
 #endif
 	sctk_prepare_send_message_to_network_reorder ( msg );
 
-	if ( 0 )
-	{
-		i = sctk_network_ib_get_rail_signalization();
-	}
-	else
-	{
-		i = sctk_network_select_send_rail ( msg );
-	}
+	i = sctk_network_select_send_rail ( msg );
 
 	/* Always send using the MPI network */
 	sctk_nodebug ( "Send message using rail %d", i );
@@ -374,7 +348,7 @@ void sctk_network_init_multirail_ib ( sctk_rail_info_t *new_rail , int max_rails
 	rails = sctk_realloc ( rails, ( rails_nb + 1 ) * sizeof ( sctk_rail_info_t * ) );
 	/* Initialize the newly allocated memory */
 	memset ( ( rails + rails_nb ), 0, sizeof ( sctk_rail_info_t * ) );
-	is_ib_used = 1;
+
 	/* Store a pointer to the new rail in local multirail */
 	rails[rails_nb] = new_rail;
 	/* Retrieve config pointers */
@@ -400,7 +374,6 @@ void sctk_network_init_multirail_ib ( sctk_rail_info_t *new_rail , int max_rails
 			sctk_abort();
 		}
 
-		sctk_network_ib_set_rail_data ( rails_nb );
 		sctk_network_init_mpi_ib ( rails[rails_nb] );
 	}
 	else
@@ -408,7 +381,6 @@ void sctk_network_init_multirail_ib ( sctk_rail_info_t *new_rail , int max_rails
 		if ( config->driver.value.infiniband.network_type == 0 )
 		{
 			/* Fallback IB network */
-			sctk_network_ib_set_rail_signalization ( rails_nb );
 			sctk_network_init_fallback_ib ( rails[rails_nb], rails_nb );
 
 			if ( strcmp ( rail_config->topology, "ring" ) && strcmp ( rail_config->topology, "torus" ) )
@@ -455,10 +427,6 @@ void sctk_network_init_multirail_ib ( sctk_rail_info_t *new_rail , int max_rails
 
 }
 
-char sctk_network_is_ib_used()
-{
-	return is_ib_used;
-}
 
 /************ INITIALIZE TASK ****************/
 void sctk_network_initialize_task_multirail_ib ( int rank, int vp )

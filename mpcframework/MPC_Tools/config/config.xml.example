@@ -41,33 +41,6 @@
 							</infiniband>
 						</driver>
 					</config>
-					<config>
-						<name>ib_config_signalization</name>
-						<driver>
-							<infiniband>
-								<network_type>0</network_type>
-								<qp_tx_depth>1000</qp_tx_depth>
-								<cq_depth>2000</cq_depth>
-								<init_ibufs>100</init_ibufs>
-								<init_recv_ibufs>20</init_recv_ibufs>
-								<max_srq_ibufs_posted>100</max_srq_ibufs_posted>
-								<max_srq_ibufs>100</max_srq_ibufs>
-								<srq_credit_limit>100</srq_credit_limit>
-								<init_mr>10</init_mr>
-								<steal>0</steal>
-								<rdma_min_size>0</rdma_min_size>
-								<rdma_max_size>0</rdma_max_size>
-								<rdma_min_nb>0</rdma_min_nb>
-								<rdma_max_nb>0</rdma_max_nb>
-								<rdma_resizing_min_size>0</rdma_resizing_min_size>
-								<rdma_resizing_max_size>0</rdma_resizing_max_size>
-								<rdma_resizing_min_nb>0</rdma_resizing_min_nb>
-								<rdma_resizing_max_nb>0</rdma_resizing_max_nb>
-								<size_recv_ibufs_chunk>50</size_recv_ibufs_chunk>
-							</infiniband>
-						</driver>
-						
-					</config>
 						
 					<config>
 						<name>tcp_config_mpi</name>
@@ -84,12 +57,6 @@
 						<device>0</device>
 						<topology>ring</topology>
 						<config>ib_config_mpi</config>
-					</rail>
-					<rail>
-						<name>ib_signalization</name>
-						<device>0</device>
-						<topology>torus</topology>
-						<config>ib_config_signalization</config>
 					</rail>
 					<rail>
 						<name>tcp_mpi</name>
@@ -121,7 +88,7 @@
 						<name>ib</name>
 						<rails>
 							<rail>ib_mpi</rail>
-							<rail>ib_signalization</rail>
+							<rail>ib_mpi</rail>
 						</rails>
 					</cli_option>
 					<cli_option>
@@ -141,7 +108,6 @@
 						<name>default</name>
 						<rails>
 							<rail>ib_mpi</rail>
-							<rail>ib_signalization</rail>
 						</rails>
 					</cli_option>
 				</cli_options>

@@ -344,18 +344,3 @@ void sctk_route_messages_recv ( int src, int myself, sctk_message_class_t messag
 }
 
 
-/************************************************************************/
-/* Signalization rails: getters and setters                             */
-/************************************************************************/
-static sctk_rail_info_t *rail_signalization = NULL;
-
-void sctk_route_set_signalization_rail ( sctk_rail_info_t *rail )
-{
-	rail_signalization = rail;
-}
-sctk_rail_info_t *sctk_route_get_signalization_rail()
-{
-	assume ( rail_signalization );
-	return rail_signalization;
-}
-

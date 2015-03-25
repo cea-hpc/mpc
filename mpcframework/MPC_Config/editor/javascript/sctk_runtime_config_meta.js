@@ -39,7 +39,7 @@ meta.types = {
 	}},
 	net_driver_infiniband : {type: 'struct', name: "net_driver_infiniband", childs: {
 		network_type: {mode: 'param', name: "network_type", type: "int", doc: "Define a network's type (0=signalization, 1=data)", dflt: "0", },
-		adm_port: {mode: 'param', name: "adm_port", type: "int", doc: "Defines the port number to use.", dflt: "0", },
+		adm_port: {mode: 'param', name: "adm_port", type: "int", doc: "Defines the port number to use.", dflt: "1", },
 		verbose_level: {mode: 'param', name: "verbose_level", type: "int", doc: "Defines the verbose level of the Infiniband interface .", dflt: "0", },
 		eager_limit: {mode: 'param', name: "eager_limit", type: "int", doc: "Size of the eager buffers (short messages).", dflt: "12288", },
 		buffered_limit: {mode: 'param', name: "buffered_limit", type: "int", doc: "Max size for using the Buffered protocol (message split into several Eager messages).", dflt: "262114", },
@@ -122,7 +122,7 @@ meta.types = {
 	gate_message_type : {type: 'struct', name: "gate_message_type", childs: {
 		process: {mode: 'param', name: "process", type: "int", doc: "Process Specific Messages can use this rail", dflt: "1", },
 		common: {mode: 'param', name: "common", type: "int", doc: "Common messages (MPI) can use this rail", dflt: "1", },
-		gatefunc: {mode: 'param', name: "gatefunc", type: "funcptr", doc: "Function to be called for this gate", dflt: "sctk_rail_gate_maxsize", },
+		gatefunc: {mode: 'param', name: "gatefunc", type: "funcptr", doc: "Function to be called for this gate", dflt: "sctk_rail_gate_msgtype", },
 	}},
 	gate_user : {type: 'struct', name: "gate_user", childs: {
 		gatefunc: {mode: 'param', name: "gatefunc", type: "funcptr", doc: "Function to be called for this gate", dflt: "sctk_rail_gate_true", },

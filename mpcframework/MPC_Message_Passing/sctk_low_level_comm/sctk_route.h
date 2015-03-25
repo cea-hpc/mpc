@@ -176,13 +176,4 @@ void sctk_route_messages_send ( int myself, int dest, sctk_message_class_t messa
 void sctk_route_messages_recv ( int src, int myself, sctk_message_class_t message_class, int tag, void *buffer, size_t size );
 
 
-/************************************************************************/
-/* Signalization rails: getters and setters                             */
-/************************************************************************/
-
-void sctk_route_set_signalization_rail ( sctk_rail_info_t *rail );
-sctk_rail_info_t *sctk_route_get_signalization_rail();
-
-
-
 #endif
