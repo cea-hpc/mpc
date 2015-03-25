@@ -321,6 +321,18 @@ struct sctk_runtime_config_struct_gate_max_size
 };
 
 /******************************** STRUCTURE *********************************/
+/**This gate can be used define which type of message can use a given rail.**/
+struct sctk_runtime_config_struct_gate_message_type
+{	int init_done;
+	/**Process Specific Messages can use this rail**/
+	int process;
+	/**Common messages (MPI) can use this rail**/
+	int common;
+	/**Function to be called for this gate**/
+	struct sctk_runtime_config_funcptr gatefunc;
+};
+
+/******************************** STRUCTURE *********************************/
 /**This gate uses a given rail with a user defined function.**/
 struct sctk_runtime_config_struct_gate_user
 {	int init_done;
@@ -337,6 +349,7 @@ enum sctk_runtime_config_struct_net_gate_type
 	SCTK_RTCFG_net_gate_probabilistic,
 	SCTK_RTCFG_net_gate_minsize,
 	SCTK_RTCFG_net_gate_maxsize,
+	SCTK_RTCFG_net_gate_msgtype,
 	SCTK_RTCFG_net_gate_user,
 };
 
@@ -350,6 +363,7 @@ struct sctk_runtime_config_struct_net_gate
 		struct sctk_runtime_config_struct_gate_probabilistic probabilistic;
 		struct sctk_runtime_config_struct_gate_min_size minsize;
 		struct sctk_runtime_config_struct_gate_max_size maxsize;
+		struct sctk_runtime_config_struct_gate_message_type msgtype;
 		struct sctk_runtime_config_struct_gate_probabilistic user;
 	} value;
 };

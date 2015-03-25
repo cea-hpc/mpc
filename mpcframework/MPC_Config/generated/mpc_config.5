@@ -592,6 +592,25 @@ Type is function pointer. Default value is sctk_rail_gate_maxsize.
 .Pp gatefunc
 Function to be called for this gate
 .El
+.Sh ENTRIES OF TYPE gate_message_type
+This gate can be used define which type of message can use a given rail.
+.Pp
+It support parameters :
+.Pp
+.Bl -tag -width Ds
+.It Cm process
+Type is int. Default value is 1. 
+.Pp process
+Process Specific Messages can use this rail
+.It Cm common
+Type is int. Default value is 1. 
+.Pp common
+Common messages (MPI) can use this rail
+.It Cm gatefunc
+Type is function pointer. Default value is sctk_rail_gate_maxsize. 
+.Pp gatefunc
+Function to be called for this gate
+.El
 .Sh ENTRIES OF TYPE gate_user
 This gate uses a given rail with a user defined function.
 .Pp
@@ -617,6 +636,8 @@ It can contain a node of type :
  of type gate_min_size. 
 .It Cm maxsize
  of type gate_max_size. 
+.It Cm msgtype
+ of type gate_message_type. 
 .It Cm user
  of type gate_probabilistic. 
 .El

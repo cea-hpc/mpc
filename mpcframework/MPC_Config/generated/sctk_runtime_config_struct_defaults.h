@@ -66,6 +66,7 @@ void sctk_runtime_config_struct_init_gate_boolean(void * struct_ptr);
 void sctk_runtime_config_struct_init_gate_probabilistic(void * struct_ptr);
 void sctk_runtime_config_struct_init_gate_min_size(void * struct_ptr);
 void sctk_runtime_config_struct_init_gate_max_size(void * struct_ptr);
+void sctk_runtime_config_struct_init_gate_message_type(void * struct_ptr);
 void sctk_runtime_config_struct_init_gate_user(void * struct_ptr);
 void sctk_runtime_config_struct_init_net_gate(void * struct_ptr);
 void sctk_runtime_config_struct_init_net_rail(void * struct_ptr);

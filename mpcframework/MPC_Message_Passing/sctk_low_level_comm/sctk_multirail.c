@@ -63,6 +63,25 @@ int sctk_rail_gate_maxsize( sctk_rail_info_t * rail, sctk_thread_ptp_message_t *
 	return ( message_size < conf->value );
 }
 
+int sctk_rail_gate_msgtype( sctk_rail_info_t * rail, sctk_thread_ptp_message_t * message , void * gate_config )
+{
+	struct sctk_runtime_config_struct_gate_message_type * conf = (struct sctk_runtime_config_struct_gate_message_type *)gate_config;
+	
+	int is_process_specific = sctk_is_process_specific_message ( SCTK_MSG_HEADER ( message ) );
+	
+	/* It is a process specific message
+	 * and it is allowed */
+	if( is_process_specific && conf->process )
+		return 1;
+	
+	/* It is a common message and it is allowed */
+	if( !is_process_specific && conf->common )
+		return 1;
+	
+	
+	return 0;
+}
+
 struct sctk_gate_context
 {
 	int (*func)( sctk_rail_info_t * rail, sctk_thread_ptp_message_t * message , void * gate_config );

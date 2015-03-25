@@ -259,6 +259,20 @@
     </xs:all>
   </xs:complexType>
   <!-- ********************************************************* -->
+  <xs:complexType name="user_type_gate_message_type">
+    <xs:all>
+      <xs:element minOccurs="0" name="process" type="xs:integer"/>
+      <xs:element minOccurs="0" name="common" type="xs:integer"/>
+      <xs:element minOccurs="0" name="gatefunc">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+    </xs:all>
+  </xs:complexType>
+  <!-- ********************************************************* -->
   <xs:complexType name="user_type_gate_user">
     <xs:all>
       <xs:element minOccurs="0" name="gatefunc">
@@ -277,6 +291,7 @@
       <xs:element name="probabilistic" type="user_type_gate_probabilistic"/>
       <xs:element name="minsize" type="user_type_gate_min_size"/>
       <xs:element name="maxsize" type="user_type_gate_max_size"/>
+      <xs:element name="msgtype" type="user_type_gate_message_type"/>
       <xs:element name="user" type="user_type_gate_probabilistic"/>
     </xs:choice>
   </xs:complexType>

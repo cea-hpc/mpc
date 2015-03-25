@@ -320,6 +320,23 @@ void sctk_runtime_config_struct_init_gate_max_size(void * struct_ptr)
 }
 
 /*******************  FUNCTION  *********************/
+void sctk_runtime_config_struct_init_gate_message_type(void * struct_ptr)
+{
+	struct sctk_runtime_config_struct_gate_message_type * obj = struct_ptr;
+	/* Make sure this element is not initialized yet       */
+	/* It allows us to know when we are facing dynamically */
+	/* allocated objects requiring an init                 */
+	if( obj->init_done != 0 ) return;
+
+	/* Simple params : */
+	obj->process = 1;
+	obj->common = 1;
+	obj->gatefunc.name = "sctk_rail_gate_maxsize";
+	*(void **) &(obj->gatefunc.value) = sctk_runtime_config_get_symbol("sctk_rail_gate_maxsize");
+	obj->init_done = 1;
+}
+
+/*******************  FUNCTION  *********************/
 void sctk_runtime_config_struct_init_gate_user(void * struct_ptr)
 {
 	struct sctk_runtime_config_struct_gate_user * obj = struct_ptr;
@@ -649,6 +666,12 @@ void sctk_runtime_config_reset_struct_default_if_needed(char * structname, void 
 	if( !strcmp( structname , "sctk_runtime_config_struct_gate_max_size") )
 	{
 		sctk_runtime_config_struct_init_gate_max_size( ptr );
+		return;
+	}
+
+	if( !strcmp( structname , "sctk_runtime_config_struct_gate_message_type") )
+	{
+		sctk_runtime_config_struct_init_gate_message_type( ptr );
 		return;
 	}
 

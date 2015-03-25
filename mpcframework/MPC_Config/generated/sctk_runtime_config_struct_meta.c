@@ -161,6 +161,11 @@ const struct sctk_runtime_config_entry_meta sctk_runtime_config_db[] = {
 	{"value"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_gate_max_size,value)  , sizeof(size_t) , "size_t" , NULL},
 	{"gatefunc"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_gate_max_size,gatefunc)  , sizeof(struct sctk_runtime_config_funcptr) , "funcptr" , NULL},
 	/* struct */
+	{"sctk_runtime_config_struct_gate_message_type" , SCTK_CONFIG_META_TYPE_STRUCT , 0  , sizeof(struct sctk_runtime_config_struct_gate_message_type) , NULL , sctk_runtime_config_struct_init_gate_message_type},
+	{"process"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_gate_message_type,process)  , sizeof(int) , "int" , NULL},
+	{"common"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_gate_message_type,common)  , sizeof(int) , "int" , NULL},
+	{"gatefunc"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_gate_message_type,gatefunc)  , sizeof(struct sctk_runtime_config_funcptr) , "funcptr" , NULL},
+	/* struct */
 	{"sctk_runtime_config_struct_gate_user" , SCTK_CONFIG_META_TYPE_STRUCT , 0  , sizeof(struct sctk_runtime_config_struct_gate_user) , NULL , sctk_runtime_config_struct_init_gate_user},
 	{"gatefunc"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_gate_user,gatefunc)  , sizeof(struct sctk_runtime_config_funcptr) , "funcptr" , NULL},
 	/* union */
@@ -169,6 +174,7 @@ const struct sctk_runtime_config_entry_meta sctk_runtime_config_db[] = {
 	{"probabilistic"     , SCTK_CONFIG_META_TYPE_UNION_ENTRY  , SCTK_RTCFG_net_gate_probabilistic  , sizeof(struct sctk_runtime_config_struct_gate_probabilistic) , "sctk_runtime_config_struct_gate_probabilistic" , sctk_runtime_config_struct_init_gate_probabilistic},
 	{"minsize"     , SCTK_CONFIG_META_TYPE_UNION_ENTRY  , SCTK_RTCFG_net_gate_minsize  , sizeof(struct sctk_runtime_config_struct_gate_min_size) , "sctk_runtime_config_struct_gate_min_size" , sctk_runtime_config_struct_init_gate_min_size},
 	{"maxsize"     , SCTK_CONFIG_META_TYPE_UNION_ENTRY  , SCTK_RTCFG_net_gate_maxsize  , sizeof(struct sctk_runtime_config_struct_gate_max_size) , "sctk_runtime_config_struct_gate_max_size" , sctk_runtime_config_struct_init_gate_max_size},
+	{"msgtype"     , SCTK_CONFIG_META_TYPE_UNION_ENTRY  , SCTK_RTCFG_net_gate_msgtype  , sizeof(struct sctk_runtime_config_struct_gate_message_type) , "sctk_runtime_config_struct_gate_message_type" , sctk_runtime_config_struct_init_gate_message_type},
 	{"user"     , SCTK_CONFIG_META_TYPE_UNION_ENTRY  , SCTK_RTCFG_net_gate_user  , sizeof(struct sctk_runtime_config_struct_gate_probabilistic) , "sctk_runtime_config_struct_gate_probabilistic" , sctk_runtime_config_struct_init_gate_probabilistic},
 	/* struct */
 	{"sctk_runtime_config_struct_net_rail" , SCTK_CONFIG_META_TYPE_STRUCT , 0  , sizeof(struct sctk_runtime_config_struct_net_rail) , NULL , sctk_runtime_config_struct_init_net_rail},

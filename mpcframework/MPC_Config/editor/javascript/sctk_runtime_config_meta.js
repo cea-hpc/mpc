@@ -119,6 +119,11 @@ meta.types = {
 		value: {mode: 'param', name: "value", type: "size", doc: "Maximum size to choose this rail (with units)", dflt: null},
 		gatefunc: {mode: 'param', name: "gatefunc", type: "funcptr", doc: "Function to be called for this gate", dflt: "sctk_rail_gate_maxsize", },
 	}},
+	gate_message_type : {type: 'struct', name: "gate_message_type", childs: {
+		process: {mode: 'param', name: "process", type: "int", doc: "Process Specific Messages can use this rail", dflt: "1", },
+		common: {mode: 'param', name: "common", type: "int", doc: "Common messages (MPI) can use this rail", dflt: "1", },
+		gatefunc: {mode: 'param', name: "gatefunc", type: "funcptr", doc: "Function to be called for this gate", dflt: "sctk_rail_gate_maxsize", },
+	}},
 	gate_user : {type: 'struct', name: "gate_user", childs: {
 		gatefunc: {mode: 'param', name: "gatefunc", type: "funcptr", doc: "Function to be called for this gate", dflt: "sctk_rail_gate_true", },
 	}},
@@ -127,6 +132,7 @@ meta.types = {
 		probabilistic: {name: "probabilistic", type: "gate_probabilistic"},
 		minsize: {name: "minsize", type: "gate_min_size"},
 		maxsize: {name: "maxsize", type: "gate_max_size"},
+		msgtype: {name: "msgtype", type: "gate_message_type"},
 		user: {name: "user", type: "gate_probabilistic"},
 	}},
 	net_rail : {type: 'struct', name: "net_rail", childs: {
