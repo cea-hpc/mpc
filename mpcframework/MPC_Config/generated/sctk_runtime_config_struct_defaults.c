@@ -356,6 +356,7 @@ void sctk_runtime_config_struct_init_net_rail(void * struct_ptr)
 	obj->priority = 0;
 	obj->device = NULL;
 	obj->topology = NULL;
+	obj->ondemand = 1;
 	obj->config = NULL;
 	/* array */
 	obj->gates = NULL;

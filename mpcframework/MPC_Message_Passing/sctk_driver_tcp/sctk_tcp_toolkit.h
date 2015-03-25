@@ -32,7 +32,6 @@ extern "C"
 
 void sctk_network_init_tcp_all ( sctk_rail_info_t *rail, int sctk_use_tcp_o_ib,
                                  void * ( *tcp_thread ) ( sctk_endpoint_t * ),
-                                 int ( *route ) ( int , sctk_rail_info_t * ),
                                  void ( *route_init ) () );
 
 void tcp_on_demand_connection_handler( sctk_rail_info_t *rail, int dest_process );

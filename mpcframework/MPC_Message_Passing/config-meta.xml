@@ -146,6 +146,7 @@
 			<param name="priority" type="int" doc="Number which defines the order in which routes are tested (higher first)." default="0"  />
 			<param name="device" type="string" doc="Define the name of the device to use in this rail." />
 			<param name="topology" type="string" doc="Define the network topology to apply on this rail." />
+			<param name="ondemand" type="int" doc="Define if on-demand connections are allowed on this rail."  default="1"/>
 			<param name="config" type="string" doc="Define the driver config to use for this rail." />
 			<array name="gates" entry-name="gate" type="net_gate" doc="List of gates to be applied in this config." />
 		</struct>

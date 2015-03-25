@@ -214,9 +214,7 @@ static void sctk_ib_cm_change_state_to_rts ( sctk_rail_info_t *rail,
  *  Messages are exchange in a string format. This is because
  *  we are using the PMI library.
  *----------------------------------------------------------*/
-void sctk_ib_cm_connect_ring ( sctk_rail_info_t *rail,
-                               int ( *route ) ( int , sctk_rail_info_t * ),
-                               void ( *route_init ) ( sctk_rail_info_t * ) )
+void sctk_ib_cm_connect_ring ( sctk_rail_info_t *rail )
 {
 	sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
 	int dest_rank;

@@ -287,6 +287,7 @@
 -e <xs:element minOccurs='0' name='priority' type='xs:integer'/>\
 -e <xs:element minOccurs='0' name='device' type='xs:string'/>\
 -e <xs:element minOccurs='0' name='topology' type='xs:string'/>\
+-e <xs:element minOccurs='0' name='ondemand' type='xs:integer'/>\
 -e <xs:element minOccurs='0' name='config' type='xs:string'/>\
 -e <xs:element minOccurs='0' name='gates'>\
 -e <xs:complexType>\

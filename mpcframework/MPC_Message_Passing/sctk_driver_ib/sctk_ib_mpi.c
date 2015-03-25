@@ -1005,7 +1005,7 @@ void sctk_network_init_mpi_ib ( sctk_rail_info_t *rail )
 	rail->send_message_from_network = sctk_send_message_from_network_mpi_ib;
 
 	/* Bootstrap a ring on this network */
-	sctk_ib_cm_connect_ring ( rail, rail->route, rail->route_init );
+	sctk_ib_cm_connect_ring ( rail );
 	
 	sctk_ib_topology_init_task ( rail, sctk_thread_get_vp() );
 	rail->initialize_leader_task ( rail );

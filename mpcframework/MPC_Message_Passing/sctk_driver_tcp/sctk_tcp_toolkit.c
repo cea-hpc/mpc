@@ -431,7 +431,6 @@ void tcp_on_demand_connection_handler( sctk_rail_info_t *rail, int dest_process 
 
 void sctk_network_init_tcp_all ( sctk_rail_info_t *rail, int sctk_use_tcp_o_ib,
                                  void * ( *tcp_thread ) ( sctk_endpoint_t * ),
-                                 int ( *route ) ( int , sctk_rail_info_t * ),
                                  void ( *route_init ) ( sctk_rail_info_t * ) )
 {
 	char right_rank_connection_infos[MAX_STRING_SIZE];
@@ -443,7 +442,6 @@ void sctk_network_init_tcp_all ( sctk_rail_info_t *rail, int sctk_use_tcp_o_ib,
 	assume ( rail->send_message_from_network != NULL );
 
 	/* Fill in common rail info */
-	rail->route = route;
 	rail->connect_from = sctk_network_connection_from_tcp;
 	rail->connect_to = sctk_network_connection_to_tcp;
 	rail->control_message_handler = tcp_control_message_handler;

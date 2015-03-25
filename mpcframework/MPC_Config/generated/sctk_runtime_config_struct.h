@@ -366,6 +366,8 @@ struct sctk_runtime_config_struct_net_rail
 	char * device;
 	/**Define the network topology to apply on this rail.**/
 	char * topology;
+	/**Define if on-demand connections are allowed on this rail.**/
+	int ondemand;
 	/**Define the driver config to use for this rail.**/
 	char * config;
 	/**List of gates to be applied in this config.**/

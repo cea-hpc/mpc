@@ -271,44 +271,45 @@ void sctk_rail_dump_routes()
 void sctk_rail_init_route ( sctk_rail_info_t *rail, char *topology, void (*on_demand)( struct sctk_rail_info_s * rail , int dest ) )
 {
 
-	rail->on_demand = 0;
+							
+	/* Register On demand Handler if needed */
+	if( rail->runtime_config_rail->ondemand )
+	{
+		rail->connect_on_demand = on_demand;
+		rail->on_demand = 1;
+	}
+	else
+	{
+		rail->connect_on_demand = NULL;
+		rail->on_demand = 0;
+	}
+
 
 	if ( strcmp ( "ring", topology ) == 0 )
 	{
-		rail->route = sctk_route_ring;
 		rail->route_init = sctk_route_ring_init;
 		rail->topology_name = "ring";
 	}
 	else
+	{
 		if ( strcmp ( "fully", topology ) == 0 )
 		{
-			rail->route = sctk_route_fully;
 			rail->route_init = sctk_route_fully_init;
 			rail->topology_name = "fully connected";
 		}
 		else
-			if ( strcmp ( "ondemand", topology ) == 0 )
+		{
+			if ( strcmp ( "torus", topology ) == 0 )
 			{
-				rail->route = sctk_route_ondemand;
-				rail->route_init = sctk_route_ondemand_init;
-				rail->topology_name = "On-Demand connections";
-				
-								
-				/* Register On demand Handler */
-				rail->connect_on_demand = on_demand;
-				
+				rail->route_init = sctk_route_torus_init;
+				rail->topology_name = "torus";
 			}
 			else
-				if ( strcmp ( "torus", topology ) == 0 )
-				{
-					rail->route = sctk_route_torus;
-					rail->route_init = sctk_route_torus_init;
-					rail->topology_name = "torus";
-				}
-				else
-				{
-					sctk_fatal("No such topology %s", topology);
-				}
+			{
+				sctk_fatal("No such topology %s", topology);
+			}
+		}
+	}
 }
 
 

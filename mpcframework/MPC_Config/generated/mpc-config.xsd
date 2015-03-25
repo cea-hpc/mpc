@@ -287,6 +287,7 @@
       <xs:element minOccurs="0" name="priority" type="xs:integer"/>
       <xs:element minOccurs="0" name="device" type="xs:string"/>
       <xs:element minOccurs="0" name="topology" type="xs:string"/>
+      <xs:element minOccurs="0" name="ondemand" type="xs:integer"/>
       <xs:element minOccurs="0" name="config" type="xs:string"/>
       <xs:element minOccurs="0" name="gates">
         <xs:complexType>

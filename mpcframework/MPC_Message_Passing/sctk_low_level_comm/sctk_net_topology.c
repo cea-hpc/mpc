@@ -35,7 +35,8 @@ static sctk_spinlock_t sctk_topology_init_lock = SCTK_SPINLOCK_INITIALIZER;
 
 void sctk_route_ring_init ( sctk_rail_info_t *rail )
 {
-
+	/* Nothing to do as the driver is supposed to
+	 * provide a ring at startup */
 }
 
 int sctk_route_ring ( int dest, sctk_rail_info_t *rail )
@@ -82,9 +83,6 @@ void sctk_route_fully_init ( sctk_rail_info_t *rail )
 	int ( *sav_sctk_route ) ( int , sctk_rail_info_t * );
 
 	sctk_pmi_barrier();
-
-	sav_sctk_route = rail->route;
-	rail->route = sctk_route_ring;
 
 	if ( 3 < sctk_process_number  )
 	{
@@ -133,24 +131,8 @@ void sctk_route_fully_init ( sctk_rail_info_t *rail )
 		sctk_pmi_barrier();
 	}
 
-	rail->route = sav_sctk_route;
 	sctk_pmi_barrier();
 	sctk_pmi_barrier();
-}
-
-/************************************************************************/
-/* On-demand                                                            */
-/************************************************************************/
-int sctk_route_ondemand ( int dest, sctk_rail_info_t *rail )
-{
-	not_reachable();
-	return -1;
-}
-
-void sctk_route_ondemand_init ( sctk_rail_info_t *rail )
-{
-	rail->route = sctk_route_ring;
-	rail->on_demand = 1;
 }
 
 
@@ -927,10 +909,6 @@ void sctk_route_torus_init ( sctk_rail_info_t *rail )
 
 	sctk_pmi_barrier();
 
-	sav_sctk_route = rail->route;
-	rail->route = sctk_route_ring;
-
-
 	if ( sctk_process_number > 3 )
 	{
 		int me = sctk_process_rank;
@@ -1029,8 +1007,6 @@ void sctk_route_torus_init ( sctk_rail_info_t *rail )
 		sctk_nodebug ( "process %d passed", me );
 	}
 
-	sctk_pmi_barrier();
-	rail->route = sav_sctk_route;
 	sctk_pmi_barrier();
 }
 

@@ -494,6 +494,6 @@ void sctk_network_init_fallback_ib ( sctk_rail_info_t *rail, int ib_rail_nb )
 	rail->notify_any_source_message = sctk_network_notify_any_source_message_ib;
 	rail->network_name = network_name;
 
-	sctk_ib_cm_connect_ring ( rail, rail->route, rail->route_init );
+	sctk_ib_cm_connect_ring ( rail );
 }
 #endif

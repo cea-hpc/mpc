@@ -134,6 +134,7 @@ meta.types = {
 		priority: {mode: 'param', name: "priority", type: "int", doc: "Number which defines the order in which routes are tested (higher first).", dflt: "0", },
 		device: {mode: 'param', name: "device", type: "string", doc: "Define the name of the device to use in this rail.", dflt: null},
 		topology: {mode: 'param', name: "topology", type: "string", doc: "Define the network topology to apply on this rail.", dflt: null},
+		ondemand: {mode: 'param', name: "ondemand", type: "int", doc: "Define if on-demand connections are allowed on this rail.", dflt: "1", },
 		config: {mode: 'param', name: "config", type: "string", doc: "Define the driver config to use for this rail.", dflt: null},
 		gates: {mode: 'array', name: "gates", type: "net_gate", entryname: "gate", dflt: null},
 	}},

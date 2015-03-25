@@ -209,5 +209,5 @@ void sctk_network_init_tcp ( sctk_rail_info_t *rail )
 	}
 
 	/* Actually initialize the network (note TCP kind specific functions) */
-	sctk_network_init_tcp_all ( rail, sctk_use_tcp_o_ib, sctk_tcp_thread, rail->route, rail->route_init );
+	sctk_network_init_tcp_all ( rail, sctk_use_tcp_o_ib, sctk_tcp_thread, rail->route_init );
 }
