@@ -404,6 +404,7 @@ void sctk_network_init_multirail_ib ( sctk_rail_info_t *new_rail , int max_rails
 		sctk_network_init_mpi_ib ( rails[rails_nb] );
 	}
 	else
+	{
 		if ( config->driver.value.infiniband.network_type == 0 )
 		{
 			/* Fallback IB network */
@@ -421,6 +422,7 @@ void sctk_network_init_multirail_ib ( sctk_rail_info_t *new_rail , int max_rails
 			sctk_error ( "You must provide a network's type equivalent to 'data' or 'signalization'. Value provided:%d", config->driver.value.infiniband.network_type );
 			sctk_abort();
 		}
+	}
 
 	if ( init_once == 0 )
 	{

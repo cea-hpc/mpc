@@ -321,7 +321,6 @@ restart:
 
 
 	/* Compute the number of rails for each type: */
-	int nb_rails_infiniband = 0;
 	int nb_rails_portals = 0;
 
 	if( 255 < cli_option->rails_size )
@@ -356,26 +355,12 @@ restart:
 		/* Switch on the driver to use */
 		switch ( driver->driver.type )
 		{
-#ifdef MPC_USE_INFINIBAND
-
-			case SCTK_RTCFG_net_driver_infiniband: /* INFINIBAND */
-				nb_rails_infiniband++ ;
-				break;
-#endif
 			case SCTK_RTCFG_net_driver_portals: /* PORTALS */
 				nb_rails_portals ++ ;
 				break;
 		}
 
 	}
-	
-	/* Here we initialize Global objects */
-	
-	if( nb_rails_infiniband )
-	{
-		sctk_ib_mmu_init();
-	}
-	
 
 	/* End of rails computing. Now allocate ! */
 

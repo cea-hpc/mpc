@@ -951,6 +951,9 @@ void sctk_network_init_mpi_ib ( sctk_rail_info_t *rail )
 	//  sctk_ib_device_open(rail_ib, (3 - ib_rail_nb) % 4);
 	sctk_ib_device_open ( rail_ib, -1 );
 
+	/* Init the MMU (done once) */
+	sctk_ib_mmu_init();
+
 	/* Init Proctection Domain */
 	sctk_ib_pd_init ( device );
 
@@ -983,7 +986,7 @@ void sctk_network_init_mpi_ib ( sctk_rail_info_t *rail )
 
 	if ( sctk_process_rank == 0 )
 	{
-	fprintf ( stderr, SCTK_COLOR_RED_BOLD ( WARNING: MPC debug mode activated. Your job * MAY * be * VERY * slow! ) "\n" );
+		fprintf ( stderr, SCTK_COLOR_RED_BOLD ( WARNING: MPC debug mode activated. Your job * MAY * be * VERY * slow! ) "\n" );
 	}
 
 #endif

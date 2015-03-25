@@ -451,6 +451,10 @@ __thread struct sctk_ib_mmu * __per_kernel_thread_ib_mmu = NULL;
 
 void sctk_ib_mmu_init()
 {
+	/* Only init once */
+	if( __main_ib_mmu_init_done )
+		return;
+	
 	_sctk_ib_mmu_init( &__main_ib_mmu );
 	__main_ib_mmu_init_done = 1;
 }
