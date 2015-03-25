@@ -397,8 +397,6 @@ typedef struct
   sctk_spinlock_t lock;
 } mpi_topology_per_comm_t;
 
-#define MPC_MPI_MAX_NUMBER_FUNC 3
-
 typedef struct mpc_mpi_per_communicator_s{
   /****** ERRORS ******/
   MPI_Handler_function *func;
@@ -639,7 +637,7 @@ TODO("to optimize")
     MPI_ERROR_REPORT(comm,MPI_ERR_RANK,"Error bad rank provided")
 
 #define mpi_check_rank_send(task,max_rank,comm)		\
-  if((((task < 0) || (task >= max_rank)) && (sctk_is_inter_comm (comm) == 0)) && (task != MPI_PROC_NULL)) \
+  if((((task < 0 && task != MPI_PROC_NULL) || (task >= max_rank)) && (sctk_is_inter_comm (comm) == 0)) && (task != MPI_PROC_NULL)) \
     MPI_ERROR_REPORT(comm,MPI_ERR_RANK,"Error bad rank provided")
 
 #define mpi_check_root(task,max_rank,comm)		\
@@ -7104,7 +7102,7 @@ __INTERNAL__PMPI_Group_excl (MPI_Group mpi_group, int n, int *ranks,
 		{
 			if((ranks[j] < 0) || (ranks[j] >= group->task_nb))
 				MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_RANK,"Unvalid ranks");
-			if(group->task_list_in_global_ranks[i] == ranks[j])
+			if(i == ranks[j])
 			{
 				is_out = 1;
 				break;
@@ -8351,10 +8349,33 @@ __INTERNAL__PMPI_Comm_get_name (MPI_Comm comm, char *comm_name,
   sctk_spinlock_lock (&(topo->lock));
   len = strlen (topo->names);
 
-  memcpy (comm_name, topo->names, len + 1);
-
-  *resultlen = len;
-  sctk_spinlock_unlock (&(topo->lock));
+  if (strcmp(topo->names, "undefined") == 0)
+  {
+	  if(comm == MPI_COMM_WORLD)
+	  {
+		  sprintf(comm_name, "MPI_COMM_WORLD");
+		  len = strlen (comm_name);
+		  *resultlen = len;
+	  }
+	  else if(comm == MPI_COMM_SELF)
+	  {
+		  sprintf(comm_name, "MPI_COMM_SELF");
+		  len = strlen (comm_name);
+		  *resultlen = len;
+	  }
+	  else
+	  {
+		  memcpy (comm_name, topo->names, len + 1);
+		  *resultlen = len;
+	  }
+	  sctk_spinlock_unlock (&(topo->lock));
+  }
+  else
+  {
+	  memcpy (comm_name, topo->names, len + 1);
+	  *resultlen = len;
+	  sctk_spinlock_unlock (&(topo->lock));
+  }
   return MPI_SUCCESS;
 }
 static int
