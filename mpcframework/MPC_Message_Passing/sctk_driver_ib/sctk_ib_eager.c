@@ -273,36 +273,10 @@ int sctk_ib_eager_poll_recv ( sctk_rail_info_t *rail, sctk_ibuf_t *ibuf )
 {
 	sctk_thread_ptp_message_body_t *msg_ibuf = IBUF_GET_EAGER_MSG_HEADER ( ibuf->buffer );
 	const sctk_ib_protocol_t protocol = IBUF_GET_PROTOCOL ( ibuf->buffer );
-	int recopy = 1;
+	int recopy = 0;
+
 	sctk_thread_ptp_message_t *msg = NULL;
 
-	if ( 0 )
-	{
-		/* If on demand, handle message and do not send it
-		* to high-layers */
-
-			/*
-			sctk_nodebug ( "Message tag: %d", ( msg_ibuf->header.message_tag ^ CM_MASK_TAG ) );
-
-			if ( ( msg_ibuf->header.message_tag ^ CM_MASK_TAG ) != CM_OD_STATIC_TAG )
-			{
-				sctk_nodebug ( "Received OD message" );
-				msg = sctk_ib_eager_recv ( rail, ibuf, recopy, protocol );
-				sctk_ib_cm_on_demand_recv ( rail, msg, ibuf, recopy );
-				return REORDER_FOUND_EXPECTED;
-			}
-			*/
-
-	}
-	else
-	{
-		/* Do not recopy message if it is not a process specific message.
-		*
-		* When there is an intermediate message, we *MUST* recopy the message
-		* because MPC does not match the user buffer with the network buffer (the copy function is
-		* not performed) */
-		recopy = 0;
-	}
 
 	sctk_nodebug ( "Received IBUF %p %d", ibuf, IBUF_GET_CHANNEL ( ibuf ) );
 

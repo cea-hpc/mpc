@@ -381,8 +381,6 @@ sctk_endpoint_t * sctk_rail_add_or_reuse_route_dynamic ( sctk_rail_info_t *rail,
 		tmp = create_func();
 		init_func ( dest, rail, tmp, 1 );
 		
-		/* We init the entry and add it to the table */
-		sctk_endpoint_init_dynamic ( tmp, dest, rail );
 		tmp->is_initiator = is_initiator;
 		
 		sctk_route_table_add_dynamic_route_no_lock(   rail->route_table, tmp );

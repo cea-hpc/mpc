@@ -370,7 +370,7 @@ void sctk_runtime_config_struct_init_net_rail(void * struct_ptr)
 
 	/* Simple params : */
 	obj->name = NULL;
-	obj->priority = 0;
+	obj->priority = 1;
 	obj->device = NULL;
 	obj->topology = NULL;
 	obj->ondemand = 1;

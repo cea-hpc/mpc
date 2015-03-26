@@ -885,6 +885,14 @@ int sctk_send_message_from_network_mpi_ib ( sctk_thread_ptp_message_t *msg )
 }
 
 
+void sctk_connect_on_demand_mpi_ib( struct sctk_rail_info_s * rail , int dest )
+{
+	sctk_endpoint_t * new_endpoint = sctk_ib_cm_on_demand_request ( dest, rail );
+	
+	sctk_rail_add_dynamic_route( rail, dest, new_endpoint );
+}
+
+
 void sctk_network_initialize_leader_task_mpi_ib ( sctk_rail_info_t *rail )
 {
 	sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
@@ -1008,9 +1016,12 @@ void sctk_network_init_mpi_ib ( sctk_rail_info_t *rail )
 	rail->initialize_leader_task ( rail );
 
 	rail->finalize_task = sctk_network_finalize_task_mpi_ib;
+	
+	rail->control_message_handler = sctk_ib_cm_control_message_handler;
 
 	rail->connect_to = sctk_network_connection_to_ib;
 	rail->connect_from = sctk_network_connection_from_ib;
+	rail->connect_on_demand = sctk_connect_on_demand_mpi_ib;
 	rail->send_message_endpoint = sctk_network_send_message_ib_endpoint;
 
 	rail->notify_recv_message = sctk_network_notify_recv_message_ib;
