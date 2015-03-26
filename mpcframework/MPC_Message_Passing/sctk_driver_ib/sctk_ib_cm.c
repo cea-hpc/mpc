@@ -39,7 +39,7 @@
 #if defined SCTK_IB_MODULE_NAME
 #error "SCTK_IB_MODULE already defined"
 #endif
-#define SCTK_IB_MODULE_DEBUG
+#define SCTK_IB_MODULE_DEBUG 1
 #define SCTK_IB_MODULE_NAME "CM"
 #include "sctk_ib_toolkit.h"
 
@@ -460,6 +460,9 @@ int sctk_ib_cm_on_demand_recv_request ( sctk_rail_info_t *rail, void *request, i
 
 	ROUTE_UNLOCK ( route_table );
 
+	sctk_ib_debug ( "[%d] OD QP connexion request from %d (initiator:%d) START",
+		                rail->rail_number, src, sctk_endpoint_get_is_initiator ( route_table ) );
+
 	/* RACE CONDITION AVOIDING -> positive ACK */
 	if ( sctk_endpoint_get_is_initiator ( route_table ) == 0 || sctk_process_rank > src )
 	{
@@ -476,7 +479,7 @@ int sctk_ib_cm_on_demand_recv_request ( sctk_rail_info_t *rail, void *request, i
 		send_keys.rail_id = * ( ( int * ) request );
 
 		/* Send ACK */
-		sctk_ib_nodebug ( "OD QP ack to process %d: (tag:%d)", src, CM_OD_ACK_TAG );
+		sctk_ib_debug ( "OD QP ack to process %d: (tag:%d)", src, CM_OD_ACK_TAG );
 
 		sctk_control_messages_send ( src, SCTK_CONTROL_MESSAGE_RAIL, CM_OD_ACK_TAG, 0,&send_keys, sizeof ( sctk_ib_cm_qp_connection_t ) );
 	}
@@ -595,7 +598,7 @@ int sctk_ib_cm_on_demand_rdma_request ( sctk_rail_info_t *rail, struct sctk_ib_q
 	else
 	{
 		/* Cannot connect to RDMA */
-		sctk_nodebug ( "[%d] Cannot connect to remote %d", rail->rail_number, remote->rank );
+		sctk_debug ( "[%d] Cannot connect to remote %d", rail->rail_number, remote->rank );
 		/* We reset the state to deconnected */
 		/* FIXME: state to reset */
 		sctk_ibuf_rdma_set_remote_state_rts ( remote, STATE_DECONNECTED );
@@ -615,7 +618,7 @@ static inline void sctk_ib_cm_on_demand_rdma_done_recv ( sctk_rail_info_t *rail,
 	struct sctk_ib_qp_s *remote = route_table->data.ib.remote;
 	ib_assume ( remote );
 
-	sctk_ib_nodebug ( "[%d] OD QP connexion DONE REQ received from process %d (%p:%u)", rail->rail_number, src,
+	sctk_ib_debug ( "[%d] OD QP connexion DONE REQ received from process %d (%p:%u)", rail->rail_number, src,
 	                  recv_keys->addr, recv_keys->rkey );
 
 	ib_assume ( recv_keys->connected == 1 );
@@ -636,7 +639,7 @@ static inline void sctk_ib_cm_on_demand_rdma_recv_ack ( sctk_rail_info_t *rail, 
 	struct sctk_ib_qp_s *remote = route_table->data.ib.remote;
 	ib_assume ( remote );
 
-	sctk_ib_nodebug ( "[%d] OD QP connexion ACK received from process %d (%p:%u)", rail->rail_number, src,
+	sctk_ib_debug ( "[%d] OD QP connexion ACK received from process %d (%p:%u)", rail->rail_number, src,
 	                  recv_keys->addr, recv_keys->rkey );
 
 	/* If the remote peer is connectable */
@@ -702,9 +705,8 @@ static inline void sctk_ib_cm_on_demand_rdma_recv_request ( sctk_rail_info_t *ra
 	ROUTE_UNLOCK ( route_table );
 
 	sctk_ib_cm_rdma_connection_t *recv_keys = ( sctk_ib_cm_rdma_connection_t * ) request;
-	sctk_ib_nodebug ( "[%d] OD RDMA connexion REQUEST to process %d (connected:%d size:%d nb:%d rdma_connections:%d)",
-	                  rail->rail_number, remote->rank, recv_keys->connected, recv_keys->size, recv_keys->nb,
-	                  device->eager_rdma_connections );
+	sctk_ib_debug ( "[%d] OD RDMA connexion REQUEST to process %d (connected:%d size:%d nb:%d )",
+	                  rail->rail_number, remote->rank, recv_keys->connected, recv_keys->size, recv_keys->nb );
 
 	/* We do not send a request if we do not want to be connected
 	* using RDMA. This is stupid :-) */
@@ -743,7 +745,7 @@ static inline void sctk_ib_cm_on_demand_rdma_recv_request ( sctk_rail_info_t *ra
 	}
 
 	/* Send ACK */
-	sctk_ib_nodebug ( "[%d] OD QP ack to process %d (%p:%u)", rail->rail_number, src,
+	sctk_ib_debug ( "[%d] OD QP ack to process %d (%p:%u)", rail->rail_number, src,
 	                  send_keys.addr, send_keys.rkey );
 
 	sctk_control_messages_send ( src, SCTK_CONTROL_MESSAGE_RAIL, CM_OD_RDMA_ACK_TAG, 0, &send_keys, sizeof ( sctk_ib_cm_rdma_connection_t ) );
@@ -907,6 +909,8 @@ static inline int sctk_ib_cm_resizing_rdma_recv_request ( sctk_rail_info_t *rail
 void sctk_ib_cm_control_message_handler( struct sctk_rail_info_s * rail, int process_src, int source_rank, char subtype, char param, void * payload )
 {
 	int rail_id = rail->rail_number;
+
+	sctk_error("CONTROL MESSAGE TYPE %d", subtype );
 
 	switch ( subtype )
 	{

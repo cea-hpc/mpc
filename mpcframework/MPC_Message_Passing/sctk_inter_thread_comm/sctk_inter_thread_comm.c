@@ -2508,14 +2508,17 @@ void sctk_notify_idle_message ()
  * */
 void sctk_send_message_try_check ( sctk_thread_ptp_message_t *msg, int perform_check )
 {
+	sctk_error("!%d! MM %d -> %d (CLASS %d SPE %d)", sctk_process_rank, SCTK_MSG_SRC_PROCESS ( msg ),  SCTK_MSG_DEST_PROCESS ( msg ), SCTK_MSG_SPECIFIC_CLASS( msg ) , sctk_message_class_is_process_specific ( SCTK_MSG_SPECIFIC_CLASS( msg ) ));
 
 	/* The message is a process specific message and the process rank does not match
 	 * the current process rank */
 	if( sctk_message_class_is_process_specific ( SCTK_MSG_SPECIFIC_CLASS( msg ) ) )
 	{
+		sctk_error("CONTROL MESSAGE %d -> %d",  SCTK_MSG_SRC_PROCESS ( msg ),  SCTK_MSG_DEST_PROCESS ( msg ) );
 		/* Process specific Message has not reached its destination */
 		if( SCTK_MSG_DEST_PROCESS ( msg ) != sctk_process_rank )
 		{
+			sctk_error("CONTROL MESSAGE %d -> %d === ROUTE",  SCTK_MSG_SRC_PROCESS ( msg ),  SCTK_MSG_DEST_PROCESS ( msg ) );
 
 			if ( msg->tail.request != NULL )
 			{
@@ -2523,7 +2526,7 @@ void sctk_send_message_try_check ( sctk_thread_ptp_message_t *msg, int perform_c
 			}
 
 			msg->tail.remote_destination = 1;
-			sctk_nodebug( "Need to forward the message fom %d to %d",  SCTK_MSG_SRC_PROCESS ( msg ),  SCTK_MSG_DEST_PROCESS ( msg ) );
+			sctk_debug( "Need to forward the message fom %d to %d",  SCTK_MSG_SRC_PROCESS ( msg ),  SCTK_MSG_DEST_PROCESS ( msg ) );
 			/* We forward the message */
 			sctk_network_send_message ( msg );
 		}
@@ -2531,6 +2534,7 @@ void sctk_send_message_try_check ( sctk_thread_ptp_message_t *msg, int perform_c
 		{
 			if( sctk_message_class_is_control_message( SCTK_MSG_SPECIFIC_CLASS( msg ) ) )
 			{
+				sctk_error("CONTROL MESSAGE %d -> %d === CALL",  SCTK_MSG_SRC_PROCESS ( msg ),  SCTK_MSG_DEST_PROCESS ( msg ) );
 				/* If we are on the right process with a control message */
 
 				/* Message is for local process call the handler (such message are never pending)

@@ -68,6 +68,8 @@ void sctk_ib_config_print ( sctk_ib_rail_info_t *rail_ib )
 {
 	LOAD_CONFIG ( rail_ib );
 
+	return;
+
 	if ( sctk_process_rank == 0 )
 	{
 		fprintf ( stderr, "############# IB configuration for %s\n"

@@ -200,7 +200,7 @@ static void sctk_network_send_message_ib_endpoint ( sctk_thread_ptp_message_t *m
 	        && ( size + IBUF_GET_EAGER_SIZE + IBUF_RDMA_GET_SIZE <= sctk_ibuf_rdma_get_eager_limit ( remote ) ) )
 	        || ( size + IBUF_GET_EAGER_SIZE <= config->eager_limit ) )
 	{
-		sctk_nodebug ( "Eager" );
+		sctk_debug ( "Eager" );
 		ibuf = sctk_ib_eager_prepare_msg ( rail_ib, remote, msg, size, -1, 0 );
 
 		/* Actually, it is possible to get a NULL pointer for ibuf. We falback to buffered */
@@ -222,7 +222,7 @@ buffered:
 	/***** BUFFERED EAGER CHANNEL *****/
 	if ( size <= config->buffered_limit )
 	{
-		sctk_nodebug ( "Buffered" );
+		sctk_debug ( "Buffered" );
 		sctk_ib_buffered_prepare_msg ( rail, remote, msg, size );
 		sctk_complete_and_free_message ( msg );
 		PROF_INC ( rail_ib->rail, ib_buffered_nb );
@@ -236,7 +236,7 @@ buffered:
 	/***** RDMA RENDEZVOUS CHANNEL *****/
 rdma:
 	{}
-	sctk_nodebug ( "Size of message: %lu", size );
+	sctk_debug ( "Size of message: %lu", size );
 	ibuf = sctk_ib_rdma_prepare_req ( rail, remote, msg, size, -1 );
 
 	/* Send message */
@@ -871,6 +871,7 @@ sctk_network_connection_from_ib ( int from, int to, sctk_rail_info_t *rail )
 
 int sctk_send_message_from_network_mpi_ib ( sctk_thread_ptp_message_t *msg )
 {
+	sctk_error("MESSAGE FROM NET %d -> %d ", SCTK_MSG_SRC_PROCESS( msg ), SCTK_MSG_DEST_PROCESS( msg ) );
 	int ret = sctk_send_message_from_network_reorder ( msg );
 
 	if ( ret == REORDER_NO_NUMBERING )
