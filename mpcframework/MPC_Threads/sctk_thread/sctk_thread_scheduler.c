@@ -633,6 +633,7 @@ static void sctk_generic_add_task(sctk_thread_generic_task_t* task){
   } else {
     sctk_generic_add_task_to_proceed(task);
   }
+  sctk_nodebug("ADD task %p FROM %p DONE",task,task->sched);
 }
 
 static void sctk_generic_sched_yield(sctk_thread_generic_scheduler_t*sched);
@@ -696,11 +697,15 @@ static inline void sctk_generic_sched_yield_intern(sctk_thread_generic_scheduler
     }
 
   } else {
-    sctk_nodebug("TASK %p status %d type %d",sched,sched->status,sched->generic.vp_type);
+    sctk_nodebug("TASK %p status %d type %d %d %d",sched,sched->status,sched->generic.vp_type,sctk_thread_generic_zombie,sched->th->attr.cancel_status);
     if(sched->status == sctk_thread_generic_zombie && sched->th->attr.detachstate == SCTK_THREAD_CREATE_DETACHED ){
       assume(vp_data.sctk_generic_delegated_zombie_detach_thread == NULL);
       vp_data.sctk_generic_delegated_zombie_detach_thread = &(sched->generic );
-      sctk_nodebug("Zombie %p",sched);
+      sctk_nodebug("Detached Zombie %p",sched);
+    }
+
+    if(sched->status == sctk_thread_generic_zombie){
+      sctk_nodebug("Attached Zombie %p",sched);
     }
   }
 
@@ -717,7 +722,11 @@ static inline void sctk_generic_sched_yield_intern(sctk_thread_generic_scheduler
  quick_swap:
   if(next != sched){
     if(next != NULL){
+      sctk_nodebug("SWAP from %p to %p",sched,next);
+      sctk_nodebug("SLEEP TASK %p status %d type %d %d cancel status %d",sched,sched->status,sched->generic.vp_type,sctk_thread_generic_zombie,sched->th->attr.cancel_status);
       swap(sched,next,&vp_data);
+      sctk_nodebug("Enter %p",sched);
+      sctk_nodebug("WAKE TASK %p status %d type %d %d cancel status %d",sched,sched->status,sched->generic.vp_type,sctk_thread_generic_zombie,sched->th->attr.cancel_status);
     } else {
       /* Idle function */
 
@@ -770,8 +779,10 @@ static inline void sctk_generic_sched_yield_intern(sctk_thread_generic_scheduler
     vp_data.sctk_generic_delegated_spinlock = NULL;
   }
  
+  sctk_nodebug("TASK %p status %d type %d sctk_thread_generic_check_signals",sched,sched->status,sched->generic.vp_type);
   sctk_thread_generic_check_signals( 1 );
 
+  sctk_nodebug("TASK %p status %d type %d sctk_thread_generic_check_signals done %p ",sched,sched->status,sched->generic.vp_type,vp_data.swap_to_sched);
   /* To ensure that blocked threads in synchronizaton locks are still able to receive
 	 and treat signals for the pthread api, we save the calling thread and schedule the
 	 receiving thread. Once signal has been treated, calling thread is scheduled again.
@@ -782,6 +793,7 @@ static inline void sctk_generic_sched_yield_intern(sctk_thread_generic_scheduler
 	goto quick_swap;
   }
 
+  sctk_nodebug("TASK %p status %d type %d Deal with zombie threads",sched,sched->status,sched->generic.vp_type);
   /* Deal with zombie threads */
   if(vp_data.sctk_generic_delegated_zombie_detach_thread != NULL){
 	//sctk_thread_generic_handle_zombies( vp_data.sctk_generic_delegated_zombie_detach_thread );
@@ -905,7 +917,7 @@ void sctk_generic_create_common(sctk_thread_generic_p_t*thread){
   if(thread->attr.scope == SCTK_THREAD_SCOPE_SYSTEM){
     thread->sched.generic.vp_type = 1;
    
-    sctk_debug("Create thread scope %d (%d SYSTEM) vp _type %d",
+    sctk_nodebug("Create thread scope %d (%d SYSTEM) vp _type %d",
 	       thread->attr.scope,SCTK_THREAD_SCOPE_SYSTEM,thread->sched.generic.vp_type);
     sctk_thread_generic_scheduler_create_vp(thread,thread->attr.bind_to);
   } else {
@@ -956,7 +968,10 @@ static void sctk_generic_scheduler_init_thread_common(sctk_thread_generic_schedu
   sched->generic.prev = NULL;
   sched->generic.is_idle_mode = 0;
   sched->generic.lock = SCTK_SPINLOCK_INITIALIZER;
+  
   assume(sem_init(&(sched->generic.sem),0,0) == 0);
+  sctk_nodebug("INIT DONE FOR TASK %p status %d type %d %d cancel status %d %p",sched,sched->status,sched->generic.vp_type,sctk_thread_generic_zombie,sched->th->attr.cancel_status,sched->th);
+  /* assume(sched->th->attr.cancel_status == 0); */
 }
 
 static void sctk_generic_scheduler_init_thread(sctk_thread_generic_scheduler_t* sched){

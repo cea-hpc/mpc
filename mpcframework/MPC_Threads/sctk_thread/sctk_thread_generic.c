@@ -1680,6 +1680,7 @@ sctk_thread_generic_check_signals( int select ){
 
 	/* Get the current thread */
 	sched = &(sctk_thread_generic_self()->sched);
+	sctk_nodebug ("sctk_thread_generic_check_signals %p",  sched);
 	current = sched->th;
 	sctk_assert( &current->sched == sched );
 
@@ -1687,7 +1688,7 @@ sctk_thread_generic_check_signals( int select ){
 			sctk_thread_generic_treat_signals( current );
 
 	if( expect_false( current->attr.cancel_status > 0 )){
-		sctk_nodebug ("%p %d %d", current,
+		sctk_debug ("%p %d %d", current,
 				( current->attr.cancel_state != SCTK_THREAD_CANCEL_DISABLE),
 				(( current->attr.cancel_type != SCTK_THREAD_CANCEL_DEFERRED)
 				 && select ));
@@ -1695,14 +1696,14 @@ sctk_thread_generic_check_signals( int select ){
 		if(( current->attr.cancel_state != SCTK_THREAD_CANCEL_DISABLE )
 				&& (( current->attr.cancel_type != SCTK_THREAD_CANCEL_DEFERRED )
 					|| !select )){
-			sctk_nodebug ("Exit Thread %p", current );
+			sctk_debug ("Exit Thread %p", current );
 			current->attr.cancel_status = 0;
 			current->attr.return_value = ((void*) SCTK_THREAD_CANCELED );
 			sctk_thread_exit_cleanup ();
-			sctk_nodebug ("thread %p key liberation", current);
+			sctk_debug ("thread %p key liberation", current);
 			sctk_thread_generic_keys_key_delete_all( &(current->keys) );
-			sctk_nodebug ("thread %p key liberation done", current);
-			sctk_nodebug ("thread %p ends", current);
+			sctk_debug ("thread %p key liberation done", current);
+			sctk_debug ("thread %p ends", current);
 
 			sctk_thread_generic_thread_status(&(current->sched),sctk_thread_generic_zombie);
 			sctk_thread_generic_sched_yield(&(current->sched));
@@ -1719,7 +1720,7 @@ sctk_thread_generic_cancel( sctk_thread_generic_t threadp ){
 	*/
 
   sctk_thread_generic_p_t* th = threadp;
-  sctk_nodebug ("thread to cancel: %p\n", th);
+  sctk_debug ("thread to cancel: %p\n", th);
 
   if( th == NULL ) return SCTK_EINVAL;
   if( th->sched.status == sctk_thread_generic_zombie
@@ -1728,7 +1729,7 @@ sctk_thread_generic_cancel( sctk_thread_generic_t threadp ){
 
   if( th->attr.cancel_state == PTHREAD_CANCEL_ENABLE ){
 	th->attr.cancel_status = 1;
-	sctk_nodebug ("thread %p canceled\n", th);
+	sctk_debug ("thread %p canceled\n", th);
   }
 
   if( th->sched.status == sctk_thread_generic_blocked )
@@ -1818,7 +1819,6 @@ void
 sctk_thread_generic_wait_for_value_and_poll (volatile int *data, int value,
 					     void (*func) (void *), void *arg)
 {
-
   sctk_thread_generic_task_t task;
   if(func){
     func(arg);
@@ -2106,12 +2106,32 @@ sctk_thread_generic_thread_init (char* thread_type,char* scheduler_type, int vp_
   sctk_add_func_type (sctk_thread_generic, self, sctk_thread_t (*)(void));
 
   /****** SIGNALS ******/
-  //sctk_thread_generic_init_default_sigset();
+  sctk_thread_generic_init_default_sigset();
+  
 
   /****** SCHEDULER ******/
   sctk_thread_generic_scheduler_init(thread_type,scheduler_type,vp_number);
   sctk_thread_generic_scheduler_init_thread(&(sctk_thread_generic_self()->sched),
 					    sctk_thread_generic_self());
+  {
+    sctk_thread_generic_attr_t lattr;
+    sctk_thread_generic_intern_attr_t * ptr;
+    sctk_thread_generic_intern_attr_t init = sctk_thread_generic_intern_attr_init;
+    sctk_thread_generic_scheduler_t* sched;
+    sctk_thread_generic_p_t* current;
+    
+    ptr = &init;
+    lattr.ptr = ptr;
+    sctk_thread_generic_attr_init_sigs( &lattr );
+    sctk_thread_generic_alloc_pthread_blocking_lock_table( &lattr );
+    sched = &(sctk_thread_generic_self()->sched);
+    current = sched->th;
+    current->attr = *ptr;
+
+    sctk_debug("%d",current->attr.cancel_status);
+  }
+  sctk_thread_generic_keys_init_thread(&(sctk_thread_generic_self()->keys));
+  
 
   /****** JOIN ******/
   sctk_add_func_type (sctk_thread_generic, join,
