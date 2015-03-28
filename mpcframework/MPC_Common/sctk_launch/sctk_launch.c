@@ -741,7 +741,7 @@ run (sctk_startup_args_t * arg)
   * to prevent the case where a (strange)
   * program modifies the argv[i] pointers
   * preventing them to be freed at exit */
-  argv_safe =  (char *) sctk_malloc ((argc + 1) * sizeof (char *));
+  argv_safe =  (char **) sctk_malloc ((argc + 1) * sizeof (char *));
   assume( argv_safe != NULL );
     
   

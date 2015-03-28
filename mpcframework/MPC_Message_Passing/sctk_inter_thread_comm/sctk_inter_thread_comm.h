@@ -46,7 +46,7 @@ extern "C"
 #define SCTK_MESSAGE_CANCELED 2
 
   /* Not using datatypes */
-#define MPC_DATATYPE_IGNORE NULL
+#define MPC_DATATYPE_IGNORE 0
 
   /* Message for a process */
 #define MASK_PROCESS_SPECIFIC 1<<9
