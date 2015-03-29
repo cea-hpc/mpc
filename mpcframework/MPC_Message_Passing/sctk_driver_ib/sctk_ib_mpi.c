@@ -1034,9 +1034,12 @@ void sctk_network_init_mpi_ib ( sctk_rail_info_t *rail )
 	rail->on_demand_connection = sctk_on_demand_connection_ib;
 	rail->send_message_from_network = sctk_send_message_from_network_mpi_ib;
 
-
-	/* Bootstrap a ring on this network */
-	sctk_ib_cm_connect_ring ( rail );
+	/* Boostrap the ring only if required */
+	if( rail->requires_bootstrap_ring )
+	{
+		/* Bootstrap a ring on this network */
+		sctk_ib_cm_connect_ring ( rail );
+	}
 
 }
 #endif

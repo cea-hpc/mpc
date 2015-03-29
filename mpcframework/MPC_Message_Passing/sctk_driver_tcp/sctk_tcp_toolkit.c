@@ -452,6 +452,7 @@ void sctk_network_init_tcp_all ( sctk_rail_info_t *rail, int sctk_use_tcp_o_ib,
 	/* Start listening TCP socket */
 	sctk_client_create_recv_socket ( rail );
 
+
 	/* Fill HOST info */
 	gethostname ( rail->network.tcp.connection_infos, MAX_STRING_SIZE - 100 );
 	rail->network.tcp.connection_infos_size = strlen ( rail->network.tcp.connection_infos );
@@ -461,7 +462,13 @@ void sctk_network_init_tcp_all ( sctk_rail_info_t *rail, int sctk_use_tcp_o_ib,
 
 	assume ( rail->network.tcp.connection_infos_size < MAX_STRING_SIZE );
 
-	/* BUILD a TCP bootstrap ring */
+	/* If this rail does not require the bootstrap ring just return */
+	if( rail->requires_bootstrap_ring == 0 )
+	{
+		return;
+	}
+
+	/* Otherwise BUILD a TCP bootstrap ring */
 	right_rank = ( sctk_process_rank + 1 ) % sctk_process_number;
 	left_rank = ( sctk_process_rank + sctk_process_number - 1 ) % sctk_process_number;
 

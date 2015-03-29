@@ -28,6 +28,38 @@
 
 static sctk_spinlock_t sctk_topology_init_lock = SCTK_SPINLOCK_INITIALIZER;
 
+/************************************************************************/
+/* None                                                                 */
+/************************************************************************/
+
+void sctk_route_none_init ( sctk_rail_info_t *rail )
+{
+	/* Nothing to do here by definition */
+}
+
+/************************************************************************/
+/* Random                                                               */
+/************************************************************************/
+
+void sctk_route_random_init ( sctk_rail_info_t *rail )
+{
+	/* This is possible only on rails where
+	 * one sided connections were fully validated
+	 * it means TPC for the moment */
+	
+	struct sctk_runtime_config_struct_net_driver_config * driver_config = rail->runtime_config_driver_config;
+	enum sctk_runtime_config_struct_net_driver_type net_type = driver_config->driver.type;
+
+	/* For the Moment only TCP is supported */
+	if( net_type != SCTK_RTCFG_net_driver_tcp )
+	{
+		sctk_fatal("The random topology is only supported by TCP for the moment");
+	}
+
+	
+
+}
+
 
 /************************************************************************/
 /* Ring                                                                 */

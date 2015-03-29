@@ -66,6 +66,8 @@ struct sctk_rail_info_s
 	/* Network Infos */
 	sctk_rail_info_spec_t network;	/**< Network dependent rail info */
 	char *topology_name; /**< Name of the target topology */
+	int requires_bootstrap_ring; /**< This flag is set to 0 when the rail does not need the initial rin
+	                                  case of the "none" topology */
 	char on_demand;	/**< If the rail allows on demand-connexions */
 	
 	/* Configuration Info */

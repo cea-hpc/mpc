@@ -270,8 +270,10 @@ void sctk_rail_dump_routes()
 
 void sctk_rail_init_route ( sctk_rail_info_t *rail, char *topology, void (*on_demand)( struct sctk_rail_info_s * rail , int dest ) )
 {
+	/* First assume that the initial ring is required */
+	rail->requires_bootstrap_ring = 1;
 
-							
+	
 	/* Register On demand Handler if needed */
 	if( rail->runtime_config_rail->ondemand )
 	{
@@ -285,28 +287,47 @@ void sctk_rail_init_route ( sctk_rail_info_t *rail, char *topology, void (*on_de
 	}
 
 
-	if ( strcmp ( "ring", topology ) == 0 )
+	if ( strcmp ( "none", topology ) == 0 )
 	{
-		rail->route_init = sctk_route_ring_init;
-		rail->topology_name = "ring";
+		rail->route_init = sctk_route_none_init;
+		rail->topology_name = "none";
+		
+		/* In this case we do not want any topology */
+		rail->requires_bootstrap_ring = 0;
 	}
 	else
 	{
-		if ( strcmp ( "fully", topology ) == 0 )
+		if ( strcmp ( "ring", topology ) == 0 )
 		{
-			rail->route_init = sctk_route_fully_init;
-			rail->topology_name = "fully connected";
+			rail->route_init = sctk_route_ring_init;
+			rail->topology_name = "ring";
 		}
 		else
 		{
-			if ( strcmp ( "torus", topology ) == 0 )
+			if ( strcmp ( "random", topology ) == 0 )
 			{
-				rail->route_init = sctk_route_torus_init;
-				rail->topology_name = "torus";
+				rail->route_init = sctk_route_random_init;
+				rail->topology_name = "random";
 			}
 			else
 			{
-				sctk_fatal("No such topology %s", topology);
+				if ( strcmp ( "fully", topology ) == 0 )
+				{
+					rail->route_init = sctk_route_fully_init;
+					rail->topology_name = "fully connected";
+				}
+				else
+				{
+					if ( strcmp ( "torus", topology ) == 0 )
+					{
+						rail->route_init = sctk_route_torus_init;
+						rail->topology_name = "torus";
+					}
+					else
+					{
+						sctk_fatal("No such topology %s", topology);
+					}
+				}
 			}
 		}
 	}
