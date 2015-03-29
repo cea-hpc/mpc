@@ -1159,11 +1159,13 @@ int __MPC_Barrier (MPC_Comm comm)
 	int size;
 	PMPC_Comm_size(comm, &size);
 	mpc_check_comm (comm, comm);
+	sctk_debug("Entering Barrier %d is intercomm %d",comm,sctk_is_inter_comm(comm));
 	
 	if(sctk_is_inter_comm(comm))
 	{
 		int root = 0, buf = 0, rank;
 		sctk_task_specific_t *task_specific;
+
 		task_specific = __MPC_get_task_specific ();
 		__MPC_Comm_rank (comm, &rank, task_specific);
 		
@@ -1187,9 +1189,14 @@ int __MPC_Barrier (MPC_Comm comm)
 		}
 	}
 	else
-		if (size > 1)
-			sctk_barrier ((sctk_communicator_t) comm);
+	  {
 
+	    if (size > 1)
+	      sctk_barrier ((sctk_communicator_t) comm);
+
+	  }
+
+	sctk_debug("Leave Barrier %d",comm);
 	MPC_ERROR_SUCESS ();
 }
 
@@ -2551,7 +2558,7 @@ int PMPC_Init (int *argc, char ***argv)
     return MPC_ERR_OTHER;
   }
 
-  PMPC_Barrier (MPC_COMM_WORLD);
+  sctk_barrier ((sctk_communicator_t) MPC_COMM_WORLD);
   task_specific->init_done = 1;
   task_specific->thread_level = MPC_THREAD_MULTIPLE;
   SCTK_PROFIL_END (MPC_Init);
@@ -3144,14 +3151,14 @@ int sctk_user_main (int argc, char **argv)
 
 	__MPC_setup_task_specific ();
 
-	__MPC_Barrier (MPC_COMM_WORLD);
+	sctk_barrier ((sctk_communicator_t) MPC_COMM_WORLD);
 	
 	if(sctk_runtime_config_get()->modules.mpc.hard_checking)
 	{
 		MPC_Hard_Check();
 	}
 
-	__MPC_Barrier (MPC_COMM_WORLD);
+	sctk_barrier ((sctk_communicator_t) MPC_COMM_WORLD);
 
 
 #ifndef SCTK_DO_NOT_HAVE_WEAK_SYMBOLS
@@ -3166,7 +3173,7 @@ int sctk_user_main (int argc, char **argv)
 
 	sctk_move_to_temp_dir_if_requested_from_env();
 
-	__MPC_Barrier (MPC_COMM_WORLD);
+	sctk_barrier ((sctk_communicator_t) MPC_COMM_WORLD);
 
 #ifdef HAVE_ENVIRON_VAR
 	result = mpc_user_main (argc, argv,environ);
@@ -3174,7 +3181,7 @@ int sctk_user_main (int argc, char **argv)
 	result = mpc_user_main (argc, argv);
 #endif
 
-	__MPC_Barrier (MPC_COMM_WORLD);
+	sctk_barrier ((sctk_communicator_t) MPC_COMM_WORLD);
 
 #ifdef MPC_Profiler
 	sctk_internal_profiler_render();
@@ -3194,7 +3201,7 @@ int sctk_user_main (int argc, char **argv)
 
 	sctk_nodebug ("All message done");
 
-	__MPC_Barrier (MPC_COMM_WORLD);
+	sctk_barrier ((sctk_communicator_t) MPC_COMM_WORLD);
 
 	__MPC_delete_task_specific ();
 
