@@ -46,7 +46,7 @@ static bool sctk_have_shell_colors;
 int sctk_only_once_while_val;
 static int sctk_debug_version_details = 0;
 static char sctk_version_buff[WRITE_BUFFER_SIZE];
-static char ret[SMALL_BUFFER_SIZE];
+static __thread char ret[SMALL_BUFFER_SIZE];
 
 int sctk_process_number = 1;
 int sctk_process_rank = 0;
