@@ -2546,88 +2546,89 @@ void sctk_send_message_try_check ( sctk_thread_ptp_message_t *msg, int perform_c
 				return;
 			}
 		}
-		
-		/* If we reach this point, we perform the
-		 * matching on the process specific message as it would
-		 * be done on any other message type */
-	}
 
-	sctk_comm_dest_key_t src_key, dest_key;
-	sctk_internal_ptp_t *src_pair, * dest_pair;
-
-	dest_key.destination = SCTK_MSG_DEST_TASK ( msg );
-	src_key.destination = SCTK_MSG_SRC_TASK ( msg );
-
-	assume ( SCTK_MSG_COMMUNICATOR ( msg ) >= 0 );
-
-	if ( SCTK_MSG_COMPLETION_FLAG ( msg ) != NULL )
-	{
-		* ( SCTK_MSG_COMPLETION_FLAG ( msg ) ) = SCTK_MESSAGE_PENDING;
-	}
-
-	if ( msg->tail.request != NULL )
-	{
-		msg->tail.request->need_check_in_wait = msg->tail.need_check_in_wait;
-		msg->tail.request->request_type = REQUEST_SEND;
-		sctk_nodebug ( "Request %p %d", msg->tail.request, msg->tail.request->request_type );
-	}
-
-	msg->tail.remote_source = 0;
-	msg->tail.remote_destination = 0;
-
-	/* We are searching for the corresponding pending list.
-	 * If we do not find any entry, we forward the message */
-	sctk_ptp_table_read_lock();
-	sctk_ptp_table_find ( dest_key, dest_pair );
-	sctk_ptp_table_find ( src_key, src_pair );
-	sctk_ptp_table_read_unlock();
-
-	if ( src_pair == NULL )
-	{
-		assume ( dest_pair );
-		msg->tail.internal_ptp = NULL;
-		/*       sctk_internal_ptp_add_pending(dest_pair,msg); */
 	}
 	else
 	{
-		sctk_internal_ptp_add_pending ( src_pair, msg );
-	}
 
-	if ( dest_pair != NULL )
-	{
-		sctk_internal_ptp_add_send_incomming ( dest_pair, msg );
+		sctk_comm_dest_key_t src_key, dest_key;
+		sctk_internal_ptp_t *src_pair, * dest_pair;
 
-		/* If we ask for a checking, we check it */
-		if ( perform_check )
+		dest_key.destination = SCTK_MSG_DEST_TASK ( msg );
+		src_key.destination = SCTK_MSG_SRC_TASK ( msg );
+
+		assume ( SCTK_MSG_COMMUNICATOR ( msg ) >= 0 );
+
+		if ( SCTK_MSG_COMPLETION_FLAG ( msg ) != NULL )
 		{
-			/* Try to match the message for the remote task */
-			int matched_nb = sctk_try_perform_messages_for_pair ( dest_pair );
-#ifdef MPC_Profiler
-
-			switch ( matched_nb )
-			{
-				case -1:
-					SCTK_COUNTER_INC ( matching_locked, 1 );
-					break;
-
-				case 0:
-					SCTK_COUNTER_INC ( matching_not_found, 1 );
-					break;
-
-				default:
-					SCTK_COUNTER_INC ( matching_found, 1 );
-					break;
-			}
-
-#endif
+			* ( SCTK_MSG_COMPLETION_FLAG ( msg ) ) = SCTK_MESSAGE_PENDING;
 		}
-	}
-	else
-	{
-		sctk_nodebug ( "Need to forward the message" );
-		/*Entering low level comm and forwarding the message*/
-		msg->tail.remote_destination = 1;
-		sctk_network_send_message ( msg );
+
+		if ( msg->tail.request != NULL )
+		{
+			msg->tail.request->need_check_in_wait = msg->tail.need_check_in_wait;
+			msg->tail.request->request_type = REQUEST_SEND;
+			sctk_nodebug ( "Request %p %d", msg->tail.request, msg->tail.request->request_type );
+		}
+
+		msg->tail.remote_source = 0;
+		msg->tail.remote_destination = 0;
+
+		/* We are searching for the corresponding pending list.
+		 * If we do not find any entry, we forward the message */
+		sctk_ptp_table_read_lock();
+		sctk_ptp_table_find ( dest_key, dest_pair );
+		sctk_ptp_table_find ( src_key, src_pair );
+		sctk_ptp_table_read_unlock();
+
+		if ( src_pair == NULL )
+		{
+			assume ( dest_pair );
+			msg->tail.internal_ptp = NULL;
+			/*       sctk_internal_ptp_add_pending(dest_pair,msg); */
+		}
+		else
+		{
+			sctk_internal_ptp_add_pending ( src_pair, msg );
+		}
+
+		if ( dest_pair != NULL )
+		{
+			sctk_internal_ptp_add_send_incomming ( dest_pair, msg );
+
+			/* If we ask for a checking, we check it */
+			if ( perform_check )
+			{
+				/* Try to match the message for the remote task */
+				int matched_nb = sctk_try_perform_messages_for_pair ( dest_pair );
+	#ifdef MPC_Profiler
+
+				switch ( matched_nb )
+				{
+					case -1:
+						SCTK_COUNTER_INC ( matching_locked, 1 );
+						break;
+
+					case 0:
+						SCTK_COUNTER_INC ( matching_not_found, 1 );
+						break;
+
+					default:
+						SCTK_COUNTER_INC ( matching_found, 1 );
+						break;
+				}
+
+	#endif
+			}
+		}
+		else
+		{
+			sctk_nodebug ( "Need to forward the message" );
+			/*Entering low level comm and forwarding the message*/
+			msg->tail.remote_destination = 1;
+			sctk_network_send_message ( msg );
+		}
+	
 	}
 
 }
