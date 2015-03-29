@@ -268,7 +268,7 @@ typedef struct
 #define MPC_STATUSES_IGNORE NULL
 #define MPC_ANY_TAG -1
 #define MPC_ANY_SOURCE -1
-#define MPC_PROC_NULL -1
+#define MPC_PROC_NULL -2
 #define MPC_COMM_NULL ((MPC_Comm)(-1))
 #define MPC_MAX_PROCESSOR_NAME 255
 #define MPC_ROOT -4
