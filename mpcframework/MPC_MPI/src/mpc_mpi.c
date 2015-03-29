@@ -1197,7 +1197,7 @@ static int
 __INTERNAL__PMPI_Send (void *buf, int count, MPI_Datatype datatype, int dest,
 		       int tag, MPI_Comm comm)
 {
-	sctk_nodebug ("SEND buf %p type %d", buf, datatype);
+        sctk_debug ("SEND buf %p type %d tag %d", buf, datatype,tag);
 	if (sctk_datatype_is_derived (datatype) && (count != 0))
 	{
 		int res;
@@ -9821,6 +9821,7 @@ PMPI_Send (void *buf, int count, MPI_Datatype datatype, int dest, int tag,
 	   MPI_Comm comm)
 {
   int res = MPI_ERR_INTERN;
+  sctk_debug ("SEND buf %p type %d tag %d dest %d count %d", buf, datatype,tag,dest,count);
   if(dest == MPC_PROC_NULL)
   {
 	res = MPI_SUCCESS;
