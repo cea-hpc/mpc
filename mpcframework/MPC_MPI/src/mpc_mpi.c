@@ -4819,7 +4819,77 @@ int __INTERNAL__PMPI_Unpack_external (char * datarep, void * inbuf, MPI_Aint ins
 static int
 __INTERNAL__PMPI_Barrier (MPI_Comm comm)
 {
-  return PMPC_Barrier (comm);
+	int size, rank, res = MPI_ERR_INTERN;
+	sctk_internal_collectives_struct_t * tmp;
+	
+	res = __INTERNAL__PMPI_Comm_size(comm, &size);
+	if(res != MPI_SUCCESS){return res;}
+	res = __INTERNAL__PMPI_Comm_rank(comm, &rank);
+	if(res != MPI_SUCCESS){return res;}
+	
+#ifndef ENABLE_COLLECTIVES_ON_INTERCOMM
+	if(sctk_is_inter_comm (comm)){
+		MPI_ERROR_REPORT(comm,MPI_ERR_COMM,"");
+	}
+#endif
+	
+	tmp = sctk_get_internal_collectives(comm);
+	if (tmp->barrier_func != NULL)
+	{
+		if (size > 1)
+		{
+			sctk_debug("Use user barrier function");
+			sctk_barrier ((sctk_communicator_t) comm);
+			res = MPI_SUCCESS;
+			return res;
+		}
+	}
+	
+	/* Intercomm */
+	if(sctk_is_inter_comm(comm))
+	{
+		int root = 0, buf = 0;
+		
+		/* Barrier on local intracomm */
+		if (size > 1)
+		{
+			res = __INTERNAL__PMPI_Barrier (sctk_get_local_comm_id(comm));
+			if(res != MPI_SUCCESS){return res;}
+		}
+		
+		/* Broadcasts between local and remote groups */
+		if(sctk_is_in_local_group(comm))
+		{
+			root = (rank == 0) ? MPI_ROOT : MPI_PROC_NULL;
+			res = __INTERNAL__PMPI_Bcast(&buf, 1, MPI_INT, root, comm);
+			if(res != MPI_SUCCESS){return res;}
+			root = 0;
+			res = __INTERNAL__PMPI_Bcast(&buf, 1, MPI_INT, root, comm);
+			if(res != MPI_SUCCESS){return res;}
+		}
+		else
+		{
+			root = 0;
+			res = __INTERNAL__PMPI_Bcast(&buf, 1, MPI_INT, root, comm);
+			if(res != MPI_SUCCESS){return res;}
+			root = (rank == 0) ? MPI_ROOT : MPI_PROC_NULL;
+			res = __INTERNAL__PMPI_Bcast(&buf, 1, MPI_INT, root, comm);
+			if(res != MPI_SUCCESS){return res;}
+		}
+	}
+	else
+	{
+		/* Intracomm 
+		 * We pass if only one task 
+		 */
+		if (size > 1)
+		{
+			sctk_barrier ((sctk_communicator_t) comm);
+			res = MPI_SUCCESS;
+		}
+	}
+	
+	return res;
 }
 
 static int
@@ -11608,19 +11678,22 @@ int PMPI_Type_get_name( MPI_Datatype datatype, char *name, int * resultlen )
 }
 
 
-int
-PMPI_Barrier (MPI_Comm comm)
+int PMPI_Barrier (MPI_Comm comm)
 {
-  int res = MPI_ERR_INTERN;
-  mpi_check_comm (comm, comm);
-#ifndef ENABLE_COLLECTIVES_ON_INTERCOMM
-  if(sctk_is_inter_comm (comm)){
-    MPI_ERROR_REPORT(comm,MPI_ERR_COMM,"");
-  }
-#endif
-  sctk_nodebug ("Entering BARRIER %d", comm);
-  res = __INTERNAL__PMPI_Barrier (comm);
-  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
+	int res = MPI_ERR_INTERN;
+	sctk_debug("Entering Barrier %d is intercomm %d -> res = %d",comm,sctk_is_inter_comm(comm), res);
+	
+	/* Profiling */
+	SCTK_PROFIL_START (MPI_Barrier);
+	
+	/* Error checking */
+	mpi_check_comm (comm, comm);
+	res = __INTERNAL__PMPI_Barrier (comm);
+	
+	/* Profiling */
+	SCTK_PROFIL_END (MPI_Barrier);
+	sctk_debug("Leave Barrier %d",comm);
+	SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
