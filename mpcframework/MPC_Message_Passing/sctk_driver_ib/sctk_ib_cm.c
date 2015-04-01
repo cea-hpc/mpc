@@ -39,7 +39,7 @@
 #if defined SCTK_IB_MODULE_NAME
 #error "SCTK_IB_MODULE already defined"
 #endif
-#define SCTK_IB_MODULE_DEBUG 1
+#define SCTK_IB_MODULE_DEBUG
 #define SCTK_IB_MODULE_NAME "CM"
 #include "sctk_ib_toolkit.h"
 
@@ -446,7 +446,7 @@ int sctk_ib_cm_on_demand_recv_request ( sctk_rail_info_t *rail, void *request, i
 	sctk_ib_cm_qp_connection_t send_keys;
 	sctk_ib_cm_qp_connection_t recv_keys;
 	int added;
-
+	
 	/* create remote for source */
 	sctk_endpoint_t *route_table = sctk_rail_add_or_reuse_route_dynamic ( rail, src, sctk_ib_create_remote, sctk_ib_init_remote, &added, 0 );
 	ib_assume ( route_table );
@@ -470,6 +470,8 @@ int sctk_ib_cm_on_demand_recv_request ( sctk_rail_info_t *rail, void *request, i
 		sctk_ib_debug ( "[%d] OD QP connexion request to process %d (initiator:%d)",
 		                rail->rail_number, remote->rank, sctk_endpoint_get_is_initiator ( route_table ) );
 		memcpy ( &recv_keys, request, sizeof ( sctk_ib_cm_qp_connection_t ) );
+
+		sctk_nodebug("INDOUND RAIL %d LID %d QPN %d PSN %d", recv_keys.rail_id, recv_keys.lid, recv_keys.qp_num, recv_keys.psn );
 
 		ib_assume ( sctk_ib_qp_allocate_get_rtr ( remote ) == 0 );
 		sctk_ib_qp_allocate_rtr ( rail_ib_targ, remote, &recv_keys );
@@ -524,6 +526,9 @@ sctk_endpoint_t *sctk_ib_cm_on_demand_request ( int dest, sctk_rail_info_t *rail
 
 		sctk_ib_qp_key_fill ( &send_keys, remote, device->port_attr.lid, remote->qp->qp_num, remote->psn );
 		send_keys.rail_id = rail->rail_number;
+		
+		sctk_nodebug("OUTBOUND RAIL %d LID %d QPN %d PSN %d", send_keys.rail_id, send_keys.lid, send_keys.qp_num, send_keys.psn );
+
 		sctk_ib_debug ( "[%d] OD QP connexion requested to %d", rail->rail_number, remote->rank );
 		sctk_control_messages_send ( dest, SCTK_CONTROL_MESSAGE_RAIL, CM_OD_REQ_TAG, 0, &send_keys, sizeof ( sctk_ib_cm_qp_connection_t ) );
 	}
@@ -909,8 +914,6 @@ static inline int sctk_ib_cm_resizing_rdma_recv_request ( sctk_rail_info_t *rail
 void sctk_ib_cm_control_message_handler( struct sctk_rail_info_s * rail, int process_src, int source_rank, char subtype, char param, void * payload )
 {
 	int rail_id = rail->rail_number;
-
-	sctk_error("CONTROL MESSAGE TYPE %d", subtype );
 
 	switch ( subtype )
 	{

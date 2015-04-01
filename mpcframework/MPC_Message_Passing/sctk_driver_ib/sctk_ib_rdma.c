@@ -173,14 +173,9 @@ sctk_ibuf_t *sctk_ib_rdma_prepare_req ( sctk_rail_info_t *rail,
 	rdma->remote_peer = remote;
 	rdma->local.req_timestamp = sctk_ib_prof_get_time_stamp();
 
-	{
-		struct sctk_rail_info_s **rails = sctk_network_get_rails();
-		assume ( rails );
-		int remote_rail_nb = sctk_network_select_recv_rail();
-		assume ( remote_rail_nb < sctk_network_ib_get_rails_nb() );
-		rdma->remote_rail     = rails[remote_rail_nb];
-		rdma_req->remote_rail = rdma->remote_rail->rail_number;
-	}
+
+	rdma->remote_rail     = rail;
+	rdma_req->remote_rail = rdma->rail->rail_number;
 
 	/* Initialization of the request */
 	rdma_req->requested_size = size - sizeof ( sctk_thread_ptp_message_body_t );
@@ -566,11 +561,11 @@ sctk_ib_rdma_recv_req ( sctk_rail_info_t *rail, sctk_ibuf_t *ibuf )
 
 	{
 		/* Computing remote rail */
-		struct sctk_rail_info_s **rails = sctk_network_get_rails();
-		assume ( rails );
 		int remote_rail_nb = rdma_req->remote_rail;
-		assume ( remote_rail_nb < sctk_network_ib_get_rails_nb() );
-		rdma->remote_rail     = rails[remote_rail_nb];
+		
+		assume ( remote_rail_nb < sctk_rail_count() );
+		
+		rdma->remote_rail     = sctk_rail_get_by_id( remote_rail_nb );
 
 		/* Get the remote QP from the remote rail */
 		int src_process;

@@ -61,11 +61,11 @@ typedef union
 /** \brief State of the QP */
 typedef enum sctk_route_state_e
 {
+    STATE_DECONNECTED   = 0,
     STATE_CONNECTED     = 111,
     STATE_FLUSHING      = 222,
     STATE_FLUSHING_CHECK = 233,
     STATE_FLUSHED       = 234,
-    STATE_DECONNECTED   = 333,
     STATE_CONNECTING    = 666,
     STATE_RECONNECTING  = 444,
     STATE_RESET         = 555,
@@ -125,6 +125,9 @@ __UNUSED__ static int sctk_endpoint_cas_state ( sctk_endpoint_t *tmp, sctk_endpo
 
 __UNUSED__ static int sctk_endpoint_get_state ( sctk_endpoint_t *tmp )
 {
+	if( !tmp )
+		return STATE_DECONNECTED;
+	
 	return ( int ) OPA_load_int ( &tmp->state );
 }
 

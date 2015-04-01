@@ -50,129 +50,6 @@
 #include "sctk_atomics.h"
 #include "sctk_asm.h"
 
-static void
-sctk_network_send_message_ib ( sctk_thread_ptp_message_t *msg, sctk_rail_info_t *rail )
-{
-	sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
-	LOAD_CONFIG ( rail_ib );
-	sctk_endpoint_t *tmp;
-	sctk_ib_route_info_t *route_data;
-	sctk_ib_qp_t *remote;
-	sctk_ibuf_t *ibuf;
-	size_t size;
-	char is_control_message = 0;
-
-	PROF_TIME_START ( rail, ib_send_message );
-
-	sctk_nodebug ( "send message through rail %d from %d to %d (%d to %d) size:%lu tag:%d", rail->rail_number,
-	               SCTK_MSG_SRC_PROCESS ( msg ),
-	               SCTK_MSG_DEST_PROCESS ( msg ),
-	               SCTK_MSG_SRC_TASK ( msg ),
-	               SCTK_MSG_DEST_TASK ( msg ),
-	               SCTK_MSG_SIZE ( msg ),
-	               SCTK_MSG_TAG ( msg ) );
-
-	/* Determine the route to used */
-	if ( 0 )
-	{
-		if ( 0 )
-		{
-			is_control_message = 1;
-			/* send a message with no_ondemand connexion */
-			tmp = sctk_rail_get_static_route_to_process_or_forward ( rail, SCTK_MSG_DEST_PROCESS ( msg ) );
-			sctk_nodebug ( "Send control message to process %d", SCTK_MSG_DEST_PROCESS ( msg ) );
-		}
-		else
-		{
-			/* send a message to a PROCESS with a possible ondemand connexion if the peer doest not
-			* exist.  */
-			tmp = sctk_rail_get_any_route_to_process_or_on_demand ( rail, SCTK_MSG_DEST_PROCESS ( msg ) );
-			sctk_nodebug ( "Send to process %d", SCTK_MSG_DEST_PROCESS ( msg ) );
-		}
-	}
-	else
-	{
-		/* send a message to a TASK with a possible ondemand connexion if the peer doest not
-		* exist.  */
-		sctk_nodebug ( "Connexion to %d", SCTK_MSG_DEST_TASK ( msg ) );
-		tmp = sctk_rail_get_any_route_to_task_or_on_demand ( rail, SCTK_MSG_DEST_TASK ( msg ) );
-	}
-
-	route_data = &tmp->data.ib;
-	remote = route_data->remote;
-
-	/* Check if the remote task is in low mem mode */
-	size = SCTK_MSG_SIZE ( msg ) + sizeof ( sctk_thread_ptp_message_body_t );
-
-	if ( is_control_message && size + IBUF_GET_EAGER_SIZE > config->eager_limit )
-	{
-		sctk_error ( "MPC tries to send a control message without using the Eager protocol."
-		             "This is not supported and MPC is going to exit ..." );
-		sctk_abort();
-	}
-
-	sctk_ib_prof_qp_write ( remote->rank, size, sctk_get_time_stamp(), PROF_QP_SEND );
-
-	/* *
-	*
-	*  We switch between available protocols
-	*
-	* */
-	if ( ( ( sctk_ibuf_rdma_get_remote_state_rts ( remote ) == STATE_CONNECTED )
-	        && ( size + IBUF_GET_EAGER_SIZE + IBUF_RDMA_GET_SIZE <= sctk_ibuf_rdma_get_eager_limit ( remote ) ) )
-	        || ( size + IBUF_GET_EAGER_SIZE <= config->eager_limit ) )
-	{
-		sctk_nodebug ( "Eager" );
-		ibuf = sctk_ib_eager_prepare_msg ( rail_ib, remote, msg, size, -1, is_control_message );
-
-		/* Actually, it is possible to get a NULL pointer for ibuf. We falback to buffered */
-		if ( ibuf == NULL )
-			goto buffered;
-
-		/* Send message */
-		sctk_ib_qp_send_ibuf ( rail_ib, remote, ibuf );
-		sctk_complete_and_free_message ( msg );
-		PROF_INC ( rail_ib->rail, ib_eager_nb );
-
-		/* Remote profiling */
-		sctk_ibuf_rdma_update_remote ( rail_ib, remote, size );
-		goto exit;
-	}
-
-buffered:
-
-	/***** BUFFERED EAGER CHANNEL *****/
-	if ( size <= config->buffered_limit )
-	{
-		sctk_nodebug ( "Buffered" );
-		sctk_ib_buffered_prepare_msg ( rail, remote, msg, size );
-		sctk_complete_and_free_message ( msg );
-		PROF_INC ( rail_ib->rail, ib_buffered_nb );
-
-		/* Remote profiling */
-		sctk_ibuf_rdma_update_remote ( rail_ib, remote, size );
-
-		goto exit;
-	}
-
-	/***** RDMA RENDEZVOUS CHANNEL *****/
-rdma:
-	{}
-	sctk_nodebug ( "Size of message: %lu", size );
-	ibuf = sctk_ib_rdma_prepare_req ( rail, remote, msg, size, -1 );
-
-	/* Send message */
-	sctk_ib_qp_send_ibuf ( rail_ib, remote, ibuf);
-	sctk_ib_rdma_prepare_send_msg ( rail_ib, msg, size );
-	PROF_INC ( rail_ib->rail, ib_rdma_nb );
-exit:
-	{}
-
-	PROF_TIME_END ( rail, ib_send_message );
-}
-
-
-
 static void sctk_network_send_message_ib_endpoint ( sctk_thread_ptp_message_t *msg , sctk_endpoint_t *endpoint )
 {
 	sctk_rail_info_t * rail = endpoint->rail;
@@ -182,6 +59,9 @@ static void sctk_network_send_message_ib_endpoint ( sctk_thread_ptp_message_t *m
 	sctk_ib_qp_t *remote;
 	sctk_ibuf_t *ibuf;
 	size_t size;
+
+
+	assume( sctk_endpoint_get_state ( endpoint ) == STATE_CONNECTED );
 
 	route_data = &endpoint->data.ib;
 	remote = route_data->remote;
@@ -201,7 +81,7 @@ static void sctk_network_send_message_ib_endpoint ( sctk_thread_ptp_message_t *m
 	        || ( size + IBUF_GET_EAGER_SIZE <= config->eager_limit ) )
 	{
 		sctk_debug ( "Eager" );
-		ibuf = sctk_ib_eager_prepare_msg ( rail_ib, remote, msg, size, -1, 0 );
+		ibuf = sctk_ib_eager_prepare_msg ( rail_ib, remote, msg, size, -1, sctk_message_class_is_process_specific ( SCTK_MSG_SPECIFIC_CLASS( msg ) ) );
 
 		/* Actually, it is possible to get a NULL pointer for ibuf. We falback to buffered */
 		if ( ibuf == NULL )
@@ -254,8 +134,6 @@ sctk_endpoint_t * sctk_on_demand_connection_ib( struct sctk_rail_info_s * rail ,
 {
 	sctk_endpoint_t * tmp = NULL;
 
-	sctk_nodebug ( "%d Trying to connect to process %d (remote:%p)", sctk_process_rank, dest, tmp );
-
 	/* Wait until we reach the 'deconnected' state */
 	tmp = sctk_rail_get_dynamic_route_to_process ( rail, dest );
 
@@ -263,7 +141,6 @@ sctk_endpoint_t * sctk_on_demand_connection_ib( struct sctk_rail_info_s * rail ,
 	{
 		sctk_endpoint_state_t state;
 		state = sctk_endpoint_get_state ( tmp );
-		sctk_nodebug ( "Got state %d", state );
 
 		do
 		{
@@ -279,8 +156,6 @@ sctk_endpoint_t * sctk_on_demand_connection_ib( struct sctk_rail_info_s * rail ,
 		while ( state != STATE_DECONNECTED && state != STATE_CONNECTED && state != STATE_RECONNECTING );
 	}
 
-	sctk_nodebug ( "QP in a KNOWN STATE" );
-
 	/* We send the request using the signalization rail */
 	tmp = sctk_ib_cm_on_demand_request ( dest, rail );
 	assume ( tmp );
@@ -288,6 +163,9 @@ sctk_endpoint_t * sctk_on_demand_connection_ib( struct sctk_rail_info_s * rail ,
 	/* If route not connected, so we wait for until it is connected */
 	while ( sctk_endpoint_get_state ( tmp ) != STATE_CONNECTED )
 	{
+	//	sctk_warning("YA WAIT");
+		
+		
 		sctk_network_notify_idle_message();
 
 		if ( sctk_endpoint_get_state ( tmp ) != STATE_CONNECTED )
@@ -296,7 +174,6 @@ sctk_endpoint_t * sctk_on_demand_connection_ib( struct sctk_rail_info_s * rail ,
 		}
 	}
 
-	sctk_nodebug ( "Connected to process %d", dest );
 	return tmp;
 }
 
@@ -375,6 +252,7 @@ int sctk_network_poll_recv_ibuf ( sctk_rail_info_t *rail, sctk_ibuf_t *ibuf, con
 
 		}
 		else
+		{
 			if ( wc.imm_data & IMM_DATA_RDMA_MSG )
 			{
 				sctk_ib_rdma_recv_done_remote_imm ( rail,
@@ -384,6 +262,7 @@ int sctk_network_poll_recv_ibuf ( sctk_rail_info_t *rail, sctk_ibuf_t *ibuf, con
 			{
 				not_reachable();
 			}
+		}
 
 		/* Check if we are in a flush state */
 		sctk_ibuf_rdma_check_flush_send ( rail_ib, remote );
@@ -772,14 +651,6 @@ static void sctk_network_notify_perform_message_ib ( int remote_process, int rem
 
 static void sctk_network_notify_idle_message_ib ( sctk_rail_info_t *rail )
 {
-	/* NOTIFY IDLE DISABLED */
-	return;
-	
-	/* ************************************************ */
-	/* ************************************************ */
-	/* ************************************************ */
-	/* ************************************************ */
-	/* ************************************************ */
 	sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
 	LOAD_CONFIG ( rail_ib );
 	struct sctk_ib_polling_s poll;
@@ -871,7 +742,6 @@ sctk_network_connection_from_ib ( int from, int to, sctk_rail_info_t *rail )
 
 int sctk_send_message_from_network_mpi_ib ( sctk_thread_ptp_message_t *msg )
 {
-	sctk_error("MESSAGE FROM NET %d -> %d ", SCTK_MSG_SRC_PROCESS( msg ), SCTK_MSG_DEST_PROCESS( msg ) );
 	int ret = sctk_send_message_from_network_reorder ( msg );
 
 	if ( ret == REORDER_NO_NUMBERING )
@@ -888,7 +758,7 @@ int sctk_send_message_from_network_mpi_ib ( sctk_thread_ptp_message_t *msg )
 
 void sctk_connect_on_demand_mpi_ib( struct sctk_rail_info_s * rail , int dest )
 {
-	sctk_endpoint_t * new_endpoint = sctk_ib_cm_on_demand_request ( dest, rail );
+	sctk_endpoint_t * new_endpoint = sctk_on_demand_connection_ib ( rail, dest );
 	
 	sctk_rail_add_dynamic_route( rail, dest, new_endpoint );
 }

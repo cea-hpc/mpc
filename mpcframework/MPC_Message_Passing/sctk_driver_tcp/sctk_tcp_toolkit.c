@@ -301,6 +301,9 @@ static void sctk_tcp_add_route ( int dest, int fd, sctk_rail_info_t *rail,
 	new_route = sctk_malloc ( sizeof ( sctk_endpoint_t ) );
 	assume ( new_route != NULL );
 	sctk_endpoint_init ( new_route,  dest, rail, route_type );
+	
+	/* Make sure the route is flagged connected */
+	sctk_endpoint_set_state ( new_route, STATE_CONNECTED );
 
 	sctk_nodebug ( "Register fd %d", fd );
 	new_route->data.tcp.fd = fd;

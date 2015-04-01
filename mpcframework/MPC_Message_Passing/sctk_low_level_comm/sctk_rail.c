@@ -404,7 +404,7 @@ sctk_endpoint_t * sctk_rail_add_or_reuse_route_dynamic ( sctk_rail_info_t *rail,
 		
 		tmp->is_initiator = is_initiator;
 		
-		sctk_route_table_add_dynamic_route_no_lock(   rail->route_table, tmp );
+		sctk_route_table_add_dynamic_route_no_lock(  rail->route_table, tmp );
 		*added = 1;
 	}
 	else

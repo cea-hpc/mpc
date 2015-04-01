@@ -425,18 +425,48 @@ sctk_endpoint_t * sctk_multirail_ellect_endpoint( sctk_thread_ptp_message_t *msg
 		}
 		else
 		{
-			/* Note that no gate is equivalent to being elected */
-			for( cur_gate = 0 ; cur_gate < cur->gate_count ; cur_gate++ )
+			/* If it is connecting just wait for
+			* the connection completion */
+			int wait_connecting;
+			 
+			do
 			{
-				struct sctk_gate_context gate_ctx;
-				sctk_gate_get_context( &cur->gates[ cur_gate ] , &gate_ctx );
-				
-				if( ( gate_ctx.func )( cur->endpoint->rail, msg, gate_ctx.params ) == 0 )
+				if(  sctk_endpoint_get_state ( cur->endpoint ) == STATE_CONNECTING )
 				{
-					this_rail_has_been_elected = 0;
-					break;
+					wait_connecting = 1;
+					sctk_notify_idle_message();
+					sched_yield();
 				}
-				
+				else
+				{
+					wait_connecting = 0;
+				}
+
+			}while(wait_connecting);
+			
+			
+			/* Now that we wait for the connection only try an endpoint if it is connected */
+			if( sctk_endpoint_get_state ( cur->endpoint ) == STATE_CONNECTED )
+			{
+				/* Note that no gate is equivalent to being elected */
+				for( cur_gate = 0 ; cur_gate < cur->gate_count ; cur_gate++ )
+				{
+					struct sctk_gate_context gate_ctx;
+					sctk_gate_get_context( &cur->gates[ cur_gate ] , &gate_ctx );
+					
+					if( ( gate_ctx.func )( cur->endpoint->rail, msg, gate_ctx.params ) == 0 )
+					{
+						this_rail_has_been_elected = 0;
+						break;
+					}
+					
+				}
+			}
+			else
+			{	
+				/* If the rail is not connected it
+				 * cannot be elected yet */
+				this_rail_has_been_elected = 0;
 			}
 		}
 		
@@ -625,7 +655,7 @@ void sctk_multirail_send_message( sctk_thread_ptp_message_t *msg )
 		
 		if( endpoint )
 		{
-			//sctk_error("RAIL %d", cur->endpoint->rail->rail_number );
+			sctk_nodebug("RAIL %d", endpoint->rail->rail_number );
 			
 			/* Prepare reordering */
 			sctk_prepare_send_message_to_network_reorder ( msg );
@@ -864,23 +894,42 @@ void sctk_multirail_destination_table_route_to_process( int destination, int * n
 
 	HASH_ITER(hh, table->destinations, entry, tmp)
 	{
-		//sctk_warning( " %d --- %d" , destination, entry->destination  );
-		if( destination == entry->destination )
+		/* Only test connected endpoint as some networks
+		 * might create the endpoint before sending
+		 * the control message to the target process.
+		 * In such case it would be selected (dist == 0)
+		 * but would not be connected ! */
+	
+		
+		if( entry->endpoints )
 		{
-			distance = 0;
-			*new_destination = destination;
-			break;
-		}
+			
+			sctk_nodebug("STATE %d == %d", entry->destination, sctk_endpoint_get_state ( entry->endpoints->endpoint ) );
+	
+			if( sctk_endpoint_get_state ( entry->endpoints->endpoint ) == STATE_CONNECTED )
+			{
+			
+				sctk_nodebug( " %d --- %d" , destination, entry->destination  );
+				if( destination == entry->destination )
+				{
+					distance = 0;
+					*new_destination = destination;
+					break;
+				}
+				
+				int cdistance = entry->destination - destination;
+				
+				if( cdistance < 0 )
+					cdistance = -cdistance;
+				
+				if( ( distance < 0 ) || (cdistance < distance ) )
+				{
+					distance = cdistance;
+					*new_destination = entry->destination;
+				}
+			
+			}
 		
-		int cdistance = entry->destination - destination;
-		
-		if( cdistance < 0 )
-			cdistance = -cdistance;
-		
-		if( ( distance < 0 ) || (cdistance < distance ) )
-		{
-			distance = cdistance;
-			*new_destination = entry->destination;
 		}
 	}
 	

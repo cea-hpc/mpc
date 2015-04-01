@@ -277,6 +277,10 @@ int sctk_ib_eager_poll_recv ( sctk_rail_info_t *rail, sctk_ibuf_t *ibuf )
 
 	sctk_thread_ptp_message_t *msg = NULL;
 
+	if( sctk_message_class_is_process_specific ( msg_ibuf->header.message_type.type ) )
+	{
+		recopy = 1;
+	}
 
 	sctk_nodebug ( "Received IBUF %p %d", ibuf, IBUF_GET_CHANNEL ( ibuf ) );
 

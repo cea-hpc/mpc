@@ -79,6 +79,24 @@ static void sctk_free_control_messages ( void *ptr )
 
 }
 
+
+void printpayload( void * pl , size_t size )
+{
+	int i;
+	
+
+	sctk_info("======== %ld ========", size);
+	for( i = 0 ; i < size; i++ )
+	{
+		sctk_info("%d = [%hu]  ",i,  ((char *)pl)[i] );
+	}
+	sctk_info("===================");
+	
+	
+	
+}
+
+
 void sctk_control_messages_send ( int dest, sctk_message_class_t message_class, int subtype, int param, void *buffer, size_t size )
 {
 
@@ -92,14 +110,17 @@ void sctk_control_messages_send ( int dest, sctk_message_class_t message_class, 
 	{
 		sctk_fatal("Cannot send a non-process specific message using this function");
 	}
+
+	sctk_init_header ( &msg, SCTK_MESSAGE_CONTIGUOUS, sctk_free_control_messages, sctk_message_copy );
+
 	
 	/* Fill in control message context (note that class is handled by set_header_in_message) */
 	SCTK_MSG_SPECIFIC_CLASS_SET_SUBTYPE( (&msg) , subtype );
 	SCTK_MSG_SPECIFIC_CLASS_SET_PARAM( (&msg) , param );
 	
-	sctk_init_header ( &msg, SCTK_MESSAGE_CONTIGUOUS, sctk_free_control_messages, sctk_message_copy );
-	
 	sctk_add_adress_in_message ( &msg, buffer, size );
+	
+	//printpayload( buffer, size );
 	
 	sctk_set_header_in_message ( &msg, tag, communicator,  sctk_get_process_rank(), dest,  &request, size, message_class, MPC_DATATYPE_IGNORE );
 	
@@ -125,7 +146,7 @@ void sctk_control_messages_incoming( sctk_thread_ptp_message_t * msg )
 	
 	
 	
-	void * tmp_contol_buffer = sctk_malloc( SCTK_MSG_SIZE ( msg ) );
+	void * tmp_contol_buffer = sctk_calloc( SCTK_MSG_SIZE ( msg ), sizeof( char ) );
 	assume( tmp_contol_buffer != NULL );
 	
 	/* Generate the paired recv message to fill the buffer in
@@ -135,7 +156,7 @@ void sctk_control_messages_incoming( sctk_thread_ptp_message_t * msg )
 	sctk_request_t request;
 	sctk_init_header ( &recvmsg, SCTK_MESSAGE_CONTIGUOUS, sctk_free_control_messages, sctk_message_copy );
 	sctk_add_adress_in_message ( &recvmsg, tmp_contol_buffer, SCTK_MSG_SIZE( msg ) );
-	sctk_set_header_in_message ( &recvmsg, 0, SCTK_COMM_WORLD, source_rank, sctk_get_process_rank(),  &request, SCTK_MSG_SIZE( msg ), class, MPC_DATATYPE_IGNORE );
+	sctk_set_header_in_message ( &recvmsg, 0, SCTK_COMM_WORLD, MPC_ANY_SOURCE, sctk_get_process_rank(),  &request, SCTK_MSG_SIZE( msg ), class, MPC_DATATYPE_IGNORE );
 	
 	/* Trigger the receive task (as if we matched) */
 	sctk_message_to_copy_t copy_task;
@@ -167,6 +188,8 @@ void sctk_control_messages_incoming( sctk_thread_ptp_message_t * msg )
 				sctk_warning("No handler was set to rail (%d = %s) control messages, set it prior to send such messages", rail_id, rail->network_name );
 				return;
 			}
+			
+			//printpayload( data, SCTK_MSG_SIZE ( msg ) );
 			
 			(rail->control_message_handler)( rail, source_process, source_rank, subtype, param,  data );
 		}

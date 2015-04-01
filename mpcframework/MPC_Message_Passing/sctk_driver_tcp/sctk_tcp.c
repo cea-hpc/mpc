@@ -56,11 +56,6 @@ static void *sctk_tcp_thread ( sctk_endpoint_t *tmp )
 		{
 			return NULL;
 		}
-		
-		if( (1024*1024) < size )
-		{
-			sctk_error("ERROR SIZE %ld\n", size );
-		}
 
 		size = size - sizeof ( sctk_thread_ptp_message_body_t ) + sizeof ( sctk_thread_ptp_message_t );
 	
@@ -94,16 +89,11 @@ static void *sctk_tcp_thread ( sctk_endpoint_t *tmp )
 		sctk_rebuild_header ( msg );
 		sctk_reinit_header ( msg, sctk_free, sctk_net_message_copy );
 
-		sctk_info( "NET RECV  [%d -> %d] TASK [%d -> %d] (%d) %p",
-	               SCTK_MSG_SRC_PROCESS ( msg ), SCTK_MSG_DEST_PROCESS ( msg ), SCTK_MSG_SRC_TASK ( msg ), SCTK_MSG_DEST_TASK ( msg ),  SCTK_MSG_TAG ( msg ), msg->tail.internal_ptp );
 
-		//sctk_nodebug ( "MSG RECV|%s|", ( char * ) body );
-
-		//sctk_debug ( "Msg recved" );
 		tmp->rail->send_message_from_network ( msg );
 	}
 	
-	sctk_error("TCP THREAD LEAVING");
+	//sctk_error("TCP THREAD LEAVING");
 
 	return NULL;
 }
@@ -113,7 +103,6 @@ static void sctk_network_send_message_endpoint_tcp ( sctk_thread_ptp_message_t *
 	size_t size;
 	int fd;
 
-	sctk_debug ( "==> Send message to %d", endpoint->dest );
 
 	sctk_spinlock_lock ( & ( endpoint->data.tcp.lock ) );
 
@@ -121,14 +110,7 @@ static void sctk_network_send_message_endpoint_tcp ( sctk_thread_ptp_message_t *
 
 	size = SCTK_MSG_SIZE ( msg ) + sizeof ( sctk_thread_ptp_message_body_t );
 
-	
-	if( (1024*1024) < size )
-	{
-		sctk_error("OUUUUT ERROR SIZE %ld\n", size );
-	}
-
-	if( !fd )
-		CRASH();
+	assume( fd != NULL );
 
 	sctk_safe_write ( fd, ( char * ) &size, sizeof ( size_t ) );
 
