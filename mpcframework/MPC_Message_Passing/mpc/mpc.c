@@ -1245,7 +1245,6 @@ int __MPC_Barrier (MPC_Comm comm)
 	int size;
 	PMPC_Comm_size(comm, &size);
 	mpc_check_comm (comm, comm);
-	sctk_debug("Entering Barrier %d is intercomm %d",comm,sctk_is_inter_comm(comm));
 	
 	if(sctk_is_inter_comm(comm))
 	{
@@ -1275,14 +1274,12 @@ int __MPC_Barrier (MPC_Comm comm)
 		}
 	}
 	else
-	  {
+	{
 
 	    if (size > 1)
 	      sctk_barrier ((sctk_communicator_t) comm);
 
-	  }
-
-	sctk_debug("Leave Barrier %d",comm);
+	}
 	MPC_ERROR_SUCESS ();
 }
 
@@ -4624,7 +4621,10 @@ int PMPC_Recv (void *buf, mpc_msg_count count, MPC_Datatype datatype, int source
 	
 	if (request.status_error != MPC_SUCCESS)
 	{
-		status->MPC_ERROR = request.status_error;
+		if(status != NULL)
+		{
+			status->MPC_ERROR = request.status_error;
+		}
 		return request.status_error;
 	}
 
@@ -4964,7 +4964,7 @@ __MPC_Bcast (void *buffer, mpc_msg_count count, MPC_Datatype datatype,
 		}
 		else if (root == MPC_ROOT)
 		{
-			PMPC_Send(buffer, count, datatype, 0, MPC_BROADCAST_INTERCOMM_TAG, comm);
+			PMPC_Send(buffer, count, datatype, 0, MPC_BROADCAST_TAG, comm);
 		}
 		else
 		{
@@ -4972,7 +4972,7 @@ __MPC_Bcast (void *buffer, mpc_msg_count count, MPC_Datatype datatype,
 
 			if (rank == 0)
 			{
-				PMPC_Recv(buffer, count, datatype, root, MPC_BROADCAST_INTERCOMM_TAG, comm, &status);
+				PMPC_Recv(buffer, count, datatype, root, MPC_BROADCAST_TAG, comm, &status);
 			}
 			__MPC_Bcast(buffer, count, datatype, 0, sctk_get_local_comm_id(comm), task_specific);
 		}

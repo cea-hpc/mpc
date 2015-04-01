@@ -2005,7 +2005,6 @@ static inline sctk_msg_list_t *sctk_perform_messages_search_matching (
 					}
 
 					ptr_found->msg->tail.request->status_error = MPC_ERR_TYPE;
-					//		return ptr_found;
 				}
 			}
 
