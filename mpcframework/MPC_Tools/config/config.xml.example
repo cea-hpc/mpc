@@ -36,9 +36,7 @@
 					<config>
 						<name>ib_config_mpi</name>
 						<driver>
-							<infiniband>
-								<network_type>1</network_type>
-							</infiniband>
+							<infiniband/>
 						</driver>
 					</config>
 						
@@ -55,6 +53,8 @@
 					<rail>
 						<name>ib_mpi</name>
 						<device>0</device>
+						<priority>1</priority>
+						<ondemand>1</ondemand>
 						<topology>ring</topology>
 						<config>ib_config_mpi</config>
 					</rail>
@@ -63,7 +63,7 @@
 						<priority>1</priority>
 						<ondemand>1</ondemand>
 						<device>0</device>
-						<topology>fully</topology>
+						<topology>ring</topology>
 						<config>tcp_config_mpi</config>
 					</rail>
 					<rail>
