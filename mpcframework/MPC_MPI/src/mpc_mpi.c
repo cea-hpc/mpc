@@ -637,7 +637,7 @@ TODO("to optimize")
     MPI_ERROR_REPORT(comm,MPI_ERR_RANK,"Error bad rank provided")
 
 #define mpi_check_rank_send(task,max_rank,comm)		\
-  if((((task < 0) || (task >= max_rank)) && (sctk_is_inter_comm (comm) == 0)) && (task < MPI_PROC_NULL)) \
+  if((((task < 0) || (task >= max_rank)) && (sctk_is_inter_comm (comm) == 0)) && (task != MPI_PROC_NULL)) \
     MPI_ERROR_REPORT(comm,MPI_ERR_RANK,"Error bad rank provided")
 
 #define mpi_check_root(task,max_rank,comm)		\
