@@ -1757,8 +1757,11 @@ void sctk_set_header_in_message ( sctk_thread_ptp_message_t * msg,
 	else
 	{
 		/* Fill in Source and Dest Process Informations (convert from task) */
-		SCTK_MSG_SRC_PROCESS_SET ( msg, sctk_get_process_rank_from_task_rank ( source ) );
-		SCTK_MSG_DEST_PROCESS_SET ( msg , sctk_get_process_rank_from_task_rank ( destination)  );
+		int source_task = sctk_get_comm_world_rank ( communicator, source );
+		int dest_task = sctk_get_comm_world_rank ( communicator, destination );
+		
+		SCTK_MSG_SRC_PROCESS_SET ( msg, sctk_get_process_rank_from_task_rank ( source_task ) );
+		SCTK_MSG_DEST_PROCESS_SET ( msg , sctk_get_process_rank_from_task_rank ( dest_task )  );
 		
 		/* "NORMAL" Messages */
 		/* If source matters */
@@ -1773,18 +1776,7 @@ void sctk_set_header_in_message ( sctk_thread_ptp_message_t * msg,
 			}
 			else
 			{
-				/* Inter-communicator */
-				if ( ( sctk_is_inter_comm ( communicator ) ) && ( ( request->request_type == REQUEST_RECV ) || ( request->request_type == REQUEST_RECV_COLL ) ) )
-				{
-					/* Do rank translation */
-					sctk_nodebug ( "recv : get comm world rank of rank %d in comm %d", source, communicator );
-					SCTK_MSG_SRC_TASK_SET ( msg, sctk_get_remote_comm_world_rank ( communicator, source ) );
-				}
-				else
-				{
-					/* Take rank to comm workd */
-					SCTK_MSG_SRC_TASK_SET ( msg,  sctk_get_comm_world_rank ( communicator, source ) );
-				}
+				SCTK_MSG_SRC_TASK_SET ( msg, source_task );
 			}
 		}
 		else
@@ -1804,15 +1796,7 @@ void sctk_set_header_in_message ( sctk_thread_ptp_message_t * msg,
 		}
 		else
 		{
-			if ( ( sctk_is_inter_comm ( communicator ) ) && ( ( request->request_type == REQUEST_SEND ) || ( request->request_type == REQUEST_SEND_COLL ) ) )
-			{
-				sctk_nodebug ( "send : get comm world rank of rank %d in comm %d", destination, communicator );
-				SCTK_MSG_DEST_TASK_SET ( msg , sctk_get_remote_comm_world_rank ( communicator, destination ) );
-			}
-			else
-			{
-				SCTK_MSG_DEST_TASK_SET ( msg , sctk_get_comm_world_rank ( communicator, destination ) );
-			}
+			SCTK_MSG_DEST_TASK_SET ( msg , dest_task );
 		}
 	}
 
@@ -2499,41 +2483,41 @@ void sctk_notify_idle_message ()
  * */
 void sctk_send_message_try_check ( sctk_thread_ptp_message_t *msg, int perform_check )
 {
-	sctk_nodebug("!%d! MM %d -> %d (CLASS %d SPE %d)", sctk_process_rank, SCTK_MSG_SRC_PROCESS ( msg ),  SCTK_MSG_DEST_PROCESS ( msg ), SCTK_MSG_SPECIFIC_CLASS( msg ) , sctk_message_class_is_process_specific ( SCTK_MSG_SPECIFIC_CLASS( msg ) ));
+	sctk_debug("!%d! MM %d -> %d (CLASS %d SPE %d)", sctk_process_rank, SCTK_MSG_SRC_PROCESS ( msg ),  SCTK_MSG_DEST_PROCESS ( msg ), SCTK_MSG_SPECIFIC_CLASS( msg ) , sctk_message_class_is_process_specific ( SCTK_MSG_SPECIFIC_CLASS( msg ) ));
+
+	/*  Message has not reached its destination */
+	if( SCTK_MSG_DEST_PROCESS ( msg ) != sctk_process_rank )
+	{
+		if ( msg->tail.request != NULL )
+		{
+			msg->tail.request->request_type = REQUEST_SEND;
+		}
+
+		msg->tail.remote_destination = 1;
+		sctk_debug( "Need to forward the message fom %d to %d",  SCTK_MSG_SRC_PROCESS ( msg ),  SCTK_MSG_DEST_PROCESS ( msg ) );
+		/* We forward the message */
+		sctk_network_send_message ( msg );
+		return;
+	}
+
 
 	/* The message is a process specific message and the process rank does not match
 	 * the current process rank */
 	if( sctk_message_class_is_process_specific ( SCTK_MSG_SPECIFIC_CLASS( msg ) ) )
 	{
-		sctk_nodebug("CONTROL MESSAGE %d -> %d (SUB %d)",  SCTK_MSG_SRC_PROCESS ( msg ),  SCTK_MSG_DEST_PROCESS ( msg ),  SCTK_MSG_SPECIFIC_CLASS_SUBTYPE( msg ) );
-		/* Process specific Message has not reached its destination */
-		if( SCTK_MSG_DEST_PROCESS ( msg ) != sctk_process_rank )
+	
+		if( sctk_message_class_is_control_message( SCTK_MSG_SPECIFIC_CLASS( msg ) ) )
 		{
-					if ( msg->tail.request != NULL )
-			{
-				msg->tail.request->request_type = REQUEST_SEND;
-			}
+			/* If we are on the right process with a control message */
 
-			msg->tail.remote_destination = 1;
-			sctk_nodebug( "Need to forward the message fom %d to %d",  SCTK_MSG_SRC_PROCESS ( msg ),  SCTK_MSG_DEST_PROCESS ( msg ) );
-			/* We forward the message */
-			sctk_network_send_message ( msg );
-		}
-		else
-		{
-			if( sctk_message_class_is_control_message( SCTK_MSG_SPECIFIC_CLASS( msg ) ) )
-			{
-				/* If we are on the right process with a control message */
-
-				/* Message is for local process call the handler (such message are never pending)
-				 * no need to perform a matching with a receive. However, the order is guaranteed
-				 * by the reorder prior to calling this function */
-				sctk_control_messages_incoming( msg );
-				
-				/* Done */
-				return;
-			}
-		}
+			/* Message is for local process call the handler (such message are never pending)
+			 * no need to perform a matching with a receive. However, the order is guaranteed
+			 * by the reorder prior to calling this function */
+			sctk_control_messages_incoming( msg );
+			
+			/* Done */
+			return;
+		}	
 
 	}
 	else
@@ -2612,6 +2596,7 @@ void sctk_send_message_try_check ( sctk_thread_ptp_message_t *msg, int perform_c
 		else
 		{
 			/*Entering low level comm and forwarding the message*/
+			sctk_error("HERE WE GO AGAIN");
 			msg->tail.remote_destination = 1;
 			sctk_network_send_message ( msg );
 		}
@@ -2626,7 +2611,7 @@ void sctk_send_message_try_check ( sctk_thread_ptp_message_t *msg, int perform_c
  * */
 void sctk_send_message ( sctk_thread_ptp_message_t *msg )
 {
-	sctk_nodebug("SEND [ %d -> %d ] [ %d -> %d ] ( size %d tag %d)", SCTK_MSG_SRC_PROCESS ( msg ), SCTK_MSG_DEST_PROCESS ( msg ), SCTK_MSG_SRC_TASK ( msg ), SCTK_MSG_DEST_TASK ( msg ),  SCTK_MSG_SIZE( msg ) ,  SCTK_MSG_TAG( msg ) );
+	sctk_debug("SEND [ %d -> %d ] [ %d -> %d ] ( size %d tag %d)", SCTK_MSG_SRC_PROCESS ( msg ), SCTK_MSG_DEST_PROCESS ( msg ), SCTK_MSG_SRC_TASK ( msg ), SCTK_MSG_DEST_TASK ( msg ),  SCTK_MSG_SIZE( msg ) ,  SCTK_MSG_TAG( msg ) );
 	
 	int need_check = 0;
 	/* TODO: need to check in wait */
@@ -2726,7 +2711,7 @@ void sctk_recv_message_try_check ( sctk_thread_ptp_message_t *msg, sctk_internal
 void sctk_recv_message ( sctk_thread_ptp_message_t *msg, sctk_internal_ptp_t *tmp,
                          int need_check )
 {
-	sctk_nodebug("RECV [ %d -> %d ] [ %d -> %d ] ( size %d tag %d)", SCTK_MSG_SRC_PROCESS ( msg ), SCTK_MSG_DEST_PROCESS ( msg ), SCTK_MSG_SRC_TASK ( msg ), SCTK_MSG_DEST_TASK ( msg ),  SCTK_MSG_SIZE( msg ) ,  SCTK_MSG_TAG( msg ) );
+	sctk_debug("RECV [ %d -> %d ] [ %d -> %d ] ( size %d tag %d)", SCTK_MSG_SRC_PROCESS ( msg ), SCTK_MSG_DEST_PROCESS ( msg ), SCTK_MSG_SRC_TASK ( msg ), SCTK_MSG_DEST_TASK ( msg ),  SCTK_MSG_SIZE( msg ) ,  SCTK_MSG_TAG( msg ) );
 	
 	msg->tail.need_check_in_wait = 1;
 	sctk_recv_message_try_check ( msg, tmp, need_check );

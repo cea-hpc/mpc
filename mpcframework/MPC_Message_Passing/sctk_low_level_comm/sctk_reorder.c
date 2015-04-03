@@ -134,7 +134,7 @@ int sctk_send_message_from_network_reorder ( sctk_thread_ptp_message_t *msg )
 	const int src_task  = SCTK_MSG_SRC_TASK ( msg );
 	const int dest_task = SCTK_MSG_DEST_TASK ( msg );
 
-	sctk_nodebug ( "Recv message from %d to %d (number: %d)", src_task, dest_task, SCTK_MSG_NUMBER ( msg ) );
+	sctk_debug ( "Recv message from [%d,%d] to [%d,%d] (number: %d)", SCTK_MSG_SRC_PROCESS ( msg ), src_task, SCTK_MSG_DEST_PROCESS ( msg ), dest_task, SCTK_MSG_NUMBER ( msg ) );
 
 	int dest_process;
 	int number;
@@ -147,22 +147,28 @@ int sctk_send_message_from_network_reorder ( sctk_thread_ptp_message_t *msg )
 	}
 	else
 	{
-		sctk_reorder_list_t *list = sctk_ptp_get_reorder_from_destination ( dest_task );
-		tmp = sctk_get_task_from_reorder ( src_task, sctk_message_class_is_process_specific(SCTK_MSG_SPECIFIC_CLASS(msg)), list );
-		assume ( tmp != NULL );
-		sctk_nodebug ( "LIST %p ENTRY %p src %d dest %d", list, tmp, src_task, dest_task );
-
 		dest_process = sctk_get_process_rank_from_task_rank ( dest_task );
-		sctk_nodebug ( "Recv message from %d to %d (number:%d)",
+		sctk_debug ( "Recv message from %d to %d (number:%d)",
 			     SCTK_MSG_SRC_TASK ( msg ),
 			     SCTK_MSG_DEST_TASK ( msg ), SCTK_MSG_NUMBER ( msg ) );
+
+		sctk_debug("RET %d == %d", dest_process, sctk_process_rank );
 
 		/* Indirect messages, we do not check PSN */
 		if ( sctk_process_rank != dest_process )
 		{
+			
 			return REORDER_NO_NUMBERING;
 		}
 
+		
+		sctk_reorder_list_t *list = sctk_ptp_get_reorder_from_destination ( dest_task );
+		
+		tmp = sctk_get_task_from_reorder ( src_task, sctk_message_class_is_process_specific(SCTK_MSG_SPECIFIC_CLASS(msg)), list );
+		assume ( tmp != NULL );
+		sctk_debug ( "LIST %p ENTRY %p src %d dest %d", list, tmp, src_task, dest_task );
+
+	
 		number = OPA_load_int ( & ( tmp->message_number_src ) );
 		sctk_nodebug ( "wait for %d recv %d", number, SCTK_MSG_NUMBER ( msg ) );
 

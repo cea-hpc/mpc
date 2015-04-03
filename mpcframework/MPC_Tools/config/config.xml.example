@@ -88,7 +88,6 @@
 						<name>ib</name>
 						<rails>
 							<rail>ib_mpi</rail>
-							<rail>ib_mpi</rail>
 						</rails>
 					</cli_option>
 					<cli_option>

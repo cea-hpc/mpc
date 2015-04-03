@@ -63,25 +63,27 @@ extern "C"
 /** \brief Macro to obtain the total number of datatypes */
 #define MPC_TYPE_COUNT (SCTK_COMMON_DATA_TYPE_COUNT + 2 * SCTK_USER_DATA_TYPES_MAX)
   
-  typedef int MPC_Message;
-  
-  typedef int mpc_msg_count;
+typedef int MPC_Message;
 
-  typedef unsigned int mpc_pack_indexes_t;
-  typedef long mpc_pack_absolute_indexes_t;
-  typedef long MPC_Aint;
-  typedef long MPC_Count;
-  typedef int MPC_Comm;
-  typedef struct
-  {
-    int task_nb;
-    /* Task list rank are valid in COMM_WORLD  */
-    int *task_list_in_global_ranks;
-  } MPC_Group_t;
-  typedef MPC_Group_t *MPC_Group;
+typedef int mpc_msg_count;
 
-  extern const MPC_Group_t mpc_group_empty;
-  extern const MPC_Group_t mpc_group_null;
+typedef unsigned int mpc_pack_indexes_t;
+typedef long mpc_pack_absolute_indexes_t;
+typedef long MPC_Aint;
+typedef long MPC_Count;
+typedef int MPC_Comm;
+
+typedef struct
+{
+	int task_nb;
+	/* Task list rank are valid in COMM_WORLD  */
+	int *task_list_in_global_ranks;
+} MPC_Group_t;
+
+typedef MPC_Group_t *MPC_Group;
+
+extern const MPC_Group_t mpc_group_empty;
+extern const MPC_Group_t mpc_group_null;
 
 #define MPC_GROUP_EMPTY &mpc_group_empty
 #define MPC_GROUP_NULL ((MPC_Group)NULL)
@@ -89,19 +91,20 @@ extern "C"
 /* #define MPC_STATUS_SIZE 80 */
 /* #define MPC_REQUEST_SIZE 30 */
 
-  /* Has to match an sctk_datatype_t */
-  typedef int MPC_Datatype;
-  typedef void (*MPC_Op_f) (const void *, void *, size_t, MPC_Datatype);
-  typedef void (MPC_User_function) (void *, void *, int *, MPC_Datatype *);
+/* Has to match an sctk_datatype_t */
+typedef int MPC_Datatype;
+typedef void (*MPC_Op_f) (const void *, void *, size_t, MPC_Datatype);
+typedef void (MPC_User_function) (void *, void *, int *, MPC_Datatype *);
 
-  typedef void (MPC_Handler_function) (MPC_Comm *, int *, ...);
-  typedef MPC_Handler_function *MPC_Errhandler;
+typedef void (MPC_Handler_function) (MPC_Comm *, int *, ...);
+typedef MPC_Handler_function *MPC_Errhandler;
 
-  typedef struct
-  {
-    MPC_Op_f func;
-    MPC_User_function *u_func;
-  } MPC_Op;
+typedef struct
+{
+	MPC_Op_f func;
+	MPC_User_function *u_func;
+} MPC_Op;
+
 #define MPC_OP_INIT {NULL,NULL}
 
 typedef struct
@@ -115,63 +118,64 @@ typedef struct
 #define MPC_STATUS_INIT {MPC_ANY_SOURCE,MPC_ANY_TAG,MPC_SUCCESS,0,0}
 
 
-  typedef struct MPC_Header{
-    int source;
-    int destination;
-    int destination_task;
-    int source_task;
-    int message_tag;
-    MPC_Comm communicator;
-    mpc_msg_count msg_size;
-  }MPC_Header;
+typedef struct MPC_Header{
+	int source;
+	int destination;
+	int destination_task;
+	int source_task;
+	int message_tag;
+	MPC_Comm communicator;
+	mpc_msg_count msg_size;
+}MPC_Header;
 
-  struct sctk_thread_ptp_message_s;
+struct sctk_thread_ptp_message_s;
 
 
-  /* Generalized requests functions */
-  
-  typedef int MPC_Grequest_query_function( void * extra_state, MPC_Status *status );
-  typedef int MPC_Grequest_cancel_function( void * extra_state, int complete );
-  typedef int MPC_Grequest_free_function( void * extra_state );
+/* Generalized requests functions */
 
-  /* Extended Generalized requests functions */
-  
-  typedef int MPCX_Grequest_poll_fn( void * extra_state , MPC_Status * status );
-  typedef int MPCX_Grequest_wait_fn( int count, void ** array_of_states, double timeout, MPC_Status * status );
+typedef int MPC_Grequest_query_function( void * extra_state, MPC_Status *status );
+typedef int MPC_Grequest_cancel_function( void * extra_state, int complete );
+typedef int MPC_Grequest_free_function( void * extra_state );
 
-  /* Generalized Request classes */
-  typedef int MPCX_Request_class;
-  
-  /* Request definition */
-  typedef struct
-  {
+/* Extended Generalized requests functions */
+
+typedef int MPCX_Grequest_poll_fn( void * extra_state , MPC_Status * status );
+typedef int MPCX_Grequest_wait_fn( int count, void ** array_of_states, double timeout, MPC_Status * status );
+
+/* Generalized Request classes */
+typedef int MPCX_Request_class;
+
+/* Request definition */
+typedef struct
+{
 	int request_type;
-    MPC_Header header;
-    volatile int completion_flag;
-    struct sctk_thread_ptp_message_s* msg;
-    int is_null;
-    int need_check_in_wait;
-    int truncated;
+	MPC_Header header;
+	volatile int completion_flag;
+	struct sctk_thread_ptp_message_s* msg;
+	int is_null;
+	int need_check_in_wait;
+	int truncated;
 	int status_error;
-    
-    /* Generalized Request context  */
-    MPC_Grequest_query_function * query_fn;
-    MPC_Grequest_cancel_function * cancel_fn;
-    MPC_Grequest_free_function * free_fn;
-    void * extra_state;
-    /* Extended Request */
-    MPCX_Grequest_poll_fn * poll_fn;
-    MPCX_Grequest_wait_fn * wait_fn;
 
-    /* MPI_Grequest_complete takes a copy of the struct
-     * not a reference however we have to change a value
-     * in the source struct which is being pulled therefore
-     * we have to do this hack by saving a pointer to the
-     * request inside the request */
-    void * pointer_to_source_request;
-  } MPC_Request;
+	/* Generalized Request context  */
+	MPC_Grequest_query_function * query_fn;
+	MPC_Grequest_cancel_function * cancel_fn;
+	MPC_Grequest_free_function * free_fn;
+	void * extra_state;
+	/* Extended Request */
+	MPCX_Grequest_poll_fn * poll_fn;
+	MPCX_Grequest_wait_fn * wait_fn;
 
-  extern MPC_Request mpc_request_null;
+	/* MPI_Grequest_complete takes a copy of the struct
+	* not a reference however we have to change a value
+	* in the source struct which is being pulled therefore
+	* we have to do this hack by saving a pointer to the
+	* request inside the request */
+	void * pointer_to_source_request;
+} MPC_Request;
+
+extern MPC_Request mpc_request_null;
+
 #define MPC_REQUEST_NULL mpc_request_null
 #define MPC_COMM_WORLD 0
 #define MPC_COMM_SELF 1
