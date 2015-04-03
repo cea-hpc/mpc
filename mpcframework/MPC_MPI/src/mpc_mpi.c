@@ -4955,7 +4955,6 @@ __INTERNAL__PMPI_Bcast_intra (void *buffer, int count, MPI_Datatype datatype, in
 	
 	reqs_send = sctk_malloc(size * sizeof(MPI_Request));
 	
-    /* Non-root receive the data. */
     if (rank != root) 
     {
         res = __INTERNAL__PMPI_Irecv(buffer, count, datatype, root, MPC_BROADCAST_TAG, comm, &req_recv);
@@ -4965,7 +4964,6 @@ __INTERNAL__PMPI_Bcast_intra (void *buffer, int count, MPI_Datatype datatype, in
     }
 	else
 	{
-		/* Root sends data to all others. */
 		for (i=0, j=0; i<size; i++) 
 		{
 			if (i == rank) 
@@ -5005,73 +5003,133 @@ __INTERNAL__PMPI_Bcast (void *buffer, int count, MPI_Datatype datatype, int root
 }
 
 static int
+__INTERNAL__PMPI_Gather_intra (void *sendbuf, int sendcnt, MPI_Datatype sendtype,
+			 void *recvbuf, int recvcnt, MPI_Datatype recvtype,
+			 int root, MPI_Comm comm)
+{
+	MPI_Aint dsize;
+	int res, rank, size;
+	MPI_Request request;
+	MPI_Request recvrequest[MPI_MAX_CONCURENT];
+
+	res = __INTERNAL__PMPI_Comm_size (comm, &size);
+	if(res != MPI_SUCCESS){return res;}
+	res = __INTERNAL__PMPI_Comm_rank (comm, &rank);
+	if(res != MPI_SUCCESS){return res;}
+
+	if (sendbuf != MPI_IN_PLACE) 
+	{
+		res = __INTERNAL__PMPI_Isend (sendbuf, sendcnt, sendtype, root, MPC_GATHER_TAG, comm,
+		&request);
+		if(res != MPI_SUCCESS){return res;}
+	}    
+	else 
+		request = MPI_REQUEST_NULL;
+
+	if (rank == root)
+	{
+		int i = 0;
+		int j;
+		
+		res = __INTERNAL__PMPI_Type_extent (recvtype, &dsize);
+		if(res != MPI_SUCCESS){return res;}
+		
+		while (i < size)
+		{
+			for (j = 0; (i < size) && (j < MPI_MAX_CONCURENT);)
+			{
+				if ((sendbuf == MPI_IN_PLACE) && (rank == i))
+					recvrequest[j] = MPI_REQUEST_NULL;
+				else 
+				{
+					res = __INTERNAL__PMPI_Irecv (
+					((char *) recvbuf) + (i * recvcnt * dsize),
+					recvcnt, 
+					recvtype, 
+					i, 
+					MPC_GATHER_TAG, 
+					comm,
+					&(recvrequest[j]));
+					if(res != MPI_SUCCESS){return res;}
+				}
+
+				i++;
+				j++;
+			}
+			j--;
+			res = __INTERNAL__PMPI_Waitall(j+1, recvrequest, MPI_STATUSES_IGNORE);
+			if(res != MPI_SUCCESS){return res;}
+		}
+	}
+
+	res = __INTERNAL__PMPI_Wait (&(request), MPI_STATUS_IGNORE);
+	if(res != MPI_SUCCESS){return res;}
+	
+	__INTERNAL__PMPI_Barrier (comm);
+	return res;
+}
+
+static int
+__INTERNAL__PMPI_Gather_inter (void *sendbuf, int sendcnt, MPI_Datatype sendtype,
+			 void *recvbuf, int recvcnt, MPI_Datatype recvtype,
+			 int root, MPI_Comm comm)
+{
+	char *ptmp;
+	int i, res, rank, size;
+    MPI_Aint incr, extent;
+    
+    res = __INTERNAL__PMPI_Comm_remote_size(comm, &size);
+    if(res != MPI_SUCCESS){return res;}
+    
+	if (MPI_PROC_NULL == root) 
+	{
+        MPI_ERROR_SUCESS ();
+    } 
+    else if (root != MPI_ROOT) 
+    {
+        res = __INTERNAL__PMPI_Send(sendbuf, sendcnt, sendtype, root,
+                                MPC_GATHER_TAG, comm);
+        if(res != MPI_SUCCESS){return res;}
+    } 
+    else 
+    {
+        res = __INTERNAL__PMPI_Type_extent(recvtype, &extent);
+		if(res != MPI_SUCCESS){return res;}
+
+        incr = extent * recvcnt;
+        for (i = 0, ptmp = (char *) recvbuf; i < size; ++i, ptmp += incr) 
+        {
+            res = __INTERNAL__PMPI_Recv(ptmp, recvcnt, recvtype, i,
+                                MPC_GATHER_TAG, comm, MPI_STATUS_IGNORE);
+			if(res != MPI_SUCCESS){return res;}
+        }
+    }
+    return res;
+}
+
+static int
 __INTERNAL__PMPI_Gather (void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 			 void *recvbuf, int recvcnt, MPI_Datatype recvtype,
 			 int root, MPI_Comm comm)
 {
-  if (sctk_datatype_is_derived (sendtype) || sctk_datatype_is_derived (recvtype) || 1)
-    {
-      MPI_Aint dsize;
-      int size;
-      int rank;
-      MPI_Request request;
-      MPI_Request recvrequest[MPI_MAX_CONCURENT];
-
-
-      __INTERNAL__PMPI_Comm_size (comm, &size);
-      __INTERNAL__PMPI_Comm_rank (comm, &rank);
-
-    if (sendbuf != MPC_IN_PLACE) {
-      __INTERNAL__PMPI_Isend (sendbuf, sendcnt, sendtype, root, -2, comm,
-			      &request);
-    }    else 
-    request = MPI_REQUEST_NULL;
-
-      if (rank == root)
+	int res = MPI_ERR_INTERN;
+	
+	/* Intercomm */
+	if(sctk_is_inter_comm(comm))
 	{
-	  int i = 0;
-	  int j;
-/* 	  __INTERNAL__PMPI_Pack_size(1,recvtype,comm,&dsize); */
-	  __INTERNAL__PMPI_Type_extent (recvtype, &dsize);
-	  while (i < size)
-	    {
-	      for (j = 0; (i < size) && (j < MPI_MAX_CONCURENT);)
-		{
-        if ((sendbuf == MPC_IN_PLACE) && (rank == i))
-            recvrequest[j] = MPI_REQUEST_NULL;
-        else {
-		  __INTERNAL__PMPI_Irecv (((char *) recvbuf) +
-					  (i * recvcnt * dsize),
-					  recvcnt, recvtype, i, -2, comm,
-					  &(recvrequest[j]));
-        }
-
-		  i++;
-		  j++;
-		}
-	      j--;
-	      __INTERNAL__PMPI_Waitall(j+1, recvrequest, MPI_STATUSES_IGNORE);
-/*
-	      for (; j >= 0; j--)
-		{
-		  __INTERNAL__PMPI_Wait (&(recvrequest[j]),
-					 MPI_STATUS_IGNORE);
-		}
-*/
-	    }
+		res = __INTERNAL__PMPI_Gather_inter(sendbuf, sendcnt, sendtype, recvbuf, 
+			recvcnt, recvtype, root, comm);
+		if(res != MPI_SUCCESS){return res;}
+	}
+	else
+	{
+		/* Intracomm */
+		res = __INTERNAL__PMPI_Gather_intra(sendbuf, sendcnt, sendtype, recvbuf, 
+			recvcnt, recvtype, root, comm);
+		if(res != MPI_SUCCESS){return res;}
 	}
 
-      __INTERNAL__PMPI_Wait (&(request), MPI_STATUS_IGNORE);
-
-      __INTERNAL__PMPI_Barrier (comm);
-      return MPI_SUCCESS;
-    }
-  else
-    {
-	  not_reachable();
-      return PMPC_Gather (sendbuf, sendcnt, sendtype, recvbuf, recvcnt,
-			 recvtype, root, comm);
-    }
+	return res;
 }
 static int
 __INTERNAL__PMPI_Gatherv (void *sendbuf, int sendcnt, MPI_Datatype sendtype,
