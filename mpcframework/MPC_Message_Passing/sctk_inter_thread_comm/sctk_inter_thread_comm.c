@@ -679,8 +679,13 @@ void sctk_message_completion_and_free ( sctk_thread_ptp_message_t *send,
 	{
 		size_t send_size;
 		size_t recv_size;
+
 		/* Update the request with the source, message tag and message size */
-		recv->tail.request->header.source = SCTK_MSG_SRC_PROCESS ( send );
+		
+		/* Make sure to do the communicator translation here
+		 * as messages are sent with their comm_world rank */
+		recv->tail.request->header.source = sctk_get_rank ( recv->tail.request->header.communicator, SCTK_MSG_SRC_TASK ( send ) );
+		
 		recv->tail.request->header.message_tag = SCTK_MSG_TAG ( send );
 		recv->tail.request->header.msg_size = SCTK_MSG_SIZE ( send );
 		sctk_nodebug ( "request->header.msg_size = %d", recv->tail.request->header.msg_size );
@@ -1783,6 +1788,7 @@ void sctk_set_header_in_message ( sctk_thread_ptp_message_t * msg,
 		{
 			/* Otherwise source does not matter */
 			SCTK_MSG_SRC_TASK_SET ( msg, -1 );
+			SCTK_MSG_SRC_PROCESS_SET ( msg, -1 );
 		}
 		
 		/* Fill in dest */
@@ -1933,9 +1939,15 @@ static inline sctk_msg_list_t *sctk_perform_messages_search_matching (
 		header_found = & ( ptr_found->msg->body.header );
 
 		/* Match the communicator, the tag, the source and the specific message tag */
-		if (	( header->communicator == header_found->communicator ) &&
+		if (    /* Match Communicator */
+		        ( header->communicator == header_found->communicator ) &&
+		        /* Match message type */
 		        ( header->message_type.type == header_found->message_type.type ) &&
+		        /* Match source Process */
 		        ( ( header->source == header_found->source ) || ( header->source == MPC_ANY_SOURCE ) ) &&
+		        /* Match source task appart for process specific messages which are not matched at task level */
+		        ( ( header->source_task == header_found->source_task ) || ( header->source_task == MPC_ANY_SOURCE ) || sctk_message_class_is_process_specific(header->message_type.type)  ) &&
+		        /* Match Message Tag */
 		        ( ( header->message_tag == header_found->message_tag ) || ( ( header->message_tag == MPC_ANY_TAG ) && ( header_found->message_tag >= 0 ) ) ) )
 		{
 			/* update the status with ERR_TYPE if datatypes don't match*/
@@ -2691,7 +2703,7 @@ void sctk_recv_message_try_check ( sctk_thread_ptp_message_t *msg, sctk_internal
 	}
 
 	/* We add the message to the pending list */
-	sctk_nodebug ( "Post recv from PROCESS [%d -> %d] TASK [%d -> %d] (%d) %p",
+	sctk_debug ( "Post recv from PROCESS [%d -> %d] TASK [%d -> %d] (%d) %p",
 	               SCTK_MSG_SRC_PROCESS ( msg ), SCTK_MSG_DEST_PROCESS ( msg ), SCTK_MSG_SRC_TASK ( msg ), SCTK_MSG_DEST_TASK ( msg ),  SCTK_MSG_TAG ( msg ), msg->tail.request );
 	sctk_internal_ptp_add_pending ( recv_ptp, msg );
 	sctk_internal_ptp_add_recv_incomming ( recv_ptp, msg );

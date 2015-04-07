@@ -2638,43 +2638,45 @@ __INTERNAL__PMPI_Startall (int count, MPI_Request * array_of_requests)
   return MPI_SUCCESS;
 }
 
-static int
-__INTERNAL__PMPI_Sendrecv (void *sendbuf, int sendcount,
+static int __INTERNAL__PMPI_Sendrecv (void *sendbuf, int sendcount,
 			   MPI_Datatype sendtype, int dest, int sendtag,
 			   void *recvbuf, int recvcount,
 			   MPI_Datatype recvtype, int source, int recvtag,
 			   MPI_Comm comm, MPI_Status * status)
 {
-  int res;
-  MPI_Request s_request;
-  MPI_Request r_request;
-  MPI_Status s_status;
+	int res;
+	MPI_Request s_request;
+	MPI_Request r_request;
+	MPI_Status s_status;
 
-  sctk_nodebug ("__INTERNAL__PMPI_Sendrecv TYPE %d %d", sendtype, recvtype);
+	sctk_nodebug ("__INTERNAL__PMPI_Sendrecv TYPE %d %d", sendtype, recvtype);
 
-  res =
-    __INTERNAL__PMPI_Isend (sendbuf, sendcount, sendtype, dest, sendtag,
-			    comm, &s_request);
-  if (res != MPI_SUCCESS)
-    {
-      return res;
-    }
-  res =
-    __INTERNAL__PMPI_Irecv (recvbuf, recvcount, recvtype, source, recvtag,
-			    comm, &r_request);
-  if (res != MPI_SUCCESS)
-    {
-      return res;
-    }
-  res = __INTERNAL__PMPI_Wait (&s_request, &s_status);
-  if (res != MPI_SUCCESS)
-    {
-      return res;
-    }
-  res = __INTERNAL__PMPI_Wait (&r_request, status);
-  sctk_nodebug ("__INTERNAL__PMPI_Sendrecv TYPE %d %d done", sendtype, recvtype);
-  return res;
+	res = __INTERNAL__PMPI_Isend (sendbuf, sendcount, sendtype, dest, sendtag, comm, &s_request);
+	
+	if (res != MPI_SUCCESS)
+	{
+		return res;
+	}
+	res = __INTERNAL__PMPI_Irecv (recvbuf, recvcount, recvtype, source, recvtag, comm, &r_request);
+	
+	if (res != MPI_SUCCESS)
+	{
+		return res;
+	}
+	
+	res = __INTERNAL__PMPI_Wait (&s_request, &s_status);
+	
+	if (res != MPI_SUCCESS)
+	{
+		return res;
+	}
+	
+	res = __INTERNAL__PMPI_Wait (&r_request, status);
+
+	sctk_nodebug ("__INTERNAL__PMPI_Sendrecv TYPE %d %d done", sendtype, recvtype);
+	return res;
 }
+
 static int
 __INTERNAL__PMPI_Sendrecv_replace (void *buf, int count,
 				   MPI_Datatype datatype, int dest,

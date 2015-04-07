@@ -124,9 +124,6 @@ static inline sctk_internal_communicator_t *sctk_check_internal_communicator_no_
 	int i=0, j=0;
 	sctk_internal_communicator_t *tmp = NULL;
 
-	if (communicator < 0)
-		k = *(int *)0;
-	
 	assume ( communicator >= 0 );
 
 	if ( communicator >= SCTK_MAX_COMMUNICATOR_TAB )

@@ -3867,12 +3867,15 @@ __MPC_Test_no_check (MPC_Request * request, int *flag, MPC_Status * status)
 
 int PMPC_Wait (MPC_Request * request, MPC_Status * status)
 {
+	
   int res;
   SCTK_PROFIL_START (MPC_Wait);
 #ifdef MPC_LOG_DEBUG
   mpc_log_debug (MPC_COMM_WORLD, "MPC_Wait req=%p", request);
 #endif
+
   res = __MPC_Wait (request, status);
+
   SCTK_PROFIL_END (MPC_Wait);
   return res;
 }
@@ -4749,7 +4752,7 @@ static inline int MPC_Iprobe_inter (const int source, const int destination,
 	if ((source == MPC_ANY_SOURCE) && (tag == MPC_ANY_TAG))
 		{
 		sctk_probe_any_source_any_tag (destination, comm, flag, &msg);
-		status->MPC_SOURCE = msg.source;
+		status->MPC_SOURCE = msg.source_task;
 		status->MPC_TAG = msg.message_tag;
 		status->size = (mpc_msg_count) msg.msg_size;
 		status->MPC_ERROR = MPC_ERR_PENDING;
@@ -4760,7 +4763,7 @@ static inline int MPC_Iprobe_inter (const int source, const int destination,
 	{
 		msg.message_tag = tag;
 		sctk_probe_source_tag (destination, source, comm, flag, &msg);
-		status->MPC_SOURCE = msg.source;
+		status->MPC_SOURCE = msg.source_task;
 		status->MPC_TAG = msg.message_tag;
 		status->size = (mpc_msg_count) msg.msg_size;
 		status->MPC_ERROR = MPC_ERR_PENDING;
@@ -4770,7 +4773,7 @@ static inline int MPC_Iprobe_inter (const int source, const int destination,
 	if ((source != MPC_ANY_SOURCE) && (tag == MPC_ANY_TAG))
 	{
 		sctk_probe_source_any_tag (destination, source, comm, flag, &msg);
-		status->MPC_SOURCE = msg.source;
+		status->MPC_SOURCE = msg.source_task;
 		status->MPC_TAG = msg.message_tag;
 		status->size = (mpc_msg_count) msg.msg_size;
 		status->MPC_ERROR = MPC_ERR_PENDING;
@@ -4781,7 +4784,7 @@ static inline int MPC_Iprobe_inter (const int source, const int destination,
 	{
 		msg.message_tag = tag;
 		sctk_probe_any_source_tag (destination, comm, flag, &msg);
-		status->MPC_SOURCE = msg.source;
+		status->MPC_SOURCE = msg.source_task;
 		status->MPC_TAG = msg.message_tag;
 		status->size = (mpc_msg_count) msg.msg_size;
 		status->MPC_ERROR = MPC_ERR_PENDING;
