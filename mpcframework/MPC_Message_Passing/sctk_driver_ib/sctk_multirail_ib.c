@@ -32,7 +32,6 @@
 #include <sctk_tcp.h>
 #include <opa_primitives.h>
 #include <sctk_checksum.h>
-#include "sctk_ib_fallback.h"
 #include "sctk_ib_mpi.h"
 #include "sctk_ib_config.h"
 #include "sctk_ib_toolkit.h"
