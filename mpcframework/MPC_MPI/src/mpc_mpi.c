@@ -12276,7 +12276,7 @@ PMPI_Scatterv (void *sendbuf, int *sendcnts, int *displs,
 	       MPI_Datatype recvtype, int root, MPI_Comm comm)
 {
 	int res = MPI_ERR_INTERN;
-	int size, rank;
+	int size, rank, i;
 #ifndef ENABLE_COLLECTIVES_ON_INTERCOMM
 	if(sctk_is_inter_comm (comm)){
 		MPI_ERROR_REPORT(comm,MPI_ERR_COMM,"");
@@ -12287,14 +12287,21 @@ PMPI_Scatterv (void *sendbuf, int *sendcnts, int *displs,
 	
 	/* Error checking */
 	mpi_check_comm (comm, comm);
-	res = __INTERNAL__PMPI_Comm_size (comm, &size);
+	res = __INTERNAL__PMPI_Comm_remote_size (comm, &size);
 	if(res != MPI_SUCCESS){return res;}
 	res = __INTERNAL__PMPI_Comm_rank (comm, &rank);
 	if(res != MPI_SUCCESS){return res;}
 	
 	mpi_check_root(root,size,comm);
-	mpi_check_buf (sendbuf, comm);
-	mpi_check_type (sendtype, comm);
+	if(rank == root)
+	{
+		for(i=0; i<size; i++)
+			mpi_check_count(sendcnts[i], comm);
+		
+		mpi_check_buf (sendbuf, comm);
+		mpi_check_type (sendtype, comm);
+	}
+	
 	mpi_check_buf (recvbuf, comm);
 	mpi_check_count (recvcnt, comm);
 	mpi_check_type (recvtype, comm);

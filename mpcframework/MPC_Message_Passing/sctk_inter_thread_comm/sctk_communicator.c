@@ -1479,7 +1479,7 @@ inline int sctk_get_nb_task_remote ( const sctk_communicator_t communicator )
 		}
 	}
 	else
-		return 0;
+		return tmp->nb_task;
 }
 
 /************************* FUNCTION ************************/
