@@ -48,7 +48,6 @@
 #include <sctk_ib_prof.h>
 #include <sctk_route.h>
 #include <sctk_ibufs_rdma.h>
-#include <sctk_multirail_ib.h>
 #include <sctk_io_helper.h>
 
 /* Initialize a new route table */

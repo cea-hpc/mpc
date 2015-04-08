@@ -37,6 +37,7 @@
 #include "utlist.h"
 #include "sctk_ib_mpi.h"
 #include "sctk_ib_rdma.h"
+#include "sctk_ib_topology.h"
 
 #if defined SCTK_IB_MODULE_NAME
 #error "SCTK_IB_MODULE already defined"
@@ -577,5 +578,59 @@ int sctk_ib_cp_handle_message ( sctk_rail_info_t *rail, sctk_ibuf_t *ibuf, int d
 		return 1;
 	}
 }
+
+
+/** Collaborative Polling Init and release */
+
+void sctk_network_notify_idle_message_multirail_ib_wait_send ()
+{
+	int i;
+
+	for ( i = 0; i < sctk_rail_count(); i++ )
+	{
+		sctk_rail_info_t * rail = sctk_rail_get_by_id ( i );
+		
+		if( rail->runtime_config_driver_config->driver.type != SCTK_RTCFG_net_driver_infiniband )
+			continue;
+		
+		rail->notify_idle_message ( rail );
+	}
+}
+
+
+
+void sctk_network_initialize_task_collaborative_ib ( int rank, int vp )
+{
+	if ( sctk_process_number > 1 && sctk_network_is_ib_used() )
+	{
+		/* Register task for collaborative polling */
+		sctk_ib_cp_init_task ( rank, vp );
+	}
+
+	int i;
+
+	for ( i = 0; i < sctk_rail_count(); i++ )
+	{
+		sctk_rail_info_t * rail = sctk_rail_get_by_id ( i );
+		
+		if( rail->runtime_config_driver_config->driver.type != SCTK_RTCFG_net_driver_infiniband )
+			continue;
+		
+		/* Register task for topology infos */
+		sctk_ib_topology_init_task ( rail, vp );
+	}
+}
+
+
+void sctk_network_finalize_task_collaborative_ib ( int rank )
+{
+	if ( sctk_process_number > 1 && sctk_network_is_ib_used() )
+	{
+		sctk_ib_cp_finalize_task ( rank );
+	}
+}
+
+
+
 
 #endif

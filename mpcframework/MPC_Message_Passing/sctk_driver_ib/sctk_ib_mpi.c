@@ -28,7 +28,6 @@
 #include <sctk_ib_toolkit.h>
 #include <sctk_route.h>
 #include <sctk_net_tools.h>
-#include <sctk_multirail_ib.h>
 #include "sctk_ib.h"
 #include <sctk_ibufs.h>
 #include <sctk_ibufs_rdma.h>

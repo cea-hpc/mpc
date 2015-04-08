@@ -55,7 +55,6 @@
 #include <mpc_internal_thread.h>
 #include <sctk_communicator.h>
 #include "sctk_pmi.h"
-#include "sctk_multirail_ib.h"
 #include "sctk_ib_prof.h"
 #include <sctk_low_level_comm.h>
 #include "mpc_datatypes.h"
@@ -584,7 +583,7 @@ sctk_thread_create_tmp_start_routine (sctk_thread_data_t * __arg)
     {
       sctk_ptp_per_task_init (tmp.task_id);
 #ifdef MPC_USE_INFINIBAND
-      sctk_network_initialize_task_multirail_ib (tmp.task_id, tmp.virtual_processor);
+      sctk_network_initialize_task_collaborative_ib (tmp.task_id, tmp.virtual_processor);
 #endif
       sctk_register_thread_initial (tmp.task_id);
       sctk_terminaison_barrier (tmp.task_id);
@@ -642,7 +641,7 @@ sctk_thread_create_tmp_start_routine (sctk_thread_data_t * __arg)
       sctk_terminaison_barrier (tmp.task_id);
       sctk_nodebug ("sctk_terminaison_barrier done");
 #ifdef MPC_USE_INFINIBAND
-      sctk_network_finalize_task_multirail_ib (tmp.task_id);
+      sctk_network_finalize_task_collaborative_ib(tmp.task_id);
 #endif
       sctk_unregister_task (tmp.task_id);
       sctk_net_send_task_end (tmp.task_id, sctk_process_rank);
@@ -2491,12 +2490,6 @@ sctk_start_func (void *(*run) (void *), void *arg)
 	sctk_thread_running = 0;
 
 	#ifdef MPC_Message_Passing
-	
-	#ifdef MPC_USE_INFINIBAND
-	if(sctk_network_is_ib_used() ){
-		sctk_network_finalize_multirail_ib();
-	}
-	#endif
 	sctk_datatype_release();
 	sctk_ignore_sigpipe();
 	sctk_communicator_delete ();

@@ -31,7 +31,6 @@
 #include "sctk_ib_polling.h"
 #include "sctk_ibufs.h"
 #include "sctk_ib_mmu.h"
-#include "sctk_multirail_ib.h"
 #include "sctk_net_tools.h"
 #include "sctk_ib_cp.h"
 #include "sctk_ib_prof.h"

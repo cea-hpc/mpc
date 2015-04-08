@@ -736,6 +736,8 @@ static void *wait_send ( void *arg )
 	return NULL;
 }
 
+
+
 /* Send a message without locks. Messages which are sent are not blocked by locks.
  * This is useful for QP deconnexion */
 static inline void __send_ibuf ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *remote, sctk_ibuf_t *ibuf )
