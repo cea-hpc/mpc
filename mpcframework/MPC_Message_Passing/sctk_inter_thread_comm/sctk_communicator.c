@@ -303,22 +303,18 @@ static inline int sctk_del_internal_communicator_no_lock_no_check ( const sctk_c
 /************************* FUNCTION ************************/
 /**
  * This method determine if the global rank is contained in the local group or the remote group
- * @param id Identification number of the inter-communicator.
+ * @param communicator Identification number of the inter-communicator.
  * @param rank global rank
 **/
-int sctk_is_in_local_group ( const sctk_communicator_t communicator )
+int sctk_is_in_local_group_rank ( const sctk_communicator_t communicator , int comm_world_rank )
 {
 	int i = 0;
-	sctk_thread_data_t *thread_data;
-	int comm_world_rank;
+	
 	sctk_internal_communicator_t *tmp;
 
 	if ( communicator == MPC_COMM_WORLD )
 		return 1;
 
-	/* get task id */
-	thread_data = sctk_thread_data_get ();
-	comm_world_rank = thread_data->task_id;
 	tmp = sctk_get_internal_communicator ( communicator );
 
 	assume ( tmp != NULL );
@@ -348,6 +344,20 @@ int sctk_is_in_local_group ( const sctk_communicator_t communicator )
 	}
 
 	return -1;
+}
+
+/************************* FUNCTION ************************/
+/**
+ * This method determine if the global rank is contained in the local group or the remote group
+ * @param communicator Identification number of the inter-communicator.
+**/
+int sctk_is_in_local_group ( const sctk_communicator_t communicator )
+{
+	int comm_world_rank = sctk_get_task_rank();
+	
+	assume( 0 <= comm_world_rank );
+	
+	return sctk_is_in_local_group_rank( communicator, comm_world_rank );
 }
 
 /************************* FUNCTION ************************/
@@ -1546,7 +1556,7 @@ inline int sctk_get_rank ( const sctk_communicator_t communicator, const int com
 
 	if ( tmp->is_inter_comm == 1 )
 	{
-		int result = sctk_is_in_local_group ( communicator );
+		int result = sctk_is_in_local_group_rank ( communicator , comm_world_rank );
 
 		if ( result )
 		{

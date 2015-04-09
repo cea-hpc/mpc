@@ -325,7 +325,7 @@ static inline void sctk_mpc_commit_status_from_request(MPC_Request * request, MP
 	}
 	else if (status != MPC_STATUS_IGNORE)
 	{
-		status->MPC_SOURCE = request->header.source;
+		status->MPC_SOURCE = request->header.source_task;
 		status->MPC_TAG = request->header.message_tag;
 		status->MPC_ERROR = MPC_SUCCESS;
 		
@@ -398,6 +398,8 @@ void sctk_mpc_init_request (MPC_Request * request, MPC_Comm comm, int src, int r
     {
       request->header.source = MPC_PROC_NULL;
       request->header.destination = MPC_PROC_NULL;
+      request->header.source_task = MPC_PROC_NULL;
+      request->header.destination_task = MPC_PROC_NULL;
       request->header.message_tag = MPC_ANY_TAG;
       request->header.communicator = comm;
       request->header.msg_size = 0;
@@ -438,7 +440,7 @@ static inline size_t sctk_mpc_get_message_size(MPC_Request * request){
 }
 
 static inline int sctk_mpc_get_message_source(MPC_Request * request){
-  return request->header.source;
+  return request->header.source_task;
 }
 
 static inline int sctk_mpc_message_is_null(MPC_Request * request){
@@ -4742,48 +4744,7 @@ static inline int MPC_Iprobe_inter (const int source, const int destination,
 	*flag = 0;
 
 	sctk_assert (status != MPC_STATUS_IGNORE);
-	
-	if ((source == MPC_ANY_SOURCE) && (tag == MPC_ANY_TAG))
-		{
-		sctk_probe_any_source_any_tag (destination, comm, flag, &msg);
-		status->MPC_SOURCE = msg.source_task;
-		status->MPC_TAG = msg.message_tag;
-		status->size = (mpc_msg_count) msg.msg_size;
-		status->MPC_ERROR = MPC_ERR_PENDING;
-		MPC_ERROR_SUCESS ();
-	}
-	
-	if ((source != MPC_ANY_SOURCE) && (tag != MPC_ANY_TAG))
-	{
-		msg.message_tag = tag;
-		sctk_probe_source_tag (destination, source, comm, flag, &msg);
-		status->MPC_SOURCE = msg.source_task;
-		status->MPC_TAG = msg.message_tag;
-		status->size = (mpc_msg_count) msg.msg_size;
-		status->MPC_ERROR = MPC_ERR_PENDING;
-		MPC_ERROR_SUCESS ();
-	}
-	
-	if ((source != MPC_ANY_SOURCE) && (tag == MPC_ANY_TAG))
-	{
-		sctk_probe_source_any_tag (destination, source, comm, flag, &msg);
-		status->MPC_SOURCE = msg.source_task;
-		status->MPC_TAG = msg.message_tag;
-		status->size = (mpc_msg_count) msg.msg_size;
-		status->MPC_ERROR = MPC_ERR_PENDING;
-		MPC_ERROR_SUCESS ();
-	}
-	
-	if ((source == MPC_ANY_SOURCE) && (tag != MPC_ANY_TAG))
-	{
-		msg.message_tag = tag;
-		sctk_probe_any_source_tag (destination, comm, flag, &msg);
-		status->MPC_SOURCE = msg.source_task;
-		status->MPC_TAG = msg.message_tag;
-		status->size = (mpc_msg_count) msg.msg_size;
-		status->MPC_ERROR = MPC_ERR_PENDING;
-		MPC_ERROR_SUCESS ();
-	}
+
 
 	/*handler for MPC_PROC_NULL*/
 	if (source == MPC_PROC_NULL)
@@ -4796,9 +4757,49 @@ static inline int MPC_Iprobe_inter (const int source, const int destination,
 		MPC_ERROR_SUCESS ();
 	}
 
-	fprintf (stderr, "source = %d tag = %d\n", source, tag);
-	not_reachable ();
-	MPC_ERROR_SUCESS ();
+	/* Value to check that the case was handled by
+	 * one of the if in this function */
+	int __did_process = 0;
+	
+	if ((source == MPC_ANY_SOURCE) && (tag == MPC_ANY_TAG))
+	{
+		sctk_probe_any_source_any_tag (destination, comm, flag, &msg);
+		__did_process = 1;
+	}
+	else if ((source != MPC_ANY_SOURCE) && (tag != MPC_ANY_TAG))
+	{
+		msg.message_tag = tag;
+		sctk_probe_source_tag (destination, source, comm, flag, &msg);
+		__did_process = 1;
+	} else if ((source != MPC_ANY_SOURCE) && (tag == MPC_ANY_TAG))
+	{
+		sctk_probe_source_any_tag (destination, source, comm, flag, &msg);
+		__did_process = 1;
+	}
+	else if ((source == MPC_ANY_SOURCE) && (tag != MPC_ANY_TAG))
+	{
+		msg.message_tag = tag;
+		sctk_probe_any_source_tag (destination, comm, flag, &msg);
+		__did_process = 1;
+	}
+
+	
+	if( __did_process )
+	{
+		/* Do not forget to resolve rank here (to match communicator) */
+		status->MPC_SOURCE = sctk_get_rank( comm, msg.source_task );
+		
+		status->MPC_TAG = msg.message_tag;
+		status->size = (mpc_msg_count) msg.msg_size;
+		status->MPC_ERROR = MPC_ERR_PENDING;
+		MPC_ERROR_SUCESS ();
+	}
+	else
+	{
+		fprintf (stderr, "source = %d tag = %d\n", source, tag);
+		not_reachable ();
+		MPC_ERROR_SUCESS ();
+	}
 }
 
 int PMPC_Iprobe (int source, int tag, MPC_Comm comm, int *flag, MPC_Status * status)
