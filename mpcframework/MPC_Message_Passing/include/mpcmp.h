@@ -293,7 +293,9 @@ extern MPC_Request mpc_request_null;
 #define MPC_ALLTOALLW_TAG -8
 #define MPC_BROADCAST_TAG -9
 #define MPC_BARRIER_TAG -10
-#define MPC_LAST_TAG -11
+#define MPC_ALLGATHER_TAG -11
+#define MPC_ALLGATHERV_TAG -12
+#define MPC_LAST_TAG -13
 
 
 

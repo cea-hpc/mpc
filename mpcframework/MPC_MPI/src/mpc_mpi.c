@@ -5035,15 +5035,16 @@ __INTERNAL__PMPI_Gather_intra (void *sendbuf, int sendcnt,
 	res = __INTERNAL__PMPI_Comm_rank (comm, &rank);
 	if(res != MPI_SUCCESS){return res;}
 
-	if (sendbuf != MPI_IN_PLACE) 
+	if((sendbuf == MPC_IN_PLACE) && (rank == root)){
+		request = MPI_REQUEST_NULL;
+	}    
+	else 
 	{
 		res = __INTERNAL__PMPI_Isend (sendbuf, sendcnt, sendtype, root, 
 		MPC_GATHER_TAG, comm, &request);
 		if(res != MPI_SUCCESS){return res;}
-	}    
-	else 
-		request = MPI_REQUEST_NULL;
-
+	}
+	
 	if (rank == root)
 	{
 		int i = 0;
@@ -5056,7 +5057,7 @@ __INTERNAL__PMPI_Gather_intra (void *sendbuf, int sendcnt,
 		{
 			for (j = 0; (i < size) && (j < MPI_MAX_CONCURENT);)
 			{
-				if ((sendbuf == MPI_IN_PLACE) && (rank == i))
+				if ((sendbuf == MPI_IN_PLACE) && (i == root))
 					recvrequest[j] = MPI_REQUEST_NULL;
 				else 
 				{
@@ -5070,7 +5071,6 @@ __INTERNAL__PMPI_Gather_intra (void *sendbuf, int sendcnt,
 					&(recvrequest[j]));
 					if(res != MPI_SUCCESS){return res;}
 				}
-
 				i++;
 				j++;
 			}
@@ -5084,7 +5084,6 @@ __INTERNAL__PMPI_Gather_intra (void *sendbuf, int sendcnt,
 	res = __INTERNAL__PMPI_Wait (&(request), MPI_STATUS_IGNORE);
 	if(res != MPI_SUCCESS){return res;}
 	
-	__INTERNAL__PMPI_Barrier (comm);
 	return res;
 }
 
@@ -5573,11 +5572,11 @@ __INTERNAL__PMPI_Allgather_intra (void *sendbuf, int sendcount,
 	res = __INTERNAL__PMPI_Comm_rank (comm, &rank);
 	if(res != MPI_SUCCESS){return res;}
 	
-	if (sendbuf == MPI_IN_PLACE) 
+	if (sendbuf == MPI_IN_PLACE && rank != root) 
 	{
-		size_t extent;
-		res = __INTERNAL__PMPI_Type_size (recvtype, &extent);
-		sctk_debug("NEW: sendbuf = (char *)recvbuf) + (%d * %d * %d), recvtype %d", rank, extent, recvcount, recvtype);
+		MPI_Aint extent;
+		res = __INTERNAL__PMPI_Type_extent (recvtype, &extent);
+		if(res != MPI_SUCCESS){return res;}
 		sendbuf = ((char*) recvbuf) + (rank * extent * recvcount);
 		sendtype = recvtype;
 		sendcount = recvcount;
@@ -5600,27 +5599,47 @@ __INTERNAL__PMPI_Allgather_inter (void *sendbuf, int sendcount,
 {
 	int size, rank, remote_size, res = MPI_ERR_INTERN;
 	int root = 0;
+	MPI_Aint slb, sextent;
 	void *tmp_buf;
-  
-	if(rank == 0 && sendcount > 0)
+	
+	res = __INTERNAL__PMPI_Comm_rank(comm, &rank);
+	if(res != MPI_SUCCESS){return res;}
+    res = __INTERNAL__PMPI_Comm_size(comm, &size);
+    if(res != MPI_SUCCESS){return res;}
+    res = __INTERNAL__PMPI_Comm_remote_size(comm, &remote_size);
+    if(res != MPI_SUCCESS){return res;}
+    
+	if ((rank == 0) && (sendcount != 0))
 	{
-		tmp_buf = (void *)sctk_malloc(sendcount*size*sizeof(void *));
+		res = __INTERNAL__PMPI_Type_lb(sendtype, &slb);
+		if(res != MPI_SUCCESS){return res;}
+		res = __INTERNAL__PMPI_Type_extent(sendtype, &sextent);
+		if(res != MPI_SUCCESS){return res;}
+		
+		tmp_buf = (void *)sctk_malloc(sextent * sendcount*size*sizeof(void *));
+		tmp_buf = (void *)((char*)tmp_buf - slb);
 	}
-
-	__INTERNAL__PMPI_Gather (sendbuf, sendcount, sendtype, tmp_buf, sendcount, sendtype, 0, sctk_get_local_comm_id(comm));
+	
+	if (sendcount != 0) 
+	{
+		res = __INTERNAL__PMPI_Gather (sendbuf, sendcount, sendtype, tmp_buf, sendcount, sendtype, 0, sctk_get_local_comm_id(comm));
+		if(res != MPI_SUCCESS){return res;}
+	}
 
 	if(sctk_is_in_local_group(comm))
 	{
 		if(sendcount != 0)
 		{
 			root = (rank == 0) ? MPI_ROOT : MPI_PROC_NULL;
-			__INTERNAL__PMPI_Bcast(tmp_buf, size * sendcount, sendtype, root, comm);
+			res = __INTERNAL__PMPI_Bcast(tmp_buf, size * sendcount, sendtype, root, comm);
+			if(res != MPI_SUCCESS){return res;}
 		}
 
 		if(recvcount != 0)
 		{
 			root = 0;
-			__INTERNAL__PMPI_Bcast(recvbuf, remote_size * recvcount, recvtype, root, comm);
+			res = __INTERNAL__PMPI_Bcast(recvbuf, remote_size * recvcount, recvtype, root, comm);
+			if(res != MPI_SUCCESS){return res;}
 		}
 	}
 	else
@@ -5628,13 +5647,15 @@ __INTERNAL__PMPI_Allgather_inter (void *sendbuf, int sendcount,
 		if(recvcount != 0)
 		{
 			root = 0;
-			__INTERNAL__PMPI_Bcast(recvbuf, remote_size * recvcount, recvtype, root, comm);
+			res = __INTERNAL__PMPI_Bcast(recvbuf, remote_size * recvcount, recvtype, root, comm);
+			if(res != MPI_SUCCESS){return res;}
 		}
 
 		if(sendcount != 0)
 		{
 			root = (rank == 0) ? MPI_ROOT : MPI_PROC_NULL;
-			__INTERNAL__PMPI_Bcast(tmp_buf, size * sendcount, sendtype, root, comm);
+			res = __INTERNAL__PMPI_Bcast(tmp_buf, size * sendcount, sendtype, root, comm);
+			if(res != MPI_SUCCESS){return res;}
 		}
 	}
 	return res;
