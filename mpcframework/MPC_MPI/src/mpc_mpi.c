@@ -6076,45 +6076,6 @@ __INTERNAL__PMPI_Alltoallv (void *sendbuf, int *sendcnts, int *sdispls,
 			    int *recvcnts, int *rdispls,
 			    MPI_Datatype recvtype, MPI_Comm comm)
 {
-/*
-  if (sctk_datatype_is_derived (sendtype) || sctk_datatype_is_derived (recvtype))
-    {
-TODO("Should be optimized like PMPC_Alltoallv")
-      int i;
-      int size;
-      int rank;
-      MPI_Request sendrequest;
-      MPI_Request recvrequest;
-      MPI_Aint d_send;
-      MPI_Aint d_recv;
-
-      __INTERNAL__PMPI_Comm_size (comm, &size);
-      __INTERNAL__PMPI_Comm_rank (comm, &rank);
-
-      __INTERNAL__PMPI_Type_extent (sendtype, &d_send);
-      __INTERNAL__PMPI_Type_extent (recvtype, &d_recv);
-      for (i = 0; i < size; i++)
-	{
-	  __INTERNAL__PMPI_Isend (((char *) sendbuf) +
-				  (sdispls[i] * d_send),
-				  sendcnts[i], sendtype, i, -2, comm,
-				  &sendrequest);
-	  __INTERNAL__PMPI_Irecv (((char *) recvbuf) + (rdispls[i] * d_recv),
-				  recvcnts[i], recvtype, i, -2, comm,
-				  &recvrequest);
-
-	  __INTERNAL__PMPI_Wait (&(sendrequest), MPI_STATUS_IGNORE);
-	  __INTERNAL__PMPI_Wait (&(recvrequest), MPI_STATUS_IGNORE);
-	}
-      __INTERNAL__PMPI_Barrier (comm);
-      return MPI_SUCCESS;
-    }
-  else
-    {
-      return PMPC_Alltoallv (sendbuf, sendcnts, sdispls, sendtype, recvbuf,
-			    recvcnts, rdispls, recvtype, comm);
-    }
-*/
 	int res = MPI_ERR_INTERN;
 	
 	/* Intercomm */
@@ -6136,11 +6097,211 @@ TODO("Should be optimized like PMPC_Alltoallv")
 }
 
 static int
-__INTERNAL__PMPI_Alltoallw(void *sendbuf, int *sendcnts, int *sdispls, MPI_Datatype *sendtypes,
-				   void *recvbuf, int *recvcnts, int *rdispls, MPI_Datatype *recvtypes, MPI_Comm comm)
+__INTERNAL__PMPI_Alltoallw_intra(void *sendbuf, int *sendcnts, int *sdispls, 
+MPI_Datatype *sendtypes, void *recvbuf, int *recvcnts, int *rdispls, 
+MPI_Datatype *recvtypes, MPI_Comm comm)
 {
-	return PMPC_Alltoallw (sendbuf, sendcnts, sdispls, sendtypes, recvbuf,
-			    recvcnts, rdispls, recvtypes, comm);
+	int res = MPI_ERR_INTERN;
+	int i, j, ii, ss, dst;
+	int type_size, size;
+	int rank, bblock = 4;
+	MPI_Status status;
+	MPI_Status *starray;
+	MPI_Request *reqarray;
+	int outstanding_requests;
+	
+	res = __INTERNAL__PMPI_Comm_size (comm, &size);
+	if(res != MPI_SUCCESS){return res;}
+	res = __INTERNAL__PMPI_Comm_rank (comm, &rank);
+	if(res != MPI_SUCCESS){return res;}
+	
+	if (bblock < size) bblock = size;
+	
+	if (sendbuf == MPI_IN_PLACE) 
+	{
+        for (i = 0; i < size; ++i) 
+        {
+            for (j = i; j < size; ++j) 
+            {
+                if (rank == i) 
+                {
+                    res = __INTERNAL__PMPI_Sendrecv_replace(
+                    ((char *)recvbuf + rdispls[j]),
+                    recvcnts[j], 
+                    recvtypes[j],
+                    j, 
+                    MPC_ALLTOALLW_TAG,
+                    j, 
+                    MPC_ALLTOALLW_TAG,
+                    comm, 
+                    &status);
+                    if(res != MPI_SUCCESS){return res;}
+                }
+                else if (rank == j) 
+                {
+                    res = __INTERNAL__PMPI_Sendrecv_replace(
+                    ((char *)recvbuf + rdispls[i]),
+                    recvcnts[i], 
+                    recvtypes[i],
+                    i, 
+                    MPC_ALLTOALLW_TAG,
+                    i, 
+                    MPC_ALLTOALLW_TAG,
+                    comm, 
+                    &status);
+                    if(res != MPI_SUCCESS){return res;}
+                }
+            }
+        }
+    }
+    else 
+    {
+		starray  = (MPI_Status*)  sctk_malloc(2*bblock*sizeof(MPI_Status));
+		reqarray = (MPI_Request*) sctk_malloc(2*bblock*sizeof(MPI_Request));
+	
+		for (ii=0; ii<size; ii+=bblock)
+		{
+			outstanding_requests = 0;
+			ss = size-ii < bblock ? size-ii : bblock;
+
+			for ( i=0; i<ss; i++ )
+			{
+				dst = (rank+i+ii) % size;
+				if (recvcnts[dst])
+				{
+					res = __INTERNAL__PMPI_Type_size(recvtypes[dst], &type_size);
+					if(res != MPI_SUCCESS){return res;}
+					if (type_size)
+					{
+						res = __INTERNAL__PMPI_Irecv(
+						(char *)recvbuf+rdispls[dst], 
+						recvcnts[dst], 
+						recvtypes[dst], 
+						dst, 
+						MPC_ALLTOALLW_TAG, 
+						comm, 
+						&reqarray[outstanding_requests]);
+						if(res != MPI_SUCCESS){return res;}
+						outstanding_requests++;
+					}
+				}
+			}
+
+			for ( i=0; i<ss; i++ )
+			{
+				dst = (rank-i-ii+size) % size;
+				if (sendcnts[dst])
+				{
+					res = __INTERNAL__PMPI_Type_size(sendtypes[dst], &type_size);
+					if(res != MPI_SUCCESS){return res;}
+					if (type_size)
+					{
+						res = __INTERNAL__PMPI_Isend(
+						(char *)sendbuf+sdispls[dst], 
+						sendcnts[dst], 
+						sendtypes[dst], 
+						dst, 
+						MPC_ALLTOALLW_TAG, 
+						comm, 
+						&reqarray[outstanding_requests]);
+						if(res != MPI_SUCCESS){return res;}
+						outstanding_requests++;
+					}
+				}
+			}
+
+			res = __INTERNAL__PMPI_Waitall(outstanding_requests, reqarray, starray);
+			if(res != MPI_SUCCESS){return res;}
+		}
+	}
+	return res;
+}
+
+static int
+__INTERNAL__PMPI_Alltoallw_inter(void *sendbuf, int *sendcnts, int *sdispls, 
+MPI_Datatype *sendtypes, void *recvbuf, int *recvcnts, int *rdispls, 
+MPI_Datatype *recvtypes, MPI_Comm comm)
+{
+	int res = MPI_ERR_INTERN;
+	int local_size, remote_size, max_size, i;
+	MPI_Status status;
+	MPI_Datatype sendtype, recvtype;
+	int src, dst, rank, sendcount, recvcount;
+	char *sendaddr, *recvaddr;
+
+	res = __INTERNAL__PMPI_Comm_size (comm, &local_size);
+	if(res != MPI_SUCCESS){return res;}
+	res = __INTERNAL__PMPI_Comm_rank (comm, &rank);
+	if(res != MPI_SUCCESS){return res;}
+	res = __INTERNAL__PMPI_Comm_remote_size(comm, &remote_size);
+	if(res != MPI_SUCCESS){return res;}
+
+	max_size = (local_size < remote_size) ? remote_size : local_size;
+	for (i=0; i<max_size; i++)
+	{
+		src = (rank - i + max_size) % max_size;
+		dst = (rank + i) % max_size;
+		if (src >= remote_size)
+		{
+			src = MPI_PROC_NULL;
+			recvaddr = NULL;
+			recvcount = 0;
+			recvtype = MPI_DATATYPE_NULL;
+		}
+		else
+		{
+			recvaddr = (char *)recvbuf + rdispls[src];
+			recvcount = recvcnts[src];
+			recvtype = recvtypes[src];
+		}
+		if (dst >= remote_size)
+		{
+			dst = MPI_PROC_NULL;
+			sendaddr = NULL;
+			sendcount = 0;
+			sendtype = MPI_DATATYPE_NULL;
+		}
+		else
+		{
+			sendaddr = (char *)sendbuf+sdispls[dst];
+			sendcount = sendcnts[dst];
+			sendtype = sendtypes[dst];
+		}
+
+		res = __INTERNAL__PMPI_Sendrecv(sendaddr, sendcount, sendtype, 
+		dst, MPC_ALLTOALLW_TAG, recvaddr, recvcount, recvtype, src, 
+		MPC_ALLTOALLW_TAG, comm, &status);
+	}
+	return res;
+}
+
+static int
+__INTERNAL__PMPI_Alltoallw(void *sendbuf, int *sendcnts, int *sdispls, 
+MPI_Datatype *sendtypes, void *recvbuf, int *recvcnts, int *rdispls, 
+MPI_Datatype *recvtypes, MPI_Comm comm)
+{
+/*
+	return PMPC_Alltoallw (sendbuf, sendcnts, sdispls, sendtypes, 
+	recvbuf, recvcnts, rdispls, recvtypes, comm);
+*/
+	int res = MPI_ERR_INTERN;
+	
+	/* Intercomm */
+	if(sctk_is_inter_comm(comm))
+	{
+		res = __INTERNAL__PMPI_Alltoallw_inter(sendbuf, sendcnts, 
+		sdispls, sendtypes, recvbuf, recvcnts, rdispls, recvtypes, comm);
+		if(res != MPI_SUCCESS){return res;}
+	}
+	else
+	{
+		/* Intracomm */
+		res = __INTERNAL__PMPI_Alltoallw_intra(sendbuf, sendcnts, 
+		sdispls, sendtypes, recvbuf, recvcnts, rdispls, recvtypes, comm);
+		if(res != MPI_SUCCESS){return res;}
+	}
+
+	return res;
 }
 
 /* Neighbor collectives */
@@ -12921,6 +13082,11 @@ PMPI_Alltoall (void *sendbuf, int sendcount, MPI_Datatype sendtype,
 	mpi_check_count (recvcount, comm);
 	mpi_check_type (recvtype, comm);
     
+    if (MPI_IN_PLACE == sendbuf) {
+		sendcount = recvcount;
+		sendtype = recvtype;
+	}
+        
 	if (recvbuf == MPI_IN_PLACE) {
 		MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
 	}
@@ -12985,8 +13151,10 @@ int PMPI_Alltoallw(void *sendbuf, int *sendcnts, int *sdispls, MPI_Datatype *sen
 				   void *recvbuf, int *recvcnts, int *rdispls, MPI_Datatype *recvtypes, MPI_Comm comm)
 {
 	int res = MPI_ERR_INTERN;
-	int size;
+	int size, rsize, rank;
 	int i; 
+	MPI_Aint sextent, rextent;
+	
 #ifndef ENABLE_COLLECTIVES_ON_INTERCOMM
 	if(sctk_is_inter_comm (comm)){
 		MPI_ERROR_REPORT(comm,MPI_ERR_COMM,"");
@@ -12995,21 +13163,34 @@ int PMPI_Alltoallw(void *sendbuf, int *sendcnts, int *sdispls, MPI_Datatype *sen
 	/* Profiling */
 	SCTK_PROFIL_START (MPI_Alltoallw);
 	
+	res = __INTERNAL__PMPI_Comm_size (comm, &size);
+	if(res != MPI_SUCCESS){return res;}
+	res = __INTERNAL__PMPI_Comm_remote_size (comm, &rsize);
+	if(res != MPI_SUCCESS){return res;}
+	res = __INTERNAL__PMPI_Comm_rank (comm, &rank);
+	if(res != MPI_SUCCESS){return res;}
+	
 	/* Error checking */
 	mpi_check_comm (comm, comm);
 	res = __INTERNAL__PMPI_Comm_size (comm, &size);
 	if(res != MPI_SUCCESS){return res;}
 	
-	for(i = 0; i < size; i++)
+	for ( i = 0; i < size; i++ ) 
 	{
-		mpi_check_count (sendcnts[i], comm);
-		mpi_check_count (recvcnts[i], comm);
-		mpi_check_type (sendtypes[i], comm);
+		if (sendbuf != MPI_IN_PLACE) 
+		{
+			mpi_check_type (sendtypes[i], comm);
+			res = __INTERNAL__PMPI_Type_extent(sendtypes[i], &sextent);
+			if(res != MPI_SUCCESS){return res;}
+			mpi_check_buf((char *)(sendbuf)+sdispls[i]*sextent, comm);
+			mpi_check_count (sendcnts[i], comm);
+		}
 		mpi_check_type (recvtypes[i], comm);
+		res = __INTERNAL__PMPI_Type_extent(recvtypes[i], &rextent);
+		if(res != MPI_SUCCESS){return res;}
+		mpi_check_buf((char *)(recvbuf)+rdispls[i]*rextent, comm);
+		mpi_check_count (recvcnts[i], comm);
 	}
-	
-	mpi_check_buf (sendbuf, comm);
-	mpi_check_buf (recvbuf, comm);
 	
 	if (MPI_IN_PLACE == sendbuf) 
 	{
@@ -13017,8 +13198,14 @@ int PMPI_Alltoallw(void *sendbuf, int *sendcnts, int *sdispls, MPI_Datatype *sen
 		sdispls    = rdispls;
 		sendtypes  = recvtypes;
 	}
-	if (MPI_IN_PLACE == recvbuf)
+	
+	if ((NULL == sendcnts) || (NULL == sdispls) || (NULL == sendtypes) ||
+        (NULL == recvcnts) || (NULL == rdispls) || (NULL == recvtypes) ||
+        recvbuf == MPI_IN_PLACE) 
+    {
 		MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
+    }
+		
 		
 	/* Internal */
 	res = __INTERNAL__PMPI_Alltoallw (sendbuf, sendcnts, sdispls,

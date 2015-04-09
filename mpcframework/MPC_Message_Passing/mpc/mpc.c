@@ -6301,7 +6301,7 @@ PMPC_Alltoallw (const void *sendbuf, const int sendcounts[],
                 dst = (rank-i-ii+size) % size;
                 if (sendcounts[dst])
                 {
-                    type_size = __MPC_Get_datatype_size(recvtypes[dst], task_specific);
+                    type_size = __MPC_Get_datatype_size(sendtypes[dst], task_specific);
                     if (type_size)
                     {
                         PMPC_Isend((char *)sendbuf+sdispls[dst], sendcounts[dst], sendtypes[dst], dst, MPC_ALLTOALLW_TAG, comm, &reqarray[outstanding_requests]);
