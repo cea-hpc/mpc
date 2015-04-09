@@ -684,7 +684,7 @@ void sctk_message_completion_and_free ( sctk_thread_ptp_message_t *send,
 		
 		/* Make sure to do the communicator translation here
 		 * as messages are sent with their comm_world rank */
-		recv->tail.request->header.source = sctk_get_rank ( recv->tail.request->header.communicator, SCTK_MSG_SRC_TASK ( send ) );
+		recv->tail.request->header.source = SCTK_MSG_SRC_TASK ( send );
 		
 		recv->tail.request->header.message_tag = SCTK_MSG_TAG ( send );
 		recv->tail.request->header.msg_size = SCTK_MSG_SIZE ( send );
@@ -1762,8 +1762,37 @@ void sctk_set_header_in_message ( sctk_thread_ptp_message_t * msg,
 	else
 	{
 		/* Fill in Source and Dest Process Informations (convert from task) */
-		int source_task = sctk_get_comm_world_rank ( communicator, source );
-		int dest_task = sctk_get_comm_world_rank ( communicator, destination );
+		
+		int source_task = -1;
+		int dest_task = -1;
+		
+		
+		if( sctk_is_inter_comm(communicator) )
+		{
+			/* If this is a RECV make sure the translation is done on the source according to remote */
+			if( (request->request_type == REQUEST_RECV) || (request->request_type == REQUEST_RECV_COLL) )
+			{
+				source_task = sctk_get_remote_comm_world_rank (communicator, source);
+				dest_task = sctk_get_comm_world_rank ( communicator, destination );
+			}
+			
+			/* If this is a SEND make sure the translation is done on the dest according to remote */
+			if( (request->request_type == REQUEST_SEND) || (request->request_type == REQUEST_SEND_COLL) )
+			{
+				source_task = sctk_get_comm_world_rank ( communicator, source );
+				dest_task = sctk_get_remote_comm_world_rank (communicator, destination);
+			}
+		}
+		else
+		{
+			/* If we are not using an inter-comm just translate to COMM_WORLD */
+			source_task = sctk_get_comm_world_rank ( communicator, source );
+			dest_task = sctk_get_comm_world_rank ( communicator, destination );
+		}
+
+		
+		
+		
 		
 		SCTK_MSG_SRC_PROCESS_SET ( msg, sctk_get_process_rank_from_task_rank ( source_task ) );
 		SCTK_MSG_DEST_PROCESS_SET ( msg , sctk_get_process_rank_from_task_rank ( dest_task )  );
@@ -1820,6 +1849,8 @@ void sctk_set_header_in_message ( sctk_thread_ptp_message_t * msg,
 		sctk_request_init_request ( request, SCTK_MESSAGE_PENDING, msg, source, destination, message_tag, communicator, count, request->request_type );
 		SCTK_MSG_COMPLETION_FLAG_SET ( msg , & ( request->completion_flag ) );
 	}
+
+	//sctk_error("SOURCE %d DEST %d COMM %d RSOURCE %d RDEST %d", source, destination,  SCTK_MSG_COMMUNICATOR( msg ), SCTK_MSG_SRC_TASK( msg ), SCTK_MSG_DEST_TASK( msg ) );
 
 	msg->tail.need_check_in_wait = 1;
 }
