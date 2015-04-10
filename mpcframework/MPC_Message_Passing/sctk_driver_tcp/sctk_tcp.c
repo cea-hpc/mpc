@@ -139,7 +139,7 @@ static void sctk_network_notify_perform_message_tcp ( int remote, int remote_tas
 
 static void sctk_network_notify_idle_message_tcp ()
 {
-
+	sched_yield();
 }
 
 static void sctk_network_notify_any_source_message_tcp ( int polling_task_id, int blocking, sctk_rail_info_t *rail )

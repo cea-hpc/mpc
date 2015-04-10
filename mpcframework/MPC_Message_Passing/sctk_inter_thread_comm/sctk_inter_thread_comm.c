@@ -1790,13 +1790,6 @@ void sctk_set_header_in_message ( sctk_thread_ptp_message_t * msg,
 			dest_task = sctk_get_comm_world_rank ( communicator, destination );
 		}
 
-		
-		
-		
-		
-		SCTK_MSG_SRC_PROCESS_SET ( msg, sctk_get_process_rank_from_task_rank ( source_task ) );
-		SCTK_MSG_DEST_PROCESS_SET ( msg , sctk_get_process_rank_from_task_rank ( dest_task )  );
-		
 		/* If source matters */
 		if ( source != MPC_ANY_SOURCE )
 		{
@@ -1835,6 +1828,10 @@ void sctk_set_header_in_message ( sctk_thread_ptp_message_t * msg,
 			SCTK_MSG_DEST_TASK_SET ( msg , dest_task );
 		}
 	}
+	
+	
+	SCTK_MSG_SRC_PROCESS_SET ( msg, sctk_get_process_rank_from_task_rank ( SCTK_MSG_SRC_TASK( msg ) ) );
+	SCTK_MSG_DEST_PROCESS_SET ( msg , sctk_get_process_rank_from_task_rank ( SCTK_MSG_DEST_TASK( msg ) )  );
 
 	/* Fill in Message meta-data */
 	SCTK_MSG_COMMUNICATOR_SET ( msg , communicator );
