@@ -173,7 +173,7 @@ void sctk_route_table_add_static_route (  sctk_route_table_t * table, sctk_endpo
 	assume( tmp->origin == ROUTE_ORIGIN_STATIC );
 	
 	sctk_spinlock_write_lock(&sctk_route_table_static_lock);
-	HASH_ADD_INT( table->dynamic_route_table, dest, tmp );
+	HASH_ADD_INT( table->static_route_table, dest, tmp );
 	/* Register route in multi-rail */
 	sctk_multirail_destination_table_push_endpoint( tmp );
 	sctk_spinlock_write_unlock(&sctk_route_table_static_lock);
@@ -213,7 +213,7 @@ sctk_endpoint_t * sctk_route_table_get_dynamic_route( sctk_route_table_t * table
 	sctk_spinlock_read_lock ( &table->dynamic_route_table_lock );
 	tmp = sctk_route_table_get_dynamic_route_no_lock( table ,  dest );
 	sctk_spinlock_read_unlock ( &table->dynamic_route_table_lock );
-
+	
 	return tmp;
 }
 

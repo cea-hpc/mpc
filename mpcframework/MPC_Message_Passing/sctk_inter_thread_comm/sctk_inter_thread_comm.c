@@ -1809,8 +1809,7 @@ void sctk_set_header_in_message ( sctk_thread_ptp_message_t * msg,
 		else
 		{
 			/* Otherwise source does not matter */
-			SCTK_MSG_SRC_TASK_SET ( msg, -1 );
-			SCTK_MSG_SRC_PROCESS_SET ( msg, -1 );
+			SCTK_MSG_SRC_TASK_SET ( msg, MPC_ANY_SOURCE );
 		}
 		
 		/* Fill in dest */
@@ -1828,7 +1827,16 @@ void sctk_set_header_in_message ( sctk_thread_ptp_message_t * msg,
 			SCTK_MSG_DEST_TASK_SET ( msg , dest_task );
 		}
 		
-		SCTK_MSG_SRC_PROCESS_SET ( msg, sctk_get_process_rank_from_task_rank ( SCTK_MSG_SRC_TASK( msg ) ) );
+		/* Only set the source process if we are not in ANY source */
+		if( SCTK_MSG_SRC_TASK( msg ) != MPC_ANY_SOURCE )
+		{
+			SCTK_MSG_SRC_PROCESS_SET ( msg, sctk_get_process_rank_from_task_rank ( SCTK_MSG_SRC_TASK( msg ) ) );
+		}
+		else
+		{
+			SCTK_MSG_SRC_PROCESS_SET ( msg, MPC_ANY_SOURCE );
+		}
+		
 		SCTK_MSG_DEST_PROCESS_SET ( msg , sctk_get_process_rank_from_task_rank ( SCTK_MSG_DEST_TASK( msg ) )  );
 	}
 

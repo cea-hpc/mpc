@@ -485,8 +485,10 @@ recheck:
 		{
 #endif
 			SCTK_PROFIL_START ( ib_poll_cq );
+
 			/* Poll received messages */
 			sctk_ib_cq_poll ( rail, device->recv_cq, config->wc_in_number, poll, sctk_network_poll_recv );
+
 			/* Poll sent messages */
 			sctk_ib_cq_poll ( rail, device->send_cq, config->wc_out_number, poll, sctk_network_poll_send );
 			SCTK_PROFIL_END ( ib_poll_cq );
@@ -681,11 +683,6 @@ static void sctk_network_notify_idle_message_ib ( sctk_rail_info_t *rail )
 				sctk_ib_cp_poll ( rail, &poll, polling_task_id );
 			}
 		}
-	}
-
-	if ( config->steal > 0 )
-	{
-		sctk_ib_cp_steal ( rail, &poll, 0 );
 	}
 }
 

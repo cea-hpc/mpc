@@ -362,7 +362,7 @@ sctk_endpoint_t * sctk_rail_get_static_route_to_process ( sctk_rail_info_t *rail
 sctk_endpoint_t * sctk_rail_get_any_route_to_process ( sctk_rail_info_t *rail, int dest )
 {
 	sctk_endpoint_t *tmp;
-	
+
 	/* First try static routes */
 	tmp = sctk_route_table_get_static_route( rail->route_table , dest );
 
