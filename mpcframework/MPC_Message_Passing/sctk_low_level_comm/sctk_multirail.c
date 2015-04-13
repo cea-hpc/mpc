@@ -434,7 +434,7 @@ sctk_endpoint_t * sctk_multirail_ellect_endpoint( sctk_thread_ptp_message_t *msg
 				if(  sctk_endpoint_get_state ( cur->endpoint ) == STATE_CONNECTING )
 				{
 					wait_connecting = 1;
-					//sctk_network_notify_any_source_message ( -1, 0 );
+					sctk_network_notify_idle_message ();
 					sched_yield();
 				}
 				else
