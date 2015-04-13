@@ -7541,44 +7541,154 @@ __INTERNAL__PMPI_Allreduce (void *sendbuf, void *recvbuf, int count,
 }
 
 static int
+__INTERNAL__PMPI_Reduce_scatter_intra (void *sendbuf, void *recvbuf, int *recvcnts,
+				 MPI_Datatype datatype, MPI_Op op,
+				 MPI_Comm comm)
+{
+	int res = MPI_ERR_INTERN;
+	int i;
+	MPI_Aint dsize;
+	int size;
+	int acc = 0;
+
+	res = __INTERNAL__PMPI_Comm_size (comm, &size);
+	if(res != MPI_SUCCESS){return res;}
+	res = __INTERNAL__PMPI_Type_extent (datatype, &dsize);
+	if(res != MPI_SUCCESS){return res;}
+
+	for (i = 0; i < size; i++)
+	{
+		if (sendbuf == MPI_IN_PLACE)
+		{
+			sendbuf = recvbuf;
+			res = __INTERNAL__PMPI_Reduce (sendbuf, recvbuf, recvcnts[i], datatype, op, i, comm);
+		}
+		else
+		{
+			res = __INTERNAL__PMPI_Reduce (((char *) sendbuf) + (acc * dsize), recvbuf, recvcnts[i], datatype, op, i, comm);
+		}
+		if(res != MPI_SUCCESS){return res;}
+		acc += recvcnts[i];
+	}
+
+	res = __INTERNAL__PMPI_Barrier (comm);
+	return res;
+}
+
+static int
+__INTERNAL__PMPI_Reduce_scatter_inter (void *sendbuf, void *recvbuf, int *recvcnts,
+				 MPI_Datatype datatype, MPI_Op op,
+				 MPI_Comm comm)
+{
+	int res, i, rank, root = 0, rsize, lsize;
+    int totalcounts;
+    MPI_Aint extent;
+    char *tmpbuf = NULL, *tmpbuf2 = NULL;
+    MPI_Request req;
+    int *disps = NULL;
+    MPC_Op mpc_op;
+	sctk_op_t *mpi_op;
+	MPC_Op_f func;
+
+	mpi_op = sctk_convert_to_mpc_op (op);
+	mpc_op = mpi_op->op;
+
+    res = __INTERNAL__PMPI_Comm_rank(comm, &rank);
+    if(res != MPI_SUCCESS){return res;}
+    res = __INTERNAL__PMPI_Comm_size(comm, &lsize);
+    if(res != MPI_SUCCESS){return res;}
+    res = __INTERNAL__PMPI_Comm_remote_size(comm, &rsize);
+    if(res != MPI_SUCCESS){return res;}
+
+    for (totalcounts = 0, i = 0; i < lsize; i++) 
+    {
+        totalcounts += recvcnts[i];
+    }
+
+    if (rank == root) 
+    {
+        res = __INTERNAL__PMPI_Type_extent(datatype, &extent);
+        if(res != MPI_SUCCESS){return res;}
+
+        disps = (int*) sctk_malloc(sizeof(int) * lsize);
+        if (NULL == disps){
+            return MPI_ERR_INTERN;
+        }
+        disps[0] = 0;
+        for (i = 0; i < (lsize - 1); ++i) 
+        {
+            disps[i + 1] = disps[i] + recvcnts[i];
+        }
+
+        tmpbuf = (char *) sctk_malloc(totalcounts * extent);
+        tmpbuf2 = (char *) sctk_malloc(totalcounts * extent);
+        if (NULL == tmpbuf || NULL == tmpbuf2) {
+            return MPI_ERR_INTERN;
+        }
+
+        res = __INTERNAL__PMPI_Isend(sendbuf, totalcounts, datatype, 0, 
+        MPC_REDUCE_SCATTER_TAG, comm, &req);
+        if(res != MPI_SUCCESS){return res;}
+
+        res = __INTERNAL__PMPI_Recv(tmpbuf2, totalcounts, datatype, 0, 
+        MPC_REDUCE_SCATTER_TAG, comm, MPI_STATUS_IGNORE);
+        if(res != MPI_SUCCESS){return res;}
+
+        res = __INTERNAL__PMPI_Wait( &req, MPI_STATUS_IGNORE);
+        if(res != MPI_SUCCESS){return res;}
+
+        for (i = 1; i < rsize; i++) 
+        {
+            res = __INTERNAL__PMPI_Recv(tmpbuf, totalcounts, datatype, 
+            i, MPC_REDUCE_SCATTER_TAG, comm, MPI_STATUS_IGNORE);
+            if(res != MPI_SUCCESS){return res;}
+            
+			if (mpc_op.u_func == NULL)
+			{
+				func = sctk_get_common_function(datatype, mpc_op);
+			}
+			else
+			{
+				func = mpc_op.u_func;
+			}
+			
+			func(tmpbuf, tmpbuf2, totalcounts, datatype);
+        }
+    } 
+    else 
+    {
+        res = __INTERNAL__PMPI_Send(sendbuf, totalcounts, datatype, root, 
+        MPC_REDUCE_SCATTER_TAG, comm);
+        if(res != MPI_SUCCESS){return res;}
+    }
+
+    res = __INTERNAL__PMPI_Scatterv(tmpbuf2, recvcnts, disps, datatype, 
+    recvbuf, recvcnts[rank], datatype, 0, sctk_get_local_comm_id(comm));
+
+    return res;
+}
+
+static int
 __INTERNAL__PMPI_Reduce_scatter (void *sendbuf, void *recvbuf, int *recvcnts,
 				 MPI_Datatype datatype, MPI_Op op,
 				 MPI_Comm comm)
 {
-  int res;
-  int i;
-  MPI_Aint dsize;
-  int size;
-  int acc = 0;
-
-  __INTERNAL__PMPI_Comm_size (comm, &size);
-  __INTERNAL__PMPI_Type_extent (datatype, &dsize);
-
- /* __INTERNAL__PMPI_Barrier (comm); */
- /* fprintf(stderr,"%d size, %d disze %d datatype %d op\n",size,dsize,datatype,op); */
- /* __INTERNAL__PMPI_Barrier (comm); */
-
-  for (i = 0; i < size; i++)
-    {
-      if (sendbuf == MPI_IN_PLACE)
-	  {
-		sendbuf = recvbuf;
-		res = __INTERNAL__PMPI_Reduce (sendbuf, recvbuf, recvcnts[i], datatype, op, i, comm);
-	  }
-	  else
-	  {
-	  	res = __INTERNAL__PMPI_Reduce (((char *) sendbuf) + (acc * dsize), recvbuf, recvcnts[i], datatype, op, i, comm);
-	  }
-      if (res != MPI_SUCCESS)
+	int res = MPI_ERR_INTERN;
+	
+	/* Intercomm */
+	if(sctk_is_inter_comm(comm))
 	{
-	  return res;
+		res = __INTERNAL__PMPI_Reduce_scatter_inter(sendbuf, recvbuf, recvcnts, datatype, op, comm);
+		if(res != MPI_SUCCESS){return res;}
 	}
-      acc += recvcnts[i];
-    }
+	else
+	{
+		/* Intracomm */
+		res = __INTERNAL__PMPI_Reduce_scatter_intra(sendbuf, recvbuf, recvcnts, datatype, op, comm);
+		if(res != MPI_SUCCESS){return res;}
+	}
 
-  res = __INTERNAL__PMPI_Barrier (comm);
-
-  return res;
+	return res;
 }
 
 static int
@@ -13725,7 +13835,10 @@ int PMPI_Reduce (void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
 	if (0 == count) {
 		return MPI_SUCCESS;
 	}
+	
+	/* Internal */
 	res = __INTERNAL__PMPI_Reduce (sendbuf, recvbuf, count, datatype, op, root, comm);
+	
 	/* Profiling */
 	SCTK_PROFIL_END (MPI_Reduce);
 	SCTK_MPI_CHECK_RETURN_VAL (res, comm);
@@ -13780,6 +13893,8 @@ PMPI_Allreduce (void *sendbuf, void *recvbuf, int count,
     if (0 == count) {
         return MPI_SUCCESS;
     }
+    
+    /* Internal */
 	res = __INTERNAL__PMPI_Allreduce (sendbuf, recvbuf, count, datatype, 
 	op, comm);
 	
@@ -13792,34 +13907,41 @@ int
 PMPI_Reduce_scatter (void *sendbuf, void *recvbuf, int *recvcnts,
 		     MPI_Datatype datatype, MPI_Op op, MPI_Comm comm)
 {
-  int i;
-  int size; 
-  int res = MPI_ERR_INTERN;
-        mpi_check_comm (comm, comm);
-  if (MPI_IN_PLACE == recvbuf) {
-	  MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
-  }
-  
+	int i;
+	int size; 
+	int res = MPI_ERR_INTERN;
 #ifndef ENABLE_COLLECTIVES_ON_INTERCOMM
-  if(sctk_is_inter_comm (comm)){
-    MPI_ERROR_REPORT(comm,MPI_ERR_COMM,"");
-  }
+	if(sctk_is_inter_comm (comm)){
+		MPI_ERROR_REPORT(comm,MPI_ERR_COMM,"");
+	}
 #endif
-
+	/* Profiling */
+	SCTK_PROFIL_START (MPI_Reduce_scatter);
+	
+	/* Error checking */
+	mpi_check_comm (comm, comm);
+	if (MPI_IN_PLACE == recvbuf) {
+		MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
+	}
 	mpi_check_buf (sendbuf, comm);
 	mpi_check_buf (recvbuf, comm);
-  
-  __INTERNAL__PMPI_Comm_size (comm, &size);
 
-  for(i = 0; i < size; i++){
-	mpi_check_count (recvcnts[i], comm);
-  }
+	res = __INTERNAL__PMPI_Comm_size (comm, &size);
+	if(res != MPI_SUCCESS){return res;}
+	
+	for(i = 0; i < size; i++){
+		mpi_check_count (recvcnts[i], comm);
+	}
 	mpi_check_type (datatype, comm);
 	mpi_check_op (op,datatype, comm);
-  res =
-    __INTERNAL__PMPI_Reduce_scatter (sendbuf, recvbuf, recvcnts, datatype, op,
-				     comm);
-  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
+	
+	/* Internal */
+	res = __INTERNAL__PMPI_Reduce_scatter (sendbuf, recvbuf, recvcnts, 
+	datatype, op, comm);
+	
+	/* Profiling */
+	SCTK_PROFIL_END (MPI_Reduce_scatter);
+	SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
