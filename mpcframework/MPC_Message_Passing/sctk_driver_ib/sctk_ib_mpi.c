@@ -596,35 +596,11 @@ static void sctk_network_notify_perform_message_ib ( int remote_process, int rem
 	LOAD_CONFIG ( rail_ib );
 	struct sctk_ib_polling_s poll;
 
-#if 0
-	{
-		sctk_ib_qp_t *remote;
-		sctk_ib_route_info_t *route_data;
-		sctk_endpoint_t *route =  sctk_rail_get_any_route_to_process_or_forward ( rail, remote_process );
-		ib_assume ( route );
-		int ret;
-
-		route_data = &route->data.ib;
-		remote = route_data->remote;
-
-		/*  Poll messages fistly on RDMA. If no message has been found,
-		*       * we continue to poll SR channel */
-		ret = sctk_ib_rdma_eager_poll_remote ( rail_ib, remote );
-
-		if ( ret == REORDER_FOUND_EXPECTED )
-			return;
-	}
-#else
-
 	int ret;
 	sctk_ib_rdma_eager_walk_remotes ( rail_ib, sctk_ib_rdma_eager_poll_remote, &ret );
 
 	if ( ret == REORDER_FOUND_EXPECTED )
-	{
 		return;
-	}
-
-#endif
 
 	POLL_INIT ( &poll );
 	SCTK_PROFIL_START ( ib_perform_all );
@@ -645,6 +621,7 @@ static void sctk_network_notify_perform_message_ib ( int remote_process, int rem
 		}
 	}
 
+
 	SCTK_PROFIL_END ( ib_perform_all );
 }
 
@@ -655,33 +632,25 @@ static void sctk_network_notify_idle_message_ib ( sctk_rail_info_t *rail )
 	struct sctk_ib_polling_s poll;
 	int polling_task_id = sctk_get_task_rank();
 
+
 	int ret;
 	sctk_ib_rdma_eager_walk_remotes ( rail_ib, sctk_ib_rdma_eager_poll_remote, &ret );
 
 	if ( ret == REORDER_FOUND_EXPECTED )
 		return;
 
-	if ( polling_task_id >= 0 )
-	{
-		POLL_INIT ( &poll );
-		sctk_ib_cp_poll ( rail, &poll, polling_task_id );
-	}
 
-	/* If nothing to poll, we poll the CQ */
-	if ( POLL_GET_RECV ( &poll ) == 0 )
-	{
-		POLL_INIT ( &poll );
-		sctk_network_poll_all_cq ( rail, &poll, polling_task_id, 0 );
+	POLL_INIT ( &poll );
+	sctk_network_poll_all_cq ( rail, &poll, polling_task_id, 0 );
 
-		/* If the polling returned something or someone already inside the function,
-		* we retry to poll the pending lists */
-		if ( POLL_GET_RECV_CQ ( &poll ) != 0 )
+	/* If the polling returned something or someone already inside the function,
+	* we retry to poll the pending lists */
+	if ( POLL_GET_RECV_CQ ( &poll ) != 0 )
+	{
+		if ( polling_task_id >= 0 )
 		{
-			if ( polling_task_id >= 0 )
-			{
-				POLL_INIT ( &poll );
-				sctk_ib_cp_poll ( rail, &poll, polling_task_id );
-			}
+			POLL_INIT ( &poll );
+			sctk_ib_cp_poll ( rail, &poll, polling_task_id );
 		}
 	}
 }
@@ -699,7 +668,6 @@ static void sctk_network_notify_any_source_message_ib ( int polling_task_id, int
 		if ( ret == REORDER_FOUND_EXPECTED )
 			return;
 	}
-
 
 	POLL_INIT ( &poll );
 	sctk_ib_cp_poll ( rail, &poll, polling_task_id );
@@ -899,6 +867,8 @@ void sctk_network_init_mpi_ib ( sctk_rail_info_t *rail )
 	rail->network_name = network_name;
 
 	rail->send_message_from_network = sctk_send_message_from_network_mpi_ib;
+
+	sctk_polling_tree_set_max_load( &rail->polling_tree, 1 );
 
 	/* Boostrap the ring only if required */
 	if( rail->requires_bootstrap_ring )
