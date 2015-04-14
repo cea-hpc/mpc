@@ -887,6 +887,7 @@ void sctk_network_init_mpi_ib ( sctk_rail_info_t *rail )
 	rail->connect_to = sctk_network_connection_to_ib;
 	rail->connect_from = sctk_network_connection_from_ib;
 	rail->connect_on_demand = sctk_connect_on_demand_mpi_ib;
+	
 	rail->send_message_endpoint = sctk_network_send_message_ib_endpoint;
 
 	rail->notify_recv_message = sctk_network_notify_recv_message_ib;
@@ -894,6 +895,7 @@ void sctk_network_init_mpi_ib ( sctk_rail_info_t *rail )
 	rail->notify_perform_message = sctk_network_notify_perform_message_ib;
 	rail->notify_idle_message = sctk_network_notify_idle_message_ib;
 	rail->notify_any_source_message = sctk_network_notify_any_source_message_ib;
+	
 	rail->network_name = network_name;
 
 	rail->send_message_from_network = sctk_send_message_from_network_mpi_ib;

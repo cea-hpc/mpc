@@ -83,9 +83,8 @@ struct sctk_rail_info_s
 	void ( *finalize_task ) ( struct sctk_rail_info_s * );
 	void ( *initialize_task ) ( struct sctk_rail_info_s * );
 	void ( *initialize_leader_task ) ( struct sctk_rail_info_s * );
-	/* Network interactions */
-	void ( *send_message ) ( sctk_thread_ptp_message_t *, struct sctk_rail_info_s * );
 	
+	/* Network interactions */
 	void ( *send_message_endpoint ) ( sctk_thread_ptp_message_t *, sctk_endpoint_t * );
 	
 	void ( *notify_recv_message ) ( sctk_thread_ptp_message_t * , struct sctk_rail_info_s * );

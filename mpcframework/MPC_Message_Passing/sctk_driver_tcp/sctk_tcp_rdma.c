@@ -155,18 +155,15 @@ static void *sctk_tcp_rdma_thread ( sctk_endpoint_t *tmp )
 	return NULL;
 }
 
-static void sctk_network_send_message_tcp_rdma ( sctk_thread_ptp_message_t *msg, sctk_rail_info_t *rail )
+static void sctk_network_send_message_tcp_rdma_endpoint ( sctk_thread_ptp_message_t *msg, sctk_endpoint_t *endpoint )
 {
-	sctk_endpoint_t *tmp;
 	int fd;
 
 	sctk_nodebug ( "send message through rail %d", rail->rail_number );
 
-	tmp = sctk_rail_get_any_route_to_task_or_on_demand ( rail, SCTK_MSG_DEST_TASK ( msg ) );
+	sctk_spinlock_lock ( & ( endpoint->data.tcp.lock ) );
 
-	sctk_spinlock_lock ( & ( tmp->data.tcp.lock ) );
-
-	fd = tmp->data.tcp.fd;
+	fd = endpoint->data.tcp.fd;
 
 	sctk_tcp_rdma_type_t op_type = SCTK_RDMA_MESSAGE_HEADER;
 
@@ -174,7 +171,7 @@ static void sctk_network_send_message_tcp_rdma ( sctk_thread_ptp_message_t *msg,
 	sctk_safe_write ( fd, ( char * ) msg, sizeof ( sctk_thread_ptp_message_body_t ) );
 	sctk_safe_write ( fd, &msg, sizeof ( void * ) );
 
-	sctk_spinlock_unlock ( & ( tmp->data.tcp.lock ) );
+	sctk_spinlock_unlock ( & ( endpoint->data.tcp.lock ) );
 
 }
 
@@ -210,7 +207,7 @@ static void sctk_network_notify_any_source_message_tcp_rdma ( int polling_task_i
 void sctk_network_init_tcp_rdma ( sctk_rail_info_t *rail )
 {
 	/* Init RDMA specific infos */
-	rail->send_message = sctk_network_send_message_tcp_rdma;
+	rail->send_message_endpoint = sctk_network_send_message_tcp_rdma_endpoint;
 	rail->notify_recv_message = sctk_network_notify_recv_message_tcp_rdma;
 	rail->notify_matching_message = sctk_network_notify_matching_message_tcp_rdma;
 	rail->notify_perform_message = sctk_network_notify_perform_message_tcp_rdma;
