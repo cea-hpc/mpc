@@ -519,12 +519,13 @@ sctk_endpoint_t * sctk_rail_get_any_route_to_process_or_on_demand ( sctk_rail_in
 	{
 		/* Here we did not find a route therefore we instantiate it */
 
-		/* On demand enabled */
-		if ( rail->on_demand )
+		/* On demand enabled and provided */
+		if ( rail->on_demand && rail->connect_on_demand )
 		{
 			/* Network has an on-demand function */
-			if( rail->on_demand_connection )
-				return (rail->on_demand_connection)( rail, dest );
+			(rail->connect_on_demand)( rail, dest );
+			/* Here the new endpoint has been pushed, just recall */
+			return sctk_rail_get_any_route_to_process( rail, dest );
 		}
 		else
 		{

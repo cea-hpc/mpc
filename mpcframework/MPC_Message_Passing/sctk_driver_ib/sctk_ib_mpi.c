@@ -895,7 +895,7 @@ void sctk_network_init_mpi_ib ( sctk_rail_info_t *rail )
 	rail->notify_idle_message = sctk_network_notify_idle_message_ib;
 	rail->notify_any_source_message = sctk_network_notify_any_source_message_ib;
 	rail->network_name = network_name;
-	rail->on_demand_connection = sctk_on_demand_connection_ib;
+
 	rail->send_message_from_network = sctk_send_message_from_network_mpi_ib;
 
 	/* Boostrap the ring only if required */

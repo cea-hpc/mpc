@@ -95,7 +95,6 @@ struct sctk_rail_info_s
 	void ( *notify_any_source_message ) ( int, int, struct sctk_rail_info_s * );
 	
 	int ( *send_message_from_network ) ( sctk_thread_ptp_message_t * );
-	sctk_endpoint_t * ( *on_demand_connection ) ( struct sctk_rail_info_s * rail , int dest );
 	void ( *connect_on_demand ) ( struct sctk_rail_info_s * rail , int dest );
 	
 	void (*control_message_handler)( struct sctk_rail_info_s * rail, int source_process, int source_rank, char subtype, char param, void * data );
