@@ -1134,6 +1134,10 @@ void sctk_communicator_self_init()
 
 /* Bolean telling if the variables were loaded */
 static int sctk_get_process_rank_from_task_rank_context_init_done = 0;
+static int sctk_get_process_rank_from_task_rank_context_present = 0;
+
+
+
 /* getenv("SCTK_MIC_NB_TASK") != NULL) */
 static char *SCTK_MIC_NB_TASK = NULL;
 /* getenv("SCTK_HOST_NB_TASK") */
@@ -1156,7 +1160,16 @@ static inline void sctk_get_process_setup_env()
 	SCTK_NB_HOST = getenv ( "SCTK_NB_HOST" );
 	SCTK_NB_MIC = getenv ( "SCTK_NB_MIC" );
 
+	if ( ( SCTK_MIC_NB_TASK != NULL ) ||
+          ( SCTK_HOST_NB_TASK != NULL ) ||
+          ( SCTK_NB_HOST != NULL ) ||
+          ( SCTK_NB_MIC != NULL ) )
+		sctk_get_process_rank_from_task_rank_context_present = 1;
+
+
 	sctk_get_process_rank_from_task_rank_context_init_done = 1;
+	
+	
 }
 
 
@@ -1179,10 +1192,7 @@ void sctk_communicator_world_init ( const int nb_task )
 
 	sctk_get_process_setup_env();
 
-	if ( ( SCTK_MIC_NB_TASK != NULL ) ||
-	        ( SCTK_HOST_NB_TASK != NULL ) ||
-	        ( SCTK_NB_HOST != NULL ) ||
-	        ( SCTK_NB_MIC != NULL ) )
+	if( sctk_get_process_rank_from_task_rank_context_present )
 	{
 		int node_rank, process_on_node_rank, process_on_node_number;
 		int host_number, mic_nb_task, host_nb_task;
@@ -1756,10 +1766,7 @@ int sctk_get_node_rank_from_task_rank ( const int rank )
 {
 	sctk_get_process_setup_env();
 
-	if ( ( SCTK_MIC_NB_TASK != NULL ) ||
-	        ( SCTK_HOST_NB_TASK != NULL ) ||
-	        ( SCTK_NB_HOST != NULL ) ||
-	        ( SCTK_NB_MIC != NULL ) )
+	if ( sctk_get_process_rank_from_task_rank_context_present)
 	{
 		int host_number, mic_nb_task, host_nb_task;
 
@@ -1806,10 +1813,7 @@ int sctk_get_process_rank_from_task_rank ( int rank )
 		 * from the environment by the following function */
 		sctk_get_process_setup_env();
 
-		if ( ( SCTK_MIC_NB_TASK != NULL ) ||
-		        ( SCTK_HOST_NB_TASK != NULL ) ||
-		        ( SCTK_NB_HOST != NULL ) ||
-		        ( SCTK_NB_MIC != NULL ) )
+		if ( sctk_get_process_rank_from_task_rank_context_present )
 		{
 			int i, node_rank, sum_proc_node = 0, sum_task_node = 0, node_number, nb_processes_on_node;
 			int *process_from_node = NULL;

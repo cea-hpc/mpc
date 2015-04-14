@@ -21,6 +21,7 @@
 /* ######################################################################## */
 #include "sctk_multirail.h"
 #include "sctk_low_level_comm.h"
+#include "sctk_polling.h"
 
 #include <stdlib.h>
 
@@ -728,6 +729,13 @@ void sctk_multirail_notify_perform( int remote, int remote_task_id, int polling_
 	}
 }
 
+void notify_idle_message_trampoline( void * prail )
+{
+	sctk_rail_info_t * rail = (sctk_rail_info_t * )prail;
+	(rail->notify_idle_message)( rail );
+}
+
+
 void sctk_multirail_notify_idle()
 {
 	int count = sctk_rail_count();
@@ -739,7 +747,7 @@ void sctk_multirail_notify_idle()
 		
 		if( rail->notify_idle_message )
 		{
-			(rail->notify_idle_message)( rail );
+			sctk_polling_tree_poll( &rail->polling_tree , notify_idle_message_trampoline , (void *)rail );
 		}
 	}
 }

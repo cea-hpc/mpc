@@ -482,7 +482,6 @@ typedef struct sctk_perform_messages_s
 	int blocking;
 } sctk_perform_messages_t;
 
-
 void sctk_perform_messages_wait_init ( struct sctk_perform_messages_s *wait, sctk_request_t *request, int blocking );
 /**
 Check if the message if completed according to the message passed as a request
@@ -503,7 +502,6 @@ void sctk_notify_idle_message ();
 void sctk_notify_idle_message_inter ();
 sctk_reorder_list_t *sctk_ptp_get_reorder_from_destination ( int task );
 void sctk_inter_thread_perform_idle ( volatile int *data, int value, void ( *func ) ( void * ), void *arg );
-
 
 /************************************************************************/
 /* Specific Message Tagging	                                          */
