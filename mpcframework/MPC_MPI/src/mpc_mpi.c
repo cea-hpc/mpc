@@ -7846,86 +7846,66 @@ static int
 __INTERNAL__PMPI_Scan (void *sendbuf, void *recvbuf, int count,
 		       MPI_Datatype datatype, MPI_Op op, MPI_Comm comm)
 {
-  MPC_Op mpc_op;
-  sctk_op_t *mpi_op;
-  int size;
-  int rank;
-  MPI_Request request;
-  MPI_Aint dsize;
-  void *tmp;
-  int res;
+	MPC_Op mpc_op;
+	sctk_op_t *mpi_op;
+	int size, dsize;
+	int rank;
+	MPI_Request request;
+	char *tmp = NULL;
+	char *free_buffer = NULL;
+	int res;
 
-  mpi_op = sctk_convert_to_mpc_op (op);
-  mpc_op = mpi_op->op;
+	mpi_op = sctk_convert_to_mpc_op (op);
+	mpc_op = mpi_op->op;
 
-  __INTERNAL__PMPI_Comm_rank (comm, &rank);
-  __INTERNAL__PMPI_Comm_size (comm, &size);
+	res = __INTERNAL__PMPI_Comm_rank (comm, &rank);
+	if(res != MPI_SUCCESS){return res;}
+	res = __INTERNAL__PMPI_Comm_size (comm, &size);
+	if(res != MPI_SUCCESS){return res;}
 
+	res = __INTERNAL__PMPI_Isend (sendbuf, count, datatype, rank, MPC_SCAN_TAG, comm, &request);
+	if(res != MPI_SUCCESS){return res;}
 
-  __INTERNAL__PMPI_Isend (sendbuf, count, datatype, rank, -3, comm, &request);
+	res = __INTERNAL__PMPI_Recv (recvbuf, count, datatype, rank, MPC_SCAN_TAG, comm, MPI_STATUS_IGNORE);
+	if(res != MPI_SUCCESS){return res;}
+	
 
-  res =  __INTERNAL__PMPI_Type_extent (datatype, &dsize);
-  if (res != MPI_SUCCESS)
-    {
-      return res;
-    }
+	res = __INTERNAL__PMPI_Barrier (comm);
+	if(res != MPI_SUCCESS){return res;}
 
-  tmp = sctk_malloc (dsize*count);
-
-  res =
-    __INTERNAL__PMPI_Recv (recvbuf, count, datatype, rank, -3, comm,
-			   MPI_STATUS_IGNORE);
-  if (res != MPI_SUCCESS)
-    {
-      return res;
-    }
-
-  res = __INTERNAL__PMPI_Barrier (comm);
-  if (res != MPI_SUCCESS)
-    {
-      return res;
-    }
-
-  if (rank != 0)
-    {
-      res =
-	__INTERNAL__PMPI_Recv (tmp, count, datatype, rank - 1, -3, comm,
-			       MPI_STATUS_IGNORE);
-      if (res != MPI_SUCCESS)
+	if (rank != 0)
 	{
-	  return res;
-	}
-      if (mpc_op.u_func != NULL)
-	{
-	  mpc_op.u_func (tmp, recvbuf, &count, &datatype);
-	}
-      else
-	{
-	  MPC_Op_f func;
-	  func = sctk_get_common_function (datatype, mpc_op);
-	  func (tmp, recvbuf, count, datatype);
-	}
-    }
+		res = PMPI_Type_size(datatype, &dsize);
+        if(res != MPI_SUCCESS){return res;}
 
-  if (rank + 1 < size)
-    {
-      res =
-	__INTERNAL__PMPI_Send (recvbuf, count, datatype, rank + 1, -3, comm);
-      if (res != MPI_SUCCESS)
-	{
-	  return res;
+		tmp = sctk_malloc(dsize*count);
+		res = __INTERNAL__PMPI_Recv (tmp, count, datatype, rank - 1, MPC_SCAN_TAG, comm, MPI_STATUS_IGNORE);
+		if(res != MPI_SUCCESS){return res;}
+		
+		if (mpc_op.u_func != NULL)
+		{
+			mpc_op.u_func (tmp, recvbuf, &count, &datatype);
+		}
+		else
+		{
+			MPC_Op_f func;
+			func = sctk_get_common_function (datatype, mpc_op);
+			func (tmp, recvbuf, count, datatype);
+		}
 	}
-    }
 
-  sctk_free (tmp);
-  res = __INTERNAL__PMPI_Wait (&(request), MPI_STATUS_IGNORE);
-  if (res != MPI_SUCCESS)
-    {
-      return res;
-    }
-  res = __INTERNAL__PMPI_Barrier (comm);
+	if (rank + 1 < size)
+	{
+		res = __INTERNAL__PMPI_Send (recvbuf, count, datatype, rank + 1, MPC_SCAN_TAG, comm);
+		if(res != MPI_SUCCESS){return res;}
+	}
 
-  return res;
+	sctk_free (tmp);
+	res = __INTERNAL__PMPI_Wait (&(request), MPI_STATUS_IGNORE);
+	if(res != MPI_SUCCESS){return res;}
+
+	res = __INTERNAL__PMPI_Barrier (comm);
+	return res;
 }
 
 static int
@@ -14104,44 +14084,57 @@ int
 PMPI_Scan (void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
 	   MPI_Op op, MPI_Comm comm)
 {
-  int res = MPI_ERR_INTERN;
-  mpi_check_comm (comm, comm);
-
-#ifndef ENABLE_COLLECTIVES_ON_INTERCOMM
-        if(sctk_is_inter_comm (comm)){
-          MPI_ERROR_REPORT(comm,MPI_ERR_COMM,"");
-        }
-#endif
-
-  mpi_check_buf (sendbuf, comm);
-  mpi_check_buf (recvbuf, comm);
-  mpi_check_count (count, comm);
-  mpi_check_type (datatype, comm);
+	int res = MPI_ERR_INTERN;
+	
+	/* Invalid operation for intercommunicators */
+	if(sctk_is_inter_comm (comm)){
+		MPI_ERROR_REPORT(comm,MPI_ERR_COMM,"");
+	}
+	/* Profiling */
+	SCTK_PROFIL_START (MPI_Scan);
+	
+	/* Error checking */
+	mpi_check_comm (comm, comm);
+	mpi_check_buf (sendbuf, comm);
+	mpi_check_buf (recvbuf, comm);
+	mpi_check_count (count, comm);
+	mpi_check_type (datatype, comm);
 	mpi_check_op (op, datatype,comm);
-  res = __INTERNAL__PMPI_Scan (sendbuf, recvbuf, count, datatype, op, comm);
-  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
+	
+	/* Internal */
+	res = __INTERNAL__PMPI_Scan (sendbuf, recvbuf, count, datatype, op, comm);
+	
+	/* Profiling */
+	SCTK_PROFIL_END (MPI_Scan);
+	SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
 PMPI_Exscan (void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
 	   MPI_Op op, MPI_Comm comm)
 {
-  int res = MPI_ERR_INTERN;
-  mpi_check_comm (comm, comm);
-
-#ifndef ENABLE_COLLECTIVES_ON_INTERCOMM
-        if(sctk_is_inter_comm (comm)){
-          MPI_ERROR_REPORT(comm,MPI_ERR_COMM,"");
-        }
-#endif
-
-  mpi_check_buf (sendbuf, comm);
-  mpi_check_buf (recvbuf, comm);
-  mpi_check_count (count, comm);
-  mpi_check_type (datatype, comm);
+	int res = MPI_ERR_INTERN;
+	
+	if(sctk_is_inter_comm (comm)){
+		MPI_ERROR_REPORT(comm,MPI_ERR_COMM,"");
+	}
+	/* Profiling */
+	SCTK_PROFIL_START (MPI_Exscan);
+	
+	/* Error checking */
+	mpi_check_comm (comm, comm);
+	mpi_check_buf (sendbuf, comm);
+	mpi_check_buf (recvbuf, comm);
+	mpi_check_count (count, comm);
+	mpi_check_type (datatype, comm);
 	mpi_check_op (op, datatype,comm);
-  res = __INTERNAL__PMPI_Exscan (sendbuf, recvbuf, count, datatype, op, comm);
-  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
+	
+	/* Internal */
+	res = __INTERNAL__PMPI_Exscan (sendbuf, recvbuf, count, datatype, op, comm);
+	
+	/* Profiling */
+	SCTK_PROFIL_END (MPI_Exscan);
+	SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
 int
