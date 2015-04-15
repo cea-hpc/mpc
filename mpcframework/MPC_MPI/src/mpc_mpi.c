@@ -7080,6 +7080,8 @@ static sctk_op_t * sctk_convert_to_mpc_op (MPI_Op op)
 			ADD_FUNC_HANDLER(func,MPC_SHORT_INT,op);		\
 			ADD_FUNC_HANDLER(func,MPC_2INT,op);		\
 			ADD_FUNC_HANDLER(func,MPC_2FLOAT,op);		\
+			ADD_FUNC_HANDLER(func,MPC_2INTEGER,op);		\
+			ADD_FUNC_HANDLER(func,MPC_2REAL,op);		\
 			ADD_FUNC_HANDLER(func,MPC_COMPLEX,op);		\
 			ADD_FUNC_HANDLER(func,MPC_2DOUBLE_PRECISION,op);	\
 			ADD_FUNC_HANDLER(func,MPC_COMPLEX8,op);	\
