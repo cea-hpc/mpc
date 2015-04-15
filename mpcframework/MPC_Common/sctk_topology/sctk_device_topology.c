@@ -64,8 +64,8 @@ const char * sctk_device_container_to_char( sctk_device_container_t type )
 		case SCTK_MACHINE_LEVEL_DEVICE:
 			return "SCTK_MACHINE_LEVEL_DEVICE";
 		break;
-		case SCTK_NUMA_LEVEL_DEVICE:
-			return "SCTK_NUMA_LEVEL_DEVICE";
+		case SCTK_TOPOLOGICAL_DEVICE:
+			return "SCTK_TOPOLOGICAL_DEVICE";
 		break;
 	}	
 	
@@ -78,34 +78,6 @@ const char * sctk_device_container_to_char( sctk_device_container_t type )
 static sctk_device_t * sctk_devices = NULL;
 static int sctk_devices_count = 0;
 
-#if 0
-/** This is the container defining a device */
-typedef struct sctk_device_s
-{
-	/* Descriptor */
-	sctk_device_type_t type; /**< This is the type of the OSdev pointed to */
-	sctk_device_container_t container; /**< This is the topological level of the device */
-	char * name; /**< Name of the device (called OSname in HWloc) */
-	
-	/* Hwloc REF */
-	hwloc_obj_t obj; /**< This is the actual Hwloc object (PCI) for this device */
-	hwloc_obj_t non_io_parent_obj; /**< This is the first non IO parent of the object (defining locality) */
-	
-	/* Topology */
-	hwloc_cpuset_t cpuset; /**< This is the CPUset of the parent non IO */
-	hwloc_cpuset_t nodeset; /**< This is the NODEset of the parent non IO */
-	
-	int numa_id; /**< This is the ID of the NUMA node containing the device */
-	int vp_id; /**< This is the ID of the core elected as master for this device */
-
-	/* Attributes */
-	char * vendor; /** PCI card vendor */
-	char * device; /** PCI card descriptor */
-	
-}sctk_device_t;
-#endif
-
-
 
 /************************************************************************/
 /* DEVICE                                                               */
@@ -117,8 +89,6 @@ void sctk_device_print( sctk_device_t * dev )
 	sctk_info("Type : %s", sctk_device_type_to_char( dev->type) );
 	sctk_info("Container : %s", sctk_device_container_to_char( dev->container) );
 	sctk_info("Name : %s", dev->name );
-	sctk_info("Numa ID : %d", dev->numa_id );
-	sctk_info("VP ID : %d", dev->vp_id );
 	sctk_info("Vendor : '%s'", dev->vendor );
 	sctk_info("Device : '%s'", dev->device );
 	
@@ -183,12 +153,16 @@ void sctk_device_init( hwloc_topology_t topology, sctk_device_t * dev , hwloc_ob
 		dev->cpuset = hwloc_bitmap_dup( dev->non_io_parent_obj->cpuset );
 		dev->nodeset = hwloc_bitmap_dup( dev->non_io_parent_obj->nodeset );
 		
-		if( dev->non_io_parent_obj->type == HWLOC_OBJ_NODE 
-		|| dev->non_io_parent_obj->type == HWLOC_OBJ_GROUP  )
+		hwloc_const_cpuset_t allowed_cpuset = hwloc_topology_get_allowed_cpuset( topology );
+		
+		/* If the device CPUset it diferent from the whole process
+		 * cpuset then we can consider that this device might
+		 * be facing some topological constraints */
+		if( ! hwloc_bitmap_isequal (dev->cpuset, allowed_cpuset)  )
 		{
 			/* We set this flag to inform that the
 			 * device is locality sensitive */
-			dev->container = SCTK_NUMA_LEVEL_DEVICE;
+			dev->container = SCTK_TOPOLOGICAL_DEVICE;
 		}
 		else
 		{
@@ -201,9 +175,6 @@ void sctk_device_init( hwloc_topology_t topology, sctk_device_t * dev , hwloc_ob
 	{
 		/* No topology then assume we are machine level */
 		dev->container = SCTK_MACHINE_LEVEL_DEVICE;
-		/* Master is all zero */
-		dev->numa_id = 0;
-		dev->vp_id = 0;
 	}
 	
 	/* Retrieve to OS level child */
@@ -324,7 +295,37 @@ void sctk_device_release()
 
 sctk_device_t * sctk_device_get_from_handle( char * handle )
 {
+	int i;
 	
+	/* Try as an OS id  (eth0, eth1, sda, ... )*/
+	for( i = 0 ; i < sctk_devices_count ; i++ )
+	{
+		if( !strcmp( handle, sctk_devices[i].name ) )
+		{
+			return &sctk_devices[i];
+		}
+	}
+	
+	/* Try as a PCI id (xxxx:yy:zz.t or yy:zz.t) */
+	
+	hwloc_obj_t pci_dev = hwloc_get_pcidev_by_busidstring ( sctk_get_topology_object(), handle );
+	
+	if(! pci_dev )
+	{
+		return NULL;
+	}
+	
+	/* A pci dev was found now match to a device */
+	for( i = 0 ; i < sctk_devices_count ; i++ )
+	{
+		/* Just compare HWloc object pointers */
+		if( pci_dev == sctk_devices[i].obj )
+		{
+			return &sctk_devices[i];
+		}
+	}
+	
+	return NULL;
 	
 }
 

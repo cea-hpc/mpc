@@ -56,7 +56,7 @@ const char * sctk_device_type_to_char( sctk_device_type_t type );
 typedef enum
 {
 	SCTK_MACHINE_LEVEL_DEVICE, /**< Case where parent is the whole machine (or something not handled) */
-	SCTK_NUMA_LEVEL_DEVICE /**< Case where parent is a numa node */
+	SCTK_TOPOLOGICAL_DEVICE /**< Case where parent is a numa node */
 }sctk_device_container_t;
 
 const char * sctk_device_container_to_char( sctk_device_container_t type );
@@ -81,9 +81,6 @@ typedef struct sctk_device_s
 	/* Topology */
 	hwloc_cpuset_t cpuset; /**< This is the CPUset of the parent non IO */
 	hwloc_cpuset_t nodeset; /**< This is the NODEset of the parent non IO */
-	
-	int numa_id; /**< This is the ID of the NUMA node containing the device */
-	int vp_id; /**< This is the ID of the core elected as master for this device */
 
 	/* Attributes */
 	const char * vendor; /** PCI card vendor */
