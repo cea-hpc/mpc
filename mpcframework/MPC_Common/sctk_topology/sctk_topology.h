@@ -147,6 +147,8 @@ int sctk_topology_is_ib_device_close_from_cpu (struct ibv_device * dev, int core
 #endif
 
   void sctk_topology_init_cpu();
+  
+  int sctk_get_pu_number();
 #ifdef __cplusplus
 }
 #endif

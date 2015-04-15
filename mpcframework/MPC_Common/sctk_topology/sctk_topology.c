@@ -31,6 +31,7 @@
 #include "sctk_thread.h"
 #include "sctk.h"
 #include "sctk_kernel_thread.h"
+#include "sctk_device_topology.h"
 
 #ifdef MPC_Message_Passing
 #include "sctk_pmi.h"
@@ -257,7 +258,7 @@ sctk_restrict_topology ()
   
 #ifdef __MIC__
 	{
-		sctk_update_topology (sctk_processor_number_on_node, get_pu_number_by_core(topology, 0)) ;
+		sctk_update_topology (sctk_processor_number_on_node, sctk_get_pu_number_by_core(topology, 0)) ;
 	}
 #endif
 
@@ -447,7 +448,7 @@ void sctk_topology_init_cpu(){
   sctk_get_cpu_val = -1;
 }
 
-int get_pu_number()
+int sctk_get_pu_number()
 {
 	int core_number;
 	hwloc_topology_t topology;
@@ -468,7 +469,7 @@ int get_pu_number()
 	return core_number;
 }
 
-int get_pu_number_by_core(hwloc_topology_t topology, int core)
+int sctk_get_pu_number_by_core(hwloc_topology_t topology, int core)
 {
 	int core_number;
 
@@ -493,17 +494,25 @@ sctk_topology_init ()
 
   xml_path = getenv("MPC_SET_XML_TOPOLOGY_FILE");
   sctk_xml_specific_path = xml_path;
+  
   hwloc_topology_init(&topology);
+  
   if(xml_path != NULL){
     fprintf(stderr,"USE XML file %s\n",xml_path);
     hwloc_topology_set_xml(topology,xml_path);
   }
+ 
+  /* Set flags to make sure devices are also loaded */
+  hwloc_topology_set_flags( topology, HWLOC_TOPOLOGY_FLAG_IO_DEVICES );
+ 
   hwloc_topology_load(topology);
 
   hwloc_topology_init(&topology_full);
+  
   if(xml_path != NULL){
     hwloc_topology_set_xml(topology_full,xml_path);
   }
+
   hwloc_topology_load(topology_full);
 
   topology_cpuset = hwloc_bitmap_alloc();
@@ -515,6 +524,10 @@ sctk_topology_init ()
       SCTK_LOCAL_VERSION_MINOR);
 
   sctk_restrict_topology();
+  
+   /*  load devices */
+  sctk_device_load_from_topology( topology );
+
 
 #ifndef WINDOWS_SYS
   gethostname (sctk_node_name, SCTK_MAX_NODE_NAME);

@@ -550,7 +550,13 @@ return ;
 	  if ( prev_child == NULL ) {
 		  char level_id[8] ;
 		  int numa_id = 0 ;
-		  if ( is_numa_node && cur_obj->type != HWLOC_OBJ_MACHINE ) {
+		  if ( is_numa_node 
+		  /* Make sure to skip devices */
+		  && cur_obj->type != HWLOC_OBJ_MACHINE
+		  && cur_obj->type != HWLOC_OBJ_MISC 
+		  && cur_obj->type != HWLOC_OBJ_BRIDGE 
+		  && cur_obj->type != HWLOC_OBJ_PCI_DEVICE 
+		  && cur_obj->type != HWLOC_OBJ_OS_DEVICE ) {
 			  hwloc_obj_t temp_obj = cur_obj;
 			  while (temp_obj->type != HWLOC_OBJ_NODE && temp_obj->type != HWLOC_OBJ_GROUP) {
 				  temp_obj = hwloc_get_ancestor_obj_by_type(topology,HWLOC_OBJ_NODE,temp_obj);
