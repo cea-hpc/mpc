@@ -7172,15 +7172,16 @@ __INTERNAL__PMPI_Reduce_derived_no_commute (void *sendbuf, void *recvbuf, int co
 
 	if(rank != size-1)
 	{
-		if (mpc_op.u_func == NULL)
-		{
-			func = sctk_get_common_function(datatype, mpc_op);
-		}
-		else
-		{
-			func = mpc_op.u_func;
-		}
-		 func(sendbuf, tmp_buf, count, datatype);
+        if (mpc_op.u_func != NULL)
+        {
+            mpc_op.u_func(sendbuf, tmp_buf, &count, &datatype);
+        }
+        else
+        {
+            MPC_Op_f func;
+            func = sctk_get_common_function(datatype, mpc_op);
+            func(sendbuf, tmp_buf, count, datatype);
+        }
 	}
 
 	if((rank == 0) && (root != 0))
@@ -7643,16 +7644,16 @@ __INTERNAL__PMPI_Reduce_scatter_inter (void *sendbuf, void *recvbuf, int *recvcn
             i, MPC_REDUCE_SCATTER_TAG, comm, MPI_STATUS_IGNORE);
             if(res != MPI_SUCCESS){return res;}
             
-			if (mpc_op.u_func == NULL)
-			{
-				func = sctk_get_common_function(datatype, mpc_op);
-			}
-			else
-			{
-				func = mpc_op.u_func;
-			}
-			
-			func(tmpbuf, tmpbuf2, totalcounts, datatype);
+            if (mpc_op.u_func != NULL)
+            {
+                mpc_op.u_func(tmpbuf, tmpbuf2, &totalcounts, &datatype);
+            }
+            else
+            {
+                MPC_Op_f func;
+                func = sctk_get_common_function(datatype, mpc_op);
+                func(tmpbuf, tmpbuf2, totalcounts, datatype);
+            }
         }
     } 
     else 
@@ -7787,17 +7788,17 @@ __INTERNAL__PMPI_Reduce_scatter_block_inter (void *sendbuf, void *recvbuf, int r
             res = __INTERNAL__PMPI_Recv(tmpbuf, totalcounts, datatype, i, 
             MPC_REDUCE_SCATTER_BLOCK_TAG, comm, MPI_STATUS_IGNORE);
             if(res != MPI_SUCCESS){return res;}
-			
-			if (mpc_op.u_func == NULL)
-			{
-				func = sctk_get_common_function(datatype, mpc_op);
-			}
-			else
-			{
-				func = mpc_op.u_func;
-			}
-			
-			func(tmpbuf, tmpbuf2, totalcounts, datatype);
+
+            if (mpc_op.u_func != NULL)
+            {
+                mpc_op.u_func(tmpbuf, tmpbuf2, &totalcounts, &datatype);
+            }
+            else
+            {
+                MPC_Op_f func;
+                func = sctk_get_common_function(datatype, mpc_op);
+                func(tmpbuf, tmpbuf2, totalcounts, datatype);
+            }
         }
     } 
     else 
