@@ -7839,9 +7839,6 @@ __INTERNAL__PMPI_Reduce_scatter_block (void *sendbuf, void *recvbuf, int recvcnt
 	}
 
 	return res;
-/*
-	
-*/
 }
 
 MPC_Op_f sctk_get_common_function (MPC_Datatype datatype, MPC_Op op);
@@ -7915,86 +7912,70 @@ static int
 __INTERNAL__PMPI_Exscan (void *sendbuf, void *recvbuf, int count,
 		       MPI_Datatype datatype, MPI_Op op, MPI_Comm comm)
 {
-  MPC_Op mpc_op;
-  sctk_op_t *mpi_op;
-  int size;
-  int rank;
-  MPI_Request request;
-  MPI_Aint dsize;
-  void *tmp;
-  int res;
+	MPC_Op mpc_op;
+	sctk_op_t *mpi_op;
+	int size;
+	int rank;
+	MPI_Request request;
+	MPI_Aint dsize;
+	void *tmp;
+	int res = MPI_ERR_INTERN;
 
-  mpi_op = sctk_convert_to_mpc_op (op);
-  mpc_op = mpi_op->op;
+	mpi_op = sctk_convert_to_mpc_op (op);
+	mpc_op = mpi_op->op;
 
-  __INTERNAL__PMPI_Comm_rank (comm, &rank);
-  __INTERNAL__PMPI_Comm_size (comm, &size);
+	res = __INTERNAL__PMPI_Comm_rank (comm, &rank);
+	if(res != MPI_SUCCESS){return res;}
+	res = __INTERNAL__PMPI_Comm_size (comm, &size);
+	if(res != MPI_SUCCESS){return res;}
 
+	res = __INTERNAL__PMPI_Isend (sendbuf, count, datatype, rank, 
+	MPC_EXSCAN_TAG, comm, &request);
+	if(res != MPI_SUCCESS){return res;}
+	
+	res =  __INTERNAL__PMPI_Type_extent (datatype, &dsize);
+	if(res != MPI_SUCCESS){return res;}
 
-  __INTERNAL__PMPI_Isend (sendbuf, count, datatype, rank, -3, comm, &request);
+	tmp = sctk_malloc (dsize*count);
 
-  res =  __INTERNAL__PMPI_Type_extent (datatype, &dsize);
-  if (res != MPI_SUCCESS)
-    {
-      return res;
-    }
+	res = __INTERNAL__PMPI_Recv (tmp, count, datatype, rank, 
+	MPC_EXSCAN_TAG, comm, MPI_STATUS_IGNORE);
+	if(res != MPI_SUCCESS){return res;}
 
-  tmp = sctk_malloc (dsize*count);
+	res = __INTERNAL__PMPI_Barrier (comm);
+	if(res != MPI_SUCCESS){return res;}
 
-  res =
-    __INTERNAL__PMPI_Recv (tmp, count, datatype, rank, -3, comm,
-			   MPI_STATUS_IGNORE);
-  if (res != MPI_SUCCESS)
-    {
-      return res;
-    }
-
-  res = __INTERNAL__PMPI_Barrier (comm);
-  if (res != MPI_SUCCESS)
-    {
-      return res;
-    }
-
-  if (rank != 0)
-    {
-      res =
-	__INTERNAL__PMPI_Recv (recvbuf, count, datatype, rank - 1, -3, comm,
-			       MPI_STATUS_IGNORE);
-      if (res != MPI_SUCCESS)
+	if (rank != 0)
 	{
-	  return res;
+		res = __INTERNAL__PMPI_Recv (recvbuf, count, datatype, rank - 1, 
+		MPC_EXSCAN_TAG, comm, MPI_STATUS_IGNORE);
+		if(res != MPI_SUCCESS){return res;}
+		
+		if (mpc_op.u_func != NULL)
+		{
+			mpc_op.u_func (recvbuf, tmp, &count, &datatype);
+		}
+		else
+		{
+			MPC_Op_f func;
+			func = sctk_get_common_function (datatype, mpc_op);
+			func (recvbuf, tmp, count, datatype);
+		}
 	}
-      if (mpc_op.u_func != NULL)
-	{
-	  mpc_op.u_func (recvbuf, tmp, &count, &datatype);
-	}
-      else
-	{
-	  MPC_Op_f func;
-	  func = sctk_get_common_function (datatype, mpc_op);
-	  func (recvbuf, tmp, count, datatype);
-	}
-    }
 
-  if (rank + 1 < size)
-    {
-      res =
-	__INTERNAL__PMPI_Send (tmp, count, datatype, rank + 1, -3, comm);
-      if (res != MPI_SUCCESS)
+	if (rank + 1 < size)
 	{
-	  return res;
+		res = __INTERNAL__PMPI_Send (tmp, count, datatype, rank + 1, 
+		MPC_EXSCAN_TAG, comm);
+		if(res != MPI_SUCCESS){return res;}
 	}
-    }
 
-  sctk_free (tmp);
-  res = __INTERNAL__PMPI_Wait (&(request), MPI_STATUS_IGNORE);
-  if (res != MPI_SUCCESS)
-    {
-      return res;
-    }
-  res = __INTERNAL__PMPI_Barrier (comm);
-
-  return res;
+	sctk_free (tmp);
+	res = __INTERNAL__PMPI_Wait (&(request), MPI_STATUS_IGNORE);
+	if(res != MPI_SUCCESS){return res;}
+	
+	res = __INTERNAL__PMPI_Barrier (comm);
+	return res;
 }
 
 typedef struct MPI_internal_group_s
@@ -8625,7 +8606,7 @@ __INTERNAL__PMPI_Group_range_excl (MPI_Group mpi_group, int n,
 		first_rank = ranges[i][0];
 		last_rank  = ranges[i][1];
 		stride     = ranges[i][2];
-		/*fprintf(stderr,"first_rank %d last_rank %d stride %d group_size %d\n",first_rank,last_rank,stride,group_size);*/
+		
 		if ((first_rank < 0) || (first_rank >= group_size) || (last_rank < 0) || (last_rank >= group_size) || (stride == 0))
 		{
 			MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_ARG,"Wrong ranges");
@@ -8772,13 +8753,6 @@ __INTERNAL__PMPI_Group_range_excl (MPI_Group mpi_group, int n,
 			k++;
 		}
 	}
-	//~ sctk_debug("---------");
-	//~ for(i=0; i<count; i++)
-		//~ sctk_debug("ranks_excluded[%d] = %d", i, ranks_excluded[i]);
-	//~ if (NULL != ranks_excluded)
-	//~ {
-		//~ free(ranks_excluded);
-	//~ }
 
 /* including the ranks in the new group */
     result = __INTERNAL__PMPI_Group_incl(mpi_group, k, ranks_included, mpi_newgroup);
@@ -9205,7 +9179,7 @@ __INTERNAL__PMPI_Intercomm_merge (MPI_Comm intercomm, int high,
 
 	sctk_nodebug("rank %d, grank %d : boroadcast comm %d", rank, grank, intercomm);
 	sctk_broadcast(&remote_high,sizeof(int),0,sctk_get_local_comm_id(intercomm));
-	//~ PMPI_Bcast(&remote_high, 1, MPC_INT, 0, sctk_get_local_comm_id(intercomm));
+	
 	sctk_nodebug("rank %d : merge intercomm %d, high = %d, remote_high = %d", rank, intercomm, high, remote_high);
 	/* TODO : Finir le merge avec le placement des groupes en fonction des paramètres "high" */
 	if(sctk_is_in_local_group(intercomm))
@@ -9424,7 +9398,6 @@ static int __INTERNAL__PMPI_Attr_put (MPI_Comm comm, int keyval, void *attr_valu
 	{
 		long tmp = 0;
 		tmp = tmp + *(long *)attr_value;
-/*	fprintf(stderr,"Put %ld\n",tmp);*/
 		tmp_per_comm->key_vals[keyval].attr = (void *)tmp;
 	}
 
@@ -9504,9 +9477,6 @@ static int __INTERNAL__PMPI_Attr_get (MPI_Comm comm, int keyval, void *attr_valu
 		{
 			long tmp;
 			tmp = (long)tmp_per_comm->key_vals[keyval].attr;
-			/*int val = (int)tmp;
-        fprintf(stderr,"Put %ld %d\n",tmp,val);*/
-
 			*attr = (void*)tmp;
 		}
     }
@@ -9515,13 +9485,6 @@ static int __INTERNAL__PMPI_Attr_get (MPI_Comm comm, int keyval, void *attr_valu
 	sctk_spinlock_unlock(&(tmp->lock));
 	return res;
 }
-
-/*
- *        (void *) &MPI_TAG_UB_VALUE  ,
-        &MPI_HOST_VALUE,
-        &MPI_IO_VALUE,
-        &MPI_WTIME_IS_GLOBAL_VALUE
- * */
 
 static int __INTERNAL__PMPI_Attr_get_fortran (MPI_Comm comm, int keyval, int *attr_value,   int *flag){
         if ((keyval >= 0) && (keyval < MPI_MAX_KEY_DEFINED))
@@ -11305,21 +11268,6 @@ PMPI_Send (void *buf, int count, MPI_Datatype datatype, int dest, int tag,
     sctk_nodebug ("tag %d", tag);
     mpi_check_tag_send (tag, comm);
     __INTERNAL__PMPI_Comm_size (comm, &size);
-    //~ if(sctk_is_inter_comm(comm))
-    //~ {
-		//~ if(sctk_is_in_local_group(comm))
-		//~ {
-			//~ int remote_size;
-			//~ __INTERNAL__PMPI_Comm_remote_size(comm, &remote_size);
-			//~ mpi_check_rank (dest, remote_size, comm);
-		//~ }
-		//~ else
-		//~ {
-			//~ mpi_check_rank (dest, size, comm);
-		//~ }
-	//~ }
-	//~ else
-		//~ mpi_check_rank (dest, size, comm);
     if(sctk_is_inter_comm(comm) == 0){
       mpi_check_rank_send (dest, size, comm);
     }
@@ -11365,21 +11313,6 @@ int PMPI_Recv (void *buf, int count, MPI_Datatype datatype, int source, int tag,
 		{
 			mpi_check_rank (source, size, comm);
 		}
-		//~ if(sctk_is_inter_comm(comm))
-		//~ {
-		//~ if(sctk_is_in_local_group(comm))
-		//~ {
-		//~ int remote_size;
-		//~ __INTERNAL__PMPI_Comm_remote_size(comm, &remote_size);
-		//~ mpi_check_rank (source, remote_size, comm);
-		//~ }
-		//~ else
-		//~ {
-		//~ mpi_check_rank (source, size, comm);
-		//~ }
-		//~ }
-		//~ else
-		//~ mpi_check_rank (source, size, comm);
 		if (count != 0)
 		{
 			mpi_check_buf (buf, comm);
@@ -11440,21 +11373,6 @@ PMPI_Bsend (void *buf, int count, MPI_Datatype datatype, int dest, int tag,
     if(sctk_is_inter_comm(comm) == 0){
       mpi_check_rank_send (dest, size, comm);
     }
-    //~ if(sctk_is_inter_comm(comm))
-    //~ {
-		//~ if(sctk_is_in_local_group(comm))
-		//~ {
-			//~ int remote_size;
-			//~ __INTERNAL__PMPI_Comm_remote_size(comm, &remote_size);
-			//~ mpi_check_rank (dest, remote_size, comm);
-		//~ }
-		//~ else
-		//~ {
-			//~ mpi_check_rank (dest, size, comm);
-		//~ }
-	//~ }
-	//~ else
-		//~ mpi_check_rank (dest, size, comm);
     if (count != 0)
       {
 	mpi_check_buf (buf, comm);
@@ -11485,21 +11403,6 @@ PMPI_Ssend (void *buf, int count, MPI_Datatype datatype, int dest, int tag,
     if(sctk_is_inter_comm(comm) == 0){
       mpi_check_rank_send (dest, size, comm);
     }
-    //~ if(sctk_is_inter_comm(comm))
-    //~ {
-		//~ if(sctk_is_in_local_group(comm))
-		//~ {
-			//~ int remote_size;
-			//~ __INTERNAL__PMPI_Comm_remote_size(comm, &remote_size);
-			//~ mpi_check_rank (dest, remote_size, comm);
-		//~ }
-		//~ else
-		//~ {
-			//~ mpi_check_rank (dest, size, comm);
-		//~ }
-	//~ }
-	//~ else
-		//~ mpi_check_rank (dest, size, comm);
     if (count != 0)
       {
 	mpi_check_buf (buf, comm);
@@ -11530,21 +11433,6 @@ PMPI_Rsend (void *buf, int count, MPI_Datatype datatype, int dest, int tag,
     if(sctk_is_inter_comm(comm) == 0){
       mpi_check_rank_send (dest, size, comm);
     }
-    //~ if(sctk_is_inter_comm(comm))
-    //~ {
-		//~ if(sctk_is_in_local_group(comm))
-		//~ {
-			//~ int remote_size;
-			//~ __INTERNAL__PMPI_Comm_remote_size(comm, &remote_size);
-			//~ mpi_check_rank (dest, remote_size, comm);
-		//~ }
-		//~ else
-		//~ {
-			//~ mpi_check_rank (dest, size, comm);
-		//~ }
-	//~ }
-	//~ else
-		//~ mpi_check_rank (dest, size, comm);
     if (count != 0)
       {
 	mpi_check_buf (buf, comm);
@@ -11596,21 +11484,6 @@ PMPI_Isend (void *buf, int count, MPI_Datatype datatype, int dest, int tag,
     if(sctk_is_inter_comm(comm) == 0){
       mpi_check_rank_send (dest, size, comm);
     }
-    //~ if(sctk_is_inter_comm(comm))
-    //~ {
-		//~ if(sctk_is_in_local_group(comm))
-		//~ {
-			//~ int remote_size;
-			//~ __INTERNAL__PMPI_Comm_remote_size(comm, &remote_size);
-			//~ mpi_check_rank (dest, remote_size, comm);
-		//~ }
-		//~ else
-		//~ {
-			//~ mpi_check_rank (dest, size, comm);
-		//~ }
-	//~ }
-	//~ else
-		//~ mpi_check_rank (dest, size, comm);
     if (count != 0)
       {
 	mpi_check_buf (buf, comm);
@@ -11646,21 +11519,6 @@ PMPI_Ibsend (void *buf, int count, MPI_Datatype datatype, int dest, int tag,
     if(sctk_is_inter_comm(comm) == 0){
       mpi_check_rank_send (dest, size, comm);
     }
-    //~ if(sctk_is_inter_comm(comm))
-    //~ {
-		//~ if(sctk_is_in_local_group(comm))
-		//~ {
-			//~ int remote_size;
-			//~ __INTERNAL__PMPI_Comm_remote_size(comm, &remote_size);
-			//~ mpi_check_rank (dest, remote_size, comm);
-		//~ }
-		//~ else
-		//~ {
-			//~ mpi_check_rank (dest, size, comm);
-		//~ }
-	//~ }
-	//~ else
-		//~ mpi_check_rank (dest, size, comm);
 
     if (count != 0)
       {
@@ -11695,21 +11553,6 @@ PMPI_Issend (void *buf, int count, MPI_Datatype datatype, int dest, int tag,
     if(sctk_is_inter_comm(comm) == 0){
       mpi_check_rank_send (dest, size, comm);
     }
-    //~ if(sctk_is_inter_comm(comm))
-    //~ {
-		//~ if(sctk_is_in_local_group(comm))
-		//~ {
-			//~ int remote_size;
-			//~ __INTERNAL__PMPI_Comm_remote_size(comm, &remote_size);
-			//~ mpi_check_rank (dest, remote_size, comm);
-		//~ }
-		//~ else
-		//~ {
-			//~ mpi_check_rank (dest, size, comm);
-		//~ }
-	//~ }
-	//~ else
-		//~ mpi_check_rank (dest, size, comm);
     if (count != 0)
       {
 	mpi_check_buf (buf, comm);
@@ -11743,21 +11586,6 @@ PMPI_Irsend (void *buf, int count, MPI_Datatype datatype, int dest, int tag,
     if(sctk_is_inter_comm(comm) == 0){
       mpi_check_rank_send (dest, size, comm);
     }
-    //~ if(sctk_is_inter_comm(comm))
-    //~ {
-		//~ if(sctk_is_in_local_group(comm))
-		//~ {
-			//~ int remote_size;
-			//~ __INTERNAL__PMPI_Comm_remote_size(comm, &remote_size);
-			//~ mpi_check_rank (dest, remote_size, comm);
-		//~ }
-		//~ else
-		//~ {
-			//~ mpi_check_rank (dest, size, comm);
-		//~ }
-	//~ }
-	//~ else
-		//~ mpi_check_rank (dest, size, comm);
     if (count != 0)
       {
 	mpi_check_buf (buf, comm);
@@ -11791,21 +11619,6 @@ PMPI_Irecv (void *buf, int count, MPI_Datatype datatype, int source,
     if(sctk_is_inter_comm(comm) == 0){
       mpi_check_rank (source, size, comm);
     }
-    //~ if(sctk_is_inter_comm(comm))
-    //~ {
-		//~ if(sctk_is_in_local_group(comm))
-		//~ {
-			//~ int remote_size;
-			//~ __INTERNAL__PMPI_Comm_remote_size(comm, &remote_size);
-			//~ mpi_check_rank (source, remote_size, comm);
-		//~ }
-		//~ else
-		//~ {
-			//~ mpi_check_rank (source, size, comm);
-		//~ }
-	//~ }
-	//~ else
-		//~ mpi_check_rank (source, size, comm);
 
     if (count != 0)
       {
@@ -12103,21 +11916,6 @@ PMPI_Send_init (void *buf, int count, MPI_Datatype datatype, int dest,
     if(sctk_is_inter_comm(comm) == 0){
       mpi_check_rank_send (dest, size, comm);
     }
-    //~ if(sctk_is_inter_comm(comm))
-    //~ {
-		//~ if(sctk_is_in_local_group(comm))
-		//~ {
-			//~ int remote_size;
-			//~ __INTERNAL__PMPI_Comm_remote_size(comm, &remote_size);
-			//~ mpi_check_rank (dest, remote_size, comm);
-		//~ }
-		//~ else
-		//~ {
-			//~ mpi_check_rank (dest, size, comm);
-		//~ }
-	//~ }
-	//~ else
-		//~ mpi_check_rank (dest, size, comm);
     if (count != 0)
       {
 	mpi_check_buf (buf, comm);
@@ -12145,21 +11943,6 @@ PMPI_Bsend_init (void *buf, int count, MPI_Datatype datatype,
     if(sctk_is_inter_comm(comm) == 0){
       mpi_check_rank_send (dest, size, comm);
     }
-    //~ if(sctk_is_inter_comm(comm))
-    //~ {
-		//~ if(sctk_is_in_local_group(comm))
-		//~ {
-			//~ int remote_size;
-			//~ __INTERNAL__PMPI_Comm_remote_size(comm, &remote_size);
-			//~ mpi_check_rank (dest, remote_size, comm);
-		//~ }
-		//~ else
-		//~ {
-			//~ mpi_check_rank (dest, size, comm);
-		//~ }
-	//~ }
-	//~ else
-		//~ mpi_check_rank (dest, size, comm);
     if (count != 0)
       {
 	mpi_check_buf (buf, comm);
@@ -12187,21 +11970,6 @@ PMPI_Ssend_init (void *buf, int count, MPI_Datatype datatype, int dest,
     if(sctk_is_inter_comm(comm) == 0){
       mpi_check_rank_send (dest, size, comm);
     }
-    //~ if(sctk_is_inter_comm(comm))
-    //~ {
-		//~ if(sctk_is_in_local_group(comm))
-		//~ {
-			//~ int remote_size;
-			//~ __INTERNAL__PMPI_Comm_remote_size(comm, &remote_size);
-			//~ mpi_check_rank (dest, remote_size, comm);
-		//~ }
-		//~ else
-		//~ {
-			//~ mpi_check_rank (dest, size, comm);
-		//~ }
-	//~ }
-	//~ else
-		//~ mpi_check_rank (dest, size, comm);
     if (count != 0)
       {
 	mpi_check_buf (buf, comm);
@@ -12229,21 +11997,6 @@ PMPI_Rsend_init (void *buf, int count, MPI_Datatype datatype, int dest,
     if(sctk_is_inter_comm(comm) == 0){
       mpi_check_rank_send (dest, size, comm);
     }
-    //~ if(sctk_is_inter_comm(comm))
-    //~ {
-		//~ if(sctk_is_in_local_group(comm))
-		//~ {
-			//~ int remote_size;
-			//~ __INTERNAL__PMPI_Comm_remote_size(comm, &remote_size);
-			//~ mpi_check_rank (dest, remote_size, comm);
-		//~ }
-		//~ else
-		//~ {
-			//~ mpi_check_rank (dest, size, comm);
-		//~ }
-	//~ }
-	//~ else
-		//~ mpi_check_rank (dest, size, comm);
     if (count != 0)
       {
 	mpi_check_buf (buf, comm);
@@ -12271,21 +12024,6 @@ PMPI_Recv_init (void *buf, int count, MPI_Datatype datatype, int source,
     if(sctk_is_inter_comm(comm) == 0){
       mpi_check_rank (source, size, comm);
     }
-    //~ if(sctk_is_inter_comm(comm))
-    //~ {
-		//~ if(sctk_is_in_local_group(comm))
-		//~ {
-			//~ int remote_size;
-			//~ __INTERNAL__PMPI_Comm_remote_size(comm, &remote_size);
-			//~ mpi_check_rank (source, remote_size, comm);
-		//~ }
-		//~ else
-		//~ {
-			//~ mpi_check_rank (source, size, comm);
-		//~ }
-	//~ }
-	//~ else
-		//~ mpi_check_rank (source, size, comm);
     if (count != 0)
       {
 	mpi_check_buf (buf, comm);
