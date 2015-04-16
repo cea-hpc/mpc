@@ -4987,7 +4987,7 @@ __INTERNAL__PMPI_Bcast_intra (void *buffer, int count,
 			if(res != MPI_SUCCESS){return res;}
 			j++;
 		}
-		res = __INTERNAL__PMPI_Waitall(size-1, reqs_send, MPI_STATUSES_IGNORE);
+		res = __INTERNAL__PMPI_Waitall(j, reqs_send, MPI_STATUSES_IGNORE);
 		if(res != MPI_SUCCESS){return res;}
 	}
 	
