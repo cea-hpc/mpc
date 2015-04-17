@@ -23,6 +23,7 @@
 
 #include "sctk_debug.h"
 #include "sctk_thread.h"
+#include "sctk_spinlock.h"
 
 /************************************************************************/
 /* ENUM DEFINITION                                                      */
@@ -78,6 +79,91 @@ const char * sctk_device_container_to_char( sctk_device_container_t type )
 static sctk_device_t * sctk_devices = NULL;
 static int sctk_devices_count = 0;
 
+/************************************************************************/
+/* Scattering Computation                                               */
+/************************************************************************/
+
+static sctk_spinlock_t ___counter_lock = SCTK_SPINLOCK_INITIALIZER;
+static int ___numa_count = -1;
+static int ___core_count = -1;
+static int ___current_numa_id = 0;
+static int ___current_core_id = 0;
+
+
+
+int sctk_device_count_pu_on_numa( hwloc_obj_t obj  )
+{
+	int i;
+	
+	if( obj->type == HWLOC_OBJ_PU )
+	{
+		return 1;
+	}
+	
+	int ret = 0;
+	
+	for( i = 0 ; i < obj->arity ; i++ )
+	{
+		ret += sctk_device_count_pu_on_numa( obj->children[i] );
+	}
+	
+	return ret;
+}
+
+
+
+void sctk_device_load_topology_limits( hwloc_topology_t topology )
+{
+	int numa = sctk_get_numa_node_number();
+	/* Assume 1 when not a numa machine */
+	if( numa == 0 )
+		numa = 1;
+	___numa_count = numa;
+	
+	hwloc_obj_t numa_node =  hwloc_get_next_obj_by_type( topology, HWLOC_OBJ_NODE, NULL );
+	
+	/* Assume 1 to begin with */
+	___core_count = 1;
+	
+	/* Prepare to walk numa nodes */
+	int has_numa = 0;
+	int last_count = -1;
+	
+	while( numa_node )
+	{
+		has_numa |= 1;
+		
+		int local_count = sctk_device_count_pu_on_numa( numa_node );
+		
+		if( last_count < 0 )
+			last_count = local_count;
+		
+		if( local_count < last_count  )
+		{
+			sctk_warning("Machine seems to be asymetric");
+			last_count = local_count;
+		}
+		
+		numa_node = hwloc_get_next_obj_by_type( topology, HWLOC_OBJ_NODE, numa_node );
+	}
+
+	/* No numa found */
+	if( !has_numa )
+	{
+		___core_count = sctk_get_cpu_number();
+	}
+	else
+	{
+		/* If numa then use the minimum number of cores
+		 * in order to adapt the scatering algorithm
+		 * to every socket */
+		___core_count = last_count;
+	}
+
+	sctk_error(" %d NUMA for %d CORES", ___numa_count, ___core_count );
+}
+
+
 
 /************************************************************************/
 /* DEVICE                                                               */
@@ -110,6 +196,8 @@ void sctk_device_print( sctk_device_t * dev )
 	
 	sctk_info("#######################################");
 }
+
+
 
 void sctk_device_init( hwloc_topology_t topology, sctk_device_t * dev , hwloc_obj_t obj, int os_dev_offset )
 {
@@ -163,10 +251,31 @@ void sctk_device_init( hwloc_topology_t topology, sctk_device_t * dev , hwloc_ob
 			/* We set this flag to inform that the
 			 * device is locality sensitive */
 			dev->container = SCTK_TOPOLOGICAL_DEVICE;
+			
+			/*TODO*/
+			
 		}
 		else
 		{
+			/* Here we have a device with no particular locality
+			 * we then apply a scatter algoritms to elect
+			 * a preferential NUMA node */
 			dev->container = SCTK_MACHINE_LEVEL_DEVICE;
+			
+			sctk_spinlock_lock( & ___counter_lock );
+			
+			/* If needed first load the topology */
+			if( (___core_count < 0) || ( ___numa_count < 0 ) )
+			{
+				sctk_device_load_topology_limits( topology );
+			}
+			
+			/* Increment Numa */
+			
+			/*TODO */
+			
+			sctk_spinlock_unlock( & ___counter_lock );
+			
 		}
 		
 		

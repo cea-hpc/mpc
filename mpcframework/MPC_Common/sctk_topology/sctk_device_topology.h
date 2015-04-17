@@ -82,6 +82,9 @@ typedef struct sctk_device_s
 	hwloc_cpuset_t cpuset; /**< This is the CPUset of the parent non IO */
 	hwloc_cpuset_t nodeset; /**< This is the NODEset of the parent non IO */
 
+	int root_core;
+	int root_numa;
+
 	/* Attributes */
 	const char * vendor; /** PCI card vendor */
 	const char * device; /** PCI card descriptor */
