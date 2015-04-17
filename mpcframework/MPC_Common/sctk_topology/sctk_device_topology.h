@@ -80,10 +80,10 @@ typedef struct sctk_device_s
 	
 	/* Topology */
 	hwloc_cpuset_t cpuset; /**< This is the CPUset of the parent non IO */
-	hwloc_cpuset_t nodeset; /**< This is the NODEset of the parent non IO */
+	hwloc_nodeset_t nodeset; /**< This is the NODEset of the parent non IO */
 
-	int root_core;
-	int root_numa;
+	int root_core; /**< This is the master core for this NUMA node */
+	int root_numa; /**< This is the master NUMA node for this device */
 
 	/* Attributes */
 	const char * vendor; /** PCI card vendor */

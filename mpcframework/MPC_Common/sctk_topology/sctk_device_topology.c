@@ -24,6 +24,7 @@
 #include "sctk_debug.h"
 #include "sctk_thread.h"
 #include "sctk_spinlock.h"
+#include "sctk_topology.h"
 
 /************************************************************************/
 /* ENUM DEFINITION                                                      */
@@ -87,7 +88,7 @@ static sctk_spinlock_t ___counter_lock = SCTK_SPINLOCK_INITIALIZER;
 static int ___numa_count = -1;
 static int ___core_count = -1;
 static int ___current_numa_id = 0;
-static int ___current_core_id = 0;
+static int * ___current_core_id = NULL;
 
 
 
@@ -118,7 +119,12 @@ void sctk_device_load_topology_limits( hwloc_topology_t topology )
 	/* Assume 1 when not a numa machine */
 	if( numa == 0 )
 		numa = 1;
+
 	___numa_count = numa;
+	
+    /* Allocate a current core ID for each numa */
+    ___current_core_id = sctk_calloc( ___numa_count, sizeof( int ) );
+    assume( ___current_core_id != NULL );
 	
 	hwloc_obj_t numa_node =  hwloc_get_next_obj_by_type( topology, HWLOC_OBJ_NODE, NULL );
 	
@@ -163,7 +169,51 @@ void sctk_device_load_topology_limits( hwloc_topology_t topology )
 	sctk_error(" %d NUMA for %d CORES", ___numa_count, ___core_count );
 }
 
+int sctk_device_get_ith_logical_on_numa(  hwloc_topology_t topology, int numa_id , int core_id )
+{
+   int ret = -1;
+   
+   int did_alloc = 0;
+   hwloc_cpuset_t local_cpuset;
+   hwloc_obj_t numa = hwloc_get_obj_by_type( topology, HWLOC_OBJ_NODE , numa_id); 	
+   
+   if( !numa )
+   {
+	   /* This machine has no numa with this id (can also be non-numa)
+	    * then work on the autorized CPUSET */
+	   local_cpuset = hwloc_topology_get_allowed_cpuset( topology );
+   }
+   else
+   {
+	   /* We found the target numa, use its cpuset */
+	   local_cpuset = numa->cpuset;
+   }
+   
+   int i = 0;
+	
 
+	do
+	{
+		ret = hwloc_bitmap_next ( local_cpuset , ret);
+	
+		/* Not found is core ID erroneous ? */
+		if( ret < 0 )
+		{
+			return 0;
+		}
+		
+		/* We have the target logical core */
+		if( i == core_id )
+		{
+			return ret;
+		}
+		 
+		i++; 
+	}while( 0 <= ret ); 
+	
+	/* Not found */
+	return 0;
+}
 
 /************************************************************************/
 /* DEVICE                                                               */
@@ -183,7 +233,7 @@ void sctk_device_print( sctk_device_t * dev )
 
 	char cpusetraw[512];
 	hwloc_bitmap_snprintf(cpusetraw, 512, dev->cpuset);
-	
+
 	sctk_info("CPU set : '%s' (%s)", cpuset , cpusetraw );
 	
 	char nodeset[512];
@@ -193,6 +243,8 @@ void sctk_device_print( sctk_device_t * dev )
 	hwloc_bitmap_snprintf(nodesetraw, 512, dev->nodeset);
 	
 	sctk_info("NODE set : '%s' (%s)", nodeset, nodesetraw );
+	sctk_info("Root numa : '%d'", dev->root_numa );
+	sctk_info("Root core : '%d'", dev->root_core );
 	
 	sctk_info("#######################################");
 }
@@ -241,6 +293,7 @@ void sctk_device_init( hwloc_topology_t topology, sctk_device_t * dev , hwloc_ob
 		dev->cpuset = hwloc_bitmap_dup( dev->non_io_parent_obj->cpuset );
 		dev->nodeset = hwloc_bitmap_dup( dev->non_io_parent_obj->nodeset );
 		
+
 		hwloc_const_cpuset_t allowed_cpuset = hwloc_topology_get_allowed_cpuset( topology );
 		
 		/* If the device CPUset it diferent from the whole process
@@ -271,9 +324,14 @@ void sctk_device_init( hwloc_topology_t topology, sctk_device_t * dev , hwloc_ob
 			}
 			
 			/* Increment Numa */
+			___current_numa_id = ( ___current_numa_id + 1 ) % ___numa_count;
+			dev->root_numa = ___current_numa_id;
 			
-			/*TODO */
-			
+			/* Increment Thread */
+			___current_core_id[ dev->root_numa ] = (___current_core_id[ dev->root_numa ] + 1 ) % ___core_count;
+			dev->root_core = sctk_device_get_ith_logical_on_numa( topology, dev->root_numa, 
+	___current_core_id[ dev->root_numa ] );
+
 			sctk_spinlock_unlock( & ___counter_lock );
 			
 		}
@@ -445,13 +503,13 @@ int sctk_device_vp_is_device_leader( sctk_device_t * device, int vp_id )
 	
 }
 
-int sctk_device_vp_is_on_device_numa( sctk_device_t * device, int vp_id )
+int sctk_device_vp_is_on_device_socket( sctk_device_t * device, int vp_id )
 {
 	
 	
 }
 
-int sctk_device_vp_is_outside_device_numa( sctk_device_t * device, int vp_id )
+int sctk_device_vp_is_on_device_numa( sctk_device_t * device, int vp_id )
 {
 	
 	
