@@ -47,7 +47,13 @@ if test -e "${SCTK_LIB_DIR}/libromio.a"; then
 	fi
 fi
 
-FLAGS="-Wl,-rpath,${SCTK_LIB_DIR} -Wl,-rpath,${SCTK_LIB_DIR}/../lib64 -lmpc_tdb_remote_static $SCTK_LDFLAGS \${ROMIO}"
+if test -e "${SCTK_LIB_DIR}/libmpcgetopt.a"; then
+	if test "x\${MPC_BOOTSTRAP}" != "xyes"; then
+		SCTK_GETOPT="-L${SCTK_LIB_DIR}/ -lmpcgetopt"
+	fi
+fi
+
+FLAGS="-Wl,-rpath,${SCTK_LIB_DIR} -Wl,-rpath,${SCTK_LIB_DIR}/../lib64 -lmpc_tdb_remote_static $SCTK_LDFLAGS \${ROMIO} \${SCTK_GETOPT}"
 
 if test "\$MPC_USE_INTEL_COMPILER" = "1"; then
 MPC_DO_NOT_USE_GNU_LM="1"

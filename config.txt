@@ -14,3 +14,4 @@ hydra        ; 3.1   ;       ; install ;                                        
 hydra_simple ;       ;       ; install ; hydra                                             ; all     ; hydra_simple	; local.autotools
 gdb          ; 7.6.2 ;       ; install ;                                                   ; target  ; extern		; generic.autotools
 romio        ; 2008.03.09 ;       ; install ;    mpcframework                              ; target  ; extern		; generic.autotools.mpc
+sctk_getopt        ; 1.0 ;       ; install ;    mpcframework                              ; target  ; extern		; generic.autotools.mpc
