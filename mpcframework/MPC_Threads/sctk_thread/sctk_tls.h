@@ -86,20 +86,14 @@ extern "C"
   /* MPC Tracelib TLS */
   extern __thread void *tls_trace_module;
   extern __thread void *tls_args;
+
+
   extern __thread void *sctk_hls_generation;
 
 #if defined (SCTK_USE_OPTIMIZED_TLS)
   extern __thread void *sctk_tls_module_vp[sctk_extls_max_scope+sctk_hls_max_scope] ;
   extern __thread void **sctk_tls_module ;
 #endif
-
- /* Getopt TLS */
-  extern __thread char *sctk_optarg;
-  extern __thread int sctk_optind;
-  extern __thread int sctk_opterr;
-  extern __thread int sctk_optopt;
-  extern __thread int sctk_optreset;
-  extern __thread int sctk_optpos;
 
 #endif
 
@@ -120,7 +114,6 @@ extern "C"
 #define tls_save(a) ucp->a = a;
 #define tls_restore(a) a = ucp->a;
 #define tls_init(a) ucp->a = NULL;
-#define tls_init_zero(a) ucp->a = 0;
 
   static inline void sctk_context_save_tls (sctk_mctx_t * ucp)
   {
@@ -150,14 +143,6 @@ extern "C"
     /* MPC Tracelib TLS */
     tls_save (tls_args);
     tls_save (tls_trace_module);
-    
-    /* Getopt TLS */
-    tls_save (sctk_optarg);
-    tls_save (sctk_optind);
-    tls_save (sctk_opterr);
-    tls_save (sctk_optopt);
-    tls_save (sctk_optreset);
-    tls_save (sctk_optpos);
 #endif
   }
 
@@ -190,14 +175,6 @@ extern "C"
     /* MPC Tracelib TLS */
     tls_restore (tls_args);
     tls_restore (tls_trace_module);
-    
-    /* Getopt TLS */
-    tls_restore (sctk_optarg);
-    tls_restore (sctk_optind);
-    tls_restore (sctk_opterr);
-    tls_restore (sctk_optopt);
-    tls_restore (sctk_optreset);
-    tls_restore (sctk_optpos);
 #endif
   }
 
@@ -229,13 +206,7 @@ extern "C"
 #if defined (SCTK_USE_OPTIMIZED_TLS)
     tls_init (sctk_tls_module);
 #endif
-    /* Getopt TLS */
-    tls_init (sctk_optarg);
-    tls_init_zero (sctk_optind);
-    tls_init_zero (sctk_opterr);
-    tls_init_zero (sctk_optopt);
-    tls_init_zero (sctk_optreset);
-    tls_init_zero (sctk_optpos);
+
 #endif
   }
 

@@ -203,13 +203,6 @@ Need to check this in more depth for futur version ( > 2.4.0-1).
     /* MPC OpenMP TLS */
     void *sctk_openmp_thread_tls ;
 #endif
-    /* Getopt Support */
-    char *sctk_optarg;
-    int sctk_optind;
-    int sctk_opterr;
-    int sctk_optopt;
-    int sctk_optreset;
-    int sctk_optpos;
   } sctk_mctx_t;
 
   int sctk_getcontext (sctk_mctx_t * ucp);
