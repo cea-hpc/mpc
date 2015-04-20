@@ -450,41 +450,12 @@ for arg in "$@" ; do
     fi
 done
 
-# include architecture finder
-. "${MPC_RPREFIX}/.Architectures.sh"
-
-if test "$BINARY" != ""; then
-    # find architecture
-	getBinaryTarget "arch_bin" "${BINARY}"
-else
-    arch_bin="k1om"
-fi
-
-# verify arch bin and host compatibility
-UNAME="`uname -m`"
-if test "`uname -m`" != "${arch_bin}" -a "{MPCRUN_CONFIG_FILE}" = ""; then
-	if test "${arch_bin}" = "0"; then 
-		arch_bin="unknown" 
-	fi
-	echo "###########################################################################"
-	echo "# You are on ${UNAME} machine and try to run a ${arch_bin} binary "      
-	echo "###########################################################################"
-	exit 1
-fi
-
 # Here we prepend the PATH which is normally postpended
 # we do this as we can't override the whole prefix with
 # mpc binaries as it can cause version mismatches
 export SCTK_BINDIR="${prefix}/bin/"
 export PATH="${SCTK_BINDIR}:${PATH}"
 
-
-# load MPC Hydra launcher if not k1om architecture
-if test "${arch_bin}" = "k1om"; then 
-    echo "k1om architecture detected" >&2
-else
-    echo "${arch_bin} architecture detected" >&2
-fi
 
 if test "$PROCESS_NB" = "0" ; then
     PROCESS_NB="1"
