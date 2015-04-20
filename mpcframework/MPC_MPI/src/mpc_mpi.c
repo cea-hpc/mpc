@@ -347,9 +347,12 @@ static int __INTERNAL__PMPI_Finalize (void);
 static int __INTERNAL__PMPI_Finalized (int*);
 static int __INTERNAL__PMPI_Initialized (int *);
 static int __INTERNAL__PMPI_Abort (MPI_Comm, int);
+struct MPI_request_struct_s;
 static int __INTERNAL__PMPI_Isend_test_req (void *buf, int count,
-    MPI_Datatype datatype, int dest, int tag, MPI_Comm comm,
-				 MPI_Request * request, int is_valid_request);
+					    MPI_Datatype datatype, int dest, int tag, 
+					    MPI_Comm comm,
+					    MPI_Request * request, int is_valid_request,
+					    struct MPI_request_struct_s* requests);
 
   /* MPI-2 functions */
 static int __INTERNAL__PMPI_Comm_get_name (MPI_Comm, char *, int *);
@@ -865,6 +868,12 @@ typedef struct MPI_internal_request_s
 	sctk_alloc_buffer_t buf; /**< This is a buffer allocator used to allocate requests */
 }MPI_request_struct_t;
 
+MPI_request_struct_t * __sctk_internal_get_MPC_requests(){
+  MPI_request_struct_t *requests;
+  PMPC_Get_requests ((void *) &requests);
+  return requests;
+}
+
 /** \brief Initialize MPI interface request handling */
 static inline void __sctk_init_mpc_request ()
 {
@@ -951,13 +960,11 @@ static inline void __sctk_init_mpc_request_internal(MPI_internal_request_t *tmp)
  * 
  *  \param req Request to allocate (will be written with the ID of the request)
  * */
-static inline MPI_internal_request_t * __sctk_new_mpc_request_internal (MPI_Request * req)
+static inline MPI_internal_request_t * 
+__sctk_new_mpc_request_internal (MPI_Request * req, 
+				 MPI_request_struct_t *requests)
 {
-	MPI_request_struct_t *requests;
 	MPI_internal_request_t *tmp;
-
-	/* Retrieve the request strunt from the env */
-	PMPC_Get_requests ((void *) &requests);
 
 	/* Lock the request struct */
 	sctk_spinlock_lock (&(requests->lock));
@@ -1035,11 +1042,11 @@ static inline MPI_internal_request_t * __sctk_new_mpc_request_internal (MPI_Requ
 }
 
 /** \brief Create a new \ref MPC_Request */
-static inline MPC_Request * __sctk_new_mpc_request (MPI_Request * req)
+static inline MPC_Request * __sctk_new_mpc_request (MPI_Request * req,MPI_request_struct_t *requests)
 {
 	MPI_internal_request_t *tmp;
 	/* Acquire a free MPI_Iternal request */
-	tmp = __sctk_new_mpc_request_internal (req);
+	tmp = __sctk_new_mpc_request_internal (req,requests);
 	/* Return its inner MPC_Request */
 	return &(tmp->req);
 }
@@ -1049,10 +1056,11 @@ static inline MPC_Request * __sctk_new_mpc_request (MPI_Request * req)
  * 	\param req Request to convert to an \ref MPI_internal_request_t
  *  \return a pointer to the \MPI_internal_request_t associated with req NULL if not found
  *  */
-static inline MPI_internal_request_t * __sctk_convert_mpc_request_internal (MPI_Request * req)
+static inline MPI_internal_request_t * 
+__sctk_convert_mpc_request_internal (MPI_Request * req,
+				     MPI_request_struct_t *requests)
 {
 	MPI_internal_request_t *tmp;
-	MPI_request_struct_t *requests;
 	
 	/* Retrieve the interger ID of this request */
 	int	int_req = *req;
@@ -1064,7 +1072,6 @@ static inline MPI_internal_request_t * __sctk_convert_mpc_request_internal (MPI_
 	}
 
 	/* Retrieve the request array */
-	PMPC_Get_requests ((void *) &requests);
 	assume (requests != NULL);
 	
 	/* Lock it */
@@ -1092,12 +1099,12 @@ static inline MPI_internal_request_t * __sctk_convert_mpc_request_internal (MPI_
  * \param req Request to convert to an \ref MPC_Request
  * \return a pointer to the MPC_Request NULL if not found
  */
-static inline MPC_Request * __sctk_convert_mpc_request (MPI_Request * req)
+static inline MPC_Request * __sctk_convert_mpc_request (MPI_Request * req,MPI_request_struct_t *requests)
 {
 	MPI_internal_request_t *tmp;
 
 	/* Resolve the MPI_internal_request_t */
-	tmp = __sctk_convert_mpc_request_internal (req);
+	tmp = __sctk_convert_mpc_request_internal (req,requests);
 	
 	/* If there was no MPI_internal_request_t or it was unactive */
 	if ((tmp == NULL) || (tmp->is_active == 0))
@@ -1116,19 +1123,19 @@ static inline MPC_Request * __sctk_convert_mpc_request (MPI_Request * req)
  *  \param t Datatype to store
  * 
  * */
-static inline void __sctk_add_in_mpc_request (MPI_Request * req, void *t)
+static inline void __sctk_add_in_mpc_request (MPI_Request * req, void *t,MPI_request_struct_t *requests)
 {
 	MPI_internal_request_t *tmp;
-	tmp = __sctk_convert_mpc_request_internal (req);
+	tmp = __sctk_convert_mpc_request_internal (req,requests);
 	tmp->saved_datatype = t;
 }
 
 /** Delete a request
  *  \param req Request to delete
  */
-static inline void __sctk_delete_mpc_request (MPI_Request * req)
+static inline void __sctk_delete_mpc_request (MPI_Request * req,
+					      MPI_request_struct_t *requests)
 {
-	MPI_request_struct_t *requests;
 	MPI_internal_request_t *tmp;
 	
 	/* Convert resquest to an integer */
@@ -1140,8 +1147,6 @@ static inline void __sctk_delete_mpc_request (MPI_Request * req)
 		return;
 	}
 
-	/* Retrieve the request array */
-	PMPC_Get_requests ((void *) &requests);
 	assume (requests != NULL);
 	/* Lock it */
 	sctk_nodebug ("Delete request %d", *req);
@@ -1603,17 +1608,18 @@ __INTERNAL__PMPI_Buffer_detach (void *bufferptr, int *size)
 static int
 __INTERNAL__PMPI_Ibsend_test_req (void *buf, int count, MPI_Datatype datatype,
 				  int dest, int tag, MPI_Comm comm,
-				  MPI_Request * request, int is_valid_request)
+				  MPI_Request * request, int is_valid_request,
+				  struct MPI_request_struct_s* requests)
 {
   mpi_buffer_t *tmp;
   int size;
   int res;
-  MPI_request_struct_t *requests;
   mpi_buffer_overhead_t *head;
   mpi_buffer_overhead_t *head_next;
   void *head_buf;
   mpi_buffer_overhead_t *found = NULL;
   //~ get the pack size
+
   res = __INTERNAL__PMPI_Pack_size (count, datatype, comm, &size);
   if (res != MPI_SUCCESS)
     {
@@ -1675,7 +1681,8 @@ __INTERNAL__PMPI_Ibsend_test_req (void *buf, int count, MPI_Datatype datatype,
 	}
       assume (position <= size);
 
-      res = __INTERNAL__PMPI_Isend_test_req (head_buf, position, MPI_PACKED, dest, tag, comm, &(head->request), 0);
+
+      res = __INTERNAL__PMPI_Isend_test_req (head_buf, position, MPI_PACKED, dest, tag, comm, &(head->request), 0,requests);
 
 /*       fprintf(stderr,"Add request %d %d\n",head->request,res); */
 
@@ -1688,14 +1695,14 @@ __INTERNAL__PMPI_Ibsend_test_req (void *buf, int count, MPI_Datatype datatype,
       if(is_valid_request == 1){
         MPI_internal_request_t* tmp_request;
 
-        tmp_request = (MPI_internal_request_t *)__sctk_convert_mpc_request (request);
+        tmp_request = (MPI_internal_request_t *)__sctk_convert_mpc_request (request,requests);
         tmp_request->req.completion_flag = SCTK_MESSAGE_DONE;
 
       } else {
 //	*request = MPI_REQUEST_NULL;
 	MPI_internal_request_t* tmp_request;
-	__sctk_new_mpc_request (request);
-	tmp_request = (MPI_internal_request_t *)__sctk_convert_mpc_request (request);
+	__sctk_new_mpc_request (request,requests);
+	tmp_request = (MPI_internal_request_t *)__sctk_convert_mpc_request (request,requests);
 	tmp_request->req.completion_flag = SCTK_MESSAGE_DONE;
       }
 
@@ -1717,13 +1724,15 @@ __INTERNAL__PMPI_Ibsend (void *buf, int count, MPI_Datatype datatype,
 			 MPI_Request * request)
 {
   return __INTERNAL__PMPI_Ibsend_test_req (buf, count, datatype, dest, tag,
-					   comm, request, 0);
+					   comm, request, 0,
+					   __sctk_internal_get_MPC_requests());
 }
 
 static int
 __INTERNAL__PMPI_Isend_test_req (void *buf, int count, MPI_Datatype datatype,
 				 int dest, int tag, MPI_Comm comm,
-				 MPI_Request * request, int is_valid_request)
+				 MPI_Request * request, int is_valid_request,
+				 MPI_request_struct_t *requests)
 {
 	if (sctk_datatype_is_derived (datatype) && (count != 0))
 	{
@@ -1745,7 +1754,7 @@ __INTERNAL__PMPI_Isend_test_req (void *buf, int count, MPI_Datatype datatype,
 			}
 			res =
 			__INTERNAL__PMPI_Isend_test_req (buf, 1, new_datatype, dest, tag,
-			comm, request, is_valid_request);
+							 comm, request, is_valid_request,requests);
 			if (res != MPI_SUCCESS)
 			{
 				return res;
@@ -1766,11 +1775,11 @@ __INTERNAL__PMPI_Isend_test_req (void *buf, int count, MPI_Datatype datatype,
 
 			if (is_valid_request)
 			{
-				res = PMPC_Open_pack (__sctk_convert_mpc_request (request));
+			  res = PMPC_Open_pack (__sctk_convert_mpc_request (request,requests));
 			}
 			else
 			{
-				res = PMPC_Open_pack (__sctk_new_mpc_request (request));
+			  res = PMPC_Open_pack (__sctk_new_mpc_request (request,requests));
 			}
 			if (res != MPI_SUCCESS)
 			{
@@ -1780,7 +1789,7 @@ __INTERNAL__PMPI_Isend_test_req (void *buf, int count, MPI_Datatype datatype,
 			{
 				mpc_pack_absolute_indexes_t *tmp;
 				tmp = sctk_malloc (derived_datatype.opt_count * 2 * sizeof (mpc_pack_absolute_indexes_t));
-				__sctk_add_in_mpc_request (request, tmp);
+				__sctk_add_in_mpc_request (request, tmp,requests);
 				
 				memcpy (tmp, derived_datatype.opt_begins, derived_datatype.opt_count * sizeof (mpc_pack_absolute_indexes_t));
 				memcpy (&(tmp[derived_datatype.opt_count]), derived_datatype.opt_ends, derived_datatype.opt_count * sizeof (mpc_pack_absolute_indexes_t));
@@ -1789,14 +1798,14 @@ __INTERNAL__PMPI_Isend_test_req (void *buf, int count, MPI_Datatype datatype,
 				derived_datatype.opt_ends = &(tmp[derived_datatype.opt_count]);
 			}
 
-			res = PMPC_Add_pack_absolute (buf, derived_datatype.opt_count, derived_datatype.opt_begins, derived_datatype.opt_ends, MPC_CHAR,	__sctk_convert_mpc_request (request));
+			res = PMPC_Add_pack_absolute (buf, derived_datatype.opt_count, derived_datatype.opt_begins, derived_datatype.opt_ends, MPC_CHAR,	__sctk_convert_mpc_request (request,requests));
 		
 			if (res != MPI_SUCCESS)
 			{
 				return res;
 			}
 
-			res = PMPC_Isend_pack (dest, tag, comm, __sctk_convert_mpc_request (request));
+			res = PMPC_Isend_pack (dest, tag, comm, __sctk_convert_mpc_request (request,requests));
 			return res;
 		}
 	}
@@ -1810,12 +1819,12 @@ __INTERNAL__PMPI_Isend_test_req (void *buf, int count, MPI_Datatype datatype,
 		if (is_valid_request)
 		{
 			return PMPC_Isend (buf, count, datatype, dest, tag, comm,
-			__sctk_convert_mpc_request (request));
+					   __sctk_convert_mpc_request (request,requests));
 		}
 		else
 		{
 			return PMPC_Isend (buf, count, datatype, dest, tag, comm,
-			__sctk_new_mpc_request (request));
+					   __sctk_new_mpc_request (request,requests));
 		}
 	}
 }
@@ -1825,19 +1834,20 @@ __INTERNAL__PMPI_Isend (void *buf, int count, MPI_Datatype datatype, int dest,
 			int tag, MPI_Comm comm, MPI_Request * request)
 {
   return __INTERNAL__PMPI_Isend_test_req (buf, count, datatype, dest, tag,
-					  comm, request, 0);
+					  comm, request, 0,__sctk_internal_get_MPC_requests());
 }
 
 static int
 __INTERNAL__PMPI_Issend_test_req (void *buf, int count, MPI_Datatype datatype,
 				  int dest, int tag, MPI_Comm comm,
-				  MPI_Request * request, int is_valid_request)
+				  MPI_Request * request, int is_valid_request,
+				  MPI_request_struct_t *requests)
 {
   if (sctk_datatype_is_derived (datatype) && (count != 0))
     {
       return __INTERNAL__PMPI_Isend_test_req (buf, count, datatype, dest, tag,
 					      comm, request,
-					      is_valid_request);
+					      is_valid_request,requests);
     }
   else
     {
@@ -1849,12 +1859,12 @@ __INTERNAL__PMPI_Issend_test_req (void *buf, int count, MPI_Datatype datatype,
       if (is_valid_request)
 	{
 	  return PMPC_Issend (buf, count, datatype, dest, tag, comm,
-			     __sctk_convert_mpc_request (request));
+			     __sctk_convert_mpc_request (request,requests));
 	}
       else
 	{
 	  return PMPC_Issend (buf, count, datatype, dest, tag, comm,
-			     __sctk_new_mpc_request (request));
+			     __sctk_new_mpc_request (request,requests));
 	}
     }
 }
@@ -1864,30 +1874,31 @@ __INTERNAL__PMPI_Issend (void *buf, int count, MPI_Datatype datatype,
 			 MPI_Request * request)
 {
   return __INTERNAL__PMPI_Issend_test_req (buf, count, datatype, dest, tag,
-					   comm, request, 0);
+					   comm, request, 0,__sctk_internal_get_MPC_requests());
 }
 static int
 __INTERNAL__PMPI_Irsend_test_req (void *buf, int count, MPI_Datatype datatype,
 				  int dest, int tag, MPI_Comm comm,
-				  MPI_Request * request, int is_valid_request)
+				  MPI_Request * request, int is_valid_request,
+				  MPI_request_struct_t *requests)
 {
   if (sctk_datatype_is_derived (datatype))
     {
       return __INTERNAL__PMPI_Isend_test_req (buf, count, datatype, dest, tag,
 					      comm, request,
-					      is_valid_request);
+					      is_valid_request,requests);
     }
   else
     {
       if (is_valid_request)
 	{
 	  return PMPC_Irsend (buf, count, datatype, dest, tag, comm,
-			     __sctk_convert_mpc_request (request));
+			      __sctk_convert_mpc_request (request,requests));
 	}
       else
 	{
 	  return PMPC_Irsend (buf, count, datatype, dest, tag, comm,
-			     __sctk_new_mpc_request (request));
+			      __sctk_new_mpc_request (request,requests));
 	}
     }
 }
@@ -1896,13 +1907,15 @@ static int __INTERNAL__PMPI_Irsend (void *buf, int count, MPI_Datatype datatype,
 			 int dest, int tag, MPI_Comm comm,
 			 MPI_Request * request)
 {
-  return __INTERNAL__PMPI_Irsend_test_req (buf, count, datatype, dest, tag, comm, request, 0);
+  return __INTERNAL__PMPI_Irsend_test_req (buf, count, datatype, dest, tag, comm, request, 0,
+					   __sctk_internal_get_MPC_requests());
 }
 
 
 static int __INTERNAL__PMPI_Irecv_test_req (void *buf, int count, MPI_Datatype datatype,
 				 int source, int tag, MPI_Comm comm,
-				 MPI_Request * request, int is_valid_request)
+					    MPI_Request * request, int is_valid_request,
+					    struct MPI_request_struct_s * requests)
 {
 	if (sctk_datatype_is_derived (datatype))
 	{
@@ -1925,7 +1938,7 @@ static int __INTERNAL__PMPI_Irecv_test_req (void *buf, int count, MPI_Datatype d
 			res =
 			__INTERNAL__PMPI_Irecv_test_req (buf, 1, new_datatype, source,
 			tag, comm, request,
-			is_valid_request);
+							 is_valid_request,requests);
 			if (res != MPI_SUCCESS)
 			{
 				return res;
@@ -1946,11 +1959,11 @@ static int __INTERNAL__PMPI_Irecv_test_req (void *buf, int count, MPI_Datatype d
 			
 			if (is_valid_request)
 			{
-				res = PMPC_Open_pack (__sctk_convert_mpc_request (request));
+			  res = PMPC_Open_pack (__sctk_convert_mpc_request (request,requests));
 			}
 			else
 			{
-				res = PMPC_Open_pack (__sctk_new_mpc_request (request));
+			  res = PMPC_Open_pack (__sctk_new_mpc_request (request,requests));
 			}
 			
 			if (res != MPI_SUCCESS)
@@ -1961,7 +1974,7 @@ static int __INTERNAL__PMPI_Irecv_test_req (void *buf, int count, MPI_Datatype d
 			{
 				mpc_pack_absolute_indexes_t *tmp;
 				tmp = sctk_malloc (derived_datatype.opt_count * 2 * sizeof (mpc_pack_absolute_indexes_t));
-				__sctk_add_in_mpc_request (request, tmp);
+				__sctk_add_in_mpc_request (request, tmp,requests);
 
 				memcpy (tmp, derived_datatype.opt_begins, derived_datatype.opt_count * sizeof (mpc_pack_absolute_indexes_t));
 				memcpy (&(tmp[derived_datatype.opt_count]), derived_datatype.opt_ends, derived_datatype.opt_count * sizeof (mpc_pack_absolute_indexes_t));
@@ -1971,7 +1984,7 @@ static int __INTERNAL__PMPI_Irecv_test_req (void *buf, int count, MPI_Datatype d
 			}
 
 			res =
-			PMPC_Add_pack_absolute (buf, derived_datatype.opt_count, derived_datatype.opt_begins, derived_datatype.opt_ends, MPC_CHAR, __sctk_convert_mpc_request (request));
+			  PMPC_Add_pack_absolute (buf, derived_datatype.opt_count, derived_datatype.opt_begins, derived_datatype.opt_ends, MPC_CHAR, __sctk_convert_mpc_request (request,requests));
 			if (res != MPI_SUCCESS)
 			{
 				return res;
@@ -1979,7 +1992,7 @@ static int __INTERNAL__PMPI_Irecv_test_req (void *buf, int count, MPI_Datatype d
 
 			res =
 			PMPC_Irecv_pack (source, tag, comm,
-			__sctk_convert_mpc_request (request));
+					 __sctk_convert_mpc_request (request,requests));
 			return res;
 		}
 	}
@@ -1988,12 +2001,12 @@ static int __INTERNAL__PMPI_Irecv_test_req (void *buf, int count, MPI_Datatype d
 		if (is_valid_request)
 		{
 			return PMPC_Irecv (buf, count, datatype, source, tag, comm,
-			__sctk_convert_mpc_request (request));
+					   __sctk_convert_mpc_request (request,requests));
 		}
 		else
 		{
 			return PMPC_Irecv (buf, count, datatype, source, tag, comm,
-			__sctk_new_mpc_request (request));
+					   __sctk_new_mpc_request (request,requests));
 		}
 	}
 }
@@ -2003,16 +2016,19 @@ static int __INTERNAL__PMPI_Irecv (void *buf, int count, MPI_Datatype datatype,
 			MPI_Request * request)
 {
   return __INTERNAL__PMPI_Irecv_test_req (buf, count, datatype, source, tag,
-					  comm, request, 0);
+					  comm, request, 0,__sctk_internal_get_MPC_requests());
 }
 
 static int __INTERNAL__PMPI_Wait (MPI_Request * request, MPI_Status * status)
 {
 	int res;
+	MPI_request_struct_t *requests;
 	sctk_nodebug("wait request %d", *request);
-	res = PMPC_Wait (__sctk_convert_mpc_request (request), status);
 
-	__sctk_delete_mpc_request (request);
+	requests = __sctk_internal_get_MPC_requests();
+
+	res = PMPC_Wait (__sctk_convert_mpc_request (request,requests), status);
+	__sctk_delete_mpc_request (request,requests);
 	return res;
 }
 
@@ -2020,11 +2036,13 @@ static int __INTERNAL__PMPI_Test (MPI_Request * request, int *flag, MPI_Status *
 {
 	int res;
 	MPI_internal_request_t *tmp;
-	tmp = __sctk_convert_mpc_request_internal(request);
-	res = PMPC_Test (__sctk_convert_mpc_request (request), flag, status);
+	MPI_request_struct_t *requests;
+	requests = __sctk_internal_get_MPC_requests();
+	tmp = __sctk_convert_mpc_request_internal(request,requests);
+	res = PMPC_Test (__sctk_convert_mpc_request (request,requests), flag, status);
 	if (*flag)
     {
-      __sctk_delete_mpc_request (request);
+      __sctk_delete_mpc_request (request,requests);
     }
 	else
     {
@@ -2037,13 +2055,15 @@ static int __INTERNAL__PMPI_Request_free (MPI_Request * request)
 {
 	int res = MPI_SUCCESS;
 	MPI_internal_request_t *tmp;
-	tmp = __sctk_convert_mpc_request_internal (request);
+	MPI_request_struct_t *requests;
+	requests = __sctk_internal_get_MPC_requests();
+	tmp = __sctk_convert_mpc_request_internal (request,requests);
 
 	if (tmp)
     {
 		tmp->freeable = 1;
 		tmp->auto_free = 1;
-		__sctk_delete_mpc_request (request);
+		__sctk_delete_mpc_request (request,requests);
 		*request = MPI_REQUEST_NULL;
     }
 	return res;
@@ -2067,6 +2087,9 @@ static int __INTERNAL__PMPI_Testany (int count, MPI_Request * array_of_requests,
   *index = MPI_UNDEFINED;
   *flag = 1;
   int tmp;
+  MPI_request_struct_t *requests;
+
+  requests = __sctk_internal_get_MPC_requests();
 
   for (i = 0; i < count; i++)
     {
@@ -2077,7 +2100,7 @@ static int __INTERNAL__PMPI_Testany (int count, MPI_Request * array_of_requests,
 
       {
 	MPC_Request *req;
-	req = __sctk_convert_mpc_request (&(array_of_requests[i]));
+	req = __sctk_convert_mpc_request (&(array_of_requests[i]),requests);
 	if (req == &MPC_REQUEST_NULL)
 	  {
 	    continue;
@@ -2099,7 +2122,7 @@ static int __INTERNAL__PMPI_Testany (int count, MPI_Request * array_of_requests,
 	}
       if (*flag)
 	{
-	  __sctk_delete_mpc_request (&(array_of_requests[i]));
+	  __sctk_delete_mpc_request (&(array_of_requests[i]),requests);
 	  *index = i;
 	  return tmp;
 	}
@@ -2114,6 +2137,9 @@ static int __INTERNAL__PMPI_Waitall (int count, MPI_Request * array_of_requests,
 {
 	int flag = 0;
 	int i;
+	MPI_request_struct_t *requests;
+	
+	requests = __sctk_internal_get_MPC_requests();
 
 	/* Set the MPI_Status to MPI_SUCCESS */
 	if(array_of_statuses != MPI_STATUSES_IGNORE){
@@ -2149,7 +2175,7 @@ static int __INTERNAL__PMPI_Waitall (int count, MPI_Request * array_of_requests,
 		}
 		else
 		{
-			mpc_array_of_requests[i] = __sctk_convert_mpc_request (&(array_of_requests[i]));
+		  mpc_array_of_requests[i] = __sctk_convert_mpc_request (&(array_of_requests[i]),requests);
 		}
 
 	}
@@ -2163,7 +2189,7 @@ static int __INTERNAL__PMPI_Waitall (int count, MPI_Request * array_of_requests,
 	 
 	/* Delete the MPI requests */
 	for( i = 0 ; i < count ; i++ )
-		__sctk_delete_mpc_request (&(array_of_requests[i]));
+	  __sctk_delete_mpc_request (&(array_of_requests[i]),requests);
 	
 	/* If needed free the mpc_array_of_requests */
 	if( PMPI_WAIT_ALL_STATIC_TRSH <= count )
@@ -2179,6 +2205,8 @@ static int __INTERNAL__PMPI_Testall (int count, MPI_Request array_of_requests[],
 	int i;
 	int done = 0;
 	int loc_flag;
+	MPI_request_struct_t *requests;
+	requests = __sctk_internal_get_MPC_requests();
 	*flag = 0;
 	if(array_of_statuses != MPC_STATUSES_IGNORE){
 	  for (i = 0; i < count; i++)
@@ -2200,7 +2228,7 @@ static int __INTERNAL__PMPI_Testall (int count, MPI_Request array_of_requests[],
 		else
 		{
 			MPC_Request *req;
-			req = __sctk_convert_mpc_request (&(array_of_requests[i]));
+			req = __sctk_convert_mpc_request (&(array_of_requests[i]),requests);
 			if (req == &MPC_REQUEST_NULL)
 			{
 				done++;
@@ -2228,7 +2256,7 @@ static int __INTERNAL__PMPI_Testall (int count, MPI_Request array_of_requests[],
 		{
 			if (array_of_requests[i] != MPI_REQUEST_NULL)
 			{
-				__sctk_delete_mpc_request (&(array_of_requests[i]));
+			  __sctk_delete_mpc_request (&(array_of_requests[i]),requests);
 			}
 		}
 	}
@@ -2244,6 +2272,8 @@ static int __INTERNAL__PMPI_Waitsome (int incount, MPI_Request * array_of_reques
 {
   int i;
   int req_null_count = 0;
+  MPI_request_struct_t *requests;
+  requests = __sctk_internal_get_MPC_requests();
 
   *outcount = MPI_UNDEFINED;
 
@@ -2252,7 +2282,7 @@ static int __INTERNAL__PMPI_Waitsome (int incount, MPI_Request * array_of_reques
       req_null_count++;
     } else {
       MPC_Request *req;
-      req = __sctk_convert_mpc_request (&(array_of_requests[i]));
+      req = __sctk_convert_mpc_request (&(array_of_requests[i]),requests);
       if (req == &MPC_REQUEST_NULL)
 	{
 	  req_null_count++;
@@ -2279,13 +2309,16 @@ static int __INTERNAL__PMPI_Testsome (int incount, MPI_Request * array_of_reques
 	int done = 0;
 	int no_active_done = 0;
 	int loc_flag;
+	MPI_request_struct_t *requests;
+	requests = __sctk_internal_get_MPC_requests();
+
 	for (i = 0; i < incount; i++)
 	{
 	  if (array_of_requests[i] != MPI_REQUEST_NULL)
 		{
 			int tmp;
 			MPC_Request *req;
-			req = __sctk_convert_mpc_request (&(array_of_requests[i]));
+			req = __sctk_convert_mpc_request (&(array_of_requests[i]),requests);
 			if (req == &MPC_REQUEST_NULL)
 			{
 				loc_flag = 0;
@@ -2299,7 +2332,7 @@ static int __INTERNAL__PMPI_Testsome (int incount, MPI_Request * array_of_reques
 			if (loc_flag)
 			{
 				array_of_indices[done] = i;
-				__sctk_delete_mpc_request (&(array_of_requests[i]));
+				__sctk_delete_mpc_request (&(array_of_requests[i]),requests);
 				done++;
 			}
 			if (tmp != MPI_SUCCESS)
@@ -2345,10 +2378,13 @@ __INTERNAL__PMPI_Cancel (MPI_Request * request)
 {
   int res = MPI_ERR_INTERN;
   MPI_internal_request_t *req;
-  req = __sctk_convert_mpc_request_internal (request);
+  MPI_request_struct_t *requests;
+  requests = __sctk_internal_get_MPC_requests();
+
+  req = __sctk_convert_mpc_request_internal (request,requests);
   if (req->is_active == 1)
 	{
-	  res = PMPC_Cancel (__sctk_convert_mpc_request (request));
+	  res = PMPC_Cancel (__sctk_convert_mpc_request (request,requests));
 	}
   else
     {
@@ -2369,7 +2405,7 @@ __INTERNAL__PMPI_Send_init (void *buf, int count, MPI_Datatype datatype,
 			    MPI_Request * request)
 {
 	MPI_internal_request_t *req;
-	req = __sctk_new_mpc_request_internal (request);
+	req = __sctk_new_mpc_request_internal (request,__sctk_internal_get_MPC_requests());
 	if(dest == MPC_PROC_NULL)
 	{
 		req->freeable = 0;
@@ -2409,7 +2445,7 @@ __INTERNAL__PMPI_Bsend_init (void *buf, int count, MPI_Datatype datatype,
 {
 	int rank;
 	MPI_internal_request_t *req;
-	req = __sctk_new_mpc_request_internal (request);
+	req = __sctk_new_mpc_request_internal (request,__sctk_internal_get_MPC_requests());
 	sctk_nodebug("new request %d", *request);
 	if(dest == MPC_PROC_NULL)
 	{
@@ -2448,7 +2484,7 @@ __INTERNAL__PMPI_Ssend_init (void *buf, int count, MPI_Datatype datatype,
 			     MPI_Request * request)
 {
 	MPI_internal_request_t *req;
-	req = __sctk_new_mpc_request_internal (request);
+	req = __sctk_new_mpc_request_internal (request,__sctk_internal_get_MPC_requests());
 	if(dest == MPC_PROC_NULL)
 	{
 		req->freeable = 0;
@@ -2486,7 +2522,7 @@ __INTERNAL__PMPI_Rsend_init (void *buf, int count, MPI_Datatype datatype,
 			     MPI_Request * request)
 {
 	MPI_internal_request_t *req;
-	req = __sctk_new_mpc_request_internal (request);
+	req = __sctk_new_mpc_request_internal (request,__sctk_internal_get_MPC_requests());
 	if(dest == MPC_PROC_NULL)
 	{
 		req->freeable = 0;
@@ -2524,7 +2560,7 @@ __INTERNAL__PMPI_Recv_init (void *buf, int count, MPI_Datatype datatype,
 			    MPI_Request * request)
 {
   MPI_internal_request_t *req;
-  req = __sctk_new_mpc_request_internal (request);
+  req = __sctk_new_mpc_request_internal (request,__sctk_internal_get_MPC_requests());
   req->freeable = 0;
   req->is_active = 0;
   req->req.request_type = REQUEST_RECV;
@@ -2545,7 +2581,9 @@ ____INTERNAL__PMPI_Start (MPI_Request * request)
 {
   int res = 0;
   MPI_internal_request_t *req;
-  req = __sctk_convert_mpc_request_internal (request);
+  MPI_request_struct_t *requests;
+  requests = __sctk_internal_get_MPC_requests();
+  req = __sctk_convert_mpc_request_internal (request,requests);
   if(req->is_active != 0)
 	return MPI_ERR_REQUEST;
   req->is_active = 1;
@@ -2565,7 +2603,7 @@ ____INTERNAL__PMPI_Start (MPI_Request * request)
 					 req->persistant.datatype,
 					 req->persistant.dest_source,
 					 req->persistant.tag,
-					 req->persistant.comm, request, 1);
+					 req->persistant.comm, request, 1,requests);
       break;
     case Bsend_init:
       res =
@@ -2574,7 +2612,7 @@ ____INTERNAL__PMPI_Start (MPI_Request * request)
 					  req->persistant.datatype,
 					  req->persistant.dest_source,
 					  req->persistant.tag,
-					  req->persistant.comm, request, 1);
+					  req->persistant.comm, request, 1,requests);
       break;
     case Rsend_init:
       res =
@@ -2583,7 +2621,7 @@ ____INTERNAL__PMPI_Start (MPI_Request * request)
 					  req->persistant.datatype,
 					  req->persistant.dest_source,
 					  req->persistant.tag,
-					  req->persistant.comm, request, 1);
+					  req->persistant.comm, request, 1,requests);
       break;
     case Ssend_init:
       res =
@@ -2592,7 +2630,7 @@ ____INTERNAL__PMPI_Start (MPI_Request * request)
 					  req->persistant.datatype,
 					  req->persistant.dest_source,
 					  req->persistant.tag,
-					  req->persistant.comm, request, 1);
+					  req->persistant.comm, request, 1,requests);
       break;
     case Recv_init:
       res =
@@ -2601,7 +2639,7 @@ ____INTERNAL__PMPI_Start (MPI_Request * request)
 					 req->persistant.datatype,
 					 req->persistant.dest_source,
 					 req->persistant.tag,
-					 req->persistant.comm, request, 1);
+					 req->persistant.comm, request, 1,requests);
       break;
     default:
       not_reachable ();
@@ -2747,7 +2785,7 @@ __INTERNAL__PMPI_Sendrecv_replace (void *buf, int count,
 int PMPI_Grequest_start( MPI_Grequest_query_function *query_fn, MPI_Grequest_free_function * free_fn,
 					  MPI_Grequest_cancel_function * cancel_fn, void *extra_state, MPI_Request * request)
 {
-	MPC_Request *new_request = __sctk_new_mpc_request (request);
+	MPC_Request *new_request = __sctk_new_mpc_request (request,__sctk_internal_get_MPC_requests());
 	
 	return PMPC_Grequest_start( query_fn, free_fn, cancel_fn, extra_state, new_request );
 }
@@ -2755,7 +2793,7 @@ int PMPI_Grequest_start( MPI_Grequest_query_function *query_fn, MPI_Grequest_fre
 
 int PMPI_Grequest_complete(  MPI_Request request )
 {
-	MPC_Request *mpc_req = __sctk_convert_mpc_request (&request);
+	MPC_Request *mpc_req = __sctk_convert_mpc_request (&request,__sctk_internal_get_MPC_requests());
 	return PMPC_Grequest_complete( *mpc_req );
 }
 
@@ -2770,7 +2808,7 @@ int PMPI_Grequest_complete(  MPI_Request request )
            		  void *extra_state, 
            		  MPI_Request * request)
   {
-	  MPC_Request *new_request = __sctk_new_mpc_request (request);
+          MPC_Request *new_request = __sctk_new_mpc_request (request,__sctk_internal_get_MPC_requests());
 	  return PMPCX_Grequest_start(query_fn, free_fn, cancel_fn, poll_fn, extra_state, new_request);
   }
 
@@ -2790,7 +2828,7 @@ int PMPIX_Grequest_class_create( MPI_Grequest_query_function * query_fn,
   
 int PMPIX_Grequest_class_allocate( MPIX_Grequest_class target_class, void *extra_state, MPI_Request *request )
 {
-	MPC_Request *new_request = __sctk_new_mpc_request (request);
+        MPC_Request *new_request = __sctk_new_mpc_request (request,__sctk_internal_get_MPC_requests());
 	return PMPCX_Grequest_class_allocate( target_class, extra_state, new_request );
 }
 
@@ -12164,7 +12202,7 @@ int PMPI_Status_set_cancelled (MPI_Status *status, int cancelled)
 
 int PMPI_Request_get_status (MPI_Request request, int *flag, MPI_Status *status)
 {
-	MPC_Request *mpc_request =  __sctk_convert_mpc_request(&request);
+        MPC_Request *mpc_request =  __sctk_convert_mpc_request(&request,__sctk_internal_get_MPC_requests());
 	
 	MPI_Comm comm = MPI_COMM_WORLD;
 	int res = MPI_ERR_INTERN;
