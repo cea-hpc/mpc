@@ -43,6 +43,10 @@ getArch()
         A_out="${1}"
 	checkString="${2}"
 
+        eval "${A_out}=$2"
+
+        return
+
 	getArchList archList
 	for arch in ${archList}; do
 		getAliasList aliasList "${arch}"
