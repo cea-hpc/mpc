@@ -226,6 +226,9 @@ do
 			ROMIO_PREFIX='disabled'		
 			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --disable-MPC_MPI"
 			;;
+		--disable-ROMIO)
+			ROMIO_PREFIX='disabled'
+			;;
 		##################### MPC ###################
 		--with-mpc=*)
 			extractParamValue 'MPC_PREFIX' 'with-mpc' "$arg"
