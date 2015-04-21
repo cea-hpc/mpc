@@ -161,6 +161,7 @@ void __init_a_composed_common_types(MPC_Datatype target_type, MPC_Aint disp, MPC
 	dtctx.array_of_displacements_addr = displacements;
 	dtctx.array_of_types = types;
 	MPC_Datatype_set_context( target_type, &dtctx);
+	
 
 	/* We do this to handle the padding as we
 	 * want to guarantee the matching with
@@ -605,7 +606,8 @@ int sctk_derived_datatype_release( sctk_derived_datatype_t * type )
 
 			if( count )
 			{
-				if( type->context.internal_type != layout[0].type )
+				if( type->context.internal_type != layout[0].type
+				&&  type->context.internal_type != MPC_DATATYPE_NULL )
 				{
 					to_free[type->context.internal_type] = 1;
 				}
