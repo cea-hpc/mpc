@@ -678,52 +678,6 @@ int sctk_aio_lio_listio( int mode , struct aiocb * const aiocb_list[], int nitem
 
 #endif
 
-#ifdef MPC_GETOPT_ENABLED
-/* Getopt Support */
-
-#define _GETOPT_H
-#include <unistd.h>
-#include <getopt.h>
-
-/* Getopt variables */
-extern char * sctk_optarg;
-extern int sctk_optind, sctk_opterr, sctk_optopt, sctk_optreset, sctk_optpos;
-
-/* Define the option struct */
-struct option
-{
-	const char *name;
-	int has_arg;
-	int *flag;
-	int val;
-};
-
-/* Redefine the getopt modifiers */
-#define no_argument        0
-#define required_argument  1
-#define optional_argument  2
-
-/* SCTK getopt implementation */
-int sctk_getopt(int, char * const [], const char *);
-int sctk_getopt_long(int, char *const *, const char *, const struct option *, int *);
-int sctk_getopt_long_only(int, char *const *, const char *, const struct option *, int *);
-
-/* Rewrite getopt variables */
-#define optarg sctk_optarg
-#define optind sctk_optind
-#define opterr sctk_opterr
-#define optopt sctk_optopt
-#define optreset sctk_optreset
-#define optpos sctk_optpos
-
-/* Rewrite getopt functions */
-#define getopt_long sctk_getopt_long
-#define getopt_long_only sctk_getopt_long_only
-#define getopt sctk_getopt
-#define __getopt_msg sctk___getopt_msg
-
-/* End of getopt support */
-#endif
 
 #ifdef __cplusplus
 }
