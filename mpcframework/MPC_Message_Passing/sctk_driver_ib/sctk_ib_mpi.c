@@ -868,8 +868,6 @@ void sctk_network_init_mpi_ib ( sctk_rail_info_t *rail )
 
 	rail->send_message_from_network = sctk_send_message_from_network_mpi_ib;
 
-	sctk_polling_tree_set_max_load( &rail->polling_tree, 1 );
-
 	/* Boostrap the ring only if required */
 	if( rail->requires_bootstrap_ring )
 	{

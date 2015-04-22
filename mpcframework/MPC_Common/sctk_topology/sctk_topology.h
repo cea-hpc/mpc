@@ -146,7 +146,40 @@ void sctk_restrict_binding();
 int sctk_topology_is_ib_device_close_from_cpu (struct ibv_device * dev, int core_id);
 #endif
 
-  void sctk_topology_init_cpu();
+/*! \brief Convert a PU id to a logical index
+*/
+int sctk_topology_convert_os_pu_to_logical( int pu_os_id );
+
+/*! \brief Convert an OS PU to a logical index
+*/
+int sctk_topology_convert_logical_pu_to_os( int pu_id );
+
+/*! \brief Returns the complete allowed cpu set for this process
+*/
+hwloc_cpuset_t sctk_topology_get_machine_cpuset();
+
+/*! \brief Return the cpuset of the node containing the PU with pu_id
+ * if not numa it behaves like  sctk_topology_get_machine_cpuset
+*/
+hwloc_cpuset_t sctk_topology_get_numa_cpuset( int pu_id );
+
+/*! \brief Return the cpuset of the socket containing the PU with pu_id
+*/
+hwloc_cpuset_t sctk_topology_get_socket_cpuset( int pu_id );
+
+/*! \brief Return the cpuset of the PU with pu_id
+*/
+hwloc_cpuset_t sctk_topology_get_pu_cpuset( int pu_id );
+
+/*! \brief Return the cpuset of the CORE hosting PU with pu_id
+*/
+hwloc_cpuset_t sctk_topology_get_core_cpuset( int pu_id );
+
+/*! \brief Retrieve a CPUSET with the first core for each item of level NUMA/MACHINE/SOCKET
+*/
+hwloc_cpuset_t sctk_topology_get_roots_for_level( hwloc_obj_type_t type );
+
+void sctk_topology_init_cpu();
   
   int sctk_get_pu_number();
 #ifdef __cplusplus

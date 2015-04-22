@@ -24,7 +24,7 @@
 
 #include <sctk_inter_thread_comm.h>
 #include <sctk_runtime_config.h>
-#include "sctk_polling.h"
+#include "sctk_topological_polling.h"
 
 /* Forward struct declarations */
 typedef struct sctk_rail_info_s sctk_rail_info_t;
@@ -77,8 +77,10 @@ struct sctk_rail_info_s
 
 	/* Route table */
 	sctk_route_table_t * route_table;
+
 	/* Polling mechanism */
-	struct sctk_polling_tree polling_tree;
+	struct sctk_topological_polling_tree idle_polling_tree;
+	struct sctk_topological_polling_tree any_source_polling_tree;
 
 	/* HOOKS */
 

@@ -747,10 +747,26 @@ void sctk_multirail_notify_idle()
 		
 		if( rail->notify_idle_message )
 		{
-			sctk_polling_tree_poll( &rail->polling_tree , notify_idle_message_trampoline , (void *)rail );
+			sctk_topological_polling_tree_poll( &rail->idle_polling_tree , notify_idle_message_trampoline , (void *)rail );
 		}
 	}
 }
+
+
+struct sctk_anysource_polling_ctx
+{
+	int polling_task_id;
+	int blocking;
+	sctk_rail_info_t * rail;
+};
+
+
+void notify_anysource_trampoline( void * pctx )
+{
+	struct sctk_anysource_polling_ctx * ctx = (struct sctk_anysource_polling_ctx *) pctx;
+	(ctx->rail->notify_any_source_message)( ctx->polling_task_id, ctx->blocking, ctx->rail );
+}
+
 
 void sctk_multirail_notify_anysource( int polling_task_id, int blocking )
 {
@@ -763,7 +779,13 @@ void sctk_multirail_notify_anysource( int polling_task_id, int blocking )
 		
 		if( rail->notify_any_source_message )
 		{
-			(rail->notify_any_source_message)(polling_task_id, blocking, rail );
+			struct sctk_anysource_polling_ctx ctx;
+			
+			ctx.polling_task_id = polling_task_id;
+			ctx.blocking = blocking;
+			ctx.rail = rail;
+			
+			sctk_topological_polling_tree_poll( &rail->any_source_polling_tree , notify_anysource_trampoline , (void *)&ctx );
 		}
 	}
 }

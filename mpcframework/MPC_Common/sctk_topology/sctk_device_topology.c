@@ -165,8 +165,6 @@ void sctk_device_load_topology_limits( hwloc_topology_t topology )
 		 * to every socket */
 		___core_count = last_count;
 	}
-
-	sctk_error(" %d NUMA for %d CORES", ___numa_count, ___core_count );
 }
 
 int sctk_device_get_ith_logical_on_numa(  hwloc_topology_t topology, int numa_id , int core_id )
@@ -450,7 +448,7 @@ void sctk_device_load_from_topology( hwloc_topology_t topology )
 	}
 	
 	
-	hwloc_topology_export_xml(topology, "-");
+	//hwloc_topology_export_xml(topology, "-");
 }
 
 void sctk_device_release()

@@ -1445,23 +1445,6 @@ __thread sctk_thread_ptp_message_t *buffered_ptp_message = NULL;
 __thread sctk_spinlock_t lock_buffered_ptp_message = SCTK_SPINLOCK_INITIALIZER;
 
 
-static void sctk_rail_init_polling_for_task()
-{
-	int i;
-	int rail_count = sctk_rail_count();
-	
-	for( i = 0 ; i < rail_count; i++ )
-	{
-		sctk_rail_info_t * rail = sctk_rail_get_by_id ( i );
-		
-		/* Make sute that the first task calling initialize the rail */
-		sctk_polling_tree_init_once( &rail->polling_tree );
-		/* Push current task in polling structure */
-		sctk_polling_tree_join( &rail->polling_tree );
-	}
-}
-
-
 /*
  * Init data structures used for task i. Called only once for each task
  */
@@ -1479,9 +1462,6 @@ void sctk_ptp_per_task_init ( int i )
 	/* Initialize reordering for the list */
 	sctk_reorder_list_init ( &tmp->reorder );
 	
-	/* Initialize polling for this task */
-	sctk_rail_init_polling_for_task();
-
 	/* Initialize the internal ptp lists */
 	sctk_internal_ptp_message_list_init ( & ( tmp->lists ) );
 	/* And insert them */

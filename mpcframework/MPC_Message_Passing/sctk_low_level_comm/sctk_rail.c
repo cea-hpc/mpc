@@ -65,7 +65,9 @@ sctk_rail_info_t * sctk_rail_new ( struct sctk_runtime_config_struct_net_rail *r
 	new_rail->rail_number = __rails.rail_current_id;
 	
 	new_rail->route_table = sctk_route_table_new();
-	sctk_polling_tree_init_empty( &new_rail->polling_tree );
+	
+	sctk_topological_polling_tree_init( &new_rail->idle_polling_tree, SCTK_POLL_SOCKET, SCTK_POLL_NUMA, 0 );
+	sctk_topological_polling_tree_init( &new_rail->any_source_polling_tree, SCTK_POLL_SOCKET, SCTK_POLL_MACHINE, 0 );
 
 	__rails.rail_current_id++;
 

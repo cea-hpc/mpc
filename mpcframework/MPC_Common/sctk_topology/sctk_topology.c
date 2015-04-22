@@ -404,6 +404,176 @@ uname (struct utsname *buf)
 
 #endif
 
+int sctk_topology_convert_os_pu_to_logical( int pu_os_id )
+{
+	hwloc_cpuset_t this_pu_cpuset = hwloc_bitmap_alloc();
+	hwloc_bitmap_only(this_pu_cpuset, pu_os_id);
+	
+	hwloc_obj_t pu = hwloc_get_obj_inside_cpuset_by_type(topology, this_pu_cpuset, HWLOC_OBJ_PU, 0);
+	
+	if( !pu )
+	{
+		return 0;
+	}
+
+	return pu->logical_index;
+}
+
+int sctk_topology_convert_logical_pu_to_os( int pu_id )
+{
+	hwloc_obj_t target_pu = hwloc_get_obj_by_type(topology,HWLOC_OBJ_PU, pu_id );
+	
+	if( !target_pu )
+	{
+		/* Assume 0 in case of error */
+		return 0;
+	}
+	
+	return target_pu->os_index;	
+}
+
+hwloc_cpuset_t sctk_topology_get_machine_cpuset()
+{
+	return  hwloc_topology_get_allowed_cpuset( topology );
+}
+
+hwloc_cpuset_t sctk_topology_get_numa_cpuset( int pu_id )
+{
+	hwloc_cpuset_t ret;
+	
+	if( !sctk_is_numa_node () )
+	{
+		ret =  hwloc_topology_get_allowed_cpuset( topology );
+	}
+	else
+	{
+		hwloc_obj_t target_pu = hwloc_get_obj_by_type(topology,HWLOC_OBJ_PU, pu_id );
+		assume( target_pu != NULL );
+		
+		hwloc_obj_t parent = target_pu->parent;
+		
+		while( parent->type != HWLOC_OBJ_NODE )
+		{
+			if( !parent )
+				break;
+			
+			parent = parent->parent;
+		}
+		
+		assume( parent != NULL );
+		
+		ret = parent->cpuset;
+	}
+	
+	return ret;
+}
+
+
+hwloc_cpuset_t sctk_topology_get_socket_cpuset( int pu_id )
+{
+	hwloc_obj_t target_pu = hwloc_get_obj_by_type(topology,HWLOC_OBJ_PU, pu_id );
+	assume( target_pu != NULL );
+	
+	hwloc_obj_t parent = target_pu->parent;
+	
+	while( parent->type != HWLOC_OBJ_SOCKET )
+	{
+		if( !parent )
+			break;
+		
+		parent = parent->parent;
+	}
+	
+	assume( parent != NULL );
+	
+	return parent->cpuset;
+}
+
+
+hwloc_cpuset_t sctk_topology_get_core_cpuset( int pu_id )
+{
+	hwloc_obj_t target_pu = hwloc_get_obj_by_type(topology,HWLOC_OBJ_PU, pu_id );
+	assume( target_pu != NULL );
+	
+	hwloc_obj_t parent = target_pu->parent;
+	
+	while( parent->type != HWLOC_OBJ_CORE )
+	{
+		if( !parent )
+			break;
+		
+		parent = parent->parent;
+	}
+	
+	assume( parent != NULL );
+	
+	return parent->cpuset;
+}
+
+hwloc_cpuset_t sctk_topology_get_pu_cpuset( int pu_id )
+{
+	hwloc_obj_t target_pu = hwloc_get_obj_by_type(topology,HWLOC_OBJ_PU, pu_id );
+	assume( target_pu != NULL );
+	return target_pu->cpuset;
+}
+
+
+int __sctk_topology_get_roots_for_level( hwloc_obj_t obj, hwloc_cpuset_t roots )
+{
+	if( obj->type == HWLOC_OBJ_PU )
+	{
+		hwloc_bitmap_or( roots, roots, obj->cpuset ); 
+	 	return 1;
+	}
+	
+	int i;
+	
+	int ret = 0;
+	
+	for( i = 0 ; i < obj->arity ; i++ )
+	{
+		ret = __sctk_topology_get_roots_for_level( obj->children[i] , roots );
+		
+		if( ret )
+			break;
+	}
+	
+	return ret;
+}
+
+hwloc_cpuset_t sctk_topology_get_roots_for_level( hwloc_obj_type_t type )
+{
+	hwloc_cpuset_t roots = hwloc_bitmap_alloc();
+	
+	/* Handle the case where the node is not a numa node */
+	if( !sctk_is_numa_node () )
+	{
+		/* Just tell that the expected value was MACHINE */
+		type = HWLOC_OBJ_MACHINE;
+	}
+	
+	int pu_count = hwloc_get_nbobjs_by_type(topology, type);
+
+	int i;
+	
+	for( i = 0 ; i < pu_count ; i++ )
+	{
+		hwloc_obj_t obj = hwloc_get_obj_by_type(topology, type, i);
+		 __sctk_topology_get_roots_for_level( obj, roots );
+		obj = hwloc_get_next_obj_by_type( topology, type, obj );
+	}
+	
+	if( hwloc_bitmap_iszero( roots ) )
+	{
+		sctk_fatal("Did not find any roots for this level");
+	}
+	
+	return roots;
+}
+
+
+
+
 /*! \brief Return the current core_id
 */
 static __thread int sctk_get_cpu_val = -1;
@@ -454,7 +624,7 @@ static inline  int sctk_get_cpu_intern ()
 	return cpu;
 }
 
- int sctk_get_cpu ()
+ int sctk_get_cpu()
 {
 	if(sctk_get_cpu_val < 0)
 	{
@@ -568,8 +738,10 @@ void sctk_topology_init ()
 	if (!hwloc_bitmap_iszero(pin_processor_bitmap))
 	{
 		sctk_print_topology (stderr);
-	}
+	}	
+
 }
+
 
 /*! \brief Destroy the topology module
 */
