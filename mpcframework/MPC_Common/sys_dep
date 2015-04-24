@@ -55,6 +55,8 @@ SCTK_CHECK_HEADER sys/types.h
 SCTK_CHECK_HEADER unistd.h
 SCTK_CHECK_HEADER setjmp.h
 SCTK_CHECK_HEADER signal.h
+SCTK_CHECK_HEADER sys/types.h
+SCTK_CHECK_HEADER regex.h
 
 sctk_echo
 

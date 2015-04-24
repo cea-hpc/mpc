@@ -110,6 +110,7 @@ void sctk_device_release();
 
 sctk_device_t * sctk_device_get_from_handle( char * handle );
 int sctk_device_get_id_from_handle( char * handle );
+sctk_device_t ** sctk_device_get_from_handle_regexp( char * handle_reg_exp, int * count );
 
 /* Locality helpers */
 

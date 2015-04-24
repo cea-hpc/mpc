@@ -437,6 +437,9 @@ void sctk_runtime_config_struct_init_net_rail(void * struct_ptr)
 	/* array */
 	obj->gates = NULL;
 	obj->gates_size = 0;
+	/* array */
+	obj->subrails = NULL;
+	obj->subrails_size = 0;
 	obj->init_done = 1;
 }
 

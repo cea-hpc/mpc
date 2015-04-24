@@ -414,6 +414,10 @@ struct sctk_runtime_config_struct_net_rail
 	struct sctk_runtime_config_struct_net_gate * gates;
 	/** Number of elements in gates array. **/
 	int gates_size;
+	/**Used for topological rail selection**/
+	struct sctk_runtime_config_struct_net_rail * subrails;
+	/** Number of elements in subrails array. **/
+	int subrails_size;
 };
 
 /******************************** STRUCTURE *********************************/

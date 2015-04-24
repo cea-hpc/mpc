@@ -26,7 +26,8 @@
 #include "sctk_spinlock.h"
 #include "sctk_topology.h"
 
-
+#include <sys/types.h>
+#include <regex.h>
 
 #ifdef MPC_USE_INFINIBAND
 #include <infiniband/verbs.h>
@@ -578,6 +579,63 @@ int sctk_device_get_id_from_handle( char * handle )
 	
 	return dev->device_id;
 }
+
+sctk_device_t ** sctk_device_get_from_handle_regexp( char * handle_reg_exp, int * count )
+{
+	
+	/* For simplicity just allocate an array of the number of devices (make it NULL terminated) */
+	sctk_device_t ** ret_dev = sctk_malloc( sizeof( sctk_device_t *) * ( sctk_devices_count + 1 ) );
+	
+	/* Set it to NULL */
+	int i;
+	for( i = 0 ; i < sctk_devices_count + 1; i++ )
+		ret_dev[i] = NULL;
+	
+	/* Prepare the regexp */
+	regex_t regexp;
+	char msg_buff[100];
+	
+	int ret = regcomp( &regexp, handle_reg_exp, 0 );
+	
+	if( ret )
+	{
+		perror("regcomp");
+		regerror( ret, &regexp, msg_buff, 100 );
+		sctk_fatal("Could not compile device regexp %s ( %s )", handle_reg_exp , msg_buff);
+	}
+	
+	
+	/* Lets walk the devices to see who matches */
+	int current_count = 0;
+	
+	for( i = 0 ; i < sctk_devices_count ; i++ )
+	{
+		ret = regexec( &regexp, sctk_devices[i].name, 0, NULL, 0 );
+		
+		if( ret == 0 )
+		{
+			/* Match then push the device */
+			ret_dev[current_count] = &sctk_devices[i];
+			current_count++;
+		}
+		else if( ret == REG_NOMATCH )
+		{
+			/* No Match */
+			sctk_info("Regex %s skips %s", handle_reg_exp, sctk_devices[i].name);
+		}
+		else
+		{
+			regerror( ret, &regexp, msg_buff, 100 );
+			sctk_fatal("Could not execute device regexp %s on %s ( %s )", handle_reg_exp, sctk_devices[i].name, msg_buff);
+		}
+	}
+	
+	if( count )
+		*count = current_count;
+		
+	return ret_dev;
+}
+
 
 
 int sctk_device_vp_is_device_leader( sctk_device_t * device, int vp_id )

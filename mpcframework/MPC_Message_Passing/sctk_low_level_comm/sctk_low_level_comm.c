@@ -267,6 +267,55 @@ static inline struct sctk_runtime_config_struct_net_driver_config *sctk_get_driv
 /* Network INIT                                                         */
 /************************************************************************/
 
+int sctk_count_rails( struct sctk_runtime_config_struct_net_cli_option *cli_option )
+{
+	/* Now compute the actual total number of rails knowing that
+	 * some rails might contain subrails */
+	
+	int k;
+	int total_rail_nb = 0;
+	 
+	for ( k = 0; k < cli_option->rails_size; ++k )
+	{
+		/* Get the rail */
+		struct sctk_runtime_config_struct_net_rail *rail = sctk_get_rail_config_by_name ( cli_option->rails[k] );
+		
+		/* Here we have two cases, first the rail device name is a regexp (begins with !)
+		 * or the subrails are already defined with their device manually set  */
+		
+		/* Case with preset subrails */
+		if( rail->subrails_size )
+		{
+			/* Count subrails */
+			total_rail_nb += rail->subrails_size;	
+		}
+		else
+		{
+			if( strlen( rail->device ) )
+			{
+				if( rail->device[0] == '!')
+				{
+					/* We need to rebuild subrails
+					 * according to devices */
+					int matching_rails = 0;
+					
+					/* +1 to skip the ! */
+					sctk_device_t ** matching_device = sctk_device_get_from_handle_regexp( rail->device + 1, &matching_rails );
+					
+					/* Now we build the subrail array */
+					
+				}
+			}
+			
+		}
+		
+		/* Count this rail */
+		total_rail_nb++;
+	}
+	
+	return total_rail_nb;
+}
+
 /** \brief Init MPC network configuration
  *
  *   This function also loads the default configuration from the command
@@ -287,7 +336,7 @@ restart:
 	sctk_multirail_destination_table_init();
 
 	int j, k, l;
-	int rails_nb = 0;
+
 	struct sctk_runtime_config_struct_net_cli_option *cli_option = NULL;
 
 	/* Retrieve default network from config */
@@ -314,16 +363,19 @@ restart:
 	}
 
 
+	int total_rail_nb = sctk_count_rails( cli_option );
+
+
 	/* Allocate Rails Storage we need to do it at once as we are going to
 	 * distribute pointers to rails to every modules therefore, they
 	 * should not change during the whole execution */
-	sctk_rail_allocate ( cli_option->rails_size );
+	sctk_rail_allocate ( total_rail_nb );
 
 
 	/* Compute the number of rails for each type: */
 	int nb_rails_portals = 0;
 
-	if( 255 < cli_option->rails_size )
+	if( 255 < total_rail_nb )
 	{
 		sctk_fatal("There cannot be more than 255 rails");
 		/* If you want to remove this limation make sure that 
@@ -332,7 +384,7 @@ restart:
 	}
 
 
-	for ( k = 0; k < cli_option->rails_size; ++k )
+	for ( k = 0; k < total_rail_nb; ++k )
 	{
 		/* Get the rail */
 		struct sctk_runtime_config_struct_net_rail *rail = sctk_get_rail_config_by_name ( cli_option->rails[k] );
@@ -368,7 +420,7 @@ restart:
 	 * rails are initialized in the same order than in the config
 	 * this is important if no priority is given to make sure
 	 * that the decalration order will be the gate order */
-	for ( k = (cli_option->rails_size - 1); 0 <= k ; k-- )
+	for ( k = (total_rail_nb - 1); 0 <= k ; k-- )
 	{
 		/* For each RAIL */
 		struct sctk_runtime_config_struct_net_rail *rail_config_struct = sctk_get_rail_config_by_name ( cli_option->rails[k] );
@@ -422,8 +474,6 @@ restart:
 				break;
 		}
 
-		/* Increment the number of rails used */
-		rails_nb++;
 	}
 
 

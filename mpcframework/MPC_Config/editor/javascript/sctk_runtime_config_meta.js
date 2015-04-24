@@ -149,6 +149,7 @@ meta.types = {
 		ondemand: {mode: 'param', name: "ondemand", type: "int", doc: "Define if on-demand connections are allowed on this rail.", dflt: "1", },
 		config: {mode: 'param', name: "config", type: "string", doc: "Define the driver config to use for this rail.", dflt: null},
 		gates: {mode: 'array', name: "gates", type: "net_gate", entryname: "gate", dflt: null},
+		subrails: {mode: 'array', name: "subrails", type: "net_rail", entryname: "subrail", dflt: null},
 	}},
 	net_cli_option : {type: 'struct', name: "net_cli_option", childs: {
 		name: {mode: 'param', name: "name", type: "string", doc: "Define the name of the option.", dflt: null},

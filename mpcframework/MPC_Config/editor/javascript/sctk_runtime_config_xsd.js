@@ -331,6 +331,13 @@
 -e </xs:sequence>\
 -e </xs:complexType>\
 -e </xs:element>\
+-e <xs:element minOccurs='0' name='subrails'>\
+-e <xs:complexType>\
+-e <xs:sequence>\
+-e <xs:element minOccurs='0' maxOccurs='unbounded' name='subrail' type='user_type_net_rail'/>\
+-e </xs:sequence>\
+-e </xs:complexType>\
+-e </xs:element>\
 -e </xs:all>\
 -e </xs:complexType>\
 -e <!-- ********************************************************* -->\
