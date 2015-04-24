@@ -52,7 +52,7 @@ void sctk_rail_allocate ( int count )
 
 
 
-sctk_rail_info_t * sctk_rail_new ( struct sctk_runtime_config_struct_net_rail *runtime_config_rail,
+sctk_rail_info_t * sctk_rail_register( struct sctk_runtime_config_struct_net_rail *runtime_config_rail,
                                          struct sctk_runtime_config_struct_net_driver_config *runtime_config_driver_config )
 {
 	if ( __rails.rail_current_id ==  sctk_rail_count() )
@@ -61,7 +61,7 @@ sctk_rail_info_t * sctk_rail_new ( struct sctk_runtime_config_struct_net_rail *r
 	}
 
 	/* Store rail */
-	sctk_rail_info_t *new_rail = &__rails.rails[__rails.rail_current_id];
+	sctk_rail_info_t * new_rail = &__rails.rails[__rails.rail_current_id];
 
 	/* Load Config */
 	new_rail->runtime_config_rail = runtime_config_rail;
@@ -69,6 +69,11 @@ sctk_rail_info_t * sctk_rail_new ( struct sctk_runtime_config_struct_net_rail *r
 	
 	/* Set rail Number */
 	new_rail->rail_number = __rails.rail_current_id;
+	
+	/* Set no parent (note that for hierarchies it is the parent
+	 * which put itsef as parent in the child rails ) see subrails
+	 * just a few lines down */
+	new_rail->parent_rail = NULL;
 	
 	/* Init Empty route table */
 	new_rail->route_table = sctk_route_table_new();
@@ -106,7 +111,39 @@ sctk_rail_info_t * sctk_rail_new ( struct sctk_runtime_config_struct_net_rail *r
 	                                    sctk_rail_convert_polling_set_from_config(any_source->range),
 	                                    target_core );
 
-	__rails.rail_current_id++;
+	/* Is the rail topological ? meaning does it have subrails ?*/
+	if( runtime_config_rail->subrails_size )
+	{
+		sctk_rail_init_driver( new_rail, SCTK_RAIL_TOPOLOGICAL );
+
+		__rails.rail_current_id++;
+		
+		/* And now register subrails */
+		int i;
+		for( i = 0 ; i < runtime_config_rail->subrails_size ; i++ )
+		{
+			struct sctk_runtime_config_struct_net_rail *subrail_rail_conf = &runtime_config_rail->subrails[i];
+			/* Here we have to query in order to handle hierachies with different drivers */
+			struct sctk_runtime_config_struct_net_driver_config  * subrail_driver_conf = sctk_get_driver_config_by_name( subrail_rail_conf->config );
+			
+			if( !subrail_driver_conf )
+			{
+				sctk_fatal("Could not locate driver config for subrail %s", subrail_rail_conf->config );
+			}
+		
+			/* Now do the init */
+			sctk_rail_info_t * child_rail = sctk_rail_register( subrail_rail_conf, subrail_driver_conf );
+			/* Here the parent rail registers itself in the child */
+			child_rail->parent_rail = new_rail;
+		}
+		
+	}
+	else
+	{
+		sctk_rail_init_driver( new_rail, runtime_config_driver_config->driver.type );
+		__rails.rail_current_id++;
+	}
+
 
 	return new_rail;
 }
@@ -139,7 +176,7 @@ void sctk_rail_commit()
 	{
 		sctk_rail_info_t *  rail = sctk_rail_get_by_id ( i );
 		rail->route_init( rail );
-		sprintf ( name_ptr, "\nRail %d/%d [%s (%s)]", i + 1,  sctk_rail_count(), rail->network_name, rail->topology_name );
+		sprintf ( name_ptr, "\nRail %d/%d [%s (%s) (%s)]", i + 1,  sctk_rail_count(), rail->network_name, rail->topology_name , rail->runtime_config_rail->device );
 		name_ptr = net_name + strlen ( net_name );
 		sctk_pmi_barrier();
 	}

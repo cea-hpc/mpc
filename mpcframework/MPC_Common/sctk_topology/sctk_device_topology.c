@@ -615,13 +615,13 @@ sctk_device_t ** sctk_device_get_from_handle_regexp( char * handle_reg_exp, int 
 		if( ret == 0 )
 		{
 			/* Match then push the device */
+			sctk_info("Regex %s MATCH %s", handle_reg_exp, sctk_devices[i].name);
 			ret_dev[current_count] = &sctk_devices[i];
 			current_count++;
 		}
 		else if( ret == REG_NOMATCH )
 		{
 			/* No Match */
-			sctk_info("Regex %s skips %s", handle_reg_exp, sctk_devices[i].name);
 		}
 		else
 		{

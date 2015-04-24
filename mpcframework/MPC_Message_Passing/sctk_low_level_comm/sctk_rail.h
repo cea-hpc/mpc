@@ -39,6 +39,10 @@ typedef struct sctk_endpoint_s sctk_endpoint_t;
 /* Rail Info                                                            */
 /************************************************************************/
 
+/** \brief This value is used to identify a rail which makes the interface
+ *         with a set of rails using a topology logic */
+#define SCTK_RAIL_TOPOLOGICAL 9999
+
 /** \brief Network dependent RAIL informations */
 typedef union
 {
@@ -65,6 +69,9 @@ struct sctk_rail_info_s
 	int rail_number; /**< ID of this rail */
 	char *network_name; /**< Name of this rail */
 	sctk_device_t * rail_device; /**< Device associated with the rail */
+	
+	struct sctk_rail_info_s * parent_rail; /**< This is used for rail hierarchies 
+	                                            (note that parent initializes it for the child) */
 	
 	/* Network Infos */
 	sctk_rail_info_spec_t network;	/**< Network dependent rail info */
@@ -136,7 +143,7 @@ struct sctk_rail_array
 
 void sctk_rail_allocate ( int count );
 
-sctk_rail_info_t *sctk_rail_new ( struct sctk_runtime_config_struct_net_rail *runtime_config_rail,
+sctk_rail_info_t *sctk_rail_register( struct sctk_runtime_config_struct_net_rail *runtime_config_rail,
                                   struct sctk_runtime_config_struct_net_driver_config *runtime_config_driver_config );
 int sctk_rail_count();
 sctk_rail_info_t * sctk_rail_get_by_id ( int i );

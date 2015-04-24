@@ -223,7 +223,7 @@ static inline struct sctk_runtime_config_struct_net_cli_option *sctk_get_net_con
 *   \param name Name of the requested rail
 *   \return The rail or NULL
 */
-static inline struct sctk_runtime_config_struct_net_rail *sctk_get_rail_config_by_name ( char *name )
+struct sctk_runtime_config_struct_net_rail *sctk_get_rail_config_by_name ( char *name )
 {
 	int l = 0;
 	struct sctk_runtime_config_struct_net_rail *ret = NULL;
@@ -244,7 +244,7 @@ static inline struct sctk_runtime_config_struct_net_rail *sctk_get_rail_config_b
 *   \param name Name of the requested driver config
 *   \return The driver config or NULL
 */
-static inline struct sctk_runtime_config_struct_net_driver_config *sctk_get_driver_config_by_name ( char *name )
+struct sctk_runtime_config_struct_net_driver_config *sctk_get_driver_config_by_name ( char *name )
 {
 	int j = 0;
 	struct sctk_runtime_config_struct_net_driver_config *ret = NULL;
@@ -267,7 +267,7 @@ static inline struct sctk_runtime_config_struct_net_driver_config *sctk_get_driv
 /* Network INIT                                                         */
 /************************************************************************/
 
-int sctk_count_rails( struct sctk_runtime_config_struct_net_cli_option *cli_option )
+int sctk_unfold_rails( struct sctk_runtime_config_struct_net_cli_option *cli_option )
 {
 	/* Now compute the actual total number of rails knowing that
 	 * some rails might contain subrails */
@@ -302,8 +302,34 @@ int sctk_count_rails( struct sctk_runtime_config_struct_net_cli_option *cli_opti
 					/* +1 to skip the ! */
 					sctk_device_t ** matching_device = sctk_device_get_from_handle_regexp( rail->device + 1, &matching_rails );
 					
-					/* Now we build the subrail array */
+					/* Now we build the subrail array
+					 * we duplicate the config of current rail
+					 * while just overriding device name with the 
+					 * one we extracted from the device array */
+					struct sctk_runtime_config_struct_net_rail * subrails = 
+					     sctk_malloc( sizeof(  struct sctk_runtime_config_struct_net_rail ) * matching_rails );
 					
+					int i;
+					
+					for( i =  0 ; i < matching_rails ; i++ )
+					{
+						/* Copy Current rail (note that at this point the rail has no subrails ) */
+						memcpy( &subrails[i], rail, sizeof( struct sctk_runtime_config_struct_net_rail ) );
+						
+						/* Update device name with matching device */
+						subrails[i].device = matching_device[i]->name;
+						
+						/* Make sure that subrails do not have a subrail */
+						subrails[i].subrails_size = 0;
+					}
+					
+					/* Store the new subrail array in the rail */
+					rail->subrails = subrails;
+					rail->subrails_size = matching_rails;
+					
+					
+					/* Increment total rails by matching rails */
+					total_rail_nb += matching_rails;
 				}
 			}
 			
@@ -316,13 +342,44 @@ int sctk_count_rails( struct sctk_runtime_config_struct_net_cli_option *cli_opti
 	return total_rail_nb;
 }
 
-/** \brief Init MPC network configuration
- *
- *   This function also loads the default configuration from the command
- *   line including rails and network backends
- *
- *  \param name Name of the configuration from the command line (can be NULL)
- */
+
+void sctk_rail_init_driver( sctk_rail_info_t * rail, int driver_type )
+{
+	/* Switch on the driver to use */
+	switch ( driver_type )
+	{
+#ifdef MPC_USE_INFINIBAND
+
+		case SCTK_RTCFG_net_driver_infiniband: /* INFINIBAND */
+			sctk_network_init_mpi_ib ( rail );
+		break;
+#endif
+#ifdef MPC_USE_PORTALS
+
+		//case SCTK_RTCFG_net_driver_portals: /* TCP */
+		//	sctk_network_init_multirail_portals ( new_rail, nb_rails_portals );
+		//break;
+#endif
+		case SCTK_RAIL_TOPOLOGICAL:
+		case SCTK_RTCFG_net_driver_tcp:
+			sctk_network_init_tcp ( rail );
+		break;
+		
+		case SCTK_RTCFG_net_driver_tcprdma:
+			sctk_network_init_tcp_rdma( rail );
+		break;
+		
+
+
+		default:
+			sctk_fatal("No such network type");
+			break;
+	}
+}
+
+
+
+
 void sctk_net_init_driver ( char *name )
 {	
 restart:
@@ -362,9 +419,9 @@ restart:
 		sctk_abort();
 	}
 
-
-	int total_rail_nb = sctk_count_rails( cli_option );
-
+	
+	/* This call counts rails while also unfolding subrails */
+	int total_rail_nb = sctk_unfold_rails( cli_option );
 
 	/* Allocate Rails Storage we need to do it at once as we are going to
 	 * distribute pointers to rails to every modules therefore, they
@@ -383,44 +440,11 @@ restart:
 		 * struct sctk_control_message_header */
 	}
 
-
-	for ( k = 0; k < total_rail_nb; ++k )
-	{
-		/* Get the rail */
-		struct sctk_runtime_config_struct_net_rail *rail = sctk_get_rail_config_by_name ( cli_option->rails[k] );
-
-		if ( rail == NULL )
-		{
-			sctk_error ( "Rail with name '%s' not found in config!", cli_option->rails[k] );
-			sctk_abort();
-		}
-
-		/* Try to find the driver associated to the configuration */
-		struct sctk_runtime_config_struct_net_driver_config *driver = sctk_get_driver_config_by_name ( rail->config );
-
-		if ( driver == NULL )
-		{
-			sctk_error ( "Driver with name '%s' not found in config!", rail->config );
-			continue;
-		}
-
-		/* Switch on the driver to use */
-		switch ( driver->driver.type )
-		{
-			case SCTK_RTCFG_net_driver_portals: /* PORTALS */
-				nb_rails_portals ++ ;
-				break;
-		}
-
-	}
-
-	/* End of rails computing. Now allocate ! */
-
 	/* HERE note that we are going in reverse order so that
 	 * rails are initialized in the same order than in the config
 	 * this is important if no priority is given to make sure
 	 * that the decalration order will be the gate order */
-	for ( k = (total_rail_nb - 1); 0 <= k ; k-- )
+	for ( k = (cli_option->rails_size - 1); 0 <= k ; k-- )
 	{
 		/* For each RAIL */
 		struct sctk_runtime_config_struct_net_rail *rail_config_struct = sctk_get_rail_config_by_name ( cli_option->rails[k] );
@@ -442,41 +466,9 @@ restart:
 			continue;
 		}
 
-		/* Set infos for the current rail */
-		sctk_rail_info_t *new_rail = sctk_rail_new ( rail_config_struct, driver_config );
-
-		/* Switch on the driver to use */
-		switch ( driver_config->driver.type )
-		{
-#ifdef MPC_USE_INFINIBAND
-
-			case SCTK_RTCFG_net_driver_infiniband: /* INFINIBAND */
-				sctk_network_init_mpi_ib ( new_rail );
-			break;
-#endif
-#ifdef MPC_USE_PORTALS
-
-			case SCTK_RTCFG_net_driver_portals: /* TCP */
-				sctk_network_init_multirail_portals ( new_rail, nb_rails_portals );
-			break;
-#endif
-			case SCTK_RTCFG_net_driver_tcp:
-				sctk_network_init_tcp ( new_rail );
-			break;
-			
-			case SCTK_RTCFG_net_driver_tcprdma:
-				sctk_network_init_tcp_rdma( new_rail );
-			break;
-
-
-			default:
-				//sctk_network_not_implemented ( option_name );
-				break;
-		}
-
+		/* Register and initalize new rail inside the rail array */
+		sctk_rail_register( rail_config_struct, driver_config );
 	}
-
-
 
 	sctk_rail_commit();
 	sctk_checksum_init();
