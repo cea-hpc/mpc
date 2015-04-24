@@ -641,6 +641,25 @@ It can contain a node of type :
 .It Cm user
  of type gate_probabilistic. 
 .El
+.Sh ENTRIES OF TYPE topological_polling
+Defines a topological polling configuration.
+.Pp
+It support parameters :
+.Pp
+.Bl -tag -width Ds
+.It Cm range
+Type is enum rail_topological_polling_level. Possible values are : RAIL_POLL_NONE, RAIL_POLL_PU, RAIL_POLL_CORE, RAIL_POLL_SOCKET, RAIL_POLL_NUMA, RAIL_POLL_MACHINE.
+
+Default value is RAIL_POLL_MACHINE. 
+.Pp range
+Define the subset of cores involved in the polling.
+.It Cm trigger
+Type is enum rail_topological_polling_level. Possible values are : RAIL_POLL_NONE, RAIL_POLL_PU, RAIL_POLL_CORE, RAIL_POLL_SOCKET, RAIL_POLL_NUMA, RAIL_POLL_MACHINE.
+
+Default value is RAIL_POLL_SOCKET. 
+.Pp trigger
+Define the subset of cores involved in the polling.
+.El
 .Sh ENTRIES OF TYPE net_rail
 Define a rail which is a name, a device associate to a driver and a routing topology.
 .Pp
@@ -656,9 +675,17 @@ Type is int. Default value is 1.
 .Pp priority
 Number which defines the order in which routes are tested (higher first).
 .It Cm device
-Type is string. 
+Type is string. Default value is default. 
 .Pp device
 Define the name of the device to use in this rail.
+.It Cm idle_polling
+Type is topological_polling. 
+.Pp idle_polling
+Define how the idle polling is done.
+.It Cm any_source_polling
+Type is topological_polling. 
+.Pp any_source_polling
+Define how the any-source polling is done.
 .It Cm topology
 Type is string. 
 .Pp topology

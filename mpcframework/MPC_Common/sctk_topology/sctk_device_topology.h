@@ -89,6 +89,8 @@ typedef struct sctk_device_s
 	const char * vendor; /** PCI card vendor */
 	const char * device; /** PCI card descriptor */
 	
+	int device_id;
+	
 }sctk_device_t;
 
 
@@ -107,6 +109,7 @@ void sctk_device_release();
 /* Device getter */
 
 sctk_device_t * sctk_device_get_from_handle( char * handle );
+int sctk_device_get_id_from_handle( char * handle );
 
 /* Locality helpers */
 

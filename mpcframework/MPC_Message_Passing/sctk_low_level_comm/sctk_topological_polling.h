@@ -36,7 +36,7 @@
 typedef enum
 {
 	SCTK_POLL_NOT_SET = 0,  /**< This is for error handling */
-	SCTK_POLL_NONE,  /**< This is for error handling */
+	SCTK_POLL_NONE,  /**< This is to deactivate polling */
 	SCTK_POLL_PU,  /**< This is for polling at core level */
 	SCTK_POLL_CORE,  /**< This is for polling at core level */
 	SCTK_POLL_SOCKET, /**< Socket level */
@@ -87,8 +87,7 @@ void sctk_topological_polling_tree_init( struct sctk_topological_polling_tree * 
                                          sctk_topological_polling_set_t range,
                                          int root_pu );
 
-
-void sctk_topological_polling_tree_trigger( struct sctk_topological_polling_tree * tree , void (*func)(void *), void * arg );
+sctk_topological_polling_set_t sctk_rail_convert_polling_set_from_config( enum rail_topological_polling_level poll );
 
 void sctk_topological_polling_tree_poll( struct sctk_topological_polling_tree * tree,  void (*func)( void *), void * arg );
 

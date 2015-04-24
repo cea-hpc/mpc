@@ -296,11 +296,31 @@
     </xs:choice>
   </xs:complexType>
   <!-- ********************************************************* -->
+  <xs:simpleType name="user_type_rail_topological_polling_level">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="RAIL_POLL_NONE"/>
+      <xs:enumeration value="RAIL_POLL_PU"/>
+      <xs:enumeration value="RAIL_POLL_CORE"/>
+      <xs:enumeration value="RAIL_POLL_SOCKET"/>
+      <xs:enumeration value="RAIL_POLL_NUMA"/>
+      <xs:enumeration value="RAIL_POLL_MACHINE"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <!-- ********************************************************* -->
+  <xs:complexType name="user_type_topological_polling">
+    <xs:all>
+      <xs:element minOccurs="0" name="range" type="user_type_rail_topological_polling_level"/>
+      <xs:element minOccurs="0" name="trigger" type="user_type_rail_topological_polling_level"/>
+    </xs:all>
+  </xs:complexType>
+  <!-- ********************************************************* -->
   <xs:complexType name="user_type_net_rail">
     <xs:all>
       <xs:element minOccurs="0" name="name" type="xs:string"/>
       <xs:element minOccurs="0" name="priority" type="xs:integer"/>
       <xs:element minOccurs="0" name="device" type="xs:string"/>
+      <xs:element minOccurs="0" name="idle_polling" type="user_type_topological_polling"/>
+      <xs:element minOccurs="0" name="any_source_polling" type="user_type_topological_polling"/>
       <xs:element minOccurs="0" name="topology" type="xs:string"/>
       <xs:element minOccurs="0" name="ondemand" type="xs:integer"/>
       <xs:element minOccurs="0" name="config" type="xs:string"/>

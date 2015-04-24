@@ -799,8 +799,7 @@ void sctk_network_init_mpi_ib ( sctk_rail_info_t *rail )
 	device = sctk_ib_device_init ( rail_ib );
 
 	/* Automatically open the closest IB HCA */
-	//  sctk_ib_device_open(rail_ib, (3 - ib_rail_nb) % 4);
-	sctk_ib_device_open ( rail_ib, -1 );
+	sctk_ib_device_open ( rail_ib, rail_config->device );
 
 	/* Init the MMU (done once) */
 	sctk_ib_mmu_init();

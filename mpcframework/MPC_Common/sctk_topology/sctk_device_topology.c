@@ -26,6 +26,12 @@
 #include "sctk_spinlock.h"
 #include "sctk_topology.h"
 
+
+
+#ifdef MPC_USE_INFINIBAND
+#include <infiniband/verbs.h>
+#endif
+
 /************************************************************************/
 /* ENUM DEFINITION                                                      */
 /************************************************************************/
@@ -179,7 +185,7 @@ int sctk_device_get_ith_logical_on_numa(  hwloc_topology_t topology, int numa_id
    {
 	   /* This machine has no numa with this id (can also be non-numa)
 	    * then work on the autorized CPUSET */
-	   local_cpuset = hwloc_topology_get_allowed_cpuset( topology );
+	   local_cpuset = (hwloc_cpuset_t)hwloc_topology_get_allowed_cpuset( topology );
    }
    else
    {
@@ -203,7 +209,8 @@ int sctk_device_get_ith_logical_on_numa(  hwloc_topology_t topology, int numa_id
 		/* We have the target logical core */
 		if( i == core_id )
 		{
-			return ret;
+			/* Do not forget to convert it to logical */
+			return sctk_topology_convert_os_pu_to_logical( ret );
 		}
 		 
 		i++; 
@@ -243,6 +250,7 @@ void sctk_device_print( sctk_device_t * dev )
 	sctk_info("NODE set : '%s' (%s)", nodeset, nodesetraw );
 	sctk_info("Root numa : '%d'", dev->root_numa );
 	sctk_info("Root core : '%d'", dev->root_core );
+	sctk_info("Device ID : '%d'", dev->device_id );
 	
 	sctk_info("#######################################");
 }
@@ -327,6 +335,7 @@ void sctk_device_init( hwloc_topology_t topology, sctk_device_t * dev , hwloc_ob
 			
 			/* Increment Thread */
 			___current_core_id[ dev->root_numa ] = (___current_core_id[ dev->root_numa ] + 1 ) % ___core_count;
+			
 			dev->root_core = sctk_device_get_ith_logical_on_numa( topology, dev->root_numa, 
 	___current_core_id[ dev->root_numa ] );
 
@@ -393,13 +402,66 @@ void sctk_device_init( hwloc_topology_t topology, sctk_device_t * dev , hwloc_ob
 			dev->type = dev_attr->type;
 		}
 	}
-	
-	sctk_device_print( dev );
+
+	dev->device_id = -1;
 }
 
 /************************************************************************/
 /* DEVICE INTERFACE                                                     */
 /************************************************************************/
+
+#ifdef MPC_USE_INFINIBAND
+/** The purpose of this function is to resolve the device ids of the OFA devices */
+void sctk_device_fill_in_infiniband_info( sctk_device_t * device, hwloc_topology_t topology )
+{
+	int devices_nb;
+	/* Retrieve device list from verbs */
+	struct ibv_device ** dev_list = ibv_get_device_list ( &devices_nb );
+
+	int id;
+	
+	/* For all the devices */
+	for( id = 0 ; id < devices_nb ; id++ )
+	{
+		/* Retrieve the HWLOC osdev */
+		hwloc_obj_t ofa_osdev = hwloc_ibv_get_device_osdev ( topology, dev_list[id] );
+		
+		/* If one */
+		if( ofa_osdev )
+		{
+			/* Compare the OS name with the one we have from the previously loaded device */
+			if( !strcmp( device->name , ofa_osdev->name ) )
+			{
+				sctk_warning("OFA device %s had ID %d", ofa_osdev->name, id );
+				device->device_id = id;
+			}
+		}
+	}
+}
+#endif
+
+
+
+
+
+void sctk_device_enrich_topology( hwloc_topology_t topology )
+{
+	int i;
+	
+	for( i = 0 ; i < sctk_devices_count ; i++ )
+	{
+		sctk_device_t * device = &sctk_devices[i];
+		
+		if( device->type == SCTK_DEVICE_NETWORK_OFA )
+		{
+		#ifdef MPC_USE_INFINIBAND
+			sctk_device_fill_in_infiniband_info( device, topology );
+		#endif
+		}	
+	}
+
+}
+
 
 void sctk_device_load_from_topology( hwloc_topology_t topology )
 {
@@ -447,8 +509,13 @@ void sctk_device_load_from_topology( hwloc_topology_t topology )
 		pci_dev = hwloc_get_next_pcidev( topology, pci_dev );
 	}
 	
-	
+	sctk_device_enrich_topology( topology );
 	//hwloc_topology_export_xml(topology, "-");
+
+	for( i = 0 ; i < sctk_devices_count ; i++ )
+	{
+		sctk_device_print( &sctk_devices[i] );
+	}
 }
 
 void sctk_device_release()
@@ -458,9 +525,14 @@ void sctk_device_release()
 }
 
 
+
+
 sctk_device_t * sctk_device_get_from_handle( char * handle )
 {
 	int i;
+	
+	if( !handle )
+		return NULL;
 	
 	/* Try as an OS id  (eth0, eth1, sda, ... )*/
 	for( i = 0 ; i < sctk_devices_count ; i++ )
@@ -492,6 +564,19 @@ sctk_device_t * sctk_device_get_from_handle( char * handle )
 	
 	return NULL;
 	
+}
+
+
+int sctk_device_get_id_from_handle( char * handle )
+{
+	sctk_device_t * dev = sctk_device_get_from_handle(  handle );
+	
+	if( !dev )
+	{
+		return -1;
+	}
+	
+	return dev->device_id;
 }
 
 

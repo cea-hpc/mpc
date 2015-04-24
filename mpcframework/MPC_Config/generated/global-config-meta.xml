@@ -237,12 +237,27 @@
 		<!-- #          RAIL              # -->
 		<!-- ############################## -->
 	
+		<enum name="rail_topological_polling_level" doc="Values used for topological polling in the rail configuration">
+			<value>RAIL_POLL_NONE</value>
+			<value>RAIL_POLL_PU</value>
+			<value>RAIL_POLL_CORE</value>
+			<value>RAIL_POLL_SOCKET</value>
+			<value>RAIL_POLL_NUMA</value>
+			<value>RAIL_POLL_MACHINE</value>
+		</enum>
+	
+		<struct name="topological_polling" doc="Defines a topological polling configuration.">
+			<param name="range" type="rail_topological_polling_level" doc="Define the subset of cores involved in the polling." default="RAIL_POLL_MACHINE"/>
+			<param name="trigger" type="rail_topological_polling_level" doc="Define the subset of cores involved in the polling." default="RAIL_POLL_SOCKET"/>
+		</struct>
 
 		<!-- Structure for rail definition -->
 		<struct name="net_rail" doc="Define a rail which is a name, a device associate to a driver and a routing topology.">
 			<param name="name" type="string" doc="Define the name of current rail." />
 			<param name="priority" type="int" doc="Number which defines the order in which routes are tested (higher first)." default="1"  />
-			<param name="device" type="string" doc="Define the name of the device to use in this rail." />
+			<param name="device" type="string" doc="Define the name of the device to use in this rail." default="default"/>
+			<param name="idle_polling" type="topological_polling" doc="Define how the idle polling is done." />
+			<param name="any_source_polling" type="topological_polling" doc="Define how the any-source polling is done." />
 			<param name="topology" type="string" doc="Define the network topology to apply on this rail." />
 			<param name="ondemand" type="int" doc="Define if on-demand connections are allowed on this rail."  default="1"/>
 			<param name="config" type="string" doc="Define the driver config to use for this rail." />

@@ -296,11 +296,31 @@
 -e </xs:choice>\
 -e </xs:complexType>\
 -e <!-- ********************************************************* -->\
+-e <xs:simpleType name='user_type_rail_topological_polling_level'>\
+-e <xs:restriction base='xs:string'>\
+-e <xs:enumeration value='RAIL_POLL_NONE'/>\
+-e <xs:enumeration value='RAIL_POLL_PU'/>\
+-e <xs:enumeration value='RAIL_POLL_CORE'/>\
+-e <xs:enumeration value='RAIL_POLL_SOCKET'/>\
+-e <xs:enumeration value='RAIL_POLL_NUMA'/>\
+-e <xs:enumeration value='RAIL_POLL_MACHINE'/>\
+-e </xs:restriction>\
+-e </xs:simpleType>\
+-e <!-- ********************************************************* -->\
+-e <xs:complexType name='user_type_topological_polling'>\
+-e <xs:all>\
+-e <xs:element minOccurs='0' name='range' type='user_type_rail_topological_polling_level'/>\
+-e <xs:element minOccurs='0' name='trigger' type='user_type_rail_topological_polling_level'/>\
+-e </xs:all>\
+-e </xs:complexType>\
+-e <!-- ********************************************************* -->\
 -e <xs:complexType name='user_type_net_rail'>\
 -e <xs:all>\
 -e <xs:element minOccurs='0' name='name' type='xs:string'/>\
 -e <xs:element minOccurs='0' name='priority' type='xs:integer'/>\
 -e <xs:element minOccurs='0' name='device' type='xs:string'/>\
+-e <xs:element minOccurs='0' name='idle_polling' type='user_type_topological_polling'/>\
+-e <xs:element minOccurs='0' name='any_source_polling' type='user_type_topological_polling'/>\
 -e <xs:element minOccurs='0' name='topology' type='xs:string'/>\
 -e <xs:element minOccurs='0' name='ondemand' type='xs:integer'/>\
 -e <xs:element minOccurs='0' name='config' type='xs:string'/>\

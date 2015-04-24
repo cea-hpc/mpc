@@ -24,6 +24,7 @@
 
 #include <sctk_inter_thread_comm.h>
 #include <sctk_runtime_config.h>
+#include "sctk_device_topology.h"
 #include "sctk_topological_polling.h"
 
 /* Forward struct declarations */
@@ -63,6 +64,7 @@ struct sctk_rail_info_s
 	/* Global Info */
 	int rail_number; /**< ID of this rail */
 	char *network_name; /**< Name of this rail */
+	sctk_device_t * rail_device; /**< Device associated with the rail */
 	
 	/* Network Infos */
 	sctk_rail_info_spec_t network;	/**< Network dependent rail info */

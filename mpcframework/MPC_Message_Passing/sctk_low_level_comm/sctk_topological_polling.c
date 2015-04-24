@@ -81,6 +81,35 @@ static inline int sctk_topological_polling_trigget_to_hwloc_type( sctk_topologic
 }
 
 
+sctk_topological_polling_set_t sctk_rail_convert_polling_set_from_config( enum rail_topological_polling_level poll )
+{
+	switch( poll )
+	{
+		case RAIL_POLL_NONE:
+			return SCTK_POLL_NONE;
+		break;
+		case RAIL_POLL_PU:
+			return SCTK_POLL_PU;
+		break;
+		case RAIL_POLL_CORE:
+			return SCTK_POLL_CORE;
+		break;
+		case RAIL_POLL_SOCKET:
+			return SCTK_POLL_SOCKET;
+		break;
+		case RAIL_POLL_NUMA:
+			return SCTK_POLL_NUMA;
+		break;
+		case RAIL_POLL_MACHINE:
+			return SCTK_POLL_MACHINE;
+		break;
+		default:
+			sctk_fatal("Error converting polling value from config");
+	}
+
+}
+
+
 
 void sctk_topological_polling_tree_init( struct sctk_topological_polling_tree * tree,  sctk_topological_polling_set_t trigger, sctk_topological_polling_set_t range, int root_pu )
 {

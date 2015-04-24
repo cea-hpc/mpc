@@ -360,6 +360,63 @@ void sctk_runtime_config_struct_init_net_gate(void * struct_ptr)
 }
 
 /*******************  FUNCTION  *********************/
+void sctk_runtime_config_enum_init_rail_topological_polling_level()
+{
+	struct enum_type * current_enum = (struct enum_type *) malloc(sizeof(struct enum_type));
+	struct enum_value * current_value, * values = NULL;
+
+	strncpy(current_enum->name, "enum rail_topological_polling_level", 50);
+
+	current_value = (struct enum_value *) malloc(sizeof(struct enum_value));
+	strncpy(current_value->name, "RAIL_POLL_NONE", 50);
+	current_value->value = RAIL_POLL_NONE;
+	HASH_ADD_STR(values, name, current_value);
+
+	current_value = (struct enum_value *) malloc(sizeof(struct enum_value));
+	strncpy(current_value->name, "RAIL_POLL_PU", 50);
+	current_value->value = RAIL_POLL_PU;
+	HASH_ADD_STR(values, name, current_value);
+
+	current_value = (struct enum_value *) malloc(sizeof(struct enum_value));
+	strncpy(current_value->name, "RAIL_POLL_CORE", 50);
+	current_value->value = RAIL_POLL_CORE;
+	HASH_ADD_STR(values, name, current_value);
+
+	current_value = (struct enum_value *) malloc(sizeof(struct enum_value));
+	strncpy(current_value->name, "RAIL_POLL_SOCKET", 50);
+	current_value->value = RAIL_POLL_SOCKET;
+	HASH_ADD_STR(values, name, current_value);
+
+	current_value = (struct enum_value *) malloc(sizeof(struct enum_value));
+	strncpy(current_value->name, "RAIL_POLL_NUMA", 50);
+	current_value->value = RAIL_POLL_NUMA;
+	HASH_ADD_STR(values, name, current_value);
+
+	current_value = (struct enum_value *) malloc(sizeof(struct enum_value));
+	strncpy(current_value->name, "RAIL_POLL_MACHINE", 50);
+	current_value->value = RAIL_POLL_MACHINE;
+	HASH_ADD_STR(values, name, current_value);
+
+	current_enum->values = values;
+	HASH_ADD_STR(enums_types, name, current_enum);
+}
+
+/*******************  FUNCTION  *********************/
+void sctk_runtime_config_struct_init_topological_polling(void * struct_ptr)
+{
+	struct sctk_runtime_config_struct_topological_polling * obj = struct_ptr;
+	/* Make sure this element is not initialized yet       */
+	/* It allows us to know when we are facing dynamically */
+	/* allocated objects requiring an init                 */
+	if( obj->init_done != 0 ) return;
+
+	/* Simple params : */
+	obj->range = RAIL_POLL_MACHINE;
+	obj->trigger = RAIL_POLL_SOCKET;
+	obj->init_done = 1;
+}
+
+/*******************  FUNCTION  *********************/
 void sctk_runtime_config_struct_init_net_rail(void * struct_ptr)
 {
 	struct sctk_runtime_config_struct_net_rail * obj = struct_ptr;
@@ -371,7 +428,9 @@ void sctk_runtime_config_struct_init_net_rail(void * struct_ptr)
 	/* Simple params : */
 	obj->name = NULL;
 	obj->priority = 1;
-	obj->device = NULL;
+	obj->device = "default";
+	sctk_runtime_config_struct_init_topological_polling(&obj->idle_polling);
+	sctk_runtime_config_struct_init_topological_polling(&obj->any_source_polling);
 	obj->topology = NULL;
 	obj->ondemand = 1;
 	obj->config = NULL;
@@ -563,6 +622,7 @@ void sctk_runtime_config_reset(struct sctk_runtime_config * config)
 	sctk_runtime_config_struct_init_low_level_comm(&config->modules.low_level_comm);
 	sctk_runtime_config_struct_init_mpc(&config->modules.mpc);
 	sctk_runtime_config_enum_init_ibv_rdvz_protocol();
+	sctk_runtime_config_enum_init_rail_topological_polling_level();
 	sctk_runtime_config_struct_init_openmp(&config->modules.openmp);
 	sctk_runtime_config_struct_init_profiler(&config->modules.profiler);
 	sctk_runtime_config_struct_init_thread(&config->modules.thread);
@@ -678,6 +738,12 @@ void sctk_runtime_config_reset_struct_default_if_needed(char * structname, void 
 	if( !strcmp( structname , "sctk_runtime_config_struct_gate_user") )
 	{
 		sctk_runtime_config_struct_init_gate_user( ptr );
+		return;
+	}
+
+	if( !strcmp( structname , "sctk_runtime_config_struct_topological_polling") )
+	{
+		sctk_runtime_config_struct_init_topological_polling( ptr );
 		return;
 	}
 

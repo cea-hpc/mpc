@@ -124,6 +124,18 @@ enum ibv_rdvz_protocol
 	IBV_RDVZ_READ_PROTOCOL
 };
 
+/********************************** ENUM ************************************/
+/**Values used for topological polling in the rail configuration**/
+enum rail_topological_polling_level
+{
+	RAIL_POLL_NONE,
+	RAIL_POLL_PU,
+	RAIL_POLL_CORE,
+	RAIL_POLL_SOCKET,
+	RAIL_POLL_NUMA,
+	RAIL_POLL_MACHINE
+};
+
 /******************************** STRUCTURE *********************************/
 /**Declare a fake driver to test the configuration system.**/
 struct sctk_runtime_config_struct_net_driver_infiniband
@@ -369,6 +381,16 @@ struct sctk_runtime_config_struct_net_gate
 };
 
 /******************************** STRUCTURE *********************************/
+/**Defines a topological polling configuration.**/
+struct sctk_runtime_config_struct_topological_polling
+{	int init_done;
+	/**Define the subset of cores involved in the polling.**/
+	enum rail_topological_polling_level range;
+	/**Define the subset of cores involved in the polling.**/
+	enum rail_topological_polling_level trigger;
+};
+
+/******************************** STRUCTURE *********************************/
 /**Define a rail which is a name, a device associate to a driver and a routing topology.**/
 struct sctk_runtime_config_struct_net_rail
 {	int init_done;
@@ -378,6 +400,10 @@ struct sctk_runtime_config_struct_net_rail
 	int priority;
 	/**Define the name of the device to use in this rail.**/
 	char * device;
+	/**Define how the idle polling is done.**/
+	struct sctk_runtime_config_struct_topological_polling idle_polling;
+	/**Define how the any-source polling is done.**/
+	struct sctk_runtime_config_struct_topological_polling any_source_polling;
 	/**Define the network topology to apply on this rail.**/
 	char * topology;
 	/**Define if on-demand connections are allowed on this rail.**/

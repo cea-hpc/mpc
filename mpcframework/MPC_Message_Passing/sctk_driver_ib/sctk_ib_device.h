@@ -85,7 +85,7 @@ typedef struct sctk_ib_device_s
 
 sctk_ib_device_t *sctk_ib_device_init ( struct sctk_ib_rail_info_s *rail_ib );
 
-sctk_ib_device_t *sctk_ib_device_open ( struct sctk_ib_rail_info_s *rail_ib, int rail_nb );
+sctk_ib_device_t *sctk_ib_device_open ( struct sctk_ib_rail_info_s *rail_ib, char * device_name );
 
 struct ibv_pd *sctk_ib_pd_init ( sctk_ib_device_t *device );
 

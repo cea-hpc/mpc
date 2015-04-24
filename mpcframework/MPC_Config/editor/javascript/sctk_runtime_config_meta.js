@@ -135,10 +135,16 @@ meta.types = {
 		msgtype: {name: "msgtype", type: "gate_message_type"},
 		user: {name: "user", type: "gate_probabilistic"},
 	}},
+	topological_polling : {type: 'struct', name: "topological_polling", childs: {
+		range: {mode: 'param', name: "range", type: "rail_topological_polling_level", doc: "Define the subset of cores involved in the polling.", dflt: "RAIL_POLL_MACHINE", },
+		trigger: {mode: 'param', name: "trigger", type: "rail_topological_polling_level", doc: "Define the subset of cores involved in the polling.", dflt: "RAIL_POLL_SOCKET", },
+	}},
 	net_rail : {type: 'struct', name: "net_rail", childs: {
 		name: {mode: 'param', name: "name", type: "string", doc: "Define the name of current rail.", dflt: null},
 		priority: {mode: 'param', name: "priority", type: "int", doc: "Number which defines the order in which routes are tested (higher first).", dflt: "1", },
-		device: {mode: 'param', name: "device", type: "string", doc: "Define the name of the device to use in this rail.", dflt: null},
+		device: {mode: 'param', name: "device", type: "string", doc: "Define the name of the device to use in this rail.", dflt: "default", },
+		idle_polling: {mode: 'param', name: "idle_polling", type: "topological_polling", doc: "Define how the idle polling is done.", dflt: null},
+		any_source_polling: {mode: 'param', name: "any_source_polling", type: "topological_polling", doc: "Define how the any-source polling is done.", dflt: null},
 		topology: {mode: 'param', name: "topology", type: "string", doc: "Define the network topology to apply on this rail.", dflt: null},
 		ondemand: {mode: 'param', name: "ondemand", type: "int", doc: "Define if on-demand connections are allowed on this rail.", dflt: "1", },
 		config: {mode: 'param', name: "config", type: "string", doc: "Define the driver config to use for this rail.", dflt: null},
@@ -230,5 +236,13 @@ meta.enum = {
 	ibv_rdvz_protocol : {type: 'enum', name: "ibv_rdvz_protocol", doc: "", values: {
 		IBV_RDVZ_WRITE_PROTOCOL: "IBV_RDVZ_WRITE_PROTOCOL",
 		IBV_RDVZ_READ_PROTOCOL: "IBV_RDVZ_READ_PROTOCOL",
+	}},
+	rail_topological_polling_level : {type: 'enum', name: "rail_topological_polling_level", doc: "Values used for topological polling in the rail configuration", values: {
+		RAIL_POLL_NONE: "RAIL_POLL_NONE",
+		RAIL_POLL_PU: "RAIL_POLL_PU",
+		RAIL_POLL_CORE: "RAIL_POLL_CORE",
+		RAIL_POLL_SOCKET: "RAIL_POLL_SOCKET",
+		RAIL_POLL_NUMA: "RAIL_POLL_NUMA",
+		RAIL_POLL_MACHINE: "RAIL_POLL_MACHINE",
 	}},
 };

@@ -50,6 +50,8 @@ void sctk_rail_allocate ( int count )
 	__rails.rail_number = count;
 }
 
+
+
 sctk_rail_info_t * sctk_rail_new ( struct sctk_runtime_config_struct_net_rail *runtime_config_rail,
                                          struct sctk_runtime_config_struct_net_driver_config *runtime_config_driver_config )
 {
@@ -58,16 +60,51 @@ sctk_rail_info_t * sctk_rail_new ( struct sctk_runtime_config_struct_net_rail *r
 		sctk_fatal ( "Error : Rail overflow detected\n" );
 	}
 
+	/* Store rail */
 	sctk_rail_info_t *new_rail = &__rails.rails[__rails.rail_current_id];
 
+	/* Load Config */
 	new_rail->runtime_config_rail = runtime_config_rail;
 	new_rail->runtime_config_driver_config = runtime_config_driver_config;
+	
+	/* Set rail Number */
 	new_rail->rail_number = __rails.rail_current_id;
 	
+	/* Init Empty route table */
 	new_rail->route_table = sctk_route_table_new();
 	
-	sctk_topological_polling_tree_init( &new_rail->idle_polling_tree, SCTK_POLL_SOCKET, SCTK_POLL_NUMA, 0 );
-	sctk_topological_polling_tree_init( &new_rail->any_source_polling_tree, SCTK_POLL_SOCKET, SCTK_POLL_MACHINE, 0 );
+	/* Load and save Rail Device (NULL if not found) */
+	new_rail->rail_device = sctk_device_get_from_handle( runtime_config_rail->device );
+	
+	/* Initialize Polling */
+	int target_core = 0;
+	
+	/* If the device is known load polling topology */
+	if( new_rail->rail_device )
+	{
+		target_core = new_rail->rail_device->root_core;
+	}
+	else
+	{
+		/* Otherwise just consider that the work is done on "0"*/
+		target_core = 0;
+	}
+	
+	/* Load Polling Config */
+	struct sctk_runtime_config_struct_topological_polling * idle = &runtime_config_rail->idle_polling;
+	struct sctk_runtime_config_struct_topological_polling * any_source = &runtime_config_rail->any_source_polling;
+	
+	/* Set idle Polling */
+	sctk_topological_polling_tree_init( &new_rail->idle_polling_tree, 
+	                                    sctk_rail_convert_polling_set_from_config(idle->trigger),
+	                                    sctk_rail_convert_polling_set_from_config(idle->range),
+	                                    target_core );
+	
+	/* Set any source Polling */              
+	sctk_topological_polling_tree_init( &new_rail->any_source_polling_tree,
+				      sctk_rail_convert_polling_set_from_config(any_source->trigger),
+	                                    sctk_rail_convert_polling_set_from_config(any_source->range),
+	                                    target_core );
 
 	__rails.rail_current_id++;
 

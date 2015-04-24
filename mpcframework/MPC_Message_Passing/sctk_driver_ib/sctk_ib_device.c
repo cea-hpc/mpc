@@ -25,6 +25,8 @@
 #include "sctk_ib_device.h"
 #include "sctk_ib_toolkit.h"
 
+#include <string.h>
+
 sctk_ib_device_t *sctk_ib_device_init ( struct sctk_ib_rail_info_s *rail_ib )
 {
 	struct ibv_device **dev_list;
@@ -39,13 +41,14 @@ sctk_ib_device_t *sctk_ib_device_init ( struct sctk_ib_rail_info_s *rail_ib )
 		SCTK_IB_ABORT ( "No IB devices found." );
 	}
 
+
 	device = sctk_malloc ( sizeof ( sctk_ib_device_t ) );
-
 	ib_assume ( device );
-
 	rail_ib->device = device;
+	
 	rail_ib->device->dev_list = dev_list;
 	rail_ib->device->dev_nb = devices_nb;
+	
 	rail_ib->device->eager_rdma_connections = 0;
 	/* Specific to ondemand (de)connexions */
 	rail_ib->device->ondemand.qp_list = NULL;
@@ -59,7 +62,7 @@ sctk_ib_device_t *sctk_ib_device_init ( struct sctk_ib_rail_info_s *rail_ib )
 
 
 
-sctk_ib_device_t *sctk_ib_device_open ( struct sctk_ib_rail_info_s *rail_ib, int rail_nb )
+sctk_ib_device_t *sctk_ib_device_open ( struct sctk_ib_rail_info_s *rail_ib, char * device_name )
 {
 	LOAD_DEVICE ( rail_ib );
 	struct ibv_device **dev_list = device->dev_list;
@@ -69,41 +72,35 @@ sctk_ib_device_t *sctk_ib_device_open ( struct sctk_ib_rail_info_s *rail_ib, int
 	int link_rate = -1;
 	int data_rate = -1;
 	int i;
-
-
-	/* If the rail number is -1, so we try to estimate which IB card is the closest */
-	if ( rail_nb == -1 )
+	
+	int device_id = 0;
+	
+	/* Try to resolve the device name to a device ID only if provided */
+	if( device_name )
 	{
-		for ( i = 0; i < devices_nb; ++i )
+		/* Is it empty string ? Or is "default" */
+		if( strlen( device_name ) && strcmp("default", device_name ) )
 		{
-			int ret;
-
-			ret = sctk_topology_is_ib_device_close_from_cpu ( dev_list[i], sctk_get_cpu() );
-
-			if ( ret != 0 )
+			/* Try to resolve the device */
+			device_id = sctk_device_get_id_from_handle( device_name );
+			
+			if( device_id < 0 )
 			{
-				rail_nb = i;
-				break;
+				sctk_warning("Could not locate a device with name %s assuming default device '0'", device_name );
+				device_id = 0;
 			}
 		}
-
-		/* If no rail open, we open the first one */
-		if ( rail_nb == -1 )
-		{
-			sctk_error ( "Cannot determine the closest IB card from the thread allocating the structures. Use the card 0" );
-			rail_nb = 0;
-		}
 	}
+	
 
-
-	if ( rail_nb >= devices_nb )
+	if ( device_id >= devices_nb )
 	{
-		SCTK_IB_ABORT ( "Cannot open rail. You asked rail %d on %d", rail_nb, devices_nb );
+		SCTK_IB_ABORT ( "Cannot open rail. You asked rail %d on %d", device_id, devices_nb );
 	}
 
-	sctk_ib_nodebug ( "Opening rail %d on %d", rail_nb, devices_nb );
+	sctk_ib_nodebug ( "Opening rail %d on %d", device_id, devices_nb );
 
-	device->context = ibv_open_device ( dev_list[rail_nb] );
+	device->context = ibv_open_device ( dev_list[device_id] );
 
 	if ( !device->context )
 	{
@@ -177,8 +174,8 @@ sctk_ib_device_t *sctk_ib_device_open ( struct sctk_ib_rail_info_s *rail_ib, int
 
 	sctk_nodebug ( "device %d", device->dev_attr.max_qp_wr );
 	srand48 ( getpid () * time ( NULL ) );
-	rail_ib->device->dev_index = rail_nb;
-	rail_ib->device->dev = dev_list[rail_nb];
+	rail_ib->device->dev_index = device_id;
+	rail_ib->device->dev = dev_list[device_id];
 	return device;
 }
 

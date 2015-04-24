@@ -177,10 +177,16 @@ const struct sctk_runtime_config_entry_meta sctk_runtime_config_db[] = {
 	{"msgtype"     , SCTK_CONFIG_META_TYPE_UNION_ENTRY  , SCTK_RTCFG_net_gate_msgtype  , sizeof(struct sctk_runtime_config_struct_gate_message_type) , "sctk_runtime_config_struct_gate_message_type" , sctk_runtime_config_struct_init_gate_message_type},
 	{"user"     , SCTK_CONFIG_META_TYPE_UNION_ENTRY  , SCTK_RTCFG_net_gate_user  , sizeof(struct sctk_runtime_config_struct_gate_probabilistic) , "sctk_runtime_config_struct_gate_probabilistic" , sctk_runtime_config_struct_init_gate_probabilistic},
 	/* struct */
+	{"sctk_runtime_config_struct_topological_polling" , SCTK_CONFIG_META_TYPE_STRUCT , 0  , sizeof(struct sctk_runtime_config_struct_topological_polling) , NULL , sctk_runtime_config_struct_init_topological_polling},
+	{"range"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_topological_polling,range)  , sizeof(enum rail_topological_polling_level) , "enum rail_topological_polling_level" , NULL},
+	{"trigger"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_topological_polling,trigger)  , sizeof(enum rail_topological_polling_level) , "enum rail_topological_polling_level" , NULL},
+	/* struct */
 	{"sctk_runtime_config_struct_net_rail" , SCTK_CONFIG_META_TYPE_STRUCT , 0  , sizeof(struct sctk_runtime_config_struct_net_rail) , NULL , sctk_runtime_config_struct_init_net_rail},
 	{"name"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_rail,name)  , sizeof(char *) , "char *" , NULL},
 	{"priority"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_rail,priority)  , sizeof(int) , "int" , NULL},
 	{"device"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_rail,device)  , sizeof(char *) , "char *" , NULL},
+	{"idle_polling"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_rail,idle_polling)  , sizeof(struct sctk_runtime_config_struct_topological_polling) , "sctk_runtime_config_struct_topological_polling" , sctk_runtime_config_struct_init_topological_polling},
+	{"any_source_polling"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_rail,any_source_polling)  , sizeof(struct sctk_runtime_config_struct_topological_polling) , "sctk_runtime_config_struct_topological_polling" , sctk_runtime_config_struct_init_topological_polling},
 	{"topology"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_rail,topology)  , sizeof(char *) , "char *" , NULL},
 	{"ondemand"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_rail,ondemand)  , sizeof(int) , "int" , NULL},
 	{"config"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_rail,config)  , sizeof(char *) , "char *" , NULL},
