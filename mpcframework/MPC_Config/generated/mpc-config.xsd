@@ -95,6 +95,12 @@
     </xs:all>
   </xs:complexType>
   <!-- ********************************************************* -->
+  <xs:complexType name="user_type_net_driver_topological">
+    <xs:all>
+      <xs:element minOccurs="0" name="dummy" type="xs:integer"/>
+    </xs:all>
+  </xs:complexType>
+  <!-- ********************************************************* -->
   <xs:complexType name="user_type_net_driver_infiniband">
     <xs:all>
       <xs:element minOccurs="0" name="network_type" type="xs:integer"/>
@@ -185,6 +191,7 @@
       <xs:element name="portals" type="user_type_net_driver_portals"/>
       <xs:element name="tcp" type="user_type_net_driver_tcp"/>
       <xs:element name="tcprdma" type="user_type_net_driver_tcp_rdma"/>
+      <xs:element name="topological" type="user_type_net_driver_topological"/>
     </xs:choice>
   </xs:complexType>
   <!-- ********************************************************* -->

@@ -71,7 +71,7 @@ static inline int sctk_get_processor_rank (void)
 
 static inline int sctk_get_processor_number (void)
 {
-	return sctk_get_cpu_number ();
+	return sctk_get_cpu_number();
 }
 
 static inline int sctk_get_core_number (void)

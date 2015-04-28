@@ -179,6 +179,10 @@ hwloc_cpuset_t sctk_topology_get_core_cpuset( int pu_id );
 */
 hwloc_cpuset_t sctk_topology_get_roots_for_level( hwloc_obj_type_t type );
 
+/*! \brief Compute the distance between a given object and a PU
+*/
+int sctk_topology_distance_from_pu( int source_pu, hwloc_obj_t target_obj );
+
 void sctk_topology_init_cpu();
   
   int sctk_get_pu_number();

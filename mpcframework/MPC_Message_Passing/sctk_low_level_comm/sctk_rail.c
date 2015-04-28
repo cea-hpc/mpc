@@ -69,6 +69,7 @@ sctk_rail_info_t * sctk_rail_register( struct sctk_runtime_config_struct_net_rai
 	
 	/* Set rail Number */
 	new_rail->rail_number = __rails.rail_current_id;
+	new_rail->subrail_id = -1;
 	
 	/* Set no parent (note that for hierarchies it is the parent
 	 * which put itsef as parent in the child rails ) see subrails
@@ -80,6 +81,15 @@ sctk_rail_info_t * sctk_rail_register( struct sctk_runtime_config_struct_net_rai
 	
 	/* Load and save Rail Device (NULL if not found) */
 	new_rail->rail_device = sctk_device_get_from_handle( runtime_config_rail->device );
+	
+	if( ! new_rail->rail_device )
+	{
+		if( strcmp( runtime_config_rail->device, "default") && runtime_config_rail->device[0] != '!' )
+		{
+			sctk_fatal("No such device %s", runtime_config_rail->device );
+		}
+	}
+	
 	
 	/* Initialize Polling */
 	int target_core = 0;
@@ -114,8 +124,13 @@ sctk_rail_info_t * sctk_rail_register( struct sctk_runtime_config_struct_net_rai
 	/* Is the rail topological ? meaning does it have subrails ?*/
 	if( runtime_config_rail->subrails_size )
 	{
-		sctk_rail_init_driver( new_rail, SCTK_RAIL_TOPOLOGICAL );
-
+		/* Intialize subrail array */
+		new_rail->subrail_count = runtime_config_rail->subrails_size;
+		new_rail->subrails = sctk_malloc( new_rail->subrail_count * sizeof( struct sctk_rail_info_s *) );
+		
+		assume( new_rail->subrails != NULL );
+		
+		/* First increment the rail ID to book parent's ID */
 		__rails.rail_current_id++;
 		
 		/* And now register subrails */
@@ -135,7 +150,14 @@ sctk_rail_info_t * sctk_rail_register( struct sctk_runtime_config_struct_net_rai
 			sctk_rail_info_t * child_rail = sctk_rail_register( subrail_rail_conf, subrail_driver_conf );
 			/* Here the parent rail registers itself in the child */
 			child_rail->parent_rail = new_rail;
+			/* Set the subrail id in the child */
+			child_rail->subrail_id = i;
+			/* Register the subrail in current rail */
+			new_rail->subrails[i] = child_rail;
 		}
+		
+		/* Initialize the parent RAIL now that subrails are started */
+		sctk_rail_init_driver( new_rail, SCTK_RTCFG_net_driver_topological );
 		
 	}
 	else
@@ -176,7 +198,7 @@ void sctk_rail_commit()
 	{
 		sctk_rail_info_t *  rail = sctk_rail_get_by_id ( i );
 		rail->route_init( rail );
-		sprintf ( name_ptr, "\nRail %d/%d [%s (%s) (%s)]", i + 1,  sctk_rail_count(), rail->network_name, rail->topology_name , rail->runtime_config_rail->device );
+		sprintf ( name_ptr, "\n%sRail [%s (%s) (%s)]", (rail->parent_rail)?"\tSub-":"", rail->network_name, rail->topology_name , rail->runtime_config_rail->device );
 		name_ptr = net_name + strlen ( net_name );
 		sctk_pmi_barrier();
 	}

@@ -86,6 +86,7 @@ const char * sctk_device_container_to_char( sctk_device_container_t type )
 
 static sctk_device_t * sctk_devices = NULL;
 static int sctk_devices_count = 0;
+static sctk_device_matrix_t sctk_device_matrix;
 
 /************************************************************************/
 /* Scattering Computation                                               */
@@ -434,7 +435,7 @@ void sctk_device_fill_in_infiniband_info( sctk_device_t * device, hwloc_topology
 			if( !strcmp( device->name , ofa_osdev->name ) )
 			{
 				sctk_warning("OFA device %s had ID %d", ofa_osdev->name, id );
-				device->device_id = id;
+				device->id = id;
 			}
 		}
 	}
@@ -503,6 +504,8 @@ void sctk_device_load_from_topology( hwloc_topology_t topology )
 			if( pci_dev->children[i]->type == HWLOC_OBJ_OS_DEVICE )
 			{
 				sctk_device_init( topology, &sctk_devices[ off ] , pci_dev, i );
+				/* Set the ID of the device */
+				sctk_devices[ off ].device_id = off;
 				off++;
 			}
 		}
@@ -517,6 +520,9 @@ void sctk_device_load_from_topology( hwloc_topology_t topology )
 	{
 		sctk_device_print( &sctk_devices[i] );
 	}
+	
+	/* Now initialize the device distance matrix */
+	sctk_device_matrix_init();
 }
 
 void sctk_device_release()
@@ -582,7 +588,11 @@ int sctk_device_get_id_from_handle( char * handle )
 
 sctk_device_t ** sctk_device_get_from_handle_regexp( char * handle_reg_exp, int * count )
 {
-	
+	if( !handle_reg_exp )
+	{
+		return  NULL;
+	}
+
 	/* For simplicity just allocate an array of the number of devices (make it NULL terminated) */
 	sctk_device_t ** ret_dev = sctk_malloc( sizeof( sctk_device_t *) * ( sctk_devices_count + 1 ) );
 	
@@ -615,7 +625,7 @@ sctk_device_t ** sctk_device_get_from_handle_regexp( char * handle_reg_exp, int 
 		if( ret == 0 )
 		{
 			/* Match then push the device */
-			sctk_info("Regex %s MATCH %s", handle_reg_exp, sctk_devices[i].name);
+			sctk_nodebug("Regex %s MATCH %s", handle_reg_exp, sctk_devices[i].name);
 			ret_dev[current_count] = &sctk_devices[i];
 			current_count++;
 		}
@@ -632,26 +642,166 @@ sctk_device_t ** sctk_device_get_from_handle_regexp( char * handle_reg_exp, int 
 	
 	if( count )
 		*count = current_count;
-		
+	
+	/* Free the regexp */
+	regfree( 	&regexp );
+	
 	return ret_dev;
 }
 
+/************************************************************************/
+/* DISTANCE MATRIX                                                      */
+/************************************************************************/
 
-
-int sctk_device_vp_is_device_leader( sctk_device_t * device, int vp_id )
+/** Retrieves a pointer to the  static device matrix */
+sctk_device_matrix_t * sctk_device_matrix_get()
 {
+	return &sctk_device_matrix;
+}
+
+/** Return a pointer to cell */
+static inline int * sctk_device_matrix_get_cell( int pu_id, int device_id )
+{
+	if( !sctk_device_matrix.distances )
+		return NULL;
 	
+	if( (pu_id < 0)||( sctk_device_matrix.pu_count <= pu_id ) )
+		return NULL;
+	
+	if( (device_id < 0)||( sctk_device_matrix.device_count <= device_id))
+		return NULL;
+	
+	return&sctk_device_matrix.distances[pu_id*sctk_device_matrix.device_count+device_id];
+}
+
+/** Return a cell value */
+static inline int sctk_device_matrix_get_value( int pu_id, int device_id )
+{
+	int * ret = sctk_device_matrix_get_cell( pu_id, device_id );
+	
+	if( !ret )
+		return -1;
+		
+	return *ret;
+}
+
+
+/** Intializes the device matrix */
+void sctk_device_matrix_init()
+{
+	sctk_device_matrix.device_count = sctk_devices_count;
+	sctk_device_matrix.pu_count =  sctk_get_cpu_number();
+	
+	sctk_device_matrix.distances = sctk_malloc( sizeof( int ) * sctk_device_matrix.device_count  * sctk_device_matrix.pu_count );
+	
+	assume( sctk_device_matrix.distances != NULL );
+	
+	int i,j;
+	
+	/* For each device */
+	for( i = 0 ; i < sctk_device_matrix.device_count; i++ )
+	{
+		hwloc_obj_t device_obj = sctk_devices[i].obj;
+		
+		/* For each PU */
+		for( j = 0 ; j < sctk_device_matrix.pu_count; j++ )
+		{
+			int * cell = sctk_device_matrix_get_cell( j, i );
+			
+			if(!cell)
+			{
+				sctk_warning("Could not get cell");
+				continue;
+			}
+			
+			/* Compute the distance */
+			*cell = sctk_topology_distance_from_pu( j , device_obj );
+			
+			sctk_info("Distance (PU %d, DEV %d (%s)) == %d", j, i, sctk_devices[i].name, *cell );
+		}
+	}
 	
 }
 
-int sctk_device_vp_is_on_device_socket( sctk_device_t * device, int vp_id )
+
+/** Get the closest device from PU matching the regexp "matching_regexp" */
+sctk_device_t * sctk_device_matrix_get_closest_from_pu( int pu_id, char * matching_regexp )
 {
+	/* Retrieve devices matching the regexp */
+	int count;
+	sctk_device_t ** device_list = sctk_device_get_from_handle_regexp( matching_regexp, &count );
+	
+	if( !count )
+	{
+		return NULL;
+	}
+	
+	int i;
+	int minimal_distance = -1;
+	sctk_device_t * closest_device = NULL;
+	
+	for( i = 0 ; i < count ; i++ )
+	{
+		sctk_device_t * dev = device_list[i];
+		int distance = sctk_device_matrix_get_value( pu_id, dev->id );
+		
+		if( distance < 0 )
+		{
+			continue;
+		}
+		
+		if( (minimal_distance < 0 ) || ( distance < minimal_distance ) )
+		{
+			minimal_distance = distance;
+			closest_device = dev;
+		}
+	}
 	
 	
+	sctk_free( device_list );
+	return closest_device;
 }
 
-int sctk_device_vp_is_on_device_numa( sctk_device_t * device, int vp_id )
+/** Return 1 if the devices matching the regexp are equidistant */
+int sctk_device_matrix_is_equidistant(char * matching_regexp)
 {
+/* Retrieve devices matching the regexp */
+	int count;
+	sctk_device_t ** device_list = sctk_device_get_from_handle_regexp( matching_regexp, &count );
 	
+	if( !count )
+	{
+		return 1;
+	}
 	
+	int i,j;
+	int ref_distance = -1;
+	
+	for( i = 0 ; i < count ; i++ )
+	{
+	
+		for( j = 0 ; j < sctk_device_matrix.pu_count ; j++ )
+		{
+			sctk_device_t * dev = device_list[i];
+			int distance = sctk_device_matrix_get_value( j, dev->id );
+			
+			if( ref_distance < 0 )
+			{
+				ref_distance = distance;
+			}
+			else
+			{
+				if( distance != ref_distance )
+				{
+					sctk_free( device_list );
+					return 0;
+				}
+			}
+		}
+	}
+	
+	sctk_free( device_list );
+	
+	/* If we are still here topology is even */
+	return 1;
 }

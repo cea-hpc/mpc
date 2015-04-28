@@ -37,6 +37,9 @@ meta.types = {
 		colors: {mode: 'param', name: "colors", type: "bool", doc: "Print colored text in terminal", dflt: "true", },
 		max_filename_size: {mode: 'param', name: "max_filename_size", type: "int", doc: "", dflt: "1024", },
 	}},
+	net_driver_topological : {type: 'struct', name: "net_driver_topological", childs: {
+		dummy: {mode: 'param', name: "dummy", type: "int", doc: "A test Param", dflt: null},
+	}},
 	net_driver_infiniband : {type: 'struct', name: "net_driver_infiniband", childs: {
 		network_type: {mode: 'param', name: "network_type", type: "int", doc: "Define a network's type (0=signalization, 1=data)", dflt: "0", },
 		adm_port: {mode: 'param', name: "adm_port", type: "int", doc: "Defines the port number to use.", dflt: "1", },
@@ -98,6 +101,7 @@ meta.types = {
 		portals: {name: "portals", type: "net_driver_portals"},
 		tcp: {name: "tcp", type: "net_driver_tcp"},
 		tcprdma: {name: "tcprdma", type: "net_driver_tcp_rdma"},
+		topological: {name: "topological", type: "net_driver_topological"},
 	}},
 	net_driver_config : {type: 'struct', name: "net_driver_config", childs: {
 		name: {mode: 'param', name: "name", type: "string", doc: "Name of the driver configuration to be referenced in rail definitions.", dflt: null},
@@ -145,9 +149,9 @@ meta.types = {
 		device: {mode: 'param', name: "device", type: "string", doc: "Define the name of the device to use in this rail.", dflt: "default", },
 		idle_polling: {mode: 'param', name: "idle_polling", type: "topological_polling", doc: "Define how the idle polling is done.", dflt: null},
 		any_source_polling: {mode: 'param', name: "any_source_polling", type: "topological_polling", doc: "Define how the any-source polling is done.", dflt: null},
-		topology: {mode: 'param', name: "topology", type: "string", doc: "Define the network topology to apply on this rail.", dflt: null},
+		topology: {mode: 'param', name: "topology", type: "string", doc: "Define the network topology to apply on this rail.", dflt: "ring", },
 		ondemand: {mode: 'param', name: "ondemand", type: "int", doc: "Define if on-demand connections are allowed on this rail.", dflt: "1", },
-		config: {mode: 'param', name: "config", type: "string", doc: "Define the driver config to use for this rail.", dflt: null},
+		config: {mode: 'param', name: "config", type: "string", doc: "Define the driver config to use for this rail.", dflt: "topological", },
 		gates: {mode: 'array', name: "gates", type: "net_gate", entryname: "gate", dflt: null},
 		subrails: {mode: 'array', name: "subrails", type: "net_rail", entryname: "subrail", dflt: null},
 	}},

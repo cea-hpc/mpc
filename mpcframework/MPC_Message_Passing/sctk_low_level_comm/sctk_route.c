@@ -120,6 +120,7 @@ void sctk_endpoint_init ( sctk_endpoint_t *tmp,  int dest, sctk_rail_info_t *rai
 	memset( tmp, 0, sizeof( sctk_endpoint_t ) );
 	tmp->dest = dest;
 	tmp->rail = rail;
+	tmp->subrail_id = -1;
 	/* FIXME: the following commented line may potentially break other modules (like TCP). */
 	sctk_endpoint_set_low_memory_mode_local ( tmp, 0 );
 	sctk_endpoint_set_low_memory_mode_remote ( tmp, 0 );

@@ -97,6 +97,10 @@
 		<!-- ############################## -->
 		<!-- #           DRIVERS          # -->
 		<!-- ############################## -->
+		<struct name="net_driver_topological" doc="Declare a topological driver.">
+			<param name="dummy" type="int" doc="A test Param"/>
+		</struct>
+		
 		
 		<!-- Structure for infiniband driver -->
 		<struct name="net_driver_infiniband" doc="Declare a fake driver to test the configuration system.">
@@ -174,6 +178,7 @@
 			<choice name="portals" type="net_driver_portals" />
 			<choice name="tcp" type="net_driver_tcp" />
 			<choice name="tcprdma" type="net_driver_tcp_rdma" />
+			<choice name="topological" type="net_driver_topological" />
 		</union>
 
 		<!-- ############################## -->
@@ -258,9 +263,9 @@
 			<param name="device" type="string" doc="Define the name of the device to use in this rail." default="default"/>
 			<param name="idle_polling" type="topological_polling" doc="Define how the idle polling is done." />
 			<param name="any_source_polling" type="topological_polling" doc="Define how the any-source polling is done." />
-			<param name="topology" type="string" doc="Define the network topology to apply on this rail." />
+			<param name="topology" type="string" doc="Define the network topology to apply on this rail." default="ring"/>
 			<param name="ondemand" type="int" doc="Define if on-demand connections are allowed on this rail."  default="1"/>
-			<param name="config" type="string" doc="Define the driver config to use for this rail." />
+			<param name="config" type="string" doc="Define the driver config to use for this rail." default="topological" />
 			<array name="gates" entry-name="gate" type="net_gate" doc="List of gates to be applied in this config." />
 			<array name="subrails" entry-name="subrail" type="net_rail" doc="Used for topological rail selection" />
 		</struct>

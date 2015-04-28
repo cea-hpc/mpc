@@ -249,6 +249,9 @@ struct sctk_runtime_config_struct_net_driver_config *sctk_get_driver_config_by_n
 	int j = 0;
 	struct sctk_runtime_config_struct_net_driver_config *ret = NULL;
 
+	if( ! name )
+		return NULL;
+
 	for ( j = 0; j < sctk_net_get_config()->configs_size; ++j )
 	{
 		if ( strcmp ( name, sctk_net_get_config()->configs[j].name ) == 0 )
@@ -287,7 +290,8 @@ int sctk_unfold_rails( struct sctk_runtime_config_struct_net_cli_option *cli_opt
 		if( rail->subrails_size )
 		{
 			/* Count subrails */
-			total_rail_nb += rail->subrails_size;	
+			total_rail_nb += rail->subrails_size;
+			rail->topology = "none";
 		}
 		else
 		{
@@ -322,6 +326,8 @@ int sctk_unfold_rails( struct sctk_runtime_config_struct_net_cli_option *cli_opt
 						/* Make sure that subrails do not have a subrail */
 						subrails[i].subrails_size = 0;
 					}
+					
+					sctk_free( matching_device );
 					
 					/* Store the new subrail array in the rail */
 					rail->subrails = subrails;
@@ -360,7 +366,9 @@ void sctk_rail_init_driver( sctk_rail_info_t * rail, int driver_type )
 		//	sctk_network_init_multirail_portals ( new_rail, nb_rails_portals );
 		//break;
 #endif
-		case SCTK_RAIL_TOPOLOGICAL:
+		case SCTK_RTCFG_net_driver_topological:
+			sctk_network_init_topological( rail );
+		break;
 		case SCTK_RTCFG_net_driver_tcp:
 			sctk_network_init_tcp ( rail );
 		break;
@@ -462,8 +470,12 @@ restart:
 
 		if ( driver_config == NULL )
 		{
-			sctk_error ( "Driver with name '%s' not found in config!", rail_config_struct->config );
-			continue;
+			/* This can only be accepted for topological rails */
+			if( rail_config_struct->subrails_size == 0 )
+			{
+				sctk_error ( "Driver with name '%s' not found in config!", rail_config_struct->config );
+				continue;
+			}
 		}
 
 		/* Register and initalize new rail inside the rail array */

@@ -100,6 +100,20 @@ void sctk_runtime_config_struct_init_debugger(void * struct_ptr)
 }
 
 /*******************  FUNCTION  *********************/
+void sctk_runtime_config_struct_init_net_driver_topological(void * struct_ptr)
+{
+	struct sctk_runtime_config_struct_net_driver_topological * obj = struct_ptr;
+	/* Make sure this element is not initialized yet       */
+	/* It allows us to know when we are facing dynamically */
+	/* allocated objects requiring an init                 */
+	if( obj->init_done != 0 ) return;
+
+	/* Simple params : */
+	obj->dummy = 0;
+	obj->init_done = 1;
+}
+
+/*******************  FUNCTION  *********************/
 void sctk_runtime_config_struct_init_net_driver_infiniband(void * struct_ptr)
 {
 	struct sctk_runtime_config_struct_net_driver_infiniband * obj = struct_ptr;
@@ -431,9 +445,9 @@ void sctk_runtime_config_struct_init_net_rail(void * struct_ptr)
 	obj->device = "default";
 	sctk_runtime_config_struct_init_topological_polling(&obj->idle_polling);
 	sctk_runtime_config_struct_init_topological_polling(&obj->any_source_polling);
-	obj->topology = NULL;
+	obj->topology = "ring";
 	obj->ondemand = 1;
-	obj->config = NULL;
+	obj->config = "topological";
 	/* array */
 	obj->gates = NULL;
 	obj->gates_size = 0;
@@ -669,6 +683,12 @@ void sctk_runtime_config_reset_struct_default_if_needed(char * structname, void 
 	if( !strcmp( structname , "sctk_runtime_config_struct_debugger") )
 	{
 		sctk_runtime_config_struct_init_debugger( ptr );
+		return;
+	}
+
+	if( !strcmp( structname , "sctk_runtime_config_struct_net_driver_topological") )
+	{
+		sctk_runtime_config_struct_init_net_driver_topological( ptr );
 		return;
 	}
 

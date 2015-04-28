@@ -281,6 +281,17 @@ Type is int. Default value is 1024.
 .Pp max_filename_size
 
 .El
+.Sh ENTRIES OF TYPE net_driver_topological
+Declare a topological driver.
+.Pp
+It support parameters :
+.Pp
+.Bl -tag -width Ds
+.It Cm dummy
+Type is int. 
+.Pp dummy
+A test Param
+.El
 .Sh ENTRIES OF TYPE net_driver_infiniband
 Declare a fake driver to test the configuration system.
 .Pp
@@ -516,6 +527,8 @@ It can contain a node of type :
  of type net_driver_tcp. 
 .It Cm tcprdma
  of type net_driver_tcp_rdma. 
+.It Cm topological
+ of type net_driver_topological. 
 .El
 .Sh ENTRIES OF TYPE net_driver_config
 Contain a list of driver configuration reused by rail definitions.
@@ -687,7 +700,7 @@ Type is topological_polling.
 .Pp any_source_polling
 Define how the any-source polling is done.
 .It Cm topology
-Type is string. 
+Type is string. Default value is ring. 
 .Pp topology
 Define the network topology to apply on this rail.
 .It Cm ondemand
@@ -695,7 +708,7 @@ Type is int. Default value is 1.
 .Pp ondemand
 Define if on-demand connections are allowed on this rail.
 .It Cm config
-Type is string. 
+Type is string. Default value is topological. 
 .Pp config
 Define the driver config to use for this rail.
 .It Cm gates

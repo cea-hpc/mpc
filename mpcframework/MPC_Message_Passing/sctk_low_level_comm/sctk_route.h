@@ -82,6 +82,7 @@ struct sctk_endpoint_s
 	int dest;
 	sctk_route_info_spec_t data;
 	sctk_rail_info_t *rail;
+	int subrail_id; 		/**< The id of the subrail (if applicable otherwise -1) */
 	sctk_route_origin_t origin;       /**< Origin of the route entry: static or dynamic route */
 	OPA_int_t state; 		  /**< State of the route \ref sctk_endpoint_state_t */
 	OPA_int_t low_memory_mode_local;  /**< If a message "out of memory" has already been sent to the

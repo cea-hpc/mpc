@@ -79,6 +79,9 @@ const struct sctk_runtime_config_entry_meta sctk_runtime_config_db[] = {
 	{"colors"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_debugger,colors)  , sizeof(bool) , "bool" , NULL},
 	{"max_filename_size"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_debugger,max_filename_size)  , sizeof(int) , "int" , NULL},
 	/* struct */
+	{"sctk_runtime_config_struct_net_driver_topological" , SCTK_CONFIG_META_TYPE_STRUCT , 0  , sizeof(struct sctk_runtime_config_struct_net_driver_topological) , NULL , sctk_runtime_config_struct_init_net_driver_topological},
+	{"dummy"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_driver_topological,dummy)  , sizeof(int) , "int" , NULL},
+	/* struct */
 	{"sctk_runtime_config_struct_net_driver_infiniband" , SCTK_CONFIG_META_TYPE_STRUCT , 0  , sizeof(struct sctk_runtime_config_struct_net_driver_infiniband) , NULL , sctk_runtime_config_struct_init_net_driver_infiniband},
 	{"network_type"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_driver_infiniband,network_type)  , sizeof(int) , "int" , NULL},
 	{"adm_port"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_driver_infiniband,adm_port)  , sizeof(int) , "int" , NULL},
@@ -140,6 +143,7 @@ const struct sctk_runtime_config_entry_meta sctk_runtime_config_db[] = {
 	{"portals"     , SCTK_CONFIG_META_TYPE_UNION_ENTRY  , SCTK_RTCFG_net_driver_portals  , sizeof(struct sctk_runtime_config_struct_net_driver_portals) , "sctk_runtime_config_struct_net_driver_portals" , sctk_runtime_config_struct_init_net_driver_portals},
 	{"tcp"     , SCTK_CONFIG_META_TYPE_UNION_ENTRY  , SCTK_RTCFG_net_driver_tcp  , sizeof(struct sctk_runtime_config_struct_net_driver_tcp) , "sctk_runtime_config_struct_net_driver_tcp" , sctk_runtime_config_struct_init_net_driver_tcp},
 	{"tcprdma"     , SCTK_CONFIG_META_TYPE_UNION_ENTRY  , SCTK_RTCFG_net_driver_tcprdma  , sizeof(struct sctk_runtime_config_struct_net_driver_tcp_rdma) , "sctk_runtime_config_struct_net_driver_tcp_rdma" , sctk_runtime_config_struct_init_net_driver_tcp_rdma},
+	{"topological"     , SCTK_CONFIG_META_TYPE_UNION_ENTRY  , SCTK_RTCFG_net_driver_topological  , sizeof(struct sctk_runtime_config_struct_net_driver_topological) , "sctk_runtime_config_struct_net_driver_topological" , sctk_runtime_config_struct_init_net_driver_topological},
 	/* struct */
 	{"sctk_runtime_config_struct_net_driver_config" , SCTK_CONFIG_META_TYPE_STRUCT , 0  , sizeof(struct sctk_runtime_config_struct_net_driver_config) , NULL , sctk_runtime_config_struct_init_net_driver_config},
 	{"name"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_driver_config,name)  , sizeof(char *) , "char *" , NULL},

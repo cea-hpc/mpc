@@ -39,10 +39,6 @@ typedef struct sctk_endpoint_s sctk_endpoint_t;
 /* Rail Info                                                            */
 /************************************************************************/
 
-/** \brief This value is used to identify a rail which makes the interface
- *         with a set of rails using a topology logic */
-#define SCTK_RAIL_TOPOLOGICAL 9999
-
 /** \brief Network dependent RAIL informations */
 typedef union
 {
@@ -51,6 +47,7 @@ typedef union
 #ifdef MPC_USE_PORTAL
 	sctk_portals_rail_info_t portals; /**< Portals Info */
 #endif
+	sctk_topological_rail_info_t topological; /**< Topological rail info */
 } sctk_rail_info_spec_t;
 
 
@@ -67,11 +64,14 @@ struct sctk_rail_info_s
 {
 	/* Global Info */
 	int rail_number; /**< ID of this rail */
+	int subrail_id; /**< ID of this rail if it is a subrail (-1 otherwise) */
 	char *network_name; /**< Name of this rail */
 	sctk_device_t * rail_device; /**< Device associated with the rail */
 	
 	struct sctk_rail_info_s * parent_rail; /**< This is used for rail hierarchies 
 	                                            (note that parent initializes it for the child) */
+	struct sctk_rail_info_s ** subrails;   /**< Pointer to subrails (if present) */
+	int subrail_count;   /**< number of subrails */
 	
 	/* Network Infos */
 	sctk_rail_info_spec_t network;	/**< Network dependent rail info */
@@ -151,6 +151,60 @@ void sctk_rail_commit();
 int sctk_rail_committed();
 void sctk_rail_init_route ( sctk_rail_info_t *rail, char *topology, void (*on_demand)( struct sctk_rail_info_s * rail , int dest ) );
 void sctk_rail_dump_routes();
+
+/** Retrieve the HWLOC device associated with a rail */
+static inline hwloc_obj_t sctk_rail_get_device_hwloc_obj( sctk_rail_info_t *rail )
+{
+	if( !rail->rail_device )
+		return NULL;
+	
+	return rail->rail_device->obj;
+}
+
+/** Return the name of the device (as put in the config) */
+static inline char * sctk_rail_get_device_name( sctk_rail_info_t *rail )
+{
+	if( !rail )
+		return NULL;
+	
+	return rail->runtime_config_rail->device;
+}
+
+/** Returns 1 if the rail is based on a regexp */
+static inline int sctk_rail_device_is_regexp( sctk_rail_info_t *rail )
+{
+	char * dev = sctk_rail_get_device_name( rail );
+	
+	if( !dev )
+		return 0;
+	
+	if( dev[0] == '!' )
+		return 1;
+	
+	return 0;
+}
+
+/** Returns the id of the subrail using this device -1 otherwise */
+static inline int sctk_rail_get_subrail_id_with_device( sctk_rail_info_t *rail, sctk_device_t * dev )
+{
+	if( ! rail )
+		return -1;
+	
+	if( rail->subrail_count == 0 )
+		return -1;
+	
+	int i;
+	
+	for( i = 0 ; i < rail->subrail_count ; i++ )
+	{
+		if( dev == rail->subrails[i]->rail_device )
+		{
+			return i;
+		}
+	}
+	
+	return -1;
+}
 
 /************************************************************************/
 /* Add Routes to Rail                                                   */

@@ -137,6 +137,14 @@ enum rail_topological_polling_level
 };
 
 /******************************** STRUCTURE *********************************/
+/**Declare a topological driver.**/
+struct sctk_runtime_config_struct_net_driver_topological
+{	int init_done;
+	/**A test Param**/
+	int dummy;
+};
+
+/******************************** STRUCTURE *********************************/
 /**Declare a fake driver to test the configuration system.**/
 struct sctk_runtime_config_struct_net_driver_infiniband
 {	int init_done;
@@ -267,6 +275,7 @@ enum sctk_runtime_config_struct_net_driver_type
 	SCTK_RTCFG_net_driver_portals,
 	SCTK_RTCFG_net_driver_tcp,
 	SCTK_RTCFG_net_driver_tcprdma,
+	SCTK_RTCFG_net_driver_topological,
 };
 
 /******************************** STRUCTURE *********************************/
@@ -279,6 +288,7 @@ struct sctk_runtime_config_struct_net_driver
 		struct sctk_runtime_config_struct_net_driver_portals portals;
 		struct sctk_runtime_config_struct_net_driver_tcp tcp;
 		struct sctk_runtime_config_struct_net_driver_tcp_rdma tcprdma;
+		struct sctk_runtime_config_struct_net_driver_topological topological;
 	} value;
 };
 

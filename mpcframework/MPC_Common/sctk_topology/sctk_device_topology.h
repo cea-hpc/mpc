@@ -70,6 +70,7 @@ const char * sctk_device_container_to_char( sctk_device_container_t type );
 typedef struct sctk_device_s
 {
 	/* Descriptor */
+	int id; /** ID of the device (offset in the device array) */
 	sctk_device_type_t type; /**< This is the type of the OSdev pointed to */
 	sctk_device_container_t container; /**< This is the topological level of the device */
 	char * name; /**< Name of the device (called OSname in HWloc) */
@@ -86,10 +87,10 @@ typedef struct sctk_device_s
 	int root_numa; /**< This is the master NUMA node for this device */
 
 	/* Attributes */
-	const char * vendor; /** PCI card vendor */
-	const char * device; /** PCI card descriptor */
+	const char * vendor; /**< PCI card vendor */
+	const char * device; /**< PCI card descriptor */
 	
-	int device_id;
+	int device_id; /**< The internal ID of the device (for IB, card ID) set in enrich topology */
 	
 }sctk_device_t;
 
@@ -108,14 +109,32 @@ void sctk_device_release();
 
 /* Device getter */
 
+/** Retrieve a device from its handle (PCI or OSname) */
 sctk_device_t * sctk_device_get_from_handle( char * handle );
+/** Retrieve a device ID from its handle (PCI or OSname) */
 int sctk_device_get_id_from_handle( char * handle );
+/** Retrieve the list of devices matching a given regexp (on OSname) */
 sctk_device_t ** sctk_device_get_from_handle_regexp( char * handle_reg_exp, int * count );
 
-/* Locality helpers */
+/************************************************************************/
+/* DISTANCE MATRIX                                                      */
+/************************************************************************/
+/** This is a structure defining the distance matrix
+ * for devices */
+typedef struct sctk_device_matrix_s
+{
+	int * distances;
 
-int sctk_device_vp_is_device_leader( sctk_device_t * device, int vp_id );
-int sctk_device_vp_is_on_device_numa( sctk_device_t * device, int vp_id );
-int sctk_device_vp_is_outside_device_numa( sctk_device_t * device, int vp_id );
+	int pu_count;
+	int device_count;
+}sctk_device_matrix_t;
+
+/** Retrieves a pointer to the  static device matrix */
+sctk_device_matrix_t * sctk_device_matrix_get();
+/** Get the closest device from PU matching the regexp "matching_regexp" */
+sctk_device_t * sctk_device_matrix_get_closest_from_pu( int pu_id, char * matching_regexp );
+/** Return 1 if the devices matching the regexp are equidistant */
+int sctk_device_matrix_is_equidistant(char * matching_regexp);
+
 
 #endif /* SCTK_DEVICE_TOPOLOGY_H */

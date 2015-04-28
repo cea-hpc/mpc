@@ -613,6 +613,10 @@ void sctk_network_initialize_task_collaborative_ib ( int rank, int vp )
 	{
 		sctk_rail_info_t * rail = sctk_rail_get_by_id ( i );
 		
+		/* It can happen for topological rails */
+		if( ! rail->runtime_config_driver_config )
+			continue;
+		
 		if( rail->runtime_config_driver_config->driver.type != SCTK_RTCFG_net_driver_infiniband )
 			continue;
 		
