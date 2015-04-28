@@ -1,0 +1,354 @@
+/* ############################# MPC License ############################## */
+/* # Wed Nov 19 15:19:19 CET 2008                                         # */
+/* # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          # */
+/* #                                                                      # */
+/* # IDDN.FR.001.230040.000.S.P.2007.000.10000                            # */
+/* # This file is part of the MPC Runtime.                                # */
+/* #                                                                      # */
+/* # This software is governed by the CeCILL-C license under French law   # */
+/* # and abiding by the rules of distribution of free software.  You can  # */
+/* # use, modify and/ or redistribute the software under the terms of     # */
+/* # the CeCILL-C license as circulated by CEA, CNRS and INRIA at the     # */
+/* # following URL http://www.cecill.info.                                # */
+/* #                                                                      # */
+/* # The fact that you are presently reading this means that you have     # */
+/* # had knowledge of the CeCILL-C license and that you accept its        # */
+/* # terms.                                                               # */
+/* #                                                                      # */
+/* # Authors:                                                             # */
+/* #   - BESNARD Jean-Baptiste jbbesnard@paratools.fr                     # */
+/* #                                                                      # */
+/* ######################################################################## */
+#include <sctk_route.h>
+#include "sctk_topological_rail.h"
+#include <sctk_accessor.h>
+
+
+static void sctk_network_send_message_endpoint_topological ( sctk_thread_ptp_message_t *msg, sctk_endpoint_t *endpoint )
+{
+	int vp_id = sctk_get_processor_rank();
+	
+	if( vp_id < 0 )
+	{
+		/* If not on VP assume 0 */
+		vp_id = 0;
+	}
+	
+	assume( endpoint->parent_rail != NULL );
+	
+	sctk_topological_rail_info_t  * topo_infos = &endpoint->parent_rail->network.topological;
+	
+	sctk_rail_info_t * topological_rail = endpoint->parent_rail->subrails[ vp_id ];
+	assume( 0 <= endpoint->subrail_id );
+	sctk_rail_info_t * endpoint_rail = endpoint->rail;
+	
+	/* Do we match ? */
+	if( topological_rail == endpoint_rail )
+	{
+		/* It means that the endpoint found by the multirail
+		 * is already topological, just send through it */
+		topological_rail->send_message_endpoint( msg, endpoint );
+	}
+	else
+	{
+		/* Here the first endpoint is not the topological
+		 * one, we have to look in the topological rail
+		 * to see if this endpoint exists */
+		int dest = SCTK_MSG_DEST_PROCESS( msg );
+		sctk_endpoint_t * topological_endpoint = sctk_rail_get_any_route_to_process ( topological_rail, dest );
+		
+		/* Did we find one ? */
+		if( topological_endpoint )
+		{
+			/* Send through it */
+			SCTK_MSG_SET_RAIL_ID( msg, topological_rail->rail_number );
+			topological_rail->send_message_endpoint( msg, topological_endpoint );
+		}
+		else
+		{
+			/* Fallback to the original endpoint (we pay the NUMA not to delay the message) */
+			endpoint_rail->send_message_endpoint( msg, endpoint );
+			
+			if( !sctk_message_class_is_control_message( SCTK_MSG_SPECIFIC_CLASS( msg ) ) )
+			{
+				/* Intiate an on-demand connection to the remote on the topological rail (to keep connection balanced) */
+				if( topological_rail->on_demand )
+				{
+					sctk_error("CONNECT to %d", dest );
+					/* Here we need to push in a list */
+					//topological_rail->connect_on_demand( topological_rail, dest );
+				}
+			}
+		}
+	}
+}
+
+static void sctk_network_notify_recv_message_topological ( sctk_thread_ptp_message_t *msg, sctk_rail_info_t *rail )
+{
+	/* Done in subrails */
+}
+
+static void sctk_network_notify_matching_message_topological ( sctk_thread_ptp_message_t *msg, sctk_rail_info_t *rail )
+{
+	/* Done in subrails */
+}
+
+static void sctk_network_notify_perform_message_topological ( int remote, int remote_task_id, int polling_task_id, int blocking, sctk_rail_info_t *rail )
+{
+	/* Done in subrails */
+}
+
+static void sctk_network_notify_idle_message_topological ()
+{
+	/* Done in subrails */
+}
+
+static void sctk_network_notify_any_source_message_topological ( int polling_task_id, int blocking, sctk_rail_info_t *rail )
+{
+	/* Done in subrails */
+}
+
+static int sctk_send_message_from_network_topological ( sctk_thread_ptp_message_t *msg )
+{
+	/* Done in subrails */
+	return 1;
+}
+
+void topological_on_demand_connection_handler( sctk_rail_info_t *rail, int dest_process )
+{
+	sctk_error("CONNECT TO %d", dest_process );
+	int vp_id = sctk_get_processor_rank();
+	
+	if( vp_id < 0 )
+	{
+		/* If not on VP assume 0 */
+		vp_id = 0;
+	}
+	
+	sctk_rail_info_t *topological_subrail = rail->subrails[ vp_id ];
+	topological_subrail->connect_on_demand( topological_subrail, dest_process );
+}
+
+void topological_control_message_handler( struct sctk_rail_info_s * rail, int source_process, int source_rank, char subtype, char param, void * data )
+{
+	/* Done in subrails */
+}
+
+
+void sctk_network_connection_to_topological( int from, int to, sctk_rail_info_t *rail )
+{
+	/* Done in subrails */
+}
+
+
+void sctk_network_connection_from_topological( int from, int to, sctk_rail_info_t *rail )
+{
+	/* Done in subrails */
+}
+
+/********************************************************************/
+/* TOPOLOGICAL Rail Init                                            */
+/********************************************************************/
+
+void sctk_network_init_topological_rail_info(  sctk_rail_info_t *rail )
+{
+	sctk_topological_rail_info_t  * infos = &rail->network.topological;
+	
+	/* Allocate an array of CPU size */
+	infos->max_vp = sctk_get_cpu_number();
+	
+	infos->vp_to_subrail = sctk_malloc( infos->max_vp * sizeof( int ) );
+	assume( infos->vp_to_subrail != NULL );
+	
+	/* Now fill it according to different cases */
+	int i;
+	
+	/* First put -1 everywhere */
+	for( i = 0 ; i < infos->max_vp ; i++ )
+	{
+		infos->vp_to_subrail[i] = -1;
+	}
+	
+	/* First case there is a single rail to choose */
+	if( rail->subrail_count == 1 )
+	{
+		for( i = 0 ; i < infos->max_vp ; i++ )
+		{
+			/* Always choose first rail */
+			infos->vp_to_subrail[i] = 0;
+		}
+		
+		/* Done */
+		return;
+	}
+	
+	char * device_regexp = NULL;
+	int device_reg_exp_allocated = 0;
+	
+	/* Prepare to switch between the two last cases */
+	if( sctk_rail_device_is_regexp( rail ) )
+	{
+		/* Second case the topology is defined with a regexp */
+		
+		 device_regexp = sctk_rail_get_device_name( rail );
+		/* Increment by 1 to skip the '!' */
+		device_regexp++;
+	}
+	else
+	{
+		/* Third case, the topology is defined as a list of subrails
+		 * the tips here is to build a regexp from it this list
+		 * to use the same code as if it was a regexp */
+		 
+		/* Allocate the device name list */
+		char ** device_name_list = sctk_malloc( sizeof( char * ) * rail->subrail_count );
+		int j;
+		
+		/* Retrieve names */
+		for( i = 0 ; i < rail->subrail_count ; i++ )
+		{
+			if( sctk_rail_device_is_regexp( rail->subrails[i] ) )
+			{
+				sctk_fatal("Device names with regular expressions are not allowed in subrails");
+			}
+			
+			device_name_list[i] =  sctk_rail_get_device_name( rail->subrails[i] );
+		}
+		
+		/* Bubble sort names (as a shorter regexp with the same name could match */
+		
+		int total_name_len = 0;
+		
+		for( i = 0 ; i < rail->subrail_count ; i++ )
+		{
+			char * name_i = device_name_list[i];
+			
+			int len_i = 0;
+			if( name_i )
+			{
+				len_i = strlen( name_i );
+			}
+			
+			/* In the mean time do total name len computation */
+			total_name_len += len_i;
+			
+			for( j = i + 1 ; j < rail->subrail_count ; j++ )
+			{
+				char * name_j = device_name_list[j];
+			
+				int len_j = 0;
+				if( name_j )
+				{
+					len_j = strlen( name_j );
+				}
+				
+				if( len_i < len_j )
+				{
+					char * tmp = name_i;
+					device_name_list[i] = name_j;
+					device_name_list[j] = tmp;
+				}
+			}
+		}
+		
+		/* Allocate space for the regexp (add 3*count for the \\|) */
+		device_reg_exp_allocated = 1;
+		int device_regexp_length = total_name_len + 3 * rail->subrail_count + 100 /* Some margin never killed */;
+		device_regexp = sctk_malloc(device_regexp_length);
+		assume( device_regexp != NULL );
+		
+		device_regexp[0] = '\0';
+		
+		/* Build the regexp */
+		for( i = 0 ; i < rail->subrail_count ; i++ )
+		{
+			if( !device_name_list[i] )
+				continue;
+			
+			char local[500];
+			snprintf(local, 500, "%s", device_name_list[i] );
+			
+			strncat( device_regexp, local, device_regexp_length);
+			
+			if( i != (rail->subrail_count - 1) )
+			{
+				strncat( device_regexp, "\\|", device_regexp_length);
+			}
+			
+		}
+		
+	}
+		
+	/* Is the topology flat ? */
+	if( sctk_device_matrix_is_equidistant( device_regexp ) )
+	{
+		/* In this case we split the devices among the PUs as the topology
+		 * is flat therefore no need to think of distances just split
+		 * devices envenly among the CPUS */
+		int cpu_per_device = infos->max_vp / rail->subrail_count;
+		 
+		/* If there are more devices than CPU */
+		if( ! cpu_per_device )
+		{
+			cpu_per_device = 1;
+		}
+		
+		for( i = 0 ; i < infos->max_vp ; i++ )
+		{
+			/* Comput ehte device bucket */
+			infos->vp_to_subrail[i] = i / cpu_per_device;
+			
+			/* Should NEVER happen due to integer computation */
+			if( rail->subrail_count <= infos->vp_to_subrail[i] )
+			{
+				infos->vp_to_subrail[i] = rail->subrail_count - 1;
+			}
+		}
+		
+		/* Done */
+	}
+	else
+	{
+		/* Here we have to think of distance */
+		for( i = 0 ; i < infos->max_vp ; i++ )
+		{
+			/* Always choose first rail */
+			sctk_device_t * dev = sctk_device_matrix_get_closest_from_pu( i, device_regexp );
+			/* Map device to subrail */
+			infos->vp_to_subrail[i] = sctk_rail_get_subrail_id_with_device( rail, dev );
+		}
+		
+		/* Done */
+	}
+
+	if( device_reg_exp_allocated )
+	{
+		sctk_free( device_regexp );
+	}
+}
+
+
+
+
+
+void sctk_network_init_topological ( sctk_rail_info_t *rail )
+{
+	/* Register Hooks in rail */
+	rail->send_message_endpoint = sctk_network_send_message_endpoint_topological;
+	rail->notify_recv_message = sctk_network_notify_recv_message_topological;
+	rail->notify_matching_message = sctk_network_notify_matching_message_topological;
+	rail->notify_perform_message = sctk_network_notify_perform_message_topological;
+	rail->notify_idle_message = sctk_network_notify_idle_message_topological;
+	rail->notify_any_source_message = sctk_network_notify_any_source_message_topological;
+	rail->send_message_from_network = sctk_send_message_from_network_topological;
+	rail->control_message_handler = topological_control_message_handler;
+	rail->connect_to = sctk_network_connection_to_topological;
+	rail->connect_from = sctk_network_connection_from_topological;
+
+	rail->network_name = "Topological RAIL";
+
+	sctk_network_init_topological_rail_info( rail );
+	
+	/* Init Routes (intialize on-demand context) */
+	sctk_rail_init_route ( rail, rail->runtime_config_rail->topology, NULL );
+}

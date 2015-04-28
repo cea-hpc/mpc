@@ -79,17 +79,21 @@ typedef enum sctk_route_state_e
 struct sctk_endpoint_s
 {
 	UT_hash_handle hh;
+
 	int dest;
 	sctk_route_info_spec_t data;
-	sctk_rail_info_t *rail;
+	sctk_rail_info_t *parent_rail;/**< Pointer to the parent rail (called by default if present) */
+	sctk_rail_info_t *rail;	/**< Pointer to the rail owning this endpoint */
 	int subrail_id; 		/**< The id of the subrail (if applicable otherwise -1) */
 	sctk_route_origin_t origin;       /**< Origin of the route entry: static or dynamic route */
 	OPA_int_t state; 		  /**< State of the route \ref sctk_endpoint_state_t */
+	
 	OPA_int_t low_memory_mode_local;  /**< If a message "out of memory" has already been sent to the
 					   *   process to notice him that we are out of memory */
 	OPA_int_t low_memory_mode_remote; /**< If the remote process is running out of memory */
 	char is_initiator;		  /**< Return if the process is the initiator of the remote creation.
 					   * if 'is_initiator == CHAR_MAX, value not set */
+	
 	sctk_spinlock_t lock;
 };
 
@@ -155,9 +159,9 @@ struct sctk_route_table_s
 
 sctk_route_table_t * sctk_route_table_new();
 /* Functions for adding a route */
-void sctk_route_table_add_static_route (  sctk_route_table_t * table, sctk_endpoint_t *tmp );
-void sctk_route_table_add_dynamic_route (  sctk_route_table_t * table, sctk_endpoint_t *tmp );
-void sctk_route_table_add_dynamic_route_no_lock (  sctk_route_table_t * table, sctk_endpoint_t *tmp );
+void sctk_route_table_add_static_route (  sctk_route_table_t * table, sctk_endpoint_t *tmp, int push_in_multirail );
+void sctk_route_table_add_dynamic_route (  sctk_route_table_t * table, sctk_endpoint_t *tmp, int push_in_multirail );
+void sctk_route_table_add_dynamic_route_no_lock (  sctk_route_table_t * table, sctk_endpoint_t *tmp, int push_in_multirail );
 /* Functions for getting a route */
 sctk_endpoint_t * sctk_route_table_get_static_route(   sctk_route_table_t * table , int dest );
 sctk_endpoint_t * sctk_route_table_get_dynamic_route(   sctk_route_table_t * table , int dest );

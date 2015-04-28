@@ -656,14 +656,20 @@ void sctk_multirail_send_message( sctk_thread_ptp_message_t *msg )
 		
 		if( endpoint )
 		{
-			sctk_nodebug("RAIL %d", endpoint->rail->rail_number );
+			sctk_rail_info_t * target_rail = endpoint->rail;
+			
+			/* Override by parent if present (topological rail) */
+			if( endpoint->parent_rail != NULL )
+				target_rail = endpoint->parent_rail;
+			
+			sctk_nodebug("RAIL %d", target_rail->rail_number );
 			
 			/* Prepare reordering */
 			sctk_prepare_send_message_to_network_reorder ( msg );
 			/* Set rail number in message */
 			SCTK_MSG_SET_RAIL_ID( msg, endpoint->rail->rail_number );
 			/* Send the message */
-			(endpoint->rail->send_message_endpoint)( msg, endpoint );
+			(target_rail->send_message_endpoint)( msg, endpoint );
 		}
 		else
 		{

@@ -51,10 +51,10 @@ sctk_route_table_t * sctk_route_table_new()
 	
 	ret->dynamic_route_table = NULL;
 	sctk_spin_rwlock_t lck = SCTK_SPIN_RWLOCK_INITIALIZER;
-
 	ret->dynamic_route_table_lock = lck;
-	ret->static_route_table = NULL;
 	
+	ret->static_route_table = NULL;
+
 	return ret;
 }
 
@@ -120,8 +120,9 @@ void sctk_endpoint_init ( sctk_endpoint_t *tmp,  int dest, sctk_rail_info_t *rai
 	memset( tmp, 0, sizeof( sctk_endpoint_t ) );
 	tmp->dest = dest;
 	tmp->rail = rail;
+	tmp->parent_rail = NULL;
 	tmp->subrail_id = -1;
-	/* FIXME: the following commented line may potentially break other modules (like TCP). */
+
 	sctk_endpoint_set_low_memory_mode_local ( tmp, 0 );
 	sctk_endpoint_set_low_memory_mode_remote ( tmp, 0 );
 	sctk_endpoint_set_state ( tmp, STATE_DECONNECTED );
@@ -149,34 +150,44 @@ void sctk_endpoint_init_dynamic ( sctk_endpoint_t *tmp, int dest, sctk_rail_info
 /************************************************************************/
 
 
-void sctk_route_table_add_dynamic_route_no_lock (  sctk_route_table_t * table, sctk_endpoint_t *tmp )
+void sctk_route_table_add_dynamic_route_no_lock (  sctk_route_table_t * table, sctk_endpoint_t *tmp, int push_in_multirail )
 {
 	assume( tmp->origin == ROUTE_ORIGIN_DYNAMIC );
+	
 	HASH_ADD_INT( table->dynamic_route_table, dest, tmp );
-	/* Register route in multi-rail */
-	sctk_multirail_destination_table_push_endpoint( tmp );
+
+	if( push_in_multirail )
+	{
+		/* Register route in multi-rail */
+		sctk_multirail_destination_table_push_endpoint( tmp );
+	}
 }
 
-void sctk_route_table_add_dynamic_route (  sctk_route_table_t * table, sctk_endpoint_t *tmp )
+void sctk_route_table_add_dynamic_route (  sctk_route_table_t * table, sctk_endpoint_t *tmp, int push_in_multirail )
 {
 	assume( tmp->origin == ROUTE_ORIGIN_DYNAMIC );
 	
 	sctk_spinlock_write_lock ( &table->dynamic_route_table_lock );
-	sctk_route_table_add_dynamic_route_no_lock ( table,tmp );
+	sctk_route_table_add_dynamic_route_no_lock ( table,tmp, push_in_multirail );
 	sctk_spinlock_write_unlock ( &table->dynamic_route_table_lock  );
 }
 
 
-void sctk_route_table_add_static_route (  sctk_route_table_t * table, sctk_endpoint_t *tmp )
+void sctk_route_table_add_static_route (  sctk_route_table_t * table, sctk_endpoint_t *tmp , int push_in_multirail)
 {
 	sctk_nodebug("New static route to %d", tmp->dest );
 	
 	assume( tmp->origin == ROUTE_ORIGIN_STATIC );
 	
 	sctk_spinlock_write_lock(&sctk_route_table_static_lock);
+	
 	HASH_ADD_INT( table->static_route_table, dest, tmp );
-	/* Register route in multi-rail */
-	sctk_multirail_destination_table_push_endpoint( tmp );
+	
+	if( push_in_multirail )
+	{
+		/* Register route in multi-rail */
+		sctk_multirail_destination_table_push_endpoint( tmp );
+	}
 	sctk_spinlock_write_unlock(&sctk_route_table_static_lock);
 }
 
@@ -187,12 +198,13 @@ void sctk_route_table_add_static_route (  sctk_route_table_t * table, sctk_endpo
 
 sctk_endpoint_t * sctk_route_table_get_static_route(   sctk_route_table_t * table , int dest )
 {
-	sctk_endpoint_t *tmp;
+	sctk_endpoint_t *tmp = NULL;
 
 	/* We do not need to take a lock for the static table. No route can be created
 	* or destructed during execution time */
 
 	HASH_FIND_INT ( table->static_route_table, &dest, tmp );
+
 	sctk_nodebug ( "Get static route for %d -> %p", dest, tmp );
 
 	return tmp;

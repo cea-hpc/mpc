@@ -378,11 +378,11 @@ static void __sctk_network_connection_from_tcp( int from, int to, sctk_rail_info
 	
 	if( route_type == ROUTE_ORIGIN_STATIC )
 	{
-		sctk_control_messages_send ( to, SCTK_CONTROL_MESSAGE_RAIL, SCTK_TCP_CONTROL_MESSAGE_ON_DEMAND_STATIC, 0, &ctx, sizeof( struct sctk_tcp_connection_context ) );
+		sctk_control_messages_send_rail ( to, SCTK_CONTROL_MESSAGE_RAIL, SCTK_TCP_CONTROL_MESSAGE_ON_DEMAND_STATIC, 0, &ctx, sizeof( struct sctk_tcp_connection_context ) , rail->rail_number);
 	}
 	else
 	{
-		sctk_control_messages_send ( to, SCTK_CONTROL_MESSAGE_RAIL, SCTK_TCP_CONTROL_MESSAGE_ON_DEMAND_DYNAMIC, 0, &ctx, sizeof( struct sctk_tcp_connection_context ) );
+		sctk_control_messages_send_rail ( to, SCTK_CONTROL_MESSAGE_RAIL, SCTK_TCP_CONTROL_MESSAGE_ON_DEMAND_DYNAMIC, 0, &ctx, sizeof( struct sctk_tcp_connection_context )  , rail->rail_number);
 	}
 
 	src_socket = accept ( rail->network.tcp.sockfd, NULL, 0 );
@@ -413,9 +413,11 @@ void tcp_control_message_handler( struct sctk_rail_info_s * rail, int source_pro
 	switch( action )
 	{
 		case SCTK_TCP_CONTROL_MESSAGE_ON_DEMAND_STATIC :
+			sctk_error("ON DEM STAT");
 			sctk_network_connection_to_ctx( rail, (struct sctk_tcp_connection_context *) data, ROUTE_ORIGIN_STATIC );
 		break;
 		case SCTK_TCP_CONTROL_MESSAGE_ON_DEMAND_DYNAMIC :
+			sctk_error("ON DEM DYN");
 			sctk_network_connection_to_ctx( rail, (struct sctk_tcp_connection_context *) data, ROUTE_ORIGIN_DYNAMIC );
 		break;
 	}

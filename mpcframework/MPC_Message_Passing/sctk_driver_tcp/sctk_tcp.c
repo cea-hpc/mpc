@@ -100,6 +100,8 @@ static void *sctk_tcp_thread ( sctk_endpoint_t *tmp )
 
 static void sctk_network_send_message_endpoint_tcp ( sctk_thread_ptp_message_t *msg, sctk_endpoint_t *endpoint )
 {
+	sctk_error("SUBRAIL %d", endpoint->rail->subrail_id );
+	
 	size_t size;
 	int fd;
 

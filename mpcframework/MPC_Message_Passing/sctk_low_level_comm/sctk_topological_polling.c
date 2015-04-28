@@ -307,7 +307,7 @@ static inline void sctk_topological_polling_cell_poll( struct sctk_topological_p
 
 void sctk_topological_polling_tree_poll( struct sctk_topological_polling_tree * tree,  void (*func)( void *), void * arg )
 {
-	int cpu_id = sctk_get_cpu();
+	int cpu_id = sctk_get_processor_rank();
 
 	/* Nothing to do */
 	if( !func )

@@ -96,8 +96,12 @@ void printpayload( void * pl , size_t size )
 	
 }
 
+void sctk_control_messages_send( int dest, sctk_message_class_t message_class, int subtype, int param, void *buffer, size_t size ) 
+{
+	sctk_control_messages_send_rail( dest, message_class, subtype, param, buffer, size, -1 ); 
+}
 
-void sctk_control_messages_send ( int dest, sctk_message_class_t message_class, int subtype, int param, void *buffer, size_t size )
+void sctk_control_messages_send_rail( int dest, sctk_message_class_t message_class, int subtype, int param, void *buffer, size_t size, int  rail_id ) 
 {
 
 	sctk_communicator_t communicator = SCTK_COMM_WORLD;
@@ -117,6 +121,7 @@ void sctk_control_messages_send ( int dest, sctk_message_class_t message_class, 
 	/* Fill in control message context (note that class is handled by set_header_in_message) */
 	SCTK_MSG_SPECIFIC_CLASS_SET_SUBTYPE( (&msg) , subtype );
 	SCTK_MSG_SPECIFIC_CLASS_SET_PARAM( (&msg) , param );
+	SCTK_MSG_SPECIFIC_CLASS_SET_RAILID( (&msg), rail_id);
 	
 	sctk_add_adress_in_message ( &msg, buffer, size );
 	
@@ -176,6 +181,8 @@ void sctk_control_messages_incoming( sctk_thread_ptp_message_t * msg )
 		case SCTK_CONTROL_MESSAGE_RAIL:
 		{
 			sctk_rail_info_t * rail = sctk_rail_get_by_id ( rail_id );
+			
+			sctk_error("MESSAGE TO RAIL %d", rail_id);
 			
 			if(!rail)
 			{

@@ -52,8 +52,10 @@ void sctk_rail_allocate ( int count )
 
 
 
-sctk_rail_info_t * sctk_rail_register( struct sctk_runtime_config_struct_net_rail *runtime_config_rail,
-                                         struct sctk_runtime_config_struct_net_driver_config *runtime_config_driver_config )
+sctk_rail_info_t * sctk_rail_register_with_parent( struct sctk_runtime_config_struct_net_rail *runtime_config_rail,
+                                         struct sctk_runtime_config_struct_net_driver_config *runtime_config_driver_config,
+                                         sctk_rail_info_t * parent,
+                                         int subrail_id )
 {
 	if ( __rails.rail_current_id ==  sctk_rail_count() )
 	{
@@ -61,20 +63,22 @@ sctk_rail_info_t * sctk_rail_register( struct sctk_runtime_config_struct_net_rai
 	}
 
 	/* Store rail */
+	
 	sctk_rail_info_t * new_rail = &__rails.rails[__rails.rail_current_id];
+	/* Set rail Number */
+	new_rail->rail_number = __rails.rail_current_id;
+	__rails.rail_current_id++;
+
 
 	/* Load Config */
 	new_rail->runtime_config_rail = runtime_config_rail;
 	new_rail->runtime_config_driver_config = runtime_config_driver_config;
 	
-	/* Set rail Number */
-	new_rail->rail_number = __rails.rail_current_id;
-	new_rail->subrail_id = -1;
 	
-	/* Set no parent (note that for hierarchies it is the parent
-	 * which put itsef as parent in the child rails ) see subrails
-	 * just a few lines down */
-	new_rail->parent_rail = NULL;
+	new_rail->subrail_id = subrail_id;
+	
+	/* Set parent if present */
+	new_rail->parent_rail = parent;
 	
 	/* Init Empty route table */
 	new_rail->route_table = sctk_route_table_new();
@@ -129,10 +133,7 @@ sctk_rail_info_t * sctk_rail_register( struct sctk_runtime_config_struct_net_rai
 		new_rail->subrails = sctk_malloc( new_rail->subrail_count * sizeof( struct sctk_rail_info_s *) );
 		
 		assume( new_rail->subrails != NULL );
-		
-		/* First increment the rail ID to book parent's ID */
-		__rails.rail_current_id++;
-		
+
 		/* And now register subrails */
 		int i;
 		for( i = 0 ; i < runtime_config_rail->subrails_size ; i++ )
@@ -147,11 +148,8 @@ sctk_rail_info_t * sctk_rail_register( struct sctk_runtime_config_struct_net_rai
 			}
 		
 			/* Now do the init */
-			sctk_rail_info_t * child_rail = sctk_rail_register( subrail_rail_conf, subrail_driver_conf );
-			/* Here the parent rail registers itself in the child */
-			child_rail->parent_rail = new_rail;
-			/* Set the subrail id in the child */
-			child_rail->subrail_id = i;
+			sctk_rail_info_t * child_rail = sctk_rail_register_with_parent( subrail_rail_conf, subrail_driver_conf, new_rail, i );
+
 			/* Register the subrail in current rail */
 			new_rail->subrails[i] = child_rail;
 		}
@@ -163,11 +161,17 @@ sctk_rail_info_t * sctk_rail_register( struct sctk_runtime_config_struct_net_rai
 	else
 	{
 		sctk_rail_init_driver( new_rail, runtime_config_driver_config->driver.type );
-		__rails.rail_current_id++;
 	}
 
 
 	return new_rail;
+}
+
+
+sctk_rail_info_t * sctk_rail_register( struct sctk_runtime_config_struct_net_rail *runtime_config_rail,
+                                         struct sctk_runtime_config_struct_net_driver_config *runtime_config_driver_config )
+{
+	return sctk_rail_register_with_parent( runtime_config_rail, runtime_config_driver_config, NULL, -1 );
 }
 
 int sctk_rail_count()
@@ -198,7 +202,7 @@ void sctk_rail_commit()
 	{
 		sctk_rail_info_t *  rail = sctk_rail_get_by_id ( i );
 		rail->route_init( rail );
-		sprintf ( name_ptr, "\n%sRail [%s (%s) (%s)]", (rail->parent_rail)?"\tSub-":"", rail->network_name, rail->topology_name , rail->runtime_config_rail->device );
+		sprintf ( name_ptr, "\n%sRail(%d) [%s (%s) (%s)]", (rail->parent_rail)?"\tSub-":"", rail->rail_number, rail->network_name, rail->topology_name , rail->runtime_config_rail->device );
 		name_ptr = net_name + strlen ( net_name );
 		sctk_pmi_barrier();
 	}
@@ -435,19 +439,74 @@ void sctk_rail_init_route ( sctk_rail_info_t *rail, char *topology, void (*on_de
 
 /**************************/
 
-
-
-
 void sctk_rail_add_static_route (sctk_rail_info_t *rail, int dest, sctk_endpoint_t *tmp )
 {
-	sctk_route_table_add_static_route ( rail->route_table, tmp );
+	/* Is this rail a subrail ? */
+	if( rail->parent_rail )
+	{
+		/* Save SUBrail id inside the route */
+		assume( 0 <= rail->subrail_id );
+		tmp->subrail_id = rail->subrail_id;
+		/* "Steal" the endpoint from the subrail */
+		tmp->parent_rail = rail->parent_rail;
+		/* Add in local rail without pushing in multirail */
+		sctk_route_table_add_static_route ( rail->route_table, tmp, 0 );
+		/* Push in multirail */
+		sctk_multirail_destination_table_push_endpoint( tmp );
+	}
+	else
+	{
+		/* NO PARENT : Just add the route and register in multirail */
+		sctk_route_table_add_static_route ( rail->route_table, tmp, 1 );
+	}
 }
 
 
 
 void sctk_rail_add_dynamic_route ( sctk_rail_info_t *rail, int dest, sctk_endpoint_t *tmp )
 {
-	sctk_route_table_add_dynamic_route (  rail->route_table, tmp );
+	/* Is this rail a subrail ? */
+	if( rail->parent_rail )
+	{
+		/* Save SUBrail id inside the route */
+		assume( 0 <= rail->subrail_id );
+		tmp->subrail_id = rail->subrail_id;
+		/* "Steal" the endpoint from the subrail */
+		tmp->parent_rail = rail->parent_rail;
+		/* Add in local rail without pushing in multirail */
+		sctk_route_table_add_dynamic_route (  rail->route_table, tmp, 0 );
+		/* Push in multirail */
+		sctk_multirail_destination_table_push_endpoint( tmp );
+	}
+	else
+	{
+		/* NO PARENT : Just add the route and register in multirail */
+		sctk_route_table_add_dynamic_route (  rail->route_table, tmp, 1 );
+	}
+	
+}
+
+void sctk_rail_add_dynamic_route_no_lock (  sctk_rail_info_t * rail, sctk_endpoint_t *tmp )
+{
+	/* Is this rail a subrail ? */
+	if( rail->parent_rail )
+	{
+		/* Save SUBrail id inside the route */
+		assume( 0 <= rail->subrail_id );
+		tmp->subrail_id = rail->subrail_id;
+		/* "Steal" the endpoint from the subrail */
+		tmp->parent_rail = rail->parent_rail;
+		/* Add in local rail without pushing in multirail */
+		sctk_route_table_add_dynamic_route_no_lock (  rail->route_table, tmp, 0 );
+		/* Push in multirail */
+		sctk_multirail_destination_table_push_endpoint( tmp );
+	}
+	else
+	{
+		/* NO PARENT : Just add the route and register in multirail */
+		sctk_route_table_add_dynamic_route_no_lock (  rail->route_table, tmp, 1 );
+	}
+	
 }
 
 
@@ -503,7 +562,7 @@ sctk_endpoint_t * sctk_rail_add_or_reuse_route_dynamic ( sctk_rail_info_t *rail,
 		
 		tmp->is_initiator = is_initiator;
 		
-		sctk_route_table_add_dynamic_route_no_lock(  rail->route_table, tmp );
+		sctk_rail_add_dynamic_route_no_lock( rail, tmp );
 		*added = 1;
 	}
 	else
