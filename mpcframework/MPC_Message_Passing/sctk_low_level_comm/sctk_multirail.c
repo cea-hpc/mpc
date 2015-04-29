@@ -490,6 +490,81 @@ sctk_endpoint_t * sctk_multirail_ellect_endpoint( sctk_thread_ptp_message_t *msg
 
 sctk_spinlock_t on_demand_connection_lock = SCTK_SPINLOCK_INITIALIZER;
 
+/* Per VP pending on-demand connection list */
+static __thread sctk_pending_on_demand_t * __pending_on_demand = NULL;
+
+void sctk_pending_on_demand_push( sctk_rail_info_t * rail, int dest )
+{
+	/* Is the rail on demand ? */
+	if( !rail->connect_on_demand )
+	{
+		/* No then nothing to do */
+		return;
+	}
+	
+	sctk_pending_on_demand_t * new = sctk_malloc( sizeof(  struct sctk_pending_on_demand_s ) );
+	assume( new != NULL );
+	
+	new->next = (struct sctk_pending_on_demand_s *)__pending_on_demand;
+
+	new->dest = dest;
+	new->rail = rail;
+	
+	__pending_on_demand = new;
+}
+
+
+void sctk_pending_on_demand_release( sctk_pending_on_demand_t * pod )
+{
+	sctk_free( pod );
+}
+
+sctk_pending_on_demand_t * sctk_pending_on_demand_get()
+{
+	sctk_pending_on_demand_t * ret = __pending_on_demand;
+	
+	if( ret )
+	{
+		__pending_on_demand = ret->next;
+	}
+	
+	return ret;
+}
+
+
+void sctk_pending_on_demand_process()
+{
+	sctk_pending_on_demand_t * pod = sctk_pending_on_demand_get();
+	
+	while( pod )
+	{
+		/* Check if the endpoint exist in the rail */
+		sctk_endpoint_t * previous_endpoint = sctk_rail_get_any_route_to_process (  pod->rail, pod->dest );
+		
+		/* No endpoint ? then its worth locking */
+		if( !previous_endpoint )
+		{
+			sctk_spinlock_lock( & on_demand_connection_lock );
+			
+			/* Check again to avoid RC */
+			previous_endpoint = sctk_rail_get_any_route_to_process (  pod->rail, pod->dest );
+			
+			/* We can create it */
+			if( !previous_endpoint )
+			{
+				(pod->rail->connect_on_demand)( pod->rail,  pod->dest );
+			}
+			
+			sctk_spinlock_unlock( & on_demand_connection_lock );
+		}
+		
+		sctk_pending_on_demand_t * to_free = pod;
+		/* Get next */
+		pod = sctk_pending_on_demand_get();
+		/* Free previous */
+		sctk_pending_on_demand_release( to_free );
+	}
+}
 
 
 
@@ -684,6 +759,10 @@ void sctk_multirail_send_message( sctk_thread_ptp_message_t *msg )
 		sctk_multirail_destination_table_relax_routes( routes );
 
 	}while( retry );
+	
+	/* Before Leaving Make sure that there are no pending on-demand
+	 * connections (addeb by the topological rail while holding routes) */
+	sctk_pending_on_demand_process();
 }
 
 

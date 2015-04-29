@@ -74,9 +74,11 @@ static void sctk_network_send_message_endpoint_topological ( sctk_thread_ptp_mes
 				/* Intiate an on-demand connection to the remote on the topological rail (to keep connection balanced) */
 				if( topological_rail->on_demand )
 				{
-					sctk_error("CONNECT to %d", dest );
-					/* Here we need to push in a list */
-					//topological_rail->connect_on_demand( topological_rail, dest );
+					/* Note that here we push the pending connection in
+					 * a list as we cannot create connection while holding
+					 * the route table in read (in the middle of a send )
+					 * this will be done just before leaving the multirail-send function */
+					sctk_pending_on_demand_push( topological_rail, dest );
 				}
 			}
 		}
@@ -116,7 +118,6 @@ static int sctk_send_message_from_network_topological ( sctk_thread_ptp_message_
 
 void topological_on_demand_connection_handler( sctk_rail_info_t *rail, int dest_process )
 {
-	sctk_error("CONNECT TO %d", dest_process );
 	int vp_id = sctk_get_processor_rank();
 	
 	if( vp_id < 0 )
@@ -126,7 +127,11 @@ void topological_on_demand_connection_handler( sctk_rail_info_t *rail, int dest_
 	}
 	
 	sctk_rail_info_t *topological_subrail = rail->subrails[ vp_id ];
-	topological_subrail->connect_on_demand( topological_subrail, dest_process );
+	
+	if( topological_subrail->connect_on_demand )
+	{
+		topological_subrail->connect_on_demand( topological_subrail, dest_process );
+	}
 }
 
 void topological_control_message_handler( struct sctk_rail_info_s * rail, int source_process, int source_rank, char subtype, char param, void * data )
@@ -350,5 +355,5 @@ void sctk_network_init_topological ( sctk_rail_info_t *rail )
 	sctk_network_init_topological_rail_info( rail );
 	
 	/* Init Routes (intialize on-demand context) */
-	sctk_rail_init_route ( rail, rail->runtime_config_rail->topology, NULL );
+	sctk_rail_init_route ( rail, rail->runtime_config_rail->topology, topological_on_demand_connection_handler );
 }

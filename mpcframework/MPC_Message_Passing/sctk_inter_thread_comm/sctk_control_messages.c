@@ -182,8 +182,6 @@ void sctk_control_messages_incoming( sctk_thread_ptp_message_t * msg )
 		{
 			sctk_rail_info_t * rail = sctk_rail_get_by_id ( rail_id );
 			
-			sctk_error("MESSAGE TO RAIL %d", rail_id);
-			
 			if(!rail)
 			{
 				sctk_fatal("No such rail %d", rail_id );

@@ -95,5 +95,20 @@ void sctk_multirail_destination_table_push_endpoint(sctk_endpoint_t * endpoint )
 void sctk_multirail_destination_table_pop_endpoint(sctk_endpoint_t * topop );
 void sctk_multirail_destination_table_route_to_process( int destination, int * new_destination );
 
+/************************************************************************/
+/* Pending on-demand connections                                        */
+/************************************************************************/
+
+typedef struct sctk_pending_on_demand_s
+{
+	sctk_rail_info_t * rail;	
+	int dest;
+	struct sctk_pending_on_demand_s * next;
+}sctk_pending_on_demand_t;
+
+void sctk_pending_on_demand_push( sctk_rail_info_t * rail, int dest );
+void sctk_pending_on_demand_release( sctk_pending_on_demand_t * pod );
+sctk_pending_on_demand_t * sctk_pending_on_demand_get();
+void sctk_pending_on_demand_process();
 
 #endif /* SCTK_MULTIRAIL */

@@ -323,6 +323,11 @@ int sctk_unfold_rails( struct sctk_runtime_config_struct_net_cli_option *cli_opt
 						/* Update device name with matching device */
 						subrails[i].device = matching_device[i]->name;
 						
+						/* Make sure that the topological rail has the highest priority
+						 * this is important during the on-demand election process
+						 * as we want the topological rail to make this choice */
+						subrails[i].priority = rail->priority - 1;
+						
 						/* Make sure that subrails do not have a subrail */
 						subrails[i].subrails_size = 0;
 					}

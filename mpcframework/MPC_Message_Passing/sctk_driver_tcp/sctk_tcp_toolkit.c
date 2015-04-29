@@ -413,11 +413,9 @@ void tcp_control_message_handler( struct sctk_rail_info_s * rail, int source_pro
 	switch( action )
 	{
 		case SCTK_TCP_CONTROL_MESSAGE_ON_DEMAND_STATIC :
-			sctk_error("ON DEM STAT");
 			sctk_network_connection_to_ctx( rail, (struct sctk_tcp_connection_context *) data, ROUTE_ORIGIN_STATIC );
 		break;
 		case SCTK_TCP_CONTROL_MESSAGE_ON_DEMAND_DYNAMIC :
-			sctk_error("ON DEM DYN");
 			sctk_network_connection_to_ctx( rail, (struct sctk_tcp_connection_context *) data, ROUTE_ORIGIN_DYNAMIC );
 		break;
 	}
