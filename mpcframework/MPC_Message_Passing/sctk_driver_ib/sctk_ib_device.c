@@ -24,6 +24,7 @@
 /* ######################################################################## */
 #include "sctk_ib_device.h"
 #include "sctk_ib_toolkit.h"
+#include "sctk_device_topology.h"
 
 #include <string.h>
 

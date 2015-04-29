@@ -37,8 +37,13 @@ static void sctk_network_send_message_endpoint_topological ( sctk_thread_ptp_mes
 	assume( endpoint->parent_rail != NULL );
 	
 	sctk_topological_rail_info_t  * topo_infos = &endpoint->parent_rail->network.topological;
+	int target_subrail = topo_infos->vp_to_subrail[ vp_id ];
 	
-	sctk_rail_info_t * topological_rail = endpoint->parent_rail->subrails[ vp_id ];
+	/* If everything goes bad */
+	if( target_subrail < 0 )
+		target_subrail = 0;
+	
+	sctk_rail_info_t * topological_rail = endpoint->parent_rail->subrails[ target_subrail ];
 	assume( 0 <= endpoint->subrail_id );
 	sctk_rail_info_t * endpoint_rail = endpoint->rail;
 	
@@ -125,8 +130,14 @@ void topological_on_demand_connection_handler( sctk_rail_info_t *rail, int dest_
 		/* If not on VP assume 0 */
 		vp_id = 0;
 	}
+	sctk_topological_rail_info_t  * topo_infos = &rail->network.topological;
+	int target_subrail = topo_infos->vp_to_subrail[ vp_id ];
 	
-	sctk_rail_info_t *topological_subrail = rail->subrails[ vp_id ];
+	/* If everything goes bad */
+	if( target_subrail < 0 )
+		target_subrail = 0;
+
+	sctk_rail_info_t *topological_subrail = rail->subrails[ target_subrail ];
 	
 	if( topological_subrail->connect_on_demand )
 	{

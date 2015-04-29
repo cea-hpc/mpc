@@ -427,7 +427,7 @@ void sctk_device_fill_in_infiniband_info( sctk_device_t * device, hwloc_topology
 	{
 		/* Retrieve the HWLOC osdev */
 		hwloc_obj_t ofa_osdev = hwloc_ibv_get_device_osdev ( topology, dev_list[id] );
-		
+
 		/* If one */
 		if( ofa_osdev )
 		{
@@ -435,7 +435,7 @@ void sctk_device_fill_in_infiniband_info( sctk_device_t * device, hwloc_topology
 			if( !strcmp( device->name , ofa_osdev->name ) )
 			{
 				sctk_nodebug("OFA device %s has ID %d", ofa_osdev->name, id );
-				device->id = id;
+				device->device_id = id;
 			}
 		}
 	}
@@ -582,7 +582,7 @@ int sctk_device_get_id_from_handle( char * handle )
 	{
 		return -1;
 	}
-	
+
 	return dev->device_id;
 }
 

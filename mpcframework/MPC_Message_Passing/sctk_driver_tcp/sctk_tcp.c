@@ -110,8 +110,6 @@ static void sctk_network_send_message_endpoint_tcp ( sctk_thread_ptp_message_t *
 
 	size = SCTK_MSG_SIZE ( msg ) + sizeof ( sctk_thread_ptp_message_body_t );
 
-	assume( fd != NULL );
-
 	sctk_safe_write ( fd, ( char * ) &size, sizeof ( size_t ) );
 
 	sctk_safe_write ( fd, ( char * ) msg, sizeof ( sctk_thread_ptp_message_body_t ) );

@@ -51,7 +51,7 @@
 				<rails>
 					<rail>
 						<name>ib_mpi</name>
-						<device>!mlx_*</device>
+						<device>!mlx4_*</device>
 						<!-- Restrict Idle Polling only to the device NUMA -->
 						<idle_polling>
 							<range>RAIL_POLL_NUMA</range>
