@@ -31,7 +31,6 @@
 			<modules>
 			</modules>
 			<networks>
-				<!-- net config contain complexe structures so default value cannot be setup into config-meta.xml -->
 				<configs>
 					<config>
 						<name>ib_config_mpi</name>
@@ -66,14 +65,12 @@
 						<name>tcp_mpi</name>
 						<priority>1</priority>
 						<ondemand>1</ondemand>
-						<device>0</device>
 						<topology>ring</topology>
 						<config>tcp_config_mpi</config>
 					</rail>
 					<rail>
 						<name>tcp_large</name>
 						<priority>10</priority>
-						<device>0</device>
 						<ondemand>1</ondemand>
 						<topology>fully</topology>
 						<config>tcp_config_mpi</config>
