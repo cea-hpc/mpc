@@ -434,7 +434,7 @@ void sctk_device_fill_in_infiniband_info( sctk_device_t * device, hwloc_topology
 			/* Compare the OS name with the one we have from the previously loaded device */
 			if( !strcmp( device->name , ofa_osdev->name ) )
 			{
-				sctk_warning("OFA device %s had ID %d", ofa_osdev->name, id );
+				sctk_nodebug("OFA device %s has ID %d", ofa_osdev->name, id );
 				device->id = id;
 			}
 		}
@@ -505,7 +505,7 @@ void sctk_device_load_from_topology( hwloc_topology_t topology )
 			{
 				sctk_device_init( topology, &sctk_devices[ off ] , pci_dev, i );
 				/* Set the ID of the device */
-				sctk_devices[ off ].device_id = off;
+				sctk_devices[ off ].id = off;
 				off++;
 			}
 		}

@@ -411,6 +411,8 @@ int sctk_topology_convert_os_pu_to_logical( int pu_os_id )
 	
 	hwloc_obj_t pu = hwloc_get_obj_inside_cpuset_by_type(topology, this_pu_cpuset, HWLOC_OBJ_PU, 0);
 	
+	hwloc_bitmap_free( this_pu_cpuset );
+	
 	if( !pu )
 	{
 		return 0;

@@ -617,6 +617,10 @@ void sctk_network_initialize_task_collaborative_ib ( int rank, int vp )
 		if( ! rail->runtime_config_driver_config )
 			continue;
 		
+		/* Skip topological rails */
+		if( 0 < rail->subrail_count )
+			continue;
+		
 		if( rail->runtime_config_driver_config->driver.type != SCTK_RTCFG_net_driver_infiniband )
 			continue;
 		
