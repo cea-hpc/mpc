@@ -36,6 +36,7 @@ typedef struct sctk_ib_mmu_entry_s
 	/* Content */
 	void * addr; /** Adress of the pinned block */
 	size_t size; /** Size of the pinned block */
+	sctk_ib_rail_info_t *rail; /** Rail for which the block is pinned */
 	struct ibv_mr *mr; /** Pointer to the IBV memory region */
 
 	sctk_spin_rwlock_t entry_refcounter; /** Refcounter */

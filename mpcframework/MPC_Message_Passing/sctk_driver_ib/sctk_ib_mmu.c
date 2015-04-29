@@ -37,9 +37,10 @@ sctk_ib_mmu_entry_t * sctk_ib_mmu_entry_new( sctk_ib_rail_info_t *rail_ib, void 
 
 	assume( new != NULL );
 	
-	/* Save address and size */
+	/* Save address size and rail */
 	new->addr = addr;
 	new->size = size;
+	new->rail = rail_ib;
 	
 	/* Pin memory and save memory handle */
 	if( rail_ib )
@@ -217,7 +218,7 @@ static inline int __sctk_ib_mmu_get_entry_containing( sctk_ib_mmu_entry_t * entr
 }
 
 
-sctk_ib_mmu_entry_t * sctk_ib_mmu_get_entry_containing_no_lock( struct sctk_ib_mmu * mmu, void * addr, size_t size )
+sctk_ib_mmu_entry_t * sctk_ib_mmu_get_entry_containing_no_lock( struct sctk_ib_mmu * mmu, void * addr, size_t size, sctk_ib_rail_info_t *rail_ib )
 {
 	int i;
 
@@ -227,8 +228,26 @@ sctk_ib_mmu_entry_t * sctk_ib_mmu_get_entry_containing_no_lock( struct sctk_ib_m
 
 		if( __sctk_ib_mmu_get_entry_containing( mmu->cache[i], addr, size ) )
 		{
-			/* note that here the cell is held in read and not relaxed */
-			return mmu->cache[i];
+			/* Do we have a rail constraint ?
+			 * useful when pinning in multirail */
+			if( rail_ib )
+			{
+				/* In this case we also check rail equality
+				 * to make sure that we are pinned on the right
+				 * device, requiring otherwise the addition */
+				if( mmu->cache[i]->rail == rail_ib )
+				{
+					/* note that here the cell is held in read and not relaxed */
+					return mmu->cache[i];
+				}
+			}
+			else
+			{
+				/* No rail then just return the entry */
+				
+				/* note that here the cell is held in read and not relaxed */
+				return mmu->cache[i];
+			}
 		}
 
 		sctk_ib_mmu_entry_relax( mmu->cache[i] );
@@ -238,7 +257,7 @@ sctk_ib_mmu_entry_t * sctk_ib_mmu_get_entry_containing_no_lock( struct sctk_ib_m
 }
 
 
-sctk_ib_mmu_entry_t * _sctk_ib_mmu_get_entry_containing( struct sctk_ib_mmu * mmu, void * addr, size_t size )
+sctk_ib_mmu_entry_t * _sctk_ib_mmu_get_entry_containing( struct sctk_ib_mmu * mmu, void * addr, size_t size, sctk_ib_rail_info_t * rail_ib )
 {
 	/* No cache means no HIT */
 	if( !mmu->cache_enabled )
@@ -248,7 +267,7 @@ sctk_ib_mmu_entry_t * _sctk_ib_mmu_get_entry_containing( struct sctk_ib_mmu * mm
 		/* Lock the MMU */
 	sctk_spinlock_read_lock( &mmu->cache_lock );
 	
-	ret = sctk_ib_mmu_get_entry_containing_no_lock( mmu, addr, size );
+	ret = sctk_ib_mmu_get_entry_containing_no_lock( mmu, addr, size, rail_ib );
 	
 	sctk_spinlock_read_unlock( &mmu->cache_lock );
 	
@@ -358,7 +377,7 @@ sctk_ib_mmu_entry_t * _sctk_ib_mmu_pin(  struct sctk_ib_mmu * mmu,  sctk_ib_rail
 	
 	/* Look first in local then go up the cache */
 
-	entry = _sctk_ib_mmu_get_entry_containing( mmu, addr, size );
+	entry = _sctk_ib_mmu_get_entry_containing( mmu, addr, size, rail_ib );
 	
 	if( entry )
 	{
@@ -545,7 +564,7 @@ static int store_onethousand_then_retrieve_centers_on_root( struct sctk_ib_mmu *
 	
 	for( i = 0 ; i < ENTRY_COUNT ; i++ )
 	{
-		sctk_ib_mmu_entry_t * ent = _sctk_ib_mmu_get_entry_containing( root, pointers[i] , 8 );
+		sctk_ib_mmu_entry_t * ent = _sctk_ib_mmu_get_entry_containing( root, pointers[i] , 8 , NULL);
 		
 		//sctk_error("Get %p  -- %p", pointers[i], ent);
 		
@@ -583,7 +602,7 @@ static int pin_unpin_on_root( struct sctk_ib_mmu * root)
 	_sctk_ib_mmu_unpin( root, pointer + 8, 8 );
 
 
-	sctk_ib_mmu_entry_t * ent = _sctk_ib_mmu_get_entry_containing( root, pointer , 8 );
+	sctk_ib_mmu_entry_t * ent = _sctk_ib_mmu_get_entry_containing( root, pointer , 8 , NULL );
 
 	if( ent != NULL )
 		return 1;
