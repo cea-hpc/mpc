@@ -62,8 +62,8 @@ static void sctk_network_send_message_endpoint_topological ( sctk_thread_ptp_mes
 		int dest = SCTK_MSG_DEST_PROCESS( msg );
 		sctk_endpoint_t * topological_endpoint = sctk_rail_get_any_route_to_process ( topological_rail, dest );
 		
-		/* Did we find one ? */
-		if( topological_endpoint )
+		/* Did we find one ? Is it connected yet ? */
+		if( sctk_endpoint_get_state( topological_endpoint ) == STATE_CONNECTED )
 		{
 			/* Send through it */
 			topological_rail->send_message_endpoint( msg, topological_endpoint );
