@@ -45,7 +45,7 @@ void sctk_control_message_context_set_user( void (*fn)( int , int , char , char 
 /************************************************************************/
 
 void sctk_control_messages_send ( int dest, sctk_message_class_t message_class, int subtype, int param, void *buffer, size_t size );
-void sctk_control_messages_send_rail( int dest, sctk_message_class_t message_class, int subtype, int param, void *buffer, size_t size, int  rail_id );
+void sctk_control_messages_send_rail( int dest, int subtype, int param, void *buffer, size_t size, int  rail_id );
 void sctk_control_messages_incoming( sctk_thread_ptp_message_t * msg );
 
 #endif /* SCTK_CONTROL_MESSAGE_H */

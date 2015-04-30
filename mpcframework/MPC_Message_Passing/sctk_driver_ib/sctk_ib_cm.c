@@ -427,7 +427,7 @@ static inline void sctk_ib_cm_on_demand_recv_ack ( sctk_rail_info_t *rail, void 
 	sctk_ib_qp_allocate_rts ( rail_ib_targ, remote );
 
 	/* SEND MESSAGE */
-	sctk_control_messages_send_rail ( src, SCTK_CONTROL_MESSAGE_RAIL, CM_OD_DONE_TAG, 0, &done, sizeof ( sctk_ib_cm_done_t ) , rail->rail_number);
+	sctk_control_messages_send_rail ( src, CM_OD_DONE_TAG, 0, &done, sizeof ( sctk_ib_cm_done_t ) , rail->rail_number);
 
 	/* Change to connected */
 	sctk_ib_cm_change_state ( rail, route_table, STATE_CONNECTED );
@@ -475,7 +475,7 @@ int sctk_ib_cm_on_demand_recv_request ( sctk_rail_info_t *rail, void *request, i
 		/* Send ACK */
 		sctk_ib_debug ( "OD QP ack to process %d: (tag:%d)", src, CM_OD_ACK_TAG );
 
-		sctk_control_messages_send_rail ( src, SCTK_CONTROL_MESSAGE_RAIL, CM_OD_ACK_TAG, 0,&send_keys, sizeof ( sctk_ib_cm_qp_connection_t ), rail->rail_number );
+		sctk_control_messages_send_rail ( src, CM_OD_ACK_TAG, 0,&send_keys, sizeof ( sctk_ib_cm_qp_connection_t ), rail->rail_number );
 	}
 
 	return 0;
@@ -520,7 +520,7 @@ sctk_endpoint_t *sctk_ib_cm_on_demand_request ( int dest, sctk_rail_info_t *rail
 		send_keys.rail_id = rail->rail_number;
 
 		sctk_ib_debug ( "[%d] OD QP connexion requested to %d", rail->rail_number, remote->rank );
-		sctk_control_messages_send_rail ( dest, SCTK_CONTROL_MESSAGE_RAIL, CM_OD_REQ_TAG, 0, &send_keys, sizeof ( sctk_ib_cm_qp_connection_t ), rail->rail_number );
+		sctk_control_messages_send_rail ( dest, CM_OD_REQ_TAG, 0, &send_keys, sizeof ( sctk_ib_cm_qp_connection_t ), rail->rail_number );
 	}
 
 	return route_table;
@@ -588,7 +588,7 @@ int sctk_ib_cm_on_demand_rdma_request ( sctk_rail_info_t *rail, struct sctk_ib_q
 		                rail->rail_number, remote->rank, send_keys.size, send_keys.nb, device->eager_rdma_connections, remote->rdma.cancel_nb );
 
 		send_keys.rail_id = rail->rail_number;
-		sctk_control_messages_send_rail ( remote->rank, SCTK_CONTROL_MESSAGE_RAIL, CM_OD_RDMA_REQ_TAG, 0, &send_keys, sizeof ( sctk_ib_cm_rdma_connection_t ), rail->rail_number );
+		sctk_control_messages_send_rail ( remote->rank, CM_OD_RDMA_REQ_TAG, 0, &send_keys, sizeof ( sctk_ib_cm_rdma_connection_t ), rail->rail_number );
 	}
 	else
 	{
@@ -655,7 +655,7 @@ static inline void sctk_ib_cm_on_demand_rdma_recv_ack ( sctk_rail_info_t *rail, 
 
 		/* Send the message */
 		send_keys.connected = 1;
-		sctk_control_messages_send_rail ( src, SCTK_CONTROL_MESSAGE_RAIL, CM_OD_RDMA_DONE_TAG, 0,  &send_keys, sizeof ( sctk_ib_cm_rdma_connection_t ), rail->rail_number );
+		sctk_control_messages_send_rail ( src, CM_OD_RDMA_DONE_TAG, 0,  &send_keys, sizeof ( sctk_ib_cm_rdma_connection_t ), rail->rail_number );
 
 		sctk_ib_cm_change_state_to_rts ( rail, route_table, CONNECTION );
 
@@ -743,7 +743,7 @@ static inline void sctk_ib_cm_on_demand_rdma_recv_request ( sctk_rail_info_t *ra
 	sctk_ib_debug ( "[%d] OD QP ack to process %d (%p:%u)", rail->rail_number, src,
 	                  send_keys.addr, send_keys.rkey );
 
-	sctk_control_messages_send_rail ( src, SCTK_CONTROL_MESSAGE_RAIL, CM_OD_RDMA_ACK_TAG, 0, &send_keys, sizeof ( sctk_ib_cm_rdma_connection_t ) , rail->rail_number);
+	sctk_control_messages_send_rail ( src, CM_OD_RDMA_ACK_TAG, 0, &send_keys, sizeof ( sctk_ib_cm_rdma_connection_t ) , rail->rail_number);
 }
 
 
@@ -779,7 +779,7 @@ int sctk_ib_cm_resizing_rdma_request ( sctk_rail_info_t *rail, struct sctk_ib_qp
 	                  rail->rail_number, remote->rank, send_keys.size, send_keys.nb,
 	                  remote->rdma.resizing_nb );
 
-	sctk_control_messages_send_rail ( remote->rank, SCTK_CONTROL_MESSAGE_RAIL, CM_RESIZING_RDMA_REQ_TAG, 0, &send_keys, sizeof ( sctk_ib_cm_rdma_connection_t ), rail->rail_number );
+	sctk_control_messages_send_rail ( remote->rank, CM_RESIZING_RDMA_REQ_TAG, 0, &send_keys, sizeof ( sctk_ib_cm_rdma_connection_t ), rail->rail_number );
 
 	return 1;
 }
@@ -797,7 +797,7 @@ void sctk_ib_cm_resizing_rdma_ack ( sctk_rail_info_t *rail,  struct sctk_ib_qp_s
 	                  rail->rail_number, remote->rank, send_keys->addr, send_keys->rkey );
 
 	send_keys->rail_id = rail->rail_number;
-	sctk_control_messages_send_rail ( remote->rank, SCTK_CONTROL_MESSAGE_RAIL, CM_RESIZING_RDMA_ACK_TAG, 0, send_keys, sizeof ( sctk_ib_cm_rdma_connection_t ) , rail->rail_number );
+	sctk_control_messages_send_rail ( remote->rank, CM_RESIZING_RDMA_ACK_TAG, 0, send_keys, sizeof ( sctk_ib_cm_rdma_connection_t ) , rail->rail_number );
 }
 
 static inline void sctk_ib_cm_resizing_rdma_done_recv ( sctk_rail_info_t *rail, void *done, int src )
@@ -855,7 +855,7 @@ static inline void sctk_ib_cm_resizing_rdma_ack_recv ( sctk_rail_info_t *rail, v
 	send_keys->rail_id = rail_ib_targ->rail->rail_number;
 	sctk_ibuf_rdma_fill_remote_addr ( rail_ib_targ, remote, send_keys, REGION_SEND );
 
-	sctk_control_messages_send_rail ( src, SCTK_CONTROL_MESSAGE_RAIL, CM_RESIZING_RDMA_DONE_TAG, 0, send_keys, sizeof ( sctk_ib_cm_rdma_connection_t ), rail->rail_number );
+	sctk_control_messages_send_rail ( src, CM_RESIZING_RDMA_DONE_TAG, 0, send_keys, sizeof ( sctk_ib_cm_rdma_connection_t ), rail->rail_number );
 	
 	sctk_ib_cm_change_state_to_rts ( rail, route_table, RESIZING );
 }

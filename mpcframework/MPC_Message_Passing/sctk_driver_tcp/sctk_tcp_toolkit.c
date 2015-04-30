@@ -378,11 +378,11 @@ static void __sctk_network_connection_from_tcp( int from, int to, sctk_rail_info
 	
 	if( route_type == ROUTE_ORIGIN_STATIC )
 	{
-		sctk_control_messages_send_rail ( to, SCTK_CONTROL_MESSAGE_RAIL, SCTK_TCP_CONTROL_MESSAGE_ON_DEMAND_STATIC, 0, &ctx, sizeof( struct sctk_tcp_connection_context ) , rail->rail_number);
+		sctk_control_messages_send_rail ( to, SCTK_TCP_CONTROL_MESSAGE_ON_DEMAND_STATIC, 0, &ctx, sizeof( struct sctk_tcp_connection_context ) , rail->rail_number);
 	}
 	else
 	{
-		sctk_control_messages_send_rail ( to, SCTK_CONTROL_MESSAGE_RAIL, SCTK_TCP_CONTROL_MESSAGE_ON_DEMAND_DYNAMIC, 0, &ctx, sizeof( struct sctk_tcp_connection_context )  , rail->rail_number);
+		sctk_control_messages_send_rail ( to, SCTK_TCP_CONTROL_MESSAGE_ON_DEMAND_DYNAMIC, 0, &ctx, sizeof( struct sctk_tcp_connection_context )  , rail->rail_number);
 	}
 
 	src_socket = accept ( rail->network.tcp.sockfd, NULL, 0 );

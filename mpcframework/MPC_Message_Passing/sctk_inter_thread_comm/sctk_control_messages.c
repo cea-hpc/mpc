@@ -96,14 +96,8 @@ void printpayload( void * pl , size_t size )
 	
 }
 
-void sctk_control_messages_send( int dest, sctk_message_class_t message_class, int subtype, int param, void *buffer, size_t size ) 
+void __sctk_control_messages_send( int dest, sctk_message_class_t message_class, int subtype, int param, void *buffer, size_t size, int  rail_id ) 
 {
-	sctk_control_messages_send_rail( dest, message_class, subtype, param, buffer, size, -1 ); 
-}
-
-void sctk_control_messages_send_rail( int dest, sctk_message_class_t message_class, int subtype, int param, void *buffer, size_t size, int  rail_id ) 
-{
-
 	sctk_communicator_t communicator = SCTK_COMM_WORLD;
 	sctk_communicator_t tag = 0;
 	
@@ -131,6 +125,16 @@ void sctk_control_messages_send_rail( int dest, sctk_message_class_t message_cla
 	sctk_send_message ( &msg );
 	
 	sctk_wait_message ( &request );
+}
+
+void sctk_control_messages_send( int dest, sctk_message_class_t message_class, int subtype, int param, void *buffer, size_t size ) 
+{
+	__sctk_control_messages_send( dest, message_class, subtype, param, buffer, size, -1 ); 
+}
+
+void sctk_control_messages_send_rail( int dest, int subtype, int param, void *buffer, size_t size, int  rail_id ) 
+{
+	__sctk_control_messages_send( dest, SCTK_CONTROL_MESSAGE_RAIL, subtype, param, buffer, size, rail_id ); 
 }
 
 void sctk_control_messages_incoming( sctk_thread_ptp_message_t * msg )
