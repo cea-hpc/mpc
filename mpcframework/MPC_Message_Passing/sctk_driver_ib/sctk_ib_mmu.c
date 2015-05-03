@@ -465,9 +465,6 @@ int _sctk_ib_mmu_unpin(  struct sctk_ib_mmu * mmu, void * addr, size_t size)
 static struct sctk_ib_mmu __main_ib_mmu;
 volatile int __main_ib_mmu_init_done = 0;
 
-__thread struct sctk_ib_mmu * __per_kernel_thread_ib_mmu = NULL;
-
-
 void sctk_ib_mmu_init()
 {
 	/* Only init once */
