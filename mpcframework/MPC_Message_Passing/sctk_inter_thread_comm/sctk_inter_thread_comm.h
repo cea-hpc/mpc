@@ -232,9 +232,6 @@ void sctk_probe_any_source_tag ( int destination, const sctk_communicator_t comm
 
 #define SCTK_MSG_HEADER( msg ) &msg->body.header
 
-#define SCTK_MSG_RAIL_ID( msg ) msg->body.header.message_type.rail_id
-#define SCTK_MSG_SET_RAIL_ID( msg , id ) do{ msg->body.header.message_type.rail_id = id; }while(0)
-
 #define SCTK_MSG_SIZE( msg ) msg->body.header.msg_size
 #define SCTK_MSG_SIZE_SET( msg , size ) do{ msg->body.header.msg_size = size; }while(0)
 

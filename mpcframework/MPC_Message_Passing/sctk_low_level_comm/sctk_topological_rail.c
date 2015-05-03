@@ -66,7 +66,6 @@ static void sctk_network_send_message_endpoint_topological ( sctk_thread_ptp_mes
 		if( topological_endpoint )
 		{
 			/* Send through it */
-			SCTK_MSG_SET_RAIL_ID( msg, topological_rail->rail_number );
 			topological_rail->send_message_endpoint( msg, topological_endpoint );
 		}
 		else

@@ -741,8 +741,7 @@ void sctk_multirail_send_message( sctk_thread_ptp_message_t *msg )
 			
 			/* Prepare reordering */
 			sctk_prepare_send_message_to_network_reorder ( msg );
-			/* Set rail number in message */
-			SCTK_MSG_SET_RAIL_ID( msg, endpoint->rail->rail_number );
+
 			/* Send the message */
 			(target_rail->send_message_endpoint)( msg, endpoint );
 		}
