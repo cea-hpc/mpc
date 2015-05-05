@@ -153,8 +153,26 @@ void sctk_control_messages_incoming( sctk_thread_ptp_message_t * msg )
 	short param = SCTK_MSG_SPECIFIC_CLASS_PARAM( msg );
 	
 	
+	int did_allocate = 0;
+	void * tmp_contol_buffer = NULL;
+	char __the_static_buffer_used_instead_of_doing_static_allocation[4096];
 	
-	void * tmp_contol_buffer = sctk_calloc( SCTK_MSG_SIZE ( msg ), sizeof( char ) );
+	/* Do we need to rely on a dynamic allocation */
+	if( 4096 <= SCTK_MSG_SIZE ( msg ) )
+	{
+		/* Yes we will have to free */
+		did_allocate = 1;
+		/* Allocate */
+		tmp_contol_buffer = sctk_calloc( SCTK_MSG_SIZE ( msg ), sizeof( char ) );
+	}
+	else
+	{
+		/* No need to free */
+		did_allocate = 0;
+		/* Refference the static buffer */
+		tmp_contol_buffer = __the_static_buffer_used_instead_of_doing_static_allocation;
+	}
+	
 	assume( tmp_contol_buffer != NULL );
 	
 	/* Generate the paired recv message to fill the buffer in
@@ -224,8 +242,13 @@ void sctk_control_messages_incoming( sctk_thread_ptp_message_t * msg )
 			not_reachable();
 	}
 	
-	/* Free the TMP buffer */
-	sctk_free( tmp_contol_buffer );
+	/* Free only if the message was too large
+	 * for the static buffer */
+	if( did_allocate )
+	{
+		/* Free the TMP buffer */
+		sctk_free( tmp_contol_buffer );
+	}
 }
 
 
