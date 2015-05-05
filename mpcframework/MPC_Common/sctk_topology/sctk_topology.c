@@ -575,34 +575,42 @@ hwloc_cpuset_t sctk_topology_get_roots_for_level( hwloc_obj_type_t type )
 
 
 
-int __sctk_topology_distance_fill_prefix( hwloc_obj_t ** prefix, hwloc_obj_t target_obj, hwloc_obj_t current_obj, int current_depth )
+int __sctk_topology_distance_fill_prefix( hwloc_obj_t ** prefix, hwloc_obj_t target_obj )
 {
 	/* Register in the tree */
-	prefix[ current_depth ] = current_obj;
+	if( !target_obj )
+		return 0;
 	
-	/* Am I the target ? */
-	if( target_obj == current_obj )
-		return current_depth;
+	int depth = 0;
 	
-	/* No then lets try my children */
-	int i;
-	for( i = 0 ; i < current_obj->arity ; i++ )
+	/* Compute depth as it is not set for
+	 * PCI devices ... */
+	hwloc_obj_t cur = target_obj;
+	
+	while( cur->parent )
 	{
-		int ret = __sctk_topology_distance_fill_prefix( prefix, target_obj, current_obj->children[i], current_depth + 1 );
-		
-		if( ret )
-		{
-			/* DFS lookup found it */
-			return ret;
-		}
-		
+		depth++;
+		cur = cur->parent;
+	}
+
+	/* Set depth +1 as NULL */
+	prefix[depth + 1 ] = NULL;
+	
+	/* Prepare to walk up the tree */
+	cur = target_obj;
+	int cur_depth = depth;
+	
+	sctk_nodebug("================\n");
+	
+	while( cur  )
+	{
+		sctk_nodebug("%d == %p == %s\n", cur_depth, cur, hwloc_obj_type_string (cur->type) );
+		prefix[cur_depth] = cur;
+		cur_depth --;
+		cur = cur->parent;
 	}
 	
-	/* Unregister current depth as lookup failed on this path */
-	prefix[ current_depth ] = NULL;
-	
-	
-	return 0;
+	return depth;
 }
 
 
@@ -633,8 +641,8 @@ int sctk_topology_distance_from_pu( int source_pu, hwloc_obj_t target_obj )
 	}
 	
 	/* Compute the prefix of the two objects in the tree */
-	int pu_depth = __sctk_topology_distance_fill_prefix( prefix_PU, source_pu_obj, hwloc_get_root_obj (topology), 0 );
-	int obj_depth = __sctk_topology_distance_fill_prefix( prefix_target, target_obj, hwloc_get_root_obj (topology), 0 );
+	int pu_depth = __sctk_topology_distance_fill_prefix( prefix_PU, source_pu_obj );
+	int obj_depth = __sctk_topology_distance_fill_prefix( prefix_target, target_obj );
 	
 	
 	/* Extract the common prefix */
@@ -653,7 +661,7 @@ int sctk_topology_distance_from_pu( int source_pu, hwloc_obj_t target_obj )
 	
 	/* From this we know that the distance is the sum of the two prefixes
 	 * without the common part plus one */
-	int distance = ( pu_depth + obj_depth - (common_prefix * 2) ) + 1;
+	int distance = ( pu_depth + obj_depth - (common_prefix * 2) );
 
 	sctk_nodebug("Common prefix %d PU %d OBJ %d == %d", common_prefix, pu_depth, obj_depth , distance);
 	
