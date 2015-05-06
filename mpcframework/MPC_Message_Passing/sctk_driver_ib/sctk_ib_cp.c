@@ -166,7 +166,7 @@ void sctk_ib_cp_init ( struct sctk_ib_rail_info_s *rail_ib )
 void sctk_ib_cp_init_task ( int rank, int vp )
 {
 	sctk_ib_cp_task_t *task = NULL;
-	int node =  sctk_get_node_from_cpu ( vp );
+	int node =  sctk_get_node_from_cpu( vp );
 	task_node_number = node;
 	/* Process specific list of messages */
 	static sctk_ibuf_t *volatile __global_ibufs_list = NULL;

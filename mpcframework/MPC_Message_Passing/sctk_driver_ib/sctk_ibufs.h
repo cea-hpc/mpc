@@ -138,6 +138,7 @@ typedef struct sctk_ibuf_numa_s
 	OPA_int_t free_nb;							  /**< Number of buffers free */
 	OPA_int_t free_srq_nb;						  /**< Number of SRQ buffers free */
 	int free_srq_cache_nb;						  /**< Number of SRQ buffers free in cache */
+	
 	struct sctk_ib_topology_numa_node_s *numa_node; /**< Pointer to the topological NUMA node structure */
 
 

@@ -30,10 +30,6 @@
 #include "sctk.h"
 #include "sctk_ibufs.h"
 
-#define LOAD_TOPO(rail_ib) \
-  struct sctk_ib_topology_s * topo = rail_ib->topology;
-
-extern __thread struct sctk_ib_topology_numa_node_s **numa_node_task;
 
 typedef struct sctk_ib_topology_numa_node_s
 {
@@ -59,24 +55,13 @@ typedef struct sctk_ib_topology_s
 	 * May be used if a task is trying to access NUMA structures and none are allocated */
 	struct sctk_ib_topology_numa_node_s *default_node;
 
-	int nodes_nb;
+	int numa_node_count;
 } sctk_ib_topology_t;
 
-void sctk_ib_topology_init ( struct sctk_ib_rail_info_s *rail_ib );
-void sctk_ib_topology_init_task ( struct sctk_rail_info_s *rail, int vp );
+void sctk_ib_topology_init ( sctk_ib_topology_t * topology );
+void sctk_ib_topology_init_rail ( struct sctk_ib_rail_info_s *rail_ib );
 
-TODO ( "The maximum number of NUMA nodes should be dynamically determined!" )
-#define MAX_NUMA_NODE_NB 32
-__UNUSED__ static void sctk_ib_topology_check_and_allocate_tls ( sctk_ib_rail_info_t *rail_ib )
-{
-	/* Create the TLS variable if not already created */
-	if ( numa_node_task == NULL )
-	{
-//    int rails_nb = sctk_network_ib_get_rails_nb() ;
-		numa_node_task = sctk_malloc ( MAX_NUMA_NODE_NB * sizeof ( struct sctk_ib_topology_numa_node_s ) );
-		memset ( numa_node_task, 0, MAX_NUMA_NODE_NB * sizeof ( struct sctk_ib_topology_numa_node_s ) );
-	}
-}
+void sctk_ib_topology_init_task ( struct sctk_rail_info_s *rail, int vp );
 
 /* Return the IB topology structure the closest from the current task
  *

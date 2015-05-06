@@ -824,7 +824,7 @@ void sctk_network_init_mpi_ib ( sctk_rail_info_t *rail )
 		sctk_ib_config_print ( rail_ib );
 	}
 
-	sctk_ib_topology_init ( rail_ib );
+	sctk_ib_topology_init_rail ( rail_ib );
 	sctk_ib_topology_init_task ( rail, sctk_thread_get_vp() );
 	
 	/* Initialize network */

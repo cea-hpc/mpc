@@ -49,7 +49,7 @@ static sctk_ibuf_numa_t *sctk_ibuf_get_closest_node ( struct sctk_ib_rail_info_s
 
 
 
-/* Init a poll of buffers on the numa node pointed by 'node'
+/* Init a pool of buffers on the numa node pointed by 'node'
  * FIXME: use malloc_on_node instead of memalign
  * Carreful: this function is *NOT* thread-safe */
 void sctk_ibuf_init_numa_node ( struct sctk_ib_rail_info_s *rail_ib,
