@@ -459,7 +459,9 @@ void sctk_device_enrich_topology( hwloc_topology_t topology )
 		#ifdef MPC_USE_INFINIBAND
 			sctk_device_fill_in_infiniband_info( device, topology );
 		#endif
-		}	
+		}
+		
+		
 	}
 
 }
@@ -473,12 +475,20 @@ void sctk_device_load_from_topology( hwloc_topology_t topology )
 	
 	while( pci_dev )
 	{
-		/* Note that some PCI dev can create multiple OSDev */
-		for( i = 0 ; i < pci_dev->arity ; i++ )
+		if( ! pci_dev->arity )
 		{
-			if( pci_dev->children[i]->type == HWLOC_OBJ_OS_DEVICE )
+			sctk_devices_count ++;
+		}
+		else
+		{
+			/* Note that some PCI dev can create multiple OSDev */
+			for( i = 0 ; i < pci_dev->arity ; i++ )
 			{
-				sctk_devices_count ++;
+				if( pci_dev->children[i]->type == HWLOC_OBJ_OS_DEVICE )
+				{
+					sctk_devices_count ++;
+				}
+				
 			}
 		}
 		
@@ -497,16 +507,24 @@ void sctk_device_load_from_topology( hwloc_topology_t topology )
 	
 	while( pci_dev )
 	{
-
-		for( i = 0 ; i < pci_dev->arity ; i++ )
+		
+		if( ! pci_dev->arity )
 		{
-			/* Unfold the PCI device to process HOST objs */
-			if( pci_dev->children[i]->type == HWLOC_OBJ_OS_DEVICE )
+			sctk_device_init( topology, &sctk_devices[ off ] , pci_dev, 0 );
+			off++;
+		}
+		else
+		{
+			for( i = 0 ; i < pci_dev->arity ; i++ )
 			{
-				sctk_device_init( topology, &sctk_devices[ off ] , pci_dev, i );
-				/* Set the ID of the device */
-				sctk_devices[ off ].id = off;
-				off++;
+				/* Unfold the PCI device to process HOST objs */
+				if( pci_dev->children[i]->type == HWLOC_OBJ_OS_DEVICE )
+				{
+					sctk_device_init( topology, &sctk_devices[ off ] , pci_dev, i );
+					/* Set the ID of the device */
+					sctk_devices[ off ].id = off;
+					off++;
+				}
 			}
 		}
 		
