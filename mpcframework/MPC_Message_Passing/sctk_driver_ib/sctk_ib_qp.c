@@ -542,7 +542,7 @@ int sctk_ib_qp_get_cap_flags ( struct sctk_ib_rail_info_s *rail_ib )
 /*-----------------------------------------------------------
  *  ALLOCATION
  *----------------------------------------------------------*/
-void sctk_ib_qp_allocate_init ( struct sctk_ib_rail_info_s *rail_ib, int rank, sctk_ib_qp_t *remote, int ondemand, sctk_endpoint_t *route_table )
+void sctk_ib_qp_allocate_init ( struct sctk_ib_rail_info_s *rail_ib, int rank, sctk_ib_qp_t *remote, int ondemand, sctk_endpoint_t *endpoint )
 {
 	LOAD_CONFIG ( rail_ib );
 	LOAD_DEVICE ( rail_ib );
@@ -553,7 +553,7 @@ void sctk_ib_qp_allocate_init ( struct sctk_ib_rail_info_s *rail_ib, int rank, s
 
 	sctk_nodebug ( "QP reinited for rank %d", rank );
 
-	remote->route_table = route_table;
+	remote->endpoint = endpoint;
 	remote->psn = lrand48 () & 0xffffff;
 	remote->rank = rank;
 	remote->free_nb = config->qp_tx_depth;
@@ -630,7 +630,7 @@ void sctk_ib_qp_allocate_rts ( struct sctk_ib_rail_info_s *rail_ib,  sctk_ib_qp_
 void sctk_ib_qp_allocate_reset ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *remote )
 {
 	struct ibv_qp_attr       attr;
-	sctk_endpoint_t *route_table = remote->route_table;
+	sctk_endpoint_t *endpoint = remote->endpoint;
 	int flags;
 
 	attr = sctk_ib_qp_STATE_RESET_attr ( rail_ib, remote->psn, &flags );
