@@ -22,6 +22,7 @@
 ########################################################################
 need_module MPC_Message_Passing
 need_module MPC_Common
+need_module MPC_Config
 
 #Disable mpi inter-node network 
 check_net_mpi_disable="1"

@@ -515,6 +515,80 @@ struct sctk_runtime_config_struct_mpc
 };
 
 /******************************** STRUCTURE *********************************/
+/**Collectives intracom MPI**/
+struct sctk_runtime_config_struct_collectives_intra
+{	/**MPI_Barrier intracom algorithm**/
+	struct sctk_runtime_config_funcptr barrier_intra;
+	/**Type of MPI_Bcast intracom algorithm**/
+	struct sctk_runtime_config_funcptr bcast_intra;
+	/**MPI_Allgather intracom algorithm**/
+	struct sctk_runtime_config_funcptr allgather_intra;
+	/**MPI_Allgatherv intracom algorithm**/
+	struct sctk_runtime_config_funcptr allgatherv_intra;
+	/**MPI_Alltoall intracom algorithm**/
+	struct sctk_runtime_config_funcptr alltoall_intra;
+	/**Alltoallv intracom algorithm**/
+	struct sctk_runtime_config_funcptr alltoallv_intra;
+	/**MPI_Alltoallw intracom algorithm**/
+	struct sctk_runtime_config_funcptr alltoallw_intra;
+	/**MPI_Gather intracom algorithm**/
+	struct sctk_runtime_config_funcptr gather_intra;
+	/**MPI_Gatherv intracom algorithm**/
+	struct sctk_runtime_config_funcptr gatherv_intra;
+	/**MPI_Scatter intracom algorithm**/
+	struct sctk_runtime_config_funcptr scatter_intra;
+	/**MPI_Scatterv intracom algorithm**/
+	struct sctk_runtime_config_funcptr scatterv_intra;
+	/**MPI_Scan intracom algorithm**/
+	struct sctk_runtime_config_funcptr scan_intra;
+	/**MPI_Exscan intracom algorithm**/
+	struct sctk_runtime_config_funcptr exscan_intra;
+	/**MPI_Reduce intracom algorithm**/
+	struct sctk_runtime_config_funcptr reduce_intra;
+	/**MPI_Allreduce intracom algorithm**/
+	struct sctk_runtime_config_funcptr allreduce_intra;
+	/**MPI_Reduce_scatter intracom algorithm**/
+	struct sctk_runtime_config_funcptr reduce_scatter_intra;
+	/**MPI_Reduce_scatter_block intracom algorithm**/
+	struct sctk_runtime_config_funcptr reduce_scatter_block_intra;
+};
+
+/******************************** STRUCTURE *********************************/
+/**Collectives intercom MPI**/
+struct sctk_runtime_config_struct_collectives_inter
+{	/**MPI_Barrier intercom algorithm**/
+	struct sctk_runtime_config_funcptr barrier_inter;
+	/**MPI_Barrier intercom algorithm**/
+	struct sctk_runtime_config_funcptr bcast_inter;
+	/**MPI_Allgather intercom algorithm**/
+	struct sctk_runtime_config_funcptr allgather_inter;
+	/**MPI_Allgatherv intercom algorithm**/
+	struct sctk_runtime_config_funcptr allgatherv_inter;
+	/**MPI_Alltoall intercom algorithm**/
+	struct sctk_runtime_config_funcptr alltoall_inter;
+	/**MPI_Alltoallv intercom algorithm**/
+	struct sctk_runtime_config_funcptr alltoallv_inter;
+	/**MPI_Alltoallw intercom algorithm**/
+	struct sctk_runtime_config_funcptr alltoallw_inter;
+	/**MPI_Gather intercom algorithm**/
+	struct sctk_runtime_config_funcptr gather_inter;
+	/**MPI_Gatherv intercom algorithm**/
+	struct sctk_runtime_config_funcptr gatherv_inter;
+	/**MPI_Scatter intercom algorithm**/
+	struct sctk_runtime_config_funcptr scatter_inter;
+	/**MPI_Scatterv intercom algorithm**/
+	struct sctk_runtime_config_funcptr scatterv_inter;
+	/**MPI_Reduce intercom algorithm**/
+	struct sctk_runtime_config_funcptr reduce_inter;
+	/**MPI_Allreduce intercom algorithm**/
+	struct sctk_runtime_config_funcptr allreduce_inter;
+	/**MPI_Reduce_scatter intercom algorithm**/
+	struct sctk_runtime_config_funcptr reduce_scatter_inter;
+	/**MPI_Reduce_scatter_block intercom algorithm**/
+	struct sctk_runtime_config_funcptr reduce_scatter_block_inter;
+};
+
+/******************************** STRUCTURE *********************************/
 /**Options for MPC OpenMP.**/
 struct sctk_runtime_config_struct_openmp
 {	int init_done;
@@ -593,6 +667,8 @@ struct sctk_runtime_config_modules
 	struct sctk_runtime_config_struct_inter_thread_comm inter_thread_comm;
 	struct sctk_runtime_config_struct_low_level_comm low_level_comm;
 	struct sctk_runtime_config_struct_mpc mpc;
+	struct sctk_runtime_config_struct_collectives_intra collectives_intra;
+	struct sctk_runtime_config_struct_collectives_inter collectives_inter;
 	struct sctk_runtime_config_struct_openmp openmp;
 	struct sctk_runtime_config_struct_profiler profiler;
 	struct sctk_runtime_config_struct_thread thread;
