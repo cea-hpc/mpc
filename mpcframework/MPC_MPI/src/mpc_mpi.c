@@ -5479,7 +5479,7 @@ __INTERNAL__PMPI_Scatterv_intra (void *sendbuf, int *sendcnts, int *displs,
 	} 
 	else 
 	{
-		res = __INTERNAL__PMPI_Irecv (recvbuf, recvcnt, recvtype, root, -2, 
+		res = __INTERNAL__PMPI_Irecv (recvbuf, recvcnt, recvtype, root, MPC_SCATTERV_TAG, 
 		comm, &request);
 		if(res != MPI_SUCCESS){sctk_free(sendrequest); return res;}
 	}
