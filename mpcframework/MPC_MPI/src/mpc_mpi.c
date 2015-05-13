@@ -4900,18 +4900,6 @@ int (*exscan_intra)(void *, void *, int, MPI_Datatype, MPI_Op, MPI_Comm);
 
 /* Collectives */
 int
-barrier_intra_test (MPI_Comm comm)
-{
-	fprintf(stderr, "Intra comm number %d\n", comm);
-}
-
-int
-barrier_inter_test (MPI_Comm comm)
-{
-	fprintf(stderr, "Inter comm number %d\n", comm);
-}
-
-int
 __INTERNAL__PMPI_Barrier_intra (MPI_Comm comm)
 {
 	int i, res = MPI_ERR_INTERN, size, rank;
@@ -5003,6 +4991,7 @@ __INTERNAL__PMPI_Barrier (MPI_Comm comm)
 	/* Intercomm */
 	if(sctk_is_inter_comm(comm))
 	{
+		if(barrier_inter == NULL)
 		barrier_inter = (int (*)(MPI_Comm))(sctk_runtime_config_get()->modules.collectives_inter.barrier_inter.value);
 		res = barrier_inter(comm);
 		if(res != MPI_SUCCESS){return res;}
@@ -5010,6 +4999,7 @@ __INTERNAL__PMPI_Barrier (MPI_Comm comm)
 	else
 	{
 		/* Intracomm */
+		if(barrier_intra == NULL)
 		barrier_intra = (int (*)(MPI_Comm))(sctk_runtime_config_get()->modules.collectives_intra.barrier_intra.value);
 		res = barrier_intra(comm);
 		if(res != MPI_SUCCESS){return res;}
@@ -5108,6 +5098,7 @@ __INTERNAL__PMPI_Bcast (void *buffer, int count, MPI_Datatype datatype,
 	/* Intercomm */
 	if(sctk_is_inter_comm(comm))
 	{
+		if(bcast_inter == NULL)
 		bcast_inter = (int (*)(void *, int, MPI_Datatype, int, MPI_Comm))(sctk_runtime_config_get()->modules.collectives_inter.bcast_inter.value);
 		res = bcast_inter(buffer, count, datatype, root, comm);
 		if(res != MPI_SUCCESS){return res;}
@@ -5115,6 +5106,7 @@ __INTERNAL__PMPI_Bcast (void *buffer, int count, MPI_Datatype datatype,
 	else
 	{
 		/* Intracomm */
+		if(bcast_intra == NULL)
 		bcast_intra = (int (*)(void *, int, MPI_Datatype, int, MPI_Comm))(sctk_runtime_config_get()->modules.collectives_intra.bcast_intra.value);
 		res = bcast_intra(buffer, count, datatype, root, comm);
 		if(res != MPI_SUCCESS){return res;}
@@ -5239,6 +5231,7 @@ __INTERNAL__PMPI_Gather (void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 	/* Intercomm */
 	if(sctk_is_inter_comm(comm))
 	{
+		if(gather_inter == NULL)
 		gather_inter = (int (*)(void *, int, MPI_Datatype, void *, 
 		int, MPI_Datatype, int, MPI_Comm))(sctk_runtime_config_get()->modules.collectives_inter.gather_inter.value);
 		res = gather_inter(sendbuf, sendcnt, sendtype, recvbuf, 
@@ -5248,6 +5241,7 @@ __INTERNAL__PMPI_Gather (void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 	else
 	{
 		/* Intracomm */
+		if(gather_intra == NULL)
 		gather_intra = (int (*)(void *, int, MPI_Datatype, void *, 
 		int, MPI_Datatype, int, MPI_Comm))(sctk_runtime_config_get()->modules.collectives_intra.gather_intra.value);
 		res = gather_intra(sendbuf, sendcnt, sendtype, recvbuf, 
@@ -5377,6 +5371,7 @@ __INTERNAL__PMPI_Gatherv (void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 	/* Intercomm */
 	if(sctk_is_inter_comm(comm))
 	{
+		if(gatherv_inter == NULL)
 		gatherv_inter = (int (*)(void *, int, MPI_Datatype, void *, 
 		int *, int *, MPI_Datatype, int, MPI_Comm))(sctk_runtime_config_get()->modules.collectives_inter.gatherv_inter.value);
 		res = gatherv_inter(sendbuf, sendcnt, sendtype, recvbuf, 
@@ -5386,6 +5381,7 @@ __INTERNAL__PMPI_Gatherv (void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 	else
 	{
 		/* Intracomm */
+		if(gatherv_intra == NULL)
 		gatherv_intra = (int (*)(void *, int, MPI_Datatype, void *, 
 		int *, int *, MPI_Datatype, int, MPI_Comm))(sctk_runtime_config_get()->modules.collectives_intra.gatherv_intra.value);
 		res = gatherv_intra(sendbuf, sendcnt, sendtype, recvbuf, 
@@ -5515,6 +5511,7 @@ __INTERNAL__PMPI_Scatter (void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 	/* Intercomm */
 	if(sctk_is_inter_comm(comm))
 	{
+		if(scatter_inter == NULL)
 		scatter_inter = (int (*)(void *, int, MPI_Datatype, void *, 
 		int, MPI_Datatype, int, MPI_Comm))(sctk_runtime_config_get()->modules.collectives_inter.scatter_inter.value);
 		res = scatter_inter(sendbuf, sendcnt, sendtype, recvbuf, 
@@ -5524,6 +5521,7 @@ __INTERNAL__PMPI_Scatter (void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 	else
 	{
 		/* Intracomm */
+		if(scatter_intra == NULL)
 		scatter_intra = (int (*)(void *, int, MPI_Datatype, void *, 
 		int, MPI_Datatype, int, MPI_Comm))(sctk_runtime_config_get()->modules.collectives_intra.scatter_intra.value);
 		res = scatter_intra(sendbuf, sendcnt, sendtype, recvbuf, 
@@ -5660,6 +5658,7 @@ __INTERNAL__PMPI_Scatterv (void *sendbuf, int *sendcnts, int *displs,
 	/* Intercomm */
 	if(sctk_is_inter_comm(comm))
 	{
+		if(scatterv_inter == NULL)
 		scatterv_inter = (int (*)(void *, int *, int *, MPI_Datatype, 
 		void *, int, MPI_Datatype, int, MPI_Comm))(sctk_runtime_config_get()->modules.collectives_inter.scatterv_inter.value);
 		res = scatterv_inter(sendbuf, sendcnts, displs, sendtype, 
@@ -5669,6 +5668,7 @@ __INTERNAL__PMPI_Scatterv (void *sendbuf, int *sendcnts, int *displs,
 	else
 	{
 		/* Intracomm */
+		if(scatterv_intra == NULL)
 		scatterv_intra = (int (*)(void *, int *, int *, MPI_Datatype, 
 		void *, int, MPI_Datatype, int, MPI_Comm))(sctk_runtime_config_get()->modules.collectives_intra.scatterv_intra.value);
 		res = scatterv_intra(sendbuf, sendcnts, displs, sendtype, 
@@ -5791,6 +5791,7 @@ __INTERNAL__PMPI_Allgather (void *sendbuf, int sendcount,
 	/* Intercomm */
 	if(sctk_is_inter_comm(comm))
 	{
+		if(allgather_inter == NULL)
 		allgather_inter = (int (*)(void *, int , MPI_Datatype, void *, 
 		int, MPI_Datatype, MPI_Comm))(sctk_runtime_config_get()->modules.collectives_inter.allgather_inter.value);
 		res = allgather_inter(sendbuf, sendcount, sendtype, recvbuf, 
@@ -5800,6 +5801,7 @@ __INTERNAL__PMPI_Allgather (void *sendbuf, int sendcount,
 	else
 	{
 		/* Intracomm */
+		if(allgather_intra == NULL)
 		allgather_intra = (int (*)(void *, int , MPI_Datatype, void *, 
 		int, MPI_Datatype, MPI_Comm))(sctk_runtime_config_get()->modules.collectives_intra.allgather_intra.value);
 		res = allgather_intra(sendbuf, sendcount, sendtype, recvbuf, 
@@ -5933,6 +5935,7 @@ __INTERNAL__PMPI_Allgatherv (void *sendbuf, int sendcount,
 	/* Intercomm */
 	if(sctk_is_inter_comm(comm))
 	{
+		if(allgatherv_inter == NULL)
 		allgatherv_inter = (int (*)(void *, int, MPI_Datatype, void *, 
 		int *, int *, MPI_Datatype, MPI_Comm))(sctk_runtime_config_get()->modules.collectives_inter.allgatherv_inter.value);
 		res = allgatherv_inter(sendbuf, sendcount, sendtype, recvbuf, 
@@ -5942,6 +5945,7 @@ __INTERNAL__PMPI_Allgatherv (void *sendbuf, int sendcount,
 	else
 	{
 		/* Intracomm */
+		if(allgatherv_intra == NULL)
 		allgatherv_intra = (int (*)(void *, int, MPI_Datatype, void *, 
 		int *, int *, MPI_Datatype, MPI_Comm))(sctk_runtime_config_get()->modules.collectives_intra.allgatherv_intra.value);
 		res = allgatherv_intra(sendbuf, sendcount, sendtype, recvbuf, 
@@ -6083,6 +6087,7 @@ __INTERNAL__PMPI_Alltoall (void *sendbuf, int sendcount,
 	/* Intercomm */
 	if(sctk_is_inter_comm(comm))
 	{
+		if(alltoall_inter == NULL)
 		alltoall_inter = (int (*)(void *, int, MPI_Datatype, void *, 
 		int, MPI_Datatype, MPI_Comm))(sctk_runtime_config_get()->modules.collectives_inter.alltoall_inter.value);
 		res = alltoall_inter(sendbuf, sendcount, sendtype, recvbuf, 
@@ -6092,7 +6097,7 @@ __INTERNAL__PMPI_Alltoall (void *sendbuf, int sendcount,
 	else
 	{
 		/* Intracomm */
-		fprintf(stderr, "alltoall intra\n");
+		if(alltoall_intra == NULL)
 		alltoall_intra = (int (*)(void *, int, MPI_Datatype, void *, 
 		int, MPI_Datatype, MPI_Comm))(sctk_runtime_config_get()->modules.collectives_intra.alltoall_intra.value);
 		res = alltoall_intra(sendbuf, sendcount, sendtype, recvbuf, 
@@ -6230,6 +6235,7 @@ __INTERNAL__PMPI_Alltoallv (void *sendbuf, int *sendcnts, int *sdispls,
 	/* Intercomm */
 	if(sctk_is_inter_comm(comm))
 	{
+		if(alltoallv_inter == NULL)
 		alltoallv_inter = (int (*)(void *, int *, int *, MPI_Datatype, 
 		void *, int *, int *, MPI_Datatype, MPI_Comm))(sctk_runtime_config_get()->modules.collectives_inter.alltoallv_inter.value);
 		res = alltoallv_inter(sendbuf, sendcnts, sdispls, sendtype, 
@@ -6239,7 +6245,7 @@ __INTERNAL__PMPI_Alltoallv (void *sendbuf, int *sendcnts, int *sdispls,
 	else
 	{
 		/* Intracomm */
-		fprintf(stderr, "alltoallv intra\n");
+		if(alltoallv_intra == NULL)
 		alltoallv_intra = (int (*)(void *, int *, int *, MPI_Datatype, 
 		void *, int *, int *, MPI_Datatype, MPI_Comm))(sctk_runtime_config_get()->modules.collectives_intra.alltoallv_intra.value);
 		res = alltoallv_intra(sendbuf, sendcnts, sdispls, sendtype, 
@@ -6438,6 +6444,7 @@ MPI_Datatype *recvtypes, MPI_Comm comm)
 	/* Intercomm */
 	if(sctk_is_inter_comm(comm))
 	{
+		if(alltoallw_inter == NULL)
 		alltoallw_inter = (int (*)(void *, int *, int *, MPI_Datatype *, 
 		void *, int *, int *, MPI_Datatype *, MPI_Comm))(sctk_runtime_config_get()->modules.collectives_inter.alltoallw_inter.value);
 		res = alltoallw_inter(sendbuf, sendcnts, sdispls, sendtypes, 
@@ -6447,6 +6454,7 @@ MPI_Datatype *recvtypes, MPI_Comm comm)
 	else
 	{
 		/* Intracomm */
+		if(alltoallw_intra == NULL)
 		alltoallw_intra = (int (*)(void *, int *, int *, MPI_Datatype *, 
 		void *, int *, int *, MPI_Datatype *, MPI_Comm))(sctk_runtime_config_get()->modules.collectives_intra.alltoallw_intra.value);
 		res = alltoallw_intra(sendbuf, sendcnts, sdispls, sendtypes, 
@@ -7530,6 +7538,7 @@ __INTERNAL__PMPI_Reduce (void *sendbuf, void *recvbuf, int count,
 	/* Intercomm */
 	if(sctk_is_inter_comm(comm))
 	{
+		if(reduce_inter == NULL)
 		reduce_inter = (int (*)(void *, void *, int, MPI_Datatype, 
 		MPI_Op, int, MPI_Comm))(sctk_runtime_config_get()->modules.collectives_inter.reduce_inter.value);
 		res = reduce_inter(sendbuf, recvbuf, count, datatype, op, root, 
@@ -7539,6 +7548,7 @@ __INTERNAL__PMPI_Reduce (void *sendbuf, void *recvbuf, int count,
 	else
 	{
 		/* Intracomm */
+		if(reduce_intra == NULL)
 		reduce_intra = (int (*)(void *, void *, int, MPI_Datatype, 
 		MPI_Op, int, MPI_Comm))(sctk_runtime_config_get()->modules.collectives_intra.reduce_intra.value);
 		res = reduce_intra(sendbuf, recvbuf, count, datatype, op, root, 
@@ -7688,6 +7698,7 @@ __INTERNAL__PMPI_Allreduce (void *sendbuf, void *recvbuf, int count,
 	/* Intercomm */
 	if(sctk_is_inter_comm(comm))
 	{
+		if(allreduce_inter == NULL)
 		allreduce_inter = (int (*)(void *, void *, int, MPI_Datatype, 
 		MPI_Op, MPI_Comm))(sctk_runtime_config_get()->modules.collectives_inter.allreduce_inter.value);
 		res = allreduce_inter(sendbuf, recvbuf, count, datatype, op, 
@@ -7697,6 +7708,7 @@ __INTERNAL__PMPI_Allreduce (void *sendbuf, void *recvbuf, int count,
 	else
 	{
 		/* Intracomm */
+		if(allreduce_intra == NULL)
 		allreduce_intra = (int (*)(void *, void *, int, MPI_Datatype, 
 		MPI_Op, MPI_Comm))(sctk_runtime_config_get()->modules.collectives_intra.allreduce_intra.value);
 		res = allreduce_intra(sendbuf, recvbuf, count, datatype, op, comm);
@@ -7843,6 +7855,7 @@ __INTERNAL__PMPI_Reduce_scatter (void *sendbuf, void *recvbuf, int *recvcnts,
 	/* Intercomm */
 	if(sctk_is_inter_comm(comm))
 	{
+		if(reduce_scatter_inter == NULL)
 		reduce_scatter_inter = (int (*)(void *, void *, int *, MPI_Datatype, 
 		MPI_Op, MPI_Comm))(sctk_runtime_config_get()->modules.collectives_inter.reduce_scatter_inter.value);
 		res = reduce_scatter_inter(sendbuf, recvbuf, recvcnts, datatype, 
@@ -7852,6 +7865,7 @@ __INTERNAL__PMPI_Reduce_scatter (void *sendbuf, void *recvbuf, int *recvcnts,
 	else
 	{
 		/* Intracomm */
+		if(reduce_scatter_intra == NULL)
 		reduce_scatter_intra = (int (*)(void *, void *, int *, MPI_Datatype, 
 		MPI_Op, MPI_Comm))(sctk_runtime_config_get()->modules.collectives_intra.reduce_scatter_intra.value);
 		res = reduce_scatter_intra(sendbuf, recvbuf, recvcnts, datatype, 
@@ -7993,6 +8007,7 @@ __INTERNAL__PMPI_Reduce_scatter_block (void *sendbuf, void *recvbuf, int recvcnt
 	/* Intercomm */
 	if(sctk_is_inter_comm(comm))
 	{
+		if(reduce_scatter_block_inter == NULL)
 		reduce_scatter_block_inter = (int (*)(void *, void *, int, MPI_Datatype, 
 		MPI_Op, MPI_Comm))(sctk_runtime_config_get()->modules.collectives_inter.reduce_scatter_block_inter.value);
 		res = reduce_scatter_block_inter(sendbuf, recvbuf, recvcnt, datatype, 
@@ -8002,6 +8017,7 @@ __INTERNAL__PMPI_Reduce_scatter_block (void *sendbuf, void *recvbuf, int recvcnt
 	else
 	{
 		/* Intracomm */
+		if(reduce_scatter_block_intra == NULL)
 		reduce_scatter_block_intra = (int (*)(void *, void *, int, MPI_Datatype, 
 		MPI_Op, MPI_Comm))(sctk_runtime_config_get()->modules.collectives_intra.reduce_scatter_block_intra.value);
 		res = reduce_scatter_block_intra(sendbuf, recvbuf, recvcnt, datatype, 
@@ -8086,6 +8102,7 @@ __INTERNAL__PMPI_Scan (void *sendbuf, void *recvbuf, int count,
 	int res = MPI_ERR_INTERN;
 	
 	/* Only on Intracomm */
+	if(scan_intra == NULL)
 	scan_intra = (int (*)(void *, void *, int, MPI_Datatype, 
 	MPI_Op, MPI_Comm))(sctk_runtime_config_get()->modules.collectives_intra.scan_intra.value);
 	res = scan_intra(sendbuf, recvbuf, count, datatype, op, comm);
@@ -8171,9 +8188,10 @@ __INTERNAL__PMPI_Exscan (void *sendbuf, void *recvbuf, int count,
 	int res = MPI_ERR_INTERN;
 	
 	/* Only on Intracomm */
-	scan_intra = (int (*)(void *, void *, int, MPI_Datatype, 
-	MPI_Op, MPI_Comm))(sctk_runtime_config_get()->modules.collectives_intra.scan_intra.value);
-	res = scan_intra(sendbuf, recvbuf, count, datatype, op, comm);
+	if(exscan_intra == NULL)
+	exscan_intra = (int (*)(void *, void *, int, MPI_Datatype, 
+	MPI_Op, MPI_Comm))(sctk_runtime_config_get()->modules.collectives_intra.exscan_intra.value);
+	res = exscan_intra(sendbuf, recvbuf, count, datatype, op, comm);
 
 	return res;
 }
