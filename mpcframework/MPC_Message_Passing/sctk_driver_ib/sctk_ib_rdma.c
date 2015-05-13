@@ -159,7 +159,7 @@ sctk_ibuf_t *sctk_ib_rdma_prepare_req ( sctk_rail_info_t *rail,
 	IBUF_SET_SRC_TASK ( ibuf->buffer, SCTK_MSG_SRC_TASK ( msg ) );
 
 	rdma_header = IBUF_GET_RDMA_HEADER ( ibuf->buffer );
-	IBUF_SET_RDMA_TYPE ( rdma_header, rdma_req_type );
+	IBUF_SET_RDMA_TYPE ( rdma_header, SCTK_IB_RDMA_RDV_REQ_TYPE );
 
 	/* Get the buffer */
 	rdma_req    = IBUF_GET_RDMA_REQ ( ibuf->buffer );
@@ -226,7 +226,7 @@ static inline sctk_ibuf_t *sctk_ib_rdma_prepare_ack ( sctk_rail_info_t *rail,
 
 	/* Initialization of the buffer */
 	IBUF_SET_PROTOCOL ( ibuf->buffer, SCTK_IB_RDMA_PROTOCOL );
-	IBUF_SET_RDMA_TYPE ( rdma_header, rdma_ack_type );
+	IBUF_SET_RDMA_TYPE ( rdma_header, SCTK_IB_RDMA_RDV_ACK_TYPE );
 
 	sctk_nodebug ( "Send RDMA ACK message: %lu %u", rdma_ack->addr, rdma_ack->rkey );
 	return ibuf;
@@ -245,7 +245,7 @@ sctk_ib_rdma_prepare_data_write ( sctk_rail_info_t *rail,
 	sctk_ib_rdma_t *rdma_header;
 	sctk_ibuf_t *ibuf;
 
-#if 0
+/*
 	ibuf = sctk_ibuf_pick_send_sr ( rail_ib );
 	assume ( ibuf );
 
@@ -256,7 +256,7 @@ sctk_ib_rdma_prepare_data_write ( sctk_rail_info_t *rail,
 	IBUF_SET_DEST_TASK ( ibuf->buffer, rdma->destination_task );
 	IBUF_SET_SRC_TASK ( ibuf->buffer, rdma->source_task );
 	IBUF_SET_PROTOCOL ( ibuf->buffer, SCTK_IB_RDMA_PROTOCOL );
-	IBUF_SET_RDMA_TYPE ( rdma_header, rdma_data_write_type );
+	IBUF_SET_RDMA_TYPE ( rdma_header, SCTK_IB_RDMA_RDV_WRITE_TYPE );
 
 	sctk_debug ( "Write from %p (%lu) to %p (%lu)",
 	             rdma->local.addr,
@@ -287,6 +287,7 @@ sctk_ib_rdma_prepare_data_write ( sctk_rail_info_t *rail,
 	sctk_ib_qp_send_ibuf ( rail_ib,
 	                       rdma->remote_peer, ibuf, 0 );
 #else
+*/
 	int src_process;
 	sctk_endpoint_t *route;
 	route = sctk_rail_get_any_route_to_process_or_on_demand ( rdma->remote_rail, rdma->remote_peer->rank );
@@ -301,7 +302,7 @@ sctk_ib_rdma_prepare_data_write ( sctk_rail_info_t *rail,
 	IBUF_SET_DEST_TASK ( ibuf->buffer, rdma->destination_task );
 	IBUF_SET_SRC_TASK ( ibuf->buffer, rdma->source_task );
 	IBUF_SET_PROTOCOL ( ibuf->buffer, SCTK_IB_RDMA_PROTOCOL );
-	IBUF_SET_RDMA_TYPE ( rdma_header, rdma_data_write_type );
+	IBUF_SET_RDMA_TYPE ( rdma_header, SCTK_IB_RDMA_RDV_WRITE_TYPE );
 
 	sctk_nodebug ( "Write from %p (%lu) to %p (%lu)",
 	               rdma->local.addr,
@@ -320,9 +321,9 @@ sctk_ib_rdma_prepare_data_write ( sctk_rail_info_t *rail,
 	sctk_ib_qp_send_ibuf ( &rdma->remote_rail->network.ib,
 	                       route->data.ib.remote, ibuf);
 
-
+/*
 #endif
-
+*/
 	rdma->local.send_rdma_timestamp = sctk_ib_prof_get_time_stamp();
 }
 
@@ -362,7 +363,7 @@ sctk_ib_rdma_prepare_done_write ( sctk_rail_info_t *rail, sctk_ibuf_t *incoming_
 	IBUF_SET_SRC_TASK ( ibuf->buffer, rdma->source_task );
 
 	IBUF_SET_PROTOCOL ( ibuf->buffer, SCTK_IB_RDMA_PROTOCOL );
-	IBUF_SET_RDMA_TYPE ( rdma_header, rdma_done_type );
+	IBUF_SET_RDMA_TYPE ( rdma_header, SCTK_IB_RDMA_RDV_DONE_TYPE );
 
 	sctk_ib_qp_send_ibuf ( rail_ib, rdma->remote_peer, ibuf);
 #endif
@@ -585,10 +586,12 @@ sctk_ib_rdma_recv_req ( sctk_rail_info_t *rail, sctk_ibuf_t *ibuf )
 	rdma->local.msg_header = msg;
 	rdma->local.ready = 0;
 	rdma->ht_key = OPA_fetch_and_incr_int ( &recv_rdma_headers_nb );
+	
 	sctk_spinlock_lock ( &recv_rdma_headers_lock );
 	HASH_ADD ( hh, recv_rdma_headers, ht_key, sizeof ( int ), rdma );
 	sctk_nodebug ( "ADD msg %p with key %d", rdma, rdma->ht_key );
 	sctk_spinlock_unlock ( &recv_rdma_headers_lock );
+	
 	/* XXX: Only for collaborative polling */
 	rdma->source_task = IBUF_GET_SRC_TASK ( ibuf->buffer );
 	rdma->destination_task = IBUF_GET_DEST_TASK ( ibuf->buffer );
@@ -740,7 +743,7 @@ sctk_ib_rdma_poll_recv ( sctk_rail_info_t *rail, sctk_ibuf_t *ibuf )
 	/* Switch on the RDMA type of message */
 	switch ( IBUF_GET_RDMA_TYPE ( rdma_header ) )
 	{
-		case rdma_req_type:
+		case SCTK_IB_RDMA_RDV_REQ_TYPE:
 		{
 			sctk_nodebug ( "Poll recv: message RDMA req received" );
 			sctk_ib_rdma_recv_req ( rail, ibuf );
@@ -748,7 +751,7 @@ sctk_ib_rdma_poll_recv ( sctk_rail_info_t *rail, sctk_ibuf_t *ibuf )
 		}
 		break;
 
-		case rdma_ack_type:
+		case SCTK_IB_RDMA_RDV_ACK_TYPE:
 		{
 			sctk_nodebug ( "Poll recv: message RDMA ack received" );
 			/* Buffer reused: don't need to free it */
@@ -758,7 +761,7 @@ sctk_ib_rdma_poll_recv ( sctk_rail_info_t *rail, sctk_ibuf_t *ibuf )
 		}
 		break;
 
-		case rdma_done_type:
+		case SCTK_IB_RDMA_RDV_DONE_TYPE:
 		{
 			sctk_nodebug ( "Poll recv: message RDMA done received" );
 			sctk_ib_rdma_recv_done_remote ( rail, ibuf );
@@ -789,25 +792,21 @@ sctk_ib_rdma_poll_send ( sctk_rail_info_t *rail, sctk_ibuf_t *ibuf )
 	/* Switch on the RDMA type of message */
 	switch ( IBUF_GET_RDMA_TYPE ( rdma_header ) )
 	{
-		case rdma_req_type:
+		case SCTK_IB_RDMA_RDV_REQ_TYPE:
 			sctk_nodebug ( "Poll send: message RDMA req received" );
 			break;
 
-		case rdma_ack_type:
+		case SCTK_IB_RDMA_RDV_ACK_TYPE:
 			sctk_nodebug ( "Poll send: message RDMA ack received" );
 			break;
 
-		case rdma_data_write_type:
+		case SCTK_IB_RDMA_RDV_WRITE_TYPE:
 			sctk_nodebug ( "Poll send: message RDMA data write received" );
 			msg = sctk_ib_rdma_prepare_done_write ( rail, ibuf );
 			sctk_ib_rdma_recv_done_local ( rail, msg );
 			break;
 
-		case rdma_data_read_type:
-			sctk_nodebug ( "Poll send: message RDMA data read received" );
-			break;
-
-		case rdma_done_type:
+		case SCTK_IB_RDMA_RDV_DONE_TYPE:
 			sctk_nodebug ( "Poll send: message RDMA done received" );
 			break;
 

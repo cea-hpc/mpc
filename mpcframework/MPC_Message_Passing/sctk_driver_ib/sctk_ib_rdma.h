@@ -39,11 +39,10 @@
 /* XXX: Packed structures */
 typedef enum sctk_ib_rdma_type_e
 {
-    rdma_req_type = 111,
-    rdma_ack_type = 222,
-    rdma_done_type = 333,
-    rdma_data_read_type = 444,
-    rdma_data_write_type = 555,
+    SCTK_IB_RDMA_RDV_REQ_TYPE = 111,
+    SCTK_IB_RDMA_RDV_ACK_TYPE = 222,
+    SCTK_IB_RDMA_RDV_DONE_TYPE = 333,
+    SCTK_IB_RDMA_RDV_WRITE_TYPE = 555,
 } __attribute__ ( ( packed ) )
 sctk_ib_rdma_type_t;
 
