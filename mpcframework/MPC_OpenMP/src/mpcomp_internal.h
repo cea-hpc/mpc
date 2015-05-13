@@ -55,7 +55,7 @@ extern "C"
 #define MPCOMP_NOWAIT_STOP_SYMBOL	(-2)
 
 /* Uncomment to enable coherency checking */
-#define MPCOMP_COHERENCY_CHECKING 1
+#define MPCOMP_COHERENCY_CHECKING 0
 #define MPCOMP_OVERFLOW_CHECKING 0
 
 #define MPCOMP_COMBINED_NONE 0
