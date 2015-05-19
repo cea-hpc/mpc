@@ -5053,6 +5053,7 @@ MPC_Op_tmp (void *in, void *inout, size_t size, MPC_Datatype t)
       ADD_FUNC_HANDLER(func,MPC_UNSIGNED_SHORT,op);     \
       ADD_FUNC_HANDLER(func,MPC_UNSIGNED,op);           \
       ADD_FUNC_HANDLER(func,MPC_UNSIGNED_LONG,op);      \
+      ADD_FUNC_HANDLER(func,MPC_UNSIGNED_LONG_LONG,op);      \
       ADD_FUNC_HANDLER(func,MPC_LONG_LONG_INT,op);      \
       ADD_FUNC_HANDLER(func,MPC_LONG_DOUBLE,op);        \
       ADD_FUNC_HANDLER(func,MPC_LONG_LONG,op);        \

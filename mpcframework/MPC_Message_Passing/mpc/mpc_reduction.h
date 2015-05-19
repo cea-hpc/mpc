@@ -84,6 +84,7 @@ MPC_DEFINED_FUNCS(MPC_COMPLEX16,mpc_double_double ,name)	;		\
 MPC_DEFINED_FUNCS(MPC_DOUBLE_COMPLEX,mpc_double_double ,name)	;		\
 MPC_DEFINED_FUNCS(MPC_COMPLEX32,mpc_longdouble_longdouble ,name)	;		\
 MPC_DEFINED_FUNCS(MPC_UNSIGNED_LONG_LONG_INT,mpc_unsigned_long_long_int ,name)	;		\
+MPC_DEFINED_FUNCS(MPC_UNSIGNED_LONG_LONG,mpc_unsigned_long_long_int ,name)	;		\
 MPC_DEFINED_FUNCS(MPC_LONG_LONG_INT, mpc_long_long_int ,name)	;		\
 MPC_DEFINED_FUNCS(MPC_LOGICAL, int,name);				\
 MPC_DEFINED_FUNCS(MPC_2DOUBLE_PRECISION,mpc_double_double ,name);	\
