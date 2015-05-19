@@ -150,7 +150,7 @@ void __init_a_composed_common_types(MPC_Datatype target_type, MPC_Aint disp, MPC
 	displacements[1] = begins[1];
 
 	/* Create the derived data-type */
-	PMPC_Derived_datatype_on_slot( target_type, begins, ends, types, 2, 0, 0, 0, 0);
+	PMPC_Derived_datatype_on_slot( target_type, begins, ends, types, 2, 0, 0, struct_size, 1);
 
 	/* Fill its context */
 	struct Datatype_External_context dtctx;
