@@ -7312,6 +7312,7 @@ static sctk_op_t * sctk_convert_to_mpc_op (MPI_Op op)
       ADD_FUNC_HANDLER(func,MPC_UNSIGNED_SHORT,op);     \
       ADD_FUNC_HANDLER(func,MPC_UNSIGNED,op);           \
       ADD_FUNC_HANDLER(func,MPC_UNSIGNED_LONG,op);      \
+      ADD_FUNC_HANDLER(func,MPC_UNSIGNED_LONG_LONG,op);      \
       ADD_FUNC_HANDLER(func,MPC_LONG_LONG_INT,op);      \
       ADD_FUNC_HANDLER(func,MPC_LONG_DOUBLE,op);        \
       ADD_FUNC_HANDLER(func,MPC_LONG_LONG,op);        \
