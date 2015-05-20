@@ -846,6 +846,9 @@ typedef struct MPI_internal_request_s
 
 	/*Req_free*/
 	int auto_free;
+
+	/*Owner*/
+	void* task_req_id;
 } MPI_internal_request_t;
 
 /** \brief MPI_Request managment structure 
@@ -925,7 +928,7 @@ __sctk_convert_mpc_request_internal_cache_get (MPI_Request * req,
 
         tmp = mpc_mpi_request_cache[id];
 
-        if(tmp->rank != *req)
+        if((tmp->rank != *req) || (tmp->task_req_id != requests))
                 return NULL;
 
         return tmp;
@@ -942,10 +945,18 @@ static inline void __sctk_convert_mpc_request_internal_cache_register(MPI_intern
 #define __sctk_convert_mpc_request_internal_cache_register(a) (void)(0)
 #endif
 
+static inline void sctk_delete_internal_request_clean(MPI_internal_request_t *tmp)
+{
+        /* Release the internal request */
+        tmp->used = 0;
+        sctk_free (tmp->saved_datatype);
+        tmp->saved_datatype = NULL;
+
+}
 
 
 #ifdef MPC_MPI_USE_LOCAL_REQUESTS_QUEUE
-#define MPC_MPI_LOCAL_REQUESTS_QUEUE_SIZE 10 
+#define MPC_MPI_LOCAL_REQUESTS_QUEUE_SIZE 10
 __thread MPI_internal_request_t * mpc_mpi_local_request_queue = NULL;
 __thread int mpc_mpi_local_request_queue_nb_req = 0;
 static inline MPI_internal_request_t *
@@ -956,8 +967,12 @@ __sctk_new_mpc_request_internal_local_get (MPI_Request * req,
 	tmp = mpc_mpi_local_request_queue;
 	
 	if(tmp != NULL){
-		mpc_mpi_local_request_queue = tmp->next;
-		mpc_mpi_local_request_queue_nb_req --;
+		if(tmp->task_req_id == requests) {
+			mpc_mpi_local_request_queue = tmp->next;
+			mpc_mpi_local_request_queue_nb_req --;
+		} else {
+			tmp = NULL;
+		}
 	}
 
         return tmp;
@@ -966,8 +981,10 @@ __sctk_new_mpc_request_internal_local_get (MPI_Request * req,
 static inline int sctk_delete_internal_request_local_put(MPI_internal_request_t *tmp, MPI_request_struct_t *requests )
 {
 	if(mpc_mpi_local_request_queue_nb_req < MPC_MPI_LOCAL_REQUESTS_QUEUE_SIZE){
-		tmp->next = mpc_mpi_local_request_queue;
 
+		sctk_delete_internal_request_clean(tmp);
+
+		tmp->next = mpc_mpi_local_request_queue;
 		mpc_mpi_local_request_queue = tmp;
 
 		mpc_mpi_local_request_queue_nb_req ++;
@@ -986,10 +1003,7 @@ static inline int sctk_delete_internal_request_local_put(MPI_internal_request_t 
 /** \brief Delete an internal request and put it in the free-list */
 static inline void sctk_delete_internal_request(MPI_internal_request_t *tmp, MPI_request_struct_t *requests )
 {
-	/* Release the internal request */
-	tmp->used = 0;
-	sctk_free (tmp->saved_datatype);
-	tmp->saved_datatype = NULL;
+	sctk_delete_internal_request_clean(tmp);
 	
 	/* Push in in the head of the free list */
 	tmp->next = requests->free_list;
@@ -1084,6 +1098,7 @@ __sctk_new_mpc_request_internal (MPI_Request * req,
 				/* Set not used */
 				tmp->used = 0;
 				tmp->lock = 0;
+				tmp->task_req_id = requests;
 				
 				/* Put the newly allocated slot in the free list */
 				tmp->next = requests->free_list;
@@ -1102,11 +1117,10 @@ __sctk_new_mpc_request_internal (MPI_Request * req,
 
 		/* Remove from free list */
 		requests->free_list = tmp->next;
-		
+
 		sctk_spinlock_unlock (&(requests->lock));
 	}
 
-	
         /* Mark it as used */
         tmp->used = 1;
         /* Mark it as freable */
@@ -1158,15 +1172,14 @@ __sctk_convert_mpc_request_internal (MPI_Request * req,
 		return NULL;
 	}
 
+        /* Retrieve the request array */
+        assume (requests != NULL);
+
         /* Check bounds */
         assume (((int_req) >= 0) && ((int_req) < requests->max_size));
 
 	tmp = __sctk_convert_mpc_request_internal_cache_get(req,requests);
 	if(tmp == NULL){
-
-		/* Retrieve the request array */
-		assume (requests != NULL);
-	
 		/* Lock it */
 		sctk_spinlock_lock (&(requests->lock));
 	
@@ -1181,11 +1194,14 @@ __sctk_convert_mpc_request_internal (MPI_Request * req,
 		__sctk_convert_mpc_request_internal_cache_register(tmp);
 	}
 
+	assume(tmp->task_req_id == requests);
+
 	/* Is rank coherent with the offset */
 	assume (tmp->rank == *req);
-	/* Is this request in used */
+
+        /* Is this request in used */
 	assume (tmp->used);
-	
+
 	/* Return the MPI_internal_request_t * */
 	return tmp;
 }
@@ -1259,19 +1275,17 @@ static inline void __sctk_delete_mpc_request (MPI_Request * req,
 
 	/* Deactivate the request */
 	tmp->is_active = 0;
-	
+
 	/* Can the request be freed ? */
 	if (tmp->freeable == 1)
 	{
 		/* Make sure the rank matches the TAB offset */
 		assume (tmp->rank == *req);
-		
+	
 		/* Auto free ? */
 		if(tmp->auto_free == 0)
 		{
-			/* NO */
 			/* Call delete internal request to push it in the free list */
-			sctk_spinlock_unlock (&(tmp->lock));
 			if(sctk_delete_internal_request_local_put(tmp,requests) == 0){
 				sctk_spinlock_lock (&(requests->lock));
 				sctk_delete_internal_request(tmp,requests);
@@ -1281,7 +1295,6 @@ static inline void __sctk_delete_mpc_request (MPI_Request * req,
 			*req = MPI_REQUEST_NULL;
 		} else {
 			/* Remove it from the free list */
-			sctk_spinlock_unlock (&(tmp->lock));
 			sctk_spinlock_lock (&(requests->lock));
 			tmp->next = requests->auto_free_list;
 			requests->auto_free_list = tmp;
@@ -1289,8 +1302,8 @@ static inline void __sctk_delete_mpc_request (MPI_Request * req,
 			/* Set the source request to NULL */
 			*req = MPI_REQUEST_NULL;
 		}
-	}
-		
+	} 
+	sctk_spinlock_unlock (&(tmp->lock));
 
 }
 
