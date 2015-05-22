@@ -49,8 +49,8 @@
 TODO("Optimize algorithme for derived types")
 
 #define ENABLE_COLLECTIVES_ON_INTERCOMM  
-#define MPC_MPI_USE_REQUEST_CACHE
-#define MPC_MPI_USE_LOCAL_REQUESTS_QUEUE
+//#define MPC_MPI_USE_REQUEST_CACHE
+//#define MPC_MPI_USE_LOCAL_REQUESTS_QUEUE
 
 static int __INTERNAL__PMPI_Attr_set_fortran (int keyval);
 
@@ -1808,14 +1808,14 @@ __INTERNAL__PMPI_Ibsend_test_req (void *buf, int count, MPI_Datatype datatype,
       if(is_valid_request == 1){
         MPI_internal_request_t* tmp_request;
 
-        tmp_request = (MPI_internal_request_t *)__sctk_convert_mpc_request (request,requests);
+        tmp_request = __sctk_convert_mpc_request_internal (request,requests);
         tmp_request->req.completion_flag = SCTK_MESSAGE_DONE;
 
       } else {
 //	*request = MPI_REQUEST_NULL;
 	MPI_internal_request_t* tmp_request;
 	__sctk_new_mpc_request (request,requests);
-	tmp_request = (MPI_internal_request_t *)__sctk_convert_mpc_request (request,requests);
+	tmp_request = __sctk_convert_mpc_request_internal (request,requests);
 	tmp_request->req.completion_flag = SCTK_MESSAGE_DONE;
       }
 
