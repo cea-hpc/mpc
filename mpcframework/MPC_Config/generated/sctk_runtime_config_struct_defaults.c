@@ -100,6 +100,96 @@ void sctk_runtime_config_struct_init_debugger(void * struct_ptr)
 }
 
 /*******************  FUNCTION  *********************/
+void sctk_runtime_config_struct_init_collectives_intra(void * struct_ptr)
+{
+	struct sctk_runtime_config_struct_collectives_intra * obj = struct_ptr;
+	/* Make sure this element is not initialized yet       */
+	/* It allows us to know when we are facing dynamically */
+	/* allocated objects requiring an init                 */
+	if( obj->init_done != 0 ) return;
+
+	/* Simple params : */
+	obj->barrier_intra.name = "__INTERNAL__PMPI_Barrier_intra";
+	*(void **) &(obj->barrier_intra.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Barrier_intra");
+	obj->bcast_intra.name = "__INTERNAL__PMPI_Bcast_intra";
+	*(void **) &(obj->bcast_intra.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Bcast_intra");
+	obj->allgather_intra.name = "__INTERNAL__PMPI_Allgather_intra";
+	*(void **) &(obj->allgather_intra.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Allgather_intra");
+	obj->allgatherv_intra.name = "__INTERNAL__PMPI_Allgatherv_intra";
+	*(void **) &(obj->allgatherv_intra.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Allgatherv_intra");
+	obj->alltoall_intra.name = "__INTERNAL__PMPI_Alltoall_intra";
+	*(void **) &(obj->alltoall_intra.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Alltoall_intra");
+	obj->alltoallv_intra.name = "__INTERNAL__PMPI_Alltoallv_intra";
+	*(void **) &(obj->alltoallv_intra.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Alltoallv_intra");
+	obj->alltoallw_intra.name = "__INTERNAL__PMPI_Alltoallw_intra";
+	*(void **) &(obj->alltoallw_intra.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Alltoallw_intra");
+	obj->gather_intra.name = "__INTERNAL__PMPI_Gather_intra";
+	*(void **) &(obj->gather_intra.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Gather_intra");
+	obj->gatherv_intra.name = "__INTERNAL__PMPI_Gatherv_intra";
+	*(void **) &(obj->gatherv_intra.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Gatherv_intra");
+	obj->scatter_intra.name = "__INTERNAL__PMPI_Scatter_intra";
+	*(void **) &(obj->scatter_intra.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Scatter_intra");
+	obj->scatterv_intra.name = "__INTERNAL__PMPI_Scatterv_intra";
+	*(void **) &(obj->scatterv_intra.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Scatterv_intra");
+	obj->scan_intra.name = "__INTERNAL__PMPI_Scan_intra";
+	*(void **) &(obj->scan_intra.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Scan_intra");
+	obj->exscan_intra.name = "__INTERNAL__PMPI_Exscan_intra";
+	*(void **) &(obj->exscan_intra.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Exscan_intra");
+	obj->reduce_intra.name = "__INTERNAL__PMPI_Reduce_intra";
+	*(void **) &(obj->reduce_intra.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Reduce_intra");
+	obj->allreduce_intra.name = "__INTERNAL__PMPI_Allreduce_intra";
+	*(void **) &(obj->allreduce_intra.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Allreduce_intra");
+	obj->reduce_scatter_intra.name = "__INTERNAL__PMPI_Reduce_scatter_intra";
+	*(void **) &(obj->reduce_scatter_intra.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Reduce_scatter_intra");
+	obj->reduce_scatter_block_intra.name = "__INTERNAL__PMPI_Reduce_scatter_block_intra";
+	*(void **) &(obj->reduce_scatter_block_intra.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Reduce_scatter_block_intra");
+	obj->init_done = 1;
+}
+
+/*******************  FUNCTION  *********************/
+void sctk_runtime_config_struct_init_collectives_inter(void * struct_ptr)
+{
+	struct sctk_runtime_config_struct_collectives_inter * obj = struct_ptr;
+	/* Make sure this element is not initialized yet       */
+	/* It allows us to know when we are facing dynamically */
+	/* allocated objects requiring an init                 */
+	if( obj->init_done != 0 ) return;
+
+	/* Simple params : */
+	obj->barrier_inter.name = "__INTERNAL__PMPI_Barrier_inter";
+	*(void **) &(obj->barrier_inter.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Barrier_inter");
+	obj->bcast_inter.name = "__INTERNAL__PMPI_Bcast_inter";
+	*(void **) &(obj->bcast_inter.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Bcast_inter");
+	obj->allgather_inter.name = "__INTERNAL__PMPI_Allgather_inter";
+	*(void **) &(obj->allgather_inter.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Allgather_inter");
+	obj->allgatherv_inter.name = "__INTERNAL__PMPI_Allgatherv_inter";
+	*(void **) &(obj->allgatherv_inter.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Allgatherv_inter");
+	obj->alltoall_inter.name = "__INTERNAL__PMPI_Alltoall_inter";
+	*(void **) &(obj->alltoall_inter.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Alltoall_inter");
+	obj->alltoallv_inter.name = "__INTERNAL__PMPI_Alltoallv_inter";
+	*(void **) &(obj->alltoallv_inter.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Alltoallv_inter");
+	obj->alltoallw_inter.name = "__INTERNAL__PMPI_Alltoallw_inter";
+	*(void **) &(obj->alltoallw_inter.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Alltoallw_inter");
+	obj->gather_inter.name = "__INTERNAL__PMPI_Gather_inter";
+	*(void **) &(obj->gather_inter.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Gather_inter");
+	obj->gatherv_inter.name = "__INTERNAL__PMPI_Gatherv_inter";
+	*(void **) &(obj->gatherv_inter.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Gatherv_inter");
+	obj->scatter_inter.name = "__INTERNAL__PMPI_Scatter_inter";
+	*(void **) &(obj->scatter_inter.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Scatter_inter");
+	obj->scatterv_inter.name = "__INTERNAL__PMPI_Scatterv_inter";
+	*(void **) &(obj->scatterv_inter.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Scatterv_inter");
+	obj->reduce_inter.name = "__INTERNAL__PMPI_Reduce_inter";
+	*(void **) &(obj->reduce_inter.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Reduce_inter");
+	obj->allreduce_inter.name = "__INTERNAL__PMPI_Allreduce_inter";
+	*(void **) &(obj->allreduce_inter.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Allreduce_inter");
+	obj->reduce_scatter_inter.name = "__INTERNAL__PMPI_Reduce_scatter_inter";
+	*(void **) &(obj->reduce_scatter_inter.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Reduce_scatter_inter");
+	obj->reduce_scatter_block_inter.name = "__INTERNAL__PMPI_Reduce_scatter_block_inter";
+	*(void **) &(obj->reduce_scatter_block_inter.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Reduce_scatter_block_inter");
+	obj->init_done = 1;
+}
+
+/*******************  FUNCTION  *********************/
 void sctk_runtime_config_struct_init_net_driver_topological(void * struct_ptr)
 {
 	struct sctk_runtime_config_struct_net_driver_topological * obj = struct_ptr;
@@ -556,84 +646,6 @@ void sctk_runtime_config_struct_init_mpc(void * struct_ptr)
 }
 
 /*******************  FUNCTION  *********************/
-void sctk_runtime_config_struct_init_collectives_intra(void * struct_ptr)
-{
-	struct sctk_runtime_config_struct_collectives_intra * obj = struct_ptr;
-	/* Simple params : */
-	obj->barrier_intra.name = "__INTERNAL__PMPI_Barrier_intra";
-	*(void **) &(obj->barrier_intra.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Barrier_intra");
-	obj->bcast_intra.name = "__INTERNAL__PMPI_Bcast_intra";
-	*(void **) &(obj->bcast_intra.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Bcast_intra");
-	obj->allgather_intra.name = "__INTERNAL__PMPI_Allgather_intra";
-	*(void **) &(obj->allgather_intra.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Allgather_intra");
-	obj->allgatherv_intra.name = "__INTERNAL__PMPI_Allgatherv_intra";
-	*(void **) &(obj->allgatherv_intra.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Allgatherv_intra");
-	obj->alltoall_intra.name = "__INTERNAL__PMPI_Alltoall_intra";
-	*(void **) &(obj->alltoall_intra.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Alltoall_intra");
-	obj->alltoallv_intra.name = "__INTERNAL__PMPI_Alltoallv_intra";
-	*(void **) &(obj->alltoallv_intra.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Alltoallv_intra");
-	obj->alltoallw_intra.name = "__INTERNAL__PMPI_Alltoallw_intra";
-	*(void **) &(obj->alltoallw_intra.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Alltoallw_intra");
-	obj->gather_intra.name = "__INTERNAL__PMPI_Gather_intra";
-	*(void **) &(obj->gather_intra.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Gather_intra");
-	obj->gatherv_intra.name = "__INTERNAL__PMPI_Gatherv_intra";
-	*(void **) &(obj->gatherv_intra.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Gatherv_intra");
-	obj->scatter_intra.name = "__INTERNAL__PMPI_Scatter_intra";
-	*(void **) &(obj->scatter_intra.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Scatter_intra");
-	obj->scatterv_intra.name = "__INTERNAL__PMPI_Scatterv_intra";
-	*(void **) &(obj->scatterv_intra.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Scatterv_intra");
-	obj->scan_intra.name = "__INTERNAL__PMPI_Scan_intra";
-	*(void **) &(obj->scan_intra.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Scan_intra");
-	obj->exscan_intra.name = "__INTERNAL__PMPI_Exscan_intra";
-	*(void **) &(obj->exscan_intra.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Exscan_intra");
-	obj->reduce_intra.name = "__INTERNAL__PMPI_Reduce_intra";
-	*(void **) &(obj->reduce_intra.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Reduce_intra");
-	obj->allreduce_intra.name = "__INTERNAL__PMPI_Allreduce_intra";
-	*(void **) &(obj->allreduce_intra.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Allreduce_intra");
-	obj->reduce_scatter_intra.name = "__INTERNAL__PMPI_Reduce_scatter_intra";
-	*(void **) &(obj->reduce_scatter_intra.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Reduce_scatter_intra");
-	obj->reduce_scatter_block_intra.name = "__INTERNAL__PMPI_Reduce_scatter_block_intra";
-	*(void **) &(obj->reduce_scatter_block_intra.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Reduce_scatter_block_intra");
-}
-
-/*******************  FUNCTION  *********************/
-void sctk_runtime_config_struct_init_collectives_inter(void * struct_ptr)
-{
-	struct sctk_runtime_config_struct_collectives_inter * obj = struct_ptr;
-	/* Simple params : */
-	obj->barrier_inter.name = "__INTERNAL__PMPI_Barrier_inter";
-	*(void **) &(obj->barrier_inter.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Barrier_inter");
-	obj->bcast_inter.name = "__INTERNAL__PMPI_Bcast_inter";
-	*(void **) &(obj->bcast_inter.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Bcast_inter");
-	obj->allgather_inter.name = "__INTERNAL__PMPI_Allgather_inter";
-	*(void **) &(obj->allgather_inter.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Allgather_inter");
-	obj->allgatherv_inter.name = "__INTERNAL__PMPI_Allgatherv_inter";
-	*(void **) &(obj->allgatherv_inter.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Allgatherv_inter");
-	obj->alltoall_inter.name = "__INTERNAL__PMPI_Alltoall_inter";
-	*(void **) &(obj->alltoall_inter.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Alltoall_inter");
-	obj->alltoallv_inter.name = "__INTERNAL__PMPI_Alltoallv_inter";
-	*(void **) &(obj->alltoallv_inter.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Alltoallv_inter");
-	obj->alltoallw_inter.name = "__INTERNAL__PMPI_Alltoallw_inter";
-	*(void **) &(obj->alltoallw_inter.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Alltoallw_inter");
-	obj->gather_inter.name = "__INTERNAL__PMPI_Gather_inter";
-	*(void **) &(obj->gather_inter.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Gather_inter");
-	obj->gatherv_inter.name = "__INTERNAL__PMPI_Gatherv_inter";
-	*(void **) &(obj->gatherv_inter.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Gatherv_inter");
-	obj->scatter_inter.name = "__INTERNAL__PMPI_Scatter_inter";
-	*(void **) &(obj->scatter_inter.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Scatter_inter");
-	obj->scatterv_inter.name = "__INTERNAL__PMPI_Scatterv_inter";
-	*(void **) &(obj->scatterv_inter.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Scatterv_inter");
-	obj->reduce_inter.name = "__INTERNAL__PMPI_Reduce_inter";
-	*(void **) &(obj->reduce_inter.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Reduce_inter");
-	obj->allreduce_inter.name = "__INTERNAL__PMPI_Allreduce_inter";
-	*(void **) &(obj->allreduce_inter.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Allreduce_inter");
-	obj->reduce_scatter_inter.name = "__INTERNAL__PMPI_Reduce_scatter_inter";
-	*(void **) &(obj->reduce_scatter_inter.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Reduce_scatter_inter");
-	obj->reduce_scatter_block_inter.name = "__INTERNAL__PMPI_Reduce_scatter_block_inter";
-	*(void **) &(obj->reduce_scatter_block_inter.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Reduce_scatter_block_inter");
-}
-
-/*******************  FUNCTION  *********************/
 void sctk_runtime_config_struct_init_openmp(void * struct_ptr)
 {
 	struct sctk_runtime_config_struct_openmp * obj = struct_ptr;
@@ -713,16 +725,13 @@ void sctk_runtime_config_reset(struct sctk_runtime_config * config)
 	sctk_runtime_config_struct_init_allocator(&config->modules.allocator);
 	sctk_runtime_config_struct_init_launcher(&config->modules.launcher);
 	sctk_runtime_config_struct_init_debugger(&config->modules.debugger);
+	sctk_runtime_config_struct_init_collectives_intra(&config->modules.collectives_intra);
+	sctk_runtime_config_struct_init_collectives_inter(&config->modules.collectives_inter);
 	sctk_runtime_config_struct_init_inter_thread_comm(&config->modules.inter_thread_comm);
 	sctk_runtime_config_struct_init_low_level_comm(&config->modules.low_level_comm);
 	sctk_runtime_config_struct_init_mpc(&config->modules.mpc);
 	sctk_runtime_config_enum_init_ibv_rdvz_protocol();
-<<<<<<< HEAD
 	sctk_runtime_config_enum_init_rail_topological_polling_level();
-=======
-	sctk_runtime_config_struct_init_collectives_intra(&config->modules.collectives_intra);
-	sctk_runtime_config_struct_init_collectives_inter(&config->modules.collectives_inter);
->>>>>>> 	New_collectives:
 	sctk_runtime_config_struct_init_openmp(&config->modules.openmp);
 	sctk_runtime_config_struct_init_profiler(&config->modules.profiler);
 	sctk_runtime_config_struct_init_thread(&config->modules.thread);
@@ -766,6 +775,18 @@ void sctk_runtime_config_reset_struct_default_if_needed(char * structname, void 
 	if( !strcmp( structname , "sctk_runtime_config_struct_debugger") )
 	{
 		sctk_runtime_config_struct_init_debugger( ptr );
+		return;
+	}
+
+	if( !strcmp( structname , "sctk_runtime_config_struct_collectives_intra") )
+	{
+		sctk_runtime_config_struct_init_collectives_intra( ptr );
+		return;
+	}
+
+	if( !strcmp( structname , "sctk_runtime_config_struct_collectives_inter") )
+	{
+		sctk_runtime_config_struct_init_collectives_inter( ptr );
 		return;
 	}
 
