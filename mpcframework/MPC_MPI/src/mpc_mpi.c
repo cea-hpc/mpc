@@ -14158,13 +14158,6 @@ PMPI_Scan (void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
 {
 	int res = MPI_ERR_INTERN;
 	
-	/* Invalid operation for intercommunicators */
-	if(sctk_is_inter_comm (comm)){
-		MPI_ERROR_REPORT(comm,MPI_ERR_COMM,"");
-	}
-	/* Profiling */
-	SCTK_PROFIL_START (MPI_Scan);
-	
 	/* Error checking */
 	mpi_check_comm (comm, comm);
 	mpi_check_buf (sendbuf, comm);
@@ -14172,6 +14165,14 @@ PMPI_Scan (void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
 	mpi_check_count (count, comm);
 	mpi_check_type (datatype, comm);
 	mpi_check_op (op, datatype,comm);
+
+	/* Invalid operation for intercommunicators */
+	if(sctk_is_inter_comm (comm)){
+		MPI_ERROR_REPORT(comm,MPI_ERR_COMM,"");
+	}
+	/* Profiling */
+	SCTK_PROFIL_START (MPI_Scan);
+	
 	
 	/* Internal */
 	res = __INTERNAL__PMPI_Scan (sendbuf, recvbuf, count, datatype, op, comm);
