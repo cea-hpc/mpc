@@ -3013,9 +3013,18 @@ static int __INTERNAL__PMPI_Type_contiguous_inherits (unsigned long count, MPI_D
 		 * Output : ABCABCABC... of length count_out
 		 */
 
+		long new_ub = input_datatype.ub;
+		long new_lb = input_datatype.lb;
+		long next_ub,next_lb,cur_ub,cur_lb;
+		
+		next_ub = input_datatype.ub;
+		next_lb = input_datatype.lb;
+
 		for (i = 0; i < count_out; i++)
 		{
-	
+		        cur_ub = next_ub;
+			cur_lb = next_lb;
+
 			begins_out[i] = input_datatype.begins[i % input_datatype.count]    /* Original begin offset in the input block */
 							+ extent * (i / input_datatype.count); /* New offset due to type replication */
 							
@@ -3023,21 +3032,29 @@ static int __INTERNAL__PMPI_Type_contiguous_inherits (unsigned long count, MPI_D
 							+ extent * (i / input_datatype.count); /* New offset due to type replication */
 			
 			datatypes[i] = input_datatype.datatypes[i % input_datatype.count];
+
+			if(i % input_datatype.count == input_datatype.count - 1){   
+			  next_ub = cur_ub + extent;
+			  next_lb = cur_ub;
+			  
+			  if(cur_ub > new_ub) new_ub = cur_ub;
+			  if(cur_lb < new_lb) new_lb = cur_lb;
+			}
+
 			
 			sctk_nodebug ("%d , %lu-%lu <- %lu-%lu", i, begins_out[i],
 					ends_out[i], input_datatype.begins[i % input_datatype.count],
 					input_datatype.ends[i % input_datatype.count]);
 		}
 
-		/* Update new type upperbound */
-		long new_ub = input_datatype.ub + extent * (count - 1);
-
 		/* Handle the NULL count case */
-		if( !count )
+		if( !count ){
 			new_ub = 0;
+			new_lb = 0;
+		}
 		
 		/* Actually create the new datatype */
-		PMPC_Derived_datatype (data_out, begins_out, ends_out, datatypes, count_out, input_datatype.lb,	input_datatype.is_lb, new_ub, input_datatype.is_ub, dtctx);
+		PMPC_Derived_datatype (data_out, begins_out, ends_out, datatypes, count_out, new_lb,	input_datatype.is_lb, new_ub, input_datatype.is_ub, dtctx);
 
 		/* Free temporary buffers */
 		sctk_free (datatypes);
