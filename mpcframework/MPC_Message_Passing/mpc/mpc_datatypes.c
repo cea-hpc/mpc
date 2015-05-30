@@ -672,11 +672,15 @@ void sctk_derived_datatype_true_extent( sctk_derived_datatype_t * type , mpc_pac
 	
 	for( i = 0 ; i < type->count ; i++ )
 	{
-		if( !min_set || ( type->begins[i] < min_index ) )
-			min_index = type->begins[i];
+	  if( !min_set || ( type->begins[i] < min_index ) ){
+	    min_index = type->begins[i];
+	    min_set = 1;
+	  }
 		
-		if( !max_set || ( max_index < type->ends[i] ) )
-			max_index = type->ends[i];
+	  if( !max_set || ( max_index < type->ends[i] ) ){
+	    max_index = type->ends[i];
+	    max_set = 1;
+	  }
 		
 	}
 	
