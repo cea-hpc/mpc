@@ -22,6 +22,7 @@
 /* #   - DIDELOT Sylvain sylvain.didelot@exascale-computing.eu            # */
 /* #                                                                      # */
 /* ######################################################################## */
+#ifdef MPC_USE_INFINIBAND
 #include "sctk_ib_device.h"
 #include "sctk_ib_toolkit.h"
 #include "sctk_device_topology.h"
@@ -235,3 +236,4 @@ struct ibv_cq *sctk_ib_cq_init ( sctk_ib_device_t *device,
 
 	return cq;
 }
+#endif

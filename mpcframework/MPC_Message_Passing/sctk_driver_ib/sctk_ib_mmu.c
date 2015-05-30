@@ -19,6 +19,7 @@
 /* #   - BESNARD Jean-Baptiste jbbesnard@paratools.fr                     # */
 /* #                                                                      # */
 /* ######################################################################## */
+#ifdef MPC_USE_INFINIBAND
 #include "sctk_ib_mmu.h"
 #include "sctk_ib_device.h"
 #include "sctk_runtime_config.h"
@@ -634,3 +635,4 @@ void test_topological_mmu()
 }
 
 
+#endif
