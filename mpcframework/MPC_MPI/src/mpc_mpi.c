@@ -3194,11 +3194,24 @@ static int __INTERNAL__PMPI_Type_hvector (int count,
 		int i;
 		int j;
 		unsigned long k;
+
+
+		long new_ub = input_datatype.ub;
+		long new_lb = input_datatype.lb;
+		long next_ub,next_lb,cur_ub,cur_lb;
+		
+		next_ub = input_datatype.ub;
+		next_lb = input_datatype.lb;
+
+
 		for (i = 0; i < count; i++)
 		{
 			/* For block */
 			for (j = 0; j < blocklen; j++)
 			{
+			        cur_ub = next_ub;
+				cur_lb = next_lb;
+
 				/* For each block in the block length */
 				for (k = 0; k < input_datatype.count; k++)
 				{
@@ -3206,15 +3219,21 @@ static int __INTERNAL__PMPI_Type_hvector (int count,
 					begins_out[(i * blocklen + j) * input_datatype.count + k] =	input_datatype.begins[k] + (stride_t * i) + (j * extent);
 					ends_out[(i * blocklen + j) * input_datatype.count + k] = input_datatype.ends[k] + (stride_t * i) + (j * extent);
 					datatypes[(i * blocklen + j) * input_datatype.count + k] = input_datatype.datatypes[k];
-				}
+				}                
+				next_ub = cur_ub + extent;
+				next_lb = cur_lb + extent;
+				
+				if(cur_ub > new_ub) new_ub = cur_ub;
+				if(cur_lb < new_lb) new_lb = cur_lb;
 			}
+			
+			next_ub = input_datatype.ub + ((stride* (i + 1)));
+			next_lb = input_datatype.lb + ((stride* (i + 1)));
+			
 		}
 
-		/* Compute the new upper bound */
-		int new_ub = input_datatype.ub + extent * stride * (count - 1) + extent * (blocklen - 1);
-		
 		/* Create the derived datatype */
-		PMPC_Derived_datatype (newtype_p, begins_out, ends_out, datatypes, count_out, input_datatype.lb, input_datatype.is_lb, new_ub, input_datatype.is_ub, &dtctx);
+		PMPC_Derived_datatype (newtype_p, begins_out, ends_out, datatypes, count_out, new_lb, input_datatype.is_lb, new_ub, input_datatype.is_ub, &dtctx);
 		
 		/* Free temporary arrays */
 		sctk_free (begins_out);
