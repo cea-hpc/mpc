@@ -7808,6 +7808,36 @@ __INTERNAL__PMPI_Allreduce_intra (void *sendbuf, void *recvbuf, int count,
 	return res;
 }
 
+static int
+__INTERNAL__PMPI_copy_buffer(void *sendbuf, void *recvbuf, int count,
+			     MPI_Datatype datatype){
+
+  int res = MPI_ERR_INTERN;
+  if(sctk_datatype_is_derived (datatype) && (count != 0)){
+    MPI_Request request_send;
+    MPI_Request request_recv;
+    
+    res = __INTERNAL__PMPI_Isend (sendbuf, count, datatype, 
+				  0, MPC_COPY_TAG, MPI_COMM_SELF, &request_send);
+    if(res != MPI_SUCCESS){return res;}
+    
+    res = __INTERNAL__PMPI_Irecv (recvbuf, count, datatype, 
+				 0, MPC_COPY_TAG, MPI_COMM_SELF, &request_recv);
+    if(res != MPI_SUCCESS){return res;}
+    
+    res = __INTERNAL__PMPI_Wait (&(request_recv), MPI_STATUS_IGNORE);
+    if(res != MPI_SUCCESS){return res;}
+    
+    res = __INTERNAL__PMPI_Wait (&(request_send), MPI_STATUS_IGNORE);
+    if(res != MPI_SUCCESS){return res;}
+  } else {
+      MPI_Aint dsize;
+      res = __INTERNAL__PMPI_Type_extent (datatype, &dsize);
+      if(res != MPI_SUCCESS){return res;}
+      memcpy(recvbuf,sendbuf,count*dsize);
+  }
+  return res;
+}
 int
 __INTERNAL__PMPI_Allreduce_inter (void *sendbuf, void *recvbuf, int count,
 			    MPI_Datatype datatype, MPI_Op op, MPI_Comm comm)

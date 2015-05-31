@@ -61,6 +61,10 @@
 #ifdef MPC_Message_Passing
 #include "sctk_low_level_comm.h"
 #endif
+
+
+MPC_Op_f sctk_get_common_function (MPC_Datatype datatype, MPC_Op op);
+
  /************************************************************************/
  /*MPC STATUS                                                            */
  /************************************************************************/
