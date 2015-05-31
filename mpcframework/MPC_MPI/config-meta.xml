@@ -17,7 +17,7 @@
             <param name="scan_intra" type="funcptr" default="__INTERNAL__PMPI_Scan_intra" doc="MPI_Scan intracom algorithm"/>
             <param name="exscan_intra" type="funcptr" default="__INTERNAL__PMPI_Exscan_intra" doc="MPI_Exscan intracom algorithm"/>
             <param name="reduce_intra" type="funcptr" default="__INTERNAL__PMPI_Reduce_intra" doc="MPI_Reduce intracom algorithm"/>
-            <param name="allreduce_intra" type="funcptr" default="__INTERNAL__PMPI_Allreduce_intra" doc="MPI_Allreduce intracom algorithm"/>
+            <param name="allreduce_intra" type="funcptr" default="__INTERNAL__PMPI_Allreduce_intra_binary_tree" doc="MPI_Allreduce intracom algorithm"/>
             <param name="reduce_scatter_intra" type="funcptr" default="__INTERNAL__PMPI_Reduce_scatter_intra" doc="MPI_Reduce_scatter intracom algorithm"/>
             <param name="reduce_scatter_block_intra" type="funcptr" default="__INTERNAL__PMPI_Reduce_scatter_block_intra" doc="MPI_Reduce_scatter_block intracom algorithm"/>
         </struct>
