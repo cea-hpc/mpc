@@ -137,8 +137,8 @@ void sctk_runtime_config_struct_init_collectives_intra(void * struct_ptr)
 	*(void **) &(obj->exscan_intra.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Exscan_intra");
 	obj->reduce_intra.name = "__INTERNAL__PMPI_Reduce_intra";
 	*(void **) &(obj->reduce_intra.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Reduce_intra");
-	obj->allreduce_intra.name = "__INTERNAL__PMPI_Allreduce_intra_binary_tree";
-	*(void **) &(obj->allreduce_intra.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Allreduce_intra_binary_tree");
+	obj->allreduce_intra.name = "__INTERNAL__PMPI_Allreduce_intra";
+	*(void **) &(obj->allreduce_intra.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Allreduce_intra");
 	obj->reduce_scatter_intra.name = "__INTERNAL__PMPI_Reduce_scatter_intra";
 	*(void **) &(obj->reduce_scatter_intra.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Reduce_scatter_intra");
 	obj->reduce_scatter_block_intra.name = "__INTERNAL__PMPI_Reduce_scatter_block_intra";
