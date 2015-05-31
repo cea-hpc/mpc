@@ -7838,6 +7838,123 @@ __INTERNAL__PMPI_copy_buffer(void *sendbuf, void *recvbuf, int count,
   }
   return res;
 }
+
+int
+__INTERNAL__PMPI_Allreduce_intra_binary_tree (void *sendbuf, void *recvbuf, int count,
+					      MPI_Datatype datatype, MPI_Op op, MPI_Comm comm)
+{
+  int res = MPI_ERR_INTERN;
+  MPC_Op mpc_op;
+  sctk_op_t *mpi_op;
+  int size;
+  int rank;
+
+  mpi_op = sctk_convert_to_mpc_op (op);
+  mpc_op = mpi_op->op;
+	
+  res = __INTERNAL__PMPI_Comm_rank (comm, &rank);
+  if(res != MPI_SUCCESS){return res;}
+  res = __INTERNAL__PMPI_Comm_size (comm, &size);
+  if(res != MPI_SUCCESS){return res;}
+
+  if((mpi_op->commute == 0) || (size ==1) || (size % 2 != 0))
+    {
+      res = __INTERNAL__PMPI_Allreduce_intra(sendbuf,recvbuf,count,datatype,op,comm);
+      if(res != MPI_SUCCESS){return res;}
+    } 
+  else 
+    {
+      void* tmp_buf;
+      MPI_Aint dsize;
+      int allocated = 0; 
+      int is_MPI_IN_PLACE = 0;
+      int step = 2;
+
+      MPC_Op_f func;
+      func = sctk_get_common_function(datatype, mpc_op);
+
+      res = __INTERNAL__PMPI_Type_extent (datatype, &dsize);
+      if(res != MPI_SUCCESS){return res;}
+	    
+      tmp_buf = malloc(count*dsize);
+      if(sendbuf == MPI_IN_PLACE){
+	is_MPI_IN_PLACE = 1;
+	sendbuf = recvbuf;
+      }
+      allocated = 1;
+
+      if(is_MPI_IN_PLACE == 0){
+	res = __INTERNAL__PMPI_copy_buffer(sendbuf,recvbuf,count,datatype);
+	if(res != MPI_SUCCESS){return res;}
+      }
+	   
+      for(step = 1; step < size; step = step *2){
+	if(rank % (2*step) != 0){
+	  MPI_Request request_send;
+
+	  //fprintf(stderr,"DOWN STEP %d %d Send to %d\n",step,rank,rank-step);
+
+	  res = __INTERNAL__PMPI_Isend (recvbuf, count, datatype, 
+					rank - step, MPC_ALLREDUCE_TAG, comm, &request_send);
+	  if(res != MPI_SUCCESS){return res;}
+				
+	  res = __INTERNAL__PMPI_Wait (&(request_send), MPI_STATUS_IGNORE);
+	  if(res != MPI_SUCCESS){return res;}
+
+	  step = step *2;
+	  break;
+		
+	} else {
+	  if(rank + step < size){
+	    //fprintf(stderr,"DOWN STEP %d %d Recv from %d\n",step,rank,rank+step);
+	    res = __INTERNAL__PMPI_Recv (tmp_buf, count, datatype, 
+					 rank + step, MPC_ALLREDUCE_TAG, comm, MPI_STATUS_IGNORE);
+	    if(res != MPI_SUCCESS){return res;}
+		  
+		  
+	    if (mpc_op.u_func != NULL)
+	      {
+		mpc_op.u_func(tmp_buf, recvbuf, &count, &datatype);
+	      }
+	    else
+	      {
+		func(tmp_buf, recvbuf, count, datatype);
+	      }
+		  
+	  }
+	}
+      }
+
+      step = step / 2;
+      //fprintf(stderr,"DONE %d STEP %d\n",rank,step);
+
+      for(;step > 0;step = step / 2){
+	if(rank % (2*step) == 0){
+	  if(rank+step < size){
+	    MPI_Request request_send;
+	    //fprintf(stderr,"UP STEP %d %d Send to %d\n",step,rank,rank+step);
+	    res = __INTERNAL__PMPI_Isend (recvbuf, count, datatype, 
+					  rank + step, MPC_ALLREDUCE_TAG, comm, &request_send);
+	    if(res != MPI_SUCCESS){return res;}
+	    
+	    res = __INTERNAL__PMPI_Wait (&(request_send), MPI_STATUS_IGNORE);
+	    if(res != MPI_SUCCESS){return res;}
+	  }
+	} else {
+	  //fprintf(stderr,"UP STEP %d %d Recv from %d\n",step,rank,rank-step);
+	  res = __INTERNAL__PMPI_Recv (recvbuf, count, datatype, 
+				       rank - step, MPC_ALLREDUCE_TAG, comm, MPI_STATUS_IGNORE);
+	}	
+      }
+ 
+      if(allocated == 1){
+	free(tmp_buf);
+      }
+    }
+  //__INTERNAL__PMPI_Barrier(comm);
+  return res;
+}
+
 int
 __INTERNAL__PMPI_Allreduce_inter (void *sendbuf, void *recvbuf, int count,
 			    MPI_Datatype datatype, MPI_Op op, MPI_Comm comm)
