@@ -38,7 +38,7 @@ extern "C"
 
 
 /** Not using datatypes */
-#define MPC_DATATYPE_IGNORE NULL
+#define MPC_DATATYPE_IGNORE ((MPC_Datatype)0)
 
 
 /* Defines if we are in a full MPI mode */
