@@ -222,7 +222,7 @@ extern MPC_Request mpc_request_null;
 #define MPC_STATUSES_IGNORE NULL
 #define MPC_ANY_TAG -1
 #define MPC_ANY_SOURCE -1
-#define MPC_PROC_NULL -2
+#define MPC_PROC_NULL SCTK_PROC_NULL
 #define MPC_MAX_PROCESSOR_NAME 255
 #define MPC_ROOT -4
 #define MPC_MAX_OBJECT_NAME 256
@@ -740,7 +740,7 @@ int MPC_Test_cancelled (MPC_Status *, int *);
   /*MPI compatibility*/
 #define MPC_BSEND_OVERHEAD 0
 #define MPC_BOTTOM ((void*)0)
-#define MPC_IN_PLACE ((void*)-1)
+#define MPC_IN_PLACE SCTK_IN_PLACE
 
 
 

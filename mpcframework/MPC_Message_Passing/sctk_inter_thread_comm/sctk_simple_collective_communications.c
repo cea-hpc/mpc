@@ -166,7 +166,7 @@ static void sctk_allreduce_simple ( const void *buffer_in, void *buffer_out,
 
 		if ( tmp->allreduce.allreduce_simple.done == 0 )
 		{
-			if ( buffer_in != MPC_IN_PLACE )
+			if ( buffer_in != SCTK_IN_PLACE )
 			{
 				memcpy ( tmp->allreduce.allreduce_simple.buffer, buffer_in, size );
 			}

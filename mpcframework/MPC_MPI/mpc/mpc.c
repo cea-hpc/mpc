@@ -398,28 +398,7 @@ static inline void sctk_mpc_init_request_null(){
 
 void sctk_mpc_init_request (MPC_Request * request, MPC_Comm comm, int src, int request_type)
 {
-  if (request != NULL)
-    {
-      request->header.source = MPC_PROC_NULL;
-      request->header.destination = MPC_PROC_NULL;
-      request->header.source_task = MPC_PROC_NULL;
-      request->header.destination_task = MPC_PROC_NULL;
-      request->header.message_tag = MPC_ANY_TAG;
-      request->header.communicator = comm;
-      request->header.msg_size = 0;
-      request->completion_flag = SCTK_MESSAGE_DONE;
-      request->request_type = request_type;
-      request->is_null = 0;
-      request->truncated = 0;
-      request->msg = NULL;
-      request->query_fn = NULL;
-      request->cancel_fn = NULL;
-      request->wait_fn = NULL;
-      request->poll_fn = NULL;
-      request->free_fn = NULL;
-      request->extra_state = NULL;
-      request->pointer_to_source_request = (void *)request;
-    }
+  sctk_init_request(request, comm, request_type);
 }
 
 static inline void sctk_mpc_register_message_in_request(MPC_Request * request,

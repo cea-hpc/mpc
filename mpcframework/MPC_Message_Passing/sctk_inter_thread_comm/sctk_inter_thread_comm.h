@@ -36,14 +36,17 @@ extern "C"
 {
 #endif
 
-
-/** Not using datatypes */
-#define MPC_DATATYPE_IGNORE ((MPC_Datatype)0)
-
-
 /* Defines if we are in a full MPI mode */
 //#define SCTK_ENABLE_SPINNING
 
+/************************************************************************/
+/* Low Level Messafe Interface                                          */
+/************************************************************************/
+
+void sctk_init_request (sctk_request_t * request, sctk_communicator_t comm, int request_type);
+void sctk_message_isend( int dest, void * data, size_t size, int tag, sctk_communicator_t comm , sctk_request_t *req );
+void sctk_message_irecv( int src, void * buffer, size_t size, int tag, sctk_communicator_t comm , sctk_request_t *req );
+void sctk_sendrecv( void * sendbuf, size_t size, int dest, int tag, void * recvbuf, int src, int comm );
 
 /************************************************************************/
 /* sctk_request_t		                                          */

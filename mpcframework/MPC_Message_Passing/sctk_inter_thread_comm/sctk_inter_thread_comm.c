@@ -160,6 +160,93 @@ typedef struct sctk_internal_ptp_s
 } sctk_internal_ptp_t;
 
 /********************************************************************/
+/*Message Interface                                                 */
+/********************************************************************/
+
+void sctk_init_request (sctk_request_t * request, sctk_communicator_t comm, int request_type)
+{
+  if (request != NULL)
+    {
+      request->header.source = MPC_PROC_NULL;
+      request->header.destination = MPC_PROC_NULL;
+      request->header.source_task = MPC_PROC_NULL;
+      request->header.destination_task = MPC_PROC_NULL;
+      request->header.message_tag = MPC_ANY_TAG;
+      request->header.communicator = comm;
+      request->header.msg_size = 0;
+      request->completion_flag = SCTK_MESSAGE_DONE;
+      request->request_type = request_type;
+      request->is_null = 0;
+      request->truncated = 0;
+      request->msg = NULL;
+      request->query_fn = NULL;
+      request->cancel_fn = NULL;
+      request->wait_fn = NULL;
+      request->poll_fn = NULL;
+      request->free_fn = NULL;
+      request->extra_state = NULL;
+      request->pointer_to_source_request = (void *)request;
+    }
+}
+
+void sctk_message_isend( int dest, void * data, size_t size, int tag, sctk_communicator_t comm , sctk_request_t *req )
+{
+	int src = sctk_get_task_rank ();
+	
+	if (dest == SCTK_PROC_NULL)
+    {
+      sctk_init_request(req,comm, REQUEST_SEND);
+      return;
+    }
+	
+	sctk_error("%d SEND TO %d TAG %d size %d", src, dest, tag, size );
+	struct sctk_internal_ptp_s * ptp_internal = sctk_get_internal_ptp ( src );
+	
+	sctk_init_request(req,comm, REQUEST_SEND);
+	
+	sctk_thread_ptp_message_t *msg = sctk_create_header( src, SCTK_MESSAGE_CONTIGUOUS);
+	sctk_add_adress_in_message( msg, data, size);
+	sctk_set_header_in_message( msg, tag, comm, src, dest, req, size, SCTK_P2P_MESSAGE, MPC_DATATYPE_IGNORE);
+	sctk_send_message (msg);
+}
+
+void sctk_message_irecv( int src, void * buffer, size_t size, int tag, sctk_communicator_t comm , sctk_request_t *req )
+{
+	int dest = sctk_get_task_rank ();
+	
+	if (src == SCTK_PROC_NULL)
+    {
+      sctk_init_request(req,comm, REQUEST_RECV);
+      return;
+    }
+	
+	sctk_error("%d RECV FROM %d TAG %d size %d", dest, src, tag, size );
+	struct sctk_internal_ptp_s * ptp_internal = sctk_get_internal_ptp ( dest );
+	
+	sctk_init_request(req,comm, REQUEST_RECV);
+	
+	sctk_thread_ptp_message_t *msg = sctk_create_header( src, SCTK_MESSAGE_CONTIGUOUS);
+	sctk_add_adress_in_message( msg, buffer, size);
+	sctk_set_header_in_message( msg, tag, comm, src, dest, req, size, SCTK_P2P_MESSAGE, MPC_DATATYPE_IGNORE);
+	sctk_recv_message (msg,ptp_internal, 0);
+}
+
+void sctk_wait_message ( sctk_request_t *request );
+
+void sctk_sendrecv( void * sendbuf, size_t size, int dest, int tag, void * recvbuf, int src, int comm )
+{
+	sctk_request_t sendreq, recvreq;
+	sctk_message_isend( dest, sendbuf, size, tag, comm , &sendreq );
+	sctk_message_irecv( src, recvbuf, size, tag, comm , &recvreq );
+	
+	sctk_error("SR %d Wait %d -> %d",sendreq.header.source_task, sendreq.header.source_task, sendreq.header.destination ); 
+	sctk_wait_message( &sendreq );
+	sctk_error("RR %d Wait %d -> %d", sendreq.header.source_task, recvreq.header.source_task, recvreq.header.destination_task ); 
+	sctk_wait_message( &recvreq );
+}
+
+
+/********************************************************************/
 /*Functions                                                         */
 /********************************************************************/
 
