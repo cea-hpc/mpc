@@ -28,9 +28,8 @@ extern "C"
 {
 #endif
 
+#include <sctk_portals_toolkit.h>
 #ifdef MPC_USE_PORTALS
-#include <sctk_spinlock.h>
-#include <portals4.h>
 
 # define ENTRY_T  ptl_me_t
 # define HANDLE_T ptl_handle_me_t
@@ -75,8 +74,6 @@ extern "C"
 
 #define TRYLOCK_SUCCESS	    0
 
-
-
 #define CHECK_RETURNVAL(x) do { int ret; \
     switch (ret = x) { \
 	case PTL_IGNORED: \
@@ -91,86 +88,23 @@ extern "C"
     } } while (0)
 
 
-typedef struct sctk_portals_data_s
+typedef struct sctk_portals_route_info_s
 {
 	ptl_process_t id;//to route
-} sctk_portals_data_t;
+} sctk_portals_route_info_t;
 
-typedef struct portals_message_s
+
+typedef struct sctk_portals_rail_info_s
 {
-
-	ptl_md_t md;
-	ptl_handle_md_t md_handle;
-	ptl_me_t me;
-	ptl_handle_me_t me_handle;
-
-	uint8_t  allocs;
-	ptl_process_t peer;
-	ptl_match_bits_t match_bits;
-	ptl_match_bits_t ignore_bits;
-	void *buffer;
-	unsigned peer_idThread;
-	unsigned my_idThread;
-	int type;
-	int tag;
-	int append_pos;
-	int append_list;
-} sctk_portals_message_t;
-
-
-typedef struct sctk_Event_s
-{
-	unsigned used;
-	//int vp;
-	ptl_pt_index_t pt_index;
-	sctk_portals_message_t msg;
-	sctk_message_to_copy_t ptrmsg;
-} sctk_Event_t;
-
-typedef struct sctk_EventL_s
-{
-	unsigned 			    nb_elems;
-	unsigned 			    nb_elems_headers;
-	sctk_Event_t 			events[SIZE_QUEUE_EVENTS];
-	struct sctk_EventL_s 	*next;
-} sctk_EventL_t;
-
-
-typedef struct sctk_EventQ_s
-{
-	unsigned SizeMsgList;
-	sctk_EventL_t ListMsg;
-
-} sctk_EventQ_t;
-
-typedef struct sctk_ProcsL_s
-{
-	unsigned 			nb_elems;
-	ptl_process_t 		Procs[SIZE_QUEUE_PROCS];
-	struct sctk_ProcsL_s 	*next;
-} sctk_ProcsL_t;
-
-
-typedef struct sctk_ProcsQ_s
-{
-	unsigned SizeList;
-	sctk_ProcsL_t List;
-
-} sctk_ProcsQ_t;
-
-typedef struct sctk_proals_rail_info_s
-{
-
-
-	ptl_ni_limits_t 	actual;
-	ptl_handle_ni_t 	ni_handle_phys;
-	ptl_process_t 		my_id;
-	int 				ntasks;
-	ptl_pt_index_t		*pt_index;
-	sctk_EventQ_t		*EvQ;				//event list, one by thread
-	ptl_handle_eq_t	*eq_h;
-	sctk_spinlock_t 	*lock;				//event list, one by thread
-	ptl_ct_event_t 		zeroCounter;
+	ptl_ni_limits_t   actual;
+	ptl_handle_ni_t   ni_handle_phys;
+	ptl_process_t     my_id;
+	int               ntasks;
+	ptl_pt_index_t    *pt_index;
+	sctk_EventQ_t     *EvQ;	//event list, one by thread
+	ptl_handle_eq_t   *eq_h;
+	sctk_spinlock_t   *lock; //event list, one by thread
+	ptl_ct_event_t    zeroCounter;
 
 } sctk_portals_rail_info_t;
 
