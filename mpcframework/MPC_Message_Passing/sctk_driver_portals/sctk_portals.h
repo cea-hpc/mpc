@@ -91,7 +91,7 @@ extern "C"
     } } while (0)
 
 
-typedef struct
+typedef struct sctk_portals_data_s
 {
 	ptl_process_t id;//to route
 } sctk_portals_data_t;
@@ -158,7 +158,7 @@ typedef struct sctk_ProcsQ_s
 
 } sctk_ProcsQ_t;
 
-typedef struct
+typedef struct sctk_proals_rail_info_s
 {
 
 
@@ -174,10 +174,7 @@ typedef struct
 
 } sctk_portals_rail_info_t;
 
-void sctk_network_init_multirail_portals ( sctk_rail_info_t *new_rail , int max_rails );
-#if 0
-void sctk_network_init_portals ( char *name, char *topology );
-#endif
+void sctk_network_init_portals ( sctk_rail_info_t *rail);
 #ifdef __cplusplus
 }
 #endif

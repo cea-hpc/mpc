@@ -45,7 +45,7 @@ typedef union
 {
 	sctk_tcp_rail_info_t tcp;	/**< TCP Rail Info */
 	sctk_ib_rail_info_t ib;	/**< IB Rail Info */
-#ifdef MPC_USE_PORTAL
+#ifdef MPC_USE_PORTALS
 	sctk_portals_rail_info_t portals; /**< Portals Info */
 #endif
 	sctk_topological_rail_info_t topological; /**< Topological rail info */
