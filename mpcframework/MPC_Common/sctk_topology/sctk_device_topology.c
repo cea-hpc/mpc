@@ -282,7 +282,7 @@ void sctk_device_init( hwloc_topology_t topology, sctk_device_t * dev , hwloc_ob
 	}
 	else
 	{
-		dev->name = "";
+		dev->name = strdup("");
 	}
 	
 	dev->vendor =  hwloc_obj_get_info_by_name( obj, "PCIVendor");
