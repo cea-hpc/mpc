@@ -20,7 +20,6 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#include <mpcmp.h>
 #include <sctk_inter_thread_comm.h>
 #include <sctk_low_level_comm.h>
 #include <sctk_communicator.h>
@@ -2359,7 +2358,7 @@ void sctk_wait_message ( sctk_request_t *request )
 			 * the MPI context */
 			while ( ! request->completion_flag )
 			{
-				MPC_Status status;
+				sctk_status_t status;
 				( request->poll_fn ) ( request->extra_state, &status );
 			}
 		}

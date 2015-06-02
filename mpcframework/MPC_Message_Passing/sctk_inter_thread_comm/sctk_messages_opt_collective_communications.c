@@ -20,7 +20,6 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#include <mpcmp.h>
 #include <sctk_collective_communications.h>
 #include <sctk_inter_thread_comm.h>
 #include <sctk_communicator.h>

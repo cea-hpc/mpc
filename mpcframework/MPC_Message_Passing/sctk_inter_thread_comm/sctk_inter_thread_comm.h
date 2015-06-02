@@ -26,10 +26,10 @@
 #include <sctk_debug.h>
 #include <sctk_communicator.h>
 #include <sctk_collective_communications.h>
-#include <mpcmp.h>
 #include <sctk_reorder.h>
 #include <sctk_ib.h>
 #include <opa_primitives.h>
+#include <sctk_types.h>
 
 #ifdef __cplusplus
 extern "C"
@@ -57,8 +57,6 @@ typedef enum
     REQUEST_RECV_COLL,
     REQUEST_GENERALIZED
 } sctk_request_type_t;
-
-typedef MPC_Request sctk_request_t;
 
 void sctk_wait_message ( sctk_request_t *request );
 int sctk_cancel_message ( sctk_request_t *msg );
@@ -183,7 +181,7 @@ typedef struct sctk_thread_message_header_s
 	int message_number; /**< Message order (for reorder) */
 	char use_message_numbering; /**< Should this message be reordered */
 	/* Content */
-	MPC_Datatype datatype; /**< Caried data-type (for matching check) */
+	sctk_datatype_t datatype; /**< Caried data-type (for matching check) */
 	size_t msg_size; /**< Message size */
 } sctk_thread_message_header_t;
 
@@ -454,7 +452,7 @@ void sctk_set_header_in_message ( sctk_thread_ptp_message_t *msg, const int mess
                                   sctk_request_t *request,
                                   const size_t count,
                                   sctk_message_class_t message_class,
-                                  MPC_Datatype datatype );
+                                  sctk_datatype_t datatype );
 void sctk_send_message ( sctk_thread_ptp_message_t *msg );
 void sctk_send_message_try_check ( sctk_thread_ptp_message_t *msg, int perform_check );
 void sctk_recv_message ( sctk_thread_ptp_message_t *msg, struct sctk_internal_ptp_s *tmp, int need_check );

@@ -22,15 +22,7 @@
 #ifndef __SCTK_COMMUNICATOR_H_
 #define __SCTK_COMMUNICATOR_H_
 
-/************************** MACROS *************************/
-/** define the MPI_COMM_WORLD internal communicator number **/
-#define SCTK_COMM_WORLD 0
-/** define the MPI_COMM_SELF internal communicator number **/
-#define SCTK_COMM_SELF 1
-
-/************************** TYPES **************************/
-/** define the communicator number type **/
-typedef int sctk_communicator_t;
+#include <sctk_types.h>
 
 /******************************** STRUCTURE *********************************/
 struct sctk_internal_collectives_struct_s;

@@ -45,6 +45,7 @@ extern "C"
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <sctk_types.h>
 
   int PMPC_Main (int argc, char **argv);
   int PMPC_User_Main (int argc, char **argv);
@@ -65,13 +66,13 @@ extern "C"
   
 typedef int MPC_Message;
 
-typedef int mpc_msg_count;
+typedef sctk_msg_count_t mpc_msg_count;
 
 typedef unsigned int mpc_pack_indexes_t;
 typedef long mpc_pack_absolute_indexes_t;
 typedef long MPC_Aint;
 typedef long MPC_Count;
-typedef int MPC_Comm;
+typedef sctk_communicator_t MPC_Comm;
 
 typedef struct
 {
@@ -92,93 +93,42 @@ extern const MPC_Group_t mpc_group_null;
 /* #define MPC_REQUEST_SIZE 30 */
 
 /* Has to match an sctk_datatype_t */
-typedef int MPC_Datatype;
-typedef void (*MPC_Op_f) (const void *, void *, size_t, MPC_Datatype);
-typedef void (MPC_User_function) (void *, void *, int *, MPC_Datatype *);
+typedef sctk_datatype_t MPC_Datatype;
 
 typedef void (MPC_Handler_function) (MPC_Comm *, int *, ...);
 typedef MPC_Handler_function *MPC_Errhandler;
 
-typedef struct
-{
-	MPC_Op_f func;
-	MPC_User_function *u_func;
-} MPC_Op;
-
+/** Reduction Operations */
+typedef sctk_Op_f MPC_Op_f;
+typedef sctk_Op_User_function MPC_User_function;
+typedef sctk_Op MPC_Op;
 #define MPC_OP_INIT {NULL,NULL}
 
-typedef struct
-{
-	int MPC_SOURCE;		/**< Source of the Message */
-	int MPC_TAG;		/**< Tag of the message */
-	int MPC_ERROR;		/**< Did we encounter an error */
-	int cancelled;		/**< Was the message canceled */
-	mpc_msg_count size;	/**< Size of the message */
-} MPC_Status;
+typedef sctk_status_t MPC_Status;
 #define MPC_STATUS_INIT {MPC_ANY_SOURCE,MPC_ANY_TAG,MPC_SUCCESS,0,0}
-
-
-typedef struct MPC_Header{
-	int source;
-	int destination;
-	int destination_task;
-	int source_task;
-	int message_tag;
-	MPC_Comm communicator;
-	mpc_msg_count msg_size;
-}MPC_Header;
 
 struct sctk_thread_ptp_message_s;
 
 
-/* Generalized requests functions */
+/** Generalized requests functions **/
+typedef sctk_Grequest_query_function MPC_Grequest_query_function;
+typedef sctk_Grequest_cancel_function MPC_Grequest_cancel_function;
+typedef sctk_Grequest_free_function MPC_Grequest_free_function;
+/** Extended Generalized requests functions **/
+typedef sctk_Grequest_poll_fn MPCX_Grequest_poll_fn;
+typedef sctk_Grequest_wait_fn MPCX_Grequest_wait_fn;
+/** Generalized Request classes **/
+typedef sctk_Request_class MPCX_Request_class;
 
-typedef int MPC_Grequest_query_function( void * extra_state, MPC_Status *status );
-typedef int MPC_Grequest_cancel_function( void * extra_state, int complete );
-typedef int MPC_Grequest_free_function( void * extra_state );
-
-/* Extended Generalized requests functions */
-
-typedef int MPCX_Grequest_poll_fn( void * extra_state , MPC_Status * status );
-typedef int MPCX_Grequest_wait_fn( int count, void ** array_of_states, double timeout, MPC_Status * status );
-
-/* Generalized Request classes */
-typedef int MPCX_Request_class;
-
-/* Request definition */
-typedef struct
-{
-	int request_type;
-	MPC_Header header;
-	volatile int completion_flag;
-	struct sctk_thread_ptp_message_s* msg;
-	int is_null;
-	int need_check_in_wait;
-	int truncated;
-	int status_error;
-
-	/* Generalized Request context  */
-	MPC_Grequest_query_function * query_fn;
-	MPC_Grequest_cancel_function * cancel_fn;
-	MPC_Grequest_free_function * free_fn;
-	void * extra_state;
-	/* Extended Request */
-	MPCX_Grequest_poll_fn * poll_fn;
-	MPCX_Grequest_wait_fn * wait_fn;
-
-	/* MPI_Grequest_complete takes a copy of the struct
-	* not a reference however we have to change a value
-	* in the source struct which is being pulled therefore
-	* we have to do this hack by saving a pointer to the
-	* request inside the request */
-	void * pointer_to_source_request;
-} MPC_Request;
-
+/** MPC Requests */
+typedef sctk_request_t MPC_Request;
 extern MPC_Request mpc_request_null;
 
 #define MPC_REQUEST_NULL mpc_request_null
-#define MPC_COMM_WORLD 0
-#define MPC_COMM_SELF 1
+
+#define MPC_COMM_WORLD SCTK_COMM_WORLD
+#define MPC_COMM_SELF SCTK_COMM_SELF
+#define MPC_COMM_NULL SCTK_COMM_NULL
 
 #define MPC_SUCCESS 0
 #define MPC_UNDEFINED (-1)
@@ -273,7 +223,6 @@ extern MPC_Request mpc_request_null;
 #define MPC_ANY_TAG -1
 #define MPC_ANY_SOURCE -1
 #define MPC_PROC_NULL -2
-#define MPC_COMM_NULL ((MPC_Comm)(-1))
 #define MPC_MAX_PROCESSOR_NAME 255
 #define MPC_ROOT -4
 #define MPC_MAX_OBJECT_NAME 256

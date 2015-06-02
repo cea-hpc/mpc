@@ -23,7 +23,6 @@
 
 #include <stdio.h>
 
-#include <mpcmp.h>
 #include <sctk_low_level_comm.h>
 #include <sctk_communicator.h>
 #include <mpc_datatypes.h>
