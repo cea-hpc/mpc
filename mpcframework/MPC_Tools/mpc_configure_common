@@ -914,8 +914,12 @@ if test "$check_networks_done" = "0" ; then
 	    INFINIBAND|infiniband|ib|IB)
       SCTK_CHECK_LIB_OPENIB
 		;;
+        portals|ptl|PORTALS|Portals|PTL)
+        SCTK_CHECK_LIB_PORTALS
+        ;;
 	    all)
 		if test "$check_net_all_done" = "" ; then
+            SCTK_CHECK_LIB_PORTALS
 		    SCTK_CHECK_LIB_OPENIB
 		    check_net_mpi
 		    check_net_tcp

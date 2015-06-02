@@ -192,6 +192,7 @@ Optional packages:
   --with-openpa=prefix    Enable OpenPA using given prefix [system default]
   --with-hwloc=prefix     Enable hwloc using given prefix [system default]
   --with-openib=prefix    Enable OpenFabrics using given prefix [system default]
+  --with-portals=prefix   Enable Portals API using given prefix [system default]
   --with-libxml2=prefix   Enable libxml2 for config file parsing [pkg-config or /usr]
   --with-libsctk_arch=prefix   Enable libsctk_arch for config file parsing [pkg-config or /usr]
 
@@ -233,6 +234,7 @@ SCTK_VALGRIND_MEMCHECK='0'
 HWLOC_USER_PREFIX=""
 OPENPA_USER_PREFIX=""
 OPENIB_USER_PREFIX=""
+PORTALS_USER_PREFIX=""
 SCTK_LIBXML2_PREFIX=""
 SCTK_LIBSCTK_ARCH_PREFIX=""
 
@@ -463,7 +465,10 @@ for arg in "$@" ; do
     --with-openib=*)
     OPENIB_USER_PREFIX="`echo A$arg | sed -e 's/A--with-openib=//g'`"
     ;;
-	--with-libxml2=*)
+	--with-portals=*)
+    PORTALS_USER_PREFIX="`echo A$arg | sed -e 's/A--with-portals=//g'`"
+    ;;
+    --with-libxml2=*)
 	SCTK_LIBXML2_PREFIX="`echo A$arg | sed -e 's/A--with-libxml2=//g'`"
 	;;
 	--with-libsctk_arch=*)
