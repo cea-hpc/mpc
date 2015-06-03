@@ -226,8 +226,21 @@ do
 			ROMIO_PREFIX='disabled'		
 			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --disable-MPC_MPI"
 			;;
-		--disable-ROMIO)
+		--disable-ROMIO|--disable-romio)
 			ROMIO_PREFIX='disabled'
+			;;
+		--lib-mode)
+			ROMIO_PREFIX='disabled'
+			GDB_PREFIX='disabled'
+			MPC_PREFIX='disabled'
+			GCC_PREFIX='disabled'
+			HYDRA_PREFIX='disabled'
+			GMP_PREFIX='disabled'
+			MPFR_PREFIX='disabled'
+			BINUTILS_PREFIX='disabled'
+			SCTK_GETOPT_PREFIX='disabled'
+			HYDRA_SIMPLE_PREFIX='disabled'
+			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --disable-MPC_MPI --disable-MPC_Allocator"
 			;;
 		##################### MPC ###################
 		--with-mpc=*)

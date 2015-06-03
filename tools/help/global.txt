@@ -13,6 +13,7 @@ Defaults for the options are specified in brackets.
   --prefix=PREFIX                         : Install architecture-independent files in PREFIX [/usr/local]
   --disable-check-install                 : Override installation if it already exists in the prefix
   --disable-check-deps                    : Disable dependency checking
+  --lib-mode                              : Build MPC as a communication library
 
 # Build
   --compiler                              : Default compiler
@@ -28,6 +29,7 @@ Defaults for the options are specified in brackets.
   --disable-mpc-gcc                       : Disable gcc
   --disable-mpc-binutils                  : Disable binutils
   --disable-mpc-fortran                   : Disable fortran
+  --diable-romio                          : Disable ROMIO MPI-IO support
 
 # Specify system subpackages
   --with-mpc-gdb=*                        : Specify gdb prefix on the system

@@ -171,6 +171,7 @@ Optional features:
   --enable-debug-messages          Enable MPC debug message printing in verbose level 3
   --enable-shell-colors            Enable support of colors in shell
   --enable-valgrind-memcheck       Enable support of valgrind memcheck in MPC_Allocator
+  --enable-lib-mode                Build MPC as a communication library
 
 Module selection:
 EOF
@@ -372,6 +373,9 @@ for arg in "$@" ; do
     ;;
     --enable-shell-colors)
     SCTK_SHELL_COLORS="1"
+    ;;
+    --enable-lib-mode)
+    SCTK_LIB_MODE="1"
     ;;
     --disable-shell-colors)
     SCTK_SHELL_COLORS="0"

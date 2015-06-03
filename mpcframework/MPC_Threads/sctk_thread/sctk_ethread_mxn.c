@@ -926,7 +926,7 @@ sctk_ethread_mxn_thread_init (void)
 }
 
 
-#ifndef MPC_Message_Passing
+#ifndef MPC_MPI
 
 #ifdef HAVE_ENVIRON_VAR
 #include <stdlib.h>
