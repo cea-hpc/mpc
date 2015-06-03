@@ -78,7 +78,7 @@ static void sctk_opt_noalloc_split_messages_send ( const sctk_communicator_t com
 	sctk_init_header ( & ( msg_req->msg ), SCTK_MESSAGE_CONTIGUOUS, sctk_free_opt_noalloc_split_messages, sctk_message_copy );
 	sctk_add_adress_in_message ( & ( msg_req->msg ), buffer, size );
 	msg_req->request.request_type = REQUEST_SEND_COLL;
-	sctk_set_header_in_message ( & ( msg_req->msg ), tag, communicator, myself, dest, & ( msg_req->request ), size, message_class, MPC_DATATYPE_IGNORE );
+	sctk_set_header_in_message ( & ( msg_req->msg ), tag, communicator, myself, dest, & ( msg_req->request ), size, message_class, SCTK_DATATYPE_IGNORE );
 
 	sctk_send_message ( & ( msg_req->msg ) );
 #if 0
@@ -94,7 +94,7 @@ static void sctk_opt_noalloc_split_messages_recv ( const sctk_communicator_t com
 	sctk_init_header ( & ( msg_req->msg ), SCTK_MESSAGE_CONTIGUOUS, sctk_free_opt_noalloc_split_messages, sctk_message_copy );
 	sctk_add_adress_in_message ( & ( msg_req->msg ), buffer, size );
 	msg_req->request.request_type = REQUEST_RECV_COLL;
-	sctk_set_header_in_message ( & ( msg_req->msg ), tag, communicator,  src, myself, & ( msg_req->request ), size, message_class, MPC_DATATYPE_IGNORE );
+	sctk_set_header_in_message ( & ( msg_req->msg ), tag, communicator,  src, myself, & ( msg_req->request ), size, message_class, SCTK_DATATYPE_IGNORE );
 
 	sctk_recv_message ( & ( msg_req->msg ), ptp_internal, 1 );
 #if 0

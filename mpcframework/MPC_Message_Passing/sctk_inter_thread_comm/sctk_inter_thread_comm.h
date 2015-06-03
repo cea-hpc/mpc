@@ -464,6 +464,20 @@ void sctk_message_completion_and_free ( sctk_thread_ptp_message_t *send, sctk_th
 void sctk_complete_and_free_message ( sctk_thread_ptp_message_t *msg );
 void sctk_rebuild_header ( sctk_thread_ptp_message_t *msg );
 
+/** Buffered Messages **/
+#define MAX_MPC_BUFFERED_SIZE (128 * sizeof(long))
+
+typedef struct mpc_buffered_msg_s
+{
+	sctk_thread_ptp_message_t header;
+	/* Completion flag to use if the user do not provide a valid request */
+	int completion_flag;
+	/* MPC_Request if the message is buffered  */
+	sctk_request_t request;
+	long buf[(MAX_MPC_BUFFERED_SIZE / sizeof (long)) + 1];
+} mpc_buffered_msg_t;
+
+
 /************************************************************************/
 /* Message Progess                                                      */
 /************************************************************************/

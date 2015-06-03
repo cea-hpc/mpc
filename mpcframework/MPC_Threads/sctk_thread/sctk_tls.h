@@ -97,7 +97,7 @@ extern "C"
 
 #endif
 
-#ifdef MPC_Message_Passing
+#ifdef MPC_MPI
   extern __thread struct sctk_thread_specific_s * ___sctk_message_passing;
 #endif
 
@@ -137,7 +137,7 @@ extern "C"
 	tls_save (sctk_tls_module);
 #endif
 
-#ifdef MPC_Message_Passing
+#ifdef MPC_MPI
     tls_save (___sctk_message_passing);
 #endif
     /* MPC Tracelib TLS */
@@ -169,7 +169,7 @@ extern "C"
     sctk_context_restore_tls_module_vp () ;
 #endif
 
-#ifdef MPC_Message_Passing
+#ifdef MPC_MPI
     tls_restore (___sctk_message_passing);
 #endif
     /* MPC Tracelib TLS */
@@ -194,7 +194,7 @@ extern "C"
 #endif
     /* tls_init (mpc_user_tls_1); */
     ucp->mpc_user_tls_1 = mpc_user_tls_1 ;
-#ifdef MPC_Message_Passing
+#ifdef MPC_MPI
     tls_init (___sctk_message_passing);
 #endif
     /* MPC Tracelib TLS */

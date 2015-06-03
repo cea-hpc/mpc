@@ -101,9 +101,15 @@ typedef struct
 /** Define the NULL communicator number */
 #define SCTK_COMM_NULL  ((sctk_communicator_t)(-1))
 /** Not using datatypes */
-#define MPC_DATATYPE_IGNORE ((sctk_datatype_t)0)
+#define SCTK_DATATYPE_IGNORE ((sctk_datatype_t)0)
 /** In place collectives **/
 #define SCTK_IN_PLACE ((void*)-1)
 /** PROC_NULL **/
 #define SCTK_PROC_NULL -2
+/** SUCCESS and ERROR **/
+#define SCTK_SUCCESS 0
+/** Wildcards **/
+#define SCTK_ANY_TAG -1
+#define SCTK_ANY_SOURCE -1
+
 #endif /* SCTK_TYPES_H */

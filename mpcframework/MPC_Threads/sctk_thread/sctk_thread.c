@@ -32,7 +32,6 @@
 #include "sctk_config.h"
 #include "sctk_thread.h"
 #include "sctk_kernel_thread.h"
-#include "sctk_internal_thread.h"
 #include "sctk_alloc.h"
 #include "sctk_launch.h"
 #include "sctk_topology.h"
@@ -52,13 +51,16 @@
 #include "sctk_runtime_config.h"
 #include "sctk_runtime_config_struct_defaults.h"
 
-#ifdef MPC_Message_Passing
+#ifdef MPC_MPI
 #include <mpc_internal_thread.h>
+#include "mpc_datatypes.h"
+#endif
+
+#ifdef MPC_Message_Passing
 #include <sctk_communicator.h>
 #include "sctk_pmi.h"
 #include "sctk_ib_prof.h"
 #include <sctk_low_level_comm.h>
-#include "mpc_datatypes.h"
 #endif
 #include <errno.h>
 extern int errno;
@@ -734,7 +736,7 @@ sctk_thread_create_tmp_start_routine_user (sctk_thread_data_t * __arg)
   *ptr_cleanup = NULL;
   sctk_thread_setspecific (_sctk_thread_handler_key, ptr_cleanup);
 
-#ifdef MPC_Message_Passing
+#ifdef MPC_MPI
   __MPC_reinit_task_specific (tmp.father_data);
 #endif
 
@@ -767,13 +769,13 @@ sctk_thread_create_tmp_start_routine_user (sctk_thread_data_t * __arg)
   /** **/
 
 
-#ifdef MPC_Message_Passing
+#ifdef MPC_MPI
    MPC_Init_thread_specific();
 #endif
 
   res = tmp.__start_routine (tmp.__arg);
 
-#ifdef MPC_Message_Passing
+#ifdef MPC_MPI
   MPC_Release_thread_specific();
 #endif
 
@@ -883,7 +885,7 @@ sctk_user_thread_create (sctk_thread_t * restrict __threadp,
   tmp->__start_routine = __start_routine;
   tmp->task_id = -1;
   tmp->user_thread = user_thread;
-#ifdef MPC_Message_Passing
+#ifdef MPC_MPI
   tmp->father_data = __MPC_get_task_specific ();
 #else
   tmp->father_data = NULL;
@@ -1904,7 +1906,7 @@ sctk_thread_timer (void *arg)
   return NULL;
 }
 
-#ifdef MPC_Message_Passing
+#ifdef MPC_MPI
 static void *
 sctk_thread_migration (void *arg)
 {
@@ -2113,7 +2115,7 @@ sctk_start_func (void *(*run) (void *), void *arg)
 	int start_thread;
 	kthread_t timer_thread;
 
-#ifdef MPC_Message_Passing
+#ifdef MPC_MPI
 	sctk_thread_t migration_thread;
 	sctk_thread_attr_t migration_thread_attr;
 #endif
@@ -2123,7 +2125,7 @@ sctk_start_func (void *(*run) (void *), void *arg)
 	sctk_thread_t *threads = NULL;
 	int thread_to_join = 0;
 
-#ifdef MPC_Message_Passing
+#ifdef MPC_MPI
 	sctk_datatype_init();
 #endif
 
@@ -2133,7 +2135,7 @@ sctk_start_func (void *(*run) (void *), void *arg)
 
 	kthread_create (&timer_thread, sctk_thread_timer, NULL);
 
-#ifdef MPC_Message_Passing
+#ifdef MPC_MPI
 	sctk_thread_attr_init (&migration_thread_attr);
 	sctk_thread_attr_setscope (&migration_thread_attr, SCTK_THREAD_SCOPE_SYSTEM);
 	sctk_user_thread_create (&migration_thread, &migration_thread_attr, sctk_thread_migration, NULL);
@@ -2441,7 +2443,7 @@ sctk_start_func (void *(*run) (void *), void *arg)
 			self_p, vp);
 
 #ifdef MPC_Message_Passing
-      sctk_register_task(i);
+			sctk_register_task(i);
 			sctk_register_restart_thread (i, proc);
 #endif
 
@@ -2490,8 +2492,11 @@ sctk_start_func (void *(*run) (void *), void *arg)
 
 	sctk_thread_running = 0;
 
-	#ifdef MPC_Message_Passing
+	#ifdef MPC_MPI
 	sctk_datatype_release();
+	#endif
+	
+	#ifdef MPC_Message_Passing
 	sctk_ignore_sigpipe();
 	sctk_communicator_delete ();
 	#endif

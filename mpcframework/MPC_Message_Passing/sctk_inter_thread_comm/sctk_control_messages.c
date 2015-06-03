@@ -25,7 +25,6 @@
 
 #include <sctk_low_level_comm.h>
 #include <sctk_communicator.h>
-#include <mpc_datatypes.h>
 #include <sctk.h>
 #include <sctk_debug.h>
 #include <sctk_spinlock.h>
@@ -34,7 +33,6 @@
 #include <string.h>
 #include <sctk_asm.h>
 #include <sctk_checksum.h>
-#include <mpc_common.h>
 #include <sctk_reorder.h>
 #include <sctk_rail.h>
 
@@ -119,7 +117,7 @@ void __sctk_control_messages_send( int dest, sctk_message_class_t message_class,
 	sctk_add_adress_in_message ( &msg, buffer, size );
 	
 	//printpayload( buffer, size );
-	sctk_set_header_in_message ( &msg, tag, communicator,  sctk_get_process_rank(), dest,  &request, size, message_class, MPC_DATATYPE_IGNORE );
+	sctk_set_header_in_message ( &msg, tag, communicator,  sctk_get_process_rank(), dest,  &request, size, message_class, SCTK_DATATYPE_IGNORE );
 	
 	sctk_send_message ( &msg );
 	
@@ -181,7 +179,7 @@ void sctk_control_messages_incoming( sctk_thread_ptp_message_t * msg )
 	sctk_request_t request;
 	sctk_init_header ( &recvmsg, SCTK_MESSAGE_CONTIGUOUS, sctk_free_control_messages, sctk_message_copy );
 	sctk_add_adress_in_message ( &recvmsg, tmp_contol_buffer, SCTK_MSG_SIZE( msg ) );
-	sctk_set_header_in_message ( &recvmsg, 0, SCTK_COMM_WORLD, MPC_ANY_SOURCE, sctk_get_process_rank(),  &request, SCTK_MSG_SIZE( msg ), class, MPC_DATATYPE_IGNORE );
+	sctk_set_header_in_message ( &recvmsg, 0, SCTK_COMM_WORLD, SCTK_ANY_SOURCE, sctk_get_process_rank(),  &request, SCTK_MSG_SIZE( msg ), class, SCTK_DATATYPE_IGNORE );
 	
 	/* Trigger the receive task (as if we matched) */
 	sctk_message_to_copy_t copy_task;

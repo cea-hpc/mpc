@@ -28,6 +28,7 @@ extern "C"
 {
 #endif
 
+#include <stdlib.h>
 #include <sctk_config.h>
 #include <errno.h>
 #include <mpc.h>

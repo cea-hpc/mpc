@@ -129,8 +129,8 @@ extern MPC_Request mpc_request_null;
 #define MPC_COMM_WORLD SCTK_COMM_WORLD
 #define MPC_COMM_SELF SCTK_COMM_SELF
 #define MPC_COMM_NULL SCTK_COMM_NULL
+#define MPC_SUCCESS SCTK_SUCCESS
 
-#define MPC_SUCCESS 0
 #define MPC_UNDEFINED (-1)
 /* Communication argument parameters */
 #define MPC_ERR_BUFFER                  1  /* Invalid buffer pointer */
@@ -220,8 +220,8 @@ extern MPC_Request mpc_request_null;
 
 #define MPC_STATUS_IGNORE NULL
 #define MPC_STATUSES_IGNORE NULL
-#define MPC_ANY_TAG -1
-#define MPC_ANY_SOURCE -1
+#define MPC_ANY_TAG SCTK_ANY_TAG
+#define MPC_ANY_SOURCE SCTK_ANY_SOURCE
 #define MPC_PROC_NULL SCTK_PROC_NULL
 #define MPC_MAX_PROCESSOR_NAME 255
 #define MPC_ROOT -4
@@ -279,7 +279,7 @@ typedef int MPC_Info;
 #define MPC_DATATYPE_NULL ((MPC_Datatype)-1)
 #define MPC_UB ((MPC_Datatype)-2)
 #define MPC_LB ((MPC_Datatype)-3)
-#define MPC_CHAR 0
+#define MPC_PACKED 0
 #define MPC_BYTE 1
 #define MPC_SHORT 2
 #define MPC_INT 3
@@ -292,7 +292,7 @@ typedef int MPC_Info;
 #define MPC_UNSIGNED_LONG  10
 #define MPC_LONG_DOUBLE  11
 #define MPC_LONG_LONG 12
-#define MPC_PACKED 13
+#define MPC_CHAR 13
 #define MPC_LOGICAL 22
 #define MPC_INTEGER1 24
 #define MPC_INTEGER2 25

@@ -655,7 +655,7 @@ static inline sctk_communicator_t sctk_intercommunicator_get_new_id ( int local_
 	int need_clean;
 	int change_i = 1;
 	int tag = 628;
-	PMPC_Comm_rank(SCTK_COMM_WORLD, &wrank);
+	wrank = sctk_get_task_rank();
 	
 	sctk_nodebug ( "rank %d : get new id for intercomm, local_leader = %d, remote_leader = %d, local_root = %d, peer_comm = %d", rank, local_leader, remote_leader, local_root, peer_comm );
 
@@ -2048,7 +2048,7 @@ sctk_communicator_t sctk_duplicate_communicator ( const sctk_communicator_t orig
 			remote_leader = tmp->remote_comm->remote_leader;
 		}
 
-		__MPC_Barrier ( origin_communicator );
+		sctk_barrier ( origin_communicator );
 		sctk_spinlock_lock ( & ( tmp->creation_lock ) );
 
 		if ( tmp->new_comm == NULL )
@@ -2142,7 +2142,7 @@ sctk_communicator_t sctk_duplicate_communicator ( const sctk_communicator_t orig
 			tmp->has_zero = 1;
 		}
 
-		__MPC_Barrier ( origin_communicator );
+		sctk_barrier ( origin_communicator );
 
 		if ( ( rank != local_leader ) && ( tmp->has_zero == 1 ) )
 		{
@@ -2762,7 +2762,7 @@ sctk_communicator_t sctk_create_communicator_from_intercomm ( const sctk_communi
 
 	sctk_spinlock_unlock ( & ( tmp->creation_lock ) );
 
-	__MPC_Barrier ( origin_communicator );
+	sctk_barrier ( origin_communicator );
 
 	if ( grank == local_leader )
 	{
@@ -2770,7 +2770,7 @@ sctk_communicator_t sctk_create_communicator_from_intercomm ( const sctk_communi
 		tmp->has_zero = 1;
 	}
 
-	__MPC_Barrier ( origin_communicator );
+	sctk_barrier ( origin_communicator );
 
 	if ( ( grank != local_leader ) && ( tmp->has_zero == 1 ) )
 	{
