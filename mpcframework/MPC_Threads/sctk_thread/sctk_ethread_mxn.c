@@ -927,6 +927,7 @@ sctk_ethread_mxn_thread_init (void)
 
 
 #ifndef MPC_MPI
+#ifndef SCTK_LIB_MODE
 
 #ifdef HAVE_ENVIRON_VAR
 #include <stdlib.h>
@@ -949,4 +950,5 @@ sctk_user_main (int argc, char **argv)
 
   return result;
 }
-#endif
+#endif /* MPC_MPI */
+#endif /* SCTK_LIB_MODE */

@@ -39,6 +39,7 @@
 #include "sctk_tls.h"
 #include <unistd.h>
 #include "sctk_posix_thread.h"
+#include "sctk_internal_thread.h"
 #ifdef MPC_OpenMP
 #include"mpcomp_internal.h"
 #endif

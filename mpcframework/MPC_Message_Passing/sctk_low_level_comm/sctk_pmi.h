@@ -208,6 +208,17 @@ void sctk_net_abort();
 SCTK_PMI_BOOL
 sctk_pmi_is_initialized();
 
+
+/******************************************************************************
+LIBRARY MODE TOLOGY GETTERS 
+******************************************************************************/
+
+#ifdef SCTK_LIB_MODE
+int MPC_Net_rank();
+int MPC_Net_size();
+#endif
+
+
 #ifdef __cplusplus
 }
 #endif

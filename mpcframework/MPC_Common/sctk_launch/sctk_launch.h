@@ -59,19 +59,25 @@ extern "C"
   void mpc_start_ (void);
   void mpc_start__ (void);
 
-#ifdef HAVE_ENVIRON_VAR
-  extern int mpc_user_main__ (int, char **,char**);
-#else
-  extern int mpc_user_main__ (int, char **);
-#endif
+#ifndef SCTK_LIB_MODE
+
+	#ifdef HAVE_ENVIRON_VAR
+	  extern int mpc_user_main__ (int, char **,char**);
+	#else
+	  extern int mpc_user_main__ (int, char **);
+	#endif
+	
+	#if defined(MPC_Message_Passing) || defined(MPC_Threads)
+	int main_c (int argc, char **argv);
+	int main_fortran (int argc, char **argv);
+	#endif
+
+#endif /* SCTK_LIB_MODE */
 
   /*  return the number of tasks involved */
   int sctk_get_total_tasks_number();
 
-#if defined(MPC_Message_Passing) || defined(MPC_Threads)
-  int main_c (int argc, char **argv);
-  int main_fortran (int argc, char **argv);
-#endif
+
 
 #ifdef __cplusplus
 }

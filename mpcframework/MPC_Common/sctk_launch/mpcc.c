@@ -31,6 +31,9 @@
 extern char ** environ;
 #endif
 
+/* No need for a main in LIB mode */
+#ifndef SCTK_LIB_MODE
+
 #if defined(MPC_Message_Passing) || defined(MPC_Threads)
 #include "mpc.h"
 
@@ -168,3 +171,5 @@ mpc_start__ (void)
   argv[1] = NULL;
   main_fortran (1, argv);
 }
+
+#endif /* SCTK_LIB_MODE */
