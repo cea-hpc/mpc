@@ -55,6 +55,7 @@
 		<xsl:text>&#9;memset(config, 0, sizeof(struct sctk_runtime_config));&#10;</xsl:text>
 		<xsl:text>&#9;sctk_handler = dlopen(0, RTLD_LAZY | RTLD_GLOBAL);&#10;</xsl:text>
 		<xsl:for-each select="config">
+			<xsl:value-of select="concat('#ifdef ',@name,'&#10;')"/>
 			<xsl:for-each select="modules">
 				<xsl:for-each select="module">
 					<xsl:value-of select="concat('&#9;sctk_runtime_config_struct_init_',@type,'(&amp;config->modules.',@name,');&#10;')"/>
@@ -65,7 +66,7 @@
 					<xsl:value-of select="concat('&#9;sctk_runtime_config_enum_init_',@name,'();&#10;')"/>
 				</xsl:for-each>
 			</xsl:for-each>
-			
+			<xsl:text>#endif&#10;</xsl:text>
 		</xsl:for-each>
 		<xsl:text>&#09;sctk_runtime_config_struct_init_networks(&amp;config->networks);&#10;</xsl:text>
 		<xsl:text>&#09;dlclose(sctk_handler);&#10;</xsl:text>

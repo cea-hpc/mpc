@@ -31,15 +31,15 @@
 #include "stdarg.h"
 
 #ifndef SCTK_LIB_MODE
-#ifndef MPC_NO_AUTO_MAIN_REDEF
-	#undef main
-	
-	#ifdef __cplusplus
-		#define main long mpc_user_main_dummy__ (); extern "C" int mpc_user_main__
-	#else
-		#define main mpc_user_main__
-	#endif
-#endif /* MPC_NO_AUTO_MAIN_REDEF */
+	#ifndef MPC_NO_AUTO_MAIN_REDEF
+		#undef main
+		
+		#ifdef __cplusplus
+			#define main long mpc_user_main_dummy__ (); extern "C" int mpc_user_main__
+		#else
+			#define main mpc_user_main__
+		#endif
+	#endif /* MPC_NO_AUTO_MAIN_REDEF */
 #endif /* SCTK_LIB_MODE */
 
 #ifdef __cplusplus

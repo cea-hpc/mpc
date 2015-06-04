@@ -22,18 +22,6 @@
 #ifndef __mpc__H
 #define __mpc__H
 
-/*
-#ifndef MPC_NO_AUTO_MAIN_REDEF
-#undef main
-#ifdef __cplusplus
-#define main long mpc_user_main_dummy__ (); extern "C" int mpc_user_main__
-#else
-#define main mpc_user_main__
-#endif
-#endif
-*/
-
-
 #ifdef __cplusplus
 extern "C"
 {

@@ -40,6 +40,11 @@ if test "x$MPC_AIO_ENABLED" = "x1"; then
 		FLAGS="$FLAGS  -DMPC_AIO_ENABLED"
 fi
 
+#This flag is set when MPC runs in lib-mode
+if test "x$SCTK_LIB_MODE" = "x1"; then
+		FLAGS="$FLAGS  -DSCTK_LIB_MODE"
+fi
+
 cat <<EOF >> bin/mpc_cflags
 ROMIO=""
 

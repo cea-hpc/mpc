@@ -782,7 +782,10 @@ void sctk_topology_init ()
 	char* xml_path;
 
 	#ifdef MPC_Message_Passing
+	
+	#ifndef SCTK_LIB_MODE
 	if(sctk_process_number > 1)
+	#endif
 	{
 		sctk_pmi_init();
 	}
