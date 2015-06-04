@@ -216,6 +216,9 @@ LIBRARY MODE TOLOGY GETTERS
 #ifdef SCTK_LIB_MODE
 int MPC_Net_rank();
 int MPC_Net_size();
+void MPC_Net_barrier();
+void MPC_Net_send_to( void * data, size_t size, int target );
+void MPC_Net_recv_from( void * data, size_t size, int source );
 #endif
 
 

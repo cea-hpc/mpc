@@ -45,7 +45,13 @@ static void *sctk_tcp_thread ( sctk_endpoint_t *tmp )
 		ssize_t res;
 
 		res = sctk_safe_read ( fd, ( char * ) &size, sizeof ( size_t ) );
-		//sctk_debug ( "Got msg of size %d (online:%d)", res, sctk_online_program );
+		sctk_nodebug ( "Got msg of size %d (online:%d)", res, sctk_online_program );
+
+		if( res == 0 )
+		{
+			/* EOF */
+			break;
+		}
 
 		if ( res < sizeof ( size_t ) )
 		{
@@ -69,6 +75,12 @@ static void *sctk_tcp_thread ( sctk_endpoint_t *tmp )
 		//sctk_debug ( "Read %d", sizeof ( sctk_thread_ptp_message_body_t ) );
 		res = sctk_safe_read ( fd, ( char * ) msg, sizeof ( sctk_thread_ptp_message_body_t ) );
 
+		if( res == 0 )
+		{
+			/* EOF */
+			break;
+		}
+
 		if ( res != sizeof ( sctk_thread_ptp_message_body_t ) )
 		{
 			return NULL;
@@ -79,12 +91,17 @@ static void *sctk_tcp_thread ( sctk_endpoint_t *tmp )
 
 		if ( SCTK_MSG_COMMUNICATOR ( msg ) < 0 )
 		{
-			return NULL;
+			sctk_fatal("BAD communicator %d",  SCTK_MSG_COMMUNICATOR ( msg ) );
 		}
 
 		/* Recv body*/
 		size = size - sizeof ( sctk_thread_ptp_message_t );
-		sctk_safe_read ( fd, ( char * ) body, size );
+		res = sctk_safe_read ( fd, ( char * ) body, size );
+
+		if( res == 0 )
+		{
+			/* EOF */
+		}
 
 		sctk_rebuild_header ( msg );
 		sctk_reinit_header ( msg, sctk_free, sctk_net_message_copy );
@@ -95,7 +112,7 @@ static void *sctk_tcp_thread ( sctk_endpoint_t *tmp )
 	
 	//sctk_error("TCP THREAD LEAVING");
 
-	return NULL;
+	pthread_exit( NULL );
 }
 
 static void sctk_network_send_message_endpoint_tcp ( sctk_thread_ptp_message_t *msg, sctk_endpoint_t *endpoint )

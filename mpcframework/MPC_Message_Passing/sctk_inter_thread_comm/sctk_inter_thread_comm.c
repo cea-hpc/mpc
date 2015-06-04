@@ -564,7 +564,7 @@ static void sctk_ptp_table_loop ( int ( *func ) ( sctk_internal_ptp_t *pair ), c
 
 sctk_reorder_list_t *sctk_ptp_get_reorder_from_destination ( int task )
 {
-	struct sctk_internal_ptp_s *internal_ptp;
+	struct sctk_internal_ptp_s *internal_ptp = NULL;
 	sctk_comm_dest_key_t key;
 	key.destination = task;
 
@@ -2632,7 +2632,10 @@ void sctk_notify_idle_message ()
  * */
 void sctk_send_message_try_check ( sctk_thread_ptp_message_t *msg, int perform_check )
 {
-	sctk_debug("!%d! MM %d -> %d (CLASS %d SPE %d)", sctk_process_rank, SCTK_MSG_SRC_PROCESS ( msg ),  SCTK_MSG_DEST_PROCESS ( msg ), SCTK_MSG_SPECIFIC_CLASS( msg ) , sctk_message_class_is_process_specific ( SCTK_MSG_SPECIFIC_CLASS( msg ) ));
+	if( sctk_process_rank < 0 )
+		CRASH();
+	
+	sctk_error("!%d! MM %d -> %d (CLASS %d SPE %d)", sctk_process_rank, SCTK_MSG_SRC_PROCESS ( msg ),  SCTK_MSG_DEST_PROCESS ( msg ), SCTK_MSG_SPECIFIC_CLASS( msg ) , sctk_message_class_is_process_specific ( SCTK_MSG_SPECIFIC_CLASS( msg ) ));
 
 	/*  Message has not reached its destination */
 	if( SCTK_MSG_DEST_PROCESS ( msg ) != sctk_process_rank )

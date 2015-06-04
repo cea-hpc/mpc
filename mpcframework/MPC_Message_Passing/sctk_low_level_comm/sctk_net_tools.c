@@ -125,6 +125,7 @@ void sctk_net_write_in_fd ( sctk_thread_ptp_message_t *msg,
 			size = SCTK_MSG_SIZE ( msg );
 
 			sctk_nodebug ( "MSG SEND |%s|", ( char * ) msg->tail.message.contiguous.addr );
+
 			sctk_safe_write ( fd, msg->tail.message.contiguous.addr, size );
 			break;
 		}

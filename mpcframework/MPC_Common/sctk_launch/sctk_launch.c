@@ -299,6 +299,15 @@ static void sctk_perform_initialisation (void)
 	sctk_internal_profiler_init();
 #endif
 
+
+#ifdef SCTK_LIB_MODE	
+	/* In LIB mode we create the task context
+	 * at process level (not in an actual task ) */
+	int my_rank = 0;
+	sctk_pmi_get_process_rank ( &my_rank );
+	sctk_ptp_per_task_init (my_rank);
+#endif
+
 #ifdef MPC_Message_Passing
 	if (sctk_process_nb_val > 1) {
 		sctk_net_init_driver(sctk_network_driver_name);
@@ -340,6 +349,7 @@ static void sctk_perform_initialisation (void)
 			fprintf (stderr, "Restart Job\n");
 		}
 	}
+
 	/*  { */
 	/*     FILE *topo_file = NULL; */
 	/*    int max_try = sctk_runtime_config_get()->modules.launcher.max_try;*/

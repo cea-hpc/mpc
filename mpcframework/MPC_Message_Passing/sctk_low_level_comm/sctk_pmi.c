@@ -71,6 +71,24 @@ INITIALIZATION/FINALIZE
 	{
 		return 1;
 	}
+	
+	#pragma weak MPC_Net_barrier
+	void MPC_Net_barrier()
+	{
+		
+	}
+	
+	#pragma weak MPC_Net_send_to
+	void MPC_Net_send_to( void * data, size_t size, int target )
+	{
+		sctk_fatal("You must implement the MPC_Net_send_to function to run in multiprocess");
+	}
+	
+	#pragma weak MPC_Net_recv_from
+	void MPC_Net_recv_from( void * data, size_t size, int source )
+	{
+		sctk_fatal("You must implement the MPC_Net_recv_from function to run in multiprocess");
+	}
 #endif
 
 
@@ -396,6 +414,9 @@ SYNCHRONIZATION
 */
 int sctk_pmi_barrier()
 {
+#ifdef SCTK_LIB_MODE
+	return PMI_SUCCESS;
+#else
 	int rc;
 
 	// Perform the barrier
@@ -405,6 +426,7 @@ int sctk_pmi_barrier()
 	}
 
 	return PMI_SUCCESS;
+#endif
 }
 
 
@@ -462,7 +484,7 @@ int sctk_pmi_get_connection_info ( void *info, size_t size, int tag, int rank )
 
 	// Build the key
 	sKeyValue = ( char * ) sctk_malloc ( sctk_max_key_len * sizeof ( char ) );
-	sprintf ( sKeyValue, "%d_%d", tag, rank );
+	sprintf ( sKeyValue, "MPC_KEYS_%d_%d", tag, rank );
 
 	// Build the value
 	sValue = ( char * ) info;

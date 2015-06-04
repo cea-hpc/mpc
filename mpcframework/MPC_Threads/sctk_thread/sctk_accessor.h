@@ -35,10 +35,16 @@ extern "C"
 
 static inline int sctk_get_task_rank (void)
 {
+#ifdef SCTK_LIB_MODE	
+	int my_rank = 0;
+	sctk_pmi_get_process_rank ( &my_rank );
+	return my_rank;
+#else
 	if( !sctk_thread_data_get() )
 		return -1;
 
 	return (int) (sctk_thread_data_get()->task_id);
+#endif
 }
 
 int sctk_get_total_tasks_number();

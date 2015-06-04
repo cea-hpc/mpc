@@ -1693,11 +1693,9 @@ int sctk_get_comm_world_rank ( const sctk_communicator_t communicator, const int
 	else
 		if ( communicator == SCTK_COMM_SELF )
 		{
-			sctk_thread_data_t *thread_data;
 			int cwrank;
 			/* get task id */
-			thread_data = sctk_thread_data_get ();
-			cwrank = thread_data->task_id;
+			cwrank = sctk_get_task_rank();
 			return cwrank;
 		}
 
@@ -2187,11 +2185,9 @@ sctk_communicator_t sctk_create_intercommunicator ( const sctk_communicator_t lo
 	int local_root = 0, i, rank, grank, nb_task_involved, local_size, remote_leader_rank,
 	    remote_size, remote_lleader, remote_rleader, rleader, lleader, local_id, remote_id;
 	int *remote_task_list;
-	sctk_thread_data_t *thread_data;
-
 	/* get task id */
-	thread_data = sctk_thread_data_get ();
-	rank = thread_data->task_id;
+
+	rank = sctk_get_task_rank();
 	sctk_barrier (local_comm);
 	/* group rank */
 	grank = sctk_get_rank ( local_comm, rank );
@@ -2511,13 +2507,11 @@ sctk_communicator_t sctk_create_communicator ( const sctk_communicator_t origin_
 	sctk_internal_communicator_t *new_tmp;
 	int local_root = 0;
 	sctk_communicator_t comm;
-	sctk_thread_data_t *thread_data;
 	int i;
 	int rank, grank;
 
 	/* get task id */
-	thread_data = sctk_thread_data_get ();
-	rank = thread_data->task_id;
+	rank = sctk_get_task_rank();
 	/* get group rank */
 	grank = sctk_get_rank ( origin_communicator, rank );
 
@@ -2657,13 +2651,11 @@ sctk_communicator_t sctk_create_communicator_from_intercomm ( const sctk_communi
 	sctk_internal_communicator_t *new_tmp;
 	int local_root = 0;
 	sctk_communicator_t comm;
-	sctk_thread_data_t *thread_data;
 	int i, local_leader, remote_leader;
 	int rank, grank;
 
 	/* get task id */
-	thread_data = sctk_thread_data_get ();
-	rank = thread_data->task_id;
+	rank = sctk_get_task_rank();
 	/* get group rank */
 	grank = sctk_get_rank ( origin_communicator, rank );
 
@@ -2817,7 +2809,6 @@ sctk_communicator_t sctk_create_intercommunicator_from_intercommunicator (const 
 	sctk_internal_communicator_t * tmp;
 	sctk_communicator_t newintercomm;
 	sctk_communicator_t peer_comm;
-	sctk_thread_data_t *thread_data;
 	sctk_status_t status;
 	int local_comm;
 	int local_leader = 0;
@@ -2827,8 +2818,7 @@ sctk_communicator_t sctk_create_intercommunicator_from_intercommunicator (const 
 	
 	sctk_nodebug("sctk_create_intercommunicator_from_intercommunicator origin_comm %d, local_comm %d", origin_communicator, local_com);
 	/* get task id */
-	thread_data = sctk_thread_data_get ();
-	rank = thread_data->task_id;
+	rank = sctk_get_task_rank();
 	/* get group rank */
 	grank = sctk_get_rank(origin_communicator, rank);
 	local_comm = sctk_get_local_comm_id(origin_communicator);
