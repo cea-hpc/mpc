@@ -189,6 +189,15 @@ static char* sctk_network_driver_name = NULL;
 /*   sctk_net_val = val; */
 /* } */
 
+
+static void sctk_use_pthread (void)
+{
+	sctk_multithreading_mode = "pthread";
+	sctk_thread_val = sctk_pthread_thread_init;
+}
+
+
+
 static void sctk_perform_initialisation (void)
 {
 	/*   mkdir (sctk_store_dir, 0777); */
@@ -230,7 +239,7 @@ static void sctk_perform_initialisation (void)
 	if (sctk_version_details_val)
 		sctk_set_version_details ();
 
-#ifndef SCTK_LIB_MODE
+#ifdef SCTK_LIB_MODE
 	/* In lib mode we force the pthread MODE */
 	sctk_use_pthread();
 #endif
@@ -351,21 +360,12 @@ static void sctk_perform_initialisation (void)
 	sctk_flush_version ();
 }
 
-	static void
-sctk_version_details (void)
+static void sctk_version_details (void)
 {
 	sctk_version_details_val = 1;
 }
 
-	static void
-sctk_use_pthread (void)
-{
-	sctk_multithreading_mode = "pthread";
-	sctk_thread_val = sctk_pthread_thread_init;
-}
-
-	static void
-sctk_use_ethread (void)
+static void sctk_use_ethread (void)
 {
 	sctk_multithreading_mode = "ethread";
 	sctk_thread_val = sctk_ethread_thread_init;

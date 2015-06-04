@@ -225,20 +225,10 @@
 			<param name="enable_idle_polling" type="bool" default="false" doc="Enable usage of polling during idle."/>
 			<param name="ib_global" type="ib_global" doc="Global parameters for IB" />
 		</struct>
-		
-		<!-- ############################## -->
-		<!-- #             MPC            # -->
-		<!-- ############################## -->
 
-		<struct name="mpc" doc="Options for MPC Message Passing">
-			<param name="log_debug" type="bool" default="false" doc="Print debug messages"/>
-			<param name="hard_checking" type="bool" default="false" doc=""/>
-			<param name="buffering" type="bool" default="false" doc=""/>
-		</struct>
 	</usertypes>
 	<modules>
 		<module name="inter_thread_comm" type="inter_thread_comm" />
 		<module name="low_level_comm" type="low_level_comm" />
-		<module name="mpc" type="mpc"/>
 	</modules>
 </config>

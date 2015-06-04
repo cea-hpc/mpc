@@ -7302,7 +7302,7 @@ PMPC_Isend_pack (int dest, int tag, MPC_Comm comm, MPC_Request * request)
 				  src,
 				  dest,
 				  request,
-				  sctk_mpc_get_message_size(request),SCTK_P2P_MESSAGE, MPC_DATATYPE_IGNORE);
+				  sctk_mpc_get_message_size(request),SCTK_P2P_MESSAGE, MPC_PACKED);
   sctk_send_message (msg);
   SCTK_PROFIL_END (MPC_Isend_pack);
   MPC_ERROR_SUCESS ();
@@ -7358,7 +7358,7 @@ PMPC_Irecv_pack (int source, int tag, MPC_Comm comm, MPC_Request * request)
 				  source,
 				  src,
 				  request,
-				  sctk_mpc_get_message_size(request),SCTK_P2P_MESSAGE, MPC_DATATYPE_IGNORE);
+				  sctk_mpc_get_message_size(request),SCTK_P2P_MESSAGE, MPC_PACKED );
 
   sctk_recv_message (msg,task_specific->my_ptp_internal, 0);
   SCTK_PROFIL_END (MPC_Irecv_pack);

@@ -36,7 +36,7 @@
 #include <sctk_rail.h>
 
 #ifdef MPC_MPI
-#include <sctk_datatype.h>
+#include <mpc_datatypes.h>
 #endif
 
 /********************************************************************/

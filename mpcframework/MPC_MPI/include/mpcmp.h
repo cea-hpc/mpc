@@ -220,7 +220,6 @@ extern MPC_Request mpc_request_null;
 /********************************************************************/
 /*Special TAGS                                                      */
 /********************************************************************/
-#define MPC_ANY_TAG -1
 #define MPC_GATHERV_TAG -2
 #define MPC_GATHER_TAG -3
 #define MPC_SCATTERV_TAG -4

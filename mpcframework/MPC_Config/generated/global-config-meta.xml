@@ -91,6 +91,69 @@
 		<module name="debugger" type="debugger"/>
 	</modules>
 </config>
+<config name="MPC_MPI">
+	<usertypes>
+		<struct name="collectives_intra" doc="Collectives intracom MPI">
+            <param name="barrier_intra" type="funcptr" default="__INTERNAL__PMPI_Barrier_intra" doc="MPI_Barrier intracom algorithm"/>
+            <param name="bcast_intra" type="funcptr" default="__INTERNAL__PMPI_Bcast_intra" doc="Type of MPI_Bcast intracom algorithm"/>
+            <param name="allgather_intra" type="funcptr" default="__INTERNAL__PMPI_Allgather_intra" doc="MPI_Allgather intracom algorithm"/>
+            <param name="allgatherv_intra" type="funcptr" default="__INTERNAL__PMPI_Allgatherv_intra" doc="MPI_Allgatherv intracom algorithm"/>
+            <param name="alltoall_intra" type="funcptr" default="__INTERNAL__PMPI_Alltoall_intra" doc="MPI_Alltoall intracom algorithm"/>
+            <param name="alltoallv_intra" type="funcptr" default="__INTERNAL__PMPI_Alltoallv_intra" doc="Alltoallv intracom algorithm"/>
+            <param name="alltoallw_intra" type="funcptr" default="__INTERNAL__PMPI_Alltoallw_intra" doc="MPI_Alltoallw intracom algorithm"/>
+            <param name="gather_intra" type="funcptr" default="__INTERNAL__PMPI_Gather_intra" doc="MPI_Gather intracom algorithm"/>
+            <param name="gatherv_intra" type="funcptr" default="__INTERNAL__PMPI_Gatherv_intra" doc="MPI_Gatherv intracom algorithm"/>
+            <param name="scatter_intra" type="funcptr" default="__INTERNAL__PMPI_Scatter_intra" doc="MPI_Scatter intracom algorithm"/>
+            <param name="scatterv_intra" type="funcptr" default="__INTERNAL__PMPI_Scatterv_intra" doc="MPI_Scatterv intracom algorithm"/>
+            <param name="scan_intra" type="funcptr" default="__INTERNAL__PMPI_Scan_intra" doc="MPI_Scan intracom algorithm"/>
+            <param name="exscan_intra" type="funcptr" default="__INTERNAL__PMPI_Exscan_intra" doc="MPI_Exscan intracom algorithm"/>
+            <param name="reduce_intra" type="funcptr" default="__INTERNAL__PMPI_Reduce_intra" doc="MPI_Reduce intracom algorithm"/>
+            <param name="allreduce_intra" type="funcptr" default="__INTERNAL__PMPI_Allreduce_intra" doc="MPI_Allreduce intracom algorithm"/>
+            <param name="reduce_scatter_intra" type="funcptr" default="__INTERNAL__PMPI_Reduce_scatter_intra" doc="MPI_Reduce_scatter intracom algorithm"/>
+            <param name="reduce_scatter_block_intra" type="funcptr" default="__INTERNAL__PMPI_Reduce_scatter_block_intra" doc="MPI_Reduce_scatter_block intracom algorithm"/>
+        </struct>
+
+        <struct name="collectives_inter" doc="Collectives intercom MPI">
+            <param name="barrier_inter" type="funcptr" default="__INTERNAL__PMPI_Barrier_inter" doc="MPI_Barrier intercom algorithm"/><param name="bcast_inter" type="funcptr" default="__INTERNAL__PMPI_Bcast_inter" doc="MPI_Barrier intercom algorithm"/>
+            <param name="allgather_inter" type="funcptr" default="__INTERNAL__PMPI_Allgather_inter" doc="MPI_Allgather intercom algorithm"/>
+            <param name="allgatherv_inter" type="funcptr" default="__INTERNAL__PMPI_Allgatherv_inter" doc="MPI_Allgatherv intercom algorithm"/>
+            <param name="alltoall_inter" type="funcptr" default="__INTERNAL__PMPI_Alltoall_inter" doc="MPI_Alltoall intercom algorithm"/>
+            <param name="alltoallv_inter" type="funcptr" default="__INTERNAL__PMPI_Alltoallv_inter" doc="MPI_Alltoallv intercom algorithm"/>
+            <param name="alltoallw_inter" type="funcptr" default="__INTERNAL__PMPI_Alltoallw_inter" doc="MPI_Alltoallw intercom algorithm"/>
+            <param name="gather_inter" type="funcptr" default="__INTERNAL__PMPI_Gather_inter" doc="MPI_Gather intercom algorithm"/>
+            <param name="gatherv_inter" type="funcptr" default="__INTERNAL__PMPI_Gatherv_inter" doc="MPI_Gatherv intercom algorithm"/>
+            <param name="scatter_inter" type="funcptr" default="__INTERNAL__PMPI_Scatter_inter" doc="MPI_Scatter intercom algorithm"/>
+            <param name="scatterv_inter" type="funcptr" default="__INTERNAL__PMPI_Scatterv_inter" doc="MPI_Scatterv intercom algorithm"/>
+            <param name="reduce_inter" type="funcptr" default="__INTERNAL__PMPI_Reduce_inter" doc="MPI_Reduce intercom algorithm"/>
+            <param name="allreduce_inter" type="funcptr" default="__INTERNAL__PMPI_Allreduce_inter" doc="MPI_Allreduce intercom algorithm"/>
+            <param name="reduce_scatter_inter" type="funcptr" default="__INTERNAL__PMPI_Reduce_scatter_inter" doc="MPI_Reduce_scatter intercom algorithm"/>
+            <param name="reduce_scatter_block_inter" type="funcptr" default="__INTERNAL__PMPI_Reduce_scatter_block_inter" doc="MPI_Reduce_scatter_block intercom algorithm"/>
+        </struct>
+        
+        		
+	<!-- ############################## -->
+	<!-- #             MPC            # -->
+	<!-- ############################## -->
+
+	<struct name="mpc" doc="Options for MPC Message Passing">
+		<param name="log_debug" type="bool" default="false" doc="Print debug messages"/>
+		<param name="hard_checking" type="bool" default="false" doc=""/>
+		<param name="buffering" type="bool" default="false" doc=""/>
+	</struct>
+	
+	
+	</usertypes>
+	
+	
+	<modules>
+		<module name="collectives_intra" type="collectives_intra"/>
+		<module name="collectives_inter" type="collectives_inter"/>
+		<module name="mpc" type="mpc"/>
+	</modules>
+      
+      
+      
+</config>
 <config name="MPC_Message_Passing">
 	<usertypes>
 		
@@ -316,65 +379,11 @@
 			<param name="enable_idle_polling" type="bool" default="false" doc="Enable usage of polling during idle."/>
 			<param name="ib_global" type="ib_global" doc="Global parameters for IB" />
 		</struct>
-		
-		<!-- ############################## -->
-		<!-- #             MPC            # -->
-		<!-- ############################## -->
 
-		<struct name="mpc" doc="Options for MPC Message Passing">
-			<param name="log_debug" type="bool" default="false" doc="Print debug messages"/>
-			<param name="hard_checking" type="bool" default="false" doc=""/>
-			<param name="buffering" type="bool" default="false" doc=""/>
-		</struct>
 	</usertypes>
 	<modules>
 		<module name="inter_thread_comm" type="inter_thread_comm" />
 		<module name="low_level_comm" type="low_level_comm" />
-		<module name="mpc" type="mpc"/>
-	</modules>
-</config>
-<config name="MPC_MPI">
-	<usertypes>
-		<struct name="collectives_intra" doc="Collectives intracom MPI">
-            <param name="barrier_intra" type="funcptr" default="__INTERNAL__PMPI_Barrier_intra" doc="MPI_Barrier intracom algorithm"/>
-            <param name="bcast_intra" type="funcptr" default="__INTERNAL__PMPI_Bcast_intra" doc="Type of MPI_Bcast intracom algorithm"/>
-            <param name="allgather_intra" type="funcptr" default="__INTERNAL__PMPI_Allgather_intra" doc="MPI_Allgather intracom algorithm"/>
-            <param name="allgatherv_intra" type="funcptr" default="__INTERNAL__PMPI_Allgatherv_intra" doc="MPI_Allgatherv intracom algorithm"/>
-            <param name="alltoall_intra" type="funcptr" default="__INTERNAL__PMPI_Alltoall_intra" doc="MPI_Alltoall intracom algorithm"/>
-            <param name="alltoallv_intra" type="funcptr" default="__INTERNAL__PMPI_Alltoallv_intra" doc="Alltoallv intracom algorithm"/>
-            <param name="alltoallw_intra" type="funcptr" default="__INTERNAL__PMPI_Alltoallw_intra" doc="MPI_Alltoallw intracom algorithm"/>
-            <param name="gather_intra" type="funcptr" default="__INTERNAL__PMPI_Gather_intra" doc="MPI_Gather intracom algorithm"/>
-            <param name="gatherv_intra" type="funcptr" default="__INTERNAL__PMPI_Gatherv_intra" doc="MPI_Gatherv intracom algorithm"/>
-            <param name="scatter_intra" type="funcptr" default="__INTERNAL__PMPI_Scatter_intra" doc="MPI_Scatter intracom algorithm"/>
-            <param name="scatterv_intra" type="funcptr" default="__INTERNAL__PMPI_Scatterv_intra" doc="MPI_Scatterv intracom algorithm"/>
-            <param name="scan_intra" type="funcptr" default="__INTERNAL__PMPI_Scan_intra" doc="MPI_Scan intracom algorithm"/>
-            <param name="exscan_intra" type="funcptr" default="__INTERNAL__PMPI_Exscan_intra" doc="MPI_Exscan intracom algorithm"/>
-            <param name="reduce_intra" type="funcptr" default="__INTERNAL__PMPI_Reduce_intra" doc="MPI_Reduce intracom algorithm"/>
-            <param name="allreduce_intra" type="funcptr" default="__INTERNAL__PMPI_Allreduce_intra" doc="MPI_Allreduce intracom algorithm"/>
-            <param name="reduce_scatter_intra" type="funcptr" default="__INTERNAL__PMPI_Reduce_scatter_intra" doc="MPI_Reduce_scatter intracom algorithm"/>
-            <param name="reduce_scatter_block_intra" type="funcptr" default="__INTERNAL__PMPI_Reduce_scatter_block_intra" doc="MPI_Reduce_scatter_block intracom algorithm"/>
-        </struct>
-
-        <struct name="collectives_inter" doc="Collectives intercom MPI">
-            <param name="barrier_inter" type="funcptr" default="__INTERNAL__PMPI_Barrier_inter" doc="MPI_Barrier intercom algorithm"/><param name="bcast_inter" type="funcptr" default="__INTERNAL__PMPI_Bcast_inter" doc="MPI_Barrier intercom algorithm"/>
-            <param name="allgather_inter" type="funcptr" default="__INTERNAL__PMPI_Allgather_inter" doc="MPI_Allgather intercom algorithm"/>
-            <param name="allgatherv_inter" type="funcptr" default="__INTERNAL__PMPI_Allgatherv_inter" doc="MPI_Allgatherv intercom algorithm"/>
-            <param name="alltoall_inter" type="funcptr" default="__INTERNAL__PMPI_Alltoall_inter" doc="MPI_Alltoall intercom algorithm"/>
-            <param name="alltoallv_inter" type="funcptr" default="__INTERNAL__PMPI_Alltoallv_inter" doc="MPI_Alltoallv intercom algorithm"/>
-            <param name="alltoallw_inter" type="funcptr" default="__INTERNAL__PMPI_Alltoallw_inter" doc="MPI_Alltoallw intercom algorithm"/>
-            <param name="gather_inter" type="funcptr" default="__INTERNAL__PMPI_Gather_inter" doc="MPI_Gather intercom algorithm"/>
-            <param name="gatherv_inter" type="funcptr" default="__INTERNAL__PMPI_Gatherv_inter" doc="MPI_Gatherv intercom algorithm"/>
-            <param name="scatter_inter" type="funcptr" default="__INTERNAL__PMPI_Scatter_inter" doc="MPI_Scatter intercom algorithm"/>
-            <param name="scatterv_inter" type="funcptr" default="__INTERNAL__PMPI_Scatterv_inter" doc="MPI_Scatterv intercom algorithm"/>
-            <param name="reduce_inter" type="funcptr" default="__INTERNAL__PMPI_Reduce_inter" doc="MPI_Reduce intercom algorithm"/>
-            <param name="allreduce_inter" type="funcptr" default="__INTERNAL__PMPI_Allreduce_inter" doc="MPI_Allreduce intercom algorithm"/>
-            <param name="reduce_scatter_inter" type="funcptr" default="__INTERNAL__PMPI_Reduce_scatter_inter" doc="MPI_Reduce_scatter intercom algorithm"/>
-            <param name="reduce_scatter_block_inter" type="funcptr" default="__INTERNAL__PMPI_Reduce_scatter_block_inter" doc="MPI_Reduce_scatter_block intercom algorithm"/>
-        </struct>
-	</usertypes>
-	<modules>
-		<module name="collectives_intra" type="collectives_intra"/>
-        <module name="collectives_inter" type="collectives_inter"/>
 	</modules>
 </config>
 <config name="MPC_OpenMP">
