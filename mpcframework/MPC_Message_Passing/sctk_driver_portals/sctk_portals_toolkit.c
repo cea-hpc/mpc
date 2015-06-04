@@ -927,17 +927,6 @@ void ListFree ( sctk_portals_rail_info_t *portals_info, sctk_EventQ_t *EvQ, int 
 
 }
 
-/*check if a put was received*/
-unsigned inline isPutEvent ( ptl_event_t event )
-{
-    if ( event.type == PTL_EVENT_PUT )
-    {
-        return 1;
-    }
-    else
-        return 0;
-}
-
 /*check if a message was received or sended*/
 void clearList ( sctk_rail_info_t *rail, int id )
 {
@@ -1042,7 +1031,7 @@ void notify ( sctk_rail_info_t *rail, int id )
 
     sctk_spinlock_lock ( &portals_info->lock[id] ); //to be thread safe
 
-    while ( PtlEQGet ( *eq_h, &event ) == PTL_OK && isPutEvent ( event ) )
+    while ( PtlEQGet ( *eq_h, &event ) == PTL_OK && event.type == PTL_EVENT_PUT )
         //we give all events
     {
         ListAppendMsgReq ( rail, &event, id );
@@ -1061,14 +1050,16 @@ void sctk_network_init_portals_all ( sctk_rail_info_t *rail )
     int src_rank;
     ptl_ni_limits_t desired;
 
-    {
-#warning "GROS HACK"
-        {
-            static char rank[100];
-            sprintf ( rank, "%d", sctk_process_rank );
-            setenv ( "PORTALS4_RANK", rank, 1 );
-        }
-    }
+/*
+ *    {
+ *#warning "GROS HACK"
+ *        {
+ *            static char rank[100];
+ *            sprintf ( rank, "%d", sctk_process_rank );
+ *            setenv ( "PORTALS4_RANK", rank, 1 );
+ *        }
+ *    }
+ */
 
     sctk_pmi_barrier();
 
@@ -1080,23 +1071,25 @@ void sctk_network_init_portals_all ( sctk_rail_info_t *rail )
 
     assume ( PtlGetPhysId ( rail->network.portals.ni_handle_phys, &rail->network.portals.my_id ) ==  PTL_OK );
 
-    /*printf("NI actual limits\n  max_entries:            %d\n  max_unexpected_headers: %d\n  max_mds:                %d\n  max_cts:                %d\n  max_eqs:                %d\n  max_pt_index:           %d\n  max_iovecs:             %d\n  max_list_size:          %d\n  max_msg_size:           %d\n  max_atomic_size:        %d\n  max_waw_ordered_size:   %d\n  max_war_ordered_size:   %d\n  max_volatile_size:      %d\n",
-      rail->network.portals.actual.max_entries,
-      rail->network.portals.actual.max_unexpected_headers,
-      rail->network.portals.actual.max_mds,
-      rail->network.portals.actual.max_cts,
-      rail->network.portals.actual.max_eqs,
-      rail->network.portals.actual.max_pt_index,
-      rail->network.portals.actual.max_iovecs,
-      rail->network.portals.actual.max_list_size,
-      (int)rail->network.portals.actual.max_msg_size,
-      (int)rail->network.portals.actual.max_atomic_size,
-      (int)rail->network.portals.actual.max_waw_ordered_size,
-      (int)rail->network.portals.actual.max_war_ordered_size,
-      (int)rail->network.portals.actual.max_volatile_size);*/
+    /*
+     *printf("NI actual limits\n  max_entries:            %d\n  max_unexpected_headers: %d\n  max_mds:                %d\n  max_cts:                %d\n  max_eqs:                %d\n  max_pt_index:           %d\n  max_iovecs:             %d\n  max_list_size:          %d\n  max_msg_size:           %d\n  max_atomic_size:        %d\n  max_waw_ordered_size:   %d\n  max_war_ordered_size:   %d\n  max_volatile_size:      %d\n",
+     *  rail->network.portals.actual.max_entries,
+     *  rail->network.portals.actual.max_unexpected_headers,
+     *  rail->network.portals.actual.max_mds,
+     *  rail->network.portals.actual.max_cts,
+     *  rail->network.portals.actual.max_eqs,
+     *  rail->network.portals.actual.max_pt_index,
+     *  rail->network.portals.actual.max_iovecs,
+     *  rail->network.portals.actual.max_list_size,
+     *  (int)rail->network.portals.actual.max_msg_size,
+     *  (int)rail->network.portals.actual.max_atomic_size,
+     *  (int)rail->network.portals.actual.max_waw_ordered_size,
+     *  (int)rail->network.portals.actual.max_war_ordered_size,
+     *  (int)rail->network.portals.actual.max_volatile_size);
+     */
 
     sctk_nodebug ( "ni_handle_phys %p my_id.nid %u my_id.pid %u", rail->network.portals.ni_handle_phys, rail->network.portals.my_id.phys.nid, rail->network.portals.my_id.phys.pid );
-    //int ntasks = sctk_get_local_number_tasks(sctk_process_rank);//mettre ntasks pareil pour tous le monde
+    
     int ntasks = sctk_get_max_local_number_tasks();//the same number of indexes for everybody
     sctk_nodebug ( "tasks max %d", ntasks );
     rail->network.portals.ntasks = ntasks;
