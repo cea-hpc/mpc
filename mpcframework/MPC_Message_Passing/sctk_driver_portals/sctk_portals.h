@@ -42,13 +42,15 @@ typedef struct sctk_portals_rail_info_s
 	ptl_ni_limits_t   actual;
 	ptl_handle_ni_t   ni_handle_phys;
 	ptl_process_t     my_id;
-	int               ntasks;
-	ptl_pt_index_t    *pt_index;
-	sctk_EventQ_t     *EvQ;	//event list, one by thread
-	ptl_handle_eq_t   *eq_h;
+	int               nb_tasks_per_process;
+	ptl_pt_index_t    *pt_index; // one per thread
+	sctk_portals_event_table_list_t     *event_list;	//event list, one by thread
+	ptl_handle_eq_t   *event_handler;
 	sctk_spinlock_t   *lock; //event list, one by thread
 	ptl_ct_event_t    zeroCounter;
 
+    char connection_infos[MAX_STRING_SIZE];
+    size_t connection_infos_size;
 } sctk_portals_rail_info_t;
 
 void sctk_network_init_portals ( sctk_rail_info_t *rail);

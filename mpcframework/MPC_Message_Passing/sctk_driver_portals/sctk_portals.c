@@ -50,7 +50,7 @@ static void sctk_network_send_message_endpoint_portals ( sctk_thread_ptp_message
 
     if ( sctk_get_peer_process_rank ( SCTK_MSG_SRC_PROCESS ( msg ) ) != sctk_process_rank )
     {
-        sctk_Event_t *event 			= ( sctk_Event_t * ) msg->tail.portals_message_info_t; //get the evenet datas
+        sctk_portals_event_item_t *event 			= ( sctk_portals_event_item_t * ) msg->tail.portals_message_info_t; //get the evenet datas
         sctk_portals_message_t *ptrmsg 	= &event->msg;//get the struct message of portals
         int index = ptrmsg->peer_idThread;
 
@@ -88,8 +88,8 @@ static void sctk_network_send_message_endpoint_portals ( sctk_thread_ptp_message
         assert ( ctc.failure == 0 );
         sctk_nodebug ( "will free list" );
 
-        sctk_EventQ_t *EvQ 		= &rail->data.portals.EvQ[index];
-        sctk_EventL_t *currList = &EvQ->ListMsg;
+        sctk_portals_event_table_list_t *EvQ 		= &rail->data.portals.event_list[index];
+        sctk_portals_event_table_t *currList = &EvQ->head;
         int i, pos = ptrmsg->append_pos;
 
         //free the structs
@@ -119,7 +119,7 @@ static void sctk_network_send_message_endpoint_portals ( sctk_thread_ptp_message
 
             currList->events[pos].msg.me.options = OPTIONS_HEADER;
 
-            CHECK_RETURNVAL ( APPEND ( rail->data.portals.ni_handle_phys, rail->data.portals.pt_index[currList->events[pos].pt_index], &currList->events[pos].msg.me, PTL_PRIORITY_LIST, NULL, &currList->events[pos].msg.me_handle ) );
+            CHECK_RETURNVAL ( PtlMEAppend ( rail->data.portals.ni_handle_phys, rail->data.portals.pt_index[currList->events[pos].pt_index], &currList->events[pos].msg.me, PTL_PRIORITY_LIST, NULL, &currList->events[pos].msg.me_handle ) );
 
             ptrmsg->append_pos = -1;
 
@@ -151,7 +151,7 @@ static void sctk_network_notify_perform_message_portals ( int remote, int remote
     /*sctk_nodebug ( "perform message through rail %d", rail->rail_number );*/
     /*int i;*/
 
-    /*for ( i = 0; i < rail->network.portals.ntasks; i++ )*/
+    /*for ( i = 0; i < rail->network.portals.nb_tasks_per_process; i++ )*/
         /*notify ( rail, i );*/
 }
 
@@ -165,7 +165,7 @@ static void sctk_network_notify_any_source_message_portals ( int polling_task_id
     /*sctk_nodebug ( "any_source message through rail %d", rail->rail_number );*/
     /*int i;*/
 
-    /*for ( i = 0; i < rail->network.portals.ntasks; i++ )*/
+    /*for ( i = 0; i < rail->network.portals.nb_tasks_per_process; i++ )*/
         /*notify ( rail, i );*/
 }
 
