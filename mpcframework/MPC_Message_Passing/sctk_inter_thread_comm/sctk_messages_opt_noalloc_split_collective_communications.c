@@ -75,6 +75,8 @@ typedef struct
 static void sctk_opt_noalloc_split_messages_send ( const sctk_communicator_t communicator, int myself, int dest, int tag, void *buffer, size_t size,
                                                    sctk_message_class_t message_class, sctk_opt_noalloc_split_messages_t *msg_req, int check, int copy_in_send )
 {
+	//sctk_error("BAR %d SEND TO %d", myself, dest );
+	
 	sctk_init_header ( & ( msg_req->msg ), SCTK_MESSAGE_CONTIGUOUS, sctk_free_opt_noalloc_split_messages, sctk_message_copy );
 	sctk_add_adress_in_message ( & ( msg_req->msg ), buffer, size );
 	msg_req->request.request_type = REQUEST_SEND_COLL;
@@ -91,6 +93,8 @@ static void sctk_opt_noalloc_split_messages_recv ( const sctk_communicator_t com
                                                    sctk_message_class_t message_class, sctk_opt_noalloc_split_messages_t *msg_req, struct sctk_internal_ptp_s *ptp_internal, int check,
                                                    int copy_in_recv )
 {
+	//sctk_error("BAR %d RECV FROM %d", myself, src );
+	
 	sctk_init_header ( & ( msg_req->msg ), SCTK_MESSAGE_CONTIGUOUS, sctk_free_opt_noalloc_split_messages, sctk_message_copy );
 	sctk_add_adress_in_message ( & ( msg_req->msg ), buffer, size );
 	msg_req->request.request_type = REQUEST_RECV_COLL;

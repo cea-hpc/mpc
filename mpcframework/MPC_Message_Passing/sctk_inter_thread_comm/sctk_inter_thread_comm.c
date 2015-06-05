@@ -200,8 +200,7 @@ void sctk_message_isend( int dest, void * data, size_t size, int tag, sctk_commu
       sctk_init_request(req,comm, REQUEST_SEND);
       return;
     }
-	
-	sctk_error("%d SEND TO %d TAG %d size %d", src, dest, tag, size );
+
 	struct sctk_internal_ptp_s * ptp_internal = sctk_get_internal_ptp ( src );
 	
 	sctk_init_request(req,comm, REQUEST_SEND);
@@ -221,8 +220,7 @@ void sctk_message_irecv( int src, void * buffer, size_t size, int tag, sctk_comm
       sctk_init_request(req,comm, REQUEST_RECV);
       return;
     }
-	
-	sctk_error("%d RECV FROM %d TAG %d size %d", dest, src, tag, size );
+
 	struct sctk_internal_ptp_s * ptp_internal = sctk_get_internal_ptp ( dest );
 	
 	sctk_init_request(req,comm, REQUEST_RECV);
@@ -2635,7 +2633,7 @@ void sctk_send_message_try_check ( sctk_thread_ptp_message_t *msg, int perform_c
 	if( sctk_process_rank < 0 )
 		CRASH();
 	
-	sctk_error("!%d! MM %d -> %d (CLASS %d SPE %d)", sctk_process_rank, SCTK_MSG_SRC_PROCESS ( msg ),  SCTK_MSG_DEST_PROCESS ( msg ), SCTK_MSG_SPECIFIC_CLASS( msg ) , sctk_message_class_is_process_specific ( SCTK_MSG_SPECIFIC_CLASS( msg ) ));
+	sctk_debug("!%d! MM %d -> %d (CLASS %d SPE %d)", sctk_process_rank, SCTK_MSG_SRC_PROCESS ( msg ),  SCTK_MSG_DEST_PROCESS ( msg ), SCTK_MSG_SPECIFIC_CLASS( msg ) , sctk_message_class_is_process_specific ( SCTK_MSG_SPECIFIC_CLASS( msg ) ));
 
 	/*  Message has not reached its destination */
 	if( SCTK_MSG_DEST_PROCESS ( msg ) != sctk_process_rank )
@@ -2646,7 +2644,7 @@ void sctk_send_message_try_check ( sctk_thread_ptp_message_t *msg, int perform_c
 		}
 
 		msg->tail.remote_destination = 1;
-		sctk_debug( "Need to forward the message fom %d to %d",  SCTK_MSG_SRC_PROCESS ( msg ),  SCTK_MSG_DEST_PROCESS ( msg ) );
+		sctk_nodebug( "Need to forward the message fom %d to %d",  SCTK_MSG_SRC_PROCESS ( msg ),  SCTK_MSG_DEST_PROCESS ( msg ) );
 		/* We forward the message */
 		sctk_network_send_message ( msg );
 		return;
@@ -2743,7 +2741,6 @@ void sctk_send_message_try_check ( sctk_thread_ptp_message_t *msg, int perform_c
 		else
 		{
 			/*Entering low level comm and forwarding the message*/
-			sctk_error("HERE WE GO AGAIN");
 			msg->tail.remote_destination = 1;
 			sctk_network_send_message ( msg );
 		}
@@ -2758,7 +2755,7 @@ void sctk_send_message_try_check ( sctk_thread_ptp_message_t *msg, int perform_c
  * */
 void sctk_send_message ( sctk_thread_ptp_message_t *msg )
 {
-	sctk_debug("SEND [ %d -> %d ] [ %d -> %d ] ( size %d tag %d)", SCTK_MSG_SRC_PROCESS ( msg ), SCTK_MSG_DEST_PROCESS ( msg ), SCTK_MSG_SRC_TASK ( msg ), SCTK_MSG_DEST_TASK ( msg ),  SCTK_MSG_SIZE( msg ) ,  SCTK_MSG_TAG( msg ) );
+	sctk_nodebug("SEND [ %d -> %d ] [ %d -> %d ] ( size %d tag %d)", SCTK_MSG_SRC_PROCESS ( msg ), SCTK_MSG_DEST_PROCESS ( msg ), SCTK_MSG_SRC_TASK ( msg ), SCTK_MSG_DEST_TASK ( msg ),  SCTK_MSG_SIZE( msg ) ,  SCTK_MSG_TAG( msg ) );
 	
 	int need_check = 0;
 	/* TODO: need to check in wait */

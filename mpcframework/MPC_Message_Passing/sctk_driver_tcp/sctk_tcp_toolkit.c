@@ -568,7 +568,7 @@ void sctk_network_init_tcp_all ( sctk_rail_info_t *rail, int sctk_use_tcp_o_ib,
 	else
 	{
 		/* Here particular case of two processes (not to loop) */
-		if ( sctk_process_rank % 2 == 0 )
+		if ( sctk_process_rank == 0 )
 		{
 			sctk_nodebug ( "Connect to %d", right_rank );
 			right_socket = sctk_tcp_connect_to ( right_rank_connection_infos, rail );

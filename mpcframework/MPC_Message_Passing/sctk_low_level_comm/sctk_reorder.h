@@ -78,7 +78,7 @@ typedef struct sctk_reorder_table_s
 
 typedef struct sctk_reorder_task_s
 {
-	sctk_reorder_table_t *table;
+	volatile sctk_reorder_table_t *table;
 	sctk_spinlock_t lock;
 } sctk_reorder_list_t;
 

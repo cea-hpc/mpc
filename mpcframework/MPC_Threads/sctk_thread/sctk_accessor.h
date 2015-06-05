@@ -28,6 +28,8 @@
 #include "sctk_thread.h"
 #include "sctk_topology.h"
 #include "sctk.h"
+#include "sctk_pmi.h" 
+
 #ifdef __cplusplus
 extern "C"
 {
