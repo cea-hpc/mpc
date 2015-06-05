@@ -80,8 +80,6 @@ void sctk_barrier ( const sctk_communicator_t communicator )
 {
 	sctk_internal_collectives_struct_t *tmp;
 
-	sctk_nodebug ( "sctk_barrier begin" ); //AMAHEO
-
 	if ( communicator != SCTK_COMM_SELF )
 	{
 		tmp = sctk_get_internal_collectives ( communicator );

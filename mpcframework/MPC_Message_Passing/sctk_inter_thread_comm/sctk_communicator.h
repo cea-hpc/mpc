@@ -56,7 +56,7 @@ inline int sctk_get_process_nb_in_array ( const sctk_communicator_t communicator
 inline int *sctk_get_process_array ( const sctk_communicator_t communicator );
 
 sctk_communicator_t sctk_get_peer_comm ( const sctk_communicator_t communicator );
-sctk_communicator_t sctk_create_communicator ( const sctk_communicator_t origin_communicator, const int nb_task_involved, const int *task_list, int is_inter_comm );
+sctk_communicator_t sctk_create_communicator ( const sctk_communicator_t origin_communicator, const int nb_task_involved, const int *task_list );
 sctk_communicator_t sctk_create_intercommunicator ( const sctk_communicator_t local_comm, const int local_leader, const sctk_communicator_t peer_comm, const int remote_leader,
                                                     const int tag, const int first );
 sctk_communicator_t sctk_duplicate_communicator ( const sctk_communicator_t origin_communicator, int is_inter_comm, int rank );

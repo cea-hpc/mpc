@@ -21,6 +21,8 @@
 /* ######################################################################## */
 #ifndef SCTK_TYPES_H
 #define SCTK_TYPES_H
+/************************** HEADERS **************************/
+#include <stdlib.h>
 /************************** TYPES **************************/
 /** define the communicator number type **/
 typedef int sctk_communicator_t;

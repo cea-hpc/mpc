@@ -6474,7 +6474,7 @@ __MPC_Comm_create (MPC_Comm comm, MPC_Group group, MPC_Comm * comm_out,
 	}
 	else
 	{
-		(*comm_out) = sctk_create_communicator (comm, group->task_nb, group->task_list_in_global_ranks, is_inter_comm);
+		(*comm_out) = sctk_create_communicator (comm, group->task_nb, group->task_list_in_global_ranks);
 		sctk_nodebug("\trank %d: new intracomm -> %d", rank, *comm_out);
 	}
     

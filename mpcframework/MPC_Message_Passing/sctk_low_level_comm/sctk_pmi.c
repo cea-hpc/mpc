@@ -60,32 +60,32 @@ INITIALIZATION/FINALIZE
 ******************************************************************************/
 
 #ifdef SCTK_LIB_MODE
-	#pragma weak MPC_Net_rank
-	int MPC_Net_rank()
+	#pragma weak MPC_Net_hook_rank
+	int MPC_Net_hook_rank()
 	{
 		return 0;
 	}
 	
-	#pragma weak MPC_Net_size
-	int MPC_Net_size()
+	#pragma weak MPC_Net_hook_size
+	int MPC_Net_hook_size()
 	{
 		return 1;
 	}
 	
-	#pragma weak MPC_Net_barrier
-	void MPC_Net_barrier()
+	#pragma weak MPC_Net_hook_barrier
+	void MPC_Net_hook_barrier()
 	{
 		
 	}
 	
-	#pragma weak MPC_Net_send_to
-	void MPC_Net_send_to( void * data, size_t size, int target )
+	#pragma weak MPC_Net_hook_send_to
+	void MPC_Net_hook_send_to( void * data, size_t size, int target )
 	{
 		sctk_fatal("You must implement the MPC_Net_send_to function to run in multiprocess");
 	}
 	
-	#pragma weak MPC_Net_recv_from
-	void MPC_Net_recv_from( void * data, size_t size, int source )
+	#pragma weak MPC_Net_hook_recv_from
+	void MPC_Net_hook_recv_from( void * data, size_t size, int source )
 	{
 		sctk_fatal("You must implement the MPC_Net_recv_from function to run in multiprocess");
 	}
@@ -105,8 +105,8 @@ int sctk_pmi_init()
 		int rc;
 		done = 1;
 #ifdef SCTK_LIB_MODE
-		sctk_pmi_process_rank = MPC_Net_rank();
-		sctk_pmi_process_number = MPC_Net_size();
+		sctk_pmi_process_rank = MPC_Net_hook_rank();
+		sctk_pmi_process_number = MPC_Net_hook_size();
 
 		/* Consider nodes as processes */
 		sctk_node_rank = sctk_pmi_process_rank;

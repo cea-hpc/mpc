@@ -2498,10 +2498,9 @@ sctk_communicator_t sctk_create_intercommunicator ( const sctk_communicator_t lo
  * @param origin_communicator origin communicator.
  * @param nb_task_involved number of tasks involved.
  * @param task_list list of tasks involved.
- * @param is_inter_comm determine if it is an intercommunicator.
  * @return the identification number of the new communicator.
 **/
-sctk_communicator_t sctk_create_communicator ( const sctk_communicator_t origin_communicator, const int nb_task_involved, const int *task_list, int is_inter_comm )
+sctk_communicator_t sctk_create_communicator ( const sctk_communicator_t origin_communicator, const int nb_task_involved, const int *task_list )
 {
 	sctk_internal_communicator_t *tmp;
 	sctk_internal_communicator_t *new_tmp;

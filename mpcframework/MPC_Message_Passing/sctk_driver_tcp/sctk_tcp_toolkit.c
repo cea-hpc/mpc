@@ -482,13 +482,13 @@ void sctk_network_init_tcp_all ( sctk_rail_info_t *rail, int sctk_use_tcp_o_ib,
 	{
 		if ( sctk_process_rank % 2 == 0 )
 		{
-			MPC_Net_send_to( rail->network.tcp.connection_infos, MAX_STRING_SIZE, left_rank );
-			MPC_Net_recv_from( right_rank_connection_infos, MAX_STRING_SIZE, right_rank );
+			MPC_Net_hook_send_to( rail->network.tcp.connection_infos, MAX_STRING_SIZE, left_rank );
+			MPC_Net_hook_recv_from( right_rank_connection_infos, MAX_STRING_SIZE, right_rank );
 		}
 		else
 		{
-			MPC_Net_recv_from( right_rank_connection_infos, MAX_STRING_SIZE, right_rank );
-			MPC_Net_send_to( rail->network.tcp.connection_infos, MAX_STRING_SIZE, left_rank );
+			MPC_Net_hook_recv_from( right_rank_connection_infos, MAX_STRING_SIZE, right_rank );
+			MPC_Net_hook_send_to( rail->network.tcp.connection_infos, MAX_STRING_SIZE, left_rank );
 		}
 	}
 	else
@@ -497,11 +497,11 @@ void sctk_network_init_tcp_all ( sctk_rail_info_t *rail, int sctk_use_tcp_o_ib,
 		{
 			if( sctk_process_rank == 1 )
 			{
-				MPC_Net_send_to( rail->network.tcp.connection_infos, MAX_STRING_SIZE, left_rank );
+				MPC_Net_hook_send_to( rail->network.tcp.connection_infos, MAX_STRING_SIZE, left_rank );
 			}
 			else
 			{
-				MPC_Net_recv_from( right_rank_connection_infos, MAX_STRING_SIZE, right_rank );
+				MPC_Net_hook_recv_from( right_rank_connection_infos, MAX_STRING_SIZE, right_rank );
 			}
 		}
 	}
