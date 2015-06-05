@@ -58,6 +58,9 @@ static inline int sctk_get_task_number (void)
 
 static inline int sctk_get_local_task_rank (void)
 {
+#ifdef SCTK_LIB_MODE
+	return 0;
+#endif
 	if( !sctk_thread_data_get() )
 		return -1;
 		
@@ -66,6 +69,9 @@ static inline int sctk_get_local_task_rank (void)
 
 static inline int sctk_get_local_task_number (void)
 {
+#ifdef SCTK_LIB_MODE
+	return 1;
+#endif
 	return sctk_thread_get_current_local_tasks_nb();
 }
 
