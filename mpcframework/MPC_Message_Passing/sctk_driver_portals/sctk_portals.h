@@ -28,16 +28,21 @@ extern "C"
 {
 #endif
 
-#include <sctk_portals_toolkit.h>
+#include <sctk_io_helper.h>
 #ifdef MPC_USE_PORTALS
+#include <sctk_portals_toolkit.h>
+//#ifndef __SCTK_ROUTE_H_
+//#error "sctk_route must be included before sctk_portals.h"
+//#endif
 
-typedef struct sctk_portals_route_info_s
+struct sctk_portals_route_info_s
 {
 	ptl_process_t id;//to route
-} sctk_portals_route_info_t;
+};
+typedef struct sctk_portals_route_info_s sctk_portals_route_info_t;
 
 
-typedef struct sctk_portals_rail_info_s
+struct sctk_portals_rail_info_s
 {
 	ptl_ni_limits_t   actual;
 	ptl_handle_ni_t   ni_handle_phys;
@@ -51,7 +56,8 @@ typedef struct sctk_portals_rail_info_s
 
     char connection_infos[MAX_STRING_SIZE];
     size_t connection_infos_size;
-} sctk_portals_rail_info_t;
+};
+typedef struct sctk_portals_rail_info_s sctk_portals_rail_info_t;
 
 void sctk_network_init_portals ( sctk_rail_info_t *rail);
 #ifdef __cplusplus

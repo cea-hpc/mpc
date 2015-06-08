@@ -30,10 +30,9 @@ extern "C"
 #endif
 
 #ifdef MPC_USE_PORTALS
-#include <sctk_route.h>
 #include <portals4.h>
 #include <sctk_spinlock.h>
-#include <utlist.h>
+//#include <utlist.h>
 
 # define NI_TYPE  PTL_NI_MATCHING
 # define OPTIONS  (PTL_ME_OP_GET | PTL_ME_EVENT_CT_COMM | PTL_ME_EVENT_CT_OVERFLOW | PTL_ME_EVENT_LINK_DISABLE | PTL_ME_EVENT_UNLINK_DISABLE | PTL_ME_USE_ONCE | PTL_ME_EVENT_COMM_DISABLE)
@@ -45,7 +44,7 @@ extern "C"
 #define SCTK_PORTALS_SIZE_EVENTS		64
 //#define SIZE_QUEUE_PROCS		16
 #define SCTK_PORTALS_SIZE_HEADERS		16
-#define SIZE_QUEUE_HEADERS_MIN	8
+#define SCTK_PORTALS_SIZE_HEADERS_MIN	8
 
 #define MSG_ARRAY	0
 #define OVER_ARRAY	1
@@ -110,7 +109,7 @@ typedef struct portals_message_s
 } sctk_portals_message_t;
 
 
-typedef sruct sctk_portals_event_item_s
+typedef struct sctk_portals_event_item_s
 {
 	unsigned used;
 	//int vp;
@@ -124,11 +123,11 @@ typedef struct sctk_portals_event_table_s
 	unsigned int nb_elems;
 	unsigned int nb_elems_headers;
 	sctk_portals_event_item_t events[SCTK_PORTALS_SIZE_EVENTS];
-	sctk_portals_event_table_t *next;
+	struct sctk_portals_event_table_s *next;
 } sctk_portals_event_table_t;
 
 
-typedef struct sctk_portals_event_list_s
+typedef struct sctk_portals_event_table_list_s
 {
 	unsigned nb_elements;
 	sctk_portals_event_table_t head;
@@ -155,5 +154,5 @@ void portals_on_demand_connection_handler( sctk_rail_info_t *rail, int dest_proc
 #ifdef __cplusplus
 }
 #endif
-#endif
-#endif
+#endif // MPC_USE_PORTALS
+#endif // end .h file

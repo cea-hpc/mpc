@@ -23,6 +23,7 @@
 
 #ifdef MPC_USE_PORTALS
 
+#include <sctk_route.h>
 #include <sctk_portals_toolkit.h>
 /************ TOOLS **********************************/
 void test_event_type ( ptl_event_t *event, int rank, const char *type )
@@ -167,7 +168,7 @@ decode ( const char *inval, void *outval, int outvallen )
     return 0;
 }
 
-void set_portals_set_max ( long int *ptr, int size )
+void sctk_portals_set_max ( long int *ptr, int size )
 {
 
     *ptr = 1;
@@ -365,12 +366,12 @@ void sctk_portals_free ( void *msg ) //free isn't atomatic because we reuse memo
     //sctk_free(msg);
 }
 
-static void sctk_portals_add_route(int dest, ptl_process_t id, char*sctk_rail_info_t *rail, sctk_route_origin_t route_type ){
+static void sctk_portals_add_route(int dest, ptl_process_t id, sctk_rail_info_t *rail, sctk_route_origin_t route_type ){
     sctk_endpoint_t *new_route;
 
     new_route = sctk_malloc ( sizeof ( sctk_endpoint_t ) );
     assume(new_route != NULL);
-    sctk_endpoint_init(new_route, rail, route_type);
+    sctk_endpoint_init(new_route, dest, rail, route_type);
     sctk_endpoint_set_state(new_route, STATE_CONNECTED);
 
     new_route->data.portals.id = id;
@@ -383,7 +384,7 @@ static void sctk_portals_add_route(int dest, ptl_process_t id, char*sctk_rail_in
     /**TODO: need a polling threads ? */
 }
 
-static void sctk_portals_bind_to(sctk_rail_info_t *rail, ptl_process_it remote){
+static void sctk_portals_bind_to(sctk_rail_info_t *rail, ptl_process_t remote){
     ptl_md_t md;
     ptl_handle_md_t md_handle;
 
@@ -399,7 +400,7 @@ static void sctk_portals_bind_to(sctk_rail_info_t *rail, ptl_process_it remote){
 
     ptl_ct_event_t ctc;
 
-    CHECK_RETURNVAL ( PtlGet ( md_handle, 0, md.length, right_id, 0, 0, 0, NULL ) ); //getting the init buf
+    CHECK_RETURNVAL ( PtlGet ( md_handle, 0, md.length, remote, 0, 0, 0, NULL ) ); //getting the init buf
     CHECK_RETURNVAL ( PtlCTWait ( md.ct_handle, 1, &ctc ) ); //we need to wait the message for routing
 }
 
@@ -434,7 +435,8 @@ inline int sctk_get_local_id ( int task_id )
 }
 
 /* get the number of threads in a proc */
-inline int sctk_get_local_number_tasks ( int proc_id )
+/*inline int sctk_get_local_number_tasks ( int proc_id )*/
+inline int sctk_get_local_number_tasks ()
 {
     int i, p = 0;
 
@@ -444,7 +446,7 @@ inline int sctk_get_local_number_tasks ( int proc_id )
 
     p = rap;
 
-    if ( proc_id < rest )
+    if ( sctk_process_rank < rest )
         p++;
 
     sctk_nodebug ( "tasks: %d", p );
@@ -525,9 +527,9 @@ static inline void reserve ( sctk_portals_rail_info_t *portals_info, int ind, sc
 
     for ( i = 0; i < EvQ->nb_elements; i++ )
     {
-        if ( currList->nb_elems < SIZE_QUEUE_EVENTS )
+        if ( currList->nb_elems < SCTK_PORTALS_SIZE_EVENTS )
         {
-            for ( k = 0; k < SIZE_QUEUE_EVENTS; k++ )
+            for ( k = 0; k < SCTK_PORTALS_SIZE_EVENTS; k++ )
             {
                 if ( currList->events[k].used == IDLE )
                 {
@@ -587,18 +589,18 @@ static inline void evalReserve ( sctk_portals_rail_info_t *portals_info, int ind
     for ( i = 0; i < EvQ->nb_elements; i++ )
     {
         reservations += currList->nb_elems_headers;
-        free_space += SIZE_QUEUE_EVENTS - currList->nb_elems;
+        free_space += SCTK_PORTALS_SIZE_EVENTS - currList->nb_elems;
         currList = currList->next;
     }
 
-    if ( reservations < SIZE_QUEUE_HEADERS_MIN )
+    if ( reservations < SCTK_PORTALS_SIZE_HEADERS_MIN )
     {
-        if ( free_space < SIZE_QUEUE_HEADERS - reservations )
+        if ( free_space < SCTK_PORTALS_SIZE_HEADERS - reservations )
         {
             ListAllocMsg ( EvQ );
         }
 
-        reserve ( portals_info, ind, EvQ, SIZE_QUEUE_HEADERS - reservations );
+        reserve ( portals_info, ind, EvQ, SCTK_PORTALS_SIZE_HEADERS - reservations );
     }
 }
 
@@ -621,7 +623,7 @@ void ListAppendMsg ( sctk_portals_rail_info_t *portals_info, sctk_thread_ptp_mes
 
     sctk_spinlock_lock ( &portals_info->lock[my_idThread] ); //to be thread safe
 
-    sctk_portals_event_table_list_t *EvQ 		= &portals_info->EvQ[my_idThread];//get the event queue of the good index
+    sctk_portals_event_table_list_t *EvQ 		= &portals_info->event_list[my_idThread];//get the event queue of the good index
 
     unsigned currPos = 0;
     sctk_portals_event_table_t *currList = &EvQ->head;
@@ -630,7 +632,7 @@ void ListAppendMsg ( sctk_portals_rail_info_t *portals_info, sctk_thread_ptp_mes
     while ( !found )
     {
 
-        if ( currList->nb_elems < SIZE_QUEUE_EVENTS )
+        if ( currList->nb_elems < SCTK_PORTALS_SIZE_EVENTS )
         {
             int pos = 0;
 
@@ -784,7 +786,7 @@ void ListAppendMsgReq ( sctk_rail_info_t *rail, ptl_event_t *event, int peer_idT
     set_Match_Ignore_Bits ( &match, &ignore, my_idThread, tag );
     ptl_handle_ni_t *ni_h 	= & ( portals_info->ni_handle_phys );
 
-    sctk_portals_event_table_list_t *EvQ 		= &portals_info->EvQ[peer_idThread];//we get the good index
+    sctk_portals_event_table_list_t *EvQ 		= &portals_info->event_list[peer_idThread];//we get the good index
 
     sctk_portals_event_table_t *currList = &EvQ->head;
     evalReserve ( portals_info, peer_idThread, EvQ );
@@ -792,7 +794,7 @@ void ListAppendMsgReq ( sctk_rail_info_t *rail, ptl_event_t *event, int peer_idT
     while ( !found )
     {
 
-        if ( currList->nb_elems < SIZE_QUEUE_EVENTS && currList->nb_elems_headers > 0 )
+        if ( currList->nb_elems < SCTK_PORTALS_SIZE_EVENTS && currList->nb_elems_headers > 0 )
             //enough places ?
         {
             int pos = 0;
@@ -992,7 +994,7 @@ void clearList ( sctk_rail_info_t *rail, int id )
 
 
         ptl_handle_ni_t *ni_h = &portals_info->ni_handle_phys;
-        sctk_portals_event_table_list_t *EvQ = &portals_info->EvQ[id];
+        sctk_portals_event_table_list_t *EvQ = &portals_info->event_list[id];
         ptl_handle_eq_t *eq_h = &portals_info->event_handler[id];
 
         sctk_portals_event_table_t *currList = &EvQ->head;
@@ -1009,12 +1011,12 @@ void clearList ( sctk_rail_info_t *rail, int id )
             for ( k = 0; k < size; k++, i++ )
                 //and all the elements
             {
-                while ( i < SIZE_QUEUE_EVENTS && currList->events[i].used != IN_USE )
+                while ( i < SCTK_PORTALS_SIZE_EVENTS && currList->events[i].used != IN_USE )
                 {
                     i++;
                 }
 
-                if ( i == SIZE_QUEUE_EVENTS ) //to avoid bugs
+                if ( i == SCTK_PORTALS_SIZE_EVENTS ) //to avoid bugs
                     break;
 
                 if ( currList->events[i].msg.type == WRITE )
@@ -1078,7 +1080,7 @@ void notify ( sctk_rail_info_t *rail, int id )
     sctk_portals_rail_info_t *portals_info = &rail->network.portals;
 
     ptl_handle_ni_t *ni_h = &portals_info->ni_handle_phys;
-    ptl_handle_eq_t *eq_h = &portals_info->event_handlerid];
+    ptl_handle_eq_t *eq_h = &portals_info->event_handler[id];
 
     ptl_event_t event;
 
@@ -1141,8 +1143,8 @@ void sctk_network_init_portals_all ( sctk_rail_info_t *rail )
     rail->network.portals.event_list = sctk_malloc ( sizeof ( sctk_portals_event_table_list_t ) * ntasks );
     rail->network.portals.event_handler = sctk_malloc ( sizeof ( ptl_handle_eq_t ) * ntasks );
     rail->network.portals.lock = sctk_malloc ( sizeof ( sctk_spinlock_t ) * ntasks );
-    //rail->network.portals.pre_matching = sctk_malloc(sizeof(ptl_me_t)*ntasks*(SIZE_QUEUE_HEADERS+2));
-    //rail->network.portals.pre_matching_handle = sctk_malloc(sizeof(ptl_handle_me_t)*ntasks*(SIZE_QUEUE_HEADERS+2));
+    //rail->network.portals.pre_matching = sctk_malloc(sizeof(ptl_me_t)*ntasks*(SCTK_PORTALS_SIZE_HEADERS+2));
+    //rail->network.portals.pre_matching_handle = sctk_malloc(sizeof(ptl_handle_me_t)*ntasks*(SCTK_PORTALS_SIZE_HEADERS+2));
     rail->network.portals.pt_index = sctk_malloc ( sizeof ( ptl_pt_index_t ) * ntasks );
     bzero ( &rail->network.portals.zeroCounter, sizeof ( ptl_ct_event_t ) );
     init.start  = &idle;
@@ -1237,14 +1239,14 @@ void sctk_network_init_portals_all ( sctk_rail_info_t *rail )
     left_rank = ( sctk_process_rank + sctk_process_number - 1 ) % sctk_process_number;
     
 	sctk_nodebug ( "Connection Infos (%d): %s", sctk_process_rank, rail->network.portals.connection_infos );
-    assume(sctk_pmi_put_connection_info ( rail->network.portals.connection_infos, MAX_STRING_SIZE, rail->number ) == 0);
+    assume(sctk_pmi_put_connection_info ( rail->network.portals.connection_infos, MAX_STRING_SIZE, rail->rail_number ) == 0);
 
     sctk_pmi_barrier();
 
     /*sctk_endpoint_t *tmp, *tmp2;*/
     
     /*snprintf ( key, key_max, "PORTALS-%d-%06d", rail->rail_number , right_rank );*/
-    sctk_pmi_get_connection_info ( right_rank_connection_infos, MAX_STRING_SIZE, rail->number, right_rank );
+    sctk_pmi_get_connection_info ( right_rank_connection_infos, MAX_STRING_SIZE, rail->rail_number, right_rank );
     sctk_nodebug ( "Got KEY %s\t%s", right_rank,right_rank_connection_infos, ); //key is the process_rank ,val is the nid and pid encoded
 
     /*tmp = sctk_malloc ( sizeof ( sctk_endpoint_t ) );*/
@@ -1258,7 +1260,7 @@ void sctk_network_init_portals_all ( sctk_rail_info_t *rail )
 
     if(sctk_process_number > 2){
         /*snprintf ( key, key_max, "PORTALS-%d-%06d", rail->rail_number , left_rank );*/
-        sctk_pmi_get_connection_info ( left_rank_connection_infos, MAX_STRING_SIZE, rail->number, left_rank );
+        sctk_pmi_get_connection_info ( left_rank_connection_infos, MAX_STRING_SIZE, rail->rail_number, left_rank );
         sctk_nodebug ( "Got KEY %s\t%s", left_rank,right_rank_connection_infos, ); //key is the process_rank ,val is the nid and pid encoded
 
         /*tmp2 = sctk_malloc ( sizeof ( sctk_endpoint_t ) );*/

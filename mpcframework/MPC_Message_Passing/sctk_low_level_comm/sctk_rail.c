@@ -86,7 +86,7 @@ sctk_rail_info_t * sctk_rail_register_with_parent( struct sctk_runtime_config_st
 	/* Load and save Rail Device (NULL if not found) */
 	new_rail->rail_device = sctk_device_get_from_handle( runtime_config_rail->device );
 	
-	if( ! new_rail->rail_device )
+    if( ! new_rail->rail_device )
 	{
 		if( strcmp( runtime_config_rail->device, "default") && runtime_config_rail->device[0] != '!' )
 		{

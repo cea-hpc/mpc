@@ -133,7 +133,7 @@ meta.types = {
 		mmu_cache_maximum_pin_size: {mode: 'param', name: "mmu_cache_maximum_pin_size", type: "size", doc: "Maximum size of an pinned entry.", dflt: "1GB", },
 	}},
 	net_driver_portals : {type: 'struct', name: "net_driver_portals", childs: {
-		fake_param: {mode: 'param', name: "fake_param", type: "int", doc: "Fake param.", dflt: "0", },
+		fake_param: {mode: 'param', name: "fake_param", type: "int", doc: "Fake param.", dflt: "1", },
 	}},
 	net_driver_tcp : {type: 'struct', name: "net_driver_tcp", childs: {
 		tcpoib: {mode: 'param', name: "tcpoib", type: "int", doc: "Enable TCP over Infiniband (if elligible).", dflt: "1", },

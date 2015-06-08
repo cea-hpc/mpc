@@ -65,9 +65,15 @@
 								<size_recv_ibufs_chunk>50</size_recv_ibufs_chunk>
 							</infiniband>
 						</driver>
-						
+                   	
 					</config>
-						
+                    <config>
+                        <name>portals</name>
+                        <driver>
+                            <tcp/>
+                        </driver>
+                    </config>
+
 					<config>
 						<name>tcp_config_mpi</name>
 						<driver>
@@ -117,6 +123,12 @@
 						<topology>ring</topology>
 						<config>tcp_config_mpi</config>
 					</rail>
+					<rail>
+						<name>portals_mpi</name>
+						<device>0</device>
+						<topology>ring</topology>
+						<config>portals</config>
+					</rail>
 				</rails>
 
 				<cli_options>
@@ -138,6 +150,12 @@
 						<rails>
 							<rail>tcp_large</rail>
 							<rail>tcp_mpi</rail>
+						</rails>
+					</cli_option>
+					<cli_option>
+						<name>portals</name>
+						<rails>
+							<rail>portals_mpi</rail>
 						</rails>
 					</cli_option>
 					<cli_option>

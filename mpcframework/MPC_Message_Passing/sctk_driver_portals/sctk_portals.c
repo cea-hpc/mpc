@@ -23,12 +23,13 @@
 
 #ifdef MPC_USE_PORTALS
 #include <sctk_debug.h>
-#include <sctk_portals.h>
+#include <sctk_route.h>
 #include <sctk_inter_thread_comm.h>
+#include <sctk_portals.h>
 
 /************ INTER_THEAD_COMM HOOOKS ****************/
 //TODO: Refactor and extract portals routine into sctk_portals_toolkit.c
-static void sctk_network_send_message_endpoint_portals ( sctk_thread_ptp_message_t *msg, sctk_endpoint_t *rail )
+static void sctk_network_send_message_endpoint_portals ( sctk_thread_ptp_message_t *msg, sctk_endpoint_t *endpoint )
 {
     sctk_endpoint_t *tmp;
     size_t size;
@@ -37,14 +38,14 @@ static void sctk_network_send_message_endpoint_portals ( sctk_thread_ptp_message
 
     if ( 0 )
     {
-        tmp = sctk_rail_get_any_route_to_process_or_on_demand ( rail->rail, SCTK_MSG_DEST_PROCESS ( msg ) ); //proc
+        tmp = sctk_rail_get_any_route_to_process_or_on_demand ( endpoint->rail, SCTK_MSG_DEST_PROCESS ( msg ) ); //proc
     }
     else
     {
-        tmp = sctk_rail_get_any_route_to_task_or_on_demand( rail->rail, SCTK_MSG_DEST_TASK ( msg ) ); //task
+        tmp = sctk_rail_get_any_route_to_task_or_on_demand( endpoint->rail, SCTK_MSG_DEST_TASK ( msg ) ); //task
     }
 
-    sctk_nodebug ( "my %d dest %d", rail->data.portals.my_id.phys.pid, tmp->data.portals.id.phys.pid );
+    sctk_nodebug ( "my %d dest %d", endpoint->rail->network.portals.my_id.phys.pid, tmp->rail->network.portals.id.phys.pid );
     sctk_nodebug ( "send from %d to %d", SCTK_MSG_SRC_PROCESS ( msg ), SCTK_MSG_DEST_PROCESS ( msg ) );
 
 
@@ -54,7 +55,7 @@ static void sctk_network_send_message_endpoint_portals ( sctk_thread_ptp_message
         sctk_portals_message_t *ptrmsg 	= &event->msg;//get the struct message of portals
         int index = ptrmsg->peer_idThread;
 
-        sctk_spinlock_lock ( &rail->data.portals.lock[index] ); //to be thread safe
+        sctk_spinlock_lock ( &endpoint->rail->network.portals.lock[index] ); //to be thread safe
 
         sctk_nodebug ( "%d =/ %d", sctk_get_peer_process_rank ( SCTK_MSG_SRC_PROCESS ( msg ) ), sctk_process_rank );
 
@@ -88,7 +89,7 @@ static void sctk_network_send_message_endpoint_portals ( sctk_thread_ptp_message
         assert ( ctc.failure == 0 );
         sctk_nodebug ( "will free list" );
 
-        sctk_portals_event_table_list_t *EvQ 		= &rail->data.portals.event_list[index];
+        sctk_portals_event_table_list_t *EvQ 		= &endpoint->rail->network.portals.event_list[index];
         sctk_portals_event_table_t *currList = &EvQ->head;
         int i, pos = ptrmsg->append_pos;
 
@@ -119,7 +120,7 @@ static void sctk_network_send_message_endpoint_portals ( sctk_thread_ptp_message
 
             currList->events[pos].msg.me.options = OPTIONS_HEADER;
 
-            CHECK_RETURNVAL ( PtlMEAppend ( rail->data.portals.ni_handle_phys, rail->data.portals.pt_index[currList->events[pos].pt_index], &currList->events[pos].msg.me, PTL_PRIORITY_LIST, NULL, &currList->events[pos].msg.me_handle ) );
+            CHECK_RETURNVAL ( PtlMEAppend ( endpoint->rail->network.portals.ni_handle_phys, endpoint->rail->network.portals.pt_index[currList->events[pos].pt_index], &currList->events[pos].msg.me, PTL_PRIORITY_LIST, NULL, &currList->events[pos].msg.me_handle ) );
 
             ptrmsg->append_pos = -1;
 
@@ -130,9 +131,9 @@ static void sctk_network_send_message_endpoint_portals ( sctk_thread_ptp_message
             abort();
         }
 
-        sctk_spinlock_unlock ( &rail->data.portals.lock[index] ); //to be thread safe
+        sctk_spinlock_unlock ( &endpoint->rail->network.portals.lock[index] ); //to be thread safe
     }
-    ListAppendMsg ( &rail->data.portals, msg, &tmp->data.portals, WRITE, NULL );
+    ListAppendMsg ( &endpoint->rail->network.portals, msg, &tmp->data.portals, WRITE, NULL );
 }
 
 static void sctk_network_notify_recv_message_portals ( sctk_thread_ptp_message_t *msg, sctk_rail_info_t *rail )

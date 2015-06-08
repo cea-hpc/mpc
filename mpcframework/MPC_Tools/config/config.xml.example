@@ -45,7 +45,12 @@
 							<tcp/>
 						</driver>
 					</config>
-				         
+                    <config>
+                        <name>portals_config</name>
+                        <driver>
+                            <portals/>
+                        </driver>
+                    </config> 
 				</configs>
 
 				<rails>
@@ -82,7 +87,13 @@
 								</minsize>
 							</gate>
 						</gates>
-					</rail>
+                    </rail>
+                    <rail>
+                        <name>portals_mpi</name>
+                        <priority>1</priority>
+                        <ondemand>0</ondemand>
+                        <config>portals_config</config>
+                    </rail>
 				</rails>
 
 				<cli_options>
@@ -104,7 +115,13 @@
 							<rail>tcp_large</rail>
 							<rail>tcp_mpi</rail>
 						</rails>
-					</cli_option>
+                    </cli_option>
+                    <cli_option>
+                        <name>portals</name>
+                        <rails>
+                            <rail>portals_mpi</rail>
+                        </rails>
+                    </cli_option>
 					<cli_option>
 						<name>default</name>
 						<rails>

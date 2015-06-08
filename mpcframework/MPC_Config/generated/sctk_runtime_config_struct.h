@@ -341,7 +341,7 @@ struct sctk_runtime_config_struct_ib_global
 };
 
 /******************************** STRUCTURE *********************************/
-/**Declare a fake driver to test the configuration system.**/
+/**Portals-based driver**/
 struct sctk_runtime_config_struct_net_driver_portals
 {	int init_done;
 	/**Fake param.**/

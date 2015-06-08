@@ -68,8 +68,8 @@
 		</enum>
 
 		<!-- Structure for Portals driver -->
-		<struct name="net_driver_portals" doc="Declare a fake driver to test the configuration system.">
-			<param name="fake_param" type="int" doc="Fake param." default="0" />
+		<struct name="net_driver_portals" doc="Portals-based driver">
+            <param name="fake_param" type="int" doc="Fake param." default="1" />
 		</struct>
 
 		<!-- Structure for TCP driver -->
