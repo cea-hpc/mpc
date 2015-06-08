@@ -193,6 +193,22 @@ sctk_rail_info_t * sctk_rail_get_by_id ( int i )
 }
 
 
+int sctk_rail_get_rdma_id()
+{
+	return __rails.rdma_rail;
+}
+
+
+sctk_rail_info_t * sctk_rail_get_rdma ()
+{
+	int rdma_id = sctk_rail_get_rdma_id();
+	
+	if( rdma_id < 0 )
+		return NULL;
+	
+	return sctk_rail_get_by_id ( rdma_id );
+}
+
 
 void rdma_rail_ellection()
 {
@@ -282,7 +298,8 @@ void rdma_rail_ellection()
 		{
 			sctk_rail_info_t *  rail = sctk_rail_get_by_id ( i );
 			
-			if(  rail->rail_pin_region
+			if(  (rail->subrail_id == -1) /* Only consider root rails */
+			&&   rail->rail_pin_region
 			&&   rail->rail_unpin_region )
 			{
 				rails_to_skip[rail->rail_number] = rail->priority;

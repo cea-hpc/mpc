@@ -200,6 +200,8 @@ sctk_rail_info_t *sctk_rail_register( struct sctk_runtime_config_struct_net_rail
                                   struct sctk_runtime_config_struct_net_driver_config *runtime_config_driver_config );
 int sctk_rail_count();
 sctk_rail_info_t * sctk_rail_get_by_id ( int i );
+int sctk_rail_get_rdma_id();
+sctk_rail_info_t * sctk_rail_get_rdma ();
 void sctk_rail_commit();
 int sctk_rail_committed();
 void sctk_rail_init_route ( sctk_rail_info_t *rail, char *topology, void (*on_demand)( struct sctk_rail_info_s * rail , int dest ) );
