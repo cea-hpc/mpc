@@ -193,6 +193,7 @@ meta.types = {
 		any_source_polling: {mode: 'param', name: "any_source_polling", type: "topological_polling", doc: "Define how the any-source polling is done.", dflt: null},
 		topology: {mode: 'param', name: "topology", type: "string", doc: "Define the network topology to apply on this rail.", dflt: "ring", },
 		ondemand: {mode: 'param', name: "ondemand", type: "int", doc: "Define if on-demand connections are allowed on this rail.", dflt: "1", },
+		rdma: {mode: 'param', name: "rdma", type: "int", doc: "Defines if the rail has RDMA enabled.", dflt: "0", },
 		config: {mode: 'param', name: "config", type: "string", doc: "Define the driver config to use for this rail.", dflt: "topological", },
 		gates: {mode: 'array', name: "gates", type: "net_gate", entryname: "gate", dflt: null},
 		subrails: {mode: 'array', name: "subrails", type: "net_rail", entryname: "subrail", dflt: null},

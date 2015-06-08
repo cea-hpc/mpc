@@ -766,6 +766,31 @@ void sctk_network_memory_free_hook_ib ( void * ptr, size_t size )
 }
 
 
+/* Pinning */
+
+struct sctk_rail_pin_ctx_list * sctk_ib_pin_region( struct sctk_rail_info_s * rail, void * addr, size_t size )
+{
+	struct sctk_rail_pin_ctx_list * ret = sctk_malloc( sizeof( struct sctk_rail_pin_ctx_list ) );
+	
+	/* Fill entry */
+	ret->rail_id = rail->rail_number;
+	ret->pin.ib.entry = sctk_ib_mmu_entry_new( &rail->network.ib, addr, size );
+	ret->next = NULL;
+	
+	return ret;
+}
+
+void sctk_ib_unpin_region( struct sctk_rail_info_s * rail, struct sctk_rail_pin_ctx_list * ctx )
+{
+	assume( rail->rail_number == ctx->rail_id );
+	
+	sctk_ib_mmu_entry_release( ctx->pin.ib.entry );
+	ctx->pin.ib.entry = NULL;
+	ctx->rail_id = -1;
+	
+	sctk_free( ctx );
+}
+
 
 void sctk_network_init_mpi_ib ( sctk_rail_info_t *rail )
 {
@@ -862,6 +887,9 @@ void sctk_network_init_mpi_ib ( sctk_rail_info_t *rail )
 	rail->notify_perform_message = sctk_network_notify_perform_message_ib;
 	rail->notify_idle_message = sctk_network_notify_idle_message_ib;
 	rail->notify_any_source_message = sctk_network_notify_any_source_message_ib;
+	
+	rail->rail_pin_region = sctk_ib_pin_region;
+	rail->rail_unpin_region = sctk_ib_unpin_region;
 	
 	rail->network_name = network_name;
 

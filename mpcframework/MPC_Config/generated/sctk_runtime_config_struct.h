@@ -508,6 +508,8 @@ struct sctk_runtime_config_struct_net_rail
 	char * topology;
 	/**Define if on-demand connections are allowed on this rail.**/
 	int ondemand;
+	/**Defines if the rail has RDMA enabled.**/
+	int rdma;
 	/**Define the driver config to use for this rail.**/
 	char * config;
 	/**List of gates to be applied in this config.**/

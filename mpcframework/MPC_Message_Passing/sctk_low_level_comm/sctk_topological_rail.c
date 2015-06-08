@@ -23,6 +23,7 @@
 #include "sctk_topological_rail.h"
 #include <sctk_accessor.h>
 
+#include <sctk_multirail.h>
 
 static void sctk_network_send_message_endpoint_topological ( sctk_thread_ptp_message_t *msg, sctk_endpoint_t *endpoint )
 {
@@ -343,6 +344,72 @@ void sctk_network_init_topological_rail_info(  sctk_rail_info_t *rail )
 }
 
 
+struct sctk_rail_pin_ctx_list * sctk_topological_rail_pin_region( struct sctk_rail_info_s * rail, void * addr, size_t size )
+{
+	struct sctk_rail_pin_ctx_list * ret = NULL;
+	struct sctk_rail_pin_ctx_list * current = NULL;
+	
+	int i;
+	
+	/* Build a pinning list involving all subrails */
+	for( i = 0 ; i < rail->subrail_count ; i++ )
+	{
+		struct sctk_rail_info_s * subrail = rail->subrails[i];
+		
+		if( !subrail->rail_pin_region || !subrail->rail_unpin_region )
+		{
+			sctk_fatal("To be RDMA capable a topological rail must\n"
+				 "only contain RDMA capable networks (error %s)", subrail->network_name );
+		}
+		
+		struct sctk_rail_pin_ctx_list * tmp = subrail->rail_pin_region( subrail, addr, size );
+		
+		assume( tmp != NULL );
+		
+		if( current )
+		{
+			/* Here push in the list (ret is already 
+			 * set to be the first element) */
+			current->next = tmp;
+			
+		}
+		else
+		{
+			/* Only the first entry is returned */
+			ret = tmp;
+		}
+		
+		/* Move current to last element (to create a list) */
+		current = tmp;
+	}
+	
+	return ret;
+}
+
+void sctk_topological_rail_unpin_region( struct sctk_rail_info_s * rail, struct sctk_rail_pin_ctx_list * ctx )
+{
+	struct sctk_rail_pin_ctx_list * current = ctx;
+	struct sctk_rail_pin_ctx_list * to_free = NULL;
+	
+	/* Just free all the members of the list */
+	while( current )
+	{
+		/* Be careful the struct sctk_rail_pin_ctx_list is FREED
+		 * by the underlying unpin function */
+		to_free = current;
+		current = current->next;
+		
+		sctk_rail_info_t * subrail = sctk_rail_get_by_id ( to_free->rail_id );
+		
+		if( !subrail->rail_pin_region || !subrail->rail_unpin_region )
+		{
+			sctk_fatal("To be RDMA capable a topological rail must\n"
+				 "only contain RDMA capable networks (error %s)", subrail->network_name );
+		}
+		
+		subrail->rail_unpin_region( subrail, to_free );
+	}
+}
 
 
 
@@ -359,7 +426,9 @@ void sctk_network_init_topological ( sctk_rail_info_t *rail )
 	rail->control_message_handler = topological_control_message_handler;
 	rail->connect_to = sctk_network_connection_to_topological;
 	rail->connect_from = sctk_network_connection_from_topological;
-
+	rail->rail_pin_region = sctk_topological_rail_pin_region;
+	rail->rail_unpin_region = sctk_topological_rail_unpin_region;
+	
 	rail->network_name = "Topological RAIL";
 
 	sctk_network_init_topological_rail_info( rail );

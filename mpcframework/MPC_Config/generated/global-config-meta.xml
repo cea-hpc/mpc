@@ -329,6 +329,7 @@
 			<param name="any_source_polling" type="topological_polling" doc="Define how the any-source polling is done." />
 			<param name="topology" type="string" doc="Define the network topology to apply on this rail." default="ring"/>
 			<param name="ondemand" type="int" doc="Define if on-demand connections are allowed on this rail."  default="1"/>
+			<param name="rdma" type="int" doc="Defines if the rail has RDMA enabled."  default="0"/>
 			<param name="config" type="string" doc="Define the driver config to use for this rail." default="topological" />
 			<array name="gates" entry-name="gate" type="net_gate" doc="List of gates to be applied in this config." />
 			<array name="subrails" entry-name="subrail" type="net_rail" doc="Used for topological rail selection" />

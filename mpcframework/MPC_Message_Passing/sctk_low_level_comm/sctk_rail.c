@@ -31,13 +31,13 @@
 #include <stdio.h>
 #include <unistd.h>
 
-
+#include "sctk_multirail.h"
 
 /************************************************************************/
 /* Rails Storage                                                        */
 /************************************************************************/
 
-static struct sctk_rail_array __rails = { NULL, 0, 0, 0 };
+static struct sctk_rail_array __rails = { NULL, 0, 0, 0, -1 };
 
 /************************************************************************/
 /* Rail Init and Getters                                                */
@@ -125,6 +125,13 @@ sctk_rail_info_t * sctk_rail_register_with_parent( struct sctk_runtime_config_st
 	                                    sctk_rail_convert_polling_set_from_config(any_source->range),
 	                                    target_core );
 
+	/* Checkout is RDMA */
+	int is_rdma = runtime_config_rail->rdma;
+	new_rail->is_rdma = is_rdma;
+
+	/* Retrieve priority */
+	new_rail->priority = runtime_config_rail->priority;
+
 	/* Is the rail topological ? meaning does it have subrails ?*/
 	if( runtime_config_rail->subrails_size )
 	{
@@ -187,10 +194,150 @@ sctk_rail_info_t * sctk_rail_get_by_id ( int i )
 
 
 
+void rdma_rail_ellection()
+{
+	int * rails_to_skip = sctk_calloc( sctk_rail_count(), sizeof( int ) );
+	assume( rails_to_skip );
+	
+	/* First detect all subrails which are part of
+	 * a TOPOLOGICAL rail with the RDMA flag */
+	int i;
+	for ( i = 0; i <  sctk_rail_count(); i++ )
+	{
+		sctk_rail_info_t *  rail = sctk_rail_get_by_id ( i );
+	
+		/* Do not process rail if already flagged */
+		if( rails_to_skip[rail->rail_number] )
+			continue;
+		
+		if( !rail->is_rdma )
+			continue;
+		
+		if( rail->subrail_count )
+		{
+			/* If we are here this rail is topological
+			 * and RDMA enabled, we have to flag all
+			 * the subrails as skipped to guarantee
+			 * the "unicity" of the RDMA rail */
+			int j;
+			
+			for( j = 0 ; j < rail->subrail_count; j++ )
+			{
+				rails_to_skip[rail->subrails[j]->rail_number] = 1;
+			}
+		}
+	}
+	
+	/* Now that we flagged to skip topological RDMA subrails
+	 * we check that only a single TOPO rail has been flagged */
+	int rdma_rail_id = -1;
+	
+	for ( i = 0; i <  sctk_rail_count(); i++ )
+	{
+		sctk_rail_info_t *  rail = sctk_rail_get_by_id ( i );
+	
+		/* Do not process rail if flagged */
+		if( rails_to_skip[rail->rail_number] )
+			continue;
+		
+		if( !rail->is_rdma )
+			continue;
+		
+		/* If we are here the RAIL is RDMA and not skipped */
+		if( rdma_rail_id < 0 )
+		{
+			rdma_rail_id = rail->rail_number;
+		}
+		else
+		{
+			/* In this case we have two rails with the
+			 * RDMA condition UP which is not allowed */
+			sctk_rail_info_t * previous = sctk_rail_get_by_id ( rdma_rail_id );
+			
+			sctk_fatal("Found two rails with the RDMA flag up (%s and %s)\n"
+			           "this is not allowed, please make sure that only one is set");
+		}
+		
+	}
+	
+	if( 0 <= rdma_rail_id )
+	{
+		/* We found a RDMA rail set by the flag
+		 * save it as the RDMA one */
+		__rails.rdma_rail = rdma_rail_id;
+		/* Done !*/
+	}
+	else
+	{
+		/* If we are here no RDMA rail was set with the flag
+		 * our policy is to ellect the one with the highest
+		 * priority to be the default RDMA rail */
+		
+		/* We use the previous skip array to list
+		 * the candidates (as priorities) before
+		 * choosing the one with the highest priority */
+		 
+		/* Fill with priorities (RDMA rails only) or "0") */
+		for ( i = 0; i <  sctk_rail_count(); i++ )
+		{
+			sctk_rail_info_t *  rail = sctk_rail_get_by_id ( i );
+			
+			if(  rail->rail_pin_region
+			&&   rail->rail_unpin_region )
+			{
+				rails_to_skip[rail->rail_number] = rail->priority;
+			}
+			else
+			{
+				rails_to_skip[rail->rail_number] = -1;
+			}
+		}
+		
+		
+		int current_max = -1;
+		int current = -1;
+		
+		/* Now choose the one with the highest priority */
+		for ( i = 0; i <  sctk_rail_count(); i++ )
+		{
+			if( 0 <= rails_to_skip[i] )
+			{
+				if( (current_max < 0 )
+				||  ( current_max < rails_to_skip[i] ) )
+				{
+					current_max = rails_to_skip[i];
+					current = i;
+				}
+			}
+		}
+		
+		if( 0 <= current )
+		{
+			sctk_info("RDMA rail found");
+			__rails.rdma_rail = current;
+			sctk_rail_info_t *  rail = sctk_rail_get_by_id ( current );
+			/* Force RDMA in the default rail */
+			rail->is_rdma = 1;
+			
+		}
+		else
+		{
+			if( !sctk_get_process_rank() )
+				sctk_warning("No RDMA capable rail found (using emulated calls)");
+		}
+	}
+
+}
+
+
+
 /* Finalize Rails (call the rail route init func ) */
 void sctk_rail_commit()
 {
+	/* First proceed with the RDMA rail ellection */
+	rdma_rail_ellection();
 
+	/* Display network context */
 	char *net_name;
 	int i;
 	char *name_ptr;
@@ -202,7 +349,7 @@ void sctk_rail_commit()
 	{
 		sctk_rail_info_t *  rail = sctk_rail_get_by_id ( i );
 		rail->route_init( rail );
-		sprintf ( name_ptr, "\n%sRail(%d) [%s (%s) (%s)]", (rail->parent_rail)?"\tSub-":"", rail->rail_number, rail->network_name, rail->topology_name , rail->runtime_config_rail->device );
+		sprintf ( name_ptr, "\n%sRail(%d) [%s (%s) (%s)] %s", (rail->parent_rail)?"\tSub-":"", rail->rail_number, rail->network_name, rail->topology_name , rail->runtime_config_rail->device, rail->is_rdma?"RDMA":"" );
 		name_ptr = net_name + strlen ( net_name );
 		sctk_pmi_barrier();
 	}

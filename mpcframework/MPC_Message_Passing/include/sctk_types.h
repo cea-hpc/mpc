@@ -31,7 +31,7 @@ typedef int sctk_datatype_t;
 /** Message count **/
 typedef int sctk_msg_count_t;
 /** A message header to be put in the request **/
-typedef struct sctk_header_t{
+typedef struct{
 	int source;
 	int destination;
 	int destination_task;

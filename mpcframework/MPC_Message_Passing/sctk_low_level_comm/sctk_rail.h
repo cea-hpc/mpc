@@ -50,6 +50,51 @@ typedef union
 	sctk_topological_rail_info_t topological; /**< Topological rail info */
 } sctk_rail_info_spec_t;
 
+/************************************************************************/
+/* Rail Pin CTX                                                         */
+/************************************************************************/
+
+#ifdef MPC_USE_INFINIBAND
+
+#include "sctk_ib_mmu.h"
+
+struct sctk_rail_ib_pin_ctx
+{
+	sctk_ib_mmu_entry_t  * entry;
+};
+#endif
+
+#ifdef MPC_USE_PORTAL
+struct sctk_rail_portals_pin_ctx
+{
+	
+};
+#endif /* MPC_USE_PORTAL */
+
+typedef union
+{
+#ifdef MPC_USE_INFINIBAND
+	struct sctk_rail_ib_pin_ctx ib;
+#endif
+#ifdef MPC_USE_PORTAL
+	struct sctk_rail_portals_pin_ctx portals;
+#endif /* MPC_USE_PORTAL */
+}sctk_rail_pin_ctx_internal_t;
+
+struct sctk_rail_pin_ctx_list
+{
+	sctk_rail_pin_ctx_internal_t pin;
+	int rail_id;
+	struct sctk_rail_pin_ctx_list * next;
+};
+
+typedef struct
+{
+	struct sctk_rail_pin_ctx_list list;
+	sctk_spinlock_t lock;
+}sctk_rail_pin_ctx_t;
+
+
 
 /************************************************************************/
 /* Rail                                                                 */
@@ -65,6 +110,7 @@ struct sctk_rail_info_s
 	/* Global Info */
 	int rail_number; /**< ID of this rail */
 	int subrail_id; /**< ID of this rail if it is a subrail (-1 otherwise) */
+	int priority; /** Priority of this rail */
 	char *network_name; /**< Name of this rail */
 	sctk_device_t * rail_device; /**< Device associated with the rail */
 	
@@ -79,6 +125,7 @@ struct sctk_rail_info_s
 	int requires_bootstrap_ring; /**< This flag is set to 0 when the rail does not need the initial rin
 	                                  case of the "none" topology */
 	char on_demand;	/**< If the rail allows on demand-connexions */
+	char is_rdma;        /**< If the rail supports RDMA operations */
 	
 	/* Configuration Info */
 	struct sctk_runtime_config_struct_net_rail *runtime_config_rail;  /**< Rail config */
@@ -112,6 +159,10 @@ struct sctk_rail_info_s
 	
 	void (*control_message_handler)( struct sctk_rail_info_s * rail, int source_process, int source_rank, char subtype, char param, void * data );
 	
+	/* Pinning */
+	struct sctk_rail_pin_ctx_list * (*rail_pin_region)( struct sctk_rail_info_s * rail, void * addr, size_t size );
+	void (*rail_unpin_region)( struct sctk_rail_info_s * rail, struct sctk_rail_pin_ctx_list * ctx );
+	
 	/* Connection management */
 	
 	void ( *connect_to ) ( int, int, sctk_rail_info_t * );
@@ -136,6 +187,8 @@ struct sctk_rail_array
 	int rail_current_id;
 	/** Set to 1 when routes have been committed by a call to \ref sctk_rail_commit */
 	int rails_committed;
+	/** Id of the RDMA rail */
+	int rdma_rail;
 };
 
 

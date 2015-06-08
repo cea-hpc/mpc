@@ -32,6 +32,8 @@
 #include <sys/resource.h>
 #include <stdlib.h>
 
+#include <sctk_alloc.h>
+
 sctk_ib_mmu_entry_t * sctk_ib_mmu_entry_new( sctk_ib_rail_info_t *rail_ib, void * addr, size_t size )
 {
 	sctk_ib_mmu_entry_t * new = sctk_malloc( sizeof( sctk_ib_mmu_entry_t ) );

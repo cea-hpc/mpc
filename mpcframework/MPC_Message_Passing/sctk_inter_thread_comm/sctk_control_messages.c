@@ -35,6 +35,7 @@
 #include <sctk_checksum.h>
 #include <sctk_reorder.h>
 #include <sctk_rail.h>
+#include <sctk_alloc.h>
 
 /************************************************************************/
 /* Control Messages Context                                             */

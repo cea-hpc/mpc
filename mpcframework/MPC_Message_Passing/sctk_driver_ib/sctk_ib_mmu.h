@@ -20,23 +20,22 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#ifndef SCTK_ib_mmu_H
-#define SCTK_ib_mmu_H
+#ifndef SCTK_IB_MMU_H
+#define SCTK_IB_MMU_H
 
 #include <stdlib.h>
 #include <sctk_spinlock.h>
-#include <sctk_rail.h>
-
 
 /** This is the actual payload */
 struct ibv_mr;
+struct sctk_ib_rail_info_s;
 
 typedef struct sctk_ib_mmu_entry_s
 {
 	/* Content */
 	void * addr; /** Adress of the pinned block */
 	size_t size; /** Size of the pinned block */
-	sctk_ib_rail_info_t *rail; /** Rail for which the block is pinned */
+	struct sctk_ib_rail_info_s *rail; /** Rail for which the block is pinned */
 	struct ibv_mr *mr; /** Pointer to the IBV memory region */
 
 	sctk_spin_rwlock_t entry_refcounter; /** Refcounter */
@@ -44,7 +43,7 @@ typedef struct sctk_ib_mmu_entry_s
 	int free_on_relax;
 }sctk_ib_mmu_entry_t;
 
-sctk_ib_mmu_entry_t * sctk_ib_mmu_entry_new( sctk_ib_rail_info_t *rail_ib, void * addr, size_t size );
+sctk_ib_mmu_entry_t * sctk_ib_mmu_entry_new( struct sctk_ib_rail_info_s *rail_ib, void * addr, size_t size );
 void sctk_ib_mmu_entry_release( sctk_ib_mmu_entry_t * release );
 
 int sctk_ib_mmu_entry_contains( sctk_ib_mmu_entry_t * entry, void * addr, size_t size );
@@ -70,7 +69,7 @@ struct sctk_ib_mmu
 void _sctk_ib_mmu_init( struct sctk_ib_mmu * mmu );
 void _sctk_ib_mmu_release( struct sctk_ib_mmu * mmu );
 
-sctk_ib_mmu_entry_t * _sctk_ib_mmu_pin(  struct sctk_ib_mmu * mmu,  sctk_ib_rail_info_t *rail_ib, void * addr, size_t size);
+sctk_ib_mmu_entry_t * _sctk_ib_mmu_pin(  struct sctk_ib_mmu * mmu,  struct sctk_ib_rail_info_s *rail_ib, void * addr, size_t size);
 int _sctk_ib_mmu_unpin(  struct sctk_ib_mmu * mmu, void * addr, size_t size);
 
 /** This is the main interface (abstracting storage) */
@@ -78,9 +77,9 @@ int _sctk_ib_mmu_unpin(  struct sctk_ib_mmu * mmu, void * addr, size_t size);
 void sctk_ib_mmu_init();
 void sctk_ib_mmu_release();
 
-sctk_ib_mmu_entry_t * sctk_ib_mmu_pin( sctk_ib_rail_info_t *rail_ib, void * addr, size_t size);
+sctk_ib_mmu_entry_t * sctk_ib_mmu_pin( struct sctk_ib_rail_info_s *rail_ib, void * addr, size_t size);
 void sctk_ib_mmu_relax( sctk_ib_mmu_entry_t * handler );
 int sctk_ib_mmu_unpin(  void * addr, size_t size);
 
 
-#endif /* SCTK_ib_mmu_H */
+#endif /* SCTK_IB_MMU_H */

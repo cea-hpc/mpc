@@ -554,6 +554,7 @@ void sctk_runtime_config_struct_init_net_rail(void * struct_ptr)
 	sctk_runtime_config_struct_init_topological_polling(&obj->any_source_polling);
 	obj->topology = "ring";
 	obj->ondemand = 1;
+	obj->rdma = 0;
 	obj->config = "topological";
 	/* array */
 	obj->gates = NULL;

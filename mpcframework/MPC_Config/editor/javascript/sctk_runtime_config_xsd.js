@@ -573,6 +573,7 @@
 -e <xs:element minOccurs='0' name='any_source_polling' type='user_type_topological_polling'/>\
 -e <xs:element minOccurs='0' name='topology' type='xs:string'/>\
 -e <xs:element minOccurs='0' name='ondemand' type='xs:integer'/>\
+-e <xs:element minOccurs='0' name='rdma' type='xs:integer'/>\
 -e <xs:element minOccurs='0' name='config' type='xs:string'/>\
 -e <xs:element minOccurs='0' name='gates'>\
 -e <xs:complexType>\

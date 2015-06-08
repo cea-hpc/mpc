@@ -573,6 +573,7 @@
       <xs:element minOccurs="0" name="any_source_polling" type="user_type_topological_polling"/>
       <xs:element minOccurs="0" name="topology" type="xs:string"/>
       <xs:element minOccurs="0" name="ondemand" type="xs:integer"/>
+      <xs:element minOccurs="0" name="rdma" type="xs:integer"/>
       <xs:element minOccurs="0" name="config" type="xs:string"/>
       <xs:element minOccurs="0" name="gates">
         <xs:complexType>
