@@ -511,19 +511,28 @@ SCTK_CFLAGS="$SCTK_CFLAGS $SCTK_CFLAGS_NON_GNU"
 
 # export launcher information
 
-# Make sure Hydra is present before making it default.
-# If you directly run the mpc configure without the
-# root configure Hydra might not be installed hence
-# should not be used => Fallback to slurm if available
-
-if [ $SCTK_HYDRA -eq 1 ]; then
-  SCTK_JOB_MANAGER="HYDRA"
-elif [ $SCTK_SLURM -eq 1 ]; then
-  SCTK_JOB_MANAGER="SLURM"
+if [ $SCTK_LIB_MODE -eq 1 ]; then
+	#In LIB mode, no need for a launcher
+	#all is handled by the host MPI
+	SCTK_JOB_MANAGER=""
 else
-  perror "Neither Hydra nor Slurm has been selected"
-  exit 1
+
+	# Make sure Hydra is present before making it default.
+	# If you directly run the mpc configure without the
+	# root configure Hydra might not be installed hence
+	# should not be used => Fallback to slurm if available
+
+	if [ $SCTK_HYDRA -eq 1 ]; then
+	  SCTK_JOB_MANAGER="HYDRA"
+	elif [ $SCTK_SLURM -eq 1 ]; then
+	  SCTK_JOB_MANAGER="SLURM"
+	else
+	  perror "Neither Hydra nor Slurm has been selected"
+	  exit 1
+	fi
+
 fi
+
 export SCTK_JOB_MANAGER
 
 tmp_cross_gen(){

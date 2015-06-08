@@ -140,22 +140,27 @@ SCTK_CHECK_LIB_PMI()
 	sctk_internal_setup_pmi_slurm_fallback
 
 	SCTK_MSG_CHECKING "Launcher"
-	if [ $SCTK_HYDRA -eq 1 ] && [ $SCTK_SLURM -eq 0 ]; then
-		sctk_internal_setup_lib_hydra
-		result 'hydra'
-	elif [ $SCTK_HYDRA -eq 0 ] && [ $SCTK_SLURM -eq 1 ]; then
-		sctk_internal_setup_lib_slurm
-		result 'slurm'
-		SCTK_MSG_CHECKING "slurm prefix"
-		result "$SLURM_PREFIX"
-	else
-		result 'hydra,slurm'
-		sctk_error "Your must use --with-slurm or --with-hydra, but you can't use both at same time."
-	fi
 
-	#checks
-	SCTK_CHECK_HEADER "pmi.h"
-	SCTK_CHECK_LDOPTION $PMI_LIB
+	if [ $SCTK_LIB_MODE -eq 1 ]; then
+		result 'libmode'
+	else
+		if [ $SCTK_HYDRA -eq 1 ] && [ $SCTK_SLURM -eq 0 ]; then
+			sctk_internal_setup_lib_hydra
+			result 'hydra'
+		elif [ $SCTK_HYDRA -eq 0 ] && [ $SCTK_SLURM -eq 1 ]; then
+			sctk_internal_setup_lib_slurm
+			result 'slurm'
+			SCTK_MSG_CHECKING "slurm prefix"
+			result "$SLURM_PREFIX"
+		else
+			result 'hydra,slurm'
+			sctk_error "Your must use --with-slurm or --with-hydra, but you can't use both at same time."
+		fi
+
+		#checks
+		SCTK_CHECK_HEADER "pmi.h"
+		SCTK_CHECK_LDOPTION $PMI_LIB
+	fi
 
 	end_section
 }
