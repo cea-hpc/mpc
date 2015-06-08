@@ -52,12 +52,16 @@ sctk_terminaison_barrier ( const int id )
 	if ( done == local )
 	{
 		done = 0;
-
+		#ifndef SCTK_LIB_MODE
+		/* In libmode we do not want the pmi barrier
+		 * to be called after MPI_Finalize (therefore we
+		 * simply ignore it )*/
 		if ( sctk_process_number > 1 )
 		{
 			sctk_nodebug ( "sctk_pmi_barrier" );
 			sctk_pmi_barrier();
 		}
+		#endif
 
 		sctk_nodebug ( "WAKE ALL in sctk_terminaison_barrier" );
 		sctk_thread_cond_broadcast ( &cond );
