@@ -44,9 +44,12 @@
 #include "sctk_asm.h"
 #include "sctk_atomics.h"
 #ifdef MPC_Message_Passing
-#include "sctk_inter_thread_comm.h"
-#include "sctk_low_level_comm.h"
-#endif
+	#include "sctk_inter_thread_comm.h"
+	#include "sctk_low_level_comm.h"
+	#ifdef MPC_USE_INFINIBAND
+		#include <sctk_ib_cp.h>
+	#endif /* MPC_USE_INFINIBAND */
+#endif /* MPC_Message_Passing */
 #include "sctk_topology.h"
 #include "sctk_asm.h"
 #include "sctk_tls.h"
@@ -312,6 +315,12 @@ static void sctk_perform_initialisation (void)
 	if (sctk_process_nb_val > 1) {
 		sctk_net_init_driver(sctk_network_driver_name);
 	}
+#endif
+
+#ifdef SCTK_LIB_MODE
+	#ifdef MPC_USE_INFINIBAND
+		sctk_network_initialize_task_collaborative_ib (my_rank, 0);
+	#endif
 #endif
 
 	sctk_atomics_cpu_freq_init();
