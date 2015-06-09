@@ -49,6 +49,11 @@ ssize_t sctk_safe_read(int fd, void* buf, size_t count)
 	int tmp = 0, nb_total_received_bytes = 0;
 	int res = count;
 
+	if( count == 0 )
+	{
+		return 1;
+	}
+
 	/* loop until read all */
 	while (nb_total_received_bytes < count) {
 		tmp = read(fd, (char *)buf + nb_total_received_bytes, count - nb_total_received_bytes);
