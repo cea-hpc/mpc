@@ -39,14 +39,6 @@ extern "C"
 /* Defines if we are in a full MPI mode */
 //#define SCTK_ENABLE_SPINNING
 
-/************************************************************************/
-/* Low Level Messafe Interface                                          */
-/************************************************************************/
-
-void sctk_init_request (sctk_request_t * request, sctk_communicator_t comm, int request_type);
-void sctk_message_isend( int dest, void * data, size_t size, int tag, sctk_communicator_t comm , sctk_request_t *req );
-void sctk_message_irecv( int src, void * buffer, size_t size, int tag, sctk_communicator_t comm , sctk_request_t *req );
-void sctk_sendrecv( void * sendbuf, size_t size, int dest, int tag, void * recvbuf, int src, int comm );
 
 /************************************************************************/
 /* sctk_request_t		                                          */
@@ -75,6 +67,7 @@ typedef enum
 	SCTK_CANCELLED_RECV,
 	
 	SCTK_P2P_MESSAGE,
+	SCTK_RDMA_WINDOW_MESSAGES, 		/**< These messages are used to exchange window informations */
 	
 	SCTK_BARRIER_MESSAGE,
 	SCTK_BROADCAST_MESSAGE,
@@ -101,6 +94,11 @@ static inline int sctk_message_class_is_process_specific( sctk_message_class_t t
 		case SCTK_BARRIER_MESSAGE:
 		case SCTK_BROADCAST_MESSAGE:
 		case SCTK_ALLREDUCE_MESSAGE:
+		case SCTK_RDMA_WINDOW_MESSAGES: /* Note that the RDMA win message 
+					   * is not process specific to force
+					   * on-demand connections between the
+					   * RDMA peers prior to emitting RDMA */
+					    
 			return 0;
 		
 		
@@ -133,6 +131,7 @@ static inline int sctk_message_class_is_control_message( sctk_message_class_t ty
 		case SCTK_ALLREDUCE_HETERO_MESSAGE:
 		case SCTK_BROADCAST_HETERO_MESSAGE:
 		case SCTK_BARRIER_HETERO_MESSAGE:
+		case SCTK_RDMA_WINDOW_MESSAGES:
 			return 0;
 		
 		case SCTK_CONTROL_MESSAGE_RAIL:
@@ -146,6 +145,19 @@ static inline int sctk_message_class_is_control_message( sctk_message_class_t ty
 	
 	return 0;
 }
+
+/************************************************************************/
+/* Low Level Messafe Interface                                          */
+/************************************************************************/
+
+void sctk_init_request (sctk_request_t * request, sctk_communicator_t comm, int request_type);
+void sctk_message_isend_class_src( int src , int dest, void * data, size_t size, int tag, sctk_communicator_t comm , sctk_message_class_t class, sctk_request_t *req );
+void sctk_message_irecv_class_dest( int src, int dest, void * buffer, size_t size, int tag, sctk_communicator_t comm , sctk_message_class_t class, sctk_request_t *req );
+void sctk_message_isend_class( int dest, void * data, size_t size, int tag, sctk_communicator_t comm , sctk_message_class_t class, sctk_request_t *req );
+void sctk_message_irecv_class( int src, void * data, size_t size, int tag, sctk_communicator_t comm , sctk_message_class_t class, sctk_request_t *req );
+void sctk_message_isend( int dest, void * data, size_t size, int tag, sctk_communicator_t comm , sctk_request_t *req );
+void sctk_message_irecv( int src, void * data, size_t size, int tag, sctk_communicator_t comm , sctk_request_t *req );
+void sctk_sendrecv( void * sendbuf, size_t size, int dest, int tag, void * recvbuf, int src, int comm );
 
 /************************************************************************/
 /* Control Messages Header                                              */

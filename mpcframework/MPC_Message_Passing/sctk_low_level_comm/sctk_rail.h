@@ -57,10 +57,12 @@ typedef union
 #ifdef MPC_USE_INFINIBAND
 
 #include "sctk_ib_mmu.h"
+#include <infiniband/verbs.h>
 
 struct sctk_rail_ib_pin_ctx
 {
-	sctk_ib_mmu_entry_t  * entry;
+	struct ibv_mr mr;
+	sctk_ib_mmu_entry_t * p_entry;
 };
 #endif
 
@@ -90,11 +92,11 @@ struct sctk_rail_pin_ctx_list
 
 typedef struct
 {
-	struct sctk_rail_pin_ctx_list list;
-	sctk_spinlock_t lock;
+	struct sctk_rail_pin_ctx_list * list;
 }sctk_rail_pin_ctx_t;
 
-
+void sctk_rail_pin_ctx_init( sctk_rail_pin_ctx_t * ctx, void * addr, size_t size );
+void sctk_rail_pin_ctx_release( sctk_rail_pin_ctx_t * ctx );
 
 /************************************************************************/
 /* Rail                                                                 */

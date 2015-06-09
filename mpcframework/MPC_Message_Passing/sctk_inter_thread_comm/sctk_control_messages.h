@@ -38,6 +38,17 @@ struct sctk_control_message_context
 
 void sctk_control_message_context_set_user( void (*fn)( int , int , char , char , void * ) );
 
+/************************************************************************/
+/* Process Level Control messages                                       */
+/************************************************************************/
+
+typedef enum
+{
+	SCTK_PROCESS_RDMA_WIN_MAPTO,
+	SCTK_PROCESS_RDMA_WIN_RELAX,
+	SCTK_PROCESS_RDMA_EMULATED_WRITE,
+	SCTK_PROCESS_RDMA_EMULATED_READ
+}sctk_control_msg_process_t;
 
 
 /************************************************************************/

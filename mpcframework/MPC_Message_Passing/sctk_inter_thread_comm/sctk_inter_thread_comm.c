@@ -191,15 +191,13 @@ void sctk_init_request (sctk_request_t * request, sctk_communicator_t comm, int 
     }
 }
 
-void sctk_message_isend( int dest, void * data, size_t size, int tag, sctk_communicator_t comm , sctk_request_t *req )
+void sctk_message_isend_class_src( int src , int dest, void * data, size_t size, int tag, sctk_communicator_t comm , sctk_message_class_t class, sctk_request_t *req )
 {
-	int src = sctk_get_task_rank ();
-	
 	if (dest == SCTK_PROC_NULL)
-    {
-      sctk_init_request(req,comm, REQUEST_SEND);
-      return;
-    }
+          {
+	      sctk_init_request(req,comm, REQUEST_SEND);
+	      return;
+          }
 
 	struct sctk_internal_ptp_s * ptp_internal = sctk_get_internal_ptp ( src );
 	
@@ -207,19 +205,26 @@ void sctk_message_isend( int dest, void * data, size_t size, int tag, sctk_commu
 	
 	sctk_thread_ptp_message_t *msg = sctk_create_header( src, SCTK_MESSAGE_CONTIGUOUS);
 	sctk_add_adress_in_message( msg, data, size);
-	sctk_set_header_in_message( msg, tag, comm, src, dest, req, size, SCTK_P2P_MESSAGE, SCTK_DATATYPE_IGNORE);
+	sctk_set_header_in_message( msg, tag, comm, src, dest, req, size, class, SCTK_DATATYPE_IGNORE);
 	sctk_send_message (msg);
 }
 
-void sctk_message_irecv( int src, void * buffer, size_t size, int tag, sctk_communicator_t comm , sctk_request_t *req )
+
+
+void sctk_message_isend_class( int dest, void * data, size_t size, int tag, sctk_communicator_t comm , sctk_message_class_t class, sctk_request_t *req )
 {
-	int dest = sctk_get_task_rank ();
-	
+	int src = sctk_get_task_rank ();
+	sctk_message_isend_class_src( src , dest, data, size, tag, comm , class, req );
+}
+
+
+void sctk_message_irecv_class_dest( int src, int dest, void * buffer, size_t size, int tag, sctk_communicator_t comm , sctk_message_class_t class, sctk_request_t *req )
+{
 	if (src == SCTK_PROC_NULL)
-    {
-      sctk_init_request(req,comm, REQUEST_RECV);
-      return;
-    }
+          {
+		sctk_init_request(req,comm, REQUEST_RECV);
+		return;
+          }
 
 	struct sctk_internal_ptp_s * ptp_internal = sctk_get_internal_ptp ( dest );
 	
@@ -227,8 +232,24 @@ void sctk_message_irecv( int src, void * buffer, size_t size, int tag, sctk_comm
 	
 	sctk_thread_ptp_message_t *msg = sctk_create_header( src, SCTK_MESSAGE_CONTIGUOUS);
 	sctk_add_adress_in_message( msg, buffer, size);
-	sctk_set_header_in_message( msg, tag, comm, src, dest, req, size, SCTK_P2P_MESSAGE, SCTK_DATATYPE_IGNORE);
+	sctk_set_header_in_message( msg, tag, comm, src, dest, req, size, class, SCTK_DATATYPE_IGNORE);
 	sctk_recv_message (msg,ptp_internal, 0);
+}
+
+void sctk_message_irecv_class( int src, void * buffer, size_t size, int tag, sctk_communicator_t comm , sctk_message_class_t class, sctk_request_t *req )
+{
+	int dest = sctk_get_task_rank ();
+	sctk_message_irecv_class_dest( src, dest, buffer, size, tag, comm , class, req );
+}
+
+void sctk_message_isend( int dest, void * data, size_t size, int tag, sctk_communicator_t comm , sctk_request_t *req )
+{
+	sctk_message_isend_class( dest, data, size, tag, comm , SCTK_P2P_MESSAGE, req );
+}
+
+void sctk_message_irecv( int src, void * data, size_t size, int tag, sctk_communicator_t comm , sctk_request_t *req )
+{
+	sctk_message_irecv_class( src, data, size, tag, comm , SCTK_P2P_MESSAGE, req );
 }
 
 void sctk_wait_message ( sctk_request_t *request );
@@ -238,10 +259,8 @@ void sctk_sendrecv( void * sendbuf, size_t size, int dest, int tag, void * recvb
 	sctk_request_t sendreq, recvreq;
 	sctk_message_isend( dest, sendbuf, size, tag, comm , &sendreq );
 	sctk_message_irecv( src, recvbuf, size, tag, comm , &recvreq );
-	
-	sctk_error("SR %d Wait %d -> %d",sendreq.header.source_task, sendreq.header.source_task, sendreq.header.destination ); 
+
 	sctk_wait_message( &sendreq );
-	sctk_error("RR %d Wait %d -> %d", sendreq.header.source_task, recvreq.header.source_task, recvreq.header.destination_task ); 
 	sctk_wait_message( &recvreq );
 }
 
@@ -2440,6 +2459,11 @@ void sctk_wait_message ( sctk_request_t *request )
 		return;
 	}
 
+	if ( request->request_type == REQUEST_NULL )
+	{
+		return;
+	}
+
 	if ( request->request_type == REQUEST_GENERALIZED )
 	{
 		if ( request->poll_fn )
@@ -2755,7 +2779,7 @@ void sctk_send_message_try_check ( sctk_thread_ptp_message_t *msg, int perform_c
  * */
 void sctk_send_message ( sctk_thread_ptp_message_t *msg )
 {
-	sctk_nodebug("SEND [ %d -> %d ] [ %d -> %d ] ( size %d tag %d)", SCTK_MSG_SRC_PROCESS ( msg ), SCTK_MSG_DEST_PROCESS ( msg ), SCTK_MSG_SRC_TASK ( msg ), SCTK_MSG_DEST_TASK ( msg ),  SCTK_MSG_SIZE( msg ) ,  SCTK_MSG_TAG( msg ) );
+	sctk_debug("SEND [ %d -> %d ] [ %d -> %d ] ( size %d tag %d)", SCTK_MSG_SRC_PROCESS ( msg ), SCTK_MSG_DEST_PROCESS ( msg ), SCTK_MSG_SRC_TASK ( msg ), SCTK_MSG_DEST_TASK ( msg ),  SCTK_MSG_SIZE( msg ) ,  SCTK_MSG_TAG( msg ) );
 	
 	int need_check = 0;
 	/* TODO: need to check in wait */

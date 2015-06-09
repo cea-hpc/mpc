@@ -1,0 +1,506 @@
+/* ############################# MPC License ############################## */
+/* # Wed Nov 19 15:19:19 CET 2008                                         # */
+/* # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          # */
+/* #                                                                      # */
+/* # IDDN.FR.001.230040.000.S.P.2007.000.10000                            # */
+/* # This file is part of the MPC Runtime.                                # */
+/* #                                                                      # */
+/* # This software is governed by the CeCILL-C license under French law   # */
+/* # and abiding by the rules of distribution of free software.  You can  # */
+/* # use, modify and/ or redistribute the software under the terms of     # */
+/* # the CeCILL-C license as circulated by CEA, CNRS and INRIA at the     # */
+/* # following URL http://www.cecill.info.                                # */
+/* #                                                                      # */
+/* # The fact that you are presently reading this means that you have     # */
+/* # had knowledge of the CeCILL-C license and that you accept its        # */
+/* # terms.                                                               # */
+/* #                                                                      # */
+/* # Authors:                                                             # */
+/* #   - BESNARD Jean-Baptiste jbbesnard@paratools.fr                     # */
+/* #                                                                      # */
+/* ######################################################################## */
+
+#include "sctk_window.h"
+#include "sctk_inter_thread_comm.h"
+#include "uthash.h"
+#include <sctk_alloc.h>
+#include <sctk_control_messages.h>
+
+/************************************************************************/
+/* Window Numbering and translation                                     */
+/************************************************************************/
+
+sctk_spinlock_t __window_ht_lock = SCTK_SPINLOCK_INITIALIZER;
+unsigned int __current_win_id = 0;
+
+struct win_id_to_win
+{
+	int id;
+	struct sctk_window win;
+	UT_hash_handle hh; /**< This dummy data structure is required by UTHash is order to make this data structure hashable */ 
+};
+
+/* The ID to win translation HT */
+struct win_id_to_win * __id_to_win_ht = NULL;
+
+static struct sctk_window * sctk_win_register()
+{
+	struct win_id_to_win * new = sctk_malloc( sizeof( struct sctk_window ) );
+	assume( new );
+	
+	sctk_spinlock_lock( &__window_ht_lock );
+	
+	new->id = __current_win_id++;
+	memset( &new->win, 0, sizeof( struct sctk_window ) );
+	new->win.id = new->id;
+	
+	HASH_ADD_INT( __id_to_win_ht, id, new );
+
+	sctk_spinlock_unlock( &__window_ht_lock );
+	
+	return &new->win;
+}
+
+static struct sctk_window * sctk_win_translate( sctk_window_t win_id )
+{
+	static struct sctk_window * ret = NULL;
+	struct win_id_to_win * cell = NULL;
+	
+	sctk_spinlock_lock( &__window_ht_lock );
+	HASH_FIND_INT(__id_to_win_ht, &win_id, cell);
+	
+	if( cell )
+	{
+		ret = &cell->win;
+	}
+	
+	sctk_spinlock_unlock( &__window_ht_lock );
+	
+	return ret;
+}
+
+static void sctk_win_delete( struct sctk_window * win )
+{
+	struct win_id_to_win * cell = NULL;
+	
+	sctk_spinlock_lock( &__window_ht_lock );
+	HASH_FIND_INT(__id_to_win_ht, &win->id, cell);
+	
+	if( cell )
+	{
+		HASH_DEL(__id_to_win_ht, cell);
+		sctk_free( cell );
+	}
+	
+	sctk_spinlock_unlock( &__window_ht_lock );
+}
+
+/************************************************************************/
+/* Definition of an RDMA window                                         */
+/************************************************************************/
+
+static void _sctk_win_acquire( struct sctk_window * win )
+{
+	sctk_spinlock_lock( &win->lock );
+	
+	win->refcounter++;
+
+	sctk_spinlock_unlock( &win->lock );
+}
+
+void sctk_win_acquire( sctk_window_t win_id )
+{
+	struct sctk_window * win = sctk_win_translate( win_id );
+	
+	if( !win )
+	{
+		sctk_fatal("No such window ID");
+	}
+	
+	_sctk_win_acquire( win );
+}
+
+
+static int _sctk_win_relax( struct sctk_window * win )
+{
+	int ret = 0;
+
+	sctk_spinlock_lock( &win->lock );
+	
+	win->refcounter--;
+	ret = win->refcounter;
+
+	sctk_spinlock_unlock( &win->lock );	
+	
+	return ret;
+}
+
+
+int sctk_win_relax( sctk_window_t win_id )
+{
+	struct sctk_window * win = sctk_win_translate( win_id );
+	
+	if( !win )
+	{
+		sctk_fatal("No such window ID");
+	}
+	
+	return _sctk_win_relax( win );
+}
+
+
+sctk_window_t sctk_window_init( void *addr, size_t size, size_t disp_unit )
+{
+	struct sctk_window * win = sctk_win_register();
+	
+	/* We are local and therefore have no remote id */
+	win->remote_id = -1;
+	
+	/* Set window owner task */
+	win->owner = sctk_get_task_rank();
+	
+	/* Save CTX */
+	win->start_addr = addr;
+	win->size = size;
+	win->disp_unit = disp_unit;
+	
+	sctk_rail_info_t * rdma_rail = sctk_rail_get_rdma ();
+	
+	if( !rdma_rail )
+	{
+		/* No RDMA rail flag the window as emulated */
+		win->is_emulated = 1;
+	}
+	else
+	{
+		/* We have a RDMA rail no need to emulate */
+		win->is_emulated = 0;
+		/* We need to pin the window */
+		sctk_rail_pin_ctx_init( &win->pin, addr, size );
+	}
+	
+	/* Set refcounter */
+	win->lock = SCTK_SPINLOCK_INITIALIZER;
+	win->refcounter = 1;
+
+	return win->id;
+}
+
+
+void sctk_window_release( sctk_window_t win_id, void *addr, size_t size, size_t disp_unit )
+{
+	struct sctk_window * win = sctk_win_translate( win_id );
+	
+	if( !win )
+	{
+		sctk_fatal("No such window ID");
+	}	
+	
+	/* Do we need to signal a remote win ? */
+	if( win->owner != sctk_get_task_rank() )
+	{
+		/* This is a remote window sigal release
+		 * to remote rank */
+		assume( 0 <= win->remote_id );
+		
+		/* Signal release to remote */
+		sctk_control_messages_send ( sctk_get_process_rank_from_task_rank ( win->owner ), SCTK_CONTROL_MESSAGE_PROCESS, SCTK_PROCESS_RDMA_WIN_RELAX, 0, NULL, 0  );
+	}
+
+	/* Now work on the local window */
+	
+	/* Decrement refcounter */
+	int refcount = _sctk_win_relax( win );
+	
+	/* Did the refcounter reach "0" ? */
+	if( refcount )
+		return;
+	
+	/* If we are at "0" we free the window */
+	
+	if( ! win->is_emulated )
+	{
+		/* If we were not emulated, unpin */
+		sctk_rail_pin_ctx_release( &win->pin );
+	}
+	
+	/* Remove the window from the translation table */
+	sctk_win_delete( win );
+	
+	/* Free content */
+	memset( win, 0, sizeof( struct sctk_window ) );
+}
+
+
+int sctk_window_map_remote( int remote_rank, sctk_window_t win_id )
+{
+	sctk_error("MAP REMOTE %d", remote_rank );
+	struct sctk_window_map_request mr;
+	sctk_window_map_request_init( &mr, remote_rank, win_id );
+	
+	/* Case where we are local */
+	if( (mr.source_rank == mr.remote_rank)
+	||  (! sctk_is_net_message( mr.remote_rank ) ) ) /* If the target is in the same proces
+					          * just work locally */
+	{
+		struct sctk_window * win = sctk_win_translate( win_id );
+		
+		if(!win)
+		{
+			/* No such window */
+			return -1;
+		}
+		
+		/* Increment refcount */
+		_sctk_win_acquire( win );
+		
+		/* Return the same window */
+		return win_id;
+	}
+	
+	struct sctk_window remote_win_data;
+	memset( &remote_win_data, 0, sizeof( struct sctk_window ) );
+	
+	/* Send a map request to remote task */
+	sctk_control_messages_send ( sctk_get_process_rank_from_task_rank (remote_rank) , SCTK_CONTROL_MESSAGE_PROCESS, SCTK_PROCESS_RDMA_WIN_MAPTO, 0, &mr, sizeof(struct sctk_window_map_request)  );
+	
+	/* And now prepare to receive the remote win data */
+	sctk_request_t req;
+	sctk_error("EMIT RECV to %d",  remote_rank );
+	sctk_message_irecv_class( remote_rank, &remote_win_data, sizeof(struct sctk_window) , 0, SCTK_COMM_WORLD, SCTK_RDMA_WINDOW_MESSAGES, &req );
+	sctk_wait_message ( &req );
+	
+	if( remote_win_data.id < 0 )
+	{
+		/* No such remote */
+		return -1;
+	}
+	
+	/* If we are here we received the remote and it existed */
+	
+	/* Create a new window */
+	struct sctk_window * win = sctk_win_register();
+	
+	int local_id = win->id;
+	
+	/* Copy remote inside it */
+	memcpy( win, &remote_win_data, sizeof( struct sctk_window ) );
+	
+	/* Update refcounting (1 as it is a window mirror) */
+	win->refcounter = 1;
+	win->lock = SCTK_SPINLOCK_INITIALIZER;
+	
+	/* Restore local ID overwritten by the copy and save remote id */
+	win->remote_id = win->id;
+	
+	assume( 0 <= win->remote_id );
+	
+	win->id = local_id;
+	
+	return win->id;
+}
+
+/* Control messages handler */
+
+void sctk_window_map_remote_ctrl_msg_handler( struct sctk_window_map_request * mr )
+{
+	sctk_request_t req;
+	struct sctk_window * win = sctk_win_translate( mr->win_id );
+
+	/* Note that here we are called outside of a task context
+	 * therefore we have to manually retrieve the remote task
+	 * id for the map request to fill the messages accordingly 
+	 * using sctk_message_isend_class_src */
+
+	if(! win )
+	{
+		/* We did not find the requested win
+		 * send a dummy window with a negative ID*/
+		struct sctk_window dummy_win;
+		memset( &dummy_win, 0, sizeof( struct sctk_window ) );
+		dummy_win.id = -1;
+		
+		/* Send the dummy win */
+		sctk_message_isend_class_src( mr->remote_rank, mr->source_rank, &dummy_win, sizeof(struct sctk_window) , 0, SCTK_COMM_WORLD, SCTK_RDMA_WINDOW_MESSAGES, &req );
+		sctk_wait_message ( &req );
+		
+		/* Done */
+		return;
+	}
+	
+	/* We have a local window matching */
+	
+	/* Increment its refcounter */
+	_sctk_win_acquire( win );
+	
+	/* Send local win infos to remote */
+
+	sctk_message_isend_class_src( mr->remote_rank, mr->source_rank, win, sizeof(struct sctk_window) , 0, SCTK_COMM_WORLD, SCTK_RDMA_WINDOW_MESSAGES, &req );
+	sctk_error("Handler send to %d", mr->source_rank);
+	sctk_wait_message ( &req );
+	sctk_error("Handler DONE");
+	/* DONE */
+}
+
+void sctk_window_relax_ctrl_msg_handler( sctk_window_t win_id )
+{
+	struct sctk_window * win = sctk_win_translate( win_id );
+	
+	if( !win )
+	{
+		sctk_warning("No such window %d in remote relax", win_id);
+		return;
+	}
+	
+	_sctk_win_relax( win );
+}
+
+void sctk_window_RDMA_emulated_write_ctrl_msg_handler( struct sctk_window_emulated_RDMA *erma )
+{
+	struct sctk_window * win = sctk_win_translate( erma->win_id );
+	
+	if( !win )
+	{
+		sctk_fatal("No such window in emulated RDMA write");
+	}
+	
+	size_t offset = erma->offset * win->disp_unit;
+
+	if( win->size <= ( offset + erma->size ) )
+	{
+		sctk_fatal("Error RDMA emulated write operation overflows the window");
+	} 
+	
+	sctk_request_t data_req;
+	sctk_message_irecv_class( erma->source_rank, win->start_addr + offset, erma->size , 0, SCTK_COMM_WORLD, SCTK_RDMA_WINDOW_MESSAGES, &data_req );
+	sctk_wait_message ( &data_req );
+}
+
+void sctk_window_RDMA_emulated_read_ctrl_msg_handler( struct sctk_window_emulated_RDMA *erma )
+{
+	struct sctk_window * win = sctk_win_translate( erma->win_id );
+	
+	if( !win )
+	{
+		sctk_fatal("No such window in emulated RDMA write");
+	}
+	
+	size_t offset = erma->offset * win->disp_unit;
+
+	if( win->size <= ( offset + erma->size ) )
+	{
+		sctk_fatal("Error RDMA emulated write operation overflows the window");
+	} 
+	
+	sctk_request_t data_req;
+	sctk_message_isend_class( erma->source_rank, win->start_addr + offset, erma->size , 0, SCTK_COMM_WORLD, SCTK_RDMA_WINDOW_MESSAGES, &data_req );
+	sctk_wait_message ( &data_req );
+}
+
+/************************************************************************/
+/* Window Operations                                                    */
+/************************************************************************/
+
+void sctk_window_RDMA_write_local( struct sctk_window * win,  void * src_addr, size_t size, size_t dest_offset )
+{
+	size_t offset = dest_offset * win->disp_unit;
+
+	if( win->size <= ( offset + size ) )
+	{
+		sctk_fatal("Error RDMA write operation overflows the window");
+	} 
+
+	/* Do the local RDMA */
+	memcpy( win->start_addr + offset, src_addr, size );
+}
+
+
+
+
+void sctk_window_RDMA_write( sctk_window_t win_id, void * src_addr, size_t size, size_t dest_offset, sctk_request_t  * req  )
+{
+	struct sctk_window * win = sctk_win_translate( win_id );
+	
+	if( !win )
+	{
+		sctk_fatal("No such window ID");
+	}
+	
+	/* Set an empty request */
+	sctk_init_request(req, SCTK_COMM_WORLD, REQUEST_NULL );
+
+	int my_rank = sctk_get_process_rank();
+	
+	if( (my_rank == win->owner) /* Same rank */
+	||  (! sctk_is_net_message( win->owner ) ) /* Same process */  )
+	{
+		/* Shared Memory */
+		sctk_window_RDMA_write_local( win,  src_addr, size,  dest_offset );
+		return;
+	}
+	else /*if( win->is_emulated )*/
+	{
+		/* Emulated write using control messages */
+		struct sctk_window_emulated_RDMA erma;
+		sctk_window_emulated_RDMA_init( &erma, dest_offset, size, win->remote_id );
+		sctk_control_messages_send ( win->owner, SCTK_CONTROL_MESSAGE_PROCESS, SCTK_PROCESS_RDMA_EMULATED_WRITE, 0, &erma, sizeof(struct sctk_window_emulated_RDMA) );
+		
+		/* Note that we store the data transfer req in the request */
+		sctk_message_isend_class( sctk_get_process_rank_from_task_rank (win->owner), src_addr, size , 0, SCTK_COMM_WORLD, SCTK_RDMA_WINDOW_MESSAGES, req );
+	}
+	/*
+	else
+	{
+		Actual RDMA write
+	}*/
+	
+}
+
+void sctk_window_RDMA_read_local( struct sctk_window * win,  void * dest_addr, size_t size, size_t src_offset )
+{
+	size_t offset = src_offset * win->disp_unit;
+
+	if( win->size <= ( offset + size ) )
+	{
+		sctk_fatal("Error RDMA write operation overflows the window");
+	} 
+
+	/* Do the local RDMA */
+	memcpy( dest_addr, win->start_addr + offset, size );
+}
+
+
+void sctk_window_RDMA_read( sctk_window_t win_id, void * dest_addr, size_t size, size_t src_offset, sctk_request_t  * req )
+{
+	struct sctk_window * win = sctk_win_translate( win_id );
+	
+	if( !win )
+	{
+		sctk_fatal("No such window ID");
+	}	
+
+	int my_rank = sctk_get_process_rank();
+	
+	if( (my_rank == win->owner) /* Same rank */
+	||  (! sctk_is_net_message( win->owner ) ) /* Same process */  )
+	{
+		/* Shared Memory */
+		sctk_window_RDMA_read_local( win,  dest_addr, size,  src_offset );
+		return;
+	}
+	else /*if( win->is_emulated )*/
+	{
+		/* Emulated write using control messages */
+		struct sctk_window_emulated_RDMA erma;
+		sctk_window_emulated_RDMA_init( &erma, src_offset, size, win->remote_id );
+		sctk_control_messages_send ( sctk_get_process_rank_from_task_rank (win->owner), SCTK_CONTROL_MESSAGE_PROCESS, SCTK_PROCESS_RDMA_EMULATED_READ, 0, &erma, sizeof(struct sctk_window_emulated_RDMA) );
+		
+		/* Note that we store the data transfer req in the request */
+		sctk_message_irecv_class( win->owner, dest_addr, size , 0, SCTK_COMM_WORLD, SCTK_RDMA_WINDOW_MESSAGES, req );
+	}
+	/*
+	else
+	{
+		Actual RDMA write
+	}*/
+}

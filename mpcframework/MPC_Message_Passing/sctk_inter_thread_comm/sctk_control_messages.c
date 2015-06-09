@@ -36,6 +36,7 @@
 #include <sctk_reorder.h>
 #include <sctk_rail.h>
 #include <sctk_alloc.h>
+#include <sctk_window.h>
 
 /************************************************************************/
 /* Control Messages Context                                             */
@@ -58,13 +59,37 @@ void sctk_control_message_context_set_user( void (*fn)( int , int , char , char 
 /* Process Level Messages                                               */
 /************************************************************************/
 
+
 void sctk_control_message_process_level( int source_process, int source_rank, char subtype, char param, void * data )
 {
+	struct sctk_window_map_request * mr  = NULL;
+	struct sctk_window_emulated_RDMA *erma = NULL;
 	
-	
-	
-	
-	
+	switch( subtype )
+	{
+		case SCTK_PROCESS_RDMA_WIN_MAPTO:
+			sctk_error("Received a MAP remote from %d", source_rank );
+			mr = (struct sctk_window_map_request *) data;
+			sctk_window_map_remote_ctrl_msg_handler( mr );
+		break;
+		
+		case SCTK_PROCESS_RDMA_WIN_RELAX:
+			sctk_error("Received a  WIN relax from %d", source_rank );
+			sctk_window_relax_ctrl_msg_handler( param );
+		break;
+		
+		case SCTK_PROCESS_RDMA_EMULATED_WRITE :
+			sctk_error("Received an EMUL write from %d", source_rank );
+			erma = (struct sctk_window_emulated_RDMA *)data;
+			sctk_window_RDMA_emulated_write_ctrl_msg_handler( &erma );
+		break;
+		
+		case SCTK_PROCESS_RDMA_EMULATED_READ :
+			sctk_error("Received an EMUL read from %d", source_rank );
+			erma = (struct sctk_window_emulated_RDMA *)data;
+			sctk_window_RDMA_emulated_read_ctrl_msg_handler( &erma );
+		break;
+	}
 	
 }
 
@@ -101,6 +126,15 @@ void __sctk_control_messages_send( int dest, sctk_message_class_t message_class,
 	
 	sctk_request_t request;
 	sctk_thread_ptp_message_t msg;
+	
+	/* Add a dummy payload */
+	int dummy_data = 42;
+	
+	if( !buffer && !size )
+	{
+		buffer = &dummy_data;
+		size = sizeof( int );
+	}
 	
 	if( !sctk_message_class_is_process_specific( message_class ) )
 	{

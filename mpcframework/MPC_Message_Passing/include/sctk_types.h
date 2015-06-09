@@ -95,6 +95,8 @@ typedef struct
 	sctk_Op_f func;
 	sctk_Op_User_function *u_func;
 } sctk_Op;
+/** RDMA windows */
+typedef int sctk_window_t;
 /************************** MACROS *************************/
 /** define the MPI_COMM_WORLD internal communicator number **/
 #define SCTK_COMM_WORLD 0

@@ -528,6 +528,38 @@ void sctk_rail_dump_routes()
 	}
 }
 
+/************************************************************************/
+/* Rail Pin CTX                                                         */
+/************************************************************************/
+
+void sctk_rail_pin_ctx_init( sctk_rail_pin_ctx_t * ctx, void * addr, size_t size )
+{
+	sctk_rail_info_t * rdma_rail = sctk_rail_get_rdma ();
+	
+	if( !rdma_rail )
+	{
+		/* Emulated mode no need to pin */
+		return;
+	}
+	
+	ctx->list = rdma_rail->rail_pin_region( rdma_rail, addr, size );
+	
+	assume( ctx->list != NULL );
+}
+
+void sctk_rail_pin_ctx_release( sctk_rail_pin_ctx_t * ctx )
+{
+	sctk_rail_info_t * rdma_rail = sctk_rail_get_rdma ();
+	
+	if( !rdma_rail )
+	{
+		/* Emulated mode no need to pin */
+		return;
+	}
+	
+	rdma_rail->rail_unpin_region( rdma_rail, ctx->list );
+	ctx->list = NULL;
+}
 
 
 
