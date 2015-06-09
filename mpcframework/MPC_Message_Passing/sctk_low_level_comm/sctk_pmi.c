@@ -457,7 +457,7 @@ int sctk_pmi_put_connection_info ( void *info, size_t size, int tag )
 
 	// Build the key
 	sKeyValue = ( char * ) sctk_malloc ( sctk_max_key_len * sizeof ( char ) );
-	sprintf ( sKeyValue, "%d_%d", tag, iRank );
+	sprintf ( sKeyValue, "MPC_KEYS_%d_%d", tag, iRank );
 
 	// Build the value
 	sValue = ( char * ) info;
