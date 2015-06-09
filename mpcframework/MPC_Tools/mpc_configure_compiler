@@ -597,7 +597,17 @@ fi
 cat <<EOF >> $1
 COMPILER_ARGS=""
 
-for i in "\$@" -fmpc-include ; do
+AUTO_INCLUDE="-fmpc-include"
+
+if test "$1" = "bin/mpc_ifort" ; then  
+AUTO_INCLUDE=""
+fi
+
+if test "$1" = "bin/mpc_gfortran" ; then  
+AUTO_INCLUDE=""
+fi
+
+for i in "\$@" $AUTO_INCLUDE ; do
     CURRENT_ARG="'\$i'"
     
     #This is used to add the mpc.h include
