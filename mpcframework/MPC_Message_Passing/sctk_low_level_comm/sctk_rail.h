@@ -87,12 +87,14 @@ struct sctk_rail_pin_ctx_list
 {
 	sctk_rail_pin_ctx_internal_t pin;
 	int rail_id;
-	struct sctk_rail_pin_ctx_list * next;
 };
+
+#define SCTK_PIN_LIST_SIZE 25
 
 typedef struct
 {
-	struct sctk_rail_pin_ctx_list * list;
+	struct sctk_rail_pin_ctx_list list[SCTK_PIN_LIST_SIZE];
+	int size;
 }sctk_rail_pin_ctx_t;
 
 void sctk_rail_pin_ctx_init( sctk_rail_pin_ctx_t * ctx, void * addr, size_t size );
@@ -159,11 +161,11 @@ struct sctk_rail_info_s
 	int ( *send_message_from_network ) ( sctk_thread_ptp_message_t * );
 	void ( *connect_on_demand ) ( struct sctk_rail_info_s * rail , int dest );
 	
-	void (*control_message_handler)( struct sctk_rail_info_s * rail, int source_process, int source_rank, char subtype, char param, void * data );
+	void (*control_message_handler)( struct sctk_rail_info_s * rail, int source_process, int source_rank, char subtype, char param, void * data, size_t size );
 	
 	/* Pinning */
-	struct sctk_rail_pin_ctx_list * (*rail_pin_region)( struct sctk_rail_info_s * rail, void * addr, size_t size );
-	void (*rail_unpin_region)( struct sctk_rail_info_s * rail, struct sctk_rail_pin_ctx_list * ctx );
+	void (*rail_pin_region)( struct sctk_rail_info_s * rail, struct sctk_rail_pin_ctx_list * list, void * addr, size_t size );
+	void (*rail_unpin_region)( struct sctk_rail_info_s * rail, struct sctk_rail_pin_ctx_list * list );
 	
 	/* Connection management */
 	

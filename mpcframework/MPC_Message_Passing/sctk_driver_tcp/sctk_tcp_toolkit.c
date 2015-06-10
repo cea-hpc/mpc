@@ -406,7 +406,7 @@ static void sctk_network_connection_from_tcp ( int from, int to, sctk_rail_info_
 }
 
 
-void tcp_control_message_handler( struct sctk_rail_info_s * rail, int source_process, int source_rank, char subtype, char param, void * data )
+void tcp_control_message_handler( struct sctk_rail_info_s * rail, int source_process, int source_rank, char subtype, char param, void * data, size_t size )
 {
 	sctk_tcp_control_message_t action = subtype;
 

@@ -194,10 +194,10 @@ void sctk_init_request (sctk_request_t * request, sctk_communicator_t comm, int 
 void sctk_message_isend_class_src( int src , int dest, void * data, size_t size, int tag, sctk_communicator_t comm , sctk_message_class_t class, sctk_request_t *req )
 {
 	if (dest == SCTK_PROC_NULL)
-          {
-	      sctk_init_request(req,comm, REQUEST_SEND);
-	      return;
-          }
+	{
+	sctk_init_request(req,comm, REQUEST_SEND);
+	return;
+	}
 
 	struct sctk_internal_ptp_s * ptp_internal = sctk_get_internal_ptp ( src );
 	
@@ -1864,7 +1864,7 @@ void sctk_set_header_in_message ( sctk_thread_ptp_message_t * msg,
 		SCTK_MSG_DEST_PROCESS_SET ( msg , destination  );
 		
 		/* Message does not come from a task source */
-		SCTK_MSG_SRC_TASK_SET ( msg ,  -1 );
+		SCTK_MSG_SRC_TASK_SET ( msg ,  sctk_get_task_rank() );
 
 		/* In all cases such message goes to a process */
 		SCTK_MSG_DEST_TASK_SET ( msg, -1 );
@@ -2398,6 +2398,8 @@ static void sctk_perform_messages_wait_for_value_and_poll ( void *a )
 {
 	struct sctk_perform_messages_s *_wait = ( struct sctk_perform_messages_s * ) a;
 
+	sctk_control_message_process();
+
 	sctk_perform_messages ( _wait );
 
 	if ( ( volatile int ) _wait->request->completion_flag != SCTK_MESSAGE_DONE )
@@ -2433,6 +2435,8 @@ void sctk_perform_messages_wait_init_request_type ( struct sctk_perform_messages
 void sctk_inter_thread_perform_idle ( volatile int *data, int value,
                                       void ( *func ) ( void * ), void *arg )
 {
+	sctk_control_message_process();
+	
 #ifdef SCTK_ENABLE_SPINNING
 
 	while ( ( volatile int ) *data != value )
@@ -2525,6 +2529,8 @@ void sctk_wait_message ( sctk_request_t *request )
 
 void sctk_perform_messages ( struct sctk_perform_messages_s *wait )
 {
+	
+	
 	const sctk_request_t *request = wait->request;
 	sctk_internal_ptp_t *recv_ptp = wait->recv_ptp;
 	sctk_internal_ptp_t *send_ptp = wait->send_ptp;
@@ -2657,7 +2663,7 @@ void sctk_send_message_try_check ( sctk_thread_ptp_message_t *msg, int perform_c
 	if( sctk_process_rank < 0 )
 		CRASH();
 	
-	sctk_debug("!%d! MM %d -> %d (CLASS %d SPE %d)", sctk_process_rank, SCTK_MSG_SRC_PROCESS ( msg ),  SCTK_MSG_DEST_PROCESS ( msg ), SCTK_MSG_SPECIFIC_CLASS( msg ) , sctk_message_class_is_process_specific ( SCTK_MSG_SPECIFIC_CLASS( msg ) ));
+	sctk_debug("!%d! MM %d -> %d (CLASS %s(%d) SPE %d SIZE %d)", sctk_process_rank, SCTK_MSG_SRC_PROCESS ( msg ),  SCTK_MSG_DEST_PROCESS ( msg ), sctk_message_class_name[SCTK_MSG_SPECIFIC_CLASS( msg )], SCTK_MSG_SPECIFIC_CLASS( msg ) , sctk_message_class_is_process_specific ( SCTK_MSG_SPECIFIC_CLASS( msg ) ), SCTK_MSG_SIZE( msg ));
 
 	/*  Message has not reached its destination */
 	if( SCTK_MSG_DEST_PROCESS ( msg ) != sctk_process_rank )

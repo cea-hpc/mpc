@@ -80,14 +80,16 @@ int sctk_window_map_remote( int remote_rank, sctk_window_t win_id );
 struct sctk_window_emulated_RDMA
 {
 	int source_rank;
+	int remote_rank;
 	size_t offset;
 	size_t size;
 	sctk_window_t win_id;
 };
 
-static inline void sctk_window_emulated_RDMA_init( struct sctk_window_emulated_RDMA * erma, size_t offset, size_t size, sctk_window_t win_id )
+static inline void sctk_window_emulated_RDMA_init( struct sctk_window_emulated_RDMA * erma, int remote_rank, size_t offset, size_t size, sctk_window_t win_id )
 {
 	erma->source_rank = sctk_get_task_rank();
+	erma->remote_rank = remote_rank;
 	erma->offset = offset;
 	erma->size = size;
 	erma->win_id = win_id;
@@ -96,13 +98,19 @@ static inline void sctk_window_emulated_RDMA_init( struct sctk_window_emulated_R
 
 void sctk_window_RDMA_write( sctk_window_t win_id, void * src_addr, size_t size, size_t dest_offset, sctk_request_t  * req  );
 void sctk_window_RDMA_read( sctk_window_t win_id, void * dest_addr, size_t size, size_t src_offset, sctk_request_t  * req  );
-
+void sctk_window_RDMA_fence( sctk_window_t win_id );
 
 
 /************************************************************************/
 /* Control Messages Handlers                                            */
 /************************************************************************/
 
+enum
+{
+	TAG_RDMA_READ,
+	TAG_RDMA_WRITE,
+	TAG_RDMA_MAP
+};
 
 void sctk_window_map_remote_ctrl_msg_handler( struct sctk_window_map_request * mr );
 void sctk_window_relax_ctrl_msg_handler( sctk_window_t win_id );

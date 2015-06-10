@@ -68,6 +68,7 @@ typedef enum
 	
 	SCTK_P2P_MESSAGE,
 	SCTK_RDMA_WINDOW_MESSAGES, 		/**< These messages are used to exchange window informations */
+	SCTK_CONTROL_MESSAGE_FENCE,     /**< This message is sent to create a fence on control messages */
 	
 	SCTK_BARRIER_MESSAGE,
 	SCTK_BROADCAST_MESSAGE,
@@ -83,6 +84,26 @@ typedef enum
 	SCTK_CONTROL_MESSAGE_COUNT		/**< Just in case this value allows to track the number of control message types */
 }sctk_message_class_t;
 
+static const char * const sctk_message_class_name[ SCTK_CONTROL_MESSAGE_COUNT ] = 
+{   "SCTK_CANCELLED_SEND",
+	"SCTK_CANCELLED_RECV",
+	
+	"SCTK_P2P_MESSAGE",
+	"SCTK_RDMA_WINDOW_MESSAGES", 	
+	"SCTK_CONTROL_MESSAGE_FENCE",   
+	
+	"SCTK_BARRIER_MESSAGE",
+	"SCTK_BROADCAST_MESSAGE",
+	"SCTK_ALLREDUCE_MESSAGE",
+	
+	"SCTK_ALLREDUCE_HETERO_MESSAGE",
+	"SCTK_BROADCAST_HETERO_MESSAGE",
+	"SCTK_BARRIER_HETERO_MESSAGE",
+	
+	"SCTK_CONTROL_MESSAGE_RAIL", 		
+	"SCTK_CONTROL_MESSAGE_PROCESS",		
+	"SCTK_CONTROL_MESSAGE_USER"
+ };
 
 static inline int sctk_message_class_is_process_specific( sctk_message_class_t type )
 {
@@ -94,6 +115,7 @@ static inline int sctk_message_class_is_process_specific( sctk_message_class_t t
 		case SCTK_BARRIER_MESSAGE:
 		case SCTK_BROADCAST_MESSAGE:
 		case SCTK_ALLREDUCE_MESSAGE:
+		case SCTK_CONTROL_MESSAGE_FENCE:
 		case SCTK_RDMA_WINDOW_MESSAGES: /* Note that the RDMA win message 
 					   * is not process specific to force
 					   * on-demand connections between the
@@ -132,6 +154,7 @@ static inline int sctk_message_class_is_control_message( sctk_message_class_t ty
 		case SCTK_BROADCAST_HETERO_MESSAGE:
 		case SCTK_BARRIER_HETERO_MESSAGE:
 		case SCTK_RDMA_WINDOW_MESSAGES:
+		case SCTK_CONTROL_MESSAGE_FENCE:
 			return 0;
 		
 		case SCTK_CONTROL_MESSAGE_RAIL:
@@ -190,8 +213,8 @@ typedef struct sctk_thread_message_header_s
 	int destination_task; /**< Destination Task ID */
 	/* Context */
 	int message_tag; /**< Message TAG */
-	struct sctk_control_message_header message_type;
 	sctk_communicator_t communicator; /**< Message communicator */
+	struct sctk_control_message_header message_type; /**< Control Message Infos */
 	/* Ordering */
 	int message_number; /**< Message order (for reorder) */
 	char use_message_numbering; /**< Should this message be reordered */

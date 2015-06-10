@@ -768,19 +768,14 @@ void sctk_network_memory_free_hook_ib ( void * ptr, size_t size )
 
 /* Pinning */
 
-struct sctk_rail_pin_ctx_list * sctk_ib_pin_region( struct sctk_rail_info_s * rail, void * addr, size_t size )
+void sctk_ib_pin_region( struct sctk_rail_info_s * rail, struct sctk_rail_pin_ctx_list * list, void * addr, size_t size )
 {
-	struct sctk_rail_pin_ctx_list * ret = sctk_malloc( sizeof( struct sctk_rail_pin_ctx_list ) );
-	
 	/* Fill entry */
-	ret->rail_id = rail->rail_number;
+	list->rail_id = rail->rail_number;
 	/* Save the pointer (to free the block returned by sctk_ib_mmu_entry_new) */
-	ret->pin.ib.p_entry = sctk_ib_mmu_entry_new( &rail->network.ib, addr, size );
+	list->pin.ib.p_entry = sctk_ib_mmu_entry_new( &rail->network.ib, addr, size );
 	/* Save it inside the struct to allow serialization */
-	memcpy( &ret->pin.ib.mr , ret->pin.ib.p_entry->mr, sizeof( struct ibv_mr ) );
-	ret->next = NULL;
-	
-	return ret;
+	memcpy( &list->pin.ib.mr , list->pin.ib.p_entry->mr, sizeof( struct ibv_mr ) );
 }
 
 void sctk_ib_unpin_region( struct sctk_rail_info_s * rail, struct sctk_rail_pin_ctx_list * ctx )
@@ -791,8 +786,6 @@ void sctk_ib_unpin_region( struct sctk_rail_info_s * rail, struct sctk_rail_pin_
 	ctx->pin.ib.p_entry = NULL;
 	memset( &ctx->pin.ib.mr, 0, sizeof( struct ibv_mr ) );
 	ctx->rail_id = -1;
-	
-	sctk_free( ctx );
 }
 
 

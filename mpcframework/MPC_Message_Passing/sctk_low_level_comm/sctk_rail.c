@@ -542,7 +542,30 @@ void sctk_rail_pin_ctx_init( sctk_rail_pin_ctx_t * ctx, void * addr, size_t size
 		return;
 	}
 	
-	ctx->list = rdma_rail->rail_pin_region( rdma_rail, addr, size );
+	/* Clear the pin ctx */
+	int i;
+	
+	for( i = 0 ; i < SCTK_PIN_LIST_SIZE; i++ )
+	{
+		memset( &ctx->list[i], 0, sizeof( struct sctk_rail_pin_ctx_list ) );
+		ctx->list[i].rail_id = -1;
+	}
+	
+	if( 0 < rdma_rail->subrail_count )
+	{
+		/* Here we have a topological rail we in for several rails */
+		ctx->size = rdma_rail->subrail_count;
+		/* Make sure we have enough room as we store these data
+		 * in static to allow easy serialization between windows */
+		assume( ctx->size < SCTK_PIN_LIST_SIZE );
+	}
+	else
+	{		
+		/* By default we only pin for a single entry */
+		ctx->size = 1;
+	}
+	
+	rdma_rail->rail_pin_region( rdma_rail, ctx->list, addr, size );
 	
 	assume( ctx->list != NULL );
 }
@@ -558,7 +581,6 @@ void sctk_rail_pin_ctx_release( sctk_rail_pin_ctx_t * ctx )
 	}
 	
 	rdma_rail->rail_unpin_region( rdma_rail, ctx->list );
-	ctx->list = NULL;
 }
 
 

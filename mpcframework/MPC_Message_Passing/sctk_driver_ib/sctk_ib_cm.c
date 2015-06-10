@@ -901,7 +901,7 @@ static inline int sctk_ib_cm_resizing_rdma_recv_request ( sctk_rail_info_t *rail
  *  Handler of OD connexions
  *----------------------------------------------------------*/
 
-void sctk_ib_cm_control_message_handler( struct sctk_rail_info_s * rail, int process_src, int source_rank, char subtype, char param, void * payload )
+void sctk_ib_cm_control_message_handler( struct sctk_rail_info_s * rail, int process_src, int source_rank, char subtype, char param, void * payload, size_t size )
 {
 	int rail_id = rail->rail_number;
 
