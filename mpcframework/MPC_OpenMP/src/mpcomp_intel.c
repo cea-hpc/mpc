@@ -336,13 +336,13 @@ wrapper_function( void * arg )
 void   
 __kmpc_begin ( ident_t * loc, kmp_int32 flags ) 
 {
-not_implemented() ;
+// not_implemented() ;
 }
 
 void   
 __kmpc_end ( ident_t * loc )
 {
-not_implemented() ;
+// not_implemented() ;
 }
 
 
@@ -1016,6 +1016,7 @@ __kmpc_dispatch_init_4(ident_t *loc, kmp_int32 gtid, enum sched_type schedule,
       ,
       ((mpcomp_thread_t *) sctk_openmp_thread_tls)->rank,
       lb, ub, ub+st, st, chunk, schedule ) ;
+// printf( "__kmpc_dispatch_init_4: schedule = %d\n", schedule ) ;
 
   switch( schedule ) {
     case kmp_sch_dynamic_chunked:
@@ -1028,6 +1029,11 @@ __kmpc_dispatch_init_4(ident_t *loc, kmp_int32 gtid, enum sched_type schedule,
 	  ((mpcomp_thread_t *) sctk_openmp_thread_tls),
 	  (long)lb, (long)ub+(long)st, (long)st, (long)chunk
 	  ) ;
+      break ;
+    case kmp_sch_guided_chunked:
+      __mpcomp_dynamic_loop_init(
+	  ((mpcomp_thread_t *) sctk_openmp_thread_tls),
+	  (long)lb, (long)ub+(long)st, (long)st, (long)chunk ) ;
       break ;
     default:
       not_implemented() ;
@@ -1646,16 +1652,22 @@ __kmpc_atomic_float8_add(  ident_t *id_ref, int gtid, kmp_real64 * lhs, kmp_real
       "Add %g",
       ((mpcomp_thread_t *) sctk_openmp_thread_tls)->rank, rhs ) ;
 
+#if 0
   __kmp_test_then_add_real64( lhs, rhs ) ;
+#endif
 
   /* TODO check how we can add this function to asssembly-dedicated module */
 
-#if 0
+#if __MIC__ || __MIC2__
+#warning "MIC => atomic locks"
   __mpcomp_atomic_begin() ;
 
   *lhs += rhs ;
 
   __mpcomp_atomic_end() ;
+#else 
+#warning "NON MIC => atomic optim"
+  __kmp_test_then_add_real64( lhs, rhs ) ;
 #endif
 
 
