@@ -24,6 +24,14 @@
 #include <sctk_debug.h>
 #include "mpcomp_internal.h"
 
+/* Declaration from MPC
+TODO: put these declarations in header file
+*/
+void __mpcomp_internal_begin_parallel_region(int arg_num_threads,
+		mpcomp_new_parallel_region_info_t info ) ;
+
+void __mpcomp_internal_end_parallel_region( mpcomp_instance_t * instance ) ;
+
 /*
  *
  * Target high-priority directives:
@@ -1759,6 +1767,9 @@ NON_IMPLEMENTED_ATOMIC( fixed8,  orl, kmp_int64,  void )   // __kmpc_atomic_fixe
 /* Operators .AND., .OR. are covered by __kmpc_atomic_*_{andl,orl}           */
 /* Intrinsics IAND, IOR, IEOR are covered by __kmpc_atomic_*_{andb,orb,xor}  */
 /* ------------------------------------------------------------------------- */
+
+NON_IMPLEMENTED_ATOMIC( float8,  max, kmp_real64,  void )   // __kmpc_atomic_float8_max
+NON_IMPLEMENTED_ATOMIC( fixed4,  max, kmp_int32,   void )   // __kmpc_atomic_fixed4_max
 
 #if 0
   MIN_MAX_COMPXCHG( fixed1,  max, char,        8, <, 1i, 0, KMP_ARCH_X86 ) // __kmpc_atomic_fixed1_max
