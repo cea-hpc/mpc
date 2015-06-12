@@ -1,0 +1,4768 @@
+/* ############################# MPC License ############################## */
+/* # Wed Nov 19 15:19:19 CET 2008                                         # */
+/* # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          # */
+/* #                                                                      # */
+/* # IDDN.FR.001.230040.000.S.P.2007.000.10000                            # */
+/* # This file is part of the MPC Runtime.                                # */
+/* #                                                                      # */
+/* # This software is governed by the CeCILL-C license under French law   # */
+/* # and abiding by the rules of distribution of free software.  You can  # */
+/* # use, modify and/ or redistribute the software under the terms of     # */
+/* # the CeCILL-C license as circulated by CEA, CNRS and INRIA at the     # */
+/* # following URL http://www.cecill.info.                                # */
+/* #                                                                      # */
+/* # The fact that you are presently reading this means that you have     # */
+/* # had knowledge of the CeCILL-C license and that you accept its        # */
+/* # terms.                                                               # */
+/* #                                                                      # */
+/* # Authors:                                                             # */
+/* #   - JAEGER Julien julien.jaeger@cea.fr                               # */
+/* #                                                                      # */
+/* ######################################################################## */
+#include <mpc_mpi_internal.h>
+#ifndef SCTK_DO_NOT_HAVE_WEAK_SYMBOLS
+#include "mpc_nbc_weak.h"
+#endif
+
+#undef ffunc
+#define ffunc(a) a##_
+#include <mpc_nbc_fortran.h>
+
+#undef ffunc
+#define ffunc(a) a##__
+#include <mpc_nbc_fortran.h>
+#undef ffunc
+
+
+
+
+/* INTERNAL FOR NON-BLOCKING COLLECTIVES - CALL TO libNBC FUNCTIONS*/
+
+
+/********************************************************************* *
+ * The Following code comes from the libNBC, a library for the support *
+ * of MPI-3 Non-Blocking Collective. The code was modified to ensure	 *
+ * compatibility with the MPC framework.															 *
+ * *********************************************************************/
+
+static inline int NBC_Sched_create(NBC_Schedule* schedule);
+static inline int NBC_Sched_send(void* buf, char tmpbuf, int count, MPI_Datatype datatype, int dest, NBC_Schedule *schedule);
+static inline int NBC_Sched_recv(void* buf, char tmpbuf, int count, MPI_Datatype datatype, int source, NBC_Schedule *schedule);
+static inline int NBC_Sched_op(void* buf3, char tmpbuf3, void* buf1, char tmpbuf1, void* buf2, char tmpbuf2, int count, MPI_Datatype datatype, MPI_Op op, NBC_Schedule *schedule);
+static inline int NBC_Sched_copy(void *src, char tmpsrc, int srccount, MPI_Datatype srctype, void *tgt, char tmptgt, int tgtcount, MPI_Datatype tgttype, NBC_Schedule *schedule);
+static inline int NBC_Sched_unpack(void *inbuf, char tmpinbuf, int count, MPI_Datatype datatype, void *outbuf, char tmpoutbuf, NBC_Schedule *schedule);
+static inline int NBC_Sched_barrier(NBC_Schedule *schedule);
+static inline int NBC_Sched_commit(NBC_Schedule *schedule);
+
+static inline int NBC_Progress(NBC_Handle *handle);
+static inline int NBC_Start(NBC_Handle *handle, NBC_Schedule *schedule);
+static inline int NBC_Start_round(NBC_Handle *handle);
+static inline int NBC_Init_handle(NBC_Handle *handle, MPI_Comm comm, int tag);
+static inline int NBC_Type_intrinsic(MPI_Datatype type);
+static inline int NBC_Copy(void *src, int srccount, MPI_Datatype srctype, void *tgt, int tgtcount, MPI_Datatype tgttype, MPI_Comm comm);
+static inline NBC_Comminfo* NBC_Init_comm(MPI_Comm comm, int keyval);
+static inline int NBC_Create_fortran_handle(int *fhandle, NBC_Handle **handle);
+static inline int NBC_Free(NBC_Handle* handle);
+static inline int NBC_Operation(void *buf3, void *buf1, void *buf2, MPI_Op op, MPI_Datatype type, int count);
+
+/*New functions by JJ*/
+static inline int NBC_Sched_send_pos(int pos, void* buf, char tmpbuf, int count, MPI_Datatype datatype, int dest, NBC_Schedule *schedule);
+static inline int NBC_Sched_recv_pos(int pos, void* buf, char tmpbuf, int count, MPI_Datatype datatype, int source, NBC_Schedule *schedule);
+static inline int NBC_Sched_commit_jj(NBC_Schedule *schedule);
+static inline int NBC_Sched_barrier_pos(int pos, NBC_Schedule *schedule);
+static inline int NBC_Sched_op_pos(int pos, void* buf3, char tmpbuf3, void* buf1, char tmpbuf1, void* buf2, char tmpbuf2, int count, MPI_Datatype datatype, MPI_Op op, NBC_Schedule *schedule);
+/****************** *
+ * NBC_IALLGATHER.C *
+ * ******************/
+
+/*
+ * Copyright (c) 2006 The Trustees of Indiana University and Indiana
+ *										University Research and Technology
+ *										Corporation.	All rights reserved.
+ * Copyright (c) 2006 The Technical University of Chemnitz. All 
+ *										rights reserved.
+ *
+ * Author(s): Torsten Hoefler <htor@cs.indiana.edu>
+ *
+ */
+
+
+/* simple linear MPI_Iallgather
+ * the algorithm uses p-1 rounds
+ * each node sends the packet it received last round (or has in round 0) to it's right neighbor (modulo p)
+ * each node receives from it's left (modulo p) neighbor */
+static int NBC_Iallgather(void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, NBC_Handle *handle) {
+	int rank, p, res, r;
+	MPI_Aint rcvext, sndext;
+	NBC_Schedule *schedule;
+	char *rbuf, *sbuf, inplace;
+
+	NBC_IN_PLACE(sendbuf, recvbuf, inplace);
+	
+	res = NBC_Init_handle(handle, comm, MPC_IALLGATHER_TAG);
+	if(res != NBC_OK) { printf("Error in NBC_Init_handle(%i)\n", res); return res; }
+	res = PMPC_Comm_rank(comm, &rank);
+	if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_rank() (%i)\n", res); return res; }
+	res = PMPC_Comm_size(comm, &p);
+	if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_size() (%i)\n", res); return res; }
+	res = __INTERNAL__PMPI_Type_extent(sendtype, &sndext);
+	if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Type_extent() (%i)\n", res); return res; }
+	res = __INTERNAL__PMPI_Type_extent(recvtype, &rcvext);
+	if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Type_extent() (%i)\n", res); return res; }
+
+	handle->tmpbuf = NULL;
+
+	if(!((rank == 0) && inplace)) {
+		/* copy my data to receive buffer */
+		rbuf = ((char *)recvbuf) + (rank*recvcount*rcvext);
+		res = NBC_Copy(sendbuf, sendcount, sendtype, rbuf, recvcount, recvtype, comm);
+		if (NBC_OK != res) { printf("Error in NBC_Copy() (%i)\n", res); return res; }
+	}
+
+		schedule = (NBC_Schedule*)sctk_malloc(sizeof(NBC_Schedule));
+		if (NULL == schedule) { printf("Error in sctk_malloc()\n"); return res; }
+
+//		res = NBC_Sched_create(schedule);
+//		if(NBC_OK != res) { printf("Error in NBC_Sched_create, (%i)\n", res); return res; }
+	int alloc_size = 2*sizeof(int) + (p-1)*(sizeof(NBC_Args_send)+sizeof(NBC_Fn_type)) + (p-1)*(sizeof(NBC_Args_recv)+sizeof(NBC_Fn_type)) + sizeof(char); 
+		*schedule=sctk_malloc(alloc_size);		
+
+		*(int*)*schedule=alloc_size;
+		*(((int*)*schedule)+1)=(p-1)*2;
+
+		sbuf = ((char *)recvbuf) + (rank*recvcount*rcvext);
+		/* do p-1 rounds */
+		int pos=0;
+		for(r=0;r<p;r++) {
+			if(r != rank) {
+				/* recv from rank r */
+				rbuf = ((char *)recvbuf) + r*(recvcount*rcvext);
+				res = NBC_Sched_recv_pos(pos, rbuf, 0, recvcount, recvtype, r, schedule);
+	pos+=sizeof(NBC_Args_recv)+sizeof(NBC_Fn_type);
+				if (NBC_OK != res) { printf("Error in NBC_Sched_recv() (%i)\n", res); return res; }
+				/* send to rank r - not from the sendbuf to optimize MPI_IN_PLACE */
+				res = NBC_Sched_send_pos(pos, sbuf, 0, recvcount, recvtype, r, schedule);
+	pos+=sizeof(NBC_Args_send)+sizeof(NBC_Fn_type);
+				if (NBC_OK != res) { printf("Error in NBC_Sched_send() (%i)\n", res); return res; }
+			}
+		}
+
+		res = NBC_Sched_commit_jj(schedule);
+		if (NBC_OK != res) { printf("Error in NBC_Sched_commit() (%i)\n", res); return res; }
+
+
+ 
+	res = NBC_Start(handle, schedule);
+	if (NBC_OK != res) { printf("Error in NBC_Start() (%i)\n", res); return res; }
+ 
+	return NBC_OK;
+}
+
+
+/******************* *
+ * NBC_IALLGATHERV.C *
+ * *******************/
+
+/*
+ * Copyright (c) 2006 The Trustees of Indiana University and Indiana
+ *										University Research and Technology
+ *										Corporation.	All rights reserved.
+ * Copyright (c) 2006 The Technical University of Chemnitz. All 
+ *										rights reserved.
+ *
+ * Author(s): Torsten Hoefler <htor@cs.indiana.edu>
+ *
+ */
+
+/* an allgatherv schedule can not be cached easily because the contents
+ * ot the recvcounts array may change, so a comparison of the address
+ * would not be sufficient ... we simply do not cache it */
+
+/* simple linear MPI_Iallgatherv
+ * the algorithm uses p-1 rounds
+ * first round:
+ *	 each node sends to it's left node (rank+1)%p sendcount elements 
+ *	 each node begins with it's right node (rank-11)%p and receives from it recvcounts[(rank+1)%p] elements
+ * second round: 
+ *	 each node sends to node (rank+2)%p sendcount elements 
+ *	 each node receives from node (rank-2)%p recvcounts[(rank+2)%p] elements */
+static int NBC_Iallgatherv(void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int *recvcounts, int *displs, MPI_Datatype recvtype, MPI_Comm comm, NBC_Handle *handle) {
+	int rank, p, res, r, speer, rpeer;
+	MPI_Aint rcvext, sndext;
+	NBC_Schedule *schedule;
+	char *rbuf, inplace;
+	
+	NBC_IN_PLACE(sendbuf, recvbuf, inplace);
+	
+	res = NBC_Init_handle(handle, comm, MPC_IALLGATHERV_TAG);
+	if(res != NBC_OK) { printf("Error in NBC_Init_handle(%i)\n", res); return res; }
+	res = PMPC_Comm_rank(comm, &rank);
+	if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_rank() (%i)\n", res); return res; }
+	res = PMPC_Comm_size(comm, &p);
+	if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_size() (%i)\n", res); return res; }
+	res = __INTERNAL__PMPI_Type_extent(sendtype, &sndext);
+	if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Type_extent() (%i)\n", res); return res; }
+	res = __INTERNAL__PMPI_Type_extent(recvtype, &rcvext);
+	if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Type_extent() (%i)\n", res); return res; }
+
+	schedule = (NBC_Schedule*)sctk_malloc(sizeof(NBC_Schedule));
+	if (NULL == schedule) { printf("Error in sctk_malloc() (%i)\n", res); return res; }
+
+	handle->tmpbuf=NULL;
+ 
+	res = NBC_Sched_create(schedule);
+	if(res != NBC_OK) { printf("Error in NBC_Sched_create, (%i)\n", res); return res; }
+	
+	if(!inplace) {
+		/* copy my data to receive buffer */
+		rbuf = ((char *)recvbuf) + (displs[rank]*rcvext);
+		NBC_Copy(sendbuf, sendcount, sendtype, rbuf, recvcounts[rank], recvtype, comm);
+		if (NBC_OK != res) { printf("Error in NBC_Copy() (%i)\n", res); return res; }
+	}
+
+	/* do p-1 rounds */
+	for(r=1;r<p;r++) {
+		speer = (rank+r)%p;
+		rpeer = (rank-r+p)%p;
+		rbuf = ((char *)recvbuf) + (displs[rpeer]*rcvext);
+		
+		res = NBC_Sched_recv(rbuf, 0, recvcounts[rpeer], recvtype, rpeer, schedule);
+		if (NBC_OK != res) { printf("Error in NBC_Sched_recv() (%i)\n", res); return res; }
+		res = NBC_Sched_send(sendbuf, 0, sendcount, sendtype, speer, schedule);
+		if (NBC_OK != res) { printf("Error in NBC_Sched_send() (%i)\n", res); return res; }
+	}
+
+	res = NBC_Sched_commit(schedule);
+	if (NBC_OK != res) { printf("Error in NBC_Sched_commit() (%i)\n", res); return res; }
+ 
+	res = NBC_Start(handle, schedule);
+	if (NBC_OK != res) { printf("Error in NBC_Start() (%i)\n", res); return res; }
+ 
+	return NBC_OK;
+}
+
+
+
+/****************** *
+ * NBC_IALLREDUCE.C *
+ * ******************/
+
+/*
+ * Copyright (c) 2006 The Trustees of Indiana University and Indiana
+ *										University Research and Technology
+ *										Corporation.	All rights reserved.
+ * Copyright (c) 2006 The Technical University of Chemnitz. All 
+ *										rights reserved.
+ *
+ * Author(s): Torsten Hoefler <htor@cs.indiana.edu>
+ *
+ */
+
+static inline int allred_sched_diss(int rank, int p, int count, MPI_Datatype datatype, void *sendbuf, void *recvbuf, MPI_Op op, NBC_Schedule *schedule, NBC_Handle *handle);
+static inline int allred_sched_chain(int rank, int p, int count, MPI_Datatype datatype, void *sendbuf, void *recvbuf, MPI_Op op, int size, int ext, NBC_Schedule *schedule, NBC_Handle *handle, int fragsize);
+static inline int allred_sched_ring(int rank, int p, int count, MPI_Datatype datatype, void *sendbuf, void *recvbuf, MPI_Op op, int size, int ext, NBC_Schedule *schedule, NBC_Handle *handle);
+
+#define RANK2VRANK(rank, vrank, root) \
+{ \
+	vrank = rank; \
+	if (rank == 0) vrank = root; \
+	if (rank == root) vrank = 0; \
+}
+#define VRANK2RANK(rank, vrank, root) \
+{ \
+	rank = vrank; \
+	if (vrank == 0) rank = root; \
+	if (vrank == root) rank = 0; \
+}
+static int NBC_Iallreduce(void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, NBC_Handle* handle) {
+	int rank, p, res, size;
+	MPI_Aint ext;
+	NBC_Schedule *schedule;
+	enum { NBC_ARED_BINOMIAL, NBC_ARED_RING } alg;
+	char inplace;
+
+	NBC_IN_PLACE(sendbuf, recvbuf, inplace);
+
+	res = NBC_Init_handle(handle, comm, MPC_IALLREDUCE_TAG);
+	if(res != NBC_OK) { printf("Error in NBC_Init_handle(%i)\n", res); return res; }
+	res = PMPC_Comm_rank(comm, &rank);
+	if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_rank() (%i)\n", res); return res; }
+	res = PMPC_Comm_size(comm, &p);
+	if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_size() (%i)\n", res); return res; }
+	res = __INTERNAL__PMPI_Type_extent(datatype, &ext);
+	if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Type_extent() (%i)\n", res); return res; }
+	res = __INTERNAL__PMPI_Type_size(datatype, &size);
+	if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Type_size() (%i)\n", res); return res; }
+
+	handle->tmpbuf = sctk_malloc(ext*count);
+	if(handle->tmpbuf == NULL) { printf("Error in sctk_malloc() (%i)\n", res); return NBC_OOR; }
+
+	if((p == 1) && !inplace) {
+		/* for a single node - copy data to receivebuf */
+		res = NBC_Copy(sendbuf, count, datatype, recvbuf, count, datatype, comm);
+		if (NBC_OK != res) { printf("Error in NBC_Copy() (%i)\n", res); return res; }
+	}
+
+	/* algorithm selection */
+	if(p < 4 || size*count < 65536) {
+		alg = NBC_ARED_BINOMIAL;
+	} else {
+		alg = NBC_ARED_RING;
+	}
+
+	schedule = (NBC_Schedule*)sctk_malloc(sizeof(NBC_Schedule));
+	if (NULL == schedule) { printf("Error in sctk_malloc()\n"); return res; }
+
+	//		res = NBC_Sched_create(schedule);
+	//		if(res != NBC_OK) { printf("Error in NBC_Sched_create (%i)\n", res); return res; }
+	int sends = 0;
+	int recvs = 0;
+	int ops = 0;
+	int maxr = (int)ceil((log(p)/LOG2));
+	int cpts[maxr][3];
+	int root = 0;
+
+	switch(alg) {
+		case NBC_ARED_BINOMIAL:
+			;
+			int vrank, vpeer, peer, r;
+			RANK2VRANK(rank, vrank, root);
+
+			int end = 0;
+			for(r=1; r<=maxr; r++) {
+				cpts[r-1][0]=0;
+				cpts[r-1][1]=0;
+				cpts[r-1][2]=0;
+				if(end == 0) {
+					if((vrank % (1<<r)) == 0) {
+						/* we have to receive this round */
+						vpeer = vrank + (1<<(r-1));
+						VRANK2RANK(peer, vpeer, root);
+							if(peer<p) {
+								cpts[r-1][0]++;
+								recvs++;
+								/* we have to wait until we have the data */
+								/* perform the reduce in my local buffer */
+								cpts[r-1][1]++;
+								ops++;
+
+							}
+					} else {
+						/* we have to send this round */
+						cpts[r-1][2]++;
+						sends++;
+
+						/* leave the game */
+						end = 1;
+					}
+				}
+			}
+
+
+
+
+			int alloc_size = 2*sizeof(int) + recvs * (sizeof(NBC_Args_recv)+sizeof(NBC_Fn_type)+sizeof(int)+sizeof(char)) + ops * (sizeof(NBC_Args_op)+sizeof(NBC_Fn_type)+sizeof(int)+sizeof(char)) + sends * (sizeof(NBC_Args_send)+sizeof(NBC_Fn_type)) + sizeof(char);
+
+
+
+			if(vrank == 0)
+			{
+				alloc_size += 2*sizeof(int) + maxr*(sizeof(NBC_Args_send)+sizeof(NBC_Fn_type)) + sizeof(char);
+			}
+			else
+			{
+				sends = 0;
+				for(r=0; r<maxr; r++) {
+					if(((vrank + (1<<r) < p) && (vrank < (1<<r))) ) {
+						sends ++;
+					}
+				}
+				alloc_size += 2*sizeof(int) + (sizeof(NBC_Args_recv)+sizeof(NBC_Fn_type)) + sizeof(char) + sizeof(int) + sends*(sizeof(NBC_Args_send)+sizeof(NBC_Fn_type)) + sizeof(char);
+					
+			}
+
+
+			*schedule=sctk_malloc(alloc_size);
+			int cpt = 0;
+			char * ptr = (char*)*schedule+sizeof(int);
+			char * ptr2 = (char*)*schedule+2*sizeof(int);
+			for(r=1; r<=maxr; r++)
+			{
+				if(cpts[r-1][2] !=0)
+				{
+					cpt += cpts[r-1][2];
+					ptr2 += cpts[r-1][2] * (sizeof(NBC_Args_send)+sizeof(NBC_Fn_type));
+				}
+				else if(cpts[r-1][0] != 0)
+				{
+					cpt += cpts[r-1][0];
+					ptr2 += cpts[r-1][0] * (sizeof(NBC_Args_recv)+sizeof(NBC_Fn_type));
+					*(int*)ptr=cpt;
+					ptr2 += sizeof(char);
+					ptr = ptr2;
+					ptr2 += sizeof(int);
+					cpt = cpts[r-1][1];
+					ptr2 += cpts[r-1][1] * (sizeof(NBC_Args_op)+sizeof(NBC_Fn_type));
+
+					*(int*)ptr=cpt;
+					ptr2 += sizeof(char);
+					ptr = ptr2;
+					ptr2 += sizeof(int);
+
+					cpt = 0;
+				}
+			}
+
+
+
+			if(vrank == 0)
+			{
+				*(int*)ptr=maxr;
+
+			}
+			else
+			{
+
+				*(int*)ptr=1;
+				/* Number of elements in second round = number of sends */
+				*((int*)(ptr+sizeof(NBC_Args_recv)+sizeof(NBC_Fn_type)+sizeof(char))) = sends;
+			}
+
+			res = allred_sched_diss(rank, p, count, datatype, sendbuf, recvbuf, op, schedule, handle);
+			break;
+		case NBC_ARED_RING:
+			res = allred_sched_ring(rank, p, count, datatype, sendbuf, recvbuf, op, size, ext, schedule, handle);
+			break;
+	}
+	if (NBC_OK != res) { printf("Error in Schedule creation() (%i)\n", res); return res; }
+
+	res = NBC_Sched_commit(schedule);
+	if(res != NBC_OK) { sctk_free(handle->tmpbuf); printf("Error in NBC_Sched_commit() (%i)\n", res); return res; }
+
+
+	res = NBC_Start(handle, schedule);
+	if(res != NBC_OK) { sctk_free(handle->tmpbuf); printf("Error in NBC_Start() (%i)\n", res); return res; }
+
+	/* tmpbuf is freed with the handle */
+	return NBC_OK;
+}
+
+
+/* binomial allreduce (binomial tree up and binomial bcast down)
+ * working principle:
+ * - each node gets a virtual rank vrank
+ * - the 'root' node get vrank 0 
+ * - node 0 gets the vrank of the 'root'
+ * - all other ranks stay identical (they do not matter)
+ *
+ * Algorithm:
+ * pairwise exchange
+ * round r: 
+ *	grp = rank % 2^r
+ *	if grp == 0: receive from rank + 2^(r-1) if it exists and reduce value
+ *	if grp == 1: send to rank - 2^(r-1) and exit function
+ *	
+ * do this for R=log_2(p) rounds
+ * followed by a Bcast:
+ * Algorithm:
+ * - each node with vrank > 2^r and vrank < 2^r+1 receives from node
+ *	 vrank - 2^r (vrank=1 receives from 0, vrank 0 receives never)
+ * - each node sends each round r to node vrank + 2^r
+ * - a node stops to send if 2^r > commsize	
+ *		
+ */
+#define RANK2VRANK(rank, vrank, root) \
+{ \
+	vrank = rank; \
+	if (rank == 0) vrank = root; \
+	if (rank == root) vrank = 0; \
+}
+#define VRANK2RANK(rank, vrank, root) \
+{ \
+	rank = vrank; \
+	if (vrank == 0) rank = root; \
+	if (vrank == root) rank = 0; \
+}
+static inline int allred_sched_diss(int rank, int p, int count, MPI_Datatype datatype, void *sendbuf, void *recvbuf, MPI_Op op, NBC_Schedule *schedule, NBC_Handle *handle) {
+	int root, vrank, r, maxr, firstred, vpeer, peer, res;
+	
+	root = 0; /* this makes the code for ireduce and iallreduce nearly identical - could be changed to improve performance */
+	RANK2VRANK(rank, vrank, root);
+	maxr = (int)ceil((log(p)/LOG2));
+
+	firstred = 1;
+	int pos = 0;
+	for(r=1; r<=maxr; r++) {
+		if((vrank % (1<<r)) == 0) {
+			/* we have to receive this round */
+			vpeer = vrank + (1<<(r-1));
+			VRANK2RANK(peer, vpeer, root)
+			if(peer<p) {
+				res = NBC_Sched_recv_pos(pos, 0, 1, count, datatype, peer, schedule);
+	pos += sizeof(NBC_Args_recv)+sizeof(NBC_Fn_type);
+				if(res != NBC_OK) { sctk_free(handle->tmpbuf); printf("Error in NBC_Sched_recv() (%i)\n", res); return res; }
+				/* we have to wait until we have the data */
+				res = NBC_Sched_barrier_pos(pos, schedule);
+	pos += sizeof(int)+sizeof(char);
+				if(res != NBC_OK) { sctk_free(handle->tmpbuf); printf("Error in NBC_Sched_barrier() (%i)\n", res); return res; }
+				if(firstred) {
+					/* perform the reduce with the senbuf */
+					res = NBC_Sched_op_pos(pos, recvbuf, 0, sendbuf, 0, 0, 1, count, datatype, op, schedule);
+		pos += sizeof(NBC_Args_op)+sizeof(NBC_Fn_type);
+					firstred = 0;
+				} else {
+					/* perform the reduce in my local buffer */
+					res = NBC_Sched_op_pos(pos, recvbuf, 0, recvbuf, 0, 0, 1, count, datatype, op, schedule);
+		pos += sizeof(NBC_Args_op)+sizeof(NBC_Fn_type);
+				}
+				if(res != NBC_OK) { sctk_free(handle->tmpbuf); printf("Error in NBC_Sched_op() (%i)\n", res); return res; }
+				/* this cannot be done until handle->tmpbuf is unused :-( */
+				res = NBC_Sched_barrier_pos(pos, schedule);
+	pos += sizeof(int)+sizeof(char);
+				if(res != NBC_OK) { sctk_free(handle->tmpbuf); printf("Error in NBC_Sched_barrier() (%i)\n", res); return res; }
+			}
+		} else {
+			/* we have to send this round */
+			vpeer = vrank - (1<<(r-1));
+			VRANK2RANK(peer, vpeer, root)
+			if(firstred) {
+				/* we have to use the sendbuf in the first round .. */
+				res = NBC_Sched_send_pos(pos, sendbuf, 0, count, datatype, peer, schedule);
+	pos += (sizeof(NBC_Args_send)+sizeof(NBC_Fn_type));
+			} else {
+				/* and the recvbuf in all remaining rounds */
+				res = NBC_Sched_send_pos(pos, recvbuf, 0, count, datatype, peer, schedule);
+	pos += (sizeof(NBC_Args_send)+sizeof(NBC_Fn_type));
+			}
+			if(res != NBC_OK) { sctk_free(handle->tmpbuf); printf("Error in NBC_Sched_send() (%i)\n", res); return res; }
+			/* leave the game */
+			break;
+		}
+	}
+	
+	/* this is the Bcast part - copied with minor changes from nbc_ibcast.c 
+	 * changed: buffer -> recvbuf	*/
+	RANK2VRANK(rank, vrank, root);
+
+	/* receive from the right hosts	*/
+	if(vrank != 0) {
+		for(r=0; r<maxr; r++) {
+			if((vrank >= (1<<r)) && (vrank < (1<<(r+1)))) {
+				VRANK2RANK(peer, vrank-(1<<r), root);
+				res = NBC_Sched_recv_pos(pos, recvbuf, 0, count, datatype, peer, schedule);
+	pos += (sizeof(NBC_Args_recv)+sizeof(NBC_Fn_type));
+				if(res != NBC_OK) { sctk_free(handle->tmpbuf); printf("Error in NBC_Sched_recv() (%i)\n", res); return res; }
+			}
+		}
+		res = NBC_Sched_barrier_pos(pos, schedule);
+		pos += sizeof(int)+sizeof(char);
+		if(NBC_OK != res) { sctk_free(handle->tmpbuf); printf("Error in NBC_Sched_barrier() (%i)\n", res); return res; }
+	}
+
+	/* now send to the right hosts */
+	for(r=0; r<maxr; r++) {
+		if(((vrank + (1<<r) < p) && (vrank < (1<<r))) || (vrank == 0)) {
+			VRANK2RANK(peer, vrank+(1<<r), root);
+			res = NBC_Sched_send_pos(pos, recvbuf, 0, count, datatype, peer, schedule);
+			pos += (sizeof(NBC_Args_send)+sizeof(NBC_Fn_type));
+			if(res != NBC_OK) { sctk_free(handle->tmpbuf); printf("Error in NBC_Sched_send() (%i)\n", res); return res; }
+		}
+	}
+	/* end of the bcast */
+	
+	return NBC_OK;
+}
+
+static inline int allred_sched_chain(int rank, int p, int count, MPI_Datatype datatype, void *sendbuf, void *recvbuf, MPI_Op op, int size, int ext, NBC_Schedule *schedule, NBC_Handle *handle, int fragsize) {
+	int res, rrpeer, rbpeer, srpeer, sbpeer, numfrag, fragnum, fragcount, thiscount, bstart, bend;
+	long roffset, boffset;
+	
+	/* reduce peers */
+	rrpeer = rank+1; 
+	srpeer = rank-1;
+	/* bcast peers */
+	rbpeer = rank-1;
+	sbpeer = rank+1;
+	
+	if(count == 0) return NBC_OK;
+	
+	numfrag = count*size/fragsize;
+	if((count*size)%fragsize != 0) numfrag++;
+	fragcount = count/numfrag;
+
+	/* determine the starting round of bcast ... the first reduced packet
+	 * is after p-1 rounds at rank 0 and will be sent back ... */
+	bstart = p-1+rank;
+	/* determine the ending round of bcast ... after arrival of the first
+	 * packet, each rank has to forward numfrag packets */
+	bend = bstart+numfrag;
+
+	/* this are two loops in one - this is a little nasty :-( */
+	for(fragnum = 0; fragnum < bend; fragnum++) {
+		roffset = fragnum*fragcount*ext;
+		boffset = (fragnum-bstart)*fragcount*ext;
+		thiscount = fragcount;
+
+		/* first numfrag rounds ... REDUCE to rank 0 */
+		if(fragnum < numfrag) {
+			if(fragnum == numfrag-1) {
+				/* last fragment may not be full */
+				thiscount = count-fragcount*fragnum;
+			}
+
+			/* REDUCE - PART last node does not recv */
+			if(rank != p-1) {
+				res = NBC_Sched_recv((char*)roffset, 1, thiscount, datatype, rrpeer, schedule);
+				if (NBC_OK != res) { printf("Error in NBC_Sched_recv() (%i)\n", res); return res; }
+				res = NBC_Sched_barrier(schedule);
+				/* root reduces into receivebuf */
+				if(rank == 0) {
+					res = NBC_Sched_op((char*)recvbuf+roffset, 0, (char*)sendbuf+roffset, 0, (char*)roffset, 1, thiscount, datatype, op, schedule);
+				} else {
+					res = NBC_Sched_op((char*)roffset, 1, (char*)sendbuf+roffset, 0, (char*)roffset, 1, thiscount, datatype, op, schedule);
+				}
+				res = NBC_Sched_barrier(schedule);
+			}
+
+			/* REDUCE PART root does not send */
+			if(rank != 0) {
+				/* rank p-1 has to send out of sendbuffer :) */
+				if(rank == p-1) {
+					res = NBC_Sched_send((char*)sendbuf+roffset, 0, thiscount, datatype, srpeer, schedule);
+				} else {
+					res = NBC_Sched_send((char*)roffset, 1, thiscount, datatype, srpeer, schedule);
+				}
+				if (NBC_OK != res) { printf("Error in NBC_Sched_send() (%i)\n", res); return res; }
+			}
+		}
+
+		/* BCAST from rank 0 */
+		if(fragnum >= bstart) {
+			if(fragnum == bend-1) {
+				/* last fragment may not be full */
+				thiscount = count-fragcount*(fragnum-bstart);
+			}
+			
+			/* BCAST PART root does not receive */
+			if(rank != 0) {
+				res = NBC_Sched_recv((char*)recvbuf+boffset, 0, thiscount, datatype, rbpeer, schedule);
+				if (NBC_OK != res) { printf("Error in NBC_Sched_recv() (%i)\n", res); return res; }
+				res = NBC_Sched_barrier(schedule);
+			}
+			
+			/* BCAST PART last rank does not send */
+			if(rank != p-1) {
+				res = NBC_Sched_send((char*)recvbuf+boffset, 0, thiscount, datatype, sbpeer, schedule);
+				if (NBC_OK != res) { printf("Error in NBC_Sched_send() (%i)\n", res); return res; }
+				res = NBC_Sched_barrier(schedule);
+			}
+		}
+	}
+
+
+	return NBC_OK;
+}
+
+static inline int allred_sched_ring(int r, int p, int count, MPI_Datatype datatype, void *sendbuf, void *recvbuf, MPI_Op op, int size, int ext, NBC_Schedule *schedule, NBC_Handle *handle) {
+	int i; /* runner */
+	int segsize, *segsizes, *segoffsets; /* segment sizes and offsets per segment (number of segments == number of nodes */
+	int speer, rpeer; /* send and recvpeer */
+	int res;
+
+	if(count == 0) return NBC_OK;
+
+	{
+		int mycount; /* temporary */
+		segsizes = (int*)sctk_malloc(sizeof(int)*p);
+		segoffsets = (int*)sctk_malloc(sizeof(int)*p);
+		segsize = count/p; /* size of the segments */
+		if(count%p != 0) segsize++;
+		mycount = count;
+		segoffsets[0] = 0;
+		for(i = 0; i<p;i++) {
+			mycount -= segsize;
+			segsizes[i] = segsize;
+			if(mycount < 0) {
+				segsizes[i] = segsize+mycount;
+				mycount = 0;
+			}
+			if(i) segoffsets[i] = segoffsets[i-1] + segsizes[i-1];
+		}
+	}
+
+	/* reduce peers */
+	speer = (r+1)%p;
+	rpeer = (r-1+p)%p;
+
+	/*	+ -> reduced this round
+	 *	/ -> sum (reduced in a previous step)
+	 *
+	 *		 *** round 0 ***
+	 *		0				1				2			
+	 *														 
+	 *	 00			 10			 20			0: [1] -> 1 
+	 *	 01			 11			 21			1: [2] -> 2
+	 *	 02			 12			 22			2: [0] -> 0	--> send element (r+1)%p to node (r+1)%p
+	 *
+	 *			*** round 1 ***
+	 *		0				1				2
+	 *
+	 *	 00+20		10			 20		 0: red(0), [0] -> 1
+	 *	 01			 11+01		21		 1: red(1), [1] -> 2
+	 *	 02			 12			 22+12	2: red(2), [2] -> 0 --> reduce and send element (r+0)%p to node (r+1)%p
+	 *
+	 *			*** round 2 ***
+	 *		0				1				2
+	 *
+	 *	 00/20		all			20		 0: red(2), [2] -> 1 
+	 *	 01			 11/01		all		1: red(0), [0] -> 2
+	 *	 all			12			 22/12	2: red(1), [1] -> 0 --> reduce and send (r-1)%p to node (r+1)%p
+	 *
+	 *			*** round 3 ***
+	 *		0				1				2
+	 *
+	 *	 00/20		all			all		0: [1] -> 1
+	 *	 all			11/01		all		1: [2] -> 2
+	 *	 all			all			22/12	2: [0] -> 0 --> send element (r-2)%p to node (r+1)%p
+	 *
+	 *			*** round 4 ***
+	 *		0				1				2
+	 *
+	 *	 all			all			all		0: done
+	 *	 all			all			all		1: done
+	 *	 all			all			all		2: done
+	 *
+	 * -> 4
+	 *		 *** round 0 ***
+	 *		0				1				2				3			
+	 *														 
+	 *	 00			 10			 20			 30			 0: [1] -> 1 
+	 *	 01			 11			 21			 31			 1: [2] -> 2
+	 *	 02			 12			 22			 32			 2: [3] -> 3	
+	 *	 03			 13			 23			 33			 3: [0] -> 0 --> send element (r+1)%p to node (r+1)%p
+	 *
+	 *			*** round 1 ***
+	 *		0				1				2				3
+	 *
+	 *	 00+30		10			 20			 30			 0: red(0), [0] -> 1
+	 *	 01			 11+01		21			 31			 1: red(1), [1] -> 2
+	 *	 02			 12			 22+12		32			 2: red(2), [2] -> 3 
+	 *	 03			 13			 23			 33+23		3: red(3), [3] -> 0 --> reduce and send element (r+0)%p to node (r+1)%p
+	 *
+	 *			*** round 2 ***
+	 *		0				1				2				3
+	 *
+	 *	 00/30		10+00/30 20			 30			 0: red(3), [3] -> 1 
+	 *	 01			 11/01		21+11/01 31			 1: red(0), [0] -> 2
+	 *	 02			 12			 22/12		32+22/12 2: red(1), [1] -> 3
+	 *	 03+33/23 13			 23			 33/23		3: red(2), [2] -> 0 --> reduce and send (r-1)%p to node (r+1)%p
+	 *
+	 *			*** round 3 ***
+	 *		0				1				2				3
+	 *
+	 *	 00/30		10/00/30 all			30			 0: red(2), [2] -> 1 
+	 *	 01			 11/01		21/11/01 all			1: red(3), [3] -> 2
+	 *	 all			12			 22/12		32/22/12 2: red(0), [0] -> 3
+	 *	 03/33/23 all			23			 33/23		3: red(1), [1] -> 0 --> reduce and send (r-2)%p to node (r+1)%p 
+	 *
+	 *			*** round 4 ***
+	 *		0				1				2				3 
+	 *	 
+	 *	 00/30		10/00/30 all			all			0: [1] -> 1
+	 *	 all			11/01		21/11/01 all			1: [2] -> 2
+	 *	 all			all			22/12		32/22/12 2: [3] -> 3
+	 *	 03/33/23 all			all			33/23		3: [0] -> 0 --> receive and send element (r+1)%p to node (r+1)%p
+	 *
+	 *			*** round 5 ***
+	 *		0				1				2				3
+	 *		
+	 *	 all			10/00/30 all			all			0: [0] -> 1
+	 *	 all			all			21/11/01 all			1: [1] -> 2
+	 *	 all			all			all			32/22/12 2: [3] -> 3
+	 *	 03/33/23 all			all			all			3: [4] -> 4 --> receive and send element (r-0)%p to node (r+1)%p
+	 *
+	 *			*** round 6 ***
+	 *		0				1				2				3
+	 *	 
+	 *	 all			all			all			all			
+	 *	 all			all			all			all			
+	 *	 all			all			all			all	
+	 *	 all			all			all			all		 receive element (r-1)%p
+	 *
+	 *	 2p-2 rounds ... every node does p-1 reductions and p-1 sends
+	 *
+	 */
+	{
+		int round = 0;
+		/* first p-1 rounds are reductions */
+		do {
+			int selement = (r+1-round + 2*p /*2*p avoids negative mod*/)%p; /* the element I am sending */
+			int soffset = segoffsets[selement]*ext;
+			int relement = (r-round + 2*p /*2*p avoids negative mod*/)%p; /* the element that I receive from my neighbor */
+			int roffset = segoffsets[relement]*ext;
+
+			/* first message come out of sendbuf */
+			if(round == 0) {
+				NBC_Sched_send((char*)sendbuf+soffset, 0, segsizes[selement], datatype, speer, schedule);
+			} else {
+				NBC_Sched_send((char*)recvbuf+soffset, 0, segsizes[selement], datatype, speer, schedule);
+			}
+			NBC_Sched_recv((char*)recvbuf+roffset, 0, segsizes[relement], datatype, rpeer, schedule);
+
+			NBC_Sched_barrier(schedule);
+			NBC_Sched_op((char*)recvbuf+roffset, 0, (char*)sendbuf+roffset, 0, (char*)recvbuf+roffset, 0, segsizes[relement], datatype, op, schedule);
+			NBC_Sched_barrier(schedule);
+
+			round++;
+		} while(round < p-1);
+
+		do {
+			int selement = (r+1-round + 2*p /*2*p avoids negative mod*/)%p; /* the element I am sending */
+			int soffset = segoffsets[selement]*ext;
+			int relement = (r-round + 2*p /*2*p avoids negative mod*/)%p; /* the element that I receive from my neighbor */
+			int roffset = segoffsets[relement]*ext;
+
+			NBC_Sched_send((char*)recvbuf+soffset, 0, segsizes[selement], datatype, speer, schedule);
+			NBC_Sched_recv((char*)recvbuf+roffset, 0, segsizes[relement], datatype, rpeer, schedule);
+			NBC_Sched_barrier(schedule);
+			round++;	
+		} while (round < 2*p-2);
+	}
+
+
+	return NBC_OK;
+}
+
+
+/***************** *
+ * NBC_IALLTOALL.C *
+ * *****************/
+
+/*
+ * Copyright (c) 2006 The Trustees of Indiana University and Indiana
+ *										University Research and Technology
+ *										Corporation.	All rights reserved.
+ * Copyright (c) 2006 The Technical University of Chemnitz. All 
+ *										rights reserved.
+ *
+ * Author(s): Torsten Hoefler <htor@cs.indiana.edu>
+ *
+ */
+
+static inline int a2a_sched_linear(int rank, int p, MPI_Aint sndext, MPI_Aint rcvext, NBC_Schedule *schedule, void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm);
+static inline int a2a_sched_pairwise(int rank, int p, MPI_Aint sndext, MPI_Aint rcvext, NBC_Schedule *schedule, void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm);
+static inline int a2a_sched_diss(int rank, int p, MPI_Aint sndext, MPI_Aint rcvext, NBC_Schedule* schedule, void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, NBC_Handle *handle);
+
+
+
+/* simple linear MPI_Ialltoall the (simple) algorithm just sends to all nodes */
+static int NBC_Ialltoall(void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, NBC_Handle *handle)	{
+	int rank, p, res, a2asize, sndsize, datasize;
+	NBC_Schedule *schedule;
+	MPI_Aint rcvext, sndext;
+	char *rbuf, *sbuf, inplace;
+	enum {NBC_A2A_LINEAR, NBC_A2A_PAIRWISE, NBC_A2A_DISS} alg;
+
+	NBC_IN_PLACE(sendbuf, recvbuf, inplace);
+	
+	res = NBC_Init_handle(handle, comm, MPC_IALLTOALL_TAG);
+	if(res != NBC_OK) { printf("Error in NBC_Init_handle(%i)\n", res); return res; }
+	res = PMPC_Comm_rank(comm, &rank);
+	if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_rank() (%i)\n", res); return res; }
+	res = PMPC_Comm_size(comm, &p);
+	if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_size() (%i)\n", res); return res; }
+	res = __INTERNAL__PMPI_Type_extent(sendtype, &sndext);
+	if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Type_extent() (%i)\n", res); return res; }
+	res = __INTERNAL__PMPI_Type_extent(recvtype, &rcvext);
+	if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Type_extent() (%i)\n", res); return res; }
+	res = __INTERNAL__PMPI_Type_size(sendtype, &sndsize);
+	if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Type_size() (%i)\n", res); return res; }
+
+	/* algorithm selection */
+	a2asize = sndsize*sendcount*p;
+	/* this number is optimized for TCP on odin.cs.indiana.edu */
+	if((p <= 8) && ((a2asize < 1<<17) || (sndsize*sendcount < 1<<12))) {
+		/* just send as fast as we can if we have less than 8 peers, if the
+		 * total communicated size is smaller than 1<<17 *and* if we don't
+		 * have eager messages (msgsize < 1<<13) */
+		alg = NBC_A2A_LINEAR;
+	} else if(a2asize < (1<<12)*p) {
+		alg = NBC_A2A_LINEAR;
+	} else
+		alg = NBC_A2A_LINEAR; /*NBC_A2A_PAIRWISE;*/
+
+	if(!inplace) {
+		/* copy my data to receive buffer */
+		rbuf = ((char *)recvbuf) + (rank*recvcount*rcvext);
+		sbuf = ((char *)sendbuf) + (rank*sendcount*sndext);
+		res = NBC_Copy(sbuf, sendcount, sendtype, rbuf, recvcount, recvtype, comm);
+		if (NBC_OK != res) { printf("Error in NBC_Copy() (%i)\n", res); return res; }
+	}
+
+	/* allocate temp buffer if we need one */
+	if(alg == NBC_A2A_DISS) {
+		/* only A2A_DISS needs buffers */
+		if(NBC_Type_intrinsic(sendtype)) {
+			datasize = sndext*sendcount;
+		} else {
+			res = __INTERNAL__PMPI_Pack_size(sendcount, sendtype, comm, &datasize);
+			if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Pack_size() (%i)\n", res); return res; }
+		}
+		/* allocate temporary buffers */
+		if(p % 2 == 0) {
+			handle->tmpbuf=sctk_malloc(datasize*p*2);
+		} else {
+			/* we cannot divide p by two, so alloc more to be safe ... */
+			handle->tmpbuf=sctk_malloc(datasize*(p/2+1)*2*2);
+		}
+
+		/* phase 1 - rotate n data blocks upwards into the tmpbuffer */
+		if(NBC_Type_intrinsic(sendtype)) {
+			/* contiguous - just copy (1st copy) */
+			memcpy(handle->tmpbuf, (char*)sendbuf+datasize*rank, datasize*(p-rank));
+			if(rank != 0) memcpy((char*)handle->tmpbuf+datasize*(p-rank), sendbuf, datasize*(rank));
+		} else {
+			int pos=0;
+
+			/* non-contiguous - pack */
+			res = __INTERNAL__PMPI_Pack((char*)sendbuf+rank*sendcount*sndext, (p-rank)*sendcount, sendtype, handle->tmpbuf, (p-rank)*datasize, &pos, comm);
+			if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Pack() (%i)\n", res); return res; }
+			if(rank != 0) {
+				pos = 0;
+				__INTERNAL__PMPI_Pack(sendbuf, rank*sendcount, sendtype, (char*)handle->tmpbuf+datasize*(p-rank), rank*datasize, &pos, comm);
+				if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Pack() (%i)\n", res); return res; }
+			}
+		}
+	} else {
+		handle->tmpbuf=NULL;
+	}
+
+		/* not found - generate new schedule */
+		schedule = (NBC_Schedule*)sctk_malloc(sizeof(NBC_Schedule));
+		if (NULL == schedule) { printf("Error in sctk_malloc()\n"); return res; }
+
+		res = NBC_Sched_create(schedule);
+		if(res != NBC_OK) { printf("Error in NBC_Sched_create (%i)\n", res); return res; }
+		
+		switch(alg) {
+			case NBC_A2A_LINEAR: 
+				res = a2a_sched_linear(rank, p, sndext, rcvext, schedule, sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm);
+				break;
+			case NBC_A2A_DISS:
+				res = a2a_sched_diss(rank, p, sndext, rcvext, schedule, sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, handle);
+				break;
+			case NBC_A2A_PAIRWISE:
+				res = a2a_sched_pairwise(rank, p, sndext, rcvext, schedule, sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm);
+				break;
+		}
+		
+		if (NBC_OK != res) { return res; }
+
+		res = NBC_Sched_commit(schedule);
+		if (NBC_OK != res) { printf("Error in NBC_Sched_commit() (%i)\n", res); return res; }
+ 
+
+	res = NBC_Start(handle, schedule);
+	if (NBC_OK != res) { printf("Error in NBC_Start() (%i)\n", res); return res; }
+ 
+	return NBC_OK;
+}
+
+static inline int a2a_sched_pairwise(int rank, int p, MPI_Aint sndext, MPI_Aint rcvext, NBC_Schedule* schedule, void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm) {
+	int res, r, sndpeer, rcvpeer;
+	char *rbuf, *sbuf;
+
+	res = NBC_OK;
+	if(p < 2) return res;
+	
+	for(r=1;r<p;r++) {
+		
+		sndpeer = (rank+r)%p;
+		rcvpeer = (rank-r+p)%p;
+		
+		rbuf = ((char *) recvbuf) + (rcvpeer*recvcount*rcvext);
+		res = NBC_Sched_recv(rbuf, 0, recvcount, recvtype, rcvpeer, schedule);
+		if (NBC_OK != res) { printf("Error in NBC_Sched_recv() (%i)\n", res); return res; }
+		sbuf = ((char *) sendbuf) + (sndpeer*sendcount*sndext);
+		res = NBC_Sched_send(sbuf, 0, sendcount, sendtype, sndpeer, schedule);
+		if (NBC_OK != res) { printf("Error in NBC_Sched_send() (%i)\n", res); return res; }
+		
+		if (r < p) {
+			res = NBC_Sched_barrier(schedule);
+			if (NBC_OK != res) { printf("Error in NBC_Sched_barr() (%i)\n", res); return res; }
+		}
+	}
+
+	return res;
+}
+
+static inline int a2a_sched_linear(int rank, int p, MPI_Aint sndext, MPI_Aint rcvext, NBC_Schedule* schedule, void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm) {
+	int res, r;
+	char *rbuf, *sbuf;
+
+	res = NBC_OK;
+
+	for(r=0;r<p;r++) {
+		/* easy algorithm */
+		if ((r == rank)) { continue; }
+		rbuf = ((char *) recvbuf) + (r*recvcount*rcvext);
+		res = NBC_Sched_recv(rbuf, 0, recvcount, recvtype, r, schedule);
+		if (NBC_OK != res) { printf("Error in NBC_Sched_recv() (%i)\n", res); return res; }
+		sbuf = ((char *) sendbuf) + (r*sendcount*sndext);
+		res = NBC_Sched_send(sbuf, 0, sendcount, sendtype, r, schedule);
+		if (NBC_OK != res) { printf("Error in NBC_Sched_send() (%i)\n", res); return res; }
+	}
+
+	return res;
+}
+
+static inline int a2a_sched_diss(int rank, int p, MPI_Aint sndext, MPI_Aint rcvext, NBC_Schedule* schedule, void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, NBC_Handle *handle) {
+	int res, i, r, speer, rpeer, datasize, offset, virtp;
+	char *rbuf, *rtmpbuf, *stmpbuf;
+
+	res = NBC_OK;
+	if(p < 2) return res;
+ 
+	if(NBC_Type_intrinsic(sendtype)) {
+		datasize = sndext*sendcount;
+	} else {
+		res = __INTERNAL__PMPI_Pack_size(sendcount, sendtype, comm, &datasize);
+		if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Pack_size() (%i)\n", res); return res; }
+	}
+ 
+	/* allocate temporary buffers */
+	if(p % 2 == 0) {
+		rtmpbuf = (char*)handle->tmpbuf+datasize*p;
+		stmpbuf = (char*)handle->tmpbuf+datasize*(p+p/2);
+	} else {
+		/* we cannot divide p by two, so alloc more to be safe ... */
+		virtp = (p/2+1)*2;
+		rtmpbuf = (char*)handle->tmpbuf+datasize*p;
+		stmpbuf = (char*)handle->tmpbuf+datasize*(p+virtp/2);
+	}
+
+	/* phase 2 - communicate */
+	for(r = 1; r < p; r<<=1) {
+		offset = 0;
+		for(i=1; i<p; i++) {
+			/* test if bit r is set in rank number i */
+			if((i&r) == r) {
+				/* copy data to sendbuffer (2nd copy) - could be avoided using iovecs */
+				NBC_Sched_copy((void*)(long)(i*datasize), 1, datasize, MPI_BYTE, stmpbuf+offset-(unsigned long)handle->tmpbuf, 1, datasize, MPI_BYTE, schedule);
+				offset += datasize;
+			}
+		}
+ 
+		speer = ( rank + r) % p;
+		/* add p because modulo does not work with negative values */
+		rpeer = ((rank - r)+p) % p;
+ 
+		res = NBC_Sched_recv(rtmpbuf-(unsigned long)handle->tmpbuf, 1, offset, MPI_BYTE, rpeer, schedule);
+		if (NBC_OK != res) { printf("Error in NBC_Sched_recv() (%i)\n", res); return res; }
+ 
+		res = NBC_Sched_send(stmpbuf-(unsigned long)handle->tmpbuf, 1, offset, MPI_BYTE, speer, schedule);
+		if (NBC_OK != res) { printf("Error in NBC_Sched_send() (%i)\n", res); return res; }
+
+		res = NBC_Sched_barrier(schedule);
+		if (NBC_OK != res) { printf("Error in NBC_Sched_barrier() (%i)\n", res); return res; }
+		
+		/* unpack from buffer */
+		offset = 0;
+		for(i=1; i<p; i++) {
+			/* test if bit r is set in rank number i */
+			if((i&r) == r) {
+				/* copy data to tmpbuffer (3rd copy) - could be avoided using iovecs */
+				NBC_Sched_copy(rtmpbuf+offset-(unsigned long)handle->tmpbuf, 1, datasize, MPI_BYTE, (void*)(long)(i*datasize), 1, datasize, MPI_BYTE, schedule);
+				offset += datasize;
+			}
+		}
+	}
+
+	/* phase 3 - reorder - data is now in wrong order in handle->tmpbuf -
+	 * reorder it into recvbuf */
+	for(i=0; i<p; i++) {
+		rbuf = (char*)recvbuf+((rank-i+p)%p)*recvcount*rcvext;
+		res = NBC_Sched_unpack((void*)(long)(i*datasize), 1, recvcount, recvtype, rbuf, 0, schedule);
+		if (NBC_OK != res) { printf("MPI Error in NBC_Sched_pack() (%i)\n", res); return res; }
+	}
+		
+	return NBC_OK;
+}
+
+
+/****************** *
+ * NBC_IALLTOALLV.C *
+ * ******************/
+
+/*
+ * Copyright (c) 2006 The Trustees of Indiana University and Indiana
+ *										University Research and Technology
+ *										Corporation.	All rights reserved.
+ * Copyright (c) 2006 The Technical University of Chemnitz. All 
+ *										rights reserved.
+ *
+ * Author(s): Torsten Hoefler <htor@cs.indiana.edu>
+ *
+ */
+
+/* an alltoallv schedule can not be cached easily because the contents
+ * ot the recvcounts array may change, so a comparison of the address
+ * would not be sufficient ... we simply do not cache it */
+
+
+/* simple linear Alltoallv */
+static int NBC_Ialltoallv(void* sendbuf, int *sendcounts, int *sdispls,
+		MPI_Datatype sendtype, void* recvbuf, int *recvcounts, int *rdispls,
+		MPI_Datatype recvtype, MPI_Comm comm, NBC_Handle* handle) {
+	
+	int rank, p, res, i;
+	MPI_Aint sndext, rcvext;
+	NBC_Schedule *schedule;
+	char *rbuf, *sbuf, inplace;
+	
+	NBC_IN_PLACE(sendbuf, recvbuf, inplace);
+	
+	res = NBC_Init_handle(handle, comm, MPC_IALLTOALLV_TAG);
+	if(res != NBC_OK) { printf("Error in NBC_Init_handle(%i)\n", res); return res; }
+	res = PMPC_Comm_rank(comm, &rank);
+	if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_rank() (%i)\n", res); return res; }
+	res = PMPC_Comm_size(comm, &p);
+	if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_size() (%i)\n", res); return res; }
+	res = __INTERNAL__PMPI_Type_extent(sendtype, &sndext);
+	if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Type_extent() (%i)\n", res); return res; }
+	res = __INTERNAL__PMPI_Type_extent(recvtype, &rcvext);
+	if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Type_extent() (%i)\n", res); return res; }
+
+	schedule = (NBC_Schedule*)sctk_malloc(sizeof(NBC_Schedule));
+	if (NULL == schedule) { printf("Error in sctk_malloc() (%i)\n", res); return res; }
+
+	handle->tmpbuf=NULL;
+	
+	res = NBC_Sched_create(schedule);
+	if(res != NBC_OK) { printf("Error in NBC_Sched_create (%i)\n", res); return res; }
+
+	/* copy data to receivbuffer */
+	if((sendcounts[rank] != 0) && !inplace) {
+		rbuf = ((char *) recvbuf) + (rdispls[rank] * rcvext);
+		sbuf = ((char *) sendbuf) + (sdispls[rank] * sndext);
+		res = NBC_Copy(sbuf, sendcounts[rank], sendtype, rbuf, recvcounts[rank], recvtype, comm);
+		if (NBC_OK != res) { printf("Error in NBC_Copy() (%i)\n", res); return res; }
+	}
+
+	for (i = 0; i < p; i++) {
+		if (i == rank) { continue; }
+		/* post all sends */
+		if(sendcounts[i] != 0) {
+			sbuf = ((char *) sendbuf) + (sdispls[i] * sndext);
+			res = NBC_Sched_send(sbuf, 0, sendcounts[i], sendtype, i, schedule);
+			if (NBC_OK != res) { printf("Error in NBC_Sched_send() (%i)\n", res); return res; }
+		}
+		/* post all receives */
+		if(recvcounts[i] != 0) {
+			rbuf = ((char *) recvbuf) + (rdispls[i] * rcvext);
+			res = NBC_Sched_recv(rbuf, 0, recvcounts[i], recvtype, i, schedule);
+			if (NBC_OK != res) { printf("Error in NBC_Sched_recv() (%i)\n", res); return res; }
+		}
+	}
+
+	res = NBC_Sched_commit(schedule);
+	if (NBC_OK != res) { printf("Error in NBC_Sched_commit() (%i)\n", res); return res; }
+
+	res = NBC_Start(handle, schedule);
+	if (NBC_OK != res) { printf("Error in NBC_Start() (%i)\n", res); return res; }
+	
+	return NBC_OK;
+}
+
+
+/******************* *
+ * NBC_IBARRIER.C *
+ * *******************/
+
+/*
+ * Copyright (c) 2006 The Trustees of Indiana University and Indiana
+ *										University Research and Technology
+ *										Corporation.	All rights reserved.
+ * Copyright (c) 2006 The Technical University of Chemnitz. All 
+ *										rights reserved.
+ *
+ * Author(s): Torsten Hoefler <htor@cs.indiana.edu>
+ *
+ */
+
+
+/* Dissemination implementation of MPI_Ibarrier */
+
+static int NBC_Ibarrier(MPI_Comm comm, NBC_Handle* handle) {
+	int round, rank, p, maxround, res, recvpeer, sendpeer;
+	NBC_Schedule *schedule;
+
+	res = NBC_Init_handle(handle, comm, MPC_IBARRIER_TAG);
+	if(res != NBC_OK) { printf("Error in NBC_Init_handle(%i)\n", res); return res; }
+	res = PMPC_Comm_rank(comm, &rank);
+	if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_rank() (%i)\n", res); return res; }
+	res = PMPC_Comm_size(comm, &p);
+	if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_size() (%i)\n", res); return res; }
+
+
+	//NBC_DEBUG(10, "(%d/%d) NBC_Ibarrier: Entering NBC_Ibarrier\n", rank, p);
+	handle->tmpbuf=(void*)sctk_malloc(2*sizeof(char));
+
+	//NBC_DEBUG(10, "(%d/%d) NBC_Ibarrier: allocating Schedule\n", rank, p);
+	schedule = (NBC_Schedule*)sctk_malloc(sizeof(NBC_Schedule));
+	//NBC_DEBUG(10, "(%d/%d) NBC_Ibarrier: Schedule allocated\n", rank, p);
+	if (NULL == schedule) { printf("Error in sctk_malloc()\n"); return res; }
+
+
+	round = -1;
+	//NBC_DEBUG(10, "(%d/%d) NBC_Ibarrier: creating Schedule\n", rank, p);
+	res = NBC_Sched_create(schedule);
+	//NBC_DEBUG(10, "(%d/%d) NBC_Ibarrier: Schedule created\n", rank, p);
+	if(res != NBC_OK) { printf("Error in NBC_Sched_create (%i)\n", res);	return res; }
+
+		maxround = (int)ceil((log(p)/LOG2)-1);
+
+		do {
+			round++;
+			sendpeer = (rank + (1<<round)) % p;
+			/* add p because modulo does not work with
+			 * negative values */
+			recvpeer = ((rank - (1<<round))+p) % p;
+
+			/* send msg to sendpeer */
+			//NBC_DEBUG(10, "(%d/%d) NBC_Ibarrier: Scheduling Send\n", rank, p);
+			res = NBC_Sched_send((void*)0, 1, 1, MPI_BYTE, sendpeer, schedule);
+			if (NBC_OK != res) { printf("Error	in NBC_Sched_send() (%i)\n", res); return res; }
+
+			/* recv msg from recvpeer */
+			//NBC_DEBUG(10, "(%d/%d) NBC_Ibarrier: Scheduling Recv\n", rank, p);
+			res = NBC_Sched_recv((void*)1, 1, 1, MPI_BYTE, recvpeer, schedule);
+			if(NBC_OK != res) { printf("Error in NBC_Sched_recv() (%i)\n", res); return res; }
+
+			/* end communication round */
+			if(round < maxround) {
+				//NBC_DEBUG(10, "(%d/%d) NBC_Ibarrier: Scheduling barrier\n", rank, p);
+				res = NBC_Sched_barrier(schedule);
+				if(NBC_OK != res) { printf("Error in NBC_Sched_barrier() (%i)\n", res); return res; }
+			}
+		} while (round < maxround);
+
+		//NBC_DEBUG(10, "(%d/%d) NBC_Ibarrier: committing Schedule\n", rank, p);
+		res = NBC_Sched_commit(schedule);
+		//NBC_DEBUG(10, "(%d/%d) NBC_Ibarrier: Schedule committed\n", rank, p);
+		if (NBC_OK != res){ printf("Error in NBC_Sched_commit() (%i)\n", res); return res;	}
+
+		//NBC_DEBUG(10, "(%d/%d) NBC_Ibarrier: before NBC_Start\n", rank, p);
+		res = NBC_Start(handle, schedule);
+		//NBC_DEBUG(10, "(%d/%d) NBC_Ibarrier: after NBC_Start\n", rank, p);
+
+		if(NBC_OK != res) { printf("Error in NBC_Start() (%i)\n", res); return res; }
+
+		return NBC_OK;
+}
+
+
+/************** *
+ * NBC_IBCAST.C *
+ * **************/
+
+/*
+ * Copyright (c) 2006 The Trustees of Indiana University and Indiana
+ *										University Research and Technology
+ *										Corporation.	All rights reserved.
+ * Copyright (c) 2006 The Technical University of Chemnitz. All 
+ *										rights reserved.
+ *
+ * Author(s): Torsten Hoefler <htor@cs.indiana.edu>
+ *
+ */
+
+static inline int bcast_sched_binomial(int rank, int p, int root, NBC_Schedule *schedule, void *buffer, int count, MPI_Datatype datatype);
+static inline int bcast_sched_linear(int rank, int p, int root, NBC_Schedule *schedule, void *buffer, int count, MPI_Datatype datatype);
+static inline int bcast_sched_chain(int rank, int p, int root, NBC_Schedule *schedule, void *buffer, int count, MPI_Datatype datatype, int fragsize, int size);
+
+
+static int NBC_Ibcast(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, NBC_Handle* handle) {
+	int rank, p, res, size, segsize;
+	NBC_Schedule *schedule;
+	enum { NBC_BCAST_LINEAR, NBC_BCAST_BINOMIAL, NBC_BCAST_CHAIN } alg;
+	
+	res = NBC_Init_handle(handle, comm, MPC_IBCAST_TAG);
+	//	if(res != NBC_OK) { printf("Error in NBC_Init_handle(%i)\n", res); return res; }
+	res = PMPC_Comm_rank(comm, &rank);
+//	if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_rank() (%i)\n", res); return res; }
+	res = PMPC_Comm_size(comm, &p);
+//	if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_rank() (%i)\n", res); return res; }
+	res = __INTERNAL__PMPI_Type_size(datatype, &size);
+//	if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Type_size() (%i)\n", res); return res; }
+	
+	segsize = 16384;
+	/* algorithm selection */
+/*	if(p <= 4) {
+		alg = NBC_BCAST_LINEAR;
+	} else if(size*count < 65536) {
+		alg = NBC_BCAST_BINOMIAL;
+	} else if(size*count < 524288) {
+		alg = NBC_BCAST_CHAIN;
+		segsize = 16384/2;
+	} else {
+		alg = NBC_BCAST_CHAIN;
+		segsize = 65536/2;
+	}
+*/
+
+	if(p>4)
+	{
+	alg = NBC_BCAST_BINOMIAL;
+	}
+	else
+	{
+	alg = NBC_BCAST_LINEAR;
+	}
+
+	handle->tmpbuf=NULL;
+
+		schedule = (NBC_Schedule*)sctk_malloc(sizeof(NBC_Schedule));
+
+	
+//		res = NBC_Sched_create(schedule);
+//	 if(res != NBC_OK) { printf("Error in NBC_Sched_create, res = %i\n", res); return res; }
+
+		switch(alg) {
+			case NBC_BCAST_LINEAR:
+	if(rank == root)
+	{
+		int alloc_size =2*sizeof(int) + ((p-1)*(sizeof(NBC_Args_send)+sizeof(NBC_Fn_type))) + sizeof(char); 
+		*schedule=sctk_malloc(alloc_size);
+		if(*schedule == NULL) { return NBC_OOR; }
+		*(int*)*schedule=alloc_size;
+		*(((int*)*schedule)+1)=p-1;
+	}
+	else
+	{
+		int alloc_size =2*sizeof(int) + (sizeof(NBC_Args_recv)+sizeof(NBC_Fn_type)) + sizeof(char); 
+		*schedule=sctk_malloc(alloc_size);
+		if(*schedule == NULL) { return NBC_OOR; }
+		*(int*)*schedule=alloc_size;
+		*(((int*)*schedule)+1)=1;
+	}
+				res = bcast_sched_linear(rank, p, root, schedule, buffer, count, datatype);
+				break;
+
+			case NBC_BCAST_BINOMIAL:
+	;
+	int vrank;
+
+	RANK2VRANK(rank, vrank, root);	
+
+				if(vrank == 0)
+	{
+			int sends = (int)ceil((log(p)/LOG2));
+		int alloc_size = 2*sizeof(int) + sends*(sizeof(NBC_Args_send)+sizeof(NBC_Fn_type)) + sizeof(char);
+		*schedule=sctk_malloc(alloc_size);
+		if(*schedule == NULL) { return NBC_OOR; }
+		*(int*)*schedule=alloc_size;
+		*(((int*)*schedule)+1)=sends;
+
+	}
+	else
+	{
+		int r;
+		int sends = 0;
+			int maxr = (int)ceil((log(p)/LOG2));
+		for(r=0; r<maxr; r++) {
+			if(((vrank + (1<<r) < p) && (vrank < (1<<r))) ) {
+		sends ++;
+			}
+		}
+		int alloc_size = 2*sizeof(int) + (sizeof(NBC_Args_recv)+sizeof(NBC_Fn_type)) + sizeof(char) + sizeof(int) + sends*(sizeof(NBC_Args_send)+sizeof(NBC_Fn_type)) + sizeof(char);
+		*schedule=sctk_malloc(alloc_size);
+		if(*schedule == NULL) { return NBC_OOR; }
+		*(int*)*schedule=alloc_size;
+		/* Number of elements in first round = number of recvs = 1*/
+
+		*(((int*)*schedule)+1)=1;
+		/* Number of elements in second round = number of sends */
+		*((int*)((char*)*schedule+2*sizeof(int)+sizeof(NBC_Args_recv)+sizeof(NBC_Fn_type)+sizeof(char))) = sends;
+	}
+
+
+
+				res = bcast_sched_binomial(rank, p, root, schedule, buffer, count, datatype);
+				break;
+
+
+//			case NBC_BCAST_CHAIN:
+//				res = bcast_sched_chain(rank, p, root, schedule, buffer, count, datatype, segsize, size);
+//				break;
+		}
+		if (NBC_OK != res) { printf("Error in Schedule creation() (%i)\n", res); return res; }
+		
+		res = NBC_Sched_commit_jj(schedule);
+		if (NBC_OK != res) { printf("Error in NBC_Sched_commit() (%i)\n", res); return res; }
+ 
+	res = NBC_Start(handle, schedule);
+	if (NBC_OK != res) { printf("Error in NBC_Start() (%i)\n", res); return res; }
+	
+	return NBC_OK;
+}
+
+/* better binomial bcast 
+ * working principle:
+ * - each node gets a virtual rank vrank
+ * - the 'root' node get vrank 0 
+ * - node 0 gets the vrank of the 'root'
+ * - all other ranks stay identical (they do not matter)
+ *
+ * Algorithm:
+ * - each node with vrank > 2^r and vrank < 2^r+1 receives from node
+ *	 vrank - 2^r (vrank=1 receives from 0, vrank 0 receives never)
+ * - each node sends each round r to node vrank + 2^r
+ * - a node stops to send if 2^r > commsize	
+ */
+#define RANK2VRANK(rank, vrank, root) \
+{ \
+	vrank = rank; \
+	if (rank == 0) vrank = root; \
+	if (rank == root) vrank = 0; \
+}
+#define VRANK2RANK(rank, vrank, root) \
+{ \
+	rank = vrank; \
+	if (vrank == 0) rank = root; \
+	if (vrank == root) rank = 0; \
+}
+static inline int bcast_sched_binomial(int rank, int p, int root, NBC_Schedule *schedule, void *buffer, int count, MPI_Datatype datatype) {
+	int maxr, vrank, peer, r, res;
+	
+	maxr = (int)ceil((log(p)/LOG2));
+
+	RANK2VRANK(rank, vrank, root);
+	int pos = 0;
+	/* receive from the right hosts	*/
+	if(vrank != 0) {
+		for(r=0; r<maxr; r++) {
+			if((vrank >= (1<<r)) && (vrank < (1<<(r+1)))) {
+				VRANK2RANK(peer, vrank-(1<<r), root);
+//				res = NBC_Sched_recv(buffer, 0, count, datatype, peer, schedule);
+				res = NBC_Sched_recv_pos(pos, buffer, 0, count, datatype, peer, schedule);
+	pos+=(sizeof(NBC_Args_recv)+sizeof(NBC_Fn_type));
+				if (NBC_OK != res) { printf("Error in NBC_Sched_recv() (%i)\n", res); return res; }
+			}
+		}
+//		res = NBC_Sched_barrier(schedule);
+		res = NBC_Sched_barrier_pos(pos, schedule);
+		pos += sizeof(char)+sizeof(int);
+		if (NBC_OK != res) { printf("Error in NBC_Sched_barrier() (%i)\n", res); return res; }
+	}
+
+	/* now send to the right hosts */
+	for(r=0; r<maxr; r++) {
+		if(((vrank + (1<<r) < p) && (vrank < (1<<r))) || (vrank == 0)) {
+			VRANK2RANK(peer, vrank+(1<<r), root);
+//			res = NBC_Sched_send(buffer, 0, count, datatype, peer, schedule);
+			res = NBC_Sched_send_pos(pos, buffer, 0, count, datatype, peer, schedule);
+			pos+=sizeof(NBC_Args_send)+sizeof(NBC_Fn_type);
+			if (NBC_OK != res) { printf("Error in NBC_Sched_send() (%i)\n", res); return res; }
+		}
+	}
+
+	return NBC_OK;
+}
+
+/* simple linear MPI_Ibcast */
+static inline int bcast_sched_linear(int rank, int p, int root, NBC_Schedule *schedule, void *buffer, int count, MPI_Datatype datatype) {
+	int peer, res;	
+
+	/* send to all others */
+	if(rank == root) {
+		int pos = 0;
+		for (peer=0; peer<p;peer++) {
+			if(peer != root) {
+				/* send msg to peer */
+				res = NBC_Sched_send_pos(pos, buffer, 0, count, datatype, peer, schedule);
+	pos+=(sizeof(NBC_Args_send)+sizeof(NBC_Fn_type));
+				if (NBC_OK != res) { printf("Error in NBC_Sched_send() (%i)\n", res); return res; }
+			}
+		}
+	} else {
+		/* recv msg from root */
+		res = NBC_Sched_recv_pos(0, buffer, 0, count, datatype, root, schedule);
+		if (NBC_OK != res) { printf("Error in NBC_Sched_recv() (%i)\n", res); return res; }
+	}
+	
+	return NBC_OK;
+}
+
+/* simple chained MPI_Ibcast */
+static inline int bcast_sched_chain(int rank, int p, int root, NBC_Schedule *schedule, void *buffer, int count, MPI_Datatype datatype, int fragsize, int size) {
+	int res, vrank, rpeer, speer, numfrag, fragnum, fragcount, thiscount;
+	MPI_Aint ext;
+	char *buf;
+
+	RANK2VRANK(rank, vrank, root);
+	VRANK2RANK(rpeer, vrank-1, root);
+	VRANK2RANK(speer, vrank+1, root);
+	res = __INTERNAL__PMPI_Type_extent(datatype, &ext);
+	if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Type_extent() (%i)\n", res); return res; }
+	
+	if(count == 0) return NBC_OK;
+
+	numfrag = count*size/fragsize;
+	if((count*size)%fragsize != 0) numfrag++;
+	fragcount = count/numfrag;
+	
+	for(fragnum = 0; fragnum < numfrag; fragnum++) {
+		buf = (char*)buffer+fragnum*fragcount*ext;
+		thiscount = fragcount;
+		if(fragnum == numfrag-1) {
+			/* last fragment may not be full */
+			thiscount = count-fragcount*fragnum;
+		}
+
+		/* root does not receive */
+		if(vrank != 0) {
+			res = NBC_Sched_recv(buf, 0, thiscount, datatype, rpeer, schedule);
+			if (NBC_OK != res) { printf("Error in NBC_Sched_recv() (%i)\n", res); return res; }
+			res = NBC_Sched_barrier(schedule);
+		}
+
+		/* last rank does not send */
+		if(vrank != p-1) {
+			res = NBC_Sched_send(buf, 0, thiscount, datatype, speer, schedule);
+			if (NBC_OK != res) { printf("Error in NBC_Sched_send() (%i)\n", res); return res; }
+			/* this barrier here seems awaward but isn't!!!! */
+			if(vrank == 0) res = NBC_Sched_barrier(schedule);
+		}
+	}
+	
+	return NBC_OK;
+}
+
+
+/*************** *
+ * NBC_IGATHER.C *
+ * ***************/
+
+/*
+ * Copyright (c) 2006 The Trustees of Indiana University and Indiana
+ *										University Research and Technology
+ *										Corporation.	All rights reserved.
+ * Copyright (c) 2006 The Technical University of Chemnitz. All 
+ *										rights reserved.
+ *
+ * Author(s): Torsten Hoefler <htor@cs.indiana.edu>
+ *
+ */
+
+
+static int NBC_Igather(void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, NBC_Handle* handle) {
+	int rank, p, res, i;
+	MPI_Aint rcvext;
+	NBC_Schedule *schedule;
+	char *rbuf, inplace;
+	
+	NBC_IN_PLACE(sendbuf, recvbuf, inplace);
+	
+	res = NBC_Init_handle(handle, comm, MPC_IGATHER_TAG);
+	if(res != NBC_OK) { printf("Error in NBC_Init_handle(%i)\n", res); return res; }
+	res = PMPC_Comm_rank(comm, &rank);
+	if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_rank() (%i)\n", res); return res; }
+	res = PMPC_Comm_size(comm, &p);
+	if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_rank() (%i)\n", res); return res; }
+	res = __INTERNAL__PMPI_Type_extent(recvtype, &rcvext);
+	if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Type_extent() (%i)\n", res); return res; }
+
+	handle->tmpbuf = NULL;
+	
+	if((rank == root) && (!inplace)) {
+		rbuf = ((char *)recvbuf) + (rank*recvcount*rcvext);
+		/* if I am the root - just copy the message (only without MPI_IN_PLACE) */
+		res = NBC_Copy(sendbuf, sendcount, sendtype, rbuf, recvcount, recvtype, comm);
+		if (NBC_OK != res) { printf("Error in NBC_Copy() (%i)\n", res); return res; }
+	}
+ 
+		schedule = (NBC_Schedule*)sctk_malloc(sizeof(NBC_Schedule));
+		if (NULL == schedule) { printf("Error in sctk_malloc() (%i)\n", res); return res; }
+
+		res = NBC_Sched_create(schedule);
+		if(res != NBC_OK) { printf("Error in NBC_Sched_create (%i)\n", res); return res; }
+
+		/* send to root */
+		if(rank != root) {
+			/* send msg to root */
+			res = NBC_Sched_send(sendbuf, 0, sendcount, sendtype, root, schedule);
+			if (NBC_OK != res) { printf("Error in NBC_Sched_send() (%i)\n", res); return res; }
+		} else {
+			for(i=0;i<p;i++) {
+				rbuf = ((char *)recvbuf) + (i*recvcount*rcvext);
+				if(i != root) {
+					/* root receives message to the right buffer */
+					res = NBC_Sched_recv(rbuf, 0, recvcount, recvtype, i, schedule);
+					if (NBC_OK != res) { printf("Error in NBC_Sched_recv() (%i)\n", res); return res; }
+				}
+			}
+		}
+	 
+		res = NBC_Sched_commit(schedule);
+		if (NBC_OK != res) { printf("Error in NBC_Sched_commit() (%i)\n", res); return res; }
+ 
+
+	res = NBC_Start(handle, schedule);
+	if (NBC_OK != res) { printf("Error in NBC_Start() (%i)\n", res); return res; }
+ 
+	return NBC_OK;
+}
+
+
+/**************** *
+ * NBC_IGATHERV.C *
+ * ****************/
+
+/*
+ * Copyright (c) 2006 The Trustees of Indiana University and Indiana
+ *										University Research and Technology
+ *										Corporation.	All rights reserved.
+ * Copyright (c) 2006 The Technical University of Chemnitz. All 
+ *										rights reserved.
+ *
+ * Author(s): Torsten Hoefler <htor@cs.indiana.edu>
+ *
+ */
+
+/* an gatherv schedule can not be cached easily because the contents
+ * ot the recvcounts array may change, so a comparison of the address
+ * would not be sufficient ... we simply do not cache it */
+
+static int NBC_Igatherv(void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int *recvcounts, int *displs, MPI_Datatype recvtype, int root, MPI_Comm comm, NBC_Handle* handle) {
+	int rank, p, res, i;
+	MPI_Aint rcvext;
+	NBC_Schedule *schedule;
+	char *rbuf, inplace;
+	
+	NBC_IN_PLACE(sendbuf, recvbuf, inplace);
+	
+	res = NBC_Init_handle(handle, comm, MPC_IGATHERV_TAG);
+	if(res != NBC_OK) { printf("Error in NBC_Init_handle(%i)\n", res); return res; }
+	res = PMPC_Comm_rank(comm, &rank);
+	if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_rank() (%i)\n", res); return res; }
+	res = PMPC_Comm_size(comm, &p);
+	if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_rank() (%i)\n", res); return res; }
+	res = __INTERNAL__PMPI_Type_extent(recvtype, &rcvext);
+	if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Type_extent() (%i)\n", res); return res; }
+
+	schedule = (NBC_Schedule*)sctk_malloc(sizeof(NBC_Schedule));
+	if (NULL == schedule) { printf("Error in sctk_malloc() (%i)\n", res); return res; }
+
+	handle->tmpbuf=NULL;
+ 
+	res = NBC_Sched_create(schedule);
+	if(res != NBC_OK) { printf("Error in NBC_Sched_create (%i)\n", res); return res; }
+
+	/* send to root */
+	if(rank != root) {
+		/* send msg to root */
+		res = NBC_Sched_send(sendbuf, 0, sendcount, sendtype, root, schedule);
+		if (NBC_OK != res) { printf("Error in NBC_Sched_send() (%i)\n", res); return res; }
+	} else {
+		for(i=0;i<p;i++) {
+			rbuf = ((char *)recvbuf) + (displs[i]*rcvext);
+			if(i == root) {
+				if(!inplace) {
+					/* if I am the root - just copy the message */
+					res = NBC_Copy(sendbuf, sendcount, sendtype, rbuf, recvcounts[i], recvtype, comm);
+					if (NBC_OK != res) { printf("Error in NBC_Copy() (%i)\n", res); return res; }
+				}
+			} else {
+				/* root receives message to the right buffer */
+				res = NBC_Sched_recv(rbuf, 0, recvcounts[i], recvtype, i, schedule);
+				if (NBC_OK != res) { printf("Error in NBC_Sched_recv() (%i)\n", res); return res; }
+			}
+		}
+	}
+ 
+	res = NBC_Sched_commit(schedule);
+	if (NBC_OK != res) { printf("Error in NBC_Sched_commit() (%i)\n", res); return res; }
+ 
+	res = NBC_Start(handle, schedule);
+	if (NBC_OK != res) { printf("Error in NBC_Start() (%i)\n", res); return res; }
+ 
+	return NBC_OK;
+}
+
+
+/******************* *
+ * NBC_IREDUCE.C *
+ * *******************/
+
+/*
+ * Copyright (c) 2006 The Trustees of Indiana University and Indiana
+ *										University Research and Technology
+ *										Corporation.	All rights reserved.
+ * Copyright (c) 2006 The Technical University of Chemnitz. All 
+ *										rights reserved.
+ *
+ * Author(s): Torsten Hoefler <htor@cs.indiana.edu>
+ *
+ */
+
+static inline int red_sched_binomial(int rank, int p, int root, void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, void *redbuf, NBC_Schedule *schedule, NBC_Handle *handle);
+static inline int red_sched_chain(int rank, int p, int root, void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int ext, int size, NBC_Schedule *schedule, NBC_Handle *handle, int fragsize);
+
+
+/* the non-blocking reduce */
+static int NBC_Ireduce(void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm, NBC_Handle* handle) {
+	int rank, p, res, segsize, size;
+	MPI_Aint ext;
+	NBC_Schedule *schedule;
+	char *redbuf=NULL, inplace;
+	enum { NBC_RED_BINOMIAL, NBC_RED_CHAIN } alg;
+	
+	NBC_IN_PLACE(sendbuf, recvbuf, inplace);
+	
+	res = NBC_Init_handle(handle, comm, MPC_IREDUCE_TAG);
+	if(res != NBC_OK) { printf("Error in NBC_Init_handle(%i)\n", res); return res; }
+	res = PMPC_Comm_rank(comm, &rank);
+	if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_rank() (%i)\n", res); return res; }
+	res = PMPC_Comm_size(comm, &p);
+	if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_size() (%i)\n", res); return res; }
+	res = __INTERNAL__PMPI_Type_extent(datatype, &ext);
+	if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Type_extent() (%i)\n", res); return res; }
+	res = __INTERNAL__PMPI_Type_size(datatype, &size);
+	if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Type_size() (%i)\n", res); return res; }
+	
+	/* only one node -> copy data */
+	if((p == 1) && !inplace) {
+		res = NBC_Copy(sendbuf, count, datatype, recvbuf, count, datatype, comm);
+		if (NBC_OK != res) { printf("Error in NBC_Copy() (%i)\n", res); return res; }
+	}
+	
+	/* algorithm selection */
+	if(p > 4 || size*count < 65536) {
+		alg = NBC_RED_BINOMIAL;
+		if(rank == root) {
+			/* root reduces in receivebuffer */
+			handle->tmpbuf = sctk_malloc(ext*count);
+		} else {
+			/* recvbuf may not be valid on non-root nodes */
+			handle->tmpbuf = sctk_malloc(ext*count*2);
+			redbuf = ((char*)handle->tmpbuf)+(ext*count);
+		}
+	} else {
+		handle->tmpbuf = sctk_malloc(ext*count);
+		alg = NBC_RED_CHAIN;
+		segsize = 16384/2;
+	}
+	if (NULL == handle->tmpbuf) { printf("Error in sctk_malloc() (%i)\n", res); return res; }
+
+	schedule = (NBC_Schedule*)sctk_malloc(sizeof(NBC_Schedule));
+	if (NULL == schedule) { printf("Error in sctk_malloc() (%i)\n", res); return res; }
+
+	int sends = 0;
+	int recvs = 0;
+	int ops = 0;
+	int maxr = (int)ceil((log(p)/LOG2));
+	int cpts[maxr][3];
+
+	switch(alg) {
+		case NBC_RED_BINOMIAL:
+			;
+			int vrank, vpeer, peer, r;
+			RANK2VRANK(rank, vrank, root);
+
+			int end = 0;
+			for(r=1; r<=maxr; r++) {
+				cpts[r-1][0]=0;
+				cpts[r-1][1]=0;
+				cpts[r-1][2]=0;
+				if(end == 0) {
+					if((vrank % (1<<r)) == 0) {
+						/* we have to receive this round */
+						vpeer = vrank + (1<<(r-1));
+						VRANK2RANK(peer, vpeer, root)
+							if(peer<p) {
+								cpts[r-1][0]++;
+								recvs++;
+								/* we have to wait until we have the data */
+								/* perform the reduce in my local buffer */
+								cpts[r-1][1]++;
+								ops++;
+
+							}
+						} else {
+							/* we have to send this round */
+							cpts[r-1][2]++;
+							sends++;
+
+							/* leave the game */
+							end = 1;
+						}
+					}
+				}
+
+			int alloc_size = 2*sizeof(int) + recvs * (sizeof(NBC_Args_recv)+sizeof(NBC_Fn_type)+sizeof(int)+sizeof(char)) + ops * (sizeof(NBC_Args_op)+sizeof(NBC_Fn_type)+sizeof(int)+sizeof(char)) + sends * (sizeof(NBC_Args_send)+sizeof(NBC_Fn_type)) + sizeof(char);
+			*schedule=sctk_malloc(alloc_size);
+			int cpt = 0;
+			char * ptr = (char*)*schedule+sizeof(int);
+			char * ptr2 = (char*)*schedule+2*sizeof(int);
+			for(r=1; r<=maxr; r++)
+			{
+				if(cpts[r-1][2] !=0)
+				{
+					cpt += cpts[r-1][2];
+					ptr2 += cpts[r-1][2] * (sizeof(NBC_Args_send)+sizeof(NBC_Fn_type));
+				}
+				else if(cpts[r-1][0] != 0)
+				{
+					cpt += cpts[r-1][0];
+					ptr2 += cpts[r-1][0] * (sizeof(NBC_Args_recv)+sizeof(NBC_Fn_type));
+					*(int*)ptr=cpt;
+					ptr2 += sizeof(char);
+					ptr = ptr2;
+					ptr2 += sizeof(int);
+					cpt = cpts[r-1][1];
+					ptr2 += cpts[r-1][1] * (sizeof(NBC_Args_op)+sizeof(NBC_Fn_type));
+	
+					*(int*)ptr=cpt;
+					ptr2 += sizeof(char);
+					ptr = ptr2;
+					ptr2 += sizeof(int);
+	
+					cpt = 0;
+				}
+			}
+
+				res = red_sched_binomial(rank, p, root, sendbuf, recvbuf, count, datatype, op, redbuf, schedule, handle);
+				break;
+			case NBC_RED_CHAIN:
+				res = red_sched_chain(rank, p, root, sendbuf, recvbuf, count, datatype, op, ext, size, schedule, handle, segsize);
+				break;
+		}
+		if (NBC_OK != res) { printf("Error in Schedule creation() (%i)\n", res); return res; }
+		
+		res = NBC_Sched_commit(schedule);
+		if (NBC_OK != res) { sctk_free(handle->tmpbuf); printf("Error in NBC_Sched_commit() (%i)\n", res); return res; }
+	
+	res = NBC_Start(handle, schedule);
+	if (NBC_OK != res) { sctk_free(handle->tmpbuf); printf("Error in NBC_Start() (%i)\n", res); return res; }
+	
+	/* tmpbuf is freed with the handle */
+	return NBC_OK;
+}
+
+
+/* binomial reduce
+ * working principle:
+ * - each node gets a virtual rank vrank
+ * - the 'root' node get vrank 0 
+ * - node 0 gets the vrank of the 'root'
+ * - all other ranks stay identical (they do not matter)
+ *
+ * Algorithm:
+ * pairwise exchange
+ * round r: 
+ *	grp = rank % 2^r
+ *	if grp == 0: receive from rank + 2^(r-1) if it exists and reduce value
+ *	if grp == 1: send to rank - 2^(r-1) and exit function
+ *	
+ * do this for R=log_2(p) rounds
+ *		
+ */
+#define RANK2VRANK(rank, vrank, root) \
+{ \
+	vrank = rank; \
+	if (rank == 0) vrank = root; \
+	if (rank == root) vrank = 0; \
+}
+#define VRANK2RANK(rank, vrank, root) \
+{ \
+	rank = vrank; \
+	if (vrank == 0) rank = root; \
+	if (vrank == root) rank = 0; \
+}
+static inline int red_sched_binomial(int rank, int p, int root, void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, void *redbuf, NBC_Schedule *schedule, NBC_Handle *handle) {
+	int firstred, vrank, vpeer, peer, res, maxr, r;
+
+	RANK2VRANK(rank, vrank, root);
+	maxr = (int)ceil((log(p)/LOG2));
+
+	firstred = 1;
+	int pos = 0;
+	for(r=1; r<=maxr; r++) {
+		if((vrank % (1<<r)) == 0) {
+			/* we have to receive this round */
+			vpeer = vrank + (1<<(r-1));
+			VRANK2RANK(peer, vpeer, root)
+			if(peer<p) {
+				res = NBC_Sched_recv_pos(pos, 0, 1, count, datatype, peer, schedule);
+	pos += (sizeof(NBC_Args_recv)+sizeof(NBC_Fn_type));
+				if (NBC_OK != res) { sctk_free(handle->tmpbuf); printf("Error in NBC_Sched_recv() (%i)\n", res); return res; }
+				/* we have to wait until we have the data */
+				res = NBC_Sched_barrier_pos(pos, schedule);
+	pos += sizeof(char)+sizeof(int);
+				if (NBC_OK != res) { sctk_free(handle->tmpbuf); printf("Error in NBC_Sched_barrier() (%i)\n", res); return res; }
+				/* perform the reduce in my local buffer */
+				if(firstred) {
+					if(rank == root) {
+						/* root is the only one who reduces in the receivebuffer 
+						 * take data from sendbuf in first round - save copy */
+						res = NBC_Sched_op_pos(pos, recvbuf, 0, sendbuf, 0, 0, 1, count, datatype, op, schedule);
+			pos += (sizeof(NBC_Args_op)+sizeof(NBC_Fn_type));
+					} else {
+						/* all others may not have a receive buffer 
+						 * take data from sendbuf in first round - save copy */
+						res = NBC_Sched_op_pos(pos, (char *)redbuf-(unsigned long)handle->tmpbuf, 1, sendbuf, 0, 0, 1, count, datatype, op, schedule);
+			pos += (sizeof(NBC_Args_op)+sizeof(NBC_Fn_type));
+					}
+					firstred = 0;
+				} else {
+					if(rank == root) {
+						/* root is the only one who reduces in the receivebuffer */
+						res = NBC_Sched_op_pos(pos, recvbuf, 0, recvbuf, 0, 0, 1, count, datatype, op, schedule);
+			pos += (sizeof(NBC_Args_op)+sizeof(NBC_Fn_type));
+					} else {
+						/* all others may not have a receive buffer */
+						res = NBC_Sched_op_pos(pos, (char *)redbuf-(unsigned long)handle->tmpbuf, 1, (char *)redbuf-(unsigned long)handle->tmpbuf, 1, 0, 1, count, datatype, op, schedule);
+			pos += (sizeof(NBC_Args_op)+sizeof(NBC_Fn_type));
+					}
+				}
+				if (NBC_OK != res) { sctk_free(handle->tmpbuf); printf("Error in NBC_Sched_op() (%i)\n", res); return res; }
+				/* this cannot be done until handle->tmpbuf is unused :-( */
+				res = NBC_Sched_barrier_pos(pos, schedule);
+	pos += sizeof(char)+sizeof(int);
+				if (NBC_OK != res) { sctk_free(handle->tmpbuf); printf("Error in NBC_Sched_barrier() (%i)\n", res); return res; }
+			}
+		} else {
+			/* we have to send this round */
+			vpeer = vrank - (1<<(r-1));
+			VRANK2RANK(peer, vpeer, root)
+			if(firstred) {
+				/* we did not reduce anything */
+				res = NBC_Sched_send_pos(pos, sendbuf, 0, count, datatype, peer, schedule);
+	pos += (sizeof(NBC_Args_send)+sizeof(NBC_Fn_type));
+			} else {
+				/* we have to use the redbuf the root (which works in receivebuf) is never sending .. */
+				res = NBC_Sched_send_pos(pos, (char *)redbuf-(unsigned long)handle->tmpbuf, 1, count, datatype, peer, schedule);
+	pos += (sizeof(NBC_Args_send)+sizeof(NBC_Fn_type));
+			}
+			if (NBC_OK != res) { sctk_free(handle->tmpbuf); printf("Error in NBC_Sched_send() (%i)\n", res); return res; }
+			/* leave the game */
+			break;
+		}
+	}
+
+	return NBC_OK;
+}
+
+/* chain send ... */ 
+static inline int red_sched_chain(int rank, int p, int root, void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int ext, int size, NBC_Schedule *schedule, NBC_Handle *handle, int fragsize) {
+	int res, vrank, rpeer, speer, numfrag, fragnum, fragcount, thiscount;
+	long offset;
+	
+	RANK2VRANK(rank, vrank, root);
+	VRANK2RANK(rpeer, vrank+1, root);
+	VRANK2RANK(speer, vrank-1, root);
+	
+	if(count == 0) return NBC_OK;
+	
+	numfrag = count*size/fragsize;
+	if((count*size)%fragsize != 0) numfrag++;
+	fragcount = count/numfrag;
+
+	for(fragnum = 0; fragnum < numfrag; fragnum++) {
+		offset = fragnum*fragcount*ext;
+		thiscount = fragcount;
+		if(fragnum == numfrag-1) {
+			/* last fragment may not be full */
+			thiscount = count-fragcount*fragnum;
+		}
+
+		/* last node does not recv */
+		if(vrank != p-1) {
+			res = NBC_Sched_recv((char*)offset, 1, thiscount, datatype, rpeer, schedule);
+			if (NBC_OK != res) { printf("Error in NBC_Sched_recv() (%i)\n", res); return res; }
+			res = NBC_Sched_barrier(schedule);
+			/* root reduces into receivebuf */
+			if(vrank == 0) {
+				res = NBC_Sched_op((char*)recvbuf+offset, 0, (char*)sendbuf+offset, 0, (char*)offset, 1, thiscount, datatype, op, schedule);
+			} else {
+				res = NBC_Sched_op((char*)offset, 1, (char*)sendbuf+offset, 0, (char*)offset, 1, thiscount, datatype, op, schedule);
+			}
+			res = NBC_Sched_barrier(schedule);
+		}
+
+		/* root does not send */
+		if(vrank != 0) {
+			/* rank p-1 has to send out of sendbuffer :) */
+			if(vrank == p-1) {
+				res = NBC_Sched_send((char*)sendbuf+offset, 0, thiscount, datatype, speer, schedule);
+			} else {
+				res = NBC_Sched_send((char*)offset, 1, thiscount, datatype, speer, schedule);
+			}
+			if (NBC_OK != res) { printf("Error in NBC_Sched_send() (%i)\n", res); return res; }
+			/* this barrier here seems awkward but isn't!!!! */
+			res = NBC_Sched_barrier(schedule);
+		}
+	}
+
+	return NBC_OK;
+}
+
+
+/*********************** *
+ * NBC_IREDUCE_SCATTER.C *
+ * ***********************/
+
+/*
+ * Copyright (c) 2006 The Trustees of Indiana University and Indiana
+ *										University Research and Technology
+ *										Corporation.	All rights reserved.
+ * Copyright (c) 2006 The Technical University of Chemnitz. All 
+ *										rights reserved.
+ *
+ * Author(s): Torsten Hoefler <htor@cs.indiana.edu>
+ *
+ */
+
+/* an reduce_csttare schedule can not be cached easily because the contents
+ * ot the recvcounts array may change, so a comparison of the address
+ * would not be sufficient ... we simply do not cache it */
+
+/* binomial reduce to rank 0 followed by a linear scatter ...
+ *
+ * Algorithm:
+ * pairwise exchange
+ * round r: 
+ *	grp = rank % 2^r
+ *	if grp == 0: receive from rank + 2^(r-1) if it exists and reduce value
+ *	if grp == 1: send to rank - 2^(r-1) and exit function
+ *	
+ * do this for R=log_2(p) rounds
+ *		
+ */
+
+static int NBC_Ireduce_scatter(void* sendbuf, void* recvbuf, int *recvcounts, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, NBC_Handle* handle) {
+	int peer, rank, maxr, p, r, res, count, offset, firstred;
+	MPI_Aint ext;
+	char *redbuf, *sbuf, inplace;
+	NBC_Schedule *schedule;
+	
+	NBC_IN_PLACE(sendbuf, recvbuf, inplace);
+
+	res = NBC_Init_handle(handle, comm, MPC_IREDUCE_SCATTER_TAG);
+	if(res != NBC_OK) { printf("Error in NBC_Init_handle(%i)\n", res); return res; }
+	res = PMPC_Comm_rank(comm, &rank);
+	if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_rank() (%i)\n", res); return res; }
+	res = PMPC_Comm_size(comm, &p);
+	if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_size() (%i)\n", res); return res; }
+	res = __INTERNAL__PMPI_Type_extent(datatype, &ext);
+	if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Type_extent() (%i)\n", res); return res; }
+	
+	schedule = (NBC_Schedule*)sctk_malloc(sizeof(NBC_Schedule));
+	if (NULL == schedule) { printf("Error in sctk_malloc()\n"); return NBC_OOR; }
+
+	res = NBC_Sched_create(schedule);
+	if(res != NBC_OK) { printf("Error in NBC_Sched_create (%i)\n", res); return res; }
+
+	maxr = (int)ceil((log(p)/LOG2));
+
+	count = 0;
+	for(r=0;r<p;r++) count += recvcounts[r];
+	
+	handle->tmpbuf = sctk_malloc(ext*count*2);
+	if(handle->tmpbuf == NULL) { printf("Error in sctk_malloc()\n"); return NBC_OOR; }
+
+	redbuf = ((char*)handle->tmpbuf)+(ext*count);
+
+	/* copy data to redbuf if we only have a single node */
+	if((p==1) && !inplace) {
+		res = NBC_Copy(sendbuf, count, datatype, redbuf, count, datatype, comm);
+		if (NBC_OK != res) { printf("Error in NBC_Copy() (%i)\n", res); return res; }
+	}
+	
+	firstred = 1;
+	for(r=1; r<=maxr; r++) {
+		if((rank % (1<<r)) == 0) {
+			/* we have to receive this round */
+			peer = rank + (1<<(r-1));
+			if(peer<p) {
+				res = NBC_Sched_recv(0, 1, count, datatype, peer, schedule);
+				if (NBC_OK != res) { sctk_free(handle->tmpbuf); printf("Error in NBC_Sched_recv() (%i)\n", res); return res; }
+				/* we have to wait until we have the data */
+				res = NBC_Sched_barrier(schedule);
+				if (NBC_OK != res) { sctk_free(handle->tmpbuf); printf("Error in NBC_Sched_barrier() (%i)\n", res); return res; }
+				if(firstred) {
+					/* take reduce data from the sendbuf in the first round -> save copy */
+					res = NBC_Sched_op(redbuf-(unsigned long)handle->tmpbuf, 1, sendbuf, 0, 0, 1, count, datatype, op, schedule);
+					firstred = 0;
+				} else {
+					/* perform the reduce in my local buffer */
+					res = NBC_Sched_op(redbuf-(unsigned long)handle->tmpbuf, 1, redbuf-(unsigned long)handle->tmpbuf, 1, 0, 1, count, datatype, op, schedule);
+				}
+				if (NBC_OK != res) { sctk_free(handle->tmpbuf); printf("Error in NBC_Sched_op() (%i)\n", res); return res; }
+				/* this cannot be done until handle->tmpbuf is unused :-( */
+				res = NBC_Sched_barrier(schedule);
+				if (NBC_OK != res) { sctk_free(handle->tmpbuf); printf("Error in NBC_Sched_barrier() (%i)\n", res); return res; }
+			}
+		} else {
+			/* we have to send this round */
+			peer = rank - (1<<(r-1));
+			if(firstred) {
+				/* we have to send the senbuf */
+				res = NBC_Sched_send(sendbuf, 0, count, datatype, peer, schedule);
+			} else {
+				/* we send an already reduced value from redbuf */
+				res = NBC_Sched_send(redbuf-(unsigned long)handle->tmpbuf, 1, count, datatype, peer, schedule);
+			}
+			if (NBC_OK != res) { sctk_free(handle->tmpbuf); printf("Error in NBC_Sched_send() (%i)\n", res); return res; }
+			/* leave the game */
+			break;
+		}
+	}
+	
+	res = NBC_Sched_barrier(schedule);
+	if (NBC_OK != res) { sctk_free(handle->tmpbuf); printf("Error in NBC_Sched_barrier() (%i)\n", res); return res; }
+
+	/* rank 0 is root and sends - all others receive */
+	if(rank != 0) {
+		res = NBC_Sched_recv(recvbuf, 0, recvcounts[rank], datatype, 0, schedule);
+	 if (NBC_OK != res) { sctk_free(handle->tmpbuf); printf("Error in NBC_Sched_recv() (%i)\n", res); return res; }
+	}
+
+	if(rank == 0) {
+		offset = 0;
+		for(r=1;r<p;r++) {
+			offset += recvcounts[r-1];
+			sbuf = ((char *)redbuf) + (offset*ext);
+			/* root sends the right buffer to the right receiver */
+			res = NBC_Sched_send(sbuf-(unsigned long)handle->tmpbuf, 1, recvcounts[r], datatype, r, schedule);
+			if (NBC_OK != res) { sctk_free(handle->tmpbuf); printf("Error in NBC_Sched_send() (%i)\n", res); return res; }
+		}
+		res = NBC_Sched_copy(redbuf-(unsigned long)handle->tmpbuf, 1, recvcounts[0], datatype, recvbuf, 0, recvcounts[0], datatype, schedule);
+		if (NBC_OK != res) { sctk_free(handle->tmpbuf); printf("Error in NBC_Sched_copy() (%i)\n", res); return res; }
+	}
+
+	
+	res = NBC_Sched_commit(schedule);
+	if (NBC_OK != res) { sctk_free(handle->tmpbuf); printf("Error in NBC_Sched_commit() (%i)\n", res); return res; }
+	
+	res = NBC_Start(handle, schedule);
+	if (NBC_OK != res) { sctk_free(handle->tmpbuf); printf("Error in NBC_Start() (%i)\n", res); return res; }
+	
+	/* tmpbuf is freed with the handle */
+	return NBC_OK;
+}
+
+
+/************* *
+ * NBC_ISCAN.C *
+ * *************/
+
+/*
+ * Copyright (c) 2006 The Trustees of Indiana University and Indiana
+ *										University Research and Technology
+ *										Corporation.	All rights reserved.
+ * Copyright (c) 2006 The Technical University of Chemnitz. All 
+ *										rights reserved.
+ *
+ * Author(s): Torsten Hoefler <htor@cs.indiana.edu>
+ *
+ */
+
+
+/* linear iscan
+ * working principle:
+ * 1. each node (but node 0) receives from left neigbor
+ * 2. performs op
+ * 3. all but rank p-1 do sends to it's right neigbor and exits
+ *
+ */
+static int NBC_Iscan(void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, NBC_Handle* handle) {
+	int rank, p, res;
+	MPI_Aint ext;
+	NBC_Schedule *schedule;
+	char inplace;
+	
+	NBC_IN_PLACE(sendbuf, recvbuf, inplace);
+	
+	res = NBC_Init_handle(handle, comm, MPC_ISCAN_TAG);
+	if(res != NBC_OK) { printf("Error in NBC_Init_handle(%i)\n", res); return res; }
+	res = PMPC_Comm_rank(comm, &rank);
+	if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_rank() (%i)\n", res); return res; }
+	res = PMPC_Comm_size(comm, &p);
+	if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_size() (%i)\n", res); return res; }
+	res = __INTERNAL__PMPI_Type_extent(datatype, &ext);
+	if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Type_extent() (%i)\n", res); return res; }
+	
+	handle->tmpbuf = sctk_malloc(ext*count);
+	if(handle->tmpbuf == NULL) { printf("Error in sctk_malloc()\n"); return NBC_OOR; }
+
+	if((rank == 0) && !inplace) {
+		/* copy data to receivebuf */
+		res = NBC_Copy(sendbuf, count, datatype, recvbuf, count, datatype, comm);
+		if (NBC_OK != res) { printf("Error in NBC_Copy() (%i)\n", res); return res; }
+	}
+
+		schedule = (NBC_Schedule*)sctk_malloc(sizeof(NBC_Schedule));
+		if (NULL == schedule) { printf("Error in sctk_malloc()\n"); return res; }
+
+		res = NBC_Sched_create(schedule);
+		if(res != NBC_OK) { printf("Error in NBC_Sched_create (%i)\n", res); return res; }
+
+		if(rank != 0) {
+			res = NBC_Sched_recv(0, 1, count, datatype, rank-1, schedule);
+			if (NBC_OK != res) { sctk_free(handle->tmpbuf); printf("Error in NBC_Sched_recv() (%i)\n", res); return res; }
+			/* we have to wait until we have the data */
+			res = NBC_Sched_barrier(schedule);
+			if (NBC_OK != res) { sctk_free(handle->tmpbuf); printf("Error in NBC_Sched_barrier() (%i)\n", res); return res; }
+			/* perform the reduce in my local buffer */
+			res = NBC_Sched_op(recvbuf, 0, sendbuf, 0, 0, 1, count, datatype, op, schedule);
+			if (NBC_OK != res) { sctk_free(handle->tmpbuf); printf("Error in NBC_Sched_op() (%i)\n", res); return res; }
+			/* this cannot be done until handle->tmpbuf is unused :-( */
+			res = NBC_Sched_barrier(schedule);
+			if (NBC_OK != res) { sctk_free(handle->tmpbuf); printf("Error in NBC_Sched_barrier() (%i)\n", res); return res; }
+		}
+		if(rank != p-1) {
+			res = NBC_Sched_send(recvbuf, 0, count, datatype, rank+1, schedule);
+			if (NBC_OK != res) { sctk_free(handle->tmpbuf); printf("Error in NBC_Sched_send() (%i)\n", res); return res; }
+		}
+
+		res = NBC_Sched_commit(schedule);
+		if (NBC_OK != res) { sctk_free(handle->tmpbuf); printf("Error in NBC_Sched_commit() (%i)\n", res); return res; }
+
+	
+	res = NBC_Start(handle, schedule);
+	if (NBC_OK != res) { sctk_free(handle->tmpbuf); printf("Error in NBC_Start() (%i)\n", res); return res; }
+	
+	/* tmpbuf is freed with the handle */
+	return NBC_OK;
+}
+
+
+/**************** *
+ * NBC_ISCATTER.C *
+ * ****************/
+
+/*
+ * Copyright (c) 2006 The Trustees of Indiana University and Indiana
+ *										University Research and Technology
+ *										Corporation.	All rights reserved.
+ * Copyright (c) 2006 The Technical University of Chemnitz. All 
+ *										rights reserved.
+ *
+ * Author(s): Torsten Hoefler <htor@cs.indiana.edu>
+ *
+ */
+
+
+/* simple linear MPI_Iscatter */
+static int NBC_Iscatter(void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, NBC_Handle* handle) {
+	int rank, p, res, i;
+	MPI_Aint sndext;
+	NBC_Schedule *schedule;
+	char *sbuf, inplace;
+	
+	NBC_IN_PLACE(sendbuf, recvbuf, inplace);
+	
+	res = NBC_Init_handle(handle, comm, MPC_ISCATTER_TAG);
+	if(res != NBC_OK) { printf("Error in NBC_Init_handle(%i)\n", res); return res; }
+	res = PMPC_Comm_rank(comm, &rank);
+	if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_rank() (%i)\n", res); return res; }
+	res = PMPC_Comm_size(comm, &p);
+	if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_size() (%i)\n", res); return res; }
+	res = __INTERNAL__PMPI_Type_extent(sendtype, &sndext);
+	if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Type_extent() (%i)\n", res); return res; }
+
+	handle->tmpbuf=NULL;
+ 
+	if((rank == root) && (!inplace)) {
+		sbuf = ((char *)sendbuf) + (rank*sendcount*sndext);
+		/* if I am the root - just copy the message (not for MPI_IN_PLACE) */
+		res = NBC_Copy(sbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm);
+		if (NBC_OK != res) { printf("Error in NBC_Copy() (%i)\n", res); return res; }
+	}
+					
+		schedule = (NBC_Schedule*)sctk_malloc(sizeof(NBC_Schedule));
+		if (NULL == schedule) { printf("Error in sctk_malloc()\n"); return res; }
+
+		res = NBC_Sched_create(schedule);
+		if(res != NBC_OK) { printf("Error in NBC_Sched_create (%i)\n", res); return res; }
+
+		/* receive from root */
+		if(rank != root) {
+			/* recv msg from root */
+			res = NBC_Sched_recv(recvbuf, 0, recvcount, recvtype, root, schedule);
+			if (NBC_OK != res) { printf("Error in NBC_Sched_recv() (%i)\n", res); return res; }
+		} else {
+			for(i=0;i<p;i++) {
+				sbuf = ((char *)sendbuf) + (i*sendcount*sndext);
+				if(i != root) {
+					/* root sends the right buffer to the right receiver */
+					res = NBC_Sched_send(sbuf, 0, sendcount, sendtype, i, schedule);
+					if (NBC_OK != res) { printf("Error in NBC_Sched_send() (%i)\n", res); return res; }
+				}
+			}
+		}
+	 
+		res = NBC_Sched_commit(schedule);
+		if (NBC_OK != res) { printf("Error in NBC_Sched_commit() (%i)\n", res); return res; }
+
+ 
+	res = NBC_Start(handle, schedule);
+	if (NBC_OK != res) { printf("Error in NBC_Start() (%i)\n", res); return res; }
+ 
+	return NBC_OK;
+}
+
+
+/***************** *
+ * NBC_ISCATTERV.C *
+ * *****************/
+
+/*
+ * Copyright (c) 2006 The Trustees of Indiana University and Indiana
+ *										University Research and Technology
+ *										Corporation.	All rights reserved.
+ * Copyright (c) 2006 The Technical University of Chemnitz. All 
+ *										rights reserved.
+ *
+ * Author(s): Torsten Hoefler <htor@cs.indiana.edu>
+ *
+ */
+
+/* a scatterv schedule can not be cached easily because the contents
+ * ot the recvcounts array may change, so a comparison of the address
+ * would not be sufficient ... we simply do not cache it */
+
+/* simple linear MPI_Iscatterv */
+static int NBC_Iscatterv(void* sendbuf, int *sendcounts, int *displs, MPI_Datatype sendtype, void* recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, NBC_Handle* handle) {
+	int rank, p, res, i;
+	MPI_Aint sndext;
+	NBC_Schedule *schedule;
+	char *sbuf, inplace;
+	
+	NBC_IN_PLACE(sendbuf, recvbuf, inplace);
+	
+	res = NBC_Init_handle(handle, comm, MPC_ISCATTERV_TAG);
+	if(res != NBC_OK) { printf("Error in NBC_Init_handle(%i)\n", res); return res; }
+	res = PMPC_Comm_rank(comm, &rank);
+	if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_rank() (%i)\n", res); return res; }
+	res = PMPC_Comm_size(comm, &p);
+	if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_size() (%i)\n", res); return res; }
+	res = __INTERNAL__PMPI_Type_extent(sendtype, &sndext);
+	if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Type_extent() (%i)\n", res); return res; }
+
+	schedule = (NBC_Schedule*)sctk_malloc(sizeof(NBC_Schedule));
+	if (NULL == schedule) { printf("Error in sctk_malloc()\n"); return res; }
+
+	handle->tmpbuf=NULL;
+ 
+	res = NBC_Sched_create(schedule);
+	if(res != NBC_OK) { printf("Error in NBC_Sched_create (%i)\n", res); return res; }
+
+	/* receive from root */
+	if(rank != root) {
+		/* recv msg from root */
+		res = NBC_Sched_recv(recvbuf, 0, recvcount, recvtype, root, schedule);
+		if (NBC_OK != res) { printf("Error in NBC_Sched_recv() (%i)\n", res); return res; }
+	} else {
+		for(i=0;i<p;i++) {
+			sbuf = ((char *)sendbuf) + (displs[i]*sndext);
+			if(i == root) {
+				if(!inplace) {
+					/* if I am the root - just copy the message */
+					res = NBC_Copy(sbuf, sendcounts[i], sendtype, recvbuf, recvcount, recvtype, comm);
+					if (NBC_OK != res) { printf("Error in NBC_Copy() (%i)\n", res); return res; }
+				}
+			} else {
+				/* root sends the right buffer to the right receiver */
+				res = NBC_Sched_send(sbuf, 0, sendcounts[i], sendtype, i, schedule);
+				if (NBC_OK != res) { printf("Error in NBC_Sched_send() (%i)\n", res); return res; }
+			}
+		}
+	}
+ 
+	res = NBC_Sched_commit(schedule);
+	if (NBC_OK != res) { printf("Error in NBC_Sched_commit() (%i)\n", res); return res; }
+ 
+	res = NBC_Start(handle, schedule);
+	if (NBC_OK != res) { printf("Error in NBC_Start() (%i)\n", res); return res; }
+ 
+	return NBC_OK;
+}
+
+/********************************************************************* *
+ * The previous code came from the libNBC, a library for the support	 *
+ * of MPI-3 Non-Blocking Collective. The code was modified to ensure	 *
+ * compatibility with the MPC framework.															 *
+ * *********************************************************************/
+
+/********************************************************************* *
+ * The Following code is a modified version of three functions from		*
+ * the libNBC. It aims to support the three MPI-3 Non-Blocking				 *
+ * Collective functions that are not initially present in the libNBC.	*
+ * *********************************************************************/
+/****************** *
+ * NBC_IALLTOALLW.C *
+ * ******************/
+
+
+/* simple linear Alltoallv */
+static int NBC_Ialltoallw(void* sendbuf, int *sendcounts, int *sdispls,
+		MPI_Datatype *sendtypes, void* recvbuf, int *recvcounts, int *rdispls,
+		MPI_Datatype *recvtypes, MPI_Comm comm, NBC_Handle* handle) {
+	
+	int rank, p, res, i;
+	MPI_Aint sndext, rcvext;
+	NBC_Schedule *schedule;
+	char *rbuf, *sbuf, inplace;
+	
+	NBC_IN_PLACE(sendbuf, recvbuf, inplace);
+	
+	res = NBC_Init_handle(handle, comm, MPC_IALLTOALLW_TAG);
+	if(res != NBC_OK) { printf("Error in NBC_Init_handle(%i)\n", res); return res; }
+	res = PMPC_Comm_rank(comm, &rank);
+	if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_rank() (%i)\n", res); return res; }
+	res = PMPC_Comm_size(comm, &p);
+	if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_size() (%i)\n", res); return res; }
+	/*
+	res = MPI_Type_extent(sendtype, &sndext);
+	if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Type_extent() (%i)\n", res); return res; }
+	res = MPI_Type_extent(recvtype, &rcvext);
+	if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Type_extent() (%i)\n", res); return res; }
+*/
+	schedule = (NBC_Schedule*)sctk_malloc(sizeof(NBC_Schedule));
+	if (NULL == schedule) { printf("Error in sctk_malloc() (%i)\n", res); return res; }
+
+	handle->tmpbuf=NULL;
+	
+	res = NBC_Sched_create(schedule);
+	if(res != NBC_OK) { printf("Error in NBC_Sched_create (%i)\n", res); return res; }
+
+	/* copy data to receivbuffer */
+	if((sendcounts[rank] != 0) && !inplace) {
+		rbuf = ((char *) recvbuf) + (rdispls[rank]);
+		sbuf = ((char *) sendbuf) + (sdispls[rank]);
+		res = NBC_Copy(sbuf, sendcounts[rank], sendtypes[rank], rbuf, recvcounts[rank], recvtypes[rank], comm);
+		if (NBC_OK != res) { printf("Error in NBC_Copy() (%i)\n", res); return res; }
+	}
+
+	for (i = 0; i < p; i++) {
+		if (i == rank) { continue; }
+		/* post all sends */
+		if(sendcounts[i] != 0) {
+			sbuf = ((char *) sendbuf) + (sdispls[i]);
+			res = NBC_Sched_send(sbuf, 0, sendcounts[i], sendtypes[i], i, schedule);
+			if (NBC_OK != res) { printf("Error in NBC_Sched_send() (%i)\n", res); return res; }
+		}
+		/* post all receives */
+		if(recvcounts[i] != 0) {
+			rbuf = ((char *) recvbuf) + (rdispls[i]);
+			res = NBC_Sched_recv(rbuf, 0, recvcounts[i], recvtypes[i], i, schedule);
+			if (NBC_OK != res) { printf("Error in NBC_Sched_recv() (%i)\n", res); return res; }
+		}
+	}
+
+	res = NBC_Sched_commit(schedule);
+	if (NBC_OK != res) { printf("Error in NBC_Sched_commit() (%i)\n", res); return res; }
+
+	res = NBC_Start(handle, schedule);
+	if (NBC_OK != res) { printf("Error in NBC_Start() (%i)\n", res); return res; }
+	
+	return NBC_OK;
+}
+
+
+
+/***************************** *
+ * NBC_IREDUCE_SCATTER_BLOCK.C *
+ * *****************************/
+
+
+static int NBC_Ireduce_scatter_block(void* sendbuf, void* recvbuf, int recvcount, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, NBC_Handle* handle) {
+	int peer, rank, maxr, p, r, res, count, offset, firstred;
+	MPI_Aint ext;
+	char *redbuf, *sbuf, inplace;
+	NBC_Schedule *schedule;
+	
+	NBC_IN_PLACE(sendbuf, recvbuf, inplace);
+
+	res = NBC_Init_handle(handle, comm, MPC_IREDUCE_SCATTER_BLOCK_TAG);
+	if(res != NBC_OK) { printf("Error in NBC_Init_handle(%i)\n", res); return res; }
+	res = PMPC_Comm_rank(comm, &rank);
+	if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_rank() (%i)\n", res); return res; }
+	res = PMPC_Comm_size(comm, &p);
+	if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_size() (%i)\n", res); return res; }
+	res = __INTERNAL__PMPI_Type_extent(datatype, &ext);
+	if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Type_extent() (%i)\n", res); return res; }
+	
+	schedule = (NBC_Schedule*)sctk_malloc(sizeof(NBC_Schedule));
+	if (NULL == schedule) { printf("Error in sctk_malloc()\n"); return NBC_OOR; }
+
+	res = NBC_Sched_create(schedule);
+	if(res != NBC_OK) { printf("Error in NBC_Sched_create (%i)\n", res); return res; }
+
+	maxr = (int)ceil((log(p)/LOG2));
+
+//	count = 0;
+//	for(r=0;r<p;r++) count += recvcount;
+	count = recvcount * p;
+
+	handle->tmpbuf = sctk_malloc(ext*count*2);
+	if(handle->tmpbuf == NULL) { printf("Error in sctk_malloc()\n"); return NBC_OOR; }
+
+	redbuf = ((char*)handle->tmpbuf)+(ext*count);
+
+	/* copy data to redbuf if we only have a single node */
+	if((p==1) && !inplace) {
+		res = NBC_Copy(sendbuf, count, datatype, redbuf, count, datatype, comm);
+		if (NBC_OK != res) { printf("Error in NBC_Copy() (%i)\n", res); return res; }
+	}
+	
+	firstred = 1;
+	for(r=1; r<=maxr; r++) {
+		if((rank % (1<<r)) == 0) {
+			/* we have to receive this round */
+			peer = rank + (1<<(r-1));
+			if(peer<p) {
+				res = NBC_Sched_recv(0, 1, count, datatype, peer, schedule);
+				if (NBC_OK != res) { sctk_free(handle->tmpbuf); printf("Error in NBC_Sched_recv() (%i)\n", res); return res; }
+				/* we have to wait until we have the data */
+				res = NBC_Sched_barrier(schedule);
+				if (NBC_OK != res) { sctk_free(handle->tmpbuf); printf("Error in NBC_Sched_barrier() (%i)\n", res); return res; }
+				if(firstred) {
+					/* take reduce data from the sendbuf in the first round -> save copy */
+					res = NBC_Sched_op(redbuf-(unsigned long)handle->tmpbuf, 1, sendbuf, 0, 0, 1, count, datatype, op, schedule);
+					firstred = 0;
+				} else {
+					/* perform the reduce in my local buffer */
+					res = NBC_Sched_op(redbuf-(unsigned long)handle->tmpbuf, 1, redbuf-(unsigned long)handle->tmpbuf, 1, 0, 1, count, datatype, op, schedule);
+				}
+				if (NBC_OK != res) { sctk_free(handle->tmpbuf); printf("Error in NBC_Sched_op() (%i)\n", res); return res; }
+				/* this cannot be done until handle->tmpbuf is unused :-( */
+				res = NBC_Sched_barrier(schedule);
+				if (NBC_OK != res) { sctk_free(handle->tmpbuf); printf("Error in NBC_Sched_barrier() (%i)\n", res); return res; }
+			}
+		} else {
+			/* we have to send this round */
+			peer = rank - (1<<(r-1));
+			if(firstred) {
+				/* we have to send the senbuf */
+				res = NBC_Sched_send(sendbuf, 0, count, datatype, peer, schedule);
+			} else {
+				/* we send an already reduced value from redbuf */
+				res = NBC_Sched_send(redbuf-(unsigned long)handle->tmpbuf, 1, count, datatype, peer, schedule);
+			}
+			if (NBC_OK != res) { sctk_free(handle->tmpbuf); printf("Error in NBC_Sched_send() (%i)\n", res); return res; }
+			/* leave the game */
+			break;
+		}
+	}
+	
+	res = NBC_Sched_barrier(schedule);
+	if (NBC_OK != res) { sctk_free(handle->tmpbuf); printf("Error in NBC_Sched_barrier() (%i)\n", res); return res; }
+
+	/* rank 0 is root and sends - all others receive */
+	if(rank != 0) {
+		res = NBC_Sched_recv(recvbuf, 0, recvcount, datatype, 0, schedule);
+	 if (NBC_OK != res) { sctk_free(handle->tmpbuf); printf("Error in NBC_Sched_recv() (%i)\n", res); return res; }
+	}
+
+	if(rank == 0) {
+		offset = 0;
+		for(r=1;r<p;r++) {
+			offset += recvcount;
+			sbuf = ((char *)redbuf) + (offset*ext);
+			/* root sends the right buffer to the right receiver */
+			res = NBC_Sched_send(sbuf-(unsigned long)handle->tmpbuf, 1, recvcount, datatype, r, schedule);
+			if (NBC_OK != res) { sctk_free(handle->tmpbuf); printf("Error in NBC_Sched_send() (%i)\n", res); return res; }
+		}
+		res = NBC_Sched_copy(redbuf-(unsigned long)handle->tmpbuf, 1, recvcount, datatype, recvbuf, 0, recvcount, datatype, schedule);
+		if (NBC_OK != res) { sctk_free(handle->tmpbuf); printf("Error in NBC_Sched_copy() (%i)\n", res); return res; }
+	}
+
+	
+	res = NBC_Sched_commit(schedule);
+	if (NBC_OK != res) { sctk_free(handle->tmpbuf); printf("Error in NBC_Sched_commit() (%i)\n", res); return res; }
+	
+	res = NBC_Start(handle, schedule);
+	if (NBC_OK != res) { sctk_free(handle->tmpbuf); printf("Error in NBC_Start() (%i)\n", res); return res; }
+	
+	/* tmpbuf is freed with the handle */
+	return NBC_OK;
+}
+
+
+
+
+/************* *
+ * NBC_ISCAN.C *
+ * *************/
+
+static int NBC_Iexscan(void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, NBC_Handle* handle) {
+	int rank, p, res;
+	MPI_Aint ext;
+	NBC_Schedule *schedule;
+	char inplace;
+	
+	NBC_IN_PLACE(sendbuf, recvbuf, inplace);
+	
+	res = NBC_Init_handle(handle, comm, MPC_IEXSCAN_TAG);
+	if(res != NBC_OK) { printf("Error in NBC_Init_handle(%i)\n", res); return res; }
+	res = PMPC_Comm_rank(comm, &rank);
+	if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_rank() (%i)\n", res); return res; }
+	res = PMPC_Comm_size(comm, &p);
+	if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_size() (%i)\n", res); return res; }
+	res = __INTERNAL__PMPI_Type_extent(datatype, &ext);
+	if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Type_extent() (%i)\n", res); return res; }
+	
+	handle->tmpbuf = sctk_malloc(ext*count);
+	if(handle->tmpbuf == NULL) { printf("Error in sctk_malloc()\n"); return NBC_OOR; }
+
+	if((rank == 0) && !inplace) {
+		/* copy data to receivebuf */
+		res = NBC_Copy(sendbuf, count, datatype, recvbuf, count, datatype, comm);
+		if (NBC_OK != res) { printf("Error in NBC_Copy() (%i)\n", res); return res; }
+	}
+
+		schedule = (NBC_Schedule*)sctk_malloc(sizeof(NBC_Schedule));
+		if (NULL == schedule) { printf("Error in sctk_malloc()\n"); return res; }
+
+		res = NBC_Sched_create(schedule);
+		if(res != NBC_OK) { printf("Error in NBC_Sched_create (%i)\n", res); return res; }
+
+		if(rank != 0) {
+			res = NBC_Sched_recv(recvbuf, 0, count, datatype, rank-1, schedule);
+			if (NBC_OK != res) { sctk_free(handle->tmpbuf); printf("Error in NBC_Sched_recv() (%i)\n", res); return res; }
+			/* we have to wait until we have the data */
+			res = NBC_Sched_barrier(schedule);
+			if (NBC_OK != res) { sctk_free(handle->tmpbuf); printf("Error in NBC_Sched_barrier() (%i)\n", res); return res; }
+			/* perform the reduce in my local buffer */
+			res = NBC_Sched_op(0, 1, sendbuf, 0, recvbuf, 0, count, datatype, op, schedule);
+			if (NBC_OK != res) { sctk_free(handle->tmpbuf); printf("Error in NBC_Sched_op() (%i)\n", res); return res; }
+			/* this cannot be done until handle->tmpbuf is unused :-( */
+			res = NBC_Sched_barrier(schedule);
+			if (NBC_OK != res) { sctk_free(handle->tmpbuf); printf("Error in NBC_Sched_barrier() (%i)\n", res); return res; }
+		}
+		if(rank != 0 && rank != p-1) {
+			res = NBC_Sched_send(0, 1, count, datatype, rank+1, schedule);
+			if (NBC_OK != res) { sctk_free(handle->tmpbuf); printf("Error in NBC_Sched_send() (%i)\n", res); return res; }
+		}
+		if(rank == 0 ) {
+			res = NBC_Sched_send(recvbuf, 0, count, datatype, rank+1, schedule);
+			if (NBC_OK != res) { sctk_free(handle->tmpbuf); printf("Error in NBC_Sched_send() (%i)\n", res); return res; }
+		}
+
+		res = NBC_Sched_commit(schedule);
+		if (NBC_OK != res) { sctk_free(handle->tmpbuf); printf("Error in NBC_Sched_commit() (%i)\n", res); return res; }
+
+	
+	res = NBC_Start(handle, schedule);
+	if (NBC_OK != res) { sctk_free(handle->tmpbuf); printf("Error in NBC_Start() (%i)\n", res); return res; }
+	
+	/* tmpbuf is freed with the handle */
+	return NBC_OK;
+}
+
+
+/********************************************************************* *
+ * The previous code was a modified version of three functions from		*
+ * the libNBC. It aimed to support the three MPI-3 Non-Blocking				*
+ * Collective functions that are not initially present in the libNBC.	*
+ * *********************************************************************/
+
+/********************************************************************* *
+ * The Following code comes from the libNBC, a library for the support *
+ * of MPI-3 Non-Blocking Collective. The code was modified to ensure   *
+ * compatibility with the MPC framework.                               *
+ * *********************************************************************/
+
+
+/******* *
+ * NBC.C *
+ * *******/
+
+/*
+ * Copyright (c) 2006 The Trustees of Indiana University and Indiana
+ *                    University Research and Technology
+ *                    Corporation.  All rights reserved.
+ * Copyright (c) 2006 The Technical University of Chemnitz. All 
+ *                    rights reserved.
+ *
+ * Author(s): Torsten Hoefler <htor@cs.indiana.edu>
+ *
+ */
+
+
+ 
+
+#ifdef HAVE_PROGRESS_THREAD
+
+void *NBC_Pthread_func( void *ptr ) {
+
+  MPI_Request req=MPI_REQUEST_NULL;
+  int tmp_recv;
+
+  while(1) {
+    int cpt = 1;
+    int size = 10;
+
+      MPI_Request * requests;
+      int * requests_locations;
+      NBC_Handle ** requests_handles;
+
+      requests = (MPI_Request *)sctk_malloc(sizeof(MPI_Request) * size);
+      requests_locations = (int *)sctk_malloc(sizeof(int) * size);
+      requests_handles = (NBC_Handle **)sctk_malloc(sizeof(NBC_Handle *) * size);
+
+
+      if(req==MPI_REQUEST_NULL) __INTERNAL__PMPI_Irecv(&tmp_recv, 1, MPI_INT, 0, 0, MPI_COMM_SELF, &req);
+      requests[0]=req;
+
+      /* re-compile list of requests */
+
+      struct sctk_task_specific_s * task_specific;
+      struct sctk_list_elem * list_handles;
+      sctk_thread_mutex_t * lock;
+      task_specific = __MPC_get_task_specific ();
+
+      lock = &(task_specific->mpc_mpi_data->list_handles_lock);
+
+      struct sctk_list_elem *iter, *elem_tmp;
+
+      NBC_Handle *tmp_handle;
+
+      sctk_thread_mutex_lock(lock);
+      list_handles = task_specific->mpc_mpi_data->NBC_Pthread_handles;
+
+      DL_FOREACH_SAFE(list_handles, iter, elem_tmp)
+      {
+        tmp_handle = iter->elem;
+        /* if the handle is not done but there are no requests, it must be
+         * a new one - start first round */
+        if(tmp_handle->req_count == 0) {
+          NBC_Start_round(tmp_handle);
+        }
+        int i; 
+        for(i=0; i<tmp_handle->req_count; i++) {
+          if(tmp_handle->req_array[i] != MPI_REQUEST_NULL) 
+          {
+            if(cpt == size)
+            {
+              size = size*2;
+              requests = (MPI_Request*)sctk_realloc(requests, sizeof(MPI_Request) * size);
+              requests_locations = (int*)sctk_realloc(requests_locations, sizeof(int) * size);
+              requests_handles = (NBC_Handle **)sctk_realloc(requests_handles, sizeof(NBC_Handle *) * size);
+            }
+            requests[cpt] = tmp_handle->req_array[i];
+            requests_locations[cpt] = i;
+            requests_handles[cpt] = tmp_handle;
+
+            cpt = cpt + 1;
+          }
+        }
+      }
+
+      sctk_thread_mutex_unlock(lock);
+
+
+    int retidx = 0;
+    //NBC_DEBUG(10, "waiting for %i elements\n", cpt);
+    int res = __INTERNAL__PMPI_Waitany(cpt, requests, &retidx, MPI_STATUS_IGNORE);
+    //NBC_DEBUG(10, "elements %d is finished", retidx);
+    if(res != MPI_SUCCESS) { printf("Error %i in MPI_Waitany()\n", res); }
+    if(0 != retidx) { // 0 is the fake request ...
+      /* mark request as finished */
+      requests_handles[retidx]->req_array[requests_locations[retidx]] = MPI_REQUEST_NULL;
+      /* progress request (finished?) */
+      NBC_Progress(requests_handles[retidx]);
+    } else {
+      req = MPI_REQUEST_NULL;
+    }
+
+		sctk_free(requests);
+		sctk_free(requests_locations);
+		sctk_free(requests_handles);
+  }
+}
+
+#endif
+
+//#define NBC_TIMING
+
+#ifdef NBC_TIMING
+static double Isend_time=0, Irecv_time=0, Wait_time=0, Test_time=0;
+void NBC_Reset_times() {
+  Isend_time=Irecv_time=Wait_time=Test_time=0;
+}
+void NBC_Print_times(double div) {
+  printf("*** NBC_TIMES: Isend: %lf, Irecv: %lf, Wait: %lf, Test: %lf\n", Isend_time*1e6/div, Irecv_time*1e6/div,	Wait_time*1e6/div, Test_time*1e6/div); fflush(stdout);
+}
+#endif
+
+
+/* allocates a new schedule array */
+static inline int NBC_Sched_create(NBC_Schedule* schedule) {
+ 
+  *schedule=sctk_malloc(2*sizeof(int));
+  if(*schedule == NULL) { return NBC_OOR; }
+  *(int*)*schedule=2*sizeof(int);
+  *(((int*)*schedule)+1)=0;
+
+  return NBC_OK;
+}
+
+/* this function puts a send into the schedule */
+static inline int NBC_Sched_send(void* buf, char tmpbuf, int count, MPI_Datatype datatype, int dest, NBC_Schedule *schedule) {
+  int size;
+  NBC_Args_send* send_args;
+ 
+  /* get size of actual schedule */
+  NBC_GET_SIZE(*schedule, size);
+  *schedule = (NBC_Schedule)sctk_realloc(*schedule, size+sizeof(NBC_Args_send)+sizeof(NBC_Fn_type));
+  if(*schedule == NULL) { printf("Error in sctk_realloc()\n"); return NBC_OOR; }
+  
+  /* adjust the function type */
+  *(NBC_Fn_type*)((char*)*schedule+size)=SEND;
+  
+  /* store the passed arguments */
+  send_args = (NBC_Args_send*)((char*)*schedule+size+sizeof(NBC_Fn_type));
+  send_args->buf=buf;
+  send_args->tmpbuf=tmpbuf;
+  send_args->count=count;
+  send_args->datatype=datatype;
+  send_args->dest=dest;
+
+  /* increase number of elements in schedule */
+  NBC_INC_NUM_ROUND(*schedule);
+  //NBC_DEBUG(10, "adding send - ends at byte %i\n", (int)(size+sizeof(NBC_Args_send)+sizeof(NBC_Fn_type)));
+
+  /* increase size of schedule */
+  NBC_INC_SIZE(*schedule, sizeof(NBC_Args_send)+sizeof(NBC_Fn_type));
+
+  return NBC_OK;
+}
+
+static inline int NBC_Sched_send_pos(int pos, void* buf, char tmpbuf, int count, MPI_Datatype datatype, int dest, NBC_Schedule *schedule) {
+  int size;
+  NBC_Args_send* send_args;
+ 
+  /* adjust the function type */
+  *(NBC_Fn_type*)((char*)*schedule+2*sizeof(int)+pos)=SEND;
+  
+  /* store the passed arguments */
+  send_args = (NBC_Args_send*)((char*)*schedule+2*sizeof(int)+pos+sizeof(NBC_Fn_type));
+  send_args->buf=buf;
+  send_args->tmpbuf=tmpbuf;
+  send_args->count=count;
+  send_args->datatype=datatype;
+  send_args->dest=dest;
+
+  return NBC_OK;
+}
+
+/* this function puts a receive into the schedule */
+static inline int NBC_Sched_recv(void* buf, char tmpbuf, int count, MPI_Datatype datatype, int source, NBC_Schedule *schedule) {
+  int size;
+  NBC_Args_recv* recv_args;
+ 
+  /* get size of actual schedule */
+  NBC_GET_SIZE(*schedule, size);
+  *schedule = (NBC_Schedule)sctk_realloc(*schedule, size+sizeof(NBC_Args_recv)+sizeof(NBC_Fn_type));
+  if(*schedule == NULL) { printf("Error in sctk_realloc()\n"); return NBC_OOR; }
+  
+  /* adjust the function type */
+  *(NBC_Fn_type*)((char*)*schedule+size)=RECV;
+
+  /* store the passed arguments */
+  recv_args=(NBC_Args_recv*)((char*)*schedule+size+sizeof(NBC_Fn_type));
+  recv_args->buf=buf;
+  recv_args->tmpbuf=tmpbuf;
+  recv_args->count=count;
+  recv_args->datatype=datatype;
+  recv_args->source=source;
+
+  /* increase number of elements in schedule */
+  NBC_INC_NUM_ROUND(*schedule);
+  //NBC_DEBUG(10, "adding receive - ends at byte %i\n", (int)(size+sizeof(NBC_Args_recv)+sizeof(NBC_Fn_type)));
+
+  /* increase size of schedule */
+  NBC_INC_SIZE(*schedule, sizeof(NBC_Args_recv)+sizeof(NBC_Fn_type));
+
+  return NBC_OK;
+}
+
+static inline int NBC_Sched_recv_pos(int pos, void* buf, char tmpbuf, int count, MPI_Datatype datatype, int source, NBC_Schedule *schedule) {
+  int size;
+  NBC_Args_recv* recv_args;
+ 
+  /* get size of actual schedule */
+//  NBC_GET_SIZE(*schedule, size);
+//  *schedule = (NBC_Schedule)sctk_realloc(*schedule, size+sizeof(NBC_Args_recv)+sizeof(NBC_Fn_type));
+//  if(*schedule == NULL) { printf("Error in sctk_realloc()\n"); return NBC_OOR; }
+  
+  /* adjust the function type */
+//  *(NBC_Fn_type*)((char*)*schedule+2*sizeof(int)+pos*(sizeof(NBC_Args_recv)+sizeof(NBC_Fn_type)))=RECV;
+  *(NBC_Fn_type*)((char*)*schedule+2*sizeof(int)+pos)=RECV;
+
+  /* store the passed arguments */
+//  recv_args=(NBC_Args_recv*)((char*)*schedule+2*sizeof(int)+pos*(sizeof(NBC_Args_recv)+sizeof(NBC_Fn_type))+sizeof(NBC_Fn_type));
+  recv_args=(NBC_Args_recv*)((char*)*schedule+2*sizeof(int)+pos+sizeof(NBC_Fn_type));
+  recv_args->buf=buf;
+  recv_args->tmpbuf=tmpbuf;
+  recv_args->count=count;
+  recv_args->datatype=datatype;
+  recv_args->source=source;
+
+  /* increase number of elements in schedule */
+//  NBC_INC_NUM_ROUND(*schedule);
+//  //NBC_DEBUG(10, "adding receive - ends at byte %i\n", (int)(size+sizeof(NBC_Args_recv)+sizeof(NBC_Fn_type)));
+
+  /* increase size of schedule */
+//  NBC_INC_SIZE(*schedule, sizeof(NBC_Args_recv)+sizeof(NBC_Fn_type));
+
+  return NBC_OK;
+}
+
+
+/* this function puts an operation into the schedule */
+static inline int NBC_Sched_op(void *buf3, char tmpbuf3, void* buf1, char tmpbuf1, void* buf2, char tmpbuf2, int count, MPI_Datatype datatype, MPI_Op op, NBC_Schedule *schedule) {
+  int size;
+  NBC_Args_op* op_args;
+  
+  /* get size of actual schedule */
+  NBC_GET_SIZE(*schedule, size);
+  *schedule = (NBC_Schedule)sctk_realloc(*schedule, size+sizeof(NBC_Args_op)+sizeof(NBC_Fn_type));
+  if(*schedule == NULL) { printf("Error in sctk_realloc()\n"); return NBC_OOR; }
+  
+  /* adjust the function type */
+  *(NBC_Fn_type*)((char*)*schedule+size)=OP;
+
+  /* store the passed arguments */
+  op_args=(NBC_Args_op*)((char*)*schedule+size+sizeof(NBC_Fn_type));
+  op_args->buf1=buf1;
+  op_args->buf2=buf2;
+  op_args->buf3=buf3;
+  op_args->tmpbuf1=tmpbuf1;
+  op_args->tmpbuf2=tmpbuf2;
+  op_args->tmpbuf3=tmpbuf3;
+  op_args->count=count;
+  op_args->op=op;
+  op_args->datatype=datatype;
+
+  /* increase number of elements in schedule */
+  NBC_INC_NUM_ROUND(*schedule);
+  //NBC_DEBUG(10, "adding op - ends at byte %i\n", (int)(size+sizeof(NBC_Args_op)+sizeof(NBC_Fn_type)));
+
+  /* increase size of schedule */
+  NBC_INC_SIZE(*schedule, sizeof(NBC_Args_op)+sizeof(NBC_Fn_type));
+  
+  return NBC_OK;
+}
+
+static inline int NBC_Sched_op_pos(int pos, void *buf3, char tmpbuf3, void* buf1, char tmpbuf1, void* buf2, char tmpbuf2, int count, MPI_Datatype datatype, MPI_Op op, NBC_Schedule *schedule) {
+  int size;
+  NBC_Args_op* op_args;
+  
+  /* get size of actual schedule */
+//  NBC_GET_SIZE(*schedule, size);
+//  *schedule = (NBC_Schedule)sctk_realloc(*schedule, size+sizeof(NBC_Args_op)+sizeof(NBC_Fn_type));
+//  if(*schedule == NULL) { printf("Error in sctk_realloc()\n"); return NBC_OOR; }
+  
+  /* adjust the function type */
+  *(NBC_Fn_type*)((char*)*schedule+2*sizeof(int)+pos)=OP;
+
+  /* store the passed arguments */
+  op_args=(NBC_Args_op*)((char*)*schedule+2*sizeof(int)+pos+sizeof(NBC_Fn_type));
+  op_args->buf1=buf1;
+  op_args->buf2=buf2;
+  op_args->buf3=buf3;
+  op_args->tmpbuf1=tmpbuf1;
+  op_args->tmpbuf2=tmpbuf2;
+  op_args->tmpbuf3=tmpbuf3;
+  op_args->count=count;
+  op_args->op=op;
+  op_args->datatype=datatype;
+
+  /* increase number of elements in schedule */
+//  NBC_INC_NUM_ROUND(*schedule);
+  //NBC_DEBUG(10, "adding op - ends at byte %i\n", (int)(size+sizeof(NBC_Args_op)+sizeof(NBC_Fn_type)));
+
+  /* increase size of schedule */
+//  NBC_INC_SIZE(*schedule, sizeof(NBC_Args_op)+sizeof(NBC_Fn_type));
+  
+  return NBC_OK;
+}
+
+
+
+/* this function puts a copy into the schedule */
+static inline int NBC_Sched_copy(void *src, char tmpsrc, int srccount, MPI_Datatype srctype, void *tgt, char tmptgt, int tgtcount, MPI_Datatype tgttype, NBC_Schedule *schedule) {
+  int size;
+  NBC_Args_copy* copy_args;
+  
+  /* get size of actual schedule */
+  NBC_GET_SIZE(*schedule, size);
+  *schedule = (NBC_Schedule)sctk_realloc(*schedule, size+sizeof(NBC_Args_copy)+sizeof(NBC_Fn_type));
+  if(*schedule == NULL) { printf("Error in sctk_realloc()\n"); return NBC_OOR; }
+  
+  /* adjust the function type */
+  *(NBC_Fn_type*)((char*)*schedule+size)=COPY;
+  
+  /* store the passed arguments */
+  copy_args = (NBC_Args_copy*)((char*)*schedule+size+sizeof(NBC_Fn_type));
+  copy_args->src=src;
+  copy_args->tmpsrc=tmpsrc;
+  copy_args->srccount=srccount;
+  copy_args->srctype=srctype;
+  copy_args->tgt=tgt;
+  copy_args->tmptgt=tmptgt;
+  copy_args->tgtcount=tgtcount;
+  copy_args->tgttype=tgttype;
+
+  /* increase number of elements in schedule */
+  NBC_INC_NUM_ROUND(*schedule);
+  //NBC_DEBUG(10, "adding copy - ends at byte %i\n", (int)(size+sizeof(NBC_Args_copy)+sizeof(NBC_Fn_type)));
+
+  /* increase size of schedule */
+  NBC_INC_SIZE(*schedule, sizeof(NBC_Args_copy)+sizeof(NBC_Fn_type));
+
+  return NBC_OK;
+}
+
+/* this function puts a unpack into the schedule */
+static inline int NBC_Sched_unpack(void *inbuf, char tmpinbuf, int count, MPI_Datatype datatype, void *outbuf, char tmpoutbuf, NBC_Schedule *schedule) {
+  int size;
+  NBC_Args_unpack* unpack_args;
+  
+  /* get size of actual schedule */
+  NBC_GET_SIZE(*schedule, size);
+  *schedule = (NBC_Schedule)sctk_realloc(*schedule, size+sizeof(NBC_Args_unpack)+sizeof(NBC_Fn_type));
+  if(*schedule == NULL) { printf("Error in sctk_realloc()\n"); return NBC_OOR; }
+  
+  /* adjust the function type */
+  *(NBC_Fn_type*)((char*)*schedule+size)=UNPACK;
+  
+  /* store the passed arguments */
+  unpack_args = (NBC_Args_unpack*)((char*)*schedule+size+sizeof(NBC_Fn_type));
+  unpack_args->inbuf=inbuf;
+  unpack_args->tmpinbuf=tmpinbuf;
+  unpack_args->count=count;
+  unpack_args->datatype=datatype;
+  unpack_args->outbuf=outbuf;
+  unpack_args->tmpoutbuf=tmpoutbuf;
+
+  /* increase number of elements in schedule */
+  NBC_INC_NUM_ROUND(*schedule);
+  //NBC_DEBUG(10, "adding unpack - ends at byte %i\n", (int)(size+sizeof(NBC_Args_unpack)+sizeof(NBC_Fn_type)));
+
+  /* increase size of schedule */
+  NBC_INC_SIZE(*schedule, sizeof(NBC_Args_unpack)+sizeof(NBC_Fn_type));
+
+  return NBC_OK;
+}
+
+/* this function ends a round of a schedule */
+static inline int NBC_Sched_barrier(NBC_Schedule *schedule) {
+  int size;
+  
+  /* get size of actual schedule */
+  NBC_GET_SIZE(*schedule, size);
+  *schedule = (NBC_Schedule)sctk_realloc(*schedule, size+sizeof(char)+sizeof(int));
+  if(*schedule == NULL) { printf("Error in sctk_realloc()\n"); return NBC_OOR; }
+  
+  /* add the barrier char (1) because another round follows */
+  *(char*)((char*)*schedule+size)=1;
+  
+  /* set round count elements = 0 for new round */
+  *(int*)((char*)*schedule+size+sizeof(char))=0;
+  //NBC_DEBUG(10, "ending round at byte %i\n", (int)(size+sizeof(char)+sizeof(int)));
+  
+  /* increase size of schedule */
+  NBC_INC_SIZE(*schedule, sizeof(char)+sizeof(int));
+
+  return NBC_OK;
+}
+
+static inline int NBC_Sched_barrier_pos(int pos, NBC_Schedule *schedule) {
+  int size;
+  
+  /* get size of actual schedule */
+//  NBC_GET_SIZE(*schedule, size);
+//  *schedule = (NBC_Schedule)sctk_realloc(*schedule, size+sizeof(char)+sizeof(int));
+//  if(*schedule == NULL) { printf("Error in sctk_realloc()\n"); return NBC_OOR; }
+  
+  /* add the barrier char (1) because another round follows */
+  *(char*)((char*)*schedule+2*sizeof(int)+pos)=1;
+  
+  /* set round count elements = 0 for new round */
+//  *(int*)((char*)*schedule+2*sizeof(int)+pos+sizeof(char))=0;
+  //NBC_DEBUG(10, "ending round at byte %i\n", (int)(size+sizeof(char)+sizeof(int)));
+  
+  /* increase size of schedule */
+//  NBC_INC_SIZE(*schedule, sizeof(char)+sizeof(int));
+
+  return NBC_OK;
+}
+
+/* this function ends a schedule */
+static inline int NBC_Sched_commit(NBC_Schedule *schedule) {
+  int size;
+ 
+  /* get size of actual schedule */
+  NBC_GET_SIZE(*schedule, size);
+  *schedule = (NBC_Schedule)sctk_realloc(*schedule, size+sizeof(char));
+  if(*schedule == NULL) { printf("Error in sctk_realloc()\n"); return NBC_OOR; }
+ 
+  /* add the barrier char (0) because this is the last round */
+  *(char*)((char*)*schedule+size)=0;
+  //NBC_DEBUG(10, "closing schedule %p at byte %i\n", *schedule, (int)(size+sizeof(char)));
+
+  /* increase size of schedule */
+  NBC_INC_SIZE(*schedule, sizeof(char));
+ 
+  return NBC_OK;
+}
+
+static inline int NBC_Sched_commit_jj(NBC_Schedule *schedule) {
+  int size;
+ 
+  /* get size of actual schedule */
+  NBC_GET_SIZE(*schedule, size);
+//  *schedule = (NBC_Schedule)sctk_realloc(*schedule, size+sizeof(char));
+//  if(*schedule == NULL) { printf("Error in sctk_realloc()\n"); return NBC_OOR; }
+ 
+  /* add the barrier char (0) because this is the last round */
+  *(char*)((char*)*schedule+size-sizeof(char))=0;
+  //NBC_DEBUG(10, "closing schedule %p at byte %i\n", *schedule, (int)(size+sizeof(char)));
+
+  /* increase size of schedule */
+//  NBC_INC_SIZE(*schedule, sizeof(char));
+ 
+  return NBC_OK;
+}
+
+
+/* finishes a request
+ *
+ * to be called *only* from the progress thread !!! */
+static inline int NBC_Free(NBC_Handle* handle) {
+  
+#ifdef HAVE_PROGRESS_THREAD 
+    struct sctk_task_specific_s * task_specific;
+    struct sctk_list_elem * list_handles;
+    sctk_thread_mutex_t * lock;
+    task_specific = __MPC_get_task_specific ();
+
+    lock = &(task_specific->mpc_mpi_data->list_handles_lock);
+
+    struct sctk_list_elem *elem_tmp;
+
+    sctk_thread_mutex_lock(lock);
+    list_handles = task_specific->mpc_mpi_data->NBC_Pthread_handles;
+ 
+    DL_SEARCH_SCALAR(list_handles, elem_tmp, elem, handle);
+    DL_DELETE(task_specific->mpc_mpi_data->NBC_Pthread_handles, elem_tmp);
+
+    sctk_thread_mutex_unlock(lock);
+
+  sctk_thread_mutex_lock(&handle->lock);
+#endif
+	  if(handle->schedule != NULL) {
+
+			if(handle->tmpbuf != NULL)
+			{
+				sctk_free((void*)(handle->tmpbuf));
+			  handle->tmpbuf = NULL;
+			}
+		 	if(handle->req_array != NULL)
+			{
+				sctk_free((void*)(handle->req_array));
+		  	handle->req_array = NULL;
+			}
+		 
+
+    /* free schedule */
+			sctk_free((void*)*(handle->schedule));
+			sctk_free((void*)handle->schedule);
+			handle->schedule = NULL;
+	  }
+#ifdef HAVE_PROGRESS_THREAD 
+  sctk_thread_mutex_unlock(&handle->lock);
+#endif
+
+  /* if the nbc_I<collective> attached some data */
+  /* problems with schedule cache here, see comment (TODO) in
+   * nbc_internal.h */
+  if(NULL != handle->tmpbuf) {
+    sctk_free((void*)handle->tmpbuf);
+    handle->tmpbuf = NULL;
+  }
+
+#ifdef HAVE_PROGRESS_THREAD 
+  if(sctk_thread_sem_post(&handle->semid) != 0) { perror("sctk_thread_sem_post()"); }
+#endif
+
+  return NBC_OK;
+}
+
+/* progresses a request
+ *
+ * to be called *only* from the progress thread !!! */
+static inline int NBC_Progress(NBC_Handle *handle) {
+  int flag, res, ret=NBC_CONTINUE;
+  long size;
+  char *delim;
+
+  /* the handle is done if there is no schedule attached */
+  if(handle->schedule != NULL) {
+
+    if((handle->req_count > 0) && (handle->req_array != NULL)) {
+			sctk_debug("INSIDE THE PROGRESS THREAD");
+      //NBC_DEBUG(50, "NBC_Progress: testing for %i requests\n", handle->req_count);
+#ifdef NBC_TIMING
+      Test_time -= MPI_Wtime();
+#endif
+//      res = __INTERNAL__PMPI_Testall(handle->req_count, handle->req_array, &flag, MPI_STATUSES_IGNORE);
+      res = __INTERNAL__PMPI_Waitall(handle->req_count, handle->req_array, /*&flag,*/ MPI_STATUSES_IGNORE);
+      if(res != MPI_SUCCESS) { printf("MPI Error in MPI_Testall() (%i)\n", res); ret=res; goto error; }
+#ifdef NBC_TIMING
+      Test_time += MPI_Wtime();
+#endif
+    }// else {
+//      flag = 1; /* we had no open requests -> proceed to next round */
+//    }
+
+    /* a round is finished */
+//    if(flag) {
+      /* adjust delim to start of current round */
+      //NBC_DEBUG(5, "NBC_Progress: going in schedule %p to row-offset: %li\n", *handle->schedule, handle->row_offset);
+      delim = (char*)*handle->schedule + handle->row_offset;
+      //NBC_DEBUG(10, "delim: %p\n", delim);
+      NBC_GET_ROUND_SIZE(delim, size);
+      //NBC_DEBUG(10, "size: %li\n", size);
+      /* adjust delim to end of current round -> delimiter */
+      delim = delim + size;
+
+      if(handle->req_array != NULL) {
+        /* free request array */
+        sctk_free((void*)handle->req_array);
+        handle->req_array = NULL;
+      }
+      handle->req_count = 0;
+
+      if(*delim == 0) {
+        /* this was the last round - we're done */
+        //NBC_DEBUG(5, "NBC_Progress last round finished - we're done\n");
+        
+        res = NBC_Free(handle);
+        if((NBC_OK != res)) { printf("Error in NBC_Free() (%i)\n", res); ret=res; goto error; }
+
+        return NBC_OK;
+      } else {
+        //NBC_DEBUG(5, "NBC_Progress round finished - goto next round\n");
+        /* move delim to start of next round */
+        delim = delim+1;
+        /* initializing handle for new virgin round */
+        handle->row_offset = (long)delim - (long)*handle->schedule;
+        /* kick it off */
+        res = NBC_Start_round(handle);
+        if(NBC_OK != res) { printf("Error in NBC_Start_round() (%i)\n", res); ret=res; goto error; }
+      }
+//    }
+  } else {
+    ret= NBC_OK;
+  }
+
+error:
+  return ret;
+}
+
+static inline int NBC_Start_round(NBC_Handle *handle) {
+  int *numptr; /* number of operations */
+  int i, res, ret=NBC_OK;
+  NBC_Fn_type *typeptr;
+  NBC_Args_send *sendargs; 
+  NBC_Args_recv *recvargs; 
+  NBC_Args_op *opargs; 
+  NBC_Args_copy *copyargs; 
+  NBC_Args_unpack *unpackargs; 
+  NBC_Schedule myschedule;
+  void *buf1, *buf2, *buf3;
+ 
+  MPI_request_struct_t * requests = __sctk_internal_get_MPC_requests();
+
+  /* get schedule address */
+  myschedule = (NBC_Schedule*)((char*)*handle->schedule + handle->row_offset);
+
+  numptr = (int*)myschedule;
+  NBC_DEBUG(10, "start_round round at address %p : posting %i operations\n", myschedule, *numptr);
+
+  /* MODIFIED BY JJ*/
+
+	int req_cpt = 0;
+	int old_req_count = handle->req_count;
+
+	typeptr = (NBC_Fn_type*)(numptr+1);
+  for (i=0; i<*numptr; i++) {
+    switch(*typeptr) {
+      case SEND:
+				req_cpt++;
+        typeptr = (NBC_Fn_type*)(((NBC_Args_send*)typeptr)+1);
+        break;
+      case RECV:
+				req_cpt ++;
+        typeptr = (NBC_Fn_type*)(((NBC_Args_recv*)typeptr)+1);
+        break;
+      case OP:
+        typeptr = (NBC_Fn_type*)((NBC_Args_op*)typeptr+1);
+        break;
+      case COPY:
+        typeptr = (NBC_Fn_type*)((NBC_Args_copy*)typeptr+1);
+        break;
+      case UNPACK:
+        typeptr = (NBC_Fn_type*)((NBC_Args_unpack*)typeptr+1);
+        break;
+      default:
+        printf("--NBC_Start_round: bad type %li at offset %li\n", (long)*typeptr, (long)typeptr-(long)myschedule);
+        ret=NBC_BAD_SCHED;
+        goto error;
+    }
+    /* increase ptr by size of fn_type enum */
+    typeptr = (NBC_Fn_type*)((NBC_Fn_type*)typeptr+1);
+  }
+
+	handle->req_count += req_cpt;
+	MPI_Request * tmp_reqs = handle->req_array; 
+  handle->req_array = (MPI_Request*)sctk_malloc((handle->req_count)*sizeof(MPI_Request));
+	for(i=0; i<old_req_count; i++)
+	{
+		handle->req_array[i] = tmp_reqs[i]; 
+	}
+	sctk_free(tmp_reqs);
+	
+
+	req_cpt = 0;
+
+  /* typeptr is increased by sizeof(int) bytes to point to type */
+  typeptr = (NBC_Fn_type*)(numptr+1);
+  for (i=0; i<*numptr; i++) {
+    /* go sizeof op-data forward */
+    switch(*typeptr) {
+      case SEND:
+        //NBC_DEBUG(5,"  SEND (offset %li) ", (long)typeptr-(long)myschedule);
+        sendargs = (NBC_Args_send*)(typeptr+1);
+        //NBC_DEBUG(5,"*buf: %p, count: %i, type: %lu, dest: %i, tag: %i)\n", sendargs->buf, sendargs->count, (unsigned long)sendargs->datatype, sendargs->dest, handle->tag);
+        typeptr = (NBC_Fn_type*)(((NBC_Args_send*)typeptr)+1);
+        /* get an additional request */
+        //handle->req_count++;
+				req_cpt ++;
+        /* get buffer */
+        if(sendargs->tmpbuf) 
+          buf1=(char*)handle->tmpbuf+(long)sendargs->buf;
+        else
+          buf1=sendargs->buf;
+#ifdef NBC_TIMING
+    Isend_time -= MPI_Wtime();
+#endif
+//        handle->req_array = (MPI_Request*)sctk_realloc((void*)handle->req_array, (handle->req_count)*sizeof(MPI_Request));
+        NBC_CHECK_NULL(handle->req_array);
+//        printf("req->array = %p, req->count = %d  ---- request pointer is %p \n", handle->req_array, handle->req_count, (MPI_Request*)handle->req_array+handle->req_count-1);
+//        res = __INTERNAL__PMPI_Isend(buf1, sendargs->count, sendargs->datatype, sendargs->dest, handle->tag, handle->mycomm, handle->req_array+(old_req_count+req_cpt-1));
+        res = PMPC_Isend(buf1, sendargs->count, sendargs->datatype, sendargs->dest, handle->tag, handle->mycomm, __sctk_new_mpc_request (handle->req_array+(old_req_count+req_cpt-1), requests));
+        if(MPI_SUCCESS != res) { printf("Error in MPI_Isend(%lu, %i, %lu, %i, %i, %lu) (%i)\n", (unsigned long)buf1, sendargs->count, (unsigned long)sendargs->datatype, sendargs->dest, handle->tag, (unsigned long)handle->mycomm, res); ret=res; goto error; }
+#ifdef NBC_TIMING
+    Isend_time += MPI_Wtime();
+#endif
+        break;
+      case RECV:
+        //NBC_DEBUG(5, "  RECV (offset %li) ", (long)typeptr-(long)myschedule);
+        recvargs = (NBC_Args_recv*)(typeptr+1);
+        //NBC_DEBUG(5, "*buf: %p, count: %i, type: %lu, source: %i, tag: %i)\n", recvargs->buf, recvargs->count, (unsigned long)recvargs->datatype, recvargs->source, handle->tag);
+        typeptr = (NBC_Fn_type*)(((NBC_Args_recv*)typeptr)+1);
+        /* get an additional request - TODO: req_count NOT thread safe */
+        //handle->req_count++;
+				req_cpt ++;
+        /* get buffer */
+        if(recvargs->tmpbuf) {
+          buf1=(char*)handle->tmpbuf+(long)recvargs->buf;
+        } else {
+          buf1=recvargs->buf;
+        }
+#ifdef NBC_TIMING
+    Irecv_time -= MPI_Wtime();
+#endif
+//        handle->req_array = (MPI_Request*)sctk_realloc((void*)handle->req_array, (handle->req_count)*sizeof(MPI_Request));
+        NBC_CHECK_NULL(handle->req_array);
+//        res = __INTERNAL__PMPI_Irecv(buf1, recvargs->count, recvargs->datatype, recvargs->source, handle->tag, handle->mycomm, handle->req_array+(old_req_count+req_cpt-1));
+        res = PMPC_Irecv(buf1, recvargs->count, recvargs->datatype, recvargs->source, handle->tag, handle->mycomm, __sctk_new_mpc_request (handle->req_array+(old_req_count+req_cpt-1), requests));
+        if(MPI_SUCCESS != res) { printf("Error in MPI_Irecv(%lu, %i, %lu, %i, %i, %lu) (%i)\n", (unsigned long)buf1, recvargs->count, (unsigned long)recvargs->datatype, recvargs->source, handle->tag, (unsigned long)handle->mycomm, res); ret=res; goto error; }
+#ifdef NBC_TIMING
+    Irecv_time += MPI_Wtime();
+#endif
+        break;
+      case OP:
+        //NBC_DEBUG(5, "  OP   (offset %li) ", (long)typeptr-(long)myschedule);
+        opargs = (NBC_Args_op*)(typeptr+1);
+        //NBC_DEBUG(5, "*buf1: %p, buf2: %p, count: %i, type: %lu)\n", opargs->buf1, opargs->buf2, opargs->count, (unsigned long)opargs->datatype);
+        typeptr = (NBC_Fn_type*)((NBC_Args_op*)typeptr+1);
+        /* get buffers */
+        if(opargs->tmpbuf1) 
+          buf1=(char*)handle->tmpbuf+(long)opargs->buf1;
+        else
+          buf1=opargs->buf1;
+        if(opargs->tmpbuf2) 
+          buf2=(char*)handle->tmpbuf+(long)opargs->buf2;
+        else
+          buf2=opargs->buf2;
+        if(opargs->tmpbuf3) 
+          buf3=(char*)handle->tmpbuf+(long)opargs->buf3;
+        else
+          buf3=opargs->buf3;
+        res = NBC_Operation(buf3, buf1, buf2, opargs->op, opargs->datatype, opargs->count);
+        if(res != NBC_OK) { printf("NBC_Operation() failed (code: %i)\n", res); ret=res; goto error; }
+        break;
+      case COPY:
+        //NBC_DEBUG(5, "  COPY   (offset %li) ", (long)typeptr-(long)myschedule);
+        copyargs = (NBC_Args_copy*)(typeptr+1);
+        //NBC_DEBUG(5, "*src: %lu, srccount: %i, srctype: %lu, *tgt: %lu, tgtcount: %i, tgttype: %lu)\n", (unsigned long)copyargs->src, copyargs->srccount, (unsigned long)copyargs->srctype, (unsigned long)copyargs->tgt, copyargs->tgtcount, (unsigned long)copyargs->tgttype);
+        typeptr = (NBC_Fn_type*)((NBC_Args_copy*)typeptr+1);
+        /* get buffers */
+        if(copyargs->tmpsrc) 
+          buf1=(char*)handle->tmpbuf+(long)copyargs->src;
+        else
+          buf1=copyargs->src;
+        if(copyargs->tmptgt) 
+          buf2=(char*)handle->tmpbuf+(long)copyargs->tgt;
+        else
+          buf2=copyargs->tgt;
+        res = NBC_Copy(buf1, copyargs->srccount, copyargs->srctype, buf2, copyargs->tgtcount, copyargs->tgttype, handle->mycomm);
+        if(res != NBC_OK) { printf("NBC_Copy() failed (code: %i)\n", res); ret=res; goto error; }
+        break;
+      case UNPACK:
+        //NBC_DEBUG(5, "  UNPACK   (offset %li) ", (long)typeptr-(long)myschedule);
+        unpackargs = (NBC_Args_unpack*)(typeptr+1);
+        //NBC_DEBUG(5, "*src: %lu, srccount: %i, srctype: %lu, *tgt: %lu\n", (unsigned long)unpackargs->inbuf, unpackargs->count, (unsigned long)unpackargs->datatype, (unsigned long)unpackargs->outbuf);
+        typeptr = (NBC_Fn_type*)((NBC_Args_unpack*)typeptr+1);
+        /* get buffers */
+        if(unpackargs->tmpinbuf) 
+          buf1=(char*)handle->tmpbuf+(long)unpackargs->inbuf;
+        else
+          buf1=unpackargs->outbuf;
+        if(unpackargs->tmpoutbuf) 
+          buf2=(char*)handle->tmpbuf+(long)unpackargs->outbuf;
+        else
+          buf2=unpackargs->outbuf;
+        res = NBC_Unpack(buf1, unpackargs->count, unpackargs->datatype, buf2, handle->mycomm);
+        if(res != NBC_OK) { printf("NBC_Unpack() failed (code: %i)\n", res); ret=res; goto error; }
+        break;
+      default:
+        printf("NBC_Start_round: bad type %li at offset %li\n", (long)*typeptr, (long)typeptr-(long)myschedule);
+        ret=NBC_BAD_SCHED;
+        goto error;
+    }
+    /* increase ptr by size of fn_type enum */
+    typeptr = (NBC_Fn_type*)((NBC_Fn_type*)typeptr+1);
+  }
+
+
+  /* check if we can make progress - not in the first round, this allows us to leave the
+   * initialization faster and to reach more overlap 
+   *
+   * threaded case: calling progress in the first round can lead to a
+   * deadlock if NBC_Free is called in this round :-( */
+  if(handle->row_offset != sizeof(int)) {
+    res = NBC_Progress(handle);
+    if((NBC_OK != res) && (NBC_CONTINUE != res)) { printf("Error in NBC_Progress() (%i)\n", res); ret=res; goto error; }
+  }
+
+error:
+  return ret;
+}
+
+
+static inline int NBC_Initialize() {
+#ifdef HAVE_PROGRESS_THREAD 
+  struct sctk_task_specific_s * task_specific;
+  task_specific = __MPC_get_task_specific ();
+
+#ifdef HAVE_RT_THREAD 
+  sctk_thread_attr_t attr;
+  struct sched_param param;
+  param.sched_priority = 90;
+  pthread_attr_init(&attr);
+  pthread_attr_setinheritsched(&attr, PTHREAD_EXPLICIT_SCHED);
+  pthread_attr_setschedparam(&attr, &param);
+  pthread_attr_setschedpolicy(&attr, SCHED_FIFO);
+
+  /* spawn the polling thread */
+  int ret = sctk_user_thread_create( &NBC_thread, &attr, NBC_Pthread_func, NULL);
+#else
+  int ret = sctk_user_thread_create( &(task_specific->mpc_mpi_data->NBC_Pthread), NULL, NBC_Pthread_func, NULL);
+#endif
+  if(0 != ret) { printf("Error in sctk_user_thread_create() (%i)\n", ret); return NBC_OOR; }
+
+#ifdef HAVE_RT_THREAD 
+  pthread_attr_destroy(&attr);
+#endif
+  
+   task_specific->mpc_mpi_data->nbc_initialized_per_task = 1;
+#endif
+
+  return NBC_OK;
+}
+
+static inline int NBC_Init_handle(NBC_Handle *handle, MPI_Comm comm, int tag) {
+  int res;
+
+#ifdef HAVE_PROGRESS_THREAD // right now, we need this only if we need to start a progress thread
+  struct sctk_task_specific_s * task_specific;
+  task_specific = __MPC_get_task_specific ();
+
+  sctk_thread_mutex_t *lock = &(task_specific->mpc_mpi_data->nbc_initializer_lock);
+  sctk_thread_mutex_lock(lock);
+  if(task_specific->mpc_mpi_data->nbc_initialized_per_task != 1) {
+    res = NBC_Initialize();
+    if(res != NBC_OK) 
+    {
+      sctk_thread_mutex_unlock(lock);
+      return res;
+    }
+  }
+  sctk_thread_mutex_unlock(lock);
+
+  /* init locks */
+  sctk_thread_mutex_init(&handle->lock, NULL);
+  /* init semaphore */
+  if(sctk_thread_sem_init(&handle->semid, 0, 0) != 0) { perror("sctk_thread_sem_init()"); }
+
+#endif
+
+  handle->tmpbuf = NULL;
+  handle->req_count = 0;
+  handle->req_array = NULL;
+  handle->comm = comm;
+  handle->schedule = NULL;
+  /* first int is the schedule size */
+  handle->row_offset = sizeof(int);
+
+  handle->tag=tag;
+	handle->mycomm = comm;
+
+  return NBC_OK;
+}
+
+
+static inline int NBC_Start(NBC_Handle *handle, NBC_Schedule *schedule) {
+  int res;
+  int tmp_send = 0;
+
+  handle->schedule = schedule;
+
+#ifdef HAVE_PROGRESS_THREAD 
+  /* add handle to open handles - and give the control to the progress
+   * thread - the handle must not be touched by the user thread from now
+   * on !!! */
+
+
+
+    struct sctk_task_specific_s * task_specific;
+    struct sctk_list_elem * list_handles;
+    sctk_thread_mutex_t *lock;
+    task_specific = __MPC_get_task_specific ();
+
+    lock = &(task_specific->mpc_mpi_data->list_handles_lock);
+
+    struct sctk_list_elem *elem_tmp;
+
+
+
+    elem_tmp=sctk_malloc(sizeof(struct sctk_list_elem));
+    elem_tmp->elem = handle;
+
+    sctk_thread_mutex_lock(lock);
+    list_handles = task_specific->mpc_mpi_data->NBC_Pthread_handles;
+
+    DL_APPEND(task_specific->mpc_mpi_data->NBC_Pthread_handles, elem_tmp);
+
+    sctk_thread_mutex_unlock(lock);
+		
+	sctk_thread_wait_for_value_and_poll(&(task_specific->mpc_mpi_data->nbc_initialized_per_task), 1, NULL, NULL);
+  /* wake progress thread up */
+
+//	while(!task_specific->mpc_mpi_data->nbc_initialized_per_task);
+
+  PMPC_Send(&tmp_send, 1, MPI_INT, 0, 0, MPI_COMM_SELF);
+#else
+    //NBC_DEBUG(10,"NBC_Start - In else of ifdef HAVE_PROGRESS_THREAD\n");
+  /* kick off first round */
+  res = NBC_Start_round(handle);
+  if((NBC_OK != res)) { printf("Error in NBC_Start_round() (%i)\n", res); return res; }
+#endif
+
+  return NBC_OK;
+}
+
+
+int NBC_Wait(NBC_Handle *handle, MPI_Status *status) {
+ 
+
+
+  //NBC_DEBUG(3, "Testing the handle \n"); fflush(stdout);
+
+
+#ifdef HAVE_PROGRESS_THREAD
+  sctk_thread_mutex_lock(&handle->lock);
+#endif
+  if(handle->schedule == NULL) {
+#ifdef HAVE_PROGRESS_THREAD 
+    sctk_thread_mutex_unlock(&handle->lock);
+#endif
+    return NBC_OK;
+  }
+#ifdef HAVE_PROGRESS_THREAD 
+  sctk_thread_mutex_unlock(&handle->lock);
+#endif
+  //NBC_DEBUG(3, "Progression \n");
+
+#ifdef HAVE_PROGRESS_THREAD 
+  /* wait on semaphore */
+	int szcomm;
+	MPI_Comm_size(handle->mycomm, &szcomm);
+	if(szcomm == 1) sctk_thread_sem_post(&handle->semid);
+  //NBC_DEBUG(3, "sem_wait : %d\n", handle->semid);
+  if(sctk_thread_sem_wait(&handle->semid) != 0) { perror("sctk_thread_sem_wait()"); }
+  //NBC_DEBUG(3, "sem_destroy : %d\n", handle->semid);
+  if(sctk_thread_sem_destroy(&handle->semid) != 0) { perror("sctk_thread_sem_destroy()"); }
+#else
+  /* poll */
+  while(NBC_OK != NBC_Progress(handle));
+#endif    
+
+  //NBC_DEBUG(3, "finished request with tag %i\n", handle->tag); fflush(stdout);
+  
+  return NBC_OK;
+}
+
+
+
+/******************* *
+ * NBC_OP.C *
+ * *******************/
+
+/*
+ * Copyright (c) 2006 The Trustees of Indiana University and Indiana
+ *                    University Research and Technology
+ *                    Corporation.  All rights reserved.
+ * Copyright (c) 2006 The Technical University of Chemnitz. All 
+ *                    rights reserved.
+ *
+ * Author(s): Torsten Hoefler <htor@cs.indiana.edu>
+ *
+ */
+
+static inline int NBC_Operation(void *buf3, void *buf1, void *buf2, MPI_Op op, MPI_Datatype type, int count) {
+  int i;
+     
+  if(type == MPI_INT) { 
+    if(op == MPI_MIN) {
+      for(i=0; i<count; i++) {
+        if(*(((int*)buf1) + i) > *(((int*)buf2) + i)) *(((int*)buf3) + i) = *(((int*)buf2) + i); else *(((int*)buf3) + i) = *(((int*)buf1) + i); 
+      }
+    } else if(op == MPI_MAX) {
+      for(i=0; i<count; i++) {
+        if(*(((int*)buf1) + i) < *(((int*)buf2) + i)) *(((int*)buf3) + i) = *(((int*)buf2) + i); else *(((int*)buf3) + i) = *(((int*)buf1) + i); 
+      }
+    } else if(op == MPI_SUM) {
+      for(i=0; i<count; i++) {
+        *(((int*)buf3) + i) = *(((int*)buf1) + i) + *(((int*)buf2) + i); 
+      }
+    } else if(op == MPI_PROD) {
+      for(i=0; i<count; i++) {
+        *(((int*)buf3) + i) = *(((int*)buf1) + i) * *(((int*)buf2) + i); 
+      }
+    } else if(op == MPI_LAND) {
+      for(i=0; i<count; i++) {
+        *(((int*)buf3) + i) = *(((int*)buf1) + i) && *(((int*)buf2) + i); 
+      }
+    } else if(op == MPI_BAND) {
+      for(i=0; i<count; i++) {
+        *(((int*)buf3) + i) = *(((int*)buf1) + i) & *(((int*)buf2) + i); 
+      }
+    } else if(op == MPI_LOR) {
+      for(i=0; i<count; i++) {
+        *(((int*)buf3) + i) = *(((int*)buf1) + i) || *(((int*)buf2) + i); 
+      }
+    } else if(op == MPI_BOR) {
+      for(i=0; i<count; i++) {
+        *(((int*)buf3) + i) = *(((int*)buf1) + i) | *(((int*)buf2) + i); 
+      }
+    } else if(op == MPI_LXOR) {
+      for(i=0; i<count; i++) {
+        *(((int*)buf3) + i) = ((*(((int*)buf1) + i) ? 1 : 0) ^ (*(((int*)buf2) + i) ?  1 : 0)); 
+      }
+    } else if(op == MPI_BXOR) {
+      for(i=0; i<count; i++) {
+        *(((int*)buf3) + i) = ((*(((int*)buf1) + i)) ^ (*(((int*)buf2) + i))); 
+      }
+    } else return NBC_OP_NOT_SUPPORTED; 
+  } else if(type == MPI_LONG) { 
+    if(op == MPI_MIN) {
+      for(i=0; i<count; i++) {
+        if(*(((long*)buf1) + i) > *(((long*)buf2) + i)) *(((long*)buf3) + i) = *(((long*)buf2) + i); else *(((long*)buf3) + i) = *(((long*)buf1) + i); 
+      }
+    } else if(op == MPI_MAX) {
+      for(i=0; i<count; i++) {
+        if(*(((long*)buf1) + i) < *(((long*)buf2) + i)) *(((long*)buf3) + i) = *(((long*)buf2) + i); else *(((long*)buf3) + i) = *(((long*)buf1) + i); 
+      }
+    } else if(op == MPI_SUM) {
+      for(i=0; i<count; i++) {
+        *(((long*)buf3) + i) = *(((long*)buf1) + i) + *(((long*)buf2) + i); 
+      }
+    } else if(op == MPI_PROD) {
+      for(i=0; i<count; i++) {
+        *(((long*)buf3) + i) = *(((long*)buf1) + i) * *(((long*)buf2) + i); 
+      }
+    } else if(op == MPI_LAND) {
+      for(i=0; i<count; i++) {
+        *(((long*)buf3) + i) = *(((long*)buf1) + i) && *(((long*)buf2) + i); 
+      }
+    } else if(op == MPI_BAND) {
+      for(i=0; i<count; i++) {
+        *(((long*)buf3) + i) = *(((long*)buf1) + i) & *(((long*)buf2) + i); 
+      }
+    } else if(op == MPI_LOR) {
+      for(i=0; i<count; i++) {
+        *(((long*)buf3) + i) = *(((long*)buf1) + i) || *(((long*)buf2) + i); 
+      }
+    } else if(op == MPI_BOR) {
+      for(i=0; i<count; i++) {
+        *(((long*)buf3) + i) = *(((long*)buf1) + i) | *(((long*)buf2) + i); 
+      }
+    } else if(op == MPI_LXOR) {
+      for(i=0; i<count; i++) {
+        *(((long*)buf3) + i) = ((*(((long*)buf1) + i) ? 1 : 0) ^ (*(((long*)buf2) + i) ?  1 : 0)); 
+      }
+    } else if(op == MPI_BXOR) {
+      for(i=0; i<count; i++) {
+        *(((long*)buf3) + i) = ((*(((long*)buf1) + i)) ^ (*(((long*)buf2) + i))); 
+      }
+    } else return NBC_OP_NOT_SUPPORTED; 
+  } else if(type == MPI_SHORT) { 
+    if(op == MPI_MIN) {
+      for(i=0; i<count; i++) {
+        if(*(((short*)buf1) + i) > *(((short*)buf2) + i)) *(((short*)buf3) + i) = *(((short*)buf2) + i); else *(((short*)buf3) + i) = *(((short*)buf1) + i); 
+      }
+    } else if(op == MPI_MAX) {
+      for(i=0; i<count; i++) {
+        if(*(((short*)buf1) + i) < *(((short*)buf2) + i)) *(((short*)buf3) + i) = *(((short*)buf2) + i); else *(((short*)buf3) + i) = *(((short*)buf1) + i); 
+      }
+    } else if(op == MPI_SUM) {
+      for(i=0; i<count; i++) {
+        *(((short*)buf3) + i) = *(((short*)buf1) + i) + *(((short*)buf2) + i); 
+      }
+    } else if(op == MPI_PROD) {
+      for(i=0; i<count; i++) {
+        *(((short*)buf3) + i) = *(((short*)buf1) + i) * *(((short*)buf2) + i); 
+      }
+    } else if(op == MPI_LAND) {
+      for(i=0; i<count; i++) {
+        *(((short*)buf3) + i) = *(((short*)buf1) + i) && *(((short*)buf2) + i); 
+      }
+    } else if(op == MPI_BAND) {
+      for(i=0; i<count; i++) {
+        *(((short*)buf3) + i) = *(((short*)buf1) + i) & *(((short*)buf2) + i); 
+      }
+    } else if(op == MPI_LOR) {
+      for(i=0; i<count; i++) {
+        *(((short*)buf3) + i) = *(((short*)buf1) + i) || *(((short*)buf2) + i); 
+      }
+    } else if(op == MPI_BOR) {
+      for(i=0; i<count; i++) {
+        *(((short*)buf3) + i) = *(((short*)buf1) + i) | *(((short*)buf2) + i); 
+      }
+    } else if(op == MPI_LXOR) {
+      for(i=0; i<count; i++) {
+        *(((short*)buf3) + i) = ((*(((short*)buf1) + i) ? 1 : 0) ^ (*(((short*)buf2) + i) ?  1 : 0)); 
+      }
+    } else if(op == MPI_BXOR) {
+      for(i=0; i<count; i++) {
+        *(((short*)buf3) + i) = ((*(((short*)buf1) + i)) ^ (*(((short*)buf2) + i))); 
+      }
+    } else return NBC_OP_NOT_SUPPORTED; 
+  } else if(type == MPI_UNSIGNED) { 
+    if(op == MPI_MIN) {
+      for(i=0; i<count; i++) {
+        if(*(((unsigned int*)buf1) + i) > *(((unsigned int*)buf2) + i)) *(((unsigned int*)buf3) + i) = *(((unsigned int*)buf2) + i); else *(((unsigned int*)buf3) + i) = *(((unsigned int*)buf1) + i); 
+      }
+    } else if(op == MPI_MAX) {
+      for(i=0; i<count; i++) {
+        if(*(((unsigned int*)buf1) + i) < *(((unsigned int*)buf2) + i)) *(((unsigned int*)buf3) + i) = *(((unsigned int*)buf2) + i); else *(((unsigned int*)buf3) + i) = *(((unsigned int*)buf1) + i); 
+      }
+    } else if(op == MPI_SUM) {
+      for(i=0; i<count; i++) {
+        *(((unsigned int*)buf3) + i) = *(((unsigned int*)buf1) + i) + *(((unsigned int*)buf2) + i); 
+      }
+    } else if(op == MPI_PROD) {
+      for(i=0; i<count; i++) {
+        *(((unsigned int*)buf3) + i) = *(((unsigned int*)buf1) + i) * *(((unsigned int*)buf2) + i); 
+      }
+    } else if(op == MPI_LAND) {
+      for(i=0; i<count; i++) {
+        *(((unsigned int*)buf3) + i) = *(((unsigned int*)buf1) + i) && *(((unsigned int*)buf2) + i); 
+      }
+    } else if(op == MPI_BAND) {
+      for(i=0; i<count; i++) {
+        *(((unsigned int*)buf3) + i) = *(((unsigned int*)buf1) + i) & *(((unsigned int*)buf2) + i); 
+      }
+    } else if(op == MPI_LOR) {
+      for(i=0; i<count; i++) {
+        *(((unsigned int*)buf3) + i) = *(((unsigned int*)buf1) + i) || *(((unsigned int*)buf2) + i); 
+      }
+    } else if(op == MPI_BOR) {
+      for(i=0; i<count; i++) {
+        *(((unsigned int*)buf3) + i) = *(((unsigned int*)buf1) + i) | *(((unsigned int*)buf2) + i); 
+      }
+    } else if(op == MPI_LXOR) {
+      for(i=0; i<count; i++) {
+        *(((unsigned int*)buf3) + i) = ((*(((unsigned int*)buf1) + i) ? 1 : 0) ^ (*(((unsigned int*)buf2) + i) ?  1 : 0)); 
+      }
+    } else if(op == MPI_BXOR) {
+      for(i=0; i<count; i++) {
+        *(((unsigned int*)buf3) + i) = ((*(((unsigned int*)buf1) + i)) ^ (*(((unsigned int*)buf2) + i))); 
+      }
+    } else return NBC_OP_NOT_SUPPORTED; 
+  } else if(type == MPI_UNSIGNED_LONG) { 
+    if(op == MPI_MIN) {
+      for(i=0; i<count; i++) {
+        if(*(((unsigned long*)buf1) + i) > *(((unsigned long*)buf2) + i)) *(((unsigned long*)buf3) + i) = *(((unsigned long*)buf2) + i); else *(((unsigned long*)buf3) + i) = *(((unsigned long*)buf1) + i); 
+      }
+    } else if(op == MPI_MAX) {
+      for(i=0; i<count; i++) {
+        if(*(((unsigned long*)buf1) + i) < *(((unsigned long*)buf2) + i)) *(((unsigned long*)buf3) + i) = *(((unsigned long*)buf2) + i); else *(((unsigned long*)buf3) + i) = *(((unsigned long*)buf1) + i); 
+      }
+    } else if(op == MPI_SUM) {
+      for(i=0; i<count; i++) {
+        *(((unsigned long*)buf3) + i) = *(((unsigned long*)buf1) + i) + *(((unsigned long*)buf2) + i); 
+      }
+    } else if(op == MPI_PROD) {
+      for(i=0; i<count; i++) {
+        *(((unsigned long*)buf3) + i) = *(((unsigned long*)buf1) + i) * *(((unsigned long*)buf2) + i); 
+      }
+    } else if(op == MPI_LAND) {
+      for(i=0; i<count; i++) {
+        *(((unsigned long*)buf3) + i) = *(((unsigned long*)buf1) + i) && *(((unsigned long*)buf2) + i); 
+      }
+    } else if(op == MPI_BAND) {
+      for(i=0; i<count; i++) {
+        *(((unsigned long*)buf3) + i) = *(((unsigned long*)buf1) + i) & *(((unsigned long*)buf2) + i); 
+      }
+    } else if(op == MPI_LOR) {
+      for(i=0; i<count; i++) {
+        *(((unsigned long*)buf3) + i) = *(((unsigned long*)buf1) + i) || *(((unsigned long*)buf2) + i); 
+      }
+    } else if(op == MPI_BOR) {
+      for(i=0; i<count; i++) {
+        *(((unsigned long*)buf3) + i) = *(((unsigned long*)buf1) + i) | *(((unsigned long*)buf2) + i); 
+      }
+    } else if(op == MPI_LXOR) {
+      for(i=0; i<count; i++) {
+        *(((unsigned long*)buf3) + i) = ((*(((unsigned long*)buf1) + i) ? 1 : 0) ^ (*(((unsigned long*)buf2) + i) ?  1 : 0)); 
+      }
+    } else if(op == MPI_BXOR) {
+      for(i=0; i<count; i++) {
+        *(((unsigned long*)buf3) + i) = ((*(((unsigned long*)buf1) + i)) ^ (*(((unsigned long*)buf2) + i))); 
+      }
+    } else return NBC_OP_NOT_SUPPORTED; 
+  } else if(type == MPI_UNSIGNED_SHORT) { 
+    if(op == MPI_MIN) {
+      for(i=0; i<count; i++) {
+        if(*(((unsigned short*)buf1) + i) > *(((unsigned short*)buf2) + i)) *(((unsigned short*)buf3) + i) = *(((unsigned short*)buf2) + i); else *(((unsigned short*)buf3) + i) = *(((unsigned short*)buf1) + i); 
+      }
+    } else if(op == MPI_MAX) {
+      for(i=0; i<count; i++) {
+        if(*(((unsigned short*)buf1) + i) < *(((unsigned short*)buf2) + i)) *(((unsigned short*)buf3) + i) = *(((unsigned short*)buf2) + i); else *(((unsigned short*)buf3) + i) = *(((unsigned short*)buf1) + i); 
+      }
+    } else if(op == MPI_SUM) {
+      for(i=0; i<count; i++) {
+        *(((unsigned short*)buf3) + i) = *(((unsigned short*)buf1) + i) + *(((unsigned short*)buf2) + i); 
+      }
+    } else if(op == MPI_PROD) {
+      for(i=0; i<count; i++) {
+        *(((unsigned short*)buf3) + i) = *(((unsigned short*)buf1) + i) * *(((unsigned short*)buf2) + i); 
+      }
+    } else if(op == MPI_LAND) {
+      for(i=0; i<count; i++) {
+        *(((unsigned short*)buf3) + i) = *(((unsigned short*)buf1) + i) && *(((unsigned short*)buf2) + i); 
+      }
+    } else if(op == MPI_BAND) {
+      for(i=0; i<count; i++) {
+        *(((unsigned short*)buf3) + i) = *(((unsigned short*)buf1) + i) & *(((unsigned short*)buf2) + i); 
+      }
+    } else if(op == MPI_LOR) {
+      for(i=0; i<count; i++) {
+        *(((unsigned short*)buf3) + i) = *(((unsigned short*)buf1) + i) || *(((unsigned short*)buf2) + i); 
+      }
+    } else if(op == MPI_BOR) {
+      for(i=0; i<count; i++) {
+        *(((unsigned short*)buf3) + i) = *(((unsigned short*)buf1) + i) | *(((unsigned short*)buf2) + i); 
+      }
+    } else if(op == MPI_LXOR) {
+      for(i=0; i<count; i++) {
+        *(((unsigned short*)buf3) + i) = ((*(((unsigned short*)buf1) + i) ? 1 : 0) ^ (*(((unsigned short*)buf2) + i) ?  1 : 0)); 
+      }
+    } else if(op == MPI_BXOR) {
+      for(i=0; i<count; i++) {
+        *(((unsigned short*)buf3) + i) = ((*(((unsigned short*)buf1) + i)) ^ (*(((unsigned short*)buf2) + i))); 
+      }
+    } else return NBC_OP_NOT_SUPPORTED; 
+  } else if(type == MPI_FLOAT) { 
+    if(op == MPI_MIN) {
+      for(i=0; i<count; i++) {
+        if(*(((float*)buf1) + i) > *(((float*)buf2) + i)) *(((float*)buf3) + i) = *(((float*)buf2) + i); else *(((float*)buf3) + i) = *(((float*)buf1) + i); 
+      }
+    } else if(op == MPI_MAX) {
+      for(i=0; i<count; i++) {
+        if(*(((float*)buf1) + i) < *(((float*)buf2) + i)) *(((float*)buf3) + i) = *(((float*)buf2) + i); else *(((float*)buf3) + i) = *(((float*)buf1) + i); 
+      }
+    } else if(op == MPI_SUM) {
+      for(i=0; i<count; i++) {
+        *(((float*)buf3) + i) = *(((float*)buf1) + i) + *(((float*)buf2) + i); 
+      }
+    } else if(op == MPI_PROD) {
+      for(i=0; i<count; i++) {
+        *(((float*)buf3) + i) = *(((float*)buf1) + i) * *(((float*)buf2) + i); 
+      }
+    } else return NBC_OP_NOT_SUPPORTED; 
+  } else if(type == MPI_DOUBLE) { 
+    if(op == MPI_MIN) {
+      for(i=0; i<count; i++) {
+        if(*(((double*)buf1) + i) > *(((double*)buf2) + i)) *(((double*)buf3) + i) = *(((double*)buf2) + i); else *(((double*)buf3) + i) = *(((double*)buf1) + i); 
+      }
+    } else if(op == MPI_MAX) {
+      for(i=0; i<count; i++) {
+        if(*(((double*)buf1) + i) < *(((double*)buf2) + i)) *(((double*)buf3) + i) = *(((double*)buf2) + i); else *(((double*)buf3) + i) = *(((double*)buf1) + i); 
+      }
+    } else if(op == MPI_SUM) {
+      for(i=0; i<count; i++) {
+        *(((double*)buf3) + i) = *(((double*)buf1) + i) + *(((double*)buf2) + i); 
+      }
+    } else if(op == MPI_PROD) {
+      for(i=0; i<count; i++) {
+        *(((double*)buf3) + i) = *(((double*)buf1) + i) * *(((double*)buf2) + i); 
+      }
+    } else return NBC_OP_NOT_SUPPORTED; 
+  } else if(type == MPI_LONG_DOUBLE) { 
+    if(op == MPI_MIN) {
+      for(i=0; i<count; i++) {
+        if(*(((long double*)buf1) + i) > *(((long double*)buf2) + i)) *(((long double*)buf3) + i) = *(((long double*)buf2) + i); else *(((long double*)buf3) + i) = *(((long double*)buf1) + i); 
+      }
+    } else if(op == MPI_MAX) {
+      for(i=0; i<count; i++) {
+        if(*(((long double*)buf1) + i) < *(((long double*)buf2) + i)) *(((long double*)buf3) + i) = *(((long double*)buf2) + i); else *(((long double*)buf3) + i) = *(((long double*)buf1) + i); 
+      }
+    } else if(op == MPI_SUM) {
+      for(i=0; i<count; i++) {
+        *(((long double*)buf3) + i) = *(((long double*)buf1) + i) + *(((long double*)buf2) + i); 
+      }
+    } else if(op == MPI_PROD) {
+      for(i=0; i<count; i++) {
+        *(((long double*)buf3) + i) = *(((long double*)buf1) + i) * *(((long double*)buf2) + i); 
+      }
+    } else return NBC_OP_NOT_SUPPORTED; 
+  } else if(type == MPI_BYTE) { 
+    if(op == MPI_BAND) {
+      for(i=0; i<count; i++) {
+        *(((char*)buf3) + i) = *(((char*)buf1) + i) & *(((char*)buf2) + i); 
+      }
+    } else if(op == MPI_BOR) {
+      for(i=0; i<count; i++) {
+        *(((char*)buf3) + i) = *(((char*)buf1) + i) | *(((char*)buf2) + i); 
+      }
+    } else if(op == MPI_BXOR) {
+      for(i=0; i<count; i++) {
+        *(((char*)buf3) + i) = ((*(((char*)buf1) + i)) ^ (*(((char*)buf2) + i))); 
+      }
+    } else return NBC_OP_NOT_SUPPORTED; 
+  } else if(type == MPI_FLOAT_INT) { 
+    if(op == MPI_MAXLOC) {
+      for(i=0; i<count; i++) {
+        typedef struct {
+          float val;
+          int rank;
+        } float_int;
+        float_int *ptr1, *ptr2, *ptr3;
+                            
+        ptr1 = ((float_int*)buf1) + i;
+        ptr2 = ((float_int*)buf2) + i;
+        ptr3 = ((float_int*)buf3) + i;
+      
+        if(ptr1->val < ptr2->val) { 
+          ptr3->val = ptr2->val; ptr3->rank = ptr2->rank; 
+        } else { 
+          ptr3->val = ptr1->val; ptr3->rank = ptr1->rank; 
+        } 
+      }  
+    } else if(op == MPI_MINLOC) {
+      for(i=0; i<count; i++) {
+        typedef struct {
+          float val;
+          int rank;
+        } float_int;
+        float_int *ptr1, *ptr2, *ptr3;
+                            
+        ptr1 = ((float_int*)buf1) + i;
+        ptr2 = ((float_int*)buf2) + i;
+        ptr3 = ((float_int*)buf3) + i;
+      
+        if(ptr1->val > ptr2->val) { 
+          ptr3->val = ptr2->val; ptr3->rank = ptr2->rank; 
+        } else { 
+          ptr3->val = ptr1->val; ptr3->rank = ptr1->rank; 
+        } 
+      }  
+    } else return NBC_OP_NOT_SUPPORTED; 
+  } else if(type == MPI_DOUBLE_INT) { 
+    if(op == MPI_MAXLOC) {
+      for(i=0; i<count; i++) {
+        typedef struct {
+          double val;
+          int rank;
+        } double_int;
+        double_int *ptr1, *ptr2, *ptr3;
+                            
+        ptr1 = ((double_int*)buf1) + i;
+        ptr2 = ((double_int*)buf2) + i;
+        ptr3 = ((double_int*)buf3) + i;
+      
+        if(ptr1->val < ptr2->val) { 
+          ptr3->val = ptr2->val; ptr3->rank = ptr2->rank; 
+        } else { 
+          ptr3->val = ptr1->val; ptr3->rank = ptr1->rank; 
+        } 
+      }  
+    } else if(op == MPI_MINLOC) {
+      for(i=0; i<count; i++) {
+        typedef struct {
+          double val;
+          int rank;
+        } double_int;
+        double_int *ptr1, *ptr2, *ptr3;
+                            
+        ptr1 = ((double_int*)buf1) + i;
+        ptr2 = ((double_int*)buf2) + i;
+        ptr3 = ((double_int*)buf3) + i;
+      
+        if(ptr1->val > ptr2->val) { 
+          ptr3->val = ptr2->val; ptr3->rank = ptr2->rank; 
+        } else { 
+          ptr3->val = ptr1->val; ptr3->rank = ptr1->rank; 
+        } 
+      }  
+    } else return NBC_OP_NOT_SUPPORTED; 
+  } else if(type == MPI_LONG_INT) { 
+    if(op == MPI_MAXLOC) {
+      for(i=0; i<count; i++) {
+        typedef struct {
+          long val;
+          int rank;
+        } long_int;
+        long_int *ptr1, *ptr2, *ptr3;
+                            
+        ptr1 = ((long_int*)buf1) + i;
+        ptr2 = ((long_int*)buf2) + i;
+        ptr3 = ((long_int*)buf3) + i;
+      
+        if(ptr1->val < ptr2->val) { 
+          ptr3->val = ptr2->val; ptr3->rank = ptr2->rank; 
+        } else { 
+          ptr3->val = ptr1->val; ptr3->rank = ptr1->rank; 
+        } 
+      }  
+    } else if(op == MPI_MINLOC) {
+      for(i=0; i<count; i++) {
+        typedef struct {
+          long val;
+          int rank;
+        } long_int;
+        long_int *ptr1, *ptr2, *ptr3;
+                            
+        ptr1 = ((long_int*)buf1) + i;
+        ptr2 = ((long_int*)buf2) + i;
+        ptr3 = ((long_int*)buf3) + i;
+      
+        if(ptr1->val > ptr2->val) { 
+          ptr3->val = ptr2->val; ptr3->rank = ptr2->rank; 
+        } else { 
+          ptr3->val = ptr1->val; ptr3->rank = ptr1->rank; 
+        } 
+      }  
+    } else return NBC_OP_NOT_SUPPORTED; 
+  } else if(type == MPI_2INT) { 
+    if(op == MPI_MAXLOC) {
+      for(i=0; i<count; i++) {
+        typedef struct {
+          int val;
+          int rank;
+        } int_int;
+        int_int *ptr1, *ptr2, *ptr3;
+                            
+        ptr1 = ((int_int*)buf1) + i;
+        ptr2 = ((int_int*)buf2) + i;
+        ptr3 = ((int_int*)buf3) + i;
+      
+        if(ptr1->val < ptr2->val) { 
+          ptr3->val = ptr2->val; ptr3->rank = ptr2->rank; 
+        } else { 
+          ptr3->val = ptr1->val; ptr3->rank = ptr1->rank; 
+        } 
+      }  
+    } else if(op == MPI_MINLOC) {
+      for(i=0; i<count; i++) {
+        typedef struct {
+          int val;
+          int rank;
+        } int_int;
+        int_int *ptr1, *ptr2, *ptr3;
+                            
+        ptr1 = ((int_int*)buf1) + i;
+        ptr2 = ((int_int*)buf2) + i;
+        ptr3 = ((int_int*)buf3) + i;
+      
+        if(ptr1->val > ptr2->val) { 
+          ptr3->val = ptr2->val; ptr3->rank = ptr2->rank; 
+        } else { 
+          ptr3->val = ptr1->val; ptr3->rank = ptr1->rank; 
+        } 
+      }  
+    } else return NBC_OP_NOT_SUPPORTED; 
+  } else if(type == MPI_SHORT_INT) { 
+    if(op == MPI_MAXLOC) {
+      for(i=0; i<count; i++) {
+        typedef struct {
+          short val;
+          int rank;
+        } short_int;
+        short_int *ptr1, *ptr2, *ptr3;
+                            
+        ptr1 = ((short_int*)buf1) + i;
+        ptr2 = ((short_int*)buf2) + i;
+        ptr3 = ((short_int*)buf3) + i;
+      
+        if(ptr1->val < ptr2->val) { 
+          ptr3->val = ptr2->val; ptr3->rank = ptr2->rank; 
+        } else { 
+          ptr3->val = ptr1->val; ptr3->rank = ptr1->rank; 
+        } 
+      }  
+    } else if(op == MPI_MINLOC) {
+      for(i=0; i<count; i++) {
+        typedef struct {
+          short val;
+          int rank;
+        } short_int;
+        short_int *ptr1, *ptr2, *ptr3;
+                            
+        ptr1 = ((short_int*)buf1) + i;
+        ptr2 = ((short_int*)buf2) + i;
+        ptr3 = ((short_int*)buf3) + i;
+      
+        if(ptr1->val > ptr2->val) { 
+          ptr3->val = ptr2->val; ptr3->rank = ptr2->rank; 
+        } else { 
+          ptr3->val = ptr1->val; ptr3->rank = ptr1->rank; 
+        } 
+      }  
+    } else return NBC_OP_NOT_SUPPORTED; 
+  } else if(type == MPI_LONG_DOUBLE_INT) { 
+    if(op == MPI_MAXLOC) {
+      for(i=0; i<count; i++) {
+        typedef struct {
+          long double val;
+          int rank;
+        } long_double_int;
+        long_double_int *ptr1, *ptr2, *ptr3;
+                            
+        ptr1 = ((long_double_int*)buf1) + i;
+        ptr2 = ((long_double_int*)buf2) + i;
+        ptr3 = ((long_double_int*)buf3) + i;
+      
+        if(ptr1->val < ptr2->val) { 
+          ptr3->val = ptr2->val; ptr3->rank = ptr2->rank; 
+        } else { 
+          ptr3->val = ptr1->val; ptr3->rank = ptr1->rank; 
+        } 
+      }  
+    } else if(op == MPI_MINLOC) {
+      for(i=0; i<count; i++) {
+        typedef struct {
+          long double val;
+          int rank;
+        } long_double_int;
+        long_double_int *ptr1, *ptr2, *ptr3;
+                            
+        ptr1 = ((long_double_int*)buf1) + i;
+        ptr2 = ((long_double_int*)buf2) + i;
+        ptr3 = ((long_double_int*)buf3) + i;
+      
+        if(ptr1->val > ptr2->val) { 
+          ptr3->val = ptr2->val; ptr3->rank = ptr2->rank; 
+        } else { 
+          ptr3->val = ptr1->val; ptr3->rank = ptr1->rank; 
+        } 
+      }  
+    } else return NBC_OP_NOT_SUPPORTED; 
+  } else return NBC_DATATYPE_NOT_SUPPORTED;
+  
+  return NBC_OK;
+}
+
+/********************************************************************* *
+ * The previous code came from the libNBC, a library for the support   *
+ * of MPI-3 Non-Blocking Collective. The code was modified to ensure   *
+ * compatibility with the MPC framework.                               *
+ * *********************************************************************/
+
+
+int NBC_Finalize(sctk_thread_t * NBC_thread)
+{
+#ifdef HAVE_PROGRESS_THREAD
+  int ret = sctk_thread_join( *NBC_thread, NULL);
+  if(0 != ret) { printf("Error in sctk_thread_join() (%i)\n", ret); return NBC_OOR; }
+#endif
+#ifdef NBC_TIMING
+	NBC_Print_times(1000.0);
+#endif
+	return NBC_OK;		
+}
+
+
+
+
+
+/*
+  PMPI FUNCTIONS
+*/
+
+/*
+ * TODO: RULE FROM THE MPI STANDARD
+ * In order to fully support the MPI standard, we cannot fail if the returned value of
+ * an MPI function is different than MPI_SUCCESS.
+ * We could add an additional MPC mode in order to fail in the case of a wrong returned value.
+ */
+#define SCTK_MPI_CHECK_RETURN_VAL(res,comm)do{if(res == MPI_SUCCESS){return res;} else {MPI_ERROR_REPORT(comm,res,"Generic error retrun");}}while(0)
+//~ #define SCTK_MPI_CHECK_RETURN_VAL(res, comm) return res
+
+
+
+  /*Non-Blocking Collective*/
+
+int
+PMPI_Ibarrier (MPI_Comm comm, MPI_Request *request)
+{
+  sctk_nodebug ("Entering IBARRIER %d", comm);
+  int res = MPI_ERR_INTERN;
+  SCTK__MPI_INIT_REQUEST (request);
+  int csize;
+  MPI_Comm_size(comm, &csize);
+  if(csize == 1)
+  {
+    res = __INTERNAL__PMPI_Barrier (comm);
+    MPI_internal_request_t *tmp;
+    tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
+    tmp->req.completion_flag = SCTK_MESSAGE_DONE;
+  }
+  else
+  {
+    MPI_internal_request_t *tmp;
+  tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
+  tmp->is_nbc = 1;
+  res = NBC_Ibarrier (comm, &(tmp->nbc_handle));
+  }
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
+}
+
+
+int
+PMPI_Ibcast (void *buffer, int count, MPI_Datatype datatype, int root,
+	    MPI_Comm comm, MPI_Request *request)
+{
+  int res = MPI_ERR_INTERN;
+  sctk_nodebug ("Entering IBCAST %d with count %d", comm, count);
+  SCTK__MPI_INIT_REQUEST (request);
+  int csize;
+  MPI_Comm_size(comm, &csize);
+  if(csize == 1)
+  {
+    res = __INTERNAL__PMPI_Bcast (buffer, count, datatype, root, comm);
+    MPI_internal_request_t *tmp;
+    tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
+    tmp->req.completion_flag = SCTK_MESSAGE_DONE;
+  }
+  else
+  {
+  MPI_internal_request_t *tmp;
+  tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
+  tmp->is_nbc = 1;
+    res = NBC_Ibcast (buffer, count, datatype, root, comm, &(tmp->nbc_handle));
+  }
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
+}
+
+int
+PMPI_Igather (void *sendbuf, int sendcnt, MPI_Datatype sendtype,
+	     void *recvbuf, int recvcnt, MPI_Datatype recvtype,
+	     int root, MPI_Comm comm, MPI_Request * request)
+{
+  int res = MPI_ERR_INTERN;
+  sctk_nodebug ("Entering IGATHER %d", comm);
+  SCTK__MPI_INIT_REQUEST (request);
+
+  int csize;
+  MPI_Comm_size(comm, &csize);
+  if(csize == 1)
+  {
+    res = __INTERNAL__PMPI_Gather (sendbuf, sendcnt, sendtype, recvbuf, recvcnt,
+			     recvtype, root, comm);
+    MPI_internal_request_t *tmp;
+    tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
+    tmp->req.completion_flag = SCTK_MESSAGE_DONE;
+  }
+  else
+  {
+  MPI_internal_request_t *tmp;
+  tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
+  tmp->is_nbc = 1;
+  res =
+    NBC_Igather (sendbuf, sendcnt, sendtype, recvbuf, recvcnt,
+			     recvtype, root, comm, &(tmp->nbc_handle));
+  }
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
+}
+
+int
+PMPI_Igatherv (void *sendbuf, int sendcnt, MPI_Datatype sendtype,
+	      void *recvbuf, int *recvcnts, int *displs,
+	      MPI_Datatype recvtype, int root, MPI_Comm comm,
+	      MPI_Request *request)
+{
+  int res = MPI_ERR_INTERN;
+  sctk_nodebug ("Entering IGATHERV %d", comm);
+  SCTK__MPI_INIT_REQUEST (request);
+
+  int csize;
+  MPI_Comm_size(comm, &csize);
+  if(csize == 1)
+  {
+    res = __INTERNAL__PMPI_Gatherv (sendbuf, sendcnt, sendtype, recvbuf, recvcnts,
+			     displs, recvtype, root, comm);
+    MPI_internal_request_t *tmp;
+    tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
+    tmp->req.completion_flag = SCTK_MESSAGE_DONE;
+  }
+  else
+  {
+    MPI_internal_request_t *tmp;
+  tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
+  tmp->is_nbc = 1;
+res =
+    NBC_Igatherv (sendbuf, sendcnt, sendtype, recvbuf, recvcnts,
+			      displs, recvtype, root, comm, &(tmp->nbc_handle));
+  }
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
+}
+
+int
+PMPI_Iscatter (void *sendbuf, int sendcnt, MPI_Datatype sendtype,
+	      void *recvbuf, int recvcnt, MPI_Datatype recvtype, int root,
+	      MPI_Comm comm, MPI_Request * request)
+{
+  int res = MPI_ERR_INTERN;
+  sctk_nodebug ("Entering ISCATTER %d", comm);
+  SCTK__MPI_INIT_REQUEST (request);
+
+  int csize;
+  MPI_Comm_size(comm, &csize);
+  if(csize == 1)
+  {
+    res = __INTERNAL__PMPI_Scatter (sendbuf, sendcnt, sendtype, recvbuf, recvcnt,
+			      recvtype, root, comm);
+    MPI_internal_request_t *tmp;
+    tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
+    tmp->req.completion_flag = SCTK_MESSAGE_DONE;
+  }
+  else
+  {
+  MPI_internal_request_t *tmp;
+  tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
+  tmp->is_nbc = 1;
+  res =
+    NBC_Iscatter (sendbuf, sendcnt, sendtype, recvbuf, recvcnt,
+			      recvtype, root, comm, &(tmp->nbc_handle));
+  }
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
+}
+
+int
+PMPI_Iscatterv (void *sendbuf, int *sendcnts, int *displs,
+	       MPI_Datatype sendtype, void *recvbuf, int recvcnt,
+	       MPI_Datatype recvtype, int root, MPI_Comm comm, 
+	       MPI_Request * request)
+{
+  int res = MPI_ERR_INTERN;
+  sctk_nodebug ("Entering ISCATTERV %d", comm);
+  SCTK__MPI_INIT_REQUEST (request);
+
+  int csize;
+  MPI_Comm_size(comm, &csize);
+  if(csize == 1)
+  {
+    res = __INTERNAL__PMPI_Scatterv (sendbuf, sendcnts, displs, sendtype, recvbuf, recvcnt,
+			      recvtype, root, comm);
+    MPI_internal_request_t *tmp;
+    tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
+    tmp->req.completion_flag = SCTK_MESSAGE_DONE;
+  }
+  else
+  {
+   MPI_internal_request_t *tmp;
+  tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
+  tmp->is_nbc = 1;
+ 	res =
+   NBC_Iscatterv (sendbuf, sendcnts, displs, sendtype, recvbuf,
+			       recvcnt, recvtype, root, comm, &(tmp->nbc_handle));
+  }
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
+}
+
+int
+PMPI_Iallgather (void *sendbuf, int sendcount, MPI_Datatype sendtype,
+		void *recvbuf, int recvcount, MPI_Datatype recvtype,
+		MPI_Comm comm, MPI_Request *request)
+{
+  int res = MPI_ERR_INTERN;
+  sctk_nodebug ("Entering IALLGATHER %d", comm);
+  SCTK__MPI_INIT_REQUEST (request);
+  
+  int csize;
+  MPI_Comm_size(comm, &csize);
+  if(csize == 1)
+  {
+    res = __INTERNAL__PMPI_Allgather (sendbuf, sendcount, sendtype, recvbuf,
+				recvcount, recvtype, comm);
+    MPI_internal_request_t *tmp;
+    tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
+    tmp->req.completion_flag = SCTK_MESSAGE_DONE;
+  }
+  else
+  {
+  MPI_internal_request_t *tmp;
+  tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
+  tmp->is_nbc = 1;
+
+  res =  NBC_Iallgather (sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, &(tmp->nbc_handle));
+//  res = __INTERNAL__PMPI_Iallgather (sendbuf, sendcount, sendtype, recvbuf,
+//				recvcount, recvtype, comm, request);
+  }
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
+}
+
+int
+PMPI_Iallgatherv (void *sendbuf, int sendcount, MPI_Datatype sendtype,
+		 void *recvbuf, int *recvcounts, int *displs,
+		 MPI_Datatype recvtype, MPI_Comm comm, MPI_Request *request)
+{
+  int res = MPI_ERR_INTERN;
+  sctk_nodebug ("Entering IALLGATHERV %d", comm);
+  SCTK__MPI_INIT_REQUEST (request);
+
+  int csize;
+  MPI_Comm_size(comm, &csize);
+  if(csize == 1)
+  {
+    res = __INTERNAL__PMPI_Allgatherv (sendbuf, sendcount, sendtype, recvbuf,
+				 recvcounts, displs, recvtype, comm);
+    MPI_internal_request_t *tmp;
+    tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
+    tmp->req.completion_flag = SCTK_MESSAGE_DONE;
+  }
+  else
+  {
+  MPI_internal_request_t *tmp;
+  tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
+  tmp->is_nbc = 1;
+  res =
+    NBC_Iallgatherv (sendbuf, sendcount, sendtype, recvbuf,
+				 recvcounts, displs, recvtype, comm, &(tmp->nbc_handle));
+  }
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
+}
+
+int
+PMPI_Ialltoall (void *sendbuf, int sendcount, MPI_Datatype sendtype,
+	       void *recvbuf, int recvcount, MPI_Datatype recvtype,
+	       MPI_Comm comm, MPI_Request *request)
+{
+  int res = MPI_ERR_INTERN;
+  sctk_nodebug ("Entering IALLTOALL %d", comm);
+  SCTK__MPI_INIT_REQUEST (request);
+
+  int csize;
+  MPI_Comm_size(comm, &csize);
+  if(csize == 1)
+  {
+    res = __INTERNAL__PMPI_Alltoall (sendbuf, sendcount, sendtype, recvbuf,
+			       recvcount, recvtype, comm);
+    MPI_internal_request_t *tmp;
+    tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
+    tmp->req.completion_flag = SCTK_MESSAGE_DONE;
+  }
+  else
+  {
+  MPI_internal_request_t *tmp;
+  tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
+  tmp->is_nbc = 1;
+  res =
+    NBC_Ialltoall (sendbuf, sendcount, sendtype, recvbuf,
+			       recvcount, recvtype, comm, &(tmp->nbc_handle));
+  }
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
+}
+
+int
+PMPI_Ialltoallv (void *sendbuf, int *sendcnts, int *sdispls,
+		MPI_Datatype sendtype, void *recvbuf, int *recvcnts,
+		int *rdispls, MPI_Datatype recvtype, MPI_Comm comm, MPI_Request *request)
+{
+  int res = MPI_ERR_INTERN;
+  sctk_nodebug ("Entering IALLTOALLV %d", comm);
+  SCTK__MPI_INIT_REQUEST (request);
+
+  int csize;
+  MPI_Comm_size(comm, &csize);
+  if(csize == 1)
+  {
+    res = __INTERNAL__PMPI_Alltoallv (sendbuf, sendcnts, sdispls, sendtype, recvbuf,
+				recvcnts, rdispls, recvtype, comm);
+    MPI_internal_request_t *tmp;
+    tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
+    tmp->req.completion_flag = SCTK_MESSAGE_DONE;
+  }
+  else
+  {
+	  MPI_internal_request_t *tmp;
+	  tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
+	  tmp->is_nbc = 1;
+    res =
+    NBC_Ialltoallv (sendbuf, sendcnts, sdispls, sendtype, recvbuf,
+				recvcnts, rdispls, recvtype, comm, &(tmp->nbc_handle));
+  }
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
+}
+
+int PMPI_Ialltoallw(void *sendbuf, int *sendcnts, int *sdispls, MPI_Datatype *sendtypes, 
+				   void *recvbuf, int *recvcnts, int *rdispls, MPI_Datatype *recvtypes, MPI_Comm comm, MPI_Request *request)
+{
+  int res = MPI_ERR_INTERN;
+  sctk_nodebug ("Entering IALLTOALLW %d", comm);
+  SCTK__MPI_INIT_REQUEST (request);
+
+  int csize;
+  MPI_Comm_size(comm, &csize);
+  if(csize == 1)
+  {
+    res = __INTERNAL__PMPI_Alltoallw (sendbuf, sendcnts, sdispls, sendtypes, recvbuf, 
+        recvcnts, rdispls, recvtypes, comm);
+    MPI_internal_request_t *tmp;
+    tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
+    tmp->req.completion_flag = SCTK_MESSAGE_DONE;
+  }
+  else
+  {
+	  MPI_internal_request_t *tmp;
+	  tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
+	  tmp->is_nbc = 1;
+	  res = 
+    NBC_Ialltoallw (sendbuf, sendcnts, sdispls, sendtypes, recvbuf, 
+        recvcnts, rdispls, recvtypes, comm, &(tmp->nbc_handle));
+  }
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
+  return res;
+}
+
+int
+PMPI_Ireduce (void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
+	     MPI_Op op, int root, MPI_Comm comm, MPI_Request *request)
+{
+  int res = MPI_ERR_INTERN;
+  sctk_nodebug ("Entering IREDUCE %d", comm);
+  SCTK__MPI_INIT_REQUEST (request);
+
+  int csize;
+  MPI_Comm_size(comm, &csize);
+  if(csize == 1)
+  {
+    res = __INTERNAL__PMPI_Reduce (sendbuf, recvbuf, count, datatype, op, root,
+			     comm);
+    MPI_internal_request_t *tmp;
+    tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
+    tmp->req.completion_flag = SCTK_MESSAGE_DONE;
+  }
+  else
+  {
+  MPI_internal_request_t *tmp;
+  tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
+  tmp->is_nbc = 1;
+  res =
+    NBC_Ireduce (sendbuf, recvbuf, count, datatype, op, root,
+			     comm, &(tmp->nbc_handle));
+  }
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
+}
+
+
+int
+PMPI_Iallreduce (void *sendbuf, void *recvbuf, int count,
+		MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Request *request)
+{
+  int res = MPI_ERR_INTERN;
+  sctk_nodebug ("Entering IALLREDUCE %d", comm);
+  SCTK__MPI_INIT_REQUEST (request);
+
+  int csize;
+  MPI_Comm_size(comm, &csize);
+  if(csize == 1)
+  {
+    res = __INTERNAL__PMPI_Allreduce (sendbuf, recvbuf, count, datatype, op, comm);
+    MPI_internal_request_t *tmp;
+    tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
+    tmp->req.completion_flag = SCTK_MESSAGE_DONE;
+  }
+  else
+  {
+  MPI_internal_request_t *tmp;
+  tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
+  tmp->is_nbc = 1;
+  res =
+    NBC_Iallreduce (sendbuf, recvbuf, count, datatype, op, comm, &(tmp->nbc_handle));
+  }
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
+}
+
+int
+PMPI_Ireduce_scatter (void *sendbuf, void *recvbuf, int *recvcnts,
+		     MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Request *request)
+{
+  int res = MPI_ERR_INTERN;
+  sctk_nodebug ("Entering IREDUCE_SCATTER %d", comm);
+  SCTK__MPI_INIT_REQUEST (request);
+
+  int csize;
+  MPI_Comm_size(comm, &csize);
+  if(csize == 1)
+  {
+    res = __INTERNAL__PMPI_Reduce_scatter (sendbuf, recvbuf, recvcnts, datatype, op,
+				     comm);
+    MPI_internal_request_t *tmp;
+    tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
+    tmp->req.completion_flag = SCTK_MESSAGE_DONE;
+  }
+  else
+  {
+  MPI_internal_request_t *tmp;
+  tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
+  tmp->is_nbc = 1;
+  res =
+    NBC_Ireduce_scatter (sendbuf, recvbuf, recvcnts, datatype, op,
+				     comm, &(tmp->nbc_handle));
+  }
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
+}
+
+int
+PMPI_Iscan (void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
+	   MPI_Op op, MPI_Comm comm, MPI_Request *request)
+{
+  int res = MPI_ERR_INTERN;
+  sctk_nodebug ("Entering ISCAN %d", comm);
+  SCTK__MPI_INIT_REQUEST (request);
+
+  int csize;
+  MPI_Comm_size(comm, &csize);
+  if(csize == 1)
+  {
+    res = __INTERNAL__PMPI_Scan (sendbuf, recvbuf, count, datatype, op, comm);
+    MPI_internal_request_t *tmp;
+    tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
+    tmp->req.completion_flag = SCTK_MESSAGE_DONE;
+  }
+  else
+  {
+  MPI_internal_request_t *tmp;
+  tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
+  tmp->is_nbc = 1;
+    res = NBC_Iscan (sendbuf, recvbuf, count, datatype, op, comm, &(tmp->nbc_handle));
+  }
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
+}
+
+int
+PMPI_Ireduce_scatter_block (void *sendbuf, void *recvbuf, int recvcnt,
+		     MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Request *request)
+{
+  int res = MPI_ERR_INTERN;
+  sctk_nodebug ("Entering IREDUCE_SCATTER_BLOCK %d", comm);
+  SCTK__MPI_INIT_REQUEST (request);
+
+  int csize;
+  MPI_Comm_size(comm, &csize);
+  if(csize == 1)
+  {
+    res = __INTERNAL__PMPI_Reduce_scatter_block (sendbuf, recvbuf, recvcnt, datatype, op,
+				     comm);
+    MPI_internal_request_t *tmp;
+    tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
+    tmp->req.completion_flag = SCTK_MESSAGE_DONE;
+  }
+  else
+  {
+  MPI_internal_request_t *tmp;
+  tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
+  tmp->is_nbc = 1;
+    res =
+    NBC_Ireduce_scatter_block (sendbuf, recvbuf, recvcnt, datatype, op,
+				     comm, &(tmp->nbc_handle));
+  }
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
+}
+
+int
+PMPI_Iexscan (void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
+	   MPI_Op op, MPI_Comm comm, MPI_Request *request)
+{
+  int res = MPI_ERR_INTERN;
+  sctk_nodebug ("Entering IEXSCAN %d", comm);
+  SCTK__MPI_INIT_REQUEST (request);
+
+  int csize;
+  MPI_Comm_size(comm, &csize);
+  if(csize == 1)
+  {
+    res = __INTERNAL__PMPI_Exscan (sendbuf, recvbuf, count, datatype, op, comm);
+    MPI_internal_request_t *tmp;
+    tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
+    tmp->req.completion_flag = SCTK_MESSAGE_DONE;
+  }
+  else
+  {
+  MPI_internal_request_t *tmp;
+  tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
+  tmp->is_nbc = 1;
+    res = NBC_Iexscan (sendbuf, recvbuf, count, datatype, op, comm, &(tmp->nbc_handle));
+  }
+  SCTK_MPI_CHECK_RETURN_VAL (res, comm);
+}
+
+
+
+

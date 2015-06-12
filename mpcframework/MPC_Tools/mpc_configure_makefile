@@ -320,6 +320,8 @@ done
 printf "\t@cp include/sctk_config.h INSTALL/include/mpcframework">> Makefile; echo "">> Makefile
 printf "\t@cp include/mpc.h INSTALL/include/mpcframework">> Makefile; echo "">> Makefile
 printf "\t@cp include/mpc_main.h INSTALL/include/mpcframework">> Makefile; echo "">> Makefile
+printf "\t@cp ${MPC_SOURCE_DIR}/MPC_Common/libdict/dict.h INSTALL/include/mpcframework/dict.h ">> Makefile; echo "">> Makefile
+printf "\t@cp ${MPC_SOURCE_DIR}/MPC_Common/libdict/hb_tree.h INSTALL/include/mpcframework/hb_tree.h ">> Makefile; echo "">> Makefile
 printf "\t@echo \"Install in ${SCTK_PREFIX}\"">> Makefile; echo "">> Makefile
 printf "\t@mkdir -p \${DESTDIR}${SCTK_PREFIX}">> Makefile; echo "">> Makefile
 printf "\t@mkdir -p \${DESTDIR}${SCTK_BIN_DIR}">> Makefile; echo "">> Makefile
