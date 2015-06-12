@@ -25,6 +25,30 @@
 
 /* FORTRAN MAPPING */
 
+void
+omp_barrier_ ()
+{
+	__mpcomp_barrier();
+}
+
+void
+omp_barrier__ ()
+{
+	__mpcomp_barrier();
+}
+
+void
+omp_flush_ ()
+{
+	__mpcomp_flush();
+}
+
+void
+omp_flush__ ()
+{
+	__mpcomp_flush();
+}
+
 /* LIB FUNCTIONS */
 
 
