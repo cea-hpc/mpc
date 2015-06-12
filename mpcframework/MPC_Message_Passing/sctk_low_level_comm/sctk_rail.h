@@ -166,7 +166,7 @@ struct sctk_rail_info_s
 	/* Pinning */
 	void (*rail_pin_region)( struct sctk_rail_info_s * rail, struct sctk_rail_pin_ctx_list * list, void * addr, size_t size );
 	void (*rail_unpin_region)( struct sctk_rail_info_s * rail, struct sctk_rail_pin_ctx_list * list );
-	
+
 	/* Connection management */
 	
 	void ( *connect_to ) ( int, int, sctk_rail_info_t * );

@@ -778,14 +778,14 @@ void sctk_ib_pin_region( struct sctk_rail_info_s * rail, struct sctk_rail_pin_ct
 	memcpy( &list->pin.ib.mr , list->pin.ib.p_entry->mr, sizeof( struct ibv_mr ) );
 }
 
-void sctk_ib_unpin_region( struct sctk_rail_info_s * rail, struct sctk_rail_pin_ctx_list * ctx )
+void sctk_ib_unpin_region( struct sctk_rail_info_s * rail, struct sctk_rail_pin_ctx_list * list )
 {
-	assume( rail->rail_number == ctx->rail_id );
+	assume( rail->rail_number == list->rail_id );
 	
-	sctk_ib_mmu_entry_release( ctx->pin.ib.p_entry );
-	ctx->pin.ib.p_entry = NULL;
-	memset( &ctx->pin.ib.mr, 0, sizeof( struct ibv_mr ) );
-	ctx->rail_id = -1;
+	sctk_ib_mmu_entry_release( list->pin.ib.p_entry );
+	list->pin.ib.p_entry = NULL;
+	memset( &list->pin.ib.mr, 0, sizeof( struct ibv_mr ) );
+	list->rail_id = -1;
 }
 
 
