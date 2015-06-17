@@ -77,7 +77,7 @@ void sctk_char_c_to_fortran (char *buf, int size)
 #include <mpc_mpi_fortran.h>
 
 #undef ffunc
-#define ffunc(a) a##__
+#define	ffunc(a) a##__
 #include <mpc_mpi_fortran.h>
 #undef ffunc
 
@@ -114,7 +114,6 @@ static int __INTERNAL__PMPI_Request_free (MPI_Request *);
 static int __INTERNAL__PMPI_Waitany (int, MPI_Request *, int *, MPI_Status *);
 static int __INTERNAL__PMPI_Testany (int, MPI_Request *, int *, int *,
 				     MPI_Status *);
-static int __INTERNAL__PMPI_Waitall (int, MPI_Request *, MPI_Status *);
 static int __INTERNAL__PMPI_Testall (int, MPI_Request *, int *, MPI_Status *);
 static int __INTERNAL__PMPI_Waitsome (int, MPI_Request *, int *, int *,
 				      MPI_Status *);
@@ -157,8 +156,8 @@ static int __INTERNAL__PMPI_Type_hindexed (int, int *, MPI_Aint *,
 static int __INTERNAL__PMPI_Type_struct (int, int *, MPI_Aint *,
 					 MPI_Datatype *, MPI_Datatype *);
 static int __INTERNAL__PMPI_Address (void *, MPI_Aint *);
-static int __INTERNAL__PMPI_Type_extent (MPI_Datatype, MPI_Aint *);
-static int __INTERNAL__PMPI_Type_size (MPI_Datatype, int *);
+int __INTERNAL__PMPI_Type_extent (MPI_Datatype, MPI_Aint *);
+int __INTERNAL__PMPI_Type_size (MPI_Datatype, int *);
 static int __INTERNAL__PMPI_Type_lb (MPI_Datatype, MPI_Aint *);
 static int __INTERNAL__PMPI_Type_ub (MPI_Datatype, MPI_Aint *);
 static int __INTERNAL__PMPI_Type_create_resized(MPI_Datatype old_type, MPI_Aint lb, MPI_Aint extent, MPI_Datatype *new_type);
@@ -194,24 +193,24 @@ int __INTERNAL__PMPI_Pack_external (char *datarep , void *inbuf, int incount, MP
 int __INTERNAL__PMPI_Unpack_external (char * datarep, void * inbuf, MPI_Aint insize, MPI_Aint * position, void * outbuf, int outcount, MPI_Datatype datatype);
 
 
-static int __INTERNAL__PMPI_Barrier (MPI_Comm);
-static int __INTERNAL__PMPI_Bcast (void *, int, MPI_Datatype, int, MPI_Comm);
-static int __INTERNAL__PMPI_Gather (void *, int, MPI_Datatype, void *, int,
+int __INTERNAL__PMPI_Barrier (MPI_Comm);
+int __INTERNAL__PMPI_Bcast (void *, int, MPI_Datatype, int, MPI_Comm);
+int __INTERNAL__PMPI_Gather (void *, int, MPI_Datatype, void *, int,
 				    MPI_Datatype, int, MPI_Comm);
-static int __INTERNAL__PMPI_Gatherv (void *, int, MPI_Datatype, void *, int *,
+int __INTERNAL__PMPI_Gatherv (void *, int, MPI_Datatype, void *, int *,
 				     int *, MPI_Datatype, int, MPI_Comm);
-static int __INTERNAL__PMPI_Scatter (void *, int, MPI_Datatype, void *, int,
+int __INTERNAL__PMPI_Scatter (void *, int, MPI_Datatype, void *, int,
 				     MPI_Datatype, int, MPI_Comm);
-static int __INTERNAL__PMPI_Scatterv (void *, int *, int *, MPI_Datatype,
+int __INTERNAL__PMPI_Scatterv (void *, int *, int *, MPI_Datatype,
 				      void *, int, MPI_Datatype, int,
 				      MPI_Comm);
-static int __INTERNAL__PMPI_Allgather (void *, int, MPI_Datatype, void *, int,
+int __INTERNAL__PMPI_Allgather (void *, int, MPI_Datatype, void *, int,
 				       MPI_Datatype, MPI_Comm);
-static int __INTERNAL__PMPI_Allgatherv (void *, int, MPI_Datatype, void *,
+int __INTERNAL__PMPI_Allgatherv (void *, int, MPI_Datatype, void *,
 					int *, int *, MPI_Datatype, MPI_Comm);
-static int __INTERNAL__PMPI_Alltoall (void *, int, MPI_Datatype, void *, int,
+int __INTERNAL__PMPI_Alltoall (void *, int, MPI_Datatype, void *, int,
 				      MPI_Datatype, MPI_Comm);
-static int __INTERNAL__PMPI_Alltoallv (void *, int *, int *, MPI_Datatype,
+int __INTERNAL__PMPI_Alltoallv (void *, int *, int *, MPI_Datatype,
 				       void *, int *, int *, MPI_Datatype,
 				       MPI_Comm);
 				       
@@ -226,20 +225,19 @@ static int __INTERNAL__PMPI_Neighbor_alltoallv_cart(void *, int [], int [], MPI_
 static int __INTERNAL__PMPI_Neighbor_alltoallv_graph(void *, int [], int [], MPI_Datatype , void *, int [], int [], MPI_Datatype , MPI_Comm );
 static int __INTERNAL__PMPI_Neighbor_alltoallw_cart(void *, int [], MPI_Aint [], MPI_Datatype [], void *, int [], MPI_Aint [], MPI_Datatype [], MPI_Comm comm);
 static int __INTERNAL__PMPI_Neighbor_alltoallw_graph(void *, int [], MPI_Aint [], MPI_Datatype [], void *, int [], MPI_Aint [], MPI_Datatype [], MPI_Comm comm);
-  
-static int __INTERNAL__PMPI_Reduce (void *, void *, int, MPI_Datatype, MPI_Op,
+int __INTERNAL__PMPI_Reduce (void *, void *, int, MPI_Datatype, MPI_Op,
 				    int, MPI_Comm);
 static int __INTERNAL__PMPI_Op_create (MPI_User_function *, int, MPI_Op *);
 static int __INTERNAL__PMPI_Op_free (MPI_Op *);
-static int __INTERNAL__PMPI_Allreduce (void *, void *, int, MPI_Datatype,
+int __INTERNAL__PMPI_Allreduce (void *, void *, int, MPI_Datatype,
 				       MPI_Op, MPI_Comm);
-static int __INTERNAL__PMPI_Reduce_scatter (void *, void *, int *,
+int __INTERNAL__PMPI_Reduce_scatter (void *, void *, int *,
 					    MPI_Datatype, MPI_Op, MPI_Comm);
-static int __INTERNAL__PMPI_Reduce_scatter_block (void *, void *, int,
+int __INTERNAL__PMPI_Reduce_scatter_block (void *, void *, int,
 					    MPI_Datatype, MPI_Op, MPI_Comm);
-static int __INTERNAL__PMPI_Scan (void *, void *, int, MPI_Datatype, MPI_Op,
+int __INTERNAL__PMPI_Scan (void *, void *, int, MPI_Datatype, MPI_Op,
 				  MPI_Comm);
-static int __INTERNAL__PMPI_Exscan (void *, void *, int, MPI_Datatype, MPI_Op,
+int __INTERNAL__PMPI_Exscan (void *, void *, int, MPI_Datatype, MPI_Op,
 				  MPI_Comm);
 static int __INTERNAL__PMPI_Group_size (MPI_Group, int *);
 static int __INTERNAL__PMPI_Group_rank (MPI_Group, int *);
@@ -476,7 +474,7 @@ static inline void PMPC_Set_op(struct sctk_mpi_ops_s *ops){
 /*
   ERRORS HANDLING
 */
-static inline int
+inline int
 SCTK__MPI_ERROR_REPORT__ (MPC_Comm comm, int error, char *message, char *file,
 			  int line)
 {
@@ -528,7 +526,6 @@ __sctk_init_mpi_errors ()
   data->user_func[MPI_ERRORS_ARE_FATAL].status = 1;
 }
 
-#define MPI_ERROR_REPORT(comm, error,message) return SCTK__MPI_ERROR_REPORT__(comm, error,message,__FILE__, __LINE__)
 
 #define MPI_ERROR_SUCESS() return MPI_SUCCESS
 
@@ -729,7 +726,7 @@ static int SCTK__MPI_Attr_communicator_dup (MPI_Comm old, MPI_Comm new);
 
 /* const MPI_Comm MPI_COMM_SELF = MPC_COMM_SELF; */
 
-MPI_request_struct_t * __sctk_internal_get_mpc_requests()
+MPI_request_struct_t * __sctk_internal_get_MPC_requests()
 {
   MPI_request_struct_t *requests;
   PMPC_Get_requests ((void *) &requests);
@@ -2116,7 +2113,7 @@ static int __INTERNAL__PMPI_Testany (int count, MPI_Request * array_of_requests,
 
 #define PMPI_WAIT_ALL_STATIC_TRSH 32
 
-static int __INTERNAL__PMPI_Waitall (int count, MPI_Request * array_of_requests, MPI_Status * array_of_statuses)
+int __INTERNAL__PMPI_Waitall (int count, MPI_Request * array_of_requests, MPI_Status * array_of_statuses)
 {
 	int flag = 0;
 	int i;
@@ -4112,7 +4109,7 @@ static int __INTERNAL__PMPI_Address (void *location, MPI_Aint * address)
 	return MPI_SUCCESS;
 }
 
-static int __INTERNAL__PMPI_Type_extent (MPI_Datatype datatype, MPI_Aint * extent)
+int __INTERNAL__PMPI_Type_extent (MPI_Datatype datatype, MPI_Aint * extent)
 {
 	MPI_Aint UB;
 	MPI_Aint LB;
@@ -4134,7 +4131,7 @@ static int __INTERNAL__PMPI_Type_extent (MPI_Datatype datatype, MPI_Aint * exten
 /* See the 1.1 version of the Standard.  The standard made an
    unfortunate choice here, however, it is the standard.  The size returned
    by MPI_Type_size is specified as an int, not an MPI_Aint */
-static int __INTERNAL__PMPI_Type_size (MPI_Datatype datatype, int *size)
+int __INTERNAL__PMPI_Type_size (MPI_Datatype datatype, int *size)
 {
 	size_t tmp_size;
 	int real_val;
@@ -5001,7 +4998,7 @@ __INTERNAL__PMPI_Barrier_inter (MPI_Comm comm)
 	}
 }
 
-static int
+int
 __INTERNAL__PMPI_Barrier (MPI_Comm comm)
 {
 	int res = MPI_ERR_INTERN;
@@ -5107,7 +5104,7 @@ __INTERNAL__PMPI_Bcast_intra (void *buffer, int count,
     return res;
 }
 
-static int
+int
 __INTERNAL__PMPI_Bcast (void *buffer, int count, MPI_Datatype datatype, 
 	int root, MPI_Comm comm)
 {
@@ -5239,7 +5236,7 @@ __INTERNAL__PMPI_Gather_inter (void *sendbuf, int sendcnt,
     return res;
 }
 
-static int
+int
 __INTERNAL__PMPI_Gather (void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 			 void *recvbuf, int recvcnt, MPI_Datatype recvtype,
 			 int root, MPI_Comm comm)
@@ -5388,7 +5385,7 @@ __INTERNAL__PMPI_Gatherv_inter (void *sendbuf, int sendcnt, MPI_Datatype sendtyp
 	return res;
 }
 
-static int
+int
 __INTERNAL__PMPI_Gatherv (void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 			  void *recvbuf, int *recvcnts, int *displs,
 			  MPI_Datatype recvtype, int root, MPI_Comm comm)
@@ -5528,7 +5525,7 @@ __INTERNAL__PMPI_Scatter_inter (void *sendbuf, int sendcnt, MPI_Datatype sendtyp
 	return res;
 }
 
-static int
+int
 __INTERNAL__PMPI_Scatter (void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 			  void *recvbuf, int recvcnt, MPI_Datatype recvtype,
 			  int root, MPI_Comm comm)
@@ -5675,7 +5672,7 @@ __INTERNAL__PMPI_Scatterv_inter (void *sendbuf, int *sendcnts, int *displs,
     return res;
 }
 
-static int
+int
 __INTERNAL__PMPI_Scatterv (void *sendbuf, int *sendcnts, int *displs,
 			   MPI_Datatype sendtype, void *recvbuf, int recvcnt,
 			   MPI_Datatype recvtype, int root, MPI_Comm comm)
@@ -5807,7 +5804,7 @@ __INTERNAL__PMPI_Allgather_inter (void *sendbuf, int sendcount,
 	return res;
 }
 
-static int
+int
 __INTERNAL__PMPI_Allgather (void *sendbuf, int sendcount,
 			    MPI_Datatype sendtype, void *recvbuf,
 			    int recvcount, MPI_Datatype recvtype,
@@ -5951,7 +5948,7 @@ __INTERNAL__PMPI_Allgatherv_inter (void *sendbuf, int sendcount,
 	return res;
 }
 
-static int
+int
 __INTERNAL__PMPI_Allgatherv (void *sendbuf, int sendcount,
 			     MPI_Datatype sendtype, void *recvbuf,
 			     int *recvcounts, int *displs,
@@ -6103,7 +6100,7 @@ __INTERNAL__PMPI_Alltoall_inter (void *sendbuf, int sendcount,
 	return res;
 }
 
-static int
+int
 __INTERNAL__PMPI_Alltoall (void *sendbuf, int sendcount,
 			   MPI_Datatype sendtype, void *recvbuf,
 			   int recvcount, MPI_Datatype recvtype,
@@ -6251,7 +6248,7 @@ __INTERNAL__PMPI_Alltoallv_inter (void *sendbuf, int *sendcnts, int *sdispls,
 	return res;
 }
 
-static int
+int
 __INTERNAL__PMPI_Alltoallv (void *sendbuf, int *sendcnts, int *sdispls,
 			    MPI_Datatype sendtype, void *recvbuf,
 			    int *recvcnts, int *rdispls,
@@ -6461,7 +6458,7 @@ MPI_Datatype *recvtypes, MPI_Comm comm)
 	return res;
 }
 
-static int
+int
 __INTERNAL__PMPI_Alltoallw(void *sendbuf, int *sendcnts, int *sdispls, 
 MPI_Datatype *sendtypes, void *recvbuf, int *recvcnts, int *rdispls, 
 MPI_Datatype *recvtypes, MPI_Comm comm)
@@ -7556,7 +7553,7 @@ __INTERNAL__PMPI_Reduce_inter (void *sendbuf, void *recvbuf, int count,
 	return res;
 }
 
-static int
+int
 __INTERNAL__PMPI_Reduce (void *sendbuf, void *recvbuf, int count,
 			 MPI_Datatype datatype, MPI_Op op, int root,
 			 MPI_Comm comm)
@@ -7895,7 +7892,7 @@ __INTERNAL__PMPI_Allreduce_inter (void *sendbuf, void *recvbuf, int count,
 	return res;
 }
 
-static int
+int
 __INTERNAL__PMPI_Allreduce (void *sendbuf, void *recvbuf, int count,
 			    MPI_Datatype datatype, MPI_Op op, MPI_Comm comm)
 {
@@ -8051,7 +8048,7 @@ __INTERNAL__PMPI_Reduce_scatter_inter (void *sendbuf, void *recvbuf, int *recvcn
     return res;
 }
 
-static int
+int
 __INTERNAL__PMPI_Reduce_scatter (void *sendbuf, void *recvbuf, int *recvcnts,
 				 MPI_Datatype datatype, MPI_Op op,
 				 MPI_Comm comm)
@@ -8203,7 +8200,7 @@ __INTERNAL__PMPI_Reduce_scatter_block_inter (void *sendbuf, void *recvbuf, int r
     return res;
 }
 
-static int
+int
 __INTERNAL__PMPI_Reduce_scatter_block (void *sendbuf, void *recvbuf, int recvcnt,
 				 MPI_Datatype datatype, MPI_Op op,
 				 MPI_Comm comm)
@@ -11672,7 +11669,7 @@ SCTK__MPI_INIT_STATUS (MPI_Status * status)
 {
 }
 
-static inline void
+inline void
 SCTK__MPI_INIT_REQUEST (MPI_Request * request)
 {
   *request = MPI_REQUEST_NULL;

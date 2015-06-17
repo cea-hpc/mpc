@@ -24,15 +24,15 @@
 #include "mpc_nbc_weak.h"
 #endif
 
+
 #undef ffunc
-#define ffunc(a) a##_
+#define ffunc(f)  f##_
 #include <mpc_nbc_fortran.h>
 
 #undef ffunc
-#define ffunc(a) a##__
+#define ffunc(f) f##__
 #include <mpc_nbc_fortran.h>
 #undef ffunc
-
 
 
 

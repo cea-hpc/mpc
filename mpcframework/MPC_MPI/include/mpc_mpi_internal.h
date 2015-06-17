@@ -198,7 +198,8 @@ typedef struct MPI_internal_request_s
 	sctk_alloc_buffer_t buf; /**< This is a buffer allocator used to allocate requests */
 }MPI_request_struct_t;
 
-MPI_request_struct_t * __sctk_internal_get_mpc_requests();
+
+MPI_request_struct_t * __sctk_internal_get_MPC_requests();
 inline void __sctk_init_mpc_request ();
 inline MPI_internal_request_t *
 __sctk_convert_mpc_request_internal_cache_get (MPI_Request * req,
@@ -222,7 +223,33 @@ inline void __sctk_delete_mpc_request (MPI_Request * req,
 					      MPI_request_struct_t *requests);
 
 
+/*
+  SHARED INTERNAL FUNCTIONS
+*/
+#define MPI_ERROR_REPORT(comm, error,message) return SCTK__MPI_ERROR_REPORT__(comm, error,message,__FILE__, __LINE__)
 
+void SCTK__MPI_INIT_REQUEST (MPI_Request * request);
+int SCTK__MPI_ERROR_REPORT__ (MPC_Comm comm, int error, char *message, char *file, int line);
 
+int __INTERNAL__PMPI_Type_extent (MPI_Datatype, MPI_Aint *);
+int __INTERNAL__PMPI_Type_size (MPI_Datatype, int *);
+
+int __INTERNAL__PMPI_Waitall (int, MPI_Request *, MPI_Status *);
+int __INTERNAL__PMPI_Allgather (void *, int, MPI_Datatype, void *, int, MPI_Datatype, MPI_Comm);
+int __INTERNAL__PMPI_Allgatherv (void *, int, MPI_Datatype, void *, int *, int *, MPI_Datatype, MPI_Comm);
+int __INTERNAL__PMPI_Allreduce (void *, void *, int, MPI_Datatype, MPI_Op, MPI_Comm);
+int __INTERNAL__PMPI_Alltoall (void *, int, MPI_Datatype, void *, int, MPI_Datatype, MPI_Comm);
+int __INTERNAL__PMPI_Alltoallv (void *, int *, int *, MPI_Datatype,void *, int *, int *, MPI_Datatype, MPI_Comm);
+int __INTERNAL__PMPI_Barrier (MPI_Comm);
+int __INTERNAL__PMPI_Bcast (void *, int, MPI_Datatype, int, MPI_Comm);
+int __INTERNAL__PMPI_Exscan (void *, void *, int, MPI_Datatype, MPI_Op, MPI_Comm);
+int __INTERNAL__PMPI_Gather (void *, int, MPI_Datatype, void *, int, MPI_Datatype, int, MPI_Comm);
+int __INTERNAL__PMPI_Gatherv (void *, int, MPI_Datatype, void *, int *, int *, MPI_Datatype, int, MPI_Comm);
+int __INTERNAL__PMPI_Reduce (void *, void *, int, MPI_Datatype, MPI_Op, int, MPI_Comm);
+int __INTERNAL__PMPI_Reduce_scatter (void *, void *, int *, MPI_Datatype, MPI_Op, MPI_Comm);
+int __INTERNAL__PMPI_Reduce_scatter_block (void *, void *, int, MPI_Datatype, MPI_Op, MPI_Comm);
+int __INTERNAL__PMPI_Scan (void *, void *, int, MPI_Datatype, MPI_Op, MPI_Comm);
+int __INTERNAL__PMPI_Scatter (void *, int, MPI_Datatype, void *, int, MPI_Datatype, int, MPI_Comm);
+int __INTERNAL__PMPI_Scatterv (void *, int *, int *, MPI_Datatype, void *, int, MPI_Datatype, int, MPI_Comm);
 
 
