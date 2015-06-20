@@ -937,7 +937,10 @@ sctk_thread_generic_kill( sctk_thread_generic_t threadp, int val ){
 
   if( val == 0 ) return 0;
   val--;
-  if( val < 0 || val > SCTK_NSIG ) return SCTK_EINVAL;
+  if( val < 0 || val > SCTK_NSIG ) {
+    errno = EINVAL;
+    return SCTK_EINVAL;
+  }
 
   if( (&(th->attr.spinlock )) != (&(sctk_thread_generic_self()->attr.spinlock ))){
 	sctk_spinlock_lock ( &(th->attr.spinlock ));
