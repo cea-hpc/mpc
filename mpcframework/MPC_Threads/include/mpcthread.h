@@ -656,7 +656,9 @@ int mpc_thread_mutex_unlock (sctk_thread_mutex_t * mutex);
 #define sched_yield sctk_thread_yield
 #define raise(a) sctk_thread_kill(sctk_thread_self(), a)
 
+#ifndef SCTK_DONOT_REDEFINE_KILL
 #define kill  sctk_thread_process_kill
+#endif
 #define sigpending sctk_thread_sigpending
 #define sigsuspend sctk_thread_sigsuspend
 #define sigwait  sctk_thread_sigwait

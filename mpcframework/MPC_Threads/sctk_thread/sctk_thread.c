@@ -26,6 +26,7 @@
 
 #undef sleep
 #undef usleep
+#define SCTK_DONOT_REDEFINE_KILL
 
 #include "sctk_debug.h"
 #include "sctk_config.h"
