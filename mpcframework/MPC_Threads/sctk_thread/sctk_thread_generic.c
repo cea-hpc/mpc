@@ -1018,9 +1018,9 @@ sctk_thread_generic_getattr_np( sctk_thread_generic_t threadp,
 		  || th->sched.status == sctk_thread_generic_zombie )
 	  return SCTK_ESRCH;
 
-  if(attr->ptr == NULL){
+  /* if(attr->ptr == NULL){ */
     sctk_thread_generic_attr_init(attr);
-  }
+  /* } */
   *(attr->ptr) = th->attr;
   return 0;
 }
