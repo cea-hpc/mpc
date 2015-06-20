@@ -1043,8 +1043,8 @@ sctk_thread_generic_attr_getscope (const sctk_thread_generic_attr_t * attr, int 
 
   if(ptr == NULL){
     ptr = &init;
-	sctk_thread_generic_attr_init_sigs( attr );
-	sctk_thread_generic_alloc_pthread_blocking_lock_table( attr );
+	/* sctk_thread_generic_attr_init_sigs( attr ); */
+	/* sctk_thread_generic_alloc_pthread_blocking_lock_table( attr ); */
   }
   *scope = ptr->scope;
   return 0;
