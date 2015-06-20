@@ -83,6 +83,10 @@ extern "C"
 #define SEM_FAILED SCTK_SEM_FAILED
 
 
+#define PTHREAD_PRIO_NONE MPC_THREAD_PRIO_NONE
+#define PTHREAD_PRIO_INHERIT MPC_THREAD_PRIO_INHERIT
+#define PTHREAD_PRIO_PROTECT MPC_THREAD_PRIO_PROTECT
+
 /* pthread_atfork */
 #define pthread_atfork mpc_thread_atfork
 
