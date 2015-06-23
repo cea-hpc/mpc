@@ -7956,6 +7956,37 @@ __INTERNAL__PMPI_Allreduce_intra_binary_tree (void *sendbuf, void *recvbuf, int 
 }
 
 int
+__INTERNAL__PMPI_Allreduce_intra_no_mix_derived_types (void *sendbuf, void *recvbuf, int count,
+						       MPI_Datatype datatype, MPI_Op op, MPI_Comm comm)
+{
+  int res = MPI_ERR_INTERN;
+  MPC_Op mpc_op;
+  sctk_op_t *mpi_op;
+  int size;
+  int rank;
+
+  mpi_op = sctk_convert_to_mpc_op (op);
+  mpc_op = mpi_op->op;
+	
+  res = __INTERNAL__PMPI_Comm_rank (comm, &rank);
+  if(res != MPI_SUCCESS){return res;}
+  res = __INTERNAL__PMPI_Comm_size (comm, &size);
+  if(res != MPI_SUCCESS){return res;}
+
+  if((mpi_op->commute == 0) || (sctk_datatype_is_derived(datatype)))
+    {
+      res = __INTERNAL__PMPI_Allreduce_intra(sendbuf,recvbuf,count,datatype,op,comm);
+      if(res != MPI_SUCCESS){return res;}
+    } 
+  else 
+    {
+      res = PMPC_Allreduce(sendbuf,recvbuf,count,datatype,mpc_op,comm);
+      if(res != MPI_SUCCESS){return res;}
+    }
+  return res;
+}
+
+int
 __INTERNAL__PMPI_Allreduce_inter (void *sendbuf, void *recvbuf, int count,
 			    MPI_Datatype datatype, MPI_Op op, MPI_Comm comm)
 {
