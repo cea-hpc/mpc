@@ -90,9 +90,22 @@
                     </rail>
                     <rail>
                         <name>portals_mpi</name>
-                        <priority>1</priority>
-                        <ondemand>0</ondemand>
+                        <priority>6</priority>
+                        <ondemand>1</ondemand>
                         <config>portals_config</config>
+                    </rail>
+                    <rail>
+                        <name>portals_large</name>
+                        <priority>6</priority>
+                        <ondemand>1</ondemand>
+                        <config>portals_config</config>
+						<gates>
+							<gate>
+								<minsize>
+									<value>128B</value>
+								</minsize>
+							</gate>
+						</gates>
                     </rail>
 				</rails>
 
@@ -120,6 +133,13 @@
                         <name>portals</name>
                         <rails>
                             <rail>portals_mpi</rail>
+                        </rails>
+                    </cli_option>
+                    <cli_option>
+                        <name>multirail_portals</name>
+                        <rails>
+                            <rail>portals_large</rail>
+                            <rail>tcp_mpi</rail>
                         </rails>
                     </cli_option>
 					<cli_option>

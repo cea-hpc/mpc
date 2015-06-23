@@ -18,6 +18,7 @@
 /* # Authors:                                                             # */
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
 /* #   - GONCALVES Thomas thomas.goncalves@cea.fr                         # */
+/* #   - ADAM Julien julien.adam@cea.fr                                   # */
 /* #                                                                      # */
 /* ######################################################################## */
 
@@ -30,7 +31,7 @@ extern "C"
 #endif
 
 #ifdef MPC_USE_PORTALS
-#include <portals4.h>
+#include <sctk_portals_helper.h>
 #include <sctk_spinlock.h>
 //#include <utlist.h>
 
@@ -56,6 +57,7 @@ extern "C"
 #define EVENT_ENTRY 		1
 #define EVENT_DESCRIPTOR 	2
 
+#define TAG_INIT    0x1000000000000000
 #define TAG_IGN 	0x00000000FFFFFFFF
 #define SOURCE_IGN 	0x0000FFFF00000000
 #define FLAG_REQ	0x0001000000000000
@@ -88,6 +90,7 @@ extern "C"
         default: fprintf(stderr, "=> %s returned failcode %i (line %u)\n", #x, ret, (unsigned int)__LINE__); abort(); break; \
     } } while (0)
 
+   
 typedef struct portals_message_s
 {
 	ptl_md_t md;
@@ -106,6 +109,7 @@ typedef struct portals_message_s
 	int tag;
 	int append_pos;
 	int append_list;
+    char init_message;
 } sctk_portals_message_t;
 
 
@@ -150,9 +154,9 @@ typedef struct sctk_portals_event_table_list_s
 //} sctk_ProcsQ_t;
 
 void sctk_network_init_portals_all ( sctk_rail_info_t *rail );
-void portals_on_demand_connection_handler( sctk_rail_info_t *rail, int dest_process );
+void sctk_portals_on_demand_connection_handler( sctk_rail_info_t *rail, int dest_process );
+#endif
 #ifdef __cplusplus
 }
-#endif
 #endif // MPC_USE_PORTALS
 #endif // end .h file

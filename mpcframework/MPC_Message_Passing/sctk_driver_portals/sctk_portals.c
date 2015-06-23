@@ -18,6 +18,7 @@
 /* # Authors:                                                             # */
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
 /* #   - GONCALVES Thomas thomas.goncalves@cea.fr                         # */
+/* #   - ADAM Julien julien.adam@cea.fr                                   # */
 /* #                                                                      # */
 /* ######################################################################## */
 
@@ -31,22 +32,19 @@
 //TODO: Refactor and extract portals routine into sctk_portals_toolkit.c
 static void sctk_network_send_message_endpoint_portals ( sctk_thread_ptp_message_t *msg, sctk_endpoint_t *endpoint )
 {
-    sctk_endpoint_t *tmp;
+    /*sctk_endpoint_t *tmp;*/
     size_t size;
     int fd;
+    /*if ( 0 )*/
+    /*{*/
+        /*tmp = sctk_rail_get_any_route_to_process_or_on_demand ( endpoint->rail, SCTK_MSG_DEST_PROCESS ( msg ) ); //proc*/
+    /*}*/
+    /*else*/
+    /*{*/
+        /*tmp = sctk_rail_get_any_route_to_task_or_on_demand( endpoint->rail, SCTK_MSG_DEST_TASK ( msg ) ); //task*/
+    /*}*/
 
-
-    if ( 0 )
-    {
-        tmp = sctk_rail_get_any_route_to_process_or_on_demand ( endpoint->rail, SCTK_MSG_DEST_PROCESS ( msg ) ); //proc
-    }
-    else
-    {
-        tmp = sctk_rail_get_any_route_to_task_or_on_demand( endpoint->rail, SCTK_MSG_DEST_TASK ( msg ) ); //task
-    }
-
-    sctk_nodebug ( "my %d dest %d", endpoint->rail->network.portals.my_id.phys.pid, tmp->rail->network.portals.id.phys.pid );
-    sctk_nodebug ( "send from %d to %d", SCTK_MSG_SRC_PROCESS ( msg ), SCTK_MSG_DEST_PROCESS ( msg ) );
+    sctk_debug ( "my %d(%d) dest %d(%d)", endpoint->rail->network.portals.my_id.phys.pid, SCTK_MSG_SRC_PROCESS ( msg ), endpoint->data.portals.id.phys.pid, SCTK_MSG_DEST_PROCESS ( msg ));
 
 
     if ( sctk_get_peer_process_rank ( SCTK_MSG_SRC_PROCESS ( msg ) ) != sctk_process_rank )
@@ -57,11 +55,11 @@ static void sctk_network_send_message_endpoint_portals ( sctk_thread_ptp_message
 
         sctk_spinlock_lock ( &endpoint->rail->network.portals.lock[index] ); //to be thread safe
 
-        sctk_nodebug ( "%d =/ %d", sctk_get_peer_process_rank ( SCTK_MSG_SRC_PROCESS ( msg ) ), sctk_process_rank );
+        sctk_debug ( "%d =/ %d", sctk_get_peer_process_rank ( SCTK_MSG_SRC_PROCESS ( msg ) ), sctk_process_rank );
 
         if ( msg->tail.message.contiguous.size == SCTK_MSG_SIZE ( msg ) )
         {
-            sctk_nodebug ( "useless" );
+            sctk_debug ( "useless" );
         }
         else
             msg->tail.message.contiguous.size = SCTK_MSG_SIZE ( msg );
@@ -69,12 +67,12 @@ static void sctk_network_send_message_endpoint_portals ( sctk_thread_ptp_message
         ptl_ct_event_t ctc;
 
         msg->tail.message.contiguous.addr = sctk_malloc ( msg->tail.message.contiguous.size ); //to get the buffer
-        sctk_nodebug ( "allocated %p", msg->tail.portals_message_info_t );
+        sctk_debug ( "allocated %p", msg->tail.portals_message_info_t );
 
         sctk_portals_rail_info_t *portals_info	= ( sctk_portals_rail_info_t * ) msg->tail.portals_info_t;
         ptl_handle_ni_t *ni_h 					= &portals_info->ni_handle_phys;
         ptl_match_bits_t match, ignore;
-        set_Match_Ignore_Bits ( &match, &ignore, ptrmsg->my_idThread, ptrmsg->tag );
+        set_Match_Ignore_Bits ( &match, &ignore, ptrmsg->my_idThread, ptrmsg->tag, 1 );
         ptrmsg->md.start  	 	= msg->tail.message.contiguous.addr;//to get the buffer
 
         ptrmsg->md.length 	 	= msg->tail.message.contiguous.size;
@@ -84,10 +82,10 @@ static void sctk_network_send_message_endpoint_portals ( sctk_thread_ptp_message
         CHECK_RETURNVAL ( PtlMDBind ( *ni_h, &ptrmsg->md, &ptrmsg->md_handle ) );
         CHECK_RETURNVAL ( PtlGet ( ptrmsg->md_handle, 0, ptrmsg->md.length, ptrmsg->peer,
                     ptrmsg->peer_idThread, match, 0, NULL ) );
-        sctk_nodebug ( "waiting" );
+        sctk_debug ( "waiting" );
         CHECK_RETURNVAL ( PtlCTWait ( ptrmsg->md.ct_handle, 1, &ctc ) ); //we need to wait the message for routing
         assert ( ctc.failure == 0 );
-        sctk_nodebug ( "will free list" );
+        sctk_debug ( "will free list" );
 
         sctk_portals_event_table_list_t *EvQ 		= &endpoint->rail->network.portals.event_list[index];
         sctk_portals_event_table_t *currList = &EvQ->head;
@@ -133,7 +131,7 @@ static void sctk_network_send_message_endpoint_portals ( sctk_thread_ptp_message
 
         sctk_spinlock_unlock ( &endpoint->rail->network.portals.lock[index] ); //to be thread safe
     }
-    ListAppendMsg ( &endpoint->rail->network.portals, msg, &tmp->data.portals, WRITE, NULL );
+    sctk_portals_send_put_event ( &endpoint->rail->network.portals, msg, &endpoint->data.portals, WRITE, NULL );
 }
 
 static void sctk_network_notify_recv_message_portals ( sctk_thread_ptp_message_t *msg, sctk_rail_info_t *rail )
@@ -143,31 +141,33 @@ static void sctk_network_notify_recv_message_portals ( sctk_thread_ptp_message_t
 
 static void sctk_network_notify_matching_message_portals ( sctk_thread_ptp_message_t *msg, sctk_rail_info_t *rail )
 {
-    /*sctk_nodebug ( "message matched %p", msg );*/
+    /*sctk_debug ( "message matched %p", msg );*/
     /*NOTHING TO DO*/
 }
 
 static void sctk_network_notify_perform_message_portals ( int remote, int remote_task_id, int polling_task_id, int blocking, sctk_rail_info_t *rail )
 {
-    /*sctk_nodebug ( "perform message through rail %d", rail->rail_number );*/
-    /*int i;*/
+    /*sctk_debug ( "perform message through rail %d", rail->rail_number );*/
+    int i;
+    for ( i = 0; i < rail->network.portals.nb_tasks_per_process; i++ )
+    notify ( rail, i );
 
-    /*for ( i = 0; i < rail->network.portals.nb_tasks_per_process; i++ )*/
-        /*notify ( rail, i );*/
 }
 
 static void sctk_network_notify_idle_message_portals () //plus de calcul,blocage
 {
+    /*for ( i = 0; i < rail->network.portals.nb_tasks_per_process; i++ )*/
+        /*notify ( rail, i );*/
 }
 
 static void sctk_network_notify_any_source_message_portals ( int polling_task_id, int blocking, sctk_rail_info_t *rail )
 {
 
-    /*sctk_nodebug ( "any_source message through rail %d", rail->rail_number );*/
-    /*int i;*/
+    /*sctk_debug ( "any_source message through rail %d", rail->rail_number );*/
+    int i;
 
-    /*for ( i = 0; i < rail->network.portals.nb_tasks_per_process; i++ )*/
-        /*notify ( rail, i );*/
+    for ( i = 0; i < rail->network.portals.nb_tasks_per_process; i++ )
+       notify ( rail, i );
 }
 
 static int sctk_send_message_from_network_portals ( sctk_thread_ptp_message_t *msg )
@@ -193,7 +193,7 @@ void sctk_network_init_portals (sctk_rail_info_t *rail)
     rail->send_message_from_network = sctk_send_message_from_network_portals;
     rail->network_name = "PORTALS";
 
-    sctk_rail_init_route ( rail, rail->runtime_config_rail->topology, portals_on_demand_connection_handler );
+    sctk_rail_init_route ( rail, rail->runtime_config_rail->topology, sctk_portals_on_demand_connection_handler );
     sctk_network_init_portals_all ( rail );
 }
 

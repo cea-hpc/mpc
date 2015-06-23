@@ -18,6 +18,7 @@
 /* # Authors:                                                             # */
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
 /* #   - GONCALVES Thomas thomas.goncalves@cea.fr                         # */
+/* #   - ADAM Julien julien.adam@cea.fr                                   # */
 /* #                                                                      # */
 /* ######################################################################## */
 
@@ -60,8 +61,8 @@ struct sctk_portals_rail_info_s
 typedef struct sctk_portals_rail_info_s sctk_portals_rail_info_t;
 
 void sctk_network_init_portals ( sctk_rail_info_t *rail);
+#endif
 #ifdef __cplusplus
 }
-#endif
 #endif
 #endif
