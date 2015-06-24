@@ -350,9 +350,9 @@ int sctk_ib_cp_poll ( struct sctk_rail_info_s *rail, struct sctk_ib_polling_s *p
 {
 	sctk_ib_cp_task_t *task = NULL;
 #ifdef HAVE_PROGRESS_THREAD
-	if ( task_id < 0 )
+	if ( task_id < 0 || 1)
 #else
-	if ( task_id < 0 || 1 )
+	if ( task_id < 0 )
 #endif
 	{
 		sctk_ib_cp_steal ( rail, poll, 1 );

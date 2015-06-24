@@ -106,12 +106,9 @@ static int __INTERNAL__PMPI_Issend (void *, int, MPI_Datatype, int, int,
 				    MPI_Comm, MPI_Request *);
 static int __INTERNAL__PMPI_Irsend (void *, int, MPI_Datatype, int, int,
 				    MPI_Comm, MPI_Request *);
-static int __INTERNAL__PMPI_Irecv (void *, int, MPI_Datatype, int, int,
-				   MPI_Comm, MPI_Request *);
 static int __INTERNAL__PMPI_Wait (MPI_Request *, MPI_Status *);
 static int __INTERNAL__PMPI_Test (MPI_Request *, int *, MPI_Status *);
 static int __INTERNAL__PMPI_Request_free (MPI_Request *);
-static int __INTERNAL__PMPI_Waitany (int, MPI_Request *, int *, MPI_Status *);
 static int __INTERNAL__PMPI_Testany (int, MPI_Request *, int *, int *,
 				     MPI_Status *);
 static int __INTERNAL__PMPI_Testall (int, MPI_Request *, int *, MPI_Status *);
@@ -1982,7 +1979,7 @@ static int __INTERNAL__PMPI_Irecv_test_req (void *buf, int count, MPI_Datatype d
 	}
 }
 
-static int __INTERNAL__PMPI_Irecv (void *buf, int count, MPI_Datatype datatype,
+int __INTERNAL__PMPI_Irecv (void *buf, int count, MPI_Datatype datatype,
 			int source, int tag, MPI_Comm comm,
 			MPI_Request * request)
 {
@@ -2049,7 +2046,7 @@ static int __INTERNAL__PMPI_Request_free (MPI_Request * request)
 	return res;
 }
 
-static int __INTERNAL__PMPI_Waitany (int count, MPI_Request * array_of_requests, int *index, MPI_Status * status)
+int __INTERNAL__PMPI_Waitany (int count, MPI_Request * array_of_requests, int *index, MPI_Status * status)
 {
 	int flag = 0;
 
@@ -11624,6 +11621,14 @@ static int
 __INTERNAL__PMPI_Finalize (void)
 {
   int res; 
+/*
+  struct sctk_task_specific_s * task_specific;
+  task_specific = __MPC_get_task_specific ();
+  if(task_specific->mpc_mpi_data->nbc_initialized_per_task){
+		NBC_Finalize(&(task_specific->mpc_mpi_data->NBC_Pthread));
+
+	}
+*/
   if(is_finalized != 0){
     MPI_ERROR_REPORT (MPI_COMM_WORLD, MPI_ERR_OTHER, "MPI_Finalize issue");
   }

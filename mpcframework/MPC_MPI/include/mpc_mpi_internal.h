@@ -65,6 +65,12 @@ void sctk_char_c_to_fortran (char *buf, int size);
 #endif
 
 
+struct sctk_list_elem {
+  void* elem;
+  struct sctk_list_elem *prev;
+  struct sctk_list_elem *next;
+};
+
 
 typedef struct
 {
@@ -235,6 +241,10 @@ int __INTERNAL__PMPI_Type_extent (MPI_Datatype, MPI_Aint *);
 int __INTERNAL__PMPI_Type_size (MPI_Datatype, int *);
 
 int __INTERNAL__PMPI_Waitall (int, MPI_Request *, MPI_Status *);
+int __INTERNAL__PMPI_Waitany (int, MPI_Request *, int *, MPI_Status *);
+
+int __INTERNAL__PMPI_Irecv (void *, int, MPI_Datatype, int, int,
+				   MPI_Comm, MPI_Request *);
 int __INTERNAL__PMPI_Allgather (void *, int, MPI_Datatype, void *, int, MPI_Datatype, MPI_Comm);
 int __INTERNAL__PMPI_Allgatherv (void *, int, MPI_Datatype, void *, int *, int *, MPI_Datatype, MPI_Comm);
 int __INTERNAL__PMPI_Allreduce (void *, void *, int, MPI_Datatype, MPI_Op, MPI_Comm);
@@ -252,4 +262,5 @@ int __INTERNAL__PMPI_Scan (void *, void *, int, MPI_Datatype, MPI_Op, MPI_Comm);
 int __INTERNAL__PMPI_Scatter (void *, int, MPI_Datatype, void *, int, MPI_Datatype, int, MPI_Comm);
 int __INTERNAL__PMPI_Scatterv (void *, int *, int *, MPI_Datatype, void *, int, MPI_Datatype, int, MPI_Comm);
 
+int NBC_Finalize(sctk_thread_t *NBC_thread);
 
