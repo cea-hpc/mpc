@@ -2683,7 +2683,7 @@ void sctk_send_message_try_check ( sctk_thread_ptp_message_t *msg, int perform_c
 
 	/* The message is a process specific message and the process rank does not match
 	 * the current process rank */
-	if( sctk_message_class_is_control_message( SCTK_MSG_SPECIFIC_CLASS( msg ) ) )
+	if( sctk_message_class_is_control_message( SCTK_MSG_SPECIFIC_CLASS( msg ) )  )
 	{
 		/* If we are on the right process with a control message */
 
@@ -2693,8 +2693,9 @@ void sctk_send_message_try_check ( sctk_thread_ptp_message_t *msg, int perform_c
 		sctk_control_messages_incoming( msg );
 		
 		/* Done */
-		return;
-	}	
+		return;	
+
+	}
 	else
 	{
 
