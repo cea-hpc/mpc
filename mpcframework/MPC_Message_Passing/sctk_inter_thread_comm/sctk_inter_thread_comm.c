@@ -2561,23 +2561,18 @@ void sctk_send_message_try_check ( sctk_thread_ptp_message_t *msg, int perform_c
 
 	/* The message is a process specific message and the process rank does not match
 	 * the current process rank */
-	if( sctk_message_class_is_process_specific ( SCTK_MSG_SPECIFIC_CLASS( msg ) ) )
+	if( sctk_message_class_is_control_message( SCTK_MSG_SPECIFIC_CLASS( msg ) ) )
 	{
-	
-		if( sctk_message_class_is_control_message( SCTK_MSG_SPECIFIC_CLASS( msg ) ) )
-		{
-			/* If we are on the right process with a control message */
+		/* If we are on the right process with a control message */
 
-			/* Message is for local process call the handler (such message are never pending)
-			 * no need to perform a matching with a receive. However, the order is guaranteed
-			 * by the reorder prior to calling this function */
-			sctk_control_messages_incoming( msg );
-			
-			/* Done */
-			return;
-		}	
-
-	}
+		/* Message is for local process call the handler (such message are never pending)
+		 * no need to perform a matching with a receive. However, the order is guaranteed
+		 * by the reorder prior to calling this function */
+		sctk_control_messages_incoming( msg );
+		
+		/* Done */
+		return;
+	}	
 	else
 	{
 
