@@ -43,16 +43,11 @@ void sctk_reorder_list_init ( sctk_reorder_list_t *reorder )
 /*
  * Add a reorder entry to the reorder table and initialize it
  */
- 
-
 sctk_reorder_table_t *sctk_init_task_to_reorder ( int dest )
 {
 	sctk_reorder_table_t *tmp;
 
 	tmp = sctk_malloc ( sizeof ( sctk_reorder_table_t ) );
-	
-	memset( tmp, 0, sizeof ( sctk_reorder_table_t ) );
-	
 	OPA_store_int ( & ( tmp->message_number_src ), 0 );
 	OPA_store_int ( & ( tmp->message_number_dest ), 0 );
 	tmp->lock = SCTK_SPINLOCK_INITIALIZER;
@@ -72,6 +67,7 @@ sctk_reorder_table_t *sctk_get_task_from_reorder ( int dest, int process_specifi
 	sctk_reorder_table_t *tmp;
 
 	key.destination = dest;
+	key.is_process_specific = process_specific;
 
 	sctk_spinlock_lock ( &reorder->lock );
 	HASH_FIND ( hh, reorder->table, &key, sizeof ( sctk_reorder_key_t ), tmp );
@@ -150,7 +146,8 @@ int sctk_send_message_from_network_reorder ( sctk_thread_ptp_message_t *msg )
 		return REORDER_NO_NUMBERING;
 	}
 	else
-	{	dest_process = sctk_get_process_rank_from_task_rank ( dest_task );
+	{
+		dest_process = sctk_get_process_rank_from_task_rank ( dest_task );
 		sctk_debug ( "Recv message from %d to %d (number:%d)",
 			     SCTK_MSG_SRC_TASK ( msg ),
 			     SCTK_MSG_DEST_TASK ( msg ), SCTK_MSG_NUMBER ( msg ) );
