@@ -48,16 +48,12 @@ sctk_reorder_table_t *sctk_init_task_to_reorder ( int dest )
 {
 	sctk_reorder_table_t *tmp;
 
-<<<<<<< HEAD
-	tmp = sctk_malloc ( sizeof ( sctk_reorder_table_t ) );
-=======
 	tmp = sctk_malloc( sizeof ( sctk_reorder_table_t ) );
 	
 	assume( tmp != NULL );
 	
 	memset( tmp, 0, sizeof ( sctk_reorder_table_t ) );
-	
->>>>>>> MPC-RDMA : Stabilize and validate the READ/WRITE RDMA interface in shared and emulated mode
+
 	OPA_store_int ( & ( tmp->message_number_src ), 0 );
 	OPA_store_int ( & ( tmp->message_number_dest ), 0 );
 	tmp->lock = SCTK_SPINLOCK_INITIALIZER;
@@ -79,8 +75,6 @@ sctk_reorder_table_t *sctk_get_task_from_reorder ( int dest, int process_specifi
 	sctk_nodebug("[%p] LOOK %d / %d", reorder, dest, process_specific );
 
 	key.destination = dest;
-	key.is_process_specific = process_specific;
-
 
 	sctk_spinlock_lock ( &reorder->lock );
 	
