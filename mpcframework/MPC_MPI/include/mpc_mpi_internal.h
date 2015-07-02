@@ -239,6 +239,11 @@ int SCTK__MPI_ERROR_REPORT__ (MPC_Comm comm, int error, char *message, char *fil
 
 int __INTERNAL__PMPI_Type_extent (MPI_Datatype, MPI_Aint *);
 int __INTERNAL__PMPI_Type_size (MPI_Datatype, int *);
+int __INTERNAL__PMPI_Pack (void *, int, MPI_Datatype, void *, int,
+                                  int *, MPI_Comm);
+int __INTERNAL__PMPI_Unpack (void *, int, int *, void *, int,
+                                    MPI_Datatype, MPI_Comm);
+int __INTERNAL__PMPI_Pack_size (int, MPI_Datatype, MPI_Comm, int *);
 
 int __INTERNAL__PMPI_Waitall (int, MPI_Request *, MPI_Status *);
 int __INTERNAL__PMPI_Waitany (int, MPI_Request *, int *, MPI_Status *);

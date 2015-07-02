@@ -178,12 +178,6 @@ int __INTERNAL__PMPI_Type_create_subarray (int ndims,
 					   int order,
 					   MPI_Datatype oldtype,
 					   MPI_Datatype * new_type);
-static int __INTERNAL__PMPI_Pack (void *, int, MPI_Datatype, void *, int,
-				  int *, MPI_Comm);
-static int __INTERNAL__PMPI_Unpack (void *, int, int *, void *, int,
-				    MPI_Datatype, MPI_Comm);
-static int __INTERNAL__PMPI_Pack_size (int, MPI_Datatype, MPI_Comm, int *);
-
 
 int __INTERNAL__PMPI_Pack_external_size (char *datarep , int incount, MPI_Datatype datatype, MPI_Aint *size);
 int __INTERNAL__PMPI_Pack_external (char *datarep , void *inbuf, int incount, MPI_Datatype datatype, void * outbuf, MPI_Aint outsize, MPI_Aint * position);
@@ -4427,7 +4421,7 @@ static int __INTERNAL__PMPI_Get_elements_x (MPI_Status * status, MPI_Datatype da
 }
 
 
-static int
+int
 __INTERNAL__PMPI_Pack (void *inbuf,
 		       int incount,
 		       MPI_Datatype datatype,
@@ -4503,7 +4497,7 @@ __INTERNAL__PMPI_Pack (void *inbuf,
 	}
 }
 
-static int
+int
 __INTERNAL__PMPI_Unpack (void *inbuf,
 			 int insize,
 			 int *position,
@@ -4567,7 +4561,7 @@ __INTERNAL__PMPI_Unpack (void *inbuf,
 	}
 }
 
-static int
+int
 __INTERNAL__PMPI_Pack_size (int incount, MPI_Datatype datatype, MPI_Comm comm,
 			    int *size)
 {
