@@ -19,6 +19,7 @@
  * if the profiler does not profile NBC_ calls :) */
 #define USE_PMPI 1
 #define HAVE_PROGRESS_THREAD 1
+//#define NBC_DLEVEL 11
 
 /* enable schedule caching - undef NBC_CACHE_SCHEDULE to deactivate it */
 /* TODO: this whole schedule cache stuff does not work with the tmbuf
@@ -614,6 +615,8 @@ static inline void NBC_DEBUG(int level, const char *fmt, ...)
 		va_start(ap, fmt);
 		vprintf(fmt, ap);
 		va_end (ap);
+		fflush(stdout);
+		fflush(stderr);
 	} 
 #endif
 }
