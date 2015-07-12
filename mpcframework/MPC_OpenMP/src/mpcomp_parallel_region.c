@@ -63,7 +63,7 @@ __mpcomp_wakeup_mvp(
     mvp->nb_threads = 1 ;
 
 	mvp->threads[0].info = mvp->info ;
-	mvp->threads[0].rank = mvp->min_index ;
+	mvp->threads[0].rank = mvp->min_index[mpcomp_global_icvs.affinity] ;
 	mvp->threads[0].single_sections_current = 
 		mvp->info.single_sections_current_save ;
 	mvp->threads[0].for_dyn_current = 
@@ -168,7 +168,8 @@ static inline mpcomp_node_t * __mpcomp_wakeup_node(
 		 */
 		for ( i = 1 ; i < n->nb_children ; i++ ) {
 			/* TODO promote min_index -> min_index[affinity] */
-			if ( n->children.node[i]->min_index < num_threads ) {
+			if ( n->children.node[i]->min_index[mpcomp_global_icvs.affinity] < 
+                    num_threads ) {
 				nb_children_involved++ ;
 			}
 		}
@@ -193,7 +194,8 @@ static inline mpcomp_node_t * __mpcomp_wakeup_node(
 			/* Wake up children and transfer information */
 			for ( i = 1 ; i < n->nb_children ; i++ ) {
 				/* TODO promote min_index -> min_index[affinity] */
-				if ( n->children.node[i]->min_index < num_threads ) {
+				if ( n->children.node[i]->min_index[mpcomp_global_icvs.affinity] 
+                        < num_threads ) {
 #if MPCOMP_TRANSFER_INFO_ON_NODES
 					n->children.node[i]->info = n->info ;
 #endif
@@ -229,7 +231,7 @@ static inline mpcomp_node_t * __mpcomp_wakeup_leaf(
     sctk_assert( n->child_type == MPCOMP_CHILDREN_LEAF ) ;
 	int nb_children_involved = 1 ;
     for ( i = 1 ; i < n->nb_children ; i++ ) {
-		if ( n->children.leaf[i]->min_index < num_threads ) {
+		if ( n->children.leaf[i]->min_index[mpcomp_global_icvs.affinity] < num_threads ) {
 			nb_children_involved++ ;
 		}
 	}
@@ -237,7 +239,7 @@ static inline mpcomp_node_t * __mpcomp_wakeup_leaf(
 			nb_children_involved ) ;
     n->barrier_num_threads = nb_children_involved ;
     for ( i = 1 ; i < n->nb_children ; i++ ) {
-		if ( n->children.leaf[i]->min_index < num_threads ) {
+		if ( n->children.leaf[i]->min_index[mpcomp_global_icvs.affinity] < num_threads ) {
 #if MPCOMP_TRANSFER_INFO_ON_NODES
 			n->children.leaf[i]->info = n->info ;
 #else

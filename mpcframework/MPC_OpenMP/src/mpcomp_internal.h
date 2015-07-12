@@ -70,6 +70,11 @@ extern "C"
 #define MPCOMP_CHUNKS_NOT_AVAIL 1
 #define MPCOMP_CHUNKS_AVAIL     2
 
+/* Define macro MPCOMP_MIC in case of Xeon Phi compilation */
+#if __MIC__ || __MIC2__
+#define MPCOMP_MIC 1
+#endif /* __MIC__ || __MIC2__ */
+
 #define MPCOMP_TASK 1
 
 #if MPCOMP_TASK
@@ -151,6 +156,13 @@ extern "C"
 	   MPCOMP_MODE_FULLY_MIXED
      } mpcomp_mode_t ;
 
+     typedef enum mpcomp_affinity_t {
+       MPCOMP_AFFINITY_COMPACT,   /* Distribute over logical PUs */
+       MPCOMP_AFFINITY_SCATTER,   /* Distribute over memory controllers */
+       MPCOMP_AFFINITY_BALANCED,   /* Distribute over physical PUs */
+       MPCOMP_AFFINITY_NB
+     } mpcomp_affinity_t ;
+
 
 /*****************
  ****** STRUCTURES 
@@ -160,15 +172,16 @@ extern "C"
      /* One structure per OpenMP instance */
      typedef struct mpcomp_global_icv_s 
      {
-	  omp_sched_t def_sched_var;	/* Default schedule when no 'schedule' clause
-					   is present */
+	  omp_sched_t def_sched_var;    /* Default schedule when no 'schedule' clause 
+                                       is present */
 	  int bind_var;                 /* Is the OpenMP threads bound to cpu cores */
 	  int stacksize_var;            /* Size of the stack per thread (in Bytes) */
 	  int active_wait_policy_var;   /* Is the threads wait policy active or passive */
 	  int thread_limit_var;         /* Number of Open threads to use for the whole program */
 	  int max_active_levels_var;    /* Maximum number of nested active parallel regions */
-	  int nmicrovps_var;		/* Number of VPs */
-	  int warn_nested ;		/* Emit warning for nested parallelism? */
+	  int nmicrovps_var;            /* Number of VPs */
+	  int warn_nested ;             /* Emit warning for nested parallelism? */
+	  int affinity;                 /* OpenMP threads affinity  */
      } mpcomp_global_icv_t;
 
 
@@ -341,7 +354,8 @@ typedef struct mpcomp_thread_s
 	int * for_dyn_target ; /* Coordinates of target thread to steal */
 	int * for_dyn_shift ; /* Shift of target thread to steal */
 	int for_dyn_last_loop_iteration ; /* WORKAROUND (pr35196.c)
-																			 Did we just execute the last iteration of the original loop? */
+                                         Did we just execute the last 
+                                         iteration of the original loop? */
 
 	/* ORDERED CONSTRUCT */
 	int current_ordered_iteration; 
@@ -367,6 +381,11 @@ typedef struct mpcomp_thread_s
 						 (array of size 'tree_depth' */
 	  int *tree_cumulative ; /* Initialized in __mpcomp_build_tree */
 	  hwloc_topology_t topology;
+	  int scatter_depth ; /* TODO check */
+	  int core_depth; /* TODO check */
+	  int nb_cores; /* TODO check */
+	  int balanced_last_thread; /* TODO check */
+	  int balanced_current_core; /* TODO check */
 #if MPCOMP_TASK
 	  int *tree_level_size;
 	  int tree_array_size;
@@ -389,8 +408,8 @@ typedef struct mpcomp_thread_s
 
 	  int *tree_rank; 	          /* Array of rank in every node of the tree */
 	  int rank;    	                  /* Rank within the microVPs */
-	  int min_index ;
-          int vp;                         /* VP on which microVP is executed */
+	  int min_index[MPCOMP_AFFINITY_NB] ;
+      int vp;                         /* VP on which microVP is executed */
 	  char pad0[64];                  /* Padding */
 	  volatile int enable;
 	  char pad1[64];                  /* Padding */
@@ -406,9 +425,9 @@ typedef struct mpcomp_thread_s
 
 	  /* OMP 3.0 */
 #if MPCOMP_TASK
-	  struct mpcomp_node_s **tree_array;               /* Array reprensentation of the tree */
-	  unsigned tree_array_rank;                        /* Rank in tree_array */ 
-	  int *path;                                       /* Path in the tree */
+	  struct mpcomp_node_s **tree_array;  /* Array reprensentation of the tree */
+	  unsigned tree_array_rank;           /* Rank in tree_array */ 
+	  int *path;                          /* Path in the tree */
 	  struct mpcomp_task_list_s *tasklist[MPCOMP_TASK_TYPE_COUNT]; /* Lists of tasks */
 	  struct mpcomp_task_list_s *lastStolen_tasklist[MPCOMP_TASK_TYPE_COUNT];
 	  int tasklistNodeRank[MPCOMP_TASK_TYPE_COUNT];
@@ -430,8 +449,8 @@ typedef struct mpcomp_thread_s
 	  mpcomp_new_parallel_region_info_t info ;
 
 	  /* The following indices correspond to the 'rank' value in microVPs */
-	  int min_index;   /* Flat min index of leaves in this subtree */
-	  int max_index;   /* Flat max index of leaves in this subtree */
+	  int min_index[MPCOMP_AFFINITY_NB];   /* Flat min index of leaves in this subtree */
+	  int max_index[MPCOMP_AFFINITY_NB];   /* Flat max index of leaves in this subtree */
 
 	  mpcomp_instance_t * instance ; /* Information on the whole team */
 
@@ -450,6 +469,7 @@ typedef struct mpcomp_thread_s
 	  sctk_atomics_int chunks_avail;                /* Flag for presence of chunks 
 							   under current node */
 	  sctk_atomics_int nb_chunks_empty_children;    /* Counter for presence of chunks */
+         /* TODO to check if it is useful */
 
 	  char pad2[64];                       /* Padding */
 	  volatile long barrier_done;          /* Is the barrier (for the child team) over? */

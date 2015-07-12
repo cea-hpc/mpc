@@ -89,6 +89,8 @@ static int OMP_TASK_NESTING_MAX = 8;
 static int OMP_WARN_NESTED = 0 ;
 /* Hybrid MPI/OpenMP mode */
 static mpcomp_mode_t OMP_MODE = MPCOMP_MODE_SIMPLE_MIXED ;
+/* Affinity policy -> default is BALANCED for hyperthreading */
+static mpcomp_affinity_t OMP_AFFINITY = MPCOMP_AFFINITY_BALANCED ;
 
 mpcomp_global_icv_t mpcomp_global_icvs;
 
@@ -478,6 +480,9 @@ TODO( "If OMP_NUM_THREADS is 0, let it equal to 0 by default and handle it later
     } else {
       fprintf( stderr, "\tNo warning for nested parallelism\n" ) ;
     }
+#if MPCOMP_MIC
+    fprintf( stderr, "\tMIC optimizations on\n" ) ;
+#endif
     TODO( "Add every env vars when printing info on OpenMP" ) 
   }
 }
@@ -515,6 +520,7 @@ void __mpcomp_init() {
       mpcomp_global_icvs.max_active_levels_var = OMP_MAX_ACTIVE_LEVELS;
       mpcomp_global_icvs.nmicrovps_var = OMP_MICROVP_NUMBER ;
       mpcomp_global_icvs.warn_nested = OMP_WARN_NESTED ;
+      mpcomp_global_icvs.affinity = OMP_AFFINITY ;
       done = 1;
     }
 
@@ -665,8 +671,6 @@ void __mpcomp_instance_init( mpcomp_instance_t * instance, int nb_mvps,
 	 * tree_level_size, tree_array_size, tree_array_first_rank 
 	 */
 
-
-
 	sctk_nodebug( "__mpcomp_instance_init: Entering..." ) ;
 
 	/* Assign the current team */
@@ -675,7 +679,7 @@ void __mpcomp_instance_init( mpcomp_instance_t * instance, int nb_mvps,
 	/* TODO: act here to adapt the number of microVPs for each MPI task */
 
 	if ( nb_mvps > 1 ){
-	     hwloc_topology_t restrictedTopology, flatTopology;
+        hwloc_topology_t restrictedTopology, flatTopology;
 		int err;
 
 		/* Alloc memory for 'nb_mvps' microVPs */
@@ -684,8 +688,20 @@ void __mpcomp_instance_init( mpcomp_instance_t * instance, int nb_mvps,
 
 		instance->nb_mvps = nb_mvps ;
 
-		__mpcomp_restrict_topology(&restrictedTopology, instance->nb_mvps);
-		__mpcomp_flatten_topology(restrictedTopology, &flatTopology);
+		err = __mpcomp_restrict_topology(&restrictedTopology, instance->nb_mvps);
+        if ( err == -1 ) {
+            fprintf( stderr,
+                    "MPC_OpenMP Internal error in __mpcomp_restrict_topology\n" ) ;
+            exit( 1 ) ;
+        }
+
+		err = __mpcomp_flatten_topology(restrictedTopology, &flatTopology);
+        if ( err ) {
+            fprintf( stderr,
+                    "MPC_OpenMP Internal error in __mpcomp_flatten_topology\n" ) ;
+            exit( 1 ) ;
+        }
+
 		instance->topology = flatTopology;
 		hwloc_topology_destroy(restrictedTopology);
 
@@ -695,6 +711,7 @@ void __mpcomp_instance_init( mpcomp_instance_t * instance, int nb_mvps,
 			__mpcomp_build_tree( instance, OMP_TREE_NB_LEAVES, OMP_TREE_DEPTH, OMP_TREE ) ; 
 		}
 	} else {
+        int i ;
 		mpcomp_local_icv_t icvs ;
 		/* Sequential instance and team */
 		instance->mvps = (mpcomp_mvp_t **)sctk_malloc( 1 * sizeof( mpcomp_mvp_t * ) ) ;
@@ -703,7 +720,9 @@ void __mpcomp_instance_init( mpcomp_instance_t * instance, int nb_mvps,
 		instance->mvps[0] = (mpcomp_mvp_t *)sctk_malloc( 1 * sizeof( mpcomp_mvp_t ) ) ;
 		sctk_assert( instance->mvps[0] != NULL ) ;
 
-		instance->mvps[0]->min_index = 0 ;
+        for ( i = 0 ; i < MPCOMP_AFFINITY_NB ; i++ ) {
+            instance->mvps[0]->min_index[i] = 0 ;
+        }
 
 		instance->nb_mvps = 1 ;
 

@@ -623,6 +623,16 @@ __kmpc_reduce_nowait( ident_t *loc, kmp_int32 global_tid, kmp_int32 num_vars, si
       ) ;
 
 #if 0
+  printf( "[%d] __kmpc_reduce_nowait %d var(s) of size %ld, LOC=0x%.4X "
+      "CRITICAL ? %d, TREE ? %d, ATOMIC ? %d\n",
+      t->rank, num_vars, reduce_size, 
+      loc->flags, 
+      (lck!=NULL), (reduce_data!=NULL && reduce_func!=NULL), 
+      ( (loc->flags & KMP_IDENT_ATOMIC_REDUCE) == KMP_IDENT_ATOMIC_REDUCE )
+      ) ;
+#endif
+
+#if 0
   /* Version with atomic operation */
   return 2 ;
 #endif
@@ -630,6 +640,11 @@ __kmpc_reduce_nowait( ident_t *loc, kmp_int32 global_tid, kmp_int32 num_vars, si
   /* Version with critical section */
   sctk_assert( lck != NULL ) ;
   __mpcomp_anonymous_critical_begin() ;
+
+#if 0
+if ( t->rank == 0 && 
+(loc->flags & KMP_IDENT_ATOMIC_REDUCE) != KMP_IDENT_ATOMIC_REDUCE ) return 0 ;
+#endif
   return 1 ;
 }
 
@@ -689,6 +704,16 @@ __kmpc_reduce( ident_t *loc, kmp_int32 global_tid, kmp_int32 num_vars, size_t re
       ( (loc->flags & KMP_IDENT_ATOMIC_REDUCE) == KMP_IDENT_ATOMIC_REDUCE )
       
       ) ;
+
+#if 0
+  printf( "[%d] __kmpc_reduce %d var(s) of size %ld, "
+      "CRITICAL ? %d, TREE ? %d, ATOMIC ? %d\n",
+      t->rank, num_vars, reduce_size, 
+      (lck!=NULL), (reduce_data!=NULL && reduce_func!=NULL), 
+      ( (loc->flags & KMP_IDENT_ATOMIC_REDUCE) == KMP_IDENT_ATOMIC_REDUCE )
+      
+      ) ;
+#endif
 
 #if 0
   /* Version with atomic operation */
@@ -1665,6 +1690,8 @@ __kmpc_atomic_float8_add(  ident_t *id_ref, int gtid, kmp_real64 * lhs, kmp_real
 #endif
 
   /* TODO check how we can add this function to asssembly-dedicated module */
+
+/* TODO use MPCOMP_MIC */
 
 #if __MIC__ || __MIC2__
 #warning "MIC => atomic locks"
