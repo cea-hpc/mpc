@@ -89,8 +89,8 @@ static int OMP_TASK_NESTING_MAX = 8;
 static int OMP_WARN_NESTED = 0 ;
 /* Hybrid MPI/OpenMP mode */
 static mpcomp_mode_t OMP_MODE = MPCOMP_MODE_SIMPLE_MIXED ;
-/* Affinity policy -> default is BALANCED for hyperthreading */
-static mpcomp_affinity_t OMP_AFFINITY = MPCOMP_AFFINITY_BALANCED ;
+/* TODO Affinity policy -> default should be BALANCED for hyperthreading */
+static mpcomp_affinity_t OMP_AFFINITY = MPCOMP_AFFINITY_COMPACT ;
 
 mpcomp_global_icv_t mpcomp_global_icvs;
 
