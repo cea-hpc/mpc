@@ -676,8 +676,7 @@ void __mpcomp_instance_init( mpcomp_instance_t * instance, int nb_mvps,
 	/* Assign the current team */
 	instance->team = team ;
 
-	/* TODO: act here to adapt the number of microVPs for each MPI task */
-
+    /* If this instance is not sequential... */
 	if ( nb_mvps > 1 ){
         hwloc_topology_t restrictedTopology, flatTopology;
 		int err;
@@ -688,18 +687,17 @@ void __mpcomp_instance_init( mpcomp_instance_t * instance, int nb_mvps,
 
 		instance->nb_mvps = nb_mvps ;
 
+        /* Restrict the global topology to the number of microVPs */
 		err = __mpcomp_restrict_topology(&restrictedTopology, instance->nb_mvps);
         if ( err == -1 ) {
-            fprintf( stderr,
-                    "MPC_OpenMP Internal error in __mpcomp_restrict_topology\n" ) ;
-            exit( 1 ) ;
+            sctk_error( "MPC_OpenMP Internal error in __mpcomp_restrict_topology" ) ;
+            sctk_abort() ;
         }
 
 		err = __mpcomp_flatten_topology(restrictedTopology, &flatTopology);
         if ( err ) {
-            fprintf( stderr,
-                    "MPC_OpenMP Internal error in __mpcomp_flatten_topology\n" ) ;
-            exit( 1 ) ;
+            sctk_error( "MPC_OpenMP Internal error in __mpcomp_flatten_topology" ) ;
+            sctk_abort() ;
         }
 
 		instance->topology = flatTopology;
