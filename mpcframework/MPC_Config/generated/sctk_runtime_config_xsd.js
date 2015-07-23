@@ -667,6 +667,12 @@ var sctk_runtime_config_xsd = "<?xml version='1.0'?>\
 </xs:all>\
 </xs:complexType>\
 <!-- ********************************************************* -->\
+<xs:complexType name='user_type_progress_thread'>\
+<xs:all>\
+<xs:element minOccurs='0' name='use_progress_thread' type='xs:integer'/>\
+</xs:all>\
+</xs:complexType>\
+<!-- ********************************************************* -->\
 <xs:complexType name='user_type_openmp'>\
 <xs:all>\
 <xs:element minOccurs='0' name='vp' type='xs:integer'/>\
@@ -730,6 +736,7 @@ var sctk_runtime_config_xsd = "<?xml version='1.0'?>\
 <xs:element minOccurs='0' name='mpc' type='user_type_mpc'/>\
 <xs:element minOccurs='0' name='collectives_intra' type='user_type_collectives_intra'/>\
 <xs:element minOccurs='0' name='collectives_inter' type='user_type_collectives_inter'/>\
+<xs:element minOccurs='0' name='progress_thread' type='user_type_progress_thread'/>\
 <xs:element minOccurs='0' name='openmp' type='user_type_openmp'/>\
 <xs:element minOccurs='0' name='profiler' type='user_type_profiler'/>\
 <xs:element minOccurs='0' name='thread' type='user_type_thread'/>\

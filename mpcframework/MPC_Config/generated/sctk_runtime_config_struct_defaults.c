@@ -647,6 +647,20 @@ void sctk_runtime_config_struct_init_collectives_inter(void * struct_ptr)
 }
 
 /*******************  FUNCTION  *********************/
+void sctk_runtime_config_struct_init_progress_thread(void * struct_ptr)
+{
+	struct sctk_runtime_config_struct_progress_thread * obj = struct_ptr;
+	/* Make sure this element is not initialized yet       */
+	/* It allows us to know when we are facing dynamically */
+	/* allocated objects requiring an init                 */
+	if( obj->init_done != 0 ) return;
+
+	/* Simple params : */
+	obj->use_progress_thread = 1;
+	obj->init_done = 1;
+}
+
+/*******************  FUNCTION  *********************/
 void sctk_runtime_config_struct_init_openmp(void * struct_ptr)
 {
 	struct sctk_runtime_config_struct_openmp * obj = struct_ptr;
@@ -734,6 +748,7 @@ void sctk_runtime_config_reset(struct sctk_runtime_config * config)
 	sctk_runtime_config_enum_init_rail_topological_polling_level();
 	sctk_runtime_config_struct_init_collectives_intra(&config->modules.collectives_intra);
 	sctk_runtime_config_struct_init_collectives_inter(&config->modules.collectives_inter);
+	sctk_runtime_config_struct_init_progress_thread(&config->modules.progress_thread);
 	sctk_runtime_config_struct_init_openmp(&config->modules.openmp);
 	sctk_runtime_config_struct_init_profiler(&config->modules.profiler);
 	sctk_runtime_config_struct_init_thread(&config->modules.thread);
@@ -909,6 +924,12 @@ void sctk_runtime_config_reset_struct_default_if_needed(char * structname, void 
 	if( !strcmp( structname , "sctk_runtime_config_struct_collectives_inter") )
 	{
 		sctk_runtime_config_struct_init_collectives_inter( ptr );
+		return;
+	}
+
+	if( !strcmp( structname , "sctk_runtime_config_struct_progress_thread") )
+	{
+		sctk_runtime_config_struct_init_progress_thread( ptr );
 		return;
 	}
 

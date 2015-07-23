@@ -131,6 +131,10 @@ See type collectives_intra.
 Collectives intercom MPI
 .br
 See type collectives_inter.
+.It Cm progress_thread
+Progress thread NBC
+.br
+See type progress_thread.
 .It Cm openmp
 Options for MPC OpenMP.
 .br
@@ -1000,6 +1004,17 @@ MPI_Reduce_scatter intercom algorithm
 Type is function pointer. Default value is __INTERNAL__PMPI_Reduce_scatter_block_inter. 
 .Pp reduce_scatter_block_inter
 MPI_Reduce_scatter_block intercom algorithm
+.El
+.Sh ENTRIES OF TYPE progress_thread
+Progress thread NBC
+.Pp
+It support parameters :
+.Pp
+.Bl -tag -width Ds
+.It Cm use_progress_thread
+Type is int. Default value is 1. 
+.Pp use_progress_thread
+If use progress threads for non blocking collectives
 .El
 .Sh ENTRIES OF TYPE openmp
 Options for MPC OpenMP.

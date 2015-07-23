@@ -225,6 +225,9 @@ meta.types = {
 		reduce_scatter_inter: {mode: 'param', name: "reduce_scatter_inter", type: "funcptr", doc: "MPI_Reduce_scatter intercom algorithm", dflt: "__INTERNAL__PMPI_Reduce_scatter_inter", },
 		reduce_scatter_block_inter: {mode: 'param', name: "reduce_scatter_block_inter", type: "funcptr", doc: "MPI_Reduce_scatter_block intercom algorithm", dflt: "__INTERNAL__PMPI_Reduce_scatter_block_inter", },
 	}},
+	progress_thread : {type: 'struct', name: "progress_thread", childs: {
+		use_progress_thread: {mode: 'param', name: "use_progress_thread", type: "int", doc: "If use progress threads for non blocking collectives", dflt: "1", },
+	}},
 	openmp : {type: 'struct', name: "openmp", childs: {
 		vp: {mode: 'param', name: "vp", type: "int", doc: "Number of VPs for each OpenMP team", dflt: "0", },
 		schedule: {mode: 'param', name: "schedule", type: "string", doc: "Runtime schedule type and chunck size", dflt: "static", },
@@ -268,6 +271,7 @@ meta.modules = {
 	mpc: {name: "mpc", type: "mpc"},
 	collectives_intra: {name: "collectives_intra", type: "collectives_intra"},
 	collectives_inter: {name: "collectives_inter", type: "collectives_inter"},
+	progress_thread: {name: "progress_thread", type: "progress_thread"},
 	openmp: {name: "openmp", type: "openmp"},
 	profiler: {name: "profiler", type: "profiler"},
 	thread: {name: "thread", type: "thread"},

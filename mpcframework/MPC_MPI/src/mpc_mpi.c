@@ -11570,12 +11570,13 @@ __INTERNAL__PMPI_Init (int *argc, char ***argv)
     task_specific->mpc_mpi_data->groups = NULL;
     task_specific->mpc_mpi_data->buffers = NULL;
     task_specific->mpc_mpi_data->ops = NULL;
-#ifdef HAVE_PROGRESS_THREAD 
+  if(sctk_runtime_config_get()->modules.progress_thread.use_progress_thread == 1)
+  {
     task_specific->mpc_mpi_data->NBC_Pthread_handles = NULL;
     sctk_thread_mutex_init(&(task_specific->mpc_mpi_data->list_handles_lock), NULL);
     task_specific->mpc_mpi_data->nbc_initialized_per_task = 0;
     sctk_thread_mutex_init(&(task_specific->mpc_mpi_data->nbc_initializer_lock), NULL);
-#endif
+  }
     __sctk_init_mpc_request ();
     __sctk_init_mpi_buffer ();
     __sctk_init_mpi_errors ();
