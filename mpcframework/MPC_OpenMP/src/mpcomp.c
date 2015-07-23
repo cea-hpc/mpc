@@ -694,6 +694,7 @@ void __mpcomp_instance_init( mpcomp_instance_t * instance, int nb_mvps,
             sctk_abort() ;
         }
 
+#if 0
 		err = __mpcomp_flatten_topology(restrictedTopology, &flatTopology);
         if ( err ) {
             sctk_error( "MPC_OpenMP Internal error in __mpcomp_flatten_topology" ) ;
@@ -702,6 +703,9 @@ void __mpcomp_instance_init( mpcomp_instance_t * instance, int nb_mvps,
 
 		instance->topology = flatTopology;
 		hwloc_topology_destroy(restrictedTopology);
+#else
+		instance->topology = restrictedTopology ;
+#endif
 
 		if ( OMP_TREE == NULL ) {
 			__mpcomp_build_default_tree( instance ) ;

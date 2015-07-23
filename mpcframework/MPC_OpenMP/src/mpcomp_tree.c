@@ -26,6 +26,7 @@
 #include "mpcomp.h"
 #include "mpcomp_internal.h"
 
+#if 0
 #if HWLOC_API_VERSION < 0x00010800
 #warning "MPC_OPENMP overload hwloc_topology_dup"
 /* Duplicate the entire topology 'oldtopology' into 'newtopology' */
@@ -58,8 +59,10 @@ int hwloc_topology_dup(hwloc_topology_t * newtopology,
 #else
 #warning "MPC_OPENMP use regular hwloc_topology_dup"
 #endif
+#endif
 
 
+/* Called only by __mpcomp_buid_tree */
 static int mpcomp_get_global_index_from_cpu (hwloc_topology_t topo, const int vp)
 {
      hwloc_topology_t globalTopology = sctk_get_topology_object();
@@ -75,6 +78,7 @@ static int mpcomp_get_global_index_from_cpu (hwloc_topology_t topo, const int vp
 
 
 
+#if 0
 /*
  * Walk down the topology object 'topology' from 'obj' node
  * and return the number of leaves.
@@ -153,6 +157,10 @@ int __mpcomp_flatten_topology(hwloc_topology_t topology, hwloc_topology_t *flatT
 	       if (nbLeaves != nbChildren) {
 		    /* If two object of the topology haven't the same number of leaves */
 
+               sctk_debug( "__mpcomp_flatten_topology: Objects at depth %d"
+                       " have different nb children (%d vs. %d) type %s",
+                       i, nbLeaves, nbChildren, hwloc_obj_type_string( obj->type ) ) ;
+
 		    assert(obj->type != HWLOC_OBJ_MACHINE);
 		    ignoredTypes[obj->type] = 1;
 		    
@@ -165,15 +173,6 @@ int __mpcomp_flatten_topology(hwloc_topology_t topology, hwloc_topology_t *flatT
 	  }
      }
 
-#if 0
-     /* Duplicate 'topology' to flat topology */
-     err = hwloc_topology_load(*flatTopology);
-     if (err) {
-	  sctk_debug("Error on loading topology");
-	  return 1;
-     }
-#endif
-
      if (sctk_get_verbosity()>=3) {
          fprintf( stderr, "FLATTEN TOPOLOGY\n" ) ;
          sctk_print_specific_topology( stderr, *flatTopology) ;
@@ -181,6 +180,7 @@ int __mpcomp_flatten_topology(hwloc_topology_t topology, hwloc_topology_t *flatT
 
      return 0;
 }
+#endif
 
 /*
  * Restrict the topology object of the current mpi task to 'nb_mvps' vps.
