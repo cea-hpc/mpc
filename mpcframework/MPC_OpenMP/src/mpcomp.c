@@ -689,7 +689,7 @@ void __mpcomp_instance_init( mpcomp_instance_t * instance, int nb_mvps,
 
         /* Restrict the global topology to the number of microVPs */
 		err = __mpcomp_restrict_topology(&restrictedTopology, instance->nb_mvps);
-        if ( err == -1 ) {
+        if ( err != 0 ) {
             sctk_error( "MPC_OpenMP Internal error in __mpcomp_restrict_topology" ) ;
             sctk_abort() ;
         }
