@@ -3669,25 +3669,14 @@ static inline int NBC_Initialize() {
   struct sctk_task_specific_s * task_specific;
   task_specific = __MPC_get_task_specific ();
 
-#ifdef HAVE_RT_THREAD 
   sctk_thread_attr_t attr;
-  struct sched_param param;
-  param.sched_priority = 90;
-  pthread_attr_init(&attr);
-  pthread_attr_setinheritsched(&attr, PTHREAD_EXPLICIT_SCHED);
-  pthread_attr_setschedparam(&attr, &param);
-  pthread_attr_setschedpolicy(&attr, SCHED_FIFO);
+  sctk_thread_attr_init(&attr);
+  sctk_thread_attr_setbinding (&attr, sctk_get_cpu());
 
-  /* spawn the polling thread */
-  int ret = sctk_user_thread_create( &NBC_thread, &attr, NBC_Pthread_func, NULL);
-#else
-  int ret = sctk_user_thread_create( &(task_specific->mpc_mpi_data->NBC_Pthread), NULL, NBC_Pthread_func, NULL);
-#endif
+  int ret = sctk_user_thread_create( &(task_specific->mpc_mpi_data->NBC_Pthread), &attr, NBC_Pthread_func, NULL);
   if(0 != ret) { printf("Error in sctk_user_thread_create() (%i)\n", ret); return NBC_OOR; }
 
-#ifdef HAVE_RT_THREAD 
-  pthread_attr_destroy(&attr);
-#endif
+  sctk_thread_attr_destroy(&attr);
   
    task_specific->mpc_mpi_data->nbc_initialized_per_task = 1;
 #endif
