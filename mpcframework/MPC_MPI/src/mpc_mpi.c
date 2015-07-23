@@ -2047,7 +2047,7 @@ int __INTERNAL__PMPI_Waitany (int count, MPI_Request * array_of_requests, int *i
 	while (!flag)
     {
 		__INTERNAL__PMPI_Testany (count, array_of_requests, index, &flag, status);
-      /* if (!flag) sctk_thread_yield (); */
+	
     }
 	return MPI_SUCCESS;
 }
@@ -11619,7 +11619,6 @@ __INTERNAL__PMPI_Finalize (void)
   struct sctk_task_specific_s * task_specific;
   task_specific = __MPC_get_task_specific ();
   if(task_specific->mpc_mpi_data->nbc_initialized_per_task == 1){
-	printf("I AM DOING THIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIS!!!!!!\n");
 	task_specific->mpc_mpi_data->nbc_initialized_per_task = -1;	
 	sched_yield();
 	NBC_Finalize(&(task_specific->mpc_mpi_data->NBC_Pthread));

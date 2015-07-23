@@ -14,27 +14,11 @@
 /* the debug level */
 //#define NBC_DLEVEL 11
 
-/* use PMPI calls to MPI backend - this is needed because otherwise th
- * output will be screwed up in the profiler ... but this can be disabled
- * if the profiler does not profile NBC_ calls :) */
-#define USE_PMPI 1
 #define HAVE_PROGRESS_THREAD 1
-//#define NBC_DLEVEL 11
-
-/* enable schedule caching - undef NBC_CACHE_SCHEDULE to deactivate it */
-/* TODO: this whole schedule cache stuff does not work with the tmbuf
- * :-( - first, the tmpbuf must not be freed if a schedule using it is
- * still in the cache and second, the tmpbuf used by the schedule must
- * be attached to the handle that uses this schedule !!!! 
- * I.E., THIS IS EXPERIMENTAL AND MIGHT NOT WORK */
-//#define NBC_CACHE_SCHEDULE 
-#define NBC_SCHED_DICT_UPPER 1024 /* max. number of dict entries */
-#define NBC_SCHED_DICT_LOWER 512	/* nuber of dict entries after wipe, if SCHED_DICT_UPPER is reached */
 
 /********************* end of LibNBC tuning parameters ************************/
 
 /* correct fortran bindings */
-#define NBC_F77_FUNC_ F77_FUNC_
 
 #include <mpc_mpi.h>
 #include <mpc_thread.h>
@@ -44,8 +28,6 @@
 #include <assert.h>
 #include <math.h>
 #include <string.h>
-
-#include <dict.h>
 
 #define USE_MPI /* set by the buildsystem! */
 
@@ -73,10 +55,6 @@ extern "C" {
 /* number of implemented collective functions */
 #define NBC_NUM_COLL 19
 
-//MPI_Datatype	MPI_Type_f2c(MPI_Fint type);
-//MPI_Comm		MPI_Comm_f2c(MPI_Fint comm);
-
-
 
 /* a schedule is basically a pointer to some memory location where the
  * schedule array resides */ 
@@ -86,14 +64,6 @@ typedef void* NBC_Schedule;
 typedef struct {
 	MPI_Comm mycomm; /* save the shadow communicator here */
 	int tag;
-#ifdef NBC_CACHE_SCHEDULE
-	void *NBC_Dict[NBC_NUM_COLL]; /* this should point to a struct
-																			hb_tree, but since this is a
-																			public header-file, this would be
-																			an include mess :-(. So let's void
-																			it ...*/
-	int NBC_Dict_size[NBC_NUM_COLL];
-#endif
 
 } NBC_Comminfo;
 
@@ -144,36 +114,7 @@ void NBC_Print_times(double div);
 
 /* all MPI functions used in LibNBC have to be defined here */
 
-/*
-#ifdef USE_PMPI
-#define MPI_Irecv PMPI_Irecv
-#define MPI_Waitany PMPI_Waitany
-#define MPI_Iprobe PMPI_Iprobe
-#define MPI_Wtime PMPI_Wtime
-#define MPI_Testall PMPI_Testall
-#define MPI_Isend PMPI_Isend
-#define MPI_Keyval_create PMPI_Keyval_create
-#define MPI_Attr_get PMPI_Attr_get
-#define MPI_Comm_dup PMPI_Comm_dup
-#define MPI_Attr_put PMPI_Attr_put
-#define MPI_Send PMPI_Send
-#define MPI_Comm_size PMPI_Comm_size
-#define MPI_Comm_rank PMPI_Comm_rank
-#define MPI_Type_extent PMPI_Type_extent
-#define MPI_Type_size PMPI_Type_size
-#define MPI_Pack_size PMPI_Pack_size
-#define MPI_Pack PMPI_Pack
-#define MPI_Unpack PMPI_Unpack
-//#define MPI_Comm_f2c PMPI_Comm_f2c
-//#define MPI_Type_f2c PMPI_Type_f2c
-//#define MPI_Op_f2c PMPI_Op_f2c
-#define MPI_Cart_shift PMPI_Cart_shift
-#define MPI_Cartdim_get PMPI_Cartdim_get
-#define MPI_Graph_neighbors PMPI_Graph_neighbors
-#define MPI_Graph_neighbors_count PMPI_Graph_neighbors_count
-#define MPI_Topo_test PMPI_Topo_test
-#endif
-*/
+
 /* if we use MPI-1, MPI_IN_PLACE is not defined :-( */
 #ifndef MPI_IN_PLACE
 #define MPI_IN_PLACE (void*)1
@@ -201,11 +142,12 @@ void NBC_Print_times(double div);
 #define NBC_GATHERV 10
 #define NBC_REDUCE 11
 #define NBC_REDUCESCAT 12
-#define NBC_SCAN 13
-#define NBC_SCATTER 14
-#define NBC_SCATTERV 15
-#define NBC_CART_SHIFT_XCHG 16
-#define NBC_NEIGHBOR_XCHG 17
+#define NBC_REDUCESCATBLOCK 13
+#define NBC_SCAN 14
+#define NBC_SCATTER 15
+#define NBC_SCATTERV 16
+#define NBC_CART_SHIFT_XCHG 17
+#define NBC_NEIGHBOR_XCHG 18
 /* set the number of collectives in nbc.h !!!! */
 	
 /* several typedefs for NBC */
@@ -274,134 +216,6 @@ typedef struct {
 
 
 /* internal function prototypes */
-
-#ifdef NBC_CACHE_SCHEDULE
-/* this is a dummy structure which is used to get the schedule out of
- * the collop sepcific structure. The schedule pointer HAS to be at the
- * first position and should NOT BE REORDERED by the compiler (C
- * guarantees that */
-struct NBC_dummyarg {
-	NBC_Schedule *schedule;
-};
-
-typedef struct {
-	NBC_Schedule *schedule;
-	void *sendbuf;
-	int sendcount;
-	MPI_Datatype sendtype;
-	void* recvbuf;
-	int recvcount;
-	MPI_Datatype recvtype;
-} NBC_Alltoall_args;
-int NBC_Alltoall_args_compare(NBC_Alltoall_args *a, NBC_Alltoall_args *b, void *param);
-
-typedef struct {
-	NBC_Schedule *schedule;
-	void *sendbuf;
-	int sendcount;
-	MPI_Datatype sendtype;
-	void* recvbuf;
-	int recvcount;
-	MPI_Datatype recvtype;
-} NBC_Allgather_args;
-int NBC_Allgather_args_compare(NBC_Allgather_args *a, NBC_Allgather_args *b, void *param);
-
-typedef struct {
-	NBC_Schedule *schedule;
-	void *sendbuf;
-	void* recvbuf;
-	int count;
-	MPI_Datatype datatype;
-	MPI_Op op;
-} NBC_Allreduce_args;
-int NBC_Allreduce_args_compare(NBC_Allreduce_args *a, NBC_Allreduce_args *b, void *param);
-
-typedef struct {
-	NBC_Schedule *schedule;
-	void *buffer;
-	int count;
-	MPI_Datatype datatype;
-	int root;
-} NBC_Bcast_args;
-int NBC_Bcast_args_compare(NBC_Bcast_args *a, NBC_Bcast_args *b, void *param);
-
-typedef struct {
-	NBC_Schedule *schedule;
-	void *sendbuf;
-	int sendcount;
-	MPI_Datatype sendtype;
-	void* recvbuf;
-	int recvcount;
-	MPI_Datatype recvtype;
-	int root;
-} NBC_Gather_args;
-int NBC_Gather_args_compare(NBC_Gather_args *a, NBC_Gather_args *b, void *param);
-
-typedef struct {
-	NBC_Schedule *schedule;
-	void *sendbuf;
-	void* recvbuf;
-	int count;
-	MPI_Datatype datatype;
-	MPI_Op op;
-	int root;
-} NBC_Reduce_args;
-int NBC_Reduce_args_compare(NBC_Reduce_args *a, NBC_Reduce_args *b, void *param);
-
-typedef struct {
-	NBC_Schedule *schedule;
-	void *sendbuf;
-	void* recvbuf;
-	int count;
-	MPI_Datatype datatype;
-	MPI_Op op;
-} NBC_Scan_args;
-int NBC_Scan_args_compare(NBC_Scan_args *a, NBC_Scan_args *b, void *param);
-
-typedef struct {
-	NBC_Schedule *schedule;
-	void *sendbuf;
-	int sendcount;
-	MPI_Datatype sendtype;
-	void* recvbuf;
-	int recvcount;
-	MPI_Datatype recvtype;
-	int root;
-} NBC_Scatter_args;
-int NBC_Scatter_args_compare(NBC_Scatter_args *a, NBC_Scatter_args *b, void *param);
-
-typedef struct {
-	NBC_Schedule *schedule;
-	void *sbuf; 
-	int scount; 
-	MPI_Datatype stype;
-	void *rbuf; 
-	int rcount; 
-	MPI_Datatype rtype; 
-	int direction; 
-	int disp;
-	MPI_Comm comm; 
-} NBC_Icart_shift_xchg_args;
-int NBC_Icart_shift_xchg_args_compare(NBC_Icart_shift_xchg_args *a, NBC_Icart_shift_xchg_args *b, void *param);
-
-typedef struct {
-	NBC_Schedule *schedule;
-	void *sbuf;
-	int scount;
-	MPI_Datatype stype;
-	void *rbuf;
-	int rcount;
-	MPI_Datatype rtype; 
-	MPI_Comm comm; 
-} NBC_Ineighbor_xchg_args;
-int NBC_Ineighbor_xchg_args_compare(NBC_Ineighbor_xchg_args *a, NBC_Ineighbor_xchg_args *b, void *param);
-
-/* Schedule cache structures/functions */
-u_int32_t adler32(u_int32_t adler, int8_t *buf, int len);
-void NBC_SchedCache_args_delete(void *entry);
-void NBC_SchedCache_args_delete_key_dummy(void *k);
-	
-#endif
 
 
 /* some macros */
@@ -598,10 +412,6 @@ void NBC_SchedCache_args_delete_key_dummy(void *k);
 
 
 
-/*
-#define NBC_DEBUG(level, ...) {} 
-*/
-
 static inline void NBC_DEBUG(int level, const char *fmt, ...) 
 { 
 #if NBC_DLEVEL > 0
@@ -698,17 +508,6 @@ static inline int NBC_Unpack(void *src, int srccount, MPI_Datatype srctype, void
 	return NBC_OK;
 }
 
-/* deletes elements from dict until low watermark is reached */
-static __inline__ void NBC_SchedCache_dictwipe(hb_tree *dict, int *size) {
-	hb_itor *itor;
-
-	itor = hb_itor_new(dict);
-	for (; hb_itor_valid(itor) && (*size>NBC_SCHED_DICT_LOWER); hb_itor_next(itor)) {
-		hb_tree_remove(dict, hb_itor_key(itor), 0);
-		*size = *size-1;
-	}
-	hb_itor_destroy(itor);
-}
 
 #define NBC_IN_PLACE(sendbuf, recvbuf, inplace) \
 { \
