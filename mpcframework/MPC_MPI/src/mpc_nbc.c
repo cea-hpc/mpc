@@ -2871,9 +2871,19 @@ void *NBC_Pthread_func( void *ptr ) {
   MPI_Request req=MPI_REQUEST_NULL;
   int tmp_recv;
 
+  struct sctk_task_specific_s * task_specific;
+
+  struct sctk_list_elem * list_handles;
+  sctk_thread_mutex_t * lock;
+  task_specific = __MPC_get_task_specific ();
+
+
   while(1) {
+  
     int cpt = 1;
     int size = 10;
+ 
+    printf("+++++++++++++++++++++++++++++++++DEBUT DE WHILE(1)\n");
 
       MPI_Request * requests;
       int * requests_locations;
@@ -2888,11 +2898,6 @@ void *NBC_Pthread_func( void *ptr ) {
       requests[0]=req;
 
       /* re-compile list of requests */
-
-      struct sctk_task_specific_s * task_specific;
-      struct sctk_list_elem * list_handles;
-      sctk_thread_mutex_t * lock;
-      task_specific = __MPC_get_task_specific ();
 
       lock = &(task_specific->mpc_mpi_data->list_handles_lock);
 
@@ -2948,9 +2953,15 @@ void *NBC_Pthread_func( void *ptr ) {
       req = MPI_REQUEST_NULL;
     }
 
-		sctk_free(requests);
-		sctk_free(requests_locations);
-		sctk_free(requests_handles);
+	sctk_free(requests);
+	sctk_free(requests_locations);
+	sctk_free(requests_handles);
+	printf("-------------------------BEFORE TESTING nbc_initialized_per_task == -1 (in fact = %d\n",task_specific->mpc_mpi_data->nbc_initialized_per_task);
+	if(task_specific->mpc_mpi_data->nbc_initialized_per_task == -1){
+		printf("I AM HEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEERE!!!!!!\n"); fflush(stdout);
+		sctk_thread_exit(0);
+	}
+	sched_yield();
   }
 }
 
@@ -3426,7 +3437,9 @@ static inline int NBC_Progress(NBC_Handle *handle) {
         
         res = NBC_Free(handle);
         if((NBC_OK != res)) { printf("Error in NBC_Free() (%i)\n", res); ret=res; goto error; }
-
+//#if HAVE_PROGRESS_THREAD
+//	sctk_thread_exit(NULL);
+//#endif
         return NBC_OK;
       } else {
         //NBC_DEBUG(5, "NBC_Progress round finished - goto next round\n");
@@ -3691,7 +3704,7 @@ static inline int NBC_Init_handle(NBC_Handle *handle, MPI_Comm comm, int tag) {
 
   sctk_thread_mutex_t *lock = &(task_specific->mpc_mpi_data->nbc_initializer_lock);
   sctk_thread_mutex_lock(lock);
-  if(task_specific->mpc_mpi_data->nbc_initialized_per_task != 1) {
+  if(task_specific->mpc_mpi_data->nbc_initialized_per_task == 0) {
     res = NBC_Initialize();
     if(res != NBC_OK) 
     {
@@ -4397,7 +4410,8 @@ static inline int NBC_Operation(void *buf3, void *buf1, void *buf2, MPI_Op op, M
 int NBC_Finalize(sctk_thread_t * NBC_thread)
 {
 #ifdef HAVE_PROGRESS_THREAD
-  int ret = sctk_thread_join( *NBC_thread, NULL);
+  int ret = 0;
+//  ret = sctk_thread_join( *NBC_thread, NULL);
   if(0 != ret) { printf("Error in sctk_thread_join() (%i)\n", ret); return NBC_OOR; }
 #endif
 #ifdef NBC_TIMING
