@@ -4,6 +4,7 @@ import sys
 import argparse
 import os
 import string
+import subprocess
 
 scriptpath = os.path.dirname(os.path.realpath(sys.argv[0]))
 
@@ -13,13 +14,13 @@ Argument Parsing
 
 argparser = argparse.ArgumentParser(description='This is the MPC fortran Module Generator')
 
-argparser.add_argument('-c', '--comp', action='store', help='The C compiler used to preprocess the MPI.h header')
+argparser.add_argument('-c', '--ccomp', action='store', help='The C compiler used to preprocess the MPI.h header')
+argparser.add_argument('-f', '--fcomp', action='store', help='The F90 compiler used to generate modules')
 argparser.add_argument('-m', '--mpih', action='store', help='Path to the \'mpi.h\' header file to be preprocessed')
 
 args = argparser.parse_args()
-#print args
 
-if (args.comp == None) or (args.mpih == None) :
+if (args.fcomp == None) or (args.mpih == None)  or (args.ccomp == None) :
 	print "ERROR Missing argument see '" + os.path.basename(sys.argv[0]) + " -h'"
 
 '''
@@ -38,6 +39,20 @@ with open(scriptpath + '/typesc2f.json') as data_file:
 with open('./constants.json') as data_file:    
     mpcconstants = json.load(data_file)
 
+# Get the preprocessed MPI.h from the MPC compiler
+parsed_mpih=""
+try:
+	parsed_mpih=subprocess.check_output([args.ccomp, "-E", args.mpih]);
+except OSError:
+	print "Could not preparse the", args.mpih, "Header"
+	exit(1)
+
+def MPIFunctionsisPresentinMPC( fname ):
+	index = parsed_mpih.find( fname );
+	if index < 0:
+		return 0;
+	else:
+		return 1;
 
 
 module_file_data = "";
@@ -352,7 +367,15 @@ for f in mpi_interface:
 	
 	uses = [];
 	
-	print "\tGEN\t" + functionName + "..."
+	#check for presence inside MPC
+	if MPIFunctionsisPresentinMPC( functionName ) == 0:
+		#Note that we implement all MPI_File functions which are in ROMIO
+		#We have to do this as the ROMIO header is only compiled later on
+		if (functionName.find("MPI_File")) < 0 :
+			print "\tSKIP\t" + functionName + "..."
+			continue;
+	else:
+		print "\tGEN\t" + functionName + "..."
 	
 	for arg in mpi_interface[ functionName ]:
 		name = arg[1];
