@@ -341,7 +341,7 @@ typedef struct mpcomp_thread_s
 	struct mpcomp_thread_s * father ; /* Father thread  TODO: use it for ancestors */
 
 	/* LOOP CONSTRUCT */
-
+    int schedule_type;   /* Handle scheduling type */
 	/* -- STATIC FOR LOOP CONSTRUCT -- */
 	int static_nb_chunks;         /* Number of total static chunk for the thread */
 	int static_current_chunk;     /* Current chunk index */

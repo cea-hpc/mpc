@@ -1044,19 +1044,29 @@ void
 __kmpc_dispatch_init_4(ident_t *loc, kmp_int32 gtid, enum sched_type schedule,
     kmp_int32 lb, kmp_int32 ub, kmp_int32 st, kmp_int32 chunk )
 {
-  sctk_debug(
+    sctk_debug(
       "[%d] __kmpc_dispatch_init_4: enter %d -> %d incl, %d excl [%d] ck:%d sch:%d"
       ,
       ((mpcomp_thread_t *) sctk_openmp_thread_tls)->rank,
       lb, ub, ub+st, st, chunk, schedule ) ;
-// printf( "__kmpc_dispatch_init_4: schedule = %d\n", schedule ) ;
+    
+    /* save the scheduling type */
+    mpcomp_thread_t * t ;
+    t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
+    sctk_assert( t != NULL ) ;
+    t->schedule_type = schedule;
 
   switch( schedule ) {
+    //regular scheduling
     case kmp_sch_dynamic_chunked:
+    case kmp_ord_dynamic_chunked:
       __mpcomp_dynamic_loop_init( 
 	  ((mpcomp_thread_t *) sctk_openmp_thread_tls),
 	  (long)lb, (long)ub+(long)st, (long)st, (long)chunk ) ;
       break ;
+    case kmp_sch_static:
+    case kmp_sch_static_chunked:
+    case kmp_ord_static:
     case kmp_ord_static_chunked:
       __mpcomp_static_loop_init(
 	  ((mpcomp_thread_t *) sctk_openmp_thread_tls),
@@ -1064,10 +1074,11 @@ __kmpc_dispatch_init_4(ident_t *loc, kmp_int32 gtid, enum sched_type schedule,
 	  ) ;
       break ;
     case kmp_sch_guided_chunked:
+    case kmp_ord_guided_chunked:
       __mpcomp_dynamic_loop_init(
 	  ((mpcomp_thread_t *) sctk_openmp_thread_tls),
 	  (long)lb, (long)ub+(long)st, (long)st, (long)chunk ) ;
-      break ;
+    break ;
     default:
       not_implemented() ;
       break ;
@@ -1121,25 +1132,82 @@ __kmpc_dispatch_next_4( ident_t *loc, kmp_int32 gtid, kmp_int32 *p_last,
 {
   /* TODO need to check the current schedule */
 
-  int ret ;
+  int ret, schedule ;
   mpcomp_thread_t *t ;
   long from, to ;
 
   t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
+  sctk_assert(t != NULL);
+  /* get scheduling type used in kmpc_dispatch_init */
+  schedule = t->schedule_type;
 
-  ret = __mpcomp_dynamic_loop_next( &from, &to ) ;
+  switch( schedule ) 
+  {
+    //regular scheduling
+    case kmp_sch_dynamic_chunked:
+        ret = __mpcomp_dynamic_loop_next( &from, &to ) ;
+    break;
+    case kmp_sch_static:
+    case kmp_sch_static_chunked:
+        ret = __mpcomp_static_loop_next( &from, &to ) ;
+    break;
+    case kmp_sch_guided_chunked:
+        ret = __mpcomp_guided_loop_next( &from, &to ) ;
+    break ;
+    //ordered scheduling
+    case kmp_ord_dynamic_chunked:
+        ret = __mpcomp_ordered_dynamic_loop_next( &from, &to ) ;
+    break;
+    case kmp_ord_static:
+    case kmp_ord_static_chunked:
+        ret = __mpcomp_ordered_static_loop_next( &from, &to ) ;
+    break;
+    case kmp_ord_guided_chunked:
+        ret = __mpcomp_ordered_guided_loop_next( &from, &to ) ;
+    break ;
+    default:
+        not_implemented();
+    break;
+  }
 
   sctk_debug( 
       "[%d] __kmpc_dispatch_next_4: %ld -> %ld excl, %ld incl [%d] (ret=%d)",
       t->rank,
       from, to, to - t->info.loop_incr, *p_st, ret ) ;
-
-
+  
+  /* sync with intel runtime (A->B excluded with gcc / A->B included with intel) */
   *p_lb = (kmp_int32) from ;
   *p_ub = (kmp_int32)to - (kmp_int32)t->info.loop_incr ;
 
   if ( ret == 0 ) {
-    __mpcomp_dynamic_loop_end_nowait() ;
+      switch( schedule )   
+      {
+        //regular scheduling
+        case kmp_sch_dynamic_chunked:
+            __mpcomp_dynamic_loop_end_nowait() ;
+        break;
+        case kmp_sch_static:
+        case kmp_sch_static_chunked:
+            __mpcomp_static_loop_end_nowait() ;
+        break;
+        case kmp_sch_guided_chunked:
+            __mpcomp_guided_loop_end_nowait() ;
+        break ;
+        //ordered scheduling
+        case kmp_ord_dynamic_chunked:
+            __mpcomp_ordered_dynamic_loop_end_nowait() ;
+        break;
+        case kmp_ord_static:
+        case kmp_ord_static_chunked:
+            __mpcomp_ordered_static_loop_end_nowait() ;
+        break;
+        case kmp_ord_guided_chunked:
+            __mpcomp_ordered_guided_loop_end_nowait() ;
+        break ;
+        default:
+            not_implemented();
+        break;
+      }
   }
 
   return ret ;
