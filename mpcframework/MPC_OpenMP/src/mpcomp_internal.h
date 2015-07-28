@@ -462,7 +462,9 @@ typedef struct mpcomp_thread_s
 	       struct mpcomp_mvp_s **leaf;
 	  } children;                         /* Children list */
 
+#if 0
 	  sctk_spinlock_t lock;	        /* Lock for structure updates */
+#endif
 	  char pad0[64];                /* Padding */
 	  volatile int slave_running;
 	  char pad1[64];                /* Padding */
@@ -487,9 +489,11 @@ typedef struct mpcomp_thread_s
 
 	  int id_numa;  /* NUMA node on which this node is allocated */
         
+#if 0
 	  int num_threads;          /* Number of threads in the current team */
 	  void *(*func) (void *);
 	  void *shared;
+#endif
      } mpcomp_node_t;
 
 

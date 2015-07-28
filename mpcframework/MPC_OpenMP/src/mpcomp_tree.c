@@ -661,7 +661,9 @@ __mpcomp_build_tree( mpcomp_instance_t * instance, int n_leaves, int depth, int 
 	       root->min_index[i] = 0;
 	  }
 	  root->instance = instance ;
+#if 0
 	  root->lock = SCTK_SPINLOCK_INITIALIZER;
+#endif
 	  root->slave_running = 0;
 	  sctk_atomics_store_int( &(root->barrier), 0 );
 
@@ -856,7 +858,8 @@ __mpcomp_build_tree( mpcomp_instance_t * instance, int n_leaves, int depth, int 
 
 			 /* TODO: The NUMA allocation may be a constraint if we want to 
                 change the affinity during the execution */
-			 child_target_numa = sctk_get_node_from_cpu_topology( instance->topology,  order[ min_index[mpcomp_global_icvs.affinity] ] ) ;
+			 child_target_numa = sctk_get_node_from_cpu_topology( instance->topology, 
+                     order[ min_index[MPCOMP_AFFINITY_COMPACT] ] ) ;
 
 			 n2 = (mpcomp_node_t *)mpcomp_malloc(1, sizeof( mpcomp_node_t ), child_target_numa );
 
@@ -870,7 +873,9 @@ __mpcomp_build_tree( mpcomp_instance_t * instance, int n_leaves, int depth, int 
 			      n2->min_index[j] = min_index[j];
 
 			 n2->instance = instance ;
+#if 0
 			 n2->lock = SCTK_SPINLOCK_INITIALIZER;
+#endif
 			 n2->slave_running = 0;
 
 			 sctk_atomics_store_int( &(n2->barrier), 0 );
