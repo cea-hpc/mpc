@@ -381,7 +381,8 @@ typedef struct mpcomp_thread_s
 	  int tree_depth ; /* Depth of the tree */
 	  int *tree_base; /* Degree per level of the tree 
 						 (array of size 'tree_depth' */
-	  int *tree_cumulative ; /* Initialized in __mpcomp_build_tree */
+	  int *tree_cumulative; /* Initialized in __mpcomp_build_tree */
+      int *tree_nb_nodes_per_depth; /* Number of nodes at each depth ([0] = root = 1) */
 	  hwloc_topology_t topology;
 	  int scatter_depth ; /* TODO check */
 	  int core_depth; /* TODO check */
@@ -452,7 +453,6 @@ typedef struct mpcomp_thread_s
 
 	  /* The following indices correspond to the 'rank' value in microVPs */
 	  int min_index[MPCOMP_AFFINITY_NB];   /* Flat min index of leaves in this subtree */
-	  int max_index[MPCOMP_AFFINITY_NB];   /* Flat max index of leaves in this subtree */
 
 	  mpcomp_instance_t * instance ; /* Information on the whole team */
 
@@ -468,10 +468,6 @@ typedef struct mpcomp_thread_s
 	  char pad1[64];                /* Padding */
 
 	  sctk_atomics_int barrier;	                /* Barrier for the child team */
-	  sctk_atomics_int chunks_avail;                /* Flag for presence of chunks 
-							   under current node */
-	  sctk_atomics_int nb_chunks_empty_children;    /* Counter for presence of chunks */
-         /* TODO to check if it is useful */
 
 	  char pad2[64];                       /* Padding */
 	  volatile long barrier_done;          /* Is the barrier (for the child team) over? */

@@ -472,6 +472,7 @@ int __mpcomp_build_default_tree(mpcomp_instance_t *instance)
 	return 1;
 }
 
+#if 0
 #if MPCOMP_MIC
 int __mpcomp_compute_min_index( mpcomp_instance_t * instance, mpcomp_node_t * n, int nthreads)
 {
@@ -525,11 +526,30 @@ int __mpcomp_compute_min_index( mpcomp_instance_t * instance, mpcomp_node_t * n,
      return 0;
 }
 #endif /* MPCOMP_MIC */
+#endif
+
+static int 
+__mpcomp_compute_scatter_min_index(
+        mpcomp_node_t * father,
+        mpcomp_instance_t * instance,
+       int rank_in_children )
+{
+    sctk_assert( father != NULL ) ;
+    sctk_assert( instance != NULL ) ;
+    sctk_assert( rank_in_children >= 0 ) ;
+    sctk_assert( rank_in_children < father->nb_children ) ;
+
+    return father->min_index[ MPCOMP_AFFINITY_SCATTER ] + rank_in_children * 
+        instance->tree_nb_nodes_per_depth[ father->depth ] ;
+}
+
 
 /*
  * Build a tree according to three parameters.
  */
-int __mpcomp_build_tree( mpcomp_instance_t * instance, int n_leaves, int depth, int * degree ) {
+int 
+__mpcomp_build_tree( mpcomp_instance_t * instance, int n_leaves, int depth, int * degree ) 
+{
 	  mpcomp_node_t * root; /* Root of the tree */
 	  int current_mpc_vp; /* Current VP where the master is */
 	  int current_mvp; /* Current microVP we are dealing with */
@@ -550,7 +570,8 @@ int __mpcomp_build_tree( mpcomp_instance_t * instance, int n_leaves, int depth, 
 	  /* Fill instance paratemers regarding tree shape */
 	  instance->tree_depth = depth ;
 	  instance->tree_base = degree ;
-	  TODO( "check that we can copy degree pointer instead of deep copy")
+      /* tree_cumulative */
+	  TODO( "Perform a deep copy of degree for tree_base" )
 	  instance->tree_cumulative = mpcomp_malloc(0,
 			  sizeof(int) * depth, 0 ) ;
 	  for ( i = 0 ; i < depth-1 ; i++ ) {
@@ -560,6 +581,15 @@ int __mpcomp_build_tree( mpcomp_instance_t * instance, int n_leaves, int depth, 
 		  }
 	  }
 	  instance->tree_cumulative[depth-1] = 1 ; 
+      /* tree_nb_nodes_per_depth */
+	  instance->tree_nb_nodes_per_depth = mpcomp_malloc(0,
+			  sizeof(int) * (depth+1), 0 ) ;
+	  instance->tree_nb_nodes_per_depth[0] = 1 ; 
+	  for ( i = 1 ; i <= depth ; i++ ) {
+          instance->tree_nb_nodes_per_depth[i] = 
+              instance->tree_nb_nodes_per_depth[i-1] * 
+              instance->tree_base[i-1] ;
+	  }
 #if MPCOMP_TASK     
      instance->tree_level_size = mpcomp_malloc(0, 
 			 sizeof(int) * (instance->tree_depth + 1), 0);
@@ -597,7 +627,7 @@ int __mpcomp_build_tree( mpcomp_instance_t * instance, int n_leaves, int depth, 
 	  sctk_assert( s != NULL );
 
 	  /* Get the current VP number */
-	  //current_mpc_vp = sctk_thread_get_vp ();
+	  /* current_mpc_vp = sctk_thread_get_vp (); */
 	  current_mpc_vp = 0;
 
 	  /* Get the number of CPUs */
@@ -629,7 +659,6 @@ int __mpcomp_build_tree( mpcomp_instance_t * instance, int n_leaves, int depth, 
 	  root->nb_children = degree[0];
 	  for (i=0; i<MPCOMP_AFFINITY_NB; i++) {
 	       root->min_index[i] = 0;
-	       root->max_index[i] = n_leaves;
 	  }
 	  root->instance = instance ;
 	  root->lock = SCTK_SPINLOCK_INITIALIZER;
@@ -637,6 +666,7 @@ int __mpcomp_build_tree( mpcomp_instance_t * instance, int n_leaves, int depth, 
 	  sctk_atomics_store_int( &(root->barrier), 0 );
 
 	  root->barrier_done = 0;
+      root->barrier_num_threads = 0 ;
 
 	  root->id_numa = sctk_get_node_from_cpu_topology(instance->topology, current_mpc_vp ) ;
 
@@ -696,18 +726,14 @@ int __mpcomp_build_tree( mpcomp_instance_t * instance, int n_leaves, int depth, 
 			 /* Get the set of registers */
 			 sctk_getcontext(&(instance->mvps[current_mvp]->vp_context));
 
-			 int j, nb_scatter_units;
-			 nb_scatter_units = 1;
-			 for ( j = 0; j < instance->scatter_depth ; j++ )
-			      nb_scatter_units *= degree[j]; 
-
 			 /* Initialize the corresponding microVP (all but tree-related variables) */
 			 instance->mvps[current_mvp]->nb_threads = 0;
 			 instance->mvps[current_mvp]->next_nb_threads = 0;
 			 instance->mvps[current_mvp]->rank = current_mvp;
 			 instance->mvps[current_mvp]->vp = target_vp;
 			 instance->mvps[current_mvp]->min_index[MPCOMP_AFFINITY_COMPACT] = n->min_index[MPCOMP_AFFINITY_COMPACT]+i;
-			 instance->mvps[current_mvp]->min_index[MPCOMP_AFFINITY_SCATTER] = n->min_index[MPCOMP_AFFINITY_SCATTER] + i * nb_scatter_units; /* TODO: compute the real value */
+             instance->mvps[current_mvp]->min_index[MPCOMP_AFFINITY_SCATTER] = 
+                 __mpcomp_compute_scatter_min_index( n, instance, i ) ;
 			 instance->mvps[current_mvp]->min_index[MPCOMP_AFFINITY_BALANCED] = n->min_index[MPCOMP_AFFINITY_BALANCED]+i; /* TODO: compute the real value */
 			 instance->mvps[current_mvp]->enable = 1;
 			 instance->mvps[current_mvp]->tree_rank = 
@@ -813,24 +839,23 @@ int __mpcomp_build_tree( mpcomp_instance_t * instance, int n_leaves, int depth, 
 		    for ( i = n->nb_children - 1; i >= 0; i-- ) {
 			 mpcomp_node_t * n2;
 			 int min_index[MPCOMP_AFFINITY_NB] ;
-			 int child_target_numa, j, nb_underlying_scatter_units, nb_cores, nb_threads_per_core;
-
-			 nb_underlying_scatter_units = 1;
-			 for ( j = n->depth + 1; j < instance->scatter_depth; j++ )
-			      nb_underlying_scatter_units *= degree[j]; 
+			 int child_target_numa, nb_cores, nb_threads_per_core;
 
 			 /* Compute the min rank of openmp thread in the 
 			  * corresponding subtree */
 			 min_index[MPCOMP_AFFINITY_COMPACT] = n->min_index[MPCOMP_AFFINITY_COMPACT] + 
-			      i * (n->max_index[MPCOMP_AFFINITY_COMPACT] - n->min_index[MPCOMP_AFFINITY_COMPACT]) / 
-			      degree[ n->depth ];
-			 min_index[MPCOMP_AFFINITY_SCATTER] = n->min_index[MPCOMP_AFFINITY_SCATTER] + 
-			      i * nb_underlying_scatter_units;
+			      i * instance->tree_cumulative[n->depth] ;
+             min_index[MPCOMP_AFFINITY_SCATTER] = __mpcomp_compute_scatter_min_index(
+                     n, instance, i ) ;
+#if 0
 			 min_index[MPCOMP_AFFINITY_BALANCED] = n->min_index[MPCOMP_AFFINITY_BALANCED] + 
 			      i * (n->max_index[MPCOMP_AFFINITY_BALANCED] - n->min_index[MPCOMP_AFFINITY_BALANCED]) / 
 			      degree[ n->depth ];; /* TODO: compute the real value */
+#endif
+			 min_index[MPCOMP_AFFINITY_BALANCED] = 0 ;
 
-			 /* TODO: The NUMA allocation may be a constraint if we want to change the affinity during the execution */
+			 /* TODO: The NUMA allocation may be a constraint if we want to 
+                change the affinity during the execution */
 			 child_target_numa = sctk_get_node_from_cpu_topology( instance->topology,  order[ min_index[mpcomp_global_icvs.affinity] ] ) ;
 
 			 n2 = (mpcomp_node_t *)mpcomp_malloc(1, sizeof( mpcomp_node_t ), child_target_numa );
@@ -844,16 +869,11 @@ int __mpcomp_build_tree( mpcomp_instance_t * instance, int n_leaves, int depth, 
 			 for ( j = 0 ; j < MPCOMP_AFFINITY_NB ; j++)
 			      n2->min_index[j] = min_index[j];
 
-			 n2->max_index[MPCOMP_AFFINITY_COMPACT] = n->min_index[MPCOMP_AFFINITY_COMPACT] + (i+1) * (n->max_index[MPCOMP_AFFINITY_COMPACT] - n->min_index[MPCOMP_AFFINITY_COMPACT]) / degree[ n->depth ] ;
-			 n2->max_index[MPCOMP_AFFINITY_SCATTER] = n->min_index[MPCOMP_AFFINITY_SCATTER] + (i+1) * nb_underlying_scatter_units;
-			 n2->max_index[MPCOMP_AFFINITY_BALANCED] = n->min_index[MPCOMP_AFFINITY_BALANCED] + (i+1) * (n->max_index[MPCOMP_AFFINITY_BALANCED] - n->min_index[MPCOMP_AFFINITY_BALANCED]) / degree[ n->depth ] ;
 			 n2->instance = instance ;
 			 n2->lock = SCTK_SPINLOCK_INITIALIZER;
 			 n2->slave_running = 0;
 
 			 sctk_atomics_store_int( &(n2->barrier), 0 );
-			 sctk_atomics_store_int( &(n2->chunks_avail), 0 );
-			 sctk_atomics_store_int( &(n2->nb_chunks_empty_children), 0 );
 
 			 n2->barrier_done = 0;
 			 n2->barrier_num_threads = 0;
@@ -873,6 +893,7 @@ int __mpcomp_build_tree( mpcomp_instance_t * instance, int n_leaves, int depth, 
 	  free( s );
 	  free( order );
 
+      /* Print the final tree */
 	  __mpcomp_print_tree( instance );
 
 	  return 0;
@@ -895,7 +916,7 @@ void __mpcomp_print_tree( mpcomp_instance_t * instance ) {
 
      __mpcomp_push( s, instance->root );
 
-	 TODO("port this function w/ new debug function sctk_debug_no_newline") 
+	 TODO("Port this function w/ sctk_debug function by allocating strings") 
 
      fprintf( stderr, "==== Printing the current OpenMP tree ====\n" );
 
@@ -908,7 +929,27 @@ void __mpcomp_print_tree( mpcomp_instance_t * instance ) {
 		 }
 		 fprintf( stderr, "%d", instance->tree_base[i] ) ;
 	 }
-	 fprintf( stderr, "]\n" ) ;
+	 fprintf( stderr, "]" ) ;
+
+	 fprintf( stderr, " Cumulative = [" ) ;
+	 for ( i = 0 ; i < instance->tree_depth ; i++ ) {
+		 if ( i != 0 ) {
+			 fprintf( stderr, ", " ) ;
+		 }
+		 fprintf( stderr, "%d", instance->tree_cumulative[i] ) ;
+	 }
+	 fprintf( stderr, "]" ) ;
+
+	 fprintf( stderr, " #Nodes per depth = [" ) ;
+	 for ( i = 0 ; i <= instance->tree_depth ; i++ ) {
+		 if ( i != 0 ) {
+			 fprintf( stderr, ", " ) ;
+		 }
+		 fprintf( stderr, "%d", instance->tree_nb_nodes_per_depth[i] ) ;
+	 }
+	 fprintf( stderr, "]" ) ;
+
+     fprintf( stderr, "\n" ) ;
 
      while ( !__mpcomp_is_stack_empty( s ) ) {
 	  mpcomp_node_t * n;
@@ -928,11 +969,10 @@ void __mpcomp_print_tree( mpcomp_instance_t * instance ) {
               "Node %ld (@ %p) -> NUMA %d, min/max "
               , n->rank, n, n->id_numa ) ;
 
-      /* Print all min_index/max_index for each affinity */
+      /* Print all min_index for each affinity */
       for ( i = 0 ; i < MPCOMP_AFFINITY_NB ; i++ ) {
-          fprintf( stderr, "[%d]->%.2d/%.2d ",
-                  i, n->min_index[i],
-                  n->max_index[i] ) ;
+          fprintf( stderr, "[%d]->%.2d ",
+                  i, n->min_index[i] ) ;
       }
 
       /* Print main information about the node (cont.) */
@@ -965,8 +1005,14 @@ void __mpcomp_print_tree( mpcomp_instance_t * instance ) {
                     instance, i, mvp->rank, &mvp, mvp->vp, 
                     mvp->to_run ) ;
 
-		    fprintf( stderr, " min:%d tree_rank @ %p", 
-					mvp->min_index[mpcomp_global_icvs.affinity], mvp->tree_rank ) ;
+            /* Print min_index for each affinity */
+            for ( j = 0 ; j < MPCOMP_AFFINITY_NB ; j++ ) {
+                fprintf( stderr, " [%d]->%.2d",
+                        j, mvp->min_index[j] ) ;
+            }
+
+		    fprintf( stderr, " tree_rank @ %p", 
+					mvp->tree_rank ) ;
 		    for ( j = 0 ; j < n->depth + 1 ; j++ ) {
 			 fprintf( stderr, " j=%d, %d", j, mvp->tree_rank[j] ) ;
 		    }

@@ -898,7 +898,7 @@ void * mpcomp_slave_mvp_node( void * arg ) {
 void * mpcomp_slave_mvp_leaf( void * arg ) {
   mpcomp_mvp_t * mvp ;
 
-  sctk_debug( "mpcomp_slave_mvp_leaf: Entering..." ) ;
+  sctk_nodebug( "mpcomp_slave_mvp_leaf: Entering..." ) ;
 
   /* Grab the current microVP */
   mvp = (mpcomp_mvp_t *)arg ;
