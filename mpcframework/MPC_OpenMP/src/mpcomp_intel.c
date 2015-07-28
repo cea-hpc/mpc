@@ -256,7 +256,7 @@ wrapper_function( void * arg )
   rank = mpcomp_get_thread_num() ;
   w = (wrapper_t *) arg ;
 
-  sctk_debug( "[%d] wrapper_function: entering w/ %d arg(s)...",
+  sctk_nodebug( "[%d] wrapper_function: entering w/ %d arg(s)...",
      rank, w->argc ) ;
 
 #if 0
@@ -328,7 +328,7 @@ wrapper_function( void * arg )
 
 #if 1
 
-  sctk_debug( "[%d] wrapper_function: invoking microtask...",
+  sctk_nodebug( "[%d] wrapper_function: invoking microtask...",
      rank ) ;
 
   __kmp_invoke_microtask( w->f, rank, rank, w->argc, w->args ) ;
@@ -361,7 +361,7 @@ __kmpc_end ( ident_t * loc )
 kmp_int32
 __kmpc_ok_to_fork(ident_t * loc)
 {
-  sctk_debug( "__kmpc_ok_to_fork: entering..." ) ;
+  sctk_nodebug( "__kmpc_ok_to_fork: entering..." ) ;
   return 1 ;
 }
 
@@ -374,7 +374,7 @@ __kmpc_fork_call(ident_t * loc, kmp_int32 argc, kmpc_micro microtask, ...)
   wrapper_t w ;
   mpcomp_thread_t *t;
 
-  sctk_debug( "__kmpc_fork_call: entering w/ %d arg(s)...", argc ) ;
+  sctk_nodebug( "__kmpc_fork_call: entering w/ %d arg(s)...", argc ) ;
 
   /* Handle orphaned directive (initialize OpenMP environment) */
   __mpcomp_init() ;
@@ -410,7 +410,7 @@ __kmpc_serialized_parallel(ident_t *loc, kmp_int32 global_tid)
   mpcomp_thread_t * t ;
 	mpcomp_new_parallel_region_info_t info ;
 
-  sctk_debug( "__kmpc_serialized_parallel: entering (%d) ...", global_tid ) ;
+  sctk_nodebug( "__kmpc_serialized_parallel: entering (%d) ...", global_tid ) ;
 
   /* Grab the thread info */
   t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
@@ -437,7 +437,7 @@ __kmpc_end_serialized_parallel(ident_t *loc, kmp_int32 global_tid)
 {
   mpcomp_thread_t * t ;
 
-  sctk_debug( "__kmpc_end_serialized_parallel: entering (%d)...", global_tid ) ;
+  sctk_nodebug( "__kmpc_end_serialized_parallel: entering (%d)...", global_tid ) ;
 
   /* Grab the thread info */
   t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
@@ -455,7 +455,7 @@ __kmpc_push_num_threads( ident_t *loc, kmp_int32 global_tid, kmp_int32 num_threa
 {
   mpcomp_thread_t * t ;
 
-  sctk_debug( "__kmpc_push_num_threads: pushing %d thread(s)", num_threads ) ;
+  sctk_nodebug( "__kmpc_push_num_threads: pushing %d thread(s)", num_threads ) ;
 
   /* Handle orphaned directive (initialize OpenMP environment) */
   __mpcomp_init() ;
@@ -489,35 +489,35 @@ __kmpc_fork_teams( ident_t * loc, kmp_int32 argc, kmpc_micro microtask, ... )
 kmp_int32
 __kmpc_global_thread_num(ident_t * loc)
 {
-  sctk_debug( "__kmpc_global_thread_num: " ) ;
+  sctk_nodebug( "__kmpc_global_thread_num: " ) ;
   return mpcomp_get_thread_num() ;
 }
 
 kmp_int32
 __kmpc_global_num_threads(ident_t * loc)
 {
-  sctk_debug( "__kmpc_global_num_threads: " ) ;
+  sctk_nodebug( "__kmpc_global_num_threads: " ) ;
   return mpcomp_get_num_threads() ;
 }
 
 kmp_int32
 __kmpc_bound_thread_num(ident_t * loc)
 {
-  sctk_debug( "__kmpc_bound_thread_num: " ) ;
+  sctk_nodebug( "__kmpc_bound_thread_num: " ) ;
   return mpcomp_get_thread_num() ;
 }
 
 kmp_int32
 __kmpc_bound_num_threads(ident_t * loc)
 {
-  sctk_debug( "__kmpc_bound_num_threads: " ) ;
+  sctk_nodebug( "__kmpc_bound_num_threads: " ) ;
   return mpcomp_get_num_threads() ;
 }
 
 kmp_int32
 __kmpc_in_parallel(ident_t * loc)
 {
-  sctk_debug( "__kmpc_in_parallel: " ) ;
+  sctk_nodebug( "__kmpc_in_parallel: " ) ;
   return mpcomp_in_parallel() ;
 }
 
@@ -538,7 +538,7 @@ __kmpc_flush(ident_t *loc, ...)
 void
 __kmpc_barrier(ident_t *loc, kmp_int32 global_tid) 
 {
-  sctk_debug( "[%d] __kmpc_barrier: entering...",
+  sctk_nodebug( "[%d] __kmpc_barrier: entering...",
       ((mpcomp_thread_t *) sctk_openmp_thread_tls)->rank  ) ;
 
   __mpcomp_barrier() ;
@@ -763,7 +763,7 @@ __kmpc_master(ident_t *loc, kmp_int32 global_tid)
   t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
   sctk_assert( t != NULL ) ;
 
-  sctk_debug( "[%d] __kmp_master: entering",
+  sctk_nodebug( "[%d] __kmp_master: entering",
       t->rank ) ;
 
   if ( t->rank == 0 ) {
@@ -776,26 +776,26 @@ __kmpc_master(ident_t *loc, kmp_int32 global_tid)
 void
 __kmpc_end_master(ident_t *loc, kmp_int32 global_tid)
 {
-  sctk_debug( "[%d] __kmpc_end_master: entering...",
+  sctk_nodebug( "[%d] __kmpc_end_master: entering...",
       ((mpcomp_thread_t *) sctk_openmp_thread_tls)->rank  ) ;
 }
 
 void 
 __kmpc_ordered(ident_t *loc, kmp_int32 global_tid)
 {
-  not_implemented() ;
+    __mpcomp_ordered_begin();
 }
 
 void
 __kmpc_end_ordered(ident_t *loc, kmp_int32 global_tid)
 {
-  not_implemented() ;
+    __mpcomp_ordered_end();
 }
 
 void
 __kmpc_critical(ident_t *loc, kmp_int32 global_tid, kmp_critical_name *crit)
 {
-  sctk_debug( "[%d] __kmpc_critical: enter %p (%d,%d,%d,%d,%d,%d,%d,%d)",
+  sctk_nodebug( "[%d] __kmpc_critical: enter %p (%d,%d,%d,%d,%d,%d,%d,%d)",
       ((mpcomp_thread_t *) sctk_openmp_thread_tls)->rank,
       crit,
       (*crit)[0], (*crit)[1], (*crit)[2], (*crit)[3],
@@ -815,7 +815,7 @@ __kmpc_end_critical(ident_t *loc, kmp_int32 global_tid, kmp_critical_name *crit)
 kmp_int32
 __kmpc_single(ident_t *loc, kmp_int32 global_tid)
 {
-  sctk_debug( "[%d] __kmpc_single: entering...",
+  sctk_nodebug( "[%d] __kmpc_single: entering...",
       ((mpcomp_thread_t *) sctk_openmp_thread_tls)->rank  ) ;
 
   return __mpcomp_do_single() ;
@@ -824,7 +824,7 @@ __kmpc_single(ident_t *loc, kmp_int32 global_tid)
 void
 __kmpc_end_single(ident_t *loc, kmp_int32 global_tid)
 {
-  sctk_debug( "[%d] __kmpc_end_single: entering...",
+  sctk_nodebug( "[%d] __kmpc_end_single: entering...",
       ((mpcomp_thread_t *) sctk_openmp_thread_tls)->rank  ) ;
 }
 
@@ -841,7 +841,7 @@ __kmpc_for_static_init_4( ident_t *loc, kmp_int32 gtid, kmp_int32 schedtype,
      sctk_assert(t != NULL);   
 
 
-  sctk_debug( "[%d] __kmpc_for_static_init_4: <%s> "
+  sctk_nodebug( "[%d] __kmpc_for_static_init_4: <%s> "
       "schedtype=%d, %d? %d -> %d incl. [%d], incr=%d chunk=%d *plastiter=%d *pstride=%d"
       ,
       ((mpcomp_thread_t *) sctk_openmp_thread_tls)->rank, 
@@ -858,7 +858,7 @@ __kmpc_for_static_init_4( ident_t *loc, kmp_int32 gtid, kmp_int32 schedtype,
 
       /* Chunk to execute? */
       if ( res ) {
-      sctk_debug( "[%d] Results for __kmpc_for_static_init_4 (kmp_sch_static): "
+      sctk_nodebug( "[%d] Results for __kmpc_for_static_init_4 (kmp_sch_static): "
 	  "%ld -> %ld excl %ld incl [%d]"
 	  ,
 	  ((mpcomp_thread_t *) sctk_openmp_thread_tls)->rank, 
@@ -899,7 +899,7 @@ __kmpc_for_static_init_4( ident_t *loc, kmp_int32 gtid, kmp_int32 schedtype,
 	  chunk, 0, &from, &to ) ;
 	  */
 
-      sctk_debug( "[%d] Results for __kmpc_for_static_init_4 (kmp_sch_static_chunked): "
+      sctk_nodebug( "[%d] Results for __kmpc_for_static_init_4 (kmp_sch_static_chunked): "
 	  "%ld -> %ld excl %ld incl [%d]"
 	  ,
 	  ((mpcomp_thread_t *) sctk_openmp_thread_tls)->rank, 
@@ -946,7 +946,7 @@ __kmpc_for_static_init_8( ident_t *loc, kmp_int32 gtid, kmp_int32 schedtype,
   t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
   sctk_assert(t != NULL);   
 
-  sctk_debug( "[%d] __kmpc_for_static_init_8: "
+  sctk_nodebug( "[%d] __kmpc_for_static_init_8: "
       "schedtype=%d, %d? %ld -> %ld incl. [%ld], incr=%ld chunk=%ld "
       ,
       ((mpcomp_thread_t *) sctk_openmp_thread_tls)->rank, 
@@ -961,7 +961,7 @@ __kmpc_for_static_init_8( ident_t *loc, kmp_int32 gtid, kmp_int32 schedtype,
 	  &from, &to ) ;
 
       if ( res ) {
-	sctk_debug( "[%d] Results for __kmpc_for_static_init_8: "
+	sctk_nodebug( "[%d] Results for __kmpc_for_static_init_8: "
 	    "%ld -> %ld [%ld]"
 	    ,
 	    ((mpcomp_thread_t *) sctk_openmp_thread_tls)->rank, 
@@ -993,7 +993,7 @@ __kmpc_for_static_init_8( ident_t *loc, kmp_int32 gtid, kmp_int32 schedtype,
       *pupper = *plower + (chunk * incr) - incr;
 
 
-      sctk_debug( "[%d] Results for __kmpc_for_static_init_8 (kmp_sch_static_chunked): "
+      sctk_nodebug( "[%d] Results for __kmpc_for_static_init_8 (kmp_sch_static_chunked): "
 	  "%ld -> %ld excl %ld incl [%d]"
 	  ,
 	  ((mpcomp_thread_t *) sctk_openmp_thread_tls)->rank, 
@@ -1025,7 +1025,7 @@ __kmpc_for_static_init_8u( ident_t *loc, kmp_int32 gtid, kmp_int32 schedtype,
 {
   /* TODO: the same as unsigned long long in GCC... */
 
-  sctk_debug( "__kmpc_for_static_init_8u: siweof long = %d, sizeof long long %d",
+  sctk_nodebug( "__kmpc_for_static_init_8u: siweof long = %d, sizeof long long %d",
       sizeof( long ), sizeof( long long ) ) ;
 
   not_implemented() ;
@@ -1034,7 +1034,7 @@ __kmpc_for_static_init_8u( ident_t *loc, kmp_int32 gtid, kmp_int32 schedtype,
 void
 __kmpc_for_static_fini( ident_t * loc, kmp_int32 global_tid ) 
 {
-  sctk_debug( "[%d] __kmpc_for_static_fini: entering...",
+  sctk_nodebug( "[%d] __kmpc_for_static_fini: entering...",
       ((mpcomp_thread_t *) sctk_openmp_thread_tls)->rank ) ;
 
   /* Nothing to do here... */
@@ -1044,7 +1044,7 @@ void
 __kmpc_dispatch_init_4(ident_t *loc, kmp_int32 gtid, enum sched_type schedule,
     kmp_int32 lb, kmp_int32 ub, kmp_int32 st, kmp_int32 chunk )
 {
-    sctk_debug(
+    sctk_nodebug(
       "[%d] __kmpc_dispatch_init_4: enter %d -> %d incl, %d excl [%d] ck:%d sch:%d"
       ,
       ((mpcomp_thread_t *) sctk_openmp_thread_tls)->rank,
@@ -1057,7 +1057,7 @@ __kmpc_dispatch_init_4(ident_t *loc, kmp_int32 gtid, enum sched_type schedule,
     t->schedule_type = schedule;
 
   switch( schedule ) {
-    //regular scheduling
+    /* regular scheduling */
     case kmp_sch_dynamic_chunked:
     case kmp_ord_dynamic_chunked:
       __mpcomp_dynamic_loop_init( 
@@ -1065,13 +1065,17 @@ __kmpc_dispatch_init_4(ident_t *loc, kmp_int32 gtid, enum sched_type schedule,
 	  (long)lb, (long)ub+(long)st, (long)st, (long)chunk ) ;
       break ;
     case kmp_sch_static:
-    case kmp_sch_static_chunked:
     case kmp_ord_static:
+      t->static_nb_chunks_intel = 0;
+      __mpcomp_static_loop_init(
+	  ((mpcomp_thread_t *) sctk_openmp_thread_tls),
+	  (long)lb, (long)ub+(long)st, (long)st, (long)0) ;
+      break ; 
+    case kmp_sch_static_chunked:
     case kmp_ord_static_chunked:
       __mpcomp_static_loop_init(
 	  ((mpcomp_thread_t *) sctk_openmp_thread_tls),
-	  (long)lb, (long)ub+(long)st, (long)st, (long)chunk
-	  ) ;
+	  (long)lb, (long)ub+(long)st, (long)st, (long)chunk) ;
       break ;
     case kmp_sch_guided_chunked:
     case kmp_ord_guided_chunked:
@@ -1083,6 +1087,7 @@ __kmpc_dispatch_init_4(ident_t *loc, kmp_int32 gtid, enum sched_type schedule,
       not_implemented() ;
       break ;
   }
+  t->first_iteration = 1;
 }
 
 void
@@ -1097,7 +1102,7 @@ __kmpc_dispatch_init_8( ident_t *loc, kmp_int32 gtid, enum sched_type schedule,
                         kmp_int64 lb, kmp_int64 ub,
                         kmp_int64 st, kmp_int64 chunk )
 {
-  sctk_debug(
+  sctk_nodebug(
       "[%d] __kmpc_dispatch_init_8: enter %ld -> %ld incl, %ld excl [%ld] ck:%ld sch:%d"
       ,
       ((mpcomp_thread_t *) sctk_openmp_thread_tls)->rank,
@@ -1143,34 +1148,50 @@ __kmpc_dispatch_next_4( ident_t *loc, kmp_int32 gtid, kmp_int32 *p_last,
 
   switch( schedule ) 
   {
-    //regular scheduling
+    /* regular scheduling */
     case kmp_sch_dynamic_chunked:
         ret = __mpcomp_dynamic_loop_next( &from, &to ) ;
     break;
     case kmp_sch_static:
+        if(t->static_nb_chunks_intel == 0 && t->first_iteration)
+            ret = __mpcomp_static_schedule_get_single_chunk (*p_lb, *p_ub, *p_st, &from, &to);
+        else
+            ret = __mpcomp_static_loop_next( &from, &to ) ;
+    break;
     case kmp_sch_static_chunked:
         ret = __mpcomp_static_loop_next( &from, &to ) ;
     break;
     case kmp_sch_guided_chunked:
         ret = __mpcomp_guided_loop_next( &from, &to ) ;
     break ;
-    //ordered scheduling
+    /* ordered scheduling */
     case kmp_ord_dynamic_chunked:
         ret = __mpcomp_ordered_dynamic_loop_next( &from, &to ) ;
+        t->current_ordered_iteration = from;
     break;
     case kmp_ord_static:
     case kmp_ord_static_chunked:
-        ret = __mpcomp_ordered_static_loop_next( &from, &to ) ;
+        /* handle intel case for default chunk */
+        if(t->static_nb_chunks_intel == 0 && t->first_iteration)
+            ret = __mpcomp_static_schedule_get_single_chunk (*p_lb, *p_ub, *p_st, &from, &to);
+        else
+            ret = __mpcomp_ordered_static_loop_next( &from, &to ) ;
+        t->current_ordered_iteration = from;
     break;
     case kmp_ord_guided_chunked:
         ret = __mpcomp_ordered_guided_loop_next( &from, &to ) ;
+        t->current_ordered_iteration = from;
     break ;
     default:
         not_implemented();
     break;
   }
+  
+  /* we passed first iteration */
+  if(t->first_iteration)
+      t->first_iteration = 0;
 
-  sctk_debug( 
+  sctk_nodebug( 
       "[%d] __kmpc_dispatch_next_4: %ld -> %ld excl, %ld incl [%d] (ret=%d)",
       t->rank,
       from, to, to - t->info.loop_incr, *p_st, ret ) ;
@@ -1235,7 +1256,7 @@ __kmpc_dispatch_next_8( ident_t *loc, kmp_int32 gtid, kmp_int32 *p_last,
 
   ret = __mpcomp_dynamic_loop_next( (long *)p_lb, (long *)p_ub ) ;
 
-  sctk_debug( 
+  sctk_nodebug( 
       "[%d] __kmpc_dispatch_next_8: %ld -> %ld excl, %ld incl (ret=%d)",
       t->rank,
       *p_lb, *p_ub, *p_ub - t->info.loop_incr, ret ) ;
@@ -1260,7 +1281,7 @@ __kmpc_dispatch_next_8u( ident_t *loc, kmp_int32 gtid, kmp_int32 *p_last,
 void
 __kmpc_dispatch_fini_4( ident_t *loc, kmp_int32 gtid )
 {
-  not_implemented() ;
+  //not_implemented() ;
 }
 
 void
