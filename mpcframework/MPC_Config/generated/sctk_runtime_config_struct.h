@@ -630,6 +630,8 @@ struct sctk_runtime_config_struct_openmp
 	bool warn_nested;
 	/**MPI/OpenMP hybrid mode (simple-mixed, alternating)**/
 	char * mode;
+	/**Affinity of threads for parallel regions (COMPACT, SCATTER, BALANCED)**/
+	char * affinity;
 };
 
 /******************************** STRUCTURE *********************************/

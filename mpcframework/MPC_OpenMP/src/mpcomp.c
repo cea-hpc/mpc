@@ -90,7 +90,7 @@ static int OMP_WARN_NESTED = 0 ;
 /* Hybrid MPI/OpenMP mode */
 static mpcomp_mode_t OMP_MODE = MPCOMP_MODE_SIMPLE_MIXED ;
 /* TODO Affinity policy -> default should be BALANCED for hyperthreading */
-static mpcomp_affinity_t OMP_AFFINITY = MPCOMP_AFFINITY_COMPACT ;
+static mpcomp_affinity_t OMP_AFFINITY = MPCOMP_AFFINITY_SCATTER ;
 
 mpcomp_global_icv_t mpcomp_global_icvs;
 
@@ -340,6 +340,54 @@ TODO( "If OMP_NUM_THREADS is 0, let it equal to 0 by default and handle it later
 
   }
 
+  /******* OMP_AFFINITY *******/
+  env = sctk_runtime_config_get()->modules.openmp.affinity;
+  OMP_AFFINITY = MPCOMP_AFFINITY_COMPACT ;
+  if ( env != NULL )
+  {
+    int ok = 0 ;
+
+	/* Handling MPCOMP_AFFINITY_COMPACT */
+	if ( strncmp (env, "compact", strlen("compact") ) == 0 
+		||
+		strncmp (env, "COMPACT", strlen("COMPACT") ) == 0
+		) 
+	{
+	  OMP_AFFINITY = MPCOMP_AFFINITY_COMPACT ;
+      ok = 1 ;
+	}
+
+	/* Handling MPCOMP_AFFINITY_SCATTER */
+	if ( strncmp (env, "scatter", strlen("scatter") ) == 0 
+		||
+		strncmp (env, "SCATTER", strlen("SCATTER") ) == 0
+		) 
+	{
+	  OMP_AFFINITY = MPCOMP_AFFINITY_SCATTER ;
+      ok = 1 ;
+	}
+
+	/* Handling MPCOMP_AFFINITY_BALANCED */
+	if ( strncmp (env, "balanced", strlen("balanced") ) == 0 
+		||
+		strncmp (env, "BALANCED", strlen("BALANCED") ) == 0
+		) 
+	{
+	  OMP_AFFINITY = MPCOMP_AFFINITY_BALANCED ;
+      ok = 1 ;
+	}
+
+	if ( ok ) 
+	{
+	} else {
+      fprintf (stderr,
+	  "Warning: Unknown affinity <%s> (must be COMPACT, SCATTER or BALANCED),"
+	  " fallback to default affinity <%d>\n", env,
+	  OMP_AFFINITY );
+	}
+
+  }
+
 
   /******* OMP_TREE *********/
   env = sctk_runtime_config_get()->modules.openmp.tree ;
@@ -438,6 +486,21 @@ TODO( "If OMP_NUM_THREADS is 0, let it equal to 0 by default and handle it later
 	} else {
 		fprintf (stderr, "\t%d microVPs (OMP_MICROVP_NUMBER)\n", OMP_MICROVP_NUMBER);
 	}
+    fprintf( stderr, "\tAffinity " ) ;
+    switch ( OMP_AFFINITY ) {
+        case MPCOMP_AFFINITY_COMPACT:
+            fprintf( stderr, "COMPACT\n" ) ;
+            break;
+        case MPCOMP_AFFINITY_SCATTER:
+            fprintf( stderr, "SCATTER\n" ) ;
+            break;
+        case MPCOMP_AFFINITY_BALANCED:
+            fprintf( stderr, "BALANCED\n" ) ;
+            break;
+        default:
+            fprintf( stderr, "Unknown\n" ) ;
+            break ;
+    }
 	if ( OMP_TREE != NULL ) {
 	  int i ;
 	  fprintf( stderr, "\tOMP_TREE w/ depth:%d leaves:%d, arity:[%d", 
@@ -1151,7 +1214,7 @@ mpcomp_get_thread_num (void)
   t = sctk_openmp_thread_tls ;
   sctk_assert( t != NULL ) ;
 
-  sctk_nodebug( "[%d] mpcomp_get_thread_num: entering",
+  sctk_debug( "[%d] mpcomp_get_thread_num: entering",
 		 t->rank	) ;
 
   return t->rank;

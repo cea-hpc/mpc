@@ -686,6 +686,7 @@
       <xs:element minOccurs="0" name="max_alive_single" type="xs:integer"/>
       <xs:element minOccurs="0" name="warn_nested" type="xs:boolean"/>
       <xs:element minOccurs="0" name="mode" type="xs:string"/>
+      <xs:element minOccurs="0" name="affinity" type="xs:string"/>
     </xs:all>
   </xs:complexType>
   <!-- ********************************************************* -->

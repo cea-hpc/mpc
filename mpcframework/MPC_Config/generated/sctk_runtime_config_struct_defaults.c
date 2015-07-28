@@ -673,6 +673,7 @@ void sctk_runtime_config_struct_init_openmp(void * struct_ptr)
 	obj->max_alive_single = 3;
 	obj->warn_nested = false;
 	obj->mode = "simple-mixed";
+	obj->affinity = "compact";
 	obj->init_done = 1;
 }
 

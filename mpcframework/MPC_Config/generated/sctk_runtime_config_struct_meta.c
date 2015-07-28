@@ -287,6 +287,7 @@ const struct sctk_runtime_config_entry_meta sctk_runtime_config_db[] = {
 	{"max_alive_single"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_openmp,max_alive_single)  , sizeof(int) , "int" , NULL},
 	{"warn_nested"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_openmp,warn_nested)  , sizeof(bool) , "bool" , NULL},
 	{"mode"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_openmp,mode)  , sizeof(char *) , "char *" , NULL},
+	{"affinity"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_openmp,affinity)  , sizeof(char *) , "char *" , NULL},
 	/* struct */
 	{"sctk_runtime_config_struct_profiler" , SCTK_CONFIG_META_TYPE_STRUCT , 0  , sizeof(struct sctk_runtime_config_struct_profiler) , NULL , sctk_runtime_config_struct_init_profiler},
 	{"file_prefix"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_profiler,file_prefix)  , sizeof(char *) , "char *" , NULL},

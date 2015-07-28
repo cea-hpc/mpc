@@ -167,7 +167,6 @@ static inline mpcomp_node_t * __mpcomp_wakeup_node(
 		/* Compute the number of children that will be involved for the barrier
 		 */
 		for ( i = 1 ; i < n->nb_children ; i++ ) {
-			/* TODO promote min_index -> min_index[affinity] */
 			if ( n->children.node[i]->min_index[mpcomp_global_icvs.affinity] < 
                     num_threads ) {
 				nb_children_involved++ ;
@@ -180,20 +179,20 @@ static inline mpcomp_node_t * __mpcomp_wakeup_node(
 		/* Update the number of threads for the barrier */
 		n->barrier_num_threads = nb_children_involved ;
 
-		/* TODO test not valid for non-compact affinity
-		 * need to move root while nb_children == 1, then stop
-		 */
-
 		if ( nb_children_involved == 1 ) {
-			if ( master ) {
+            /* Bypass algorithm are ok with threads only with compact affinity
+               Otherwise, with more than 1 thread, multiple subtree of the root
+               will be used
+             */
+			if ( master && mpcomp_global_icvs.affinity == MPCOMP_AFFINITY_COMPACT ) {
 				/* Only one subtree => bypass */
 				instance->team->info.new_root = n->children.node[0] ;
-				sctk_debug( "__mpcomp_wakeup_node: Bypassing root" ) ;
+				sctk_debug( "__mpcomp_wakeup_node: Bypassing root from depth %d to %d",
+                       n->depth, n->depth+1 ) ;
 			}
 		} else {
 			/* Wake up children and transfer information */
 			for ( i = 1 ; i < n->nb_children ; i++ ) {
-				/* TODO promote min_index -> min_index[affinity] */
 				if ( n->children.node[i]->min_index[mpcomp_global_icvs.affinity] 
                         < num_threads ) {
 #if MPCOMP_TRANSFER_INFO_ON_NODES

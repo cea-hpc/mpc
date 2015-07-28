@@ -243,6 +243,7 @@ meta.types = {
 		max_alive_single: {mode: 'param', name: "max_alive_single", type: "int", doc: "Maximum number of alive single construct", dflt: "3", },
 		warn_nested: {mode: 'param', name: "warn_nested", type: "bool", doc: "Emit warning when entering nested parallelism", dflt: "false", },
 		mode: {mode: 'param', name: "mode", type: "string", doc: "MPI/OpenMP hybrid mode (simple-mixed, alternating)", dflt: "simple-mixed", },
+		affinity: {mode: 'param', name: "affinity", type: "string", doc: "Affinity of threads for parallel regions (COMPACT, SCATTER, BALANCED)", dflt: "compact", },
 	}},
 	profiler : {type: 'struct', name: "profiler", childs: {
 		file_prefix: {mode: 'param', name: "file_prefix", type: "string", doc: "Prefix of MPC Profiler outputs", dflt: "mpc_profile", },

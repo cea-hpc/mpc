@@ -248,6 +248,17 @@ void sctk_runtime_config_override_by_getenv_openmp(struct sctk_runtime_config * 
 		config->modules.openmp.mode = tmp;
 	}
 
+    /******* KMP_AFFINITY*******/
+	if ((tmp = getenv("KMP_AFFINITY")) != NULL)
+	{
+		config->modules.openmp.affinity = tmp;
+	}
+    /******* OMP_AFFINITY*******/
+	if ((tmp = getenv("OMP_AFFINITY")) != NULL)
+	{
+		config->modules.openmp.affinity = tmp;
+	}
+
 
 
 
