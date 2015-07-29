@@ -528,30 +528,6 @@ for s in sizeofs:
 	module_file_data += "END SUBROUTINE MPI_SIZEOF_" + str(cnt) + "\n"
 	cnt+=1
 
-
-
-'''           MODULE PROCEDURE MPI_SIZEOF_I, MPI_SIZEOF_R,                &
-     &                      MPI_SIZEOF_L, MPI_SIZEOF_CH, MPI_SIZEOF_CX,&
-     &           MPI_SIZEOF_IV, MPI_SIZEOF_RV,                         &
-     &           MPI_SIZEOF_LV, MPI_SIZEOF_CHV, MPI_SIZEOF_CXV
-           MODULE PROCEDURE MPI_SIZEOF_D, MPI_SIZEOF_DV
-          MODULE PROCEDURE MPI_SIZEOF_I1, MPI_SIZEOF_I1V
-          MODULE PROCEDURE MPI_SIZEOF_I2, MPI_SIZEOF_I2V
-          MODULE PROCEDURE MPI_SIZEOF_I8, MPI_SIZEOF_I8V
-       
-!
-       CONTAINS
-!
-       SUBROUTINE MPI_SIZEOF_I( X, SIZE, IERROR )
-       INTEGER X
-       INTEGER SIZE, IERROR
-       SIZE = 4
-       IERROR = 0
-       END SUBROUTINE MPI_SIZEOF_I
-'''
-
-
-
 """
  Write Module END
 """
