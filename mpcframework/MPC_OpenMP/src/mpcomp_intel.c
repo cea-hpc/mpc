@@ -1055,6 +1055,7 @@ __kmpc_dispatch_init_4(ident_t *loc, kmp_int32 gtid, enum sched_type schedule,
     t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
     sctk_assert( t != NULL ) ;
     t->schedule_type = schedule;
+    t->static_nb_chunks_intel = 1; /* initialize default nb_chunks */
 
   switch( schedule ) {
     /* regular scheduling */
@@ -1140,12 +1141,17 @@ __kmpc_dispatch_next_4( ident_t *loc, kmp_int32 gtid, kmp_int32 *p_last,
   int ret, schedule ;
   mpcomp_thread_t *t ;
   long from, to ;
-
+    
   t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
   sctk_assert(t != NULL);
   /* get scheduling type used in kmpc_dispatch_init */
   schedule = t->schedule_type;
+  
+  /* Fix for intel */
+  if(t->first_iteration)
+    t->static_current_chunk = -1;
 
+  sctk_nodebug("__kmpc_dispatch_next_4: p_lb %ld, p_ub %ld, p_st %ld", *p_lb, *p_ub, *p_st);
   switch( schedule ) 
   {
     /* regular scheduling */
@@ -1154,7 +1160,7 @@ __kmpc_dispatch_next_4( ident_t *loc, kmp_int32 gtid, kmp_int32 *p_last,
     break;
     case kmp_sch_static:
         if(t->static_nb_chunks_intel == 0 && t->first_iteration)
-            ret = __mpcomp_static_schedule_get_single_chunk (*p_lb, *p_ub, *p_st, &from, &to);
+            ret = __mpcomp_static_schedule_get_single_chunk (*p_lb, (*p_ub)+(*p_st), *p_st, &from, &to);
         else
             ret = __mpcomp_static_loop_next( &from, &to ) ;
     break;
@@ -1173,7 +1179,7 @@ __kmpc_dispatch_next_4( ident_t *loc, kmp_int32 gtid, kmp_int32 *p_last,
     case kmp_ord_static_chunked:
         /* handle intel case for default chunk */
         if(t->static_nb_chunks_intel == 0 && t->first_iteration)
-            ret = __mpcomp_static_schedule_get_single_chunk (*p_lb, *p_ub, *p_st, &from, &to);
+            ret = __mpcomp_static_schedule_get_single_chunk (*p_lb, (*p_ub)+(*p_st), *p_st, &from, &to);
         else
             ret = __mpcomp_ordered_static_loop_next( &from, &to ) ;
         t->current_ordered_iteration = from;
