@@ -1148,7 +1148,7 @@ __kmpc_dispatch_next_4( ident_t *loc, kmp_int32 gtid, kmp_int32 *p_last,
   schedule = t->schedule_type;
   
   /* Fix for intel */
-  if(t->first_iteration)
+  if(t->first_iteration && t->static_nb_chunks_intel > 0)
     t->static_current_chunk = -1;
 
   sctk_nodebug("__kmpc_dispatch_next_4: p_lb %ld, p_ub %ld, p_st %ld", *p_lb, *p_ub, *p_st);
