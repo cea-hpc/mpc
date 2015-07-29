@@ -1,4 +1,7 @@
 {
+    "MPI_Finalize":
+    [
+    ],
     "MPI_Abort": [
         [
             "MPI_Comm", 
@@ -3966,7 +3969,7 @@
             "array_of_displacements"
         ], 
         [
-            "MPI_Datatype*", 
+            "MPI_Datatype[]", 
             "array_of_types"
         ], 
         [
@@ -4082,15 +4085,15 @@
             "max_datatypes"
         ], 
         [
-            "int*", 
+            "int[]", 
             "array_of_integers"
         ], 
         [
-            "MPI_Aint*", 
+            "MPI_Aint[]", 
             "array_of_addresses"
         ], 
         [
-            "MPI_Datatype*", 
+            "MPI_Datatype[]", 
             "array_of_datatypes"
         ]
     ], 

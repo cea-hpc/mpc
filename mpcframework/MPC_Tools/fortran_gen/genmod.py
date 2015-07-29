@@ -39,13 +39,18 @@ with open(scriptpath + '/typesc2f.json') as data_file:
 with open('./constants.json') as data_file:    
     mpcconstants = json.load(data_file)
 
+# Load sizeofs definitions
+with open(scriptpath + '/sizeofs.json') as data_file:    
+    sizeofs = json.load(data_file)
+
 # Get the preprocessed MPI.h from the MPC compiler
 parsed_mpih=""
+
 try:
-	parsed_mpih=subprocess.check_output([args.ccomp, "-E", args.mpih]);
-except OSError:
+	with open('./preparsed_mpih.dat') as data_file:    
+		parsed_mpih = data_file.read();
+except IOError:
 	print "Could not preparse the", args.mpih, "Header"
-	exit(1)
 
 def MPIFunctionsisPresentinMPC( fname ):
 	index = parsed_mpih.find( fname );
@@ -377,16 +382,26 @@ for f in mpi_interface:
 	else:
 		print "\tGEN\t" + functionName + "..."
 	
+	#Add the error flag
+	if type( mpi_interface[ functionName ] ) == type( [] ) :
+		mpi_interface[ functionName ].append( [ "int", "ierror" ] );
+	
+	contains_void_arg = 0;
+	
 	for arg in mpi_interface[ functionName ]:
 		name = arg[1];
 		ctype = arg[0];
 		ftype = typesc2f.get( ctype );
-		
+
 		if ftype == None:
 			#Type can't be converted to Fortran ABORT
 			ftype = "NONE"
 			print "\t ERROR failed to translate :",  ctype + " " + name + "==> " + ftype 
 			exit(1);
+		
+		if ftype == "EXTERNAL":
+			contains_void_arg = 1;
+			break;
 		
 		#If we are here we managed to do the type translation
 		
@@ -411,8 +426,10 @@ for f in mpi_interface:
 		if "MPI_OFFSET_KIND" in ftype:
 			uses.append("MPI_OFFSET_KIND");
 		
-		
-		
+	#Do not generate functions with void pointers in F90
+	if contains_void_arg:
+		continue;
+	
 	
 	#Emit the subroutine code
 	module_file_data+= "\n\nSUBROUTINE " + capsfunctioname +"(";
@@ -469,6 +486,90 @@ f.close()
 
 #
 #
+#  THIS IS THE SIZEOF FORTRAN MODULE
+#
+#
+
+print "\n################################"
+print "Generating the MPI Fortran Module"
+print "################################\n"
+
+module_file_data = genheader()
+
+
+"""
+ Write Module START
+"""
+
+module_file_data +=("MODULE MPI_SIZEOFS\n"
+		"IMPLICIT NONE\n\n");
+
+
+module_file_data +=("PUBLIC :: MPI_SIZEOF\n"
+		"INTERFACE MPI_SIZEOF\n\n");
+
+cnt = 0;
+		
+for s in sizeofs:
+	module_file_data += "MODULE PROCEDURE MPI_SIZEOF_" + str(cnt) + "\n"
+	cnt+=1
+
+module_file_data +=("\nEND INTERFACE ! MPI_SIZEOF\n\n");
+module_file_data +=("CONTAINS\n");
+
+cnt = 0;
+		
+for s in sizeofs:
+	module_file_data += "\nSUBROUTINE MPI_SIZEOF_" + str(cnt) + "( X, SIZE, RES )\n"
+	module_file_data += s[0].upper() + "\n";
+	module_file_data += "INTEGER SIZE, RES\n";
+	module_file_data += "RES=0\n";
+	module_file_data += "SIZE=" + str(s[1]) + "\n";
+	module_file_data += "END SUBROUTINE MPI_SIZEOF_" + str(cnt) + "\n"
+	cnt+=1
+
+
+
+'''           MODULE PROCEDURE MPI_SIZEOF_I, MPI_SIZEOF_R,                &
+     &                      MPI_SIZEOF_L, MPI_SIZEOF_CH, MPI_SIZEOF_CX,&
+     &           MPI_SIZEOF_IV, MPI_SIZEOF_RV,                         &
+     &           MPI_SIZEOF_LV, MPI_SIZEOF_CHV, MPI_SIZEOF_CXV
+           MODULE PROCEDURE MPI_SIZEOF_D, MPI_SIZEOF_DV
+          MODULE PROCEDURE MPI_SIZEOF_I1, MPI_SIZEOF_I1V
+          MODULE PROCEDURE MPI_SIZEOF_I2, MPI_SIZEOF_I2V
+          MODULE PROCEDURE MPI_SIZEOF_I8, MPI_SIZEOF_I8V
+       
+!
+       CONTAINS
+!
+       SUBROUTINE MPI_SIZEOF_I( X, SIZE, IERROR )
+       INTEGER X
+       INTEGER SIZE, IERROR
+       SIZE = 4
+       IERROR = 0
+       END SUBROUTINE MPI_SIZEOF_I
+'''
+
+
+
+"""
+ Write Module END
+"""
+
+module_file_data +="\nEND MODULE MPI_SIZEOFS\n";
+
+"""
+ Open Output Module FILE
+"""
+
+f = open("mpi_sizeofs.f90", "w" )
+
+f.write( module_file_data );
+
+f.close()
+
+#
+#
 #  THIS IS THE MPI FORTRAN MODULE
 #
 #
@@ -490,6 +591,7 @@ module_file_data +=("MODULE MPI\n\n");
 
 module_file_data += "USE MPI_BASE\n"
 module_file_data += "USE MPI_CONSTANTS\n"
+module_file_data += "USE MPI_SIZEOFS\n"
 
 
 """

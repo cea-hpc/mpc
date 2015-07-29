@@ -148,1742 +148,1166 @@ SUBROUTINE MPI_WIN_NULL_COPY_FN(OLDWIN, WIN_KEYVAL, EXTRA_STATE,&
 END SUBROUTINE MPI_WIN_NULL_COPY_FN
 
 
-SUBROUTINE MPI_START(request)
+SUBROUTINE MPI_START(request,ierror)
 	INTEGER	request
+	INTEGER	ierror
 END SUBROUTINE MPI_START
 
 
-SUBROUTINE MPI_FILE_WRITE_ALL_BEGIN(fh,buf,count,&
-	datatype)
-	INTEGER	fh
-	EXTERNAL	buf
-	INTEGER	count
-	INTEGER	datatype
-END SUBROUTINE MPI_FILE_WRITE_ALL_BEGIN
-
-
-SUBROUTINE MPI_WIN_POST(group,assert,win)
+SUBROUTINE MPI_WIN_POST(group,assert,win,&
+	ierror)
 	INTEGER	group
 	INTEGER	assert
 	INTEGER	win
+	INTEGER	ierror
 END SUBROUTINE MPI_WIN_POST
 
 
-SUBROUTINE MPI_WIN_GET_ERRHANDLER(win,errhandler)
+SUBROUTINE MPI_WIN_GET_ERRHANDLER(win,errhandler,ierror)
 	INTEGER	win
 	INTEGER	errhandler
+	INTEGER	ierror
 END SUBROUTINE MPI_WIN_GET_ERRHANDLER
 
 
-SUBROUTINE MPI_FILE_GET_GROUP(fh,group)
+SUBROUTINE MPI_FILE_GET_GROUP(fh,group,ierror)
 	INTEGER	fh
 	INTEGER	group
+	INTEGER	ierror
 END SUBROUTINE MPI_FILE_GET_GROUP
 
 
-SUBROUTINE MPI_SENDRECV(sendbuf,sendcount,sendtype,&
-	dest,sendtag,recvbuf,&
-	recvcount,recvtype,source,&
-	recvtag,comm,status)
-	USE MPI_CONSTANTS,ONLY: MPI_STATUS_SIZE
-	EXTERNAL	sendbuf
-	INTEGER	sendcount
-	INTEGER	sendtype
-	INTEGER	dest
-	INTEGER	sendtag
-	EXTERNAL	recvbuf
-	INTEGER	recvcount
-	INTEGER	recvtype
-	INTEGER	source
-	INTEGER	recvtag
-	INTEGER	comm
-	INTEGER status(MPI_STATUS_SIZE)
-END SUBROUTINE MPI_SENDRECV
-
-
-SUBROUTINE MPI_SCAN(sendbuf,recvbuf,count,&
-	datatype,op,comm)
-	EXTERNAL	sendbuf
-	EXTERNAL	recvbuf
-	INTEGER	count
-	INTEGER	datatype
-	INTEGER	op
-	INTEGER	comm
-END SUBROUTINE MPI_SCAN
-
-
-SUBROUTINE MPI_STARTALL(count,array_of_requests)
+SUBROUTINE MPI_STARTALL(count,array_of_requests,ierror)
 	INTEGER	count
 	INTEGER array_of_requests(*)
+	INTEGER	ierror
 END SUBROUTINE MPI_STARTALL
 
 
-SUBROUTINE MPI_ATTR_DELETE(comm,keyval)
+SUBROUTINE MPI_ATTR_DELETE(comm,keyval,ierror)
 	INTEGER	comm
 	INTEGER	keyval
+	INTEGER	ierror
 END SUBROUTINE MPI_ATTR_DELETE
 
 
-SUBROUTINE MPI_FILE_IWRITE_SHARED(fh,buf,count,&
-	datatype,request)
-	INTEGER	fh
-	EXTERNAL	buf
-	INTEGER	count
-	INTEGER	datatype
-	INTEGER	request
-END SUBROUTINE MPI_FILE_IWRITE_SHARED
-
-
-SUBROUTINE MPI_COMM_GET_ATTR(comm,comm_keyval,attribute_val,&
-	flag)
-	INTEGER	comm
-	INTEGER	comm_keyval
-	EXTERNAL	attribute_val
-	LOGICAL	flag
-END SUBROUTINE MPI_COMM_GET_ATTR
-
-
-SUBROUTINE MPI_FILE_GET_INFO(fh,info_used)
+SUBROUTINE MPI_FILE_GET_INFO(fh,info_used,ierror)
 	INTEGER	fh
 	INTEGER	info_used
+	INTEGER	ierror
 END SUBROUTINE MPI_FILE_GET_INFO
 
 
-SUBROUTINE MPI_TYPE_DELETE_ATTR(type,type_keyval)
+SUBROUTINE MPI_TYPE_DELETE_ATTR(type,type_keyval,ierror)
 	INTEGER	type
 	INTEGER	type_keyval
+	INTEGER	ierror
 END SUBROUTINE MPI_TYPE_DELETE_ATTR
 
 
-SUBROUTINE MPI_ERROR_CLASS(errorcode,errorclass)
+SUBROUTINE MPI_ERROR_CLASS(errorcode,errorclass,ierror)
 	INTEGER	errorcode
 	INTEGER	errorclass
+	INTEGER	ierror
 END SUBROUTINE MPI_ERROR_CLASS
 
 
-SUBROUTINE MPI_FREE_MEM(base)
-	EXTERNAL	base
-END SUBROUTINE MPI_FREE_MEM
-
-
-SUBROUTINE MPI_INFO_DUP(info,newinfo)
+SUBROUTINE MPI_INFO_DUP(info,newinfo,ierror)
 	INTEGER	info
 	INTEGER	newinfo
+	INTEGER	ierror
 END SUBROUTINE MPI_INFO_DUP
 
 
-SUBROUTINE MPI_TYPE_LB(type,lb)
+SUBROUTINE MPI_TYPE_LB(type,lb,ierror)
 	INTEGER	type
 	INTEGER	lb
+	INTEGER	ierror
 END SUBROUTINE MPI_TYPE_LB
 
 
 SUBROUTINE MPI_CART_GET(comm,maxdims,dims,&
-	periods,coords)
+	periods,coords,ierror)
 	INTEGER	comm
 	INTEGER	maxdims
 	INTEGER dims(*)
 	LOGICAL periods(*)
 	INTEGER coords(*)
+	INTEGER	ierror
 END SUBROUTINE MPI_CART_GET
 
 
-SUBROUTINE MPI_ADD_ERROR_CLASS(errorclass)
+SUBROUTINE MPI_ADD_ERROR_CLASS(errorclass,ierror)
 	INTEGER	errorclass
+	INTEGER	ierror
 END SUBROUTINE MPI_ADD_ERROR_CLASS
 
 
-SUBROUTINE MPI_FILE_WRITE_SHARED(fh,buf,count,&
-	datatype,status)
-	USE MPI_CONSTANTS,ONLY: MPI_STATUS_SIZE
-	INTEGER	fh
-	EXTERNAL	buf
-	INTEGER	count
-	INTEGER	datatype
-	INTEGER status(MPI_STATUS_SIZE)
-END SUBROUTINE MPI_FILE_WRITE_SHARED
-
-
-SUBROUTINE MPI_BUFFER_DETACH(buffer,size)
-	EXTERNAL	buffer
-	INTEGER	size
-END SUBROUTINE MPI_BUFFER_DETACH
-
-
-SUBROUTINE MPI_FILE_SET_SIZE(fh,size)
+SUBROUTINE MPI_FILE_SET_SIZE(fh,size,ierror)
 	USE MPI_CONSTANTS,ONLY: MPI_OFFSET_KIND
 	INTEGER	fh
 	INTEGER(KIND=MPI_OFFSET_KIND)	size
+	INTEGER	ierror
 END SUBROUTINE MPI_FILE_SET_SIZE
 
 
 SUBROUTINE MPI_INTERCOMM_CREATE(local_comm,local_leader,bridge_comm,&
-	remote_leader,tag,newintercomm)
+	remote_leader,tag,newintercomm,&
+	ierror)
 	INTEGER	local_comm
 	INTEGER	local_leader
 	INTEGER	bridge_comm
 	INTEGER	remote_leader
 	INTEGER	tag
 	INTEGER	newintercomm
+	INTEGER	ierror
 END SUBROUTINE MPI_INTERCOMM_CREATE
 
 
-SUBROUTINE MPI_FILE_IREAD_AT(fh,offset,buf,&
-	count,datatype,request)
-	USE MPI_CONSTANTS,ONLY: MPI_OFFSET_KIND
-	INTEGER	fh
-	INTEGER(KIND=MPI_OFFSET_KIND)	offset
-	EXTERNAL	buf
-	INTEGER	count
-	INTEGER	datatype
-	INTEGER	request
-END SUBROUTINE MPI_FILE_IREAD_AT
-
-
-SUBROUTINE MPI_ALLREDUCE(sendbuf,recvbuf,count,&
-	datatype,op,comm)
-	EXTERNAL	sendbuf
-	EXTERNAL	recvbuf
-	INTEGER	count
-	INTEGER	datatype
-	INTEGER	op
-	INTEGER	comm
-END SUBROUTINE MPI_ALLREDUCE
-
-
-SUBROUTINE MPI_COMM_CREATE_KEYVAL(comm_copy_attr_fn,comm_delete_attr_fn,comm_keyval,&
-	extra_state)
-	EXTERNAL	comm_copy_attr_fn
-	EXTERNAL	comm_delete_attr_fn
-	INTEGER	comm_keyval
-	EXTERNAL	extra_state
-END SUBROUTINE MPI_COMM_CREATE_KEYVAL
-
-
-SUBROUTINE MPI_IBSEND(buf,count,datatype,&
-	dest,tag,comm,&
-	request)
-	EXTERNAL	buf
-	INTEGER	count
-	INTEGER	datatype
-	INTEGER	dest
-	INTEGER	tag
-	INTEGER	comm
-	INTEGER	request
-END SUBROUTINE MPI_IBSEND
-
-
-SUBROUTINE MPI_FILE_READ_ALL_END(fh,buf,status)
-	USE MPI_CONSTANTS,ONLY: MPI_STATUS_SIZE
-	INTEGER	fh
-	EXTERNAL	buf
-	INTEGER status(MPI_STATUS_SIZE)
-END SUBROUTINE MPI_FILE_READ_ALL_END
-
-
-SUBROUTINE MPI_COMM_REMOTE_SIZE(comm,size)
+SUBROUTINE MPI_COMM_REMOTE_SIZE(comm,size,ierror)
 	INTEGER	comm
 	INTEGER	size
+	INTEGER	ierror
 END SUBROUTINE MPI_COMM_REMOTE_SIZE
 
 
-SUBROUTINE MPI_TYPE_CONTIGUOUS(count,oldtype,newtype)
+SUBROUTINE MPI_TYPE_CONTIGUOUS(count,oldtype,newtype,&
+	ierror)
 	INTEGER	count
 	INTEGER	oldtype
 	INTEGER	newtype
+	INTEGER	ierror
 END SUBROUTINE MPI_TYPE_CONTIGUOUS
 
 
-SUBROUTINE MPI_SEND_INIT(buf,count,datatype,&
-	dest,tag,comm,&
-	request)
-	EXTERNAL	buf
-	INTEGER	count
-	INTEGER	datatype
-	INTEGER	dest
-	INTEGER	tag
-	INTEGER	comm
-	INTEGER	request
-END SUBROUTINE MPI_SEND_INIT
-
-
-SUBROUTINE MPI_TYPE_GET_NAME(type,type_name,resultlen)
+SUBROUTINE MPI_TYPE_GET_NAME(type,type_name,resultlen,&
+	ierror)
 	INTEGER	type
 	CHARACTER (LEN=*)	type_name
 	INTEGER	resultlen
+	INTEGER	ierror
 END SUBROUTINE MPI_TYPE_GET_NAME
 
 
-SUBROUTINE MPI_REDUCE(sendbuf,recvbuf,count,&
-	datatype,op,root,&
-	comm)
-	EXTERNAL	sendbuf
-	EXTERNAL	recvbuf
-	INTEGER	count
-	INTEGER	datatype
-	INTEGER	op
-	INTEGER	root
-	INTEGER	comm
-END SUBROUTINE MPI_REDUCE
-
-
-SUBROUTINE MPI_TYPE_COMMIT(type)
+SUBROUTINE MPI_TYPE_COMMIT(type,ierror)
 	INTEGER	type
+	INTEGER	ierror
 END SUBROUTINE MPI_TYPE_COMMIT
 
 
-SUBROUTINE MPI_COMM_GET_PARENT(parent)
+SUBROUTINE MPI_COMM_GET_PARENT(parent,ierror)
 	INTEGER	parent
+	INTEGER	ierror
 END SUBROUTINE MPI_COMM_GET_PARENT
 
 
 SUBROUTINE MPI_TESTANY(count,array_of_requests,index,&
-	flag,status)
+	flag,status,ierror)
 	USE MPI_CONSTANTS,ONLY: MPI_STATUS_SIZE
 	INTEGER	count
 	INTEGER array_of_requests(*)
 	INTEGER	index
 	LOGICAL	flag
 	INTEGER status(MPI_STATUS_SIZE)
+	INTEGER	ierror
 END SUBROUTINE MPI_TESTANY
 
 
-SUBROUTINE MPI_TYPE_EXTENT(type,extent)
+SUBROUTINE MPI_TYPE_EXTENT(type,extent,ierror)
 	INTEGER	type
 	INTEGER	extent
+	INTEGER	ierror
 END SUBROUTINE MPI_TYPE_EXTENT
 
 
-SUBROUTINE MPI_FILE_PREALLOCATE(fh,size)
+SUBROUTINE MPI_FILE_PREALLOCATE(fh,size,ierror)
 	USE MPI_CONSTANTS,ONLY: MPI_OFFSET_KIND
 	INTEGER	fh
 	INTEGER(KIND=MPI_OFFSET_KIND)	size
+	INTEGER	ierror
 END SUBROUTINE MPI_FILE_PREALLOCATE
 
 
-SUBROUTINE MPI_FILE_GET_POSITION(fh,offset)
+SUBROUTINE MPI_FILE_GET_POSITION(fh,offset,ierror)
 	USE MPI_CONSTANTS,ONLY: MPI_OFFSET_KIND
 	INTEGER	fh
 	INTEGER(KIND=MPI_OFFSET_KIND)	offset
+	INTEGER	ierror
 END SUBROUTINE MPI_FILE_GET_POSITION
 
 
-SUBROUTINE MPI_SENDRECV_REPLACE(buf,count,datatype,&
-	dest,sendtag,source,&
-	recvtag,comm,status)
-	USE MPI_CONSTANTS,ONLY: MPI_STATUS_SIZE
-	EXTERNAL	buf
-	INTEGER	count
-	INTEGER	datatype
-	INTEGER	dest
-	INTEGER	sendtag
-	INTEGER	source
-	INTEGER	recvtag
-	INTEGER	comm
-	INTEGER status(MPI_STATUS_SIZE)
-END SUBROUTINE MPI_SENDRECV_REPLACE
-
-
-SUBROUTINE MPI_TYPE_GET_EXTENT(type,lb,extent)
+SUBROUTINE MPI_TYPE_GET_EXTENT(type,lb,extent,&
+	ierror)
 	USE MPI_CONSTANTS,ONLY: MPI_ADDRESS_KIND
 	INTEGER	type
 	INTEGER(KIND=MPI_ADDRESS_KIND)	lb
 	INTEGER(KIND=MPI_ADDRESS_KIND)	extent
+	INTEGER	ierror
 END SUBROUTINE MPI_TYPE_GET_EXTENT
 
 
-SUBROUTINE MPI_KEYVAL_CREATE(copy_fn,delete_fn,keyval,&
-	extra_state)
-	EXTERNAL	copy_fn
-	EXTERNAL	delete_fn
-	INTEGER	keyval
-	EXTERNAL	extra_state
-END SUBROUTINE MPI_KEYVAL_CREATE
-
-
 SUBROUTINE MPI_TYPE_HVECTOR(count,blocklength,stride,&
-	oldtype,newtype)
+	oldtype,newtype,ierror)
 	INTEGER	count
 	INTEGER	blocklength
 	INTEGER	stride
 	INTEGER	oldtype
 	INTEGER	newtype
+	INTEGER	ierror
 END SUBROUTINE MPI_TYPE_HVECTOR
 
 
 SUBROUTINE MPI_GROUP_TRANSLATE_RANKS(group1,n,ranks1,&
-	group2,ranks2)
+	group2,ranks2,ierror)
 	INTEGER	group1
 	INTEGER	n
 	INTEGER ranks1(*)
 	INTEGER	group2
 	INTEGER ranks2(*)
+	INTEGER	ierror
 END SUBROUTINE MPI_GROUP_TRANSLATE_RANKS
 
 
 SUBROUTINE MPI_TESTSOME(incount,array_of_requests,outcount,&
-	array_of_indices,array_of_statuses)
+	array_of_indices,array_of_statuses,ierror)
 	USE MPI_CONSTANTS,ONLY: MPI_STATUS_SIZE
 	INTEGER	incount
 	INTEGER array_of_requests(*)
 	INTEGER	outcount
 	INTEGER array_of_indices(*)
 	INTEGER array_of_statuses(MPI_STATUS_SIZE,*)
+	INTEGER	ierror
 END SUBROUTINE MPI_TESTSOME
 
 
-SUBROUTINE MPI_RECV_INIT(buf,count,datatype,&
-	source,tag,comm,&
-	request)
-	EXTERNAL	buf
-	INTEGER	count
-	INTEGER	datatype
-	INTEGER	source
-	INTEGER	tag
-	INTEGER	comm
-	INTEGER	request
-END SUBROUTINE MPI_RECV_INIT
-
-
-SUBROUTINE MPI_WIN_SET_NAME(win,win_name)
+SUBROUTINE MPI_WIN_SET_NAME(win,win_name,ierror)
 	INTEGER	win
 	CHARACTER (LEN=*)	win_name
+	INTEGER	ierror
 END SUBROUTINE MPI_WIN_SET_NAME
 
 
-SUBROUTINE MPI_TYPE_DUP(type,newtype)
+SUBROUTINE MPI_TYPE_DUP(type,newtype,ierror)
 	INTEGER	type
 	INTEGER	newtype
+	INTEGER	ierror
 END SUBROUTINE MPI_TYPE_DUP
 
 
-SUBROUTINE MPI_QUERY_THREAD(provided)
+SUBROUTINE MPI_QUERY_THREAD(provided,ierror)
 	INTEGER	provided
+	INTEGER	ierror
 END SUBROUTINE MPI_QUERY_THREAD
 
 
-SUBROUTINE MPI_COMM_GROUP(comm,group)
+SUBROUTINE MPI_COMM_GROUP(comm,group,ierror)
 	INTEGER	comm
 	INTEGER	group
+	INTEGER	ierror
 END SUBROUTINE MPI_COMM_GROUP
 
 
-SUBROUTINE MPI_ADD_ERROR_CODE(errorclass,errorcode)
+SUBROUTINE MPI_ADD_ERROR_CODE(errorclass,errorcode,ierror)
 	INTEGER	errorclass
 	INTEGER	errorcode
+	INTEGER	ierror
 END SUBROUTINE MPI_ADD_ERROR_CODE
 
 
 SUBROUTINE MPI_TYPE_CREATE_RESIZED(oldtype,lb,extent,&
-	newtype)
+	newtype,ierror)
 	USE MPI_CONSTANTS,ONLY: MPI_ADDRESS_KIND
 	INTEGER	oldtype
 	INTEGER(KIND=MPI_ADDRESS_KIND)	lb
 	INTEGER(KIND=MPI_ADDRESS_KIND)	extent
 	INTEGER	newtype
+	INTEGER	ierror
 END SUBROUTINE MPI_TYPE_CREATE_RESIZED
 
 
-SUBROUTINE MPI_FILE_SEEK_SHARED(fh,offset,whence)
+SUBROUTINE MPI_FILE_SEEK_SHARED(fh,offset,whence,&
+	ierror)
 	USE MPI_CONSTANTS,ONLY: MPI_OFFSET_KIND
 	INTEGER	fh
 	INTEGER(KIND=MPI_OFFSET_KIND)	offset
 	INTEGER	whence
+	INTEGER	ierror
 END SUBROUTINE MPI_FILE_SEEK_SHARED
 
 
-SUBROUTINE MPI_UNPUBLISH_NAME(service_name,info,port_name)
+SUBROUTINE MPI_UNPUBLISH_NAME(service_name,info,port_name,&
+	ierror)
 	CHARACTER (LEN=*)	service_name
 	INTEGER	info
 	CHARACTER (LEN=*)	port_name
+	INTEGER	ierror
 END SUBROUTINE MPI_UNPUBLISH_NAME
 
 
-SUBROUTINE MPI_GET_ADDRESS(location,address)
-	USE MPI_CONSTANTS,ONLY: MPI_ADDRESS_KIND
-	EXTERNAL	location
-	INTEGER(KIND=MPI_ADDRESS_KIND)	address
-END SUBROUTINE MPI_GET_ADDRESS
-
-
-SUBROUTINE MPI_IS_THREAD_MAIN(flag)
+SUBROUTINE MPI_IS_THREAD_MAIN(flag,ierror)
 	LOGICAL	flag
+	INTEGER	ierror
 END SUBROUTINE MPI_IS_THREAD_MAIN
 
 
-SUBROUTINE MPI_IRECV(buf,count,datatype,&
-	source,tag,comm,&
-	request)
-	EXTERNAL	buf
-	INTEGER	count
-	INTEGER	datatype
-	INTEGER	source
-	INTEGER	tag
-	INTEGER	comm
-	INTEGER	request
-END SUBROUTINE MPI_IRECV
-
-
 SUBROUTINE MPI_TYPE_CREATE_INDEXED_BLOCK(count,blocklength,array_of_displacements,&
-	oldtype,newtype)
+	oldtype,newtype,ierror)
 	INTEGER	count
 	INTEGER	blocklength
 	INTEGER array_of_displacements(*)
 	INTEGER	oldtype
 	INTEGER	newtype
+	INTEGER	ierror
 END SUBROUTINE MPI_TYPE_CREATE_INDEXED_BLOCK
 
 
-SUBROUTINE MPI_INITIALIZED(flag)
+SUBROUTINE MPI_INITIALIZED(flag,ierror)
 	LOGICAL	flag
+	INTEGER	ierror
 END SUBROUTINE MPI_INITIALIZED
 
 
-SUBROUTINE MPI_FILE_IWRITE(fh,buf,count,&
-	datatype,request)
-	INTEGER	fh
-	EXTERNAL	buf
-	INTEGER	count
-	INTEGER	datatype
-	INTEGER	request
-END SUBROUTINE MPI_FILE_IWRITE
-
-
-SUBROUTINE MPI_BSEND(buf,count,datatype,&
-	dest,tag,comm)
-	EXTERNAL	buf
-	INTEGER	count
-	INTEGER	datatype
-	INTEGER	dest
-	INTEGER	tag
-	INTEGER	comm
-END SUBROUTINE MPI_BSEND
-
-
 SUBROUTINE MPI_GROUP_EXCL(group,n,ranks,&
-	newgroup)
+	newgroup,ierror)
 	INTEGER	group
 	INTEGER	n
 	INTEGER ranks(*)
 	INTEGER	newgroup
+	INTEGER	ierror
 END SUBROUTINE MPI_GROUP_EXCL
 
 
-SUBROUTINE MPI_GET_COUNT(status,datatype,count)
+SUBROUTINE MPI_GET_COUNT(status,datatype,count,&
+	ierror)
 	USE MPI_CONSTANTS,ONLY: MPI_STATUS_SIZE
 	INTEGER status(MPI_STATUS_SIZE)
 	INTEGER	datatype
 	INTEGER	count
+	INTEGER	ierror
 END SUBROUTINE MPI_GET_COUNT
 
 
-SUBROUTINE MPI_ERROR_STRING(errorcode,string,resultlen)
+SUBROUTINE MPI_ERROR_STRING(errorcode,string,resultlen,&
+	ierror)
 	INTEGER	errorcode
 	CHARACTER (LEN=*)	string
 	INTEGER	resultlen
+	INTEGER	ierror
 END SUBROUTINE MPI_ERROR_STRING
 
 
-SUBROUTINE MPI_GREQUEST_START(query_fn,free_fn,cancel_fn,&
-	extra_state,request)
-	EXTERNAL	query_fn
-	EXTERNAL	free_fn
-	EXTERNAL	cancel_fn
-	EXTERNAL	extra_state
-	INTEGER	request
-END SUBROUTINE MPI_GREQUEST_START
-
-
-SUBROUTINE MPI_CARTDIM_GET(comm,ndims)
+SUBROUTINE MPI_CARTDIM_GET(comm,ndims,ierror)
 	INTEGER	comm
 	INTEGER	ndims
+	INTEGER	ierror
 END SUBROUTINE MPI_CARTDIM_GET
 
 
-SUBROUTINE MPI_ALLGATHER(sendbuf,sendcount,sendtype,&
-	recvbuf,recvcount,recvtype,&
-	comm)
-	EXTERNAL	sendbuf
-	INTEGER	sendcount
-	INTEGER	sendtype
-	EXTERNAL	recvbuf
-	INTEGER	recvcount
-	INTEGER	recvtype
-	INTEGER	comm
-END SUBROUTINE MPI_ALLGATHER
-
-
 SUBROUTINE MPI_CART_COORDS(comm,rank,maxdims,&
-	coords)
+	coords,ierror)
 	INTEGER	comm
 	INTEGER	rank
 	INTEGER	maxdims
 	INTEGER coords(*)
+	INTEGER	ierror
 END SUBROUTINE MPI_CART_COORDS
 
 
-SUBROUTINE MPI_SCATTERV(sendbuf,sendcounts,displs,&
-	sendtype,recvbuf,recvcount,&
-	recvtype,root,comm)
-	EXTERNAL	sendbuf
-	INTEGER sendcounts(*)
-	INTEGER displs(*)
-	INTEGER	sendtype
-	EXTERNAL	recvbuf
-	INTEGER	recvcount
-	INTEGER	recvtype
-	INTEGER	root
-	INTEGER	comm
-END SUBROUTINE MPI_SCATTERV
-
-
-SUBROUTINE MPI_ISSEND(buf,count,datatype,&
-	dest,tag,comm,&
-	request)
-	EXTERNAL	buf
-	INTEGER	count
-	INTEGER	datatype
-	INTEGER	dest
-	INTEGER	tag
-	INTEGER	comm
-	INTEGER	request
-END SUBROUTINE MPI_ISSEND
-
-
-SUBROUTINE MPI_FILE_SYNC(fh)
+SUBROUTINE MPI_FILE_SYNC(fh,ierror)
 	INTEGER	fh
+	INTEGER	ierror
 END SUBROUTINE MPI_FILE_SYNC
 
 
-SUBROUTINE MPI_RSEND(ibuf,count,datatype,&
-	dest,tag,comm)
-	EXTERNAL	ibuf
-	INTEGER	count
-	INTEGER	datatype
-	INTEGER	dest
-	INTEGER	tag
-	INTEGER	comm
-END SUBROUTINE MPI_RSEND
-
-
-SUBROUTINE MPI_FILE_GET_AMODE(fh,amode)
+SUBROUTINE MPI_FILE_GET_AMODE(fh,amode,ierror)
 	INTEGER	fh
 	INTEGER	amode
+	INTEGER	ierror
 END SUBROUTINE MPI_FILE_GET_AMODE
 
 
-SUBROUTINE MPI_ABORT(comm,errorcode)
+SUBROUTINE MPI_ABORT(comm,errorcode,ierror)
 	INTEGER	comm
 	INTEGER	errorcode
+	INTEGER	ierror
 END SUBROUTINE MPI_ABORT
 
 
-SUBROUTINE MPI_GREQUEST_COMPLETE(request)
+SUBROUTINE MPI_GREQUEST_COMPLETE(request,ierror)
 	INTEGER	request
+	INTEGER	ierror
 END SUBROUTINE MPI_GREQUEST_COMPLETE
 
 
-SUBROUTINE MPI_PACK(inbuf,incount,datatype,&
-	outbuf,outsize,position,&
-	comm)
-	EXTERNAL	inbuf
-	INTEGER	incount
-	INTEGER	datatype
-	EXTERNAL	outbuf
-	INTEGER	outsize
-	INTEGER	position
-	INTEGER	comm
-END SUBROUTINE MPI_PACK
-
-
-SUBROUTINE MPI_WIN_SET_ATTR(win,win_keyval,attribute_val)
-	INTEGER	win
-	INTEGER	win_keyval
-	EXTERNAL	attribute_val
-END SUBROUTINE MPI_WIN_SET_ATTR
-
-
-SUBROUTINE MPI_INFO_CREATE(info)
+SUBROUTINE MPI_INFO_CREATE(info,ierror)
 	INTEGER	info
+	INTEGER	ierror
 END SUBROUTINE MPI_INFO_CREATE
 
 
 SUBROUTINE MPI_FILE_OPEN(comm,filename,amode,&
-	info,fh)
+	info,fh,ierror)
 	INTEGER	comm
 	CHARACTER (LEN=*)	filename
 	INTEGER	amode
 	INTEGER	info
 	INTEGER	fh
+	INTEGER	ierror
 END SUBROUTINE MPI_FILE_OPEN
 
 
-SUBROUTINE MPI_GATHERV(sendbuf,sendcount,sendtype,&
-	recvbuf,recvcounts,displs,&
-	recvtype,root,comm)
-	EXTERNAL	sendbuf
-	INTEGER	sendcount
-	INTEGER	sendtype
-	EXTERNAL	recvbuf
-	INTEGER recvcounts(*)
-	INTEGER displs(*)
-	INTEGER	recvtype
-	INTEGER	root
-	INTEGER	comm
-END SUBROUTINE MPI_GATHERV
-
-
-SUBROUTINE MPI_TYPE_GET_ATTR(type,type_keyval,attribute_val,&
-	flag)
-	INTEGER	type
-	INTEGER	type_keyval
-	EXTERNAL	attribute_val
-	LOGICAL	flag
-END SUBROUTINE MPI_TYPE_GET_ATTR
-
-
-SUBROUTINE MPI_COMM_SET_NAME(comm,comm_name)
+SUBROUTINE MPI_COMM_SET_NAME(comm,comm_name,ierror)
 	INTEGER	comm
 	CHARACTER (LEN=*)	comm_name
+	INTEGER	ierror
 END SUBROUTINE MPI_COMM_SET_NAME
 
 
-SUBROUTINE MPI_COMM_DISCONNECT(comm)
+SUBROUTINE MPI_COMM_DISCONNECT(comm,ierror)
 	INTEGER	comm
+	INTEGER	ierror
 END SUBROUTINE MPI_COMM_DISCONNECT
 
 
-SUBROUTINE MPI_COMM_REMOTE_GROUP(comm,group)
+SUBROUTINE MPI_COMM_REMOTE_GROUP(comm,group,ierror)
 	INTEGER	comm
 	INTEGER	group
+	INTEGER	ierror
 END SUBROUTINE MPI_COMM_REMOTE_GROUP
 
 
 SUBROUTINE MPI_CART_SHIFT(comm,direction,disp,&
-	rank_source,rank_dest)
+	rank_source,rank_dest,ierror)
 	INTEGER	comm
 	INTEGER	direction
 	INTEGER	disp
 	INTEGER	rank_source
 	INTEGER	rank_dest
+	INTEGER	ierror
 END SUBROUTINE MPI_CART_SHIFT
 
 
 SUBROUTINE MPI_GROUP_INCL(group,n,ranks,&
-	newgroup)
+	newgroup,ierror)
 	INTEGER	group
 	INTEGER	n
 	INTEGER ranks(*)
 	INTEGER	newgroup
+	INTEGER	ierror
 END SUBROUTINE MPI_GROUP_INCL
 
 
-SUBROUTINE MPI_COMM_SIZE(comm,size)
+SUBROUTINE MPI_COMM_SIZE(comm,size,ierror)
 	INTEGER	comm
 	INTEGER	size
+	INTEGER	ierror
 END SUBROUTINE MPI_COMM_SIZE
 
 
 SUBROUTINE MPI_TYPE_CREATE_HINDEXED(count,array_of_blocklengths,array_of_displacements,&
-	oldtype,newtype)
+	oldtype,newtype,ierror)
 	USE MPI_CONSTANTS,ONLY: MPI_ADDRESS_KIND
 	INTEGER	count
 	INTEGER array_of_blocklengths(*)
 	INTEGER(KIND=MPI_ADDRESS_KIND) array_of_displacements(*)
 	INTEGER	oldtype
 	INTEGER	newtype
+	INTEGER	ierror
 END SUBROUTINE MPI_TYPE_CREATE_HINDEXED
 
 
-SUBROUTINE MPI_FILE_IREAD_SHARED(fh,buf,count,&
-	datatype,request)
-	INTEGER	fh
-	EXTERNAL	buf
-	INTEGER	count
-	INTEGER	datatype
-	INTEGER	request
-END SUBROUTINE MPI_FILE_IREAD_SHARED
-
-
-SUBROUTINE MPI_FILE_SET_ERRHANDLER(file,errhandler)
+SUBROUTINE MPI_FILE_SET_ERRHANDLER(file,errhandler,ierror)
 	INTEGER	file
 	INTEGER	errhandler
+	INTEGER	ierror
 END SUBROUTINE MPI_FILE_SET_ERRHANDLER
 
 
-SUBROUTINE MPI_TYPE_C2F(datatype)
+SUBROUTINE MPI_TYPE_C2F(datatype,ierror)
 	INTEGER	datatype
+	INTEGER	ierror
 END SUBROUTINE MPI_TYPE_C2F
 
 
-SUBROUTINE MPI_FILE_READ_ORDERED(fh,buf,count,&
-	datatype,status)
-	USE MPI_CONSTANTS,ONLY: MPI_STATUS_SIZE
-	INTEGER	fh
-	EXTERNAL	buf
-	INTEGER	count
-	INTEGER	datatype
-	INTEGER status(MPI_STATUS_SIZE)
-END SUBROUTINE MPI_FILE_READ_ORDERED
-
-
 SUBROUTINE MPI_WAITSOME(incount,array_of_requests,outcount,&
-	array_of_indices,array_of_statuses)
+	array_of_indices,array_of_statuses,ierror)
 	USE MPI_CONSTANTS,ONLY: MPI_STATUS_SIZE
 	INTEGER	incount
 	INTEGER array_of_requests(*)
 	INTEGER	outcount
 	INTEGER array_of_indices(*)
 	INTEGER array_of_statuses(MPI_STATUS_SIZE,*)
+	INTEGER	ierror
 END SUBROUTINE MPI_WAITSOME
 
 
-SUBROUTINE MPI_GROUP_DIFFERENCE(group1,group2,newgroup)
+SUBROUTINE MPI_GROUP_DIFFERENCE(group1,group2,newgroup,&
+	ierror)
 	INTEGER	group1
 	INTEGER	group2
 	INTEGER	newgroup
+	INTEGER	ierror
 END SUBROUTINE MPI_GROUP_DIFFERENCE
 
 
-SUBROUTINE MPI_ATTR_GET(comm,keyval,attribute_val,&
-	flag)
-	INTEGER	comm
-	INTEGER	keyval
-	EXTERNAL	attribute_val
-	LOGICAL	flag
-END SUBROUTINE MPI_ATTR_GET
-
-
-SUBROUTINE MPI_REDUCE_SCATTER(sendbuf,recvbuf,recvcounts,&
-	datatype,op,comm)
-	EXTERNAL	sendbuf
-	EXTERNAL	recvbuf
-	INTEGER recvcounts(*)
-	INTEGER	datatype
-	INTEGER	op
-	INTEGER	comm
-END SUBROUTINE MPI_REDUCE_SCATTER
-
-
-SUBROUTINE MPI_WIN_GET_NAME(win,win_name,resultlen)
+SUBROUTINE MPI_WIN_GET_NAME(win,win_name,resultlen,&
+	ierror)
 	INTEGER	win
 	CHARACTER (LEN=*)	win_name
 	INTEGER	resultlen
+	INTEGER	ierror
 END SUBROUTINE MPI_WIN_GET_NAME
 
 
-SUBROUTINE MPI_WAIT(request,status)
+SUBROUTINE MPI_WAIT(request,status,ierror)
 	USE MPI_CONSTANTS,ONLY: MPI_STATUS_SIZE
 	INTEGER	request
 	INTEGER status(MPI_STATUS_SIZE)
+	INTEGER	ierror
 END SUBROUTINE MPI_WAIT
 
 
 SUBROUTINE MPI_TESTALL(count,array_of_requests,flag,&
-	array_of_statuses)
+	array_of_statuses,ierror)
 	USE MPI_CONSTANTS,ONLY: MPI_STATUS_SIZE
 	INTEGER	count
 	INTEGER array_of_requests(*)
 	LOGICAL	flag
 	INTEGER array_of_statuses(MPI_STATUS_SIZE,*)
+	INTEGER	ierror
 END SUBROUTINE MPI_TESTALL
 
 
-SUBROUTINE MPI_FILE_SET_INFO(fh,info)
+SUBROUTINE MPI_FILE_SET_INFO(fh,info,ierror)
 	INTEGER	fh
 	INTEGER	info
+	INTEGER	ierror
 END SUBROUTINE MPI_FILE_SET_INFO
 
 
-SUBROUTINE MPI_IRSEND(buf,count,datatype,&
-	dest,tag,comm,&
-	request)
-	EXTERNAL	buf
-	INTEGER	count
-	INTEGER	datatype
-	INTEGER	dest
-	INTEGER	tag
-	INTEGER	comm
-	INTEGER	request
-END SUBROUTINE MPI_IRSEND
-
-
-SUBROUTINE MPI_GET_VERSION(version,subversion)
+SUBROUTINE MPI_GET_VERSION(version,subversion,ierror)
 	INTEGER	version
 	INTEGER	subversion
+	INTEGER	ierror
 END SUBROUTINE MPI_GET_VERSION
 
 
-SUBROUTINE MPI_FILE_CALL_ERRHANDLER(fh,errorcode)
+SUBROUTINE MPI_FILE_CALL_ERRHANDLER(fh,errorcode,ierror)
 	INTEGER	fh
 	INTEGER	errorcode
+	INTEGER	ierror
 END SUBROUTINE MPI_FILE_CALL_ERRHANDLER
 
 
-SUBROUTINE MPI_COMM_CREATE_ERRHANDLER(function,errhandler)
+SUBROUTINE MPI_COMM_CREATE_ERRHANDLER(function,errhandler,ierror)
 	INTERFACE 
 	SUBROUTINE function(vv0,vv1)
 	INTEGER vv0,vv1
 	END SUBROUTINE
 	END INTERFACE
 	INTEGER	errhandler
+	INTEGER	ierror
 END SUBROUTINE MPI_COMM_CREATE_ERRHANDLER
 
 
-SUBROUTINE MPI_FILE_WRITE_ALL(fh,buf,count,&
-	datatype,status)
-	USE MPI_CONSTANTS,ONLY: MPI_STATUS_SIZE
-	INTEGER	fh
-	EXTERNAL	buf
-	INTEGER	count
-	INTEGER	datatype
-	INTEGER status(MPI_STATUS_SIZE)
-END SUBROUTINE MPI_FILE_WRITE_ALL
-
-
 SUBROUTINE MPI_COMM_CONNECT(port_name,info,root,&
-	comm,newcomm)
+	comm,newcomm,ierror)
 	CHARACTER (LEN=*)	port_name
 	INTEGER	info
 	INTEGER	root
 	INTEGER	comm
 	INTEGER	newcomm
+	INTEGER	ierror
 END SUBROUTINE MPI_COMM_CONNECT
 
 
-SUBROUTINE MPI_GROUP_COMPARE(group1,group2,result)
+SUBROUTINE MPI_GROUP_COMPARE(group1,group2,result,&
+	ierror)
 	INTEGER	group1
 	INTEGER	group2
 	INTEGER	result
+	INTEGER	ierror
 END SUBROUTINE MPI_GROUP_COMPARE
 
 
-SUBROUTINE MPI_ADDRESS(location,address)
-	USE MPI_CONSTANTS,ONLY: MPI_ADDRESS_KIND
-	EXTERNAL	location
-	INTEGER(KIND=MPI_ADDRESS_KIND)	address
-END SUBROUTINE MPI_ADDRESS
-
-
-SUBROUTINE MPI_COMM_COMPARE(comm1,comm2,result)
+SUBROUTINE MPI_COMM_COMPARE(comm1,comm2,result,&
+	ierror)
 	INTEGER	comm1
 	INTEGER	comm2
 	INTEGER	result
+	INTEGER	ierror
 END SUBROUTINE MPI_COMM_COMPARE
 
 
-SUBROUTINE MPI_WIN_UNLOCK(rank,win)
+SUBROUTINE MPI_WIN_UNLOCK(rank,win,ierror)
 	INTEGER	rank
 	INTEGER	win
+	INTEGER	ierror
 END SUBROUTINE MPI_WIN_UNLOCK
 
 
 SUBROUTINE MPI_GRAPH_MAP(comm,nnodes,index,&
-	edges,newrank)
+	edges,newrank,ierror)
 	INTEGER	comm
 	INTEGER	nnodes
 	INTEGER index(*)
 	INTEGER edges(*)
 	INTEGER	newrank
+	INTEGER	ierror
 END SUBROUTINE MPI_GRAPH_MAP
 
 
-SUBROUTINE MPI_REQUEST_FREE(request)
+SUBROUTINE MPI_REQUEST_FREE(request,ierror)
 	INTEGER	request
+	INTEGER	ierror
 END SUBROUTINE MPI_REQUEST_FREE
 
 
-SUBROUTINE MPI_TOPO_TEST(comm,status)
+SUBROUTINE MPI_TOPO_TEST(comm,status,ierror)
 	INTEGER	comm
 	INTEGER	status
+	INTEGER	ierror
 END SUBROUTINE MPI_TOPO_TEST
 
 
-SUBROUTINE MPI_FILE_READ(fh,buf,count,&
-	datatype,status)
-	USE MPI_CONSTANTS,ONLY: MPI_STATUS_SIZE
-	INTEGER	fh
-	EXTERNAL	buf
-	INTEGER	count
-	INTEGER	datatype
-	INTEGER status(MPI_STATUS_SIZE)
-END SUBROUTINE MPI_FILE_READ
-
-
-SUBROUTINE MPI_BUFFER_ATTACH(buffer,size)
-	EXTERNAL	buffer
-	INTEGER	size
-END SUBROUTINE MPI_BUFFER_ATTACH
-
-
-SUBROUTINE MPI_WIN_CALL_ERRHANDLER(win,errorcode)
+SUBROUTINE MPI_WIN_CALL_ERRHANDLER(win,errorcode,ierror)
 	INTEGER	win
 	INTEGER	errorcode
+	INTEGER	ierror
 END SUBROUTINE MPI_WIN_CALL_ERRHANDLER
 
 
-SUBROUTINE MPI_WIN_GET_GROUP(win,group)
+SUBROUTINE MPI_WIN_GET_GROUP(win,group,ierror)
 	INTEGER	win
 	INTEGER	group
+	INTEGER	ierror
 END SUBROUTINE MPI_WIN_GET_GROUP
 
 
-SUBROUTINE MPI_ERRHANDLER_CREATE(function,errhandler)
+SUBROUTINE MPI_ERRHANDLER_CREATE(function,errhandler,ierror)
 	INTERFACE 
 	SUBROUTINE function(vv0,vv1)
 	INTEGER vv0,vv1
 	END SUBROUTINE
 	END INTERFACE
 	INTEGER	errhandler
+	INTEGER	ierror
 END SUBROUTINE MPI_ERRHANDLER_CREATE
 
 
 SUBROUTINE MPI_CART_CREATE(old_comm,ndims,dims,&
-	periods,reorder,comm_cart)
+	periods,reorder,comm_cart,&
+	ierror)
 	INTEGER	old_comm
 	INTEGER	ndims
 	INTEGER dims(*)
 	LOGICAL periods(*)
 	LOGICAL	reorder
 	INTEGER	comm_cart
+	INTEGER	ierror
 END SUBROUTINE MPI_CART_CREATE
 
 
-SUBROUTINE MPI_STATUS_SET_CANCELLED(status,flag)
+SUBROUTINE MPI_STATUS_SET_CANCELLED(status,flag,ierror)
 	USE MPI_CONSTANTS,ONLY: MPI_STATUS_SIZE
 	INTEGER status(MPI_STATUS_SIZE)
 	LOGICAL	flag
+	INTEGER	ierror
 END SUBROUTINE MPI_STATUS_SET_CANCELLED
 
 
 SUBROUTINE MPI_TYPE_STRUCT(count,array_of_blocklengths,array_of_displacements,&
-	array_of_types,newtype)
+	array_of_types,newtype,ierror)
 	INTEGER	count
 	INTEGER array_of_blocklengths(*)
 	INTEGER array_of_displacements(*)
 	INTEGER array_of_types(*)
 	INTEGER	newtype
+	INTEGER	ierror
 END SUBROUTINE MPI_TYPE_STRUCT
 
 
-SUBROUTINE MPI_GRAPH_NEIGHBORS_COUNT(comm,rank,nneighbors)
+SUBROUTINE MPI_GRAPH_NEIGHBORS_COUNT(comm,rank,nneighbors,&
+	ierror)
 	INTEGER	comm
 	INTEGER	rank
 	INTEGER	nneighbors
+	INTEGER	ierror
 END SUBROUTINE MPI_GRAPH_NEIGHBORS_COUNT
 
 
 SUBROUTINE MPI_FILE_GET_VIEW(fh,disp,etype,&
-	filetype,datarep)
+	filetype,datarep,ierror)
 	USE MPI_CONSTANTS,ONLY: MPI_OFFSET_KIND
 	INTEGER	fh
 	INTEGER(KIND=MPI_OFFSET_KIND)	disp
 	INTEGER	etype
 	INTEGER	filetype
 	CHARACTER (LEN=*)	datarep
+	INTEGER	ierror
 END SUBROUTINE MPI_FILE_GET_VIEW
 
 
-SUBROUTINE MPI_ALLGATHERV(sendbuf,sendcount,sendtype,&
-	recvbuf,recvcounts,displs,&
-	recvtype,comm)
-	EXTERNAL	sendbuf
-	INTEGER	sendcount
-	INTEGER	sendtype
-	EXTERNAL	recvbuf
-	INTEGER recvcounts(*)
-	INTEGER displs(*)
-	INTEGER	recvtype
-	INTEGER	comm
-END SUBROUTINE MPI_ALLGATHERV
-
-
-SUBROUTINE MPI_INFO_C2F(info)
+SUBROUTINE MPI_INFO_C2F(info,ierror)
 	INTEGER	info
+	INTEGER	ierror
 END SUBROUTINE MPI_INFO_C2F
 
 
-SUBROUTINE MPI_FILE_GET_POSITION_SHARED(fh,offset)
+SUBROUTINE MPI_FILE_GET_POSITION_SHARED(fh,offset,ierror)
 	USE MPI_CONSTANTS,ONLY: MPI_OFFSET_KIND
 	INTEGER	fh
 	INTEGER(KIND=MPI_OFFSET_KIND)	offset
+	INTEGER	ierror
 END SUBROUTINE MPI_FILE_GET_POSITION_SHARED
 
 
 SUBROUTINE MPI_GRAPH_NEIGHBORS(comm,rank,maxneighbors,&
-	neighbors)
+	neighbors,ierror)
 	INTEGER	comm
 	INTEGER	rank
 	INTEGER	maxneighbors
 	INTEGER neighbors(*)
+	INTEGER	ierror
 END SUBROUTINE MPI_GRAPH_NEIGHBORS
 
 
-SUBROUTINE MPI_DIMS_CREATE(nnodes,ndims,dims)
+SUBROUTINE MPI_DIMS_CREATE(nnodes,ndims,dims,&
+	ierror)
 	INTEGER	nnodes
 	INTEGER	ndims
 	INTEGER dims(*)
+	INTEGER	ierror
 END SUBROUTINE MPI_DIMS_CREATE
 
 
-SUBROUTINE MPI_FILE_IREAD(fh,buf,count,&
-	datatype,request)
-	INTEGER	fh
-	EXTERNAL	buf
-	INTEGER	count
-	INTEGER	datatype
-	INTEGER	request
-END SUBROUTINE MPI_FILE_IREAD
-
-
-SUBROUTINE MPI_SCATTER(sendbuf,sendcount,sendtype,&
-	recvbuf,recvcount,recvtype,&
-	root,comm)
-	EXTERNAL	sendbuf
-	INTEGER	sendcount
-	INTEGER	sendtype
-	EXTERNAL	recvbuf
-	INTEGER	recvcount
-	INTEGER	recvtype
-	INTEGER	root
-	INTEGER	comm
-END SUBROUTINE MPI_SCATTER
-
-
-SUBROUTINE MPI_FILE_GET_BYTE_OFFSET(fh,offset,disp)
+SUBROUTINE MPI_FILE_GET_BYTE_OFFSET(fh,offset,disp,&
+	ierror)
 	USE MPI_CONSTANTS,ONLY: MPI_OFFSET_KIND
 	INTEGER	fh
 	INTEGER(KIND=MPI_OFFSET_KIND)	offset
 	INTEGER(KIND=MPI_OFFSET_KIND)	disp
+	INTEGER	ierror
 END SUBROUTINE MPI_FILE_GET_BYTE_OFFSET
 
 
-SUBROUTINE MPI_COMM_FREE_KEYVAL(comm_keyval)
+SUBROUTINE MPI_COMM_FREE_KEYVAL(comm_keyval,ierror)
 	INTEGER	comm_keyval
+	INTEGER	ierror
 END SUBROUTINE MPI_COMM_FREE_KEYVAL
 
 
-SUBROUTINE MPI_OP_CREATE(function,commute,op)
-	EXTERNAL	function
-	LOGICAL	commute
-	INTEGER	op
-END SUBROUTINE MPI_OP_CREATE
-
-
-SUBROUTINE MPI_FILE_SEEK(fh,offset,whence)
+SUBROUTINE MPI_FILE_SEEK(fh,offset,whence,&
+	ierror)
 	USE MPI_CONSTANTS,ONLY: MPI_OFFSET_KIND
 	INTEGER	fh
 	INTEGER(KIND=MPI_OFFSET_KIND)	offset
 	INTEGER	whence
+	INTEGER	ierror
 END SUBROUTINE MPI_FILE_SEEK
 
 
-SUBROUTINE MPI_EXSCAN(sendbuf,recvbuf,count,&
-	datatype,op,comm)
-	EXTERNAL	sendbuf
-	EXTERNAL	recvbuf
-	INTEGER	count
-	INTEGER	datatype
-	INTEGER	op
-	INTEGER	comm
-END SUBROUTINE MPI_EXSCAN
+SUBROUTINE MPI_ADD_ERROR_STRING(errorcode,string,ierror)
+	INTEGER	errorcode
+	CHARACTER (LEN=*)	string
+	INTEGER	ierror
+END SUBROUTINE MPI_ADD_ERROR_STRING
 
 
-SUBROUTINE MPI_SSEND_INIT(buf,count,datatype,&
-	dest,tag,comm,&
-	request)
-	EXTERNAL	buf
-	INTEGER	count
-	INTEGER	datatype
-	INTEGER	dest
-	INTEGER	tag
-	INTEGER	comm
-	INTEGER	request
-END SUBROUTINE MPI_SSEND_INIT
-
-
-SUBROUTINE MPI_RSEND_INIT(buf,count,datatype,&
-	dest,tag,comm,&
-	request)
-	EXTERNAL	buf
-	INTEGER	count
-	INTEGER	datatype
-	INTEGER	dest
-	INTEGER	tag
-	INTEGER	comm
-	INTEGER	request
-END SUBROUTINE MPI_RSEND_INIT
-
-
-SUBROUTINE MPI_INFO_FREE(info)
+SUBROUTINE MPI_INFO_FREE(info,ierror)
 	INTEGER	info
+	INTEGER	ierror
 END SUBROUTINE MPI_INFO_FREE
 
 
-SUBROUTINE MPI_PUBLISH_NAME(service_name,info,port_name)
+SUBROUTINE MPI_PUBLISH_NAME(service_name,info,port_name,&
+	ierror)
 	CHARACTER (LEN=*)	service_name
 	INTEGER	info
 	CHARACTER (LEN=*)	port_name
+	INTEGER	ierror
 END SUBROUTINE MPI_PUBLISH_NAME
 
 
-SUBROUTINE MPI_BCAST(buffer,count,datatype,&
-	root,comm)
-	EXTERNAL	buffer
-	INTEGER	count
-	INTEGER	datatype
-	INTEGER	root
-	INTEGER	comm
-END SUBROUTINE MPI_BCAST
-
-
-SUBROUTINE MPI_GET_PROCESSOR_NAME(name,resultlen)
+SUBROUTINE MPI_GET_PROCESSOR_NAME(name,resultlen,ierror)
 	CHARACTER (LEN=*)	name
 	INTEGER	resultlen
+	INTEGER	ierror
 END SUBROUTINE MPI_GET_PROCESSOR_NAME
 
 
-SUBROUTINE MPI_INFO_SET(info,key,value)
+SUBROUTINE MPI_INFO_SET(info,key,value,&
+	ierror)
 	INTEGER	info
 	CHARACTER (LEN=*)	key
 	CHARACTER (LEN=*)	value
+	INTEGER	ierror
 END SUBROUTINE MPI_INFO_SET
 
 
-SUBROUTINE MPI_FILE_WRITE_ORDERED_END(fh,buf,status)
-	USE MPI_CONSTANTS,ONLY: MPI_STATUS_SIZE
-	INTEGER	fh
-	EXTERNAL	buf
-	INTEGER status(MPI_STATUS_SIZE)
-END SUBROUTINE MPI_FILE_WRITE_ORDERED_END
-
-
 SUBROUTINE MPI_GRAPH_CREATE(comm_old,nnodes,index,&
-	edges,reorder,comm_graph)
+	edges,reorder,comm_graph,&
+	ierror)
 	INTEGER	comm_old
 	INTEGER	nnodes
 	INTEGER index(*)
 	INTEGER edges(*)
 	LOGICAL	reorder
 	INTEGER	comm_graph
+	INTEGER	ierror
 END SUBROUTINE MPI_GRAPH_CREATE
 
 
-SUBROUTINE MPI_COMM_FREE(comm)
+SUBROUTINE MPI_COMM_FREE(comm,ierror)
 	INTEGER	comm
+	INTEGER	ierror
 END SUBROUTINE MPI_COMM_FREE
 
 
-SUBROUTINE MPI_FILE_WRITE_AT_ALL(fh,offset,buf,&
-	count,datatype,status)
-	USE MPI_CONSTANTS,ONLY: MPI_STATUS_SIZE,MPI_OFFSET_KIND
-	INTEGER	fh
-	INTEGER(KIND=MPI_OFFSET_KIND)	offset
-	EXTERNAL	buf
-	INTEGER	count
-	INTEGER	datatype
-	INTEGER status(MPI_STATUS_SIZE)
-END SUBROUTINE MPI_FILE_WRITE_AT_ALL
-
-
-SUBROUTINE MPI_ERRHANDLER_GET(comm,errhandler)
+SUBROUTINE MPI_ERRHANDLER_GET(comm,errhandler,ierror)
 	INTEGER	comm
 	INTEGER	errhandler
+	INTEGER	ierror
 END SUBROUTINE MPI_ERRHANDLER_GET
 
 
 SUBROUTINE MPI_PACK_SIZE(incount,datatype,comm,&
-	size)
+	size,ierror)
 	INTEGER	incount
 	INTEGER	datatype
 	INTEGER	comm
 	INTEGER	size
+	INTEGER	ierror
 END SUBROUTINE MPI_PACK_SIZE
 
 
-SUBROUTINE MPI_COMM_CALL_ERRHANDLER(comm,errorcode)
+SUBROUTINE MPI_COMM_CALL_ERRHANDLER(comm,errorcode,ierror)
 	INTEGER	comm
 	INTEGER	errorcode
+	INTEGER	ierror
 END SUBROUTINE MPI_COMM_CALL_ERRHANDLER
 
 
-SUBROUTINE MPI_COMM_TEST_INTER(comm,flag)
+SUBROUTINE MPI_COMM_TEST_INTER(comm,flag,ierror)
 	INTEGER	comm
 	LOGICAL	flag
+	INTEGER	ierror
 END SUBROUTINE MPI_COMM_TEST_INTER
 
 
-SUBROUTINE MPI_INTERCOMM_MERGE(intercomm,high,newintercomm)
+SUBROUTINE MPI_INTERCOMM_MERGE(intercomm,high,newintercomm,&
+	ierror)
 	INTEGER	intercomm
 	LOGICAL	high
 	INTEGER	newintercomm
+	INTEGER	ierror
 END SUBROUTINE MPI_INTERCOMM_MERGE
 
 
-SUBROUTINE MPI_WIN_COMPLETE(win)
+SUBROUTINE MPI_WIN_COMPLETE(win,ierror)
 	INTEGER	win
+	INTEGER	ierror
 END SUBROUTINE MPI_WIN_COMPLETE
 
 
-SUBROUTINE MPI_PACK_EXTERNAL(datarep,inbuf,incount,&
-	datatype,outbuf,outsize,&
-	position)
-	USE MPI_CONSTANTS,ONLY: MPI_ADDRESS_KIND
-	CHARACTER (LEN=*)	datarep
-	EXTERNAL	inbuf
-	INTEGER	incount
-	INTEGER	datatype
-	EXTERNAL	outbuf
-	INTEGER(KIND=MPI_ADDRESS_KIND)	outsize
-	INTEGER(KIND=MPI_ADDRESS_KIND)	position
-END SUBROUTINE MPI_PACK_EXTERNAL
-
-
-SUBROUTINE MPI_FILE_GET_TYPE_EXTENT(fh,datatype,extent)
+SUBROUTINE MPI_FILE_GET_TYPE_EXTENT(fh,datatype,extent,&
+	ierror)
 	USE MPI_CONSTANTS,ONLY: MPI_ADDRESS_KIND
 	INTEGER	fh
 	INTEGER	datatype
 	INTEGER(KIND=MPI_ADDRESS_KIND)	extent
+	INTEGER	ierror
 END SUBROUTINE MPI_FILE_GET_TYPE_EXTENT
 
 
-SUBROUTINE MPI_FILE_C2F(file)
+SUBROUTINE MPI_FILE_C2F(file,ierror)
 	INTEGER	file
+	INTEGER	ierror
 END SUBROUTINE MPI_FILE_C2F
 
 
-SUBROUTINE MPI_FILE_READ_ALL_BEGIN(fh,buf,count,&
-	datatype)
-	INTEGER	fh
-	EXTERNAL	buf
-	INTEGER	count
-	INTEGER	datatype
-END SUBROUTINE MPI_FILE_READ_ALL_BEGIN
-
-
-SUBROUTINE MPI_TYPE_SET_ATTR(type,type_keyval,attr_val)
-	INTEGER	type
-	INTEGER	type_keyval
-	EXTERNAL	attr_val
-END SUBROUTINE MPI_TYPE_SET_ATTR
-
-
 SUBROUTINE MPI_INFO_GET_VALUELEN(info,key,valuelen,&
-	flag)
+	flag,ierror)
 	INTEGER	info
 	CHARACTER (LEN=*)	key
 	INTEGER	valuelen
 	LOGICAL	flag
+	INTEGER	ierror
 END SUBROUTINE MPI_INFO_GET_VALUELEN
 
 
-SUBROUTINE MPI_PUT(origin_addr,origin_count,origin_datatype,&
-	target_rank,target_disp,target_count,&
-	target_datatype,win)
-	USE MPI_CONSTANTS,ONLY: MPI_ADDRESS_KIND
-	EXTERNAL	origin_addr
-	INTEGER	origin_count
-	INTEGER	origin_datatype
-	INTEGER	target_rank
-	INTEGER(KIND=MPI_ADDRESS_KIND)	target_disp
-	INTEGER	target_count
-	INTEGER	target_datatype
-	INTEGER	win
-END SUBROUTINE MPI_PUT
-
-
-SUBROUTINE MPI_FILE_READ_AT_ALL(fh,offset,buf,&
-	count,datatype,status)
-	USE MPI_CONSTANTS,ONLY: MPI_STATUS_SIZE,MPI_OFFSET_KIND
-	INTEGER	fh
-	INTEGER(KIND=MPI_OFFSET_KIND)	offset
-	EXTERNAL	buf
-	INTEGER	count
-	INTEGER	datatype
-	INTEGER status(MPI_STATUS_SIZE)
-END SUBROUTINE MPI_FILE_READ_AT_ALL
-
-
-SUBROUTINE MPI_FILE_READ_ORDERED_END(fh,buf,status)
-	USE MPI_CONSTANTS,ONLY: MPI_STATUS_SIZE
-	INTEGER	fh
-	EXTERNAL	buf
-	INTEGER status(MPI_STATUS_SIZE)
-END SUBROUTINE MPI_FILE_READ_ORDERED_END
-
-
-SUBROUTINE MPI_ISEND(buf,count,datatype,&
-	dest,tag,comm,&
-	request)
-	EXTERNAL	buf
-	INTEGER	count
-	INTEGER	datatype
-	INTEGER	dest
-	INTEGER	tag
-	INTEGER	comm
-	INTEGER	request
-END SUBROUTINE MPI_ISEND
-
-
 SUBROUTINE MPI_TYPE_GET_ENVELOPE(type,num_integers,num_addresses,&
-	num_datatypes,combiner)
+	num_datatypes,combiner,ierror)
 	INTEGER	type
 	INTEGER	num_integers
 	INTEGER	num_addresses
 	INTEGER	num_datatypes
 	INTEGER	combiner
+	INTEGER	ierror
 END SUBROUTINE MPI_TYPE_GET_ENVELOPE
 
 
-SUBROUTINE MPI_GROUP_RANK(group,rank)
+SUBROUTINE MPI_GROUP_RANK(group,rank,ierror)
 	INTEGER	group
 	INTEGER	rank
+	INTEGER	ierror
 END SUBROUTINE MPI_GROUP_RANK
 
 
-SUBROUTINE MPI_ALLTOALL(sendbuf,sendcount,sendtype,&
-	recvbuf,recvcount,recvtype,&
-	comm)
-	EXTERNAL	sendbuf
-	INTEGER	sendcount
-	INTEGER	sendtype
-	EXTERNAL	recvbuf
-	INTEGER	recvcount
-	INTEGER	recvtype
-	INTEGER	comm
-END SUBROUTINE MPI_ALLTOALL
-
-
-SUBROUTINE MPI_FILE_CREATE_ERRHANDLER(function,errhandler)
+SUBROUTINE MPI_FILE_CREATE_ERRHANDLER(function,errhandler,ierror)
 	INTERFACE 
 	SUBROUTINE function(vv0,vv1)
 	INTEGER vv0,vv1
 	END SUBROUTINE
 	END INTERFACE
 	INTEGER	errhandler
+	INTEGER	ierror
 END SUBROUTINE MPI_FILE_CREATE_ERRHANDLER
 
 
 SUBROUTINE MPI_INFO_GET(info,key,valuelen,&
-	value,flag)
+	value,flag,ierror)
 	INTEGER	info
 	CHARACTER (LEN=*)	key
 	INTEGER	valuelen
 	CHARACTER (LEN=*)	value
 	LOGICAL	flag
+	INTEGER	ierror
 END SUBROUTINE MPI_INFO_GET
 
 
-SUBROUTINE MPI_FILE_IWRITE_AT(fh,offset,buf,&
-	count,datatype,request)
-	USE MPI_CONSTANTS,ONLY: MPI_OFFSET_KIND
-	INTEGER	fh
-	INTEGER(KIND=MPI_OFFSET_KIND)	offset
-	EXTERNAL	buf
-	INTEGER	count
-	INTEGER	datatype
-	INTEGER	request
-END SUBROUTINE MPI_FILE_IWRITE_AT
-
-
-SUBROUTINE MPI_GROUP_C2F(group)
+SUBROUTINE MPI_GROUP_C2F(group,ierror)
 	INTEGER	group
+	INTEGER	ierror
 END SUBROUTINE MPI_GROUP_C2F
 
 
-SUBROUTINE MPI_GROUP_INTERSECTION(group1,group2,newgroup)
+SUBROUTINE MPI_GROUP_INTERSECTION(group1,group2,newgroup,&
+	ierror)
 	INTEGER	group1
 	INTEGER	group2
 	INTEGER	newgroup
+	INTEGER	ierror
 END SUBROUTINE MPI_GROUP_INTERSECTION
 
 
-SUBROUTINE MPI_TYPE_FREE_KEYVAL(type_keyval)
+SUBROUTINE MPI_TYPE_FREE_KEYVAL(type_keyval,ierror)
 	INTEGER	type_keyval
+	INTEGER	ierror
 END SUBROUTINE MPI_TYPE_FREE_KEYVAL
 
 
 SUBROUTINE MPI_TYPE_CREATE_STRUCT(count,array_of_block_lengths,array_of_displacements,&
-	array_of_types,newtype)
+	array_of_types,newtype,ierror)
 	USE MPI_CONSTANTS,ONLY: MPI_ADDRESS_KIND
 	INTEGER	count
 	INTEGER array_of_block_lengths(*)
 	INTEGER(KIND=MPI_ADDRESS_KIND) array_of_displacements(*)
-	INTEGER	array_of_types
+	INTEGER array_of_types(*)
 	INTEGER	newtype
+	INTEGER	ierror
 END SUBROUTINE MPI_TYPE_CREATE_STRUCT
 
 
 SUBROUTINE MPI_TYPE_GET_CONTENTS(mtype,max_integers,max_addresses,&
 	max_datatypes,array_of_integers,array_of_addresses,&
-	array_of_datatypes)
+	array_of_datatypes,ierror)
 	USE MPI_CONSTANTS,ONLY: MPI_ADDRESS_KIND
 	INTEGER	mtype
 	INTEGER	max_integers
 	INTEGER	max_addresses
 	INTEGER	max_datatypes
-	INTEGER	array_of_integers
-	INTEGER(KIND=MPI_ADDRESS_KIND)	array_of_addresses
-	INTEGER	array_of_datatypes
+	INTEGER array_of_integers(*)
+	INTEGER(KIND=MPI_ADDRESS_KIND) array_of_addresses(*)
+	INTEGER array_of_datatypes(*)
+	INTEGER	ierror
 END SUBROUTINE MPI_TYPE_GET_CONTENTS
 
 
-SUBROUTINE MPI_REDUCE_LOCAL(inbuf,inoutbuf,count,&
-	datatype,op)
-	EXTERNAL	inbuf
-	EXTERNAL	inoutbuf
-	INTEGER	count
-	INTEGER	datatype
-	INTEGER	op
-END SUBROUTINE MPI_REDUCE_LOCAL
-
-
-SUBROUTINE MPI_GROUP_UNION(group1,group2,newgroup)
+SUBROUTINE MPI_GROUP_UNION(group1,group2,newgroup,&
+	ierror)
 	INTEGER	group1
 	INTEGER	group2
 	INTEGER	newgroup
+	INTEGER	ierror
 END SUBROUTINE MPI_GROUP_UNION
 
 
-SUBROUTINE MPI_TYPE_FREE(type)
+SUBROUTINE MPI_TYPE_FREE(type,ierror)
 	INTEGER	type
+	INTEGER	ierror
 END SUBROUTINE MPI_TYPE_FREE
 
 
-SUBROUTINE MPI_INFO_GET_NTHKEY(info,n,key)
+SUBROUTINE MPI_INFO_GET_NTHKEY(info,n,key,&
+	ierror)
 	INTEGER	info
 	INTEGER	n
 	CHARACTER (LEN=*)	key
+	INTEGER	ierror
 END SUBROUTINE MPI_INFO_GET_NTHKEY
 
 
-SUBROUTINE MPI_REQUEST_C2F(request)
+SUBROUTINE MPI_REQUEST_C2F(request,ierror)
 	INTEGER	request
+	INTEGER	ierror
 END SUBROUTINE MPI_REQUEST_C2F
 
 
-SUBROUTINE MPI_FILE_WRITE_AT_ALL_BEGIN(fh,offset,buf,&
-	count,datatype)
-	USE MPI_CONSTANTS,ONLY: MPI_OFFSET_KIND
-	INTEGER	fh
-	INTEGER(KIND=MPI_OFFSET_KIND)	offset
-	EXTERNAL	buf
-	INTEGER	count
-	INTEGER	datatype
-END SUBROUTINE MPI_FILE_WRITE_AT_ALL_BEGIN
-
-
-SUBROUTINE MPI_UNPACK_EXTERNAL(datarep,inbuf,insize,&
-	position,outbuf,outcount,&
-	datatype)
-	USE MPI_CONSTANTS,ONLY: MPI_ADDRESS_KIND
-	CHARACTER (LEN=*)	datarep
-	EXTERNAL	inbuf
-	INTEGER(KIND=MPI_ADDRESS_KIND)	insize
-	INTEGER(KIND=MPI_ADDRESS_KIND)	position
-	EXTERNAL	outbuf
-	INTEGER	outcount
-	INTEGER	datatype
-END SUBROUTINE MPI_UNPACK_EXTERNAL
-
-
-SUBROUTINE MPI_ERRHANDLER_SET(comm,errhandler)
+SUBROUTINE MPI_ERRHANDLER_SET(comm,errhandler,ierror)
 	INTEGER	comm
 	INTEGER	errhandler
+	INTEGER	ierror
 END SUBROUTINE MPI_ERRHANDLER_SET
 
 
-SUBROUTINE MPI_FILE_READ_AT_ALL_BEGIN(fh,offset,buf,&
-	count,datatype)
-	USE MPI_CONSTANTS,ONLY: MPI_OFFSET_KIND
-	INTEGER	fh
-	INTEGER(KIND=MPI_OFFSET_KIND)	offset
-	EXTERNAL	buf
-	INTEGER	count
-	INTEGER	datatype
-END SUBROUTINE MPI_FILE_READ_AT_ALL_BEGIN
-
-
-SUBROUTINE MPI_COMM_GET_ERRHANDLER(comm,erhandler)
+SUBROUTINE MPI_COMM_GET_ERRHANDLER(comm,erhandler,ierror)
 	INTEGER	comm
 	INTEGER	erhandler
+	INTEGER	ierror
 END SUBROUTINE MPI_COMM_GET_ERRHANDLER
 
 
-SUBROUTINE MPI_TEST_CANCELLED(status,flag)
+SUBROUTINE MPI_TEST_CANCELLED(status,flag,ierror)
 	USE MPI_CONSTANTS,ONLY: MPI_STATUS_SIZE
 	INTEGER status(MPI_STATUS_SIZE)
 	LOGICAL	flag
+	INTEGER	ierror
 END SUBROUTINE MPI_TEST_CANCELLED
 
 
 SUBROUTINE MPI_WIN_LOCK(lock_type,rank,assert,&
-	win)
+	win,ierror)
 	INTEGER	lock_type
 	INTEGER	rank
 	INTEGER	assert
 	INTEGER	win
+	INTEGER	ierror
 END SUBROUTINE MPI_WIN_LOCK
 
 
-SUBROUTINE MPI_WIN_CREATE(base,size,disp_unit,&
-	info,comm,win)
-	USE MPI_CONSTANTS,ONLY: MPI_ADDRESS_KIND
-	EXTERNAL	base
-	INTEGER(KIND=MPI_ADDRESS_KIND)	size
-	INTEGER	disp_unit
-	INTEGER	info
-	INTEGER	comm
-	INTEGER	win
-END SUBROUTINE MPI_WIN_CREATE
-
-
-SUBROUTINE MPI_TEST(request,flag,status)
+SUBROUTINE MPI_TEST(request,flag,status,&
+	ierror)
 	USE MPI_CONSTANTS,ONLY: MPI_STATUS_SIZE
 	INTEGER	request
 	LOGICAL	flag
 	INTEGER status(MPI_STATUS_SIZE)
+	INTEGER	ierror
 END SUBROUTINE MPI_TEST
 
 
 SUBROUTINE MPI_TYPE_CREATE_HVECTOR(count,blocklength,stride,&
-	oldtype,newtype)
+	oldtype,newtype,ierror)
 	USE MPI_CONSTANTS,ONLY: MPI_ADDRESS_KIND
 	INTEGER	count
 	INTEGER	blocklength
 	INTEGER(KIND=MPI_ADDRESS_KIND)	stride
 	INTEGER	oldtype
 	INTEGER	newtype
+	INTEGER	ierror
 END SUBROUTINE MPI_TYPE_CREATE_HVECTOR
 
 
-SUBROUTINE MPI_FILE_WRITE_ALL_END(fh,buf,status)
-	USE MPI_CONSTANTS,ONLY: MPI_STATUS_SIZE
-	INTEGER	fh
-	EXTERNAL	buf
-	INTEGER status(MPI_STATUS_SIZE)
-END SUBROUTINE MPI_FILE_WRITE_ALL_END
-
-
-SUBROUTINE MPI_INFO_GET_NKEYS(info,nkeys)
+SUBROUTINE MPI_INFO_GET_NKEYS(info,nkeys,ierror)
 	INTEGER	info
 	INTEGER	nkeys
+	INTEGER	ierror
 END SUBROUTINE MPI_INFO_GET_NKEYS
 
 
-SUBROUTINE MPI_WIN_START(group,assert,win)
+SUBROUTINE MPI_WIN_START(group,assert,win,&
+	ierror)
 	INTEGER	group
 	INTEGER	assert
 	INTEGER	win
+	INTEGER	ierror
 END SUBROUTINE MPI_WIN_START
 
 
-SUBROUTINE MPI_FILE_GET_SIZE(fh,size)
+SUBROUTINE MPI_FILE_GET_SIZE(fh,size,ierror)
 	USE MPI_CONSTANTS,ONLY: MPI_OFFSET_KIND
 	INTEGER	fh
 	INTEGER(KIND=MPI_OFFSET_KIND)	size
+	INTEGER	ierror
 END SUBROUTINE MPI_FILE_GET_SIZE
 
 
-SUBROUTINE MPI_FINALIZED(flag)
+SUBROUTINE MPI_FINALIZED(flag,ierror)
 	LOGICAL	flag
+	INTEGER	ierror
 END SUBROUTINE MPI_FINALIZED
 
 
-SUBROUTINE MPI_WIN_FREE_KEYVAL(win_keyval)
+SUBROUTINE MPI_WIN_FREE_KEYVAL(win_keyval,ierror)
 	INTEGER	win_keyval
+	INTEGER	ierror
 END SUBROUTINE MPI_WIN_FREE_KEYVAL
 
 
 SUBROUTINE MPI_WAITANY(count,array_of_requests,index,&
-	status)
+	status,ierror)
 	USE MPI_CONSTANTS,ONLY: MPI_STATUS_SIZE
 	INTEGER	count
 	INTEGER array_of_requests(*)
 	INTEGER	index
 	INTEGER status(MPI_STATUS_SIZE)
+	INTEGER	ierror
 END SUBROUTINE MPI_WAITANY
 
 
-SUBROUTINE MPI_OPEN_PORT(info,port_name)
+SUBROUTINE MPI_OPEN_PORT(info,port_name,ierror)
 	INTEGER	info
 	CHARACTER (LEN=*)	port_name
+	INTEGER	ierror
 END SUBROUTINE MPI_OPEN_PORT
 
 
 SUBROUTINE MPI_TYPE_INDEXED(count,array_of_blocklengths,array_of_displacements,&
-	oldtype,newtype)
+	oldtype,newtype,ierror)
 	INTEGER	count
 	INTEGER array_of_blocklengths(*)
 	INTEGER array_of_displacements(*)
 	INTEGER	oldtype
 	INTEGER	newtype
+	INTEGER	ierror
 END SUBROUTINE MPI_TYPE_INDEXED
 
 
-SUBROUTINE MPI_GATHER(sendbuf,sendcount,sendtype,&
-	recvbuf,recvcount,recvtype,&
-	root,comm)
-	EXTERNAL	sendbuf
-	INTEGER	sendcount
-	INTEGER	sendtype
-	EXTERNAL	recvbuf
-	INTEGER	recvcount
-	INTEGER	recvtype
-	INTEGER	root
-	INTEGER	comm
-END SUBROUTINE MPI_GATHER
-
-
 SUBROUTINE MPI_TYPE_VECTOR(count,blocklength,stride,&
-	oldtype,newtype)
+	oldtype,newtype,ierror)
 	INTEGER	count
 	INTEGER	blocklength
 	INTEGER	stride
 	INTEGER	oldtype
 	INTEGER	newtype
+	INTEGER	ierror
 END SUBROUTINE MPI_TYPE_VECTOR
 
 
-SUBROUTINE MPI_GET_ELEMENTS(status,datatype,count)
+SUBROUTINE MPI_GET_ELEMENTS(status,datatype,count,&
+	ierror)
 	USE MPI_CONSTANTS,ONLY: MPI_STATUS_SIZE
 	INTEGER status(MPI_STATUS_SIZE)
 	INTEGER	datatype
 	INTEGER	count
+	INTEGER	ierror
 END SUBROUTINE MPI_GET_ELEMENTS
 
 
-SUBROUTINE MPI_FILE_WRITE(fh,buf,count,&
-	datatype,status)
-	USE MPI_CONSTANTS,ONLY: MPI_STATUS_SIZE
-	INTEGER	fh
-	EXTERNAL	buf
-	INTEGER	count
-	INTEGER	datatype
-	INTEGER status(MPI_STATUS_SIZE)
-END SUBROUTINE MPI_FILE_WRITE
-
-
-SUBROUTINE MPI_FILE_READ_AT_ALL_END(fh,buf,status)
-	USE MPI_CONSTANTS,ONLY: MPI_STATUS_SIZE
-	INTEGER	fh
-	EXTERNAL	buf
-	INTEGER status(MPI_STATUS_SIZE)
-END SUBROUTINE MPI_FILE_READ_AT_ALL_END
-
-
 SUBROUTINE MPI_PROBE(source,tag,comm,&
-	status)
+	status,ierror)
 	USE MPI_CONSTANTS,ONLY: MPI_STATUS_SIZE
 	INTEGER	source
 	INTEGER	tag
 	INTEGER	comm
 	INTEGER status(MPI_STATUS_SIZE)
+	INTEGER	ierror
 END SUBROUTINE MPI_PROBE
 
 
 SUBROUTINE MPI_FILE_SET_VIEW(fh,disp,etype,&
-	filetype,datarep,info)
+	filetype,datarep,info,&
+	ierror)
 	USE MPI_CONSTANTS,ONLY: MPI_OFFSET_KIND
 	INTEGER	fh
 	INTEGER(KIND=MPI_OFFSET_KIND)	disp
@@ -1891,232 +1315,182 @@ SUBROUTINE MPI_FILE_SET_VIEW(fh,disp,etype,&
 	INTEGER	filetype
 	CHARACTER (LEN=*)	datarep
 	INTEGER	info
+	INTEGER	ierror
 END SUBROUTINE MPI_FILE_SET_VIEW
 
 
-SUBROUTINE MPI_UNPACK(inbuf,insize,position,&
-	outbuf,outcount,datatype,&
-	comm)
-	EXTERNAL	inbuf
-	INTEGER	insize
-	INTEGER	position
-	EXTERNAL	outbuf
-	INTEGER	outcount
-	INTEGER	datatype
-	INTEGER	comm
-END SUBROUTINE MPI_UNPACK
-
-
-SUBROUTINE MPI_TYPE_UB(mtype,ub)
+SUBROUTINE MPI_TYPE_UB(mtype,ub,ierror)
 	INTEGER	mtype
 	INTEGER	ub
+	INTEGER	ierror
 END SUBROUTINE MPI_TYPE_UB
 
 
-SUBROUTINE MPI_STATUS_SET_ELEMENTS(status,datatype,count)
+SUBROUTINE MPI_STATUS_SET_ELEMENTS(status,datatype,count,&
+	ierror)
 	USE MPI_CONSTANTS,ONLY: MPI_STATUS_SIZE
 	INTEGER status(MPI_STATUS_SIZE)
 	INTEGER	datatype
 	INTEGER	count
+	INTEGER	ierror
 END SUBROUTINE MPI_STATUS_SET_ELEMENTS
 
 
-SUBROUTINE MPI_WIN_DELETE_ATTR(win,win_keyval)
+SUBROUTINE MPI_WIN_DELETE_ATTR(win,win_keyval,ierror)
 	INTEGER	win
 	INTEGER	win_keyval
+	INTEGER	ierror
 END SUBROUTINE MPI_WIN_DELETE_ATTR
 
 
 SUBROUTINE MPI_TYPE_HINDEXED(count,array_of_blocklengths,array_of_displacements,&
-	oldtype,newtype)
+	oldtype,newtype,ierror)
 	INTEGER	count
 	INTEGER array_of_blocklengths(*)
 	INTEGER array_of_displacements(*)
 	INTEGER	oldtype
 	INTEGER	newtype
+	INTEGER	ierror
 END SUBROUTINE MPI_TYPE_HINDEXED
 
 
-SUBROUTINE MPI_FILE_SET_ATOMICITY(fh,flag)
+SUBROUTINE MPI_FILE_SET_ATOMICITY(fh,flag,ierror)
 	INTEGER	fh
 	LOGICAL	flag
+	INTEGER	ierror
 END SUBROUTINE MPI_FILE_SET_ATOMICITY
 
 
 SUBROUTINE MPI_GROUP_RANGE_INCL(group,n,ranges,&
-	newgroup)
+	newgroup,ierror)
 	INTEGER	group
 	INTEGER	n
 	INTEGER ranges(3,*)
 	INTEGER	newgroup
+	INTEGER	ierror
 END SUBROUTINE MPI_GROUP_RANGE_INCL
 
 
-SUBROUTINE MPI_GET(origin_addr,origin_count,origin_datatype,&
-	target_rank,target_disp,target_count,&
-	target_datatype,win)
-	USE MPI_CONSTANTS,ONLY: MPI_ADDRESS_KIND
-	EXTERNAL	origin_addr
-	INTEGER	origin_count
-	INTEGER	origin_datatype
-	INTEGER	target_rank
-	INTEGER(KIND=MPI_ADDRESS_KIND)	target_disp
-	INTEGER	target_count
-	INTEGER	target_datatype
-	INTEGER	win
-END SUBROUTINE MPI_GET
-
-
 SUBROUTINE MPI_IPROBE(source,tag,comm,&
-	flag,status)
+	flag,status,ierror)
 	USE MPI_CONSTANTS,ONLY: MPI_STATUS_SIZE
 	INTEGER	source
 	INTEGER	tag
 	INTEGER	comm
 	LOGICAL	flag
 	INTEGER status(MPI_STATUS_SIZE)
+	INTEGER	ierror
 END SUBROUTINE MPI_IPROBE
 
 
-SUBROUTINE MPI_FILE_WRITE_AT_ALL_END(fh,buf,status)
-	USE MPI_CONSTANTS,ONLY: MPI_STATUS_SIZE
-	INTEGER	fh
-	EXTERNAL	buf
-	INTEGER status(MPI_STATUS_SIZE)
-END SUBROUTINE MPI_FILE_WRITE_AT_ALL_END
-
-
-SUBROUTINE MPI_TYPE_GET_TRUE_EXTENT(datatype,true_lb,true_extent)
+SUBROUTINE MPI_TYPE_GET_TRUE_EXTENT(datatype,true_lb,true_extent,&
+	ierror)
 	USE MPI_CONSTANTS,ONLY: MPI_ADDRESS_KIND
 	INTEGER	datatype
 	INTEGER(KIND=MPI_ADDRESS_KIND)	true_lb
 	INTEGER(KIND=MPI_ADDRESS_KIND)	true_extent
+	INTEGER	ierror
 END SUBROUTINE MPI_TYPE_GET_TRUE_EXTENT
 
 
 SUBROUTINE MPI_GRAPH_GET(comm,maxindex,maxedges,&
-	index,edges)
+	index,edges,ierror)
 	INTEGER	comm
 	INTEGER	maxindex
 	INTEGER	maxedges
 	INTEGER index(*)
 	INTEGER edges(*)
+	INTEGER	ierror
 END SUBROUTINE MPI_GRAPH_GET
 
 
-SUBROUTINE MPI_INFO_DELETE(info,key)
+SUBROUTINE MPI_INFO_DELETE(info,key,ierror)
 	INTEGER	info
 	CHARACTER (LEN=*)	key
+	INTEGER	ierror
 END SUBROUTINE MPI_INFO_DELETE
 
 
-SUBROUTINE MPI_WIN_GET_ATTR(win,win_keyval,attribute_val,&
-	flag)
-	INTEGER	win
-	INTEGER	win_keyval
-	EXTERNAL	attribute_val
-	LOGICAL	flag
-END SUBROUTINE MPI_WIN_GET_ATTR
-
-
-SUBROUTINE MPI_CART_RANK(comm,coords,rank)
+SUBROUTINE MPI_CART_RANK(comm,coords,rank,&
+	ierror)
 	INTEGER	comm
 	INTEGER coords(*)
 	INTEGER	rank
+	INTEGER	ierror
 END SUBROUTINE MPI_CART_RANK
 
 
-SUBROUTINE MPI_FINALIZE()
+SUBROUTINE MPI_FINALIZE(ierror)
+	INTEGER	ierror
 END SUBROUTINE MPI_FINALIZE
 
 
-SUBROUTINE MPI_COMM_CREATE(comm,group,newcomm)
+SUBROUTINE MPI_COMM_CREATE(comm,group,newcomm,&
+	ierror)
 	INTEGER	comm
 	INTEGER	group
 	INTEGER	newcomm
+	INTEGER	ierror
 END SUBROUTINE MPI_COMM_CREATE
 
 
 SUBROUTINE MPI_PACK_EXTERNAL_SIZE(datarep,incount,datatype,&
-	size)
+	size,ierror)
 	USE MPI_CONSTANTS,ONLY: MPI_ADDRESS_KIND
 	CHARACTER (LEN=*)	datarep
 	INTEGER	incount
 	INTEGER	datatype
 	INTEGER(KIND=MPI_ADDRESS_KIND)	size
+	INTEGER	ierror
 END SUBROUTINE MPI_PACK_EXTERNAL_SIZE
 
 
-SUBROUTINE MPI_COMM_JOIN(fd,intercomm)
+SUBROUTINE MPI_COMM_JOIN(fd,intercomm,ierror)
 	INTEGER	fd
 	INTEGER	intercomm
+	INTEGER	ierror
 END SUBROUTINE MPI_COMM_JOIN
 
 
-SUBROUTINE MPI_FILE_READ_AT(fh,offset,buf,&
-	count,datatype,status)
-	USE MPI_CONSTANTS,ONLY: MPI_STATUS_SIZE,MPI_OFFSET_KIND
-	INTEGER	fh
-	INTEGER(KIND=MPI_OFFSET_KIND)	offset
-	EXTERNAL	buf
-	INTEGER	count
-	INTEGER	datatype
-	INTEGER status(MPI_STATUS_SIZE)
-END SUBROUTINE MPI_FILE_READ_AT
-
-
-SUBROUTINE MPI_KEYVAL_FREE(keyval)
+SUBROUTINE MPI_KEYVAL_FREE(keyval,ierror)
 	INTEGER	keyval
+	INTEGER	ierror
 END SUBROUTINE MPI_KEYVAL_FREE
 
 
-SUBROUTINE MPI_WIN_WAIT(win)
+SUBROUTINE MPI_WIN_WAIT(win,ierror)
 	INTEGER	win
+	INTEGER	ierror
 END SUBROUTINE MPI_WIN_WAIT
 
 
-SUBROUTINE MPI_ALLOC_MEM(size,info,baseptr)
-	USE MPI_CONSTANTS,ONLY: MPI_ADDRESS_KIND
-	INTEGER(KIND=MPI_ADDRESS_KIND)	size
-	INTEGER	info
-	EXTERNAL	baseptr
-END SUBROUTINE MPI_ALLOC_MEM
-
-
-SUBROUTINE MPI_TYPE_SIZE(type,size)
+SUBROUTINE MPI_TYPE_SIZE(type,size,ierror)
 	INTEGER	type
 	INTEGER	size
+	INTEGER	ierror
 END SUBROUTINE MPI_TYPE_SIZE
 
 
-SUBROUTINE MPI_LOOKUP_NAME(service_name,info,port_name)
+SUBROUTINE MPI_LOOKUP_NAME(service_name,info,port_name,&
+	ierror)
 	CHARACTER (LEN=*)	service_name
 	INTEGER	info
 	CHARACTER (LEN=*)	port_name
+	INTEGER	ierror
 END SUBROUTINE MPI_LOOKUP_NAME
 
 
-SUBROUTINE MPI_FILE_GET_ATOMICITY(fh,flag)
+SUBROUTINE MPI_FILE_GET_ATOMICITY(fh,flag,ierror)
 	INTEGER	fh
 	LOGICAL	flag
+	INTEGER	ierror
 END SUBROUTINE MPI_FILE_GET_ATOMICITY
-
-
-SUBROUTINE MPI_FILE_READ_SHARED(fh,buf,count,&
-	datatype,status)
-	USE MPI_CONSTANTS,ONLY: MPI_STATUS_SIZE
-	INTEGER	fh
-	EXTERNAL	buf
-	INTEGER	count
-	INTEGER	datatype
-	INTEGER status(MPI_STATUS_SIZE)
-END SUBROUTINE MPI_FILE_READ_SHARED
 
 
 SUBROUTINE MPI_TYPE_CREATE_DARRAY(size,rank,ndims,&
 	gsize_array,distrib_array,darg_array,&
 	psize_array,order,oldtype,&
-	newtype)
+	newtype,ierror)
 	INTEGER	size
 	INTEGER	rank
 	INTEGER	ndims
@@ -2127,75 +1501,71 @@ SUBROUTINE MPI_TYPE_CREATE_DARRAY(size,rank,ndims,&
 	INTEGER	order
 	INTEGER	oldtype
 	INTEGER	newtype
+	INTEGER	ierror
 END SUBROUTINE MPI_TYPE_CREATE_DARRAY
 
 
-SUBROUTINE MPI_WIN_CREATE_ERRHANDLER(function,errhandler)
+SUBROUTINE MPI_WIN_CREATE_ERRHANDLER(function,errhandler,ierror)
 	INTERFACE 
 	SUBROUTINE function(vv0,vv1)
 	INTEGER vv0,vv1
 	END SUBROUTINE
 	END INTERFACE
 	INTEGER	errhandler
+	INTEGER	ierror
 END SUBROUTINE MPI_WIN_CREATE_ERRHANDLER
 
 
 SUBROUTINE MPI_CART_MAP(comm,ndims,dims,&
-	periods,newrank)
+	periods,newrank,ierror)
 	INTEGER	comm
 	INTEGER	ndims
 	INTEGER dims(*)
 	LOGICAL periods(*)
 	INTEGER	newrank
+	INTEGER	ierror
 END SUBROUTINE MPI_CART_MAP
 
 
-SUBROUTINE MPI_FILE_WRITE_AT(fh,offset,buf,&
-	count,datatype,status)
-	USE MPI_CONSTANTS,ONLY: MPI_STATUS_SIZE,MPI_OFFSET_KIND
-	INTEGER	fh
-	INTEGER(KIND=MPI_OFFSET_KIND)	offset
-	EXTERNAL	buf
-	INTEGER	count
-	INTEGER	datatype
-	INTEGER status(MPI_STATUS_SIZE)
-END SUBROUTINE MPI_FILE_WRITE_AT
-
-
 SUBROUTINE MPI_COMM_ACCEPT(port_name,info,root,&
-	comm,newcomm)
+	comm,newcomm,ierror)
 	CHARACTER (LEN=*)	port_name
 	INTEGER	info
 	INTEGER	root
 	INTEGER	comm
 	INTEGER	newcomm
+	INTEGER	ierror
 END SUBROUTINE MPI_COMM_ACCEPT
 
 
-SUBROUTINE MPI_TYPE_SET_NAME(type,type_name)
+SUBROUTINE MPI_TYPE_SET_NAME(type,type_name,ierror)
 	INTEGER	type
 	CHARACTER (LEN=*)	type_name
+	INTEGER	ierror
 END SUBROUTINE MPI_TYPE_SET_NAME
 
 
-SUBROUTINE MPI_CLOSE_PORT(port_name)
+SUBROUTINE MPI_CLOSE_PORT(port_name,ierror)
 	CHARACTER (LEN=*)	port_name
+	INTEGER	ierror
 END SUBROUTINE MPI_CLOSE_PORT
 
 
-SUBROUTINE MPI_ERRHANDLER_C2F(errhandler)
+SUBROUTINE MPI_ERRHANDLER_C2F(errhandler,ierror)
 	INTEGER	errhandler
+	INTEGER	ierror
 END SUBROUTINE MPI_ERRHANDLER_C2F
 
 
-SUBROUTINE MPI_FILE_CLOSE(fh)
+SUBROUTINE MPI_FILE_CLOSE(fh,ierror)
 	INTEGER	fh
+	INTEGER	ierror
 END SUBROUTINE MPI_FILE_CLOSE
 
 
 SUBROUTINE MPI_TYPE_CREATE_SUBARRAY(ndims,size_array,subsize_array,&
 	start_array,order,oldtype,&
-	newtype)
+	newtype,ierror)
 	INTEGER	ndims
 	INTEGER size_array(*)
 	INTEGER subsize_array(*)
@@ -2203,347 +1573,208 @@ SUBROUTINE MPI_TYPE_CREATE_SUBARRAY(ndims,size_array,subsize_array,&
 	INTEGER	order
 	INTEGER	oldtype
 	INTEGER	newtype
+	INTEGER	ierror
 END SUBROUTINE MPI_TYPE_CREATE_SUBARRAY
 
 
-SUBROUTINE MPI_COMM_C2F(comm)
+SUBROUTINE MPI_COMM_C2F(comm,ierror)
 	INTEGER	comm
+	INTEGER	ierror
 END SUBROUTINE MPI_COMM_C2F
 
 
-SUBROUTINE MPI_FILE_DELETE(filename,info)
+SUBROUTINE MPI_FILE_DELETE(filename,info,ierror)
 	CHARACTER (LEN=*)	filename
 	INTEGER	info
+	INTEGER	ierror
 END SUBROUTINE MPI_FILE_DELETE
 
 
-SUBROUTINE MPI_COMM_SET_ATTR(comm,comm_keyval,attribute_val)
-	INTEGER	comm
-	INTEGER	comm_keyval
-	EXTERNAL	attribute_val
-END SUBROUTINE MPI_COMM_SET_ATTR
-
-
-SUBROUTINE MPI_FILE_READ_ALL(fh,buf,count,&
-	datatype,status)
-	USE MPI_CONSTANTS,ONLY: MPI_STATUS_SIZE
-	INTEGER	fh
-	EXTERNAL	buf
-	INTEGER	count
-	INTEGER	datatype
-	INTEGER status(MPI_STATUS_SIZE)
-END SUBROUTINE MPI_FILE_READ_ALL
-
-
-SUBROUTINE MPI_RECV(buf,count,datatype,&
-	source,tag,comm,&
-	status)
-	USE MPI_CONSTANTS,ONLY: MPI_STATUS_SIZE
-	EXTERNAL	buf
-	INTEGER	count
-	INTEGER	datatype
-	INTEGER	source
-	INTEGER	tag
-	INTEGER	comm
-	INTEGER status(MPI_STATUS_SIZE)
-END SUBROUTINE MPI_RECV
-
-
-SUBROUTINE MPI_COMM_DUP(comm,newcomm)
+SUBROUTINE MPI_COMM_DUP(comm,newcomm,ierror)
 	INTEGER	comm
 	INTEGER	newcomm
+	INTEGER	ierror
 END SUBROUTINE MPI_COMM_DUP
 
 
-SUBROUTINE MPI_WAITALL(count,array_of_requests,array_of_statuses)
+SUBROUTINE MPI_WAITALL(count,array_of_requests,array_of_statuses,&
+	ierror)
 	USE MPI_CONSTANTS,ONLY: MPI_STATUS_SIZE
 	INTEGER	count
 	INTEGER array_of_requests(*)
 	INTEGER array_of_statuses(MPI_STATUS_SIZE,*)
+	INTEGER	ierror
 END SUBROUTINE MPI_WAITALL
 
 
-SUBROUTINE MPI_COMM_DELETE_ATTR(comm,comm_keyval)
+SUBROUTINE MPI_COMM_DELETE_ATTR(comm,comm_keyval,ierror)
 	INTEGER	comm
 	INTEGER	comm_keyval
+	INTEGER	ierror
 END SUBROUTINE MPI_COMM_DELETE_ATTR
 
 
-SUBROUTINE MPI_SSEND(buf,count,datatype,&
-	dest,tag,comm)
-	EXTERNAL	buf
-	INTEGER	count
-	INTEGER	datatype
-	INTEGER	dest
-	INTEGER	tag
-	INTEGER	comm
-END SUBROUTINE MPI_SSEND
-
-
-SUBROUTINE MPI_GROUP_SIZE(group,size)
+SUBROUTINE MPI_GROUP_SIZE(group,size,ierror)
 	INTEGER	group
 	INTEGER	size
+	INTEGER	ierror
 END SUBROUTINE MPI_GROUP_SIZE
 
 
-SUBROUTINE MPI_FILE_GET_ERRHANDLER(file,errhandler)
+SUBROUTINE MPI_FILE_GET_ERRHANDLER(file,errhandler,ierror)
 	INTEGER	file
 	INTEGER	errhandler
+	INTEGER	ierror
 END SUBROUTINE MPI_FILE_GET_ERRHANDLER
 
 
-SUBROUTINE MPI_ATTR_PUT(comm,keyval,attribute_val)
+SUBROUTINE MPI_BARRIER(comm,ierror)
 	INTEGER	comm
-	INTEGER	keyval
-	EXTERNAL	attribute_val
-END SUBROUTINE MPI_ATTR_PUT
-
-
-SUBROUTINE MPI_BARRIER(comm)
-	INTEGER	comm
+	INTEGER	ierror
 END SUBROUTINE MPI_BARRIER
 
 
-SUBROUTINE MPI_WIN_FREE(win)
+SUBROUTINE MPI_WIN_FREE(win,ierror)
 	INTEGER	win
+	INTEGER	ierror
 END SUBROUTINE MPI_WIN_FREE
 
 
-SUBROUTINE MPI_ALLTOALLW(sendbuf,sendcounts,sdispls,&
-	sendtypes,recvbuf,recvcounts,&
-	rdispls,recvtypes,comm)
-	EXTERNAL	sendbuf
-	INTEGER sendcounts(*)
-	INTEGER sdispls(*)
-	INTEGER	sendtypes
-	EXTERNAL	recvbuf
-	INTEGER recvcounts(*)
-	INTEGER rdispls(*)
-	INTEGER	recvtypes
-	INTEGER	comm
-END SUBROUTINE MPI_ALLTOALLW
-
-
-SUBROUTINE MPI_ALLTOALLV(sendbuf,sendcounts,sdispls,&
-	sendtype,recvbuf,recvcounts,&
-	rdispls,recvtype,comm)
-	EXTERNAL	sendbuf
-	INTEGER sendcounts(*)
-	INTEGER sdispls(*)
-	INTEGER	sendtype
-	EXTERNAL	recvbuf
-	INTEGER recvcounts(*)
-	INTEGER rdispls(*)
-	INTEGER	recvtype
-	INTEGER	comm
-END SUBROUTINE MPI_ALLTOALLV
-
-
-SUBROUTINE MPI_BSEND_INIT(buf,count,datatype,&
-	dest,tag,comm,&
-	request)
-	EXTERNAL	buf
-	INTEGER	count
-	INTEGER	datatype
-	INTEGER	dest
-	INTEGER	tag
-	INTEGER	comm
-	INTEGER	request
-END SUBROUTINE MPI_BSEND_INIT
-
-
-SUBROUTINE MPI_ADD_ERROR_STRING(errorcode,string)
-	INTEGER	errorcode
-	CHARACTER (LEN=*)	string
-END SUBROUTINE MPI_ADD_ERROR_STRING
-
-
-SUBROUTINE MPI_OP_FREE(op)
+SUBROUTINE MPI_OP_FREE(op,ierror)
 	INTEGER	op
+	INTEGER	ierror
 END SUBROUTINE MPI_OP_FREE
 
 
-SUBROUTINE MPI_WIN_SET_ERRHANDLER(win,errhandler)
+SUBROUTINE MPI_WIN_SET_ERRHANDLER(win,errhandler,ierror)
 	INTEGER	win
 	INTEGER	errhandler
+	INTEGER	ierror
 END SUBROUTINE MPI_WIN_SET_ERRHANDLER
 
 
-SUBROUTINE MPI_ACCUMULATE(origin_addr,origin_count,origin_datatype,&
-	target_rank,target_disp,target_count,&
-	target_datatype,op,win)
-	USE MPI_CONSTANTS,ONLY: MPI_ADDRESS_KIND
-	EXTERNAL	origin_addr
-	INTEGER	origin_count
-	INTEGER	origin_datatype
-	INTEGER	target_rank
-	INTEGER(KIND=MPI_ADDRESS_KIND)	target_disp
-	INTEGER	target_count
-	INTEGER	target_datatype
-	INTEGER	op
-	INTEGER	win
-END SUBROUTINE MPI_ACCUMULATE
-
-
-SUBROUTINE MPI_COMM_GET_NAME(comm,comm_name,resultlen)
+SUBROUTINE MPI_COMM_GET_NAME(comm,comm_name,resultlen,&
+	ierror)
 	INTEGER	comm
 	CHARACTER (LEN=*)	comm_name
 	INTEGER	resultlen
+	INTEGER	ierror
 END SUBROUTINE MPI_COMM_GET_NAME
 
 
-SUBROUTINE MPI_CART_SUB(comm,remain_dims,new_comm)
+SUBROUTINE MPI_CART_SUB(comm,remain_dims,new_comm,&
+	ierror)
 	INTEGER	comm
 	LOGICAL remain_dims(*)
 	INTEGER	new_comm
+	INTEGER	ierror
 END SUBROUTINE MPI_CART_SUB
 
 
-SUBROUTINE MPI_FILE_WRITE_ORDERED(fh,buf,count,&
-	datatype,status)
-	USE MPI_CONSTANTS,ONLY: MPI_STATUS_SIZE
-	INTEGER	fh
-	EXTERNAL	buf
-	INTEGER	count
-	INTEGER	datatype
-	INTEGER status(MPI_STATUS_SIZE)
-END SUBROUTINE MPI_FILE_WRITE_ORDERED
-
-
-SUBROUTINE MPI_WIN_C2F(win)
+SUBROUTINE MPI_WIN_C2F(win,ierror)
 	INTEGER	win
+	INTEGER	ierror
 END SUBROUTINE MPI_WIN_C2F
 
 
 SUBROUTINE MPI_GROUP_RANGE_EXCL(group,n,ranges,&
-	newgroup)
+	newgroup,ierror)
 	INTEGER	group
 	INTEGER	n
 	INTEGER ranges(3,*)
 	INTEGER	newgroup
+	INTEGER	ierror
 END SUBROUTINE MPI_GROUP_RANGE_EXCL
 
 
 SUBROUTINE MPI_COMM_SPLIT(comm,color,key,&
-	newcomm)
+	newcomm,ierror)
 	INTEGER	comm
 	INTEGER	color
 	INTEGER	key
 	INTEGER	newcomm
+	INTEGER	ierror
 END SUBROUTINE MPI_COMM_SPLIT
 
 
-SUBROUTINE MPI_COMM_SET_ERRHANDLER(comm,errhandler)
+SUBROUTINE MPI_COMM_SET_ERRHANDLER(comm,errhandler,ierror)
 	INTEGER	comm
 	INTEGER	errhandler
+	INTEGER	ierror
 END SUBROUTINE MPI_COMM_SET_ERRHANDLER
 
 
-SUBROUTINE MPI_REQUEST_GET_STATUS(request,flag,status)
+SUBROUTINE MPI_REQUEST_GET_STATUS(request,flag,status,&
+	ierror)
 	USE MPI_CONSTANTS,ONLY: MPI_STATUS_SIZE
 	INTEGER	request
 	LOGICAL	flag
 	INTEGER status(MPI_STATUS_SIZE)
+	INTEGER	ierror
 END SUBROUTINE MPI_REQUEST_GET_STATUS
 
 
-SUBROUTINE MPI_GROUP_FREE(group)
+SUBROUTINE MPI_GROUP_FREE(group,ierror)
 	INTEGER	group
+	INTEGER	ierror
 END SUBROUTINE MPI_GROUP_FREE
 
 
-SUBROUTINE MPI_TYPE_CREATE_KEYVAL(type_copy_attr_fn,type_delete_attr_fn,type_keyval,&
-	extra_state)
-	EXTERNAL	type_copy_attr_fn
-	EXTERNAL	type_delete_attr_fn
-	INTEGER	type_keyval
-	EXTERNAL	extra_state
-END SUBROUTINE MPI_TYPE_CREATE_KEYVAL
-
-
-SUBROUTINE MPI_FILE_WRITE_ORDERED_BEGIN(fh,buf,count,&
-	datatype)
-	INTEGER	fh
-	EXTERNAL	buf
-	INTEGER	count
-	INTEGER	datatype
-END SUBROUTINE MPI_FILE_WRITE_ORDERED_BEGIN
-
-
-SUBROUTINE MPI_FILE_READ_ORDERED_BEGIN(fh,buf,count,&
-	datatype)
-	INTEGER	fh
-	EXTERNAL	buf
-	INTEGER	count
-	INTEGER	datatype
-END SUBROUTINE MPI_FILE_READ_ORDERED_BEGIN
-
-
-SUBROUTINE MPI_GRAPHDIMS_GET(comm,nnodes,nedges)
+SUBROUTINE MPI_GRAPHDIMS_GET(comm,nnodes,nedges,&
+	ierror)
 	INTEGER	comm
 	INTEGER	nnodes
 	INTEGER	nedges
+	INTEGER	ierror
 END SUBROUTINE MPI_GRAPHDIMS_GET
 
 
-SUBROUTINE MPI_COMM_RANK(comm,rank)
+SUBROUTINE MPI_COMM_RANK(comm,rank,ierror)
 	INTEGER	comm
 	INTEGER	rank
+	INTEGER	ierror
 END SUBROUTINE MPI_COMM_RANK
 
 
-SUBROUTINE MPI_CANCEL(request)
+SUBROUTINE MPI_CANCEL(request,ierror)
 	INTEGER	request
+	INTEGER	ierror
 END SUBROUTINE MPI_CANCEL
 
 
-SUBROUTINE MPI_WIN_FENCE(assert,win)
+SUBROUTINE MPI_WIN_FENCE(assert,win,ierror)
 	INTEGER	assert
 	INTEGER	win
+	INTEGER	ierror
 END SUBROUTINE MPI_WIN_FENCE
 
 
-SUBROUTINE MPI_WIN_CREATE_KEYVAL(win_copy_attr_fn,win_delete_attr_fn,win_keyval,&
-	extra_state)
-	EXTERNAL	win_copy_attr_fn
-	EXTERNAL	win_delete_attr_fn
-	INTEGER	win_keyval
-	EXTERNAL	extra_state
-END SUBROUTINE MPI_WIN_CREATE_KEYVAL
-
-
-SUBROUTINE MPI_ERRHANDLER_FREE(errhandler)
+SUBROUTINE MPI_ERRHANDLER_FREE(errhandler,ierror)
 	INTEGER	errhandler
+	INTEGER	ierror
 END SUBROUTINE MPI_ERRHANDLER_FREE
 
 
-SUBROUTINE MPI_WIN_TEST(win,flag)
+SUBROUTINE MPI_WIN_TEST(win,flag,ierror)
 	INTEGER	win
 	LOGICAL	flag
+	INTEGER	ierror
 END SUBROUTINE MPI_WIN_TEST
 
 
-SUBROUTINE MPI_OP_C2F(op)
+SUBROUTINE MPI_OP_C2F(op,ierror)
 	INTEGER	op
+	INTEGER	ierror
 END SUBROUTINE MPI_OP_C2F
 
 
-SUBROUTINE MPI_TYPE_MATCH_SIZE(typeclass,size,type)
+SUBROUTINE MPI_TYPE_MATCH_SIZE(typeclass,size,type,&
+	ierror)
 	INTEGER	typeclass
 	INTEGER	size
 	INTEGER	type
+	INTEGER	ierror
 END SUBROUTINE MPI_TYPE_MATCH_SIZE
-
-
-SUBROUTINE MPI_SEND(buf,count,datatype,&
-	dest,tag,comm)
-	EXTERNAL	buf
-	INTEGER	count
-	INTEGER	datatype
-	INTEGER	dest
-	INTEGER	tag
-	INTEGER	comm
-END SUBROUTINE MPI_SEND
 
 
 END INTERFACE

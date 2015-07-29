@@ -27,6 +27,7 @@ fi
 MPIFH=""
 MPIMODF=""
 MPICONSTF=""
+MPISIZEOF=""
 MPIBASEF=""
 
 #Can the file be generated ?
@@ -43,6 +44,7 @@ generate_from_backup()
 	#Here we fallback to pregenerated files
 	MPIFH="$SCRIPTPATH/pregenerated/mpif.h"
 	MPIMODF="$SCRIPTPATH/pregenerated/mpi.f90"
+	MPISIZEOF="$SCRIPTPATH/pregenerated/mpi_sizeofs.f90"
 	MPICONSTF="$SCRIPTPATH/pregenerated/mpi_constants.f90"
 	MPIBASEF="$SCRIPTPATH/pregenerated/mpi_base.f90"
 		
@@ -170,9 +172,10 @@ EOF
 	TEMP=`tempfile`
 	TEMP="${TEMP}.c"
 cat << EOF > $TEMP
-#include <mpi.h>
+#include <mpc.h>
 int main(int argc, char ** argv )
 {
+	return 0;
 }
 EOF
 
@@ -222,8 +225,23 @@ genfortanfiles()
 		return
 	fi
 	
+	#Now preparse MPI.h to allow function detection
+	echo -n "(i) Generating preparsed mpi.h ...   "
+	
+	${MPCCC} -E ${MPIHFILE} -o preparsed_mpih.dat 2>> ./fortrangen.log
+	
+	if test -e "preparsed_mpih.dat"; then
+		echo "Generated"
+	else
+		echo "(E) Failed to generate the preparsed mpi.h file"
+		echo "(E) See ./fortrangen.log"
+		generate_from_backup
+		return
+	fi
+	
 	#And now launch the python generation phase
-	${PYTHON} ${SCRIPTPATH}/genmod.py -f ${MPCFC} -c ${MPCCC} -m ${MPIHFILE} 2>> ./fortrangen.log
+	${PYTHON} ${SCRIPTPATH}/genmod.py -f "${MPCFC}" -c "${MPCCC}" -m "${MPIHFILE}" 
+	#2>> ./fortrangen.log
 
 	if test "x$?" != "x0"; then
 		echo "(E) Fortran module/header generation failed"
@@ -240,19 +258,10 @@ genfortranmods()
 {
 	#Generate a main using MPI for sanity check
 	echo -n "(i) Compiling Fortran modules...   "
-	
-TEMP=`tempfile`
-TEMP="${TEMP}.f90"
-TEMP2=`tempfile`
-cat << EOF > $TEMP
-PROGRAM TESTAPP
-USE MPI
 
-END PROGRAM TESTAPP
-EOF
 	#Note that it is important to compile twice (Fortran MAGIC dependency resolution)
-	$MPCFC ${MPIBASEF} ${MPICONSTF} ${MPIMODF} $TEMP -o $TEMP2 2>> ./fortrangen.log
-	$MPCFC ${MPIBASEF} ${MPICONSTF} ${MPIMODF} $TEMP -o $TEMP2  2>> ./fortrangen.log
+	$MPCFC -c ${MPIBASEF} ${MPICONSTF} ${MPIMODF} ${MPISIZEOF}  2>> ./fortrangen.log
+	$MPCFC -c ${MPIBASEF} ${MPICONSTF} ${MPIMODF} ${MPISIZEOF}  2>> ./fortrangen.log
 	
 	if test "x$?" != "x0"; then
 		echo "(E) Module compilation failed"
@@ -289,7 +298,7 @@ proceedwithfortranfilegeneration()
 		#Check that everything is there
 		echo "(i) Checking generated files...   "
 		
-		for f in mpi_base.f90 mpi_constants.f90 mpi.f90 mpif.h
+		for f in mpi_base.f90 mpi_constants.f90 mpi_sizeofs.f90 mpi_sizeofs.o mpi.f90 mpif.h
 		do
 			if test -e "$f"; then
 				echo "(i)\t${f}... Found."
@@ -303,6 +312,7 @@ proceedwithfortranfilegeneration()
 			MPIFH="${PWD}/mpif.h"
 			MPIMODF="${PWD}/mpi.f90"
 			MPICONSTF="${PWD}/mpi_constants.f90"
+			MPISIZEOF="${PWD}/mpi_sizeofs.f90"
 			MPIBASEF="${PWD}/mpi_base.f90"
 			
 		done
@@ -322,7 +332,7 @@ proceedwithfortranfilegeneration()
 
 	echo "(i) Checking Module files...   "
 		
-	for f in mpi_base.mod mpi_constants.mod mpi.mod
+	for f in mpi_base.mod mpi_constants.mod mpi_sizeofs.mod mpi.mod
 	do
 		if test -e "$f"; then
 			echo "(i)\t${f}... Found."
@@ -338,29 +348,29 @@ proceedwithfortranfilegeneration()
 	echo "#  Installing Fortran Files                              #"
 	echo "########################################################\n"
 
-			MPIFH="${PWD}/mpif.h"
-			MPIMODF="${PWD}/mpi.f90"
-			MPICONSTF="${PWD}/mpi_constants.f90"
-			MPIBASEF="${PWD}/mpi_base.f90"
-
 	cp ${MPIFH} ${INSTALL}/
 	cp mpi.mod ${INSTALL}/
 	cp mpi_constants.mod ${INSTALL}/
 	cp mpi_base.mod ${INSTALL}/
+	cp mpi_sizeofs.mod ${INSTALL}/
+	cp mpi_sizeofs.o ${INSTALL}/../../lib/
 
 	echo "(i) Checking installed files...   "
 		
-	for f in mpi_base.mod mpi_constants.mod mpi.mod mpif.h
+	for f in mpi_base.mod mpi_constants.mod mpi_sizeofs.mod ../../lib/mpi_sizeofs.o mpi.mod mpif.h
 	do
-		if test -e "${INSTALL}/$f"; then
-			echo "(i)\t${f}... Found."
+		NAME=`basename ${f}` 
+		if test -e "${INSTALL}/${f}"; then
+			echo "(i)\t${NAME}... Found."
 		else
-			echo "(E)\t${f}... NOT Found."
+			echo "(E)\t${NAME}... NOT Found."
 			echo "(FATAL) Fortran module compilation failed"
 			echo "   You might not be able to run F90 codes"
 			return
 		fi	
 	done
+	
+	echo " #### FORTRAN DONE ####"
 }
 
 

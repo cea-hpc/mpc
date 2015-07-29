@@ -71,8 +71,9 @@ cat <<EOF >> bin/mpc_cflags
 echo "-I${SCTK_INCLUDE_DIR} -I${SCTK_INCLUDE_DIR}/../ \$ROMIO \${SCTK_GETOPT} $FLAGS -L${SCTK_ARCH_LIBRARY_PATH} -Wl,-rpath=${SCTK_ARCH_LIBRARY_PATH} "
 EOF
 else
+#${SCTK_LIB_DIR}/mpi_sizeofs.o defines the Fortran MPI_SIZEOF implementation
 cat <<EOF >> bin/mpc_cflags
-echo "-I${SCTK_INCLUDE_DIR} -I${SCTK_INCLUDE_DIR}/../ \$ROMIO \${SCTK_GETOPT} $FLAGS"
+echo "-I${SCTK_INCLUDE_DIR} -I${SCTK_INCLUDE_DIR}/../ \$ROMIO \${SCTK_GETOPT} ${SCTK_LIB_DIR}/mpi_sizeofs.o $FLAGS "
 EOF
 fi
 
