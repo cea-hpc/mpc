@@ -460,12 +460,14 @@ int __mpcomp_build_default_tree(mpcomp_instance_t *instance)
 	/* Build the default tree */
 	__mpcomp_build_tree( instance, n_leaves, depth, degree ) ;
 
+#if 0
 #if MPCOMP_MIC
 	instance->nb_cores = 1;
 	for ( i = 0; i < instance->core_depth; i++ )
 	     instance->nb_cores *= degree[i];
 	__mpcomp_compute_min_index( instance, instance->root, n_leaves );
 #endif /* MPCOMP_MIC */
+#endif
 
 	sctk_nodebug("__mpcomp_build_auto_tree done"); 
 
@@ -856,8 +858,6 @@ __mpcomp_build_tree( mpcomp_instance_t * instance, int n_leaves, int depth, int 
 #endif
 			 min_index[MPCOMP_AFFINITY_BALANCED] = 0 ;
 
-			 /* TODO: The NUMA allocation may be a constraint if we want to 
-                change the affinity during the execution */
 			 child_target_numa = sctk_get_node_from_cpu_topology( instance->topology, 
                      order[ min_index[MPCOMP_AFFINITY_COMPACT] ] ) ;
 
