@@ -1044,7 +1044,7 @@ void
 __kmpc_dispatch_init_4(ident_t *loc, kmp_int32 gtid, enum sched_type schedule,
     kmp_int32 lb, kmp_int32 ub, kmp_int32 st, kmp_int32 chunk )
 {
-    sctk_nodebug(
+    sctk_debug(
       "[%d] __kmpc_dispatch_init_4: enter %d -> %d incl, %d excl [%d] ck:%d sch:%d"
       ,
       ((mpcomp_thread_t *) sctk_openmp_thread_tls)->rank,
@@ -1055,7 +1055,7 @@ __kmpc_dispatch_init_4(ident_t *loc, kmp_int32 gtid, enum sched_type schedule,
     t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
     sctk_assert( t != NULL ) ;
     t->schedule_type = schedule;
-    t->static_nb_chunks_intel = 1; /* initialize default nb_chunks */
+    t->static_chunk_size_intel = 1; /* initialize default nb_chunks */
 
   switch( schedule ) {
     /* regular scheduling */
@@ -1067,7 +1067,7 @@ __kmpc_dispatch_init_4(ident_t *loc, kmp_int32 gtid, enum sched_type schedule,
       break ;
     case kmp_sch_static:
     case kmp_ord_static:
-      t->static_nb_chunks_intel = 0;
+      t->static_chunk_size_intel = 0;
       __mpcomp_static_loop_init(
 	  ((mpcomp_thread_t *) sctk_openmp_thread_tls),
 	  (long)lb, (long)ub+(long)st, (long)st, (long)0) ;
@@ -1095,7 +1095,51 @@ void
 __kmpc_dispatch_init_4u( ident_t *loc, kmp_int32 gtid, enum sched_type schedule,
                         kmp_uint32 lb, kmp_uint32 ub, kmp_int32 st, kmp_int32 chunk )
 {
-  not_implemented() ;
+    sctk_debug(
+      "[%d] __kmpc_dispatch_init_4u: enter %d -> %d incl, %d excl [%d] ck:%d sch:%d"
+      ,
+      ((mpcomp_thread_t *) sctk_openmp_thread_tls)->rank,
+      lb, ub, ub+st, st, chunk, schedule ) ;
+    
+    /* save the scheduling type */
+    mpcomp_thread_t * t ;
+    t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
+    sctk_assert( t != NULL ) ;
+    t->schedule_type = schedule;
+    t->static_chunk_size_intel = 1; /* initialize default nb_chunks */
+
+  switch( schedule ) {
+    /* regular scheduling */
+    case kmp_sch_dynamic_chunked:
+    case kmp_ord_dynamic_chunked:
+      __mpcomp_dynamic_loop_init( 
+	  ((mpcomp_thread_t *) sctk_openmp_thread_tls),
+	  (long)lb, (long)ub+(long)st, (long)st, (long)chunk ) ;
+      break ;
+    case kmp_sch_static:
+    case kmp_ord_static:
+      t->static_chunk_size_intel = 0;
+      __mpcomp_static_loop_init(
+	  ((mpcomp_thread_t *) sctk_openmp_thread_tls),
+	  (long)lb, (long)ub+(long)st, (long)st, (long)0) ;
+      break ; 
+    case kmp_sch_static_chunked:
+    case kmp_ord_static_chunked:
+      __mpcomp_static_loop_init(
+	  ((mpcomp_thread_t *) sctk_openmp_thread_tls),
+	  (long)lb, (long)ub+(long)st, (long)st, (long)chunk) ;
+      break ;
+    case kmp_sch_guided_chunked:
+    case kmp_ord_guided_chunked:
+      __mpcomp_dynamic_loop_init(
+	  ((mpcomp_thread_t *) sctk_openmp_thread_tls),
+	  (long)lb, (long)ub+(long)st, (long)st, (long)chunk ) ;
+    break ;
+    default:
+      not_implemented() ;
+      break ;
+  }
+  t->first_iteration = 1;
 }
 
 void
@@ -1103,23 +1147,50 @@ __kmpc_dispatch_init_8( ident_t *loc, kmp_int32 gtid, enum sched_type schedule,
                         kmp_int64 lb, kmp_int64 ub,
                         kmp_int64 st, kmp_int64 chunk )
 {
-  sctk_nodebug(
-      "[%d] __kmpc_dispatch_init_8: enter %ld -> %ld incl, %ld excl [%ld] ck:%ld sch:%d"
-      ,
+    sctk_debug(
+      "[%d] __kmpc_dispatch_init_8: enter %d -> %d incl, %d excl [%d] ck:%d sch:%d",
       ((mpcomp_thread_t *) sctk_openmp_thread_tls)->rank,
       lb, ub, ub+st, st, chunk, schedule ) ;
+    
+    /* save the scheduling type */
+    mpcomp_thread_t * t ;
+    t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
+    sctk_assert( t != NULL ) ;
+    t->schedule_type = schedule;
+    t->static_chunk_size_intel = 1; /* initialize default nb_chunks */
 
   switch( schedule ) {
+    /* regular scheduling */
     case kmp_sch_dynamic_chunked:
+    case kmp_ord_dynamic_chunked:
       __mpcomp_dynamic_loop_init( 
 	  ((mpcomp_thread_t *) sctk_openmp_thread_tls),
 	  lb, ub+st, st, chunk ) ;
       break ;
+    case kmp_sch_static:
+    case kmp_ord_static:
+      t->static_chunk_size_intel = 0;
+      __mpcomp_static_loop_init(
+	  ((mpcomp_thread_t *) sctk_openmp_thread_tls),
+	  lb, ub+st, st, 0) ;
+      break ; 
+    case kmp_sch_static_chunked:
+    case kmp_ord_static_chunked:
+      __mpcomp_static_loop_init(
+	  ((mpcomp_thread_t *) sctk_openmp_thread_tls),
+	  lb, ub+st, st, chunk) ;
+      break ;
+    case kmp_sch_guided_chunked:
+    case kmp_ord_guided_chunked:
+      __mpcomp_dynamic_loop_init(
+	  ((mpcomp_thread_t *) sctk_openmp_thread_tls),
+	 lb, ub+st, st, chunk ) ;
+    break ;
     default:
       not_implemented() ;
       break ;
   }
-
+  t->first_iteration = 1;
 }
 
 void
@@ -1127,7 +1198,51 @@ __kmpc_dispatch_init_8u( ident_t *loc, kmp_int32 gtid, enum sched_type schedule,
                          kmp_uint64 lb, kmp_uint64 ub,
                          kmp_int64 st, kmp_int64 chunk )
 {
-  not_implemented() ;
+    sctk_debug(
+      "[%d] __kmpc_dispatch_init_8u: enter %d -> %d incl, %d excl [%d] ck:%d sch:%d"
+      ,
+      ((mpcomp_thread_t *) sctk_openmp_thread_tls)->rank,
+      lb, ub, ub+st, st, chunk, schedule ) ;
+    
+    /* save the scheduling type */
+    mpcomp_thread_t * t ;
+    t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
+    sctk_assert( t != NULL ) ;
+    t->schedule_type = schedule;
+    t->static_chunk_size_intel = 1; /* initialize default nb_chunks */
+
+  switch( schedule ) {
+    /* regular scheduling */
+    case kmp_sch_dynamic_chunked:
+    case kmp_ord_dynamic_chunked:
+      __mpcomp_dynamic_loop_init( 
+	  ((mpcomp_thread_t *) sctk_openmp_thread_tls),
+	  (long)lb, (long)ub+(long)st, (long)st, (long)chunk ) ;
+      break ;
+    case kmp_sch_static:
+    case kmp_ord_static:
+      t->static_chunk_size_intel = 0;
+      __mpcomp_static_loop_init(
+	  ((mpcomp_thread_t *) sctk_openmp_thread_tls),
+	  (long)lb, (long)ub+(long)st, (long)st, (long)0) ;
+      break ; 
+    case kmp_sch_static_chunked:
+    case kmp_ord_static_chunked:
+      __mpcomp_static_loop_init(
+	  ((mpcomp_thread_t *) sctk_openmp_thread_tls),
+	  (long)lb, (long)ub+(long)st, (long)st, (long)chunk) ;
+      break ;
+    case kmp_sch_guided_chunked:
+    case kmp_ord_guided_chunked:
+      __mpcomp_dynamic_loop_init(
+	  ((mpcomp_thread_t *) sctk_openmp_thread_tls),
+	  (long)lb, (long)ub+(long)st, (long)st, (long)chunk ) ;
+    break ;
+    default:
+      not_implemented() ;
+      break ;
+  }
+  t->first_iteration = 1;
 }
 
 
@@ -1136,8 +1251,6 @@ int
 __kmpc_dispatch_next_4( ident_t *loc, kmp_int32 gtid, kmp_int32 *p_last,
                         kmp_int32 *p_lb, kmp_int32 *p_ub, kmp_int32 *p_st )
 {
-  /* TODO need to check the current schedule */
-
   int ret, schedule ;
   mpcomp_thread_t *t ;
   long from, to ;
@@ -1148,7 +1261,7 @@ __kmpc_dispatch_next_4( ident_t *loc, kmp_int32 gtid, kmp_int32 *p_last,
   schedule = t->schedule_type;
   
   /* Fix for intel */
-  if(t->first_iteration && t->static_nb_chunks_intel > 0)
+  if(t->first_iteration && t->static_chunk_size_intel > 0)
     t->static_current_chunk = -1;
 
   sctk_nodebug("__kmpc_dispatch_next_4: p_lb %ld, p_ub %ld, p_st %ld", *p_lb, *p_ub, *p_st);
@@ -1159,10 +1272,10 @@ __kmpc_dispatch_next_4( ident_t *loc, kmp_int32 gtid, kmp_int32 *p_last,
         ret = __mpcomp_dynamic_loop_next( &from, &to ) ;
     break;
     case kmp_sch_static:
-        if(t->static_nb_chunks_intel == 0 && t->first_iteration)
-            ret = __mpcomp_static_schedule_get_single_chunk (*p_lb, (*p_ub)+(*p_st), *p_st, &from, &to);
+        if(t->static_chunk_size_intel == 0 && t->first_iteration)
+            ret = __mpcomp_static_schedule_get_single_chunk ((long)(*p_lb), (long)((*p_ub)+(*p_st)), (long)(*p_st), &from, &to);
         else
-            ret = __mpcomp_static_loop_next( &from, &to ) ;
+            ret = __mpcomp_static_loop_next( &from, &to );
     break;
     case kmp_sch_static_chunked:
         ret = __mpcomp_static_loop_next( &from, &to ) ;
@@ -1178,8 +1291,8 @@ __kmpc_dispatch_next_4( ident_t *loc, kmp_int32 gtid, kmp_int32 *p_last,
     case kmp_ord_static:
     case kmp_ord_static_chunked:
         /* handle intel case for default chunk */
-        if(t->static_nb_chunks_intel == 0 && t->first_iteration)
-            ret = __mpcomp_static_schedule_get_single_chunk (*p_lb, (*p_ub)+(*p_st), *p_st, &from, &to);
+        if(t->static_chunk_size_intel == 0 && t->first_iteration)
+            ret = __mpcomp_static_schedule_get_single_chunk ((long)(*p_lb), (long)((*p_ub)+(*p_st)), (long)(*p_st), &from, &to);
         else
             ret = __mpcomp_ordered_static_loop_next( &from, &to ) ;
         t->current_ordered_iteration = from;
@@ -1244,33 +1357,209 @@ int
 __kmpc_dispatch_next_4u( ident_t *loc, kmp_int32 gtid, kmp_int32 *p_last,
                         kmp_uint32 *p_lb, kmp_uint32 *p_ub, kmp_int32 *p_st )
 {
-  not_implemented() ;
-  return 0 ; /* no more work */
+  int ret, schedule ;
+  mpcomp_thread_t *t ;
+  long from, to ;
+    
+  t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
+  sctk_assert(t != NULL);
+  /* get scheduling type used in kmpc_dispatch_init */
+  schedule = t->schedule_type;
+  
+  /* Fix for intel */
+  if(t->first_iteration && t->static_chunk_size_intel > 0)
+    t->static_current_chunk = -1;
+
+  sctk_nodebug("__kmpc_dispatch_next_4: p_lb %ld, p_ub %ld, p_st %ld", *p_lb, *p_ub, *p_st);
+  switch( schedule ) 
+  {
+    /* regular scheduling */
+    case kmp_sch_dynamic_chunked:
+        ret = __mpcomp_dynamic_loop_next( &from, &to ) ;
+    break;
+    case kmp_sch_static:
+        if(t->static_chunk_size_intel == 0 && t->first_iteration)
+            ret = __mpcomp_static_schedule_get_single_chunk ((long)(*p_lb), (long)((*p_ub)+(*p_st)), (long)(*p_st), &from, &to);
+        else
+            ret = __mpcomp_static_loop_next( &from, &to );
+    break;
+    case kmp_sch_static_chunked:
+        ret = __mpcomp_static_loop_next( &from, &to ) ;
+    break;
+    case kmp_sch_guided_chunked:
+        ret = __mpcomp_guided_loop_next( &from, &to ) ;
+    break ;
+    /* ordered scheduling */
+    case kmp_ord_dynamic_chunked:
+        ret = __mpcomp_ordered_dynamic_loop_next( &from, &to ) ;
+        t->current_ordered_iteration = from;
+    break;
+    case kmp_ord_static:
+    case kmp_ord_static_chunked:
+        /* handle intel case for default chunk */
+        if(t->static_chunk_size_intel == 0 && t->first_iteration)
+            ret = __mpcomp_static_schedule_get_single_chunk ((long)(*p_lb), (long)((*p_ub)+(*p_st)), (long)(*p_st), &from, &to);
+        else
+            ret = __mpcomp_ordered_static_loop_next( &from, &to ) ;
+        t->current_ordered_iteration = from;
+    break;
+    case kmp_ord_guided_chunked:
+        ret = __mpcomp_ordered_guided_loop_next( &from, &to ) ;
+        t->current_ordered_iteration = from;
+    break ;
+    default:
+        not_implemented();
+    break;
+  }
+  
+  /* we passed first iteration */
+  if(t->first_iteration)
+      t->first_iteration = 0;
+
+  sctk_nodebug( 
+      "[%d] __kmpc_dispatch_next_4: %ld -> %ld excl, %ld incl [%d] (ret=%d)",
+      t->rank,
+      from, to, to - t->info.loop_incr, *p_st, ret ) ;
+  
+  /* sync with intel runtime (A->B excluded with gcc / A->B included with intel) */
+  *p_lb = (kmp_uint32) from ;
+  *p_ub = (kmp_uint32)to - (kmp_uint32)t->info.loop_incr ;
+
+  if ( ret == 0 ) {
+      switch( schedule )   
+      {
+        //regular scheduling
+        case kmp_sch_dynamic_chunked:
+            __mpcomp_dynamic_loop_end_nowait() ;
+        break;
+        case kmp_sch_static:
+        case kmp_sch_static_chunked:
+            __mpcomp_static_loop_end_nowait() ;
+        break;
+        case kmp_sch_guided_chunked:
+            __mpcomp_guided_loop_end_nowait() ;
+        break ;
+        //ordered scheduling
+        case kmp_ord_dynamic_chunked:
+            __mpcomp_ordered_dynamic_loop_end_nowait() ;
+        break;
+        case kmp_ord_static:
+        case kmp_ord_static_chunked:
+            __mpcomp_ordered_static_loop_end_nowait() ;
+        break;
+        case kmp_ord_guided_chunked:
+            __mpcomp_ordered_guided_loop_end_nowait() ;
+        break ;
+        default:
+            not_implemented();
+        break;
+      }
+  }
+
+  return ret ;
 }
 
 int
 __kmpc_dispatch_next_8( ident_t *loc, kmp_int32 gtid, kmp_int32 *p_last,
                         kmp_int64 *p_lb, kmp_int64 *p_ub, kmp_int64 *p_st )
 {
-  
-  /* TODO need to check the current schedule */
-
-  int ret ;
+  int ret, schedule ;
   mpcomp_thread_t *t ;
-
+  long from, to ;
+    
   t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
+  sctk_assert(t != NULL);
+  /* get scheduling type used in kmpc_dispatch_init */
+  schedule = t->schedule_type;
+  
+  /* Fix for intel */
+  if(t->first_iteration && t->static_chunk_size_intel > 0)
+    t->static_current_chunk = -1;
 
-  ret = __mpcomp_dynamic_loop_next( (long *)p_lb, (long *)p_ub ) ;
+  sctk_nodebug("__kmpc_dispatch_next_4: p_lb %ld, p_ub %ld, p_st %ld", *p_lb, *p_ub, *p_st);
+  switch( schedule ) 
+  {
+    /* regular scheduling */
+    case kmp_sch_dynamic_chunked:
+        ret = __mpcomp_dynamic_loop_next( &from, &to ) ;
+    break;
+    case kmp_sch_static:
+        if(t->static_chunk_size_intel == 0 && t->first_iteration)
+            ret = __mpcomp_static_schedule_get_single_chunk ((long)(*p_lb), (long)((*p_ub)+(*p_st)), (long)(*p_st), &from, &to);
+        else
+            ret = __mpcomp_static_loop_next( &from, &to );
+    break;
+    case kmp_sch_static_chunked:
+        ret = __mpcomp_static_loop_next( &from, &to ) ;
+    break;
+    case kmp_sch_guided_chunked:
+        ret = __mpcomp_guided_loop_next( &from, &to ) ;
+    break ;
+    /* ordered scheduling */
+    case kmp_ord_dynamic_chunked:
+        ret = __mpcomp_ordered_dynamic_loop_next( &from, &to ) ;
+        t->current_ordered_iteration = from;
+    break;
+    case kmp_ord_static:
+    case kmp_ord_static_chunked:
+        /* handle intel case for default chunk */
+        if(t->static_chunk_size_intel == 0 && t->first_iteration)
+            ret = __mpcomp_static_schedule_get_single_chunk ((long)(*p_lb), (long)((*p_ub)+(*p_st)), (long)(*p_st), &from, &to);
+        else
+            ret = __mpcomp_ordered_static_loop_next( &from, &to ) ;
+        t->current_ordered_iteration = from;
+    break;
+    case kmp_ord_guided_chunked:
+        ret = __mpcomp_ordered_guided_loop_next( &from, &to ) ;
+        t->current_ordered_iteration = from;
+    break ;
+    default:
+        not_implemented();
+    break;
+  }
+  
+  /* we passed first iteration */
+  if(t->first_iteration)
+      t->first_iteration = 0;
 
   sctk_nodebug( 
-      "[%d] __kmpc_dispatch_next_8: %ld -> %ld excl, %ld incl (ret=%d)",
+      "[%d] __kmpc_dispatch_next_4: %ld -> %ld excl, %ld incl [%d] (ret=%d)",
       t->rank,
-      *p_lb, *p_ub, *p_ub - t->info.loop_incr, ret ) ;
-
-  *p_ub = *p_ub - t->info.loop_incr ;
+      from, to, to - t->info.loop_incr, *p_st, ret ) ;
+  
+  /* sync with intel runtime (A->B excluded with gcc / A->B included with intel) */
+  *p_lb = (kmp_int64) from ;
+  *p_ub = (kmp_int64)to - (kmp_int64)t->info.loop_incr ;
 
   if ( ret == 0 ) {
-    __mpcomp_dynamic_loop_end_nowait() ;
+      switch( schedule )   
+      {
+        //regular scheduling
+        case kmp_sch_dynamic_chunked:
+            __mpcomp_dynamic_loop_end_nowait() ;
+        break;
+        case kmp_sch_static:
+        case kmp_sch_static_chunked:
+            __mpcomp_static_loop_end_nowait() ;
+        break;
+        case kmp_sch_guided_chunked:
+            __mpcomp_guided_loop_end_nowait() ;
+        break ;
+        //ordered scheduling
+        case kmp_ord_dynamic_chunked:
+            __mpcomp_ordered_dynamic_loop_end_nowait() ;
+        break;
+        case kmp_ord_static:
+        case kmp_ord_static_chunked:
+            __mpcomp_ordered_static_loop_end_nowait() ;
+        break;
+        case kmp_ord_guided_chunked:
+            __mpcomp_ordered_guided_loop_end_nowait() ;
+        break ;
+        default:
+            not_implemented();
+        break;
+      }
   }
 
   return ret ;
@@ -1280,32 +1569,130 @@ int
 __kmpc_dispatch_next_8u( ident_t *loc, kmp_int32 gtid, kmp_int32 *p_last,
                         kmp_uint64 *p_lb, kmp_uint64 *p_ub, kmp_int64 *p_st )
 {
-  not_implemented() ;
-  return 0 ; /* no more work */
+  int ret, schedule ;
+  mpcomp_thread_t *t ;
+  long from, to ;
+    
+  t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
+  sctk_assert(t != NULL);
+  /* get scheduling type used in kmpc_dispatch_init */
+  schedule = t->schedule_type;
+  
+  /* Fix for intel */
+  if(t->first_iteration && t->static_chunk_size_intel > 0)
+    t->static_current_chunk = -1;
+
+  sctk_nodebug("__kmpc_dispatch_next_4: p_lb %ld, p_ub %ld, p_st %ld", *p_lb, *p_ub, *p_st);
+  switch( schedule ) 
+  {
+    /* regular scheduling */
+    case kmp_sch_dynamic_chunked:
+        ret = __mpcomp_dynamic_loop_next( &from, &to ) ;
+    break;
+    case kmp_sch_static:
+        if(t->static_chunk_size_intel == 0 && t->first_iteration)
+            ret = __mpcomp_static_schedule_get_single_chunk ((long)(*p_lb), (long)((*p_ub)+(*p_st)), (long)(*p_st), &from, &to);
+        else
+            ret = __mpcomp_static_loop_next( &from, &to );
+    break;
+    case kmp_sch_static_chunked:
+        ret = __mpcomp_static_loop_next( &from, &to ) ;
+    break;
+    case kmp_sch_guided_chunked:
+        ret = __mpcomp_guided_loop_next( &from, &to ) ;
+    break ;
+    /* ordered scheduling */
+    case kmp_ord_dynamic_chunked:
+        ret = __mpcomp_ordered_dynamic_loop_next( &from, &to ) ;
+        t->current_ordered_iteration = from;
+    break;
+    case kmp_ord_static:
+    case kmp_ord_static_chunked:
+        /* handle intel case for default chunk */
+        if(t->static_chunk_size_intel == 0 && t->first_iteration)
+            ret = __mpcomp_static_schedule_get_single_chunk ((long)(*p_lb), (long)((*p_ub)+(*p_st)), (long)(*p_st), &from, &to);
+        else
+            ret = __mpcomp_ordered_static_loop_next( &from, &to ) ;
+        t->current_ordered_iteration = from;
+    break;
+    case kmp_ord_guided_chunked:
+        ret = __mpcomp_ordered_guided_loop_next( &from, &to ) ;
+        t->current_ordered_iteration = from;
+    break ;
+    default:
+        not_implemented();
+    break;
+  }
+  
+  /* we passed first iteration */
+  if(t->first_iteration)
+      t->first_iteration = 0;
+
+  sctk_nodebug( 
+      "[%d] __kmpc_dispatch_next_4: %ld -> %ld excl, %ld incl [%d] (ret=%d)",
+      t->rank,
+      from, to, to - t->info.loop_incr, *p_st, ret ) ;
+  
+  /* sync with intel runtime (A->B excluded with gcc / A->B included with intel) */
+  *p_lb = (kmp_uint64) from ;
+  *p_ub = (kmp_uint64)to - (kmp_uint64)t->info.loop_incr ;
+
+  if ( ret == 0 ) {
+      switch( schedule )   
+      {
+        //regular scheduling
+        case kmp_sch_dynamic_chunked:
+            __mpcomp_dynamic_loop_end_nowait() ;
+        break;
+        case kmp_sch_static:
+        case kmp_sch_static_chunked:
+            __mpcomp_static_loop_end_nowait() ;
+        break;
+        case kmp_sch_guided_chunked:
+            __mpcomp_guided_loop_end_nowait() ;
+        break ;
+        //ordered scheduling
+        case kmp_ord_dynamic_chunked:
+            __mpcomp_ordered_dynamic_loop_end_nowait() ;
+        break;
+        case kmp_ord_static:
+        case kmp_ord_static_chunked:
+            __mpcomp_ordered_static_loop_end_nowait() ;
+        break;
+        case kmp_ord_guided_chunked:
+            __mpcomp_ordered_guided_loop_end_nowait() ;
+        break ;
+        default:
+            not_implemented();
+        break;
+      }
+  }
+
+  return ret ;
 }
 
 void
 __kmpc_dispatch_fini_4( ident_t *loc, kmp_int32 gtid )
 {
-  //not_implemented() ;
+    /* Nothing to do here, the end is handled by kmp_dispatch_next_4 */
 }
 
 void
 __kmpc_dispatch_fini_8( ident_t *loc, kmp_int32 gtid )
 {
-  not_implemented() ;
+    /* Nothing to do here, the end is handled by kmp_dispatch_next_4u */
 }
 
 void
 __kmpc_dispatch_fini_4u( ident_t *loc, kmp_int32 gtid )
 {
-  not_implemented() ;
+    /* Nothing to do here, the end is handled by kmp_dispatch_next_8 */
 }
 
 void
 __kmpc_dispatch_fini_8u( ident_t *loc, kmp_int32 gtid )
 {
-  not_implemented() ;
+    /* Nothing to do here, the end is handled by kmp_dispatch_next_8u */
 }
 
 

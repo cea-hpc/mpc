@@ -345,7 +345,7 @@ typedef struct mpcomp_thread_s
 	/* -- STATIC FOR LOOP CONSTRUCT -- */
 	int static_nb_chunks;         /* Number of total static chunk for the thread */
 	int static_current_chunk;     /* Current chunk index */
-    int static_nb_chunks_intel;  /* save nb_chunks from intel for kmp_dispatch_next */
+    int static_chunk_size_intel;  /* save nb_chunks from intel for kmp_dispatch_next */
     int first_iteration; /* is it the first iteration ? */
 
 	/* -- DYNAMIC FOR LOOP CONSTRUCT -- */
