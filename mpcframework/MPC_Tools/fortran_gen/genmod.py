@@ -180,7 +180,7 @@ const_types = [ "MPI_Comm", "MPI_Datatype", "MPI_Group", "MPI_Win", "MPI_File", 
 
 for t in const_types:
 	module_file_data += ('TYPE :: ' + t + '\n'
-			 '\tINTEGER :: VAL\n'
+			 '   INTEGER :: VAL\n'
 			 'END TYPE ' + t + '\n\n');
 
 
@@ -439,7 +439,7 @@ for f in mpi_interface:
 		if i < (len(names) - 1) :
 			module_file_data += ","
 			if (((i+1)%3) == 0) and (i):
-				module_file_data+= "&\n\t"
+				module_file_data+= "&\n   "
 	module_file_data+=")\n"
 	#USE CONSTANTS IF NEEDED
 	#Hacky way to get unique elements
@@ -450,7 +450,7 @@ for f in mpi_interface:
 			string_uses += uses[i]
 			if i < (len(uses) -1):
 				string_uses += ","
-		module_file_data+= "\tUSE MPI_CONSTANTS,ONLY: " + string_uses + "\n"
+		module_file_data+= "   USE MPI_CONSTANTS,ONLY: " + string_uses + "\n"
 	
 	#DUMP ARGS
 	if len(names) != len(types) or  len(types) != len(wasprefixed):
@@ -458,9 +458,9 @@ for f in mpi_interface:
 
 	for i in range( 0, len( names ) ):
 		if wasprefixed[i]:
-			module_file_data+= "\t" + types[i] + "\n";
+			module_file_data+= "   " + types[i] + "\n";
 		else:
-			module_file_data+= "\t" + types[i] + "\t" + names[i] + "\n";
+			module_file_data+= "   " + types[i] + "\t" + names[i] + "\n";
 
 
 	module_file_data+= "END SUBROUTINE " + capsfunctioname + "\n"

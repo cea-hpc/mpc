@@ -25,12 +25,12 @@
 
 int is_mpif_only = 0;
 
-#define MPI_INTEGER_VAL(sa,a) printf("{ \"name\" : \"%s\" , \"decl\" : \"INTEGER %s\\nPARAMETER (%s=%d)\\n\", \"mpif_only\" : %d },\n",sa,sa,sa,(int)a, is_mpif_only)
-#define MPI_INTEGER_ARRAY_CONV(sa,size) printf("{ \"name\" : \"%s\" , \"decl\" : \"integer %s(%d)\\n COMMON %s\\n\", \"mpif_only\" : %d },\n",sa, sa, size, sa, is_mpif_only)
-#define MPI_INTEGER_ARRAY_OF_ARRAY_CONV(sa,size) printf("{ \"name\" : \"%s\" , \"decl\" : \"integer %s(%d,1)\\n\\n COMMON %s\\n\", \"mpif_only\" : %d },\n",sa, sa,size, sa, is_mpif_only)
-#define MPI_INTEGER_8_VAL(sa,a) printf("{ \"name\" : \"%s\" , \"decl\" : \"INTEGER*8 %s\\nPARAMETER (%s=%ld)\\n\", \"mpif_only\" : %d },\n",sa, sa,sa,(long)a, is_mpif_only)
-#define MPI_POINTER_CONV(sa) printf("{ \"name\" : \"%s\" , \"decl\" : \"EXTERNAL %s\\n\", \"mpif_only\" : %d },\n",sa, sa, is_mpif_only)
-#define MPI_DOUBLE_CONV(sa) printf("{ \"name\" : \"%s\" , \"decl\" : \"DOUBLE PRECISION %s\\n\", \"mpif_only\" : %d },\n",sa, sa, is_mpif_only)
+#define MPI_INTEGER_VAL(sa,a) printf("{ \"name\" : \"%s\" , \"decl\" : \"       INTEGER %s\\n       PARAMETER (%s=%d)\\n\", \"mpif_only\" : %d },\n",sa,sa,sa,(int)a, is_mpif_only)
+#define MPI_INTEGER_ARRAY_CONV(sa,size) printf("{ \"name\" : \"%s\" , \"decl\" : \"       integer %s(%d)\\n       COMMON %s\\n\", \"mpif_only\" : %d },\n",sa, sa, size, sa, is_mpif_only)
+#define MPI_INTEGER_ARRAY_OF_ARRAY_CONV(sa,size) printf("{ \"name\" : \"%s\" , \"decl\" : \"       integer %s(%d,1)\\n\\n       COMMON %s\\n\", \"mpif_only\" : %d },\n",sa, sa,size, sa, is_mpif_only)
+#define MPI_INTEGER_8_VAL(sa,a) printf("{ \"name\" : \"%s\" , \"decl\" : \"       INTEGER*8 %s\\n       PARAMETER (%s=%ld)\\n\", \"mpif_only\" : %d },\n",sa, sa,sa,(long)a, is_mpif_only)
+#define MPI_POINTER_CONV(sa) printf("{ \"name\" : \"%s\" , \"decl\" : \"       EXTERNAL %s\\n\", \"mpif_only\" : %d },\n",sa, sa, is_mpif_only)
+#define MPI_DOUBLE_CONV(sa) printf("{ \"name\" : \"%s\" , \"decl\" : \"       DOUBLE PRECISION %s\\n\", \"mpif_only\" : %d },\n",sa, sa, is_mpif_only)
 
 int generate_mpi_fortran_constants()
 {

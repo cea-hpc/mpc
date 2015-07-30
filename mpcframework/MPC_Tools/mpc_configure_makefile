@@ -355,9 +355,9 @@ echo "Preparing includes for Fortran"
 FORTRAN_PYTHON="/usr/bin/env python"
 	#/!\ see here that $(CC) is not defined it is because we want it
 	#resolved in the makefile not here make sure you escape the values...
-FORTRAN_CC="\$(CC) -g -lmpc_framework $SCTK_CFLAGS -IINSTALL/include/mpcframework -LINSTALL/lib -lmpc -lmpc_tdb_remote_static $SCTK_LDFLAGS -lm"
+FORTRAN_CC="\$(CC) -g -lmpc_framework $SCTK_CFLAGS -IINSTALL/include/mpcframework -LINSTALL/lib $SCTK_LDFLAGS -lm"
 	#/!\ Same story for FC
-FORTRAN_FC="\$(F77) -g $SCTK_CFLAGS -IINSTALL/include/mpcframework -LINSTALL/lib -lmpc -lmpc_tdb_remote_static $SCTK_LDFLAGS -lm"
+FORTRAN_FC="\$(F77) -g $SCTK_CFLAGS -IINSTALL/include/mpcframework -LINSTALL/lib $SCTK_LDFLAGS -lm"
 FORTAN_MPIH="${MPC_SOURCE_DIR}/MPC_MPI/include/mpc_mpi.h"
 FORTRAN_INSTALL="${PWD}/INSTALL/include/mpcframework/"
 #Call the script
