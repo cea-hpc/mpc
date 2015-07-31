@@ -27,7 +27,7 @@ int is_mpif_only = 0;
 
 #define MPI_INTEGER_VAL(sa,a) printf("{ \"name\" : \"%s\" , \"decl\" : \"       INTEGER %s\\n       PARAMETER (%s=%d)\\n\", \"mpif_only\" : %d },\n",sa,sa,sa,(int)a, is_mpif_only)
 #define MPI_INTEGER_ARRAY_CONV(sa,size) printf("{ \"name\" : \"%s\" , \"decl\" : \"       integer %s(%d)\\n       COMMON %s\\n\", \"mpif_only\" : %d },\n",sa, sa, size, sa, is_mpif_only)
-#define MPI_INTEGER_ARRAY_OF_ARRAY_CONV(sa,size) printf("{ \"name\" : \"%s\" , \"decl\" : \"       integer %s(%d,1)\\n\\n       COMMON %s\\n\", \"mpif_only\" : %d },\n",sa, sa,size, sa, is_mpif_only)
+#define MPI_INTEGER_ARRAY_OF_ARRAY_CONV(sa,size) printf("{ \"name\" : \"%s\" , \"decl\" : \"       integer %s(%d,1)\\n\       COMMON %s\\n\", \"mpif_only\" : %d },\n",sa, sa,size, sa, is_mpif_only)
 #define MPI_INTEGER_8_VAL(sa,a) printf("{ \"name\" : \"%s\" , \"decl\" : \"       INTEGER*8 %s\\n       PARAMETER (%s=%ld)\\n\", \"mpif_only\" : %d },\n",sa, sa,sa,(long)a, is_mpif_only)
 #define MPI_POINTER_CONV(sa) printf("{ \"name\" : \"%s\" , \"decl\" : \"       EXTERNAL %s\\n\", \"mpif_only\" : %d },\n",sa, sa, is_mpif_only)
 #define MPI_DOUBLE_CONV(sa) printf("{ \"name\" : \"%s\" , \"decl\" : \"       DOUBLE PRECISION %s\\n\", \"mpif_only\" : %d },\n",sa, sa, is_mpif_only)
@@ -276,23 +276,6 @@ int generate_mpi_fortran_constants()
 	MPI_INTEGER_VAL ("MPI_ERRORS_ARE_FATAL", 2);
 
 	MPI_INTEGER_VAL ("MPI_KEYVAL_INVALID", -1);
-
-	MPI_POINTER_CONV ("MPI_NULL_DELETE_FN");
-	MPI_POINTER_CONV ("MPI_NULL_COPY_FN");
-	MPI_POINTER_CONV ("MPI_DUP_FN");
-
-	MPI_POINTER_CONV ("MPI_TYPE_NULL_DELETE_FN");
-	MPI_POINTER_CONV ("MPI_TYPE_NULL_COPY_FN");
-	MPI_POINTER_CONV ("MPI_TYPE_DUP_FN");
-
-	MPI_POINTER_CONV ("MPI_COMM_NULL_DELETE_FN");
-	MPI_POINTER_CONV ("MPI_COMM_NULL_COPY_FN");
-	MPI_POINTER_CONV ("MPI_COMM_DUP_FN");
-
-	MPI_POINTER_CONV ("MPI_WIN_NULL_DELETE_FN");
-	MPI_POINTER_CONV ("MPI_WIN_NULL_COPY_FN");
-	MPI_POINTER_CONV ("MPI_WIN_DUP_FN");
-
 	MPI_INTEGER_VAL ("MPI_COMM_SELF", MPI_COMM_SELF);
 
 	MPI_INTEGER_VAL ("MPI_MAX_KEY_DEFINED", 7);
@@ -351,6 +334,22 @@ int generate_mpi_fortran_constants()
 	 * reason we set the is_mpif_only to 1 for this section */
 
 	is_mpif_only = 1;
+
+	MPI_POINTER_CONV ("MPI_NULL_DELETE_FN");
+	MPI_POINTER_CONV ("MPI_NULL_COPY_FN");
+	MPI_POINTER_CONV ("MPI_DUP_FN");
+
+	MPI_POINTER_CONV ("MPI_TYPE_NULL_DELETE_FN");
+	MPI_POINTER_CONV ("MPI_TYPE_NULL_COPY_FN");
+	MPI_POINTER_CONV ("MPI_TYPE_DUP_FN");
+
+	MPI_POINTER_CONV ("MPI_COMM_NULL_DELETE_FN");
+	MPI_POINTER_CONV ("MPI_COMM_NULL_COPY_FN");
+	MPI_POINTER_CONV ("MPI_COMM_DUP_FN");
+
+	MPI_POINTER_CONV ("MPI_WIN_NULL_DELETE_FN");
+	MPI_POINTER_CONV ("MPI_WIN_NULL_COPY_FN");
+	MPI_POINTER_CONV ("MPI_WIN_DUP_FN");
 
 	MPI_POINTER_CONV( "MPI_WTICK" );
 	MPI_POINTER_CONV( "PMPI_WTICK" );
