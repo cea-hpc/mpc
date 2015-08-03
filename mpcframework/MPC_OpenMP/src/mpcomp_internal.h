@@ -45,7 +45,7 @@ extern "C"
 /* Maximum number of threads for each team of a parallel region */
 #define MPCOMP_MAX_THREADS		256
 /* Number of threads per microVP */
-#define MPCOMP_MAX_THREADS_PER_MICROVP	8
+#define MPCOMP_MAX_THREADS_PER_MICROVP	1
 
 
 /* Maximum number of alive 'for dynamic' and 'for guided'  construct */
@@ -66,6 +66,7 @@ extern "C"
 /* MACRO FOR PERFORMANCE */
 #define MPCOMP_MALLOC_ON_NODE	1
 #define MPCOMP_TRANSFER_INFO_ON_NODES 0
+#define MPCOMP_ALIGN 1
 
 #define MPCOMP_CHUNKS_NOT_AVAIL 1
 #define MPCOMP_CHUNKS_AVAIL     2
@@ -403,7 +404,11 @@ typedef struct mpcomp_thread_s
 	  sctk_mctx_t vp_context;   /* Context including registers, stack pointer, ... */
 	  sctk_thread_t pid; 	    /* Thread ID */
 
+#if MPCOMP_ALIGN
+	  mpcomp_new_parallel_region_info_t info __attribute__ ((aligned (128))) ;
+#else
 	  mpcomp_new_parallel_region_info_t info ;
+#endif
 
 	  int nb_threads;           /* Total number of threads running on the Micro VP */
 	  int next_nb_threads;
@@ -449,7 +454,11 @@ typedef struct mpcomp_thread_s
 	  int depth;                      /* Depth in the tree */
 	  int nb_children;                /* Number of children */
 
+#if MPCOMP_ALIGN
+      mpcomp_new_parallel_region_info_t info __attribute__ ((aligned (128))) ;
+#else
 	  mpcomp_new_parallel_region_info_t info ;
+#endif
 
 	  /* The following indices correspond to the 'rank' value in microVPs */
 	  int min_index[MPCOMP_AFFINITY_NB];   /* Flat min index of leaves in this subtree */
@@ -462,20 +471,34 @@ typedef struct mpcomp_thread_s
 	       struct mpcomp_mvp_s **leaf;
 	  } children;                         /* Children list */
 
-#if 0
-	  sctk_spinlock_t lock;	        /* Lock for structure updates */
-#endif
+#if MPCOMP_ALIGN
+	  volatile int slave_running __attribute__ ((aligned (128)));
+#else
 	  char pad0[64];                /* Padding */
-	  volatile int slave_running;
+      volatile int slave_running ;
 	  char pad1[64];                /* Padding */
+#endif
 
-	  sctk_atomics_int barrier;	                /* Barrier for the child team */
-
+#if MPCOMP_ALIGN
+	  sctk_atomics_int barrier __attribute__ ((aligned (128)));	                /* Barrier for the child team */
+#else
+	  sctk_atomics_int barrier ;
 	  char pad2[64];                       /* Padding */
-	  volatile long barrier_done;          /* Is the barrier (for the child team) over? */
+#endif
+
+#if MPCOMP_ALIGN
+	  volatile long barrier_done __attribute__ ((aligned (128)));          /* Is the barrier (for the child team) over? */
+#else
+	  volatile long barrier_done ;
 	  char pad3[64];                       /* Padding */
-	  volatile long barrier_num_threads;   /* Number of threads involved in the barrier */
+#endif
+
+#if MPCOMP_ALIGN
+	  volatile long barrier_num_threads __attribute__ ((aligned (128)));   /* Number of threads involved in the barrier */
+#else
+	  volatile long barrier_num_threads ;   /* Number of threads involved in the barrier */
 	  char pad4[64];                       /* Padding */
+#endif
 
 
 #if MPCOMP_TASK
@@ -489,11 +512,6 @@ typedef struct mpcomp_thread_s
 
 	  int id_numa;  /* NUMA node on which this node is allocated */
         
-#if 0
-	  int num_threads;          /* Number of threads in the current team */
-	  void *(*func) (void *);
-	  void *shared;
-#endif
      } mpcomp_node_t;
 
 

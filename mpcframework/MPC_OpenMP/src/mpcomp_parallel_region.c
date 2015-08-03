@@ -255,8 +255,8 @@ static inline mpcomp_node_t * __mpcomp_wakeup_leaf(
 	return n ;
 }
 
-/* TODO put only arg_num_threads and info */
-void __mpcomp_internal_begin_parallel_region(int arg_num_threads, 
+inline void 
+__mpcomp_internal_begin_parallel_region(int arg_num_threads, 
 		mpcomp_new_parallel_region_info_t info )
 {
   mpcomp_thread_t * t ;
@@ -388,7 +388,8 @@ void __mpcomp_internal_begin_parallel_region(int arg_num_threads,
 	return ;
 }
 
-void __mpcomp_internal_end_parallel_region( mpcomp_instance_t * instance )
+inline void 
+__mpcomp_internal_end_parallel_region( mpcomp_instance_t * instance )
 {
 	mpcomp_node_t * root ;
 	mpcomp_thread_t * master ;

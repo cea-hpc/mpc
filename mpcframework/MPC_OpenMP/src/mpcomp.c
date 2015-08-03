@@ -538,6 +538,9 @@ TODO( "If OMP_NUM_THREADS is 0, let it equal to 0 by default and handle it later
 #if MPCOMP_COHERENCY_CHECKING
     fprintf( stderr, "\tCoherency check enabled\n" ) ;
 #endif
+#if MPCOMP_ALIGN
+    fprintf( stderr, "\tStructure field alignement\n" ) ;
+#endif
     if ( OMP_WARN_NESTED ) {
       fprintf( stderr, "\tOMP_WARN_NESTED %d (breakpoint mpcomp_warn_nested)\n", OMP_WARN_NESTED ) ;
     } else {

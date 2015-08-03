@@ -230,6 +230,12 @@ __mpcomp_restrict_topology(hwloc_topology_t *restrictedTopology, int nb_mvps)
      nb_pus = hwloc_get_nbobjs_by_type(topology, HWLOC_OBJ_PU);
      nb_mvps_per_core = nb_mvps / nb_cores;
 
+     if (sctk_get_verbosity()>=3) 
+     {
+fprintf( stderr, "[[%d]] __mpcomp_restrict_topology: General Topo: nb_cores = %d, nb_pus = %d\n",
+taskRank, nb_cores, nb_pus ) ;
+}
+
      mvp = 0;
      /* Iterate through all cores */
      for (core = 0; core < nb_cores && mvp < nb_mvps; core++) 
@@ -568,6 +574,16 @@ __mpcomp_build_tree( mpcomp_instance_t * instance, int n_leaves, int depth, int 
 	  sctk_assert( instance->mvps != NULL );
 	  sctk_assert( __mpcomp_check_tree_parameters( n_leaves, depth, degree ) );
 	  sctk_assert( n_leaves == instance->nb_mvps ) ;
+
+if ( __mpcomp_check_tree_parameters( n_leaves, depth, degree ) == 0 ) {
+    sctk_error("Wrong OMP_TREE!" ) ;
+    sctk_abort() ;
+}
+
+if ( n_leaves != instance->nb_mvps ) {
+    sctk_error("Wrong OMP_TREE! (test 2)" ) ;
+    sctk_abort() ;
+}
 
 	  /* Fill instance paratemers regarding tree shape */
 	  instance->tree_depth = depth ;
