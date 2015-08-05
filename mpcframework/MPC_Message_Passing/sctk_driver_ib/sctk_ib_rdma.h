@@ -116,9 +116,13 @@ sctk_ib_rdma_done_t;
  *  FUNCTIONS
  *----------------------------------------------------------*/
 
-sctk_ibuf_t *sctk_ib_rdma_prepare_req ( sctk_rail_info_t *rail,
-                                        sctk_ib_qp_t *remote, sctk_thread_ptp_message_t *msg, size_t size,
-                                        int low_memory_mode );
+sctk_ibuf_t *sctk_ib_rdma_rendezvous_prepare_req ( sctk_rail_info_t *rail,
+													sctk_ib_qp_t *remote, sctk_thread_ptp_message_t *msg, size_t size,
+													int low_memory_mode );
+
+void sctk_ib_rdma_rendezvous_prepare_send_msg ( sctk_ib_rail_info_t *rail_ib,
+											    sctk_thread_ptp_message_t *msg, size_t size );
+
 
 int
 sctk_ib_rdma_poll_recv ( sctk_rail_info_t *rail, sctk_ibuf_t *ibuf );
@@ -126,14 +130,12 @@ sctk_ib_rdma_poll_recv ( sctk_rail_info_t *rail, sctk_ibuf_t *ibuf );
 int
 sctk_ib_rdma_poll_send ( sctk_rail_info_t *rail, sctk_ibuf_t *ibuf );
 
-void sctk_ib_rdma_prepare_send_msg ( sctk_ib_rail_info_t *rail_ib,
-                                     sctk_thread_ptp_message_t *msg, size_t size );
+
 void sctk_ib_rdma_print ( sctk_thread_ptp_message_t *msg );
 
 sctk_ibuf_t *sctk_ib_rdma_eager_prepare_msg ( sctk_ib_rail_info_t *rail_ib,
                                               sctk_ib_qp_t *remote, sctk_thread_ptp_message_t *msg, size_t size );
 
-sctk_thread_ptp_message_t *
-sctk_ib_rdma_recv_done_remote_imm ( sctk_rail_info_t *rail, int imm_data );
+sctk_thread_ptp_message_t * sctk_ib_rdma_recv_done_remote_imm ( sctk_rail_info_t *rail, int imm_data );
 #endif
 #endif

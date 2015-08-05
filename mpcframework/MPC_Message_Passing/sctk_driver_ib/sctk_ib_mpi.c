@@ -114,11 +114,11 @@ buffered:
 rdma:
 	{}
 	sctk_debug ( "Size of message: %lu", size );
-	ibuf = sctk_ib_rdma_prepare_req ( rail, remote, msg, size, -1 );
+	ibuf = sctk_ib_rdma_rendezvous_prepare_req ( rail, remote, msg, size, -1 );
 
 	/* Send message */
 	sctk_ib_qp_send_ibuf ( rail_ib, remote, ibuf );
-	sctk_ib_rdma_prepare_send_msg ( rail_ib, msg, size );
+	sctk_ib_rdma_rendezvous_prepare_send_msg ( rail_ib, msg, size );
 	PROF_INC ( rail_ib->rail, ib_rdma_nb );
 exit:
 	{}
