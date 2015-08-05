@@ -149,7 +149,7 @@ int sctk_win_relax( sctk_window_t win_id )
 }
 
 
-sctk_window_t sctk_window_init( void *addr, size_t size, size_t disp_unit )
+sctk_window_t sctk_window_init( void *addr, size_t size, size_t disp_unit, sctk_communicator_t comm )
 {
 	struct sctk_window * win = sctk_win_register();
 	
@@ -158,6 +158,7 @@ sctk_window_t sctk_window_init( void *addr, size_t size, size_t disp_unit )
 	
 	/* Set window owner task */
 	win->owner = sctk_get_task_rank();
+	win->comm = comm;
 	
 	/* Save CTX */
 	win->start_addr = addr;
@@ -416,7 +417,40 @@ void sctk_window_RDMA_write_local( struct sctk_window * win,  void * src_addr, s
 	memcpy( win->start_addr + offset, src_addr, size );
 }
 
+void sctk_window_RDMA_write_net( struct sctk_window * win, void * src_addr, size_t size, size_t dest_offset, sctk_request_t  * req  )
+{
+	sctk_rail_info_t * rdma_rail = sctk_rail_get_rdma ();
+	
+	if( !rdma_rail->rdma_write )
+	{
+		sctk_fatal("This rails despite flagged RDMA did not define rdma_write");
+	}
 
+
+	void * dest_address = win->start_addr + win->disp_unit * dest_offset;
+	void * win_end_addr = win->start_addr + win->size;
+	
+	
+	if( win_end_addr < (dest_address + size ) )
+	{
+		sctk_fatal("Error RDMA write operation overflows the window");
+	}
+	
+	
+	/* Pin local segment */
+	sctk_rail_pin_ctx_t local_pin;
+	sctk_rail_pin_ctx_init( &local_pin, src_addr, size );
+	
+	sctk_thread_ptp_message_t * msg = sctk_create_header (win->owner,SCTK_MESSAGE_CONTIGUOUS);
+	
+	sctk_init_request(req,win->comm, REQUEST_SEND);
+	sctk_set_header_in_message (msg, -8, win->comm, sctk_get_task_rank (), win->owner, req, size,SCTK_RDMA_MESSAGE, SCTK_DATATYPE_IGNORE );
+
+	rdma_rail->rdma_write( rdma_rail, msg, src_addr, local_pin.list, dest_address, win->pin.list, size );
+	
+	/* Note that we use the cache here */
+	sctk_rail_pin_ctx_release( &local_pin );
+}
 
 
 void sctk_window_RDMA_write( sctk_window_t win_id, void * src_addr, size_t size, size_t dest_offset, sctk_request_t  * req  )
@@ -440,7 +474,7 @@ void sctk_window_RDMA_write( sctk_window_t win_id, void * src_addr, size_t size,
 		sctk_window_RDMA_write_local( win,  src_addr, size,  dest_offset );
 		return;
 	}
-	else /*if( win->is_emulated )*/
+	else if( win->is_emulated )
 	{
 		/* Emulated write using control messages */
 		struct sctk_window_emulated_RDMA erma;
@@ -450,11 +484,12 @@ void sctk_window_RDMA_write( sctk_window_t win_id, void * src_addr, size_t size,
 		/* Note that we store the data transfer req in the request */
 		sctk_message_isend_class( win->owner, src_addr, size , TAG_RDMA_WRITE, SCTK_COMM_WORLD, SCTK_RDMA_WINDOW_MESSAGES, req );
 	}
-	/*
+
 	else
 	{
-		Actual RDMA write
-	}*/
+		
+		sctk_window_RDMA_write_net( win, src_addr, size, dest_offset, req  );
+	}
 	
 }
 

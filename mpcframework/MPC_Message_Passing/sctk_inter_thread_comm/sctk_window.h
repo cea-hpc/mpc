@@ -40,14 +40,14 @@ struct sctk_window
 	size_t disp_unit;
 	int owner;
 	sctk_rail_pin_ctx_t pin;
-	
+	sctk_communicator_t comm;
 	int is_emulated;
 	sctk_spinlock_t lock;
 	unsigned int refcounter;
 };
 
 /* Local init and release */
-sctk_window_t sctk_window_init( void *addr, size_t size, size_t disp_unit );
+sctk_window_t sctk_window_init( void *addr, size_t size, size_t disp_unit, sctk_communicator_t comm );
 void sctk_window_release( sctk_window_t win, void *addr, size_t size, size_t disp_unit );
 
 /* Refcounter interactions */

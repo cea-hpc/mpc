@@ -195,8 +195,8 @@ void sctk_message_isend_class_src( int src , int dest, void * data, size_t size,
 {
 	if (dest == SCTK_PROC_NULL)
 	{
-	sctk_init_request(req,comm, REQUEST_SEND);
-	return;
+		sctk_init_request(req,comm, REQUEST_SEND);
+		return;
 	}
 
 	struct sctk_internal_ptp_s * ptp_internal = sctk_get_internal_ptp ( src );
