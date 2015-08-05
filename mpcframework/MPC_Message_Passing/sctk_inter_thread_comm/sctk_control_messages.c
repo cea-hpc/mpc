@@ -37,6 +37,7 @@
 #include <sctk_rail.h>
 #include <sctk_alloc.h>
 #include <sctk_window.h>
+#include "sctk_topological_polling.h"
 
 
 /************************************************************************/
@@ -358,6 +359,9 @@ sctk_spinlock_t __ctrl_msg_list_lock = SCTK_SPINLOCK_INITIALIZER;
 
 static volatile int ____ctrl_msg_list_count = 0;
 
+struct sctk_topological_polling_tree ___control_message_list_polling_tree;
+
+
 struct sctk_ctrl_msg_cell
 {
 	sctk_thread_ptp_message_t * msg;
@@ -367,6 +371,9 @@ struct sctk_ctrl_msg_cell
 };
 
 struct sctk_ctrl_msg_cell * __ctrl_msg_list = NULL;
+
+
+
 
 void sctk_control_message_push( sctk_thread_ptp_message_t * msg )
 {
@@ -422,9 +429,9 @@ void sctk_control_message_process_all()
 
 static volatile int __inside_sctk_control_message_process = 0;
 
-void sctk_control_message_process()
+void ___sctk_control_message_process(void * dummy )
 {
-	
+
 	if( __inside_sctk_control_message_process )
 		return;
 	
@@ -469,3 +476,14 @@ void sctk_control_message_process()
 }
 
 
+void sctk_control_message_process()
+{
+	sctk_topological_polling_tree_poll( &___control_message_list_polling_tree,  ___sctk_control_message_process, NULL );
+}
+
+
+
+void sctk_control_message_init()
+{
+	sctk_topological_polling_tree_init(  &___control_message_list_polling_tree, SCTK_POLL_SOCKET, SCTK_POLL_MACHINE,  0 );
+}

@@ -404,6 +404,9 @@ restart:
 
 	/* Initialize multi-rail engine */
 	sctk_multirail_destination_table_init();
+	
+	/* Init Polling for control messages */
+	sctk_control_message_init();
 
 	int j, k, l;
 

@@ -74,6 +74,7 @@ void sctk_control_message_fence_handler( struct sctk_control_message_fence_ctx *
 /* Control Messages List                                                */
 /************************************************************************/
 
+void sctk_control_message_init();
 void sctk_control_message_push( sctk_thread_ptp_message_t * msg );
 void sctk_control_message_process();
 void sctk_control_message_process_all();
