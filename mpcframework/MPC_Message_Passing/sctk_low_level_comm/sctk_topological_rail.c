@@ -145,7 +145,7 @@ void topological_on_demand_connection_handler( sctk_rail_info_t *rail, int dest_
 	}
 }
 
-void topological_control_message_handler( struct sctk_rail_info_s * rail, int source_process, int source_rank, char subtype, char param, void * data )
+void topological_control_message_handler( struct sctk_rail_info_s * rail, int source_process, int source_rank, char subtype, char param, void * data, size_t size )
 {
 	/* Done in subrails */
 }
@@ -365,8 +365,7 @@ void sctk_topological_rail_pin_region( struct sctk_rail_info_s * rail, struct sc
 		/* Here we fill the individual pin infos for subrails */
 		subrail->rail_pin_region( subrail, list + i, addr, size );
 	}
-	
-	return ret;
+
 }
 
 void sctk_topological_rail_unpin_region( struct sctk_rail_info_s * rail, struct sctk_rail_pin_ctx_list * list )

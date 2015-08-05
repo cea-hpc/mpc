@@ -300,7 +300,7 @@ typedef struct sctk_ibuf_s
 	size_t *size_flag;					/**< Size flag */
 	int previous_flag;					/**< Previous flag for RDMA */
 	double polled_timestamp;			/**< Timestamp when the ibuf has been polled from the CQ */
-	struct sctk_rail_info_s *rail;		/**< We save the rail where the message has been pooled*/
+	struct sctk_rail_info_s *rail;	/**< We save the rail where the message has been pooled*/
 	enum sctk_ib_cq_type_t cq;
 	uint32_t send_imm_data;
 } sctk_ibuf_t;

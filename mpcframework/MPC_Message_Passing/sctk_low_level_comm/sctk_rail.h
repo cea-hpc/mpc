@@ -163,6 +163,18 @@ struct sctk_rail_info_s
 	
 	void (*control_message_handler)( struct sctk_rail_info_s * rail, int source_process, int source_rank, char subtype, char param, void * data, size_t size );
 	
+	/* RDMA Ops */
+	
+	void (*rdma_write)(  sctk_rail_info_t *rail, sctk_thread_ptp_message_t *msg,
+                         void * src_addr, struct sctk_rail_pin_ctx_list * local_key,
+                         void * dest_addr, struct  sctk_rail_pin_ctx_list * remote_key,
+                         size_t size );
+	
+	void (*rmda_read)(  sctk_rail_info_t *rail, sctk_thread_ptp_message_t *msg,
+                         void * src_addr, sctk_rail_pin_ctx_t * remote_key,
+                         void * dest_addr, sctk_rail_pin_ctx_t * local_key,
+                         size_t size );
+	
 	/* Pinning */
 	void (*rail_pin_region)( struct sctk_rail_info_s * rail, struct sctk_rail_pin_ctx_list * list, void * addr, size_t size );
 	void (*rail_unpin_region)( struct sctk_rail_info_s * rail, struct sctk_rail_pin_ctx_list * list );

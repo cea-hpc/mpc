@@ -885,8 +885,13 @@ void sctk_network_init_mpi_ib ( sctk_rail_info_t *rail )
 	rail->notify_idle_message = sctk_network_notify_idle_message_ib;
 	rail->notify_any_source_message = sctk_network_notify_any_source_message_ib;
 	
+	/* PIN */
 	rail->rail_pin_region = sctk_ib_pin_region;
 	rail->rail_unpin_region = sctk_ib_unpin_region;
+	
+	/* RDMA */
+	rail->rdma_write = sctk_ib_rdma_write;
+	rail->rdma_read = sctk_ib_rdma_read;
 	
 	rail->network_name = network_name;
 

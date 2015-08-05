@@ -43,6 +43,8 @@ typedef enum sctk_ib_rdma_type_e
     SCTK_IB_RDMA_RDV_ACK_TYPE = 222,
     SCTK_IB_RDMA_RDV_DONE_TYPE = 333,
     SCTK_IB_RDMA_RDV_WRITE_TYPE = 555,
+    SCTK_IB_RDMA_WRITE = 666,
+    SCTK_IB_RDMA_READ = 777,
 } __attribute__ ( ( packed ) )
 sctk_ib_rdma_type_t;
 
@@ -50,6 +52,7 @@ typedef struct sctk_ib_rdma_s
 {
 	size_t payload_size;
 	sctk_ib_rdma_type_t type;
+	void * msg_pointer;
 } __attribute__ ( ( packed ) )
 sctk_ib_rdma_t;
 
@@ -115,6 +118,9 @@ sctk_ib_rdma_done_t;
 /*-----------------------------------------------------------
  *  FUNCTIONS
  *----------------------------------------------------------*/
+ 
+ 
+ /* Rendez-vous */
 
 sctk_ibuf_t *sctk_ib_rdma_rendezvous_prepare_req ( sctk_rail_info_t *rail,
 													sctk_ib_qp_t *remote, sctk_thread_ptp_message_t *msg, size_t size,
@@ -122,6 +128,19 @@ sctk_ibuf_t *sctk_ib_rdma_rendezvous_prepare_req ( sctk_rail_info_t *rail,
 
 void sctk_ib_rdma_rendezvous_prepare_send_msg ( sctk_ib_rail_info_t *rail_ib,
 											    sctk_thread_ptp_message_t *msg, size_t size );
+
+/* RDMA Read-Write */
+
+int sctk_ib_rdma_write(  sctk_rail_info_t *rail, sctk_thread_ptp_message_t *msg,
+                         void * src_addr, struct sctk_rail_pin_ctx_list * local_key,
+                         void * dest_addr, struct sctk_rail_pin_ctx_list * remote_key,
+                         size_t size );
+
+int sctk_ib_rdma_read(   sctk_rail_info_t *rail, sctk_thread_ptp_message_t *msg,
+                         void * src_addr, struct  sctk_rail_pin_ctx_list * remote_key,
+                         void * dest_addr, struct  sctk_rail_pin_ctx_list * local_key,
+                         size_t size );
+
 
 
 int

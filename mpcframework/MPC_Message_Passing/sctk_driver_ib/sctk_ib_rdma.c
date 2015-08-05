@@ -49,6 +49,10 @@
  *----------------------------------------------------------*/
 #define IBUF_GET_RDMA_TYPE(x) ((x)->type)
 #define IBUF_SET_RDMA_TYPE(x, __type) ((x)->type = __type)
+#define IBUF_GET_RDMA_SIZE(x) ((x)->size)
+#define IBUF_SET_RDMA_SIZE(x, __size) ((x)->size = __size)
+#define IBUF_GET_RDMA_POINTER(x) ((x)->msg_pointer)
+#define IBUF_SET_RDMA_POINTER(x, __msg_pointer) ((x)->msg_pointer = __msg_pointer)
 
 sctk_ib_header_rdma_t *recv_rdma_headers = NULL;
 sctk_spinlock_t recv_rdma_headers_lock = SCTK_SPINLOCK_INITIALIZER;
@@ -726,6 +730,108 @@ static inline sctk_thread_ptp_message_t * sctk_ib_rdma_rendezvous_prepare_done_w
 
 
 /*-----------------------------------------------------------
+ *  RDMA READ & WRITE
+ *----------------------------------------------------------*/
+
+sctk_thread_ptp_message_t * sctk_ib_rdma_retrieve_msg_ptr(  sctk_ibuf_t *ibuf )
+{
+	sctk_ib_rdma_t *rdma_header  = IBUF_GET_RDMA_HEADER ( ibuf->buffer );
+	
+	sctk_thread_ptp_message_t * ret = IBUF_GET_RDMA_POINTER( rdma_header  );
+	
+	return ret;
+}
+
+
+int sctk_ib_rdma_write(  sctk_rail_info_t *rail, sctk_thread_ptp_message_t *msg,
+                         void * src_addr, struct sctk_rail_pin_ctx_list * local_key,
+                         void * dest_addr, struct sctk_rail_pin_ctx_list * remote_key,
+                         size_t size )
+{
+	LOAD_RAIL ( rail );
+
+	int src_process;
+	sctk_endpoint_t  * route = sctk_rail_get_any_route_to_process_or_on_demand ( rail, SCTK_MSG_DEST_PROCESS ( msg ) );
+
+	sctk_ibuf_t * ibuf = sctk_ibuf_pick_send_sr ( rail_ib );
+	assume ( ibuf );
+
+	sctk_ib_rdma_t *rdma_header  = IBUF_GET_RDMA_HEADER ( ibuf->buffer );
+	
+
+	IBUF_SET_DEST_TASK ( ibuf->buffer, SCTK_MSG_DEST_TASK ( msg ) );
+	IBUF_SET_SRC_TASK ( ibuf->buffer, SCTK_MSG_SRC_TASK ( msg ) );
+	IBUF_SET_PROTOCOL ( ibuf->buffer, SCTK_IB_RDMA_PROTOCOL );
+	
+	IBUF_SET_RDMA_TYPE ( rdma_header, SCTK_IB_RDMA_WRITE );
+	IBUF_SET_RDMA_SIZE( rdma_header, size);
+	IBUF_SET_RDMA_POINTER( rdma_header, msg );
+
+	sctk_error ( "RDMA Write from %p (%lu) to %p (%lu)",
+	               src_addr,
+	               size,
+	               dest_addr,
+	               size );
+
+	sctk_ibuf_rdma_write_init ( ibuf,
+	                            src_addr,
+	                            local_key->pin.ib.mr.lkey,
+	                            dest_addr,
+	                            remote_key->pin.ib.mr.rkey,
+	                            size,
+	                            IBV_SEND_SIGNALED, IBUF_RELEASE );
+
+	sctk_ib_qp_send_ibuf ( &rail->network.ib,
+	                       route->data.ib.remote, ibuf);
+
+}
+
+ 
+int sctk_ib_rdma_read(   sctk_rail_info_t *rail, sctk_thread_ptp_message_t *msg,
+                         void * src_addr, struct  sctk_rail_pin_ctx_list * remote_key,
+                         void * dest_addr, struct  sctk_rail_pin_ctx_list * local_key,
+                         size_t size )
+{
+	LOAD_RAIL ( rail );
+
+	int src_process;
+	sctk_endpoint_t  * route = sctk_rail_get_any_route_to_process_or_on_demand ( rail, SCTK_MSG_DEST_PROCESS ( msg ) );
+
+	sctk_ibuf_t * ibuf = sctk_ibuf_pick_send_sr ( rail_ib );
+	assume ( ibuf );
+
+	sctk_ib_rdma_t *rdma_header  = IBUF_GET_RDMA_HEADER ( ibuf->buffer );
+
+	IBUF_SET_DEST_TASK ( ibuf->buffer, SCTK_MSG_DEST_TASK ( msg ) );
+	IBUF_SET_SRC_TASK ( ibuf->buffer, SCTK_MSG_SRC_TASK ( msg ) );
+	IBUF_SET_PROTOCOL ( ibuf->buffer, SCTK_IB_RDMA_PROTOCOL );
+	
+	IBUF_SET_RDMA_TYPE ( rdma_header, SCTK_IB_RDMA_READ );
+	IBUF_SET_RDMA_SIZE( rdma_header, size);
+	IBUF_SET_RDMA_POINTER( rdma_header, msg );
+
+
+	sctk_error ( "RDMA Read from %p (%lu) to %p (%lu)",
+	               src_addr,
+	               size,
+	               dest_addr,
+	               size );
+
+	sctk_ibuf_rdma_read_init ( ibuf,
+	                            dest_addr,
+	                            local_key->pin.ib.mr.rkey,
+	                            src_addr,
+	                            remote_key->pin.ib.mr.lkey,
+	                            size,
+	                            IBV_SEND_SIGNALED, IBUF_RELEASE );
+
+	sctk_ib_qp_send_ibuf ( &rail->network.ib,
+	                       route->data.ib.remote, ibuf);
+
+}
+
+
+/*-----------------------------------------------------------
  *  POLLING SEND / RECV
  *----------------------------------------------------------*/
  
@@ -807,6 +913,20 @@ sctk_ib_rdma_poll_send ( sctk_rail_info_t *rail, sctk_ibuf_t *ibuf )
 			sctk_nodebug ( "Poll send: message RDMA done received" );
 			break;
 
+
+		case SCTK_IB_RDMA_WRITE:
+			msg = sctk_ib_rdma_retrieve_msg_ptr( ibuf );
+			sctk_error ( "RDMA Write DONE" );
+			sctk_complete_and_free_message ( msg );
+			break;
+
+
+		case SCTK_IB_RDMA_READ:
+			msg = sctk_ib_rdma_retrieve_msg_ptr( ibuf );
+			sctk_error ( "RDMA Read DONE" );
+			sctk_complete_and_free_message ( msg );
+			break;
+			
 		default:
 			sctk_error ( "Got RDMA type:%d, payload_size;%lu", IBUF_GET_RDMA_TYPE ( rdma_header ), 
 															   rdma_header->payload_size );
