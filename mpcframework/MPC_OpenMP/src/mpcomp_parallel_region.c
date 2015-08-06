@@ -327,11 +327,24 @@ __mpcomp_internal_begin_parallel_region(int arg_num_threads,
 	/* Do not touch to single_sections_current_save and for_dyn_current_save */
 	instance->team->info.combined_pragma = info.combined_pragma ;
 	instance->team->info.icvs = t->info.icvs ;
+    /* Update active_levels_var and levels_var accordingly */
+    instance->team->info.icvs.levels_var = t->info.icvs.levels_var+1;
+    if ( num_threads > 1 ) 
+    {
+        instance->team->info.icvs.active_levels_var = 
+            t->info.icvs.active_levels_var+1;
+    }
 	instance->team->info.loop_lb = info.loop_lb ;
 	instance->team->info.loop_b = info.loop_b ;
 	instance->team->info.loop_incr = info.loop_incr ;
 	instance->team->info.loop_chunk_size = info.loop_chunk_size ;
 	instance->team->info.nb_sections = info.nb_sections ;
+
+    sctk_nodebug( "__mpcomp_internal_begin_parallel_region: "
+            "Level %d -> %d, Active level %d -> %d",
+            t->info.icvs.levels_var, instance->team->info.icvs.levels_var,
+            t->info.icvs.active_levels_var, instance->team->info.icvs.active_levels_var
+            ) ;
 
 
 	/* Compute depth */

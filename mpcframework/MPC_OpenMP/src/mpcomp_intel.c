@@ -365,6 +365,12 @@ __kmpc_ok_to_fork(ident_t * loc)
   return 1 ;
 }
 
+/* TEMP */
+#if 0
+int intel_temp_argc = 10 ;
+void ** intel_temp_args_copy = NULL ;
+#endif
+
 void
 __kmpc_fork_call(ident_t * loc, kmp_int32 argc, kmpc_micro microtask, ...)
 {
@@ -383,8 +389,25 @@ __kmpc_fork_call(ident_t * loc, kmp_int32 argc, kmpc_micro microtask, ...)
   t = (mpcomp_thread_t *) sctk_openmp_thread_tls;
   sctk_assert(t != NULL);
 
+// fprintf( stderr, "__kmpc_fork_call: parallel region w/ %d args\n", argc ) ;
+
+#if 0
+if ( intel_temp_args_copy == NULL ) 
+{
+intel_temp_args_copy = (void **)malloc( intel_temp_argc * sizeof( void * ) ) ;
+}
+if ( argc <= intel_temp_argc ) 
+{
+args_copy = intel_temp_args_copy ;
+} else 
+{
   args_copy = (void **)malloc( argc * sizeof( void * ) ) ;
   sctk_assert( args_copy ) ;
+}
+#else
+  args_copy = (void **)malloc( argc * sizeof( void * ) ) ;
+  sctk_assert( args_copy ) ;
+#endif
 
   va_start( args, microtask ) ;
 

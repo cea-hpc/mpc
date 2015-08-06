@@ -689,9 +689,12 @@ void __mpcomp_init() {
     icvs.nest_var = OMP_NESTED;
     icvs.run_sched_var = OMP_SCHEDULE;
     icvs.modifier_sched_var = OMP_MODIFIER_SCHEDULE ;
+    icvs.active_levels_var = 0 ;
+    icvs.levels_var = 0 ;
+
 
 	/* Thread info initialization */
-    __mpcomp_thread_init( t, icvs, seq_instance ) ;
+    __mpcomp_thread_init( t, icvs, seq_instance, NULL ) ;
 	t->children_instance = instance ;
 
 #if MPCOMP_TASK
@@ -796,7 +799,8 @@ void __mpcomp_instance_init( mpcomp_instance_t * instance, int nb_mvps,
 
 		instance->root = NULL ;
 
-		__mpcomp_thread_init( &(instance->mvps[0]->threads[0]), icvs, instance ) ;
+		__mpcomp_thread_init( &(instance->mvps[0]->threads[0]), icvs, instance,
+              sctk_openmp_thread_tls  ) ;
 
 	}
 
@@ -1068,21 +1072,20 @@ mpcomp_in_parallel (void)
 
 /*
  * OpenMP 3.0. Returns the nesting level for the parallel block, which enclose the calling call.
- * TODO : differencier active_level et level
  */
 int
 mpcomp_get_level (void)
 {
-	not_implemented();
-	/*
 	mpcomp_thread_t *t;
+
 	__mpcomp_init ();
+
 	t = sctk_openmp_thread_tls;
 	sctk_assert(t != NULL);
-	sctk_debug( "mpcomp_get_level: entering %d", t->instance->team->depth);
-	return t->instance->team->depth;
-	*/
-	return -1 ;
+
+	sctk_debug( "mpcomp_get_level: %d", t->info.icvs.levels_var );
+
+	return t->info.icvs.levels_var;
 }
 
 /*
@@ -1095,8 +1098,8 @@ mpcomp_get_active_level (void)
 	__mpcomp_init ();
 	t = sctk_openmp_thread_tls;
 	sctk_assert(t != NULL);
-	sctk_debug( "mpcomp_get_active_level: entering %d", t->instance->team->depth);
-	return t->instance->team->depth;
+	sctk_debug( "mpcomp_get_active_level: %d", t->info.icvs.active_levels_var );
+	return t->info.icvs.active_levels_var ;
 }
 
 /*
@@ -1107,23 +1110,37 @@ mpcomp_get_active_level (void)
 int 
 mpcomp_get_ancestor_thread_num(int level)
 {
-	not_implemented();
-	/*
 	mpcomp_thread_t *t;
+	mpcomp_instance_t *instance ;
+    int i ;
+
+    /* TODO: father of threads are set too early => NULL */
+    not_implemented() ;
+
 	__mpcomp_init();
+
+    sctk_debug( "mpcomp_get_ancestor_thread_num: %d",
+            level ) ;
+
 	t = sctk_openmp_thread_tls;
 	sctk_assert(t != NULL);
-	mpcomp_instance_t *instance = t->instance;
-	if (level < 0 || level > (instance->team->depth))
+
+    instance = t->instance ;
+	sctk_assert(instance != NULL);
+
+    /* If level is outside of bounds, return -1 */
+	if (level < 0 || level > mpcomp_get_level() )
 	{
-	sctk_debug( "mpcomp_get_ancestor_thread_num (%d) = -1", level);
 		return -1;
 	}
-	for (level = (instance->team->depth - level); level > 0; --level)
-		t = &instance->root->father->instance;
-	return (team id);
-	*/
-	return -1 ;
+
+    /* Go up to the right level and catch the rank */
+	for ( i = mpcomp_get_level() ; i > level ; i-- ) 
+    {
+		t = t->father ;
+        sctk_assert(t != NULL);
+    }
+	return t->rank ;
 }
 
 /*
@@ -1134,32 +1151,37 @@ mpcomp_get_ancestor_thread_num(int level)
 int 
 omp_get_team_size(int level)
 {
-	not_implemented();
-	/*
 	mpcomp_thread_t *t;
+	mpcomp_instance_t *instance ;
+    int i ;
+
+    /* TODO: father of threads are set too early => NULL */
+    not_implemented() ;
+
 	__mpcomp_init();
+
+    sctk_debug( "mpcomp_get_ancestor_thread_num: %d",
+            level ) ;
+
 	t = sctk_openmp_thread_tls;
 	sctk_assert(t != NULL);
-	mpcomp_instance_t *instance = t->instance;
-	if (level < 0 || level > (instance->team->depth))
+
+    instance = t->instance ;
+	sctk_assert(instance != NULL);
+
+    /* If level is outside of bounds, return -1 */
+	if (level < 0 || level > mpcomp_get_level() )
 	{
-	sctk_debug( "mpcomp_get_team_size (%d) = -1", level);
 		return -1;
 	}
-	for (level = (instance->team->depth - level); level > 0; --level)
-		t = &instance->root->father->instance;
-	if (instance->team == NULL)
-	{
-	sctk_debug( "mpcomp_get_team_size (%d) = 1", level);
-		return 1;
-	}
-	else
-	{
-	sctk_debug( "mpcomp_get_team_size (%d) = %d", level, instance->team->info.num_threads);
-		return instance->team->info.num_threads;
-	}
-	*/
-	return -1 ;
+
+    /* Go up to the right level and catch the rank */
+	for ( i = mpcomp_get_level() ; i > level ; i-- ) 
+    {
+		t = t->father ;
+        sctk_assert(t != NULL);
+    }
+	return t->info.num_threads ;
 }
 
 /*

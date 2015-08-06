@@ -190,13 +190,15 @@ extern "C"
      /* One structure per OpenMP thread */
      typedef struct mpcomp_local_icv_s 
      {
-	  int nthreads_var;		/* Number of threads for the next team 
+	  int nthreads_var ;		/* Number of threads for the next team 
 					   creation */
 	  int dyn_var;		        /* Is dynamic thread adjustement on? */
 	  int nest_var;		        /* Is nested OpenMP handled/allowed? */
 	  omp_sched_t run_sched_var;	/* Schedule to use when a 'schedule' clause is
 					   set to 'runtime' */
 	  int modifier_sched_var;	/* Size of chunks for loop schedule */
+      int active_levels_var; /* Number of nested, active enclosing parallel regions */
+      int levels_var ; /* Number of nested enclosing parallel regions */
      } mpcomp_local_icv_t;
 
      
@@ -590,7 +592,7 @@ typedef struct mpcomp_thread_s
      }
 
      static inline void __mpcomp_thread_init(mpcomp_thread_t *t, mpcomp_local_icv_t icvs,
-					     mpcomp_instance_t *instance )
+					     mpcomp_instance_t *instance, mpcomp_thread_t *father )
      {
 	  int i;
 
@@ -604,7 +606,9 @@ typedef struct mpcomp_thread_s
 	  t->instance = instance;
 	  t->children_instance = NULL;
 	  t->push_num_threads = -1 ;
-	  t->father = NULL ;
+	  t->father = father ;
+
+      sctk_debug( "__mpcomp_thread_init: father = %p\n", father ) ;
 
 	  /* -- SINGLE CONSTRUCT -- */
 	  // t->single_sections_current = 0 ;

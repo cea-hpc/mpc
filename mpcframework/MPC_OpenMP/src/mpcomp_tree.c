@@ -767,7 +767,7 @@ if ( n_leaves != instance->nb_mvps ) {
 				 __mpcomp_thread_init( 
 						 &(instance->mvps[current_mvp]->threads[i_thread]),
 						 icvs,
-						 instance ) ;
+						 instance, sctk_openmp_thread_tls ) ;
 				 instance->mvps[current_mvp]->threads[i_thread].mvp = 
 					 instance->mvps[current_mvp] ;
 			 }
