@@ -170,9 +170,9 @@ struct sctk_rail_info_s
                          void * dest_addr, struct  sctk_rail_pin_ctx_list * remote_key,
                          size_t size );
 	
-	void (*rmda_read)(  sctk_rail_info_t *rail, sctk_thread_ptp_message_t *msg,
-                         void * src_addr, sctk_rail_pin_ctx_t * remote_key,
-                         void * dest_addr, sctk_rail_pin_ctx_t * local_key,
+	void (*rdma_read)(  sctk_rail_info_t *rail, sctk_thread_ptp_message_t *msg,
+                         void * src_addr,  struct  sctk_rail_pin_ctx_list * remote_key,
+                         void * dest_addr, struct  sctk_rail_pin_ctx_list * local_key,
                          size_t size );
 	
 	/* Pinning */

@@ -131,12 +131,12 @@ void sctk_ib_rdma_rendezvous_prepare_send_msg ( sctk_ib_rail_info_t *rail_ib,
 
 /* RDMA Read-Write */
 
-int sctk_ib_rdma_write(  sctk_rail_info_t *rail, sctk_thread_ptp_message_t *msg,
+void sctk_ib_rdma_write(  sctk_rail_info_t *rail, sctk_thread_ptp_message_t *msg,
                          void * src_addr, struct sctk_rail_pin_ctx_list * local_key,
                          void * dest_addr, struct sctk_rail_pin_ctx_list * remote_key,
                          size_t size );
 
-int sctk_ib_rdma_read(   sctk_rail_info_t *rail, sctk_thread_ptp_message_t *msg,
+void sctk_ib_rdma_read(   sctk_rail_info_t *rail, sctk_thread_ptp_message_t *msg,
                          void * src_addr, struct  sctk_rail_pin_ctx_list * remote_key,
                          void * dest_addr, struct  sctk_rail_pin_ctx_list * local_key,
                          size_t size );

@@ -773,7 +773,7 @@ void sctk_ib_pin_region( struct sctk_rail_info_s * rail, struct sctk_rail_pin_ct
 	/* Fill entry */
 	list->rail_id = rail->rail_number;
 	/* Save the pointer (to free the block returned by sctk_ib_mmu_entry_new) */
-	list->pin.ib.p_entry = sctk_ib_mmu_pin( rail, addr, size);
+	list->pin.ib.p_entry = sctk_ib_mmu_pin( &rail->network.ib, addr, size);
 	
 	/* Save it inside the struct to allow serialization */
 	memcpy( &list->pin.ib.mr , list->pin.ib.p_entry->mr, sizeof( struct ibv_mr ) );

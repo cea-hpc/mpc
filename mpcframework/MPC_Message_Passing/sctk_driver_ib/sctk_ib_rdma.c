@@ -49,8 +49,8 @@
  *----------------------------------------------------------*/
 #define IBUF_GET_RDMA_TYPE(x) ((x)->type)
 #define IBUF_SET_RDMA_TYPE(x, __type) ((x)->type = __type)
-#define IBUF_GET_RDMA_SIZE(x) ((x)->size)
-#define IBUF_SET_RDMA_SIZE(x, __size) ((x)->size = __size)
+#define IBUF_GET_RDMA_PLSIZE(x) ((x)->payload_size)
+#define IBUF_SET_RDMA_PLSIZE(x, __size) ((x)->payload_size = __size)
 #define IBUF_GET_RDMA_POINTER(x) ((x)->msg_pointer)
 #define IBUF_SET_RDMA_POINTER(x, __msg_pointer) ((x)->msg_pointer = __msg_pointer)
 
@@ -416,6 +416,69 @@ static void sctk_ib_rdma_rendezvous_send_ack ( sctk_rail_info_t *rail, sctk_thre
 
 	return ibuf;
 }
+
+
+
+void sctk_ib_rdma_rendezvous_net_copy ( sctk_message_to_copy_t *tmp )
+{
+	sctk_thread_ptp_message_t *send;
+	sctk_thread_ptp_message_t *recv;
+	sctk_ib_msg_header_t *send_header;
+
+	send = tmp->msg_send;
+	recv = tmp->msg_recv;
+	send_header = &send->tail.ib;
+
+	/* The buffer has been posted and if the message is contiguous,
+	 * we can initiate a RDMA data transfert */
+	sctk_spinlock_lock ( &send_header->rdma.lock );
+
+	/* If the message has not yet been handled */
+	if ( send_header->rdma.local.status == SCTK_IB_RDMA_NOT_SET )
+	{
+
+		if ( recv->tail.message_type == SCTK_MESSAGE_CONTIGUOUS )
+		{
+
+			/* XXX: Check if the size requested is the size of the message posted */
+//      assume(send_header->rdma.requested_size == recv->tail.message.contiguous.size);
+
+			send_header->rdma.local.addr  = recv->tail.message.contiguous.addr;
+			send_header->rdma.local.size  = recv->tail.message.contiguous.size;
+			send_header->rdma.local.status       = SCTK_IB_RDMA_ZEROCOPY;
+			sctk_nodebug ( "Zerocopy. (Send:%p Recv:%p)", send, recv );
+			sctk_ib_rdma_prepare_recv_zerocopy ( send_header->rdma.rail, send );
+			sctk_ib_rdma_rendezvous_send_ack ( send_header->rdma.rail, send );
+			send_header->rdma.copy_ptr = tmp;
+			send_header->rdma.local.ready = 1;
+		}
+		else
+			/* not contiguous message */
+		{
+			send_header->rdma.local.status       = SCTK_IB_RDMA_RECOPY;
+			sctk_ib_rdma_prepare_recv_recopy ( send_header->rdma.rail, send );
+			sctk_nodebug ( "Msg %p recopied from buffer %p", tmp->msg_send, send_header->rdma.local.addr );
+			send_header->rdma.copy_ptr = tmp;
+			sctk_ib_rdma_rendezvous_send_ack ( send_header->rdma.rail, send );
+			send_header->rdma.local.ready = 1;
+		}
+
+		sctk_nodebug ( "Copy_ptr: %p (free:%p, ptr:%p)", tmp, send->tail.free_memory,
+		               send_header->rdma.local.addr );
+
+	}
+	else
+		if ( send_header->rdma.local.status == SCTK_IB_RDMA_RECOPY )
+		{
+			send_header->rdma.copy_ptr = tmp;
+			send_header->rdma.local.ready = 1;
+		}
+		else
+			not_reachable();
+
+	sctk_spinlock_unlock ( &send_header->rdma.lock );
+}
+
  
 static inline sctk_thread_ptp_message_t * sctk_ib_rdma_rendezvous_recv_req ( sctk_rail_info_t *rail, 
 																			  sctk_ibuf_t *ibuf )
@@ -541,67 +604,6 @@ void sctk_ib_rdma_rendezvous_prepare_send_msg ( sctk_ib_rail_info_t *rail_ib,
 	rdma->local.msg_header = msg;
 	/* Message is now ready ready */
 	rdma->local.ready = 1;
-}
-
-
-void sctk_ib_rdma_rendezvous_net_copy ( sctk_message_to_copy_t *tmp )
-{
-	sctk_thread_ptp_message_t *send;
-	sctk_thread_ptp_message_t *recv;
-	sctk_ib_msg_header_t *send_header;
-
-	send = tmp->msg_send;
-	recv = tmp->msg_recv;
-	send_header = &send->tail.ib;
-
-	/* The buffer has been posted and if the message is contiguous,
-	 * we can initiate a RDMA data transfert */
-	sctk_spinlock_lock ( &send_header->rdma.lock );
-
-	/* If the message has not yet been handled */
-	if ( send_header->rdma.local.status == SCTK_IB_RDMA_NOT_SET )
-	{
-
-		if ( recv->tail.message_type == SCTK_MESSAGE_CONTIGUOUS )
-		{
-
-			/* XXX: Check if the size requested is the size of the message posted */
-//      assume(send_header->rdma.requested_size == recv->tail.message.contiguous.size);
-
-			send_header->rdma.local.addr  = recv->tail.message.contiguous.addr;
-			send_header->rdma.local.size  = recv->tail.message.contiguous.size;
-			send_header->rdma.local.status       = SCTK_IB_RDMA_ZEROCOPY;
-			sctk_nodebug ( "Zerocopy. (Send:%p Recv:%p)", send, recv );
-			sctk_ib_rdma_prepare_recv_zerocopy ( send_header->rdma.rail, send );
-			sctk_ib_rdma_rendezvous_send_ack ( send_header->rdma.rail, send );
-			send_header->rdma.copy_ptr = tmp;
-			send_header->rdma.local.ready = 1;
-		}
-		else
-			/* not contiguous message */
-		{
-			send_header->rdma.local.status       = SCTK_IB_RDMA_RECOPY;
-			sctk_ib_rdma_prepare_recv_recopy ( send_header->rdma.rail, send );
-			sctk_nodebug ( "Msg %p recopied from buffer %p", tmp->msg_send, send_header->rdma.local.addr );
-			send_header->rdma.copy_ptr = tmp;
-			sctk_ib_rdma_rendezvous_send_ack ( send_header->rdma.rail, send );
-			send_header->rdma.local.ready = 1;
-		}
-
-		sctk_nodebug ( "Copy_ptr: %p (free:%p, ptr:%p)", tmp, send->tail.free_memory,
-		               send_header->rdma.local.addr );
-
-	}
-	else
-		if ( send_header->rdma.local.status == SCTK_IB_RDMA_RECOPY )
-		{
-			send_header->rdma.copy_ptr = tmp;
-			send_header->rdma.local.ready = 1;
-		}
-		else
-			not_reachable();
-
-	sctk_spinlock_unlock ( &send_header->rdma.lock );
 }
 
 
@@ -743,12 +745,14 @@ sctk_thread_ptp_message_t * sctk_ib_rdma_retrieve_msg_ptr(  sctk_ibuf_t *ibuf )
 }
 
 
-int sctk_ib_rdma_write(  sctk_rail_info_t *rail, sctk_thread_ptp_message_t *msg,
+void sctk_ib_rdma_write(  sctk_rail_info_t *rail, sctk_thread_ptp_message_t *msg,
                          void * src_addr, struct sctk_rail_pin_ctx_list * local_key,
                          void * dest_addr, struct sctk_rail_pin_ctx_list * remote_key,
                          size_t size )
 {
 	LOAD_RAIL ( rail );
+
+	sctk_error("RDMA WRITE NET INSIDE");
 
 	int src_process;
 	sctk_endpoint_t  * route = sctk_rail_get_any_route_to_process_or_on_demand ( rail, SCTK_MSG_DEST_PROCESS ( msg ) );
@@ -764,7 +768,7 @@ int sctk_ib_rdma_write(  sctk_rail_info_t *rail, sctk_thread_ptp_message_t *msg,
 	IBUF_SET_PROTOCOL ( ibuf->buffer, SCTK_IB_RDMA_PROTOCOL );
 	
 	IBUF_SET_RDMA_TYPE ( rdma_header, SCTK_IB_RDMA_WRITE );
-	IBUF_SET_RDMA_SIZE( rdma_header, size);
+	IBUF_SET_RDMA_PLSIZE( rdma_header, size);
 	IBUF_SET_RDMA_POINTER( rdma_header, msg );
 
 	sctk_error ( "RDMA Write from %p (%lu) to %p (%lu)",
@@ -787,7 +791,7 @@ int sctk_ib_rdma_write(  sctk_rail_info_t *rail, sctk_thread_ptp_message_t *msg,
 }
 
  
-int sctk_ib_rdma_read(   sctk_rail_info_t *rail, sctk_thread_ptp_message_t *msg,
+void sctk_ib_rdma_read(   sctk_rail_info_t *rail, sctk_thread_ptp_message_t *msg,
                          void * src_addr, struct  sctk_rail_pin_ctx_list * remote_key,
                          void * dest_addr, struct  sctk_rail_pin_ctx_list * local_key,
                          size_t size )
@@ -807,7 +811,7 @@ int sctk_ib_rdma_read(   sctk_rail_info_t *rail, sctk_thread_ptp_message_t *msg,
 	IBUF_SET_PROTOCOL ( ibuf->buffer, SCTK_IB_RDMA_PROTOCOL );
 	
 	IBUF_SET_RDMA_TYPE ( rdma_header, SCTK_IB_RDMA_READ );
-	IBUF_SET_RDMA_SIZE( rdma_header, size);
+	IBUF_SET_RDMA_PLSIZE( rdma_header, size);
 	IBUF_SET_RDMA_POINTER( rdma_header, msg );
 
 
@@ -816,14 +820,9 @@ int sctk_ib_rdma_read(   sctk_rail_info_t *rail, sctk_thread_ptp_message_t *msg,
 	               size,
 	               dest_addr,
 	               size );
-
-	sctk_ibuf_rdma_read_init ( ibuf,
-	                            dest_addr,
-	                            local_key->pin.ib.mr.rkey,
-	                            src_addr,
-	                            remote_key->pin.ib.mr.lkey,
-	                            size,
-	                            IBV_SEND_SIGNALED, IBUF_RELEASE );
+	               
+	             
+	sctk_ibuf_rdma_read_init ( ibuf, dest_addr, local_key->pin.ib.mr.rkey, src_addr, remote_key->pin.ib.mr.lkey, size );
 
 	sctk_ib_qp_send_ibuf ( &rail->network.ib,
 	                       route->data.ib.remote, ibuf);

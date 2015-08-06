@@ -850,8 +850,7 @@ void sctk_ibuf_rdma_read_init ( sctk_ibuf_t *ibuf,
                                 sctk_uint32_t lkey,
                                 void *remote_address,
                                 sctk_uint32_t rkey,
-                                int len,
-                                void *supp_ptr )
+                                int len )
 {
 	ibuf->in_srq = 0;
 	ibuf->send_imm_data = 0;
@@ -872,7 +871,6 @@ void sctk_ibuf_rdma_read_init ( sctk_ibuf_t *ibuf,
 	ibuf->desc.sg_entry.addr = ( uintptr_t ) local_address;
 
 	ibuf->flag = RDMA_READ_IBUF_FLAG;
-	ibuf->supp_ptr = supp_ptr;
 }
 
 void sctk_ibuf_print_rdma ( sctk_ibuf_t *ibuf, char *desc )

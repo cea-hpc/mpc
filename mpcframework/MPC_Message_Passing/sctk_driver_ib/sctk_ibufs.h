@@ -371,8 +371,7 @@ void sctk_ibuf_rdma_read_init ( sctk_ibuf_t *ibuf,
                                 sctk_uint32_t lkey,
                                 void *remote_address,
                                 sctk_uint32_t rkey,
-                                int len,
-                                void *supp_ptr );
+                                int len );
 
 void sctk_ibuf_release ( struct sctk_ib_rail_info_s *rail_ib,
                          sctk_ibuf_t *ibuf,
