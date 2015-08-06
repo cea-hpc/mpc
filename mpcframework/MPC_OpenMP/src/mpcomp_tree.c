@@ -572,20 +572,18 @@ __mpcomp_build_tree( mpcomp_instance_t * instance, int n_leaves, int depth, int 
 	  /* Check input parameters */
 	  sctk_assert( instance != NULL );
 	  sctk_assert( instance->mvps != NULL );
-	  sctk_assert( __mpcomp_check_tree_parameters( n_leaves, depth, degree ) );
-	  sctk_assert( n_leaves == instance->nb_mvps ) ;
 
-if ( __mpcomp_check_tree_parameters( n_leaves, depth, degree ) == 0 ) {
-    sctk_error("Wrong OMP_TREE!" ) ;
-    sctk_abort() ;
-}
+      if ( __mpcomp_check_tree_parameters( n_leaves, depth, degree ) == 0 ) {
+          sctk_error("Wrong OMP_TREE!" ) ;
+          sctk_abort() ;
+      }
 
-if ( n_leaves != instance->nb_mvps ) {
-    sctk_error("Wrong OMP_TREE! (test 2)" ) ;
-    sctk_abort() ;
-}
+      if ( n_leaves != instance->nb_mvps ) {
+          sctk_error("Wrong OMP_TREE! (test 2)" ) ;
+          sctk_abort() ;
+      }
 
-	  /* Fill instance paratemers regarding tree shape */
+      /* Fill instance paratemers regarding tree shape */
 	  instance->tree_depth = depth ;
 	  instance->tree_base = degree ;
       /* tree_cumulative */
@@ -754,7 +752,7 @@ if ( n_leaves != instance->nb_mvps ) {
 			 instance->mvps[current_mvp]->min_index[MPCOMP_AFFINITY_COMPACT] = n->min_index[MPCOMP_AFFINITY_COMPACT]+i;
              instance->mvps[current_mvp]->min_index[MPCOMP_AFFINITY_SCATTER] = 
                  __mpcomp_compute_scatter_min_index( n, instance, i ) ;
-			 instance->mvps[current_mvp]->min_index[MPCOMP_AFFINITY_BALANCED] = n->min_index[MPCOMP_AFFINITY_BALANCED]+i; /* TODO: compute the real value */
+			 instance->mvps[current_mvp]->min_index[MPCOMP_AFFINITY_BALANCED] = n->min_index[MPCOMP_AFFINITY_COMPACT]+i; /* TODO: compute the real value */
 			 instance->mvps[current_mvp]->enable = 1;
 			 instance->mvps[current_mvp]->tree_rank = 
 			      (int *)mpcomp_malloc(1, depth*sizeof(int), target_numa );
@@ -872,7 +870,7 @@ if ( n_leaves != instance->nb_mvps ) {
 			      i * (n->max_index[MPCOMP_AFFINITY_BALANCED] - n->min_index[MPCOMP_AFFINITY_BALANCED]) / 
 			      degree[ n->depth ];; /* TODO: compute the real value */
 #endif
-			 min_index[MPCOMP_AFFINITY_BALANCED] = 0 ;
+			 min_index[MPCOMP_AFFINITY_BALANCED] = min_index[MPCOMP_AFFINITY_COMPACT] ;
 
 			 child_target_numa = sctk_get_node_from_cpu_topology( instance->topology, 
                      order[ min_index[MPCOMP_AFFINITY_COMPACT] ] ) ;
