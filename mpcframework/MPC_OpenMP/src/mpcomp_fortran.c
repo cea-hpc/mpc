@@ -138,6 +138,18 @@ omp_get_team_size__ (int level)
 	return mpcomp_get_team_size(level);
 }
 
+int
+omp_get_level_ (void)
+{
+    return mpcomp_get_level() ;
+}
+
+int
+omp_get_level__ (void)
+{
+    return mpcomp_get_level() ;
+}
+
 /* DYNAMIC FUNCTIONS */
 void
 omp_set_dynamic_ (int *dynamic_threads)
