@@ -802,8 +802,7 @@ void sctk_topology_init ()
 		hwloc_topology_set_xml(topology,xml_path);
 	}
 
-	/* Set flags to make sure devices are also loaded */
-	hwloc_topology_set_flags( topology, HWLOC_TOPOLOGY_FLAG_IO_DEVICES );
+
 
 	hwloc_topology_load(topology);
 
@@ -813,6 +812,9 @@ void sctk_topology_init ()
 	{
 		hwloc_topology_set_xml(topology_full,xml_path);
 	}
+
+	/* Set flags to make sure devices are also loaded */
+	hwloc_topology_set_flags( topology_full, HWLOC_TOPOLOGY_FLAG_IO_DEVICES );
 
 	hwloc_topology_load(topology_full);
 
@@ -827,7 +829,7 @@ void sctk_topology_init ()
 	sctk_restrict_topology();
 
 	/*  load devices */
-	sctk_device_load_from_topology( topology );
+	sctk_device_load_from_topology( topology_full );
 
 
 	#ifndef WINDOWS_SYS

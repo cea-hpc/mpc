@@ -149,13 +149,18 @@ void sctk_device_load_topology_limits( hwloc_topology_t topology )
 		
 		int local_count = sctk_device_count_pu_on_numa( numa_node );
 		
-		if( last_count < 0 )
-			last_count = local_count;
-		
-		if( local_count < last_count  )
+		if( local_count != 0 )
 		{
-			sctk_warning("Machine seems to be asymetric");
-			last_count = local_count;
+		
+			if( last_count < 0 )
+				last_count = local_count;
+			
+			if( local_count < last_count  )
+			{
+				sctk_warning("Machine seems to be asymetric");
+				last_count = local_count;
+			}
+			
 		}
 		
 		numa_node = hwloc_get_next_obj_by_type( topology, HWLOC_OBJ_NODE, numa_node );
@@ -172,6 +177,15 @@ void sctk_device_load_topology_limits( hwloc_topology_t topology )
 		 * in order to adapt the scatering algorithm
 		 * to every socket */
 		___core_count = last_count;
+	}
+	
+	/* Just in case we never know what HWLOC can do
+	 * and which kind of machine we will get, put
+	 * at least one in this value as we use it for modulos */
+	
+	if( ___core_count == 0 )
+	{
+		___core_count = 1;
 	}
 }
 
