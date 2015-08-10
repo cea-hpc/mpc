@@ -25,7 +25,8 @@
 
 #include <sctk_multirail.h>
 
-static void sctk_network_send_message_endpoint_topological ( sctk_thread_ptp_message_t *msg, sctk_endpoint_t *endpoint )
+
+sctk_endpoint_t * sctk_topological_rail_ellect_endpoint( int remote , sctk_thread_ptp_message_t *msg, sctk_endpoint_t *endpoint )
 {
 	int vp_id = sctk_get_processor_rank();
 	
@@ -44,6 +45,7 @@ static void sctk_network_send_message_endpoint_topological ( sctk_thread_ptp_mes
 	if( target_subrail < 0 )
 		target_subrail = 0;
 	
+	
 	sctk_rail_info_t * topological_rail = endpoint->parent_rail->subrails[ target_subrail ];
 	assume( 0 <= endpoint->subrail_id );
 	sctk_rail_info_t * endpoint_rail = endpoint->rail;
@@ -53,27 +55,24 @@ static void sctk_network_send_message_endpoint_topological ( sctk_thread_ptp_mes
 	{
 		/* It means that the endpoint found by the multirail
 		 * is already topological, just send through it */
-		topological_rail->send_message_endpoint( msg, endpoint );
+		return endpoint;
 	}
 	else
 	{
 		/* Here the first endpoint is not the topological
 		 * one, we have to look in the topological rail
 		 * to see if this endpoint exists */
-		int dest = SCTK_MSG_DEST_PROCESS( msg );
-		sctk_endpoint_t * topological_endpoint = sctk_rail_get_any_route_to_process ( topological_rail, dest );
+		sctk_endpoint_t * topological_endpoint = sctk_rail_get_any_route_to_process ( topological_rail, remote );
 		
 		/* Did we find one ? Is it connected yet ? */
 		if( sctk_endpoint_get_state( topological_endpoint ) == STATE_CONNECTED )
 		{
-			/* Send through it */
-			topological_rail->send_message_endpoint( msg, topological_endpoint );
+			/* YES Send through it */
+			return topological_endpoint;
 		}
 		else
 		{
-			/* Fallback to the original endpoint (we pay the NUMA not to delay the message) */
-			endpoint_rail->send_message_endpoint( msg, endpoint );
-			
+						
 			if( !sctk_message_class_is_control_message( SCTK_MSG_SPECIFIC_CLASS( msg ) ) )
 			{
 				/* Intiate an on-demand connection to the remote on the topological rail (to keep connection balanced) */
@@ -83,11 +82,33 @@ static void sctk_network_send_message_endpoint_topological ( sctk_thread_ptp_mes
 					 * a list as we cannot create connection while holding
 					 * the route table in read (in the middle of a send )
 					 * this will be done just before leaving the multirail-send function */
-					sctk_pending_on_demand_push( topological_rail, dest );
+					sctk_pending_on_demand_push( topological_rail, remote );
 				}
 			}
+			
+			/* Fallback to the original endpoint (we pay the NUMA not to delay the message) */
+			return endpoint;
 		}
 	}
+	
+	return NULL;
+}
+
+
+
+
+
+static void sctk_network_send_message_endpoint_topological ( sctk_thread_ptp_message_t *msg, sctk_endpoint_t *endpoint )
+{
+	sctk_endpoint_t * topo_endpoint = sctk_topological_rail_ellect_endpoint( SCTK_MSG_DEST_PROCESS( msg ) , msg, endpoint );
+	
+	assume( topo_endpoint != NULL );
+	
+	sctk_rail_info_t * endpoint_rail = endpoint->rail;
+	
+	assume( endpoint_rail != NULL );
+	
+	endpoint_rail->send_message_endpoint( msg, topo_endpoint );
 }
 
 static void sctk_network_notify_recv_message_topological ( sctk_thread_ptp_message_t *msg, sctk_rail_info_t *rail )
