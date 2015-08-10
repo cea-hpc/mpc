@@ -118,10 +118,6 @@ int sctk_pmi_init()
 		return 0;
 #else /* SCTK_LIB_MODE */
 		int max_kvsname_len;
-		
-		sctk_pmi_get_process_rank ( &sctk_pmi_process_rank );
-		sctk_pmi_get_process_number ( &sctk_pmi_process_number );
-		
 
 		// Initialized PMI/SLURM
 		rc = PMI_Init ( &spawned );
@@ -326,7 +322,9 @@ int sctk_pmi_init()
 		return rc;
 	#endif /* MPC_USE_HYDRA */
 
-
+		
+		sctk_pmi_get_process_rank ( &sctk_pmi_process_rank );
+		sctk_pmi_get_process_number ( &sctk_pmi_process_number );
 		sctk_pmi_get_node_rank ( &sctk_node_rank );
 		sctk_pmi_get_node_number ( &sctk_node_number );
 		sctk_pmi_get_process_on_node_rank ( &sctk_local_process_rank );
