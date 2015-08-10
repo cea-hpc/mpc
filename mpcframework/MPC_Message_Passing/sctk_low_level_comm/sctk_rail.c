@@ -669,6 +669,8 @@ void sctk_rail_add_static_route (sctk_rail_info_t *rail, int dest, sctk_endpoint
 		tmp->parent_rail = rail->parent_rail;
 		/* Add in local rail without pushing in multirail */
 		sctk_route_table_add_static_route ( rail->route_table, tmp, 0 );
+		/* Add in parent rail without pushing in multirail */
+		sctk_route_table_add_static_route ( rail->parent_rail->route_table, tmp, 0 );
 		/* Push in multirail */
 		sctk_multirail_destination_table_push_endpoint( tmp );
 	}
@@ -693,6 +695,8 @@ void sctk_rail_add_dynamic_route ( sctk_rail_info_t *rail, int dest, sctk_endpoi
 		tmp->parent_rail = rail->parent_rail;
 		/* Add in local rail without pushing in multirail */
 		sctk_route_table_add_dynamic_route (  rail->route_table, tmp, 0 );
+		/* Add in parent rail without pushing in multirail */
+		sctk_route_table_add_dynamic_route ( rail->parent_rail->route_table, tmp, 0 );
 		/* Push in multirail */
 		sctk_multirail_destination_table_push_endpoint( tmp );
 	}

@@ -251,6 +251,7 @@ sctk_ib_topology_get_numa_node ( struct sctk_ib_rail_info_s *rail_ib )
 		int vp = sctk_thread_get_vp();
 		struct sctk_ib_topology_numa_node_s *node;
 
+
 		// TODO: we should initialize the VP number for *EACH* created thread, in *EVERY* thread modes
 		if ( vp < 0 )
 		{
@@ -260,9 +261,12 @@ sctk_ib_topology_get_numa_node ( struct sctk_ib_rail_info_s *rail_ib )
 		{
 			int node_num =  sctk_get_node_from_cpu ( vp );
 			assume ( topo );
-			assume ( node_num < topo->numa_node_count );
 
-			if ( topo->nodes[node_num] == NULL )
+			if( topo->numa_node_count == 0 )
+			{
+				node = topo->default_node;
+			}
+			else if ( topo->nodes[node_num] == NULL  )
 			{
 				node = topo->default_node;
 			}
