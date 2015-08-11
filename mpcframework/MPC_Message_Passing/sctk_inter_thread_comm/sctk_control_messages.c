@@ -81,7 +81,7 @@ void sctk_control_message_process_level( int source_process, int source_rank, ch
 		break;
 		
 		case SCTK_PROCESS_RDMA_WIN_RELAX:
-			sctk_error("Received a  WIN relax from %d", source_rank );
+			sctk_error("Received a  WIN relax from %d on %d", source_rank , param);
 			sctk_window_relax_ctrl_msg_handler( param );
 		break;
 		

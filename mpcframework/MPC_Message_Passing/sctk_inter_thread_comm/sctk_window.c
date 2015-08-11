@@ -88,6 +88,7 @@ static void sctk_win_delete( struct sctk_window * win )
 	
 	if( cell )
 	{
+		sctk_error("%d deleting %p", __FUNCTION__, cell );
 		HASH_DEL(__id_to_win_ht, cell);
 		sctk_free( cell );
 	}
@@ -123,6 +124,7 @@ void sctk_win_acquire( sctk_window_t win_id )
 
 static int _sctk_win_relax( struct sctk_window * win )
 {
+	sctk_error("%s win is %p REFC is %d --", __FUNCTION__, win,  win->refcounter);
 	int ret = 0;
 
 	sctk_spinlock_lock( &win->lock );
@@ -138,6 +140,7 @@ static int _sctk_win_relax( struct sctk_window * win )
 
 int sctk_win_relax( sctk_window_t win_id )
 {
+	sctk_error("%s", __FUNCTION__ );
 	struct sctk_window * win = sctk_win_translate( win_id );
 	
 	if( !win )
@@ -188,9 +191,11 @@ sctk_window_t sctk_window_init( void *addr, size_t size, size_t disp_unit, sctk_
 }
 
 
-void sctk_window_release( sctk_window_t win_id, void *addr, size_t size, size_t disp_unit )
+void sctk_window_release( sctk_window_t win_id  )
 {
 	struct sctk_window * win = sctk_win_translate( win_id );
+	
+	sctk_error("%s win is %p", __FUNCTION__, win );
 	
 	if( !win )
 	{
@@ -205,7 +210,7 @@ void sctk_window_release( sctk_window_t win_id, void *addr, size_t size, size_t 
 		assume( 0 <= win->remote_id );
 		
 		/* Signal release to remote */
-		sctk_control_messages_send ( sctk_get_process_rank_from_task_rank ( win->owner ), SCTK_CONTROL_MESSAGE_PROCESS, SCTK_PROCESS_RDMA_WIN_RELAX, 0, NULL, 0  );
+		//sctk_control_messages_send ( sctk_get_process_rank_from_task_rank ( win->owner ), SCTK_CONTROL_MESSAGE_PROCESS, SCTK_PROCESS_RDMA_WIN_RELAX, win->remote_id, NULL, 0  );
 	}
 
 	/* Now work on the local window */
@@ -344,6 +349,8 @@ void sctk_window_map_remote_ctrl_msg_handler( struct sctk_window_map_request * m
 void sctk_window_relax_ctrl_msg_handler( sctk_window_t win_id )
 {
 	struct sctk_window * win = sctk_win_translate( win_id );
+
+	sctk_error("%s win is %p", __FUNCTION__, win );
 	
 	if( !win )
 	{
@@ -351,7 +358,10 @@ void sctk_window_relax_ctrl_msg_handler( sctk_window_t win_id )
 		return;
 	}
 	
-	_sctk_win_relax( win );
+	if( _sctk_win_relax( win ) == 0 )
+	{
+		sctk_window_release( win_id );
+	}
 }
 
 void sctk_window_RDMA_emulated_write_ctrl_msg_handler( struct sctk_window_emulated_RDMA *erma )

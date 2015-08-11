@@ -48,7 +48,7 @@ struct sctk_window
 
 /* Local init and release */
 sctk_window_t sctk_window_init( void *addr, size_t size, size_t disp_unit, sctk_communicator_t comm );
-void sctk_window_release( sctk_window_t win, void *addr, size_t size, size_t disp_unit );
+void sctk_window_release( sctk_window_t win );
 
 /* Refcounter interactions */
 void sctk_win_acquire( sctk_window_t win_id );
