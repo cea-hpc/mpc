@@ -264,7 +264,7 @@ void sctk_probe_any_source_tag ( int destination, const sctk_communicator_t comm
 #define SCTK_MSG_SPECIFIC_CLASS_SUBTYPE( msg ) msg->body.header.message_type.subtype
 #define SCTK_MSG_SPECIFIC_CLASS_SET_SUBTYPE( msg , sub_type ) do{ msg->body.header.message_type.subtype = sub_type; }while(0)
 
-#define SCTK_MSG_SPECIFIC_CLASS_PARAM( msg ) msg->body.header.message_type.subtype
+#define SCTK_MSG_SPECIFIC_CLASS_PARAM( msg ) msg->body.header.message_type.param
 #define SCTK_MSG_SPECIFIC_CLASS_SET_PARAM( msg , param ) do{ msg->body.header.message_type.param = param; }while(0)
 
 #define SCTK_MSG_SPECIFIC_CLASS_RAILID( msg ) msg->body.header.message_type.rail_id

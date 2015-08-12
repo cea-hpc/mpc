@@ -76,6 +76,9 @@ static struct sctk_window * sctk_win_translate( sctk_window_t win_id )
 	
 	sctk_spinlock_unlock( &__window_ht_lock );
 	
+	sctk_nodebug("%s WIN %d on %d is %p", __FUNCTION__, win_id, sctk_get_task_rank() , ret);
+
+	
 	return ret;
 }
 
@@ -88,7 +91,7 @@ static void sctk_win_delete( struct sctk_window * win )
 	
 	if( cell )
 	{
-		sctk_error("%d deleting %p", __FUNCTION__, cell );
+		sctk_nodebug("%s on %d", __FUNCTION__, sctk_get_task_rank() );
 		HASH_DEL(__id_to_win_ht, cell);
 		sctk_free( cell );
 	}
@@ -124,7 +127,7 @@ void sctk_win_acquire( sctk_window_t win_id )
 
 static int _sctk_win_relax( struct sctk_window * win )
 {
-	sctk_error("%s win is %p REFC is %d --", __FUNCTION__, win,  win->refcounter);
+	sctk_nodebug("%s win_id %d on %d", __FUNCTION__, win->id, sctk_get_task_rank() );
 	int ret = 0;
 
 	sctk_spinlock_lock( &win->lock );
@@ -187,6 +190,8 @@ sctk_window_t sctk_window_init( void *addr, size_t size, size_t disp_unit, sctk_
 	win->lock = SCTK_SPINLOCK_INITIALIZER;
 	win->refcounter = 1;
 
+	sctk_nodebug("CREATING WIN (%p) %d on %d RC %d", win, win->id, sctk_get_task_rank(), win->refcounter );
+
 	return win->id;
 }
 
@@ -195,7 +200,7 @@ void sctk_window_release( sctk_window_t win_id  )
 {
 	struct sctk_window * win = sctk_win_translate( win_id );
 	
-	sctk_error("%s win is %p", __FUNCTION__, win );
+	sctk_nodebug("%s %p win_id %d on %d RC %d", __FUNCTION__, win, win_id, sctk_get_task_rank() , win->refcounter);
 	
 	if( !win )
 	{
@@ -203,14 +208,16 @@ void sctk_window_release( sctk_window_t win_id  )
 	}	
 	
 	/* Do we need to signal a remote win ? */
-	if( win->owner != sctk_get_task_rank() )
+	if( (win->owner != sctk_get_task_rank())
+	&&   sctk_is_net_message( win->owner ) )
 	{
+		sctk_nodebug("Remote is %d on %d", win->remote_id, win->owner  );
 		/* This is a remote window sigal release
 		 * to remote rank */
 		assume( 0 <= win->remote_id );
 		
 		/* Signal release to remote */
-		//sctk_control_messages_send ( sctk_get_process_rank_from_task_rank ( win->owner ), SCTK_CONTROL_MESSAGE_PROCESS, SCTK_PROCESS_RDMA_WIN_RELAX, win->remote_id, NULL, 0  );
+		sctk_control_messages_send ( sctk_get_process_rank_from_task_rank ( win->owner ), SCTK_CONTROL_MESSAGE_PROCESS, SCTK_PROCESS_RDMA_WIN_RELAX, win->remote_id, NULL, 0  );
 	}
 
 	/* Now work on the local window */
@@ -219,8 +226,13 @@ void sctk_window_release( sctk_window_t win_id  )
 	int refcount = _sctk_win_relax( win );
 	
 	/* Did the refcounter reach "0" ? */
-	if( refcount )
+	if( refcount != 0 )
+	{
+		sctk_nodebug("NO REL %s win_id %d on %d (RC %d)", __FUNCTION__, win_id, sctk_get_task_rank(), refcount );
 		return;
+	}
+	
+	sctk_nodebug("REL %s win_id %d on %d (RC %d)", __FUNCTION__, win_id, sctk_get_task_rank(), refcount );
 	
 	/* If we are at "0" we free the window */
 	
@@ -229,27 +241,18 @@ void sctk_window_release( sctk_window_t win_id  )
 		/* If we were not emulated, unpin */
 		sctk_rail_pin_ctx_release( &win->pin );
 	}
-	
-	/* Remove the window from the translation table */
-	sctk_win_delete( win );
-	
+
 	/* Free content */
-	memset( win, 0, sizeof( struct sctk_window ) );
+	sctk_win_delete( win );
 }
 
 
 int sctk_window_map_remote( int remote_rank, sctk_window_t win_id )
 {
+	sctk_nodebug("%s winid is %d", __FUNCTION__, win_id );
+	
 	struct sctk_window_map_request mr;
 	sctk_window_map_request_init( &mr, remote_rank, win_id );
-
-	struct sctk_window * win = sctk_win_translate( win_id );
-
-	if(!win)
-	{
-		/* No such window */
-		return -1;
-	}
 
 	/* Case where we are local */
 	if( (mr.source_rank == mr.remote_rank)
@@ -257,8 +260,19 @@ int sctk_window_map_remote( int remote_rank, sctk_window_t win_id )
 					          * just work locally */
 	{	
 		
+		struct sctk_window * win = sctk_win_translate( win_id );
+
+		if(!win)
+		{
+			/* No such window */
+			sctk_error("No such win");
+			return -1;
+		}
+		
 		/* Increment refcount */
 		_sctk_win_acquire( win );
+		
+		sctk_error("Win is local");
 		
 		/* Return the same window */
 		return win_id;
@@ -279,6 +293,7 @@ int sctk_window_map_remote( int remote_rank, sctk_window_t win_id )
 	if( remote_win_data.id < 0 )
 	{
 		/* No such remote */
+		sctk_error("NO SUCH remote");
 		return -1;
 	}
 	
@@ -302,6 +317,8 @@ int sctk_window_map_remote( int remote_rank, sctk_window_t win_id )
 	assume( 0 <= new_win->remote_id );
 	
 	new_win->id = local_id;
+	
+	sctk_nodebug("%s win is %p returining (RC %d) ID %d", __FUNCTION__, new_win, new_win->refcounter, new_win->remote_id );
 	
 	return new_win->id;
 }
@@ -350,18 +367,15 @@ void sctk_window_relax_ctrl_msg_handler( sctk_window_t win_id )
 {
 	struct sctk_window * win = sctk_win_translate( win_id );
 
-	sctk_error("%s win is %p", __FUNCTION__, win );
+	sctk_nodebug("%s win is %p target is %d (RC %d)", __FUNCTION__, win, win_id , win->refcounter);
 	
 	if( !win )
 	{
 		sctk_warning("No such window %d in remote relax", win_id);
 		return;
 	}
-	
-	if( _sctk_win_relax( win ) == 0 )
-	{
-		sctk_window_release( win_id );
-	}
+
+	sctk_window_release( win_id );
 }
 
 void sctk_window_RDMA_emulated_write_ctrl_msg_handler( struct sctk_window_emulated_RDMA *erma )

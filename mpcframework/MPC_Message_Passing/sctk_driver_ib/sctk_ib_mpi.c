@@ -782,6 +782,9 @@ void sctk_ib_pin_region( struct sctk_rail_info_s * rail, struct sctk_rail_pin_ct
 void sctk_ib_unpin_region( struct sctk_rail_info_s * rail, struct sctk_rail_pin_ctx_list * list )
 {
 	assume( rail->rail_number == list->rail_id );
+	
+	sctk_error("Unpin %p at %p size %ld releaseon %d", list->pin.ib.p_entry, list->pin.ib.p_entry->addr, list->pin.ib.p_entry->size, list->pin.ib.p_entry->free_on_relax );
+	
 	sctk_ib_mmu_relax( list->pin.ib.p_entry );
 	list->pin.ib.p_entry = NULL;
 	memset( &list->pin.ib.mr, 0, sizeof( struct ibv_mr ) );
