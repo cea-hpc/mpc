@@ -210,6 +210,7 @@ void sctk_control_messages_perform( sctk_thread_ptp_message_t * msg )
 
 	int source_process = SCTK_MSG_SRC_PROCESS( msg );
 	int source_rank = SCTK_MSG_SRC_TASK( msg );
+	size_t msg_size = SCTK_MSG_SIZE( msg );
 	short subtype = SCTK_MSG_SPECIFIC_CLASS_SUBTYPE( msg );
 	char param = SCTK_MSG_SPECIFIC_CLASS_PARAM( msg );
 	char rail_id = SCTK_MSG_SPECIFIC_CLASS_RAILID( msg );
@@ -243,7 +244,7 @@ void sctk_control_messages_perform( sctk_thread_ptp_message_t * msg )
 	sctk_thread_ptp_message_t recvmsg;
 	sctk_request_t request;
 	sctk_init_header ( &recvmsg, SCTK_MESSAGE_CONTIGUOUS, sctk_free_control_messages, sctk_message_copy );
-	sctk_add_adress_in_message ( &recvmsg, tmp_contol_buffer, SCTK_MSG_SIZE( msg ) );
+	sctk_add_adress_in_message ( &recvmsg, tmp_contol_buffer, msg_size );
 	sctk_set_header_in_message ( &recvmsg, 0, SCTK_COMM_WORLD, SCTK_ANY_SOURCE, sctk_get_process_rank(),  &request, SCTK_MSG_SIZE( msg ), class, SCTK_DATATYPE_IGNORE );
 	
 	/* Trigger the receive task (as if we matched) */
@@ -277,12 +278,12 @@ void sctk_control_messages_perform( sctk_thread_ptp_message_t * msg )
 			
 			//printpayload( data, SCTK_MSG_SIZE ( msg ) );
 			
-			(rail->control_message_handler)( rail, source_process, source_rank, subtype, param,  data, SCTK_MSG_SIZE( msg ) );
+			(rail->control_message_handler)( rail, source_process, source_rank, subtype, param,  data, msg_size );
 		}
 		break;
 		case SCTK_CONTROL_MESSAGE_PROCESS:
 		{
-			sctk_control_message_process_level( source_process, source_rank, subtype, param,  data, SCTK_MSG_SIZE( msg ) );
+			sctk_control_message_process_level( source_process, source_rank, subtype, param,  data, msg_size );
 		}
 		break;
 		case SCTK_CONTROL_MESSAGE_USER:
@@ -295,7 +296,7 @@ void sctk_control_messages_perform( sctk_thread_ptp_message_t * msg )
 				return;
 			}
 			
-			(ctx->sctk_user_control_message)( source_process, source_rank, subtype, param,  data, SCTK_MSG_SIZE( msg ) );
+			(ctx->sctk_user_control_message)( source_process, source_rank, subtype, param,  data, msg_size );
 		}
 		break;
 		default:
