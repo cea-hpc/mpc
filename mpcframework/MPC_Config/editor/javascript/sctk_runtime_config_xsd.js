@@ -400,6 +400,13 @@
 -e </xs:restriction>\
 -e </xs:simpleType>\
 -e </xs:element>\
+-e <xs:element minOccurs='0' name='mmu_cache_maximum_pin_size'>\
+-e <xs:simpleType>\
+-e <xs:restriction base='xs:string'>\
+-e <xs:pattern value='[0-9]+[ ]?[K|M|G|T|P]?B'/>\
+-e </xs:restriction>\
+-e </xs:simpleType>\
+-e </xs:element>\
 -e </xs:all>\
 -e </xs:complexType>\
 -e <!-- ********************************************************* -->\

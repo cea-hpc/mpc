@@ -328,8 +328,10 @@ struct sctk_runtime_config_struct_ib_global
 	int mmu_cache_enabled;
 	/**Number of entries to keep in the cache.**/
 	int mmu_cache_entry_count;
-	/**Number of entries to keep in the cache.**/
+	/**Total size of entries to keep in the cache.**/
 	size_t mmu_cache_maximum_size;
+	/**Maximum size of an pinned entry.**/
+	size_t mmu_cache_maximum_pin_size;
 };
 
 /******************************** STRUCTURE *********************************/

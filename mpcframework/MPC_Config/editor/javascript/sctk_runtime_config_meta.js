@@ -127,7 +127,8 @@ meta.types = {
 	ib_global : {type: 'struct', name: "ib_global", childs: {
 		mmu_cache_enabled: {mode: 'param', name: "mmu_cache_enabled", type: "int", doc: "Defines if the MMU cache is enabled.", dflt: "1", },
 		mmu_cache_entry_count: {mode: 'param', name: "mmu_cache_entry_count", type: "int", doc: "Number of entries to keep in the cache.", dflt: "1000", },
-		mmu_cache_maximum_size: {mode: 'param', name: "mmu_cache_maximum_size", type: "size", doc: "Number of entries to keep in the cache.", dflt: "10GB", },
+		mmu_cache_maximum_size: {mode: 'param', name: "mmu_cache_maximum_size", type: "size", doc: "Total size of entries to keep in the cache.", dflt: "4GB", },
+		mmu_cache_maximum_pin_size: {mode: 'param', name: "mmu_cache_maximum_pin_size", type: "size", doc: "Maximum size of an pinned entry.", dflt: "1GB", },
 	}},
 	net_driver_portals : {type: 'struct', name: "net_driver_portals", childs: {
 		fake_param: {mode: 'param', name: "fake_param", type: "int", doc: "Fake param.", dflt: "0", },

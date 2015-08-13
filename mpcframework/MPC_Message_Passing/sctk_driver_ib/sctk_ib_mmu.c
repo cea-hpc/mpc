@@ -44,12 +44,17 @@ sctk_ib_mmu_entry_t * sctk_ib_mmu_entry_new( sctk_ib_rail_info_t *rail_ib, void 
 	new->addr = addr;
 	new->size = size;
 	new->rail = rail_ib;
+
+	const struct sctk_runtime_config * config = sctk_runtime_config_get();
+	const struct sctk_runtime_config_struct_ib_global * ib_global_config = &config->modules.low_level_comm.ib_global;
+
 	
-	if( (1024 * 1024 * 1024) < size )
+	if( (ib_global_config->mmu_cache_maximum_pin_size) < size )
 	{
-		sctk_fatal("Due to a Mellanox limitation the maximum size of a pinned memory region\n"
-		           "is 1 GB, consider splitting this large segment is several segments of  \n"
-		           "less than 1GB to overcome this limitation, sorry for the inconvenience");
+		sctk_fatal("You have reached the maximum size of a pinned memory region(%g GB),"
+				   "consider splitting this large segment is several segments or \n"
+				   "increase the size limitation in the config depending on your IB card specs",
+		           ib_global_config->mmu_cache_maximum_pin_size / (1024.0 * 1024.0 * 1024.0));
 	}
 	
 	sctk_nodebug("NEW MMU ENTRY at %p size %ld", new->addr, new->size );

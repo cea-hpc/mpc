@@ -285,7 +285,8 @@ void sctk_runtime_config_struct_init_ib_global(void * struct_ptr)
 	/* Simple params : */
 	obj->mmu_cache_enabled = 1;
 	obj->mmu_cache_entry_count = 1000;
-	obj->mmu_cache_maximum_size = sctk_runtime_config_map_entry_parse_size("10GB");
+	obj->mmu_cache_maximum_size = sctk_runtime_config_map_entry_parse_size("4GB");
+	obj->mmu_cache_maximum_pin_size = sctk_runtime_config_map_entry_parse_size("1GB");
 	obj->init_done = 1;
 }
 
