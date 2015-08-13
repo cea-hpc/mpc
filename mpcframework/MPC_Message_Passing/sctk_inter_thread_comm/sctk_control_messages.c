@@ -67,6 +67,7 @@ void sctk_control_message_process_level( int source_process, int source_rank, ch
 	struct sctk_window_map_request * mr  = NULL;
 	struct sctk_window_emulated_RDMA *erma = NULL;
 	struct sctk_control_message_fence_ctx * fence = NULL;
+	int win_id = -1;
 	
 	switch( subtype )
 	{
@@ -75,14 +76,15 @@ void sctk_control_message_process_level( int source_process, int source_rank, ch
 			sctk_control_message_fence_handler( fence );
 		break;
 		case SCTK_PROCESS_RDMA_WIN_MAPTO:
-			sctk_error("Received a MAP remote from %d", source_rank );
+			sctk_nodebug("Received a MAP remote from %d", source_rank );
 			mr = (struct sctk_window_map_request *) data;
 			sctk_window_map_remote_ctrl_msg_handler( mr );
 		break;
 		
 		case SCTK_PROCESS_RDMA_WIN_RELAX:
-			sctk_error("Received a  WIN relax from %d on %d", source_rank , param);
-			sctk_window_relax_ctrl_msg_handler( param );
+			memcpy( &win_id, data, sizeof(int) );
+			sctk_nodebug("Received a  WIN relax from %d on %d", source_rank , win_id);
+			sctk_window_relax_ctrl_msg_handler( win_id );
 		break;
 		
 		case SCTK_PROCESS_RDMA_EMULATED_WRITE :

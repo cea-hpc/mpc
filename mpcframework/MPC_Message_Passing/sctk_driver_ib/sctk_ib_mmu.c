@@ -45,7 +45,14 @@ sctk_ib_mmu_entry_t * sctk_ib_mmu_entry_new( sctk_ib_rail_info_t *rail_ib, void 
 	new->size = size;
 	new->rail = rail_ib;
 	
-	sctk_error("NEW MMU ENTRY at %p size %ld", new->addr, new->size );
+	if( (1024 * 1024 * 1024) < size )
+	{
+		sctk_fatal("Due to a Mellanox limitation the maximum size of a pinned memory region\n"
+		           "is 1 GB, consider splitting this large segment is several segments of  \n"
+		           "less than 1GB to overcome this limitation, sorry for the inconvenience");
+	}
+	
+	sctk_nodebug("NEW MMU ENTRY at %p size %ld", new->addr, new->size );
 	
 	/* Pin memory and save memory handle */
 	if( rail_ib )
@@ -75,6 +82,8 @@ void sctk_ib_mmu_entry_release( sctk_ib_mmu_entry_t * release )
 	
 	int ret = 0;
 	
+	sctk_nodebug("MMU UNPIN at %p size %ld", release->addr, release->size );
+	
 	/* Unregister memory */
 	if( release->mr )
 	{
@@ -94,7 +103,7 @@ void sctk_ib_mmu_entry_release( sctk_ib_mmu_entry_t * release )
 
 int sctk_ib_mmu_entry_contains( sctk_ib_mmu_entry_t * entry, void * addr, size_t size )
 {
-	sctk_error("Test %p (%ld) == %p (%ld)\n",  addr, size,  entry->addr, entry->size );
+	sctk_nodebug("Test %p (%ld) == %p (%ld)\n",  addr, size,  entry->addr, entry->size );
 	
 	if( ( entry->addr <= addr )
 	&&  ( (addr + size) <= (entry->addr + entry->size) ) )
@@ -142,7 +151,7 @@ void sctk_ib_mmu_entry_acquire( sctk_ib_mmu_entry_t * entry )
 	if( !entry )
 		return;
 	
-	sctk_error("ACQUIRING(%p) %p s %ld", entry, entry->addr, entry->size );
+	sctk_nodebug("ACQUIRING(%p) %p s %ld", entry, entry->addr, entry->size );
 	
 	sctk_spinlock_read_lock( &entry->entry_refcounter );
 }
@@ -153,7 +162,7 @@ void sctk_ib_mmu_entry_relax( sctk_ib_mmu_entry_t * entry )
 	if( !entry )
 		return;
 
-	sctk_error("Entry RELAX %p", entry );
+	sctk_nodebug("Entry RELAX %p", entry );
 	
 	
 	sctk_spinlock_read_unlock( &entry->entry_refcounter );
@@ -340,7 +349,7 @@ void _sctk_ib_mmu_push_entry( struct sctk_ib_mmu * mmu , sctk_ib_mmu_entry_t * e
 		 _sctk_ib_mmu_try_to_release_and_replace_entry( mmu, NULL );
 	}
 
-	sctk_error("Current MMU size %ld", mmu->current_size );
+	sctk_nodebug("Current MMU size %ld", mmu->current_size );
 
 	/* Warning YOU must enter here MMU LOCKED ! */
 	int trials = 0;
@@ -382,7 +391,6 @@ void _sctk_ib_mmu_push_entry( struct sctk_ib_mmu * mmu , sctk_ib_mmu_entry_t * e
 	/* We store the fact that this entry will be freed on relax (this is a clear edge case
 	 * which can happen on caches with a very small count in case of slot scarcity) */
 	entry->free_on_relax = 1;
-	sctk_error("SEt free on relax");
 }
 
 

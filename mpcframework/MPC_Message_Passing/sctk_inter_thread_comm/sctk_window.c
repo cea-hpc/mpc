@@ -217,7 +217,7 @@ void sctk_window_release( sctk_window_t win_id  )
 		assume( 0 <= win->remote_id );
 		
 		/* Signal release to remote */
-		sctk_control_messages_send ( sctk_get_process_rank_from_task_rank ( win->owner ), SCTK_CONTROL_MESSAGE_PROCESS, SCTK_PROCESS_RDMA_WIN_RELAX, win->remote_id, NULL, 0  );
+		sctk_control_messages_send ( sctk_get_process_rank_from_task_rank ( win->owner ), SCTK_CONTROL_MESSAGE_PROCESS, SCTK_PROCESS_RDMA_WIN_RELAX, 0, (void *)&win->remote_id, sizeof(int)  );
 	}
 
 	/* Now work on the local window */
