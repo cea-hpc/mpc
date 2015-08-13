@@ -236,7 +236,9 @@ void sctk_window_release( sctk_window_t win_id  )
 	
 	/* If we are at "0" we free the window */
 	
-	if( ! win->is_emulated )
+	/* Make sure that the window is not emulated and
+	 * that it is not a remote one (pinned remotely) */
+	if( (!win->is_emulated) && (win->remote_id < 0 ) )
 	{
 		/* If we were not emulated, unpin */
 		sctk_rail_pin_ctx_release( &win->pin );
