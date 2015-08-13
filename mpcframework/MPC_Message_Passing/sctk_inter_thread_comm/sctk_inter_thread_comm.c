@@ -2491,7 +2491,6 @@ void sctk_wait_message ( sctk_request_t *request )
 	else
 	{
 		sctk_perform_messages_wait_init ( &_wait, request, 1 );
-
 		/* Find the PTPs lists */
 		if ( request->completion_flag != SCTK_MESSAGE_DONE )
 		{

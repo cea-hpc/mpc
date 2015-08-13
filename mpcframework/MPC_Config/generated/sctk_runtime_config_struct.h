@@ -254,6 +254,8 @@ struct sctk_runtime_config_struct_net_driver_infiniband
 	int qp_rx_depth;
 	/**Number of entries to allocate in the CQ. If too low, may cause a CQ overrun**/
 	int cq_depth;
+	/**Number of RDMA resources on QP (covers both max_dest_rd_atomic and max_rd_atomic)**/
+	int rdma_depth;
 	/**Max pending RDMA operations for send**/
 	int max_sg_sq;
 	/**Max pending RDMA operations for recv**/
@@ -292,10 +294,6 @@ struct sctk_runtime_config_struct_net_driver_infiniband
 	int wc_in_number;
 	/**Defines the number of entries for the CQ dedicated to sent messages.**/
 	int wc_out_number;
-	/**Number of outstanding RDMA reads and atomic operations on the destination QP (to be confirmed)**/
-	int rdma_depth;
-	/**Number of responder resources for handling incoming RDMA reads and atomic operations (to be confirmed)**/
-	int rdma_dest_depth;
 	/**Defines if the low memory mode should be activated**/
 	bool low_memory;
 	/**Defines the Rendezvous protocol to use (IBV_RDVZ_WRITE_PROTOCOL or IBV_RDVZ_READ_PROTOCOL)**/

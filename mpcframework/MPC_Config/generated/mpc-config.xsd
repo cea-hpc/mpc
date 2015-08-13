@@ -354,6 +354,7 @@
       <xs:element minOccurs="0" name="qp_tx_depth" type="xs:integer"/>
       <xs:element minOccurs="0" name="qp_rx_depth" type="xs:integer"/>
       <xs:element minOccurs="0" name="cq_depth" type="xs:integer"/>
+      <xs:element minOccurs="0" name="rdma_depth" type="xs:integer"/>
       <xs:element minOccurs="0" name="max_sg_sq" type="xs:integer"/>
       <xs:element minOccurs="0" name="max_sg_rq" type="xs:integer"/>
       <xs:element minOccurs="0" name="max_inline" type="xs:integer"/>
@@ -373,8 +374,6 @@
       <xs:element minOccurs="0" name="async_thread" type="xs:integer"/>
       <xs:element minOccurs="0" name="wc_in_number" type="xs:integer"/>
       <xs:element minOccurs="0" name="wc_out_number" type="xs:integer"/>
-      <xs:element minOccurs="0" name="rdma_depth" type="xs:integer"/>
-      <xs:element minOccurs="0" name="rdma_dest_depth" type="xs:integer"/>
       <xs:element minOccurs="0" name="low_memory" type="xs:boolean"/>
       <xs:element minOccurs="0" name="rdvz_protocol" type="user_type_ibv_rdvz_protocol"/>
       <xs:element minOccurs="0" name="rdma_min_size" type="xs:integer"/>

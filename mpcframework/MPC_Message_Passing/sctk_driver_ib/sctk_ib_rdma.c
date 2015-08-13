@@ -799,7 +799,7 @@ void sctk_ib_rdma_read(   sctk_rail_info_t *rail, sctk_thread_ptp_message_t *msg
 	LOAD_RAIL ( rail );
 
 	int src_process;
-	sctk_endpoint_t  * route = sctk_rail_get_any_route_to_process_or_on_demand ( rail, SCTK_MSG_DEST_PROCESS ( msg ) );
+	sctk_endpoint_t  * route = sctk_rail_get_any_route_to_process_or_on_demand ( rail, SCTK_MSG_SRC_PROCESS ( msg ) );
 
 	sctk_ibuf_t * ibuf = sctk_ibuf_pick_send_sr ( rail_ib );
 	assume ( ibuf );

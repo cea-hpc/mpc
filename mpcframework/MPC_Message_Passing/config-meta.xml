@@ -22,6 +22,7 @@
 			<param name="qp_tx_depth" type="int" doc="Number of entries to allocate in the QP for sending messages. If too low, may cause an QP overrun" default="15000" />
 			<param name="qp_rx_depth" type="int" doc="Number of entries to allocate in the QP for receiving messages. Must be 0 if using SRQ" default="0" />
 			<param name="cq_depth" type="int" doc="Number of entries to allocate in the CQ. If too low, may cause a CQ overrun" default="40000" />
+			<param name="rdma_depth" type="int" doc="Number of RDMA resources on QP (covers both max_dest_rd_atomic and max_rd_atomic)" default="16" />
 			<param name="max_sg_sq" type="int" doc="Max pending RDMA operations for send" default="4" />
 			<param name="max_sg_rq" type="int" doc="Max pending RDMA operations for recv" default="4" />
 			<param name="max_inline" type="int" doc="Max size for inlining messages" default="128" />
@@ -41,8 +42,6 @@
 			<param name="async_thread" type="int" doc="Defines if the asynchronous may be started at the MPC initialization." default="0" />
 			<param name="wc_in_number" type="int" doc="Defines the number of entries for the CQ dedicated to received messages." default="0" />
 			<param name="wc_out_number" type="int" doc="Defines the number of entries for the CQ dedicated to sent messages." default="0" />
-			<param name="rdma_depth" type="int" doc="Number of outstanding RDMA reads and atomic operations on the destination QP (to be confirmed)" default="0" />
-			<param name="rdma_dest_depth" type="int" doc="Number of responder resources for handling incoming RDMA reads and atomic operations (to be confirmed)" default="0" />
 			<param name="low_memory" type="bool" doc="Defines if the low memory mode should be activated" default="false" />
 			<param name="rdvz_protocol" type="ibv_rdvz_protocol" doc="Defines the Rendezvous protocol to use (IBV_RDVZ_WRITE_PROTOCOL or IBV_RDVZ_READ_PROTOCOL)" default="IBV_RDVZ_WRITE_PROTOCOL" />
 			<param name="rdma_min_size" type="int" doc="Defines the minimum size for the Eager RDMA buffers" default="1024" />

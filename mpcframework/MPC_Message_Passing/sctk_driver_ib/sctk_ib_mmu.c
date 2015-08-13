@@ -63,8 +63,9 @@ sctk_ib_mmu_entry_t * sctk_ib_mmu_entry_new( sctk_ib_rail_info_t *rail_ib, void 
 	if( rail_ib )
 	{
 		new->mr = ibv_reg_mr ( rail_ib->device->pd, addr, size, IBV_ACCESS_REMOTE_WRITE
-				         | IBV_ACCESS_LOCAL_WRITE
-				         | IBV_ACCESS_REMOTE_READ );
+																 | IBV_ACCESS_LOCAL_WRITE
+																 | IBV_ACCESS_REMOTE_READ
+																 | IBV_ACCESS_REMOTE_ATOMIC );
 	}
 	else
 	{

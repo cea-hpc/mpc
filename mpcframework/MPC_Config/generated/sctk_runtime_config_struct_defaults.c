@@ -238,6 +238,7 @@ void sctk_runtime_config_struct_init_net_driver_infiniband(void * struct_ptr)
 	obj->qp_tx_depth = 15000;
 	obj->qp_rx_depth = 0;
 	obj->cq_depth = 40000;
+	obj->rdma_depth = 16;
 	obj->max_sg_sq = 4;
 	obj->max_sg_rq = 4;
 	obj->max_inline = 128;
@@ -257,8 +258,6 @@ void sctk_runtime_config_struct_init_net_driver_infiniband(void * struct_ptr)
 	obj->async_thread = 0;
 	obj->wc_in_number = 0;
 	obj->wc_out_number = 0;
-	obj->rdma_depth = 0;
-	obj->rdma_dest_depth = 0;
 	obj->low_memory = false;
 	obj->rdvz_protocol = IBV_RDVZ_WRITE_PROTOCOL;
 	obj->rdma_min_size = 1024;

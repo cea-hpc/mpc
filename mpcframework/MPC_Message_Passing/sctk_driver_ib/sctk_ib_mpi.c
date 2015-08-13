@@ -180,7 +180,7 @@ int sctk_network_poll_send_ibuf ( sctk_rail_info_t *rail, sctk_ibuf_t *ibuf,  co
 {
 	sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
 	int release_ibuf = 1;
-
+	
 	/* Switch on the protocol of the received message */
 	switch ( IBUF_GET_PROTOCOL ( ibuf->buffer ) )
 	{

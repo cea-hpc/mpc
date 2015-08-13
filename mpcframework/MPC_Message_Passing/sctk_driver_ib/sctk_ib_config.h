@@ -68,7 +68,7 @@ typedef struct sctk_ib_config_s
   unsigned int  init_mr;
   unsigned int  adm_port;
   unsigned int  rdma_depth;
-  unsigned int  rdma_dest_depth;
+  unsigned int  rdma_depth;
   unsigned int  no_memory_limitation;
   unsigned int  adaptive_polling;
   unsigned int  secure_polling;

@@ -753,50 +753,6 @@ void sctk_ibuf_send_init ( sctk_ibuf_t *ibuf, size_t size )
 	ibuf->flag = SEND_IBUF_FLAG;
 }
 
-int sctk_ibuf_rdma_write_init ( sctk_ibuf_t *ibuf,
-                                void *local_address,
-                                sctk_uint32_t lkey,
-                                void *remote_address,
-                                sctk_uint32_t rkey,
-                                int len,
-                                int send_flags,
-                                char to_release )
-{
-	LOAD_CONFIG ( ibuf->region->rail );
-	int is_inlined = 0;
-
-	/* If data may be inlined */
-	if ( len <= config->max_inline )
-	{
-		ibuf->desc.wr.send.send_flags = IBV_SEND_INLINE | send_flags;
-		ibuf->flag = RDMA_WRITE_INLINE_IBUF_FLAG;
-		is_inlined = 1;
-	}
-	else
-	{
-		ibuf->desc.wr.send.send_flags = send_flags;
-		ibuf->flag = RDMA_WRITE_IBUF_FLAG;
-	}
-
-	ibuf->in_srq = 0;
-	ibuf->send_imm_data = 0;
-	ibuf->to_release = to_release;
-	ibuf->desc.wr.send.next = NULL;
-	ibuf->desc.wr.send.opcode = IBV_WR_RDMA_WRITE;
-	ibuf->desc.wr.send.wr_id = ( uintptr_t ) ibuf;
-
-	ibuf->desc.wr.send.num_sge = 1;
-	ibuf->desc.wr.send.wr.rdma.remote_addr = ( uintptr_t ) remote_address;
-	ibuf->desc.wr.send.wr.rdma.rkey = rkey;
-
-	ibuf->desc.wr.send.sg_list = & ( ibuf->desc.sg_entry );
-	ibuf->desc.wr.send.imm_data = IMM_DATA_NULL;
-	ibuf->desc.sg_entry.length = len;
-	ibuf->desc.sg_entry.lkey = lkey;
-	ibuf->desc.sg_entry.addr = ( uintptr_t ) local_address;
-
-	return is_inlined;
-}
 
 int sctk_ibuf_rdma_write_with_imm_init ( sctk_ibuf_t *ibuf,
                                          void *local_address,
@@ -843,6 +799,50 @@ int sctk_ibuf_rdma_write_with_imm_init ( sctk_ibuf_t *ibuf,
 	return is_inlined;
 }
 
+int sctk_ibuf_rdma_write_init ( sctk_ibuf_t *ibuf,
+                                void *local_address,
+                                sctk_uint32_t lkey,
+                                void *remote_address,
+                                sctk_uint32_t rkey,
+                                int len,
+                                int send_flags,
+                                char to_release )
+{
+	LOAD_CONFIG ( ibuf->region->rail );
+	int is_inlined = 0;
+
+	/* If data may be inlined */
+	if ( len <= config->max_inline )
+	{
+		ibuf->desc.wr.send.send_flags = IBV_SEND_INLINE | send_flags;
+		ibuf->flag = RDMA_WRITE_INLINE_IBUF_FLAG;
+		is_inlined = 1;
+	}
+	else
+	{
+		ibuf->desc.wr.send.send_flags = send_flags;
+		ibuf->flag = RDMA_WRITE_IBUF_FLAG;
+	}
+
+	ibuf->in_srq = 0;
+	ibuf->send_imm_data = 0;
+	ibuf->to_release = to_release;
+	ibuf->desc.wr.send.next = NULL;
+	ibuf->desc.wr.send.opcode = IBV_WR_RDMA_WRITE;
+	ibuf->desc.wr.send.wr_id = ( uintptr_t ) ibuf;
+
+	ibuf->desc.wr.send.num_sge = 1;
+	ibuf->desc.wr.send.wr.rdma.remote_addr = ( uintptr_t ) remote_address;
+	ibuf->desc.wr.send.wr.rdma.rkey = rkey;
+
+	ibuf->desc.wr.send.sg_list = & ( ibuf->desc.sg_entry );
+	ibuf->desc.wr.send.imm_data = IMM_DATA_NULL;
+	ibuf->desc.sg_entry.length = len;
+	ibuf->desc.sg_entry.lkey = lkey;
+	ibuf->desc.sg_entry.addr = ( uintptr_t ) local_address;
+
+	return is_inlined;
+}
 
 
 void sctk_ibuf_rdma_read_init ( sctk_ibuf_t *ibuf,

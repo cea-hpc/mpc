@@ -424,7 +424,11 @@ struct ibv_qp_attr sctk_ib_qp_state_rtr_attr ( struct sctk_ib_rail_info_s *rail_
 	attr.path_mtu = IBV_MTU_2048;
 	/* QP number of remote QP */
 	/* maximul number if resiyrces for incoming RDMA request */
-	attr.max_dest_rd_atomic = config->rdma_dest_depth;
+	attr.max_dest_rd_atomic = config->rdma_depth;
+	
+	/* number or outstanding RDMA reads and atomic operations allowed */
+	attr.max_rd_atomic = config->rdma_depth;
+
 	/* maximum RNR NAK timer (recommanded value: 12) */
 	attr.min_rnr_timer = 12;
 
@@ -467,8 +471,12 @@ struct ibv_qp_attr sctk_ib_qp_state_rts_attr ( struct sctk_ib_rail_info_s *rail_
 	attr.rnr_retry = 7;
 	/* packet sequence number */
 	attr.sq_psn = psn;
+
+	/* maximul number if resiyrces for incoming RDMA request */
+	attr.max_dest_rd_atomic = config->rdma_depth;
+	
 	/* number or outstanding RDMA reads and atomic operations allowed */
-	attr.max_rd_atomic = config->rdma_dest_depth;
+	attr.max_rd_atomic = config->rdma_depth;
 
 	*flags = IBV_QP_STATE
 	         | IBV_QP_TIMEOUT

@@ -503,6 +503,10 @@ Number of entries to allocate in the QP for receiving messages. Must be 0 if usi
 Type is int. Default value is 40000. 
 .Pp cq_depth
 Number of entries to allocate in the CQ. If too low, may cause a CQ overrun
+.It Cm rdma_depth
+Type is int. Default value is 16. 
+.Pp rdma_depth
+Number of RDMA resources on QP (covers both max_dest_rd_atomic and max_rd_atomic)
 .It Cm max_sg_sq
 Type is int. Default value is 4. 
 .Pp max_sg_sq
@@ -579,14 +583,6 @@ Defines the number of entries for the CQ dedicated to received messages.
 Type is int. Default value is 0. 
 .Pp wc_out_number
 Defines the number of entries for the CQ dedicated to sent messages.
-.It Cm rdma_depth
-Type is int. Default value is 0. 
-.Pp rdma_depth
-Number of outstanding RDMA reads and atomic operations on the destination QP (to be confirmed)
-.It Cm rdma_dest_depth
-Type is int. Default value is 0. 
-.Pp rdma_dest_depth
-Number of responder resources for handling incoming RDMA reads and atomic operations (to be confirmed)
 .It Cm low_memory
 Type is bool. Default value is false. 
 .Pp low_memory
