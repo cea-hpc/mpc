@@ -421,7 +421,7 @@ void sctk_window_RDMA_emulated_read_ctrl_msg_handler( struct sctk_window_emulate
 		sctk_fatal("Error RDMA emulated write operation overflows the window\n"
 		           " WIN S : %ld , offset %ld, disp %ld, actual off %ld",
 		            win->size, erma->offset, win->disp_unit, offset);
-	} 
+	}
 	
 	sctk_request_t data_req;
 	sctk_message_isend_class_src( erma->remote_rank, erma->source_rank, win->start_addr + offset, erma->size , TAG_RDMA_READ, win->comm, SCTK_RDMA_WINDOW_MESSAGES, &data_req );
