@@ -325,6 +325,8 @@ sctk_centralized_thread_generic_wake_on_task_lock( sctk_thread_generic_scheduler
 typedef struct {
   sctk_spinlock_t sctk_multiple_queues_sched_list_lock;
   sctk_thread_generic_scheduler_generic_t* sctk_multiple_queues_sched_list;
+/* TODO Optimize to have data locality*/
+  char pad[4096];
 } sctk_multiple_queues_sched_list_t;
 #define SCTK_MULTIPLE_QUEUES_SCHED_LIST_INIT {SCTK_SPINLOCK_INITIALIZER,NULL}
 
