@@ -76,7 +76,7 @@ typedef struct sctk_ib_device_s
 	char link_rate[64];
 	int link_width;
 	int data_rate;
-
+	int index_pkey;
 
 	int eager_rdma_connections; 		/**< For eager RDMA channel */
 } sctk_ib_device_t;

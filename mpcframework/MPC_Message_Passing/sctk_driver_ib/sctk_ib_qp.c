@@ -391,13 +391,14 @@ struct ibv_qp_init_attr sctk_ib_qp_init_attr ( struct sctk_ib_rail_info_s *rail_
 struct ibv_qp_attr sctk_ib_qp_state_init_attr ( struct sctk_ib_rail_info_s *rail_ib, int *flags )
 {
 	LOAD_CONFIG ( rail_ib );
+	LOAD_DEVICE ( rail_ib );
 	struct ibv_qp_attr attr;
 	memset ( &attr, 0, sizeof ( struct ibv_qp_attr ) );
 
 	/*init state */
 	attr.qp_state = IBV_QPS_INIT;
 	/* pkey index, normally 0 */
-	attr.pkey_index = 0;
+	attr.pkey_index = device->index_pkey;
 	/* physical port number (1 .. n) */
 	attr.port_num = config->adm_port;
 	attr.qp_access_flags = IBV_ACCESS_REMOTE_WRITE

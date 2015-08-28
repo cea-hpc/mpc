@@ -67,6 +67,7 @@ sctk_ib_device_t *sctk_ib_device_init ( struct sctk_ib_rail_info_s *rail_ib )
 sctk_ib_device_t *sctk_ib_device_open ( struct sctk_ib_rail_info_s *rail_ib, char * device_name )
 {
 	LOAD_DEVICE ( rail_ib );
+	LOAD_CONFIG ( rail_ib );
 	struct ibv_device **dev_list = device->dev_list;
 	int devices_nb = device->dev_nb;
 	int link_width = -1;
@@ -117,6 +118,31 @@ sctk_ib_device_t *sctk_ib_device_open ( struct sctk_ib_rail_info_s *rail_ib, cha
 	if ( ibv_query_port ( device->context, 1, &device->port_attr ) != 0 )
 	{
 		SCTK_IB_ABORT ( "Unable to get port attr" );
+	}
+
+    	{
+        	int i_pkey;
+	        uint16_t pkey;
+		uint16_t specific_pkey = 0x0000;
+		device->index_pkey = 0;
+		sctk_ib_nodebug("PKEY %s\n", config->pkey);
+		if(strcmp(config->pkey,"undefined") != 0){
+			device->index_pkey = -1;
+			specific_pkey = strtoul(config->pkey,NULL,16); 
+			sctk_ib_nodebug("PKEY %s = %p\n",config->pkey,specific_pkey);
+		        for(i_pkey = 0; ; i_pkey++){
+		            if(ibv_query_pkey(device->context,1, i_pkey,&pkey) != 0) break;
+		            pkey = ntohs(pkey);
+		            if(pkey) sctk_ib_nodebug("PKEY index %d value %p\n",i_pkey,pkey);
+			    if(pkey == specific_pkey) {
+				device->index_pkey = i_pkey;
+				break;
+			    }
+		    }
+		    if(device->index_pkey == -1){
+			SCTK_IB_ABORT ( "Unable to find pkey" );
+		    }
+	        }
 	}
 
 	/* Get the link width */
