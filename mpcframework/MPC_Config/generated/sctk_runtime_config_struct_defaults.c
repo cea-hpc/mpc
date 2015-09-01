@@ -656,7 +656,7 @@ void sctk_runtime_config_struct_init_progress_thread(void * struct_ptr)
 	if( obj->init_done != 0 ) return;
 
 	/* Simple params : */
-	obj->use_progress_thread = 1;
+	obj->use_progress_thread = 0;
 	obj->init_done = 1;
 }
 

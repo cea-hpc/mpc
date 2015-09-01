@@ -40,7 +40,7 @@
         </struct>
 
 	<struct name="progress_thread" doc="Progress thread NBC">
-	    <param name="use_progress_thread" type="int" default="1" doc="If use progress threads for non blocking collectives"/>
+	    <param name="use_progress_thread" type="int" default="0" doc="If use progress threads for non blocking collectives"/>
 	</struct>
 	</usertypes>
 	<modules>

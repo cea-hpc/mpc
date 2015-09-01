@@ -226,7 +226,7 @@ meta.types = {
 		reduce_scatter_block_inter: {mode: 'param', name: "reduce_scatter_block_inter", type: "funcptr", doc: "MPI_Reduce_scatter_block intercom algorithm", dflt: "__INTERNAL__PMPI_Reduce_scatter_block_inter", },
 	}},
 	progress_thread : {type: 'struct', name: "progress_thread", childs: {
-		use_progress_thread: {mode: 'param', name: "use_progress_thread", type: "int", doc: "If use progress threads for non blocking collectives", dflt: "1", },
+		use_progress_thread: {mode: 'param', name: "use_progress_thread", type: "int", doc: "If use progress threads for non blocking collectives", dflt: "0", },
 	}},
 	openmp : {type: 'struct', name: "openmp", childs: {
 		vp: {mode: 'param', name: "vp", type: "int", doc: "Number of VPs for each OpenMP team", dflt: "0", },
