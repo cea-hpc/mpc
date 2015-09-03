@@ -3273,8 +3273,10 @@ static inline int NBC_Sched_commit_pos(NBC_Schedule *schedule) {
  *
  * to be called *only* from the progress thread !!! */
 static inline int NBC_Free(NBC_Handle* handle) {
+  int use_progress_thread = 0;
+  use_progress_thread = sctk_runtime_config_get()->modules.progress_thread.use_progress_thread;
 
-  if(sctk_runtime_config_get()->modules.progress_thread.use_progress_thread == 1)
+  if(use_progress_thread == 1)
   {
   
     struct sctk_task_specific_s * task_specific;
@@ -3315,7 +3317,7 @@ static inline int NBC_Free(NBC_Handle* handle) {
 			sctk_free((void*)handle->schedule);
 			handle->schedule = NULL;
 	  }
-  if(sctk_runtime_config_get()->modules.progress_thread.use_progress_thread == 1)
+  if(use_progress_thread == 1)
   {
     sctk_thread_mutex_unlock(&handle->lock);
   }
@@ -3325,7 +3327,7 @@ static inline int NBC_Free(NBC_Handle* handle) {
     handle->tmpbuf = NULL;
   }
 
-  if(sctk_runtime_config_get()->modules.progress_thread.use_progress_thread == 1)
+  if(use_progress_thread == 1)
   {
     if(sctk_thread_sem_post(&handle->semid) != 0) { perror("sctk_thread_sem_post()"); }
   }
@@ -3674,19 +3676,21 @@ static inline int NBC_Start(NBC_Handle *handle, NBC_Schedule *schedule) {
 
 
 int NBC_Wait(NBC_Handle *handle, MPI_Status *status) {
+  int use_progress_thread = 0;
+  use_progress_thread = sctk_runtime_config_get()->modules.progress_thread.use_progress_thread;
 
-  if(sctk_runtime_config_get()->modules.progress_thread.use_progress_thread == 1)
+  if(use_progress_thread == 1)
   { 
   sctk_thread_mutex_lock(&handle->lock);
   }
   if(handle->schedule == NULL) {
-  if(sctk_runtime_config_get()->modules.progress_thread.use_progress_thread == 1)
+  if(use_progress_thread == 1)
   {
     sctk_thread_mutex_unlock(&handle->lock);
   }
     return NBC_OK;
   }
-  if(sctk_runtime_config_get()->modules.progress_thread.use_progress_thread == 1)
+  if(use_progress_thread == 1)
   {
   sctk_thread_mutex_unlock(&handle->lock);
 
