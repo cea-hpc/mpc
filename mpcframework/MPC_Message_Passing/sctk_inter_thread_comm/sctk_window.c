@@ -25,6 +25,7 @@
 #include "uthash.h"
 #include <sctk_alloc.h>
 #include <sctk_control_messages.h>
+#include <sctk_atomics.h>
 
 /************************************************************************/
 /* Window Numbering and translation                                     */
@@ -693,6 +694,209 @@ void sctk_window_RDMA_read_win( sctk_window_t src_win_id, size_t src_offset, siz
 	
 	__sctk_window_RDMA_read( src_win_id, &dest_win->pin, dest_addr, size, src_offset, req );
 }
+
+
+
+
+/* Fetch and Add =================== */
+
+//sctk_ib_rdma_fetch_and_add(  sctk_rail_info_t *rail, sctk_thread_ptp_message_t *msg, void * fetch_addr, struct  sctk_rail_pin_ctx_list * local_key, void * remote_addr, struct  sctk_rail_pin_ctx_list * remote_key, sctk_uint64_t add)
+
+
+int sctk_window_fetch_and_op_operate( RDMA_op op, int add, sctk_atomics_int * src, void * dest )
+{
+	int result = 0;
+	
+	int val = 0;
+	
+	switch( op )
+	{
+		case RDMA_SUM:
+			result = sctk_atomics_fetch_and_add_int( src, add );
+			break;
+			
+		case RDMA_INC:
+			result = sctk_atomics_fetch_and_add_int( src, 1 );
+			break;
+			
+		case RDMA_DEC:
+			result = sctk_atomics_fetch_and_add_int( src, -1 );
+			break;
+		
+		case RMDA_MIN :
+			val = sctk_atomics_load_int( src );
+			
+			if( add < val )
+			{
+				sctk_atomics_store_int( src, add );
+			}
+			
+			result = val;
+			break;
+		case RDMA_MAX :
+			val = sctk_atomics_load_int( src );
+			
+			if( val < add )
+			{
+				sctk_atomics_store_int( src, add );
+			}
+			
+			result = val;
+			break;
+		case RDMA_PROD :
+			val = sctk_atomics_load_int( src );
+			sctk_atomics_store_int( src, add * val );
+			result = val;
+			break;
+		case RDMA_LAND :
+			val = sctk_atomics_load_int( src );
+			sctk_atomics_store_int( src, add && val );
+			result = val;
+			break;
+
+		case RDMA_BAND :
+			val = sctk_atomics_load_int( src );
+			sctk_atomics_store_int( src, add & val );
+			result = val;
+			break;
+
+		case RDMA_LOR :
+			val = sctk_atomics_load_int( src );
+			sctk_atomics_store_int( src, add || val );
+			result = val;
+			break;
+
+		case RDMA_BOR :
+			val = sctk_atomics_load_int( src );
+			sctk_atomics_store_int( src, add | val );
+			result = val;
+			break;
+
+		case RDMA_LXOR :
+			val = sctk_atomics_load_int( src );
+			sctk_atomics_store_int( src, add != val );
+			result = val;
+			break;
+
+		case RDMA_BXOR :
+			val = sctk_atomics_load_int( src );
+			sctk_atomics_store_int( src, add ^ val );
+			result = val;
+			break;
+
+	}
+
+	memcpy( dest, &result, sizeof( sctk_atomics_int ) );
+}
+
+
+
+
+
+
+
+
+void sctk_window_RDMA_fetch_and_op_local( sctk_window_t remote_win_id, size_t remote_offset, size_t size, void * fetch_addr, int add, RDMA_op op, sctk_request_t  * req )
+{
+	struct sctk_window * win = sctk_win_translate( remote_win_id );
+	
+	sctk_error("Fetch and add");
+	
+	if( !win )
+	{
+		sctk_fatal("No such window ID %d", remote_win_id);
+	}
+
+	size_t offset = remote_offset * win->disp_unit;
+
+	if( win->size < ( offset + size ) )
+	{
+		sctk_fatal("Error RDMA read operation overflows the window");
+	}
+
+	if( size != sizeof( sctk_atomics_int ) )
+	{
+		sctk_fatal("Fetch and add is only supported on %d bits operands\n", sizeof(sctk_atomics_int));
+	}
+	else
+	{
+
+		sctk_atomics_int * remote_addr = (sctk_atomics_int *)(win->start_addr + offset);
+		
+		sctk_window_fetch_and_op_operate( op, add, remote_addr, fetch_addr );
+	}
+	
+	
+	/* Save the result in the fetch_addr */
+	
+}
+
+
+void __sctk_window_RDMA_fetch_and_op( sctk_window_t remote_win_id, size_t remote_offset, size_t size, sctk_rail_pin_ctx_t * fetch_pin, void * fetch_addr, int add, RDMA_op op, sctk_request_t  * req )
+{
+	struct sctk_window * win = sctk_win_translate( remote_win_id );
+	
+	sctk_error("Fetch and add");
+	
+	if( !win )
+	{
+		sctk_fatal("No such window ID %d", remote_win_id);
+	}
+
+	/* Set an empty request */
+	sctk_init_request(req, win->comm, REQUEST_RECV );
+
+	int my_rank = sctk_get_task_rank();
+	
+	if( (my_rank == win->owner) /* Same rank */
+	||  (! sctk_is_net_message( win->owner ) ) /* Same process */  )
+	{
+		/* Shared Memory */
+		sctk_window_RDMA_fetch_and_op_local( remote_win_id, remote_offset, size, fetch_addr, add, op, req );
+		return;
+	}
+	else if( win->is_emulated )
+	{
+		
+	}
+	else
+	{	
+
+	}
+}
+
+
+void sctk_window_RDMA_fetch_and_op( sctk_window_t remote_win_id, size_t remote_offset, size_t size, void * fetch_addr, int add, RDMA_op op, sctk_request_t  * req )
+{
+	__sctk_window_RDMA_fetch_and_op( remote_win_id, remote_offset, size, NULL, fetch_addr, add, op, req );	
+}
+
+
+void sctk_window_RDMA_fetch_and_add_win( sctk_window_t remote_win_id, size_t remote_offset, size_t size, sctk_window_t local_win_id, size_t fetch_offset, int add, RDMA_op op, sctk_request_t  * req )
+{
+struct sctk_window * local_win = sctk_win_translate( local_win_id );
+
+	if( !local_win )
+	{
+		sctk_fatal("No such window ID");
+	}
+	
+	void * dest_addr = local_win->start_addr + fetch_offset * local_win->disp_unit;
+	void * win_end_addr = local_win->start_addr + local_win->size;
+	
+	
+	if( win_end_addr < (dest_addr + size ) )
+	{
+		sctk_fatal("Error RDMA write operation overflows the window");
+	}
+	
+	
+	__sctk_window_RDMA_fetch_and_op( remote_win_id, remote_offset, size, &local_win->pin, dest_addr, add, op, req );
+
+}
+
+
+
 
 
 

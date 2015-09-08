@@ -830,6 +830,44 @@ void sctk_ib_rdma_read(   sctk_rail_info_t *rail, sctk_thread_ptp_message_t *msg
 }
 
 
+void sctk_ib_rdma_fetch_and_add(  sctk_rail_info_t *rail, sctk_thread_ptp_message_t *msg, void * fetch_addr, struct  sctk_rail_pin_ctx_list * local_key, void * remote_addr, struct  sctk_rail_pin_ctx_list * remote_key, sctk_uint64_t add)
+{
+	LOAD_RAIL ( rail );
+
+	int src_process;
+	sctk_endpoint_t  * route = sctk_rail_get_any_route_to_process_or_on_demand ( rail, SCTK_MSG_SRC_PROCESS ( msg ) );
+
+	sctk_ibuf_t * ibuf = sctk_ibuf_pick_send_sr ( rail_ib );
+	assume ( ibuf );
+
+	sctk_ib_rdma_t *rdma_header  = IBUF_GET_RDMA_HEADER ( ibuf->buffer );
+
+	IBUF_SET_DEST_TASK ( ibuf->buffer, SCTK_MSG_DEST_TASK ( msg ) );
+	IBUF_SET_SRC_TASK ( ibuf->buffer, SCTK_MSG_SRC_TASK ( msg ) );
+	IBUF_SET_PROTOCOL ( ibuf->buffer, SCTK_IB_RDMA_PROTOCOL );
+	
+	IBUF_SET_RDMA_TYPE ( rdma_header, SCTK_IB_RDMA_FETCH_AND_ADD );
+	IBUF_SET_RDMA_POINTER( rdma_header, msg );
+
+
+	sctk_error ( "RDMA Fetch and add from %p to %p add %lld",
+	               remote_addr,
+	               fetch_addr,
+	               add );
+	               
+	sctk_ibuf_rdma_fetch_and_add_init(  ibuf,
+									    fetch_addr,
+										local_key->pin.ib.mr.rkey,
+										remote_addr,
+										remote_key->pin.ib.mr.lkey,
+										add );
+
+	sctk_ib_qp_send_ibuf ( &rail->network.ib,
+	                       route->data.ib.remote, ibuf);
+
+}
+
+
 /*-----------------------------------------------------------
  *  POLLING SEND / RECV
  *----------------------------------------------------------*/
@@ -923,6 +961,12 @@ sctk_ib_rdma_poll_send ( sctk_rail_info_t *rail, sctk_ibuf_t *ibuf )
 		case SCTK_IB_RDMA_READ:
 			msg = sctk_ib_rdma_retrieve_msg_ptr( ibuf );
 			sctk_error ( "RDMA Read DONE" );
+			sctk_complete_and_free_message ( msg );
+			break;
+
+		case SCTK_IB_RDMA_FETCH_AND_ADD:
+			msg = sctk_ib_rdma_retrieve_msg_ptr( ibuf );
+			sctk_error ( "RDMA Fetch and add DONE" );
 			sctk_complete_and_free_message ( msg );
 			break;
 			

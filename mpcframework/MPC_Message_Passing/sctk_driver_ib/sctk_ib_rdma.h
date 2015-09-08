@@ -45,6 +45,7 @@ typedef enum sctk_ib_rdma_type_e
     SCTK_IB_RDMA_RDV_WRITE_TYPE = 555,
     SCTK_IB_RDMA_WRITE = 666,
     SCTK_IB_RDMA_READ = 777,
+    SCTK_IB_RDMA_FETCH_AND_ADD = 888,
 } __attribute__ ( ( packed ) )
 sctk_ib_rdma_type_t;
 
