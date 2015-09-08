@@ -97,7 +97,11 @@ static inline void sctk_window_emulated_RDMA_init( struct sctk_window_emulated_R
 
 
 void sctk_window_RDMA_write( sctk_window_t win_id, void * src_addr, size_t size, size_t dest_offset, sctk_request_t  * req  );
+void sctk_window_RDMA_write_win( sctk_window_t src_win_id, size_t src_offset, size_t size,  sctk_window_t dest_win_id, size_t dest_offset, sctk_request_t  * req  );
+
 void sctk_window_RDMA_read( sctk_window_t win_id, void * dest_addr, size_t size, size_t src_offset, sctk_request_t  * req  );
+void sctk_window_RDMA_read_win( sctk_window_t src_win_id, size_t src_offset, size_t size, sctk_window_t dest_win_id, size_t dest_offset, sctk_request_t  * req );
+
 void sctk_window_RDMA_fence( sctk_window_t win_id );
 
 
