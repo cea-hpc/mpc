@@ -26,6 +26,8 @@
 #include <sctk_alloc.h>
 #include <sctk_control_messages.h>
 #include <sctk_atomics.h>
+#include <sctk_spinlock.h>
+#include <sctk_wchar.h>
 
 /************************************************************************/
 /* Window Numbering and translation                                     */
@@ -703,16 +705,61 @@ void sctk_window_RDMA_read_win( sctk_window_t src_win_id, size_t src_offset, siz
 //sctk_ib_rdma_fetch_and_add(  sctk_rail_info_t *rail, sctk_thread_ptp_message_t *msg, void * fetch_addr, struct  sctk_rail_pin_ctx_list * local_key, void * remote_addr, struct  sctk_rail_pin_ctx_list * remote_key, sctk_uint64_t add)
 
 
-int sctk_window_fetch_and_op_operate( RDMA_op op, int add, sctk_atomics_int * src, void * dest )
+size_t RDMA_type_size( RDMA_type type )
+{
+	switch( type )
+	{
+		case RMDA_TYPE_CHAR:
+			return sizeof( char );
+		case RMDA_TYPE_DOUBLE:
+			return sizeof(double);
+		case RMDA_TYPE_FLOAT:
+			return sizeof(float);
+		case RMDA_TYPE_INT:
+			return sizeof(int);
+		case RMDA_TYPE_LONG:
+			return sizeof(long);
+		case RMDA_TYPE_LONG_DOUBLE:
+			return sizeof(long double);
+		case RMDA_TYPE_LONG_LONG:
+			return sizeof(long long);
+		case RMDA_TYPE_LONG_LONG_INT:
+			return sizeof( long long int );
+		case RMDA_TYPE_SHORT:
+			return sizeof( short );
+		case RMDA_TYPE_SIGNED_CHAR:
+			return sizeof( signed char );
+		case RMDA_TYPE_UNSIGNED:
+			return sizeof( unsigned );
+		case RMDA_TYPE_UNSIGNED_CHAR:
+			return sizeof( unsigned char );
+		case RMDA_TYPE_UNSIGNED_LONG:
+			return sizeof( unsigned long );
+		case RMDA_TYPE_UNSIGNED_LONG_LONG:
+			return sizeof( unsigned long long );
+		case RMDA_TYPE_UNSIGNED_SHORT:
+			return sizeof( unsigned short );
+		case RMDA_TYPE_WCHAR:
+			return sizeof( sctk_wchar_t );
+	}
+	
+	sctk_fatal("Found an unhandled RDMA datatype");
+}
+
+
+
+void sctk_window_fetch_and_op_operate_int( RDMA_op op, void * add, sctk_atomics_int * src, void * dest )
 {
 	int result = 0;
 	
 	int val = 0;
 	
+	int * to_add = ((int *) add );
+	
 	switch( op )
 	{
 		case RDMA_SUM:
-			result = sctk_atomics_fetch_and_add_int( src, add );
+			result = sctk_atomics_fetch_and_add_int( src, *to_add );
 			break;
 			
 		case RDMA_INC:
@@ -726,9 +773,9 @@ int sctk_window_fetch_and_op_operate( RDMA_op op, int add, sctk_atomics_int * sr
 		case RMDA_MIN :
 			val = sctk_atomics_load_int( src );
 			
-			if( add < val )
+			if( *to_add < val )
 			{
-				sctk_atomics_store_int( src, add );
+				sctk_atomics_store_int( src, *to_add );
 			}
 			
 			result = val;
@@ -736,51 +783,51 @@ int sctk_window_fetch_and_op_operate( RDMA_op op, int add, sctk_atomics_int * sr
 		case RDMA_MAX :
 			val = sctk_atomics_load_int( src );
 			
-			if( val < add )
+			if( val < *to_add )
 			{
-				sctk_atomics_store_int( src, add );
+				sctk_atomics_store_int( src, *to_add );
 			}
 			
 			result = val;
 			break;
 		case RDMA_PROD :
 			val = sctk_atomics_load_int( src );
-			sctk_atomics_store_int( src, add * val );
+			sctk_atomics_store_int( src, *to_add * val );
 			result = val;
 			break;
 		case RDMA_LAND :
 			val = sctk_atomics_load_int( src );
-			sctk_atomics_store_int( src, add && val );
+			sctk_atomics_store_int( src, *to_add && val );
 			result = val;
 			break;
 
 		case RDMA_BAND :
 			val = sctk_atomics_load_int( src );
-			sctk_atomics_store_int( src, add & val );
+			sctk_atomics_store_int( src, *to_add & val );
 			result = val;
 			break;
 
 		case RDMA_LOR :
 			val = sctk_atomics_load_int( src );
-			sctk_atomics_store_int( src, add || val );
+			sctk_atomics_store_int( src, *to_add || val );
 			result = val;
 			break;
 
 		case RDMA_BOR :
 			val = sctk_atomics_load_int( src );
-			sctk_atomics_store_int( src, add | val );
+			sctk_atomics_store_int( src, *to_add | val );
 			result = val;
 			break;
 
 		case RDMA_LXOR :
 			val = sctk_atomics_load_int( src );
-			sctk_atomics_store_int( src, add != val );
+			sctk_atomics_store_int( src, *to_add != val );
 			result = val;
 			break;
 
 		case RDMA_BXOR :
 			val = sctk_atomics_load_int( src );
-			sctk_atomics_store_int( src, add ^ val );
+			sctk_atomics_store_int( src, *to_add ^ val );
 			result = val;
 			break;
 
@@ -789,18 +836,228 @@ int sctk_window_fetch_and_op_operate( RDMA_op op, int add, sctk_atomics_int * sr
 	memcpy( dest, &result, sizeof( sctk_atomics_int ) );
 }
 
+#define RDMA_OP_def( type, type2, type3 ) \
+static sctk_spinlock_t __RDMA_OP_ ## type ## type2 ## type3 ## _lock = SCTK_SPINLOCK_INITIALIZER;\
+\
+void sctk_window_fetch_and_op_operate_ ## type ## type2 ## type3 ## _( RDMA_op op, void * add, sctk_atomics_int * src, void * dest )\
+{\
+	type type2 type3 result;\
+	type type2 type3 * to_add = ( type type2 type3 *) add;\
+	type type2 type3 * dest_addr = ( type type2 type3 *)dest;\
+\
+	sctk_spinlock_lock( &__RDMA_OP_ ## type ## type2 ## type3  ##_lock );\
+	\
+	result = *dest_addr;\
+	\
+	switch( op )\
+	{\
+		case RDMA_SUM:\
+			*dest_addr += *to_add;\
+			break;\
+			\
+		case RDMA_INC:\
+			*dest_addr = *dest_addr + 1;\
+			break;\
+			\
+		case RDMA_DEC:\
+			*dest_addr = *dest_addr - 1;\
+			break;\
+		\
+		case RMDA_MIN:\
+			if( *to_add < result )\
+			{\
+				*dest_addr = *to_add;\
+			}\
+			break;\
+		case RDMA_MAX :\
+			if( result < *to_add )\
+			{\
+				*dest_addr = *to_add;\
+			}\
+			break;\
+		case RDMA_PROD :\
+			*dest_addr *= *to_add;\
+			break;\
+		case RDMA_LAND :\
+			*dest_addr = *dest_addr && *to_add;\
+			break;\
+\
+		case RDMA_BAND :\
+			*dest_addr = *dest_addr & *to_add;\
+			break;\
+\
+		case RDMA_LOR :\
+			*dest_addr = *dest_addr || *to_add;\
+			break;\
+\
+		case RDMA_BOR :\
+			*dest_addr = *dest_addr | *to_add;\
+			break;\
+\
+		case RDMA_LXOR :\
+			*dest_addr = *dest_addr != *to_add;\
+			break;\
+\
+		case RDMA_BXOR :\
+			*dest_addr = *dest_addr ^ *to_add;\
+			break;\
+\
+	}\
+\
+	sctk_spinlock_unlock( &__RDMA_OP_ ## type ## type2 ## type3 ##_lock );\
+}
+
+#define RDMA_OP_def_nobin( type, type2 ) \
+static sctk_spinlock_t __RDMA_OP_ ## type ## type2 ## _lock = SCTK_SPINLOCK_INITIALIZER;\
+\
+void sctk_window_fetch_and_op_operate_ ## type ## type2 ## _( RDMA_op op, void * add, sctk_atomics_int * src, void * dest )\
+{\
+	type type2 result;\
+	type type2 * to_add = ( type type2 *) add;\
+	type type2 * dest_addr = ( type type2 *)dest;\
+\
+	sctk_spinlock_lock( &__RDMA_OP_ ## type ## type2 ##_lock );\
+	\
+	result = *dest_addr;\
+	\
+	switch( op )\
+	{\
+		case RDMA_SUM:\
+			*dest_addr += *to_add;\
+			break;\
+			\
+		case RDMA_INC:\
+			*dest_addr = *dest_addr + 1;\
+			break;\
+			\
+		case RDMA_DEC:\
+			*dest_addr = *dest_addr - 1;\
+			break;\
+		\
+		case RMDA_MIN:\
+			if( *to_add < result )\
+			{\
+				*dest_addr = *to_add;\
+			}\
+			break;\
+		case RDMA_MAX :\
+			if( result < *to_add )\
+			{\
+				*dest_addr = *to_add;\
+			}\
+			break;\
+		case RDMA_PROD :\
+			*dest_addr *= *to_add;\
+			break;\
+		case RDMA_LAND :\
+			*dest_addr = *dest_addr && *to_add;\
+			break;\
+\
+		case RDMA_BAND :\
+			sctk_fatal("RDMA Binary operand is not defined for %s", #type);\
+			break;\
+\
+		case RDMA_LOR :\
+			*dest_addr = *dest_addr || *to_add;\
+			break;\
+\
+		case RDMA_BOR :\
+			sctk_fatal("RDMA Binary operand is not defined for %s", #type);\
+			break;\
+\
+		case RDMA_LXOR :\
+			*dest_addr = *dest_addr != *to_add;\
+			break;\
+\
+		case RDMA_BXOR :\
+			sctk_fatal("RDMA Binary operand is not defined for %s", #type);\
+			break;\
+\
+	}\
+\
+	sctk_spinlock_unlock( &__RDMA_OP_ ## type ## type2 ##_lock );\
+}
+
+
+RDMA_OP_def( char, , )
+RDMA_OP_def_nobin( double, )
+RDMA_OP_def_nobin( float, )
+RDMA_OP_def( long, , )
+RDMA_OP_def_nobin( long, double )
+RDMA_OP_def( long, long ,)
+RDMA_OP_def( long, long , int )
+RDMA_OP_def( short, ,)
+RDMA_OP_def( signed, char,)
+RDMA_OP_def( unsigned, ,)
+RDMA_OP_def( unsigned, char, )
+RDMA_OP_def( unsigned, long , )
+RDMA_OP_def( unsigned, long , long )
+RDMA_OP_def( unsigned, short , )
+RDMA_OP_def( sctk_wchar_t, , )
+
+void sctk_window_fetch_and_op_operate( RDMA_op op, RDMA_type type, void * add, sctk_atomics_int * src, void * dest )
+{
+	switch( type )
+	{
+		case RMDA_TYPE_CHAR:
+			sctk_window_fetch_and_op_operate_char_( op, add, src, dest );
+			return;
+		case RMDA_TYPE_DOUBLE:
+			sctk_window_fetch_and_op_operate_double_( op, add, src, dest );
+			return;
+		case RMDA_TYPE_FLOAT:
+			sctk_window_fetch_and_op_operate_float_( op, add, src, dest );
+			return;
+		case RMDA_TYPE_INT:
+			sctk_window_fetch_and_op_operate_int( op, add, src, dest );
+			return;
+		case RMDA_TYPE_LONG:
+			sctk_window_fetch_and_op_operate_long_( op, add, src, dest );
+			return;
+		case RMDA_TYPE_LONG_DOUBLE:
+			sctk_window_fetch_and_op_operate_longdouble_( op, add, src, dest );
+			return;
+		case RMDA_TYPE_LONG_LONG:
+			sctk_window_fetch_and_op_operate_longlong_( op, add, src, dest );
+			return;
+		case RMDA_TYPE_LONG_LONG_INT:
+			sctk_window_fetch_and_op_operate_longlongint_( op, add, src, dest );
+			return;
+		case RMDA_TYPE_SHORT:
+			sctk_window_fetch_and_op_operate_short_( op, add, src, dest );
+			return;
+		case RMDA_TYPE_SIGNED_CHAR:
+			sctk_window_fetch_and_op_operate_signedchar_( op, add, src, dest );
+			return;
+		case RMDA_TYPE_UNSIGNED:
+			sctk_window_fetch_and_op_operate_unsigned_( op, add, src, dest );
+			return;
+		case RMDA_TYPE_UNSIGNED_CHAR:
+			sctk_window_fetch_and_op_operate_unsignedchar_( op, add, src, dest );
+			return;
+		case RMDA_TYPE_UNSIGNED_LONG:
+			sctk_window_fetch_and_op_operate_long_( op, add, src, dest );
+			return;
+		case RMDA_TYPE_UNSIGNED_LONG_LONG:
+			sctk_window_fetch_and_op_operate_unsignedlonglong_( op, add, src, dest );
+			return;
+		case RMDA_TYPE_UNSIGNED_SHORT:
+			return;
+			sctk_window_fetch_and_op_operate_unsignedshort_( op, add, src, dest );
+		case RMDA_TYPE_WCHAR:
+			sctk_window_fetch_and_op_operate_sctk_wchar_t_( op, add, src, dest );
+			return;
+	}
+}
 
 
 
 
-
-
-
-void sctk_window_RDMA_fetch_and_op_local( sctk_window_t remote_win_id, size_t remote_offset, size_t size, void * fetch_addr, int add, RDMA_op op, sctk_request_t  * req )
+void sctk_window_RDMA_fetch_and_op_local( sctk_window_t remote_win_id, size_t remote_offset,  void * fetch_addr, void * add, RDMA_op op, RDMA_type type, sctk_request_t  * req )
 {
 	struct sctk_window * win = sctk_win_translate( remote_win_id );
 	
-	sctk_error("Fetch and add");
+	//sctk_error("Fetch and add");
 	
 	if( !win )
 	{
@@ -809,34 +1066,26 @@ void sctk_window_RDMA_fetch_and_op_local( sctk_window_t remote_win_id, size_t re
 
 	size_t offset = remote_offset * win->disp_unit;
 
-	if( win->size < ( offset + size ) )
+	if( win->size < ( offset + RDMA_type_size( type ) ) )
 	{
 		sctk_fatal("Error RDMA read operation overflows the window");
 	}
 
-	if( size != sizeof( sctk_atomics_int ) )
-	{
-		sctk_fatal("Fetch and add is only supported on %d bits operands\n", sizeof(sctk_atomics_int));
-	}
-	else
-	{
+	sctk_atomics_int * remote_addr = (sctk_atomics_int *)(win->start_addr + offset);
+	
+	
+	sctk_window_fetch_and_op_operate( op, type, add, remote_addr, fetch_addr );
 
-		sctk_atomics_int * remote_addr = (sctk_atomics_int *)(win->start_addr + offset);
-		
-		sctk_window_fetch_and_op_operate( op, add, remote_addr, fetch_addr );
-	}
-	
-	
 	/* Save the result in the fetch_addr */
 	
 }
 
 
-void __sctk_window_RDMA_fetch_and_op( sctk_window_t remote_win_id, size_t remote_offset, size_t size, sctk_rail_pin_ctx_t * fetch_pin, void * fetch_addr, int add, RDMA_op op, sctk_request_t  * req )
+void __sctk_window_RDMA_fetch_and_op( sctk_window_t remote_win_id, size_t remote_offset, sctk_rail_pin_ctx_t * fetch_pin, void * fetch_addr, void * add, RDMA_op op,  RDMA_type type, sctk_request_t  * req )
 {
 	struct sctk_window * win = sctk_win_translate( remote_win_id );
 	
-	sctk_error("Fetch and add");
+	//sctk_error("Fetch and add");
 	
 	if( !win )
 	{
@@ -852,27 +1101,31 @@ void __sctk_window_RDMA_fetch_and_op( sctk_window_t remote_win_id, size_t remote
 	||  (! sctk_is_net_message( win->owner ) ) /* Same process */  )
 	{
 		/* Shared Memory */
-		sctk_window_RDMA_fetch_and_op_local( remote_win_id, remote_offset, size, fetch_addr, add, op, req );
+		sctk_window_RDMA_fetch_and_op_local( remote_win_id, remote_offset, fetch_addr, add, op, type, req );
 		return;
 	}
 	else if( win->is_emulated )
 	{
 		
 	}
-	else
+	else if( (RDMA_type_size( type ) == 8) &&  /* This is clearly an IB related TEST ! */
+		(  type == RMDA_TYPE_INT
+		|| type == RMDA_TYPE_LONG
+		|| type == RMDA_TYPE_UNSIGNED_LONG
+		|| type == RMDA_TYPE_UNSIGNED ) )
 	{	
-
+		
 	}
 }
 
 
-void sctk_window_RDMA_fetch_and_op( sctk_window_t remote_win_id, size_t remote_offset, size_t size, void * fetch_addr, int add, RDMA_op op, sctk_request_t  * req )
+void sctk_window_RDMA_fetch_and_op( sctk_window_t remote_win_id, size_t remote_offset, void * fetch_addr, void * add, RDMA_op op,  RDMA_type type, sctk_request_t  * req )
 {
-	__sctk_window_RDMA_fetch_and_op( remote_win_id, remote_offset, size, NULL, fetch_addr, add, op, req );	
+	__sctk_window_RDMA_fetch_and_op( remote_win_id, remote_offset, NULL, fetch_addr, add, op, type, req );	
 }
 
 
-void sctk_window_RDMA_fetch_and_add_win( sctk_window_t remote_win_id, size_t remote_offset, size_t size, sctk_window_t local_win_id, size_t fetch_offset, int add, RDMA_op op, sctk_request_t  * req )
+void sctk_window_RDMA_fetch_and_add_win( sctk_window_t remote_win_id, size_t remote_offset, sctk_window_t local_win_id, size_t fetch_offset, void * add, RDMA_op op,  RDMA_type type, sctk_request_t  * req )
 {
 struct sctk_window * local_win = sctk_win_translate( local_win_id );
 
@@ -885,13 +1138,13 @@ struct sctk_window * local_win = sctk_win_translate( local_win_id );
 	void * win_end_addr = local_win->start_addr + local_win->size;
 	
 	
-	if( win_end_addr < (dest_addr + size ) )
+	if( win_end_addr < (dest_addr + RDMA_type_size( type ) ) )
 	{
 		sctk_fatal("Error RDMA write operation overflows the window");
 	}
 	
 	
-	__sctk_window_RDMA_fetch_and_op( remote_win_id, remote_offset, size, &local_win->pin, dest_addr, add, op, req );
+	__sctk_window_RDMA_fetch_and_op( remote_win_id, remote_offset, &local_win->pin, dest_addr, add, op, type, req );
 
 }
 

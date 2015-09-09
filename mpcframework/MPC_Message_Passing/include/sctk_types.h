@@ -116,6 +116,29 @@ typedef enum
 	RDMA_BXOR,
 }RDMA_op;
 
+typedef enum
+{
+	RMDA_TYPE_CHAR,
+	RMDA_TYPE_DOUBLE,
+	RMDA_TYPE_FLOAT,
+	RMDA_TYPE_INT,
+	RMDA_TYPE_LONG,
+	RMDA_TYPE_LONG_DOUBLE,
+	RMDA_TYPE_LONG_LONG,
+	RMDA_TYPE_LONG_LONG_INT,
+	RMDA_TYPE_SHORT,
+	RMDA_TYPE_SIGNED_CHAR,
+	RMDA_TYPE_UNSIGNED,
+	RMDA_TYPE_UNSIGNED_CHAR,
+	RMDA_TYPE_UNSIGNED_LONG,
+	RMDA_TYPE_UNSIGNED_LONG_LONG,
+	RMDA_TYPE_UNSIGNED_SHORT,
+	RMDA_TYPE_WCHAR
+}RDMA_type;
+
+size_t RDMA_type_size( RDMA_type type );
+
+
 /************************** MACROS *************************/
 /** define the MPI_COMM_WORLD internal communicator number **/
 #define SCTK_COMM_WORLD 0

@@ -102,8 +102,8 @@ void sctk_window_RDMA_write_win( sctk_window_t src_win_id, size_t src_offset, si
 void sctk_window_RDMA_read( sctk_window_t win_id, void * dest_addr, size_t size, size_t src_offset, sctk_request_t  * req  );
 void sctk_window_RDMA_read_win( sctk_window_t src_win_id, size_t src_offset, size_t size, sctk_window_t dest_win_id, size_t dest_offset, sctk_request_t  * req );
 
-void sctk_window_RDMA_fetch_and_add( sctk_window_t remote_win_id, size_t remote_offset, size_t size, void * fetch_addr, int add, RDMA_op op, sctk_request_t  * req );
-void sctk_window_RDMA_fetch_and_add_win( sctk_window_t remote_win_id, size_t remote_offset, size_t size, sctk_window_t local_win_id, size_t fetch_offset, int add,  RDMA_op op, sctk_request_t  * req );
+void sctk_window_RDMA_fetch_and_add( sctk_window_t remote_win_id, size_t remote_offset, void * fetch_addr, int add, RDMA_op op, RDMA_type type, sctk_request_t  * req );
+void sctk_window_RDMA_fetch_and_add_win( sctk_window_t remote_win_id, size_t remote_offset, sctk_window_t local_win_id, size_t fetch_offset, void * add, RDMA_op op,  RDMA_type type, sctk_request_t  * req );
 
 void sctk_window_RDMA_fence( sctk_window_t win_id );
 
