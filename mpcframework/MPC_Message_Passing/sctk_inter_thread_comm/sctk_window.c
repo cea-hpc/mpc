@@ -1110,6 +1110,68 @@ void sctk_window_RDMA_fetch_and_op_local( sctk_window_t remote_win_id, size_t re
 }
 
 
+void sctk_window_RDMA_fetch_and_op_net( sctk_window_t remote_win_id, size_t remote_offset,  sctk_rail_pin_ctx_t * fetch_pin, void * fetch_addr,  void * add, RDMA_op op, RDMA_type type, sctk_request_t  * req )
+{
+	sctk_rail_info_t * rdma_rail = sctk_rail_get_rdma ();
+	
+	if( !rdma_rail->rdma_write )
+	{
+		sctk_fatal("This rails despite flagged RDMA did not define rdma_write");
+	}
+
+	struct sctk_window * win = sctk_win_translate( remote_win_id );
+	
+	sctk_error("RDMA FETCH AND OP");
+	
+	if( !win )
+	{
+		sctk_fatal("No such window ID %d", remote_win_id);
+	}
+
+	void * src_address = win->start_addr + win->disp_unit * remote_offset;
+
+	size_t offset = remote_offset * win->disp_unit;
+
+	if( win->size < ( offset + RDMA_type_size( type ) ) )
+	{
+		sctk_fatal("Error RDMA read operation overflows the window");
+	} 
+
+	int did_pin = 0;
+
+	/* Pin local segment */
+	if( ! fetch_pin )
+	{
+		sctk_rail_pin_ctx_t local_pin;
+		fetch_pin = &local_pin;
+		sctk_rail_pin_ctx_init( fetch_pin, fetch_addr, RDMA_type_size( type ) );
+		did_pin = 1;
+	}
+	
+	sctk_thread_ptp_message_t * msg = sctk_create_header (win->owner,SCTK_MESSAGE_CONTIGUOUS);
+
+	sctk_set_header_in_message (msg, -8, win->comm,  win->owner, sctk_get_task_rank (), req, RDMA_type_size( type ), SCTK_RDMA_MESSAGE, SCTK_DATATYPE_IGNORE );
+
+	rdma_rail->rdma_fetch_and_op(  rdma_rail,
+							       msg,
+							       fetch_addr,
+							       fetch_pin->list,
+							       src_address,
+							       win->pin.list,
+							       add,
+							       op,
+							       type );
+
+
+	if( did_pin )
+	{
+		/* Note that we use the cache here */
+		sctk_rail_pin_ctx_release( fetch_pin );
+	}
+}
+
+
+
 void __sctk_window_RDMA_fetch_and_op( sctk_window_t remote_win_id, size_t remote_offset, sctk_rail_pin_ctx_t * fetch_pin, void * fetch_addr, void * add, RDMA_op op,  RDMA_type type, sctk_request_t  * req )
 {
 	struct sctk_window * win = sctk_win_translate( remote_win_id );
@@ -1162,7 +1224,7 @@ void __sctk_window_RDMA_fetch_and_op( sctk_window_t remote_win_id, size_t remote
 	}
 	else
 	{	
-		
+		sctk_window_RDMA_fetch_and_op_net( remote_win_id, remote_offset,  fetch_pin, fetch_addr,  add, op, type,  req );
 	}
 }
 
