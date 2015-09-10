@@ -403,7 +403,8 @@ struct ibv_qp_attr sctk_ib_qp_state_init_attr ( struct sctk_ib_rail_info_s *rail
 	attr.port_num = config->adm_port;
 	attr.qp_access_flags = IBV_ACCESS_REMOTE_WRITE
 	                       | IBV_ACCESS_LOCAL_WRITE
-	                       | IBV_ACCESS_REMOTE_READ;
+	                       | IBV_ACCESS_REMOTE_READ
+	                       | IBV_ACCESS_REMOTE_ATOMIC;
 
 	*flags = IBV_QP_STATE
 	         | IBV_QP_PKEY_INDEX
