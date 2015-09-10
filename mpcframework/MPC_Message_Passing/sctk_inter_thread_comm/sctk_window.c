@@ -1121,6 +1121,23 @@ void __sctk_window_RDMA_fetch_and_op( sctk_window_t remote_win_id, size_t remote
 		sctk_fatal("No such window ID %d", remote_win_id);
 	}
 
+	/* Now try to see if we pass the RDMA rail gate function for fetch and op */
+
+	sctk_rail_info_t * rdma_rail = sctk_rail_get_rdma ();
+	
+	int RDMA_fetch_and_op_gate_passed = 0;
+	
+	if( rdma_rail )
+	{
+		if( rdma_rail->rdma_fetch_and_op_gate )
+		{
+			RDMA_fetch_and_op_gate_passed = (rdma_rail->rdma_fetch_and_op_gate)( RDMA_type_size( type ), op, type );
+			/* At this point if RDMA_fetch_and_op_gate_passed == 1 , the NET can handle this fetch and op */
+		}
+	}
+
+
+
 	/* Set an empty request */
 	sctk_init_request(req, win->comm, REQUEST_RECV );
 
@@ -1133,7 +1150,7 @@ void __sctk_window_RDMA_fetch_and_op( sctk_window_t remote_win_id, size_t remote
 		sctk_window_RDMA_fetch_and_op_local( remote_win_id, remote_offset, fetch_addr, add, op, type, req );
 		return;
 	}
-	else if( win->is_emulated )
+	else if( win->is_emulated || (RDMA_fetch_and_op_gate_passed == 0 /* Network does not support this RDMA atomic fallback to emulated */) )
 	{
 		struct sctk_window_emulated_fetch_and_op_RDMA fop;
 		sctk_window_emulated_fetch_and_op_RDMA_init( &fop, win->owner, remote_offset, win->remote_id, op, type, add );
@@ -1142,15 +1159,8 @@ void __sctk_window_RDMA_fetch_and_op( sctk_window_t remote_win_id, size_t remote
 
 		/* Note that we store the data transfer req in the request */
 		sctk_message_irecv_class( win->owner, fetch_addr, fop.rdma.size , TAG_RDMA_FETCH_AND_OP, win->comm, SCTK_RDMA_WINDOW_MESSAGES, req );
-		
-		
-		
 	}
-	else if( (RDMA_type_size( type ) == 8) &&  /* This is clearly an IB related TEST ! */
-		(  type == RDMA_TYPE_INT
-		|| type == RDMA_TYPE_LONG
-		|| type == RDMA_TYPE_UNSIGNED_LONG
-		|| type == RDMA_TYPE_UNSIGNED ) )
+	else
 	{	
 		
 	}

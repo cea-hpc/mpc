@@ -730,6 +730,37 @@ static inline sctk_thread_ptp_message_t * sctk_ib_rdma_rendezvous_prepare_done_w
 }
 
 
+/*-----------------------------------------------------------
+ *  RDMA ATOMIC OPERATIONS GATES
+ *----------------------------------------------------------*/
+
+int sctk_ib_rdma_fetch_and_op_gate( size_t size, RDMA_op op, RDMA_type type )
+{
+	/* IB only supports 64 bits operands */
+	if( size != 8 )
+	{
+		return 0;
+	}
+	
+	/* IB only has fetch and ADD */
+	if( op != RDMA_SUM )
+	{
+		return 0;
+	}
+	
+	return 1;
+}
+
+int sctk_ib_rdma_swap_gate( size_t size, RDMA_op op, RDMA_type type )
+{
+	/* IB only supports 64 bits operands */
+	if( size != 8 )
+	{
+		return 0;
+	}
+	
+	return 1;
+}
 
 /*-----------------------------------------------------------
  *  RDMA READ & WRITE
@@ -830,9 +861,27 @@ void sctk_ib_rdma_read(   sctk_rail_info_t *rail, sctk_thread_ptp_message_t *msg
 }
 
 
-void sctk_ib_rdma_fetch_and_add(  sctk_rail_info_t *rail, sctk_thread_ptp_message_t *msg, void * fetch_addr, struct  sctk_rail_pin_ctx_list * local_key, void * remote_addr, struct  sctk_rail_pin_ctx_list * remote_key, sctk_uint64_t add)
+void sctk_ib_rdma_fetch_and_op(   sctk_rail_info_t *rail,
+								  sctk_thread_ptp_message_t *msg,
+								  void * fetch_addr,
+								  struct  sctk_rail_pin_ctx_list * local_key,
+								  void * remote_addr,
+								  struct  sctk_rail_pin_ctx_list * remote_key,
+								  sctk_uint64_t add,
+								  RDMA_op op,
+							      RDMA_type type )
 {
 	LOAD_RAIL ( rail );
+	
+	if( op != RDMA_SUM )
+	{
+		sctk_fatal("Infiniband only supports the SUM operand");
+	}
+	
+	if( RDMA_type_size( type ) != 8 )
+	{
+		sctk_fatal("Infiniband only supports 64bits operands");	
+	}
 
 	int src_process;
 	sctk_endpoint_t  * route = sctk_rail_get_any_route_to_process_or_on_demand ( rail, SCTK_MSG_SRC_PROCESS ( msg ) );

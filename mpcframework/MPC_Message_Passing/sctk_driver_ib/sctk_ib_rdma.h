@@ -142,6 +142,21 @@ void sctk_ib_rdma_read(   sctk_rail_info_t *rail, sctk_thread_ptp_message_t *msg
                          void * dest_addr, struct  sctk_rail_pin_ctx_list * local_key,
                          size_t size );
 
+/* RDMA Atomics */
+int sctk_ib_rdma_fetch_and_op_gate( size_t size, RDMA_op op, RDMA_type type );
+
+void sctk_ib_rdma_fetch_and_op(   sctk_rail_info_t *rail,
+								  sctk_thread_ptp_message_t *msg,
+								  void * fetch_addr,
+								  struct  sctk_rail_pin_ctx_list * local_key,
+								  void * remote_addr,
+								  struct  sctk_rail_pin_ctx_list * remote_key,
+								  sctk_uint64_t add,
+								  RDMA_op op,
+							      RDMA_type type )
+
+
+int sctk_ib_rdma_swap_gate( size_t size, RDMA_op op, RDMA_type type );
 
 
 int

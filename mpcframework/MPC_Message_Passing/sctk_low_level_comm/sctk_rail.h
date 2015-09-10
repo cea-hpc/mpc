@@ -26,6 +26,7 @@
 #include <sctk_runtime_config.h>
 #include "sctk_device_topology.h"
 #include "sctk_topological_polling.h"
+#include "sctk_types.h"
 
 /* Forward struct declarations */
 typedef struct sctk_rail_info_s sctk_rail_info_t;
@@ -164,6 +165,24 @@ struct sctk_rail_info_s
 	void (*control_message_handler)( struct sctk_rail_info_s * rail, int source_process, int source_rank, char subtype, char param, void * data, size_t size );
 	
 	/* RDMA Ops */
+	
+	int (*rdma_fetch_and_op_gate)( size_t size, RDMA_op op, RDMA_type type );
+	
+	
+	void (*rdma_fetch_and_op)(  sctk_rail_info_t *rail,
+							    sctk_thread_ptp_message_t *msg,
+							    void * fetch_addr,
+							    struct  sctk_rail_pin_ctx_list * local_key,
+							    void * remote_addr,
+							    struct  sctk_rail_pin_ctx_list * remote_key,
+							    sctk_uint64_t add,
+							    RDMA_op op,
+							    RDMA_type type );
+
+
+	
+	
+	int (*rdma_swap_gate)( size_t size, RDMA_op op, RDMA_type type );
 	
 	void (*rdma_write)(  sctk_rail_info_t *rail, sctk_thread_ptp_message_t *msg,
                          void * src_addr, struct sctk_rail_pin_ctx_list * local_key,

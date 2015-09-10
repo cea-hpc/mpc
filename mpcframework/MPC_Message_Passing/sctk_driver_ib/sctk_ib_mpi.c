@@ -895,6 +895,8 @@ void sctk_network_init_mpi_ib ( sctk_rail_info_t *rail )
 	/* RDMA */
 	rail->rdma_write = sctk_ib_rdma_write;
 	rail->rdma_read = sctk_ib_rdma_read;
+	rail->rdma_fetch_and_op_gate = sctk_ib_rdma_fetch_and_op_gate;
+	rail->rdma_swap_gate = sctk_ib_rdma_swap_gate;
 	
 	rail->network_name = network_name;
 
