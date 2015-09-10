@@ -1193,7 +1193,7 @@ void __sctk_window_RDMA_fetch_and_op( sctk_window_t remote_win_id, size_t remote
 	{
 		if( rdma_rail->rdma_fetch_and_op_gate )
 		{
-			RDMA_fetch_and_op_gate_passed = (rdma_rail->rdma_fetch_and_op_gate)( RDMA_type_size( type ), op, type );
+			RDMA_fetch_and_op_gate_passed = (rdma_rail->rdma_fetch_and_op_gate)( rdma_rail, RDMA_type_size( type ), op, type );
 			/* At this point if RDMA_fetch_and_op_gate_passed == 1 , the NET can handle this fetch and op */
 		}
 		else

@@ -734,7 +734,7 @@ static inline sctk_thread_ptp_message_t * sctk_ib_rdma_rendezvous_prepare_done_w
  *  RDMA ATOMIC OPERATIONS GATES
  *----------------------------------------------------------*/
 
-int sctk_ib_rdma_fetch_and_op_gate( size_t size, RDMA_op op, RDMA_type type )
+int sctk_ib_rdma_fetch_and_op_gate( sctk_rail_info_t *rail, size_t size, RDMA_op op, RDMA_type type )
 {
 	/* IB only supports 64 bits operands */
 	if( size != 8 )
@@ -755,7 +755,7 @@ int sctk_ib_rdma_fetch_and_op_gate( size_t size, RDMA_op op, RDMA_type type )
 	return 1;
 }
 
-int sctk_ib_rdma_swap_gate( size_t size, RDMA_op op, RDMA_type type )
+int sctk_ib_rdma_swap_gate( sctk_rail_info_t *rail, size_t size, RDMA_op op, RDMA_type type )
 {
 	/* IB only supports 64 bits operands */
 	if( size != 8 )

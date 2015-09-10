@@ -143,7 +143,7 @@ void sctk_ib_rdma_read(   sctk_rail_info_t *rail, sctk_thread_ptp_message_t *msg
                          size_t size );
 
 /* RDMA Atomics */
-int sctk_ib_rdma_fetch_and_op_gate( size_t size, RDMA_op op, RDMA_type type );
+int sctk_ib_rdma_fetch_and_op_gate( sctk_rail_info_t *rail, size_t size, RDMA_op op, RDMA_type type );
 
 void sctk_ib_rdma_fetch_and_op(   sctk_rail_info_t *rail,
 								  sctk_thread_ptp_message_t *msg,
@@ -156,7 +156,7 @@ void sctk_ib_rdma_fetch_and_op(   sctk_rail_info_t *rail,
 							      RDMA_type type );
 
 
-int sctk_ib_rdma_swap_gate( size_t size, RDMA_op op, RDMA_type type );
+int sctk_ib_rdma_swap_gate( sctk_rail_info_t *rail, size_t size, RDMA_op op, RDMA_type type );
 
 
 int
