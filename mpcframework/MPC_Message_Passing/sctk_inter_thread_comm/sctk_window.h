@@ -96,6 +96,32 @@ static inline void sctk_window_emulated_RDMA_init( struct sctk_window_emulated_R
 }
 
 
+struct sctk_window_emulated_fetch_and_op_RDMA
+{
+	struct sctk_window_emulated_RDMA rdma;
+	RDMA_type type;
+	RDMA_op op;
+	char add[16];
+};
+
+
+static inline void sctk_window_emulated_fetch_and_op_RDMA_init( struct sctk_window_emulated_fetch_and_op_RDMA * fop, int remote_rank, size_t offset, sctk_window_t win_id, RDMA_op op, RDMA_type type, void * add )
+{
+	sctk_window_emulated_RDMA_init( &fop->rdma, remote_rank, offset, RDMA_type_size( type ), win_id );
+	
+	fop->type = type;
+	fop->op = op;
+	
+	assume( fop->rdma.size <= 16 );
+
+	if( add )
+	{
+		memcpy( fop->add, add, fop->rdma.size );
+	}
+}
+
+
+
 void sctk_window_RDMA_write( sctk_window_t win_id, void * src_addr, size_t size, size_t dest_offset, sctk_request_t  * req  );
 void sctk_window_RDMA_write_win( sctk_window_t src_win_id, size_t src_offset, size_t size,  sctk_window_t dest_win_id, size_t dest_offset, sctk_request_t  * req  );
 
@@ -116,6 +142,7 @@ enum
 {
 	TAG_RDMA_READ,
 	TAG_RDMA_WRITE,
+	TAG_RDMA_FETCH_AND_OP,
 	TAG_RDMA_MAP
 };
 

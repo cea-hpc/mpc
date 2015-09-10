@@ -383,6 +383,16 @@ void sctk_window_relax_ctrl_msg_handler( sctk_window_t win_id )
 	sctk_window_release( win_id );
 }
 
+
+
+/************************************************************************/
+/* Window Operations                                                    */
+/************************************************************************/
+
+
+/* WRITE ======================= */
+
+
 void sctk_window_RDMA_emulated_write_ctrl_msg_handler( struct sctk_window_emulated_RDMA *erma )
 {
 	struct sctk_window * win = sctk_win_translate( erma->win_id );
@@ -408,35 +418,6 @@ void sctk_window_RDMA_emulated_write_ctrl_msg_handler( struct sctk_window_emulat
 	sctk_wait_message ( &data_req );
 }
 
-void sctk_window_RDMA_emulated_read_ctrl_msg_handler( struct sctk_window_emulated_RDMA *erma )
-{
-	struct sctk_window * win = sctk_win_translate( erma->win_id );
-	
-	if( !win )
-	{
-		sctk_fatal("No such window in emulated RDMA write");
-	}
-	
-	size_t offset = erma->offset * win->disp_unit;
-
-	if( win->size < ( offset + erma->size ) )
-	{
-		sctk_fatal("Error RDMA emulated write operation overflows the window\n"
-		           " WIN S : %ld , offset %ld, disp %ld, actual off %ld",
-		            win->size, erma->offset, win->disp_unit, offset);
-	}
-	
-	sctk_request_t data_req;
-	sctk_message_isend_class_src( erma->remote_rank, erma->source_rank, win->start_addr + offset, erma->size , TAG_RDMA_READ, win->comm, SCTK_RDMA_WINDOW_MESSAGES, &data_req );
-	sctk_wait_message ( &data_req );
-}
-
-/************************************************************************/
-/* Window Operations                                                    */
-/************************************************************************/
-
-
-/* WRITE ======================= */
 
 void sctk_window_RDMA_write_local( struct sctk_window * win,  void * src_addr, size_t size, size_t dest_offset )
 {
@@ -572,6 +553,28 @@ void sctk_window_RDMA_write_win( sctk_window_t src_win_id, size_t src_offset, si
 
 /* READ ======================= */
 
+void sctk_window_RDMA_emulated_read_ctrl_msg_handler( struct sctk_window_emulated_RDMA *erma )
+{
+	struct sctk_window * win = sctk_win_translate( erma->win_id );
+	
+	if( !win )
+	{
+		sctk_fatal("No such window in emulated RDMA write");
+	}
+	
+	size_t offset = erma->offset * win->disp_unit;
+
+	if( win->size < ( offset + erma->size ) )
+	{
+		sctk_fatal("Error RDMA emulated write operation overflows the window\n"
+		           " WIN S : %ld , offset %ld, disp %ld, actual off %ld",
+		            win->size, erma->offset, win->disp_unit, offset);
+	}
+	
+	sctk_request_t data_req;
+	sctk_message_isend_class_src( erma->remote_rank, erma->source_rank, win->start_addr + offset, erma->size , TAG_RDMA_READ, win->comm, SCTK_RDMA_WINDOW_MESSAGES, &data_req );
+	sctk_wait_message ( &data_req );
+}
 
 
 void sctk_window_RDMA_read_local( struct sctk_window * win,  void * dest_addr, size_t size, size_t src_offset )
@@ -702,44 +705,42 @@ void sctk_window_RDMA_read_win( sctk_window_t src_win_id, size_t src_offset, siz
 
 /* Fetch and Add =================== */
 
-//sctk_ib_rdma_fetch_and_add(  sctk_rail_info_t *rail, sctk_thread_ptp_message_t *msg, void * fetch_addr, struct  sctk_rail_pin_ctx_list * local_key, void * remote_addr, struct  sctk_rail_pin_ctx_list * remote_key, sctk_uint64_t add)
-
 
 size_t RDMA_type_size( RDMA_type type )
 {
 	switch( type )
 	{
-		case RMDA_TYPE_CHAR:
+		case RDMA_TYPE_CHAR:
 			return sizeof( char );
-		case RMDA_TYPE_DOUBLE:
+		case RDMA_TYPE_DOUBLE:
 			return sizeof(double);
-		case RMDA_TYPE_FLOAT:
+		case RDMA_TYPE_FLOAT:
 			return sizeof(float);
-		case RMDA_TYPE_INT:
+		case RDMA_TYPE_INT:
 			return sizeof(int);
-		case RMDA_TYPE_LONG:
+		case RDMA_TYPE_LONG:
 			return sizeof(long);
-		case RMDA_TYPE_LONG_DOUBLE:
+		case RDMA_TYPE_LONG_DOUBLE:
 			return sizeof(long double);
-		case RMDA_TYPE_LONG_LONG:
+		case RDMA_TYPE_LONG_LONG:
 			return sizeof(long long);
-		case RMDA_TYPE_LONG_LONG_INT:
+		case RDMA_TYPE_LONG_LONG_INT:
 			return sizeof( long long int );
-		case RMDA_TYPE_SHORT:
+		case RDMA_TYPE_SHORT:
 			return sizeof( short );
-		case RMDA_TYPE_SIGNED_CHAR:
+		case RDMA_TYPE_SIGNED_CHAR:
 			return sizeof( signed char );
-		case RMDA_TYPE_UNSIGNED:
+		case RDMA_TYPE_UNSIGNED:
 			return sizeof( unsigned );
-		case RMDA_TYPE_UNSIGNED_CHAR:
+		case RDMA_TYPE_UNSIGNED_CHAR:
 			return sizeof( unsigned char );
-		case RMDA_TYPE_UNSIGNED_LONG:
+		case RDMA_TYPE_UNSIGNED_LONG:
 			return sizeof( unsigned long );
-		case RMDA_TYPE_UNSIGNED_LONG_LONG:
+		case RDMA_TYPE_UNSIGNED_LONG_LONG:
 			return sizeof( unsigned long long );
-		case RMDA_TYPE_UNSIGNED_SHORT:
+		case RDMA_TYPE_UNSIGNED_SHORT:
 			return sizeof( unsigned short );
-		case RMDA_TYPE_WCHAR:
+		case RDMA_TYPE_WCHAR:
 			return sizeof( sctk_wchar_t );
 	}
 	
@@ -748,7 +749,7 @@ size_t RDMA_type_size( RDMA_type type )
 
 
 
-void sctk_window_fetch_and_op_operate_int( RDMA_op op, void * add, sctk_atomics_int * src, void * dest )
+void sctk_window_fetch_and_op_operate_int( RDMA_op op, void * add, void * src, void * dest )
 {
 	int result = 0;
 	
@@ -770,7 +771,7 @@ void sctk_window_fetch_and_op_operate_int( RDMA_op op, void * add, sctk_atomics_
 			result = sctk_atomics_fetch_and_add_int( src, -1 );
 			break;
 		
-		case RMDA_MIN :
+		case RDMA_MIN :
 			val = sctk_atomics_load_int( src );
 			
 			if( *to_add < val )
@@ -839,67 +840,68 @@ void sctk_window_fetch_and_op_operate_int( RDMA_op op, void * add, sctk_atomics_
 #define RDMA_OP_def( type, type2, type3 ) \
 static sctk_spinlock_t __RDMA_OP_ ## type ## type2 ## type3 ## _lock = SCTK_SPINLOCK_INITIALIZER;\
 \
-void sctk_window_fetch_and_op_operate_ ## type ## type2 ## type3 ## _( RDMA_op op, void * add, sctk_atomics_int * src, void * dest )\
+void sctk_window_fetch_and_op_operate_ ## type ## type2 ## type3 ## _( RDMA_op op, void * add, void * src, void * dest )\
 {\
 	type type2 type3 result;\
 	type type2 type3 * to_add = ( type type2 type3 *) add;\
+	type type2 type3 * src_addr = ( type type2 type3 *) src;\
 	type type2 type3 * dest_addr = ( type type2 type3 *)dest;\
 \
 	sctk_spinlock_lock( &__RDMA_OP_ ## type ## type2 ## type3  ##_lock );\
 	\
-	result = *dest_addr;\
+	*dest_addr = *src_addr;\
 	\
 	switch( op )\
 	{\
 		case RDMA_SUM:\
-			*dest_addr += *to_add;\
+			*src_addr = *src_addr + *to_add;\
 			break;\
 			\
 		case RDMA_INC:\
-			*dest_addr = *dest_addr + 1;\
+			*src_addr = *src_addr + 1;\
 			break;\
 			\
 		case RDMA_DEC:\
-			*dest_addr = *dest_addr - 1;\
+			*src_addr = *src_addr - 1;\
 			break;\
 		\
-		case RMDA_MIN:\
-			if( *to_add < result )\
+		case RDMA_MIN:\
+			if( *to_add < *src_addr )\
 			{\
-				*dest_addr = *to_add;\
+				*src_addr = *to_add;\
 			}\
 			break;\
 		case RDMA_MAX :\
-			if( result < *to_add )\
+			if( *src_addr < *to_add )\
 			{\
-				*dest_addr = *to_add;\
+				*src_addr = *to_add;\
 			}\
 			break;\
 		case RDMA_PROD :\
-			*dest_addr *= *to_add;\
+			*src_addr *= *to_add;\
 			break;\
 		case RDMA_LAND :\
-			*dest_addr = *dest_addr && *to_add;\
+			*src_addr = *src_addr && *to_add;\
 			break;\
 \
 		case RDMA_BAND :\
-			*dest_addr = *dest_addr & *to_add;\
+			*src_addr = *src_addr & *to_add;\
 			break;\
 \
 		case RDMA_LOR :\
-			*dest_addr = *dest_addr || *to_add;\
+			*src_addr = *src_addr || *to_add;\
 			break;\
 \
 		case RDMA_BOR :\
-			*dest_addr = *dest_addr | *to_add;\
+			*src_addr = *src_addr | *to_add;\
 			break;\
 \
 		case RDMA_LXOR :\
-			*dest_addr = *dest_addr != *to_add;\
+			*src_addr = *src_addr != *to_add;\
 			break;\
 \
 		case RDMA_BXOR :\
-			*dest_addr = *dest_addr ^ *to_add;\
+			*src_addr = *src_addr ^ *to_add;\
 			break;\
 \
 	}\
@@ -910,47 +912,48 @@ void sctk_window_fetch_and_op_operate_ ## type ## type2 ## type3 ## _( RDMA_op o
 #define RDMA_OP_def_nobin( type, type2 ) \
 static sctk_spinlock_t __RDMA_OP_ ## type ## type2 ## _lock = SCTK_SPINLOCK_INITIALIZER;\
 \
-void sctk_window_fetch_and_op_operate_ ## type ## type2 ## _( RDMA_op op, void * add, sctk_atomics_int * src, void * dest )\
+void sctk_window_fetch_and_op_operate_ ## type ## type2 ## _( RDMA_op op, void * add, void * src, void * dest )\
 {\
 	type type2 result;\
 	type type2 * to_add = ( type type2 *) add;\
+	type type2 * src_addr = ( type type2 *) src;\
 	type type2 * dest_addr = ( type type2 *)dest;\
 \
 	sctk_spinlock_lock( &__RDMA_OP_ ## type ## type2 ##_lock );\
 	\
-	result = *dest_addr;\
+	*dest_addr = *src_addr;\
 	\
 	switch( op )\
 	{\
 		case RDMA_SUM:\
-			*dest_addr += *to_add;\
+			*src_addr += *to_add;\
 			break;\
 			\
 		case RDMA_INC:\
-			*dest_addr = *dest_addr + 1;\
+			*src_addr = *src_addr + 1;\
 			break;\
 			\
 		case RDMA_DEC:\
-			*dest_addr = *dest_addr - 1;\
+			*src_addr = *src_addr - 1;\
 			break;\
 		\
-		case RMDA_MIN:\
-			if( *to_add < result )\
+		case RDMA_MIN:\
+			if( *to_add < *src_addr )\
 			{\
-				*dest_addr = *to_add;\
+				*src_addr = *to_add;\
 			}\
 			break;\
 		case RDMA_MAX :\
-			if( result < *to_add )\
+			if( *src_addr < *to_add )\
 			{\
-				*dest_addr = *to_add;\
+				*src_addr = *to_add;\
 			}\
 			break;\
 		case RDMA_PROD :\
-			*dest_addr *= *to_add;\
+			*src_addr *= *to_add;\
 			break;\
 		case RDMA_LAND :\
-			*dest_addr = *dest_addr && *to_add;\
+			*src_addr = *src_addr && *to_add;\
 			break;\
 \
 		case RDMA_BAND :\
@@ -958,7 +961,7 @@ void sctk_window_fetch_and_op_operate_ ## type ## type2 ## _( RDMA_op op, void *
 			break;\
 \
 		case RDMA_LOR :\
-			*dest_addr = *dest_addr || *to_add;\
+			*src_addr = *src_addr || *to_add;\
 			break;\
 \
 		case RDMA_BOR :\
@@ -966,7 +969,7 @@ void sctk_window_fetch_and_op_operate_ ## type ## type2 ## _( RDMA_op op, void *
 			break;\
 \
 		case RDMA_LXOR :\
-			*dest_addr = *dest_addr != *to_add;\
+			*src_addr = *src_addr != *to_add;\
 			break;\
 \
 		case RDMA_BXOR :\
@@ -995,61 +998,89 @@ RDMA_OP_def( unsigned, long , long )
 RDMA_OP_def( unsigned, short , )
 RDMA_OP_def( sctk_wchar_t, , )
 
-void sctk_window_fetch_and_op_operate( RDMA_op op, RDMA_type type, void * add, sctk_atomics_int * src, void * dest )
+void sctk_window_fetch_and_op_operate( RDMA_op op, RDMA_type type, void * add, void * src, void * dest )
 {
 	switch( type )
 	{
-		case RMDA_TYPE_CHAR:
+		case RDMA_TYPE_CHAR:
 			sctk_window_fetch_and_op_operate_char_( op, add, src, dest );
 			return;
-		case RMDA_TYPE_DOUBLE:
+		case RDMA_TYPE_DOUBLE:
 			sctk_window_fetch_and_op_operate_double_( op, add, src, dest );
 			return;
-		case RMDA_TYPE_FLOAT:
+		case RDMA_TYPE_FLOAT:
 			sctk_window_fetch_and_op_operate_float_( op, add, src, dest );
 			return;
-		case RMDA_TYPE_INT:
+		case RDMA_TYPE_INT:
 			sctk_window_fetch_and_op_operate_int( op, add, src, dest );
 			return;
-		case RMDA_TYPE_LONG:
+		case RDMA_TYPE_LONG:
 			sctk_window_fetch_and_op_operate_long_( op, add, src, dest );
 			return;
-		case RMDA_TYPE_LONG_DOUBLE:
+		case RDMA_TYPE_LONG_DOUBLE:
 			sctk_window_fetch_and_op_operate_longdouble_( op, add, src, dest );
 			return;
-		case RMDA_TYPE_LONG_LONG:
+		case RDMA_TYPE_LONG_LONG:
 			sctk_window_fetch_and_op_operate_longlong_( op, add, src, dest );
 			return;
-		case RMDA_TYPE_LONG_LONG_INT:
+		case RDMA_TYPE_LONG_LONG_INT:
 			sctk_window_fetch_and_op_operate_longlongint_( op, add, src, dest );
 			return;
-		case RMDA_TYPE_SHORT:
+		case RDMA_TYPE_SHORT:
 			sctk_window_fetch_and_op_operate_short_( op, add, src, dest );
 			return;
-		case RMDA_TYPE_SIGNED_CHAR:
+		case RDMA_TYPE_SIGNED_CHAR:
 			sctk_window_fetch_and_op_operate_signedchar_( op, add, src, dest );
 			return;
-		case RMDA_TYPE_UNSIGNED:
+		case RDMA_TYPE_UNSIGNED:
 			sctk_window_fetch_and_op_operate_unsigned_( op, add, src, dest );
 			return;
-		case RMDA_TYPE_UNSIGNED_CHAR:
+		case RDMA_TYPE_UNSIGNED_CHAR:
 			sctk_window_fetch_and_op_operate_unsignedchar_( op, add, src, dest );
 			return;
-		case RMDA_TYPE_UNSIGNED_LONG:
+		case RDMA_TYPE_UNSIGNED_LONG:
 			sctk_window_fetch_and_op_operate_long_( op, add, src, dest );
 			return;
-		case RMDA_TYPE_UNSIGNED_LONG_LONG:
+		case RDMA_TYPE_UNSIGNED_LONG_LONG:
 			sctk_window_fetch_and_op_operate_unsignedlonglong_( op, add, src, dest );
 			return;
-		case RMDA_TYPE_UNSIGNED_SHORT:
+		case RDMA_TYPE_UNSIGNED_SHORT:
 			return;
 			sctk_window_fetch_and_op_operate_unsignedshort_( op, add, src, dest );
-		case RMDA_TYPE_WCHAR:
+		case RDMA_TYPE_WCHAR:
 			sctk_window_fetch_and_op_operate_sctk_wchar_t_( op, add, src, dest );
 			return;
 	}
 }
 
+
+
+void sctk_window_RDMA_fetch_and_op_ctrl_msg_handler( struct sctk_window_emulated_fetch_and_op_RDMA *fop )
+{
+	struct sctk_window * win = sctk_win_translate( fop->rdma.win_id );
+	
+	if( !win )
+	{
+		sctk_fatal("No such window in emulated RDMA write");
+	}
+	
+	size_t offset = fop->rdma.offset * win->disp_unit;
+
+	if( win->size < ( offset + fop->rdma.size ) )
+	{
+		sctk_fatal("Error RDMA emulated feth anb op operation overflows the window\n"
+		           " WIN S : %ld , offset %ld, disp %ld, actual off %ld",
+		            win->size, fop->rdma.offset, win->disp_unit, offset);
+	}
+	
+	char fetch[16];
+	
+	sctk_window_fetch_and_op_operate( fop->op, fop->type, fop->add, win->start_addr + offset, &fetch );
+	
+	sctk_request_t data_req;
+	sctk_message_isend_class_src( fop->rdma.remote_rank, fop->rdma.source_rank, &fetch, fop->rdma.size , TAG_RDMA_FETCH_AND_OP, win->comm, SCTK_RDMA_WINDOW_MESSAGES, &data_req );
+	sctk_wait_message ( &data_req );
+}
 
 
 
@@ -1076,8 +1107,6 @@ void sctk_window_RDMA_fetch_and_op_local( sctk_window_t remote_win_id, size_t re
 	
 	sctk_window_fetch_and_op_operate( op, type, add, remote_addr, fetch_addr );
 
-	/* Save the result in the fetch_addr */
-	
 }
 
 
@@ -1106,13 +1135,22 @@ void __sctk_window_RDMA_fetch_and_op( sctk_window_t remote_win_id, size_t remote
 	}
 	else if( win->is_emulated )
 	{
+		struct sctk_window_emulated_fetch_and_op_RDMA fop;
+		sctk_window_emulated_fetch_and_op_RDMA_init( &fop, win->owner, remote_offset, win->remote_id, op, type, add );
+		
+		sctk_control_messages_send ( sctk_get_process_rank_from_task_rank (win->owner), SCTK_CONTROL_MESSAGE_PROCESS, SCTK_PROCESS_RDMA_EMULATED_FETCH_AND_OP, 0, &fop, sizeof(struct sctk_window_emulated_fetch_and_op_RDMA) );
+
+		/* Note that we store the data transfer req in the request */
+		sctk_message_irecv_class( win->owner, fetch_addr, fop.rdma.size , TAG_RDMA_FETCH_AND_OP, win->comm, SCTK_RDMA_WINDOW_MESSAGES, req );
+		
+		
 		
 	}
 	else if( (RDMA_type_size( type ) == 8) &&  /* This is clearly an IB related TEST ! */
-		(  type == RMDA_TYPE_INT
-		|| type == RMDA_TYPE_LONG
-		|| type == RMDA_TYPE_UNSIGNED_LONG
-		|| type == RMDA_TYPE_UNSIGNED ) )
+		(  type == RDMA_TYPE_INT
+		|| type == RDMA_TYPE_LONG
+		|| type == RDMA_TYPE_UNSIGNED_LONG
+		|| type == RDMA_TYPE_UNSIGNED ) )
 	{	
 		
 	}
