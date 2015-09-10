@@ -1078,7 +1078,7 @@ void sctk_window_RDMA_fetch_and_op_ctrl_msg_handler( struct sctk_window_emulated
 	sctk_window_fetch_and_op_operate( fop->op, fop->type, fop->add, win->start_addr + offset, &fetch );
 	
 	sctk_request_t data_req;
-	sctk_message_isend_class_src( fop->rdma.remote_rank, fop->rdma.source_rank, &fetch, fop->rdma.size , TAG_RDMA_FETCH_AND_OP, win->comm, SCTK_RDMA_WINDOW_MESSAGES, &data_req );
+	sctk_message_isend_class_src( fop->rdma.remote_rank, fop->rdma.source_rank, &fetch, fop->rdma.size , TAG_RDMA_FETCH_AND_OP, win->comm, SCTK_RDMA_MESSAGE, &data_req );
 	sctk_wait_message ( &data_req );
 }
 
@@ -1120,8 +1120,6 @@ void sctk_window_RDMA_fetch_and_op_net( sctk_window_t remote_win_id, size_t remo
 	}
 
 	struct sctk_window * win = sctk_win_translate( remote_win_id );
-	
-	sctk_error("RDMA FETCH AND OP");
 	
 	if( !win )
 	{
@@ -1196,17 +1194,7 @@ void __sctk_window_RDMA_fetch_and_op( sctk_window_t remote_win_id, size_t remote
 			RDMA_fetch_and_op_gate_passed = (rdma_rail->rdma_fetch_and_op_gate)( rdma_rail, RDMA_type_size( type ), op, type );
 			/* At this point if RDMA_fetch_and_op_gate_passed == 1 , the NET can handle this fetch and op */
 		}
-		else
-		{
-			sctk_error("NO GATE");
-		}
 	}
-	else
-	{
-		sctk_error("NO RDMA");
-	}
-
-
 
 	/* Set an empty request */
 	sctk_init_request(req, win->comm, REQUEST_RECV );
@@ -1216,25 +1204,22 @@ void __sctk_window_RDMA_fetch_and_op( sctk_window_t remote_win_id, size_t remote
 	if( (my_rank == win->owner) /* Same rank */
 	||  (! sctk_is_net_message( win->owner ) ) /* Same process */  )
 	{
-		sctk_error("LOCAL FOP %d %d", op, type);
 		/* Shared Memory */
 		sctk_window_RDMA_fetch_and_op_local( remote_win_id, remote_offset, fetch_addr, add, op, type, req );
 		return;
 	}
 	else if( win->is_emulated || (RDMA_fetch_and_op_gate_passed == 0 /* Network does not support this RDMA atomic fallback to emulated */) )
 	{
-		sctk_error("EMU FOP %d %d", op, type);
 		struct sctk_window_emulated_fetch_and_op_RDMA fop;
 		sctk_window_emulated_fetch_and_op_RDMA_init( &fop, win->owner, remote_offset, win->remote_id, op, type, add );
 		
 		sctk_control_messages_send ( sctk_get_process_rank_from_task_rank (win->owner), SCTK_CONTROL_MESSAGE_PROCESS, SCTK_PROCESS_RDMA_EMULATED_FETCH_AND_OP, 0, &fop, sizeof(struct sctk_window_emulated_fetch_and_op_RDMA) );
 
 		/* Note that we store the data transfer req in the request */
-		sctk_message_irecv_class( win->owner, fetch_addr, fop.rdma.size , TAG_RDMA_FETCH_AND_OP, win->comm, SCTK_RDMA_WINDOW_MESSAGES, req );
+		sctk_message_irecv_class( win->owner, fetch_addr, fop.rdma.size , TAG_RDMA_FETCH_AND_OP, win->comm, SCTK_RDMA_MESSAGE, req );
 	}
 	else
 	{
-		sctk_error("IB FOP %d %d", op, type);
 		sctk_window_RDMA_fetch_and_op_net( remote_win_id, remote_offset,  fetch_pin, fetch_addr,  add, op, type,  req );
 	}
 }

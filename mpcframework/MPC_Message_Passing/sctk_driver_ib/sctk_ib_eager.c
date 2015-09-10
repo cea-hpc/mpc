@@ -129,7 +129,7 @@ sctk_ibuf_t *sctk_ib_eager_prepare_msg ( sctk_ib_rail_info_t *rail_ib,  sctk_ib_
 
 	body = ( char * ) msg + sizeof ( sctk_thread_ptp_message_t );
 
-	if ( is_control_message )
+	if ( 0 )
 	{
 		ibuf = sctk_ibuf_pick_send_sr ( rail_ib );
 		sctk_ibuf_prepare ( rail_ib, remote, ibuf, ibuf_size );

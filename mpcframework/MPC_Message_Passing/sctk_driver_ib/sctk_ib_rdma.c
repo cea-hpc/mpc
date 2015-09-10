@@ -739,20 +739,30 @@ int sctk_ib_rdma_fetch_and_op_gate( sctk_rail_info_t *rail, size_t size, RDMA_op
 	/* IB only supports 64 bits operands */
 	if( size != 8 )
 	{
-		sctk_error("SIZE was %d != 8", size );
 		return 0;
 	}
 	
 	/* IB only has fetch and ADD */
 	if( op != RDMA_SUM )
 	{
-		sctk_error("NOT SUM %d", op );
 		return 0;
 	}
 	
-	sctk_error("IB COMPLIANT" );
 	
-	return 1;
+	if( type == RDMA_TYPE_LONG
+	||  type ==  RDMA_TYPE_LONG_LONG
+	||  type ==  RDMA_TYPE_LONG_LONG_INT
+	||  type ==  RDMA_TYPE_UNSIGNED_LONG
+	||  type ==  RDMA_TYPE_UNSIGNED_LONG_LONG
+	||  type ==  RDMA_TYPE_WCHAR )
+	{
+		/* Addition is only valid on integers */
+		return 1;
+	}
+	else
+	{
+		return 0;
+	}
 }
 
 int sctk_ib_rdma_swap_gate( sctk_rail_info_t *rail, size_t size, RDMA_op op, RDMA_type type )
@@ -806,7 +816,7 @@ void sctk_ib_rdma_write(  sctk_rail_info_t *rail, sctk_thread_ptp_message_t *msg
 	IBUF_SET_RDMA_PLSIZE( rdma_header, size);
 	IBUF_SET_RDMA_POINTER( rdma_header, msg );
 
-	sctk_error ( "RDMA Write from %p (%lu) to %p (%lu)",
+	sctk_info ( "RDMA Write from %p (%lu) to %p (%lu)",
 	               src_addr,
 	               size,
 	               dest_addr,
@@ -850,7 +860,7 @@ void sctk_ib_rdma_read(   sctk_rail_info_t *rail, sctk_thread_ptp_message_t *msg
 	IBUF_SET_RDMA_POINTER( rdma_header, msg );
 
 
-	sctk_error ( "RDMA Read from %p (%lu) to %p (%lu)",
+	sctk_info ( "RDMA Read from %p (%lu) to %p (%lu)",
 	               src_addr,
 	               size,
 	               dest_addr,
@@ -876,8 +886,6 @@ void sctk_ib_rdma_fetch_and_op(   sctk_rail_info_t *rail,
 							      RDMA_type type )
 {
 	LOAD_RAIL ( rail );
-	
-	sctk_error("IB FETCH AND OP");
 	
 	if( op != RDMA_SUM )
 	{
@@ -905,7 +913,7 @@ void sctk_ib_rdma_fetch_and_op(   sctk_rail_info_t *rail,
 	IBUF_SET_RDMA_POINTER( rdma_header, msg );
 
 
-	sctk_error ( "RDMA Fetch and add from %p to %p add %lld",
+	sctk_info ( "RDMA Fetch and op from %p to %p add %lld",
 	               remote_addr,
 	               fetch_addr,
 	               add );
@@ -1011,20 +1019,20 @@ sctk_ib_rdma_poll_send ( sctk_rail_info_t *rail, sctk_ibuf_t *ibuf )
 
 		case SCTK_IB_RDMA_WRITE:
 			msg = sctk_ib_rdma_retrieve_msg_ptr( ibuf );
-			sctk_error ( "RDMA Write DONE" );
+			sctk_info ( "RDMA Write DONE" );
 			sctk_complete_and_free_message ( msg );
 			break;
 
 
 		case SCTK_IB_RDMA_READ:
 			msg = sctk_ib_rdma_retrieve_msg_ptr( ibuf );
-			sctk_error ( "RDMA Read DONE" );
+			sctk_info ( "RDMA Read DONE" );
 			sctk_complete_and_free_message ( msg );
 			break;
 
 		case SCTK_IB_RDMA_FETCH_AND_ADD:
 			msg = sctk_ib_rdma_retrieve_msg_ptr( ibuf );
-			sctk_error ( "RDMA Fetch and add DONE" );
+			sctk_info ( "RDMA Fetch and op DONE" );
 			sctk_complete_and_free_message ( msg );
 			break;
 			

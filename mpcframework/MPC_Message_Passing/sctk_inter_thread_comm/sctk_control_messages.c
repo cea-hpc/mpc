@@ -318,6 +318,8 @@ void sctk_control_messages_perform( sctk_thread_ptp_message_t * msg )
 		/* Free the TMP buffer */
 		sctk_free( tmp_contol_buffer );
 	}
+	
+	sctk_complete_and_free_message( &recvmsg );
 }
 
 void sctk_control_message_fence( int target_task )
