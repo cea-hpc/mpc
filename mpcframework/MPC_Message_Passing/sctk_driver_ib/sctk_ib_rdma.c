@@ -739,14 +739,18 @@ int sctk_ib_rdma_fetch_and_op_gate( size_t size, RDMA_op op, RDMA_type type )
 	/* IB only supports 64 bits operands */
 	if( size != 8 )
 	{
+		sctk_error("SIZE was %d != 8", size );
 		return 0;
 	}
 	
 	/* IB only has fetch and ADD */
 	if( op != RDMA_SUM )
 	{
+		sctk_error("NOT SUM %d", op );
 		return 0;
 	}
+	
+	sctk_error("IB COMPLIANT" );
 	
 	return 1;
 }
@@ -872,6 +876,8 @@ void sctk_ib_rdma_fetch_and_op(   sctk_rail_info_t *rail,
 							      RDMA_type type )
 {
 	LOAD_RAIL ( rail );
+	
+	sctk_error("IB FETCH AND OP");
 	
 	if( op != RDMA_SUM )
 	{

@@ -151,7 +151,7 @@ void sctk_ib_rdma_fetch_and_op(   sctk_rail_info_t *rail,
 								  struct  sctk_rail_pin_ctx_list * local_key,
 								  void * remote_addr,
 								  struct  sctk_rail_pin_ctx_list * remote_key,
-								  sctk_uint64_t add,
+								  void * add,
 								  RDMA_op op,
 							      RDMA_type type );
 
