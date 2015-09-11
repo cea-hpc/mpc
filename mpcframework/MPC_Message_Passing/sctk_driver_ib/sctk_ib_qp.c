@@ -836,6 +836,7 @@ int sctk_ib_qp_send_ibuf ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *re
 
 	/* We release the buffer if it has been inlined & if it
 	* do not generate an event once the transmission done */
+		
 	if ( ( ibuf->flag == SEND_INLINE_IBUF_FLAG
 	|| ibuf->flag == RDMA_WRITE_INLINE_IBUF_FLAG )
 	&& ( ( ( ibuf->desc.wr.send.send_flags & IBV_SEND_SIGNALED ) == 0 ) ) )
@@ -851,6 +852,7 @@ int sctk_ib_qp_send_ibuf ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *re
 		sctk_network_poll_send_ibuf ( rail_ib->rail, ibuf, 0, &poll );
 		return 0;
 	}
+
 
 	return 1;
 }

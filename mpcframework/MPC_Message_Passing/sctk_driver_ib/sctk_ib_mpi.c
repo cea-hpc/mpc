@@ -177,7 +177,7 @@ sctk_endpoint_t * sctk_on_demand_connection_ib( struct sctk_rail_info_s * rail ,
 
 
 int sctk_network_poll_send_ibuf ( sctk_rail_info_t *rail, sctk_ibuf_t *ibuf,  const char from_cp, struct sctk_ib_polling_s *poll )
-{
+{	
 	sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
 	int release_ibuf = 1;
 	
@@ -199,7 +199,7 @@ int sctk_network_poll_send_ibuf ( sctk_rail_info_t *rail, sctk_ibuf_t *ibuf,  co
 
 		default:
 			sctk_error ( "Got wrong protocol: %d %p", IBUF_GET_PROTOCOL ( ibuf->buffer ), &IBUF_GET_PROTOCOL ( ibuf->buffer ) );
-			not_reachable();
+			CRASH();
 			break;
 	}
 
@@ -363,6 +363,7 @@ static int sctk_network_poll_send ( sctk_rail_info_t *rail, struct ibv_wc *wc, s
 	       wc->wr_id;
 
 	ib_assume ( ibuf );
+
 	int src_task = -1;
 	int dest_task = -1;
 
@@ -412,7 +413,7 @@ static int sctk_network_poll_send ( sctk_rail_info_t *rail, struct ibv_wc *wc, s
 	sctk_ibuf_rdma_update_max_pending_data ( rail_ib, ibuf->remote,
 	                                         current_pending );
 
-	if ( IBUF_GET_CHANNEL ( ibuf ) & RC_SR_CHANNEL )
+	if ( (IBUF_GET_CHANNEL ( ibuf ) & RC_SR_CHANNEL) && ( 0 <= dest_task ) )
 	{
 		src_task = IBUF_GET_SRC_TASK ( ibuf->buffer );
 		dest_task = IBUF_GET_DEST_TASK ( ibuf->buffer );

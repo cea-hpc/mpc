@@ -129,7 +129,6 @@ void sctk_ibuf_init_numa_node ( struct sctk_ib_rail_info_s *rail_ib,
 	}
 
 	OPA_add_int ( &node->free_nb, nb_ibufs );
-	sctk_error("[%d] XX ADD %d ====> %s:%d", node->free_nb,  nb_ibufs, __FILE__, __LINE__ );
 	
 	free_nb = OPA_load_int ( &node->free_nb );
 	node->nb += nb_ibufs;
@@ -180,7 +179,6 @@ sctk_ibuf_t *sctk_ibuf_pick_send_sr ( struct sctk_ib_rail_info_s *rail_ib )
 	ibuf = node->free_entry;
 	DL_DELETE ( node->free_entry, node->free_entry );
 	OPA_decr_int ( &node->free_nb );
-	sctk_error("[%d] %p DEC ====> %s:%d", node->free_nb, ibuf, __FILE__, __LINE__ );
 
 	sctk_spinlock_unlock ( lock );
 
@@ -317,7 +315,6 @@ sctk_ibuf_t *sctk_ibuf_pick_send ( struct sctk_ib_rail_info_s *rail_ib,
 		ibuf = node->free_entry;
 		DL_DELETE ( node->free_entry, node->free_entry );
 		OPA_decr_int ( &node->free_nb );
-		sctk_error("[%d] %p DEC ====> %s:%d", node->free_nb, ibuf, __FILE__, __LINE__ );
 
 		sctk_spinlock_unlock ( lock );
 
@@ -392,7 +389,6 @@ sctk_ibuf_pick_recv ( struct sctk_ib_rail_info_s *rail_ib, struct sctk_ibuf_numa
 	ibuf = node->free_entry;
 	DL_DELETE ( node->free_entry, node->free_entry );
 	OPA_decr_int ( &node->free_nb );
-	sctk_error("[%d] %p DEC ====> %s:%d", node->free_nb, ibuf, __FILE__, __LINE__ );
 
 
 
@@ -478,7 +474,6 @@ static int srq_post ( struct sctk_ib_rail_info_s *rail_ib,
 
 				/* change counters */
 				OPA_incr_int ( &node->free_nb );
-				sctk_error("[%d] %p INC ====> %s:%d", node->free_nb, ibuf, __FILE__, __LINE__ );
 				DL_PREPEND ( node->free_entry, ibuf );
 				break;
 			}
@@ -577,7 +572,6 @@ void sctk_ibuf_release ( struct sctk_ib_rail_info_s *rail_ib,
 					if ( srq_cache_nb > 40 )
 					{
 						OPA_add_int ( &node->free_nb, srq_cache_nb );
-						sctk_error("[%d] %p ADD %d ====> %s:%d", node->free_nb, ibuf, srq_cache_nb, __FILE__, __LINE__ );
 
 						sctk_spinlock_lock ( lock );
 						DL_CONCAT ( node->free_entry, closest_node->free_srq_cache );
@@ -607,7 +601,6 @@ void sctk_ibuf_release ( struct sctk_ib_rail_info_s *rail_ib,
 				IBUF_SET_PROTOCOL ( ibuf->buffer, SCTK_IB_NULL_PROTOCOL );
 
 				OPA_incr_int ( &node->free_nb );
-				sctk_error("[%d] %p INC ====> %s:%d", node->free_nb, ibuf, __FILE__, __LINE__ );
 				sctk_spinlock_lock ( lock );
 				DL_APPEND ( node->free_entry, ibuf );
 				sctk_spinlock_unlock ( lock );
@@ -646,6 +639,7 @@ void sctk_ibuf_prepare ( sctk_ib_rail_info_t *rail_ib,
 	}
 	else
 	{
+
 		ib_assume ( IBUF_GET_CHANNEL ( ibuf ) & RC_SR_CHANNEL );
 		sctk_ibuf_send_inline_init ( ibuf, size );
 	}
@@ -712,6 +706,7 @@ int sctk_ibuf_send_inline_init ( sctk_ibuf_t *ibuf, size_t size )
 {
 	LOAD_CONFIG ( ibuf->region->rail );
 	int is_inlined = 0;
+
 
 	/* If data may be inlined */
 	if ( size <= config->max_inline )

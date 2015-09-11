@@ -138,6 +138,7 @@ void __sctk_control_messages_send( int dest, sctk_message_class_t message_class,
 	sctk_communicator_t tag = 0;
 	
 	sctk_request_t request;
+
 	sctk_thread_ptp_message_t msg;
 	
 	/* Add a dummy payload */
@@ -167,7 +168,7 @@ void __sctk_control_messages_send( int dest, sctk_message_class_t message_class,
 	//printpayload( buffer, size );
 	sctk_set_header_in_message ( &msg, tag, communicator,  sctk_get_process_rank(), dest,  &request, size, message_class, SCTK_DATATYPE_IGNORE );
 	
-	sctk_send_message ( &msg );
+	sctk_send_message_try_check ( &msg, 1 );	
 	
 	sctk_wait_message ( &request );
 }
