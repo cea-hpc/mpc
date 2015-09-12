@@ -765,7 +765,7 @@ int sctk_ib_rdma_fetch_and_op_gate( sctk_rail_info_t *rail, size_t size, RDMA_op
 	}
 }
 
-int sctk_ib_rdma_swap_gate( sctk_rail_info_t *rail, size_t size, RDMA_op op, RDMA_type type )
+int sctk_ib_rdma_cas_gate( sctk_rail_info_t *rail, size_t size,  RDMA_type type )
 {
 	/* IB only supports 64 bits operands */
 	if( size != 8 )
@@ -894,7 +894,7 @@ void sctk_ib_rdma_fetch_and_op(   sctk_rail_info_t *rail,
 	
 	if( RDMA_type_size( type ) != 8 )
 	{
-		sctk_fatal("Infiniband only supports 64bits operands");	
+		sctk_fatal("This implementation only supports 64bits operands for Fetch and Op");	
 	}
 
 	int src_process;
@@ -928,6 +928,60 @@ void sctk_ib_rdma_fetch_and_op(   sctk_rail_info_t *rail,
 										remote_key->pin.ib.mr.lkey,
 										local_add );
 
+	sctk_ib_qp_send_ibuf ( &rail->network.ib,
+	                       route->data.ib.remote, ibuf);
+
+}
+
+void sctk_ib_rdma_cas(   sctk_rail_info_t *rail,
+						  sctk_thread_ptp_message_t *msg,
+						  void * remote_addr,
+						  struct  sctk_rail_pin_ctx_list * remote_key,
+						  void * comp,
+						  void * new,
+						  RDMA_type type )
+{
+	LOAD_RAIL ( rail );
+	
+	if( RDMA_type_size( type ) != 8 )
+	{
+		sctk_fatal("This implementation only supports 64bits operands for CAS");	
+	}
+
+	int src_process;
+	sctk_endpoint_t  * route = sctk_rail_get_any_route_to_process_or_on_demand ( rail, SCTK_MSG_SRC_PROCESS ( msg ) );
+
+	sctk_ibuf_t * ibuf = sctk_ibuf_pick_send_sr ( rail_ib );
+	assume ( ibuf );
+
+	sctk_ib_rdma_t *rdma_header  = IBUF_GET_RDMA_HEADER ( ibuf->buffer );
+
+	IBUF_SET_DEST_TASK ( ibuf->buffer, SCTK_MSG_DEST_TASK ( msg ) );
+	IBUF_SET_SRC_TASK ( ibuf->buffer, SCTK_MSG_SRC_TASK ( msg ) );
+	IBUF_SET_PROTOCOL ( ibuf->buffer, SCTK_IB_RDMA_PROTOCOL );
+	
+	IBUF_SET_RDMA_TYPE ( rdma_header, SCTK_IB_RDMA_CAS );
+	IBUF_SET_RDMA_POINTER( rdma_header, msg );
+
+
+	sctk_uint64_t local_comp = 0;
+	memcpy( &local_comp, comp, sizeof( sctk_uint64_t ) );
+	               
+	sctk_uint64_t local_new = 0;
+	memcpy( &local_new, new, sizeof( sctk_uint64_t ) );
+
+
+	sctk_info ( "RDMA CASS to %p to comp %lld new %lld",
+	               remote_addr,
+	               local_comp,
+	               local_new );
+	               
+	sctk_ibuf_rdma_CAS_init( ibuf,
+							 remote_addr,
+							 remote_key->pin.ib.mr.lkey,
+							 local_comp,
+							 local_new);
+							                 
 	sctk_ib_qp_send_ibuf ( &rail->network.ib,
 	                       route->data.ib.remote, ibuf);
 

@@ -46,6 +46,7 @@ typedef enum sctk_ib_rdma_type_e
     SCTK_IB_RDMA_WRITE = 666,
     SCTK_IB_RDMA_READ = 777,
     SCTK_IB_RDMA_FETCH_AND_ADD = 888,
+    SCTK_IB_RDMA_CAS = 999
 } __attribute__ ( ( packed ) )
 sctk_ib_rdma_type_t;
 
@@ -155,8 +156,15 @@ void sctk_ib_rdma_fetch_and_op(   sctk_rail_info_t *rail,
 								  RDMA_op op,
 							      RDMA_type type );
 
+void sctk_ib_rdma_cas(   sctk_rail_info_t *rail,
+						  sctk_thread_ptp_message_t *msg,
+						  void * remote_addr,
+						  struct  sctk_rail_pin_ctx_list * remote_key,
+						  void * comp,
+						  void * new,
+						  RDMA_type type );
 
-int sctk_ib_rdma_swap_gate( sctk_rail_info_t *rail, size_t size, RDMA_op op, RDMA_type type );
+int sctk_ib_rdma_cas_gate( sctk_rail_info_t *rail, size_t size, RDMA_type type );
 
 
 int

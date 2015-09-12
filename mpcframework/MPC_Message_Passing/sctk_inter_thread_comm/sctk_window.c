@@ -764,11 +764,11 @@ void sctk_window_fetch_and_op_operate_int( RDMA_op op, void * add, void * src, v
 			break;
 			
 		case RDMA_INC:
-			result = sctk_atomics_fetch_and_add_int( src, 1 );
+			result = sctk_atomics_fetch_and_incr_int( src);
 			break;
 			
 		case RDMA_DEC:
-			result = sctk_atomics_fetch_and_add_int( src, -1 );
+			result = sctk_atomics_fetch_and_decr_int( src );
 			break;
 		
 		case RDMA_MIN :
@@ -1061,7 +1061,7 @@ void sctk_window_RDMA_fetch_and_op_ctrl_msg_handler( struct sctk_window_emulated
 	
 	if( !win )
 	{
-		sctk_fatal("No such window in emulated RDMA write");
+		sctk_fatal("No such window in emulated RDMA fetch and op");
 	}
 	
 	size_t offset = fop->rdma.offset * win->disp_unit;
@@ -1102,11 +1102,9 @@ void sctk_window_RDMA_fetch_and_op_local( sctk_window_t remote_win_id, size_t re
 		sctk_fatal("Error RDMA read operation overflows the window");
 	}
 
-	sctk_atomics_int * remote_addr = (sctk_atomics_int *)(win->start_addr + offset);
-	
+	void * remote_addr = win->start_addr + offset;
 	
 	sctk_window_fetch_and_op_operate( op, type, add, remote_addr, fetch_addr );
-
 }
 
 
@@ -1114,9 +1112,9 @@ void sctk_window_RDMA_fetch_and_op_net( sctk_window_t remote_win_id, size_t remo
 {
 	sctk_rail_info_t * rdma_rail = sctk_rail_get_rdma ();
 	
-	if( !rdma_rail->rdma_write )
+	if( !rdma_rail->rdma_fetch_and_op )
 	{
-		sctk_fatal("This rails despite flagged RDMA did not define rdma_write");
+		sctk_fatal("This rails despite flagged RDMA did not define fetch and op");
 	}
 
 	struct sctk_window * win = sctk_win_translate( remote_win_id );
@@ -1159,7 +1157,6 @@ void sctk_window_RDMA_fetch_and_op_net( sctk_window_t remote_win_id, size_t remo
 							       add,
 							       op,
 							       type );
-
 
 	if( did_pin )
 	{
@@ -1255,7 +1252,192 @@ struct sctk_window * local_win = sctk_win_translate( local_win_id );
 }
 
 
+/* Compare and SWAP =================== */
 
+
+void sctk_window_RDMA_CAS_int_local( void * cmp , void * new, void * target )
+{
+	int oldv = *((int *)cmp );
+	int newv = *((int *)new );
+	sctk_atomics_int * ptarget = (sctk_atomics_int *)target;
+	
+	sctk_atomics_cas_int(ptarget, oldv, newv);
+}
+
+void sctk_window_RDMA_CAS_ptr_local( void * cmp , void * new, void * target )
+{
+	sctk_atomics_ptr * ptarget = (sctk_atomics_ptr *)target;
+	sctk_atomics_cas_ptr(ptarget, cmp, new);
+}
+
+static sctk_spinlock_t __RDMA_CAS_16_lock = SCTK_SPINLOCK_INITIALIZER;
+
+void sctk_window_RDMA_CAS_16_local( void * cmp , void * new, void * target )
+{
+	sctk_spinlock_lock( &__RDMA_CAS_16_lock );
+	
+	if( memcmp( target, cmp, 16 ) == 0 )
+	{
+		memcpy( target, new, 16 );
+	}
+	
+	sctk_spinlock_unlock( &__RDMA_CAS_16_lock );
+}
+
+static sctk_spinlock_t __RDMA_CAS_any_lock = SCTK_SPINLOCK_INITIALIZER;
+
+void sctk_window_RDMA_CAS_any_local( void * cmp , void * new, void * target, size_t size )
+{
+	sctk_spinlock_lock( &__RDMA_CAS_any_lock );
+	
+	if( memcmp( target, cmp, size ) == 0 )
+	{
+		memcpy( target, new, size );
+	}
+	
+	sctk_spinlock_unlock( &__RDMA_CAS_any_lock );
+}
+
+
+void sctk_window_RDMA_CAS_local( sctk_window_t remote_win_id, size_t remote_offset, void * comp, void * new_data,  RDMA_type type )
+{
+	struct sctk_window * win = sctk_win_translate( remote_win_id );
+
+	if( !win )
+	{
+		sctk_fatal("No such window ID %d", remote_win_id);
+	}
+
+	size_t offset = remote_offset * win->disp_unit;
+
+	if( win->size < ( offset + RDMA_type_size( type ) ) )
+	{
+		sctk_fatal("Error RDMA read operation overflows the window");
+	}
+
+	void * remote_addr = (sctk_atomics_int *)(win->start_addr + offset);
+	
+	size_t type_size = RDMA_type_size( type );
+	
+	if( type_size == sizeof( sctk_atomics_int ) )
+	{
+		sctk_window_RDMA_CAS_int_local( comp , new_data, remote_addr );
+	}
+	else if( type_size == sizeof( sctk_atomics_ptr ) )
+	{
+		sctk_window_RDMA_CAS_ptr_local( comp , new_data, remote_addr );
+	}
+	else if( type_size == 16 )
+	{
+		sctk_window_RDMA_CAS_16_local( comp , new_data, remote_addr );
+	}
+	else
+	{
+		sctk_window_RDMA_CAS_any_local( comp , new_data, remote_addr,  type_size);
+	}
+
+}
+
+
+
+void sctk_window_RDMA_CAS_ctrl_msg_handler( struct sctk_window_emulated_CAS_RDMA *fcas )
+{	
+	sctk_window_RDMA_CAS_local( fcas->rdma.win_id, fcas->rdma.offset, fcas->comp, fcas->new,  fcas->type );
+}
+
+
+void sctk_window_RDMA_CAS_net( sctk_window_t remote_win_id, size_t remote_offset, void * comp, void * new_data,  RDMA_type type, sctk_request_t  * req )
+{
+	sctk_rail_info_t * rdma_rail = sctk_rail_get_rdma ();
+	
+	if( !rdma_rail->rdma_cas )
+	{
+		sctk_fatal("This rails despite flagged RDMA did not define CAS");
+	}
+
+	struct sctk_window * win = sctk_win_translate( remote_win_id );
+	
+	if( !win )
+	{
+		sctk_fatal("No such window ID %d", remote_win_id);
+	}
+
+	void * dest_addr = win->start_addr + win->disp_unit * remote_offset;
+
+	size_t offset = remote_offset * win->disp_unit;
+
+	if( win->size < ( offset + RDMA_type_size( type ) ) )
+	{
+		sctk_fatal("Error RDMA read operation overflows the window");
+	} 
+
+	sctk_thread_ptp_message_t * msg = sctk_create_header (win->owner,SCTK_MESSAGE_CONTIGUOUS);
+
+	sctk_set_header_in_message (msg, -8, win->comm,  win->owner, sctk_get_task_rank (), req, RDMA_type_size( type ), SCTK_RDMA_MESSAGE, SCTK_DATATYPE_IGNORE );
+
+	rdma_rail->rdma_cas(  rdma_rail,
+						   msg,
+						   dest_addr,
+						   win->pin.list,
+						   comp,
+						   new_data,
+						   type );
+
+}
+
+
+
+
+void sctk_window_RDMA_CAS( sctk_window_t remote_win_id, size_t remote_offset, void * comp, void * new_data,  RDMA_type type, sctk_request_t  * req )
+{
+	struct sctk_window * win = sctk_win_translate( remote_win_id );
+	
+	//sctk_error("CAS");
+	
+	if( !win )
+	{
+		sctk_fatal("No such window ID %d", remote_win_id);
+	}
+
+	/* Now try to see if we pass the RDMA rail gate function for fetch and op */
+
+	sctk_rail_info_t * rdma_rail = sctk_rail_get_rdma ();
+	
+	int RDMA_CAS_gate_passed = 0;
+	
+	if( rdma_rail )
+	{
+		if( rdma_rail->rdma_cas_gate )
+		{
+			RDMA_CAS_gate_passed = (rdma_rail->rdma_cas_gate)( rdma_rail, RDMA_type_size( type ), type );
+			/* At this point if RDMA_CAS_gate_passed == 1 , the NET can handle CAS */
+		}
+	}
+
+	/* Set an empty request */
+	sctk_init_request(req, win->comm, REQUEST_RECV );
+
+	int my_rank = sctk_get_task_rank();
+	
+	if( (my_rank == win->owner) /* Same rank */
+	||  (! sctk_is_net_message( win->owner ) ) /* Same process */  )
+	{
+		/* Shared Memory */
+		sctk_window_RDMA_CAS_local( remote_win_id, remote_offset, comp, new_data,  type );
+		return;
+	}
+	else if( win->is_emulated || (RDMA_CAS_gate_passed == 0 /* Network does not support this RDMA atomic fallback to emulated */) )
+	{
+		struct sctk_window_emulated_CAS_RDMA fcas;
+		sctk_window_emulated_CAS_RDMA_init( &fcas, win->owner, remote_offset, win->remote_id, type, comp, new_data );
+
+		sctk_control_messages_send ( sctk_get_process_rank_from_task_rank (win->owner), SCTK_CONTROL_MESSAGE_PROCESS, SCTK_PROCESS_RDMA_EMULATED_CAS, 0, &fcas, sizeof(struct sctk_window_emulated_CAS_RDMA) );
+	}
+	else
+	{
+		sctk_window_RDMA_CAS_net( remote_win_id, remote_offset, comp, new_data,  type, req );
+	}
+}
 
 
 
@@ -1289,7 +1471,7 @@ void sctk_window_RDMA_fence( sctk_window_t win_id )
 	}
 	else
 	{
-		/* TODO */
+		sctk_control_message_fence( win->owner );
 	}
 	
 	

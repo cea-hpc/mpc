@@ -900,7 +900,8 @@ void sctk_network_init_mpi_ib ( sctk_rail_info_t *rail )
 	rail->rdma_fetch_and_op_gate = sctk_ib_rdma_fetch_and_op_gate;
 	rail->rdma_fetch_and_op = sctk_ib_rdma_fetch_and_op;
 	
-	rail->rdma_swap_gate = sctk_ib_rdma_swap_gate;
+	rail->rdma_cas_gate = sctk_ib_rdma_cas_gate;
+	rail->rdma_cas = sctk_ib_rdma_cas;
 	
 	rail->network_name = network_name;
 

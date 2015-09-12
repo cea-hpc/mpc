@@ -182,7 +182,15 @@ struct sctk_rail_info_s
 
 	
 	
-	int (*rdma_swap_gate)( sctk_rail_info_t *rail, size_t size, RDMA_op op, RDMA_type type );
+	int (*rdma_cas_gate)( sctk_rail_info_t *rail, size_t size, RDMA_type type );
+
+	void (*rdma_cas)(   sctk_rail_info_t *rail,
+						  sctk_thread_ptp_message_t *msg,
+						  void * remote_addr,
+						  struct  sctk_rail_pin_ctx_list * remote_key,
+						  void * comp,
+						  void * new,
+						  RDMA_type type );
 	
 	void (*rdma_write)(  sctk_rail_info_t *rail, sctk_thread_ptp_message_t *msg,
                          void * src_addr, struct sctk_rail_pin_ctx_list * local_key,

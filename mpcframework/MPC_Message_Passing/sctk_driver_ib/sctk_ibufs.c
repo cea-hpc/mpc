@@ -912,6 +912,34 @@ void sctk_ibuf_rdma_fetch_and_add_init( sctk_ibuf_t *ibuf,
 	ibuf->flag = RDMA_READ_IBUF_FLAG;
 }
 
+void sctk_ibuf_rdma_CAS_init( sctk_ibuf_t *ibuf,
+							  void *remote_address,
+							  sctk_uint32_t rkey,
+							  sctk_uint64_t comp,
+							  sctk_uint64_t new )
+{
+	ibuf->in_srq = 0;
+	ibuf->send_imm_data = 0;
+	ibuf->to_release = IBUF_RELEASE;
+	ibuf->desc.wr.send.next = NULL;
+	ibuf->desc.wr.send.opcode = IBV_WR_ATOMIC_CMP_AND_SWP;
+	ibuf->desc.wr.send.send_flags = IBV_SEND_SIGNALED;
+	ibuf->desc.wr.send.wr_id = ( uintptr_t ) ibuf;
+
+	ibuf->desc.wr.send.num_sge = 0;
+	
+	ibuf->desc.wr.send.wr.atomic.remote_addr = remote_address;
+	ibuf->desc.wr.send.wr.atomic.compare_add = comp;
+	ibuf->desc.wr.send.wr.atomic.swap = new;
+	ibuf->desc.wr.send.wr.atomic.rkey = rkey;
+
+
+	ibuf->desc.wr.send.sg_list = & ( ibuf->desc.sg_entry );
+	ibuf->desc.wr.send.imm_data = IMM_DATA_NULL;
+
+	ibuf->flag = RDMA_READ_IBUF_FLAG;
+}
+
 void sctk_ibuf_print_rdma ( sctk_ibuf_t *ibuf, char *desc )
 {
 	sprintf ( desc, 	"region       :%p\n"

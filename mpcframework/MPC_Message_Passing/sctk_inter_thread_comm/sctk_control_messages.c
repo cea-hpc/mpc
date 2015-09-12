@@ -68,6 +68,7 @@ void sctk_control_message_process_level( int source_process, int source_rank, ch
 	struct sctk_window_emulated_RDMA *erma = NULL;
 	struct sctk_control_message_fence_ctx * fence = NULL;
 	struct sctk_window_emulated_fetch_and_op_RDMA *fop = NULL;
+	struct sctk_window_emulated_CAS_RDMA *fcas = NULL;
 	int win_id = -1;
 	
 	switch( subtype )
@@ -101,6 +102,11 @@ void sctk_control_message_process_level( int source_process, int source_rank, ch
 		case SCTK_PROCESS_RDMA_EMULATED_FETCH_AND_OP:
 			fop = (struct sctk_window_emulated_fetch_and_op_RDMA *)data;
 			sctk_window_RDMA_fetch_and_op_ctrl_msg_handler( fop );
+		break;
+		
+		case SCTK_PROCESS_RDMA_EMULATED_CAS:
+			fcas = (struct sctk_window_emulated_CAS_RDMA *)data;
+			sctk_window_RDMA_CAS_ctrl_msg_handler( fcas );
 		break;
 	}
 	

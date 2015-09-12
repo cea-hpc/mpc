@@ -515,6 +515,43 @@ void sctk_topological_rail_rdma_fetch_and_op(   sctk_rail_info_t *rail,
 	endpoint_rail->rdma_fetch_and_op( endpoint_rail, msg, fetch_addr, local_key +  subrail_id, remote_addr, remote_key + subrail_id, add, op , type);
 }
 
+void sctk_topological_rail_cas(   sctk_rail_info_t *rail,
+								  sctk_thread_ptp_message_t *msg,
+								  void * remote_addr,
+								  struct  sctk_rail_pin_ctx_list * remote_key,
+								  void * comp,
+								  void * new,
+								  RDMA_type type )
+{
+	sctk_endpoint_t * topo_endpoint = sctk_rail_get_any_route_to_process ( rail, SCTK_MSG_SRC_PROCESS( msg ) );
+	
+	if( ! topo_endpoint )
+	{
+		topological_on_demand_connection_handler( rail, SCTK_MSG_SRC_PROCESS( msg ) );
+	}
+	else
+	{
+		topo_endpoint = sctk_topological_rail_ellect_endpoint( SCTK_MSG_SRC_PROCESS( msg ) , msg, topo_endpoint );
+	}
+
+	/* By default use rail 0 */
+	sctk_rail_info_t * endpoint_rail = rail->subrails[0];
+	
+	/* If we found a topo endpoint, override the 0 */
+	if( topo_endpoint )
+		endpoint_rail = topo_endpoint->rail;
+
+	assume( endpoint_rail != NULL );
+	assume( endpoint_rail->rdma_read != NULL );
+	
+	int subrail_id = endpoint_rail->subrail_id;
+	assume( 0 <= subrail_id );
+	assume( subrail_id < rail->subrail_count );
+	
+	endpoint_rail->rdma_cas( endpoint_rail, msg, remote_addr, remote_key + subrail_id, comp, new, type );
+}
+
+
 
 int sctk_topological_rail_rdma_fetch_and_op_gate( sctk_rail_info_t *rail, size_t size, RDMA_op op, RDMA_type type )
 {
@@ -539,7 +576,7 @@ int sctk_topological_rail_rdma_fetch_and_op_gate( sctk_rail_info_t *rail, size_t
 	return 1;
 }
 
-int sctk_topological_rail_rdma_swap_gate( sctk_rail_info_t *rail, size_t size, RDMA_op op, RDMA_type type )
+int sctk_topological_rail_rdma_cas_gate( sctk_rail_info_t *rail, size_t size, RDMA_type type )
 {
 	/* Check on all rails */
 	int i;
@@ -548,12 +585,12 @@ int sctk_topological_rail_rdma_swap_gate( sctk_rail_info_t *rail, size_t size, R
 	{
 		sctk_rail_info_t * subrail = rail->subrails[i];
 		
-		if( !subrail->rdma_swap_gate )
+		if( !subrail->rdma_cas_gate )
 		{
 			return 0;
 		}
 		
-		if( (subrail->rdma_swap_gate)( subrail, size, op, type ) == 0 )
+		if( (subrail->rdma_cas_gate)( subrail, size, type ) == 0 )
 		{
 			return 0;
 		}
@@ -590,7 +627,8 @@ void sctk_network_init_topological ( sctk_rail_info_t *rail )
 	rail->rdma_fetch_and_op_gate = sctk_topological_rail_rdma_fetch_and_op_gate;
 	rail->rdma_fetch_and_op = sctk_topological_rail_rdma_fetch_and_op;
 	
-	rail->rdma_swap_gate = sctk_topological_rail_rdma_swap_gate;
+	rail->rdma_cas_gate = sctk_topological_rail_rdma_cas_gate;
+	rail->rdma_cas = sctk_topological_rail_cas;
 	
 	rail->network_name = "Topological RAIL";
 

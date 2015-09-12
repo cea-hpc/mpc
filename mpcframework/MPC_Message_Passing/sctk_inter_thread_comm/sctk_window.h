@@ -121,6 +121,29 @@ static inline void sctk_window_emulated_fetch_and_op_RDMA_init( struct sctk_wind
 }
 
 
+struct sctk_window_emulated_CAS_RDMA
+{
+	struct sctk_window_emulated_RDMA rdma;
+	RDMA_type type;
+	char comp[16];
+	char new[16];
+};
+
+
+static inline void sctk_window_emulated_CAS_RDMA_init( struct sctk_window_emulated_CAS_RDMA * fcas, int remote_rank, size_t offset, sctk_window_t win_id, RDMA_type type, void * cmp, void * new )
+{
+	sctk_window_emulated_RDMA_init( &fcas->rdma, remote_rank, offset, RDMA_type_size( type ), win_id );
+	
+	fcas->type = type;
+	
+	assume( fcas->rdma.size <= 16 );
+	assume( cmp != NULL );
+	assume( new != NULL );
+
+	memcpy( fcas->comp, cmp, fcas->rdma.size );
+	memcpy( fcas->new, new, fcas->rdma.size );
+}
+
 
 void sctk_window_RDMA_write( sctk_window_t win_id, void * src_addr, size_t size, size_t dest_offset, sctk_request_t  * req  );
 void sctk_window_RDMA_write_win( sctk_window_t src_win_id, size_t src_offset, size_t size,  sctk_window_t dest_win_id, size_t dest_offset, sctk_request_t  * req  );
@@ -131,6 +154,11 @@ void sctk_window_RDMA_read_win( sctk_window_t src_win_id, size_t src_offset, siz
 void sctk_window_RDMA_fetch_and_op( sctk_window_t remote_win_id, size_t remote_offset, void * fetch_addr, void * add, RDMA_op op,  RDMA_type type, sctk_request_t  * req );
 void sctk_window_RDMA_fetch_and_op_win( sctk_window_t remote_win_id, size_t remote_offset, sctk_window_t local_win_id, size_t fetch_offset, void * add, RDMA_op op,  RDMA_type type, sctk_request_t  * req );
 void sctk_window_RDMA_fetch_and_op_ctrl_msg_handler( struct sctk_window_emulated_fetch_and_op_RDMA *fop );
+
+
+void sctk_window_RDMA_CAS_ctrl_msg_handler( struct sctk_window_emulated_CAS_RDMA *fcas );
+void sctk_window_RDMA_CAS( sctk_window_t remote_win_id, size_t remote_offset, void * comp, void * new_data,  RDMA_type type, sctk_request_t  * req );
+
 
 void sctk_window_RDMA_fence( sctk_window_t win_id );
 
