@@ -1368,7 +1368,7 @@ void sctk_window_RDMA_CAS_net( sctk_window_t remote_win_id, size_t remote_offset
 
 	if( win->size < ( offset + RDMA_type_size( type ) ) )
 	{
-		sctk_fatal("Error RDMA read operation overflows the window");
+		sctk_fatal("Error RDMA CAS operation overflows the window");
 	} 
 
 	sctk_thread_ptp_message_t * msg = sctk_create_header (win->owner,SCTK_MESSAGE_CONTIGUOUS);

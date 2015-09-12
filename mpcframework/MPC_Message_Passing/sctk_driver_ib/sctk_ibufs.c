@@ -933,9 +933,11 @@ void sctk_ibuf_rdma_CAS_init( sctk_ibuf_t *ibuf,
 	ibuf->desc.wr.send.wr.atomic.swap = new;
 	ibuf->desc.wr.send.wr.atomic.rkey = rkey;
 
-
-	ibuf->desc.wr.send.sg_list = NULL;
+	ibuf->desc.wr.send.sg_list = & ( ibuf->desc.sg_entry );
 	ibuf->desc.wr.send.imm_data = IMM_DATA_NULL;
+	ibuf->desc.sg_entry.length = sizeof( sctk_uint64_t );
+	ibuf->desc.sg_entry.lkey = 0;
+	ibuf->desc.sg_entry.addr = NULL;
 
 	ibuf->flag = RDMA_CAS_IBUF_FLAG;
 }
