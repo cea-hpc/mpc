@@ -1089,6 +1089,12 @@ sctk_ib_rdma_poll_send ( sctk_rail_info_t *rail, sctk_ibuf_t *ibuf )
 			sctk_info ( "RDMA Fetch and op DONE" );
 			sctk_complete_and_free_message ( msg );
 			break;
+
+		case SCTK_IB_RDMA_CAS:
+			msg = sctk_ib_rdma_retrieve_msg_ptr( ibuf );
+			sctk_info ( "RDMA CAS DONE" );
+			sctk_complete_and_free_message ( msg );
+			break;
 			
 		default:
 			sctk_error ( "Got RDMA type:%d, payload_size;%lu", IBUF_GET_RDMA_TYPE ( rdma_header ), 

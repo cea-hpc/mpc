@@ -909,7 +909,7 @@ void sctk_ibuf_rdma_fetch_and_add_init( sctk_ibuf_t *ibuf,
 	ibuf->desc.sg_entry.lkey = lkey;
 	ibuf->desc.sg_entry.addr = ( uintptr_t ) fetch_addr;
 
-	ibuf->flag = RDMA_READ_IBUF_FLAG;
+	ibuf->flag = RDMA_FETCH_AND_OP_IBUF_FLAG;
 }
 
 void sctk_ibuf_rdma_CAS_init( sctk_ibuf_t *ibuf,
@@ -934,10 +934,10 @@ void sctk_ibuf_rdma_CAS_init( sctk_ibuf_t *ibuf,
 	ibuf->desc.wr.send.wr.atomic.rkey = rkey;
 
 
-	ibuf->desc.wr.send.sg_list = & ( ibuf->desc.sg_entry );
+	ibuf->desc.wr.send.sg_list = NULL;
 	ibuf->desc.wr.send.imm_data = IMM_DATA_NULL;
 
-	ibuf->flag = RDMA_READ_IBUF_FLAG;
+	ibuf->flag = RDMA_CAS_IBUF_FLAG;
 }
 
 void sctk_ibuf_print_rdma ( sctk_ibuf_t *ibuf, char *desc )

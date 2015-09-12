@@ -214,6 +214,8 @@ enum sctk_ibuf_status
     FREE_FLAG             = 22,
     RDMA_READ_IBUF_FLAG   = 33,
     RDMA_WRITE_IBUF_FLAG  = 44,
+    RDMA_FETCH_AND_OP_IBUF_FLAG  = 45,
+    RDMA_CAS_IBUF_FLAG  = 46,
     NORMAL_IBUF_FLAG      = 55,
     SEND_IBUF_FLAG        = 66,
     SEND_INLINE_IBUF_FLAG = 77,
@@ -233,6 +235,14 @@ __UNUSED__ static char *sctk_ibuf_print_flag ( enum sctk_ibuf_status flag )
 
 		case RDMA_WRITE_IBUF_FLAG:
 			return "RDMA_WRITE_IBUF_FLAG";
+			break;
+			
+		case RDMA_FETCH_AND_OP_IBUF_FLAG:
+			return "RDMA_FETCH_AND_OP_IBUF_FLAG";
+			break;
+
+		case RDMA_CAS_IBUF_FLAG:
+			return "RDMA_CAS_IBUF_FLAG";
 			break;
 
 		case RDMA_WRITE_INLINE_IBUF_FLAG:

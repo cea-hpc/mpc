@@ -1375,6 +1375,8 @@ void sctk_window_RDMA_CAS_net( sctk_window_t remote_win_id, size_t remote_offset
 
 	sctk_set_header_in_message (msg, -8, win->comm,  win->owner, sctk_get_task_rank (), req, RDMA_type_size( type ), SCTK_RDMA_MESSAGE, SCTK_DATATYPE_IGNORE );
 
+	sctk_error("CAS GOT NET");
+
 	rdma_rail->rdma_cas(  rdma_rail,
 						   msg,
 						   dest_addr,
@@ -1392,7 +1394,7 @@ void sctk_window_RDMA_CAS( sctk_window_t remote_win_id, size_t remote_offset, vo
 {
 	struct sctk_window * win = sctk_win_translate( remote_win_id );
 	
-	//sctk_error("CAS");
+	sctk_error("CAS");
 	
 	if( !win )
 	{
@@ -1422,12 +1424,16 @@ void sctk_window_RDMA_CAS( sctk_window_t remote_win_id, size_t remote_offset, vo
 	if( (my_rank == win->owner) /* Same rank */
 	||  (! sctk_is_net_message( win->owner ) ) /* Same process */  )
 	{
+		sctk_error("CAS SHARED");
+	
+		
 		/* Shared Memory */
 		sctk_window_RDMA_CAS_local( remote_win_id, remote_offset, comp, new_data,  type );
 		return;
 	}
 	else if( win->is_emulated || (RDMA_CAS_gate_passed == 0 /* Network does not support this RDMA atomic fallback to emulated */) )
 	{
+		sctk_error("CAS EMU");
 		struct sctk_window_emulated_CAS_RDMA fcas;
 		sctk_window_emulated_CAS_RDMA_init( &fcas, win->owner, remote_offset, win->remote_id, type, comp, new_data );
 
@@ -1435,6 +1441,7 @@ void sctk_window_RDMA_CAS( sctk_window_t remote_win_id, size_t remote_offset, vo
 	}
 	else
 	{
+		sctk_error("CAS NET");
 		sctk_window_RDMA_CAS_net( remote_win_id, remote_offset, comp, new_data,  type, req );
 	}
 }
@@ -1473,8 +1480,5 @@ void sctk_window_RDMA_fence( sctk_window_t win_id )
 	{
 		sctk_control_message_fence( win->owner );
 	}
-	
-	
-	
-	
+
 }
