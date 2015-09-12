@@ -517,6 +517,8 @@ void sctk_topological_rail_rdma_fetch_and_op(   sctk_rail_info_t *rail,
 
 void sctk_topological_rail_cas(   sctk_rail_info_t *rail,
 								  sctk_thread_ptp_message_t *msg,
+								  void *  res_addr,
+						          struct  sctk_rail_pin_ctx_list * local_key,
 								  void * remote_addr,
 								  struct  sctk_rail_pin_ctx_list * remote_key,
 								  void * comp,
@@ -548,7 +550,7 @@ void sctk_topological_rail_cas(   sctk_rail_info_t *rail,
 	assume( 0 <= subrail_id );
 	assume( subrail_id < rail->subrail_count );
 	
-	endpoint_rail->rdma_cas( endpoint_rail, msg, remote_addr, remote_key + subrail_id, comp, new, type );
+	endpoint_rail->rdma_cas( endpoint_rail, msg, res_addr, local_key + subrail_id,  remote_addr, remote_key + subrail_id, comp, new, type );
 }
 
 

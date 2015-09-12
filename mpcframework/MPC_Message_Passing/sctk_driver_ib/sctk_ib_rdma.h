@@ -156,8 +156,10 @@ void sctk_ib_rdma_fetch_and_op(   sctk_rail_info_t *rail,
 								  RDMA_op op,
 							      RDMA_type type );
 
-void sctk_ib_rdma_cas(   sctk_rail_info_t *rail,
+void sctk_ib_rdma_cas(    sctk_rail_info_t *rail,
 						  sctk_thread_ptp_message_t *msg,
+						  void *  res_addr,
+						  struct  sctk_rail_pin_ctx_list * local_key,
 						  void * remote_addr,
 						  struct  sctk_rail_pin_ctx_list * remote_key,
 						  void * comp,

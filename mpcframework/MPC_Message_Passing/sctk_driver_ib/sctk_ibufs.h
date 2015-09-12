@@ -391,6 +391,8 @@ void sctk_ibuf_rdma_fetch_and_add_init( sctk_ibuf_t *ibuf,
 										sctk_uint64_t add );
 
 void sctk_ibuf_rdma_CAS_init( sctk_ibuf_t *ibuf,
+							  void *  res_addr,
+							  sctk_uint32_t local_key,
 							  void *remote_address,
 							  sctk_uint32_t rkey,
 							  sctk_uint64_t comp,

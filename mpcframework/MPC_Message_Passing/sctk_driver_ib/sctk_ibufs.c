@@ -913,6 +913,8 @@ void sctk_ibuf_rdma_fetch_and_add_init( sctk_ibuf_t *ibuf,
 }
 
 void sctk_ibuf_rdma_CAS_init( sctk_ibuf_t *ibuf,
+							  void *  res_addr,
+							  sctk_uint32_t local_key,
 							  void *remote_address,
 							  sctk_uint32_t rkey,
 							  sctk_uint64_t comp,
@@ -936,8 +938,8 @@ void sctk_ibuf_rdma_CAS_init( sctk_ibuf_t *ibuf,
 	ibuf->desc.wr.send.sg_list = & ( ibuf->desc.sg_entry );
 	ibuf->desc.wr.send.imm_data = IMM_DATA_NULL;
 	ibuf->desc.sg_entry.length = sizeof( sctk_uint64_t );
-	ibuf->desc.sg_entry.lkey = 0;
-	ibuf->desc.sg_entry.addr = NULL;
+	ibuf->desc.sg_entry.lkey = local_key;
+	ibuf->desc.sg_entry.addr = res_addr;
 
 	ibuf->flag = RDMA_CAS_IBUF_FLAG;
 }

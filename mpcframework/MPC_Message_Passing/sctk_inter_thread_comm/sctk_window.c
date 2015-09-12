@@ -1255,29 +1255,39 @@ struct sctk_window * local_win = sctk_win_translate( local_win_id );
 /* Compare and SWAP =================== */
 
 
-void sctk_window_RDMA_CAS_int_local( void * cmp , void * new, void * target )
+void sctk_window_RDMA_CAS_int_local( void * cmp , void * new, void * target, void * res )
 {
 	int oldv = *((int *)cmp );
 	int newv = *((int *)new );
 	sctk_atomics_int * ptarget = (sctk_atomics_int *)target;
+	int * pres = (sctk_atomics_int *)res;
 	
-	sctk_atomics_cas_int(ptarget, oldv, newv);
+	int local = sctk_atomics_cas_int(ptarget, oldv, newv);
+	
+	if( pres )
+		*pres = local;
 }
 
-void sctk_window_RDMA_CAS_ptr_local( void * cmp , void * new, void * target )
+void sctk_window_RDMA_CAS_ptr_local( void * cmp , void * new, void * target, void  * res )
 {
 	sctk_atomics_ptr * ptarget = (sctk_atomics_ptr *)target;
-	sctk_atomics_cas_ptr(ptarget, cmp, new);
+	
+	void * local = sctk_atomics_cas_ptr(ptarget, cmp, new);
+
+	memcpy( res, &local, sizeof( void * ) );
 }
 
 static sctk_spinlock_t __RDMA_CAS_16_lock = SCTK_SPINLOCK_INITIALIZER;
 
-void sctk_window_RDMA_CAS_16_local( void * cmp , void * new, void * target )
+void sctk_window_RDMA_CAS_16_local( void * cmp , void * new, void * target, void * res )
 {
 	sctk_spinlock_lock( &__RDMA_CAS_16_lock );
 	
 	if( memcmp( target, cmp, 16 ) == 0 )
 	{
+		if( res )
+			memcpy( res, target, 16 );
+
 		memcpy( target, new, 16 );
 	}
 	
@@ -1286,12 +1296,15 @@ void sctk_window_RDMA_CAS_16_local( void * cmp , void * new, void * target )
 
 static sctk_spinlock_t __RDMA_CAS_any_lock = SCTK_SPINLOCK_INITIALIZER;
 
-void sctk_window_RDMA_CAS_any_local( void * cmp , void * new, void * target, size_t size )
+void sctk_window_RDMA_CAS_any_local( void * cmp , void * new, void * target, void * res, size_t size )
 {
 	sctk_spinlock_lock( &__RDMA_CAS_any_lock );
 	
 	if( memcmp( target, cmp, size ) == 0 )
 	{
+		if( res )
+			memcpy( res, target, size );
+
 		memcpy( target, new, size );
 	}
 	
@@ -1299,7 +1312,7 @@ void sctk_window_RDMA_CAS_any_local( void * cmp , void * new, void * target, siz
 }
 
 
-void sctk_window_RDMA_CAS_local( sctk_window_t remote_win_id, size_t remote_offset, void * comp, void * new_data,  RDMA_type type )
+void sctk_window_RDMA_CAS_local( sctk_window_t remote_win_id, size_t remote_offset, void * comp, void * new_data, void * res,  RDMA_type type )
 {
 	struct sctk_window * win = sctk_win_translate( remote_win_id );
 
@@ -1321,19 +1334,19 @@ void sctk_window_RDMA_CAS_local( sctk_window_t remote_win_id, size_t remote_offs
 	
 	if( type_size == sizeof( sctk_atomics_int ) )
 	{
-		sctk_window_RDMA_CAS_int_local( comp , new_data, remote_addr );
+		sctk_window_RDMA_CAS_int_local( comp , new_data, remote_addr, res );
 	}
 	else if( type_size == sizeof( sctk_atomics_ptr ) )
 	{
-		sctk_window_RDMA_CAS_ptr_local( comp , new_data, remote_addr );
+		sctk_window_RDMA_CAS_ptr_local( comp , new_data, remote_addr, res );
 	}
 	else if( type_size == 16 )
 	{
-		sctk_window_RDMA_CAS_16_local( comp , new_data, remote_addr );
+		sctk_window_RDMA_CAS_16_local( comp , new_data, remote_addr, res );
 	}
 	else
 	{
-		sctk_window_RDMA_CAS_any_local( comp , new_data, remote_addr,  type_size);
+		sctk_window_RDMA_CAS_any_local( comp , new_data, remote_addr, res,  type_size);
 	}
 
 }
@@ -1341,12 +1354,33 @@ void sctk_window_RDMA_CAS_local( sctk_window_t remote_win_id, size_t remote_offs
 
 
 void sctk_window_RDMA_CAS_ctrl_msg_handler( struct sctk_window_emulated_CAS_RDMA *fcas )
-{	
-	sctk_window_RDMA_CAS_local( fcas->rdma.win_id, fcas->rdma.offset, fcas->comp, fcas->new,  fcas->type );
+{
+	struct sctk_window * win = sctk_win_translate( fcas->rdma.win_id );
+	
+	if( !win )
+	{
+		sctk_fatal("No such window in emulated RDMA CAS");
+	}
+	
+	size_t offset = fcas->rdma.offset * win->disp_unit;
+
+	if( win->size < ( offset + fcas->rdma.size ) )
+	{
+		sctk_fatal("Error RDMA emulated CAS operation overflows the window\n"
+		           " WIN S : %ld , offset %ld, disp %ld, actual off %ld",
+		            win->size, fcas->rdma.offset, win->disp_unit, offset);
+	}
+
+	char res[16];
+	sctk_window_RDMA_CAS_local( fcas->rdma.win_id, fcas->rdma.offset, fcas->comp, fcas->new, res,  fcas->type );
+	
+	sctk_request_t data_req;
+	sctk_message_isend_class_src( fcas->rdma.remote_rank, fcas->rdma.source_rank, &res, fcas->rdma.size , TAG_RDMA_CAS, win->comm, SCTK_RDMA_MESSAGE, &data_req );
+	sctk_wait_message ( &data_req );	
 }
 
 
-void sctk_window_RDMA_CAS_net( sctk_window_t remote_win_id, size_t remote_offset, void * comp, void * new_data,  RDMA_type type, sctk_request_t  * req )
+void sctk_window_RDMA_CAS_net( sctk_window_t remote_win_id, size_t remote_offset, void * comp, void * new_data, void * res,  sctk_rail_pin_ctx_t * res_pin,  RDMA_type type, sctk_request_t  * req )
 {
 	sctk_rail_info_t * rdma_rail = sctk_rail_get_rdma ();
 	
@@ -1379,6 +1413,8 @@ void sctk_window_RDMA_CAS_net( sctk_window_t remote_win_id, size_t remote_offset
 
 	rdma_rail->rdma_cas(  rdma_rail,
 						   msg,
+						   res,
+						   res_pin,
 						   dest_addr,
 						   win->pin.list,
 						   comp,
@@ -1390,7 +1426,7 @@ void sctk_window_RDMA_CAS_net( sctk_window_t remote_win_id, size_t remote_offset
 
 
 
-void sctk_window_RDMA_CAS( sctk_window_t remote_win_id, size_t remote_offset, void * comp, void * new_data,  RDMA_type type, sctk_request_t  * req )
+void __sctk_window_RDMA_CAS( sctk_window_t remote_win_id, size_t remote_offset, void * comp, void * new_data, void * res,  sctk_rail_pin_ctx_t * res_pin,   RDMA_type type, sctk_request_t  * req )
 {
 	struct sctk_window * win = sctk_win_translate( remote_win_id );
 	
@@ -1428,7 +1464,7 @@ void sctk_window_RDMA_CAS( sctk_window_t remote_win_id, size_t remote_offset, vo
 	
 		
 		/* Shared Memory */
-		sctk_window_RDMA_CAS_local( remote_win_id, remote_offset, comp, new_data,  type );
+		sctk_window_RDMA_CAS_local( remote_win_id, remote_offset, comp, new_data, res, type );
 		return;
 	}
 	else if( win->is_emulated || (RDMA_CAS_gate_passed == 0 /* Network does not support this RDMA atomic fallback to emulated */) )
@@ -1438,12 +1474,20 @@ void sctk_window_RDMA_CAS( sctk_window_t remote_win_id, size_t remote_offset, vo
 		sctk_window_emulated_CAS_RDMA_init( &fcas, win->owner, remote_offset, win->remote_id, type, comp, new_data );
 
 		sctk_control_messages_send ( sctk_get_process_rank_from_task_rank (win->owner), SCTK_CONTROL_MESSAGE_PROCESS, SCTK_PROCESS_RDMA_EMULATED_CAS, 0, &fcas, sizeof(struct sctk_window_emulated_CAS_RDMA) );
+	
+		sctk_message_irecv_class( win->owner, res, fcas.rdma.size , TAG_RDMA_CAS, win->comm, SCTK_RDMA_MESSAGE, req );
 	}
 	else
 	{
 		sctk_error("CAS NET");
-		sctk_window_RDMA_CAS_net( remote_win_id, remote_offset, comp, new_data,  type, req );
+		sctk_window_RDMA_CAS_net( remote_win_id, remote_offset, comp, new_data, res, res_pin,  type, req );
 	}
+}
+
+
+void sctk_window_RDMA_CAS( sctk_window_t remote_win_id, size_t remote_offset, void * comp, void * new_data, void * res, RDMA_type type, sctk_request_t  * req )
+{
+	__sctk_window_RDMA_CAS(  remote_win_id,  remote_offset,  comp, new_data, res, NULL, type, req );
 }
 
 

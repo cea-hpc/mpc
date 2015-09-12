@@ -157,7 +157,7 @@ void sctk_window_RDMA_fetch_and_op_ctrl_msg_handler( struct sctk_window_emulated
 
 
 void sctk_window_RDMA_CAS_ctrl_msg_handler( struct sctk_window_emulated_CAS_RDMA *fcas );
-void sctk_window_RDMA_CAS( sctk_window_t remote_win_id, size_t remote_offset, void * comp, void * new_data,  RDMA_type type, sctk_request_t  * req );
+void sctk_window_RDMA_CAS( sctk_window_t remote_win_id, size_t remote_offset, void * comp, void * new_data, void  * res, RDMA_type type, sctk_request_t  * req );
 
 
 void sctk_window_RDMA_fence( sctk_window_t win_id );
@@ -172,6 +172,7 @@ enum
 	TAG_RDMA_READ,
 	TAG_RDMA_WRITE,
 	TAG_RDMA_FETCH_AND_OP,
+	TAG_RDMA_CAS,
 	TAG_RDMA_MAP
 };
 
