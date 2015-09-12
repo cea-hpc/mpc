@@ -1260,7 +1260,7 @@ void sctk_window_RDMA_CAS_int_local( void * cmp , void * new, void * target, voi
 	int oldv = *((int *)cmp );
 	int newv = *((int *)new );
 	sctk_atomics_int * ptarget = (sctk_atomics_int *)target;
-	int * pres = (sctk_atomics_int *)res;
+	int * pres = (int *)res;
 	
 	int local = sctk_atomics_cas_int(ptarget, oldv, newv);
 	
@@ -1268,13 +1268,14 @@ void sctk_window_RDMA_CAS_int_local( void * cmp , void * new, void * target, voi
 		*pres = local;
 }
 
-void sctk_window_RDMA_CAS_ptr_local( void * cmp , void * new, void * target, void  * res )
+void sctk_window_RDMA_CAS_ptr_local( void ** cmp , void ** new, void * target, void  * res )
 {
 	sctk_atomics_ptr * ptarget = (sctk_atomics_ptr *)target;
-	
-	void * local = sctk_atomics_cas_ptr(ptarget, cmp, new);
 
-	memcpy( res, &local, sizeof( void * ) );
+	void * local = sctk_atomics_cas_ptr(ptarget, *cmp, *new);
+
+	if( res )
+		memcpy( res, &local, sizeof( void * ) );
 }
 
 static sctk_spinlock_t __RDMA_CAS_16_lock = SCTK_SPINLOCK_INITIALIZER;
