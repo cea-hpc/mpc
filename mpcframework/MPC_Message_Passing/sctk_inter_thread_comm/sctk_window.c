@@ -1403,23 +1403,39 @@ void sctk_window_RDMA_CAS_net( sctk_window_t remote_win_id, size_t remote_offset
 	if( win->size < ( offset + RDMA_type_size( type ) ) )
 	{
 		sctk_fatal("Error RDMA CAS operation overflows the window");
-	} 
+	}
+	
+	int did_pin = 0;
+	
+	/* Pin local segment */
+	if( ! res_pin )
+	{
+		sctk_rail_pin_ctx_t local_pin;
+		res_pin = &local_pin;
+		sctk_rail_pin_ctx_init( res_pin, res, RDMA_type_size( type ) );
+		did_pin = 1;
+	}
 
 	sctk_thread_ptp_message_t * msg = sctk_create_header (win->owner,SCTK_MESSAGE_CONTIGUOUS);
 
 	sctk_set_header_in_message (msg, -8, win->comm,  win->owner, sctk_get_task_rank (), req, RDMA_type_size( type ), SCTK_RDMA_MESSAGE, SCTK_DATATYPE_IGNORE );
 
-	sctk_error("CAS GOT NET");
-
 	rdma_rail->rdma_cas(  rdma_rail,
 						   msg,
 						   res,
-						   res_pin,
+						   res_pin->list,
 						   dest_addr,
 						   win->pin.list,
 						   comp,
 						   new_data,
 						   type );
+
+
+	if( did_pin )
+	{
+		/* Note that we use the cache here */
+		sctk_rail_pin_ctx_release( res_pin );
+	}
 
 }
 
@@ -1429,9 +1445,7 @@ void sctk_window_RDMA_CAS_net( sctk_window_t remote_win_id, size_t remote_offset
 void __sctk_window_RDMA_CAS( sctk_window_t remote_win_id, size_t remote_offset, void * comp, void * new_data, void * res,  sctk_rail_pin_ctx_t * res_pin,   RDMA_type type, sctk_request_t  * req )
 {
 	struct sctk_window * win = sctk_win_translate( remote_win_id );
-	
-	sctk_error("CAS");
-	
+
 	if( !win )
 	{
 		sctk_fatal("No such window ID %d", remote_win_id);
@@ -1460,16 +1474,12 @@ void __sctk_window_RDMA_CAS( sctk_window_t remote_win_id, size_t remote_offset, 
 	if( (my_rank == win->owner) /* Same rank */
 	||  (! sctk_is_net_message( win->owner ) ) /* Same process */  )
 	{
-		sctk_error("CAS SHARED");
-	
-		
 		/* Shared Memory */
 		sctk_window_RDMA_CAS_local( remote_win_id, remote_offset, comp, new_data, res, type );
 		return;
 	}
 	else if( win->is_emulated || (RDMA_CAS_gate_passed == 0 /* Network does not support this RDMA atomic fallback to emulated */) )
 	{
-		sctk_error("CAS EMU");
 		struct sctk_window_emulated_CAS_RDMA fcas;
 		sctk_window_emulated_CAS_RDMA_init( &fcas, win->owner, remote_offset, win->remote_id, type, comp, new_data );
 
@@ -1479,7 +1489,6 @@ void __sctk_window_RDMA_CAS( sctk_window_t remote_win_id, size_t remote_offset, 
 	}
 	else
 	{
-		sctk_error("CAS NET");
 		sctk_window_RDMA_CAS_net( remote_win_id, remote_offset, comp, new_data, res, res_pin,  type, req );
 	}
 }

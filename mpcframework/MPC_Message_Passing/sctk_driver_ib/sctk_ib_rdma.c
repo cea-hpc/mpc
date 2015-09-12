@@ -923,9 +923,9 @@ void sctk_ib_rdma_fetch_and_op(   sctk_rail_info_t *rail,
 	               
 	sctk_ibuf_rdma_fetch_and_add_init(  ibuf,
 									    fetch_addr,
-										local_key->pin.ib.mr.rkey,
+										local_key->pin.ib.mr.lkey,
 										remote_addr,
-										remote_key->pin.ib.mr.lkey,
+										remote_key->pin.ib.mr.rkey,
 										local_add );
 
 	sctk_ib_qp_send_ibuf ( &rail->network.ib,
@@ -982,7 +982,7 @@ void sctk_ib_rdma_cas(    sctk_rail_info_t *rail,
 							 res_addr,
 							 local_key->pin.ib.mr.lkey,
 							 remote_addr,
-							 remote_key->pin.ib.mr.lkey,
+							 remote_key->pin.ib.mr.rkey,
 							 local_comp,
 							 local_new);
 							                 

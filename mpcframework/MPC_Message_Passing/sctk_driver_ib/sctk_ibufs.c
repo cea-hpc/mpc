@@ -928,7 +928,7 @@ void sctk_ibuf_rdma_CAS_init( sctk_ibuf_t *ibuf,
 	ibuf->desc.wr.send.send_flags = IBV_SEND_SIGNALED;
 	ibuf->desc.wr.send.wr_id = ( uintptr_t ) ibuf;
 
-	ibuf->desc.wr.send.num_sge = 0;
+	ibuf->desc.wr.send.num_sge = 1;
 	
 	ibuf->desc.wr.send.wr.atomic.remote_addr = remote_address;
 	ibuf->desc.wr.send.wr.atomic.compare_add = comp;
