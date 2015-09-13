@@ -26,6 +26,7 @@
 #include "sctk_types.h"
 #include "sctk_spinlock.h"
 #include "sctk_rail.h"
+#include "sctk_rdma.h"
 
 /************************************************************************/
 /* Definition of an RDMA window                                         */
@@ -45,10 +46,6 @@ struct sctk_window
 	sctk_spinlock_t lock;
 	unsigned int refcounter;
 };
-
-/* Local init and release */
-sctk_window_t sctk_window_init( void *addr, size_t size, size_t disp_unit, sctk_communicator_t comm );
-void sctk_window_release( sctk_window_t win );
 
 /* Refcounter interactions */
 void sctk_win_acquire( sctk_window_t win_id );
@@ -70,11 +67,9 @@ static inline void sctk_window_map_request_init( struct sctk_window_map_request 
 	mr->win_id = win_id;
 }
 
-int sctk_window_map_remote( int remote_rank, sctk_window_t win_id );
-
 
 /************************************************************************/
-/* Window Operations                                                    */
+/* Window Emulated Operations  Strutures                                */
 /************************************************************************/
 
 struct sctk_window_emulated_RDMA
@@ -144,26 +139,6 @@ static inline void sctk_window_emulated_CAS_RDMA_init( struct sctk_window_emulat
 	memcpy( fcas->new, new, fcas->rdma.size );
 }
 
-
-void sctk_window_RDMA_write( sctk_window_t win_id, void * src_addr, size_t size, size_t dest_offset, sctk_request_t  * req  );
-void sctk_window_RDMA_write_win( sctk_window_t src_win_id, size_t src_offset, size_t size,  sctk_window_t dest_win_id, size_t dest_offset, sctk_request_t  * req  );
-
-void sctk_window_RDMA_read( sctk_window_t win_id, void * dest_addr, size_t size, size_t src_offset, sctk_request_t  * req  );
-void sctk_window_RDMA_read_win( sctk_window_t src_win_id, size_t src_offset, size_t size, sctk_window_t dest_win_id, size_t dest_offset, sctk_request_t  * req );
-
-void sctk_window_RDMA_fetch_and_op( sctk_window_t remote_win_id, size_t remote_offset, void * fetch_addr, void * add, RDMA_op op,  RDMA_type type, sctk_request_t  * req );
-void sctk_window_RDMA_fetch_and_op_win( sctk_window_t remote_win_id, size_t remote_offset, sctk_window_t local_win_id, size_t fetch_offset, void * add, RDMA_op op,  RDMA_type type, sctk_request_t  * req );
-void sctk_window_RDMA_fetch_and_op_ctrl_msg_handler( struct sctk_window_emulated_fetch_and_op_RDMA *fop );
-
-
-
-void sctk_window_RDMA_CAS( sctk_window_t remote_win_id, size_t remote_offset, void * comp, void * new_data, void  * res, RDMA_type type, sctk_request_t  * req );
-void sctk_window_RDMA_CAS_win( sctk_window_t remote_win_id, size_t remote_offset,  sctk_window_t local_win_id, size_t res_offset, void * comp, void * new_data, RDMA_type type, sctk_request_t  * req );
-void sctk_window_RDMA_CAS_ctrl_msg_handler( struct sctk_window_emulated_CAS_RDMA *fcas );
-
-void sctk_window_RDMA_fence( sctk_window_t win_id );
-
-
 /************************************************************************/
 /* Control Messages Handlers                                            */
 /************************************************************************/
@@ -181,6 +156,7 @@ void sctk_window_map_remote_ctrl_msg_handler( struct sctk_window_map_request * m
 void sctk_window_relax_ctrl_msg_handler( sctk_window_t win_id );
 void sctk_window_RDMA_emulated_write_ctrl_msg_handler( struct sctk_window_emulated_RDMA *erma );
 void sctk_window_RDMA_emulated_read_ctrl_msg_handler( struct sctk_window_emulated_RDMA *erma );
-
+void sctk_window_RDMA_fetch_and_op_ctrl_msg_handler( struct sctk_window_emulated_fetch_and_op_RDMA *fop );
+void sctk_window_RDMA_CAS_ctrl_msg_handler( struct sctk_window_emulated_CAS_RDMA *fcas );
 
 #endif /* SCTK_WINDOW_H */

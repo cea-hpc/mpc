@@ -1525,6 +1525,14 @@ void sctk_window_RDMA_CAS_win( sctk_window_t remote_win_id, size_t remote_offset
 
 
 
+/* WAIT =================== */
+
+void sctk_window_RDMA_wait( sctk_request_t *request )
+{
+	sctk_wait_message( request );
+}
+
+
 /* FENCE =================== */
 
 void sctk_window_RDMA_fence( sctk_window_t win_id )
