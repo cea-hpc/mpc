@@ -1262,7 +1262,13 @@ void sctk_window_RDMA_CAS_int_local( void * cmp , void * new, void * target, voi
 	sctk_atomics_int * ptarget = (sctk_atomics_int *)target;
 	int * pres = (int *)res;
 	
-	int local = sctk_atomics_cas_int(ptarget, oldv, newv);
+	
+	
+	int local = 0;
+	
+	local = sctk_atomics_cas_int(ptarget, oldv, newv);
+	
+	//sctk_error("OLD %d NEW %d RES %d", oldv, newv, local );
 	
 	if( pres )
 		*pres = local;
