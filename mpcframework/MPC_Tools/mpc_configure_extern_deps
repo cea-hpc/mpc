@@ -141,7 +141,7 @@ SCTK_CHECK_LIB_PMI()
 
 	SCTK_MSG_CHECKING "Launcher"
 
-	if [ "x$SCTK_LIB_MODE" -eq "x1" ]; then
+	if [ "x$SCTK_LIB_MODE" = "x1" ]; then
 		result 'libmode'
 	else
 		if [ $SCTK_HYDRA -eq 1 ] && [ $SCTK_SLURM -eq 0 ]; then
