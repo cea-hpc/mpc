@@ -1554,7 +1554,7 @@ void sctk_window_RDMA_fence( sctk_window_t win_id )
 	}
 	else
 	{
-		sctk_control_message_fence( win->owner );
+		return;
 	}
 
 }
