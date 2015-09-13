@@ -1230,7 +1230,7 @@ void sctk_window_RDMA_fetch_and_op( sctk_window_t remote_win_id, size_t remote_o
 
 void sctk_window_RDMA_fetch_and_add_win( sctk_window_t remote_win_id, size_t remote_offset, sctk_window_t local_win_id, size_t fetch_offset, void * add, RDMA_op op,  RDMA_type type, sctk_request_t  * req )
 {
-struct sctk_window * local_win = sctk_win_translate( local_win_id );
+	struct sctk_window * local_win = sctk_win_translate( local_win_id );
 
 	if( !local_win )
 	{
@@ -1243,7 +1243,7 @@ struct sctk_window * local_win = sctk_win_translate( local_win_id );
 	
 	if( win_end_addr < (dest_addr + RDMA_type_size( type ) ) )
 	{
-		sctk_fatal("Error RDMA write operation overflows the window");
+		sctk_fatal("Error RDMA Fetch and OP operation overflows the window");
 	}
 	
 	
@@ -1498,6 +1498,28 @@ void __sctk_window_RDMA_CAS( sctk_window_t remote_win_id, size_t remote_offset, 
 void sctk_window_RDMA_CAS( sctk_window_t remote_win_id, size_t remote_offset, void * comp, void * new_data, void * res, RDMA_type type, sctk_request_t  * req )
 {
 	__sctk_window_RDMA_CAS(  remote_win_id,  remote_offset,  comp, new_data, res, NULL, type, req );
+}
+
+
+void sctk_window_RDMA_CAS_win( sctk_window_t remote_win_id, size_t remote_offset,  sctk_window_t local_win_id, size_t res_offset, void * comp, void * new_data, RDMA_type type, sctk_request_t  * req )
+{
+	struct sctk_window * local_win = sctk_win_translate( local_win_id );
+
+	if( !local_win )
+	{
+		sctk_fatal("No such window ID");
+	}
+	
+	void * res_addr = local_win->start_addr + res_offset * local_win->disp_unit;
+	void * win_end_addr = local_win->start_addr + local_win->size;
+	
+	
+	if( win_end_addr < (res_addr + RDMA_type_size( type ) ) )
+	{
+		sctk_fatal("Error RDMA CAS operation overflows the window");
+	}
+	
+	__sctk_window_RDMA_CAS(  remote_win_id,  remote_offset,  comp, new_data, res_addr, &local_win->pin, type, req );
 }
 
 
