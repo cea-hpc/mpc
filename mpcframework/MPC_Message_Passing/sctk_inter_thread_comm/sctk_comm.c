@@ -86,7 +86,7 @@ void MPC_Net_recv( int src, void * buffer, size_t size, int tag, sctk_communicat
 	MPC_Net_wait( &req );
 }
 
-void MPC_Net_sendrecv( void * sendbuf, size_t size, int dest, int tag, void * recvbuf, int src, int comm )
+void MPC_Net_sendrecv( void * sendbuf, size_t size, int dest, int tag, void * recvbuf, int src, sctk_communicator_t comm )
 {
 	sctk_sendrecv( sendbuf, size, dest, tag, recvbuf, src, comm );
 }
