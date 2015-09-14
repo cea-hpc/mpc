@@ -36,24 +36,17 @@ extern "C"
 //#error "sctk_route must be included before sctk_portals.h"
 //#endif
 
-struct sctk_portals_route_info_s
+typedef struct sctk_portals_route_info_s
 {
-	ptl_process_t id;//to route
-};
-typedef struct sctk_portals_route_info_s sctk_portals_route_info_t;
-
+	sctk_portals_process_id_t dest;//to route
+}sctk_portals_route_info_t;
 
 struct sctk_portals_rail_info_s
 {
-	ptl_ni_limits_t   actual;
-	ptl_handle_ni_t   ni_handle_phys;
-	ptl_process_t     my_id;
-	int               nb_tasks_per_process;
-	ptl_pt_index_t    *pt_index; // one per thread
-	sctk_portals_event_table_list_t     *event_list;	//event list, one by thread
-	ptl_handle_eq_t   *event_handler;
-	sctk_spinlock_t   *lock; //event list, one by thread
-	ptl_ct_event_t    zeroCounter;
+	sctk_portals_limits_t            max_limits;
+	sctk_portals_interface_handler_t interface_handler;
+	sctk_portals_process_id_t        current_id;
+	sctk_portals_table_t             ptable;
 
     char connection_infos[MAX_STRING_SIZE];
     size_t connection_infos_size;

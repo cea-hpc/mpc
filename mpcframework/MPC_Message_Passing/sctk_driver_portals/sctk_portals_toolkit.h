@@ -32,8 +32,6 @@ extern "C"
 
 #ifdef MPC_USE_PORTALS
 #include <sctk_portals_helper.h>
-#include <sctk_spinlock.h>
-//#include <utlist.h>
 
 # define NI_TYPE  PTL_NI_MATCHING
 # define OPTIONS  (PTL_ME_OP_GET | PTL_ME_EVENT_CT_COMM | PTL_ME_EVENT_CT_OVERFLOW | PTL_ME_EVENT_LINK_DISABLE | PTL_ME_EVENT_UNLINK_DISABLE | PTL_ME_USE_ONCE | PTL_ME_EVENT_COMM_DISABLE)
@@ -77,19 +75,6 @@ extern "C"
 
 #define TRYLOCK_SUCCESS	    0
 
-#define CHECK_RETURNVAL(x) do { int ret; \
-    switch (ret = x) { \
-	case PTL_IGNORED: \
-        case PTL_OK: break; \
-        case PTL_FAIL: fprintf(stderr, "=> %s returned PTL_FAIL (line %u)\n", #x, (unsigned int)__LINE__); abort(); break; \
-        case PTL_NO_SPACE: fprintf(stderr, "=> %s returned PTL_NO_SPACE (line %u)\n", #x, (unsigned int)__LINE__); abort(); break; \
-        case PTL_ARG_INVALID: fprintf(stderr, "=> %s returned PTL_ARG_INVALID (line %u)\n", #x, (unsigned int)__LINE__); abort(); break; \
-        case PTL_NO_INIT: fprintf(stderr, "=> %s returned PTL_NO_INIT (line %u)\n", #x, (unsigned int)__LINE__); abort(); break; \
-		case PTL_PT_IN_USE: fprintf(stderr, "=> %s returned PTL_PT_IN_USE (line %u)\n", #x, (unsigned int)__LINE__); abort(); break; \
-        case PTL_IN_USE: fprintf(stderr, "=> %s returned PTL_IN_USE (line %u)\n", #x, (unsigned int)__LINE__); abort(); break; \
-        default: fprintf(stderr, "=> %s returned failcode %i (line %u)\n", #x, ret, (unsigned int)__LINE__); abort(); break; \
-    } } while (0)
-
    
 typedef struct portals_message_s
 {
@@ -112,46 +97,25 @@ typedef struct portals_message_s
     char init_message;
 } sctk_portals_message_t;
 
+typedef struct sctk_portals_connection_context_s
+{
+	sctk_portals_process_id_t from;
+	int to;
+    ptl_pt_index_t entry;
+} sctk_portals_connection_context_t;
+
+typedef enum
+{
+	SCTK_PORTALS_CONTROL_MESSAGE_ON_DEMAND_STATIC,
+	SCTK_PORTALS_CONTROL_MESSAGE_ON_DEMAND_DYNAMIC
+} sctk_portals_control_message_t;
 
 typedef struct sctk_portals_event_item_s
 {
 	unsigned used;
-	//int vp;
-	ptl_pt_index_t pt_index;
 	sctk_portals_message_t msg;
 	sctk_message_to_copy_t ptrmsg;
 } sctk_portals_event_item_t;
-
-typedef struct sctk_portals_event_table_s
-{
-	unsigned int nb_elems;
-	unsigned int nb_elems_headers;
-	sctk_portals_event_item_t events[SCTK_PORTALS_SIZE_EVENTS];
-	struct sctk_portals_event_table_s *next;
-} sctk_portals_event_table_t;
-
-
-typedef struct sctk_portals_event_table_list_s
-{
-	unsigned nb_elements;
-	sctk_portals_event_table_t head;
-
-} sctk_portals_event_table_list_t;
-
-//typedef struct sctk_ProcsL_s
-//{
-	//unsigned             nb_elems;
-	//ptl_process_t        Procs[SIZE_QUEUE_PROCS];
-	//struct sctk_ProcsL_s *next;
-//} sctk_ProcsL_t;
-
-
-//typedef struct sctk_ProcsQ_s
-//{
-	//unsigned        SizeList;
-	//sctk_ProcsL_t   List;
-
-//} sctk_ProcsQ_t;
 
 void sctk_network_init_portals_all ( sctk_rail_info_t *rail );
 void sctk_portals_on_demand_connection_handler( sctk_rail_info_t *rail, int dest_process );

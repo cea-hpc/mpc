@@ -44,94 +44,94 @@ static void sctk_network_send_message_endpoint_portals ( sctk_thread_ptp_message
         /*tmp = sctk_rail_get_any_route_to_task_or_on_demand( endpoint->rail, SCTK_MSG_DEST_TASK ( msg ) ); //task*/
     /*}*/
 
-    sctk_debug ( "my %d(%d) dest %d(%d)", endpoint->rail->network.portals.my_id.phys.pid, SCTK_MSG_SRC_PROCESS ( msg ), endpoint->data.portals.id.phys.pid, SCTK_MSG_DEST_PROCESS ( msg ));
+    /*sctk_debug ( "my %d(%d) dest %d(%d)", endpoint->rail->network.portals.my_id.phys.pid, SCTK_MSG_SRC_PROCESS ( msg ), endpoint->data.portals.id.phys.pid, SCTK_MSG_DEST_PROCESS ( msg ));*/
 
 
-    if ( sctk_get_peer_process_rank ( SCTK_MSG_SRC_PROCESS ( msg ) ) != sctk_process_rank )
-    {
-        sctk_portals_event_item_t *event 			= ( sctk_portals_event_item_t * ) msg->tail.portals_message_info_t; //get the evenet datas
-        sctk_portals_message_t *ptrmsg 	= &event->msg;//get the struct message of portals
-        int index = ptrmsg->peer_idThread;
+    /*if ( sctk_get_peer_process_rank ( SCTK_MSG_SRC_PROCESS ( msg ) ) != sctk_process_rank )*/
+    /*{*/
+        /*sctk_portals_event_item_t *event 			= ( sctk_portals_event_item_t * ) msg->tail.portals_message_info_t; //get the evenet datas*/
+        /*sctk_portals_message_t *ptrmsg 	= &event->msg;//get the struct message of portals*/
+        /*int index = ptrmsg->peer_idThread;*/
 
-        sctk_spinlock_lock ( &endpoint->rail->network.portals.lock[index] ); //to be thread safe
+        /*sctk_spinlock_lock ( &endpoint->rail->network.portals.lock[index] ); //to be thread safe*/
 
-        sctk_debug ( "%d =/ %d", sctk_get_peer_process_rank ( SCTK_MSG_SRC_PROCESS ( msg ) ), sctk_process_rank );
+        /*sctk_debug ( "%d =/ %d", sctk_get_peer_process_rank ( SCTK_MSG_SRC_PROCESS ( msg ) ), sctk_process_rank );*/
 
-        if ( msg->tail.message.contiguous.size == SCTK_MSG_SIZE ( msg ) )
-        {
-            sctk_debug ( "useless" );
-        }
-        else
-            msg->tail.message.contiguous.size = SCTK_MSG_SIZE ( msg );
+        /*if ( msg->tail.message.contiguous.size == SCTK_MSG_SIZE ( msg ) )*/
+        /*{*/
+            /*sctk_debug ( "useless" );*/
+        /*}*/
+        /*else*/
+            /*msg->tail.message.contiguous.size = SCTK_MSG_SIZE ( msg );*/
 
-        ptl_ct_event_t ctc;
+        /*ptl_ct_event_t ctc;*/
 
-        msg->tail.message.contiguous.addr = sctk_malloc ( msg->tail.message.contiguous.size ); //to get the buffer
-        sctk_debug ( "allocated %p", msg->tail.portals_message_info_t );
+        /*msg->tail.message.contiguous.addr = sctk_malloc ( msg->tail.message.contiguous.size ); //to get the buffer*/
+        /*sctk_debug ( "allocated %p", msg->tail.portals_message_info_t );*/
 
-        sctk_portals_rail_info_t *portals_info	= ( sctk_portals_rail_info_t * ) msg->tail.portals_info_t;
-        ptl_handle_ni_t *ni_h 					= &portals_info->ni_handle_phys;
-        ptl_match_bits_t match, ignore;
-        set_Match_Ignore_Bits ( &match, &ignore, ptrmsg->my_idThread, ptrmsg->tag, 1 );
-        ptrmsg->md.start  	 	= msg->tail.message.contiguous.addr;//to get the buffer
+        /*sctk_portals_rail_info_t *portals_info	= ( sctk_portals_rail_info_t * ) msg->tail.portals_info_t;*/
+        /*ptl_handle_ni_t *ni_h 					= &portals_info->ni_handle_phys;*/
+        /*ptl_match_bits_t match, ignore;*/
+        /*set_Match_Ignore_Bits ( &match, &ignore, ptrmsg->my_idThread, ptrmsg->tag, 1 );*/
+        /*ptrmsg->md.start  	 	= msg->tail.message.contiguous.addr;//to get the buffer*/
 
-        ptrmsg->md.length 	 	= msg->tail.message.contiguous.size;
+        /*ptrmsg->md.length 	 	= msg->tail.message.contiguous.size;*/
 
-        ptrmsg->md.options   	= PTL_MD_EVENT_CT_REPLY;
-        ptrmsg->md.eq_handle 	= PTL_EQ_NONE;   // i.e. don't queue get events
-        CHECK_RETURNVAL ( PtlMDBind ( *ni_h, &ptrmsg->md, &ptrmsg->md_handle ) );
-        CHECK_RETURNVAL ( PtlGet ( ptrmsg->md_handle, 0, ptrmsg->md.length, ptrmsg->peer,
-                    ptrmsg->peer_idThread, match, 0, NULL ) );
-        sctk_debug ( "waiting" );
-        CHECK_RETURNVAL ( PtlCTWait ( ptrmsg->md.ct_handle, 1, &ctc ) ); //we need to wait the message for routing
-        assert ( ctc.failure == 0 );
-        sctk_debug ( "will free list" );
+        /*ptrmsg->md.options   	= PTL_MD_EVENT_CT_REPLY;*/
+        /*ptrmsg->md.eq_handle 	= PTL_EQ_NONE;   // i.e. don't queue get events*/
+        /*CHECK_RETURNVAL ( PtlMDBind ( *ni_h, &ptrmsg->md, &ptrmsg->md_handle ) );*/
+        /*CHECK_RETURNVAL ( PtlGet ( ptrmsg->md_handle, 0, ptrmsg->md.length, ptrmsg->peer,*/
+                    /*ptrmsg->peer_idThread, match, 0, NULL ) );*/
+        /*sctk_debug ( "waiting" );*/
+        /*CHECK_RETURNVAL ( PtlCTWait ( ptrmsg->md.ct_handle, 1, &ctc ) ); //we need to wait the message for routing*/
+        /*assert ( ctc.failure == 0 );*/
+        /*sctk_debug ( "will free list" );*/
 
-        sctk_portals_event_table_list_t *EvQ 		= &endpoint->rail->network.portals.event_list[index];
-        sctk_portals_event_table_t *currList = &EvQ->head;
-        int i, pos = ptrmsg->append_pos;
+        /*sctk_portals_event_table_list_t *EvQ 		= &endpoint->rail->network.portals.event_list[index];*/
+        /*sctk_portals_event_table_t *currList = &EvQ->head;*/
+        /*int i, pos = ptrmsg->append_pos;*/
 
-        //free the structs
-        for ( i = 0; i < ptrmsg->append_list; i++ )
-            currList = currList->next;
+        /*//free the structs*/
+        /*for ( i = 0; i < ptrmsg->append_list; i++ )*/
+            /*currList = currList->next;*/
 
-        if ( currList->events[pos].used == IN_USE )
-        {
+        /*if ( currList->events[pos].used == IN_USE )*/
+        /*{*/
 
-            //we add a new entry on the table
-            currList->nb_elems--;
-            currList->nb_elems_headers++;
-            bzero ( currList->events[pos].ptrmsg.msg_send, sizeof ( sctk_thread_ptp_message_t ) );
-            currList->events[pos].used = RESERVED;
+            /*//we add a new entry on the table*/
+            /*currList->nb_elems--;*/
+            /*currList->nb_elems_headers++;*/
+            /*bzero ( currList->events[pos].ptrmsg.msg_send, sizeof ( sctk_thread_ptp_message_t ) );*/
+            /*currList->events[pos].used = RESERVED;*/
 
-            currList->events[pos].msg.me.start  = currList->events[pos].ptrmsg.msg_send;
-            currList->events[pos].msg.me.length = sizeof ( sctk_thread_ptp_message_body_t ); //
-            currList->events[pos].msg.me.uid    = PTL_UID_ANY;
-
-
-            currList->events[pos].msg.me.match_id.phys.nid = PTL_NID_ANY;
-            currList->events[pos].msg.me.match_id.phys.pid = PTL_PID_ANY;
+            /*currList->events[pos].msg.me.start  = currList->events[pos].ptrmsg.msg_send;*/
+            /*currList->events[pos].msg.me.length = sizeof ( sctk_thread_ptp_message_body_t ); //*/
+            /*currList->events[pos].msg.me.uid    = PTL_UID_ANY;*/
 
 
-            currList->events[pos].msg.me.match_bits    = FLAG_REQ;
-            currList->events[pos].msg.me.ignore_bits   = REQ_IGN;
+            /*currList->events[pos].msg.me.match_id.phys.nid = PTL_NID_ANY;*/
+            /*currList->events[pos].msg.me.match_id.phys.pid = PTL_PID_ANY;*/
 
-            currList->events[pos].msg.me.options = OPTIONS_HEADER;
 
-            CHECK_RETURNVAL ( PtlMEAppend ( endpoint->rail->network.portals.ni_handle_phys, endpoint->rail->network.portals.pt_index[currList->events[pos].pt_index], &currList->events[pos].msg.me, PTL_PRIORITY_LIST, NULL, &currList->events[pos].msg.me_handle ) );
+            /*currList->events[pos].msg.me.match_bits    = FLAG_REQ;*/
+            /*currList->events[pos].msg.me.ignore_bits   = REQ_IGN;*/
 
-            ptrmsg->append_pos = -1;
+            /*currList->events[pos].msg.me.options = OPTIONS_HEADER;*/
 
-        }
-        else
-        {
-            sctk_error ( "Error portals list free" );
-            abort();
-        }
+            /*CHECK_RETURNVAL ( PtlMEAppend ( endpoint->rail->network.portals.ni_handle_phys, endpoint->rail->network.portals.pt_index[currList->events[pos].pt_index], &currList->events[pos].msg.me, PTL_PRIORITY_LIST, NULL, &currList->events[pos].msg.me_handle ) );*/
 
-        sctk_spinlock_unlock ( &endpoint->rail->network.portals.lock[index] ); //to be thread safe
-    }
-    sctk_portals_send_put_event ( &endpoint->rail->network.portals, msg, &endpoint->data.portals, WRITE, NULL );
+            /*ptrmsg->append_pos = -1;*/
+
+        /*}*/
+        /*else*/
+        /*{*/
+            /*sctk_error ( "Error portals list free" );*/
+            /*abort();*/
+        /*}*/
+
+        /*sctk_spinlock_unlock ( &endpoint->rail->network.portals.lock[index] ); //to be thread safe*/
+    /*}*/
+    /*sctk_portals_send_put_event ( &endpoint->rail->network.portals, msg, &endpoint->data.portals, WRITE, NULL );*/
 }
 
 static void sctk_network_notify_recv_message_portals ( sctk_thread_ptp_message_t *msg, sctk_rail_info_t *rail )
@@ -149,8 +149,8 @@ static void sctk_network_notify_perform_message_portals ( int remote, int remote
 {
     /*sctk_debug ( "perform message through rail %d", rail->rail_number );*/
     int i;
-    for ( i = 0; i < rail->network.portals.nb_tasks_per_process; i++ )
-    notify ( rail, i );
+    /*for ( i = 0; i < rail->network.portals.nb_tasks_per_process; i++ )*/
+    /*notify ( rail, i );*/
 
 }
 
@@ -164,10 +164,10 @@ static void sctk_network_notify_any_source_message_portals ( int polling_task_id
 {
 
     /*sctk_debug ( "any_source message through rail %d", rail->rail_number );*/
-    int i;
+    /*int i;*/
 
-    for ( i = 0; i < rail->network.portals.nb_tasks_per_process; i++ )
-       notify ( rail, i );
+    /*for ( i = 0; i < rail->network.portals.nb_tasks_per_process; i++ )*/
+       /*notify ( rail, i );*/
 }
 
 static int sctk_send_message_from_network_portals ( sctk_thread_ptp_message_t *msg )
