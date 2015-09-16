@@ -79,6 +79,7 @@ typedef enum
 	SCTK_BROADCAST_HETERO_MESSAGE,
 	SCTK_BARRIER_HETERO_MESSAGE,
 	
+	SCTK_CONTROL_MESSAGE_INTERNAL, 		/**< This message is to be used inside a rail logic */
 	SCTK_CONTROL_MESSAGE_RAIL, 		/**< This message goes to a rail */
 	SCTK_CONTROL_MESSAGE_PROCESS,		/**< This message goes to a process (\ref sctk_control_message_process_level) */
 	SCTK_CONTROL_MESSAGE_USER,		/**< This message goes to the application using an optionnal handler */
@@ -102,6 +103,7 @@ static const char * const sctk_message_class_name[ SCTK_CONTROL_MESSAGE_COUNT ] 
 	"SCTK_BROADCAST_HETERO_MESSAGE",
 	"SCTK_BARRIER_HETERO_MESSAGE",
 	
+	"SCTK_CONTROL_MESSAGE_INTERNAL",
 	"SCTK_CONTROL_MESSAGE_RAIL", 		
 	"SCTK_CONTROL_MESSAGE_PROCESS",		
 	"SCTK_CONTROL_MESSAGE_USER"
@@ -127,7 +129,7 @@ static inline int sctk_message_class_is_process_specific( sctk_message_class_t t
 			return 0;
 		
 		
-		
+		case SCTK_CONTROL_MESSAGE_INTERNAL:
 		case SCTK_ALLREDUCE_HETERO_MESSAGE:
 		case SCTK_BROADCAST_HETERO_MESSAGE:
 		case SCTK_BARRIER_HETERO_MESSAGE:
@@ -159,6 +161,7 @@ static inline int sctk_message_class_is_control_message( sctk_message_class_t ty
 		case SCTK_BARRIER_HETERO_MESSAGE:
 		case SCTK_RDMA_WINDOW_MESSAGES:
 		case SCTK_CONTROL_MESSAGE_FENCE:
+		case SCTK_CONTROL_MESSAGE_INTERNAL:
 			return 0;
 		
 		case SCTK_CONTROL_MESSAGE_RAIL:
