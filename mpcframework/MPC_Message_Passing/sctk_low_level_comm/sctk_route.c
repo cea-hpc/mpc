@@ -32,12 +32,6 @@
 #include <utarray.h>
 #include <sctk_multirail.h>
 
-/************************************************************************/
-/* Routes Storage                                                       */
-/************************************************************************/
-
-/** This conditionnal lock is used during static route initialization */
-static sctk_spin_rwlock_t sctk_route_table_static_lock = SCTK_SPIN_RWLOCK_INITIALIZER;
 
 /************************************************************************/
 /* Route Table                                                          */
@@ -48,12 +42,13 @@ sctk_route_table_t * sctk_route_table_new()
 	sctk_route_table_t * ret = sctk_malloc( sizeof( sctk_route_table_t ) );
 	
 	assume( ret != NULL );
-	
-	ret->dynamic_route_table = NULL;
+
 	sctk_spin_rwlock_t lck = SCTK_SPIN_RWLOCK_INITIALIZER;
 	ret->dynamic_route_table_lock = lck;
 	
-	ret->static_route_table = NULL;
+	MPCHT_init( &ret->dynamic_route_table, 128 );
+	MPCHT_init( &ret->static_route_table, 128 );
+
 
 	return ret;
 }
@@ -154,7 +149,7 @@ void sctk_route_table_add_dynamic_route_no_lock (  sctk_route_table_t * table, s
 {
 	assume( tmp->origin == ROUTE_ORIGIN_DYNAMIC );
 	
-	HASH_ADD_INT( table->dynamic_route_table, dest, tmp );
+	MPCHT_set(  &table->dynamic_route_table, tmp->dest, tmp );
 
 	if( push_in_multirail )
 	{
@@ -178,17 +173,14 @@ void sctk_route_table_add_static_route (  sctk_route_table_t * table, sctk_endpo
 	sctk_nodebug("New static route to %d", tmp->dest );
 	
 	assume( tmp->origin == ROUTE_ORIGIN_STATIC );
-	
-	sctk_spinlock_write_lock(&sctk_route_table_static_lock);
-	
-	HASH_ADD_INT( table->static_route_table, dest, tmp );
+		
+	MPCHT_set( &table->static_route_table, tmp->dest, tmp );
 	
 	if( push_in_multirail )
 	{
 		/* Register route in multi-rail */
 		sctk_multirail_destination_table_push_endpoint( tmp );
 	}
-	sctk_spinlock_write_unlock(&sctk_route_table_static_lock);
 }
 
 
@@ -200,10 +192,7 @@ sctk_endpoint_t * sctk_route_table_get_static_route(   sctk_route_table_t * tabl
 {
 	sctk_endpoint_t *tmp = NULL;
 
-	/* We do not need to take a lock for the static table. No route can be created
-	* or destructed during execution time */
-
-	HASH_FIND_INT ( table->static_route_table, &dest, tmp );
+	tmp = MPCHT_get(&table->static_route_table, dest);
 
 	sctk_nodebug ( "Get static route for %d -> %p", dest, tmp );
 
@@ -212,9 +201,9 @@ sctk_endpoint_t * sctk_route_table_get_static_route(   sctk_route_table_t * tabl
 
 sctk_endpoint_t * sctk_route_table_get_dynamic_route_no_lock( sctk_route_table_t * table , int dest )
 {
-	sctk_endpoint_t *tmp;
+	sctk_endpoint_t *tmp = NULL;
 
-	HASH_FIND_INT ( table->dynamic_route_table, &dest, tmp );
+	tmp = MPCHT_get( &table->dynamic_route_table, dest );
 
 	return tmp;
 }
@@ -250,7 +239,8 @@ void sctk_walk_all_dynamic_routes ( sctk_route_table_t * table, void ( *func ) (
 	/* Do not walk on static routes */
 
 	sctk_spinlock_read_lock ( &table->dynamic_route_table_lock );
-	HASH_ITER ( hh, table->dynamic_route_table, current_route, tmp )
+	
+	MPC_HT_ITER ( &table->dynamic_route_table, current_route )
 	{
 		if ( sctk_endpoint_get_state ( current_route ) == STATE_CONNECTED )
 		{
@@ -260,6 +250,8 @@ void sctk_walk_all_dynamic_routes ( sctk_route_table_t * table, void ( *func ) (
 			}
 		}
 	}
+	MPC_HT_ITER_END
+	
 	sctk_spinlock_read_unlock ( &table->dynamic_route_table_lock );
 
 	tmp2 = NULL;
@@ -281,7 +273,7 @@ void sctk_walk_all_static_routes( sctk_route_table_t * table, void ( *func ) (  
 
 	/* Do not walk on static routes */
 
-	HASH_ITER ( hh, table->static_route_table , current_route, tmp )
+	MPC_HT_ITER ( &table->static_route_table, current_route )
 	{
 		if ( sctk_endpoint_get_state ( current_route ) == STATE_CONNECTED )
 		{
@@ -291,6 +283,7 @@ void sctk_walk_all_static_routes( sctk_route_table_t * table, void ( *func ) (  
 			}
 		}
 	}
+	MPC_HT_ITER_END
 
 	tmp2 = NULL;
 
