@@ -25,7 +25,7 @@
 
 #include <uthash.h>
 #include <math.h>
-
+#include <sctk_ht.h>
 #include <sctk_rail.h>
 
 /************************************************************************/
@@ -78,8 +78,6 @@ typedef enum sctk_route_state_e
  */
 struct sctk_endpoint_s
 {
-	UT_hash_handle hh;
-
 	int dest;
 	sctk_route_info_spec_t data;
 	sctk_rail_info_t *parent_rail;/**< Pointer to the parent rail (called by default if present) */
@@ -150,10 +148,10 @@ __UNUSED__ static sctk_route_origin_t sctk_endpoint_get_origin ( sctk_endpoint_t
 struct sctk_route_table_s
 {
 	/* Dynamic Routes */
-	sctk_endpoint_t * dynamic_route_table; /** Here are stored the dynamic routes (hash table) */
+	struct MPCHT dynamic_route_table; /** Here are stored the dynamic routes (hash table) */
 	sctk_spin_rwlock_t dynamic_route_table_lock; /** This is the dynamic route lock */
 	/* Static Routes */
-	sctk_endpoint_t * static_route_table; /** Here are stored static routes (hash table) -- no lock as they are read only */
+	struct MPCHT static_route_table; /** Here are stored static routes (hash table) -- no lock as they are read only */
 };
 
 
