@@ -30,7 +30,7 @@
 #include <sctk_ib.h>
 #include <opa_primitives.h>
 #include <sctk_types.h>
-
+#include <sctk_portals.h>
 #ifdef __cplusplus
 extern "C"
 {
@@ -412,6 +412,7 @@ void sctk_determine_task_source_and_destination_from_header ( sctk_thread_ptp_me
 
 struct mpc_buffered_msg_s;
 struct sctk_internal_ptp_s;
+struct sctk_portals_msg_header_s;
 
 /*Data not to tranfers in inter-process communications*/
 typedef struct
@@ -453,8 +454,7 @@ typedef struct
 	void *route_table;
 
 	/* Portals infos */
-	void *portals_message_info_t;
-	void *portals_info_t;
+	struct sctk_portals_msg_header_s portals;
 
 	/* XXX:Specific to IB */
 	struct sctk_ib_msg_header_s ib;

@@ -34,14 +34,22 @@ extern "C"
 #include <sctk_portals_toolkit.h>
 //#ifndef __SCTK_ROUTE_H_
 //#error "sctk_route must be included before sctk_portals.h"
-//#endif
+//#endif 
 
 typedef struct sctk_portals_route_info_s
 {
 	sctk_portals_process_id_t dest;//to route
 }sctk_portals_route_info_t;
 
-struct sctk_portals_rail_info_s
+typedef struct sctk_portals_msg_header_s
+{
+	sctk_portals_process_id_t remote;
+	ptl_pt_index_t remote_index;
+	ptl_match_bits_t tag;
+
+} sctk_portals_msg_header_t;
+
+typedef struct sctk_portals_rail_info_s
 {
 	sctk_portals_limits_t            max_limits;
 	sctk_portals_interface_handler_t interface_handler;
@@ -50,8 +58,7 @@ struct sctk_portals_rail_info_s
 
     char connection_infos[MAX_STRING_SIZE];
     size_t connection_infos_size;
-};
-typedef struct sctk_portals_rail_info_s sctk_portals_rail_info_t;
+} sctk_portals_rail_info_t;
 
 void sctk_network_init_portals ( sctk_rail_info_t *rail);
 #endif

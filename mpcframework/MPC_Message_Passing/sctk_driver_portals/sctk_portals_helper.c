@@ -23,8 +23,10 @@
 /* ######################################################################## */
 
 #include <sctk_portals_helper.h>
-#include <string.h>
-#include <stdlib.h>
+#include <sctk_debug.h>
+#include <sctk_accessor.h>
+#include <sctk_atomics.h>
+
 void sctk_portals_helper_print_event_type ( ptl_event_t *event)
 {
     switch ( event->type )
@@ -100,7 +102,7 @@ void sctk_portals_helper_print_event_type ( ptl_event_t *event)
 
 inline int sctk_portals_helper_compute_nb_portals_entries()
 {
-    int tasks = sctk_get_tasks_number();
+    int tasks = sctk_get_task_number();
     int processes = sctk_get_process_number();
 	int nb = tasks / processes;
     int rest = ( tasks % processes );
@@ -164,6 +166,7 @@ void sctk_portals_helper_lib_init(sctk_portals_interface_handler_t *interface, s
 	int cpt = 0; // universal counter
 	//starting Portals Implementation library
 	sctk_portals_assume(PtlInit());
+	ptable->table_lock = SCTK_SPINLOCK_INITIALIZER;
 
 	//filling ptl_limits with max possible values (covering lot of cases)
 	sctk_portals_limits_t max_values;
@@ -191,30 +194,30 @@ void sctk_portals_helper_lib_init(sctk_portals_interface_handler_t *interface, s
 	//create a counter reset to easily reset event counter
 	bzero(&counter_reset, sizeof ( ptl_ct_event_t ));
 	//as much entries than the number of tasks in current process
-	ptable->nb_entries = sctk_portals_compute_nb_portals_entries();
-	ptable->head = NULL;
-
+	ptable->nb_entries = sctk_portals_helper_compute_nb_portals_entries();
+	ptable->head = sctk_malloc(sizeof(sctk_portals_table_entry_t*)*ptable->nb_entries);
 	//create portals entries
 	for(cpt = 0; cpt < ptable->nb_entries; cpt++){
-		sctk_portals_table_entry_t *cur = (sctk_portals_table_entry_t*)sctk_malloc(sizeof(sctk_portals_table_entry_t));
-		sctk_portals_helper_init_table_entry(cur, interface, cpt);
-		LL_APPEND(ptable->head, cur);
+		ptable->head[cpt] = (sctk_portals_table_entry_t*)sctk_malloc(sizeof(sctk_portals_table_entry_t));
+		sctk_portals_helper_init_table_entry(ptable->head[cpt], interface, cpt);
 	}
 }
 
 void sctk_portals_helper_init_table_entry(sctk_portals_table_entry_t* entry, sctk_portals_interface_handler_t *interface, int ind){
 
+	int i;
 	assert(entry != NULL);
-	entry->lock = (sctk_spinlock_t*)sctk_malloc(sizeof(sctk_spinlock_t));
+	assert(interface != NULL);
 	entry->lock = SCTK_SPINLOCK_INITIALIZER;
-	entry->event_list = NULL;
+	entry->event_list = sctk_malloc(sizeof(ptl_handle_eq_t));
 	entry->index = ind; // set index to desired : index of init loop
+	entry->entry_cpt = SCTK_PORTALS_BITS_FIRST;
 
 	//init event queue for this entry
 	sctk_portals_assume(PtlEQAlloc(
 		*interface, // NI handler
 		SCTK_PORTALS_EVENTS_QUEUE_SIZE,  // event queue size initialization 
-		entry->event_list                       //output : an event queue is created
+		entry->event_list                //output : an event queue is created
 	));
 	
 	//init its Portals reference
@@ -226,8 +229,29 @@ void sctk_portals_helper_init_table_entry(sctk_portals_table_entry_t* entry, sct
 		&entry->index                           // output: effective index id
 	));
 
+	for (i = 0; i < SCTK_PORTALS_HEADERS_ME_SIZE; ++i) {
+		ptl_me_t me;
+		ptl_handle_me_t me_handle;
+		sctk_thread_ptp_message_t* slot;
+
+		slot = sctk_malloc(sizeof( sctk_thread_ptp_message_t));
+
+		sctk_portals_helper_init_list_entry(&me, interface, slot, sizeof(sctk_thread_ptp_message_t), SCTK_PORTALS_ME_PUT_OPTIONS );
+
+		me.match_bits = SCTK_PORTALS_BITS_HDR;
+
+		sctk_portals_assume(PtlMEAppend(
+			*interface,
+			i,
+			&me,
+			PTL_PRIORITY_LIST,
+			NULL,
+			&me_handle
+		));
+	}
 }
-static int sctk_portals_helper_from_str ( const char *inval, void *outval, int outvallen )
+
+int sctk_portals_helper_from_str ( const char *inval, void *outval, int outvallen )
 {
     int i;
     char *ret = ( char * ) outval;
@@ -264,7 +288,7 @@ static int sctk_portals_helper_from_str ( const char *inval, void *outval, int o
 
     return 0;
 }
-static int sctk_portals_helper_to_str ( const void *inval, int invallen, char *outval, int outvallen )
+int sctk_portals_helper_to_str ( const void *inval, int invallen, char *outval, int outvallen )
 {
     static unsigned char encodings[] =
     {
@@ -272,8 +296,8 @@ static int sctk_portals_helper_to_str ( const void *inval, int invallen, char *o
             '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'
     };
     int i;
-
-    if ( invallen * 2 + 1 > outvallen )
+    sctk_debug("before = %lu - %lu", ((sctk_portals_process_id_t*)inval)->phys.nid, ((sctk_portals_process_id_t*)inval)->phys.pid);
+	if ( invallen * 2 + 1 > outvallen )
     {
         return 1;
     }
@@ -285,11 +309,11 @@ static int sctk_portals_helper_to_str ( const void *inval, int invallen, char *o
     }
 
     outval[invallen * 2] = '\0';
-
+	sctk_debug("after = %s", outval);
     return 0;
 }
 
-static void sctk_portals_helper_bind_to(sctk_portals_interface_handler_t*interface, ptl_process_t remote){
+void sctk_portals_helper_bind_to(sctk_portals_interface_handler_t*interface, ptl_process_t remote){
     ptl_md_t md;
     ptl_handle_md_t md_handle;
 
@@ -307,6 +331,7 @@ static void sctk_portals_helper_bind_to(sctk_portals_interface_handler_t*interfa
 
     sctk_portals_assume ( PtlGet ( md_handle, 0, md.length, remote, 0, 0, 0, NULL ) ); //getting the init buf
     sctk_portals_assume ( PtlCTWait ( md.ct_handle, 1, &ctc ) ); //we need to wait the message for routing
+
 }
 
 void sctk_portals_helper_init_list_entry(ptl_me_t* me, sctk_portals_interface_handler_t *ni_handler, void* start, size_t size, unsigned int option)
@@ -332,3 +357,9 @@ void sctk_portals_helper_init_memory_descriptor(ptl_md_t* md, sctk_portals_inter
 	sctk_portals_assume(PtlCTAlloc(*ni_handler, &md->ct_handle));
 	sctk_portals_assume(PtlEQAlloc(*ni_handler, SCTK_PORTALS_EVENTS_QUEUE_SIZE, &md->eq_handle));
 }
+
+void sctk_portals_helper_set_bits_from_msg(ptl_match_bits_t* match, void*atomic)
+{
+	match = sctk_atomics_fetch_and_incr_int(atomic);
+}
+

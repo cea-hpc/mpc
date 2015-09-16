@@ -33,75 +33,16 @@ extern "C"
 #ifdef MPC_USE_PORTALS
 #include <sctk_portals_helper.h>
 
-# define NI_TYPE  PTL_NI_MATCHING
-# define OPTIONS  (PTL_ME_OP_GET | PTL_ME_EVENT_CT_COMM | PTL_ME_EVENT_CT_OVERFLOW | PTL_ME_EVENT_LINK_DISABLE | PTL_ME_EVENT_UNLINK_DISABLE | PTL_ME_USE_ONCE | PTL_ME_EVENT_COMM_DISABLE)
-# define OPTIONS2 (PTL_ME_OP_PUT | PTL_ME_EVENT_CT_COMM | PTL_ME_EVENT_CT_OVERFLOW | PTL_ME_EVENT_LINK_DISABLE | PTL_ME_EVENT_UNLINK_DISABLE)
-# define OPTIONS_HEADER  (PTL_ME_OP_PUT | PTL_ME_EVENT_CT_COMM | PTL_ME_EVENT_CT_OVERFLOW | PTL_ME_EVENT_LINK_DISABLE | PTL_ME_EVENT_UNLINK_DISABLE | PTL_ME_USE_ONCE)
-# define APPEND   PtlMEAppend
-# define UNLINK   PtlMEUnlink
-
-#define SCTK_PORTALS_SIZE_EVENTS		64
-//#define SIZE_QUEUE_PROCS		16
-#define SCTK_PORTALS_SIZE_HEADERS		16
-#define SCTK_PORTALS_SIZE_HEADERS_MIN	8
-
-#define MSG_ARRAY	0
-#define OVER_ARRAY	1
-
-#define READ	2
-#define	WRITE	1
-
-#define EVENT_EVENT 		0
-#define EVENT_ENTRY 		1
-#define EVENT_DESCRIPTOR 	2
-
-#define TAG_INIT    0x1000000000000000
-#define TAG_IGN 	0x00000000FFFFFFFF
-#define SOURCE_IGN 	0x0000FFFF00000000
-#define FLAG_REQ	0x0001000000000000
-#define REQ_IGN		0xFFFEFFFFFFFFFFFF
-#define ANY_TAG 	-1
-#define ANY_SOURCE 	-1
-
-/*		|  ME  |  MEH |  MD  |  MDH |				*/
-//#define MDH_ALLOCATED		1
-#define MD_ALLOCATED		2
-//#define MEH_ALLOCATED		4
-#define ME_ALLOCATED		8
-
-#define IDLE				0
-#define	RESERVED			1
-#define IN_USE				2
-
-#define TRYLOCK_SUCCESS	    0
-
-   
-typedef struct portals_message_s
-{
-	ptl_md_t md;
-	ptl_handle_md_t md_handle;
-	ptl_me_t me;
-	ptl_handle_me_t me_handle;
-
-	uint8_t  allocs;
-	ptl_process_t peer;
-	ptl_match_bits_t match_bits;
-	ptl_match_bits_t ignore_bits;
-	void *buffer;
-	unsigned peer_idThread;
-	unsigned my_idThread;
-	int type;
-	int tag;
-	int append_pos;
-	int append_list;
-    char init_message;
-} sctk_portals_message_t;
+typedef struct sctk_endpoint_s sctk_endpoint_t;
+typedef struct sctk_rail_info_s sctk_rail_info_t;
+typedef struct sctk_thread_ptp_message_s sctk_thread_ptp_message_t;
 
 typedef struct sctk_portals_connection_context_s
 {
 	sctk_portals_process_id_t from;
 	int to;
     ptl_pt_index_t entry;
+
 } sctk_portals_connection_context_t;
 
 typedef enum
@@ -110,15 +51,10 @@ typedef enum
 	SCTK_PORTALS_CONTROL_MESSAGE_ON_DEMAND_DYNAMIC
 } sctk_portals_control_message_t;
 
-typedef struct sctk_portals_event_item_s
-{
-	unsigned used;
-	sctk_portals_message_t msg;
-	sctk_message_to_copy_t ptrmsg;
-} sctk_portals_event_item_t;
-
 void sctk_network_init_portals_all ( sctk_rail_info_t *rail );
 void sctk_portals_on_demand_connection_handler( sctk_rail_info_t *rail, int dest_process );
+void sctk_portals_send_put ( sctk_endpoint_t *endpoint, sctk_thread_ptp_message_t *msg);
+int sctk_portals_polling_queue_for(sctk_rail_info_t*rail, size_t task_id);
 #endif
 #ifdef __cplusplus
 }
