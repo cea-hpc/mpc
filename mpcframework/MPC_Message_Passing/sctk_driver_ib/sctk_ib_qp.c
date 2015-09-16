@@ -260,10 +260,10 @@ void sctk_ib_qp_keys_send ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *r
 	int key_max = sctk_pmi_get_max_key_len();
 	int val_max = sctk_pmi_get_max_val_len();
 	
-	char * key = sctk_malloc( sizeof(char) * key_max );
+	char * key = sctk_malloc( sizeof(char) * key_max + 1 );
 	assume( key != NULL );
 	
-	char * val = sctk_malloc( sizeof(char) * val_max );
+	char * val = sctk_malloc( sizeof(char) * val_max + 1 );
 	assume( val != NULL );
 	
 	int ret;
@@ -280,8 +280,8 @@ void sctk_ib_qp_keys_send ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *r
 	ret = sctk_pmi_put_connection_info_str ( val, val_max, key );
 	ib_assume ( ret == SCTK_PMI_SUCCESS );
 	
-	free( key );
-	free( val );
+	sctk_free( key );
+	sctk_free( val );
 }
 
 sctk_ib_cm_qp_connection_t sctk_ib_qp_keys_recv ( struct sctk_ib_rail_info_s *rail_ib,
@@ -292,10 +292,10 @@ sctk_ib_cm_qp_connection_t sctk_ib_qp_keys_recv ( struct sctk_ib_rail_info_s *ra
 	int key_max = sctk_pmi_get_max_key_len();
 	int val_max = sctk_pmi_get_max_val_len();
 	
-	char * key = sctk_malloc( sizeof(char) * key_max );
+	char * key = sctk_malloc( sizeof(char) * key_max  + 1);
 	assume( key != NULL );
 	
-	char * val = sctk_malloc( sizeof(char) * val_max );
+	char * val = sctk_malloc( sizeof(char) * val_max + 1);
 	assume( val != NULL );
 
 	int ret;
@@ -305,8 +305,8 @@ sctk_ib_cm_qp_connection_t sctk_ib_qp_keys_recv ( struct sctk_ib_rail_info_s *ra
 	ib_assume ( ret == SCTK_PMI_SUCCESS );
 	qp_keys = sctk_ib_qp_keys_convert ( val );
 
-	free( key );
-	free( val );
+	sctk_free( key );
+	sctk_free( val );
 
 	return qp_keys;
 }
