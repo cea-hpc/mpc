@@ -199,6 +199,10 @@ static void sctk_use_pthread (void)
 	sctk_thread_val = sctk_pthread_thread_init;
 }
 
+/* Note that we start with an agressive frequency
+ * to speedup the polling during the init phase
+ * we relax it after doing driver initialization */
+int __polling_thread_frequency = 10;
 
 void * polling_thread( void * dummy )
 {
@@ -214,7 +218,7 @@ void * polling_thread( void * dummy )
     while(1)
     {
         sctk_network_notify_idle_message();
-        usleep(100);
+        usleep(__polling_thread_frequency);
     }
 }
 
@@ -339,6 +343,9 @@ static void sctk_perform_initialisation (void)
 		sctk_net_init_driver(sctk_network_driver_name);
 	}
 #endif
+
+	/* We passed the init phase we can relax the polling */
+	__polling_thread_frequency = 200;
 
 #ifdef SCTK_LIB_MODE
 	#ifdef MPC_USE_INFINIBAND
