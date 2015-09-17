@@ -239,10 +239,9 @@ void sctk_portals_helper_init_table_entry(sctk_portals_table_entry_t* entry, sct
 		sctk_portals_helper_init_list_entry(&me, interface, slot, sizeof(sctk_thread_ptp_message_t), SCTK_PORTALS_ME_PUT_OPTIONS );
 
 		me.match_bits = SCTK_PORTALS_BITS_HDR;
-
 		sctk_portals_assume(PtlMEAppend(
 			*interface,
-			i,
+			ind,
 			&me,
 			PTL_PRIORITY_LIST,
 			NULL,
@@ -296,7 +295,7 @@ int sctk_portals_helper_to_str ( const void *inval, int invallen, char *outval, 
             '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'
     };
     int i;
-    sctk_debug("before = %lu - %lu", ((sctk_portals_process_id_t*)inval)->phys.nid, ((sctk_portals_process_id_t*)inval)->phys.pid);
+    /*sctk_debug("before = %lu - %lu", ((sctk_portals_process_id_t*)inval)->phys.nid, ((sctk_portals_process_id_t*)inval)->phys.pid);*/
 	if ( invallen * 2 + 1 > outvallen )
     {
         return 1;
@@ -309,7 +308,7 @@ int sctk_portals_helper_to_str ( const void *inval, int invallen, char *outval, 
     }
 
     outval[invallen * 2] = '\0';
-	sctk_debug("after = %s", outval);
+	/*sctk_debug("after = %s", outval);*/
     return 0;
 }
 

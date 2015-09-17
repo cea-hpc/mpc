@@ -32,7 +32,6 @@
 //TODO: Refactor and extract portals routine into sctk_portals_toolkit.c
 static void sctk_network_send_message_endpoint_portals ( sctk_thread_ptp_message_t *msg, sctk_endpoint_t *endpoint )
 {
-	sctk_debug("PORTALS SEND : ");
 	sctk_portals_send_put(endpoint, msg);
 }
 
@@ -50,9 +49,7 @@ static void sctk_network_notify_perform_message_portals ( int remote, int remote
 
 static void sctk_network_notify_idle_message_portals (sctk_rail_info_t* rail) //plus de calcul,blocage
 {
-	size_t mytask = sctk_get_task_rank();
-	if(mytask < 0)
-		mytask = 0;
+	size_t mytask = sctk_get_task_rank() % rail->network.portals.ptable.nb_entries;
 
 	if( ! sctk_portals_polling_queue_for(rail, mytask)){
 		sctk_portals_polling_queue_for(rail, SCTK_PORTALS_POLL_ALL);

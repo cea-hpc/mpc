@@ -412,7 +412,6 @@ void sctk_determine_task_source_and_destination_from_header ( sctk_thread_ptp_me
 
 struct mpc_buffered_msg_s;
 struct sctk_internal_ptp_s;
-struct sctk_portals_msg_header_s;
 
 /*Data not to tranfers in inter-process communications*/
 typedef struct
