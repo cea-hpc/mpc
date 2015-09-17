@@ -200,6 +200,24 @@ static void sctk_use_pthread (void)
 }
 
 
+void * polling_thread( void * dummy )
+{
+	/* The role of this thread is to poll
+	 * idle in a gentle manner in order
+	 * to avoid starvation particularly
+	 * during init phases (where tasks
+	 * are not waiting but for example
+	 * might be in a PMI barrier.
+	 * 
+	 * Note that as polling is hierarchical
+	 * the contention is limited */
+    while(1)
+    {
+        sctk_network_notify_idle_message();
+        usleep(100);
+    }
+}
+
 
 static void sctk_perform_initialisation (void)
 {
@@ -310,6 +328,11 @@ static void sctk_perform_initialisation (void)
 	sctk_pmi_get_process_rank ( &my_rank );
 	sctk_ptp_per_task_init (my_rank);
 #endif
+
+	/* Start auxiliary polling thread */
+    pthread_t progress;
+    pthread_create (&progress, NULL, polling_thread, NULL);
+
 
 #ifdef MPC_Message_Passing
 	if (sctk_process_nb_val > 1) {
