@@ -359,6 +359,6 @@ void sctk_portals_helper_init_memory_descriptor(ptl_md_t* md, sctk_portals_inter
 
 void sctk_portals_helper_set_bits_from_msg(ptl_match_bits_t* match, void*atomic)
 {
-	match = sctk_atomics_fetch_and_incr_int(atomic);
+	*match = sctk_atomics_fetch_and_incr_int(atomic);
 }
 

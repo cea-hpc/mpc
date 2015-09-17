@@ -46,6 +46,7 @@ typedef struct sctk_portals_msg_header_s
 	sctk_portals_process_id_t remote;
 	ptl_pt_index_t remote_index;
 	ptl_match_bits_t tag;
+	ptl_handle_ni_t* handler;
 
 } sctk_portals_msg_header_t;
 

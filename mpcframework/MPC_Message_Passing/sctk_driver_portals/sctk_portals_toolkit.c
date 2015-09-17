@@ -30,23 +30,39 @@
 #include <sctk_control_messages.h>
 
 void sctk_portals_message_copy ( sctk_message_to_copy_t *tmp ){
-	sctk_thread_ptp_mesage_t* sender;
-	sctk_thread_ptp_mesage_t* recver;
-
+	sctk_thread_ptp_message_t* sender;
+	sctk_thread_ptp_message_t* recver;
+	sctk_portals_msg_header_t* remote_info;
+	ptl_md_t data;
+	ptl_handle_md_t data_handler;
+	ptl_ct_event_t event;
 
 	sender = tmp->msg_send;
 	recver = tmp->msg_recv;
+	remote_info = &sender->tail.portals;
+	sctk_debug("PORTALS: Mesage copy from %lu (%lu - %lu)", remote_info->remote, remote_info->remote_index, remote_info->tag);
 
+	sctk_portals_helper_init_memory_descriptor(&data, remote_info->handler, recver->tail.message.contiguous.addr, SCTK_MSG_SIZE(recver), SCTK_PORTALS_MD_GET_OPTIONS);
 
-	sctk_debug("PORTALS: Ready for message_copy");
+	sctk_portals_assume(PtlMDBind(*remote_info->handler, &data, &data_handler));
+	sctk_portals_assume(PtlGet(data_handler, 0, SCTK_MSG_SIZE(recver), remote_info->remote, remote_info->remote_index, remote_info->tag, 0, NULL));
+	sctk_portals_assume(PtlCTWait(data.ct_handle, 1, &event));
+	ptl_event_t ev;
+	sctk_debug ("PORTALS: copy event:");
+	while(PtlEQGet(data.eq_handle, &ev) == PTL_OK){
+		sctk_debug("FLAG : %d", ev.type);
+	}
+	assert(event.failure == 0);
+	sctk_debug("PORTALS: Free resources (%lu) [%d]", event.failure == 0);
+	sctk_portals_assume(PtlMDRelease(data_handler));
 
+	sctk_complete_and_free_message(recver);
 }
 
 void sctk_portals_free ( void *msg ) //free isn't atomatic because we reuse memory allocated
 {
 
-	sctk_debug ( "message free %p", msg );
-	//sctk_free(msg);
+	sctk_free(msg);
 }
 
 void sctk_portals_add_route(int dest, ptl_process_t id, sctk_rail_info_t *rail, sctk_route_origin_t route_type ){
@@ -85,16 +101,16 @@ void sctk_portals_send_put ( sctk_endpoint_t *endpoint, sctk_thread_ptp_message_
 	
 	sctk_portals_assume(PtlMDBind(prail->interface_handler, &data, &data_handler));
 	
-	sctk_portals_helper_init_list_entry(&slot, &prail->interface_handler, msg->tail.message.contiguous.addr, msg->tail.message.contiguous.size, SCTK_PORTALS_ME_PUT_OPTIONS);
+	sctk_portals_helper_init_list_entry(&slot, &prail->interface_handler, msg->tail.message.contiguous.addr, msg->tail.message.contiguous.size, SCTK_PORTALS_ME_GET_OPTIONS);
 
-	sctk_portals_helper_set_bits_from_msg(&slot.match_bits, &prail->ptable.head[task_rank]->entry_cpt); 
-
+	sctk_portals_helper_set_bits_from_msg(&slot.match_bits, &prail->ptable.head[task_rank]->entry_cpt);
+	sctk_debug("ME accessible w/ : %lu - %lu - %lu", prail->current_id, task_rank, slot.match_bits);
 	sctk_portals_assume(PtlMEAppend(
 				prail->interface_handler, // NI handler
 				task_rank, // pt entry for current task
 				&slot, // ME to append
 				PTL_PRIORITY_LIST, //global options
-				NULL, //user data
+				msg, //user data
 				&slot_handler
 				));
 
@@ -120,10 +136,16 @@ void sctk_portals_send_put ( sctk_endpoint_t *endpoint, sctk_thread_ptp_message_
 	sctk_portals_assume(PtlMDRelease(data_handler));
 }
 void sctk_portals_ack_get (sctk_rail_info_t* rail, ptl_event_t* event){
-	sctk_thread_ptp_message_t* content = event->start;
+	ptl_me_t new_me;
+	ptl_handle_me_t new_me_handle;
+
+	sctk_thread_ptp_message_t* content = (sctk_thread_ptp_message_t*)event->user_ptr;
+	sctk_debug("PORTALS: GEt data from %lu", event->initiator);
 	sctk_complete_and_free_message(content);
 
-	//need to reset the ME
+	sctk_portals_helper_init_list_entry(&new_me, &rail->network.portals.interface_handler, (sctk_thread_ptp_message_t*)sctk_malloc(sizeof(sctk_thread_ptp_message_t)), sizeof(sctk_thread_ptp_message_t), SCTK_PORTALS_ME_PUT_OPTIONS);
+	new_me.match_bits = SCTK_PORTALS_BITS_HDR;
+	sctk_portals_assume(PtlMEAppend(rail->network.portals.interface_handler, event->pt_index, &new_me, PTL_PRIORITY_LIST, NULL, &new_me_handle));
 
 }
 
@@ -132,8 +154,10 @@ void sctk_portals_recv_put (sctk_rail_info_t* rail, ptl_event_t* event){
 
 	sctk_debug("PORTALS: recv from %lu (%lu - %lu)", event->initiator, event->pt_index, event->hdr_data);
 	content->tail.portals.remote = event->initiator;
-	content->tail.portals.remote_index = event->pt_index;
+	content->tail.portals.remote_index = SCTK_MSG_SRC_TASK(content) % rail->network.portals.ptable.nb_entries;
 	content->tail.portals.tag = (ptl_match_bits_t)event->hdr_data;
+	sctk_debug("Data stored at : %lu - %lu - %lu", event->initiator, event->pt_index, event->hdr_data);
+	content->tail.portals.handler = &rail->network.portals.interface_handler;
 	sctk_rebuild_header(content);
 	sctk_reinit_header(content, sctk_portals_free, sctk_portals_message_copy);
 	SCTK_MSG_COMPLETION_FLAG_SET(content, NULL);
