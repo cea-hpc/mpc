@@ -459,6 +459,10 @@ void sctk_rail_dump_routes()
 	{
 		sctk_rail_info_t *  rail = sctk_rail_get_by_id ( i );
 		
+		if( rail->parent_rail )
+			continue;
+
+		
 		snprintf( path, 512, "./%d.%d.%s.dot.tmp", rank, i, rail->network_name );
 		
 		FILE * f = fopen( path, "w" );
@@ -492,6 +496,9 @@ void sctk_rail_dump_routes()
 		for ( i = 0; i <  sctk_rail_count(); i++ )
 		{
 			sctk_rail_info_t *  rail = sctk_rail_get_by_id ( i );
+			
+			if( rail->parent_rail )
+				continue;
 			
 			printf("Merging %s\n", rail->network_name );
 			
