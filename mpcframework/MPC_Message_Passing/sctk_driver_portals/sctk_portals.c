@@ -18,7 +18,7 @@
 /* # Authors:                                                             # */
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
 /* #   - GONCALVES Thomas thomas.goncalves@cea.fr                         # */
-/* #   - ADAM Julien julien.adam@cea.fr                                   # */
+/* #   - ADAM Julien adamj@paratools.fr                                   # */
 /* #                                                                      # */
 /* ######################################################################## */
 
@@ -28,8 +28,12 @@
 #include <sctk_inter_thread_comm.h>
 #include <sctk_portals.h>
 
-/************ INTER_THEAD_COMM HOOOKS ****************/
-//TODO: Refactor and extract portals routine into sctk_portals_toolkit.c
+/**
+ * @brief Main entry point for sending message (called by higher layers)
+ *
+ * @param msg message to send
+ * @param endpoint connection handler to take for routing
+ */
 static void sctk_network_send_message_endpoint_portals ( sctk_thread_ptp_message_t *msg, sctk_endpoint_t *endpoint )
 {
 	sctk_portals_send_put(endpoint, msg);
@@ -47,20 +51,41 @@ static void sctk_network_notify_perform_message_portals ( int remote, int remote
 {
 }
 
-static void sctk_network_notify_idle_message_portals (sctk_rail_info_t* rail) //plus de calcul,blocage
+/**
+ * @brief NOTIFIER : routine called by idle task (hierarchical election to avoid contention)
+ *
+ * @param rail driver data from current network
+ */
+static void sctk_network_notify_idle_message_portals (sctk_rail_info_t* rail)
 {
 	size_t mytask = sctk_get_task_rank() % rail->network.portals.ptable.nb_entries;
 
+	// check if current task and neighbors have pending message. If not, poll the entire portals table
 	if( ! sctk_portals_polling_queue_for(rail, mytask)){
 		sctk_portals_polling_queue_for(rail, SCTK_PORTALS_POLL_ALL);
 	}
 }
 
+/**
+ * @brief NOTIFIER : routine called when an any_source message is arrived
+ *
+ * @param polling_task_id
+ * @param blocking
+ * @param rail
+ */
 static void sctk_network_notify_any_source_message_portals ( int polling_task_id, int blocking, sctk_rail_info_t *rail )
 {
+	//need to poll all messages entries to find any_source's target
 	sctk_portals_polling_queue_for(rail, SCTK_PORTALS_POLL_ALL);
 }
 
+/**
+ * @brief Routine called just before a message is forwarded to higher layer (sctk_inter_thread_comm)
+ *
+ * @param msg message to forward
+ *
+ * @return 
+ */
 static int sctk_send_message_from_network_portals ( sctk_thread_ptp_message_t *msg )
 {
     if ( sctk_send_message_from_network_reorder ( msg ) == REORDER_NO_NUMBERING )
@@ -74,6 +99,11 @@ static int sctk_send_message_from_network_portals ( sctk_thread_ptp_message_t *m
 
 
 /************ INIT ****************/
+/**
+ * @brief unique initialization for this rail (already created and managed by multirail handler)
+ *
+ * @param rail
+ */
 void sctk_network_init_portals (sctk_rail_info_t *rail)
 {
     /* Register hooks in rail */

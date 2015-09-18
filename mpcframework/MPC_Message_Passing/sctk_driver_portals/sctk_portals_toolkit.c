@@ -18,7 +18,7 @@
 /* # Authors:                                                             # */
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
 /* #   - GONCALVES Thomas thomas.goncalves@cea.fr                         # */
-/* #   - ADAM Julien julien.adam@cea.fr                                   # */
+/* #   - ADAM Julien adamj@paratools.fr                                   # */
 /* #                                                                      # */
 /* ######################################################################## */
 
@@ -29,7 +29,17 @@
 #include <sctk_pmi.h>
 #include <sctk_control_messages.h>
 
+/**
+ * @brief Portals handler for getting a message
+ *
+ * Rendezvous protocol w/ Portals implementation allows to make data transfer only when user buffer
+ * is ready, avoiding useless recopies. sctk_portals_message_copy get back the data from the sender and copies them into
+ * user buffer directly
+ *
+ * @param tmp sender/recever ptp messages
+ */
 void sctk_portals_message_copy ( sctk_message_to_copy_t *tmp ){
+	
 	sctk_thread_ptp_message_t* sender;
 	sctk_thread_ptp_message_t* recver;
 	sctk_portals_msg_header_t* remote_info;
@@ -42,29 +52,40 @@ void sctk_portals_message_copy ( sctk_message_to_copy_t *tmp ){
 	remote_info = &sender->tail.portals;
 	sctk_debug("PORTALS: Mesage copy from %lu (%lu - %lu)", remote_info->remote, remote_info->remote_index, remote_info->tag);
 
+	// init MD where data will be stored (this MD is bound to userspace buffer)
 	sctk_portals_helper_init_memory_descriptor(&data, remote_info->handler, recver->tail.message.contiguous.addr, SCTK_MSG_SIZE(recver), SCTK_PORTALS_MD_GET_OPTIONS);
 
+	//attach MD, load data
 	sctk_portals_assume(PtlMDBind(*remote_info->handler, &data, &data_handler));
 	sctk_portals_assume(PtlGet(data_handler, 0, SCTK_MSG_SIZE(recver), remote_info->remote, remote_info->remote_index, remote_info->tag, 0, NULL));
+
+	//wait until ptlGet finish
 	sctk_portals_assume(PtlCTWait(data.ct_handle, 1, &event));
-	ptl_event_t ev;
-	sctk_debug ("PORTALS: copy event:");
-	while(PtlEQGet(data.eq_handle, &ev) == PTL_OK){
-		sctk_debug("FLAG : %d", ev.type);
-	}
-	assert(event.failure == 0);
-	sctk_debug("PORTALS: Free resources (%lu) [%d]", event.failure == 0);
+	//release MD entry
 	sctk_portals_assume(PtlMDRelease(data_handler));
 
+	//notify upper layer that data are now available
 	sctk_complete_and_free_message(recver);
 }
 
+/**
+ * @brief freeing portals-specific data from ptp_message
+ *
+ * @param msg
+ */
 void sctk_portals_free ( void *msg ) //free isn't atomatic because we reuse memory allocated
 {
-
 	sctk_free(msg);
 }
 
+/**
+ * @brief add a route into the rail with Portals specifications
+ *
+ * @param dest
+ * @param id
+ * @param rail
+ * @param route_type
+ */
 void sctk_portals_add_route(int dest, ptl_process_t id, sctk_rail_info_t *rail, sctk_route_origin_t route_type ){
 	sctk_endpoint_t *new_route;
 
@@ -82,7 +103,12 @@ void sctk_portals_add_route(int dest, ptl_process_t id, sctk_rail_info_t *rail, 
 }
 
 
-/*[> append a new sending message in the list <]*/
+/**
+ * @brief Send a given ptp_message to a given route
+ *
+ * @param endpoint the route
+ * @param msg the message
+ */
 void sctk_portals_send_put ( sctk_endpoint_t *endpoint, sctk_thread_ptp_message_t *msg)
 {
 	sctk_portals_rail_info_t * prail = &endpoint->rail->network.portals;
@@ -95,26 +121,32 @@ void sctk_portals_send_put ( sctk_endpoint_t *endpoint, sctk_thread_ptp_message_
 	ptl_pt_index_t remote_entry;
 	ptl_ct_event_t event;
 
+	//compute remote Portals entry
 	remote_entry = SCTK_MSG_SRC_TASK(msg) % prail->ptable.nb_entries;
 
+	//init MD
 	sctk_portals_helper_init_memory_descriptor(&data, &prail->interface_handler, msg, sizeof(sctk_thread_ptp_message_body_t), SCTK_PORTALS_MD_PUT_OPTIONS);
 	
+	//attach MD
 	sctk_portals_assume(PtlMDBind(prail->interface_handler, &data, &data_handler));
 	
+	//init ME associated to the data
 	sctk_portals_helper_init_list_entry(&slot, &prail->interface_handler, msg->tail.message.contiguous.addr, msg->tail.message.contiguous.size, SCTK_PORTALS_ME_GET_OPTIONS);
 
+	//compute match_bits with atomic incrementation of global entry counter
 	sctk_portals_helper_set_bits_from_msg(&slot.match_bits, &prail->ptable.head[task_rank]->entry_cpt);
-	sctk_debug("ME accessible w/ : %lu - %lu - %lu", prail->current_id, task_rank, slot.match_bits);
+	
+	//adding this ME (and attached data) to Portals
 	sctk_portals_assume(PtlMEAppend(
 				prail->interface_handler, // NI handler
 				task_rank, // pt entry for current task
 				&slot, // ME to append
 				PTL_PRIORITY_LIST, //global options
 				msg, //user data
-				&slot_handler
+				&slot_handler // output : the handler on the data
 				));
 
-	sctk_debug("PORTALS: send to %lu (%lu - %lu)", proute->dest, remote_entry, slot.match_bits);
+	//send ptp_body_message header to remote process
 	sctk_portals_assume(PtlPut(
 				data_handler, //handler on data
 				0, //local offset in MD : none
@@ -125,46 +157,65 @@ void sctk_portals_send_put ( sctk_endpoint_t *endpoint, sctk_thread_ptp_message_
 				SCTK_PORTALS_BITS_HDR,
 				0, // remote offst in ME : none
 				NULL, //user data
-				slot.match_bits //mark msg as a standard request
+				slot.match_bits //ME match_bits for target Get matching
 				));
 
-	sctk_debug("PORTALS: Wait for sending (%lu)", prail->current_id);
+	//waiting for PtlPut to send
 	sctk_portals_assume(PtlCTWait(data.ct_handle, 1, &event));
-	ptl_event_t ev;
-	sctk_debug ("PORTALS: event = %d", (PtlEQGet(data.eq_handle, &ev) == PTL_OK && ev.type == PTL_EVENT_SEND));
-	sctk_debug("PORTALS: Free resources (%lu) [%d]", prail->current_id, event.failure == 0);
+	//release locked MD
 	sctk_portals_assume(PtlMDRelease(data_handler));
 }
+/**
+ * @brief When a message have been sent, the source have to notify and unlock tasks waiting for completion
+ *
+ * @param rail
+ * @param event event triggered by PtlGet from target
+ */
 void sctk_portals_ack_get (sctk_rail_info_t* rail, ptl_event_t* event){
 	ptl_me_t new_me;
 	ptl_handle_me_t new_me_handle;
 
+	//retrieve msg address for completion
 	sctk_thread_ptp_message_t* content = (sctk_thread_ptp_message_t*)event->user_ptr;
-	sctk_debug("PORTALS: GEt data from %lu", event->initiator);
 	sctk_complete_and_free_message(content);
 
+	//adding a new ME to replace the consumed one
 	sctk_portals_helper_init_list_entry(&new_me, &rail->network.portals.interface_handler, (sctk_thread_ptp_message_t*)sctk_malloc(sizeof(sctk_thread_ptp_message_t)), sizeof(sctk_thread_ptp_message_t), SCTK_PORTALS_ME_PUT_OPTIONS);
 	new_me.match_bits = SCTK_PORTALS_BITS_HDR;
 	sctk_portals_assume(PtlMEAppend(rail->network.portals.interface_handler, event->pt_index, &new_me, PTL_PRIORITY_LIST, NULL, &new_me_handle));
-
 }
 
+/**
+ * @brief RECV handling routing, stores incoming header for accessing it later
+ *
+ * @param rail
+ * @param event
+ */
 void sctk_portals_recv_put (sctk_rail_info_t* rail, ptl_event_t* event){
 	sctk_thread_ptp_message_t* content = event->start;
 
-	sctk_debug("PORTALS: recv from %lu (%lu - %lu)", event->initiator, event->pt_index, event->hdr_data);
+	//store needed data in message tail (forwarded to sctk_message_copy())
 	content->tail.portals.remote = event->initiator;
 	content->tail.portals.remote_index = SCTK_MSG_SRC_TASK(content) % rail->network.portals.ptable.nb_entries;
+	//this field contains ME header from source where data have been tagged
 	content->tail.portals.tag = (ptl_match_bits_t)event->hdr_data;
-	sctk_debug("Data stored at : %lu - %lu - %lu", event->initiator, event->pt_index, event->hdr_data);
 	content->tail.portals.handler = &rail->network.portals.interface_handler;
+
+	//notify upper layer that a message is arrived
 	sctk_rebuild_header(content);
 	sctk_reinit_header(content, sctk_portals_free, sctk_portals_message_copy);
 	SCTK_MSG_COMPLETION_FLAG_SET(content, NULL);
-
 	rail->send_message_from_network(content);
 }
 
+/**
+ * @brief Poll incoming events in a queue for the given id
+ *
+ * @param rail
+ * @param id
+ *
+ * @return 1 if polling have been useful, 0 otherwise
+ */
 static int sctk_portals_poll_one_queue(sctk_rail_info_t *rail, size_t id)
 {
 	int ret = 1;
@@ -172,15 +223,16 @@ static int sctk_portals_poll_one_queue(sctk_rail_info_t *rail, size_t id)
 	sctk_portals_table_t* ptable = &rail->network.portals.ptable;
 	ptl_handle_eq_t* queue = ptable->head[id]->event_list;
 	
-
+	//if no other tasks are polling this list
 	if(sctk_spinlock_trylock(&ptable->head[id]->lock) == 0){
+		//while there are event to poll, continue
 		while(PtlEQGet(*queue, &event) == PTL_OK){
+			//if it is for data transfer => release resources and complete and free message
 			if(event.type == PTL_EVENT_GET)
 			{
-				//complete and free messages
 				sctk_portals_ack_get(rail, &event);
 			}
-			//polling only header ME, ie those with Put request
+			//otherwise, other events are not triggered if it is not for an incoming message notification
 			else if(event.type != PTL_EVENT_PUT) continue;
 			else {
 				sctk_portals_recv_put(rail, &event);
@@ -193,12 +245,20 @@ static int sctk_portals_poll_one_queue(sctk_rail_info_t *rail, size_t id)
 	return ret;
 }
 
+/**
+ * @brief try to poll incoming message for current task and neighbors 
+ *
+ * @param rail
+ * @param task_id
+ *
+ * @return 
+ */
 int sctk_portals_polling_queue_for(sctk_rail_info_t*rail, size_t task_id){
 	int ret = 0, ret_bef = 0, ret_aft = 0;
 	size_t task_bef = 0, task_aft = 0, mytask = sctk_get_task_rank();
 	size_t nb_entries = rail->network.portals.ptable.nb_entries;
 
-	//a process which have to poll every queue 
+	//if the request is to poll every lists
 	if(task_id == SCTK_PORTALS_POLL_ALL){
 		int i;
 		if(sctk_spinlock_trylock(&rail->network.portals.ptable.table_lock) == 0){
@@ -210,7 +270,9 @@ int sctk_portals_polling_queue_for(sctk_rail_info_t*rail, size_t task_id){
 		return 0;
 	}
 
+	//else, poll my queue
 	ret = sctk_portals_poll_one_queue(rail, task_id);
+	//if not, poll neighbors
 	if(ret){
 		task_bef = (task_id - 1) % nb_entries;
 		task_aft = (task_id + 1) % nb_entries;

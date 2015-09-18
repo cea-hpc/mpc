@@ -18,7 +18,7 @@
 /* # Authors:                                                             # */
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
 /* #   - GONCALVES Thomas thomas.goncalves@cea.fr                         # */
-/* #   - ADAM Julien julien.adam@cea.fr                                   # */
+/* #   - ADAM Julien adamj@paratools.fr                                   # */
 /* #                                                                      # */
 /* ######################################################################## */
 
@@ -48,7 +48,7 @@ extern "C"
 #define SCTK_PORTALS_POLL_ALL -1
 
 #define SCTK_PORTALS_EVENTS_QUEUE_SIZE 64
-#define SCTK_PORTALS_HEADERS_ME_SIZE 64
+#define SCTK_PORTALS_HEADERS_ME_SIZE (SCTK_PORTALS_EVENTS_QUEUE_SIZE + 4)
 
 #define SCTK_PORTALS_ME_OPTIONS PTL_ME_EVENT_CT_COMM | PTL_ME_EVENT_CT_OVERFLOW | PTL_ME_EVENT_LINK_DISABLE | PTL_ME_EVENT_UNLINK_DISABLE | PTL_ME_USE_ONCE
 #define SCTK_PORTALS_ME_PUT_OPTIONS SCTK_PORTALS_ME_OPTIONS | PTL_ME_OP_PUT
@@ -75,15 +75,12 @@ extern "C"
         default: sctk_fatal( "=> %s returned failcode %i (line %u)\n", #x, ret, (unsigned int)__LINE__); break; \
     } } while (0)
 
-ptl_ct_event_t counter_reset;
-
 typedef struct sctk_portals_table_entry_s
 {
 	ptl_pt_index_t                     index;
 	ptl_handle_eq_t                    *event_list;
 	sctk_spinlock_t                    lock;
 	int                                entry_cpt;
-	struct sctk_portals_table_entry_s  *next;
 } sctk_portals_table_entry_t;
 
 typedef struct sctk_portals_table_s

@@ -18,7 +18,7 @@
 /* # Authors:                                                             # */
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
 /* #   - GONCALVES Thomas thomas.goncalves@cea.fr                         # */
-/* #   - ADAM Julien julien.adam@cea.fr                                   # */
+/* #   - ADAM Julien adamj@paratools.fr                                   # */
 /* #                                                                      # */
 /* ######################################################################## */
 
@@ -191,8 +191,6 @@ void sctk_portals_helper_lib_init(sctk_portals_interface_handler_t *interface, s
 	sctk_debug("PORTALS : NI = %p | ID = (%u,%u)", interface, id->phys.nid, id->phys.pid);
 
 	/** portals table initialization */
-	//create a counter reset to easily reset event counter
-	bzero(&counter_reset, sizeof ( ptl_ct_event_t ));
 	//as much entries than the number of tasks in current process
 	ptable->nb_entries = sctk_portals_helper_compute_nb_portals_entries();
 	ptable->head = sctk_malloc(sizeof(sctk_portals_table_entry_t*)*ptable->nb_entries);
