@@ -2355,7 +2355,7 @@ void sctk_perform_messages_wait_init (
 	if ( request->header.source_task != SCTK_ANY_SOURCE && request->header.communicator != SCTK_COMM_NULL )
 	{
 		/* Convert task rank to process rank */
-		*source_task_id = sctk_get_comm_world_rank ( request->header.communicator, request->header.source_task );
+		*source_task_id = sctk_get_rank ( request->header.communicator, request->header.source_task );
 		*remote_process = sctk_get_process_rank_from_task_rank ( *source_task_id );
 		sctk_nodebug ( "remote process=%d source=%d comm=%d", *remote_process, request->header.source_task, request->header.communicator );
 	}

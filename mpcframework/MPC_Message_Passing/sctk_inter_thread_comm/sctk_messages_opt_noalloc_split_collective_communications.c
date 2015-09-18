@@ -254,7 +254,7 @@ static void sctk_barrier_opt_noalloc_split_messages ( const sctk_communicator_t 
 		rsize = sctk_get_nb_task_remote ( communicator );
 		size = sctk_get_nb_task_total ( communicator );
 
-		for ( i = 0 ; i < size ; i++ )
+		for ( i = 0 ; i < rsize ; i++ )
 		{
 			sctk_opt_noalloc_split_messages_send (	communicator,
 			                                        myself,
@@ -262,7 +262,7 @@ static void sctk_barrier_opt_noalloc_split_messages ( const sctk_communicator_t 
 			                                        65536,
 			                                        &c,
 			                                        1,
-			                                        SCTK_BROADCAST_MESSAGE,
+			                                        SCTK_BARRIER_MESSAGE,
 			                                        sctk_opt_noalloc_split_messages_get_item ( &table ),
 			                                        ( size < broadcast_check_threshold ),
 			                                        ( size < broadcast_check_threshold ) );
@@ -276,7 +276,7 @@ static void sctk_barrier_opt_noalloc_split_messages ( const sctk_communicator_t 
 			                                        65536,
 			                                        &c,
 			                                        1,
-			                                        SCTK_BROADCAST_MESSAGE,
+			                                        SCTK_BARRIER_MESSAGE,
 			                                        sctk_opt_noalloc_split_messages_get_item ( &table ),
 			                                        ptp_internal,
 			                                        1,
