@@ -51,6 +51,7 @@ typedef union
 {
 	sctk_tcp_route_info_t tcp; /**< TCP route info */
 	sctk_ib_route_info_t ib; /**< IB route info */
+	sctk_shm_route_info_t shm;
 #ifdef MPC_USE_PORTALS
     sctk_portals_route_info_t portals; /*< Portals route info */
 #endif

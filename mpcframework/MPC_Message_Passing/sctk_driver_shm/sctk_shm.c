@@ -12,9 +12,12 @@
 
 static int sctk_shm_proc_local_rank_on_node = -1;
 static volatile int sctk_shm_driver_initialized = 0;
+
+#ifdef MPC_USE_VIRTUAL_MACHINE
 static char* sctk_qemu_shm_process_filename = NULL;
 static size_t sctk_qemu_shm_process_size = 0;
 static void* sctk_qemu_shm_shmem_base = NULL;
+#endif /* MPC_USE_VIRTUAL_MACHINE */
 
 // FROM Henry S. Warren, Jr.'s "Hacker's Delight."
 static long sctk_shm_roundup_powerof2(unsigned long n)
@@ -29,6 +32,7 @@ static long sctk_shm_roundup_powerof2(unsigned long n)
     return n+1;
 }
 
+#ifdef MPC_USE_VIRTUAL_MACHINE
 char *sctk_get_qemu_shm_process_filename( void )
 {
     return sctk_qemu_shm_process_filename;
@@ -53,6 +57,7 @@ void *sctk_get_shm_host_pmi_infos(void)
 {
     return sctk_qemu_shm_shmem_base;
 }
+#endif /* MPC_USE_VIRTUAL_MACHINE */
 
 static void 
 sctk_network_send_message_endpoint_shm ( sctk_thread_ptp_message_t *msg, sctk_endpoint_t *endpoint )
@@ -101,7 +106,7 @@ sctk_network_notify_recv_message_shm ( sctk_thread_ptp_message_t *msg, sctk_rail
 }
 
 static void 
-sctk_network_notify_idle_message_shm ( void )
+sctk_network_notify_idle_message_shm ( sctk_rail_info_t *rail )
 {
     size_t size;
     vcli_cell_t * __cell;
@@ -135,16 +140,15 @@ sctk_network_notify_idle_message_shm ( void )
     }
     
     SCTK_MSG_COMPLETION_FLAG_SET ( msg , NULL );
-	msg->tail.message_type = SCTK_MESSAGE_NETWORK;
+    msg->tail.message_type = SCTK_MESSAGE_NETWORK;
 	
     if ( SCTK_MSG_COMMUNICATOR ( msg ) < 0 )
 	    return;
     
     vcli_raw_push_cell(SCTK_QEMU_SHM_FREE_QUEUE_ID, __cell);       
-  
-	sctk_rebuild_header ( msg );
-	sctk_reinit_header ( msg, sctk_free, sctk_net_message_copy );
-    
+
+    sctk_rebuild_header ( msg ); 
+    sctk_reinit_header ( msg, sctk_free, sctk_net_message_copy );
     sctk_send_message_from_network_shm ( msg );
 }
 
@@ -158,15 +162,16 @@ sctk_network_notify_any_source_message_shm ( int polling_task_id, int blocking, 
 /* SHM Init                                                         */
 /********************************************************************/
 
+#ifdef MPC_USE_VIRTUAL_MACHINE
 void sctk_shm_host_pmi_init( void )
 {
 	int sctk_shm_vmhost_node_rank;
 	int sctk_shm_vmhost_node_number;
 	int sctk_vmhost_shm_local_process_rank;
 	int sctk_vmhost_shm_local_process_number;
-    sctk_shm_guest_pmi_infos_t *shm_host_pmi_infos;
+    	sctk_shm_guest_pmi_infos_t *shm_host_pmi_infos;
 
-    shm_host_pmi_infos = (sctk_shm_guest_pmi_infos_t*) sctk_get_shm_host_pmi_infos();
+    	shm_host_pmi_infos = (sctk_shm_guest_pmi_infos_t*) sctk_get_shm_host_pmi_infos();
     
 	sctk_pmi_get_node_rank ( &sctk_shm_vmhost_node_rank );
 	sctk_pmi_get_node_number ( &sctk_shm_vmhost_node_number );
@@ -178,6 +183,7 @@ void sctk_shm_host_pmi_init( void )
     //shm_host_pmi_infos->sctk_pmi_procid = ;
     //shm_host_pmi_infos->sctk_pmi_nprocs = ; 
 }
+#endif /* MPC_USE_VIRTUAL_MACHINE */
 
 static void *
 sctk_shm_add_region_slave(sctk_size_t size,sctk_alloc_mapper_handler_t * handler) 
@@ -293,6 +299,7 @@ static void sctk_shm_init_raw_queue(size_t sctk_shmem_size, int sctk_shmem_cells
     sctk_shm_mapper_role_t shm_role;
     struct sctk_alloc_mapper_handler_s *pmi_handler = NULL;
 
+#ifdef MPC_USE_VIRTUAL_MACHINE
     if( sctk_mpc_is_vmguest() )
     {
         printf("MPC is vmguest process\n");
@@ -303,17 +310,23 @@ static void sctk_shm_init_raw_queue(size_t sctk_shmem_size, int sctk_shmem_cells
     }
     else
     {
+#endif /* MPC_USE_VIRTUAL_MACHINE */
         sprintf(buffer, "%d", rank);
         pmi_handler = sctk_shm_pmi_handler_init(buffer);
         shm_role = (sctk_shm_proc_local_rank_on_node == rank) ? SCTK_SHM_MAPPER_ROLE_MASTER : SCTK_SHM_MAPPER_ROLE_SLAVE; 
         shm_base = sctk_shm_add_region(sctk_shmem_size,shm_role,pmi_handler);
+
+#ifdef MPC_USE_VIRTUAL_MACHINE
         if( shm_role == SCTK_SHM_MAPPER_ROLE_MASTER && sctk_mpc_is_vmhost() )
         {
             printf("MPC is vmhost process\n");
             sctk_qemu_shm_shmem_base = shm_base;
             shm_base += sizeof( sctk_shm_guest_pmi_infos_t );
         }
+#endif /* MPC_USE_VIRTUAL_MACHINE */
+
         sctk_vcli_raw_infos_add( shm_base, sctk_shmem_size, sctk_shmem_cells_num, rank );
+
         if( shm_role == SCTK_SHM_MAPPER_ROLE_MASTER )
         {
             vcli_raw_reset_infos_reset(rank);
@@ -321,7 +334,11 @@ static void sctk_shm_init_raw_queue(size_t sctk_shmem_size, int sctk_shmem_cells
             sctk_set_qemu_shm_process_size(sctk_shmem_size);
         }
         sctk_shm_pmi_handler_free(pmi_handler);
+
+#ifdef MPC_USE_VIRTUAL_MACHINE
     }
+#endif /* MPC_USE_VIRTUAL_MACHINE */
+
 }
 
 void sctk_shm_check_raw_queue(int local_process_number)
@@ -358,14 +375,16 @@ void sctk_network_init_shm ( sctk_rail_info_t *rail )
 	rail->notify_idle_message = sctk_network_notify_idle_message_shm;
 	rail->send_message_from_network = sctk_send_message_from_network_shm;
 
-    rail->network_name = "SHM";
+    	rail->network_name = "SHM";
 	sctk_rail_init_route ( rail, rail->runtime_config_rail->topology, NULL );
 
 	sctk_shmem_cells_num = rail->runtime_config_driver_config->driver.value.shm.cells_num;
-    sctk_shmem_size = sctk_shm_get_raw_queues_size(sctk_shmem_cells_num);
+    	sctk_shmem_size = sctk_shm_get_raw_queues_size(sctk_shmem_cells_num);
 
+#ifdef MPC_USE_VIRTUAL_MACHINE
     if( sctk_mpc_is_vmhost() || sctk_mpc_is_vmguest() )
         sctk_shmem_size = sctk_shm_roundup_powerof2(sctk_shmem_size);
+#endif /* MPC_USE_VIRTUAL_MACHINE */
 
     sctk_pmi_get_process_on_node_rank(&local_process_rank);
     sctk_pmi_get_process_on_node_number(&local_process_number);

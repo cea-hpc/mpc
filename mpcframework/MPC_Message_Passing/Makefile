@@ -52,6 +52,15 @@ SOBJ_driver_portals=$(SFILES_driver_portals:sctk_driver_portals/%.S=$(M_PWD)/BUI
 SDEP_driver_portals=$(SFILES_driver_portals:sctk_driver_portals/%.S=$(M_PWD)/BUILD_MPC_Message_Passing/lib/%.d)
 
 
+FILES_driver_shm=$(wildcard sctk_driver_shm/*.c)
+OBJ_driver_shm=$(FILES_driver_shm:sctk_driver_shm/%.c=$(M_PWD)/BUILD_MPC_Message_Passing/lib/%.o)
+DEP_driver_shm=$(FILES_driver_shm:sctk_driver_shm/%.c=$(M_PWD)/BUILD_MPC_Message_Passing/lib/%.d)
+
+SFILES_driver_shm=$(wildcard sctk_driver_shm/*.S)
+SOBJ_driver_shm=$(SFILES_driver_shm:sctk_driver_shm/%.S=$(M_PWD)/BUILD_MPC_Message_Passing/lib/%.o)
+SDEP_driver_shm=$(SFILES_driver_shm:sctk_driver_shm/%.S=$(M_PWD)/BUILD_MPC_Message_Passing/lib/%.d)
+
+
 FILES_driver_tcp=$(wildcard sctk_driver_tcp/*.c)
 OBJ_driver_tcp=$(FILES_driver_tcp:sctk_driver_tcp/%.c=$(M_PWD)/BUILD_MPC_Message_Passing/lib/%.o)
 DEP_driver_tcp=$(FILES_driver_tcp:sctk_driver_tcp/%.c=$(M_PWD)/BUILD_MPC_Message_Passing/lib/%.d)
@@ -88,6 +97,9 @@ FOBJ_driver_ib=$(FFILES_driver_ib:sctk_driver_ib/%.f=$(M_PWD)/BUILD_MPC_Message_
 FFILES_driver_portals=$(wildcard sctk_driver_portals/*.f)
 FOBJ_driver_portals=$(FFILES_driver_portals:sctk_driver_portals/%.f=$(M_PWD)/BUILD_MPC_Message_Passing/lib/%_f.o)
 
+FFILES_driver_shm=$(wildcard sctk_driver_shm/*.f)
+FOBJ_driver_shm=$(FFILES_driver_shm:sctk_driver_shm/%.f=$(M_PWD)/BUILD_MPC_Message_Passing/lib/%_f.o)
+
 FFILES_driver_tcp=$(wildcard sctk_driver_tcp/*.f)
 FOBJ_driver_tcp=$(FFILES_driver_tcp:sctk_driver_tcp/%.f=$(M_PWD)/BUILD_MPC_Message_Passing/lib/%_f.o)
 
@@ -103,6 +115,7 @@ $(M_PWD)/include_modules/MPC_Message_Passing:
 	@../MPC_Tools/mpc_prepare_includes $(MPC_SOURCE_DIR)MPC_Message_Passing/include $(M_PWD)/include_modules
 	@../MPC_Tools/mpc_prepare_includes $(MPC_SOURCE_DIR)MPC_Message_Passing/sctk_driver_ib $(M_PWD)/include_modules
 	@../MPC_Tools/mpc_prepare_includes $(MPC_SOURCE_DIR)MPC_Message_Passing/sctk_driver_portals $(M_PWD)/include_modules
+	@../MPC_Tools/mpc_prepare_includes $(MPC_SOURCE_DIR)MPC_Message_Passing/sctk_driver_shm $(M_PWD)/include_modules
 	@../MPC_Tools/mpc_prepare_includes $(MPC_SOURCE_DIR)MPC_Message_Passing/sctk_driver_tcp $(M_PWD)/include_modules
 	@../MPC_Tools/mpc_prepare_includes $(MPC_SOURCE_DIR)MPC_Message_Passing/sctk_inter_thread_comm $(M_PWD)/include_modules
 	@../MPC_Tools/mpc_prepare_includes $(MPC_SOURCE_DIR)MPC_Message_Passing/sctk_low_level_comm $(M_PWD)/include_modules
@@ -133,6 +146,11 @@ $(DEP_driver_portals):$(M_PWD)/BUILD_MPC_Message_Passing/lib/%.d:sctk_driver_por
 	@$(CC) $(SCTK_CC_DEP) $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%.d,sctk_driver_portals/%.c,$@) | \
 		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
 
+$(DEP_driver_shm):$(M_PWD)/BUILD_MPC_Message_Passing/lib/%.d:sctk_driver_shm/%.c
+	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%.d,sctk_driver_shm/%.c,$@)"
+	@$(CC) $(SCTK_CC_DEP) $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%.d,sctk_driver_shm/%.c,$@) | \
+		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
+
 $(DEP_driver_tcp):$(M_PWD)/BUILD_MPC_Message_Passing/lib/%.d:sctk_driver_tcp/%.c
 	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%.d,sctk_driver_tcp/%.c,$@)"
 	@$(CC) $(SCTK_CC_DEP) $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%.d,sctk_driver_tcp/%.c,$@) | \
@@ -161,6 +179,10 @@ $(DEP_driver_portals):$(M_PWD)/BUILD_MPC_Message_Passing/lib/%.d:sctk_driver_por
 	@echo "    Generate fake dependencies $(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%.d,sctk_driver_portals/%.c,$@)"
 	@echo "$(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%.d,sctk_driver_portals/%.c,$@)" > $@
 
+$(DEP_driver_shm):$(M_PWD)/BUILD_MPC_Message_Passing/lib/%.d:sctk_driver_shm/%.c
+	@echo "    Generate fake dependencies $(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%.d,sctk_driver_shm/%.c,$@)"
+	@echo "$(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%.d,sctk_driver_shm/%.c,$@)" > $@
+
 $(DEP_driver_tcp):$(M_PWD)/BUILD_MPC_Message_Passing/lib/%.d:sctk_driver_tcp/%.c
 	@echo "    Generate fake dependencies $(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%.d,sctk_driver_tcp/%.c,$@)"
 	@echo "$(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%.d,sctk_driver_tcp/%.c,$@)" > $@
@@ -187,6 +209,10 @@ $(OBJ_driver_portals):%.o:%.d
 	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%.o,sctk_driver_portals/%.c,$@)"
 	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%.o,sctk_driver_portals/%.c,$@) -o $@
 
+$(OBJ_driver_shm):%.o:%.d
+	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%.o,sctk_driver_shm/%.c,$@)"
+	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%.o,sctk_driver_shm/%.c,$@) -o $@
+
 $(OBJ_driver_tcp):%.o:%.d
 	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%.o,sctk_driver_tcp/%.c,$@)"
 	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%.o,sctk_driver_tcp/%.c,$@) -o $@
@@ -212,6 +238,11 @@ $(SDEP_driver_ib):$(M_PWD)/BUILD_MPC_Message_Passing/lib/%.d:sctk_driver_ib/%.S
 $(SDEP_driver_portals):$(M_PWD)/BUILD_MPC_Message_Passing/lib/%.d:sctk_driver_portals/%.S
 	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%.d,sctk_driver_portals/%.S,$@)"
 	@$(GCC) -M $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%.d,sctk_driver_portals/%.S,$@) | \
+		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
+
+$(SDEP_driver_shm):$(M_PWD)/BUILD_MPC_Message_Passing/lib/%.d:sctk_driver_shm/%.S
+	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%.d,sctk_driver_shm/%.S,$@)"
+	@$(GCC) -M $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%.d,sctk_driver_shm/%.S,$@) | \
 		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
 
 $(SDEP_driver_tcp):$(M_PWD)/BUILD_MPC_Message_Passing/lib/%.d:sctk_driver_tcp/%.S
@@ -241,6 +272,10 @@ $(SOBJ_driver_portals):%.o:%.d
 	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%.o,sctk_driver_portals/%.S,$@)"
 	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%.o,sctk_driver_portals/%.S,$@) -o $@
 
+$(SOBJ_driver_shm):%.o:%.d
+	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%.o,sctk_driver_shm/%.S,$@)"
+	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%.o,sctk_driver_shm/%.S,$@) -o $@
+
 $(SOBJ_driver_tcp):%.o:%.d
 	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%.o,sctk_driver_tcp/%.S,$@)"
 	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%.o,sctk_driver_tcp/%.S,$@) -o $@
@@ -264,6 +299,10 @@ $(FOBJ_driver_ib):$(M_PWD)/BUILD_MPC_Message_Passing/lib/%_f.o:sctk_driver_ib/%.
 $(FOBJ_driver_portals):$(M_PWD)/BUILD_MPC_Message_Passing/lib/%_f.o:sctk_driver_portals/%.f
 	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%_f.o,sctk_driver_portals/%.f,$@)"
 	@$(F77) -c $(FFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%_f.o,sctk_driver_portals/%.f,$@) -o $@
+
+$(FOBJ_driver_shm):$(M_PWD)/BUILD_MPC_Message_Passing/lib/%_f.o:sctk_driver_shm/%.f
+	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%_f.o,sctk_driver_shm/%.f,$@)"
+	@$(F77) -c $(FFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%_f.o,sctk_driver_shm/%.f,$@) -o $@
 
 $(FOBJ_driver_tcp):$(M_PWD)/BUILD_MPC_Message_Passing/lib/%_f.o:sctk_driver_tcp/%.f
 	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%_f.o,sctk_driver_tcp/%.f,$@)"

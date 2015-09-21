@@ -28,6 +28,7 @@
 #include <sctk_tcp.h>
 #include <sctk_ib.h>
 #include <sctk_portals.h>
+#include <sctk_shm.h>
 #include <sctk_topological_rail.h>
 
 
