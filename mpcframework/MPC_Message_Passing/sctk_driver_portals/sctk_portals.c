@@ -28,6 +28,8 @@
 #include <sctk_inter_thread_comm.h>
 #include <sctk_portals.h>
 
+static volatile short rail_is_ready = 0;
+
 /**
  * @brief Main entry point for sending message (called by higher layers)
  *
@@ -58,6 +60,8 @@ static void sctk_network_notify_perform_message_portals ( int remote, int remote
  */
 static void sctk_network_notify_idle_message_portals (sctk_rail_info_t* rail)
 {
+	if(!rail_is_ready) return;
+
 	size_t mytask = sctk_get_task_rank() % rail->network.portals.ptable.nb_entries;
 
 	// check if current task and neighbors have pending message. If not, poll the entire portals table
@@ -118,6 +122,7 @@ void sctk_network_init_portals (sctk_rail_info_t *rail)
 
     sctk_rail_init_route ( rail, rail->runtime_config_rail->topology, sctk_portals_on_demand_connection_handler );
     sctk_network_init_portals_all ( rail );
+	rail_is_ready = 1;
 }
 
 #endif

@@ -37,9 +37,13 @@ extern "C"
 #include <stdlib.h>
 #include <string.h>
 
-#define SCTK_PORTALS_BITS_INIT 0x0000000000000000UL
-#define SCTK_PORTALS_BITS_HDR  0
-#define SCTK_PORTALS_BITS_FIRST 1
+#define SCTK_PORTALS_BITS_INIT 0UL
+#define SCTK_PORTALS_BITS_FIRST_VALUE 1UL
+#define SCTK_PORTALS_BITS_HEADER 0UL
+//#define SCTK_PORTALS_BITS_CONTROL_MESSAGE (~(0UL)) 
+#define SCTK_PORTALS_BITS_EAGER_SLOT (~(0UL) - 1UL)
+#define SCTK_PORTALS_BITS_OPEN_CONNECTION (~(0UL) - 2UL)
+
 //is entry specific or not (=header or not)
 #define SCTK_PORTALS_NOT_SPECIFIC 0
 #define SCTK_PORTALS_SPECIFIC 1
@@ -91,15 +95,18 @@ typedef struct sctk_portals_table_s
 	
 } sctk_portals_table_t;
 
-void sctk_portals_helper_lib_init(sctk_portals_interface_handler_t *interface, sctk_portals_process_id_t* id, sctk_portals_limits_t *maxs, sctk_portals_table_t *ptable);
+void sctk_portals_helper_lib_init(sctk_portals_interface_handler_t *interface, sctk_portals_process_id_t* id, sctk_portals_table_t *ptable);
 
-void sctk_portals_helper_init_list_entry(ptl_me_t* me, sctk_portals_interface_handler_t *ni_handler, void* start, size_t size, unsigned int option);
+void sctk_portals_helper_init_new_entry(ptl_me_t* me, sctk_portals_interface_handler_t *ni_handler, void* start, size_t size, ptl_match_bits_t match, unsigned int option);
 void sctk_portals_helper_init_table_entry(sctk_portals_table_entry_t* entry, sctk_portals_interface_handler_t *interface, int ind);
 void sctk_portals_helper_set_bits_from_msg(ptl_match_bits_t* match, void*atomic);
 void sctk_portals_helper_init_memory_descriptor(ptl_md_t* md, sctk_portals_interface_handler_t *ni_handler, void* start, size_t size, unsigned int option);
 int sctk_portals_helper_from_str ( const char *inval, void *outval, int outvallen );
 int sctk_portals_helper_to_str ( const void *inval, int invallen, char *outval, int outvallen );
 void sctk_portals_helper_bind_to(sctk_portals_interface_handler_t*interface, ptl_process_t remote);
+void sctk_portals_helper_get_request(void* start, size_t size, ptl_handle_ni_t* handler, ptl_process_t remote, ptl_pt_index_t index, ptl_match_bits_t match, void* ptr);
+void sctk_portals_helper_put_request(void* start, size_t size, ptl_handle_ni_t* handler, ptl_process_t remote, ptl_pt_index_t index, ptl_match_bits_t match, void* ptr, ptl_hdr_data_t extra);
+inline void sctk_portals_helper_register_new_entry(ptl_handle_ni_t* handler, ptl_pt_index_t index, ptl_me_t* slot, void* ptr);
 
 #endif
 #ifdef __cplusplus

@@ -40,7 +40,6 @@ typedef struct sctk_thread_ptp_message_s sctk_thread_ptp_message_t;
 typedef struct sctk_portals_connection_context_s
 {
 	sctk_portals_process_id_t from;
-	int to;
     ptl_pt_index_t entry;
 
 } sctk_portals_connection_context_t;
