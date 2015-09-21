@@ -330,8 +330,10 @@ static void sctk_shm_init_raw_queue(size_t sctk_shmem_size, int sctk_shmem_cells
         if( shm_role == SCTK_SHM_MAPPER_ROLE_MASTER )
         {
             vcli_raw_reset_infos_reset(rank);
+#ifdef MPC_USE_VIRTUAL_MACHINE
             sctk_set_qemu_shm_process_filename(pmi_handler->gen_filename(pmi_handler->option));
             sctk_set_qemu_shm_process_size(sctk_shmem_size);
+#endif /* MPC_USE_VIRTUAL_MACHINE */
         }
         sctk_shm_pmi_handler_free(pmi_handler);
 
@@ -390,7 +392,8 @@ void sctk_network_init_shm ( sctk_rail_info_t *rail )
     sctk_pmi_get_process_on_node_number(&local_process_number);
     sctk_shm_proc_local_rank_on_node = local_process_rank;
     first_proc_on_node = sctk_get_process_rank() - local_process_rank;
-    
+
+#ifdef MPC_USE_VIRTUAL_MACHINE
     if( sctk_mpc_is_vmguest())
     {
         sctk_vcli_raw_infos_init( 1 );
@@ -401,13 +404,16 @@ void sctk_network_init_shm ( sctk_rail_info_t *rail )
     }
     else
     {
+#endif /* MPC_USE_VIRTUAL_MACHINE */    
         sctk_vcli_raw_infos_init(local_process_number);
         for( i=0; i<local_process_number; i++)
         {
             sctk_shm_init_raw_queue(sctk_shmem_size, sctk_shmem_cells_num, i);
             sctk_shm_add_route(first_proc_on_node+i,i,rail);
         }
+#ifdef MPC_USE_VIRTUAL_MACHINE
     }
+#endif /* MPC_USE_VIRTUAL_MACHINE */    
 
     sctk_shm_driver_initialized = 1;
 }
