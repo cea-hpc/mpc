@@ -197,7 +197,7 @@ SCTK_STATIC void * sctk_shm_mapper_find_common_addr(sctk_size_t size, int* pids,
 //shm sync
 SCTK_STATIC sctk_shm_mapper_sync_header_t * sctk_shm_mapper_sync_header_init(void * ptr,sctk_size_t size,int participants);
 SCTK_STATIC sctk_shm_mapper_sync_header_t * sctk_shm_mapper_sync_header_slave_update(void * ptr,sctk_size_t size,int participants);
-SCTK_STATIC void sctk_shm_mapper_barrier(sctk_shm_mapper_sync_header_t * sync_header,sctk_shm_mapper_role_t role,int participants);
+SCTK_STATIC void sctk_shm_mapper_barrier( sctk_shm_mapper_sync_header_t * sync_header,sctk_shm_mapper_role_t role,int participants);
 
 /************************* FUNCTION ************************/
 //construction of common mapping table to find common free segment

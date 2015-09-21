@@ -119,7 +119,7 @@ SCTK_STATIC sctk_shm_mapper_sync_header_t * sctk_shm_mapper_sync_header_init(voi
  * @param role Define the role of the caller, must be slaves and strictly 1 master.
  * @TODO rewrite with MPC functions and remove need of role.
 **/
-SCTK_STATIC void sctk_shm_mapper_barrier(sctk_shm_mapper_sync_header_t * sync_header,sctk_shm_mapper_role_t role,int participants)
+SCTK_STATIC void sctk_shm_mapper_barrier( sctk_shm_mapper_sync_header_t * sync_header,sctk_shm_mapper_role_t role,int participants)
 {
 	//errors
 	assert(sync_header != NULL);
@@ -252,7 +252,7 @@ SCTK_STATIC void * sctk_shm_mapper_slave(sctk_size_t size,int participants,sctk_
 	char * filename;
 	int fd;
 	void * ptr;
-	sctk_shm_mapper_sync_header_t volatile * sync_header;
+	sctk_shm_mapper_sync_header_t * sync_header;
 
 	//check args
 	assert(handler != NULL);
@@ -276,12 +276,12 @@ SCTK_STATIC void * sctk_shm_mapper_slave(sctk_size_t size,int participants,sctk_
     
 	//wait final decision of master
 	while ( NULL == sync_header->final_address) {
-    };
+    	};
 
 	sctk_shm_mapper_barrier(sync_header,SCTK_SHM_MAPPER_ROLE_SLAVE,participants);
 	
-    //remap if required
-    ptr = (void*)sync_header->final_address;
+    	//remap if required
+    	ptr = (void*)sync_header->final_address;
 	sctk_shm_mapper_remap(fd,sync_header,ptr,size);
 	sync_header = ptr;
 
