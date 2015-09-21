@@ -440,12 +440,20 @@
     </xs:all>
   </xs:complexType>
   <!-- ********************************************************* -->
+  <xs:complexType name="user_type_net_driver_shm">
+    <xs:all>
+      <xs:element minOccurs="0" name="shmem_size" type="xs:integer"/>
+      <xs:element minOccurs="0" name="cells_num" type="xs:integer"/>
+    </xs:all>
+  </xs:complexType>
+  <!-- ********************************************************* -->
   <xs:complexType name="user_type_net_driver">
     <xs:choice>
       <xs:element name="infiniband" type="user_type_net_driver_infiniband"/>
       <xs:element name="portals" type="user_type_net_driver_portals"/>
       <xs:element name="tcp" type="user_type_net_driver_tcp"/>
       <xs:element name="tcprdma" type="user_type_net_driver_tcp_rdma"/>
+      <xs:element name="shm" type="user_type_net_driver_shm"/>
       <xs:element name="topological" type="user_type_net_driver_topological"/>
     </xs:choice>
   </xs:complexType>

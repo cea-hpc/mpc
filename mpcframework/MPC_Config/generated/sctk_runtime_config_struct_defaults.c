@@ -368,6 +368,21 @@ void sctk_runtime_config_struct_init_net_driver_tcp_rdma(void * struct_ptr)
 }
 
 /*******************  FUNCTION  *********************/
+void sctk_runtime_config_struct_init_net_driver_shm(void * struct_ptr)
+{
+	struct sctk_runtime_config_struct_net_driver_shm * obj = struct_ptr;
+	/* Make sure this element is not initialized yet       */
+	/* It allows us to know when we are facing dynamically */
+	/* allocated objects requiring an init                 */
+	if( obj->init_done != 0 ) return;
+
+	/* Simple params : */
+	obj->shmem_size = 1024;
+	obj->cells_num = 8;
+	obj->init_done = 1;
+}
+
+/*******************  FUNCTION  *********************/
 void sctk_runtime_config_struct_init_net_driver(void * struct_ptr)
 {
 	struct sctk_runtime_config_struct_net_driver * obj = struct_ptr;
@@ -867,6 +882,12 @@ void sctk_runtime_config_reset_struct_default_if_needed(char * structname, void 
 	if( !strcmp( structname , "sctk_runtime_config_struct_net_driver_tcp_rdma") )
 	{
 		sctk_runtime_config_struct_init_net_driver_tcp_rdma( ptr );
+		return;
+	}
+
+	if( !strcmp( structname , "sctk_runtime_config_struct_net_driver_shm") )
+	{
+		sctk_runtime_config_struct_init_net_driver_shm( ptr );
 		return;
 	}
 

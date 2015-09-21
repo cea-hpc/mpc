@@ -242,12 +242,19 @@
 			<param name="tcpoib" type="int" doc="Enable TCP over Infiniband (if elligible)." default="1" />
 		</struct>
 
+		<!-- Structure for Shared Memory driver -->
+        	<struct name="net_driver_shm" doc="Inter-Process shared memory communication implementation">
+            		<param name="shmem_size" type="int" doc="Size of shared memory region." default="1024" />
+            		<param name="cells_num" type="int" doc="Size of shared memory region." default="8" />
+        	</struct>
+
 		<!-- Union to merge drivers -->
 		<union name="net_driver" doc="Define a specific configuration for a network driver to apply in rails.">
 			<choice name="infiniband" type="net_driver_infiniband" />
 			<choice name="portals" type="net_driver_portals" />
 			<choice name="tcp" type="net_driver_tcp" />
 			<choice name="tcprdma" type="net_driver_tcp_rdma" />
+			<choice name="shm" type="net_driver_shm" />
 			<choice name="topological" type="net_driver_topological" />
 		</union>
 

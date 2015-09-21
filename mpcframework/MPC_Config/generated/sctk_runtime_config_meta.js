@@ -141,11 +141,16 @@ meta.types = {
 	net_driver_tcp_rdma : {type: 'struct', name: "net_driver_tcp_rdma", childs: {
 		tcpoib: {mode: 'param', name: "tcpoib", type: "int", doc: "Enable TCP over Infiniband (if elligible).", dflt: "1", },
 	}},
+	net_driver_shm : {type: 'struct', name: "net_driver_shm", childs: {
+		shmem_size: {mode: 'param', name: "shmem_size", type: "int", doc: "Size of shared memory region.", dflt: "1024", },
+		cells_num: {mode: 'param', name: "cells_num", type: "int", doc: "Size of shared memory region.", dflt: "8", },
+	}},
 	net_driver : {type: 'union', name: "net_driver", choice: {
 		infiniband: {name: "infiniband", type: "net_driver_infiniband"},
 		portals: {name: "portals", type: "net_driver_portals"},
 		tcp: {name: "tcp", type: "net_driver_tcp"},
 		tcprdma: {name: "tcprdma", type: "net_driver_tcp_rdma"},
+		shm: {name: "shm", type: "net_driver_shm"},
 		topological: {name: "topological", type: "net_driver_topological"},
 	}},
 	net_driver_config : {type: 'struct', name: "net_driver_config", childs: {

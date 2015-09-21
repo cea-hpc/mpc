@@ -701,6 +701,21 @@ Type is int. Default value is 1.
 .Pp tcpoib
 Enable TCP over Infiniband (if elligible).
 .El
+.Sh ENTRIES OF TYPE net_driver_shm
+Inter-Process shared memory communication implementation
+.Pp
+It support parameters :
+.Pp
+.Bl -tag -width Ds
+.It Cm shmem_size
+Type is int. Default value is 1024. 
+.Pp shmem_size
+Size of shared memory region.
+.It Cm cells_num
+Type is int. Default value is 8. 
+.Pp cells_num
+Size of shared memory region.
+.El
 .Sh OPTIONS OF NODE net_driver
 Define a specific configuration for a network driver to apply in rails.
 .Pp
@@ -715,6 +730,8 @@ It can contain a node of type :
  of type net_driver_tcp. 
 .It Cm tcprdma
  of type net_driver_tcp_rdma. 
+.It Cm shm
+ of type net_driver_shm. 
 .It Cm topological
  of type net_driver_topological. 
 .El

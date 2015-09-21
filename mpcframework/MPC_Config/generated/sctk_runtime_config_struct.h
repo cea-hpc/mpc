@@ -364,6 +364,16 @@ struct sctk_runtime_config_struct_net_driver_tcp_rdma
 	int tcpoib;
 };
 
+/******************************** STRUCTURE *********************************/
+/**Inter-Process shared memory communication implementation**/
+struct sctk_runtime_config_struct_net_driver_shm
+{	int init_done;
+	/**Size of shared memory region.**/
+	int shmem_size;
+	/**Size of shared memory region.**/
+	int cells_num;
+};
+
 /********************************** ENUM ************************************/
 /**Define a specific configuration for a network driver to apply in rails.**/
 enum sctk_runtime_config_struct_net_driver_type
@@ -373,6 +383,7 @@ enum sctk_runtime_config_struct_net_driver_type
 	SCTK_RTCFG_net_driver_portals,
 	SCTK_RTCFG_net_driver_tcp,
 	SCTK_RTCFG_net_driver_tcprdma,
+	SCTK_RTCFG_net_driver_shm,
 	SCTK_RTCFG_net_driver_topological,
 };
 
@@ -386,6 +397,7 @@ struct sctk_runtime_config_struct_net_driver
 		struct sctk_runtime_config_struct_net_driver_portals portals;
 		struct sctk_runtime_config_struct_net_driver_tcp tcp;
 		struct sctk_runtime_config_struct_net_driver_tcp_rdma tcprdma;
+		struct sctk_runtime_config_struct_net_driver_shm shm;
 		struct sctk_runtime_config_struct_net_driver_topological topological;
 	} value;
 };
