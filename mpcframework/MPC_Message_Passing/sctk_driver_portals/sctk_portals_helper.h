@@ -36,7 +36,7 @@ extern "C"
 #include <utlist.h>
 #include <stdlib.h>
 #include <string.h>
-
+#include <sctk_atomics.h>
 #define SCTK_PORTALS_BITS_INIT 0UL
 #define SCTK_PORTALS_BITS_FIRST_VALUE 1UL
 #define SCTK_PORTALS_BITS_HEADER 0UL
@@ -84,7 +84,7 @@ typedef struct sctk_portals_table_entry_s
 	ptl_pt_index_t                     index;
 	ptl_handle_eq_t                    *event_list;
 	sctk_spinlock_t                    lock;
-	int                                entry_cpt;
+	sctk_atomics_int                   entry_cpt;
 } sctk_portals_table_entry_t;
 
 typedef struct sctk_portals_table_s

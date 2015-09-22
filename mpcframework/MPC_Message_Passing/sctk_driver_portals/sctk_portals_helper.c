@@ -107,10 +107,11 @@ inline int sctk_portals_helper_compute_nb_portals_entries()
 	int nb = tasks / processes;
     int rest = ( tasks % processes );
 
-    if ( sctk_get_process_rank() < rest )
+    if ( rest )
         nb++;
 
-    return nb;
+	//allowing one extra list -> spcial messages
+    return nb + 1;
 
 }
 
@@ -171,7 +172,7 @@ void sctk_portals_helper_lib_init(sctk_portals_interface_handler_t *interface, s
 	//filling ptl_limits with max possible values (covering lot of cases)
 	sctk_portals_limits_t max_values;
 	sctk_portals_helper_init_boundaries(&max_values);
-	sctk_debug("1");	
+	
 	//Init Portals network interface
 	sctk_portals_assume(PtlNIInit(
 		PTL_IFACE_DEFAULT, //default network interface (probably 0
@@ -181,20 +182,16 @@ void sctk_portals_helper_lib_init(sctk_portals_interface_handler_t *interface, s
 		NULL, //effective portals boundaries
 		interface
 	));
-	sctk_debug("2");
+	
 	//assign an unique identifier for calling process
 	sctk_portals_assume(PtlGetPhysId(
 		*interface, //initialized network interface handler
 		id //set id for calling process
 	));
 
-	sctk_debug("PORTALS : NI = %p | ID = (%u,%u)", interface, id->phys.nid, id->phys.pid);
-
 	/** portals table initialization */
 	//as much entries than the number of tasks in current process
-	sctk_debug("plop");
 	ptable->nb_entries = sctk_portals_helper_compute_nb_portals_entries();
-	sctk_debug("PORTALS: nb entries = ptable->nb_entries");
 	ptable->head = sctk_malloc(sizeof(sctk_portals_table_entry_t*)*ptable->nb_entries);
 	//create portals entries
 	for(cpt = 0; cpt < ptable->nb_entries; cpt++){
@@ -211,7 +208,7 @@ void sctk_portals_helper_init_table_entry(sctk_portals_table_entry_t* entry, sct
 	entry->lock = SCTK_SPINLOCK_INITIALIZER;
 	entry->event_list = sctk_malloc(sizeof(ptl_handle_eq_t));
 	entry->index = ind; // set index to desired : index of init loop
-	entry->entry_cpt = SCTK_PORTALS_BITS_FIRST_VALUE;
+	sctk_atomics_store_int(&entry->entry_cpt, 1);
 
 	//init event queue for this entry
 	sctk_portals_assume(PtlEQAlloc(
