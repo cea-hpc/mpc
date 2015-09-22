@@ -232,7 +232,7 @@ void sctk_portals_helper_init_table_entry(sctk_portals_table_entry_t* entry, sct
 		sctk_thread_ptp_message_t* slot;
 
 		slot = sctk_malloc(sizeof( sctk_thread_ptp_message_t));
-
+		
 		sctk_portals_helper_init_new_entry(&me, interface, slot, sizeof(sctk_thread_ptp_message_t), SCTK_PORTALS_BITS_HEADER, SCTK_PORTALS_ME_PUT_OPTIONS );
 		sctk_portals_helper_register_new_entry(interface, ind, &me, NULL);
 	}

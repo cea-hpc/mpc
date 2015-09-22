@@ -38,11 +38,13 @@ extern "C"
 #include <string.h>
 #include <sctk_atomics.h>
 #define SCTK_PORTALS_BITS_INIT 0UL
-#define SCTK_PORTALS_BITS_FIRST_VALUE 1UL
 #define SCTK_PORTALS_BITS_HEADER 0UL
-//#define SCTK_PORTALS_BITS_CONTROL_MESSAGE (~(0UL)) 
-#define SCTK_PORTALS_BITS_EAGER_SLOT (~(0UL) - 1UL)
-#define SCTK_PORTALS_BITS_OPEN_CONNECTION (~(0UL) - 2UL)
+#define SCTK_PORTALS_BITS_EAGER_SLOT (~(0UL))
+
+#define SCTK_PORTALS_MSG_CAT_REGULAR 0 
+#define SCTK_PORTALS_MSG_CAT_REAGER 1
+#define SCTK_PORTALS_MSG_CAT_CM 2
+#define SCTK_PORTALS_MSG_CAT_RESERVED 3
 
 //is entry specific or not (=header or not)
 #define SCTK_PORTALS_NOT_SPECIFIC 0

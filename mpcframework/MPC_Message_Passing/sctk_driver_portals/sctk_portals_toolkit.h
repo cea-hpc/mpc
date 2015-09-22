@@ -41,6 +41,7 @@ typedef struct sctk_portals_connection_context_s
 {
 	sctk_portals_process_id_t from;
     ptl_pt_index_t entry;
+	ptl_match_bits_t match;
 
 } sctk_portals_connection_context_t;
 
