@@ -89,6 +89,13 @@
 						</gates>
                     </rail>
                     <rail>
+                        <name>portals_mpi_fully</name>
+                        <priority>6</priority>
+						<ondemand>1</ondemand>
+						<topology>fully</topology>
+                        <config>portals_config</config>
+                    </rail>
+                    <rail>
                         <name>portals_mpi</name>
                         <priority>6</priority>
                         <ondemand>1</ondemand>
@@ -133,6 +140,12 @@
                         <name>portals</name>
                         <rails>
                             <rail>portals_mpi</rail>
+                        </rails>
+                    </cli_option>
+                    <cli_option>
+                        <name>fully_portals</name>
+                        <rails>
+                            <rail>portals_mpi_fully</rail>
                         </rails>
                     </cli_option>
                     <cli_option>

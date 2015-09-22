@@ -75,6 +75,9 @@ void sctk_portals_free ( void *msg ) //free isn't atomatic because we reuse memo
 void sctk_portals_add_route(int dest, ptl_process_t id, sctk_rail_info_t *rail, sctk_route_origin_t route_type ){
 	sctk_endpoint_t *new_route;
 
+	sctk_debug("PORTALS: Create route to %d (%lu)", dest, id.phys.pid);
+	if(dest == -1)
+		CRASH();
 	new_route = sctk_malloc ( sizeof ( sctk_endpoint_t ) );
 	assume(new_route != NULL);
 	sctk_endpoint_init(new_route, dest, rail, route_type);
@@ -342,10 +345,10 @@ void sctk_portals_control_message_handler( sctk_rail_info_t *rail, int src_proce
 	assume(size == sizeof(sctk_portals_connection_context_t));
     switch(action){
         case SCTK_PORTALS_CONTROL_MESSAGE_ON_DEMAND_STATIC:
-            sctk_portals_network_connection_to_ctx(source_rank, rail, (sctk_portals_connection_context_t *)data, ROUTE_ORIGIN_STATIC);
+            sctk_portals_network_connection_to_ctx(src_process, rail, (sctk_portals_connection_context_t *)data, ROUTE_ORIGIN_STATIC);
             break;
         case SCTK_PORTALS_CONTROL_MESSAGE_ON_DEMAND_DYNAMIC:
-            sctk_portals_network_connection_to_ctx(source_rank, rail, (sctk_portals_connection_context_t *)data, ROUTE_ORIGIN_DYNAMIC);
+            sctk_portals_network_connection_to_ctx(src_process, rail, (sctk_portals_connection_context_t *)data, ROUTE_ORIGIN_DYNAMIC);
             break;
     }
 }
