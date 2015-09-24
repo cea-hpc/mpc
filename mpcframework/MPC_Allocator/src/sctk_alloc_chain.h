@@ -126,7 +126,7 @@ SCTK_STATIC bool sctk_alloc_chain_refill_mem(struct sctk_alloc_chain* chain,sctk
 SCTK_PUBLIC void sctk_alloc_chain_destroy(struct sctk_alloc_chain * chain,bool force);
 SCTK_PUBLIC void sctk_alloc_chain_purge_rfq(struct sctk_alloc_chain * chain);
 SCTK_STATIC void sctk_alloc_chain_free_macro_bloc(struct sctk_alloc_chain * chain,sctk_alloc_vchunk vchunk);
-SCTK_STATIC bool sctk_alloc_chain_can_remap(struct sctk_alloc_chain * chain);
+extern SCTK_STATIC bool sctk_alloc_chain_can_remap(struct sctk_alloc_chain * chain);
 SCTK_PUBLIC void * sctk_alloc_chain_realloc(struct sctk_alloc_chain * chain, void * ptr, sctk_size_t size);
 SCTK_PUBLIC void sctk_alloc_chain_numa_migrate(struct sctk_alloc_chain * chain, int target_numa_node,bool migrate_chain_struct,bool migrate_content,struct sctk_alloc_mm_source * new_mm_source);
 SCTK_PUBLIC bool sctk_alloc_chain_is_thread_safe(struct sctk_alloc_chain * chain);

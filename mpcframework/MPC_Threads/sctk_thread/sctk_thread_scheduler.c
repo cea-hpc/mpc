@@ -299,7 +299,7 @@ void sctk_centralized_poll_tasks(sctk_thread_generic_scheduler_t* sched){
 }
 }
 
-inline void
+extern inline void
 sctk_centralized_thread_generic_wake_on_task_lock( sctk_thread_generic_scheduler_t* sched,
 				int remove_from_lock_list ){
   sctk_thread_generic_task_t* task_tmp;
@@ -488,7 +488,7 @@ void sctk_multiple_queues_poll_tasks(sctk_thread_generic_scheduler_t* sched){
     sctk_spinlock_unlock(&sctk_multiple_queues_task_lists[core].sctk_multiple_queues_task_list_lock);  
 }
 
-inline void
+extern inline void
 sctk_multiple_queues_thread_generic_wake_on_task_lock( sctk_thread_generic_scheduler_t* sched,
 						       int remove_from_lock_list ){
   sctk_thread_generic_task_t* task_tmp;

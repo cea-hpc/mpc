@@ -61,7 +61,7 @@ sctk_ethread_mxn_self ()
   return task;
 }
 
-inline sctk_ethread_t
+extern inline sctk_ethread_t
 sctk_ethread_mxn_self_check ()
 {
   sctk_ethread_virtual_processor_t *vp;

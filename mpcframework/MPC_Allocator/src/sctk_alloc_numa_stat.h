@@ -70,7 +70,7 @@ struct sctk_alloc_numa_stat_linux_page_entry_s
 /************************* FUNCTION ************************/
 //internal functions
 SCTK_STATIC int sctk_alloc_numa_stat_get_node_of_page(void * ptr);
-SCTK_STATIC void sctk_alloc_numa_stat_at_exit(void);
+extern SCTK_STATIC void sctk_alloc_numa_stat_at_exit(void);
 SCTK_STATIC void sctk_alloc_numa_stat_open_pagemap(void);
 #ifdef HAVE_LINUX_PAGEMAP
 SCTK_STATIC struct sctk_alloc_numa_stat_linux_page_entry_s * sctk_alloc_numa_stat_read_pagemap(sctk_size_t first_page, sctk_size_t last_page);
