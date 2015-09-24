@@ -23,7 +23,7 @@
 #include <sys/time.h>
 #include <libarch.h>
 
-inline double
+double
 sctk_atomics_get_timestamp_gettimeofday ()
 {
   struct timeval tp;
