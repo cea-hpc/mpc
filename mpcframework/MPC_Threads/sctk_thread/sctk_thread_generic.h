@@ -81,7 +81,7 @@ int
 sctk_thread_generic_user_create (sctk_thread_generic_t * threadp,
 				 sctk_thread_generic_attr_t * attr,
 				 void *(*start_routine) (void *), void *arg);
-int
+extern int
 sctk_thread_generic_attr_init (sctk_thread_generic_attr_t * attr);
 
 void
