@@ -84,7 +84,7 @@ sctk_thread_generic_user_create (sctk_thread_generic_t * threadp,
 int
 sctk_thread_generic_attr_init (sctk_thread_generic_attr_t * attr);
 
-inline void
+void
 sctk_thread_generic_check_signals( int select );
 inline void
 sctk_thread_generic_handle_zombies( sctk_thread_generic_scheduler_generic_t* th );
