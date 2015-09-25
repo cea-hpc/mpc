@@ -198,6 +198,12 @@ void sctk_portals_helper_lib_init(sctk_portals_interface_handler_t *interface, s
 		ptable->head[cpt] = (sctk_portals_table_entry_t*)sctk_malloc(sizeof(sctk_portals_table_entry_t));
 		sctk_portals_helper_init_table_entry(ptable->head[cpt], interface, cpt);
 	}
+
+	//init MDs queue
+	sctk_portals_pending_msg_list_t *mds = &ptable->pending_list;
+	mds->head = NULL;
+	mds->nb_msg  = 0;
+	mds->msg_lock = SCTK_SPINLOCK_INITIALIZER;
 }
 
 void sctk_portals_helper_init_table_entry(sctk_portals_table_entry_t* entry, sctk_portals_interface_handler_t *interface, int ind){
@@ -283,7 +289,6 @@ int sctk_portals_helper_to_str ( const void *inval, int invallen, char *outval, 
             '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'
     };
     int i;
-    /*sctk_debug("before = %lu - %lu", ((sctk_portals_process_id_t*)inval)->phys.nid, ((sctk_portals_process_id_t*)inval)->phys.pid);*/
 	if ( invallen * 2 + 1 > outvallen )
     {
         return 1;
@@ -296,29 +301,7 @@ int sctk_portals_helper_to_str ( const void *inval, int invallen, char *outval, 
     }
 
     outval[invallen * 2] = '\0';
-	/*sctk_debug("after = %s", outval);*/
     return 0;
-}
-
-void sctk_portals_helper_bind_to(sctk_portals_interface_handler_t*interface, ptl_process_t remote){
-    ptl_md_t md;
-    ptl_handle_md_t md_handle;
-
-    int idle = 0;
-    sctk_portals_assume ( PtlCTAlloc (*interface, &md.ct_handle ) );
-
-    md.start  		= &idle;
-    md.length 		= sizeof ( int );
-    md.options  	= PTL_MD_EVENT_CT_REPLY;
-    md.eq_handle 	= PTL_EQ_NONE;   		// i.e. don't queue receive events
-
-    sctk_portals_assume ( PtlMDBind (*interface, &md, &md_handle ) );
-
-    ptl_ct_event_t ctc;
-
-    sctk_portals_assume ( PtlGet ( md_handle, 0, md.length, remote, 0, 0, 0, NULL ) ); //getting the init buf
-    sctk_portals_assume ( PtlCTWait ( md.ct_handle, 1, &ctc ) ); //we need to wait the message for routing
-	assert(ctc.failure ==0);
 }
 
 void sctk_portals_helper_init_new_entry(ptl_me_t* me, sctk_portals_interface_handler_t *ni_handler, void* start, size_t size, ptl_match_bits_t match, unsigned int option)
@@ -350,42 +333,51 @@ void sctk_portals_helper_set_bits_from_msg(ptl_match_bits_t* match, void*atomic)
 	*match = sctk_atomics_fetch_and_incr_int(atomic);
 }
 
-void sctk_portals_helper_get_request(void* start, size_t size, ptl_handle_ni_t* handler, ptl_process_t remote, ptl_pt_index_t index, ptl_match_bits_t match, void* ptr){
+void sctk_portals_helper_get_request(sctk_portals_pending_msg_list_t* list, void* start, size_t size, ptl_handle_ni_t* handler, ptl_process_t remote, ptl_pt_index_t index, ptl_match_bits_t match, void* ptr, sctk_portals_request_type_t req_type){
 	
-	ptl_md_t data;
-	ptl_handle_md_t data_handler;
-	ptl_ct_event_t event;
+	sctk_portals_pending_msg_t* msg = sctk_malloc(sizeof(sctk_portals_pending_msg_t));
+
+	msg->ack_type = SCTK_PORTALS_NO_ACK_MSG;
+	msg->data.cat_msg = (ptr == NULL)? SCTK_PORTALS_CAT_RESERVED : SCTK_PORTALS_CAT_REGULAR;
 	
-	sctk_portals_helper_init_memory_descriptor(&data, handler, start, size, SCTK_PORTALS_MD_GET_OPTIONS);
+	msg->data.extra_data = ptr;
+
+	sctk_portals_helper_init_memory_descriptor(&msg->md, handler, start, size, SCTK_PORTALS_MD_GET_OPTIONS);
 
 	//attach MD, load data
-	sctk_portals_assume(PtlMDBind(*handler, &data, &data_handler));
+	sctk_portals_assume(PtlMDBind(*handler, &msg->md, &msg->md_handler));
 	sctk_debug("PORTALS: Get (%lu - %lu - %lu)", remote.phys.pid, index, match);
-	sctk_portals_assume(PtlGet(data_handler, 0, size, remote, index, match, 0, ptr));
+	sctk_portals_assume(PtlGet(msg->md_handler, 0, size, remote, index, match, 0, ptr));
 
-	//wait until ptlGet finish
-	sctk_portals_assume(PtlCTWait(data.ct_handle, 1, &event));
-	assume(event.failure == 0);
-	
-	//release MD entry
-	sctk_portals_assume(PtlMDRelease(data_handler));
+	if(req_type == SCTK_PORTALS_BLOCKING_REQUEST){
+		ptl_ct_event_t event;
+		sctk_portals_assume(PtlCTWait(msg->md.ct_handle, 1, &event));
+		assume(event.failure == 0);
+	}
+
+	sctk_spinlock_lock(&list->msg_lock);
+	LL_APPEND(list->head, msg );
+	sctk_spinlock_unlock(&list->msg_lock);
 }
 
-void sctk_portals_helper_put_request(void* start, size_t size, ptl_handle_ni_t* handler, ptl_process_t remote, ptl_pt_index_t index, ptl_match_bits_t match, void* ptr, ptl_hdr_data_t extra)
+void sctk_portals_helper_put_request(sctk_portals_pending_msg_list_t* list, void* start, size_t size, ptl_handle_ni_t* handler, ptl_process_t remote, ptl_pt_index_t index, ptl_match_bits_t match, void* ptr, ptl_hdr_data_t extra, sctk_portals_request_type_t req_type, sctk_portals_ack_msg_type_t ack_requested)
 {
-	ptl_md_t data;
-	ptl_handle_md_t data_handler;
-	ptl_ct_event_t event;
+	sctk_portals_pending_msg_t* msg = sctk_malloc(sizeof(sctk_portals_pending_msg_t));
 	
-	sctk_portals_helper_init_memory_descriptor(&data, handler, start, size, SCTK_PORTALS_MD_PUT_OPTIONS);
+	msg->ack_type = ack_requested;
+	msg->data.cat_msg = SCTK_PORTALS_CAT_REGULAR;
+	msg->data.extra_data = ptr;
+	
+	sctk_portals_helper_init_memory_descriptor(&msg->md, handler, start, size, SCTK_PORTALS_MD_PUT_OPTIONS);
 
 	//attach MD, load data
-	sctk_portals_assume(PtlMDBind(*handler, &data, &data_handler));
+	sctk_portals_assume(PtlMDBind(*handler, &msg->md, &msg->md_handler));
+	sctk_debug("Addr: %lu, %lu, %lu ", remote.phys.pid, index, match);
 	sctk_portals_assume(PtlPut(
-				data_handler,
+				msg->md_handler,
 				0,
 				size,
-				PTL_NO_ACK_REQ,
+				ack_requested,
 				remote,
 				index,
 				match,
@@ -393,9 +385,17 @@ void sctk_portals_helper_put_request(void* start, size_t size, ptl_handle_ni_t* 
 				ptr,
 				extra
 				));
-	sctk_portals_assume(PtlCTWait(data.ct_handle, 1, &event));
-	assume(event.failure == 0);
-	sctk_portals_assume(PtlMDRelease(data_handler));
+
+	if(req_type == SCTK_PORTALS_BLOCKING_REQUEST){
+		ptl_ct_event_t event;
+		int cpt = (ack_requested == SCTK_PORTALS_ACK_MSG) ? 2 : 1;
+		sctk_portals_assume(PtlCTWait(msg->md.ct_handle, cpt, &event));
+		assume(event.failure == 0);
+	}
+
+	sctk_spinlock_lock(&list->msg_lock);
+	LL_APPEND(list->head, msg);
+	sctk_spinlock_unlock(&list->msg_lock);
 }
 
 inline void sctk_portals_helper_register_new_entry(ptl_handle_ni_t* handler, ptl_pt_index_t index, ptl_me_t* slot, void* ptr)

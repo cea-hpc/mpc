@@ -68,6 +68,11 @@ static void sctk_network_notify_idle_message_portals (sctk_rail_info_t* rail)
 	if( ! sctk_portals_polling_queue_for(rail, mytask)){
 		sctk_portals_polling_queue_for(rail, SCTK_PORTALS_POLL_ALL);
 	}
+	
+	if(sctk_spinlock_trylock(&rail->network.portals.ptable.pending_list.msg_lock) == 0){
+		sctk_portals_poll_pending_msg_list(rail);
+		sctk_spinlock_unlock(&rail->network.portals.ptable.pending_list.msg_lock);
+	}
 }
 
 /**

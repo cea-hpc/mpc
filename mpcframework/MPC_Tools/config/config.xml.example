@@ -71,7 +71,7 @@
 						<name>tcp_mpi</name>
 						<priority>1</priority>
 						<ondemand>1</ondemand>
-						<topology>ring</topology>
+						<topology>fully</topology>
 						<config>tcp_config_mpi</config>
 					</rail>
 					<rail>
@@ -133,7 +133,6 @@
 						<name>multirail_tcp</name>
 						<rails>
 							<rail>tcp_large</rail>
-							<rail>tcp_mpi</rail>
 						</rails>
                     </cli_option>
                     <cli_option>
@@ -152,7 +151,6 @@
                         <name>multirail_portals</name>
                         <rails>
                             <rail>portals_large</rail>
-                            <rail>tcp_mpi</rail>
                         </rails>
                     </cli_option>
 					<cli_option>

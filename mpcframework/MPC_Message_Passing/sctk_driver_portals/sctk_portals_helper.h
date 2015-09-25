@@ -41,10 +41,6 @@ extern "C"
 #define SCTK_PORTALS_BITS_HEADER 0UL
 #define SCTK_PORTALS_BITS_EAGER_SLOT (~(0UL))
 
-#define SCTK_PORTALS_MSG_CAT_REGULAR 0 
-#define SCTK_PORTALS_MSG_CAT_REAGER 1
-#define SCTK_PORTALS_MSG_CAT_CM 2
-#define SCTK_PORTALS_MSG_CAT_RESERVED 3
 
 //is entry specific or not (=header or not)
 #define SCTK_PORTALS_NOT_SPECIFIC 0
@@ -60,7 +56,7 @@ extern "C"
 #define SCTK_PORTALS_ME_PUT_OPTIONS SCTK_PORTALS_ME_OPTIONS | PTL_ME_OP_PUT
 #define SCTK_PORTALS_ME_GET_OPTIONS SCTK_PORTALS_ME_OPTIONS | PTL_ME_OP_GET
 
-#define SCTK_PORTALS_MD_OPTIONS 0
+#define SCTK_PORTALS_MD_OPTIONS PTL_MD_EVENT_CT_ACK
 #define SCTK_PORTALS_MD_PUT_OPTIONS SCTK_PORTALS_MD_OPTIONS | PTL_MD_EVENT_CT_SEND
 #define SCTK_PORTALS_MD_GET_OPTIONS SCTK_PORTALS_MD_OPTIONS | PTL_MD_EVENT_CT_REPLY
 
@@ -81,19 +77,64 @@ extern "C"
         default: sctk_fatal( "=> %s returned failcode %i (line %u)\n", #x, ret, (unsigned int)__LINE__); break; \
     } } while (0)
 
+typedef enum sctk_portals_request_type_e
+{
+	SCTK_PORTALS_BLOCKING_REQUEST,
+	SCTK_PORTALS_NO_BLOCKING_REQUEST
+} sctk_portals_request_type_t;
+
+typedef enum sctk_portals_ack_msg_type_s
+{
+	SCTK_PORTALS_ACK_MSG = PTL_ACK_REQ,
+	SCTK_PORTALS_NO_ACK_MSG = PTL_NO_ACK_REQ
+} sctk_portals_ack_msg_type_t;
+
+typedef enum sctk_portals_slot_category_s
+{
+	SCTK_PORTALS_CAT_REGULAR, 
+	SCTK_PORTALS_CAT_HEADER_RDV,
+	SCTK_PORTALS_CAT_HEADER_EAG,
+	SCTK_PORTALS_CAT_RESERVED
+} sctk_portals_slot_category_t;
+
+typedef struct sctk_portals_list_entry_extra_s
+{
+	sctk_portals_slot_category_t cat_msg;
+	void* extra_data;
+} sctk_portals_list_entry_extra_t;
+
 typedef struct sctk_portals_table_entry_s
 {
 	ptl_pt_index_t                     index;
-	ptl_handle_eq_t                    *event_list;
+	ptl_handle_eq_t *                  event_list;
 	sctk_spinlock_t                    lock;
 	sctk_atomics_int                   entry_cpt;
 } sctk_portals_table_entry_t;
 
+typedef struct sctk_portals_pending_msg_s 
+{
+	ptl_handle_md_t md_handler;
+	ptl_md_t md;
+	sctk_portals_ack_msg_type_t ack_type;
+	struct sctk_portals_list_entry_extra_s data;
+	struct sctk_portals_pending_msg_s* next;
+} sctk_portals_pending_msg_t;
+
+typedef struct sctk_portals_pending_msg_list_s
+{
+	sctk_spinlock_t                    msg_lock;
+	size_t                             nb_msg;
+	struct sctk_portals_pending_msg_s* head;
+
+} sctk_portals_pending_msg_list_t;
+
+
 typedef struct sctk_portals_table_s
 {
 	size_t nb_entries;
-	sctk_spinlock_t					table_lock;
+	sctk_spinlock_t					    table_lock;
 	struct sctk_portals_table_entry_s** head;
+	struct sctk_portals_pending_msg_list_s      pending_list;
 	
 } sctk_portals_table_t;
 
@@ -106,8 +147,8 @@ void sctk_portals_helper_init_memory_descriptor(ptl_md_t* md, sctk_portals_inter
 int sctk_portals_helper_from_str ( const char *inval, void *outval, int outvallen );
 int sctk_portals_helper_to_str ( const void *inval, int invallen, char *outval, int outvallen );
 void sctk_portals_helper_bind_to(sctk_portals_interface_handler_t*interface, ptl_process_t remote);
-void sctk_portals_helper_get_request(void* start, size_t size, ptl_handle_ni_t* handler, ptl_process_t remote, ptl_pt_index_t index, ptl_match_bits_t match, void* ptr);
-void sctk_portals_helper_put_request(void* start, size_t size, ptl_handle_ni_t* handler, ptl_process_t remote, ptl_pt_index_t index, ptl_match_bits_t match, void* ptr, ptl_hdr_data_t extra);
+void sctk_portals_helper_get_request(sctk_portals_pending_msg_list_t* list, void* start, size_t size, ptl_handle_ni_t* handler, ptl_process_t remote, ptl_pt_index_t index, ptl_match_bits_t match, void* ptr, sctk_portals_request_type_t req_type);
+void sctk_portals_helper_put_request(sctk_portals_pending_msg_list_t* list, void* start, size_t size, ptl_handle_ni_t* handler, ptl_process_t remote, ptl_pt_index_t index, ptl_match_bits_t match, void* ptr, ptl_hdr_data_t extra, sctk_portals_request_type_t req_type, sctk_portals_ack_msg_type_t ack_requested);
 inline void sctk_portals_helper_register_new_entry(ptl_handle_ni_t* handler, ptl_pt_index_t index, ptl_me_t* slot, void* ptr);
 
 #endif

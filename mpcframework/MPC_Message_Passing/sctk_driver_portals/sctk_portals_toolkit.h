@@ -37,6 +37,12 @@ typedef struct sctk_endpoint_s sctk_endpoint_t;
 typedef struct sctk_rail_info_s sctk_rail_info_t;
 typedef struct sctk_thread_ptp_message_s sctk_thread_ptp_message_t;
 
+typedef enum
+{
+	SCTK_PORTALS_CONTROL_MESSAGE_ON_DEMAND_STATIC,
+	SCTK_PORTALS_CONTROL_MESSAGE_ON_DEMAND_DYNAMIC
+} sctk_portals_control_message_type_t;
+
 typedef struct sctk_portals_connection_context_s
 {
 	sctk_portals_process_id_t from;
@@ -44,12 +50,6 @@ typedef struct sctk_portals_connection_context_s
 	ptl_match_bits_t match;
 
 } sctk_portals_connection_context_t;
-
-typedef enum
-{
-	SCTK_PORTALS_CONTROL_MESSAGE_ON_DEMAND_STATIC,
-	SCTK_PORTALS_CONTROL_MESSAGE_ON_DEMAND_DYNAMIC
-} sctk_portals_control_message_t;
 
 void sctk_network_init_portals_all ( sctk_rail_info_t *rail );
 void sctk_portals_on_demand_connection_handler( sctk_rail_info_t *rail, int dest_process );
