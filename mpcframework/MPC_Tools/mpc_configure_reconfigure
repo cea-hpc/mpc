@@ -38,7 +38,7 @@ echo "\"" >> reconfigure
 else
 printf "CONFIGURE_LINE=\"$0 ">> reconfigure
 for i in "$@" ; do 
-printf " \'$i\'">> reconfigure
+printf " '$i'">> reconfigure
 done
 echo "\"" >> reconfigure
 fi

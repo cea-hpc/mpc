@@ -452,8 +452,10 @@ typedef struct
 	void *rdma_src;
 	void *route_table;
 
+#ifdef MPC_USE_PORTALS
 	/* Portals infos */
 	struct sctk_portals_msg_header_s portals;
+#endif
 
 	/* XXX:Specific to IB */
 	struct sctk_ib_msg_header_s ib;

@@ -22,6 +22,8 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
+#ifdef MPC_USE_PORTALS
+
 #include <sctk_portals_helper.h>
 #include <sctk_debug.h>
 #include <sctk_accessor.h>
@@ -411,4 +413,4 @@ inline void sctk_portals_helper_register_new_entry(ptl_handle_ni_t* handler, ptl
 		&slot_handler
 		));
 }
-
+#endif // MPC_USE_PORTALS
