@@ -10,6 +10,8 @@
 #include "sctk_shm_raw_queues.h"
 #include "sctk_shm.h"
 
+#include "sctk_fast_cpy.h"
+
 static int sctk_shm_proc_local_rank_on_node = -1;
 static volatile int sctk_shm_driver_initialized = 0;
 
@@ -18,6 +20,8 @@ static char* sctk_qemu_shm_process_filename = NULL;
 static size_t sctk_qemu_shm_process_size = 0;
 static void* sctk_qemu_shm_shmem_base = NULL;
 #endif /* MPC_USE_VIRTUAL_MACHINE */
+
+#define sctk_min(a, b)  ((a) < (b) ? (a) : (b))
 
 // FROM Henry S. Warren, Jr.'s "Hacker's Delight."
 static long sctk_shm_roundup_powerof2(unsigned long n)
@@ -63,20 +67,56 @@ static void
 sctk_network_send_message_endpoint_shm ( sctk_thread_ptp_message_t *msg, sctk_endpoint_t *endpoint )
 {
     vcli_cell_t * __cell = NULL;
+
     while(!__cell)
         __cell = vcli_raw_pop_cell(SCTK_QEMU_SHM_FREE_QUEUE_ID, endpoint->data.shm.dest);
-
+	
     /* get free cells from dest queue */
-	__cell->size = SCTK_MSG_SIZE ( msg ) + sizeof ( sctk_thread_ptp_message_body_t );
-    assume_m(__cell->size < VCLI_CELLS_SIZE, "ERROR: msg too big");
+    //if( SCTK_MSG_SIZE ( msg ) + sizeof ( sctk_thread_ptp_message_body_t ) < VCLI_CELLS_SIZE ) 
+    //if( SCTK_MSG_SIZE ( msg ) + sizeof ( sctk_thread_ptp_message_t ) < 2*1024 ) 
+    if( SCTK_MSG_SIZE ( msg ) + sizeof ( sctk_thread_ptp_message_t ) < 8*1024 ) 
+    {
+    	__cell->size = SCTK_MSG_SIZE ( msg ) + sizeof ( sctk_thread_ptp_message_body_t );
+	__cell->msg_type = SCTK_SHM_EAGER;
+    	FAST_MEMCPY( __cell->data, (char*) msg, sizeof ( sctk_thread_ptp_message_body_t ));       
 
-    memcpy( __cell->data, (char*) msg, sizeof ( sctk_thread_ptp_message_body_t ));       
-
-    if( SCTK_MSG_SIZE ( msg ) > 0)
-        sctk_net_copy_in_buffer(msg, (char*) __cell->data + sizeof(sctk_thread_ptp_message_body_t));          
+    	if(SCTK_MSG_SIZE ( msg ) > 0)
+        	sctk_net_copy_in_buffer( msg, (char*) __cell->data + sizeof(sctk_thread_ptp_message_body_t) );          
         
-    vcli_raw_push_cell(SCTK_QEMU_SHM_RECV_QUEUE_ID, __cell);       
-    sctk_complete_and_free_message( msg ); 
+    	vcli_raw_push_cell(SCTK_QEMU_SHM_RECV_QUEUE_ID, __cell);       
+    	sctk_complete_and_free_message( msg ); 
+    }
+    else
+    {
+	//fprintf(stdout, "Send CMA SHM msg\n");
+	struct iovec * tmp;
+	sctk_shm_iovec_info_t * shm_iov;
+    	__cell->size = sizeof ( sctk_thread_ptp_message_body_t );
+	
+    	shm_iov = (sctk_shm_iovec_info_t *) sctk_malloc( 1 * sizeof( sctk_shm_iovec_info_t ));
+    	assume(shm_iov != NULL);
+
+	__cell->msg_type = SCTK_SHM_RDMA;
+	
+    	FAST_MEMCPY( __cell->data, (char*) msg, sizeof ( sctk_thread_ptp_message_body_t ));       
+	shm_iov->msg = msg;
+	shm_iov->pid = getpid();
+	shm_iov->mpi_src = sctk_get_local_process_rank();
+        //fprintf(stdout, "value : %d\n", shm_iov->mpi_src);
+	
+  	sctk_get_iovec_in_buffer( msg, &tmp, &(shm_iov->len));	
+	shm_iov->ptr = (struct iovec*)((char*) __cell->data + sizeof(sctk_thread_ptp_message_body_t) + sizeof(sctk_shm_iovec_info_t));
+	
+	assume( (char*) shm_iov->ptr + sizeof(struct iovec) < ( char*) __cell + VCLI_CELLS_SIZE );
+	assume( sizeof(sctk_thread_ptp_message_body_t) + sizeof(sctk_shm_iovec_info_t) + sizeof(struct iovec) < VCLI_CELLS_SIZE );
+	
+	FAST_MEMCPY(( char*) __cell->data + sizeof(sctk_thread_ptp_message_body_t), shm_iov, sizeof(sctk_shm_iovec_info_t));
+
+	FAST_MEMCPY(shm_iov->ptr, tmp, shm_iov->len * sizeof(struct iovec));
+	//fprintf(stdout, "push to dest queue\n");
+    	vcli_raw_push_cell(SCTK_QEMU_SHM_RECV_QUEUE_ID, __cell);       
+	//fprintf(stdout, "pushed to dest queue\n");
+    }
 }
 
 static void 
@@ -105,13 +145,133 @@ sctk_network_notify_recv_message_shm ( sctk_thread_ptp_message_t *msg, sctk_rail
 {
 }
 
+static sctk_thread_ptp_message_t *
+sctk_network_perform_eager_msg_shm( vcli_cell_t * __cell )
+{
+    size_t size;
+    sctk_thread_ptp_message_t *msg; 
+    void *inb, *body;
+
+    size = __cell->size - sizeof ( sctk_thread_ptp_message_body_t ) + sizeof ( sctk_thread_ptp_message_t );
+    msg = sctk_malloc ( size );
+    assume(msg != NULL);
+
+    /* copy header */ 
+    inb = __cell->data;
+    FAST_MEMCPY( (char *) msg, __cell->data, sizeof ( sctk_thread_ptp_message_body_t ));       
+    if( size > sizeof ( sctk_thread_ptp_message_t ))
+    {
+        /* copy msg */
+        body = ( char * ) msg + sizeof ( sctk_thread_ptp_message_t );
+        inb += sizeof ( sctk_thread_ptp_message_body_t );
+        size = size -  sizeof ( sctk_thread_ptp_message_t );
+        FAST_MEMCPY(body, inb, size);       
+    }
+    
+    SCTK_MSG_COMPLETION_FLAG_SET ( msg , NULL );
+    msg->tail.message_type = SCTK_MESSAGE_NETWORK;
+    return msg;	
+}
+ 
+static sctk_thread_ptp_message_t *
+sctk_network_perform_rdma_msg_shm( vcli_cell_t * __cell )
+{
+    size_t size;
+    sctk_shm_iovec_info_t * shm_iov;
+    sctk_thread_ptp_message_t * msg; 
+    struct iov * tmp;
+    void *inb;
+	
+    msg = sctk_malloc ( sizeof ( sctk_thread_ptp_message_t )  + sizeof(sctk_shm_iovec_info_t) );
+    assume(msg != NULL);
+
+    shm_iov = (sctk_shm_iovec_info_t *) ((char*) msg + sizeof ( sctk_thread_ptp_message_t ));
+    FAST_MEMCPY( msg, __cell->data, sizeof ( sctk_thread_ptp_message_body_t ));       
+    FAST_MEMCPY( shm_iov, __cell->data + sizeof ( sctk_thread_ptp_message_body_t ), sizeof(sctk_shm_iovec_info_t));
+   	
+    tmp = sctk_malloc( shm_iov->len * sizeof(struct iovec));
+    assume( tmp != NULL);
+    
+    FAST_MEMCPY(tmp, (char *) __cell->data + sizeof ( sctk_thread_ptp_message_body_t ) + sizeof(sctk_shm_iovec_info_t), shm_iov->len * sizeof(struct iovec));
+    shm_iov->ptr = tmp;
+        
+    SCTK_MSG_COMPLETION_FLAG_SET ( msg , NULL );
+    msg->tail.message_type = SCTK_MESSAGE_NETWORK;
+    return msg;	
+}
+
+void sctk_shm_rdma_message_copy ( sctk_message_to_copy_t * tmp )
+{
+    	vcli_cell_t * __cell = NULL;
+	sctk_thread_ptp_message_t *send;
+        sctk_thread_ptp_message_t *recv;
+        char *body;
+	struct iovec * recv_iov, * send_iov;
+	sctk_shm_iovec_info_t * shm_send_iov;
+	int nread;
+
+        send = tmp->msg_send;
+        recv = tmp->msg_recv;
+
+        body = ( char * ) send + sizeof ( sctk_thread_ptp_message_t );
+        SCTK_MSG_COMPLETION_FLAG_SET ( send , NULL );
+
+        sctk_nodebug ( "MSG |%s|", ( char * ) body );
+        switch ( recv->tail.message_type )
+        {
+                case SCTK_MESSAGE_CONTIGUOUS:
+                {
+                        size_t size;
+                        size = SCTK_MSG_SIZE ( send );
+                        size = sctk_min ( SCTK_MSG_SIZE ( send ), recv->tail.message.contiguous.size );
+			
+			recv_iov = (struct iovec *) sctk_malloc( sizeof( struct iovec ));
+			recv_iov->iov_base = recv->tail.message.contiguous.addr;
+			recv_iov->iov_len = size;	
+			
+			send_iov = (struct iovec *) sctk_malloc( sizeof( struct iovec ));
+			shm_send_iov = (sctk_shm_iovec_info_t *)(( char * ) send + sizeof ( sctk_thread_ptp_message_t ));
+			send_iov->iov_base = shm_send_iov->ptr->iov_base;	
+			send_iov->iov_len = size;	
+			
+			nread = process_vm_readv(shm_send_iov->pid, recv_iov, 1, send_iov, 1, 0);
+        		if(nread < 0)
+           	 		perror("process_vm_readv:");
+			
+                        sctk_message_completion_and_free ( send, recv );
+			sctk_free(recv_iov);
+			sctk_free(send_iov);
+                        break;
+                }
+		default:
+			abort();
+	}
+
+	//fprintf(stdout, "[COPY] resend to %d\n", shm_send_iov->mpi_src);
+    	while(!__cell)
+        	__cell = vcli_raw_pop_cell(SCTK_QEMU_SHM_FREE_QUEUE_ID, shm_send_iov->mpi_src);
+
+    	/* get free cells from dest queue */
+	__cell->msg_type = SCTK_SHM_CMPL;
+   	__cell->size = sizeof ( sctk_thread_ptp_message_body_t );
+	FAST_MEMCPY( __cell->data, shm_send_iov, sizeof(sctk_shm_iovec_info_t) );
+	//fprintf(stdout, "[COPY] push to src queue\n");
+    	vcli_raw_push_cell(SCTK_QEMU_SHM_RECV_QUEUE_ID, __cell);       
+	//fprintf(stdout, "[COPY] pushed to src queue\n");
+}
+
+void sctk_shm_rdma_message_free ( void * tmp )
+{
+	//sctk_shm_iovec_info_t * iov = (sctk_shm_iovec_info_t *) ((char*) tmp + sizeof ( sctk_thread_ptp_message_t ));
+	//sctk_free( iov->ptr );
+	//sctk_free( tmp );
+}
+
 static void 
 sctk_network_notify_idle_message_shm ( sctk_rail_info_t *rail )
 {
-    size_t size;
     vcli_cell_t * __cell;
     sctk_thread_ptp_message_t *msg; 
-    void *inb, *body;
 
     if(!sctk_shm_driver_initialized)
         return;
@@ -120,36 +280,41 @@ sctk_network_notify_idle_message_shm ( sctk_rail_info_t *rail )
 
     if( __cell == NULL)
         return;
-    
+
     assume_m( __cell->size >= sizeof ( sctk_thread_ptp_message_body_t ), "Incorrect Msg\n");
+    
+    sctk_shm_iovec_info_t* shm_iov;
 
-    size = __cell->size - sizeof ( sctk_thread_ptp_message_body_t ) + sizeof ( sctk_thread_ptp_message_t );
-    msg = sctk_malloc ( size );
-    assume(msg != NULL);
-
-    /* copy header */ 
-    inb = __cell->data;
-    memcpy( (char *) msg, __cell->data, sizeof ( sctk_thread_ptp_message_body_t ));       
-    if( size > sizeof ( sctk_thread_ptp_message_t ))
+    switch(__cell->msg_type)
     {
-        /* copy msg */
-        body = ( char * ) msg + sizeof ( sctk_thread_ptp_message_t );
-        inb += sizeof ( sctk_thread_ptp_message_body_t );
-        size = size -  sizeof ( sctk_thread_ptp_message_t );
-        memcpy(body, inb, size);       
+	case SCTK_SHM_EAGER: 
+		msg = sctk_network_perform_eager_msg_shm( __cell );
+    		vcli_raw_push_cell(SCTK_QEMU_SHM_FREE_QUEUE_ID, __cell);       
+    		if ( SCTK_MSG_COMMUNICATOR ( msg ) < 0 )
+	    		return;
+    		sctk_rebuild_header ( msg ); 
+    		sctk_reinit_header ( msg, sctk_free, sctk_net_message_copy );
+    		sctk_send_message_from_network_shm ( msg );
+		break;
+	case SCTK_SHM_RDMA: 
+		msg = sctk_network_perform_rdma_msg_shm( __cell );
+    		vcli_raw_push_cell(SCTK_QEMU_SHM_FREE_QUEUE_ID, __cell);       
+    		if ( SCTK_MSG_COMMUNICATOR ( msg ) < 0 )
+	    		return;
+    		sctk_rebuild_header ( msg ); 
+    		sctk_reinit_header ( msg, sctk_shm_rdma_message_free, sctk_shm_rdma_message_copy );
+    		sctk_send_message_from_network_shm ( msg );
+		break;
+	case SCTK_SHM_CMPL:
+		shm_iov = __cell->data;
+		msg = shm_iov->msg;
+    		sctk_complete_and_free_message( msg ); 
+    		vcli_raw_push_cell(SCTK_QEMU_SHM_FREE_QUEUE_ID, __cell);       
+		break;
+	default:
+		abort();
     }
-    
-    SCTK_MSG_COMPLETION_FLAG_SET ( msg , NULL );
-    msg->tail.message_type = SCTK_MESSAGE_NETWORK;
-	
-    if ( SCTK_MSG_COMMUNICATOR ( msg ) < 0 )
-	    return;
-    
-    vcli_raw_push_cell(SCTK_QEMU_SHM_FREE_QUEUE_ID, __cell);       
 
-    sctk_rebuild_header ( msg ); 
-    sctk_reinit_header ( msg, sctk_free, sctk_net_message_copy );
-    sctk_send_message_from_network_shm ( msg );
 }
 
 static void 
@@ -221,7 +386,7 @@ sctk_shm_add_region_master(sctk_size_t size,sctk_alloc_mapper_handler_t * handle
 	char *filename;
 	int fd;
 	void *ptr;
-    bool status;
+        bool status;
 	
 	//check args
 	assert(handler != NULL);
@@ -240,7 +405,7 @@ sctk_shm_add_region_master(sctk_size_t size,sctk_alloc_mapper_handler_t * handle
 	status = handler->send_handler(filename,handler->option);
 	assume_m(status,"Fail to send the SHM filename to other participants.");
 
-    sctk_pmi_barrier();
+        sctk_pmi_barrier();
 
 	close(fd);
 	sctk_shm_mapper_unlink(filename);
@@ -273,7 +438,7 @@ static void* sctk_shm_add_region(sctk_size_t size,sctk_shm_mapper_role_t role,
 
 static void sctk_shm_add_route(int dest,int shm_dest,sctk_rail_info_t *rail )
 {
-	sctk_endpoint_t *new_route;
+    sctk_endpoint_t *new_route;
 
     /* Allocate a new route */
     new_route = sctk_malloc ( sizeof ( sctk_endpoint_t ) );
@@ -288,7 +453,8 @@ static void sctk_shm_add_route(int dest,int shm_dest,sctk_rail_info_t *rail )
 
     /* set the route as connected */
     sctk_endpoint_set_state ( new_route, STATE_CONNECTED );
-    
+
+    //fprintf(stdout, "Add route to %d with endpoint %d\n", dest, shm_dest);     
     return;
 }
 
@@ -320,6 +486,7 @@ static void sctk_shm_init_raw_queue(size_t sctk_shmem_size, int sctk_shmem_cells
         if( shm_role == SCTK_SHM_MAPPER_ROLE_MASTER && sctk_mpc_is_vmhost() )
         {
             printf("MPC is vmhost process\n");
+            //vcli_raw_reset_infos_reset( rank );
             sctk_qemu_shm_shmem_base = shm_base;
             shm_base += sizeof( sctk_shm_guest_pmi_infos_t );
         }
@@ -329,7 +496,7 @@ static void sctk_shm_init_raw_queue(size_t sctk_shmem_size, int sctk_shmem_cells
 
         if( shm_role == SCTK_SHM_MAPPER_ROLE_MASTER )
         {
-            vcli_raw_reset_infos_reset(rank);
+            vcli_raw_reset_infos_reset( rank );
 #ifdef MPC_USE_VIRTUAL_MACHINE
             sctk_set_qemu_shm_process_filename(pmi_handler->gen_filename(pmi_handler->option));
             sctk_set_qemu_shm_process_size(sctk_shmem_size);
@@ -408,12 +575,14 @@ void sctk_network_init_shm ( sctk_rail_info_t *rail )
         sctk_vcli_raw_infos_init(local_process_number);
         for( i=0; i<local_process_number; i++)
         {
-            sctk_shm_init_raw_queue(sctk_shmem_size, sctk_shmem_cells_num, i);
-            sctk_shm_add_route(first_proc_on_node+i,i,rail);
+            	sctk_shm_init_raw_queue(sctk_shmem_size, sctk_shmem_cells_num, i);
+		if( i != local_process_rank)
+            		sctk_shm_add_route(first_proc_on_node+i,i,rail);
         }
 #ifdef MPC_USE_VIRTUAL_MACHINE
     }
 #endif /* MPC_USE_VIRTUAL_MACHINE */    
 
     sctk_shm_driver_initialized = 1;
+    fprintf(stdout, "vcli cells size : %d\n", VCLI_CELLS_SIZE);
 }

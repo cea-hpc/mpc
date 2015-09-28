@@ -126,7 +126,7 @@ sctk_vcli_raw_get_state(void *shmem_base, size_t shmem_size,int cells_num)
     
     const void *max_addr = (void*) ((char*) shmem_base + shmem_size);
     vcli->cells_num = cells_num;
-
+    vcli->raw_queue_pop_lock = SCTK_SPINLOCK_INITIALIZER;
     vcli->send_queue = vcli_raw_queue_base(shmem_base,SCTK_QEMU_SHM_SEND_QUEUE_ID);
     vcli->recv_queue = vcli_raw_queue_base(shmem_base,SCTK_QEMU_SHM_RECV_QUEUE_ID);
     vcli->cmpl_queue = vcli_raw_queue_base(shmem_base,SCTK_QEMU_SHM_CMPL_QUEUE_ID);
@@ -151,6 +151,7 @@ sctk_vcli_raw_queue_reset(vcli_raw_state_t *vcli, vcli_queue_t queue)
     {
         cell = (lfq_cell_t *)(vcli->cells_pool)+i;
         cell->queue = queue;
+	fprintf(stdout, "Add cell to queue: %d\n", queue);
         cell->next = 0;
         sctk_vcli_raw_lfq_enqueue(vcli->free_queue, vcli->cells_pool, cell);
         

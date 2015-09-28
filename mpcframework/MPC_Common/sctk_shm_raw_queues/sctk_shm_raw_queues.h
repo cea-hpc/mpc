@@ -9,6 +9,8 @@
 typedef uint16_t vcli_queue_t;
 typedef uint16_t vcli_port_t;
 
+typedef enum {SCTK_SHM_EAGER, SCTK_SHM_RDMA, SCTK_SHM_CMPL} vcli_shm_type_t;
+
 enum vcli_raw_shm_queue_type_e
 {
     SCTK_QEMU_SHM_SEND_QUEUE_ID = 0, 
@@ -23,6 +25,7 @@ struct vcli_cell_s{
     uint16_t size;                  /* Amount of data packed in a cell */
     vcli_port_t from_port;          /* Port from which the cell was sent */
     vcli_port_t to_port;            /* Port to which the cell is adressed */
+    vcli_shm_type_t msg_type;
     void *opaque;                   /* Opaque data used by the sender */
     char data[VCLI_CELLS_SIZE];     /* Actual data transferred */
     char pad[CACHELINE_SIZE];       /* Prevent false sharing with container */

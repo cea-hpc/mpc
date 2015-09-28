@@ -38,7 +38,6 @@ struct iovec * sctk_net_convert_msg_to_iovec(sctk_thread_ptp_message_t *,int*,si
 /* sctk_net_copy for iovec */
 void sctk_net_copy_msg_from_iovec( sctk_message_to_copy_t *, sctk_iovec_cpy_t); 
 
-
 void sctk_net_copy_in_buffer ( sctk_thread_ptp_message_t *msg,
                                char *buffer );
 

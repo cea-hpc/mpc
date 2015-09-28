@@ -33,6 +33,7 @@ struct vcli_raw_state_s
 {
     int cells_num; 
     int cells_size; 
+    sctk_spinlock_t raw_queue_pop_lock;
     volatile lf_queue_t *send_queue; 
     volatile lf_queue_t *recv_queue;
     volatile lf_queue_t *cmpl_queue;

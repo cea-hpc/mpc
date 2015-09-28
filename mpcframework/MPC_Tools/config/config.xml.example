@@ -136,13 +136,6 @@
                         			<ondemand>0</ondemand>
                         			<topology>fully</topology>
                         			<config>shm_config_mpi</config>
-                        			<gates>
-                            				<gate>
-                                				<maxsize>
-                                    					<value>10KB</value>
-                                				</maxsize>
-                            				</gate>
-                        			</gates>
                     			</rail>
 				</rails>
 				<cli_options>

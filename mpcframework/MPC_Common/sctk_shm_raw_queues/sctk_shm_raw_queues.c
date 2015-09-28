@@ -34,7 +34,7 @@ void sctk_vcli_raw_infos_add(void* shmem_base, size_t shmem_size,
     assume(sctk_vcli_raw_infos != NULL);
     assume(sctk_vcli_raw_infos[vcli_master] == NULL);
     sctk_vcli_raw_infos[vcli_master] = 
-        sctk_vcli_raw_get_state(shmem_base,shmem_size,cells_num);
+    sctk_vcli_raw_get_state(shmem_base,shmem_size,cells_num);
     assume(sctk_vcli_raw_infos[vcli_master] != NULL);
     return; 
 }
@@ -75,7 +75,7 @@ vcli_cell_t *
 vcli_raw_pop_cell(vcli_raw_shm_queue_type_t type, vcli_queue_t queue)
 {
     vcli_raw_state_t *vcli = sctk_vcli_get_raw_infos(queue);
-    volatile lf_queue_t *type_queue = vcli_raw_get_queue_by_type(type,queue);
+    volatile lf_queue_t *type_queue = vcli_raw_get_queue_by_type(type, queue);
     return lfq_to_vcli(lfq_dequeue(type_queue,vcli->cells_pool));
 }
 
