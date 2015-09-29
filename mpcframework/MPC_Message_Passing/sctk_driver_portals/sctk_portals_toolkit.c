@@ -29,6 +29,20 @@
 #include <sctk_pmi.h>
 #include <sctk_control_messages.h>
 
+static void printpayload( void * pl , size_t size )
+{
+	int i;
+
+
+	sctk_info("======== %ld ========", size);
+	sctk_info("Address : %p", pl);
+	for( i = 0 ; i < size; i++ )
+	{
+		sctk_info("%d = [%hu]  ",i,  ((char *)pl)[i] );
+	}
+	sctk_info("===================");
+}
+
 /**
  * @brief Portals handler for getting a message
  *
@@ -39,17 +53,24 @@
  * @param tmp sender/recever ptp messages
  */
 void sctk_portals_message_copy ( sctk_message_to_copy_t *tmp ){
-	
+
 	sctk_thread_ptp_message_t* sender;
 	sctk_thread_ptp_message_t* recver;
 	sctk_portals_msg_header_t* remote_info;
-
+	sctk_portals_request_type_t type = SCTK_PORTALS_NO_BLOCKING_REQUEST;
 	sender = tmp->msg_send;
 	recver = tmp->msg_recv;
 	remote_info = &sender->tail.portals;
+	sctk_portals_list_entry_extra_t stuff;
+	stuff.cat_msg = SCTK_PORTALS_CAT_REGULAR;
+	stuff.extra_data = recver;
+	if(sctk_message_class_is_control_message(SCTK_MSG_SPECIFIC_CLASS(sender))){
+		sctk_debug("CONTROL MESSAGE COPY");
+		type = SCTK_PORTALS_BLOCKING_REQUEST;
+		stuff.cat_msg = SCTK_PORTALS_CAT_CTLMESSAGE;
+	}
 
-	sctk_portals_helper_get_request(remote_info->list, recver->tail.message.contiguous.addr, SCTK_MSG_SIZE(recver), remote_info->handler, remote_info->remote, remote_info->remote_index, remote_info->tag, recver, SCTK_PORTALS_NO_BLOCKING_REQUEST);
-	sctk_debug("Get started");
+	sctk_portals_helper_get_request(remote_info->list, recver->tail.message.contiguous.addr, SCTK_MSG_SIZE(recver), remote_info->handler, remote_info->remote, remote_info->remote_index, remote_info->tag, &stuff, type);
 }
 
 /**
@@ -70,13 +91,13 @@ void sctk_portals_free ( void *msg ) //free isn't atomatic because we reuse memo
  * @param rail
  * @param route_type
  */
-void sctk_portals_add_route(int dest, ptl_process_t id, sctk_rail_info_t *rail, sctk_route_origin_t route_type, sctk_endpoint_state_t state){
+sctk_endpoint_t*  sctk_portals_add_route(int dest, ptl_process_t id, sctk_rail_info_t *rail, sctk_route_origin_t route_type, sctk_endpoint_state_t state){
 	sctk_endpoint_t *new_route;
 
 	new_route = sctk_malloc ( sizeof ( sctk_endpoint_t ) );
 	assume(new_route != NULL);
 	sctk_endpoint_init(new_route, dest, rail, route_type);
-	sctk_debug("PORTALS: Register %d -> %d", sctk_get_process_rank(), dest);
+	sctk_nodebug("PORTALS: Register %d -> %d", sctk_get_process_rank(), dest);
 	new_route->data.portals.dest = id;
 	if(route_type == ROUTE_ORIGIN_STATIC){
 		sctk_rail_add_static_route(rail, dest, new_route);
@@ -84,6 +105,8 @@ void sctk_portals_add_route(int dest, ptl_process_t id, sctk_rail_info_t *rail, 
 		sctk_rail_add_dynamic_route(rail, dest, new_route);
 	}
 	sctk_endpoint_set_state(new_route, state);
+
+	return new_route;
 }
 
 
@@ -105,30 +128,40 @@ void sctk_portals_send_put ( sctk_endpoint_t *endpoint, sctk_thread_ptp_message_
 	ptl_match_bits_t match;
 	ptl_me_t slot;
 
+	sctk_portals_list_entry_extra_t *stuff = sctk_malloc(sizeof(sctk_portals_list_entry_extra_t));
+	stuff->cat_msg = SCTK_PORTALS_CAT_REGULAR;
+	stuff->extra_data = msg;
+
 	//compute remote Portals entry
 	remote_entry = SCTK_MSG_DEST_TASK(msg) % prail->ptable.nb_entries;
 	local_entry = SCTK_MSG_SRC_TASK(msg) % prail->ptable.nb_entries;
-	
+
+	if(sctk_message_class_is_control_message(SCTK_MSG_SPECIFIC_CLASS(msg))){
+		local_entry = prail->ptable.nb_entries;
+		stuff->cat_msg = SCTK_PORTALS_CAT_CTLMESSAGE;
+	}
+
 	//if routing : apply Get() before sending header
 	if(SCTK_MSG_SRC_PROCESS(msg) != sctk_get_process_rank()){
 		ptl_me_t me;
-		payload = sctk_malloc(sizeof(SCTK_MSG_SIZE(msg)));
-		payload_size = SCTK_MSG_SIZE(msg);
 		sctk_portals_msg_header_t *remote_info = &msg->tail.portals;
-		sctk_debug("PORTALS: ROUTING - GET FROM %lu, %d, %d", remote_info->remote.phys.pid, remote_info->remote_index, remote_info->tag);
-		sctk_portals_helper_get_request(&prail->ptable.pending_list, payload, SCTK_MSG_SIZE(msg), remote_info->handler, remote_info->remote, remote_info->remote_index, remote_info->tag, NULL, SCTK_PORTALS_BLOCKING_REQUEST);
+
+		payload = sctk_malloc(SCTK_MSG_SIZE(msg));
+		payload_size = SCTK_MSG_SIZE(msg);
+		stuff->cat_msg = SCTK_PORTALS_CAT_ROUTING_MSG;
+		stuff->extra_data = payload;
+
+		sctk_nodebug("PORTALS: ROUTING - GET FROM %lu, %d, %d", remote_info->remote.phys.pid, remote_info->remote_index, remote_info->tag);
+		sctk_portals_helper_get_request(&prail->ptable.pending_list, payload, payload_size, remote_info->handler, remote_info->remote, remote_info->remote_index, remote_info->tag, stuff, SCTK_PORTALS_BLOCKING_REQUEST);
 	}
 	else {
 		payload = msg->tail.message.contiguous.addr;
 		payload_size = msg->tail.message.contiguous.size;
 	}
-	
-	if(sctk_message_class_is_control_message(SCTK_MSG_SPECIFIC_CLASS(msg))){
-		local_entry = prail->ptable.nb_entries - 1;
-	}
+
 	//if control message, set the good entry to match
 	sctk_portals_helper_set_bits_from_msg(&match, &prail->ptable.head[local_entry]->entry_cpt);
-	
+
 	if(sctk_message_class_is_control_message(SCTK_MSG_SPECIFIC_CLASS(msg))){
 		sctk_debug("PORTALS: SEND CONTROL_MESSAGE TO   (%d -> %d) [%lu -> %lu] - %lu - %lu", SCTK_MSG_SRC_PROCESS(msg),  SCTK_MSG_DEST_PROCESS(msg), prail->current_id.phys.pid,proute->dest.phys.pid, local_entry, match);
 	}
@@ -137,11 +170,8 @@ void sctk_portals_send_put ( sctk_endpoint_t *endpoint, sctk_thread_ptp_message_
 	}
 
 	sctk_portals_helper_init_new_entry(&slot, &prail->interface_handler, payload, payload_size, match, SCTK_PORTALS_ME_GET_OPTIONS);
-	sctk_portals_list_entry_extra_t* stuff = sctk_malloc(sizeof(sctk_portals_list_entry_extra_t));
-	stuff->cat_msg = SCTK_PORTALS_CAT_REGULAR;
-	stuff->extra_data = msg;
 	sctk_portals_helper_register_new_entry(&prail->interface_handler, local_entry, &slot, stuff);
-	sctk_portals_helper_put_request(&prail->ptable.pending_list ,msg, sizeof(sctk_thread_ptp_message_body_t), &prail->interface_handler, proute->dest, remote_entry, SCTK_PORTALS_BITS_HEADER, NULL, match, SCTK_PORTALS_NO_BLOCKING_REQUEST, SCTK_PORTALS_NO_ACK_MSG);	
+	sctk_portals_helper_put_request(&prail->ptable.pending_list ,msg, sizeof(sctk_thread_ptp_message_body_t), &prail->interface_handler, proute->dest, remote_entry, SCTK_PORTALS_BITS_HEADER, stuff, match, SCTK_PORTALS_NO_BLOCKING_REQUEST, SCTK_PORTALS_NO_ACK_MSG);
 }
 /**
  * @brief When a message have been sent, the source have to notify and unlock tasks waiting for completion
@@ -156,6 +186,7 @@ void sctk_portals_ack_get (sctk_rail_info_t* rail, ptl_event_t* event){
 	//retrieve msg address for completion
 	sctk_portals_list_entry_extra_t* stuff = event->user_ptr;
 	sctk_thread_ptp_message_t* content = (sctk_thread_ptp_message_t*)stuff->extra_data;
+	sctk_debug("PORTALS: Free Message (FROM PUT) %d", SCTK_MSG_DEST_PROCESS(content));
 	sctk_complete_and_free_message(content);
 
 	//adding a new ME to replace the consumed one
@@ -172,7 +203,7 @@ void sctk_portals_ack_get (sctk_rail_info_t* rail, ptl_event_t* event){
 void sctk_portals_recv_put (sctk_rail_info_t* rail, ptl_event_t* event){
 	sctk_thread_ptp_message_t* content = event->start;
 
-	
+
 	//store needed data in message tail (forwarded to sctk_message_copy())
 	content->tail.portals.remote = event->initiator;
 	content->tail.portals.remote_index = SCTK_MSG_SRC_TASK(content) % rail->network.portals.ptable.nb_entries;
@@ -180,9 +211,9 @@ void sctk_portals_recv_put (sctk_rail_info_t* rail, ptl_event_t* event){
 	content->tail.portals.tag = (ptl_match_bits_t)event->hdr_data;
 	content->tail.portals.handler = &rail->network.portals.interface_handler;
 	content->tail.portals.list = &rail->network.portals.ptable.pending_list;
-	
+
 	if(sctk_message_class_is_control_message(SCTK_MSG_SPECIFIC_CLASS(content))){
-		content->tail.portals.remote_index = rail->network.portals.ptable.nb_entries - 1;
+		content->tail.portals.remote_index = rail->network.portals.ptable.nb_entries;
 		sctk_debug("PORTALS: RECV CONTROL_MESSAGE FROM (%d -> %d) [%lu -> %lu] %lu - %lu", SCTK_MSG_SRC_PROCESS(content), SCTK_MSG_DEST_PROCESS(content),  event->initiator.phys.pid,rail->network.portals.current_id.phys.pid, content->tail.portals.remote_index, content->tail.portals.tag);
 	}
 	else {
@@ -202,44 +233,53 @@ void sctk_portals_poll_pending_msg_list(sctk_rail_info_t *rail){
 	LL_FOREACH_SAFE(list->head, elt, tmp){
 		ptl_event_t event;
 		int ret = PtlEQGet(elt->md.eq_handle, &event);
-		int to_delete = 0;
+		int to_free = 0;
+		sctk_portals_list_entry_extra_t pending = elt->data;
 		sctk_thread_ptp_message_t* msg = NULL;
+
 		while(ret == PTL_OK){
+			assume(event.ni_fail_type == PTL_NI_OK);
+			sctk_debug("bind with remote access  %lu (%d)", elt->md_handler, event.type);
 			switch(event.type){
-				case PTL_EVENT_SEND:
-					if(elt->ack_type == SCTK_PORTALS_NO_ACK_MSG)
-						to_delete = 1;
+				case PTL_EVENT_SEND: // data from MD have been sent
+					to_free = (elt->ack_type == SCTK_PORTALS_NO_ACK_MSG);
 					break;
-				case PTL_EVENT_REPLY:
+
+				case PTL_EVENT_REPLY: // data have been copied into MD
 					//routine to notify data can now be accessed
-					switch(elt->data.cat_msg){
-						case SCTK_PORTALS_CAT_REGULAR:
-							msg = (sctk_thread_ptp_message_t*) elt->data.extra_data;
+					switch(pending.cat_msg){
+
+						case SCTK_PORTALS_CAT_REGULAR: // when standard message is copied in userspace
+							msg = (sctk_thread_ptp_message_t*) pending.extra_data;
+							sctk_debug("Free message (FROM GET) %d", SCTK_MSG_SRC_PROCESS(msg));
 							sctk_complete_and_free_message(msg);
 							break;
-						default:
-							break;
 
+						case SCTK_PORTALS_CAT_CTLMESSAGE: // when control message is received
+						case SCTK_PORTALS_CAT_RESERVED:  // when connection is initialized
+						case SCTK_PORTALS_CAT_ROUTING_MSG: //when MD is a routing slot (no action)
+							break;
+						default:
+							not_reachable();
 					}
-					to_delete = 1;
+					to_free = 1;
 					break;
 				case PTL_EVENT_ACK:
 					//just notify that a Put() have been completed to the target
-					to_delete = 1;
+					to_free = 1;
 					break;
 				default:
 					not_reachable();
-					break;
 			}
 			ret = PtlEQGet(elt->md.eq_handle, &event);
 		}
-
-		if(to_delete){
+		if(to_free){
 			PtlMDRelease(elt->md_handler);
 			LL_DELETE(list->head, elt);
-			free(elt);
+			sctk_free(elt);
 		}
 	}
+	/*sctk_debug("Ending MD polling");*/
 }
 
 /**
@@ -256,56 +296,80 @@ static int sctk_portals_poll_one_queue(sctk_rail_info_t *rail, size_t id)
 	ptl_event_t event;
 	sctk_portals_table_t* ptable = &rail->network.portals.ptable;
 	ptl_handle_eq_t* queue = ptable->head[id]->event_list;
-	
+
 	//if no other tasks are polling this list
 	if(sctk_spinlock_trylock(&ptable->head[id]->lock) == 0){
 		//while there are event to poll, continue
 		while(PtlEQGet(*queue, &event) == PTL_OK){
+			assume(event.ni_fail_type == PTL_NI_OK);
 			sctk_portals_list_entry_extra_t* stuff = event.user_ptr;
-			int cat ;
-			cat = (stuff == NULL) ? SCTK_PORTALS_CAT_REGULAR:stuff->cat_msg;
-			//if it is for data transfer => release resources and complete and free message
+			sctk_portals_slot_category_t cat;
+
+			cat = (stuff == NULL) ? SCTK_PORTALS_CAT_REGULAR : stuff->cat_msg;
 			switch(event.type){
 				case PTL_EVENT_GET:
+				case PTL_EVENT_GET_OVERFLOW:
 					switch(cat){
 						case SCTK_PORTALS_CAT_REGULAR:
+							sctk_warning("PORTALS: Read from %p", event.start);
 							sctk_portals_ack_get(rail, &event);
 							break;
-						default:
+
+						case SCTK_PORTALS_CAT_ROUTING_MSG:
+							sctk_free(stuff->extra_data); // free temporary payload
 							break;
+						case SCTK_PORTALS_CAT_CTLMESSAGE:
+						case SCTK_PORTALS_CAT_RESERVED:
+							break;
+						default:
+							CRASH();
+							not_reachable();
 					}
 					break;
-				case PTL_EVENT_PUT: //handle recv event only for incoming header
+
+
+				// case of PUT received for a given ME
+				case PTL_EVENT_PUT:
+				case PTL_EVENT_PUT_OVERFLOW:
 					switch(cat){
-						case SCTK_PORTALS_CAT_RESERVED:
-							/*sctk_debug("PORTALS: stuff = %p", stuff);*/
-							sctk_portals_add_route((int)stuff->extra_data, *((sctk_portals_process_id_t*)event.start), rail, ROUTE_ORIGIN_STATIC, STATE_CONNECTED);
-							break;
 						case SCTK_PORTALS_CAT_REGULAR:
-							sctk_portals_recv_put(rail, &event);
+						case SCTK_PORTALS_CAT_CTLMESSAGE:
+							sctk_portals_recv_put(rail, &event); // handle the message
+							break;
+						case SCTK_PORTALS_CAT_RESERVED:
+						case SCTK_PORTALS_CAT_ROUTING_MSG:
 							break;
 						default:
-							break;
+							not_reachable();
 					}
+					break;
+
+				//not used events for now
+				case PTL_EVENT_ATOMIC:
+				case PTL_EVENT_ATOMIC_OVERFLOW:
+				case PTL_EVENT_FETCH_ATOMIC:
+				case PTL_EVENT_FETCH_ATOMIC_OVERFLOW:
+				case PTL_EVENT_PT_DISABLED:
+				case PTL_EVENT_SEARCH:
 					break;
 				default:
-					break;
+					not_reachable();
 			}
-			if(stuff != NULL) sctk_free(stuff);
+			if(stuff) sctk_free(stuff);
 		}
 		sctk_spinlock_unlock(&ptable->head[id]->lock);
 	}
-	
+
 	return ret;
 }
 
 /**
- * @brief try to poll incoming message for current task and neighbors 
+ * @brief try to poll incoming message for current task and neighbors
  *
  * @param rail
  * @param task_id
  *
- * @return 
+ * @return
  */
 int sctk_portals_polling_queue_for(sctk_rail_info_t*rail, size_t task_id){
 	int ret = 0, ret_bef = 0, ret_aft = 0;
@@ -350,47 +414,69 @@ static void sctk_portals_network_connection_to(int from, int to, sctk_rail_info_
 static void sctk_portals_network_connection_to_ctx(int src, sctk_rail_info_t* rail,sctk_portals_connection_context_t * ctx, sctk_route_origin_t route_type)
 {
 	sctk_portals_rail_info_t* prail = &rail->network.portals;
+	sctk_portals_list_entry_extra_t stuff;
 	sctk_debug("PORTALS: ON DEMAND TO   %lu - %lu - %lu", ctx->from.phys.pid, ctx->entry, ctx->match);
-	/*sctk_portals_add_route(src, ctx->from, rail, route_type, STATE_CONNECTED);*/
-	
-	/*sctk_portals_helper_put_request(&rail->network.portals.ptable.pending_list, &prail->current_id, sizeof(sctk_portals_process_id_t), &prail->interface_handler, ctx->from, ctx->entry, ctx->match, NULL, 0, SCTK_PORTALS_NO_BLOCKING_REQUEST, SCTK_PORTALS_NO_ACK_MSG);*/
+	sctk_portals_add_route(src, ctx->from, rail, route_type, STATE_CONNECTED);
 
+	stuff.cat_msg = SCTK_PORTALS_CAT_RESERVED;
+	stuff.extra_data = NULL;
+	sctk_portals_helper_put_request(&rail->network.portals.ptable.pending_list, &prail->current_id, sizeof(sctk_portals_process_id_t), &prail->interface_handler, ctx->from, ctx->entry, ctx->match, &stuff, 0, SCTK_PORTALS_NO_BLOCKING_REQUEST, SCTK_PORTALS_NO_ACK_MSG);
+
+	sctk_debug("PORTALS: ON DEMAND TO COMPLETED");
 }
+
+
+
 
 static void sctk_portals_network_connection_from(int from, int to, sctk_rail_info_t* rail, sctk_route_origin_t route_type) {
     sctk_portals_connection_context_t ctx;
-    sctk_portals_process_id_t *slot = sctk_malloc(sizeof(sctk_portals_process_id_t));
+    sctk_portals_process_id_t slot;
     ptl_ct_event_t ctc;
     ptl_me_t me;
     ptl_handle_me_t me_handler;
+	sctk_endpoint_t* route;
+	sctk_portals_list_entry_extra_t* stuff = NULL;
 
-	
+
+	stuff = sctk_malloc(sizeof(sctk_portals_list_entry_extra_t));
+	stuff->cat_msg = SCTK_PORTALS_CAT_RESERVED;
+	stuff->extra_data = NULL;
+
 	//prepare network context to send to remote process
 	ctx.from = rail->network.portals.current_id;
-	ctx.entry = rail->network.portals.ptable.nb_entries - 1;
-	
+	ctx.entry = rail->network.portals.ptable.nb_entries;
+
 	sctk_portals_helper_set_bits_from_msg(&ctx.match, &rail->network.portals.ptable.head[ctx.entry]->entry_cpt);
 
-	sctk_debug("PORTALS: ON DEMAND FROM %lu - %lu - %lu", ctx.from.phys.pid, ctx.entry, ctx.match);
+	sctk_debug("PORTALS: ON DEMAND FROM %lu -> %d - %lu - %lu", ctx.from.phys.pid, to , ctx.entry, ctx.match);
 	// init ME w/ default
-	sctk_portals_helper_init_new_entry(&me, &rail->network.portals.interface_handler, (void*)slot, sizeof(sctk_portals_process_id_t), ctx.match, SCTK_PORTALS_ME_PUT_OPTIONS);
+	sctk_portals_helper_init_new_entry(&me, &rail->network.portals.interface_handler, (void*)&slot, sizeof(sctk_portals_process_id_t), ctx.match, SCTK_PORTALS_ME_PUT_OPTIONS);
 
-	sctk_portals_list_entry_extra_t* stuff = sctk_malloc(sizeof(sctk_portals_list_entry_extra_t));
-	stuff->cat_msg = SCTK_PORTALS_CAT_RESERVED;
-	stuff->extra_data = (void*)to;
 	sctk_portals_helper_register_new_entry(&rail->network.portals.interface_handler, ctx.entry, &me, stuff);
-	
+
+	route = sctk_portals_add_route(to, slot, rail, route_type, STATE_CONNECTING);
+
 	//depending on creation type, route can be created as a dynamic or static one
 	if(route_type == ROUTE_ORIGIN_STATIC){
 		sctk_control_messages_send_rail(to,SCTK_PORTALS_CONTROL_MESSAGE_ON_DEMAND_STATIC,0, &ctx,sizeof(sctk_portals_connection_context_t), rail->rail_number );
 	} else {
-		sctk_control_messages_send_rail(to,SCTK_PORTALS_CONTROL_MESSAGE_ON_DEMAND_DYNAMIC, 0, &ctx,sizeof(sctk_portals_connection_context_t), rail->rail_number ); 
+		sctk_control_messages_send_rail(to,SCTK_PORTALS_CONTROL_MESSAGE_ON_DEMAND_DYNAMIC, 0, &ctx,sizeof(sctk_portals_connection_context_t), rail->rail_number );
 	}
+
+	while(PtlCTGet(me.ct_handle, &ctc) == PTL_OK){
+		sctk_error("PORTALS: INIT Wait for ptl_process (%d)", ctc.success);
+	}
+	//sctk_portals_assume(PtlCTWait(me.ct_handle,1, &ctc));
+	//assume(ctc.failure == 0);
+	route->data.portals.dest = slot;
+	sctk_endpoint_set_state(route, STATE_CONNECTED);
+	sctk_debug("PORTALS: ON DEMAND FROM COMPLETED: value = %lu", route->data.portals.dest.phys.pid);
 }
 
 static void sctk_portals_connection_from(int from, int to , sctk_rail_info_t *rail){
     sctk_portals_network_connection_from(from, to, rail, ROUTE_ORIGIN_STATIC);
 }
+
 static void sctk_portals_connection_to(int from, int to , sctk_rail_info_t *rail){
     sctk_portals_network_connection_to(from, to, rail, ROUTE_ORIGIN_STATIC);
 
@@ -427,13 +513,13 @@ void sctk_network_init_portals_all ( sctk_rail_info_t *rail )
     rail->control_message_handler = sctk_portals_control_message_handler;
 
 	sctk_portals_helper_lib_init(&rail->network.portals.interface_handler, &rail->network.portals.current_id, &rail->network.portals.ptable);
-    
+
 	//if process binding w/ ring is not required, stop here
     if( rail->requires_bootstrap_ring == 0 )
     {
         return;
     }
-   
+
 	/** Portals initialization : Ring topology */
 	/**
 	 * 1. bind to right process through PMI
@@ -455,25 +541,21 @@ void sctk_network_init_portals_all ( sctk_rail_info_t *rail )
 
     sctk_pmi_get_connection_info ( right_rank_connection_infos, MAX_STRING_SIZE, rail->rail_number, right_rank );
     sctk_portals_helper_from_str(right_rank_connection_infos, &right_id, sizeof ( right_id ) );
-	/*sctk_debug ( "Got id %lu\t%lu", right_id.phys.nid, right_id.phys.pid );	*/
+    sctk_debug ( "PORTALS: Bind %d(%lu) -> %d(%lu)", sctk_process_rank, rail->network.portals.current_id.phys.pid,  right_rank, right_id.phys.pid);
 
     sctk_pmi_barrier();
 	//Register the right neighbour as a connection and let Portals make the binding
-	/*sctk_portals_helper_bind_to(&rail->network.portals.interface_handler, right_id);*/
 
 	//if we need an initialization to the left process (bidirectional ring)
     if(sctk_process_number > 2){
         sctk_pmi_get_connection_info ( left_rank_connection_infos, MAX_STRING_SIZE, rail->rail_number, left_rank );
-        /*sctk_debug ( "Got KEY %s from %d", right_rank_connection_infos, right_rank);*/
 
         /*decode portals identification string into nid and pid*/
         sctk_portals_helper_from_str( left_rank_connection_infos, &left_id, sizeof (sctk_portals_process_id_t) );
-        /*sctk_debug ( "Got id %lu\t%lu", left_id.phys.nid, left_id.phys.pid );	*/
-		// register the left neighbour as a connection and let Portals make the binding
-        /*sctk_portals_helper_bind_to(&rail->network.portals.interface_handler, left_id);*/
-    	sctk_debug ( "PORTALS: Bind %d(%lu) -> %d(%lu)", sctk_process_rank, rail->network.portals.current_id.phys.pid,  left_rank, left_id.phys.pid);
+        // register the left neighbour as a connection and let Portals make the binding
+        sctk_debug ( "PORTALS: Bind %d(%lu) -> %d(%lu)", sctk_process_rank, rail->network.portals.current_id.phys.pid,  left_rank, left_id.phys.pid);
     }
-   
+
 	//Syncing before adding the route
     sctk_pmi_barrier();
 
@@ -483,11 +565,11 @@ void sctk_network_init_portals_all ( sctk_rail_info_t *rail )
     {
         sctk_portals_add_route (left_rank, left_id, rail, ROUTE_ORIGIN_STATIC, STATE_CONNECTED);
     }
-   
+
 	//syncing with other processes
     sctk_pmi_barrier();
 	if(sctk_process_rank == 0){
-		sctk_debug("PORTALS: Register ======== end RING");
+		sctk_nodebug("PORTALS: Register ======== end RING");
 	}
 
 }

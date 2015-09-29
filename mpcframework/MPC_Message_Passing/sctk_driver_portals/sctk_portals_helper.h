@@ -91,9 +91,9 @@ typedef enum sctk_portals_ack_msg_type_s
 
 typedef enum sctk_portals_slot_category_s
 {
-	SCTK_PORTALS_CAT_REGULAR, 
-	SCTK_PORTALS_CAT_HEADER_RDV,
-	SCTK_PORTALS_CAT_HEADER_EAG,
+	SCTK_PORTALS_CAT_REGULAR,
+	SCTK_PORTALS_CAT_CTLMESSAGE,
+	SCTK_PORTALS_CAT_ROUTING_MSG,
 	SCTK_PORTALS_CAT_RESERVED
 } sctk_portals_slot_category_t;
 
@@ -111,7 +111,7 @@ typedef struct sctk_portals_table_entry_s
 	sctk_atomics_int                   entry_cpt;
 } sctk_portals_table_entry_t;
 
-typedef struct sctk_portals_pending_msg_s 
+typedef struct sctk_portals_pending_msg_s
 {
 	ptl_handle_md_t md_handler;
 	ptl_md_t md;
@@ -135,7 +135,7 @@ typedef struct sctk_portals_table_s
 	sctk_spinlock_t					    table_lock;
 	struct sctk_portals_table_entry_s** head;
 	struct sctk_portals_pending_msg_list_s      pending_list;
-	
+
 } sctk_portals_table_t;
 
 void sctk_portals_helper_lib_init(sctk_portals_interface_handler_t *interface, sctk_portals_process_id_t* id, sctk_portals_table_t *ptable);

@@ -113,7 +113,7 @@ inline int sctk_portals_helper_compute_nb_portals_entries()
         nb++;
 
 	//allowing one extra list -> spcial messages
-    return nb + 1;
+    return nb ;
 
 }
 
@@ -174,7 +174,7 @@ void sctk_portals_helper_lib_init(sctk_portals_interface_handler_t *interface, s
 	//filling ptl_limits with max possible values (covering lot of cases)
 	sctk_portals_limits_t max_values;
 	sctk_portals_helper_init_boundaries(&max_values);
-	
+
 	//Init Portals network interface
 	sctk_portals_assume(PtlNIInit(
 		PTL_IFACE_DEFAULT, //default network interface (probably 0
@@ -184,7 +184,7 @@ void sctk_portals_helper_lib_init(sctk_portals_interface_handler_t *interface, s
 		NULL, //effective portals boundaries
 		interface
 	));
-	
+
 	//assign an unique identifier for calling process
 	sctk_portals_assume(PtlGetPhysId(
 		*interface, //initialized network interface handler
@@ -194,9 +194,9 @@ void sctk_portals_helper_lib_init(sctk_portals_interface_handler_t *interface, s
 	/** portals table initialization */
 	//as much entries than the number of tasks in current process
 	ptable->nb_entries = sctk_portals_helper_compute_nb_portals_entries();
-	ptable->head = sctk_malloc(sizeof(sctk_portals_table_entry_t*)*ptable->nb_entries);
+	ptable->head = sctk_malloc(sizeof(sctk_portals_table_entry_t*)*ptable->nb_entries+1);
 	//create portals entries
-	for(cpt = 0; cpt < ptable->nb_entries; cpt++){
+	for(cpt = 0; cpt < ptable->nb_entries+1; cpt++){
 		ptable->head[cpt] = (sctk_portals_table_entry_t*)sctk_malloc(sizeof(sctk_portals_table_entry_t));
 		sctk_portals_helper_init_table_entry(ptable->head[cpt], interface, cpt);
 	}
@@ -221,10 +221,10 @@ void sctk_portals_helper_init_table_entry(sctk_portals_table_entry_t* entry, sct
 	//init event queue for this entry
 	sctk_portals_assume(PtlEQAlloc(
 		*interface, // NI handler
-		SCTK_PORTALS_EVENTS_QUEUE_SIZE,  // event queue size initialization 
-		entry->event_list                //output : an event queue is created
+		SCTK_PORTALS_EVENTS_QUEUE_SIZE,// event queue size initialization
+		entry->event_list              //output : an event queue is created
 	));
-	
+
 	//init its Portals reference
 	sctk_portals_assume(PtlPTAlloc(
 		*interface, // NI handler
@@ -240,7 +240,7 @@ void sctk_portals_helper_init_table_entry(sctk_portals_table_entry_t* entry, sct
 		sctk_thread_ptp_message_t* slot;
 
 		slot = sctk_malloc(sizeof( sctk_thread_ptp_message_t));
-		
+
 		sctk_portals_helper_init_new_entry(&me, interface, slot, sizeof(sctk_thread_ptp_message_t), SCTK_PORTALS_BITS_HEADER, SCTK_PORTALS_ME_PUT_OPTIONS );
 		sctk_portals_helper_register_new_entry(interface, ind, &me, NULL);
 	}
@@ -317,8 +317,8 @@ void sctk_portals_helper_init_new_entry(ptl_me_t* me, sctk_portals_interface_han
 	me->match_bits = match;
 	me->ignore_bits = SCTK_PORTALS_BITS_INIT;
 	me->options = option;
-	
-	sctk_portals_assume(PtlCTAlloc(*ni_handler, &me->ct_handle));	
+
+	sctk_portals_assume(PtlCTAlloc(*ni_handler, &me->ct_handle));
 }
 
 void sctk_portals_helper_init_memory_descriptor(ptl_md_t* md, sctk_portals_interface_handler_t *ni_handler, void* start, size_t size, unsigned int option){
@@ -336,45 +336,48 @@ void sctk_portals_helper_set_bits_from_msg(ptl_match_bits_t* match, void*atomic)
 }
 
 void sctk_portals_helper_get_request(sctk_portals_pending_msg_list_t* list, void* start, size_t size, ptl_handle_ni_t* handler, ptl_process_t remote, ptl_pt_index_t index, ptl_match_bits_t match, void* ptr, sctk_portals_request_type_t req_type){
-	
+
 	sctk_portals_pending_msg_t* msg = sctk_malloc(sizeof(sctk_portals_pending_msg_t));
 
 	msg->ack_type = SCTK_PORTALS_NO_ACK_MSG;
-	msg->data.cat_msg = (ptr == NULL)? SCTK_PORTALS_CAT_RESERVED : SCTK_PORTALS_CAT_REGULAR;
-	
-	msg->data.extra_data = ptr;
+	msg->data = *((sctk_portals_list_entry_extra_t*)ptr);
 
 	sctk_portals_helper_init_memory_descriptor(&msg->md, handler, start, size, SCTK_PORTALS_MD_GET_OPTIONS);
 
 	//attach MD, load data
 	sctk_portals_assume(PtlMDBind(*handler, &msg->md, &msg->md_handler));
 	sctk_debug("PORTALS: Get (%lu - %lu - %lu)", remote.phys.pid, index, match);
-	sctk_portals_assume(PtlGet(msg->md_handler, 0, size, remote, index, match, 0, ptr));
+	sctk_portals_assume(PtlGet(msg->md_handler, 0, size, remote, index, match, 0, NULL));
 
 	if(req_type == SCTK_PORTALS_BLOCKING_REQUEST){
 		ptl_ct_event_t event;
-		sctk_portals_assume(PtlCTWait(msg->md.ct_handle, 1, &event));
-		assume(event.failure == 0);
+		/*sctk_portals_assume(PtlCTWait(msg->md.ct_handle, 1, &event));*/
+		do{
+			PtlCTGet(msg->md.ct_handle, &event);
+			assume(event.failure==0);
+			sctk_debug("PORTALS: Wait for GET (%lu - %lu - %lu)", remote.phys.pid, index, match);
+		}while(event.success <= 0);
+		/*assume(event.failure == 0);*/
 	}
 
 	sctk_spinlock_lock(&list->msg_lock);
 	LL_APPEND(list->head, msg );
+	sctk_debug("PORTALS: Adding GET MD %lu !", msg->md_handler);
 	sctk_spinlock_unlock(&list->msg_lock);
 }
 
 void sctk_portals_helper_put_request(sctk_portals_pending_msg_list_t* list, void* start, size_t size, ptl_handle_ni_t* handler, ptl_process_t remote, ptl_pt_index_t index, ptl_match_bits_t match, void* ptr, ptl_hdr_data_t extra, sctk_portals_request_type_t req_type, sctk_portals_ack_msg_type_t ack_requested)
 {
 	sctk_portals_pending_msg_t* msg = sctk_malloc(sizeof(sctk_portals_pending_msg_t));
-	
+
 	msg->ack_type = ack_requested;
-	msg->data.cat_msg = SCTK_PORTALS_CAT_REGULAR;
-	msg->data.extra_data = ptr;
-	
+	msg->data = *((sctk_portals_list_entry_extra_t*)ptr);
+
 	sctk_portals_helper_init_memory_descriptor(&msg->md, handler, start, size, SCTK_PORTALS_MD_PUT_OPTIONS);
 
 	//attach MD, load data
 	sctk_portals_assume(PtlMDBind(*handler, &msg->md, &msg->md_handler));
-	sctk_debug("Addr: %lu, %lu, %lu ", remote.phys.pid, index, match);
+	sctk_debug("PORTALS: Put (%lu - %lu - %lu)", remote.phys.pid, index, match);
 	sctk_portals_assume(PtlPut(
 				msg->md_handler,
 				0,
@@ -384,18 +387,20 @@ void sctk_portals_helper_put_request(sctk_portals_pending_msg_list_t* list, void
 				index,
 				match,
 				0,
-				ptr,
+				NULL,
 				extra
 				));
 
 	if(req_type == SCTK_PORTALS_BLOCKING_REQUEST){
 		ptl_ct_event_t event;
 		int cpt = (ack_requested == SCTK_PORTALS_ACK_MSG) ? 2 : 1;
+		sctk_debug("Put Waiting");
 		sctk_portals_assume(PtlCTWait(msg->md.ct_handle, cpt, &event));
 		assume(event.failure == 0);
 	}
 
 	sctk_spinlock_lock(&list->msg_lock);
+	sctk_debug("PORTALS: Adding PUT MD %lu !", msg->md_handler);
 	LL_APPEND(list->head, msg);
 	sctk_spinlock_unlock(&list->msg_lock);
 }
@@ -412,5 +417,6 @@ inline void sctk_portals_helper_register_new_entry(ptl_handle_ni_t* handler, ptl
 		ptr,
 		&slot_handler
 		));
+	sctk_warning("PORTALS: Register new entry : (%lu - %lu)", index, slot->match_bits);
 }
 #endif // MPC_USE_PORTALS

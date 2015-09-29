@@ -68,7 +68,10 @@ static void sctk_network_notify_idle_message_portals (sctk_rail_info_t* rail)
 	if( ! sctk_portals_polling_queue_for(rail, mytask)){
 		sctk_portals_polling_queue_for(rail, SCTK_PORTALS_POLL_ALL);
 	}
-	
+
+	//progress special messages
+	sctk_portals_polling_queue_for(rail, rail->network.portals.ptable.nb_entries);
+
 	if(sctk_spinlock_trylock(&rail->network.portals.ptable.pending_list.msg_lock) == 0){
 		sctk_portals_poll_pending_msg_list(rail);
 		sctk_spinlock_unlock(&rail->network.portals.ptable.pending_list.msg_lock);
@@ -93,7 +96,7 @@ static void sctk_network_notify_any_source_message_portals ( int polling_task_id
  *
  * @param msg message to forward
  *
- * @return 
+ * @return
  */
 static int sctk_send_message_from_network_portals ( sctk_thread_ptp_message_t *msg )
 {
