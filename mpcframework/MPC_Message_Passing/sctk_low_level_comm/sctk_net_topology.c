@@ -46,7 +46,7 @@ void sctk_route_random_init ( sctk_rail_info_t *rail )
 	/* This is possible only on rails where
 	 * one sided connections were fully validated
 	 * it means TPC for the moment */
-	
+
 	struct sctk_runtime_config_struct_net_driver_config * driver_config = rail->runtime_config_driver_config;
 	enum sctk_runtime_config_struct_net_driver_type net_type = driver_config->driver.type;
 
@@ -56,7 +56,7 @@ void sctk_route_random_init ( sctk_rail_info_t *rail )
 		sctk_fatal("The random topology is only supported by TCP for the moment");
 	}
 
-	
+
 
 }
 
@@ -136,16 +136,17 @@ void sctk_route_fully_init ( sctk_rail_info_t *rail )
 
 						if ( tmp == NULL )
 						{
+							sctk_warning("ON-DEMAND : REQUEST %d <--> %d", from, to);
 							rail->connect_from ( from, to, rail );
 							SCTK_COUNTER_INC ( signalization_endpoints, 1 );
 						}
-						
-						
+
+
 					}
 
 					if ( to == sctk_process_rank )
 					{
-						
+
 						tmp = sctk_rail_get_any_route_to_process ( rail, from );
 
 						if ( tmp == NULL )
@@ -153,8 +154,8 @@ void sctk_route_fully_init ( sctk_rail_info_t *rail )
 							rail->connect_to ( from, to, rail );
 							SCTK_COUNTER_INC ( signalization_endpoints, 1 );
 						}
-						
-						
+
+
 					}
 				}
 			}

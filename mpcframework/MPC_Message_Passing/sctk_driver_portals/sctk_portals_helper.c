@@ -355,7 +355,7 @@ void sctk_portals_helper_get_request(sctk_portals_pending_msg_list_t* list, void
 		do{
 			PtlCTGet(msg->md.ct_handle, &event);
 			assume(event.failure==0);
-			sctk_debug("PORTALS: Wait for GET (%lu - %lu - %lu)", remote.phys.pid, index, match);
+			//sctk_debug("PORTALS: Wait for GET (%lu - %lu - %lu)", remote.phys.pid, index, match);
 		}while(event.success <= 0);
 		/*assume(event.failure == 0);*/
 	}
@@ -394,7 +394,7 @@ void sctk_portals_helper_put_request(sctk_portals_pending_msg_list_t* list, void
 	if(req_type == SCTK_PORTALS_BLOCKING_REQUEST){
 		ptl_ct_event_t event;
 		int cpt = (ack_requested == SCTK_PORTALS_ACK_MSG) ? 2 : 1;
-		sctk_debug("Put Waiting");
+		//sctk_debug("Put Waiting");
 		sctk_portals_assume(PtlCTWait(msg->md.ct_handle, cpt, &event));
 		assume(event.failure == 0);
 	}
@@ -417,6 +417,6 @@ inline void sctk_portals_helper_register_new_entry(ptl_handle_ni_t* handler, ptl
 		ptr,
 		&slot_handler
 		));
-	sctk_warning("PORTALS: Register new entry : (%lu - %lu)", index, slot->match_bits);
+	sctk_nodebug("PORTALS: Register new entry : (%lu - %lu)", index, slot->match_bits);
 }
 #endif // MPC_USE_PORTALS
