@@ -1,0 +1,21 @@
+[
+	[ "integer x", 4 ],
+	[ "real x", 4],
+	[ "double precision x", 8],
+	[ "logical x", 4],
+	[ "character x", 1],
+	[ "complex x", 8],
+	[ "integer x(*)", 4],
+	[ "real x(*)", 4],
+	[ "double precision x(*)", 8],
+	[ "logical x(*)", 4],
+	[ "character x(*)", 1],
+	[ "complex x(*)", 8],
+	[ "integer*8 x", 8],
+	[ "integer*8 x(*)", 8],
+	[ "integer*1 x", 1],
+	[ "integer*1 x(*)", 1],
+	[ "integer*2 x", 2],
+	[ "integer*2 x(*)", 2]
+]
+	
