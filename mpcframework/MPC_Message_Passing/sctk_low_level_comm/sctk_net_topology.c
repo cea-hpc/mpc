@@ -125,7 +125,7 @@ void sctk_route_fully_init ( sctk_rail_info_t *rail )
 		{
 			for ( to = 0; to < sctk_process_number; to ++ )
 			{
-				if ( to != from )
+				if ( to > from )
 				{
 					sctk_endpoint_t *tmp;
 
@@ -136,7 +136,7 @@ void sctk_route_fully_init ( sctk_rail_info_t *rail )
 
 						if ( tmp == NULL )
 						{
-							sctk_warning("ON-DEMAND : REQUEST %d <--> %d", from, to);
+							sctk_nodebug("ON-DEMAND : REQUEST %d <--> %d", from, to);
 							rail->connect_from ( from, to, rail );
 							SCTK_COUNTER_INC ( signalization_endpoints, 1 );
 						}
@@ -160,6 +160,7 @@ void sctk_route_fully_init ( sctk_rail_info_t *rail )
 				}
 			}
 		}
+		sctk_nodebug("%d finished its requests !!!!!!!", sctk_process_rank);
 
 		sctk_pmi_barrier();
 	}
