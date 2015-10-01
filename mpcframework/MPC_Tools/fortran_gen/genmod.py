@@ -491,7 +491,7 @@ f.close()
 #
 
 print "\n################################"
-print "Generating the MPI Fortran Module"
+print "Generating the SIZEOF Fortran Module"
 print "################################\n"
 
 module_file_data = genheader()

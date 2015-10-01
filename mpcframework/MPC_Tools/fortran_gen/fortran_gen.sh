@@ -298,7 +298,7 @@ proceedwithfortranfilegeneration()
 		#Check that everything is there
 		echo "(i) Checking generated files...   "
 		
-		for f in mpi_base.f90 mpi_constants.f90 mpi_sizeofs.f90 mpi_sizeofs.o mpi.f90 mpif.h
+		for f in mpi_base.f90 mpi_constants.f90 mpi_sizeofs.f90  mpi.f90 mpif.h
 		do
 			if test -e "$f"; then
 				echo "(i)\t${f}... Found."
