@@ -580,13 +580,13 @@ header_sh >> $1
 
 if test "$4" = "intel"; then
 cat <<EOF >> $1
-ADD_FLAG_PRIVATIZE="$2"
+ADD_FLAG_PRIVATIZE="$2 -DMPC_PRIVATIZED"
 MPC_USE_INTEL_COMPILER="1"
 EOF
 else
 if test "${COMPILER_LIST}" != "" ; then
 cat <<EOF >> $1
-ADD_FLAG_PRIVATIZE="$2"
+ADD_FLAG_PRIVATIZE="$2 -DMPC_PRIVATIZED"
 EOF
 else
 cat <<EOF >> $1
@@ -618,7 +618,7 @@ for i in "\$@" $AUTO_INCLUDE ; do
         CURRENT_ARG="-include mpc_main.h"
     fi
     if test "\$i" = "-fmpc-privatize" ; then
-        ADD_FLAG_PRIVATIZE="$2"
+        ADD_FLAG_PRIVATIZE="$2 -DMPC_PRIVATIZED"
         CURRENT_ARG=""
     fi
     if test "\$i" = "-fno-mpc-privatize" ; then
