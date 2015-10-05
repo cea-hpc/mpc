@@ -65,20 +65,20 @@ static void sctk_network_notify_idle_message_portals (sctk_rail_info_t* rail)
 	size_t mytask = sctk_get_task_rank() % rail->network.portals.ptable.nb_entries;
 
 	//sctk_info("PORTALS: poll standard lists");
+
 	// check if current task and neighbors have pending message. If not, poll the entire portals table
 	if(sctk_portals_polling_queue_for(rail, mytask)){
 		sctk_portals_polling_queue_for(rail, SCTK_PORTALS_POLL_ALL);
 	}
 
 	//progress special messages
-	//sctk_info("MY TASK = %d , NB ENTRIES = %d", mytask, rail->network.portals.ptable.nb_entries);
 	sctk_portals_polling_queue_for(rail, rail->network.portals.ptable.nb_entries);
 
+	//check pending requests
 	if(sctk_spinlock_trylock(&rail->network.portals.ptable.pending_list.msg_lock) == 0){
 		sctk_portals_poll_pending_msg_list(rail);
 		sctk_spinlock_unlock(&rail->network.portals.ptable.pending_list.msg_lock);
 	}
-	//sctk_debug("ENDING PORTALS IDLE MESSAGE POLLING");
 }
 
 /**
