@@ -82,13 +82,9 @@ int getopt_long_only(int, char *const *, const char *, const struct option *, in
 
 
 /* Getopt variables (can be rewriten to point to privatized sctk_*) */
-#ifdef MPC_GETOPT_COMPILATION
-extern __thread char * optarg;
-extern __thread int optind, opterr, optopt, optreset, optpos;
-#else
 extern  char * optarg;
 extern  int optind, opterr, optopt, optreset, optpos;
-#endif
+
 
 
 /* End of getopt support */
