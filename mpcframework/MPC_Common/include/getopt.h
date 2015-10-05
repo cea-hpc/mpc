@@ -30,10 +30,11 @@
 
 #define _GETOPT_H
 #include <unistd.h>
+#include <getopt.h>
 
 /* Getopt variables */
-extern __thread char * sctk_optarg;
-extern __thread int sctk_optind, sctk_opterr, sctk_optopt, sctk_optreset, sctk_optpos;
+extern char * sctk_optarg;
+extern int sctk_optind, sctk_opterr, sctk_optopt, sctk_optreset, sctk_optpos;
 
 /* Define the option struct */
 struct option
