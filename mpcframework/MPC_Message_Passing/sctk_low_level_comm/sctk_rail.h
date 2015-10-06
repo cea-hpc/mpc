@@ -30,7 +30,7 @@
 
 /* Forward struct declarations */
 typedef struct sctk_rail_info_s sctk_rail_info_t;
-typedef struct sctk_route_table_s sctk_route_table_t; 
+typedef struct sctk_route_table_s sctk_route_table_t;
 typedef struct sctk_endpoint_s sctk_endpoint_t;
 
 /* Driver definitions */
@@ -67,21 +67,25 @@ struct sctk_rail_ib_pin_ctx
 };
 #endif
 
-#ifdef MPC_USE_PORTAL
+#ifdef MPC_USE_PORTALS
+
+#include <sctk_portals_helper.h>
 struct sctk_rail_portals_pin_ctx
 {
-	
+    ptl_handle_me_t me_handler;
+    ptl_match_bits_t match;
+    ptl_process_t id;
 };
-#endif /* MPC_USE_PORTAL */
+#endif /* MPC_USE_PORTALS */
 
 typedef union
 {
 #ifdef MPC_USE_INFINIBAND
 	struct sctk_rail_ib_pin_ctx ib;
 #endif
-#ifdef MPC_USE_PORTAL
+#ifdef MPC_USE_PORTALS
 	struct sctk_rail_portals_pin_ctx portals;
-#endif /* MPC_USE_PORTAL */
+#endif /* MPC_USE_PORTALS */
 }sctk_rail_pin_ctx_internal_t;
 
 struct sctk_rail_pin_ctx_list
@@ -118,12 +122,12 @@ struct sctk_rail_info_s
 	int priority; /** Priority of this rail */
 	char *network_name; /**< Name of this rail */
 	sctk_device_t * rail_device; /**< Device associated with the rail */
-	
-	struct sctk_rail_info_s * parent_rail; /**< This is used for rail hierarchies 
+
+	struct sctk_rail_info_s * parent_rail; /**< This is used for rail hierarchies
 	                                            (note that parent initializes it for the child) */
 	struct sctk_rail_info_s ** subrails;   /**< Pointer to subrails (if present) */
 	int subrail_count;   /**< number of subrails */
-	
+
 	/* Network Infos */
 	sctk_rail_info_spec_t network;	/**< Network dependent rail info */
 	char *topology_name; /**< Name of the target topology */
@@ -131,7 +135,7 @@ struct sctk_rail_info_s
 	                                  case of the "none" topology */
 	char on_demand;	/**< If the rail allows on demand-connexions */
 	char is_rdma;        /**< If the rail supports RDMA operations */
-	
+
 	/* Configuration Info */
 	struct sctk_runtime_config_struct_net_rail *runtime_config_rail;  /**< Rail config */
 	struct sctk_runtime_config_struct_net_driver_config *runtime_config_driver_config;  /**< Driver config */
@@ -149,26 +153,26 @@ struct sctk_rail_info_s
 	void ( *finalize_task ) ( struct sctk_rail_info_s * );
 	void ( *initialize_task ) ( struct sctk_rail_info_s * );
 	void ( *initialize_leader_task ) ( struct sctk_rail_info_s * );
-	
+
 	/* Network interactions */
 	void ( *send_message_endpoint ) ( sctk_thread_ptp_message_t *, sctk_endpoint_t * );
-	
+
 	void ( *notify_recv_message ) ( sctk_thread_ptp_message_t * , struct sctk_rail_info_s * );
 	void ( *notify_matching_message ) ( sctk_thread_ptp_message_t * , struct sctk_rail_info_s * );
 	void ( *notify_perform_message ) ( int , int, int, int, struct sctk_rail_info_s * );
 	void ( *notify_idle_message ) ( struct sctk_rail_info_s * );
 	void ( *notify_any_source_message ) ( int, int, struct sctk_rail_info_s * );
-	
+
 	int ( *send_message_from_network ) ( sctk_thread_ptp_message_t * );
 	void ( *connect_on_demand ) ( struct sctk_rail_info_s * rail , int dest );
-	
+
 	void (*control_message_handler)( struct sctk_rail_info_s * rail, int source_process, int source_rank, char subtype, char param, void * data, size_t size );
-	
+
 	/* RDMA Ops */
-	
+
 	int (*rdma_fetch_and_op_gate)( sctk_rail_info_t *rail, size_t size, RDMA_op op, RDMA_type type );
-	
-	
+
+
 	void (*rdma_fetch_and_op)(  sctk_rail_info_t *rail,
 							    sctk_thread_ptp_message_t *msg,
 							    void * fetch_addr,
@@ -180,8 +184,8 @@ struct sctk_rail_info_s
 							    RDMA_type type );
 
 
-	
-	
+
+
 	int (*rdma_cas_gate)( sctk_rail_info_t *rail, size_t size, RDMA_type type );
 
 	void (*rdma_cas)(   sctk_rail_info_t *rail,
@@ -193,28 +197,28 @@ struct sctk_rail_info_s
 						  void * comp,
 						  void * new,
 						  RDMA_type type );
-	
+
 	void (*rdma_write)(  sctk_rail_info_t *rail, sctk_thread_ptp_message_t *msg,
                          void * src_addr, struct sctk_rail_pin_ctx_list * local_key,
                          void * dest_addr, struct  sctk_rail_pin_ctx_list * remote_key,
                          size_t size );
-	
+
 	void (*rdma_read)(  sctk_rail_info_t *rail, sctk_thread_ptp_message_t *msg,
                          void * src_addr,  struct  sctk_rail_pin_ctx_list * remote_key,
                          void * dest_addr, struct  sctk_rail_pin_ctx_list * local_key,
                          size_t size );
-	
+
 	/* Pinning */
 	void (*rail_pin_region)( struct sctk_rail_info_s * rail, struct sctk_rail_pin_ctx_list * list, void * addr, size_t size );
 	void (*rail_unpin_region)( struct sctk_rail_info_s * rail, struct sctk_rail_pin_ctx_list * list );
 
 	/* Connection management */
-	
+
 	void ( *connect_to ) ( int, int, sctk_rail_info_t * );
 	void ( *connect_from ) ( int, int, sctk_rail_info_t * );
-	
+
 	/* Routing */
-	
+
 	int ( *route ) ( int , sctk_rail_info_t * );
 	void ( *route_init ) ( sctk_rail_info_t * );
 };
@@ -257,7 +261,7 @@ static inline hwloc_obj_t sctk_rail_get_device_hwloc_obj( sctk_rail_info_t *rail
 {
 	if( !rail->rail_device )
 		return NULL;
-	
+
 	return rail->rail_device->obj;
 }
 
@@ -266,7 +270,7 @@ static inline char * sctk_rail_get_device_name( sctk_rail_info_t *rail )
 {
 	if( !rail )
 		return NULL;
-	
+
 	return rail->runtime_config_rail->device;
 }
 
@@ -274,13 +278,13 @@ static inline char * sctk_rail_get_device_name( sctk_rail_info_t *rail )
 static inline int sctk_rail_device_is_regexp( sctk_rail_info_t *rail )
 {
 	char * dev = sctk_rail_get_device_name( rail );
-	
+
 	if( !dev )
 		return 0;
-	
+
 	if( dev[0] == '!' )
 		return 1;
-	
+
 	return 0;
 }
 
@@ -289,12 +293,12 @@ static inline int sctk_rail_get_subrail_id_with_device( sctk_rail_info_t *rail, 
 {
 	if( ! rail )
 		return -1;
-	
+
 	if( rail->subrail_count == 0 )
 		return -1;
-	
+
 	int i;
-	
+
 	for( i = 0 ; i < rail->subrail_count ; i++ )
 	{
 		if( dev == rail->subrails[i]->rail_device )
@@ -302,7 +306,7 @@ static inline int sctk_rail_get_subrail_id_with_device( sctk_rail_info_t *rail, 
 			return i;
 		}
 	}
-	
+
 	return -1;
 }
 

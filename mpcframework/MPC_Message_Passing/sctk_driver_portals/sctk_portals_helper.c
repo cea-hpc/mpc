@@ -112,7 +112,6 @@ inline int sctk_portals_helper_compute_nb_portals_entries()
     if ( rest )
         nb++;
 
-	//allowing one extra list -> spcial messages
     return nb ;
 
 }
@@ -149,20 +148,33 @@ inline void sctk_portals_helper_init_boundaries ( sctk_portals_limits_t *desired
     sctk_portals_helper_set_max ( ( long int * ) &desired->max_war_ordered_size, sizeof ( int ) );
     sctk_portals_helper_set_max ( ( long int * ) &desired->max_volatile_size, sizeof ( int ) + 1 );
 
-    /*printf("NI actual limits\n  max_entries:            %d\n  max_unexpected_headers: %d\n  max_mds:                %d\n  max_cts:                %d\n  max_eqs:                %d\n  max_pt_index:           %d\n  max_iovecs:             %d\n  max_list_size:          %d\n  max_msg_size:           %d\n  max_atomic_size:        %d\n  max_waw_ordered_size:   %d\n  max_war_ordered_size:   %d\n  max_volatile_size:      %d\n",*/
-      /*rail->network.portals.actual.max_entries,*/
-      /*rail->network.portals.actual.max_unexpected_headers,*/
-      /*rail->network.portals.actual.max_mds,*/
-      /*rail->network.portals.actual.max_cts,*/
-      /*rail->network.portals.actual.max_eqs,*/
-      /*rail->network.portals.actual.max_pt_index,*/
-      /*rail->network.portals.actual.max_iovecs,*/
-      /*rail->network.portals.actual.max_list_size,*/
-      /*(int)rail->network.portals.actual.max_msg_size,*/
-      /*(int)rail->network.portals.actual.max_atomic_size,*/
-      /*(int)rail->network.portals.actual.max_waw_ordered_size,*/
-      /*(int)rail->network.portals.actual.max_war_ordered_size,*/
-      /*(int)rail->network.portals.actual.max_volatile_size);*/
+    sctk_debug("NI actual limits\n"
+	"max_entries:            %d\n"
+	"max_unexpected_headers: %d\n"
+	"max_mds:                %d\n"
+	"max_cts:                %d\n"
+	"max_eqs:                %d\n"
+	"max_pt_index:           %d\n"
+	"max_iovecs:             %d\n"
+	"max_list_size:          %d\n"
+	"max_msg_size:           %d\n"
+	"max_atomic_size:        %d\n"
+	"max_waw_ordered_size:   %d\n"
+	"max_war_ordered_size:   %d\n"
+	"max_volatile_size:      %d\n",
+      desired->max_entries,
+      desired->max_unexpected_headers,
+      desired->max_mds,
+      desired->max_cts,
+      desired->max_eqs,
+      desired->max_pt_index,
+      desired->max_iovecs,
+      desired->max_list_size,
+      (int)desired->max_msg_size,
+      (int)desired->max_atomic_size,
+      (int)desired->max_waw_ordered_size,
+      (int)desired->max_war_ordered_size,
+      (int)desired->max_volatile_size);
 }
 
 void sctk_portals_helper_lib_init(sctk_portals_interface_handler_t *interface, sctk_portals_process_id_t* id, sctk_portals_table_t *ptable){
@@ -194,9 +206,9 @@ void sctk_portals_helper_lib_init(sctk_portals_interface_handler_t *interface, s
 	/** portals table initialization */
 	//as much entries than the number of tasks in current process
 	ptable->nb_entries = sctk_portals_helper_compute_nb_portals_entries();
-	ptable->head = sctk_malloc(sizeof(sctk_portals_table_entry_t*)*ptable->nb_entries+1);
+	ptable->head = sctk_malloc(sizeof(sctk_portals_table_entry_t*)*(ptable->nb_entries+2));
 	//create portals entries
-	for(cpt = 0; cpt < ptable->nb_entries+1; cpt++){
+	for(cpt = 0; cpt < ptable->nb_entries+2; cpt++){
 		ptable->head[cpt] = (sctk_portals_table_entry_t*)sctk_malloc(sizeof(sctk_portals_table_entry_t));
 		sctk_portals_helper_init_table_entry(ptable->head[cpt], interface, cpt);
 	}
@@ -347,7 +359,7 @@ void sctk_portals_helper_get_request(sctk_portals_pending_msg_list_t* list, void
 	//attach MD, load data
 	sctk_portals_assume(PtlMDBind(*handler, &msg->md, &msg->md_handler));
 	sctk_debug("PORTALS: Get (%lu - %lu - %lu)", remote.phys.pid, index, match);
-	sctk_portals_assume(PtlGet(msg->md_handler, 0, size, remote, index, match, 0, NULL));
+	sctk_portals_assume(PtlGet(msg->md_handler, 0, size, remote, index, match, 0, ptr));
 
 	if(req_type == SCTK_PORTALS_BLOCKING_REQUEST){
 		ptl_ct_event_t event;
@@ -364,7 +376,7 @@ void sctk_portals_helper_get_request(sctk_portals_pending_msg_list_t* list, void
 
 	sctk_spinlock_lock(&list->msg_lock);
 	LL_APPEND(list->head, msg );
-	sctk_debug("PORTALS: Adding GET MD %lu !", msg->md_handler);
+	sctk_debug("PORTALS: Adding GET MD %lu %p!", msg->md_handler, list->head);
 	sctk_spinlock_unlock(&list->msg_lock);
 }
 
@@ -379,7 +391,7 @@ void sctk_portals_helper_put_request(sctk_portals_pending_msg_list_t* list, void
 
 	//attach MD, load data
 	sctk_portals_assume(PtlMDBind(*handler, &msg->md, &msg->md_handler));
-	sctk_debug("PORTALS: Put (%lu - %lu - %lu)", remote.phys.pid, index, match);
+	sctk_nodebug("PORTALS: Put (%lu - %lu - %lu)", remote.phys.pid, index, match);
 	sctk_portals_assume(PtlPut(
 				msg->md_handler,
 				0,
@@ -389,7 +401,7 @@ void sctk_portals_helper_put_request(sctk_portals_pending_msg_list_t* list, void
 				index,
 				match,
 				0,
-				NULL,
+				ptr,
 				extra
 				));
 
@@ -406,12 +418,12 @@ void sctk_portals_helper_put_request(sctk_portals_pending_msg_list_t* list, void
 	}
 
 	sctk_spinlock_lock(&list->msg_lock);
-	sctk_debug("PORTALS: Adding PUT MD %lu !", msg->md_handler);
+	sctk_nodebug("PORTALS: Adding PUT MD %lu %p!", msg->md_handler, list->head);
 	LL_APPEND(list->head, msg);
 	sctk_spinlock_unlock(&list->msg_lock);
 }
 
-inline void sctk_portals_helper_register_new_entry(ptl_handle_ni_t* handler, ptl_pt_index_t index, ptl_me_t* slot, void* ptr)
+ptl_handle_me_t sctk_portals_helper_register_new_entry(ptl_handle_ni_t* handler, ptl_pt_index_t index, ptl_me_t* slot, void* ptr)
 {
 	ptl_handle_me_t slot_handler;
 
@@ -423,6 +435,103 @@ inline void sctk_portals_helper_register_new_entry(ptl_handle_ni_t* handler, ptl
 		ptr,
 		&slot_handler
 		));
-	sctk_warning("PORTALS: Register new entry : (%lu - %lu)", index, slot->match_bits);
+	if(ptr)
+	sctk_nodebug("PORTALS: Register new entry : (%lu - %lu) %d", index, slot->match_bits, ((sctk_portals_list_entry_extra_t*)ptr)->cat_msg);
+	return slot_handler;
+}
+
+void sctk_portals_helper_fetchAtomic_request(sctk_portals_pending_msg_list_t* list,
+		    void* start_new, void* start_res, size_t type_size,
+		    ptl_handle_ni_t* handler, ptl_process_t remote,
+		    ptl_pt_index_t index, ptl_match_bits_t match,
+		    void* ptr, ptl_hdr_data_t extra,
+		    ptl_op_t operation, ptl_datatype_t datatype)
+{
+	sctk_portals_pending_msg_t* msg_put = sctk_malloc(sizeof(sctk_portals_pending_msg_t));
+	sctk_portals_pending_msg_t* msg_get = sctk_malloc(sizeof(sctk_portals_pending_msg_t));
+
+	msg_put->ack_type = SCTK_PORTALS_NO_ACK_MSG;
+	msg_put->data = *((sctk_portals_list_entry_extra_t*)ptr);
+
+	msg_get->ack_type = SCTK_PORTALS_NO_ACK_MSG;
+	msg_get->data = *((sctk_portals_list_entry_extra_t*)ptr);
+
+	sctk_portals_helper_init_memory_descriptor(&msg_put->md, handler, start_new, type_size, SCTK_PORTALS_MD_PUT_OPTIONS);
+	sctk_portals_helper_init_memory_descriptor(&msg_get->md, handler, start_res, type_size, SCTK_PORTALS_MD_GET_OPTIONS);
+
+	//attach MD, load data
+	sctk_portals_assume(PtlMDBind(*handler, &msg_put->md, &msg_put->md_handler));
+	sctk_portals_assume(PtlMDBind(*handler, &msg_get->md, &msg_get->md_handler));
+
+	sctk_nodebug("PORTALS: FETCH ATOMIC (%lu - %lu - %lu)", remote.phys.pid, index, match);
+	sctk_portals_assume(PtlFetchAtomic(
+				msg_get->md_handler,
+				0,
+				msg_put->md_handler,
+				0,
+				type_size,
+				remote,
+				index,
+				match,
+				0,
+				ptr,
+				extra,
+				operation,
+				datatype
+				));
+
+	sctk_spinlock_lock(&list->msg_lock);
+	sctk_nodebug("PORTALS: Adding Fetch ATOMIC MDs %lu !", msg->md_handler);
+	LL_APPEND(list->head, msg_put);
+	LL_APPEND(list->head, msg_get);
+	sctk_spinlock_unlock(&list->msg_lock);
+}
+
+void sctk_portals_helper_swap_request(sctk_portals_pending_msg_list_t* list,
+		    void* start_new, void* start_res, size_t type_size,
+		    ptl_handle_ni_t* handler, ptl_process_t remote,
+		    ptl_pt_index_t index, ptl_match_bits_t match,
+		    void* ptr, ptl_hdr_data_t extra,
+		    void* operand, ptl_op_t operation, ptl_datatype_t datatype)
+{
+	sctk_portals_pending_msg_t* msg_put = sctk_malloc(sizeof(sctk_portals_pending_msg_t));
+	sctk_portals_pending_msg_t* msg_get = sctk_malloc(sizeof(sctk_portals_pending_msg_t));
+
+	msg_put->ack_type = SCTK_PORTALS_NO_ACK_MSG;
+	msg_put->data = *((sctk_portals_list_entry_extra_t*)ptr);
+
+	msg_get->ack_type = SCTK_PORTALS_NO_ACK_MSG;
+	msg_get->data = *((sctk_portals_list_entry_extra_t*)ptr);
+
+	sctk_portals_helper_init_memory_descriptor(&msg_put->md, handler, start_new, type_size, SCTK_PORTALS_MD_PUT_OPTIONS);
+	sctk_portals_helper_init_memory_descriptor(&msg_get->md, handler, start_res, type_size, SCTK_PORTALS_MD_GET_OPTIONS);
+
+	//attach MD, load data
+	sctk_portals_assume(PtlMDBind(*handler, &msg_put->md, &msg_put->md_handler));
+	sctk_portals_assume(PtlMDBind(*handler, &msg_get->md, &msg_get->md_handler));
+
+	sctk_nodebug("PORTALS: SWAP (%lu - %lu - %lu)", remote.phys.pid, index, match);
+	sctk_portals_assume(PtlSwap(
+				msg_get->md_handler,
+				0,
+				msg_put->md_handler,
+				0,
+				type_size,
+				remote,
+				index,
+				match,
+				0,
+				ptr,
+				extra,
+				operand,
+				operation,
+				datatype
+				));
+
+	sctk_spinlock_lock(&list->msg_lock);
+	sctk_nodebug("PORTALS: Adding SWAP MDs %lu !", msg->md_handler);
+	LL_APPEND(list->head, msg_put);
+	LL_APPEND(list->head, msg_get);
+	sctk_spinlock_unlock(&list->msg_lock);
 }
 #endif // MPC_USE_PORTALS

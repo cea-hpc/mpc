@@ -27,6 +27,7 @@
 #include <sctk_route.h>
 #include <sctk_inter_thread_comm.h>
 #include <sctk_portals.h>
+#include <sctk_portals_rdma.h>
 
 static volatile short rail_is_ready = 0;
 
@@ -71,8 +72,11 @@ static void sctk_network_notify_idle_message_portals (sctk_rail_info_t* rail)
 		sctk_portals_polling_queue_for(rail, SCTK_PORTALS_POLL_ALL);
 	}
 
-	//progress special messages
-	sctk_portals_polling_queue_for(rail, rail->network.portals.ptable.nb_entries);
+	//progress RDMA messages queue
+	sctk_portals_poll_one_queue(rail, rail->network.portals.ptable.nb_entries);
+
+	//progress special messages queue
+	sctk_portals_poll_one_queue(rail, rail->network.portals.ptable.nb_entries+1);
 
 	//check pending requests
 	if(sctk_spinlock_trylock(&rail->network.portals.ptable.pending_list.msg_lock) == 0){
@@ -129,6 +133,20 @@ void sctk_network_init_portals (sctk_rail_info_t *rail)
     rail->notify_idle_message = sctk_network_notify_idle_message_portals;
     rail->notify_any_source_message = sctk_network_notify_any_source_message_portals;
     rail->send_message_from_network = sctk_send_message_from_network_portals;
+
+    /* PIN */
+    rail->rail_pin_region = sctk_portals_pin_region;
+    rail->rail_unpin_region = sctk_portals_unpin_region;
+
+    /* RDMA */
+    rail->rdma_write = sctk_portals_rdma_write;
+    rail->rdma_read = sctk_portals_rdma_read;
+
+    rail->rdma_fetch_and_op_gate = sctk_portals_rdma_fetch_and_op_gate;
+    rail->rdma_fetch_and_op = sctk_portals_rdma_fetch_and_op;
+    rail->rdma_cas_gate = sctk_portals_rdma_cas_gate;
+    rail->rdma_cas = sctk_portals_rdma_cas;
+
     rail->network_name = "PORTALS";
 
     sctk_rail_init_route ( rail, rail->runtime_config_rail->topology, sctk_portals_on_demand_connection_handler );

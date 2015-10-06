@@ -38,7 +38,7 @@
 							<infiniband/>
 						</driver>
 					</config>
-						
+
 					<config>
 						<name>tcp_config_mpi</name>
 						<driver>
@@ -50,7 +50,7 @@
                         <driver>
                             <portals/>
                         </driver>
-                    </config> 
+                    </config>
 				</configs>
 
 				<rails>
@@ -61,7 +61,7 @@
 						<idle_polling>
 							<range>RAIL_POLL_NUMA</range>
 							<trigger>RAIL_POLL_SOCKET</trigger>
-						</idle_polling>					
+						</idle_polling>
 						<priority>1</priority>
 						<ondemand>1</ondemand>
 						<topology>ring</topology>
@@ -101,6 +101,13 @@
                         <ondemand>1</ondemand>
                         <config>portals_config</config>
                     </rail>
+		    <rail>
+			<name>portals_rdma</name>
+                        <priority>6</priority>
+                        <ondemand>1</ondemand>
+                        <config>portals_config</config>
+			<rdma>1</rdma>
+		    </rail>
                     <rail>
                         <name>portals_large</name>
                         <priority>6</priority>
@@ -151,6 +158,12 @@
                         <name>multirail_portals</name>
                         <rails>
                             <rail>portals_large</rail>
+                        </rails>
+                    </cli_option>
+		    <cli_option>
+                        <name>rdma_portals</name>
+                        <rails>
+                            <rail>portals_rdma</rail>
                         </rails>
                     </cli_option>
 					<cli_option>

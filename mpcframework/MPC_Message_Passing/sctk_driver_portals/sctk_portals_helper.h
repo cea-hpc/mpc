@@ -52,9 +52,11 @@ extern "C"
 #define SCTK_PORTALS_EVENTS_QUEUE_SIZE 64
 #define SCTK_PORTALS_HEADERS_ME_SIZE (SCTK_PORTALS_EVENTS_QUEUE_SIZE + 4)
 
-#define SCTK_PORTALS_ME_OPTIONS PTL_ME_EVENT_CT_COMM | PTL_ME_EVENT_CT_OVERFLOW | PTL_ME_EVENT_LINK_DISABLE | PTL_ME_EVENT_UNLINK_DISABLE | PTL_ME_USE_ONCE
-#define SCTK_PORTALS_ME_PUT_OPTIONS SCTK_PORTALS_ME_OPTIONS | PTL_ME_OP_PUT
-#define SCTK_PORTALS_ME_GET_OPTIONS SCTK_PORTALS_ME_OPTIONS | PTL_ME_OP_GET
+#define SCTK_PORTALS_ME_OPTIONS PTL_ME_EVENT_CT_COMM | PTL_ME_EVENT_CT_OVERFLOW | PTL_ME_EVENT_LINK_DISABLE | PTL_ME_EVENT_UNLINK_DISABLE
+#define SCTK_PORTALS_ME_PUT_OPTIONS SCTK_PORTALS_ME_OPTIONS | PTL_ME_OP_PUT | PTL_ME_USE_ONCE
+#define SCTK_PORTALS_ME_GET_OPTIONS SCTK_PORTALS_ME_OPTIONS | PTL_ME_OP_GET | PTL_ME_USE_ONCE
+
+#define SCTK_PORTALS_ME_ALL_OPTIONS SCTK_PORTALS_ME_OPTIONS | PTL_ME_OP_PUT | PTL_ME_OP_GET
 
 #define SCTK_PORTALS_MD_OPTIONS PTL_MD_EVENT_CT_ACK
 #define SCTK_PORTALS_MD_PUT_OPTIONS SCTK_PORTALS_MD_OPTIONS | PTL_MD_EVENT_CT_SEND
@@ -94,7 +96,8 @@ typedef enum sctk_portals_slot_category_s
 	SCTK_PORTALS_CAT_REGULAR,
 	SCTK_PORTALS_CAT_CTLMESSAGE,
 	SCTK_PORTALS_CAT_ROUTING_MSG,
-	SCTK_PORTALS_CAT_RESERVED
+	SCTK_PORTALS_CAT_RESERVED,
+	SCTK_PORTALS_CAT_RDMA
 } sctk_portals_slot_category_t;
 
 typedef struct sctk_portals_list_entry_extra_s
@@ -149,7 +152,22 @@ int sctk_portals_helper_to_str ( const void *inval, int invallen, char *outval, 
 void sctk_portals_helper_bind_to(sctk_portals_interface_handler_t*interface, ptl_process_t remote);
 void sctk_portals_helper_get_request(sctk_portals_pending_msg_list_t* list, void* start, size_t size, ptl_handle_ni_t* handler, ptl_process_t remote, ptl_pt_index_t index, ptl_match_bits_t match, void* ptr, sctk_portals_request_type_t req_type);
 void sctk_portals_helper_put_request(sctk_portals_pending_msg_list_t* list, void* start, size_t size, ptl_handle_ni_t* handler, ptl_process_t remote, ptl_pt_index_t index, ptl_match_bits_t match, void* ptr, ptl_hdr_data_t extra, sctk_portals_request_type_t req_type, sctk_portals_ack_msg_type_t ack_requested);
-inline void sctk_portals_helper_register_new_entry(ptl_handle_ni_t* handler, ptl_pt_index_t index, ptl_me_t* slot, void* ptr);
+ptl_handle_me_t sctk_portals_helper_register_new_entry(ptl_handle_ni_t* handler, ptl_pt_index_t index, ptl_me_t* slot, void* ptr);
+
+void sctk_portals_helper_swap_request(sctk_portals_pending_msg_list_t* list,
+		    void* start_new, void* start_res, size_t type_size,
+		    ptl_handle_ni_t* handler, ptl_process_t remote,
+		    ptl_pt_index_t index, ptl_match_bits_t match,
+		    void* ptr, ptl_hdr_data_t extra,
+		    void* operand, ptl_op_t operation, ptl_datatype_t datatype);
+
+
+void sctk_portals_helper_fetchAtomic_request(sctk_portals_pending_msg_list_t* list,
+		    void* start_new, void* start_res, size_t type_size,
+		    ptl_handle_ni_t* handler, ptl_process_t remote,
+		    ptl_pt_index_t index, ptl_match_bits_t match,
+		    void* ptr, ptl_hdr_data_t extra,
+		    ptl_op_t operation, ptl_datatype_t datatype);
 
 #endif
 #ifdef __cplusplus

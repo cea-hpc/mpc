@@ -30,7 +30,6 @@
 #include <sctk_portals_helper.h>
 #include <sctk_route.h>
 
-
 int sctk_portals_rdma_fetch_and_op_gate( sctk_rail_info_t *rail, size_t size, RDMA_op op, RDMA_type type );
 
 

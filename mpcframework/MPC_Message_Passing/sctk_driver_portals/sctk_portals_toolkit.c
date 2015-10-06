@@ -138,7 +138,7 @@ void sctk_portals_send_put ( sctk_endpoint_t *endpoint, sctk_thread_ptp_message_
 	//if control message, tag it as is + shift message queue where ME will be registered
 	if(sctk_message_class_is_control_message(SCTK_MSG_SPECIFIC_CLASS(msg)))
 	{
-		local_entry = prail->ptable.nb_entries;
+		local_entry = prail->ptable.nb_entries + 1;
 		stuff->cat_msg = SCTK_PORTALS_CAT_CTLMESSAGE;
 	}
 
@@ -218,7 +218,7 @@ void sctk_portals_ack_get (sctk_rail_info_t* rail, ptl_event_t* event)
 	stuff = event->user_ptr;
 	content = (sctk_thread_ptp_message_t*)stuff->extra_data;
 
-	sctk_nodebug("%p PORTALS: Free Message (FROM PUT) %d", content, SCTK_MSG_DEST_PROCESS(content));
+	sctk_debug("%p PORTALS: Free Message (FROM PUT) %d", content, SCTK_MSG_DEST_PROCESS(content));
 	//free message
 	sctk_complete_and_free_message(content);
 
@@ -261,7 +261,7 @@ void sctk_portals_recv_put (sctk_rail_info_t* rail, ptl_event_t* event)
 	//if control message, ajust local entry point for message
 	if(sctk_message_class_is_control_message(SCTK_MSG_SPECIFIC_CLASS(content)))
 	{
-		content->tail.portals.remote_index = rail->network.portals.ptable.nb_entries;
+		content->tail.portals.remote_index = rail->network.portals.ptable.nb_entries + 1;
 		sctk_warning("PORTALS: RECV CONTROL_MESSAGE FROM (%d -> %d) [%lu -> %lu] %lu - %lu", SCTK_MSG_SRC_PROCESS(content), SCTK_MSG_DEST_PROCESS(content),  event->initiator.phys.pid,rail->network.portals.current_id.phys.pid, content->tail.portals.remote_index, content->tail.portals.tag);
 	}
 	else
@@ -298,7 +298,8 @@ void sctk_portals_poll_pending_msg_list(sctk_rail_info_t *rail)
 		//while an avent is contained in current event_queue
 		while(ret == PTL_OK)
 		{
-			assume(event.ni_fail_type == PTL_NI_OK);
+			if(event.ni_fail_type != PTL_NI_OK)
+				CRASH();
 			//depending on event type
 			switch(event.type)
 			{
@@ -310,6 +311,8 @@ void sctk_portals_poll_pending_msg_list(sctk_rail_info_t *rail)
 					//depending on message type
 					switch(pending.cat_msg)
 					{
+
+						case SCTK_PORTALS_CAT_RDMA: // special msg : RDMA
 						case SCTK_PORTALS_CAT_REGULAR: // when standard message is copied in userspace
 							msg = (sctk_thread_ptp_message_t*) pending.extra_data;
 							sctk_debug("Free message (FROM GET) %d", SCTK_MSG_SRC_PROCESS(msg));
@@ -351,6 +354,8 @@ int sctk_portals_poll_one_queue(sctk_rail_info_t *rail, size_t id)
 	sctk_portals_list_entry_extra_t* stuff = NULL;
 	sctk_portals_slot_category_t cat;
 
+	assume(id < ptable->nb_entries+2);
+
 	//if no other tasks are polling this list
 	if(sctk_spinlock_trylock(&ptable->head[id]->lock) == 0)
 	{
@@ -371,10 +376,15 @@ int sctk_portals_poll_one_queue(sctk_rail_info_t *rail, size_t id)
 					{
 						case SCTK_PORTALS_CAT_REGULAR:
 						case SCTK_PORTALS_CAT_CTLMESSAGE:
-							sctk_debug("PORTALS: Read from %p", event.start);
+							if(id == ptable->nb_entries)
+								sctk_error("READ FROM GET RDMA");
+							else sctk_debug("PORTALS: Read from %p", event.start);
 							sctk_portals_ack_get(rail, &event);
 							break;
 
+						case SCTK_PORTALS_CAT_RDMA:
+							sctk_warning("Get for RDMA REQUEST ");
+							break;
 						case SCTK_PORTALS_CAT_ROUTING_MSG:
 							sctk_free(stuff->extra_data); // free temporary payload
 							break;
@@ -396,6 +406,9 @@ int sctk_portals_poll_one_queue(sctk_rail_info_t *rail, size_t id)
 						case SCTK_PORTALS_CAT_CTLMESSAGE:
 							sctk_portals_recv_put(rail, &event); // handle the message
 							break;
+						case SCTK_PORTALS_CAT_RDMA:
+						sctk_warning("Put for RDMA REQUEST ");
+							break;
 						case SCTK_PORTALS_CAT_RESERVED:
 						case SCTK_PORTALS_CAT_ROUTING_MSG:
 							break;
@@ -403,12 +416,14 @@ int sctk_portals_poll_one_queue(sctk_rail_info_t *rail, size_t id)
 							not_reachable();
 					}
 					break;
+				case PTL_EVENT_FETCH_ATOMIC:
+				case PTL_EVENT_FETCH_ATOMIC_OVERFLOW:
+					sctk_error("FETCH ATOMIC ACCESSED");
+					break;
 
 				//not used events for now
 				case PTL_EVENT_ATOMIC:
 				case PTL_EVENT_ATOMIC_OVERFLOW:
-				case PTL_EVENT_FETCH_ATOMIC:
-				case PTL_EVENT_FETCH_ATOMIC_OVERFLOW:
 				case PTL_EVENT_PT_DISABLED:
 				case PTL_EVENT_SEARCH:
 					break;
@@ -534,7 +549,7 @@ void sctk_portals_network_connection_from(int from, int to, sctk_rail_info_t* ra
 
 	//prepare network context to send to remote process
 	ctx.from = rail->network.portals.current_id;
-	ctx.entry = rail->network.portals.ptable.nb_entries;
+	ctx.entry = rail->network.portals.ptable.nb_entries + 1;
 
 	sctk_portals_helper_set_bits_from_msg(&ctx.match, &rail->network.portals.ptable.head[ctx.entry]->entry_cpt);
 
