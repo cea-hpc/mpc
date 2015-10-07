@@ -39,7 +39,7 @@ static volatile short rail_is_ready = 0;
  */
 static void sctk_network_send_message_endpoint_portals ( sctk_thread_ptp_message_t *msg, sctk_endpoint_t *endpoint )
 {
-	sctk_portals_send_put(endpoint, msg);
+    sctk_portals_send_put(endpoint, msg);
 }
 
 static void sctk_network_notify_recv_message_portals ( sctk_thread_ptp_message_t *msg, sctk_rail_info_t *rail )
@@ -64,8 +64,6 @@ static void sctk_network_notify_idle_message_portals (sctk_rail_info_t* rail)
 	if(!rail_is_ready) return;
 
 	size_t mytask = sctk_get_task_rank() % rail->network.portals.ptable.nb_entries;
-
-	//sctk_info("PORTALS: poll standard lists");
 
 	// check if current task and neighbors have pending message. If not, poll the entire portals table
 	if(sctk_portals_polling_queue_for(rail, mytask)){

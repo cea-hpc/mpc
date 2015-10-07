@@ -75,6 +75,7 @@ struct sctk_rail_portals_pin_ctx
     ptl_handle_me_t me_handler;
     ptl_match_bits_t match;
     ptl_process_t id;
+    void* start_addr;
 };
 #endif /* MPC_USE_PORTALS */
 

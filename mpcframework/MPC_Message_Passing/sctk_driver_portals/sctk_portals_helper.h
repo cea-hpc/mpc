@@ -37,6 +37,7 @@ extern "C"
 #include <stdlib.h>
 #include <string.h>
 #include <sctk_atomics.h>
+
 #define SCTK_PORTALS_BITS_INIT 0UL
 #define SCTK_PORTALS_BITS_HEADER 0UL
 #define SCTK_PORTALS_BITS_EAGER_SLOT (~(0UL))
@@ -56,7 +57,7 @@ extern "C"
 #define SCTK_PORTALS_ME_PUT_OPTIONS SCTK_PORTALS_ME_OPTIONS | PTL_ME_OP_PUT | PTL_ME_USE_ONCE
 #define SCTK_PORTALS_ME_GET_OPTIONS SCTK_PORTALS_ME_OPTIONS | PTL_ME_OP_GET | PTL_ME_USE_ONCE
 
-#define SCTK_PORTALS_ME_ALL_OPTIONS SCTK_PORTALS_ME_OPTIONS | PTL_ME_OP_PUT | PTL_ME_OP_GET
+#define SCTK_PORTALS_ME_ALL_OPTIONS SCTK_PORTALS_ME_OPTIONS | PTL_ME_OP_GET | PTL_ME_OP_PUT
 
 #define SCTK_PORTALS_MD_OPTIONS PTL_MD_EVENT_CT_ACK
 #define SCTK_PORTALS_MD_PUT_OPTIONS SCTK_PORTALS_MD_OPTIONS | PTL_MD_EVENT_CT_SEND
@@ -149,13 +150,24 @@ void sctk_portals_helper_set_bits_from_msg(ptl_match_bits_t* match, void*atomic)
 void sctk_portals_helper_init_memory_descriptor(ptl_md_t* md, sctk_portals_interface_handler_t *ni_handler, void* start, size_t size, unsigned int option);
 int sctk_portals_helper_from_str ( const char *inval, void *outval, int outvallen );
 int sctk_portals_helper_to_str ( const void *inval, int invallen, char *outval, int outvallen );
-void sctk_portals_helper_bind_to(sctk_portals_interface_handler_t*interface, ptl_process_t remote);
-void sctk_portals_helper_get_request(sctk_portals_pending_msg_list_t* list, void* start, size_t size, ptl_handle_ni_t* handler, ptl_process_t remote, ptl_pt_index_t index, ptl_match_bits_t match, void* ptr, sctk_portals_request_type_t req_type);
-void sctk_portals_helper_put_request(sctk_portals_pending_msg_list_t* list, void* start, size_t size, ptl_handle_ni_t* handler, ptl_process_t remote, ptl_pt_index_t index, ptl_match_bits_t match, void* ptr, ptl_hdr_data_t extra, sctk_portals_request_type_t req_type, sctk_portals_ack_msg_type_t ack_requested);
 ptl_handle_me_t sctk_portals_helper_register_new_entry(ptl_handle_ni_t* handler, ptl_pt_index_t index, ptl_me_t* slot, void* ptr);
 
+void sctk_portals_helper_get_request(sctk_portals_pending_msg_list_t* list,
+			void* start, size_t size, size_t remote_offset,
+			ptl_handle_ni_t* handler, ptl_process_t remote,
+			ptl_pt_index_t index, ptl_match_bits_t match, void* ptr,
+			sctk_portals_request_type_t req_type);
+
+void sctk_portals_helper_put_request(sctk_portals_pending_msg_list_t* list,
+				void* start, size_t size, size_t remote_offset,
+				ptl_handle_ni_t* handler, ptl_process_t remote,
+				ptl_pt_index_t index, ptl_match_bits_t match, void* ptr,
+				ptl_hdr_data_t extra, sctk_portals_request_type_t req_type,
+				sctk_portals_ack_msg_type_t ack_requested);
+
 void sctk_portals_helper_swap_request(sctk_portals_pending_msg_list_t* list,
-		    void* start_new, void* start_res, size_t type_size,
+		    void* start_new, size_t new_offset, void* start_res, size_t res_offset,
+		    size_t type_size, size_t remote_offset,
 		    ptl_handle_ni_t* handler, ptl_process_t remote,
 		    ptl_pt_index_t index, ptl_match_bits_t match,
 		    void* ptr, ptl_hdr_data_t extra,
@@ -163,7 +175,8 @@ void sctk_portals_helper_swap_request(sctk_portals_pending_msg_list_t* list,
 
 
 void sctk_portals_helper_fetchAtomic_request(sctk_portals_pending_msg_list_t* list,
-		    void* start_new, void* start_res, size_t type_size,
+		    void* start_new, size_t new_offset, void* start_res, size_t res_offset,
+		    size_t type_size, size_t remote_offset,
 		    ptl_handle_ni_t* handler, ptl_process_t remote,
 		    ptl_pt_index_t index, ptl_match_bits_t match,
 		    void* ptr, ptl_hdr_data_t extra,

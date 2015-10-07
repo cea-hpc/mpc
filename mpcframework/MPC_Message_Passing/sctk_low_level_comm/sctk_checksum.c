@@ -23,6 +23,7 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
+#include <sctk_runtime_config.h>
 #include "sctk_checksum.h"
 #ifdef SCTK_USE_CHECKSUM
 #include "sctk_shell_colors.h"

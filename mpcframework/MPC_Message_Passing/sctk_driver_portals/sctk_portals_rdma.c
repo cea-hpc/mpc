@@ -58,7 +58,7 @@ static ptl_datatype_t sctk_portals_rdma_determine_type(RDMA_type type)
 		case RDMA_TYPE_DOUBLE:             return PTL_DOUBLE; break;
 		case RDMA_TYPE_FLOAT:              return PTL_FLOAT; break;
 		case RDMA_TYPE_INT:                return PTL_INT32_T; break;
-		case RDMA_TYPE_LONG:               return PTL_INT32_T; break;
+		case RDMA_TYPE_LONG:               return PTL_INT64_T; break;
 		case RDMA_TYPE_LONG_DOUBLE:        return PTL_LONG_DOUBLE; break;
 		case RDMA_TYPE_LONG_LONG:          return PTL_INT64_T; break;
 		case RDMA_TYPE_LONG_LONG_INT:      return PTL_INT64_T; break;
@@ -123,7 +123,7 @@ void sctk_portals_rdma_fetch_and_op(  sctk_rail_info_t *rail,
 
 	sctk_portals_helper_fetchAtomic_request(
 		&rail->network.portals.ptable.pending_list,
-		fetch_addr,	adder, RDMA_type_size(type),
+		fetch_addr,	0, adder,0,  RDMA_type_size(type), 0,
 		&rail->network.portals.interface_handler,
 		portals.id,
 		rail->network.portals.ptable.nb_entries,
@@ -162,7 +162,7 @@ void sctk_portals_rdma_cas(sctk_rail_info_t *rail,
 
 	sctk_portals_helper_swap_request(
 		&rail->network.portals.ptable.pending_list,
-		new, res_addr, RDMA_type_size(type),
+		new, 0, res_addr, 0, RDMA_type_size(type), 0,
 		&rail->network.portals.interface_handler,
 		portals.id,
 		rail->network.portals.ptable.nb_entries,
@@ -185,11 +185,12 @@ void sctk_portals_rdma_write(  sctk_rail_info_t *rail, sctk_thread_ptp_message_t
 	stuff->cat_msg = SCTK_PORTALS_CAT_RDMA;
 	stuff->extra_data = msg;
 
-
+	sctk_nodebug("RDMA WRITE TO %lu - %lu !!", portals.id.phys.pid, portals.match);
 	sctk_portals_helper_put_request(
 		&rail->network.portals.ptable.pending_list,
 		src_addr,
 		size,
+		(dest_addr - portals.start_addr),
 		&rail->network.portals.interface_handler,
 		portals.id,
 		rail->network.portals.ptable.nb_entries,
@@ -197,7 +198,7 @@ void sctk_portals_rdma_write(  sctk_rail_info_t *rail, sctk_thread_ptp_message_t
 		stuff,
 		0,
 		SCTK_PORTALS_NO_BLOCKING_REQUEST,
-		SCTK_PORTALS_NO_ACK_MSG
+		SCTK_PORTALS_ACK_MSG
 	);
 }
 
@@ -212,11 +213,12 @@ void sctk_portals_rdma_read(  sctk_rail_info_t *rail, sctk_thread_ptp_message_t 
 	stuff->cat_msg = SCTK_PORTALS_CAT_RDMA;
 	stuff->extra_data = msg;
 
-	sctk_error("RDMA READ FROM %lu - %lu !!", portals.id.phys.pid, portals.match);
+	sctk_warning("RDMA READ FROM %lu - %lu (%d) !!", portals.id.phys.pid, portals.match, (src_addr - portals.start_addr));
 	sctk_portals_helper_get_request(
 		&rail->network.portals.ptable.pending_list,
 		dest_addr,
 		size,
+		(src_addr - portals.start_addr),
 		&rail->network.portals.interface_handler,
 		portals.id,
 		rail->network.portals.ptable.nb_entries,
@@ -246,7 +248,8 @@ void sctk_portals_pin_region( struct sctk_rail_info_s * rail, struct sctk_rail_p
 	list->pin.portals.me_handler = sctk_portals_helper_register_new_entry(&prail->interface_handler, entry, &me, stuff);;
 	list->pin.portals.match = match;
 	list->pin.portals.id = prail->current_id;
-	sctk_error("Pinning %lu - %lu !!", list->pin.portals.id.phys.pid, list->pin.portals.match);
+	list->pin.portals.start_addr = addr;
+	sctk_nodebug("Pinning %lu - %lu !!", list->pin.portals.id.phys.pid, list->pin.portals.match);
 
 }
 
