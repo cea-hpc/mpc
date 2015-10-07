@@ -2,24 +2,17 @@
 #define __SCTK_SHM_H__
 
 #include "sctk_shm_raw_queues.h"
+#include "sctk_shm_eager.h"
+#include "sctk_shm_cma.h"
+
 #include "sctk_rail.h"
+
 
 /** \brief ROUTE level data structure for SHM 
 *
 *   This structure is stored in each \ref sctk_endpoint_s structure
 *   using the \ref sctk_route_info_spec_t union
 */
-
-typedef struct
-{
-  struct iovec * ptr;
-  int mpi_src;
-  int len;
-  pid_t pid;
-  
-  sctk_thread_ptp_message_t * msg;
-} sctk_shm_iovec_info_t;
-
 typedef struct
 {
     int dest;
