@@ -28,6 +28,9 @@
 #include <sctk_portals_toolkit.h>
 #include <sctk_pmi.h>
 #include <sctk_control_messages.h>
+
+#define sctk_min(a, b)  ((a) < (b) ? (a) : (b))
+
 /**
  * @brief Portals handler for getting a message
  *
@@ -47,8 +50,11 @@ void sctk_portals_message_copy ( sctk_message_to_copy_t *tmp )
 	recver = tmp->msg_recv;
 	remote_info = &sender->tail.portals;
 	sctk_portals_list_entry_extra_t stuff;
+	size_t size;
 	stuff.cat_msg = SCTK_PORTALS_CAT_REGULAR;
 	stuff.extra_data = recver;
+
+	size = sctk_min(SCTK_MSG_SIZE(recver), recver->tail.message.contiguous.size );
 
 	//if msg is control_message, wait after Get (implementation dependent)
 	if(sctk_message_class_is_control_message(SCTK_MSG_SPECIFIC_CLASS(sender)))
@@ -61,7 +67,7 @@ void sctk_portals_message_copy ( sctk_message_to_copy_t *tmp )
 	sctk_portals_helper_get_request(
 		remote_info->list,
 		recver->tail.message.contiguous.addr,
-		SCTK_MSG_SIZE(recver),
+		size,
 		0,
 		remote_info->handler,
 		remote_info->remote,
