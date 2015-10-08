@@ -8,7 +8,6 @@
 
 typedef struct
 {
-  struct iovec * ptr;
   int mpi_src;
   int len;
   pid_t pid;

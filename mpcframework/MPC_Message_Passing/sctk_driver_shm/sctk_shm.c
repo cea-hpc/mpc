@@ -73,7 +73,7 @@ sctk_network_notify_idle_message_shm ( sctk_rail_info_t *rail )
         if(msg) sctk_send_message_from_network_shm(msg);
 		break;
 	case SCTK_SHM_RDMA: 
-		msg = sctk_network_rdma_msg_shm_recv(__cell,0);
+		msg = sctk_network_rdma_msg_shm_recv(__cell,1);
         if(msg) sctk_send_message_from_network_shm(msg);
 		break;
 	case SCTK_SHM_CMPL:
