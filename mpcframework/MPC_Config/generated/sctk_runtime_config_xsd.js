@@ -440,12 +440,20 @@
 -e </xs:all>\
 -e </xs:complexType>\
 -e <!-- ********************************************************* -->\
+-e <xs:complexType name='user_type_net_driver_shm'>\
+-e <xs:all>\
+-e <xs:element minOccurs='0' name='shmem_size' type='xs:integer'/>\
+-e <xs:element minOccurs='0' name='cells_num' type='xs:integer'/>\
+-e </xs:all>\
+-e </xs:complexType>\
+-e <!-- ********************************************************* -->\
 -e <xs:complexType name='user_type_net_driver'>\
 -e <xs:choice>\
 -e <xs:element name='infiniband' type='user_type_net_driver_infiniband'/>\
 -e <xs:element name='portals' type='user_type_net_driver_portals'/>\
 -e <xs:element name='tcp' type='user_type_net_driver_tcp'/>\
 -e <xs:element name='tcprdma' type='user_type_net_driver_tcp_rdma'/>\
+-e <xs:element name='shm' type='user_type_net_driver_shm'/>\
 -e <xs:element name='topological' type='user_type_net_driver_topological'/>\
 -e </xs:choice>\
 -e </xs:complexType>\

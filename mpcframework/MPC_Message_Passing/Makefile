@@ -1,4 +1,4 @@
-# Makefile generated with ../MPC_Tools/mpc_gen_makefile mardi 2 juin 2015, 10:27:09 (UTC+0200)
+# Makefile generated with ../MPC_Tools/mpc_gen_makefile jeudi 8 octobre 2015, 16:07:34 (UTC+0200)
 ############################# MPC License ##############################
 # Wed Nov 19 15:19:19 CET 2008                                         #
 # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          #
@@ -109,7 +109,7 @@ FOBJ_inter_thread_comm=$(FFILES_inter_thread_comm:sctk_inter_thread_comm/%.f=$(M
 FFILES_low_level_comm=$(wildcard sctk_low_level_comm/*.f)
 FOBJ_low_level_comm=$(FFILES_low_level_comm:sctk_low_level_comm/%.f=$(M_PWD)/BUILD_MPC_Message_Passing/lib/%_f.o)
 
-all: $(OBJ_include) $(FOBJ_include) $(SOBJ_include) $(OBJ_driver_ib) $(FOBJ_driver_ib) $(SOBJ_driver_ib) $(OBJ_driver_portals) $(FOBJ_driver_portals) $(SOBJ_driver_portals) $(OBJ_driver_tcp) $(FOBJ_driver_tcp) $(SOBJ_driver_tcp) $(OBJ_inter_thread_comm) $(FOBJ_inter_thread_comm) $(SOBJ_inter_thread_comm) $(OBJ_low_level_comm) $(FOBJ_low_level_comm) $(SOBJ_low_level_comm)
+all: $(OBJ_include) $(FOBJ_include) $(SOBJ_include) $(OBJ_driver_ib) $(FOBJ_driver_ib) $(SOBJ_driver_ib) $(OBJ_driver_portals) $(FOBJ_driver_portals) $(SOBJ_driver_portals) $(OBJ_driver_shm) $(FOBJ_driver_shm) $(SOBJ_driver_shm) $(OBJ_driver_tcp) $(FOBJ_driver_tcp) $(SOBJ_driver_tcp) $(OBJ_inter_thread_comm) $(FOBJ_inter_thread_comm) $(SOBJ_inter_thread_comm) $(OBJ_low_level_comm) $(FOBJ_low_level_comm) $(SOBJ_low_level_comm)
 
 $(M_PWD)/include_modules/MPC_Message_Passing:
 	@../MPC_Tools/mpc_prepare_includes $(MPC_SOURCE_DIR)MPC_Message_Passing/include $(M_PWD)/include_modules
@@ -125,7 +125,7 @@ prepare_includes:$(M_PWD)/include_modules/MPC_Message_Passing
 
 
 ifneq ($(SCTK_MAKE_NO_DEP),yes)
-DEPENDS=$(DEP_include) $(DEP_driver_ib) $(DEP_driver_portals) $(DEP_driver_tcp) $(DEP_inter_thread_comm) $(DEP_low_level_comm) 
+DEPENDS=$(DEP_include) $(DEP_driver_ib) $(DEP_driver_portals) $(DEP_driver_shm) $(DEP_driver_tcp) $(DEP_inter_thread_comm) $(DEP_low_level_comm) 
 
 $(DEPENDS):Makefile 
 endif
