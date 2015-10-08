@@ -129,6 +129,10 @@
             <param name="reduce_scatter_inter" type="funcptr" default="__INTERNAL__PMPI_Reduce_scatter_inter" doc="MPI_Reduce_scatter intercom algorithm"/>
             <param name="reduce_scatter_block_inter" type="funcptr" default="__INTERNAL__PMPI_Reduce_scatter_block_inter" doc="MPI_Reduce_scatter_block intercom algorithm"/>
         </struct>
+
+       	<struct name="progress_thread" doc="Progress thread NBC">
+	    <param name="use_progress_thread" type="int" default="0" doc="If use progress threads for non blocking collectives"/>
+	</struct>
         
         		
 	<!-- ############################## -->
@@ -148,7 +152,8 @@
 	<modules>
 		<module name="collectives_intra" type="collectives_intra"/>
 		<module name="collectives_inter" type="collectives_inter"/>
-		<module name="mpc" type="mpc"/>
+        	<module name="progress_thread" type="progress_thread"/>
+        	<module name="mpc" type="mpc"/>
 	</modules>
       
       

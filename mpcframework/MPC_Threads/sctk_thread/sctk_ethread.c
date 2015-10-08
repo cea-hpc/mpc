@@ -60,7 +60,7 @@ sctk_ethread_self ()
   return task;
 }
 
-inline sctk_ethread_t
+sctk_ethread_t
 sctk_ethread_self_check ()
 {
   sctk_ethread_virtual_processor_t *vp;

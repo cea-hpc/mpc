@@ -193,6 +193,14 @@ struct sctk_runtime_config_struct_collectives_inter
 };
 
 /******************************** STRUCTURE *********************************/
+/**Progress thread NBC**/
+struct sctk_runtime_config_struct_progress_thread
+{	int init_done;
+	/**If use progress threads for non blocking collectives**/
+	int use_progress_thread;
+};
+
+/******************************** STRUCTURE *********************************/
 /**Options for MPC Message Passing**/
 struct sctk_runtime_config_struct_mpc
 {	int init_done;
@@ -674,6 +682,7 @@ struct sctk_runtime_config_modules
 	struct sctk_runtime_config_struct_debugger debugger;
 	struct sctk_runtime_config_struct_collectives_intra collectives_intra;
 	struct sctk_runtime_config_struct_collectives_inter collectives_inter;
+	struct sctk_runtime_config_struct_progress_thread progress_thread;
 	struct sctk_runtime_config_struct_mpc mpc;
 	struct sctk_runtime_config_struct_inter_thread_comm inter_thread_comm;
 	struct sctk_runtime_config_struct_low_level_comm low_level_comm;

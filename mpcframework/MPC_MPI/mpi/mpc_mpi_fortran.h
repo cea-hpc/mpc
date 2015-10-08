@@ -17,14 +17,12 @@
 /* #                                                                      # */
 /* # Authors:                                                             # */
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
+/* #   - JAEGER Julien julien.jaeger@cea.fr                               # */
 /* #                                                                      # */
 /* ######################################################################## */
 
 TODO("Handle the case of MPI_Aint which are not int fortran")
 
-
-char * sctk_char_fortran_to_c (char *buf, int size, char ** free_ptr );
-void sctk_char_c_to_fortran (char *buf, int size);
 
 void ffunc (mpi_send) (void *buf, int *count, MPI_Datatype * datatype,
 		       int *dest, int *tag, MPI_Comm * comm, int *res);
@@ -2046,24 +2044,6 @@ void ffunc (pmpi_open_port)(MPI_Info info, char *port_name, int *res){not_implem
 void ffunc (pmpi_publish_name)(const char *service_name, MPI_Info info, const char *port_name, int *res){not_implemented();}
 void ffunc (pmpi_unpublish_name)(const char *service_name, MPI_Info info, const char *port_name, int *res){not_implemented();}
 
-/* non blocking coll */
-void ffunc (pmpi_iallreduce) (const void *sendbuf, void *recvbuf, int count,MPI_Datatype datatype, MPI_Op op, MPI_Comm comm,MPI_Request *request, int *res){not_implemented();}
-void ffunc (pmpi_ibarrier)(MPI_Comm comm, MPI_Request *request, int *res){not_implemented();}
-void ffunc (pmpi_ibcast)(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, MPI_Request *request, int *res){not_implemented();}
-void ffunc (pmpi_igather)(const void *sendbuf, int sendcount, MPI_Datatype sendtype,void *recvbuf, int recvcount, MPI_Datatype recvtype,int root, MPI_Comm comm, MPI_Request *request, int *res){not_implemented();}
-void ffunc (pmpi_igatherv)(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int recvcounts[], const int displs[], MPI_Datatype recvtype, int root, MPI_Comm comm, MPI_Request *request, int *res){not_implemented();}
-void ffunc (pmpi_iscatter)(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPI_Request *request, int *res){not_implemented();}
-void ffunc (pmpi_iscatterv)(const void *sendbuf, const int sendcounts[], const int displs[], MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPI_Request *request, int *res){not_implemented();}
-void ffunc (pmpi_iallgather)(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPI_Request *request, int *res){not_implemented();}
-void ffunc (pmpi_iallgatherv)(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int recvcounts[], const int displs[], MPI_Datatype recvtype, MPI_Comm comm, MPI_Request *request, int *res){not_implemented();}
-void ffunc (pmpi_ialltoall)(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPI_Request *request, int *res){not_implemented();}
-void ffunc (pmpi_ialltoallv)(const void *sendbuf, const int sendcounts[], const int sdispls[], MPI_Datatype sendtype, void *recvbuf, const int recvcounts[], const int rdispls[], MPI_Datatype recvtype, MPI_Comm comm, MPI_Request *request, int *res){not_implemented();}
-void ffunc (pmpi_ialltoallw)(const void *sendbuf, const int sendcounts[], const int sdispls[], const MPI_Datatype sendtypes[], void *recvbuf, const int recvcounts[], const int rdispls[], const MPI_Datatype recvtypes[], MPI_Comm comm, MPI_Request *request, int *res){not_implemented();}
-void ffunc (pmpi_ireduce)(const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm, MPI_Request *request, int *res){not_implemented();}
-void ffunc (pmpi_ireduce_scatter)(const void *sendbuf, void *recvbuf, const int recvcounts[], MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Request *request, int *res){not_implemented();}
-void ffunc (pmpi_ireduce_scatter_block)(const void *sendbuf, void *recvbuf, int recvcount, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Request *request, int *res){not_implemented();}
-void ffunc (pmpi_iscan)(const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Request *request, int *res){not_implemented();}
-void ffunc (pmpi_iexscan)(const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Request *request, int *res){not_implemented();}
 
 /* Dist graph operations */
 void ffunc (pmpi_dist_graph_neighbors_count)(MPI_Comm comm, int *indegree, int *outdegree, int *weighted, int *res){not_implemented();}

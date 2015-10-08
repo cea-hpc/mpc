@@ -57,6 +57,7 @@ void sctk_runtime_config_struct_init_launcher(void * struct_ptr);
 void sctk_runtime_config_struct_init_debugger(void * struct_ptr);
 void sctk_runtime_config_struct_init_collectives_intra(void * struct_ptr);
 void sctk_runtime_config_struct_init_collectives_inter(void * struct_ptr);
+void sctk_runtime_config_struct_init_progress_thread(void * struct_ptr);
 void sctk_runtime_config_struct_init_mpc(void * struct_ptr);
 void sctk_runtime_config_struct_init_net_driver_topological(void * struct_ptr);
 void sctk_runtime_config_struct_init_net_driver_infiniband(void * struct_ptr);

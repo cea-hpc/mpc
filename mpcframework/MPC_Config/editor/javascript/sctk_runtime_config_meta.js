@@ -73,6 +73,9 @@ meta.types = {
 		reduce_scatter_inter: {mode: 'param', name: "reduce_scatter_inter", type: "funcptr", doc: "MPI_Reduce_scatter intercom algorithm", dflt: "__INTERNAL__PMPI_Reduce_scatter_inter", },
 		reduce_scatter_block_inter: {mode: 'param', name: "reduce_scatter_block_inter", type: "funcptr", doc: "MPI_Reduce_scatter_block intercom algorithm", dflt: "__INTERNAL__PMPI_Reduce_scatter_block_inter", },
 	}},
+	progress_thread : {type: 'struct', name: "progress_thread", childs: {
+		use_progress_thread: {mode: 'param', name: "use_progress_thread", type: "int", doc: "If use progress threads for non blocking collectives", dflt: "0", },
+	}},
 	mpc : {type: 'struct', name: "mpc", childs: {
 		log_debug: {mode: 'param', name: "log_debug", type: "bool", doc: "Print debug messages", dflt: "false", },
 		hard_checking: {mode: 'param', name: "hard_checking", type: "bool", doc: "", dflt: "false", },
@@ -266,6 +269,7 @@ meta.modules = {
 	debugger: {name: "debugger", type: "debugger"},
 	collectives_intra: {name: "collectives_intra", type: "collectives_intra"},
 	collectives_inter: {name: "collectives_inter", type: "collectives_inter"},
+	progress_thread: {name: "progress_thread", type: "progress_thread"},
 	mpc: {name: "mpc", type: "mpc"},
 	inter_thread_comm: {name: "inter_thread_comm", type: "inter_thread_comm"},
 	low_level_comm: {name: "low_level_comm", type: "low_level_comm"},

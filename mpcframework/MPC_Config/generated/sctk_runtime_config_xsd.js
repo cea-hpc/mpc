@@ -329,6 +329,12 @@
 -e </xs:all>\
 -e </xs:complexType>\
 -e <!-- ********************************************************* -->\
+-e <xs:complexType name='user_type_progress_thread'>\
+-e <xs:all>\
+-e <xs:element minOccurs='0' name='use_progress_thread' type='xs:integer'/>\
+-e </xs:all>\
+-e </xs:complexType>\
+-e <!-- ********************************************************* -->\
 -e <xs:complexType name='user_type_mpc'>\
 -e <xs:all>\
 -e <xs:element minOccurs='0' name='log_debug' type='xs:boolean'/>\
@@ -734,6 +740,7 @@
 -e <xs:element minOccurs='0' name='debugger' type='user_type_debugger'/>\
 -e <xs:element minOccurs='0' name='collectives_intra' type='user_type_collectives_intra'/>\
 -e <xs:element minOccurs='0' name='collectives_inter' type='user_type_collectives_inter'/>\
+-e <xs:element minOccurs='0' name='progress_thread' type='user_type_progress_thread'/>\
 -e <xs:element minOccurs='0' name='mpc' type='user_type_mpc'/>\
 -e <xs:element minOccurs='0' name='inter_thread_comm' type='user_type_inter_thread_comm'/>\
 -e <xs:element minOccurs='0' name='low_level_comm' type='user_type_low_level_comm'/>\

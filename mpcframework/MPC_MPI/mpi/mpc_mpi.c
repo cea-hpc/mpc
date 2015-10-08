@@ -20,39 +20,11 @@
 /* #   - JAEGER Julien julien.jaeger@cea.fr                               # */
 /* #                                                                      # */
 /* ######################################################################## */
-#include <mpc.h>
-#include <mpc_mpi.h>
-#include <sctk_debug.h>
-#include <sctk_spinlock.h>
-#include "sctk_thread.h"
-#include <sctk_ethread_internal.h>
-#include "sctk_communicator.h"
-#include "sctk_collective_communications.h"
-#include "mpc_reduction.h"
-#include "sctk_debug.h"
-#include "sctk_topology.h"
-#include "mpcthread.h"
-#include "sctk_inter_thread_comm.h"
-#include "mpc_common.h"
-#include "sctk_spinlock.h"
-#include "sctk_communicator.h"
-#include "sctk_alloc.h"
-#include <mpc_extern32.h>
-#include <string.h>
-#include <uthash.h>
-#include "sctk_runtime_config.h"
+#include <mpc_mpi_internal.h>
 
 #ifndef SCTK_DO_NOT_HAVE_WEAK_SYMBOLS
 #include "mpc_mpi_weak.h"
 #endif
-
-TODO("Optimize algorithme for derived types")
-
-#define ENABLE_COLLECTIVES_ON_INTERCOMM  
-//#define MPC_MPI_USE_REQUEST_CACHE
-//#define MPC_MPI_USE_LOCAL_REQUESTS_QUEUE
-
-static int __INTERNAL__PMPI_Attr_set_fortran (int keyval);
 
 char * sctk_char_fortran_to_c (char *buf, int size, char ** free_ptr)
 {
@@ -100,23 +72,16 @@ void sctk_char_c_to_fortran (char *buf, int size)
     }
 }
 
-#if defined(SCTK_USE_CHAR_MIXED)
-#define SCTK_CHAR_END(size)
-#define SCTK_CHAR_MIXED(size)  ,long int size
-#else
-#define SCTK_CHAR_END(size) ,long int size
-#define SCTK_CHAR_MIXED(size)
-#endif
-
 #undef ffunc
 #define ffunc(a) a##_
 #include <mpc_mpi_fortran.h>
 
 #undef ffunc
-#define ffunc(a) a##__
+#define	ffunc(a) a##__
 #include <mpc_mpi_fortran.h>
-
 #undef ffunc
+
+
 /*
   INTERNAL FUNCTIONS
 */
@@ -141,15 +106,11 @@ static int __INTERNAL__PMPI_Issend (void *, int, MPI_Datatype, int, int,
 				    MPI_Comm, MPI_Request *);
 static int __INTERNAL__PMPI_Irsend (void *, int, MPI_Datatype, int, int,
 				    MPI_Comm, MPI_Request *);
-static int __INTERNAL__PMPI_Irecv (void *, int, MPI_Datatype, int, int,
-				   MPI_Comm, MPI_Request *);
 static int __INTERNAL__PMPI_Wait (MPI_Request *, MPI_Status *);
 static int __INTERNAL__PMPI_Test (MPI_Request *, int *, MPI_Status *);
 static int __INTERNAL__PMPI_Request_free (MPI_Request *);
-static int __INTERNAL__PMPI_Waitany (int, MPI_Request *, int *, MPI_Status *);
 static int __INTERNAL__PMPI_Testany (int, MPI_Request *, int *, int *,
 				     MPI_Status *);
-static int __INTERNAL__PMPI_Waitall (int, MPI_Request *, MPI_Status *);
 static int __INTERNAL__PMPI_Testall (int, MPI_Request *, int *, MPI_Status *);
 static int __INTERNAL__PMPI_Waitsome (int, MPI_Request *, int *, int *,
 				      MPI_Status *);
@@ -192,8 +153,8 @@ static int __INTERNAL__PMPI_Type_hindexed (int, int *, MPI_Aint *,
 static int __INTERNAL__PMPI_Type_struct (int, int *, MPI_Aint *,
 					 MPI_Datatype *, MPI_Datatype *);
 static int __INTERNAL__PMPI_Address (void *, MPI_Aint *);
-static int __INTERNAL__PMPI_Type_extent (MPI_Datatype, MPI_Aint *);
-static int __INTERNAL__PMPI_Type_size (MPI_Datatype, int *);
+int __INTERNAL__PMPI_Type_extent (MPI_Datatype, MPI_Aint *);
+int __INTERNAL__PMPI_Type_size (MPI_Datatype, int *);
 static int __INTERNAL__PMPI_Type_lb (MPI_Datatype, MPI_Aint *);
 static int __INTERNAL__PMPI_Type_ub (MPI_Datatype, MPI_Aint *);
 static int __INTERNAL__PMPI_Type_create_resized(MPI_Datatype old_type, MPI_Aint lb, MPI_Aint extent, MPI_Datatype *new_type);
@@ -217,36 +178,30 @@ int __INTERNAL__PMPI_Type_create_subarray (int ndims,
 					   int order,
 					   MPI_Datatype oldtype,
 					   MPI_Datatype * new_type);
-static int __INTERNAL__PMPI_Pack (void *, int, MPI_Datatype, void *, int,
-				  int *, MPI_Comm);
-static int __INTERNAL__PMPI_Unpack (void *, int, int *, void *, int,
-				    MPI_Datatype, MPI_Comm);
-static int __INTERNAL__PMPI_Pack_size (int, MPI_Datatype, MPI_Comm, int *);
-
 
 int __INTERNAL__PMPI_Pack_external_size (char *datarep , int incount, MPI_Datatype datatype, MPI_Aint *size);
 int __INTERNAL__PMPI_Pack_external (char *datarep , void *inbuf, int incount, MPI_Datatype datatype, void * outbuf, MPI_Aint outsize, MPI_Aint * position);
 int __INTERNAL__PMPI_Unpack_external (char * datarep, void * inbuf, MPI_Aint insize, MPI_Aint * position, void * outbuf, int outcount, MPI_Datatype datatype);
 
 
-static int __INTERNAL__PMPI_Barrier (MPI_Comm);
-static int __INTERNAL__PMPI_Bcast (void *, int, MPI_Datatype, int, MPI_Comm);
-static int __INTERNAL__PMPI_Gather (void *, int, MPI_Datatype, void *, int,
+int __INTERNAL__PMPI_Barrier (MPI_Comm);
+int __INTERNAL__PMPI_Bcast (void *, int, MPI_Datatype, int, MPI_Comm);
+int __INTERNAL__PMPI_Gather (void *, int, MPI_Datatype, void *, int,
 				    MPI_Datatype, int, MPI_Comm);
-static int __INTERNAL__PMPI_Gatherv (void *, int, MPI_Datatype, void *, int *,
+int __INTERNAL__PMPI_Gatherv (void *, int, MPI_Datatype, void *, int *,
 				     int *, MPI_Datatype, int, MPI_Comm);
-static int __INTERNAL__PMPI_Scatter (void *, int, MPI_Datatype, void *, int,
+int __INTERNAL__PMPI_Scatter (void *, int, MPI_Datatype, void *, int,
 				     MPI_Datatype, int, MPI_Comm);
-static int __INTERNAL__PMPI_Scatterv (void *, int *, int *, MPI_Datatype,
+int __INTERNAL__PMPI_Scatterv (void *, int *, int *, MPI_Datatype,
 				      void *, int, MPI_Datatype, int,
 				      MPI_Comm);
-static int __INTERNAL__PMPI_Allgather (void *, int, MPI_Datatype, void *, int,
+int __INTERNAL__PMPI_Allgather (void *, int, MPI_Datatype, void *, int,
 				       MPI_Datatype, MPI_Comm);
-static int __INTERNAL__PMPI_Allgatherv (void *, int, MPI_Datatype, void *,
+int __INTERNAL__PMPI_Allgatherv (void *, int, MPI_Datatype, void *,
 					int *, int *, MPI_Datatype, MPI_Comm);
-static int __INTERNAL__PMPI_Alltoall (void *, int, MPI_Datatype, void *, int,
+int __INTERNAL__PMPI_Alltoall (void *, int, MPI_Datatype, void *, int,
 				      MPI_Datatype, MPI_Comm);
-static int __INTERNAL__PMPI_Alltoallv (void *, int *, int *, MPI_Datatype,
+int __INTERNAL__PMPI_Alltoallv (void *, int *, int *, MPI_Datatype,
 				       void *, int *, int *, MPI_Datatype,
 				       MPI_Comm);
 				       
@@ -261,20 +216,19 @@ static int __INTERNAL__PMPI_Neighbor_alltoallv_cart(void *, int [], int [], MPI_
 static int __INTERNAL__PMPI_Neighbor_alltoallv_graph(void *, int [], int [], MPI_Datatype , void *, int [], int [], MPI_Datatype , MPI_Comm );
 static int __INTERNAL__PMPI_Neighbor_alltoallw_cart(void *, int [], MPI_Aint [], MPI_Datatype [], void *, int [], MPI_Aint [], MPI_Datatype [], MPI_Comm comm);
 static int __INTERNAL__PMPI_Neighbor_alltoallw_graph(void *, int [], MPI_Aint [], MPI_Datatype [], void *, int [], MPI_Aint [], MPI_Datatype [], MPI_Comm comm);
-  
-static int __INTERNAL__PMPI_Reduce (void *, void *, int, MPI_Datatype, MPI_Op,
+int __INTERNAL__PMPI_Reduce (void *, void *, int, MPI_Datatype, MPI_Op,
 				    int, MPI_Comm);
 static int __INTERNAL__PMPI_Op_create (MPI_User_function *, int, MPI_Op *);
 static int __INTERNAL__PMPI_Op_free (MPI_Op *);
-static int __INTERNAL__PMPI_Allreduce (void *, void *, int, MPI_Datatype,
+int __INTERNAL__PMPI_Allreduce (void *, void *, int, MPI_Datatype,
 				       MPI_Op, MPI_Comm);
-static int __INTERNAL__PMPI_Reduce_scatter (void *, void *, int *,
+int __INTERNAL__PMPI_Reduce_scatter (void *, void *, int *,
 					    MPI_Datatype, MPI_Op, MPI_Comm);
-static int __INTERNAL__PMPI_Reduce_scatter_block (void *, void *, int,
+int __INTERNAL__PMPI_Reduce_scatter_block (void *, void *, int,
 					    MPI_Datatype, MPI_Op, MPI_Comm);
-static int __INTERNAL__PMPI_Scan (void *, void *, int, MPI_Datatype, MPI_Op,
+int __INTERNAL__PMPI_Scan (void *, void *, int, MPI_Datatype, MPI_Op,
 				  MPI_Comm);
-static int __INTERNAL__PMPI_Exscan (void *, void *, int, MPI_Datatype, MPI_Op,
+int __INTERNAL__PMPI_Exscan (void *, void *, int, MPI_Datatype, MPI_Op,
 				  MPI_Comm);
 static int __INTERNAL__PMPI_Group_size (MPI_Group, int *);
 static int __INTERNAL__PMPI_Group_rank (MPI_Group, int *);
@@ -421,21 +375,6 @@ typedef struct mpc_mpi_per_communicator_s{
 
 #define MPC_MPI_MAX_NUMBER_FUNC 3
 
-typedef struct
-{
-  MPI_Copy_function *copy_fn;
-  MPI_Delete_function *delete_fn;
-  void *extra_state;
-  int used;
-  int fortran_key;
-} MPI_Caching_key_t;
-
-typedef struct
-{
-  MPI_Handler_function *func;
-  int status;
-} MPI_Handler_user_function_t;
-
 struct MPI_request_struct_s;
 struct MPI_group_struct_s;
 typedef struct MPI_group_struct_s MPI_group_struct_t;
@@ -444,31 +383,7 @@ typedef struct MPI_buffer_struct_s MPI_buffer_struct_t;
 struct sctk_mpi_ops_s;
 typedef struct sctk_mpi_ops_s sctk_mpi_ops_t;
 
-typedef struct mpc_mpi_data_s{
-  /****** ERRORS ******/
-  MPI_Handler_user_function_t* user_func;
-  int user_func_nb;
 
-  /****** Attributes ******/
-  MPI_Caching_key_t *attrs_fn;
-  int number;
-  int max_number;
-
-  /****** REQUESTS ******/
-  struct MPI_request_struct_s *requests;
-
-  /****** GROUPS ******/
-  struct MPI_group_struct_s *groups;
-
-  /****** BUFFERS ******/
-  struct MPI_buffer_struct_s *buffers;
-
-  /****** OP ******/
-  struct sctk_mpi_ops_s *ops;
-
-  /****** LOCK ******/
-  sctk_spinlock_t lock;
-}mpc_mpi_data_t;
 
 static
 void mpc_mpi_per_communicator_copy_func(mpc_mpi_per_communicator_t** to, mpc_mpi_per_communicator_t* from)
@@ -550,7 +465,7 @@ static inline void PMPC_Set_op(struct sctk_mpi_ops_s *ops){
 /*
   ERRORS HANDLING
 */
-static inline int
+inline int
 SCTK__MPI_ERROR_REPORT__ (MPC_Comm comm, int error, char *message, char *file,
 			  int line)
 {
@@ -602,7 +517,6 @@ __sctk_init_mpi_errors ()
   data->user_func[MPI_ERRORS_ARE_FATAL].status = 1;
 }
 
-#define MPI_ERROR_REPORT(comm, error,message) return SCTK__MPI_ERROR_REPORT__(comm, error,message,__FILE__, __LINE__)
 
 #define MPI_ERROR_SUCESS() return MPI_SUCCESS
 
@@ -803,87 +717,15 @@ static int SCTK__MPI_Attr_communicator_dup (MPI_Comm old, MPI_Comm new);
 
 /* const MPI_Comm MPI_COMM_SELF = MPC_COMM_SELF; */
 
-/************************************************************************/
-/* Request Handling                                                    */
-/************************************************************************/
-
-typedef enum
-{ 
-	Send_init,
-	Bsend_init,
-	Rsend_init,
-	Ssend_init,
-	Recv_init
-} MPI_Persistant_op_t;
-
-typedef struct MPI_Persistant_s
+MPI_request_struct_t * __sctk_internal_get_MPC_requests()
 {
-	void *buf;
-	int count;
-	MPI_Datatype datatype;
-	int dest_source;
-	int tag;
-	MPI_Comm comm;
-	MPI_Persistant_op_t op;
-} MPI_Persistant_t;
-
-typedef struct MPI_internal_request_s
-{
-	sctk_spinlock_t lock; /**< Lock protecting the data-structure */	
-
-	MPC_Request req;	/**< Request to be stored */
-	int used; 	/**< Is the request slot in use */
-	volatile struct MPI_internal_request_s *next;
-	int rank; 	/**< Offset in the tab array from  struct \ref MPI_request_struct_s */
-
-	/* Persitant */
-	MPI_Persistant_t persistant;
-	int freeable;
-	int is_active;
-
-	/*Datatypes */
-	void *saved_datatype;
-
-	/*Req_free*/
-	int auto_free;
-
-	/*Owner*/
-	void* task_req_id;
-} MPI_internal_request_t;
-
-/** \brief MPI_Request managment structure 
- * 
- * 	In order to simplify the fortran interface it is preferable
- *  to store requests as integers. However we need to be able
- *  retrieve data associated with it (the \ref MPC_Request)
- *  by preserving a mapping between the interger id (MPI_Request)
- *  and the actual request (MPC_Request). Moreover,
- *  this structure tries to recycle requests in order to avoid
- *  reallocating them each time.
- * 
- *  To do so \ref MPI_internal_request_s are in a chained list,
- *  allowing their storage in both free_list and auto_free_list
- * 
- * */
- typedef struct MPI_request_struct_s
-{
-	sctk_spinlock_t lock; /**< Lock protecting the data-structure */
-	/* Number of resquests */
-	int max_size; /**< Current size of the tab array (starts at 0 and is increased 10 by 10) */
-	MPI_internal_request_t **tab; /**< This array stores the \ref MPI_internal_request_t which are the containers for MPC_Requests */
-	volatile MPI_internal_request_t *free_list; /**< In this array requests are ready to be used, when created requests go to this array */
-	volatile MPI_internal_request_t *auto_free_list; /**< This list contains request which are automatically freed */
-	sctk_alloc_buffer_t buf; /**< This is a buffer allocator used to allocate requests */
-}MPI_request_struct_t;
-
-MPI_request_struct_t * __sctk_internal_get_MPC_requests(){
   MPI_request_struct_t *requests;
   PMPC_Get_requests ((void *) &requests);
   return requests;
 }
 
 /** \brief Initialize MPI interface request handling */
-static inline void __sctk_init_mpc_request ()
+inline void __sctk_init_mpc_request ()
 {
 	static sctk_thread_mutex_t sctk_request_lock =	SCTK_THREAD_MUTEX_INITIALIZER;
 	MPI_request_struct_t *requests;
@@ -916,7 +758,7 @@ static inline void __sctk_init_mpc_request ()
 #define MPC_MPI_REQUEST_CACHE_SIZE 128
 __thread MPI_internal_request_t* mpc_mpi_request_cache[MPC_MPI_REQUEST_CACHE_SIZE];
 
-static inline MPI_internal_request_t *
+inline MPI_internal_request_t *
 __sctk_convert_mpc_request_internal_cache_get (MPI_Request * req,
                                            MPI_request_struct_t *requests)
 {
@@ -934,7 +776,8 @@ __sctk_convert_mpc_request_internal_cache_get (MPI_Request * req,
         return tmp;
 }
 
-static inline void __sctk_convert_mpc_request_internal_cache_register(MPI_internal_request_t * req){
+inline void __sctk_convert_mpc_request_internal_cache_register(MPI_internal_request_t * req)
+{
         int id;
 
         id = req->rank % MPC_MPI_REQUEST_CACHE_SIZE;
@@ -945,7 +788,7 @@ static inline void __sctk_convert_mpc_request_internal_cache_register(MPI_intern
 #define __sctk_convert_mpc_request_internal_cache_register(a) (void)(0)
 #endif
 
-static inline void sctk_delete_internal_request_clean(MPI_internal_request_t *tmp)
+inline void sctk_delete_internal_request_clean(MPI_internal_request_t *tmp)
 {
         /* Release the internal request */
         tmp->used = 0;
@@ -959,9 +802,10 @@ static inline void sctk_delete_internal_request_clean(MPI_internal_request_t *tm
 #define MPC_MPI_LOCAL_REQUESTS_QUEUE_SIZE 10
 __thread MPI_internal_request_t * mpc_mpi_local_request_queue = NULL;
 __thread int mpc_mpi_local_request_queue_nb_req = 0;
-static inline MPI_internal_request_t *
+inline MPI_internal_request_t *
 __sctk_new_mpc_request_internal_local_get (MPI_Request * req,
-                                 MPI_request_struct_t *requests){
+                                 MPI_request_struct_t *requests)
+{
 	MPI_internal_request_t *tmp = NULL;
 
 	tmp = mpc_mpi_local_request_queue;
@@ -978,7 +822,7 @@ __sctk_new_mpc_request_internal_local_get (MPI_Request * req,
         return tmp;
 }
 
-static inline int sctk_delete_internal_request_local_put(MPI_internal_request_t *tmp, MPI_request_struct_t *requests )
+inline int sctk_delete_internal_request_local_put(MPI_internal_request_t *tmp, MPI_request_struct_t *requests )
 {
 	if(mpc_mpi_local_request_queue_nb_req < MPC_MPI_LOCAL_REQUESTS_QUEUE_SIZE){
 
@@ -1001,7 +845,7 @@ static inline int sctk_delete_internal_request_local_put(MPI_internal_request_t 
 
 
 /** \brief Delete an internal request and put it in the free-list */
-static inline void sctk_delete_internal_request(MPI_internal_request_t *tmp, MPI_request_struct_t *requests )
+inline void sctk_delete_internal_request(MPI_internal_request_t *tmp, MPI_request_struct_t *requests )
 {
 	sctk_delete_internal_request_clean(tmp);
 	
@@ -1014,7 +858,7 @@ static inline void sctk_delete_internal_request(MPI_internal_request_t *tmp, MPI
  * 
  *  \param requests a pointer to the request array structure 
  * */
-static inline void sctk_check_auto_free_list(MPI_request_struct_t *requests)
+inline void sctk_check_auto_free_list(MPI_request_struct_t *requests)
 {
 	/* If there is an auto free list */
 	if(requests->auto_free_list != NULL)
@@ -1045,7 +889,7 @@ static inline void sctk_check_auto_free_list(MPI_request_struct_t *requests)
 }
 
 /** \brief Initialize an \ref MPI_internal_request_t */
-static inline void __sctk_init_mpc_request_internal(MPI_internal_request_t *tmp){
+inline void __sctk_init_mpc_request_internal(MPI_internal_request_t *tmp){
 	memset (&(tmp->req), 0, sizeof (MPC_Request));
 }
 
@@ -1053,7 +897,7 @@ static inline void __sctk_init_mpc_request_internal(MPI_internal_request_t *tmp)
  * 
  *  \param req Request to allocate (will be written with the ID of the request)
  * */
-static inline MPI_internal_request_t * 
+extern inline MPI_internal_request_t * 
 __sctk_new_mpc_request_internal (MPI_Request * req, 
 				 MPI_request_struct_t *requests)
 {
@@ -1131,6 +975,11 @@ __sctk_new_mpc_request_internal (MPI_Request * req,
         tmp->auto_free = 0;
         tmp->saved_datatype = NULL;
 
+	/* Mark it as not an nbc */
+	tmp->is_nbc = 0;
+
+
+
 	__sctk_convert_mpc_request_internal_cache_register(tmp);
 	
 	/* Set request to be the id in the tab array (rank) */
@@ -1143,7 +992,7 @@ __sctk_new_mpc_request_internal (MPI_Request * req,
 }
 
 /** \brief Create a new \ref MPC_Request */
-static inline MPC_Request * __sctk_new_mpc_request (MPI_Request * req,MPI_request_struct_t *requests)
+extern inline MPC_Request * __sctk_new_mpc_request (MPI_Request * req,MPI_request_struct_t *requests)
 {
 	MPI_internal_request_t *tmp;
 	/* Acquire a free MPI_Iternal request */
@@ -1157,7 +1006,7 @@ static inline MPC_Request * __sctk_new_mpc_request (MPI_Request * req,MPI_reques
  * 	\param req Request to convert to an \ref MPI_internal_request_t
  *  \return a pointer to the \MPI_internal_request_t associated with req NULL if not found
  *  */
-static inline MPI_internal_request_t * 
+inline MPI_internal_request_t * 
 __sctk_convert_mpc_request_internal (MPI_Request * req,
 				     MPI_request_struct_t *requests)
 {
@@ -1210,7 +1059,7 @@ __sctk_convert_mpc_request_internal (MPI_Request * req,
  * \param req Request to convert to an \ref MPC_Request
  * \return a pointer to the MPC_Request NULL if not found
  */
-static inline MPC_Request * __sctk_convert_mpc_request (MPI_Request * req,MPI_request_struct_t *requests)
+inline MPC_Request * __sctk_convert_mpc_request (MPI_Request * req,MPI_request_struct_t *requests)
 {
 	MPI_internal_request_t *tmp;
 
@@ -1234,7 +1083,7 @@ static inline MPC_Request * __sctk_convert_mpc_request (MPI_Request * req,MPI_re
  *  \param t Datatype to store
  * 
  * */
-static inline void __sctk_add_in_mpc_request (MPI_Request * req, void *t,MPI_request_struct_t *requests)
+inline void __sctk_add_in_mpc_request (MPI_Request * req, void *t,MPI_request_struct_t *requests)
 {
 	MPI_internal_request_t *tmp;
 	tmp = __sctk_convert_mpc_request_internal (req,requests);
@@ -1244,7 +1093,7 @@ static inline void __sctk_add_in_mpc_request (MPI_Request * req, void *t,MPI_req
 /** Delete a request
  *  \param req Request to delete
  */
-static inline void __sctk_delete_mpc_request (MPI_Request * req,
+inline void __sctk_delete_mpc_request (MPI_Request * req,
 					      MPI_request_struct_t *requests)
 {
 	MPI_internal_request_t *tmp;
@@ -2124,7 +1973,7 @@ static int __INTERNAL__PMPI_Irecv_test_req (void *buf, int count, MPI_Datatype d
 	}
 }
 
-static int __INTERNAL__PMPI_Irecv (void *buf, int count, MPI_Datatype datatype,
+int __INTERNAL__PMPI_Irecv (void *buf, int count, MPI_Datatype datatype,
 			int source, int tag, MPI_Comm comm,
 			MPI_Request * request)
 {
@@ -2136,11 +1985,20 @@ static int __INTERNAL__PMPI_Wait (MPI_Request * request, MPI_Status * status)
 {
 	int res;
 	MPI_request_struct_t *requests;
+	MPI_internal_request_t *tmp;
 	sctk_nodebug("wait request %d", *request);
 
 	requests = __sctk_internal_get_MPC_requests();
-
-	res = PMPC_Wait (__sctk_convert_mpc_request (request,requests), status);
+	tmp = __sctk_convert_mpc_request_internal(request,requests);
+	
+	if((tmp != NULL ) && (tmp->is_nbc == 1 ))
+	{
+		res =  NBC_Wait(&(tmp->nbc_handle), status);
+	}
+	else
+	{
+		res = PMPC_Wait (__sctk_convert_mpc_request (request,requests), status);
+	}
 	__sctk_delete_mpc_request (request,requests);
 	return res;
 }
@@ -2182,14 +2040,14 @@ static int __INTERNAL__PMPI_Request_free (MPI_Request * request)
 	return res;
 }
 
-static int __INTERNAL__PMPI_Waitany (int count, MPI_Request * array_of_requests, int *index, MPI_Status * status)
+int __INTERNAL__PMPI_Waitany (int count, MPI_Request * array_of_requests, int *index, MPI_Status * status)
 {
 	int flag = 0;
 
 	while (!flag)
     {
 		__INTERNAL__PMPI_Testany (count, array_of_requests, index, &flag, status);
-      /* if (!flag) sctk_thread_yield (); */
+	
     }
 	return MPI_SUCCESS;
 }
@@ -2246,7 +2104,7 @@ static int __INTERNAL__PMPI_Testany (int count, MPI_Request * array_of_requests,
 
 #define PMPI_WAIT_ALL_STATIC_TRSH 32
 
-static int __INTERNAL__PMPI_Waitall (int count, MPI_Request * array_of_requests, MPI_Status * array_of_statuses)
+int __INTERNAL__PMPI_Waitall (int count, MPI_Request * array_of_requests, MPI_Status * array_of_statuses)
 {
 	int flag = 0;
 	int i;
@@ -4242,7 +4100,7 @@ static int __INTERNAL__PMPI_Address (void *location, MPI_Aint * address)
 	return MPI_SUCCESS;
 }
 
-static int __INTERNAL__PMPI_Type_extent (MPI_Datatype datatype, MPI_Aint * extent)
+int __INTERNAL__PMPI_Type_extent (MPI_Datatype datatype, MPI_Aint * extent)
 {
 	MPI_Aint UB;
 	MPI_Aint LB;
@@ -4264,7 +4122,7 @@ static int __INTERNAL__PMPI_Type_extent (MPI_Datatype datatype, MPI_Aint * exten
 /* See the 1.1 version of the Standard.  The standard made an
    unfortunate choice here, however, it is the standard.  The size returned
    by MPI_Type_size is specified as an int, not an MPI_Aint */
-static int __INTERNAL__PMPI_Type_size (MPI_Datatype datatype, int *size)
+int __INTERNAL__PMPI_Type_size (MPI_Datatype datatype, int *size)
 {
 	size_t tmp_size;
 	int real_val;
@@ -4563,7 +4421,7 @@ static int __INTERNAL__PMPI_Get_elements_x (MPI_Status * status, MPI_Datatype da
 }
 
 
-static int
+int
 __INTERNAL__PMPI_Pack (void *inbuf,
 		       int incount,
 		       MPI_Datatype datatype,
@@ -4639,7 +4497,7 @@ __INTERNAL__PMPI_Pack (void *inbuf,
 	}
 }
 
-static int
+int
 __INTERNAL__PMPI_Unpack (void *inbuf,
 			 int insize,
 			 int *position,
@@ -4703,7 +4561,7 @@ __INTERNAL__PMPI_Unpack (void *inbuf,
 	}
 }
 
-static int
+int
 __INTERNAL__PMPI_Pack_size (int incount, MPI_Datatype datatype, MPI_Comm comm,
 			    int *size)
 {
@@ -5131,7 +4989,7 @@ __INTERNAL__PMPI_Barrier_inter (MPI_Comm comm)
 	}
 }
 
-static int
+int
 __INTERNAL__PMPI_Barrier (MPI_Comm comm)
 {
 	int res = MPI_ERR_INTERN;
@@ -5237,7 +5095,7 @@ __INTERNAL__PMPI_Bcast_intra (void *buffer, int count,
     return res;
 }
 
-static int
+int
 __INTERNAL__PMPI_Bcast (void *buffer, int count, MPI_Datatype datatype, 
 	int root, MPI_Comm comm)
 {
@@ -5369,7 +5227,7 @@ __INTERNAL__PMPI_Gather_inter (void *sendbuf, int sendcnt,
     return res;
 }
 
-static int
+int
 __INTERNAL__PMPI_Gather (void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 			 void *recvbuf, int recvcnt, MPI_Datatype recvtype,
 			 int root, MPI_Comm comm)
@@ -5518,7 +5376,7 @@ __INTERNAL__PMPI_Gatherv_inter (void *sendbuf, int sendcnt, MPI_Datatype sendtyp
 	return res;
 }
 
-static int
+int
 __INTERNAL__PMPI_Gatherv (void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 			  void *recvbuf, int *recvcnts, int *displs,
 			  MPI_Datatype recvtype, int root, MPI_Comm comm)
@@ -5658,7 +5516,7 @@ __INTERNAL__PMPI_Scatter_inter (void *sendbuf, int sendcnt, MPI_Datatype sendtyp
 	return res;
 }
 
-static int
+int
 __INTERNAL__PMPI_Scatter (void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 			  void *recvbuf, int recvcnt, MPI_Datatype recvtype,
 			  int root, MPI_Comm comm)
@@ -5805,7 +5663,7 @@ __INTERNAL__PMPI_Scatterv_inter (void *sendbuf, int *sendcnts, int *displs,
     return res;
 }
 
-static int
+int
 __INTERNAL__PMPI_Scatterv (void *sendbuf, int *sendcnts, int *displs,
 			   MPI_Datatype sendtype, void *recvbuf, int recvcnt,
 			   MPI_Datatype recvtype, int root, MPI_Comm comm)
@@ -5937,7 +5795,7 @@ __INTERNAL__PMPI_Allgather_inter (void *sendbuf, int sendcount,
 	return res;
 }
 
-static int
+int
 __INTERNAL__PMPI_Allgather (void *sendbuf, int sendcount,
 			    MPI_Datatype sendtype, void *recvbuf,
 			    int recvcount, MPI_Datatype recvtype,
@@ -6081,7 +5939,7 @@ __INTERNAL__PMPI_Allgatherv_inter (void *sendbuf, int sendcount,
 	return res;
 }
 
-static int
+int
 __INTERNAL__PMPI_Allgatherv (void *sendbuf, int sendcount,
 			     MPI_Datatype sendtype, void *recvbuf,
 			     int *recvcounts, int *displs,
@@ -6233,7 +6091,7 @@ __INTERNAL__PMPI_Alltoall_inter (void *sendbuf, int sendcount,
 	return res;
 }
 
-static int
+int
 __INTERNAL__PMPI_Alltoall (void *sendbuf, int sendcount,
 			   MPI_Datatype sendtype, void *recvbuf,
 			   int recvcount, MPI_Datatype recvtype,
@@ -6381,7 +6239,7 @@ __INTERNAL__PMPI_Alltoallv_inter (void *sendbuf, int *sendcnts, int *sdispls,
 	return res;
 }
 
-static int
+int
 __INTERNAL__PMPI_Alltoallv (void *sendbuf, int *sendcnts, int *sdispls,
 			    MPI_Datatype sendtype, void *recvbuf,
 			    int *recvcnts, int *rdispls,
@@ -6591,7 +6449,7 @@ MPI_Datatype *recvtypes, MPI_Comm comm)
 	return res;
 }
 
-static int
+int
 __INTERNAL__PMPI_Alltoallw(void *sendbuf, int *sendcnts, int *sdispls, 
 MPI_Datatype *sendtypes, void *recvbuf, int *recvcnts, int *rdispls, 
 MPI_Datatype *recvtypes, MPI_Comm comm)
@@ -7686,7 +7544,7 @@ __INTERNAL__PMPI_Reduce_inter (void *sendbuf, void *recvbuf, int count,
 	return res;
 }
 
-static int
+int
 __INTERNAL__PMPI_Reduce (void *sendbuf, void *recvbuf, int count,
 			 MPI_Datatype datatype, MPI_Op op, int root,
 			 MPI_Comm comm)
@@ -8025,7 +7883,7 @@ __INTERNAL__PMPI_Allreduce_inter (void *sendbuf, void *recvbuf, int count,
 	return res;
 }
 
-static int
+int
 __INTERNAL__PMPI_Allreduce (void *sendbuf, void *recvbuf, int count,
 			    MPI_Datatype datatype, MPI_Op op, MPI_Comm comm)
 {
@@ -8181,7 +8039,7 @@ __INTERNAL__PMPI_Reduce_scatter_inter (void *sendbuf, void *recvbuf, int *recvcn
     return res;
 }
 
-static int
+int
 __INTERNAL__PMPI_Reduce_scatter (void *sendbuf, void *recvbuf, int *recvcnts,
 				 MPI_Datatype datatype, MPI_Op op,
 				 MPI_Comm comm)
@@ -8333,7 +8191,7 @@ __INTERNAL__PMPI_Reduce_scatter_block_inter (void *sendbuf, void *recvbuf, int r
     return res;
 }
 
-static int
+int
 __INTERNAL__PMPI_Reduce_scatter_block (void *sendbuf, void *recvbuf, int recvcnt,
 				 MPI_Datatype datatype, MPI_Op op,
 				 MPI_Comm comm)
@@ -9852,7 +9710,7 @@ static int __INTERNAL__PMPI_Keyval_free (int *keyval)
 	return MPI_SUCCESS;
 }
 
-static int __INTERNAL__PMPI_Attr_set_fortran (int keyval)
+int __INTERNAL__PMPI_Attr_set_fortran (int keyval)
 {
 	int res = MPI_SUCCESS;
 	MPI_Comm comm = MPI_COMM_WORLD;
@@ -11712,7 +11570,13 @@ __INTERNAL__PMPI_Init (int *argc, char ***argv)
     task_specific->mpc_mpi_data->groups = NULL;
     task_specific->mpc_mpi_data->buffers = NULL;
     task_specific->mpc_mpi_data->ops = NULL;
-
+  if(sctk_runtime_config_get()->modules.progress_thread.use_progress_thread == 1)
+  {
+    task_specific->mpc_mpi_data->NBC_Pthread_handles = NULL;
+    sctk_thread_mutex_init(&(task_specific->mpc_mpi_data->list_handles_lock), NULL);
+    task_specific->mpc_mpi_data->nbc_initialized_per_task = 0;
+    sctk_thread_mutex_init(&(task_specific->mpc_mpi_data->nbc_initializer_lock), NULL);
+  }
     __sctk_init_mpc_request ();
     __sctk_init_mpi_buffer ();
     __sctk_init_mpi_errors ();
@@ -11752,6 +11616,16 @@ static int
 __INTERNAL__PMPI_Finalize (void)
 {
   int res; 
+
+  struct sctk_task_specific_s * task_specific;
+  task_specific = __MPC_get_task_specific ();
+  if(task_specific->mpc_mpi_data->nbc_initialized_per_task == 1){
+	task_specific->mpc_mpi_data->nbc_initialized_per_task = -1;	
+	sched_yield();
+	NBC_Finalize(&(task_specific->mpc_mpi_data->NBC_Pthread));
+
+  }
+
   if(is_finalized != 0){
     MPI_ERROR_REPORT (MPI_COMM_WORLD, MPI_ERR_OTHER, "MPI_Finalize issue");
   }
@@ -11797,7 +11671,7 @@ SCTK__MPI_INIT_STATUS (MPI_Status * status)
 {
 }
 
-static inline void
+inline void
 SCTK__MPI_INIT_REQUEST (MPI_Request * request)
 {
   *request = MPI_REQUEST_NULL;
@@ -15719,25 +15593,6 @@ int PMPI_Open_port(MPI_Info info, char *port_name){not_implemented();}
 int PMPI_Publish_name(const char *service_name, MPI_Info info, const char *port_name){not_implemented();}
 int PMPI_Unpublish_name(const char *service_name, MPI_Info info, const char *port_name){not_implemented();}
 
-
-/* non blocking coll */
-int PMPI_Iallreduce (const void *sendbuf, void *recvbuf, int count,MPI_Datatype datatype, MPI_Op op, MPI_Comm comm,MPI_Request *request){not_implemented();}
-int PMPI_Ibarrier(MPI_Comm comm, MPI_Request *request){not_implemented();}
-int PMPI_Ibcast(void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm, MPI_Request *request){not_implemented();}
-int PMPI_Igather(const void *sendbuf, int sendcount, MPI_Datatype sendtype,void *recvbuf, int recvcount, MPI_Datatype recvtype,int root, MPI_Comm comm, MPI_Request *request){not_implemented();}
-int PMPI_Igatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int recvcounts[], const int displs[], MPI_Datatype recvtype, int root, MPI_Comm comm, MPI_Request *request){not_implemented();}
-int PMPI_Iscatter(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPI_Request *request){not_implemented();}
-int PMPI_Iscatterv(const void *sendbuf, const int sendcounts[], const int displs[], MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm, MPI_Request *request){not_implemented();}
-int PMPI_Iallgather(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPI_Request *request){not_implemented();}
-int PMPI_Iallgatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, const int recvcounts[], const int displs[], MPI_Datatype recvtype, MPI_Comm comm, MPI_Request *request){not_implemented();}
-int PMPI_Ialltoall(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm, MPI_Request *request){not_implemented();}
-int PMPI_Ialltoallv(const void *sendbuf, const int sendcounts[], const int sdispls[], MPI_Datatype sendtype, void *recvbuf, const int recvcounts[], const int rdispls[], MPI_Datatype recvtype, MPI_Comm comm, MPI_Request *request){not_implemented();}
-int PMPI_Ialltoallw(const void *sendbuf, const int sendcounts[], const int sdispls[], const MPI_Datatype sendtypes[], void *recvbuf, const int recvcounts[], const int rdispls[], const MPI_Datatype recvtypes[], MPI_Comm comm, MPI_Request *request){not_implemented();}
-int PMPI_Ireduce(const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm, MPI_Request *request){not_implemented();}
-int PMPI_Ireduce_scatter(const void *sendbuf, void *recvbuf, const int recvcounts[], MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Request *request){not_implemented();}
-int PMPI_Ireduce_scatter_block(const void *sendbuf, void *recvbuf, int recvcount, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Request *request){not_implemented();}
-int PMPI_Iscan(const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Request *request){not_implemented();}
-int PMPI_Iexscan(const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Request *request){not_implemented();}
 
 /* Dist graph operations */
 int PMPI_Dist_graph_neighbors_count(MPI_Comm comm, int *indegree, int *outdegree, int *weighted){not_implemented();}

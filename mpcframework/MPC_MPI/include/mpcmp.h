@@ -237,8 +237,26 @@ extern MPC_Request mpc_request_null;
 #define MPC_REDUCE_SCATTER_BLOCK_TAG -16
 #define MPC_SCAN_TAG -17
 #define MPC_EXSCAN_TAG -18
-#define MPC_COPY_TAG -19
-#define MPC_LAST_TAG -20
+#define MPC_IBARRIER_TAG -19
+#define MPC_IBCAST_TAG -20
+#define MPC_IGATHER_TAG -21
+#define MPC_IGATHERV_TAG -22
+#define MPC_ISCATTER_TAG -23
+#define MPC_ISCATTERV_TAG -24
+#define MPC_IALLGATHER_TAG -25
+#define MPC_IALLGATHERV_TAG -26
+#define MPC_IALLTOALL_TAG -27
+#define MPC_IALLTOALLV_TAG -28
+#define MPC_IALLTOALLW_TAG -29
+#define MPC_IREDUCE_TAG -30
+#define MPC_IALLREDUCE_TAG -31
+#define MPC_IREDUCE_SCATTER_TAG -32
+#define MPC_IREDUCE_SCATTER_BLOCK_TAG -33
+#define MPC_ISCAN_TAG -34
+#define MPC_IEXSCAN_TAG -35
+#define MPC_COPY_TAG -36
+/* TAG of minimum value */
+#define MPC_LAST_TAG -37
 
 
 

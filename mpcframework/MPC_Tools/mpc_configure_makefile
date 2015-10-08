@@ -160,7 +160,7 @@ echo "" >> Makefile
 echo "bin/mpc_print_config: lib/libmpc_framework.a lib/libmpc_tdb_remote_static.a " >> Makefile
 printf "\t@echo Build bin/mpc_print_config" >> Makefile; echo "" >> Makefile
 #printf "\t@DIR_DEST_EXE=${PWD}/bin BUILD_DIR=\$(M_PWD)/BUILD_MPC_Config/bin \$(MAKE) -C ${MPC_SOURCE_DIR}MPC_Config/bin build_exe" >> Makefile; echo "" >> Makefile
-printf "\t@\$(CC) -Iinclude_modules -Iinclude $SCTK_CFLAGS  ${MPC_SOURCE_DIR}MPC_Config/bin/*.c  -o bin/mpc_print_config -Llib -lmpc_framework -lmpc_tdb_remote_static $SCTK_LDFLAGS -lm -Llib ">> Makefile; echo "">> Makefile
+printf "\t@\$(CC) -Iinclude_modules -Iinclude $SCTK_CFLAGS  ${MPC_SOURCE_DIR}MPC_Config/bin/*.c  -o bin/mpc_print_config -Llib -lmpc_framework -lmpc_tdb_remote_static $SCTK_LDFLAGS -lm -Llib -ldl">> Makefile; echo "">> Makefile
 
 
 #
@@ -320,6 +320,8 @@ done
 printf "\t@cp include/sctk_config.h INSTALL/include/mpcframework">> Makefile; echo "">> Makefile
 printf "\t@cp include/mpc.h INSTALL/include/mpcframework">> Makefile; echo "">> Makefile
 printf "\t@cp include/mpc_main.h INSTALL/include/mpcframework">> Makefile; echo "">> Makefile
+printf "\t@cp ${MPC_SOURCE_DIR}/MPC_Common/libdict/dict.h INSTALL/include/mpcframework/dict.h ">> Makefile; echo "">> Makefile
+printf "\t@cp ${MPC_SOURCE_DIR}/MPC_Common/libdict/hb_tree.h INSTALL/include/mpcframework/hb_tree.h ">> Makefile; echo "">> Makefile
 printf "\t@echo \"Install in ${SCTK_PREFIX}\"">> Makefile; echo "">> Makefile
 printf "\t@mkdir -p \${DESTDIR}${SCTK_PREFIX}">> Makefile; echo "">> Makefile
 printf "\t@mkdir -p \${DESTDIR}${SCTK_BIN_DIR}">> Makefile; echo "">> Makefile
@@ -350,39 +352,20 @@ printf "\t@cp ${MPC_SOURCE_DIR}/MPC_Threads/sctk_thread/sctk_pthread_api.h  INST
 fi
 
 echo "Preparing includes for Fortran"
-if test -e ${MPC_SOURCE_DIR}/MPC_Tools/fortran_headers/mpcf.h -a -e ${MPC_SOURCE_DIR}/MPC_Tools/fortran_headers/mpif.h ; then
-    printf "\t@echo \"Generate fortran mpc/mpi includes\"">> Makefile; echo "" >> Makefile
-    printf "\t@cp ${MPC_SOURCE_DIR}/MPC_Tools/fortran_headers/* INSTALL/include/mpcframework" >> Makefile; echo "" >> Makefile
-else
-    for i in $MODULE_LIST; do
-        NAME="fortran_header"
-        if test "$SCTK_FORTRAN" = "1" && test "$i" = "MPC_Message_Passing"; then
-            printf "\t@\$(CC) -g $SCTK_CFLAGS -IINSTALL/include/mpcframework ${MPC_SOURCE_DIR}MPC_Tools/mpc_make_fortran_interface.c -o ./$NAME -LINSTALL/lib -lmpc -lmpc_tdb_remote_static $SCTK_LDFLAGS -lm" >> Makefile; echo "" >> Makefile
-            if test "$SCTK_FORTRAN_HEADER_DISABLED" != "1" ; then
-                if test "$SCTK_CROSS_EXEC" != "" ; then
-                    printf "\t@echo \"Generate fortran mpc include\"">> Makefile; echo "" >> Makefile
-                    printf "\tscp $NAME ${SCTK_MIC_USER}@${SCTK_MIC_HOSTNAME}:/tmp/" >> Makefile; echo "" >> Makefile
-                    printf "\t@ssh ${SCTK_MIC_USER}@${SCTK_MIC_HOSTNAME} MPC_MAKE_FORTRAN_INTERFACE=1 MPC_DISABLE_CONFIG=1 MPC_DISABLE_BANNER=\"1\" /tmp/$NAME mpc.h > INSTALL/include/mpcframework/mpcf.h">> Makefile; echo "" >> Makefile
-                else
-                    printf "\t@MPC_MAKE_FORTRAN_INTERFACE=1 MPC_DISABLE_CONFIG=1 MPC_DISABLE_BANNER=\"1\" LD_LIBRARY_PATH=\$(DESTDIR)/\$(OPENPA_PREFIX_INSTALL)/lib:\$(DESTDIR)/\$(HWLOC_PREFIX_INSTALL)/lib:\$(LD_LIBRARY_PATH) ./$NAME mpc.h > INSTALL/include/mpcframework/mpcf.h">> Makefile; echo "" >> Makefile
-                fi
 
-                DIR_TEST="MPC_MPI"
-                check_module
-                if test "$FOUND" != "" ; then
-                    if test "$SCTK_CROSS_EXEC" != "" ; then
-                        printf "\t@echo \"Generate fortran mpi include\"" >> Makefile; echo "" >> Makefile
-                        printf "\tscp $NAME ${SCTK_MIC_USER}@${SCTK_MIC_HOSTNAME}:/tmp/" >> Makefile; echo "" >> Makefile
-                        printf "\t@ssh ${SCTK_MIC_USER}@${SCTK_MIC_HOSTNAME} MPC_MAKE_FORTRAN_INTERFACE=1 MPC_DISABLE_CONFIG=1 MPC_DISABLE_BANNER=\"1\" /tmp/$NAME mpi.h > INSTALL/include/mpcframework/mpif.h">> Makefile; echo "" >> Makefile
-                    else
-                        printf "\t@MPC_MAKE_FORTRAN_INTERFACE=1 MPC_DISABLE_CONFIG=1 MPC_DISABLE_BANNER=\"1\" LD_LIBRARY_PATH=\$(DESTDIR)/\$(OPENPA_PREFIX_INSTALL)/lib:\$(DESTDIR)/\$(HWLOC_PREFIX_INSTALL)/lib:\$(LD_LIBRARY_PATH) ./$NAME mpi.h > INSTALL/include/mpcframework/mpif.h">> Makefile; echo "" >> Makefile
-                    fi
-                fi
-            fi
-            printf "\t@rm ./$NAME">> Makefile; echo "">> Makefile
-        fi
-    done
-fi
+#Prepare the variables to be passed to the fortran generation script
+FORTRAN_PYTHON="/usr/bin/env python"
+	#/!\ see here that $(CC) is not defined it is because we want it
+	#resolved in the makefile not here make sure you escape the values...
+FORTRAN_CC="\$(CC) -g -lmpc_framework $SCTK_CFLAGS -IINSTALL/include/mpcframework -LINSTALL/lib $SCTK_LDFLAGS -lm"
+	#/!\ Same story for FC
+FORTRAN_FC="\$(F77) -g $SCTK_CFLAGS -IINSTALL/include/mpcframework -LINSTALL/lib $SCTK_LDFLAGS -lm"
+FORTAN_MPIH="${MPC_SOURCE_DIR}/MPC_MPI/include/mpc_mpi.h"
+FORTRAN_INSTALL="${PWD}/INSTALL/include/mpcframework/"
+#Call the script
+printf "\t@echo \"Generate fortran mpc/mpi includes and modules\"">> Makefile; echo "" >> Makefile
+printf "\t@MPC_MAKE_FORTRAN_INTERFACE=1 MPC_DISABLE_CONFIG=1 MPC_DISABLE_BANNER=\"1\" LD_LIBRARY_PATH=\$(DESTDIR)/\$(OPENPA_PREFIX_INSTALL)/lib:\$(DESTDIR)/\$(HWLOC_PREFIX_INSTALL)/lib:\$(LD_LIBRARY_PATH) sh ${MPC_SOURCE_DIR}MPC_Tools/fortran_gen/fortran_gen.sh \"${FORTRAN_PYTHON}\" \"${FORTRAN_CC}\" \"${FORTRAN_FC}\" \"${FORTAN_MPIH}\" \"${FORTRAN_INSTALL}\" ">> Makefile; echo "" >> Makefile
+
 printf "\t@chmod -R 644 INSTALL/lib/*">> Makefile; echo "">> Makefile
 #printf "\t@echo \"Build mpc db\"">> Makefile; echo "">> Makefile
 #printf "\t@\$(CC) $SCTK_CFLAGS ${MPC_SOURCE_DIR}MPC_Tools/mpcrun_tools/mpcdb_client.c -o INSTALL/bin/mpcdb_client $SCTK_LDFLAGS ">> Makefile; echo "">> Makefile
