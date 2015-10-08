@@ -79,7 +79,7 @@ checkFortranGenEnv()
 	echo -n "(i) Checking for Python JSON...\t"
 	
 	
-	TEMP=`tempfile`
+	TEMP=`mktemp`
 
 cat << EOF > $TEMP
 #!/usr/bin/env python 
@@ -106,7 +106,7 @@ EOF
 	
 	echo -n "(i) Checking for Fortran compiler...   "
 	
-	TEMP=`tempfile`
+	TEMP=`mktemp`
 	TEMP="${TEMP}.f90"
 cat << EOF > $TEMP
 PROGRAM TESTAPP
@@ -114,7 +114,7 @@ PROGRAM TESTAPP
 END PROGRAM TESTAPP
 EOF
 
-	TEMP2=`tempfile`
+	TEMP2=`mktemp`
 	$MPCFC $TEMP -o $TEMP2  2>> ./fortrangen.log
 
 	if test "x$?" != "x0"; then
@@ -130,7 +130,7 @@ EOF
 
 	echo -n "(i) Checking for Fortran Modules...   "
 
-TEMP=`tempfile`
+TEMP=`mktemp`
 TEMP="${TEMP}.f90"
 cat << EOF > $TEMP
 
@@ -144,7 +144,7 @@ PROGRAM TESTAPP
 END PROGRAM TESTAPP
 EOF
 
-	TEMP2=`tempfile`
+	TEMP2=`mktemp`
 	$MPCFC $TEMP -o $TEMP2  2>> ./fortrangen.log
 
 	if test "x$?" != "x0"; then
@@ -169,7 +169,7 @@ EOF
 	
 	echo -n "(i) Checking for C compiler...   "
 	
-	TEMP=`tempfile`
+	TEMP=`mktemp`
 	TEMP="${TEMP}.c"
 cat << EOF > $TEMP
 #include <mpc.h>
@@ -179,7 +179,7 @@ int main(int argc, char ** argv )
 }
 EOF
 
-	TEMP2=`tempfile`
+	TEMP2=`mktemp`
 	$MPCCC $TEMP -o $TEMP2  2>> ./fortrangen.log
 
 	if test "x$?" != "x0"; then
@@ -199,7 +199,7 @@ genfortanfiles()
 	#First compile the constants code
 	echo -n "(i) Compiling constants file...   "
 	
-	TEMP=`tempfile`
+	TEMP=`mktemp`
 	$MPCCC ${SCRIPTPATH}/gen_iface.c -o ${TEMP} 2>> ./fortrangen.log
 
 	if test "x$?" != "x0"; then
