@@ -52,14 +52,14 @@ sctk_network_preform_eager_msg_shm_withcopy(vcli_cell_t * __cell)
 
     /* copy header */ 
     inb = __cell->data;
-    FAST_MEMCPY( (char *) msg, __cell->data, sizeof ( sctk_thread_ptp_message_body_t ));       
+    memcpy( (char *) msg, __cell->data, sizeof ( sctk_thread_ptp_message_body_t ));       
     if( size > sizeof ( sctk_thread_ptp_message_t ))
     {
         /* copy msg */
         body = ( char * ) msg + sizeof ( sctk_thread_ptp_message_t );
         inb += sizeof ( sctk_thread_ptp_message_t );
         size = size -  sizeof ( sctk_thread_ptp_message_t );
-        FAST_MEMCPY(body, inb, size);       
+        memcpy(body, inb, size);       
     }
     
     return msg;	
@@ -87,30 +87,39 @@ sctk_network_eager_msg_shm_recv(vcli_cell_t * __cell,int copy_enabled)
         shm_free_funct = sctk_shm_eager_message_free_nocopy;
         shm_copy_funct = sctk_shm_eager_message_copy_nocopy;
     }
-    vcli_raw_push_cell(SCTK_QEMU_SHM_FREE_QUEUE_ID, __cell);       
+
     SCTK_MSG_COMPLETION_FLAG_SET ( msg , NULL );
     msg->tail.message_type = SCTK_MESSAGE_NETWORK;
     if ( SCTK_MSG_COMMUNICATOR ( msg ) < 0 )
         return NULL;
     sctk_rebuild_header ( msg ); 
-    sctk_reinit_header ( msg, sctk_free, sctk_net_message_copy );
+    sctk_reinit_header ( msg, shm_free_funct, shm_copy_funct);
     return msg;
 }
 
+static int sctk_shm_eager_number_try = 0;
 int
-sctk_network_eager_msg_shm_send(sctk_thread_ptp_message_t *msg,vcli_cell_t * __cell,int copy_enabled)
+sctk_network_eager_msg_shm_send(sctk_thread_ptp_message_t *msg, int dest, int copy_enabled)
 {
+    
+    vcli_cell_t * __cell = NULL;
+    
     if( SCTK_MSG_SIZE ( msg ) + sizeof ( sctk_thread_ptp_message_t ) > 8*1024)
         return 0;
 
+    while(!__cell && sctk_shm_eager_number_try < 1000)
+    {
+        __cell = vcli_raw_pop_cell(SCTK_QEMU_SHM_FREE_QUEUE_ID, dest);
+    }
+
     __cell->size = SCTK_MSG_SIZE ( msg ) + sizeof ( sctk_thread_ptp_message_t );
 	__cell->msg_type = SCTK_SHM_EAGER;
-    FAST_MEMCPY( __cell->data, (char*) msg, sizeof ( sctk_thread_ptp_message_t ));       
+    memcpy( __cell->data, (char*) msg, sizeof ( sctk_thread_ptp_message_t ));       
 
     if(SCTK_MSG_SIZE ( msg ) > 0)
         sctk_net_copy_in_buffer( msg, (char*) __cell->data + sizeof(sctk_thread_ptp_message_t) );          
         
-    vcli_raw_push_cell(SCTK_QEMU_SHM_RECV_QUEUE_ID, __cell);       
+    vcli_raw_push_cell_dest(SCTK_QEMU_SHM_RECV_QUEUE_ID, __cell, dest);       
     sctk_complete_and_free_message( msg ); 
     return 1;
 }

@@ -17,15 +17,10 @@ static volatile int sctk_shm_driver_initialized = 0;
 static void 
 sctk_network_send_message_endpoint_shm ( sctk_thread_ptp_message_t *msg, sctk_endpoint_t *endpoint )
 {
-    vcli_cell_t * __cell = NULL;
-
-    while(!__cell)
-        __cell = vcli_raw_pop_cell(SCTK_QEMU_SHM_FREE_QUEUE_ID, endpoint->data.shm.dest);
-    
-    if(sctk_network_eager_msg_shm_send(msg,__cell,0))
+    if(sctk_network_eager_msg_shm_send(msg,endpoint->data.shm.dest,0))
         return;
     
-    if(sctk_network_rdma_msg_shm_send(msg,__cell,0))
+    if(sctk_network_rdma_msg_shm_send(msg,endpoint->data.shm.dest,0))
         return;
         
 }
@@ -68,6 +63,7 @@ sctk_network_notify_idle_message_shm ( sctk_rail_info_t *rail )
     __cell = vcli_raw_pop_cell(SCTK_QEMU_SHM_RECV_QUEUE_ID,sctk_shm_proc_local_rank_on_node); 
     if( __cell == NULL )
         return;
+
     assume_m( __cell->size >= sizeof ( sctk_thread_ptp_message_body_t ), "Incorrect Msg\n");
 
     switch(__cell->msg_type)
@@ -333,5 +329,6 @@ void sctk_network_init_shm ( sctk_rail_info_t *rail )
 #endif /* MPC_USE_VIRTUAL_MACHINE */    
 
     sctk_shm_driver_initialized = 1;
+    sctk_network_rdma_shm_interface_init();
     fprintf(stderr, "nb cell : %d\n", sctk_shmem_cells_num);
 }

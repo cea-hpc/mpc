@@ -1,11 +1,11 @@
 #ifndef __SCTK_SHM_H__
 #define __SCTK_SHM_H__
 
-#include "sctk_shm_raw_queues.h"
-#include "sctk_shm_eager.h"
-#include "sctk_shm_cma.h"
-
 #include "sctk_rail.h"
+#include "sctk_shm_eager.h"
+#include "sctk_shm_frag.h"
+#include "sctk_shm_cma.h"
+#include "sctk_shm_raw_queues.h"
 
 
 /** \brief ROUTE level data structure for SHM 
