@@ -1,7 +1,8 @@
 #ifndef __SCTK_SHM_RAW_QUEUES_ALLOC_H__ 
 #define __SCTK_SHM_RAW_QUEUES_ALLOC_H__ 
 
-#define QEMU_SHM_USE_MPC
+//#define ATOMIC_QUEUE
+//#define QEMU_SHM_USE_MPC
 
 #ifdef QEMU_SHM_USE_MPC
 

@@ -9,11 +9,12 @@ lfq_cell_t *lfq_dequeue(volatile lf_queue_t *lfq, lfq_cell_t *pools_ptr)
 {
     volatile lfq_cell_t *cell;
 #ifndef ATOMIC_QUEUE
+    if ( sctk_spinlock_trylock( &( lfq->lock ) ) == 1 )
+        return NULL;
+
     lfq_ptr_t head = lfq->shadow_head;
     lfq_ptr_t tail;
-
-    sctk_spinlock_lock( &(lfq->lock));
-    cell = vcli_raw_ptr_to_cell(pools_ptr,lfq->head); 
+    cell = vcli_raw_ptr_to_cell( pools_ptr, lfq->head ); 
     
     if(lfq->head == 0)
     {
@@ -30,6 +31,9 @@ lfq_cell_t *lfq_dequeue(volatile lf_queue_t *lfq, lfq_cell_t *pools_ptr)
         lfq->tail = 0;
         lfq->head = 0;
     }
+#ifdef SCTK_SHM_RAW_QUEUE_DEBUG
+    lfq->current_cellules--; 
+#endif /* SCTK_SHM_RAW_QUEUE_DEBUG */
     sctk_spinlock_unlock( &(lfq->lock));
 #else /* ATOMIC_QUEUE */
     lfq_ptr_t head = lfq->shadow_head;
@@ -76,12 +80,14 @@ lfq_cell_t *lfq_dequeue(volatile lf_queue_t *lfq, lfq_cell_t *pools_ptr)
     return (lfq_cell_t *) cell;
 }
 
-void sctk_vcli_raw_lfq_enqueue(volatile lf_queue_t *lfq, lfq_cell_t *pools_ptr, lfq_cell_t *cell)
+int sctk_vcli_raw_lfq_enqueue(volatile lf_queue_t *lfq, lfq_cell_t *pools_ptr, lfq_cell_t *cell)
 {
     lfq_ptr_t new = vcli_raw_cell_to_ptr(pools_ptr, cell);
     lfq_ptr_t prev;
 #ifndef ATOMIC_QUEUE
-    sctk_spinlock_lock( &(lfq->lock));
+    while( sctk_spinlock_trylock( &(lfq->lock)) == 1)
+        cpu_relax();
+
     prev = lfq->tail;
     lfq->tail = new;
     if(prev == 0)
@@ -93,6 +99,9 @@ void sctk_vcli_raw_lfq_enqueue(volatile lf_queue_t *lfq, lfq_cell_t *pools_ptr, 
         lfq_cell_t* abs_prev = vcli_raw_ptr_to_cell(pools_ptr, prev);     
         abs_prev->next = new;
     }
+#ifdef SCTK_SHM_RAW_QUEUE_DEBUG
+    lfq->current_cellules++; 
+#endif /* SCTK_SHM_RAW_QUEUE_DEBUG */
     sctk_spinlock_unlock( &(lfq->lock));
 #else /*  ATOMIC_QUEUE */
     prev = __sync_lock_test_and_set(&lfq->tail, new);
@@ -141,19 +150,23 @@ void
 sctk_vcli_raw_queue_reset(vcli_raw_state_t *vcli, vcli_queue_t queue)
 {
     int i;
+    int res;
     lfq_cell_t *cell;
     memset((lf_queue_t*) vcli->send_queue, 0, sizeof(lf_queue_t));
     memset((lf_queue_t*) vcli->recv_queue, 0, sizeof(lf_queue_t));
     memset((lf_queue_t*) vcli->cmpl_queue, 0, sizeof(lf_queue_t));
     memset((lf_queue_t*) vcli->free_queue, 0, sizeof(lf_queue_t));
-     
+
+//    vcli->free_queue->current_cellules = 1;
+ //   vcli->recv_queue->current_cellules = 1;
+  //  vcli->cmpl_queue->current_cellules = 1;
+  //  vcli->send_queue->current_cellules = 1;
+
     for(i = 0; i < vcli->cells_num; i++)
     {
         cell = (lfq_cell_t *)(vcli->cells_pool)+i;
         cell->queue = queue;
-	fprintf(stdout, "Add cell to queue: %d\n", queue);
         cell->next = 0;
         sctk_vcli_raw_lfq_enqueue(vcli->free_queue, vcli->cells_pool, cell);
-        
     }
 }

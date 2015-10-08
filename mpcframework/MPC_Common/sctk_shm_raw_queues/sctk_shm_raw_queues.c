@@ -74,9 +74,20 @@ vcli_raw_get_queue_by_type(vcli_raw_shm_queue_type_t type, vcli_queue_t queue)
 vcli_cell_t * 
 vcli_raw_pop_cell(vcli_raw_shm_queue_type_t type, vcli_queue_t queue)
 {
+    vcli_cell_t * _cell;
     vcli_raw_state_t *vcli = sctk_vcli_get_raw_infos(queue);
     volatile lf_queue_t *type_queue = vcli_raw_get_queue_by_type(type, queue);
-    return lfq_to_vcli(lfq_dequeue(type_queue,vcli->cells_pool));
+    _cell = lfq_to_vcli(lfq_dequeue(type_queue,vcli->cells_pool));
+
+#ifdef SCTK_SHM_RAW_QUEUE_DEBUG
+    if( _cell != NULL && type == SCTK_QEMU_SHM_FREE_QUEUE_ID)
+    {
+        sctk_spinlock_lock( &(type_queue->lock));
+        fprintf(stderr, "[%d] get empty cell cell : %lu / %lu \n", queue, type_queue->current_cellules, 255);
+        sctk_spinlock_unlock( &(type_queue->lock));
+    }
+#endif /* SCTK_SHM_RAW_QUEUE_DEBUG */
+    return _cell;
 }
 
 void 
@@ -85,6 +96,24 @@ vcli_raw_push_cell(vcli_raw_shm_queue_type_t type, vcli_cell_t * _cell)
     lfq_cell_t *cell = vcli_to_lfq(_cell);
     vcli_raw_state_t *vcli = sctk_vcli_get_raw_infos(cell->queue);
     volatile lf_queue_t *type_queue = vcli_raw_get_queue_by_type(type,cell->queue);
+    sctk_vcli_raw_lfq_enqueue(type_queue,vcli->cells_pool,cell);
+#ifdef SCTK_SHM_RAW_QUEUE_DEBUG
+    if( type == SCTK_QEMU_SHM_FREE_QUEUE_ID)
+    {
+        sctk_spinlock_lock( &(type_queue->lock));
+        fprintf(stderr, "[%d] release cell : %lu / %lu \n", cell->queue, type_queue->current_cellules, 255);
+        sctk_spinlock_unlock( &(type_queue->lock));
+    }
+#endif /* SCTK_SHM_RAW_QUEUE_DEBUG */
+}
+
+void
+vcli_raw_push_cell_dest(vcli_raw_shm_queue_type_t type, vcli_cell_t * _cell,vcli_queue_t queue)
+{
+    lfq_cell_t *cell = vcli_to_lfq(_cell);
+    vcli_raw_state_t *vcli = sctk_vcli_get_raw_infos(queue);
+    volatile lf_queue_t *type_queue = vcli_raw_get_queue_by_type(type,queue);
+    assume_m( type != SCTK_QEMU_SHM_FREE_QUEUE_ID, "Release free cell in wrong queue")
     sctk_vcli_raw_lfq_enqueue(type_queue,vcli->cells_pool,cell);
 }
 

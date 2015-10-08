@@ -2,6 +2,7 @@
 #define __SCTK_SHM_RAW_QUEUES_INTERNALS_H__
 
 #include <inttypes.h>
+#include "stdlib.h"
 
 #include "sctk.h"
 #include "sctk_shm_raw_queues.h"
@@ -14,6 +15,10 @@ struct lf_queue_s
 {
     lfq_ptr_t head;
     lfq_ptr_t tail;
+#ifdef SCTK_SHM_RAW_QUEUE_DEBUG
+    int total_cellules;
+    int current_cellules;
+#endif /* SCTK_SHM_RAW_QUEUE_DEBUG */
     sctk_spinlock_t lock; 
     char cache_pad[CACHELINE_SIZE - 2 * sizeof(lfq_ptr_t) - sizeof(sctk_spinlock_t)];
     lfq_ptr_t shadow_head;
@@ -46,7 +51,7 @@ typedef struct vcli_raw_state_s vcli_raw_state_t;
 
 
 lfq_cell_t *lfq_dequeue(volatile lf_queue_t*,lfq_cell_t*);
-void sctk_vcli_raw_lfq_enqueue(volatile lf_queue_t*,lfq_cell_t*,lfq_cell_t*);
+int sctk_vcli_raw_lfq_enqueue(volatile lf_queue_t*,lfq_cell_t*,lfq_cell_t*);
 vcli_raw_state_t * sctk_vcli_raw_get_state(void *,size_t,int);
 void sctk_vcli_raw_queue_reset(vcli_raw_state_t*,vcli_queue_t);
 
