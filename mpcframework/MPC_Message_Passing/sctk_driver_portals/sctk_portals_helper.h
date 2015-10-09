@@ -113,6 +113,7 @@ typedef struct sctk_portals_table_entry_s
 	ptl_handle_eq_t *                  event_list;
 	sctk_spinlock_t                    lock;
 	sctk_atomics_int                   entry_cpt;
+
 } sctk_portals_table_entry_t;
 
 typedef struct sctk_portals_pending_msg_s
@@ -127,7 +128,6 @@ typedef struct sctk_portals_pending_msg_s
 typedef struct sctk_portals_pending_msg_list_s
 {
 	sctk_spinlock_t                    msg_lock;
-	size_t                             nb_msg;
 	struct sctk_portals_pending_msg_s* head;
 
 } sctk_portals_pending_msg_list_t;

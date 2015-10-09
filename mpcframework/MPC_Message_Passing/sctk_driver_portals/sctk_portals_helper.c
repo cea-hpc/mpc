@@ -218,7 +218,6 @@ void sctk_portals_helper_lib_init(sctk_portals_interface_handler_t *interface, s
 	//init MDs queue
 	sctk_portals_pending_msg_list_t *mds = &ptable->pending_list;
 	mds->head = NULL;
-	mds->nb_msg  = 0;
 	mds->msg_lock = SCTK_SPINLOCK_INITIALIZER;
 }
 

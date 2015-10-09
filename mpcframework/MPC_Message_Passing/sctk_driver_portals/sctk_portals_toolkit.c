@@ -530,7 +530,7 @@ void sctk_portals_network_connection_to_ctx(int src, sctk_rail_info_t* rail,
 	sctk_portals_rail_info_t* prail = &rail->network.portals;
 	sctk_portals_list_entry_extra_t stuff;
 
-	sctk_debug("PORTALS: RECV ON-DEMAND - %lu at (%lu,%lu)", ctx->from, ctx->entry, ctx->match);
+	sctk_debug("PORTALS: RECV ON-DEMAND - %lu at (%lu,%lu)", ctx->from.phys.pid, ctx->entry, ctx->match);
 
 	//directly add the route
 	sctk_portals_add_route(src, ctx->from, rail, route_type, STATE_CONNECTED);
@@ -580,7 +580,7 @@ void sctk_portals_network_connection_from(int from, int to, sctk_rail_info_t* ra
 
 	sctk_portals_helper_set_bits_from_msg(&ctx.match, &rail->network.portals.ptable.head[ctx.entry]->entry_cpt);
 
-	sctk_debug("PORTALS: SEND ON-DEMAND - %lu at (%lu,%lu)", ctx.from, ctx.entry, ctx.match);
+	sctk_debug("PORTALS: SEND ON-DEMAND - %lu at (%lu,%lu)", ctx.from.phys.pid, ctx.entry, ctx.match);
 
 	// init ME w/ default
 	sctk_portals_helper_init_new_entry(&me, &rail->network.portals.interface_handler, (void*)&slot, sizeof(sctk_portals_process_id_t), ctx.match, SCTK_PORTALS_ME_PUT_OPTIONS);
@@ -602,7 +602,7 @@ void sctk_portals_network_connection_from(int from, int to, sctk_rail_info_t* ra
 	//waiting for remote data to process
 	while(PtlCTGet(me.ct_handle, &ctc) == PTL_OK)
 	{
-		sctk_debug("PORTALS: SEND ON-DEMAND - %lu at (%lu,%lu) WAITING", ctx.from, ctx.entry, ctx.match);
+		sctk_debug("PORTALS: SEND ON-DEMAND - %lu at (%lu,%lu) WAITING", ctx.from.phys.pid, ctx.entry, ctx.match);
 		assume(ctc.failure == 0);
 		if(ctc.success > 0)
 			break;
@@ -610,7 +610,7 @@ void sctk_portals_network_connection_from(int from, int to, sctk_rail_info_t* ra
 	}
 	route->data.portals.dest = slot;
 	sctk_endpoint_set_state(route, STATE_CONNECTED);
-	sctk_debug("PORTALS: SEND ON-DEMAND - %lu at (%lu,%lu) COMPLETED", ctx.from, ctx.entry, ctx.match);
+	sctk_debug("PORTALS: SEND ON-DEMAND - %lu at (%lu,%lu) COMPLETED", ctx.from.phys.pid, ctx.entry, ctx.match);
 }
 
 void sctk_portals_connection_from(int from, int to , sctk_rail_info_t *rail)
@@ -700,7 +700,7 @@ void sctk_network_init_portals_all ( sctk_rail_info_t *rail )
         /*decode portals identification string into nid and pid*/
         sctk_portals_helper_from_str( left_rank_connection_infos, &left_id, sizeof (sctk_portals_process_id_t) );
         // register the left neighbour as a connection and let Portals make the binding
-		sctk_debug("PORTALS: PMI MAPPING - %d(%lu) -> %d(%lu)", sctk_process_rank, rail->network.portals.current_id.phys.pid,  right_rank, right_id.phys.pid);
+		sctk_debug("PORTALS: PMI MAPPING - %d(%lu) -> %d(%lu)", sctk_process_rank, rail->network.portals.current_id.phys.pid,  left_rank, left_id.phys.pid);
 	}
 
 	//Syncing before adding the route
