@@ -1,4 +1,4 @@
-# Makefile generated with ../MPC_Tools/mpc_gen_makefile jeudi 8 octobre 2015, 16:07:34 (UTC+0200)
+# Makefile generated with ../MPC_Tools/mpc_gen_makefile Thu Oct  8 21:37:22 CEST 2015
 ############################# MPC License ##############################
 # Wed Nov 19 15:19:19 CET 2008                                         #
 # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          #

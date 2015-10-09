@@ -4,6 +4,9 @@
 #include "sctk_shm_raw_queues.h"
 #include "sctk_inter_thread_comm.h"
 
+#define SCTK_SHM_PTP_ALIGN ((sizeof(sctk_thread_ptp_message_t)+63) & (~63))
+//#define SCTK_SHM_PTP_ALIGN sizeof(sctk_thread_ptp_message_t)
+
 sctk_thread_ptp_message_t * sctk_network_eager_msg_shm_recv(vcli_cell_t*,int);
 int sctk_network_eager_msg_shm_send(sctk_thread_ptp_message_t*,int,int);
 

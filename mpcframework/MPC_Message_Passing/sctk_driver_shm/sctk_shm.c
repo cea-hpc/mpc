@@ -69,7 +69,7 @@ sctk_network_notify_idle_message_shm ( sctk_rail_info_t *rail )
     switch(__cell->msg_type)
     {
 	case SCTK_SHM_EAGER: 
-        msg = sctk_network_eager_msg_shm_recv(__cell,0);
+        msg = sctk_network_eager_msg_shm_recv(__cell,1);
         if(msg) sctk_send_message_from_network_shm(msg);
 		break;
 	case SCTK_SHM_RDMA: 

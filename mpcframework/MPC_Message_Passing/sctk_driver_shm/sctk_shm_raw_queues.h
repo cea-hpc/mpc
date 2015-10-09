@@ -23,14 +23,16 @@ enum vcli_raw_shm_queue_type_e
 typedef enum vcli_raw_shm_queue_type_e vcli_raw_shm_queue_type_t;
 
 struct vcli_cell_s{
-    uint16_t size;                  /* Amount of data packed in a cell */
-    vcli_port_t src;          /* Port from which the cell was sent */
-    vcli_port_t dest;            /* Port to which the cell is adressed */
+    uint32_t size;                  /* Amount of data packed in a cell */
+    uint32_t src;          /* Port from which the cell was sent */
+    uint32_t dest;            /* Port to which the cell is adressed */
+    char padding[32];
+    char payload[128];
+    char data[VCLI_CELLS_SIZE];     /* Actual data transferred */
     vcli_shm_type_t msg_type;
     void *opaque;                   /* Opaque data used by the sender */
     void *opaque_send;
     void *opaque_recv;
-    char data[VCLI_CELLS_SIZE];     /* Actual data transferred */
     char pad[CACHELINE_SIZE];       /* Prevent false sharing with container */
 };
 typedef struct vcli_cell_s vcli_cell_t;

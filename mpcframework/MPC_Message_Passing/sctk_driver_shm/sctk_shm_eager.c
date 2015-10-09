@@ -1,6 +1,7 @@
 #include "sctk_shm_eager.h"
 #include "sctk_net_tools.h"
 
+
 /**
  * NO COPY FUNCTION
  */
@@ -42,26 +43,9 @@ sctk_shm_eager_message_copy_withcopy ( sctk_message_to_copy_t * tmp )
 static sctk_thread_ptp_message_t *
 sctk_network_preform_eager_msg_shm_withcopy(vcli_cell_t * __cell)
 {
-    size_t size;
-    void *inb, *body;
     sctk_thread_ptp_message_t *msg; 
-
-    size = __cell->size - sizeof ( sctk_thread_ptp_message_t ) + sizeof ( sctk_thread_ptp_message_t );
-    msg = sctk_malloc ( size );
-    assume(msg != NULL);
-
-    /* copy header */ 
-    inb = __cell->data;
-    memcpy( (char *) msg, __cell->data, sizeof ( sctk_thread_ptp_message_body_t ));       
-    if( size > sizeof ( sctk_thread_ptp_message_t ))
-    {
-        /* copy msg */
-        body = ( char * ) msg + sizeof ( sctk_thread_ptp_message_t );
-        inb += sizeof ( sctk_thread_ptp_message_t );
-        size = size -  sizeof ( sctk_thread_ptp_message_t );
-        memcpy(body, inb, size);       
-    }
-    
+    msg = sctk_malloc ( __cell->size );
+    memcpy( (char *) msg, __cell->data, __cell->size);       
     return msg;	
 }
 
@@ -112,12 +96,12 @@ sctk_network_eager_msg_shm_send(sctk_thread_ptp_message_t *msg, int dest, int co
         __cell = vcli_raw_pop_cell(SCTK_QEMU_SHM_FREE_QUEUE_ID, dest);
     }
 
-    __cell->size = SCTK_MSG_SIZE ( msg ) + sizeof ( sctk_thread_ptp_message_t );
+    __cell->size = SCTK_MSG_SIZE (msg) + sizeof ( sctk_thread_ptp_message_t );
 	__cell->msg_type = SCTK_SHM_EAGER;
     memcpy( __cell->data, (char*) msg, sizeof ( sctk_thread_ptp_message_t ));       
 
     if(SCTK_MSG_SIZE ( msg ) > 0)
-        sctk_net_copy_in_buffer( msg, (char*) __cell->data + sizeof(sctk_thread_ptp_message_t) );          
+        sctk_net_copy_in_buffer(msg,(char*)__cell->data+sizeof(sctk_thread_ptp_message_t)); 
         
     vcli_raw_push_cell_dest(SCTK_QEMU_SHM_RECV_QUEUE_ID, __cell, dest);       
     sctk_complete_and_free_message( msg ); 
