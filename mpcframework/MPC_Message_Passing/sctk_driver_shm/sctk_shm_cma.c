@@ -184,6 +184,9 @@ sctk_network_rdma_msg_shm_send(sctk_thread_ptp_message_t *msg, int dest, int cop
     sctk_shm_iovec_info_t * shm_iov;
     vcli_cell_t * __cell = NULL;
 
+    if( SCTK_MSG_SIZE ( msg ) + sizeof ( sctk_thread_ptp_message_t ) > 16*1024)
+        return 0;
+
     while(!__cell)
     {
         __cell = vcli_raw_pop_cell(SCTK_QEMU_SHM_FREE_QUEUE_ID, sctk_shm_process_mpi_local_id);

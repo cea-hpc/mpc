@@ -23,6 +23,10 @@ sctk_network_send_message_endpoint_shm ( sctk_thread_ptp_message_t *msg, sctk_en
     if(sctk_network_rdma_msg_shm_send(msg,endpoint->data.shm.dest,0))
         return;
         
+    //fprintf(stderr,"[ FRAG | Send ] From %d to %d\n", sctk_shm_proc_local_rank_on_node, endpoint->data.shm.dest); 
+    if(sctk_network_frag_msg_shm_send(msg,endpoint->data.shm.dest,0))
+        return;
+    assume_m(0, "message unsupported by mpc shm"); 
 }
 
 static void 
@@ -55,7 +59,6 @@ sctk_network_notify_idle_message_shm ( sctk_rail_info_t *rail )
 {
     vcli_cell_t * __cell;
     sctk_thread_ptp_message_t *msg; 
-    struct iov *local, *remote;
     
     if(!sctk_shm_driver_initialized)
         return;
@@ -64,7 +67,7 @@ sctk_network_notify_idle_message_shm ( sctk_rail_info_t *rail )
     if( __cell == NULL )
         return;
 
-    assume_m( __cell->size >= sizeof ( sctk_thread_ptp_message_body_t ), "Incorrect Msg\n");
+    // assume_m( __cell->size >= sizeof ( sctk_thread_ptp_message_body_t ), "Incorrect Msg\n");
 
     switch(__cell->msg_type)
     {
@@ -79,6 +82,18 @@ sctk_network_notify_idle_message_shm ( sctk_rail_info_t *rail )
 	case SCTK_SHM_CMPL:
         msg = sctk_network_rdma_cmpl_msg_shm_recv(__cell);
     	sctk_complete_and_free_message( msg ); 
+		break;
+	case SCTK_SHM_FRAG:
+        //fprintf(stderr,"[ FRAG | Recv ] (%d) From %d to %d\n",sctk_shm_proc_local_rank_on_node, __cell->src, __cell->dest); 
+        msg = sctk_network_frag_msg_shm_recv(__cell,1);
+        //fprintf(stderr, "recv : %p", msg);
+    	if(msg) sctk_send_message_from_network_shm(msg);
+		break;
+	case SCTK_SHM_ACK:
+        //fprintf(stderr,"[ FRAG | Ack ] (%d)From %d to %d\n",sctk_shm_proc_local_rank_on_node, __cell->src, __cell->dest); 
+        msg = sctk_network_frag_msg_shm_resend(__cell,__cell->dest,1);
+        //fprintf(stderr, "resend : %p", msg);
+    	if(msg) sctk_complete_and_free_message( msg ); 
 		break;
 	default:
 		abort();
@@ -330,5 +345,5 @@ void sctk_network_init_shm ( sctk_rail_info_t *rail )
 
     sctk_shm_driver_initialized = 1;
     sctk_network_rdma_shm_interface_init();
-    fprintf(stderr, "nb cell : %d\n", sctk_shmem_cells_num);
+    //fprintf(stderr, "nb cell : %d\n", sctk_shmem_cells_num);
 }

@@ -88,7 +88,7 @@ sctk_network_eager_msg_shm_send(sctk_thread_ptp_message_t *msg, int dest, int co
     
     vcli_cell_t * __cell = NULL;
     
-    if( SCTK_MSG_SIZE ( msg ) + sizeof ( sctk_thread_ptp_message_t ) > 8*1024)
+    if( SCTK_MSG_SIZE ( msg ) + sizeof ( sctk_thread_ptp_message_t ) > 4*1024)
         return 0;
 
     while(!__cell && sctk_shm_eager_number_try < 1000)
