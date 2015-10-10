@@ -6,7 +6,7 @@
 /**
  * Get offset of a member
  */
-#define ll_offsetof(TYPE, MEMBER) ((size_t) &((TYPE *)0)->MEMBER)
+#define sctk_shm_ll_offsetof(TYPE, MEMBER) ((size_t) &((TYPE *)0)->MEMBER)
 
 /**
  * Casts a member of a structure out to the containing structure
@@ -15,9 +15,9 @@
  * @param member     the name of the member within the struct.
  *
  */
-#define sctk_vcli_container_of(ptr, type, member) ({                      \
+#define sctk_shm_container_of(ptr, type, member) ({                      \
         const typeof( ((type *)0)->member ) *__mptr = (ptr);    \
-        (type *)( (char *)__mptr - ll_offsetof(type,member) );})
+        (type *)( (char *)__mptr - sctk_shm_ll_offsetof(type,member) );})
 
 static inline void * 
 align(void *ptr, unsigned long boundary)

@@ -1,172 +1,79 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include "sctk_debug.h"
 
 #include "sctk_shm_raw_queues_internals.h"
+#include "sctk_raw_freelist_mthreads.h"
 
-lfq_cell_t *lfq_dequeue(volatile lf_queue_t *lfq, lfq_cell_t *pools_ptr)
+static void * 
+sctk_shm_get_region_queue_base(char *ptr,sctk_shm_list_type_t type)
 {
-    volatile lfq_cell_t *cell;
-#ifndef ATOMIC_QUEUE
-    if ( sctk_spinlock_trylock( &( lfq->lock ) ) == 1 )
-        return NULL;
-
-    lfq_ptr_t head = lfq->shadow_head;
-    lfq_ptr_t tail;
-    cell = vcli_raw_ptr_to_cell( pools_ptr, lfq->head ); 
-    
-    if(lfq->head == 0)
-    {
-        sctk_spinlock_unlock( &(lfq->lock));
-        return NULL;
-    }
-
-    if(cell->next != 0)
-    {
-        lfq->head = cell->next;
-    }
-    else
-    {
-        lfq->tail = 0;
-        lfq->head = 0;
-    }
-#ifdef SCTK_SHM_RAW_QUEUE_DEBUG
-    lfq->current_cellules--; 
-#endif /* SCTK_SHM_RAW_QUEUE_DEBUG */
-    sctk_spinlock_unlock( &(lfq->lock));
-#else /* ATOMIC_QUEUE */
-    lfq_ptr_t head = lfq->shadow_head;
-
-    lfq_ptr_t tail;
-
-    if(head == 0)
-    {
-        head = lfq->head;
-        if(head == 0)
-        {
-            cpu_relax();
-            return NULL;
-        }
-        else
-        {
-            lfq->shadow_head = head;
-            lfq->head = 0;
-        }
-    }
-
-    cell = vcli_raw_ptr_to_cell(pools_ptr, head); 
-
-    if(cell->next != 0)
-    {
-        lfq->shadow_head = cell->next;
-    }
-    else
-    {
-        lfq->shadow_head = 0;
-        tail = __sync_val_compare_and_swap(&lfq->tail, head, 0);
-        if(tail != head)
-        {
-            while(cell->next == 0)
-            {
-                cpu_relax();
-            }
-            lfq->shadow_head = cell->next;
-        }
-
-    }
-#endif /* ATOMIC_QUEUE */
-    cell->next = 0;
-    return (lfq_cell_t *) cell;
+    return ptr + ( type * sizeof( sctk_shm_list_t ) );
 }
 
-int sctk_vcli_raw_lfq_enqueue(volatile lf_queue_t *lfq, lfq_cell_t *pools_ptr, lfq_cell_t *cell)
+static char *
+sctk_shm_get_region_items_asymm_addr(char *ptr)
 {
-    lfq_ptr_t new = vcli_raw_cell_to_ptr(pools_ptr, cell);
-    lfq_ptr_t prev;
-#ifndef ATOMIC_QUEUE
-    while( sctk_spinlock_trylock( &(lfq->lock)) == 1)
-        cpu_relax();
-
-    prev = lfq->tail;
-    lfq->tail = new;
-    if(prev == 0)
-    {
-        lfq->head = new;
-    }
-    else
-    {
-        lfq_cell_t* abs_prev = vcli_raw_ptr_to_cell(pools_ptr, prev);     
-        abs_prev->next = new;
-    }
-#ifdef SCTK_SHM_RAW_QUEUE_DEBUG
-    lfq->current_cellules++; 
-#endif /* SCTK_SHM_RAW_QUEUE_DEBUG */
-    sctk_spinlock_unlock( &(lfq->lock));
-#else /*  ATOMIC_QUEUE */
-    prev = __sync_lock_test_and_set(&lfq->tail, new);
-    
-    if(prev == 0)
-    {
-        lfq->head = new;
-    }
-    else
-    {
-        
-        lfq_cell_t* abs_prev = vcli_raw_ptr_to_cell(pools_ptr, prev);     
-        abs_prev->next = new;
-     }
-#endif /* ATOMIC_QUEUE */
+    /* First offset after all shmem queues */
+    return ptr + (4 * sizeof(sctk_shm_list_t));
 }
 
-/* */
-vcli_raw_state_t *
-sctk_vcli_raw_get_state(void *shmem_base, size_t shmem_size,int cells_num)
+size_t 
+sctk_shm_get_region_size(int cells_num)
 {
-    int i;
-    vcli_raw_state_t *vcli = NULL;
-
-#ifdef VCLI_RAW_WITH_MPC
-    vcli = (vcli_raw_state_t*) sctk_malloc(sizeof(vcli_raw_state_t));
-    assume( vcli != NULL );
-#else /* VCLI_RAW_WITH_MPC */
-    vcli = (vcli_raw_state_t*) malloc(sizeof(vcli_raw_state_t));
-#endif /* VCLI_RAW_WITH_MPC */
-    
-    const void *max_addr = (void*) ((char*) shmem_base + shmem_size);
-    vcli->cells_num = cells_num;
-    vcli->raw_queue_pop_lock = SCTK_SPINLOCK_INITIALIZER;
-    vcli->send_queue = vcli_raw_queue_base(shmem_base,SCTK_QEMU_SHM_SEND_QUEUE_ID);
-    vcli->recv_queue = vcli_raw_queue_base(shmem_base,SCTK_QEMU_SHM_RECV_QUEUE_ID);
-    vcli->cmpl_queue = vcli_raw_queue_base(shmem_base,SCTK_QEMU_SHM_CMPL_QUEUE_ID);
-    vcli->free_queue = vcli_raw_queue_base(shmem_base,SCTK_QEMU_SHM_FREE_QUEUE_ID);
-    vcli->cells_pool  = vcli_raw_cell_pool_queue_base(shmem_base);
-    assume((char*) vcli->cells_pool < (char*) max_addr);
-    
-    return vcli;
+    void *size = NULL;
+    size_t tmp;
+    /* shmem_queue size */
+    tmp = 4 * sizeof(sctk_shm_list_t);
+    size += tmp;
+    /* shmem_cell_pool size */
+    tmp = cells_num * sizeof(sctk_shm_item_t);
+    size += tmp;
+    return ( ( uintptr_t ) page_align( size ) );
 }
 
 void 
-sctk_vcli_raw_queue_reset(vcli_raw_state_t *vcli, vcli_queue_t queue)
+sctk_shm_reset_region_queues(sctk_shm_region_infos_t *shmem, int process_rank)
 {
     int i;
-    int res;
-    lfq_cell_t *cell;
-    memset((lf_queue_t*) vcli->send_queue, 0, sizeof(lf_queue_t));
-    memset((lf_queue_t*) vcli->recv_queue, 0, sizeof(lf_queue_t));
-    memset((lf_queue_t*) vcli->cmpl_queue, 0, sizeof(lf_queue_t));
-    memset((lf_queue_t*) vcli->free_queue, 0, sizeof(lf_queue_t));
+    sctk_shm_item_t * abs_item;
+    char * item_asymm_addr;
 
-//    vcli->free_queue->current_cellules = 1;
- //   vcli->recv_queue->current_cellules = 1;
-  //  vcli->cmpl_queue->current_cellules = 1;
-  //  vcli->send_queue->current_cellules = 1;
+    item_asymm_addr = shmem->sctk_shm_asymm_addr;
 
-    for(i = 0; i < vcli->cells_num; i++)
+    memset((sctk_shm_list_t*) shmem->send_queue, 0, sizeof(sctk_shm_list_t));
+    memset((sctk_shm_list_t*) shmem->recv_queue, 0, sizeof(sctk_shm_list_t));
+    memset((sctk_shm_list_t*) shmem->cmpl_queue, 0, sizeof(sctk_shm_list_t));
+    memset((sctk_shm_list_t*) shmem->free_queue, 0, sizeof(sctk_shm_list_t));
+
+    for(i = 0; i < shmem->cells_num; i++)
     {
-        cell = (lfq_cell_t *)(vcli->cells_pool)+i;
-        cell->queue = queue;
-        cell->next = 0;
-        sctk_vcli_raw_lfq_enqueue(vcli->free_queue, vcli->cells_pool, cell);
+        abs_item = (sctk_shm_item_t *)(item_asymm_addr)+i;
+        abs_item->src = process_rank;
+        abs_item->next = 0;
+        sctk_shm_enqueue_mt(shmem->free_queue,item_asymm_addr,abs_item,item_asymm_addr);
     }
 }
+
+/* */
+sctk_shm_region_infos_t *
+sctk_shm_set_region_infos(void *shmem_base, size_t shmem_size,int cells_num)
+{
+    int i;
+    sctk_shm_region_infos_t *shmem = NULL;
+
+    shmem = (sctk_shm_region_infos_t*) sctk_malloc(sizeof(sctk_shm_region_infos_t));
+    assume( shmem != NULL );
+    
+    shmem->cells_num = cells_num;
+    shmem->global_lock = SCTK_SPINLOCK_INITIALIZER;
+    shmem->send_queue = sctk_shm_get_region_queue_base(shmem_base,SCTK_SHM_CELLS_QUEUE_SEND);
+    shmem->recv_queue = sctk_shm_get_region_queue_base(shmem_base,SCTK_SHM_CELLS_QUEUE_RECV);
+    shmem->cmpl_queue = sctk_shm_get_region_queue_base(shmem_base,SCTK_SHM_CELLS_QUEUE_CMPL);
+    shmem->free_queue = sctk_shm_get_region_queue_base(shmem_base,SCTK_SHM_CELLS_QUEUE_FREE);
+    shmem->sctk_shm_asymm_addr = sctk_shm_get_region_items_asymm_addr(shmem_base);
+    return shmem;
+}
+
