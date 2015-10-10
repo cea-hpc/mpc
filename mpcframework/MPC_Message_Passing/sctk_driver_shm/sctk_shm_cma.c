@@ -10,7 +10,7 @@ static unsigned long sctk_shm_process_mpi_local_id = -1;
 static void 
 sctk_shm_rdma_message_copy_generic(sctk_message_to_copy_t * tmp)
 {
-    vcli_cell_t * __cell = NULL;
+    sctk_shm_cell_t * cell = NULL;
 	sctk_thread_ptp_message_t *send;
     sctk_thread_ptp_message_t *recv;
     char *body;
@@ -54,23 +54,23 @@ sctk_shm_rdma_message_copy_generic(sctk_message_to_copy_t * tmp)
 }
 
 static void
-sctk_network_rdma_msg_cmpl_shm_send(sctk_shm_iovec_info_t *shm_send_iov, vcli_cell_t * __cell)
+sctk_network_rdma_msg_cmpl_shm_send(sctk_shm_iovec_info_t *shm_send_iov, sctk_shm_cell_t * cell)
 {
-	__cell->msg_type = SCTK_SHM_CMPL;
-   	__cell->size = sizeof ( sctk_thread_ptp_message_body_t );
-	memcpy( __cell->data, shm_send_iov, sizeof(sctk_shm_iovec_info_t) );
+	cell->msg_type = SCTK_SHM_CMPL;
+   	cell->size = sizeof ( sctk_thread_ptp_message_body_t );
+	memcpy( cell->data, shm_send_iov, sizeof(sctk_shm_iovec_info_t) );
     //fprintf(stderr, "[%d]resend cmpl to src : %d -> %d\n", nb_seq_rdma_send_cmpl++,sctk_shm_process_mpi_local_id, shm_send_iov->mpi_src);
-    vcli_raw_push_cell_dest(SCTK_QEMU_SHM_RECV_QUEUE_ID, __cell, shm_send_iov->mpi_src);       
+    sctk_shm_push_cell_dest(SCTK_SHM_CELLS_QUEUE_RECV, cell, shm_send_iov->mpi_src);       
 }
 
 sctk_thread_ptp_message_t *
-sctk_network_rdma_cmpl_msg_shm_recv(vcli_cell_t * __cell)
+sctk_network_rdma_cmpl_msg_shm_recv(sctk_shm_cell_t * cell)
 {
     sctk_thread_ptp_message_t *msg = NULL; 
     sctk_shm_iovec_info_t *shm_iov;
-	shm_iov = (sctk_shm_iovec_info_t*) __cell->data;
+	shm_iov = (sctk_shm_iovec_info_t*) cell->data;
 	msg = shm_iov->msg;
-    vcli_raw_push_cell(SCTK_QEMU_SHM_FREE_QUEUE_ID, __cell);       
+    sctk_shm_push_cell_origin(SCTK_SHM_CELLS_QUEUE_FREE, cell);       
     assume_m(msg != NULL, "Error in cma recv msg");
     return msg;
 }
@@ -79,12 +79,12 @@ sctk_network_rdma_cmpl_msg_shm_recv(vcli_cell_t * __cell)
 static void 
 sctk_shm_rdma_message_free_nocopy(void *tmp)
 {
-    vcli_cell_t * __cell = NULL;
+    sctk_shm_cell_t * cell = NULL;
     sctk_shm_iovec_info_t *shm_iov = NULL; 
     shm_iov = (sctk_shm_iovec_info_t *) ((char*) tmp + sizeof(sctk_thread_ptp_message_t));
-    __cell = container_of(tmp, vcli_cell_t, data);
-    assume_m( __cell != NULL, "Error: sctk_shm_rdma_message_free_nocopy");
-    sctk_network_rdma_msg_cmpl_shm_send( shm_iov, __cell );
+    cell = container_of(tmp, sctk_shm_cell_t, data);
+    assume_m( cell != NULL, "Error: sctk_shm_rdma_message_free_nocopy");
+    sctk_network_rdma_msg_cmpl_shm_send( shm_iov, cell );
 }
 
 static void 
@@ -94,20 +94,20 @@ sctk_shm_rdma_message_copy_nocopy(sctk_message_to_copy_t * tmp)
 }
 
 static sctk_thread_ptp_message_t *
-sctk_network_preform_rdma_msg_shm_nocopy( vcli_cell_t * __cell)
+sctk_network_preform_rdma_msg_shm_nocopy( sctk_shm_cell_t * cell)
 {
-    return (sctk_thread_ptp_message_t*) __cell->data;
+    return (sctk_thread_ptp_message_t*) cell->data;
 }
 
 static void 
 sctk_shm_rdma_message_free_withcopy(void *tmp)
 {
-    vcli_cell_t * __cell = NULL;
+    sctk_shm_cell_t * cell = NULL;
     sctk_shm_iovec_info_t * shm_iov = NULL;
     shm_iov = (sctk_shm_iovec_info_t *)(( char * ) tmp + sizeof ( sctk_thread_ptp_message_t ));
-    while(!__cell)
-        __cell = vcli_raw_pop_cell(SCTK_QEMU_SHM_FREE_QUEUE_ID, sctk_shm_process_mpi_local_id);
-    sctk_network_rdma_msg_cmpl_shm_send(shm_iov, __cell);
+    while(!cell)
+        cell = sctk_shm_pop_cell_dest(SCTK_SHM_CELLS_QUEUE_FREE, sctk_shm_process_mpi_local_id);
+    sctk_network_rdma_msg_cmpl_shm_send(shm_iov, cell);
     sctk_free(tmp);
 }
 
@@ -118,7 +118,7 @@ sctk_shm_rdma_message_copy_withcopy(sctk_message_to_copy_t * tmp)
 }
 
 static sctk_thread_ptp_message_t *
-sctk_network_preform_rdma_msg_shm_withcopy( vcli_cell_t * __cell)
+sctk_network_preform_rdma_msg_shm_withcopy( sctk_shm_cell_t * cell)
 {
     sctk_shm_iovec_info_t *shm_iov = NULL;
     sctk_thread_ptp_message_t * msg = NULL;
@@ -128,7 +128,7 @@ sctk_network_preform_rdma_msg_shm_withcopy( vcli_cell_t * __cell)
     msg = sctk_malloc ( sizeof ( sctk_thread_ptp_message_t )  + sizeof(sctk_shm_iovec_info_t)  + sizeof(struct iovec));
     assume(msg != NULL);
 
-    buffer_in = __cell->data;
+    buffer_in = cell->data;
     buffer_out = msg;
     memcpy( buffer_out, buffer_in, sizeof ( sctk_thread_ptp_message_body_t ));       
        
@@ -146,7 +146,7 @@ sctk_network_preform_rdma_msg_shm_withcopy( vcli_cell_t * __cell)
 
 
 sctk_thread_ptp_message_t *
-sctk_network_rdma_msg_shm_recv(vcli_cell_t * __cell,int copy_enabled)
+sctk_network_rdma_msg_shm_recv(sctk_shm_cell_t * cell,int copy_enabled)
 {
     sctk_thread_ptp_message_t *msg; 
     void (*shm_free_funct)(void*) = NULL;
@@ -154,14 +154,14 @@ sctk_network_rdma_msg_shm_recv(vcli_cell_t * __cell,int copy_enabled)
 
     if( copy_enabled )
     {
-        msg = sctk_network_preform_rdma_msg_shm_withcopy( __cell );
+        msg = sctk_network_preform_rdma_msg_shm_withcopy( cell );
         shm_free_funct = sctk_shm_rdma_message_free_withcopy;
         shm_copy_funct = sctk_shm_rdma_message_copy_withcopy;
-    	vcli_raw_push_cell(SCTK_QEMU_SHM_FREE_QUEUE_ID, __cell);       
+    	sctk_shm_push_cell_origin(SCTK_SHM_CELLS_QUEUE_FREE, cell);       
     }
     else
     {
-        msg = sctk_network_preform_rdma_msg_shm_nocopy( __cell );
+        msg = sctk_network_preform_rdma_msg_shm_nocopy( cell );
         shm_free_funct = sctk_shm_rdma_message_free_nocopy;
         shm_copy_funct = sctk_shm_rdma_message_copy_nocopy;
     }
@@ -182,33 +182,33 @@ sctk_network_rdma_msg_shm_send(sctk_thread_ptp_message_t *msg, int dest, int cop
     struct iovec * tmp;
     char * ptr;
     sctk_shm_iovec_info_t * shm_iov;
-    vcli_cell_t * __cell = NULL;
+    sctk_shm_cell_t * cell = NULL;
 
-    if( SCTK_MSG_SIZE ( msg ) + sizeof ( sctk_thread_ptp_message_t ) > 16*1024)
-        return 0;
+  //  if( SCTK_MSG_SIZE ( msg ) + sizeof ( sctk_thread_ptp_message_t ) > 16*1024)
+  //      return 0;
 
-    while(!__cell)
+    while(!cell)
     {
-        __cell = vcli_raw_pop_cell(SCTK_QEMU_SHM_FREE_QUEUE_ID, sctk_shm_process_mpi_local_id);
+        cell = sctk_shm_pop_cell_dest(SCTK_SHM_CELLS_QUEUE_FREE, sctk_shm_process_mpi_local_id);
         sched_yield();
     }
     
-    __cell->msg_type = SCTK_SHM_RDMA;
-    __cell->size = sizeof ( sctk_thread_ptp_message_body_t );
+    cell->msg_type = SCTK_SHM_RDMA;
+    cell->size = sizeof ( sctk_thread_ptp_message_body_t );
 	assume( sizeof(sctk_thread_ptp_message_t) + sizeof(sctk_shm_iovec_info_t) + sizeof(struct iovec) < VCLI_CELLS_SIZE );
     
-    shm_iov = (sctk_shm_iovec_info_t *)((char*) __cell->data + sizeof(sctk_thread_ptp_message_t));
+    shm_iov = (sctk_shm_iovec_info_t *)((char*) cell->data + sizeof(sctk_thread_ptp_message_t));
     shm_iov->msg = msg;
     shm_iov->pid = sctk_shm_process_sys_id;
     shm_iov->mpi_src = sctk_shm_process_mpi_local_id;
     ptr = (struct iovec*)((char*) shm_iov + sizeof(sctk_shm_iovec_info_t));
-    assume( (char*) ptr + sizeof(struct iovec) < ( char*) __cell + VCLI_CELLS_SIZE );
+    assume( (char*) ptr + sizeof(struct iovec) < ( char*) cell + VCLI_CELLS_SIZE );
 	
-    memcpy( __cell->data, (char*) msg, sizeof ( sctk_thread_ptp_message_body_t ));       
+    memcpy( cell->data, (char*) msg, sizeof ( sctk_thread_ptp_message_body_t ));       
     sctk_get_iovec_in_buffer( msg, &tmp, &(shm_iov->len));	
 	
     memcpy(ptr, tmp, shm_iov->len * sizeof(struct iovec));
-    vcli_raw_push_cell_dest( SCTK_QEMU_SHM_RECV_QUEUE_ID, __cell, dest);       
+    sctk_shm_push_cell_dest( SCTK_SHM_CELLS_QUEUE_RECV, cell, dest);       
     return 1;
 }
 
@@ -217,4 +217,5 @@ sctk_network_rdma_shm_interface_init(void)
 {
     sctk_shm_process_sys_id = getpid();
     sctk_shm_process_mpi_local_id = sctk_get_local_process_rank();
+    //sctk_shm_rdma_zerocopy_enabled = rail->runtime_config_driver_config->driver.value.shm.cells_num
 }

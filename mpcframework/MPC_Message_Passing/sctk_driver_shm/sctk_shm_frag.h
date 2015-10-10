@@ -14,8 +14,8 @@ typedef struct
     sctk_thread_ptp_message_t* header;
 }sctk_shm_rdv_info_t;
 
-sctk_thread_ptp_message_t *sctk_network_frag_msg_shm_resend(vcli_cell_t*, int,int);
-sctk_thread_ptp_message_t *sctk_network_frag_msg_shm_recv(vcli_cell_t*,int);
+sctk_thread_ptp_message_t *sctk_network_frag_msg_shm_resend(sctk_shm_cell_t*, int,int);
+sctk_thread_ptp_message_t *sctk_network_frag_msg_shm_recv(sctk_shm_cell_t*,int);
 int sctk_network_frag_msg_shm_send(sctk_thread_ptp_message_t*,int,int);
 
 #endif /* __SCTK_SHM_FRAG__ */
