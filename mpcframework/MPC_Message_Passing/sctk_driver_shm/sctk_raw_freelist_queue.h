@@ -5,6 +5,7 @@
 #include "sctk_spinlock.h"
 #include "sctk_shm_raw_queues_archdefs.h"
 
+#define SCTK_SHM_CELL_SIZE 4024
 /**
  * ENUM
  */
@@ -42,17 +43,16 @@ typedef struct sctk_shm_cell_s{
     sctk_shm_msg_type_t msg_type;   /* Cell msg type                        */ 
     void *opaque_send;              /* Opaque data used by the sender       */
     void *opaque_recv;              /* Opaque data used by the recver       */
-    char data[VCLI_CELLS_SIZE];     /* Actual data transferred              */
+    char data[SCTK_SHM_CELL_SIZE];     /* Actual data transferred              */
 } sctk_shm_cell_t;
 typedef struct sctk_shm_cell_s sctk_shm_cell_t;
 
 struct sctk_shm_item_s
 {
-    uint64_t maxsize;                  
-    uint64_t src;
+    int src;
     struct sctk_shm_item_s *next;
     sctk_shm_cell_t cell;
-} __attribute__ ((aligned(CACHELINE_SIZE)));
+};
 typedef struct sctk_shm_item_s sctk_shm_item_t;
 
 struct sctk_shm_list_s
@@ -66,15 +66,15 @@ struct sctk_shm_list_s
 typedef struct sctk_shm_list_s sctk_shm_list_t;
 
 static inline sctk_shm_item_t *
-sctk_shm_abs_to_rel(char * base_addr, sctk_shm_item_t *rel_addr)
+sctk_shm_abs_to_rel(char *base_addr, sctk_shm_item_t *abs_addr)
 {
-    return (sctk_shm_item_t *)((size_t)rel_addr - (size_t)base_addr);
+    return (sctk_shm_item_t *)((size_t)abs_addr - (size_t)base_addr);
 }
 
 static inline sctk_shm_item_t *
 sctk_shm_rel_to_abs(char *base_addr, sctk_shm_item_t *rel_addr)
 {
-    return (sctk_shm_item_t *)(base_addr + (size_t)rel_addr) ;
+    return (sctk_shm_item_t *)((size_t)base_addr + (size_t)rel_addr) ;
 }
 
 static inline sctk_shm_cell_t *

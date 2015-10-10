@@ -17,15 +17,15 @@ static volatile int sctk_shm_driver_initialized = 0;
 static void 
 sctk_network_send_message_endpoint_shm ( sctk_thread_ptp_message_t *msg, sctk_endpoint_t *endpoint )
 {
-    if(sctk_network_eager_msg_shm_send(msg,endpoint->data.shm.dest,0))
+    if(sctk_network_eager_msg_shm_send(msg,endpoint->data.shm.dest))
         return;
     
-    if(sctk_network_rdma_msg_shm_send(msg,endpoint->data.shm.dest,0))
+    if(sctk_network_rdma_msg_shm_send(msg,endpoint->data.shm.dest))
+        return;
+
+    if(sctk_network_frag_msg_shm_send(msg,endpoint->data.shm.dest))
         return;
         
-    //fprintf(stderr,"[ FRAG | Send ] From %d to %d\n", sctk_shm_proc_local_rank_on_node, endpoint->data.shm.dest); 
-    if(sctk_network_frag_msg_shm_send(msg,endpoint->data.shm.dest,0))
-        return;
     assume_m(0, "message unsupported by mpc shm"); 
 }
 
@@ -63,40 +63,37 @@ sctk_network_notify_idle_message_shm ( sctk_rail_info_t *rail )
     if(!sctk_shm_driver_initialized)
         return;
 
-    cell = sctk_shm_pop_cell_dest(SCTK_SHM_CELLS_QUEUE_RECV,sctk_shm_proc_local_rank_on_node); 
-    if( cell == NULL )
-        return;
-
-    // assume_m( cell->size >= sizeof ( sctk_thread_ptp_message_body_t ), "Incorrect Msg\n");
-
-    switch(cell->msg_type)
+    while(1)
     {
-	case SCTK_SHM_EAGER: 
-        msg = sctk_network_eager_msg_shm_recv(cell,1);
-        if(msg) sctk_send_message_from_network_shm(msg);
-		break;
-	case SCTK_SHM_RDMA: 
-		msg = sctk_network_rdma_msg_shm_recv(cell,1);
-        if(msg) sctk_send_message_from_network_shm(msg);
-		break;
-	case SCTK_SHM_CMPL:
-        msg = sctk_network_rdma_cmpl_msg_shm_recv(cell);
-    	sctk_complete_and_free_message( msg ); 
-		break;
-	case SCTK_SHM_FRAG:
-        //fprintf(stderr,"[ FRAG | Recv ] (%d) From %d to %d\n",sctk_shm_proc_local_rank_on_node, cell->src, cell->dest); 
-        msg = sctk_network_frag_msg_shm_recv(cell,1);
-        //fprintf(stderr, "recv : %p", msg);
-    	if(msg) sctk_send_message_from_network_shm(msg);
-		break;
-	case SCTK_SHM_ACK:
-        //fprintf(stderr,"[ FRAG | Ack ] (%d)From %d to %d\n",sctk_shm_proc_local_rank_on_node, cell->src, cell->dest); 
-        msg = sctk_network_frag_msg_shm_resend(cell,cell->dest,1);
-        //fprintf(stderr, "resend : %p", msg);
-    	if(msg) sctk_complete_and_free_message( msg ); 
-		break;
-	default:
-		abort();
+        cell = sctk_shm_pop_cell_recv(); 
+        if( cell == NULL )
+            return;
+    
+        switch(cell->msg_type)
+        {
+	    case SCTK_SHM_EAGER: 
+            msg = sctk_network_eager_msg_shm_recv(cell,0);
+            if(msg) sctk_send_message_from_network_shm(msg);
+		    break;
+	    case SCTK_SHM_RDMA: 
+		    msg = sctk_network_rdma_msg_shm_recv(cell,1);
+            if(msg) sctk_send_message_from_network_shm(msg);
+		    break;
+	    case SCTK_SHM_CMPL:
+            msg = sctk_network_rdma_cmpl_msg_shm_recv(cell);
+        	sctk_complete_and_free_message( msg ); 
+		    break;
+	    case SCTK_SHM_FRAG:
+            msg = sctk_network_frag_msg_shm_recv(cell,1);
+    	    if(msg) sctk_send_message_from_network_shm(msg);
+		    break;
+	    case SCTK_SHM_ACK:
+            msg = sctk_network_frag_msg_shm_resend(cell,cell->dest,1);
+        	if(msg) sctk_complete_and_free_message( msg ); 
+		    break;
+	    default:
+		    abort();
+        }
     }
 }
 
@@ -225,48 +222,19 @@ static void sctk_shm_init_raw_queue(size_t sctk_shmem_size, int sctk_shmem_cells
     sctk_shm_mapper_role_t shm_role;
     struct sctk_alloc_mapper_handler_s *pmi_handler = NULL;
 
-#ifdef MPC_USE_VIRTUAL_MACHINE
-    if( sctk_mpc_is_vmguest() )
-    {
-        printf("MPC is vmguest process\n");
-        shm_base = sctk_mpc_get_vmguest_shmem_base();
-        sctk_qemu_shm_shmem_base = shm_base;
-        shm_base += sizeof( sctk_shm_guest_pmi_infos_t );
-        sctk_shm_add_region_infos( shm_base, sctk_shmem_size, sctk_shmem_cells_num, rank );
-    }
-    else
-    {
-#endif /* MPC_USE_VIRTUAL_MACHINE */
-        sprintf(buffer, "%d", rank);
-        pmi_handler = sctk_shm_pmi_handler_init(buffer);
-        shm_role = (sctk_shm_proc_local_rank_on_node == rank) ? SCTK_SHM_MAPPER_ROLE_MASTER : SCTK_SHM_MAPPER_ROLE_SLAVE; 
-        shm_base = sctk_shm_add_region(sctk_shmem_size,shm_role,pmi_handler);
-
-#ifdef MPC_USE_VIRTUAL_MACHINE
-        if( shm_role == SCTK_SHM_MAPPER_ROLE_MASTER && sctk_mpc_is_vmhost() )
-        {
-            printf("MPC is vmhost process\n");
-            sctk_qemu_shm_shmem_base = shm_base;
-            shm_base += sizeof( sctk_shm_guest_pmi_infos_t );
-        }
-#endif /* MPC_USE_VIRTUAL_MACHINE */
+    sprintf(buffer, "%d", rank);
+    pmi_handler = sctk_shm_pmi_handler_init(buffer);
+    shm_role = (sctk_shm_proc_local_rank_on_node == rank) ? SCTK_SHM_MAPPER_ROLE_MASTER : SCTK_SHM_MAPPER_ROLE_SLAVE; 
+    shm_base = sctk_shm_add_region(sctk_shmem_size,shm_role,pmi_handler);
         
-        fprintf(stderr, "shm_base: %p\n", shm_base);
-        sctk_shm_add_region_infos(shm_base, sctk_shmem_size, sctk_shmem_cells_num, rank );
+    sctk_shm_add_region_infos(shm_base, sctk_shmem_size, sctk_shmem_cells_num, rank );
 
-        if( shm_role == SCTK_SHM_MAPPER_ROLE_MASTER )
-        {
-            sctk_shm_reset_process_queues( rank );
-#ifdef MPC_USE_VIRTUAL_MACHINE
-            sctk_set_qemu_shm_process_filename(pmi_handler->gen_filename(pmi_handler->option));
-            sctk_set_qemu_shm_process_size(sctk_shmem_size);
-#endif /* MPC_USE_VIRTUAL_MACHINE */
-        }
-        sctk_shm_pmi_handler_free(pmi_handler);
-
-#ifdef MPC_USE_VIRTUAL_MACHINE
+    if( shm_role == SCTK_SHM_MAPPER_ROLE_MASTER )
+    {
+        sctk_shm_reset_process_queues( rank );
     }
-#endif /* MPC_USE_VIRTUAL_MACHINE */
+
+    sctk_shm_pmi_handler_free(pmi_handler);
 
 }
 
@@ -324,13 +292,11 @@ void sctk_network_init_shm ( sctk_rail_info_t *rail )
     {
         sctk_shm_init_raw_queue(sctk_shmem_size, sctk_shmem_cells_num, i);
 		if( i != local_process_rank)
-            		sctk_shm_add_route(first_proc_on_node+i,i,rail);
-        }
+            sctk_shm_add_route(first_proc_on_node+i,i,rail);
+        sctk_pmi_barrier();
+    }
 
     sctk_shm_driver_initialized = 1;
     sctk_network_rdma_shm_interface_init();
-    sctk_pmi_barrier();
-    fprintf(stderr, "MPC SHM Initialized\n");
-    sctk_pmi_barrier();
     sctk_shm_check_raw_queue(local_process_number);
 }

@@ -16,6 +16,6 @@ typedef struct
 
 sctk_thread_ptp_message_t *sctk_network_frag_msg_shm_resend(sctk_shm_cell_t*, int,int);
 sctk_thread_ptp_message_t *sctk_network_frag_msg_shm_recv(sctk_shm_cell_t*,int);
-int sctk_network_frag_msg_shm_send(sctk_thread_ptp_message_t*,int,int);
+int sctk_network_frag_msg_shm_send(sctk_thread_ptp_message_t*,int);
 
 #endif /* __SCTK_SHM_FRAG__ */

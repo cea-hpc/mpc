@@ -14,6 +14,8 @@ void sctk_shm_add_region_infos(char*,size_t,int,int);
 void sctk_shm_reset_process_queues(int);
 
 sctk_shm_cell_t* sctk_shm_pop_cell_dest(sctk_shm_list_type_t,int);
+sctk_shm_cell_t* sctk_shm_pop_cell_recv(void);
+sctk_shm_cell_t* sctk_shm_pop_cell_free(int);
 void sctk_shm_push_cell_dest(sctk_shm_list_type_t,sctk_shm_cell_t*,int); 
 void sctk_shm_push_cell_origin(sctk_shm_list_type_t,sctk_shm_cell_t*);
 int sctk_shm_isempty_process_queue(sctk_shm_list_type_t,int);

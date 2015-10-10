@@ -79,13 +79,13 @@ sctk_network_frag_msg_shm_resend(sctk_shm_cell_t* cell, int dest, int enabled_co
 }
 
 int 
-sctk_network_frag_msg_shm_send(sctk_thread_ptp_message_t* msg,int dest,int enabled_copy)
+sctk_network_frag_msg_shm_send(sctk_thread_ptp_message_t* msg,int dest)
 {
    sctk_shm_rdv_info_t* sctk_shm_send_frag_info;
 
    sctk_shm_cell_t * cell = NULL;
    while(!cell)
-    cell = sctk_shm_pop_cell_dest(SCTK_SHM_CELLS_QUEUE_FREE,dest);
+    cell = sctk_shm_pop_cell_free(dest);
 
    sctk_shm_send_frag_info = (sctk_shm_rdv_info_t*) cell->opaque_send;
 

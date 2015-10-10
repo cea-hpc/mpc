@@ -14,6 +14,8 @@ struct sctk_shm_region_infos_s
 {
     int cells_num; 
     int cells_size; 
+    char* shm_base;
+    char* max_addr;
     sctk_spinlock_t global_lock;
     volatile sctk_shm_list_t *send_queue; 
     volatile sctk_shm_list_t *recv_queue;

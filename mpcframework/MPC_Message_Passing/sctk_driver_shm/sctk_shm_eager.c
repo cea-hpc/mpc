@@ -1,6 +1,6 @@
 #include "sctk_shm_eager.h"
 #include "sctk_net_tools.h"
-
+#include "fast_memcpy.h"
 
 /**
  * NO COPY FUNCTION
@@ -45,7 +45,7 @@ sctk_network_preform_eager_msg_shm_withcopy(sctk_shm_cell_t * cell)
 {
     sctk_thread_ptp_message_t *msg; 
     msg = sctk_malloc ( cell->size );
-    memcpy( (char *) msg, cell->data, cell->size);       
+    fast_memcpy( (char *) msg, cell->data, cell->size);       
     return msg;	
 }
 
@@ -76,29 +76,26 @@ sctk_network_eager_msg_shm_recv(sctk_shm_cell_t * cell,int copy_enabled)
     msg->tail.message_type = SCTK_MESSAGE_NETWORK;
     if ( SCTK_MSG_COMMUNICATOR ( msg ) < 0 )
         return NULL;
-    sctk_rebuild_header ( msg ); 
-    sctk_reinit_header ( msg, shm_free_funct, shm_copy_funct);
+    sctk_rebuild_header( msg ); 
+    sctk_reinit_header( msg, shm_free_funct, shm_copy_funct);
     return msg;
 }
 
-static int sctk_shm_eager_number_try = 0;
 int
-sctk_network_eager_msg_shm_send(sctk_thread_ptp_message_t *msg, int dest, int copy_enabled)
+sctk_network_eager_msg_shm_send(sctk_thread_ptp_message_t *msg, int dest)
 {
     
     sctk_shm_cell_t * cell = NULL;
     
-    if( SCTK_MSG_SIZE ( msg ) + sizeof ( sctk_thread_ptp_message_t ) > 4*1024)
+    if( SCTK_MSG_SIZE ( msg ) + sizeof ( sctk_thread_ptp_message_t ) > SCTK_SHM_CELL_SIZE)
         return 0;
 
-    while(!cell && sctk_shm_eager_number_try < 1000)
-    {
-        cell = sctk_shm_pop_cell_dest(SCTK_SHM_CELLS_QUEUE_FREE, dest);
-    }
+    while(!cell) 
+        cell = sctk_shm_pop_cell_free(dest);
 
     cell->size = SCTK_MSG_SIZE (msg) + sizeof ( sctk_thread_ptp_message_t );
 	cell->msg_type = SCTK_SHM_EAGER;
-    memcpy( cell->data, (char*) msg, sizeof ( sctk_thread_ptp_message_t ));       
+    fast_memcpy( cell->data, (char*) msg, sizeof ( sctk_thread_ptp_message_body_t ));       
 
     if(SCTK_MSG_SIZE ( msg ) > 0)
         sctk_net_copy_in_buffer(msg,(char*)cell->data+sizeof(sctk_thread_ptp_message_t)); 
