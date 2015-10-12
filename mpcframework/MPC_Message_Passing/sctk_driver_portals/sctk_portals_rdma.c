@@ -123,7 +123,7 @@ void sctk_portals_rdma_fetch_and_op(  sctk_rail_info_t *rail,
 
 	sctk_portals_helper_fetchAtomic_request(
 		&rail->network.portals.ptable.pending_list,
-		fetch_addr,	0, adder,0,  RDMA_type_size(type), 0,
+		fetch_addr,	0, adder,0,  RDMA_type_size(type), (remote_addr - portals.start_addr),
 		&rail->network.portals.interface_handler,
 		portals.id,
 		rail->network.portals.ptable.nb_entries,
@@ -162,7 +162,7 @@ void sctk_portals_rdma_cas(sctk_rail_info_t *rail,
 
 	sctk_portals_helper_swap_request(
 		&rail->network.portals.ptable.pending_list,
-		new, 0, res_addr, 0, RDMA_type_size(type), 0,
+		new, 0, res_addr, 0, RDMA_type_size(type), (remote_addr - portals.start_addr),
 		&rail->network.portals.interface_handler,
 		portals.id,
 		rail->network.portals.ptable.nb_entries,
