@@ -1,6 +1,5 @@
 #include "sctk_shm_eager.h"
 #include "sctk_net_tools.h"
-#include "fast_memcpy.h"
 
 /**
  * NO COPY FUNCTION
@@ -10,7 +9,7 @@ sctk_shm_eager_message_free_nocopy ( void *tmp )
 {
     sctk_shm_cell_t * cell = NULL;
     cell = container_of(tmp, sctk_shm_cell_t, data);
-    sctk_shm_push_cell_origin(SCTK_SHM_CELLS_QUEUE_FREE, cell);       
+    sctk_shm_release_cell(cell);
 }
 
 static void 
@@ -43,9 +42,12 @@ sctk_shm_eager_message_copy_withcopy ( sctk_message_to_copy_t * tmp )
 static sctk_thread_ptp_message_t *
 sctk_network_preform_eager_msg_shm_withcopy(sctk_shm_cell_t * cell)
 {
-    sctk_thread_ptp_message_t *msg; 
-    msg = sctk_malloc ( cell->size );
-    fast_memcpy( (char *) msg, cell->data, cell->size);       
+    size_t size;
+    sctk_thread_ptp_message_t *msg, *tmp; 
+    tmp = (sctk_thread_ptp_message_t *) cell->data;
+    size = SCTK_MSG_SIZE (tmp) + sizeof(sctk_thread_ptp_message_t); 
+    msg = sctk_malloc (size);
+    memcpy( (char *) msg, cell->data, size);       
     return msg;	
 }
 
@@ -60,14 +62,14 @@ sctk_network_eager_msg_shm_recv(sctk_shm_cell_t * cell,int copy_enabled)
 
     if( copy_enabled )
     {
-        msg = sctk_network_preform_eager_msg_shm_withcopy( cell );
+        msg = sctk_network_preform_eager_msg_shm_withcopy(cell);
         shm_free_funct = sctk_shm_eager_message_free_withcopy;
         shm_copy_funct = sctk_shm_eager_message_copy_withcopy;
-    	sctk_shm_push_cell_origin(SCTK_SHM_CELLS_QUEUE_FREE, cell);       
+        sctk_shm_release_cell(cell);
     }
     else
     {
-        msg = sctk_network_preform_eager_msg_shm_nocopy( cell );
+        msg = sctk_network_preform_eager_msg_shm_nocopy(cell);
         shm_free_funct = sctk_shm_eager_message_free_nocopy;
         shm_copy_funct = sctk_shm_eager_message_copy_nocopy;
     }
@@ -84,23 +86,23 @@ sctk_network_eager_msg_shm_recv(sctk_shm_cell_t * cell,int copy_enabled)
 int
 sctk_network_eager_msg_shm_send(sctk_thread_ptp_message_t *msg, int dest)
 {
-    
     sctk_shm_cell_t * cell = NULL;
+    struct iovec *to_send = NULL; 
     
-    if( SCTK_MSG_SIZE ( msg ) + sizeof ( sctk_thread_ptp_message_t ) > SCTK_SHM_CELL_SIZE)
+    if(SCTK_MSG_SIZE(msg)+sizeof(sctk_thread_ptp_message_t) > SCTK_SHM_CELL_SIZE)
         return 0;
 
     while(!cell) 
-        cell = sctk_shm_pop_cell_free(dest);
-
-    cell->size = SCTK_MSG_SIZE (msg) + sizeof ( sctk_thread_ptp_message_t );
+        cell = sctk_shm_get_cell(dest);
+    
 	cell->msg_type = SCTK_SHM_EAGER;
-    fast_memcpy( cell->data, (char*) msg, sizeof ( sctk_thread_ptp_message_body_t ));       
+    to_send = (struct iovec *) malloc(sizeof(struct iovec)); 
+    memcpy(cell->data,(char*)msg,sizeof(sctk_thread_ptp_message_body_t));       
 
-    if(SCTK_MSG_SIZE ( msg ) > 0)
+    if(SCTK_MSG_SIZE(msg) > 0)
         sctk_net_copy_in_buffer(msg,(char*)cell->data+sizeof(sctk_thread_ptp_message_t)); 
         
-    sctk_shm_push_cell_dest(SCTK_SHM_CELLS_QUEUE_RECV, cell, dest);       
+    sctk_shm_send_cell(cell);
     sctk_complete_and_free_message( msg ); 
     return 1;
 }

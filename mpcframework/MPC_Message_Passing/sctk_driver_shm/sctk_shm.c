@@ -63,9 +63,9 @@ sctk_network_notify_idle_message_shm ( sctk_rail_info_t *rail )
     if(!sctk_shm_driver_initialized)
         return;
 
-    while(1)
+  //  while(1)
     {
-        cell = sctk_shm_pop_cell_recv(); 
+        cell = sctk_shm_recv_cell(); 
         if( cell == NULL )
             return;
     
@@ -88,7 +88,7 @@ sctk_network_notify_idle_message_shm ( sctk_rail_info_t *rail )
     	    if(msg) sctk_send_message_from_network_shm(msg);
 		    break;
 	    case SCTK_SHM_ACK:
-            msg = sctk_network_frag_msg_shm_resend(cell,cell->dest,1);
+            msg = sctk_network_frag_msg_shm_resend(cell,1);
         	if(msg) sctk_complete_and_free_message( msg ); 
 		    break;
 	    default:
@@ -215,7 +215,7 @@ static void sctk_shm_add_route(int dest,int shm_dest,sctk_rail_info_t *rail )
     return;
 }
 
-static void sctk_shm_init_raw_queue(size_t sctk_shmem_size, int sctk_shmem_cells_num, int rank)
+static void sctk_shm_init_raw_queue(size_t size, int cells_num, int rank, int participants)
 {
     char buffer[16];
     void *shm_base = NULL;
@@ -224,18 +224,17 @@ static void sctk_shm_init_raw_queue(size_t sctk_shmem_size, int sctk_shmem_cells
 
     sprintf(buffer, "%d", rank);
     pmi_handler = sctk_shm_pmi_handler_init(buffer);
-    shm_role = (sctk_shm_proc_local_rank_on_node == rank) ? SCTK_SHM_MAPPER_ROLE_MASTER : SCTK_SHM_MAPPER_ROLE_SLAVE; 
-    shm_base = sctk_shm_add_region(sctk_shmem_size,shm_role,pmi_handler);
+
+    shm_role = SCTK_SHM_MAPPER_ROLE_SLAVE;
+    shm_role = (sctk_local_process_rank==rank)?SCTK_SHM_MAPPER_ROLE_MASTER:shm_role; 
+    shm_base = sctk_shm_add_region( size, shm_role, pmi_handler);
         
-    sctk_shm_add_region_infos(shm_base, sctk_shmem_size, sctk_shmem_cells_num, rank );
+    sctk_shm_add_region_infos(shm_base,size,cells_num,rank,participants );
 
     if( shm_role == SCTK_SHM_MAPPER_ROLE_MASTER )
-    {
         sctk_shm_reset_process_queues( rank );
-    }
 
     sctk_shm_pmi_handler_free(pmi_handler);
-
 }
 
 void sctk_shm_check_raw_queue(int local_process_number)
@@ -273,7 +272,8 @@ void sctk_network_init_shm ( sctk_rail_info_t *rail )
     rail->network_name = "SHM";
 	sctk_rail_init_route ( rail, rail->runtime_config_rail->topology, NULL );
 
-	sctk_shmem_cells_num = rail->runtime_config_driver_config->driver.value.shm.cells_num;
+	sctk_shmem_cells_num = 64;
+//rail->runtime_config_driver_config->driver.value.shm.cells_num;
     sctk_shmem_size = sctk_shm_get_region_size(sctk_shmem_cells_num);
     fprintf(stderr, "size shm : %ld\n", sctk_shmem_size);
 
@@ -290,7 +290,7 @@ void sctk_network_init_shm ( sctk_rail_info_t *rail )
     sctk_shm_init_regions_infos(local_process_number);
     for( i=0; i<local_process_number; i++)
     {
-        sctk_shm_init_raw_queue(sctk_shmem_size, sctk_shmem_cells_num, i);
+        sctk_shm_init_raw_queue(sctk_shmem_size,sctk_shmem_cells_num,i,local_process_number);
 		if( i != local_process_rank)
             sctk_shm_add_route(first_proc_on_node+i,i,rail);
         sctk_pmi_barrier();

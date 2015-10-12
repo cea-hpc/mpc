@@ -368,6 +368,30 @@ struct sctk_runtime_config_struct_net_driver_tcp_rdma
 /**Inter-Process shared memory communication implementation**/
 struct sctk_runtime_config_struct_net_driver_shm
 {	int init_done;
+	/**Defines priority for the SHM buffered message**/
+	int buffered_priority;
+	/**Defines the min size for the SHM buffered message**/
+	int buffered_min_size;
+	/**Defines the min size for the SHM buffered message**/
+	int buffered_max_size;
+	/**Defines if mode zerocopy should be actived for SHM buffered message**/
+	bool buffered_zerocopy;
+	/**Defines priority for the SHM CMA message**/
+	int cma_priority;
+	/**Defines the min size for the SHM CMA message**/
+	int cma_min_size;
+	/**Defines the min size for the SHM CMA message**/
+	int cma_max_size;
+	/**Defines if mode zerocopy should be actived for SHM CMA message**/
+	bool cma_zerocopy;
+	/**Defines priority for the SHM fragmented message**/
+	int frag_priority;
+	/**Defines the min size for the SHM fragmented message**/
+	int frag_min_size;
+	/**Defines the min size for the SHM fragmented message**/
+	int frag_max_size;
+	/**Defines if mode zerocopy should be actived for SHM fragmented message**/
+	bool frag_zerocopy;
 	/**Size of shared memory region.**/
 	int shmem_size;
 	/**Size of shared memory region.**/

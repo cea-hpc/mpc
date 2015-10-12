@@ -84,9 +84,21 @@
 		</struct>
 
 		<!-- Structure for Shared Memory driver -->
-        	<struct name="net_driver_shm" doc="Inter-Process shared memory communication implementation">
+        <struct name="net_driver_shm" doc="Inter-Process shared memory communication implementation">
+                    <param name="buffered_priority" type="int" doc="Defines priority for the SHM buffered message" default="0" />
+                    <param name="buffered_min_size" type="int" doc="Defines the min size for the SHM buffered message" default="0" />
+                    <param name="buffered_max_size" type="int" doc="Defines the min size for the SHM buffered message" default="4096" />
+                    <param name="buffered_zerocopy" type="bool" doc="Defines if mode zerocopy should be actived for SHM buffered message" default="false" />
+                    <param name="cma_priority" type="int" doc="Defines priority for the SHM CMA message" default="1" />
+                    <param name="cma_min_size" type="int" doc="Defines the min size for the SHM CMA message" default="4096" />
+                    <param name="cma_max_size" type="int" doc="Defines the min size for the SHM CMA message" default="0" />
+                    <param name="cma_zerocopy" type="bool" doc="Defines if mode zerocopy should be actived for SHM CMA message" default="false" />
+                    <param name="frag_priority" type="int" doc="Defines priority for the SHM fragmented message" default="2" />
+                    <param name="frag_min_size" type="int" doc="Defines the min size for the SHM fragmented message" default="4096" />
+                    <param name="frag_max_size" type="int" doc="Defines the min size for the SHM fragmented message" default="0" />
+                    <param name="frag_zerocopy" type="bool" doc="Defines if mode zerocopy should be actived for SHM fragmented message" default="false" />
             		<param name="shmem_size" type="int" doc="Size of shared memory region." default="1024" />
-            		<param name="cells_num" type="int" doc="Size of shared memory region." default="8" />
+            		<param name="cells_num" type="int" doc="Size of shared memory region." default="128" />
         	</struct>
 
 		<!-- Union to merge drivers -->

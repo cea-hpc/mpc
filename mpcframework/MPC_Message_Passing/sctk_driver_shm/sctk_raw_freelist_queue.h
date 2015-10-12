@@ -5,11 +5,11 @@
 #include "sctk_spinlock.h"
 #include "sctk_shm_raw_queues_archdefs.h"
 
-#define SCTK_SHM_CELL_SIZE 4024
+#define SCTK_SHM_CELL_SIZE 8192
+
 /**
  * ENUM
  */
-
 typedef enum {
     SCTK_SHM_MTHREADS,
     SCTK_SHM_ATOMIC
@@ -18,9 +18,9 @@ typedef enum {
 typedef enum {
     SCTK_SHM_EAGER, 
     SCTK_SHM_RDMA, 
-    SCTK_SHM_CMPL, 
     SCTK_SHM_FRAG, 
-    SCTK_SHM_ACK
+    SCTK_SHM_CMPL, 
+    SCTK_SHM_ACK, 
 } sctk_shm_msg_type_t;
 
 typedef enum 
@@ -35,21 +35,18 @@ typedef enum
 /**
  * STRUCTS
  */
-
 typedef struct sctk_shm_cell_s{
-    uint32_t src;                   /* Process from which the cell was sent */
-    uint32_t dest;                  /* Process which the cell is adressed   */
-    size_t size;                    /* Amount of data packed in a cell      */
-    sctk_shm_msg_type_t msg_type;   /* Cell msg type                        */ 
-    void *opaque_send;              /* Opaque data used by the sender       */
-    void *opaque_recv;              /* Opaque data used by the recver       */
-    char data[SCTK_SHM_CELL_SIZE];     /* Actual data transferred              */
+    sctk_spinlock_t lock; 
+    sctk_shm_msg_type_t msg_type;       /* Cell msg type                        */ 
+    void *opaque_send;                  /* Opaque data used by the sender       */
+    void *opaque_recv;                  /* Opaque data used by the recver       */
+    char data[SCTK_SHM_CELL_SIZE];      /* Actual data transferred              */
 } sctk_shm_cell_t;
 typedef struct sctk_shm_cell_s sctk_shm_cell_t;
 
 struct sctk_shm_item_s
 {
-    int src;
+    unsigned int src;
     struct sctk_shm_item_s *next;
     sctk_shm_cell_t cell;
 };
@@ -60,9 +57,12 @@ struct sctk_shm_list_s
     sctk_shm_item_t *head;
     sctk_shm_item_t *tail;
     sctk_spinlock_t lock; 
+#ifdef SHM_USE_ATOMIC_QUEUE
     char cache_pad[CACHELINE_SIZE];
     sctk_shm_item_t *shadow_head;
-} __attribute__ ((aligned(CACHELINE_SIZE)));
+#endif /* SHM_USE_ATOMIC_QUEUE */
+};
+// __attribute__ ((aligned(CACHELINE_SIZE)));
 typedef struct sctk_shm_list_s sctk_shm_list_t;
 
 static inline sctk_shm_item_t *
@@ -92,7 +92,13 @@ sctk_shm_cell_to_item(sctk_shm_cell_t * cell)
 static inline int 
 sctk_shm_queue_isempty(volatile sctk_shm_list_t *queue)
 {
+
+#ifdef SHM_USE_ATOMIC_QUEUE
     return (queue->shadow_head == 0 && queue->head == 0);
+#else /* SHM_USE_ATOMIC_QUEUE */
+    return (queue->head == 0);
+#endif /* SHM_USE_ATOMIC_QUEUE */
+
 }
 
 #endif /* __SCTK_RAW_FREELIST_QUEUE_H__ */

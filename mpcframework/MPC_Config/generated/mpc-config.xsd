@@ -442,6 +442,18 @@
   <!-- ********************************************************* -->
   <xs:complexType name="user_type_net_driver_shm">
     <xs:all>
+      <xs:element minOccurs="0" name="buffered_priority" type="xs:integer"/>
+      <xs:element minOccurs="0" name="buffered_min_size" type="xs:integer"/>
+      <xs:element minOccurs="0" name="buffered_max_size" type="xs:integer"/>
+      <xs:element minOccurs="0" name="buffered_zerocopy" type="xs:boolean"/>
+      <xs:element minOccurs="0" name="cma_priority" type="xs:integer"/>
+      <xs:element minOccurs="0" name="cma_min_size" type="xs:integer"/>
+      <xs:element minOccurs="0" name="cma_max_size" type="xs:integer"/>
+      <xs:element minOccurs="0" name="cma_zerocopy" type="xs:boolean"/>
+      <xs:element minOccurs="0" name="frag_priority" type="xs:integer"/>
+      <xs:element minOccurs="0" name="frag_min_size" type="xs:integer"/>
+      <xs:element minOccurs="0" name="frag_max_size" type="xs:integer"/>
+      <xs:element minOccurs="0" name="frag_zerocopy" type="xs:boolean"/>
       <xs:element minOccurs="0" name="shmem_size" type="xs:integer"/>
       <xs:element minOccurs="0" name="cells_num" type="xs:integer"/>
     </xs:all>

@@ -707,12 +707,60 @@ Inter-Process shared memory communication implementation
 It support parameters :
 .Pp
 .Bl -tag -width Ds
+.It Cm buffered_priority
+Type is int. Default value is 0. 
+.Pp buffered_priority
+Defines priority for the SHM buffered message
+.It Cm buffered_min_size
+Type is int. Default value is 0. 
+.Pp buffered_min_size
+Defines the min size for the SHM buffered message
+.It Cm buffered_max_size
+Type is int. Default value is 4096. 
+.Pp buffered_max_size
+Defines the min size for the SHM buffered message
+.It Cm buffered_zerocopy
+Type is bool. Default value is false. 
+.Pp buffered_zerocopy
+Defines if mode zerocopy should be actived for SHM buffered message
+.It Cm cma_priority
+Type is int. Default value is 1. 
+.Pp cma_priority
+Defines priority for the SHM CMA message
+.It Cm cma_min_size
+Type is int. Default value is 4096. 
+.Pp cma_min_size
+Defines the min size for the SHM CMA message
+.It Cm cma_max_size
+Type is int. Default value is 0. 
+.Pp cma_max_size
+Defines the min size for the SHM CMA message
+.It Cm cma_zerocopy
+Type is bool. Default value is false. 
+.Pp cma_zerocopy
+Defines if mode zerocopy should be actived for SHM CMA message
+.It Cm frag_priority
+Type is int. Default value is 2. 
+.Pp frag_priority
+Defines priority for the SHM fragmented message
+.It Cm frag_min_size
+Type is int. Default value is 4096. 
+.Pp frag_min_size
+Defines the min size for the SHM fragmented message
+.It Cm frag_max_size
+Type is int. Default value is 0. 
+.Pp frag_max_size
+Defines the min size for the SHM fragmented message
+.It Cm frag_zerocopy
+Type is bool. Default value is false. 
+.Pp frag_zerocopy
+Defines if mode zerocopy should be actived for SHM fragmented message
 .It Cm shmem_size
 Type is int. Default value is 1024. 
 .Pp shmem_size
 Size of shared memory region.
 .It Cm cells_num
-Type is int. Default value is 8. 
+Type is int. Default value is 128. 
 .Pp cells_num
 Size of shared memory region.
 .El

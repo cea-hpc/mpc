@@ -8,21 +8,24 @@ static inline sctk_shm_item_t *
 sctk_shm_dequeue_mt(volatile sctk_shm_list_t *queue,char *src_base_addr)
 {
     volatile sctk_shm_item_t *abs_item;
+    sctk_shm_item_t *head, *tail;
 
-    if (sctk_spinlock_trylock(&(queue->lock)) == 1 )
+    if(sctk_spinlock_trylock(&(queue->lock)) != 0)
+    { 
+        cpu_relax();
         return NULL;
+    }
 
-    sctk_shm_item_t *head = queue->shadow_head;
-    sctk_shm_item_t *tail;
-    abs_item = sctk_shm_rel_to_abs(src_base_addr,queue->head); 
-    
-    if(queue->head == 0)
+    head = queue->head;    
+    if(!head)
     {
         sctk_spinlock_unlock( &(queue->lock));
         return NULL;
     }
     
-    if(abs_item->next != 0)
+    abs_item = sctk_shm_rel_to_abs(src_base_addr,queue->head); 
+    
+    if(abs_item->next)
     {
         queue->head = abs_item->next;
     }
@@ -44,7 +47,9 @@ sctk_shm_enqueue_mt(volatile sctk_shm_list_t *queue,
 {
     sctk_shm_item_t *rel_new_item, *rel_prev_item, *abs_prev_item;
     rel_new_item = sctk_shm_abs_to_rel(src_base_addr,abs_new_item);
-    sctk_spinlock_lock( &(queue->lock));
+    
+    while(sctk_spinlock_trylock(&(queue->lock)) != 0)
+        cpu_relax();
 
     rel_prev_item = queue->tail;
     queue->tail = rel_new_item;

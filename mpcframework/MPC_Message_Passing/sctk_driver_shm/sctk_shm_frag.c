@@ -40,19 +40,18 @@ static void
 sctk_shm_write_fragmented_msg( sctk_shm_cell_t* cell)
 {
    sctk_shm_rdv_info_t* sctk_shm_send_frag_info;
-   size_t empty_space, size_to_copy;
+   size_t size_to_copy;
    void *buffer_in, *buffer_out;
 
    sctk_shm_send_frag_info = (sctk_shm_rdv_info_t*) cell->opaque_send;
-   empty_space = VCLI_CELLS_SIZE / 2 ;
    size_to_copy = sctk_shm_send_frag_info->size_total - sctk_shm_send_frag_info->size_compute;
-   size_to_copy = (size_to_copy < empty_space) ? size_to_copy : empty_space;
+   size_to_copy = (size_to_copy < SCTK_SHM_CELL_SIZE) ? size_to_copy : SCTK_SHM_CELL_SIZE;
 
    buffer_out = cell->data ;
    buffer_in = sctk_shm_send_frag_info->msg + sctk_shm_send_frag_info->size_compute;
    memcpy(buffer_out, buffer_in, size_to_copy);
    sctk_shm_send_frag_info->size_compute += size_to_copy;
-   cell->size = size_to_copy;
+   //cell->size = size_to_copy;
 }
 
 /************************************************
@@ -60,16 +59,17 @@ sctk_shm_write_fragmented_msg( sctk_shm_cell_t* cell)
  * *********************************************/
 
 sctk_thread_ptp_message_t * 
-sctk_network_frag_msg_shm_resend(sctk_shm_cell_t* cell, int dest, int enabled_copy)
+sctk_network_frag_msg_shm_resend(sctk_shm_cell_t* cell, int enabled_copy)
 {
+   int dest;
    sctk_shm_rdv_info_t* sctk_shm_send_frag_info;
    sctk_shm_send_frag_info = (sctk_shm_rdv_info_t*) cell->opaque_send;
    cell->msg_type = SCTK_SHM_FRAG;
 
    sctk_shm_write_fragmented_msg( cell );
-   sctk_shm_push_cell_dest(SCTK_SHM_CELLS_QUEUE_RECV, cell, dest);       
+   dest = SCTK_MSG_SRC_PROCESS(sctk_shm_send_frag_info->header);
+   sctk_shm_send_cell(cell);       
 
-   //fprintf(stderr, "send %d / %d\n", sctk_shm_send_frag_info->size_compute, sctk_shm_send_frag_info->size_total); 
    if( sctk_shm_send_frag_info->size_total != sctk_shm_send_frag_info->size_compute )
         return NULL;
 
@@ -85,28 +85,28 @@ sctk_network_frag_msg_shm_send(sctk_thread_ptp_message_t* msg,int dest)
 
    sctk_shm_cell_t * cell = NULL;
    while(!cell)
-    cell = sctk_shm_pop_cell_free(dest);
+    cell = sctk_shm_get_cell(dest);
 
    sctk_shm_send_frag_info = (sctk_shm_rdv_info_t*) cell->opaque_send;
 
-   cell->size = SCTK_MSG_SIZE (msg) + sizeof ( sctk_thread_ptp_message_t ); 
-   cell->src = sctk_get_local_process_rank();
-   cell->dest = dest;
+   //cell->size = SCTK_MSG_SIZE (msg) + sizeof (sctk_thread_ptp_message_t); 
    cell->msg_type = SCTK_SHM_FRAG;
 
-   sctk_shm_send_frag_info = sctk_shm_init_send_frag_msg(SCTK_MSG_SIZE (msg));
+   sctk_shm_send_frag_info = sctk_shm_init_send_frag_msg(SCTK_MSG_SIZE(msg));
    sctk_shm_send_frag_info->header = msg;
    sctk_shm_send_frag_info->msg = (void*) msg->tail.message.contiguous.addr;
 
    cell->opaque_send = (void*) sctk_shm_send_frag_info;
    memcpy(cell->data, msg, sizeof(sctk_thread_ptp_message_body_t));
-   sctk_shm_push_cell_dest(SCTK_SHM_CELLS_QUEUE_RECV, cell, dest);       
+   sctk_shm_send_cell(cell);       
    return 1;
 }
 
 sctk_thread_ptp_message_t * 
 sctk_network_frag_msg_shm_recv(sctk_shm_cell_t* cell, int enabled_copy)
 {
+   int src;
+   size_t size;
    void *buffer_in, *buffer_out;
    sctk_thread_ptp_message_t *msg = NULL;
    sctk_shm_rdv_info_t* sctk_shm_recv_frag_info;
@@ -114,7 +114,9 @@ sctk_network_frag_msg_shm_recv(sctk_shm_cell_t* cell, int enabled_copy)
 
    if( sctk_shm_recv_frag_info == NULL)
    {
-      sctk_shm_recv_frag_info = sctk_shm_init_recv_frag_msg( cell->size);
+      msg = (sctk_thread_ptp_message_t *) cell->data; 
+      size = SCTK_MSG_SIZE (msg) + sizeof(sctk_thread_ptp_message_t);
+      sctk_shm_recv_frag_info = sctk_shm_init_recv_frag_msg(size);
       sctk_shm_recv_frag_info->addr = cell->opaque_send;
       cell->opaque_recv = (void*) sctk_shm_recv_frag_info;
       /* copy and reinit ptp thread header */
@@ -127,16 +129,19 @@ sctk_network_frag_msg_shm_recv(sctk_shm_cell_t* cell, int enabled_copy)
    }
    else
    {
+      size = sctk_shm_recv_frag_info->size_total - sctk_shm_recv_frag_info->size_compute;
+      size = (size < SCTK_SHM_CELL_SIZE) ? size : SCTK_SHM_CELL_SIZE;
       buffer_in = sctk_shm_recv_frag_info->msg + sctk_shm_recv_frag_info->size_compute;
       buffer_out = cell->data;
-      memcpy(buffer_in, buffer_out, cell->size);
-      sctk_shm_recv_frag_info->size_compute += cell->size;
+      memcpy(buffer_in, buffer_out, size);
+      sctk_shm_recv_frag_info->size_compute += size;
    }
-    //fprintf(stderr, "Recv %d / %d\n", sctk_shm_recv_frag_info->size_compute, sctk_shm_recv_frag_info->size_total); 
+
     if(sctk_shm_recv_frag_info->size_total != sctk_shm_recv_frag_info->size_compute)
     {
+        src = SCTK_MSG_SRC_PROCESS(sctk_shm_recv_frag_info->header);
         cell->msg_type = SCTK_SHM_ACK;
-        sctk_shm_push_cell_dest(SCTK_SHM_CELLS_QUEUE_RECV, cell, cell->src);
+        sctk_shm_send_cell(cell);
         return NULL;
     }
 
@@ -144,7 +149,7 @@ sctk_network_frag_msg_shm_recv(sctk_shm_cell_t* cell, int enabled_copy)
     sctk_shm_recv_frag_info->is_ready_to_send = 1;
     cell->opaque_send = NULL;
     cell->opaque_recv = NULL;
-    sctk_shm_push_cell_origin(SCTK_SHM_CELLS_QUEUE_FREE, cell);
+    sctk_shm_release_cell(cell);
     return msg;
 }
 

@@ -8,10 +8,9 @@
 
 typedef struct
 {
-  int mpi_src;
-  int len;
-  pid_t pid;
   sctk_thread_ptp_message_t * msg;
+  int iovec_len;
+  pid_t pid;
 } sctk_shm_iovec_info_t;
 
 void sctk_network_rdma_shm_interface_init(void);

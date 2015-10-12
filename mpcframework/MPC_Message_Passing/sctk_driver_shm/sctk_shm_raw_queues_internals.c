@@ -28,7 +28,8 @@ sctk_shm_get_region_size(int cells_num)
     size = 4 * sizeof(sctk_shm_list_t);
     size += 128 + (cells_num+1) * sizeof(sctk_shm_item_t);
     size += 4*1024; 
-    return ( ( uintptr_t ) page_align( size ) );
+    return size;
+// ( ( uintptr_t ) page_align( size ) );
 }
 
 void 
@@ -61,7 +62,7 @@ sctk_shm_reset_region_queues(sctk_shm_region_infos_t *shmem, int rank)
 
 /* */
 sctk_shm_region_infos_t *
-sctk_shm_set_region_infos(void *shmem_base, size_t shmem_size,int cells_num)
+sctk_shm_set_region_infos(void *shmem_base, size_t shmem_size,int cells_num, int participants)
 {
     int i;
     sctk_shm_region_infos_t *shmem = NULL;
@@ -70,7 +71,9 @@ sctk_shm_set_region_infos(void *shmem_base, size_t shmem_size,int cells_num)
     assume( shmem != NULL );
     
     shmem->cells_num = cells_num;
-    shmem->shm_base = shmem_base;
+    shmem->all_shm_base = sctk_malloc(sctk_local_process_number*sizeof(char*));
+    shmem->all_shm_base[sctk_local_process_rank] = shmem_base;
+    shmem->shm_base = shmem_base; 
     shmem->max_addr = shmem->shm_base + shmem_size;
     shmem->global_lock = SCTK_SPINLOCK_INITIALIZER;
     shmem->send_queue = sctk_shm_get_region_queue_base(shmem_base,SCTK_SHM_CELLS_QUEUE_SEND);

@@ -377,8 +377,20 @@ void sctk_runtime_config_struct_init_net_driver_shm(void * struct_ptr)
 	if( obj->init_done != 0 ) return;
 
 	/* Simple params : */
+	obj->buffered_priority = 0;
+	obj->buffered_min_size = 0;
+	obj->buffered_max_size = 4096;
+	obj->buffered_zerocopy = false;
+	obj->cma_priority = 1;
+	obj->cma_min_size = 4096;
+	obj->cma_max_size = 0;
+	obj->cma_zerocopy = false;
+	obj->frag_priority = 2;
+	obj->frag_min_size = 4096;
+	obj->frag_max_size = 0;
+	obj->frag_zerocopy = false;
 	obj->shmem_size = 1024;
-	obj->cells_num = 8;
+	obj->cells_num = 128;
 	obj->init_done = 1;
 }
 

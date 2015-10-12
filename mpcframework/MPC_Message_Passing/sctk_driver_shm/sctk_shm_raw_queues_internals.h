@@ -15,6 +15,7 @@ struct sctk_shm_region_infos_s
     int cells_num; 
     int cells_size; 
     char* shm_base;
+    char* all_shm_base;
     char* max_addr;
     sctk_spinlock_t global_lock;
     volatile sctk_shm_list_t *send_queue; 
@@ -26,7 +27,7 @@ struct sctk_shm_region_infos_s
 typedef struct sctk_shm_region_infos_s sctk_shm_region_infos_t;
 
 /* FUNCS */
-sctk_shm_region_infos_t *sctk_shm_set_region_infos(void*,size_t,int);
+sctk_shm_region_infos_t *sctk_shm_set_region_infos(void*,size_t,int,int);
 void sctk_shm_reset_region_queues(sctk_shm_region_infos_t*,int);
 size_t sctk_shm_get_region_size(int);
 

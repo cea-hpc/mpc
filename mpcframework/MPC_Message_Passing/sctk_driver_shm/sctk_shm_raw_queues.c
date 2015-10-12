@@ -26,12 +26,11 @@ void sctk_shm_init_regions_infos(int participants)
 }
 
 void 
-sctk_shm_add_region_infos(char* shmem_base,size_t shmem_size,int cells_num,int rank)
+sctk_shm_add_region_infos(char* shmem_base,size_t shmem_size,int cells_num,int rank,int participants)
 {
     assume(sctk_shm_regions_infos != NULL);
     assume(sctk_shm_regions_infos[rank] == NULL);
-    sctk_shm_regions_infos[rank]=sctk_shm_set_region_infos(shmem_base,shmem_size,cells_num);
-    return; 
+    sctk_shm_regions_infos[rank]=sctk_shm_set_region_infos(shmem_base,shmem_size,cells_num,participants);
 }
 
 void sctk_shm_reset_process_queues(int rank)
@@ -66,7 +65,6 @@ sctk_shm_get_queue_by_type(sctk_shm_list_type_t type, int rank)
     return queue; 
 }
 
-
 sctk_shm_cell_t * 
 sctk_shm_pop_cell_dest(sctk_shm_list_type_t type, int rank)
 {
@@ -82,7 +80,7 @@ sctk_shm_pop_cell_dest(sctk_shm_list_type_t type, int rank)
 }
 
 sctk_shm_cell_t * 
-sctk_shm_pop_cell_recv(void)
+sctk_shm_recv_cell(void)
 {
     sctk_shm_region_infos_t *item_shm_infos;
     sctk_shm_item_t * item;
@@ -95,7 +93,7 @@ sctk_shm_pop_cell_recv(void)
 }
 
 sctk_shm_cell_t * 
-sctk_shm_pop_cell_free(int dest)
+sctk_shm_get_cell(int dest)
 {
     sctk_shm_region_infos_t *item_shm_infos;
     sctk_shm_item_t * item;
@@ -105,6 +103,36 @@ sctk_shm_pop_cell_free(int dest)
     queue = sctk_shm_get_queue_by_type(SCTK_SHM_CELLS_QUEUE_FREE,dest);
     item = sctk_shm_dequeue_mt(queue,item_shm_infos->sctk_shm_asymm_addr);
     return sctk_shm_item_to_cell(item);
+}
+
+void
+sctk_shm_send_cell(sctk_shm_cell_t * cell)
+{
+    sctk_shm_item_t * item;
+    volatile sctk_shm_list_t *queue;
+    char *item_asymm_addr;
+    sctk_shm_region_infos_t *item_shm_infos;
+
+    item = sctk_shm_cell_to_item(cell);
+    item_shm_infos = sctk_shm_get_region_infos(item->src);
+    item_asymm_addr = item_shm_infos->sctk_shm_asymm_addr;
+    queue = sctk_shm_get_queue_by_type(SCTK_SHM_CELLS_QUEUE_RECV,item->src);
+    sctk_shm_enqueue_mt(queue,item_asymm_addr,item,item_asymm_addr);
+}
+
+void
+sctk_shm_release_cell(sctk_shm_cell_t * cell)
+{
+    sctk_shm_item_t * item;
+    volatile sctk_shm_list_t *queue;
+    char *item_asymm_addr;
+    sctk_shm_region_infos_t *item_shm_infos;
+
+    item = sctk_shm_cell_to_item(cell);
+    item_shm_infos = sctk_shm_get_region_infos(item->src);
+    item_asymm_addr = item_shm_infos->sctk_shm_asymm_addr;
+    queue = sctk_shm_get_queue_by_type(SCTK_SHM_CELLS_QUEUE_FREE,item->src);
+    sctk_shm_enqueue_mt(queue,item_asymm_addr,item,item_asymm_addr);
 }
 
 void
