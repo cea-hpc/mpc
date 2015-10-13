@@ -62,7 +62,7 @@ typedef struct sctk_portals_rail_info_s
     size_t connection_infos_size;
 } sctk_portals_rail_info_t;
 
-void sctk_network_init_portals ( sctk_rail_info_t *rail);
+void sctk_network_init_portals ( struct sctk_rail_info_s *rail);
 #endif
 #ifdef __cplusplus
 }
