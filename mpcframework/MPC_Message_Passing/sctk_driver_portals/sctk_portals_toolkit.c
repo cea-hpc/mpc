@@ -443,7 +443,7 @@ int sctk_portals_poll_one_queue(sctk_rail_info_t *rail, size_t id)
 				case PTL_EVENT_FETCH_ATOMIC:
 				case PTL_EVENT_FETCH_ATOMIC_OVERFLOW:
 					sctk_debug("PORTALS: (REMOTE) POLL FETCH-ATOMIC - %lu (%lu)", rail->network.portals.current_id.phys.pid, cat);
-
+                    to_free = 0;
 					break;
 
 				//not used events for now
@@ -452,6 +452,7 @@ int sctk_portals_poll_one_queue(sctk_rail_info_t *rail, size_t id)
 				case PTL_EVENT_PT_DISABLED:
 				case PTL_EVENT_SEARCH:
 					sctk_debug("PORTALS: POLL NOT HANDLED EVENT - %lu (%lu)", rail->network.portals.current_id.phys.pid, cat);
+                    to_free = 0;
 
 					break;
 				default:

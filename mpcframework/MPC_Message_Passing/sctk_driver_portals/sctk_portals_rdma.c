@@ -25,8 +25,8 @@
 #include <sctk_portals_rdma.h>
 
 // const used for emulate RDMA_INC and RDMA_DEC, not provided by Portals
-static short inc_buf = 1;
-static short dec_buf = -1;
+static const int inc_buf = 1;
+static const int dec_buf = -1;
 
 static ptl_op_t sctk_portals_rdma_determine_operation(RDMA_op op)
 {
@@ -123,7 +123,7 @@ void sctk_portals_rdma_fetch_and_op(  sctk_rail_info_t *rail,
 
 	sctk_portals_helper_fetchAtomic_request(
 		&rail->network.portals.ptable.pending_list,
-		fetch_addr,	0, adder,0,  RDMA_type_size(type), (remote_addr - portals.start_addr),
+		adder,	0, fetch_addr,0,  RDMA_type_size(type), (remote_addr - portals.start_addr),
 		&rail->network.portals.interface_handler,
 		portals.id,
 		rail->network.portals.ptable.nb_entries,
