@@ -469,21 +469,7 @@ void sctk_network_poll_all_cq ( sctk_rail_info_t *rail, sctk_ib_polling_t *poll,
 	LOAD_DEVICE ( rail_ib );
 	LOAD_CONFIG ( rail_ib );
 
-#ifdef SCTK_IB_CQ_MUTEX
-	pthread_mutex_lock ( &poll_mutex );
 
-recheck:
-
-	if ( ib_thread_first_to_poll == 1 || ib_thread_has_cq_lock )
-	{
-		retry = 0;
-		ib_thread_first_to_poll = 0;
-		pthread_mutex_unlock ( &poll_mutex );
-		ib_thread_has_cq_lock ++;
-
-		do
-		{
-#endif
 			SCTK_PROFIL_START ( ib_poll_cq );
 
 			/* Poll received messages */
@@ -625,35 +611,62 @@ static void sctk_network_notify_perform_message_ib ( int remote_process, int rem
 	SCTK_PROFIL_END ( ib_perform_all );
 }
 
+__thread int idle_poll_all = 0;
+__thread int idle_poll_freq = 100;
 static void sctk_network_notify_idle_message_ib ( sctk_rail_info_t *rail )
 {
-	sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
-	LOAD_CONFIG ( rail_ib );
-	struct sctk_ib_polling_s poll;
-	int polling_task_id = sctk_get_task_rank();
+    sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
+    LOAD_CONFIG ( rail_ib );
+    struct sctk_ib_polling_s poll;
+
+    int dopoll = idle_poll_all++;
+
+    if( dopoll != idle_poll_all )
+        return;
+    else
+        idle_poll_all = 0;
+
+    if( idle_poll_freq < idle_poll_all )
+        idle_poll_all = 0;
+
+    int ret;
+    sctk_ib_rdma_eager_walk_remotes ( rail_ib, sctk_ib_rdma_eager_poll_remote, &ret );
+
+    if ( ret == REORDER_FOUND_EXPECTED )
+    {
+        idle_poll_freq = 10;
+        return;
+    }
+    else
+    {
+        idle_poll_freq *= 2;
+    }
 
 
-	int ret;
-	sctk_ib_rdma_eager_walk_remotes ( rail_ib, sctk_ib_rdma_eager_poll_remote, &ret );
 
-	if ( ret == REORDER_FOUND_EXPECTED )
-		return;
+    int polling_task_id = sctk_get_task_rank();
+    POLL_INIT ( &poll );
+    sctk_network_poll_all_cq ( rail, &poll, polling_task_id, 0 );
 
-
-	POLL_INIT ( &poll );
-	sctk_network_poll_all_cq ( rail, &poll, polling_task_id, 0 );
-
-	/* If the polling returned something or someone already inside the function,
-	* we retry to poll the pending lists */
-	if ( POLL_GET_RECV_CQ ( &poll ) != 0 )
-	{
-		if ( polling_task_id >= 0 )
-		{
-			POLL_INIT ( &poll );
-			sctk_ib_cp_poll ( rail, &poll, polling_task_id );
-		}
-	}
+    /* If the polling returned something or someone already inside the function,
+    * we retry to poll the pending lists */
+    if ( POLL_GET_RECV_CQ ( &poll ) != 0 )
+    {
+        idle_poll_freq = 100;
+        if ( polling_task_id >= 0 )
+        {
+            POLL_INIT ( &poll );
+            sctk_ib_cp_poll ( rail, &poll, polling_task_id );
+        }
+    }
+    else
+    {
+        idle_poll_freq *= 4;
+        if( 2000 < idle_poll_freq )
+            idle_poll_freq = 2000;
+    }
 }
+
 
 static void sctk_network_notify_any_source_message_ib ( int polling_task_id, int blocking, sctk_rail_info_t *rail )
 {
