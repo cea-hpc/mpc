@@ -229,20 +229,6 @@ void sctk_portals_ack_get (sctk_rail_info_t* rail, ptl_event_t* event)
 	sctk_debug("PORTALS: ACK GET MSG - %lu at (%lu,%lu)", event->initiator.phys.pid, event->pt_index, event->match_bits);
 	//free message
 	sctk_complete_and_free_message(content);
-
-	//adding a new ME to replace the consumed one
-	sctk_portals_helper_init_new_entry(
-		&new_me, &rail->network.portals.interface_handler,
-		(sctk_thread_ptp_message_t*)sctk_malloc(sizeof(sctk_thread_ptp_message_t)),
-		sizeof(sctk_thread_ptp_message_t),
-		SCTK_PORTALS_BITS_HEADER,
-		SCTK_PORTALS_ME_PUT_OPTIONS);
-
-	sctk_portals_helper_register_new_entry(
-		&rail->network.portals.interface_handler,
-		event->pt_index,
-		&new_me,
-		NULL);
 }
 
 /**
@@ -281,7 +267,22 @@ void sctk_portals_recv_put (sctk_rail_info_t* rail, ptl_event_t* event)
 	sctk_rebuild_header(content);
 	sctk_reinit_header(content, sctk_portals_free, sctk_portals_message_copy);
 
-	rail->send_message_from_network(content);
+    ptl_me_t new_me;
+	//adding a new ME to replace the consumed one
+	sctk_portals_helper_init_new_entry(
+		&new_me, &rail->network.portals.interface_handler,
+		(sctk_thread_ptp_message_t*)sctk_malloc(sizeof(sctk_thread_ptp_message_t)),
+		sizeof(sctk_thread_ptp_message_t),
+		SCTK_PORTALS_BITS_HEADER,
+		SCTK_PORTALS_ME_PUT_OPTIONS);
+
+	sctk_portals_helper_register_new_entry(
+		&rail->network.portals.interface_handler,
+		event->pt_index,
+		&new_me,
+		NULL);
+
+    rail->send_message_from_network(content);
 }
 
 void sctk_portals_poll_pending_msg_list(sctk_rail_info_t *rail)
