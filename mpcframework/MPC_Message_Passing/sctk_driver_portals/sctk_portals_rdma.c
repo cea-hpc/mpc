@@ -24,10 +24,6 @@
 
 #include <sctk_portals_rdma.h>
 
-// const used for emulate RDMA_INC and RDMA_DEC, not provided by Portals
-static const int inc_buf = 1;
-static const int dec_buf = -1;
-
 static ptl_op_t sctk_portals_rdma_determine_operation(RDMA_op op)
 {
 	switch(op)
@@ -66,7 +62,7 @@ static ptl_datatype_t sctk_portals_rdma_determine_type(RDMA_type type)
 		case RDMA_TYPE_SIGNED_CHAR:        return PTL_INT8_T; break;
 		case RDMA_TYPE_UNSIGNED:           return PTL_UINT32_T; break;
 		case RDMA_TYPE_UNSIGNED_CHAR:      return PTL_UINT8_T; break;
-		case RDMA_TYPE_UNSIGNED_LONG:      return PTL_UINT32_T; break;
+		case RDMA_TYPE_UNSIGNED_LONG:      return PTL_UINT64_T; break;
 		case RDMA_TYPE_UNSIGNED_LONG_LONG: return PTL_UINT64_T; break;
 		case RDMA_TYPE_UNSIGNED_SHORT:     return PTL_UINT16_T; break;
 		case RDMA_TYPE_WCHAR:              return PTL_INT16_T; break;
@@ -83,6 +79,132 @@ int sctk_portals_rdma_fetch_and_op_gate( sctk_rail_info_t *rail, size_t size, RD
 }
 
 
+static short sctk_portals_rdma_unary_request(RDMA_op op, RDMA_type type, char* buf, size_t size)
+{
+	if(op != RDMA_INC && op != RDMA_DEC)
+	{
+		return 0;
+	}
+	assume(size >= RDMA_type_size(type));
+	memset(buf, 0, size);
+	if(op == RDMA_INC)
+	{
+		switch(type)
+		{
+			case RDMA_TYPE_CHAR:
+			case RDMA_TYPE_UNSIGNED_CHAR:
+			case RDMA_TYPE_SIGNED_CHAR:
+			{
+				int8_t x = 1;
+				memcpy(buf, &x, sizeof(int8_t));
+				break;
+			}
+			case RDMA_TYPE_SHORT:
+			case RDMA_TYPE_WCHAR:
+			case RDMA_TYPE_UNSIGNED_SHORT:
+			{
+				int16_t x = 1;
+				memcpy(buf, &x, sizeof(int16_t));
+				break;
+			}
+			case RDMA_TYPE_DOUBLE:
+			{
+				double x = 1.0;
+				memcpy(buf, &x, sizeof(double));
+				break;
+			}
+			case RDMA_TYPE_FLOAT:
+			{
+				float x = 1.0;
+				memcpy(buf, &x, sizeof(float));
+				break;
+			}
+			case RDMA_TYPE_INT:
+			case RDMA_TYPE_UNSIGNED:
+			{
+				int32_t x = 1;
+				memcpy(buf, &x, sizeof(int32_t));
+				break;
+			}
+			case RDMA_TYPE_LONG_LONG:
+			case RDMA_TYPE_LONG:
+			case RDMA_TYPE_LONG_LONG_INT:
+			case RDMA_TYPE_UNSIGNED_LONG:
+			case RDMA_TYPE_UNSIGNED_LONG_LONG:
+			{
+				int64_t x = 1;
+				memcpy(buf, &x, sizeof(int64_t));
+				break;
+			}
+			case RDMA_TYPE_LONG_DOUBLE:
+			{
+				long double x = 1.0;
+				memcpy(buf, &x, sizeof(long double));
+				break;
+			}
+		}
+	}
+	else if( op == RDMA_DEC)
+	{
+		switch(type)
+		{
+			case RDMA_TYPE_CHAR:
+			case RDMA_TYPE_UNSIGNED_CHAR:
+			case RDMA_TYPE_SIGNED_CHAR:
+			{
+				int8_t x = -1;
+				memcpy(buf, &x, sizeof(int8_t));
+				break;
+			}
+			case RDMA_TYPE_SHORT:
+			case RDMA_TYPE_WCHAR:
+			case RDMA_TYPE_UNSIGNED_SHORT:
+			{
+				int16_t x = -1;
+				memcpy(buf, &x, sizeof(int16_t));
+				break;
+			}
+			case RDMA_TYPE_DOUBLE:
+			{
+				double x = -1.0;
+				memcpy(buf, &x, sizeof(double));
+				break;
+			}
+			case RDMA_TYPE_FLOAT:
+			{
+				float x = -1.0;
+				memcpy(buf, &x, sizeof(float));
+				break;
+			}
+			case RDMA_TYPE_INT:
+			case RDMA_TYPE_UNSIGNED:
+			{
+				int32_t x = -1;
+				memcpy(buf, &x, sizeof(int32_t));
+				break;
+			}
+			case RDMA_TYPE_LONG_LONG:
+			case RDMA_TYPE_LONG:
+			case RDMA_TYPE_LONG_LONG_INT:
+			case RDMA_TYPE_UNSIGNED_LONG:
+			case RDMA_TYPE_UNSIGNED_LONG_LONG:
+			{
+				int64_t x = -1;
+				memcpy(buf, &x, sizeof(int64_t));
+				break;
+			}
+			case RDMA_TYPE_LONG_DOUBLE:
+			{
+				long double x = -1.0;
+				memcpy(buf, &x, sizeof(long double));
+				break;
+			}
+		}
+	}
+
+	return 1;
+}
+
 void sctk_portals_rdma_fetch_and_op(  sctk_rail_info_t *rail,
 							sctk_thread_ptp_message_t *msg,
 							void * fetch_addr,
@@ -97,16 +219,13 @@ void sctk_portals_rdma_fetch_and_op(  sctk_rail_info_t *rail,
 	ptl_datatype_t datatype;
 	ptl_op_t operation;
 	void * adder = add;
+	char buf[50];
 
-	if(op == RDMA_INC)
+
+	if(sctk_portals_rdma_unary_request(op, type, buf, 50))
 	{
 		operation = PTL_SUM;
-		adder = &inc_buf;
-	}
-	else if(op == RDMA_DEC)
-	{
-		operation = PTL_SUM;
-		adder = &dec_buf;
+		adder = (void*)(&buf);
 	}
 	else
 	{
@@ -151,9 +270,8 @@ void sctk_portals_rdma_cas(sctk_rail_info_t *rail,
 					  void * new,
 					  RDMA_type type )
 {
-	//need to pair
-	ptl_datatype_t datatype;
-	ptl_op_t operation;
+	ptl_datatype_t datatype = sctk_portals_rdma_determine_type(type);
+	ptl_op_t operation = PTL_CSWAP;
 
 	struct sctk_rail_portals_pin_ctx portals = remote_key->pin.portals;
 	sctk_portals_list_entry_extra_t *stuff = sctk_malloc(sizeof(sctk_portals_list_entry_extra_t));
