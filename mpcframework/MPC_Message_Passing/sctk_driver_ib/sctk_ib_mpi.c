@@ -413,7 +413,7 @@ static int sctk_network_poll_send ( sctk_rail_info_t *rail, struct ibv_wc *wc, s
 	sctk_ibuf_rdma_update_max_pending_data ( rail_ib, ibuf->remote,
 	                                         current_pending );
 
-	if ( (IBUF_GET_CHANNEL ( ibuf ) & RC_SR_CHANNEL) && ( 0 <= dest_task ) )
+	if ( (IBUF_GET_CHANNEL ( ibuf ) & RC_SR_CHANNEL))
 	{
 		src_task = IBUF_GET_SRC_TASK ( ibuf->buffer );
 		dest_task = IBUF_GET_DEST_TASK ( ibuf->buffer );
@@ -575,9 +575,7 @@ recheck:
 #endif
 #endif
 
-
-	TODO ( "Should be reactivated for Hetero collective" )
-	//  sctk_ib_cp_poll_global_list(rail, poll);
+	sctk_ib_cp_poll_global_list(rail, poll);
 }
 
 static void sctk_network_notify_recv_message_ib ( sctk_thread_ptp_message_t *msg, sctk_rail_info_t *rail )
