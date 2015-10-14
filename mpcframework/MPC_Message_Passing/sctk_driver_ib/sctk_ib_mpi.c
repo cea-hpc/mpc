@@ -560,9 +560,7 @@ void sctk_network_poll_all_cq ( sctk_rail_info_t *rail, sctk_ib_polling_t *poll,
 #endif
 #endif
 
-
-	TODO ( "Should be reactivated for Hetero collective" )
-	//  sctk_ib_cp_poll_global_list(rail, poll);
+	sctk_ib_cp_poll_global_list(rail, poll);
 }
 
 static void sctk_network_notify_recv_message_ib ( sctk_thread_ptp_message_t *msg, sctk_rail_info_t *rail )
