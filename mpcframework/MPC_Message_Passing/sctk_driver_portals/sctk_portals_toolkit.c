@@ -361,7 +361,7 @@ void sctk_portals_poll_pending_msg_list(sctk_rail_info_t *rail)
 			ret = PtlEQGet(elt->md.eq_handle, &event);
 		}
 		if(to_free){
-			PtlMDRelease(elt->md_handler);
+			sctk_portals_helper_destroy_memory_descriptor(&elt->md, &elt->md_handler);
 			LL_DELETE(list->head, elt);
 			sctk_free(elt);
 		}

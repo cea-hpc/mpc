@@ -73,6 +73,7 @@ struct sctk_rail_ib_pin_ctx
 struct sctk_rail_portals_pin_ctx
 {
     ptl_handle_me_t me_handler;
+    ptl_me_t me;
     ptl_match_bits_t match;
     ptl_process_t id;
     void* start_addr;

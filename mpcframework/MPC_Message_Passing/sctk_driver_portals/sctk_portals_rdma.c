@@ -245,7 +245,8 @@ void sctk_portals_pin_region( struct sctk_rail_info_s * rail, struct sctk_rail_p
 	sctk_portals_helper_init_new_entry(&me, &prail->interface_handler, addr, size, match, SCTK_PORTALS_ME_ALL_OPTIONS);
 
 	list->rail_id = rail->rail_number;
-	list->pin.portals.me_handler = sctk_portals_helper_register_new_entry(&prail->interface_handler, entry, &me, stuff);;
+	list->pin.portals.me_handler = sctk_portals_helper_register_new_entry(&prail->interface_handler, entry, &me, stuff);
+	list->pin.portals.me = me;
 	list->pin.portals.match = match;
 	list->pin.portals.id = prail->current_id;
 	list->pin.portals.start_addr = addr;
@@ -256,5 +257,5 @@ void sctk_portals_pin_region( struct sctk_rail_info_s * rail, struct sctk_rail_p
 void sctk_portals_unpin_region( struct sctk_rail_info_s * rail, struct sctk_rail_pin_ctx_list * list )
 {
 	assume(list->rail_id == rail->rail_number);
-	PtlMEUnlink(list->pin.portals.me_handler);
+	sctk_portals_helper_destroy_entry(&list->pin.portals.me, &list->pin.portals.me_handler);
 }

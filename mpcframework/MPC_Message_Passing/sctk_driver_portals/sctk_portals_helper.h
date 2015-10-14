@@ -143,14 +143,18 @@ typedef struct sctk_portals_table_s
 } sctk_portals_table_t;
 
 void sctk_portals_helper_lib_init(sctk_portals_interface_handler_t *interface, sctk_portals_process_id_t* id, sctk_portals_table_t *ptable);
+void sctk_portals_helper_init_table_entry(sctk_portals_table_entry_t* entry, sctk_portals_interface_handler_t *interface, int ind);
 
 void sctk_portals_helper_init_new_entry(ptl_me_t* me, sctk_portals_interface_handler_t *ni_handler, void* start, size_t size, ptl_match_bits_t match, unsigned int option);
-void sctk_portals_helper_init_table_entry(sctk_portals_table_entry_t* entry, sctk_portals_interface_handler_t *interface, int ind);
 void sctk_portals_helper_set_bits_from_msg(ptl_match_bits_t* match, void*atomic);
-void sctk_portals_helper_init_memory_descriptor(ptl_md_t* md, sctk_portals_interface_handler_t *ni_handler, void* start, size_t size, unsigned int option);
+ptl_handle_me_t sctk_portals_helper_register_new_entry(ptl_handle_ni_t* handler, ptl_pt_index_t index, ptl_me_t* slot, void* ptr);
+void sctk_portals_helper_destroy_entry(ptl_me_t* me, ptl_handle_me_t* handler);
+
+void sctk_portals_helper_init_memory_descriptor(ptl_md_t* md, sctk_portals_interface_handler_t *ni_handler, void* start, size_t size, unsigned int option, ptl_handle_md_t* md_handler);
+void sctk_portals_helper_destroy_memory_descriptor(ptl_md_t* md, ptl_handle_md_t* handler);
+
 int sctk_portals_helper_from_str ( const char *inval, void *outval, int outvallen );
 int sctk_portals_helper_to_str ( const void *inval, int invallen, char *outval, int outvallen );
-ptl_handle_me_t sctk_portals_helper_register_new_entry(ptl_handle_ni_t* handler, ptl_pt_index_t index, ptl_me_t* slot, void* ptr);
 
 void sctk_portals_helper_get_request(sctk_portals_pending_msg_list_t* list,
 			void* start, size_t size, size_t remote_offset,

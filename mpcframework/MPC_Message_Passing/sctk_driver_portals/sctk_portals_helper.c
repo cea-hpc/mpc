@@ -334,6 +334,12 @@ void sctk_portals_helper_init_new_entry(ptl_me_t* me, sctk_portals_interface_han
 	sctk_portals_assume(PtlCTAlloc(*ni_handler, &me->ct_handle));
 }
 
+void sctk_portals_helper_destroy_entry(ptl_me_t* me, ptl_handle_me_t* handler)
+{
+    sctk_portals_assume(PtlCTFree(me->ct_handle));
+    sctk_portals_assume(PtlMEUnlink(*handler));
+}
+
 ptl_handle_me_t sctk_portals_helper_register_new_entry(ptl_handle_ni_t* handler, ptl_pt_index_t index, ptl_me_t* slot, void* ptr)
 {
 	ptl_handle_me_t slot_handler;
@@ -354,13 +360,23 @@ ptl_handle_me_t sctk_portals_helper_register_new_entry(ptl_handle_ni_t* handler,
 	return slot_handler;
 }
 
-void sctk_portals_helper_init_memory_descriptor(ptl_md_t* md, sctk_portals_interface_handler_t *ni_handler, void* start, size_t size, unsigned int option){
+void sctk_portals_helper_init_memory_descriptor(ptl_md_t* md, sctk_portals_interface_handler_t *ni_handler, void* start, size_t size, unsigned int option, ptl_handle_md_t* md_handler){
+
 	md->start = start;
 	md->length = size;
 	md->options = option;
 
 	sctk_portals_assume(PtlCTAlloc(*ni_handler, &md->ct_handle));
 	sctk_portals_assume(PtlEQAlloc(*ni_handler, SCTK_PORTALS_EVENTS_QUEUE_SIZE, &md->eq_handle));
+	sctk_portals_assume(PtlMDBind(*ni_handler, md, md_handler));
+
+}
+
+void sctk_portals_helper_destroy_memory_descriptor(ptl_md_t* md, ptl_handle_md_t* handler)
+{
+    sctk_portals_assume(PtlEQFree(md->eq_handle));
+    sctk_portals_assume(PtlCTFree(md->ct_handle));
+    sctk_portals_assume(PtlMDRelease(*handler));
 }
 
 void sctk_portals_helper_set_bits_from_msg(ptl_match_bits_t* match, void*atomic)
@@ -380,10 +396,7 @@ void sctk_portals_helper_get_request(sctk_portals_pending_msg_list_t* list,
 	msg->ack_type = SCTK_PORTALS_NO_ACK_MSG;
 	msg->data = *((sctk_portals_list_entry_extra_t*)ptr);
 
-	sctk_portals_helper_init_memory_descriptor(&msg->md, handler, start, size, SCTK_PORTALS_MD_GET_OPTIONS);
-
-	//attach MD, load data
-	sctk_portals_assume(PtlMDBind(*handler, &msg->md, &msg->md_handler));
+	sctk_portals_helper_init_memory_descriptor(&msg->md, handler, start, size, SCTK_PORTALS_MD_GET_OPTIONS, &msg->md_handler);
 
 	sctk_debug("PORTALS: GET REQUEST - %lu at (%lu,%lu)", remote.phys.pid, index, match);
 	sctk_portals_assume(PtlGet(msg->md_handler, 0, size, remote, index, match, remote_offset, ptr));
@@ -417,10 +430,8 @@ void sctk_portals_helper_put_request(sctk_portals_pending_msg_list_t* list,
 	msg->ack_type = ack_requested;
 	msg->data = *((sctk_portals_list_entry_extra_t*)ptr);
 
-	sctk_portals_helper_init_memory_descriptor(&msg->md, handler, start, size, SCTK_PORTALS_MD_PUT_OPTIONS);
+	sctk_portals_helper_init_memory_descriptor(&msg->md, handler, start, size, SCTK_PORTALS_MD_PUT_OPTIONS, &msg->md_handler);
 
-	//attach MD, load data
-	sctk_portals_assume(PtlMDBind(*handler, &msg->md, &msg->md_handler));
 	sctk_debug("PORTALS: PUT REQUEST - %lu at (%lu,%lu)", remote.phys.pid, index, match);
 	sctk_portals_assume(PtlPut(
 				msg->md_handler,
@@ -470,12 +481,8 @@ void sctk_portals_helper_fetchAtomic_request(sctk_portals_pending_msg_list_t* li
 	msg_get->ack_type = SCTK_PORTALS_NO_ACK_MSG;
 	msg_get->data = *((sctk_portals_list_entry_extra_t*)ptr);
 
-	sctk_portals_helper_init_memory_descriptor(&msg_put->md, handler, start_new, type_size, SCTK_PORTALS_MD_PUT_OPTIONS);
-	sctk_portals_helper_init_memory_descriptor(&msg_get->md, handler, start_res, type_size, SCTK_PORTALS_MD_GET_OPTIONS);
-
-	//attach MD, load data
-	sctk_portals_assume(PtlMDBind(*handler, &msg_put->md, &msg_put->md_handler));
-	sctk_portals_assume(PtlMDBind(*handler, &msg_get->md, &msg_get->md_handler));
+	sctk_portals_helper_init_memory_descriptor(&msg_put->md, handler, start_new, type_size, SCTK_PORTALS_MD_PUT_OPTIONS, &msg_put->md_handler);
+	sctk_portals_helper_init_memory_descriptor(&msg_get->md, handler, start_res, type_size, SCTK_PORTALS_MD_GET_OPTIONS, &msg_get->md_handler);
 
 	sctk_debug("PORTALS: FETCH-ATOMIC REQUEST - %lu at (%lu,%lu)", remote.phys.pid, index, match);
 	sctk_portals_assume(PtlFetchAtomic(
@@ -518,12 +525,8 @@ void sctk_portals_helper_swap_request(sctk_portals_pending_msg_list_t* list,
 	msg_get->ack_type = SCTK_PORTALS_NO_ACK_MSG;
 	msg_get->data = *((sctk_portals_list_entry_extra_t*)ptr);
 
-	sctk_portals_helper_init_memory_descriptor(&msg_put->md, handler, start_new, type_size, SCTK_PORTALS_MD_PUT_OPTIONS);
-	sctk_portals_helper_init_memory_descriptor(&msg_get->md, handler, start_res, type_size, SCTK_PORTALS_MD_GET_OPTIONS);
-
-	//attach MD, load data
-	sctk_portals_assume(PtlMDBind(*handler, &msg_put->md, &msg_put->md_handler));
-	sctk_portals_assume(PtlMDBind(*handler, &msg_get->md, &msg_get->md_handler));
+	sctk_portals_helper_init_memory_descriptor(&msg_put->md, handler, start_new, type_size, SCTK_PORTALS_MD_PUT_OPTIONS, &msg_put->md_handler);
+	sctk_portals_helper_init_memory_descriptor(&msg_get->md, handler, start_res, type_size, SCTK_PORTALS_MD_GET_OPTIONS, &msg_get->md_handler);
 
 	sctk_debug("PORTALS: SWAP REQUEST - %lu at (%lu,%lu)", remote.phys.pid, index, match);
 	sctk_portals_assume(PtlSwap(
