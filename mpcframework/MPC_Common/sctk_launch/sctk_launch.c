@@ -345,7 +345,7 @@ static void sctk_perform_initialisation (void)
 #endif
 
 	/* We passed the init phase we can relax the polling */
-	__polling_thread_frequency = 200;
+	__polling_thread_frequency = 50000;
 
 #ifdef SCTK_LIB_MODE
 	#ifdef MPC_USE_INFINIBAND
