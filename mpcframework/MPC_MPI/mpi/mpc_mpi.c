@@ -9371,6 +9371,11 @@ __INTERNAL__PMPI_Group_free (MPI_Group * mpi_group)
 {
   int res;
   MPC_Group group;
+  
+  if( (*mpi_group == MPI_GROUP_EMPTY)
+  ||  (*mpi_group == MPI_GROUP_NULL)  )
+	return;
+  
   group = __sctk_convert_mpc_group (*mpi_group);
 
   res = PMPC_Group_free (&group);
