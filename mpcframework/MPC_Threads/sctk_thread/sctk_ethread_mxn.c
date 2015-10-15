@@ -654,7 +654,18 @@ sctk_ethread_mxn_init_virtual_processors ()
 static int
 sctk_ethread_mxn_get_vp ()
 {
-  return sctk_ethread_mxn_self ()->vp->rank;
+  /* Be careful the polling thread might
+   * end up here we need to tell him that mxn
+   * does not know where he is (-1) */
+  sctk_ethread_per_thread_t *cur = sctk_ethread_mxn_self ();
+
+  if( !cur )
+        return -1;
+
+  if( !cur->vp )
+        return -1;
+
+  return cur->vp->rank;
 }
 
 static int

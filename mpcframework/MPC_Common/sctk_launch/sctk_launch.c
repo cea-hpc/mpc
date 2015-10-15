@@ -189,6 +189,31 @@ static char* sctk_network_driver_name = NULL;
 /*   sctk_net_val = val; */
 /* } */
 
+/* Note that we start with an agressive frequency
+ * to speedup the polling during the init phase
+ * we relax it after doing driver initialization */
+int __polling_thread_frequency = 10;
+
+void * polling_thread( void * dummy )
+{
+	/* The role of this thread is to poll
+	 * idle in a gentle manner in order
+	 * to avoid starvation particularly
+	 * during init phases (where tasks
+	 * are not waiting but for example
+	 * might be in a PMI barrier.
+	 * 
+	 * Note that as polling is hierarchical
+	 * the contention is limited */
+    while(1)
+    {
+        sctk_network_notify_idle_message();
+        usleep(__polling_thread_frequency);
+    }
+}
+
+
+
   static void
 sctk_perform_initialisation (void)
 {
@@ -283,11 +308,20 @@ sctk_perform_initialisation (void)
 	sctk_internal_profiler_init();
 #endif
 
+
+	/* Start auxiliary polling thread */
+    pthread_t progress;
+    pthread_create (&progress, NULL, polling_thread, NULL);
+
 #ifdef MPC_Message_Passing
   if (sctk_process_nb_val > 1) {
     sctk_net_init_driver(sctk_network_driver_name);
   }
 #endif
+
+
+	/* We passed the init phase we can relax the polling */
+	__polling_thread_frequency = 50000;
 
   sctk_atomics_cpu_freq_init();
   if (sctk_process_rank == 0)
