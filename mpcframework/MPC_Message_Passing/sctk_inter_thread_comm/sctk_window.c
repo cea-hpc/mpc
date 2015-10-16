@@ -453,7 +453,7 @@ void sctk_window_RDMA_write_net( struct sctk_window * win, sctk_rail_pin_ctx_t *
 		sctk_fatal("Error RDMA write operation overflows the window");
 	}
 	
-	sctk_error("RDMA WRITE NET");
+	sctk_nodebug("RDMA WRITE NET");
 	
 	int did_local_pin = 0;
 	
@@ -484,7 +484,7 @@ void __sctk_window_RDMA_write( sctk_window_t win_id, sctk_rail_pin_ctx_t * src_p
 {
 	struct sctk_window * win = sctk_win_translate( win_id );
 	
-	sctk_error("RDMA WRITE");
+	sctk_nodebug("RDMA WRITE");
 	
 	if( !win )
 	{
@@ -639,7 +639,7 @@ void __sctk_window_RDMA_read( sctk_window_t win_id, sctk_rail_pin_ctx_t * dest_p
 {
 	struct sctk_window * win = sctk_win_translate( win_id );
 	
-	sctk_error("RDMA READ");
+	sctk_nodebug("RDMA READ");
 	
 	if( !win )
 	{
@@ -823,7 +823,7 @@ void sctk_window_fetch_and_op_operate_int( RDMA_op op, void * add, void * src, v
 
 		case RDMA_LXOR :
 			val = sctk_atomics_load_int( src );
-			sctk_atomics_store_int( src, *to_add != val );
+			sctk_atomics_store_int( src, (!(*to_add)) != (!(val)) );
 			result = val;
 			break;
 
@@ -898,7 +898,7 @@ void sctk_window_fetch_and_op_operate_ ## type ## type2 ## type3 ## _( RDMA_op o
 			break;\
 \
 		case RDMA_LXOR :\
-			*src_addr = *src_addr != *to_add;\
+			*src_addr = (!(*src_addr)) != (!(*to_add));\
 			break;\
 \
 		case RDMA_BXOR :\
@@ -970,7 +970,7 @@ void sctk_window_fetch_and_op_operate_ ## type ## type2 ## _( RDMA_op op, void *
 			break;\
 \
 		case RDMA_LXOR :\
-			*src_addr = *src_addr != *to_add;\
+			*src_addr = (!(*src_addr)) != (!(*to_add));\
 			break;\
 \
 		case RDMA_BXOR :\
