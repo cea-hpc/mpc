@@ -326,11 +326,6 @@ static void sctk_perform_initialisation (void)
 	sctk_internal_profiler_init();
 #endif
 
-
-	/* Start auxiliary polling thread */
-    pthread_t progress;
-    pthread_create (&progress, NULL, polling_thread, NULL);
-
 #ifdef SCTK_LIB_MODE	
 	/* In LIB mode we create the task context
 	 * at process level (not in an actual task ) */
