@@ -410,9 +410,6 @@ static void sctk_perform_initialisation (void)
 	/* We passed the init phase we can stop the bootstrap polling */
 	__polling_done = 1;
 
-
-	/* We passed the init phase we can stop the bootstrap polling */
-	__polling_done = 1;
 }
 
 static void sctk_version_details (void)
