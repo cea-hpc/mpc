@@ -192,7 +192,7 @@ static char* sctk_network_driver_name = NULL;
 /* Note that we start with an agressive frequency
  * to speedup the polling during the init phase
  * we relax it after doing driver initialization */
-int __polling_thread_frequency = 10;
+int __polling_done = 0;
 
 void * polling_thread( void * dummy )
 {
@@ -208,7 +208,9 @@ void * polling_thread( void * dummy )
     while(1)
     {
         sctk_network_notify_idle_message();
-        usleep(__polling_thread_frequency);
+        
+        if( __polling_done )
+			break;
     }
 }
 
@@ -320,9 +322,6 @@ sctk_perform_initialisation (void)
 #endif
 
 
-	/* We passed the init phase we can relax the polling */
-	__polling_thread_frequency = 50000;
-
   sctk_atomics_cpu_freq_init();
   if (sctk_process_rank == 0)
   {
@@ -376,6 +375,10 @@ sctk_perform_initialisation (void)
 /*     } */
 /*   } */
   sctk_flush_version ();
+
+
+	/* We passed the init phase we can stop the bootstrap polling */
+	__polling_done = 1;
 }
 
   static void
