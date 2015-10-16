@@ -39,7 +39,7 @@ static ptl_op_t sctk_portals_rdma_determine_operation(RDMA_op op)
 		case RDMA_LXOR: return PTL_LXOR; break;
 		case RDMA_BXOR: return PTL_BXOR; break;
 		default:
-			sctk_error("Type not handled by Portals %d", op);
+			sctk_fatal("Type not handled by Portals %d", op);
 	}
 
 	not_reachable();
@@ -331,7 +331,7 @@ void sctk_portals_rdma_read(  sctk_rail_info_t *rail, sctk_thread_ptp_message_t 
 	stuff->cat_msg = SCTK_PORTALS_CAT_RDMA;
 	stuff->extra_data = msg;
 
-	sctk_warning("RDMA READ FROM %lu - %lu (%d) !!", portals.id.phys.pid, portals.match, (src_addr - portals.start_addr));
+	sctk_nodebug("RDMA READ FROM %lu - %lu (%d) !!", portals.id.phys.pid, portals.match, (src_addr - portals.start_addr));
 	sctk_portals_helper_get_request(
 		&rail->network.portals.ptable.pending_list,
 		dest_addr,
@@ -368,7 +368,7 @@ void sctk_portals_pin_region( struct sctk_rail_info_s * rail, struct sctk_rail_p
 	list->pin.portals.match = match;
 	list->pin.portals.id = prail->current_id;
 	list->pin.portals.start_addr = addr;
-	sctk_nodebug("Pinning %lu - %lu !!", list->pin.portals.id.phys.pid, list->pin.portals.match);
+	sctk_debug("Pinning %lu - %lu !!", list->pin.portals.id.phys.pid, list->pin.portals.match);
 
 }
 
@@ -376,4 +376,5 @@ void sctk_portals_unpin_region( struct sctk_rail_info_s * rail, struct sctk_rail
 {
 	assume(list->rail_id == rail->rail_number);
 	sctk_portals_helper_destroy_entry(&list->pin.portals.me, &list->pin.portals.me_handler);
+	sctk_debug("UN-PINNING %lu - %lu !!", list->pin.portals.id.phys.pid, list->pin.portals.match);
 }

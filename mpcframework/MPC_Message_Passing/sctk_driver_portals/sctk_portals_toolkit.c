@@ -54,8 +54,7 @@ void sctk_portals_message_copy ( sctk_message_to_copy_t *tmp )
 	stuff.cat_msg = SCTK_PORTALS_CAT_REGULAR;
 	stuff.extra_data = recver;
 
-	size = sctk_min(SCTK_MSG_SIZE(recver), recver->tail.message.contiguous.size );
-
+	size = sctk_min(SCTK_MSG_SIZE(sender), SCTK_MSG_SIZE(recver));
 	//if msg is control_message, wait after Get (implementation dependent)
 	if(sctk_message_class_is_control_message(SCTK_MSG_SPECIFIC_CLASS(sender)))
 	{
