@@ -620,7 +620,7 @@ static void sctk_network_notify_idle_message_ib ( sctk_rail_info_t *rail )
 
     int dopoll = idle_poll_all++;
 
-    if( dopoll != idle_poll_all )
+    if( dopoll != idle_poll_freq )
         return;
     else
         idle_poll_all = 0;
