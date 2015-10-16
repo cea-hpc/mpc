@@ -286,13 +286,14 @@ int sctk_window_map_remote( int remote_rank, sctk_window_t win_id )
 	struct sctk_window remote_win_data;
 	memset( &remote_win_data, 0, sizeof( struct sctk_window ) );
 	
-	/* Send a map request to remote task */
-	sctk_control_messages_send ( sctk_get_process_rank_from_task_rank (remote_rank) , SCTK_CONTROL_MESSAGE_PROCESS, SCTK_PROCESS_RDMA_WIN_MAPTO, 0, &mr, sizeof(struct sctk_window_map_request)  );
-	
 	/* And now prepare to receive the remote win data */
 	sctk_request_t req;
-
 	sctk_message_irecv_class( remote_rank, &remote_win_data, sizeof(struct sctk_window) , TAG_RDMA_MAP, SCTK_COMM_WORLD, SCTK_RDMA_WINDOW_MESSAGES, &req );
+	
+    /* Send a map request to remote task */
+	sctk_control_messages_send ( sctk_get_process_rank_from_task_rank (remote_rank) , SCTK_CONTROL_MESSAGE_PROCESS, SCTK_PROCESS_RDMA_WIN_MAPTO, 0, &mr, sizeof(struct sctk_window_map_request)  );
+	
+
 	sctk_wait_message ( &req );
 	
 	if( remote_win_data.id < 0 )
@@ -507,10 +508,10 @@ void __sctk_window_RDMA_write( sctk_window_t win_id, sctk_rail_pin_ctx_t * src_p
 		/* Emulated write using control messages */
 		struct sctk_window_emulated_RDMA erma;
 		sctk_window_emulated_RDMA_init( &erma, win->owner, dest_offset, size, win->remote_id );
-		sctk_control_messages_send ( sctk_get_process_rank_from_task_rank (win->owner), SCTK_CONTROL_MESSAGE_PROCESS, SCTK_PROCESS_RDMA_EMULATED_WRITE, 0, &erma, sizeof(struct sctk_window_emulated_RDMA) );
-		
 		/* Note that we store the data transfer req in the request */
 		sctk_message_isend_class( win->owner, src_addr, size , TAG_RDMA_WRITE, win->comm, SCTK_RDMA_WINDOW_MESSAGES, req );
+		sctk_control_messages_send ( sctk_get_process_rank_from_task_rank (win->owner), SCTK_CONTROL_MESSAGE_PROCESS, SCTK_PROCESS_RDMA_EMULATED_WRITE, 0, &erma, sizeof(struct sctk_window_emulated_RDMA) );
+		
 	}
 	else
 	{
@@ -662,10 +663,10 @@ void __sctk_window_RDMA_read( sctk_window_t win_id, sctk_rail_pin_ctx_t * dest_p
 		/* Emulated write using control messages */
 		struct sctk_window_emulated_RDMA erma;
 		sctk_window_emulated_RDMA_init( &erma, win->owner, src_offset, size, win->remote_id );
-		sctk_control_messages_send ( sctk_get_process_rank_from_task_rank (win->owner), SCTK_CONTROL_MESSAGE_PROCESS, SCTK_PROCESS_RDMA_EMULATED_READ, 0, &erma, sizeof(struct sctk_window_emulated_RDMA) );
-		
 		/* Note that we store the data transfer req in the request */
 		sctk_message_irecv_class( win->owner, dest_addr, size , TAG_RDMA_READ, win->comm, SCTK_RDMA_WINDOW_MESSAGES, req );
+		sctk_control_messages_send ( sctk_get_process_rank_from_task_rank (win->owner), SCTK_CONTROL_MESSAGE_PROCESS, SCTK_PROCESS_RDMA_EMULATED_READ, 0, &erma, sizeof(struct sctk_window_emulated_RDMA) );
+		
 	}
 	else
 	{	
