@@ -202,7 +202,7 @@ static void sctk_use_pthread (void)
 /* Note that we start with an agressive frequency
  * to speedup the polling during the init phase
  * we relax it after doing driver initialization */
-int __polling_thread_frequency = 10;
+int __polling_done = 0;
 
 void * polling_thread( void * dummy )
 {
@@ -218,7 +218,9 @@ void * polling_thread( void * dummy )
     while(1)
     {
         sctk_network_notify_idle_message();
-        usleep(__polling_thread_frequency);
+        
+        if( __polling_done )
+			break;
     }
 }
 
@@ -344,9 +346,6 @@ static void sctk_perform_initialisation (void)
 	}
 #endif
 
-	/* We passed the init phase we can relax the polling */
-	__polling_thread_frequency = 50000;
-
 #ifdef SCTK_LIB_MODE
 	#ifdef MPC_USE_INFINIBAND
 		sctk_network_initialize_task_collaborative_ib (my_rank, 0);
@@ -407,6 +406,10 @@ static void sctk_perform_initialisation (void)
 	/*     } */
 	/*   } */
 	sctk_flush_version ();
+
+
+	/* We passed the init phase we can stop the bootstrap polling */
+	__polling_done = 1;
 }
 
 static void sctk_version_details (void)

@@ -618,9 +618,7 @@ static void sctk_network_notify_idle_message_ib ( sctk_rail_info_t *rail )
     LOAD_CONFIG ( rail_ib );
     struct sctk_ib_polling_s poll;
 
-    int dopoll = idle_poll_all++;
-
-    if( dopoll != idle_poll_freq )
+    if( idle_poll_all != idle_poll_freq )
         return;
     else
         idle_poll_all = 0;
@@ -633,15 +631,13 @@ static void sctk_network_notify_idle_message_ib ( sctk_rail_info_t *rail )
 
     if ( ret == REORDER_FOUND_EXPECTED )
     {
-        idle_poll_freq = 10;
+        idle_poll_freq = 100;
         return;
     }
     else
     {
-        idle_poll_freq *= 2;
+        idle_poll_freq *= 4;
     }
-
-
 
     int polling_task_id = sctk_get_task_rank();
     POLL_INIT ( &poll );
@@ -661,9 +657,10 @@ static void sctk_network_notify_idle_message_ib ( sctk_rail_info_t *rail )
     else
     {
         idle_poll_freq *= 4;
-        if( 2000 < idle_poll_freq )
-            idle_poll_freq = 2000;
     }
+
+    if( 150000 < idle_poll_freq )
+            idle_poll_freq = 150000;
 }
 
 
