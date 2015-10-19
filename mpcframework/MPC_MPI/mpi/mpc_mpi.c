@@ -3583,7 +3583,8 @@ static int __INTERNAL__PMPI_Type_struct(int count, int blocklens[], MPI_Aint ind
 
 		int types_are_all_common = 1;
 		
-		/* Note that types with UB LB are ignored */
+		/* First check if we are playing with common datatypes
+		 * Note that types with UB LB are ignored */
 		for (i = 0; i < count; i++)
 		{
 			if( !sctk_datatype_is_common( old_types[i] ) )
@@ -3592,6 +3593,7 @@ static int __INTERNAL__PMPI_Type_struct(int count, int blocklens[], MPI_Aint ind
 					break;
 			}
 		}
+	
 
 		if( types_are_all_common )
 		{			

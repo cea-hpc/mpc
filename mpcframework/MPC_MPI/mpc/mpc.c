@@ -1807,8 +1807,11 @@ static inline size_t __MPC_Get_datatype_size (MPC_Datatype datatype, sctk_task_s
 			
 			if( derived_type_target->is_a_padded_struct )
 			{
+
 				/* Here we return UB as the size (padded struct) */
 				ret = derived_type_target->ub;
+				
+							
 			}
 			else
 			{
