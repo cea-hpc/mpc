@@ -3614,7 +3614,6 @@ static int __INTERNAL__PMPI_Type_struct(int count, int blocklens[], MPI_Aint ind
 				if( new_ub != common_type_size )
 					did_pad_struct = 1;
 				
-				sctk_error("UB IS %d", new_ub );		
 			}
 		}
 
@@ -4397,6 +4396,7 @@ static int __INTERNAL__PMPI_Get_elements_x (MPI_Status * status, MPI_Datatype da
 		break;
 		
 		case MPC_DATATYPES_DERIVED:
+	
 			task_specific = __MPC_get_task_specific ();
 			
 			/* This is the size we received */
@@ -4416,7 +4416,7 @@ static int __INTERNAL__PMPI_Get_elements_x (MPI_Status * status, MPI_Datatype da
 			
 			int done = 0;
 			
-			if( layout )
+			if( 0 /* Do not Use the Layout to compute Get_Element*/ )
 			{
 				if( ! count )
 				{
@@ -4426,10 +4426,10 @@ static int __INTERNAL__PMPI_Get_elements_x (MPI_Status * status, MPI_Datatype da
 				while( !done )
 				{
 				
-					sctk_nodebug("count : %d  size : %d done : %d", count, size, done);
+					sctk_error("count : %d  size : %d done : %d", count, size, done);
 					for(i = 0; i < count; i++)
 					{
-						sctk_nodebug("BLOCK SIZE  : %d", layout[i].size );
+						sctk_error("BLOCK SIZE  : %d", layout[i].size );
 						
 						size -= layout[i].size;
 						
