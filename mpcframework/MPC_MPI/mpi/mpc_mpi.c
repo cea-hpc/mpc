@@ -3393,6 +3393,7 @@ static int __INTERNAL__PMPI_Type_struct(int count, int blocklens[], MPI_Aint ind
 	mpc_pack_absolute_indexes_t new_lb = (mpc_pack_absolute_indexes_t) (-1);
 	int new_is_lb = 0;
 	mpc_pack_absolute_indexes_t new_ub = 0;
+	mpc_pack_absolute_indexes_t common_type_size = 0;
 	int new_is_ub = 0;
 	unsigned long my_count_out = 0;
 	
@@ -3521,6 +3522,12 @@ static int __INTERNAL__PMPI_Type_struct(int count, int blocklens[], MPI_Aint ind
 						ends_out[glob_count_out] = ends_in[0] + stride_t + (extent * j);
 						datatypes[glob_count_out] = old_types[i];
 
+						/* We use this variable to keep track of structure ending
+						 * in order to do alignment when we only handle common types */
+						if( common_type_size < ends_out[glob_count_out] )
+							common_type_size = ends_out[glob_count_out];
+
+
 						glob_count_out++;
 				}
 				sctk_nodebug("simple type %d new_lb %d new_ub %d", i, new_lb, new_ub);
@@ -3548,6 +3555,69 @@ static int __INTERNAL__PMPI_Type_struct(int count, int blocklens[], MPI_Aint ind
 		sctk_nodebug("%d new_lb %d new_ub %d", i, new_lb, new_ub);
 	}
 /* 	fprintf(stderr,"End Type\n"); */
+
+
+	/* Now check for padding if involved types are all common
+	 * in order to make alignment decisions (p. 85 of the standard)
+	 * 
+	 * struct
+	 * {
+	 * 		int a;
+	 * 		char c;
+	 * };
+	 * 
+	 * I I I I C
+	 * 
+	 * Should map to
+	 * 
+	 * I I I I C - - - 
+	 * 
+	 * To fulfil alignment constraints
+	 * 
+	 * */
+
+		
+	int extent_mod = 1;
+
+
+	if( count )
+	{
+
+		int types_are_all_common = 1;
+		
+		/* Note that types with UB LB are ignored */
+		for (i = 0; i < count; i++)
+		{
+			if( !sctk_datatype_is_common( old_types[i] ) )
+			{
+					types_are_all_common = 0;
+					break;
+			}
+		}
+
+		if( types_are_all_common )
+		{			
+			MPI_Aint first_type_extent = 0;
+			__INTERNAL__PMPI_Type_extent(old_types[0], &first_type_extent);
+			
+			if( first_type_extent )
+			{
+				extent_mod = first_type_extent;
+
+				
+				int missing_to_allign = common_type_size % extent_mod;
+
+				/* Set an UB to the type to fulfil alignment */
+				new_is_ub = 1;
+				new_ub = common_type_size + extent_mod - missing_to_allign;
+								
+			}
+		}
+
+	}
+
+	/* Padding DONE HERE */
+
 
 
 	/* Set its context */
