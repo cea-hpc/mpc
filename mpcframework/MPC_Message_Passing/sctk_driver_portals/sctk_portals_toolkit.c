@@ -28,6 +28,7 @@
 #include <sctk_portals_toolkit.h>
 #include <sctk_pmi.h>
 #include <sctk_control_messages.h>
+#include <sctk_net_tools.h>
 
 #define sctk_min(a, b)  ((a) < (b) ? (a) : (b))
 
@@ -51,10 +52,23 @@ void sctk_portals_message_copy ( sctk_message_to_copy_t *tmp )
 	remote_info = &sender->tail.portals;
 	sctk_portals_list_entry_extra_t stuff;
 	size_t size;
+	void *payload;
+
 	stuff.cat_msg = SCTK_PORTALS_CAT_REGULAR;
 	stuff.extra_data = recver;
 
 	size = sctk_min(SCTK_MSG_SIZE(sender), SCTK_MSG_SIZE(recver));
+
+	if(recver->tail.message_type == SCTK_MESSAGE_CONTIGUOUS)
+	{
+		payload = recver->tail.message.contiguous.addr;
+	}
+	else
+	{
+		payload = sctk_malloc(size);
+		type = SCTK_PORTALS_BLOCKING_REQUEST;
+	}
+
 	//if msg is control_message, wait after Get (implementation dependent)
 	if(sctk_message_class_is_control_message(SCTK_MSG_SPECIFIC_CLASS(sender)))
 	{
@@ -65,7 +79,7 @@ void sctk_portals_message_copy ( sctk_message_to_copy_t *tmp )
 	// send the get request (need to be specific depending on message type)
 	sctk_portals_helper_get_request(
 		remote_info->list,
-		recver->tail.message.contiguous.addr,
+		payload,
 		size,
 		0,
 		remote_info->handler,
@@ -74,6 +88,12 @@ void sctk_portals_message_copy ( sctk_message_to_copy_t *tmp )
 		remote_info->tag,
 		&stuff, // contains message type and pointer to msg (for completion)
 		type);
+
+	if(recver->tail.message_copy != SCTK_MESSAGE_CONTIGUOUS)
+	{
+		sctk_net_message_copy_from_buffer(payload, tmp, 0);
+		sctk_free(payload);
+	}
 }
 
 void sctk_portals_free ( void *msg )
@@ -173,8 +193,16 @@ void sctk_portals_send_put ( sctk_endpoint_t *endpoint, sctk_thread_ptp_message_
 	}
 	else
 	{ // if regular message (need to make specification depending on message type)
-		payload = msg->tail.message.contiguous.addr;
-		payload_size = msg->tail.message.contiguous.size;
+		payload_size = SCTK_MSG_SIZE(msg);
+		if(msg->tail.message_type == SCTK_MESSAGE_CONTIGUOUS)
+		{
+			payload = msg->tail.message.contiguous.addr;
+		}
+		else
+		{
+			payload=sctk_malloc(payload_size);
+			sctk_net_copy_in_buffer(msg, payload);
+		}
 	}
 
 	// setting unique match bits for given ME
