@@ -4571,6 +4571,7 @@ int PMPC_Recv (void *buf, mpc_msg_count count, MPC_Datatype datatype, int source
 	}
 	
 	mpc_check_buf (buf, comm);
+
 	mpc_check_type (datatype, comm);
 
 	#ifdef MPC_LOG_DEBUG
@@ -4628,6 +4629,7 @@ int PMPC_Recv (void *buf, mpc_msg_count count, MPC_Datatype datatype, int source
 		{
 			status->MPC_ERROR = request.status_error;
 		}
+
 		return request.status_error;
 	}
 
