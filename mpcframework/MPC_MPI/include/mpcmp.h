@@ -903,6 +903,7 @@ int MPC_Test_cancelled (MPC_Status *, int *);
   /*Types */
   int PMPC_Type_size (MPC_Datatype, size_t *);
   int PMPC_Type_is_allocated (MPC_Datatype datatype, int * flag );
+  int PMPC_Type_flag_padded(MPC_Datatype datatype);
   int PMPC_Type_hcontiguous (MPC_Datatype *outtype, size_t count, MPC_Datatype *data_in);
   int __MPC_Barrier (MPC_Comm comm);
   int PMPC_Type_free (MPC_Datatype * datatype);

@@ -3576,9 +3576,7 @@ static int __INTERNAL__PMPI_Type_struct(int count, int blocklens[], MPI_Aint ind
 	 * 
 	 * */
 
-		
-	int extent_mod = 1;
-
+	int did_pad_struct = 0;
 
 	if( count )
 	{
@@ -3602,7 +3600,7 @@ static int __INTERNAL__PMPI_Type_struct(int count, int blocklens[], MPI_Aint ind
 			
 			if( first_type_extent )
 			{
-				extent_mod = first_type_extent;
+				int extent_mod = first_type_extent;
 
 				
 				int missing_to_allign = common_type_size % extent_mod;
@@ -3610,11 +3608,16 @@ static int __INTERNAL__PMPI_Type_struct(int count, int blocklens[], MPI_Aint ind
 				/* Set an UB to the type to fulfil alignment */
 				new_is_ub = 1;
 				new_ub = common_type_size + extent_mod - missing_to_allign;
-								
+				
+				if( new_ub != common_type_size )
+					did_pad_struct = 1;
+				
+				sctk_error("UB IS %d", new_ub );		
 			}
 		}
 
 	}
+
 
 	/* Padding DONE HERE */
 
@@ -3632,6 +3635,9 @@ static int __INTERNAL__PMPI_Type_struct(int count, int blocklens[], MPI_Aint ind
 	res = PMPC_Derived_datatype(newtype, begins_out, ends_out, datatypes, glob_count_out, new_lb, new_is_lb, new_ub, new_is_ub, &dtctx);
 	assert(res == MPI_SUCCESS);
 
+
+	/* Set the struct type as padded to return the UB in MPI_Type_size */
+	PMPC_Type_flag_padded( *newtype );
 	
 	/*   sctk_nodebug("new_type %d",* newtype); */
 	/*   sctk_nodebug("final new_lb %d,%d new_ub %d %d",new_lb,new_is_lb,new_ub,new_is_ub); */

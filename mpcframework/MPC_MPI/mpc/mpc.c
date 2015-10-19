@@ -1804,8 +1804,20 @@ static inline size_t __MPC_Get_datatype_size (MPC_Datatype datatype, sctk_task_s
 				sctk_fatal("Tried to retrieve an uninitialized datatype %d", datatype);
 			}
 			
-			/* Extract the size field */
-			ret = derived_type_target->size;
+			
+			if( derived_type_target->is_a_padded_struct )
+			{
+				/* Here we return UB as the size (padded struct) */
+				ret = derived_type_target->ub;
+			}
+			else
+			{
+				/* Extract the size field */
+				ret = derived_type_target->size;
+			}
+			
+			
+
 
 			/* Return */
 			return ret;
@@ -1864,35 +1876,6 @@ int PMPC_Type_get_true_extent(MPC_Datatype datatype, MPC_Aint *true_lb, MPC_Aint
 	MPC_ERROR_SUCESS();
 }
 
-/** \brief This function aims at handling the particular case of struct derived data-type size
- *  \param datatype Target data-type
- *  \param size size to set
- * 
- *  This is needed as some struct data-type have additionnal padding
- *  and we define it this way after setting the correct offsets
- */
-int PMPC_Type_set_size(MPC_Datatype datatype, size_t size )
-{
-	sctk_task_specific_t * task_specific = __MPC_get_task_specific ();
-
-	sctk_derived_datatype_t * derived_type_target;
-
-	switch( sctk_datatype_kind(datatype) )
-	{
-		case MPC_DATATYPES_COMMON:
-		case MPC_DATATYPES_CONTIGUOUS:
-		case MPC_DATATYPES_UNKNOWN:
-			MPC_ERROR_REPORT( MPC_COMM_SELF, MPC_ERR_ARG, "Bad data-type this can only be done on derived types");
-		break;
-		case MPC_DATATYPES_DERIVED:
-			derived_type_target = sctk_task_specific_get_derived_datatype(task_specific, datatype);
-			derived_type_target->size = size;
-		break;
-	}
-	
-	MPC_ERROR_SUCESS ();
-}
-
 
 /** \brief Checks if a datatype has already been released
  *  \param datatype target datatype
@@ -1923,6 +1906,40 @@ int PMPC_Type_is_allocated (MPC_Datatype datatype, int * flag )
 		case MPC_DATATYPES_UNKNOWN:
 			*flag = 0;
 		break;	
+	}
+	
+	MPC_ERROR_SUCESS ();
+}
+
+/** \brief Set a Struct datatype as a padded one to return the extent instead of the size
+ *  \param datatype to be flagged as padded
+ */
+int PMPC_Type_flag_padded (MPC_Datatype datatype )
+{
+	sctk_task_specific_t * task_specific = __MPC_get_task_specific ();
+
+	sctk_derived_datatype_t * derived_type_target = NULL;
+	
+	switch( sctk_datatype_kind(datatype) )
+	{
+		case MPC_DATATYPES_COMMON:
+		case MPC_DATATYPES_CONTIGUOUS:
+		case MPC_DATATYPES_UNKNOWN:
+			sctk_fatal("Only Common datatypes can be flagged");
+		break;
+		case MPC_DATATYPES_DERIVED:
+			derived_type_target = sctk_task_specific_get_derived_datatype(task_specific, datatype);
+			
+			if( derived_type_target )
+			{
+				derived_type_target->is_a_padded_struct = 1;
+			}
+			else
+			{
+				return MPC_ERR_ARG;
+			}
+			
+		break;
 	}
 	
 	MPC_ERROR_SUCESS ();

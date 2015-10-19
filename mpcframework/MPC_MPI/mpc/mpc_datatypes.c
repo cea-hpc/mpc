@@ -166,7 +166,7 @@ void __init_a_composed_common_types(MPC_Datatype target_type, MPC_Aint disp, MPC
 	/* We do this to handle the padding as we
 	 * want to guarantee the matching with
 	 * an used defined struct */
-	PMPC_Type_set_size(target_type, struct_size );
+	PMPC_Type_flag_padded(target_type );
 }
 
 void init_composed_common_types()
@@ -553,6 +553,9 @@ void sctk_derived_datatype_init( sctk_derived_datatype_t * type ,
 	type->lb = lb;
 	type->is_ub = is_ub;
 	type->is_lb = is_lb;
+	
+	/* We assume 0 this value is set in the Struct constructor afterwards */
+	type->is_a_padded_struct = 0;
 	
 	/* Clear context */
 	sctk_datatype_context_clear( &type->context );
