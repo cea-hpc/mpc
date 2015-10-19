@@ -2043,13 +2043,15 @@ static int __INTERNAL__PMPI_Request_free (MPI_Request * request)
 int __INTERNAL__PMPI_Waitany (int count, MPI_Request * array_of_requests, int *index, MPI_Status * status)
 {
 	int flag = 0;
+	int ret = MPI_SUCCESS;
 
 	while (!flag)
     {
-		__INTERNAL__PMPI_Testany (count, array_of_requests, index, &flag, status);
+		ret = __INTERNAL__PMPI_Testany (count, array_of_requests, index, &flag, status);
 	
     }
-	return MPI_SUCCESS;
+    
+	return ret;
 }
 
 static int __INTERNAL__PMPI_Testany (int count, MPI_Request * array_of_requests, int *index, int *flag, MPI_Status * status)
@@ -2059,6 +2061,12 @@ static int __INTERNAL__PMPI_Testany (int count, MPI_Request * array_of_requests,
   *flag = 1;
   int tmp;
   MPI_request_struct_t *requests;
+
+   if( !array_of_requests )
+   {
+	   return MPI_SUCCESS;
+   }
+
 
   requests = __sctk_internal_get_MPC_requests();
 
@@ -2098,7 +2106,8 @@ static int __INTERNAL__PMPI_Testany (int count, MPI_Request * array_of_requests,
 	  return tmp;
 	}
     }
-  sctk_thread_yield();
+
+
   return MPI_SUCCESS;
 }
 
@@ -12244,7 +12253,9 @@ PMPI_Waitany (int count, MPI_Request array_of_requests[], int *index,
   MPI_Comm comm = MPI_COMM_WORLD;
   int res = MPI_ERR_INTERN;
   res = __INTERNAL__PMPI_Waitany (count, array_of_requests, index, status);
-  if(status != MPI_STATUS_IGNORE){
+  
+  if((status != MPI_STATUS_IGNORE)
+	&(array_of_requests != NULL) ){
     if(status->MPI_ERROR != MPI_SUCCESS){
       res = status->MPI_ERROR;
     }
@@ -12261,7 +12272,9 @@ PMPI_Testany (int count, MPI_Request array_of_requests[], int *index,
   int res = MPI_ERR_INTERN;
   res =
     __INTERNAL__PMPI_Testany (count, array_of_requests, index, flag, status);
-  if(status != MPI_STATUS_IGNORE){
+ 
+  if((status != MPI_STATUS_IGNORE)
+  && (array_of_requests!= NULL) ){
     if((status->MPI_ERROR != MPI_SUCCESS) && (status->MPI_ERROR != MPI_ERR_PENDING)){
       res = status->MPI_ERROR;
     }
