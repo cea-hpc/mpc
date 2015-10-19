@@ -8717,20 +8717,34 @@ __INTERNAL__PMPI_Group_translate_ranks (MPI_Group mpi_group1, int n, int *ranks1
 		sctk_nodebug("ranks1[%d] = %d", i, ranks1[i]);
 
         for(i = 0 ; i < n ; i++){
-                if(ranks1[i] < 0) return MPI_ERR_RANK;
-		if(ranks1[i] >= group1->task_nb) return MPI_ERR_RANK;
+                if(ranks1[i]  ==  MPI_UNDEFINED )
+					return MPI_ERR_RANK;
+                
+				if(ranks1[i] >= group1->task_nb)
+					return MPI_ERR_RANK;
         }
 
+	/*
 	for(i = 0 ; i < group1->task_nb ; i++)
-		sctk_nodebug("group1 : task_list_in_global_ranks[%d] = %d", i, group1->task_list_in_global_ranks[i]);
+		sctk_error("group1 : task_list_in_global_ranks[%d] = %d", i, group1->task_list_in_global_ranks[i]);
 
 	for(i = 0 ; i < group2->task_nb ; i++)
-		sctk_nodebug("group2 : task_list_in_global_ranks[%d] = %d", i, group2->task_list_in_global_ranks[i]);
+		sctk_error("group2 : task_list_in_global_ranks[%d] = %d", i, group2->task_list_in_global_ranks[i]);
+	*/
+
 
 	for (j = 0; j < n; j++)
     {
 		int i;
 		int grank;
+		
+		/* MPI 2 Errata http://www.mpi-forum.org/docs/mpi-2.0/errata-20-2.pdf */
+		if( ranks1[j] == MPI_PROC_NULL )
+		{
+			ranks2[j] = MPI_PROC_NULL;
+			continue;
+		}
+		
 		grank = group1->task_list_in_global_ranks[ranks1[j]];
 		ranks2[j] = MPI_UNDEFINED;
 		for (i = 0; i < group2->task_nb; i++)
