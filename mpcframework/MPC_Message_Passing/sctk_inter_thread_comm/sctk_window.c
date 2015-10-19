@@ -1211,10 +1211,10 @@ void __sctk_window_RDMA_fetch_and_op( sctk_window_t remote_win_id, size_t remote
 		struct sctk_window_emulated_fetch_and_op_RDMA fop;
 		sctk_window_emulated_fetch_and_op_RDMA_init( &fop, win->owner, remote_offset, win->remote_id, op, type, add );
 		
-		sctk_control_messages_send ( sctk_get_process_rank_from_task_rank (win->owner), SCTK_CONTROL_MESSAGE_PROCESS, SCTK_PROCESS_RDMA_EMULATED_FETCH_AND_OP, 0, &fop, sizeof(struct sctk_window_emulated_fetch_and_op_RDMA) );
-
 		/* Note that we store the data transfer req in the request */
 		sctk_message_irecv_class( win->owner, fetch_addr, fop.rdma.size , TAG_RDMA_FETCH_AND_OP, win->comm, SCTK_RDMA_MESSAGE, req );
+		sctk_control_messages_send ( sctk_get_process_rank_from_task_rank (win->owner), SCTK_CONTROL_MESSAGE_PROCESS, SCTK_PROCESS_RDMA_EMULATED_FETCH_AND_OP, 0, &fop, sizeof(struct sctk_window_emulated_fetch_and_op_RDMA) );
+
 	}
 	else
 	{
@@ -1491,9 +1491,9 @@ void __sctk_window_RDMA_CAS( sctk_window_t remote_win_id, size_t remote_offset, 
 		struct sctk_window_emulated_CAS_RDMA fcas;
 		sctk_window_emulated_CAS_RDMA_init( &fcas, win->owner, remote_offset, win->remote_id, type, comp, new_data );
 
+		sctk_message_irecv_class( win->owner, res, fcas.rdma.size , TAG_RDMA_CAS, win->comm, SCTK_RDMA_MESSAGE, req );
 		sctk_control_messages_send ( sctk_get_process_rank_from_task_rank (win->owner), SCTK_CONTROL_MESSAGE_PROCESS, SCTK_PROCESS_RDMA_EMULATED_CAS, 0, &fcas, sizeof(struct sctk_window_emulated_CAS_RDMA) );
 	
-		sctk_message_irecv_class( win->owner, res, fcas.rdma.size , TAG_RDMA_CAS, win->comm, SCTK_RDMA_MESSAGE, req );
 	}
 	else
 	{
