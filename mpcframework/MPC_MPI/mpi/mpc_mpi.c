@@ -7445,7 +7445,9 @@ __INTERNAL__PMPI_Reduce_intra (void *sendbuf, void *recvbuf, int count,
 		MPI_Request request_recv;
 
 		if (sendbuf == MPI_IN_PLACE)
-			request_send = MPI_REQUEST_NULL;
+		{
+			return MPI_SUCCESS;
+		}
 		else
 		{
 			res = __INTERNAL__PMPI_Isend (sendbuf, count, datatype, 0, 
