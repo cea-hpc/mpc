@@ -2852,7 +2852,7 @@ static int __INTERNAL__PMPI_Type_contiguous_inherits (unsigned long count, MPI_D
 		__INTERNAL__PMPI_Type_extent (data_in, (MPI_Aint *) & extent);
 
 		/* By definition the number of output types is count times the one of the input type */
-		unsigned long count_out = input_datatype.count * count;
+		unsigned long count_out = input_datatype.count * count ;
 		
 		/* Allocate datatype description */
 		mpc_pack_absolute_indexes_t *begins_out = sctk_malloc (count_out * sizeof (mpc_pack_absolute_indexes_t));
