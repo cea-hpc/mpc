@@ -2316,7 +2316,10 @@ static int __INTERNAL__PMPI_Testsome (int incount, MPI_Request * array_of_reques
 			no_active_done++;
 		}
 	}
-	*outcount = done;
+	
+	if( done != 0 )
+		*outcount = done;
+	
 	if (no_active_done == incount)
 	{
 		*outcount = MPI_UNDEFINED;
