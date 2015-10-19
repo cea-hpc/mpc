@@ -11628,8 +11628,10 @@ __INTERNAL__PMPI_Finalize (void)
 	task_specific->mpc_mpi_data->nbc_initialized_per_task = -1;	
 	sched_yield();
 	NBC_Finalize(&(task_specific->mpc_mpi_data->NBC_Pthread));
-
   }
+
+  MPI_Comm c = MPI_COMM_SELF;
+  PMPI_Comm_free( &c );
 
   if(is_finalized != 0){
     MPI_ERROR_REPORT (MPI_COMM_WORLD, MPI_ERR_OTHER, "MPI_Finalize issue");
@@ -14640,14 +14642,10 @@ PMPI_Comm_free (MPI_Comm * comm)
     {
       MPI_ERROR_REPORT (MPI_COMM_WORLD, MPI_ERR_COMM, "");
     }
+ 
   if (*comm == MPI_COMM_WORLD)
     {
-      MPI_ERROR_REPORT (MPI_COMM_WORLD, MPI_ERR_COMM, "");
-    }
-
-  if (*comm == MPI_COMM_SELF)
-    {
-      MPI_ERROR_REPORT (MPI_COMM_WORLD, MPI_ERR_COMM, "");
+       MPI_ERROR_REPORT (MPI_COMM_WORLD, MPI_ERR_COMM, "");
     }
 
   mpi_check_comm (*comm, *comm);
