@@ -2664,11 +2664,7 @@ void sctk_send_message_try_check ( sctk_thread_ptp_message_t *msg, int perform_c
 	if( sctk_process_rank < 0 )
 		CRASH();
 	
-	sctk_debug("!%d! MM %d -> %d [%d -> %d] tag %d (CLASS %s(%d) SPE %d SIZE %d)", sctk_process_rank, SCTK_MSG_SRC_PROCESS ( msg ),  
-																				   SCTK_MSG_DEST_PROCESS ( msg ), SCTK_MSG_SRC_TASK( msg ),  SCTK_MSG_DEST_TASK( msg ),
-																				   SCTK_MSG_TAG( msg ), sctk_message_class_name[(int)SCTK_MSG_SPECIFIC_CLASS( msg )], 
-																				   SCTK_MSG_SPECIFIC_CLASS( msg ) ,
-																				   sctk_message_class_is_process_specific ( SCTK_MSG_SPECIFIC_CLASS( msg ) ), SCTK_MSG_SIZE( msg ));
+	sctk_debug("!%d! MM %d -> %d (CLASS %s(%d) SPE %d SIZE %d)", sctk_process_rank, SCTK_MSG_SRC_PROCESS ( msg ),  SCTK_MSG_DEST_PROCESS ( msg ), sctk_message_class_name[SCTK_MSG_SPECIFIC_CLASS( msg )], SCTK_MSG_SPECIFIC_CLASS( msg ) , sctk_message_class_is_process_specific ( SCTK_MSG_SPECIFIC_CLASS( msg ) ), SCTK_MSG_SIZE( msg ));
 
 	/*  Message has not reached its destination */
 	if( SCTK_MSG_DEST_PROCESS ( msg ) != sctk_process_rank )
@@ -2949,24 +2945,7 @@ void sctk_probe_source_tag_func ( int destination, int source, int tag,
 	sctk_internal_ptp_t *dest_ptp;
 	sctk_internal_ptp_t *src_ptp = NULL;
 	
-	int world_source;
-	
-	if( source != SCTK_ANY_SOURCE )
-	{
-		if( sctk_is_inter_comm(comm) )
-		{
-			world_source = sctk_get_remote_comm_world_rank (comm, source);
-		}
-		else
-		{
-			world_source = sctk_get_comm_world_rank ( comm, source );
-		}	
-	}
-	else
-	{
-		world_source = SCTK_ANY_SOURCE;
-	}
-	
+	int world_source = (source == SCTK_ANY_SOURCE)?(SCTK_ANY_SOURCE):(sctk_get_comm_world_rank ( comm, source ));
 	int world_destination = sctk_get_comm_world_rank ( comm, destination );
 
 	msg->source_task = world_source;
