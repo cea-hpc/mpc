@@ -1564,6 +1564,7 @@ __INTERNAL__PMPI_Buffer_detach (void *bufferptr, int *size)
   tmp->size = 0;
   tmp->buffer = NULL;
   sctk_spinlock_unlock (&(tmp->lock));
+  
   return MPI_SUCCESS;
 }
 
@@ -1573,111 +1574,114 @@ __INTERNAL__PMPI_Ibsend_test_req (void *buf, int count, MPI_Datatype datatype,
 				  MPI_Request * request, int is_valid_request,
 				  struct MPI_request_struct_s* requests)
 {
-  mpi_buffer_t *tmp;
-  int size;
-  int res;
-  mpi_buffer_overhead_t *head;
-  mpi_buffer_overhead_t *head_next;
-  void *head_buf;
-  mpi_buffer_overhead_t *found = NULL;
-  //~ get the pack size
+	mpi_buffer_t *tmp;
+	int size;
+	int res;
+	mpi_buffer_overhead_t *head;
+	mpi_buffer_overhead_t *head_next;
+	void *head_buf;
+	mpi_buffer_overhead_t *found = NULL;
+	//~ get the pack size
 
-  res = __INTERNAL__PMPI_Pack_size (count, datatype, comm, &size);
-  if (res != MPI_SUCCESS)
-    {
-      return res;
-    }
-
-  if (size % sizeof (mpi_buffer_overhead_t))
-    {
-      size +=
-	sizeof (mpi_buffer_overhead_t) -
-	(size % sizeof (mpi_buffer_overhead_t));
-    }
-  assume (size % sizeof (mpi_buffer_overhead_t) == 0);
-
-  sctk_nodebug ("MSG size %d", size);
-
-  PMPC_Get_buffers (&tmp);
-  sctk_spinlock_lock (&(tmp->lock));
-
-  if (tmp->buffer == NULL)
-    {
-      sctk_spinlock_unlock (&(tmp->lock));
-      MPI_ERROR_REPORT (comm, MPI_ERR_BUFFER, "No buffer available");
-    }
-
-  found = SCTK__MPI_Compact_buffer (size, tmp);
-  sctk_nodebug("found = %d", found);
-  if (found)
-    {
-      int position = 0;
-      head = found;
-      head_buf = (char *) head + sizeof (mpi_buffer_overhead_t);
-
-      assume (head->request == MPI_REQUEST_NULL);
-
-      if (head->size >= size + (int)sizeof (mpi_buffer_overhead_t))
+	res = __INTERNAL__PMPI_Pack_size (count, datatype, comm, &size);
+	
+	if (res != MPI_SUCCESS)
 	{
-	  int old_size;
-	  old_size = head->size;
-	  head->size = size;
-	  head_next = SCTK__buffer_next_header (head, tmp);
-	  head_next->size = old_size - size - sizeof (mpi_buffer_overhead_t);
-	  head_next->request = MPI_REQUEST_NULL;
-	  sctk_nodebug ("SPLIT Create new buffer of size %d old %d",
+		return res;
+	}
+
+	if (size % sizeof (mpi_buffer_overhead_t))
+	{
+		size +=
+		sizeof (mpi_buffer_overhead_t) -
+		(size % sizeof (mpi_buffer_overhead_t));
+	}
+	assume (size % sizeof (mpi_buffer_overhead_t) == 0);
+
+	sctk_nodebug ("MSG size %d", size);
+
+	PMPC_Get_buffers (&tmp);
+	sctk_spinlock_lock_yield (&(tmp->lock));
+
+	if (tmp->buffer == NULL)
+	{
+		sctk_spinlock_unlock (&(tmp->lock));
+		MPI_ERROR_REPORT (comm, MPI_ERR_BUFFER, "No buffer available");
+	}
+
+	found = SCTK__MPI_Compact_buffer (size, tmp);
+
+	sctk_nodebug("found = %d", found);
+	
+	if (found)
+	{
+		int position = 0;
+		head = found;
+		head_buf = (char *) head + sizeof (mpi_buffer_overhead_t);
+
+		assume (head->request == MPI_REQUEST_NULL);
+
+		if (head->size >= size + (int)sizeof (mpi_buffer_overhead_t))
+		{
+			int old_size;
+			old_size = head->size;
+			head->size = size;
+			head_next = SCTK__buffer_next_header (head, tmp);
+			head_next->size = old_size - size - sizeof (mpi_buffer_overhead_t);
+			head_next->request = MPI_REQUEST_NULL;
+			sctk_nodebug ("SPLIT Create new buffer of size %d old %d",
 			head_next->size, old_size);
+		}
+
+		sctk_nodebug ("CHUNK %p<%p-%p<%p", tmp->buffer, head,
+		SCTK__buffer_next_header (head, tmp),
+		(void *) ((unsigned long) tmp->buffer + tmp->size));
+
+		res =
+		__INTERNAL__PMPI_Pack (buf, count, datatype, head_buf, head->size,
+		&position, comm);
+		if (res != MPI_SUCCESS)
+		{
+			sctk_spinlock_unlock (&(tmp->lock));
+			return res;
+		}
+		
+		assume (position <= size);
+
+
+		res = __INTERNAL__PMPI_Isend_test_req (head_buf, position, MPI_PACKED, dest, tag, comm, &(head->request), 0,requests);
+
+		/*       fprintf(stderr,"Add request %d %d\n",head->request,res); */
+
+		if (res != MPI_SUCCESS)
+		{
+			sctk_spinlock_unlock (&(tmp->lock));
+			return res;
+		}
+
+		if(is_valid_request == 1){
+			MPI_internal_request_t* tmp_request;
+
+			tmp_request = __sctk_convert_mpc_request_internal (request,requests);
+			tmp_request->req.completion_flag = SCTK_MESSAGE_DONE;
+
+		} else {
+			//	*request = MPI_REQUEST_NULL;
+			MPI_internal_request_t* tmp_request;
+			__sctk_new_mpc_request (request,requests);
+			tmp_request = __sctk_convert_mpc_request_internal (request,requests);
+			tmp_request->req.completion_flag = SCTK_MESSAGE_DONE;
+		}
+
+
 	}
-
-      sctk_nodebug ("CHUNK %p<%p-%p<%p", tmp->buffer, head,
-		    SCTK__buffer_next_header (head, tmp),
-		    (void *) ((unsigned long) tmp->buffer + tmp->size));
-
-      res =
-	__INTERNAL__PMPI_Pack (buf, count, datatype, head_buf, head->size,
-			       &position, comm);
-      if (res != MPI_SUCCESS)
+	else
 	{
-	  sctk_spinlock_unlock (&(tmp->lock));
-	  return res;
-	}
-      assume (position <= size);
-
-
-      res = __INTERNAL__PMPI_Isend_test_req (head_buf, position, MPI_PACKED, dest, tag, comm, &(head->request), 0,requests);
-
-/*       fprintf(stderr,"Add request %d %d\n",head->request,res); */
-
-      if (res != MPI_SUCCESS)
-	{
-	  sctk_spinlock_unlock (&(tmp->lock));
-	  return res;
+		MPI_ERROR_REPORT (comm, MPI_ERR_BUFFER, "No space left in buffer");
 	}
 
-      if(is_valid_request == 1){
-        MPI_internal_request_t* tmp_request;
-
-        tmp_request = __sctk_convert_mpc_request_internal (request,requests);
-        tmp_request->req.completion_flag = SCTK_MESSAGE_DONE;
-
-      } else {
-//	*request = MPI_REQUEST_NULL;
-	MPI_internal_request_t* tmp_request;
-	__sctk_new_mpc_request (request,requests);
-	tmp_request = __sctk_convert_mpc_request_internal (request,requests);
-	tmp_request->req.completion_flag = SCTK_MESSAGE_DONE;
-      }
-
-
-    }
-  else
-    {
-      sctk_spinlock_unlock (&(tmp->lock));
-      MPI_ERROR_REPORT (comm, MPI_ERR_BUFFER, "No space left in buffer");
-    }
-
-  sctk_spinlock_unlock (&(tmp->lock));
-  return MPI_SUCCESS;
+	sctk_spinlock_unlock (&(tmp->lock));
+	return MPI_SUCCESS;
 }
 
 static int
@@ -2000,6 +2004,7 @@ static int __INTERNAL__PMPI_Wait (MPI_Request * request, MPI_Status * status)
 		res = PMPC_Wait (__sctk_convert_mpc_request (request,requests), status);
 	}
 	__sctk_delete_mpc_request (request,requests);
+	
 	return res;
 }
 
