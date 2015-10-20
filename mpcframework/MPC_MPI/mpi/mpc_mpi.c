@@ -14998,6 +14998,14 @@ PMPI_Graph_create (MPI_Comm comm_old, int nnodes, int *index, int *edges,
   if((nnodes < 0) || (nnodes > size)){
         MPI_ERROR_REPORT (comm_old, MPI_ERR_ARG, "");
   }
+  
+  if( nnodes == 0 )
+  {
+	*comm_graph = MPI_COMM_NULL;  
+	return MPI_SUCCESS;
+  }
+  
+  
   nb_edge = index[nnodes -1];
   for(i = 0; i < nb_edge; i++){
 	  if(edges[i] < 0){
