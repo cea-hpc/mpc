@@ -2945,8 +2945,8 @@ void sctk_probe_source_tag_func ( int destination, int source, int tag,
 	sctk_internal_ptp_t *dest_ptp;
 	sctk_internal_ptp_t *src_ptp = NULL;
 	
-	int world_source = (source == SCTK_ANY_SOURCE)?(SCTK_ANY_SOURCE):(sctk_get_comm_world_rank ( comm, source ));
-	int world_destination = sctk_get_comm_world_rank ( comm, destination );
+	int world_source = source;
+	int world_destination = destination;
 
 	msg->source_task = world_source;
 	msg->destination_task = world_destination;

@@ -4852,17 +4852,36 @@ __MPC_Probe (int source, int tag, MPC_Comm comm, MPC_Status * status,
 	     sctk_task_specific_t * task_specific)
 {
   MPC_probe_struct_t probe_struct;
-  __MPC_Comm_rank (comm, &probe_struct.destination, task_specific);
+  int comm_rank = -1;
+  
+  __MPC_Comm_rank (comm, &comm_rank, task_specific);
 
 #ifdef MPC_LOG_DEBUG
   mpc_log_debug (comm, "MPC_Probe source=%d tag=%d", source, tag);
 #endif
-  probe_struct.source = source;
+   if( source != SCTK_ANY_SOURCE )
+   {
+		   if( sctk_is_inter_comm(comm) )
+		   {
+				   probe_struct.source = sctk_get_remote_comm_world_rank (comm, source);
+		   }
+		   else
+		   {
+				   probe_struct.source =  sctk_get_comm_world_rank ( comm, source );
+		   }       
+   }
+   else
+   {
+		   probe_struct.source =  SCTK_ANY_SOURCE;
+   }
+  
+  probe_struct.destination =  sctk_get_comm_world_rank ( comm, comm_rank );
+
   probe_struct.tag = tag;
   probe_struct.comm = comm;
   probe_struct.status = status;
 
-  MPC_Iprobe_inter (source, probe_struct.destination, tag, comm,
+  MPC_Iprobe_inter ( probe_struct.source, probe_struct.destination, tag, comm,
 		    &probe_struct.flag, status);
 
   if (probe_struct.flag != 1)
