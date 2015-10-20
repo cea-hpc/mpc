@@ -15016,12 +15016,7 @@ PMPI_Graph_create (MPI_Comm comm_old, int nnodes, int *index, int *edges,
           }
   }
   for (i = 0; i < nnodes; i++){
-    int j; 
-    for(j = first_edge; j < index[i]; j++){
-          if(edges[j] == i){
-                MPI_ERROR_REPORT (comm_old, MPI_ERR_ARG, "");
-          }
-    }
+    int j;
     first_edge = index[i];
   }
   }
