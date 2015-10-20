@@ -10255,10 +10255,10 @@ static int SCTK__MPI_Comm_communicator_dup (MPI_Comm comm, MPI_Comm newcomm)
 
 		topo_new->data.graph.nnodes = topo_old->data.graph.nnodes;
 		topo_new->data.graph.reorder = topo_old->data.graph.reorder;
-		topo_new->data.graph.index = sctk_malloc (topo_old->data.graph.nnodes * sizeof (int));
-		memcpy (topo_new->data.graph.index, topo_old->data.graph.index, topo_old->data.graph.nnodes * sizeof (int));
-		topo_new->data.graph.edges = sctk_malloc (topo_old->data.graph.nnodes * sizeof (int));
-		memcpy (topo_new->data.graph.edges, topo_old->data.graph.edges, topo_old->data.graph.nnodes * sizeof (int));
+		topo_new->data.graph.index = sctk_malloc ( topo_old->data.graph.nindex * sizeof (int));
+		memcpy (topo_new->data.graph.index, topo_old->data.graph.index,  topo_old->data.graph.nindex * sizeof (int));
+		topo_new->data.graph.edges = sctk_malloc (topo_old->data.graph.nedges * sizeof (int));
+		memcpy (topo_new->data.graph.edges, topo_old->data.graph.edges, topo_old->data.graph.nedges * sizeof (int));
 
 		topo_new->data.graph.nedges = topo_old->data.graph.nedges;
 		topo_new->data.graph.nindex = topo_old->data.graph.nindex;
