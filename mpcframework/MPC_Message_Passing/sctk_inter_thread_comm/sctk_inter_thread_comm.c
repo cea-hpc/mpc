@@ -2096,6 +2096,8 @@ static inline sctk_msg_list_t *sctk_perform_messages_search_matching (
 		{
 			/* update the status with ERR_TYPE if datatypes don't match*/
 			#ifdef MPC_MPI
+			
+			
 			if ( header->datatype != header_found->datatype &&
 			        /* See page 33 of 3.0 PACKED and BYTE are exceptions */
 			        header->datatype != MPC_PACKED && header_found->datatype != MPC_PACKED &&
@@ -2103,7 +2105,7 @@ static inline sctk_msg_list_t *sctk_perform_messages_search_matching (
 			        header->msg_size > 0 &&
 			        header_found->msg_size > 0
 			   )
-			{
+			{				
 				if ( sctk_datatype_is_common ( header->datatype ) && sctk_datatype_is_common ( header_found->datatype ) )
 				{
 			

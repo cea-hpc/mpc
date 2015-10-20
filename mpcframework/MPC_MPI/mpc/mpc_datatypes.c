@@ -785,6 +785,7 @@ void sctk_derived_datatype_display( sctk_derived_datatype_t * target_type )
 {
 	sctk_error("============DERIVED===================");
 	sctk_error("TYPE %d", target_type->id );
+	sctk_error("NAME %s", sctk_datype_get_name( target_type->id ) );
 	sctk_error("SIZE %ld", target_type->size );
 	sctk_error("REF_COUNT %ld", target_type->ref_count );
 	sctk_error("COUNT %ld", target_type->count );

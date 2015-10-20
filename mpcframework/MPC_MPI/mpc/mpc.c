@@ -6735,9 +6735,7 @@ PMPC_Comm_split (MPC_Comm comm, int color, int key, MPC_Comm * comm_out)
 	color_tab = (int *) sctk_malloc (size * sizeof (int));
 
 	tab_this.rank = rank;
-	
-	sctk_error("SETTING RANK on %d at %d color %d key %d", comm, rank , color, key);
-	
+
 	tab_this.color = color;
 	tab_this.key = key;
 	sctk_nodebug("Allgather...");

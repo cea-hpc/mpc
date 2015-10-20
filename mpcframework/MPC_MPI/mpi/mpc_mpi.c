@@ -3659,7 +3659,11 @@ static int __INTERNAL__PMPI_Type_struct(int count, int blocklens[], MPI_Aint ind
 
 
 	/* Set the struct type as padded to return the UB in MPI_Type_size */
-	PMPC_Type_flag_padded( *newtype );
+	
+	if( did_pad_struct )
+	{
+		PMPC_Type_flag_padded( *newtype );
+	}
 	
 	/*   sctk_nodebug("new_type %d",* newtype); */
 	/*   sctk_nodebug("final new_lb %d,%d new_ub %d %d",new_lb,new_is_lb,new_ub,new_is_ub); */
