@@ -4695,6 +4695,9 @@ int PMPC_Recv (void *buf, mpc_msg_count count, MPC_Datatype datatype, int source
 
 int PMPC_Status_set_elements_x(MPC_Status * status, MPC_Datatype datatype, MPC_Count count )
 {
+	if( status == MPC_STATUS_IGNORE )
+		MPC_ERROR_SUCESS();
+	
 	size_t elem_size = 0;
 	PMPC_Type_size (datatype, &elem_size);
 	status->size = elem_size * count;
