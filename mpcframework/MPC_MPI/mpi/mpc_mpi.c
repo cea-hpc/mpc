@@ -11249,6 +11249,34 @@ __INTERNAL__PMPI_Cart_sub (MPI_Comm comm, int *remain_dims,
 			sctk_spinlock_unlock (&(topo->lock));
 			return res;
 		}
+		
+		
+		int has_a_dim_left = 0;
+		
+		for (i = 0; i < topo->data.cart.ndims; i++)
+		{
+			if (remain_dims[i])
+			{
+				has_a_dim_left = 1;
+				break;
+			}
+		}
+		
+		if( !has_a_dim_left )
+		{
+			if( rank == 0 )
+			{
+				MPI_Comm_dup(MPI_COMM_SELF, comm_new);
+			}
+			else
+			{
+				*comm_new = MPI_COMM_NULL;
+			}
+			
+			sctk_spinlock_unlock (&(topo->lock));
+			return MPI_SUCCESS;
+		}
+		
 
 		nb_comm = 1;
 		for (i = 0; i < topo->data.cart.ndims; i++)
