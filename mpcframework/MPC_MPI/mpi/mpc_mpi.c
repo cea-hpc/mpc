@@ -11088,11 +11088,7 @@ __INTERNAL__PMPI_Cart_shift (MPI_Comm comm, int direction, int displ,
   sctk_spinlock_lock (&(topo->lock));
 
   __INTERNAL__PMPI_Comm_rank (comm, &rank);
-	
-  if (displ == 0)
-  {
-	  MPI_ERROR_REPORT (comm, MPI_ERR_ARG, "Displacement must be < 0 or > 0");
-  }
+
 
   if (topo->type != MPI_CART)
     {
