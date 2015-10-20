@@ -11371,7 +11371,7 @@ __INTERNAL__PMPI_Graph_map (MPI_Comm comm, int nnodes, int *index,
 TODO("Should be optimized")
   __INTERNAL__PMPI_Comm_rank (comm, newrank);
 
-  if (*newrank > nnodes)
+  if (nnodes <= *newrank)
     {
       *newrank = MPI_UNDEFINED;
     }
