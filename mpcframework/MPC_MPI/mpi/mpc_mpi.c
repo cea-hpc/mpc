@@ -14938,6 +14938,13 @@ PMPI_Cart_create (MPI_Comm comm_old, int ndims, int *dims, int *periods,
   {
     MPI_ERROR_REPORT (comm_old, MPI_ERR_DIMS, "");
   }
+  
+  if( size <= ndims )
+  {
+	  *comm_cart = MPI_COMM_NULL;
+	  MPI_ERROR_REPORT (comm_old, MPI_ERR_DIMS, "");
+  }
+  
   else if (ndims >= 1 && 
 	  (periods == NULL || comm_cart == NULL))
   {
