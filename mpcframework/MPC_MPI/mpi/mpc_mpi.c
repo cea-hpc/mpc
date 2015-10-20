@@ -11332,7 +11332,7 @@ __INTERNAL__PMPI_Cart_map (MPI_Comm comm, int ndims, int *dims,
 TODO("Should be optimized")
   res = __INTERNAL__PMPI_Comm_rank (comm, newrank);
 
-  if (*newrank > nnodes)
+  if (*newrank >= nnodes)
     {
       *newrank = MPI_UNDEFINED;
     }
