@@ -89,7 +89,7 @@ void sctk_portals_message_copy ( sctk_message_to_copy_t *tmp )
 		&stuff, // contains message type and pointer to msg (for completion)
 		type);
 
-	if(recver->tail.message_copy != SCTK_MESSAGE_CONTIGUOUS)
+	if(recver->tail.message_type != SCTK_MESSAGE_CONTIGUOUS)
 	{
 		sctk_net_message_copy_from_buffer(payload, tmp, 0);
 		sctk_free(payload);
