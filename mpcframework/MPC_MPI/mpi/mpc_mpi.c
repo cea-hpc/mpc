@@ -2062,11 +2062,18 @@ static int __INTERNAL__PMPI_Testany (int count, MPI_Request * array_of_requests,
   int tmp;
   MPI_request_struct_t *requests;
 
+	if( status != MPC_STATUSES_IGNORE )
+	{
+		status->MPI_ERROR = MPC_SUCCESS;
+	}
+
+
    if( !array_of_requests )
    {
 	   return MPI_SUCCESS;
    }
 
+  
 
   requests = __sctk_internal_get_MPC_requests();
 
@@ -12254,8 +12261,7 @@ PMPI_Waitany (int count, MPI_Request array_of_requests[], int *index,
   int res = MPI_ERR_INTERN;
   res = __INTERNAL__PMPI_Waitany (count, array_of_requests, index, status);
   
-  if((status != MPI_STATUS_IGNORE)
-	&(array_of_requests != NULL) ){
+  if( status != MPI_STATUS_IGNORE ){
     if(status->MPI_ERROR != MPI_SUCCESS){
       res = status->MPI_ERROR;
     }
@@ -12273,8 +12279,7 @@ PMPI_Testany (int count, MPI_Request array_of_requests[], int *index,
   res =
     __INTERNAL__PMPI_Testany (count, array_of_requests, index, flag, status);
  
-  if((status != MPI_STATUS_IGNORE)
-  && (array_of_requests!= NULL) ){
+  if( status != MPI_STATUS_IGNORE ){
     if((status->MPI_ERROR != MPI_SUCCESS) && (status->MPI_ERROR != MPI_ERR_PENDING)){
       res = status->MPI_ERROR;
     }
