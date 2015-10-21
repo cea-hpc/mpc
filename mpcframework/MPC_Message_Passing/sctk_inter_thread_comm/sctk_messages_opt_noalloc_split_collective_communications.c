@@ -282,6 +282,8 @@ static void sctk_barrier_opt_noalloc_split_messages ( const sctk_communicator_t 
 			                                        1,
 			                                        1 );
 		}
+		
+		
 
 		sctk_opt_noalloc_split_messages_wait ( &table );
 	}

@@ -32,7 +32,7 @@
 
 /************************** MACROS *************************/
 /** define the max number of communicators in the common table **/
-#define SCTK_MAX_COMMUNICATOR_TAB 32
+#define SCTK_MAX_COMMUNICATOR_TAB 64
 
 /******************************** STRUCTURE *********************************/
 /**

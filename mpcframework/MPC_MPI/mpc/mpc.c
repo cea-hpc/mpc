@@ -4748,7 +4748,7 @@ int PMPC_Cancel (MPC_Request * request)
 }
 
 
-static inline int MPC_Iprobe_inter (const int source, const int destination,
+static inline int MPC_Iprobe_inter (const int asource, const int destination,
 				    const int tag, const MPC_Comm comm,
 				    int *flag, MPC_Status * status)
 {
@@ -4761,6 +4761,8 @@ static inline int MPC_Iprobe_inter (const int source, const int destination,
 
 	sctk_assert (status != MPC_STATUS_IGNORE);
 
+    int source = asource;
+
 
 	/*handler for MPC_PROC_NULL*/
 	if (source == MPC_PROC_NULL)
@@ -4772,6 +4774,23 @@ static inline int MPC_Iprobe_inter (const int source, const int destination,
 		status->MPC_ERROR = MPC_SUCCESS;
 		MPC_ERROR_SUCESS ();
 	}
+
+	if( source != SCTK_ANY_SOURCE )
+	{
+		   if( sctk_is_inter_comm(comm) )
+		   {
+				   source = sctk_get_remote_comm_world_rank (comm, asource);
+		   }
+		   else
+		   {
+				   source =  sctk_get_comm_world_rank ( comm, asource );
+		   }       
+	}
+	else
+	{
+		   source =  SCTK_ANY_SOURCE;
+	}
+  
 
 	/* Value to check that the case was handled by
 	 * one of the if in this function */
@@ -4803,8 +4822,15 @@ static inline int MPC_Iprobe_inter (const int source, const int destination,
 	if( __did_process )
 	{
 		/* Do not forget to resolve rank here (to match communicator) */
-		status->MPC_SOURCE = sctk_get_rank( comm, msg.source_task );
-		
+	   if( sctk_is_inter_comm(comm) )
+	   {
+			   status->MPC_SOURCE = sctk_get_remote_comm_world_rank (comm, msg.source_task);
+	   }
+	   else
+	   {
+			   status->MPC_SOURCE =  sctk_get_comm_world_rank ( comm, msg.source_task );
+	   }       
+
 		status->MPC_TAG = msg.message_tag;
 		status->size = (mpc_msg_count) msg.msg_size;
 		status->MPC_ERROR = MPC_ERR_PENDING;
