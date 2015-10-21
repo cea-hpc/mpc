@@ -816,7 +816,7 @@ void sctk_derived_datatype_display( sctk_derived_datatype_t * target_type )
 	printf("TYP : [");
 	for( i = 0 ; i < nd ; i++ )
 	{
-		printf("[%d] %d , ", i, target_type->context.array_of_types[i] );
+		printf("[%d] %d (%s), ", i, target_type->context.array_of_types[i], sctk_datype_get_name( target_type->context.array_of_types[i] ) );
 	}
 	printf("]\n");
 	sctk_error("==============================================");
