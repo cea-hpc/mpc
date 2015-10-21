@@ -2950,6 +2950,8 @@ void sctk_probe_source_tag_func ( int destination, int source, int tag,
 	int world_source = source;
 	int world_destination = destination;
 
+	//sctk_error("%d === %d ( %d )", world_source, world_destination, tag );
+
 	msg->source_task = world_source;
 	msg->destination_task = world_destination;
 	msg->message_tag = tag;

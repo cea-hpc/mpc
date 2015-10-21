@@ -4748,7 +4748,7 @@ int PMPC_Cancel (MPC_Request * request)
 }
 
 
-static inline int MPC_Iprobe_inter (const int asource, const int destination,
+static inline int MPC_Iprobe_inter (const int asource, const int adestination,
 				    const int tag, const MPC_Comm comm,
 				    int *flag, MPC_Status * status)
 {
@@ -4762,7 +4762,7 @@ static inline int MPC_Iprobe_inter (const int asource, const int destination,
 	sctk_assert (status != MPC_STATUS_IGNORE);
 
     int source = asource;
-
+    int destination = sctk_get_comm_world_rank ( comm, adestination );
 
 	/*handler for MPC_PROC_NULL*/
 	if (source == MPC_PROC_NULL)
@@ -4775,7 +4775,8 @@ static inline int MPC_Iprobe_inter (const int asource, const int destination,
 		MPC_ERROR_SUCESS ();
 	}
 
-	if( source != SCTK_ANY_SOURCE )
+
+	if( source != MPC_ANY_SOURCE )
 	{
 		   if( sctk_is_inter_comm(comm) )
 		   {
@@ -4788,9 +4789,8 @@ static inline int MPC_Iprobe_inter (const int asource, const int destination,
 	}
 	else
 	{
-		   source =  SCTK_ANY_SOURCE;
+		   source =  MPC_ANY_SOURCE;
 	}
-  
 
 	/* Value to check that the case was handled by
 	 * one of the if in this function */
@@ -4819,18 +4819,9 @@ static inline int MPC_Iprobe_inter (const int asource, const int destination,
 	}
 
 	
-	if( __did_process )
+	if( __did_process  )
 	{
-		/* Do not forget to resolve rank here (to match communicator) */
-	   if( sctk_is_inter_comm(comm) )
-	   {
-			   status->MPC_SOURCE = sctk_get_remote_comm_world_rank (comm, msg.source_task);
-	   }
-	   else
-	   {
-			   status->MPC_SOURCE =  sctk_get_comm_world_rank ( comm, msg.source_task );
-	   }       
-
+	    status->MPC_SOURCE =  sctk_get_rank ( comm, msg.source_task );
 		status->MPC_TAG = msg.message_tag;
 		status->size = (mpc_msg_count) msg.msg_size;
 		status->MPC_ERROR = MPC_ERR_PENDING;
@@ -6757,10 +6748,9 @@ PMPC_Comm_split (MPC_Comm comm, int color, int key, MPC_Comm * comm_out)
 
 	mpc_check_comm (comm, comm);
 
-#ifdef MPC_LOG_DEBUG
-	mpc_log_debug (comm, "MPC_Comm_split color=%d key=%d out_comm=%p",
+	sctk_nodebug ("MPC_Comm_split color=%d key=%d out_comm=%p",
 	color, key, comm_out);
-#endif
+
 
 	__MPC_Comm_size (comm, &size);
 	__MPC_Comm_rank (comm, &rank, task_specific);
