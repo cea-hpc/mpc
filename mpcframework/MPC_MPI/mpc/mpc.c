@@ -3775,8 +3775,6 @@ static inline int __MPC_Test (MPC_Request * request, int *flag, MPC_Status * sta
 	if ((sctk_mpc_completion_flag(request) == SCTK_MESSAGE_PENDING) && (!sctk_mpc_message_is_null(request)))
 	{
 		sctk_mpc_perform_messages(request);
-      /* There is no more needs for thread switching here */
-      /* sctk_thread_yield (); */
 	}
 
 	//~ request->completion_flag != 0
@@ -3784,6 +3782,11 @@ static inline int __MPC_Test (MPC_Request * request, int *flag, MPC_Status * sta
 	{
 		*flag = 1;
 		sctk_mpc_commit_status_from_request(request,status);
+	}
+	else
+	{
+		/* No Match Yield */
+		sctk_thread_yield ();
 	}
 
 	//~ request->is_null > 0
@@ -3824,6 +3827,11 @@ static inline int __MPC_Test_check (MPC_Request * request, int *flag, MPC_Status
 	{
 		*flag = 1;
 		sctk_mpc_commit_status_from_request(request,status);
+	}
+	else
+	{
+		/* No Match Yield */
+		sctk_thread_yield ();
 	}
 
 	if((status != MPC_STATUS_IGNORE) && (*flag == 0)){
