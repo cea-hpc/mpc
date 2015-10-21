@@ -11773,7 +11773,7 @@ __INTERNAL__PMPI_Finalize (void)
   }
 
   MPI_Comm c = MPI_COMM_SELF;
-  PMPI_Comm_free( &c );
+  PMPC_Comm_free( &c );
 
   if(is_finalized != 0){
     MPI_ERROR_REPORT (MPI_COMM_WORLD, MPI_ERR_OTHER, "MPI_Finalize issue");
@@ -14787,7 +14787,7 @@ PMPI_Comm_free (MPI_Comm * comm)
       MPI_ERROR_REPORT (MPI_COMM_WORLD, MPI_ERR_COMM, "");
     }
  
-  if (*comm == MPI_COMM_WORLD)
+  if ((*comm == MPI_COMM_WORLD) || (*comm == MPI_COMM_SELF))
     {
        MPI_ERROR_REPORT (MPI_COMM_WORLD, MPI_ERR_COMM, "");
     }

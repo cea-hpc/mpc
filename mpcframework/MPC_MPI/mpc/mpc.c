@@ -6665,10 +6665,12 @@ __MPC_Comm_free (MPC_Comm * comm)
 {
   sctk_task_specific_t *task_specific;
   task_specific = __MPC_get_task_specific ();
+  
   if (*comm == MPC_COMM_WORLD)
   {
       MPC_ERROR_SUCESS ();
-    }
+  }
+  
   MPC_Comm old_comm = *comm;
   *comm = MPC_COMM_NULL;
   INFO("Comm free disabled")
