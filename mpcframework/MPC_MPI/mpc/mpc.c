@@ -4748,7 +4748,7 @@ int PMPC_Cancel (MPC_Request * request)
 }
 
 
-static inline int MPC_Iprobe_inter (const int asource, const int adestination,
+static inline int MPC_Iprobe_inter (const int source, const int destination,
 				    const int tag, const MPC_Comm comm,
 				    int *flag, MPC_Status * status)
 {
@@ -4761,9 +4761,6 @@ static inline int MPC_Iprobe_inter (const int asource, const int adestination,
 
 	sctk_assert (status != MPC_STATUS_IGNORE);
 
-    int source = asource;
-    int destination = sctk_get_comm_world_rank ( comm, adestination );
-
 	/*handler for MPC_PROC_NULL*/
 	if (source == MPC_PROC_NULL)
 	{
@@ -4773,23 +4770,6 @@ static inline int MPC_Iprobe_inter (const int asource, const int adestination,
 		status->size = 0;
 		status->MPC_ERROR = MPC_SUCCESS;
 		MPC_ERROR_SUCESS ();
-	}
-
-
-	if( source != MPC_ANY_SOURCE )
-	{
-		   if( sctk_is_inter_comm(comm) )
-		   {
-				   source = sctk_get_remote_comm_world_rank (comm, asource);
-		   }
-		   else
-		   {
-				   source =  sctk_get_comm_world_rank ( comm, asource );
-		   }       
-	}
-	else
-	{
-		   source =  MPC_ANY_SOURCE;
 	}
 
 	/* Value to check that the case was handled by
@@ -4847,6 +4827,26 @@ int PMPC_Iprobe (int source, int tag, MPC_Comm comm, int *flag, MPC_Status * sta
 	
 	mpc_check_comm (comm, comm);
 	__MPC_Comm_rank (comm, &destination, task_specific);
+	
+	/* Translate ranks */
+
+	if( source != MPC_ANY_SOURCE )
+	{
+		   if( sctk_is_inter_comm(comm) )
+		   {
+				   source = sctk_get_remote_comm_world_rank (comm, source);
+		   }
+		   else
+		   {
+				   source =  sctk_get_comm_world_rank ( comm, source );
+		   }       
+	}
+	else
+	{
+		   source =  MPC_ANY_SOURCE;
+	}
+
+	destination = sctk_get_comm_world_rank ( comm, destination );
 	
 	res = MPC_Iprobe_inter (source, destination, tag, comm, flag, status);
 	
