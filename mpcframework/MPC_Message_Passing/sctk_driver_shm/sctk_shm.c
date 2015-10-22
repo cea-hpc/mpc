@@ -102,6 +102,7 @@ sctk_network_notify_idle_message_shm ( sctk_rail_info_t *rail )
 		    abort();
         }
     }
+	sctk_network_frag_msg_shm_idle(1);
 }
 
 static void sctk_network_notify_recv_message_shm ( sctk_thread_ptp_message_t *msg, sctk_rail_info_t *rail )

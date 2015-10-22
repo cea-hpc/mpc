@@ -34,12 +34,12 @@ sctk_shm_init_send_frag_msg(size_t size, int *key)
     sctk_shm_rdv_info_t* info = NULL;
 
     *key = ( sctk_local_process_rank << 8 ) + sctk_shm_process_msg_id;
+    sctk_shm_process_msg_id = (sctk_shm_process_msg_id+1) % SCTK_SHM_MAX_PROC_ID;
 
     sctk_spinlock_lock(&sckt_shm_frag_hashtable_lock); 
     while(sctk_shm_frag_get_elt_from_hash(*key))
     {
-	fprintf(stderr, "lolilol");
-        sctk_shm_process_msg_id = (sctk_shm_process_msg_id + 1) % SCTK_SHM_MAX_SEQ_NUMBER; 
+    	sctk_shm_process_msg_id = (sctk_shm_process_msg_id+1) % SCTK_SHM_MAX_PROC_ID;
         *key = ( sctk_local_process_rank << 8 ) + sctk_shm_process_msg_id;
     }
     
@@ -61,15 +61,18 @@ sctk_shm_init_recv_frag_msg(int key, size_t size)
 {
    sctk_shm_rdv_info_t* info = NULL;
 
-   sctk_spinlock_lock(&sckt_shm_frag_hashtable_lock);
 
    if(sctk_shm_frag_get_elt_from_hash(key))
         assume_m(0, "msg already commit to hash table ...");
 
    info = sctk_malloc(sizeof(sctk_shm_rdv_info_t)+size);
-   sctk_shm_frag_add_elt_to_hash(key,info);
 
-   sctk_spinlock_unlock(&sckt_shm_frag_hashtable_lock); 
+   while(sctk_shm_frag_get_elt_from_hash(key))
+	;
+
+   sctk_spinlock_lock(&sckt_shm_frag_hashtable_lock);
+   sctk_shm_frag_add_elt_to_hash(key,info);
+   sctk_spinlock_unlock(&sckt_shm_frag_hashtable_lock);
     
    info->size_total = size - sizeof(sctk_thread_ptp_message_t);
    info->size_compute = 0;
@@ -134,7 +137,6 @@ sctk_network_frag_msg_first_send(sctk_thread_ptp_message_t* msg, int dest)
    cell->msg_type = SCTK_SHM_FRAG;
    cell->frag_hkey = key;
    sctk_shm_send_cell(cell);       
-   fprintf(stderr, "[%d - %d]\tFirst send ended ...\n", sctk_local_process_rank, key);
    return sctk_shm_send_frag_info;
 }
 
@@ -164,14 +166,12 @@ sctk_network_frag_msg_try_send(sctk_shm_rdv_info_t* infos, int retry)
 
    if(infos->size_total == infos->size_compute)
    {
-	fprintf(stderr, "call complete and free\n");
         sctk_thread_ptp_message_t *msg = infos->header;
         sctk_shm_frag_del_elt_from_hash(infos->key);
         sctk_free(infos);
         sctk_complete_and_free_message(msg) ;
    }
 
-   fprintf(stderr, "[%d - %d]\tTry send ended ...\n", sctk_local_process_rank, infos->key);
    return (!retry) ? retry : old_value-retry;
 }
 
@@ -181,7 +181,6 @@ sctk_network_frag_msg_shm_idle(int max_try)
     sctk_shm_rdv_info_t* infos = NULL;
 
     MPC_HT_ITER( &sctk_shm_frag_hastable_ptr, infos )
-    fprintf(stderr, "[%d - %d]\tIdle frag ended ...\n", sctk_local_process_rank, infos->key);
     sctk_network_frag_msg_try_send(infos, 1);
     MPC_HT_ITER_END
 }
@@ -223,21 +222,15 @@ sctk_network_frag_msg_shm_recv(sctk_shm_cell_t* cell, int enabled_copy)
       /* copy and reinit ptp thread header */
       msg = sctk_shm_recv_frag_info->header;
       memcpy( msg, cell->data, sizeof(sctk_thread_ptp_message_body_t));
-      fprintf(stderr, "[%d - %d]\tRecv first frag ended ...\n", sctk_local_process_rank, hkey);
-      fprintf(stderr, "%lu, %lu\n", sctk_shm_recv_frag_info->size_total, sctk_shm_recv_frag_info->size_compute);
    }
    else
    {
-      fprintf(stderr, "Recv next frag begin ...\n");
-      fprintf(stderr, "[%d - %d] %lu, %lu\n", sctk_local_process_rank, hkey, sctk_shm_recv_frag_info->size_total, sctk_shm_recv_frag_info->size_compute);
       size = sctk_shm_recv_frag_info->size_total - sctk_shm_recv_frag_info->size_compute;
       size = (size < SCTK_SHM_CELL_SIZE) ? size : SCTK_SHM_CELL_SIZE;
       buffer_in = sctk_shm_recv_frag_info->msg + sctk_shm_recv_frag_info->size_compute;
       buffer_out = cell->data;
-      fprintf(stderr, "Recv next frag memcpy ... %lu \n", size);
       memcpy(buffer_in, buffer_out, size);
       sctk_shm_recv_frag_info->size_compute += size;
-      fprintf(stderr, "Recv next frag ended ...\n");
    }
 
    sctk_shm_release_cell(cell); 
@@ -245,15 +238,12 @@ sctk_network_frag_msg_shm_recv(sctk_shm_cell_t* cell, int enabled_copy)
    if(sctk_shm_recv_frag_info->size_total != sctk_shm_recv_frag_info->size_compute)
 	return NULL;
 
-      	fprintf(stderr, "Recv frag full msg ...\n");
         msg = sctk_shm_recv_frag_info->header;
       	msg->body.completion_flag = NULL;
      	msg->tail.message_type = SCTK_MESSAGE_NETWORK;
       	sctk_rebuild_header(msg);
       	sctk_reinit_header(msg, sctk_shm_rdv_free, sctk_shm_rdv_message_copy);
         sctk_shm_frag_del_elt_from_hash(hkey);
-   	fprintf(stderr, "RECV msg addr : %p\n", msg);
-       // sctk_free(sctk_shm_recv_frag_info);
 	return msg;
 }
 
