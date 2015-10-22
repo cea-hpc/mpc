@@ -387,6 +387,9 @@ typedef struct mpcomp_thread_s
     /* Threadprivate */
     struct common_table *th_pri_common;
     struct private_common *th_pri_head;
+
+    /* reduction method */
+    int reduction_method;
 } mpcomp_thread_t;
 
 
@@ -651,6 +654,8 @@ typedef struct mpcomp_thread_s
       for (i = 0; i < KMP_HASH_TABLE_SIZE; ++i)
         t->th_pri_common->data[ i ] = 0;
       t->th_pri_head = NULL;
+
+      t->reduction_method = 0;
      }
 
 
