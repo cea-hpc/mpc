@@ -165,6 +165,18 @@ extern "C"
      } mpcomp_affinity_t ;
 
 
+/********************
+ ****** Threadprivate 
+ ********************/
+#define KMP_HASH_TABLE_LOG2 9                               /* log2 of the hash table size */
+#define KMP_HASH_TABLE_SIZE (1 << KMP_HASH_TABLE_LOG2)      /* size of the hash table */
+#define KMP_HASH_SHIFT      3                               /* throw away this many low bits from the address */
+#define KMP_HASH(x)         ((((uint64_t) x) >> KMP_HASH_SHIFT) & (KMP_HASH_TABLE_SIZE-1))
+
+struct common_table {
+    struct private_common *data[ KMP_HASH_TABLE_SIZE ];
+};
+
 /*****************
  ****** STRUCTURES 
  *****************/
@@ -371,6 +383,10 @@ typedef struct mpcomp_thread_s
 	struct mpcomp_task_list_s *tied_tasks;   /* List of suspended tied tasks */
 	int *larceny_order;
 #endif //MPCOMP_TASK
+
+    /* Threadprivate */
+    struct common_table *th_pri_common;
+    struct private_common *th_pri_head;
 } mpcomp_thread_t;
 
 
@@ -630,6 +646,11 @@ typedef struct mpcomp_thread_s
 	  t->current_task = NULL;
 	  t->larceny_order = NULL;
 #endif /* MPCOMP_TASK */
+
+      t->th_pri_common = (struct common_table *) sctk_malloc(sizeof(struct common_table));
+      for (i = 0; i < KMP_HASH_TABLE_SIZE; ++i)
+        t->th_pri_common->data[ i ] = 0;
+      t->th_pri_head = NULL;
      }
 
 

@@ -225,11 +225,66 @@ typedef kmp_int32 kmp_critical_name[8] ;
 #define KMP_IDENT_BARRIER_IMPL_SINGLE    0x0140
 #define KMP_IDENT_BARRIER_IMPL_WORKSHARE 0x01C0
 
+/*******************************
+  * THREADPRIVATE
+  ******************************/
+/* keeps tracked of threadprivate cache allocations for cleanup later */
+typedef void    (*microtask_t)( int *gtid, int *npr, ... );
+typedef void *(* kmpc_ctor)(void *) ;
+typedef void  (* kmpc_dtor)(void *) ;
+typedef void *(* kmpc_cctor)(void *, void *) ;
+typedef void *(* kmpc_ctor_vec)(void *, size_t) ;
+typedef void  (* kmpc_dtor_vec)(void *, size_t) ;
+typedef void *(* kmpc_cctor_vec)(void *, void *, size_t) ;
+
+typedef struct kmp_cached_addr {
+    void                      **addr;           /* address of allocated cache */
+    struct kmp_cached_addr     *next;           /* pointer to next cached address */
+} kmp_cached_addr_t;
+
+kmp_cached_addr_t  *__kmp_threadpriv_cache_list = NULL; /* list for cleaning */
+
+struct private_common {
+    struct private_common     *next;
+    struct private_common     *link;
+    void                      *gbl_addr;
+    void                      *par_addr;        /* par_addr == gbl_addr for MASTER thread */
+    size_t                     cmn_size;
+};
+
+struct shared_common
+{
+    struct shared_common      *next;
+    struct private_data       *pod_init;
+    void                      *obj_init;
+    void                      *gbl_addr;
+    union {
+        kmpc_ctor              ctor;
+        kmpc_ctor_vec          ctorv;
+    } ct;
+    union {
+        kmpc_cctor             cctor;
+        kmpc_cctor_vec         cctorv;
+    } cct;
+    union {
+        kmpc_dtor              dtor;
+        kmpc_dtor_vec          dtorv;
+    } dt;
+    size_t                     vec_len;
+    int                        is_vec;
+    size_t                     cmn_size;
+};
+
+struct shared_table {
+    struct shared_common *data[ KMP_HASH_TABLE_SIZE ];
+};
+
+struct shared_table __kmp_threadprivate_d_table;
 
 /* MY STRUCTS */
 
 typedef struct wrapper {
-  kmpc_micro f ;
+  microtask_t f ;
   int argc ;
   void ** args ;
 } wrapper_t ;
@@ -242,99 +297,20 @@ typedef struct wrapper {
 extern int __kmp_xchg_fixed32( volatile int * p, int d ) ;
 extern int __kmp_test_then_add32( volatile int * addr, int data ) ;
 extern long __kmp_test_then_add64( volatile long * addr, long data ) ;
-extern double __kmp_test_then_add_real64( volatile double *addr, double data ); 
-
-extern int __kmp_invoke_microtask( 
-    kmpc_micro pkfn, int gtid, int npr, int argc, void *argv[] );
+extern int __kmp_invoke_microtask(kmpc_micro pkfn, int gtid, int npr, int argc, void *argv[] );
 
 void *
 wrapper_function( void * arg ) 
 {
-  int rank ;
-  wrapper_t * w ;
+    int rank;
+    wrapper_t * w;
 
-  rank = mpcomp_get_thread_num() ;
-  w = (wrapper_t *) arg ;
+    rank = mpcomp_get_thread_num();
+    w = (wrapper_t *) arg;
 
-  sctk_nodebug( "[%d] wrapper_function: entering w/ %d arg(s)...",
-     rank, w->argc ) ;
+    __kmp_invoke_microtask( w->f, rank, rank, w->argc, w->args );
 
-#if 0
-  switch( w->argc ) {
-    case 0:
-      w->f( &rank, &rank ) ;
-      break ;
-    case 1:
-      w->f( &rank, &rank, w->args[0] ) ;
-      break ;
-    case 2:
-      w->f( &rank, &rank, w->args[0], w->args[1] ) ;
-      break ;
-    case 3:
-      w->f( &rank, &rank, w->args[0], w->args[1], w->args[2] ) ;
-      break ;
-    case 4:
-      w->f( &rank, &rank, w->args[0], w->args[1], w->args[2], w->args[3] ) ;
-      break ;
-    case 5:
-      w->f( &rank, &rank, w->args[0], w->args[1], w->args[2], w->args[3], w->args[4] ) ;
-      break ;
-    case 6:
-      w->f( &rank, &rank, w->args[0], w->args[1], w->args[2], w->args[3], w->args[4], w->args[5] ) ;
-      break ;
-    case 7:
-      w->f( &rank, &rank, w->args[0], w->args[1], w->args[2], w->args[3], w->args[4], w->args[5], w->args[6] ) ;
-      break ;
-    case 9:
-      w->f( &rank, &rank, w->args[0], w->args[1], w->args[2], w->args[3], w->args[4], w->args[5], w->args[6], w->args[7], w->args[8] ) ;
-      break ;
-    case 10:
-      w->f( &rank, &rank, w->args[0], w->args[1], w->args[2], w->args[3], w->args[4], w->args[5], w->args[6], w->args[7], w->args[8],
-	 w->args[9] ) ;
-      break ;
-    case 11:
-      w->f( &rank, &rank, w->args[0], w->args[1], w->args[2], w->args[3], w->args[4], w->args[5], w->args[6], w->args[7], w->args[8],
-	 w->args[9], w->args[10] ) ;
-      break ;
-    case 12:
-      w->f( &rank, &rank, w->args[0], w->args[1], w->args[2], w->args[3], w->args[4], w->args[5], w->args[6], w->args[7], w->args[8],
-	 w->args[9], w->args[10], w->args[11] ) ;
-      break ;
-    case 13:
-      w->f( &rank, &rank, w->args[0], w->args[1], w->args[2], w->args[3], w->args[4], w->args[5], w->args[6], w->args[7], w->args[8],
-	 w->args[9], w->args[10], w->args[11], w->args[12] ) ;
-      break ;
-    case 18:
-      w->f( &rank, &rank, 
-	  w->args[0], w->args[1], w->args[2], w->args[3], w->args[4], w->args[5], w->args[6], w->args[7], w->args[8], w->args[9], 
-	  w->args[10], w->args[11], w->args[12], w->args[13], w->args[14], w->args[15], w->args[16], w->args[17]
-	  ) ;
-      break ;
-    case 59:
-      w->f( &rank, &rank, 
-	  w->args[0], w->args[1], w->args[2], w->args[3], w->args[4], w->args[5], w->args[6], w->args[7], w->args[8], w->args[9], 
-	  w->args[10], w->args[11], w->args[12], w->args[13], w->args[14], w->args[15], w->args[16], w->args[17], w->args[18], w->args[19], 
-	  w->args[20], w->args[21], w->args[22], w->args[23], w->args[24], w->args[25], w->args[26], w->args[27], w->args[28], w->args[29], 
-	  w->args[30], w->args[31], w->args[32], w->args[33], w->args[34], w->args[35], w->args[36], w->args[37], w->args[38], w->args[39], 
-	  w->args[40], w->args[41], w->args[42], w->args[43], w->args[44], w->args[45], w->args[46], w->args[47], w->args[48], w->args[49], 
-	  w->args[50], w->args[51], w->args[52], w->args[53], w->args[54], w->args[55], w->args[56], w->args[57], w->args[58]
-	  ) ;
-      break ;
-    default:
-      not_reachable() ;
-      break ;
-  }
-#endif
-
-#if 1
-
-  sctk_nodebug( "[%d] wrapper_function: invoking microtask...",
-     rank ) ;
-
-  __kmp_invoke_microtask( w->f, rank, rank, w->argc, w->args ) ;
-#endif
-
-  return NULL ;
+    return NULL ;
 }
 
 /********************************
@@ -1723,19 +1699,72 @@ __kmpc_dispatch_fini_8u( ident_t *loc, kmp_int32 gtid )
 /********************************
   * THREAD PRIVATE DATA SUPPORT
   *******************************/
+struct private_common *
+__kmp_threadprivate_find_task_common( struct common_table *tbl, int gtid, void *pc_addr )
+
+{
+    struct private_common *tn;
+    for (tn = tbl->data[ KMP_HASH(pc_addr) ]; tn; tn = tn->next) 
+    {
+        if (tn->gbl_addr == pc_addr) 
+        {
+            return tn;
+        }   
+    }
+    return 0;
+}
+
+struct private_common *
+kmp_threadprivate_insert( int gtid, void *pc_addr, void *data_addr, size_t pc_size )
+{
+    struct private_common *tn, **tt;
+    static sctk_thread_mutex_t lock = SCTK_THREAD_MUTEX_INITIALIZER;
+    mpcomp_thread_t *t ; 
+    t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
+
+    /* critical section */
+    sctk_thread_mutex_lock (&lock);
+        tn = (struct private_common *) sctk_malloc( sizeof (struct private_common) );
+        tn->gbl_addr = pc_addr;
+        tn->cmn_size = pc_size;
+        tn->par_addr = (void *) sctk_malloc( tn->cmn_size );
+        memcpy(tn->par_addr, pc_addr, pc_size);
+    sctk_thread_mutex_unlock (&lock);
+    /* end critical section */
+    
+    tt = &(t->th_pri_common->data[ KMP_HASH(pc_addr) ]);
+    tn->next = *tt;
+    *tt = tn;
+    tn->link = t->th_pri_head;
+    t->th_pri_head = tn;
+    return tn;
+}
+
+void * 
+__kmpc_threadprivate ( ident_t *loc, kmp_int32 global_tid, void * data, size_t size )
+{
+    void *ret = NULL;
+    struct private_common *tn;
+    mpcomp_thread_t *t ; 
+    t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
+
+    tn = __kmp_threadprivate_find_task_common( t->th_pri_common, global_tid, data );
+    if (!tn)
+    {
+        tn = kmp_threadprivate_insert( global_tid, data, data, size );
+    }
+    
+    ret = tn->par_addr;
+    
+    return ret ;
+}
+
 void
 __kmpc_copyprivate(ident_t *loc, kmp_int32 global_tid, size_t cpy_size, void *cpy_data,
     void (*cpy_func)(void *, void *), kmp_int32 didit )
 {
   not_implemented() ;
 }
-
-typedef void *(* kmpc_ctor)(void *) ;
-typedef void  (* kmpc_dtor)(void *) ;
-typedef void *(* kmpc_cctor)(void *, void *) ;
-typedef void *(* kmpc_ctor_vec)(void *, size_t) ;
-typedef void  (* kmpc_dtor_vec)(void *, size_t) ;
-typedef void *(* kmpc_cctor_vec)(void *, void *, size_t) ;
 
 void
 __kmpc_threadprivate_register( ident_t *loc, void *data, kmpc_ctor ctor, kmpc_cctor cctor,
@@ -1746,12 +1775,36 @@ __kmpc_threadprivate_register( ident_t *loc, void *data, kmpc_ctor ctor, kmpc_cc
 }
 
 void *
-__kmpc_threadprivate_cached( ident_t *loc, kmp_int32 global_tid, void *data, size_t size,
-    void *** cache)
-{
-  sctk_error("Detection of threadprivate variables w/ Intel Compiler: please re-compile with automatic privatization for MPC") ;
-  sctk_abort() ;
-  return NULL ;
+__kmpc_threadprivate_cached( ident_t *loc, kmp_int32 global_tid, void *data, size_t size, void *** cache)
+{  
+  static sctk_thread_mutex_t lock = SCTK_THREAD_MUTEX_INITIALIZER;
+  if (*cache == 0)
+  {
+    sctk_thread_mutex_lock (&lock);
+    if (*cache == 0)
+    {
+        //handle cache to be dealt with later
+        void ** my_cache;
+        my_cache = (void**) malloc(sizeof( void * ) * 8 + sizeof ( kmp_cached_addr_t ));
+        fprintf(stderr, "__kmpc_threadprivate_cached: T#%d allocated cache at address %p\n", global_tid, my_cache);
+        kmp_cached_addr_t *tp_cache_addr;
+        tp_cache_addr = (kmp_cached_addr_t *) & my_cache[8];
+        tp_cache_addr -> addr = my_cache;
+        tp_cache_addr -> next = __kmp_threadpriv_cache_list;
+        __kmp_threadpriv_cache_list = tp_cache_addr;
+        *cache = my_cache;
+    }
+    sctk_thread_mutex_unlock (&lock);
+  }
+
+  void *ret = NULL;
+  if ((ret = (*cache)[ global_tid ]) == 0)
+  {
+      ret = __kmpc_threadprivate( loc, global_tid, data, (size_t) size);
+      (*cache)[ global_tid ] = ret;
+  }
+  
+  return ret;
 }
 
 void
@@ -1760,13 +1813,6 @@ __kmpc_threadprivate_register_vec(ident_t *loc, void *data, kmpc_ctor_vec ctor,
 {
   sctk_error("Detection of threadprivate variables w/ Intel Compiler: please re-compile with automatic privatization for MPC") ;
   sctk_abort() ;
-}
-
-void * 
-__kmpc_threadprivate ( ident_t *loc, kmp_int32 global_tid, void * data, size_t size )
-{
-not_implemented() ;
-return NULL ;
 }
 
 /********************************
