@@ -297,6 +297,7 @@ typedef struct wrapper {
 extern int __kmp_xchg_fixed32( volatile int * p, int d ) ;
 extern int __kmp_test_then_add32( volatile int * addr, int data ) ;
 extern long __kmp_test_then_add64( volatile long * addr, long data ) ;
+extern double __kmp_test_then_add_real64( volatile double *addr, double data );
 extern int __kmp_invoke_microtask(kmpc_micro pkfn, int gtid, int npr, int argc, void *argv[] );
 
 void *
@@ -1766,14 +1767,6 @@ __kmpc_copyprivate(ident_t *loc, kmp_int32 global_tid, size_t cpy_size, void *cp
   not_implemented() ;
 }
 
-void
-__kmpc_threadprivate_register( ident_t *loc, void *data, kmpc_ctor ctor, kmpc_cctor cctor,
-    kmpc_dtor dtor)
-{
-  sctk_error("Detection of threadprivate variables w/ Intel Compiler: please re-compile with automatic privatization for MPC") ;
-  sctk_abort() ;
-}
-
 void *
 __kmpc_threadprivate_cached( ident_t *loc, kmp_int32 global_tid, void *data, size_t size, void *** cache)
 {  
@@ -1805,6 +1798,14 @@ __kmpc_threadprivate_cached( ident_t *loc, kmp_int32 global_tid, void *data, siz
   }
   
   return ret;
+}
+
+void
+__kmpc_threadprivate_register( ident_t *loc, void *data, kmpc_ctor ctor, kmpc_cctor cctor,
+    kmpc_dtor dtor)
+{
+  sctk_error("Detection of threadprivate variables w/ Intel Compiler: please re-compile with automatic privatization for MPC") ;
+  sctk_abort() ;
 }
 
 void
