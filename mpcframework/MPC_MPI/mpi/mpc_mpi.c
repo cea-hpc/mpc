@@ -11772,8 +11772,8 @@ __INTERNAL__PMPI_Finalize (void)
 	NBC_Finalize(&(task_specific->mpc_mpi_data->NBC_Pthread));
   }
 
-  MPI_Comm c = MPI_COMM_SELF;
-  PMPC_Comm_free( &c );
+  /* Clear attributes on COMM_SELF */
+  SCTK__MPI_Attr_clean_communicator (MPI_COMM_SELF);
 
   if(is_finalized != 0){
     MPI_ERROR_REPORT (MPI_COMM_WORLD, MPI_ERR_OTHER, "MPI_Finalize issue");
