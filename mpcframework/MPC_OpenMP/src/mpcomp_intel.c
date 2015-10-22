@@ -1764,7 +1764,28 @@ void
 __kmpc_copyprivate(ident_t *loc, kmp_int32 global_tid, size_t cpy_size, void *cpy_data,
     void (*cpy_func)(void *, void *), kmp_int32 didit )
 {
-  not_implemented() ;
+    mpcomp_thread_t *t ;    /* Info on the current thread */
+
+    void **data_ptr;
+    /* Grab the thread info */
+    t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
+    sctk_assert( t != NULL ) ;
+
+    /* In this flow path, the number of threads should not be 1 */
+    sctk_assert( t->info.num_threads > 0 ) ;
+
+    /* Grab the team info */
+    sctk_assert( t->instance != NULL ) ;
+    sctk_assert( t->instance->team != NULL ) ;
+    
+    data_ptr = &(t->instance->team->single_copyprivate_data);
+    if (didit) *data_ptr = cpy_data;
+    
+    __mpcomp_barrier();
+
+    if (! didit) (*cpy_func)( cpy_data, *data_ptr );
+
+    __mpcomp_barrier();
 }
 
 void *
@@ -1779,7 +1800,6 @@ __kmpc_threadprivate_cached( ident_t *loc, kmp_int32 global_tid, void *data, siz
         //handle cache to be dealt with later
         void ** my_cache;
         my_cache = (void**) malloc(sizeof( void * ) * 8 + sizeof ( kmp_cached_addr_t ));
-        fprintf(stderr, "__kmpc_threadprivate_cached: T#%d allocated cache at address %p\n", global_tid, my_cache);
         kmp_cached_addr_t *tp_cache_addr;
         tp_cache_addr = (kmp_cached_addr_t *) & my_cache[8];
         tp_cache_addr -> addr = my_cache;
