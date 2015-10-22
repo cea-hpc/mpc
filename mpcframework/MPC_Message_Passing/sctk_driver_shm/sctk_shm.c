@@ -20,12 +20,12 @@ sctk_network_send_message_endpoint_shm ( sctk_thread_ptp_message_t *msg, sctk_en
     if(sctk_network_eager_msg_shm_send(msg,endpoint->data.shm.dest))
         return;
     
-    if(sctk_network_rdma_msg_shm_send(msg,endpoint->data.shm.dest))
-        return;
-
     if(sctk_network_frag_msg_shm_send(msg,endpoint->data.shm.dest))
         return;
         
+    if(sctk_network_rdma_msg_shm_send(msg,endpoint->data.shm.dest))
+        return;
+
     assume_m(0, "message unsupported by mpc shm"); 
 }
 
@@ -34,9 +34,6 @@ sctk_network_notify_matching_message_shm ( sctk_thread_ptp_message_t *msg, sctk_
 {
 }
 
-static void sctk_network_notify_recv_message_shm ( sctk_thread_ptp_message_t *msg, sctk_rail_info_t *rail )
-{
-}
 
 static void 
 sctk_network_notify_perform_message_shm ( int remote, int remote_task_id, int polling_task_id, int blocking, sctk_rail_info_t *rail )
@@ -63,7 +60,7 @@ sctk_network_notify_idle_message_shm ( sctk_rail_info_t *rail )
     if(!sctk_shm_driver_initialized)
         return;
 
-  //  while(1)
+    while(1)
     {
         cell = sctk_shm_recv_cell(); 
         if( cell == NULL )
@@ -87,20 +84,23 @@ sctk_network_notify_idle_message_shm ( sctk_rail_info_t *rail )
             msg = sctk_network_frag_msg_shm_recv(cell,1);
     	    if(msg) sctk_send_message_from_network_shm(msg);
 		    break;
-	    case SCTK_SHM_ACK:
-            msg = sctk_network_frag_msg_shm_resend(cell,1);
-        	if(msg) sctk_complete_and_free_message( msg ); 
-		    break;
 	    default:
 		    abort();
         }
     }
+
+    sctk_network_frag_msg_shm_idle(1);
+}
+
+static void sctk_network_notify_recv_message_shm ( sctk_thread_ptp_message_t *msg, sctk_rail_info_t *rail )
+{
+    sctk_network_notify_idle_message_shm ( rail );
 }
 
 static void 
 sctk_network_notify_any_source_message_shm ( int polling_task_id, int blocking, sctk_rail_info_t *rail )
 {
-
+    sctk_network_notify_idle_message_shm ( rail );
 }
 
 /********************************************************************/
@@ -272,7 +272,7 @@ void sctk_network_init_shm ( sctk_rail_info_t *rail )
     rail->network_name = "SHM";
 	sctk_rail_init_route ( rail, rail->runtime_config_rail->topology, NULL );
 
-	sctk_shmem_cells_num = 64;
+	sctk_shmem_cells_num = 128;
 //rail->runtime_config_driver_config->driver.value.shm.cells_num;
     sctk_shmem_size = sctk_shm_get_region_size(sctk_shmem_cells_num);
     fprintf(stderr, "size shm : %ld\n", sctk_shmem_size);
@@ -298,5 +298,6 @@ void sctk_network_init_shm ( sctk_rail_info_t *rail )
 
     sctk_shm_driver_initialized = 1;
     sctk_network_rdma_shm_interface_init();
+    sctk_network_frag_shm_interface_init();
     sctk_shm_check_raw_queue(local_process_number);
 }
