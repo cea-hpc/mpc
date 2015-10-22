@@ -38,6 +38,7 @@ sctk_shm_init_send_frag_msg(size_t size, int *key)
     sctk_spinlock_lock(&sckt_shm_frag_hashtable_lock); 
     while(sctk_shm_frag_get_elt_from_hash(*key))
     {
+	fprintf(stderr, "lolilol");
         sctk_shm_process_msg_id = (sctk_shm_process_msg_id + 1) % SCTK_SHM_MAX_SEQ_NUMBER; 
         *key = ( sctk_local_process_rank << 8 ) + sctk_shm_process_msg_id;
     }

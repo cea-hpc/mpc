@@ -14,6 +14,20 @@
 static int sctk_shm_proc_local_rank_on_node = -1;
 static volatile int sctk_shm_driver_initialized = 0;
 
+// FROM Henry S. Warren, Jr.'s "Hacker's Delight."
+static long sctk_shm_roundup_powerof2(unsigned long n)
+{
+    assume( n < ( 1 << 31));
+    --n;
+    n |= n >> 1;
+    n |= n >> 2;
+    n |= n >> 4;
+    n |= n >> 8;
+    n |= n >> 16;
+    return n+1;
+}
+
+
 static void 
 sctk_network_send_message_endpoint_shm ( sctk_thread_ptp_message_t *msg, sctk_endpoint_t *endpoint )
 {
