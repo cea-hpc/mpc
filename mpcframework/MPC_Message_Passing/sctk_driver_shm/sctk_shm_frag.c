@@ -33,13 +33,13 @@ sctk_shm_init_send_frag_msg(size_t size, int *key)
 {
     sctk_shm_rdv_info_t* info = NULL;
 
-    *key = ( sctk_local_process_rank << 24 ) + sctk_shm_process_msg_id;
+    *key = ( sctk_local_process_rank << 8 ) + sctk_shm_process_msg_id;
 
     sctk_spinlock_lock(&sckt_shm_frag_hashtable_lock); 
     while(sctk_shm_frag_get_elt_from_hash(*key))
     {
         sctk_shm_process_msg_id = (sctk_shm_process_msg_id + 1) % SCTK_SHM_MAX_SEQ_NUMBER; 
-        *key = ( sctk_local_process_rank << 24 ) + sctk_shm_process_msg_id;
+        *key = ( sctk_local_process_rank << 8 ) + sctk_shm_process_msg_id;
     }
     
     info = sctk_malloc(sizeof(sctk_shm_rdv_info_t));     
@@ -87,26 +87,26 @@ sctk_shm_rdv_free(void* ptr)
 static void
 sctk_shm_rdv_message_copy(sctk_message_to_copy_t* tmp)
 {
-   sctk_shm_rdv_info_t* info = NULL;
-   info = (sctk_shm_rdv_info_t*)((void*)tmp->msg_send - sizeof(sctk_shm_rdv_info_t));
-   sctk_net_message_copy_from_buffer (info->msg,tmp,1);
+   sctk_net_message_copy(tmp);
+  // sctk_shm_rdv_info_t* info = NULL;
+ //  info = (sctk_shm_rdv_info_t*)((void*)tmp->msg_send - sizeof(sctk_shm_rdv_info_t));
+  // fprintf(stderr, "COPY msg addr : %p\n", info->msg);
+  // sctk_net_message_copy_from_buffer (info->,tmp,1);
 }
 
 static void 
-sctk_shm_write_fragmented_msg( sctk_shm_cell_t* cell)
+sctk_shm_write_fragmented_msg( sctk_shm_cell_t* cell, sctk_shm_rdv_info_t* infos)
 {
-   sctk_shm_rdv_info_t* sctk_shm_send_frag_info;
    size_t size_to_copy;
    void *buffer_in, *buffer_out;
 
-   sctk_shm_send_frag_info = (sctk_shm_rdv_info_t*) cell->opaque_send;
-   size_to_copy = sctk_shm_send_frag_info->size_total - sctk_shm_send_frag_info->size_compute;
+   size_to_copy = infos->size_total - infos->size_compute;
    size_to_copy = (size_to_copy < SCTK_SHM_CELL_SIZE) ? size_to_copy : SCTK_SHM_CELL_SIZE;
 
-   buffer_out = cell->data ;
-   buffer_in = sctk_shm_send_frag_info->msg + sctk_shm_send_frag_info->size_compute;
+   buffer_out = cell->data;
+   buffer_in = infos->msg + infos->size_compute;
    memcpy(buffer_out, buffer_in, size_to_copy);
-   sctk_shm_send_frag_info->size_compute += size_to_copy;
+   infos->size_compute += size_to_copy;
 }
 
 /************************************************
@@ -133,7 +133,7 @@ sctk_network_frag_msg_first_send(sctk_thread_ptp_message_t* msg, int dest)
    cell->msg_type = SCTK_SHM_FRAG;
    cell->frag_hkey = key;
    sctk_shm_send_cell(cell);       
-
+   fprintf(stderr, "[%d - %d]\tFirst send ended ...\n", sctk_local_process_rank, key);
    return sctk_shm_send_frag_info;
 }
 
@@ -157,27 +157,30 @@ sctk_network_frag_msg_try_send(sctk_shm_rdv_info_t* infos, int retry)
         retry--;
         cell->msg_type = SCTK_SHM_FRAG;
         cell->frag_hkey = infos->key;
-        sctk_shm_write_fragmented_msg(cell);
+        sctk_shm_write_fragmented_msg(cell, infos);
         sctk_shm_send_cell(cell); 
    }
 
    if(infos->size_total == infos->size_compute)
    {
+	fprintf(stderr, "call complete and free\n");
         sctk_thread_ptp_message_t *msg = infos->header;
         sctk_shm_frag_del_elt_from_hash(infos->key);
         sctk_free(infos);
         sctk_complete_and_free_message(msg) ;
    }
 
+   fprintf(stderr, "[%d - %d]\tTry send ended ...\n", sctk_local_process_rank, infos->key);
    return (!retry) ? retry : old_value-retry;
 }
 
 void
 sctk_network_frag_msg_shm_idle(int max_try)
 {
-    sctk_shm_rdv_info_t* infos;
+    sctk_shm_rdv_info_t* infos = NULL;
 
     MPC_HT_ITER( &sctk_shm_frag_hastable_ptr, infos )
+    fprintf(stderr, "[%d - %d]\tIdle frag ended ...\n", sctk_local_process_rank, infos->key);
     sctk_network_frag_msg_try_send(infos, 1);
     MPC_HT_ITER_END
 }
@@ -186,18 +189,17 @@ sctk_network_frag_msg_shm_idle(int max_try)
 int 
 sctk_network_frag_msg_shm_send(sctk_thread_ptp_message_t* msg, int dest)
 {
-   sctk_shm_rdv_info_t* sctk_shm_send_frag_info;
-   sctk_shm_cell_t * cell = NULL;
+   sctk_shm_rdv_info_t* infos;
     
-   if( SCTK_MSG_SIZE(msg) > 3*SCTK_SHM_CELL_SIZE)
+   if( SCTK_MSG_SIZE(msg) > 3 * SCTK_SHM_CELL_SIZE)
         return 0;
 
-   sctk_network_frag_msg_first_send(msg, dest);
-   sctk_network_frag_msg_try_send(sctk_shm_send_frag_info, 1);
+   infos = sctk_network_frag_msg_first_send(msg, dest);
+   sctk_network_frag_msg_try_send(infos, 1);
    return 1;
 }
 
-sctk_thread_ptp_message_t * 
+sctk_thread_ptp_message_t *
 sctk_network_frag_msg_shm_recv(sctk_shm_cell_t* cell, int enabled_copy)
 {
    int src, hkey;
@@ -207,6 +209,7 @@ sctk_network_frag_msg_shm_recv(sctk_shm_cell_t* cell, int enabled_copy)
    sctk_shm_rdv_info_t* sctk_shm_recv_frag_info;
     
    hkey = cell->frag_hkey; 
+   
    sctk_shm_recv_frag_info = sctk_shm_frag_get_elt_from_hash(hkey); 
 
    if( sctk_shm_recv_frag_info == NULL)
@@ -219,36 +222,43 @@ sctk_network_frag_msg_shm_recv(sctk_shm_cell_t* cell, int enabled_copy)
       /* copy and reinit ptp thread header */
       msg = sctk_shm_recv_frag_info->header;
       memcpy( msg, cell->data, sizeof(sctk_thread_ptp_message_body_t));
-      msg->body.completion_flag = NULL;
-      msg->tail.message_type = SCTK_MESSAGE_NETWORK;
-      sctk_rebuild_header(msg);
-      sctk_reinit_header(msg, sctk_shm_rdv_free, sctk_shm_rdv_message_copy);
+      fprintf(stderr, "[%d - %d]\tRecv first frag ended ...\n", sctk_local_process_rank, hkey);
+      fprintf(stderr, "%lu, %lu\n", sctk_shm_recv_frag_info->size_total, sctk_shm_recv_frag_info->size_compute);
    }
    else
    {
+      fprintf(stderr, "Recv next frag begin ...\n");
+      fprintf(stderr, "[%d - %d] %lu, %lu\n", sctk_local_process_rank, hkey, sctk_shm_recv_frag_info->size_total, sctk_shm_recv_frag_info->size_compute);
       size = sctk_shm_recv_frag_info->size_total - sctk_shm_recv_frag_info->size_compute;
       size = (size < SCTK_SHM_CELL_SIZE) ? size : SCTK_SHM_CELL_SIZE;
       buffer_in = sctk_shm_recv_frag_info->msg + sctk_shm_recv_frag_info->size_compute;
       buffer_out = cell->data;
+      fprintf(stderr, "Recv next frag memcpy ... %lu \n", size);
       memcpy(buffer_in, buffer_out, size);
       sctk_shm_recv_frag_info->size_compute += size;
+      fprintf(stderr, "Recv next frag ended ...\n");
    }
 
    sctk_shm_release_cell(cell); 
 
-   if(sctk_shm_recv_frag_info->size_total == sctk_shm_recv_frag_info->size_compute)
-   {
-        msg = sctk_shm_recv_frag_info->header;
-        sctk_shm_frag_del_elt_from_hash(hkey);
-        sctk_free(sctk_shm_recv_frag_info);
-    }
+   if(sctk_shm_recv_frag_info->size_total != sctk_shm_recv_frag_info->size_compute)
+	return NULL;
 
-    return msg;
+      	fprintf(stderr, "Recv frag full msg ...\n");
+        msg = sctk_shm_recv_frag_info->header;
+      	msg->body.completion_flag = NULL;
+     	msg->tail.message_type = SCTK_MESSAGE_NETWORK;
+      	sctk_rebuild_header(msg);
+      	sctk_reinit_header(msg, sctk_shm_rdv_free, sctk_shm_rdv_message_copy);
+        sctk_shm_frag_del_elt_from_hash(hkey);
+   	fprintf(stderr, "RECV msg addr : %p\n", msg);
+       // sctk_free(sctk_shm_recv_frag_info);
+	return msg;
 }
 
 void 
 sctk_network_frag_shm_interface_init(void)
 {
-    sctk_shm_process_hash_id = (sctk_get_local_process_rank() << 24);
-    MPCHT_init(&sctk_shm_frag_hastable_ptr, 254);
+    sctk_shm_process_hash_id = (sctk_get_local_process_rank() << 8);
+    MPCHT_init(&sctk_shm_frag_hastable_ptr, 2 << 16);
 }

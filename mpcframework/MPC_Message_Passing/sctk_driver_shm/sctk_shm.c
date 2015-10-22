@@ -74,22 +74,20 @@ sctk_network_notify_idle_message_shm ( sctk_rail_info_t *rail )
 		    break;
 	    case SCTK_SHM_RDMA: 
 		    msg = sctk_network_rdma_msg_shm_recv(cell,1);
-            if(msg) sctk_send_message_from_network_shm(msg);
+                    if(msg) sctk_send_message_from_network_shm(msg);
 		    break;
 	    case SCTK_SHM_CMPL:
             msg = sctk_network_rdma_cmpl_msg_shm_recv(cell);
         	sctk_complete_and_free_message( msg ); 
 		    break;
 	    case SCTK_SHM_FRAG:
-            msg = sctk_network_frag_msg_shm_recv(cell,1);
-    	    if(msg) sctk_send_message_from_network_shm(msg);
-		    break;
+            	msg = sctk_network_frag_msg_shm_recv(cell,1);
+    	    	if(msg) sctk_send_message_from_network_shm(msg);
+		break;
 	    default:
 		    abort();
         }
     }
-
-    sctk_network_frag_msg_shm_idle(1);
 }
 
 static void sctk_network_notify_recv_message_shm ( sctk_thread_ptp_message_t *msg, sctk_rail_info_t *rail )
@@ -277,10 +275,7 @@ void sctk_network_init_shm ( sctk_rail_info_t *rail )
     sctk_shmem_size = sctk_shm_get_region_size(sctk_shmem_cells_num);
     fprintf(stderr, "size shm : %ld\n", sctk_shmem_size);
 
-#ifdef MPC_USE_VIRTUAL_MACHINE
-    if( sctk_mpc_is_vmhost() || sctk_mpc_is_vmguest() )
         sctk_shmem_size = sctk_shm_roundup_powerof2(sctk_shmem_size);
-#endif /* MPC_USE_VIRTUAL_MACHINE */
 
     sctk_pmi_get_process_on_node_rank(&local_process_rank);
     sctk_pmi_get_process_on_node_number(&local_process_number);
