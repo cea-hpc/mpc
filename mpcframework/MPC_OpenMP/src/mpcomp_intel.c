@@ -912,10 +912,18 @@ __kmpc_for_static_init_4( ident_t *loc, kmp_int32 gtid, kmp_int32 schedtype,
   long from, to ;
   mpcomp_thread_t *t;
   int res ;
+  //save old pupper
+  kmp_int32 pupper_old = *pupper;
 
      t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
      sctk_assert(t != NULL);   
 
+  fprintf(stderr, "[%d] __kmpc_for_static_init_4: "
+      "schedtype=%d, %d? %d -> %d incl. [%d], incr=%d chunk=%d *plastiter=%d *pstride=%d, num_threads = %d\n"
+      ,
+      ((mpcomp_thread_t *) sctk_openmp_thread_tls)->rank, 
+      schedtype, *plastiter, *plower, *pupper, *pstride, incr, chunk, *plastiter, *pstride, t->instance->team->info.num_threads
+      ) ;
 
   sctk_nodebug( "[%d] __kmpc_for_static_init_4: <%s> "
       "schedtype=%d, %d? %d -> %d incl. [%d], incr=%d chunk=%d *plastiter=%d *pstride=%d"
@@ -959,6 +967,14 @@ __kmpc_for_static_init_4( ident_t *loc, kmp_int32 gtid, kmp_int32 schedtype,
       //* TODO what about pstride and plastiter? */
       // *pstride = incr ;
       // *plastiter = 1 ;
+      
+      *pstride = *pupper - *plower;
+
+      if(*pupper == pupper_old)
+          *plastiter = 1;
+      else
+          *plastiter = 0;
+      
       break ;
     case kmp_sch_static_chunked:
 
@@ -970,6 +986,10 @@ __kmpc_for_static_init_4( ident_t *loc, kmp_int32 gtid, kmp_int32 schedtype,
       *plower = *plower + ((chunk * incr)* t->rank );
       *pupper = *plower + (chunk * incr) - incr;
 
+      if(*pupper == pupper_old)
+          *plastiter = 1;
+      else
+          *plastiter = 0;
 
       /* __mpcomp_static_schedule_get_specific_chunk( *plower, *pupper+incr, incr,
 	  chunk, 0, &from, &to ) ;
@@ -1000,6 +1020,12 @@ __kmpc_for_static_init_4( ident_t *loc, kmp_int32 gtid, kmp_int32 schedtype,
       not_implemented() ;
       break ;
   } 
+      fprintf(stderr, "[%d] Results for __kmpc_for_static_init_4 (kmp_sch_static_chunked): "
+	  "%ld -> %ld excl %ld incl [%d] => plastiter = %d\n"
+	  ,
+	  ((mpcomp_thread_t *) sctk_openmp_thread_tls)->rank, 
+	  *plower, *pupper, *pupper-incr, *pstride, *plastiter
+	  ) ;
 }
 
 void
@@ -1163,7 +1189,7 @@ __kmpc_dispatch_init_4(ident_t *loc, kmp_int32 gtid, enum sched_type schedule,
 	  (long)lb, (long)ub+(long)st, (long)st, (long)chunk ) ;
     break ;
     default:
-      sctk_error(stderr, "schedule %d not handled\n", schedule);
+      sctk_error("schedule %d not handled\n", schedule);
       not_implemented() ;
       break ;
   }
@@ -2382,6 +2408,13 @@ __kmpc_atomic_float8_add(  ident_t *id_ref, int gtid, kmp_real64 * lhs, kmp_real
   /* TODO: use assembly functions by Intel if available */
 }
 
+
+#if __MIC__ || __MIC2__
+    #define DO_PAUSE _mm_delay_32( 1 )
+#else
+    #define DO_PAUSE __kmp_x86_pause()
+#endif
+
 #define ATOMIC_BEGIN(TYPE_ID,OP_ID,TYPE, RET_TYPE) \
 RET_TYPE __kmpc_atomic_##TYPE_ID##_##OP_ID( ident_t *id_ref, int gtid, TYPE * lhs, TYPE rhs ) \
 {
@@ -2395,7 +2428,7 @@ ATOMIC_BEGIN(TYPE_ID,OP_ID,TYPE,void)                                           
                                           *(volatile kmp_int##BITS *) &old_value,                                    \
                                           *(volatile kmp_int##BITS *) &new_value ))                                  \
     {                                                                                                       \
-        __kmp_x86_pause();                                                                                  \
+        DO_PAUSE;                                                                                  \
         old_value = *(TYPE volatile *)lhs;                                                                  \
         new_value = old_value OP rhs;                                                                       \
     }                                                                                                       \
