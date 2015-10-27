@@ -18,7 +18,8 @@ typedef enum {
 typedef enum {
     SCTK_SHM_EAGER, 
     SCTK_SHM_RDMA, 
-    SCTK_SHM_FRAG, 
+    SCTK_SHM_FIRST_FRAG, 
+    SCTK_SHM_NEXT_FRAG, 
     SCTK_SHM_CMPL, 
     SCTK_SHM_ACK, 
 } sctk_shm_msg_type_t;

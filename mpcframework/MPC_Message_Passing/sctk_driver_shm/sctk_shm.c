@@ -13,6 +13,7 @@
 
 static int sctk_shm_proc_local_rank_on_node = -1;
 static volatile int sctk_shm_driver_initialized = 0;
+static sctk_spinlock_t sctk_shm_polling_lock = SCTK_SPINLOCK_INITIALIZER;
 
 // FROM Henry S. Warren, Jr.'s "Hacker's Delight."
 static long sctk_shm_roundup_powerof2(unsigned long n)
@@ -37,7 +38,7 @@ sctk_network_send_message_endpoint_shm ( sctk_thread_ptp_message_t *msg, sctk_en
     if(sctk_network_frag_msg_shm_send(msg,endpoint->data.shm.dest))
         return;
         
-    if(sctk_network_rdma_msg_shm_send(msg,endpoint->data.shm.dest))
+    if(sctk_network_cma_msg_shm_send(msg,endpoint->data.shm.dest))
         return;
 
     assume_m(0, "message unsupported by mpc shm"); 
@@ -70,31 +71,38 @@ sctk_network_notify_idle_message_shm ( sctk_rail_info_t *rail )
 {
     sctk_shm_cell_t * cell;
     sctk_thread_ptp_message_t *msg; 
-    
+ 
     if(!sctk_shm_driver_initialized)
         return;
+
+    if(sctk_spinlock_trylock(&sctk_shm_polling_lock))
+	return;
 
     while(1)
     {
         cell = sctk_shm_recv_cell(); 
         if( cell == NULL )
-            return;
+	{
+	   sctk_network_frag_msg_shm_idle(1);
+	   break;
+	}
     
         switch(cell->msg_type)
         {
 	    case SCTK_SHM_EAGER: 
-            msg = sctk_network_eager_msg_shm_recv(cell,0);
-            if(msg) sctk_send_message_from_network_shm(msg);
-		    break;
+            	msg = sctk_network_eager_msg_shm_recv(cell,0);
+            	if(msg) sctk_send_message_from_network_shm(msg);
+		break;
 	    case SCTK_SHM_RDMA: 
-		    msg = sctk_network_rdma_msg_shm_recv(cell,1);
-                    if(msg) sctk_send_message_from_network_shm(msg);
-		    break;
+		msg = sctk_network_cma_msg_shm_recv(cell,1);
+               	if(msg) sctk_send_message_from_network_shm(msg);
+		break;
 	    case SCTK_SHM_CMPL:
-            msg = sctk_network_rdma_cmpl_msg_shm_recv(cell);
+            	msg = sctk_network_cma_cmpl_msg_shm_recv(cell);
         	sctk_complete_and_free_message( msg ); 
 		    break;
-	    case SCTK_SHM_FRAG:
+	    case SCTK_SHM_FIRST_FRAG:
+	    case SCTK_SHM_NEXT_FRAG:
             	msg = sctk_network_frag_msg_shm_recv(cell,1);
     	    	if(msg) sctk_send_message_from_network_shm(msg);
 		break;
@@ -102,7 +110,8 @@ sctk_network_notify_idle_message_shm ( sctk_rail_info_t *rail )
 		    abort();
         }
     }
-	sctk_network_frag_msg_shm_idle(1);
+
+    sctk_spinlock_unlock(&sctk_shm_polling_lock);
 }
 
 static void sctk_network_notify_recv_message_shm ( sctk_thread_ptp_message_t *msg, sctk_rail_info_t *rail )
@@ -301,13 +310,13 @@ void sctk_network_init_shm ( sctk_rail_info_t *rail )
     for( i=0; i<local_process_number; i++)
     {
         sctk_shm_init_raw_queue(sctk_shmem_size,sctk_shmem_cells_num,i,local_process_number);
-		if( i != local_process_rank)
-            sctk_shm_add_route(first_proc_on_node+i,i,rail);
+	if( i != local_process_rank)
+        	sctk_shm_add_route(first_proc_on_node+i,i,rail);
         sctk_pmi_barrier();
     }
 
-    sctk_shm_driver_initialized = 1;
-    sctk_network_rdma_shm_interface_init();
+    (void) sctk_network_cma_shm_interface_init(NULL);
     sctk_network_frag_shm_interface_init();
-    sctk_shm_check_raw_queue(local_process_number);
+    //sctk_shm_check_raw_queue(local_process_number);
+    sctk_shm_driver_initialized = 1;
 }

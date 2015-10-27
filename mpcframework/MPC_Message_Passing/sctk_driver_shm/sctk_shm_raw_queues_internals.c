@@ -45,6 +45,7 @@ sctk_shm_reset_region_queues(sctk_shm_region_infos_t *shmem, int rank)
     memset((sctk_shm_list_t*) shmem->recv_queue, 0, sizeof(sctk_shm_list_t));
     memset((sctk_shm_list_t*) shmem->cmpl_queue, 0, sizeof(sctk_shm_list_t));
     memset((sctk_shm_list_t*) shmem->free_queue, 0, sizeof(sctk_shm_list_t));
+//    memset((sctk_shm_list_t*) shmem->buff_queue, 0, sizeof(sctk_shm_list_t));
 
     abs_ptr_item = item_asymm_addr + (size_t) 128;
 
@@ -72,7 +73,6 @@ sctk_shm_set_region_infos(void *shmem_base, size_t shmem_size,int cells_num, int
     
     shmem->cells_num = cells_num;
     shmem->all_shm_base = sctk_malloc(sctk_local_process_number*sizeof(char*));
-    shmem->all_shm_base[sctk_local_process_rank] = shmem_base;
     shmem->shm_base = shmem_base; 
     shmem->max_addr = shmem->shm_base + shmem_size;
     shmem->global_lock = SCTK_SPINLOCK_INITIALIZER;
@@ -80,6 +80,7 @@ sctk_shm_set_region_infos(void *shmem_base, size_t shmem_size,int cells_num, int
     shmem->recv_queue = sctk_shm_get_region_queue_base(shmem_base,SCTK_SHM_CELLS_QUEUE_RECV);
     shmem->cmpl_queue = sctk_shm_get_region_queue_base(shmem_base,SCTK_SHM_CELLS_QUEUE_CMPL);
     shmem->free_queue = sctk_shm_get_region_queue_base(shmem_base,SCTK_SHM_CELLS_QUEUE_FREE);
+ //   shmem->buff_queue = sctk_shm_get_region_queue_base(shmem_base,SCTK_SHM_CELLS_QUEUE_BUFF);
     assume_m(shmem->free_queue < shmem->max_addr, "Too small shmem memory region");
     shmem->sctk_shm_asymm_addr = sctk_shm_get_region_items_asymm_addr(shmem_base);
     return shmem;

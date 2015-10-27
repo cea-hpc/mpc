@@ -1,31 +1,66 @@
 #include "sctk_shm_frag.h"
 
 #define SCTK_SHM_MAX_SEQ_NUMBER 16777208 /* ( 2 << 24 - 8) */
-#define SCTK_SHM_MAX_PROC_ID 254 /* ( 2 << 8 - 1) */
+#define SCTK_SHM_MAX_PROC_ID 5 /* ( 2 << 8 - 1) */
 
  
-static struct MPCHT sctk_shm_frag_hastable_ptr;
+static struct MPCHT sctk_shm_recving_frag_hastable_ptr;
+static struct MPCHT sctk_shm_sending_frag_hastable_ptr;
 static sctk_spinlock_t sckt_shm_frag_hashtable_lock = SCTK_SPINLOCK_INITIALIZER;
 
 static int sctk_shm_process_hash_id = 0;
 static int sctk_shm_process_msg_id = 0;
 
+typedef enum{SCTK_SHM_SENDER_HT, SCTK_SHM_RECVER_HT} sctk_shm_table_t;
+  
 static sctk_shm_rdv_info_t*
-sctk_shm_frag_get_elt_from_hash(int key)
+sctk_shm_frag_get_elt_from_hash(int key, sctk_shm_table_t table_type)
 {
-    return (sctk_shm_rdv_info_t*) MPCHT_get(&sctk_shm_frag_hastable_ptr, key );
+	void * tmp;
+	switch(table_type)
+	{
+		case SCTK_SHM_SENDER_HT:
+			tmp = MPCHT_get(&sctk_shm_sending_frag_hastable_ptr, key);
+			break;
+		case SCTK_SHM_RECVER_HT:
+			tmp = MPCHT_get(&sctk_shm_recving_frag_hastable_ptr, key);
+			break;
+		default:
+			assume_m(0, "Unknown shm hastable type");
+	}
+    return (sctk_shm_rdv_info_t*) tmp; 
 }
 
 static void
-sctk_shm_frag_add_elt_to_hash(int key, sctk_shm_rdv_info_t* elt)
+sctk_shm_frag_add_elt_to_hash(int key, sctk_shm_rdv_info_t* elt, sctk_shm_table_t table_type)
 {
-    MPCHT_set(&sctk_shm_frag_hastable_ptr, key, (void*) elt);
+	switch(table_type)
+	{
+		case SCTK_SHM_SENDER_HT:
+			MPCHT_set(&sctk_shm_sending_frag_hastable_ptr, key, (void*) elt);
+			break;
+		case SCTK_SHM_RECVER_HT:
+			MPCHT_set(&sctk_shm_recving_frag_hastable_ptr, key, (void*) elt);
+			break;
+		default:
+			assume_m(0, "Unknown shm hastable type");
+	}
 }
 
 static void
-sctk_shm_frag_del_elt_from_hash(int key)
+sctk_shm_frag_del_elt_from_hash(int key, sctk_shm_table_t table_type)
 {
-    MPCHT_delete( &sctk_shm_frag_hastable_ptr, key);
+	switch(table_type)
+	{
+		case SCTK_SHM_SENDER_HT:
+			MPCHT_delete(&sctk_shm_sending_frag_hastable_ptr, key);
+			break;
+		case SCTK_SHM_RECVER_HT:
+			MPCHT_delete(&sctk_shm_recving_frag_hastable_ptr, key);
+			break;
+		default:
+			assume_m(0, "Unknown shm hastable type");
+	}
 }
 
 static sctk_shm_rdv_info_t* 
@@ -33,18 +68,20 @@ sctk_shm_init_send_frag_msg(size_t size, int *key)
 {
     sctk_shm_rdv_info_t* info = NULL;
 
-    *key = ( sctk_local_process_rank << 8 ) + sctk_shm_process_msg_id;
+    //*key = ( sctk_local_process_rank << 8 ) + sctk_shm_process_msg_id;
+    *key = sctk_shm_process_msg_id;
     sctk_shm_process_msg_id = (sctk_shm_process_msg_id+1) % SCTK_SHM_MAX_PROC_ID;
 
     sctk_spinlock_lock(&sckt_shm_frag_hashtable_lock); 
-    while(sctk_shm_frag_get_elt_from_hash(*key))
+    while(sctk_shm_frag_get_elt_from_hash(*key, SCTK_SHM_SENDER_HT))
     {
     	sctk_shm_process_msg_id = (sctk_shm_process_msg_id+1) % SCTK_SHM_MAX_PROC_ID;
-        *key = ( sctk_local_process_rank << 8 ) + sctk_shm_process_msg_id;
+        //*key = ( sctk_local_process_rank << 8 ) + sctk_shm_process_msg_id;
+        *key = sctk_shm_process_msg_id;
     }
     
     info = sctk_malloc(sizeof(sctk_shm_rdv_info_t));     
-    sctk_shm_frag_add_elt_to_hash(*key, info);
+    sctk_shm_frag_add_elt_to_hash(*key, info, SCTK_SHM_SENDER_HT);
 
     sctk_spinlock_unlock(&sckt_shm_frag_hashtable_lock); 
     
@@ -62,16 +99,16 @@ sctk_shm_init_recv_frag_msg(int key, size_t size)
    sctk_shm_rdv_info_t* info = NULL;
 
 
-   if(sctk_shm_frag_get_elt_from_hash(key))
+   if(sctk_shm_frag_get_elt_from_hash(key,SCTK_SHM_RECVER_HT))
         assume_m(0, "msg already commit to hash table ...");
 
    info = sctk_malloc(sizeof(sctk_shm_rdv_info_t)+size);
 
-   while(sctk_shm_frag_get_elt_from_hash(key))
+   while(sctk_shm_frag_get_elt_from_hash(key, SCTK_SHM_RECVER_HT))
 	;
 
    sctk_spinlock_lock(&sckt_shm_frag_hashtable_lock);
-   sctk_shm_frag_add_elt_to_hash(key,info);
+   sctk_shm_frag_add_elt_to_hash(key,info, SCTK_SHM_RECVER_HT);
    sctk_spinlock_unlock(&sckt_shm_frag_hashtable_lock);
     
    info->size_total = size - sizeof(sctk_thread_ptp_message_t);
@@ -134,8 +171,9 @@ sctk_network_frag_msg_first_send(sctk_thread_ptp_message_t* msg, int dest)
 
    memcpy(cell->data, msg, sizeof(sctk_thread_ptp_message_body_t));
 
-   cell->msg_type = SCTK_SHM_FRAG;
-   cell->frag_hkey = key;
+   cell->msg_type = SCTK_SHM_FIRST_FRAG;
+   cell->frag_hkey = ( sctk_local_process_rank << 8 ) + key;
+   //fprintf(stderr, "(%d-%d) [FIRST - SEND]\tKey : %d\n", sctk_local_process_rank, dest, cell->frag_hkey);
    sctk_shm_send_cell(cell);       
    return sctk_shm_send_frag_info;
 }
@@ -158,16 +196,17 @@ sctk_network_frag_msg_try_send(sctk_shm_rdv_info_t* infos, int retry)
             break;
 
         retry--;
-        cell->msg_type = SCTK_SHM_FRAG;
-        cell->frag_hkey = infos->key;
+   	cell->msg_type = SCTK_SHM_NEXT_FRAG;
+        cell->frag_hkey = ( sctk_local_process_rank << 8 ) + infos->key;
         sctk_shm_write_fragmented_msg(cell, infos);
+      	//fprintf(stderr, "(%d-%d) [NEXT - SEND]\tKey:%d\t%lu/%lu\n", sctk_local_process_rank, infos->dest, cell->frag_hkey,infos->size_compute,infos->size_total);
         sctk_shm_send_cell(cell); 
    }
 
    if(infos->size_total == infos->size_compute)
    {
         sctk_thread_ptp_message_t *msg = infos->header;
-        sctk_shm_frag_del_elt_from_hash(infos->key);
+        sctk_shm_frag_del_elt_from_hash(infos->key, SCTK_SHM_SENDER_HT);
         sctk_free(infos);
         sctk_complete_and_free_message(msg) ;
    }
@@ -180,7 +219,7 @@ sctk_network_frag_msg_shm_idle(int max_try)
 {
     sctk_shm_rdv_info_t* infos = NULL;
 
-    MPC_HT_ITER( &sctk_shm_frag_hastable_ptr, infos )
+    MPC_HT_ITER( &sctk_shm_sending_frag_hastable_ptr, infos )
     sctk_network_frag_msg_try_send(infos, 1);
     MPC_HT_ITER_END
 }
@@ -209,12 +248,11 @@ sctk_network_frag_msg_shm_recv(sctk_shm_cell_t* cell, int enabled_copy)
    sctk_shm_rdv_info_t* sctk_shm_recv_frag_info;
     
    hkey = cell->frag_hkey; 
-   
-   sctk_shm_recv_frag_info = sctk_shm_frag_get_elt_from_hash(hkey); 
 
-   if( sctk_shm_recv_frag_info == NULL)
+   if( cell->msg_type == SCTK_SHM_FIRST_FRAG )
    {
       msg = (sctk_thread_ptp_message_t *) cell->data; 
+      //fprintf(stderr, "(%p-%d-%d) [FIRST - RECV]\tKey : %d\n", cell, sctk_local_process_rank, SCTK_MSG_SRC_PROCESS(msg), cell->frag_hkey);
       size = SCTK_MSG_SIZE (msg) + sizeof(sctk_thread_ptp_message_t);
       sctk_shm_recv_frag_info = sctk_shm_init_recv_frag_msg(hkey, size);
       sctk_shm_recv_frag_info->addr = cell->opaque_send;
@@ -225,6 +263,9 @@ sctk_network_frag_msg_shm_recv(sctk_shm_cell_t* cell, int enabled_copy)
    }
    else
    {
+      sctk_shm_recv_frag_info = sctk_shm_frag_get_elt_from_hash(hkey,SCTK_SHM_RECVER_HT); 
+      assume_m( sctk_shm_recv_frag_info != NULL, "WHAT ?!" );
+      //fprintf(stderr, "(%p-%d-%d) [NEXT - RECV]\tKey : %d\n", cell,sctk_local_process_rank, sctk_shm_recv_frag_info->dest, cell->frag_hkey);
       size = sctk_shm_recv_frag_info->size_total - sctk_shm_recv_frag_info->size_compute;
       size = (size < SCTK_SHM_CELL_SIZE) ? size : SCTK_SHM_CELL_SIZE;
       buffer_in = sctk_shm_recv_frag_info->msg + sctk_shm_recv_frag_info->size_compute;
@@ -243,7 +284,7 @@ sctk_network_frag_msg_shm_recv(sctk_shm_cell_t* cell, int enabled_copy)
      	msg->tail.message_type = SCTK_MESSAGE_NETWORK;
       	sctk_rebuild_header(msg);
       	sctk_reinit_header(msg, sctk_shm_rdv_free, sctk_shm_rdv_message_copy);
-        sctk_shm_frag_del_elt_from_hash(hkey);
+        sctk_shm_frag_del_elt_from_hash(hkey,SCTK_SHM_RECVER_HT);
 	return msg;
 }
 
@@ -251,5 +292,6 @@ void
 sctk_network_frag_shm_interface_init(void)
 {
     sctk_shm_process_hash_id = (sctk_get_local_process_rank() << 8);
-    MPCHT_init(&sctk_shm_frag_hastable_ptr, 2 << 16);
+    MPCHT_init(&sctk_shm_recving_frag_hastable_ptr, 2 << 16);
+    MPCHT_init(&sctk_shm_sending_frag_hastable_ptr, 16 );
 }
