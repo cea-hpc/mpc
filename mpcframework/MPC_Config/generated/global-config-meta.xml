@@ -161,15 +161,15 @@
 </config>
 <config name="MPC_Message_Passing">
 	<usertypes>
-		
+
 		<!-- ############################## -->
 		<!-- #           DRIVERS          # -->
 		<!-- ############################## -->
 		<struct name="net_driver_topological" doc="Declare a topological driver.">
 			<param name="dummy" type="int" doc="A test Param"/>
 		</struct>
-		
-		
+
+
 		<!-- Structure for infiniband driver -->
 		<struct name="net_driver_infiniband" doc="Declare a fake driver to test the configuration system.">
 			<param name="pkey" type="string" doc="Define the pkey value" default="undefined"/>
@@ -213,7 +213,7 @@
 			<param name="rdma_resizing_max_nb" type="int" doc="Defines the maximum number of Eager RDMA buffers (resizing)" default="32" />
 			<param name="size_recv_ibufs_chunk" type="int" doc="Defines the number of receive buffers allocated on the fly." default="400" />
 		</struct>
-		
+
 		<struct name="ib_global" doc="Global Parameters for IB common structs.">
 			<param name="mmu_cache_enabled" type="int" doc="Defines if the MMU cache is enabled." default="1" />
 			<param name="mmu_cache_entry_count" type="int" doc="Number of entries to keep in the cache." default="1000" />
@@ -228,7 +228,8 @@
 
 		<!-- Structure for Portals driver -->
 		<struct name="net_driver_portals" doc="Portals-based driver">
-            <param name="fake_param" type="int" doc="Fake param." default="1" />
+			<param name="eager_limit" type="int" doc="Size of the eager buffers (short messages)." default="65565" />
+			<!--<param name="idle_polling" type="int" doc="Number of extra queues accessed by tasks for collaborative polling" default="2" />-->
 		</struct>
 
 		<!-- Structure for TCP driver -->
@@ -263,29 +264,29 @@
 		<!-- ############################## -->
 		<!-- #         RAIL GATES         # -->
 		<!-- ############################## -->
-		
+
 		<!-- Rail Gates -->
-		
+
 		<struct name="gate_boolean" doc="This gate applies given thruth value to messages.">
 			<param name="value" type="int" doc="whereas to accept input messages or not" default="1" />
 			<param name="gatefunc" type="funcptr" doc="Function to be called for this gate" default="sctk_rail_gate_boolean"/>
 		</struct>
-		
+
 		<struct name="gate_probabilistic" doc="This gate uses a given rail with a parametrized probability.">
 			<param name="probability" type="int" doc="Probability to choose this rail in percents (ralatively to this single rail, integer)" default="50" />
 			<param name="gatefunc" type="funcptr" default="sctk_rail_gate_probabilistic" doc="Function to be called for this gate"/>
 		</struct>
-		
+
 		<struct name="gate_min_size" doc="This gate uses a given rail if size is at least a given value.">
 			<param name="value" type="size" doc="Minimum size to choose this rail (with units)"/>
 			<param name="gatefunc" type="funcptr" default="sctk_rail_gate_minsize" doc="Function to be called for this gate"/>
 		</struct>
-		
+
 		<struct name="gate_max_size" doc="This gate uses a given rail if size is at most a given value.">
 			<param name="value" type="size" doc="Maximum size to choose this rail (with units)"/>
 			<param name="gatefunc" type="funcptr" default="sctk_rail_gate_maxsize" doc="Function to be called for this gate"/>
 		</struct>
-		
+
 		<struct name="gate_message_type" doc="This gate can be used define which type of message can use a given rail.">
 			<param name="process" type="int" doc="Process Specific Messages can use this rail" default="1" />
 			<param name="common" type="int" doc="Common messages (MPI) can use this rail" default="1" />
@@ -295,7 +296,7 @@
 		<struct name="gate_user" doc="This gate uses a given rail with a user defined function.">
 			<param name="gatefunc" type="funcptr" default="sctk_rail_gate_true" doc="Function to be called for this gate"/>
 		</struct>
-		
+
 		<!-- Union to merge gates -->
 		<union name="net_gate" doc="Defines gates and their configuration.">
 			<choice name="boolean" type="gate_boolean" />
@@ -304,13 +305,13 @@
 			<choice name="maxsize" type="gate_max_size" />
 			<choice name="msgtype" type="gate_message_type" />
 			<choice name="user" type="gate_probabilistic" />
-		</union>	
-		
+		</union>
+
 
 		<!-- ############################## -->
 		<!-- #          RAIL              # -->
 		<!-- ############################## -->
-	
+
 		<enum name="rail_topological_polling_level" doc="Values used for topological polling in the rail configuration">
 			<value>RAIL_POLL_NONE</value>
 			<value>RAIL_POLL_PU</value>
@@ -319,7 +320,7 @@
 			<value>RAIL_POLL_NUMA</value>
 			<value>RAIL_POLL_MACHINE</value>
 		</enum>
-	
+
 		<struct name="topological_polling" doc="Defines a topological polling configuration.">
 			<param name="range" type="rail_topological_polling_level" doc="Define the subset of cores involved in the polling." default="RAIL_POLL_MACHINE"/>
 			<param name="trigger" type="rail_topological_polling_level" doc="Define the subset of cores involved in the polling." default="RAIL_POLL_SOCKET"/>

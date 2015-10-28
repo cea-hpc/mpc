@@ -344,8 +344,8 @@ struct sctk_runtime_config_struct_ib_global
 /**Portals-based driver**/
 struct sctk_runtime_config_struct_net_driver_portals
 {	int init_done;
-	/**Fake param.**/
-	int fake_param;
+	/**Size of the eager buffers (short messages).**/
+	int eager_limit;
 };
 
 /******************************** STRUCTURE *********************************/

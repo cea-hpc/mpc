@@ -335,7 +335,7 @@ void sctk_runtime_config_struct_init_net_driver_portals(void * struct_ptr)
 	if( obj->init_done != 0 ) return;
 
 	/* Simple params : */
-	obj->fake_param = 1;
+	obj->eager_limit = 65565;
 	obj->init_done = 1;
 }
 

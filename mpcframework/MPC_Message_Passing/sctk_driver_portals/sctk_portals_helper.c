@@ -212,7 +212,7 @@ void sctk_portals_helper_lib_init(sctk_portals_interface_handler_t *interface, s
 	for(cpt = 0; cpt < ptable->nb_entries+2; cpt++)
 	{
 		ptable->head[cpt] = (sctk_portals_table_entry_t*)sctk_malloc(sizeof(sctk_portals_table_entry_t));
-		sctk_portals_helper_init_table_entry(ptable->head[cpt], interface, cpt);
+		sctk_portals_helper_init_table_entry(ptable->head[cpt], interface, cpt, ptable->eager_limit);
 	}
 
 	//init MDs queue
@@ -221,7 +221,7 @@ void sctk_portals_helper_lib_init(sctk_portals_interface_handler_t *interface, s
 	mds->msg_lock = SCTK_SPINLOCK_INITIALIZER;
 }
 
-void sctk_portals_helper_init_table_entry(sctk_portals_table_entry_t* entry, sctk_portals_interface_handler_t *interface, int ind){
+void sctk_portals_helper_init_table_entry(sctk_portals_table_entry_t* entry, sctk_portals_interface_handler_t *interface, int ind, size_t eager_limit){
 
 	int i;
 	assert(entry != NULL);
@@ -256,6 +256,14 @@ void sctk_portals_helper_init_table_entry(sctk_portals_table_entry_t* entry, sct
 
 	    sctk_portals_helper_init_new_entry(&me, interface, slot, sizeof(sctk_thread_ptp_message_t), SCTK_PORTALS_BITS_HEADER, SCTK_PORTALS_ME_PUT_OPTIONS );
 	    sctk_portals_helper_register_new_entry(interface, ind, &me, NULL);
+
+	    ptl_me_t me_2;
+	    ptl_handle_me_t me_handle_2;
+	    void* new_slot = (void*)sctk_malloc(eager_limit);
+
+	    sctk_portals_helper_init_new_entry(&me_2, interface, new_slot, eager_limit, SCTK_PORTALS_BITS_EAGER_SLOT, SCTK_PORTALS_ME_PUT_OPTIONS );
+	    sctk_portals_helper_register_new_entry(interface, ind, &me_2, NULL);
+
 	}
 }
 

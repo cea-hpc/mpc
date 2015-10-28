@@ -26,9 +26,11 @@
 
 #include <sctk_route.h>
 #include <sctk_portals_toolkit.h>
+#include <sctk_portals_eager.h>
 #include <sctk_pmi.h>
 #include <sctk_control_messages.h>
 #include <sctk_net_tools.h>
+#include <sctk_low_level_comm.h>
 
 #define sctk_min(a, b)  ((a) < (b) ? (a) : (b))
 
@@ -152,6 +154,12 @@ void sctk_portals_send_put ( sctk_endpoint_t *endpoint, sctk_thread_ptp_message_
 	ptl_match_bits_t match;
 	ptl_me_t slot;
 
+	if(SCTK_MSG_SIZE(msg) + sizeof(sctk_thread_ptp_message_body_t) < prail->ptable.eager_limit)
+	{
+		sctk_portals_eager_send_put(endpoint, msg);
+		return;
+	}
+
 	//create associated data
 	stuff = sctk_malloc(sizeof(sctk_portals_list_entry_extra_t));
 	stuff->cat_msg = SCTK_PORTALS_CAT_REGULAR;
@@ -267,6 +275,7 @@ void sctk_portals_ack_get (sctk_rail_info_t* rail, ptl_event_t* event)
 void sctk_portals_recv_put (sctk_rail_info_t* rail, ptl_event_t* event)
 {
 	sctk_thread_ptp_message_t* content = NULL;
+	ptl_me_t new_me;
 
 	content = event->start;
 
@@ -294,7 +303,6 @@ void sctk_portals_recv_put (sctk_rail_info_t* rail, ptl_event_t* event)
 	sctk_rebuild_header(content);
 	sctk_reinit_header(content, sctk_portals_free, sctk_portals_message_copy);
 
-    ptl_me_t new_me;
 	//adding a new ME to replace the consumed one
 	sctk_portals_helper_init_new_entry(
 		&new_me, &rail->network.portals.interface_handler,
@@ -308,6 +316,7 @@ void sctk_portals_recv_put (sctk_rail_info_t* rail, ptl_event_t* event)
 		event->pt_index,
 		&new_me,
 		NULL);
+
 
     rail->send_message_from_network(content);
 }
@@ -349,12 +358,12 @@ void sctk_portals_poll_pending_msg_list(sctk_rail_info_t *rail)
 					//depending on message type
 					switch(pending.cat_msg)
 					{
+						case SCTK_PORTALS_CAT_EAGER: //don't exist (Get() for EAGER)
 						case SCTK_PORTALS_CAT_RDMA: // special msg : RDMA
 						case SCTK_PORTALS_CAT_REGULAR: // when standard message is copied in userspace
 							msg = (sctk_thread_ptp_message_t*) pending.extra_data;
 							sctk_complete_and_free_message(msg);
 							break;
-
 
 						case SCTK_PORTALS_CAT_CTLMESSAGE: // when control message is received
 						case SCTK_PORTALS_CAT_RESERVED:  // when connection is initialized
@@ -370,10 +379,12 @@ void sctk_portals_poll_pending_msg_list(sctk_rail_info_t *rail)
 
 					switch(pending.cat_msg)
 					{
+						case SCTK_PORTALS_CAT_EAGER:
 						case SCTK_PORTALS_CAT_RDMA: // special msg : RDMA
 							msg = (sctk_thread_ptp_message_t*) pending.extra_data;
 							sctk_complete_and_free_message(msg);
 							break;
+
 						case SCTK_PORTALS_CAT_CTLMESSAGE: // when control message is received
 						case SCTK_PORTALS_CAT_RESERVED:  // when connection is initialized
 						case SCTK_PORTALS_CAT_ROUTING_MSG: //when MD is a routing slot (no action)
@@ -439,9 +450,9 @@ int sctk_portals_poll_one_queue(sctk_rail_info_t *rail, size_t id)
 							sctk_free(stuff->extra_data); // free temporary payload
 							break;
 						case SCTK_PORTALS_CAT_RESERVED:
+						case SCTK_PORTALS_CAT_EAGER: //don't exist (Get() for EAGER)
 							break;
 						default:
-							CRASH();
 							not_reachable();
 					}
 					break;
@@ -453,13 +464,15 @@ int sctk_portals_poll_one_queue(sctk_rail_info_t *rail, size_t id)
 					//depending on message type
 					switch(cat)
 					{
+						case SCTK_PORTALS_CAT_EAGER:
+							sctk_portals_eager_recv_put(rail, &event); // handle the message
+							break;
 						case SCTK_PORTALS_CAT_REGULAR:
 						case SCTK_PORTALS_CAT_CTLMESSAGE:
 							sctk_portals_recv_put(rail, &event); // handle the message
 							break;
 						case SCTK_PORTALS_CAT_RDMA:
 							to_free = 0;
-							sctk_nodebug("Put for RDMA REQUEST ");
 							break;
 						case SCTK_PORTALS_CAT_RESERVED:
 						case SCTK_PORTALS_CAT_ROUTING_MSG:
@@ -744,5 +757,6 @@ void sctk_network_init_portals_all ( sctk_rail_info_t *rail )
 
 	//syncing with other processes
     sctk_pmi_barrier();
+    rail->network.portals.ptable.eager_limit = rail->runtime_config_driver_config->driver.value.portals.eager_limit;
 }
 #endif

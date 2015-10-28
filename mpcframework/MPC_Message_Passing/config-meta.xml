@@ -69,8 +69,8 @@
 
 		<!-- Structure for Portals driver -->
 		<struct name="net_driver_portals" doc="Portals-based driver">
-			<param name="eager_limit" type="int" doc="Size of the eager buffers (short messages)." default="12288" />
-			<param name="idle_polling" type="int" doc="Number of extra queues accessed by tasks for collaborative polling" default="2" />
+			<param name="eager_limit" type="int" doc="Size of the eager buffers (short messages)." default="65565" />
+			<!--<param name="idle_polling" type="int" doc="Number of extra queues accessed by tasks for collaborative polling" default="2" />-->
 		</struct>
 
 		<!-- Structure for TCP driver -->

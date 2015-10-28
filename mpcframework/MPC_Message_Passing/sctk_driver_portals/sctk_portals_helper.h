@@ -96,6 +96,7 @@ typedef enum sctk_portals_slot_category_s
 {
 	SCTK_PORTALS_CAT_REGULAR,
 	SCTK_PORTALS_CAT_CTLMESSAGE,
+	SCTK_PORTALS_CAT_EAGER,
 	SCTK_PORTALS_CAT_ROUTING_MSG,
 	SCTK_PORTALS_CAT_RESERVED,
 	SCTK_PORTALS_CAT_RDMA
@@ -135,6 +136,7 @@ typedef struct sctk_portals_pending_msg_list_s
 
 typedef struct sctk_portals_table_s
 {
+	size_t eager_limit;
 	size_t nb_entries;
 	sctk_spinlock_t					    table_lock;
 	struct sctk_portals_table_entry_s** head;
@@ -143,7 +145,7 @@ typedef struct sctk_portals_table_s
 } sctk_portals_table_t;
 
 void sctk_portals_helper_lib_init(sctk_portals_interface_handler_t *interface, sctk_portals_process_id_t* id, sctk_portals_table_t *ptable);
-void sctk_portals_helper_init_table_entry(sctk_portals_table_entry_t* entry, sctk_portals_interface_handler_t *interface, int ind);
+void sctk_portals_helper_init_table_entry(sctk_portals_table_entry_t* entry, sctk_portals_interface_handler_t *interface, int ind, size_t eager_limit);
 
 void sctk_portals_helper_init_new_entry(ptl_me_t* me, sctk_portals_interface_handler_t *ni_handler, void* start, size_t size, ptl_match_bits_t match, unsigned int option);
 void sctk_portals_helper_set_bits_from_msg(ptl_match_bits_t* match, void*atomic);

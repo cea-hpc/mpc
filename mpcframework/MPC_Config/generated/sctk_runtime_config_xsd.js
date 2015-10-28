@@ -424,7 +424,7 @@
 -e <!-- ********************************************************* -->\
 -e <xs:complexType name='user_type_net_driver_portals'>\
 -e <xs:all>\
--e <xs:element minOccurs='0' name='fake_param' type='xs:integer'/>\
+-e <xs:element minOccurs='0' name='eager_limit' type='xs:integer'/>\
 -e </xs:all>\
 -e </xs:complexType>\
 -e <!-- ********************************************************* -->\
