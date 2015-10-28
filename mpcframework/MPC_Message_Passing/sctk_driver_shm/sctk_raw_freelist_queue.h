@@ -5,7 +5,7 @@
 #include "sctk_spinlock.h"
 #include "sctk_shm_raw_queues_archdefs.h"
 
-#define SCTK_SHM_CELL_SIZE 8192
+#define SCTK_SHM_CELL_SIZE 1024
 
 /**
  * ENUM

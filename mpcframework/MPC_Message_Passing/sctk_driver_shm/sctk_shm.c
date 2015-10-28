@@ -15,6 +15,8 @@ static int sctk_shm_proc_local_rank_on_node = -1;
 static volatile int sctk_shm_driver_initialized = 0;
 static sctk_spinlock_t sctk_shm_polling_lock = SCTK_SPINLOCK_INITIALIZER;
 
+static void sctk_network_notify_idle_message_shm ( sctk_rail_info_t *rail );
+
 // FROM Henry S. Warren, Jr.'s "Hacker's Delight."
 static long sctk_shm_roundup_powerof2(unsigned long n)
 {
@@ -36,7 +38,7 @@ sctk_network_send_message_endpoint_shm ( sctk_thread_ptp_message_t *msg, sctk_en
         return;
     
     if(sctk_network_frag_msg_shm_send(msg,endpoint->data.shm.dest))
-        return;
+	return; 
         
     if(sctk_network_cma_msg_shm_send(msg,endpoint->data.shm.dest))
         return;
@@ -78,14 +80,13 @@ sctk_network_notify_idle_message_shm ( sctk_rail_info_t *rail )
     if(sctk_spinlock_trylock(&sctk_shm_polling_lock))
 	return;
 
+    sctk_network_frag_msg_shm_idle(1);
+
     while(1)
     {
         cell = sctk_shm_recv_cell(); 
         if( cell == NULL )
-	{
-	   sctk_network_frag_msg_shm_idle(1);
 	   break;
-	}
     
         switch(cell->msg_type)
         {
@@ -100,14 +101,14 @@ sctk_network_notify_idle_message_shm ( sctk_rail_info_t *rail )
 	    case SCTK_SHM_CMPL:
             	msg = sctk_network_cma_cmpl_msg_shm_recv(cell);
         	sctk_complete_and_free_message( msg ); 
-		    break;
+		break;
 	    case SCTK_SHM_FIRST_FRAG:
 	    case SCTK_SHM_NEXT_FRAG:
             	msg = sctk_network_frag_msg_shm_recv(cell,1);
     	    	if(msg) sctk_send_message_from_network_shm(msg);
 		break;
 	    default:
-		    abort();
+		abort();
         }
     }
 
@@ -294,7 +295,7 @@ void sctk_network_init_shm ( sctk_rail_info_t *rail )
     rail->network_name = "SHM";
 	sctk_rail_init_route ( rail, rail->runtime_config_rail->topology, NULL );
 
-	sctk_shmem_cells_num = 128;
+	sctk_shmem_cells_num = 64;
 //rail->runtime_config_driver_config->driver.value.shm.cells_num;
     sctk_shmem_size = sctk_shm_get_region_size(sctk_shmem_cells_num);
     fprintf(stderr, "size shm : %ld\n", sctk_shmem_size);

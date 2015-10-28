@@ -1,17 +1,20 @@
 #include "sctk_shm_frag.h"
 
 #define SCTK_SHM_MAX_SEQ_NUMBER 16777208 /* ( 2 << 24 - 8) */
-#define SCTK_SHM_MAX_PROC_ID 5 /* ( 2 << 8 - 1) */
+#define SCTK_SHM_MAX_PROC_ID 64 /* ( 2 << 8 - 1) */
 
  
 static struct MPCHT sctk_shm_recving_frag_hastable_ptr;
 static struct MPCHT sctk_shm_sending_frag_hastable_ptr;
+static struct MPCHT sctk_shm_pending_frag_hastable_ptr;
+
 static sctk_spinlock_t sckt_shm_frag_hashtable_lock = SCTK_SPINLOCK_INITIALIZER;
+static volatile int sctk_shm_frag_send_msg_num = 0;
 
 static int sctk_shm_process_hash_id = 0;
 static int sctk_shm_process_msg_id = 0;
 
-typedef enum{SCTK_SHM_SENDER_HT, SCTK_SHM_RECVER_HT} sctk_shm_table_t;
+typedef enum {SCTK_SHM_SENDER_HT, SCTK_SHM_RECVER_HT} sctk_shm_table_t;
   
 static sctk_shm_rdv_info_t*
 sctk_shm_frag_get_elt_from_hash(int key, sctk_shm_table_t table_type)
@@ -154,15 +157,18 @@ sctk_shm_write_fragmented_msg( sctk_shm_cell_t* cell, sctk_shm_rdv_info_t* infos
  *   Send function per class                    *
  * *********************************************/
 
+static int sctk_try_send_first_msg = 0;
+
 static sctk_shm_rdv_info_t*
 sctk_network_frag_msg_first_send(sctk_thread_ptp_message_t* msg, int dest)
 {
    int key;
    sctk_shm_cell_t * cell = NULL;
    sctk_shm_rdv_info_t* sctk_shm_send_frag_info;
+   int sctk_try_send_first_msg = 0;
 
    while(!cell)
-    cell = sctk_shm_get_cell(dest);
+   	cell = sctk_shm_get_cell(dest);
 
    sctk_shm_send_frag_info = sctk_shm_init_send_frag_msg(SCTK_MSG_SIZE(msg), &key);
    sctk_shm_send_frag_info->header = msg;
@@ -174,10 +180,10 @@ sctk_network_frag_msg_first_send(sctk_thread_ptp_message_t* msg, int dest)
    cell->msg_type = SCTK_SHM_FIRST_FRAG;
    cell->frag_hkey = ( sctk_local_process_rank << 8 ) + key;
    //fprintf(stderr, "(%d-%d) [FIRST - SEND]\tKey : %d\n", sctk_local_process_rank, dest, cell->frag_hkey);
+   sctk_shm_frag_send_msg_num++;
    sctk_shm_send_cell(cell);       
    return sctk_shm_send_frag_info;
 }
-
 
 static int 
 sctk_network_frag_msg_try_send(sctk_shm_rdv_info_t* infos, int retry)
@@ -185,7 +191,7 @@ sctk_network_frag_msg_try_send(sctk_shm_rdv_info_t* infos, int retry)
    int old_value = retry;
    sctk_shm_cell_t * cell = NULL;
 
-   while(infos->size_total != infos->size_compute)
+ //  while(infos->size_total != infos->size_compute )
    {
         do
         {       
@@ -193,7 +199,8 @@ sctk_network_frag_msg_try_send(sctk_shm_rdv_info_t* infos, int retry)
         }while(!cell && retry);
         
         if(!cell)
-            break;
+		return;
+//		break;
 
         retry--;
    	cell->msg_type = SCTK_SHM_NEXT_FRAG;
@@ -207,6 +214,7 @@ sctk_network_frag_msg_try_send(sctk_shm_rdv_info_t* infos, int retry)
    {
         sctk_thread_ptp_message_t *msg = infos->header;
         sctk_shm_frag_del_elt_from_hash(infos->key, SCTK_SHM_SENDER_HT);
+	sctk_shm_frag_send_msg_num--;
         sctk_free(infos);
         sctk_complete_and_free_message(msg) ;
    }
@@ -218,20 +226,23 @@ void
 sctk_network_frag_msg_shm_idle(int max_try)
 {
     sctk_shm_rdv_info_t* infos = NULL;
+	
+    if(!sctk_shm_frag_send_msg_num)
+	return;
 
     MPC_HT_ITER( &sctk_shm_sending_frag_hastable_ptr, infos )
     sctk_network_frag_msg_try_send(infos, 1);
     MPC_HT_ITER_END
 }
 
-
 int 
 sctk_network_frag_msg_shm_send(sctk_thread_ptp_message_t* msg, int dest)
 {
    sctk_shm_rdv_info_t* infos;
     
-   if( SCTK_MSG_SIZE(msg) > 3 * SCTK_SHM_CELL_SIZE)
-        return 0;
+   //if( SCTK_MSG_SIZE(msg) > 3 * SCTK_SHM_CELL_SIZE)
+//   if( SCTK_MSG_SIZE(msg) > 524288)
+ //       return 0;
 
    infos = sctk_network_frag_msg_first_send(msg, dest);
    sctk_network_frag_msg_try_send(infos, 1);
@@ -293,5 +304,5 @@ sctk_network_frag_shm_interface_init(void)
 {
     sctk_shm_process_hash_id = (sctk_get_local_process_rank() << 8);
     MPCHT_init(&sctk_shm_recving_frag_hastable_ptr, 2 << 16);
-    MPCHT_init(&sctk_shm_sending_frag_hastable_ptr, 16 );
+    MPCHT_init(&sctk_shm_sending_frag_hastable_ptr, SCTK_SHM_MAX_PROC_ID );
 }
