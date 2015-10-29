@@ -154,7 +154,7 @@ void sctk_portals_send_put ( sctk_endpoint_t *endpoint, sctk_thread_ptp_message_
 	ptl_match_bits_t match;
 	ptl_me_t slot;
 
-	if(SCTK_MSG_SIZE(msg) + sizeof(sctk_thread_ptp_message_body_t) < prail->ptable.eager_limit)
+	if(SCTK_MSG_SIZE(msg) + sizeof(sctk_thread_ptp_message_t) < prail->ptable.eager_limit)
 	{
 		sctk_portals_eager_send_put(endpoint, msg);
 		return;
@@ -375,13 +375,13 @@ void sctk_portals_poll_pending_msg_list(sctk_rail_info_t *rail)
 					to_free = 1;
 					break;
 				case PTL_EVENT_ACK:	//just notify that a Put() have been completed to the target
-				sctk_debug("PORTALS: POLL ACK - %lu (%lu)", rail->network.portals.current_id.phys.pid, pending.cat_msg);
-
+					sctk_debug("PORTALS: POLL ACK - %lu (%lu)", rail->network.portals.current_id.phys.pid, pending.cat_msg);
+					msg = (sctk_thread_ptp_message_t*) pending.extra_data;
 					switch(pending.cat_msg)
 					{
 						case SCTK_PORTALS_CAT_EAGER:
+							sctk_free(msg->tail.portals.payload);
 						case SCTK_PORTALS_CAT_RDMA: // special msg : RDMA
-							msg = (sctk_thread_ptp_message_t*) pending.extra_data;
 							sctk_complete_and_free_message(msg);
 							break;
 
@@ -644,7 +644,7 @@ void sctk_portals_network_connection_from(int from, int to, sctk_rail_info_t* ra
 	//waiting for remote data to process
 	while(PtlCTGet(me.ct_handle, &ctc) == PTL_OK)
 	{
-		sctk_debug("PORTALS: SEND ON-DEMAND - %lu at (%lu,%lu) WAITING", ctx.from.phys.pid, ctx.entry, ctx.match);
+		//sctk_debug("PORTALS: SEND ON-DEMAND - %lu at (%lu,%lu) WAITING", ctx.from.phys.pid, ctx.entry, ctx.match);
 		assume(ctc.failure == 0);
 		if(ctc.success > 0)
 			break;
@@ -699,7 +699,7 @@ void sctk_network_init_portals_all ( sctk_rail_info_t *rail )
     rail->control_message_handler = sctk_portals_control_message_handler;
 
 	sctk_debug("PORTALS: LIB INITIALIZATION");
-
+    rail->network.portals.ptable.eager_limit = rail->runtime_config_driver_config->driver.value.portals.eager_limit;
 	sctk_portals_helper_lib_init(&rail->network.portals.interface_handler, &rail->network.portals.current_id, &rail->network.portals.ptable);
 
 	//if process binding w/ ring is not required, stop here
@@ -757,6 +757,5 @@ void sctk_network_init_portals_all ( sctk_rail_info_t *rail )
 
 	//syncing with other processes
     sctk_pmi_barrier();
-    rail->network.portals.ptable.eager_limit = rail->runtime_config_driver_config->driver.value.portals.eager_limit;
 }
 #endif

@@ -260,9 +260,12 @@ void sctk_portals_helper_init_table_entry(sctk_portals_table_entry_t* entry, sct
 	    ptl_me_t me_2;
 	    ptl_handle_me_t me_handle_2;
 	    void* new_slot = (void*)sctk_malloc(eager_limit);
+	    sctk_portals_list_entry_extra_t* stuff = sctk_malloc(sizeof(sctk_portals_list_entry_extra_t));
+	    stuff->cat_msg = SCTK_PORTALS_CAT_EAGER;
+	    stuff->extra_data = NULL;
 
 	    sctk_portals_helper_init_new_entry(&me_2, interface, new_slot, eager_limit, SCTK_PORTALS_BITS_EAGER_SLOT, SCTK_PORTALS_ME_PUT_OPTIONS );
-	    sctk_portals_helper_register_new_entry(interface, ind, &me_2, NULL);
+	    sctk_portals_helper_register_new_entry(interface, ind, &me_2, stuff);
 
 	}
 }
