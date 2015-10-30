@@ -45,16 +45,16 @@
  */
 void sctk_portals_message_copy ( sctk_message_to_copy_t *tmp )
 {
-	sctk_thread_ptp_message_t* sender;
-	sctk_thread_ptp_message_t* recver;
-	sctk_portals_msg_header_t* remote_info;
+	sctk_thread_ptp_message_t* sender = NULL;
+	sctk_thread_ptp_message_t* recver = NULL;
+	sctk_portals_msg_header_t* remote_info = NULL;
 	sctk_portals_request_type_t type = SCTK_PORTALS_NO_BLOCKING_REQUEST;
 	sender = tmp->msg_send;
 	recver = tmp->msg_recv;
 	remote_info = &sender->tail.portals;
 	sctk_portals_list_entry_extra_t stuff;
 	size_t size;
-	void *payload;
+	void *payload = NULL;
 
 	stuff.cat_msg = SCTK_PORTALS_CAT_REGULAR;
 	stuff.extra_data = recver;
@@ -94,13 +94,13 @@ void sctk_portals_message_copy ( sctk_message_to_copy_t *tmp )
 	if(recver->tail.message_type != SCTK_MESSAGE_CONTIGUOUS)
 	{
 		sctk_net_message_copy_from_buffer(payload, tmp, 0);
-		sctk_free(payload);
+		sctk_free(payload); payload = NULL;
 	}
 }
 
 void sctk_portals_free ( void *msg )
 {
-	sctk_free(msg); // free the preallocated thread_ptp_message_body_t
+	sctk_free(msg); msg = NULL;// free the preallocated thread_ptp_message_body_t
 }
 
 /**
@@ -118,7 +118,7 @@ sctk_endpoint_t*  sctk_portals_add_route(int dest, ptl_process_t id, sctk_rail_i
 								sctk_route_origin_t route_type, sctk_endpoint_state_t state)
 {
 
-	sctk_endpoint_t *new_route;
+	sctk_endpoint_t *new_route = NULL;
 
 	new_route = sctk_malloc ( sizeof ( sctk_endpoint_t ) );
 	assume(new_route != NULL);
@@ -391,7 +391,7 @@ void sctk_portals_poll_pending_msg_list(sctk_rail_info_t *rail)
 						case SCTK_PORTALS_CAT_CTLMESSAGE: // when control message is received
 						case SCTK_PORTALS_CAT_RESERVED:  // when connection is initialized
 						case SCTK_PORTALS_CAT_ROUTING_MSG: //when MD is a routing slot (no action)
-							sctk_free(msg); // not a message* !!! it is a ptl_iovec_t *
+							sctk_free(msg); msg = NULL;// not a message* !!! it is a ptl_iovec_t *
 							break;
 						default:
 							not_reachable();
@@ -406,7 +406,7 @@ void sctk_portals_poll_pending_msg_list(sctk_rail_info_t *rail)
 		if(to_free){
 			sctk_portals_helper_destroy_memory_descriptor(&elt->md, &elt->md_handler);
 			LL_DELETE(list->head, elt);
-			sctk_free(elt);
+			sctk_free(elt); elt = NULL;
 		}
 	}
 }
@@ -452,7 +452,8 @@ int sctk_portals_poll_one_queue(sctk_rail_info_t *rail, size_t id)
 							to_free = 0;
 							break;
 						case SCTK_PORTALS_CAT_ROUTING_MSG:
-							sctk_free(stuff->extra_data); // free temporary payload
+						// free temporary payload
+							sctk_free(stuff->extra_data); stuff->extra_data = NULL;
 							break;
 						case SCTK_PORTALS_CAT_RESERVED:
 						case SCTK_PORTALS_CAT_EAGER: //don't exist (Get() for EAGER)
@@ -523,7 +524,11 @@ int sctk_portals_poll_one_queue(sctk_rail_info_t *rail, size_t id)
 					not_reachable();
 			}
 			// if extra data have been allocated:
-			if(stuff && to_free) sctk_free(stuff);
+			if(stuff && to_free)
+			{
+				sctk_free(stuff);
+				stuff = NULL;
+			}
 			ret = 0;
 		}
 		if(!stop_polling_now)
@@ -636,7 +641,7 @@ void sctk_portals_network_connection_from(int from, int to, sctk_rail_info_t* ra
     ptl_ct_event_t ctc;
     ptl_me_t me;
     ptl_handle_me_t me_handler;
-	sctk_endpoint_t* route;
+	sctk_endpoint_t* route = NULL;
 	sctk_portals_list_entry_extra_t* stuff = NULL;
 
 	stuff = sctk_malloc(sizeof(sctk_portals_list_entry_extra_t));

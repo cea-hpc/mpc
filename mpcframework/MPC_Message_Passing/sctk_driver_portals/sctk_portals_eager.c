@@ -38,9 +38,9 @@
 
 void sctk_portals_eager_message_copy ( sctk_message_to_copy_t *tmp )
 {
-sctk_thread_ptp_message_t* sender;
-	sctk_thread_ptp_message_t* recver;
-	sctk_portals_msg_header_t* remote_info;
+	sctk_thread_ptp_message_t* sender = NULL;
+	sctk_thread_ptp_message_t* recver = NULL;
+	sctk_portals_msg_header_t* remote_info = NULL;
 	sender = tmp->msg_send;
 	recver = tmp->msg_recv;
 	remote_info = &sender->tail.portals;
@@ -61,7 +61,7 @@ sctk_thread_ptp_message_t* sender;
 
 void sctk_portals_eager_free (void* msg)
 {
-	sctk_free(msg);
+	sctk_free(msg); msg = NULL;
 }
 
 void sctk_portals_eager_send_put ( sctk_endpoint_t *endpoint, sctk_thread_ptp_message_t *msg)
@@ -95,8 +95,6 @@ void sctk_portals_eager_send_put ( sctk_endpoint_t *endpoint, sctk_thread_ptp_me
 	if(SCTK_MSG_SRC_PROCESS(msg) != sctk_get_process_rank())
 	{
 		ptl_me_t me;
-		sctk_portals_msg_header_t *remote_info = &msg->tail.portals;
-
 		iovecs[1].iov_base = msg->tail.portals.payload;
 
 		stuff->cat_msg = SCTK_PORTALS_CAT_ROUTING_MSG;
@@ -122,6 +120,7 @@ void sctk_portals_eager_send_put ( sctk_endpoint_t *endpoint, sctk_thread_ptp_me
 		sctk_debug("PORTALS: EAGER SEND - (%d -> %d) [%lu -> %lu] at (%lu)", SCTK_MSG_SRC_PROCESS(msg),  SCTK_MSG_DEST_PROCESS(msg), prail->current_id.phys.pid,proute->dest.phys.pid, local_entry);
 	}
 
+	sctk_warning("SEND HEADER %lu - PAYLOAD %lu", hash_payload(iovecs[0].iov_base, iovecs[0].iov_len), hash_payload(iovecs[1].iov_base, iovecs[1].iov_len));
 	//send the header request
 	sctk_portals_helper_put_request(
 		&prail->ptable.pending_list,
@@ -142,12 +141,13 @@ void sctk_portals_eager_recv_put (sctk_rail_info_t* rail, unsigned int indice,  
 	sctk_thread_ptp_message_t* msg = NULL;
 	void* payload = NULL;
 	ptl_me_t new_me;
-	ptl_iovec_t* iovecs;
+	ptl_iovec_t* iovecs = NULL;
 
 	iovecs = ((sctk_portals_list_entry_extra_t*)event->user_ptr)->extra_data;
 
 	msg = iovecs[0].iov_base;
 	payload = iovecs[1].iov_base;
+	sctk_error("RECV HEADER %lu - PAYLOAD %lu", hash_payload(iovecs[0].iov_base, iovecs[0].iov_len), hash_payload(iovecs[1].iov_base, SCTK_MSG_SIZE(msg)));
 
 	//store needed data in message tail (forwarded to sctk_message_copy())
 	msg->tail.portals.remote = event->initiator;
@@ -170,6 +170,8 @@ void sctk_portals_eager_recv_put (sctk_rail_info_t* rail, unsigned int indice,  
 		sctk_debug("PORTALS: EAGER RECV - (%d -> %d) [%lu -> %lu] at (%lu/%lu)", SCTK_MSG_SRC_PROCESS(msg), SCTK_MSG_DEST_PROCESS(msg),  event->initiator.phys.pid,rail->network.portals.current_id.phys.pid, msg->tail.portals.remote_index, msg->tail.portals.tag);
 	}
 
+	sctk_free(iovecs); iovecs = NULL;
+
 	//notify upper layer that a message is arrived
 	SCTK_MSG_COMPLETION_FLAG_SET(msg, NULL);
 	sctk_rebuild_header(msg);
@@ -188,7 +190,7 @@ void sctk_portals_eager_recv_put (sctk_rail_info_t* rail, unsigned int indice,  
 
 	sctk_portals_list_entry_extra_t* stuff = sctk_malloc(sizeof(sctk_portals_list_entry_extra_t));
 	stuff->cat_msg = SCTK_PORTALS_CAT_EAGER;
-	stuff->extra_data = NULL;
+	stuff->extra_data = iovecs2;
 
 	sctk_portals_helper_init_new_entry(&me_2, msg->tail.portals.handler, iovecs2, 2, SCTK_PORTALS_BITS_EAGER_SLOT, SCTK_PORTALS_ME_PUT_OPTIONS | PTL_IOVEC );
 	sctk_portals_helper_register_new_entry(msg->tail.portals.handler, event->pt_index, &me_2, stuff);

@@ -265,7 +265,7 @@ void sctk_portals_helper_init_table_entry(sctk_portals_table_entry_t* entry, sct
 
 	    void* new_slot = (void*)sctk_malloc(eager_limit);
 	    ptl_iovec_t *iovecs = sctk_malloc(sizeof(ptl_iovec_t) * 2);
-
+	    memset(new_slot, 0, eager_limit);
 	    iovecs[0].iov_base = new_slot;
 	    iovecs[0].iov_len = sizeof(sctk_thread_ptp_message_body_t);
 	    iovecs[1].iov_base = new_slot + sizeof(sctk_thread_ptp_message_t);
@@ -428,10 +428,9 @@ void sctk_portals_helper_get_request(sctk_portals_pending_msg_list_t* list,
 		ptl_ct_event_t event;
 		sctk_debug("PORTALS: GET REQUEST - %lu at (%lu,%lu) WAITING", remote.phys.pid, index, match);
 		while(PtlCTGet(msg->md.ct_handle, &event) == PTL_OK){
-			assume(event.failure==0);
-			if(event.success > 0)
-			    break;
-
+		    assume(event.failure==0);
+		    if(event.success > 0)
+			break;
 		}
 	}
 
