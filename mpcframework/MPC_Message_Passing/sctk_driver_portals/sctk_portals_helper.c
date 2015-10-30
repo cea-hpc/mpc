@@ -247,7 +247,10 @@ void sctk_portals_helper_init_table_entry(sctk_portals_table_entry_t* entry, sct
 		&entry->index       // output: effective index id
 	));
 
-	for (i = 0; i < SCTK_PORTALS_HEADERS_ME_SIZE; ++i) {
+	assume(eager_limit >= sizeof(sctk_thread_ptp_message_t));
+
+	for (i = 0; i < SCTK_PORTALS_HEADERS_ME_SIZE; ++i)
+	{
 	    ptl_me_t me;
 	    ptl_handle_me_t me_handle;
 	    sctk_thread_ptp_message_t* slot;
@@ -259,15 +262,24 @@ void sctk_portals_helper_init_table_entry(sctk_portals_table_entry_t* entry, sct
 
 	    ptl_me_t me_2;
 	    ptl_handle_me_t me_handle_2;
+
 	    void* new_slot = (void*)sctk_malloc(eager_limit);
+	    ptl_iovec_t *iovecs = sctk_malloc(sizeof(ptl_iovec_t) * 2);
+
+	    iovecs[0].iov_base = new_slot;
+	    iovecs[0].iov_len = sizeof(sctk_thread_ptp_message_body_t);
+	    iovecs[1].iov_base = new_slot + sizeof(sctk_thread_ptp_message_t);
+	    iovecs[1].iov_len = eager_limit - sizeof(sctk_thread_ptp_message_t);
+
 	    sctk_portals_list_entry_extra_t* stuff = sctk_malloc(sizeof(sctk_portals_list_entry_extra_t));
 	    stuff->cat_msg = SCTK_PORTALS_CAT_EAGER;
-	    stuff->extra_data = NULL;
+	    stuff->extra_data = iovecs;
 
-	    sctk_portals_helper_init_new_entry(&me_2, interface, new_slot, eager_limit, SCTK_PORTALS_BITS_EAGER_SLOT, SCTK_PORTALS_ME_PUT_OPTIONS );
+	    sctk_portals_helper_init_new_entry(&me_2, interface, iovecs, 2, SCTK_PORTALS_BITS_EAGER_SLOT, SCTK_PORTALS_ME_PUT_OPTIONS | PTL_IOVEC );
 	    sctk_portals_helper_register_new_entry(interface, ind, &me_2, stuff);
-
 	}
+
+
 }
 
 int sctk_portals_helper_from_str ( const char *inval, void *outval, int outvallen )
@@ -434,15 +446,20 @@ void sctk_portals_helper_put_request(sctk_portals_pending_msg_list_t* list,
 				ptl_handle_ni_t* handler, ptl_process_t remote,
 				ptl_pt_index_t index, ptl_match_bits_t match, void* ptr,
 				ptl_hdr_data_t extra, sctk_portals_request_type_t req_type,
-				sctk_portals_ack_msg_type_t ack_requested)
+				sctk_portals_ack_msg_type_t ack_requested,
+				unsigned int option)
 {
 	sctk_portals_pending_msg_t* msg = sctk_malloc(sizeof(sctk_portals_pending_msg_t));
 
 	msg->ack_type = ack_requested;
 	msg->data = *((sctk_portals_list_entry_extra_t*)ptr);
 
-	sctk_portals_helper_init_memory_descriptor(&msg->md, handler, start, size, SCTK_PORTALS_MD_PUT_OPTIONS, &msg->md_handler);
-
+	sctk_portals_helper_init_memory_descriptor(&msg->md, handler, start, size, option, &msg->md_handler);
+	if(option & PTL_IOVEC)
+	{
+	    ptl_iovec_t* temp = (ptl_iovec_t*)start;
+	    size = temp[0].iov_len + temp[1].iov_len;
+	}
 	sctk_debug("PORTALS: PUT REQUEST - %lu at (%lu,%lu)", remote.phys.pid, index, match);
 	sctk_portals_assume(PtlPut(
 				msg->md_handler,

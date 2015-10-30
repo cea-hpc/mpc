@@ -169,7 +169,8 @@ void sctk_portals_helper_put_request(sctk_portals_pending_msg_list_t* list,
 				ptl_handle_ni_t* handler, ptl_process_t remote,
 				ptl_pt_index_t index, ptl_match_bits_t match, void* ptr,
 				ptl_hdr_data_t extra, sctk_portals_request_type_t req_type,
-				sctk_portals_ack_msg_type_t ack_requested);
+				sctk_portals_ack_msg_type_t ack_requested,
+				unsigned int option);
 
 void sctk_portals_helper_swap_request(sctk_portals_pending_msg_list_t* list,
 		    void* start_new, size_t new_offset, void* start_res, size_t res_offset,

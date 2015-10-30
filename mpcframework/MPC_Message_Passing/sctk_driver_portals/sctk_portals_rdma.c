@@ -316,7 +316,8 @@ void sctk_portals_rdma_write(  sctk_rail_info_t *rail, sctk_thread_ptp_message_t
 		stuff,
 		0,
 		SCTK_PORTALS_NO_BLOCKING_REQUEST,
-		SCTK_PORTALS_ACK_MSG
+		SCTK_PORTALS_ACK_MSG,
+		SCTK_PORTALS_MD_PUT_OPTIONS
 	);
 }
 

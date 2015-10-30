@@ -27,8 +27,10 @@
 #include <sctk_control_messages.h>
 #include <sctk_net_tools.h>
 #include <sctk_low_level_comm.h>
+#include <zlib.h>
 
 #define sctk_min(a, b)  ((a) < (b) ? (a) : (b))
+#define hash_payload(a,b) adler32(0UL, (void*)a, (size_t)b)
 
 void sctk_portals_eager_message_copy ( sctk_message_to_copy_t *tmp )
 {
@@ -44,15 +46,12 @@ sctk_thread_ptp_message_t* sender;
 
 	if(recver->tail.message_type == SCTK_MESSAGE_CONTIGUOUS)
 	{
-		memcpy(remote_info->payload, recver->tail.message.contiguous.addr, size);
+		memcpy(recver->tail.message.contiguous.addr, remote_info->payload, size);
 	}
 	else
 	{
 		sctk_net_message_copy_from_buffer(remote_info->payload, tmp, 0);
 	}
-
-	sctk_free(remote_info->payload);
-
 	sctk_message_completion_and_free(sender, recver);
 }
 
@@ -65,14 +64,12 @@ void sctk_portals_eager_send_put ( sctk_endpoint_t *endpoint, sctk_thread_ptp_me
 {
 	sctk_portals_rail_info_t * prail = &endpoint->rail->network.portals;
 	sctk_portals_route_info_t *proute = &endpoint->data.portals;
-	void* payload = NULL;
 	sctk_portals_list_entry_extra_t * stuff = NULL;
 	size_t payload_size = 0, header_size = 0, eager_size = 0;
 
 	ptl_pt_index_t local_entry;
 	ptl_pt_index_t remote_entry;
-
-	payload = msg->tail.portals.payload;
+	ptl_iovec_t* iovecs = sctk_malloc(sizeof(ptl_iovec_t) * 2);
 
 	//create associated data
 	stuff = sctk_malloc(sizeof(sctk_portals_list_entry_extra_t));
@@ -87,29 +84,30 @@ void sctk_portals_eager_send_put ( sctk_endpoint_t *endpoint, sctk_thread_ptp_me
 	header_size = sizeof(sctk_thread_ptp_message_body_t);
 	eager_size = header_size + payload_size;
 
-	payload = sctk_malloc(eager_size);
-
-	memcpy(payload, msg, header_size);
+	iovecs[0].iov_base = msg;
+	iovecs[0].iov_len = header_size;
+	iovecs[1].iov_len = payload_size;
 
 	if(SCTK_MSG_SRC_PROCESS(msg) != sctk_get_process_rank())
 	{
 		ptl_me_t me;
 		sctk_portals_msg_header_t *remote_info = &msg->tail.portals;
 
-		memcpy(payload + header_size, msg->tail.portals.payload, payload_size);
+		iovecs[1].iov_base = msg->tail.portals.payload;
 
 		stuff->cat_msg = SCTK_PORTALS_CAT_ROUTING_MSG;
-		stuff->extra_data = payload;
+		stuff->extra_data = iovecs;
 	}
 	else
 	{ // if regular message (need to make specification depending on message type)
 		if(msg->tail.message_type == SCTK_MESSAGE_CONTIGUOUS)
 		{
-			memcpy(payload + header_size, msg->tail.message.contiguous.addr, payload_size);
+			iovecs[1].iov_base = msg->tail.message.contiguous.addr;
 		}
 		else
 		{
-			sctk_net_copy_in_buffer(msg, payload + header_size);
+			iovecs[1].iov_base = sctk_malloc(payload_size);
+			sctk_net_copy_in_buffer(msg, iovecs[1].iov_base);
 		}
 	}
 
@@ -123,7 +121,7 @@ void sctk_portals_eager_send_put ( sctk_endpoint_t *endpoint, sctk_thread_ptp_me
 	//send the header request
 	sctk_portals_helper_put_request(
 		&prail->ptable.pending_list,
-		payload , eager_size, 0,
+		iovecs, 2, 0,
 		&prail->interface_handler,
 		proute->dest,
 		remote_entry,
@@ -131,7 +129,8 @@ void sctk_portals_eager_send_put ( sctk_endpoint_t *endpoint, sctk_thread_ptp_me
 		stuff,
 		0,
 		SCTK_PORTALS_NO_BLOCKING_REQUEST,
-		SCTK_PORTALS_ACK_MSG);
+		SCTK_PORTALS_ACK_MSG,
+		SCTK_PORTALS_MD_PUT_OPTIONS | PTL_IOVEC);
 }
 
 void sctk_portals_eager_recv_put (sctk_rail_info_t* rail, ptl_event_t* event)
@@ -139,11 +138,12 @@ void sctk_portals_eager_recv_put (sctk_rail_info_t* rail, ptl_event_t* event)
 	sctk_thread_ptp_message_t* msg = NULL;
 	void* payload = NULL;
 	ptl_me_t new_me;
+	ptl_iovec_t* iovecs;
 
-	msg = sctk_malloc(sizeof(sctk_thread_ptp_message_t));
-	memcpy(msg, event->start, sizeof(sctk_thread_ptp_message_body_t));
+	iovecs = ((sctk_portals_list_entry_extra_t*)event->user_ptr)->extra_data;
 
-	payload = event->start + sizeof(sctk_thread_ptp_message_body_t);
+	msg = iovecs[0].iov_base;
+	payload = iovecs[1].iov_base;
 
 	//store needed data in message tail (forwarded to sctk_message_copy())
 	msg->tail.portals.remote = event->initiator;
@@ -154,8 +154,7 @@ void sctk_portals_eager_recv_put (sctk_rail_info_t* rail, ptl_event_t* event)
 	msg->tail.portals.handler = &rail->network.portals.interface_handler;
 	msg->tail.portals.list = &rail->network.portals.ptable.pending_list;
 
-	msg->tail.portals.payload = sctk_malloc(SCTK_MSG_SIZE(msg));
-	memcpy(msg->tail.portals.payload, payload, SCTK_MSG_SIZE(msg));
+	msg->tail.portals.payload = payload;
 
 	//if control message, ajust local entry point for message
 	if(sctk_message_class_is_control_message(SCTK_MSG_SPECIFIC_CLASS(msg)))
@@ -166,24 +165,29 @@ void sctk_portals_eager_recv_put (sctk_rail_info_t* rail, ptl_event_t* event)
 	{
 		sctk_debug("PORTALS: EAGER RECV - (%d -> %d) [%lu -> %lu] at (%lu/%lu)", SCTK_MSG_SRC_PROCESS(msg), SCTK_MSG_DEST_PROCESS(msg),  event->initiator.phys.pid,rail->network.portals.current_id.phys.pid, msg->tail.portals.remote_index, msg->tail.portals.tag);
 	}
+
 	//notify upper layer that a message is arrived
 	SCTK_MSG_COMPLETION_FLAG_SET(msg, NULL);
 	sctk_rebuild_header(msg);
 	sctk_reinit_header(msg, sctk_portals_eager_free, sctk_portals_eager_message_copy);
 
-	//adding a new ME to replace the consumed one
-	sctk_portals_helper_init_new_entry(
-		&new_me, &rail->network.portals.interface_handler,
-		(void*)event->start,
-		rail->network.portals.ptable.eager_limit,
-		SCTK_PORTALS_BITS_EAGER_SLOT,
-		SCTK_PORTALS_ME_PUT_OPTIONS);
+	ptl_me_t me_2;
+	ptl_handle_me_t me_handle_2;
+	size_t eager_limit = rail->network.portals.ptable.eager_limit;
+	void* new_slot = (void*)sctk_malloc(eager_limit);
 
-	sctk_portals_helper_register_new_entry(
-		&rail->network.portals.interface_handler,
-		event->pt_index,
-		&new_me,
-		NULL);
+	ptl_iovec_t *iovecs2 = sctk_malloc(sizeof(ptl_iovec_t) * 2);
+	iovecs2[0].iov_base = new_slot;
+	iovecs2[0].iov_len = sizeof(sctk_thread_ptp_message_body_t);
+	iovecs2[1].iov_base = new_slot + sizeof(sctk_thread_ptp_message_t);
+	iovecs2[1].iov_len = eager_limit - sizeof(sctk_thread_ptp_message_t);
+
+	sctk_portals_list_entry_extra_t* stuff = sctk_malloc(sizeof(sctk_portals_list_entry_extra_t));
+	stuff->cat_msg = SCTK_PORTALS_CAT_EAGER;
+	stuff->extra_data = NULL;
+
+	sctk_portals_helper_init_new_entry(&me_2, msg->tail.portals.handler, iovecs2, 2, SCTK_PORTALS_BITS_EAGER_SLOT, SCTK_PORTALS_ME_PUT_OPTIONS | PTL_IOVEC );
+	sctk_portals_helper_register_new_entry(msg->tail.portals.handler, event->pt_index, &me_2, stuff);
 
     rail->send_message_from_network(msg);
 }

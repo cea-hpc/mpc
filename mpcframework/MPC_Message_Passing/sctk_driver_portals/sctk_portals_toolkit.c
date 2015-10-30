@@ -242,7 +242,8 @@ void sctk_portals_send_put ( sctk_endpoint_t *endpoint, sctk_thread_ptp_message_
 		stuff,
 		match,
 		SCTK_PORTALS_NO_BLOCKING_REQUEST,
-		SCTK_PORTALS_NO_ACK_MSG);
+		SCTK_PORTALS_NO_ACK_MSG,
+		SCTK_PORTALS_MD_PUT_OPTIONS);
 }
 /**
  * @brief When a message have been sent, the source have to notify and unlock tasks waiting for completion
@@ -343,7 +344,8 @@ void sctk_portals_poll_pending_msg_list(sctk_rail_info_t *rail)
 		//while an avent is contained in current event_queue
 		while(ret == PTL_OK)
 		{
-			assume(event.ni_fail_type == PTL_NI_OK);
+			if(event.ni_fail_type != PTL_NI_OK)
+				sctk_error("%d", event.ni_fail_type);
 
 			//depending on event type
 			switch(event.type)
@@ -380,7 +382,7 @@ void sctk_portals_poll_pending_msg_list(sctk_rail_info_t *rail)
 					switch(pending.cat_msg)
 					{
 						case SCTK_PORTALS_CAT_EAGER:
-							sctk_free(msg->tail.portals.payload);
+							//sctk_free(iovecs);
 						case SCTK_PORTALS_CAT_RDMA: // special msg : RDMA
 							sctk_complete_and_free_message(msg);
 							break;
@@ -388,6 +390,7 @@ void sctk_portals_poll_pending_msg_list(sctk_rail_info_t *rail)
 						case SCTK_PORTALS_CAT_CTLMESSAGE: // when control message is received
 						case SCTK_PORTALS_CAT_RESERVED:  // when connection is initialized
 						case SCTK_PORTALS_CAT_ROUTING_MSG: //when MD is a routing slot (no action)
+							sctk_free(msg); // not a message* !!! it is a ptl_iovec_t *
 							break;
 						default:
 							not_reachable();
@@ -425,6 +428,7 @@ int sctk_portals_poll_one_queue(sctk_rail_info_t *rail, size_t id)
 		while(PtlEQGet(*queue, &event) == PTL_OK)
 		{
 			assume(event.ni_fail_type == PTL_NI_OK);
+			assume(event.mlength == event.rlength);
 			stuff = event.user_ptr;
 			cat = (stuff == NULL) ? SCTK_PORTALS_CAT_REGULAR : stuff->cat_msg;
 
@@ -591,7 +595,8 @@ void sctk_portals_network_connection_to_ctx(int src, sctk_rail_info_t* rail,
 		&stuff,
 		0,
 		SCTK_PORTALS_NO_BLOCKING_REQUEST,
-		SCTK_PORTALS_NO_ACK_MSG);
+		SCTK_PORTALS_NO_ACK_MSG,
+		SCTK_PORTALS_MD_PUT_OPTIONS);
 
 }
 
@@ -644,7 +649,7 @@ void sctk_portals_network_connection_from(int from, int to, sctk_rail_info_t* ra
 	//waiting for remote data to process
 	while(PtlCTGet(me.ct_handle, &ctc) == PTL_OK)
 	{
-		//sctk_debug("PORTALS: SEND ON-DEMAND - %lu at (%lu,%lu) WAITING", ctx.from.phys.pid, ctx.entry, ctx.match);
+		sctk_debug("PORTALS: SEND ON-DEMAND - %lu at (%lu,%lu) WAITING", ctx.from.phys.pid, ctx.entry, ctx.match);
 		assume(ctc.failure == 0);
 		if(ctc.success > 0)
 			break;
