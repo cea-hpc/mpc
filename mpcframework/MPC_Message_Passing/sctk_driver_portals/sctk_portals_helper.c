@@ -247,7 +247,6 @@ void sctk_portals_helper_init_table_entry(sctk_portals_table_entry_t* entry, sct
 		&entry->index       // output: effective index id
 	));
 
-	assume(eager_limit >= sizeof(sctk_thread_ptp_message_t));
 
 	for (i = 0; i < SCTK_PORTALS_HEADERS_ME_SIZE; ++i)
 	{
@@ -260,23 +259,26 @@ void sctk_portals_helper_init_table_entry(sctk_portals_table_entry_t* entry, sct
 	    sctk_portals_helper_init_new_entry(&me, interface, slot, sizeof(sctk_thread_ptp_message_t), SCTK_PORTALS_BITS_HEADER, SCTK_PORTALS_ME_PUT_OPTIONS );
 	    sctk_portals_helper_register_new_entry(interface, ind, &me, NULL);
 
-	    ptl_me_t me_2;
-	    ptl_handle_me_t me_handle_2;
+	    if(eager_limit >= sizeof(sctk_thread_ptp_message_t))
+	    {
+		ptl_me_t me_2;
+		ptl_handle_me_t me_handle_2;
 
-	    void* new_slot = (void*)sctk_malloc(eager_limit);
-	    ptl_iovec_t *iovecs = sctk_malloc(sizeof(ptl_iovec_t) * 2);
-	    memset(new_slot, 0, eager_limit);
-	    iovecs[0].iov_base = new_slot;
-	    iovecs[0].iov_len = sizeof(sctk_thread_ptp_message_body_t);
-	    iovecs[1].iov_base = new_slot + sizeof(sctk_thread_ptp_message_t);
-	    iovecs[1].iov_len = eager_limit - sizeof(sctk_thread_ptp_message_t);
+		void* new_slot = (void*)sctk_malloc(eager_limit);
+		ptl_iovec_t *iovecs = sctk_malloc(sizeof(ptl_iovec_t) * 2);
+		memset(new_slot, 0, eager_limit);
+		iovecs[0].iov_base = new_slot;
+		iovecs[0].iov_len = sizeof(sctk_thread_ptp_message_body_t);
+		iovecs[1].iov_base = new_slot + sizeof(sctk_thread_ptp_message_t);
+		iovecs[1].iov_len = eager_limit - sizeof(sctk_thread_ptp_message_t);
 
-	    sctk_portals_list_entry_extra_t* stuff = sctk_malloc(sizeof(sctk_portals_list_entry_extra_t));
-	    stuff->cat_msg = SCTK_PORTALS_CAT_EAGER;
-	    stuff->extra_data = iovecs;
+		sctk_portals_list_entry_extra_t* stuff = sctk_malloc(sizeof(sctk_portals_list_entry_extra_t));
+		stuff->cat_msg = SCTK_PORTALS_CAT_EAGER;
+		stuff->extra_data = iovecs;
 
-	    sctk_portals_helper_init_new_entry(&me_2, interface, iovecs, 2, SCTK_PORTALS_BITS_EAGER_SLOT, SCTK_PORTALS_ME_PUT_OPTIONS | PTL_IOVEC );
-	    sctk_portals_helper_register_new_entry(interface, ind, &me_2, stuff);
+		sctk_portals_helper_init_new_entry(&me_2, interface, iovecs, 2, SCTK_PORTALS_BITS_EAGER_SLOT, SCTK_PORTALS_ME_PUT_OPTIONS | PTL_IOVEC );
+		sctk_portals_helper_register_new_entry(interface, ind, &me_2, stuff);
+	    }
 	}
 
 
