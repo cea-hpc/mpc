@@ -37,8 +37,8 @@ struct sctk_thread_ptp_message_s;
 
 void sctk_portals_eager_message_copy ( struct sctk_message_to_copy_s *tmp );
 void sctk_portals_eager_free (void* msg);
-void sctk_portals_eager_send_put ( struct sctk_endpoint_s *endpoint, struct sctk_thread_ptp_message_s *msg);
-void sctk_portals_eager_recv_put (struct sctk_rail_info_s* rail, ptl_event_t* event);
+void sctk_portals_eager_send_put ( struct sctk_endpoint_s *endpoint,struct sctk_thread_ptp_message_s *msg);
+void sctk_portals_eager_recv_put (struct sctk_rail_info_s* rail,  unsigned int indice, ptl_event_t* event);
 
 #endif /* MPC_USE_PORTALS */
 

@@ -27,10 +27,14 @@
 #include <sctk_control_messages.h>
 #include <sctk_net_tools.h>
 #include <sctk_low_level_comm.h>
-#include <zlib.h>
+
 
 #define sctk_min(a, b)  ((a) < (b) ? (a) : (b))
+
+#ifdef SCTK_USE_CHECKSUM
+#include <zlib.h>
 #define hash_payload(a,b) adler32(0UL, (void*)a, (size_t)b)
+#endif
 
 void sctk_portals_eager_message_copy ( sctk_message_to_copy_t *tmp )
 {
@@ -133,7 +137,7 @@ void sctk_portals_eager_send_put ( sctk_endpoint_t *endpoint, sctk_thread_ptp_me
 		SCTK_PORTALS_MD_PUT_OPTIONS | PTL_IOVEC);
 }
 
-void sctk_portals_eager_recv_put (sctk_rail_info_t* rail, ptl_event_t* event)
+void sctk_portals_eager_recv_put (sctk_rail_info_t* rail, unsigned int indice,  ptl_event_t* event)
 {
 	sctk_thread_ptp_message_t* msg = NULL;
 	void* payload = NULL;
@@ -189,5 +193,7 @@ void sctk_portals_eager_recv_put (sctk_rail_info_t* rail, ptl_event_t* event)
 	sctk_portals_helper_init_new_entry(&me_2, msg->tail.portals.handler, iovecs2, 2, SCTK_PORTALS_BITS_EAGER_SLOT, SCTK_PORTALS_ME_PUT_OPTIONS | PTL_IOVEC );
 	sctk_portals_helper_register_new_entry(msg->tail.portals.handler, event->pt_index, &me_2, stuff);
 
+
+	sctk_spinlock_unlock(&rail->network.portals.ptable.head[indice]->lock);
     rail->send_message_from_network(msg);
 }

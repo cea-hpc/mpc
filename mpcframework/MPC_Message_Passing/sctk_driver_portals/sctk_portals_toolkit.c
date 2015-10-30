@@ -273,7 +273,7 @@ void sctk_portals_ack_get (sctk_rail_info_t* rail, ptl_event_t* event)
  * @param rail
  * @param event
  */
-void sctk_portals_recv_put (sctk_rail_info_t* rail, ptl_event_t* event)
+void sctk_portals_recv_put (sctk_rail_info_t* rail, unsigned int indice, ptl_event_t* event)
 {
 	sctk_thread_ptp_message_t* content = NULL;
 	ptl_me_t new_me;
@@ -319,6 +319,7 @@ void sctk_portals_recv_put (sctk_rail_info_t* rail, ptl_event_t* event)
 		NULL);
 
 
+	sctk_spinlock_unlock(&rail->network.portals.ptable.head[indice]->lock);
     rail->send_message_from_network(content);
 }
 
@@ -412,7 +413,7 @@ void sctk_portals_poll_pending_msg_list(sctk_rail_info_t *rail)
 
 int sctk_portals_poll_one_queue(sctk_rail_info_t *rail, size_t id)
 {
-	int ret = 1, to_free = 1;
+	int ret = 1, to_free = 1, stop_polling_now = 0;
 	ptl_event_t event;
 	sctk_portals_table_t* ptable = &rail->network.portals.ptable;
 	ptl_handle_eq_t* queue = ptable->head[id]->event_list;
@@ -425,7 +426,7 @@ int sctk_portals_poll_one_queue(sctk_rail_info_t *rail, size_t id)
 	if(sctk_spinlock_trylock(&ptable->head[id]->lock) == 0)
 	{
 		//while there are event to poll, continue
-		while(PtlEQGet(*queue, &event) == PTL_OK)
+		while(PtlEQGet(*queue, &event) == PTL_OK && !stop_polling_now)
 		{
 			assume(event.ni_fail_type == PTL_NI_OK);
 			assume(event.mlength == event.rlength);
@@ -469,11 +470,29 @@ int sctk_portals_poll_one_queue(sctk_rail_info_t *rail, size_t id)
 					switch(cat)
 					{
 						case SCTK_PORTALS_CAT_EAGER:
-							sctk_portals_eager_recv_put(rail, &event); // handle the message
+							/*
+							 * In order to avoid deadlocks, we have to relax lock on list before
+							 * calling inter_thread_comm (which can take a while and/or send messages)
+							 * For that, this function relax the lock (unable to dot it now because
+							 * the event has not been pulled yet). We need to trylock it when the
+							 * function back
+							 */
+							sctk_portals_eager_recv_put(rail, id, &event); // handle the message
+							if(sctk_spinlock_trylock(&ptable->head[id]->lock) != 0) //unable to lock
+							{
+								stop_polling_now = 1;
+							}
 							break;
 						case SCTK_PORTALS_CAT_REGULAR:
 						case SCTK_PORTALS_CAT_CTLMESSAGE:
-							sctk_portals_recv_put(rail, &event); // handle the message
+							/*
+							 * For the same reason as above, need to relock when function ends
+							 */
+							sctk_portals_recv_put(rail, id, &event); // handle the message
+							if(sctk_spinlock_trylock(&ptable->head[id]->lock) != 0) //unable to lock
+							{
+								stop_polling_now = 1;
+							}
 							break;
 						case SCTK_PORTALS_CAT_RDMA:
 							to_free = 0;
@@ -507,7 +526,10 @@ int sctk_portals_poll_one_queue(sctk_rail_info_t *rail, size_t id)
 			if(stuff && to_free) sctk_free(stuff);
 			ret = 0;
 		}
-		sctk_spinlock_unlock(&ptable->head[id]->lock);
+		if(!stop_polling_now)
+		{
+			sctk_spinlock_unlock(&ptable->head[id]->lock);
+		}
 	}
 
 	return ret;
