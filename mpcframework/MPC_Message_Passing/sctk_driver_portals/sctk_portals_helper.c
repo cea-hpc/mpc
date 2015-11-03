@@ -252,12 +252,16 @@ void sctk_portals_helper_init_table_entry(sctk_portals_table_entry_t* entry, sct
 	{
 	    ptl_me_t me;
 	    ptl_handle_me_t me_handle;
+	    sctk_portals_list_entry_extra_t* stuff = sctk_malloc(sizeof(sctk_portals_list_entry_extra_t));
 	    sctk_thread_ptp_message_t* slot;
 
 	    slot = sctk_malloc(sizeof( sctk_thread_ptp_message_t));
+	    stuff->cat_msg = SCTK_PORTALS_CAT_REGULAR;
+	    stuff->extra_data = NULL;
+	    stuff->pending_str = me;
 
 	    sctk_portals_helper_init_new_entry(&me, interface, slot, sizeof(sctk_thread_ptp_message_t), SCTK_PORTALS_BITS_HEADER, SCTK_PORTALS_ME_PUT_OPTIONS );
-	    sctk_portals_helper_register_new_entry(interface, ind, &me, NULL);
+	    sctk_portals_helper_register_new_entry(interface, ind, &me, stuff);
 
 	    if(eager_limit >= sizeof(sctk_thread_ptp_message_t))
 	    {

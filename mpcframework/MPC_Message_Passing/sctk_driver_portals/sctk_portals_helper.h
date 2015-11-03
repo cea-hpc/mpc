@@ -106,6 +106,7 @@ typedef struct sctk_portals_list_entry_extra_s
 {
 	sctk_portals_slot_category_t cat_msg;
 	void* extra_data;
+	ptl_me_t pending_str; // need to rewrite this member
 } sctk_portals_list_entry_extra_t;
 
 typedef struct sctk_portals_table_entry_s

@@ -120,7 +120,10 @@ void sctk_portals_eager_send_put ( sctk_endpoint_t *endpoint, sctk_thread_ptp_me
 		sctk_debug("PORTALS: EAGER SEND - (%d -> %d) [%lu -> %lu] at (%lu)", SCTK_MSG_SRC_PROCESS(msg),  SCTK_MSG_DEST_PROCESS(msg), prail->current_id.phys.pid,proute->dest.phys.pid, local_entry);
 	}
 
-	sctk_warning("SEND HEADER %lu - PAYLOAD %lu", hash_payload(iovecs[0].iov_base, iovecs[0].iov_len), hash_payload(iovecs[1].iov_base, iovecs[1].iov_len));
+#ifdef MPC_USE_CHECKSUM
+	sctk_debug("SEND HEADER %lu - PAYLOAD %lu", hash_payload(iovecs[0].iov_base, iovecs[0].iov_len), hash_payload(iovecs[1].iov_base, iovecs[1].iov_len));
+#endif
+
 	//send the header request
 	sctk_portals_helper_put_request(
 		&prail->ptable.pending_list,
@@ -147,7 +150,10 @@ void sctk_portals_eager_recv_put (sctk_rail_info_t* rail, unsigned int indice,  
 
 	msg = iovecs[0].iov_base;
 	payload = iovecs[1].iov_base;
-	sctk_error("RECV HEADER %lu - PAYLOAD %lu", hash_payload(iovecs[0].iov_base, iovecs[0].iov_len), hash_payload(iovecs[1].iov_base, SCTK_MSG_SIZE(msg)));
+
+#ifdef MPC_USE_CHECKSUM
+	sctk_debug("RECV HEADER %lu - PAYLOAD %lu", hash_payload(iovecs[0].iov_base, iovecs[0].iov_len), hash_payload(iovecs[1].iov_base, SCTK_MSG_SIZE(msg)));
+#endif
 
 	//store needed data in message tail (forwarded to sctk_message_copy())
 	msg->tail.portals.remote = event->initiator;

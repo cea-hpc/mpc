@@ -156,10 +156,11 @@ void sctk_portals_send_put ( sctk_endpoint_t *endpoint, sctk_thread_ptp_message_
 
 	if(SCTK_MSG_SIZE(msg) + sizeof(sctk_thread_ptp_message_t) < prail->ptable.eager_limit)
 	{
+		//sctk_error("EAGER REQUEST");
 		sctk_portals_eager_send_put(endpoint, msg);
 		return;
 	}
-
+	//sctk_warning("RDV REQUEST");
 	//create associated data
 	stuff = sctk_malloc(sizeof(sctk_portals_list_entry_extra_t));
 	stuff->cat_msg = SCTK_PORTALS_CAT_REGULAR;
@@ -229,6 +230,8 @@ void sctk_portals_send_put ( sctk_endpoint_t *endpoint, sctk_thread_ptp_message_
 		payload , payload_size,
 		match   , SCTK_PORTALS_ME_GET_OPTIONS);
 
+	stuff->pending_str = slot;
+
 	sctk_portals_helper_register_new_entry(&prail->interface_handler, local_entry, &slot, stuff);
 
 	//send the header request
@@ -261,7 +264,7 @@ void sctk_portals_ack_get (sctk_rail_info_t* rail, ptl_event_t* event)
 	//retrieve msg address for completion
 	stuff = event->user_ptr;
 	content = (sctk_thread_ptp_message_t*)stuff->extra_data;
-
+	sctk_portals_assume(PtlCTFree(stuff->pending_str.ct_handle));
 	sctk_debug("PORTALS: ACK GET MSG - %lu at (%lu,%lu)", event->initiator.phys.pid, event->pt_index, event->match_bits);
 	//free message
 	sctk_complete_and_free_message(content);
@@ -526,6 +529,7 @@ int sctk_portals_poll_one_queue(sctk_rail_info_t *rail, size_t id)
 			// if extra data have been allocated:
 			if(stuff && to_free)
 			{
+				//sctk_portals_assume(PtlCTFree(stuff->pending_str.ct_handle));
 				sctk_free(stuff);
 				stuff = NULL;
 			}
