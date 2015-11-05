@@ -934,111 +934,138 @@ __kmpc_for_static_init_4( ident_t *loc, kmp_int32 gtid, kmp_int32 schedtype,
     kmp_int32 * plastiter, kmp_int32 * plower, kmp_int32 * pupper,
     kmp_int32 * pstride, kmp_int32 incr, kmp_int32 chunk ) 
 {
-  long from, to ;
-  mpcomp_thread_t *t;
-  int res ;
-  //save old pupper
-  kmp_int32 pupper_old = *pupper;
+    long from, to ;
+    mpcomp_thread_t *t;
+    int res ;
+    kmp_int32 trip_count;
+    //save old pupper
+    kmp_int32 pupper_old = *pupper;
 
-     t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
-     sctk_assert(t != NULL);   
+    t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
+    sctk_assert(t != NULL);   
+    
+    if ( t->info.num_threads == 1 ) 
+    {
+        if( plastiter != NULL )
+            *plastiter = TRUE;
+        *pstride = (incr > 0) ? (*pupper - *plower + 1) : (-(*plower - *pupper + 1));
+        
+        return;
+    }
 
+    //trip_count computation            
+    if ( incr == 1 ) {
+        trip_count = *pupper - *plower + 1;
+    } else if (incr == -1) {
+        trip_count = *plower - *pupper + 1;
+    } else {
+        if ( incr > 1 ) {
+            trip_count = (*pupper - *plower) / incr + 1;
+        } else {
+            trip_count = (*plower - *pupper) / ( -incr ) + 1;
+        }
+    }            
 
-  sctk_nodebug( "[%d] __kmpc_for_static_init_4: <%s> "
-      "schedtype=%d, %d? %d -> %d incl. [%d], incr=%d chunk=%d *plastiter=%d *pstride=%d"
-      ,
-      ((mpcomp_thread_t *) sctk_openmp_thread_tls)->rank, 
-      loc->psource,
-      schedtype, *plastiter, *plower, *pupper, *pstride, incr, chunk, *plastiter, *pstride
-      ) ;
+    sctk_nodebug( "[%d] __kmpc_for_static_init_4: <%s> "
+    "schedtype=%d, %d? %d -> %d incl. [%d], incr=%d chunk=%d *plastiter=%d *pstride=%d"
+    ,
+    ((mpcomp_thread_t *) sctk_openmp_thread_tls)->rank, 
+    loc->psource,
+    schedtype, *plastiter, *plower, *pupper, *pstride, incr, chunk, *plastiter, *pstride
+    ) ;
 
-  switch( schedtype ) {
-    case kmp_sch_static:
+    switch( schedtype ) 
+    {
+        case kmp_sch_static:
+            /* Get the single chunk for the current thread */
+            res = __mpcomp_static_schedule_get_single_chunk( *plower, *pupper+incr, incr, &from, &to ) ;
 
-      /* Get the single chunk for the current thread */
-      res = __mpcomp_static_schedule_get_single_chunk( *plower, *pupper+incr, incr,
-	  &from, &to ) ;
+            /* Chunk to execute? */
+            if ( res ) 
+            {
+                sctk_nodebug( "[%d] Results for __kmpc_for_static_init_4 (kmp_sch_static): "
+	            "%ld -> %ld excl %ld incl [%d]"
+	            ,
+	            ((mpcomp_thread_t *) sctk_openmp_thread_tls)->rank, 
+	            from, to, to-incr, incr
+	            ) ;
 
-      /* Chunk to execute? */
-      if ( res ) {
-      sctk_nodebug( "[%d] Results for __kmpc_for_static_init_4 (kmp_sch_static): "
-	  "%ld -> %ld excl %ld incl [%d]"
-	  ,
-	  ((mpcomp_thread_t *) sctk_openmp_thread_tls)->rank, 
-	  from, to, to-incr, incr
-	  ) ;
+                /* Remarks:
+	            - MPC chunk has not-inclusive upper bound while Intel runtime includes
+	            upper bound for calculation 
+	            - Need to cast from long to int because MPC handles everything has a long
+	            (like GCC) while Intel creates different functions
+	            */
+                *plower=(kmp_int32)from ;
+                *pupper=(kmp_int32)to-incr;
 
-      /* Remarks:
-	 - MPC chunk has not-inclusive upper bound while Intel runtime includes
-	 upper bound for calculation 
-	 - Need to cast from long to int because MPC handles everything has a long
-	 (like GCC) while Intel creates different functions
-	 */
-      *plower=(kmp_int32)from ;
-      *pupper=(kmp_int32)to-incr;
+            } 
+            else 
+            {
+	            /* No chunk */
+	            *pupper=*pupper+incr;
+	            *plower=*pupper;
+            }
 
-      } else {
-	/* No chunk */
-	*pupper=*pupper+incr;
-	*plower=*pupper;
-      }
+            *pstride = *pupper - *plower;
+            //plastiter computation
+            if(trip_count < t->info.num_threads)
+            {    
+                if( plastiter != NULL )
+                    *plastiter = ( t->rank == trip_count - 1 ); 
+            } else {
+                if ( incr > 0 ) {
+                    if( plastiter != NULL )
+                        *plastiter = *plower <= pupper_old && *pupper > pupper_old - incr;
+                } else {
+                    if( plastiter != NULL )
+                        *plastiter = *plower >= pupper_old && *pupper < pupper_old - incr;
+                }    
+            }
+        
+        break ;
+        case kmp_sch_static_chunked:
+            if(chunk < 1)
+                chunk = 1;
+            
+            // span = chunk * incr;
+            *pstride = (chunk * incr) * t->info.num_threads ;
+            *plower = *plower + ((chunk * incr)* t->rank );
+            *pupper = *plower + (chunk * incr) - incr;
+           
+            //plastiter computation 
+            if( plastiter != NULL )
+                *plastiter = (t->rank == ((trip_count - 1)/chunk) % t->info.num_threads);
 
-      //* TODO what about pstride and plastiter? */
-      // *pstride = incr ;
-      // *plastiter = 1 ;
-      
-      *pstride = *pupper - *plower;
+            sctk_nodebug( "[%d] Results for __kmpc_for_static_init_4 (kmp_sch_static_chunked): "
+	        "%ld -> %ld excl %ld incl [%d]"
+	        ,
+	        ((mpcomp_thread_t *) sctk_openmp_thread_tls)->rank, 
+	        *plower, *pupper, *pupper-incr, incr
+	        ) ;
 
-      if(*pupper == pupper_old)
-          *plastiter = 1;
-      else
-          *plastiter = 0;
-      
-      break ;
-    case kmp_sch_static_chunked:
-
-      sctk_assert( chunk >= 1 ) ;
-
-
-      // span = chunk * incr;
-      *pstride = (chunk * incr) * t->info.num_threads ;
-      *plower = *plower + ((chunk * incr)* t->rank );
-      *pupper = *plower + (chunk * incr) - incr;
-
-      if(*pupper == pupper_old)
-          *plastiter = 1;
-      else
-          *plastiter = 0;
-
-      /* __mpcomp_static_schedule_get_specific_chunk( *plower, *pupper+incr, incr,
-	  chunk, 0, &from, &to ) ;
-	  */
-
-      sctk_nodebug( "[%d] Results for __kmpc_for_static_init_4 (kmp_sch_static_chunked): "
-	  "%ld -> %ld excl %ld incl [%d]"
-	  ,
-	  ((mpcomp_thread_t *) sctk_openmp_thread_tls)->rank, 
-	  *plower, *pupper, *pupper-incr, incr
-	  ) ;
-
-      /* Remarks:
-	 - MPC chunk has not-inclusive upper bound while Intel runtime includes
-	 upper bound for calculation 
-	 - Need to cast from long to int because MPC handles everything has a long
-	 (like GCC) while Intel creates different functions
-	 */
-      // *plower=(kmp_int32)from ;
-      // *pupper=(kmp_int32)to-incr;
-
-      /* TODO what should we do w/ plastiter? */
-      /* TODO what if the number of chunk is > 1? */
-
-      // not_implemented() ;
-      break ;
-    default:
-      not_implemented() ;
-      break ;
-  } 
+            /* Remarks:
+	        - MPC chunk has not-inclusive upper bound while Intel runtime includes
+	        upper bound for calculation 
+	        - Need to cast from long to int because MPC handles everything has a long
+	        (like GCC) while Intel creates different functions
+	        */
+            
+            /* TODO what should we do w/ plastiter? */
+            /* TODO what if the number of chunk is > 1? */
+/*            
+            fprintf(stderr, "[%d] Results: "
+	        "%ld -> %ld excl %ld incl [%d], trip=%d, plastiter = %d\n"
+	        ,
+	        t->rank, 
+	        *plower, *pupper, *pupper-incr, incr, trip_count, *plastiter
+	        ) ;
+*/
+        break ;
+        default:
+            not_implemented() ;
+        break ;
+    } 
 }
 
 void
