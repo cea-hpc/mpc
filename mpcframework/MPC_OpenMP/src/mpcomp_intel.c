@@ -247,6 +247,7 @@ int __kmp_force_reduction_method = reduction_method_not_defined;
 /*******************************
   * THREADPRIVATE
   ******************************/
+int __kmp_init_common = 0;
 /* keeps tracked of threadprivate cache allocations for cleanup later */
 typedef void    (*microtask_t)( int *gtid, int *npr, ... );
 typedef void *(* kmpc_ctor)(void *) ;
@@ -262,6 +263,13 @@ typedef struct kmp_cached_addr {
 } kmp_cached_addr_t;
 
 kmp_cached_addr_t  *__kmp_threadpriv_cache_list = NULL; /* list for cleaning */
+
+struct private_data {
+    struct private_data *next;          /* The next descriptor in the list      */
+    void                *data;          /* The data buffer for this descriptor  */
+    int                  more;          /* The repeat count for this descriptor */
+    size_t               size;          /* The data size for this descriptor    */
+};
 
 struct private_common {
     struct private_common     *next;
@@ -375,11 +383,22 @@ __kmpc_fork_call(ident_t * loc, kmp_int32 argc, kmpc_micro microtask, ...)
   void ** args_copy ;
   wrapper_t w ;
   mpcomp_thread_t *t;
+  static sctk_thread_mutex_t lock = SCTK_THREAD_MUTEX_INITIALIZER;
 
   sctk_nodebug( "__kmpc_fork_call: entering w/ %d arg(s)...", argc ) ;
 
   /* Handle orphaned directive (initialize OpenMP environment) */
   __mpcomp_init() ;
+  
+  /* Threadprvate initialisation */
+  sctk_thread_mutex_lock(&lock);
+  if( !__kmp_init_common )
+  {
+    for (i = 0; i < KMP_HASH_TABLE_SIZE; ++i)
+      __kmp_threadprivate_d_table.data[ i ] = 0;
+    __kmp_init_common = 1;
+  }
+  sctk_thread_mutex_unlock(&lock);
 
   /* Grab info on the current thread */
   t = (mpcomp_thread_t *) sctk_openmp_thread_tls;
@@ -918,12 +937,6 @@ __kmpc_for_static_init_4( ident_t *loc, kmp_int32 gtid, kmp_int32 schedtype,
      t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
      sctk_assert(t != NULL);   
 
-  fprintf(stderr, "[%d] __kmpc_for_static_init_4: "
-      "schedtype=%d, %d? %d -> %d incl. [%d], incr=%d chunk=%d *plastiter=%d *pstride=%d, num_threads = %d\n"
-      ,
-      ((mpcomp_thread_t *) sctk_openmp_thread_tls)->rank, 
-      schedtype, *plastiter, *plower, *pupper, *pstride, incr, chunk, *plastiter, *pstride, t->instance->team->info.num_threads
-      ) ;
 
   sctk_nodebug( "[%d] __kmpc_for_static_init_4: <%s> "
       "schedtype=%d, %d? %d -> %d incl. [%d], incr=%d chunk=%d *plastiter=%d *pstride=%d"
@@ -1020,12 +1033,6 @@ __kmpc_for_static_init_4( ident_t *loc, kmp_int32 gtid, kmp_int32 schedtype,
       not_implemented() ;
       break ;
   } 
-      fprintf(stderr, "[%d] Results for __kmpc_for_static_init_4 (kmp_sch_static_chunked): "
-	  "%ld -> %ld excl %ld incl [%d] => plastiter = %d\n"
-	  ,
-	  ((mpcomp_thread_t *) sctk_openmp_thread_tls)->rank, 
-	  *plower, *pupper, *pupper-incr, *pstride, *plastiter
-	  ) ;
 }
 
 void
@@ -1827,11 +1834,51 @@ __kmpc_dispatch_fini_8u( ident_t *loc, kmp_int32 gtid )
 /********************************
   * THREAD PRIVATE DATA SUPPORT
   *******************************/
+
+int __kmp_default_tp_capacity() 
+{
+    char * env;
+    int nth = 128;
+    int __kmp_xproc = 0, req_nproc = 0, r = 0, __kmp_max_nth = 32 * 1024;
+    
+    r = sysconf( _SC_NPROCESSORS_ONLN );
+    __kmp_xproc = (r > 0) ? r : 2;
+
+    env = getenv ("OMP_NUM_THREADS");
+    if (env != NULL)
+    {
+        req_nproc = strtol(env, NULL, 10);              
+    }
+
+    if (nth < (4 * req_nproc))
+        nth = (4 * req_nproc);
+    if (nth < (4 * __kmp_xproc))
+        nth = (4 * __kmp_xproc);
+
+    if (nth > __kmp_max_nth)
+        nth = __kmp_max_nth;
+
+    return nth;
+}
+
 struct private_common *
 __kmp_threadprivate_find_task_common( struct common_table *tbl, int gtid, void *pc_addr )
-
 {
     struct private_common *tn;
+    for (tn = tbl->data[ KMP_HASH(pc_addr) ]; tn; tn = tn->next) 
+    {
+        if (tn->gbl_addr == pc_addr) 
+        {
+            return tn;
+        }   
+    }
+    return 0;
+}
+
+struct shared_common *
+__kmp_find_shared_task_common( struct shared_table *tbl, int gtid, void *pc_addr )
+{
+    struct shared_common *tn;
     for (tn = tbl->data[ KMP_HASH(pc_addr) ]; tn; tn = tn->next) 
     {
         if (tn->gbl_addr == pc_addr) 
@@ -1855,7 +1902,12 @@ kmp_threadprivate_insert( int gtid, void *pc_addr, void *data_addr, size_t pc_si
         tn = (struct private_common *) sctk_malloc( sizeof (struct private_common) );
         tn->gbl_addr = pc_addr;
         tn->cmn_size = pc_size;
-        tn->par_addr = (void *) sctk_malloc( tn->cmn_size );
+        
+        if(gtid == 0)
+            tn->par_addr = (void *) pc_addr;
+        else
+            tn->par_addr = (void *) sctk_malloc( tn->cmn_size );
+        
         memcpy(tn->par_addr, pc_addr, pc_size);
     sctk_thread_mutex_unlock (&lock);
     /* end critical section */
@@ -1865,6 +1917,7 @@ kmp_threadprivate_insert( int gtid, void *pc_addr, void *data_addr, size_t pc_si
     *tt = tn;
     tn->link = t->th_pri_head;
     t->th_pri_head = tn;
+    
     return tn;
 }
 
@@ -1881,9 +1934,16 @@ __kmpc_threadprivate ( ident_t *loc, kmp_int32 global_tid, void * data, size_t s
     {
         tn = kmp_threadprivate_insert( global_tid, data, data, size );
     }
+    else
+    {
+        if((size_t)size > tn->cmn_size)
+        {
+            sctk_error("TPCommonBlockInconsist: -> Wong size threadprivate variable found");
+            sctk_abort();
+        }
+    }
     
     ret = tn->par_addr;
-    
     return ret ;
 }
 
@@ -1918,7 +1978,8 @@ __kmpc_copyprivate(ident_t *loc, kmp_int32 global_tid, size_t cpy_size, void *cp
 void *
 __kmpc_threadprivate_cached( ident_t *loc, kmp_int32 global_tid, void *data, size_t size, void *** cache)
 {  
-  static sctk_thread_mutex_t lock = SCTK_THREAD_MUTEX_INITIALIZER;
+  static sctk_thread_mutex_t lock = SCTK_THREAD_MUTEX_INITIALIZER; 
+  int __kmp_tp_capacity = __kmp_default_tp_capacity();
   if (*cache == 0)
   {
     sctk_thread_mutex_lock (&lock);
@@ -1926,9 +1987,9 @@ __kmpc_threadprivate_cached( ident_t *loc, kmp_int32 global_tid, void *data, siz
     {
         //handle cache to be dealt with later
         void ** my_cache;
-        my_cache = (void**) malloc(sizeof( void * ) * 8 + sizeof ( kmp_cached_addr_t ));
+        my_cache = (void**) malloc(sizeof( void * ) * __kmp_tp_capacity + sizeof ( kmp_cached_addr_t ));
         kmp_cached_addr_t *tp_cache_addr;
-        tp_cache_addr = (kmp_cached_addr_t *) & my_cache[8];
+        tp_cache_addr = (kmp_cached_addr_t *) & my_cache[__kmp_tp_capacity];
         tp_cache_addr -> addr = my_cache;
         tp_cache_addr -> next = __kmp_threadpriv_cache_list;
         __kmp_threadpriv_cache_list = tp_cache_addr;
@@ -1936,14 +1997,13 @@ __kmpc_threadprivate_cached( ident_t *loc, kmp_int32 global_tid, void *data, siz
     }
     sctk_thread_mutex_unlock (&lock);
   }
-
+  
   void *ret = NULL;
   if ((ret = (*cache)[ global_tid ]) == 0)
   {
       ret = __kmpc_threadprivate( loc, global_tid, data, (size_t) size);
       (*cache)[ global_tid ] = ret;
   }
-  
   return ret;
 }
 
@@ -1951,16 +2011,51 @@ void
 __kmpc_threadprivate_register( ident_t *loc, void *data, kmpc_ctor ctor, kmpc_cctor cctor,
     kmpc_dtor dtor)
 {
-  sctk_error("Detection of threadprivate variables w/ Intel Compiler: please re-compile with automatic privatization for MPC") ;
-  sctk_abort() ;
+    struct shared_common *d_tn, **lnk_tn;
+
+    /* Only the global data table exists. */
+    d_tn = __kmp_find_shared_task_common( &__kmp_threadprivate_d_table, -1, data );
+
+    if (d_tn == 0) 
+    {
+        d_tn = (struct shared_common *) sctk_malloc( sizeof( struct shared_common ) );
+        d_tn->gbl_addr = data;
+
+        d_tn->ct.ctor = ctor;
+        d_tn->cct.cctor = cctor;
+        d_tn->dt.dtor = dtor;
+        
+        lnk_tn = &(__kmp_threadprivate_d_table.data[ KMP_HASH(data) ]);
+
+        d_tn->next = *lnk_tn;
+        *lnk_tn = d_tn;
+    }
 }
 
 void
 __kmpc_threadprivate_register_vec(ident_t *loc, void *data, kmpc_ctor_vec ctor, 
     kmpc_cctor_vec cctor, kmpc_dtor_vec dtor, size_t vector_length )
 {
-  sctk_error("Detection of threadprivate variables w/ Intel Compiler: please re-compile with automatic privatization for MPC") ;
-  sctk_abort() ;
+    struct shared_common *d_tn, **lnk_tn;
+
+    d_tn = __kmp_find_shared_task_common( &__kmp_threadprivate_d_table,
+                                          -1, data );        /* Only the global data table exists. */
+    if (d_tn == 0) 
+    {
+        d_tn = (struct shared_common *) sctk_malloc( sizeof( struct shared_common ) );
+        d_tn->gbl_addr = data;
+
+        d_tn->ct.ctorv = ctor;
+        d_tn->cct.cctorv = cctor;
+        d_tn->dt.dtorv = dtor;
+        d_tn->is_vec = TRUE;
+        d_tn->vec_len = (size_t) vector_length;
+        
+        lnk_tn = &(__kmp_threadprivate_d_table.data[ KMP_HASH(data) ]);
+
+        d_tn->next = *lnk_tn;
+        *lnk_tn = d_tn;
+    }
 }
 
 /********************************
