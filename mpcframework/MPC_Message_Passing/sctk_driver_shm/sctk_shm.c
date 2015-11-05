@@ -10,12 +10,14 @@
 #include <sctk_route.h>
 #include "sctk_shm_raw_queues.h"
 #include "sctk_shm.h"
+#include "utlist.h"
 
 static int sctk_shm_proc_local_rank_on_node = -1;
 static volatile int sctk_shm_driver_initialized = 0;
 static sctk_spinlock_t sctk_shm_polling_lock = SCTK_SPINLOCK_INITIALIZER;
 
-static void sctk_network_notify_idle_message_shm ( sctk_rail_info_t *rail );
+static sctk_shm_msg_list_t *sctk_shm_pending_ptp_msg_list = NULL;
+static sctk_spinlock_t sctk_shm_pending_ptp_msg_lock = SCTK_SPINLOCK_INITIALIZER;
 
 // FROM Henry S. Warren, Jr.'s "Hacker's Delight."
 static long sctk_shm_roundup_powerof2(unsigned long n)
@@ -30,20 +32,68 @@ static long sctk_shm_roundup_powerof2(unsigned long n)
     return n+1;
 }
 
+void sctk_shm_network_rdma_write(  sctk_rail_info_t *rail, sctk_thread_ptp_message_t *msg,
+                         void * src_addr, struct sctk_rail_pin_ctx_list * local_key,
+                         void * dest_addr, struct  sctk_rail_pin_ctx_list * remote_key,
+                         size_t size )
+{
+
+
+}
+
+	
+void sctk_shm_network_rdma_read(  sctk_rail_info_t *rail, sctk_thread_ptp_message_t *msg,
+                         void * src_addr,  struct  sctk_rail_pin_ctx_list * remote_key,
+                         void * dest_addr, struct  sctk_rail_pin_ctx_list * local_key,
+                         size_t size )
+{
+
+}
+	
+static void
+sctk_network_add_message_to_pending_shm_list( sctk_thread_ptp_message_t *msg, int sctk_shm_dest)
+{
+    sctk_shm_msg_list_t *tmp = sctk_malloc(sizeof(sctk_shm_msg_list_t));
+    tmp->msg = msg;
+    tmp->sctk_shm_dest = sctk_shm_dest; 
+    sctk_spinlock_lock(&sctk_shm_pending_ptp_msg_lock);
+    DL_APPEND(sctk_shm_pending_ptp_msg_list, tmp);
+    sctk_spinlock_unlock(&sctk_shm_pending_ptp_msg_lock);
+}
+
+static void
+sctk_network_send_message_dest_shm( sctk_thread_ptp_message_t *msg, int sctk_shm_dest )
+{
+    if(sctk_network_eager_msg_shm_send( msg, sctk_shm_dest ))
+        return;
+    
+    if(sctk_network_frag_msg_shm_send( msg, sctk_shm_dest ))
+	return; 
+        
+    if(sctk_network_cma_msg_shm_send( msg, sctk_shm_dest ))
+        return;
+
+    sctk_network_add_message_to_pending_shm_list( msg, sctk_shm_dest );    
+}
+
+
+static void
+sctk_network_send_message_from_pending_shm_list( int sctk_shm_max_message )
+{
+	sctk_shm_msg_list_t *tmp;
+	DL_FOREACH(sctk_shm_pending_ptp_msg_list, tmp)
+	{
+		sctk_spinlock_lock(&sctk_shm_pending_ptp_msg_lock);
+		DL_DELETE( sctk_shm_pending_ptp_msg_list, tmp);	
+		sctk_spinlock_unlock(&sctk_shm_pending_ptp_msg_lock);
+		sctk_network_send_message_dest_shm(tmp->msg, tmp->sctk_shm_dest);
+	}
+}
 
 static void 
 sctk_network_send_message_endpoint_shm ( sctk_thread_ptp_message_t *msg, sctk_endpoint_t *endpoint )
 {
-    if(sctk_network_eager_msg_shm_send(msg,endpoint->data.shm.dest))
-        return;
-    
-    if(sctk_network_frag_msg_shm_send(msg,endpoint->data.shm.dest))
-	return; 
-        
-    if(sctk_network_cma_msg_shm_send(msg,endpoint->data.shm.dest))
-        return;
-
-    assume_m(0, "message unsupported by mpc shm"); 
+	sctk_network_send_message_dest_shm( msg, endpoint->data.shm.dest);
 }
 
 static void 

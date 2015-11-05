@@ -13,6 +13,7 @@ static volatile int sctk_shm_frag_send_msg_num = 0;
 
 static int sctk_shm_process_hash_id = 0;
 static int sctk_shm_process_msg_id = 0;
+static int sctk_shm_frag_max_try = 10;
 
 typedef enum {SCTK_SHM_SENDER_HT, SCTK_SHM_RECVER_HT} sctk_shm_table_t;
   
@@ -162,12 +163,13 @@ static int sctk_try_send_first_msg = 0;
 static sctk_shm_rdv_info_t*
 sctk_network_frag_msg_first_send(sctk_thread_ptp_message_t* msg, int dest)
 {
-   int key;
+   int key, try;
    sctk_shm_cell_t * cell = NULL;
    sctk_shm_rdv_info_t* sctk_shm_send_frag_info;
    int sctk_try_send_first_msg = 0;
+   try = 0;
 
-   while(!cell)
+   while(!cell && try < sctk_shm_frag_max_try )
    	cell = sctk_shm_get_cell(dest);
 
    sctk_shm_send_frag_info = sctk_shm_init_send_frag_msg(SCTK_MSG_SIZE(msg), &key);
@@ -239,7 +241,7 @@ int
 sctk_network_frag_msg_shm_send(sctk_thread_ptp_message_t* msg, int dest)
 {
    sctk_shm_rdv_info_t* infos;
-    
+   return 0; 
    //if( SCTK_MSG_SIZE(msg) > 3 * SCTK_SHM_CELL_SIZE)
 //   if( SCTK_MSG_SIZE(msg) > 524288)
  //       return 0;

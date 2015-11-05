@@ -6,6 +6,7 @@
 
 static pid_t sctk_shm_process_sys_id = -1;
 static unsigned long sctk_shm_process_mpi_local_id = -1;
+static int sctk_shm_cma_max_try = 10;
 
 static void 
 sctk_shm_cma_message_copy_generic(sctk_message_to_copy_t * tmp)
@@ -183,15 +184,22 @@ sctk_network_cma_msg_shm_recv(sctk_shm_cell_t * cell,int copy_enabled)
 int
 sctk_network_cma_msg_shm_send(sctk_thread_ptp_message_t *msg, int dest)
 {
+    int try = 0;
     size_t size;  
     struct iovec * tmp;
     char * ptr;
     sctk_shm_iovec_info_t * shm_iov;
     sctk_shm_cell_t * cell = NULL;
 
-    while(!cell)
+    while(!cell && try < sctk_shm_cma_max_try)
+    {
         cell = sctk_shm_get_cell(dest);
+	try++;
+    }
     
+    if( !cell ) 
+        return 0;
+ 
     size = sizeof(sctk_thread_ptp_message_t) + sizeof(sctk_shm_iovec_info_t);
     size += sizeof(struct iovec);
     assume_m(size < 8*1024, "Too big message for one cell");

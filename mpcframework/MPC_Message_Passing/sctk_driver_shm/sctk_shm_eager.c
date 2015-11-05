@@ -1,6 +1,8 @@
 #include "sctk_shm_eager.h"
 #include "sctk_net_tools.h"
 
+static int sctk_shm_eager_max_try = 10;
+
 /**
  * NO COPY FUNCTION
  */
@@ -86,16 +88,25 @@ sctk_network_eager_msg_shm_recv(sctk_shm_cell_t * cell,int copy_enabled)
 int
 sctk_network_eager_msg_shm_send(sctk_thread_ptp_message_t *msg, int dest)
 {
+    int try = 0;
     sctk_shm_cell_t * cell = NULL;
     struct iovec *to_send = NULL; 
     
     if(SCTK_MSG_SIZE(msg)+sizeof(sctk_thread_ptp_message_t) > SCTK_SHM_CELL_SIZE)
         return 0;
 
-    while(!cell) 
+    while(!cell && try < sctk_shm_eager_max_try ) 
+    {
         cell = sctk_shm_get_cell(dest);
-    
-	cell->msg_type = SCTK_SHM_EAGER;
+	try++;
+    }
+
+    if( !cell )
+    {
+	return 0;
+    }
+
+    cell->msg_type = SCTK_SHM_EAGER;
     to_send = (struct iovec *) malloc(sizeof(struct iovec)); 
     memcpy(cell->data,(char*)msg,sizeof(sctk_thread_ptp_message_body_t));       
 
@@ -104,6 +115,11 @@ sctk_network_eager_msg_shm_send(sctk_thread_ptp_message_t *msg, int dest)
         
     sctk_shm_send_cell(cell);
     sctk_complete_and_free_message( msg ); 
+
     return 1;
 }
 
+int sctk_network_eager_msg_shm_interface_init( void )
+{
+	return 1;
+}
