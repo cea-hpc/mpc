@@ -320,11 +320,17 @@ typedef struct wrapper {
 /********************************
   * FUNCTIONS
   *******************************/
-
-extern int __kmp_xchg_fixed32( volatile int * p, int d ) ;
-extern int __kmp_test_then_add32( volatile int * addr, int data ) ;
-extern long __kmp_test_then_add64( volatile long * addr, long data ) ;
-extern double __kmp_test_then_add_real64( volatile double *addr, double data );
+extern int __kmp_x86_pause();
+extern int __kmp_compare_and_store8(kmp_int8 *, kmp_int8, kmp_int8);
+extern int __kmp_compare_and_store16(kmp_int16 *, kmp_int16, kmp_int16);
+extern int __kmp_compare_and_store32(kmp_int32 *, kmp_int32, kmp_int32);
+extern int __kmp_compare_and_store64(kmp_int64 *, kmp_int64, kmp_int64);
+extern int __kmp_xchg_fixed32( kmp_int32 *, kmp_int32  ) ;
+extern int __kmp_xchg_fixed64( kmp_int64 *, kmp_int64  ) ;
+extern int __kmp_test_then_add32( kmp_int32 *, kmp_int32  ) ;
+extern long __kmp_test_then_add64( kmp_int64 *, kmp_int64 ) ;
+extern double __kmp_test_then_add_real32( kmp_real32 *, kmp_real32 );
+extern double __kmp_test_then_add_real64( kmp_real64 *, kmp_real64 );
 extern int __kmp_invoke_microtask(kmpc_micro pkfn, int gtid, int npr, int argc, void *argv[] );
 
 void *
@@ -2409,29 +2415,6 @@ __kmpc_test_nest_lock( ident_t *loc, kmp_int32 gtid, void **user_lock )
   * ATOMIC_OPERATIONS
   *******************************/
 
-void
-__kmpc_atomic_fixed4_add( ident_t * loc, int global_tid, kmp_int32 * lhs, kmp_int32 rhs )
-{
-
-  sctk_nodebug( "[%d] __kmpc_atomic_fixed4_add: "
-      "Add %d",
-      ((mpcomp_thread_t *) sctk_openmp_thread_tls)->rank, rhs ) ;
-
-  __kmp_test_then_add32( lhs, rhs ) ;
-
-#if 0
-  __mpcomp_atomic_begin() ;
-
-  *lhs += rhs ;
-
-  __mpcomp_atomic_end() ;
-
-  /* TODO: use assembly functions by Intel if available */
-#endif
-
-}
-
-
 void 
 __kmpc_atomic_fixed4_wr(  ident_t *id_ref, int gtid, kmp_int32   * lhs, kmp_int32   rhs ) 
 {
@@ -2448,26 +2431,6 @@ __kmpc_atomic_fixed4_wr(  ident_t *id_ref, int gtid, kmp_int32   * lhs, kmp_int3
 
   __mpcomp_atomic_end() ;
 
-  /* TODO: use assembly functions by Intel if available */
-#endif
-}
-
-
-void 
-__kmpc_atomic_fixed8_add(  ident_t *id_ref, int gtid, kmp_int64 * lhs, kmp_int64 rhs )
-{
-  sctk_nodebug( "[%d] __kmpc_atomic_fixed8_add: "
-      "Add %ld",
-      ((mpcomp_thread_t *) sctk_openmp_thread_tls)->rank, rhs ) ;
-
-  __kmp_test_then_add64( lhs, rhs ) ;
-
-#if 0
-  __mpcomp_atomic_begin() ;
-
-  *lhs += rhs ;
-
-  __mpcomp_atomic_end() ;
   /* TODO: use assembly functions by Intel if available */
 #endif
 }
@@ -2514,16 +2477,20 @@ __kmpc_atomic_float8_add(  ident_t *id_ref, int gtid, kmp_real64 * lhs, kmp_real
 RET_TYPE __kmpc_atomic_##TYPE_ID##_##OP_ID( ident_t *id_ref, int gtid, TYPE * lhs, TYPE rhs ) \
 {
 
-#define ATOMIC_CMPXCHG(TYPE_ID,OP_ID,TYPE,BITS,OP,LCK_ID,MASK,GOMP_FLAG)                                      \
+#define ATOMIC_BEGIN_CPT(TYPE_ID,OP_ID,TYPE, RET_TYPE) \
+RET_TYPE __kmpc_atomic_##TYPE_ID##_##OP_ID( ident_t *id_ref, int gtid, TYPE * lhs, TYPE rhs, int flag ) \
+{
+
+#define ATOMIC_CMPXCHG(TYPE_ID,OP_ID,TYPE,BITS,OP,LCK_ID,MASK,GOMP_FLAG)                                    \
 ATOMIC_BEGIN(TYPE_ID,OP_ID,TYPE,void)                                                                       \
     TYPE old_value, new_value;                                                                              \
     old_value = *(TYPE volatile *) lhs;                                                                     \
     new_value = old_value OP rhs;                                                                           \
-    while ( ! __kmp_compare_and_store##BITS( (kmp_int##BITS *) lhs,                                                  \
-                                          *(volatile kmp_int##BITS *) &old_value,                                    \
-                                          *(volatile kmp_int##BITS *) &new_value ))                                  \
+    while ( ! __kmp_compare_and_store##BITS( (kmp_int##BITS *) lhs,                                         \
+                                          *(volatile kmp_int##BITS *) &old_value,                           \
+                                          *(volatile kmp_int##BITS *) &new_value ))                         \
     {                                                                                                       \
-        DO_PAUSE;                                                                                  \
+        DO_PAUSE;                                                                                           \
         old_value = *(TYPE volatile *)lhs;                                                                  \
         new_value = old_value OP rhs;                                                                       \
     }                                                                                                       \
@@ -2531,76 +2498,153 @@ ATOMIC_BEGIN(TYPE_ID,OP_ID,TYPE,void)                                           
 
 #define ATOMIC_CMPX_L(TYPE_ID,OP_ID,TYPE,BITS,OP,LCK_ID,MASK,GOMP_FLAG)                                     \
 ATOMIC_BEGIN(TYPE_ID,OP_ID,TYPE,void)                                                                       \
-    not_implemented();                                                                                      \
+    TYPE old_value, new_value;                                                                              \
+    old_value = *(TYPE volatile *)lhs;                                                                      \
+    new_value = old_value OP rhs;                                                                           \
+    while ( ! __kmp_compare_and_store##BITS( ((kmp_int##BITS *) lhs),                                       \
+    (*(kmp_int##BITS *) &old_value), (*(kmp_int##BITS *) &new_value) ) )                                    \
+    {                                                                                                       \
+        DO_PAUSE;                                                                                           \
+        old_value = *(TYPE volatile *)lhs;                                                                  \
+        new_value = old_value OP rhs;                                                                       \
+    }                                                                                                       \
 }
 
 
-#define MIN_MAX_COMPXCHG(TYPE_ID,OP_ID,TYPE,BITS,OP,LCK_ID,MASK,GOMP_FLAG)                                               \
+#define MIN_MAX_COMPXCHG(TYPE_ID,OP_ID,TYPE,BITS,OP,LCK_ID,MASK,GOMP_FLAG)                                  \
 ATOMIC_BEGIN(TYPE_ID,OP_ID,TYPE,void)                                                                       \
-    not_implemented();                                                                                      \
+    if ( *lhs OP rhs )                                                                                      \
+    {                                                                                                       \
+        TYPE volatile temp_val;                                                                             \
+        TYPE old_value;                                                                                     \
+        temp_val = *lhs;                                                                                    \
+        old_value = temp_val;                                                                               \
+        while ( old_value OP rhs &&                                                                         \
+                ! __kmp_compare_and_store##BITS( ((kmp_int##BITS *) lhs),                                   \
+                                             (*(kmp_int##BITS *) &old_value),                               \
+                                             (*(kmp_int##BITS *) &rhs)                                      \
+                                           )                                                                \
+              )                                                                                             \
+        {                                                                                                   \
+            DO_PAUSE;                                                                                       \
+            temp_val = *lhs;                                                                                \
+            old_value = temp_val;                                                                           \
+        }                                                                                                   \
+    }                                                                                                       \
 }
 
-#define MIN_MAX_CRITICAL(TYPE_ID,OP_ID,TYPE,BITS,OP,LCK_ID,MASK,GOMP_FLAG)                                               \
+#define ATOMIC_CMPX_EQV(TYPE_ID,OP_ID,TYPE,BITS,OP,LCK_ID,MASK,GOMP_FLAG)                                   \
 ATOMIC_BEGIN(TYPE_ID,OP_ID,TYPE,void)                                                                       \
-    not_implemented();                                                                                      \
-}
+    TYPE old_value, new_value;                                                                              \
+    old_value = *(TYPE volatile *)lhs;                                                                      \
+    new_value = old_value OP rhs;                                                                           \
+    while ( ! __kmp_compare_and_store##BITS( ((kmp_int##BITS *) lhs),                                       \
+    (*(kmp_int##BITS *) &old_value), (*(kmp_int##BITS *) &new_value) ) )                                    \
+    {                                                                                                       \
+        DO_PAUSE;                                                                                           \
+        old_value = *(TYPE volatile *)lhs;                                                                  \
+        new_value = old_value OP rhs;                                                                       \
+    }                                                                                                       \
+}                                                                                                           \
 
-#define ATOMIC_CMPX_EQV(TYPE_ID,OP_ID,TYPE,BITS,OP,LCK_ID,MASK,GOMP_FLAG)                                               \
+#define ATOMIC_CRITICAL(TYPE_ID,OP_ID,TYPE,OP,LCK_ID,GOMP_FLAG)                                             \
 ATOMIC_BEGIN(TYPE_ID,OP_ID,TYPE,void)                                                                       \
-    not_implemented();                                                                                      \
-}
-
-#define ATOMIC_CRITICAL(TYPE_ID,OP_ID,TYPE,BITS,OP,GOMP_FLAG)                                               \
-ATOMIC_BEGIN(TYPE_ID,OP_ID,TYPE,void)                                                                       \
-    not_implemented();                                                                                      \
-}
-
-
-#define MIN_MAX_COMPXCHG_CPT(TYPE_ID,OP_ID,TYPE,BITS,OP,GOMP_FLAG)                                               \
-ATOMIC_BEGIN(TYPE_ID,OP_ID,TYPE,void)                                                                       \
-    not_implemented();                                                                                      \
-}
-
-#define MIN_MAX_CRITICAL_CPT(TYPE_ID,OP_ID,TYPE,BITS,OP,GOMP_FLAG)                                               \
-ATOMIC_BEGIN(TYPE_ID,OP_ID,TYPE,void)                                                                       \
-    not_implemented();                                                                                      \
-}
-
-#define ATOMIC_CMPXCHG_CPT(TYPE_ID,OP_ID,TYPE,BITS,OP,GOMP_FLAG)                                               \
-ATOMIC_BEGIN(TYPE_ID,OP_ID,TYPE,void)                                                                       \
-    not_implemented();                                                                                      \
-}
-
-#define ATOMIC_CMPX_EQV_CPT(TYPE_ID,OP_ID,TYPE,BITS,OP,GOMP_FLAG)                                               \
-ATOMIC_BEGIN(TYPE_ID,OP_ID,TYPE,void)                                                                       \
-    not_implemented();                                                                                      \
+    static sctk_thread_mutex_t critical_lock = SCTK_THREAD_MUTEX_INITIALIZER;                               \
+    sctk_thread_mutex_lock(&critical_lock);                                                                 \
+    (*lhs) OP##= (rhs);                                                                                     \
+    sctk_thread_mutex_unlock(&critical_lock);                                                               \
 }
 
 
-#define ATOMIC_CRITICAL_CPT(TYPE_ID,OP_ID,TYPE,BITS,OP,GOMP_FLAG)                                               \
-ATOMIC_BEGIN(TYPE_ID,OP_ID,TYPE,void)                                                                       \
-    not_implemented();                                                                                      \
+#define MIN_MAX_COMPXCHG_CPT(TYPE_ID,OP_ID,TYPE,BITS,OP,GOMP_FLAG)                                          \
+ATOMIC_BEGIN_CPT(TYPE_ID,OP_ID,TYPE,TYPE)                                                                   \
+    TYPE new_value, old_value;                                                                              \
+    if ( *lhs OP rhs )                                                                                      \
+    {                                                                                                       \
+        TYPE volatile temp_val;                                                                             \
+        temp_val = *lhs;                                                                                    \
+        old_value = temp_val;                                                                               \
+        while ( old_value OP rhs &&                                                                         \
+        ! __kmp_compare_and_store##BITS( ((kmp_int##BITS *) lhs),                                           \
+        (*(kmp_int##BITS *) &old_value), (*(kmp_int##BITS *) &rhs) ) )                                      \
+        {                                                                                                   \
+            DO_PAUSE;                                                                                       \
+            temp_val = *lhs;                                                                                \
+            old_value = temp_val;                                                                           \
+        }                                                                                                   \
+        if( flag )                                                                                          \
+            return rhs;                                                                                     \
+        else                                                                                                \
+            return old_value;                                                                               \
+    }                                                                                                       \
+    return *lhs;                                                                                            \
 }
 
-#define ATOMIC_CRITICAL_CPT_WRK(TYPE_ID,OP_ID,TYPE,BITS,OP,GOMP_FLAG)                                               \
-ATOMIC_BEGIN(TYPE_ID,OP_ID,TYPE,void)                                                                       \
-    not_implemented();                                                                                      \
+#define ATOMIC_CMPXCHG_CPT(TYPE_ID,OP_ID,TYPE,BITS,OP,GOMP_FLAG)                                            \
+ATOMIC_BEGIN_CPT(TYPE_ID,OP_ID,TYPE,TYPE)                                                                   \
+    TYPE volatile temp_val;                                                                                 \
+    TYPE old_value, new_value;                                                                              \
+    temp_val = *lhs;                                                                                        \
+    old_value = temp_val;                                                                                   \
+    new_value = old_value OP rhs;                                                                           \
+    while ( ! __kmp_compare_and_store##BITS( ((kmp_int##BITS *) lhs),                                       \
+    (*(kmp_int##BITS *) &old_value), (*(kmp_int##BITS *) &new_value) ) )                                    \
+    {                                                                                                       \
+        DO_PAUSE;                                                                                           \
+        temp_val = *lhs;                                                                                    \
+        old_value = temp_val;                                                                               \
+        new_value = old_value OP rhs;                                                                       \
+    }                                                                                                       \
+    if( flag ) { return new_value; } else return old_value;                                                 \
 }
 
-#define ATOMIC_FIXED_ADD(TYPE_ID,OP_ID,TYPE,BITS,OP,LCK_ID,MASK,GOMP_FLAG)                                               \
+#define ATOMIC_CMPX_EQV_CPT(TYPE_ID,OP_ID,TYPE,BITS,OP,GOMP_FLAG)                                           \
+ATOMIC_BEGIN_CPT(TYPE_ID,OP_ID,TYPE,TYPE)                                                                   \
+    TYPE volatile temp_val;                                                                                 \
+    TYPE old_value, new_value;                                                                              \
+    temp_val = *lhs;                                                                                        \
+    old_value = temp_val;                                                                                   \
+    new_value = old_value OP rhs;                                                                           \
+    while ( ! __kmp_compare_and_store##BITS( ((kmp_int##BITS *) lhs),                                       \
+    (*(kmp_int##BITS *) &old_value), (*(kmp_int##BITS *) &new_value) ) )                                    \
+    {                                                                                                       \
+        DO_PAUSE;                                                                                           \
+        temp_val = *lhs;                                                                                    \
+        old_value = temp_val;                                                                               \
+        new_value = old_value OP rhs;                                                                       \
+    }                                                                                                       \
+    if( flag ) { return new_value; } else return old_value;                                                 \
+}
+
+
+#define ATOMIC_CRITICAL_CPT(TYPE_ID,OP_ID,TYPE,OP,LCK_ID,GOMP_FLAG)                                         \
+ATOMIC_BEGIN_CPT(TYPE_ID,OP_ID,TYPE,TYPE)                                                                   \
+    static sctk_thread_mutex_t critical_lock = SCTK_THREAD_MUTEX_INITIALIZER;                               \
+    TYPE new_value;                                                                                         \
+    sctk_thread_mutex_lock(&critical_lock);                                                                 \
+    if( flag ) {                                                                                            \
+        (*lhs) OP##= rhs; new_value = (*lhs);                                                               \
+    } else {                                                                                                \
+        new_value = (*lhs); (*lhs) OP##= rhs;                                                               \
+    }                                                                                                       \
+    sctk_thread_mutex_unlock(&critical_lock);                                                               \
+    return new_value;                                                                                       \
+}
+
+#define ATOMIC_FIXED_ADD(TYPE_ID,OP_ID,TYPE,BITS,OP,LCK_ID,MASK,GOMP_FLAG)                                  \
 ATOMIC_BEGIN(TYPE_ID,OP_ID,TYPE,void)                                                                       \
-    not_implemented();                                                                                      \
+    __kmp_test_then_add##BITS( (lhs), (+ rhs) );                                                            \
 }
 
 // Routines for ATOMIC 4-byte operands addition and subtraction
-//ATOMIC_FIXED_ADD( fixed4, add, kmp_int32,  32, +, 4i, 3, 0            )  // __kmpc_atomic_fixed4_add
+ATOMIC_FIXED_ADD( fixed4, add, kmp_int32,  32, +, 4i, 3, 0            )  // __kmpc_atomic_fixed4_add
 ATOMIC_FIXED_ADD( fixed4, sub, kmp_int32,  32, -, 4i, 3, 0            )  // __kmpc_atomic_fixed4_sub
 
 ATOMIC_CMPXCHG( float4,  add, kmp_real32, 32, +,  4r, 3, KMP_ARCH_X86 )  // __kmpc_atomic_float4_add
 ATOMIC_CMPXCHG( float4,  sub, kmp_real32, 32, -,  4r, 3, KMP_ARCH_X86 )  // __kmpc_atomic_float4_sub
 
 // Routines for ATOMIC 8-byte operands addition and subtraction
-//ATOMIC_FIXED_ADD( fixed8, add, kmp_int64,  64, +, 8i, 7, KMP_ARCH_X86 )  // __kmpc_atomic_fixed8_add
+ATOMIC_FIXED_ADD( fixed8, add, kmp_int64,  64, +, 8i, 7, KMP_ARCH_X86 )  // __kmpc_atomic_fixed8_add
 ATOMIC_FIXED_ADD( fixed8, sub, kmp_int64,  64, -, 8i, 7, KMP_ARCH_X86 )  // __kmpc_atomic_fixed8_sub
 
 //ATOMIC_CMPXCHG( float8,  add, kmp_real64, 64, +,  8r, 7, KMP_ARCH_X86 )  // __kmpc_atomic_float8_add
@@ -2688,14 +2732,8 @@ MIN_MAX_COMPXCHG( float4,  max, kmp_real32, 32, <, 4r, 3, KMP_ARCH_X86 ) // __km
 MIN_MAX_COMPXCHG( float4,  min, kmp_real32, 32, >, 4r, 3, KMP_ARCH_X86 ) // __kmpc_atomic_float4_min
 MIN_MAX_COMPXCHG( float8,  max, kmp_real64, 64, <, 8r, 7, KMP_ARCH_X86 ) // __kmpc_atomic_float8_max
 MIN_MAX_COMPXCHG( float8,  min, kmp_real64, 64, >, 8r, 7, KMP_ARCH_X86 ) // __kmpc_atomic_float8_min
-#if KMP_HAVE_QUAD
-    MIN_MAX_CRITICAL( float16, max,     QUAD_LEGACY,      <, 16r,   1 )            // __kmpc_atomic_float16_max
-    MIN_MAX_CRITICAL( float16, min,     QUAD_LEGACY,      >, 16r,   1 )            // __kmpc_atomic_float16_min
-    #if ( KMP_ARCH_X86 )
-        MIN_MAX_CRITICAL( float16, max_a16, Quad_a16_t,     <, 16r,   1 )            // __kmpc_atomic_float16_max_a16
-        MIN_MAX_CRITICAL( float16, min_a16, Quad_a16_t,     >, 16r,   1 )            // __kmpc_atomic_float16_min_a16
-    #endif
-#endif
+
+
 ATOMIC_CMPXCHG(  fixed1, neqv, kmp_int8,   8,   ^, 1i, 0, KMP_ARCH_X86 ) // __kmpc_atomic_fixed1_neqv
 ATOMIC_CMPXCHG(  fixed2, neqv, kmp_int16, 16,   ^, 2i, 1, KMP_ARCH_X86 ) // __kmpc_atomic_fixed2_neqv
 ATOMIC_CMPXCHG(  fixed4, neqv, kmp_int32, 32,   ^, 4i, 3, KMP_ARCH_X86 ) // __kmpc_atomic_fixed4_neqv
@@ -2733,14 +2771,56 @@ MIN_MAX_COMPXCHG_CPT( float4,  max_cpt, kmp_real32, 32, <, KMP_ARCH_X86 ) // __k
 MIN_MAX_COMPXCHG_CPT( float4,  min_cpt, kmp_real32, 32, >, KMP_ARCH_X86 ) // __kmpc_atomic_float4_min_cpt
 MIN_MAX_COMPXCHG_CPT( float8,  max_cpt, kmp_real64, 64, <, KMP_ARCH_X86 ) // __kmpc_atomic_float8_max_cpt
 MIN_MAX_COMPXCHG_CPT( float8,  min_cpt, kmp_real64, 64, >, KMP_ARCH_X86 ) // __kmpc_atomic_float8_min_cpt
-#if KMP_HAVE_QUAD
-    MIN_MAX_CRITICAL_CPT( float16, max_cpt, QUAD_LEGACY,    <, 16r,   1 )     // __kmpc_atomic_float16_max_cpt
-    MIN_MAX_CRITICAL_CPT( float16, min_cpt, QUAD_LEGACY,    >, 16r,   1 )     // __kmpc_atomic_float16_min_cpt
-    #if ( KMP_ARCH_X86 )
-        MIN_MAX_CRITICAL_CPT( float16, max_a16_cpt, Quad_a16_t, <, 16r,  1 )  // __kmpc_atomic_float16_max_a16_cpt
-        MIN_MAX_CRITICAL_CPT( float16, min_a16_cpt, Quad_a16_t, >, 16r,  1 )  // __kmpc_atomic_float16_mix_a16_cpt
-    #endif
-#endif
+
+ATOMIC_CMPXCHG_CPT( float4, add_cpt, kmp_real32, 32, +, KMP_ARCH_X86 )  // __kmpc_atomic_float4_add_cpt
+ATOMIC_CMPXCHG_CPT( float4, sub_cpt, kmp_real32, 32, -, KMP_ARCH_X86 )  // __kmpc_atomic_float4_sub_cpt
+ATOMIC_CMPXCHG_CPT( float8, add_cpt, kmp_real64, 64, +, KMP_ARCH_X86 )  // __kmpc_atomic_float8_add_cpt
+ATOMIC_CMPXCHG_CPT( float8, sub_cpt, kmp_real64, 64, -, KMP_ARCH_X86 )  // __kmpc_atomic_float8_sub_cpt
+
+ATOMIC_CMPXCHG_CPT( fixed1,  add_cpt, kmp_int8,    8, +,  KMP_ARCH_X86 )  // __kmpc_atomic_fixed1_add_cpt
+ATOMIC_CMPXCHG_CPT( fixed1, andb_cpt, kmp_int8,    8, &,  0            )  // __kmpc_atomic_fixed1_andb_cpt
+ATOMIC_CMPXCHG_CPT( fixed1,  div_cpt, kmp_int8,    8, /,  KMP_ARCH_X86 )  // __kmpc_atomic_fixed1_div_cpt
+ATOMIC_CMPXCHG_CPT( fixed1u, div_cpt, kmp_uint8,   8, /,  KMP_ARCH_X86 )  // __kmpc_atomic_fixed1u_div_cpt
+ATOMIC_CMPXCHG_CPT( fixed1,  mul_cpt, kmp_int8,    8, *,  KMP_ARCH_X86 )  // __kmpc_atomic_fixed1_mul_cpt
+ATOMIC_CMPXCHG_CPT( fixed1,  orb_cpt, kmp_int8,    8, |,  0            )  // __kmpc_atomic_fixed1_orb_cpt
+ATOMIC_CMPXCHG_CPT( fixed1,  shl_cpt, kmp_int8,    8, <<, KMP_ARCH_X86 )  // __kmpc_atomic_fixed1_shl_cpt
+ATOMIC_CMPXCHG_CPT( fixed1,  shr_cpt, kmp_int8,    8, >>, KMP_ARCH_X86 )  // __kmpc_atomic_fixed1_shr_cpt
+ATOMIC_CMPXCHG_CPT( fixed1u, shr_cpt, kmp_uint8,   8, >>, KMP_ARCH_X86 )  // __kmpc_atomic_fixed1u_shr_cpt
+ATOMIC_CMPXCHG_CPT( fixed1,  sub_cpt, kmp_int8,    8, -,  KMP_ARCH_X86 )  // __kmpc_atomic_fixed1_sub_cpt
+ATOMIC_CMPXCHG_CPT( fixed1,  xor_cpt, kmp_int8,    8, ^,  0            )  // __kmpc_atomic_fixed1_xor_cpt
+ATOMIC_CMPXCHG_CPT( fixed2,  add_cpt, kmp_int16,  16, +,  KMP_ARCH_X86 )  // __kmpc_atomic_fixed2_add_cpt
+ATOMIC_CMPXCHG_CPT( fixed2, andb_cpt, kmp_int16,  16, &,  0            )  // __kmpc_atomic_fixed2_andb_cpt
+ATOMIC_CMPXCHG_CPT( fixed2,  div_cpt, kmp_int16,  16, /,  KMP_ARCH_X86 )  // __kmpc_atomic_fixed2_div_cpt
+ATOMIC_CMPXCHG_CPT( fixed2u, div_cpt, kmp_uint16, 16, /,  KMP_ARCH_X86 )  // __kmpc_atomic_fixed2u_div_cpt
+ATOMIC_CMPXCHG_CPT( fixed2,  mul_cpt, kmp_int16,  16, *,  KMP_ARCH_X86 )  // __kmpc_atomic_fixed2_mul_cpt
+ATOMIC_CMPXCHG_CPT( fixed2,  orb_cpt, kmp_int16,  16, |,  0            )  // __kmpc_atomic_fixed2_orb_cpt
+ATOMIC_CMPXCHG_CPT( fixed2,  shl_cpt, kmp_int16,  16, <<, KMP_ARCH_X86 )  // __kmpc_atomic_fixed2_shl_cpt
+ATOMIC_CMPXCHG_CPT( fixed2,  shr_cpt, kmp_int16,  16, >>, KMP_ARCH_X86 )  // __kmpc_atomic_fixed2_shr_cpt
+ATOMIC_CMPXCHG_CPT( fixed2u, shr_cpt, kmp_uint16, 16, >>, KMP_ARCH_X86 )  // __kmpc_atomic_fixed2u_shr_cpt
+ATOMIC_CMPXCHG_CPT( fixed2,  sub_cpt, kmp_int16,  16, -,  KMP_ARCH_X86 )  // __kmpc_atomic_fixed2_sub_cpt
+ATOMIC_CMPXCHG_CPT( fixed2,  xor_cpt, kmp_int16,  16, ^,  0            )  // __kmpc_atomic_fixed2_xor_cpt
+ATOMIC_CMPXCHG_CPT( fixed4, andb_cpt, kmp_int32,  32, &,  0            )  // __kmpc_atomic_fixed4_andb_cpt
+ATOMIC_CMPXCHG_CPT( fixed4,  div_cpt, kmp_int32,  32, /,  KMP_ARCH_X86 )  // __kmpc_atomic_fixed4_div_cpt
+ATOMIC_CMPXCHG_CPT( fixed4u, div_cpt, kmp_uint32, 32, /,  KMP_ARCH_X86 )  // __kmpc_atomic_fixed4u_div_cpt
+ATOMIC_CMPXCHG_CPT( fixed4,  mul_cpt, kmp_int32,  32, *,  KMP_ARCH_X86 )  // __kmpc_atomic_fixed4_mul_cpt
+ATOMIC_CMPXCHG_CPT( fixed4,  orb_cpt, kmp_int32,  32, |,  0            )  // __kmpc_atomic_fixed4_orb_cpt
+ATOMIC_CMPXCHG_CPT( fixed4,  shl_cpt, kmp_int32,  32, <<, KMP_ARCH_X86 )  // __kmpc_atomic_fixed4_shl_cpt
+ATOMIC_CMPXCHG_CPT( fixed4,  shr_cpt, kmp_int32,  32, >>, KMP_ARCH_X86 )  // __kmpc_atomic_fixed4_shr_cpt
+ATOMIC_CMPXCHG_CPT( fixed4u, shr_cpt, kmp_uint32, 32, >>, KMP_ARCH_X86 )  // __kmpc_atomic_fixed4u_shr_cpt
+ATOMIC_CMPXCHG_CPT( fixed4,  xor_cpt, kmp_int32,  32, ^,  0            )  // __kmpc_atomic_fixed4_xor_cpt
+ATOMIC_CMPXCHG_CPT( fixed8, andb_cpt, kmp_int64,  64, &,  KMP_ARCH_X86 )  // __kmpc_atomic_fixed8_andb_cpt
+ATOMIC_CMPXCHG_CPT( fixed8,  div_cpt, kmp_int64,  64, /,  KMP_ARCH_X86 )  // __kmpc_atomic_fixed8_div_cpt
+ATOMIC_CMPXCHG_CPT( fixed8u, div_cpt, kmp_uint64, 64, /,  KMP_ARCH_X86 )  // __kmpc_atomic_fixed8u_div_cpt
+ATOMIC_CMPXCHG_CPT( fixed8,  mul_cpt, kmp_int64,  64, *,  KMP_ARCH_X86 )  // __kmpc_atomic_fixed8_mul_cpt
+ATOMIC_CMPXCHG_CPT( fixed8,  orb_cpt, kmp_int64,  64, |,  KMP_ARCH_X86 )  // __kmpc_atomic_fixed8_orb_cpt
+ATOMIC_CMPXCHG_CPT( fixed8,  shl_cpt, kmp_int64,  64, <<, KMP_ARCH_X86 )  // __kmpc_atomic_fixed8_shl_cpt
+ATOMIC_CMPXCHG_CPT( fixed8,  shr_cpt, kmp_int64,  64, >>, KMP_ARCH_X86 )  // __kmpc_atomic_fixed8_shr_cpt
+ATOMIC_CMPXCHG_CPT( fixed8u, shr_cpt, kmp_uint64, 64, >>, KMP_ARCH_X86 )  // __kmpc_atomic_fixed8u_shr_cpt
+ATOMIC_CMPXCHG_CPT( fixed8,  xor_cpt, kmp_int64,  64, ^,  KMP_ARCH_X86 )  // __kmpc_atomic_fixed8_xor_cpt
+ATOMIC_CMPXCHG_CPT( float4,  div_cpt, kmp_real32, 32, /,  KMP_ARCH_X86 )  // __kmpc_atomic_float4_div_cpt
+ATOMIC_CMPXCHG_CPT( float4,  mul_cpt, kmp_real32, 32, *,  KMP_ARCH_X86 )  // __kmpc_atomic_float4_mul_cpt
+ATOMIC_CMPXCHG_CPT( float8,  div_cpt, kmp_real64, 64, /,  KMP_ARCH_X86 )  // __kmpc_atomic_float8_div_cpt
+ATOMIC_CMPXCHG_CPT( float8,  mul_cpt, kmp_real64, 64, *,  KMP_ARCH_X86 )  // __kmpc_atomic_float8_mul_cpt
 
 ATOMIC_CMPXCHG_CPT(  fixed1, neqv_cpt, kmp_int8,   8,   ^, KMP_ARCH_X86 ) // __kmpc_atomic_fixed1_neqv_cpt
 ATOMIC_CMPXCHG_CPT(  fixed2, neqv_cpt, kmp_int16, 16,   ^, KMP_ARCH_X86 ) // __kmpc_atomic_fixed2_neqv_cpt
@@ -2762,46 +2842,4 @@ ATOMIC_CRITICAL_CPT( float10, add_cpt, long double,     +, 10r,   1 )           
 ATOMIC_CRITICAL_CPT( float10, sub_cpt, long double,     -, 10r,   1 )            // __kmpc_atomic_float10_sub_cpt
 ATOMIC_CRITICAL_CPT( float10, mul_cpt, long double,     *, 10r,   1 )            // __kmpc_atomic_float10_mul_cpt
 ATOMIC_CRITICAL_CPT( float10, div_cpt, long double,     /, 10r,   1 )            // __kmpc_atomic_float10_div_cpt
-#if KMP_HAVE_QUAD
-    // routines for _Quad type
-    ATOMIC_CRITICAL_CPT( float16, add_cpt, QUAD_LEGACY,     +, 16r,   1 )            // __kmpc_atomic_float16_add_cpt
-    ATOMIC_CRITICAL_CPT( float16, sub_cpt, QUAD_LEGACY,     -, 16r,   1 )            // __kmpc_atomic_float16_sub_cpt
-    ATOMIC_CRITICAL_CPT( float16, mul_cpt, QUAD_LEGACY,     *, 16r,   1 )            // __kmpc_atomic_float16_mul_cpt
-    ATOMIC_CRITICAL_CPT( float16, div_cpt, QUAD_LEGACY,     /, 16r,   1 )            // __kmpc_atomic_float16_div_cpt
-    #if ( KMP_ARCH_X86 )
-        ATOMIC_CRITICAL_CPT( float16, add_a16_cpt, Quad_a16_t, +, 16r,  1 )          // __kmpc_atomic_float16_add_a16_cpt
-        ATOMIC_CRITICAL_CPT( float16, sub_a16_cpt, Quad_a16_t, -, 16r,  1 )          // __kmpc_atomic_float16_sub_a16_cpt
-        ATOMIC_CRITICAL_CPT( float16, mul_a16_cpt, Quad_a16_t, *, 16r,  1 )          // __kmpc_atomic_float16_mul_a16_cpt
-        ATOMIC_CRITICAL_CPT( float16, div_a16_cpt, Quad_a16_t, /, 16r,  1 )          // __kmpc_atomic_float16_div_a16_cpt
-    #endif
-#endif
 
-#if 0
-// routines for complex types
-// cmplx4 routines to return void
-ATOMIC_CRITICAL_CPT_WRK( cmplx4,  add_cpt, kmp_cmplx32, +, 8c,    1 )            // __kmpc_atomic_cmplx4_add_cpt
-ATOMIC_CRITICAL_CPT_WRK( cmplx4,  sub_cpt, kmp_cmplx32, -, 8c,    1 )            // __kmpc_atomic_cmplx4_sub_cpt
-ATOMIC_CRITICAL_CPT_WRK( cmplx4,  mul_cpt, kmp_cmplx32, *, 8c,    1 )            // __kmpc_atomic_cmplx4_mul_cpt
-ATOMIC_CRITICAL_CPT_WRK( cmplx4,  div_cpt, kmp_cmplx32, /, 8c,    1 )            // __kmpc_atomic_cmplx4_div_cpt
-
-ATOMIC_CRITICAL_CPT( cmplx8,  add_cpt, kmp_cmplx64, +, 16c,   1 )            // __kmpc_atomic_cmplx8_add_cpt
-ATOMIC_CRITICAL_CPT( cmplx8,  sub_cpt, kmp_cmplx64, -, 16c,   1 )            // __kmpc_atomic_cmplx8_sub_cpt
-ATOMIC_CRITICAL_CPT( cmplx8,  mul_cpt, kmp_cmplx64, *, 16c,   1 )            // __kmpc_atomic_cmplx8_mul_cpt
-ATOMIC_CRITICAL_CPT( cmplx8,  div_cpt, kmp_cmplx64, /, 16c,   1 )            // __kmpc_atomic_cmplx8_div_cpt
-ATOMIC_CRITICAL_CPT( cmplx10, add_cpt, kmp_cmplx80, +, 20c,   1 )            // __kmpc_atomic_cmplx10_add_cpt
-ATOMIC_CRITICAL_CPT( cmplx10, sub_cpt, kmp_cmplx80, -, 20c,   1 )            // __kmpc_atomic_cmplx10_sub_cpt
-ATOMIC_CRITICAL_CPT( cmplx10, mul_cpt, kmp_cmplx80, *, 20c,   1 )            // __kmpc_atomic_cmplx10_mul_cpt
-ATOMIC_CRITICAL_CPT( cmplx10, div_cpt, kmp_cmplx80, /, 20c,   1 )            // __kmpc_atomic_cmplx10_div_cpt
-#if KMP_HAVE_QUAD
-    ATOMIC_CRITICAL_CPT( cmplx16, add_cpt, CPLX128_LEG, +, 32c,   1 )            // __kmpc_atomic_cmplx16_add_cpt
-    ATOMIC_CRITICAL_CPT( cmplx16, sub_cpt, CPLX128_LEG, -, 32c,   1 )            // __kmpc_atomic_cmplx16_sub_cpt
-    ATOMIC_CRITICAL_CPT( cmplx16, mul_cpt, CPLX128_LEG, *, 32c,   1 )            // __kmpc_atomic_cmplx16_mul_cpt
-    ATOMIC_CRITICAL_CPT( cmplx16, div_cpt, CPLX128_LEG, /, 32c,   1 )            // __kmpc_atomic_cmplx16_div_cpt
-    #if ( KMP_ARCH_X86 )
-        ATOMIC_CRITICAL_CPT( cmplx16, add_a16_cpt, kmp_cmplx128_a16_t, +, 32c,   1 )   // __kmpc_atomic_cmplx16_add_a16_cpt
-        ATOMIC_CRITICAL_CPT( cmplx16, sub_a16_cpt, kmp_cmplx128_a16_t, -, 32c,   1 )   // __kmpc_atomic_cmplx16_sub_a16_cpt
-        ATOMIC_CRITICAL_CPT( cmplx16, mul_a16_cpt, kmp_cmplx128_a16_t, *, 32c,   1 )   // __kmpc_atomic_cmplx16_mul_a16_cpt
-        ATOMIC_CRITICAL_CPT( cmplx16, div_a16_cpt, kmp_cmplx128_a16_t, /, 32c,   1 )   // __kmpc_atomic_cmplx16_div_a16_cpt
-    #endif
-#endif
-#endif
