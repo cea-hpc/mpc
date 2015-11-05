@@ -118,6 +118,7 @@ static inline int sctk_message_class_is_process_specific( sctk_message_class_t t
 		case SCTK_CANCELLED_SEND:
 		case SCTK_CANCELLED_RECV:
 		case SCTK_P2P_MESSAGE:
+		case SCTK_P2P_RDV_MESSAGE:
 		case SCTK_RDMA_MESSAGE:
 		case SCTK_BARRIER_MESSAGE:
 		case SCTK_BROADCAST_MESSAGE:
