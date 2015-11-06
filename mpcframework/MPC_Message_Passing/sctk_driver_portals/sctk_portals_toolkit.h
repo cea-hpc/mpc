@@ -125,7 +125,7 @@ int sctk_portals_poll_one_queue(struct sctk_rail_info_s *rail, size_t id);
  *
  * @return 0 if at least one event have been triggered, 0 otherwise
  */
-int sctk_portals_polling_queue_for(struct sctk_rail_info_s* rail, size_t task_id);
+int sctk_portals_polling_queue_for(struct sctk_rail_info_s* rail, int task_id);
 
 /**
  * sctk_portals_network_connection_from(...) wrapper for automatic static route creation

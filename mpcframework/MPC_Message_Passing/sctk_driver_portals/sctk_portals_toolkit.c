@@ -348,8 +348,7 @@ void sctk_portals_poll_pending_msg_list(sctk_rail_info_t *rail)
 		//while an avent is contained in current event_queue
 		while(ret == PTL_OK)
 		{
-			if(event.ni_fail_type != PTL_NI_OK)
-				sctk_error("%d", event.ni_fail_type);
+			assume(event.ni_fail_type == PTL_NI_OK);
 
 			//depending on event type
 			switch(event.type)
@@ -441,7 +440,7 @@ int sctk_portals_poll_one_queue(sctk_rail_info_t *rail, size_t id)
 				case PTL_EVENT_GET: // Data in this ME have been accessed
 				case PTL_EVENT_GET_OVERFLOW:
 
-					sctk_debug("PORTALS: (REMOTE) POLL GET - %lu (%lu)", rail->network.portals.current_id.phys.pid, cat);
+					sctk_debug("PORTALS: (REMOTE) POLL GET - %lu (%lu)", event.initiator.phys.pid, cat);
 
 					//depending on messate type
 					switch(cat)
@@ -468,7 +467,7 @@ int sctk_portals_poll_one_queue(sctk_rail_info_t *rail, size_t id)
 
 				case PTL_EVENT_PUT: // data have been published in this ME
 				case PTL_EVENT_PUT_OVERFLOW:
-					sctk_debug("PORTALS: (REMOTE) POLL PUT - %lu (%lu)", rail->network.portals.current_id.phys.pid, cat);
+					sctk_debug("PORTALS: (REMOTE) POLL PUT - %lu (%lu)", event.initiator.phys.pid, cat);
 
 					//depending on message type
 					switch(cat)
@@ -510,7 +509,7 @@ int sctk_portals_poll_one_queue(sctk_rail_info_t *rail, size_t id)
 					break;
 				case PTL_EVENT_FETCH_ATOMIC:
 				case PTL_EVENT_FETCH_ATOMIC_OVERFLOW:
-					sctk_debug("PORTALS: (REMOTE) POLL FETCH-ATOMIC - %lu (%lu)", rail->network.portals.current_id.phys.pid, cat);
+					sctk_debug("PORTALS: (REMOTE) POLL FETCH-ATOMIC - %lu (%lu)", event.initiator.phys.pid, cat);
                     to_free = 0;
 					break;
 
@@ -519,7 +518,7 @@ int sctk_portals_poll_one_queue(sctk_rail_info_t *rail, size_t id)
 				case PTL_EVENT_ATOMIC_OVERFLOW:
 				case PTL_EVENT_PT_DISABLED:
 				case PTL_EVENT_SEARCH:
-					sctk_debug("PORTALS: POLL NOT HANDLED EVENT - %lu (%lu)", rail->network.portals.current_id.phys.pid, cat);
+					sctk_debug("PORTALS: POLL NOT HANDLED EVENT - %lu (%lu)", event.initiator.phys.pid, cat);
                     to_free = 0;
 
 					break;
@@ -544,10 +543,10 @@ int sctk_portals_poll_one_queue(sctk_rail_info_t *rail, size_t id)
 	return ret;
 }
 
-int sctk_portals_polling_queue_for(sctk_rail_info_t*rail, size_t task_id)
+int sctk_portals_polling_queue_for(sctk_rail_info_t*rail, int task_id)
 {
 	int ret = 1, ret_bef = 1, ret_aft = 1;
-	size_t task_bef = 0, task_aft = 0, mytask = sctk_get_task_rank();
+	int task_bef = 0, task_aft = 0, mytask = sctk_get_task_rank();
 	size_t nb_entries = rail->network.portals.ptable.nb_entries;
 
 	//if the request is to poll every lists
@@ -587,7 +586,6 @@ int sctk_portals_polling_queue_for(sctk_rail_info_t*rail, size_t task_id)
  */
 void sctk_portals_network_connection_to(int from, int to, sctk_rail_info_t* rail, sctk_route_origin_t route_type)
 {
-
 }
 
 
@@ -607,7 +605,7 @@ void sctk_portals_network_connection_to_ctx(int src, sctk_rail_info_t* rail,
 	sctk_portals_rail_info_t* prail = &rail->network.portals;
 	sctk_portals_list_entry_extra_t stuff;
 
-	sctk_debug("PORTALS: RECV ON-DEMAND - %lu at (%lu,%lu)", ctx->from.phys.pid, ctx->entry, ctx->match);
+	sctk_debug("PORTALS: RECV ON-DEMAND FROM %d - %lu at (%lu,%lu)", src, ctx->from.phys.pid, ctx->entry, ctx->match);
 
 	//directly add the route
 	sctk_portals_add_route(src, ctx->from, rail, route_type, STATE_CONNECTED);
@@ -658,7 +656,7 @@ void sctk_portals_network_connection_from(int from, int to, sctk_rail_info_t* ra
 
 	sctk_portals_helper_set_bits_from_msg(&ctx.match, &rail->network.portals.ptable.head[ctx.entry]->entry_cpt);
 
-	sctk_debug("PORTALS: SEND ON-DEMAND - %lu at (%lu,%lu)", ctx.from.phys.pid, ctx.entry, ctx.match);
+	sctk_debug("PORTALS: SEND ON-DEMAND TO %d - %lu at (%lu,%lu)", to, ctx.from.phys.pid, ctx.entry, ctx.match);
 
 	// init ME w/ default
 	sctk_portals_helper_init_new_entry(&me, &rail->network.portals.interface_handler, (void*)&slot, sizeof(sctk_portals_process_id_t), ctx.match, SCTK_PORTALS_ME_PUT_OPTIONS);
@@ -680,7 +678,7 @@ void sctk_portals_network_connection_from(int from, int to, sctk_rail_info_t* ra
 	//waiting for remote data to process
 	while(PtlCTGet(me.ct_handle, &ctc) == PTL_OK)
 	{
-		sctk_debug("PORTALS: SEND ON-DEMAND - %lu at (%lu,%lu) WAITING", ctx.from.phys.pid, ctx.entry, ctx.match);
+		sctk_debug("PORTALS: SEND ON-DEMAND TO %d - %lu at (%lu,%lu) WAITING", to, ctx.from.phys.pid, ctx.entry, ctx.match);
 		assume(ctc.failure == 0);
 		if(ctc.success > 0)
 			break;
@@ -688,7 +686,7 @@ void sctk_portals_network_connection_from(int from, int to, sctk_rail_info_t* ra
 	}
 	route->data.portals.dest = slot;
 	sctk_endpoint_set_state(route, STATE_CONNECTED);
-	sctk_debug("PORTALS: SEND ON-DEMAND - %lu at (%lu,%lu) COMPLETED", ctx.from.phys.pid, ctx.entry, ctx.match);
+	sctk_debug("PORTALS: SEND ON-DEMAND TO %d - %lu at (%lu,%lu) COMPLETED", to, ctx.from.phys.pid, ctx.entry, ctx.match);
 }
 
 void sctk_portals_connection_from(int from, int to , sctk_rail_info_t *rail)

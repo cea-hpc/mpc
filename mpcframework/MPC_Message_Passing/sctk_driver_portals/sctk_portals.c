@@ -44,6 +44,7 @@ static void sctk_network_send_message_endpoint_portals ( sctk_thread_ptp_message
 
 static void sctk_network_notify_recv_message_portals ( sctk_thread_ptp_message_t *msg, sctk_rail_info_t *rail )
 {
+    sctk_portals_polling_queue_for(rail, SCTK_MSG_DEST_PROCESS(msg) % rail->network.portals.ptable.nb_entries);
 }
 
 static void sctk_network_notify_matching_message_portals ( sctk_thread_ptp_message_t *msg, sctk_rail_info_t *rail )
