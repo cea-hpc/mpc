@@ -40,10 +40,9 @@ sctk_shm_cma_message_copy_generic(sctk_message_to_copy_t * tmp)
 	    send_iov = (struct iovec *) sctk_malloc( sizeof( struct iovec ));
 	    shm_send_iov = (sctk_shm_iovec_info_t *) body;
 
-        fast_memcpy( send_iov, (char*)shm_send_iov+sizeof(sctk_shm_iovec_info_t),shm_send_iov->iovec_len*sizeof(struct iovec));  
-        while(nread <= 0)
-	        nread = process_vm_readv(shm_send_iov->pid, recv_iov, 1, send_iov, 1, 0);
-        assume_m( nread > 0, "Failed process_vm_readv call");
+            fast_memcpy( send_iov, (char*)shm_send_iov+sizeof(sctk_shm_iovec_info_t),shm_send_iov->iovec_len*sizeof(struct iovec));  
+	    nread = process_vm_readv(shm_send_iov->pid, recv_iov, 1, send_iov, 1, 0);
+            assume_m( nread > 0, "Failed process_vm_readv call");
 			
             sctk_message_completion_and_free ( send, recv );
 	    sctk_free(recv_iov);
