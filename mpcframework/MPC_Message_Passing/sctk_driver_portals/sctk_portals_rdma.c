@@ -24,6 +24,8 @@
 
 #include <sctk_portals_rdma.h>
 
+#ifdef MPC_USE_PORTALS
+
 static ptl_op_t sctk_portals_rdma_determine_operation(RDMA_op op)
 {
 	switch(op)
@@ -379,3 +381,5 @@ void sctk_portals_unpin_region( struct sctk_rail_info_s * rail, struct sctk_rail
 	sctk_portals_helper_destroy_entry(&list->pin.portals.me, &list->pin.portals.me_handler);
 	sctk_debug("UN-PINNING %lu - %lu !!", list->pin.portals.id.phys.pid, list->pin.portals.match);
 }
+
+#endif /* MPC_USE_PORTALS */

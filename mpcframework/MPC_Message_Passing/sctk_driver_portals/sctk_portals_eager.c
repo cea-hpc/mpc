@@ -28,6 +28,7 @@
 #include <sctk_net_tools.h>
 #include <sctk_low_level_comm.h>
 
+#ifdef MPC_USE_PORTALS
 
 #define sctk_min(a, b)  ((a) < (b) ? (a) : (b))
 
@@ -205,3 +206,6 @@ void sctk_portals_eager_recv_put (sctk_rail_info_t* rail, unsigned int indice,  
 	sctk_spinlock_unlock(&rail->network.portals.ptable.head[indice]->lock);
     rail->send_message_from_network(msg);
 }
+
+
+#endif /* MPC_USE_PORTALS */
