@@ -1305,6 +1305,9 @@ __mpcomp_ordered_begin()
 	t = (mpcomp_thread_t *) sctk_openmp_thread_tls;
 	sctk_assert(t != NULL); 
 
+    /* No need to check something in case of 1 thread */
+    if ( t->info.num_threads == 1 ) return ;
+
 	sctk_nodebug( "[%d] __mpcomp_ordered_begin: enter w/ iteration %d and team %d",
 			t->rank, t->current_ordered_iteration, t->instance->team->next_ordered_offset ) ;
 
@@ -1361,6 +1364,9 @@ void __mpcomp_ordered_end()
 
 	t = (mpcomp_thread_t *) sctk_openmp_thread_tls;
 	sctk_assert(t != NULL); 
+
+    /* No need to check something in case of 1 thread */
+    if ( t->info.num_threads == 1 ) return ;
 
 	t->current_ordered_iteration += t->info.loop_incr ;
 	if ( (t->info.loop_incr > 0 && t->current_ordered_iteration >= t->info.loop_b) ||
