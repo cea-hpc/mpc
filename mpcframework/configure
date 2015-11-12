@@ -171,6 +171,7 @@ Optional features:
   --enable-debug-messages          Enable MPC debug message printing in verbose level 3
   --enable-shell-colors            Enable support of colors in shell
   --enable-valgrind-memcheck       Enable support of valgrind memcheck in MPC_Allocator
+  --enable-lib-mode                Build MPC as a communication library
 
 Module selection:
 EOF
@@ -191,6 +192,7 @@ Optional packages:
   --with-openpa=prefix    Enable OpenPA using given prefix [system default]
   --with-hwloc=prefix     Enable hwloc using given prefix [system default]
   --with-openib=prefix    Enable OpenFabrics using given prefix [system default]
+  --with-portals=prefix   Enable Portals API using given prefix [system default]
   --with-libxml2=prefix   Enable libxml2 for config file parsing [pkg-config or /usr]
   --with-libsctk_arch=prefix   Enable libsctk_arch for config file parsing [pkg-config or /usr]
 
@@ -232,6 +234,7 @@ SCTK_VALGRIND_MEMCHECK='0'
 HWLOC_USER_PREFIX=""
 OPENPA_USER_PREFIX=""
 OPENIB_USER_PREFIX=""
+PORTALS_USER_PREFIX=""
 SCTK_LIBXML2_PREFIX=""
 SCTK_LIBSCTK_ARCH_PREFIX=""
 
@@ -373,6 +376,9 @@ for arg in "$@" ; do
     --enable-shell-colors)
     SCTK_SHELL_COLORS="1"
     ;;
+    --enable-lib-mode)
+    SCTK_LIB_MODE="1"
+    ;;
     --disable-shell-colors)
     SCTK_SHELL_COLORS="0"
     ;;
@@ -459,7 +465,10 @@ for arg in "$@" ; do
     --with-openib=*)
     OPENIB_USER_PREFIX="`echo A$arg | sed -e 's/A--with-openib=//g'`"
     ;;
-	--with-libxml2=*)
+	--with-portals=*)
+    PORTALS_USER_PREFIX="`echo A$arg | sed -e 's/A--with-portals=//g'`"
+    ;;
+    --with-libxml2=*)
 	SCTK_LIBXML2_PREFIX="`echo A$arg | sed -e 's/A--with-libxml2=//g'`"
 	;;
 	--with-libsctk_arch=*)
@@ -507,19 +516,28 @@ SCTK_CFLAGS="$SCTK_CFLAGS $SCTK_CFLAGS_NON_GNU"
 
 # export launcher information
 
-# Make sure Hydra is present before making it default.
-# If you directly run the mpc configure without the
-# root configure Hydra might not be installed hence
-# should not be used => Fallback to slurm if available
-
-if [ $SCTK_HYDRA -eq 1 ]; then
-  SCTK_JOB_MANAGER="HYDRA"
-elif [ $SCTK_SLURM -eq 1 ]; then
-  SCTK_JOB_MANAGER="SLURM"
+if [ $SCTK_LIB_MODE -eq 1 ]; then
+	#In LIB mode, no need for a launcher
+	#all is handled by the host MPI
+	SCTK_JOB_MANAGER=""
 else
-  perror "Neither Hydra nor Slurm has been selected"
-  exit 1
+
+	# Make sure Hydra is present before making it default.
+	# If you directly run the mpc configure without the
+	# root configure Hydra might not be installed hence
+	# should not be used => Fallback to slurm if available
+
+	if [ $SCTK_HYDRA -eq 1 ]; then
+	  SCTK_JOB_MANAGER="HYDRA"
+	elif [ $SCTK_SLURM -eq 1 ]; then
+	  SCTK_JOB_MANAGER="SLURM"
+	else
+	  perror "Neither Hydra nor Slurm has been selected"
+	  exit 1
+	fi
+
 fi
+
 export SCTK_JOB_MANAGER
 
 tmp_cross_gen(){

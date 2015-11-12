@@ -208,6 +208,20 @@ void sctk_net_abort();
 SCTK_PMI_BOOL
 sctk_pmi_is_initialized();
 
+
+/******************************************************************************
+LIBRARY MODE TOLOGY GETTERS 
+******************************************************************************/
+
+#ifdef SCTK_LIB_MODE
+int MPC_Net_hook_rank();
+int MPC_Net_hook_size();
+void MPC_Net_hook_barrier();
+void MPC_Net_hook_send_to( void * data, size_t size, int target );
+void MPC_Net_hook_recv_from( void * data, size_t size, int source );
+#endif
+
+
 #ifdef __cplusplus
 }
 #endif

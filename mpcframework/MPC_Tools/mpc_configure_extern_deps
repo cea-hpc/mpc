@@ -28,6 +28,7 @@ OPENPA_IS_SETUP="no"
 HYDRA_IS_SETUP="no"
 SLURM_IS_SETUP="no"
 OPENIB_IS_SETUP="no"
+PORTALS_IS_SETUP="no"
 LIBXML_IS_SETUP="no"
 LIBSCTK_ARCH_IS_SETUP="no"
 HYDRA_MODULE="${PWD}/../hydra_simple"
@@ -140,22 +141,27 @@ SCTK_CHECK_LIB_PMI()
 	sctk_internal_setup_pmi_slurm_fallback
 
 	SCTK_MSG_CHECKING "Launcher"
-	if [ $SCTK_HYDRA -eq 1 ] && [ $SCTK_SLURM -eq 0 ]; then
-		sctk_internal_setup_lib_hydra
-		result 'hydra'
-	elif [ $SCTK_HYDRA -eq 0 ] && [ $SCTK_SLURM -eq 1 ]; then
-		sctk_internal_setup_lib_slurm
-		result 'slurm'
-		SCTK_MSG_CHECKING "slurm prefix"
-		result "$SLURM_PREFIX"
-	else
-		result 'hydra,slurm'
-		sctk_error "Your must use --with-slurm or --with-hydra, but you can't use both at same time."
-	fi
 
-	#checks
-	SCTK_CHECK_HEADER "pmi.h"
-	SCTK_CHECK_LDOPTION $PMI_LIB
+	if [ "x$SCTK_LIB_MODE" = "x1" ]; then
+		result 'libmode'
+	else
+		if [ $SCTK_HYDRA -eq 1 ] && [ $SCTK_SLURM -eq 0 ]; then
+			sctk_internal_setup_lib_hydra
+			result 'hydra'
+		elif [ $SCTK_HYDRA -eq 0 ] && [ $SCTK_SLURM -eq 1 ]; then
+			sctk_internal_setup_lib_slurm
+			result 'slurm'
+			SCTK_MSG_CHECKING "slurm prefix"
+			result "$SLURM_PREFIX"
+		else
+			result 'hydra,slurm'
+			sctk_error "Your must use --with-slurm or --with-hydra, but you can't use both at same time."
+		fi
+
+		#checks
+		SCTK_CHECK_HEADER "pmi.h"
+		SCTK_CHECK_LDOPTION $PMI_LIB
+	fi
 
 	end_section
 }
@@ -367,6 +373,47 @@ SCTK_CHECK_LIB_OPENIB()
 	SCTK_NET_LIST="$SCTK_NET_LIST ib"
 	end_section
 }
+
+# Setup vars to use lib OpenIB
+# Params :
+# Global variables :
+#   - PORTALS_USER_PREFIX : Prefix used to search portals,
+# Will setup:
+#   - SCTK_CFLAGS , SCTK_LDFLAGS , SCTK_ARFLAGS , PORTALS_IS_SETUP
+sctk_internal_setup_lib_portals()
+{
+	if [ "$PORTALS_IS_SETUP" != "yes" ]; then
+		if [ -e "${PORTALS_USER_PREFIX}/include/portals4.h" ]; then
+			SCTK_CFLAGS="${SCTK_CFLAGS} -I${PORTALS_USER_PREFIX}/include/"
+		else
+			error "Could not locate portals4.h header in directory ${PORTALS_USER_PREFIX}/include/"
+		fi
+
+		#setup rpaths and -L
+		if [ -e "${PORTALS_USER_PREFIX}/lib/libportals.so" ]; then
+			SCTK_LDFLAGS="${SCTK_LDFLAGS} -Wl,-rpath,${PORTALS_USER_PREFIX}/lib -L${PORTALS_USER_PREFIX}/lib"
+			SCTK_ARFLAGS="${SCTK_ARFLAGS} ${PORTALS_USER_PREFIX}/lib/libportals.so"
+		fi
+	fi
+
+	#mark as setup
+	PORTALS_IS_SETUP="yes"
+}
+
+SCTK_CHECK_LIB_PORTALS(){
+	if [ "$PORTALS_USER_PREFIX" != "" ]; then
+		sctk_internal_setup_lib_portals;
+	fi
+    begin_section "Check Portals:"
+	SCTK_CHECK_HEADER_NOFAIL portals4.h
+	if test "$SCTK_SCTK_CHECK_HEADER_RES" = 0 ; then
+        SCTK_CHECK_OPTION "-DMPC_USE_PORTALS"
+        SCTK_CHECK_LDOPTION "-lportals"
+        SCTK_NET_LIST="$SCTK_NET_LIST portals"
+    fi
+    end_section
+}
+
 
 #setup libxml2 by using given prefix
 # Params :

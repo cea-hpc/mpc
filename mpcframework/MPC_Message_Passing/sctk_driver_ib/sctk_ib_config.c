@@ -104,7 +104,7 @@ void sctk_ib_config_print ( sctk_ib_rail_info_t *rail_ib )
 		          "init_mr          = %d\n"
 		          "adm_port         = %d\n"
 		          "rdma_depth       = %d\n"
-		          "rdma_dest_depth  = %d\n"
+		          "rdma_depth  = %d\n"
 		          "quiet_crash      = %d\n"
 		          "async_thread     = %d\n"
 		          EXPERIMENTAL ( steal ) "            = %d\n"
@@ -142,7 +142,7 @@ void sctk_ib_config_print ( sctk_ib_rail_info_t *rail_ib )
 		          config->init_mr,
 		          config->adm_port,
 		          config->rdma_depth,
-		          config->rdma_dest_depth,
+		          config->rdma_depth,
 		          config->quiet_crash,
 		          config->async_thread,
 		          config->steal, steal_names[config->steal],

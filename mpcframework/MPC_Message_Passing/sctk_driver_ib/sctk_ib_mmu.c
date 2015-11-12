@@ -32,6 +32,8 @@
 #include <sys/resource.h>
 #include <stdlib.h>
 
+#include <sctk_alloc.h>
+
 sctk_ib_mmu_entry_t * sctk_ib_mmu_entry_new( sctk_ib_rail_info_t *rail_ib, void * addr, size_t size )
 {
 	sctk_ib_mmu_entry_t * new = sctk_malloc( sizeof( sctk_ib_mmu_entry_t ) );
@@ -42,13 +44,28 @@ sctk_ib_mmu_entry_t * sctk_ib_mmu_entry_new( sctk_ib_rail_info_t *rail_ib, void 
 	new->addr = addr;
 	new->size = size;
 	new->rail = rail_ib;
+
+	const struct sctk_runtime_config * config = sctk_runtime_config_get();
+	const struct sctk_runtime_config_struct_ib_global * ib_global_config = &config->modules.low_level_comm.ib_global;
+
+	
+	if( (ib_global_config->mmu_cache_maximum_pin_size) < size )
+	{
+		sctk_fatal("You have reached the maximum size of a pinned memory region(%g GB),"
+				   "consider splitting this large segment is several segments or \n"
+				   "increase the size limitation in the config depending on your IB card specs",
+		           ib_global_config->mmu_cache_maximum_pin_size / (1024.0 * 1024.0 * 1024.0));
+	}
+	
+	sctk_nodebug("NEW MMU ENTRY at %p size %ld", new->addr, new->size );
 	
 	/* Pin memory and save memory handle */
 	if( rail_ib )
 	{
 		new->mr = ibv_reg_mr ( rail_ib->device->pd, addr, size, IBV_ACCESS_REMOTE_WRITE
-				         | IBV_ACCESS_LOCAL_WRITE
-				         | IBV_ACCESS_REMOTE_READ );
+																 | IBV_ACCESS_LOCAL_WRITE
+																 | IBV_ACCESS_REMOTE_READ
+																 | IBV_ACCESS_REMOTE_ATOMIC );
 	}
 	else
 	{
@@ -70,6 +87,8 @@ void sctk_ib_mmu_entry_release( sctk_ib_mmu_entry_t * release )
 	sctk_spinlock_write_lock( &release->entry_refcounter );
 	
 	int ret = 0;
+	
+	sctk_nodebug("MMU UNPIN at %p size %ld", release->addr, release->size );
 	
 	/* Unregister memory */
 	if( release->mr )
@@ -93,7 +112,7 @@ int sctk_ib_mmu_entry_contains( sctk_ib_mmu_entry_t * entry, void * addr, size_t
 	sctk_nodebug("Test %p (%ld) == %p (%ld)\n",  addr, size,  entry->addr, entry->size );
 	
 	if( ( entry->addr <= addr )
-	&&  ( (addr + size) < (entry->addr + entry->size) ) )
+	&&  ( (addr + size) <= (entry->addr + entry->size) ) )
 	{
 		return 1;
 	}
@@ -138,13 +157,19 @@ void sctk_ib_mmu_entry_acquire( sctk_ib_mmu_entry_t * entry )
 	if( !entry )
 		return;
 	
+	sctk_nodebug("ACQUIRING(%p) %p s %ld", entry, entry->addr, entry->size );
+	
 	sctk_spinlock_read_lock( &entry->entry_refcounter );
 }
 
 void sctk_ib_mmu_entry_relax( sctk_ib_mmu_entry_t * entry )
 {
+
 	if( !entry )
 		return;
+
+	sctk_nodebug("Entry RELAX %p", entry );
+	
 	
 	sctk_spinlock_read_unlock( &entry->entry_refcounter );
 	
@@ -152,7 +177,10 @@ void sctk_ib_mmu_entry_relax( sctk_ib_mmu_entry_t * entry )
 	 * in the cache (case where all entries were in use
 	 * this is really an edge case */
 	if( entry->free_on_relax )
+	{
+		sctk_error("Forced free on relax %p s %ld", entry->addr, entry->size );
 		sctk_ib_mmu_entry_release( entry );
+	}
 }
 
 

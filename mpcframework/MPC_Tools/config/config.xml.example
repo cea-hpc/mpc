@@ -38,14 +38,19 @@
 							<infiniband/>
 						</driver>
 					</config>
-						
+
 					<config>
 						<name>tcp_config_mpi</name>
 						<driver>
 							<tcp/>
 						</driver>
 					</config>
-				         
+                    <config>
+                        <name>portals_config</name>
+                        <driver>
+                            <portals/>
+                        </driver>
+                    </config>
 				</configs>
 
 				<rails>
@@ -56,7 +61,7 @@
 						<idle_polling>
 							<range>RAIL_POLL_NUMA</range>
 							<trigger>RAIL_POLL_SOCKET</trigger>
-						</idle_polling>					
+						</idle_polling>
 						<priority>1</priority>
 						<ondemand>1</ondemand>
 						<topology>ring</topology>
@@ -66,7 +71,7 @@
 						<name>tcp_mpi</name>
 						<priority>1</priority>
 						<ondemand>1</ondemand>
-						<topology>ring</topology>
+						<topology>fully</topology>
 						<config>tcp_config_mpi</config>
 					</rail>
 					<rail>
@@ -82,7 +87,40 @@
 								</minsize>
 							</gate>
 						</gates>
-					</rail>
+                    </rail>
+                    <rail>
+                        <name>portals_mpi_fully</name>
+                        <priority>6</priority>
+						<ondemand>1</ondemand>
+						<topology>fully</topology>
+                        <config>portals_config</config>
+                    </rail>
+                    <rail>
+                        <name>portals_mpi</name>
+                        <priority>6</priority>
+                        <ondemand>1</ondemand>
+                        <config>portals_config</config>
+                    </rail>
+		    <rail>
+			<name>portals_rdma</name>
+                        <priority>6</priority>
+                        <ondemand>1</ondemand>
+                        <config>portals_config</config>
+			<rdma>1</rdma>
+		    </rail>
+                    <rail>
+                        <name>portals_large</name>
+                        <priority>6</priority>
+                        <ondemand>1</ondemand>
+                        <config>portals_config</config>
+						<gates>
+							<gate>
+								<minsize>
+									<value>128B</value>
+								</minsize>
+							</gate>
+						</gates>
+                    </rail>
 				</rails>
 
 				<cli_options>
@@ -102,9 +140,32 @@
 						<name>multirail_tcp</name>
 						<rails>
 							<rail>tcp_large</rail>
-							<rail>tcp_mpi</rail>
 						</rails>
-					</cli_option>
+                    </cli_option>
+                    <cli_option>
+                        <name>portals</name>
+                        <rails>
+                            <rail>portals_mpi</rail>
+                        </rails>
+                    </cli_option>
+                    <cli_option>
+                        <name>fully_portals</name>
+                        <rails>
+                            <rail>portals_mpi_fully</rail>
+                        </rails>
+                    </cli_option>
+                    <cli_option>
+                        <name>multirail_portals</name>
+                        <rails>
+                            <rail>portals_large</rail>
+                        </rails>
+                    </cli_option>
+		    <cli_option>
+                        <name>rdma_portals</name>
+                        <rails>
+                            <rail>portals_rdma</rail>
+                        </rails>
+                    </cli_option>
 					<cli_option>
 						<name>default</name>
 						<rails>

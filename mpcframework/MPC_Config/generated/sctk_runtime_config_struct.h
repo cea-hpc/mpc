@@ -116,6 +116,102 @@ struct sctk_runtime_config_struct_debugger
 	int max_filename_size;
 };
 
+/******************************** STRUCTURE *********************************/
+/**Collectives intracom MPI**/
+struct sctk_runtime_config_struct_collectives_intra
+{	int init_done;
+	/**MPI_Barrier intracom algorithm**/
+	struct sctk_runtime_config_funcptr barrier_intra;
+	/**Type of MPI_Bcast intracom algorithm**/
+	struct sctk_runtime_config_funcptr bcast_intra;
+	/**MPI_Allgather intracom algorithm**/
+	struct sctk_runtime_config_funcptr allgather_intra;
+	/**MPI_Allgatherv intracom algorithm**/
+	struct sctk_runtime_config_funcptr allgatherv_intra;
+	/**MPI_Alltoall intracom algorithm**/
+	struct sctk_runtime_config_funcptr alltoall_intra;
+	/**Alltoallv intracom algorithm**/
+	struct sctk_runtime_config_funcptr alltoallv_intra;
+	/**MPI_Alltoallw intracom algorithm**/
+	struct sctk_runtime_config_funcptr alltoallw_intra;
+	/**MPI_Gather intracom algorithm**/
+	struct sctk_runtime_config_funcptr gather_intra;
+	/**MPI_Gatherv intracom algorithm**/
+	struct sctk_runtime_config_funcptr gatherv_intra;
+	/**MPI_Scatter intracom algorithm**/
+	struct sctk_runtime_config_funcptr scatter_intra;
+	/**MPI_Scatterv intracom algorithm**/
+	struct sctk_runtime_config_funcptr scatterv_intra;
+	/**MPI_Scan intracom algorithm**/
+	struct sctk_runtime_config_funcptr scan_intra;
+	/**MPI_Exscan intracom algorithm**/
+	struct sctk_runtime_config_funcptr exscan_intra;
+	/**MPI_Reduce intracom algorithm**/
+	struct sctk_runtime_config_funcptr reduce_intra;
+	/**MPI_Allreduce intracom algorithm**/
+	struct sctk_runtime_config_funcptr allreduce_intra;
+	/**MPI_Reduce_scatter intracom algorithm**/
+	struct sctk_runtime_config_funcptr reduce_scatter_intra;
+	/**MPI_Reduce_scatter_block intracom algorithm**/
+	struct sctk_runtime_config_funcptr reduce_scatter_block_intra;
+};
+
+/******************************** STRUCTURE *********************************/
+/**Collectives intercom MPI**/
+struct sctk_runtime_config_struct_collectives_inter
+{	int init_done;
+	/**MPI_Barrier intercom algorithm**/
+	struct sctk_runtime_config_funcptr barrier_inter;
+	/**MPI_Barrier intercom algorithm**/
+	struct sctk_runtime_config_funcptr bcast_inter;
+	/**MPI_Allgather intercom algorithm**/
+	struct sctk_runtime_config_funcptr allgather_inter;
+	/**MPI_Allgatherv intercom algorithm**/
+	struct sctk_runtime_config_funcptr allgatherv_inter;
+	/**MPI_Alltoall intercom algorithm**/
+	struct sctk_runtime_config_funcptr alltoall_inter;
+	/**MPI_Alltoallv intercom algorithm**/
+	struct sctk_runtime_config_funcptr alltoallv_inter;
+	/**MPI_Alltoallw intercom algorithm**/
+	struct sctk_runtime_config_funcptr alltoallw_inter;
+	/**MPI_Gather intercom algorithm**/
+	struct sctk_runtime_config_funcptr gather_inter;
+	/**MPI_Gatherv intercom algorithm**/
+	struct sctk_runtime_config_funcptr gatherv_inter;
+	/**MPI_Scatter intercom algorithm**/
+	struct sctk_runtime_config_funcptr scatter_inter;
+	/**MPI_Scatterv intercom algorithm**/
+	struct sctk_runtime_config_funcptr scatterv_inter;
+	/**MPI_Reduce intercom algorithm**/
+	struct sctk_runtime_config_funcptr reduce_inter;
+	/**MPI_Allreduce intercom algorithm**/
+	struct sctk_runtime_config_funcptr allreduce_inter;
+	/**MPI_Reduce_scatter intercom algorithm**/
+	struct sctk_runtime_config_funcptr reduce_scatter_inter;
+	/**MPI_Reduce_scatter_block intercom algorithm**/
+	struct sctk_runtime_config_funcptr reduce_scatter_block_inter;
+};
+
+/******************************** STRUCTURE *********************************/
+/**Progress thread NBC**/
+struct sctk_runtime_config_struct_progress_thread
+{	int init_done;
+	/**If use progress threads for non blocking collectives**/
+	int use_progress_thread;
+};
+
+/******************************** STRUCTURE *********************************/
+/**Options for MPC Message Passing**/
+struct sctk_runtime_config_struct_mpc
+{	int init_done;
+	/**Print debug messages**/
+	bool log_debug;
+	/****/
+	bool hard_checking;
+	/****/
+	bool buffering;
+};
+
 /********************************** ENUM ************************************/
 /****/
 enum ibv_rdvz_protocol
@@ -166,6 +262,8 @@ struct sctk_runtime_config_struct_net_driver_infiniband
 	int qp_rx_depth;
 	/**Number of entries to allocate in the CQ. If too low, may cause a CQ overrun**/
 	int cq_depth;
+	/**Number of RDMA resources on QP (covers both max_dest_rd_atomic and max_rd_atomic)**/
+	int rdma_depth;
 	/**Max pending RDMA operations for send**/
 	int max_sg_sq;
 	/**Max pending RDMA operations for recv**/
@@ -204,10 +302,6 @@ struct sctk_runtime_config_struct_net_driver_infiniband
 	int wc_in_number;
 	/**Defines the number of entries for the CQ dedicated to sent messages.**/
 	int wc_out_number;
-	/**Number of outstanding RDMA reads and atomic operations on the destination QP (to be confirmed)**/
-	int rdma_depth;
-	/**Number of responder resources for handling incoming RDMA reads and atomic operations (to be confirmed)**/
-	int rdma_dest_depth;
 	/**Defines if the low memory mode should be activated**/
 	bool low_memory;
 	/**Defines the Rendezvous protocol to use (IBV_RDVZ_WRITE_PROTOCOL or IBV_RDVZ_READ_PROTOCOL)**/
@@ -240,16 +334,18 @@ struct sctk_runtime_config_struct_ib_global
 	int mmu_cache_enabled;
 	/**Number of entries to keep in the cache.**/
 	int mmu_cache_entry_count;
-	/**Number of entries to keep in the cache.**/
+	/**Total size of entries to keep in the cache.**/
 	size_t mmu_cache_maximum_size;
+	/**Maximum size of an pinned entry.**/
+	size_t mmu_cache_maximum_pin_size;
 };
 
 /******************************** STRUCTURE *********************************/
-/**Declare a fake driver to test the configuration system.**/
+/**Portals-based driver**/
 struct sctk_runtime_config_struct_net_driver_portals
 {	int init_done;
-	/**Fake param.**/
-	int fake_param;
+	/**Size of the eager buffers (short messages).**/
+	int eager_limit;
 };
 
 /******************************** STRUCTURE *********************************/
@@ -420,6 +516,8 @@ struct sctk_runtime_config_struct_net_rail
 	char * topology;
 	/**Define if on-demand connections are allowed on this rail.**/
 	int ondemand;
+	/**Defines if the rail has RDMA enabled.**/
+	int rdma;
 	/**Define the driver config to use for this rail.**/
 	char * config;
 	/**List of gates to be applied in this config.**/
@@ -505,102 +603,6 @@ struct sctk_runtime_config_struct_low_level_comm
 };
 
 /******************************** STRUCTURE *********************************/
-/**Options for MPC Message Passing**/
-struct sctk_runtime_config_struct_mpc
-{	int init_done;
-	/**Print debug messages**/
-	bool log_debug;
-	/****/
-	bool hard_checking;
-	/****/
-	bool buffering;
-};
-
-/******************************** STRUCTURE *********************************/
-/**Collectives intracom MPI**/
-struct sctk_runtime_config_struct_collectives_intra
-{	int init_done;
-	/**MPI_Barrier intracom algorithm**/
-	struct sctk_runtime_config_funcptr barrier_intra;
-	/**Type of MPI_Bcast intracom algorithm**/
-	struct sctk_runtime_config_funcptr bcast_intra;
-	/**MPI_Allgather intracom algorithm**/
-	struct sctk_runtime_config_funcptr allgather_intra;
-	/**MPI_Allgatherv intracom algorithm**/
-	struct sctk_runtime_config_funcptr allgatherv_intra;
-	/**MPI_Alltoall intracom algorithm**/
-	struct sctk_runtime_config_funcptr alltoall_intra;
-	/**Alltoallv intracom algorithm**/
-	struct sctk_runtime_config_funcptr alltoallv_intra;
-	/**MPI_Alltoallw intracom algorithm**/
-	struct sctk_runtime_config_funcptr alltoallw_intra;
-	/**MPI_Gather intracom algorithm**/
-	struct sctk_runtime_config_funcptr gather_intra;
-	/**MPI_Gatherv intracom algorithm**/
-	struct sctk_runtime_config_funcptr gatherv_intra;
-	/**MPI_Scatter intracom algorithm**/
-	struct sctk_runtime_config_funcptr scatter_intra;
-	/**MPI_Scatterv intracom algorithm**/
-	struct sctk_runtime_config_funcptr scatterv_intra;
-	/**MPI_Scan intracom algorithm**/
-	struct sctk_runtime_config_funcptr scan_intra;
-	/**MPI_Exscan intracom algorithm**/
-	struct sctk_runtime_config_funcptr exscan_intra;
-	/**MPI_Reduce intracom algorithm**/
-	struct sctk_runtime_config_funcptr reduce_intra;
-	/**MPI_Allreduce intracom algorithm**/
-	struct sctk_runtime_config_funcptr allreduce_intra;
-	/**MPI_Reduce_scatter intracom algorithm**/
-	struct sctk_runtime_config_funcptr reduce_scatter_intra;
-	/**MPI_Reduce_scatter_block intracom algorithm**/
-	struct sctk_runtime_config_funcptr reduce_scatter_block_intra;
-};
-
-/******************************** STRUCTURE *********************************/
-/**Collectives intercom MPI**/
-struct sctk_runtime_config_struct_collectives_inter
-{	int init_done;
-	/**MPI_Barrier intercom algorithm**/
-	struct sctk_runtime_config_funcptr barrier_inter;
-	/**MPI_Barrier intercom algorithm**/
-	struct sctk_runtime_config_funcptr bcast_inter;
-	/**MPI_Allgather intercom algorithm**/
-	struct sctk_runtime_config_funcptr allgather_inter;
-	/**MPI_Allgatherv intercom algorithm**/
-	struct sctk_runtime_config_funcptr allgatherv_inter;
-	/**MPI_Alltoall intercom algorithm**/
-	struct sctk_runtime_config_funcptr alltoall_inter;
-	/**MPI_Alltoallv intercom algorithm**/
-	struct sctk_runtime_config_funcptr alltoallv_inter;
-	/**MPI_Alltoallw intercom algorithm**/
-	struct sctk_runtime_config_funcptr alltoallw_inter;
-	/**MPI_Gather intercom algorithm**/
-	struct sctk_runtime_config_funcptr gather_inter;
-	/**MPI_Gatherv intercom algorithm**/
-	struct sctk_runtime_config_funcptr gatherv_inter;
-	/**MPI_Scatter intercom algorithm**/
-	struct sctk_runtime_config_funcptr scatter_inter;
-	/**MPI_Scatterv intercom algorithm**/
-	struct sctk_runtime_config_funcptr scatterv_inter;
-	/**MPI_Reduce intercom algorithm**/
-	struct sctk_runtime_config_funcptr reduce_inter;
-	/**MPI_Allreduce intercom algorithm**/
-	struct sctk_runtime_config_funcptr allreduce_inter;
-	/**MPI_Reduce_scatter intercom algorithm**/
-	struct sctk_runtime_config_funcptr reduce_scatter_inter;
-	/**MPI_Reduce_scatter_block intercom algorithm**/
-	struct sctk_runtime_config_funcptr reduce_scatter_block_inter;
-};
-
-/******************************** STRUCTURE *********************************/
-/**Progress thread NBC**/
-struct sctk_runtime_config_struct_progress_thread
-{	int init_done;
-	/**If use progress threads for non blocking collectives**/
-	int use_progress_thread;
-};
-
-/******************************** STRUCTURE *********************************/
 /**Options for MPC OpenMP.**/
 struct sctk_runtime_config_struct_openmp
 {	int init_done;
@@ -678,12 +680,12 @@ struct sctk_runtime_config_modules
 	struct sctk_runtime_config_struct_allocator allocator;
 	struct sctk_runtime_config_struct_launcher launcher;
 	struct sctk_runtime_config_struct_debugger debugger;
-	struct sctk_runtime_config_struct_inter_thread_comm inter_thread_comm;
-	struct sctk_runtime_config_struct_low_level_comm low_level_comm;
-	struct sctk_runtime_config_struct_mpc mpc;
 	struct sctk_runtime_config_struct_collectives_intra collectives_intra;
 	struct sctk_runtime_config_struct_collectives_inter collectives_inter;
 	struct sctk_runtime_config_struct_progress_thread progress_thread;
+	struct sctk_runtime_config_struct_mpc mpc;
+	struct sctk_runtime_config_struct_inter_thread_comm inter_thread_comm;
+	struct sctk_runtime_config_struct_low_level_comm low_level_comm;
 	struct sctk_runtime_config_struct_openmp openmp;
 	struct sctk_runtime_config_struct_profiler profiler;
 	struct sctk_runtime_config_struct_thread thread;

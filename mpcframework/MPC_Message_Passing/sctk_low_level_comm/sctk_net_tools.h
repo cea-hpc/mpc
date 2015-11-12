@@ -28,6 +28,17 @@ extern "C"
 
 #include "sctk_low_level_comm.h"
 #include "sctk_io_helper.h"
+#include <sys/uio.h>
+
+/* IOVEC NET FUNCS */
+/* Copy function for net driver copy */
+typedef void(*sctk_iovec_cpy_t)(struct iovec*, sctk_thread_ptp_message_t*, size_t);
+/* Convert sctk_thread_ptp_msg_t to struct iovec */
+struct iovec * sctk_net_convert_msg_to_iovec(sctk_thread_ptp_message_t *,int*,size_t);
+/* sctk_net_copy for iovec */
+void sctk_net_copy_msg_from_iovec( sctk_message_to_copy_t *, sctk_iovec_cpy_t); 
+
+
 void sctk_net_copy_in_buffer ( sctk_thread_ptp_message_t *msg,
                                char *buffer );
 

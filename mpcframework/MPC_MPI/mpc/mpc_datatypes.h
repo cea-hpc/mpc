@@ -316,6 +316,7 @@ typedef struct
 	int is_lb; /**< Does type has a lower bound */
 	mpc_pack_absolute_indexes_t ub; /**< Upper bound offset */
 	int is_ub; /**< Does type has an upper bound */
+	int is_a_padded_struct; /**< Was the type padded with UB during construction ? */
 	
 	/* Context */
 	struct Datatype_context context; /**< Saves the creation context for MPI_get_envelope & MPI_Get_contents */

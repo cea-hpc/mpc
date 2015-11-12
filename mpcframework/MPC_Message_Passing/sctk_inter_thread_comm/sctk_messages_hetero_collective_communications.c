@@ -78,7 +78,7 @@ static void sctk_hetero_messages_send ( const sctk_communicator_t communicator, 
 	                   sctk_message_copy );
 	sctk_add_adress_in_message ( & ( msg_req->msg ), buffer, size );
 	sctk_set_header_in_message ( & ( msg_req->msg ), tag, communicator, myself, dest,
-	                             & ( msg_req->request ), size, message_class, MPC_DATATYPE_IGNORE );
+	                             & ( msg_req->request ), size, message_class, SCTK_DATATYPE_IGNORE );
 	msg_req->msg.tail.need_check_in_wait = /* copy_in_send */1;
 	sctk_send_message_try_check ( & ( msg_req->msg ), check );
 }
@@ -92,7 +92,7 @@ static void sctk_hetero_messages_recv ( const sctk_communicator_t communicator, 
 	                   sctk_message_copy );
 	sctk_add_adress_in_message ( & ( msg_req->msg ), buffer, size );
 	sctk_set_header_in_message ( & ( msg_req->msg ), tag, communicator,  src, myself,
-	                             & ( msg_req->request ), size, message_class, MPC_DATATYPE_IGNORE );
+	                             & ( msg_req->request ), size, message_class, SCTK_DATATYPE_IGNORE );
 	msg_req->msg.tail.need_check_in_wait = /* copy_in_recv */1;
 	sctk_recv_message_try_check ( & ( msg_req->msg ), ptp_internal, check );
 }
@@ -144,7 +144,6 @@ static
 void sctk_barrier_hetero_messages_inter ( const sctk_communicator_t communicator,
                                           sctk_internal_collectives_struct_t *tmp )
 {
-	sctk_thread_data_t *thread_data;
 	int myself;
 	int my_rank;
 	int *process_array;
@@ -163,8 +162,7 @@ void sctk_barrier_hetero_messages_inter ( const sctk_communicator_t communicator
 	sctk_nodebug ( "Start inter" );
 	sctk_hetero_messages_init_items ( &table );
 
-	thread_data = sctk_thread_data_get ();
-	my_rank = sctk_get_rank ( communicator, thread_data->task_id );
+	my_rank = sctk_get_rank ( communicator, sctk_get_task_rank() );
 	process_array = sctk_get_process_array ( communicator ),
 	myself_ptr = ( ( int * ) bsearch ( ( void * ) &sctk_process_rank,
 	                                   process_array,
@@ -319,7 +317,6 @@ void sctk_broadcast_hetero_messages_inter ( void *buffer, const size_t size,
 		return;
 
 	{
-		sctk_thread_data_t *thread_data;
 		int myself;
 		int *myself_ptr = NULL;
 		int my_rank;
@@ -347,8 +344,7 @@ void sctk_broadcast_hetero_messages_inter ( void *buffer, const size_t size,
 			BROADCAST_ARRITY = broadcast_arity_max;
 		}
 
-		thread_data = sctk_thread_data_get ();
-		my_rank = sctk_get_rank ( communicator, thread_data->task_id );
+		my_rank = sctk_get_rank ( communicator, sctk_get_task_rank() );
 		process_array = sctk_get_process_array ( communicator );
 		myself_ptr = ( ( int * ) bsearch ( ( void * ) &sctk_process_rank,
 		                                   process_array,
@@ -436,7 +432,6 @@ void sctk_broadcast_hetero_messages ( void *buffer, const size_t size,
 	int task_id_in_node;
 	unsigned int generation;
 	sctk_broadcast_hetero_messages_t *bcast;
-	sctk_thread_data_t *thread_data;
 	int myself;
 	int is_root_on_node = 0;
 	int root_process;
@@ -447,8 +442,7 @@ void sctk_broadcast_hetero_messages ( void *buffer, const size_t size,
 		return;
 	}
 
-	thread_data = sctk_thread_data_get ();
-	myself = sctk_get_rank ( communicator, thread_data->task_id );
+	myself = sctk_get_rank ( communicator, sctk_get_task_rank() );
 	nb_tasks_in_node = sctk_get_nb_task_local ( communicator );
 	bcast = &tmp->broadcast.broadcast_hetero_messages;
 	generation = bcast->generation;
@@ -531,7 +525,6 @@ static void sctk_allreduce_hetero_messages_intern_inter ( const void *buffer_in,
 	int ALLREDUCE_ARRITY = 2;
 	struct sctk_internal_ptp_s *ptp_internal;
 	int total_max;
-	sctk_thread_data_t *thread_data;
 	sctk_hetero_messages_table_t table;
 	void *buffer_tmp;
 	void **buffer_table;
@@ -580,8 +573,7 @@ static void sctk_allreduce_hetero_messages_intern_inter ( const void *buffer_in,
 		}
 	}
 
-	thread_data = sctk_thread_data_get ();
-	my_rank = sctk_get_rank ( communicator, thread_data->task_id );
+	my_rank = sctk_get_rank ( communicator, sctk_get_task_rank() );
 	process_array = sctk_get_process_array ( communicator ),
 	myself_ptr = ( ( int * ) bsearch ( ( void * ) &sctk_process_rank,
 	                                   process_array,

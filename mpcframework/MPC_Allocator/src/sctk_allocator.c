@@ -1487,9 +1487,10 @@ SCTK_STATIC void sctk_alloc_chain_free_macro_bloc(struct sctk_alloc_chain * chai
 	struct sctk_alloc_macro_bloc * macro_bloc;
 
 	//some checks
-	/** @todo Maybe request the bloc size to memory source insteed of directly use the constant **/
-	assert (sctk_alloc_get_size(vchunk) % SCTK_MACRO_BLOC_SIZE == SCTK_MACRO_BLOC_SIZE - sizeof(struct sctk_alloc_macro_bloc) - sizeof(struct sctk_alloc_chunk_header_large));
-
+	/** Probable Memory Coruption, Give Up on Freeing the block **/
+	if (sctk_alloc_get_size(vchunk) % SCTK_MACRO_BLOC_SIZE != SCTK_MACRO_BLOC_SIZE - sizeof(struct sctk_alloc_macro_bloc) - sizeof(struct sctk_alloc_chunk_header_large))
+		return;
+		
 	//get the macro bloc
 	/** @todo wrap the address calculation due to inheritance **/
 	macro_bloc = (struct sctk_alloc_macro_bloc *)(sctk_alloc_get_addr(vchunk) - sizeof(struct sctk_alloc_macro_bloc));

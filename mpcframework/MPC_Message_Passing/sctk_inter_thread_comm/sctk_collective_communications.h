@@ -23,14 +23,11 @@
 #define __SCTK_COLLECTIVE_COMMUNICATIONS_H_
 
 #include <sctk_inter_thread_comm.h>
-//#include <sctk_communicator.h>
 #include <sctk.h>
-#include <mpcmp.h>
 #include <sctk_spinlock.h>
 #include <sctk_thread.h>
+#include <sctk_types.h>
 
-typedef int sctk_datatype_t;
-#define sctk_null_data_type ((sctk_datatype_t)(-1))
 struct sctk_internal_collectives_struct_s;
 
 /************************************************************************/
@@ -85,7 +82,7 @@ typedef union
 void sctk_all_reduce ( const void *buffer_in, void *buffer_out,
                        const size_t elem_size,
                        const size_t elem_number,
-                       MPC_Op_f func,
+                       sctk_Op_f func,
                        const sctk_communicator_t communicator,
                        const sctk_datatype_t data_type );
 
@@ -108,7 +105,7 @@ typedef struct sctk_internal_collectives_struct_s
 	void ( *allreduce_func ) ( const void *, void *,
 	                           const size_t ,
 	                           const size_t ,
-	                           MPC_Op_f func,
+	                           sctk_Op_f func,
 	                           const sctk_communicator_t ,
 	                           const sctk_datatype_t ,
 	                           struct sctk_internal_collectives_struct_s * );

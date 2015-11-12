@@ -52,12 +52,16 @@ sctk_terminaison_barrier ( const int id )
 	if ( done == local )
 	{
 		done = 0;
-
+		#ifndef SCTK_LIB_MODE
+		/* In libmode we do not want the pmi barrier
+		 * to be called after MPI_Finalize (therefore we
+		 * simply ignore it )*/
 		if ( sctk_process_number > 1 )
 		{
 			sctk_nodebug ( "sctk_pmi_barrier" );
 			sctk_pmi_barrier();
 		}
+		#endif
 
 		sctk_nodebug ( "WAKE ALL in sctk_terminaison_barrier" );
 		sctk_thread_cond_broadcast ( &cond );
@@ -79,8 +83,6 @@ sctk_terminaison_barrier ( const int id )
 void sctk_barrier ( const sctk_communicator_t communicator )
 {
 	sctk_internal_collectives_struct_t *tmp;
-
-	sctk_nodebug ( "sctk_barrier begin" ); //AMAHEO
 
 	if ( communicator != SCTK_COMM_SELF )
 	{
@@ -110,7 +112,7 @@ void sctk_broadcast ( void *buffer, const size_t size,
 void sctk_all_reduce ( const void *buffer_in, void *buffer_out,
                        const size_t elem_size,
                        const size_t elem_number,
-                       MPC_Op_f func,
+                       sctk_Op_f func,
                        const sctk_communicator_t communicator,
                        const sctk_datatype_t data_type )
 {

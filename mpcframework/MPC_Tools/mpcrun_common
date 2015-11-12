@@ -618,7 +618,7 @@ fi
 export MPC_LAUNCH_COMMAND="${LAUNCH_COMMAND}"
 
 trap "kill -s 2 0" INT
-#echo "LAUNCH_COMMAND $LAUNCH_COMMAND"
+echo "LAUNCH_COMMAND $LAUNCH_COMMAND"
 $show $LAUNCH_COMMAND
 rc=$?
 #echo $rc

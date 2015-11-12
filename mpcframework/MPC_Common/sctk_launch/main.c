@@ -25,6 +25,9 @@
 
 #if defined(MPC_Message_Passing) || defined(MPC_Threads)
 
+/* We do not need a main
+ * when running in lib mode */
+#ifndef SCTK_LIB_MODE
 int
 main (int argc, char **argv)
 {
@@ -32,6 +35,8 @@ main (int argc, char **argv)
   tmp = main_c (argc, argv);
   return tmp;
 }
+#endif /* SCTK_LIB_MODE */
+
 #else
 	#ifdef HAVE_ENVIRON_VAR
 	  int mpc_user_main (int argc , char **argv, char**envp)

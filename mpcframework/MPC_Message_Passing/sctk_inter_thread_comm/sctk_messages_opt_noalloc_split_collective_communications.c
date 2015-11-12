@@ -20,7 +20,6 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#include <mpcmp.h>
 #include <sctk_collective_communications.h>
 #include <sctk_inter_thread_comm.h>
 #include <sctk_communicator.h>
@@ -76,10 +75,12 @@ typedef struct
 static void sctk_opt_noalloc_split_messages_send ( const sctk_communicator_t communicator, int myself, int dest, int tag, void *buffer, size_t size,
                                                    sctk_message_class_t message_class, sctk_opt_noalloc_split_messages_t *msg_req, int check, int copy_in_send )
 {
+	//sctk_error("BAR %d SEND TO %d", myself, dest );
+	
 	sctk_init_header ( & ( msg_req->msg ), SCTK_MESSAGE_CONTIGUOUS, sctk_free_opt_noalloc_split_messages, sctk_message_copy );
 	sctk_add_adress_in_message ( & ( msg_req->msg ), buffer, size );
 	msg_req->request.request_type = REQUEST_SEND_COLL;
-	sctk_set_header_in_message ( & ( msg_req->msg ), tag, communicator, myself, dest, & ( msg_req->request ), size, message_class, MPC_DATATYPE_IGNORE );
+	sctk_set_header_in_message ( & ( msg_req->msg ), tag, communicator, myself, dest, & ( msg_req->request ), size, message_class, SCTK_DATATYPE_IGNORE );
 
 	sctk_send_message ( & ( msg_req->msg ) );
 #if 0
@@ -92,10 +93,12 @@ static void sctk_opt_noalloc_split_messages_recv ( const sctk_communicator_t com
                                                    sctk_message_class_t message_class, sctk_opt_noalloc_split_messages_t *msg_req, struct sctk_internal_ptp_s *ptp_internal, int check,
                                                    int copy_in_recv )
 {
+	//sctk_error("BAR %d RECV FROM %d", myself, src );
+	
 	sctk_init_header ( & ( msg_req->msg ), SCTK_MESSAGE_CONTIGUOUS, sctk_free_opt_noalloc_split_messages, sctk_message_copy );
 	sctk_add_adress_in_message ( & ( msg_req->msg ), buffer, size );
 	msg_req->request.request_type = REQUEST_RECV_COLL;
-	sctk_set_header_in_message ( & ( msg_req->msg ), tag, communicator,  src, myself, & ( msg_req->request ), size, message_class, MPC_DATATYPE_IGNORE );
+	sctk_set_header_in_message ( & ( msg_req->msg ), tag, communicator,  src, myself, & ( msg_req->request ), size, message_class, SCTK_DATATYPE_IGNORE );
 
 	sctk_recv_message ( & ( msg_req->msg ), ptp_internal, 1 );
 #if 0
@@ -147,7 +150,6 @@ static void sctk_barrier_opt_noalloc_split_messages ( const sctk_communicator_t 
 {
 	if ( !sctk_is_inter_comm ( communicator ) )
 	{
-		sctk_thread_data_t *thread_data;
 		int myself;
 		int total;
 		int total_max;
@@ -158,10 +160,9 @@ static void sctk_barrier_opt_noalloc_split_messages ( const sctk_communicator_t 
 
 		sctk_opt_noalloc_split_messages_init_items ( &table );
 
-		thread_data = sctk_thread_data_get ();
 		total = sctk_get_nb_task_total ( communicator );
-		myself = sctk_get_rank ( communicator, thread_data->task_id );
-		ptp_internal = sctk_get_internal_ptp ( thread_data->task_id );
+		myself = sctk_get_rank ( communicator, sctk_get_task_rank() );
+		ptp_internal = sctk_get_internal_ptp ( sctk_get_task_rank() );
 		sctk_nodebug ( "enter barrier total = %d, myself = %d", total, myself );
 		total_max = log ( total ) / log ( barrier_arity );
 		total_max = pow ( barrier_arity, total_max );
@@ -241,21 +242,19 @@ static void sctk_barrier_opt_noalloc_split_messages ( const sctk_communicator_t 
 		int total;
 		int myself;
 		char c = 'c';
-		sctk_thread_data_t *thread_data;
 		sctk_opt_noalloc_split_messages_table_t table;
 		struct sctk_internal_ptp_s *ptp_internal;
 
 		sctk_opt_noalloc_split_messages_init_items ( &table );
 
-		thread_data = sctk_thread_data_get ();
 		total = sctk_get_nb_task_total ( communicator );
-		myself = sctk_get_rank ( communicator, thread_data->task_id );
-		ptp_internal = sctk_get_internal_ptp ( thread_data->task_id );
+		myself = sctk_get_rank ( communicator, sctk_get_task_rank() );
+		ptp_internal = sctk_get_internal_ptp ( sctk_get_task_rank() );
 
 		rsize = sctk_get_nb_task_remote ( communicator );
 		size = sctk_get_nb_task_total ( communicator );
 
-		for ( i = 0 ; i < size ; i++ )
+		for ( i = 0 ; i < rsize ; i++ )
 		{
 			sctk_opt_noalloc_split_messages_send (	communicator,
 			                                        myself,
@@ -263,7 +262,7 @@ static void sctk_barrier_opt_noalloc_split_messages ( const sctk_communicator_t 
 			                                        65536,
 			                                        &c,
 			                                        1,
-			                                        SCTK_BROADCAST_MESSAGE,
+			                                        SCTK_BARRIER_MESSAGE,
 			                                        sctk_opt_noalloc_split_messages_get_item ( &table ),
 			                                        ( size < broadcast_check_threshold ),
 			                                        ( size < broadcast_check_threshold ) );
@@ -277,12 +276,14 @@ static void sctk_barrier_opt_noalloc_split_messages ( const sctk_communicator_t 
 			                                        65536,
 			                                        &c,
 			                                        1,
-			                                        SCTK_BROADCAST_MESSAGE,
+			                                        SCTK_BARRIER_MESSAGE,
 			                                        sctk_opt_noalloc_split_messages_get_item ( &table ),
 			                                        ptp_internal,
 			                                        1,
 			                                        1 );
 		}
+		
+		
 
 		sctk_opt_noalloc_split_messages_wait ( &table );
 	}
@@ -308,7 +309,6 @@ void sctk_broadcast_opt_noalloc_split_messages ( void *buffer, const size_t size
 	}
 	else
 	{
-		sctk_thread_data_t *thread_data;
 		int myself;
 		int related_myself;
 		int total;
@@ -332,11 +332,10 @@ void sctk_broadcast_opt_noalloc_split_messages ( void *buffer, const size_t size
 			BROADCAST_ARRITY = broadcast_arity_max;
 		}
 
-		thread_data = sctk_thread_data_get ();
 		total = sctk_get_nb_task_total ( communicator );
-		myself = sctk_get_rank ( communicator, thread_data->task_id );
+		myself = sctk_get_rank ( communicator, sctk_get_task_rank() );
 		related_myself = ( myself + total - root ) % total;
-		ptp_internal = sctk_get_internal_ptp ( thread_data->task_id );
+		ptp_internal = sctk_get_internal_ptp ( sctk_get_task_rank() );
 		total_max = log ( total ) / log ( BROADCAST_ARRITY );
 		total_max = pow ( BROADCAST_ARRITY, total_max );
 
@@ -420,7 +419,6 @@ static void sctk_allreduce_opt_noalloc_split_messages_intern ( const void *buffe
                                                                const sctk_datatype_t data_type,
                                                                struct sctk_internal_collectives_struct_s *tmp )
 {
-	sctk_thread_data_t *thread_data;
 	int myself;
 	int total;
 	size_t size;
@@ -498,17 +496,16 @@ static void sctk_allreduce_opt_noalloc_split_messages_intern ( const void *buffe
 		}
 	}
 
-	if ( buffer_in != MPC_IN_PLACE )
+	if ( buffer_in != SCTK_IN_PLACE )
 	{
 		memcpy ( buffer_out, buffer_in, size );
 	}
 
 	assume ( size > 0 );
 
-	thread_data = sctk_thread_data_get ();
 	total = sctk_get_nb_task_total ( communicator );
-	myself = sctk_get_rank ( communicator, thread_data->task_id );
-	ptp_internal = sctk_get_internal_ptp ( thread_data->task_id );
+	myself = sctk_get_rank ( communicator, sctk_get_task_rank() );
+	ptp_internal = sctk_get_internal_ptp ( sctk_get_task_rank() );
 
 	total_max = log ( total ) / log ( ALLREDUCE_ARRITY );
 	total_max = pow ( ALLREDUCE_ARRITY, total_max );

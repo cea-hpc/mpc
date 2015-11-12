@@ -64,6 +64,7 @@ int sctk_rail_gate_maxsize( sctk_rail_info_t * rail, sctk_thread_ptp_message_t *
 	return ( message_size < conf->value );
 }
 
+
 int sctk_rail_gate_msgtype( sctk_rail_info_t * rail, sctk_thread_ptp_message_t * message , void * gate_config )
 {
 	struct sctk_runtime_config_struct_gate_message_type * conf = (struct sctk_runtime_config_struct_gate_message_type *)gate_config;
@@ -119,6 +120,11 @@ static inline void sctk_gate_get_context( struct sctk_runtime_config_struct_net_
 		case SCTK_RTCFG_net_gate_user:
 			ctx->func = (int (*)( sctk_rail_info_t *, sctk_thread_ptp_message_t *, void *))gate->value.user.gatefunc.value;
 			ctx->params = (void *)&gate->value.user;		
+		break;
+		
+		case SCTK_RTCFG_net_gate_msgtype:
+			ctx->func = (int (*)( sctk_rail_info_t *, sctk_thread_ptp_message_t *, void *))gate->value.msgtype.gatefunc.value;
+			ctx->params = (void *)&gate->value.msgtype;		
 		break;
 		
 		case SCTK_RTCFG_net_gate_NONE:

@@ -28,6 +28,8 @@
 #include "sctk_thread.h"
 #include "sctk_topology.h"
 #include "sctk.h"
+#include "sctk_pmi.h" 
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -35,10 +37,16 @@ extern "C"
 
 static inline int sctk_get_task_rank (void)
 {
+#ifdef SCTK_LIB_MODE	
+	int my_rank = 0;
+	sctk_pmi_get_process_rank ( &my_rank );
+	return my_rank;
+#else
 	if( !sctk_thread_data_get() )
 		return -1;
 
 	return (int) (sctk_thread_data_get()->task_id);
+#endif
 }
 
 int sctk_get_total_tasks_number();
@@ -50,6 +58,9 @@ static inline int sctk_get_task_number (void)
 
 static inline int sctk_get_local_task_rank (void)
 {
+#ifdef SCTK_LIB_MODE
+	return 0;
+#endif
 	if( !sctk_thread_data_get() )
 		return -1;
 		
@@ -58,6 +69,9 @@ static inline int sctk_get_local_task_rank (void)
 
 static inline int sctk_get_local_task_number (void)
 {
+#ifdef SCTK_LIB_MODE
+	return 1;
+#endif
 	return sctk_thread_get_current_local_tasks_nb();
 }
 

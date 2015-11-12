@@ -26,20 +26,15 @@
 #include <sctk_debug.h>
 #include <sctk_communicator.h>
 #include <sctk_collective_communications.h>
-#include <mpcmp.h>
 #include <sctk_reorder.h>
 #include <sctk_ib.h>
 #include <opa_primitives.h>
-
+#include <sctk_types.h>
+#include <sctk_portals.h>
 #ifdef __cplusplus
 extern "C"
 {
 #endif
-
-
-/** Not using datatypes */
-#define MPC_DATATYPE_IGNORE ((MPC_Datatype)0)
-
 
 /* Defines if we are in a full MPI mode */
 //#define SCTK_ENABLE_SPINNING
@@ -58,8 +53,6 @@ typedef enum
     REQUEST_GENERALIZED
 } sctk_request_type_t;
 
-typedef MPC_Request sctk_request_t;
-
 void sctk_wait_message ( sctk_request_t *request );
 int sctk_cancel_message ( sctk_request_t *msg );
 
@@ -74,6 +67,10 @@ typedef enum
 	SCTK_CANCELLED_RECV,
 	
 	SCTK_P2P_MESSAGE,
+	SCTK_P2P_RDV_MESSAGE,
+	SCTK_RDMA_MESSAGE,
+	SCTK_RDMA_WINDOW_MESSAGES, 		/**< These messages are used to exchange window informations */
+	SCTK_CONTROL_MESSAGE_FENCE,     /**< This message is sent to create a fence on control messages */
 	
 	SCTK_BARRIER_MESSAGE,
 	SCTK_BROADCAST_MESSAGE,
@@ -83,12 +80,36 @@ typedef enum
 	SCTK_BROADCAST_HETERO_MESSAGE,
 	SCTK_BARRIER_HETERO_MESSAGE,
 	
+	SCTK_CONTROL_MESSAGE_INTERNAL, 		/**< This message is to be used inside a rail logic */
 	SCTK_CONTROL_MESSAGE_RAIL, 		/**< This message goes to a rail */
 	SCTK_CONTROL_MESSAGE_PROCESS,		/**< This message goes to a process (\ref sctk_control_message_process_level) */
 	SCTK_CONTROL_MESSAGE_USER,		/**< This message goes to the application using an optionnal handler */
 	SCTK_CONTROL_MESSAGE_COUNT		/**< Just in case this value allows to track the number of control message types */
 }sctk_message_class_t;
 
+static const char * const sctk_message_class_name[ SCTK_CONTROL_MESSAGE_COUNT ] = 
+{   	"SCTK_CANCELLED_SEND",
+	"SCTK_CANCELLED_RECV",
+	
+	"SCTK_P2P_MESSAGE",
+	"SCTK_P2P_RDV_MESSAGE",
+	"SCTK_RDMA_MESSAGE",
+	"SCTK_RDMA_WINDOW_MESSAGES", 	
+	"SCTK_CONTROL_MESSAGE_FENCE",   
+	
+	"SCTK_BARRIER_MESSAGE",
+	"SCTK_BROADCAST_MESSAGE",
+	"SCTK_ALLREDUCE_MESSAGE",
+	
+	"SCTK_ALLREDUCE_HETERO_MESSAGE",
+	"SCTK_BROADCAST_HETERO_MESSAGE",
+	"SCTK_BARRIER_HETERO_MESSAGE",
+	
+	"SCTK_CONTROL_MESSAGE_INTERNAL",
+	"SCTK_CONTROL_MESSAGE_RAIL", 		
+	"SCTK_CONTROL_MESSAGE_PROCESS",		
+	"SCTK_CONTROL_MESSAGE_USER"
+ };
 
 static inline int sctk_message_class_is_process_specific( sctk_message_class_t type )
 {
@@ -97,13 +118,21 @@ static inline int sctk_message_class_is_process_specific( sctk_message_class_t t
 		case SCTK_CANCELLED_SEND:
 		case SCTK_CANCELLED_RECV:
 		case SCTK_P2P_MESSAGE:
+		case SCTK_P2P_RDV_MESSAGE:
+		case SCTK_RDMA_MESSAGE:
 		case SCTK_BARRIER_MESSAGE:
 		case SCTK_BROADCAST_MESSAGE:
 		case SCTK_ALLREDUCE_MESSAGE:
+		case SCTK_CONTROL_MESSAGE_FENCE:
+		case SCTK_RDMA_WINDOW_MESSAGES: /* Note that the RDMA win message 
+					   * is not process specific to force
+					   * on-demand connections between the
+					   * RDMA peers prior to emitting RDMA */
+					    
 			return 0;
 		
 		
-		
+		case SCTK_CONTROL_MESSAGE_INTERNAL:
 		case SCTK_ALLREDUCE_HETERO_MESSAGE:
 		case SCTK_BROADCAST_HETERO_MESSAGE:
 		case SCTK_BARRIER_HETERO_MESSAGE:
@@ -126,12 +155,16 @@ static inline int sctk_message_class_is_control_message( sctk_message_class_t ty
 		case SCTK_CANCELLED_SEND:
 		case SCTK_CANCELLED_RECV:
 		case SCTK_P2P_MESSAGE:
+		case SCTK_RDMA_MESSAGE:
 		case SCTK_BARRIER_MESSAGE:
 		case SCTK_BROADCAST_MESSAGE:
 		case SCTK_ALLREDUCE_MESSAGE:
 		case SCTK_ALLREDUCE_HETERO_MESSAGE:
 		case SCTK_BROADCAST_HETERO_MESSAGE:
 		case SCTK_BARRIER_HETERO_MESSAGE:
+		case SCTK_RDMA_WINDOW_MESSAGES:
+		case SCTK_CONTROL_MESSAGE_FENCE:
+		case SCTK_CONTROL_MESSAGE_INTERNAL:
 			return 0;
 		
 		case SCTK_CONTROL_MESSAGE_RAIL:
@@ -145,6 +178,19 @@ static inline int sctk_message_class_is_control_message( sctk_message_class_t ty
 	
 	return 0;
 }
+
+/************************************************************************/
+/* Low Level Messafe Interface                                          */
+/************************************************************************/
+
+void sctk_init_request (sctk_request_t * request, sctk_communicator_t comm, int request_type);
+void sctk_message_isend_class_src( int src , int dest, void * data, size_t size, int tag, sctk_communicator_t comm , sctk_message_class_t class, sctk_request_t *req );
+void sctk_message_irecv_class_dest( int src, int dest, void * buffer, size_t size, int tag, sctk_communicator_t comm , sctk_message_class_t class, sctk_request_t *req );
+void sctk_message_isend_class( int dest, void * data, size_t size, int tag, sctk_communicator_t comm , sctk_message_class_t class, sctk_request_t *req );
+void sctk_message_irecv_class( int src, void * data, size_t size, int tag, sctk_communicator_t comm , sctk_message_class_t class, sctk_request_t *req );
+void sctk_message_isend( int dest, void * data, size_t size, int tag, sctk_communicator_t comm , sctk_request_t *req );
+void sctk_message_irecv( int src, void * data, size_t size, int tag, sctk_communicator_t comm , sctk_request_t *req );
+void sctk_sendrecv( void * sendbuf, size_t size, int dest, int tag, void * recvbuf, int src, int comm );
 
 /************************************************************************/
 /* Control Messages Header                                              */
@@ -177,13 +223,13 @@ typedef struct sctk_thread_message_header_s
 	int destination_task; /**< Destination Task ID */
 	/* Context */
 	int message_tag; /**< Message TAG */
-	struct sctk_control_message_header message_type;
 	sctk_communicator_t communicator; /**< Message communicator */
+	struct sctk_control_message_header message_type; /**< Control Message Infos */
 	/* Ordering */
 	int message_number; /**< Message order (for reorder) */
 	char use_message_numbering; /**< Should this message be reordered */
 	/* Content */
-	MPC_Datatype datatype; /**< Caried data-type (for matching check) */
+	sctk_datatype_t datatype; /**< Caried data-type (for matching check) */
 	size_t msg_size; /**< Message size */
 } sctk_thread_message_header_t;
 
@@ -224,7 +270,7 @@ void sctk_probe_any_source_tag ( int destination, const sctk_communicator_t comm
 #define SCTK_MSG_SPECIFIC_CLASS_SUBTYPE( msg ) msg->body.header.message_type.subtype
 #define SCTK_MSG_SPECIFIC_CLASS_SET_SUBTYPE( msg , sub_type ) do{ msg->body.header.message_type.subtype = sub_type; }while(0)
 
-#define SCTK_MSG_SPECIFIC_CLASS_PARAM( msg ) msg->body.header.message_type.subtype
+#define SCTK_MSG_SPECIFIC_CLASS_PARAM( msg ) msg->body.header.message_type.param
 #define SCTK_MSG_SPECIFIC_CLASS_SET_PARAM( msg , param ) do{ msg->body.header.message_type.param = param; }while(0)
 
 #define SCTK_MSG_SPECIFIC_CLASS_RAILID( msg ) msg->body.header.message_type.rail_id
@@ -406,9 +452,10 @@ typedef struct
 	void *rdma_src;
 	void *route_table;
 
+#ifdef MPC_USE_PORTALS
 	/* Portals infos */
-	void *portals_message_info_t;
-	void *portals_info_t;
+	struct sctk_portals_msg_header_s portals;
+#endif
 
 	/* XXX:Specific to IB */
 	struct sctk_ib_msg_header_s ib;
@@ -454,7 +501,7 @@ void sctk_set_header_in_message ( sctk_thread_ptp_message_t *msg, const int mess
                                   sctk_request_t *request,
                                   const size_t count,
                                   sctk_message_class_t message_class,
-                                  MPC_Datatype datatype );
+                                  sctk_datatype_t datatype );
 void sctk_send_message ( sctk_thread_ptp_message_t *msg );
 void sctk_send_message_try_check ( sctk_thread_ptp_message_t *msg, int perform_check );
 void sctk_recv_message ( sctk_thread_ptp_message_t *msg, struct sctk_internal_ptp_s *tmp, int need_check );
@@ -462,6 +509,20 @@ void sctk_recv_message_try_check ( sctk_thread_ptp_message_t *msg, struct sctk_i
 void sctk_message_completion_and_free ( sctk_thread_ptp_message_t *send, sctk_thread_ptp_message_t *recv );
 void sctk_complete_and_free_message ( sctk_thread_ptp_message_t *msg );
 void sctk_rebuild_header ( sctk_thread_ptp_message_t *msg );
+
+/** Buffered Messages **/
+#define MAX_MPC_BUFFERED_SIZE (128 * sizeof(long))
+
+typedef struct mpc_buffered_msg_s
+{
+	sctk_thread_ptp_message_t header;
+	/* Completion flag to use if the user do not provide a valid request */
+	int completion_flag;
+	/* MPC_Request if the message is buffered  */
+	sctk_request_t request;
+	long buf[(MAX_MPC_BUFFERED_SIZE / sizeof (long)) + 1];
+} mpc_buffered_msg_t;
+
 
 /************************************************************************/
 /* Message Progess                                                      */

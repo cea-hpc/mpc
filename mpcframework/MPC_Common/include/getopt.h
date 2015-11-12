@@ -30,11 +30,7 @@
 
 #define _GETOPT_H
 #include <unistd.h>
-#include <getopt.h>
 
-/* Getopt variables */
-extern char * sctk_optarg;
-extern int sctk_optind, sctk_opterr, sctk_optopt, sctk_optreset, sctk_optpos;
 
 /* Define the option struct */
 struct option
@@ -46,14 +42,16 @@ struct option
 };
 
 /* Redefine the getopt modifiers */
-#define no_argument        0
-#define required_argument  1
-#define optional_argument  2
+#define sctk_no_argument        0
+#define sctk_required_argument  1
+#define sctk_optional_argument  2
 
 /* SCTK getopt implementation */
 int sctk_getopt(int, char * const [], const char *);
 int sctk_getopt_long(int, char *const *, const char *, const struct option *, int *);
 int sctk_getopt_long_only(int, char *const *, const char *, const struct option *, int *);
+
+#ifdef MPC_PRIVATIZED
 
 /* Rewrite getopt variables */
 #define optarg sctk_optarg
@@ -63,11 +61,35 @@ int sctk_getopt_long_only(int, char *const *, const char *, const struct option 
 #define optreset sctk_optreset
 #define optpos sctk_optpos
 
+/* Rewrite getopt args */
+#define no_argument sctk_no_argument
+#define required_argument sctk_required_argument
+#define optional_argument sctk_optional_argument
+
 /* Rewrite getopt functions */
 #define getopt_long sctk_getopt_long
 #define getopt_long_only sctk_getopt_long_only
 #define getopt sctk_getopt
 #define __getopt_msg sctk___getopt_msg
+
+#else
+/* Fallback to the libc implementation */
+int getopt(int, char * const [], const char *);
+int getopt_long(int, char *const *, const char *, const struct option *, int *);
+int getopt_long_only(int, char *const *, const char *, const struct option *, int *);
+
+#endif
+
+
+/* Getopt variables (can be rewriten to point to privatized sctk_*) */
+#ifdef MPC_GETOPT_COMPILATION
+extern __thread char * optarg;
+extern __thread int optind, opterr, optopt, optreset, optpos;
+#else
+extern  char * optarg;
+extern  int optind, opterr, optopt, optreset, optpos;
+#endif
+
 
 /* End of getopt support */
 #endif

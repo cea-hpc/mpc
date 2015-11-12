@@ -44,9 +44,12 @@
 #include "sctk_asm.h"
 #include "sctk_atomics.h"
 #ifdef MPC_Message_Passing
-#include "sctk_inter_thread_comm.h"
-#include "sctk_low_level_comm.h"
-#endif
+	#include "sctk_inter_thread_comm.h"
+	#include "sctk_low_level_comm.h"
+	#ifdef MPC_USE_INFINIBAND
+		#include <sctk_ib_cp.h>
+	#endif /* MPC_USE_INFINIBAND */
+#endif /* MPC_Message_Passing */
 #include "sctk_topology.h"
 #include "sctk_asm.h"
 #include "sctk_tls.h"
@@ -65,7 +68,7 @@
 #define SCTK_LOCAL_VERSION_MINOR 1
 
 #ifdef HAVE_ENVIRON_VAR
-  extern char ** environ;
+extern char ** environ;
 #endif
 
 #ifdef MPC_AIO_ENABLED
@@ -95,79 +98,79 @@ double __sctk_profiling__end__sctk_init_MPC;
 char * sctk_profiling_outputs;
 
 
-void
+	void
 format_output (char *name, char *def)
 {
-  char n[MAX_NAME_FORMAT];
-  char *tmp;
-  char *tmp_tab;
-  char *old_tmp;
-  int i;
+	char n[MAX_NAME_FORMAT];
+	char *tmp;
+	char *tmp_tab;
+	char *old_tmp;
+	int i;
 
-  for (i = 0; i < MAX_NAME_FORMAT; i++)
-  {
-    n[i] = ' ';
-  }
-  n[MAX_NAME_FORMAT - 1] = '\0';
+	for (i = 0; i < MAX_NAME_FORMAT; i++)
+	{
+		n[i] = ' ';
+	}
+	n[MAX_NAME_FORMAT - 1] = '\0';
 
-  sprintf (n, "%s", name);
-  n[strlen (name)] = ' ';
+	sprintf (n, "%s", name);
+	n[strlen (name)] = ' ';
 
-  fprintf (stderr, "  %s", n);
+	fprintf (stderr, "  %s", n);
 
-  for (i = 0; i < MAX_NAME_FORMAT; i++)
-  {
-    n[i] = ' ';
-  }
-  n[MAX_NAME_FORMAT - 1] = '\0';
+	for (i = 0; i < MAX_NAME_FORMAT; i++)
+	{
+		n[i] = ' ';
+	}
+	n[MAX_NAME_FORMAT - 1] = '\0';
 
-  tmp_tab = (char *) sctk_malloc ((1 + strlen (def)) * sizeof (char));
+	tmp_tab = (char *) sctk_malloc ((1 + strlen (def)) * sizeof (char));
 
-  memcpy (tmp_tab, def, (1 + strlen (def)) * sizeof (char));
+	memcpy (tmp_tab, def, (1 + strlen (def)) * sizeof (char));
 
-  tmp = tmp_tab;
+	tmp = tmp_tab;
 
-  while (strlen (tmp) > (MAX_TERM_LENGTH - MAX_NAME_FORMAT))
-  {
-    old_tmp = tmp;
-    tmp = &(tmp[MAX_TERM_LENGTH - MAX_NAME_FORMAT]);
-    while ((tmp > old_tmp) && (tmp[0] != ' '))
-    {
-      tmp--;
-    }
-    assume (tmp != old_tmp);
-    tmp[0] = '\0';
-    fprintf (stderr, "%s\n  %s", old_tmp, n);
-    tmp++;
-  }
-  fprintf (stderr, "%s", tmp);
-  fprintf (stderr, "\n");
+	while (strlen (tmp) > (MAX_TERM_LENGTH - MAX_NAME_FORMAT))
+	{
+		old_tmp = tmp;
+		tmp = &(tmp[MAX_TERM_LENGTH - MAX_NAME_FORMAT]);
+		while ((tmp > old_tmp) && (tmp[0] != ' '))
+		{
+			tmp--;
+		}
+		assume (tmp != old_tmp);
+		tmp[0] = '\0';
+		fprintf (stderr, "%s\n  %s", old_tmp, n);
+		tmp++;
+	}
+	fprintf (stderr, "%s", tmp);
+	fprintf (stderr, "\n");
 }
 
-  static inline int
+	static inline int
 __sctk_add_arg (char *arg, void (*action) (void),
-    char *word)
+		char *word)
 {
-  if (strncmp (word, arg, strlen (arg)) == 0)
-  {
-    action ();
-    return 0;
-  }
-  return 1;
+	if (strncmp (word, arg, strlen (arg)) == 0)
+	{
+		action ();
+		return 0;
+	}
+	return 1;
 }
 
 #define sctk_add_arg(arg,action) if(__sctk_add_arg(arg,action,word) == 0) return 0
 
-  static inline int
+	static inline int
 __sctk_add_arg_eq (char *arg, char *argeq,
-    void (*action) (char *), char *word)
+		void (*action) (char *), char *word)
 {
-  if (strncmp (word, arg, strlen (arg)) == 0)
-  {
-    action (&(word[1 + strlen (arg)]));
-    return 0;
-  }
-  return 1;
+	if (strncmp (word, arg, strlen (arg)) == 0)
+	{
+		action (&(word[1 + strlen (arg)]));
+		return 0;
+	}
+	return 1;
 }
 
 #define sctk_add_arg_eq(arg,action) if(__sctk_add_arg_eq(arg,arg"=n",action,word) == 0) return 0
@@ -188,6 +191,13 @@ static char* sctk_network_driver_name = NULL;
 /* { */
 /*   sctk_net_val = val; */
 /* } */
+
+
+static void sctk_use_pthread (void)
+{
+	sctk_multithreading_mode = "pthread";
+	sctk_thread_val = sctk_pthread_thread_init;
+}
 
 /* Note that we start with an agressive frequency
  * to speedup the polling during the init phase
@@ -215,630 +225,646 @@ void * polling_thread( void * dummy )
 }
 
 
-
-  static void
-sctk_perform_initialisation (void)
+static void sctk_perform_initialisation (void)
 {
-/*   mkdir (sctk_store_dir, 0777); */
-  if(sctk_process_nb_val && sctk_task_nb_val)
-  {
-    if(sctk_task_nb_val < sctk_process_nb_val)
+	/*   mkdir (sctk_store_dir, 0777); */
+	if(sctk_process_nb_val && sctk_task_nb_val)
 	{
-		sctk_error( "\n--process-nb=%d\n--nb-task=%d\n Nb tasks must be greater than nb processes\n Run your program with option --nb-task=(>=%d) or --nb-process=(<=%d)", sctk_process_nb_val, sctk_task_nb_val, sctk_process_nb_val, sctk_task_nb_val );
-		abort();
+		if(sctk_task_nb_val < sctk_process_nb_val)
+		{
+			sctk_error( "\n--process-nb=%d\n--nb-task=%d\n Nb tasks must be greater than nb processes\n Run your program with option --nb-task=(>=%d) or --nb-process=(<=%d)", sctk_process_nb_val, sctk_task_nb_val, sctk_process_nb_val, sctk_task_nb_val );
+			abort();
+		}
 	}
-  }
-  sctk_debug("nb process = %d, nb threads = %d", sctk_process_nb_val, sctk_task_nb_val);
-  sctk_only_once ();
+	sctk_debug("nb process = %d, nb threads = %d", sctk_process_nb_val, sctk_task_nb_val);
+	sctk_only_once ();
 
-  if (sctk_process_nb_val > 1)
-  {
-    sctk_process_number = sctk_process_nb_val;
-    sctk_nodebug ("%d processes", sctk_process_number);
-  }
+	if (sctk_process_nb_val > 1)
+	{
+		sctk_process_number = sctk_process_nb_val;
+		sctk_nodebug ("%d processes", sctk_process_number);
+	}
 
-  sctk_topology_init ();
-  /* Bind the main thread to the first VP */
-  const unsigned int core = 0;
-  int binding = 0;
-  binding = sctk_get_init_vp (core);
-  sctk_bind_to_cpu (binding);
-  sctk_nodebug("Init: thread bound to thread %d", binding);
-
-
-  #ifdef HAVE_HWLOC
-  sctk_alloc_posix_mmsrc_numa_init_phase_numa();
-  #endif
-  sctk_hls_build_repository();
-  sctk_thread_init ();
-
-
-  if (sctk_version_details_val)
-    sctk_set_version_details ();
-
-  if (sctk_thread_val != NULL)
-  {
-    sctk_thread_val ();
-  }
-  else
-  {
-    fprintf (stderr, "No multithreading mode specified!\n");
-    abort ();
-  }
-  sctk_init_alloc ();
-
-  if (sctk_processor_nb_val > 1)
-  {
-    if (sctk_process_nb_val > 1)
-    {
-      int cpu_detected;
-      cpu_detected = sctk_get_cpu_number ();
-      if (cpu_detected < sctk_processor_nb_val)
-      {
-        fprintf (stderr,
-            "Processor number doesn't match number detected %d <> %d!\n",
-            cpu_detected, sctk_processor_nb_val);
-      }
-    }
-  }
-
-#ifdef MPC_Message_Passing
-  sctk_collectives_init_hook =
-      *(void**)(&sctk_runtime_config_get()->modules.inter_thread_comm.collectives_init_hook.value);
-  if (sctk_process_nb_val > 1){
-    sctk_ptp_per_task_init(-1);
-    sctk_net_init_pmi();
-  }
+	sctk_topology_init ();
+	
+/* Do not bind in LIB_MODE */
+#ifndef SCTK_LIB_MODE
+	/* Bind the main thread to the first VP */
+	const unsigned int core = 0;
+	int binding = 0;
+	binding = sctk_get_init_vp (core);
+	sctk_bind_to_cpu (binding);
+	sctk_nodebug("Init: thread bound to thread %d", binding);
 #endif
 
-  if (sctk_task_nb_val)
-  {
+#ifdef HAVE_HWLOC
+	sctk_alloc_posix_mmsrc_numa_init_phase_numa();
+#endif
+	sctk_hls_build_repository();
+	sctk_thread_init ();
+
+	if (sctk_version_details_val)
+		sctk_set_version_details ();
+
+#ifdef SCTK_LIB_MODE
+	/* In lib mode we force the pthread MODE */
+	sctk_use_pthread();
+#endif
+
+	if (sctk_thread_val != NULL)
+	{
+		sctk_thread_val ();
+	}
+	else
+	{
+		fprintf (stderr, "No multithreading mode specified!\n");
+		abort ();
+	}
+
+	sctk_init_alloc ();
+
+	if (sctk_processor_nb_val > 1)
+	{
+		if (sctk_process_nb_val > 1)
+		{
+			int cpu_detected;
+			cpu_detected = sctk_get_cpu_number ();
+			if (cpu_detected < sctk_processor_nb_val)
+			{
+				fprintf (stderr,
+						"Processor number doesn't match number detected %d <> %d!\n",
+						cpu_detected, sctk_processor_nb_val);
+			}
+		}
+	}
+
 #ifdef MPC_Message_Passing
-    sctk_communicator_world_init (sctk_task_nb_val);
-    sctk_communicator_self_init (sctk_task_nb_val);
+	sctk_collectives_init_hook =
+		*(void**)(&sctk_runtime_config_get()->modules.inter_thread_comm.collectives_init_hook.value);
+	if (sctk_process_nb_val > 1){
+		sctk_ptp_per_task_init(-1);
+		sctk_net_init_pmi();
+	}
+#endif
+
+	if (sctk_task_nb_val)
+	{
+#ifdef MPC_Message_Passing
+		sctk_communicator_world_init (sctk_task_nb_val);
+		sctk_communicator_self_init (sctk_task_nb_val);
 #else
-    (void) (0);
+		(void) (0);
 #endif
-  }
-  else
-  {
-    fprintf (stderr, "No task number specified!\n");
-    sctk_abort ();
-  }
+	}
+	else
+	{
+		fprintf (stderr, "No task number specified!\n");
+		sctk_abort ();
+	}
 
 #ifdef MPC_Profiler
 	sctk_internal_profiler_init();
 #endif
 
+#ifdef SCTK_LIB_MODE	
+	/* In LIB mode we create the task context
+	 * at process level (not in an actual task ) */
+	int my_rank = 0;
+	sctk_pmi_get_process_rank ( &my_rank );
+	sctk_ptp_per_task_init (my_rank);
+#endif
 
 	/* Start auxiliary polling thread */
     pthread_t progress;
     pthread_create (&progress, NULL, polling_thread, NULL);
 
+
 #ifdef MPC_Message_Passing
-  if (sctk_process_nb_val > 1) {
-    sctk_net_init_driver(sctk_network_driver_name);
-  }
+	if (sctk_process_nb_val > 1) {
+		sctk_net_init_driver(sctk_network_driver_name);
+	}
 #endif
 
+#ifdef SCTK_LIB_MODE
+	#ifdef MPC_USE_INFINIBAND
+		sctk_network_initialize_task_collaborative_ib (my_rank, 0);
+	#endif
+#endif
 
-  sctk_atomics_cpu_freq_init();
-  if (sctk_process_rank == 0)
-  {
-    char *mpc_lang = "C/C++";
-    if (sctk_is_in_fortran == 1)
-    {
-      mpc_lang = "Fortran";
-    }
+	sctk_atomics_cpu_freq_init();
+	if (sctk_process_rank == 0)
+	{
+		char *mpc_lang = "C/C++";
+		if (sctk_is_in_fortran == 1)
+		{
+			mpc_lang = "Fortran";
+		}
 
-    if (sctk_runtime_config_get()->modules.launcher.banner)
-    {
-      if (SCTK_VERSION_MINOR >= 0)
-      {
-        fprintf (stderr,
-            "MPC version %d.%d.%d%s %s (%d tasks %d processes %d cpus (%2.2fGHz) %s) %s %s %s\n",
-            SCTK_VERSION_MAJOR, SCTK_VERSION_MINOR, SCTK_VERSION_REVISION,
-            SCTK_VERSION_PRE, mpc_lang, sctk_task_nb_val,
-            sctk_process_nb_val, sctk_get_cpu_number (),sctk_atomics_get_cpu_freq()/1000000000.0,
-            sctk_multithreading_mode,
-            sctk_alloc_mode (), SCTK_DEBUG_MODE, sctk_network_mode);
-      }
-      else
-      {
-        fprintf (stderr,
-            "MPC experimental version %s (%d tasks %d processes %d cpus (%2.2fGHz) %s) %s %s %s\n",
-            mpc_lang, sctk_task_nb_val, sctk_process_nb_val,
-		 sctk_get_cpu_number (),sctk_atomics_get_cpu_freq()/1000000000.0,  sctk_multithreading_mode,
-            sctk_alloc_mode (), SCTK_DEBUG_MODE, sctk_network_mode);
-      }
-    }
-    if (sctk_restart_mode == 1)
-    {
-      fprintf (stderr, "Restart Job\n");
-    }
-  }
- /*  { */
-/*     FILE *topo_file = NULL; */
-/*    int max_try = sctk_runtime_config_get()->modules.launcher.max_try;*/
-/*     sprintf (topology_name, "%s/Process_%d_topology", sctk_store_dir, */
-/*         sctk_process_rank); */
-/*     do */
-/*     { */
-/*       topo_file = fopen (topology_name, "w"); */
-/*       max_try--; */
-/*     } */
-/*     while ((topo_file == NULL) && (max_try >= 0)); */
-/*     if (topo_file != NULL) */
-/*     { */
-/*       sctk_print_topology (topo_file); */
-/*       fclose (topo_file); */
-/*     } */
-/*   } */
-  sctk_flush_version ();
+		if (sctk_runtime_config_get()->modules.launcher.banner)
+		{
+			if (SCTK_VERSION_MINOR >= 0)
+			{
+				fprintf (stderr,
+						"MPC version %d.%d.%d%s %s (%d tasks %d processes %d cpus (%2.2fGHz) %s) %s %s %s\n",
+						SCTK_VERSION_MAJOR, SCTK_VERSION_MINOR, SCTK_VERSION_REVISION,
+						SCTK_VERSION_PRE, mpc_lang, sctk_task_nb_val,
+						sctk_process_nb_val, sctk_get_cpu_number (),sctk_atomics_get_cpu_freq()/1000000000.0,
+						sctk_multithreading_mode,
+						sctk_alloc_mode (), SCTK_DEBUG_MODE, sctk_network_mode);
+			}
+			else
+			{
+				fprintf (stderr,
+						"MPC experimental version %s (%d tasks %d processes %d cpus (%2.2fGHz) %s) %s %s %s\n",
+						mpc_lang, sctk_task_nb_val, sctk_process_nb_val,
+						sctk_get_cpu_number (),sctk_atomics_get_cpu_freq()/1000000000.0,  sctk_multithreading_mode,
+						sctk_alloc_mode (), SCTK_DEBUG_MODE, sctk_network_mode);
+			}
+		}
+		if (sctk_restart_mode == 1)
+		{
+			fprintf (stderr, "Restart Job\n");
+		}
+	}
+
+	/*  { */
+	/*     FILE *topo_file = NULL; */
+	/*    int max_try = sctk_runtime_config_get()->modules.launcher.max_try;*/
+	/*     sprintf (topology_name, "%s/Process_%d_topology", sctk_store_dir, */
+	/*         sctk_process_rank); */
+	/*     do */
+	/*     { */
+	/*       topo_file = fopen (topology_name, "w"); */
+	/*       max_try--; */
+	/*     } */
+	/*     while ((topo_file == NULL) && (max_try >= 0)); */
+	/*     if (topo_file != NULL) */
+	/*     { */
+	/*       sctk_print_topology (topo_file); */
+	/*       fclose (topo_file); */
+	/*     } */
+	/*   } */
+	sctk_flush_version ();
 
 
 	/* We passed the init phase we can stop the bootstrap polling */
 	__polling_done = 1;
+
 }
 
-  static void
-sctk_version_details (void)
+static void sctk_version_details (void)
 {
-  sctk_version_details_val = 1;
+	sctk_version_details_val = 1;
 }
 
-  static void
-sctk_use_pthread (void)
+static void sctk_use_ethread (void)
 {
-  sctk_multithreading_mode = "pthread";
-  sctk_thread_val = sctk_pthread_thread_init;
+	sctk_multithreading_mode = "ethread";
+	sctk_thread_val = sctk_ethread_thread_init;
 }
 
-  static void
-sctk_use_ethread (void)
-{
-  sctk_multithreading_mode = "ethread";
-  sctk_thread_val = sctk_ethread_thread_init;
-}
-
-  void
+	void
 sctk_use_ethread_mxn (void)
 {
-  sctk_multithreading_mode = "ethread_mxn";
-  sctk_thread_val = sctk_ethread_mxn_thread_init;
+	sctk_multithreading_mode = "ethread_mxn";
+	sctk_thread_val = sctk_ethread_mxn_thread_init;
 }
 
-  void
+	void
 sctk_use_ethread_mxn_ng (void)
 {
-  sctk_multithreading_mode = "ethread_mxn_ng";
-  sctk_thread_val = sctk_ethread_mxn_ng_thread_init;
+	sctk_multithreading_mode = "ethread_mxn_ng";
+	sctk_thread_val = sctk_ethread_mxn_ng_thread_init;
 }
-  void
+	void
 sctk_use_ethread_ng (void)
 {
-  sctk_multithreading_mode = "ethread_ng";
-  sctk_thread_val = sctk_ethread_ng_thread_init;
+	sctk_multithreading_mode = "ethread_ng";
+	sctk_thread_val = sctk_ethread_ng_thread_init;
 }
 
-  void
+	void
 sctk_use_pthread_ng (void)
 {
-  sctk_multithreading_mode = "pthread_ng";
-  sctk_thread_val = sctk_pthread_ng_thread_init;
+	sctk_multithreading_mode = "pthread_ng";
+	sctk_thread_val = sctk_pthread_ng_thread_init;
 }
-  static void
+	static void
 sctk_def_directory (char *arg)
 {
-/*   sctk_store_dir = arg; */
+	/*   sctk_store_dir = arg; */
 }
 
-  static void
+	static void
 sctk_def_task_nb (char *arg)
 {
-  int task_nb;
-  task_nb = atoi (arg);
-  sctk_task_nb_val = task_nb;
+	int task_nb;
+	task_nb = atoi (arg);
+	sctk_task_nb_val = task_nb;
 }
 
-  static void
+	static void
 sctk_def_process_nb (char *arg)
 {
-  sctk_process_nb_val = atoi (arg);
+	sctk_process_nb_val = atoi (arg);
 }
 
 
 void (*sctk_get_thread_val(void)) ()
 {
-  return sctk_thread_val;
+	return sctk_thread_val;
 }
 
-  int
+	int
 sctk_get_process_nb ()
 {
-  return sctk_process_nb_val;
+	return sctk_process_nb_val;
 }
 
-  int
+	int
 sctk_get_total_tasks_number()
 {
-  return sctk_task_nb_val;
+	return sctk_task_nb_val;
 }
 
 
-  static void
+	static void
 sctk_def_processor_nb (char *arg)
 {
-  sctk_processor_nb_val = atoi (arg);
+	sctk_processor_nb_val = atoi (arg);
 
 }
 
-  int
+	int
 sctk_get_processor_nb ()
 {
-  return sctk_processor_nb_val;
+	return sctk_processor_nb_val;
 }
 
-  static void
+	static void
 sctk_def_launcher_mode(char *arg)
 {
-  sctk_launcher_mode = strdup(arg);
+	sctk_launcher_mode = strdup(arg);
 }
-  char*
+	char*
 sctk_get_launcher_mode()
 {
-  return sctk_launcher_mode;
+	return sctk_launcher_mode;
 }
 
-  static void
+	static void
 sctk_def_node_nb (char *arg)
 {
-  sctk_node_nb_val = atoi (arg);
+	sctk_node_nb_val = atoi (arg);
 }
 
-int
+	int
 sctk_get_node_nb()
 {
-  return sctk_node_nb_val;
+	return sctk_node_nb_val;
 }
 
-  static void
+	static void
 sctk_def_enable_smt (char *arg)
 {
-  sctk_enable_smt_capabilities = 1;
+	sctk_enable_smt_capabilities = 1;
 }
 
-  static void
+	static void
 sctk_def_disable_smt (char *arg)
 {
 	sctk_enable_smt_capabilities = 0;
 }
 
-  static void
+	static void
 sctk_def_share_node (char *arg)
 {
-  sctk_share_node_capabilities = 1;
+	sctk_share_node_capabilities = 1;
 }
 
-  static void
+	static void
 sctk_checkpoint (void)
 {
-  sctk_nodebug ("use sctk_check_point_restart_mode");
-  sctk_check_point_restart_mode = 1;
+	sctk_nodebug ("use sctk_check_point_restart_mode");
+	sctk_check_point_restart_mode = 1;
 }
 
-  static void
+	static void
 sctk_migration (void)
 {
-  sctk_check_point_restart_mode = 1;
-  sctk_migration_mode = 1;
+	sctk_check_point_restart_mode = 1;
+	sctk_migration_mode = 1;
 }
 
-  static void
+	static void
 sctk_restart (void)
 {
-  sctk_restart_mode = 1;
+	sctk_restart_mode = 1;
 }
 
-  static void
+	static void
 sctk_set_verbosity (char *arg)
 {
-  int tmp =  atoi (arg);
-  if( (0 <= tmp) && (sctk_verbosity < tmp) )
-    sctk_verbosity = tmp;
+	int tmp =  atoi (arg);
+	if( (0 <= tmp) && (sctk_verbosity < tmp) )
+		sctk_verbosity = tmp;
 }
 
-  int
+	int
 sctk_get_verbosity ()
 {
-  return sctk_verbosity;
+	return sctk_verbosity;
 }
 
-  static void
+	static void
 sctk_use_network (char *arg)
 {
-  sctk_network_driver_name = arg;
+	sctk_network_driver_name = arg;
 }
 
 
 static void sctk_set_profiling( char * arg )
 {
-  /* fprintf(stderr,"BEFORE |%s| |%s|\n",sctk_profiling_outputs,arg); */
+	/* fprintf(stderr,"BEFORE |%s| |%s|\n",sctk_profiling_outputs,arg); */
 #ifdef MPC_Profiler
-  if(strcmp(arg,"undef") != 0){
-    char* val;
-    
-    val = calloc(strlen(arg) + 10,sizeof(char));
-    
-    memcpy(val,arg,strlen(arg));
+	if(strcmp(arg,"undef") != 0){
+		char* val;
 
-    if( sctk_profile_renderer_check_render_list( val ) )
-      {
-	sctk_error( "Provided profiling output syntax is not correct: %s", val );
-	abort();
-      }
-    
-    /* fprintf(stderr,"SET %s %s %d\n",sctk_profiling_outputs,arg,strcmp(arg,"undef")); */
-    sctk_profiling_outputs = val;
-  }
+		val = calloc(strlen(arg) + 10,sizeof(char));
+
+		memcpy(val,arg,strlen(arg));
+
+		if( sctk_profile_renderer_check_render_list( val ) )
+		{
+			sctk_error( "Provided profiling output syntax is not correct: %s", val );
+			abort();
+		}
+
+		/* fprintf(stderr,"SET %s %s %d\n",sctk_profiling_outputs,arg,strcmp(arg,"undef")); */
+		sctk_profiling_outputs = val;
+	}
 #endif
-  /* fprintf(stderr,"AFTER %s %s\n",sctk_profiling_outputs,arg); */
-  
+	/* fprintf(stderr,"AFTER %s %s\n",sctk_profiling_outputs,arg); */
+
 }
 
-  static void
+	static void
 sctk_def_port_number (char *arg)
 {
-  arg[0] = '\0';
+	arg[0] = '\0';
 }
 
-  static void
+	static void
 sctk_def_use_host (char *arg)
 {
-  arg[0] = '\0';
+	arg[0] = '\0';
 }
 
-  static inline int
+	static inline int
 sctk_proceed_arg (char *word)
 {
-  sctk_add_arg_eq ("--directory", sctk_def_directory);
-  sctk_add_arg ("--version-details", sctk_version_details);
-  sctk_add_arg_eq ("--mpc-verbose", sctk_set_verbosity);
-  sctk_add_arg ("--use-pthread_ng", sctk_use_pthread_ng);
-  sctk_add_arg ("--use-pthread", sctk_use_pthread);
-  sctk_add_arg ("--use-ethread_mxn_ng", sctk_use_ethread_mxn_ng);
-  sctk_add_arg ("--use-ethread_mxn", sctk_use_ethread_mxn);
-  sctk_add_arg ("--use-ethread_ng", sctk_use_ethread_ng);
-  sctk_add_arg ("--use-ethread", sctk_use_ethread);
+	sctk_add_arg_eq ("--directory", sctk_def_directory);
+	sctk_add_arg ("--version-details", sctk_version_details);
+	sctk_add_arg_eq ("--mpc-verbose", sctk_set_verbosity);
+	sctk_add_arg ("--use-pthread_ng", sctk_use_pthread_ng);
+	sctk_add_arg ("--use-pthread", sctk_use_pthread);
+	sctk_add_arg ("--use-ethread_mxn_ng", sctk_use_ethread_mxn_ng);
+	sctk_add_arg ("--use-ethread_mxn", sctk_use_ethread_mxn);
+	sctk_add_arg ("--use-ethread_ng", sctk_use_ethread_ng);
+	sctk_add_arg ("--use-ethread", sctk_use_ethread);
 
-/*   sctk_add_arg ("--use-mpi", sctk_use_mpi); */
-/*   sctk_add_arg ("--use-tcp", sctk_use_tcp); */
-  sctk_add_arg_eq ("--sctk_use_network", sctk_use_network);
+	/*   sctk_add_arg ("--use-mpi", sctk_use_mpi); */
+	/*   sctk_add_arg ("--use-tcp", sctk_use_tcp); */
+	sctk_add_arg_eq ("--sctk_use_network", sctk_use_network);
 
-  /*FOR COMPATIBILITY */
-  sctk_add_arg_eq ("--sctk_use_port_number", sctk_def_port_number);
-  sctk_add_arg_eq ("--sctk_use_host", sctk_def_use_host);
+	/*FOR COMPATIBILITY */
+	sctk_add_arg_eq ("--sctk_use_port_number", sctk_def_port_number);
+	sctk_add_arg_eq ("--sctk_use_host", sctk_def_use_host);
 
-  sctk_add_arg_eq ("--task-number", sctk_def_task_nb);
-  sctk_add_arg_eq ("--processor-number", sctk_def_processor_nb);
-  sctk_add_arg_eq ("--process-number", sctk_def_process_nb);
-  sctk_add_arg_eq ("--node-number", sctk_def_node_nb);
-  sctk_add_arg_eq ("--enable-smt", sctk_def_enable_smt);
-  sctk_add_arg_eq ("--disable-smt", sctk_def_disable_smt);
-  sctk_add_arg_eq ("--share-node", sctk_def_share_node);
+	sctk_add_arg_eq ("--task-number", sctk_def_task_nb);
+	sctk_add_arg_eq ("--processor-number", sctk_def_processor_nb);
+	sctk_add_arg_eq ("--process-number", sctk_def_process_nb);
+	sctk_add_arg_eq ("--node-number", sctk_def_node_nb);
+	sctk_add_arg_eq ("--enable-smt", sctk_def_enable_smt);
+	sctk_add_arg_eq ("--disable-smt", sctk_def_disable_smt);
+	sctk_add_arg_eq ("--share-node", sctk_def_share_node);
 
-  sctk_add_arg_eq ("--profiling", sctk_set_profiling);
+	sctk_add_arg_eq ("--profiling", sctk_set_profiling);
 
-  sctk_add_arg_eq ("--launcher", sctk_def_launcher_mode);
+	sctk_add_arg_eq ("--launcher", sctk_def_launcher_mode);
 
-  sctk_add_arg ("--checkpoint", sctk_checkpoint);
-  sctk_add_arg ("--migration", sctk_migration);
-  sctk_add_arg ("--restart", sctk_restart);
+	sctk_add_arg ("--checkpoint", sctk_checkpoint);
+	sctk_add_arg ("--migration", sctk_migration);
+	sctk_add_arg ("--restart", sctk_restart);
 
-  if (strcmp (word, "--sctk-args-end--") == 0)
-    return -1;
+	if (strcmp (word, "--sctk-args-end--") == 0)
+		return -1;
 
-  fprintf (stderr, "Argument %s Unknown\n", word);
-  return -1;
+	fprintf (stderr, "Argument %s Unknown\n", word);
+	return -1;
 }
 
-  void
+	void
 sctk_launch_contribution (FILE * file)
 {
-  int i;
-  fprintf (file, "ARGC %d\n", sctk_initial_argc);
-  for (i = 0; i < sctk_initial_argc; i++)
-  {
-    fprintf (file, "%ld %s\n", (long) strlen (sctk_save_argument[i]) + 1,
-        sctk_save_argument[i]);
-  }
+	int i;
+	fprintf (file, "ARGC %d\n", sctk_initial_argc);
+	for (i = 0; i < sctk_initial_argc; i++)
+	{
+		fprintf (file, "%ld %s\n", (long) strlen (sctk_save_argument[i]) + 1,
+				sctk_save_argument[i]);
+	}
 }
 
-  static int
+	static int
 sctk_env_init_intern (int *argc, char ***argv)
 {
-  int i, j;
-  char **new_argv;
-  sctk_init ();
-  sctk_initial_argc = *argc;
-  init_argument = *argv;
-  sctk_print_version ("Init Launch", SCTK_LOCAL_VERSION_MAJOR,
-      SCTK_LOCAL_VERSION_MINOR);
+	int i, j;
+	char **new_argv;
+	sctk_init ();
+	sctk_initial_argc = *argc;
+	init_argument = *argv;
+	sctk_print_version ("Init Launch", SCTK_LOCAL_VERSION_MAJOR,
+			SCTK_LOCAL_VERSION_MINOR);
 
-  for (i = 0; i < sctk_initial_argc; i++)
-  {
-    sctk_start_argc = i;
-    if (strcmp ((*argv)[i], SCTK_START_KEYWORD) == 0)
-    {
-      sctk_start_argc = i - 1;
-      break;
-    }
-  }
+	for (i = 0; i < sctk_initial_argc; i++)
+	{
+		sctk_start_argc = i;
+		if (strcmp ((*argv)[i], SCTK_START_KEYWORD) == 0)
+		{
+			sctk_start_argc = i - 1;
+			break;
+		}
+	}
 
-  new_argv = sctk_malloc (sctk_initial_argc * sizeof (char *));
-  sctk_nodebug ("LAUNCH allocate %p of size %lu", new_argv,
-      (unsigned long) (sctk_initial_argc * sizeof (char *)));
+	new_argv = sctk_malloc (sctk_initial_argc * sizeof (char *));
+	sctk_nodebug ("LAUNCH allocate %p of size %lu", new_argv,
+			(unsigned long) (sctk_initial_argc * sizeof (char *)));
 
 
-  for (i = 0; i <= sctk_start_argc; i++)
-  {
-    new_argv[i] = (*argv)[i];
-  }
-  for (i = sctk_start_argc + 1; i < sctk_initial_argc; i++)
-  {
-    if (strcmp ((*argv)[i], SCTK_START_KEYWORD) == 0)
-    {
-      *argc = (*argc) - 1;
-    }
-    else
-    {
-      if (strcmp ((*argv)[i], "--sctk-args-end--") == 0)
-      {
-        *argc = (*argc) - 1;
-      }
-      if (sctk_proceed_arg ((*argv)[i]) == -1)
-      {
-        break;
-      }
-      (*argv)[i] = "";
-      *argc = (*argc) - 1;
-    }
-  }
-  i++;
-  for (j = sctk_start_argc + 1; i < sctk_initial_argc; i++)
-  {
-    new_argv[j] = (*argv)[i];
-    sctk_nodebug ("Copy %d %s", j, (*argv)[i]);
-    j++;
-  }
-  *argv = new_argv;
-  sctk_nodebug ("new argc tmp %d", *argc);
-  return 0;
+	for (i = 0; i <= sctk_start_argc; i++)
+	{
+		new_argv[i] = (*argv)[i];
+	}
+	for (i = sctk_start_argc + 1; i < sctk_initial_argc; i++)
+	{
+		if (strcmp ((*argv)[i], SCTK_START_KEYWORD) == 0)
+		{
+			*argc = (*argc) - 1;
+		}
+		else
+		{
+			if (strcmp ((*argv)[i], "--sctk-args-end--") == 0)
+			{
+				*argc = (*argc) - 1;
+			}
+			if (sctk_proceed_arg ((*argv)[i]) == -1)
+			{
+				break;
+			}
+			(*argv)[i] = "";
+			*argc = (*argc) - 1;
+		}
+	}
+	i++;
+	for (j = sctk_start_argc + 1; i < sctk_initial_argc; i++)
+	{
+		new_argv[j] = (*argv)[i];
+		sctk_nodebug ("Copy %d %s", j, (*argv)[i]);
+		j++;
+	}
+	*argv = new_argv;
+	sctk_nodebug ("new argc tmp %d", *argc);
+	return 0;
 }
 
-  int
+	int
 sctk_env_init (int *argc, char ***argv)
 {
-  sctk_env_init_intern (argc, argv);
-  if (sctk_restart_mode == 1)
-  {
-    return 1;
-  }
-  else
-  {
-    sctk_perform_initialisation ();
-  }
-  return 0;
+	sctk_env_init_intern (argc, argv);
+
+	if (sctk_restart_mode == 1)
+	{
+		return 1;
+	}
+	else
+	{
+		sctk_perform_initialisation ();
+	}
+	return 0;
 }
 
-  int
+	int
 sctk_env_exit ()
 {
-  sctk_topology_destroy();
+	sctk_topology_destroy();
 #ifdef MPC_AIO_ENABLED
-  sctk_aio_threads_release();
+	sctk_aio_threads_release();
 #endif
-  sctk_leave ();
-  return 0;
+	sctk_leave ();
+	return 0;
 }
 
-  static inline char *
+	static inline char *
 sctk_skip_token (char *p)
 {
-  while (isspace (*p))
-    p++;
-  while (*p && !isspace (*p))
-    p++;
-  while (isspace (*p))
-    p++;
-  return p;
+	while (isspace (*p))
+		p++;
+	while (*p && !isspace (*p))
+		p++;
+	while (isspace (*p))
+		p++;
+	return p;
 }
 
 typedef struct
 {
-  int argc;
-  char **argv;
+	int argc;
+	char **argv;
 } sctk_startup_args_t;
 
 static int main_result = 0;
 
-  static void *
-run (sctk_startup_args_t * arg)
+static void * run (sctk_startup_args_t * arg)
 {
-  int argc;
-  char **argv, **argv_safe;
-  int i;
+	int argc;
+	char **argv, **argv_safe;
+	int i;
 
-  argc = arg->argc;
-  argv = (char **) sctk_malloc ((argc + 1) * sizeof (char *));
+	argc = arg->argc;
+	argv = (char **) sctk_malloc ((argc + 1) * sizeof (char *));
 
-  assume( argv!= NULL );
-  
-  /* We create this extra argv array
-  * to prevent the case where a (strange)
-  * program modifies the argv[i] pointers
-  * preventing them to be freed at exit */
-  argv_safe =  (char **) sctk_malloc ((argc + 1) * sizeof (char *));
-  assume( argv_safe != NULL );
-    
-  
-  
-  sctk_nodebug ("creation argv %d", argc);
-  for (i = 0; i < argc; i++)
-  {
-    int j;
-    int k;
-    char *tmp;
-    sctk_nodebug ("%d %s", i, arg->argv[i]);
-    
-    tmp =  (char *) sctk_malloc ((strlen (arg->argv[i]) + 1) * sizeof (char));
-    assume( tmp != NULL );
-  
-    j = 0;
-    k = 0;
-    while (arg->argv[i][j] != '\0')
-    {
-      if (memcmp
-          (&(arg->argv[i][j]), "@MPC_LINK_ARGS@",
-           strlen ("@MPC_LINK_ARGS@")) != 0)
-      {
-        tmp[k] = arg->argv[i][j];
-        j++;
-        k++;
-      }
-      else
-      {
-        j += strlen ("@MPC_LINK_ARGS@");
-        tmp[k] = ' ';
-        k++;
-      }
-    }
-    tmp[k] = arg->argv[i][j];
-    
-    argv[i] = tmp;
-    /* Here we store the pointer to
-     * be able to free it later on
-     * even in case of modification */
-    argv_safe[i] = tmp;
-    
-    sctk_nodebug ("%d %s done", i, argv[i]);
-  }
-  sctk_nodebug ("creation argv done");
+	assume( argv!= NULL );
 
-  argv[argc] = NULL;
+	/* We create this extra argv array
+	 * to prevent the case where a (strange)
+	 * program modifies the argv[i] pointers
+	 * preventing them to be freed at exit */
+	argv_safe =  (char **) sctk_malloc ((argc + 1) * sizeof (char *));
+	assume( argv_safe != NULL );
 
-  main_result = sctk_user_main (argc, argv);
-  for (i = 0; i < argc; i++)
-  {
-    /* Here we free using the copy
-     * of the array to be sure we have
-     * a valid pointer */  
-    sctk_free (argv_safe[i]);
-  }
-  sctk_free (argv);
-  sctk_free (argv_safe);
 
-  return NULL;
+
+	sctk_nodebug ("creation argv %d", argc);
+	for (i = 0; i < argc; i++)
+	{
+		int j;
+		int k;
+		char *tmp;
+		sctk_nodebug ("%d %s", i, arg->argv[i]);
+
+		tmp =  (char *) sctk_malloc ((strlen (arg->argv[i]) + 1) * sizeof (char));
+		assume( tmp != NULL );
+
+		j = 0;
+		k = 0;
+		while (arg->argv[i][j] != '\0')
+		{
+			if (memcmp
+					(&(arg->argv[i][j]), "@MPC_LINK_ARGS@",
+					 strlen ("@MPC_LINK_ARGS@")) != 0)
+			{
+				tmp[k] = arg->argv[i][j];
+				j++;
+				k++;
+			}
+			else
+			{
+				j += strlen ("@MPC_LINK_ARGS@");
+				tmp[k] = ' ';
+				k++;
+			}
+		}
+		tmp[k] = arg->argv[i][j];
+
+		argv[i] = tmp;
+		/* Here we store the pointer to
+		 * be able to free it later on
+		 * even in case of modification */
+		argv_safe[i] = tmp;
+
+		sctk_nodebug ("%d %s done", i, argv[i]);
+	}
+	sctk_nodebug ("creation argv done");
+
+	argv[argc] = NULL;
+
+/* In libmode there is no main */
+#ifndef SCTK_LIB_MODE
+	main_result = sctk_user_main (argc, argv);
+#endif /* SCTK_LIB_MODE */
+	
+	for (i = 0; i < argc; i++)
+	{
+		/* Here we free using the copy
+		 * of the array to be sure we have
+		 * a valid pointer */  
+		sctk_free (argv_safe[i]);
+	}
+	sctk_free (argv);
+	sctk_free (argv_safe);
+
+	return NULL;
 }
 
 static int sctk_mpc_env_initialized = 0;
@@ -848,248 +874,264 @@ static int sctk_mpc_env_initialized = 0;
 #include <linux/personality.h>
 #define THIS__set_personality(pers) syscall(__NR_personality,pers)
 
-  static inline void
+	static inline void
 sctk_disable_addr_randomize (int argc, char **argv)
 {
-  bool keep_addr_randomize, disable_addr_randomize;
-  if(sctk_mpc_env_initialized == 0){
-/* To be check for move into mprcun script */
-return;
-    assume (argc > 0);
-  keep_addr_randomize = sctk_runtime_config_get()->modules.launcher.keep_rand_addr;
-  disable_addr_randomize = sctk_runtime_config_get()->modules.launcher.disable_rand_addr;
-  if (!keep_addr_randomize && disable_addr_randomize)
-  {
-    if (sctk_runtime_config_get()->modules.launcher.banner)
-    {
-		INFO("Addr randomize disabled for large scale runs")
-//      sctk_warning ("Restart execution to disable addr randomize");
-    }
-    THIS__set_personality (ADDR_NO_RANDOMIZE);
-    execvp (argv[0], argv);
-  }
-  sctk_nodebug ("current brk %p", sbrk (0));
-  } else {
-    sctk_warning("Unable to disable addr ramdomization");
-  }
+	bool keep_addr_randomize, disable_addr_randomize;
+	if(sctk_mpc_env_initialized == 0){
+		/* To be check for move into mprcun script */
+		return;
+		assume (argc > 0);
+		keep_addr_randomize = sctk_runtime_config_get()->modules.launcher.keep_rand_addr;
+		disable_addr_randomize = sctk_runtime_config_get()->modules.launcher.disable_rand_addr;
+		if (!keep_addr_randomize && disable_addr_randomize)
+		{
+			if (sctk_runtime_config_get()->modules.launcher.banner)
+			{
+				INFO("Addr randomize disabled for large scale runs")
+					//      sctk_warning ("Restart execution to disable addr randomize");
+			}
+			THIS__set_personality (ADDR_NO_RANDOMIZE);
+			execvp (argv[0], argv);
+		}
+		sctk_nodebug ("current brk %p", sbrk (0));
+	} else {
+		sctk_warning("Unable to disable addr ramdomization");
+	}
 }
 #else
-  static inline void
+	static inline void
 sctk_disable_addr_randomize (int argc, char **argv)
 {
 
 }
 #endif
 
-  static void *
+	static void *
 auto_kill_func (void *arg)
 {
-  int timeout = *(int*)arg;
-  if (timeout > 0)
-  {
-    if (sctk_runtime_config_get()->modules.launcher.banner && !sctk_is_in_fortran)
-    {
-      sctk_noalloc_fprintf (stderr, "Autokill in %ds\n", timeout);
-    }
-	sleep (timeout);
-	
-	if( !sctk_is_in_fortran )
-		sctk_noalloc_fprintf (stderr, "TIMEOUT reached\n");
-	
-    abort ();
-    exit (-1);
-  }
-  return NULL;
+	int timeout = *(int*)arg;
+	if (timeout > 0)
+	{
+		if (sctk_runtime_config_get()->modules.launcher.banner && !sctk_is_in_fortran)
+		{
+			sctk_noalloc_fprintf (stderr, "Autokill in %ds\n", timeout);
+		}
+		sleep (timeout);
+
+		if( !sctk_is_in_fortran )
+			sctk_noalloc_fprintf (stderr, "TIMEOUT reached\n");
+
+		abort ();
+		exit (-1);
+	}
+	return NULL;
 }
 
-void sctk_init_mpc_runtime(){
-  if(sctk_mpc_env_initialized == 1){
-    return;
-  } else {
-    char *sctk_argument;
-    char *sctk_disable_mpc;
-    int argc = 1;
-    char **argv;
-    void **tofree = NULL;
-    int tofree_nb = 0;
-    static int auto_kill;
-    char * argv_tmp[1];
-    int init_res;
+void sctk_init_mpc_runtime()
+{
+	if(sctk_mpc_env_initialized == 1)
+		return;
 
-    argv = argv_tmp;
-    argv[0] = "main";
+	char *sctk_argument;
+	char *sctk_disable_mpc;
+	int argc = 1;
+	char **argv;
+	void **tofree = NULL;
+	int tofree_nb = 0;
+	static int auto_kill;
+	char * argv_tmp[1];
+	int init_res;
 
-    sctk_mpc_env_initialized = 1;
+	argv = argv_tmp;
+	argv[0] = "main";
 
-    //load mpc configuration from XML files if not already done.
-    sctk_runtime_config_init();
+	sctk_mpc_env_initialized = 1;
 
-    __sctk_profiling__start__sctk_init_MPC = sctk_get_time_stamp_gettimeofday ();
+	//load mpc configuration from XML files if not already done.
+	sctk_runtime_config_init();
 
+	__sctk_profiling__start__sctk_init_MPC = sctk_get_time_stamp_gettimeofday ();
 
-    auto_kill = sctk_runtime_config_get()->modules.launcher.autokill;
-    if (auto_kill > 0)
-      {
-	pthread_t pid;
-	/*       sctk_warning ("Auto kill in %s s",auto_kill); */
-	pthread_create (&pid, NULL, auto_kill_func, &auto_kill);
-      }
+	auto_kill = sctk_runtime_config_get()->modules.launcher.autokill;
+	if (auto_kill > 0)
+	{
+		pthread_t pid;
+		/*       sctk_warning ("Auto kill in %s s",auto_kill); */
+		pthread_create (&pid, NULL, auto_kill_func, &auto_kill);
+	}
 
-    sctk_use_ethread_mxn ();
-    sctk_def_task_nb ("1");
-    sctk_def_process_nb ("1");
+	/* Default values */
+	sctk_use_ethread_mxn ();
+	sctk_def_task_nb ("1");
+	sctk_def_process_nb ("1");
 
-  // Initializing multithreading mode
-  sctk_runtime_config_get()->modules.launcher.thread_init.value();
+	// Initializing multithreading mode
+	sctk_runtime_config_get()->modules.launcher.thread_init.value();
 
-  /* Move this in a post-config function */
-  sctk_task_nb_val = sctk_runtime_config_get()->modules.launcher.nb_task;
-  sctk_process_nb_val = sctk_runtime_config_get()->modules.launcher.nb_process;
-  sctk_processor_nb_val = sctk_runtime_config_get()->modules.launcher.nb_processor;
-  sctk_node_nb_val = sctk_runtime_config_get()->modules.launcher.nb_node;
-  sctk_verbosity = sctk_runtime_config_get()->modules.launcher.verbosity;
-  sctk_launcher_mode = sctk_runtime_config_get()->modules.launcher.launcher;
-  sctk_version_details_val = sctk_runtime_config_get()->modules.launcher.vers_details;
-  sctk_profiling_outputs = sctk_runtime_config_get()->modules.launcher.profiling; 
-  sctk_enable_smt_capabilities = sctk_runtime_config_get()->modules.launcher.enable_smt;
-  sctk_share_node_capabilities = sctk_runtime_config_get()->modules.launcher.share_node;
-  sctk_restart_mode = sctk_runtime_config_get()->modules.launcher.restart;
-  sctk_check_point_restart_mode = sctk_runtime_config_get()->modules.launcher.checkpoint;
-  sctk_migration_mode = sctk_runtime_config_get()->modules.launcher.migration;
+	/* Move this in a post-config function */
+	
+#ifdef SCTK_LIB_MODE
+	/* In LIB mode comm size is inherited from
+	 * the host application (not from the launcher) */
+	sctk_process_nb_val = MPC_Net_hook_size();
+	sctk_task_nb_val = MPC_Net_hook_size();
+#else
+	sctk_task_nb_val = sctk_runtime_config_get()->modules.launcher.nb_task;
+	sctk_process_nb_val = sctk_runtime_config_get()->modules.launcher.nb_process;
+#endif
+	sctk_processor_nb_val = sctk_runtime_config_get()->modules.launcher.nb_processor;
+	sctk_node_nb_val = sctk_runtime_config_get()->modules.launcher.nb_node;
+	sctk_verbosity = sctk_runtime_config_get()->modules.launcher.verbosity;
+	sctk_launcher_mode = sctk_runtime_config_get()->modules.launcher.launcher;
+	sctk_version_details_val = sctk_runtime_config_get()->modules.launcher.vers_details;
+	sctk_profiling_outputs = sctk_runtime_config_get()->modules.launcher.profiling; 
+	sctk_enable_smt_capabilities = sctk_runtime_config_get()->modules.launcher.enable_smt;
+	sctk_share_node_capabilities = sctk_runtime_config_get()->modules.launcher.share_node;
+	sctk_restart_mode = sctk_runtime_config_get()->modules.launcher.restart;
+	sctk_check_point_restart_mode = sctk_runtime_config_get()->modules.launcher.checkpoint;
+	sctk_migration_mode = sctk_runtime_config_get()->modules.launcher.migration;
 
 	/* forece smt on MIC */
-	#ifdef __MIC__
-		sctk_enable_smt_capabilities = 1;
-	#endif
+#ifdef __MIC__
+	sctk_enable_smt_capabilities = 1;
+#endif
+
+	/*   sctk_exception_catch (11); */
+
+	/*   sctk_set_execuatble_name (argv[0]); */
+
+	/*
+	   if (sctk_runtime_config_get()->modules.launcher.disable_mpc)
+	   {
+	   sctk_pthread_thread_init ();
+	   sctk_thread_init_no_mpc ();
+	   return mpc_user_main (argc, argv);
+	   }
+	 */
+
+
+
+	sctk_argument = getenv ("MPC_STARTUP_ARGS");
+
+	if (sctk_argument != NULL)
+	{
+		/*    size_t len;*/
+		char *cursor;
+		int i;
+		char **new_argv;
+		int new_argc = 0;
+
+		new_argv = (char **) sctk_malloc ((argc + 20) * sizeof (char *));
+		tofree = (void **) sctk_malloc ((argc + 20) * sizeof (void *));
+
+		tofree[tofree_nb] = new_argv;
+		tofree_nb++;
+
+		cursor = sctk_argument;
+		new_argv[new_argc] = argv[0];
+		new_argc++;
+
+		for (i = 1; i < argc; i++)
+		{
+			new_argv[new_argc] = argv[i];
+			new_argc++;
+		}
+
+		while (*cursor == ' ')
+			cursor++;
+		while (*cursor != '\0')
+		{
+			int word_len = 0;
+			new_argv[new_argc] = (char *) sctk_malloc (1024 * sizeof (char));
+			tofree[tofree_nb] = new_argv[new_argc];
+			tofree_nb++;
+			while ((word_len < 1024) && (*cursor != '\0') && (*cursor != ' '))
+			{
+				new_argv[new_argc][word_len] = *cursor;
+				cursor++;
+				word_len++;
+			}
+			new_argv[new_argc][word_len] = '\0';
+			new_argc++;
+			while (*cursor == ' ')
+				cursor++;
+		}
+		new_argv[new_argc] = NULL;
+		argc = new_argc;
+		argv = new_argv;
+
+		/*  for(i = 0; i <= argc; i++){
+		    fprintf(stderr,"%d : %s\n",i,argv[i]);
+		    } */
+	}
+
+	memcpy (sctk_save_argument, argv, argc * sizeof (char *));
+
+	sctk_nodebug ("init argc %d", argc);
+	init_res = sctk_env_init (&argc, &argv);
+	sctk_nodebug ("init argc %d", argc);
+
+	sctk_free (argv);
 	
-    /*   sctk_exception_catch (11); */
+	if (tofree != NULL)
+	{
+		int i;
+		for (i = 0; i < tofree_nb; i++)
+		{
+			sctk_free (tofree[i]);
+		}
+		sctk_free (tofree);
+	}
 
-    /*   sctk_set_execuatble_name (argv[0]); */
-
-  /*
-  if (sctk_runtime_config_get()->modules.launcher.disable_mpc)
-  {
-    sctk_pthread_thread_init ();
-    sctk_thread_init_no_mpc ();
-    return mpc_user_main (argc, argv);
-  }
-  */
-
-    sctk_argument = getenv ("MPC_STARTUP_ARGS");
-
-    if (sctk_argument != NULL)
-      {
-	/*    size_t len;*/
-	char *cursor;
-	int i;
-	char **new_argv;
-	int new_argc = 0;
-
-	new_argv = (char **) sctk_malloc ((argc + 20) * sizeof (char *));
-	tofree = (void **) sctk_malloc ((argc + 20) * sizeof (void *));
-
-	tofree[tofree_nb] = new_argv;
-	tofree_nb++;
-
-	cursor = sctk_argument;
-	new_argv[new_argc] = argv[0];
-	new_argc++;
-
-	for (i = 1; i < argc; i++)
-	  {
-	    new_argv[new_argc] = argv[i];
-	    new_argc++;
-	  }
-
-	while (*cursor == ' ')
-	  cursor++;
-	while (*cursor != '\0')
-	  {
-	    int word_len = 0;
-	    new_argv[new_argc] = (char *) sctk_malloc (1024 * sizeof (char));
-	    tofree[tofree_nb] = new_argv[new_argc];
-	    tofree_nb++;
-	    while ((word_len < 1024) && (*cursor != '\0') && (*cursor != ' '))
-	      {
-		new_argv[new_argc][word_len] = *cursor;
-		cursor++;
-		word_len++;
-	      }
-	    new_argv[new_argc][word_len] = '\0';
-	    new_argc++;
-	    while (*cursor == ' ')
-	      cursor++;
-	  }
-	new_argv[new_argc] = NULL;
-	argc = new_argc;
-	argv = new_argv;
-
-	/*  for(i = 0; i <= argc; i++){
-	    fprintf(stderr,"%d : %s\n",i,argv[i]);
-	    } */
-      }
-
-    memcpy (sctk_save_argument, argv, argc * sizeof (char *));
-
-    sctk_nodebug ("init argc %d", argc);
-    init_res = sctk_env_init (&argc, &argv);
-    sctk_nodebug ("init argc %d", argc);
-
-    sctk_free (argv);
-    if (tofree != NULL)
-      {
-	int i;
-	for (i = 0; i < tofree_nb; i++)
-	  {
-	    sctk_free (tofree[i]);
-	  }
-	sctk_free (tofree);
-      }
-  }
 }
 
-  int
-sctk_launch_main (int argc, char **argv)
+
+#ifndef SCTK_LIB_MODE
+
+int sctk_launch_main (int argc, char **argv)
 {
-  sctk_startup_args_t arg;
+	sctk_startup_args_t arg;
 
-  /* MPC_MAKE_FORTRAN_INTERFACE is set when compiling fortran headers.
-   * To check why ? */
-  if (getenv("MPC_MAKE_FORTRAN_INTERFACE") != NULL) {
+	/* MPC_MAKE_FORTRAN_INTERFACE is set when compiling fortran headers.
+	 * To check why ? */
+	if (getenv("MPC_MAKE_FORTRAN_INTERFACE") != NULL) {
 #ifdef HAVE_ENVIRON_VAR
-    return mpc_user_main(argc, argv, environ);
+		return mpc_user_main(argc, argv, environ);
 #else
-    return mpc_user_main(argc, argv);
+		return mpc_user_main(argc, argv);
 #endif
-  }
+	}
 
-  sctk_disable_addr_randomize (argc,argv);
-  sctk_init_mpc_runtime();
+	sctk_disable_addr_randomize (argc,argv);
+	sctk_init_mpc_runtime();
 
 #if defined (SCTK_USE_OPTIMIZED_TLS)
-  /* Set GS register for optimized TLS */
-  sctk_tls_module_set_gs_register();
+	/* Set GS register for optimized TLS */
+	sctk_tls_module_set_gs_register();
 #endif
 
-  sctk_nodebug ("new argc %d", argc);
+	sctk_nodebug ("new argc %d", argc);
 
-  arg.argc = argc;
-  arg.argv = argv;
+	arg.argc = argc;
+	arg.argv = argv;
 
 
-  /*   do{ */
-  /*     int i; */
-  /*     for(i = 0; i <= argc; i++){ */
-  /*       fprintf(stderr,"%d : %s\n",i,argv[i]);       */
-  /*     } */
-  /*   }while(0); */
+	/*   do{ */
+	/*     int i; */
+	/*     for(i = 0; i <= argc; i++){ */
+	/*       fprintf(stderr,"%d : %s\n",i,argv[i]);       */
+	/*     } */
+	/*   }while(0); */
 
-  /*   sctk_exception_catch (11); */
+	/*   sctk_exception_catch (11); */
 
-  sctk_start_func ((void *(*)(void *)) run, &arg);
-  sctk_env_exit ();
+	sctk_start_func ((void *(*)(void *)) run, &arg);
+	sctk_env_exit ();
 
-  return main_result;
+	return main_result;
 }
+
+#endif /* SCTK_LIB_MODE */
 
 #endif

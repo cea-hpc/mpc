@@ -398,28 +398,7 @@ static inline void sctk_mpc_init_request_null(){
 
 void sctk_mpc_init_request (MPC_Request * request, MPC_Comm comm, int src, int request_type)
 {
-  if (request != NULL)
-    {
-      request->header.source = MPC_PROC_NULL;
-      request->header.destination = MPC_PROC_NULL;
-      request->header.source_task = MPC_PROC_NULL;
-      request->header.destination_task = MPC_PROC_NULL;
-      request->header.message_tag = MPC_ANY_TAG;
-      request->header.communicator = comm;
-      request->header.msg_size = 0;
-      request->completion_flag = SCTK_MESSAGE_DONE;
-      request->request_type = request_type;
-      request->is_null = 0;
-      request->truncated = 0;
-      request->msg = NULL;
-      request->query_fn = NULL;
-      request->cancel_fn = NULL;
-      request->wait_fn = NULL;
-      request->poll_fn = NULL;
-      request->free_fn = NULL;
-      request->extra_state = NULL;
-      request->pointer_to_source_request = (void *)request;
-    }
+  sctk_init_request(request, comm, request_type);
 }
 
 static inline void sctk_mpc_register_message_in_request(MPC_Request * request,
@@ -1825,8 +1804,23 @@ static inline size_t __MPC_Get_datatype_size (MPC_Datatype datatype, sctk_task_s
 				sctk_fatal("Tried to retrieve an uninitialized datatype %d", datatype);
 			}
 			
-			/* Extract the size field */
-			ret = derived_type_target->size;
+			
+			if( derived_type_target->is_a_padded_struct )
+			{
+
+				/* Here we return UB as the size (padded struct) */
+				ret = derived_type_target->ub;
+				
+							
+			}
+			else
+			{
+				/* Extract the size field */
+				ret = derived_type_target->size;
+			}
+			
+			
+
 
 			/* Return */
 			return ret;
@@ -1885,35 +1879,6 @@ int PMPC_Type_get_true_extent(MPC_Datatype datatype, MPC_Aint *true_lb, MPC_Aint
 	MPC_ERROR_SUCESS();
 }
 
-/** \brief This function aims at handling the particular case of struct derived data-type size
- *  \param datatype Target data-type
- *  \param size size to set
- * 
- *  This is needed as some struct data-type have additionnal padding
- *  and we define it this way after setting the correct offsets
- */
-int PMPC_Type_set_size(MPC_Datatype datatype, size_t size )
-{
-	sctk_task_specific_t * task_specific = __MPC_get_task_specific ();
-
-	sctk_derived_datatype_t * derived_type_target;
-
-	switch( sctk_datatype_kind(datatype) )
-	{
-		case MPC_DATATYPES_COMMON:
-		case MPC_DATATYPES_CONTIGUOUS:
-		case MPC_DATATYPES_UNKNOWN:
-			MPC_ERROR_REPORT( MPC_COMM_SELF, MPC_ERR_ARG, "Bad data-type this can only be done on derived types");
-		break;
-		case MPC_DATATYPES_DERIVED:
-			derived_type_target = sctk_task_specific_get_derived_datatype(task_specific, datatype);
-			derived_type_target->size = size;
-		break;
-	}
-	
-	MPC_ERROR_SUCESS ();
-}
-
 
 /** \brief Checks if a datatype has already been released
  *  \param datatype target datatype
@@ -1944,6 +1909,40 @@ int PMPC_Type_is_allocated (MPC_Datatype datatype, int * flag )
 		case MPC_DATATYPES_UNKNOWN:
 			*flag = 0;
 		break;	
+	}
+	
+	MPC_ERROR_SUCESS ();
+}
+
+/** \brief Set a Struct datatype as a padded one to return the extent instead of the size
+ *  \param datatype to be flagged as padded
+ */
+int PMPC_Type_flag_padded (MPC_Datatype datatype )
+{
+	sctk_task_specific_t * task_specific = __MPC_get_task_specific ();
+
+	sctk_derived_datatype_t * derived_type_target = NULL;
+	
+	switch( sctk_datatype_kind(datatype) )
+	{
+		case MPC_DATATYPES_COMMON:
+		case MPC_DATATYPES_CONTIGUOUS:
+		case MPC_DATATYPES_UNKNOWN:
+			sctk_fatal("Only Common datatypes can be flagged");
+		break;
+		case MPC_DATATYPES_DERIVED:
+			derived_type_target = sctk_task_specific_get_derived_datatype(task_specific, datatype);
+			
+			if( derived_type_target )
+			{
+				derived_type_target->is_a_padded_struct = 1;
+			}
+			else
+			{
+				return MPC_ERR_ARG;
+			}
+			
+		break;
 	}
 	
 	MPC_ERROR_SUCESS ();
@@ -3776,8 +3775,6 @@ static inline int __MPC_Test (MPC_Request * request, int *flag, MPC_Status * sta
 	if ((sctk_mpc_completion_flag(request) == SCTK_MESSAGE_PENDING) && (!sctk_mpc_message_is_null(request)))
 	{
 		sctk_mpc_perform_messages(request);
-      /* There is no more needs for thread switching here */
-      /* sctk_thread_yield (); */
 	}
 
 	//~ request->completion_flag != 0
@@ -3785,6 +3782,11 @@ static inline int __MPC_Test (MPC_Request * request, int *flag, MPC_Status * sta
 	{
 		*flag = 1;
 		sctk_mpc_commit_status_from_request(request,status);
+	}
+	else
+	{
+		/* No Match Yield */
+		sctk_thread_yield ();
 	}
 
 	//~ request->is_null > 0
@@ -3825,6 +3827,11 @@ static inline int __MPC_Test_check (MPC_Request * request, int *flag, MPC_Status
 	{
 		*flag = 1;
 		sctk_mpc_commit_status_from_request(request,status);
+	}
+	else
+	{
+		/* No Match Yield */
+		sctk_thread_yield ();
 	}
 
 	if((status != MPC_STATUS_IGNORE) && (*flag == 0)){
@@ -4390,7 +4397,7 @@ __MPC_Ssend (void *buf, mpc_msg_count count, MPC_Datatype datatype,
   sctk_add_adress_in_message (msg, buf,msg_size);
   sctk_mpc_init_request(&request,comm,src, REQUEST_SEND);
 
-  sctk_mpc_set_header_in_message (msg, tag, comm, src, dest, &request, msg_size,SCTK_P2P_MESSAGE, datatype);
+  sctk_mpc_set_header_in_message (msg, tag, comm, src, dest, &request, msg_size,SCTK_P2P_RDV_MESSAGE, datatype);
 
   sctk_nodebug ("count = %d, datatype = %d", SCTK_MSG_SIZE( msg ), datatype);
   sctk_send_message (msg);
@@ -4572,6 +4579,7 @@ int PMPC_Recv (void *buf, mpc_msg_count count, MPC_Datatype datatype, int source
 	}
 	
 	mpc_check_buf (buf, comm);
+
 	mpc_check_type (datatype, comm);
 
 	#ifdef MPC_LOG_DEBUG
@@ -4629,6 +4637,7 @@ int PMPC_Recv (void *buf, mpc_msg_count count, MPC_Datatype datatype, int source
 		{
 			status->MPC_ERROR = request.status_error;
 		}
+
 		return request.status_error;
 	}
 
@@ -4694,6 +4703,9 @@ int PMPC_Recv (void *buf, mpc_msg_count count, MPC_Datatype datatype, int source
 
 int PMPC_Status_set_elements_x(MPC_Status * status, MPC_Datatype datatype, MPC_Count count )
 {
+	if( status == MPC_STATUS_IGNORE )
+		MPC_ERROR_SUCESS();
+	
 	size_t elem_size = 0;
 	PMPC_Type_size (datatype, &elem_size);
 	status->size = elem_size * count;
@@ -4749,7 +4761,6 @@ static inline int MPC_Iprobe_inter (const int source, const int destination,
 
 	sctk_assert (status != MPC_STATUS_IGNORE);
 
-
 	/*handler for MPC_PROC_NULL*/
 	if (source == MPC_PROC_NULL)
 	{
@@ -4788,11 +4799,9 @@ static inline int MPC_Iprobe_inter (const int source, const int destination,
 	}
 
 	
-	if( __did_process )
+	if( __did_process  )
 	{
-		/* Do not forget to resolve rank here (to match communicator) */
-		status->MPC_SOURCE = sctk_get_rank( comm, msg.source_task );
-		
+	    status->MPC_SOURCE =  sctk_get_rank ( comm, msg.source_task );
 		status->MPC_TAG = msg.message_tag;
 		status->size = (mpc_msg_count) msg.msg_size;
 		status->MPC_ERROR = MPC_ERR_PENDING;
@@ -4818,6 +4827,26 @@ int PMPC_Iprobe (int source, int tag, MPC_Comm comm, int *flag, MPC_Status * sta
 	
 	mpc_check_comm (comm, comm);
 	__MPC_Comm_rank (comm, &destination, task_specific);
+	
+	/* Translate ranks */
+
+	if( source != MPC_ANY_SOURCE )
+	{
+		   if( sctk_is_inter_comm(comm) )
+		   {
+				   source = sctk_get_remote_comm_world_rank (comm, source);
+		   }
+		   else
+		   {
+				   source =  sctk_get_comm_world_rank ( comm, source );
+		   }       
+	}
+	else
+	{
+		   source =  MPC_ANY_SOURCE;
+	}
+
+	destination = sctk_get_comm_world_rank ( comm, destination );
 	
 	res = MPC_Iprobe_inter (source, destination, tag, comm, flag, status);
 	
@@ -4851,17 +4880,36 @@ __MPC_Probe (int source, int tag, MPC_Comm comm, MPC_Status * status,
 	     sctk_task_specific_t * task_specific)
 {
   MPC_probe_struct_t probe_struct;
-  __MPC_Comm_rank (comm, &probe_struct.destination, task_specific);
+  int comm_rank = -1;
+  
+  __MPC_Comm_rank (comm, &comm_rank, task_specific);
 
 #ifdef MPC_LOG_DEBUG
   mpc_log_debug (comm, "MPC_Probe source=%d tag=%d", source, tag);
 #endif
-  probe_struct.source = source;
+   if( source != SCTK_ANY_SOURCE )
+   {
+		   if( sctk_is_inter_comm(comm) )
+		   {
+				   probe_struct.source = sctk_get_remote_comm_world_rank (comm, source);
+		   }
+		   else
+		   {
+				   probe_struct.source =  sctk_get_comm_world_rank ( comm, source );
+		   }       
+   }
+   else
+   {
+		   probe_struct.source =  SCTK_ANY_SOURCE;
+   }
+  
+  probe_struct.destination =  sctk_get_comm_world_rank ( comm, comm_rank );
+
   probe_struct.tag = tag;
   probe_struct.comm = comm;
   probe_struct.status = status;
 
-  MPC_Iprobe_inter (source, probe_struct.destination, tag, comm,
+  MPC_Iprobe_inter ( probe_struct.source, probe_struct.destination, tag, comm,
 		    &probe_struct.flag, status);
 
   if (probe_struct.flag != 1)
@@ -6495,7 +6543,7 @@ __MPC_Comm_create (MPC_Comm comm, MPC_Group group, MPC_Comm * comm_out,
 	}
 	else
 	{
-		(*comm_out) = sctk_create_communicator (comm, group->task_nb, group->task_list_in_global_ranks, is_inter_comm);
+		(*comm_out) = sctk_create_communicator (comm, group->task_nb, group->task_list_in_global_ranks);
 		sctk_nodebug("\trank %d: new intracomm -> %d", rank, *comm_out);
 	}
     
@@ -6617,10 +6665,12 @@ __MPC_Comm_free (MPC_Comm * comm)
 {
   sctk_task_specific_t *task_specific;
   task_specific = __MPC_get_task_specific ();
+  
   if (*comm == MPC_COMM_WORLD)
   {
       MPC_ERROR_SUCESS ();
-    }
+  }
+  
   MPC_Comm old_comm = *comm;
   *comm = MPC_COMM_NULL;
   INFO("Comm free disabled")
@@ -6700,10 +6750,9 @@ PMPC_Comm_split (MPC_Comm comm, int color, int key, MPC_Comm * comm_out)
 
 	mpc_check_comm (comm, comm);
 
-#ifdef MPC_LOG_DEBUG
-	mpc_log_debug (comm, "MPC_Comm_split color=%d key=%d out_comm=%p",
+	sctk_nodebug ("MPC_Comm_split color=%d key=%d out_comm=%p",
 	color, key, comm_out);
-#endif
+
 
 	__MPC_Comm_size (comm, &size);
 	__MPC_Comm_rank (comm, &rank, task_specific);
@@ -6712,10 +6761,15 @@ PMPC_Comm_split (MPC_Comm comm, int color, int key, MPC_Comm * comm_out)
 	color_tab = (int *) sctk_malloc (size * sizeof (int));
 
 	tab_this.rank = rank;
+
 	tab_this.color = color;
 	tab_this.key = key;
 	sctk_nodebug("Allgather...");
 	__MPC_Allgather (&tab_this, sizeof (mpc_comm_split_t), MPC_CHAR, tab, sizeof (mpc_comm_split_t), MPC_CHAR, comm, task_specific);
+	
+
+	
+	
 	sctk_nodebug("done");
 	/*Sort the new tab */
 	for (i = 0; i < size; i++)
@@ -7323,7 +7377,7 @@ PMPC_Isend_pack (int dest, int tag, MPC_Comm comm, MPC_Request * request)
 				  src,
 				  dest,
 				  request,
-				  sctk_mpc_get_message_size(request),SCTK_P2P_MESSAGE, MPC_DATATYPE_IGNORE);
+				  sctk_mpc_get_message_size(request),SCTK_P2P_MESSAGE, MPC_PACKED);
   sctk_send_message (msg);
   SCTK_PROFIL_END (MPC_Isend_pack);
   MPC_ERROR_SUCESS ();
@@ -7379,7 +7433,7 @@ PMPC_Irecv_pack (int source, int tag, MPC_Comm comm, MPC_Request * request)
 				  source,
 				  src,
 				  request,
-				  sctk_mpc_get_message_size(request),SCTK_P2P_MESSAGE, MPC_DATATYPE_IGNORE);
+				  sctk_mpc_get_message_size(request),SCTK_P2P_MESSAGE, MPC_PACKED );
 
   sctk_recv_message (msg,task_specific->my_ptp_internal, 0);
   SCTK_PROFIL_END (MPC_Irecv_pack);

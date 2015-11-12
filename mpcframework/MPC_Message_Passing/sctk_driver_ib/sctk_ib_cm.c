@@ -320,15 +320,15 @@ void sctk_ib_cm_connect_to ( int from, int to, sctk_rail_info_t *rail )
 	remote = endpoint->data.ib.remote;
 	sctk_ib_debug ( "[%d] QP connection request to process %d", rail->rail_number, remote->rank );
 
-	sctk_route_messages_recv ( from, to, SCTK_CONTROL_MESSAGE_PROCESS, CM_OD_STATIC_TAG, &recv_keys, sizeof ( sctk_ib_cm_qp_connection_t ) );
+	sctk_route_messages_recv ( from, to, SCTK_CONTROL_MESSAGE_INTERNAL, CM_OD_STATIC_TAG, &recv_keys, sizeof ( sctk_ib_cm_qp_connection_t ) );
 	sctk_ib_qp_allocate_rtr ( rail_ib, remote, &recv_keys );
 
 	sctk_ib_qp_key_fill ( &send_keys, remote, device->port_attr.lid,
 	                      remote->qp->qp_num, remote->psn );
 	send_keys.rail_id = rail->rail_number;
 
-	sctk_route_messages_send ( to, from, SCTK_CONTROL_MESSAGE_PROCESS, CM_OD_STATIC_TAG , &send_keys, sizeof ( sctk_ib_cm_qp_connection_t ) );
-	sctk_route_messages_recv ( from, to, SCTK_CONTROL_MESSAGE_PROCESS, CM_OD_STATIC_TAG , &done,
+	sctk_route_messages_send ( to, from, SCTK_CONTROL_MESSAGE_INTERNAL, CM_OD_STATIC_TAG , &send_keys, sizeof ( sctk_ib_cm_qp_connection_t ) );
+	sctk_route_messages_recv ( from, to, SCTK_CONTROL_MESSAGE_INTERNAL, CM_OD_STATIC_TAG , &done,
 	                           sizeof ( sctk_ib_cm_done_t ) );
 	sctk_ib_qp_allocate_rts ( rail_ib, remote );
 	/* Add route */
@@ -367,13 +367,13 @@ void sctk_ib_cm_connect_from ( int from, int to, sctk_rail_info_t *rail )
 	                      remote->qp->qp_num, remote->psn );
 	send_keys.rail_id = rail->rail_number;
 
-	sctk_route_messages_send ( from, to, SCTK_CONTROL_MESSAGE_PROCESS, CM_OD_STATIC_TAG, &send_keys, sizeof ( sctk_ib_cm_qp_connection_t ) );
-	sctk_route_messages_recv ( to, from, SCTK_CONTROL_MESSAGE_PROCESS, CM_OD_STATIC_TAG, &recv_keys, sizeof ( sctk_ib_cm_qp_connection_t ) );
+	sctk_route_messages_send ( from, to, SCTK_CONTROL_MESSAGE_INTERNAL, CM_OD_STATIC_TAG, &send_keys, sizeof ( sctk_ib_cm_qp_connection_t ) );
+	sctk_route_messages_recv ( to, from, SCTK_CONTROL_MESSAGE_INTERNAL, CM_OD_STATIC_TAG, &recv_keys, sizeof ( sctk_ib_cm_qp_connection_t ) );
 	sctk_ib_qp_allocate_rtr ( rail_ib, remote, &recv_keys );
 	sctk_ib_qp_allocate_rts ( rail_ib, remote );
 	sctk_nodebug ( "FROM: Ready to send to %d", to );
 
-	sctk_route_messages_send ( from, to, SCTK_CONTROL_MESSAGE_PROCESS, CM_OD_STATIC_TAG, &done,
+	sctk_route_messages_send ( from, to, SCTK_CONTROL_MESSAGE_INTERNAL, CM_OD_STATIC_TAG, &done,
 	                           sizeof ( sctk_ib_cm_done_t ) );
 	/* Add route */
 	sctk_rail_add_static_route (  rail, to, endpoint );
@@ -901,7 +901,7 @@ static inline int sctk_ib_cm_resizing_rdma_recv_request ( sctk_rail_info_t *rail
  *  Handler of OD connexions
  *----------------------------------------------------------*/
 
-void sctk_ib_cm_control_message_handler( struct sctk_rail_info_s * rail, int process_src, int source_rank, char subtype, char param, void * payload )
+void sctk_ib_cm_control_message_handler( struct sctk_rail_info_s * rail, int process_src, int source_rank, char subtype, char param, void * payload, size_t size )
 {
 	int rail_id = rail->rail_number;
 

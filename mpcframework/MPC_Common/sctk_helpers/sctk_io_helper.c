@@ -46,8 +46,13 @@ volatile int sctk_online_program = 1;
 ssize_t sctk_safe_read(int fd, void* buf, size_t count)
 {
 	/* vars */
-	int tmp, nb_total_received_bytes = 0;
+	int tmp = 0, nb_total_received_bytes = 0;
 	int res = count;
+
+	if( count == 0 )
+	{
+		return 1;
+	}
 
 	/* loop until read all */
 	while (nb_total_received_bytes < count) {
@@ -55,6 +60,7 @@ ssize_t sctk_safe_read(int fd, void* buf, size_t count)
 
 		/* check errors */
 		if (tmp == 0) {
+			res = nb_total_received_bytes;
 			break;
 		} else if (tmp < 0) {
 			/* on interuption continue to re-read */

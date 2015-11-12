@@ -26,3 +26,5 @@ need_module MPC_Config
 
 #Disable mpi inter-node network 
 check_net_mpi_disable="1"
+
+SCTK_INCLUDE_FILES="mpcmp.h"

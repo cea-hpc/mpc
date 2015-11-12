@@ -260,10 +260,10 @@ void sctk_ib_qp_keys_send ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *r
 	int key_max = sctk_pmi_get_max_key_len();
 	int val_max = sctk_pmi_get_max_val_len();
 	
-	char * key = sctk_malloc( sizeof(char) * key_max );
+	char * key = sctk_malloc( sizeof(char) * key_max + 1 );
 	assume( key != NULL );
 	
-	char * val = sctk_malloc( sizeof(char) * val_max );
+	char * val = sctk_malloc( sizeof(char) * val_max + 1 );
 	assume( val != NULL );
 	
 	int ret;
@@ -280,8 +280,8 @@ void sctk_ib_qp_keys_send ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *r
 	ret = sctk_pmi_put_connection_info_str ( val, val_max, key );
 	ib_assume ( ret == SCTK_PMI_SUCCESS );
 	
-	free( key );
-	free( val );
+	sctk_free( key );
+	sctk_free( val );
 }
 
 sctk_ib_cm_qp_connection_t sctk_ib_qp_keys_recv ( struct sctk_ib_rail_info_s *rail_ib,
@@ -292,10 +292,10 @@ sctk_ib_cm_qp_connection_t sctk_ib_qp_keys_recv ( struct sctk_ib_rail_info_s *ra
 	int key_max = sctk_pmi_get_max_key_len();
 	int val_max = sctk_pmi_get_max_val_len();
 	
-	char * key = sctk_malloc( sizeof(char) * key_max );
+	char * key = sctk_malloc( sizeof(char) * key_max  + 1);
 	assume( key != NULL );
 	
-	char * val = sctk_malloc( sizeof(char) * val_max );
+	char * val = sctk_malloc( sizeof(char) * val_max + 1);
 	assume( val != NULL );
 
 	int ret;
@@ -305,8 +305,8 @@ sctk_ib_cm_qp_connection_t sctk_ib_qp_keys_recv ( struct sctk_ib_rail_info_s *ra
 	ib_assume ( ret == SCTK_PMI_SUCCESS );
 	qp_keys = sctk_ib_qp_keys_convert ( val );
 
-	free( key );
-	free( val );
+	sctk_free( key );
+	sctk_free( val );
 
 	return qp_keys;
 }
@@ -403,7 +403,8 @@ struct ibv_qp_attr sctk_ib_qp_state_init_attr ( struct sctk_ib_rail_info_s *rail
 	attr.port_num = config->adm_port;
 	attr.qp_access_flags = IBV_ACCESS_REMOTE_WRITE
 	                       | IBV_ACCESS_LOCAL_WRITE
-	                       | IBV_ACCESS_REMOTE_READ;
+	                       | IBV_ACCESS_REMOTE_READ
+	                       | IBV_ACCESS_REMOTE_ATOMIC;
 
 	*flags = IBV_QP_STATE
 	         | IBV_QP_PKEY_INDEX
@@ -424,7 +425,11 @@ struct ibv_qp_attr sctk_ib_qp_state_rtr_attr ( struct sctk_ib_rail_info_s *rail_
 	attr.path_mtu = IBV_MTU_2048;
 	/* QP number of remote QP */
 	/* maximul number if resiyrces for incoming RDMA request */
-	attr.max_dest_rd_atomic = config->rdma_dest_depth;
+	attr.max_dest_rd_atomic = config->rdma_depth;
+	
+	/* number or outstanding RDMA reads and atomic operations allowed */
+	attr.max_rd_atomic = config->rdma_depth;
+
 	/* maximum RNR NAK timer (recommanded value: 12) */
 	attr.min_rnr_timer = 12;
 
@@ -467,8 +472,12 @@ struct ibv_qp_attr sctk_ib_qp_state_rts_attr ( struct sctk_ib_rail_info_s *rail_
 	attr.rnr_retry = 7;
 	/* packet sequence number */
 	attr.sq_psn = psn;
+
+	/* maximul number if resiyrces for incoming RDMA request */
+	attr.max_dest_rd_atomic = config->rdma_depth;
+	
 	/* number or outstanding RDMA reads and atomic operations allowed */
-	attr.max_rd_atomic = config->rdma_dest_depth;
+	attr.max_rd_atomic = config->rdma_depth;
 
 	*flags = IBV_QP_STATE
 	         | IBV_QP_TIMEOUT
@@ -827,6 +836,7 @@ int sctk_ib_qp_send_ibuf ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *re
 
 	/* We release the buffer if it has been inlined & if it
 	* do not generate an event once the transmission done */
+		
 	if ( ( ibuf->flag == SEND_INLINE_IBUF_FLAG
 	|| ibuf->flag == RDMA_WRITE_INLINE_IBUF_FLAG )
 	&& ( ( ( ibuf->desc.wr.send.send_flags & IBV_SEND_SIGNALED ) == 0 ) ) )
@@ -842,6 +852,7 @@ int sctk_ib_qp_send_ibuf ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *re
 		sctk_network_poll_send_ibuf ( rail_ib->rail, ibuf, 0, &poll );
 		return 0;
 	}
+
 
 	return 1;
 }

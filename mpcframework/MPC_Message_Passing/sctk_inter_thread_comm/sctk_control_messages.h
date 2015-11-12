@@ -33,19 +33,54 @@
 /** This is the context of the control message engine */
 struct sctk_control_message_context
 {
-	void (*sctk_user_control_message)( int source_process, int source_rank, char subtype, char param, void * data ); /**< This function is called when the application has registered a function */
+	void (*sctk_user_control_message)( int source_process, int source_rank, char subtype, char param, void * data, size_t size ); /**< This function is called when the application has registered a function */
 };
 
-void sctk_control_message_context_set_user( void (*fn)( int , int , char , char , void * ) );
+void sctk_control_message_context_set_user( void (*fn)( int , int , char , char , void * , size_t ) );
 
+/************************************************************************/
+/* Process Level Control messages                                       */
+/************************************************************************/
+
+typedef enum
+{
+	SCTK_PROCESS_FENCE,
+	SCTK_PROCESS_RDMA_WIN_MAPTO,
+	SCTK_PROCESS_RDMA_WIN_RELAX,
+	SCTK_PROCESS_RDMA_EMULATED_WRITE,
+	SCTK_PROCESS_RDMA_EMULATED_READ,
+	SCTK_PROCESS_RDMA_EMULATED_FETCH_AND_OP,
+	SCTK_PROCESS_RDMA_EMULATED_CAS
+}sctk_control_msg_process_t;
 
 
 /************************************************************************/
 /* Control Messages Interface                                           */
 /************************************************************************/
 
-void sctk_control_messages_send ( int dest, sctk_message_class_t message_class, int subtype, int param, void *buffer, size_t size );
-void sctk_control_messages_send_rail( int dest, int subtype, int param, void *buffer, size_t size, int  rail_id );
+void sctk_control_messages_send ( int dest, sctk_message_class_t message_class, int subtype, char param, void *buffer, size_t size );
+void sctk_control_messages_send_rail( int dest, int subtype, char param, void *buffer, size_t size, int  rail_id );
 void sctk_control_messages_incoming( sctk_thread_ptp_message_t * msg );
+void sctk_control_messages_perform( sctk_thread_ptp_message_t * msg );
+
+struct sctk_control_message_fence_ctx
+{
+	int source;
+	int remote;
+};
+
+void sctk_control_message_fence( int target_task );
+void sctk_control_message_fence_handler( struct sctk_control_message_fence_ctx *ctx );
+
+/************************************************************************/
+/* Control Messages List                                                */
+/************************************************************************/
+
+void sctk_control_message_init();
+void sctk_control_message_push( sctk_thread_ptp_message_t * msg );
+void sctk_control_message_process();
+void sctk_control_message_process_all();
+
+
 
 #endif /* SCTK_CONTROL_MESSAGE_H */

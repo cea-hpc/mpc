@@ -111,18 +111,6 @@ See type launcher.
 Options for MPC Debugger
 .br
 See type debugger.
-.It Cm inter_thread_comm
-Options for communication between threads
-.br
-See type inter_thread_comm.
-.It Cm low_level_comm
-
-.br
-See type low_level_comm.
-.It Cm mpc
-Options for MPC Message Passing
-.br
-See type mpc.
 .It Cm collectives_intra
 Collectives intracom MPI
 .br
@@ -135,6 +123,18 @@ See type collectives_inter.
 Progress thread NBC
 .br
 See type progress_thread.
+.It Cm mpc
+Options for MPC Message Passing
+.br
+See type mpc.
+.It Cm inter_thread_comm
+Options for communication between threads
+.br
+See type inter_thread_comm.
+.It Cm low_level_comm
+
+.br
+See type low_level_comm.
 .It Cm openmp
 Options for MPC OpenMP.
 .br
@@ -293,6 +293,178 @@ Type is int. Default value is 1024.
 .Pp max_filename_size
 
 .El
+.Sh ENTRIES OF TYPE collectives_intra
+Collectives intracom MPI
+.Pp
+It support parameters :
+.Pp
+.Bl -tag -width Ds
+.It Cm barrier_intra
+Type is function pointer. Default value is __INTERNAL__PMPI_Barrier_intra. 
+.Pp barrier_intra
+MPI_Barrier intracom algorithm
+.It Cm bcast_intra
+Type is function pointer. Default value is __INTERNAL__PMPI_Bcast_intra. 
+.Pp bcast_intra
+Type of MPI_Bcast intracom algorithm
+.It Cm allgather_intra
+Type is function pointer. Default value is __INTERNAL__PMPI_Allgather_intra. 
+.Pp allgather_intra
+MPI_Allgather intracom algorithm
+.It Cm allgatherv_intra
+Type is function pointer. Default value is __INTERNAL__PMPI_Allgatherv_intra. 
+.Pp allgatherv_intra
+MPI_Allgatherv intracom algorithm
+.It Cm alltoall_intra
+Type is function pointer. Default value is __INTERNAL__PMPI_Alltoall_intra. 
+.Pp alltoall_intra
+MPI_Alltoall intracom algorithm
+.It Cm alltoallv_intra
+Type is function pointer. Default value is __INTERNAL__PMPI_Alltoallv_intra. 
+.Pp alltoallv_intra
+Alltoallv intracom algorithm
+.It Cm alltoallw_intra
+Type is function pointer. Default value is __INTERNAL__PMPI_Alltoallw_intra. 
+.Pp alltoallw_intra
+MPI_Alltoallw intracom algorithm
+.It Cm gather_intra
+Type is function pointer. Default value is __INTERNAL__PMPI_Gather_intra. 
+.Pp gather_intra
+MPI_Gather intracom algorithm
+.It Cm gatherv_intra
+Type is function pointer. Default value is __INTERNAL__PMPI_Gatherv_intra. 
+.Pp gatherv_intra
+MPI_Gatherv intracom algorithm
+.It Cm scatter_intra
+Type is function pointer. Default value is __INTERNAL__PMPI_Scatter_intra. 
+.Pp scatter_intra
+MPI_Scatter intracom algorithm
+.It Cm scatterv_intra
+Type is function pointer. Default value is __INTERNAL__PMPI_Scatterv_intra. 
+.Pp scatterv_intra
+MPI_Scatterv intracom algorithm
+.It Cm scan_intra
+Type is function pointer. Default value is __INTERNAL__PMPI_Scan_intra. 
+.Pp scan_intra
+MPI_Scan intracom algorithm
+.It Cm exscan_intra
+Type is function pointer. Default value is __INTERNAL__PMPI_Exscan_intra. 
+.Pp exscan_intra
+MPI_Exscan intracom algorithm
+.It Cm reduce_intra
+Type is function pointer. Default value is __INTERNAL__PMPI_Reduce_intra. 
+.Pp reduce_intra
+MPI_Reduce intracom algorithm
+.It Cm allreduce_intra
+Type is function pointer. Default value is __INTERNAL__PMPI_Allreduce_intra. 
+.Pp allreduce_intra
+MPI_Allreduce intracom algorithm
+.It Cm reduce_scatter_intra
+Type is function pointer. Default value is __INTERNAL__PMPI_Reduce_scatter_intra. 
+.Pp reduce_scatter_intra
+MPI_Reduce_scatter intracom algorithm
+.It Cm reduce_scatter_block_intra
+Type is function pointer. Default value is __INTERNAL__PMPI_Reduce_scatter_block_intra. 
+.Pp reduce_scatter_block_intra
+MPI_Reduce_scatter_block intracom algorithm
+.El
+.Sh ENTRIES OF TYPE collectives_inter
+Collectives intercom MPI
+.Pp
+It support parameters :
+.Pp
+.Bl -tag -width Ds
+.It Cm barrier_inter
+Type is function pointer. Default value is __INTERNAL__PMPI_Barrier_inter. 
+.Pp barrier_inter
+MPI_Barrier intercom algorithm
+.It Cm bcast_inter
+Type is function pointer. Default value is __INTERNAL__PMPI_Bcast_inter. 
+.Pp bcast_inter
+MPI_Barrier intercom algorithm
+.It Cm allgather_inter
+Type is function pointer. Default value is __INTERNAL__PMPI_Allgather_inter. 
+.Pp allgather_inter
+MPI_Allgather intercom algorithm
+.It Cm allgatherv_inter
+Type is function pointer. Default value is __INTERNAL__PMPI_Allgatherv_inter. 
+.Pp allgatherv_inter
+MPI_Allgatherv intercom algorithm
+.It Cm alltoall_inter
+Type is function pointer. Default value is __INTERNAL__PMPI_Alltoall_inter. 
+.Pp alltoall_inter
+MPI_Alltoall intercom algorithm
+.It Cm alltoallv_inter
+Type is function pointer. Default value is __INTERNAL__PMPI_Alltoallv_inter. 
+.Pp alltoallv_inter
+MPI_Alltoallv intercom algorithm
+.It Cm alltoallw_inter
+Type is function pointer. Default value is __INTERNAL__PMPI_Alltoallw_inter. 
+.Pp alltoallw_inter
+MPI_Alltoallw intercom algorithm
+.It Cm gather_inter
+Type is function pointer. Default value is __INTERNAL__PMPI_Gather_inter. 
+.Pp gather_inter
+MPI_Gather intercom algorithm
+.It Cm gatherv_inter
+Type is function pointer. Default value is __INTERNAL__PMPI_Gatherv_inter. 
+.Pp gatherv_inter
+MPI_Gatherv intercom algorithm
+.It Cm scatter_inter
+Type is function pointer. Default value is __INTERNAL__PMPI_Scatter_inter. 
+.Pp scatter_inter
+MPI_Scatter intercom algorithm
+.It Cm scatterv_inter
+Type is function pointer. Default value is __INTERNAL__PMPI_Scatterv_inter. 
+.Pp scatterv_inter
+MPI_Scatterv intercom algorithm
+.It Cm reduce_inter
+Type is function pointer. Default value is __INTERNAL__PMPI_Reduce_inter. 
+.Pp reduce_inter
+MPI_Reduce intercom algorithm
+.It Cm allreduce_inter
+Type is function pointer. Default value is __INTERNAL__PMPI_Allreduce_inter. 
+.Pp allreduce_inter
+MPI_Allreduce intercom algorithm
+.It Cm reduce_scatter_inter
+Type is function pointer. Default value is __INTERNAL__PMPI_Reduce_scatter_inter. 
+.Pp reduce_scatter_inter
+MPI_Reduce_scatter intercom algorithm
+.It Cm reduce_scatter_block_inter
+Type is function pointer. Default value is __INTERNAL__PMPI_Reduce_scatter_block_inter. 
+.Pp reduce_scatter_block_inter
+MPI_Reduce_scatter_block intercom algorithm
+.El
+.Sh ENTRIES OF TYPE progress_thread
+Progress thread NBC
+.Pp
+It support parameters :
+.Pp
+.Bl -tag -width Ds
+.It Cm use_progress_thread
+Type is int. Default value is 0. 
+.Pp use_progress_thread
+If use progress threads for non blocking collectives
+.El
+.Sh ENTRIES OF TYPE mpc
+Options for MPC Message Passing
+.Pp
+It support parameters :
+.Pp
+.Bl -tag -width Ds
+.It Cm log_debug
+Type is bool. Default value is false. 
+.Pp log_debug
+Print debug messages
+.It Cm hard_checking
+Type is bool. Default value is false. 
+.Pp hard_checking
+
+.It Cm buffering
+Type is bool. Default value is false. 
+.Pp buffering
+
+.El
 .Sh ENTRIES OF TYPE net_driver_topological
 Declare a topological driver.
 .Pp
@@ -346,6 +518,10 @@ Number of entries to allocate in the QP for receiving messages. Must be 0 if usi
 Type is int. Default value is 40000. 
 .Pp cq_depth
 Number of entries to allocate in the CQ. If too low, may cause a CQ overrun
+.It Cm rdma_depth
+Type is int. Default value is 16. 
+.Pp rdma_depth
+Number of RDMA resources on QP (covers both max_dest_rd_atomic and max_rd_atomic)
 .It Cm max_sg_sq
 Type is int. Default value is 4. 
 .Pp max_sg_sq
@@ -422,14 +598,6 @@ Defines the number of entries for the CQ dedicated to received messages.
 Type is int. Default value is 0. 
 .Pp wc_out_number
 Defines the number of entries for the CQ dedicated to sent messages.
-.It Cm rdma_depth
-Type is int. Default value is 0. 
-.Pp rdma_depth
-Number of outstanding RDMA reads and atomic operations on the destination QP (to be confirmed)
-.It Cm rdma_dest_depth
-Type is int. Default value is 0. 
-.Pp rdma_dest_depth
-Number of responder resources for handling incoming RDMA reads and atomic operations (to be confirmed)
 .It Cm low_memory
 Type is bool. Default value is false. 
 .Pp low_memory
@@ -492,20 +660,24 @@ Type is int. Default value is 1000.
 .Pp mmu_cache_entry_count
 Number of entries to keep in the cache.
 .It Cm mmu_cache_maximum_size
-Type is size. Default value is 10GB. 
+Type is size. Default value is 4GB. 
 .Pp mmu_cache_maximum_size
-Number of entries to keep in the cache.
+Total size of entries to keep in the cache.
+.It Cm mmu_cache_maximum_pin_size
+Type is size. Default value is 1GB. 
+.Pp mmu_cache_maximum_pin_size
+Maximum size of an pinned entry.
 .El
 .Sh ENTRIES OF TYPE net_driver_portals
-Declare a fake driver to test the configuration system.
+Portals-based driver
 .Pp
 It support parameters :
 .Pp
 .Bl -tag -width Ds
-.It Cm fake_param
-Type is int. Default value is 0. 
-.Pp fake_param
-Fake param.
+.It Cm eager_limit
+Type is int. Default value is 65565. 
+.Pp eager_limit
+Size of the eager buffers (short messages).
 .El
 .Sh ENTRIES OF TYPE net_driver_tcp
 TCP-based driver
@@ -723,6 +895,10 @@ Define the network topology to apply on this rail.
 Type is int. Default value is 1. 
 .Pp ondemand
 Define if on-demand connections are allowed on this rail.
+.It Cm rdma
+Type is int. Default value is 0. 
+.Pp rdma
+Defines if the rail has RDMA enabled.
 .It Cm config
 Type is string. Default value is topological. 
 .Pp config
@@ -843,178 +1019,6 @@ Enable usage of polling during idle.
 Type is ib_global. 
 .Pp ib_global
 Global parameters for IB
-.El
-.Sh ENTRIES OF TYPE mpc
-Options for MPC Message Passing
-.Pp
-It support parameters :
-.Pp
-.Bl -tag -width Ds
-.It Cm log_debug
-Type is bool. Default value is false. 
-.Pp log_debug
-Print debug messages
-.It Cm hard_checking
-Type is bool. Default value is false. 
-.Pp hard_checking
-
-.It Cm buffering
-Type is bool. Default value is false. 
-.Pp buffering
-
-.El
-.Sh ENTRIES OF TYPE collectives_intra
-Collectives intracom MPI
-.Pp
-It support parameters :
-.Pp
-.Bl -tag -width Ds
-.It Cm barrier_intra
-Type is function pointer. Default value is __INTERNAL__PMPI_Barrier_intra. 
-.Pp barrier_intra
-MPI_Barrier intracom algorithm
-.It Cm bcast_intra
-Type is function pointer. Default value is __INTERNAL__PMPI_Bcast_intra. 
-.Pp bcast_intra
-Type of MPI_Bcast intracom algorithm
-.It Cm allgather_intra
-Type is function pointer. Default value is __INTERNAL__PMPI_Allgather_intra. 
-.Pp allgather_intra
-MPI_Allgather intracom algorithm
-.It Cm allgatherv_intra
-Type is function pointer. Default value is __INTERNAL__PMPI_Allgatherv_intra. 
-.Pp allgatherv_intra
-MPI_Allgatherv intracom algorithm
-.It Cm alltoall_intra
-Type is function pointer. Default value is __INTERNAL__PMPI_Alltoall_intra. 
-.Pp alltoall_intra
-MPI_Alltoall intracom algorithm
-.It Cm alltoallv_intra
-Type is function pointer. Default value is __INTERNAL__PMPI_Alltoallv_intra. 
-.Pp alltoallv_intra
-Alltoallv intracom algorithm
-.It Cm alltoallw_intra
-Type is function pointer. Default value is __INTERNAL__PMPI_Alltoallw_intra. 
-.Pp alltoallw_intra
-MPI_Alltoallw intracom algorithm
-.It Cm gather_intra
-Type is function pointer. Default value is __INTERNAL__PMPI_Gather_intra. 
-.Pp gather_intra
-MPI_Gather intracom algorithm
-.It Cm gatherv_intra
-Type is function pointer. Default value is __INTERNAL__PMPI_Gatherv_intra. 
-.Pp gatherv_intra
-MPI_Gatherv intracom algorithm
-.It Cm scatter_intra
-Type is function pointer. Default value is __INTERNAL__PMPI_Scatter_intra. 
-.Pp scatter_intra
-MPI_Scatter intracom algorithm
-.It Cm scatterv_intra
-Type is function pointer. Default value is __INTERNAL__PMPI_Scatterv_intra. 
-.Pp scatterv_intra
-MPI_Scatterv intracom algorithm
-.It Cm scan_intra
-Type is function pointer. Default value is __INTERNAL__PMPI_Scan_intra. 
-.Pp scan_intra
-MPI_Scan intracom algorithm
-.It Cm exscan_intra
-Type is function pointer. Default value is __INTERNAL__PMPI_Exscan_intra. 
-.Pp exscan_intra
-MPI_Exscan intracom algorithm
-.It Cm reduce_intra
-Type is function pointer. Default value is __INTERNAL__PMPI_Reduce_intra. 
-.Pp reduce_intra
-MPI_Reduce intracom algorithm
-.It Cm allreduce_intra
-Type is function pointer. Default value is __INTERNAL__PMPI_Allreduce_intra. 
-.Pp allreduce_intra
-MPI_Allreduce intracom algorithm
-.It Cm reduce_scatter_intra
-Type is function pointer. Default value is __INTERNAL__PMPI_Reduce_scatter_intra. 
-.Pp reduce_scatter_intra
-MPI_Reduce_scatter intracom algorithm
-.It Cm reduce_scatter_block_intra
-Type is function pointer. Default value is __INTERNAL__PMPI_Reduce_scatter_block_intra. 
-.Pp reduce_scatter_block_intra
-MPI_Reduce_scatter_block intracom algorithm
-.El
-.Sh ENTRIES OF TYPE collectives_inter
-Collectives intercom MPI
-.Pp
-It support parameters :
-.Pp
-.Bl -tag -width Ds
-.It Cm barrier_inter
-Type is function pointer. Default value is __INTERNAL__PMPI_Barrier_inter. 
-.Pp barrier_inter
-MPI_Barrier intercom algorithm
-.It Cm bcast_inter
-Type is function pointer. Default value is __INTERNAL__PMPI_Bcast_inter. 
-.Pp bcast_inter
-MPI_Barrier intercom algorithm
-.It Cm allgather_inter
-Type is function pointer. Default value is __INTERNAL__PMPI_Allgather_inter. 
-.Pp allgather_inter
-MPI_Allgather intercom algorithm
-.It Cm allgatherv_inter
-Type is function pointer. Default value is __INTERNAL__PMPI_Allgatherv_inter. 
-.Pp allgatherv_inter
-MPI_Allgatherv intercom algorithm
-.It Cm alltoall_inter
-Type is function pointer. Default value is __INTERNAL__PMPI_Alltoall_inter. 
-.Pp alltoall_inter
-MPI_Alltoall intercom algorithm
-.It Cm alltoallv_inter
-Type is function pointer. Default value is __INTERNAL__PMPI_Alltoallv_inter. 
-.Pp alltoallv_inter
-MPI_Alltoallv intercom algorithm
-.It Cm alltoallw_inter
-Type is function pointer. Default value is __INTERNAL__PMPI_Alltoallw_inter. 
-.Pp alltoallw_inter
-MPI_Alltoallw intercom algorithm
-.It Cm gather_inter
-Type is function pointer. Default value is __INTERNAL__PMPI_Gather_inter. 
-.Pp gather_inter
-MPI_Gather intercom algorithm
-.It Cm gatherv_inter
-Type is function pointer. Default value is __INTERNAL__PMPI_Gatherv_inter. 
-.Pp gatherv_inter
-MPI_Gatherv intercom algorithm
-.It Cm scatter_inter
-Type is function pointer. Default value is __INTERNAL__PMPI_Scatter_inter. 
-.Pp scatter_inter
-MPI_Scatter intercom algorithm
-.It Cm scatterv_inter
-Type is function pointer. Default value is __INTERNAL__PMPI_Scatterv_inter. 
-.Pp scatterv_inter
-MPI_Scatterv intercom algorithm
-.It Cm reduce_inter
-Type is function pointer. Default value is __INTERNAL__PMPI_Reduce_inter. 
-.Pp reduce_inter
-MPI_Reduce intercom algorithm
-.It Cm allreduce_inter
-Type is function pointer. Default value is __INTERNAL__PMPI_Allreduce_inter. 
-.Pp allreduce_inter
-MPI_Allreduce intercom algorithm
-.It Cm reduce_scatter_inter
-Type is function pointer. Default value is __INTERNAL__PMPI_Reduce_scatter_inter. 
-.Pp reduce_scatter_inter
-MPI_Reduce_scatter intercom algorithm
-.It Cm reduce_scatter_block_inter
-Type is function pointer. Default value is __INTERNAL__PMPI_Reduce_scatter_block_inter. 
-.Pp reduce_scatter_block_inter
-MPI_Reduce_scatter_block intercom algorithm
-.El
-.Sh ENTRIES OF TYPE progress_thread
-Progress thread NBC
-.Pp
-It support parameters :
-.Pp
-.Bl -tag -width Ds
-.It Cm use_progress_thread
-Type is int. Default value is 0. 
-.Pp use_progress_thread
-If use progress threads for non blocking collectives
 .El
 .Sh ENTRIES OF TYPE openmp
 Options for MPC OpenMP.

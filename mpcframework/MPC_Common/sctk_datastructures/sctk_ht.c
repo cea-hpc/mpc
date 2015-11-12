@@ -169,10 +169,9 @@ void MPCHT_init( struct MPCHT * ht, sctk_uint64_t size )
 	}
 	
 	int i;
-	sctk_spin_rwlock_t init = SCTK_SPIN_RWLOCK_INITIALIZER;
 	
 	for( i = 0 ; i < size ; i++ )
-		ht->rwlocks[i] = init;
+		sctk_spin_rwlock_init(&(ht->rwlocks[i]));
 }
 void MPCHT_release( struct MPCHT * ht )
 {
@@ -282,6 +281,7 @@ void MPCHT_delete(  struct MPCHT * ht, sctk_uint64_t key )
 			head->use_flag = 0;
 		}
 		
+		MPCHT_unlock_write( ht, bucket );
 		return;
 	}
 	

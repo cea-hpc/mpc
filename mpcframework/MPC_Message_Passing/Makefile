@@ -1,4 +1,4 @@
-# Makefile generated with ../MPC_Tools/mpc_gen_makefile Thu May 22 15:42:13 CEST 2014
+# Makefile generated with ../MPC_Tools/mpc_gen_makefile mardi 2 juin 2015, 10:27:09 (UTC+0200)
 ############################# MPC License ##############################
 # Wed Nov 19 15:19:19 CET 2008                                         #
 # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          #
@@ -32,15 +32,6 @@ DEP_include=$(FILES_include:include/%.c=$(M_PWD)/BUILD_MPC_Message_Passing/lib/%
 SFILES_include=$(wildcard include/*.S)
 SOBJ_include=$(SFILES_include:include/%.S=$(M_PWD)/BUILD_MPC_Message_Passing/lib/%.o)
 SDEP_include=$(SFILES_include:include/%.S=$(M_PWD)/BUILD_MPC_Message_Passing/lib/%.d)
-
-
-FILES_mpc=$(wildcard mpc/*.c)
-OBJ_mpc=$(FILES_mpc:mpc/%.c=$(M_PWD)/BUILD_MPC_Message_Passing/lib/%.o)
-DEP_mpc=$(FILES_mpc:mpc/%.c=$(M_PWD)/BUILD_MPC_Message_Passing/lib/%.d)
-
-SFILES_mpc=$(wildcard mpc/*.S)
-SOBJ_mpc=$(SFILES_mpc:mpc/%.S=$(M_PWD)/BUILD_MPC_Message_Passing/lib/%.o)
-SDEP_mpc=$(SFILES_mpc:mpc/%.S=$(M_PWD)/BUILD_MPC_Message_Passing/lib/%.d)
 
 
 FILES_driver_ib=$(wildcard sctk_driver_ib/*.c)
@@ -91,9 +82,6 @@ SDEP_low_level_comm=$(SFILES_low_level_comm:sctk_low_level_comm/%.S=$(M_PWD)/BUI
 FFILES_include=$(wildcard include/*.f)
 FOBJ_include=$(FFILES_include:include/%.f=$(M_PWD)/BUILD_MPC_Message_Passing/lib/%_f.o)
 
-FFILES_mpc=$(wildcard mpc/*.f)
-FOBJ_mpc=$(FFILES_mpc:mpc/%.f=$(M_PWD)/BUILD_MPC_Message_Passing/lib/%_f.o)
-
 FFILES_driver_ib=$(wildcard sctk_driver_ib/*.f)
 FOBJ_driver_ib=$(FFILES_driver_ib:sctk_driver_ib/%.f=$(M_PWD)/BUILD_MPC_Message_Passing/lib/%_f.o)
 
@@ -109,11 +97,10 @@ FOBJ_inter_thread_comm=$(FFILES_inter_thread_comm:sctk_inter_thread_comm/%.f=$(M
 FFILES_low_level_comm=$(wildcard sctk_low_level_comm/*.f)
 FOBJ_low_level_comm=$(FFILES_low_level_comm:sctk_low_level_comm/%.f=$(M_PWD)/BUILD_MPC_Message_Passing/lib/%_f.o)
 
-all: $(OBJ_include) $(FOBJ_include) $(SOBJ_include) $(OBJ_mpc) $(FOBJ_mpc) $(SOBJ_mpc) $(OBJ_driver_ib) $(FOBJ_driver_ib) $(SOBJ_driver_ib) $(OBJ_driver_portals) $(FOBJ_driver_portals) $(SOBJ_driver_portals) $(OBJ_driver_tcp) $(FOBJ_driver_tcp) $(SOBJ_driver_tcp) $(OBJ_inter_thread_comm) $(FOBJ_inter_thread_comm) $(SOBJ_inter_thread_comm) $(OBJ_low_level_comm) $(FOBJ_low_level_comm) $(SOBJ_low_level_comm)
+all: $(OBJ_include) $(FOBJ_include) $(SOBJ_include) $(OBJ_driver_ib) $(FOBJ_driver_ib) $(SOBJ_driver_ib) $(OBJ_driver_portals) $(FOBJ_driver_portals) $(SOBJ_driver_portals) $(OBJ_driver_tcp) $(FOBJ_driver_tcp) $(SOBJ_driver_tcp) $(OBJ_inter_thread_comm) $(FOBJ_inter_thread_comm) $(SOBJ_inter_thread_comm) $(OBJ_low_level_comm) $(FOBJ_low_level_comm) $(SOBJ_low_level_comm)
 
 $(M_PWD)/include_modules/MPC_Message_Passing:
 	@../MPC_Tools/mpc_prepare_includes $(MPC_SOURCE_DIR)MPC_Message_Passing/include $(M_PWD)/include_modules
-	@../MPC_Tools/mpc_prepare_includes $(MPC_SOURCE_DIR)MPC_Message_Passing/mpc $(M_PWD)/include_modules
 	@../MPC_Tools/mpc_prepare_includes $(MPC_SOURCE_DIR)MPC_Message_Passing/sctk_driver_ib $(M_PWD)/include_modules
 	@../MPC_Tools/mpc_prepare_includes $(MPC_SOURCE_DIR)MPC_Message_Passing/sctk_driver_portals $(M_PWD)/include_modules
 	@../MPC_Tools/mpc_prepare_includes $(MPC_SOURCE_DIR)MPC_Message_Passing/sctk_driver_tcp $(M_PWD)/include_modules
@@ -125,7 +112,7 @@ prepare_includes:$(M_PWD)/include_modules/MPC_Message_Passing
 
 
 ifneq ($(SCTK_MAKE_NO_DEP),yes)
-DEPENDS=$(DEP_include) $(DEP_mpc) $(DEP_driver_ib) $(DEP_driver_portals) $(DEP_driver_tcp) $(DEP_inter_thread_comm) $(DEP_low_level_comm) 
+DEPENDS=$(DEP_include) $(DEP_driver_ib) $(DEP_driver_portals) $(DEP_driver_tcp) $(DEP_inter_thread_comm) $(DEP_low_level_comm) 
 
 $(DEPENDS):Makefile 
 endif
@@ -134,11 +121,6 @@ ifneq ($(SCTK_MAKE_NO_DEP),yes)
 $(DEP_include):$(M_PWD)/BUILD_MPC_Message_Passing/lib/%.d:include/%.c
 	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%.d,include/%.c,$@)"
 	@$(CC) $(SCTK_CC_DEP) $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%.d,include/%.c,$@) | \
-		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
-
-$(DEP_mpc):$(M_PWD)/BUILD_MPC_Message_Passing/lib/%.d:mpc/%.c
-	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%.d,mpc/%.c,$@)"
-	@$(CC) $(SCTK_CC_DEP) $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%.d,mpc/%.c,$@) | \
 		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
 
 $(DEP_driver_ib):$(M_PWD)/BUILD_MPC_Message_Passing/lib/%.d:sctk_driver_ib/%.c
@@ -171,10 +153,6 @@ $(DEP_include):$(M_PWD)/BUILD_MPC_Message_Passing/lib/%.d:include/%.c
 	@echo "    Generate fake dependencies $(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%.d,include/%.c,$@)"
 	@echo "$(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%.d,include/%.c,$@)" > $@
 
-$(DEP_mpc):$(M_PWD)/BUILD_MPC_Message_Passing/lib/%.d:mpc/%.c
-	@echo "    Generate fake dependencies $(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%.d,mpc/%.c,$@)"
-	@echo "$(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%.d,mpc/%.c,$@)" > $@
-
 $(DEP_driver_ib):$(M_PWD)/BUILD_MPC_Message_Passing/lib/%.d:sctk_driver_ib/%.c
 	@echo "    Generate fake dependencies $(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%.d,sctk_driver_ib/%.c,$@)"
 	@echo "$(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%.d,sctk_driver_ib/%.c,$@)" > $@
@@ -201,10 +179,6 @@ $(OBJ_include):%.o:%.d
 	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%.o,include/%.c,$@)"
 	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%.o,include/%.c,$@) -o $@
 
-$(OBJ_mpc):%.o:%.d
-	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%.o,mpc/%.c,$@)"
-	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%.o,mpc/%.c,$@) -o $@
-
 $(OBJ_driver_ib):%.o:%.d
 	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%.o,sctk_driver_ib/%.c,$@)"
 	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%.o,sctk_driver_ib/%.c,$@) -o $@
@@ -228,11 +202,6 @@ $(OBJ_low_level_comm):%.o:%.d
 $(SDEP_include):$(M_PWD)/BUILD_MPC_Message_Passing/lib/%.d:include/%.S
 	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%.d,include/%.S,$@)"
 	@$(GCC) -M $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%.d,include/%.S,$@) | \
-		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
-
-$(SDEP_mpc):$(M_PWD)/BUILD_MPC_Message_Passing/lib/%.d:mpc/%.S
-	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%.d,mpc/%.S,$@)"
-	@$(GCC) -M $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%.d,mpc/%.S,$@) | \
 		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
 
 $(SDEP_driver_ib):$(M_PWD)/BUILD_MPC_Message_Passing/lib/%.d:sctk_driver_ib/%.S
@@ -264,10 +233,6 @@ $(SOBJ_include):%.o:%.d
 	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%.o,include/%.S,$@)"
 	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%.o,include/%.S,$@) -o $@
 
-$(SOBJ_mpc):%.o:%.d
-	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%.o,mpc/%.S,$@)"
-	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%.o,mpc/%.S,$@) -o $@
-
 $(SOBJ_driver_ib):%.o:%.d
 	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%.o,sctk_driver_ib/%.S,$@)"
 	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%.o,sctk_driver_ib/%.S,$@) -o $@
@@ -291,10 +256,6 @@ $(SOBJ_low_level_comm):%.o:%.d
 $(FOBJ_include):$(M_PWD)/BUILD_MPC_Message_Passing/lib/%_f.o:include/%.f
 	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%_f.o,include/%.f,$@)"
 	@$(F77) -c $(FFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%_f.o,include/%.f,$@) -o $@
-
-$(FOBJ_mpc):$(M_PWD)/BUILD_MPC_Message_Passing/lib/%_f.o:mpc/%.f
-	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%_f.o,mpc/%.f,$@)"
-	@$(F77) -c $(FFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%_f.o,mpc/%.f,$@) -o $@
 
 $(FOBJ_driver_ib):$(M_PWD)/BUILD_MPC_Message_Passing/lib/%_f.o:sctk_driver_ib/%.f
 	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%_f.o,sctk_driver_ib/%.f,$@)"

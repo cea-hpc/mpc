@@ -118,10 +118,10 @@ gen_xsd_file_editor()
 		do
 			if [ $first -eq 1 ]; then
 				modified_line=`echo "$line" | sed -e "s/\"/\'/g"`
-				echo -e "var sctk_runtime_config_xsd = \"$modified_line\\"
+				printf "var sctk_runtime_config_xsd = \"$modified_line "
 				first=0
 			else
-				echo -e "$line\\" | sed -e "s/x27/\'/g" | sed -e "s/\"/\'/g"
+				printf "$line " | sed -e "s/x27/\'/g" -e "s/\"/\'/g"
 			fi
 		done < $tmp
 	done

@@ -114,11 +114,11 @@ buffered:
 rdma:
 	{}
 	sctk_debug ( "Size of message: %lu", size );
-	ibuf = sctk_ib_rdma_prepare_req ( rail, remote, msg, size, -1 );
+	ibuf = sctk_ib_rdma_rendezvous_prepare_req ( rail, remote, msg, size, -1 );
 
 	/* Send message */
 	sctk_ib_qp_send_ibuf ( rail_ib, remote, ibuf );
-	sctk_ib_rdma_prepare_send_msg ( rail_ib, msg, size );
+	sctk_ib_rdma_rendezvous_prepare_send_msg ( rail_ib, msg, size );
 	PROF_INC ( rail_ib->rail, ib_rdma_nb );
 exit:
 	{}
@@ -177,10 +177,10 @@ sctk_endpoint_t * sctk_on_demand_connection_ib( struct sctk_rail_info_s * rail ,
 
 
 int sctk_network_poll_send_ibuf ( sctk_rail_info_t *rail, sctk_ibuf_t *ibuf,  const char from_cp, struct sctk_ib_polling_s *poll )
-{
+{	
 	sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
 	int release_ibuf = 1;
-
+	
 	/* Switch on the protocol of the received message */
 	switch ( IBUF_GET_PROTOCOL ( ibuf->buffer ) )
 	{
@@ -199,7 +199,7 @@ int sctk_network_poll_send_ibuf ( sctk_rail_info_t *rail, sctk_ibuf_t *ibuf,  co
 
 		default:
 			sctk_error ( "Got wrong protocol: %d %p", IBUF_GET_PROTOCOL ( ibuf->buffer ), &IBUF_GET_PROTOCOL ( ibuf->buffer ) );
-			not_reachable();
+			CRASH();
 			break;
 	}
 
@@ -363,6 +363,7 @@ static int sctk_network_poll_send ( sctk_rail_info_t *rail, struct ibv_wc *wc, s
 	       wc->wr_id;
 
 	ib_assume ( ibuf );
+
 	int src_task = -1;
 	int dest_task = -1;
 
@@ -412,7 +413,7 @@ static int sctk_network_poll_send ( sctk_rail_info_t *rail, struct ibv_wc *wc, s
 	sctk_ibuf_rdma_update_max_pending_data ( rail_ib, ibuf->remote,
 	                                         current_pending );
 
-	if ( IBUF_GET_CHANNEL ( ibuf ) & RC_SR_CHANNEL )
+	if ( (IBUF_GET_CHANNEL ( ibuf ) & RC_SR_CHANNEL))
 	{
 		src_task = IBUF_GET_SRC_TASK ( ibuf->buffer );
 		dest_task = IBUF_GET_DEST_TASK ( ibuf->buffer );
@@ -776,6 +777,31 @@ void sctk_network_memory_free_hook_ib ( void * ptr, size_t size )
 }
 
 
+/* Pinning */
+
+void sctk_ib_pin_region( struct sctk_rail_info_s * rail, struct sctk_rail_pin_ctx_list * list, void * addr, size_t size )
+{
+	/* Fill entry */
+	list->rail_id = rail->rail_number;
+	/* Save the pointer (to free the block returned by sctk_ib_mmu_entry_new) */
+	list->pin.ib.p_entry = sctk_ib_mmu_pin( &rail->network.ib, addr, size);
+	
+	/* Save it inside the struct to allow serialization */
+	memcpy( &list->pin.ib.mr , list->pin.ib.p_entry->mr, sizeof( struct ibv_mr ) );
+}
+
+void sctk_ib_unpin_region( struct sctk_rail_info_s * rail, struct sctk_rail_pin_ctx_list * list )
+{
+	assume( rail->rail_number == list->rail_id );
+	
+	sctk_nodebug("Unpin %p at %p size %ld releaseon %d", list->pin.ib.p_entry, list->pin.ib.p_entry->addr, list->pin.ib.p_entry->size, list->pin.ib.p_entry->free_on_relax );
+	
+	sctk_ib_mmu_relax( list->pin.ib.p_entry );
+	list->pin.ib.p_entry = NULL;
+	memset( &list->pin.ib.mr, 0, sizeof( struct ibv_mr ) );
+	list->rail_id = -1;
+}
+
 
 void sctk_network_init_mpi_ib ( sctk_rail_info_t *rail )
 {
@@ -872,6 +898,20 @@ void sctk_network_init_mpi_ib ( sctk_rail_info_t *rail )
 	rail->notify_perform_message = sctk_network_notify_perform_message_ib;
 	rail->notify_idle_message = sctk_network_notify_idle_message_ib;
 	rail->notify_any_source_message = sctk_network_notify_any_source_message_ib;
+	
+	/* PIN */
+	rail->rail_pin_region = sctk_ib_pin_region;
+	rail->rail_unpin_region = sctk_ib_unpin_region;
+	
+	/* RDMA */
+	rail->rdma_write = sctk_ib_rdma_write;
+	rail->rdma_read = sctk_ib_rdma_read;
+	
+	rail->rdma_fetch_and_op_gate = sctk_ib_rdma_fetch_and_op_gate;
+	rail->rdma_fetch_and_op = sctk_ib_rdma_fetch_and_op;
+	
+	rail->rdma_cas_gate = sctk_ib_rdma_cas_gate;
+	rail->rdma_cas = sctk_ib_rdma_cas;
 	
 	rail->network_name = network_name;
 

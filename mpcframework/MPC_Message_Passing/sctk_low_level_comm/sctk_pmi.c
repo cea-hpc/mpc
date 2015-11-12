@@ -27,46 +27,97 @@
 #include "sctk_debug.h"
 
 #ifdef MPC_USE_HYDRA
-#include <pmi.h>
+	#include <pmi.h>
+	#define SCTK_PMI_TAG_PMI_HOSTNAME 1
+#elif MPC_USE_SLURM
+	#include <pmi.h>
+#elif SCTK_LIB_MODE
+	/* We have to define these constants
+	 * as in lib mode we have no PMI.h */
+	#define PMI_SUCCESS 0
+	#define PMI_FAIL    1
+#endif /*SCTK_LIB_MODE */
 
 static int sctk_pmi_process_on_node_rank;
 static int sctk_pmi_node_rank;
 static int sctk_pmi_nodes_number;
 static int sctk_pmi_processes_on_node_number;
-
-
-
-
-#define SCTK_PMI_TAG_PMI_HOSTNAME 1
-
-#endif /* MPC_USE_HYDRA */
+static int sctk_pmi_process_rank;
+static int sctk_pmi_process_number;
 
 struct process_nb_from_node_rank *sctk_pmi_process_nb_from_node_rank = NULL;
 
-#ifdef MPC_USE_SLURM
-#include <pmi.h>
-#endif /* MPC_USE_SLURM */
-
-static int sctk_max_val_len;
-static int sctk_max_key_len;
-static char *sctk_kvsname;
+static int sctk_max_val_len = 0;
+static int sctk_max_key_len = 0;
+static char *sctk_kvsname = "0";
 SCTK_PMI_BOOL initialized;
 
 int spawned;
+
+/******************************************************************************
+LIBRARY MODE TOLOGY GETTERS 
+******************************************************************************/
+#ifdef SCTK_LIB_MODE
+	/* Here are the hook used by the host MPI when running in libmode */
+	#pragma weak MPC_Net_hook_rank
+	int MPC_Net_hook_rank()
+	{
+		return 0;
+	}
+	
+	#pragma weak MPC_Net_hook_size
+	int MPC_Net_hook_size()
+	{
+		return 1;
+	}
+	
+	#pragma weak MPC_Net_hook_barrier
+	void MPC_Net_hook_barrier()
+	{
+		
+	}
+	
+	#pragma weak MPC_Net_hook_send_to
+	void MPC_Net_hook_send_to( void * data, size_t size, int target )
+	{
+		sctk_fatal("You must implement the MPC_Net_send_to function to run in multiprocess");
+	}
+	
+	#pragma weak MPC_Net_hook_recv_from
+	void MPC_Net_hook_recv_from( void * data, size_t size, int source )
+	{
+		sctk_fatal("You must implement the MPC_Net_recv_from function to run in multiprocess");
+	}
+#endif
+
 /******************************************************************************
 INITIALIZATION/FINALIZE
 ******************************************************************************/
+
 /*! \brief Initialization function
  *
  */
 int sctk_pmi_init()
 {
 	static int done = 0;
-
+	
 	if ( done == 0 )
 	{
-		int rc, max_kvsname_len;
+		int rc;
 		done = 1;
+#ifdef SCTK_LIB_MODE
+		sctk_pmi_process_rank = MPC_Net_hook_rank();
+		sctk_pmi_process_number = MPC_Net_hook_size();
+
+		/* Consider nodes as processes */
+		sctk_node_rank = sctk_pmi_process_rank;
+		sctk_node_number=sctk_pmi_process_number;
+		sctk_local_process_rank = 0;
+		sctk_local_process_number = 1;
+
+		return 0;
+#else /* SCTK_LIB_MODE */
+		int max_kvsname_len;
 
 		// Initialized PMI/SLURM
 		rc = PMI_Init ( &spawned );
@@ -123,14 +174,14 @@ int sctk_pmi_init()
 			return rc;
 		}
 
-#ifdef MPC_USE_HYDRA
+	#ifdef MPC_USE_HYDRA
 		int rank, process_nb, nodes_nb = 0, i, j, size;
 		char *value = NULL;
 		char *nodes = NULL;
 		char hostname[SCTK_PMI_NAME_SIZE];
 
 		// check if PMI_Get_size is equal to 1 (could mean application launched without mpiexec)
-		rc = PMI_Get_size ( &size );
+		rc = sctk_pmi_get_process_number ( &size );
 
 		if ( rc != PMI_SUCCESS )
 		{
@@ -195,7 +246,7 @@ int sctk_pmi_init()
 
 		// now retrieve hostnames for all processes and compute local infos
 		//rc = sctk_pmi_get_process_number(&process_nb);
-		rc = PMI_Get_size ( &process_nb );
+		rc = sctk_pmi_get_process_number ( &process_nb );
 
 		if ( rc != PMI_SUCCESS )
 		{
@@ -269,21 +320,25 @@ int sctk_pmi_init()
 		free ( value );
 		free ( nodes );
 		return rc;
-#endif
+	#endif /* MPC_USE_HYDRA */
 
-
+		
+		sctk_pmi_get_process_rank ( &sctk_pmi_process_rank );
+		sctk_pmi_get_process_number ( &sctk_pmi_process_number );
 		sctk_pmi_get_node_rank ( &sctk_node_rank );
 		sctk_pmi_get_node_number ( &sctk_node_number );
 		sctk_pmi_get_process_on_node_rank ( &sctk_local_process_rank );
 		sctk_pmi_get_process_on_node_number ( &sctk_local_process_number );
-#ifdef MPC_USE_HYDRA
-  sctk_pmi_get_process_number_from_node_rank(sctk_pmi_process_nb_from_node_rank);
-#endif
+	#ifdef MPC_USE_HYDRA
+		sctk_pmi_get_process_number_from_node_rank(&sctk_pmi_process_nb_from_node_rank);
+	#endif
 
 
-#ifdef MPC_USE_SLURM
+	#ifdef MPC_USE_SLURM
 		return rc;
-#endif
+	#endif
+
+#endif /* SCTK_LIB_MODE */
 	}
 	else
 	{
@@ -298,6 +353,10 @@ int sctk_pmi_finalize()
 {
 	int rc;
 
+#ifdef SCTK_LIB_MODE
+	return PMI_SUCCESS;
+#else /* SCTK_LIB_MODE */
+
 	// Finalize PMI/SLURM
 	rc = PMI_Finalize();
 
@@ -308,6 +367,7 @@ int sctk_pmi_finalize()
 
 	free ( sctk_kvsname );
 	return rc;
+#endif
 }
 
 /*! \brief Get the job id
@@ -315,13 +375,7 @@ int sctk_pmi_finalize()
 */
 int sctk_pmi_get_job_id ( int *id )
 {
-#ifdef MPC_USE_HYDRA
-	/* in mpich with pmi1, kvs name is used as job id. */
-	*id = atoi ( sctk_kvsname );
-	return PMI_SUCCESS;
-#endif /* MPC_USE_HYDRA */
-
-#ifdef MPC_USE_SLURM
+#if defined(SCTK_LIB_MODE) || defined(MPC_USE_SLURM)
 	char *env = NULL;
 
 	env = getenv ( "SLURM_JOB_ID" );
@@ -345,9 +399,13 @@ int sctk_pmi_get_job_id ( int *id )
 			return PMI_FAIL;
 		}
 	}
-
+	
 	return PMI_SUCCESS;
-#endif /* MPC_USE_SLURM */
+#elif MPC_USE_HYDRA
+	/* in mpich with pmi1, kvs name is used as job id. */
+	*id = atoi ( sctk_kvsname );
+	return PMI_SUCCESS;
+#endif
 }
 
 /******************************************************************************
@@ -358,6 +416,10 @@ SYNCHRONIZATION
 */
 int sctk_pmi_barrier()
 {
+#ifdef SCTK_LIB_MODE
+	MPC_Net_hook_barrier();
+	return PMI_SUCCESS;
+#else /* SCTK_LIB_MODE */
 	int rc;
 
 	// Perform the barrier
@@ -367,6 +429,7 @@ int sctk_pmi_barrier()
 	}
 
 	return PMI_SUCCESS;
+#endif /* SCTK_LIB_MODE */
 }
 
 
@@ -380,6 +443,10 @@ INFORMATION DIFFUSION
 */
 int sctk_pmi_put_connection_info ( void *info, size_t size, int tag )
 {
+#ifdef SCTK_LIB_MODE
+	not_implemented();
+	return PMI_FAIL;
+#else /* SCTK_LIB_MODE */
 	int iRank, rc;
 	char *sKeyValue = NULL, * sValue = NULL;
 
@@ -388,7 +455,7 @@ int sctk_pmi_put_connection_info ( void *info, size_t size, int tag )
 
 	// Build the key
 	sKeyValue = ( char * ) sctk_malloc ( sctk_max_key_len * sizeof ( char ) );
-	sprintf ( sKeyValue, "%d_%d", tag, iRank );
+	sprintf ( sKeyValue, "MPC_KEYS_%d_%d", tag, iRank );
 
 	// Build the value
 	sValue = ( char * ) info;
@@ -409,6 +476,7 @@ int sctk_pmi_put_connection_info ( void *info, size_t size, int tag )
 
 	free ( sKeyValue );
 	return rc;
+#endif /* SCTK_LIB_MODE */
 }
 
 /*! \brief Get information required for connection initialization
@@ -419,12 +487,16 @@ int sctk_pmi_put_connection_info ( void *info, size_t size, int tag )
 */
 int sctk_pmi_get_connection_info ( void *info, size_t size, int tag, int rank )
 {
+#ifdef SCTK_LIB_MODE
+	not_implemented();
+	return PMI_FAIL;
+#else /* SCTK_LIB_MODE */
 	int rc;
 	char *sKeyValue = NULL, * sValue = NULL;
 
 	// Build the key
 	sKeyValue = ( char * ) sctk_malloc ( sctk_max_key_len * sizeof ( char ) );
-	sprintf ( sKeyValue, "%d_%d", tag, rank );
+	sprintf ( sKeyValue, "MPC_KEYS_%d_%d", tag, rank );
 
 	// Build the value
 	sValue = ( char * ) info;
@@ -437,6 +509,7 @@ int sctk_pmi_get_connection_info ( void *info, size_t size, int tag, int rank )
 
 	free ( sKeyValue );
 	return rc;
+#endif /* SCTK_LIB_MODE */
 }
 
 /*! \brief Register information required for connection initialization
@@ -446,6 +519,10 @@ int sctk_pmi_get_connection_info ( void *info, size_t size, int tag, int rank )
 */
 int sctk_pmi_put_connection_info_str ( void *info, size_t size, char tag[] )
 {
+#ifdef SCTK_LIB_MODE
+	not_implemented();
+	return PMI_FAIL;
+#else /* SCTK_LIB_MODE */
 	int iRank, rc;
 	char *sKeyValue = NULL, * sValue = NULL;
 
@@ -473,6 +550,7 @@ int sctk_pmi_put_connection_info_str ( void *info, size_t size, char tag[] )
 	}
 
 	return rc;
+#endif /* SCTK_LIB_MODE */
 }
 
 /*! \brief Get information required for connection initialization
@@ -482,6 +560,10 @@ int sctk_pmi_put_connection_info_str ( void *info, size_t size, char tag[] )
 */
 int sctk_pmi_get_connection_info_str ( void *info, size_t size, char tag[] )
 {
+#ifdef SCTK_LIB_MODE
+	not_implemented();
+	return PMI_FAIL;
+#else /* SCTK_LIB_MODE */
 	int rc;
 	char *sKeyValue = NULL, * sValue = NULL;
 
@@ -498,6 +580,7 @@ int sctk_pmi_get_connection_info_str ( void *info, size_t size, char tag[] )
 	}
 
 	return rc;
+#endif /* SCTK_LIB_MODE */
 }
 /******************************************************************************
 NUMBERING/TOPOLOGY INFORMATION
@@ -507,6 +590,10 @@ NUMBERING/TOPOLOGY INFORMATION
 */
 int sctk_pmi_get_process_number ( int *size )
 {
+#ifdef SCTK_LIB_MODE
+	*size = sctk_pmi_process_number;
+	return PMI_SUCCESS;
+#else /* SCTK_LIB_MODE */
 	int rc;
 	// Get the total number of processes
 	rc = PMI_Get_size ( size );
@@ -517,6 +604,7 @@ int sctk_pmi_get_process_number ( int *size )
 	}
 
 	return rc;
+#endif /* SCTK_LIB_MODE */
 }
 
 int sctk_pmi_get_process_number_from_node_rank ( struct process_nb_from_node_rank **process_number_from_node_rank )
@@ -526,6 +614,7 @@ int sctk_pmi_get_process_number_from_node_rank ( struct process_nb_from_node_ran
 	return PMI_SUCCESS;
 #else
 	not_implemented();
+	return PMI_FAIL;
 #endif
 }
 
@@ -534,6 +623,10 @@ int sctk_pmi_get_process_number_from_node_rank ( struct process_nb_from_node_ran
 */
 int sctk_pmi_get_process_rank ( int *rank )
 {
+#ifdef SCTK_LIB_MODE
+	*rank = sctk_pmi_process_rank;
+	return PMI_SUCCESS;
+#else /* SCTK_LIB_MODE */
 	int rc;
 
 	// Get the rank of the current process
@@ -547,6 +640,7 @@ int sctk_pmi_get_process_rank ( int *rank )
 	}
 
 	return rc;
+#endif /* SCTK_LIB_MODE */
 }
 
 /*! \brief Get the number of nodes
@@ -554,12 +648,15 @@ int sctk_pmi_get_process_rank ( int *rank )
 */
 int sctk_pmi_get_node_number ( int *size )
 {
-#ifdef MPC_USE_HYDRA
+#ifdef SCTK_LIB_MODE
+	sctk_pmi_get_process_number( size );
+#else /* SCTK_LIB_MODE */
+	#ifdef MPC_USE_HYDRA
 	*size = sctk_pmi_nodes_number;
 	return PMI_SUCCESS;
-#endif /* MPC_USE_HYDRA */
+	#endif /* MPC_USE_HYDRA */
 
-#ifdef MPC_USE_SLURM
+	#ifdef MPC_USE_SLURM
 	char *env = NULL;
 
 	env = getenv ( "SLURM_NNODES" );
@@ -576,7 +673,9 @@ int sctk_pmi_get_node_number ( int *size )
 	}
 
 	return PMI_SUCCESS;
-#endif /* MPC_USE_SLURM */
+	#endif /* MPC_USE_SLURM */
+#endif /* SCTK_LIB_MODE */
+	return PMI_FAIL;
 }
 
 /*! \brief Get the rank of this node
@@ -584,12 +683,15 @@ int sctk_pmi_get_node_number ( int *size )
 */
 int sctk_pmi_get_node_rank ( int *rank )
 {
-#ifdef MPC_USE_HYDRA
+#ifdef SCTK_LIB_MODE
+	sctk_pmi_get_process_rank( rank );
+#else /* SCTK_LIB_MODE */
+	#ifdef MPC_USE_HYDRA
 	*rank  = sctk_pmi_node_rank;
 	return PMI_SUCCESS;
-#endif /* MPC_USE_HYDRA */
+	#endif /* MPC_USE_HYDRA */
 
-#ifdef MPC_USE_SLURM
+	#ifdef MPC_USE_SLURM
 	char *env = NULL;
 
 	env = getenv ( "SLURM_NODEID" );
@@ -606,7 +708,9 @@ int sctk_pmi_get_node_rank ( int *rank )
 	}
 
 	return PMI_SUCCESS;
-#endif /* MPC_USE_SLURM */
+	#endif /* MPC_USE_SLURM */
+#endif /* SCTK_LIB_MODE */
+	return PMI_FAIL;
 }
 
 /*! \brief Get the number of processes on the current node
@@ -614,16 +718,20 @@ int sctk_pmi_get_node_rank ( int *rank )
 */
 int sctk_pmi_get_process_on_node_number ( int *size )
 {
-#ifdef MPC_USE_SLURM
+#ifdef SCTK_LIB_MODE
+	*size = sctk_local_process_number;
+	return PMI_SUCCESS;
+#else /* SCTK_LIB_MODE */
+	#ifdef MPC_USE_SLURM
 	int rc;
-#endif
+	#endif
 
-#ifdef MPC_USE_HYDRA
+	#ifdef MPC_USE_HYDRA
 	*size  = sctk_pmi_processes_on_node_number;
 	return PMI_SUCCESS;
-#endif /* MPC_USE_HYDRA */
+	#endif /* MPC_USE_HYDRA */
 
-#ifdef MPC_USE_SLURM
+	#ifdef MPC_USE_SLURM
 
 	// Get the number of processes on the current node
 	if ( ( rc = PMI_Get_clique_size ( size ) ) != PMI_SUCCESS )
@@ -634,7 +742,8 @@ int sctk_pmi_get_process_on_node_number ( int *size )
 	}
 
 	return PMI_SUCCESS;
-#endif /* MPC_USE_SLURM */
+	#endif /* MPC_USE_SLURM */
+#endif /* SCTK_LIB_MODE */
 }
 
 /*! \brief Get the rank of this process on the current node
@@ -642,12 +751,16 @@ int sctk_pmi_get_process_on_node_number ( int *size )
 */
 int sctk_pmi_get_process_on_node_rank ( int *rank )
 {
-#ifdef MPC_USE_HYDRA
+#ifdef SCTK_LIB_MODE
+	*rank = sctk_local_process_rank;
+	return PMI_SUCCESS;
+#else /* SCTK_LIB_MODE */
+	#ifdef MPC_USE_HYDRA
 	*rank = sctk_pmi_process_on_node_rank;
 	return PMI_SUCCESS;
-#endif /* MPC_USE_HYDRA */
+	#endif /* MPC_USE_HYDRA */
 
-#ifdef MPC_USE_SLURM
+	#ifdef MPC_USE_SLURM
 	char *env = NULL;
 
 	env = getenv ( "SLURM_LOCALID" );
@@ -664,7 +777,8 @@ int sctk_pmi_get_process_on_node_rank ( int *rank )
 	}
 
 	return PMI_SUCCESS;
-#endif /* MPC_USE_SLURM */
+	#endif /* MPC_USE_SLURM */
+#endif /* SCTK_LIB_MODE */
 }
 
 /******************************************************************************
@@ -678,6 +792,10 @@ PT2PT COMMUNICATIONS
 */
 int sctk_pmi_send ( void *info, size_t size, int dest )
 {
+#ifdef SCTK_LIB_MODE
+	not_implemented();
+	return PMI_FAIL;
+#else /* SCTK_LIB_MODE */
 	if ( sctk_safe_write ( dest, info, size ) == -1 )
 	{
 		fprintf ( stderr, "FAILURE (sctk_pmi): sock write error\n" );
@@ -687,6 +805,7 @@ int sctk_pmi_send ( void *info, size_t size, int dest )
 	{
 		return PMI_SUCCESS;
 	}
+#endif /* SCTK_LIB_MODE */
 }
 
 /*! \brief Receive a message
@@ -696,6 +815,10 @@ int sctk_pmi_send ( void *info, size_t size, int dest )
 */
 int sctk_pmi_recv ( void *info, size_t size, int src )
 {
+#ifdef SCTK_LIB_MODE
+	not_implemented();
+	return PMI_FAIL;
+#else /* SCTK_LIB_MODE */
 	if ( sctk_safe_read ( src, info, size ) == -1 )
 	{
 		fprintf ( stderr, "FAILURE (sctk_pmi): sock read error\n" );
@@ -705,6 +828,7 @@ int sctk_pmi_recv ( void *info, size_t size, int src )
 	{
 		return PMI_SUCCESS;
 	}
+#endif /* SCTK_LIB_MODE */
 }
 
 int
@@ -727,5 +851,9 @@ sctk_pmi_is_initialized()
 
 void sctk_net_abort()
 {
+#ifdef SCTK_LIB_MODE
+	abort();
+#else 
 	PMI_Abort ( 6, "ABORT" );
+#endif
 }

@@ -367,9 +367,9 @@ void sctk_rail_init_driver( sctk_rail_info_t * rail, int driver_type )
 #endif
 #ifdef MPC_USE_PORTALS
 
-		//case SCTK_RTCFG_net_driver_portals: /* TCP */
-		//	sctk_network_init_multirail_portals ( new_rail, nb_rails_portals );
-		//break;
+        case SCTK_RTCFG_net_driver_portals: /* PORTALS */
+            sctk_network_init_portals ( rail );
+        break;
 #endif
 		case SCTK_RTCFG_net_driver_topological:
 			sctk_network_init_topological( rail );
@@ -404,6 +404,9 @@ restart:
 
 	/* Initialize multi-rail engine */
 	sctk_multirail_destination_table_init();
+	
+	/* Init Polling for control messages */
+	sctk_control_message_init();
 
 	int j, k, l;
 

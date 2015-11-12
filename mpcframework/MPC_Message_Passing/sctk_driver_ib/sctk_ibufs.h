@@ -214,6 +214,8 @@ enum sctk_ibuf_status
     FREE_FLAG             = 22,
     RDMA_READ_IBUF_FLAG   = 33,
     RDMA_WRITE_IBUF_FLAG  = 44,
+    RDMA_FETCH_AND_OP_IBUF_FLAG  = 45,
+    RDMA_CAS_IBUF_FLAG  = 46,
     NORMAL_IBUF_FLAG      = 55,
     SEND_IBUF_FLAG        = 66,
     SEND_INLINE_IBUF_FLAG = 77,
@@ -233,6 +235,14 @@ __UNUSED__ static char *sctk_ibuf_print_flag ( enum sctk_ibuf_status flag )
 
 		case RDMA_WRITE_IBUF_FLAG:
 			return "RDMA_WRITE_IBUF_FLAG";
+			break;
+			
+		case RDMA_FETCH_AND_OP_IBUF_FLAG:
+			return "RDMA_FETCH_AND_OP_IBUF_FLAG";
+			break;
+
+		case RDMA_CAS_IBUF_FLAG:
+			return "RDMA_CAS_IBUF_FLAG";
 			break;
 
 		case RDMA_WRITE_INLINE_IBUF_FLAG:
@@ -300,7 +310,7 @@ typedef struct sctk_ibuf_s
 	size_t *size_flag;					/**< Size flag */
 	int previous_flag;					/**< Previous flag for RDMA */
 	double polled_timestamp;			/**< Timestamp when the ibuf has been polled from the CQ */
-	struct sctk_rail_info_s *rail;		/**< We save the rail where the message has been pooled*/
+	struct sctk_rail_info_s *rail;	/**< We save the rail where the message has been pooled*/
 	enum sctk_ib_cq_type_t cq;
 	uint32_t send_imm_data;
 } sctk_ibuf_t;
@@ -371,8 +381,24 @@ void sctk_ibuf_rdma_read_init ( sctk_ibuf_t *ibuf,
                                 sctk_uint32_t lkey,
                                 void *remote_address,
                                 sctk_uint32_t rkey,
-                                int len,
-                                void *supp_ptr );
+                                int len );
+
+void sctk_ibuf_rdma_fetch_and_add_init( sctk_ibuf_t *ibuf,
+										void *fetch_addr,
+										sctk_uint32_t lkey,
+										void *remote_address,
+										sctk_uint32_t rkey,
+										sctk_uint64_t add );
+
+void sctk_ibuf_rdma_CAS_init( sctk_ibuf_t *ibuf,
+							  void *  res_addr,
+							  sctk_uint32_t local_key,
+							  void *remote_address,
+							  sctk_uint32_t rkey,
+							  sctk_uint64_t comp,
+							  sctk_uint64_t new );
+
+
 
 void sctk_ibuf_release ( struct sctk_ib_rail_info_s *rail_ib,
                          sctk_ibuf_t *ibuf,

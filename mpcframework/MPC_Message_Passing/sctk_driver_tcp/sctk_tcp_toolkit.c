@@ -406,7 +406,7 @@ static void sctk_network_connection_from_tcp ( int from, int to, sctk_rail_info_
 }
 
 
-void tcp_control_message_handler( struct sctk_rail_info_s * rail, int source_process, int source_rank, char subtype, char param, void * data )
+void tcp_control_message_handler( struct sctk_rail_info_s * rail, int source_process, int source_rank, char subtype, char param, void * data, size_t size )
 {
 	sctk_tcp_control_message_t action = subtype;
 
@@ -455,7 +455,6 @@ void sctk_network_init_tcp_all ( sctk_rail_info_t *rail, int sctk_use_tcp_o_ib,
 	/* Start listening TCP socket */
 	sctk_client_create_recv_socket ( rail );
 
-
 	/* Fill HOST info */
 	gethostname ( rail->network.tcp.connection_infos, MAX_STRING_SIZE - 100 );
 	rail->network.tcp.connection_infos_size = strlen ( rail->network.tcp.connection_infos );
@@ -477,6 +476,37 @@ void sctk_network_init_tcp_all ( sctk_rail_info_t *rail, int sctk_use_tcp_o_ib,
 
 	sctk_nodebug ( "Connection Infos (%d): %s", sctk_process_rank, rail->network.tcp.connection_infos );
 
+#ifdef SCTK_LIB_MODE
+	sctk_nodebug("TCP BOOTSTRAP LIB MODE %d %d", sctk_process_number, sctk_process_rank);
+	if ( sctk_process_number > 2 )
+	{
+		if ( sctk_process_rank % 2 == 0 )
+		{
+			MPC_Net_hook_send_to( rail->network.tcp.connection_infos, MAX_STRING_SIZE, left_rank );
+			MPC_Net_hook_recv_from( right_rank_connection_infos, MAX_STRING_SIZE, right_rank );
+		}
+		else
+		{
+			MPC_Net_hook_recv_from( right_rank_connection_infos, MAX_STRING_SIZE, right_rank );
+			MPC_Net_hook_send_to( rail->network.tcp.connection_infos, MAX_STRING_SIZE, left_rank );
+		}
+	}
+	else
+	{
+		if( sctk_process_number == 2 )
+		{
+			if( sctk_process_rank == 1 )
+			{
+				MPC_Net_hook_send_to( rail->network.tcp.connection_infos, MAX_STRING_SIZE, left_rank );
+			}
+			else
+			{
+				MPC_Net_hook_recv_from( right_rank_connection_infos, MAX_STRING_SIZE, right_rank );
+			}
+		}
+	}
+#else
+
 	/* Register connection info inside the PMPI */
 	assume ( sctk_pmi_put_connection_info ( rail->network.tcp.connection_infos, MAX_STRING_SIZE, rail->rail_number ) == 0 );
 
@@ -485,9 +515,11 @@ void sctk_network_init_tcp_all ( sctk_rail_info_t *rail, int sctk_use_tcp_o_ib,
 	/* Retrieve Connection info to dest rank from the PMI */
 	assume ( sctk_pmi_get_connection_info ( right_rank_connection_infos, MAX_STRING_SIZE, rail->rail_number, right_rank ) == 0 );
 
+	sctk_pmi_barrier();
+#endif
+
 	sctk_nodebug ( "DEST Connection Infos(%d) to %d: %s", sctk_process_rank, right_rank, right_rank_connection_infos );
 
-	sctk_pmi_barrier();
 
 	/* Intiate ring connection */
 	if ( sctk_process_number > 2 )
@@ -536,7 +568,7 @@ void sctk_network_init_tcp_all ( sctk_rail_info_t *rail, int sctk_use_tcp_o_ib,
 	else
 	{
 		/* Here particular case of two processes (not to loop) */
-		if ( sctk_process_rank % 2 == 0 )
+		if ( sctk_process_rank == 0 )
 		{
 			sctk_nodebug ( "Connect to %d", right_rank );
 			right_socket = sctk_tcp_connect_to ( right_rank_connection_infos, rail );

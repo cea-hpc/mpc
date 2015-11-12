@@ -45,33 +45,44 @@ static void *sctk_tcp_thread ( sctk_endpoint_t *tmp )
 		ssize_t res;
 
 		res = sctk_safe_read ( fd, ( char * ) &size, sizeof ( size_t ) );
-		//sctk_debug ( "Got msg of size %d (online:%d)", res, sctk_online_program );
+
+		if( (res <= 0) )
+		{
+			/* EOF or ERROR */
+			break;
+		}
 
 		if ( res < sizeof ( size_t ) )
 		{
-			return NULL;
+			break;
 		}
 
 		if ( size < sizeof ( sctk_thread_ptp_message_body_t ) )
 		{
-			return NULL;
+			break;
 		}
 
 		size = size - sizeof ( sctk_thread_ptp_message_body_t ) + sizeof ( sctk_thread_ptp_message_t );
-	
+
 		msg = sctk_malloc ( size );
 		
 		assume( msg != NULL );
 		
 		body = ( char * ) msg + sizeof ( sctk_thread_ptp_message_t );
 
+
 		/* Recv header*/
-		//sctk_debug ( "Read %d", sizeof ( sctk_thread_ptp_message_body_t ) );
 		res = sctk_safe_read ( fd, ( char * ) msg, sizeof ( sctk_thread_ptp_message_body_t ) );
+
+		if( (res <= 0) )
+		{
+			/* EOF or ERROR */
+			break;
+		}
 
 		if ( res != sizeof ( sctk_thread_ptp_message_body_t ) )
 		{
-			return NULL;
+			break;
 		}
 
 		SCTK_MSG_COMPLETION_FLAG_SET ( msg , NULL );
@@ -79,12 +90,19 @@ static void *sctk_tcp_thread ( sctk_endpoint_t *tmp )
 
 		if ( SCTK_MSG_COMMUNICATOR ( msg ) < 0 )
 		{
-			return NULL;
+			sctk_fatal("BAD communicator %d",  SCTK_MSG_COMMUNICATOR ( msg ) );
 		}
 
 		/* Recv body*/
 		size = size - sizeof ( sctk_thread_ptp_message_t );
-		sctk_safe_read ( fd, ( char * ) body, size );
+		
+		res = sctk_safe_read ( fd, ( char * ) body, size );
+
+		if( (res <= 0) )
+		{
+			/* EOF or ERROR */
+			break;
+		}
 
 		sctk_rebuild_header ( msg );
 		sctk_reinit_header ( msg, sctk_free, sctk_net_message_copy );
@@ -93,9 +111,9 @@ static void *sctk_tcp_thread ( sctk_endpoint_t *tmp )
 		tmp->rail->send_message_from_network ( msg );
 	}
 	
-	//sctk_error("TCP THREAD LEAVING");
+	sctk_debug("TCP THREAD LEAVING");
 
-	return NULL;
+	pthread_exit( NULL );
 }
 
 static void sctk_network_send_message_endpoint_tcp ( sctk_thread_ptp_message_t *msg, sctk_endpoint_t *endpoint )
@@ -103,12 +121,13 @@ static void sctk_network_send_message_endpoint_tcp ( sctk_thread_ptp_message_t *
 	size_t size;
 	int fd;
 
-
 	sctk_spinlock_lock ( & ( endpoint->data.tcp.lock ) );
 
 	fd = endpoint->data.tcp.fd;
 
 	size = SCTK_MSG_SIZE ( msg ) + sizeof ( sctk_thread_ptp_message_body_t );
+
+	sctk_nodebug("SEND MSG of size %d ENDPOINT TCP to %d", size, endpoint->dest);
 
 	sctk_safe_write ( fd, ( char * ) &size, sizeof ( size_t ) );
 
@@ -116,6 +135,8 @@ static void sctk_network_send_message_endpoint_tcp ( sctk_thread_ptp_message_t *
 
 	sctk_net_write_in_fd ( msg, fd );
 	sctk_spinlock_unlock ( & ( endpoint->data.tcp.lock ) );
+
+	sctk_nodebug("SEND MSG ENDPOINT TCP to %d DONE", endpoint->dest);
 
 	sctk_complete_and_free_message ( msg );
 }
@@ -149,6 +170,7 @@ static void sctk_network_notify_any_source_message_tcp ( int polling_task_id, in
 
 static int sctk_send_message_from_network_tcp ( sctk_thread_ptp_message_t *msg )
 {
+
 	if ( sctk_send_message_from_network_reorder ( msg ) == REORDER_NO_NUMBERING )
 	{
 		/* No reordering */

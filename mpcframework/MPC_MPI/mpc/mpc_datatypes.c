@@ -166,7 +166,7 @@ void __init_a_composed_common_types(MPC_Datatype target_type, MPC_Aint disp, MPC
 	/* We do this to handle the padding as we
 	 * want to guarantee the matching with
 	 * an used defined struct */
-	PMPC_Type_set_size(target_type, struct_size );
+	PMPC_Type_flag_padded(target_type );
 }
 
 void init_composed_common_types()
@@ -554,6 +554,9 @@ void sctk_derived_datatype_init( sctk_derived_datatype_t * type ,
 	type->is_ub = is_ub;
 	type->is_lb = is_lb;
 	
+	/* We assume 0 this value is set in the Struct constructor afterwards */
+	type->is_a_padded_struct = 0;
+	
 	/* Clear context */
 	sctk_datatype_context_clear( &type->context );
 
@@ -782,6 +785,7 @@ void sctk_derived_datatype_display( sctk_derived_datatype_t * target_type )
 {
 	sctk_error("============DERIVED===================");
 	sctk_error("TYPE %d", target_type->id );
+	sctk_error("NAME %s", sctk_datype_get_name( target_type->id ) );
 	sctk_error("SIZE %ld", target_type->size );
 	sctk_error("REF_COUNT %ld", target_type->ref_count );
 	sctk_error("COUNT %ld", target_type->count );
@@ -812,7 +816,7 @@ void sctk_derived_datatype_display( sctk_derived_datatype_t * target_type )
 	printf("TYP : [");
 	for( i = 0 ; i < nd ; i++ )
 	{
-		printf("[%d] %d , ", i, target_type->context.array_of_types[i] );
+		printf("[%d] %d (%s), ", i, target_type->context.array_of_types[i], sctk_datype_get_name( target_type->context.array_of_types[i] ) );
 	}
 	printf("]\n");
 	sctk_error("==============================================");

@@ -22,18 +22,6 @@
 #ifndef __mpc__H
 #define __mpc__H
 
-/*
-#ifndef MPC_NO_AUTO_MAIN_REDEF
-#undef main
-#ifdef __cplusplus
-#define main long mpc_user_main_dummy__ (); extern "C" int mpc_user_main__
-#else
-#define main mpc_user_main__
-#endif
-#endif
-*/
-
-
 #ifdef __cplusplus
 extern "C"
 {
@@ -45,6 +33,7 @@ extern "C"
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <sctk_types.h>
 
   int PMPC_Main (int argc, char **argv);
   int PMPC_User_Main (int argc, char **argv);
@@ -65,13 +54,13 @@ extern "C"
   
 typedef int MPC_Message;
 
-typedef int mpc_msg_count;
+typedef sctk_msg_count_t mpc_msg_count;
 
 typedef unsigned int mpc_pack_indexes_t;
 typedef long mpc_pack_absolute_indexes_t;
 typedef long MPC_Aint;
 typedef long MPC_Count;
-typedef int MPC_Comm;
+typedef sctk_communicator_t MPC_Comm;
 
 typedef struct
 {
@@ -92,95 +81,44 @@ extern const MPC_Group_t mpc_group_null;
 /* #define MPC_REQUEST_SIZE 30 */
 
 /* Has to match an sctk_datatype_t */
-typedef int MPC_Datatype;
-typedef void (*MPC_Op_f) (const void *, void *, size_t, MPC_Datatype);
-typedef void (MPC_User_function) (void *, void *, int *, MPC_Datatype *);
+typedef sctk_datatype_t MPC_Datatype;
 
 typedef void (MPC_Handler_function) (MPC_Comm *, int *, ...);
 typedef MPC_Handler_function *MPC_Errhandler;
 
-typedef struct
-{
-	MPC_Op_f func;
-	MPC_User_function *u_func;
-} MPC_Op;
-
+/** Reduction Operations */
+typedef sctk_Op_f MPC_Op_f;
+typedef sctk_Op_User_function MPC_User_function;
+typedef sctk_Op MPC_Op;
 #define MPC_OP_INIT {NULL,NULL}
 
-typedef struct
-{
-	int MPC_SOURCE;		/**< Source of the Message */
-	int MPC_TAG;		/**< Tag of the message */
-	int MPC_ERROR;		/**< Did we encounter an error */
-	int cancelled;		/**< Was the message canceled */
-	mpc_msg_count size;	/**< Size of the message */
-} MPC_Status;
+typedef sctk_status_t MPC_Status;
 #define MPC_STATUS_INIT {MPC_ANY_SOURCE,MPC_ANY_TAG,MPC_SUCCESS,0,0}
-
-
-typedef struct MPC_Header{
-	int source;
-	int destination;
-	int destination_task;
-	int source_task;
-	int message_tag;
-	MPC_Comm communicator;
-	mpc_msg_count msg_size;
-}MPC_Header;
 
 struct sctk_thread_ptp_message_s;
 
 
-/* Generalized requests functions */
+/** Generalized requests functions **/
+typedef sctk_Grequest_query_function MPC_Grequest_query_function;
+typedef sctk_Grequest_cancel_function MPC_Grequest_cancel_function;
+typedef sctk_Grequest_free_function MPC_Grequest_free_function;
+/** Extended Generalized requests functions **/
+typedef sctk_Grequest_poll_fn MPCX_Grequest_poll_fn;
+typedef sctk_Grequest_wait_fn MPCX_Grequest_wait_fn;
+/** Generalized Request classes **/
+typedef sctk_Request_class MPCX_Request_class;
 
-typedef int MPC_Grequest_query_function( void * extra_state, MPC_Status *status );
-typedef int MPC_Grequest_cancel_function( void * extra_state, int complete );
-typedef int MPC_Grequest_free_function( void * extra_state );
-
-/* Extended Generalized requests functions */
-
-typedef int MPCX_Grequest_poll_fn( void * extra_state , MPC_Status * status );
-typedef int MPCX_Grequest_wait_fn( int count, void ** array_of_states, double timeout, MPC_Status * status );
-
-/* Generalized Request classes */
-typedef int MPCX_Request_class;
-
-/* Request definition */
-typedef struct
-{
-	int request_type;
-	MPC_Header header;
-	volatile int completion_flag;
-	struct sctk_thread_ptp_message_s* msg;
-	int is_null;
-	int need_check_in_wait;
-	int truncated;
-	int status_error;
-
-	/* Generalized Request context  */
-	MPC_Grequest_query_function * query_fn;
-	MPC_Grequest_cancel_function * cancel_fn;
-	MPC_Grequest_free_function * free_fn;
-	void * extra_state;
-	/* Extended Request */
-	MPCX_Grequest_poll_fn * poll_fn;
-	MPCX_Grequest_wait_fn * wait_fn;
-
-	/* MPI_Grequest_complete takes a copy of the struct
-	* not a reference however we have to change a value
-	* in the source struct which is being pulled therefore
-	* we have to do this hack by saving a pointer to the
-	* request inside the request */
-	void * pointer_to_source_request;
-} MPC_Request;
-
+/** MPC Requests */
+typedef sctk_request_t MPC_Request;
 extern MPC_Request mpc_request_null;
 
 #define MPC_REQUEST_NULL mpc_request_null
-#define MPC_COMM_WORLD 0
-#define MPC_COMM_SELF 1
 
-#define MPC_SUCCESS 0
+#define MPC_COMM_WORLD SCTK_COMM_WORLD
+#define MPC_COMM_SELF SCTK_COMM_SELF
+#define MPC_COMM_NULL SCTK_COMM_NULL
+#define MPC_SUCCESS SCTK_SUCCESS
+
 #define MPC_UNDEFINED (-1)
 /* Communication argument parameters */
 #define MPC_ERR_BUFFER                  1  /* Invalid buffer pointer */
@@ -270,10 +208,9 @@ extern MPC_Request mpc_request_null;
 
 #define MPC_STATUS_IGNORE NULL
 #define MPC_STATUSES_IGNORE NULL
-#define MPC_ANY_TAG -1
-#define MPC_ANY_SOURCE -1
-#define MPC_PROC_NULL -2
-#define MPC_COMM_NULL ((MPC_Comm)(-1))
+#define MPC_ANY_TAG SCTK_ANY_TAG
+#define MPC_ANY_SOURCE SCTK_ANY_SOURCE
+#define MPC_PROC_NULL SCTK_PROC_NULL
 #define MPC_MAX_PROCESSOR_NAME 255
 #define MPC_ROOT -4
 #define MPC_MAX_OBJECT_NAME 256
@@ -283,7 +220,6 @@ extern MPC_Request mpc_request_null;
 /********************************************************************/
 /*Special TAGS                                                      */
 /********************************************************************/
-#define MPC_ANY_TAG -1
 #define MPC_GATHERV_TAG -2
 #define MPC_GATHER_TAG -3
 #define MPC_SCATTERV_TAG -4
@@ -331,24 +267,24 @@ typedef int MPC_Info;
 
 #define MPC_CREATE_INTERN_FUNC(name) extern  const MPC_Op MPC_##name
 
-    MPC_CREATE_INTERN_FUNC (SUM);
-    MPC_CREATE_INTERN_FUNC (MAX);
-    MPC_CREATE_INTERN_FUNC (MIN);
-    MPC_CREATE_INTERN_FUNC (PROD);
-    MPC_CREATE_INTERN_FUNC (LAND);
-    MPC_CREATE_INTERN_FUNC (BAND);
-    MPC_CREATE_INTERN_FUNC (LOR);
-    MPC_CREATE_INTERN_FUNC (BOR);
-    MPC_CREATE_INTERN_FUNC (LXOR);
-    MPC_CREATE_INTERN_FUNC (BXOR);
-    MPC_CREATE_INTERN_FUNC (MINLOC);
-    MPC_CREATE_INTERN_FUNC (MAXLOC);
+MPC_CREATE_INTERN_FUNC (SUM);
+MPC_CREATE_INTERN_FUNC (MAX);
+MPC_CREATE_INTERN_FUNC (MIN);
+MPC_CREATE_INTERN_FUNC (PROD);
+MPC_CREATE_INTERN_FUNC (LAND);
+MPC_CREATE_INTERN_FUNC (BAND);
+MPC_CREATE_INTERN_FUNC (LOR);
+MPC_CREATE_INTERN_FUNC (BOR);
+MPC_CREATE_INTERN_FUNC (LXOR);
+MPC_CREATE_INTERN_FUNC (BXOR);
+MPC_CREATE_INTERN_FUNC (MINLOC);
+MPC_CREATE_INTERN_FUNC (MAXLOC);
 
     /*TYPES*/
 #define MPC_DATATYPE_NULL ((MPC_Datatype)-1)
 #define MPC_UB ((MPC_Datatype)-2)
 #define MPC_LB ((MPC_Datatype)-3)
-#define MPC_CHAR 0
+#define MPC_PACKED 0
 #define MPC_BYTE 1
 #define MPC_SHORT 2
 #define MPC_INT 3
@@ -361,7 +297,7 @@ typedef int MPC_Info;
 #define MPC_UNSIGNED_LONG  10
 #define MPC_LONG_DOUBLE  11
 #define MPC_LONG_LONG 12
-#define MPC_PACKED 13
+#define MPC_CHAR 13
 #define MPC_LOGICAL 22
 #define MPC_INTEGER1 24
 #define MPC_INTEGER2 25
@@ -809,7 +745,7 @@ int MPC_Test_cancelled (MPC_Status *, int *);
   /*MPI compatibility*/
 #define MPC_BSEND_OVERHEAD 0
 #define MPC_BOTTOM ((void*)0)
-#define MPC_IN_PLACE ((void*)-1)
+#define MPC_IN_PLACE SCTK_IN_PLACE
 
 
 
@@ -967,6 +903,7 @@ int MPC_Test_cancelled (MPC_Status *, int *);
   /*Types */
   int PMPC_Type_size (MPC_Datatype, size_t *);
   int PMPC_Type_is_allocated (MPC_Datatype datatype, int * flag );
+  int PMPC_Type_flag_padded(MPC_Datatype datatype);
   int PMPC_Type_hcontiguous (MPC_Datatype *outtype, size_t count, MPC_Datatype *data_in);
   int __MPC_Barrier (MPC_Comm comm);
   int PMPC_Type_free (MPC_Datatype * datatype);

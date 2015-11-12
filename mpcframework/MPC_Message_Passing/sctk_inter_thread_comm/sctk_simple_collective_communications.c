@@ -76,13 +76,12 @@ void sctk_broadcast_simple ( void *buffer, const size_t size,
                              const int root, const sctk_communicator_t com_id,
                              struct sctk_internal_collectives_struct_s *tmp )
 {
-	sctk_thread_data_t *thread_data;
 	int local;
 	int id;
 
-	thread_data = sctk_thread_data_get ();
+
 	local = sctk_get_nb_task_local ( com_id );
-	id = sctk_get_rank ( com_id, thread_data->task_id );
+	id = sctk_get_rank ( com_id, sctk_get_task_rank() );
 
 	sctk_thread_mutex_lock ( &tmp->broadcast.broadcast_simple.lock );
 	{
@@ -166,7 +165,7 @@ static void sctk_allreduce_simple ( const void *buffer_in, void *buffer_out,
 
 		if ( tmp->allreduce.allreduce_simple.done == 0 )
 		{
-			if ( buffer_in != MPC_IN_PLACE )
+			if ( buffer_in != SCTK_IN_PLACE )
 			{
 				memcpy ( tmp->allreduce.allreduce_simple.buffer, buffer_in, size );
 			}

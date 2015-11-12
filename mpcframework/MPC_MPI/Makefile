@@ -1,4 +1,4 @@
-# Makefile generated with ../MPC_Tools/mpc_gen_makefile Thu May 22 15:42:13 CEST 2014
+# Makefile generated with ../MPC_Tools/mpc_gen_makefile jeudi 8 octobre 2015, 14:01:11 (UTC+0200)
 ############################# MPC License ##############################
 # Wed Nov 19 15:19:19 CET 2008                                         #
 # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          #
@@ -34,6 +34,24 @@ SOBJ_include=$(SFILES_include:include/%.S=$(M_PWD)/BUILD_MPC_MPI/lib/%.o)
 SDEP_include=$(SFILES_include:include/%.S=$(M_PWD)/BUILD_MPC_MPI/lib/%.d)
 
 
+FILES_mpc=$(wildcard mpc/*.c)
+OBJ_mpc=$(FILES_mpc:mpc/%.c=$(M_PWD)/BUILD_MPC_MPI/lib/%.o)
+DEP_mpc=$(FILES_mpc:mpc/%.c=$(M_PWD)/BUILD_MPC_MPI/lib/%.d)
+
+SFILES_mpc=$(wildcard mpc/*.S)
+SOBJ_mpc=$(SFILES_mpc:mpc/%.S=$(M_PWD)/BUILD_MPC_MPI/lib/%.o)
+SDEP_mpc=$(SFILES_mpc:mpc/%.S=$(M_PWD)/BUILD_MPC_MPI/lib/%.d)
+
+
+FILES_mpi=$(wildcard mpi/*.c)
+OBJ_mpi=$(FILES_mpi:mpi/%.c=$(M_PWD)/BUILD_MPC_MPI/lib/%.o)
+DEP_mpi=$(FILES_mpi:mpi/%.c=$(M_PWD)/BUILD_MPC_MPI/lib/%.d)
+
+SFILES_mpi=$(wildcard mpi/*.S)
+SOBJ_mpi=$(SFILES_mpi:mpi/%.S=$(M_PWD)/BUILD_MPC_MPI/lib/%.o)
+SDEP_mpi=$(SFILES_mpi:mpi/%.S=$(M_PWD)/BUILD_MPC_MPI/lib/%.d)
+
+
 FILES_src=$(wildcard src/*.c)
 OBJ_src=$(FILES_src:src/%.c=$(M_PWD)/BUILD_MPC_MPI/lib/%.o)
 DEP_src=$(FILES_src:src/%.c=$(M_PWD)/BUILD_MPC_MPI/lib/%.d)
@@ -46,13 +64,21 @@ SDEP_src=$(SFILES_src:src/%.S=$(M_PWD)/BUILD_MPC_MPI/lib/%.d)
 FFILES_include=$(wildcard include/*.f)
 FOBJ_include=$(FFILES_include:include/%.f=$(M_PWD)/BUILD_MPC_MPI/lib/%_f.o)
 
+FFILES_mpc=$(wildcard mpc/*.f)
+FOBJ_mpc=$(FFILES_mpc:mpc/%.f=$(M_PWD)/BUILD_MPC_MPI/lib/%_f.o)
+
+FFILES_mpi=$(wildcard mpi/*.f)
+FOBJ_mpi=$(FFILES_mpi:mpi/%.f=$(M_PWD)/BUILD_MPC_MPI/lib/%_f.o)
+
 FFILES_src=$(wildcard src/*.f)
 FOBJ_src=$(FFILES_src:src/%.f=$(M_PWD)/BUILD_MPC_MPI/lib/%_f.o)
 
-all: $(OBJ_include) $(FOBJ_include) $(SOBJ_include) $(OBJ_src) $(FOBJ_src) $(SOBJ_src)
+all: $(OBJ_include) $(FOBJ_include) $(SOBJ_include) $(OBJ_mpc) $(FOBJ_mpc) $(SOBJ_mpc) $(OBJ_mpi) $(FOBJ_mpi) $(SOBJ_mpi) $(OBJ_src) $(FOBJ_src) $(SOBJ_src)
 
 $(M_PWD)/include_modules/MPC_MPI:
 	@../MPC_Tools/mpc_prepare_includes $(MPC_SOURCE_DIR)MPC_MPI/include $(M_PWD)/include_modules
+	@../MPC_Tools/mpc_prepare_includes $(MPC_SOURCE_DIR)MPC_MPI/mpc $(M_PWD)/include_modules
+	@../MPC_Tools/mpc_prepare_includes $(MPC_SOURCE_DIR)MPC_MPI/mpi $(M_PWD)/include_modules
 	@../MPC_Tools/mpc_prepare_includes $(MPC_SOURCE_DIR)MPC_MPI/src $(M_PWD)/include_modules
 	@touch $@
 
@@ -60,7 +86,7 @@ prepare_includes:$(M_PWD)/include_modules/MPC_MPI
 
 
 ifneq ($(SCTK_MAKE_NO_DEP),yes)
-DEPENDS=$(DEP_include) $(DEP_src) 
+DEPENDS=$(DEP_include) $(DEP_mpc) $(DEP_mpi) $(DEP_src) 
 
 $(DEPENDS):Makefile 
 endif
@@ -69,6 +95,16 @@ ifneq ($(SCTK_MAKE_NO_DEP),yes)
 $(DEP_include):$(M_PWD)/BUILD_MPC_MPI/lib/%.d:include/%.c
 	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_MPI/lib/%.d,include/%.c,$@)"
 	@$(CC) $(SCTK_CC_DEP) $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_MPI/lib/%.d,include/%.c,$@) | \
+		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_MPI/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
+
+$(DEP_mpc):$(M_PWD)/BUILD_MPC_MPI/lib/%.d:mpc/%.c
+	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_MPI/lib/%.d,mpc/%.c,$@)"
+	@$(CC) $(SCTK_CC_DEP) $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_MPI/lib/%.d,mpc/%.c,$@) | \
+		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_MPI/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
+
+$(DEP_mpi):$(M_PWD)/BUILD_MPC_MPI/lib/%.d:mpi/%.c
+	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_MPI/lib/%.d,mpi/%.c,$@)"
+	@$(CC) $(SCTK_CC_DEP) $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_MPI/lib/%.d,mpi/%.c,$@) | \
 		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_MPI/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
 
 $(DEP_src):$(M_PWD)/BUILD_MPC_MPI/lib/%.d:src/%.c
@@ -81,6 +117,14 @@ $(DEP_include):$(M_PWD)/BUILD_MPC_MPI/lib/%.d:include/%.c
 	@echo "    Generate fake dependencies $(patsubst $(M_PWD)/BUILD_MPC_MPI/lib/%.d,include/%.c,$@)"
 	@echo "$(patsubst $(M_PWD)/BUILD_MPC_MPI/lib/%.d,include/%.c,$@)" > $@
 
+$(DEP_mpc):$(M_PWD)/BUILD_MPC_MPI/lib/%.d:mpc/%.c
+	@echo "    Generate fake dependencies $(patsubst $(M_PWD)/BUILD_MPC_MPI/lib/%.d,mpc/%.c,$@)"
+	@echo "$(patsubst $(M_PWD)/BUILD_MPC_MPI/lib/%.d,mpc/%.c,$@)" > $@
+
+$(DEP_mpi):$(M_PWD)/BUILD_MPC_MPI/lib/%.d:mpi/%.c
+	@echo "    Generate fake dependencies $(patsubst $(M_PWD)/BUILD_MPC_MPI/lib/%.d,mpi/%.c,$@)"
+	@echo "$(patsubst $(M_PWD)/BUILD_MPC_MPI/lib/%.d,mpi/%.c,$@)" > $@
+
 $(DEP_src):$(M_PWD)/BUILD_MPC_MPI/lib/%.d:src/%.c
 	@echo "    Generate fake dependencies $(patsubst $(M_PWD)/BUILD_MPC_MPI/lib/%.d,src/%.c,$@)"
 	@echo "$(patsubst $(M_PWD)/BUILD_MPC_MPI/lib/%.d,src/%.c,$@)" > $@
@@ -91,6 +135,14 @@ $(OBJ_include):%.o:%.d
 	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_MPI/lib/%.o,include/%.c,$@)"
 	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_MPI/lib/%.o,include/%.c,$@) -o $@
 
+$(OBJ_mpc):%.o:%.d
+	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_MPI/lib/%.o,mpc/%.c,$@)"
+	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_MPI/lib/%.o,mpc/%.c,$@) -o $@
+
+$(OBJ_mpi):%.o:%.d
+	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_MPI/lib/%.o,mpi/%.c,$@)"
+	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_MPI/lib/%.o,mpi/%.c,$@) -o $@
+
 $(OBJ_src):%.o:%.d
 	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_MPI/lib/%.o,src/%.c,$@)"
 	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_MPI/lib/%.o,src/%.c,$@) -o $@
@@ -98,6 +150,16 @@ $(OBJ_src):%.o:%.d
 $(SDEP_include):$(M_PWD)/BUILD_MPC_MPI/lib/%.d:include/%.S
 	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_MPI/lib/%.d,include/%.S,$@)"
 	@$(GCC) -M $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_MPI/lib/%.d,include/%.S,$@) | \
+		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_MPI/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
+
+$(SDEP_mpc):$(M_PWD)/BUILD_MPC_MPI/lib/%.d:mpc/%.S
+	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_MPI/lib/%.d,mpc/%.S,$@)"
+	@$(GCC) -M $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_MPI/lib/%.d,mpc/%.S,$@) | \
+		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_MPI/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
+
+$(SDEP_mpi):$(M_PWD)/BUILD_MPC_MPI/lib/%.d:mpi/%.S
+	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_MPI/lib/%.d,mpi/%.S,$@)"
+	@$(GCC) -M $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_MPI/lib/%.d,mpi/%.S,$@) | \
 		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_MPI/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
 
 $(SDEP_src):$(M_PWD)/BUILD_MPC_MPI/lib/%.d:src/%.S
@@ -109,6 +171,14 @@ $(SOBJ_include):%.o:%.d
 	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_MPI/lib/%.o,include/%.S,$@)"
 	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_MPI/lib/%.o,include/%.S,$@) -o $@
 
+$(SOBJ_mpc):%.o:%.d
+	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_MPI/lib/%.o,mpc/%.S,$@)"
+	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_MPI/lib/%.o,mpc/%.S,$@) -o $@
+
+$(SOBJ_mpi):%.o:%.d
+	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_MPI/lib/%.o,mpi/%.S,$@)"
+	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_MPI/lib/%.o,mpi/%.S,$@) -o $@
+
 $(SOBJ_src):%.o:%.d
 	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_MPI/lib/%.o,src/%.S,$@)"
 	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_MPI/lib/%.o,src/%.S,$@) -o $@
@@ -116,6 +186,14 @@ $(SOBJ_src):%.o:%.d
 $(FOBJ_include):$(M_PWD)/BUILD_MPC_MPI/lib/%_f.o:include/%.f
 	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_MPI/lib/%_f.o,include/%.f,$@)"
 	@$(F77) -c $(FFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_MPI/lib/%_f.o,include/%.f,$@) -o $@
+
+$(FOBJ_mpc):$(M_PWD)/BUILD_MPC_MPI/lib/%_f.o:mpc/%.f
+	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_MPI/lib/%_f.o,mpc/%.f,$@)"
+	@$(F77) -c $(FFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_MPI/lib/%_f.o,mpc/%.f,$@) -o $@
+
+$(FOBJ_mpi):$(M_PWD)/BUILD_MPC_MPI/lib/%_f.o:mpi/%.f
+	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_MPI/lib/%_f.o,mpi/%.f,$@)"
+	@$(F77) -c $(FFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_MPI/lib/%_f.o,mpi/%.f,$@) -o $@
 
 $(FOBJ_src):$(M_PWD)/BUILD_MPC_MPI/lib/%_f.o:src/%.f
 	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_MPI/lib/%_f.o,src/%.f,$@)"

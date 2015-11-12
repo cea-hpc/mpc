@@ -22,15 +22,7 @@
 #ifndef __SCTK_COMMUNICATOR_H_
 #define __SCTK_COMMUNICATOR_H_
 
-/************************** MACROS *************************/
-/** define the MPI_COMM_WORLD internal communicator number **/
-#define SCTK_COMM_WORLD 0
-/** define the MPI_COMM_SELF internal communicator number **/
-#define SCTK_COMM_SELF 1
-
-/************************** TYPES **************************/
-/** define the communicator number type **/
-typedef int sctk_communicator_t;
+#include <sctk_types.h>
 
 /******************************** STRUCTURE *********************************/
 struct sctk_internal_collectives_struct_s;
@@ -64,7 +56,7 @@ inline int sctk_get_process_nb_in_array ( const sctk_communicator_t communicator
 inline int *sctk_get_process_array ( const sctk_communicator_t communicator );
 
 sctk_communicator_t sctk_get_peer_comm ( const sctk_communicator_t communicator );
-sctk_communicator_t sctk_create_communicator ( const sctk_communicator_t origin_communicator, const int nb_task_involved, const int *task_list, int is_inter_comm );
+sctk_communicator_t sctk_create_communicator ( const sctk_communicator_t origin_communicator, const int nb_task_involved, const int *task_list );
 sctk_communicator_t sctk_create_intercommunicator ( const sctk_communicator_t local_comm, const int local_leader, const sctk_communicator_t peer_comm, const int remote_leader,
                                                     const int tag, const int first );
 sctk_communicator_t sctk_duplicate_communicator ( const sctk_communicator_t origin_communicator, int is_inter_comm, int rank );

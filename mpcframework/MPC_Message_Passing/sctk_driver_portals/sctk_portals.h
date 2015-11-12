@@ -18,6 +18,7 @@
 /* # Authors:                                                             # */
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
 /* #   - GONCALVES Thomas thomas.goncalves@cea.fr                         # */
+/* #   - ADAM Julien adamj@paratools.fr                                   # */
 /* #                                                                      # */
 /* ######################################################################## */
 
@@ -28,158 +29,43 @@ extern "C"
 {
 #endif
 
+#include <sctk_io_helper.h>
 #ifdef MPC_USE_PORTALS
-#include <sctk_spinlock.h>
-#include <portals4.h>
+#include <sctk_portals_toolkit.h>
+//#ifndef __SCTK_ROUTE_H_
+//#error "sctk_route must be included before sctk_portals.h"
+//#endif
 
-# define ENTRY_T  ptl_me_t
-# define HANDLE_T ptl_handle_me_t
-# define NI_TYPE  PTL_NI_MATCHING
-# define OPTIONS  (PTL_ME_OP_GET | PTL_ME_EVENT_CT_COMM | PTL_ME_EVENT_CT_OVERFLOW | PTL_ME_EVENT_LINK_DISABLE | PTL_ME_EVENT_UNLINK_DISABLE | PTL_ME_USE_ONCE | PTL_ME_EVENT_COMM_DISABLE)
-# define OPTIONS2 (PTL_ME_OP_PUT | PTL_ME_EVENT_CT_COMM | PTL_ME_EVENT_CT_OVERFLOW | PTL_ME_EVENT_LINK_DISABLE | PTL_ME_EVENT_UNLINK_DISABLE)
-# define OPTIONS_HEADER  (PTL_ME_OP_PUT | PTL_ME_EVENT_CT_COMM | PTL_ME_EVENT_CT_OVERFLOW | PTL_ME_EVENT_LINK_DISABLE | PTL_ME_EVENT_UNLINK_DISABLE | PTL_ME_USE_ONCE)
-# define APPEND   PtlMEAppend
-# define UNLINK   PtlMEUnlink
-
-#define SIZE_QUEUE_EVENTS		64
-#define SIZE_QUEUE_PROCS		16
-#define SIZE_QUEUE_HEADERS		16
-#define SIZE_QUEUE_HEADERS_MIN	8
-
-#define MSG_ARRAY	0
-#define OVER_ARRAY	1
-
-#define READ	2
-#define	WRITE	1
-
-#define EVENT_EVENT 		0
-#define EVENT_ENTRY 		1
-#define EVENT_DESCRIPTOR 	2
-
-#define TAG_IGN 	0x00000000FFFFFFFF
-#define SOURCE_IGN 	0x0000FFFF00000000
-#define FLAG_REQ	0x0001000000000000
-#define REQ_IGN		0xFFFEFFFFFFFFFFFF
-#define ANY_TAG 	-1
-#define ANY_SOURCE 	-1
-
-/*		|  ME  |  MEH |  MD  |  MDH |				*/
-//#define MDH_ALLOCATED		1
-#define MD_ALLOCATED		2
-//#define MEH_ALLOCATED		4
-#define ME_ALLOCATED		8
-
-#define IDLE				0
-#define	RESERVED			1
-#define IN_USE				2
-
-#define TRYLOCK_SUCCESS	    0
-
-
-
-#define CHECK_RETURNVAL(x) do { int ret; \
-    switch (ret = x) { \
-	case PTL_IGNORED: \
-        case PTL_OK: break; \
-        case PTL_FAIL: fprintf(stderr, "=> %s returned PTL_FAIL (line %u)\n", #x, (unsigned int)__LINE__); abort(); break; \
-        case PTL_NO_SPACE: fprintf(stderr, "=> %s returned PTL_NO_SPACE (line %u)\n", #x, (unsigned int)__LINE__); abort(); break; \
-        case PTL_ARG_INVALID: fprintf(stderr, "=> %s returned PTL_ARG_INVALID (line %u)\n", #x, (unsigned int)__LINE__); abort(); break; \
-        case PTL_NO_INIT: fprintf(stderr, "=> %s returned PTL_NO_INIT (line %u)\n", #x, (unsigned int)__LINE__); abort(); break; \
-		case PTL_PT_IN_USE: fprintf(stderr, "=> %s returned PTL_PT_IN_USE (line %u)\n", #x, (unsigned int)__LINE__); abort(); break; \
-        case PTL_IN_USE: fprintf(stderr, "=> %s returned PTL_IN_USE (line %u)\n", #x, (unsigned int)__LINE__); abort(); break; \
-        default: fprintf(stderr, "=> %s returned failcode %i (line %u)\n", #x, ret, (unsigned int)__LINE__); abort(); break; \
-    } } while (0)
-
-
-typedef struct
+typedef struct sctk_portals_route_info_s
 {
-	ptl_process_t id;//to route
-} sctk_portals_data_t;
+	sctk_portals_process_id_t dest;//to route
+}sctk_portals_route_info_t;
 
-typedef struct portals_message_s
+typedef struct sctk_portals_msg_header_s
 {
+	sctk_portals_process_id_t remote;
+	ptl_pt_index_t remote_index;
+	ptl_match_bits_t tag;
+	ptl_handle_ni_t* handler;
+	void* payload;
+	sctk_portals_pending_msg_list_t* list;
 
-	ptl_md_t md;
-	ptl_handle_md_t md_handle;
-	ptl_me_t me;
-	ptl_handle_me_t me_handle;
+} sctk_portals_msg_header_t;
 
-	uint8_t  allocs;
-	ptl_process_t peer;
-	ptl_match_bits_t match_bits;
-	ptl_match_bits_t ignore_bits;
-	void *buffer;
-	unsigned peer_idThread;
-	unsigned my_idThread;
-	int type;
-	int tag;
-	int append_pos;
-	int append_list;
-} sctk_portals_message_t;
-
-
-typedef struct sctk_Event_s
+typedef struct sctk_portals_rail_info_s
 {
-	unsigned used;
-	//int vp;
-	ptl_pt_index_t pt_index;
-	sctk_portals_message_t msg;
-	sctk_message_to_copy_t ptrmsg;
-} sctk_Event_t;
+	sctk_portals_limits_t            max_limits;
+	sctk_portals_interface_handler_t interface_handler;
+	sctk_portals_process_id_t        current_id;
+	sctk_portals_table_t             ptable;
 
-typedef struct sctk_EventL_s
-{
-	unsigned 			    nb_elems;
-	unsigned 			    nb_elems_headers;
-	sctk_Event_t 			events[SIZE_QUEUE_EVENTS];
-	struct sctk_EventL_s 	*next;
-} sctk_EventL_t;
-
-
-typedef struct sctk_EventQ_s
-{
-	unsigned SizeMsgList;
-	sctk_EventL_t ListMsg;
-
-} sctk_EventQ_t;
-
-typedef struct sctk_ProcsL_s
-{
-	unsigned 			nb_elems;
-	ptl_process_t 		Procs[SIZE_QUEUE_PROCS];
-	struct sctk_ProcsL_s 	*next;
-} sctk_ProcsL_t;
-
-
-typedef struct sctk_ProcsQ_s
-{
-	unsigned SizeList;
-	sctk_ProcsL_t List;
-
-} sctk_ProcsQ_t;
-
-typedef struct
-{
-
-
-	ptl_ni_limits_t 	actual;
-	ptl_handle_ni_t 	ni_handle_phys;
-	ptl_process_t 		my_id;
-	int 				ntasks;
-	ptl_pt_index_t		*pt_index;
-	sctk_EventQ_t		*EvQ;				//event list, one by thread
-	ptl_handle_eq_t	*eq_h;
-	sctk_spinlock_t 	*lock;				//event list, one by thread
-	ptl_ct_event_t 		zeroCounter;
-
+    char connection_infos[MAX_STRING_SIZE];
+    size_t connection_infos_size;
 } sctk_portals_rail_info_t;
 
-void sctk_network_init_multirail_portals ( sctk_rail_info_t *new_rail , int max_rails );
-#if 0
-void sctk_network_init_portals ( char *name, char *topology );
+void sctk_network_init_portals ( struct sctk_rail_info_s *rail);
 #endif
 #ifdef __cplusplus
 }
-#endif
 #endif
 #endif

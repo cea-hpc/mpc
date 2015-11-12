@@ -31,7 +31,6 @@ extern "C"
 #endif
 #include "sctk_spinlock.h"
 #include "uthash.h"
-#include <mpcmp.h>
 #include "sctk_stdint.h"
 
 /*-----------------------------------------------------------
