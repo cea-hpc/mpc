@@ -141,9 +141,11 @@ sctk_net_convert_msg_to_iovec( sctk_thread_ptp_message_t *msg, int *iovlen, size
 		default:
 			not_reachable();
 	}
+	
+	return result;
 }
 
-void sctk_net_copy_msg_from_iovec( sctk_message_to_copy_t *tmp, sctk_iovec_cpy_t driver_func)  
+void sctk_net_copy_msg_from_iovec( sctk_message_to_copy_t *tmp, sctk_iovec_cpy_t driver_func )  
 {
 	int iovlen;
 	sctk_thread_ptp_message_t *send;
@@ -162,8 +164,8 @@ void sctk_net_copy_msg_from_iovec( sctk_message_to_copy_t *tmp, sctk_iovec_cpy_t
 
 	if ( SCTK_MSG_SIZE ( send ) > 0 )
 	{
-		result = sctk_net_convert_msg_to_iovec( recv, &iovlen, SCTK_MSG_SIZE(send));	
-		driver_func(result, send, SCTK_MSG_SIZE(send));
+		result = sctk_net_convert_msg_to_iovec(recv, &iovlen, SCTK_MSG_SIZE(send));	
+		driver_func(result, iovlen, send);
 		sctk_free(result);		
 	}
 	sctk_message_completion_and_free(send,recv);

@@ -32,7 +32,7 @@ extern "C"
 
 /* IOVEC NET FUNCS */
 /* Copy function for net driver copy */
-typedef void(*sctk_iovec_cpy_t)(struct iovec*, sctk_thread_ptp_message_t*, size_t);
+typedef void(*sctk_iovec_cpy_t)(struct iovec*, int, sctk_thread_ptp_message_t*);
 /* Convert sctk_thread_ptp_msg_t to struct iovec */
 struct iovec * sctk_net_convert_msg_to_iovec(sctk_thread_ptp_message_t *,int*,size_t);
 /* sctk_net_copy for iovec */
