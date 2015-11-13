@@ -898,6 +898,8 @@ sctk_user_thread_create (sctk_thread_t * restrict __threadp,
     }
   sctk_nodebug("Create Thread with MPI rank %d", tmp->task_id);
 
+#if 0
+  /* Must be disabled because it unbind midcro VPs */
   if (__attr != NULL)
     {
       sctk_thread_attr_getscope (__attr, &scope_init);
@@ -908,6 +910,7 @@ sctk_user_thread_create (sctk_thread_t * restrict __threadp,
     } else {
         sctk_restrict_binding();
     }
+#endif
 
   res = __sctk_ptr_thread_user_create (__threadp, __attr,
 				       (void *(*)(void *))

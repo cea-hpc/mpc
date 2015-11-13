@@ -948,24 +948,26 @@ int sctk_bind_to_cpu (int i)
 	int supported = support->cpubind->set_thisthread_cpubind;
 	const char *errmsg = strerror(errno);
 
+	if(i < 0){
+		sctk_restrict_binding();
+		return -1;
+	}
+
 	sctk_spinlock_lock(&topology_lock);
 
 	int ret = sctk_get_cpu_intern();
 
-	if (i >= 0)
-	{
-		TODO("Handle specific mapping from the user");
-		hwloc_obj_t pu = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, i);
-		assume(pu);
+	TODO("Handle specific mapping from the user");
+	hwloc_obj_t pu = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, i);
+	assume(pu);
 
-		int err = hwloc_set_cpubind(topology, pu->cpuset, HWLOC_CPUBIND_THREAD);
-		if (err)
-		{
-			fprintf(stderr,"%-40s: %sFAILED (%d, %s)\n", msg, supported?"":"X", errno, errmsg);
-		}
-		//    assume(sctk_get_cpu_intern() == i);
-		sctk_get_cpu_val = i;
+	int err = hwloc_set_cpubind(topology, pu->cpuset, HWLOC_CPUBIND_THREAD);
+	if (err)
+	{
+		fprintf(stderr,"%-40s: %sFAILED (%d, %s)\n", msg, supported?"":"X", errno, errmsg);
 	}
+	//    assume(sctk_get_cpu_intern() == i);
+	sctk_get_cpu_val = i;
 	sctk_spinlock_unlock(&topology_lock);
 	return ret;
 }
