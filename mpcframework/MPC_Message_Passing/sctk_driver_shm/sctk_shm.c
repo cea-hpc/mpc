@@ -16,6 +16,7 @@ static int sctk_shm_proc_local_rank_on_node = -1;
 static volatile int sctk_shm_driver_initialized = 0;
 static unsigned int sctk_shm_send_max_try = 100;
 
+static unsigned int sctk_shm_pending_ptp_msg_num = 0;
 static sctk_spinlock_t sctk_shm_polling_lock = SCTK_SPINLOCK_INITIALIZER;
 static sctk_spinlock_t sctk_shm_pending_ptp_msg_lock = SCTK_SPINLOCK_INITIALIZER;
 
@@ -54,12 +55,13 @@ void sctk_shm_network_rdma_read(  sctk_rail_info_t *rail, sctk_thread_ptp_messag
 static void
 sctk_network_add_message_to_pending_shm_list( sctk_thread_ptp_message_t *msg, int sctk_shm_dest)
 {
-    sctk_shm_msg_list_t *tmp = sctk_malloc(sizeof(sctk_shm_msg_list_t));
-    tmp->msg = msg;
-    tmp->sctk_shm_dest = sctk_shm_dest; 
-    sctk_spinlock_lock(&sctk_shm_pending_ptp_msg_lock);
-    DL_APPEND(sctk_shm_pending_ptp_msg_list, tmp);
-    sctk_spinlock_unlock(&sctk_shm_pending_ptp_msg_lock);
+   sctk_shm_msg_list_t *tmp = sctk_malloc(sizeof(sctk_shm_msg_list_t));
+   tmp->msg = msg;
+   tmp->sctk_shm_dest = sctk_shm_dest; 
+   sctk_spinlock_lock(&sctk_shm_pending_ptp_msg_lock);
+   DL_APPEND(sctk_shm_pending_ptp_msg_list, tmp);
+   sctk_shm_pending_ptp_msg_num++;
+   sctk_spinlock_unlock(&sctk_shm_pending_ptp_msg_lock);
 }
 
 
@@ -75,24 +77,24 @@ sctk_network_send_message_dest_shm( sctk_thread_ptp_message_t *msg, int sctk_shm
    
    if( !cell )
    {
-      sctk_network_add_message_to_pending_shm_list( msg, sctk_shm_dest );    
+      sctk_network_add_message_to_pending_shm_list(msg,sctk_shm_dest);    
       return;
    }
+
    cell->dest = sctk_shm_dest;
    cell->src = sctk_get_local_process_rank();
 
-   if(sctk_network_eager_msg_shm_send( msg, cell ))
+   if(sctk_network_eager_msg_shm_send(msg,cell))
       return;
 
- //  if(sctk_network_cma_msg_shm_send( msg, cell ))
- //    return;
-   ret = sctk_network_frag_msg_shm_send(msg, cell);
-   if(ret != 1)
-   {
-      sctk_shm_release_cell(cell); 
-      sctk_network_add_message_to_pending_shm_list( msg, sctk_shm_dest );
-   }
-   
+   if(sctk_network_cma_msg_shm_send(msg,cell))
+      return;
+
+   if(sctk_network_frag_msg_shm_send(msg,cell))
+      return;
+
+   sctk_shm_release_cell(cell); 
+   sctk_network_add_message_to_pending_shm_list( msg, sctk_shm_dest );
 }
 
 
@@ -102,6 +104,9 @@ sctk_network_send_message_from_pending_shm_list( int sctk_shm_max_message )
 	sctk_shm_msg_list_t *elt = NULL;
 	sctk_shm_msg_list_t *tmp = NULL;
 
+        if(!sctk_shm_pending_ptp_msg_num)
+           return;
+
 	if(sctk_spinlock_trylock(&sctk_shm_pending_ptp_msg_lock))
 		return;
 
@@ -110,6 +115,7 @@ sctk_network_send_message_from_pending_shm_list( int sctk_shm_max_message )
 		break;
 	}
 
+        sctk_shm_pending_ptp_msg_num--;
    	sctk_spinlock_unlock(&sctk_shm_pending_ptp_msg_lock);
 	
 	if(elt)
