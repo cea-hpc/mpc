@@ -14,10 +14,12 @@
 
 static int sctk_shm_proc_local_rank_on_node = -1;
 static volatile int sctk_shm_driver_initialized = 0;
+static unsigned int sctk_shm_send_max_try = 100;
+
 static sctk_spinlock_t sctk_shm_polling_lock = SCTK_SPINLOCK_INITIALIZER;
+static sctk_spinlock_t sctk_shm_pending_ptp_msg_lock = SCTK_SPINLOCK_INITIALIZER;
 
 static sctk_shm_msg_list_t *sctk_shm_pending_ptp_msg_list = NULL;
-static sctk_spinlock_t sctk_shm_pending_ptp_msg_lock = SCTK_SPINLOCK_INITIALIZER;
 
 // FROM Henry S. Warren, Jr.'s "Hacker's Delight."
 static long sctk_shm_roundup_powerof2(unsigned long n)
@@ -40,7 +42,6 @@ void sctk_shm_network_rdma_write(  sctk_rail_info_t *rail, sctk_thread_ptp_messa
 
 
 }
-
 	
 void sctk_shm_network_rdma_read(  sctk_rail_info_t *rail, sctk_thread_ptp_message_t *msg,
                          void * src_addr,  struct  sctk_rail_pin_ctx_list * remote_key,
@@ -61,33 +62,58 @@ sctk_network_add_message_to_pending_shm_list( sctk_thread_ptp_message_t *msg, in
     sctk_spinlock_unlock(&sctk_shm_pending_ptp_msg_lock);
 }
 
+
 static void
 sctk_network_send_message_dest_shm( sctk_thread_ptp_message_t *msg, int sctk_shm_dest )
 {
-    if(sctk_network_eager_msg_shm_send( msg, sctk_shm_dest ))
-        return;
-    
-    if(sctk_network_frag_msg_shm_send( msg, sctk_shm_dest ))
-	return; 
-        
-    if(sctk_network_cma_msg_shm_send( msg, sctk_shm_dest ))
-        return;
+   sctk_shm_cell_t * cell = NULL;
+   int sctk_shm_send_cur_try, ret;
 
-    sctk_network_add_message_to_pending_shm_list( msg, sctk_shm_dest );    
+   sctk_shm_send_cur_try = 0;
+   while(!cell && sctk_shm_send_cur_try++ < sctk_shm_send_max_try )
+   	cell = sctk_shm_get_cell(sctk_shm_dest);
+   
+   if( !cell )
+   {
+      sctk_network_add_message_to_pending_shm_list( msg, sctk_shm_dest );    
+      return;
+   }
+   cell->dest = sctk_shm_dest;
+   cell->src = sctk_get_local_process_rank();
+
+   if(sctk_network_eager_msg_shm_send( msg, cell ))
+      return;
+
+ //  if(sctk_network_cma_msg_shm_send( msg, cell ))
+ //    return;
+   ret = sctk_network_frag_msg_shm_send(msg, cell);
+   if(ret != 1)
+   {
+      sctk_shm_release_cell(cell); 
+      sctk_network_add_message_to_pending_shm_list( msg, sctk_shm_dest );
+   }
+   
 }
 
 
 static void
 sctk_network_send_message_from_pending_shm_list( int sctk_shm_max_message )
 {
-	sctk_shm_msg_list_t *tmp;
-	DL_FOREACH(sctk_shm_pending_ptp_msg_list, tmp)
-	{
-		sctk_spinlock_lock(&sctk_shm_pending_ptp_msg_lock);
-		DL_DELETE( sctk_shm_pending_ptp_msg_list, tmp);	
-		sctk_spinlock_unlock(&sctk_shm_pending_ptp_msg_lock);
-		sctk_network_send_message_dest_shm(tmp->msg, tmp->sctk_shm_dest);
+	sctk_shm_msg_list_t *elt = NULL;
+	sctk_shm_msg_list_t *tmp = NULL;
+
+	if(sctk_spinlock_trylock(&sctk_shm_pending_ptp_msg_lock))
+		return;
+
+	DL_FOREACH_SAFE(sctk_shm_pending_ptp_msg_list,elt,tmp) {
+		DL_DELETE( sctk_shm_pending_ptp_msg_list, elt);	
+		break;
 	}
+
+   	sctk_spinlock_unlock(&sctk_shm_pending_ptp_msg_lock);
+	
+	if(elt)
+		sctk_network_send_message_dest_shm(elt->msg, elt->sctk_shm_dest);
 }
 
 static void 
@@ -123,21 +149,19 @@ sctk_network_notify_idle_message_shm ( sctk_rail_info_t *rail )
 {
     sctk_shm_cell_t * cell;
     sctk_thread_ptp_message_t *msg; 
- 
+
     if(!sctk_shm_driver_initialized)
         return;
 
     if(sctk_spinlock_trylock(&sctk_shm_polling_lock))
-	return;
-
-    sctk_network_frag_msg_shm_idle(1);
+      return;
 
     while(1)
     {
         cell = sctk_shm_recv_cell(); 
-        if( cell == NULL )
+        if( !cell)
 	   break;
-    
+
         switch(cell->msg_type)
         {
 	    case SCTK_SHM_EAGER: 
@@ -150,7 +174,7 @@ sctk_network_notify_idle_message_shm ( sctk_rail_info_t *rail )
 		break;
 	    case SCTK_SHM_CMPL:
             	msg = sctk_network_cma_cmpl_msg_shm_recv(cell);
-        	sctk_complete_and_free_message( msg ); 
+        	sctk_complete_and_free_message(msg); 
 		break;
 	    case SCTK_SHM_FIRST_FRAG:
 	    case SCTK_SHM_NEXT_FRAG:
@@ -161,8 +185,14 @@ sctk_network_notify_idle_message_shm ( sctk_rail_info_t *rail )
 		abort();
         }
     }
-
+    
+    if(!cell)
+    {
+    	sctk_network_frag_msg_shm_idle(1);
+    	sctk_network_send_message_from_pending_shm_list(1);
+    }
     sctk_spinlock_unlock(&sctk_shm_polling_lock);
+
 }
 
 static void sctk_network_notify_recv_message_shm ( sctk_thread_ptp_message_t *msg, sctk_rail_info_t *rail )
@@ -202,7 +232,7 @@ sctk_shm_add_region_slave(sctk_size_t size,sctk_alloc_mapper_handler_t * handler
 	fd = sctk_shm_mapper_slave_open(filename);
 	ptr = sctk_shm_mapper_mmap(NULL,fd,size);
 
-    sctk_pmi_barrier();
+        sctk_pmi_barrier();
 
 	close(fd);
 	free(filename);
@@ -348,9 +378,7 @@ void sctk_network_init_shm ( sctk_rail_info_t *rail )
 	sctk_shmem_cells_num = 64;
 //rail->runtime_config_driver_config->driver.value.shm.cells_num;
     sctk_shmem_size = sctk_shm_get_region_size(sctk_shmem_cells_num);
-    fprintf(stderr, "size shm : %ld\n", sctk_shmem_size);
-
-        sctk_shmem_size = sctk_shm_roundup_powerof2(sctk_shmem_size);
+    sctk_shmem_size = sctk_shm_roundup_powerof2(sctk_shmem_size);
 
     sctk_pmi_get_process_on_node_rank(&local_process_rank);
     sctk_pmi_get_process_on_node_number(&local_process_number);

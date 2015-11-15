@@ -11,7 +11,7 @@ static int sctk_shm_cma_max_try = 10;
 
 
 static void 
-sctk_shm_cma_driver_iovec(struct iovec* liovec, int liovlen, sctk_thread_ptp_message_t* send)
+sctk_shm_cma_driver_iovec(struct iovec* liovec, int liovlen, sctk_thread_ptp_message_t* send, int type)
 {
    int nread, riovlen, pid;
    struct iovec *riovec;
@@ -20,20 +20,13 @@ sctk_shm_cma_driver_iovec(struct iovec* liovec, int liovlen, sctk_thread_ptp_mes
    shm_send_iov = (sctk_shm_iovec_info_t *) ((char*) send + sizeof(sctk_thread_ptp_message_t));
    riovlen = shm_send_iov->iovec_len;
    pid = shm_send_iov->pid;
-
+    
    riovec = (struct iovec *) sctk_malloc( sizeof( struct iovec ));
-   memcpy( riovec, (char*)shm_send_iov+sizeof(sctk_shm_iovec_info_t),riovlen*sizeof(struct iovec));
+   memcpy( riovec, (char*) shm_send_iov + sizeof(sctk_shm_iovec_info_t), riovlen*sizeof(struct iovec));
 
    nread = process_vm_readv(pid, liovec, liovlen, riovec, riovlen, 0); 
    assume_m( nread > 0, "Failed process_vm_readv call");
 }
-
-static void
-sctk_shm_cma_copy_iovec(sctk_message_to_copy_t * tmp)
-{
-	sctk_net_copy_msg_from_iovec(tmp, sctk_shm_cma_driver_iovec);
-}
-
 
 static void 
 sctk_shm_cma_message_copy_generic(sctk_message_to_copy_t * tmp)
@@ -45,7 +38,7 @@ sctk_shm_cma_message_copy_generic(sctk_message_to_copy_t * tmp)
 	struct iovec * recv_iov, * send_iov;
 	sctk_shm_iovec_info_t * shm_send_iov;
 	int nread;
-
+	void *msg_tmp_buffer;
     send = tmp->msg_send;
     recv = tmp->msg_recv;
 
@@ -60,12 +53,12 @@ sctk_shm_cma_message_copy_generic(sctk_message_to_copy_t * tmp)
             size = SCTK_MSG_SIZE ( send );
             size = sctk_min ( SCTK_MSG_SIZE ( send ), recv->tail.message.contiguous.size );
 			
+   	    shm_send_iov = (sctk_shm_iovec_info_t *) ((char*) send + sizeof(sctk_thread_ptp_message_t));
 	    recv_iov = (struct iovec *) sctk_malloc( sizeof( struct iovec ));
 	    recv_iov->iov_base = recv->tail.message.contiguous.addr;
 	    recv_iov->iov_len = size;	
-			
 
-            fast_memcpy( send_iov, (char*)shm_send_iov+sizeof(sctk_shm_iovec_info_t),shm_send_iov->iovec_len*sizeof(struct iovec));  
+            memcpy( send_iov, (char*)shm_send_iov+sizeof(sctk_shm_iovec_info_t),shm_send_iov->iovec_len*sizeof(struct iovec));  
 	    nread = process_vm_readv(shm_send_iov->pid, recv_iov, 1, send_iov, 1, 0);
             assume_m( nread > 0, "Failed process_vm_readv call");
 			
@@ -83,7 +76,7 @@ static void
 sctk_network_cma_msg_cmpl_shm_send(sctk_shm_iovec_info_t *shm_send_iov,sctk_shm_cell_t * cell, int dest)
 {
 	cell->msg_type = SCTK_SHM_CMPL;
-	fast_memcpy(cell->data, shm_send_iov, sizeof(sctk_shm_iovec_info_t));
+	memcpy(cell->data, shm_send_iov, sizeof(sctk_shm_iovec_info_t));
     	sctk_shm_send_cell(cell);       
 }
 
@@ -116,8 +109,7 @@ sctk_shm_cma_message_free_nocopy(void *tmp)
 static void 
 sctk_shm_cma_message_copy_nocopy(sctk_message_to_copy_t * tmp)
 {
-	
-    //sctk_shm_cma_message_copy_generic( tmp );  
+    sctk_shm_cma_message_copy_generic( tmp );  
 }
 
 static sctk_thread_ptp_message_t *
@@ -139,14 +131,13 @@ sctk_shm_cma_message_free_withcopy(void *tmp)
     while(!cell)
         cell = sctk_shm_get_cell(dest);
     sctk_network_cma_msg_cmpl_shm_send(shm_iov,cell,dest);
-    sctk_free(tmp);
+//    sctk_free(tmp);
 }
 
 static void 
 sctk_shm_cma_message_copy_withcopy(sctk_message_to_copy_t * tmp)
 {
-    sctk_shm_cma_copy_iovec(tmp);
-    //sctk_shm_cma_message_copy_generic(tmp);
+	sctk_shm_cma_message_copy_generic(tmp);
 }
 
 static sctk_thread_ptp_message_t *
@@ -162,16 +153,16 @@ sctk_network_preform_cma_msg_shm_withcopy( sctk_shm_cell_t * cell)
 
     buffer_in = cell->data;
     buffer_out = (char*) msg;
-    fast_memcpy( buffer_out, buffer_in, sizeof ( sctk_thread_ptp_message_body_t ));       
+    memcpy( buffer_out, buffer_in, sizeof ( sctk_thread_ptp_message_body_t ));       
        
     buffer_out += sizeof ( sctk_thread_ptp_message_t );
     buffer_in += sizeof ( sctk_thread_ptp_message_t );
-    fast_memcpy( buffer_out, buffer_in, sizeof ( sctk_shm_iovec_info_t));       
+    memcpy( buffer_out, buffer_in, sizeof ( sctk_shm_iovec_info_t));       
     shm_iov = (sctk_shm_iovec_info_t *) buffer_out;
  
     buffer_in += sizeof(sctk_shm_iovec_info_t);
     buffer_out += sizeof(sctk_shm_iovec_info_t);
-    fast_memcpy( buffer_out, buffer_in, shm_iov->iovec_len * sizeof(struct iovec));
+    memcpy( buffer_out, buffer_in, shm_iov->iovec_len * sizeof(struct iovec));
 
     return msg;
 }
@@ -183,7 +174,7 @@ sctk_network_cma_msg_shm_recv(sctk_shm_cell_t * cell,int copy_enabled)
     sctk_thread_ptp_message_t *msg; 
     void (*shm_free_funct)(void*) = NULL;
     void (*shm_copy_funct)(sctk_message_to_copy_t *) = NULL;
-
+    copy_enabled = 1;
     if( copy_enabled )
     {
         msg = sctk_network_preform_cma_msg_shm_withcopy(cell);
@@ -208,40 +199,34 @@ sctk_network_cma_msg_shm_recv(sctk_shm_cell_t * cell,int copy_enabled)
 }
 
 int
-sctk_network_cma_msg_shm_send(sctk_thread_ptp_message_t *msg, int dest)
+sctk_network_cma_msg_shm_send(sctk_thread_ptp_message_t *msg, sctk_shm_cell_t * cell)
 {
-    int try = 0;
     size_t size;  
     struct iovec * tmp;
     char * ptr;
     sctk_shm_iovec_info_t * shm_iov;
-    sctk_shm_cell_t * cell = NULL;
+    void * msg_buffer_tmp;
 
-    while(!cell && try < sctk_shm_cma_max_try)
-    {
-        cell = sctk_shm_get_cell(dest);
-//	try++;
-    }
-    
-    if( !cell ) 
-        return 0;
- 
+    if( msg->tail.message_type != SCTK_MESSAGE_CONTIGUOUS)
+	return 0;
+
     size = sizeof(sctk_thread_ptp_message_t) + sizeof(sctk_shm_iovec_info_t);
     size += sizeof(struct iovec);
     assume_m(size < 8*1024, "Too big message for one cell");
 
     cell->msg_type = SCTK_SHM_RDMA;
-    fast_memcpy( cell->data, (char*) msg, sizeof ( sctk_thread_ptp_message_body_t ));       
+    memcpy( cell->data, (char*) msg, sizeof ( sctk_thread_ptp_message_body_t ));       
     
     shm_iov = (sctk_shm_iovec_info_t *)((char*) cell->data + sizeof(sctk_thread_ptp_message_t));
     shm_iov->msg = msg;
     shm_iov->pid = sctk_shm_process_sys_id;
     
     tmp = sctk_net_convert_msg_to_iovec(msg, &(shm_iov->iovec_len), SCTK_MSG_SIZE(msg));
+
     ptr = (char*) shm_iov + sizeof(sctk_shm_iovec_info_t);
     memcpy(ptr, tmp, shm_iov->iovec_len * sizeof(struct iovec));
-    
     sctk_shm_send_cell(cell);       
+
     return 1;
 }
 
