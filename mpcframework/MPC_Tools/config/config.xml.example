@@ -129,7 +129,6 @@
 							</gate>
 						</gates>
                     </rail>
-					</rail>
                     			<rail>
                         			<name>shm_mpi</name>
                         			<priority>99</priority>
@@ -181,13 +180,13 @@
                             <rail>portals_rdma</rail>
                         </rails>
                     </cli_option>
-					</cli_option>
     					<cli_option>
                         			<name>shm</name>
                         			<rails>
                             				<rail>shm_mpi</rail>
                             				<rail>tcp_mpi</rail>
                         			</rails>
+    					</cli_option>
 					<cli_option>
 						<name>default</name>
 						<rails>

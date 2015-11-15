@@ -21,8 +21,7 @@
 #   - VALAT Sebastien sebastien.valat@cea.fr                           #
 #   - AUTOMATIC GENERATION                                             #
 #                                                                      #
-########################################################################
--->
+########################################################################-->
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
   <!-- ********************************************************* -->
   <xs:complexType name="user_type_allocator">
