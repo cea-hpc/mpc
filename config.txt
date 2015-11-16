@@ -2,7 +2,7 @@
 #############################################################################################################################
 libxml2      ; 2.8.0 ;       ; dep     ;                                                   ; target  ; extern       ; generic.autotools
 hwloc        ; 1.10.0 ; 1.10.0 ; install ;                                                   ; target  ; extern		; generic.autotools
-binutils     ; 2.22  ; 2.22  ; install ;                                                   ; host    ; extern		; generic.autotools
+binutils     ; 2.25  ; 2.25  ; install ;                                                   ; host    ; extern		; generic.autotools
 gmp          ; 4.3.2 ;       ; dep     ;                                                   ; host    ; extern		; generic.autotools.libsgcc
 mpfr         ; 2.4.2 ;       ; dep     ; gmp                                               ; host    ; extern		; generic.autotools.libsgcc
 mpc          ; 0.8.1 ;       ; dep     ; gmp mpfr                                          ; host    ; mpc			; generic.autotools.libsgcc
