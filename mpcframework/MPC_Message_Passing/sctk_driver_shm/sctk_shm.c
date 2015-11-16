@@ -83,13 +83,13 @@ sctk_network_send_message_dest_shm( sctk_thread_ptp_message_t *msg, int sctk_shm
 
    cell->dest = sctk_shm_dest;
    cell->src = sctk_get_local_process_rank();
-
+/*
    if(sctk_network_eager_msg_shm_send(msg,cell))
       return;
 
    if(sctk_network_cma_msg_shm_send(msg,cell))
       return;
-
+*/
    if(sctk_network_frag_msg_shm_send(msg,cell))
       return;
 
@@ -104,8 +104,8 @@ sctk_network_send_message_from_pending_shm_list( int sctk_shm_max_message )
 	sctk_shm_msg_list_t *elt = NULL;
 	sctk_shm_msg_list_t *tmp = NULL;
 
-        if(!sctk_shm_pending_ptp_msg_num)
-           return;
+    if(!sctk_shm_pending_ptp_msg_num)
+        return;
 
 	if(sctk_spinlock_trylock(&sctk_shm_pending_ptp_msg_lock))
 		return;
@@ -115,7 +115,7 @@ sctk_network_send_message_from_pending_shm_list( int sctk_shm_max_message )
 		break;
 	}
 
-        sctk_shm_pending_ptp_msg_num--;
+    sctk_shm_pending_ptp_msg_num--;
    	sctk_spinlock_unlock(&sctk_shm_pending_ptp_msg_lock);
 	
 	if(elt)
@@ -166,7 +166,7 @@ sctk_network_notify_idle_message_shm ( sctk_rail_info_t *rail )
     {
         cell = sctk_shm_recv_cell(); 
         if( !cell)
-	   break;
+	      break;
 
         switch(cell->msg_type)
         {
@@ -197,19 +197,20 @@ sctk_network_notify_idle_message_shm ( sctk_rail_info_t *rail )
     	sctk_network_frag_msg_shm_idle(1);
     	sctk_network_send_message_from_pending_shm_list(1);
     }
+
     sctk_spinlock_unlock(&sctk_shm_polling_lock);
 
 }
 
 static void sctk_network_notify_recv_message_shm ( sctk_thread_ptp_message_t *msg, sctk_rail_info_t *rail )
 {
-    sctk_network_notify_idle_message_shm ( rail );
+//    sctk_network_notify_idle_message_shm ( rail );
 }
 
 static void 
 sctk_network_notify_any_source_message_shm ( int polling_task_id, int blocking, sctk_rail_info_t *rail )
 {
-    sctk_network_notify_idle_message_shm ( rail );
+//    sctk_network_notify_idle_message_shm ( rail );
 }
 
 /********************************************************************/
