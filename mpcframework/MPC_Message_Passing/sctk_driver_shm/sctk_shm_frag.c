@@ -80,7 +80,6 @@ sctk_shm_send_register_new_frag_msg(int dest)
 {
    int try = 0;
    sctk_shm_proc_frag_info_t* frag_infos = NULL;
-   
    /* Prevent polling thread activity */ 
    frag_infos = sctk_malloc(sizeof(sctk_shm_proc_frag_info_t));
    frag_infos->is_ready = SCTK_SPINLOCK_INITIALIZER;
@@ -185,8 +184,8 @@ sctk_network_frag_msg_first_send(sctk_thread_ptp_message_t* msg, sctk_shm_cell_t
       return NULL;
 
    memcpy(cell->data, msg, sizeof(sctk_thread_ptp_message_body_t));
-   
-   cell->frag_hkey = frag_infos->msg_frag_key; 
+  
+   cell->frag_hkey = (frag_infos) ? frag_infos->msg_frag_key : -1; 
    cell->msg_type = SCTK_SHM_FIRST_FRAG;
    sctk_shm_send_cell(cell);       
 
