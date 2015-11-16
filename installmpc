@@ -209,6 +209,13 @@ do
 		--hwloc-*)
 			extractAndAddPackageOption 'HWLOC_BUILD_PARAMETERS' 'hwloc' "$arg"
 			;;
+		################### HWLOC ###################
+		--with-tbb=*)
+			extractParamValue 'TBB_PREFIX' 'with-tbb' "$arg"
+			;;
+		--tbb-*)
+			extractAndAddPackageOption 'TBB_BUILD_PARAMETERS' 'tbb' "$arg"
+			;;
 		################# COMPILER ##################
 		--compiler=*)
 			GCC_PREFIX='disabled'
@@ -233,6 +240,7 @@ do
 			;;
 		--lib-mode)
 			ROMIO_PREFIX='disabled'
+			TBB_PREFIX='disabled'
 			GDB_PREFIX='disabled'
 			MPC_PREFIX='disabled'
 			GCC_PREFIX='disabled'
