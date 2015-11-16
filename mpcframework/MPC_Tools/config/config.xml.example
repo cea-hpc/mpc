@@ -77,9 +77,9 @@
 					</rail>
 					<rail>
 						<name>tcp_mpi</name>
-						<priority>1</priority>
+						<priority>9</priority>
 						<ondemand>1</ondemand>
-						<topology>fully</topology>
+						<topology>ring</topology>
 						<config>tcp_config_mpi</config>
 					</rail>
 					<rail>
@@ -184,7 +184,6 @@
                         			<name>shm</name>
                         			<rails>
                             				<rail>shm_mpi</rail>
-                            				<rail>tcp_mpi</rail>
                         			</rails>
     					</cli_option>
 					<cli_option>

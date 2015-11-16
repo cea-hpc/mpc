@@ -1,6 +1,11 @@
 #include "sctk_shm_frag.h"
 #include "sctk_net_tools.h"
 
+#ifdef SCTK_USE_CHECKSUM
+#include <zlib.h>
+#define hash_payload(a,b) adler32(0UL, (void*)a, (size_t)b)
+#endif
+
 static volatile int sctk_shm_idle_frag_msg = 0;
 static volatile int sctk_shm_process_msg_id = 0;
 static int sctk_shm_max_frag_msg_per_process = SCTK_SHM_MAX_FRAG_MSG_PER_PROCESS;
@@ -102,7 +107,7 @@ sctk_shm_send_register_new_frag_msg(int dest)
    {
       sctk_free(frag_infos);
       frag_infos = NULL;
-      sctk_error("FAILED TO SEND MSG");
+      sctk_nodebug("FAILED TO SEND MSG");
    }   
    else
    {
@@ -184,7 +189,13 @@ sctk_network_frag_msg_first_send(sctk_thread_ptp_message_t* msg, sctk_shm_cell_t
       return NULL;
 
    memcpy(cell->data, msg, sizeof(sctk_thread_ptp_message_body_t));
-  
+    
+//   if( SCTK_MSG_SIZE(msg) > 0)
+//   {
+//   	sctk_nodebug("[KEY:%d-%ld]\t\tSEND FIRST PART MSG ( HEADER:%lu MSG:%lu )", msg_key, SCTK_MSG_SIZE(msg), hash_payload(msg, sizeof(sctk_thread_ptp_message_body_t)), hash_payload(frag_infos->msg, frag_infos->size_total));
+//        assume_m(hash_payload(cell->data, sizeof(sctk_thread_ptp_message_body_t)) == hash_payload(msg, sizeof(sctk_thread_ptp_message_body_t)), "WRONG HEADER COPY !!!!!!!");
+//   }  
+
    cell->frag_hkey = (frag_infos) ? frag_infos->msg_frag_key : -1; 
    cell->msg_type = SCTK_SHM_FIRST_FRAG;
    sctk_shm_send_cell(cell);       
@@ -209,10 +220,10 @@ sctk_network_frag_msg_first_recv(sctk_thread_ptp_message_t* msg, sctk_shm_cell_t
    msg_src = cell->src; 
    msg_key = cell->frag_hkey; 
 
-   sctk_nodebug("[KEY:%d-%ld]\t\tRECV FIRST PART MSG", msg_key, SCTK_MSG_SIZE(msg));
    frag_infos = sctk_shm_init_recv_frag_msg(msg_key, msg_src, msg);
    memcpy(frag_infos->header, cell->data, sizeof(sctk_thread_ptp_message_body_t));
-
+   //sctk_nodebug("[KEY:%d-%ld]\t\tRECV FIRST PART MSG (HEADER:%lu)", msg_key, SCTK_MSG_SIZE(msg), hash_payload(frag_infos->header, sizeof(sctk_thread_ptp_message_body_t)));
+   
    /* reset tail */
    msg = frag_infos->header;
    msg->body.completion_flag = NULL;
@@ -332,6 +343,7 @@ sctk_network_frag_msg_shm_recv(sctk_shm_cell_t* cell, int enabled_copy)
       sctk_nodebug("[KEY:%d]\t\tRECV NEXT PART MSG", msg_key);
       sctk_spinlock_lock(&sctk_shm_recving_frag_hastable_lock);
       frag_infos = sctk_shm_frag_get_elt_from_hash(msg_key, msg_src, SCTK_SHM_RECVER_HT); 
+      assume_m(((frag_infos->size_copied < frag_infos->size_total) && (frag_infos->size_copied >= 0)), "WRONG SIZE FOR FRAGMENT");
       sctk_spinlock_unlock(&sctk_shm_recving_frag_hastable_lock);
       assume_m( frag_infos != NULL, "Recv an oprhelin SHM fragment\n");
       memcpy(frag_infos->msg + frag_infos->size_copied, cell->data, cell->size_to_copy);
@@ -350,7 +362,6 @@ sctk_network_frag_msg_shm_recv(sctk_shm_cell_t* cell, int enabled_copy)
    		    sctk_shm_frag_del_elt_from_hash(msg_key, msg_src, SCTK_SHM_RECVER_HT);
     		sctk_spinlock_unlock(&sctk_shm_recving_frag_hastable_lock);
         }
-        sctk_nodebug("[KEY:%d]\t\tRECV END PART MSG",msg_key);
    }
 
    return msg_hdr;
