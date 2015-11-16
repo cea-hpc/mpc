@@ -86,10 +86,10 @@ sctk_network_send_message_dest_shm( sctk_thread_ptp_message_t *msg, int sctk_shm
 
    if(sctk_network_eager_msg_shm_send(msg,cell))
       return;
-
+/*
    if(sctk_network_cma_msg_shm_send(msg,cell))
       return;
-
+*/
    if(sctk_network_frag_msg_shm_send(msg,cell))
       return;
 
@@ -382,7 +382,7 @@ void sctk_network_init_shm ( sctk_rail_info_t *rail )
     rail->network_name = "SHM";
 	sctk_rail_init_route ( rail, rail->runtime_config_rail->topology, NULL );
 
-	sctk_shmem_cells_num = 64;
+	sctk_shmem_cells_num = 128;
 //rail->runtime_config_driver_config->driver.value.shm.cells_num;
     sctk_shmem_size = sctk_shm_get_region_size(sctk_shmem_cells_num);
     sctk_shmem_size = sctk_shm_roundup_powerof2(sctk_shmem_size);
