@@ -79,7 +79,8 @@ int __mpcomp_static_schedule_get_single_chunk (long lb, long b, long incr, long 
 	  *to = lb + (trip_count % num_threads) * (chunk_size + 1) * incr +
 	       (rank + 1 - (trip_count % num_threads)) * chunk_size * incr;
      }
-
+    
+    *to = (incr > 0) ? ((*to > b) ? b : *to) : ((*to < b) ? b : *to);
      sctk_nodebug ("__mpcomp_static_schedule_get_single_chunk: "
 		   "#%d (%d -> %d step %d) -> (%d -> %d step %d)", rank, lb, b,
 		   incr, *from, *to, incr);

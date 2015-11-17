@@ -1584,7 +1584,7 @@ __kmpc_dispatch_init_8( ident_t *loc, kmp_int32 gtid, enum sched_type schedule,
     case kmp_ord_dynamic_chunked:
       __mpcomp_dynamic_loop_init( 
 	  ((mpcomp_thread_t *) sctk_openmp_thread_tls),
-	  lb, ub+st, st, chunk ) ;
+	  (long)lb, (long)ub+(long)st, (long)st, (long)chunk ) ;
       break ;
     case kmp_sch_static:
     case kmp_ord_static:
@@ -1595,19 +1595,19 @@ __kmpc_dispatch_init_8( ident_t *loc, kmp_int32 gtid, enum sched_type schedule,
       t->static_chunk_size_intel = 0;
       __mpcomp_static_loop_init(
 	  ((mpcomp_thread_t *) sctk_openmp_thread_tls),
-	  lb, ub+st, st, 0) ;
+	  (long)lb, (long)ub+(long)st, (long)st, (long)0) ;
       break ; 
     case kmp_sch_static_chunked:
     case kmp_ord_static_chunked:
       __mpcomp_static_loop_init(
 	  ((mpcomp_thread_t *) sctk_openmp_thread_tls),
-	  lb, ub+st, st, chunk) ;
+	  (long)lb, (long)ub+(long)st, (long)st, (long)chunk) ;
       break ;
     case kmp_sch_guided_chunked:
     case kmp_ord_guided_chunked:
       __mpcomp_dynamic_loop_init(
 	  ((mpcomp_thread_t *) sctk_openmp_thread_tls),
-	 lb, ub+st, st, chunk ) ;
+	 (long)lb, (long)ub+(long)st, (long)st, (long)chunk ) ;
     break ;
     default:
       sctk_error("Schedule not handled: %d\n", schedule);
