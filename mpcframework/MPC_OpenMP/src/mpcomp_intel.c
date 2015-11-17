@@ -2863,9 +2863,9 @@ ATOMIC_BEGIN(TYPE_ID,OP_ID,TYPE,void)                                           
     TYPE old_value, new_value;                                                                              \
     old_value = *(TYPE volatile *) lhs;                                                                     \
     new_value = old_value OP rhs;                                                                           \
-    while ( ! __kmp_compare_and_store##BITS( (kmp_int##BITS *) lhs,                                         \
-                                          *(volatile kmp_int##BITS *) &old_value,                           \
-                                          *(volatile kmp_int##BITS *) &new_value ))                         \
+    while ( ! __kmp_compare_and_store##BITS( ((kmp_int##BITS *) lhs),                                         \
+                                          (*(kmp_int##BITS *) &old_value),                           \
+                                          (*(kmp_int##BITS *) &new_value )))                         \
     {                                                                                                       \
         DO_PAUSE;                                                                                           \
         old_value = *(TYPE volatile *)lhs;                                                                  \
@@ -3020,12 +3020,27 @@ ATOMIC_BEGIN_MIX(TYPE_ID,TYPE,OP_ID,RTYPE_ID,RTYPE)                             
 
 #define ATOMIC_FIXED_READ(TYPE_ID,OP_ID,TYPE,BITS,OP,GOMP_FLAG)                                             \
 ATOMIC_BEGIN_READ(TYPE_ID,OP_ID,TYPE,TYPE)                                                                  \
-    not_implemented();                                                                                      \
+    TYPE new_value;                                                                                         \
+    new_value = __kmp_test_then_add##BITS( loc, OP 0 );                                                     \
+    return new_value;                                                                                       \
 }
 
 #define ATOMIC_CMPXCHG_READ(TYPE_ID,OP_ID,TYPE,BITS,OP,GOMP_FLAG)                                           \
 ATOMIC_BEGIN_READ(TYPE_ID,OP_ID,TYPE,TYPE)                                                                  \
-    not_implemented();                                                                                      \
+    TYPE new_value;                                                                                         \
+    TYPE volatile temp_val;                                                                                 \
+    union f_i_union {                                                                                       \
+        TYPE f_val;                                                                                         \
+        kmp_int##BITS i_val;                                                                                \
+    };                                                                                                      \
+    union f_i_union old_value;                                                                              \
+    temp_val = *loc;                                                                                        \
+    old_value.f_val = temp_val;                                                                             \
+    old_value.i_val = __kmp_compare_and_store_ret##BITS( ((kmp_int##BITS *) loc),                             \
+                  (*(kmp_int##BITS *) &old_value.i_val),                                                      \
+                  (*(kmp_int##BITS *) &old_value.i_val ));                                                    \
+    new_value = old_value.f_val;                                                                            \
+    return new_value;                                                                                       \
 }
 
 #define ATOMIC_CRITICAL_READ(TYPE_ID,OP_ID,TYPE,OP,LCK_ID,GOMP_FLAG)                                        \
@@ -3035,17 +3050,30 @@ ATOMIC_BEGIN_READ(TYPE_ID,OP_ID,TYPE,TYPE)                                      
 
 #define ATOMIC_XCHG_WR(TYPE_ID,OP_ID,TYPE,BITS,OP,GOMP_FLAG)                                                \
 ATOMIC_BEGIN(TYPE_ID,OP_ID,TYPE,void)                                                                       \
-    not_implemented();                                                                                      \
+    __kmp_xchg_fixed##BITS( (lhs), (rhs) );                                                                 \
 }
 
 #define ATOMIC_XCHG_FLOAT_WR(TYPE_ID,OP_ID,TYPE,BITS,OP,GOMP_FLAG)                                          \
 ATOMIC_BEGIN(TYPE_ID,OP_ID,TYPE,void)                                                                       \
-    not_implemented();                                                                                      \
+    __kmp_xchg_real##BITS( (lhs), (rhs) );                                                                  \
 }
 
 #define ATOMIC_CMPXCHG_WR(TYPE_ID,OP_ID,TYPE,BITS,OP,GOMP_FLAG)                                             \
 ATOMIC_BEGIN(TYPE_ID,OP_ID,TYPE,void)                                                                       \
-    not_implemented();                                                                                      \
+    TYPE volatile temp_val;                                                                                 \
+    TYPE old_value, new_value;                                                                              \
+    temp_val = *lhs;                                                                                        \
+    old_value = temp_val;                                                                                   \
+    new_value = rhs;                                                                                        \
+    while ( ! __kmp_compare_and_store##BITS( (kmp_int##BITS *) lhs,                                         \
+                *(kmp_int##BITS *) &old_value,                                                              \
+                *(kmp_int##BITS *) &new_value ) )                                                           \
+    {                                                                                                       \
+        DO_PAUSE;                                                                                           \
+        temp_val = *lhs;                                                                                    \
+        old_value = temp_val;                                                                               \
+        new_value = rhs;                                                                                    \
+    }                                                                                                       \    
 }
 
 #define ATOMIC_CRITICAL_WR(TYPE_ID,OP_ID,TYPE,OP,LCK_ID,GOMP_FLAG)                                          \
@@ -3055,7 +3083,14 @@ ATOMIC_BEGIN(TYPE_ID,OP_ID,TYPE,void)                                           
 
 #define ATOMIC_FIXED_ADD_CPT(TYPE_ID,OP_ID,TYPE,BITS,OP,GOMP_FLAG)                                          \
 ATOMIC_BEGIN_CPT(TYPE_ID,OP_ID,TYPE,TYPE)                                                                   \
-    not_implemented();                                                                                      \
+    TYPE old_value, new_value;                                                                              \
+    old_value = __kmp_test_then_add##BITS( (lhs), (OP rhs) );                                               \
+    if( flag )                                                                                              \
+    {                                                                                                       \
+        return old_value OP rhs;                                                                            \
+    }                                                                                                       \
+    else                                                                                                    \
+        return old_value;                                                                                   \
 }
 
 #define ATOMIC_CMPX_L_CPT(TYPE_ID,OP_ID,TYPE,BITS,OP,GOMP_FLAG)                                             \
