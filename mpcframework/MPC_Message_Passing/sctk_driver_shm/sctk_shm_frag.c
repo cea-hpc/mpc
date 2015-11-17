@@ -68,16 +68,13 @@ sctk_shm_frag_del_elt_from_hash(int key, int table_id, sctk_shm_table_t table_ty
 static void
 sctk_shm_rdv_free(void* ptr)
 {
-    sctk_shm_proc_frag_info_t* info = (sctk_shm_proc_frag_info_t*)(ptr - sizeof(sctk_shm_proc_frag_info_t));
-    sctk_free(info);
+    sctk_free(ptr);
 }
 
 static void
 sctk_shm_rdv_message_copy(sctk_message_to_copy_t* tmp)
 {
-   sctk_shm_proc_frag_info_t* info = NULL;
-   info = (sctk_shm_proc_frag_info_t*)((void*)tmp->msg_send - sizeof(sctk_shm_proc_frag_info_t));
-   sctk_net_message_copy_from_buffer(info->msg,tmp,1);
+   sctk_net_message_copy(tmp);
 }
 
 static sctk_shm_proc_frag_info_t*
@@ -97,7 +94,7 @@ sctk_shm_send_register_new_frag_msg(int dest)
       sctk_shm_process_msg_id = (sctk_shm_process_msg_id+1) % SCTK_SHM_MAX_FRAG_MSG_PER_PROCESS;
       frag_infos->msg_frag_key = sctk_shm_process_msg_id;
 
-      if(try++ > sctk_shm_max_frag_msg_per_process)
+      if(try > sctk_shm_max_frag_msg_per_process)
          break;
 
    } while(sctk_shm_frag_get_elt_from_hash(frag_infos->msg_frag_key, dest, SCTK_SHM_SENDER_HT)); 
@@ -150,7 +147,7 @@ sctk_shm_init_recv_frag_msg(int key, int remote, sctk_thread_ptp_message_t* msg)
    sctk_shm_proc_frag_info_t* frag_infos = NULL;
    const size_t msg_size = SCTK_MSG_SIZE(msg);
 
-   frag_infos = sctk_malloc(sizeof(sctk_shm_proc_frag_info_t)+msg_size+sizeof(sctk_thread_ptp_message_t));
+   frag_infos = (sctk_shm_proc_frag_info_t*) sctk_malloc(sizeof(sctk_shm_proc_frag_info_t));
    frag_infos->is_ready = SCTK_SPINLOCK_INITIALIZER;
    sctk_spinlock_lock(&(frag_infos->is_ready));
 
@@ -158,7 +155,7 @@ sctk_shm_init_recv_frag_msg(int key, int remote, sctk_thread_ptp_message_t* msg)
    frag_infos->size_copied = 0;
    frag_infos->remote_mpi_rank = remote;
    frag_infos->local_mpi_rank = sctk_get_local_process_rank();
-   frag_infos->header = (sctk_thread_ptp_message_t*)((char*)frag_infos+sizeof(sctk_shm_proc_frag_info_t));
+   frag_infos->header = (sctk_thread_ptp_message_t*) sctk_malloc(msg_size+sizeof(sctk_thread_ptp_message_t));
    frag_infos->msg = (char*) frag_infos->header + sizeof(sctk_thread_ptp_message_t);
 
    if(msg_size)
@@ -202,7 +199,7 @@ sctk_network_frag_msg_first_send(sctk_thread_ptp_message_t* msg, sctk_shm_cell_t
 
    if(frag_infos) 
    {
-   	sctk_spinlock_unlock(&(frag_infos->is_ready));
+   	    sctk_spinlock_unlock(&(frag_infos->is_ready));
    }
    else
    {
@@ -226,11 +223,10 @@ sctk_network_frag_msg_first_recv(sctk_thread_ptp_message_t* msg, sctk_shm_cell_t
    
    /* reset tail */
    msg = frag_infos->header;
-   msg->body.completion_flag = NULL;
+   SCTK_MSG_COMPLETION_FLAG_SET ( msg , NULL );
    msg->tail.message_type = SCTK_MESSAGE_NETWORK;
    sctk_rebuild_header(msg);
    sctk_reinit_header(msg, sctk_shm_rdv_free, sctk_shm_rdv_message_copy);
-
    return frag_infos; 
 }
 
@@ -243,11 +239,11 @@ sctk_network_frag_msg_next_send(sctk_shm_proc_frag_info_t* frag_infos)
    sctk_thread_ptp_message_t* msg = NULL;
   
    if(sctk_spinlock_trylock(&(frag_infos->is_ready)))
-	return 0;
+      return 0;
 
    msg_key = frag_infos->msg_frag_key;
    msg_dest = frag_infos->remote_mpi_rank;
-
+   
    sctk_nodebug("[KEY:%d] TRY SEND NEXT PART OF FRAGMENTED MSG", msg_key);
    cell = sctk_shm_get_cell(msg_dest);
    if(!cell)
@@ -280,12 +276,14 @@ sctk_network_frag_msg_next_send(sctk_shm_proc_frag_info_t* frag_infos)
    if(frag_infos->size_total == frag_infos->size_copied)
    {
         sctk_nodebug("[KEY:%d] SEND END PART MSG", msg_key);
-	msg = frag_infos->header;
-   	sctk_free(frag_infos);
+	    msg = frag_infos->header;
+   	    sctk_free(frag_infos);
         sctk_complete_and_free_message(msg) ;
+        frag_infos = NULL;
    }
 
-   sctk_spinlock_unlock(&(frag_infos->is_ready));
+   if(frag_infos)
+      sctk_spinlock_unlock(&(frag_infos->is_ready));
 
    return 1;
 }
@@ -319,7 +317,7 @@ sctk_network_frag_msg_shm_send(sctk_thread_ptp_message_t* msg, sctk_shm_cell_t* 
    sctk_shm_proc_frag_info_t* infos = sctk_network_frag_msg_first_send(msg, cell);
    
    if(!infos)
-   	return (SCTK_MSG_SIZE(msg) > 0) ? 0 : 1;
+      return (SCTK_MSG_SIZE(msg) > 0) ? 0 : 1;
     
    return 1;
 }
@@ -357,11 +355,11 @@ sctk_network_frag_msg_shm_recv(sctk_shm_cell_t* cell, int enabled_copy)
    {
 	msg_hdr = frag_infos->header;
 	if(frag_infos->size_total)
-        {	
+    {	
     		sctk_spinlock_lock(&sctk_shm_recving_frag_hastable_lock);
    		    sctk_shm_frag_del_elt_from_hash(msg_key, msg_src, SCTK_SHM_RECVER_HT);
     		sctk_spinlock_unlock(&sctk_shm_recving_frag_hastable_lock);
-        }
+    }
    }
 
    return msg_hdr;
