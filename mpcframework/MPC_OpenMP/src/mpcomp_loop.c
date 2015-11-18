@@ -128,5 +128,5 @@ __mpcomp_get_specific_chunk_per_rank (int rank, int nb_threads,
     }
 
   *from = local_from ;
-  *to = (incr > 0) ? ((local_to > b) ? b : local_to) : ((local_to < b) ? b : local_to);
+  sctk_assert((incr > 0) ? (local_to <= b) : (local_to >= b));
 }
