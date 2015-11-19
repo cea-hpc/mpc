@@ -292,18 +292,19 @@ void
 sctk_network_frag_msg_shm_idle(int max_try)
 {
     sctk_shm_proc_frag_info_t* infos = NULL;
-    int i;
+    int i, cur_try;
     
     if(!sctk_shm_idle_frag_msg)
        return;
 
     if(sctk_spinlock_trylock(&sctk_shm_sending_frag_hastable_lock))
   	    return;
-
+    
+    cur_try = 0;
     for (i=0; i < sctk_get_local_process_number(); i++)
     {
     	MPC_HT_ITER( &(sctk_shm_sending_frag_hastable_ptr[i]), infos )
-    	   if(!sctk_network_frag_msg_next_send(infos))
+    	   if (!sctk_network_frag_msg_next_send(infos) && cur_try++ < max_try)
               break;
     	MPC_HT_ITER_END
     }
