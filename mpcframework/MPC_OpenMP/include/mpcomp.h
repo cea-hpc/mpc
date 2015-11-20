@@ -79,23 +79,21 @@ extern "C"
   void mpcomp_set_nested (int nested);
   int mpcomp_get_nested (void);
 
-  struct mpcomp_lock_s
-  {
-    volatile long status;
-    volatile long iter;
-    volatile struct mpcomp_thread_info_s *owner;
-    volatile struct mpcomp_slot_s *first;
-    volatile struct mpcomp_slot_s *last;
-    /* sctk_thread_mutex_t lock; */
-    sctk_thread_spinlock_t lock;
-  };
-
-
-  //typedef struct mpcomp_lock_s mpcomp_lock_t;
-  //typedef struct mpcomp_lock_s mpcomp_nest_lock_t;
-
   typedef sctk_thread_mutex_t mpcomp_lock_t;
+#if 0
   typedef sctk_thread_mutex_t mpcomp_nest_lock_t;
+#else
+
+  struct mpcomp_nested_lock_s
+  {
+      void * owner_thread ; /* Owner of the lock */
+      void * owner_task; /* Owner of the lock */
+      int nb_nested ; /* Number of times this lock is held */
+      sctk_thread_mutex_t l ; /* Real lock */
+  } ;
+  typedef struct mpcomp_nested_lock_s mpcomp_nest_lock_t ;
+#endif
+
 
 /* Lock Functions */
   void mpcomp_init_lock (mpcomp_lock_t * lock);

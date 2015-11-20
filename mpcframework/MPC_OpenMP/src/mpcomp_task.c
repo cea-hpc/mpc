@@ -515,9 +515,12 @@ void __mpcomp_task_infos_init()
 	       id_numa = sctk_get_node_from_cpu(sctk_get_init_vp(sctk_get_task_rank()));
 
 	  /* Allocate the default current task (no func, no data, no parent) */
+      /* TODO check that this memory allocation is useless */
+#if 0
 	  t->current_task = mpcomp_malloc(1, sizeof(struct mpcomp_task_s), id_numa);
 	  __mpcomp_task_init(t->current_task, NULL, NULL, t);
 	  t->current_task->parent = NULL;
+#endif
 
 	  /* Allocate private task data structures */
 	  t->tied_tasks = mpcomp_malloc(1, sizeof(struct mpcomp_task_list_s), id_numa);
@@ -644,10 +647,11 @@ void __mpcomp_task(void *(*fn) (void *), void *data, void (*cpyfn) (void *, void
      }
 
 		 sctk_debug( "[%d] __mpcomp_task: new task (n_threads=%ld, current_task=%s, current_task_depth=%d, "
-				 "nb_delayed=%d)",
+				 "nb_delayed=%d, current_task=%p)",
 				 t->rank, t->info.num_threads, (t->current_task)?"yes":"no",
 				 (t->current_task)?t->current_task->depth:0 ,
-				 (t->info.num_threads == 1)?0:sctk_atomics_load_int(&(new_list->nb_elements))
+				 (t->info.num_threads == 1)?0:sctk_atomics_load_int(&(new_list->nb_elements)),
+                 t->current_task
 				 ) ;
 
      if (!if_clause
@@ -660,6 +664,7 @@ void __mpcomp_task(void *(*fn) (void *), void *data, void (*cpyfn) (void *, void
 	  struct mpcomp_task_s task;
 	  struct mpcomp_task_s *prev_task;
 	  mpcomp_local_icv_t icvs;
+
 
 	  __mpcomp_task_init (&task, NULL, NULL, t);
 	  mpcomp_task_set_property (&(task.property), MPCOMP_TASK_UNDEFERRED);
@@ -697,8 +702,8 @@ void __mpcomp_task(void *(*fn) (void *), void *data, void (*cpyfn) (void *, void
 	  }
 #endif
 
-		sctk_debug( "[%d] __mpcomp_task: end of sequential task",
-				t->rank ) ;
+		sctk_debug( "[%d] __mpcomp_task: end of sequential task, current=%p",
+				t->rank, prev_task ) ;
 	  
 	  /* Replace current task */
 	  t->current_task = prev_task;
