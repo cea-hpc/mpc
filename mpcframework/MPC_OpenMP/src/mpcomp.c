@@ -33,7 +33,9 @@
   *****************/
 
 /*
-  Avoid mix of MPC with Intel and GCC OpenMP runtimes
+  Avoid mix of MPC with GCC OpenMP runtime.
+  Add other function with the following macro to avoid mixing
+  with any other non-supported OpenMP ABI
  */
 
 #define ABORT_FUNC_OMP(a,b)			\
@@ -42,9 +44,6 @@
     abort();					\
   }
 
-#if 0
-ABORT_FUNC_OMP(__kmpc_for_static_init_4,"Mix Intel OpenMP runtime with MPC")
-#endif
 ABORT_FUNC_OMP(GOMP_parallel_start,"Mix GCC OpenMP runtime with MPC")
 
 /* Schedule type */
@@ -101,7 +100,9 @@ mpcomp_global_icv_t mpcomp_global_icvs;
   *****************/
 
 TODO(" function __mpcomp_tokenizer is inspired from sctk_launch.c. Need to merge")
-static char ** __mpcomp_tokenizer( char * string_to_tokenize, int * nb_tokens ) {
+static char ** 
+__mpcomp_tokenizer( char * string_to_tokenize, int * nb_tokens ) 
+{
     /*    size_t len;*/
     char *cursor;
     int i;
@@ -139,7 +140,15 @@ static char ** __mpcomp_tokenizer( char * string_to_tokenize, int * nb_tokens ) 
 
 }
 
-static inline void __mpcomp_read_env_variables() {
+/*
+ * Read environment variables for OpenMP.
+ * Actually, the values are read from configuration: those values can be
+ * assigned with environement variable or config file.
+ * This function is called once per process
+ */
+static inline 
+void __mpcomp_read_env_variables() 
+{
   char * env ;
   int nb_threads ;
 
@@ -161,8 +170,6 @@ static inline void __mpcomp_read_env_variables() {
 	  "Switching to default value %d\n", sctk_get_processor_number (), OMP_MICROVP_NUMBER ) ;
       OMP_MICROVP_NUMBER = 0 ;
   }
-
-
 
   /******* OMP_SCHEDULE *********/
   env = sctk_runtime_config_get()->modules.openmp.schedule;
@@ -224,7 +231,6 @@ static inline void __mpcomp_read_env_variables() {
     }
   }
 
-
   /******* OMP_NUM_THREADS *********/
   OMP_NUM_THREADS = sctk_runtime_config_get()->modules.openmp.nb_threads;
   if ( OMP_NUM_THREADS < 0 ) {
@@ -235,7 +241,6 @@ TODO( "If OMP_NUM_THREADS is 0, let it equal to 0 by default and handle it later
 	  OMP_NUM_THREADS = OMP_MICROVP_NUMBER;	/* DEFAULT */
   }
   TODO( "OMP_NUM_THREADS: need to handle x,y,z,... and keep only x" )
-
 
   /******* OMP_DYNAMIC *********/
   OMP_DYNAMIC = sctk_runtime_config_get()->modules.openmp.adjustment ? 1 : 0;
@@ -401,13 +406,6 @@ TODO( "If OMP_NUM_THREADS is 0, let it equal to 0 by default and handle it later
     tokens = __mpcomp_tokenizer( env, &nb_tokens ) ;
     sctk_assert( tokens != NULL ) ;
 
-#if 0
-    fprintf( stderr, "OMP_TREE: Found %d token(s)\n", nb_tokens ) ;
-
-    for ( i = 0 ; i < nb_tokens ; i++ ) {
-      fprintf( stderr, "OMP_TREE\tToken %d -> <%s>\n", i, tokens[i] ) ;
-    }
-#endif
 
     /* TODO check that arguments are ok and #leaves is correct */
 
@@ -419,13 +417,6 @@ TODO( "If OMP_NUM_THREADS is 0, let it equal to 0 by default and handle it later
       OMP_TREE_NB_LEAVES *= OMP_TREE[i] ;
     }
 
-#if 0
-    fprintf( stderr, "OMP_TREE: tree w/ %d level(s)\n", OMP_TREE_DEPTH ) ;
-
-    for ( i = 0 ; i < nb_tokens ; i++ ) {
-      fprintf( stderr, "OMP_TREE\tLevel %d -> %d children\n", i, OMP_TREE[i] ) ;
-    }
-#endif
 	TODO( "check the env variable OMP_TREE" )
 
   } else {
@@ -434,6 +425,8 @@ TODO( "If OMP_NUM_THREADS is 0, let it equal to 0 by default and handle it later
 
 
 #if MPCOMP_TASK
+  /* TODO add variables for tasks to config */
+
   /******* OMP_NEW_TASKS_DEPTH *********/
   env = getenv ("OMP_NEW_TASKS_DEPTH");
   if (env != NULL)
@@ -557,7 +550,9 @@ TODO( "If OMP_NUM_THREADS is 0, let it equal to 0 by default and handle it later
 /* Initialization of the OpenMP runtime
    Called during the initialization of MPC
  */
-void __mpcomp_init() {
+void 
+__mpcomp_init() 
+{
   static volatile int done = 0;
   static sctk_thread_mutex_t lock = SCTK_THREAD_MUTEX_INITIALIZER;
   int nb_mvps;
@@ -657,16 +652,18 @@ void __mpcomp_init() {
 
 	if ( sctk_get_local_task_rank() == 0 ) {
 	  sctk_debug( "__mpcomp_init: "
-	      "MPI rank=%d, process_rank=%d, local_task_rank=%d => %d mvp(s) out of %d core(s) A",
+	      "MPI rank=%d, process_rank=%d, local_task_rank=%d => %d mvp(s) "
+          "out of %d core(s) A",
 	      task_rank, sctk_get_local_process_rank(), sctk_get_local_task_rank(),
 	      sctk_get_processor_number(), sctk_get_processor_number() ) ;
-	} else {
-	sctk_debug( "__mpcomp_init: "
-	    "MPI rank=%d, process_rank=%d, local_task_rank=%d => %d mvp(s) out of %d core(s)",
-	    task_rank, sctk_get_local_process_rank(), sctk_get_local_task_rank(),
-	   nb_mvps, sctk_get_processor_number() ) ;
-	}
-
+    } else {
+        sctk_debug( "__mpcomp_init: "
+                "MPI rank=%d, process_rank=%d, local_task_rank=%d => %d "
+                "mvp(s) out of %d core(s)",
+                task_rank, sctk_get_local_process_rank(), 
+                sctk_get_local_task_rank(),
+                nb_mvps, sctk_get_processor_number() ) ;
+    }
 
 
     /* Allocate an instance of OpenMP */
@@ -725,15 +722,18 @@ void __mpcomp_init() {
 
 }
 
-void __mpcomp_exit()
+void 
+__mpcomp_exit()
 {
 #if MPCOMP_TASK
      __mpcomp_task_exit();
 #endif /* MPCOMP_TASK */
 }
 
-void __mpcomp_instance_init( mpcomp_instance_t * instance, int nb_mvps,
-	   struct mpcomp_team_s * team	) {
+void 
+__mpcomp_instance_init( mpcomp_instance_t * instance, int nb_mvps,
+        struct mpcomp_team_s * team	) 
+{
 
 	/* TODO Field to update: 
 	 * tree_depth, tree_base, tree_cumulative, topology,
@@ -763,18 +763,7 @@ void __mpcomp_instance_init( mpcomp_instance_t * instance, int nb_mvps,
             sctk_abort() ;
         }
 
-#if 0
-		err = __mpcomp_flatten_topology(restrictedTopology, &flatTopology);
-        if ( err ) {
-            sctk_error( "MPC_OpenMP Internal error in __mpcomp_flatten_topology" ) ;
-            sctk_abort() ;
-        }
-
-		instance->topology = flatTopology;
-		hwloc_topology_destroy(restrictedTopology);
-#else
 		instance->topology = restrictedTopology ;
-#endif
 
 		if ( OMP_TREE == NULL ) {
 			__mpcomp_build_default_tree( instance ) ;

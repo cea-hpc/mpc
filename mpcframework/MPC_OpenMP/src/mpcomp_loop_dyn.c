@@ -30,7 +30,8 @@
 static int
 __mpcomp_dynamic_add( int * dest, int * src1, int *src2, 
 		int * base, int depth, int max_depth, 
-		int include_carry_over ) {
+		int include_carry_over ) 
+{
 		int i ;
 		int ret = 1 ;
 		int carry_over = 1 ; 
@@ -60,51 +61,11 @@ __mpcomp_dynamic_add( int * dest, int * src1, int *src2,
 /* Return 1 if overflow, otherwise 0 */
 static int
 __mpcomp_dynamic_increase( int * target, int * base,
-		int depth, int max_depth, int include_carry_over ) {
+		int depth, int max_depth, int include_carry_over ) 
+{
 		int i ;
 		int carry_over = 1;
 		int ret = 0 ;
-
-#if 0
-		mpcomp_thread_t *t ;	/* Info on the current thread */
-		t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
-		if ( t->rank == 1 ) {
-
-		sctk_debug( "__mpcomp_dynamic_increase[%d]: "
-				"depth=%d, mac_depth=%d, include_carry_over=%d"
-				,
-				t->rank,
-				depth, max_depth, include_carry_over ) ;
-		for ( i = 0 ; i < depth ; i++ ) {
-			sctk_debug( "__mpcomp_dynamic_increase[%d]: "
-					"\ttarget[%d] = %d"
-					,
-					t->rank,
-					i, target[i] ) ;
-		}
-		for ( i = 0 ; i < depth ; i++ ) {
-			sctk_debug( "__mpcomp_dynamic_increase[%d]: "
-					"\tbase[%d] = %d"
-					,
-					t->rank,
-					i, base[i] ) ;
-		}
-		}
-#endif
-
-#if 0
-		{
-			mpcomp_thread_t *t ;	/* Info on the current thread */
-			t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
-
-			if ( t->rank == 0 ) {
-				sctk_debug( "[%d] __mpcomp_dynamic_increase: "
-						"shift[1] before %d",
-						t->rank, target[1] ) ;
-			}
-		}
-#endif
-
 
 		/* Step to the next target */
 		for ( i = depth -1 ; i >= max_depth ; i-- ) {
@@ -125,36 +86,6 @@ __mpcomp_dynamic_increase( int * target, int * base,
 			}
 		}
 
-#if 0
-		{
-		mpcomp_thread_t *t ;	/* Info on the current thread */
-		t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
-		if ( t->rank == 1 ) {
-
-		for ( i = 0 ; i < depth ; i++ ) {
-			sctk_debug( "__mpcomp_dynamic_increase[%d]: "
-					"\tFinal target[%d] = %d    (ret=%d)"
-					,
-					t->rank,
-					i, target[i], ret ) ;
-		}
-		}
-		}
-#endif
-
-#if 0
-		{
-			mpcomp_thread_t *t ;	/* Info on the current thread */
-			t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
-
-			if ( t->rank == 0 ) {
-				sctk_debug( "[%d] __mpcomp_dynamic_increase: "
-						"shift[1] after %d",
-						t->rank, target[1] ) ;
-			}
-		}
-#endif
-
 		return ret ;
 }
 
@@ -162,7 +93,8 @@ __mpcomp_dynamic_increase( int * target, int * base,
  * Returns 1 on success, 0 otherwise */
 static int
 __mpcomp_dynamic_loop_get_chunk_from_rank( mpcomp_thread_t * t, 
-		mpcomp_thread_t * target, long * from, long * to ) {
+		mpcomp_thread_t * target, long * from, long * to ) 
+{
 	int r ;
 	int index;
 	int target_index ;
@@ -175,14 +107,6 @@ __mpcomp_dynamic_loop_get_chunk_from_rank( mpcomp_thread_t * t,
 			"to thread %d (current %d)", 
 			t->rank, t->rank, t->for_dyn_current,
 			target->rank, target->for_dyn_current ) ;
-
-#if 0
-	TODO("DEBUGGING PURPOSE ONLY")
-	/* TODO for debugging purpose only */
-	if ( t != target && t->rank != 0 ) {
-		return 0 ;
-	}
-#endif
 
 #if 0
 	/* Disable work-stealing */
@@ -329,7 +253,8 @@ __mpcomp_dynamic_loop_init(mpcomp_thread_t *t,
 }
 
 
-int __mpcomp_dynamic_loop_begin (long lb, long b, long incr,
+int 
+__mpcomp_dynamic_loop_begin (long lb, long b, long incr,
 				 long chunk_size, long *from, long *to)
 { 
 	mpcomp_thread_t *t ;	/* Info on the current thread */
@@ -340,17 +265,6 @@ int __mpcomp_dynamic_loop_begin (long lb, long b, long incr,
 	/* Grab the thread info */
 	t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
 	sctk_assert( t != NULL ) ;
-
-#if 0
-	/* TODO FOR DEBUGGIN PURPOSE */
-	if ( t->for_dyn_shift != NULL ) {
-		if ( t->for_dyn_shift[1] != 0 ) {
-			fprintf( stderr, "[%d] __mpcomp_dynamic_loop_begin: "
-					"error rank %d has shift[1] = %d\n",
-					t->rank, t->rank, t->for_dyn_shift[1] ) ;
-		}
-	}
-#endif
 
 	/* Initialization of loop internals */
 	__mpcomp_dynamic_loop_init(t, lb, b, incr, chunk_size);
@@ -492,26 +406,10 @@ do_increase:
 					"[%d] __mpcomp_dynamic_loop_next: "
 					"Target tour done", t->rank ) ;
 
-#if 0
-			/* TODO DEBUGGING PURPOSE */
-			if ( t->for_dyn_shift[1] != 0 ) {
-				// fprintf( stderr, "EEEERRRRRR\n" ) ;
-				sctk_debug( "EEEERRRRRR\n" ) ;
-			}
-#endif
-
 			/* Initialized target to the curent thread */
 			/* TODO maybe find another solution because it can be time consuming */
 			__mpcomp_dynamic_add(  t->for_dyn_target, t->for_dyn_shift, t->mvp->tree_rank,
 					t->instance->tree_base, t->instance->tree_depth, max_depth, 0 ) ;
-
-#if 0
-			/* TODO DEBUGGING PURPOSE */
-			if ( t->for_dyn_shift[1] != 0 ) {
-				// fprintf( stderr, "EEEERRRRRR 2\n" ) ;
-				sctk_debug( "EEEERRRRRR 2\n" ) ;
-			}
-#endif
 
 			found = 0 ;
 			break ;
@@ -586,113 +484,11 @@ do_increase:
 			"[%d] __mpcomp_dynamic_loop_next: "
 			"Exiting with no chunks", t->rank ) ;
 
-#if 0
-	/*
-	if ( t->rank == 2 ) {
-		sleep(3) ;
-	}
-	*/
-	/* TODO DEBUGGING PURPOSE */
-	if ( t->for_dyn_shift[1] != 0 ) {
-	  sctk_debug( "[%d] __mpcomp_dynamic_loop_next: exit - shift[1] = %d",
-	      t->rank, t->for_dyn_shift[1]    ) ; 
-	  /*
-		fprintf( stderr, "[%d] __mpcomp_dynamic_loop_next: exit - shift[1] = %d\n",
-				t->rank, t->for_dyn_shift[1]	) ;
-				*/
-		// not_reachable() ;
-	} 
-#endif
 	sctk_nodebug( "[%d] __mpcomp_dynamic_loop_next: exit - shift[1] = %d",
 	    t->rank, t->for_dyn_shift[1]    ) ; 
 
 	return 0 ;
 }
-
-#if 0
-static int 
-__mpcomp_dynamic_loop_steal( mpcomp_thread_t * t, long * from, long * to ) {
-	int i ;
-	int stop = 0 ; 
-	int max_depth ; 
-
-	/* Note: max_depth is a mix of new_root's depth and an artificial depth
-	 * set to reduce the stealing frontiers */
-
-	TODO( "__mpcomp_dynamic_loop_steal: Add artificial depth to limit stealing frontiers" )
-
-	sctk_debug( "__mpcomp_dynamic_loop_steal[%d]: Enter", t->rank ) ;
-	sctk_debug( "__mpcomp_dynamic_loop_steal[%d]: depth of new_root = %d",
-			t->rank, t->info.new_root->depth ) ;
-
-	/* Check that the target is allocated */
-	if ( t->for_dyn_target == NULL ) {
-		t->for_dyn_target = (int *)malloc( t->instance->tree_depth * sizeof( int ) ) ;
-		for ( i = 0 ; i < t->instance->tree_depth ; i++ ) {
-			t->for_dyn_target[i] = 0 ;
-		}
-	}
-	sctk_assert( t->for_dyn_target != NULL ) ;
-
-	/* Stop the stealing at the following depth.
-	 * Nodes above this depth will not be traversed
-	 */
-	max_depth = t->info.new_root->depth ;
-
-	while ( !stop ) {
-
-	/* Increase target index */
-	int carry_over = 1;
-	for ( i = t->instance->tree_depth -1 ; i >= max_depth ; i-- ) {
-		int value ;
-
-		value = t->for_dyn_target[i] + carry_over ;
-
-		carry_over = 0 ;
-		t->for_dyn_target[i] = value ;
-		if ( value >= t->instance->tree_base[i] ) {
-			carry_over = value / t->instance->tree_base[i] ;
-			t->for_dyn_target[i] = (value %  (t->instance->tree_base[i]) ) ;
-		}
-	}
-
-#if 0
-	fprintf( stderr, "__mpcomp_dynamic_loop_steal[%ld]: new victim = [",
-			t->rank ) ;
-	for ( i = 0 ; i < t->instance->tree_depth ; i++ ) {
-		if ( i != 0 ) {
-			fprintf( stderr, ", " ) ;
-		}
-		fprintf( stderr, "%d", t->for_dyn_target[i] ) ;
-	}
-	fprintf( stderr, "]\n" ) ;
-#endif
-
-	/* Add current microvp coordinates to select the target */
-	for ( i = max_depth ; i < t->instance->tree_depth ; i++ ) {
-		/* Add t->for_dyn_target[i] and t->mvp->tree_rank */
-
-	}
-
-	/* Compute the index of the target mvp according to its coordinates */
-
-	/* Try to steal from this mvp */
-
-
-	/* Check if target is 0 */
-	stop = 1 ;
-	for ( i = 0 ; i < t->instance->tree_depth ; i++ ) {
-		if ( t->for_dyn_target[i] != 0 ) {
-			stop = 0 ;
-		}
-	}
-	}
-
-	sctk_debug( "__mpcomp_dynamic_loop_steal[%d]: Exit", t->rank ) ;
-
-	return 0 ;
-}
-#endif
 
 void
 __mpcomp_dynamic_loop_end_nowait ()
@@ -709,20 +505,6 @@ __mpcomp_dynamic_loop_end_nowait ()
 
 	sctk_nodebug( "[%d] __mpcomp_dynamic_loop_end_nowait: entering...",
 	    t->rank ) ;
-
-#if 0
-			/* TODO DEBUGGING PURPOSE */
-			if ( t->for_dyn_shift[1] != 0 ) {
-				fprintf( stderr, "[%d] __mpcomp_dynamic_loop_end_nowait: begin - shift[1] = %d\n",
-					 t->rank, t->for_dyn_shift[1]	) ;
-				// not_reachable() ;
-			} else {
-				if ( t->rank != 0 ) {
-					// sleep(1); 
-				}
-			}
-#endif
-
 
 	/* Number of threads in the current team */
 	num_threads = t->info.num_threads;

@@ -26,44 +26,9 @@
 #include "mpcomp.h"
 #include "mpcomp_internal.h"
 
-#if 0
-#if HWLOC_API_VERSION < 0x00010800
-#warning "MPC_OPENMP overload hwloc_topology_dup"
-/* Duplicate the entire topology 'oldtopology' into 'newtopology' */
-int hwloc_topology_dup(hwloc_topology_t * newtopology, 
-        hwloc_topology_t * oldtopology)
-{
-     char *xmlBuffer; 
-     int bufLen;
-     int err;
-
-     /* Save 'oldtopology' in a xml buffer */
-     err = hwloc_topology_export_xmlbuffer(*oldtopology, &xmlBuffer, &bufLen);
-     if (err) {
-	  perror("Export topology in xmlbuffer");
-	  return -1;
-     }
-
-     /* Copy the topology saved in xml buffer inside 'newtopology' */
-     err = hwloc_topology_set_xmlbuffer(*newtopology, xmlBuffer, bufLen);
-     if (err) {
-	  perror("Set topology with xmlbuffer");
-	  return -1;
-     }
-     
-     /* Free allocated xml buffer */
-     hwloc_free_xmlbuffer(*oldtopology, xmlBuffer);
-
-     return 0;
-}
-#else
-#warning "MPC_OPENMP use regular hwloc_topology_dup"
-#endif
-#endif
-
-
 /* Called only by __mpcomp_buid_tree */
-static int mpcomp_get_global_index_from_cpu (hwloc_topology_t topo, const int vp)
+static int 
+mpcomp_get_global_index_from_cpu (hwloc_topology_t topo, const int vp)
 {
      hwloc_topology_t globalTopology = sctk_get_topology_object();
      // hwloc_topology_t globalTopology = sctk_get_topology_full_object() ;
@@ -75,112 +40,6 @@ static int mpcomp_get_global_index_from_cpu (hwloc_topology_t topo, const int vp
  
     return obj->logical_index;
 }
-
-
-
-#if 0
-/*
- * Walk down the topology object 'topology' from 'obj' node
- * and return the number of leaves.
- */
-static int get_number_of_leaves(hwloc_obj_t obj, hwloc_topology_t topology, int *ignoredTypes)
-{
-     if (obj->type == HWLOC_OBJ_PU) {
-	  /* If the object is a at lowest level */
-
-	  return 1;
-     } else {
-	  unsigned nbChildren = obj->arity;
-	  
-	  if (ignoredTypes[obj->children[0]->type] == 0) {
-	       /* Children level is not ignored, so no need to go deeper */
-
-	       return nbChildren;
-	  } else {
-	       unsigned i, nbLeaves = 0;
-	       
-	       for (i=0; i<nbChildren; i++) {
-		    /* Get the real arity of every children and sum up */
-		    nbLeaves += get_number_of_leaves(obj->children[i], topology, ignoredTypes);
-	       }
-
-	       return nbLeaves;
-	  }
-     }
-}
-
-/*
- * Configure the topology detection for 'flatTopology' in order to get
- * a symmetric tree (For each level, all node must have the same arity).
- */
-int __mpcomp_flatten_topology(hwloc_topology_t topology, hwloc_topology_t *flatTopology)
-{
-     unsigned depth, type, topoDepth;
-     int err;
-     int ignoredTypes[HWLOC_OBJ_TYPE_MAX];
-
-     /* Initialize flat topology object */
-     err = hwloc_topology_init(flatTopology);
-     if (err) {
-	  sctk_debug("Error on initializing topology");
-	  return 1;
-     }
-
-     /* Duplicate 'topology' to flat topology */
-     err = hwloc_topology_dup(flatTopology, topology);
-     if (err) {
-	  sctk_debug("Error on duplicating topology");
-	  return 1;
-     }
-
-     topoDepth = hwloc_topology_get_depth(topology);
-
-     /* Initialize the array of ignored of hwloc objects types */
-     for (type=0; type<HWLOC_OBJ_TYPE_MAX; type++) {
-	  ignoredTypes[type] = 0;
-     }
-
-     /* Walk the topology with a tree style */
-     for (depth=topoDepth-2; depth>0; depth--) {
-	  int i, nbObjs, nbChildren, nbLeaves;
-	  hwloc_obj_t obj = NULL;
-
-	  obj = hwloc_get_next_obj_by_depth(topology, depth, obj);	  
-	  nbObjs = hwloc_get_nbobjs_by_depth(topology, depth);
-	  nbChildren = get_number_of_leaves(obj, topology, ignoredTypes);
-
-	  /* Walk all the objects at current depth */
-	  for (i=1; i<nbObjs; i++) {
-	       obj = hwloc_get_next_obj_by_depth(topology, depth, obj);
-	       nbLeaves = get_number_of_leaves(obj, topology, ignoredTypes);
-	       
-	       if (nbLeaves != nbChildren) {
-		    /* If two object of the topology haven't the same number of leaves */
-
-               sctk_debug( "__mpcomp_flatten_topology: Objects at depth %d"
-                       " have different nb children (%d vs. %d) type %s",
-                       i, nbLeaves, nbChildren, hwloc_obj_type_string( obj->type ) ) ;
-
-		    assert(obj->type != HWLOC_OBJ_MACHINE);
-		    ignoredTypes[obj->type] = 1;
-		    
-		    /* Remove this level from topology for the detection */
-		    hwloc_topology_ignore_type(*flatTopology, obj->type);
-
-		    /* Go to next level */
-		    break;
-	       }
-	  }
-     }
-
-     if (sctk_get_verbosity()>=3) {
-         fprintf( stderr, "FLATTEN TOPOLOGY\n" ) ;
-         sctk_print_specific_topology( stderr, *flatTopology) ;
-     }
-
-     return 0;
-}
-#endif
 
 /*
  * Restrict the topology object of the current mpi task to 'nb_mvps' vps.
@@ -288,7 +147,8 @@ taskRank, nb_cores, nb_pus ) ;
 /**
  * Check if the following parameters are correct to build a coherent tree
  */
-int __mpcomp_check_tree_parameters(int n_leaves, int depth, int *degree)
+int 
+__mpcomp_check_tree_parameters(int n_leaves, int depth, int *degree)
 {
      int i;
      int computed_n_leaves;
@@ -466,75 +326,10 @@ int __mpcomp_build_default_tree(mpcomp_instance_t *instance)
 	/* Build the default tree */
 	__mpcomp_build_tree( instance, n_leaves, depth, degree ) ;
 
-#if 0
-#if MPCOMP_MIC
-	instance->nb_cores = 1;
-	for ( i = 0; i < instance->core_depth; i++ )
-	     instance->nb_cores *= degree[i];
-	__mpcomp_compute_min_index( instance, instance->root, n_leaves );
-#endif /* MPCOMP_MIC */
-#endif
-
 	sctk_nodebug("__mpcomp_build_auto_tree done"); 
 
 	return 1;
 }
-
-#if 0
-#if MPCOMP_MIC
-int __mpcomp_compute_min_index( mpcomp_instance_t * instance, mpcomp_node_t * n, int nthreads)
-{
-     int i, nthreads_per_core;
-
-     sctk_assert(instance != NULL);
-     sctk_assert(n != NULL);
-
-     if (n == instance->root) {
-	  instance->balanced_last_thread = -1;
-	  instance->balanced_current_core = -1;
-     }
-
-     nthreads_per_core = nthreads / instance->nb_cores ;
-
-     if ( n->depth == instance->core_depth )
-	  instance->balanced_current_core++;
-
-     if ( n->child_type == MPCOMP_CHILDREN_LEAF ) { 
-	  int k = 0;
-
-	  if (instance->balanced_current_core < instance->nb_cores % nthreads)
-	       nthreads_per_core++;
-	  
-	  for ( i = 0; i < n->nb_children; i++ ) {
-	       mpcomp_mvp_t * mvp;
-	       
-	       mvp = n->children.leaf[i];
-	       sctk_assert( mvp != NULL );
-	      
-	       if (i < nthreads_per_core && ++instance->balanced_last_thread < nthreads)
-		    /* mvp->min_index[MPCOMP_AFFINITY_BALANCED] = n->min_index[MPCOMP_AFFINITY_BALANCED] + i; */
-		    mvp->min_index[MPCOMP_AFFINITY_BALANCED] = instance->balanced_last_thread;
-	       else
-		    mvp->min_index[MPCOMP_AFFINITY_BALANCED] = instance->balanced_last_thread + nthreads + (k++);
-	  }
-     } else {
-	  for ( i = 0 ; i < n->nb_children ; i++ ) {
-	       mpcomp_node_t  *n2;
-	       
-	       n2 = n->children.node[i];
-	       sctk_assert(n2 != NULL);
-
-	       /* n2->min_index[MPCOMP_AFFINITY_BALANCED] = n->min_index[MPCOMP_AFFINITY_BALANCED] + i * instance->nb_cores * nb_threads_per_core;  */
-	       n2->min_index[MPCOMP_AFFINITY_BALANCED] = instance->balanced_last_thread + 1; 
-	       __mpcomp_compute_min_index( instance, n2, nthreads);
-	       n2->max_index[MPCOMP_AFFINITY_BALANCED] = instance->balanced_last_thread; 
-	  }	  
-     }
-
-     return 0;
-}
-#endif /* MPCOMP_MIC */
-#endif
 
 static int 
 __mpcomp_compute_scatter_min_index(
@@ -677,9 +472,6 @@ __mpcomp_build_tree( mpcomp_instance_t * instance, int n_leaves, int depth, int 
 	       root->min_index[i] = 0;
 	  }
 	  root->instance = instance ;
-#if 0
-	  root->lock = SCTK_SPINLOCK_INITIALIZER;
-#endif
 	  root->slave_running = 0;
 	  sctk_atomics_store_int( &(root->barrier), 0 );
 
@@ -885,9 +677,6 @@ __mpcomp_build_tree( mpcomp_instance_t * instance, int n_leaves, int depth, int 
 			      n2->min_index[j] = min_index[j];
 
 			 n2->instance = instance ;
-#if 0
-			 n2->lock = SCTK_SPINLOCK_INITIALIZER;
-#endif
 			 n2->slave_running = 0;
 
 			 sctk_atomics_store_int( &(n2->barrier), 0 );
@@ -916,7 +705,8 @@ __mpcomp_build_tree( mpcomp_instance_t * instance, int n_leaves, int depth, int 
 	  return 0;
 }
 
-void __mpcomp_print_tree( mpcomp_instance_t * instance ) {
+void 
+__mpcomp_print_tree( mpcomp_instance_t * instance ) {
 
      mpcomp_stack_t * s;
      int i, j;
