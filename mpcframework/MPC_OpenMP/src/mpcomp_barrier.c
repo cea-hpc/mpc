@@ -117,18 +117,6 @@ __mpcomp_internal_full_barrier (mpcomp_mvp_t *mvp)
 	long b_done;
 	mpcomp_node_t * new_root ;
 
-#if 0
-			/* TODO DEBUGGING PURPOSE */
-			if ( mvp->threads[0].for_dyn_shift != NULL &&
-					mvp->threads[0].for_dyn_shift[1] != 0 ) {
-				fprintf( stderr, "[0] __mpcomp_internal_full_barrier: shift[1] = %d\n",
-					 mvp->threads[0].for_dyn_shift[1]	) ;
-				// not_reachable() ;
-			}
-#endif
-
-
-
 	c = mvp->father;
 	sctk_assert( c != NULL ) ;
 

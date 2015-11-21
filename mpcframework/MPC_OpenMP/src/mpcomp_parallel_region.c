@@ -74,44 +74,6 @@ __mpcomp_wakeup_mvp(
 			mvp->info.single_sections_current_save,
 		 mvp->info.for_dyn_current_save ) ;
 
-#if 0
-	switch( mvp->threads[0].info.combined_pragma ) {
-		case MPCOMP_COMBINED_NONE:
-			sctk_debug( "__mpcomp_wakeup_mvp: No combined parallel" ) ;
-			break ;
-		case MPCOMP_COMBINED_SECTION:
-			sctk_debug( "__mpcomp_wakeup_mvp: Combined parallel/sections w/ %d section(s)",
-				   mvp->threads[0].info.nb_sections	) ;
-			__mpcomp_sections_init( 
-					&(mvp->threads[0]),
-					mvp->threads[0].info.nb_sections ) ;
-			break ;
-		case MPCOMP_COMBINED_STATIC_LOOP:
-			sctk_debug( "__mpcomp_wakeup_mvp: Combined parallel/loop" ) ;
-			__mpcomp_static_loop_init(
-					&(mvp->threads[0]),
-					mvp->threads[0].info.loop_lb,
-					mvp->threads[0].info.loop_b,
-					mvp->threads[0].info.loop_incr,
-					mvp->threads[0].info.loop_chunk_size
-					) ;
-			break ;
-		case MPCOMP_COMBINED_DYN_LOOP:
-			sctk_debug( "__mpcomp_wakeup_mvp: Combined parallel/loop" ) ;
-			__mpcomp_dynamic_loop_init(
-					&(mvp->threads[0]),
-					mvp->threads[0].info.loop_lb,
-					mvp->threads[0].info.loop_b,
-					mvp->threads[0].info.loop_incr,
-					mvp->threads[0].info.loop_chunk_size
-					) ;
-			break ;
-		default:
-			not_implemented() ;
-			break ;
-	}
-#endif
-
 }
 
 static inline void
@@ -119,38 +81,17 @@ static inline void
      mpcomp_mvp_t * mvp
      )
 {
-#if 0
-	switch( mvp->threads[0].info.combined_pragma ) {
-		case MPCOMP_COMBINED_NONE:
-			sctk_debug( "__mpcomp_sendtosleep_mvp: No combined parallel" ) ;
-			break ;
-		case MPCOMP_COMBINED_SECTION:
-			sctk_debug( "__mpcomp_sendtosleep_mvp: Combined parallel/sections w/ %d section(s)",
-					mvp->threads[0].info.nb_sections	) ;
-			break ;
-		case MPCOMP_COMBINED_STATIC_LOOP:
-			sctk_debug( "__mpcomp_sendtosleep_mvp: Combined parallel/loop" ) ;
-			break ;
-		case MPCOMP_COMBINED_DYN_LOOP:
-			sctk_debug( "__mpcomp_sendtosleep_mvp: Combined parallel/loop" ) ;
-			__mpcomp_dynamic_loop_end_nowait(
-					&(mvp->threads[0])
-					) ;
-			break ;
-		default:
-			not_implemented() ;
-			break ;
-	}
-#endif
 }
 
 
-static inline mpcomp_node_t * __mpcomp_wakeup_node(
+static inline mpcomp_node_t * 
+__mpcomp_wakeup_node(
 		int master,
 		mpcomp_node_t * start_node,
 		int num_threads,
 		mpcomp_instance_t * instance
-		) {
+		) 
+{
 	int i ;
 	mpcomp_node_t * n ;
 
@@ -215,11 +156,13 @@ static inline mpcomp_node_t * __mpcomp_wakeup_node(
 	return n ;
 }
 
-static inline mpcomp_node_t * __mpcomp_wakeup_leaf(
+static inline mpcomp_node_t * 
+__mpcomp_wakeup_leaf(
 		mpcomp_node_t * start_node,
 		int num_threads,
 		mpcomp_instance_t * instance
-		) {
+		) 
+{
 
 	int i ;
 	mpcomp_node_t * n ;
@@ -387,15 +330,6 @@ __mpcomp_internal_begin_parallel_region(int arg_num_threads,
 
 		__mpcomp_wakeup_mvp(instance->mvps[0], NULL ) ;
 
-#if 0
-		instance->mvps[0]->nb_threads = 1 ;
-
-		instance->mvps[0]->threads[0].info = info ;
-		instance->mvps[0]->threads[0].info.num_threads = num_threads ;
-		instance->mvps[0]->threads[0].info.new_root = instance->root ;
-#endif
-
-
 	}
 
 	return ;
@@ -497,6 +431,114 @@ __mpcomp_start_parallel_region(int arg_num_threads, void *(*func)
       "__mpcomp_start_parallel_region: === EXIT PARALLEL REGION ===\n" ) ;
 
 }
+
+/**
+  Entry point for microVP in charge of passing information to other microVPs.
+  Spinning on a specific node to wake up
+ */
+void * mpcomp_slave_mvp_node( void * arg ) {
+  int index ;
+  mpcomp_thread_t * t;
+  mpcomp_mvp_t * mvp ; /* Current microVP */
+  mpcomp_node_t * n ; /* Spinning node + Traversing node */
+  int num_threads ;
+
+  sctk_debug( "mpcomp_slave_mvp_node: Entering..." ) ;
+
+  /* Get the current microVP */
+  mvp = (mpcomp_mvp_t *)arg ;
+  sctk_assert( mvp != NULL ) ;
+
+  while (mvp->enable) {
+    int i ;
+
+	/* Capture the node to spin on */
+	n = mvp->to_run ;
+
+    /* Spinning on the designed node */
+    sctk_thread_wait_for_value_and_poll( (int*)&(n->slave_running), 1, NULL, NULL ) ;
+    n->slave_running = 0 ;
+
+	sctk_nodebug( "mpcomp_slave_mvp_node: +++ START parallel region +++" ) ;
+
+#if MPCOMP_TRANSFER_INFO_ON_NODES
+	sctk_assert( n->father != NULL ) ;
+	num_threads = n->father->info.num_threads ;
+#else
+	sctk_assert( n->instance != NULL ) ;
+	num_threads = n->instance->team->info.num_threads ;
+#endif
+	sctk_assert( num_threads > 0 ) ;
+
+
+	/* Wake up children nodes */
+	n = __mpcomp_wakeup_node(0, n, num_threads, n->instance) ;
+
+    /* Wake up children leaf */
+	n = __mpcomp_wakeup_leaf( n, num_threads, n->instance ) ;
+
+	__mpcomp_wakeup_mvp( mvp, n ) ;
+
+    /* Run */
+    in_order_scheduler( mvp ) ;
+
+    sctk_nodebug( "mpcomp_slave_mvp_node: end of in-order scheduling" ) ;
+
+    __mpcomp_sendtosleep_mvp( mvp ) ;
+
+    /* Implicit barrier */
+    __mpcomp_internal_half_barrier( mvp ) ;
+
+  }
+
+  return NULL ;
+}
+
+/**
+  Entry point for microVP working on their own
+  Spinning on a variables inside the microVP.
+ */
+void * mpcomp_slave_mvp_leaf( void * arg ) {
+  mpcomp_mvp_t * mvp ;
+
+  sctk_nodebug( "mpcomp_slave_mvp_leaf: Entering..." ) ;
+
+  /* Grab the current microVP */
+  mvp = (mpcomp_mvp_t *)arg ;
+
+  /* Spin while this microVP is alive */
+  while (mvp->enable) {
+    int i ;
+    int num_threads_mvp ;
+
+    /* Spin for new parallel region */
+    sctk_thread_wait_for_value_and_poll( (int*)&(mvp->slave_running), 1, NULL, NULL ) ;
+    mvp->slave_running = 0 ;
+
+	sctk_nodebug( "mpcomp_slave_mvp_leaf: +++ START parallel region +++" ) ;
+
+	__mpcomp_wakeup_mvp( mvp, mvp->father ) ;
+
+    /* Run */
+    in_order_scheduler( mvp ) ;
+
+    sctk_nodebug( "mpcomp_slave_mvp_leaf: +++ STOP +++" ) ;
+
+    __mpcomp_sendtosleep_mvp( mvp ) ;
+
+    /* Half barrier */
+    __mpcomp_internal_half_barrier( mvp ) ;
+  }
+
+  return NULL ;
+}
+
+/****
+ *
+ * COMBINED VERSION 
+ *
+ *
+ *****/
 
 void
 __mpcomp_start_sections_parallel_region (int arg_num_threads,
@@ -623,113 +665,6 @@ __mpcomp_start_parallel_static_loop (int arg_num_threads,
 		  lb, b, incr, chunk_size ) ;
 }
 
-/**
-  Entry point for microVP in charge of passing information to other microVPs.
-  Spinning on a specific node to wake up
- */
-void * mpcomp_slave_mvp_node( void * arg ) {
-  int index ;
-  mpcomp_thread_t * t;
-  mpcomp_mvp_t * mvp ; /* Current microVP */
-  mpcomp_node_t * n ; /* Spinning node + Traversing node */
-  int num_threads ;
-
-  sctk_debug( "mpcomp_slave_mvp_node: Entering..." ) ;
-
-  /* Get the current microVP */
-  mvp = (mpcomp_mvp_t *)arg ;
-  sctk_assert( mvp != NULL ) ;
-
-  while (mvp->enable) {
-    int i ;
-
-	/* Capture the node to spin on */
-	n = mvp->to_run ;
-
-    /* Spinning on the designed node */
-    sctk_thread_wait_for_value_and_poll( (int*)&(n->slave_running), 1, NULL, NULL ) ;
-    n->slave_running = 0 ;
-
-	sctk_nodebug( "mpcomp_slave_mvp_node: +++ START parallel region +++" ) ;
-
-#if MPCOMP_TRANSFER_INFO_ON_NODES
-	sctk_assert( n->father != NULL ) ;
-	num_threads = n->father->info.num_threads ;
-#else
-	sctk_assert( n->instance != NULL ) ;
-	num_threads = n->instance->team->info.num_threads ;
-#endif
-	sctk_assert( num_threads > 0 ) ;
-
-
-	/* Wake up children nodes */
-	n = __mpcomp_wakeup_node(0, n, num_threads, n->instance) ;
-
-    /* Wake up children leaf */
-	n = __mpcomp_wakeup_leaf( n, num_threads, n->instance ) ;
-
-	__mpcomp_wakeup_mvp( mvp, n ) ;
-
-    /* Run */
-    in_order_scheduler( mvp ) ;
-
-    sctk_nodebug( "mpcomp_slave_mvp_node: end of in-order scheduling" ) ;
-
-    __mpcomp_sendtosleep_mvp( mvp ) ;
-
-    /* Implicit barrier */
-    __mpcomp_internal_half_barrier( mvp ) ;
-
-  }
-
-  return NULL ;
-}
-
-/**
-  Entry point for microVP working on their own
-  Spinning on a variables inside the microVP.
- */
-void * mpcomp_slave_mvp_leaf( void * arg ) {
-  mpcomp_mvp_t * mvp ;
-
-  sctk_nodebug( "mpcomp_slave_mvp_leaf: Entering..." ) ;
-
-  /* Grab the current microVP */
-  mvp = (mpcomp_mvp_t *)arg ;
-
-  /* Spin while this microVP is alive */
-  while (mvp->enable) {
-    int i ;
-    int num_threads_mvp ;
-
-    /* Spin for new parallel region */
-    sctk_thread_wait_for_value_and_poll( (int*)&(mvp->slave_running), 1, NULL, NULL ) ;
-    mvp->slave_running = 0 ;
-
-	sctk_nodebug( "mpcomp_slave_mvp_leaf: +++ START parallel region +++" ) ;
-
-	__mpcomp_wakeup_mvp( mvp, mvp->father ) ;
-
-    /* Run */
-    in_order_scheduler( mvp ) ;
-
-    sctk_nodebug( "mpcomp_slave_mvp_leaf: +++ STOP +++" ) ;
-
-    __mpcomp_sendtosleep_mvp( mvp ) ;
-
-    /* Half barrier */
-    __mpcomp_internal_half_barrier( mvp ) ;
-  }
-
-  return NULL ;
-}
-
-/****
- *
- * COMBINED VERSION 
- *
- *
- *****/
 
 void
 __mpcomp_start_parallel_guided_loop (int arg_num_threads,

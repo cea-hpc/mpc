@@ -29,7 +29,8 @@
 
 #if MPCOMP_TASK
 
-int mpcomp_is_leaf(int globalRank)
+int 
+mpcomp_is_leaf(int globalRank)
 {
      mpcomp_thread_t *t;
      mpcomp_instance_t *instance;
@@ -44,7 +45,8 @@ int mpcomp_is_leaf(int globalRank)
 }
 
 /* Return the ith neighbour of the element at rank 'globalRank' in the tree_array */
-int mpcomp_get_neighbour(int globalRank, int i)
+int 
+mpcomp_get_neighbour(int globalRank, int i)
 {
      mpcomp_thread_t *t;
      mpcomp_instance_t *instance;
@@ -109,7 +111,8 @@ int mpcomp_get_neighbour(int globalRank, int i)
 }
 
 /* Return the ancestor of element at rank 'globalRank' at depth 'depth' */
-int mpcomp_get_ancestor(int globalRank, int depth)
+int 
+mpcomp_get_ancestor(int globalRank, int depth)
 {
      mpcomp_thread_t *t;
      int i, ancestor_id, firstRank, nbSubLeaves, currentDepth;
@@ -159,7 +162,8 @@ int mpcomp_get_ancestor(int globalRank, int depth)
 }
 
 /* Recursive initialization of mpcomp tasks lists (new and untied) */
-void __mpcomp_task_list_infos_init_r(mpcomp_node_t *n, struct mpcomp_node_s ***treeArray,
+void 
+__mpcomp_task_list_infos_init_r(mpcomp_node_t *n, struct mpcomp_node_s ***treeArray,
 				     unsigned nb_numa_nodes, int current_globalRank, 
 				     int current_stageSize, int current_firstRank, 
 				     int *tasklistNodeRank)
@@ -393,7 +397,8 @@ void __mpcomp_task_list_infos_exit_r(mpcomp_node_t *n)
 }
 
 /* Release of mpcomp tasks lists (new and untied) */
-void __mpcomp_task_list_infos_exit()
+void 
+__mpcomp_task_list_infos_exit()
 {
      mpcomp_thread_t *t;
 
@@ -409,7 +414,8 @@ void __mpcomp_task_list_infos_exit()
 }
 
 
-void __mpcomp_task_exit()
+void 
+__mpcomp_task_exit()
 {
 #if 0
      mpcomp_thread_t *t;
@@ -431,7 +437,8 @@ void __mpcomp_task_exit()
 }
 
 /* Recursive call for checking neighbourhood from node n */
-void __mpcomp_task_check_neighbourhood_r(mpcomp_node_t *n)
+void 
+__mpcomp_task_check_neighbourhood_r(mpcomp_node_t *n)
 {
      mpcomp_thread_t *t;
      int i, j;
@@ -586,7 +593,8 @@ void mpcomp_task_clear_parent(struct mpcomp_task_s *parent)
 /* } */
 
 /* Return list of 'type' tasks contained in element of rank 'globalRank' */
-static inline struct mpcomp_task_list_s *mpcomp_task_get_list(int globalRank, mpcomp_tasklist_type_t type)
+static inline struct mpcomp_task_list_s *
+mpcomp_task_get_list(int globalRank, mpcomp_tasklist_type_t type)
 {
      mpcomp_thread_t *t;
      struct mpcomp_task_list_s *list;
@@ -616,7 +624,8 @@ static inline struct mpcomp_task_list_s *mpcomp_task_get_list(int globalRank, mp
  * Creation of an OpenMP task 
  * Called when encountering an 'omp task' construct 
  */
-void __mpcomp_task(void *(*fn) (void *), void *data, void (*cpyfn) (void *, void *),
+void 
+__mpcomp_task(void *(*fn) (void *), void *data, void (*cpyfn) (void *, void *),
 		   long arg_size, long arg_align, bool if_clause, unsigned flags)
 {
      mpcomp_thread_t *t;
@@ -779,7 +788,8 @@ void __mpcomp_task(void *(*fn) (void *), void *data, void (*cpyfn) (void *, void
 
 
 /* Steal a task in the 'type' task list of node identified by 'globalRank' */
-static inline struct mpcomp_task_s *mpcomp_task_steal(struct mpcomp_task_list_s *list)
+static inline struct mpcomp_task_s *
+mpcomp_task_steal(struct mpcomp_task_list_s *list)
 {
      struct mpcomp_task_s *task = NULL;
 
@@ -793,7 +803,8 @@ static inline struct mpcomp_task_s *mpcomp_task_steal(struct mpcomp_task_list_s 
      return task;
 }
 
-static inline void mpcomp_task_allocate_larceny_order(mpcomp_thread_t *t)
+static inline void 
+mpcomp_task_allocate_larceny_order(mpcomp_thread_t *t)
 {
      int depth = t->instance->team->tasklist_depth[MPCOMP_TASK_TYPE_UNTIED];
      int nbMaxLists = t->instance->tree_level_size[depth];
@@ -802,7 +813,8 @@ static inline void mpcomp_task_allocate_larceny_order(mpcomp_thread_t *t)
 }
 
 /* Return the ith victim for task stealing initiated from element at 'globalRank' */
-static inline int mpcomp_task_get_victim(int globalRank, int i, mpcomp_tasklist_type_t type)
+static inline int 
+mpcomp_task_get_victim(int globalRank, int i, mpcomp_tasklist_type_t type)
 {
      mpcomp_thread_t *highwayman;
      int larcenyMode;
@@ -1053,7 +1065,8 @@ static inline int mpcomp_task_get_victim(int globalRank, int i, mpcomp_tasklist_
 }
 
 /* Look in new and untied tasks lists of others */
-static struct mpcomp_task_s * __mpcomp_task_larceny()
+static struct mpcomp_task_s * 
+__mpcomp_task_larceny()
 {
      mpcomp_thread_t *highwayman;
      struct mpcomp_task_s *task = NULL;
@@ -1224,7 +1237,8 @@ void __mpcomp_task_schedule()
  * Called when encountering a taskwait construct
  */
 #if MY_TASKWAIT
-void __mpcomp_taskwait()
+void 
+__mpcomp_taskwait()
 {
      mpcomp_thread_t *t;
      struct mpcomp_task_s *task = NULL;
@@ -1347,16 +1361,20 @@ void __mpcomp_taskwait()
  * a different task
  * Called when encountering a taskyield construct
  */
-void __mpcomp_taskyield()
+void 
+__mpcomp_taskyield()
 {
      /* Actually, do nothing */
 }
+
 #else /* MPCOMP_TASK */
+
 /* 
  * Creation of an OpenMP task 
  * Called when encountering an 'omp task' construct 
  */
-void __mpcomp_task(void *(*fn) (void *), void *data, void (*cpyfn) (void *, void *),
+void 
+__mpcomp_task(void *(*fn) (void *), void *data, void (*cpyfn) (void *, void *),
 		   long arg_size, long arg_align, bool if_clause, unsigned flags)
 {
      fn(data);
@@ -1367,19 +1385,20 @@ void __mpcomp_task(void *(*fn) (void *), void *data, void (*cpyfn) (void *, void
  * Called when encountering a taskwait construct
  * Do nothing here as task are executed directly
  */
-void __mpcomp_taskwait()
+void 
+__mpcomp_taskwait()
 {
 }
 
-/*                                                                                                                                                                                  
- * The current may be suspended in favor of execution of                                                                                                                            
- * a different task                                                                                                                                                                
- * Called when encountering a taskyield construct                                                                                                                                   
+/*
+ * The current may be suspended in favor of execution of
+ * a different task
+ * Called when encountering a taskyield construct
  */
-void __mpcomp_taskyield()
+void 
+__mpcomp_taskyield()
 {
      /* Actually, do nothing */
 }
-
 
 #endif /* MPCOMP_TASK */
