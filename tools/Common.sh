@@ -503,6 +503,26 @@ extractParamValue()
 }
 
 ######################################################
+# Set a var to a value if not already set
+#args :
+# -$1 : output variable name
+# -$2 : value triggering a set
+# -$3 : value to set
+enableParamIfNot()
+{
+	#extract in local vars
+	outputvar="$1"
+	output="$2"
+	trigger="$3"
+	value="$4"
+
+	if [ "${output}" = "${trigger}" ]
+	then
+		eval "${outputvar}=\"${value}\""
+	fi
+}
+
+######################################################
 #Find the current architecture value
 #Args :
 # -$1 : Output arch name (target or host)
@@ -741,7 +761,7 @@ setupInstallPackage()
 	type="${7}"
 	
 	#if template is empty, use default
-	if [ -z "$template" ]; then
+	if [ -z "${6}" ]; then
 		template="${PROJECT_TEMPLATE_DIR}/Makefile.${name}.in"
 	fi
 	

@@ -61,6 +61,8 @@ fi
 # Set all modules to internal
 setModulesToInternal
 
+## Not sure if here is a good place for this:
+TBB_PREFIX='disabled'
 ######################################################
 #Parse options
 for arg in "$@"
@@ -215,6 +217,12 @@ do
 			;;
 		--tbb-*)
 			extractAndAddPackageOption 'TBB_BUILD_PARAMETERS' 'tbb' "$arg"
+			;;
+		--enable-mpc-tbb)
+			enableParamIfNot 'TBB_PREFIX' "$TBB_PREFIX" 'disabled' 'internal'
+			;;
+		--disable-mpc-tbb)
+			TBB_PREFIX="disabled"
 			;;
 		################# COMPILER ##################
 		--compiler=*)
