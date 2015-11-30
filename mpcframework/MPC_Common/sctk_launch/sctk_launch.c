@@ -215,6 +215,8 @@ void * polling_thread( void * dummy )
 	 * 
 	 * Note that as polling is hierarchical
 	 * the contention is limited */
+  sctk_bind_to_cpu(-1);
+
     while(1)
     {
         sctk_network_notify_idle_message();

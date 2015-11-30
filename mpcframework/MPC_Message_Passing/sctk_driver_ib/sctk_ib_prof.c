@@ -367,6 +367,7 @@ void sctk_ib_prof_mem_write ( double ts, double mem )
 
 void *__mem_thread ( void *arg )
 {
+  sctk_bind_to_cpu(-1);
 	sctk_ib_rail_info_t *rail_ib = ( sctk_ib_rail_info_t * ) arg;
 
 	while ( 1 )
