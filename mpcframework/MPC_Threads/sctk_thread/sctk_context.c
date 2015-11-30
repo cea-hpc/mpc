@@ -17,6 +17,8 @@
 /* #                                                                      # */
 /* # Authors:                                                             # */
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
+/* #   - TABOADA Hugo hugo.taboada.ocre@cea.fr                            # */
+/* #   - JAEGER Julien julien.jaeger@cea.fr                               # */
 /* #                                                                      # */
 /* ######################################################################## */
 #include <errno.h>
@@ -36,6 +38,12 @@ typedef struct
 } sctk_tls_entry_t;
 
 #if defined(SCTK_USE_TLS)
+
+#if defined(MPC_Accelerators)
+/* MPC CUDA context */
+__thread void* tls_cuda;
+#endif
+
 
 __thread char *mpc_user_tls_1 = NULL;
 

@@ -475,6 +475,9 @@ for arg in "$@" ; do
 	--with-hwloc=*)
     HWLOC_USER_PREFIX="`echo A$arg | sed -e 's/A--with-hwloc=//g'`"
     ;;
+	--with-cuda)
+    SCTK_CUDA="1"
+    ;;
     --with-openpa=*)
     OPENPA_USER_PREFIX="`echo A$arg | sed -e 's/A--with-openpa=//g'`"
     ;;

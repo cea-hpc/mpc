@@ -18,6 +18,7 @@
 # Authors:                                                             #
 #   - PERACHE Marc marc.perache@cea.fr                                 #
 #   - CARRIBAULT Patrick patrick.carribault@cea.fr                     #
+#   - TABOADA Hugo hugo.taboada.ocre@cea.fr                            #
 #                                                                      #
 ########################################################################
 # MPC Module System Dependency Check
@@ -352,4 +353,10 @@ SCTK_CHECK_LIBSCTK_ARCH
 
 
 SCTK_CHECK_LIB_HWLOC
+
+#CUDA
+if test "$SCTK_CUDA" = 1; then
+    SCTK_CHECK_LIB_CUDA
+fi
+#ENDCUDA
 

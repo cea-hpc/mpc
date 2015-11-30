@@ -17,6 +17,8 @@
 /* #                                                                      # */
 /* # Authors:                                                             # */
 /* #   - BESNARD Jean-Baptiste jbbesnard@paratools.fr                     # */
+/* #   - TABOADA Hugo hugo.taboada.ocre@cea.fr                            # */
+/* #   - JAEGER Julien julien.jaeger@cea.fr                               # */
 /* #                                                                      # */
 /* ######################################################################## */
 #include "sctk_device_topology.h"
@@ -28,6 +30,12 @@
 
 #include <sys/types.h>
 #include <regex.h>
+
+//CUDA/
+#if defined(MPC_Accelerators)
+#include <cuda.h>
+#endif //MPC_Accelerators
+//ENDCUDA
 
 #ifdef MPC_USE_INFINIBAND
 #include <infiniband/verbs.h>
@@ -474,6 +482,11 @@ void sctk_device_fill_in_infiniband_info( sctk_device_t * device, hwloc_topology
 void sctk_device_enrich_topology( hwloc_topology_t topology )
 {
 	int i;
+    #if defined(MPC_Accelerators)
+    //CUDA
+    char string[128];
+    //ENDCUDA
+    #endif //MPC_Accelerators
 	
 	for( i = 0 ; i < sctk_devices_count ; i++ )
 	{
@@ -485,8 +498,75 @@ void sctk_device_enrich_topology( hwloc_topology_t topology )
 			sctk_device_fill_in_infiniband_info( device, topology );
 		#endif
 		}
-		
-		
+
+        #if defined(MPC_Accelerators)
+        int num_devices = 0;
+        cudaGetDeviceCount(&num_devices);
+        if(num_devices>0)
+        {
+
+            //CUDA
+            //get devices pcibusid
+            int cpt=-1;
+            char *token=NULL;
+            char ** saveptr = NULL;
+            char *pcibusid=NULL;
+            char *pcibusid_tmp=NULL;
+            const char s_pipe[2]="|";
+            const char s_equal[2]="=";
+
+            hwloc_obj_attr_snprintf(string,sizeof(string),device->obj,"|",1);
+            sctk_debug("device->obj=%s",string);
+
+            token = strtok(string,s_pipe);
+            while (token != NULL){
+                pcibusid_tmp=strtok(token,s_equal);
+                while(pcibusid_tmp != NULL){
+                    if(!cpt)
+                        pcibusid=pcibusid_tmp;
+                    cpt++;
+                    pcibusid_tmp=strtok(NULL,s_equal);
+                }
+                token = strtok(NULL,s_pipe);
+            }
+            sctk_debug("pcibusid=%s",pcibusid);
+
+            //update device->name to permet that the
+            //function sctk_device_matrix_get_closest_from_pu works correctly
+
+            //update device->device_cuda_id
+            const char card[5]="card";
+            char dest[5];
+            char buf[16];
+            int n;
+            cuInit(0);
+            CUdevice dev;
+            CUresult test;
+            test = cuDeviceGetByPCIBusId(&dev,pcibusid);
+            //printf("CUDA test = %d\n",test);
+            if(test == CUDA_SUCCESS){
+                strcpy(dest,card);
+                //printf("dest = %s\n",dest);
+                n=sprintf(buf,"%d",(int)dev);
+                strcat(dest,buf);
+                //printf("dest = %s\n",dest);
+                char*res=malloc(n*sizeof(char));
+                strcpy(res,dest);
+                //printf("res = %s\n",res);
+                device->name = res;
+                //device->device_id = (int)dev;
+                device->device_cuda_id = (int)dev;
+                device->device_id = i;
+                //printf("DEVICES : name=%s, device_id=%d, id=%d\n",device->name,device->device_id,i);
+            }else{
+                if(device->name==NULL) device->name = "unknown";
+                device->device_cuda_id = -1746;
+            }
+            //ENDCUDA
+            
+        }
+        #endif //MPC_Accelerators
+
 	}
 
 }

@@ -17,6 +17,7 @@
 /* #                                                                      # */
 /* # Authors:                                                             # */
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
+/* #   - TABOADA Hugo hugo.taboada.ocre@cea.fr                            # */
 /* #                                                                      # */
 /* ######################################################################## */
 #ifndef __SCTK_CONTEXT_H_
@@ -191,6 +192,13 @@ Need to check this in more depth for futur version ( > 2.4.0-1).
     void *mpc_user_tls_1;
     extls_ctx_t* tls_ctx;
     void *___sctk_message_passing;
+
+#if defined(MPC_Accelerators)
+    /* MPC CUDA context */
+    void* tls_cuda;
+#endif
+
+
 #if defined (MPC_OpenMP)
     /* MPC OpenMP TLS */
     void *sctk_openmp_thread_tls ;

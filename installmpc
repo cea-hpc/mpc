@@ -214,6 +214,10 @@ do
 		--hwloc-*)
 			extractAndAddPackageOption 'HWLOC_BUILD_PARAMETERS' 'hwloc' "$arg"
 			;;
+		################### CUDA ###################
+		--with-cuda)
+			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --with-cuda"
+			;;
 		################### HWLOC ###################
 		--with-tbb=*)
 			extractParamValue 'TBB_PREFIX' 'with-tbb' "$arg"

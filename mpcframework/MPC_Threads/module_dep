@@ -24,4 +24,5 @@ avail_module MPC_Allocator
 need_module MPC_Common
 need_module MPC_Config
 SCTK_CHECK_OPTION "-DMPC_Threads"
+
 SCTK_INCLUDE_FILES="mpcthread.h"

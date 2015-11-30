@@ -28,6 +28,11 @@
 
 #include "sctk_thread_generic.h"
 
+
+#if defined(MPC_Accelerators)
+#include <cuda.h>
+#endif
+
 char * sctk_char_fortran_to_c (char *buf, int size, char ** free_ptr)
 {
 	char *tmp;

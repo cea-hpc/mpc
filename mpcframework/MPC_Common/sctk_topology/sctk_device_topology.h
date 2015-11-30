@@ -91,7 +91,13 @@ typedef struct sctk_device_s
 	const char * device; /**< PCI card descriptor */
 	
 	int device_id; /**< The internal ID of the device (for IB, card ID) set in enrich topology */
-	
+
+    #if defined(MPC_Accelerators)
+    //CUDA
+    int device_cuda_id;
+    //ENDCUDA
+    #endif //MPC_Accelerators
+
 }sctk_device_t;
 
 
@@ -106,6 +112,7 @@ void sctk_device_print( sctk_device_t * dev );
 
 void sctk_device_load_from_topology( hwloc_topology_t topology );
 void sctk_device_release();
+void sctk_device_matrix_init();
 
 /* Device getter */
 
@@ -137,6 +144,5 @@ sctk_device_matrix_t * sctk_device_matrix_get();
 sctk_device_t * sctk_device_matrix_get_closest_from_pu( int pu_id, char * matching_regexp );
 /** Return 1 if the devices matching the regexp are equidistant */
 int sctk_device_matrix_is_equidistant(char * matching_regexp);
-
 
 #endif /* SCTK_DEVICE_TOPOLOGY_H */

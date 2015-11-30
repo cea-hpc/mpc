@@ -17,6 +17,7 @@
 /* #                                                                      # */
 /* # Authors:                                                             # */
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
+/* #   - TABOADA Hugo hugo.taboada.ocre@cea.fr                            # */
 /* #                                                                      # */
 /* ######################################################################## */
 #ifndef __SCTK_TLS_H_
@@ -27,6 +28,12 @@
 #include "sctk_context.h"
 #include <unistd.h>
 #include <sys/syscall.h>
+
+#if defined(MPC_Accelerators)
+#include <cuda.h>
+#include <cuda_runtime.h>
+#endif
+
 
 #ifdef __cplusplus
 extern "C"
@@ -50,6 +57,29 @@ extern "C"
 
 #if defined (MPC_Allocator)
   extern __thread struct sctk_alloc_chain * sctk_current_alloc_chain;
+#endif
+
+
+#if defined(MPC_Accelerators)
+  /* MPC CUDA context */
+
+  typedef struct tls_cuda_s{
+      int is_ready; //when all thread are ready to use cuda contexts
+      int cpu_id; //save cpu_id when context is created 
+      CUcontext context; // thread user's cuda context 
+  }tls_cuda_t;
+
+  extern __thread void* tls_cuda;
+ // extern int sctk_accelerators_cuda__init(void* tls_cuda_context);
+ // extern int sctk_accelerators_cuda__push_context(void* tls_cuda_context);
+ // extern int sctk_accelerators_cuda__pop_context(void* tls_cuda_context);
+#endif
+
+#if defined(MPC_Accelerators)
+//definition des fonctions non externe quand on a pas de module et que le code est dans le .c
+  int sctk_accelerators_cuda__init(void** ptls_cuda);
+  int sctk_accelerators_cuda__push_context(void* tls_cuda);
+  int sctk_accelerators_cuda__pop_context(void** ptls_cuda);
 #endif
 
 #if defined (MPC_OpenMP)
@@ -89,6 +119,24 @@ extern "C"
     tls_save (___sctk_message_passing);
 #endif
 
+
+#if defined(MPC_Accelerators)
+    int num_devices;
+    cudaGetDeviceCount(&num_devices);
+    if(num_devices>0)
+    {
+
+        /* MPC CUDA context */
+
+        sctk_accelerators_cuda__pop_context(&tls_cuda);
+        // printf("&tls_cuda_context=%p\n",&tls_cuda_context);
+        // fflush(stdout);
+        // printf("tls_cuda_context=%p\n",tls_cuda_context);
+        // fflush(stdout);
+        tls_save(tls_cuda);
+
+    }
+#endif
 #endif
 
 	/* the tls vector is restored by copy and cannot be changed
@@ -118,6 +166,23 @@ extern "C"
     tls_restore (___sctk_message_passing);
 #endif
 
+#if defined(MPC_Accelerators)
+    int num_devices;
+    cudaGetDeviceCount(&num_devices);
+    if(num_devices>0)
+    {
+        /* MPC CUDA context */
+        // printf("&tls_cuda_context=%p\n",&tls_cuda_context);
+        // fflush(stdout);
+        // printf("tls_cuda_context=%p\n",tls_cuda_context);
+        // fflush(stdout);
+        
+        tls_restore(tls_cuda);
+        sctk_accelerators_cuda__push_context(tls_cuda);
+
+    }
+#endif
+
 #endif
   }
 
@@ -144,6 +209,30 @@ extern "C"
 
 #ifdef MPC_MPI
     tls_init (___sctk_message_passing);
+#endif
+
+#if defined(MPC_Accelerators)
+    /* MPC CUDA context */
+    int num_devices;
+    cudaGetDeviceCount(&num_devices);
+    if(num_devices>0)
+    {
+
+        tls_init(tls_cuda);
+
+    }
+    //printf("tls_init(tls_cuda)\n");
+    //sctk_accelerators_cuda__init(&tls_cuda);
+   // printf("&tls_cuda_context=%p\n",&tls_cuda_context);
+   // fflush(stdout);
+   // printf("tls_cuda_context=%p\n",tls_cuda_context);
+   // fflush(stdout);
+    
+    //ucp->tls_cuda=tls_cuda;
+
+   // printf("after init tls.h: tls_cuda_context address=%p\n",tls_cuda_context);
+   // fflush(stdout);
+
 #endif
 #endif
   }
