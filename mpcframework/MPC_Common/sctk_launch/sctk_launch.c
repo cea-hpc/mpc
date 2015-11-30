@@ -335,8 +335,17 @@ static void sctk_perform_initialisation (void)
 #endif
 
 	/* Start auxiliary polling thread */
+/*
     pthread_t progress;
     pthread_create (&progress, NULL, polling_thread, NULL);
+*/
+
+	sctk_thread_t progress;
+	sctk_thread_attr_t attr;
+	sctk_thread_attr_init ( &attr );
+	sctk_thread_attr_setscope ( &attr, SCTK_THREAD_SCOPE_SYSTEM );
+	
+	sctk_user_thread_create(&progress, NULL, polling_thread, NULL);
 
 
 #ifdef MPC_Message_Passing
