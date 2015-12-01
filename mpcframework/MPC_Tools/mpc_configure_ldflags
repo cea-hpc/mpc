@@ -53,6 +53,12 @@ if test -e "${SCTK_LIB_DIR}/libmpcgetopt.a"; then
 	fi
 fi
 
+if test -e "${SCTK_LIB_DIR}/libmpcmpisizeof.a"; then
+	if test "x\${MPC_BOOTSTRAP}" != "xyes"; then
+		SCTK_GETOPT="-L${SCTK_LIB_DIR}/ -lmpcmpisizeof"
+	fi
+fi
+
 FLAGS="-Wl,-rpath,${SCTK_LIB_DIR} -Wl,-rpath,${SCTK_LIB_DIR}/../lib64 -lmpc_tdb_remote_static $SCTK_LDFLAGS \${ROMIO} \${SCTK_GETOPT}"
 
 if test "\$MPC_USE_INTEL_COMPILER" = "1"; then

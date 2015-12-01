@@ -79,13 +79,7 @@ else
 #${SCTK_LIB_DIR}/mpi_sizeofs.o defines the Fortran MPI_SIZEOF implementation
 cat <<EOF >> bin/mpc_cflags
 
-if test -e "${SCTK_LIB_DIR}/mpi_sizeofs.o"; then
-	MPI_SIZEOF_O="${SCTK_LIB_DIR}/mpi_sizeofs.o"
-else
-	MPI_SIZEOF_O=""
-fi
-
-echo "-I${SCTK_INCLUDE_DIR} -I${SCTK_INCLUDE_DIR}/../ \$ROMIO \${SCTK_GETOPT} \${MPI_SIZEOF_O}  $FLAGS "
+echo "-I${SCTK_INCLUDE_DIR} -I${SCTK_INCLUDE_DIR}/../ \$ROMIO \${SCTK_GETOPT} $FLAGS "
 EOF
 fi
 

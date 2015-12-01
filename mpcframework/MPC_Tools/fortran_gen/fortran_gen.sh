@@ -14,6 +14,7 @@ SCRIPTPATH=`dirname $SCRIPT`
 PYTHON="/usr/bin/env python"
 MPCFC="mpc_f77"
 MPCCC="mpc_cc"
+AR="ar"
 INSTALL="./TEST/"
 MPIHFILE="${SCRIPTPATH}/../../MPC_MPI/include/mpc_mpi.h"
 
@@ -256,17 +257,30 @@ genfortanfiles()
 
 genfortranmods()
 {
-	#Generate a main using MPI for sanity check
 	echo -n "(i) Compiling Fortran modules...   "
 
 	#Note that it is important to compile twice (Fortran MAGIC dependency resolution)
 	$MPCFC -c ${MPIBASEF} ${MPICONSTF} ${MPIMODF} ${MPISIZEOF}  2>> ./fortrangen.log
 	$MPCFC -c ${MPIBASEF} ${MPICONSTF} ${MPIMODF} ${MPISIZEOF}  2>> ./fortrangen.log
 	
+
 	if test "x$?" != "x0"; then
 		echo "(E) Module compilation failed"
 		echo "(E) See ./fortrangen.log"
 		generate_from_backup
+		return
+	else
+		echo "Done"
+	fi	
+	
+	
+	echo -n "(i) Compiling the MPI Sizeof Fortran static library...   "
+	#Generate the .so file
+	$AR rcs libmpcmpisizeof.a mpi_sizeofs.o 2>> ./fortrangen.log
+
+	if test "x$?" != "x0"; then
+		echo "(E) Static sizeof library compilation failed"
+		echo "(E) See ./fortrangen.log"
 		return
 	else
 		echo "Done"
@@ -353,11 +367,11 @@ proceedwithfortranfilegeneration()
 	cp mpi_constants.mod ${INSTALL}/
 	cp mpi_base.mod ${INSTALL}/
 	cp mpi_sizeofs.mod ${INSTALL}/
-	cp mpi_sizeofs.o ${INSTALL}/../../lib/
+	cp libmpcmpisizeof.a ${INSTALL}/../../lib/
 
 	echo "(i) Checking installed files...   "
 		
-	for f in mpi_base.mod mpi_constants.mod mpi_sizeofs.mod ../../lib/mpi_sizeofs.o mpi.mod mpif.h
+	for f in mpi_base.mod mpi_constants.mod mpi_sizeofs.mod ../../lib/libmpcmpisizeof.a mpi.mod mpif.h
 	do
 		NAME=`basename ${f}` 
 		if test -e "${INSTALL}/${f}"; then
