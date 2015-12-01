@@ -266,6 +266,13 @@ pthread_user_create (pthread_t * thread, pthread_attr_t * attr,
   {
     int res;
 
+    if(attr == NULL){
+      pthread_attr_t tmp_attr;
+      pthread_attr_init (&tmp_attr);
+      attr=&tmp_attr;
+    }
+
+
 #ifdef PTHREAD_STACK_MIN
       if (PTHREAD_STACK_MIN > size)
 	{
