@@ -184,12 +184,12 @@ static inline void integer_8_16( int8_t in, int16_t * out )
 	*out = in;
 }
 
-static inline void integer_8_32( int8_t in, int16_t * out )
+static inline void integer_8_32( int8_t in, int32_t * out )
 {
 	*out = in;
 }
 
-static inline void integer_8_64( int8_t in, int16_t * out )
+static inline void integer_8_64( int8_t in, int64_t * out )
 {
 	*out = in;
 }
