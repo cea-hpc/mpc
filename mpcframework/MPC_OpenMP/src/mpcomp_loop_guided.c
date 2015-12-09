@@ -30,7 +30,12 @@
    for loop.
 */
 
-
+/****
+ *
+ * LONG VERSION
+ *
+ *
+ *****/
 int
 __mpcomp_guided_loop_begin (long lb, long b, long incr, long chunk_size,
 			    long *from, long *to)
@@ -79,7 +84,7 @@ __mpcomp_guided_loop_next_ignore_nowait (long *from, long *to)
 
 /****
  *
- * ORDERED VERSION 
+ * ORDERED LONG VERSION 
  *
  *
  *****/
@@ -136,27 +141,17 @@ __mpcomp_ordered_guided_loop_end_nowait ()
  *
  *
  *****/
-
 int
-__mpcomp_guided_loop_ull_begin (
-		unsigned long long lb, 
-		unsigned long long b, 
-		unsigned long long incr, 
-		unsigned long long chunk_size,
-		unsigned long long *from, 
-		unsigned long long *to)
+__mpcomp_loop_ull_guided_begin (unsigned long long lb, unsigned long long b, unsigned long long incr, unsigned long long chunk_size,
+                unsigned long long *from, unsigned long long *to)
 {
-	not_implemented() ;
-	return __mpcomp_guided_loop_begin(lb, b, incr, chunk_size, (long *)from, (long *)to ) ;
+     return __mpcomp_loop_ull_dynamic_begin(lb, b, incr, chunk_size, from, to);
 }
 
 int
-__mpcomp_guided_loop_ull_next (
-		unsigned long long *from, 
-		unsigned long long *to)
+__mpcomp_loop_ull_guided_next (unsigned long long *from, unsigned long long *to)
 {
-	not_implemented() ;
-	return __mpcomp_guided_loop_next((long *)from, (long *)to) ;
+     return __mpcomp_loop_ull_dynamic_next(from, to);
 }
 
 void
@@ -175,22 +170,41 @@ __mpcomp_guided_loop_ull_end_nowait ()
 
 /****
  *
- * ULL COMBINED VERSION
- *
- *
- *****/
-
-/****
- *
  * ULL ORDERED VERSION
  *
  *
  *****/
+int
+__mpcomp_loop_ull_ordered_guided_begin (unsigned long long lb, unsigned long long b, unsigned long long incr, unsigned long long chunk_size,
+                    unsigned long long *from, unsigned long long *to)
+{
+     mpcomp_thread_t *t;
+     int res;
+
+     res = __mpcomp_loop_ull_guided_begin(lb, b, incr, chunk_size, from, to );
+
+     /* Grab the thread info */
+     t = (mpcomp_thread_t *) sctk_openmp_thread_tls;
+     sctk_assert (t != NULL);
+
+     t->current_ordered_iteration = *from;
+
+     return res;
+}
 
 int
-__mpcomp_ordered_guided_loop_ull_next(
-		unsigned long long *from, unsigned long long *to)
-{
-	return __mpcomp_ordered_guided_loop_next( (long *)from, (long *)to ) ;
+__mpcomp_loop_ull_ordered_guided_next (unsigned long long *from, unsigned long long *to) {
+     mpcomp_thread_t *t;
+     int res;
+
+     res = __mpcomp_loop_ull_guided_next(from, to);
+
+     /* Grab the thread info */
+     t = (mpcomp_thread_t *) sctk_openmp_thread_tls;
+     sctk_assert (t != NULL);
+
+     t->current_ordered_iteration = *from;
+
+     return res;
 }
 

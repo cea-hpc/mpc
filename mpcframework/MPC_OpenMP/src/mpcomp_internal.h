@@ -38,7 +38,6 @@ extern "C"
 /*****************
  ****** MACROS 
  *****************/
-
 #define SCTK_OMP_VERSION_MAJOR 3
 #define SCTK_OMP_VERSION_MINOR 1
 
@@ -869,6 +868,8 @@ typedef struct mpcomp_thread_s
      int *__mpcomp_compute_topo_tree_array(hwloc_topology_t topology, int *depth, int *index) ;
 
      /* mpcomp_loop_dyn.c */
+	 void __mpcomp_dynamic_loop_init_ull(mpcomp_thread_t *t, unsigned long long lb, 
+            unsigned long long b, unsigned long long incr, unsigned long long chunk_size) ;
 	 void __mpcomp_dynamic_loop_init(mpcomp_thread_t *t, long lb, long b, long incr, long chunk_size) ;
 
      /* mpcomp_sections.c */
@@ -898,10 +899,20 @@ __mpcomp_get_specific_chunk_per_rank (int rank, int nb_threads,
 		long chunk_size, long chunk_num,
 		long *from, long *to) ;
 
+	void
+__mpcomp_get_specific_chunk_per_rank_ull (int rank, int nb_threads,
+		unsigned long long lb, unsigned long long b, unsigned long long incr,
+		unsigned long long chunk_size, unsigned long long chunk_num,
+		unsigned long long *from, unsigned long long *to) ;
+
 long
 __mpcomp_get_static_nb_chunks_per_rank (int rank, int nb_threads, long lb,
 					long b, long incr, long chunk_size) ;
 
+
+long
+__mpcomp_get_static_nb_chunks_per_rank_ull (int rank, int nb_threads, unsigned long long lb,
+					unsigned long long b, unsigned long long incr, unsigned long long chunk_size) ;
 
 #if MPCOMP_TASK
      /* mpcomp_task.c */

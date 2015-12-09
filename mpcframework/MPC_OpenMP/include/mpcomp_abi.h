@@ -176,6 +176,8 @@ extern "C"
   int __mpcomp_static_schedule_get_single_chunk (long lb, long b, long incr, long
 						  *from, long *to);
 
+  int __mpcomp_static_schedule_get_single_chunk_ull (unsigned long long lb, unsigned long long b, unsigned long long incr, unsigned long long
+						  *from, unsigned long long *to);
 /* 
    Forced chunk size 
    pragma omp for schedule(static,chunk_size)
@@ -192,14 +194,23 @@ extern "C"
 
   int __mpcomp_static_schedule_get_nb_chunks (long lb, long b, long incr,
 					      long chunk_size);
+  unsigned long long __mpcomp_static_schedule_get_nb_chunks_ull (unsigned long long lb, unsigned long long b, unsigned long long incr,
+					      unsigned long long chunk_size);
   void __mpcomp_static_schedule_get_specific_chunk (long lb, long b, long incr,
 						    long chunk_size,
 						    long chunk_num, long *from,
 						    long *to);
-
+  void __mpcomp_static_schedule_get_specific_chunk_ull (unsigned long long lb, unsigned long long b, unsigned long long incr,
+						    unsigned long long chunk_size,
+						    unsigned long long chunk_num, unsigned long long *from,
+						    unsigned long long *to);
+  
   int __mpcomp_static_loop_begin (long lb, long b, long incr, long chunk_size,
 				  long *from, long *to);
+  int __mpcomp_loop_ull_static_begin (unsigned long long lb, unsigned long long b, unsigned long long incr, unsigned long long chunk_size,
+				  unsigned long long *from, unsigned long long *to);
   int __mpcomp_static_loop_next (long *from, long *to);
+  int __mpcomp_loop_ull_static_next (unsigned long long *from, unsigned long long *to);
   void __mpcomp_static_loop_end ();
   void __mpcomp_static_loop_end_nowait ();
 
@@ -226,6 +237,9 @@ extern "C"
  */
 	int __mpcomp_dynamic_loop_begin(long lb, long b, long incr,
 			long chunk_size, long *from, long *to);
+	int __mpcomp_loop_ull_dynamic_begin(unsigned long long lb, unsigned long long b, unsigned long long incr,
+			unsigned long long chunk_size, unsigned long long *from, unsigned long long *to);
+	int __mpcomp_loop_ull_dynamic_next(unsigned long long *from, unsigned long long *to);
 	int __mpcomp_dynamic_loop_next(long *from, long *to);
 	void __mpcomp_dynamic_loop_end();
 	void __mpcomp_dynamic_loop_end_nowait();
@@ -246,7 +260,10 @@ extern "C"
  */
   int __mpcomp_guided_loop_begin (long lb, long b, long incr, long chunk_size,
 				  long *from, long *to);
+  int __mpcomp_loop_ull_guided_begin (unsigned long long lb, unsigned long long b, unsigned long long incr, unsigned long long chunk_size,
+				  unsigned long long *from, unsigned long long *to);
   int __mpcomp_guided_loop_next (long *from, long *to);
+  int __mpcomp_loop_ull_guided_next (unsigned long long *from, unsigned long long *to);
   void __mpcomp_guided_loop_end ();
   void __mpcomp_guided_loop_end_nowait ();
 
@@ -266,7 +283,10 @@ extern "C"
  */
   int __mpcomp_runtime_loop_begin (long lb, long b, long incr,
 				   long *from, long *to);
+  int __mpcomp_loop_ull_runtime_begin (unsigned long long lb, unsigned long long b, unsigned long long incr,
+				   unsigned long long *from, unsigned long long *to);
   int __mpcomp_runtime_loop_next (long *from, long *to);
+  int __mpcomp_loop_ull_runtime_next (unsigned long long *from, unsigned long long *to);
   void __mpcomp_runtime_loop_end ();
   void __mpcomp_runtime_loop_end_nowait ();
 
@@ -308,19 +328,35 @@ void __mpcomp_ordered_end() ;
 
 int __mpcomp_ordered_static_loop_begin (long lb, long b, long incr, long chunk_size, long *from, long *to) ;
 int __mpcomp_ordered_static_loop_next(long *from, long *to) ;
+int __mpcomp_loop_ull_ordered_static_begin (unsigned long long lb, unsigned long long b, unsigned long long incr, 
+unsigned long long chunk_size, unsigned long long *from, unsigned long long *to) ;
+int __mpcomp_loop_ull_ordered_static_next(unsigned long long *from, unsigned long long *to) ;
 void __mpcomp_ordered_static_loop_end() ;
 void __mpcomp_ordered_static_loop_end_nowait() ;
 
 int __mpcomp_ordered_dynamic_loop_begin (long lb, long b, long incr, long chunk_size, long *from, long *to) ;
 int __mpcomp_ordered_dynamic_loop_next(long *from, long *to) ;
+int __mpcomp_loop_ull_ordered_dynamic_begin (unsigned long long lb, unsigned long long b, unsigned long long incr, 
+unsigned long long chunk_size, unsigned long long *from, unsigned long long *to) ;
+int __mpcomp_loop_ull_ordered_dynamic_next(unsigned long long *from, unsigned long long *to) ;
 void __mpcomp_ordered_dynamic_loop_end() ;
 void __mpcomp_ordered_dynamic_loop_end_nowait() ;
 
 int __mpcomp_ordered_guided_loop_begin (long lb, long b, long incr, long chunk_size, long *from, long *to) ;
 int __mpcomp_ordered_guided_loop_next (long *from, long *to) ;
+int __mpcomp_loop_ull_ordered_guided_begin (unsigned long long lb, unsigned long long b, unsigned long long incr, 
+unsigned long long chunk_size, unsigned long long *from, unsigned long long *to) ;
+int __mpcomp_loop_ull_ordered_guided_next(unsigned long long *from, unsigned long long *to) ;
 void __mpcomp_ordered_guided_loop_end () ;
 void __mpcomp_ordered_guided_loop_end_nowait () ;
 
+int __mpcomp_ordered_runtime_loop_begin (long lb, long b, long incr, long *from, long *to) ;
+int __mpcomp_ordered_runtime_loop_next (long *from, long *to) ;
+int __mpcomp_loop_ull_ordered_runtime_begin (unsigned long long lb, unsigned long long b, unsigned long long incr, 
+unsigned long long *from, unsigned long long *to) ;
+int __mpcomp_loop_ull_ordered_runtime_next(unsigned long long *from, unsigned long long *to) ;
+void __mpcomp_ordered_runtime_loop_end () ;
+void __mpcomp_ordered_runtime_loop_end_nowait () ;
 /* CHECKPOINT/RESTART */
 /*
    If the application uses the OpenMP ABI (or API), the checkpoint/restart

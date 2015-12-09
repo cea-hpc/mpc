@@ -858,8 +858,7 @@ void in_order_scheduler( mpcomp_mvp_t * mvp ) {
 						mvp->threads[i].info.loop_lb,
 						mvp->threads[i].info.loop_b,
 						mvp->threads[i].info.loop_incr,
-						mvp->threads[i].info.loop_chunk_size
-						) ;
+						mvp->threads[i].info.loop_chunk_size) ;
 				break ;
 			default:
 				not_implemented() ;
