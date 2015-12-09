@@ -107,14 +107,6 @@ __mpcomp_dynamic_loop_get_chunk_from_rank( mpcomp_thread_t * t,
 	int target_index ;
 	int num_threads;
 
-/*
-	fprintf(stderr,
-			"[%d] __mpcomp_dynamic_loop_get_chunk_from_rank: "
-			"Get chunk from thread %d (current %d) "
-			"to thread %d (current %d)\n", 
-			t->rank, t->rank, t->for_dyn_current,
-			target->rank, target->for_dyn_current ) ;
-*/
 #if 0
 	/* Disable work-stealing */
 	if ( t != target ) {
@@ -124,7 +116,6 @@ __mpcomp_dynamic_loop_get_chunk_from_rank( mpcomp_thread_t * t,
 
 	/* Stop if target rank has already done this specific loop */
 	if ( (t != target) && (t->for_dyn_current < target->for_dyn_current) ) {
-        //fprintf(stderr, "we're done\n");
 		return 0 ;
 	}
 
@@ -139,9 +130,6 @@ __mpcomp_dynamic_loop_get_chunk_from_rank( mpcomp_thread_t * t,
 	/* Get the current id of remaining chink for the target */
 	r = sctk_atomics_load_int( &(target->for_dyn_remain[index].i) ) ;
 
-	//fprintf(stderr, "[%d] __mpcomp_dynamic_loop_get_chunk_from_rank: target=%d, index=%d, r=%d\n", 
-	//		t->rank, target->rank, index, r);
-    
 	/* r==-1 => Initialize if the target did not reach the current loop already */
 	if ( r == -1 &&  ( (t == target) || (t->for_dyn_current > target->for_dyn_current)) ) 
     {
@@ -197,9 +185,6 @@ __mpcomp_dynamic_loop_get_chunk_from_rank( mpcomp_thread_t * t,
 				t->info.loop_lb, t->info.loop_b, t->info.loop_incr, t->info.loop_chunk_size, 
 				t->for_dyn_total - r, from, to) ;
 			
-            //fprintf(stderr, "[%d] __mpcomp_dynamic_loop_get_chunk_from_rank: Get a chunk #%d out of %d from rank %d %ld -> %ld\n", 
-			//		t->rank, r, t->for_dyn_total, target->rank, *from, *to ) ;
-
 			/* SUCCESS */
 			return 1 ;
 		}
@@ -261,8 +246,6 @@ __mpcomp_dynamic_loop_init(mpcomp_thread_t *t,
     /* Compute the total number of chunks for this thread */
 	t->for_dyn_total = __mpcomp_get_static_nb_chunks_per_rank(t->rank, num_threads, lb, b, incr, chunk_size);
     
-    //fprintf(stderr, "dynamic_loop_init :lb %ld,  b %ld, incr %ld, chunk_size %ld, for_dyn_total %d\n", lb, b, incr, chunk_size, t->for_dyn_total);
-	
     /* Try to change the number of remaining chunks */
 	sctk_atomics_cas_int(&(t->for_dyn_remain[index].i), -1, t->for_dyn_total);
 
@@ -704,9 +687,6 @@ __mpcomp_dynamic_loop_get_chunk_from_rank_ull( mpcomp_thread_t * t,
 	/* Get the current id of remaining chink for the target */
 	r = sctk_atomics_load_int( &(target->for_dyn_remain[index].i) ) ;
 
-	//fprintf(stderr, "[%d] __mpcomp_dynamic_loop_get_chunk_from_rank: target=%d, index=%d, r=%d\n", 
-	//		t->rank, target->rank, index, r);
-    
 	/* r==-1 => Initialize if the target did not reach the current loop already */
 	if ( r == -1 &&  ( (t == target) || (t->for_dyn_current > target->for_dyn_current)) ) 
     {
@@ -830,7 +810,6 @@ __mpcomp_dynamic_loop_init_ull(mpcomp_thread_t *t,
 	t->info.loop_b = b;
 	t->info.loop_incr = incr;
 	t->info.loop_chunk_size = chunk_size;
-    //fprintf(stderr, "Dynamic_loop_init : lb = %llu, b = %llu, incr = %ld\n", lb, b, incr);
     /* Compute the total number of chunks for this thread */
 	t->for_dyn_total = __mpcomp_get_static_nb_chunks_per_rank_ull(t->rank, num_threads, lb, b, incr, chunk_size);
 

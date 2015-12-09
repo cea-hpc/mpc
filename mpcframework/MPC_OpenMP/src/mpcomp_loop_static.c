@@ -72,9 +72,6 @@ int __mpcomp_static_schedule_get_single_chunk (long lb, long b, long incr, long 
 	  /* The first part is homogeneous with a chunk size a little bit larger */
 	  *from = lb + rank * (chunk_size + 1) * incr;
 	  *to = lb + (rank + 1) * (chunk_size + 1) * incr;
-      fprintf (stderr,"1: __mpcomp_static_schedule_get_single_chunk: "
-		   "#%d (%ld -> %ld step %ld) -> (%ld -> %ld step %ld)\n", rank, lb, b,
-		   incr, *from, *to, incr);
      } else {
 	  /* The final part has a smaller chunk_size, therefore the computation is
 	     splitted in 2 parts */
@@ -82,9 +79,6 @@ int __mpcomp_static_schedule_get_single_chunk (long lb, long b, long incr, long 
 	       (rank - (trip_count % num_threads)) * chunk_size * incr;
 	  *to = lb + (trip_count % num_threads) * (chunk_size + 1) * incr +
 	       (rank + 1 - (trip_count % num_threads)) * chunk_size * incr;
-      fprintf (stderr,"2: __mpcomp_static_schedule_get_single_chunk: "
-		   "#%d (%ld -> %ld step %ld) -> (%ld -> %ld step %ld)\n", rank, lb, b,
-		   incr, *from, *to, incr);
      }
     
      sctk_assert((incr > 0) ? (*to-incr <= b) : (*to-incr >= b));
@@ -210,10 +204,6 @@ __mpcomp_static_loop_init(mpcomp_thread_t *t,
 
 	/* Get the team info */
 	sctk_assert(t->instance != NULL);
-
-	//fprintf(stderr, "[%d] __mpcomp_static_loop_init:"
-	//		"Entering \n",
-	//		t->rank) ;
 
 	/* Automatic chunk size -> at most one chunk */
 	if (chunk_size == 0) {
@@ -410,14 +400,12 @@ int __mpcomp_static_schedule_get_single_chunk_ull (unsigned long long lb, unsign
     if(incr_sign > 0)
     {   
         trip_count = ((long long)(b - lb)) / incr_signed;
-        //fprintf(stderr, "1: trip_count = %lld\n", trip_count);
         if((long long)(b - lb) % incr_signed != 0)
             trip_count++;
     }   
     else
     {   
         trip_count = ((long long)(lb - b)) / incr_signed;
-        //fprintf(stderr, "2: trip_count = %lld\n", trip_count);
         if((long long)(lb - b) % incr_signed != 0)
             trip_count++;
     }   
@@ -425,7 +413,6 @@ int __mpcomp_static_schedule_get_single_chunk_ull (unsigned long long lb, unsign
     trip_count = (trip_count >= 0) ? trip_count : -trip_count;
     
  
-    //fprintf(stderr, "[%d] __mpcomp_static_schedule_get_single_chunk_ull : lb %llu, b %llu, incr %llu, trip_count = %llu\n", t->rank, lb,b,incr, trip_count);
 	if ( trip_count <= t->rank ) 
     {
 	    sctk_nodebug ("__mpcomp_static_schedule_get_single_chunk: "
@@ -450,8 +437,6 @@ int __mpcomp_static_schedule_get_single_chunk_ull (unsigned long long lb, unsign
 	    local_to = lb + (trip_count % num_threads) * (chunk_size + 1) * incr +
 	        (rank + 1 - (trip_count % num_threads)) * chunk_size * incr;
     }
-    
-    //fprintf(stderr, "ULL: local_from = %llu, local_to = %llu, lb = %llu, b = %llu, incr = %llu, b-incr = %llu\n", local_from, local_to, lb, b, incr, b-incr);
     
     sctk_assert((incr_sign > 0) ? (local_to-incr <= b) : (local_to-incr >= b));
     
@@ -522,7 +507,6 @@ unsigned long long  __mpcomp_static_schedule_get_nb_chunks_ull (unsigned long lo
 	  ("__mpcomp_static_schedule_get_nb_chunks[%d]: %ld -> [%ld] (cs=%ld) final nb_chunks = %ld",
 	   rank, lb, b, incr, chunk_size, nb_chunks_per_thread);
 
-    //fprintf(stderr, "__mpcomp_static_schedule_get_nb_chunks_ull : nb_chunks = %llu\n", nb_chunks_per_thread);
      return nb_chunks_per_thread;
 }
 
@@ -563,7 +547,6 @@ void __mpcomp_static_schedule_get_specific_chunk_ull (unsigned long long lb, uns
      }
 
      trip_count = (trip_count >= 0) ? trip_count : -trip_count;
-     //fprintf(stderr, "[%d] __mpcomp_static_schedule_get_specific_chunk_ull : lb %llu, b %llu, incr %llu, trip_count = %lld\n", t->rank, lb,b,incr, trip_count);
      
      /* The final additionnal chunk is smaller, so its computation is a little bit
 	different */
@@ -571,15 +554,15 @@ void __mpcomp_static_schedule_get_specific_chunk_ull (unsigned long long lb, uns
 	 && trip_count % chunk_size != 0
 	 && chunk_num == __mpcomp_static_schedule_get_nb_chunks_ull (lb, b, incr,
 								 chunk_size) - 1) {
-	  //int last_chunk_size = trip_count % chunk_size;
+	  int last_chunk_size = trip_count % chunk_size;
 
 	  *from = lb + (trip_count / chunk_size) * chunk_size * incr;
 	  *to = lb + trip_count * incr;
 
 	  sctk_nodebug ("__mpcomp_static_schedule_get_specific_chunk: "
-			"Thread %d / Chunk %ld: %ld -> %ld (excl) step %ld => "
+			"Thread %d: %ld -> %ld (excl) step %ld => "
 			"%ld -> %ld (excl) step %ld (chunk of %ld)\n",
-			rank, nb_chunks_per_thread, lb, b, incr, from, to, incr,
+			rank, lb, b, incr, from, to, incr,
 			last_chunk_size);	  
      } else {
 	  *from = lb + chunk_num * nb_threads * chunk_size * incr
@@ -609,10 +592,6 @@ __mpcomp_static_loop_init_ull(mpcomp_thread_t *t,
 
 	/* Get the team info */
 	sctk_assert(t->instance != NULL);
-
-	//fprintf(stderr, "[%d] __mpcomp_static_loop_init_ull:"
-	//		"Entering with chunk size = %llu\n",
-	//		t->rank, chunk_size) ;
 
 	/* Automatic chunk size -> at most one chunk */
 	if (chunk_size == 0) {

@@ -410,7 +410,6 @@ __kmpc_fork_call(ident_t * loc, kmp_int32 argc, kmpc_micro microtask, ...)
   t = (mpcomp_thread_t *) sctk_openmp_thread_tls;
   sctk_assert(t != NULL);
 
-// fprintf( stderr, "__kmpc_fork_call: parallel region w/ %d args\n", argc ) ;
 
 #if 0
 if ( intel_temp_args_copy == NULL ) 
@@ -1582,12 +1581,6 @@ __kmpc_dispatch_init_8( ident_t *loc, kmp_int32 gtid, enum sched_type schedule,
                         kmp_int64 lb, kmp_int64 ub,
                         kmp_int64 st, kmp_int64 chunk )
 {
-    /*
-    fprintf(stderr,
-      "[%d] __kmpc_dispatch_init_8: enter %lld -> %lld incl, %lld excl [%lld] ck:%lld sch:%d\n",
-      ((mpcomp_thread_t *) sctk_openmp_thread_tls)->rank,
-      lb, ub, ub+st, st, chunk, schedule ) ;
-*/
     /* add to sync with MPC runtime bounds */
     long long add = ((ub - lb) % st == 0) ? st : st - ((ub - lb) % st);
     
@@ -1642,12 +1635,6 @@ __kmpc_dispatch_init_8u( ident_t *loc, kmp_int32 gtid, enum sched_type schedule,
                          kmp_uint64 lb, kmp_uint64 ub,
                          kmp_int64 st, kmp_int64 chunk )
 {
-    /*
-    fprintf(stderr, "[%d] __kmpc_dispatch_init_8u: enter %llu -> %llu incl, %llu excl [%llu] ck:%llu sch:%d\n"
-      ,
-      ((mpcomp_thread_t *) sctk_openmp_thread_tls)->rank,
-      lb, ub, ub+st, st, chunk, schedule ) ;
-    */
     /* add to sync with MPC runtime bounds */
     unsigned long long add = ((ub - lb) % st == 0) ? st : st - ((ub - lb) % st);
 
@@ -1832,7 +1819,6 @@ __kmpc_dispatch_next_4u( ident_t *loc, kmp_int32 gtid, kmp_int32 *p_last,
   if(t->first_iteration && t->static_chunk_size_intel > 0)
     t->static_current_chunk = -1;
 
-  //fprintf(stderr, "__kmpc_dispatch_next_4u: p_lb %lu, p_ub %lu, p_st %lu, schedule %d\n", *p_lb, *p_ub, *p_st, schedule);
   sctk_nodebug("__kmpc_dispatch_next_4: p_lb %ld, p_ub %ld, p_st %ld", *p_lb, *p_ub, *p_st);
   switch( schedule ) 
   {
@@ -2063,7 +2049,6 @@ __kmpc_dispatch_next_8u( ident_t *loc, kmp_int32 gtid, kmp_int32 *p_last,
   if(t->first_iteration && t->static_chunk_size_intel > 0)
     t->static_current_chunk = -1;
 
-  //fprintf(stderr, "__kmpc_dispatch_next_8u: p_lb %llu, p_ub %llu, p_st %llu, schedule %d\n", *p_lb, *p_ub, *p_st, schedule);
   switch( schedule ) 
   {
     /* regular scheduling */
