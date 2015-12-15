@@ -305,7 +305,7 @@ printf "\t@mkdir -p INSTALL">> Makefile; echo "">> Makefile
 printf "\t@cp -r bin INSTALL">> Makefile; echo "">> Makefile
 printf "\t@cp -r \$(DIR_DEST_EXE)/* INSTALL/bin 2>/dev/null || true">> Makefile; echo "">> Makefile
 printf "\t@cp -r lib INSTALL">> Makefile; echo "">> Makefile
-printf "\t@gcc -O0 -shared -fPIC -o INSTALL/lib/libiomp5.so /ccc/scratch/cont001/ocre/serraza/mpc/mpcframework/MPC_OpenMP/intel/libiomp5.c">> Makefile; echo "">> Makefile
+printf "\t@gcc -O0 -shared -fPIC -o INSTALL/lib/libiomp5.so ${MPC_SOURCE_DIR}/MPC_OpenMP/intel/libiomp5.c">> Makefile; echo "">> Makefile
 printf "\t@mkdir -p INSTALL/bin/mpcrun_opt">> Makefile; echo "">> Makefile
 printf "\t@cp ${MPC_SOURCE_DIR}MPC_Tools/mpcrun_opt/* INSTALL/bin/mpcrun_opt">> Makefile; echo "">> Makefile
 printf "\t@mkdir -p INSTALL/include/mpcframework">> Makefile; echo "">> Makefile
