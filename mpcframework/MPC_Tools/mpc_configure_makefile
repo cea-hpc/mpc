@@ -352,7 +352,9 @@ printf "\t@cp ${MPC_SOURCE_DIR}/MPC_Threads/sctk_thread/sctk_pthread_api.h  INST
 printf "\t@cp ${MPC_SOURCE_DIR}/MPC_Threads/sctk_thread/sctk_pthread_api.h  INSTALL/include/mpcframework/semaphore.h ">> Makefile; echo "">> Makefile
 fi
 
-echo "Preparing includes for Fortran"
+# FORTRAN HEADER AND MODULE GENERATION (MPI AND OPENMP)
+if test "$SCTK_FORTRAN" = "1"; then
+echo "Preparing includes/modules for Fortran"
 
 #Prepare the variables to be passed to the fortran generation script
 FORTRAN_PYTHON="/usr/bin/env python"
@@ -364,8 +366,9 @@ FORTRAN_FC="\$(F77) -g $SCTK_CFLAGS -IINSTALL/include/mpcframework -LINSTALL/lib
 FORTAN_MPIH="${MPC_SOURCE_DIR}/MPC_MPI/include/mpc_mpi.h"
 FORTRAN_INSTALL="${PWD}/INSTALL/include/mpcframework/"
 #Call the script
-printf "\t@echo \"Generate fortran mpc/mpi includes and modules\"">> Makefile; echo "" >> Makefile
+printf "\t@echo \"Generate FORTRAN MPI/OpenMP includes and modules\"">> Makefile; echo "" >> Makefile
 printf "\t@MPC_MAKE_FORTRAN_INTERFACE=1 MPC_DISABLE_CONFIG=1 MPC_DISABLE_BANNER=\"1\" LD_LIBRARY_PATH=\$(DESTDIR)/\$(OPENPA_PREFIX_INSTALL)/lib:\$(DESTDIR)/\$(HWLOC_PREFIX_INSTALL)/lib:\$(LD_LIBRARY_PATH) sh ${MPC_SOURCE_DIR}MPC_Tools/fortran_gen/fortran_gen.sh \"${FORTRAN_PYTHON}\" \"${FORTRAN_CC}\" \"${FORTRAN_FC}\" \"${FORTAN_MPIH}\" \"${FORTRAN_INSTALL}\" ">> Makefile; echo "" >> Makefile
+fi
 
 printf "\t@chmod -R 644 INSTALL/lib/*">> Makefile; echo "">> Makefile
 #printf "\t@echo \"Build mpc db\"">> Makefile; echo "">> Makefile
@@ -383,7 +386,7 @@ printf "\t@cp -r INSTALL/man/* \${DESTDIR}${SCTK_MAN_DIR}">> Makefile; echo "">>
 printf "\t@echo \"Build dynamic libraries\"">> Makefile; echo "">> Makefile
 printf "\t@\$(CC)  \$(COBJ_LIST) ${EXTERN_NON_TESTED_LIB} -fPIC -shared -o \${DESTDIR}${SCTK_LIB_DIR}/libmpc_framework.so  $SCTK_LDFLAGS|| echo \"Unable to build C shared library\"">> Makefile; echo "">> Makefile
 if test "$SCTK_FORTRAN" = "1"; then
-printf "\t@\$(F77) \$(FOBJ_LIST) ${EXTERN_NON_TESTED_LIB} -fPIC -shared -o \${DESTDIR}${SCTK_LIB_DIR}/libmpc_frameworkf.so $SCTK_LDFLAGS|| echo \"Unable to build Fortran shared library\"">> Makefile; echo "">> Makefile
+printf "\t@\$(CC) \$(FOBJ_LIST) ${EXTERN_NON_TESTED_LIB} -fPIC -shared -o \${DESTDIR}${SCTK_LIB_DIR}/libmpc_frameworkf.so $SCTK_LDFLAGS|| echo \"Unable to build Fortran shared library\"">> Makefile; echo "">> Makefile
 fi
 printf "\t@cp -r INSTALL/bin/* \${DESTDIR}${SCTK_BIN_DIR}">> Makefile; echo "">> Makefile
 printf "\t@cp -r INSTALL/share/mpc/* \${DESTDIR}${SCTK_SHARE_DIR}">> Makefile; echo "">> Makefile

@@ -270,7 +270,7 @@ genfortanfiles()
 
 genfortranmods()
 {
-	echo -n "(i) Compiling Fortran modules...   "
+	echo -n "(i) Compiling MPI Fortran modules...   "
 
 	#Note that it is important to compile twice (Fortran MAGIC dependency resolution)
 	$MPCFC -c ${MPIBASEF} ${MPICONSTF} ${MPIMODF} ${MPISIZEOF}  2>> ./fortrangen.log
@@ -300,7 +300,22 @@ genfortranmods()
 	fi	
 	
 	rm -f $TEMP $TEMP2
+
+	# Compile OpenMP Fortran module
+	echo -n "(i) Compiling OpenMP Fortran modules...   "
+
+	#Note that it is important to compile twice (Fortran MAGIC dependency resolution)
+	$MPCFC -c $SCRIPTPATH/pregenerated/omp.f90  2>> ./fortrangen.log
+	$MPCFC -c $SCRIPTPATH/pregenerated/omp.f90  2>> ./fortrangen.log
 	
+	if test "x$?" != "x0"; then
+		echo "(E) OpenMP Module compilation failed"
+		echo "(E) See ./fortrangen.log"
+		# generate_from_backup
+		return
+	else
+		echo "Done"
+	fi	
 }
 
 
@@ -357,7 +372,7 @@ proceedwithfortranfilegeneration()
 
 	genfortranmods
 
-	echo "(i) Checking Module files...   "
+	echo "(i) Checking MPI Module files...   "
 		
 	for f in mpi_base.mod mpi_constants.mod mpi_sizeofs.mod mpi.mod
 	do
@@ -365,7 +380,21 @@ proceedwithfortranfilegeneration()
 			echo "(i)\t${f}... Found."
 		else
 			echo "(E)\t${f}... NOT Found."
-			echo "(FATAL) Fortran module compilation failed"
+			echo "(FATAL) MPI Fortran module compilation failed"
+			echo "   You might not be able to run F90 codes"
+			return
+		fi	
+	done
+
+	echo "(i) Checking OpenMP Module files...   "
+		
+	for f in omp_lib.mod omp_lib_kinds.mod
+	do
+		if test -e "$f"; then
+			echo "(i)\t${f}... Found."
+		else
+			echo "(E)\t${f}... NOT Found."
+			echo "(FATAL) OpenMP Fortran module compilation failed"
 			echo "   You might not be able to run F90 codes"
 			return
 		fi	
@@ -381,6 +410,8 @@ proceedwithfortranfilegeneration()
 	cp mpi_base.mod ${INSTALL}/
 	cp mpi_sizeofs.mod ${INSTALL}/
 	cp libmpcmpisizeof.a ${INSTALL}/../../lib/
+	cp omp_lib.mod ${INSTALL}/
+	cp omp_lib_kinds.mod ${INSTALL}/
 
 	echo "(i) Checking installed files...   "
 		
@@ -391,7 +422,20 @@ proceedwithfortranfilegeneration()
 			echo "(i)\t${NAME}... Found."
 		else
 			echo "(E)\t${NAME}... NOT Found."
-			echo "(FATAL) Fortran module compilation failed"
+			echo "(FATAL) MPI Fortran module compilation failed"
+			echo "   You might not be able to run F90 codes"
+			return
+		fi	
+	done
+
+	for f in omp_lib.mod omp_lib_kinds.mod
+	do
+		NAME=`basename ${f}` 
+		if test -e "${INSTALL}/${f}"; then
+			echo "(i)\t${NAME}... Found."
+		else
+			echo "(E)\t${NAME}... NOT Found."
+			echo "(FATAL) OpenMP Fortran module compilation failed"
 			echo "   You might not be able to run F90 codes"
 			return
 		fi	

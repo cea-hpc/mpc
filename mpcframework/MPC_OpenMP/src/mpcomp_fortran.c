@@ -27,322 +27,383 @@
 
 /* LIB FUNCTIONS */
 
-
 void
 omp_set_num_threads_ (int *num_threads)
 {
   sctk_nodebug ("Fortran: omp_set_num_threads_ %d", *num_threads);
-  mpcomp_set_num_threads (*num_threads);
+  omp_set_num_threads (*num_threads);
 }
 
 void
 omp_set_num_threads__ (int *num_threads)
 {
   sctk_nodebug ("Fortran: omp_set_num_threads__ %d", *num_threads);
-  mpcomp_set_num_threads (*num_threads);
+  omp_set_num_threads (*num_threads);
 }
 
 int
 omp_get_num_threads_ ()
 {
-  return mpcomp_get_num_threads ();
+  return omp_get_num_threads ();
 }
 
 int
 omp_get_num_threads__ ()
 {
-  return mpcomp_get_num_threads ();
+  return omp_get_num_threads ();
 }
 
 int
 omp_get_max_threads_ ()
 {
-  return mpcomp_get_max_threads ();
+  return omp_get_max_threads ();
 }
 
 int
 omp_get_max_threads__ ()
 {
-  return mpcomp_get_max_threads ();
+  return omp_get_max_threads ();
 }
 
 int
 omp_get_thread_num_ ()
 {
-  return mpcomp_get_thread_num ();
+  return omp_get_thread_num ();
 }
 
 int
 omp_get_thread_num__ ()
 {
-  return mpcomp_get_thread_num ();
+  return omp_get_thread_num ();
 }
 
 int
 omp_get_num_procs_ ()
 {
-  return mpcomp_get_num_procs ();
+  return omp_get_num_procs ();
 }
 
 int
 omp_get_num_procs__ ()
 {
-  return mpcomp_get_num_procs ();
+  return omp_get_num_procs ();
 }
 
 int
 omp_in_parallel_ ()
 {
-  return mpcomp_in_parallel ();
+  return omp_in_parallel ();
 }
 
 int
 omp_in_parallel__ ()
 {
-  return mpcomp_in_parallel ();
-}
-
-int 
-omp_get_active_level_ ()
-{
-	return mpcomp_get_active_level ();
-}
-
-int 
-omp_get_active_level__ ()
-{
-	return mpcomp_get_active_level ();
-}
-
-int
-omp_get_ancestor_thread_num_ (int level)
-{
-	return mpcomp_get_ancestor_thread_num(level);
-}
-
-int
-omp_get_ancestor_thread_num__ (int level)
-{
-	return mpcomp_get_ancestor_thread_num(level);
-}
-
-int 
-omp_get_team_size_ (int level)
-{
-	return mpcomp_get_team_size(level);
-}
-
-int 
-omp_get_team_size__ (int level)
-{
-	return mpcomp_get_team_size(level);
-}
-
-int
-omp_get_level_ (void)
-{
-    return mpcomp_get_level() ;
-}
-
-int
-omp_get_level__ (void)
-{
-    return mpcomp_get_level() ;
+  return omp_in_parallel ();
 }
 
 /* DYNAMIC FUNCTIONS */
 void
 omp_set_dynamic_ (int *dynamic_threads)
 {
-  mpcomp_set_dynamic (*dynamic_threads);
+  omp_set_dynamic (*dynamic_threads);
 }
 
 void
 omp_set_dynamic__ (int *dynamic_threads)
 {
-  mpcomp_set_dynamic (*dynamic_threads);
+  omp_set_dynamic (*dynamic_threads);
 }
 
 int
 omp_get_dynamic_ ()
 {
-  return mpcomp_get_dynamic ();
+  return omp_get_dynamic ();
 }
 
 int
 omp_get_dynamic__ ()
 {
-  return mpcomp_get_dynamic ();
+  return omp_get_dynamic ();
 }
 
 /* NESTED FUNCTIONS */
 void
 omp_set_nested_ (int *nested)
 {
-  mpcomp_set_nested (*nested);
+  omp_set_nested (*nested);
 }
 
 void
 omp_set_nested__ (int *nested)
 {
-  mpcomp_set_nested (*nested);
+  omp_set_nested (*nested);
 }
 
 int
 omp_get_nested_ ()
 {
-  return mpcomp_get_nested ();
+  return omp_get_nested ();
 }
 
 int
 omp_get_nested__ ()
 {
-  return mpcomp_get_nested ();
+  return omp_get_nested ();
 }
 
-/* TIME FUNCTIONS */
-double
-omp_get_wtime_ ()
+void 
+omp_set_schedule_ ( omp_sched_t * kind, int * modifier ) 
 {
-  return mpcomp_get_wtime ();
+    omp_set_schedule( *kind, *modifier ) ;
 }
 
-double
-omp_get_wtime__ ()
+void 
+omp_set_schedule__ ( omp_sched_t * kind, int * modifier ) 
 {
-  return mpcomp_get_wtime ();
+    omp_set_schedule( *kind, *modifier ) ;
 }
 
-double
-omp_get_wtick_ ()
+int
+omp_get_thread_limit_ ()
 {
-  return mpcomp_get_wtick ();
+    return omp_get_thread_limit() ;
 }
 
-double
-omp_get_wtick__ ()
+int
+omp_get_thread_limit__ ()
 {
-  return mpcomp_get_wtick ();
+    return omp_get_thread_limit() ;
+}
+
+void
+omp_set_max_active_levels_ ( int * max_levels )
+{
+    omp_set_max_active_levels( *max_levels ) ;
+}
+
+void
+omp_set_max_active_levels__ ( int * max_levels )
+{
+    omp_set_max_active_levels( *max_levels ) ;
+}
+
+int
+omp_get_max_active_levels_ ()
+{
+    return omp_get_max_active_levels() ;
+}
+
+int
+omp_get_max_active_levels__ ()
+{
+    return omp_get_max_active_levels() ;
+}
+
+int
+omp_get_level_ (void)
+{
+    return omp_get_level() ;
+}
+
+int
+omp_get_level__ (void)
+{
+    return omp_get_level() ;
+}
+
+int
+omp_get_ancestor_thread_num_ (int * level)
+{
+	return omp_get_ancestor_thread_num(*level);
+}
+
+int
+omp_get_ancestor_thread_num__ (int * level)
+{
+	return omp_get_ancestor_thread_num(*level);
+}
+
+int 
+omp_get_team_size_ (int * level)
+{
+	return omp_get_team_size(*level);
+}
+
+int 
+omp_get_team_size__ (int * level)
+{
+	return omp_get_team_size(*level);
+}
+
+int 
+omp_get_active_level_ ()
+{
+	return omp_get_active_level ();
+}
+
+int 
+omp_get_active_level__ ()
+{
+	return omp_get_active_level ();
+}
+
+int
+omp_in_final_ ()
+{
+    return omp_in_final() ;
+}
+
+int
+omp_in_final__ ()
+{
+    return omp_in_final() ;
 }
 
 /* LOCK FUNCTIONS */
 void
 omp_init_lock_ (omp_lock_t * lock)
 {
-  mpcomp_init_lock (lock);
+  omp_init_lock (lock);
 }
 
 void
 omp_init_lock__ (omp_lock_t * lock)
 {
-  mpcomp_init_lock (lock);
+  omp_init_lock (lock);
 }
 
 void
 omp_destroy_lock_ (omp_lock_t * lock)
 {
-  mpcomp_destroy_lock (lock);
+  omp_destroy_lock (lock);
 }
 
 void
 omp_destroy_lock__ (omp_lock_t * lock)
 {
-  mpcomp_destroy_lock (lock);
+  omp_destroy_lock (lock);
 }
 
 void
 omp_set_lock_ (omp_lock_t * lock)
 {
-  mpcomp_set_lock (lock);
+  omp_set_lock (lock);
 }
 
 void
 omp_set_lock__ (omp_lock_t * lock)
 {
-  mpcomp_set_lock (lock);
+  omp_set_lock (lock);
 }
 
 void
 omp_unset_lock_ (omp_lock_t * lock)
 {
-  mpcomp_unset_lock (lock);
+  omp_unset_lock (lock);
 }
 
 void
 omp_unset_lock__ (omp_lock_t * lock)
 {
-  mpcomp_unset_lock (lock);
+  omp_unset_lock (lock);
 }
 
 int
 omp_test_lock_ (omp_lock_t * lock)
 {
-  return mpcomp_test_lock( lock ) ;
+  return omp_test_lock( lock ) ;
 }
 
 int
 omp_test_lock__ (omp_lock_t * lock)
 {
-  return mpcomp_test_lock( lock ) ;
+  return omp_test_lock( lock ) ;
 }
 
 /* NEST-LOCK FUNCTIONS */
 void
 omp_init_nest_lock_ (omp_nest_lock_t * lock) 
 {
-  mpcomp_init_nest_lock( lock ) ;
+  omp_init_nest_lock( lock ) ;
 }
 
 void
 omp_init_nest_lock__ (omp_nest_lock_t * lock) 
 {
-  mpcomp_init_nest_lock( lock ) ;
+  omp_init_nest_lock( lock ) ;
 }
 
 void 
 omp_destroy_nest_lock_ (omp_nest_lock_t * lock) 
 {
-  mpcomp_destroy_nest_lock( lock );
+  omp_destroy_nest_lock( lock );
 }
 
 void 
 omp_destroy_nest_lock__ (omp_nest_lock_t * lock) 
 {
-  mpcomp_destroy_nest_lock( lock );
+  omp_destroy_nest_lock( lock );
 }
 
 void 
 omp_set_nest_lock_ (omp_nest_lock_t * lock) 
 {
-  mpcomp_set_nest_lock( lock ) ;
+  omp_set_nest_lock( lock ) ;
 }
 
 void 
 omp_set_nest_lock__ (omp_nest_lock_t * lock) 
 {
-  mpcomp_set_nest_lock( lock ) ;
+  omp_set_nest_lock( lock ) ;
 }
 
 void 
 omp_unset_nest_lock_ (omp_nest_lock_t * lock) 
 {
-  mpcomp_unset_nest_lock( lock ) ;
+  omp_unset_nest_lock( lock ) ;
 }
 
 void 
 omp_unset_nest_lock__ (omp_nest_lock_t * lock) 
 {
-  mpcomp_unset_nest_lock( lock ) ;
+  omp_unset_nest_lock( lock ) ;
 }
 
 int 
 omp_test_nest_lock_ (omp_nest_lock_t * lock) 
 {
-  return mpcomp_test_nest_lock( lock ) ;
+  return omp_test_nest_lock( lock ) ;
 }
 
 int 
 omp_test_nest_lock__ (omp_nest_lock_t * lock) 
 {
-  return mpcomp_test_nest_lock( lock ) ;
+  return omp_test_nest_lock( lock ) ;
 }
+
+
+/* TIME FUNCTIONS */
+double
+omp_get_wtime_ ()
+{
+  return omp_get_wtime ();
+}
+
+double
+omp_get_wtime__ ()
+{
+  return omp_get_wtime ();
+}
+
+double
+omp_get_wtick_ ()
+{
+  return omp_get_wtick ();
+}
+
+double
+omp_get_wtick__ ()
+{
+  return omp_get_wtick ();
+}
+

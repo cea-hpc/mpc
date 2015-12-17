@@ -32,87 +32,48 @@ extern "C"
 #include <errno.h>
 #include <mpc.h>
 
-/* Macros for OpenMP compliance */
-#define omp_set_num_threads mpcomp_set_num_threads
-#define omp_get_num_threads mpcomp_get_num_threads
-#define omp_get_max_threads mpcomp_get_max_threads
-#define omp_get_thread_num mpcomp_get_thread_num
-#define omp_get_num_procs mpcomp_get_num_procs
-#define omp_in_parallel mpcomp_in_parallel
-#define omp_get_level mpcomp_get_level
-#define omp_get_active_level mpcomp_get_active_level
-#define omp_set_dynamic mpcomp_set_dynamic
-#define omp_get_dynamic mpcomp_get_dynamic
-#define omp_set_nested mpcomp_set_nested
-#define omp_get_nested mpcomp_get_nested
-#define omp_get_team_size mpcomp_get_team_size
-#define omp_get_ancestor_thread_num mpcomp_get_ancestor_thread_num
-
-#define omp_lock_t mpcomp_lock_t
-#define omp_nest_lock_t mpcomp_nest_lock_t
-
-#define omp_init_lock mpcomp_init_lock
-#define omp_destroy_lock mpcomp_destroy_lock
-#define omp_set_lock mpcomp_set_lock
-#define omp_unset_lock mpcomp_unset_lock
-#define omp_test_lock mpcomp_test_lock
-
-#define omp_init_nest_lock mpcomp_init_nest_lock
-#define omp_destroy_nest_lock mpcomp_destroy_nest_lock
-#define omp_set_nest_lock mpcomp_set_nest_lock
-#define omp_unset_nest_lock mpcomp_unset_nest_lock
-#define omp_test_nest_lock mpcomp_test_nest_lock
-
-#define omp_get_wtime mpcomp_get_wtime
-#define omp_get_wtick mpcomp_get_wtick
-
-
 /* OpenMP 2.5 API */
-  void mpcomp_set_num_threads (int num_threads);
-  int mpcomp_get_num_threads (void);
-  int mpcomp_get_max_threads (void);
-  int mpcomp_get_thread_num (void);
-  int mpcomp_get_num_procs (void);
-  int mpcomp_in_parallel (void);
-  void mpcomp_set_dynamic (int dynamic_threads);
-  int mpcomp_get_dynamic (void);
-  void mpcomp_set_nested (int nested);
-  int mpcomp_get_nested (void);
+  void omp_set_num_threads (int num_threads);
+  int omp_get_num_threads (void);
+  int omp_get_max_threads (void);
+  int omp_get_thread_num (void);
+  int omp_get_num_procs (void);
+  int omp_in_parallel (void);
+  void omp_set_dynamic (int dynamic_threads);
+  int omp_get_dynamic (void);
+  void omp_set_nested (int nested);
+  int omp_get_nested (void);
 
-  typedef sctk_thread_mutex_t mpcomp_lock_t;
-#if 0
-  typedef sctk_thread_mutex_t mpcomp_nest_lock_t;
-#else
+  typedef sctk_thread_mutex_t omp_lock_t;
 
-  struct mpcomp_nested_lock_s
+  struct omp_nested_lock_s
   {
       void * owner_thread ; /* Owner of the lock */
       void * owner_task; /* Owner of the lock */
       int nb_nested ; /* Number of times this lock is held */
       sctk_thread_mutex_t l ; /* Real lock */
   } ;
-  typedef struct mpcomp_nested_lock_s mpcomp_nest_lock_t ;
-#endif
+  typedef struct omp_nested_lock_s omp_nest_lock_t ;
 
 
 /* Lock Functions */
-  void mpcomp_init_lock (mpcomp_lock_t * lock);
-  void mpcomp_destroy_lock (mpcomp_lock_t * lock);
-  void mpcomp_set_lock (mpcomp_lock_t * lock);
-  void mpcomp_unset_lock (mpcomp_lock_t * lock);
-  int mpcomp_test_lock (mpcomp_lock_t * lock);
+  void omp_init_lock (omp_lock_t * lock);
+  void omp_destroy_lock (omp_lock_t * lock);
+  void omp_set_lock (omp_lock_t * lock);
+  void omp_unset_lock (omp_lock_t * lock);
+  int omp_test_lock (omp_lock_t * lock);
 
 
 /* Nestable Lock Fuctions */
-  void mpcomp_init_nest_lock (mpcomp_nest_lock_t * lock);
-  void mpcomp_destroy_nest_lock (mpcomp_nest_lock_t * lock);
-  void mpcomp_set_nest_lock (mpcomp_nest_lock_t * lock);
-  void mpcomp_unset_nest_lock (mpcomp_nest_lock_t * lock);
-  int mpcomp_test_nest_lock (mpcomp_nest_lock_t * lock);
+  void omp_init_nest_lock (omp_nest_lock_t * lock);
+  void omp_destroy_nest_lock (omp_nest_lock_t * lock);
+  void omp_set_nest_lock (omp_nest_lock_t * lock);
+  void omp_unset_nest_lock (omp_nest_lock_t * lock);
+  int omp_test_nest_lock (omp_nest_lock_t * lock);
 
 /* Timing Routines */
-  double mpcomp_get_wtime (void);
-  double mpcomp_get_wtick (void);
+  double omp_get_wtime (void);
+  double omp_get_wtick (void);
 
 /* OpenMP 3.0 API */
   typedef enum omp_sched_t {
@@ -123,7 +84,6 @@ extern "C"
   } omp_sched_t ;
   void omp_set_schedule (omp_sched_t kind, int modifier);
   void omp_get_schedule (omp_sched_t * kind, int *modifier);
-#if 0
   int omp_get_thread_limit (void);
   void omp_set_max_active_levels (int max_levels);
   int omp_get_max_active_levels (void);
@@ -131,7 +91,6 @@ extern "C"
   int omp_get_ancestor_thread_num (int level);
   int omp_get_team_size (int level);
   int omp_get_active_level (void);
-#endif
 
 #ifdef __cplusplus
 }

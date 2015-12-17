@@ -339,7 +339,7 @@ wrapper_function( void * arg )
     int rank;
     wrapper_t * w;
 
-    rank = mpcomp_get_thread_num();
+    rank = omp_get_thread_num();
     w = (wrapper_t *) arg;
 
     __kmp_invoke_microtask( w->f, rank, rank, w->argc, w->args );
@@ -533,35 +533,35 @@ kmp_int32
 __kmpc_global_thread_num(ident_t * loc)
 {
   sctk_nodebug( "__kmpc_global_thread_num: " ) ;
-  return mpcomp_get_thread_num() ;
+  return omp_get_thread_num() ;
 }
 
 kmp_int32
 __kmpc_global_num_threads(ident_t * loc)
 {
   sctk_nodebug( "__kmpc_global_num_threads: " ) ;
-  return mpcomp_get_num_threads() ;
+  return omp_get_num_threads() ;
 }
 
 kmp_int32
 __kmpc_bound_thread_num(ident_t * loc)
 {
   sctk_nodebug( "__kmpc_bound_thread_num: " ) ;
-  return mpcomp_get_thread_num() ;
+  return omp_get_thread_num() ;
 }
 
 kmp_int32
 __kmpc_bound_num_threads(ident_t * loc)
 {
   sctk_nodebug( "__kmpc_bound_num_threads: " ) ;
-  return mpcomp_get_num_threads() ;
+  return omp_get_num_threads() ;
 }
 
 kmp_int32
 __kmpc_in_parallel(ident_t * loc)
 {
   sctk_nodebug( "__kmpc_in_parallel: " ) ;
-  return mpcomp_in_parallel() ;
+  return omp_in_parallel() ;
 }
 
 

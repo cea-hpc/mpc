@@ -25,31 +25,31 @@
 /* REGULAR LOCKS */
  
 void 
-mpcomp_init_lock(mpcomp_lock_t *lock)
+omp_init_lock(omp_lock_t *lock)
 {
   sctk_thread_mutex_init(lock,NULL);
 }
 
 void 
-mpcomp_destroy_lock(mpcomp_lock_t *lock)
+omp_destroy_lock(omp_lock_t *lock)
 {
   sctk_thread_mutex_destroy(lock);
 }
 
 void 
-mpcomp_set_lock(mpcomp_lock_t *lock)
+omp_set_lock(omp_lock_t *lock)
 {
  sctk_thread_mutex_lock(lock);
 }
 
 void 
-mpcomp_unset_lock(mpcomp_lock_t *lock)
+omp_unset_lock(omp_lock_t *lock)
 {
  sctk_thread_mutex_unlock(lock);
 }
 
 int 
-mpcomp_test_lock(mpcomp_lock_t *lock)
+omp_test_lock(omp_lock_t *lock)
 {
  return (sctk_thread_mutex_trylock(lock) == 0);
 }
@@ -58,7 +58,7 @@ mpcomp_test_lock(mpcomp_lock_t *lock)
 /* NESTED LOCKS */
 
 void 
-mpcomp_init_nest_lock(mpcomp_nest_lock_t *lock)
+omp_init_nest_lock(omp_nest_lock_t *lock)
 {
  lock->owner_thread = NULL ;
 #if MPCOMP_TASK
@@ -69,13 +69,13 @@ mpcomp_init_nest_lock(mpcomp_nest_lock_t *lock)
 }
 
 void 
-mpcomp_destroy_nest_lock(mpcomp_nest_lock_t *lock) 
+omp_destroy_nest_lock(omp_nest_lock_t *lock) 
 {
  sctk_thread_mutex_destroy(&(lock->l));
 }
 
 void 
-mpcomp_set_nest_lock(mpcomp_nest_lock_t *lock)
+omp_set_nest_lock(omp_nest_lock_t *lock)
 {
   mpcomp_thread_t * t ;
 
@@ -114,7 +114,7 @@ mpcomp_set_nest_lock(mpcomp_nest_lock_t *lock)
 }
 
 void 
-mpcomp_unset_nest_lock(mpcomp_nest_lock_t *lock)
+omp_unset_nest_lock(omp_nest_lock_t *lock)
 { 
     lock->nb_nested-- ;
 
@@ -128,7 +128,7 @@ mpcomp_unset_nest_lock(mpcomp_nest_lock_t *lock)
 }
 
 int 
-mpcomp_test_nest_lock(mpcomp_nest_lock_t *lock)
+omp_test_nest_lock(omp_nest_lock_t *lock)
 {
   mpcomp_thread_t * t ;
 
@@ -137,7 +137,7 @@ mpcomp_test_nest_lock(mpcomp_nest_lock_t *lock)
   t = sctk_openmp_thread_tls ;
   sctk_assert( t != NULL ) ;
 
-  sctk_nodebug( "mpcomp_test_nest_lock: TEST owner=(%p,%p), thread=(%p,%p)\n", 
+  sctk_nodebug( "omp_test_nest_lock: TEST owner=(%p,%p), thread=(%p,%p)\n", 
           lock->owner_thread, lock->owner_task,
           t, t->current_task ) ;
 
@@ -170,7 +170,7 @@ mpcomp_test_nest_lock(mpcomp_nest_lock_t *lock)
   }
   lock->nb_nested++ ;
 
-  sctk_nodebug( "mpcomp_test_nest_lock: SUCCESS owner=(%p,%p), thread=(%p,%p)\n", 
+  sctk_nodebug( "omp_test_nest_lock: SUCCESS owner=(%p,%p), thread=(%p,%p)\n", 
           lock->owner_thread, lock->owner_task,
           t, t->current_task ) ;
 
