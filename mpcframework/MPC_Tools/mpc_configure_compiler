@@ -599,11 +599,11 @@ COMPILER_ARGS=""
 
 AUTO_INCLUDE="-fmpc-include"
 
-if test "$1" = "bin/mpc_ifort" ; then  
+if test "\$1" = "bin/mpc_ifort" ; then  
 AUTO_INCLUDE=""
 fi
 
-if test "$1" = "bin/mpc_gfortran" ; then  
+if test "\$1" = "bin/mpc_gfortran" ; then  
 AUTO_INCLUDE=""
 fi
 
