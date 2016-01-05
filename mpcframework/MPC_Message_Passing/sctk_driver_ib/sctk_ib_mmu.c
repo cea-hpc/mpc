@@ -66,6 +66,7 @@ sctk_ib_mmu_entry_t * sctk_ib_mmu_entry_new( sctk_ib_rail_info_t *rail_ib, void 
 																 | IBV_ACCESS_LOCAL_WRITE
 																 | IBV_ACCESS_REMOTE_READ
 																 | IBV_ACCESS_REMOTE_ATOMIC );
+        assume(new->mr != NULL);
 	}
 	else
 	{
@@ -178,7 +179,7 @@ void sctk_ib_mmu_entry_relax( sctk_ib_mmu_entry_t * entry )
 	 * this is really an edge case */
 	if( entry->free_on_relax )
 	{
-		sctk_error("Forced free on relax %p s %ld", entry->addr, entry->size );
+		sctk_debug("Forced free on relax %p s %ld", entry->addr, entry->size );
 		sctk_ib_mmu_entry_release( entry );
 	}
 }
@@ -196,6 +197,10 @@ void _sctk_ib_mmu_init( struct sctk_ib_mmu * mmu )
 	sctk_spin_rwlock_init( &mmu->cache_lock );
 	
 	mmu->cache_enabled = ib_global_config->mmu_cache_enabled;
+
+#ifndef MPC_Allocator
+    mmu->cache_enabled = 0;
+#endif
 	
 	if( mmu->cache_enabled )
 	{
@@ -344,8 +349,10 @@ static inline int _sctk_ib_mmu_try_to_release_and_replace_entry( struct sctk_ib_
 void _sctk_ib_mmu_push_entry( struct sctk_ib_mmu * mmu , sctk_ib_mmu_entry_t * entry )
 {
 	/* No cache means no storage */
-	if( !mmu->cache_enabled )
+	if( !mmu->cache_enabled ){
+        entry->free_on_relax = 1;
 		return;
+    }
 
 	/* Check if we are not over the memory limit (note that current entry is already
 	 * pinned at this moment this is why it also enters in the accounting  */
