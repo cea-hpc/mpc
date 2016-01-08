@@ -1,3 +1,4 @@
+#define _GNU_SOURCE
 /* ############################# MPC License ############################## */
 /* # Wed Nov 19 15:19:19 CET 2008                                         # */
 /* # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          # */
@@ -226,6 +227,26 @@ void * polling_thread( void * dummy )
     }
 }
 
+#include <dlfcn.h>
+void tbb_sched_get_num_threads(int num_threads)
+{
+	void* next = dlsym(RTLD_NEXT, "tbb_sched_get_num_threads");
+	if(next)
+	{
+		void(*call)(int num_threads) = (void(*)(int))next;
+		call(num_threads);
+	}
+	else
+	{
+		sctk_error("No TBB !!");
+	}
+}
+/* Should be replaced with weak functions, but does not work yet */
+/*#pragma weak tbb_sched_get_num_threads*/
+/*void tbb_sched_get_num_threads(int num_threads)*/
+/*{*/
+	/*sctk_error("NO TBB !! ");*/
+/*}*/
 
 static void sctk_perform_initialisation (void)
 {

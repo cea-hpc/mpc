@@ -2479,6 +2479,7 @@ sctk_start_func (void *(*run) (void *), void *arg)
 #endif
 	}
 
+	tbb_sched_get_num_threads(sctk_get_cpu_number());
 	sctk_nodebug("sctk_current_local_tasks_nb %d",sctk_current_local_tasks_nb);
 
 	__sctk_profiling__end__sctk_init_MPC = sctk_get_time_stamp_gettimeofday ();
@@ -2597,4 +2598,10 @@ sctk_thread_atomic_add (volatile unsigned long *ptr, unsigned long val)
   *ptr = tmp + val;
   sctk_thread_mutex_unlock (&lock);
   return tmp;
+}
+
+/* Used by GCC to bypase TLS destructors calls */
+int __cxa_thread_mpc_atexit(void(*dfunc)(void*), void* obj, void* dso_symbol)
+{
+	return 0;
 }
