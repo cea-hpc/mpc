@@ -228,9 +228,9 @@ void * polling_thread( void * dummy )
 }
 
 #include <dlfcn.h>
-void tbb_sched_get_num_threads(int num_threads)
+void tbb_prepare_for_mpc(int num_threads)
 {
-	void* next = dlsym(RTLD_NEXT, "tbb_sched_get_num_threads");
+	void* next = dlsym(RTLD_NEXT, "tbb_prepare_for_mpc");
 	if(next)
 	{
 		void(*call)(int num_threads) = (void(*)(int))next;
@@ -238,12 +238,12 @@ void tbb_sched_get_num_threads(int num_threads)
 	}
 	else
 	{
-		sctk_error("No TBB !!");
+		sctk_info("TBB hasn't been loaded with this execution.");
 	}
 }
 /* Should be replaced with weak functions, but does not work yet */
-/*#pragma weak tbb_sched_get_num_threads*/
-/*void tbb_sched_get_num_threads(int num_threads)*/
+/*#pragma weak tbb_prepare_for_mpc*/
+/*void tbb_prepare_for_mpc(int num_threads)*/
 /*{*/
 	/*sctk_error("NO TBB !! ");*/
 /*}*/

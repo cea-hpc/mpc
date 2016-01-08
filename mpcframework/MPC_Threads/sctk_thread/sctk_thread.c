@@ -2479,7 +2479,7 @@ sctk_start_func (void *(*run) (void *), void *arg)
 #endif
 	}
 
-	tbb_sched_get_num_threads(sctk_get_cpu_number());
+	tbb_prepare_for_mpc(sctk_get_cpu_number());
 	sctk_nodebug("sctk_current_local_tasks_nb %d",sctk_current_local_tasks_nb);
 
 	__sctk_profiling__end__sctk_init_MPC = sctk_get_time_stamp_gettimeofday ();
