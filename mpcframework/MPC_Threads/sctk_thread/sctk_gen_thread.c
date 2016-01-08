@@ -1,3 +1,4 @@
+#define _GNU_SOURCE
 /* ############################# MPC License ############################## */
 /* # Wed Nov 19 15:19:19 CET 2008                                         # */
 /* # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          # */
@@ -1165,8 +1166,9 @@ static int
 sctk_gen_thread_getattr_np (sctk_thread_t th, sctk_thread_attr_t * attr)
 {
   sctk_init_mpc_runtime();
-  assume(sctk_gen_thread_getattr_np != __sctk_ptr_thread_getattr_np);
-  return __sctk_ptr_thread_getattr_np(th,attr);
+  /*assume(sctk_gen_thread_getattr_np != __sctk_ptr_thread_getattr_np);*/
+  /*return __sctk_ptr_thread_getattr_np(th,attr);*/
+  return pthread_getattr_np((pthread_t)th, (pthread_attr_t*) attr);
 }
 static int
 sctk_gen_thread_rwlockattr_getkind_np (sctk_thread_rwlockattr_t * attr,
