@@ -1,3 +1,4 @@
+#define _GNU_SOURCE
 /* ############################# MPC License ############################## */
 /* # Wed Nov 19 15:19:19 CET 2008                                         # */
 /* # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          # */
@@ -544,6 +545,48 @@ int sctk_thread_get_current_local_tasks_nb() {
   return sctk_current_local_tasks_nb;
 }
 
+#include <dlfcn.h>
+void __tbb_init_for_mpc(int num_threads)
+{
+	void* next = dlsym(RTLD_NEXT, "__tbb_init_for_mpc");
+	if(next)
+	{
+		void(*call)(int num_threads) = (void(*)(int))next;
+		call(num_threads);
+	}
+	else
+	{
+		sctk_debug("Calling fake TBB Finalizer");
+	}
+}
+
+void __tbb_finalize_for_mpc()
+{
+	void* next = dlsym(RTLD_NEXT, "__tbb_finalize_for_mpc");
+	if(next)
+	{
+		void(*call)() = (void(*)())next;
+		call();
+	}
+	else
+	{
+		sctk_debug("Calling fake TBB Initializer");
+	}
+}
+
+/* Should be replaced with weak functions, but does not work yet */
+/*#pragma weak __tbb_finalize_for_mpc*/
+/*void __tbb_finalize_for_mpc()*/
+/*{*/
+	/*sctk_debug("Calling fake TBB Finalizer");*/
+/*}*/
+
+/*#pragma weak __tbb_init_for_mpc*/
+/*void __tbb_init_for_mpc(int num_threads)*/
+/*{*/
+	/*sctk_debug("Calling fake TBB Initializer");*/
+/*}*/
+
 
 static void *
 sctk_thread_create_tmp_start_routine (sctk_thread_data_t * __arg)
@@ -629,12 +672,33 @@ sctk_thread_create_tmp_start_routine (sctk_thread_data_t * __arg)
 #endif
 #endif
 
+  /* BEGIN TBB SETUP */
+  /**
+   * #define macros are not used for TBB code injections
+   * avoiding MPC recompilation when the user code wants to load TBB
+   * Instead, we define two functions :
+   *    - __tbb_init_for_mpc ( called around sctk_thread.c:643)
+   *    - __tbb_finalize_for_mpc (called around sctk_thread.c:658)
+   *
+   * These functions are set via #pragma weak, empty when TBB is not
+   * loaded and bound to our patchs in TBB when loaded.
+   *
+   * TODO: due to some issues, weak functions are replaced by dlsym accesses for now
+   */
+  int nbvps =0;
+  sctk_get_init_vp_and_nbvp (sctk_get_task_rank(), &nbvps);
+  __tbb_init_for_mpc(nbvps);
+  /* END TBB SETUP */
+
   res = tmp.__start_routine (tmp.__arg);
 
   /** ** **/
   sctk_report_death (sctk_thread_self());
   /** **/
 
+  /* BEGIN TBB FINALIZE */
+  __tbb_finalize_for_mpc();
+  /* END TBB FINALIZE */
 
 #ifdef MPC_Message_Passing
   if (tmp.task_id >= 0)
@@ -2479,7 +2543,6 @@ sctk_start_func (void *(*run) (void *), void *arg)
 #endif
 	}
 
-	tbb_prepare_for_mpc(sctk_get_cpu_number());
 	sctk_nodebug("sctk_current_local_tasks_nb %d",sctk_current_local_tasks_nb);
 
 	__sctk_profiling__end__sctk_init_MPC = sctk_get_time_stamp_gettimeofday ();
