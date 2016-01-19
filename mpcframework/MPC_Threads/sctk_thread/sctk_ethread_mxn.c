@@ -402,6 +402,7 @@ sctk_ethread_mxn_user_create (sctk_ethread_t * threadp,
 
   if (attr != NULL){
     if(attr->ptr->binding != (unsigned int)-1){
+      sctk_nodebug("Thread pinned to core %d", attr->ptr->binding);
       assume(attr->ptr->binding < sctk_nb_vp_initialized);
       current_vp = sctk_ethread_mxn_vp_list[attr->ptr->binding];
     }
@@ -952,7 +953,7 @@ int
 sctk_user_main (int argc, char **argv)
 {
   int result;
-  
+
 #ifdef HAVE_ENVIRON_VAR
   result = mpc_user_main (argc, argv,environ);
 #else

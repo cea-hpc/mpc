@@ -546,13 +546,13 @@ int sctk_thread_get_current_local_tasks_nb() {
 }
 
 #include <dlfcn.h>
-void __tbb_init_for_mpc(int num_threads)
+void __tbb_init_for_mpc(int init_id, int num_threads)
 {
 	void* next = dlsym(RTLD_NEXT, "__tbb_init_for_mpc");
 	if(next)
 	{
-		void(*call)(int num_threads) = (void(*)(int))next;
-		call(num_threads);
+		void(*call)(int,int) = (void(*)(int,int))next;
+		call(init_id, num_threads);
 	}
 	else
 	{
@@ -582,7 +582,7 @@ void __tbb_finalize_for_mpc()
 /*}*/
 
 /*#pragma weak __tbb_init_for_mpc*/
-/*void __tbb_init_for_mpc(int num_threads)*/
+/*void __tbb_init_for_mpc(int init_id, int num_threads)*/
 /*{*/
 	/*sctk_debug("Calling fake TBB Initializer");*/
 /*}*/
@@ -686,8 +686,8 @@ sctk_thread_create_tmp_start_routine (sctk_thread_data_t * __arg)
    * TODO: due to some issues, weak functions are replaced by dlsym accesses for now
    */
   int nbvps =0;
-  sctk_get_init_vp_and_nbvp (sctk_get_task_rank(), &nbvps);
-  __tbb_init_for_mpc(nbvps);
+  int init_vp = sctk_get_init_vp_and_nbvp (sctk_get_task_rank(), &nbvps);
+  __tbb_init_for_mpc(init_vp, nbvps);
   /* END TBB SETUP */
 
   res = tmp.__start_routine (tmp.__arg);
