@@ -88,8 +88,8 @@ sctk_network_send_message_dest_shm( sctk_thread_ptp_message_t *msg, int sctk_shm
 
    if(sctk_network_eager_msg_shm_send(msg,cell))
       return;
-   if(sctk_network_cma_msg_shm_send(msg,cell))
-      return;
+//   if(sctk_network_cma_msg_shm_send(msg,cell))
+//      return;
    if(sctk_network_frag_msg_shm_send(msg,cell))
       return;
 

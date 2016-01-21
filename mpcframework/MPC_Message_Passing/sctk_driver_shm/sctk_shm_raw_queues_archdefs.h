@@ -1,7 +1,9 @@
 #ifndef __SCTK_SHM_RAW_QUEUES_ARCHDEFS_H__
 #define __SCTK_SHM_RAW_QUEUES_ARCHDEFS_H__
 
+#ifndef PAGE_SIZE
 #define PAGE_SIZE 4096
+#endif /* PAGE_SIZE */
 
 /**
  * Get offset of a member
@@ -15,9 +17,15 @@
  * @param member     the name of the member within the struct.
  *
  */
+
 #define sctk_shm_container_of(ptr, type, member) ({                      \
         const typeof( ((type *)0)->member ) *__mptr = (ptr);    \
         (type *)( (char *)__mptr - sctk_shm_ll_offsetof(type,member) );})
+
+/* Some distribution haven't container_of */
+#ifndef container_of
+#define container_of sctk_shm_container_of
+#endif
 
 static inline void * 
 align(void *ptr, unsigned long boundary)

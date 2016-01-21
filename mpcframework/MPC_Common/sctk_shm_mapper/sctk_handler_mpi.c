@@ -53,7 +53,8 @@ struct sctk_alloc_mapper_handler_s* sctk_shm_mpi_handler_init(void){
   struct sctk_alloc_mapper_handler_s* mpi_handler;
 
   mpi_handler = (struct sctk_alloc_mapper_handler_s*) malloc(sizeof(struct sctk_alloc_mapper_handler_s));
-  localhost = (char*) malloc(16);
+  localhost = (char*) malloc(64);
+   
   mpi_handler->option = (void*) malloc(128*sizeof(char));
 
   mpi_handler->send_handler = sctk_mpi_handler_send_filename;
@@ -61,7 +62,8 @@ struct sctk_alloc_mapper_handler_s* sctk_shm_mpi_handler_init(void){
   mpi_handler->gen_filename = sctk_mpi_handler_gen_filename;
   
   // create key
-  gethostname(localhost,256);
+  // hostname is truncate if too long
+  gethostname(localhost,64-1);
   sprintf(mpi_handler->option, "SHM_%s",localhost);
   free(localhost);
   return mpi_handler;
