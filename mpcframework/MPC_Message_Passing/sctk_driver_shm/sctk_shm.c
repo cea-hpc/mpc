@@ -15,6 +15,7 @@
 static int sctk_shm_proc_local_rank_on_node = -1;
 static volatile int sctk_shm_driver_initialized = 0;
 static unsigned int sctk_shm_send_max_try = 1;
+static int sctk_cma_enabled = 1;
 
 static unsigned int sctk_shm_pending_ptp_msg_num = 0;
 static sctk_spinlock_t sctk_shm_polling_lock = SCTK_SPINLOCK_INITIALIZER;
@@ -88,8 +89,8 @@ sctk_network_send_message_dest_shm( sctk_thread_ptp_message_t *msg, int sctk_shm
 
    if(sctk_network_eager_msg_shm_send(msg,cell))
       return;
-//   if(sctk_network_cma_msg_shm_send(msg,cell))
-//      return;
+   if(sctk_network_cma_msg_shm_send(msg,cell) && sctk_cma_enabled)
+      return;
    if(sctk_network_frag_msg_shm_send(msg,cell))
       return;
 
@@ -385,8 +386,7 @@ void sctk_network_init_shm ( sctk_rail_info_t *rail )
     rail->network_name = "SHM";
 	sctk_rail_init_route ( rail, rail->runtime_config_rail->topology, NULL );
 
-	sctk_shmem_cells_num = 1024;
-//rail->runtime_config_driver_config->driver.value.shm.cells_num;
+    sctk_shmem_cells_num = rail->runtime_config_driver_config->driver.value.shm.cells_num;
     sctk_shmem_size = sctk_shm_get_region_size(sctk_shmem_cells_num);
     sctk_shmem_size = sctk_shm_roundup_powerof2(sctk_shmem_size);
 
@@ -403,8 +403,8 @@ void sctk_network_init_shm ( sctk_rail_info_t *rail )
         	sctk_shm_add_route(first_proc_on_node+i,i,rail);
         sctk_pmi_barrier();
     }
-
-    (void) sctk_network_cma_shm_interface_init(NULL);
+    sctk_cma_enabled = rail->runtime_config_driver_config->driver.value.shm.cma_enable;
+    (void) sctk_network_cma_shm_interface_init(0);
     sctk_network_frag_shm_interface_init();
     //sctk_shm_check_raw_queue(local_process_number);
     sctk_shm_driver_initialized = 1;

@@ -13,7 +13,7 @@ typedef struct
   pid_t pid;
 } sctk_shm_iovec_info_t;
 
-int sctk_network_cma_shm_interface_init(void *);
+int sctk_network_cma_shm_interface_init(void*);
 sctk_thread_ptp_message_t *sctk_network_cma_cmpl_msg_shm_recv(sctk_shm_cell_t*);
 sctk_thread_ptp_message_t *sctk_network_cma_msg_shm_recv(sctk_shm_cell_t *,int);
 int sctk_network_cma_msg_shm_send(sctk_thread_ptp_message_t*,sctk_shm_cell_t*);

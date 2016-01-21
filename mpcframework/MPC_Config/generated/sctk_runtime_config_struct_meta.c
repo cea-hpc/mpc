@@ -191,6 +191,7 @@ const struct sctk_runtime_config_entry_meta sctk_runtime_config_db[] = {
 	{"buffered_min_size"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_driver_shm,buffered_min_size)  , sizeof(int) , "int" , NULL},
 	{"buffered_max_size"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_driver_shm,buffered_max_size)  , sizeof(int) , "int" , NULL},
 	{"buffered_zerocopy"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_driver_shm,buffered_zerocopy)  , sizeof(bool) , "bool" , NULL},
+	{"cma_enable"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_driver_shm,cma_enable)  , sizeof(bool) , "bool" , NULL},
 	{"cma_priority"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_driver_shm,cma_priority)  , sizeof(int) , "int" , NULL},
 	{"cma_min_size"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_driver_shm,cma_min_size)  , sizeof(int) , "int" , NULL},
 	{"cma_max_size"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_driver_shm,cma_max_size)  , sizeof(int) , "int" , NULL},

@@ -248,6 +248,7 @@
                     <param name="buffered_min_size" type="int" doc="Defines the min size for the SHM buffered message" default="0" />
                     <param name="buffered_max_size" type="int" doc="Defines the min size for the SHM buffered message" default="4096" />
                     <param name="buffered_zerocopy" type="bool" doc="Defines if mode zerocopy should be actived for SHM buffered message" default="false" />
+                    <param name="cma_enable" type="bool" doc="" default="true"/>
                     <param name="cma_priority" type="int" doc="Defines priority for the SHM CMA message" default="1" />
                     <param name="cma_min_size" type="int" doc="Defines the min size for the SHM CMA message" default="4096" />
                     <param name="cma_max_size" type="int" doc="Defines the min size for the SHM CMA message" default="0" />

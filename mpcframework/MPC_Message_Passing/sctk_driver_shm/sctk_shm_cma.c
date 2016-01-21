@@ -9,7 +9,6 @@ static pid_t sctk_shm_process_sys_id = -1;
 static unsigned long sctk_shm_process_mpi_local_id = -1;
 static int sctk_shm_cma_max_try = 10;
 
-
 static void 
 sctk_shm_cma_driver_iovec(struct iovec* liovec, int liovlen, sctk_thread_ptp_message_t* send, int type)
 {

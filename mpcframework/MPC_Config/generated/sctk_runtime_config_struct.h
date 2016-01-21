@@ -376,6 +376,8 @@ struct sctk_runtime_config_struct_net_driver_shm
 	int buffered_max_size;
 	/**Defines if mode zerocopy should be actived for SHM buffered message**/
 	bool buffered_zerocopy;
+	/****/
+	bool cma_enable;
 	/**Defines priority for the SHM CMA message**/
 	int cma_priority;
 	/**Defines the min size for the SHM CMA message**/

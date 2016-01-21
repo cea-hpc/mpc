@@ -146,6 +146,7 @@ meta.types = {
 		buffered_min_size: {mode: 'param', name: "buffered_min_size", type: "int", doc: "Defines the min size for the SHM buffered message", dflt: "0", },
 		buffered_max_size: {mode: 'param', name: "buffered_max_size", type: "int", doc: "Defines the min size for the SHM buffered message", dflt: "4096", },
 		buffered_zerocopy: {mode: 'param', name: "buffered_zerocopy", type: "bool", doc: "Defines if mode zerocopy should be actived for SHM buffered message", dflt: "false", },
+		cma_enable: {mode: 'param', name: "cma_enable", type: "bool", doc: "", dflt: "true", },
 		cma_priority: {mode: 'param', name: "cma_priority", type: "int", doc: "Defines priority for the SHM CMA message", dflt: "1", },
 		cma_min_size: {mode: 'param', name: "cma_min_size", type: "int", doc: "Defines the min size for the SHM CMA message", dflt: "4096", },
 		cma_max_size: {mode: 'param', name: "cma_max_size", type: "int", doc: "Defines the min size for the SHM CMA message", dflt: "0", },

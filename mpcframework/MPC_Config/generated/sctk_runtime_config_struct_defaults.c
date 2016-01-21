@@ -381,6 +381,7 @@ void sctk_runtime_config_struct_init_net_driver_shm(void * struct_ptr)
 	obj->buffered_min_size = 0;
 	obj->buffered_max_size = 4096;
 	obj->buffered_zerocopy = false;
+	obj->cma_enable = true;
 	obj->cma_priority = 1;
 	obj->cma_min_size = 4096;
 	obj->cma_max_size = 0;

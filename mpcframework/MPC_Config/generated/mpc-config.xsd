@@ -445,6 +445,7 @@
       <xs:element minOccurs="0" name="buffered_min_size" type="xs:integer"/>
       <xs:element minOccurs="0" name="buffered_max_size" type="xs:integer"/>
       <xs:element minOccurs="0" name="buffered_zerocopy" type="xs:boolean"/>
+      <xs:element minOccurs="0" name="cma_enable" type="xs:boolean"/>
       <xs:element minOccurs="0" name="cma_priority" type="xs:integer"/>
       <xs:element minOccurs="0" name="cma_min_size" type="xs:integer"/>
       <xs:element minOccurs="0" name="cma_max_size" type="xs:integer"/>
