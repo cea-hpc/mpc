@@ -24,7 +24,7 @@ sctk_shm_cma_driver_iovec(struct iovec* liovec, int liovlen, sctk_thread_ptp_mes
    memcpy( riovec, (char*) shm_send_iov + sizeof(sctk_shm_iovec_info_t), riovlen*sizeof(struct iovec));
 
    nread = process_vm_readv(pid, liovec, liovlen, riovec, riovlen, 0); 
-   assume_m( nread > 0, "Failed process_vm_readv call");
+   assume_m( nread > 0, "Failed process_vm_readv call use MPC_Config - cma_enable = false");
 }
 
 static void 
