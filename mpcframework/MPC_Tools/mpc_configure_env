@@ -67,10 +67,10 @@ fi
 # fi
 
 if test -z "\${MANPATH}" ; then
-	MANPATH="\${MPCROOT}/man"
+	MANPATH="\${MPCROOT}/man:"
 	export MANPATH
 else
-	MANPATH="\${MPCROOT}/man:\${MANPATH}"
+	MANPATH="\${MPCROOT}/man:\${MANPATH}:"
 	export MANPATH
 fi
 
