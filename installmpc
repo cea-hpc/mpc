@@ -163,6 +163,8 @@ do
 			;;
 		--disable-mpc-gcc)
 			GCC_PREFIX='disabled'
+			#If we do not have GCC also disable getopt
+			SCTK_GETOPT_PREFIX='disabled'
 			;;
 		################# FORTRAN GCC ###############
 		--disable-mpc-fortran)
