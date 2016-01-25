@@ -59,6 +59,12 @@ extern "C"
 	 with the argument given to hls_barrier
 	 and hls_single in gcc */
 
+  struct sctk_tls_dtors_s
+  {
+	  void * obj;
+	  void (*dtor)(void *);
+	  struct sctk_tls_dtors * next;
+  };
 
   void sctk_extls_duplicate (void **new);
   void sctk_extls_keep (int *scopes);

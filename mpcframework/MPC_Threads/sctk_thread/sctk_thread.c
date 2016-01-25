@@ -672,6 +672,8 @@ sctk_thread_create_tmp_start_routine (sctk_thread_data_t * __arg)
 #endif
 #endif
 
+  sctk_tls_dtors_init(&(tmp.dtors_head));
+  
   /* BEGIN TBB SETUP */
   /**
    * #define macros are not used for TBB code injections
@@ -699,6 +701,8 @@ sctk_thread_create_tmp_start_routine (sctk_thread_data_t * __arg)
   /* BEGIN TBB FINALIZE */
   __tbb_finalize_for_mpc();
   /* END TBB FINALIZE */
+  
+  sctk_tls_dtors_free(&(tmp.dtors_head));
 
 #ifdef MPC_Message_Passing
   if (tmp.task_id >= 0)
@@ -830,6 +834,7 @@ sctk_thread_create_tmp_start_routine_user (sctk_thread_data_t * __arg)
   /* Note that the profiler is not initialized in user threads */
 
   /** ** **/
+
   sctk_report_creation (sctk_thread_self());
   /** **/
 
@@ -2666,5 +2671,9 @@ sctk_thread_atomic_add (volatile unsigned long *ptr, unsigned long val)
 /* Used by GCC to bypase TLS destructors calls */
 int __cxa_thread_mpc_atexit(void(*dfunc)(void*), void* obj, void* dso_symbol)
 {
+	sctk_thread_data_t *th;
+
+	th = sctk_thread_data_get();
+	sctk_tls_dtors_add(&(th->dtors_head), obj, dfunc);
 	return 0;
 }

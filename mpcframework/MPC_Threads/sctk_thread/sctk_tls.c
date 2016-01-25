@@ -514,6 +514,35 @@ sctk_extls_delete ()
 TODO("Liberation des extls")
 }
 
+#include <utlist.h>
+
+void sctk_tls_dtors_init(struct sctk_tls_dtors_s ** head)
+{
+	*head = NULL;
+}
+
+void sctk_tls_dtors_add(struct sctk_tls_dtors_s ** head, void * obj, void (*func)(void *))
+{
+	struct sctk_tls_dtors_s * elt = sctk_malloc(sizeof(struct sctk_tls_dtors_s));
+	elt->dtor = func;
+	elt->obj = obj;
+	
+	LL_PREPEND(*head, elt);
+}
+
+void sctk_tls_dtors_free(struct sctk_tls_dtors_s ** head)
+{
+	struct sctk_tls_dtors_s* elt = NULL, *tmp = NULL;
+	int count = 0;
+	
+	LL_FOREACH_SAFE(*head, elt, tmp)
+	{
+		elt->dtor(elt->obj);
+		LL_DELETE(*head, elt);
+		sctk_free(elt);
+	}
+}
+
 /*
  * At MPC startup, create all HLS levels
  * Called in sctk_perform_initialisation in sctk_launch.c

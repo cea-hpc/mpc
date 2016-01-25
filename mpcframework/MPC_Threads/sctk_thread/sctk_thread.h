@@ -104,7 +104,8 @@ extern "C"
 #endif
 
   struct sctk_task_specific_s;
-
+  struct sctk_tls_dtors_s;
+  
   typedef struct sctk_thread_data_s
   {
     struct sctk_alloc_chain *tls;
@@ -121,6 +122,7 @@ extern "C"
     sctk_thread_t tid;
     volatile sctk_thread_status_t status;
     struct sctk_task_specific_s *father_data;
+	struct sctk_tls_dtors_s* dtors_head;
     /* Where the thread must be bound */
     unsigned int bind_to;
   } sctk_thread_data_t;
