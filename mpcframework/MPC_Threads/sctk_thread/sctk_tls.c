@@ -38,7 +38,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include "hwloc.h"
-
+#include <dlfcn.h>
 
 /* Not present in hwloc.h */
 void hwloc_obj_add_info(hwloc_obj_t obj, const char *name, const char *value);
@@ -83,6 +83,24 @@ __thread void **sctk_tls_module ;
 #endif
 
 #endif
+
+
+/* This function is called to discover if a given
+ * variable comes with a dynamic initializer */
+void sctk_tls_locate_tls_dyn_initializer( char * fname )
+{
+	void * handle = dlopen( NULL, RTLD_LAZY );
+	void * ret = dlsym( handle, fname );
+	sctk_warning("Locating Dyn initalizer for %s ret %p\n", fname, ret );
+	
+	/* If we found a dynamic initializer call it */
+	if( ret )
+	{
+		void (*fn)() = (void (*)())ret;
+		(fn)();
+	}
+}
+
 
 #if defined(SCTK_USE_TLS) && defined(Linux_SYS)
 #include <link.h>
