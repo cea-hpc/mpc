@@ -21,8 +21,7 @@
 #   - VALAT Sebastien sebastien.valat@cea.fr                           #
 #   - AUTOMATIC GENERATION                                             #
 #                                                                      #
-########################################################################
--->
+########################################################################-->
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
   <!-- ********************************************************* -->
   <xs:complexType name="user_type_allocator">
@@ -440,12 +439,33 @@
     </xs:all>
   </xs:complexType>
   <!-- ********************************************************* -->
+  <xs:complexType name="user_type_net_driver_shm">
+    <xs:all>
+      <xs:element minOccurs="0" name="buffered_priority" type="xs:integer"/>
+      <xs:element minOccurs="0" name="buffered_min_size" type="xs:integer"/>
+      <xs:element minOccurs="0" name="buffered_max_size" type="xs:integer"/>
+      <xs:element minOccurs="0" name="buffered_zerocopy" type="xs:boolean"/>
+      <xs:element minOccurs="0" name="cma_enable" type="xs:boolean"/>
+      <xs:element minOccurs="0" name="cma_priority" type="xs:integer"/>
+      <xs:element minOccurs="0" name="cma_min_size" type="xs:integer"/>
+      <xs:element minOccurs="0" name="cma_max_size" type="xs:integer"/>
+      <xs:element minOccurs="0" name="cma_zerocopy" type="xs:boolean"/>
+      <xs:element minOccurs="0" name="frag_priority" type="xs:integer"/>
+      <xs:element minOccurs="0" name="frag_min_size" type="xs:integer"/>
+      <xs:element minOccurs="0" name="frag_max_size" type="xs:integer"/>
+      <xs:element minOccurs="0" name="frag_zerocopy" type="xs:boolean"/>
+      <xs:element minOccurs="0" name="shmem_size" type="xs:integer"/>
+      <xs:element minOccurs="0" name="cells_num" type="xs:integer"/>
+    </xs:all>
+  </xs:complexType>
+  <!-- ********************************************************* -->
   <xs:complexType name="user_type_net_driver">
     <xs:choice>
       <xs:element name="infiniband" type="user_type_net_driver_infiniband"/>
       <xs:element name="portals" type="user_type_net_driver_portals"/>
       <xs:element name="tcp" type="user_type_net_driver_tcp"/>
       <xs:element name="tcprdma" type="user_type_net_driver_tcp_rdma"/>
+      <xs:element name="shm" type="user_type_net_driver_shm"/>
       <xs:element name="topological" type="user_type_net_driver_topological"/>
     </xs:choice>
   </xs:complexType>

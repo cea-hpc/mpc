@@ -60,13 +60,14 @@ sctk_net_convert_msg_to_iovec( sctk_thread_ptp_message_t *msg, int *iovlen, size
 
 		case SCTK_MESSAGE_PACK:
 		{
+			int pos;
 			char skip = 0;
 			size_t i, j, size, total;
 			void * body;
 			
 			total = 0;
-			*iovlen = msg->tail.message.pack.count;
-			result = (struct iovec*) sctk_malloc((*iovlen)*sizeof(struct iovec));
+			*iovlen = 0;
+			pos = 0;
 				
 			if (SCTK_MSG_SIZE(msg) > 0)
 			{
@@ -77,7 +78,7 @@ sctk_net_convert_msg_to_iovec( sctk_thread_ptp_message_t *msg, int *iovlen, size
 						size = ( msg->tail.message.pack.list.std[i].ends[j] -
 						         msg->tail.message.pack.list.std[i].begins[j] +
 						         1 ) * msg->tail.message.pack.list.std[i].elem_size;
-						body = (char *) (msg->tail.message.pack.list.std[i].addr) +
+						body = ((char *) (msg->tail.message.pack.list.std[i].addr)) +
 							msg->tail.message.pack.list.std[i].begins[j] *
 							msg->tail.message.pack.list.std[i].elem_size;
 						 
@@ -87,26 +88,30 @@ sctk_net_convert_msg_to_iovec( sctk_thread_ptp_message_t *msg, int *iovlen, size
 							size = max_size - total;
 						}
 
-						result[i].iov_len = size;
-						result[i].iov_base = body;  
+						pos++;
+						result = (struct iovec*) sctk_realloc(result, pos*sizeof(struct iovec));
+						result[pos-1].iov_len = size;
+						result[pos-1].iov_base = body;  
 						total += size;
 						assume ( total <= max_size );
 					}
 				}
 			}
+			*iovlen = pos;
 
 			break;
 		}
 
 		case SCTK_MESSAGE_PACK_ABSOLUTE:
 		{
+			int pos;
 			char skip = 0;
 			size_t i, j, size, total;
 			void * body;
 
 			total = 0;
-			*iovlen = msg->tail.message.pack.count;
-			result = (struct iovec*) sctk_malloc((*iovlen)*sizeof(struct iovec));
+			*iovlen = 0;
+			pos = 0;
 
 			if ( SCTK_MSG_SIZE ( msg ) > 0 )
 			{
@@ -117,7 +122,7 @@ sctk_net_convert_msg_to_iovec( sctk_thread_ptp_message_t *msg, int *iovlen, size
 						size = ( msg->tail.message.pack.list.absolute[i].ends[j] -
 						         msg->tail.message.pack.list.absolute[i].begins[j] +
 						         1 ) * msg->tail.message.pack.list.absolute[i].elem_size;
-						body = ( char * ) (msg->tail.message.pack.list.absolute[i].addr ) +
+						body = (( char * ) (msg->tail.message.pack.list.absolute[i].addr )) +
 						                 msg->tail.message.pack.list.absolute[i].begins[j] *
 						                 msg->tail.message.pack.list.absolute[i].elem_size;
 						
@@ -126,14 +131,16 @@ sctk_net_convert_msg_to_iovec( sctk_thread_ptp_message_t *msg, int *iovlen, size
 							skip = 1;
 							size = max_size - total;
 						}
-
-						result[i].iov_len = size;
-						result[i].iov_base = body;  
+						pos++;
+						result = (struct iovec*) sctk_realloc(result, pos*sizeof(struct iovec));
+						result[pos-1].iov_len = size;
+						result[pos-1].iov_base = body;  
 						total += size;
 						assume ( total <= max_size );
 					}
 				}
 			}
+			*iovlen = pos;
 
 			break;
 		}
@@ -141,9 +148,11 @@ sctk_net_convert_msg_to_iovec( sctk_thread_ptp_message_t *msg, int *iovlen, size
 		default:
 			not_reachable();
 	}
+	
+	return result;
 }
 
-void sctk_net_copy_msg_from_iovec( sctk_message_to_copy_t *tmp, sctk_iovec_cpy_t driver_func)  
+void sctk_net_copy_msg_from_iovec( sctk_message_to_copy_t *tmp, sctk_iovec_cpy_t driver_func )  
 {
 	int iovlen;
 	sctk_thread_ptp_message_t *send;
@@ -158,12 +167,12 @@ void sctk_net_copy_msg_from_iovec( sctk_message_to_copy_t *tmp, sctk_iovec_cpy_t
 	
 	/* MPI 1.3 : The length of the received message must be less than or equal 
 		     to the length of the receive buffer */
-	assume ( SCTK_MSG_SIZE ( send ) <= SCTK_MSG_SIZE( recv ));
+	assume_m( SCTK_MSG_SIZE ( send ) <= SCTK_MSG_SIZE( recv ), "NORME 1.3 ...");
 
 	if ( SCTK_MSG_SIZE ( send ) > 0 )
 	{
-		result = sctk_net_convert_msg_to_iovec( recv, &iovlen, SCTK_MSG_SIZE(send));	
-		driver_func(result, send, SCTK_MSG_SIZE(send));
+		result = sctk_net_convert_msg_to_iovec(recv, &iovlen, SCTK_MSG_SIZE(recv));	
+		driver_func(result, iovlen, send);
 		sctk_free(result);		
 	}
 	sctk_message_completion_and_free(send,recv);
@@ -331,6 +340,35 @@ void sctk_net_write_in_fd ( sctk_thread_ptp_message_t *msg,
 
 		default:
 			not_reachable();
+	}
+}
+
+void 
+sctk_get_iovec_in_buffer(sctk_thread_ptp_message_t *msg,struct iovec **iov,int *iovlen)
+{
+    struct iovec tmp;
+	switch ( msg->tail.message_type )
+	{
+		case SCTK_MESSAGE_CONTIGUOUS:
+		{
+			*iov = (struct iovec*)sctk_malloc(sizeof(struct iovec));	
+            *iovlen = 1;
+			(*iov)->iov_base = msg->tail.message.contiguous.addr;	
+			(*iov)->iov_len = SCTK_MSG_SIZE ( msg );
+			break;
+		}
+
+		case SCTK_MESSAGE_NETWORK:
+		{
+			*iov = (struct iovec*)sctk_malloc(sizeof(struct iovec));	
+            		*iovlen = 1;
+			(*iov)->iov_base = (char*)msg+sizeof(sctk_thread_ptp_message_t);
+			(*iov)->iov_len = SCTK_MSG_SIZE ( msg );
+			break;
+		}
+
+		default:
+			abort();
 	}
 }
 
@@ -531,7 +569,6 @@ int sctk_net_copy_frag_msg (
 		{
 			size_t size;
 			void *body;
-			not_implemented();
 
 			size = SCTK_MSG_SIZE ( msg );
 			body = ( char * ) msg + sizeof ( sctk_thread_ptp_message_t );
@@ -546,7 +583,6 @@ int sctk_net_copy_frag_msg (
 			size_t i;
 			size_t j;
 			size_t size;
-			not_implemented();
 
 			for ( i = 0; i < msg->tail.message.pack.count; i++ )
 				for ( j = 0; j < msg->tail.message.pack.list.std[i].count; j++ )
@@ -870,6 +906,7 @@ void sctk_net_message_copy_from_buffer ( char *body,
 						         recv->tail.message.pack.list.std[i].begins[j] +
 						         1 ) * recv->tail.message.pack.list.std[i].elem_size;
 
+						sctk_error("%p - %p \n", recv->tail.message.pack.list.std[i].begins[j], recv->tail.message.pack.list.std[i].ends[j]); 
 						if ( total + size > SCTK_MSG_SIZE ( send ) )
 						{
 							skip = 1;
@@ -910,6 +947,7 @@ void sctk_net_message_copy_from_buffer ( char *body,
 						         recv->tail.message.pack.list.absolute[i].begins[j] +
 						         1 ) * recv->tail.message.pack.list.absolute[i].elem_size;
 
+						sctk_error("%p - %p \n", recv->tail.message.pack.list.std[i].begins[j], recv->tail.message.pack.list.std[i].ends[j]); 
 						if ( total + size > SCTK_MSG_SIZE ( send ) )
 						{
 							skip = 1;

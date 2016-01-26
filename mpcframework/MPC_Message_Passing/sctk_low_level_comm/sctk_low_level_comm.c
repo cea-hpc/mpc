@@ -374,6 +374,7 @@ void sctk_rail_init_driver( sctk_rail_info_t * rail, int driver_type )
 		case SCTK_RTCFG_net_driver_topological:
 			sctk_network_init_topological( rail );
 		break;
+
 		case SCTK_RTCFG_net_driver_tcp:
 			sctk_network_init_tcp ( rail );
 		break;
@@ -381,8 +382,11 @@ void sctk_rail_init_driver( sctk_rail_info_t * rail, int driver_type )
 		case SCTK_RTCFG_net_driver_tcprdma:
 			sctk_network_init_tcp_rdma( rail );
 		break;
-		
 
+		case SCTK_RTCFG_net_driver_shm:
+			sctk_network_init_shm( rail );
+		break;
+		
 
 		default:
 			sctk_fatal("No such network type");

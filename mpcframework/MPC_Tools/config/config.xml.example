@@ -51,6 +51,14 @@
                             <portals/>
                         </driver>
                     </config>
+				
+					<config>
+                        			<name>shm_config_mpi</name>
+                        			<driver>
+                            				<shm/>
+                        			</driver>
+                    			</config>
+				         
 				</configs>
 
 				<rails>
@@ -69,9 +77,9 @@
 					</rail>
 					<rail>
 						<name>tcp_mpi</name>
-						<priority>1</priority>
+						<priority>9</priority>
 						<ondemand>1</ondemand>
-						<topology>fully</topology>
+						<topology>ring</topology>
 						<config>tcp_config_mpi</config>
 					</rail>
 					<rail>
@@ -121,8 +129,14 @@
 							</gate>
 						</gates>
                     </rail>
+                    			<rail>
+                        			<name>shm_mpi</name>
+                        			<priority>99</priority>
+                        			<ondemand>0</ondemand>
+                        			<topology>fully</topology>
+                        			<config>shm_config_mpi</config>
+                    			</rail>
 				</rails>
-
 				<cli_options>
 					<cli_option>
 						<name>ib</name>
@@ -166,6 +180,12 @@
                             <rail>portals_rdma</rail>
                         </rails>
                     </cli_option>
+    					<cli_option>
+                        			<name>shm</name>
+                        			<rails>
+                            				<rail>shm_mpi</rail>
+                        			</rails>
+    					</cli_option>
 					<cli_option>
 						<name>default</name>
 						<rails>
