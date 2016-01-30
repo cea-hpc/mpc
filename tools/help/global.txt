@@ -29,7 +29,7 @@ Defaults for the options are specified in brackets.
   --disable-mpc-gcc                       : Disable gcc
   --disable-mpc-binutils                  : Disable binutils
   --disable-mpc-fortran                   : Disable fortran
-  --diable-romio                          : Disable ROMIO MPI-IO support
+  --disable-romio                          : Disable ROMIO MPI-IO support
 
 # Specify system subpackages
   --with-mpc-gdb=*                        : Specify gdb prefix on the system
