@@ -25,6 +25,8 @@
 #include <sctk_ib_cp.h>
 #endif
 
+#include <sctk_topology.h>
+
 #undef sleep
 #undef usleep
 #define SCTK_DONOT_REDEFINE_KILL
@@ -546,13 +548,13 @@ int sctk_thread_get_current_local_tasks_nb() {
 }
 
 #include <dlfcn.h>
-void __tbb_init_for_mpc(int init_id, int num_threads)
+void __tbb_init_for_mpc(cpu_set_t * cpuset, int cpuset_len)
 {
 	void* next = dlsym(RTLD_NEXT, "__tbb_init_for_mpc");
 	if(next)
 	{
-		void(*call)(int,int) = (void(*)(int,int))next;
-		call(init_id, num_threads);
+		void(*call)(cpu_set_t*,int) = (void(*)(cpu_set_t*,int))next;
+		call(cpuset,cpuset_len);
 	}
 	else
 	{
@@ -573,20 +575,6 @@ void __tbb_finalize_for_mpc()
 		sctk_debug("Calling fake TBB Initializer");
 	}
 }
-
-/* Should be replaced with weak functions, but does not work yet */
-/*#pragma weak __tbb_finalize_for_mpc*/
-/*void __tbb_finalize_for_mpc()*/
-/*{*/
-	/*sctk_debug("Calling fake TBB Finalizer");*/
-/*}*/
-
-/*#pragma weak __tbb_init_for_mpc*/
-/*void __tbb_init_for_mpc(int init_id, int num_threads)*/
-/*{*/
-	/*sctk_debug("Calling fake TBB Initializer");*/
-/*}*/
-
 
 static void *
 sctk_thread_create_tmp_start_routine (sctk_thread_data_t * __arg)
@@ -687,9 +675,21 @@ sctk_thread_create_tmp_start_routine (sctk_thread_data_t * __arg)
    *
    * TODO: due to some issues, weak functions are replaced by dlsym accesses for now
    */
-  int nbvps =0;
-  int init_vp = sctk_get_init_vp_and_nbvp (sctk_get_task_rank(), &nbvps);
-  __tbb_init_for_mpc(init_vp, nbvps);
+  int init_cpu = sctk_get_cpu();
+  int nbvps, i;
+  cpu_set_t * cpuset;
+
+  sctk_get_init_vp_and_nbvp (sctk_get_task_rank(), &nbvps);
+  init_cpu = sctk_topology_convert_logical_pu_to_os(init_cpu);
+  
+  cpuset = sctk_malloc(sizeof(cpu_set_t) * nbvps);
+  CPU_ZERO(cpuset);
+ 
+  for (i = 0; i < nbvps; ++i) {
+	CPU_SET(init_cpu + i, cpuset);
+  }
+  
+  __tbb_init_for_mpc(cpuset, nbvps);
   /* END TBB SETUP */
 
   res = tmp.__start_routine (tmp.__arg);
