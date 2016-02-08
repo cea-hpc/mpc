@@ -2668,7 +2668,7 @@ sctk_thread_atomic_add (volatile unsigned long *ptr, unsigned long val)
   return tmp;
 }
 
-/* Used by GCC to bypase TLS destructors calls */
+/* Used by GCC to bypass TLS destructor calls */
 int __cxa_thread_mpc_atexit(void(*dfunc)(void*), void* obj, void* dso_symbol)
 {
 	sctk_thread_data_t *th;
