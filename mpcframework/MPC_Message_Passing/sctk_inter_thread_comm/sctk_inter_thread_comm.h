@@ -67,7 +67,6 @@ typedef enum
 	SCTK_CANCELLED_RECV,
 	
 	SCTK_P2P_MESSAGE,
-	SCTK_P2P_RDV_MESSAGE,
 	SCTK_RDMA_MESSAGE,
 	SCTK_RDMA_WINDOW_MESSAGES, 		/**< These messages are used to exchange window informations */
 	SCTK_CONTROL_MESSAGE_FENCE,     /**< This message is sent to create a fence on control messages */
@@ -92,7 +91,6 @@ static const char * const sctk_message_class_name[ SCTK_CONTROL_MESSAGE_COUNT ] 
 	"SCTK_CANCELLED_RECV",
 	
 	"SCTK_P2P_MESSAGE",
-	"SCTK_P2P_RDV_MESSAGE",
 	"SCTK_RDMA_MESSAGE",
 	"SCTK_RDMA_WINDOW_MESSAGES", 	
 	"SCTK_CONTROL_MESSAGE_FENCE",   
@@ -118,7 +116,6 @@ static inline int sctk_message_class_is_process_specific( sctk_message_class_t t
 		case SCTK_CANCELLED_SEND:
 		case SCTK_CANCELLED_RECV:
 		case SCTK_P2P_MESSAGE:
-		case SCTK_P2P_RDV_MESSAGE:
 		case SCTK_RDMA_MESSAGE:
 		case SCTK_BARRIER_MESSAGE:
 		case SCTK_BROADCAST_MESSAGE:

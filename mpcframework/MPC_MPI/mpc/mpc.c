@@ -4397,7 +4397,7 @@ __MPC_Ssend (void *buf, mpc_msg_count count, MPC_Datatype datatype,
   sctk_add_adress_in_message (msg, buf,msg_size);
   sctk_mpc_init_request(&request,comm,src, REQUEST_SEND);
 
-  sctk_mpc_set_header_in_message (msg, tag, comm, src, dest, &request, msg_size,SCTK_P2P_RDV_MESSAGE, datatype);
+  sctk_mpc_set_header_in_message (msg, tag, comm, src, dest, &request, msg_size,SCTK_P2P_MESSAGE, datatype);
 
   sctk_nodebug ("count = %d, datatype = %d", SCTK_MSG_SIZE( msg ), datatype);
   sctk_send_message (msg);

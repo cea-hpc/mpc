@@ -141,18 +141,21 @@
 					<cli_option>
 						<name>ib</name>
 						<rails>
+                            				<rail>shm_mpi</rail>
 							<rail>ib_mpi</rail>
 						</rails>
 					</cli_option>
 					<cli_option>
 						<name>tcp</name>
 						<rails>
+                            				<rail>shm_mpi</rail>
 							<rail>tcp_mpi</rail>
 						</rails>
 					</cli_option>
 					<cli_option>
 						<name>multirail_tcp</name>
 						<rails>
+                            				<rail>shm_mpi</rail>
 							<rail>tcp_large</rail>
 						</rails>
                     </cli_option>
@@ -189,6 +192,7 @@
 					<cli_option>
 						<name>default</name>
 						<rails>
+                            				<rail>shm_mpi</rail>
 							<rail>ib_mpi</rail>
 						</rails>
 					</cli_option>
