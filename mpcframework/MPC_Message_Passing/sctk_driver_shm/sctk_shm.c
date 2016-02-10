@@ -374,17 +374,20 @@ void sctk_network_init_shm ( sctk_rail_info_t *rail )
     size_t sctk_shmem_size;
     int sctk_shmem_cells_num;
 
-	/* Register Hooks in rail */
-	rail->send_message_endpoint = sctk_network_send_message_endpoint_shm;
-	rail->notify_recv_message = sctk_network_notify_recv_message_shm;
-	rail->notify_matching_message = sctk_network_notify_matching_message_shm;
-	rail->notify_any_source_message = sctk_network_notify_any_source_message_shm;
-	rail->notify_perform_message = sctk_network_notify_perform_message_shm;
-	rail->notify_idle_message = sctk_network_notify_idle_message_shm;
-	rail->send_message_from_network = sctk_send_message_from_network_shm;
+   /* Register Hooks in rail */
+   rail->send_message_endpoint = sctk_network_send_message_endpoint_shm;
+   rail->notify_recv_message = sctk_network_notify_recv_message_shm;
+   rail->notify_matching_message = sctk_network_notify_matching_message_shm;
+   rail->notify_any_source_message = sctk_network_notify_any_source_message_shm;
+   rail->notify_perform_message = sctk_network_notify_perform_message_shm;
+   rail->notify_idle_message = sctk_network_notify_idle_message_shm;
+   rail->send_message_from_network = sctk_send_message_from_network_shm;
 
     rail->network_name = "SHM";
-	sctk_rail_init_route ( rail, rail->runtime_config_rail->topology, NULL );
+    if( strcmp(rail->runtime_config_rail->topology, "none"))
+	sctk_warning("SHM topology must be 'none'");
+
+    sctk_rail_init_route ( rail, "none", NULL );
 
     sctk_shmem_cells_num = rail->runtime_config_driver_config->driver.value.shm.cells_num;
     sctk_shmem_size = sctk_shm_get_region_size(sctk_shmem_cells_num);
@@ -394,6 +397,9 @@ void sctk_network_init_shm ( sctk_rail_info_t *rail )
     sctk_pmi_get_process_on_node_number(&local_process_number);
     sctk_shm_proc_local_rank_on_node = local_process_rank;
     first_proc_on_node = sctk_get_process_rank() - local_process_rank;
+    
+    if(local_process_number == 1)
+	return;
 
     sctk_shm_init_regions_infos(local_process_number);
     for( i=0; i<local_process_number; i++)
