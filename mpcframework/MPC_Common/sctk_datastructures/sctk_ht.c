@@ -122,6 +122,7 @@ static inline sctk_uint64_t murmur_hash( sctk_uint64_t val )
         return h;
 }
 
+/* THESE Functions are locking buckets (as offset) */
 
 static inline void MPCHT_lock_read( struct MPCHT * ht , sctk_uint64_t bucket)
 {
@@ -132,6 +133,7 @@ static inline void MPCHT_unlock_read( struct MPCHT * ht , sctk_uint64_t bucket)
 {
 	sctk_spinlock_read_unlock( &ht->rwlocks[bucket] );
 }
+
 static inline void MPCHT_lock_write( struct MPCHT * ht , sctk_uint64_t bucket)
 {
 	sctk_spinlock_write_lock( &ht->rwlocks[bucket] );
@@ -140,6 +142,29 @@ static inline void MPCHT_lock_write( struct MPCHT * ht , sctk_uint64_t bucket)
 static inline void MPCHT_unlock_write( struct MPCHT * ht , sctk_uint64_t bucket)
 {
 	sctk_spinlock_write_unlock( &ht->rwlocks[bucket] );
+}
+
+
+/* THESE Functions are locking buckets according to KEYS */
+
+void MPCHT_lock_cell_read( struct MPCHT * ht , sctk_uint64_t key)
+{
+	MPCHT_lock_read( ht, murmur_hash( key ) % ht->table_size);
+}
+
+void MPCHT_unlock_cell_read( struct MPCHT * ht , sctk_uint64_t key)
+{
+	MPCHT_unlock_read( ht, murmur_hash( key ) % ht->table_size);
+}
+
+void MPCHT_lock_cell_write( struct MPCHT * ht , sctk_uint64_t key)
+{
+	MPCHT_lock_write( ht, murmur_hash( key ) % ht->table_size);
+}
+
+void MPCHT_unlock_cell_write( struct MPCHT * ht , sctk_uint64_t key)
+{
+	MPCHT_unlock_write( ht, murmur_hash( key ) % ht->table_size);
 }
 
 
@@ -224,6 +249,54 @@ void * MPCHT_get(  struct MPCHT * ht, sctk_uint64_t key )
 
 	MPCHT_unlock_read( ht, bucket );
 	return ret;
+}
+
+void * MPCHT_get_or_create(  struct MPCHT * ht, sctk_uint64_t key , void * (create_entry)( sctk_uint64_t key ) )
+{
+	sctk_uint64_t bucket = murmur_hash( key ) % ht->table_size;
+	
+	struct MPCHT_Cell * head = &ht->cells[bucket];
+	
+	MPCHT_lock_write( ht, bucket );
+	
+	void * data = NULL;
+	
+	if( head->use_flag == 0 )
+	{
+		/* Static cell is free */
+		
+		if( create_entry )
+		{
+			data = (create_entry)( key );
+		}
+		
+		MPCHT_Cell_init( head, key, data, NULL );
+		MPCHT_unlock_write( ht, bucket );
+		return head->data;
+	}
+
+	/* Otherwise make sure that such cell is not present yet */
+	struct MPCHT_Cell * candidate = MPCHT_Cell_get( head, key );
+	
+	if( candidate )
+	{
+		MPCHT_unlock_write( ht, bucket );
+		return candidate->data;
+	}
+	
+	/* If not we have to push it */
+	
+	if( create_entry )
+	{
+		data = (create_entry)( key );
+	}
+	
+	struct MPCHT_Cell * new_cell = MPCHT_Cell_new( key, data, head->next );
+	head->next = new_cell;
+	
+	MPCHT_unlock_write( ht, bucket );
+	
+	return new_cell->data;
 }
 
 void MPCHT_set(  struct MPCHT * ht, sctk_uint64_t key, void * data )
