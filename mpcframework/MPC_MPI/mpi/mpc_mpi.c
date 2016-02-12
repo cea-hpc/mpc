@@ -897,7 +897,8 @@ inline void __sctk_init_mpc_request_internal(MPI_internal_request_t *tmp){
  * 
  *  \param req Request to allocate (will be written with the ID of the request)
  * */
-extern inline MPI_internal_request_t * 
+/*extern inline MPI_internal_request_t * */
+inline MPI_internal_request_t * 
 __sctk_new_mpc_request_internal (MPI_Request * req, 
 				 MPI_request_struct_t *requests)
 {
@@ -992,7 +993,8 @@ __sctk_new_mpc_request_internal (MPI_Request * req,
 }
 
 /** \brief Create a new \ref MPC_Request */
-extern inline MPC_Request * __sctk_new_mpc_request (MPI_Request * req,MPI_request_struct_t *requests)
+/*extern inline MPC_Request * _sctk_new_mpc_request (MPI_Request * req,MPI_request_struct_t *requests)*/
+inline MPC_Request * __sctk_new_mpc_request (MPI_Request * req,MPI_request_struct_t *requests)
 {
 	MPI_internal_request_t *tmp;
 	/* Acquire a free MPI_Iternal request */
