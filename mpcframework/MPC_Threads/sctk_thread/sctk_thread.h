@@ -70,6 +70,7 @@ extern "C"
   void sctk_pthread_ng_thread_init (void);
 
   void sctk_thread_wait_for_value ( volatile int *data, int value);
+  int sctk_thread_timed_wait_for_value (volatile int *data, int value, unsigned int max_time_in_usec);
   void sctk_thread_wait_for_value_and_poll ( volatile int *data, int value,
 					    void (*func) (void *), void *arg);
   void

@@ -1892,6 +1892,39 @@ sctk_thread_wait_for_value_and_poll (volatile int *data, int value,
   __sctk_ptr_thread_wait_for_value_and_poll (data, value, func, arg);
 }
 
+int
+sctk_thread_timed_wait_for_value (volatile int *data, int value, unsigned int max_time_in_usec)
+{
+	unsigned int end_time = (((sctk_timer_t) max_time_in_usec / (sctk_timer_t) 1000) /
+     (sctk_timer_t) sctk_time_interval) + sctk_timer + 1;
+	
+	unsigned int trials = 0;
+	
+	while( *data != value )
+	{
+		if( end_time < sctk_timer )
+		{
+			/* TIMED OUT */
+			return 1;
+		}
+		
+		int left_to_wait = end_time - sctk_timer;
+		
+		if( (30 < trials) && ( 5000 < left_to_wait ) )
+		{
+			sctk_thread_usleep( 1000 );
+		}
+		else
+		{
+			sctk_thread_yield();
+		}
+
+		trials++;
+	}
+	
+	return 0;
+}
+
 void
 sctk_thread_wait_for_value (volatile int *data, int value)
 {

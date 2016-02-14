@@ -251,11 +251,14 @@ void * MPCHT_get(  struct MPCHT * ht, sctk_uint64_t key )
 	return ret;
 }
 
-void * MPCHT_get_or_create(  struct MPCHT * ht, sctk_uint64_t key , void * (create_entry)( sctk_uint64_t key ) )
+void * MPCHT_get_or_create(  struct MPCHT * ht, sctk_uint64_t key , void * (create_entry)( sctk_uint64_t key ), int * did_create )
 {
 	sctk_uint64_t bucket = murmur_hash( key ) % ht->table_size;
 	
 	struct MPCHT_Cell * head = &ht->cells[bucket];
+	
+	if( did_create )
+		*did_create = 1;	
 	
 	MPCHT_lock_write( ht, bucket );
 	
@@ -281,6 +284,8 @@ void * MPCHT_get_or_create(  struct MPCHT * ht, sctk_uint64_t key , void * (crea
 	if( candidate )
 	{
 		MPCHT_unlock_write( ht, bucket );
+		if( did_create )
+			*did_create = 0;	
 		return candidate->data;
 	}
 	

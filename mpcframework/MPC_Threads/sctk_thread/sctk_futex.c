@@ -228,10 +228,16 @@ int * futex_queue_HT_register_thread( struct futex_queue_HT * ht , int * futex_k
 	/* Here we first create a futex queue if 
 	 * it does not exists yet */
 	sctk_uint64_t new_key = (sctk_uint64_t) futex_key;
+	
+	int new_queue_created = 0;
 	struct futex_queue *fq = (struct futex_queue *) 
 	          MPCHT_get_or_create(&ht->queue_hash_table,
 								   new_key ,
-								   futex_queue_new_from_key);
+								   futex_queue_new_from_key,
+								   &new_queue_created);
+	/* Was a new queue created ? */
+	if( new_queue_created )
+		ht->queue_count++;
 
 	/* Did it work ? */
 	if( fq )
@@ -360,6 +366,26 @@ int sctk_futex_WAIT(void *addr1, int op, int val1, struct timespec *timeout )
 	}
 	
 	/* Here we consider the timed implementation */
+	
+	int * wait_ticket = futex_queue_HT_register_thread( &___futex_queue_HT, addr1 );
+	
+	if(!wait_ticket)
+	{
+		return -1;
+	}
+
+	unsigned int time_to_wait = timeout->tv_sec * 1e6 + timeout->tv_nsec;
+
+	if( sctk_thread_timed_wait_for_value (wait_ticket, 0, time_to_wait) )
+	{
+		/* We timed out */
+		errno = ETIMEDOUT;
+		free( wait_ticket );
+		return -1;
+	}
+	
+	/* If we are here we are done waiting */
+	free( wait_ticket );
 
 	return 0;
 }
