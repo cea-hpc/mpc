@@ -163,6 +163,18 @@ omp_set_schedule__ ( omp_sched_t * kind, int * modifier )
     omp_set_schedule( *kind, *modifier ) ;
 }
 
+void
+omp_get_schedule_ ( omp_sched_t * kind, int * modifier )
+{
+    omp_get_schedule( kind, modifier );
+}
+
+void
+omp_get_schedule__ ( omp_sched_t * kind, int * modifier )
+{
+    omp_get_schedule( kind, modifier );
+}
+
 int
 omp_get_thread_limit_ ()
 {
