@@ -64,13 +64,6 @@ omp_get_thread_num (void)
 
 }
 
-/* For backward compatibility with old patched GCC */
-int
-mpcomp_get_thread_num (void)
-{
-return omp_get_thread_num() ;
-}
-
 /*
  * Return the maximum number of threads that can be used inside a parallel region.
  * This function may be called either from serial or parallel parts of the program.
@@ -452,3 +445,17 @@ omp_in_final()
     not_implemented() ;
     return 0 ;
 }
+
+/* For backward compatibility with old patched GCC */
+int
+mpcomp_get_num_threads (void)
+{
+  return omp_get_num_threads();
+}
+
+int
+mpcomp_get_thread_num (void)
+{
+  return omp_get_thread_num() ;
+}
+

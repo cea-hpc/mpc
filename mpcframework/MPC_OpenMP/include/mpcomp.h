@@ -32,6 +32,10 @@ extern "C"
 #include <errno.h>
 #include <mpc.h>
 
+/* OpenMP 2.5 API - For backward compatibility with old patched GCC */
+  int mpcomp_get_num_threads (void);
+  int mpcomp_get_thread_num (void);
+
 /* OpenMP 2.5 API */
   void omp_set_num_threads (int num_threads);
   int omp_get_num_threads (void);
