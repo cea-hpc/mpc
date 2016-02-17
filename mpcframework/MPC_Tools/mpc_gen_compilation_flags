@@ -218,8 +218,8 @@ if test "$SCTK_FORTRAN" = "1"; then
 SCTK_CHECK_FOPTION "-fPIC"
 case $FORTRAN_COMPILER_NAME in
     *INTEL_COMPILER*)
-    sctk_echo "Using $FORTRAN_COMPILER_NAME options"
-    SCTK_CHECK_FOPTION "$SCTK_FFLAGS -threads -recursive"
+    #sctk_echo "Using $FORTRAN_COMPILER_NAME options"
+    #SCTK_CHECK_FOPTION "$SCTK_FFLAGS -threads -recursive"
     ;;
 esac
 fi

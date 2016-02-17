@@ -561,23 +561,16 @@ SCTK_CXX="`tmp_cross_gen $SCTK_CXX`"
 SCTK_F77="`tmp_cross_gen $SCTK_F77`"
 SCTK_LIRARY_PATH=""
 
-for i in ${COMPILER_LIST} ; 
-do
-	if test "${i}" != "gcc" -a "${i}" != "icc"; 
-	then 
-		SCTK_CC=`echo "${MPC_RPREFIX}/${MPC_SUBPREFIX}/bin/mpc-gcc_$i"`
-		SCTK_CXX=`echo "${MPC_RPREFIX}/${MPC_SUBPREFIX}/bin/mpc-g++_$i"`
-		SCTK_F77=`echo "${MPC_RPREFIX}/${MPC_SUBPREFIX}/bin/mpc-gfortran_$i"`
-		SCTK_GCC="${SCTK_CC}"
-		echo "sctk_cc = '${SCTK_CC}'" 2>&1
-		echo "sctk_cxx = '${SCTK_CXX}'" 2>&1
-		echo "sctk_f77 = '${SCTK_F77}'" 2>&1
-		echo "sctk_gcc = '${SCTK_GCC}'" 2>&1
+SCTK_CC=`head -n 1 ${MPC_RPREFIX}/.c_compilers.cfg | cut -f3 -d":"`
+SCTK_CXX=`head -n 1 ${MPC_RPREFIX}/.c++_compilers.cfg | cut -f3 -d":"`
+SCTK_F77=`head -n 1 ${MPC_RPREFIX}/.f77_compilers.cfg | cut -f3 -d":"`
+SCTK_GCC="${SCTK_CC}"
+echo "sctk_cc = '${SCTK_CC}'" 2>&1
+echo "sctk_cxx = '${SCTK_CXX}'" 2>&1
+echo "sctk_f77 = '${SCTK_F77}'" 2>&1
+echo "sctk_gcc = '${SCTK_GCC}'" 2>&1
 
-		SCTK_LIRARY_PATH="${MPC_RPREFIX}/${MPC_SUBPREFIX}/libsgcc/lib"
-		
-	fi   
-done
+SCTK_LIRARY_PATH="${MPC_RPREFIX}/${MPC_SUBPREFIX}/libsgcc/lib"
 
 if test "$SCTK_LIRARY_PATH" != "" ; then 
     if test "$LD_LIBRARY_PATH" != "" ; then 

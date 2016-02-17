@@ -30,6 +30,11 @@
 #
 printf_compiler(){
 
+language="$2"
+if [ "$language" = "f77" ]
+then
+    language="fortran"
+fi
 # Header
 echo "#!/bin/sh" > $1
 cat <<EOF >> $1
@@ -40,15 +45,36 @@ if test -z \${MPC_RPREFIX}; then
 	echo "################################################################"
 	exit 1
 fi
+
+#used to override option w/ compiler specific when option has been provided
+# \$1: var name
+# \$2: compiler-specific option
+override_var_if_isset()
+{
+	content="\`eval echo "$"\${1}\`"
+	if [ ! -z "\${content}" ]
+	then
+		content="\${2}"
+	else
+		content=""
+	fi
+
+	eval "\${1}=\${content}"
+}
 EOF
 header_sh >> $1
 
+########################################
+########################################
+####### MPC COMPIL WRAPPER GEN #########
+########################################
+########################################
 
 # For Fortran, generate a small object w/ main routine
-if test "$2" = "fortran" ; then 
+if test "$2" = "f77" ; then 
 cat <<EOF >> $1
-FORTRAN_START="/tmp/tmp_mpc_fotran_\$\$.f"
-FORTRAN_OBJ="/tmp/tmp_mpc_fotran_\$\$.o"
+FORTRAN_START="/tmp/tmp_mpc_fortran_\$\$.f"
+FORTRAN_OBJ="/tmp/tmp_mpc_fortran_\$\$.o"
 
 #echo "\$FORTRAN_START \$FORTRAN_OBJ"
 
@@ -83,12 +109,6 @@ cat <<THIS_EOF > \$FORTRAN_START
       call exit(0)
       end
 THIS_EOF
-EOF
-fi
-
-# CFlags and FFlags
-if test "$2" = "fortran" ; then 
-cat <<EOF >> $1
 FFLAGS="$SCTK_FFLAGS"
 MPC_COMPILER_CFLAGS=
 EOF
@@ -99,37 +119,11 @@ MPC_COMPILER_CFLAGS="$MPC_COMPILER_CFLAGS"
 EOF
 fi
 
-#Check for use of -fmpc-privatize (must not be enable for *_default compiler wrappers)
-#Maybe need some discutions to work with new icc support of privatization
-case "`basename $1`" in
-	*_default)
-		use_mpc_privat="false"
-		;;
-	*)
-		use_mpc_privat="true"
-		;;
-esac
-use_mpc_privat="true"
-
-# Regular flags and compiler (C, C++ or fortran)
-if test "${BINUTILS_PREFIX}" != "disabled" -a "$use_mpc_privat" = "true" ;
-then
-cat <<EOF >> $1
-CFLAGS="\`\${MPC_RPREFIX}/\${MPC_TARGET_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/bin/mpc_cflags $2\`"
-LDFLAGS="\`\${MPC_RPREFIX}/\${MPC_TARGET_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/bin/mpc_ldflags $2\` -B\${MPC_RPREFIX}/\${MPC_HOST_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/bin"
-CC=$CC
-EOF
-else 
-cat <<EOF >> $1
-CFLAGS="\`\${MPC_RPREFIX}/\${MPC_TARGET_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/bin/mpc_cflags $2\`"
-LDFLAGS="\`\${MPC_RPREFIX}/\${MPC_TARGET_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/bin/mpc_ldflags $2\`"
-CC=$CC
-EOF
-fi
 
 
 # More variable definitions (Library path, show and different shades of args)
 cat << EOF >> $1
+CC="\`head -n 1 \${MPC_RPREFIX}/.${2}_compilers.cfg | cut -d":" -f3\`"
 #LIB_PATH="-Wl,-rpath,\${MPC_RPREFIX}/\${MPC_TARGET_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/lib ${LIB_PATH}"
 if test "\$MPC_MAKEFILE" != "" ; then 
 LIB_PATH=""
@@ -149,22 +143,12 @@ output_filename=""
 output_file=""
 next_arg_is_output=no
 OUTPUT_FILE_ARGS=""
-EOF
-
-#
-# For loop on the input arguments
-#
-cat << EOF >> $1
+PRIV_FLAG="-fmpc-privatize"
+OMP_FLAG=""
 for arg in "\$@" ; do
     # Set addarg to no if this arg should be ignored by the C compiler
     addarg=yes
     qarg=\$arg
-EOF
-
-cat << EOF >> $1
-    # Only valid if addarg is set to 'yes'
-    addarg_cpp=yes
-    addarg_opp=no
 
     if [ \$next_arg_is_output = yes ] ; then
       output_filename=\$qarg
@@ -175,76 +159,79 @@ cat << EOF >> $1
       continue
     fi
 
-EOF
-
-#
-# '-c' option
-#
-cat << EOF >> $1
     case \$arg in
         # ----------------------------------------------------------------
         # Compiler options that affect whether we are linking or not
-    -c)
+    -c|-S|-E|-M|-MM)
     # The compiler links by default
     linking=no
-EOF
-
-#
-# Others option involving processing the input files
-# -S, -E, -M or -MM
-#
-cat << EOF >> $1
-    ;;
-    -S|-E|-M|-MM)
-    # The compiler links by default
-    linking=no
-EOF
-
-cat << EOF >> $1
     ;;
 
     -cc=*)
-    CC=\`echo A\$arg | sed -e 's/A-cc=//g'\`
+    CC=\`echo A\$arg | sed -e 's/^A-cc=//g'\`
     addarg=no
     MPC_COMPILER_CFLAGS=""
     ;;
-
-EOF
-
-cat << EOF >> $1
 
     -o)
     next_arg_is_output=yes
     addarg=no
     ;;
 
-EOF
-
-cat << EOF >> $1
-
     -threads)
     CFLAGS="\$CFLAGS -threads"
     ;;
 
-EOF
-
-cat << EOF >> $1
-
-	-fmpc-privatize)
-    if test "\${CC}" = "g++"; then
-        addarg=no
-    elif test "\${CC}" = "gcc"; then
-        addarg=no
-    else
-        qarg="'"\$arg"'"
-    fi  
-    ;;  
-
-EOF
-
-cat << EOF >> $1
-
-    -target=*)
+	-fmpc-privatize|-fmpcprivatize|-f-mpc-privatize)
+		PRIV_FLAG="\$arg"
+    	addarg=no
+	;;  
+	-fno-mpc-privatize|-fno-mpc-privatize|-fnompc-privatize|-fnompcprivatize)
+		PRIV_FLAG=""
+		addarg=no
+	;;
+	-fmpc-include)
+		#nothing to do, if not fortran, '-include mpc_main.h' is automatically forwarded
+		#This is due to order : '-include' should be set after sources files
+		addarg=no
+	;;
+	-fopenmp|-openmp)
+		OMP_FLAG="\$arg"
+		addarg=no
+	;;
+	-fno-openmp|-fnoopenmp|-no-openmp|-noopenmp)
+		OMP_FLAG=""
+		addarg=no
+	;;
+	-compilers|--compilers)
+        echo "Compilers available :"
+    	for line in \` cat \${MPC_RPREFIX}/.c_compilers.cfg\` ;
+    	do
+			family="\`cat \$line | cut -d":" -f1\`"
+			priv="\`cat \$line | cut -d":" -f2\`"
+			compiler="\`cat \$line | cut -d":" -f3\`"
+			printf " - \${compiler} (\${family} Privatization support : \${priv})"
+    	done
+		exit 0
+		;;
+	-target_list|--target_list)
+		uname=\`uname -m\`
+		target_list_tmp="\`ls -A \${MPC_RPREFIX}/\`"
+		for d in \`echo \$target_list_tmp\`; 
+		do
+			if test -d "\${MPC_RPREFIX}/\${d}"; then
+				target_list="\${target_list} \${d}"
+			fi
+		done
+		for d in \`echo \${target_list}\`; 
+		do
+			if test "\${d}" != "\${uname}"; then
+				echo "\${d}"
+			fi
+		done
+		exit 0
+	;;
+	-target=*)
 	TARGET=\`echo A\$arg | sed -e 's/A-target=//g'\`
 	addarg=no
 	
@@ -258,10 +245,6 @@ cat << EOF >> $1
 	fi
     ;;
 
-EOF
-
-cat << EOF >> $1
-
     -show)
     addarg=no
     Show=echo
@@ -271,38 +254,14 @@ cat << EOF >> $1
     -v)
     # Pass this argument to the pre-compiler/compiler as well.
     echo "mpc_cc for \$MPC_VERSION"
-EOF
-
-
-cat << EOF >> $1
     ;;
 
     # Help
     -help)
     ;;
-        # -----------------------------------------------------------------
-        # Other arguments.  We are careful to handle arguments with
-        # quotes (we try to quote all arguments in case they include
-        # any spaces)
-    *\"*)
-EOF
 
-if test "${1#*"bin/mpc_cxx"}" != "$1"; then
-	cat << EOF >> $1
-    qarg="'"\$arg"'"
-EOF
-else
-	cat << EOF >> $1
-	qarg="\$arg"
-EOF
-fi
-
-cat << EOF >> $1
-	;;
-    *\'*)
-    qarg='\"'"\$arg"'\"'
-    ;;
     *)
+	qarg="\$arg"
     ;;
 
     esac
@@ -310,35 +269,95 @@ cat << EOF >> $1
     # Update compiler arguments
     if [ \$addarg = yes ] ; then
         allargs="\$allargs '\$qarg'"
-EOF
-
-cat << EOF >> $1
     fi
+done
 EOF
+if [ "$2" != "f77" ];
+then
+cat << EOF >> $1
+allargs="\${allargs} -include mpc_main.h"
+EOF
+fi
+cat << EOF >> $1
+
+cc_path="\`which \${CC} 2> /dev/null\`"
+is_defined="\`egrep \".*:\${cc_path}$\" \${MPC_RPREFIX}/.${2}_compilers.cfg\`"
+
+#if CC is not present in MPC compiler configuration file
+if test -z "\${is_defined}";
+then
+	printf "Warning: You try to use a compiler not handled by MPC, at your own risks\n"
+	printf "Warning: All options will be forwarded 'as is' to the given compiler\n"
+else
+	CC_FAMILY="\`echo \${is_defined} | cut -d":" -f1\`"
+	CC_PRIV="\`echo \${is_defined} | cut -d":" -f2\`"
+	CC="\`echo \${is_defined} | cut -d":" -f3\`"
+
+	#if CC does not support privatization and user provides privatization option
+	if test ! -z "\${PRIV_FLAG}" -a "\${CC_PRIV}" = "N";
+	then
+		printf "Warning: '\${CC} does not support privatization support. Disabling privatization'\n"
+		printf "Warning: Do not consider using this compiler for thread-based mode.\n"
+		PRIV_FLAG=""
+	else
+		#handle compiler-specific options depending on compiler family
+		case \${CC_FAMILY} in
+			INTEL)
+				override_var_if_isset 'PRIV_FLAG' '-mSYMTAB_mpc_privatize'
+				override_var_if_isset 'OMP_FLAG' '-openmp'
+                FFFLAGS="\${FFLAGS} -threads -recursive"
+				MPC_USE_INTEL_COMPILER="1"
+                export MPC_USE_INTEL_COMPILER
+				;;
+			GNU)
+				override_var_if_isset 'PRIV_FLAG' '-fmpc-privatize'
+				override_var_if_isset 'OMP_FLAG' '-fopenmp'
+				;;
+			*)
+				#Nothing to do, vars set by user option
+				;;
+		esac
+		
+		#we need to add -DMPC_PRIVATIZED when privatisation is enabled in order to compile deps (like getopt...)
+		if test ! -z "\${PRIV_FLAG}";
+		then
+			PRIV_FLAG="\${PRIV_FLAG} -DMPC_PRIVATIZED"
+		fi
+	fi
+fi
+
+#Here we prepend the path which is normally postpended in order
+#to override binutils during the compilation
+export PATH=\${MPC_RPREFIX}/${MPC_SUBPREFIX}/bin/:\${PATH}
+
+#first definition of compiler & linking flags
+CFLAGS="\`\${MPC_RPREFIX}/\${MPC_TARGET_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/bin/mpc_cflags $language\`"
+LDFLAGS="\`\${MPC_RPREFIX}/\${MPC_TARGET_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/bin/mpc_ldflags $language\`"
+EOF
+# Regular flags and compiler (C, C++ or fortran)
+if test "${BINUTILS_PREFIX}" != "disabled" ;
+then
+cat <<EOF >> $1
+#override flags when patched binutils are used
+LDFLAGS="\${LDFLAGS} -B\${MPC_RPREFIX}/\${MPC_HOST_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/bin"
+EOF
+fi
 
 cat << EOF >> $1
-done
-
-CFLAGS="\$CFLAGS \$MPC_COMPILER_CFLAGS"
-EOF
-
-cat <<EOF >> $1
+#used to append compiler-specific flags
+CFLAGS="\$CFLAGS \${PRIV_FLAG} \${OMP_FLAG} \$MPC_COMPILER_CFLAGS"
+LDFLAGS="\${LDFLAGS}"
 
 if [ "\$linking" = yes ] ; then
 EOF
 
-if test "$2" = "fortran" ; then 
+if test "$2" = "f77" ; then 
 cat <<EOF >> $1
     \$Show \$CC \$FFLAGS \$CFLAGS -c \$FORTRAN_START -o \$FORTRAN_OBJ
     rc=\$?
     if test "\$rc" != "0" ; then 
         exit \$rc
     fi
-EOF
-fi
-
-if test "$2" = "fortran" ; then 
-cat <<EOF >> $1
 
     # Indicates if symbol exists in object file
     has_symbol ()
@@ -512,7 +531,7 @@ EOF
 fi
 fi
 
-if test "$2" = "fortran" ; then 
+if test "$2" = "f77" ; then 
 cat <<EOF >> $1
     \$Show rm -f \$FORTRAN_OBJ
 EOF
@@ -521,7 +540,7 @@ fi
 cat <<EOF >> $1
 else
 EOF
-if test "$2" = "fortran" ; then 
+if test "$2" = "f77" ; then 
 cat <<EOF >> $1
     \$Show \$CC \$FFLAGS \$CFLAGS \$allargs \${OUTPUT_FILE_ARGS}
     rc=\$?
@@ -544,7 +563,7 @@ fi
 
 EOF
 
-if test "$2" = "fortran" ; then 
+if test "$2" = "f77" ; then 
 cat <<EOF >> $1
 rm -f \$FORTRAN_START > /dev/null 2>&1 
 EOF
@@ -560,142 +579,11 @@ chmod 755 $1
 
 } # end of printf_compiler()
 
-GNU_PRIVATIZE="-fmpc-privatize"
-INTEL_PRIVATIZE="-mSYMTAB_mpc_privatize"
-#USAGE print_specific_compiler output_file privatization_option wait_to_launch_compiler compiler_name
-print_specific_compiler(){
-# Header
-echo "#!/bin/sh" > $1
-echo "#!/bin/sh" > $1
-cat <<EOF >> $1
-if test -z \${MPC_RPREFIX}; then
-	echo "################################################################"
-	echo "# No MPC_RPREFIX defined. it is the root of the actual prefix  #"
-	echo "# Yout should source the mpcvars.sh file in root of MPC prefix #"
-	echo "################################################################"
-	exit 1
-fi
-EOF
-header_sh >> $1
-
-if test "$4" = "intel"; then
-cat <<EOF >> $1
-ADD_FLAG_PRIVATIZE="$2 -DMPC_PRIVATIZED"
-MPC_USE_INTEL_COMPILER="1"
-EOF
-else
-if test "${COMPILER_LIST}" != "" ; then
-cat <<EOF >> $1
-ADD_FLAG_PRIVATIZE="$2 -DMPC_PRIVATIZED"
-EOF
-else
-cat <<EOF >> $1
-ADD_FLAG_PRIVATIZE=""
-EOF
-fi
-fi
-cat <<EOF >> $1
-COMPILER_ARGS=""
-
-AUTO_INCLUDE="-fmpc-include"
-
-if test "$1" = "bin/mpc_ifort" ; then  
-AUTO_INCLUDE=""
-fi
-
-if test "$1" = "bin/mpc_gfortran" ; then  
-AUTO_INCLUDE=""
-fi
-
-for i in "\$@" $AUTO_INCLUDE ; do
-    CURRENT_ARG="'\$i'"
-    
-    #This is used to add the mpc.h include
-    #when compiling third party modules
-    #which does not necessarilly use mpc.h/mpi.h
-    #common case being configure time
-    if test "\$i" = "-fmpc-include" ; then
-        CURRENT_ARG="-include mpc_main.h"
-    fi
-    if test "\$i" = "-fmpc-privatize" ; then
-        ADD_FLAG_PRIVATIZE="$2 -DMPC_PRIVATIZED"
-        CURRENT_ARG=""
-    fi
-    if test "\$i" = "-fno-mpc-privatize" ; then
-        ADD_FLAG_PRIVATIZE=""
-        CURRENT_ARG=""
-    fi
-    if test "\$i" = "-fnompc-privatize" ; then
-        ADD_FLAG_PRIVATIZE=""
-        CURRENT_ARG=""
-    fi
-
-    if test "\$i" = "-fopenmp" -o "\$i" = "-openmp" ; then
-	CURRENT_ARG="\${CURRENT_ARG} -B\${MPC_RPREFIX}/\${MPC_SUBPREFIX}"
-    fi
-
-    if test "\$i" = "-compilers" ; then
-    	count=1
-        echo "Compilers available :"
-    	for line in \` cat \${MPC_RPREFIX}/.c_compilers.cfg\` ;
-    	do  
-        	if test "\${line#*'mpc-gcc'}" != "\$line"; 
-        	then
-            	patched_gcc=\`echo \$line | tail -c 12\`
-            	version=\`echo \$patched_gcc | tail -c 4\`
-            	echo "\$count: patched gcc (version \${version:0:1}.\${version:1:1}.\${version:2:2})"
-        	elif test "\$line" = "gcc"; then
-            	version=\`gcc --version | grep -i "gcc" | grep -P '[0-9]\.[0-9]\.[0-9]' -o | head -n 1\`  
-            	echo "\$count: gcc (version \$version)"
-        	elif test "\$line" = "icc"; then
-            	version=\`icc --version | grep -i "icc" | cut -f 3 -d ' '\`
-            	echo "\$count: icc (version \$version)"
-        	else
-            	echo "\$count: \$line"
-        	fi  
-        	count=\$((\$count + 1))
-    	done
-    	exit 1
-    fi
-    
-    if test "\$i" = "-target_list" ; then
-		uname=\`uname -m\`
-		target_list_tmp="\`ls -A \${MPC_RPREFIX}/\`"
-		for d in \`echo \$target_list_tmp\`; 
-		do
-			if test -d "\${MPC_RPREFIX}/\${d}"; then
-				target_list="\${target_list} \${d}"
-			fi
-		done
-		for d in \`echo \${target_list}\`; 
-		do
-			if test "\${d}" != "\${uname}"; then
-				echo "\${d}"
-			fi
-		done
-		exit 1
-    fi
-    COMPILER_ARGS="\$COMPILER_ARGS \$CURRENT_ARG"
-done
-
-EOF
-if test "$4" = "intel" -o "${CC}" = "icc"; then
-cat <<EOF >> $1
-MPC_USE_INTEL_COMPILER=1
-export MPC_USE_INTEL_COMPILER
-EOF
-fi
-cat <<EOF >> $1
-
-#Here we prepend the path which is normally postpended in order
-#to override binutils during the compilation
-export PATH=\${MPC_RPREFIX}/${MPC_SUBPREFIX}/bin/:\${PATH}
-
-eval "\${MPC_RPREFIX}/\${MPC_TARGET_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/bin/$3 \$ADD_FLAG_PRIVATIZE \$COMPILER_ARGS"
-
-EOF
-
-}
+#############################################################
+#############################################################
+############ START COMPILER WRAPPER GENERATION ##############
+#############################################################
+#############################################################
 
 #fill target options for mpc_cc
 #for the host
@@ -716,7 +604,7 @@ cat <<EOF >> "${MPC_RPREFIX}/${MPC_TARGET_SUBPREFIX}/${MPC_TARGET_SUBPREFIX}/.ta
 #!/bin/sh
 SCTK_MIC=0
 export SCTK_MIC
-CC=`head -n 1 \${MPC_RPREFIX}/.c_compilers`
+CC=`head -n 1 \${MPC_RPREFIX}/.c_compilers.cfg | cut -d":" -f3`
 export CC
 addarg=no
 CFLAGS="\`\${MPC_RPREFIX}/\${MPC_TARGET_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/bin/mpc_cflags c\`"
@@ -759,7 +647,7 @@ cat <<EOF >> "${MPC_RPREFIX}/${MPC_TARGET_SUBPREFIX}/${MPC_TARGET_SUBPREFIX}/.ta
 #!/bin/sh
 SCTK_MIC=0
 export SCTK_MIC
-CC=`head -n 1 \${MPC_RPREFIX}/.c_compilers`
+CC=`head -n 1 \${MPC_RPREFIX}/.c_compilers.cfg | cut -d":" -f3`
 export CC
 addarg=no
 CFLAGS="\`\${MPC_RPREFIX}/\${MPC_TARGET_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/bin/mpc_cflags c\`"
@@ -785,192 +673,289 @@ EOF
 	esac
 fi
 
-echo "COMPILER_LIST='${COMPILER_LIST}'"
-DEFAULT_VERSION=""
-if test "${COMPILER_LIST}" != "" ; then
-  for i in ${COMPILER_LIST} ; do
-    if test "${DEFAULT_VERSION}" = "" ; then
-      DEFAULT_VERSION="${i}"
-    fi
-    
-    #
-    # Generate C compiler
-    #
-    begin_section Generate C Compiler: mpc_cc_$i
-      CC=`echo "\\${MPC_RPREFIX}/\${MPC_TARGET_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/bin/mpc-gcc_$i"`
-#      if test "${SCTK_ARCH}" = "x86_64" ; then
-#	LIB_PATH="-Wl,-rpath,\${MPC_RPREFIX}/\${MPC_TARGET_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/../gcc/lib64"
-#      else
-#	LIB_PATH="-Wl,-rpath,\${MPC_RPREFIX}/\${MPC_TARGET_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/../gcc/lib"
-#      fi
-	  
-	  if test "${i}" = "gcc" ; then
-		CC=gcc
-	  fi
-      
-	  if test "${i}" = "icc" ; then
-		CC=icc
-	  fi
-      printf_compiler bin/mpc_cc_${i} c
-    end_section
-
-    #
-    # Generate C compiler (for global linking)
-    #
-    begin_section Generate C Compiler: mpc_cc_global_$i
-      printf_compiler bin/mpc_cc_global_$i c global
-    end_section
-
-    #
-    # Generate C++ compiler
-    #
-    begin_section Generate C++ Compiler: mpc_cxx_${i}
-	  CC=`echo "\\${MPC_RPREFIX}/\${MPC_TARGET_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/bin/mpc-g++_$i"`
-      if test "${i}" = "gcc" ; then
-		CC=g++
-	  fi
-      if test "${i}" = "icc" ; then
-		CC=icpc
-	  fi
-      printf_compiler bin/mpc_cxx_${i} c++
-    end_section
-
-    #
-    # Generate Fortran compiler
-    #
-    if test "$SCTK_FORTRAN" = "1" ; then 
-      begin_section Generate Fortran77 Compiler: mpc_f77_${i}
-	CC=`echo "\\${MPC_RPREFIX}/\${MPC_TARGET_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/bin/mpc-gfortran_$i"`
-	if test "${i}" = "gcc" ; then
-		CC=gfortran
-	fi
-	if test "${i}" = "icc" ; then
-		CC=ifort
-	fi
-	printf_compiler bin/mpc_f77_${i} fortran
-      end_section
-    fi
-  done
-else
-DEFAULT_VERSION="default"
-fi
-
-# Generate default C compiler
-begin_section Generate Default C Compiler: mpc_cc_default
-  CC="$SCTK_CC"
-  LIB_PATH=""
-  printf_compiler bin/mpc_cc_default c
+#
+# Generate C compiler
+#
+begin_section Generate C Compiler: mpc_cc
+CC=`head -n 1 ${MPC_RPREFIX}/.c_compilers.cfg | cut -d":" -f3`
+printf_compiler bin/mpc_cc c
 end_section
 
+#
+# Generate C compiler (for global linking)
+#
+#begin_section Generate C Compiler: mpc_cc_global
+#printf_compiler bin/mpc_cc_global c global
+#end_section
 
-# Generate dafault C compiler (for global linking)
-begin_section Generate Default C Compiler: mpc_cc_global_default
-  CC="$SCTK_CC"
-  LIB_PATH=""
-  printf_compiler bin/mpc_cc_global_default c global
-end_section
-
-# Create the link to the default compiler
-rm -f bin/mpc_cc_global
-ln -s mpc_cc_global_${DEFAULT_VERSION} bin/mpc_cc_global
-print_specific_compiler bin/mpc_gcc $GNU_PRIVATIZE mpc_cc_${DEFAULT_VERSION}
-print_specific_compiler bin/mpc_icc $INTEL_PRIVATIZE "mpc_cc_default -cc=icc" intel
-
-# Create the link to the default compiler
-rm -f bin/mpc_cc
-ln -s mpc_gcc bin/mpc_cc
-
+#
 # Generate C++ compiler
-begin_section Generate Default C++ Compiler: mpc_cxx_default
-  CC="$SCTK_CXX"
-  LIB_PATH=""
-  printf_compiler bin/mpc_cxx_default c++ 
+#
+begin_section Generate C++ Compiler: mpc_cxx
+CC=`head -n 1 ${MPC_RPREFIX}/.c++_compilers.cfg | cut -d":" -f3`
+printf_compiler bin/mpc_cxx c++
 end_section
-
-# Create the link to the default compiler
-print_specific_compiler bin/mpc_g++ $GNU_PRIVATIZE mpc_cxx_${DEFAULT_VERSION}
-print_specific_compiler bin/mpc_icpc $INTEL_PRIVATIZE "mpc_cxx_default -cc=icpc" intel
-rm -f bin/mpc_cxx
-ln -s mpc_g++ bin/mpc_cxx
 
 #
 # Generate Fortran compiler
 #
 if test "$SCTK_FORTRAN" = "1" ; then 
-  begin_section Generate Default Fortran77 Compiler: mpc_f77_default
-    CC="$SCTK_F77"
-    printf_compiler bin/mpc_f77_default fortran
-  end_section
-
-  # Create the link to the default compiler
-
-  print_specific_compiler bin/mpc_gfortran $GNU_PRIVATIZE mpc_f77_${DEFAULT_VERSION}
-  print_specific_compiler bin/mpc_ifort $INTEL_PRIVATIZE "mpc_f77_default -cc=ifort -threads" intel
-  rm -f bin/mpc_f77
-  ln -s mpc_gfortran bin/mpc_f77
-  ln -s mpc_gfortran bin/mpc_f90
+	begin_section Generate Fortran77 Compiler: mpc_f77
+	CC=`head -n 1 ${MPC_RPREFIX}/.f77_compilers.cfg | cut -d":" -f3`
+	printf_compiler bin/mpc_f77 f77
+	end_section
 fi
 
-
-cat <<EOF > bin/mpc_compiler_status
+########################################
+########################################
+##### MPC_COMPILER_MANAGER GEN #########
+########################################
+########################################
+cat <<EOF > bin/mpc_compiler_manager
 #!/bin/sh
+if test -z \${MPC_RPREFIX}; then
+	echo "################################################################"
+	echo "# No MPC_RPREFIX defined. it is the root of the actual prefix  #"
+	echo "# Yout should source the mpcvars.sh file in root of MPC prefix #"
+	echo "################################################################"
+	exit 1
+fi
+
+RED="\`printf "\033[1;31m"\`"
+GRE="\`printf "\033[1;32m"\`"
+BLU="\`printf "\033[1;36m"\`"
+DEF="\`printf "\033[0;0m"\`"
+
+add_compiler()
+{
+	file="\${MPC_RPREFIX}/.\${1}_compilers.cfg"
+	is_there="\`egrep -n "^[a-zA-Z]+:(Y|N):\${2}$" \$file\`"
+	
+	if [ ! -z "\${is_there}" ];
+	then
+		printf "\${RED}Error: compiler \${2} already added for \${1} language ! Nothing to do\n\${DEF}"
+		exit 1
+	elif [ -z "\`which \${2} 2> /dev/null\`" ];
+	then
+		printf "\${RED}Error: \${2} is not found. We do not add it to MPC configuration !\n\${DEF}"
+		exit 1
+	else
+		if [ "\${3}" = "INTEL" ];
+		then
+			PRIV_FLAG="-mSYMTAB_mpc_privatize"
+		else
+			PRIV_FLAG="-fmpc-privatize"
+		fi
+		\${2} \${PRIV_FLAG} -c mpc_main.\${1} > /dev/null 2>&1
+		if [ \$? -eq 0 ];
+		then
+			pattern="Y"
+		else
+			pattern="N"
+		fi
+		echo "\${3}:\${pattern}:\${2}" >> \${file}
+	fi
+}
+
+remove_compiler()
+{
+	file="\${MPC_RPREFIX}/.\${1}_compilers.cfg"
+	exists="\`egrep -n "^\${3}:(Y|N):\${2}" \$file\`"
+	
+	if [ -z "\${exists}" ];
+	then
+		printf "\${RED}Error: compiler \${2} not found for \${1} language !\n\${DEF}"
+		exit 1
+	else
+		line="\`echo "\${exists}" | cut -d":" -f1\`"
+		sed -i "\${line}d" \$file
+	fi
+}
+
+set_default_compiler()
+{
+	file="\${MPC_RPREFIX}/.\${1}_compilers.cfg"
+	is_there="\`egrep "^[a-zA-Z]+:(Y|N):\${2}" \$file\`"
+	if [ -z "\${is_there}" ];
+	then
+		printf "\${RED}Error: Cannot set a compiler not present in .cfg file\n\${DEF}"
+		printf "\${RED}Error: Please use \"add\" before !\n\${DEF}"
+	else
+		family="\`echo \${is_there} | cut -f1 -d":"\`"
+		remove_compiler \${1} \${2} \${family}
+		sed -i "1i \${is_there}" \${file}
+	fi
+}
+
+print_first_compilers()
+{
+	list_languages="c c++ f77"
+	for language in \${list_languages}
+	do
+		lang_file=\${MPC_RPREFIX}/.\${language}_compilers.cfg
+		compiler="\`head -n 1 \${lang_file} | cut -d":" -f3\`"
+		echo "Default \${language} Compiler : \${GRE}\${compiler}\${DEF}"
+	done
+}
+
+stat_compilers()
+{
+
+list_languages="c c++ f77"
+if test ! -z "\$1";
+then
+	list_languages="\${1}"
+fi
+
+for language in \${list_languages}
+do
+	lang_file=\${MPC_RPREFIX}/.\${language}_compilers.cfg
+	nb_compilers="\`cat \${lang_file} | wc -l\`"
+	nb_priv="\`cat \${lang_file} | cut -d":" -f2 | egrep "^Y$" | wc -l\`"
+
+	echo "MPC \${language} compiler supports \${GRE}\${nb_compilers}\${DEF} compilers, \${RED}\${nb_priv}\${DEF} of them are privatizing."
+done
+}
+
+status_compiler()
+{
+
+list_languages="c c++ f77"
+if test ! -z "\$1";
+then
+	list_languages="\${1}"
+fi
+
+for language in \${list_languages}
+do
+	echo "Available \${BLU}\${language}\${DEF} compiler :"
+	lang_file=\${MPC_RPREFIX}/.\${language}_compilers.cfg
+	main_file=mpc_main.\${language}
+	for line in \`cat \${lang_file}\`
+	do
+		family="\`echo \${line} | cut -d":" -f1\`"
+		compiler="\`echo \${line} | cut -d":" -f3\`"
+
+		#test compiler
+		\${compiler} -c \${main_file} > /dev/null 2>&1
+		if [ \$? -eq 0 ];
+		then
+			printf " - \${GRE}FOUND \${DEF}/"
+		else
+			printf " - \${RED}NFOUND\${DEF}/"
+		fi
+		
+
+		#test privatization support
+		#switch depending on family
+		if [ "\${family}" = "INTEL" ];
+		then
+			PRIV_FLAG="-mSYMTAB_mpc_privatize"
+		else
+			PRIV_FLAG="-fmpc-privatize"
+		fi
+		\${compiler} \${PRIV_FLAG} -c \${main_file} > /dev/null 2>&1
+		if [ \$? -eq 0 ];
+		then
+			printf "\${GRE} PRIV. SUPPORT OK \${DEF}"
+		else
+			printf "\${RED} NO PRIV. SUPPORT \${DEF}"
+		fi
+		printf "for (\${family}) \${compiler}\n"
+	done
+done
+}
+
+is_valid_language()
+{
+  if test -z "\`\echo \$1 | egrep -o "^(c|c++|f77)$"\`";
+  then
+	  printf "\${RED}Language \${1} not known !\${DEF}"
+	  exit 1
+  fi
+}
+
+
 cat <<EOFINT > mpc_main.c
-#include <mpc.h>
+int i; 
+int main(int argc, char** argv){
+     return 0;
+}
+EOFINT
+cat <<EOFINT > mpc_main.c++
+int i;
  int main(int argc, char** argv){
      return 0;
 }
 EOFINT
-cat <<EOFINT > mpc_main.cpp
-#include <mpc.h>
- int main(int argc, char** argv){
-     return 0;
-}
-EOFINT
-cat <<EOFINT > mpc_main.f
+cat <<EOFINT > mpc_main.f77
       subroutine mpc_user_main
-      include 'mpcf.h'
-      integer ierr
-      call MPC_INIT (ierr)
-      call MPC_FINALIZE (ierr)
+      integer i
       end
 EOFINT
 
-check_compiler(){
-\$@ -fno-mpc-privatize > /dev/null 2>&1
-LINE="        Compiler \$1"
-if test "\$?" = "0"; then
-LINE="\$LINE OK"
-else
-LINE="\$LINE FAIL"
+mode="list"
+
+if [ ! -z "\${1}" ];
+then
+	mode="\$1"
 fi
-LINE="\$LINE privatization"
-\$@ -fmpc-privatize > /dev/null 2>&1
-if test "\$?" = "0"; then
-LINE="\$LINE OK"
-else
-LINE="\$LINE FAIL"
-fi
-echo "\$LINE"
-}
 
-echo "MPC Compiler Status:"
+case "\$mode" in
+	help|-help|--help)
+		printf "Usage: mpc_compiler_manager [\${BLU}list|stat\${DEF} [(c|c++|f77)]]\n"
+		printf "                            [\${BLU}(add|del)\${DEF} (c|c++|f77) compiler_path family]\n"
+		printf "                            [\${BLU}set_default\${DEF} (c|c++|f77) compiler_path]\n"
+		;;
+	add)
+		is_valid_language "\$2"
+		if test -z "\$2" -o -z "\$3" -o -z "\$4";
+		then
+			printf "\${RED}You need to provide 3 arguments : language, compiler_path & family\n\${DEF}"
+			exit 1
+		fi
+		add_compiler "\$2" "\$3" "\$4"
+		printf "\${GRE}Compiler \"\${2}\" appended to \${1} compiler list\${DEF}\n"
+		print_first_compilers
+		;;
+	remove|del|delete|rm)
+		is_valid_language "\$2"
+		if test -z "\$2" -o -z "\$3" -o -z "\$4";
+		then
+			printf "\${RED}You need to provide 3 arguments : language, compiler_path & family\n\${DEF}"
+			exit 1
+		fi
+		remove_compiler "\$2" "\$3" "\$4"
+		printf "\${RED}Compiler \"\${2}\" removed from \${1} compiler list\${DEF}\n"
+		print_first_compilers
+		;;
+	set_default)
+		is_valid_language "\$2"
+		if test -z "\$2" -o -z "\$3";
+		then
+			printf "\${RED}Error: You need to provide 2 arguments : language, compiler_path\${DEF}\n"
+			exit 1;
+		fi
+		set_default_compiler "\$2" "\$3" "\$4"
+		printf "\${BLU}Compiler \"\${2}\" set as default \${1} compiler list\${DEF}\n"
+		print_first_compilers
+		;;
+	list)
+		status_compiler "\$2"
+		;;
+	stat)
+		stat_compilers
+		;;
+	*)
+		printf "\${RED}Unknown Manager Mode: \"\${mode}\"\n\${DEF}"
+		exit 1
+		;;
+esac
 
 
-echo "    Check C compiler"
-check_compiler mpc_gcc -c mpc_main.c -o tmp.o
-check_compiler mpc_icc -c mpc_main.c -o tmp.o
+rm mpc_main.c mpc_main.c++ mpc_main.f77 mpc_main.o > /dev/null 2>&1
 
-echo "    Check C++ compiler"
-check_compiler mpc_g++ -c mpc_main.cpp -o tmp.o
-check_compiler mpc_icpc -c mpc_main.cpp -o tmp.o
-
-
-echo "    Check Fortran compiler"
-check_compiler mpc_gfortran -c mpc_main.f -o tmp.o
-check_compiler mpc_ifort -c mpc_main.f -o tmp.o
-
-
-rm mpc_main.c mpc_main.cpp mpc_main.f tmp.o > /dev/null 2>&1
-
+return 0
 EOF
-chmod 755 bin/mpc_compiler_status
+chmod 755 bin/mpc_compiler_manager
+ln -s mpc_compiler_manager bin/mpc_compiler_status
