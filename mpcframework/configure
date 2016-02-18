@@ -521,7 +521,7 @@ SCTK_CFLAGS="$SCTK_CFLAGS $SCTK_CFLAGS_NON_GNU"
 
 # export launcher information
 
-if [ $SCTK_LIB_MODE -eq 1 ]; then
+if [ "$SCTK_LIB_MODE" = "1" ]; then
 	#In LIB mode, no need for a launcher
 	#all is handled by the host MPI
 	SCTK_JOB_MANAGER=""

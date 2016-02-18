@@ -213,9 +213,9 @@ setCompilerList()
 		if test "${is_there}" = "" ; 
 		then
 			#first patch version
-			echo "GNU:Y:\${MPC_RPREFIX}/`uname -m`/`uname -m`/gcc/bin/mpc-gcc_${gcc_version}" >> "${config_file_c}"
-			echo "GNU:Y:\${MPC_RPREFIX}/`uname -m`/`uname -m`/gcc/bin/mpc-g++_${gcc_version}" >> "${config_file_cplus}"
-			echo "GNU:Y:\${MPC_RPREFIX}/`uname -m`/`uname -m`/gcc/bin/mpc-gfortran_${gcc_version}" >> "${config_file_fort}"
+			echo "GNU:Y:${MPC_RPREFIX}/`uname -m`/`uname -m`/bin/mpc-gcc_${gcc_version}" >> "${config_file_c}"
+			echo "GNU:Y:${MPC_RPREFIX}/`uname -m`/`uname -m`/bin/mpc-g++_${gcc_version}" >> "${config_file_cplus}"
+			echo "GNU:Y:${MPC_RPREFIX}/`uname -m`/`uname -m`/bin/mpc-gfortran_${gcc_version}" >> "${config_file_fort}"
 		fi
 
 	#adding GCC if external path is provided
