@@ -1,5 +1,8 @@
+#ifdef MPC_USE_CMA
+
 #define _GNU_SOURCE
 #include <sys/uio.h>
+
 
 #include "sctk_net_tools.h"
 #include "sctk_shm_cma.h"
@@ -239,3 +242,4 @@ sctk_network_cma_shm_interface_init(void *options)
     //sctk_shm_cma_zerocopy_enabled = rail->runtime_config_driver_config->driver.value.shm.cells_num 
     return 1;
 }
+#endif /* MPC_USE_CMA */

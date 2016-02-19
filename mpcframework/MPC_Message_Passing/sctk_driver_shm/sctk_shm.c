@@ -89,8 +89,10 @@ sctk_network_send_message_dest_shm( sctk_thread_ptp_message_t *msg, int sctk_shm
 
    if(sctk_network_eager_msg_shm_send(msg,cell))
       return;
+#ifdef MPC_USE_CMA
    if(sctk_network_cma_msg_shm_send(msg,cell) && sctk_cma_enabled)
       return;
+#endif /* MPC_USE_CMA */
    if(sctk_network_frag_msg_shm_send(msg,cell))
       return;
 
@@ -178,10 +180,12 @@ sctk_network_notify_idle_message_shm ( sctk_rail_info_t *rail )
             	msg = sctk_network_eager_msg_shm_recv(cell,0);
             	if(msg) sctk_send_message_from_network_shm(msg);
 		break;
+#ifdef MPC_USE_CMA
 	    case SCTK_SHM_RDMA: 
 		msg = sctk_network_cma_msg_shm_recv(cell,1);
                	if(msg) sctk_send_message_from_network_shm(msg);
 		break;
+#endif /* MPC_USE_CMA */
 	    case SCTK_SHM_CMPL:
             	msg = sctk_network_cma_cmpl_msg_shm_recv(cell);
         	sctk_complete_and_free_message(msg); 

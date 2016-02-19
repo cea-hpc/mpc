@@ -17,7 +17,9 @@ typedef enum {
 
 typedef enum {
     SCTK_SHM_EAGER, 
+#ifdef MPC_USE_CMA
     SCTK_SHM_RDMA, 
+#endif /* MPC_USE_CMA */
     SCTK_SHM_FIRST_FRAG, 
     SCTK_SHM_NEXT_FRAG, 
     SCTK_SHM_CMPL, 
