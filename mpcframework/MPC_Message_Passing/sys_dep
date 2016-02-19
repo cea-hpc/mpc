@@ -95,4 +95,9 @@ if test "$SCTK_CHECKSUM" != 0 ; then
 fi
 end_section
 
+begin_section Cross Memory Attach Support
+SCTK_CHECK_FUNC_NOFAIL process_vm_readv
+if test "$SCTK_SCTK_CHECK_FUNC_RES" = 0 ; then
+	SCTK_CHECK_OPTION "-DMPC_USE_CMA"
+fi
 
