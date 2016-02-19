@@ -185,11 +185,11 @@ sctk_network_notify_idle_message_shm ( sctk_rail_info_t *rail )
 		msg = sctk_network_cma_msg_shm_recv(cell,1);
                	if(msg) sctk_send_message_from_network_shm(msg);
 		break;
-#endif /* MPC_USE_CMA */
 	    case SCTK_SHM_CMPL:
             	msg = sctk_network_cma_cmpl_msg_shm_recv(cell);
         	sctk_complete_and_free_message(msg); 
 		break;
+#endif /* MPC_USE_CMA */
 	    case SCTK_SHM_FIRST_FRAG:
 	    case SCTK_SHM_NEXT_FRAG:
             	msg = sctk_network_frag_msg_shm_recv(cell,1);
@@ -414,7 +414,9 @@ void sctk_network_init_shm ( sctk_rail_info_t *rail )
         sctk_pmi_barrier();
     }
     sctk_cma_enabled = rail->runtime_config_driver_config->driver.value.shm.cma_enable;
+#ifdef MPC_USE_CMA
     (void) sctk_network_cma_shm_interface_init(0);
+#endif /* MPC_USE_CMA */
     sctk_network_frag_shm_interface_init();
     //sctk_shm_check_raw_queue(local_process_number);
     sctk_shm_driver_initialized = 1;
