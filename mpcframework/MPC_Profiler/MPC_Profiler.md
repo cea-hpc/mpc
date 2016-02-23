@@ -1,14 +1,17 @@
 Module MPC_Profiler
 ======================
 
-CONTENTS:
----------
-    
-    
-
 SUMMARY:
 --------
 
+MPC provides an internal profiler implementation
+
+CONTENTS:
+---------
+* **include/** :
+* **src/** :
+* **sctk_profiling/** :
+    
 
 COMPONENTS:
 -----------

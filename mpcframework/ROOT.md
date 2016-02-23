@@ -101,7 +101,7 @@ thread-scheduler integrated collectives to communicate with each other. As far
 as inter-node communications are concerned, MPC uses direct access to the TCP or
 InfiniBand interconnect. MPC provides performances close to MPICH2 or OpenMPI,
 but with a much better support of hybrid programming models (e.g., MPI/PThreads,
-MPI/OpenMP, …) and lower memory consumption.
+MPI/OpenMP, …) and lower memory consumption.\cite{perache2008mpc}
 
 
 Installation Guide

@@ -1,14 +1,14 @@
 Module MPC_Accelerators
 ======================
 
-CONTENTS:
----------
-    
-    
-
 SUMMARY:
 --------
 
+This module represent MPC SUpport of specialized hardware (GPGPU,etc...)
+
+CONTENTS:
+---------
+    
 
 COMPONENTS:
 -----------

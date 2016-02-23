@@ -1,14 +1,16 @@
 Module MPC_Threads
 ======================
 
-CONTENTS:
----------
-    
-    
-
 SUMMARY:
 --------
+MPC Threads implementation. Contains also Pthread overriding and multiple
+schedulers designed to handle MPC threads.
 
+CONTENTS:
+---------
+* **include/** :
+* **sctk_thread/** :
+    
 
 COMPONENTS:
 -----------

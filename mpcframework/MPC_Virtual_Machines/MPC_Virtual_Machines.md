@@ -1,14 +1,14 @@
 Module MPC_Virtual_Machines
 ======================
 
-CONTENTS:
----------
-    
-    
-
 SUMMARY:
 --------
 
+Implementation of Virtual Machines support inside MPC
+
+CONTENTS:
+---------
+    
 
 COMPONENTS:
 -----------
