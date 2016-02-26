@@ -23,7 +23,9 @@ safe_exec()
 }
 
 CURRENT_PATH="`dirname $0`"
-MPC_SOURCE_DIRECTORY="`dirname ${CURRENT_PATH}`/"
+
+MPC_SOURCE_DIRECTORY="${CURRENT_PATH}/../"
+
 export MPC_SOURCE_DIRECTORY
 
 if test -z "`which doxygen 2> /dev/null`";
