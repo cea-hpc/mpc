@@ -676,20 +676,22 @@ sctk_thread_create_tmp_start_routine (sctk_thread_data_t * __arg)
    * TODO: due to some issues, weak functions are replaced by dlsym accesses for now
    */
   int init_cpu = sctk_get_cpu();
-  int nbvps, i;
+  int nbvps, i, nb_cpusets;
   cpu_set_t * cpuset;
 
   sctk_get_init_vp_and_nbvp (sctk_get_task_rank(), &nbvps);
   init_cpu = sctk_topology_convert_logical_pu_to_os(init_cpu);
   
-  cpuset = sctk_malloc(sizeof(cpu_set_t) * nbvps);
+  nb_cpusets = 1;
+  cpuset = sctk_malloc(sizeof(cpu_set_t) * nb_cpusets);
+
   CPU_ZERO(cpuset);
  
   for (i = 0; i < nbvps; ++i) {
 	CPU_SET(init_cpu + i, cpuset);
   }
   
-  __tbb_init_for_mpc(cpuset, nbvps);
+  __tbb_init_for_mpc(cpuset, nb_cpusets);
   /* END TBB SETUP */
 
   res = tmp.__start_routine (tmp.__arg);
