@@ -174,7 +174,6 @@ int sctk_pmi_init()
 			return rc;
 		}
 
-	#ifdef MPC_USE_HYDRA
 		int rank, process_nb, nodes_nb = 0, i, j, size;
 		char *value = NULL;
 		char *nodes = NULL;
@@ -289,14 +288,20 @@ int sctk_pmi_init()
 			{
 				//new node
 				tmp = ( struct process_nb_from_node_rank * ) sctk_malloc ( sizeof ( struct process_nb_from_node_rank ) );
-				tmp->nb_process = 1;
 				tmp->node_rank = j;
-				HASH_ADD_INT ( sctk_pmi_process_nb_from_node_rank, node_rank, tmp );
+				tmp->nb_process = 1;
+				tmp->process_list = (int*) sctk_malloc(sizeof(int)*1);
+                		tmp->process_list[0] = i;
+                		HASH_ADD_INT ( sctk_pmi_process_nb_from_node_rank, node_rank, tmp );
 			}
 			else
 			{
 				//one more process on this node
 				tmp->nb_process++;
+			        int *tmp_tab = sctk_realloc(tmp->process_list, sizeof(int)*tmp->nb_process);
+                		assume(tmp_tab != NULL);
+                		tmp_tab[tmp->nb_process -1] = i;
+                		tmp->process_list = tmp_tab;
 			}
 
 			if ( j == nodes_nb )
@@ -315,13 +320,6 @@ int sctk_pmi_init()
 
 		sctk_pmi_node_rank = j;
 		sctk_pmi_nodes_number = nodes_nb;
-
-	fn_exit:
-		free ( value );
-		free ( nodes );
-		return rc;
-	#endif /* MPC_USE_HYDRA */
-
 		
 		sctk_pmi_get_process_rank ( &sctk_pmi_process_rank );
 		sctk_pmi_get_process_number ( &sctk_pmi_process_number );
@@ -329,14 +327,13 @@ int sctk_pmi_init()
 		sctk_pmi_get_node_number ( &sctk_node_number );
 		sctk_pmi_get_process_on_node_rank ( &sctk_local_process_rank );
 		sctk_pmi_get_process_on_node_number ( &sctk_local_process_number );
-	#ifdef MPC_USE_HYDRA
 		sctk_pmi_get_process_number_from_node_rank(&sctk_pmi_process_nb_from_node_rank);
-	#endif
 
 
-	#ifdef MPC_USE_SLURM
+	fn_exit:
+		free ( value );
+		free ( nodes );
 		return rc;
-	#endif
 
 #endif /* SCTK_LIB_MODE */
 	}
@@ -609,13 +606,8 @@ int sctk_pmi_get_process_number ( int *size )
 
 int sctk_pmi_get_process_number_from_node_rank ( struct process_nb_from_node_rank **process_number_from_node_rank )
 {
-#ifdef MPC_USE_HYDRA
 	*process_number_from_node_rank = sctk_pmi_process_nb_from_node_rank;
 	return PMI_SUCCESS;
-#else
-	not_implemented();
-	return PMI_FAIL;
-#endif
 }
 
 /*! \brief Get the rank of this process

@@ -68,6 +68,7 @@ struct process_nb_from_node_rank
 {
 	int node_rank;
 	int nb_process;
+	int *process_list;
 	UT_hash_handle hh;
 };
 

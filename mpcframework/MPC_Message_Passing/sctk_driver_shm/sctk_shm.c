@@ -387,32 +387,42 @@ void sctk_network_init_shm ( sctk_rail_info_t *rail )
    rail->notify_idle_message = sctk_network_notify_idle_message_shm;
    rail->send_message_from_network = sctk_send_message_from_network_shm;
 
-    rail->network_name = "SHM";
-    if( strcmp(rail->runtime_config_rail->topology, "none"))
+   rail->network_name = "SHM";
+   if( strcmp(rail->runtime_config_rail->topology, "none"))
 	sctk_warning("SHM topology must be 'none'");
 
-    sctk_rail_init_route ( rail, "none", NULL );
+   sctk_rail_init_route ( rail, "none", NULL );
 
-    sctk_shmem_cells_num = rail->runtime_config_driver_config->driver.value.shm.cells_num;
-    sctk_shmem_size = sctk_shm_get_region_size(sctk_shmem_cells_num);
-    sctk_shmem_size = sctk_shm_roundup_powerof2(sctk_shmem_size);
+   sctk_shmem_cells_num = rail->runtime_config_driver_config->driver.value.shm.cells_num;
+   sctk_shmem_size = sctk_shm_get_region_size(sctk_shmem_cells_num);
+   sctk_shmem_size = sctk_shm_roundup_powerof2(sctk_shmem_size);
 
-    sctk_pmi_get_process_on_node_rank(&local_process_rank);
-    sctk_pmi_get_process_on_node_number(&local_process_number);
-    sctk_shm_proc_local_rank_on_node = local_process_rank;
-    first_proc_on_node = sctk_get_process_rank() - local_process_rank;
+   sctk_pmi_get_process_on_node_rank(&local_process_rank);
+   sctk_pmi_get_process_on_node_number(&local_process_number);
+   sctk_shm_proc_local_rank_on_node = local_process_rank;
+
+   if(local_process_number == 1)
+        return;
+
+   struct process_nb_from_node_rank *nodes_infos = NULL;
+   sctk_pmi_get_process_number_from_node_rank(&nodes_infos);
+
+   int node_rank;
+   sctk_pmi_get_node_rank(&node_rank);
+
+   struct process_nb_from_node_rank *tmp;
+   HASH_FIND_INT( nodes_infos, &node_rank, tmp);
+
+
+   sctk_shm_init_regions_infos(local_process_number);
+   for(i=0; i < tmp->nb_process; i++)
+   {
+      sctk_shm_init_raw_queue(sctk_shmem_size,sctk_shmem_cells_num,i,local_process_number);
+      if( i != local_process_rank)
+         sctk_shm_add_route(tmp->process_list[i], i,rail);
+      sctk_pmi_barrier();
+   }
     
-    if(local_process_number == 1)
-	return;
-
-    sctk_shm_init_regions_infos(local_process_number);
-    for( i=0; i<local_process_number; i++)
-    {
-        sctk_shm_init_raw_queue(sctk_shmem_size,sctk_shmem_cells_num,i,local_process_number);
-	if( i != local_process_rank)
-        	sctk_shm_add_route(first_proc_on_node+i,i,rail);
-        sctk_pmi_barrier();
-    }
     sctk_cma_enabled = rail->runtime_config_driver_config->driver.value.shm.cma_enable;
 #ifdef MPC_USE_CMA
     (void) sctk_network_cma_shm_interface_init(0);
