@@ -906,3 +906,12 @@ unsigned long mpc_thread_tls_entry_add (unsigned long size,
 {
   return sctk_tls_entry_add (size, func);
 }
+
+/* Futexes */
+
+int  mpc_thread_futex(void *addr1, int op, int val1, 
+					  struct timespec *timeout, void *addr2, int val3)
+{
+	sctk_futex_context_init();
+	return sctk_thread_futex(addr1, op, val1, timeout, addr2, val3);
+}

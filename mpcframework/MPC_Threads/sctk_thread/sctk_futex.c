@@ -25,11 +25,50 @@
 
 #include <stdio.h>
 #include <pthread.h>
-#include <linux/futex.h>
 #include <sys/time.h>
-#include <sys/syscall.h>
 #include <errno.h>
 #include <stdlib.h>
+
+#if SCTK_FUTEX_SUPPORTED
+
+#include <linux/futex.h>
+#include <unistd.h>
+#include <sys/syscall.h>
+
+static inline int sctk_do_translate_futex_op( int OPCODE )
+{
+	switch( OPCODE )
+	{
+		case FUTEX_WAIT :
+			return SCTK_FUTEX_WAIT;
+		break;
+		case FUTEX_WAKE :
+			return SCTK_FUTEX_WAKE;
+		break;
+		case FUTEX_REQUEUE :
+			return SCTK_FUTEX_REQUEUE;
+		break;
+		case FUTEX_CMP_REQUEUE :
+			return SCTK_FUTEX_CMP_REQUEUE;
+		break;
+		default:
+			sctk_error("Not implemented YET :=)");
+	}
+
+	return OPCODE;
+}
+
+#else
+
+/* No need to translate as values are already
+ * internal symbols */
+
+int sctk_do_translate_futex_op( int OPCODE )
+{
+	return OPCODE;
+}
+
+#endif
 
 /************************************************************************/
 /* Futex Queues                                                         */
@@ -430,9 +469,15 @@ int futex_queue_HT_wake_threads( struct futex_queue_HT * ht , int * futex_key, i
 /************************************************************************/
 
 static struct futex_queue_HT ___futex_queue_HT;
+static volatile int context_init_done = 0;
 
 void sctk_futex_context_init()
 {
+	if( context_init_done )
+		return;
+	
+	context_init_done = 1;
+	
 	futex_queue_HT_init( &___futex_queue_HT );
 }
 
@@ -548,19 +593,26 @@ int sctk_futex(void *addr1, int op, int val1,
                struct timespec *timeout, void *addr2, int val3)
 {
 	int ret = 0;
-	
+
+	/* We need to convert only if futexes
+	 * are supported by the system
+	 * othewise the value is already the
+	 * internal symbol this is handled
+	 * inside this function */
+	op = sctk_do_translate_futex_op( op );
+
 	switch( op )
 	{
-		case FUTEX_WAIT :
+		case SCTK_FUTEX_WAIT :
 			ret = sctk_futex_WAIT(addr1, op, val1, timeout );
 		break;
-		case FUTEX_WAKE :
+		case SCTK_FUTEX_WAKE :
 			ret = sctk_futex_WAKE(addr1, op, val1 );
 		break;
-		case FUTEX_REQUEUE :
+		case SCTK_FUTEX_REQUEUE :
 			ret = sctk_futex_REQUEUE(addr1, op, val1, addr2 );
 		break;
-		case FUTEX_CMP_REQUEUE :
+		case SCTK_FUTEX_CMP_REQUEUE :
 			ret = sctk_futex_CMPREQUEUE(addr1, op, val1, addr2, val3 );
 		break;
 		default:
@@ -573,33 +625,5 @@ int sctk_futex(void *addr1, int op, int val1,
 	return ret;
 }
 
-/************************************************************************/
-/* Futex Syscall Trampoline                                             */
-/************************************************************************/
 
-#if SCTK_FUTEX_ENABLED
-extern __thread int (*sctk_syscall_fn)(int syscall, ... );
-
-int sctk_futex_trampoline( int futex_syscall, void *addr1, int op, int val1, 
-               struct timespec *timeout, void *addr2, int val3 )
-{
-	if( futex_syscall != SYS_futex )
-	{
-		sctk_fatal("You called %s without being a futex OP", __FUNCTION__);
-	}
-	
-	int ret = sctk_futex(addr1, op, val1, timeout, addr2, val3);
-	
-	sctk_syscall_fn = (int (*)(int, ... ))syscall;
-	
-	return ret;
-}
-
-int dyn_SYS_futex()
-{
-	sctk_syscall_fn = (int (*)(int, ... ))sctk_futex_trampoline;
-	return SYS_futex;
-}
-
-#endif
 

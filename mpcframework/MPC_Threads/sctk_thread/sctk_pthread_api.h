@@ -517,12 +517,17 @@ extern "C"
 
 
 /* Futex */
-#if SCTK_FUTEX_ENABLED
+#ifndef SCTK_FUTEX_SUPPORTED
 
-#define syscall sctk_syscall_fn
-#define SYS_futex dyn_SYS_futex()
+/* Rewrite futex ops as futex is
+ * not handled natively */
 
-#endif /* SCTK_FUTEX_ENABLED */
+#define  FUTEX_WAIT SCTK_FUTEX_WAIT
+#define  FUTEX_WAKE SCTK_FUTEX_WAKE
+#define  FUTEX_REQUEUE SCTK_FUTEX_REQUEUE
+#define  FUTEX_CMP_REQUEUE SCTK_FUTEX_CMP_REQUEUE
+
+#endif /* SCTK_FUTEX_SUPPORTED */
 
 #ifdef __cplusplus
 }

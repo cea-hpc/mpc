@@ -211,7 +211,7 @@ Need to check this in more depth for futur version ( > 2.4.0-1).
 	int sctk_optreset;
 	int sctk_optpos;
 	
-#if SCTK_FUTEX_ENABLED
+#if SCTK_FUTEX_SUPPORTED
     int (*sctk_syscall_fn)(int syscall, ... );
 #endif
 

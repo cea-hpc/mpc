@@ -139,7 +139,7 @@ begin_section Futex
 
 SCTK_CHECK_FUNC_NOFAIL syscall
 if test "$SCTK_SCTK_CHECK_FUNC_RES" = 0 ; then
-   SCTK_CHECK_OPTION "-DSCTK_FUTEX_ENABLED"
+   SCTK_CHECK_OPTION "-DSCTK_FUTEX_SUPPORTED"
 fi
 
 end_section

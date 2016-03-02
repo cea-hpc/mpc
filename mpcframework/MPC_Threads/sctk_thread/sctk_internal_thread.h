@@ -386,6 +386,9 @@ extern "C"
 							 attr, int pref);
   extern void (*__sctk_ptr_thread_kill_other_threads_np) (void);
 
+  extern int (*__sctk_ptr_thread_futex)(void *addr1, int op, int val1, 
+								struct timespec *timeout, void *addr2, int val3);
+
 #define sctk_add_func(newlib,func) __sctk_ptr_thread_##func = newlib##_##func
 #define sctk_add_func_type(newlib,func,t) __sctk_ptr_thread_##func = (t)newlib##_##func
 #define sctk_remove_func(func) __sctk_ptr_thread_##func = sctk_gen_thread_##func

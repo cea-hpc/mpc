@@ -76,6 +76,16 @@ void sctk_futex_context_release();
 int sctk_futex(void *addr1, int op, int val1, 
                struct timespec *timeout, void *addr2, int val3);
 
+/************************************************************************/
+/* Internal MPC Futex Codes                                             */
+/************************************************************************/
+
+
+#define SCTK_FUTEX_WAIT 21210
+#define SCTK_FUTEX_WAKE 21211
+#define SCTK_FUTEX_REQUEUE 21212
+#define SCTK_FUTEX_CMP_REQUEUE 21213
+
 
 /************************************************************************/
 /* Futex Syscall Trampoline                                             */

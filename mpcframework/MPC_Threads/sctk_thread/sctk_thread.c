@@ -67,6 +67,8 @@
 #include <sctk_low_level_comm.h>
 #endif
 #include <errno.h>
+#include "sctk_futex.h"
+
 extern int errno;
 typedef unsigned sctk_long_long sctk_timer_t;
 
@@ -1017,6 +1019,15 @@ sctk_thread_equal (sctk_thread_t __thread1, sctk_thread_t __thread2)
   sctk_check (res, 0);
   return res;
 }
+
+/* Futex Generic Trampoline */
+
+int  sctk_thread_futex(void *addr1, int op, int val1, 
+					  struct timespec *timeout, void *addr2, int val3)
+{
+	return __sctk_ptr_thread_futex(addr1, op, val1, timeout, addr2, val3);
+}
+
 
 static void
 _sctk_thread_cleanup_end (struct _sctk_thread_cleanup_buffer **__buffer)
@@ -2712,3 +2723,4 @@ int __cxa_thread_mpc_atexit(void(*dfunc)(void*), void* obj, void* dso_symbol)
 	sctk_tls_dtors_add(&(th->dtors_head), obj, dfunc);
 	return 0;
 }
+

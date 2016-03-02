@@ -95,7 +95,7 @@ extern "C"
   extern __thread int sctk_optreset;
   extern __thread int sctk_optpos;
 
-#if SCTK_FUTEX_ENABLED
+#if SCTK_FUTEX_SUPPORTED
   extern __thread int (*sctk_syscall_fn)(int syscall, ... );
 #endif
 
@@ -171,7 +171,7 @@ extern "C"
 	tls_save(sctk_optopt);
 	tls_save(sctk_optreset);
 	tls_save(sctk_optpos);
-#if SCTK_FUTEX_ENABLED
+#if SCTK_FUTEX_SUPPORTED
 	tls_save(sctk_syscall_fn);
 #endif
   }
@@ -213,7 +213,7 @@ extern "C"
 	tls_restore(sctk_optopt);
 	tls_restore(sctk_optreset);
 	tls_restore(sctk_optpos);
-#if SCTK_FUTEX_ENABLED
+#if SCTK_FUTEX_SUPPORTED
 	tls_restore(sctk_syscall_fn);
 #endif
   }
@@ -253,7 +253,7 @@ extern "C"
 	ucp->sctk_optopt = 0;
 	ucp->sctk_optreset = 0;
 	ucp->sctk_optpos= 0;
-#if SCTK_FUTEX_ENABLED
+#if SCTK_FUTEX_SUPPORTED
 	ucp->sctk_syscall_fn = syscall;
 #endif
 #endif

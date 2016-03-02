@@ -57,7 +57,7 @@ __thread int sctk_optopt;
 __thread int sctk_optreset;
 __thread int sctk_optpos;
 
-#if SCTK_FUTEX_ENABLED
+#if SCTK_FUTEX_SUPPORTED
 __thread int (*sctk_syscall_fn)(int syscall, ... );
 #endif
 
