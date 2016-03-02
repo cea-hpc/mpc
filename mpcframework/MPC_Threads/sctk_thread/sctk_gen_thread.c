@@ -24,6 +24,7 @@
 #include "sctk_thread.h"
 #include "sctk_launch.h"
 #include "sctk_internal_thread.h"
+#include "sctk_futex.h"
 
 static inline void
 sctk_touch_ptr (const void *ptr)
@@ -1194,6 +1195,12 @@ sctk_gen_thread_kill_other_threads_np (void)
   __sctk_ptr_thread_kill_other_threads_np();
 }
 
+int sctk_gen_thread_futex(void *addr1, int op, int val1, 
+					 struct timespec *timeout, void *addr2, int val3)
+{
+	return sctk_futex(addr1, op, val1, timeout, addr2, val3);
+}
+
 double (*__sctk_ptr_thread_get_activity) (int i) =
   sctk_gen_thread_get_activity;
 
@@ -1584,8 +1591,14 @@ int (*__sctk_ptr_thread_rwlockattr_getkind_np) (sctk_thread_rwlockattr_t *
 int (*__sctk_ptr_thread_rwlockattr_setkind_np) (sctk_thread_rwlockattr_t *
 						attr, int pref) =
   sctk_gen_thread_rwlockattr_setkind_np;
+  
 void (*__sctk_ptr_thread_kill_other_threads_np) (void) =
   sctk_gen_thread_kill_other_threads_np;
+
+int (*__sctk_ptr_thread_futex)(void *addr1, int op, int val1, 
+								struct timespec *timeout, void *addr2, int val3) =
+								sctk_gen_thread_futex;
+
 
 #define SCTK_LOCAL_VERSION_MAJOR 0
 #define SCTK_LOCAL_VERSION_MINOR 1
@@ -1743,6 +1756,6 @@ sctk_gen_thread_init ()
   __sctk_ptr_thread_kill_other_threads_np =
     sctk_gen_thread_kill_other_threads_np;
 
-
+  __sctk_ptr_thread_futex = sctk_gen_thread_futex;
 
 }

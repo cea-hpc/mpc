@@ -572,3 +572,34 @@ int sctk_futex(void *addr1, int op, int val1,
 	
 	return ret;
 }
+
+/************************************************************************/
+/* Futex Syscall Trampoline                                             */
+/************************************************************************/
+
+#if SCTK_FUTEX_ENABLED
+extern __thread int (*sctk_syscall_fn)(int syscall, ... );
+
+int sctk_futex_trampoline( int futex_syscall, void *addr1, int op, int val1, 
+               struct timespec *timeout, void *addr2, int val3 )
+{
+	if( futex_syscall != SYS_futex )
+	{
+		sctk_fatal("You called %s without being a futex OP", __FUNCTION__);
+	}
+	
+	int ret = sctk_futex(addr1, op, val1, timeout, addr2, val3);
+	
+	sctk_syscall_fn = (int (*)(int, ... ))syscall;
+	
+	return ret;
+}
+
+int dyn_SYS_futex()
+{
+	sctk_syscall_fn = (int (*)(int, ... ))sctk_futex_trampoline;
+	return SYS_futex;
+}
+
+#endif
+

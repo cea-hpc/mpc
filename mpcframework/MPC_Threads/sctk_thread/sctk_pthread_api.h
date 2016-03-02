@@ -516,6 +516,14 @@ extern "C"
 #define sem_timedwait mpc_thread_sem_timedwait
 
 
+/* Futex */
+#if SCTK_FUTEX_ENABLED
+
+#define syscall sctk_syscall_fn
+#define SYS_futex dyn_SYS_futex()
+
+#endif /* SCTK_FUTEX_ENABLED */
+
 #ifdef __cplusplus
 }
 #endif

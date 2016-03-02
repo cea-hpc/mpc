@@ -77,4 +77,11 @@ int sctk_futex(void *addr1, int op, int val1,
                struct timespec *timeout, void *addr2, int val3);
 
 
+/************************************************************************/
+/* Futex Syscall Trampoline                                             */
+/************************************************************************/
+
+int dyn_SYS_futex();
+
+
 #endif /* SCTK_FUTEX_H */

@@ -57,6 +57,9 @@ __thread int sctk_optopt;
 __thread int sctk_optreset;
 __thread int sctk_optpos;
 
+#if SCTK_FUTEX_ENABLED
+__thread int (*sctk_syscall_fn)(int syscall, ... );
+#endif
 
 unsigned long mpc_user_tls_1_offset = 0;
 unsigned long mpc_user_tls_1_entry_number = 0;

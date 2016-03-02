@@ -695,6 +695,10 @@ int sctk_aio_lio_listio( int mode , struct aiocb * const aiocb_list[], int nitem
 
 #endif
 
+#if SCTK_FUTEX_ENABLED
+extern __thread int (*sctk_syscall_fn)(int syscall, ... );
+int dyn_SYS_futex();
+#endif
 
 #ifdef __cplusplus
 }
