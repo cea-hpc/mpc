@@ -91,6 +91,18 @@ int ** futex_queue_push( struct futex_queue * fq )
 	return (int **) Buffered_FIFO_push( &fq->wait_list , &do_wait );
 }
 
+int ** futex_queue_repush( struct futex_queue * fq , int * to_repush )
+{
+	/* Make sure we do not push when poping
+	 * to avoid repopping previously popped threads */
+	while( sctk_atomics_load_int( &fq->queue_is_wake_tainted ) )
+	{
+		sched_yield();
+	}
+	
+	return (int **) Buffered_FIFO_push( &fq->wait_list , to_repush );
+}
+
 int futex_queue_wake( struct futex_queue * fq, int count )
 {
 	int popped = 0;
@@ -136,6 +148,62 @@ int futex_queue_wake( struct futex_queue * fq, int count )
 	
 	return popped;
 }
+
+int futex_queue_requeue( struct futex_queue * fq, struct futex_queue * out, int count )
+{
+	int popped = 0;
+	
+	sctk_atomics_store_int( &fq->queue_is_wake_tainted, 1 );
+
+	int * to_wake = NULL;
+	
+	while( count )
+	{
+		
+		if( !Buffered_FIFO_pop(&fq->wait_list, (void *)&to_wake ) )
+		{
+			/* No more elem to pop */
+			break;
+		}
+		else
+		{
+			/* Wake up the thread */
+			if( to_wake )
+			{
+				*to_wake = 0;
+				
+				/* Here we yield to avoid
+				 * releasing all threads at
+				 * once if they are contending on the same lock
+				 * we will do a scheduling round before releasing
+				 * the next, then being more fair in case
+				 * of competition  */
+				sched_yield();
+				popped++;
+			}
+			else
+			{
+				sctk_error("Popped an empty elem ??");
+			}
+		}
+		
+		count--;
+	}
+	
+	if( fq != out )
+	{
+		/* Queues are different, lets push on the new one */
+		while( Buffered_FIFO_pop(&fq->wait_list, (void *)&to_wake ) )
+		{
+			futex_queue_repush( out, to_wake );
+		}
+	}
+	/* ELSE Nothing to do we are already on the same queue */
+	
+	sctk_atomics_store_int( &fq->queue_is_wake_tainted, 0 );
+	
+	return popped;
+} 
 
 /************************************************************************/
 /* Futex HT                                                             */
@@ -267,6 +335,57 @@ int * futex_queue_HT_register_thread( struct futex_queue_HT * ht , int * futex_k
 }
 
 
+int futex_queue_HT_requeue_threads( struct futex_queue_HT * ht , 
+									int * in_futex_key,
+									int * out_futex_key,
+									int count )
+{	
+	int ret = 0;
+
+	/* Acquire the read lock */
+	sctk_atomics_incr_int( &ht->queue_table_is_being_manipulated);
+	
+	/* Here we first create a futex queue if 
+	 * it does not exists yet */
+	sctk_uint64_t in_key = (sctk_uint64_t) in_futex_key;
+	sctk_uint64_t out_key = (sctk_uint64_t) out_futex_key;
+	
+	int new_queue_created = 0;
+	struct futex_queue *in_fq = (struct futex_queue *) 
+	          MPCHT_get_or_create(&ht->queue_hash_table,
+								   in_key ,
+								   futex_queue_new_from_key,
+								   &new_queue_created);
+	/* Was a new queue created ? */
+	if( new_queue_created )
+		ht->queue_count++;
+	
+	new_queue_created = 0;
+	struct futex_queue *out_fq = (struct futex_queue *) 
+	          MPCHT_get_or_create(&ht->queue_hash_table,
+								   out_key ,
+								   futex_queue_new_from_key,
+								   &new_queue_created);
+	/* Was a new queue created ? */
+	if( new_queue_created )
+		ht->queue_count++;
+
+	/* Did it work ? */
+	if( in_fq && out_fq )
+	{
+		/* Here we are now manipulating a futex queue */
+		ret = futex_queue_requeue( in_fq, out_fq, count );
+	}
+	
+	/* Release the read lock */
+	sctk_atomics_decr_int( &ht->queue_table_is_being_manipulated);
+	
+	return ret;	
+	
+}
+
+
+
 int futex_queue_HT_wake_threads( struct futex_queue_HT * ht , int * futex_key, int count )
 {
 	/* Here we are protecting a table manipulation */
@@ -396,6 +515,34 @@ int sctk_futex_WAKE(void *addr1, int op, int val1 )
 	return futex_queue_HT_wake_threads(  &___futex_queue_HT, addr1,  val1 );
 }
 
+int sctk_futex_REQUEUE(void *addr1, int op, int val1, void * addr2 )
+{
+	return futex_queue_HT_requeue_threads( &___futex_queue_HT, 
+										   addr1,
+										   addr2,
+										   val1 );
+}
+
+int sctk_futex_CMPREQUEUE(void *addr1, int op, int val1, void * addr2, int val3 )
+{
+	/* First check the value */
+	OPA_int_t * pold_val = (OPA_int_t *)addr1;
+	
+	int old_val = sctk_atomics_load_int( pold_val );
+	
+	/* Val is different directly return */
+	if( old_val != val3 )
+	{
+		errno = EWOULDBLOCK;
+		return -1;
+	}
+	
+	return futex_queue_HT_requeue_threads( &___futex_queue_HT, 
+										   addr1,
+										   addr2,
+										   val1 );
+}
+
 
 int sctk_futex(void *addr1, int op, int val1, 
                struct timespec *timeout, void *addr2, int val3)
@@ -409,6 +556,12 @@ int sctk_futex(void *addr1, int op, int val1,
 		break;
 		case FUTEX_WAKE :
 			ret = sctk_futex_WAKE(addr1, op, val1 );
+		break;
+		case FUTEX_REQUEUE :
+			ret = sctk_futex_REQUEUE(addr1, op, val1, addr2 );
+		break;
+		case FUTEX_CMP_REQUEUE :
+			ret = sctk_futex_CMPREQUEUE(addr1, op, val1, addr2, val3 );
 		break;
 		default:
 			sctk_error("Not implemented YET :=)");
