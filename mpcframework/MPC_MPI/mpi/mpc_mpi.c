@@ -1679,6 +1679,7 @@ __INTERNAL__PMPI_Ibsend_test_req (void *buf, int count, MPI_Datatype datatype,
 	}
 	else
 	{
+        sctk_spinlock_unlock (&(tmp->lock));
 		MPI_ERROR_REPORT (comm, MPI_ERR_BUFFER, "No space left in buffer");
 	}
 
