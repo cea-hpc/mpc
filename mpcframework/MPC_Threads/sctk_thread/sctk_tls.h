@@ -95,10 +95,6 @@ extern "C"
   extern __thread int sctk_optreset;
   extern __thread int sctk_optpos;
 
-#if SCTK_FUTEX_SUPPORTED
-  extern __thread int (*sctk_syscall_fn)(int syscall, ... );
-#endif
-
   extern __thread char *mpc_user_tls_1;
   extern unsigned long mpc_user_tls_1_offset;
   extern unsigned long mpc_user_tls_1_entry_number;
@@ -171,9 +167,6 @@ extern "C"
 	tls_save(sctk_optopt);
 	tls_save(sctk_optreset);
 	tls_save(sctk_optpos);
-#if SCTK_FUTEX_SUPPORTED
-	tls_save(sctk_syscall_fn);
-#endif
   }
 
   static inline void sctk_context_restore_tls (sctk_mctx_t * ucp)
@@ -213,9 +206,6 @@ extern "C"
 	tls_restore(sctk_optopt);
 	tls_restore(sctk_optreset);
 	tls_restore(sctk_optpos);
-#if SCTK_FUTEX_SUPPORTED
-	tls_restore(sctk_syscall_fn);
-#endif
   }
 
   static inline void sctk_context_init_tls_without_extls (sctk_mctx_t *ucp)
@@ -253,9 +243,6 @@ extern "C"
 	ucp->sctk_optopt = 0;
 	ucp->sctk_optreset = 0;
 	ucp->sctk_optpos= 0;
-#if SCTK_FUTEX_SUPPORTED
-	ucp->sctk_syscall_fn = syscall;
-#endif
 #endif
   }
 
