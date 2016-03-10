@@ -909,7 +909,7 @@ unsigned long mpc_thread_tls_entry_add (unsigned long size,
 
 /* Futexes */
 
-int  mpc_thread_futex(void *addr1, int op, int val1, 
+int  mpc_thread_futex(int sysop, void *addr1, int op, int val1, 
 					  struct timespec *timeout, void *addr2, int val3)
 {
 	sctk_futex_context_init();

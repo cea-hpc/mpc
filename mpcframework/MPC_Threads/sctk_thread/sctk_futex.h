@@ -33,7 +33,7 @@
 
 struct futex_queue
 {
-	OPA_int_t queue_is_wake_tainted;
+	sctk_spinlock_t queue_is_wake_tainted;
 	struct Buffered_FIFO wait_list;
 	int * futex_key;
 };
@@ -85,13 +85,24 @@ int sctk_futex(void *addr1, int op, int val1,
 #define SCTK_FUTEX_WAKE 21211
 #define SCTK_FUTEX_REQUEUE 21212
 #define SCTK_FUTEX_CMP_REQUEUE 21213
+#define SCTK_FUTEX_WAKE_OP 21214
 
+/* OPS */
 
-/************************************************************************/
-/* Futex Syscall Trampoline                                             */
-/************************************************************************/
+#define SCTK_FUTEX_OP_SET 0
+#define SCTK_FUTEX_OP_ADD 1 
+#define SCTK_FUTEX_OP_OR 2 
+#define SCTK_FUTEX_OP_ANDN 3
+#define SCTK_FUTEX_OP_XOR 4  
+#define SCTK_FUTEX_OP_ARG_SHIFT 8
 
-int dyn_SYS_futex();
+/* CMP */
 
+#define SCTK_FUTEX_OP_CMP_EQ 0
+#define SCTK_FUTEX_OP_CMP_NE 1
+#define SCTK_FUTEX_OP_CMP_LT 2
+#define SCTK_FUTEX_OP_CMP_LE 3
+#define SCTK_FUTEX_OP_CMP_GT 4
+#define SCTK_FUTEX_OP_CMP_GE 5
 
 #endif /* SCTK_FUTEX_H */

@@ -126,22 +126,26 @@ static inline sctk_uint64_t murmur_hash( sctk_uint64_t val )
 
 static inline void MPCHT_lock_read( struct MPCHT * ht , sctk_uint64_t bucket)
 {
-	sctk_spinlock_read_lock( &ht->rwlocks[bucket] );
+	sctk_spin_rwlock_t * lock = &ht->rwlocks[bucket];
+	sctk_spinlock_read_lock( lock );
 }
 
 static inline void MPCHT_unlock_read( struct MPCHT * ht , sctk_uint64_t bucket)
 {
-	sctk_spinlock_read_unlock( &ht->rwlocks[bucket] );
+	sctk_spin_rwlock_t * lock = &ht->rwlocks[bucket];
+	sctk_spinlock_read_unlock( lock );
 }
 
 static inline void MPCHT_lock_write( struct MPCHT * ht , sctk_uint64_t bucket)
 {
-	sctk_spinlock_write_lock( &ht->rwlocks[bucket] );
+	sctk_spin_rwlock_t * lock = &ht->rwlocks[bucket];
+	sctk_spinlock_write_lock( lock );
 }
 
 static inline void MPCHT_unlock_write( struct MPCHT * ht , sctk_uint64_t bucket)
 {
-	sctk_spinlock_write_unlock( &ht->rwlocks[bucket] );
+	sctk_spin_rwlock_t * lock = &ht->rwlocks[bucket];
+	sctk_spinlock_write_unlock( lock );
 }
 
 

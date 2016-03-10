@@ -32,11 +32,14 @@
 #if SCTK_FUTEX_SUPPORTED
 
 #include <linux/futex.h>
-#include <unistd.h>
 #include <sys/syscall.h>
 
-static inline int sctk_do_translate_futex_op( int OPCODE )
+int sctk_do_translate_futex_op( int OPCODE )
 {
+	/* Always remove the private flag 
+	 * as it does not mean anything in our context */
+	OPCODE &= ~(FUTEX_PRIVATE_FLAG);
+	
 	switch( OPCODE )
 	{
 		case FUTEX_WAIT :
@@ -44,6 +47,9 @@ static inline int sctk_do_translate_futex_op( int OPCODE )
 		break;
 		case FUTEX_WAKE :
 			return SCTK_FUTEX_WAKE;
+		break;
+		case FUTEX_WAKE_OP :
+			return SCTK_FUTEX_WAKE_OP;
 		break;
 		case FUTEX_REQUEUE :
 			return SCTK_FUTEX_REQUEUE;
@@ -58,6 +64,71 @@ static inline int sctk_do_translate_futex_op( int OPCODE )
 	return OPCODE;
 }
 
+/* For _OP operations */
+int sctk_do_translate_futex_opcode( int opcode )
+{
+	switch( opcode )
+	{
+		case FUTEX_OP_SET :
+			return SCTK_FUTEX_OP_SET;
+		break;
+		case FUTEX_OP_ADD :
+			return SCTK_FUTEX_OP_ADD;
+		break;
+		case FUTEX_OP_OR :
+			return SCTK_FUTEX_OP_OR;
+		break;
+		case FUTEX_OP_ANDN :
+			return SCTK_FUTEX_OP_ANDN;
+		break;
+		case FUTEX_OP_XOR :
+			return SCTK_FUTEX_OP_XOR;
+		break;
+		default:
+			sctk_error("Not implemented YET :=)");
+	}
+
+	return opcode;
+}
+
+/* May not be defined */
+#ifndef FUTEX_OP_ARG_SHIFT
+#define FUTEX_OP_ARG_SHIFT 8
+#endif
+
+int sctk_do_translate_futex_opcode_for_shift( int opcode )
+{
+	return ( opcode & FUTEX_OP_ARG_SHIFT );
+}
+
+int sctk_do_translate_cmp( int cmp )
+{
+	switch( cmp )
+	{
+		case FUTEX_OP_CMP_EQ:
+			return SCTK_FUTEX_OP_CMP_EQ;
+		break;
+		case FUTEX_OP_CMP_NE:
+			return SCTK_FUTEX_OP_CMP_NE;
+		break;
+		case FUTEX_OP_CMP_LT:
+			return SCTK_FUTEX_OP_CMP_LT;
+		break;
+		case FUTEX_OP_CMP_LE:
+			return SCTK_FUTEX_OP_CMP_LE;
+		break;
+		case FUTEX_OP_CMP_GT:
+			return SCTK_FUTEX_OP_CMP_GT;
+		break;
+		case FUTEX_OP_CMP_GE:
+			return  SCTK_FUTEX_OP_CMP_GE;
+		break;
+		default:
+				sctk_fatal("No such cmp operation");
+	}
+
+	return cmp;
+}
 #else
 
 /* No need to translate as values are already
@@ -66,6 +137,22 @@ static inline int sctk_do_translate_futex_op( int OPCODE )
 int sctk_do_translate_futex_op( int OPCODE )
 {
 	return OPCODE;
+}
+
+/* For _OP operations */
+static inline int sctk_do_translate_futex_opcode( int opcode )
+{
+	return opcode;
+}
+
+int sctk_do_translate_futex_opcode_for_shift( int opcode )
+{
+	return ( opcode & SCTK_FUTEX_OP_ARG_SHIFT );
+}
+
+int sctk_do_translate_cmp( int cmp )
+{
+	return cmp;
 }
 
 #endif
@@ -77,6 +164,7 @@ int sctk_do_translate_futex_op( int OPCODE )
  
 struct futex_queue * futex_queue_new( int * futex_key )
 {
+	sctk_error("New queue %p", futex_key );
 	struct futex_queue * ret = malloc( sizeof( struct futex_queue ) );
 	
 	if( !ret )
@@ -85,7 +173,7 @@ struct futex_queue * futex_queue_new( int * futex_key )
 		return NULL;
 	}
 	
-	sctk_atomics_store_int( &ret->queue_is_wake_tainted, 0 );
+	ret->queue_is_wake_tainted = 0;
 
 	Buffered_FIFO_init(&ret->wait_list, 32, sizeof(int *));
 	
@@ -112,41 +200,43 @@ int ** futex_queue_push( struct futex_queue * fq )
 {
 	/* Make sure we do not push when poping
 	 * to avoid repopping previously popped threads */
-	while( sctk_atomics_load_int( &fq->queue_is_wake_tainted ) )
-	{
-		sched_yield();
-	}
+	sctk_spinlock_lock( &fq->queue_is_wake_tainted );
 	
 	int  * do_wait = malloc( sizeof( int ) );
 	
 	if( !do_wait )
 	{
 		perror("malloc");
+		sctk_spinlock_unlock( &fq->queue_is_wake_tainted );
 		return NULL;
 	}
 	
 	*do_wait = 1;
 	
-	return (int **) Buffered_FIFO_push( &fq->wait_list , &do_wait );
+	int ** ret = (int **) Buffered_FIFO_push( &fq->wait_list , &do_wait );
+	
+	sctk_spinlock_unlock( &fq->queue_is_wake_tainted );
+	
+	return ret;
 }
 
 int ** futex_queue_repush( struct futex_queue * fq , int * to_repush )
 {
-	/* Make sure we do not push when poping
-	 * to avoid repopping previously popped threads */
-	while( sctk_atomics_load_int( &fq->queue_is_wake_tainted ) )
-	{
-		sched_yield();
-	}
+	sctk_spinlock_lock( &fq->queue_is_wake_tainted );
 	
-	return (int **) Buffered_FIFO_push( &fq->wait_list , to_repush );
+	int ** ret = (int **) Buffered_FIFO_push( &fq->wait_list , to_repush );
+	
+	sctk_spinlock_unlock( &fq->queue_is_wake_tainted );
+	
+	return ret;
 }
 
 int futex_queue_wake( struct futex_queue * fq, int count )
 {
+	//sctk_error("Wake %p", fq );
 	int popped = 0;
 	
-	sctk_atomics_store_int( &fq->queue_is_wake_tainted, 1 );
+	sctk_spinlock_lock( &fq->queue_is_wake_tainted );
 	
 	while( count )
 	{
@@ -164,14 +254,6 @@ int futex_queue_wake( struct futex_queue * fq, int count )
 			if( to_wake )
 			{
 				*to_wake = 0;
-				
-				/* Here we yield to avoid
-				 * releasing all threads at
-				 * once if they are contending on the same lock
-				 * we will do a scheduling round before releasing
-				 * the next, then being more fair in case
-				 * of competition  */
-				sched_yield();
 				popped++;
 			}
 			else
@@ -183,7 +265,9 @@ int futex_queue_wake( struct futex_queue * fq, int count )
 		count--;
 	}
 	
-	sctk_atomics_store_int( &fq->queue_is_wake_tainted, 0 );
+	sctk_spinlock_unlock( &fq->queue_is_wake_tainted );
+	
+	//sctk_error("DONE Wake %p", fq );
 	
 	return popped;
 }
@@ -192,7 +276,7 @@ int futex_queue_requeue( struct futex_queue * fq, struct futex_queue * out, int 
 {
 	int popped = 0;
 	
-	sctk_atomics_store_int( &fq->queue_is_wake_tainted, 1 );
+	sctk_spinlock_lock( &fq->queue_is_wake_tainted );
 
 	int * to_wake = NULL;
 	
@@ -210,14 +294,6 @@ int futex_queue_requeue( struct futex_queue * fq, struct futex_queue * out, int 
 			if( to_wake )
 			{
 				*to_wake = 0;
-				
-				/* Here we yield to avoid
-				 * releasing all threads at
-				 * once if they are contending on the same lock
-				 * we will do a scheduling round before releasing
-				 * the next, then being more fair in case
-				 * of competition  */
-				sched_yield();
 				popped++;
 			}
 			else
@@ -229,17 +305,21 @@ int futex_queue_requeue( struct futex_queue * fq, struct futex_queue * out, int 
 		count--;
 	}
 	
+	sctk_spinlock_unlock( &fq->queue_is_wake_tainted );
+	
 	if( fq != out )
 	{
 		/* Queues are different, lets push on the new one */
 		while( Buffered_FIFO_pop(&fq->wait_list, (void *)&to_wake ) )
 		{
 			futex_queue_repush( out, to_wake );
+			sched_yield();
 		}
 	}
 	/* ELSE Nothing to do we are already on the same queue */
+
 	
-	sctk_atomics_store_int( &fq->queue_is_wake_tainted, 0 );
+	
 	
 	return popped;
 } 
@@ -369,6 +449,8 @@ int * futex_queue_HT_register_thread( struct futex_queue_HT * ht , int * futex_k
 	
 	/* Release the read lock */
 	sctk_atomics_decr_int( &ht->queue_table_is_being_manipulated);
+	
+	sched_yield();
 	
 	return ret;
 }
@@ -555,10 +637,113 @@ int sctk_futex_WAIT(void *addr1, int op, int val1, struct timespec *timeout )
 }
 
 
+
 int sctk_futex_WAKE(void *addr1, int op, int val1 )
 {
 	return futex_queue_HT_wake_threads(  &___futex_queue_HT, addr1,  val1 );
 }
+
+
+void sctk_futex_WAKE_OP_decode( int val3, int * op, int * cmp, int * oparg, int * cmparg )
+{
+	int opcode, cmpcode, opargcode, cmpargcode;
+
+	opcode = (val3 >> 28 ) & 0xf;
+	cmpcode = (val3 >> 24 ) & 0xf;
+	opargcode = (val3 >> 12 ) & 0xfff;
+	cmpargcode = val3 & 0xfff;
+	
+	*cmp = sctk_do_translate_cmp( cmpargcode );
+	*op = sctk_do_translate_futex_opcode( opcode );
+	
+	if( sctk_do_translate_futex_opcode_for_shift( opcode ) == 0 )
+	{
+		*oparg = opargcode;
+	}
+	else
+	{
+		/* FUTEX_OP_ARG_SHIFT was set */
+		*oparg = (1 << opargcode);
+	}
+}
+
+
+int sctk_futex_WAKE_OP_do_op( int oldval, int val3 )
+{
+	int op, cmp, oparg, cmparg;
+	
+	sctk_futex_WAKE_OP_decode( val3, &op, &cmp, &oparg, &cmparg );
+	
+	switch( op )
+	{
+		case SCTK_FUTEX_OP_SET:
+			return oparg;
+		break;
+		case SCTK_FUTEX_OP_ADD:
+			return oldval + oparg;
+		break;
+		case SCTK_FUTEX_OP_OR:
+			return oldval | oparg;
+		break;
+		case SCTK_FUTEX_OP_ANDN:
+			return oldval & oparg;
+		break;
+		case SCTK_FUTEX_OP_XOR:
+			return oldval ^ oparg;
+		break;
+		default:
+				sctk_fatal("No such operation");
+	}
+
+	return oparg;
+}
+
+int sctk_futex_WAKE_OP_do_cmp( int oldval, int val3 )
+{
+	int op, cmp, oparg, cmparg;
+	
+	sctk_futex_WAKE_OP_decode( val3, &op, &cmp, &oparg, &cmparg );
+	
+	switch( op )
+	{
+		case SCTK_FUTEX_OP_CMP_EQ:
+			return (oldval == oparg);
+		break;
+		case SCTK_FUTEX_OP_CMP_NE:
+			return (oldval != oparg);
+		break;
+		case SCTK_FUTEX_OP_CMP_LT:
+			return (oldval < oparg);
+		break;
+		case SCTK_FUTEX_OP_CMP_LE:
+			return (oldval <= oparg);
+		break;
+		case SCTK_FUTEX_OP_CMP_GT:
+			return (oparg < oldval);
+		break;
+		case SCTK_FUTEX_OP_CMP_GE:
+			return  ( oparg <= oldval);
+		break;
+		default:
+				sctk_fatal("No such operation");
+	}
+
+	return oparg;
+}
+
+int sctk_futex_WAKE_OP(void *addr1, int op, void *addr2, int val1, int val2, int val3  )
+{
+	int oldval = *(int *) addr2;
+	
+	*((int *) addr2) = sctk_futex_WAKE_OP_do_op( oldval, val3 );
+	
+	sctk_futex_WAKE(addr1, SCTK_FUTEX_WAKE, val1 );
+
+	if( sctk_futex_WAKE_OP_do_cmp( oldval, val3 ) )
+		sctk_futex_WAKE(addr2, SCTK_FUTEX_WAKE, val2 );
+
+}
+
 
 int sctk_futex_REQUEUE(void *addr1, int op, int val1, void * addr2 )
 {
@@ -600,7 +785,10 @@ int sctk_futex(void *addr1, int op, int val1,
 	 * internal symbol this is handled
 	 * inside this function */
 	op = sctk_do_translate_futex_op( op );
-
+	
+	unsigned long tmp_val2 = (unsigned long)timeout;
+	int val2 = (int)tmp_val2;
+			
 	switch( op )
 	{
 		case SCTK_FUTEX_WAIT :
@@ -609,6 +797,9 @@ int sctk_futex(void *addr1, int op, int val1,
 		case SCTK_FUTEX_WAKE :
 			ret = sctk_futex_WAKE(addr1, op, val1 );
 		break;
+		case SCTK_FUTEX_WAKE_OP :
+			ret = sctk_futex_WAKE_OP(addr1, op, addr2, val1, val2, val3 );
+		break;
 		case SCTK_FUTEX_REQUEUE :
 			ret = sctk_futex_REQUEUE(addr1, op, val1, addr2 );
 		break;
@@ -616,7 +807,7 @@ int sctk_futex(void *addr1, int op, int val1,
 			ret = sctk_futex_CMPREQUEUE(addr1, op, val1, addr2, val3 );
 		break;
 		default:
-			sctk_error("Not implemented YET :=)");
+			sctk_fatal("Not implemented YET");
 	}
 
 	
