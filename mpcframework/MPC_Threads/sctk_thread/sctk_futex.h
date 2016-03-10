@@ -28,8 +28,24 @@
 #include "sctk_atomics.h"
 
 /************************************************************************/
+/* Futex Cell                                                         */
+/************************************************************************/
+
+struct futex_cell
+{
+	int * do_wait;
+	int bitmask;
+	int skip;
+};
+
+struct futex_cell *  futex_cell_new( int bitmask );
+int  futex_cell_match( struct futex_cell * cell  , int bitmask );
+int *  futex_cell_detach( struct futex_cell * cell );
+
+/************************************************************************/
 /* Futex Queues                                                         */
 /************************************************************************/
+
 
 struct futex_queue
 {
@@ -40,8 +56,8 @@ struct futex_queue
 
 struct futex_queue * futex_queue_new( int * futex_key );
 int futex_queue_release( struct futex_queue * fq );
-int ** futex_queue_push( struct futex_queue * fq );
-int futex_queue_wake( struct futex_queue * fq, int count );
+int * futex_queue_push( struct futex_queue * fq  , int bitmask );
+int futex_queue_wake( struct futex_queue * fq , int bitmask , int use_mask, int count );
 
 /************************************************************************/
 /* Futex HT                                                             */
@@ -58,8 +74,8 @@ struct futex_queue_HT
 
 int futex_queue_HT_init( struct futex_queue_HT * ht );
 int futex_queue_HT_release( struct futex_queue_HT * ht );
-int * futex_queue_HT_register_thread( struct futex_queue_HT * ht , int * futex_key );
-int futex_queue_HT_wake_threads( struct futex_queue_HT * ht , int * futex_key, int count );
+int * futex_queue_HT_register_thread( struct futex_queue_HT * ht , int * futex_key  , int bitmask );
+int futex_queue_HT_wake_threads( struct futex_queue_HT * ht , int * futex_key , int bitmask , int use_mask, int count );
 
 
 /************************************************************************/
