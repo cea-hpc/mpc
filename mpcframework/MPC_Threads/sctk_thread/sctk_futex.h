@@ -40,7 +40,18 @@ struct futex_cell
 
 struct futex_cell *  futex_cell_new( int bitmask );
 int  futex_cell_match( struct futex_cell * cell  , int bitmask );
-int *  futex_cell_detach( struct futex_cell * cell );
+void futex_cell_detach( struct futex_cell * cell );
+
+
+struct futex_bitset_iterator_desc
+{
+	int bitmask;
+	int to_process;
+};
+
+
+int futex_cell_apply_bitmask( void * elem /* struct futex_cell */,
+						       void * arg /* struct futex_bitset_iterator_desc */ );
 
 /************************************************************************/
 /* Futex Queues                                                         */

@@ -191,12 +191,41 @@ int  futex_cell_match( struct futex_cell * cell  , int bitmask )
 	return ( cell->bitmask & bitmask );
 }
 
-int *  futex_cell_detach( struct futex_cell * cell )
+int futex_cell_apply_bitmask( void * elem, void * arg)
+{
+	struct futex_cell * cell = (struct futex_cell *)elem;
+	struct futex_bitset_iterator_desc * desc = 
+							(struct futex_bitset_iterator_desc *)arg;
+	
+	if( desc->to_process == 0 )
+	{
+		return 0;
+	}
+	
+	if( cell->skip == 0 )
+	{
+		if( futex_cell_match( cell, desc->bitmask ) )
+		{
+			/* We matched the bitset */
+			*cell->do_wait = 0;
+			cell->skip = 1;
+			desc->to_process--;
+			
+			return 1;
+		}
+	}
+	
+	/* Did not process */
+	return 0;
+}
+
+
+
+void  futex_cell_detach( struct futex_cell * cell )
 {
 	int * ret = cell->do_wait;
 	*ret = 0;
 	free( cell );
-	return ret;
 }
 
 
@@ -264,6 +293,8 @@ int * futex_queue_repush( struct futex_queue * fq , struct futex_cell * to_repus
 	return to_repush->do_wait;
 }
 
+
+
 int futex_queue_wake( struct futex_queue * fq , int bitmask, int use_mask, int count )
 {
 	int popped = 0;
@@ -291,7 +322,7 @@ int futex_queue_wake( struct futex_queue * fq , int bitmask, int use_mask, int c
 				{
 					if( !to_wake->skip )
 					{
-						*to_wake->do_wait = 0;
+						futex_cell_detach( to_wake );
 						popped++;
 						count--;
 					}
@@ -309,6 +340,13 @@ int futex_queue_wake( struct futex_queue * fq , int bitmask, int use_mask, int c
 	else
 	{
 		/* We only wake those which are matching the mask */
+		struct futex_bitset_iterator_desc desc;
+		
+		desc.bitmask = bitmask;
+		desc.to_process = count;
+		
+		popped = Buffered_FIFO_process(&fq->wait_list, futex_cell_apply_bitmask, (void *)&desc );
+		
 		
 	}
 	
@@ -338,7 +376,7 @@ int futex_queue_requeue( struct futex_queue * fq, struct futex_queue * out, int 
 			/* Wake up the thread */
 			if( to_wake )
 			{
-				*to_wake->do_wait = 0;
+				futex_cell_detach( to_wake );
 				popped++;
 			}
 			else
@@ -764,15 +802,27 @@ int sctk_futex_WAKE_OP_do_cmp( int oldval, int val3 )
 
 int sctk_futex_WAKE_OP(void *addr1, int op, void *addr2, int val1, int val2, int val3  )
 {
+	int ret = 0;
+	int tmp_ret = 0;
+	
 	int oldval = *(int *) addr2;
 	
 	*((int *) addr2) = sctk_futex_WAKE_OP_do_op( oldval, val3 );
 	
-	sctk_futex_WAKE(addr1, SCTK_FUTEX_WAKE, val1 );
+	tmp_ret = sctk_futex_WAKE(addr1, SCTK_FUTEX_WAKE, val1 );
+	
+	if( 0 <= tmp_ret )
+		ret += tmp_ret;
 
 	if( sctk_futex_WAKE_OP_do_cmp( oldval, val3 ) )
-		sctk_futex_WAKE(addr2, SCTK_FUTEX_WAKE, val2 );
+	{
+		tmp_ret = sctk_futex_WAKE(addr2, SCTK_FUTEX_WAKE, val2 );
+		
+		if( 0 <= tmp_ret )
+			ret += tmp_ret;
+	}
 
+	return ret;
 }
 
 
