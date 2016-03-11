@@ -188,6 +188,15 @@ void *Buffered_FIFO_pop(struct Buffered_FIFO *fifo, void *dest);
  */
 uint64_t Buffered_FIFO_count(struct Buffered_FIFO *fifo);
 
+/**
+ * @brief Apply a function to each element of the FIFO
+ * @param fifo the FIFO where to process elements
+ * @param func the function to apply to all elements
+ * @param arg arbitrary pointer passed to function calls
+ * @return number of elements processed
+ */
+int Buffered_FIFO_process(struct Buffered_FIFO *fifo, int (*func)( void * elem, void * arg), void * arg );
+
 #ifdef __cplusplus
   }
 #endif

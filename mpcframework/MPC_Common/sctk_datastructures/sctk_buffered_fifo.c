@@ -243,3 +243,37 @@ void *Buffered_FIFO_pop(struct Buffered_FIFO *fifo, void *dest)
 	return ret;
 }
 
+
+int Buffered_FIFO_process(struct Buffered_FIFO *fifo, int (*func)( void * elem, void * arg), void * arg )
+{
+	if( !fifo || !func )
+		return 0;
+	
+	int did_process = 0;
+	
+	/* Block the FIFO */
+	sctk_spinlock_lock( &fifo->head_lock );
+	sctk_spinlock_lock( &fifo->tail_lock );
+
+	
+	struct Buffered_FIFO_chunk * chunk = fifo->head;
+
+	while( chunk )
+	{
+		int i;
+		
+		for( i = chunk->start_offset ; i < chunk->end_offset ; i++ )
+		{
+			char *src = chunk->payload + ( i * chunk->elem_size );
+			did_process += (func)( src, arg );
+		}
+		
+		chunk = chunk->prev;
+	}
+	
+	sctk_spinlock_unlock( &fifo->tail_lock );
+	sctk_spinlock_unlock( &fifo->head_lock );
+
+	return did_process;
+}
+
