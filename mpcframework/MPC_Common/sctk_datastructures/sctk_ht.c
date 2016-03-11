@@ -145,6 +145,7 @@ static inline void MPCHT_lock_write( struct MPCHT * ht , sctk_uint64_t bucket)
 static inline void MPCHT_unlock_write( struct MPCHT * ht , sctk_uint64_t bucket)
 {
 	sctk_spin_rwlock_t * lock = &ht->rwlocks[bucket];
+
 	sctk_spinlock_write_unlock( lock );
 }
 
@@ -260,7 +261,7 @@ void * MPCHT_get_or_create(  struct MPCHT * ht, sctk_uint64_t key , void * (crea
 	sctk_uint64_t bucket = murmur_hash( key ) % ht->table_size;
 	
 	struct MPCHT_Cell * head = &ht->cells[bucket];
-	
+
 	if( did_create )
 		*did_create = 1;	
 	

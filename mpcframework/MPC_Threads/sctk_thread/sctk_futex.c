@@ -63,6 +63,21 @@ int sctk_do_translate_futex_op( int OPCODE )
 		case FUTEX_CMP_REQUEUE :
 			return SCTK_FUTEX_CMP_REQUEUE;
 		break;
+		case FUTEX_LOCK_PI :
+			return SCTK_FUTEX_LOCK_PI;
+		break;
+		case FUTEX_TRYLOCK_PI :
+			return SCTK_FUTEX_TRYLOCK_PI;
+		break;
+		case FUTEX_UNLOCK_PI :
+			return SCTK_FUTEX_UNLOCK_PI;
+		break;
+		case FUTEX_CMP_REQUEUE_PI :
+			return SCTK_FUTEX_CMP_REQUEUE_PI;
+		break;
+		case FUTEX_WAIT_REQUEUE_PI :
+			return SCTK_FUTEX_WAIT_REQUEUE_PI;
+		break;
 		default:
 			sctk_error("Not implemented YET :=)");
 	}
@@ -105,6 +120,11 @@ int sctk_do_translate_futex_opcode( int opcode )
 int sctk_do_translate_futex_opcode_for_shift( int opcode )
 {
 	return ( opcode & FUTEX_OP_ARG_SHIFT );
+}
+
+int sctk_do_translate_futex_waiter()
+{
+	return FUTEX_WAITERS;
 }
 
 int sctk_do_translate_cmp( int cmp )
@@ -156,6 +176,11 @@ int sctk_do_translate_futex_opcode_for_shift( int opcode )
 	return ( opcode & SCTK_FUTEX_OP_ARG_SHIFT );
 }
 
+int sctk_do_translate_futex_waiter()
+{
+	return SCTK_FUTEX_WAITERS;
+}
+
 int sctk_do_translate_cmp( int cmp )
 {
 	return cmp;
@@ -168,7 +193,7 @@ int sctk_do_translate_cmp( int cmp )
 /* Futex Cell                                                         */
 /************************************************************************/
 
-struct futex_cell *  futex_cell_new( int bitmask )
+struct futex_cell *  futex_cell_new( int bitmask , int orig_op )
 {
 	struct futex_cell * cell  = calloc( 1, sizeof( struct futex_cell ) );
 	
@@ -183,9 +208,10 @@ struct futex_cell *  futex_cell_new( int bitmask )
 	*cell->do_wait = 1;
 
 	cell->bitmask = bitmask;
+	cell->orig_op = orig_op;
 	
 	cell->skip = 0;
-	
+		
 	return cell;
 }
 
@@ -273,13 +299,13 @@ int futex_queue_release( struct futex_queue * fq )
 	return 0;
 }
 
-int * futex_queue_push( struct futex_queue * fq , int bitmask )
+int * futex_queue_push( struct futex_queue * fq , int bitmask, int orig_op )
 {
 	/* Make sure we do not push when poping
 	 * to avoid repopping previously popped threads */
 	sctk_spinlock_lock( &fq->queue_is_wake_tainted );
 	
-	struct futex_cell * cell = futex_cell_new(0);
+	struct futex_cell * cell = futex_cell_new(bitmask, orig_op);
 
 	Buffered_FIFO_push( &fq->wait_list , &cell );
 	
@@ -288,20 +314,45 @@ int * futex_queue_push( struct futex_queue * fq , int bitmask )
 	return cell->do_wait;
 }
 
-int * futex_queue_repush( struct futex_queue * fq , struct futex_cell * to_repush )
+int * futex_queue_repush_no_lock( struct futex_queue * fq , struct futex_cell * to_repush )
 {
-	sctk_spinlock_lock( &fq->queue_is_wake_tainted );
-	
-	Buffered_FIFO_push( &fq->wait_list , to_repush );
-	
-	sctk_spinlock_unlock( &fq->queue_is_wake_tainted );
-	
+	Buffered_FIFO_push( &fq->wait_list , &to_repush );
+
 	return to_repush->do_wait;
 }
 
+int * futex_queue_repush( struct futex_queue * fq , struct futex_cell * to_repush )
+{
+	int * ret = NULL;
+	sctk_spinlock_lock( &fq->queue_is_wake_tainted );
+	
+	ret = futex_queue_repush_no_lock( &fq->wait_list , &to_repush );
+	
+	sctk_spinlock_unlock( &fq->queue_is_wake_tainted );
+	
+	return ret;
+}
 
+int futex_check_op_compat( int op, int orig_op )
+{
+	/* Check mistmatching TYPES */
+	if( (op == SCTK_FUTEX_UNLOCK_PI)
+	||  (op == SCTK_FUTEX_CMP_REQUEUE_PI)
+	||  (op == SCTK_FUTEX_WAIT_REQUEUE_PI ) )
+	{
+		if( ( orig_op == SCTK_FUTEX_WAIT )
+		||  ( orig_op == SCTK_FUTEX_WAIT_BITSET ) )
+		{
+			
+			errno = EINVAL;
+			return -1;
+		}
+	}
 
-int futex_queue_wake( struct futex_queue * fq , int bitmask, int use_mask, int count )
+	return 0;
+}
+
+int futex_queue_wake( struct futex_queue * fq , int bitmask, int use_mask, int count, int op )
 {
 	int popped = 0;
 	
@@ -322,7 +373,7 @@ int futex_queue_wake( struct futex_queue * fq , int bitmask, int use_mask, int c
 				break;
 			}
 			else
-			{
+			{				
 				/* Wake up the thread */
 				if( to_wake )
 				{
@@ -332,11 +383,19 @@ int futex_queue_wake( struct futex_queue * fq , int bitmask, int use_mask, int c
 					}
 					else
 					{
+
 						if( !to_wake->skip )
 						{
+							if( futex_check_op_compat( op, to_wake->orig_op ) < 0 )
+							{
+								futex_queue_repush_no_lock( fq, to_wake );
+								popped = -1;
+								break;
+							}
+							
 							futex_cell_detach( to_wake );
 							popped++;
-							count--;
+							count--;						
 						}
 						else
 						{
@@ -372,7 +431,7 @@ int futex_queue_wake( struct futex_queue * fq , int bitmask, int use_mask, int c
 	return popped;
 }
 
-int futex_queue_requeue( struct futex_queue * fq, struct futex_queue * out, int count )
+int futex_queue_requeue( struct futex_queue * fq, struct futex_queue * out, int count, int op )
 {
 	int popped = 0;
 	
@@ -390,19 +449,47 @@ int futex_queue_requeue( struct futex_queue * fq, struct futex_queue * out, int 
 		}
 		else
 		{
+			
 			/* Wake up the thread */
 			if( to_wake )
 			{
-				futex_cell_detach( to_wake );
-				popped++;
+				if( *to_wake->do_wait == 2 )
+					{
+						free( to_wake->do_wait );
+					}
+					else
+					{						
+						if( !to_wake->skip )
+						{
+							if( futex_check_op_compat( op, to_wake->orig_op ) < 0 )
+							{
+								futex_queue_repush_no_lock( fq, to_wake );
+								popped = -1;
+								break;
+							}
+							
+							futex_cell_detach( to_wake );
+							popped++;
+							count--;						
+						}
+						else
+						{
+							free( to_wake->do_wait );
+						}
+					}
 			}
 			else
 			{
 				sctk_error("Popped an empty elem ??");
 			}
 		}
-		
-		count--;
+	}
+	
+	if( popped < 0 )
+	{
+		/* We already encountered an error */
+		sctk_spinlock_unlock( &fq->queue_is_wake_tainted );
+		return -1;
 	}
 	
 	if( fq != out )
@@ -411,7 +498,7 @@ int futex_queue_requeue( struct futex_queue * fq, struct futex_queue * out, int 
 		while( Buffered_FIFO_pop(&fq->wait_list, (void *)&to_wake ) )
 		{
 			futex_queue_repush( out, to_wake );
-			sched_yield();
+			//sched_yield();
 		}
 	}
 	/* ELSE Nothing to do we are already on the same queue */
@@ -447,7 +534,7 @@ int futex_queue_HT_release( struct futex_queue_HT * ht )
 }
 
 
-int * futex_queue_HT_register_thread( struct futex_queue_HT * ht , int * futex_key  , int bitmask )
+int * futex_queue_HT_register_thread( struct futex_queue_HT * ht , int * futex_key  , int bitmask , int orig_op)
 {
 	/* Here we are protecting a table manipulation */
 	while( sctk_atomics_load_int( &ht->queue_table_is_being_manipulated )  < 0 )
@@ -498,7 +585,7 @@ int * futex_queue_HT_register_thread( struct futex_queue_HT * ht , int * futex_k
 		
 		/* As we are not sure to be the first one entering
 		 * we simply recursively call the function */
-		return futex_queue_HT_register_thread( ht , futex_key, bitmask );
+		return futex_queue_HT_register_thread( ht , futex_key, bitmask, orig_op );
 	}
 	
 	
@@ -530,7 +617,7 @@ int * futex_queue_HT_register_thread( struct futex_queue_HT * ht , int * futex_k
 		/* Here we are now manipulating a futex queue */
 		
 		/* Push a new wait entry */
-		ret = futex_queue_push( fq , bitmask );
+		ret = futex_queue_push( fq , bitmask, orig_op );
 	}
 	
 	/* Release the read lock */
@@ -545,7 +632,8 @@ int * futex_queue_HT_register_thread( struct futex_queue_HT * ht , int * futex_k
 int futex_queue_HT_requeue_threads( struct futex_queue_HT * ht , 
 									int * in_futex_key,
 									int * out_futex_key,
-									int count )
+									int count,
+									int op )
 {	
 	int ret = 0;
 
@@ -581,7 +669,7 @@ int futex_queue_HT_requeue_threads( struct futex_queue_HT * ht ,
 	if( in_fq && out_fq )
 	{
 		/* Here we are now manipulating a futex queue */
-		ret = futex_queue_requeue( in_fq, out_fq, count );
+		ret = futex_queue_requeue( in_fq, out_fq, count , op );
 	}
 	
 	/* Release the read lock */
@@ -593,7 +681,7 @@ int futex_queue_HT_requeue_threads( struct futex_queue_HT * ht ,
 
 
 
-int futex_queue_HT_wake_threads( struct futex_queue_HT * ht , int * futex_key , int bitmask, int use_mask, int count )
+int futex_queue_HT_wake_threads( struct futex_queue_HT * ht , int * futex_key , int bitmask, int use_mask, int count, int op )
 {
 	/* Here we are protecting a table manipulation */
 	while( sctk_atomics_load_int( &ht->queue_table_is_being_manipulated )  < 0 )
@@ -620,13 +708,11 @@ int futex_queue_HT_wake_threads( struct futex_queue_HT * ht , int * futex_key , 
 	else
 	{
 		/* Perform the wake */
-		ret = futex_queue_wake( fq, bitmask, use_mask, count );
+		ret = futex_queue_wake( fq, bitmask, use_mask, count, op );
 	}
 	
 	/* Release the read lock */
 	sctk_atomics_decr_int( &ht->queue_table_is_being_manipulated);
-	
-	sctk_info("Waking %d threads\n", ret );
 	
 	return ret;
 }
@@ -660,7 +746,7 @@ void sctk_futex_context_release()
 
 int sctk_futex_WAIT_no_timer(void *addr1, int op, int val1, int val3 )
 {
-	int * wait_ticket = futex_queue_HT_register_thread( &___futex_queue_HT, addr1, val3 );
+	int * wait_ticket = futex_queue_HT_register_thread( &___futex_queue_HT, addr1, val3, op );
 	
 	if(!wait_ticket)
 	{
@@ -699,7 +785,7 @@ int sctk_futex_WAIT(void *addr1, int op, int val1, struct timespec *timeout, int
 	
 	/* Here we consider the timed implementation */
 	
-	int * wait_ticket = futex_queue_HT_register_thread( &___futex_queue_HT, addr1 , bitmask);
+	int * wait_ticket = futex_queue_HT_register_thread( &___futex_queue_HT, addr1 , bitmask, op);
 	
 	if(!wait_ticket)
 	{
@@ -726,13 +812,13 @@ int sctk_futex_WAIT(void *addr1, int op, int val1, struct timespec *timeout, int
 
 int sctk_futex_WAKE(void *addr1, int op, int val1 )
 {
-	return futex_queue_HT_wake_threads(  &___futex_queue_HT, addr1, 0, 0 /* No bitmask */,  val1 );
+	return futex_queue_HT_wake_threads(  &___futex_queue_HT, addr1, 0, 0 /* No bitmask */,  val1, op );
 }
 
 
 int sctk_futex_WAKE_BITSET(void *addr1, int op, int val1, int val3 )
 {
-	return futex_queue_HT_wake_threads(  &___futex_queue_HT, addr1, val3, 1,  val1 );
+	return futex_queue_HT_wake_threads(  &___futex_queue_HT, addr1, val3, 1,  val1, op);
 }
 
 
@@ -854,7 +940,8 @@ int sctk_futex_REQUEUE(void *addr1, int op, int val1, void * addr2 )
 	return futex_queue_HT_requeue_threads( &___futex_queue_HT, 
 										   addr1,
 										   addr2,
-										   val1 );
+										   val1,
+										   op );
 }
 
 int sctk_futex_CMPREQUEUE(void *addr1, int op, int val1, void * addr2, int val3 )
@@ -874,7 +961,82 @@ int sctk_futex_CMPREQUEUE(void *addr1, int op, int val1, void * addr2, int val3 
 	return futex_queue_HT_requeue_threads( &___futex_queue_HT, 
 										   addr1,
 										   addr2,
-										   val1 );
+										   val1,
+										   op );
+}
+
+int sctk_futex_CMPREQUEUE_PI(void *addr1, int op, int val1, void * addr2, int val3 )
+{
+	if( val1 != 1 )
+	{
+		errno = EINVAL;
+		return -1;
+	}
+	else
+	{
+		return sctk_futex_CMPREQUEUE(addr1, SCTK_FUTEX_CMP_REQUEUE_PI, val1, addr2, val3 );
+	}
+}
+
+
+int sctk_futex_TRYLOCKPI( int * volatile futex )
+{
+	int ret = sctk_spinlock_trylock( (sctk_spinlock_t *) futex );
+	
+	/* Flag as waited for */
+	*futex = *futex & sctk_do_translate_futex_waiter();
+	
+	if( ret != 0 )
+	{
+		return -1;
+	}
+	
+	return 0;
+}
+
+
+
+int sctk_futex_LOCKPI( int * volatile futex , struct timespec *timeout)
+{
+
+	/* Flag as waited for */
+	*futex = *futex & sctk_do_translate_futex_waiter();
+
+	if( !timeout )
+	{
+		if( sctk_futex_TRYLOCKPI( futex ) != 0 )
+		{
+			sctk_futex_WAIT_no_timer(futex, SCTK_FUTEX_LOCK_PI, *((int *)futex), 0 );
+		}
+	}
+	else
+	{
+		unsigned int time_to_wait = timeout->tv_sec * 1e6 + timeout->tv_nsec;
+
+		if( sctk_thread_timed_wait_for_value (futex, 0, time_to_wait) )
+		{
+			/* We timed out */
+			errno = ETIMEDOUT;
+			return -1;
+		}
+		
+		if( sctk_futex_TRYLOCKPI( futex ) != 0 )
+		{
+			/* We failled to take the lock just mimic timeout */
+			errno = ETIMEDOUT;
+			return -1;
+		}
+	}
+	
+	return 0;
+}
+
+int sctk_futex_UNLOCKPI( int * volatile futex)
+{
+	sctk_spinlock_unlock( (sctk_spinlock_t *) futex );
+	sctk_futex_WAKE(futex, SCTK_FUTEX_UNLOCK_PI, 1 );
+	
+	return 0;
 }
 
 
@@ -892,14 +1054,14 @@ int sctk_futex(void *addr1, int op, int val1,
 	
 	unsigned long tmp_val2 = (unsigned long)timeout;
 	int val2 = (int)tmp_val2;
-			
+
 	switch( op )
 	{
 		case SCTK_FUTEX_WAIT :
-			ret = sctk_futex_WAIT(addr1, op, val1, timeout, 0 );
+			ret = sctk_futex_WAIT(addr1, SCTK_FUTEX_WAIT, val1, timeout, 0 );
 		break;
 		case SCTK_FUTEX_WAIT_BITSET :
-			ret = sctk_futex_WAIT(addr1, op, val1, timeout, val3 );
+			ret = sctk_futex_WAIT(addr1, SCTK_FUTEX_WAIT_BITSET, val1, timeout, val3 );
 		break;
 		case SCTK_FUTEX_WAKE :
 			ret = sctk_futex_WAKE(addr1, op, val1 );
@@ -911,18 +1073,30 @@ int sctk_futex(void *addr1, int op, int val1,
 			ret = sctk_futex_WAKE_OP(addr1, op, addr2, val1, val2, val3 );
 		break;
 		case SCTK_FUTEX_REQUEUE :
-			ret = sctk_futex_REQUEUE(addr1, op, val1, addr2 );
+			ret = sctk_futex_REQUEUE(addr1, SCTK_FUTEX_REQUEUE, val1, addr2 );
 		break;
 		case SCTK_FUTEX_CMP_REQUEUE :
-			ret = sctk_futex_CMPREQUEUE(addr1, op, val1, addr2, val3 );
+			ret = sctk_futex_CMPREQUEUE(addr1, SCTK_FUTEX_CMP_REQUEUE, val1, addr2, val3 );
+		break;
+		case SCTK_FUTEX_CMP_REQUEUE_PI :
+			ret = sctk_futex_CMPREQUEUE_PI( addr1, op, val1, addr2, val3 );
+		break;
+		case SCTK_FUTEX_LOCK_PI :
+			ret = sctk_futex_LOCKPI( addr1 , timeout);
+		break;
+		case SCTK_FUTEX_TRYLOCK_PI :
+			ret = sctk_futex_TRYLOCKPI( addr1 );
+		break;
+		case SCTK_FUTEX_UNLOCK_PI :
+			ret = sctk_futex_UNLOCKPI( addr1 );
+		break;
+		case SCTK_FUTEX_WAIT_REQUEUE_PI :
+			ret = sctk_futex_WAIT(addr1, SCTK_FUTEX_WAIT_REQUEUE_PI, *((int *)addr1), timeout, 0 );
 		break;
 		default:
 			sctk_fatal("Not implemented YET");
 	}
 
-	
-	sched_yield();
-	
 	return ret;
 }
 

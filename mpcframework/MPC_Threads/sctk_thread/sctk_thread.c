@@ -96,6 +96,7 @@ sctk_thread_init (void)
 #ifdef SCTK_CHECK_CODE_RETURN
   fprintf (stderr, "Thread librarie return code check enable!!\n");
 #endif
+  sctk_futex_context_init();
   /*Check all types */
 }
 
