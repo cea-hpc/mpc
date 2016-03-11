@@ -45,8 +45,14 @@ int sctk_do_translate_futex_op( int OPCODE )
 		case FUTEX_WAIT :
 			return SCTK_FUTEX_WAIT;
 		break;
+		case FUTEX_WAIT_BITSET :
+			return SCTK_FUTEX_WAIT_BITSET;
+		break;
 		case FUTEX_WAKE :
 			return SCTK_FUTEX_WAKE;
+		break;
+		case FUTEX_WAKE_BITSET :
+			return SCTK_FUTEX_WAKE_BITSET;
 		break;
 		case FUTEX_WAKE_OP :
 			return SCTK_FUTEX_WAKE_OP;
@@ -175,7 +181,7 @@ struct futex_cell *  futex_cell_new( int bitmask )
 	}
 	
 	*cell->do_wait = 1;
-	
+
 	cell->bitmask = bitmask;
 	
 	cell->skip = 0;
@@ -320,11 +326,22 @@ int futex_queue_wake( struct futex_queue * fq , int bitmask, int use_mask, int c
 				/* Wake up the thread */
 				if( to_wake )
 				{
-					if( !to_wake->skip )
+					if( *to_wake->do_wait == 2 )
 					{
-						futex_cell_detach( to_wake );
-						popped++;
-						count--;
+						free( to_wake->do_wait );
+					}
+					else
+					{
+						if( !to_wake->skip )
+						{
+							futex_cell_detach( to_wake );
+							popped++;
+							count--;
+						}
+						else
+						{
+							free( to_wake->do_wait );
+						}
 					}
 				}
 				else
@@ -641,9 +658,9 @@ void sctk_futex_context_release()
 /* Futex Ops                                               	            */
 /************************************************************************/
 
-int sctk_futex_WAIT_no_timer(void *addr1, int op, int val1 )
+int sctk_futex_WAIT_no_timer(void *addr1, int op, int val1, int val3 )
 {
-	int * wait_ticket = futex_queue_HT_register_thread( &___futex_queue_HT, addr1, 0 );
+	int * wait_ticket = futex_queue_HT_register_thread( &___futex_queue_HT, addr1, val3 );
 	
 	if(!wait_ticket)
 	{
@@ -659,7 +676,7 @@ int sctk_futex_WAIT_no_timer(void *addr1, int op, int val1 )
 }
 
 
-int sctk_futex_WAIT(void *addr1, int op, int val1, struct timespec *timeout )
+int sctk_futex_WAIT(void *addr1, int op, int val1, struct timespec *timeout, int bitmask )
 {
 	/* First check the value */
 	OPA_int_t * pold_val = (OPA_int_t *)addr1;
@@ -677,12 +694,12 @@ int sctk_futex_WAIT(void *addr1, int op, int val1, struct timespec *timeout )
 	/* Do we need to jump to the blocking implementation ? */
 	if( !timeout )
 	{
-		return sctk_futex_WAIT_no_timer(addr1, op, val1 );
+		return sctk_futex_WAIT_no_timer(addr1, op, val1, bitmask );
 	}
 	
 	/* Here we consider the timed implementation */
 	
-	int * wait_ticket = futex_queue_HT_register_thread( &___futex_queue_HT, addr1 , 0);
+	int * wait_ticket = futex_queue_HT_register_thread( &___futex_queue_HT, addr1 , bitmask);
 	
 	if(!wait_ticket)
 	{
@@ -695,7 +712,7 @@ int sctk_futex_WAIT(void *addr1, int op, int val1, struct timespec *timeout )
 	{
 		/* We timed out */
 		errno = ETIMEDOUT;
-		free( wait_ticket );
+		*wait_ticket = 2;
 		return -1;
 	}
 	
@@ -710,6 +727,12 @@ int sctk_futex_WAIT(void *addr1, int op, int val1, struct timespec *timeout )
 int sctk_futex_WAKE(void *addr1, int op, int val1 )
 {
 	return futex_queue_HT_wake_threads(  &___futex_queue_HT, addr1, 0, 0 /* No bitmask */,  val1 );
+}
+
+
+int sctk_futex_WAKE_BITSET(void *addr1, int op, int val1, int val3 )
+{
+	return futex_queue_HT_wake_threads(  &___futex_queue_HT, addr1, val3, 1,  val1 );
 }
 
 
@@ -873,10 +896,16 @@ int sctk_futex(void *addr1, int op, int val1,
 	switch( op )
 	{
 		case SCTK_FUTEX_WAIT :
-			ret = sctk_futex_WAIT(addr1, op, val1, timeout );
+			ret = sctk_futex_WAIT(addr1, op, val1, timeout, 0 );
+		break;
+		case SCTK_FUTEX_WAIT_BITSET :
+			ret = sctk_futex_WAIT(addr1, op, val1, timeout, val3 );
 		break;
 		case SCTK_FUTEX_WAKE :
 			ret = sctk_futex_WAKE(addr1, op, val1 );
+		break;
+		case SCTK_FUTEX_WAKE_BITSET :
+			ret = sctk_futex_WAKE_BITSET(addr1, op, val1, val3 );
 		break;
 		case SCTK_FUTEX_WAKE_OP :
 			ret = sctk_futex_WAKE_OP(addr1, op, addr2, val1, val2, val3 );

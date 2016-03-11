@@ -34,6 +34,7 @@
 struct futex_cell
 {
 	int * do_wait;
+	int freed;
 	int bitmask;
 	int skip;
 };
@@ -113,6 +114,8 @@ int sctk_futex(void *addr1, int op, int val1,
 #define SCTK_FUTEX_REQUEUE 21212
 #define SCTK_FUTEX_CMP_REQUEUE 21213
 #define SCTK_FUTEX_WAKE_OP 21214
+#define SCTK_FUTEX_WAIT_BITSET 21215
+#define SCTK_FUTEX_WAKE_BITSET 21216
 
 /* OPS */
 
