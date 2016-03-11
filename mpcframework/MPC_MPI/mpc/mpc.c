@@ -28,7 +28,6 @@
 #include "mpc_reduction.h"
 #include "sctk_debug.h"
 #include "sctk_topology.h"
-#include "sctk_tls.h"
 #include <sctk_ethread_internal.h>
 #include "sctk_route.h"
 #include "mpcthread.h"

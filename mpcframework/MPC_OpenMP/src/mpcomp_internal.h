@@ -28,7 +28,6 @@
 #include "sctk_atomics.h"
 #include "sctk_asm.h"
 #include "sctk_context.h"
-#include "sctk_tls.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -547,6 +546,7 @@ typedef struct mpcomp_thread_s
  ****** VARIABLES 
  *****************/
 
+     extern __thread void *sctk_openmp_thread_tls;
      extern mpcomp_global_icv_t mpcomp_global_icvs;
 
 

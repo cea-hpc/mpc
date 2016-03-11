@@ -51,7 +51,6 @@
 #endif
 #include "sctk.h"
 #include "sctk_context.h"
-#include "sctk_tls.h"
 #include "sctk_runtime_config.h"
 #include "sctk_runtime_config_struct_defaults.h"
 

@@ -28,7 +28,6 @@
 #include "mpc_info.h"
 #include "mpc_datatypes.h"
 #include "mpc_extended_request.h"
-#include "sctk_tls.h"
 #include "sctk_debug.h"
 
 /************************************************************************/

@@ -52,7 +52,6 @@
 #endif /* MPC_Message_Passing */
 #include "sctk_topology.h"
 #include "sctk_asm.h"
-#include "sctk_tls.h"
 /* #include "sctk_daemons.h" */
 /* #include "sctk_io.h" */
 #include "sctk_runtime_config.h"

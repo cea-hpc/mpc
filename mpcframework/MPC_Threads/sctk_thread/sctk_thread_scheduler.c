@@ -32,7 +32,6 @@
 #include "sctk_spinlock.h"
 #include "sctk_thread_generic.h"
 #include "sctk_kernel_thread.h"
-#include "sctk_tls.h"
 #include "sctk_topology.h"
 #include <libpause.h>
 

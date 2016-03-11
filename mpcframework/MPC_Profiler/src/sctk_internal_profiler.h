@@ -28,7 +28,6 @@
 #include "sctk_profile_meta.h"
 #include "sctk_asm.h"
 #include "sctk_atomics.h"
-#include "sctk_tls.h"
 
 /* Profiler internal interface */
 
