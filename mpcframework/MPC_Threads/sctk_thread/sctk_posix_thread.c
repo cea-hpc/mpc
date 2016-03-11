@@ -902,10 +902,6 @@ unsigned long mpc_thread_atomic_add (volatile unsigned long
   return sctk_thread_atomic_add (ptr, val);
 }
 
-unsigned long mpc_thread_tls_entry_add (unsigned long size,
-					void (*func) (void *))
-{
-  return sctk_tls_entry_add (size, func);
 }
 
 /* At exit */
@@ -923,4 +919,3 @@ int  mpc_thread_futex(int sysop, void *addr1, int op, int val1,
 {
 	sctk_futex_context_init();
 	return sctk_thread_futex(addr1, op, val1, timeout, addr2, val3);
-}

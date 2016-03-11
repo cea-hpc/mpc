@@ -184,21 +184,13 @@ Need to check this in more depth for futur version ( > 2.4.0-1).
     volatile int restored;
     sigset_t sigs;
     int error;
-    void *thread_lib;
     void *sctk_current_alloc_chain_local;
-    void *sctk_tls_trace_local;
-    void *mpc_user_tls_1;
     void *sctk_extls;
     void *sctk_hls_generation;
 #if defined (SCTK_USE_OPTIMIZED_TLS)
     void *sctk_tls_module;
 #endif
     void *___sctk_message_passing;
-    /* profiling TLS */
-    void *tls_trace_module;
-    void *tls_args;
-    /* MPC Profiler TLS */
-    void *tls_mpc_profiler;
 #if defined (MPC_OpenMP)
     /* MPC OpenMP TLS */
     void *sctk_openmp_thread_tls ;
@@ -227,8 +219,6 @@ Need to check this in more depth for futur version ( > 2.4.0-1).
 		            size_t stack_size,
 		            void *extls);
 #endif
-  void sctk_tls_init (void);
-
 
 #ifdef __cplusplus
 }

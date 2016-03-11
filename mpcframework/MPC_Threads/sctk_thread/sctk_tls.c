@@ -62,7 +62,7 @@ int MPC_Config_Status_MPC_HAVE_OPTION_ETLS_OPTIMIZED(){
 #include <asm/prctl.h> /* ARCH_SET_GS */
 #include <sys/prctl.h> /* arch_prctl */
 
-extern int arch_prctl (int code, unsigned long addr); 
+extern int arch_prctl (int code, unsigned long addr);
 
 /*
 Function is not defined in headers, manpage say to declare it manually.
@@ -530,7 +530,7 @@ sctk_get_module_file_decr (size_t m, size_t module_size)
 
       memset (tls_module, 0, module_size);
       sctk_init_module (m, tls_module, module_size);
-	
+
       /* assume(write (fd, tls_module, module_size) == module_size); */
       res_write = write (fd, tls_module, module_size);
       free (tls_module);
@@ -652,7 +652,7 @@ size_t sctk_align_size_to_page(size_t size){
   if(size % page_size == 0){
     return size;
   }
-  size += page_size - (size % page_size);  
+  size += page_size - (size % page_size);
   return size;
 }
 
@@ -836,12 +836,12 @@ return ;
 	  if ( prev_child == NULL ) {
 		  char level_id[8] ;
 		  int numa_id = 0 ;
-		  if ( is_numa_node 
+		  if ( is_numa_node
 		  /* Make sure to skip devices */
 		  && cur_obj->type != HWLOC_OBJ_MACHINE
-		  && cur_obj->type != HWLOC_OBJ_MISC 
-		  && cur_obj->type != HWLOC_OBJ_BRIDGE 
-		  && cur_obj->type != HWLOC_OBJ_PCI_DEVICE 
+		  && cur_obj->type != HWLOC_OBJ_MISC
+		  && cur_obj->type != HWLOC_OBJ_BRIDGE
+		  && cur_obj->type != HWLOC_OBJ_PCI_DEVICE
 		  && cur_obj->type != HWLOC_OBJ_OS_DEVICE ) {
 			  hwloc_obj_t temp_obj = cur_obj;
 			  while (temp_obj->type != HWLOC_OBJ_NODE && temp_obj->type != HWLOC_OBJ_GROUP) {
@@ -1420,11 +1420,6 @@ sctk_extls_duplicate (void **new)
 
 void
 sctk_extls_keep (int *scopes)
-{
-}
-
-void
-sctk_extls_keep_non_current_thread (void **tls, int *scopes)
 {
 }
 
