@@ -26,12 +26,13 @@
 
 
 #define _GNU_SOURCE
-#include "sctk_config.h"
-#include "sctk_alloc.h"
-#include "sctk_topology.h"
+//#include "sctk_config.h"
+//#include "sctk_alloc.h"
+//#include "sctk_topology.h"
 #include "sctk_accessor.h"
+
+#include "sctk_spinlock.h"
 #include "sctk_atomics.h"
-#include <sctk_debug.h>
 #include <unistd.h>
 #include <sctk_tls.h>
 #include <sys/types.h>
@@ -39,7 +40,14 @@
 #include <fcntl.h>
 #include "hwloc.h"
 #include <dlfcn.h>
+#include <sys/mman.h>
 
+#define assume(u) do {if(!u) abort();} while(0)
+#define sctk_nodebug(...) (void)0x0;
+#define sctk_malloc malloc
+#define sctk_calloc calloc
+#define sctk_realloc realloc
+#define sctk_user_mmap mmap
 /* Not present in hwloc.h */
 void hwloc_obj_add_info(hwloc_obj_t obj, const char *name, const char *value);
 
@@ -750,7 +758,7 @@ sctk_extls_keep ( int *scopes )
 void
 sctk_extls_delete ()
 {
-TODO("Liberation des extls")
+
 }
 
 #include <utlist.h>

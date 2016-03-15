@@ -24,10 +24,7 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "sctk_config.h"
 #include "sctk_context.h"
-#include "sctk_spinlock.h"
-#include "sctk_alloc.h"
 #include <unistd.h>
 #include <sys/syscall.h>
 
