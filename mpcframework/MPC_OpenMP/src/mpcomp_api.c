@@ -72,6 +72,23 @@ omp_get_thread_num (void)
 int
 omp_get_max_threads (void)
 {
+/*  mpcomp_thread_t * t ;
+  int nb_mvps;
+
+  __mpcomp_init ();
+
+  t = sctk_openmp_thread_tls ;
+  sctk_assert( t != NULL ) ;
+  
+  if( t->children_instance )
+      nb_mvps = t->children_instance->nb_mvps;
+  else
+      nb_mvps = 1;
+
+ sctk_debug("[%d] mpcomp_get_max_threads: getting %d thread(s)",
+         t->rank, nb_mvps) ;
+
+  return nb_mvps;*/
   mpcomp_thread_t * t ;
 
   __mpcomp_init ();
@@ -79,7 +96,7 @@ omp_get_max_threads (void)
   t = sctk_openmp_thread_tls ;
   sctk_assert( t != NULL ) ;
 
- sctk_debug("[%d] omp_get_max_threads: getting %d thread(s)",
+  sctk_debug("[%d] omp_get_max_threads: getting %d thread(s)",
 		 t->rank, t->info.icvs.nthreads_var) ;
 
   return t->info.icvs.nthreads_var;
@@ -92,10 +109,24 @@ omp_get_max_threads (void)
 int
 omp_get_num_procs (void)
 {
-  mpcomp_thread_t * t ;
+  mpcomp_thread_t * t;
+//  mpcomp_thread_t * t_lookup;
+  
   __mpcomp_init ();
 
+  t = sctk_openmp_thread_tls;
+  sctk_assert(t != NULL);
+
   return mpcomp_global_icvs.nmicrovps_var;
+
+/*  t_lookup = t;
+
+  while( t_lookup->father != NULL )
+  {
+    t_lookup = t_lookup->father;
+  }
+
+  return t_lookup->children_instance->nb_mvps;*/
 }
 
 
@@ -285,11 +316,7 @@ int
 omp_get_ancestor_thread_num(int level)
 {
 	mpcomp_thread_t *t;
-	mpcomp_instance_t *instance ;
     int i ;
-
-    /* TODO: father of threads are set too early => NULL */
-    not_implemented() ;
 
 	__mpcomp_init();
 
@@ -299,17 +326,14 @@ omp_get_ancestor_thread_num(int level)
 	t = sctk_openmp_thread_tls;
 	sctk_assert(t != NULL);
 
-    instance = t->instance ;
-	sctk_assert(instance != NULL);
-
     /* If level is outside of bounds, return -1 */
-	if (level < 0 || level > omp_get_level() )
+	if (level < 0 || level > t->info.icvs.levels_var )
 	{
 		return -1;
 	}
 
     /* Go up to the right level and catch the rank */
-	for ( i = omp_get_level() ; i > level ; i-- ) 
+	for ( i = t->info.icvs.levels_var ; i > level ; i-- ) 
     {
 		t = t->father ;
         sctk_assert(t != NULL);
@@ -328,11 +352,7 @@ int
 omp_get_team_size(int level)
 {
 	mpcomp_thread_t *t;
-	mpcomp_instance_t *instance ;
     int i ;
-
-    /* TODO: father of threads are set too early => NULL */
-    not_implemented() ;
 
 	__mpcomp_init();
 
@@ -342,17 +362,14 @@ omp_get_team_size(int level)
 	t = sctk_openmp_thread_tls;
 	sctk_assert(t != NULL);
 
-    instance = t->instance ;
-	sctk_assert(instance != NULL);
-
     /* If level is outside of bounds, return -1 */
-	if (level < 0 || level > omp_get_level() )
+	if (level < 0 || level > t->info.icvs.levels_var )
 	{
 		return -1;
 	}
 
     /* Go up to the right level and catch the rank */
-	for ( i = omp_get_level() ; i > level ; i-- ) 
+	for ( i = t->info.icvs.levels_var ; i > level ; i-- ) 
     {
 		t = t->father ;
         sctk_assert(t != NULL);
@@ -409,8 +426,29 @@ omp_get_wtick (void)
 int
 omp_get_thread_limit()
 {
-    not_implemented() ;
-    return 0 ;
+  mpcomp_thread_t * t;
+  
+  __mpcomp_init ();
+
+  t = sctk_openmp_thread_tls;
+  sctk_assert(t != NULL);
+
+  return mpcomp_global_icvs.thread_limit_var;
+  /*mpcomp_thread_t *t;
+  mpcomp_thread_t *t_lookup;
+
+  __mpcomp_init();
+
+  t = sctk_openmp_thread_tls;
+  sctk_assert(t != NULL);
+
+  t_lookup = t;
+  while( t_lookup->father != NULL )
+  {
+    t_lookup = t_lookup->father;
+  }
+
+  return t_lookup->children_instance->nb_mvps;*/
 }
 
 /*

@@ -665,16 +665,15 @@ __mpcomp_init()
                 nb_mvps, sctk_get_processor_number() ) ;
     }
 
+    /* Update some global icvs according the number of mvps */
+    if( mpcomp_global_icvs.thread_limit_var == 0 
+          || mpcomp_global_icvs.thread_limit_var > nb_mvps ) {
+      mpcomp_global_icvs.thread_limit_var = nb_mvps;
+    }
 
-    /* Allocate an instance of OpenMP */
-    instance = (mpcomp_instance_t *)sctk_malloc( sizeof( mpcomp_instance_t ) ) ;
-    sctk_assert( instance != NULL ) ;
-    __mpcomp_instance_init( instance, nb_mvps, team_info ) ;
-
-
-    /* Allocate information for the sequential region */
-    t = (mpcomp_thread_t *)sctk_malloc( sizeof(mpcomp_thread_t) ) ;
-    sctk_assert( t != NULL ) ;
+    if( mpcomp_global_icvs.nmicrovps_var == 0 ) {
+      mpcomp_global_icvs.nmicrovps_var = nb_mvps;
+    }
 
     /* Initialize default ICVs */
     if (OMP_NUM_THREADS == 0) {
@@ -689,9 +688,21 @@ __mpcomp_init()
     icvs.active_levels_var = 0 ;
     icvs.levels_var = 0 ;
 
+    /* Allocate information for the sequential region */
+    t = (mpcomp_thread_t *)sctk_malloc( sizeof(mpcomp_thread_t) ) ;
+    sctk_assert( t != NULL ) ;
 
 	/* Thread info initialization */
     __mpcomp_thread_init( t, icvs, seq_instance, NULL ) ;
+
+    /* Current thread information is 't' */
+    sctk_openmp_thread_tls = t ;
+
+    /* Allocate an instance of OpenMP */
+    instance = (mpcomp_instance_t *)sctk_malloc( sizeof( mpcomp_instance_t ) ) ;
+    sctk_assert( instance != NULL ) ;
+    __mpcomp_instance_init( instance, nb_mvps, team_info ) ;
+
 	t->children_instance = instance ;
 
 #if MPCOMP_TASK
@@ -711,9 +722,6 @@ __mpcomp_init()
 	 OMP_TASK_NESTING_MAX = 8;
     team_info->task_nesting_max = OMP_TASK_NESTING_MAX;
 #endif /* MPCOMP_TASK */
-
-    /* Current thread information is 't' */
-    sctk_openmp_thread_tls = t ;
 
     sctk_thread_mutex_unlock (&lock);
 
