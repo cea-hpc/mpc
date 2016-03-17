@@ -517,48 +517,14 @@ extern "C"
 
 
 /* Futex */
-#ifndef SCTK_FUTEX_SUPPORTED
 
-#include "sctk_futex.h"
-/* Rewrite futex ops as futex is
- * not handled natively */
+/************************************************************************/
+/* Futex Wrapping                                                       */
+/************************************************************************/
 
-#define  FUTEX_WAIT SCTK_FUTEX_WAIT
-#define  FUTEX_WAKE SCTK_FUTEX_WAKE
-#define  FUTEX_WAKE_OP SCTK_FUTEX_WAKE_OP
-#define  FUTEX_REQUEUE SCTK_FUTEX_REQUEUE
-#define  FUTEX_CMP_REQUEUE SCTK_FUTEX_CMP_REQUEUE
-#define  FUTEX_WAIT_BITSET SCTK_FUTEX_WAIT_BITSET
-#define  FUTEX_WAKE_BITSET SCTK_FUTEX_WAKE_BITSET
-#define  FUTEX_LOCK_PI SCTK_FUTEX_LOCK_PI
-#define  FUTEX_TRYLOCK_PI SCTK_FUTEX_TRYLOCK_PI
-#define  FUTEX_UNLOCK_PI SCTK_FUTEX_UNLOCK_PI
-#define  FUTEX_CMP_REQUEUE_PI SCTK_FUTEX_CMP_REQUEUE_PI
-#define  FUTEX_WAIT_REQUEUE_PI SCTK_FUTEX_WAIT_REQUEUE_PI
+#include "sctk_futex_def.h"
 
-/* WAITER */
-
-#define FUTEX_WAITERS SCTK_FUTEX_WAITERS
-
-/* _OPS */
-
-#define FUTEX_OP_SET SCTK_FUTEX_OP_SET
-#define FUTEX_OP_ADD SCTK_FUTEX_OP_ADD
-#define FUTEX_OP_OR SCTK_FUTEX_OP_OR
-#define FUTEX_OP_ANDN SCTK_FUTEX_OP_ANDN
-#define FUTEX_OP_XOR SCTK_FUTEX_OP_XOR
-#define FUTEX_OP_ARG_SHIFT SCTK_FUTEX_OP_ARG_SHIFT
-
-/* CMP */
-
-#define FUTEX_OP_CMP_EQ SCTK_FUTEX_OP_CMP_EQ
-#define FUTEX_OP_CMP_NE SCTK_FUTEX_OP_CMP_NE
-#define FUTEX_OP_CMP_LT SCTK_FUTEX_OP_CMP_LT
-#define FUTEX_OP_CMP_LE SCTK_FUTEX_OP_CMP_LE
-#define FUTEX_OP_CMP_GT SCTK_FUTEX_OP_CMP_GT
-#define FUTEX_OP_CMP_GE SCTK_FUTEX_OP_CMP_GE
-
-#else
+#ifdef SCTK_FUTEX_SUPPORTED
 
 #include <unistd.h>
 #include <linux/futex.h>
@@ -569,7 +535,9 @@ extern "C"
 
 #ifndef FUTEX_OP_ARG_SHIFT
 #define FUTEX_OP_ARG_SHIFT 8
+
 #endif
+
 
 #endif /* SCTK_FUTEX_SUPPORTED */
 

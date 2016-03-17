@@ -24,7 +24,6 @@
 #include "sctk_thread.h"
 
 #include <stdio.h>
-#include <pthread.h>
 #include <sys/time.h>
 #include <errno.h>
 #include <stdlib.h>
@@ -326,7 +325,7 @@ int * futex_queue_repush( struct futex_queue * fq , struct futex_cell * to_repus
 	int * ret = NULL;
 	sctk_spinlock_lock( &fq->queue_is_wake_tainted );
 	
-	ret = futex_queue_repush_no_lock( &fq->wait_list , &to_repush );
+	ret = futex_queue_repush_no_lock( fq , to_repush );
 	
 	sctk_spinlock_unlock( &fq->queue_is_wake_tainted );
 	

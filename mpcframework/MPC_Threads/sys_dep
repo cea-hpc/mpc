@@ -135,11 +135,86 @@ gen_pthread_config
 
 end_section
 
-begin_section Futex
+begin_section Futex Support
 
+FUTEX_TEST_LEVEL=0
+
+#Check for syscalls
 SCTK_CHECK_FUNC_NOFAIL syscall
 if test "$SCTK_SCTK_CHECK_FUNC_RES" = 0 ; then
-   SCTK_CHECK_OPTION "-DSCTK_FUTEX_SUPPORTED"
+	FUTEX_TEST_LEVEL=$(( $FUTEX_TEST_LEVEL + 1))
 fi
+
+#Check for headers
+
+SCTK_CHECK_HEADER_NOFAIL linux/futex.h
+if test "$SCTK_SCTK_CHECK_HEADER_RES" = "0" ; then 
+	FUTEX_TEST_LEVEL=$(( $FUTEX_TEST_LEVEL + 1))
+fi
+
+SCTK_CHECK_HEADER_NOFAIL sys/syscall.h
+if test "$SCTK_SCTK_CHECK_HEADER_RES" = "0" ; then 
+	FUTEX_TEST_LEVEL=$(( $FUTEX_TEST_LEVEL + 1))
+fi
+
+#Check for variadic macro wrapping
+
+SCTK_MSG_CHECKING "variadic macro support compiling"
+
+cat  << EOF  > ${SCTK_CONF_C}
+int foo( int a, int b, int c )
+{
+	return a + b + c;
+}
+
+#define CALL_FOO( a , ... ) foo( a, ##__VA_ARGS__ )
+
+int main( int argc, char ** argv )
+{
+	int ret = CALL_FOO( 1, 2, 3 );
+	
+	if( ret == 6 )
+		return 0;
+	
+	return 1;
+}
+
+EOF
+
+echo "File ${SCTK_CONF_C}" >> ${SCTK_CONF_LOG} 2>&1
+cat ${SCTK_CONF_C} >> ${SCTK_CONF_LOG} 2>&1
+echo "$SCTK_CC $SCTK_CFLAGS ${SCTK_CONF_C} -o ${SCTK_CONF_BIN} -lrt">> ${SCTK_CONF_LOG} 2>&1
+eval "$SCTK_CC $SCTK_CFLAGS ${SCTK_CONF_C} -o ${SCTK_CONF_BIN} -lrt">> ${SCTK_CONF_LOG} 2>&1
+SCTK_SCTK_CHECK_HEADER_RES="$?"
+rm ${SCTK_CONF_C} >> ${SCTK_CONF_LOG} 2>&1
+
+MPC_AIO_ENABLED="0"
+
+if test "$SCTK_SCTK_CHECK_HEADER_RES" = 0 ; then
+    result yes
+    
+    SCTK_MSG_CHECKING "variadic macro support"
+    echo "${SCTK_CONF_BIN}">> ${SCTK_CONF_LOG} 2>&1
+	eval "${SCTK_CONF_BIN}">> ${SCTK_CONF_LOG} 2>&1
+	SCTK_SCTK_CHECK_HEADER_RES="$?"
+	rm ${SCTK_CONF_BIN} >> ${SCTK_CONF_LOG} 2>&1
+	
+	if test "$SCTK_SCTK_CHECK_HEADER_RES" = 0 ; then
+		result yes
+		FUTEX_TEST_LEVEL=$(( $FUTEX_TEST_LEVEL + 1))
+	else
+		result no
+	fi
+    
+else
+	result no
+fi
+
+#Check that all previous futex tests passed
+
+if test "x$FUTEX_TEST_LEVEL" = "x4" ; then
+	SCTK_CHECK_OPTION "-DSCTK_FUTEX_SUPPORTED"
+fi
+
 
 end_section

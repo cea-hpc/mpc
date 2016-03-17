@@ -21,7 +21,8 @@
 /* ######################################################################## */
 
 #include <mpcthread.h>
-
+#include "sctk_futex.h"
+#include "sctk_thread.h"
 
 
 /* pthread_atfork */
