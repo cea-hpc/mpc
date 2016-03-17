@@ -212,8 +212,11 @@ fi
 
 #Check that all previous futex tests passed
 
+SCTK_FUTEX_SUPPORTED=0
+
 if test "x$FUTEX_TEST_LEVEL" = "x4" ; then
 	SCTK_CHECK_OPTION "-DSCTK_FUTEX_SUPPORTED"
+	SCTK_FUTEX_SUPPORTED=1
 fi
 
 
