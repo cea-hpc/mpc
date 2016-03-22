@@ -26,12 +26,10 @@
 #include "sctk_io_helper.h"
 #include "sctk_debug.h"
 
-#ifdef MPC_USE_HYDRA
+
+#ifndef SCTK_LIB_MODE
 	#include <pmi.h>
-	#define SCTK_PMI_TAG_PMI_HOSTNAME 1
-#elif MPC_USE_SLURM
-	#include <pmi.h>
-#elif SCTK_LIB_MODE
+#else
 	/* We have to define these constants
 	 * as in lib mode we have no PMI.h */
 	#define PMI_SUCCESS 0

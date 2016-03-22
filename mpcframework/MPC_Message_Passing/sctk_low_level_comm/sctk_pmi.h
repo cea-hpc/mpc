@@ -58,10 +58,11 @@ extern "C"
  * SCTK_PMI tags offset
  */
 #define SCTK_PMI_TAG_TCP				1000
-#define SCTK_PMI_TAG_INFINIBAND			2000
-#define SCTK_PMI_TAG_MPCRUNCLIENT		3000
+#define SCTK_PMI_TAG_INFINIBAND				2000
+#define SCTK_PMI_TAG_MPCRUNCLIENT			3000
 #define SCTK_PMI_TAG_PMI				4000
 #define SCTK_PMI_TAG_SHM				5000
+#define SCTK_PMI_TAG_PMI_HOSTNAME 			6000 
 #define NODE_NUMBER 1024*1024
 
 struct process_nb_from_node_rank
