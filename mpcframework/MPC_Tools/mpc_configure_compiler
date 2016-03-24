@@ -61,6 +61,11 @@ override_var_if_isset()
 
 	eval "\${1}=\${content}"
 }
+
+print_if_stdout()
+{
+    test -d 1 && printf "$@"
+}
 EOF
 header_sh >> $1
 
@@ -210,7 +215,7 @@ for arg in "\$@" ; do
 			family="\`cat \$line | cut -d":" -f1\`"
 			priv="\`cat \$line | cut -d":" -f2\`"
 			compiler="\`cat \$line | cut -d":" -f3\`"
-			printf " - \${compiler} (\${family} Privatization support : \${priv})"
+			print_if_stdout " - \${compiler} (\${family} Privatization support : \${priv})"
     	done
 		exit 0
 		;;
@@ -261,7 +266,7 @@ for arg in "\$@" ; do
     ;;
 
     *)
-	qarg="\$arg"
+	qarg="'\$arg'"
     ;;
 
     esac
@@ -279,15 +284,15 @@ allargs="\${allargs} -include mpc_main.h"
 EOF
 fi
 cat << EOF >> $1
-
+unalias grep > /dev/null 2>&1
 cc_path="\`which \${CC} 2> /dev/null\`"
-is_defined="\`egrep \".*:\${cc_path}$\" \${MPC_RPREFIX}/.${2}_compilers.cfg\`"
+is_defined="\`grep \"\${cc_path}$\" \${MPC_RPREFIX}/.${2}_compilers.cfg\`"
 
 #if CC is not present in MPC compiler configuration file
 if test -z "\${is_defined}";
 then
-	printf "Warning: You try to use a compiler not handled by MPC, at your own risks\n"
-	printf "Warning: All options will be forwarded 'as is' to the given compiler\n"
+	print_if_stdout "Warning: You try to use a compiler not handled by MPC, at your own risks\n"
+	print_if_stdout "Warning: All options will be forwarded 'as is' to the given compiler\n"
 else
 	CC_FAMILY="\`echo \${is_defined} | cut -d":" -f1\`"
 	CC_PRIV="\`echo \${is_defined} | cut -d":" -f2\`"
@@ -296,8 +301,8 @@ else
 	#if CC does not support privatization and user provides privatization option
 	if test ! -z "\${PRIV_FLAG}" -a "\${CC_PRIV}" = "N";
 	then
-		printf "Warning: '\${CC} does not support privatization support. Disabling privatization'\n"
-		printf "Warning: Do not consider using this compiler for thread-based mode.\n"
+		printf_if_stdout "Warning: '\${CC} does not support privatization support. Disabling privatization'\n"
+		printf_if_stdout "Warning: Do not consider using this compiler for thread-based mode.\n"
 		PRIV_FLAG=""
 	else
 		#handle compiler-specific options depending on compiler family
