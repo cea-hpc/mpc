@@ -8,8 +8,9 @@ mpfr         ; 3.1.4 ;       ; dep     ; gmp                                    
 mpc          ; 1.0.3 ;       ; dep     ; gmp mpfr                                          ; host    ; mpc			; generic.autotools.libsgcc
 gcc          ; 4.8.5 ;       ; install ; gmp mpfr mpc binutils                             ; host    ; extern		; generic.autotools.gcc
 openpa       ; 1.0.2 ;       ; dep     ;                                                   ; target  ; extern		; generic.autotools
+libextls     ; 0.5.0 ;       ; install ; hwloc openpa                                      ; target  ; extern       ; generic.autotools
 sctk_arch    ;       ;       ; install ; openpa                                            ; target  ; local		; local.autotools
-mpcframework ;       ;       ; install ; libxml2 hwloc openpa sctk_arch hydra hydra_simple gcc; target  ; local		; local.autotools
+mpcframework ;       ;       ; install ; libxml2 hwloc openpa libextls sctk_arch hydra hydra_simple gcc; target  ; local		; local.autotools
 hydra        ; 3.1   ;       ; install ;                                                   ; all     ; extern		; generic.autotools
 hydra_simple ;       ;       ; install ; hydra                                             ; all     ; hydra_simple	; local.autotools
 gdb          ; 7.6.2 ;       ; install ;                                                   ; target  ; extern		; generic.autotools

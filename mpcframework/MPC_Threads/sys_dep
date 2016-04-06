@@ -129,6 +129,25 @@ else
 fi
 end_section
 
+
+begin_section TLS support
+#check main headers
+SCTK_CHECK_HEADER extls.h
+SCTK_CHECK_HEADER extls_common.h
+
+#setup rpaths and -L
+if [ -e "${MPC_RPREFIX}/${MPC_SUBPREFIX}/lib64/libextls.so" ]; then
+	SCTK_LDFLAGS="${SCTK_LDFLAGS} -L`echo \"\\${MPC_RPREFIX}\"`/${MPC_SUBPREFIX}/lib64"
+	#SCTK_ARFLAGS="${SCTK_ARFLAGS} ${LIBEXTLS_USER_PREFIX}/lib64/libextls.so"
+elif [ -e "${MPC_RPREFIX}/${MPC_SUBPREFIX}/lib/libextls.so" ]; then
+	SCTK_LDFLAGS="${SCTK_LDFLAGS} -L`echo \"\\${MPC_RPREFIX}\"`/${MPC_SUBPREFIX}/lib"
+	#SCTK_ARFLAGS="${SCTK_ARFLAGS} ${LIBEXTLS_USER_PREFIX}/lib/libextls.so"
+fi
+
+SCTK_CHECK_LDOPTION "-lextls"
+
+end_section
+
 begin_section Pthread
 check_pthread_flags 
 gen_pthread_config

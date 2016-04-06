@@ -227,6 +227,12 @@ do
 		--disable-mpc-tbb)
 			TBB_PREFIX="disabled"
 			;;
+		--with-libextls=*)
+			extractParamValue 'LIBEXTLS_PREFIX' 'with-libextls' "$arg"
+			;;
+		--libextls-*)
+			extractAndAddPackageOption 'LIBEXTLS_BUILD_PARAMETERS' 'libextls' "$arg"
+			;;
 		################# COMPILER ##################
 		--compiler=*)
 			GCC_PREFIX='disabled'
@@ -484,7 +490,26 @@ fillMPCBuildParameters()
 }
 
 ######################################################
+#fill libextls Build parameters
+fillTLSBuildParameters()
+{
+	#Verify if users give path for hwloc
+	if test -z "${HWLOC_PREFIX}" -o "${HWLOC_PREFIX}" = "internal"; then
+		LIBEXTLS_BUILD_PARAMETERS="'--with-hwloc=\$\(PREFIX\)/' ${LIBEXTLS_BUILD_PARAMETERS}"
+	else
+		LIBEXTLS_BUILD_PARAMETERS="'--with-hwloc=${HWLOC_PREFIX}' ${LIBEXTLS_BUILD_PARAMETERS}"
+	fi
+	#Verify if users give path for openpa
+	if test -z "${OPENPA_PREFIX}" -o "${OPENPA_PREFIX}" = "internal"; then
+		LIBEXTLS_BUILD_PARAMETERS="'--with-openpa=\$\(PREFIX\)/' ${LIBEXTLS_BUILD_PARAMETERS}"
+	else
+		LIBEXTLS_BUILD_PARAMETERS="'--with-openpa=${OPENPA_PREFIX}' ${LIBEXTLS_BUILD_PARAMETERS}"
+	fi
+}
+
+######################################################
 #Fill some external package options
+fillTLSBuildParameters
 fillGCCBuildParameters
 fillMPCBuildParameters
 
