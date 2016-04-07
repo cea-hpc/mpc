@@ -50,13 +50,6 @@ __thread void *tls_mpc_profiler;
 __thread void *sctk_openmp_thread_tls;
 #endif
 
-__thread char * sctk_optarg;
-__thread int sctk_optind;
-__thread int sctk_opterr;
-__thread int sctk_optopt;
-__thread int sctk_optreset;
-__thread int sctk_optpos;
-
 unsigned long mpc_user_tls_1_offset = 0;
 unsigned long mpc_user_tls_1_entry_number = 0;
 unsigned long mpc_user_tls_1_entry_number_max = 0;
