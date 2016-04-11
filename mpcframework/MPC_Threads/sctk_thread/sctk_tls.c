@@ -91,7 +91,7 @@ void sctk_tls_locate_tls_dyn_initializer( char * fname )
 {
 	void * handle = dlopen( NULL, RTLD_LAZY );
 	void * ret = dlsym( handle, fname );
-	sctk_warning("Locating Dyn initalizer for %s ret %p\n", fname, ret );
+	sctk_info("Locating Dyn initalizer for %s ret %p\n", fname, ret );
 	
 	/* If we found a dynamic initializer call it */
 	if( ret )
