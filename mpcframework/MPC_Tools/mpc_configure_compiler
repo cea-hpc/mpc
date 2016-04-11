@@ -150,6 +150,10 @@ next_arg_is_output=no
 OUTPUT_FILE_ARGS=""
 PRIV_FLAG="-fmpc-privatize"
 OMP_FLAG=""
+
+#By default enable dynamic pricatization
+export MPC_DYN_PRIV_ENABLED=1
+
 for arg in "\$@" ; do
     # Set addarg to no if this arg should be ignored by the C compiler
     addarg=yes
@@ -192,6 +196,11 @@ for arg in "\$@" ; do
     	addarg=no
 	;;  
 	-fno-mpc-privatize|-fno-mpc-privatize|-fnompc-privatize|-fnompcprivatize)
+		PRIV_FLAG=""
+		addarg=no
+	;;
+	-fno-mpc-plugin)
+		unset MPC_DYN_PRIV_ENABLED
 		PRIV_FLAG=""
 		addarg=no
 	;;
@@ -315,7 +324,26 @@ else
                 export MPC_USE_INTEL_COMPILER
 				;;
 			GNU)
+EOF
+
+#Insert a reference to the privatization plugin
+if [ "$language" = "c" ]; then
+cat << EOF >> $1
+				if test -e \${MPC_RPREFIX}/\${MPC_TARGET_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/lib/libprivplug.so; then
+					PRIV_FLAG="-fmpc-privatize -fplugin=\${MPC_RPREFIX}/\${MPC_TARGET_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/lib/libprivplug.so"
+				else
+					override_var_if_isset 'PRIV_FLAG' "-fmpc-privatize"
+				fi
+EOF
+else
+cat << EOF >> $1
 				override_var_if_isset 'PRIV_FLAG' '-fmpc-privatize'
+EOF
+fi
+
+
+cat << EOF >> $1
+				
 				override_var_if_isset 'OMP_FLAG' '-fopenmp'
 				;;
 			*)
