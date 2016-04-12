@@ -84,13 +84,17 @@ __thread void **sctk_tls_module ;
 
 #endif
 
+static void * __sctk_tls_locate_tls_dyn_initializer_handle = NULL;
 
 /* This function is called to discover if a given
  * variable comes with a dynamic initializer */
 void sctk_tls_locate_tls_dyn_initializer( char * fname )
 {
-	void * handle = dlopen( NULL, RTLD_LAZY );
-	void * ret = dlsym( handle, fname );
+	if( !__sctk_tls_locate_tls_dyn_initializer_handle )
+		 __sctk_tls_locate_tls_dyn_initializer_handle = dlopen( NULL, RTLD_LAZY );
+
+
+	void * ret = dlsym( __sctk_tls_locate_tls_dyn_initializer_handle, fname );
 	sctk_info("Locating Dyn initalizer for %s ret %p\n", fname, ret );
 	
 	/* If we found a dynamic initializer call it */
