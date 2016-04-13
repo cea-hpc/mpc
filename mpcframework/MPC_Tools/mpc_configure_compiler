@@ -329,7 +329,6 @@ EOF
 #Insert a reference to the privatization plugin
 if [ "$language" = "c" ]; then
 cat << EOF >> $1
-				echo "==\${MPC_RPREFIX}/\${MPC_TARGET_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/lib/libprivplug.so"
 				if test -e \${MPC_RPREFIX}/\${MPC_TARGET_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/lib/libprivplug.so; then
 					PRIV_FLAG="-fmpc-privatize -fplugin=\${MPC_RPREFIX}/\${MPC_TARGET_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/lib/libprivplug.so"
 				else
