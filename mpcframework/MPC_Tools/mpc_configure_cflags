@@ -69,7 +69,7 @@ SCTK_GETOPT=""
 
 if test -e "${SCTK_LIB_DIR}/libmpcgetopt.a"; then
 	if test "x\${MPC_BOOTSTRAP}" != "xyes"; then
-		SCTK_GETOPT="-DMPC_GETOPT_ENABLED -include ${SCTK_INCLUDE_DIR}/../getopt.h"
+		SCTK_GETOPT="-DMPC_GETOPT_ENABLED"
 	fi
 fi
 EOF

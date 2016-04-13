@@ -329,10 +329,18 @@ EOF
 #Insert a reference to the privatization plugin
 if [ "$language" = "c" ]; then
 cat << EOF >> $1
+				echo "==\${MPC_RPREFIX}/\${MPC_TARGET_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/lib/libprivplug.so"
 				if test -e \${MPC_RPREFIX}/\${MPC_TARGET_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/lib/libprivplug.so; then
 					PRIV_FLAG="-fmpc-privatize -fplugin=\${MPC_RPREFIX}/\${MPC_TARGET_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/lib/libprivplug.so"
 				else
 					override_var_if_isset 'PRIV_FLAG' "-fmpc-privatize"
+				fi
+				
+				
+				if test -e "${SCTK_LIB_DIR}/libmpcgetopt.a"; then
+					if test "x\${MPC_BOOTSTRAP}" != "xyes"; then
+						PRIV_FLAG="\${PRIV_FLAG} -include ${SCTK_INCLUDE_DIR}/../getopt.h"
+					fi
 				fi
 EOF
 else
