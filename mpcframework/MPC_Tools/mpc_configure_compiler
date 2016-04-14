@@ -201,7 +201,6 @@ for arg in "\$@" ; do
 	;;
 	-fno-mpc-plugin)
 		unset MPC_DYN_PRIV_ENABLED
-		PRIV_FLAG=""
 		addarg=no
 	;;
 	-fmpc-include)
@@ -329,28 +328,25 @@ EOF
 #Insert a reference to the privatization plugin
 if [ "$language" = "c" ]; then
 cat << EOF >> $1
-				if test -e \${MPC_RPREFIX}/\${MPC_TARGET_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/lib/libprivplug.so; then
-					PRIV_FLAG="-fmpc-privatize -fplugin=\${MPC_RPREFIX}/\${MPC_TARGET_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/lib/libprivplug.so"
+				if test -e \${MPC_RPREFIX}/\${MPC_TARGET_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/lib/libprivplug.so;
+				then
+					LIBPRIV_FLAG="-fplugin=\${MPC_RPREFIX}/\${MPC_TARGET_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/lib/libprivplug.so"
 				else
-					override_var_if_isset 'PRIV_FLAG' "-fmpc-privatize"
+					LIBPRIV_FLAG=""
 				fi
-				
-				
-				if test -e "${SCTK_LIB_DIR}/libmpcgetopt.a"; then
-					if test "x\${MPC_BOOTSTRAP}" != "xyes"; then
-						PRIV_FLAG="\${PRIV_FLAG} -include ${SCTK_INCLUDE_DIR}/../getopt.h"
+
+				if test -e "${SCTK_LIB_DIR}/libmpcgetopt.a"; 
+				then
+					if test "x\${MPC_BOOTSTRAP}" != "xyes"; 
+					then
+						GETOPT_FLAG="\${PRIV_FLAG} -include ${SCTK_INCLUDE_DIR}/../getopt.h"
+					else
+						GETOPT_FLAG=""
 					fi
-				fi
-EOF
-else
-cat << EOF >> $1
-				override_var_if_isset 'PRIV_FLAG' '-fmpc-privatize'
 EOF
 fi
-
-
 cat << EOF >> $1
-				
+				override_var_if_isset 'PRIV_FLAG' '-fmpc-privatize'
 				override_var_if_isset 'OMP_FLAG' '-fopenmp'
 				;;
 			*)
@@ -385,7 +381,7 @@ fi
 
 cat << EOF >> $1
 #used to append compiler-specific flags
-CFLAGS="\$CFLAGS \${PRIV_FLAG} \${OMP_FLAG} \$MPC_COMPILER_CFLAGS"
+CFLAGS="\$CFLAGS \${PRIV_FLAG} \${OMP_FLAG} \$MPC_COMPILER_CFLAGS \${LIBPRIV_FLAG} \${GETOPT_FLAGS}"
 LDFLAGS="\${LDFLAGS}"
 
 if [ "\$linking" = yes ] ; then
