@@ -118,9 +118,9 @@ static int sctk_send_message_from_network_portals ( sctk_thread_ptp_message_t *m
 
 /************ INIT ****************/
 /**
- * @brief unique initialization for this rail (already created and managed by multirail handler)
+ * \brief unique initialization for this rail (already created and managed by multirail handler)
  *
- * @param rail
+ * \param rail
  */
 void sctk_network_init_portals (sctk_rail_info_t *rail)
 {

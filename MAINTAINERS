@@ -1,0 +1,41 @@
+Notes:
+======
+In this file are listed people who contribute to make change in
+MPC framework and its associated components.
+
+Maintainers:
+============
+|             Name                |                 Email Address                 |
+|:-------------------------------:|:---------------------------------------------:|
+| PERACHE Marc                    |   <marc.perache@cea.fr>                       |
+| CARRIBAULT Patrick              |   <patrick.carribault@cea.fr>                 |
+| JAEGER Julien                   |   <julien.jaeger@cea.fr>                      |
+
+Contributors:
+=============
+Please, do not contact people in this section directly to report
+problems in MPC. For general information about MPC, please visit:
+  
+  http://mpc.hpcframework.com
+
+To report a bug or a problem with MPC and its components,
+please send a email to the maintainers of the project (section above)
+
+|             Name                |                 Email Address                 |
+|:-------------------------------:|:---------------------------------------------:|
+| BESNARD Jean-Baptiste           | <jbbesnard@paratools.com>                     |
+| CAPRA Antoine                   | <capra@paratools.com>                         |
+| SCHENDE Sameer                  | <sameer@paratools.com>                        |
+| SERRAZ Augustin                 | <augustin.serraz@exascale-computing.eu>       |
+| MAHEO Aurele                    | <aurele.maheo@exascale-computing.eu>          |
+| GALLET Camille                  | <camille.gallet@cea.fr>                       |
+| VET Jean-Yves                   | <jean-yves.vet@cea.fr>                        |
+| CLET-ORTEGA Jerome              | <jerome.clet-ortega@cea.fr>                   |
+| TCHIBOUKDJIAN Marc              | <marc.tchiboukdjian@exascale-computing.eu>    |
+| BISPO VIEIRA Ricardo            | <ricardo.bispo-viera@exascale-computing.eu>   |
+| VALAT Sebastien                 | <sebastien.valat@cea.fr>                      |
+| PULVERAIL Sebastien             | <sebastien.pulverail@sogeti.com>              |
+| KOLIAI Souad                    | <souad.koliai@exascale-computing.eu>          |
+| DIDELOT Sylvain                 | <sylvain.didelot@exascale-computing.eu>       |
+| GONCALVES Thomas                | <thomas.goncalves@cea.fr>                     |
+| ADAM Julien                     | <adamj@paratools.com>                         |

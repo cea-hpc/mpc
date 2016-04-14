@@ -1,0 +1,38 @@
+#!/bin/sh
+RED="`printf "\033[1;31m"`"
+GRE="`printf "\033[1;32m"`"
+DEF="`printf "\033[0;0m"`"
+
+print_error()
+{
+	printf "${RED}ERROR: ${1}\n${DEF}"
+}
+
+safe_exec()
+{
+	text="${1}"; shift
+	comm="$@"
+	${comm}
+	if test "$?" != "0";
+	then
+		print_error "${comm} failed ! Abort"
+		exit 1
+	fi
+	printf "${GRE}${text} : OK${DEF}\n"
+	
+}
+
+CURRENT_PATH="`dirname $0`"
+
+MPC_SOURCE_DIRECTORY="${CURRENT_PATH}/../"
+
+export MPC_SOURCE_DIRECTORY
+
+if test -z "`which doxygen 2> /dev/null`";
+then
+	print_error "Unable to find a valid Doxygen installation (which doxygen)"
+	print_error "Please install it and re-run."
+	exit 1
+fi
+
+safe_exec "Generating Documentation into ${MPC_SOURCE_DIRECTORY}/doc/build/" doxygen ${MPC_SOURCE_DIRECTORY}/doc/Doxyfile.in

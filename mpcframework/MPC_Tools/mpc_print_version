@@ -22,7 +22,8 @@
 ########################################################################
 
 if test "${MPC_SOURCE_DIR}" = "" ; then
-. ./.MPC_version
+	PATH_TO_DIR="`dirname $0`"
+	. ${PATH_TO_DIR}/../.MPC_version
 else
 . ${MPC_SOURCE_DIR}.MPC_version
 fi
