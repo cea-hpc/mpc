@@ -343,6 +343,7 @@ cat << EOF >> $1
 					else
 						GETOPT_FLAG=""
 					fi
+				fi
 EOF
 fi
 cat << EOF >> $1
@@ -381,7 +382,7 @@ fi
 
 cat << EOF >> $1
 #used to append compiler-specific flags
-CFLAGS="\$CFLAGS \${PRIV_FLAG} \${OMP_FLAG} \$MPC_COMPILER_CFLAGS \${LIBPRIV_FLAG} \${GETOPT_FLAGS}"
+CFLAGS="\$CFLAGS \${PRIV_FLAG} \${OMP_FLAG} \$MPC_COMPILER_CFLAGS \${LIBPRIV_FLAG} \${GETOPT_FLAG}"
 LDFLAGS="\${LDFLAGS}"
 
 if [ "\$linking" = yes ] ; then
