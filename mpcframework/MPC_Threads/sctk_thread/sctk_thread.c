@@ -1035,6 +1035,7 @@ int sctk_atexit(void (*function)(void))
 		return ret;
 	}
 	/* It failed we may not be in a task then call libc */
+	sctk_warning("Calling the default atexit function");
 #endif
 	/* We have no task level fallback to libc */
 	return atexit( function );
