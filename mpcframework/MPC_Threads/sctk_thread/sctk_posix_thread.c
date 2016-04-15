@@ -908,6 +908,14 @@ unsigned long mpc_thread_tls_entry_add (unsigned long size,
   return sctk_tls_entry_add (size, func);
 }
 
+/* At exit */
+
+int mpc_atexit(void (*function)(void))
+{
+	return sctk_atexit(function); 
+	
+}
+
 /* Futexes */
 
 int  mpc_thread_futex(int sysop, void *addr1, int op, int val1, 

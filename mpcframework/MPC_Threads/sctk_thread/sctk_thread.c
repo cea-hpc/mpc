@@ -1021,6 +1021,27 @@ sctk_thread_equal (sctk_thread_t __thread1, sctk_thread_t __thread2)
   return res;
 }
 
+/* At exit generic trampoline */
+
+int sctk_atexit(void (*function)(void))
+{
+#ifdef MPC_MPI
+	/* We may have a TASK context replacing the proces one */
+	int ret  = __MPC_atexit_task_specific( function );
+	
+	if( ret == 0 )
+	{
+		/* We were in a task and managed to register ourselves */
+		return ret;
+	}
+	/* It failed we may not be in a task then call libc */
+#endif
+	/* We have no task level fallback to libc */
+	return atexit( function );
+}
+
+
+
 /* Futex Generic Trampoline */
 
 int  sctk_thread_futex(void *addr1, int op, int val1, 
