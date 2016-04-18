@@ -321,7 +321,7 @@ int sctk_call_dynamic_initializers()
 	{
 		if( current->addr )
 		{
-			sctk_warning("TLS : Calling dynamic init %s", current->name);
+			sctk_debug("TLS : Calling dynamic init %s", current->name);
 			((void (*)())current->addr)();
 		}
 		

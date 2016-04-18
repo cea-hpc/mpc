@@ -836,8 +836,6 @@ sctk_thread_create_tmp_start_routine_user (sctk_thread_data_t * __arg)
   sctk_tls_module_alloc_and_fill() ;
 #endif
 
-	sctk_call_dynamic_initializers();
-
   /* Note that the profiler is not initialized in user threads */
 
   /** ** **/

@@ -862,6 +862,9 @@ static void * run (sctk_startup_args_t * arg)
 
 	argv[argc] = NULL;
 
+	sctk_call_dynamic_initializers();
+
+
 /* In libmode there is no main */
 #ifndef SCTK_LIB_MODE
 	main_result = sctk_user_main (argc, argv);
