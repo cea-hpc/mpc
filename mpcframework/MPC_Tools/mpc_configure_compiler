@@ -203,6 +203,10 @@ for arg in "\$@" ; do
 		unset MPC_DYN_PRIV_ENABLED
 		addarg=no
 	;;
+	-fmpc-dyninsert)
+		export MPC_DYN_INSERT=1
+		addarg=no
+	;;
 	-fmpc-include)
 		#nothing to do, if not fortran, '-include mpc_main.h' is automatically forwarded
 		#This is due to order : '-include' should be set after sources files
