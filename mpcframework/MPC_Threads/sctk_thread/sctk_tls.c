@@ -91,7 +91,6 @@ sctk_spinlock_t __sctk_tls_locate_tls_dyn_lock = 0;
  * variable comes with a dynamic initializer */
 void sctk_tls_locate_tls_dyn_initializer( char * fname )
 {
-	return;
 	sctk_spinlock_lock( &__sctk_tls_locate_tls_dyn_lock );
 	
 	if( !__sctk_tls_locate_tls_dyn_initializer_handle )
@@ -116,7 +115,7 @@ void sctk_tls_locate_tls_dyn_initializer( char * fname )
 	{
 		sctk_info("Locating Dyn initalizer for %s ret %p\n", fname, ret );
 		void (*fn)() = (void (*)())ret;
-		//(fn)();
+		(fn)();
 	}
 }
 
@@ -217,8 +216,8 @@ int sctk_load_proc_self_maps()
 int sctk_load_wrapper_symbols( char * dso , void * handle )
 {
 	char command[1000];
-	
-	snprintf(command, 1000, "nm  %s 2>&1 | grep \"___mpc_TLS_T\"", dso );
+
+	snprintf(command, 1000, "nm  %s 2>&1 | grep \"___mpc_TLS_w\"", dso );
 	
 	
 	FILE * wrapper_symbols = popen(command, "r");
@@ -228,9 +227,13 @@ int sctk_load_wrapper_symbols( char * dso , void * handle )
 		char buff[500];
 		
 		if(fgets(buff, 500, wrapper_symbols) == 0)
+		{
 			break;
+		}
+		
+		//printf("%s\n", buff );
 	
-		char * wrapp = strstr( buff , "___mpc_TLS_T" );
+		char * wrapp = strstr( buff , "___mpc_TLS_w" );
 		
 		if( wrapp )
 		{
@@ -294,7 +297,7 @@ int sctk_locate_dynamic_initializers()
 	
 	while( current )
 	{
-	
+		//printf("CHECKING %s\n", current->name );
 		if( sctk_load_wrapper_symbols(current->name, lib_handle) )
 		{
 			return 1;
@@ -318,7 +321,7 @@ int sctk_call_dynamic_initializers()
 	{
 		if( current->addr )
 		{
-			sctk_debug("TLS : Calling dynamic init %s", current->name);
+			sctk_warning("TLS : Calling dynamic init %s", current->name);
 			((void (*)())current->addr)();
 		}
 		
