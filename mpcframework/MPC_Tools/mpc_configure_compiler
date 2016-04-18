@@ -203,7 +203,7 @@ for arg in "\$@" ; do
 		unset MPC_DYN_PRIV_ENABLED
 		addarg=no
 	;;
-	-fmpc-dyninsert)
+	-fmpc-dyninsert|-fmpc-dyn-insert)
 		export MPC_DYN_INSERT=1
 		addarg=no
 	;;
