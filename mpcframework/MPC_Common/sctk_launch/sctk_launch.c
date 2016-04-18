@@ -262,6 +262,9 @@ static void sctk_perform_initialisation (void)
 	sctk_alloc_posix_mmsrc_numa_init_phase_numa();
 #endif
 	sctk_hls_build_repository();
+	
+	sctk_locate_dynamic_initializers();
+	
 	sctk_thread_init ();
 
 	if (sctk_version_details_val)

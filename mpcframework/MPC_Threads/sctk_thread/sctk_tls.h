@@ -75,6 +75,9 @@ extern "C"
   void sctk_extls_delete ();
   size_t sctk_extls_size(); 
 
+  int sctk_locate_dynamic_initializers();
+  int sctk_call_dynamic_initializers();
+
 #if defined (MPC_Allocator)
   extern __thread struct sctk_alloc_chain * sctk_current_alloc_chain;
 #endif

@@ -836,6 +836,8 @@ sctk_thread_create_tmp_start_routine_user (sctk_thread_data_t * __arg)
   sctk_tls_module_alloc_and_fill() ;
 #endif
 
+	sctk_call_dynamic_initializers();
+
   /* Note that the profiler is not initialized in user threads */
 
   /** ** **/
@@ -1027,6 +1029,7 @@ int sctk_atexit(void (*function)(void))
 {
 #ifdef MPC_MPI
 	/* We may have a TASK context replacing the proces one */
+	sctk_warning("Calling the MPC atexit function");
 	int ret  = __MPC_atexit_task_specific( function );
 	
 	if( ret == 0 )

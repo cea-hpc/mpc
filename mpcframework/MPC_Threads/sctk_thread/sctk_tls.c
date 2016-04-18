@@ -85,25 +85,257 @@ __thread void **sctk_tls_module ;
 #endif
 
 static void * __sctk_tls_locate_tls_dyn_initializer_handle = NULL;
+sctk_spinlock_t __sctk_tls_locate_tls_dyn_lock = 0;
 
 /* This function is called to discover if a given
  * variable comes with a dynamic initializer */
 void sctk_tls_locate_tls_dyn_initializer( char * fname )
 {
+	return;
+	sctk_spinlock_lock( &__sctk_tls_locate_tls_dyn_lock );
+	
 	if( !__sctk_tls_locate_tls_dyn_initializer_handle )
 		 __sctk_tls_locate_tls_dyn_initializer_handle = dlopen( NULL, RTLD_LAZY );
 
+	dlerror();    /* Clear any existing error */
 
 	void * ret = dlsym( __sctk_tls_locate_tls_dyn_initializer_handle, fname );
-	sctk_info("Locating Dyn initalizer for %s ret %p\n", fname, ret );
+
+	char * error = NULL;
+	
+	if ((error = dlerror()) != NULL)  {
+		//fprintf(stderr, "%s\n", error);
+		sctk_spinlock_unlock( &__sctk_tls_locate_tls_dyn_lock );
+		return;
+	}
+
+	sctk_spinlock_unlock( &__sctk_tls_locate_tls_dyn_lock );
 	
 	/* If we found a dynamic initializer call it */
 	if( ret )
 	{
+		sctk_info("Locating Dyn initalizer for %s ret %p\n", fname, ret );
 		void (*fn)() = (void (*)())ret;
-		(fn)();
+		//(fn)();
 	}
 }
+
+
+struct dyn_sym_s
+{
+	char * name;
+    void * addr;
+	struct dyn_sym_s * next;
+};
+
+static struct dyn_sym_s * __sctk_dyn_symbols = NULL;
+
+struct dsos_s
+{
+	char * name;
+	struct dsos_s * next;
+};
+
+static struct dsos_s * __sctk_dsos = NULL;
+
+int sctk_load_proc_self_maps()
+{
+	char * maps = calloc( 4 * 1024 * 1024, 1 );
+	
+	if( !maps )
+	{
+		return 1;
+	}
+	
+	FILE * self = fopen("/proc/self/maps" ,"r");
+	
+	size_t ret = fread(maps, 1, 4 * 1024 * 1024 , self);
+	
+	//printf("READ %d\n", ret );
+	
+	char * line = maps;
+	char * next_line;
+	
+	int cont = 1;
+	
+	unsigned long begin, end, size, inode, skip;
+	char perm[5], dev[6], dsoname[500];
+	
+	do
+	{
+		next_line = strstr( line, "\n" );
+		
+		if( next_line )
+		{
+			*next_line = '\0';
+			next_line++;
+		}
+		else
+		{
+			cont = 0;
+		}
+		
+		//printf("%s\n", line );
+		
+		sscanf(line, "%lx-%lx %4s %lx %5s %ld %s", &begin, &end, perm,
+		&skip, dev, &inode, dsoname);
+		
+		if( (perm[2] == 'x') && !(dsoname[0] == '[') )
+		{
+			
+			//fprintf(stderr,"==>%s (%s)\n", dsoname , perm);
+		
+			struct dsos_s * new = sctk_malloc( sizeof( struct dsos_s ) );
+			
+			if( !new )
+			{
+				return 1;
+			}
+			
+			new->name = strdup( dsoname );
+			new->next = __sctk_dsos;
+			__sctk_dsos = new;
+		
+		}
+		
+		line = next_line;
+		
+		
+	}while( cont );
+	
+	
+	
+	fclose( self );
+	
+	
+	free( maps );
+
+	return 0;
+}
+
+
+int sctk_load_wrapper_symbols( char * dso , void * handle )
+{
+	char command[1000];
+	
+	snprintf(command, 1000, "nm  %s 2>&1 | grep \"___mpc_TLS_T\"", dso );
+	
+	
+	FILE * wrapper_symbols = popen(command, "r");
+	
+	while(!feof(wrapper_symbols))
+	{
+		char buff[500];
+		
+		if(fgets(buff, 500, wrapper_symbols) == 0)
+			break;
+	
+		char * wrapp = strstr( buff , "___mpc_TLS_T" );
+		
+		if( wrapp )
+		{
+			char *retl = strstr( buff, "\n");
+			
+			if( retl )
+			{
+				*retl = '\0';
+				
+				while( retl != wrapp )
+				{
+					if( *(retl - 1) == ' ')
+					{
+						retl--;
+						*retl = '\0';
+					}
+					else
+					{
+						break;
+					}
+				}
+				
+			}
+			
+			
+			struct dyn_sym_s * new = sctk_malloc( sizeof(struct dyn_sym_s) );
+			
+			if( !new )
+			{
+				return 1;
+			}
+			
+			new->name = strdup( wrapp );
+			new->addr = dlsym(handle, wrapp );
+			new->next = __sctk_dyn_symbols;
+			__sctk_dyn_symbols = new;
+			
+			
+			sctk_debug("Located dyn initializer : %s", wrapp );
+		}
+	}
+	
+	pclose( wrapper_symbols );
+	
+	return 0;
+}
+
+
+
+int sctk_locate_dynamic_initializers()
+{
+	if( sctk_load_proc_self_maps() )
+	{
+		fprintf(stderr, "Failled to load /proc/self/maps");
+		return 1;
+	}
+	
+	struct dsos_s * current = __sctk_dsos;
+	
+	void * lib_handle = dlopen( NULL, RTLD_LAZY );
+	
+	while( current )
+	{
+	
+		if( sctk_load_wrapper_symbols(current->name, lib_handle) )
+		{
+			return 1;
+		}
+	
+		current = current->next;
+	}
+	
+	dlclose( lib_handle );
+	
+	return 0;
+}
+
+
+
+int sctk_call_dynamic_initializers()
+{
+	struct dyn_sym_s * current = __sctk_dyn_symbols;
+	
+	while( current )
+	{
+		if( current->addr )
+		{
+			sctk_debug("TLS : Calling dynamic init %s", current->name);
+			((void (*)())current->addr)();
+		}
+		
+		current = current->next;
+	}
+	
+	return 0;
+}
+
+
+
+
+
+
+
+
+
 
 
 #if defined(SCTK_USE_TLS) && defined(Linux_SYS)
