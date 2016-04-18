@@ -296,7 +296,7 @@ typedef struct mpcomp_new_parallel_region_info_s {
 	/* OPTIONAL INFO */
 	long loop_lb;		        /* Lower bound */
 	long loop_b;			/* Upper bound */
-	long loop_incr;		/* Step */
+	long loop_incr;			/* Step */
 	long loop_chunk_size;	        /* Size of each chunk */
 	int nb_sections ;
 } mpcomp_new_parallel_region_info_t ;

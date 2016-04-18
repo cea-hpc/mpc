@@ -38,6 +38,7 @@ GOMP_ABI_FUNC(GOMP_parallel_loop_static_start,"GOMP_1.0",__mpcomp_GOMP_parallel_
 GOMP_ABI_FUNC(GOMP_parallel_sections_start,"GOMP_1.0",__mpcomp_GOMP_parallel_sections_start,__mpcomp_GOMP_parallel_sections_start)
 GOMP_ABI_FUNC(GOMP_parallel_start,"GOMP_1.0",__mpcomp_GOMP_parallel_start,__mpcomp_GOMP_parallel_start)
 GOMP_ABI_FUNC(GOMP_sections_end,"GOMP_1.0",__mpcomp_GOMP_sections_end,__mpcomp_GOMP_sections_end)
+GOMP_ABI_FUNC(GOMP_sections_end_nowait,"GOMP_1.0",GOMP_sections_end_nowait,GOMP_sections_end_nowait)
 GOMP_ABI_FUNC(GOMP_sections_end_nowait,"GOMP_1.0",__mpcomp_GOMP_sections_end_nowait,__mpcomp_GOMP_sections_end_nowait)
 GOMP_ABI_FUNC(GOMP_sections_next,"GOMP_1.0",__mpcomp_GOMP_sections_next,__mpcomp_sections_next)
 GOMP_ABI_FUNC(GOMP_sections_start,"GOMP_1.0",__mpcomp_GOMP_sections_start,__mpcomp_sections_begin)

@@ -24,13 +24,6 @@ void __mpcomp_GOMP_parallel_end (void)
    sctk_nodebug("[Redirect GOMP]%s:\tEnd",__func__);
 }
 
-void __mpcomp_GOMP_parallel(void (*fn) (void *), void *data, unsigned num_threads, unsigned int flags)
-{
-   sctk_nodebug("[Redirect GOMP]%s:\tBegin",__func__);
-   not_implemented();
-   sctk_nodebug("[Redirect GOMP]%s:\tEnd",__func__);
-}
-
 bool __mpcomp_GOMP_cancellation_point(int which)
 {
    sctk_nodebug("[Redirect GOMP]%s:\tBegin",__func__);

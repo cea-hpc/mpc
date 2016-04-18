@@ -44,7 +44,7 @@
     abort();					\
   }
 
-ABORT_FUNC_OMP(GOMP_parallel_start,"Mix GCC OpenMP runtime with MPC")
+//ABORT_FUNC_OMP(GOMP_parallel_start,"Mix GCC OpenMP runtime with MPC")
 
 /* Schedule type */
 static omp_sched_t OMP_SCHEDULE = 1;
