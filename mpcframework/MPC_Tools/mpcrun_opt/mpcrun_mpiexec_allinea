@@ -23,7 +23,7 @@
 echo "Running MPC with $SCTK_JOB_MANAGER job manager" >&2
 
 if [ "$SCTK_JOB_MANAGER" = "SLURM" ]; then
-  LAUNCH_COMMAND="srun $LAUNCH_OPTIONS  --ntasks=$PROCESS_NB --nodes=$NODE_NB -cpus-per-task=$CPU_NB $BINARY $USER_ARGS $SCTK_ARGS"
+  LAUNCH_COMMAND="srun $LAUNCH_OPTIONS  --ntasks=$PROCESS_NB --nodes=$NODE_NB --cpus-per-task=$CPU_NB $BINARY $USER_ARGS $SCTK_ARGS"
 else
   LAUNCH_COMMAND="${SCTK_HYDRA_BINDIR}mpiexec.hydra $LAUNCH_OPTIONS -n $PROCESS_NB $BINARY $USER_ARGS $SCTK_ARGS"
 fi
