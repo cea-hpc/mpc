@@ -369,7 +369,7 @@ fi
 
 #Here we prepend the path which is normally postpended in order
 #to override binutils during the compilation
-export PATH=\${MPC_RPREFIX}/${MPC_SUBPREFIX}/bin/:\${PATH}
+export PATH=\${MPC_HOST_SUBPREFIX}/${MPC_TARGET_SUBPREFIX}/bin/:\${PATH}
 
 #first definition of compiler & linking flags
 CFLAGS="\`\${MPC_RPREFIX}/\${MPC_TARGET_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/bin/mpc_cflags $language\`"
