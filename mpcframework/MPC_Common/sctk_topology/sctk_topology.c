@@ -99,9 +99,9 @@ sctk_update_topology ( const int processor_number,  const int index_first_proces
 	if (hwloc_bitmap_iszero(pin_processor_bitmap))
 	{
 		#ifdef __MIC__
-		for( i=index_first_processor; i < processor_number; ++i)
-		#else
 		for( i=index_first_processor; i < index_first_processor+processor_number; ++i)
+		#else
+		for( i=index_first_processor; i < processor_number; ++i)
 		#endif
 		{
 			#ifdef __MIC__
