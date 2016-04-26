@@ -229,6 +229,7 @@ do
 		################# COMPILER ##################
 		--compiler=*)
 			GCC_PREFIX='disabled'
+			PRIV_PLUGIN_PREFIX='disabled'
 			extractParamValue 'MPC_COMPILER' 'compiler' "$arg"
 			;;
 		############### MPCFRAMEWORK ################
@@ -254,6 +255,7 @@ do
 			GDB_PREFIX='disabled'
 			MPC_PREFIX='disabled'
 			GCC_PREFIX='disabled'
+			PRIV_PLUGIN_PREFIX='disabled'
 			HYDRA_PREFIX='disabled'
 			HYDRA_SIMPLE_PREFIX='disabled'
 			GMP_PREFIX='disabled'
