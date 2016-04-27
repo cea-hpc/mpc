@@ -42,9 +42,9 @@ export MPC_RPREFIX
 . "${MPC_RPREFIX}/.Architectures.sh"
 
 uname=`uname -m`
-getArch host "${uname}"
-if test "$#" = "1" -a "$0" != "bash" ; then
-	getArch target "${1}"
+host="${uname}"
+if test "$#" = "1"; then
+	target="${1}"
 else 
     target=${host}
 fi
