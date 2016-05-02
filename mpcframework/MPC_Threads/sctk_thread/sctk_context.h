@@ -24,6 +24,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <extls.h>
 #include "sctk_config.h"
 
 #ifdef __cplusplus
@@ -195,6 +196,7 @@ Need to check this in more depth for futur version ( > 2.4.0-1).
     /* MPC OpenMP TLS */
     void *sctk_openmp_thread_tls ;
 #endif
+    extls_ctx_t tls_ctx;
   } sctk_mctx_t;
 
   int sctk_getcontext (sctk_mctx_t * ucp);
@@ -204,21 +206,21 @@ Need to check this in more depth for futur version ( > 2.4.0-1).
 			void *arg,
 			void (*func) (void *),
 			char *stack, size_t stack_size);
-#if defined (SCTK_USE_OPTIMIZED_TLS)
-  int
-    sctk_makecontext_extls (sctk_mctx_t * ucp,
-		            void *arg,
-		            void (*func) (void *), char *stack,
-		            size_t stack_size,
-		            void *extls, void* tls_module);
-#else
-  int
-    sctk_makecontext_extls (sctk_mctx_t * ucp,
-		            void *arg,
-		            void (*func) (void *), char *stack,
-		            size_t stack_size,
-		            void *extls);
-#endif
+//#if defined (SCTK_USE_OPTIMIZED_TLS)
+  //int
+    //sctk_makecontext_extls (sctk_mctx_t * ucp,
+					//void *arg,
+					//void (*func) (void *), char *stack,
+					//size_t stack_size,
+					//void *extls, void* tls_module);
+//#else
+  //int
+    //sctk_makecontext_extls (sctk_mctx_t * ucp,
+					//void *arg,
+					//void (*func) (void *), char *stack,
+					//size_t stack_size,
+					//void *extls);
+//#endif
 
 #ifdef __cplusplus
 }

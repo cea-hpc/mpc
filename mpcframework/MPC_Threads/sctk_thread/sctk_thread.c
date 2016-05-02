@@ -40,6 +40,7 @@
 #include "sctk_topology.h"
 #include "sctk_asm.h"
 #include "sctk_tls.h"
+#include <extls.h>
 #include <unistd.h>
 #include "sctk_posix_thread.h"
 #include "sctk_internal_thread.h"

@@ -982,6 +982,10 @@ void sctk_hls_free ()
  * of the tls_module array
  * to be called on each VP
  */
+#include <extls.h>
+extern extls_ret_t extls_optim_tls_set_pointer(extls_object_t start);
+extern __thread extls_object_level_t* current_tls_vector;
+
 void
 sctk_tls_module_set_gs_register ()
 {
@@ -989,7 +993,8 @@ sctk_tls_module_set_gs_register ()
 	if ( done_on_this_vp == 1 )
 		return ;
 
-	int result = arch_prctl(ARCH_SET_GS,(unsigned long)sctk_tls_module_vp);
+	extls_optim_tls_set_pointer(current_tls_vector);
+	/*int result = arch_prctl(ARCH_SET_GS,(unsigned long)sctk_tls_module_vp);*/
 	/*
 	int result;
 	void *gs = (void*)sctk_tls_module_vp ;
@@ -1000,7 +1005,7 @@ sctk_tls_module_set_gs_register ()
 			"S" (gs)
 			: "memory", "cc", "r11", "cx");
 	*/
-	assume(result == 0);
+	/*assume(result == 0);*/
 	done_on_this_vp = 1 ;
 }
 
@@ -1071,7 +1076,7 @@ sctk_tls_module_alloc_and_fill ()
 #endif
 
 #if defined(SCTK_i686_ARCH_SCTK) || defined (SCTK_x86_64_ARCH_SCTK)
-
+#if 0
 void *
 __sctk__tls_get_addr__process_scope (tls_index * tmp)
 {
@@ -1097,7 +1102,6 @@ __sctk__tls_get_addr__task_scope (tls_index * tmp)
   res =
     __sctk__tls_get_addr__generic_scope (tmp->ti_module, tmp->ti_offset,
 					 extls[sctk_extls_task_scope]);
-
   return res;
 }
 
@@ -1131,7 +1135,7 @@ __sctk__tls_get_addr__openmp_scope (tls_index * tmp)
   return res;
 }
 #endif
-
+#endif
 void *
 __sctk__tls_get_addr__node_scope (tls_index * tmp)
 {

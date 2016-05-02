@@ -1110,6 +1110,7 @@ int sctk_launch_main (int argc, char **argv)
 {
 	sctk_startup_args_t arg;
 
+	extls_init();
 	/* MPC_MAKE_FORTRAN_INTERFACE is set when compiling fortran headers.
 	 * To check why ? */
 	if (getenv("MPC_MAKE_FORTRAN_INTERFACE") != NULL) {
@@ -1146,6 +1147,7 @@ int sctk_launch_main (int argc, char **argv)
 	sctk_start_func ((void *(*)(void *)) run, &arg);
 	sctk_env_exit ();
 
+	extls_fini();
 	return main_result;
 }
 
