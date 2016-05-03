@@ -53,6 +53,7 @@ void hwloc_obj_add_info(hwloc_obj_t obj, const char *name, const char *value);
 
 #if defined(SCTK_USE_TLS)
 __thread void *sctk_extls = NULL;
+__thread void* sctk_extls_storage = NULL;
 
 
 #if defined (SCTK_USE_OPTIMIZED_TLS)
@@ -480,6 +481,12 @@ sctk_init_module (size_t m, char *module, size_t size)
     {
       memcpy (module, p_vaddr, p_filesz);
     }
+}
+
+inline void* extls_get_context_storage_addr(void)
+{
+	extls_dbg("FROM MPC !!!!");
+	return (void*)&sctk_extls_storage;
 }
 
 #define SCTK_COW_TLS
@@ -984,7 +991,6 @@ void sctk_hls_free ()
  */
 #include <extls.h>
 extern extls_ret_t extls_optim_tls_set_pointer(extls_object_t start);
-extern __thread extls_object_level_t* current_tls_vector;
 
 void
 sctk_tls_module_set_gs_register ()
@@ -993,7 +999,7 @@ sctk_tls_module_set_gs_register ()
 	if ( done_on_this_vp == 1 )
 		return ;
 
-	extls_optim_tls_set_pointer(current_tls_vector);
+	extls_optim_tls_set_pointer(sctk_extls_storage);
 	/*int result = arch_prctl(ARCH_SET_GS,(unsigned long)sctk_tls_module_vp);*/
 	/*
 	int result;

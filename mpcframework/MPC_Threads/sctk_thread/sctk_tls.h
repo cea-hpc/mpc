@@ -84,10 +84,7 @@ extern "C"
 #endif
 
   extern __thread void *sctk_extls;
-
-  /** used to replace sctk_extls in libextls */
-  extern __thread extls_object_level_t* current_tls_vector;
-
+  extern __thread void *sctk_extls_storage;
   extern __thread void *sctk_hls_generation;
 
 #if defined (SCTK_USE_OPTIMIZED_TLS)
@@ -142,7 +139,7 @@ extern "C"
 	/* the tls vector is restored by copy and cannot be changed
 	 * It is then uselesse to save it at this time
 	 */
-	//ucp->tls_ctx.tls_vector = current_tls_vector;
+	//ucp->tls_ctx.tls_vector = sctk_extls_storage;
   }
 
   static inline void sctk_context_restore_tls (sctk_mctx_t * ucp)
@@ -160,8 +157,8 @@ extern "C"
     tls_restore (sctk_hls_generation);
 
 	/* set the new tls vector to use, the current thread's one */
-	current_tls_vector = ucp->tls_ctx.tls_vector;
-
+	sctk_extls_storage = ucp->tls_ctx.tls_vector;
+	sctk_warning("Set global w/ %p from %p", ucp->tls_ctx.tls_vector, ucp->tls_ctx );
 #if defined (SCTK_USE_OPTIMIZED_TLS)
 	tls_restore (sctk_tls_module);
     sctk_context_restore_tls_module_vp () ;
@@ -207,6 +204,7 @@ extern "C"
 	 * Moreover, it should use ctx_herit instead of ctx_init (need to reference process level)
 	 */
  	extls_ctx_init(&ucp->tls_ctx, NULL);
+	sctk_warning("init ctx at %p",ucp->tls_ctx );
     tls_init (sctk_extls);
     sctk_extls_duplicate (&(ucp->sctk_extls));
     sctk_context_init_tls_without_extls (ucp);
