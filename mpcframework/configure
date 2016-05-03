@@ -664,6 +664,11 @@ cat <<EOF >> include/mpc_main.h
 #define main long mpc_user_main_dummy__ (); extern "C" int mpc_user_main__
 #else
 #define main mpc_user_main__
+#ifdef MPC_TLS_DLWRAP
+#define dlopen extls_dlopen
+#define dlclose extls_dlclose
+#define dlsym extls_dlsym
+#endif
 #endif
 #endif
 EOF
