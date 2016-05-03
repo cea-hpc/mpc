@@ -98,12 +98,9 @@ sctk_update_topology ( const int processor_number,  const int index_first_proces
 	hwloc_bitmap_zero(cpuset);
 	if (hwloc_bitmap_iszero(pin_processor_bitmap))
 	{
-		#ifdef __MIC__
 		for( i=index_first_processor; i < index_first_processor+processor_number; ++i)
-		#else
-		for( i=index_first_processor; i < processor_number; ++i)
-		#endif
 		{
+			sctk_error("NEW PROCESSOR : %d", i);
 			#ifdef __MIC__
 			hwloc_obj_t pu = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, i%processor_number);
 			#else
