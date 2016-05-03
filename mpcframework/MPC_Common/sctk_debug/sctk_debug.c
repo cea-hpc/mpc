@@ -41,12 +41,13 @@
 
 #define WRITE_BUFFER_SIZE (4*1024)
 #define SMALL_BUFFER_SIZE (4*1024)
+#define DEBUG_INFO_SIZE (64)
 static bool sctk_have_shell_colors;
 
 int sctk_only_once_while_val;
 static int sctk_debug_version_details = 0;
 static char sctk_version_buff[WRITE_BUFFER_SIZE];
-static __thread char ret[SMALL_BUFFER_SIZE];
+static __thread char ret[DEBUG_INFO_SIZE];
 
 int sctk_process_number = 1;
 int sctk_process_rank = 0;
@@ -111,7 +112,8 @@ sctk_print_debug_infos()
   sctk_get_thread_info (&task_id, &thread_id);
 
   if (sctk_have_shell_colors) {
-    sprintf(ret,
+    snprintf(ret,
+			DEBUG_INFO_SIZE,
         SCTK_COLOR_GREEN([%4d/%4d/%4d/)
         SCTK_COLOR_GREEN_BOLD(%4d)
         SCTK_COLOR_GREEN(/%4d/%4d]),
@@ -119,7 +121,8 @@ sctk_print_debug_infos()
         sctk_process_rank, sctk_thread_get_vp (), task_id, thread_id, sctk_local_process_rank);
   }
   else {
-    sprintf(ret,
+    snprintf(ret,
+			DEBUG_INFO_SIZE,
         "[%4d/%4d/%4d/%4d/%4d/%4d]",
         sctk_node_rank,
         sctk_process_rank, sctk_thread_get_vp (), task_id, thread_id, sctk_local_process_rank);
