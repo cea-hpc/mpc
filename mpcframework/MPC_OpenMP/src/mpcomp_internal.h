@@ -88,7 +88,7 @@ extern "C"
  * 3: production factor stealing
  ********************************/
 
-#define MPCOMP_TASK_MAX_DELAYED 1024
+#define MPCOMP_TASK_MAX_DELAYED 16
 
 /* Tasks property bitmasks */
 #define MPCOMP_TASK_UNDEFERRED   0x00000001 /* A task for which execution is not deferred
@@ -270,8 +270,8 @@ struct common_table {
      {
 	  sctk_atomics_int nb_elements;    /* Number of tasks in the list */
 	  sctk_spinlock_t lock;            /* Lock of the list */
-	  struct mpcomp_task_s *head;      /* First task of the list */
-	  struct mpcomp_task_s *tail;      /* Last task of the list */
+	  volatile struct mpcomp_task_s *head;      /* First task of the list */
+	  volatile struct mpcomp_task_s *tail;      /* Last task of the list */
  	  int total;                       /* Total number of tasks pushed in the list */
 	  sctk_atomics_int nb_larcenies;   /* Number of tasks in the list */
     };
@@ -586,6 +586,11 @@ typedef struct mpcomp_thread_s
 	}
 
      
+     void  __mpcomp_internal_begin_parallel_region(int arg_num_threads, 
+        mpcomp_new_parallel_region_info_t info );
+
+    void __mpcomp_internal_end_parallel_region( mpcomp_instance_t * instance );
+
      static inline void __mpcomp_team_init(mpcomp_team_t *team_info)
      {
 	  int i;
@@ -745,8 +750,14 @@ typedef struct mpcomp_thread_s
 	       list->head->prev = task;
 	       list->head = task;
 	  }
+      const int test = sctk_atomics_load_int(&list->nb_elements);
+      //assume( test <  MPCOMP_TASK_MAX_DELAYED);
+      
+      //if(test > MPCOMP_TASK_MAX_DELAYED)
+      //  fprintf(stderr, "%s:\t%d -- %d\n", __func__, test, MPCOMP_TASK_MAX_DELAYED);
 
 	  sctk_atomics_incr_int(&list->nb_elements);
+      
 	  list->total++;
 	  task->list = list;
      }

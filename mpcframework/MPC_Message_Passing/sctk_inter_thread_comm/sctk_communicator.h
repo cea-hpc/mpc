@@ -52,8 +52,8 @@ int sctk_get_node_rank_from_task_rank ( const int rank );
 int sctk_get_process_rank_from_task_rank ( int rank );
 int sctk_get_comm_number();
 
-inline int sctk_get_process_nb_in_array ( const sctk_communicator_t communicator );
-inline int *sctk_get_process_array ( const sctk_communicator_t communicator );
+int sctk_get_process_nb_in_array ( const sctk_communicator_t communicator );
+int *sctk_get_process_array ( const sctk_communicator_t communicator );
 
 sctk_communicator_t sctk_get_peer_comm ( const sctk_communicator_t communicator );
 sctk_communicator_t sctk_create_communicator ( const sctk_communicator_t origin_communicator, const int nb_task_involved, const int *task_list );

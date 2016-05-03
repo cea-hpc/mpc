@@ -1395,7 +1395,7 @@ inline int sctk_get_last_task_local ( const sctk_communicator_t communicator )
  * @param communicator given communicator.
  * @return the number.
 **/
-inline int sctk_get_first_task_local ( const sctk_communicator_t communicator )
+int sctk_get_first_task_local ( const sctk_communicator_t communicator )
 {
 	sctk_internal_communicator_t *tmp;
 	tmp = sctk_get_internal_communicator ( communicator );
@@ -1408,7 +1408,7 @@ inline int sctk_get_first_task_local ( const sctk_communicator_t communicator )
  * @param communicator given communicator.
  * @return the number.
 **/
-inline int sctk_get_process_nb_in_array ( const sctk_communicator_t communicator )
+int sctk_get_process_nb_in_array ( const sctk_communicator_t communicator )
 {
 	sctk_internal_communicator_t *tmp;
 	tmp = sctk_get_internal_communicator ( communicator );
@@ -1421,7 +1421,7 @@ inline int sctk_get_process_nb_in_array ( const sctk_communicator_t communicator
  * @param communicator given communicator.
  * @return the array of processes.
 **/
-inline int *sctk_get_process_array ( const sctk_communicator_t communicator )
+int *sctk_get_process_array ( const sctk_communicator_t communicator )
 {
 	sctk_internal_communicator_t *tmp;
 	tmp = sctk_get_internal_communicator ( communicator );
@@ -1434,7 +1434,7 @@ inline int *sctk_get_process_array ( const sctk_communicator_t communicator )
  * @param communicator given communicator.
  * @return the number.
 **/
-inline int sctk_get_nb_task_total ( const sctk_communicator_t communicator )
+int sctk_get_nb_task_total ( const sctk_communicator_t communicator )
 {
 	sctk_internal_communicator_t *tmp;
 	tmp = sctk_get_internal_communicator ( communicator );
@@ -1466,7 +1466,7 @@ inline int sctk_get_nb_task_total ( const sctk_communicator_t communicator )
  * @param communicator given intercommunicator.
  * @return the number.
 **/
-inline int sctk_get_nb_task_remote ( const sctk_communicator_t communicator )
+int sctk_get_nb_task_remote ( const sctk_communicator_t communicator )
 {
 	sctk_internal_communicator_t *tmp;
 	tmp = sctk_get_internal_communicator ( communicator );

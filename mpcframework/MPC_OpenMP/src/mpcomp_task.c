@@ -374,14 +374,14 @@ void __mpcomp_task_list_infos_exit_r(mpcomp_node_t *n)
 		    
 		    /* If the node correspond to the new list depth, release the data structure */
 		    if (n->depth + 1 == t->instance->team->tasklist_depth[MPCOMP_TASK_TYPE_NEW]) {
-			 //fprintf(stdout, "[mvp:%d] new_tasks->total:%d new_tasks->nb_larcenies:%d\n", mvp->rank, mvp->tasklist[MPCOMP_TASK_TYPE_NEW]->total, sctk_atomics_load_int(&mvp->tasklist[MPCOMP_TASK_TYPE_NEW]->nb_larcenies));
+			 fprintf(stdout, "[mvp:%d] new_tasks->total:%d new_tasks->nb_larcenies:%d\n", mvp->rank, mvp->tasklist[MPCOMP_TASK_TYPE_NEW]->total, sctk_atomics_load_int(&mvp->tasklist[MPCOMP_TASK_TYPE_NEW]->nb_larcenies));
 			 mpcomp_task_list_free(mvp->tasklist[MPCOMP_TASK_TYPE_NEW]);
 			 mvp->tasklist[MPCOMP_TASK_TYPE_NEW] = NULL;
 		    }
 		    
 		    /* If the node correspond to the untied list depth, release the data structure */
 		    if (n->depth + 1 == t->instance->team->tasklist_depth[MPCOMP_TASK_TYPE_UNTIED]) {
-			 //fprintf(stderr, "[mvp:%d] untied_tasks->total:%d\n", mvp->rank, mvp->tasklist[MPCOMP_TASK_TYPE_UNTIED]->total);
+			 fprintf(stderr, "[mvp:%d] untied_tasks->total:%d\n", mvp->rank, mvp->tasklist[MPCOMP_TASK_TYPE_UNTIED]->total);
 			 mpcomp_task_list_free(mvp->tasklist[MPCOMP_TASK_TYPE_UNTIED]);
 			 mvp->tasklist[MPCOMP_TASK_TYPE_UNTIED] = NULL;
 		    }
@@ -630,7 +630,7 @@ __mpcomp_task(void *(*fn) (void *), void *data, void (*cpyfn) (void *, void *),
 {
      mpcomp_thread_t *t;
      struct mpcomp_task_list_s *new_list;
-     int nb_delayed;
+     volatile int nb_delayed;
 
      /* Initialize the OpenMP environment (called several times, but really executed
       * once) */
@@ -644,15 +644,26 @@ __mpcomp_task(void *(*fn) (void *), void *data, void (*cpyfn) (void *, void *),
      t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
      sctk_assert(t != NULL);	 
      
+     assume(t->instance != NULL);
+     assume(t->instance->team != NULL);
      sctk_atomics_incr_int(&(t->instance->team->nb_tasks));
 
-
      if (t->info.num_threads == 1)
+     {
      	  nb_delayed = 0;
+          new_list = NULL;
+     }
      else {
+      assume(t->mvp != NULL);
+      assume(t->mvp->tasklistNodeRank != NULL);
+
 	  new_list = mpcomp_task_get_list(t->mvp->tasklistNodeRank[MPCOMP_TASK_TYPE_NEW], 
 				     MPCOMP_TASK_TYPE_NEW);
-     	  nb_delayed = sctk_atomics_load_int(&(new_list->nb_elements));
+          assume(new_list != NULL); 
+     	  //nb_delayed = sctk_atomics_load_int(&(new_list->nb_elements));
+     	  //sctk_atomics_incr_int(&(new_list->nb_elements));
+          nb_delayed = sctk_atomics_load_int(&(new_list->nb_elements));
+     	 // nb_delayed = sctk_atomics_fetch_and_add_int(&(new_list->nb_elements), 1);
      }
 
 		 sctk_debug( "[%d] __mpcomp_task: new task (n_threads=%ld, current_task=%s, current_task_depth=%d, "
@@ -668,12 +679,13 @@ __mpcomp_task(void *(*fn) (void *), void *data, void (*cpyfn) (void *, void *),
 	 || (t->info.num_threads == 1)
 	 || (nb_delayed > MPCOMP_TASK_MAX_DELAYED)
 	 || (t->current_task && t->current_task->depth > 8/*t->instance->team->task_nesting_max*/)) {
+
+
 	  /* Execute directly */
 //	  fn(data);
 	  struct mpcomp_task_s task;
 	  struct mpcomp_task_s *prev_task;
 	  mpcomp_local_icv_t icvs;
-
 
 	  __mpcomp_task_init (&task, NULL, NULL, t);
 	  mpcomp_task_set_property (&(task.property), MPCOMP_TASK_UNDEFERRED);
@@ -723,6 +735,7 @@ __mpcomp_task(void *(*fn) (void *), void *data, void (*cpyfn) (void *, void *),
 	  struct mpcomp_task_s *task;
 	  struct mpcomp_task_s *parent;
 	  char *data_cpy;
+     
 
 	  /* The new task may be delayed, so copy arguments in a buffer */
 	  task = mpcomp_malloc(1, sizeof (struct mpcomp_task_s) + arg_size + arg_align - 1, t->mvp->father->id_numa);
@@ -784,6 +797,9 @@ __mpcomp_task(void *(*fn) (void *), void *data, void (*cpyfn) (void *, void *),
 	  mpcomp_task_list_pushtohead(new_list, task);
 	  mpcomp_task_list_unlock(new_list);
      }
+
+   //  if(new_list != NULL)
+     //   sctk_atomics_decr_int(&(new_list->nb_elements));
 }
 
 

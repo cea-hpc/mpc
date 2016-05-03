@@ -198,7 +198,7 @@ __mpcomp_wakeup_leaf(
 	return n ;
 }
 
-inline void 
+void 
 __mpcomp_internal_begin_parallel_region(int arg_num_threads, 
 		mpcomp_new_parallel_region_info_t info )
 {
@@ -335,7 +335,7 @@ __mpcomp_internal_begin_parallel_region(int arg_num_threads,
 	return ;
 }
 
-inline void 
+void 
 __mpcomp_internal_end_parallel_region( mpcomp_instance_t * instance )
 {
 	mpcomp_node_t * root ;

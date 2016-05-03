@@ -729,7 +729,7 @@ __mpcomp_init()
 
     sctk_thread_mutex_unlock (&lock);
 
-    sctk_nodebug( "__mpcomp_init: Init done..." ) ;
+   // sctk_error( "__mpcomp_init: Init done..." ) ;
   }
 
 }
