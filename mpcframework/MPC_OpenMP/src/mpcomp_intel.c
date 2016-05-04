@@ -107,9 +107,13 @@ typedef unsigned int       kmp_uint32;
 typedef long long          kmp_int64;
 typedef unsigned long long kmp_uint64;
 
+typedef float              kmp_real32;
+typedef double             kmp_real64;
+typedef __float128         _Quad;
+typedef unsigned char      uchar;
 
-typedef float   kmp_real32;
-typedef double  kmp_real64;
+/* Check for quad-precision extension. Here, forced to 1 for MPC */
+#define KMP_HAVE_QUAD 1
 
 /* KMP.H */
 
@@ -321,16 +325,6 @@ typedef struct wrapper {
   * FUNCTIONS
   *******************************/
 extern int __kmp_x86_pause();
-extern int __kmp_compare_and_store8(kmp_int8 *, kmp_int8, kmp_int8);
-extern int __kmp_compare_and_store16(kmp_int16 *, kmp_int16, kmp_int16);
-extern int __kmp_compare_and_store32(kmp_int32 *, kmp_int32, kmp_int32);
-extern int __kmp_compare_and_store64(kmp_int64 *, kmp_int64, kmp_int64);
-extern int __kmp_xchg_fixed32( kmp_int32 *, kmp_int32  ) ;
-extern int __kmp_xchg_fixed64( kmp_int64 *, kmp_int64  ) ;
-extern int __kmp_test_then_add32( kmp_int32 *, kmp_int32  ) ;
-extern long __kmp_test_then_add64( kmp_int64 *, kmp_int64 ) ;
-extern double __kmp_test_then_add_real32( kmp_real32 *, kmp_real32 );
-extern double __kmp_test_then_add_real64( kmp_real64 *, kmp_real64 );
 extern int __kmp_invoke_microtask(kmpc_micro pkfn, int gtid, int npr, int argc, void *argv[] );
 
 void *
@@ -2659,13 +2653,6 @@ kmpc_set_blocktime (int arg)
 not_implemented() ;
 }
 
-#if 0
-void
-omp_init_lock( mpcomp_lock_t * lock)
-{
-not_implemented() ;
-}
-#endif
 
 /*
  * Lock structure
@@ -2813,6 +2800,29 @@ __kmpc_test_nest_lock( ident_t *loc, kmp_int32 gtid, void **user_lock )
 /********************************
   * ATOMIC_OPERATIONS
   *******************************/
+/* Decleration of assembly coded routines used in atomic operations */
+extern kmp_int32  __kmp_test_then_add32( volatile kmp_int32 *, kmp_int32  ) ;
+extern kmp_int64  __kmp_test_then_add64( volatile kmp_int64 *, kmp_int64 ) ;
+
+extern kmp_int8   __kmp_compare_and_store8( volatile kmp_int8 *, kmp_int8, kmp_int8);
+extern kmp_int16  __kmp_compare_and_store16( volatile kmp_int16 *, kmp_int16, kmp_int16);
+extern kmp_int32  __kmp_compare_and_store32( volatile kmp_int32 *, kmp_int32, kmp_int32);
+extern kmp_int32  __kmp_compare_and_store64( volatile kmp_int64 *, kmp_int64, kmp_int64);
+extern kmp_int8   __kmp_compare_and_store_ret8( volatile kmp_int8  *p, kmp_int8  cv, kmp_int8  sv );
+extern kmp_int16  __kmp_compare_and_store_ret16( volatile kmp_int16 *p, kmp_int16 cv, kmp_int16 sv );
+extern kmp_int32  __kmp_compare_and_store_ret32( volatile kmp_int32 *p, kmp_int32 cv, kmp_int32 sv );
+extern kmp_int64  __kmp_compare_and_store_ret64( volatile kmp_int64 *p, kmp_int64 cv, kmp_int64 sv );
+
+extern kmp_int8   __kmp_xchg_fixed8( volatile kmp_int8  *p, kmp_int8  v );
+extern kmp_int16  __kmp_xchg_fixed16( volatile kmp_int16 *p, kmp_int16 v );
+extern kmp_int32  __kmp_xchg_fixed32( volatile kmp_int32 *, kmp_int32  ) ;
+extern kmp_int64  __kmp_xchg_fixed64( volatile kmp_int64 *, kmp_int64  ) ;
+extern kmp_real32 __kmp_xchg_real32( volatile kmp_real32 *p, kmp_real32 v );
+extern kmp_real64 __kmp_xchg_real64( volatile kmp_real64 *p, kmp_real64 v );
+
+extern double     __kmp_test_then_add_real32( kmp_real32 *, kmp_real32 );
+extern double     __kmp_test_then_add_real64( kmp_real64 *, kmp_real64 );
+
 #if __MIC__ || __MIC2__
     #define DO_PAUSE _mm_delay_32( 1 )
 #else
@@ -2895,30 +2905,27 @@ __kmpc_atomic_float8_add(  ident_t *id_ref, int gtid, kmp_real64 * lhs, kmp_real
 #warning "MIC => atomic locks"
   __mpcomp_atomic_begin() ;
 
-    *lhs += rhs ;
+  *lhs += rhs ;
 
-      __mpcomp_atomic_end() ;
+  __mpcomp_atomic_end() ;
 #else 
 #warning "NON MIC => atomic optim"
-        __kmp_test_then_add_real64( lhs, rhs ) ;
+  __kmp_test_then_add_real64( lhs, rhs ) ;
 #endif
 
 
           /* TODO: use assembly functions by Intel if available */
 }
 
+
 /* begins for atomic functions */
 #define ATOMIC_BEGIN(TYPE_ID,OP_ID,TYPE, RET_TYPE)                                                          \
 RET_TYPE __kmpc_atomic_##TYPE_ID##_##OP_ID( ident_t *id_ref, int gtid, TYPE * lhs, TYPE rhs )               \
 {
 
-#define ATOMIC_BEGIN_CPT(TYPE_ID,OP_ID,TYPE, RET_TYPE)                                                      \
-RET_TYPE __kmpc_atomic_##TYPE_ID##_##OP_ID( ident_t *id_ref, int gtid, TYPE * lhs, TYPE rhs, int flag )     \
-{
-
 #define ATOMIC_BEGIN_REV(TYPE_ID,OP_ID,TYPE, RET_TYPE)                                                      \
 RET_TYPE __kmpc_atomic_##TYPE_ID##_##OP_ID##_rev( ident_t *id_ref, int gtid, TYPE * lhs, TYPE rhs )         \
-{                                   
+{
 
 #define ATOMIC_BEGIN_MIX(TYPE_ID,TYPE,OP_ID,RTYPE_ID,RTYPE)                                                 \
 void __kmpc_atomic_##TYPE_ID##_##OP_ID##_##RTYPE_ID( ident_t *id_ref, int gtid, TYPE * lhs, RTYPE rhs )     \
@@ -2926,6 +2933,10 @@ void __kmpc_atomic_##TYPE_ID##_##OP_ID##_##RTYPE_ID( ident_t *id_ref, int gtid, 
 
 #define ATOMIC_BEGIN_READ(TYPE_ID,OP_ID,TYPE, RET_TYPE)                                                     \
 RET_TYPE __kmpc_atomic_##TYPE_ID##_##OP_ID( ident_t *id_ref, int gtid, TYPE * loc )                         \
+{
+
+#define ATOMIC_BEGIN_CPT(TYPE_ID,OP_ID,TYPE, RET_TYPE)                                                      \
+RET_TYPE __kmpc_atomic_##TYPE_ID##_##OP_ID( ident_t *id_ref, int gtid, TYPE * lhs, TYPE rhs, int flag )     \
 {
 
 
@@ -2941,9 +2952,9 @@ ATOMIC_BEGIN(TYPE_ID,OP_ID,TYPE,void)                                           
     TYPE old_value, new_value;                                                                              \
     old_value = *(TYPE volatile *) lhs;                                                                     \
     new_value = old_value OP rhs;                                                                           \
-    while ( ! __kmp_compare_and_store##BITS( ((kmp_int##BITS *) lhs),                                         \
-                                          (*(kmp_int##BITS *) &old_value),                           \
-                                          (*(kmp_int##BITS *) &new_value )))                         \
+    while ( ! __kmp_compare_and_store##BITS( ((kmp_int##BITS *) lhs),                                       \
+                                             (*(kmp_int##BITS *) &old_value),                               \
+                                             (*(kmp_int##BITS *) &new_value )))                             \
     {                                                                                                       \
         DO_PAUSE;                                                                                           \
         old_value = *(TYPE volatile *)lhs;                                                                  \
@@ -2957,14 +2968,14 @@ ATOMIC_BEGIN(TYPE_ID,OP_ID,TYPE,void)                                           
     old_value = *(TYPE volatile *)lhs;                                                                      \
     new_value = old_value OP rhs;                                                                           \
     while ( ! __kmp_compare_and_store##BITS( ((kmp_int##BITS *) lhs),                                       \
-    (*(kmp_int##BITS *) &old_value), (*(kmp_int##BITS *) &new_value) ) )                                    \
+                                             (*(kmp_int##BITS *) &old_value),                               \
+                                             (*(kmp_int##BITS *) &new_value)))                              \
     {                                                                                                       \
         DO_PAUSE;                                                                                           \
         old_value = *(TYPE volatile *)lhs;                                                                  \
         new_value = old_value OP rhs;                                                                       \
     }                                                                                                       \
 }
-
 
 #define MIN_MAX_COMPXCHG(TYPE_ID,OP_ID,TYPE,BITS,OP,LCK_ID,MASK,GOMP_FLAG)                                  \
 ATOMIC_BEGIN(TYPE_ID,OP_ID,TYPE,void)                                                                       \
@@ -2976,10 +2987,8 @@ ATOMIC_BEGIN(TYPE_ID,OP_ID,TYPE,void)                                           
         old_value = temp_val;                                                                               \
         while ( old_value OP rhs &&                                                                         \
                 ! __kmp_compare_and_store##BITS( ((kmp_int##BITS *) lhs),                                   \
-                                             (*(kmp_int##BITS *) &old_value),                               \
-                                             (*(kmp_int##BITS *) &rhs)                                      \
-                                           )                                                                \
-              )                                                                                             \
+                                                 (*(kmp_int##BITS *) &old_value),                           \
+                                                 (*(kmp_int##BITS *) &rhs)))                                \
         {                                                                                                   \
             DO_PAUSE;                                                                                       \
             temp_val = *lhs;                                                                                \
@@ -2994,7 +3003,8 @@ ATOMIC_BEGIN(TYPE_ID,OP_ID,TYPE,void)                                           
     old_value = *(TYPE volatile *)lhs;                                                                      \
     new_value = old_value OP rhs;                                                                           \
     while ( ! __kmp_compare_and_store##BITS( ((kmp_int##BITS *) lhs),                                       \
-    (*(kmp_int##BITS *) &old_value), (*(kmp_int##BITS *) &new_value) ) )                                    \
+                                             (*(kmp_int##BITS *) &old_value),                               \
+                                             (*(kmp_int##BITS *) &new_value)))                              \
     {                                                                                                       \
         DO_PAUSE;                                                                                           \
         old_value = *(TYPE volatile *)lhs;                                                                  \
@@ -3010,6 +3020,13 @@ ATOMIC_BEGIN(TYPE_ID,OP_ID,TYPE,void)                                           
     sctk_thread_mutex_unlock(&critical_lock);                                                               \
 }
 
+#define ATOMIC_CRITICAL_REV(TYPE_ID,OP_ID,TYPE,OP,LCK_ID,GOMP_FLAG)                                         \
+ATOMIC_BEGIN_REV(TYPE_ID,OP_ID,TYPE,void)                                                                   \
+    static sctk_thread_mutex_t critical_lock = SCTK_THREAD_MUTEX_INITIALIZER;                               \
+    sctk_thread_mutex_lock(&critical_lock);                                                                 \
+    (*lhs) = (rhs) OP (*lhs);                                                                               \
+    sctk_thread_mutex_unlock(&critical_lock);                                                               \
+}
 
 #define MIN_MAX_COMPXCHG_CPT(TYPE_ID,OP_ID,TYPE,BITS,OP,GOMP_FLAG)                                          \
 ATOMIC_BEGIN_CPT(TYPE_ID,OP_ID,TYPE,TYPE)                                                                   \
@@ -3020,8 +3037,9 @@ ATOMIC_BEGIN_CPT(TYPE_ID,OP_ID,TYPE,TYPE)                                       
         temp_val = *lhs;                                                                                    \
         old_value = temp_val;                                                                               \
         while ( old_value OP rhs &&                                                                         \
-        ! __kmp_compare_and_store##BITS( ((kmp_int##BITS *) lhs),                                           \
-        (*(kmp_int##BITS *) &old_value), (*(kmp_int##BITS *) &rhs) ) )                                      \
+                ! __kmp_compare_and_store##BITS( ((kmp_int##BITS *) lhs),                                   \
+                                                 (*(kmp_int##BITS *) &old_value),                           \
+                                                 (*(kmp_int##BITS *) &rhs)))                                \
         {                                                                                                   \
             DO_PAUSE;                                                                                       \
             temp_val = *lhs;                                                                                \
@@ -3043,7 +3061,8 @@ ATOMIC_BEGIN_CPT(TYPE_ID,OP_ID,TYPE,TYPE)                                       
     old_value = temp_val;                                                                                   \
     new_value = old_value OP rhs;                                                                           \
     while ( ! __kmp_compare_and_store##BITS( ((kmp_int##BITS *) lhs),                                       \
-    (*(kmp_int##BITS *) &old_value), (*(kmp_int##BITS *) &new_value) ) )                                    \
+              (*(kmp_int##BITS *) &old_value),                                                              \
+              (*(kmp_int##BITS *) &new_value)))                                                             \
     {                                                                                                       \
         DO_PAUSE;                                                                                           \
         temp_val = *lhs;                                                                                    \
@@ -3061,7 +3080,8 @@ ATOMIC_BEGIN_CPT(TYPE_ID,OP_ID,TYPE,TYPE)                                       
     old_value = temp_val;                                                                                   \
     new_value = old_value OP rhs;                                                                           \
     while ( ! __kmp_compare_and_store##BITS( ((kmp_int##BITS *) lhs),                                       \
-    (*(kmp_int##BITS *) &old_value), (*(kmp_int##BITS *) &new_value) ) )                                    \
+              (*(kmp_int##BITS *) &old_value),                                                              \
+              (*(kmp_int##BITS *) &new_value)))                                                             \
     {                                                                                                       \
         DO_PAUSE;                                                                                           \
         temp_val = *lhs;                                                                                    \
@@ -3078,9 +3098,11 @@ ATOMIC_BEGIN_CPT(TYPE_ID,OP_ID,TYPE,TYPE)                                       
     TYPE new_value;                                                                                         \
     sctk_thread_mutex_lock(&critical_lock);                                                                 \
     if( flag ) {                                                                                            \
-        (*lhs) OP##= rhs; new_value = (*lhs);                                                               \
+        (*lhs) OP##= rhs;                                                                                   \
+        new_value = (*lhs);                                                                                 \
     } else {                                                                                                \
-        new_value = (*lhs); (*lhs) OP##= rhs;                                                               \
+        new_value = (*lhs);                                                                                 \
+        (*lhs) OP##= rhs;                                                                                   \
     }                                                                                                       \
     sctk_thread_mutex_unlock(&critical_lock);                                                               \
     return new_value;                                                                                       \
@@ -3088,12 +3110,35 @@ ATOMIC_BEGIN_CPT(TYPE_ID,OP_ID,TYPE,TYPE)                                       
 
 #define ATOMIC_CMPXCHG_REV(TYPE_ID,OP_ID,TYPE,BITS,OP,LCK_ID,GOMP_FLAG)                                     \
 ATOMIC_BEGIN_REV(TYPE_ID,OP_ID,TYPE,void)                                                                   \
-    not_implemented();                                                                                      \
+    TYPE volatile temp_val;                                                                                 \
+    TYPE old_value, new_value;                                                                              \
+    temp_val = *lhs;                                                                                        \
+    old_value = temp_val;                                                                                   \
+    new_value = rhs OP old_value;                                                                           \
+    while ( ! __kmp_compare_and_store##BITS( (kmp_int##BITS *) lhs,                                         \
+              *(kmp_int##BITS *) &old_value,                                                                \
+              *(kmp_int##BITS *) &new_value ))                                                              \
+    {                                                                                                       \
+        DO_PAUSE;                                                                                           \
+        temp_val = *lhs;                                                                                    \
+        old_value = temp_val;                                                                               \
+        new_value = rhs OP old_value;                                                                       \
+    }                                                                                                       \
 }
 
 #define ATOMIC_CMPXCHG_MIX(TYPE_ID,TYPE,OP_ID,BITS,OP,RTYPE_ID,RTYPE,LCK_ID,MASK,GOMP_FLAG)                 \
 ATOMIC_BEGIN_MIX(TYPE_ID,TYPE,OP_ID,RTYPE_ID,RTYPE)                                                         \
-    not_implemented();                                                                                      \
+    TYPE old_value, new_value;                                                                              \
+    old_value = *(TYPE volatile *)lhs;                                                                      \
+    new_value = old_value OP rhs;                                                                           \
+    while ( ! __kmp_compare_and_store##BITS( (kmp_int##BITS *) lhs,                                         \
+              *(kmp_int##BITS *) &old_value,                                                                \
+              *(kmp_int##BITS *) &new_value ) )                                                             \
+    {                                                                                                       \
+        DO_PAUSE;                                                                                           \
+        old_value = *(TYPE volatile *)lhs;                                                                  \
+        new_value = old_value OP rhs;                                                                       \
+    }                                                                                                       \
 }
 
 #define ATOMIC_FIXED_READ(TYPE_ID,OP_ID,TYPE,BITS,OP,GOMP_FLAG)                                             \
@@ -3114,16 +3159,20 @@ ATOMIC_BEGIN_READ(TYPE_ID,OP_ID,TYPE,TYPE)                                      
     union f_i_union old_value;                                                                              \
     temp_val = *loc;                                                                                        \
     old_value.f_val = temp_val;                                                                             \
-    old_value.i_val = __kmp_compare_and_store_ret##BITS( ((kmp_int##BITS *) loc),                             \
-                  (*(kmp_int##BITS *) &old_value.i_val),                                                      \
-                  (*(kmp_int##BITS *) &old_value.i_val ));                                                    \
+    old_value.i_val = __kmp_compare_and_store_ret##BITS( ((kmp_int##BITS *) loc),                           \
+                  (*(kmp_int##BITS *) &old_value.i_val),                                                    \
+                  (*(kmp_int##BITS *) &old_value.i_val ));                                                  \
     new_value = old_value.f_val;                                                                            \
     return new_value;                                                                                       \
 }
 
 #define ATOMIC_CRITICAL_READ(TYPE_ID,OP_ID,TYPE,OP,LCK_ID,GOMP_FLAG)                                        \
 ATOMIC_BEGIN_READ(TYPE_ID,OP_ID,TYPE,TYPE)                                                                  \
-    not_implemented();                                                                                      \
+    TYPE new_value;                                                                                         \
+    static sctk_thread_mutex_t critical_lock = SCTK_THREAD_MUTEX_INITIALIZER;                               \
+    sctk_thread_mutex_lock(&critical_lock);                                                                 \
+    new_value = (*loc);                                                                                     \
+    sctk_thread_mutex_unlock(&critical_lock);                                                               \
 }
 
 #define ATOMIC_XCHG_WR(TYPE_ID,OP_ID,TYPE,BITS,OP,GOMP_FLAG)                                                \
@@ -3144,19 +3193,22 @@ ATOMIC_BEGIN(TYPE_ID,OP_ID,TYPE,void)                                           
     old_value = temp_val;                                                                                   \
     new_value = rhs;                                                                                        \
     while ( ! __kmp_compare_and_store##BITS( (kmp_int##BITS *) lhs,                                         \
-                *(kmp_int##BITS *) &old_value,                                                              \
-                *(kmp_int##BITS *) &new_value ) )                                                           \
+              *(kmp_int##BITS *) &old_value,                                                                \
+              *(kmp_int##BITS *) &new_value ) )                                                             \
     {                                                                                                       \
         DO_PAUSE;                                                                                           \
         temp_val = *lhs;                                                                                    \
         old_value = temp_val;                                                                               \
         new_value = rhs;                                                                                    \
-    }                                                                                                       \    
+    }                                                                                                       \
 }
 
 #define ATOMIC_CRITICAL_WR(TYPE_ID,OP_ID,TYPE,OP,LCK_ID,GOMP_FLAG)                                          \
 ATOMIC_BEGIN(TYPE_ID,OP_ID,TYPE,void)                                                                       \
-    not_implemented();                                                                                      \
+    static sctk_thread_mutex_t critical_lock = SCTK_THREAD_MUTEX_INITIALIZER;                               \
+    sctk_thread_mutex_lock(&critical_lock);                                                                 \
+    (*lhs) OP (rhs);                                                                                        \
+    sctk_thread_mutex_unlock(&critical_lock);                                                               \
 }
 
 #define ATOMIC_FIXED_ADD_CPT(TYPE_ID,OP_ID,TYPE,BITS,OP,GOMP_FLAG)                                          \
@@ -3173,9 +3225,26 @@ ATOMIC_BEGIN_CPT(TYPE_ID,OP_ID,TYPE,TYPE)                                       
 
 #define ATOMIC_CMPX_L_CPT(TYPE_ID,OP_ID,TYPE,BITS,OP,GOMP_FLAG)                                             \
 ATOMIC_BEGIN_CPT(TYPE_ID,OP_ID,TYPE,TYPE)                                                                   \
-    not_implemented();                                                                                      \
+    TYPE volatile temp_val;                                                                                 \
+    TYPE old_value, new_value;                                                                              \
+    temp_val = *lhs;                                                                                        \
+    old_value = temp_val;                                                                                   \
+    new_value = old_value OP rhs;                                                                           \
+    while ( ! __kmp_compare_and_store##BITS( (kmp_int##BITS *) lhs,                                         \
+              *(kmp_int##BITS *) &old_value,                                                                \
+              *(kmp_int##BITS *) &new_value ))                                                              \
+    {                                                                                                       \
+        DO_PAUSE;                                                                                         \
+        temp_val = *lhs;                                                                                    \
+        old_value = temp_val;                                                                               \
+        new_value = old_value OP rhs;                                                                       \
+    }                                                                                                       \
+                                                                                                            \
+    if( flag ) {                                                                                            \
+        return new_value;                                                                                   \
+    } else                                                                                                  \
+        return old_value;                                                                                   \
 }
-
 
 
 // Routines for ATOMIC 4-byte operands addition and subtraction
@@ -3274,7 +3343,16 @@ MIN_MAX_COMPXCHG( float4,  max, kmp_real32, 32, <, 4r, 3, KMP_ARCH_X86 ) // __km
 MIN_MAX_COMPXCHG( float4,  min, kmp_real32, 32, >, 4r, 3, KMP_ARCH_X86 ) // __kmpc_atomic_float4_min
 MIN_MAX_COMPXCHG( float8,  max, kmp_real64, 64, <, 8r, 7, KMP_ARCH_X86 ) // __kmpc_atomic_float8_max
 MIN_MAX_COMPXCHG( float8,  min, kmp_real64, 64, >, 8r, 7, KMP_ARCH_X86 ) // __kmpc_atomic_float8_min
-
+#if 0
+#if KMP_HAVE_QUAD
+MIN_MAX_CRITICAL( float16, max,     QUAD_LEGACY,      <, 16r,   1 )      // __kmpc_atomic_float16_max
+MIN_MAX_CRITICAL( float16, min,     QUAD_LEGACY,      >, 16r,   1 )      // __kmpc_atomic_float16_min
+#if ( KMP_ARCH_X86 )
+    MIN_MAX_CRITICAL( float16, max_a16, Quad_a16_t,     <, 16r,   1 )    // __kmpc_atomic_float16_max_a16
+    MIN_MAX_CRITICAL( float16, min_a16, Quad_a16_t,     >, 16r,   1 )    // __kmpc_atomic_float16_min_a16
+#endif
+#endif
+#endif
 
 ATOMIC_CMPXCHG(  fixed1, neqv, kmp_int8,   8,   ^, 1i, 0, KMP_ARCH_X86 ) // __kmpc_atomic_fixed1_neqv
 ATOMIC_CMPXCHG(  fixed2, neqv, kmp_int16, 16,   ^, 2i, 1, KMP_ARCH_X86 ) // __kmpc_atomic_fixed2_neqv
@@ -3399,11 +3477,11 @@ ATOMIC_CMPXCHG_REV( float8,  div, kmp_real64, 64, /,  8r, KMP_ARCH_X86 )  // __k
 ATOMIC_CMPXCHG_REV( float8,  sub, kmp_real64, 64, -,  8r, KMP_ARCH_X86 )  // __kmpc_atomic_float8_sub_rev
 //                  TYPE_ID,OP_ID, TYPE,     BITS,OP,LCK_ID, GOMP_FLAG
 
-#if 0
 /* ------------------------------------------------------------------------- */
 // routines for long double type
 ATOMIC_CRITICAL_REV( float10, sub, long double,     -, 10r,   1 )            // __kmpc_atomic_float10_sub_rev
 ATOMIC_CRITICAL_REV( float10, div, long double,     /, 10r,   1 )            // __kmpc_atomic_float10_div_rev
+#if 0
 #if KMP_HAVE_QUAD
 // routines for _Quad type
 ATOMIC_CRITICAL_REV( float16, sub, QUAD_LEGACY,     -, 16r,   1 )            // __kmpc_atomic_float16_sub_rev
@@ -3455,7 +3533,7 @@ ATOMIC_CMPXCHG_MIX( float4, kmp_real32, sub, 32, -, float8, kmp_real64, 4r, 3, K
 ATOMIC_CMPXCHG_MIX( float4, kmp_real32, mul, 32, *, float8, kmp_real64, 4r, 3, KMP_ARCH_X86 ) // __kmpc_atomic_float4_mul_float8
 ATOMIC_CMPXCHG_MIX( float4, kmp_real32, div, 32, /, float8, kmp_real64, 4r, 3, KMP_ARCH_X86 ) // __kmpc_atomic_float4_div_float8
 
-#if 0
+
 // RHS=float16 (deprecated, to be removed when we are sure the compiler does not use them)
 #if KMP_HAVE_QUAD
 ATOMIC_CMPXCHG_MIX( fixed1,  char,       add,  8, +, fp, _Quad, 1i, 0, KMP_ARCH_X86 ) // __kmpc_atomic_fixed1_add_fp
@@ -3491,12 +3569,13 @@ ATOMIC_CMPXCHG_MIX( float8,  kmp_real64, add, 64, +, fp, _Quad, 8r, 7, KMP_ARCH_
 ATOMIC_CMPXCHG_MIX( float8,  kmp_real64, sub, 64, -, fp, _Quad, 8r, 7, KMP_ARCH_X86 ) // __kmpc_atomic_float8_sub_fp
 ATOMIC_CMPXCHG_MIX( float8,  kmp_real64, mul, 64, *, fp, _Quad, 8r, 7, KMP_ARCH_X86 ) // __kmpc_atomic_float8_mul_fp
 ATOMIC_CMPXCHG_MIX( float8,  kmp_real64, div, 64, /, fp, _Quad, 8r, 7, KMP_ARCH_X86 ) // __kmpc_atomic_float8_div_fp
+#endif
 
+#if 0
 ATOMIC_CRITICAL_FP( float10, long double,    add, +, fp, _Quad, 10r,   1 )            // __kmpc_atomic_float10_add_fp
 ATOMIC_CRITICAL_FP( float10, long double,    sub, -, fp, _Quad, 10r,   1 )            // __kmpc_atomic_float10_sub_fp
 ATOMIC_CRITICAL_FP( float10, long double,    mul, *, fp, _Quad, 10r,   1 )            // __kmpc_atomic_float10_mul_fp
 ATOMIC_CRITICAL_FP( float10, long double,    div, /, fp, _Quad, 10r,   1 )            // __kmpc_atomic_float10_div_fp
-#endif
 
 ATOMIC_CMPXCHG_CMPLX( cmplx4, kmp_cmplx32, add, 64, +, cmplx8,  kmp_cmplx64,  8c, 7, KMP_ARCH_X86 ) // __kmpc_atomic_cmplx4_add_cmplx8
 ATOMIC_CMPXCHG_CMPLX( cmplx4, kmp_cmplx32, sub, 64, -, cmplx8,  kmp_cmplx64,  8c, 7, KMP_ARCH_X86 ) // __kmpc_atomic_cmplx4_sub_cmplx8

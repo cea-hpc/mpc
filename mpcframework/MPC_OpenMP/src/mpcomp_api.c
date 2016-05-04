@@ -72,23 +72,6 @@ omp_get_thread_num (void)
 int
 omp_get_max_threads (void)
 {
-/*  mpcomp_thread_t * t ;
-  int nb_mvps;
-
-  __mpcomp_init ();
-
-  t = sctk_openmp_thread_tls ;
-  sctk_assert( t != NULL ) ;
-  
-  if( t->children_instance )
-      nb_mvps = t->children_instance->nb_mvps;
-  else
-      nb_mvps = 1;
-
- sctk_debug("[%d] mpcomp_get_max_threads: getting %d thread(s)",
-         t->rank, nb_mvps) ;
-
-  return nb_mvps;*/
   mpcomp_thread_t * t ;
 
   __mpcomp_init ();
@@ -110,7 +93,6 @@ int
 omp_get_num_procs (void)
 {
   mpcomp_thread_t * t;
-//  mpcomp_thread_t * t_lookup;
   
   __mpcomp_init ();
 
@@ -118,15 +100,6 @@ omp_get_num_procs (void)
   sctk_assert(t != NULL);
 
   return mpcomp_global_icvs.nmicrovps_var;
-
-/*  t_lookup = t;
-
-  while( t_lookup->father != NULL )
-  {
-    t_lookup = t_lookup->father;
-  }
-
-  return t_lookup->children_instance->nb_mvps;*/
 }
 
 
@@ -434,21 +407,6 @@ omp_get_thread_limit()
   sctk_assert(t != NULL);
 
   return mpcomp_global_icvs.thread_limit_var;
-  /*mpcomp_thread_t *t;
-  mpcomp_thread_t *t_lookup;
-
-  __mpcomp_init();
-
-  t = sctk_openmp_thread_tls;
-  sctk_assert(t != NULL);
-
-  t_lookup = t;
-  while( t_lookup->father != NULL )
-  {
-    t_lookup = t_lookup->father;
-  }
-
-  return t_lookup->children_instance->nb_mvps;*/
 }
 
 /*
@@ -458,7 +416,11 @@ omp_get_thread_limit()
 void
 omp_set_max_active_levels( int max_levels )
 {
-    not_implemented() ;
+    /*
+ *  According current implementation of nested parallelism
+ *  This is equivalent of having only one active parallel region
+ *  No operation is performed then 
+ *  */
 }
 
 /*
@@ -469,8 +431,18 @@ omp_set_max_active_levels( int max_levels )
 int
 omp_get_max_active_levels()
 {
-    not_implemented() ;
-    return 0 ;
+    /*
+ *  According current implementation of nested parallelism
+ *  This is equivalent of having only one active parallel region
+ *  */
+  mpcomp_thread_t * t;
+
+  __mpcomp_init ();
+
+  t = sctk_openmp_thread_tls;
+  sctk_assert(t != NULL);
+
+  return mpcomp_global_icvs.max_active_levels_var;
 }
 
 /*
@@ -480,8 +452,15 @@ omp_get_max_active_levels()
 int
 omp_in_final()
 {
-    not_implemented() ;
-    return 0 ;
+  mpcomp_thread_t * t;
+
+  __mpcomp_init ();
+
+  t = sctk_openmp_thread_tls;
+  sctk_assert(t != NULL);
+
+  return ( t->current_task 
+             && mpcomp_task_property_isset( t->current_task->property, MPCOMP_TASK_FINAL ));
 }
 
 /* For backward compatibility with old patched GCC */

@@ -675,6 +675,10 @@ __mpcomp_init()
       mpcomp_global_icvs.nmicrovps_var = nb_mvps;
     }
 
+    if( mpcomp_global_icvs.max_active_levels_var == 0 ) {
+      mpcomp_global_icvs.max_active_levels_var = 1;
+    }
+
     /* Initialize default ICVs */
     if (OMP_NUM_THREADS == 0) {
 	 icvs.nthreads_var = nb_mvps;
