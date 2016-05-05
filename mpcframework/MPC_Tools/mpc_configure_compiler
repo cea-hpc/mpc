@@ -363,6 +363,9 @@ cat << EOF >> $1
 		if test ! -z "\${PRIV_FLAG}";
 		then
 			PRIV_FLAG="\${PRIV_FLAG} -DMPC_PRIVATIZED"
+		else
+			#Without privatization the plugin is useless
+			LIBPRIV_FLAG=""
 		fi
 	fi
 fi
