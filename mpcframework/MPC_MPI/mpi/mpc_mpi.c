@@ -22,7 +22,8 @@
 /* ######################################################################## */
 #include <mpc_mpi_internal.h>
 
-#include <sctk_ht.h>
+#include "sctk_ht.h"
+#include "sctk_handle.h"
 
 #ifndef SCTK_DO_NOT_HAVE_WEAK_SYMBOLS
 #include "mpc_mpi_weak.h"
@@ -1217,17 +1218,16 @@ __INTERNAL__PMPI_Send (void *buf, int count, MPI_Datatype datatype, int dest,
 		sctk_nodebug ("Send contiguous type");
 		if (buf == NULL && count != 0)
 		{
-		MPI_ERROR_REPORT (comm, MPI_ERR_BUFFER, "");
-		}
-		
-		if(count == 0)
-		{
-		/* code to avoid derived datatype */
-		datatype = MPC_CHAR;
-		}
-		
-		return PMPC_Send (buf, count, datatype, dest, tag, comm);
-	}
+                  MPI_ERROR_REPORT(comm, MPI_ERR_BUFFER, "");
+                }
+
+                if (count == 0) {
+                  /* code to avoid derived datatype */
+                  datatype = MPC_CHAR;
+                }
+
+                return PMPC_Send(buf, count, datatype, dest, tag, comm);
+        }
 }
 
 

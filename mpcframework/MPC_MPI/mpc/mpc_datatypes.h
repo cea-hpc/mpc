@@ -576,7 +576,9 @@ void Datatype_Array_release( struct Datatype_Array * da );
  */
 static inline void Datatype_Array_lock( struct Datatype_Array * da )
 {
-	sctk_spinlock_lock (&da->datatype_lock);
+#ifdef SCTK_PROCESS_MODE
+  sctk_spinlock_lock(&da->datatype_lock);
+#endif
 }
 
 /** \brief Unlocks the datatype array 
@@ -584,7 +586,9 @@ static inline void Datatype_Array_lock( struct Datatype_Array * da )
  */
 static inline void Datatype_Array_unlock( struct Datatype_Array * da )
 {
-	sctk_spinlock_unlock (&da->datatype_lock);
+#ifdef SCTK_PROCESS_MODE
+  sctk_spinlock_unlock(&da->datatype_lock);
+#endif
 }
 
 /** \brief Returns a pointer to a contiguous datatype

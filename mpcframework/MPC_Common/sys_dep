@@ -339,6 +339,14 @@ if test "$SCTK_SCTK_CHECK_HEADER_RES" = 0; then
   SCTK_CHECK_OPTION "-DHAVE_WCHAR_H"
 fi
 
+begin_section Process Based MPI
+
+if test "x$SCTK_MPC_PROCESS_MODE" = "x1"; then
+  SCTK_CHECK_OPTION "-DSCTK_PROCESS_MODE"
+fi
+
+end_section
+
 begin_section Valgrind
 check_debug
 end_section

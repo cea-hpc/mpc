@@ -44,7 +44,6 @@
 #include <utlist.h>
 #include "sctk_runtime_config.h"
 #include "nbc.h"
-#include "sctk_handle.h"
 
 TODO("Optimize algorithme for derived types")
 

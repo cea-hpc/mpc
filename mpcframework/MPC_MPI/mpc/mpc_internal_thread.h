@@ -24,7 +24,6 @@ struct sctk_task_specific_s;
 struct sctk_thread_specific_s;
 
 extern void __MPC_reinit_task_specific (struct sctk_task_specific_s *tmp);
-extern struct sctk_task_specific_s *__MPC_get_task_specific (void);
 extern int __MPC_atexit_task_specific(void (*function)(void));
 extern void __MPC_init_thread_specific();
 extern void __MPC_delete_thread_specific();

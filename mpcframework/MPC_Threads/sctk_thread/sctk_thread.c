@@ -62,6 +62,7 @@
 #ifdef MPC_MPI
 #include <mpc_internal_thread.h>
 #include "mpc_datatypes.h"
+#include "mpc_common.h"
 #endif
 
 #ifdef MPC_Message_Passing

@@ -54,12 +54,14 @@ MPI_ROOT="\${MPCROOT}"
 export MPI_ROOT
 
 if test -z "\${PATH}" ; then
-	PATH="\${MPCROOT}/bin"
+	PATH="\${MPCROOT}/bin:\${MPCROOT}/bin/mpiwrapp/"
 	export PATH
 else
-	PATH="\${PATH}:\${MPCROOT}/bin"
+	PATH="\${MPCROOT}/bin/mpiwrapp/:\${PATH}:\${MPCROOT}/bin"
 	export PATH
 fi
+
+
 
 # if test -z "\${CPATH}" ; then
 #    export CPATH="\${MPCROOT}/include"

@@ -153,9 +153,10 @@ Optional features:
   --enable-FEATURE                 Include FEATURE
   --enable-fortran                 Build MPC fortran API
   --use-network=*                  Select inter-node network type [all]
+  --mpc-process-mode			   Configure MPC in a process-based flavour
   --enable-checksum                Enable checksum for inter-processes messages
   --disable-shm                    Disable intra-node communication module (SHM)
-  --enable-shm-cma		   Enable CMA support for SHM (since Linux 3.2 & glibc 2.15) 
+  --enable-shm-cma		   		   Enable CMA support for SHM (since Linux 3.2 & glibc 2.15) 
   --disable-posix-alloc            Disable MPC posix memory allocator.
   --enable-debug                   Enable MPC internal debugging features
   --enable-debug-strict            Same than --enable-debug but also enable flag -Werror.

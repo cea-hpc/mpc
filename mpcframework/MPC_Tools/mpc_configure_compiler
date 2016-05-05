@@ -992,6 +992,58 @@ fi
 
 ########################################
 ########################################
+##### MPC_MPI_COMPILER_WRAPPER #########
+########################################
+########################################
+
+genMPIcompilwrapper()
+{
+	
+TARGET_COMP=$1
+	
+cat <<EOF
+#!/bin/sh
+
+# This is the MPI class compiler proxy
+# to the MPC one, just passes the arguments
+# through however note that by default
+# this compiler does not privatize
+# you can export MPI_PRIV to do it from here
+# or just use their mpc_* counterpart
+
+# This variable is used to inform
+# sub-commands that the MPI compil
+# wrapper is invoking them
+export FROM_MPI_COMPIL_WRAPPER=1
+
+MPI_PRIV_ARG="-fnompc-privatize"
+
+if test ! -z "\$MPI_PRIV"; then
+	MPI_PRIV_ARG=""
+else
+	# This variables request the process based linking
+	# adapting the mpc_cflags and mpc_ldflags accordingly
+	export MPI_COMPIL_PROCESS_BASED=1
+fi
+
+# Now invoke the compiler
+$TARGET_COMP \$MPI_PRIV_ARG \$@ 
+
+EOF
+
+}
+
+mkdir -p ./bin/mpiwrapp/
+
+genMPIcompilwrapper "mpc_cc" >  bin/mpiwrapp/mpicc
+genMPIcompilwrapper "mpc_cxx" > bin/mpiwrapp/mpicxx
+genMPIcompilwrapper "mpc_cxx" > bin/mpiwrapp/mpic++
+genMPIcompilwrapper "mpc_f77" > bin/mpiwrapp/mpif77
+genMPIcompilwrapper "mpc_f90" > bin/mpiwrapp/mpif90
+genMPIcompilwrapper "mpc_f90" > bin/mpiwrapp/mpifc
+
+########################################
+########################################
 ##### MPC_COMPILER_MANAGER GEN #########
 ########################################
 ########################################

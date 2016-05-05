@@ -387,7 +387,12 @@ printf "\t@echo \"Generate FORTRAN MPI/OpenMP includes and modules\"">> Makefile
 printf "\t@MPC_MAKE_FORTRAN_INTERFACE=1 MPC_DISABLE_CONFIG=1 MPC_DISABLE_BANNER=\"1\" LD_LIBRARY_PATH=\$(DESTDIR)/\$(OPENPA_PREFIX_INSTALL)/lib:\$(DESTDIR)/\$(HWLOC_PREFIX_INSTALL)/lib:\$(LD_LIBRARY_PATH) sh ${MPC_SOURCE_DIR}MPC_Tools/fortran_gen/fortran_gen.sh \"${FORTRAN_PYTHON}\" \"${FORTRAN_CC}\" \"${FORTRAN_FC}\" \"${FORTAN_MPIH}\" \"${FORTRAN_INSTALL}\" > fortrangen_script.log ">> Makefile; echo "" >> Makefile
 fi
 
+#Generate MPIRUN
+printf "\t@echo \"Generate MPI launcher mpirun\"">> Makefile; echo "" >> Makefile
+printf "\t@\$(CC) ${MPC_SOURCE_DIR}MPC_Tools/mpirun/mpirun.c -o  INSTALL/bin/mpiwrapp/mpirun">> Makefile; echo "" >> Makefile
+
 printf "\t@find INSTALL/lib/* -type f -exec chmod 644 {} +">> Makefile; echo "">> Makefile
+
 #printf "\t@echo \"Build mpc db\"">> Makefile; echo "">> Makefile
 #printf "\t@\$(CC) $SCTK_CFLAGS ${MPC_SOURCE_DIR}MPC_Tools/mpcrun_tools/mpcdb_client.c -o INSTALL/bin/mpcdb_client $SCTK_LDFLAGS ">> Makefile; echo "">> Makefile
 #printf "\t@\$(CC) $SCTK_CFLAGS ${MPC_SOURCE_DIR}MPC_Tools/mpcrun_tools/mpcdb_server.c -o INSTALL/bin/mpcdb_server $SCTK_LDFLAGS ">> Makefile; echo "">> Makefile

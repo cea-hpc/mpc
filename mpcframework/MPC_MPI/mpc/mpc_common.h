@@ -112,7 +112,24 @@ typedef struct sctk_task_specific_s
 
 /** \brief Retrieves current thread task specific context
  */
-struct sctk_task_specific_s *__MPC_get_task_specific ();
+
+#ifdef SCTK_PROCESS_MODE
+extern struct sctk_task_specific_s *___the_process_specific;
+extern sctk_thread_key_t sctk_task_specific;
+#endif
+
+extern sctk_thread_key_t sctk_task_specific;
+
+static inline struct sctk_task_specific_s *__MPC_get_task_specific() {
+#ifdef SCTK_PROCESS_MODE
+  return ___the_process_specific;
+#endif
+
+  struct sctk_task_specific_s *tmp;
+  tmp = (struct sctk_task_specific_s *)sctk_thread_getspecific(
+      sctk_task_specific);
+  return tmp;
+}
 
 /** \brief Unlock the datatype array
  */
