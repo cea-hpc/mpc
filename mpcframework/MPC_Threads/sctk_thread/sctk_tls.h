@@ -156,7 +156,7 @@ extern "C"
     tls_restore (sctk_extls);
     tls_restore (sctk_hls_generation);
 
-	sctk_error("restore for %p", ucp);
+	//sctk_error("restore for %p", ucp);
 	/* set the new tls vector to use, the current thread's one */
 	//if(ucp->tls_ctx == NULL)
 	//{
@@ -165,8 +165,8 @@ extern "C"
 		//sctk_warning("FORCE init ctx at %p for %p",(ucp->tls_ctx), ucp );
 	//}
 
-	sctk_extls_storage = ucp->tls_ctx;
-	sctk_warning("Set global w/ %p from %p", ucp->tls_ctx->tls_vector, (ucp->tls_ctx) );
+	//sctk_extls_storage = ucp->tls_ctx;
+	//sctk_warning("Set global w/ %p from %p", ucp->tls_ctx->tls_vector, (ucp->tls_ctx) );
 #if defined (SCTK_USE_OPTIMIZED_TLS)
 	tls_restore (sctk_tls_module);
     sctk_context_restore_tls_module_vp () ;
@@ -211,9 +211,9 @@ extern "C"
 	 * more suited to be in sctk_thread.c w/ thread creation.
 	 * Moreover, it should use ctx_herit instead of ctx_init (need to reference process level)
 	 */
-	ucp->tls_ctx = malloc(sizeof(extls_ctx_t));
- 	extls_ctx_herit(sctk_extls_storage, ucp->tls_ctx, LEVEL_OPENMP);
-	sctk_warning("init ctx at %p for %p",(ucp->tls_ctx), ucp );
+	//ucp->tls_ctx = malloc(sizeof(extls_ctx_t));
+     //extls_ctx_herit(sctk_extls_storage, ucp->tls_ctx, LEVEL_OPENMP);
+	//sctk_warning("init ctx at %p for %p",(ucp->tls_ctx), ucp );
     tls_init (sctk_extls);
     sctk_extls_duplicate (&(ucp->sctk_extls));
     sctk_context_init_tls_without_extls (ucp);
