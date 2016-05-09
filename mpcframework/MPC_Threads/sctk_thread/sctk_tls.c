@@ -1000,7 +1000,8 @@ sctk_tls_module_set_gs_register ()
 		return ;
 
 	extls_optim_tls_set_pointer(sctk_extls_storage);
-	/*int result = arch_prctl(ARCH_SET_GS,(unsigned long)sctk_tls_module_vp);*/
+	/*sctk_warning("Switch GS !!!");*/
+	int result = arch_prctl(ARCH_SET_GS,(unsigned long)sctk_tls_module_vp);
 	/*
 	int result;
 	void *gs = (void*)sctk_tls_module_vp ;

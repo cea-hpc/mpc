@@ -666,8 +666,8 @@ cat <<EOF >> include/mpc_main.h
 #define main mpc_user_main__
 #ifdef MPC_TLS_DLWRAP
 #define dlopen extls_dlopen
-#define dlclose extls_dlclose
 #define dlsym extls_dlsym
+#define dlclose extls_dlclose
 #endif
 #endif
 #endif

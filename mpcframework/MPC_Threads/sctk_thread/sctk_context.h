@@ -187,6 +187,7 @@ Need to check this in more depth for futur version ( > 2.4.0-1).
     int error;
     void *sctk_current_alloc_chain_local;
     void *sctk_extls;
+    extls_ctx_t* tls_ctx;
     void *sctk_hls_generation;
 #if defined (SCTK_USE_OPTIMIZED_TLS)
     void *sctk_tls_module;
@@ -196,7 +197,6 @@ Need to check this in more depth for futur version ( > 2.4.0-1).
     /* MPC OpenMP TLS */
     void *sctk_openmp_thread_tls ;
 #endif
-    extls_ctx_t tls_ctx;
   } sctk_mctx_t;
 
   int sctk_getcontext (sctk_mctx_t * ucp);
