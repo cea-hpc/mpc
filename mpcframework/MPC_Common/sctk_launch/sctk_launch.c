@@ -226,7 +226,6 @@ void * polling_thread( void * dummy )
     }
 }
 
-
 static void sctk_perform_initialisation (void)
 {
 	/*   mkdir (sctk_store_dir, 0777); */

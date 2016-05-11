@@ -1,11 +1,6 @@
-/* ############################# MPC License ############################## */
-/* # Wed Nov 19 15:19:19 CET 2008                                         # */
+/* ############################ MALP License ############################## */
+/* # Fri Jan 18 14:00:00 CET 2013                                         # */
 /* # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          # */
-/* # Copyright or (C) or Copr. 2010-2012 Université de Versailles         # */
-/* # St-Quentin-en-Yvelines                                               # */
-/* #                                                                      # */
-/* # IDDN.FR.001.230040.000.S.P.2007.000.10000                            # */
-/* # This file is part of the MPC Runtime.                                # */
 /* #                                                                      # */
 /* # This software is governed by the CeCILL-C license under French law   # */
 /* # and abiding by the rules of distribution of free software.  You can  # */
@@ -18,132 +13,197 @@
 /* # terms.                                                               # */
 /* #                                                                      # */
 /* # Authors:                                                             # */
-/* #   - PERACHE Marc marc.perache@cea.fr                                 # */
-/* #   - DIDELOT Sylvain sylvain.didelot@exascale-computing.eu            # */
+/* #   - BESNARD Jean-Baptiste jean-baptiste.besnard@cea.fr               # */
 /* #                                                                      # */
 /* ######################################################################## */
 
+/**
+ * @addtogroup internal_FIFO_
+ * @{
+ */
+
+#ifndef BUFFERED_FIFO_H
+#define BUFFERED_FIFO_H
+
+
+#ifdef __cplusplus
+  extern "C"
+  {
+#endif
+
+
+
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
-#include <sctk_config.h>
-#include "sctk_stdint.h"
+#include <stdint.h>
 
-#ifndef __SCTK__BUFFERED_FIFO__
-#define __SCTK__BUFFERED_FIFO__
+#include "sctk_spinlock.h"
 
-/// Buffered fifo container
-struct sctk_buffered_fifo_chunk {
-
-    ///The payload array
-    void *payload;
-    struct sctk_buffered_fifo_chunk *p_prev;
-    struct sctk_buffered_fifo_chunk *p_next;
-
-    ///Number of elems in chunk
-    sctk_uint32_t current_offset;
-
-    ///Elems popped
-    sctk_uint32_t current_begin;
+/**
+ * @brief Structure defining a chunk of FIFO. 
+ * The Buffered_FIFO is made of several Buffered_FIFO_chunk containing the data. 
+ * 
+ * This is useful to avoid allocating/deallocating at each push/pop. 
+ */
+struct Buffered_FIFO_chunk {
+	sctk_spinlock_t lock;                 /**< @brief a lock for concurrent internal manipulations */
+	char *payload;                      /**< @brief the actual data */
+	uint64_t chunk_size;                /**< @brief the size of the current chunk */
+	size_t elem_size;                   /**< @brief the size of stored elements */
+	uint64_t start_offset;              /**< @brief the start offset (position of oldest element in payload */
+	uint64_t end_offset;                /**< @brief the end offset (position of the end of newest element in payload */
+	
+	struct Buffered_FIFO_chunk *prev;   /**< @brief previous chunk of the FIFO (newer elements) */
 };
 
-/// Generic sctk_buffered_fifo
-struct sctk_buffered_fifo {
-    struct sctk_buffered_fifo_chunk *head;
-    struct sctk_buffered_fifo_chunk *tail;
+/**
+ * @brief Initializes a Buffered_FIFO_chunk
+ * @param ch the chunk to initialize
+ * @param chunk_size the number of elements the chunk can contain
+ * @param elem_size the size of the elements to store
+ */
+void Buffered_FIFO_chunk_init( struct Buffered_FIFO_chunk *ch, 
+								uint64_t chunk_size, size_t elem_size );
 
-    ///Size of the payload
-    size_t elem_size;
+/**
+ * @brief Allocates a new Buffered_FIFO_chunk
+ * @param chunk_size the number of elements the chunk can contain
+ * @param elem_size the size of the elements to store
+ * @return the newly created chunk
+ */
+struct Buffered_FIFO_chunk * Buffered_FIFO_chunk_new( uint64_t chunk_size, uint64_t elem_size );
 
-    ///Number of elem in a chunk
-    sctk_uint32_t chunk_size;
-    sctk_uint64_t elem_count;
+/**
+ * @brief Deallocates a new Buffered_FIFO_chunk
+ * @param ch the chunk to deallocate
+ */
+void Buffered_FIFO_chunk_release( struct Buffered_FIFO_chunk *ch );
 
-    ////mode
-    sctk_uint8_t is_collector;
+/**
+ * @brief Pushes an element into a chunk
+ * @param ch the chunk where to push the element
+ * @param elem the element to push
+ * @return a pointer to the element stored in ch->payload (NULL if there is not enough room)
+ */
+void * Buffered_FIFO_chunk_push( struct Buffered_FIFO_chunk *ch, void *elem );
 
-    ///Is initialized
-    sctk_uint8_t is_initialized;
+/**
+ * @brief pops en element from a chunk
+ * @param ch the chunk where to push the element
+ * @param dest the element where to copy data
+ * @return a pointer to the element stored in ch->payload (NULL the chunk is empty)
+ */
+void * Buffered_FIFO_chunk_pop( struct Buffered_FIFO_chunk *ch, void *dest );
+
+/**
+ * @brief Thread-safely sets the previous chunk (ch->prev)
+ * @param ch the chunk where to set the previous chunk
+ * @param prev the new previous chunk
+ */
+static inline void Buffered_FIFO_chunk_ctx_prev( struct Buffered_FIFO_chunk *ch, struct Buffered_FIFO_chunk *prev)
+{
+		sctk_spinlock_lock( &ch->lock );
+		ch->prev = prev;
+		sctk_spinlock_unlock( &ch->lock );
+}
+
+/**
+ * @brief Thread-safely gets the previous chunk (ch->prev)
+ * @param ch the chunk from where to get the previous chunk
+ * @return the previous chunk
+ */
+static inline struct Buffered_FIFO_chunk * Buffered_FIFO_chunk_prev( struct Buffered_FIFO_chunk *ch )
+{
+	struct Buffered_FIFO_chunk *ret;
+	sctk_spinlock_lock( &ch->lock );
+	ret =ch->prev;
+	sctk_spinlock_unlock( &ch->lock );
+
+	return ret;
+}
+
+/**
+ * @}
+ */
+
+/**
+ * @addtogroup Buffered_FIFO_
+ * @{
+ */
+
+/**
+ * @brief This is a struct defining a FIFO
+ * It is composed of several Buffered_FIFO_chunk
+ */
+struct Buffered_FIFO {
+	sctk_spinlock_t head_lock;            /**< @brief a lock for concurent access to the head */
+	struct Buffered_FIFO_chunk *head;   /**< @brief the head chunk (chere elements are pushed */
+	sctk_spinlock_t tail_lock;            /**< @brief a lock for concurent access to the tail */
+	struct Buffered_FIFO_chunk *tail;   /**< @brief the tail chunk (from where elements are popped */
+
+	uint64_t chunk_size;                /**< @brief the size of the composing chunks */
+	size_t elem_size;                   /**< @brief the size of each stored element */
+
+	sctk_spinlock_t lock;                 /**< @brief a lock for concurrent access to element_count */
+	uint64_t elem_count;                /**< @brief the number of elements currently stored in the FIFO */
 };
 
-/**Ininitalizes a buffered fifo
-* @param fifo Pointer to an allocated sctk_buffered_fifo
-* @param elem_size Sizeof an element eg sizeof( TYPE ) ...
-* @param chunk_size Number of elems per chunk (this is le unit of malloc )
-* @param this defines if the chucks are to be freed when popped
-* (it solves the ref problem)
-**/
-void sctk_buffered_fifo_new(struct sctk_buffered_fifo *fifo, size_t elem_size,
-			sctk_uint32_t chunk_size, sctk_uint8_t is_collector);
+/**
+ * @brief Initializes a Buffered_FIFO
+ * @param fifo the FIFO to initialize
+ * @param chunk_size the wanted size for the chunks
+ * @param elem_size the size of stored elements
+ */
+void Buffered_FIFO_init(struct Buffered_FIFO *fifo, uint64_t chunk_size, size_t elem_size);
 
-/**Releases a buffered fifo
-* @param fifo Pointer to an initialized sctk_buffered_fifo
-* @param free_func function called on each chunks uppon release ( NULL means none )
-**/
-void sctk_buffered_fifo_free(struct sctk_buffered_fifo *fifo,
-			   void (*free_func) (void *));
+/**
+ * @brief releases a FIFO
+ * @param fifo the FIFO to release
+ * @param free_func 
+ * @warning free_func parameter is unused. 
+ * Release of FIFO consists of setting everything to 0 in it. 
+ */
+void Buffered_FIFO_release(struct Buffered_FIFO *fifo);
 
-/**Push an elem in FIFO mode
-* @param fifo Pointer to an initialized sctk_buffered_fifo
-* @param elem pointer to an elem of the right type
-* @return Pointer to the pushed value (useful for "collector" mode )
-**/
-void *sctk_buffered_fifo_push(struct sctk_buffered_fifo *fifo, void *elem);
+/**
+ * @brief Pushes an element into a FIFO
+ * @param fifo the FIFO where to push the element
+ * @param elem the element to push
+ * @return the internally copied element
+ */
+void *Buffered_FIFO_push(struct Buffered_FIFO *fifo, void *elem);
 
-/**Pop a pointer to the popped element
-* @param fifo Pointer to an initialized sctk_buffered_fifo
-* @return Pointer to the popped value
-**/
-void *sctk_buffered_fifo_pop_ref(struct sctk_buffered_fifo *fifo);
+/**
+ * @brief Pops an element from a FIFO
+ * @param fifo the FIFO from where to pop the element
+ * @param dest where to copy the popped element
+ * @return the popped element, NULL if the FIFO is empty
+ */
+void *Buffered_FIFO_pop(struct Buffered_FIFO *fifo, void *dest);
 
-/**Pop a pointer to the popped element
-* @param fifo Pointer to an initialized sctk_buffered_fifo
-* @param dest where to coppy the popped element
-* @return Pointer to the popped value
-**/
-void *sctk_buffered_fifo_pop_elem(struct sctk_buffered_fifo *fifo, void *dest);
+/**
+ * @brief Thread-safely gets the number of elements stored in the FIFO
+ * @param fifo the FIFO where to count elements
+ * @return the number of elements stored in the FIFO
+ */
+uint64_t Buffered_FIFO_count(struct Buffered_FIFO *fifo);
 
-//Internals
+/**
+ * @brief Apply a function to each element of the FIFO
+ * @param fifo the FIFO where to process elements
+ * @param func the function to apply to all elements
+ * @param arg arbitrary pointer passed to function calls
+ * @return number of elements processed
+ */
+int Buffered_FIFO_process(struct Buffered_FIFO *fifo, int (*func)( void * elem, void * arg), void * arg );
 
-/**Pop a pointer to the popped elem (in a fifo chunk)
-* @param fifo Pointer to an initialized sctk_buffered_fifo
-* @param fifo_chunk from which to pop an elem
-* @return Pointer to the popped value
-**/
-void *sctk_buffered_fifo_chunk_pop(struct sctk_buffered_fifo *fifo,
-			      struct sctk_buffered_fifo_chunk *fifo_chunk);
-
-/**Alocate a chunk
-* @param fifo Pointer to an initialized sctk_buffered_fifo
-* @param p_prev previous elem
-* @param p_next next elem
-* @return pointer to the fifo chunk
-**/
-struct sctk_buffered_fifo_chunk *
-sctk_buffered_fifo_alloc_chunk(struct sctk_buffered_fifo
-						      *fifo, struct
-						      sctk_buffered_fifo_chunk
-						      *p_prev, struct
-						      sctk_buffered_fifo_chunk
-						      *p_next);
-
-
-/**Get ptr to head elem
-* @param fifo Pointer to an initialized sctk_buffered_fifo
-* @return pointer to the head
-**/
-//void *sctk_buffered_fifo_head(struct sctk_buffered_fifo *fifo);
-
-  int
-sctk_buffered_fifo_is_empty(struct sctk_buffered_fifo *fifo);
-
-void *sctk_buffered_fifo_getnth(struct sctk_buffered_fifo *fifo, sctk_uint64_t n);
-
-/**Get ptr to tail elem
-* @param fifo Pointer to an initialized sctk_buffered_fifo
-* @return pointer to the tail
-**/
-void*
-sctk_buffered_fifo_get_elem_from_tail(struct sctk_buffered_fifo *fifo, sctk_uint64_t n);
-
+#ifdef __cplusplus
+  }
 #endif
+
+
+#endif /* BUFFERED_FIFO_H  */
+  
+/**
+ * @}
+ */

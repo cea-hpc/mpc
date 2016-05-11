@@ -210,8 +210,6 @@ Need to check this in more depth for futur version ( > 2.4.0-1).
 	int sctk_optopt;
 	int sctk_optreset;
 	int sctk_optpos;
-
-
   } sctk_mctx_t;
 
   int sctk_getcontext (sctk_mctx_t * ucp);

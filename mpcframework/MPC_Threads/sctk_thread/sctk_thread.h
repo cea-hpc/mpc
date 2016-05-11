@@ -70,6 +70,7 @@ extern "C"
   void sctk_pthread_ng_thread_init (void);
 
   void sctk_thread_wait_for_value ( volatile int *data, int value);
+  int sctk_thread_timed_wait_for_value (volatile int *data, int value, unsigned int max_time_in_usec);
   void sctk_thread_wait_for_value_and_poll ( volatile int *data, int value,
 					    void (*func) (void *), void *arg);
   void
@@ -104,7 +105,8 @@ extern "C"
 #endif
 
   struct sctk_task_specific_s;
-
+  struct sctk_tls_dtors_s;
+  
   typedef struct sctk_thread_data_s
   {
     struct sctk_alloc_chain *tls;
@@ -121,6 +123,7 @@ extern "C"
     sctk_thread_t tid;
     volatile sctk_thread_status_t status;
     struct sctk_task_specific_s *father_data;
+	struct sctk_tls_dtors_s* dtors_head;
     /* Where the thread must be bound */
     unsigned int bind_to;
   } sctk_thread_data_t;
@@ -158,6 +161,10 @@ extern "C"
 
   int sctk_real_pthread_create (pthread_t  *thread,
     __const pthread_attr_t *attr, void * (*start_routine)(void *), void *arg);
+
+  /* Futex */
+  int  sctk_thread_futex(void *addr1, int op, int val1, 
+					     struct timespec *timeout, void *addr2, int val3);
 
   /* profiling (exec time & dataused) */
   double sctk_profiling_get_init_time();

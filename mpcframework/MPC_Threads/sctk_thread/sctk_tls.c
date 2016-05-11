@@ -38,7 +38,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include "hwloc.h"
-
+#include <dlfcn.h>
 
 /* Not present in hwloc.h */
 void hwloc_obj_add_info(hwloc_obj_t obj, const char *name, const char *value);
@@ -83,6 +83,24 @@ __thread void **sctk_tls_module ;
 #endif
 
 #endif
+
+
+/* This function is called to discover if a given
+ * variable comes with a dynamic initializer */
+void sctk_tls_locate_tls_dyn_initializer( char * fname )
+{
+	void * handle = dlopen( NULL, RTLD_LAZY );
+	void * ret = dlsym( handle, fname );
+	sctk_warning("Locating Dyn initalizer for %s ret %p\n", fname, ret );
+	
+	/* If we found a dynamic initializer call it */
+	if( ret )
+	{
+		void (*fn)() = (void (*)())ret;
+		(fn)();
+	}
+}
+
 
 #if defined(SCTK_USE_TLS) && defined(Linux_SYS)
 #include <link.h>
@@ -494,6 +512,35 @@ void
 sctk_extls_delete ()
 {
 TODO("Liberation des extls")
+}
+
+#include <utlist.h>
+
+void sctk_tls_dtors_init(struct sctk_tls_dtors_s ** head)
+{
+	*head = NULL;
+}
+
+void sctk_tls_dtors_add(struct sctk_tls_dtors_s ** head, void * obj, void (*func)(void *))
+{
+	struct sctk_tls_dtors_s * elt = sctk_malloc(sizeof(struct sctk_tls_dtors_s));
+	elt->dtor = func;
+	elt->obj = obj;
+	
+	LL_PREPEND(*head, elt);
+}
+
+void sctk_tls_dtors_free(struct sctk_tls_dtors_s ** head)
+{
+	struct sctk_tls_dtors_s* elt = NULL, *tmp = NULL;
+	int count = 0;
+	
+	LL_FOREACH_SAFE(*head, elt, tmp)
+	{
+		elt->dtor(elt->obj);
+		LL_DELETE(*head, elt);
+		sctk_free(elt);
+	}
 }
 
 /*

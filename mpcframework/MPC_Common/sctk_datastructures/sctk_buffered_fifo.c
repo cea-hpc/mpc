@@ -1,11 +1,6 @@
-/* ############################# MPC License ############################## */
-/* # Wed Nov 19 15:19:19 CET 2008                                         # */
+/* ############################ MALP License ############################## */
+/* # Fri Jan 18 14:00:00 CET 2013                                         # */
 /* # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          # */
-/* # Copyright or (C) or Copr. 2010-2012 Université de Versailles         # */
-/* # St-Quentin-en-Yvelines                                               # */
-/* #                                                                      # */
-/* # IDDN.FR.001.230040.000.S.P.2007.000.10000                            # */
-/* # This file is part of the MPC Runtime.                                # */
 /* #                                                                      # */
 /* # This software is governed by the CeCILL-C license under French law   # */
 /* # and abiding by the rules of distribution of free software.  You can  # */
@@ -18,221 +13,267 @@
 /* # terms.                                                               # */
 /* #                                                                      # */
 /* # Authors:                                                             # */
-/* #   - PERACHE Marc marc.perache@cea.fr                                 # */
-/* #   - DIDELOT Sylvain sylvain.didelot@exascale-computing.eu            # */
+/* #   - BESNARD Jean-Baptiste jean-baptiste.besnard@cea.fr               # */
 /* #                                                                      # */
 /* ######################################################################## */
 #include "sctk_buffered_fifo.h"
+#include <stdlib.h>
+#include <string.h>
 
-    void
-sctk_buffered_fifo_new(struct sctk_buffered_fifo *fifo, size_t elem_size,
-        sctk_uint32_t chunk_size, sctk_uint8_t is_collector)
+uint64_t Buffered_FIFO_count(struct Buffered_FIFO *fifo)
 {
-    fifo->head = NULL;
-    fifo->tail = NULL;
-    fifo->is_collector = is_collector;
-    fifo->is_initialized = 1;
-    fifo->elem_count = 0;
-    fifo->chunk_size = chunk_size;
-    fifo->elem_size = elem_size;
+	uint64_t ret = 0;
+
+	sctk_spinlock_lock( &fifo->lock );
+	ret = fifo->elem_count;
+	sctk_spinlock_unlock( &fifo->lock );
+
+	return ret;
 }
 
-void
-sctk_buffered_fifo_free(struct sctk_buffered_fifo *fifo,
-        void (*free_func) (void *))
+void Buffered_FIFO_chunk_init( struct Buffered_FIFO_chunk *ch, 
+								uint64_t chunk_size, uint64_t elem_size )
 {
-    struct sctk_buffered_fifo_chunk *tmp = fifo->head;
-    struct sctk_buffered_fifo_chunk *to_free = NULL;
-    sctk_uint32_t i = 0;
-    while (tmp) {
-        to_free = tmp;
-        if (free_func) {
-            for (i = 0; i < tmp->current_offset; i++) {
-                free_func((char *) to_free->payload +
-                        (i * fifo->elem_size));
-            }}
-        tmp = tmp->p_next;
-        free(to_free->payload);
-        free(to_free);
-    }
-
+	ch->lock = 0;
+	ch->chunk_size = chunk_size;
+	ch->elem_size = elem_size;
+	ch->start_offset = 0;
+	ch->end_offset = 0;
+	
+	ch->payload = malloc( chunk_size * elem_size );
+	
+	if( !ch->payload )
+	{
+		perror( "malloc" );
+		exit(1);
+	}
+	
+	ch->prev = NULL;
 }
 
-struct sctk_buffered_fifo_chunk *
-sctk_buffered_fifo_alloc_chunk(struct
-        sctk_buffered_fifo
-        *fifo, struct
-        sctk_buffered_fifo_chunk
-        *p_prev, struct
-        sctk_buffered_fifo_chunk
-        *p_next)
+struct Buffered_FIFO_chunk * Buffered_FIFO_chunk_new( uint64_t chunk_size, uint64_t elem_size )
 {
-    struct sctk_buffered_fifo_chunk *tmp =
-        malloc(sizeof(struct sctk_buffered_fifo_chunk));
-    tmp->payload = malloc(fifo->elem_size * (fifo->chunk_size + 1));
-    tmp->p_prev = p_prev;
-    tmp->p_next = p_next;
-    tmp->current_begin = 0;
-    tmp->current_offset = 0;
-    return tmp;
+	struct Buffered_FIFO_chunk *ret = malloc( sizeof( struct Buffered_FIFO_chunk ) );
+
+	if( !ret )
+	{
+		perror(  "malloc" );
+		exit( 1 );
+	}
+
+	Buffered_FIFO_chunk_init( ret, chunk_size, elem_size );
+
+	return ret;
 }
 
 
-void *
-sctk_buffered_fifo_push(struct sctk_buffered_fifo *fifo, void *elem)
+void Buffered_FIFO_chunk_release( struct Buffered_FIFO_chunk *ch )
 {
-  if (fifo->head == NULL) {
-        fifo->head = sctk_buffered_fifo_alloc_chunk(fifo, NULL, NULL);
-        fifo->tail = fifo->head;
-    }
-
-    else {
-        if (fifo->head->current_offset == fifo->chunk_size) {
-            fifo->head = sctk_buffered_fifo_alloc_chunk(fifo, NULL, fifo->head);
-            fifo->head->p_next->p_prev = fifo->head;
-        }
-    }
-
-    void *ret =
-        (char *) fifo->head->payload +
-        (fifo->head->current_offset * fifo->elem_size);
-    fifo->head->current_offset++;
-    fifo->elem_count++;
-
-    memcpy(ret, elem, fifo->elem_size);
-    return ret;
+	free( ch->payload );	
+	memset( ch, 0, sizeof( struct Buffered_FIFO_chunk ) );
 }
 
-void *
-sctk_buffered_fifo_chunk_pop(struct sctk_buffered_fifo *fifo,
-        struct sctk_buffered_fifo_chunk *fifo_chunk)
+void * Buffered_FIFO_chunk_push( struct Buffered_FIFO_chunk *ch, void *elem )
 {
-    void *ret = NULL;
-    if (fifo_chunk == NULL)
-        return ret;
+	void *ret = NULL;
 
-    if (fifo_chunk->current_offset <= fifo_chunk->current_begin ) {
+	sctk_spinlock_lock( &ch->lock );
+	
+	/* Do we have free room ? */
 
-        fifo->tail = fifo_chunk->p_prev;
+	if( ch->end_offset < ch->chunk_size )
+	{
+		char *dest = ch->payload + ( ch->end_offset * ch->elem_size );
+		ret = dest;
+		memcpy( dest, elem, ch->elem_size );
+		ch->end_offset++;
+	}
 
-        if( !fifo->is_collector )
-        {
-            if( fifo_chunk->p_prev )
-                fifo_chunk->p_prev->p_next = NULL;
-            free(fifo_chunk->payload);
-            free(fifo_chunk);
-        }
+	sctk_spinlock_unlock( &ch->lock );
 
-        if (fifo->tail == NULL) {
-            fifo->head = NULL;
-        }
+	return ret;
+}
 
-        ret = sctk_buffered_fifo_chunk_pop(fifo, fifo->tail);
+void * Buffered_FIFO_chunk_pop( struct Buffered_FIFO_chunk *ch, void *dest )
+{
+	void *ret = NULL;
 
-        return ret;
-    }
+	sctk_spinlock_lock( &ch->lock );
+	
+	/* Is there any elem left ? */
+	if( ch->start_offset < ch->end_offset )
+	{
+		char *src = ch->payload + ( ch->start_offset * ch->elem_size );
+		ret = src;
+		memcpy( dest, src, ch->elem_size );
+		ch->start_offset++;
+	}
 
-    ret =
-        (char *) fifo_chunk->payload +
-        (fifo_chunk->current_begin * fifo->elem_size);
+	sctk_spinlock_unlock( &ch->lock );
 
-    fifo_chunk->current_begin++;
-
-    return ret;
+	return ret;
 }
 
 
-void *
-sctk_buffered_fifo_pop_elem(struct sctk_buffered_fifo *fifo, void *dest)
+
+void Buffered_FIFO_init(struct Buffered_FIFO *fifo, uint64_t chunk_size, size_t elem_size)
 {
-    void* elem;
+	fifo->head_lock = 0;
+	fifo->head = NULL;
+	fifo->tail_lock = 0;
+	fifo->tail = NULL;
 
-    elem = sctk_buffered_fifo_chunk_pop(fifo, fifo->tail);
-    if (!elem)
-    {
-        return NULL;
-    }
-    fifo->elem_count--;
+	fifo->chunk_size = chunk_size;
+	fifo->elem_size = elem_size;
 
-    if(dest)
-      memcpy(dest, elem, fifo->elem_size);
+	fifo->lock = 0;
+	fifo->elem_count = 0;
+}
 
-    return elem;
+void Buffered_FIFO_release(struct Buffered_FIFO *fifo)
+{
+	struct Buffered_FIFO_chunk * tmp = fifo->head;
+	struct Buffered_FIFO_chunk * to_free = NULL;
+
+	sctk_spinlock_lock( &fifo->head_lock );
+	sctk_spinlock_lock( &fifo->tail_lock );
+
+	while( tmp )
+	{
+		to_free = tmp;
+		tmp = tmp->prev;
+		
+		Buffered_FIFO_chunk_release( to_free );
+	}
+
+	memset( fifo, 0, sizeof(struct Buffered_FIFO) );	
 }
 
 
-void *
-sctk_buffered_fifo_pop_ref(struct sctk_buffered_fifo *fifo)
+void *Buffered_FIFO_push(struct Buffered_FIFO *fifo, void *elem)
 {
-    if( !fifo->is_collector )
-    {
-        printf("You can't pop refs if not in collector mode !\n");
-        return NULL;
-    }
+	void *ret = NULL;
 
-    if( !fifo )
-        return NULL;
+	sctk_spinlock_lock( &fifo->head_lock );
+	/* Case of empty FIFO */
+	if( fifo->head == NULL )
+	{
+			sctk_spinlock_lock( &fifo->tail_lock );
+			fifo->head = Buffered_FIFO_chunk_new( fifo->chunk_size, fifo->elem_size );
+			fifo->tail = fifo->head;
+			sctk_spinlock_unlock( &fifo->tail_lock );
+	}
 
-    fifo->elem_count--;
-    return sctk_buffered_fifo_chunk_pop(fifo, fifo->tail);
+	while( !ret )
+	{
+
+		ret = Buffered_FIFO_chunk_push( fifo->head , elem );
+		
+		/* Chunk is full  create a new one*/
+		if( !ret )
+		{
+			struct Buffered_FIFO_chunk *new = Buffered_FIFO_chunk_new( fifo->chunk_size, fifo->elem_size );
+			Buffered_FIFO_chunk_ctx_prev( fifo->head, new);
+			fifo->head = new;
+		}
+	
+	}
+	
+	sctk_spinlock_lock( &fifo->lock );
+	fifo->elem_count++;
+	sctk_spinlock_unlock( &fifo->lock );
+
+	sctk_spinlock_unlock( &fifo->head_lock );
+
+	return ret;
 }
 
 
-  int
-sctk_buffered_fifo_is_empty(struct sctk_buffered_fifo *fifo)
+void *Buffered_FIFO_pop(struct Buffered_FIFO *fifo, void *dest)
 {
-    if (fifo->elem_count)
-      return 0;
-    return 1;
+	void *ret = NULL;
+	sctk_spinlock_lock( &fifo->tail_lock );
+	
+	if( fifo->tail != NULL )
+	{
+		struct Buffered_FIFO_chunk *target = fifo->tail;
+
+		while( !ret )
+		{
+			ret = Buffered_FIFO_chunk_pop( target , dest );
+
+			if( ret )
+			{		
+				sctk_spinlock_lock( &fifo->lock );
+				fifo->elem_count--;
+				sctk_spinlock_unlock( &fifo->lock );
+			}
+			else
+			{
+				/* Go to previous chunk */
+				struct Buffered_FIFO_chunk *to_free = target; 
+				
+				target =  Buffered_FIFO_chunk_prev( target );
+				
+				
+				/* Found previous */
+				if( target )
+				{
+
+					/* Free old block */
+					Buffered_FIFO_chunk_release( to_free );
+					free( to_free );
+					/* Move tail */
+					fifo->tail = target;
+				
+				}
+				else
+				{
+					/* Head is empty */
+				
+					break;
+				}
+				
+			}
+		}	
+	}
+
+	sctk_spinlock_unlock( &fifo->tail_lock );
+	
+	return ret;
 }
 
 
-void*
-sctk_buffered_fifo_get_elem_from_tail(struct sctk_buffered_fifo *fifo, sctk_uint64_t n)
+int Buffered_FIFO_process(struct Buffered_FIFO *fifo, int (*func)( void * elem, void * arg), void * arg )
 {
-    struct sctk_buffered_fifo_chunk *tmp = fifo->tail;
-    sctk_uint64_t n_offset;
-    char* ret;
+	if( !fifo || !func )
+		return 0;
+	
+	int did_process = 0;
+	
+	/* Block the FIFO */
+	sctk_spinlock_lock( &fifo->head_lock );
+	sctk_spinlock_lock( &fifo->tail_lock );
 
-    while (tmp) {
+	
+	struct Buffered_FIFO_chunk * chunk = fifo->head;
 
-        n_offset = n + tmp->current_begin;
+	while( chunk )
+	{
+		int i;
+		
+		for( i = chunk->start_offset ; i < chunk->end_offset ; i++ )
+		{
+			char *src = chunk->payload + ( i * chunk->elem_size );
+			did_process += (func)( src, arg );
+		}
+		
+		chunk = chunk->prev;
+	}
+	
+	sctk_spinlock_unlock( &fifo->tail_lock );
+	sctk_spinlock_unlock( &fifo->head_lock );
 
-        if( n_offset < tmp->current_offset )
-        {
-            ret = (char *) tmp->payload + ( n_offset * (fifo->elem_size)) ;
-
-            return ret;
-        }
-        else
-        {
-            n -= (tmp->current_offset - tmp->current_begin);
-            tmp = tmp->p_prev;
-        }
-    }
-
-    return NULL;
+	return did_process;
 }
 
-
-void *sctk_buffered_fifo_getnth(struct sctk_buffered_fifo *fifo, sctk_uint64_t n)
-{
-    struct sctk_buffered_fifo_chunk *tmp = fifo->head;
-    char* ret;
-
-    while (tmp) {
-
-        if( n < tmp->current_offset )
-        {
-            ret = (char *) tmp->payload + (n * fifo->elem_size);
-            return ret;
-        }
-        else
-        {
-            n -= tmp->current_offset;
-            tmp = tmp->p_next;
-        }
-    }
-
-    return NULL;
-}

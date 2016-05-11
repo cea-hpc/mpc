@@ -124,11 +124,77 @@ putNewInstall()
 	fi
 }
 
+putNewCompiler()
+{
+	echo "$1::$2"
+}
+
+testCompilers()
+{
+
+	# C files
+cat<<EOF > mpc_main.c
+int i;
+int main(int argc, char ** argv)
+{
+	return 0;
+}
+EOF
+
+# CXX files
+cat<<EOF > mpc_main.c++
+int i;
+int main(int argc, char ** argv)
+{
+	return 0;
+}
+EOF
+
+# F77 files
+cat <<EOF > mpc_main.f77
+      subroutine mpc_user_main
+      integer ierr
+      end
+EOF
+
+	list_languages="c c++ f77"
+	for language in ${list_languages}
+	do
+		lang_file=${MPC_RPREFIX}/.${language}_compilers.cfg
+		main_file=mpc_main.${language}
+		for line in `cat ${lang_file}`
+		do
+			family="`echo ${line} | cut -d":" -f1`"
+			compiler="`echo ${line} | cut -d":" -f3`"
+
+			#switch depending on family
+			if [ "${family}" = "INTEL" ];
+			then
+				PRIV_FLAG="-mSYMTAB_mpc_privatize"
+			else
+				PRIV_FLAG="-fmpc-privatize"
+			fi
+			${compiler} ${PRIV_FLAG} -c ${main_file} > /dev/null 2>&1
+			if [ $? -eq 0 ];
+			then
+				pattern="Y"	
+			else
+				pattern="N"
+			fi
+			# for each line, replace first occurence of "::" by :Y: or :N:
+			# parsed_line is used to match corresponding line in current file
+			parsed_line="`echo $line | sed -e "s@/@\\\\\/@g"`"
+			sed -i "/^${parsed_line}$/{s/::/:${pattern}:/1}" ${lang_file}
+		done
+	done
+
+	rm mpc_main.c mpc_main.c++ mpc_main.f77 mpc_main.o > /dev/null 2>&1
+}
+
 ######################################################
 # set Compiler list and config file
 setCompilerList()
 {
-	tmp_list=""
 	outputvar="$1"
 	compiler="${MPC_COMPILER}"
 	gcc_version=`cat "${PROJECT_SOURCE_DIR}/config.txt" | grep "^gcc " | cut -f 2 -d ';' | sed -e 's/\.//g' | xargs echo`
@@ -136,68 +202,71 @@ setCompilerList()
 	config_file_cplus="${MPC_RPREFIX}/.c++_compilers.cfg"
 	config_file_fort="${MPC_RPREFIX}/.f77_compilers.cfg"
 	
-	if test ! -f "${config_file_c}" ; then
-		touch "${config_file_c}"
-		touch "${config_file_cplus}"
-		touch "${config_file_fort}"
-	fi
-	
-	#add mpc patched gcc
-	if [ "${GCC_PREFIX}" != 'disabled' ];
+	cat < /dev/null > "${config_file_c}"
+	cat < /dev/null > "${config_file_cplus}"
+	cat < /dev/null > "${config_file_fort}"
+
+	#Adding GCC if internal is used
+	if [ "${GCC_PREFIX}" = 'internal' ];
 	then
-		tmp_list="${gcc_version} ${tmp_list}"
 		is_there="`cat ${config_file_c} | grep \"mpc-gcc_${gcc_version}\"`"
 		if test "${is_there}" = "" ; 
 		then
 			#first patch version
-			echo "\${MPC_RPREFIX}/`uname -m`/`uname -m`/gcc/bin/mpc-gcc_${gcc_version}" >> "${config_file_c}"
-			echo "\${MPC_RPREFIX}/`uname -m`/`uname -m`/gcc/bin/mpc-g++_${gcc_version}" >> "${config_file_cplus}"
-			echo "\${MPC_RPREFIX}/`uname -m`/`uname -m`/gcc/bin/mpc-gfortran_${gcc_version}" >> "${config_file_fort}"
-		elif test "\${is_there#*mpc-gcc_${gcc_version}}" != "\$is_there";
-		then
-			#patch version already there
-			echo "patch version already there" > /dev/null
-		else
-			#new patch version 
-			sed -i "1i\${MPC_RPREFIX}/`uname -m`/`uname -m`/gcc/bin/mpc-gcc_${gcc_version}" "${config_file_c}"
-			sed -i "1i\${MPC_RPREFIX}/`uname -m`/`uname -m`/gcc/bin/mpc-g++_${gcc_version}" "${config_file_cplus}"
-			sed -i "1i\${MPC_RPREFIX}/`uname -m`/`uname -m`/gcc/bin/mpc-gfortran_${gcc_version}" "${config_file_fort}"
+			echo "GNU:Y:${MPC_RPREFIX}/`uname -m`/`uname -m`/bin/mpc-gcc_${gcc_version}" >> "${config_file_c}"
+			echo "GNU:Y:${MPC_RPREFIX}/`uname -m`/`uname -m`/bin/mpc-g++_${gcc_version}" >> "${config_file_cplus}"
+			echo "GNU:Y:${MPC_RPREFIX}/`uname -m`/`uname -m`/bin/mpc-gfortran_${gcc_version}" >> "${config_file_fort}"
 		fi
-	fi
-	
-	#add icc
-	if [ "${compiler}" = 'icc' ];
+
+	#adding GCC if external path is provided
+	elif [ "${GCC_PREFIX}" != 'disabled' ];
 	then
-		if test ! -z "${tmp_list}"; then
-			tmp_list="${tmp_list} icc"
-		else
-			tmp_list="icc ${tmp_list}"
-		fi
-		is_there="`cat ${config_file_c} | grep \"icc\"`"
-		if test "${is_there}" = "" ; then
-			echo "icc" >> "${config_file_c}"
-			echo "icpc" >> "${config_file_cplus}"
-			echo "ifort" >> "${config_file_fort}"
-		fi
+			putNewCompiler "GNU" "${GCC_PREFIX}/bin/gcc" >> "${config_file_c}"
+			putNewCompiler "GNU" "${GCC_PREFIX}/bin/g++" >> "${config_file_cplus}"
+			putNewCompiler "GNU" "${GCC_PREFIX}/bin/gfortran" >> "${config_file_fort}"
 	fi
 	
-	#check if gcc is on the system
-	gcc --version > /dev/null
-	if test "$?" = "0" ; then
-		if test ! -z "${tmp_list}"; then
-			tmp_list="${tmp_list} gcc"
-		else
-			tmp_list="gcc ${tmp_list}"
-		fi
-		is_there="`cat ${config_file_c} | grep \"^gcc\"`"
+	#add all intel compilers found in environment
+	list_of_icc=`which -a icc 2> /dev/null`
+	list_of_icpc=`which -a icpc 2> /dev/null`
+	list_of_ifort=`which -a ifort 2> /dev/null`
+	for icc in ${list_of_icc}
+	do
+		is_there="`cat ${config_file_c} | grep \"${icc}$\"`"
 		if test "${is_there}" = "" ; then
-			echo "gcc" >> "${config_file_c}"
-			echo "g++" >> "${config_file_cplus}"
-			echo "gfortran" >> "${config_file_fort}"
+			putNewCompiler "INTEL" "${icc}" >> "${config_file_c}"
 		fi
-	fi
+	done
 	
-	eval "${outputvar}=\"${tmp_list}\""
+	for icpc in ${list_of_icpc}
+	do
+		is_there="`cat ${config_file_cplus} | grep \"${icpc}$\"`"
+		if test "${is_there}" = "" ; then
+			putNewCompiler "INTEL" "${icpc}" >> "${config_file_cplus}"
+		fi
+	done
+	for ifort in ${list_of_ifort}
+	do
+		is_there="`cat ${config_file_fort} | grep \"${ifort}$\"`"
+		if test "${is_there}" = "" ; then
+			putNewCompiler "INTEL" "${ifort}" >> "${config_file_fort}"
+		fi
+	done
+	
+	#add all GNU compilers found in environment
+	list_of_gcc=`which -a gcc 2> /dev/null`
+	for gcc in ${list_of_gcc}
+	do
+		install_base=`dirname $gcc`
+		is_there="`cat ${config_file_c} | grep \"^${install_base}\"`"
+		if test "${is_there}" = "" ; then
+			putNewCompiler "GNU" "${install_base}/gcc" >> "${config_file_c}"
+			putNewCompiler "GNU" "${install_base}/g++" >> "${config_file_cplus}"
+			putNewCompiler "GNU" "${install_base}/gfortran" >> "${config_file_fort}"
+		fi
+	done
+
+	testCompilers
 }
 
 ######################################################
@@ -503,6 +572,26 @@ extractParamValue()
 }
 
 ######################################################
+# Set a var to a value if not already set
+#args :
+# -$1 : output variable name
+# -$2 : value triggering a set
+# -$3 : value to set
+enableParamIfNot()
+{
+	#extract in local vars
+	outputvar="$1"
+	output="$2"
+	trigger="$3"
+	value="$4"
+
+	if [ "${output}" = "${trigger}" ]
+	then
+		eval "${outputvar}=\"${value}\""
+	fi
+}
+
+######################################################
 #Find the current architecture value
 #Args :
 # -$1 : Output arch name (target or host)
@@ -741,7 +830,7 @@ setupInstallPackage()
 	type="${7}"
 	
 	#if template is empty, use default
-	if [ -z "$template" ]; then
+	if [ -z "${6}" ]; then
 		template="${PROJECT_TEMPLATE_DIR}/Makefile.${name}.in"
 	fi
 	

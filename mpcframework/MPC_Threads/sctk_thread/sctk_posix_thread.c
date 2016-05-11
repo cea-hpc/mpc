@@ -21,7 +21,8 @@
 /* ######################################################################## */
 
 #include <mpcthread.h>
-
+#include "sctk_futex.h"
+#include "sctk_thread.h"
 
 
 /* pthread_atfork */
@@ -905,4 +906,13 @@ unsigned long mpc_thread_tls_entry_add (unsigned long size,
 					void (*func) (void *))
 {
   return sctk_tls_entry_add (size, func);
+}
+
+/* Futexes */
+
+int  mpc_thread_futex(int sysop, void *addr1, int op, int val1, 
+					  struct timespec *timeout, void *addr2, int val3)
+{
+	sctk_futex_context_init();
+	return sctk_thread_futex(addr1, op, val1, timeout, addr2, val3);
 }

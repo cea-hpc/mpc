@@ -28,6 +28,8 @@
 #include "sctk_context.h"
 #include "sctk_spinlock.h"
 #include "sctk_alloc.h"
+#include <unistd.h>
+#include <sys/syscall.h>
 
 #ifdef __cplusplus
 extern "C"
@@ -59,6 +61,12 @@ extern "C"
 	 with the argument given to hls_barrier
 	 and hls_single in gcc */
 
+  struct sctk_tls_dtors_s
+  {
+	  void * obj;
+	  void (*dtor)(void *);
+	  struct sctk_tls_dtors * next;
+  };
 
   void sctk_extls_duplicate (void **new);
   void sctk_extls_keep (int *scopes);
@@ -86,7 +94,6 @@ extern "C"
   extern __thread int sctk_optopt;
   extern __thread int sctk_optreset;
   extern __thread int sctk_optpos;
-
 
   extern __thread char *mpc_user_tls_1;
   extern unsigned long mpc_user_tls_1_offset;
@@ -236,7 +243,6 @@ extern "C"
 	ucp->sctk_optopt = 0;
 	ucp->sctk_optreset = 0;
 	ucp->sctk_optpos= 0;
-
 #endif
   }
 

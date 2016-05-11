@@ -696,6 +696,12 @@ int sctk_aio_lio_listio( int mode , struct aiocb * const aiocb_list[], int nitem
 #endif
 
 
+/* Futexes */
+
+int  mpc_thread_futex(int sysop, void *addr1, int op, int val1, 
+					  struct timespec *timeout, void *addr2, int val3);
+
+
 #ifdef __cplusplus
 }
 #endif

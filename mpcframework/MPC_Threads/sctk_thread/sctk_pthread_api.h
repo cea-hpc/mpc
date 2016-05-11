@@ -516,6 +516,42 @@ extern "C"
 #define sem_timedwait mpc_thread_sem_timedwait
 
 
+/* Futex */
+
+/************************************************************************/
+/* Futex Wrapping                                                       */
+/************************************************************************/
+
+#include "sctk_futex_def.h"
+
+#ifdef SCTK_FUTEX_SUPPORTED
+
+#include <unistd.h>
+#include <linux/futex.h>
+#include <sys/syscall.h>
+
+#ifdef __cplusplus
+
+static inline long int __sctk_cpp_scope_dereferencing_proxy( long int a )
+{
+	return a;
+}
+
+/* In C++ sometimes you get :
+ * ::syscall( SYS_futex,futex,1,2147483647,__null,__null,0 );
+ * So we need to use a forwarding function.
+ */
+
+#define syscall(op, ...) \
+    __sctk_cpp_scope_dereferencing_proxy((( op == SYS_futex )?mpc_thread_futex( op, ##__VA_ARGS__):syscall(op, ##__VA_ARGS__)))
+#else
+#define syscall(op, ...) \
+    (( op == SYS_futex )?mpc_thread_futex( op, ##__VA_ARGS__):syscall(op, ##__VA_ARGS__))
+#endif /* __cplusplus */
+
+
+#endif /* SCTK_FUTEX_SUPPORTED */
+
 #ifdef __cplusplus
 }
 #endif

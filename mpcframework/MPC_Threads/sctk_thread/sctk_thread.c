@@ -1,3 +1,4 @@
+#define _GNU_SOURCE
 /* ############################# MPC License ############################## */
 /* # Wed Nov 19 15:19:19 CET 2008                                         # */
 /* # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          # */
@@ -23,6 +24,8 @@
 #ifdef MPC_USE_INFINIBAND
 #include <sctk_ib_cp.h>
 #endif
+
+#include <sctk_topology.h>
 
 #undef sleep
 #undef usleep
@@ -64,6 +67,8 @@
 #include <sctk_low_level_comm.h>
 #endif
 #include <errno.h>
+#include "sctk_futex.h"
+
 extern int errno;
 typedef unsigned sctk_long_long sctk_timer_t;
 
@@ -91,6 +96,7 @@ sctk_thread_init (void)
 #ifdef SCTK_CHECK_CODE_RETURN
   fprintf (stderr, "Thread librarie return code check enable!!\n");
 #endif
+  sctk_futex_context_init();
   /*Check all types */
 }
 
@@ -544,6 +550,34 @@ int sctk_thread_get_current_local_tasks_nb() {
   return sctk_current_local_tasks_nb;
 }
 
+#include <dlfcn.h>
+void __tbb_init_for_mpc(cpu_set_t * cpuset, int cpuset_len)
+{
+	void* next = dlsym(RTLD_NEXT, "__tbb_init_for_mpc");
+	if(next)
+	{
+		void(*call)(cpu_set_t*,int) = (void(*)(cpu_set_t*,int))next;
+		call(cpuset,cpuset_len);
+	}
+	else
+	{
+		sctk_debug("Calling fake TBB Finalizer");
+	}
+}
+
+void __tbb_finalize_for_mpc()
+{
+	void* next = dlsym(RTLD_NEXT, "__tbb_finalize_for_mpc");
+	if(next)
+	{
+		void(*call)() = (void(*)())next;
+		call();
+	}
+	else
+	{
+		sctk_debug("Calling fake TBB Initializer");
+	}
+}
 
 static void *
 sctk_thread_create_tmp_start_routine (sctk_thread_data_t * __arg)
@@ -629,12 +663,51 @@ sctk_thread_create_tmp_start_routine (sctk_thread_data_t * __arg)
 #endif
 #endif
 
+  sctk_tls_dtors_init(&(tmp.dtors_head));
+  
+  /* BEGIN TBB SETUP */
+  /**
+   * #define macros are not used for TBB code injections
+   * avoiding MPC recompilation when the user code wants to load TBB
+   * Instead, we define two functions :
+   *    - __tbb_init_for_mpc ( called around sctk_thread.c:643)
+   *    - __tbb_finalize_for_mpc (called around sctk_thread.c:658)
+   *
+   * These functions are set via #pragma weak, empty when TBB is not
+   * loaded and bound to our patchs in TBB when loaded.
+   *
+   * TODO: due to some issues, weak functions are replaced by dlsym accesses for now
+   */
+  int init_cpu = sctk_get_cpu();
+  int nbvps, i, nb_cpusets;
+  cpu_set_t * cpuset;
+
+  sctk_get_init_vp_and_nbvp (sctk_get_task_rank(), &nbvps);
+  init_cpu = sctk_topology_convert_logical_pu_to_os(init_cpu);
+  
+  nb_cpusets = 1;
+  cpuset = sctk_malloc(sizeof(cpu_set_t) * nb_cpusets);
+
+  CPU_ZERO(cpuset);
+ 
+  for (i = 0; i < nbvps; ++i) {
+	CPU_SET(init_cpu + i, cpuset);
+  }
+  
+  __tbb_init_for_mpc(cpuset, nb_cpusets);
+  /* END TBB SETUP */
+
   res = tmp.__start_routine (tmp.__arg);
 
   /** ** **/
   sctk_report_death (sctk_thread_self());
   /** **/
 
+  /* BEGIN TBB FINALIZE */
+  __tbb_finalize_for_mpc();
+  /* END TBB FINALIZE */
+  
+  sctk_tls_dtors_free(&(tmp.dtors_head));
 
 #ifdef MPC_Message_Passing
   if (tmp.task_id >= 0)
@@ -766,6 +839,7 @@ sctk_thread_create_tmp_start_routine_user (sctk_thread_data_t * __arg)
   /* Note that the profiler is not initialized in user threads */
 
   /** ** **/
+
   sctk_report_creation (sctk_thread_self());
   /** **/
 
@@ -946,6 +1020,15 @@ sctk_thread_equal (sctk_thread_t __thread1, sctk_thread_t __thread2)
   sctk_check (res, 0);
   return res;
 }
+
+/* Futex Generic Trampoline */
+
+int  sctk_thread_futex(void *addr1, int op, int val1, 
+					  struct timespec *timeout, void *addr2, int val3)
+{
+	return __sctk_ptr_thread_futex(addr1, op, val1, timeout, addr2, val3);
+}
+
 
 static void
 _sctk_thread_cleanup_end (struct _sctk_thread_cleanup_buffer **__buffer)
@@ -1821,6 +1904,39 @@ sctk_thread_wait_for_value_and_poll (volatile int *data, int value,
   __sctk_ptr_thread_wait_for_value_and_poll (data, value, func, arg);
 }
 
+int
+sctk_thread_timed_wait_for_value (volatile int *data, int value, unsigned int max_time_in_usec)
+{
+	unsigned int end_time = (((sctk_timer_t) max_time_in_usec / (sctk_timer_t) 1000) /
+     (sctk_timer_t) sctk_time_interval) + sctk_timer + 1;
+	
+	unsigned int trials = 0;
+	
+	while( *data != value )
+	{
+		if( end_time < sctk_timer )
+		{
+			/* TIMED OUT */
+			return 1;
+		}
+		
+		int left_to_wait = end_time - sctk_timer;
+		
+		if( (30 < trials) && ( 5000 < left_to_wait ) )
+		{
+			sctk_thread_usleep( 1000 );
+		}
+		else
+		{
+			sctk_thread_yield();
+		}
+
+		trials++;
+	}
+	
+	return 0;
+}
+
 void
 sctk_thread_wait_for_value (volatile int *data, int value)
 {
@@ -2598,3 +2714,14 @@ sctk_thread_atomic_add (volatile unsigned long *ptr, unsigned long val)
   sctk_thread_mutex_unlock (&lock);
   return tmp;
 }
+
+/* Used by GCC to bypass TLS destructor calls */
+int __cxa_thread_mpc_atexit(void(*dfunc)(void*), void* obj, void* dso_symbol)
+{
+	sctk_thread_data_t *th;
+
+	th = sctk_thread_data_get();
+	sctk_tls_dtors_add(&(th->dtors_head), obj, dfunc);
+	return 0;
+}
+

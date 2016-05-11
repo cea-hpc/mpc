@@ -61,6 +61,8 @@ fi
 # Set all modules to internal
 setModulesToInternal
 
+## Not sure if here is a good place for this:
+TBB_PREFIX='disabled'
 ######################################################
 #Parse options
 for arg in "$@"
@@ -209,6 +211,19 @@ do
 		--hwloc-*)
 			extractAndAddPackageOption 'HWLOC_BUILD_PARAMETERS' 'hwloc' "$arg"
 			;;
+		################### HWLOC ###################
+		--with-tbb=*)
+			extractParamValue 'TBB_PREFIX' 'with-tbb' "$arg"
+			;;
+		--tbb-*)
+			extractAndAddPackageOption 'TBB_BUILD_PARAMETERS' 'tbb' "$arg"
+			;;
+		--enable-mpc-tbb)
+			enableParamIfNot 'TBB_PREFIX' "$TBB_PREFIX" 'disabled' 'internal'
+			;;
+		--disable-mpc-tbb)
+			TBB_PREFIX="disabled"
+			;;
 		################# COMPILER ##################
 		--compiler=*)
 			GCC_PREFIX='disabled'
@@ -233,6 +248,7 @@ do
 			;;
 		--lib-mode)
 			ROMIO_PREFIX='disabled'
+			TBB_PREFIX='disabled'
 			GDB_PREFIX='disabled'
 			MPC_PREFIX='disabled'
 			GCC_PREFIX='disabled'

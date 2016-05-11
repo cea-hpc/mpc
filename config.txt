@@ -2,11 +2,11 @@
 #############################################################################################################################
 libxml2      ; 2.8.0 ;       ; dep     ;                                                   ; target  ; extern       ; generic.autotools
 hwloc        ; 1.10.0 ; 1.10.0 ; install ;                                                   ; target  ; extern		; generic.autotools
-binutils     ; 2.22  ; 2.22  ; install ;                                                   ; host    ; extern		; generic.autotools
+binutils     ; 2.25  ; 2.25  ; install ;                                                   ; host    ; extern		; generic.autotools
 gmp          ; 4.3.2 ;       ; dep     ;                                                   ; host    ; extern		; generic.autotools.libsgcc
 mpfr         ; 2.4.2 ;       ; dep     ; gmp                                               ; host    ; extern		; generic.autotools.libsgcc
 mpc          ; 0.8.1 ;       ; dep     ; gmp mpfr                                          ; host    ; mpc			; generic.autotools.libsgcc
-gcc          ; 4.8.0 ;       ; install ; gmp mpfr mpc binutils                             ; host    ; extern		; generic.autotools.gcc
+gcc          ; 4.8.5 ;       ; install ; gmp mpfr mpc binutils                             ; host    ; extern		; generic.autotools.gcc
 openpa       ; 1.0.2 ;       ; dep     ;                                                   ; target  ; extern		; generic.autotools
 sctk_arch    ;       ;       ; install ; openpa                                            ; target  ; local		; local.autotools
 mpcframework ;       ;       ; install ; libxml2 hwloc openpa sctk_arch hydra hydra_simple gcc; target  ; local		; local.autotools
@@ -15,3 +15,4 @@ hydra_simple ;       ;       ; install ; hydra                                  
 gdb          ; 7.6.2 ;       ; install ;                                                   ; target  ; extern		; generic.autotools
 romio        ; 2008.03.09 ;       ; install ;    mpcframework                             ; target  ; extern		; generic.autotools.mpc.seq
 sctk_getopt        ; 1.0 ;       ; install ;    mpcframework                              ; target  ; extern		; generic.autotools.mpc
+tbb          ;  4.4  ;       ; install ; mpcframework                                  ; target  ; extern        ; generic.make
