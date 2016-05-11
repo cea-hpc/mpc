@@ -123,8 +123,21 @@ EOF
 		echo "(E) See ./fortrangen.log"
 		generate_from_backup
 	else
-		echo "Found and Running"
+		echo "Found and Compiling"
 	fi
+
+	echo -n "(i) Checking for Fortran Running Fortran programs...   "
+
+	$TEMP2  2>> ./fortrangen.log
+
+	if test "x$?" != "x0"; then
+                echo "(E) Failed to run a simple Fortran MAIN"
+                echo "(E) See ./fortrangen.log"
+                generate_from_backup
+        else
+                echo "Found and Running"
+        fi
+
 
 	rm -f $TEMP $TEMP2
 

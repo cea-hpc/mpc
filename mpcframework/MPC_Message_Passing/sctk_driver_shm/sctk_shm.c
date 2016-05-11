@@ -388,8 +388,8 @@ void sctk_network_init_shm ( sctk_rail_info_t *rail )
    rail->send_message_from_network = sctk_send_message_from_network_shm;
 
    rail->network_name = "SHM";
-   if( strcmp(rail->runtime_config_rail->topology, "none"))
-	sctk_warning("SHM topology must be 'none'");
+//   if( strcmp(rail->runtime_config_rail->topology, "none"))
+//	sctk_nodebug("SHM topology must be 'none'");
 
    sctk_rail_init_route ( rail, "none", NULL );
 

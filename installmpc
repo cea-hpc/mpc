@@ -40,6 +40,8 @@ fi
 findCurrentArch 'MPC_HOST'
 MPC_TARGET="${MPC_HOST}"
 MPC_COMPILER="gcc"
+MPC_GCC_PRIVATIZED_COMPILER="gcc"
+MPC_GPP_PRIVATIZED_COMPILER="g++"
 
 ######################################################
 #Compute subdirs
@@ -227,6 +229,7 @@ do
 		################# COMPILER ##################
 		--compiler=*)
 			GCC_PREFIX='disabled'
+			PRIV_PLUGIN_PREFIX='disabled'
 			extractParamValue 'MPC_COMPILER' 'compiler' "$arg"
 			;;
 		############### MPCFRAMEWORK ################
@@ -252,6 +255,7 @@ do
 			GDB_PREFIX='disabled'
 			MPC_PREFIX='disabled'
 			GCC_PREFIX='disabled'
+			PRIV_PLUGIN_PREFIX='disabled'
 			HYDRA_PREFIX='disabled'
 			HYDRA_SIMPLE_PREFIX='disabled'
 			GMP_PREFIX='disabled'
@@ -436,8 +440,14 @@ fillGCCBuildParameters()
 		GCC_BUILD_PARAMETERS="'--with-mpc=${MPC_PREFIX}' ${GCC_BUILD_PARAMETERS}"
 	fi
 	
-	version="`cat ${PROJECT_SOURCE_DIR}/config.txt | grep \"gcc \" | cut -f 2 -d ';' | sed -e 's/\.//g' | xargs echo`"
+	version="`cat ${PROJECT_SOURCE_DIR}/config.txt | grep \"gcc\s*;\" | cut -f 2 -d ';' | sed -e 's/\.//g' | xargs echo`"
 	GCC_BUILD_PARAMETERS="--program-prefix=mpc- --program-suffix=_${version} --with-pkgversion=MPC --enable-languages=c,c++,fortran --disable-bootstrap --disable-multilib ${GCC_BUILD_PARAMETERS}"
+
+	MPC_GCC_PRIVATIZED_COMPILER="${PREFIX}/${MPC_HOST}/${MPC_HOST}/bin/mpc-gcc_${version}"
+	export MPC_GCC_PRIVATIZED_COMPILER
+
+	MPC_GPP_PRIVATIZED_COMPILER="${PREFIX}/${MPC_HOST}/${MPC_HOST}/bin/mpc-g++_${version}"
+	export MPC_GPP_PRIVATIZED_COMPILER
 }
 
 ######################################################

@@ -726,6 +726,9 @@ static inline void __MPC_init_task_specific_t (sctk_task_specific_t * tmp)
 	
 	/* Create the context class handling structure */
 	GRequest_context_init( &tmp->grequest_context );
+		
+	/* Clear exit handlers */
+	tmp->exit_handlers = NULL;
 	
 }
 
@@ -766,7 +769,72 @@ static void __MPC_setup_task_specific ()
 	
 	/* Initialize composed datatypes */
 	init_composed_common_types();
+
 }
+
+/** \brief Define a function to be called when a task leaves
+ *  \arg function Function to be callsed when task exits
+ *  \return 1 on error 0 otherwise
+ */
+int __MPC_atexit_task_specific(void (*function)(void))
+{
+	/* Retrieve the task ctx pointer */
+	sctk_task_specific_t *tmp;
+	tmp = (sctk_task_specific_t *) sctk_thread_getspecific_mpc (sctk_task_specific);
+	
+	if( !tmp )
+		return 1;
+	
+	struct sctk_task_specific_atexit_s * new_exit = sctk_malloc( sizeof( struct sctk_task_specific_atexit_s ) );
+	
+	if( !new_exit )
+	{
+		return 1;
+	}
+	
+	sctk_info("Registering task-level atexit handler (%p)", function);
+	
+	new_exit->func = function;
+	new_exit->next = tmp->exit_handlers;
+	
+	/* Register the entry */
+	tmp->exit_handlers = new_exit;
+	
+	return 0;
+}
+
+/** \brief Call atexit handlers for the task (mimicking the process behavior)
+ */
+void __MPC_atexit_task_specific_trigger()
+{
+	/* Retrieve the task ctx pointer */
+	sctk_task_specific_t *tmp;
+	tmp = (sctk_task_specific_t *) sctk_thread_getspecific_mpc (sctk_task_specific);
+	
+	if( !tmp )
+		return;
+	
+	struct sctk_task_specific_atexit_s * current = tmp->exit_handlers;
+	struct sctk_task_specific_atexit_s * to_free;
+	
+	while( current )
+	{
+		to_free = current;
+
+		
+		if( current->func )
+		{	
+			sctk_info("Calling task-level atexit handler (%p)", current->func);
+			(current->func)();
+		}
+		
+		current = current->next;
+		
+		sctk_free( to_free );
+	}
+}
+
+
 
 /** \brief Releases and frees task ctx
  *  Also called from  \ref sctk_user_main this function releases
@@ -784,8 +852,12 @@ static void __MPC_delete_task_specific ()
 	/* Free the type array */
 	Datatype_Array_release( &tmp->datatype_array );
 
+	/* Call atexit handlers */
+	__MPC_atexit_task_specific_trigger();
+
 	/* Remove the ctx reference in the host thread */
 	sctk_thread_setspecific_mpc (sctk_task_specific, NULL);
+
 
 	/* Release the task ctx */
 	__MPC_release_task_specific_t( tmp );

@@ -150,6 +150,10 @@ next_arg_is_output=no
 OUTPUT_FILE_ARGS=""
 PRIV_FLAG="-fmpc-privatize"
 OMP_FLAG=""
+
+#By default enable dynamic pricatization
+export MPC_DYN_PRIV_ENABLED=1
+
 for arg in "\$@" ; do
     # Set addarg to no if this arg should be ignored by the C compiler
     addarg=yes
@@ -193,6 +197,14 @@ for arg in "\$@" ; do
 	;;  
 	-fno-mpc-privatize|-fno-mpc-privatize|-fnompc-privatize|-fnompcprivatize)
 		PRIV_FLAG=""
+		addarg=no
+	;;
+	-fno-mpc-plugin)
+		unset MPC_DYN_PRIV_ENABLED
+		addarg=no
+	;;
+	-fmpc-dyninsert|-fmpc-dyn-insert)
+		export MPC_DYN_INSERT=1
 		addarg=no
 	;;
 	-fmpc-include)
@@ -315,6 +327,30 @@ else
                 export MPC_USE_INTEL_COMPILER
 				;;
 			GNU)
+EOF
+
+#Insert a reference to the privatization plugin
+if [ "$language" = "c" ]; then
+cat << EOF >> $1
+				if test -e \${MPC_RPREFIX}/\${MPC_TARGET_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/lib/libprivplug.so;
+				then
+					LIBPRIV_FLAG="-fplugin=\${MPC_RPREFIX}/\${MPC_TARGET_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/lib/libprivplug.so"
+				else
+					LIBPRIV_FLAG=""
+				fi
+
+				if test -e "${SCTK_LIB_DIR}/libmpcgetopt.a"; 
+				then
+					if test "x\${MPC_BOOTSTRAP}" != "xyes"; 
+					then
+						GETOPT_FLAG="\${PRIV_FLAG} -include ${SCTK_INCLUDE_DIR}/../getopt.h"
+					else
+						GETOPT_FLAG=""
+					fi
+				fi
+EOF
+fi
+cat << EOF >> $1
 				override_var_if_isset 'PRIV_FLAG' '-fmpc-privatize'
 				override_var_if_isset 'OMP_FLAG' '-fopenmp'
 				;;
@@ -327,13 +363,16 @@ else
 		if test ! -z "\${PRIV_FLAG}";
 		then
 			PRIV_FLAG="\${PRIV_FLAG} -DMPC_PRIVATIZED"
+		else
+			#Without privatization the plugin is useless
+			LIBPRIV_FLAG=""
 		fi
 	fi
 fi
 
 #Here we prepend the path which is normally postpended in order
 #to override binutils during the compilation
-export PATH=\${MPC_RPREFIX}/${MPC_SUBPREFIX}/bin/:\${PATH}
+export PATH=\${MPC_RPREFIX}/\${MPC_HOST_SUBPREFIX}/${MPC_TARGET_SUBPREFIX}/bin/:\${PATH}
 
 #first definition of compiler & linking flags
 CFLAGS="\`\${MPC_RPREFIX}/\${MPC_TARGET_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/bin/mpc_cflags $language\`"
@@ -350,7 +389,7 @@ fi
 
 cat << EOF >> $1
 #used to append compiler-specific flags
-CFLAGS="\$CFLAGS \${PRIV_FLAG} \${OMP_FLAG} \$MPC_COMPILER_CFLAGS"
+CFLAGS="\$CFLAGS \${PRIV_FLAG} \${OMP_FLAG} \$MPC_COMPILER_CFLAGS \${LIBPRIV_FLAG} \${GETOPT_FLAG}"
 LDFLAGS="\${LDFLAGS}"
 
 if [ "\$linking" = yes ] ; then

@@ -75,6 +75,9 @@ extern "C"
   void sctk_extls_delete ();
   size_t sctk_extls_size(); 
 
+  int sctk_locate_dynamic_initializers();
+  int sctk_call_dynamic_initializers();
+
 #if defined (MPC_Allocator)
   extern __thread struct sctk_alloc_chain * sctk_current_alloc_chain;
 #endif
@@ -86,14 +89,6 @@ extern "C"
   /* MPC OpenMP TLS */
   extern __thread void *sctk_openmp_thread_tls;
 #endif
-
-
-  extern __thread char * sctk_optarg;
-  extern __thread int sctk_optind;
-  extern __thread int sctk_opterr;
-  extern __thread int sctk_optopt;
-  extern __thread int sctk_optreset;
-  extern __thread int sctk_optpos;
 
   extern __thread char *mpc_user_tls_1;
   extern unsigned long mpc_user_tls_1_offset;
@@ -160,13 +155,6 @@ extern "C"
     tls_save (tls_args);
     tls_save (tls_trace_module);
 #endif
-
-	tls_save(sctk_optarg);
-	tls_save(sctk_optind);
-	tls_save(sctk_opterr);
-	tls_save(sctk_optopt);
-	tls_save(sctk_optreset);
-	tls_save(sctk_optpos);
   }
 
   static inline void sctk_context_restore_tls (sctk_mctx_t * ucp)
@@ -199,13 +187,6 @@ extern "C"
     tls_restore (tls_args);
     tls_restore (tls_trace_module);
 #endif
-
-	tls_restore(sctk_optarg);
-	tls_restore(sctk_optind);
-	tls_restore(sctk_opterr);
-	tls_restore(sctk_optopt);
-	tls_restore(sctk_optreset);
-	tls_restore(sctk_optpos);
   }
 
   static inline void sctk_context_init_tls_without_extls (sctk_mctx_t *ucp)
@@ -237,12 +218,6 @@ extern "C"
     tls_init (sctk_tls_module);
 #endif
 
-	ucp->sctk_optarg = NULL;
-	ucp->sctk_optind = 1;
-	ucp->sctk_opterr = 1;
-	ucp->sctk_optopt = 0;
-	ucp->sctk_optreset = 0;
-	ucp->sctk_optpos= 0;
 #endif
   }
 

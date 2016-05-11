@@ -162,6 +162,9 @@ extern "C"
   int sctk_real_pthread_create (pthread_t  *thread,
     __const pthread_attr_t *attr, void * (*start_routine)(void *), void *arg);
 
+  /* At exit */
+  int sctk_atexit(void (*function)(void));
+
   /* Futex */
   int  sctk_thread_futex(void *addr1, int op, int val1, 
 					     struct timespec *timeout, void *addr2, int val3);
