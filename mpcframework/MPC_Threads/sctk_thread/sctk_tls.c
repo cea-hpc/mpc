@@ -485,7 +485,6 @@ sctk_init_module (size_t m, char *module, size_t size)
 
 inline void* extls_get_context_storage_addr(void)
 {
-	extls_dbg("FROM MPC !!!!");
 	return (void*)&sctk_extls_storage;
 }
 
@@ -1001,7 +1000,7 @@ sctk_tls_module_set_gs_register ()
 
 	extls_optim_tls_set_pointer(sctk_extls_storage);
 	/*sctk_warning("Switch GS !!!");*/
-	int result = arch_prctl(ARCH_SET_GS,(unsigned long)sctk_tls_module_vp);
+	/*int result = arch_prctl(ARCH_SET_GS,(unsigned long)sctk_tls_module_vp);*/
 	/*
 	int result;
 	void *gs = (void*)sctk_tls_module_vp ;

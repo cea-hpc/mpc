@@ -405,6 +405,7 @@ sctk_makecontext (sctk_mctx_t * ucp,
 {
   int res;
   sctk_mctx_t lucp;
+  sctk_context_init_tls(&lucp);
   sctk_context_save_tls (&lucp);
 
   sctk_context_init_tls (ucp);

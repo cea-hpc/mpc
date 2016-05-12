@@ -647,7 +647,7 @@ sctk_thread_create_tmp_start_routine (sctk_thread_data_t * __arg)
   }
 
 #if defined (SCTK_USE_OPTIMIZED_TLS)
-  sctk_tls_module_set_gs_register() ;
+  /*sctk_tls_module_set_gs_register() ;*/
   sctk_tls_module_alloc_and_fill() ;
 #endif
 
@@ -774,6 +774,7 @@ sctk_thread_create (sctk_thread_t * restrict __threadp,
 
   tmp->task_id = sctk_safe_cast_long_int (task_id);
   tmp->local_task_id = sctk_safe_cast_long_int (local_task_id);
+  tmp->tls_level = LEVEL_TASK;
 
   res = __sctk_ptr_thread_create (__threadp, __attr, (void *(*)(void *))
 				  sctk_thread_create_tmp_start_routine,
@@ -830,7 +831,7 @@ sctk_thread_create_tmp_start_routine_user (sctk_thread_data_t * __arg)
   }
 
 #if defined (SCTK_USE_OPTIMIZED_TLS)
-  sctk_tls_module_set_gs_register() ;
+  /*sctk_tls_module_set_gs_register() ;*/
   sctk_tls_module_alloc_and_fill() ;
 #endif
 
@@ -963,6 +964,8 @@ sctk_user_thread_create (sctk_thread_t * restrict __threadp,
 #else
   tmp->father_data = NULL;
 #endif
+
+  tmp->tls_level = LEVEL_THREAD;
 
   if (tmp_father)
     {
