@@ -149,6 +149,7 @@ output_file=""
 next_arg_is_output=no
 OUTPUT_FILE_ARGS=""
 PRIV_FLAG="-fmpc-privatize"
+MPC_HEADER_INCLUDE="-include mpc_main.h"
 OMP_FLAG=""
 EOF
 if  test "$language" = "c"; then
@@ -217,6 +218,11 @@ for arg in "\$@" ; do
 	-fmpc-include)
 		#nothing to do, if not fortran, '-include mpc_main.h' is automatically forwarded
 		#This is due to order : '-include' should be set after sources files
+		MPC_HEADER_INCLUDE="-include mpc_main.h"
+		addarg=no
+	;;
+	-fno-mpc-include)
+		MPC_HEADER_INCLUDE=""
 		addarg=no
 	;;
 	-fopenmp|-openmp)
@@ -299,7 +305,7 @@ EOF
 if [ "$2" != "f77" ];
 then
 cat << EOF >> $1
-allargs="\${allargs} -include mpc_main.h"
+allargs="\${allargs} \${MPC_HEADER_INCLUDE}"
 EOF
 fi
 cat << EOF >> $1
