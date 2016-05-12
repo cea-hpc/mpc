@@ -150,10 +150,17 @@ next_arg_is_output=no
 OUTPUT_FILE_ARGS=""
 PRIV_FLAG="-fmpc-privatize"
 OMP_FLAG=""
+EOF
+if  test "$language" = "c"; then
 
+cat << EOF >> $1
 #By default enable dynamic pricatization
 export MPC_DYN_PRIV_ENABLED=1
+EOF
 
+fi
+
+cat << EOF >> $1
 for arg in "\$@" ; do
     # Set addarg to no if this arg should be ignored by the C compiler
     addarg=yes
