@@ -64,7 +64,12 @@ override_var_if_isset()
 
 print_if_stdout()
 {
-    test -d 1 && printf "$@"
+    >&2 printf "\$@"
+}
+
+canonize()
+{
+	readlink -e "\$1"	|| echo "\$1"
 }
 EOF
 header_sh >> $1
@@ -235,12 +240,12 @@ for arg in "\$@" ; do
 	;;
 	-compilers|--compilers)
         echo "Compilers available :"
-    	for line in \` cat \${MPC_RPREFIX}/.c_compilers.cfg\` ;
+    	for line in \` cat \${MPC_RPREFIX}/.${2}_compilers.cfg\` ;
     	do
-			family="\`cat \$line | cut -d":" -f1\`"
-			priv="\`cat \$line | cut -d":" -f2\`"
-			compiler="\`cat \$line | cut -d":" -f3\`"
-			print_if_stdout " - \${compiler} (\${family} Privatization support : \${priv})"
+			family="\`echo "\$line" | cut -d":" -f1\`"
+			priv="\`echo "\$line" | cut -d":" -f2\`"
+			compiler="\`echo "\$line" | cut -d":" -f3\`"
+			print_if_stdout " - \${compiler} (\${family} Privatization support : \${priv})\n"
     	done
 		exit 0
 		;;
@@ -310,8 +315,21 @@ EOF
 fi
 cat << EOF >> $1
 unalias grep > /dev/null 2>&1
-cc_path="\`which \${CC} 2> /dev/null\`"
-is_defined="\`grep \"\${cc_path}$\" \${MPC_RPREFIX}/.${2}_compilers.cfg\`"
+cc_path="\`canonize \${CC}\`"
+
+is_defined=""
+for line in \`cat \${MPC_RPREFIX}/.${2}_compilers.cfg\`
+do
+	cur="\`echo "\$line" | cut -d":" -f3 2> /dev/null\`"
+	cur="\`canonize \$cur\`"
+	if test "\$cur" = "\$cc_path";
+	then
+		is_defined="\$line"
+		break
+	fi
+done
+
+#is_defined="\`grep \"\${cc_path}$\" \${MPC_RPREFIX}/.${2}_compilers.cfg\`"
 
 #if CC is not present in MPC compiler configuration file
 if test -z "\${is_defined}";
@@ -326,8 +344,8 @@ else
 	#if CC does not support privatization and user provides privatization option
 	if test ! -z "\${PRIV_FLAG}" -a "\${CC_PRIV}" = "N";
 	then
-		printf_if_stdout "Warning: '\${CC} does not support privatization support. Disabling privatization'\n"
-		printf_if_stdout "Warning: Do not consider using this compiler for thread-based mode.\n"
+		print_if_stdout "Warning: '\${CC} does not support privatization support. Disabling privatization'\n"
+		print_if_stdout "Warning: Do not consider using this compiler for thread-based mode.\n"
 		PRIV_FLAG=""
 	else
 		#handle compiler-specific options depending on compiler family
@@ -372,15 +390,16 @@ cat << EOF >> $1
 				;;
 		esac
 		
-		#we need to add -DMPC_PRIVATIZED when privatisation is enabled in order to compile deps (like getopt...)
-		if test ! -z "\${PRIV_FLAG}";
-		then
-			PRIV_FLAG="\${PRIV_FLAG} -DMPC_PRIVATIZED"
-		else
-			#Without privatization the plugin is useless
-			LIBPRIV_FLAG=""
-		fi
 	fi
+fi
+
+#we need to add -DMPC_PRIVATIZED when privatisation is enabled in order to compile deps (like getopt...)
+if test ! -z "\${PRIV_FLAG}";
+then
+	PRIV_FLAG="\${PRIV_FLAG} -DMPC_PRIVATIZED"
+else
+	#Without privatization the plugin is useless
+	LIBPRIV_FLAG=""
 fi
 
 #Here we prepend the path which is normally postpended in order
