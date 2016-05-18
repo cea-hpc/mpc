@@ -2432,6 +2432,9 @@ sctk_thread_generic_thread_init (char* thread_type,char* scheduler_type, int vp_
   sctk_multithreading_initialised = 1;
 
   sctk_thread_data_init ();
+  sctk_thread_generic_polling_init(vp_number);
+
+  
 }
 
 /***************************************/

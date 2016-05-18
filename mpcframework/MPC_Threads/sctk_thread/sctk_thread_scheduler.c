@@ -1094,19 +1094,22 @@ void sctk_thread_generic_scheduler_init(char* thread_type,char* scheduler_type, 
   
   sctk_set_cpu_number (vp_number);
 
-  {
-    sctk_thread_generic_attr_t attr;
-    sctk_thread_generic_t threadp;
-    sctk_thread_generic_attr_init(&attr);
+}
+void sctk_thread_generic_polling_init(int vp_number) {
+    int i;
+    sctk_thread_attr_t attr;
+    sctk_thread_t threadp;
+    sctk_thread_attr_init(&attr);
 
-    attr.ptr->polling = 1;
-    attr.ptr->stack_size = 8*1024;
+    sctk_thread_generic_attr_t* attr_intern;
+    attr_intern=&attr;
+    attr_intern->ptr->polling = 1;
+    attr_intern->ptr->stack_size = 8*1024;
     for(i = 0; i < vp_number ; i++){
-      attr.ptr->bind_to = i;
-      sctk_thread_generic_user_create(&threadp,&attr,sctk_thread_generic_polling_func_bootstrap,NULL);
+        attr_intern->ptr->bind_to = i;
+        sctk_user_thread_create(&threadp,&attr,sctk_thread_generic_polling_func_bootstrap,NULL);
     }
-    sctk_thread_generic_attr_destroy(&attr);
-  }
+    sctk_thread_attr_destroy(&attr);
 }
 
 void sctk_thread_generic_scheduler_init_thread(sctk_thread_generic_scheduler_t* sched,
