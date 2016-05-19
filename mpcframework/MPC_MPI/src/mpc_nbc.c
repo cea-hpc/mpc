@@ -269,7 +269,7 @@ static int NBC_Iallgatherv(void* sendbuf, int sendcount, MPI_Datatype sendtype, 
 	*(int*)*schedule=alloc_size;
 	*(((int*)*schedule)+1)=(p-1)*2;
 
-	int pos = 0;
+	int pos = sizeof(int);
 
 	/* do p-1 rounds */
 	for(r=1;r<p;r++) {
@@ -569,7 +569,7 @@ static inline int allred_sched_diss(int rank, int p, int count, MPI_Datatype dat
 	maxr = (int)ceil((log(p)/LOG2));
 
 	firstred = 1;
-	int pos = 0;
+	int pos = sizeof(int);
 	for(r=1; r<=maxr; r++) {
 		if((vrank % (1<<r)) == 0) {
 			/* we have to receive this round */
@@ -1308,7 +1308,7 @@ static int NBC_Ibarrier(MPI_Comm comm, NBC_Handle* handle) {
 //        *(((int*)*schedule)+1)=(p-1)*2;
 //    }
 
-    int pos = 0;
+    int pos = sizeof(int);
         
 
     do {
@@ -1331,7 +1331,7 @@ static int NBC_Ibarrier(MPI_Comm comm, NBC_Handle* handle) {
         /* end communication round */
         if(round < maxround) {
             res = NBC_Sched_barrier_pos(pos, schedule);
-            *(int*)((char*)*schedule+2*sizeof(int)+pos)=2;
+            *(int*)((char*)*schedule+sizeof(int)+pos)=2;
             pos += sizeof(int)+sizeof(char); 
             if(NBC_OK != res) { printf("Error in NBC_Sched_barrier() (%i)\n", res); return res; }
         }
@@ -1412,7 +1412,7 @@ static int NBC_Ibcast(void *buffer, int count, MPI_Datatype datatype, int root, 
 			case NBC_BCAST_LINEAR:
 	if(rank == root)
 	{
-		int alloc_size =2*sizeof(int) + ((p-1)*(sizeof(NBC_Args_send)+sizeof(NBC_Fn_type))) + sizeof(char); 
+		int alloc_size = sizeof(int) + sizeof(int) + ((p-1)*(sizeof(NBC_Args_send)+sizeof(NBC_Fn_type))) + sizeof(char); 
 		*schedule=sctk_malloc(alloc_size);
 		if(*schedule == NULL) { return NBC_OOR; }
 		*(int*)*schedule=alloc_size;
@@ -1420,7 +1420,7 @@ static int NBC_Ibcast(void *buffer, int count, MPI_Datatype datatype, int root, 
 	}
 	else
 	{
-		int alloc_size =2*sizeof(int) + (sizeof(NBC_Args_recv)+sizeof(NBC_Fn_type)) + sizeof(char); 
+		int alloc_size = sizeof(int) + sizeof(int) + (sizeof(NBC_Args_recv)+sizeof(NBC_Fn_type)) + sizeof(char); 
 		*schedule=sctk_malloc(alloc_size);
 		if(*schedule == NULL) { return NBC_OOR; }
 		*(int*)*schedule=alloc_size;
@@ -1438,7 +1438,7 @@ static int NBC_Ibcast(void *buffer, int count, MPI_Datatype datatype, int root, 
 				if(vrank == 0)
 	{
 			int sends = (int)ceil((log(p)/LOG2));
-		int alloc_size = 2*sizeof(int) + sends*(sizeof(NBC_Args_send)+sizeof(NBC_Fn_type)) + sizeof(char);
+		int alloc_size = sizeof(int) + sizeof(int) + sends*(sizeof(NBC_Args_send)+sizeof(NBC_Fn_type)) + sizeof(char);
 		*schedule=sctk_malloc(alloc_size);
 		if(*schedule == NULL) { return NBC_OOR; }
 		*(int*)*schedule=alloc_size;
@@ -1456,7 +1456,7 @@ static int NBC_Ibcast(void *buffer, int count, MPI_Datatype datatype, int root, 
 		sends ++;
 			}
 		}
-		int alloc_size = 2*sizeof(int) + (sizeof(NBC_Args_recv)+sizeof(NBC_Fn_type)) + sizeof(char) + sizeof(int) + sends*(sizeof(NBC_Args_send)+sizeof(NBC_Fn_type)) + sizeof(char);
+		int alloc_size = sizeof(int) + sizeof(int) + (sizeof(NBC_Args_recv)+sizeof(NBC_Fn_type)) + sizeof(char) + sizeof(int) + sends*(sizeof(NBC_Args_send)+sizeof(NBC_Fn_type)) + sizeof(char);
 		*schedule=sctk_malloc(alloc_size);
 		if(*schedule == NULL) { return NBC_OOR; }
 		*(int*)*schedule=alloc_size;
@@ -1464,7 +1464,7 @@ static int NBC_Ibcast(void *buffer, int count, MPI_Datatype datatype, int root, 
 
 		*(((int*)*schedule)+1)=1;
 		/* Number of elements in second round = number of sends */
-		*((int*)((char*)*schedule+2*sizeof(int)+sizeof(NBC_Args_recv)+sizeof(NBC_Fn_type)+sizeof(char))) = sends;
+		*((int*)((char*)*schedule+sizeof(int)+sizeof(int)+sizeof(NBC_Args_recv)+sizeof(NBC_Fn_type)+sizeof(char))) = sends;
 	}
 
 
@@ -1519,7 +1519,7 @@ static inline int bcast_sched_binomial(int rank, int p, int root, NBC_Schedule *
 	maxr = (int)ceil((log(p)/LOG2));
 
 	RANK2VRANK(rank, vrank, root);
-	int pos = 0;
+	int pos = sizeof(int);
 	/* receive from the right hosts	*/
 	if(vrank != 0) {
 		for(r=0; r<maxr; r++) {
@@ -1554,7 +1554,7 @@ static inline int bcast_sched_linear(int rank, int p, int root, NBC_Schedule *sc
 
 	/* send to all others */
 	if(rank == root) {
-		int pos = 0;
+		int pos = sizeof(int);
 		for (peer=0; peer<p;peer++) {
 			if(peer != root) {
 				/* send msg to peer */
@@ -1680,7 +1680,7 @@ static int NBC_Igather(void* sendbuf, int sendcount, MPI_Datatype sendtype, void
     	*(((int*)*schedule)+1)=round_size;
 
 
-        int pos = 0;
+        int pos = sizeof(int);
 
 //		res = NBC_Sched_create(schedule);
 //		if(res != NBC_OK) { printf("Error in NBC_Sched_create (%i)\n", res); return res; }
@@ -1772,7 +1772,7 @@ static int NBC_Igatherv(void* sendbuf, int sendcount, MPI_Datatype sendtype, voi
     	*(((int*)*schedule)+1)=round_size;
 
 
-        int pos = 0;
+        int pos = sizeof(int);
 
  
 //	res = NBC_Sched_create(schedule);
@@ -1879,11 +1879,12 @@ static int NBC_Ireduce(void* sendbuf, void* recvbuf, int count, MPI_Datatype dat
 	schedule = (NBC_Schedule*)sctk_malloc(sizeof(NBC_Schedule));
 	if (NULL == schedule) { printf("Error in sctk_malloc() (%i)\n", res); return res; }
 
-	int sends = 0;
-	int recvs = 0;
-	int ops = 0;
+//	int sends = 0;
+//	int recvs = 0;
+//	int ops = 0;
 	int maxr = (int)ceil((log(p)/LOG2));
-	int cpts[maxr][3];
+//	int cpts[maxr][3];
+    int recv_op_rounds = 0;
 
 	int vrank, vpeer, peer, r;
 	RANK2VRANK(rank, vrank, root);
@@ -1892,42 +1893,45 @@ static int NBC_Ireduce(void* sendbuf, void* recvbuf, int count, MPI_Datatype dat
 	switch(alg) {
 		case NBC_RED_BINOMIAL:
 			;
-			int end = 0;
-			for(r=1; r<=maxr; r++) {
-				cpts[r-1][0]=0;
-				cpts[r-1][1]=0;
-				cpts[r-1][2]=0;
-				if(end == 0) {
-					if((vrank % (1<<r)) == 0) {
+//			int end = 0;
+			for(r=1; r<=maxr && ((vrank % (1<<r)) == 0); r++) {
+//				cpts[r-1][0]=0;
+//				cpts[r-1][1]=0;
+//				cpts[r-1][2]=0;
+//				if(end == 0) {
+//					if((vrank % (1<<r)) == 0) {
 						/* we have to receive this round */
 						vpeer = vrank + (1<<(r-1));
 						VRANK2RANK(peer, vpeer, root)
 							if(peer<p) {
-								cpts[r-1][0]++;
-								recvs++;
+//								cpts[r-1][0]++;
+//								recvs++;
 								/* we have to wait until we have the data */
 								/* perform the reduce in my local buffer */
-								cpts[r-1][1]++;
-								ops++;
+//								cpts[r-1][1]++;
+//								ops++;
+                                recv_op_rounds++;
 
 							}
-					} else {
+//					} else {
 						/* we have to send this round */
-						cpts[r-1][2]++;
-						sends++;
+//						cpts[r-1][2]++;
+//						sends++;
 
 						/* leave the game */
-						end = 1;
-					}
-				}
+//						end = 1;
+//					}
+//				}
 			}
 
-			int alloc_size = 2*sizeof(int) + recvs * (sizeof(NBC_Args_recv)+sizeof(NBC_Fn_type)+sizeof(int)+sizeof(char)) + ops * (sizeof(NBC_Args_op)+sizeof(NBC_Fn_type)+sizeof(int)+sizeof(char)) + sends * (sizeof(NBC_Args_send)+sizeof(NBC_Fn_type)) + sizeof(char);
+			int alloc_size = sizeof(int) + sizeof(int) + recv_op_rounds * (sizeof(NBC_Args_recv)+sizeof(NBC_Fn_type)+sizeof(int)+sizeof(char)) + recv_op_rounds * (sizeof(NBC_Args_op)+sizeof(NBC_Fn_type)+sizeof(int)+sizeof(char)) + sizeof(char);
+            if(rank != root) alloc_size+= (sizeof(NBC_Args_send)+sizeof(NBC_Fn_type));
 			*schedule=sctk_malloc(alloc_size);
 			*(int*)*schedule = alloc_size;
+/*
 			int cpt = 0;
 			char * ptr = ((char*)*schedule)+sizeof(int);
-			char * ptr2 = ((char*)*schedule)+2*sizeof(int);
+			char * ptr2 = ((char*)*schedule)+sizeof(int) + sizeof(int);
 			for(r=1; r<=maxr; r++)
 			{
 				if(cpts[r-1][2] !=0)
@@ -1955,7 +1959,7 @@ static int NBC_Ireduce(void* sendbuf, void* recvbuf, int count, MPI_Datatype dat
 				}
 				*(int*)ptr=cpt;
 			}
-
+*/
 			res = red_sched_binomial(rank, p, root, sendbuf, recvbuf, count, datatype, op, redbuf, schedule, handle);
 			if (NBC_OK != res) { printf("Error in Schedule creation() (%i)\n", res); return res; }
 
@@ -2086,12 +2090,16 @@ static inline int red_sched_binomial(int rank, int p, int root, void *sendbuf, v
 			vpeer = vrank + (1<<(r-1));
 			VRANK2RANK(peer, vpeer, root)
 				if(peer<p) {
+                    *(int*)((char*)*schedule+sizeof(int)+pos)=1;
+                    pos += sizeof(int);
 					res = NBC_Sched_recv_pos(pos, 0, 1, count, datatype, peer, schedule);
 					pos += (sizeof(NBC_Args_recv)+sizeof(NBC_Fn_type));
 					if (NBC_OK != res) { sctk_free(handle->tmpbuf); printf("Error in NBC_Sched_recv() (%i)\n", res); return res; }
 					/* we have to wait until we have the data */
 					res = NBC_Sched_barrier_pos(pos, schedule);
-					pos += sizeof(char)+sizeof(int);
+					pos += sizeof(char);
+                    *(int*)((char*)*schedule+sizeof(int)+pos)=1;
+                    pos += sizeof(int);
 					if (NBC_OK != res) { sctk_free(handle->tmpbuf); printf("Error in NBC_Sched_barrier() (%i)\n", res); return res; }
 					/* perform the reduce in my local buffer */
 					if(firstred) {
@@ -2115,16 +2123,18 @@ static inline int red_sched_binomial(int rank, int p, int root, void *sendbuf, v
 						} else {
 							/* all others may not have a receive buffer */
 							res = NBC_Sched_op_pos(pos, (char *)redbuf-(unsigned long)handle->tmpbuf, 1, (char *)redbuf-(unsigned long)handle->tmpbuf, 1, 0, 1, count, datatype, op, schedule);
-							pos += (sizeof(NBC_Args_op)+sizeof(NBC_Fn_type));
+                        pos += (sizeof(NBC_Args_op)+sizeof(NBC_Fn_type));
 						}
 					}
 					if (NBC_OK != res) { sctk_free(handle->tmpbuf); printf("Error in NBC_Sched_op() (%i)\n", res); return res; }
 					/* this cannot be done until handle->tmpbuf is unused :-( */
 					res = NBC_Sched_barrier_pos(pos, schedule);
-					pos += sizeof(char)+sizeof(int);
+					pos += sizeof(char);
 					if (NBC_OK != res) { sctk_free(handle->tmpbuf); printf("Error in NBC_Sched_barrier() (%i)\n", res); return res; }
 				}
 		} else {
+            *(int*)((char*)*schedule+sizeof(int)+pos)=1;
+            pos += sizeof(int);
 			/* we have to send this round */
 			vpeer = vrank - (1<<(r-1));
 			VRANK2RANK(peer, vpeer, root)
@@ -2612,7 +2622,7 @@ static int NBC_Iscatter(void* sendbuf, int sendcount, MPI_Datatype sendtype, voi
     	*(((int*)*schedule)+1)=round_size;
 
 
-        int pos = 0;
+        int pos = sizeof(int);
 
 
 
@@ -2708,7 +2718,7 @@ static int NBC_Iscatterv(void* sendbuf, int *sendcounts, int *displs, MPI_Dataty
     	*(((int*)*schedule)+1)=round_size;
 
 
-        int pos = 0;
+        int pos = sizeof(int);
 
  
 //	res = NBC_Sched_create(schedule);
@@ -3219,10 +3229,10 @@ static inline int NBC_Sched_send_pos(int pos, void* buf, char tmpbuf, int count,
   NBC_Args_send* send_args;
  
   /* adjust the function type */
-  *(NBC_Fn_type*)((char*)*schedule+2*sizeof(int)+pos)=SEND;
+  *(NBC_Fn_type*)((char*)*schedule+sizeof(int)+pos)=SEND;
   
   /* store the passed arguments */
-  send_args = (NBC_Args_send*)((char*)*schedule+2*sizeof(int)+pos+sizeof(NBC_Fn_type));
+  send_args = (NBC_Args_send*)((char*)*schedule+sizeof(int)+pos+sizeof(NBC_Fn_type));
   send_args->buf=buf;
   send_args->tmpbuf=tmpbuf;
   send_args->count=count;
@@ -3268,10 +3278,10 @@ static inline int NBC_Sched_recv_pos(int pos, void* buf, char tmpbuf, int count,
  
   
   /* adjust the function type */
-  *(NBC_Fn_type*)((char*)*schedule+2*sizeof(int)+pos)=RECV;
+  *(NBC_Fn_type*)((char*)*schedule+sizeof(int)+pos)=RECV;
 
   /* store the passed arguments */
-  recv_args=(NBC_Args_recv*)((char*)*schedule+2*sizeof(int)+pos+sizeof(NBC_Fn_type));
+  recv_args=(NBC_Args_recv*)((char*)*schedule+sizeof(int)+pos+sizeof(NBC_Fn_type));
   recv_args->buf=buf;
   recv_args->tmpbuf=tmpbuf;
   recv_args->count=count;
@@ -3321,10 +3331,10 @@ static inline int NBC_Sched_op_pos(int pos, void *buf3, char tmpbuf3, void* buf1
   NBC_Args_op* op_args;
   
   /* adjust the function type */
-  *(NBC_Fn_type*)((char*)*schedule+2*sizeof(int)+pos)=OP;
+  *(NBC_Fn_type*)((char*)*schedule+sizeof(int)+pos)=OP;
 
   /* store the passed arguments */
-  op_args=(NBC_Args_op*)((char*)*schedule+2*sizeof(int)+pos+sizeof(NBC_Fn_type));
+  op_args=(NBC_Args_op*)((char*)*schedule+sizeof(int)+pos+sizeof(NBC_Fn_type));
   op_args->buf1=buf1;
   op_args->buf2=buf2;
   op_args->buf3=buf3;
@@ -3428,7 +3438,7 @@ static inline int NBC_Sched_barrier(NBC_Schedule *schedule) {
 static inline int NBC_Sched_barrier_pos(int pos, NBC_Schedule *schedule) {
   
   /* add the barrier char (1) because another round follows */
-  *(char*)((char*)*schedule+2*sizeof(int)+pos)=1;
+  *(char*)((char*)*schedule+sizeof(int)+pos)=1;
   
   return NBC_OK;
 }
