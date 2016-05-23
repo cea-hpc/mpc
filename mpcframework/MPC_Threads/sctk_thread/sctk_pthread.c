@@ -173,7 +173,7 @@ tls_start_routine (void *arg)
   void *res;
   tmp = arg;
 #if defined(SCTK_USE_TLS)
-  sctk_extls = tmp->tls;
+  *((extls_ctx_t**)extls_get_context_storage_addr()) = tmp->tls;
 #endif
 
   res = tmp->start_routine (tmp->arg);
@@ -190,8 +190,11 @@ init_tls_start_routine_arg (void *(*start_routine) (void *), void *arg)
 
   tmp->arg = arg;
   tmp->start_routine = start_routine;
-  sctk_extls_duplicate (&(tmp->tls));
-
+#ifdef SCTK_USE_TLS
+  extls_ctx_t* ctx = sctk_malloc(sizeof(extls_ctx_t));
+  extls_ctx_herit(*((extls_ctx_t**)extls_get_context_storage_addr()), ctx, LEVEL_THREAD);
+  tmp->tls = (void*)ctx;
+#endif
   return tmp;
 }
 
