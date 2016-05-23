@@ -367,7 +367,7 @@ FORTAN_MPIH="${MPC_SOURCE_DIR}/MPC_MPI/include/mpc_mpi.h"
 FORTRAN_INSTALL="${PWD}/INSTALL/include/mpcframework/"
 #Call the script
 printf "\t@echo \"Generate FORTRAN MPI/OpenMP includes and modules\"">> Makefile; echo "" >> Makefile
-printf "\t@MPC_MAKE_FORTRAN_INTERFACE=1 MPC_DISABLE_CONFIG=1 MPC_DISABLE_BANNER=\"1\" LD_LIBRARY_PATH=\$(DESTDIR)/\$(OPENPA_PREFIX_INSTALL)/lib:\$(DESTDIR)/\$(HWLOC_PREFIX_INSTALL)/lib:\$(LD_LIBRARY_PATH) sh ${MPC_SOURCE_DIR}MPC_Tools/fortran_gen/fortran_gen.sh \"${FORTRAN_PYTHON}\" \"${FORTRAN_CC}\" \"${FORTRAN_FC}\" \"${FORTAN_MPIH}\" \"${FORTRAN_INSTALL}\" ">> Makefile; echo "" >> Makefile
+printf "\t@MPC_MAKE_FORTRAN_INTERFACE=1 MPC_DISABLE_CONFIG=1 MPC_DISABLE_BANNER=\"1\" LD_LIBRARY_PATH=\$(DESTDIR)/\$(OPENPA_PREFIX_INSTALL)/lib:\$(DESTDIR)/\$(HWLOC_PREFIX_INSTALL)/lib:\$(LD_LIBRARY_PATH) sh ${MPC_SOURCE_DIR}MPC_Tools/fortran_gen/fortran_gen.sh \"${FORTRAN_PYTHON}\" \"${FORTRAN_CC}\" \"${FORTRAN_FC}\" \"${FORTAN_MPIH}\" \"${FORTRAN_INSTALL}\" > fortrangen_script.log ">> Makefile; echo "" >> Makefile
 fi
 
 printf "\t@chmod -R 644 INSTALL/lib/*">> Makefile; echo "">> Makefile
