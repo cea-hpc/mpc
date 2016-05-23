@@ -48,12 +48,27 @@
 #define sctk_calloc calloc
 #define sctk_realloc realloc
 #define sctk_user_mmap mmap
-/* Not present in hwloc.h */
-void hwloc_obj_add_info(hwloc_obj_t obj, const char *name, const char *value);
 
 #if defined(SCTK_USE_TLS)
 __thread void *sctk_extls = NULL;
 __thread void* sctk_extls_storage = NULL;
+
+struct dyn_sym_s
+{
+	char * name;
+    void * addr;
+	struct dyn_sym_s * next;
+};
+
+static struct dyn_sym_s * __sctk_dyn_symbols = NULL;
+
+struct dsos_s
+{
+	char * name;
+	struct dsos_s * next;
+};
+
+static struct dsos_s * __sctk_dsos = NULL;
 
 
 #if defined (SCTK_USE_OPTIMIZED_TLS)
@@ -64,31 +79,6 @@ int MPC_Config_Status_MPC_HAVE_OPTION_ETLS_OPTIMIZED(){
 int MPC_Config_Status_MPC_HAVE_OPTION_ETLS_OPTIMIZED(){
   return 0;
 }
-#endif
-
-#if defined (SCTK_USE_OPTIMIZED_TLS)
-/* to set GS register */
-#include <asm/prctl.h> /* ARCH_SET_GS */
-#include <sys/prctl.h> /* arch_prctl */
-
-extern int arch_prctl (int code, unsigned long addr);
-
-/*
-Function is not defined in headers, manpage say to declare it manually.
-It may be fixed in future glibc.
-*/
-#ifndef arch_prctl
-int arch_prctl(int code, unsigned long addr);
-#endif
-
-/* need to be saved and restored at context switch */
-__thread void *sctk_tls_module_vp[sctk_extls_max_scope+sctk_hls_max_scope] ;
-/* store a direct pointer to each tls module */
-/* used by tls optimized in the linker */
-/* gs register contains the address of this array */
-/* per thread: need to be updated at context switch */
-/* real type: sctk_tls_module_t** */
-__thread void **sctk_tls_module ;
 #endif
 
 #endif
@@ -127,24 +117,6 @@ void sctk_tls_locate_tls_dyn_initializer( char * fname )
 		(fn)();
 	}
 }
-
-
-struct dyn_sym_s
-{
-	char * name;
-    void * addr;
-	struct dyn_sym_s * next;
-};
-
-static struct dyn_sym_s * __sctk_dyn_symbols = NULL;
-
-struct dsos_s
-{
-	char * name;
-	struct dsos_s * next;
-};
-
-static struct dsos_s * __sctk_dsos = NULL;
 
 int sctk_load_proc_self_maps()
 {
@@ -290,8 +262,6 @@ int sctk_load_wrapper_symbols( char * dso , void * handle )
 	return 0;
 }
 
-
-
 int sctk_locate_dynamic_initializers()
 {
 	if( sctk_load_proc_self_maps() )
@@ -320,8 +290,6 @@ int sctk_locate_dynamic_initializers()
 	return 0;
 }
 
-
-
 int sctk_call_dynamic_initializers()
 {
 	struct dyn_sym_s * current = __sctk_dyn_symbols;
@@ -340,26 +308,8 @@ int sctk_call_dynamic_initializers()
 	return 0;
 }
 
-
-
-
-
-
-
-
-
-
-
 #if defined(SCTK_USE_TLS) && defined(Linux_SYS)
-#include <link.h>
-#include <stdlib.h>
-#include <stdio.h>
 
-static __thread unsigned long p_memsz;
-static __thread unsigned long p_filesz;
-static __thread void *p_vaddr;
-static __thread size_t current_module;
-static __thread size_t total_module;
 static size_t page_size = 0;
 
 
@@ -415,25 +365,6 @@ sctk_extls_duplicate (void **new)
 {
 }
 
-/*
-  used by openmp in MPC_OpenMP/src/mpcomp_internal.h
-*/
-void
-sctk_extls_keep_with_specified_extls (void **extls, int *scopes)
-{
-}
-
-void
-sctk_extls_keep ( int *scopes )
-{
-}
-
-void
-sctk_extls_delete ()
-{
-
-}
-
 #include <utlist.h>
 
 void sctk_tls_dtors_init(struct sctk_tls_dtors_s ** head)
@@ -462,14 +393,6 @@ void sctk_tls_dtors_free(struct sctk_tls_dtors_s ** head)
 		sctk_free(elt);
 	}
 }
-
-/*
- * At MPC startup, create all HLS levels
- * Called in sctk_perform_initialisation in sctk_launch.c
- */
-
-#define MAX(a,b) ((a)>=(b)?(a):(b))
-
 
 #ifdef MPC_DISABLE_HLS
 int MPC_Config_Status_MPC_HAVE_OPTION_HLS(){

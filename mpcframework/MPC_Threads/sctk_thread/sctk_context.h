@@ -206,22 +206,6 @@ Need to check this in more depth for futur version ( > 2.4.0-1).
 			void *arg,
 			void (*func) (void *),
 			char *stack, size_t stack_size);
-//#if defined (SCTK_USE_OPTIMIZED_TLS)
-  //int
-    //sctk_makecontext_extls (sctk_mctx_t * ucp,
-					//void *arg,
-					//void (*func) (void *), char *stack,
-					//size_t stack_size,
-					//void *extls, void* tls_module);
-//#else
-  //int
-    //sctk_makecontext_extls (sctk_mctx_t * ucp,
-					//void *arg,
-					//void (*func) (void *), char *stack,
-					//size_t stack_size,
-					//void *extls);
-//#endif
-
 #ifdef __cplusplus
 }
 #endif

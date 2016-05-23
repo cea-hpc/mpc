@@ -716,7 +716,6 @@ sctk_thread_create_tmp_start_routine (sctk_thread_data_t * __arg)
   sctk_thread_remove (&tmp);
   sctk_thread_data_set (NULL);
   sctk_nodebug ("THREAD END");
-  sctk_extls_delete ();
   return res;
 }
 
@@ -756,7 +755,15 @@ sctk_thread_create (sctk_thread_t * restrict __threadp,
 
   tmp->task_id = sctk_safe_cast_long_int (task_id);
   tmp->local_task_id = sctk_safe_cast_long_int (local_task_id);
-  tmp->tls_level = LEVEL_TASK;
+
+#ifdef SCTK_USE_TLS
+  extls_ctx_t* old_ctx = sctk_extls_storage;
+  extls_ctx_t** cur_tx = ((extls_ctx_t**)extls_get_context_storage_addr());
+  *cur_tx = malloc(sizeof(extls_ctx_t));
+  extls_ctx_herit(old_ctx, *cur_tx, LEVEL_TASK);
+  extls_ctx_restore(*cur_tx);
+  extls_ctx_bind(*cur_tx, tmp->bind_to);
+#endif
 
   res = __sctk_ptr_thread_create (__threadp, __attr, (void *(*)(void *))
 				  sctk_thread_create_tmp_start_routine,
@@ -765,6 +772,7 @@ sctk_thread_create (sctk_thread_t * restrict __threadp,
   /* We reset the binding */
   {
     sctk_bind_to_cpu(previous_binding);
+  	extls_ctx_restore(old_ctx);
   }
 
   sctk_check (res, 0);
@@ -804,13 +812,6 @@ sctk_thread_create_tmp_start_routine_user (sctk_thread_data_t * __arg)
 
   sctk_alloc_posix_numa_migrate();
 
-  {
-    int keep[sctk_extls_max_scope];
-    memset (keep, 0, sctk_extls_max_scope * sizeof (int));
-    keep[sctk_extls_process_scope] = 1;
-    keep[sctk_extls_task_scope] = 1;
-    sctk_extls_keep (keep);
-  }
 
   /* Note that the profiler is not initialized in user threads */
 
@@ -837,7 +838,6 @@ sctk_thread_create_tmp_start_routine_user (sctk_thread_data_t * __arg)
   sctk_free(ptr_cleanup);
   sctk_thread_remove (&tmp);
   sctk_thread_data_set (NULL);
-  sctk_extls_delete ();
   return res;
 }
 
@@ -964,11 +964,23 @@ sctk_user_thread_create (sctk_thread_t * restrict __threadp,
     }
 #endif
 
+#ifdef SCTK_USE_TLS
+  extls_ctx_t* old_ctx = sctk_extls_storage;
+  extls_ctx_t** cur_tx = ((extls_ctx_t**)extls_get_context_storage_addr());
+  *cur_tx = malloc(sizeof(extls_ctx_t));
+  extls_ctx_herit(old_ctx, *cur_tx, LEVEL_THREAD);
+  extls_ctx_restore(*cur_tx);
+#endif
+
   res = __sctk_ptr_thread_user_create (__threadp, __attr,
 				       (void *(*)(void *))
 				       sctk_thread_create_tmp_start_routine_user,
 				       (void *) tmp);
   sctk_check (res, 0);
+
+#ifdef SCTK_USE_TLS
+  extls_ctx_restore(old_ctx);
+#endif
 
 #ifndef NO_INTERNAL_ASSERT
   if (__attr != NULL)

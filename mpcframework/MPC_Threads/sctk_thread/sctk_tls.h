@@ -36,28 +36,6 @@ extern "C"
 
 #if defined(SCTK_USE_TLS)
 
-  typedef enum
-  { sctk_extls_process_scope = 0,
-    sctk_extls_task_scope    = 1,
-    sctk_extls_thread_scope  = 2,
-    sctk_extls_openmp_scope  = 3,
-    sctk_extls_max_scope     = 4,
-  } sctk_extls_scope_t;
-
-  typedef enum
-  { sctk_hls_node_scope          = 0,
-    sctk_hls_numa_level_2_scope  = 1,
-    sctk_hls_numa_level_1_scope  = 2,
-    sctk_hls_cache_level_3_scope = 3,
-    sctk_hls_cache_level_2_scope = 4,
-    sctk_hls_cache_level_1_scope = 5,
-    sctk_hls_core_scope          = 6,
-    sctk_hls_max_scope           = 7
-  } sctk_hls_scope_t;
-  /* this numbering should be kept in sync
-	 with the argument given to hls_barrier
-	 and hls_single in gcc */
-
   struct sctk_tls_dtors_s
   {
 	  void * obj;
@@ -86,25 +64,10 @@ extern "C"
   extern __thread void *sctk_extls;
   extern __thread void *sctk_extls_storage;
 
-#if defined (SCTK_USE_OPTIMIZED_TLS)
-  extern __thread void *sctk_tls_module_vp[sctk_extls_max_scope+sctk_hls_max_scope] ;
-  extern __thread void **sctk_tls_module ;
-#endif
-
 #endif
 
 #ifdef MPC_MPI
   extern __thread struct sctk_thread_specific_s * ___sctk_message_passing;
-#endif
-
-#if defined (SCTK_USE_OPTIMIZED_TLS)
-  static inline void sctk_context_restore_tls_module_vp () {
-	  int i;
-	  if ( sctk_tls_module != NULL ) {
-		  for ( i=0; i<sctk_extls_max_scope+sctk_hls_max_scope; ++i )
-			  sctk_tls_module_vp[i] = sctk_tls_module[i] ;
-	  }
-  }
 #endif
 
 #define tls_save(a) ucp->a = a;
@@ -122,11 +85,6 @@ extern "C"
     /* MPC OpenMP TLS */
     tls_save(sctk_openmp_thread_tls);
 #endif
-    tls_save (sctk_extls);
-
-#if defined (SCTK_USE_OPTIMIZED_TLS)
-	tls_save (sctk_tls_module);
-#endif
 
 #ifdef MPC_MPI
     tls_save (___sctk_message_passing);
@@ -137,7 +95,8 @@ extern "C"
 	/* the tls vector is restored by copy and cannot be changed
 	 * It is then uselesse to save it at this time
 	 */
-	extls_ctx_save(ucp->tls_ctx);
+	if(ucp->tls_ctx != NULL)
+	    extls_ctx_save(ucp->tls_ctx);
   }
 
   static inline void sctk_context_restore_tls (sctk_mctx_t * ucp)
@@ -148,24 +107,11 @@ extern "C"
 #endif
 
 #if defined (MPC_OpenMP)
-    /* MPC OpenMP TLS */
     tls_restore (sctk_openmp_thread_tls);
 #endif
-    tls_restore (sctk_extls);
 
-	//sctk_error("restore for %p", ucp);
-	/* set the new tls vector to use, the current thread's one */
-	//if(ucp->tls_ctx == NULL)
-	//{
-		//ucp->tls_ctx = malloc(sizeof(extls_ctx_t));
-         //extls_ctx_init(ucp->tls_ctx, NULL);
-		//sctk_warning("FORCE init ctx at %p for %p",(ucp->tls_ctx), ucp );
-	//}
-	extls_ctx_restore(ucp->tls_ctx);
-#if defined (SCTK_USE_OPTIMIZED_TLS)
-	tls_restore (sctk_tls_module);
-    sctk_context_restore_tls_module_vp () ;
-#endif
+    if(ucp->tls_ctx != NULL)
+        extls_ctx_restore(ucp->tls_ctx);
 
 #ifdef MPC_MPI
     tls_restore (___sctk_message_passing);
@@ -174,9 +120,16 @@ extern "C"
 #endif
   }
 
-  static inline void sctk_context_init_tls_without_extls (sctk_mctx_t *ucp)
+  static inline void sctk_context_init_tls (sctk_mctx_t * ucp)
   {
 #if defined(SCTK_USE_TLS)
+    /* Create a new TLS context, probably not the place it has to be.
+	 * more suited to be in sctk_thread.c w/ thread creation.
+	 * Moreover, it should use ctx_herit instead of ctx_init (need to reference process level)
+	 */
+	  /* Nothing should have to be done here. The init is done per thread in sctk_thread.c */
+    ucp->tls_ctx = (extls_ctx_t*)sctk_extls_storage;
+
 #if defined (MPC_Allocator)
     ucp->sctk_current_alloc_chain_local = NULL;
 #endif
@@ -189,60 +142,9 @@ extern "C"
 #ifdef MPC_MPI
     tls_init (___sctk_message_passing);
 #endif
-
-    tls_init (sctk_hls_generation);
-
-#if defined (SCTK_USE_OPTIMIZED_TLS)
-    tls_init (sctk_tls_module);
-#endif
-
 #endif
   }
 
-  static inline void sctk_herit_from_current_extls(extls_object_level_type_t level, sctk_mctx_t* ucp)
-  {
-	ucp->tls_ctx = malloc(sizeof(extls_ctx_t));
-	extls_ctx_t* to_clone = *(extls_ctx_t**)extls_get_context_storage_addr();
-	 extls_ctx_herit(to_clone, ucp->tls_ctx, level);
-	sctk_warning("init ctx at %p for %p",(ucp->tls_ctx), ucp );
-  }
-
-  static inline void sctk_context_init_tls (sctk_mctx_t * ucp)
-  {
-#if defined(SCTK_USE_TLS)
-    /* Create a new TLS context, probably not the place it has to be.
-	 * more suited to be in sctk_thread.c w/ thread creation.
-	 * Moreover, it should use ctx_herit instead of ctx_init (need to reference process level)
-	 */
-	  /* Nothing should have to be done here. The init is done per thread in sctk_thread.c */
-    tls_init (sctk_extls);
-    sctk_extls_duplicate (&(ucp->sctk_extls));
-    sctk_context_init_tls_without_extls (ucp);
-#endif
-  }
-
-#if defined (SCTK_USE_OPTIMIZED_TLS)
-  static inline void sctk_context_init_tls_with_specified_extls (sctk_mctx_t* ucp, void* extls, void* tls_module)
-  {
-#if defined(SCTK_USE_TLS)
-    sctk_context_init_tls_without_extls (ucp);
-	ucp->sctk_extls = extls ;
-	ucp->sctk_tls_module = tls_module ;
-#endif
-  }
-#else
-  static inline void sctk_context_init_tls_with_specified_extls (sctk_mctx_t* ucp, void* extls )
-  {
-#if defined(SCTK_USE_TLS)
-    sctk_context_init_tls_without_extls (ucp);
-	ucp->sctk_extls = extls ;
-#endif
-  }
-#endif
-
-  void sctk_hls_build_repository () ;
-  void sctk_hls_checkout_on_vp () ;
-  void sctk_hls_register_thread () ;
 
 #if defined (SCTK_USE_OPTIMIZED_TLS)
   void sctk_tls_module_set_gs_register ();
