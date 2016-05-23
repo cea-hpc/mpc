@@ -85,7 +85,6 @@ extern "C"
 
   extern __thread void *sctk_extls;
   extern __thread void *sctk_extls_storage;
-  extern __thread void *sctk_hls_generation;
 
 #if defined (SCTK_USE_OPTIMIZED_TLS)
   extern __thread void *sctk_tls_module_vp[sctk_extls_max_scope+sctk_hls_max_scope] ;
@@ -124,7 +123,6 @@ extern "C"
     tls_save(sctk_openmp_thread_tls);
 #endif
     tls_save (sctk_extls);
-	tls_save (sctk_hls_generation);
 
 #if defined (SCTK_USE_OPTIMIZED_TLS)
 	tls_save (sctk_tls_module);
@@ -154,7 +152,6 @@ extern "C"
     tls_restore (sctk_openmp_thread_tls);
 #endif
     tls_restore (sctk_extls);
-    tls_restore (sctk_hls_generation);
 
 	//sctk_error("restore for %p", ucp);
 	/* set the new tls vector to use, the current thread's one */

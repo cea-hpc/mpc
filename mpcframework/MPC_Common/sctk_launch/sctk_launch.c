@@ -262,7 +262,6 @@ static void sctk_perform_initialisation (void)
 #ifdef HAVE_HWLOC
 	sctk_alloc_posix_mmsrc_numa_init_phase_numa();
 #endif
-	sctk_hls_build_repository();
 	
 	sctk_locate_dynamic_initializers();
 	

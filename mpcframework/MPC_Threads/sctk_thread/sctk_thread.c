@@ -633,24 +633,6 @@ sctk_thread_create_tmp_start_routine (sctk_thread_data_t * __arg)
     }
 #endif
 
-#ifndef MPC_DISABLE_HLS
-/* TODO disable HLS */
-  sctk_hls_checkout_on_vp();
-  sctk_hls_register_thread();
-#endif
-
-  {
-    int keep[sctk_extls_max_scope];
-    memset (keep, 0, sctk_extls_max_scope * sizeof (int));
-    keep[sctk_extls_process_scope] = 1;
-    sctk_extls_keep (keep);
-  }
-
-#if defined (SCTK_USE_OPTIMIZED_TLS)
-  /*sctk_tls_module_set_gs_register() ;*/
-  sctk_tls_module_alloc_and_fill() ;
-#endif
-
   /** ** **/
   sctk_report_creation (sctk_thread_self());
   /** **/
@@ -829,11 +811,6 @@ sctk_thread_create_tmp_start_routine_user (sctk_thread_data_t * __arg)
     keep[sctk_extls_task_scope] = 1;
     sctk_extls_keep (keep);
   }
-
-#if defined (SCTK_USE_OPTIMIZED_TLS)
-  /*sctk_tls_module_set_gs_register() ;*/
-  sctk_tls_module_alloc_and_fill() ;
-#endif
 
   /* Note that the profiler is not initialized in user threads */
 
