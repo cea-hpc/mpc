@@ -1950,6 +1950,11 @@ sctk_thread_timed_wait_for_value (volatile int *data, int value, unsigned int ma
 	return 0;
 }
 
+void extls_hls_wait_for_value(volatile int *data, int value)
+{
+  __sctk_ptr_thread_wait_for_value_and_poll (data, value, NULL, NULL);
+}
+
 void
 sctk_thread_wait_for_value (volatile int *data, int value)
 {
