@@ -243,6 +243,10 @@ do
 		--mpc-option=*)
 			extractAndAddPackageOption 'MPCFRAMEWORK_BUILD_PARAMETERS' 'mpc-option=' "$arg"
 			;;
+		--enable-color)
+			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --enable-shell-colors"
+			LIBEXTLS_BUILD_PARAMETERS="${LIBEXTLS_BUILD_PARAMETERS} --enable-color"
+			;;
 		--enable-mpc-debug)
 			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --enable-debug --enable-debug-messages --enable-MPC_Debugger"
 			;;
