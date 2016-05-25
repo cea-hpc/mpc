@@ -1,5 +1,6 @@
 mpc-check                                    export-ignore
 .gitattributes                               export-ignore
+.gitlab-ci.yml                               export-ignore
 MPC_Test_Suite                               export-ignore
 tools/gen_archive                            export-ignore
 mpc/list_of_files                            export-ignore

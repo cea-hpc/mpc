@@ -1,0 +1,56 @@
+stages:
+- build
+- cleanup_build
+- test_simple
+- test_compil
+- test_mpi
+- cleanup
+
+build_job:
+  stage: build
+  script:
+  - mkdir -p $HOME/mpc_tmp_builds/$CI_BUILD_REF
+  - mkdir BUILD
+  - cd ./BUILD/
+  - ../installmpc --prefix=$HOME/mpc_tmp_builds/$CI_BUILD_REF -j4 --mpc-option="--enable-debug"
+
+cleanup_build_job:
+  stage: cleanup_build
+  script:
+  - rm -fr $HOME/mpc_tmp_builds/$CI_BUILD_REF
+  when: on_failure
+
+simple:
+  stage: test_simple
+  script:
+  - cd MPC_Test_Suite
+  - sed -i "s/ib tcp/tcp/g" ./config/default.cfg
+  - sed -i "s/300/15/g" ./config/default.cfg
+  - sed -i "s/4 32/4 8/g" ./config/default.cfg 
+  - ./mpc_validation --prefix=$HOME/mpc_tmp_builds/$CI_BUILD_REF --select=./simple --color -vv
+
+compil:
+  stage: test_compil
+  script:
+  - cd MPC_Test_Suite
+  - sed -i "s/ib tcp/tcp/g" ./config/default.cfg
+  - sed -i "s/300/15/g" ./config/default.cfg
+  - sed -i "s/4 32/4 8/g" ./config/default.cfg
+  - ./mpc_validation --prefix=$HOME/mpc_tmp_builds/$CI_BUILD_REF --select=./gcc --color -vv
+
+mpi:
+  stage: test_mpi
+  script:
+  - cd MPC_Test_Suite
+  - sed -i "s/ib tcp/tcp/g" ./config/default.cfg
+  - sed -i "s/300/15/g" ./config/default.cfg
+  - sed -i "s/4 32/4 8/g" ./config/default.cfg
+  - ./mpc_validation --prefix=$HOME/mpc_tmp_builds/$CI_BUILD_REF --select=./MPI/MessagePassing/ --color -vv
+
+cleanup_job:
+  stage: cleanup
+  script:
+  - rm -fr $HOME/mpc_tmp_builds/$CI_BUILD_REF
+  when: always
+ 
+ 
