@@ -137,14 +137,14 @@ SCTK_CHECK_HEADER extls_common.h
 
 #setup rpaths and -L
 if [ -e "${MPC_RPREFIX}/${MPC_SUBPREFIX}/lib64/libextls.so" ]; then
-	SCTK_LDFLAGS="${SCTK_LDFLAGS} -L`echo \"\\${MPC_RPREFIX}\"`/${MPC_SUBPREFIX}/lib64"
+	SCTK_LDFLAGS="-L`echo \"\\${MPC_RPREFIX}\"`/${MPC_SUBPREFIX}/lib64 -lextls ${SCTK_LDFLAGS}"
 	#SCTK_ARFLAGS="${SCTK_ARFLAGS} ${LIBEXTLS_USER_PREFIX}/lib64/libextls.so"
 elif [ -e "${MPC_RPREFIX}/${MPC_SUBPREFIX}/lib/libextls.so" ]; then
-	SCTK_LDFLAGS="${SCTK_LDFLAGS} -L`echo \"\\${MPC_RPREFIX}\"`/${MPC_SUBPREFIX}/lib"
+	SCTK_LDFLAGS="-L`echo \"\\${MPC_RPREFIX}\"`/${MPC_SUBPREFIX}/lib -lextls ${SCTK_LDFLAGS}"
 	#SCTK_ARFLAGS="${SCTK_ARFLAGS} ${LIBEXTLS_USER_PREFIX}/lib/libextls.so"
 fi
 
-SCTK_CHECK_LDOPTION "-lextls"
+#SCTK_CHECK_LDOPTION "-lextls"
 
 end_section
 
