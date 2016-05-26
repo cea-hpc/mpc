@@ -27,7 +27,7 @@ simple:
   - sed -i "s/ib tcp/tcp/g" ./config/default.cfg
   - sed -i "s/300/15/g" ./config/default.cfg
   - sed -i "s/4 32/4 8/g" ./config/default.cfg 
-  - ./mpc_validation --prefix=$HOME/mpc_tmp_builds/$CI_BUILD_REF --select=./simple --color -vv
+  - ./mpc_validation -X --prefix=$HOME/mpc_tmp_builds/$CI_BUILD_REF --select=./simple --color -vv
 
 compil:
   stage: test_compil
@@ -36,7 +36,7 @@ compil:
   - sed -i "s/ib tcp/tcp/g" ./config/default.cfg
   - sed -i "s/300/15/g" ./config/default.cfg
   - sed -i "s/4 32/4 8/g" ./config/default.cfg
-  - ./mpc_validation --prefix=$HOME/mpc_tmp_builds/$CI_BUILD_REF --select=./gcc --color -vv
+  - ./mpc_validation -X --prefix=$HOME/mpc_tmp_builds/$CI_BUILD_REF --select=./gcc --color -vv
 
 mpi:
   stage: test_mpi
@@ -45,7 +45,7 @@ mpi:
   - sed -i "s/ib tcp/tcp/g" ./config/default.cfg
   - sed -i "s/300/15/g" ./config/default.cfg
   - sed -i "s/4 32/4 8/g" ./config/default.cfg
-  - ./mpc_validation --prefix=$HOME/mpc_tmp_builds/$CI_BUILD_REF --select=./MPI/MessagePassing/ --color -vv
+  - ./mpc_validation -X --prefix=$HOME/mpc_tmp_builds/$CI_BUILD_REF --select=./MPI/MessagePassing/ --color -vv
 
 cleanup_job:
   stage: cleanup
