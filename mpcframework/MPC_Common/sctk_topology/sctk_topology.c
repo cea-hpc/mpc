@@ -400,6 +400,12 @@ uname (struct utsname *buf)
 
 #endif
 
+typedef hwloc_topology_t extls_topo_t;
+extls_topo_t* extls_get_topology_addr()
+{
+	return &topology;
+}
+
 int sctk_topology_convert_os_pu_to_logical( int pu_os_id )
 {
 	hwloc_cpuset_t this_pu_cpuset = hwloc_bitmap_alloc();
@@ -415,18 +421,6 @@ int sctk_topology_convert_os_pu_to_logical( int pu_os_id )
 	}
 
 	return pu->logical_index;
-}
-
-int sctk_topology_get_logical_pu_ancestor( int pu_id)
-{
-	hwloc_obj_t target_pu = hwloc_get_obj_by_type(topology,HWLOC_OBJ_PU, pu_id );	
-	if( !target_pu )
-	{
-		/* Assume 0 in case of error */
-		return 0;
-	}
-	
-	return target_pu->parent->os_index;	
 }
 
 int sctk_topology_convert_logical_pu_to_os( int pu_id )

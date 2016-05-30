@@ -56,6 +56,7 @@
 /* #include "sctk_io.h" */
 #include "sctk_runtime_config.h"
 #include "sctk_bool.h"
+#include <extls_hls.h>
 
 #ifdef MPC_Profiler
 #include "sctk_profile_render.h"
@@ -248,7 +249,10 @@ static void sctk_perform_initialisation (void)
 	}
 
 	sctk_topology_init ();
-	
+#ifndef MPC_DISABLE_HLS
+	extls_hls_topology_construct();	
+#endif
+
 /* Do not bind in LIB_MODE */
 #ifndef SCTK_LIB_MODE
 	/* Bind the main thread to the first VP */
@@ -1122,11 +1126,6 @@ int sctk_launch_main (int argc, char **argv)
 
 	sctk_disable_addr_randomize (argc,argv);
 	sctk_init_mpc_runtime();
-
-#if defined (SCTK_USE_OPTIMIZED_TLS)
-	/* Set GS register for optimized TLS */
-	sctk_tls_module_set_gs_register();
-#endif
 
 	sctk_nodebug ("new argc %d", argc);
 
