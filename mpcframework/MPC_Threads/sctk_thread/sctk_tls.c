@@ -26,9 +26,9 @@
 
 
 #define _GNU_SOURCE
-//#include "sctk_config.h"
-//#include "sctk_alloc.h"
-//#include "sctk_topology.h"
+#include "sctk_config.h"
+#include "sctk_alloc.h"
+#include "sctk_topology.h"
 #include "sctk_accessor.h"
 
 #include "sctk_spinlock.h"
@@ -39,18 +39,10 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include "hwloc.h"
+#include <utlist.h>
 #include <dlfcn.h>
-#include <sys/mman.h>
-
-#define assume(u) do {if(!u) abort();} while(0)
-#define sctk_nodebug(...) (void)0x0;
-#define sctk_malloc malloc
-#define sctk_calloc calloc
-#define sctk_realloc realloc
-#define sctk_user_mmap mmap
 
 #if defined(SCTK_USE_TLS)
-__thread void *sctk_extls = NULL;
 __thread void* sctk_extls_storage = NULL;
 
 struct dyn_sym_s
@@ -60,7 +52,6 @@ struct dyn_sym_s
 	struct dyn_sym_s * next;
 };
 
-static struct dyn_sym_s * __sctk_dyn_symbols = NULL;
 
 struct dsos_s
 {
@@ -68,8 +59,11 @@ struct dsos_s
 	struct dsos_s * next;
 };
 
+static size_t page_size = 0;
+static struct dyn_sym_s * __sctk_dyn_symbols = NULL;
 static struct dsos_s * __sctk_dsos = NULL;
-
+static void * __sctk_tls_locate_tls_dyn_initializer_handle = NULL;
+sctk_spinlock_t __sctk_tls_locate_tls_dyn_lock = 0;
 
 #if defined (SCTK_USE_OPTIMIZED_TLS)
 int MPC_Config_Status_MPC_HAVE_OPTION_ETLS_OPTIMIZED(){
@@ -82,9 +76,6 @@ int MPC_Config_Status_MPC_HAVE_OPTION_ETLS_OPTIMIZED(){
 #endif
 
 #endif
-
-static void * __sctk_tls_locate_tls_dyn_initializer_handle = NULL;
-sctk_spinlock_t __sctk_tls_locate_tls_dyn_lock = 0;
 
 /* This function is called to discover if a given
  * variable comes with a dynamic initializer */
@@ -183,10 +174,7 @@ int sctk_load_proc_self_maps()
 		
 	}while( cont );
 	
-	
-	
 	fclose( self );
-	
 	
 	free( maps );
 
@@ -310,8 +298,6 @@ int sctk_call_dynamic_initializers()
 
 #if defined(SCTK_USE_TLS) && defined(Linux_SYS)
 
-static size_t page_size = 0;
-
 
 inline void* extls_get_context_storage_addr(void)
 {
@@ -352,21 +338,6 @@ size_t sctk_extls_size()
 	extls_get_sz_static_tls_segments();
 }
 
-static void
-sctk_extls_create ()
-{
-}
-
-/*
-  take TLS from father
-*/
-void
-sctk_extls_duplicate (void **new)
-{
-}
-
-#include <utlist.h>
-
 void sctk_tls_dtors_init(struct sctk_tls_dtors_s ** head)
 {
 	*head = NULL;
@@ -404,50 +375,8 @@ int MPC_Config_Status_MPC_HAVE_OPTION_HLS(){
 }
 #endif
 
-#if defined (SCTK_USE_OPTIMIZED_TLS)
-/*
- * Set the GS register to contain the address
- * of the tls_module array
- * to be called on each VP
- */
-#include <extls.h>
-extern extls_ret_t extls_optim_tls_set_pointer(extls_object_t start);
-
-void
-sctk_tls_module_set_gs_register ()
-{
-	static __thread int done_on_this_vp = 0 ;
-	if ( done_on_this_vp == 1 )
-		return ;
-
-	extls_optim_tls_set_pointer(sctk_extls_storage);
-	done_on_this_vp = 1 ;
-}
-#endif
-
 #else
 #warning "Experimental Ex-TLS support desactivated"
-
-void
-sctk_extls_create ()
-{
-}
-
-void
-sctk_extls_duplicate (void **new)
-{
-  *new = NULL;
-}
-
-void
-sctk_extls_keep (int *scopes)
-{
-}
-
-void
-sctk_extls_delete ()
-{
-}
 
 int MPC_Config_Status_MPC_HAVE_OPTION_HLS(){
   return 0;

@@ -186,12 +186,7 @@ Need to check this in more depth for futur version ( > 2.4.0-1).
     sigset_t sigs;
     int error;
     void *sctk_current_alloc_chain_local;
-    void *sctk_extls;
     extls_ctx_t* tls_ctx;
-    void *sctk_hls_generation;
-#if defined (SCTK_USE_OPTIMIZED_TLS)
-    void *sctk_tls_module;
-#endif
     void *___sctk_message_passing;
 #if defined (MPC_OpenMP)
     /* MPC OpenMP TLS */

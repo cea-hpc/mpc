@@ -82,9 +82,6 @@ static void* sctk_thread_generic_scheduler_idle_task(sctk_thread_generic_schedul
   p_th.attr = (*(attr.ptr));
   th = &p_th;
 
-#if defined (SCTK_USE_OPTIMIZED_TLS)
-  sctk_tls_module_set_gs_register();
-#endif
   sctk_thread_generic_set_self(th);
   sctk_thread_generic_scheduler_init_thread(&(sctk_thread_generic_self()->sched),th);
   sctk_thread_generic_keys_init_thread(&(sctk_thread_generic_self()->keys));
@@ -110,9 +107,6 @@ static void* sctk_thread_generic_scheduler_bootstrap_task(sctk_thread_generic_sc
   sctk_free(arg);
   arg = NULL;
 
-#if defined (SCTK_USE_OPTIMIZED_TLS)
-  sctk_tls_module_set_gs_register();
-#endif
   sctk_thread_generic_set_self(thread);
   sctk_swapcontext(&(thread->sched.ctx_bootstrap),&(thread->sched.ctx));
 

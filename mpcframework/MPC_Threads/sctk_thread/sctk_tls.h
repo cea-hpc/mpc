@@ -43,10 +43,6 @@ extern "C"
 	  struct sctk_tls_dtors_s * next;
   };
 
-  void sctk_extls_duplicate (void **new);
-  void sctk_extls_keep (int *scopes);
-  void sctk_extls_keep_with_specified_extls (void **extls, int *scopes);
-  void sctk_extls_delete ();
   size_t sctk_extls_size();
 
   int sctk_locate_dynamic_initializers();
@@ -61,7 +57,6 @@ extern "C"
   extern __thread void *sctk_openmp_thread_tls;
 #endif
 
-  extern __thread void *sctk_extls;
   extern __thread void *sctk_extls_storage;
 
 #endif
@@ -144,13 +139,6 @@ extern "C"
 #endif
 #endif
   }
-
-
-#if defined (SCTK_USE_OPTIMIZED_TLS)
-  void sctk_tls_module_set_gs_register ();
-  void sctk_tls_module_alloc_and_fill ();
-  void sctk_tls_module_alloc_and_fill_in_specified_tls_module_with_specified_extls ( void **_tls_module, void *_extls );
-#endif
 
 
   void sctk_tls_dtors_init(struct sctk_tls_dtors_s ** head);
