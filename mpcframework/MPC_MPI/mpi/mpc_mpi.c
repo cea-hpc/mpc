@@ -3628,7 +3628,7 @@ static int __INTERNAL__PMPI_Type_struct(int count, int blocklens[], MPI_Aint ind
 			MPI_Aint first_type_extent = 0;
 			__INTERNAL__PMPI_Type_extent(old_types[0], &first_type_extent);
 			
-			if( first_type_extent != 4 )
+			if( first_type_extent >= 4 )
 			{
 				int extent_mod = first_type_extent;
 
