@@ -129,8 +129,8 @@ int sctk_load_proc_self_maps()
 	
 	int cont = 1;
 	
-	unsigned long begin, end, size, inode, skip;
-	char perm[5], dev[6], dsoname[500];
+	unsigned long begin, end, size, inode;
+	char skip[50], perm[5], dev[50], dsoname[500];
 	
 	do
 	{
@@ -148,8 +148,8 @@ int sctk_load_proc_self_maps()
 		
 		//printf("%s\n", line );
 		
-		sscanf(line, "%lx-%lx %4s %lx %5s %ld %s", &begin, &end, perm,
-		&skip, dev, &inode, dsoname);
+		sscanf(line, "%lx-%lx %4s %s %s %ld %s", &begin, &end, perm,
+		skip, dev, &inode, dsoname);
 		
 		if( (perm[2] == 'x') && !(dsoname[0] == '[') )
 		{
