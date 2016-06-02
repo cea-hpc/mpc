@@ -3555,7 +3555,6 @@ static int __INTERNAL__PMPI_Type_struct(int count, int blocklens[], MPI_Aint ind
 						if( common_type_size < ends_out[glob_count_out] )
 							common_type_size = ends_out[glob_count_out];
 
-
 						glob_count_out++;
 				}
 				sctk_nodebug("simple type %d new_lb %d new_ub %d", i, new_lb, new_ub);
@@ -3627,7 +3626,7 @@ static int __INTERNAL__PMPI_Type_struct(int count, int blocklens[], MPI_Aint ind
 		{			
 			MPI_Aint first_type_extent = 0;
 			__INTERNAL__PMPI_Type_extent(old_types[0], &first_type_extent);
-			
+            common_type_size++;
 			if(( first_type_extent >= 4 ) && (common_type_size % first_type_extent != 0) )
 			{
 				int extent_mod = first_type_extent;
