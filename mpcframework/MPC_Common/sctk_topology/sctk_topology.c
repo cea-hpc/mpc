@@ -403,7 +403,7 @@ uname (struct utsname *buf)
 typedef hwloc_topology_t extls_topo_t;
 extls_topo_t* extls_get_topology_addr()
 {
-	return &topology_full;
+	return &topology;
 }
 
 int sctk_topology_convert_os_pu_to_logical( int pu_os_id )

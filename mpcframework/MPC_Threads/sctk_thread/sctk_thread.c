@@ -762,7 +762,7 @@ sctk_thread_create (sctk_thread_t * restrict __threadp,
   *cur_tx = malloc(sizeof(extls_ctx_t));
   extls_ctx_herit(old_ctx, *cur_tx, LEVEL_TASK);
   extls_ctx_restore(*cur_tx);
-  extls_ctx_bind(*cur_tx,sctk_topology_convert_logical_pu_to_os(tmp->bind_to) );
+  extls_ctx_bind(*cur_tx, tmp->bind_to);
 #endif
 
   res = __sctk_ptr_thread_create (__threadp, __attr, (void *(*)(void *))
