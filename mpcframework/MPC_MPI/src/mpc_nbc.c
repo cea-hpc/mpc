@@ -2294,28 +2294,51 @@ static int NBC_Iscan(void* sendbuf, void* recvbuf, int count, MPI_Datatype datat
 		schedule = (NBC_Schedule*)sctk_malloc(sizeof(NBC_Schedule));
 		if (NULL == schedule) { printf("Error in sctk_malloc()\n"); return res; }
 
-		res = NBC_Sched_create(schedule);
-		if(res != NBC_OK) { printf("Error in NBC_Sched_create (%i)\n", res); return res; }
+//		res = NBC_Sched_create(schedule);
+//		if(res != NBC_OK) { printf("Error in NBC_Sched_create (%i)\n", res); return res; }
+        
+        int alloc_size = sizeof(int) + sizeof(char);
 
+        if(rank != 0)   alloc_size += (sizeof(NBC_Args_recv)+sizeof(NBC_Fn_type)+sizeof(int)+sizeof(char)) 
+                                    + (sizeof(NBC_Args_op)+sizeof(NBC_Fn_type)+sizeof(int)+sizeof(char));
+        if(rank != p-1) alloc_size += (sizeof(NBC_Args_send)+sizeof(NBC_Fn_type)+sizeof(int)+sizeof(char));
+
+        *schedule=sctk_malloc(alloc_size);
+ 	    *(int*)*schedule=alloc_size;
+
+        int pos = sizeof(int);
 		if(rank != 0) {
-			res = NBC_Sched_recv(0, 1, count, datatype, rank-1, schedule);
+            *(int*)((char*)*schedule+sizeof(int)+pos)=1;
+            pos += sizeof(int);
+			res = NBC_Sched_recv_pos(pos, 0, 1, count, datatype, rank-1, schedule);
+            pos += (sizeof(NBC_Args_recv)+sizeof(NBC_Fn_type));
 			if (NBC_OK != res) { sctk_free(handle->tmpbuf); printf("Error in NBC_Sched_recv() (%i)\n", res); return res; }
 			/* we have to wait until we have the data */
-			res = NBC_Sched_barrier(schedule);
+			res = NBC_Sched_barrier_pos(pos, schedule);
+            pos += sizeof(char);
+            
 			if (NBC_OK != res) { sctk_free(handle->tmpbuf); printf("Error in NBC_Sched_barrier() (%i)\n", res); return res; }
 			/* perform the reduce in my local buffer */
-			res = NBC_Sched_op(recvbuf, 0, sendbuf, 0, 0, 1, count, datatype, op, schedule);
+            
+            *(int*)((char*)*schedule+sizeof(int)+pos)=1;
+            pos += sizeof(int);
+			res = NBC_Sched_op_pos(pos, recvbuf, 0, sendbuf, 0, 0, 1, count, datatype, op, schedule);
+            pos += (sizeof(NBC_Args_op)+sizeof(NBC_Fn_type));
 			if (NBC_OK != res) { sctk_free(handle->tmpbuf); printf("Error in NBC_Sched_op() (%i)\n", res); return res; }
 			/* this cannot be done until handle->tmpbuf is unused :-( */
-			res = NBC_Sched_barrier(schedule);
+			res = NBC_Sched_barrier_pos(pos, schedule);
+            pos += sizeof(char);
 			if (NBC_OK != res) { sctk_free(handle->tmpbuf); printf("Error in NBC_Sched_barrier() (%i)\n", res); return res; }
 		}
 		if(rank != p-1) {
-			res = NBC_Sched_send(recvbuf, 0, count, datatype, rank+1, schedule);
+            *(int*)((char*)*schedule+sizeof(int)+pos)=1;
+            pos += sizeof(int);
+			res = NBC_Sched_send_pos(pos, recvbuf, 0, count, datatype, rank+1, schedule);
+            pos += (sizeof(NBC_Args_send)+sizeof(NBC_Fn_type));
 			if (NBC_OK != res) { sctk_free(handle->tmpbuf); printf("Error in NBC_Sched_send() (%i)\n", res); return res; }
 		}
 
-		res = NBC_Sched_commit(schedule);
+		res = NBC_Sched_commit_pos(schedule);
 		if (NBC_OK != res) { sctk_free(handle->tmpbuf); printf("Error in NBC_Sched_commit() (%i)\n", res); return res; }
 
 	
@@ -2809,32 +2832,55 @@ static int NBC_Iexscan(void* sendbuf, void* recvbuf, int count, MPI_Datatype dat
 		schedule = (NBC_Schedule*)sctk_malloc(sizeof(NBC_Schedule));
 		if (NULL == schedule) { printf("Error in sctk_malloc()\n"); return res; }
 
-		res = NBC_Sched_create(schedule);
-		if(res != NBC_OK) { printf("Error in NBC_Sched_create (%i)\n", res); return res; }
 
+        int alloc_size = sizeof(int) + sizeof(char);
+
+        if(rank != 0)   alloc_size += (sizeof(NBC_Args_recv)+sizeof(NBC_Fn_type)+sizeof(int)+sizeof(char)) 
+                                    + (sizeof(NBC_Args_op)+sizeof(NBC_Fn_type)+sizeof(int)+sizeof(char));
+        if(rank != p-1) alloc_size += (sizeof(NBC_Args_send)+sizeof(NBC_Fn_type)+sizeof(int)+sizeof(char));
+
+        *schedule=sctk_malloc(alloc_size);
+ 	    *(int*)*schedule=alloc_size;
+
+        int pos = sizeof(int);
 		if(rank != 0) {
-			res = NBC_Sched_recv(recvbuf, 0, count, datatype, rank-1, schedule);
+            *(int*)((char*)*schedule+sizeof(int)+pos)=1;
+            pos += sizeof(int);
+			res = NBC_Sched_recv_pos(pos, recvbuf, 0, count, datatype, rank-1, schedule);
+            pos += (sizeof(NBC_Args_recv)+sizeof(NBC_Fn_type));
 			if (NBC_OK != res) { sctk_free(handle->tmpbuf); printf("Error in NBC_Sched_recv() (%i)\n", res); return res; }
 			/* we have to wait until we have the data */
-			res = NBC_Sched_barrier(schedule);
+			res = NBC_Sched_barrier_pos(pos, schedule);
+            pos += sizeof(char);
+
 			if (NBC_OK != res) { sctk_free(handle->tmpbuf); printf("Error in NBC_Sched_barrier() (%i)\n", res); return res; }
 			/* perform the reduce in my local buffer */
-			res = NBC_Sched_op(0, 1, sendbuf, 0, recvbuf, 0, count, datatype, op, schedule);
+            *(int*)((char*)*schedule+sizeof(int)+pos)=1;
+            pos += sizeof(int);
+			res = NBC_Sched_op_pos(pos, 0, 1, sendbuf, 0, recvbuf, 0, count, datatype, op, schedule);
+            pos += (sizeof(NBC_Args_op)+sizeof(NBC_Fn_type));
 			if (NBC_OK != res) { sctk_free(handle->tmpbuf); printf("Error in NBC_Sched_op() (%i)\n", res); return res; }
 			/* this cannot be done until handle->tmpbuf is unused :-( */
 			res = NBC_Sched_barrier(schedule);
+            pos += sizeof(char);
 			if (NBC_OK != res) { sctk_free(handle->tmpbuf); printf("Error in NBC_Sched_barrier() (%i)\n", res); return res; }
 		}
 		if(rank != 0 && rank != p-1) {
-			res = NBC_Sched_send(0, 1, count, datatype, rank+1, schedule);
+            *(int*)((char*)*schedule+sizeof(int)+pos)=1;
+            pos += sizeof(int);
+			res = NBC_Sched_send_pos(pos, 0, 1, count, datatype, rank+1, schedule);
+            pos += (sizeof(NBC_Args_send)+sizeof(NBC_Fn_type));
 			if (NBC_OK != res) { sctk_free(handle->tmpbuf); printf("Error in NBC_Sched_send() (%i)\n", res); return res; }
 		}
 		if(rank == 0 ) {
-			res = NBC_Sched_send(recvbuf, 0, count, datatype, rank+1, schedule);
+            *(int*)((char*)*schedule+sizeof(int)+pos)=1;
+            pos += sizeof(int);
+			res = NBC_Sched_send_pos(pos, recvbuf, 0, count, datatype, rank+1, schedule);
+            pos += (sizeof(NBC_Args_send)+sizeof(NBC_Fn_type));
 			if (NBC_OK != res) { sctk_free(handle->tmpbuf); printf("Error in NBC_Sched_send() (%i)\n", res); return res; }
 		}
 
-		res = NBC_Sched_commit(schedule);
+		res = NBC_Sched_commit_pos(schedule);
 		if (NBC_OK != res) { sctk_free(handle->tmpbuf); printf("Error in NBC_Sched_commit() (%i)\n", res); return res; }
 
 	
