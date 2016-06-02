@@ -95,6 +95,7 @@ extern "C"
   int omp_get_ancestor_thread_num (int level);
   int omp_get_team_size (int level);
   int omp_get_active_level (void);
+  int omp_in_final ();
 
 #ifdef __cplusplus
 }
