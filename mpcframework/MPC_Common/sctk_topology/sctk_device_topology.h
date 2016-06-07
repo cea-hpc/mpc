@@ -129,6 +129,8 @@ typedef struct sctk_device_matrix_s
 	int device_count;
 }sctk_device_matrix_t;
 
+/** Intializes the device matrix */
+void sctk_device_matrix_init();
 /** Retrieves a pointer to the  static device matrix */
 sctk_device_matrix_t * sctk_device_matrix_get();
 /** Get the closest device from PU matching the regexp "matching_regexp" */

@@ -65,7 +65,7 @@ extern "C"
   {
 	  void * obj;
 	  void (*dtor)(void *);
-	  struct sctk_tls_dtors * next;
+	  struct sctk_tls_dtors_s * next;
   };
 
   void sctk_extls_duplicate (void **new);
@@ -259,6 +259,11 @@ extern "C"
   void sctk_tls_module_alloc_and_fill_in_specified_tls_module_with_specified_extls ( void **_tls_module, void *_extls );
 #endif
 
+
+  void sctk_tls_dtors_init(struct sctk_tls_dtors_s ** head);
+  void sctk_tls_dtors_add(struct sctk_tls_dtors_s ** head, void * obj, void (*func)(void *));
+ void sctk_tls_dtors_free(struct sctk_tls_dtors_s ** head);
+  
 #ifdef __cplusplus
 }
 #endif

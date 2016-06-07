@@ -430,14 +430,14 @@ int sctk_topology_convert_logical_pu_to_os( int pu_id )
 	return target_pu->os_index;	
 }
 
-hwloc_cpuset_t sctk_topology_get_machine_cpuset()
+hwloc_const_cpuset_t sctk_topology_get_machine_cpuset()
 {
 	return  hwloc_topology_get_allowed_cpuset( topology );
 }
 
-hwloc_cpuset_t sctk_topology_get_numa_cpuset( int pu_id )
+hwloc_const_cpuset_t sctk_topology_get_numa_cpuset( int pu_id )
 {
-	hwloc_cpuset_t ret;
+	hwloc_const_cpuset_t ret;
 	
 	if( !sctk_is_numa_node () )
 	{

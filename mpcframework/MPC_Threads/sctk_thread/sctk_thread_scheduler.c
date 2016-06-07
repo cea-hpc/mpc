@@ -1102,7 +1102,7 @@ void sctk_thread_generic_polling_init(int vp_number) {
     sctk_thread_attr_init(&attr);
 
     sctk_thread_generic_attr_t* attr_intern;
-    attr_intern=&attr;
+    attr_intern=(sctk_thread_generic_attr_t*)&attr;
     attr_intern->ptr->polling = 1;
     attr_intern->ptr->stack_size = 8*1024;
     for(i = 0; i < vp_number ; i++){

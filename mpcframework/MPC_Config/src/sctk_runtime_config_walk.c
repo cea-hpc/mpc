@@ -43,7 +43,7 @@ void sctk_runtime_config_walk_union(const struct sctk_runtime_config_entry_meta 
 	const struct sctk_runtime_config_entry_meta * entry;
 	int * union_type_id = union_ptr;
 	
-	void * union_data = sctk_runtime_config_get_union_value_offset( type_name, union_ptr );
+	void * union_data = sctk_runtime_config_get_union_value_offset(type_name, union_ptr );
 
 	/* error */
 	assert(type_name != NULL);

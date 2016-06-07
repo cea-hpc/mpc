@@ -60,9 +60,12 @@ const char * sctk_device_type_to_char( sctk_device_type_t type )
 			return "SCTK_DEVICE_DMA";
 		break;
 		case SCTK_DEVICE_UKNOWN:
+		default:
 			return "SCTK_DEVICE_UKNOWN";
 		break;
 	}
+	not_reachable();
+	return NULL;
 }
 
 
@@ -76,8 +79,12 @@ const char * sctk_device_container_to_char( sctk_device_container_t type )
 		case SCTK_TOPOLOGICAL_DEVICE:
 			return "SCTK_TOPOLOGICAL_DEVICE";
 		break;
+		default:
+			return NULL;
+		break;
 	}	
-	
+	not_reachable();
+	return NULL;
 }
 
 /************************************************************************/

@@ -80,6 +80,12 @@ int sctk_is_numa_node_topology (hwloc_topology_t topo);
 */
 void sctk_print_topology (FILE * fd);
 
+/*! \brief Print a given topology tree into a file
+ * @param fd Destination file descriptor
+ * @param topology the topology to print
+*/
+void sctk_print_specific_topology (FILE * fd, hwloc_topology_t topology);
+
 /*! \brief Bind the current thread
  * @ param i The cpu_id to bind
 */
@@ -156,12 +162,12 @@ int sctk_topology_convert_logical_pu_to_os( int pu_id );
 
 /*! \brief Returns the complete allowed cpu set for this process
 */
-hwloc_cpuset_t sctk_topology_get_machine_cpuset();
+hwloc_const_cpuset_t sctk_topology_get_machine_cpuset();
 
 /*! \brief Return the cpuset of the node containing the PU with pu_id
  * if not numa it behaves like  sctk_topology_get_machine_cpuset
 */
-hwloc_cpuset_t sctk_topology_get_numa_cpuset( int pu_id );
+hwloc_const_cpuset_t sctk_topology_get_numa_cpuset( int pu_id );
 
 /*! \brief Return the cpuset of the socket containing the PU with pu_id
 */

@@ -255,6 +255,7 @@ int __INTERNAL__PMPI_Allgatherv (void *, int, MPI_Datatype, void *, int *, int *
 int __INTERNAL__PMPI_Allreduce (void *, void *, int, MPI_Datatype, MPI_Op, MPI_Comm);
 int __INTERNAL__PMPI_Alltoall (void *, int, MPI_Datatype, void *, int, MPI_Datatype, MPI_Comm);
 int __INTERNAL__PMPI_Alltoallv (void *, int *, int *, MPI_Datatype,void *, int *, int *, MPI_Datatype, MPI_Comm);
+int __INTERNAL__PMPI_Alltoallw (void *sendbuf, int *sendcnts, int *sdispls, MPI_Datatype *sendtypes, void *recvbuf, int *recvcnts, int *rdispls, MPI_Datatype *recvtypes, MPI_Comm comm);
 int __INTERNAL__PMPI_Barrier (MPI_Comm);
 int __INTERNAL__PMPI_Bcast (void *, int, MPI_Datatype, int, MPI_Comm);
 int __INTERNAL__PMPI_Exscan (void *, void *, int, MPI_Datatype, MPI_Op, MPI_Comm);

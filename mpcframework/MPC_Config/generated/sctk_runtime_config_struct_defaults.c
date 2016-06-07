@@ -818,7 +818,7 @@ void sctk_runtime_config_clean_hash_tables()
 
 
 /*******************  FUNCTION  *********************/
-void sctk_runtime_config_reset_struct_default_if_needed(char * structname, void * ptr )
+void sctk_runtime_config_reset_struct_default_if_needed(const char * structname, void * ptr )
 {
 	if( !strcmp( structname , "sctk_runtime_config_struct_allocator") )
 	{
@@ -1004,7 +1004,7 @@ void sctk_runtime_config_reset_struct_default_if_needed(char * structname, void 
 
 
 /*******************  FUNCTION  *********************/
-void * sctk_runtime_config_get_union_value_offset(char * unionname, void * ptr )
+void * sctk_runtime_config_get_union_value_offset(const char * unionname, void * ptr )
 {
 	if( !strcmp( unionname , "sctk_runtime_config_struct_net_driver") )
 	{

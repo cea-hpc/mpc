@@ -128,7 +128,7 @@ void sctk_topological_polling_tree_init( struct sctk_topological_polling_tree * 
 		sctk_topological_polling_cell_init( &tree->cells[i] );
 	
 	/* First extract the polling ranges */
-	hwloc_cpuset_t range_cpuset;
+	hwloc_const_cpuset_t range_cpuset;
 
 	switch( range )
 	{

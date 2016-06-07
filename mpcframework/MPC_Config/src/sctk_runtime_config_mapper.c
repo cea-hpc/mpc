@@ -109,7 +109,7 @@ char * sctk_runtime_config_map_entry_to_string(xmlNodePtr node)
 {
 	char *ret = NULL;
 	xmlChar * value = xmlNodeGetContent(node);
-	if (strcmp(value,sctk_cst_string_undefined) == 0)
+	if (strcmp((char*)value,sctk_cst_string_undefined) == 0)
 	{
 		ret = NULL;
 	} else {
@@ -624,7 +624,7 @@ void sctk_runtime_config_map_struct( const struct sctk_runtime_config_entry_meta
 	/* Here we make sure that every struct we encounter has already been initialized
 	 * once with the default content. This is needed as for example rails and
 	 * drivers are defined dynamically, and cannot be filled statically */
-	sctk_runtime_config_reset_struct_default_if_needed( current->name, struct_ptr );
+	sctk_runtime_config_reset_struct_default_if_needed(current->name, struct_ptr );
 
 	/* loop on all parameters of the struct */
 	node = xmlFirstElementChild(node);

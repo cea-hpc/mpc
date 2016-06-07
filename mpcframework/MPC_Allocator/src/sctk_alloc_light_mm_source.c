@@ -481,6 +481,8 @@ SCTK_STATIC struct sctk_alloc_macro_bloc * sctk_alloc_mm_source_light_mmap_new_s
 	return macro_bloc;
 }
 
+void sctk_net_memory_free_hook ( void * ptr , size_t size );
+
 /************************* FUNCTION ************************/
 /**
  * Free a macro bloc comming from the allocator. Depending on a threashold, the memory is returned to the system or

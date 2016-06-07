@@ -224,6 +224,8 @@ void * polling_thread( void * dummy )
         if( __polling_done )
 			break;
     }
+
+	return NULL;
 }
 
 static void sctk_perform_initialisation (void)

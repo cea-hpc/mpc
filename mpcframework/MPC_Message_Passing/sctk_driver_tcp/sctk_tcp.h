@@ -58,6 +58,7 @@ typedef struct
 
 
 void sctk_network_init_tcp ( sctk_rail_info_t *rail );
+void sctk_network_init_tcp_rdma ( sctk_rail_info_t *rail );
 
 #ifdef __cplusplus
 }

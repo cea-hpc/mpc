@@ -26,11 +26,31 @@
 #include <string.h>
 #include "sctk_checksum.h"
 #include "sctk_runtime_config.h"
-
+#include "sctk_control_messages.h"
 /*Networks*/
 #include <sctk_ib_mpi.h>
 #include <sctk_route.h>
 #include <sctk_multirail.h>
+
+/************************************************************************/
+/* Net Error Messages                                                   */
+/************************************************************************/
+
+/*static void sctk_network_not_implemented ( char *name )
+{
+	sctk_error ( "No configuration found for the network '%s'. Please check you '-net=' argument"
+	             " and your configuration file", name );
+	sctk_abort();
+}
+
+static void sctk_network_not_implemented_warn ( char *name )
+{
+	if ( sctk_process_rank == 0 )
+	{
+		sctk_warning ( "No configuration found for the network '%s'. Please check you '-net=' argument"
+		               " and your configuration file. FALLBACK to TCP", name );
+	}
+}*/
 
 /************************************************************************/
 /* Network Hooks                                                        */
@@ -137,7 +157,7 @@ static void sctk_network_notify_any_source_message_default ( int polling_task_id
 
 }
 
-static void ( *sctk_network_notify_any_source_message_ptr ) ( int, int ) =  sctk_network_notify_idle_message_default;
+static void ( *sctk_network_notify_any_source_message_ptr ) ( int, int ) =  sctk_network_notify_any_source_message_default;
 
 void sctk_network_notify_any_source_message ( int polling_task_id, int blocking )
 {
@@ -147,27 +167,6 @@ void sctk_network_notify_any_source_message ( int polling_task_id, int blocking 
 void sctk_network_notify_any_source_message_set ( void ( *sctk_network_notify_any_source_message_val ) ( int polling_task_id, int blocking ) )
 {
 	sctk_network_notify_any_source_message_ptr = sctk_network_notify_any_source_message_val;
-}
-
-/************************************************************************/
-/* Net Error Messages                                                   */
-/************************************************************************/
-
-static void sctk_network_not_implemented ( char *name )
-{
-	sctk_error ( "No configuration found for the network '%s'. Please check you '-net=' argument"
-	             " and your configuration file", name );
-	sctk_abort();
-}
-
-static void sctk_network_not_implemented_warn ( char *name )
-{
-	if ( sctk_process_rank == 0 )
-	{
-		sctk_warning ( "No configuration found for the network '%s'. Please check you '-net=' argument"
-		               " and your configuration file. FALLBACK to TCP", name );
-		/* sctk_abort(); */
-	}
 }
 
 /************************************************************************/
@@ -399,7 +398,6 @@ void sctk_rail_init_driver( sctk_rail_info_t * rail, int driver_type )
 
 void sctk_net_init_driver ( char *name )
 {	
-restart:
 	if ( sctk_process_number == 1 )
 	{
 		/* Nothing to do */

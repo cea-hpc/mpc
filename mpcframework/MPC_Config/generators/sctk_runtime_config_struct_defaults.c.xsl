@@ -92,7 +92,7 @@
 	<!-- ********************************************************* -->
 	<xsl:template name="gen-struct-default">
 		<xsl:text>&#10;/*******************  FUNCTION  *********************/&#10;</xsl:text>
-		<xsl:text>void sctk_runtime_config_reset_struct_default_if_needed(char * structname, void * ptr )&#10;</xsl:text>
+		<xsl:text>void sctk_runtime_config_reset_struct_default_if_needed(const char * structname, void * ptr )&#10;</xsl:text>
 		<xsl:text>{&#10;</xsl:text>
 		<xsl:for-each select="config">
 			<xsl:for-each select="usertypes">
@@ -111,7 +111,7 @@
 	<!-- ********************************************************* -->
 	<xsl:template name="gen-struct-offset">
 		<xsl:text>&#10;/*******************  FUNCTION  *********************/&#10;</xsl:text>
-		<xsl:text>void * sctk_runtime_config_get_union_value_offset(char * unionname, void * ptr )&#10;</xsl:text>
+		<xsl:text>void * sctk_runtime_config_get_union_value_offset(const char * unionname, void * ptr )&#10;</xsl:text>
 		<xsl:text>{&#10;</xsl:text>
 		<xsl:for-each select="config">
 			<xsl:for-each select="usertypes">

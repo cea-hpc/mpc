@@ -60,8 +60,8 @@ static inline int NBC_Start_round(NBC_Handle *handle);
 static inline int NBC_Init_handle(NBC_Handle *handle, MPI_Comm comm, int tag);
 static inline int NBC_Type_intrinsic(MPI_Datatype type);
 static inline int NBC_Copy(void *src, int srccount, MPI_Datatype srctype, void *tgt, int tgtcount, MPI_Datatype tgttype, MPI_Comm comm);
-static inline NBC_Comminfo* NBC_Init_comm(MPI_Comm comm, int keyval);
-static inline int NBC_Create_fortran_handle(int *fhandle, NBC_Handle **handle);
+/*static inline NBC_Comminfo* NBC_Init_comm(MPI_Comm comm, int keyval);*/
+/*static inline int NBC_Create_fortran_handle(int *fhandle, NBC_Handle **handle);*/
 static inline int NBC_Free(NBC_Handle* handle);
 static inline int NBC_Operation(void *buf3, void *buf1, void *buf2, MPI_Op op, MPI_Datatype type, int count);
 
@@ -1369,7 +1369,8 @@ static int NBC_Ibcast(void *buffer, int count, MPI_Datatype datatype, int root, 
 		if(*schedule == NULL) { return NBC_OOR; }
 		*(int*)*schedule=alloc_size;
 		*(((int*)*schedule)+1)=sends;
-
+			default:
+	;
 	}
 	else
 	{
@@ -1715,7 +1716,7 @@ static inline int red_sched_chain(int rank, int p, int root, void *sendbuf, void
 
 /* the non-blocking reduce */
 static int NBC_Ireduce(void* sendbuf, void* recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm, NBC_Handle* handle) {
-	int rank, p, res, segsize, size;
+	int rank, p, res, segsize = 0, size;
 	MPI_Aint ext;
 	NBC_Schedule *schedule;
 	char *redbuf=NULL, inplace;

@@ -90,6 +90,7 @@ struct sctk_thread_generic_p_s;
 extern void (*sctk_thread_generic_sched_create)(struct sctk_thread_generic_p_s*);
 
 void sctk_thread_generic_scheduler_init(char* thread_type,char* scheduler_type, int vp_number); 
+void sctk_thread_generic_polling_init(int vp_number);
 void sctk_thread_generic_scheduler_init_thread(sctk_thread_generic_scheduler_t* sched,
 					       struct sctk_thread_generic_p_s* th); 
 char* sctk_thread_generic_scheduler_get_name();

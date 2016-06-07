@@ -2202,7 +2202,7 @@ sctk_communicator_t sctk_create_intercommunicator ( const sctk_communicator_t lo
 	/* Here we resolve the remote leader in te peer_comm */
 	remote_leader_rank = sctk_get_comm_world_rank ( peer_comm, remote_leader );
 
-	sctk_broadcast (&remote_leader,sizeof(int),local_leader,local_comm);
+	sctk_broadcast ((void*)&remote_leader,sizeof(int),local_leader,local_comm);
 	
 	sctk_nodebug ( "rank %d : sctk_intercomm_create, first = %d, local_comm %d, peer_comm %d, local_leader %d, remote_leader %d (%d)", rank, first, local_comm, peer_comm, local_leader, remote_leader, remote_leader_rank );
 

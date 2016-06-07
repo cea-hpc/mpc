@@ -6309,9 +6309,9 @@ __INTERNAL__PMPI_Alltoallv_inter (void *sendbuf, int *sendcnts, int *sdispls,
 	res = __INTERNAL__PMPI_Comm_remote_size(comm, &remote_size);
 	if(res != MPI_SUCCESS){return res;}
 
-	res = __INTERNAL__PMPI_Type_extent(sendtype, &sendtype_extent);
+	res = __INTERNAL__PMPI_Type_extent(sendtype, (MPI_Aint*)&sendtype_extent);
 	if(res != MPI_SUCCESS){return res;}
-	res = __INTERNAL__PMPI_Type_extent(recvtype, &recvtype_extent);
+	res = __INTERNAL__PMPI_Type_extent(recvtype, (MPI_Aint*)&recvtype_extent);
 	if(res != MPI_SUCCESS){return res;}
 
 	max_size = (local_size < remote_size) ? remote_size : local_size;
@@ -15872,24 +15872,3 @@ int PMPI_Improbe(int source, int tag, MPI_Comm comm, int *flag, MPI_Message *mes
 /* END NOT IMPLEMENTED                                                     */
 /************************************************************************/
 
-#ifndef SCTK_DO_NOT_HAVE_WEAK_SYMBOLS
-INFO("Default mpc_user_main__ has been removed because of TLS compilation...")
-#if 0
-int mpc_user_main__ (int argc, char **argv);
-int
-__sctk__mpc_user_main__ (int argc, char **argv)
-{
-#if defined (MPC_OpenMP)
-  sctk_warning
-    ("You have to include mpi.h, omp.h or mpc.h in the file containing main function");
-#else
-  sctk_warning
-    ("You have to include mpi.h or mpc.h in the file containing main function");
-#endif
-  return 0;
-}
-
-#pragma weak mpc_user_main__ = __sctk__mpc_user_main__
-#endif
-
-#endif
