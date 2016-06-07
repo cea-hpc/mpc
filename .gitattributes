@@ -8,3 +8,4 @@ mpc/MPC_Accelerators                         export-ignore
 mpc/MPC_Virtual_Machines                     export-ignore
 mpc/MPC_Tools/mpcrun_opt/mpcrun_cea_mprun    export-ignore
 packaging-dev				     export-ignore
+git_tools				     export-ignore
