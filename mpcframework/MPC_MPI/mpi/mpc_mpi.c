@@ -3609,27 +3609,40 @@ static int __INTERNAL__PMPI_Type_struct(int count, int blocklens[], MPI_Aint ind
 	{
 
 		int types_are_all_common = 1;
+		int max_pad_value = 0;
 		
 		/* First check if we are playing with common datatypes
 		 * Note that types with UB LB are ignored */
 		for (i = 0; i < count; i++)
 		{
+			MPI_Aint cur_type_extent = 0;
 			if( !sctk_datatype_is_common( old_types[i] ) )
 			{
 					types_are_all_common = 0;
 					break;
+			}
+			/*
+			  Check if all common types are well aligned. If not, skip the 
+			  padding procedure
+			 */
+			__INTERNAL__PMPI_Type_extent(old_types[i], &cur_type_extent);
+			if(indices[i] % cur_type_extent != 0){
+			  types_are_all_common = 0;
+			  break;
+			} else {
+			  if(max_pad_value < cur_type_extent){
+			    max_pad_value = cur_type_extent;
+			  }
 			}
 		}
 	
 
 		if( types_are_all_common )
 		{			
-			MPI_Aint first_type_extent = 0;
-			__INTERNAL__PMPI_Type_extent(old_types[0], &first_type_extent);
-            common_type_size++;
-			if(( first_type_extent >= 4 ) && (common_type_size % first_type_extent != 0) )
+		  common_type_size++;
+			if(( max_pad_value > 0 ) && (common_type_size % max_pad_value  != 0) )
 			{
-				int extent_mod = first_type_extent;
+				int extent_mod = max_pad_value;
 
 				
 				int missing_to_allign = common_type_size % extent_mod;
