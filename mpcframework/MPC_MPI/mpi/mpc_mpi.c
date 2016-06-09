@@ -13629,6 +13629,9 @@ PMPI_Scatter (void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 		mpi_check_buf (sendbuf, comm);
 		mpi_check_count (sendcnt, comm);
 		mpi_check_type (sendtype, comm);
+		if(recvbuf == sendbuf){
+		  MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
+		}
 	}
 	else
 	{
