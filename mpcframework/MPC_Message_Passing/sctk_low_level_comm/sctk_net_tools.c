@@ -906,7 +906,7 @@ void sctk_net_message_copy_from_buffer ( char *body,
 						         recv->tail.message.pack.list.std[i].begins[j] +
 						         1 ) * recv->tail.message.pack.list.std[i].elem_size;
 
-						sctk_error("%p - %p \n", recv->tail.message.pack.list.std[i].begins[j], recv->tail.message.pack.list.std[i].ends[j]); 
+						sctk_nodebug("%p - %p \n", recv->tail.message.pack.list.std[i].begins[j], recv->tail.message.pack.list.std[i].ends[j]); 
 						if ( total + size > SCTK_MSG_SIZE ( send ) )
 						{
 							skip = 1;
@@ -947,7 +947,7 @@ void sctk_net_message_copy_from_buffer ( char *body,
 						         recv->tail.message.pack.list.absolute[i].begins[j] +
 						         1 ) * recv->tail.message.pack.list.absolute[i].elem_size;
 
-						sctk_error("%p - %p \n", recv->tail.message.pack.list.std[i].begins[j], recv->tail.message.pack.list.std[i].ends[j]); 
+						sctk_nodebug("%p - %p \n", recv->tail.message.pack.list.std[i].begins[j], recv->tail.message.pack.list.std[i].ends[j]); 
 						if ( total + size > SCTK_MSG_SIZE ( send ) )
 						{
 							skip = 1;
