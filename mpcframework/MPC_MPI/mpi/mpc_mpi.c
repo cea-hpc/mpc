@@ -9522,9 +9522,14 @@ __INTERNAL__PMPI_Group_free (MPI_Group * mpi_group)
 {
   int res;
   MPC_Group group;
-  
-  if( (*mpi_group == MPI_GROUP_EMPTY)
-  ||  (*mpi_group == MPI_GROUP_NULL)  )
+
+  if(*mpi_group == MPI_GROUP_EMPTY){
+//    *mpi_group=MPI_GROUP_NULL
+    return MPI_SUCCESS;
+  }
+
+  if( /*(*mpi_group == MPI_GROUP_EMPTY)
+  || */ (*mpi_group == MPI_GROUP_NULL)  )
 	return MPI_ERR_ARG;
   
   group = __sctk_convert_mpc_group (*mpi_group);
