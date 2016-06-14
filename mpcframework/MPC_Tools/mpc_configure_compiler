@@ -352,8 +352,8 @@ else
 		case \${CC_FAMILY} in
 			INTEL)
 				override_var_if_isset 'PRIV_FLAG' '-mSYMTAB_mpc_privatize'
-				override_var_if_isset 'OMP_FLAG' '-openmp'
-                FFFLAGS="\${FFLAGS} -threads -recursive"
+				override_var_if_isset 'OMP_FLAG' '-qopenmp'
+                FFLAGS="\${FFLAGS} -threads -recursive"
 				MPC_USE_INTEL_COMPILER="1"
                 export MPC_USE_INTEL_COMPILER
 				;;
@@ -422,6 +422,7 @@ fi
 cat << EOF >> $1
 #used to append compiler-specific flags
 CFLAGS="\$CFLAGS \${PRIV_FLAG} \${OMP_FLAG} \$MPC_COMPILER_CFLAGS \${LIBPRIV_FLAG} \${GETOPT_FLAG}"
+CFLAGS_FORTRAN_START="\${PRIV_FLAG} \$MPC_COMPILER_CFLAGS \${LIBPRIV_FLAG} \${GETOPT_FLAG}"
 LDFLAGS="\${LDFLAGS}"
 
 if [ "\$linking" = yes ] ; then
@@ -429,7 +430,7 @@ EOF
 
 if test "$2" = "f77" ; then 
 cat <<EOF >> $1
-    \$Show \$CC \$FFLAGS \$CFLAGS -c \$FORTRAN_START -o \$FORTRAN_OBJ
+    \$Show \$CC \$FFLAGS \$CFLAGS_FORTRAN_START -c \$FORTRAN_START -o \$FORTRAN_OBJ
     rc=\$?
     if test "\$rc" != "0" ; then 
         exit \$rc
