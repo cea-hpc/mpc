@@ -7345,6 +7345,12 @@ static sctk_op_t * sctk_convert_to_mpc_op (MPI_Op op)
       ADD_FUNC_HANDLER(func,MPC_DOUBLE_COMPLEX,op);        \
       ADD_FUNC_HANDLER(func,MPC_COMPLEX,op);        \
       ADD_FUNC_HANDLER(func,MPC_UNSIGNED_LONG_LONG_INT,op);   \
+      ADD_FUNC_HANDLER(func,MPC_UINT16_T,op);		\
+      ADD_FUNC_HANDLER(func,MPC_UINT32_T,op);		\
+      ADD_FUNC_HANDLER(func,MPC_UINT64_T,op);		\
+      ADD_FUNC_HANDLER(func,MPC_INT16_T,op);		\
+      ADD_FUNC_HANDLER(func,MPC_INT32_T,op);		\
+      ADD_FUNC_HANDLER(func,MPC_INT64_T,op);		\
     default:not_reachable();				\
     }							\
   }
@@ -7369,6 +7375,12 @@ static sctk_op_t * sctk_convert_to_mpc_op (MPI_Op op)
       ADD_FUNC_HANDLER(func,MPC_UNSIGNED,op);		\
       ADD_FUNC_HANDLER(func,MPC_UNSIGNED_LONG,op);	\
       ADD_FUNC_HANDLER(func,MPC_LOGICAL,op);		\
+      ADD_FUNC_HANDLER(func,MPC_UINT16_T,op);		\
+      ADD_FUNC_HANDLER(func,MPC_UINT32_T,op);		\
+      ADD_FUNC_HANDLER(func,MPC_UINT64_T,op);		\
+      ADD_FUNC_HANDLER(func,MPC_INT16_T,op);		\
+      ADD_FUNC_HANDLER(func,MPC_INT32_T,op);		\
+      ADD_FUNC_HANDLER(func,MPC_INT64_T,op);		\
     default:not_reachable();				\
     }							\
   }
