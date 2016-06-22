@@ -109,13 +109,9 @@ char * sctk_runtime_config_map_entry_to_string(xmlNodePtr node)
 {
 	char *ret = NULL;
 	xmlChar * value = xmlNodeGetContent(node);
-	if (strcmp((char*)value,sctk_cst_string_undefined) == 0)
-	{
-		ret = NULL;
-	} else {
-		ret = strdup( (char*)value );
-		xmlFree(value);
-	}
+	ret = strdup( (char*)value );
+	xmlFree(value);
+
 	return ret;
 }
 
