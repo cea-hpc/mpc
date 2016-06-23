@@ -762,7 +762,9 @@ sctk_thread_create (sctk_thread_t * restrict __threadp,
   *cur_tx = malloc(sizeof(extls_ctx_t));
   extls_ctx_herit(old_ctx, *cur_tx, LEVEL_TASK);
   extls_ctx_restore(*cur_tx);
+#ifndef MPC_DISABLE_HLS
   extls_ctx_bind(*cur_tx, tmp->bind_to);
+#endif
 #endif
 
   res = __sctk_ptr_thread_create (__threadp, __attr, (void *(*)(void *))
