@@ -154,6 +154,8 @@ output_file=""
 next_arg_is_output=no
 OUTPUT_FILE_ARGS=""
 PRIV_FLAG="-fmpc-privatize"
+unset MPC_DISABLE_TLS_OPT
+NO_TLS_OPT=0
 MPC_HEADER_INCLUDE="-include mpc_main.h"
 OMP_FLAG=""
 EOF
@@ -218,6 +220,10 @@ for arg in "\$@" ; do
 	;;
 	-fmpc-dyninsert|-fmpc-dyn-insert)
 		export MPC_DYN_INSERT=1
+		addarg=no
+	;;
+	-fmpc-notlsopt|-fmpc-no-tlsopt)
+		NO_TLS_OPT=1
 		addarg=no
 	;;
 	-fmpc-include)
@@ -351,6 +357,7 @@ else
 		#handle compiler-specific options depending on compiler family
 		case \${CC_FAMILY} in
 			INTEL)
+				NO_TLS_OPT=1
 				override_var_if_isset 'PRIV_FLAG' '-mSYMTAB_mpc_privatize'
 				override_var_if_isset 'OMP_FLAG' '-qopenmp'
                 FFLAGS="\${FFLAGS} -threads -recursive"
@@ -391,6 +398,12 @@ cat << EOF >> $1
 		esac
 		
 	fi
+fi
+
+#Do we need to disable TLS optimizations ?
+if test "x\${NO_TLS_OPT}" = "x1"; then
+	echo "INFO : TLS optimization disabled" 1>&2
+	export MPC_DISABLE_TLS_OPT=1
 fi
 
 #we need to add -DMPC_PRIVATIZED when privatisation is enabled in order to compile deps (like getopt...)
