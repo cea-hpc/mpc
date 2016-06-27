@@ -22,6 +22,34 @@
 #                                                                      # 
 ######################################################################## 
 
+
+#
+# Generate redirection to the main MPC compiler
+# For suporting backard compatibility
+#
+# $1: the name of the deprecated script name
+# $2: the real MPC script name
+# $3: The (optional) argument to specifiy a compiler
+printf_deprecated_compiler()
+{
+	echo "#!/bin/sh" > $1
+	cat <<EOF >> $1
+if test -z \${MPC_RPREFIX}; then
+	echo "################################################################"
+	echo "# No MPC_RPREFIX defined. it is the root of the actual prefix  #"
+	echo "# Yout should source the mpcvars.sh file in root of MPC prefix #"
+	echo "################################################################"
+	exit 1
+fi
+EOF
+	echo "#This script is deprecated, please use $2 instead" >> $1
+	additional_compiler=""
+	if test -n "$3"; then
+		additional_compiler="-cc=$3"
+	fi
+	echo "\${MPC_RPREFIX}/\${MPC_HOST_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/$2 $additional_compiler \"\$@\"" >> $1
+}
+
 #
 # Generate the main MPC compiler driver
 #
@@ -69,7 +97,7 @@ print_if_stdout()
 
 canonize()
 {
-	readlink -e "\$1"	|| echo "\$1"
+	echo "\$1" | sed -e "s#//*#/#g"
 }
 EOF
 header_sh >> $1
@@ -193,6 +221,7 @@ for arg in "\$@" ; do
 
     -cc=*)
     CC=\`echo A\$arg | sed -e 's/^A-cc=//g'\`
+	CC=\`which \${CC} || echo \${CC}\`
     addarg=no
     MPC_COMPILER_CFLAGS=""
     ;;
@@ -795,6 +824,11 @@ if test "$SCTK_FORTRAN" = "1" ; then
 	printf_compiler bin/mpc_f77 f77
 	end_section
 fi
+
+begin_section Generate Deprecated Compilers: backward compatibility
+printf_deprecated_compiler bin/mpc_icc bin/mpc_cc icc
+printf_deprecated_compiler bin/mpc_gcc bin/mpc_cc gcc
+end_section
 
 ########################################
 ########################################
