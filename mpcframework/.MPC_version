@@ -2,5 +2,5 @@
 MAJOR="3"
 MINOR="1"
 REVISION="0"
-PRE_RELEASE="_devel"
+PRE_RELEASE=""
 
