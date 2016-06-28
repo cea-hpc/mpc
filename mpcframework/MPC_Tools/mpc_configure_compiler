@@ -59,10 +59,6 @@ EOF
 printf_compiler(){
 
 language="$2"
-if [ "$language" = "f77" ]
-then
-    language="fortran"
-fi
 # Header
 echo "#!/bin/sh" > $1
 cat <<EOF >> $1
@@ -109,7 +105,7 @@ header_sh >> $1
 ########################################
 
 # For Fortran, generate a small object w/ main routine
-if test "$2" = "f77" ; then 
+if test "$2" = "fortran" ; then 
 cat <<EOF >> $1
 FORTRAN_START="/tmp/tmp_mpc_fortran_\$\$.f"
 FORTRAN_OBJ="/tmp/tmp_mpc_fortran_\$\$.o"
@@ -348,7 +344,7 @@ for arg in "\$@" ; do
     fi
 done
 EOF
-if [ "$2" != "f77" ];
+if [ "$2" != "fortran" ];
 then
 cat << EOF >> $1
 allargs="\${allargs} \${MPC_HEADER_INCLUDE}"
@@ -476,7 +472,7 @@ LDFLAGS="\${LDFLAGS}"
 if [ "\$linking" = yes ] ; then
 EOF
 
-if test "$2" = "f77" ; then 
+if test "$2" = "fortran" ; then 
 cat <<EOF >> $1
     \$Show \$CC \$FFLAGS \$CFLAGS_FORTRAN_START -c \$FORTRAN_START -o \$FORTRAN_OBJ
     rc=\$?
@@ -656,7 +652,7 @@ EOF
 fi
 fi
 
-if test "$2" = "f77" ; then 
+if test "$2" = "fortran" ; then 
 cat <<EOF >> $1
     \$Show rm -f \$FORTRAN_OBJ
 EOF
@@ -665,7 +661,7 @@ fi
 cat <<EOF >> $1
 else
 EOF
-if test "$2" = "f77" ; then 
+if test "$2" = "fortran" ; then 
 cat <<EOF >> $1
     \$Show \$CC \$FFLAGS \$CFLAGS \$allargs \${OUTPUT_FILE_ARGS}
     rc=\$?
@@ -688,7 +684,7 @@ fi
 
 EOF
 
-if test "$2" = "f77" ; then 
+if test "$2" = "fortran" ; then 
 cat <<EOF >> $1
 rm -f \$FORTRAN_START > /dev/null 2>&1 
 EOF
@@ -1043,9 +1039,9 @@ fi
 
 case "\$mode" in
 	help|-help|--help)
-		printf "Usage: mpc_compiler_manager [\${BLU}list|stat|list_default\${DEF} [(c|c++|f77)]]\n"
-		printf "                            [\${BLU}(add|del)\${DEF} (c|c++|f77) compiler_path family]\n"
-		printf "                            [\${BLU}set_default\${DEF} (c|c++|f77) compiler_path]\n"
+		printf "Usage: mpc_compiler_manager [\${BLU}list|stat|list_default\${DEF} [(c|c++|fortran)]]\n"
+		printf "                            [\${BLU}(add|del)\${DEF} (c|c++|fortran) compiler_path family]\n"
+		printf "                            [\${BLU}set_default\${DEF} (c|c++|fortran) compiler_path]\n"
 		;;
 	add)
 		is_valid_language "\$2"
