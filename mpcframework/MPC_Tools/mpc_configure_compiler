@@ -161,7 +161,13 @@ fi
 
 # More variable definitions (Library path, show and different shades of args)
 cat << EOF >> $1
-CC="\`head -n 1 \${MPC_RPREFIX}/.${2}_compilers.cfg | cut -d":" -f3\`"
+CC_FILE_PATH=\${MPC_RPREFIX}
+hash_name=\${HOME}/.mpcompil/\`echo \$MPC_RPREFIX | sed -e "s#//*#/#g" | sha1sum | cut -f1 -d" "\`
+if test -r \${hash_name}/.${2}_compilers.cfg;
+then
+	CC_FILE_PATH=\${hash_name}
+fi
+CC="\`head -n 1 \${CC_FILE_PATH}/.${2}_compilers.cfg | cut -d":" -f3\`"
 #LIB_PATH="-Wl,-rpath,\${MPC_RPREFIX}/\${MPC_TARGET_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/lib ${LIB_PATH}"
 if test "\$MPC_MAKEFILE" != "" ; then 
 LIB_PATH=""
@@ -275,7 +281,7 @@ for arg in "\$@" ; do
 	;;
 	-compilers|--compilers)
         echo "Compilers available :"
-    	for line in \` cat \${MPC_RPREFIX}/.${2}_compilers.cfg\` ;
+    	for line in \` cat \${CC_FILE_PATH}/.${2}_compilers.cfg\` ;
     	do
 			family="\`echo "\$line" | cut -d":" -f1\`"
 			priv="\`echo "\$line" | cut -d":" -f2\`"
@@ -353,7 +359,7 @@ unalias grep > /dev/null 2>&1
 cc_path="\`canonize \${CC}\`"
 
 is_defined=""
-for line in \`cat \${MPC_RPREFIX}/.${2}_compilers.cfg\`
+for line in \`cat \${CC_FILE_PATH}/.${2}_compilers.cfg\`
 do
 	cur="\`echo "\$line" | cut -d":" -f3 2> /dev/null\`"
 	cur="\`canonize \$cur\`"
@@ -364,7 +370,7 @@ do
 	fi
 done
 
-#is_defined="\`grep \"\${cc_path}$\" \${MPC_RPREFIX}/.${2}_compilers.cfg\`"
+#is_defined="\`grep \"\${cc_path}$\" \${CC_FILE_PATH}/.${2}_compilers.cfg\`"
 
 #if CC is not present in MPC compiler configuration file
 if test -z "\${is_defined}";
@@ -723,7 +729,7 @@ cat <<EOF >> "${MPC_RPREFIX}/${MPC_TARGET_SUBPREFIX}/${MPC_TARGET_SUBPREFIX}/.ta
 #!/bin/sh
 SCTK_MIC=0
 export SCTK_MIC
-CC=`head -n 1 \${MPC_RPREFIX}/.c_compilers.cfg | cut -d":" -f3`
+CC=`head -n 1 ${MPC_RPREFIX}/.c_compilers.cfg | cut -d":" -f3`
 export CC
 addarg=no
 CFLAGS="\`\${MPC_RPREFIX}/\${MPC_TARGET_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/bin/mpc_cflags c\`"
@@ -796,7 +802,7 @@ fi
 # Generate C compiler
 #
 begin_section Generate C Compiler: mpc_cc
-CC=`head -n 1 ${MPC_RPREFIX}/.c_compilers.cfg | cut -d":" -f3`
+#CC=`head -n 1 ${MPC_RPREFIX}/.c_compilers.cfg | cut -d":" -f3`
 printf_compiler bin/mpc_cc c
 end_section
 
@@ -811,7 +817,7 @@ end_section
 # Generate C++ compiler
 #
 begin_section Generate C++ Compiler: mpc_cxx
-CC=`head -n 1 ${MPC_RPREFIX}/.c++_compilers.cfg | cut -d":" -f3`
+#CC=`head -n 1 ${MPC_RPREFIX}/.c++_compilers.cfg | cut -d":" -f3`
 printf_compiler bin/mpc_cxx c++
 end_section
 
@@ -820,8 +826,8 @@ end_section
 #
 if test "$SCTK_FORTRAN" = "1" ; then 
 	begin_section Generate Fortran77 Compiler: mpc_f77
-	CC=`head -n 1 ${MPC_RPREFIX}/.f77_compilers.cfg | cut -d":" -f3`
-	printf_compiler bin/mpc_f77 f77
+	#CC=`head -n 1 ${MPC_RPREFIX}/.f77_compilers.cfg | cut -d":" -f3`
+	printf_compiler bin/mpc_f77 fortran
 	end_section
 fi
 

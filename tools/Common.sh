@@ -13,6 +13,7 @@ ALL_INTERNALS='false'
 ENABLE_COLOR='false'
 GEN_DEP_HELPS='false'
 SUBPREFIX=''
+CHECKSUM_TOOL="sha1sum"
 
 ######################################################
 #includes
@@ -151,16 +152,16 @@ int main(int argc, char ** argv)
 EOF
 
 # F77 files
-cat <<EOF > mpc_main.f77
+cat <<EOF > mpc_main.fortran
       subroutine mpc_user_main
       integer ierr
       end
 EOF
 
-	list_languages="c c++ f77"
+	list_languages="c c++ fortran"
 	for language in ${list_languages}
 	do
-		lang_file=${MPC_RPREFIX}/.${language}_compilers.cfg
+		lang_file=${COMPILER_FILE_DIRECTORY}/.${language}_compilers.cfg
 		main_file=mpc_main.${language}
 		for line in `cat ${lang_file}`
 		do
@@ -188,19 +189,46 @@ EOF
 		done
 	done
 
-	rm mpc_main.c mpc_main.c++ mpc_main.f77 mpc_main.o > /dev/null 2>&1
+	rm mpc_main.c mpc_main.c++ mpc_main.fortran mpc_main.o > /dev/null 2>&1
 }
 
 ######################################################
 # set Compiler list and config file
+
+createCompilerManager()
+{
+	COMPILER_FILE_DIRECTORY=${MPC_RPREFIX}/
+	export COMPILER_FILE_DIRECTORY
+
+	which ${CHECKSUM_TOOL} > /dev/null 2>&1
+	if test "$?" != "0";
+	then
+		printf "Warning: This installation cannot find to ${CHECKSUM_TOOL}.\n"
+		printf "Warning: Please ensure a valid checksum tool is available to fully exploit dynamic compiler swith facilities\n"
+		return
+	fi
+	if test ! -w $HOME;
+	then
+		printf "Warning: HOME directory is not writable. Any modifications to compilers will directly impact the installation directory\n"
+		return
+	fi
+
+	CURRENT_INSTALL_HASH="`echo "$MPC_RPREFIX" | sed -e "s#//*#/#g" | sha1sum | cut -f1 -d" "`"
+	COMPILER_FILE_DIRECTORY=$HOME/.mpcompil/${CURRENT_INSTALL_HASH}
+	
+	mkdir -p $COMPILER_FILE_DIRECTORY
+}
+
 setCompilerList()
 {
+	createCompilerManager
+
 	outputvar="$1"
 	compiler="${MPC_COMPILER}"
 	gcc_version=`cat "${PROJECT_SOURCE_DIR}/config.txt" | grep "^gcc " | cut -f 2 -d ';' | sed -e 's/\.//g' | xargs echo`
-	config_file_c="${MPC_RPREFIX}/.c_compilers.cfg"
-	config_file_cplus="${MPC_RPREFIX}/.c++_compilers.cfg"
-	config_file_fort="${MPC_RPREFIX}/.f77_compilers.cfg"
+	config_file_c="${COMPILER_FILE_DIRECTORY}/.c_compilers.cfg"
+	config_file_cplus="${COMPILER_FILE_DIRECTORY}/.c++_compilers.cfg"
+	config_file_fort="${COMPILER_FILE_DIRECTORY}/.fortran_compilers.cfg"
 	
 	cat < /dev/null > "${config_file_c}"
 	cat < /dev/null > "${config_file_cplus}"
