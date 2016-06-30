@@ -9676,15 +9676,6 @@ __INTERNAL__PMPI_Comm_split (MPI_Comm comm, int color, int key,
   int res;
   res = PMPC_Comm_split (comm, color, key, newcomm);
 
-  if( res == MPI_SUCCESS )
-  {
-    mpc_mpi_per_communicator_t* tmp;
-    mpi_topology_per_comm_t* topo_new;
-    tmp = mpc_mpc_get_per_comm_data(*newcomm);
-    topo_new = &(tmp->topo);
-    topo_new->type = -1;
-  }
-
   return res;
 }
 
