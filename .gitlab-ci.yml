@@ -4,6 +4,7 @@ stages:
 - test_simple
 - test_compil
 - test_mpi
+- test_imb
 - cleanup
 
 build_job:
@@ -46,6 +47,14 @@ mpi:
   - sed -i "s/300/15/g" ./config/default.cfg
   - sed -i "s/4 32/4 8/g" ./config/default.cfg
   - ./mpc_validation -X --prefix=$HOME/mpc_tmp_builds/$CI_BUILD_REF --select=./MPI/MessagePassing/ --color -vv
+
+imb:
+  stage: test_imb
+  script:
+  - cd MPC_Test_Suite
+  - sed -i "s/ib tcp/tcp/g" ./config/default.cfg
+  - sed -i "s/4 32/4/g" ./config/default.cfg
+  - ./mpc_validation -X --prefix=$HOME/mpc_tmp_builds/$CI_BUILD_REF --select=./MPI/IMB/check/ --color -vv
 
 cleanup_job:
   stage: cleanup
