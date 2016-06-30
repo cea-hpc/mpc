@@ -9680,15 +9680,9 @@ __INTERNAL__PMPI_Comm_split (MPI_Comm comm, int color, int key,
   {
     mpc_mpi_per_communicator_t* tmp;
     mpi_topology_per_comm_t* topo_new;
-	sctk_task_specific_t * task_specific;
-	task_specific = __MPC_get_task_specific ();
-	tmp = sctk_thread_getspecific_mpc_per_comm(task_specific,*newcomm);
-	if( tmp )
-	{
-		topo_new = &(tmp->topo);
-		if( topo_new )
-			topo_new->type = -1;
-	}
+    tmp = mpc_mpc_get_per_comm_data(*newcomm);
+    topo_new = &(tmp->topo);
+    topo_new->type = -1;
   }
 
   return res;
