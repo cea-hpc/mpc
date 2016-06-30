@@ -5,6 +5,7 @@ stages:
 - test_compil
 - test_mpi
 - test_imb
+- test_comm
 - cleanup
 
 build_job:
@@ -55,6 +56,14 @@ imb:
   - sed -i "s/ib tcp/tcp/g" ./config/default.cfg
   - sed -i "s/4 32/4/g" ./config/default.cfg
   - ./mpc_validation -X --prefix=$HOME/mpc_tmp_builds/$CI_BUILD_REF --select=./MPI/IMB/check/ --color -vv
+
+communicators:
+  stage: test_comm
+  script:
+  - cd MPC_Test_Suite
+  - sed -i "s/ib tcp/tcp/g" ./config/default.cfg
+  - sed -i "s/4 32/4/g" ./config/default.cfg
+  - ./mpc_validation -X --prefix=$HOME/mpc_tmp_builds/$CI_BUILD_REF --select=./MPI/Intel_ANL/communicators --color -vv
 
 cleanup_job:
   stage: cleanup
