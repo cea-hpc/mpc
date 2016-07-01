@@ -1,0 +1,15 @@
+#!/bin/sh
+
+USER=`whoami`
+FILE=$1
+
+usage(){
+    echo "Usage $0 patch_file"
+}
+
+if test "$FILE" =  "" ; then  
+usage
+exit 1
+fi
+
+curl --negotiate -u $USER -k -X POST https://jenkins.ccc.ocre.cea.fr/mpc_nr/job/MPC_Add_hotfix/buildWithParameters?./patch_file=$FILE
