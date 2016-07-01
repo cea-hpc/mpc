@@ -12,4 +12,4 @@ usage
 exit 1
 fi
 
-curl --negotiate -u $USER -k -X POST https://jenkins.ccc.ocre.cea.fr/mpc_nr/job/MPC_Add_hotfix/buildWithParameters?./patch_file=$FILE
+curl --negotiate -u $USER -k https://jenkins.ccc.ocre.cea.fr/mpc_nr/job/MPC_Add_hotfix/build -F file0=@$FILE -F json='{"parameter": [{"name":"./patch_file", "file":"file0"}]}'
