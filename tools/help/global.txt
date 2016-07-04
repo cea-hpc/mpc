@@ -41,6 +41,9 @@ Defaults for the options are specified in brackets.
   --with-mpc-binutils=*                   : Specify binutils prefix on the system
   --with-hwloc=*                          : Specify hwloc prefix on the system
   --with-libxml2=*                        : Specify libxml2 prefix on the system
+  --with-cuda=*                           : Specify Cuda prefix on the system
+  --with-openacc=*                        : Specify OpenACC prefix on the system (NIMPL)
+  --with-opencl=*                         : Specify OpenCL prefix on the system (NIMPL)
 
 # Options to transmit to subpackages
   --mpc-gcc-*                             : Add options to gcc configure

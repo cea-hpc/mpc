@@ -215,8 +215,14 @@ do
 			extractAndAddPackageOption 'HWLOC_BUILD_PARAMETERS' 'hwloc' "$arg"
 			;;
 		################### CUDA ###################
-		--with-cuda)
-			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --with-cuda"
+		--with-cuda=*)
+			extractParamValue 'CUDA_PREFIX' 'with-cuda' "$arg"
+			;;
+		--with-openacc=*)
+			extractParamValue 'OPENACC_PREFIX' 'with-openacc' "$arg"
+			;;
+		--with-opencl=*)
+			extractParamValue 'OPENCL_PREFIX' 'with-opencl' "$arg"
 			;;
 		################### HWLOC ###################
 		--with-tbb=*)
@@ -503,7 +509,28 @@ fillMPCBuildParameters()
 	else
 		MPCFRAMEWORK_BUILD_PARAMETERS="'--with-hydra=${HYDRA_PREFIX}' ${MPCFRAMEWORK_BUILD_PARAMETERS}"
 	fi
+
+	if test "${CUDA_PREFIX}" = "internal"; then
+		echo "CUDA libraries are not embedded inside MPC ! Abort..."
+		exit 1
+	elif test -n "${CUDA_PREFIX}"; then
+		MPCFRAMEWORK_BUILD_PARAMETERS="--with-cuda=${CUDA_PREFIX} ${MPCFRAMEWORK_BUILD_PARAMETERS}"
+	fi
 	
+	if test "${OPENACC_PREFIX}" = "internal"; then
+		echo "OpenAcc implementation is not internally handled by MPC yet !"
+		exit 1
+	elif test -n "${OPENACC_PREFIX}"; then
+		MPCFRAMEWORK_BUILD_PARAMETERS="--with-openacc=${OPENACC_PREFIX} ${MPCFRAMEWORK_BUILD_PARAMETERS}"
+	fi
+	
+	if test "${OPENCL_PREFIX}" = "internal"; then
+		echo "OpenCL libraries are not embedded with MPC yet !"
+		exit 1
+	elif test -n "${OPENCL_PREFIX}"; then
+		MPCFRAMEWORK_BUILD_PARAMETERS="--with-opencl=${OPENCL_PREFIX} ${MPCFRAMEWORK_BUILD_PARAMETERS}"
+	fi
+
 	MPCFRAMEWORK_BUILD_PARAMETERS="'--with-libsctk_arch=\$\(PREFIX\)/' ${WRAPPER_CROSS_COMPIL} --arch=${MPC_TARGET} --compilers=\"${COMPILER_LIST}\" ${MPCFRAMEWORK_BUILD_PARAMETERS}"
 }
 

@@ -25,6 +25,8 @@
 EXTERN_NON_TESTED_LIB=""
 HWLOCK_IS_SETUP="no"
 CUDA_IS_SETUP="no"
+OPENACC_IS_SETUP="no"
+OPENCL_IS_SETUP="no"
 OPENPA_IS_SETUP="no"
 HYDRA_IS_SETUP="no"
 SLURM_IS_SETUP="no"
@@ -294,21 +296,33 @@ sctk_internal_setup_lib_cuda()
 SCTK_CHECK_LIB_CUDA()
 {
 	#mark test section
-	begin_section cuda
-
+	begin_section Cuda support
 	#setup if needed
 	sctk_internal_setup_lib_cuda
-
 	#check header
 	SCTK_CHECK_HEADER "cuda.h"
-    SCTK_CHECK_OPTION "-DMPC_Accelerators"
-    SCTK_CHECK_LDOPTION "-lcudart"
-    SCTK_CHECK_LDOPTION "-lcuda"
-
-	#end of section
+	SCTK_CHECK_LDOPTION "-lcudart"
+	SCTK_CHECK_LDOPTION "-lcuda"
 	end_section
 }
 
+SCTK_CHECK_OPENACC()
+{
+	begin_section OpenACC directives
+	echo "OpenACC Directives are not implemented in MPC yet ! Sorry for the inconvenience"
+	echo "Abort"
+	exit 1
+	end_section
+}
+
+SCTK_CHECK_LIB_OPENCL()
+{
+	begin_section OpenCL Support
+	echo "OpenCL Support is not implemented in MPC yet ! Sorry for the inconvenience"
+	echo "Abort"
+	exit 1
+	end_section
+}
 
 
 # Setup vars to use lib openpa

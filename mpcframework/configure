@@ -124,6 +124,21 @@ check_arg(){
 
 SCTK_NODEP="0"
 
+sctk_disable_module()
+{
+    debug "$1=''"
+    eval "$1=''"
+}
+
+sctk_enable_module()
+{
+  	if test -d ${MPC_SOURCE_DIR}$1 ; then
+		OPT_PATH="${MPC_SOURCE_DIR}$1"
+		debug  "${1}=${OPT_PATH}"
+		eval "${1}=${OPT_PATH}"
+	fi
+}
+
 sctk_print_help(){
 cat <<EOF
 Usage: $0 [OPTION]... [VAR=VALUE]...
@@ -223,6 +238,9 @@ MPC_HYDRA="1"
 SCTK_SLURM="0"
 SCTK_OPENPA="1"
 SCTK_SHM="1"
+SCTK_CUDA="0"
+SCTK_OPENACC="0"
+SCTK_OPENCL="0"
 SCTK_ENABLE_CMA="0"
 SCTK_POSIX_ALLOC="1"
 SCTK_CHECKSUM="0"
@@ -237,6 +255,9 @@ HWLOC_USER_PREFIX=""
 OPENPA_USER_PREFIX=""
 OPENIB_USER_PREFIX=""
 PORTALS_USER_PREFIX=""
+CUDA_USER_PREFIX=""
+OPENACC_USER_PREFIX=""
+OPENCL_USER_PREFIX=""
 SCTK_LIBXML2_PREFIX=""
 SCTK_LIBSCTK_ARCH_PREFIX=""
 SCTK_MPC_PROCESS_MODE="0"
@@ -474,9 +495,21 @@ for arg in "$@" ; do
 	;;
 	--with-hwloc=*)
     HWLOC_USER_PREFIX="`echo A$arg | sed -e 's/A--with-hwloc=//g'`"
+	;;
+	--with-cuda=*)
+	SCTK_CUDA="1"
+    CUDA_USER_PREFIX="`echo A$arg | sed -e 's/A--with-cuda=//g'`"
+	sctk_enable_module "MPC_Accelerators"
     ;;
-	--with-cuda)
-    SCTK_CUDA="1"
+	--with-openacc=*)
+	SCTK_OPENACC="1"
+    OPENACC_USER_PREFIX="`echo A$arg | sed -e 's/A--with-openacc=//g'`"
+	sctk_enable_module "MPC_Accelerators"
+    ;;
+	--with-opencl=*)
+	SCTK_OPENCL="1"
+    OPENCL_USER_PREFIX="`echo A$arg | sed -e 's/A--with-opencl=//g'`"
+	sctk_enable_module "MPC_Accelerators"
     ;;
     --with-openpa=*)
     OPENPA_USER_PREFIX="`echo A$arg | sed -e 's/A--with-openpa=//g'`"
@@ -499,19 +532,14 @@ for arg in "$@" ; do
     --disable-*)
     CONF_ARG="`echo A$arg | sed -e 's/A--disable-//g'`"
     check_arg $CONF_ARG
-    debug "$CONF_ARG=''"
-    eval "$CONF_ARG=''"
-    ;;
+    sctk_disable_module "${CONF_ARG}"
+	;;
     --enable-*)
     CONF_ARG="`echo A$arg | sed -e 's/A--enable-//g'`"
     check_arg $CONF_ARG
     debug "$CONF_ARG"
-    if test -d ${MPC_SOURCE_DIR}$CONF_ARG ; then
-	OPT_PATH="${MPC_SOURCE_DIR}$CONF_ARG"
-	debug  "${CONF_ARG}=${OPT_PATH}"
-	eval "${CONF_ARG}=${OPT_PATH}"
-    fi
-    ;;
+    sctk_enable_module "${CONF_ARG}"
+	;;
     --compilers=*)
 	COMPILER_LIST="`echo A$arg | sed -e 's/A--compilers=//g'`"
     ;;

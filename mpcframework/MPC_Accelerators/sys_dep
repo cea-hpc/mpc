@@ -21,3 +21,18 @@
 #                                                                      #
 ########################################################################
 
+# CUDA support checks
+if test "$SCTK_CUDA" = "1"; then
+SCTK_CHECK_LIB_CUDA
+fi
+
+# OpenAcc directives checks
+if test "$SCTK_OPENACC" = "1"; then
+SCTK_CHECK_OPENACC
+fi
+
+# OpenCL support
+if test "$SCTK_OPENCL" = "1"; then
+SCTK_CHECK_LIB_OPENCL
+fi
+
