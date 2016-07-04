@@ -59,8 +59,6 @@ SCTK_CHECK_HEADER signal.h
 SCTK_CHECK_HEADER sys/types.h
 SCTK_CHECK_HEADER regex.h
 
-sctk_echo
-
 SCTK_CHECK_FUNC abort
 SCTK_CHECK_FUNC exit
 SCTK_CHECK_FUNC fclose
@@ -346,8 +344,6 @@ check_debug
 end_section
 
 SCTK_CHECK_LIB_OPENPA
-
-sctk_echo
 
 SCTK_CHECK_LIBSCTK_ARCH
 

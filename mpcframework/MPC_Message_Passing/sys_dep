@@ -77,10 +77,6 @@ SCTK_CHECK_FUNC strcpy
 SCTK_CHECK_FUNC strlen
 SCTK_CHECK_FUNC write
 
-if test "$SCTK_SHM" != 0 ; then
-  SCTK_CHECK_OPTION "-DSCTK_SHM"
-fi
-
 SCTK_CHECK_LIB_PMI
 
 begin_section Networks
@@ -94,18 +90,20 @@ if test "$SCTK_CHECKSUM" != 0 ; then
   end_section
 fi
 
+begin_section Check SHM
+
+if test "$SCTK_SHM" != 0 ; then
+  SCTK_CHECK_OPTION "-DSCTK_SHM"
+fi
 
 if test "$SCTK_ENABLE_CMA" != 0 ; then
-	begin_section SHM : Cross Memory Attach Support
+	sctk_echo Cross Memory Attach Support
 	SCTK_CHECK_FUNC_NOFAIL process_vm_readv
 	if test "$SCTK_SCTK_CHECK_FUNC_RES" = 0 ; then
 		SCTK_CHECK_OPTION "-DMPC_USE_CMA"
 	fi
-else
-	begin_section SHM : CMA disabled
 fi
-
 end_section
 
-
+end_section
 

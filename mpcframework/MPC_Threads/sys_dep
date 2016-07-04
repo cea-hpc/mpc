@@ -134,7 +134,7 @@ begin_section TLS support
 #check main headers
 SCTK_CHECK_HEADER extls.h
 SCTK_CHECK_HEADER extls_common.h
-
+SCTK_CHECK_LDOPTION_NOADD "-lextls"
 #setup rpaths and -L
 if [ -e "${MPC_RPREFIX}/${MPC_SUBPREFIX}/lib64/libextls.so" ]; then
 	SCTK_LDFLAGS="-L`echo \"\\${MPC_RPREFIX}\"`/${MPC_SUBPREFIX}/lib64 -lextls ${SCTK_LDFLAGS}"

@@ -22,7 +22,7 @@
 #                                                                      #
 ########################################################################
 
-begin_section Generate Makefile
+begin_section Generating Makefile
 
 if test "$SCTK_FORTRAN" = "0"; then
 SCTK_F77="true"
@@ -312,11 +312,11 @@ printf "\t@cp ${MPC_SOURCE_DIR}MPC_Tools/mpcrun_opt/* INSTALL/bin/mpcrun_opt">> 
 printf "\t@mkdir -p INSTALL/include/mpcframework">> Makefile; echo "">> Makefile
 for i in $MODULE_LIST; do
 if test -d ${MPC_SOURCE_DIR}$i/include ; then
-echo "Preparing includes for $i"
+sctk_echo "Preparing includes for $i"
 printf "\t@echo \"    Includes for module $i\"">> Makefile; echo "">> Makefile
 printf "\t@cp ${MPC_SOURCE_DIR}$i/include/* INSTALL/include/mpcframework 2>/dev/null || true">> Makefile; echo "">> Makefile
 else
-echo "No include directory for $i (${MPC_SOURCE_DIR}$i/include)"
+sctk_echo "No include directory for $i (${MPC_SOURCE_DIR}$i/include)"
 fi
 done
 printf "\t@cp include/sctk_config.h INSTALL/include/mpcframework">> Makefile; echo "">> Makefile
@@ -355,7 +355,7 @@ fi
 
 # FORTRAN HEADER AND MODULE GENERATION (MPI AND OPENMP)
 if test "$SCTK_FORTRAN" = "1"; then
-echo "Preparing includes/modules for Fortran"
+sctk_echo "Preparing includes/modules for Fortran"
 
 #Prepare the variables to be passed to the fortran generation script
 FORTRAN_PYTHON="/usr/bin/env python"

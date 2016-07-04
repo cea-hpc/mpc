@@ -39,8 +39,6 @@ SCTK_CHECK_HEADER sys/stat.h
 SCTK_CHECK_HEADER sys/time.h
 SCTK_CHECK_HEADER sys/types.h
 SCTK_CHECK_HEADER unistd.h
-
-sctk_echo
 SCTK_CHECK_FUNC abort
 SCTK_CHECK_FUNC close
 SCTK_CHECK_FUNC getenv
@@ -103,7 +101,6 @@ if [ "${SCTK_VALGRIND_MEMCHECK}" = '1' ]; then
 	SCTK_CHECK_OPTION -DHAVE_MEMCHECK_H
 fi
 
-sctk_echo
 begin_section "Page migration"
 check_binding
 end_section

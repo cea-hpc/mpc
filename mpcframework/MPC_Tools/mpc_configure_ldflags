@@ -21,7 +21,7 @@
 #                                                                      #
 ########################################################################
 
-begin_section Generate mpc_ldflags
+sctk_echo "Generating mpc_ldflags"
 
 mkdir -p bin
 
@@ -85,5 +85,3 @@ fi
 EOF
 
 chmod 755 bin/mpc_ldflags
-
-end_section

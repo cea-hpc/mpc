@@ -84,16 +84,6 @@ sctk_echo "'configure' configures ${MODULE} ${MPC_VERSION} to adapt to many kind
 
 MODULES="`mpc_modules_get_list`"
 
-activate_module(){
-    if test -d ${MPC_SOURCE_DIR}$1 ; then
-	sctk_echo "   - $1 available"
-	eval "${1}=${MPC_SOURCE_DIR}$1"
-    else
-	sctk_echo "   - $1 N/A"
-	eval "${1}=''"
-    fi
-}
-
 #std_headers std_functions
 #std_headers std_functions
 TO_CHECK="programs compilers cflags keywords module_deps config"
@@ -123,21 +113,6 @@ check_arg(){
 }
 
 SCTK_NODEP="0"
-
-sctk_disable_module()
-{
-    debug "$1=''"
-    eval "$1=''"
-}
-
-sctk_enable_module()
-{
-  	if test -d ${MPC_SOURCE_DIR}$1 ; then
-		OPT_PATH="${MPC_SOURCE_DIR}$1"
-		debug  "${1}=${OPT_PATH}"
-		eval "${1}=${OPT_PATH}"
-	fi
-}
 
 sctk_print_help(){
 cat <<EOF
@@ -225,11 +200,10 @@ EOF
 
 }
 
-begin_section "Module detection:"
+begin_section "Available Modules:"
 # Activate all modules (look for the directory)
 mpc_modules_activate_modules
-sctk_echo ""
-
+end_section
 SCTK_LIBUNWIND="1"
 SCTK_LIBNUMA="0"
 SCTK_LIBCPUSET="0"
@@ -499,17 +473,17 @@ for arg in "$@" ; do
 	--with-cuda=*)
 	SCTK_CUDA="1"
     CUDA_USER_PREFIX="`echo A$arg | sed -e 's/A--with-cuda=//g'`"
-	sctk_enable_module "MPC_Accelerators"
+	mpc_modules_enable_module "MPC_Accelerators"
     ;;
 	--with-openacc=*)
 	SCTK_OPENACC="1"
     OPENACC_USER_PREFIX="`echo A$arg | sed -e 's/A--with-openacc=//g'`"
-	sctk_enable_module "MPC_Accelerators"
+	mpc_modules_enable_module "MPC_Accelerators"
     ;;
 	--with-opencl=*)
 	SCTK_OPENCL="1"
     OPENCL_USER_PREFIX="`echo A$arg | sed -e 's/A--with-opencl=//g'`"
-	sctk_enable_module "MPC_Accelerators"
+	mpc_modules_enable_module "MPC_Accelerators"
     ;;
     --with-openpa=*)
     OPENPA_USER_PREFIX="`echo A$arg | sed -e 's/A--with-openpa=//g'`"
@@ -532,13 +506,13 @@ for arg in "$@" ; do
     --disable-*)
     CONF_ARG="`echo A$arg | sed -e 's/A--disable-//g'`"
     check_arg $CONF_ARG
-    sctk_disable_module "${CONF_ARG}"
+    mpc_modules_disable_module "${CONF_ARG}"
 	;;
     --enable-*)
     CONF_ARG="`echo A$arg | sed -e 's/A--enable-//g'`"
     check_arg $CONF_ARG
     debug "$CONF_ARG"
-    sctk_enable_module "${CONF_ARG}"
+    mpc_modules_enable_module "${CONF_ARG}"
 	;;
     --compilers=*)
 	COMPILER_LIST="`echo A$arg | sed -e 's/A--compilers=//g'`"
@@ -614,10 +588,10 @@ SCTK_CC=`head -n 1 ${CUR_CONFIG_PATH}/.c_compilers.cfg | cut -f3 -d":"`
 SCTK_CXX=`head -n 1 ${CUR_CONFIG_PATH}/.c++_compilers.cfg | cut -f3 -d":"`
 SCTK_F77=`head -n 1 ${CUR_CONFIG_PATH}/.fortran_compilers.cfg | cut -f3 -d":"`
 SCTK_GCC="${SCTK_CC}"
-echo "sctk_cc = '${SCTK_CC}'" 2>&1
-echo "sctk_cxx = '${SCTK_CXX}'" 2>&1
-echo "sctk_f77 = '${SCTK_F77}'" 2>&1
-echo "sctk_gcc = '${SCTK_GCC}'" 2>&1
+#echo "sctk_cc = '${SCTK_CC}'" 2>&1
+#echo "sctk_cxx = '${SCTK_CXX}'" 2>&1
+#echo "sctk_f77 = '${SCTK_F77}'" 2>&1
+#echo "sctk_gcc = '${SCTK_GCC}'" 2>&1
 
 SCTK_LIRARY_PATH="${MPC_RPREFIX}/${MPC_SUBPREFIX}/libsgcc/lib"
 
@@ -674,17 +648,17 @@ case $SCTK_OS in
     ;;
 esac
 
-begin_section "OS options:"
+begin_section "OS-specific options:"
 case ${SCTK_OS} in
     SunOS)
     SCTK_CHECK_LDOPTION "-lsocket -lnsl -lrt"
     ;;
     *)
-    sctk_echo "No specific libs"
+    sctk_echo "This operating system does not need any specific options"
 esac
 end_section
 
-begin_section "Check module dependencies:"
+begin_section "Checking module dependencies:"
 # MPC Module Dependency Check
 
 rm -rf include > /dev/null 2>&1
@@ -736,14 +710,13 @@ for module in $MODULES ; do
     SCTK_INCLUDE_FILES=""
     if test "`eval echo $MODULE_NAME`" != "" ; then
     if test -f ${MPC_SOURCE_DIR}${module}/module_dep; then
-    sctk_echo
     begin_module $module
-    begin_section "Check module dependencies:"
+    begin_section "Checking module dependencies:"
     . ${MPC_SOURCE_DIR}${module}/module_dep
     end_section
     if test "$SCTK_INCLUDE_FILES" != "" ; then
     for files in $SCTK_INCLUDE_FILES; do
-	sctk_echo "Add in mpc.h #include <$files>"
+	sctk_echo "Adding <$files> inclusion in mpc.h: yes"
 	echo "#include <$files>" >> include/mpc.h
     done
     fi
@@ -767,9 +740,8 @@ for module in $MODULES ; do
     MODULE_NAME="\$$module"
     if test "`eval echo $MODULE_NAME`" != "" ; then
     if test -f ${MPC_SOURCE_DIR}${module}/sys_dep; then
-    sctk_echo
     begin_module $module
-    begin_section "Check system dependencies:"
+    begin_section "Checking system dependencies:"
     . ${MPC_SOURCE_DIR}${module}/sys_dep
     end_section
     end_module $module
@@ -781,15 +753,13 @@ done
 sctk_echo
 sctk_echo "Build for ${SCTK_OS}/${SCTK_ARCH}"
 
-
 for i in $TO_CHECK; do
-begin_section "Check $i"
+begin_section "Checking $i:"
     eval check_$i
 end_section
-sctk_echo
 done
 
-begin_section "Define configuration"
+begin_section "Checking module #define macros:"
 MODULE_LIST=""
 for i in $MODULES ; do
     NAME="\$$i"
@@ -800,14 +770,11 @@ for i in $MODULES ; do
 done
 end_section
 
-sctk_echo
-
-
 for i in $MODULES; do
     rm -rf BUILD_$i
 done
 
-begin_section "Check for optimizations"
+begin_section "Checking for optimizations:"
 SCTK_MSG_CHECKING "${SCTK_OS}_${SCTK_ARCH} optimization"
 if test -d ${MPC_SOURCE_DIR}MPC_Common/sctk_optim/${SCTK_OS}_${SCTK_ARCH}; then
     SCTK_ARCH_OPTIM="${SCTK_OS}_${SCTK_ARCH}"
@@ -818,9 +785,6 @@ else
 fi
 end_section
 
-sctk_echo
-
-
 if test "$SCTK_MPC_MMAP" = "1" ; then
 begin_section "Use MPC mmap implementation"
 SCTK_CHECK_OPTION "-DSCTK_MPC_MMAP"
@@ -828,7 +792,6 @@ SCTK_CHECK_LDOPTION "-Wl,--wrap,mmap -Wl,--wrap,munmap -Wl,--wrap,mremap"
 
 end_section
 
-sctk_echo
 fi
 
 #Enable debug compiler flags
@@ -836,12 +799,10 @@ if test "$SCTK_DEBUG_STRICT" = "1"; then
 	begin_section "Enabling -Wall -Werror as we are running in strict debug mode"
 	SCTK_CHECK_OPTION "-Wall -Werror -Wno-unused-variable -Wno-unused-but-set-variable"
 	end_section
-	sctk_echo
 elif test "$SCTK_DEBUG" = "1" ; then
 	begin_section "Enabling -Wall as we are running in debug mode"
 	SCTK_CHECK_OPTION "-Wall -Wno-unused-variable -Wno-unused-but-set-variable"
 	end_section
-	sctk_echo
 fi
 
 #Check for _Pragma message in macro
@@ -853,13 +814,23 @@ COMPILER_SPECIFC_FLAGS="$COMPILER_SPECIFC_FLAGS $SCTK_CFLAGS_NON_GNU"
 if test "$SCTK_NOCREATE" != "1" ; then
 . ${MPC_SOURCE_DIR}MPC_Tools/mpc_configure_config.status
 . ${MPC_SOURCE_DIR}MPC_Tools/mpc_configure_makefile
+
+begin_section "Generating Compilation && runtime wrappers:"
 . ${MPC_SOURCE_DIR}MPC_Tools/mpc_configure_ldflags
 . ${MPC_SOURCE_DIR}MPC_Tools/mpc_configure_cflags
 . ${MPC_SOURCE_DIR}MPC_Tools/mpc_configure_mpcrun
 . ${MPC_SOURCE_DIR}MPC_Tools/mpc_configure_mpc_edit_config
 . ${MPC_SOURCE_DIR}MPC_Tools/mpc_configure_compiler
 . ${MPC_SOURCE_DIR}MPC_Tools/mpc_configure_install_cleaner
+end_section
+
 . ${MPC_SOURCE_DIR}MPC_Tools/mpc_configure_env
+
+begin_section "Generating last build artifacts:"
 . ${MPC_SOURCE_DIR}MPC_Tools/mpc_configure_status
 . ${MPC_SOURCE_DIR}MPC_Tools/mpc_configure_reconfigure
+end_section
+
+sctk_echo
+sctk_echo "FINISHED. MPC framework is now well configured and you can proceed the build through Make"
 fi

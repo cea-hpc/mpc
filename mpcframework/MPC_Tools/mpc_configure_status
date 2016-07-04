@@ -20,7 +20,7 @@
 #   - PERACHE Marc marc.perache@cea.fr                                 #
 #                                                                      #
 ########################################################################
-begin_section Generate mpc_status
+sctk_echo "Generating mpc_status"
 
 MPC_STATUS_FILE="bin/mpc_status"
 
@@ -76,5 +76,3 @@ fi
 EOF
 
 chmod 755 $MPC_STATUS_FILE
-
-end_section

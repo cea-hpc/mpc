@@ -737,7 +737,7 @@ cat <<EOF >> "${MPC_RPREFIX}/${MPC_TARGET_SUBPREFIX}/${MPC_TARGET_SUBPREFIX}/.ta
 #!/bin/sh
 SCTK_MIC=0
 export SCTK_MIC
-CC=`head -n 1 ${MPC_RPREFIX}/.c_compilers.cfg | cut -d":" -f3`
+CC=\`head -n 1 \${MPC_RPREFIX}/.c_compilers.cfg | cut -d":" -f3\`
 export CC
 addarg=no
 CFLAGS="\`\${MPC_RPREFIX}/\${MPC_TARGET_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/bin/mpc_cflags c\`"
@@ -780,7 +780,7 @@ cat <<EOF >> "${MPC_RPREFIX}/${MPC_TARGET_SUBPREFIX}/${MPC_TARGET_SUBPREFIX}/.ta
 #!/bin/sh
 SCTK_MIC=0
 export SCTK_MIC
-CC=`head -n 1 \${MPC_RPREFIX}/.c_compilers.cfg | cut -d":" -f3`
+CC=\`head -n 1 \${MPC_RPREFIX}/.c_compilers.cfg | cut -d":" -f3\`
 export CC
 addarg=no
 CFLAGS="\`\${MPC_RPREFIX}/\${MPC_TARGET_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/bin/mpc_cflags c\`"
@@ -809,10 +809,9 @@ fi
 #
 # Generate C compiler
 #
-begin_section Generate C Compiler: mpc_cc
+sctk_echo "Preparing C Compiler: mpc_cc"
 #CC=`head -n 1 ${MPC_RPREFIX}/.c_compilers.cfg | cut -d":" -f3`
 printf_compiler bin/mpc_cc c
-end_section
 
 #
 # Generate C compiler (for global linking)
@@ -824,22 +823,20 @@ end_section
 #
 # Generate C++ compiler
 #
-begin_section Generate C++ Compiler: mpc_cxx
+sctk_echo "Preparing C++ Compiler: mpc_cxx"
 #CC=`head -n 1 ${MPC_RPREFIX}/.c++_compilers.cfg | cut -d":" -f3`
 printf_compiler bin/mpc_cxx c++
-end_section
 
 #
 # Generate Fortran compiler
 #
 if test "$SCTK_FORTRAN" = "1" ; then 
-	begin_section Generate Fortran77 Compiler: mpc_f77
+	sctk_echo "Preparing Fortran Compiler: mpc_f77"
 	#CC=`head -n 1 ${MPC_RPREFIX}/.f77_compilers.cfg | cut -d":" -f3`
 	printf_compiler bin/mpc_f77 fortran
-	end_section
 fi
 
-begin_section Generate Deprecated Compilers: backward compatibility
+sctk_echo "Preparing deprecated compilers for backward compatibility"
 #deprecated C wrappers
 printf_deprecated_compiler bin/mpc_icc bin/mpc_cc icc
 printf_deprecated_compiler bin/mpc_gcc bin/mpc_cc gcc
@@ -849,7 +846,6 @@ printf_deprecated_compiler bin/mpc_g++ bin/mpc_cxx g++
 #deprecated F wrappers
 printf_deprecated_compiler bin/mpc_ifort bin/mpc_f77 ifort
 printf_deprecated_compiler bin/mpc_gfortran bin/mpc_f77 gfortran
-end_section
 
 ########################################
 ########################################

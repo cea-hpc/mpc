@@ -87,17 +87,29 @@ mpc_modules_activate_modules()
 			echo "Error: can't find directory of module ${name}"
 			exit 1
 		fi
-		activate_module "${name}"
+    	if test -d ${MPC_SOURCE_DIR}$name ; then
+			sctk_echo "   - $name"
+			eval "${name}=${MPC_SOURCE_DIR}$name"
+   		else
+			sctk_echo "   - $1 (${MPC_SOURCE_DIR}$name not found !)"
+			eval "${name}=''"
+    	fi
 	done
 }
 
-# Disable module
-# Params:
-#   - module name
 mpc_modules_disable_module()
 {
-	debug  "${name}=''"
-	eval "${name}=''"
+    debug "$1=''"
+    eval "$1=''"
+}
+
+mpc_modules_enable_module()
+{
+  	if test -d ${MPC_SOURCE_DIR}$1 ; then
+		OPT_PATH="${MPC_SOURCE_DIR}$1"
+		debug  "${1}=${OPT_PATH}"
+		eval "${1}=${OPT_PATH}"
+	fi
 }
 
 # Disable all modules except forced modules

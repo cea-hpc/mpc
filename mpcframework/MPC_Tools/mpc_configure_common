@@ -76,6 +76,7 @@ perror(){
 }
 
 begin_section(){
+	sctk_echo
 	sctk_echo "$@"
 	OFFSET="$OFFSET $OFFSET_STEP"
 }
@@ -95,30 +96,30 @@ end_section(){
 
 
 begin_module(){
-	begin_section "Prepare $1"
+	begin_section "Prepare Module $1"
 }
 
 end_module(){
-	end_section "$1 prepared"
+	end_section "Module $1 prepared"
 }
 
 need_module(){
-	sctk_printf "Check for required module $1"
+	sctk_printf "Checking for required module $1: "
 	MODULE_NAME="\$$1"
 	if test "`eval echo $MODULE_NAME`" = "" ; then
-		error "Fail"
+		error "no"
 	else
-		result "Ok"
+		result "yes"
 	fi
 }
 
 avail_module(){
-	sctk_printf "Check for optional module $1"
+	sctk_printf "Checking for optional module $1: "
 	MODULE_NAME="\$$1"
 	if test "`eval echo $MODULE_NAME`" = "" ; then
-		perror "Fail"
+		perror "no"
 	else
-		result "Ok"
+		result "yes"
 	fi
 }
 
@@ -453,7 +454,7 @@ then
 	cat "${MPC_SOURCE_DIR}/MPC_Tools/sctk_configs/sctk_config_k1om.h" | sed -e 's|@SCTK_PREFIX@|'\""${SCTK_PREFIX}"\"'|g' > include/sctk_config.h
 else
 	gen_config
-	sctk_printf "compile configuration detection: "
+	sctk_printf "Compiling Configuration Detection: "
 	echo "$SCTK_CC -D${SCTK_OS}_SYS  $SCTK_CFLAGS ${SCTK_CONF_C} $SCTK_LDFLAGS -o ${SCTK_CONF_BIN}">> ${SCTK_CONF_LOG} 2>&1
 	eval "$SCTK_CC -D${SCTK_OS}_SYS  $SCTK_CFLAGS ${SCTK_CONF_C} $SCTK_LDFLAGS -o ${SCTK_CONF_BIN}">> ${SCTK_CONF_LOG} 2>&1
 	if test "$?" = "0" ; then
@@ -462,7 +463,7 @@ else
 		rm ${SCTK_CONF_C} ${SCTK_CONF_BIN} >> ${SCTK_CONF_LOG} 2>&1
 		error  no
 	fi
-	sctk_printf "execute configuration detection: "
+	sctk_printf "Running Configuration Detection: "
 	chmod 755 ${SCTK_CONF_BIN}
 	eval "${SCTK_CROSS_EXEC} ${SCTK_CONF_BIN}"
 	if test "$?" = "0" ; then
@@ -498,18 +499,18 @@ check_pthread_flags_comp(){
 if test "$check_pthread_flags_comp_done" = "0" ; then
 case ${SCTK_OS} in
     SunOS)
-    sctk_echo "Configuration for ${SCTK_OS}"
+    sctk_echo "Configuration for ${SCTK_OS}:"
     SCTK_CHECK_OPTION "-mt -D_REENTRANT"
     COMPILER_SPECIFC_FLAGS="$COMPILER_SPECIFC_FLAGS -mt"
     SCTK_CHECK_LDOPTION "-lrt -lpthread"
     ;;
     OSF1)
-    sctk_echo "Configuration for ${SCTK_OS}"
+    sctk_echo "Configuration for ${SCTK_OS}:"
     SCTK_CHECK_OPTION "-D_REENTRANT"
     SCTK_CHECK_LDOPTION "-lpthread -lexc"
     ;;
     *)
-    sctk_echo "Configuration for default"
+    sctk_echo "Configuration for default:"
     SCTK_CHECK_OPTION "-D_REENTRANT"
     SCTK_CHECK_LDOPTION "-lpthread -lrt"
 
@@ -768,12 +769,10 @@ fi
 check_debug_done="0"
 check_debug(){
 if test "$check_debug_done" = "0" ; then
-    begin_section "Check Valgrind:"
     SCTK_CHECK_HEADER_NOFAIL "valgrind/valgrind.h valgrind/memcheck.h" sctk_null_func
     if test "$SCTK_SCTK_CHECK_HEADER_RES" = 0 ; then
 	SCTK_CHECK_OPTION "-DSCTK_USE_VALGRIND"
     fi
-    end_section
 check_debug_done="1"
 else
 sctk_echo "Already done"

@@ -32,8 +32,6 @@ if test "$SCTK_SCTK_CHECK_HEADER_RES" = 0 ; then
 	SCTK_CHECK_OPTION '-DHAVE_SYS_STAT_H'
 fi
 
-sctk_echo
-
 SCTK_CHECK_FUNC fprintf
 SCTK_CHECK_FUNC printf
 SCTK_CHECK_FUNC sprintf
@@ -52,7 +50,5 @@ SCTK_CHECK_FUNC malloc
 SCTK_CHECK_FUNC calloc
 SCTK_CHECK_FUNC free
 SCTK_CHECK_FUNC puts
-
-sctk_echo
 
 SCTK_CHECK_LIBXML2

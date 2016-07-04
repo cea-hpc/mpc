@@ -26,12 +26,13 @@
 # Generate the script to update environment according to MPC
 # (for SH and CSH)
 #
+begin_section Generating Environments scripts
 
 OUTPUT_FILE=bin/mpcvars.sh
 ARCH=`uname -m`
-begin_section Generate Environment Script ${OUTPUT_FILE}
+sctk_echo "Generating Support for ${OUTPUT_FILE}"
 
-echo "CONFIGURE ENV MPCROOT=${SCTK_PREFIX}"
+#echo "CONFIGURE ENV MPCROOT=${SCTK_PREFIX}"
 
 # Header
 echo "#!/bin/sh" > ${OUTPUT_FILE}
@@ -128,12 +129,9 @@ fi
 EOF
 fi
 
-end_section
-
-
 OUTPUT_FILE=bin/mpcvars.csh
 
-begin_section Generate Environment Script ${OUTPUT_FILE}
+sctk_echo "Generating Support for ${OUTPUT_FILE}"
 
 # Header
 echo "#!/bin/csh" > ${OUTPUT_FILE}

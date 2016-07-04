@@ -99,7 +99,7 @@ done
 }
 
 SCTK_CHECK_PROG_NOFAIL(){
-sctk_printf "checking $1: "
+sctk_printf "Checking $1: "
 
 if test -x $1 ; then 
 result yes
@@ -148,7 +148,7 @@ int main(){
 }
 EOF
 cat ${SCTK_CONF_C} >> ${LOG_FILE} 2>&1
-sctk_printf "checking type $1: "
+sctk_printf "Checking type $1: "
 echo "$SCTK_CC -D${SCTK_OS}_SYS $SCTK_CFLAGS ${SCTK_CONF_C} -o ${SCTK_CONF_BIN}">> ${SCTK_CONF_LOG} 2>&1
 eval "$SCTK_CC -D${SCTK_OS}_SYS $SCTK_CFLAGS ${SCTK_CONF_C} -o ${SCTK_CONF_BIN}">> ${SCTK_CONF_LOG} 2>&1
 if test "$?" = "0" ; then 
@@ -172,7 +172,7 @@ int main(){
 }
 EOF
 cat ${SCTK_CONF_C} >> ${LOG_FILE} 2>&1
-sctk_printf "checking keyword $1: "
+sctk_printf "Checking keyword $1: "
 echo "$SCTK_CC -D${SCTK_OS}_SYS $SCTK_CFLAGS ${SCTK_CONF_C} -o ${SCTK_CONF_BIN}">> ${SCTK_CONF_LOG} 2>&1
 eval "$SCTK_CC -D${SCTK_OS}_SYS $SCTK_CFLAGS ${SCTK_CONF_C} -o ${SCTK_CONF_BIN}">> ${SCTK_CONF_LOG} 2>&1
 if test "$?" = "0" ; then 
@@ -196,7 +196,7 @@ int main(){
 }
 EOF
 cat ${SCTK_CONF_C} >> ${LOG_FILE} 2>&1
-sctk_printf "checking keyword $1: "
+sctk_printf "Checking keyword $1: "
 echo "$SCTK_CC -D${SCTK_OS}_SYS $SCTK_CFLAGS ${SCTK_CONF_C} -o ${SCTK_CONF_BIN}">> ${SCTK_CONF_LOG} 2>&1
 eval "$SCTK_CC -D${SCTK_OS}_SYS $SCTK_CFLAGS ${SCTK_CONF_C} -o ${SCTK_CONF_BIN}">> ${SCTK_CONF_LOG} 2>&1
 if test "$?" = "0" ; then 
@@ -220,7 +220,7 @@ chmod 755 ${MPC_SOURCE_DIR}MPC_Tools/mpc_gen_license
 }
 
 SCTK_MSG_CHECKING(){
-sctk_printf "checking $@: "
+sctk_printf "Checking $@: "
 }
 
 SCTK_CHECK_HEADER(){
@@ -682,7 +682,8 @@ EOF
     done
     
 }
-SCTK_CHECK_LDOPTION(){
+
+SCTK_CHECK_LDOPTION_NOADD(){
     for i in $1 ; do 
 	SCTK_MSG_CHECKING $i
 	CACHE_RESULT=""
@@ -714,7 +715,6 @@ EOF
 	if test "$SCTK_SCTK_CHECK_HEADER_RES" = 0 ; then 
 	    sctk_cache_sucess_option $i
 	    result yes
-	    SCTK_LDFLAGS="$SCTK_LDFLAGS $i"
 	else
 	    sctk_cache_fail_option $i
 	    perror no
@@ -723,3 +723,14 @@ EOF
     done
     
 }
+
+SCTK_CHECK_LDOPTION()
+{
+    for i in $1 ; do 
+		SCTK_CHECK_LDOPTION_NOADD "$i"
+		if test "$SCTK_SCTK_CHECK_HEADER_RES" = 0 ;then
+			SCTK_LDFLAGS="$SCTK_LDFLAGS $i"
+		fi
+	done
+}
+

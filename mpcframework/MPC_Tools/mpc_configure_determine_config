@@ -710,7 +710,7 @@ gen_pthread_config(){
 ###############################################################################################
 # PTHREAD compatibility
 ###############################################################################################
-begin_section "Check POSIX threads compatibility"
+begin_section "Checking POSIX threads compatibility"
 SCTK_POSIX_CHECK_FUNCS_RES_FILE="include/sctk_config_pthread.h"
 cat << EOF > ${SCTK_POSIX_CHECK_FUNCS_RES_FILE}
 /* sctk_config_pthread.h.  Generated from $0.  */
@@ -828,12 +828,8 @@ EOF
 #SCTK_POSIX_CHECK_FUNCS pthread_kill HAVE_PTHREAD_KILL
 #SCTK_POSIX_CHECK_FUNCS sched_get_priority_max HAVE_SCHED_GET_PRIORITY_MAX
 #SCTK_POSIX_CHECK_FUNCS sched_get_priority_min HAVE_SCHED_GET_PRIORITY_MIN
-
-
 end_section
-echo ""
 #begin_section "Check NON PORTABLE POSIX threads compatibility"
 #SCTK_POSIX_CHECK_FUNCS pthread_getattr_np HAVE_PTHREAD_GETATTR_NP
-echo ""
-end_section
+#end_section
 }

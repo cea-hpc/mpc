@@ -21,7 +21,7 @@
 #                                                                      #
 ########################################################################
 
-begin_section Generate mpcrun
+sctk_echo "Generating mpcrun"
 mkdir -p bin
 
 echo "#!/bin/sh" > bin/mpcrun
@@ -64,5 +64,3 @@ cat ${MPC_SOURCE_DIR}.MPC_version >> bin/mpcrun
 cat ${MPC_SOURCE_DIR}MPC_Tools/mpcrun_common >> bin/mpcrun
 
 chmod 755 bin/mpcrun
-
-end_section

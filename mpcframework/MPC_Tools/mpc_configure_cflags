@@ -20,7 +20,7 @@
 #   - PERACHE Marc marc.perache@cea.fr                                 #
 #                                                                      #
 ########################################################################
-begin_section Generate mpc_cflags
+sctk_echo "Generating mpc_cflags"
 
 mkdir -p bin
 
@@ -108,5 +108,3 @@ fi
 EOF
 
 chmod 755 bin/mpc_cflags
-
-end_section

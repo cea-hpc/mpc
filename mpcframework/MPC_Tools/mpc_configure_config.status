@@ -21,7 +21,7 @@
 #                                                                      # 
 ######################################################################## 
 
-begin_section Generate config.status
+sctk_echo "Generating config.status"
 
 cat <<EOF > config.status
 #!/bin/sh
@@ -146,5 +146,3 @@ MODULE_LIST="$MODULE_LIST"
 EOF
 
 chmod 755 config.status
-
-end_section

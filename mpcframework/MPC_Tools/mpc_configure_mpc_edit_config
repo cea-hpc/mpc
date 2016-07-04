@@ -21,7 +21,6 @@
 #                                                                      #
 ########################################################################
 
-begin_section Generate mpc_edit_config
 mkdir -p bin
 
 echo "#!/bin/sh" > bin/mpc_edit_config
@@ -41,5 +40,3 @@ EOF
 cat ${MPC_SOURCE_DIR}MPC_Tools/mpc_edit_config_common >> bin/mpc_edit_config
 
 chmod 755 bin/mpc_edit_config
-
-end_section

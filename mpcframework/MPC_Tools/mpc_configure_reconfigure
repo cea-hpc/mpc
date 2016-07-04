@@ -21,7 +21,7 @@
 #                                                                      # 
 ######################################################################## 
 
-begin_section Generate reconfigure
+sctk_echo "Generating reconfigure script"
 
 cat <<EOF > reconfigure
 #!/bin/sh
