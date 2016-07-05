@@ -335,7 +335,9 @@ size_t sctk_align_size_to_page(size_t size){
 
 size_t sctk_extls_size()
 {
-	extls_get_sz_static_tls_segments();
+  size_t size;
+  size = extls_get_sz_static_tls_segments();
+  return size;
 }
 
 void sctk_tls_dtors_init(struct sctk_tls_dtors_s ** head)
