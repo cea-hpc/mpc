@@ -688,37 +688,21 @@ sctk_thread_create_tmp_start_routine (sctk_thread_data_t * __arg)
   // endthread priority
   // endhmt
 
-#if defined(MPC_Accelerators)
-//CUDA se mettre la
-//--------------------------------------
-        int num_devices = 0;
-        cudaGetDeviceCount(&num_devices);
-//      fprintf(stderr, "1 num_devices = %d\n", num_devices); fflush(stderr);
-        if(num_devices>0)
-        {
+#if defined(MPC_USE_CUDA)
+  int num_devices = 0;
+  cudaGetDeviceCount(&num_devices);
+  if(num_devices>0)
+  {
+	  //si il y a qu'une seule tache mpi, test marc
+	  sctk_thread_yield();
 
-//        fprintf(stderr, "2 num_devices = %d\n", num_devices); fflush(stderr);
-
-            //si il y a qu'une seule tache mpi, test marc
-            sctk_thread_yield();
-
-            //Si il y a qu'une seule tache mpi, ce pointeur reste a null
-            tls_cuda_t* cuda=(tls_cuda_t*)tls_cuda;
-            //printf("start_routine ->tls_cuda=%p\n",cuda);
-            //fflush(stdout);
-            //pour une seule tache mpi, on ne passe jamais par la et donc on se retrouve avec un contexte primaire.
-            //if(cuda){
-            cuda->is_ready = 1;
-            cuda->cpu_id= sctk_get_cpu();
-            // printf("cpu %d is ready -> %d\n",cuda->cpu_id,cuda->is_ready);
-            // fflush(stdout);
-
-            sctk_accelerators_cuda__init(&tls_cuda);
-            //}
-
-        }
-//--------------------------------------
-#endif //MPC_Accelerators
+	  //Si il y a qu'une seule tache mpi, ce pointeur reste a null
+	  tls_cuda_t* cuda=(tls_cuda_t*)tls_cuda;
+	  cuda->is_ready = 1;
+	  cuda->cpu_id= sctk_get_cpu();
+	  sctk_accl_cuda_init(&tls_cuda);
+  }
+#endif
 
   sctk_tls_dtors_init(&(tmp.dtors_head));
   
@@ -918,35 +902,22 @@ sctk_thread_create_tmp_start_routine_user (sctk_thread_data_t * __arg)
    MPC_Init_thread_specific();
 #endif
 
-#if defined(MPC_Accelerators)
-//CUDA s inserer ici
-//-------------------------------------------------
+#if defined(MPC_USE_CUDA)
    int num_devices = 0;
    cudaGetDeviceCount(&num_devices);
    if(num_devices>0)
    {
-
        sctk_thread_yield();
 
        tls_cuda_t* cuda=(tls_cuda_t*)tls_cuda;
-       //printf("start_routine_user ->tls_cuda=%p \n",cuda);
-       //fflush(stdout);
-
-       if(cuda){
+       if(cuda != NULL)
+	   {
            cuda->is_ready = 1;
            cuda->cpu_id= sctk_get_cpu();
-           //printf("START_ROUTINE_USER cpu %d is ready -> %d\n",cuda->cpu_id,cuda->is_ready);
-           //fflush(stdout);
-
-           sctk_accelerators_cuda__init(&tls_cuda);
+           sctk_accl_cuda_init(&tls_cuda);
        }
-
-       //printf("start_routine_user######cpu_number=%d, cuda->is_ready=%d\n",sctk_get_cpu(),cuda->is_ready);
-       //fflush(stdout);
-
    }
-//-------------------------------------------------
-#endif //MPC_Accelerators
+#endif
 
    // hmt
    // printf("BEFORE PTHREAD: %d\n", sctk_thread_generic_getkind_mask_self());

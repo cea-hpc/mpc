@@ -1,6 +1,7 @@
 
 #if defined(MPC_Accelerators) && defined(MPC_USE_CUDA)
 #include <sctk_cuda.h>
+#include <sctk_debug.h>
 #include <sctk_device_topology.h>
 #include <sctk_spinlock.h>
 void sctk_accl_cuda_print_ctx_flag(){
