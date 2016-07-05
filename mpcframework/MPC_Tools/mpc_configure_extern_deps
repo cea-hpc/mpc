@@ -207,7 +207,7 @@ sctk_internal_setup_lib_hwloc()
 	fi
 
 	#avoid to test -lopa if used embeded as it was not build while calling configure, so will fail
-	if [ "${OPENPA_USER_PREFIX}" = "embeded"  ]; then
+	if [ "${HWLOC_USER_PREFIX}" = "embeded"  ]; then
 		EXTERN_NON_TESTED_LIB="${EXTERN_NON_TESTED_LIB} -lhwloc"
 	fi
 
@@ -236,7 +236,7 @@ SCTK_CHECK_LIB_HWLOC()
 	SCTK_CHECK_HEADER "hwloc.h"
 
 	#avoid to test -lopa if used embeded as it was not build while calling configure, so will fail
-	if [ "${OPENPA_USER_PREFIX}" != "embeded"  ]; then
+	if [ "${HWLOC_USER_PREFIX}" != "embeded"  ]; then
 		SCTK_CHECK_LDOPTION "-lhwloc"
 	fi
 
@@ -260,9 +260,9 @@ sctk_internal_setup_lib_cuda()
 	if [ "$CUDA_IS_SETUP" != "yes" ]; then
         #We are relying on our own CUDA
         #CUDA_PREFIX_INSTALL is defined in the root configure
-        SCTK_ARFLAGS="${SCTK_ARFLAGS} ${CUDA_USER_PREFIX}/lib64/stubs/libcuda.so ${CUDA_USER_PREFIX}/lib64/libcudart.so ${SCTK_ARFLAGS} ${CUDA_USE_PREFIX}/lib64/libcuinj64.so"
+        SCTK_ARFLAGS="${SCTK_ARFLAGS} ${CUDA_USER_PREFIX}/lib64/stubs/libcuda.so ${CUDA_USER_PREFIX}/lib64/libcudart.so ${SCTK_ARFLAGS} ${CUDA_USER_PREFIX}/lib64/libcuinj64.so"
 		SCTK_CFLAGS="${SCTK_CFLAGS} -I${CUDA_USER_PREFIX}/include/"
-        SCTK_LDFLAGS="${SCTK_LDFLAGS} -L${CUDA_USER_PREFIX}/lib64 -L${CUDA_USER_PREFIX}/lib64/stubs"
+        SCTK_LDFLAGS="${SCTK_LDFLAGS} -L${CUDA_USER_PREFIX}/lib64"
     fi
 
 	#mark as setup
@@ -286,8 +286,9 @@ SCTK_CHECK_LIB_CUDA()
 	sctk_internal_setup_lib_cuda
 	#check header
 	SCTK_CHECK_HEADER "cuda.h"
-	SCTK_CHECK_LDOPTION_NOADD "-lcudart"
-	SCTK_CHECK_LDOPTION_NOADD "-lcuda"
+	SCTK_CHECK_LDOPTION "-lcuda"
+	SCTK_CHECK_LDOPTION "-lcudart"
+	SCTK_CHECK_OPTION "-DMPC_USE_CUDA"
 	end_section
 }
 
@@ -297,6 +298,7 @@ SCTK_CHECK_OPENACC()
 	echo "OpenACC Directives are not implemented in MPC yet ! Sorry for the inconvenience"
 	echo "Abort"
 	exit 1
+	SCTK_CHECK_OPTION "-DMPC_USE_OPENACC"
 	end_section
 }
 
@@ -306,6 +308,7 @@ SCTK_CHECK_LIB_OPENCL()
 	echo "OpenCL Support is not implemented in MPC yet ! Sorry for the inconvenience"
 	echo "Abort"
 	exit 1
+	SCTK_CHECK_OPTION "-DMPC_USE_OPENCL"
 	end_section
 }
 

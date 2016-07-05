@@ -30,8 +30,7 @@
 #include <sys/syscall.h>
 
 #if defined(MPC_Accelerators)
-#include <cuda.h>
-#include <cuda_runtime.h>
+#include <sctk_accelerators.h>
 #endif
 
 

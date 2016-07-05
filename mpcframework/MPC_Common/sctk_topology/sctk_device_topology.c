@@ -31,11 +31,9 @@
 #include <sys/types.h>
 #include <regex.h>
 
-//CUDA/
 #if defined(MPC_Accelerators)
-#include <cuda.h>
+#include <sctk_accelerators.h>
 #endif //MPC_Accelerators
-//ENDCUDA
 
 #ifdef MPC_USE_INFINIBAND
 #include <infiniband/verbs.h>
