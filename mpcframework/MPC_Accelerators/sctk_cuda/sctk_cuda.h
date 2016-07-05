@@ -26,4 +26,16 @@
 #include <cuda.h>
 #include <cuda_runtime.h>
 
+/* MPC CUDA context */
+
+typedef struct tls_cuda_s{
+      int is_ready; //when all thread are ready to use cuda contexts
+      int cpu_id; //save cpu_id when context is created 
+      CUcontext context; // thread user's cuda context 
+} tls_cuda_t;
+
+int sctk_accl_cuda_init(void** ptls_cuda);
+int sctk_accl_cuda_push_context(void* tls_cuda);
+int sctk_accl_cuda_pop_context(void** ptls_cuda);
+
 #endif
