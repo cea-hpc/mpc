@@ -1097,4 +1097,4 @@ rm mpc_main.c mpc_main.c++ mpc_main.fortran mpc_main.o > /dev/null 2>&1
 exit 0
 EOF
 chmod 755 bin/mpc_compiler_manager
-ln -s mpc_compiler_manager bin/mpc_compiler_status
+ln -sf mpc_compiler_manager bin/mpc_compiler_status

@@ -217,6 +217,7 @@ createCompilerManager()
 	COMPILER_FILE_DIRECTORY=$HOME/.mpcompil/${CURRENT_INSTALL_HASH}
 	
 	mkdir -p $COMPILER_FILE_DIRECTORY
+	echo "${MPC_RPREFIX}" | sed -e "s#//*#/#g" > ${COMPILER_FILE_DIRECTORY}/mpc_install_path
 }
 
 setCompilerList()
@@ -295,6 +296,18 @@ setCompilerList()
 	done
 
 	testCompilers
+
+	echo "Compiler configuration file are stored in:"
+	echo "  - Installation Path: $MPC_RPREFIX/"
+	if test "$COMPILER_FILE_DIRECTORY" != "${MPC_RPREFIX}/"
+	then
+	echo "  - Home Path: $COMPILER_FILE_DIRECTORY/"
+		# we have to copy back configuration file in the installation path, for read-only access
+		for language in c c++ fortran
+		do
+			cp ${COMPILER_FILE_DIRECTORY}/.${language}_compilers.cfg ${MPC_RPREFIX}/
+		done
+	fi
 }
 
 ######################################################
