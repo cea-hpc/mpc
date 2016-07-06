@@ -19,6 +19,9 @@
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
 /* #                                                                      # */
 /* ######################################################################## */
+#define _GNU_SOURCE        
+#include <dlfcn.h>
+
 #include "sctk_asm.h"
 #include "sctk_pthread.h"
 #include "sctk_kernel_thread.h"
@@ -179,9 +182,9 @@ kthread_create (kthread_t * thread, void *(*start_routine) (void *),
 //#warning "Move it to the XML configuration file"
     char *env;
     if ( (env = getenv("MPC_KTHREAD_STACK_SIZE")) != NULL) {
-      kthread_stack_size = atoll(env) + sctk_extls_size();
+      kthread_stack_size = atoll(env) /* + sctk_extls_size() */;
     } else {
-      kthread_stack_size = kthread_stack_size_default + sctk_extls_size();
+      kthread_stack_size = kthread_stack_size_default /* + sctk_extls_size() */;
     }
 
 #ifdef PTHREAD_STACK_MIN
@@ -248,6 +251,40 @@ kthread_create (kthread_t * thread, void *(*start_routine) (void *),
     }
     return res;
   }
+}
+
+int (*real_pthread_create)(pthread_t *, const pthread_attr_t *,
+			   void *(*) (void *), void *) = NULL;
+
+int pthread_create(pthread_t *thread, const pthread_attr_t *attr,
+		   void *(*start_routine) (void *), void *arg){
+  pthread_attr_t local_attr;
+  pthread_attr_t* r_attr;
+  size_t kthread_stack_size;
+  int res;
+  
+  if(real_pthread_create == NULL){
+    real_pthread_create = dlsym(RTLD_NEXT,"pthread_create");
+  }
+
+  r_attr = attr;
+
+  if(r_attr == NULL){
+    r_attr = &local_attr;
+    res = pthread_attr_init (r_attr);
+    if(res != 0) return res;
+  }
+
+  res = pthread_attr_getstacksize (r_attr, &kthread_stack_size);
+  if(res != 0) return res;
+
+  kthread_stack_size += sctk_extls_size();
+   
+  res = pthread_attr_setstacksize (r_attr, kthread_stack_size);
+  if(res != 0) return res;
+  
+  res = real_pthread_create(thread,r_attr,start_routine,arg);
+  return res;
 }
 
 int
