@@ -523,11 +523,11 @@ void __mpcomp_task_infos_init()
 
 	  /* Allocate the default current task (no func, no data, no parent) */
       /* TODO check that this memory allocation is useless */
-#if 0
+//#if 0
 	  t->current_task = mpcomp_malloc(1, sizeof(struct mpcomp_task_s), id_numa);
 	  __mpcomp_task_init(t->current_task, NULL, NULL, t);
 	  t->current_task->parent = NULL;
-#endif
+//#endif
 
 	  /* Allocate private task data structures */
 	  t->tied_tasks = mpcomp_malloc(1, sizeof(struct mpcomp_task_list_s), id_numa);
