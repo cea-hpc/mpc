@@ -613,55 +613,12 @@ cat <<EOF >> $1
     fi
 EOF
 else
-if test "$3" = "global" ; then 
 cat <<EOF >> $1
-    if test "\${output_filename}" = "" ; then 
-        output_filename="./a.out"
-    fi
-    global_local_args=""
-    global_local_args_redefine="no"
-    for global_local_args_i in \$allargs; do 
-
-        if test "\$global_local_args_redefine" = "yes" ; then 
-            global_local_args_redefine="no"
-            global_local_args_i=""
-        fi
-
-        if test "\$global_local_args_i" = "-o" ; then 
-            global_local_args_redefine="yes"
-            global_local_args_i=""
-        fi
-        global_local_args="\$global_local_args \$global_local_args_i"
-    done
-    \$Show \$CC \$LIB_PATH \$LDFLAGS \$CFLAGS \$global_local_args \$LDFLAGS -fpic -shared -o lib\`basename \${output_filename}\`.so
-    global_local_args=""
-    global_local_args_redefine="no"
-    global_local_args_skip="no"
-    for global_local_args_i in \$allargs; do 
-
-        if test "\`basename -- \$global_local_args_i .o\`" != "\`basename -- \$global_local_args_i\`" ; then 
-            global_local_args_skip="yes"
-        fi
-
-        if test "\$global_local_args_skip" = "no" ; then 
-        global_local_args="\$global_local_args \$global_local_args_i"
-        fi
-        global_local_args_skip="no"
-    done
-
-    global_dir_lib="\`dirname \${output_filename}\`"
-    
-    \$Show \$CC -L\$global_dir_lib -Wl,-rpath=\$global_dir_lib -l\`basename \${output_filename}\` \$LIB_PATH \$LDFLAGS \$global_local_args \$CFLAGS  \$LDFLAGS \${OUTPUT_FILE_ARGS}  
-    rc=\$?
-EOF
-else
-cat <<EOF >> $1
-    \$Show \$CC \$LIB_PATH \$LDFLAGS \$CFLAGS \$allargs \$LDFLAGS \${OUTPUT_FILE_ARGS} 
+    \$Show $3\$CC \$LIB_PATH \$LDFLAGS \$CFLAGS \$allargs \$LDFLAGS \${OUTPUT_FILE_ARGS} 
     # The first \$LDFLAGS should be removed, but still some issues... 
     # \$Show \$CC \$LIB_PATH \$CFLAGS \$allargs \$LDFLAGS \${OUTPUT_FILE_ARGS} 
     rc=\$?
 EOF
-fi
 fi
 
 if test "$2" = "fortran" ; then 
@@ -679,17 +636,10 @@ cat <<EOF >> $1
     rc=\$?
 EOF
 else
-if test "$3" = "global" ; then 
 cat <<EOF >> $1
-    \$Show \$CC \$CFLAGS \$allargs -fpic \${OUTPUT_FILE_ARGS}
+    \$Show $3\$CC \$CFLAGS \$allargs \${OUTPUT_FILE_ARGS}
     rc=\$?
 EOF
-else
-cat <<EOF >> $1
-    \$Show \$CC \$CFLAGS \$allargs \${OUTPUT_FILE_ARGS}
-    rc=\$?
-EOF
-fi
 fi
 cat <<EOF >> $1
 fi
@@ -846,6 +796,11 @@ printf_deprecated_compiler bin/mpc_g++ bin/mpc_cxx g++
 #deprecated F wrappers
 printf_deprecated_compiler bin/mpc_ifort bin/mpc_f77 ifort
 printf_deprecated_compiler bin/mpc_gfortran bin/mpc_f77 gfortran
+
+if test "$SCTK_CUDA" = "1"; then
+	sctk_echo "Preparing NVIDIA Compiler: mpc_nvcc"
+	printf_compiler bin/mpc_nvcc c++ "nvcc --compiler-bindir "
+fi
 
 ########################################
 ########################################
