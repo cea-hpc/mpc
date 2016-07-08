@@ -186,7 +186,7 @@ int sctk_load_wrapper_symbols( char * dso , void * handle )
 {
 	char command[1000];
 
-	snprintf(command, 1000, "nm  %s 2>&1 | grep \"___mpc_TLS_w\"", dso );
+	snprintf(command, 1000, "nm  %s 2>&1 | grep \"___mpc_TLS_w|_ZTW\"", dso );
 	
 	
 	FILE * wrapper_symbols = popen(command, "r");
