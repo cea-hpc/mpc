@@ -7,6 +7,8 @@ void __mpcomp_internal_GOMP_loop_end(void)
    t = (mpcomp_thread_t *) sctk_openmp_thread_tls; 
    sctk_assert(t != NULL);
 
+   sctk_warning("VALUE : %ld\t%p", t->schedule_type, t);
+
    switch(t->schedule_type)
    {
       case MPCOMP_COMBINED_DYN_LOOP:
@@ -21,12 +23,13 @@ void __mpcomp_internal_GOMP_loop_end(void)
       }
       case MPCOMP_COMBINED_RUNTIME_LOOP:
       {
-         __mpcomp_runtime_loop_end_nowait();
+         __mpcomp_runtime_loop_end();
          break;
       }
       default:
       {
          __mpcomp_static_loop_end();
+         //__mpcomp_dynamic_loop_end();
       }
    }
 }
@@ -100,6 +103,7 @@ bool __mpcomp_internal_GOMP_loop_dynamic_start (long start, long end, long incr,
    mpcomp_thread_t *t;
    t = (mpcomp_thread_t *) sctk_openmp_thread_tls; 
    sctk_assert(t != NULL);
+   sctk_nodebug("swicth schedule_type value %ld to %ld\t%p", t->schedule_type, MPCOMP_COMBINED_DYN_LOOP, t); 
    t->schedule_type = MPCOMP_COMBINED_DYN_LOOP; 
    ret = (__mpcomp_dynamic_loop_begin(start,end,incr,chunk_size,istart,iend)) ? true : false;
    return ret;

@@ -55,7 +55,7 @@ void __mpcomp_GOMP_parallel_loop_dynamic_start(void (*fn) (void *), void *data,
 				  unsigned num_threads, long start, long end,
 				  long incr, long chunk_size)
 {
-   sctk_nodebug("[Redirect GOMP]%s:\tBegin",__func__);
+   sctk_nodebug("[Redirect GOMP]%s:\tBegin\tSTART:%ld",__func__,start);
     __mpcomp_internal_GOMP_parallel_loop_generic_start(fn,data,num_threads,start,end,incr,chunk_size,(long)MPCOMP_COMBINED_DYN_LOOP);
    sctk_nodebug("[Redirect GOMP]%s:\tEnd",__func__);
 }

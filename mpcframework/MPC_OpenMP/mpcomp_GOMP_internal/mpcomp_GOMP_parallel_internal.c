@@ -67,7 +67,7 @@ static void __mpcomp_internal_GOMP_in_order_scheduler_master_end(void)
           break;
        case MPCOMP_COMBINED_DYN_LOOP:
           sctk_nodebug("%s:\tEND - Combined parallel/loop",__func__);
-          __mpcomp_dynamic_loop_end_nowait(t);
+          //__mpcomp_dynamic_loop_end_nowait(t);
           break;
        default:
           not_implemented();
