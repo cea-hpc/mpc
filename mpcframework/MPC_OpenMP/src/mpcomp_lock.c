@@ -137,16 +137,21 @@ omp_test_nest_lock(omp_nest_lock_t *lock)
   t = sctk_openmp_thread_tls ;
   sctk_assert( t != NULL ) ;
 
-  sctk_nodebug( "omp_test_nest_lock: TEST owner=(%p,%p), thread=(%p,%p)\n", 
+  sctk_error( "omp_test_nest_lock: TEST owner=(%p,%p), thread=(%p,%p)\n", 
           lock->owner_thread, lock->owner_task,
           t, t->current_task ) ;
 
 #if MPCOMP_TASK
+  struct mpcomp_task_s * cur_task = t->current_task;
+ 
+  if(t->current_task != NULL && t->current_task->isGhostTask)
+    cur_task = NULL;
+      
   if (
           !(
               (
-               (lock->owner_task == t->current_task)
-               &&
+               (lock->owner_task == cur_task)
+               && 
                (
                 (lock->owner_thread == (void *)t)
                 ||
@@ -165,7 +170,7 @@ omp_test_nest_lock(omp_nest_lock_t *lock)
       }
       lock->owner_thread = (void *)t ;
 #if MPCOMP_TASK
-      lock->owner_task = t->current_task ;
+      lock->owner_task = cur_task ;
 #endif
   }
   lock->nb_nested++ ;

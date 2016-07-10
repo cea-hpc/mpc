@@ -525,7 +525,7 @@ void __mpcomp_task_infos_init()
       /* TODO check that this memory allocation is useless */
 //#if 0
 	  t->current_task = mpcomp_malloc(1, sizeof(struct mpcomp_task_s), id_numa);
-	  __mpcomp_task_init(t->current_task, NULL, NULL, t);
+	  __mpcomp_task_init(t->current_task, NULL, NULL, t, 1);
 	  t->current_task->parent = NULL;
 //#endif
 
@@ -625,7 +625,7 @@ mpcomp_task_get_list(int globalRank, mpcomp_tasklist_type_t type)
  * Called when encountering an 'omp task' construct 
  */
 void 
-__mpcomp_task(void *(*fn) (void *), void *data, void (*cpyfn) (void *, void *),
+__mpcomp_task(void (*fn) (void *), void *data, void (*cpyfn) (void *, void *),
 		   long arg_size, long arg_align, bool if_clause, unsigned flags)
 {
      mpcomp_thread_t *t;
@@ -687,7 +687,7 @@ __mpcomp_task(void *(*fn) (void *), void *data, void (*cpyfn) (void *, void *),
 	  struct mpcomp_task_s *prev_task;
 	  mpcomp_local_icv_t icvs;
 
-	  __mpcomp_task_init (&task, NULL, NULL, t);
+	  __mpcomp_task_init (&task, NULL, NULL, t, 0);
 	  mpcomp_task_set_property (&(task.property), MPCOMP_TASK_UNDEFERRED);
 	  prev_task = t->current_task;
       
@@ -711,11 +711,11 @@ __mpcomp_task(void *(*fn) (void *), void *data, void (*cpyfn) (void *, void *),
 		// fn (data);
 #if 1
 	  if (cpyfn != NULL) {
-	       /* If cpyfn is given, use it to copy args */
 	       char tmp[arg_size + arg_align - 1];
 	       char *data_cpy = (char *) (((uintptr_t) tmp + arg_align - 1)
 	  				  & ~(uintptr_t) (arg_align - 1));
 
+	       /* If cpyfn is given, use it to copy args */
 	       cpyfn (data_cpy, data);
 	       fn (data_cpy);
 	  } else {
@@ -755,7 +755,7 @@ __mpcomp_task(void *(*fn) (void *), void *data, void (*cpyfn) (void *, void *),
 	  }
 
 	  /* Create new task */
-	  __mpcomp_task_init (task, fn, data_cpy, t);
+	  __mpcomp_task_init (task, fn, data_cpy, t, 0);
 	  task->icvs = t->info.icvs;
 	  mpcomp_task_set_property (&(task->property), MPCOMP_TASK_TIED);
 	  if (flags & 2) {

@@ -190,6 +190,7 @@ omp_get_thread_limit__ ()
 void
 omp_set_max_active_levels_ ( int * max_levels )
 {
+    fprintf(stderr, "%s - %d", __func__, *max_levels);
     omp_set_max_active_levels( *max_levels ) ;
 }
 

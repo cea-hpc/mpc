@@ -249,8 +249,9 @@ struct common_table {
      /* OpenMP task data structure */
      struct mpcomp_task_s
      {
-	  void *(*func) (void *);             /* Function to execute */
+	  void (*func) (void *);             /* Function to execute */
 	  void *data;                         /* Arguments of the function */
+      int isGhostTask;
 	  mpcomp_task_property_t property;        /* Task property */
 	  struct mpcomp_task_s *parent;       /* Mother task */
 	  struct mpcomp_task_s *children;     /* Children list */
@@ -692,10 +693,11 @@ typedef struct mpcomp_thread_s
 
      static inline void __mpcomp_task_init
      (struct mpcomp_task_s *task,
-      void *(*func) (void *),
+      void (*func) (void *),
       void *data,
-      mpcomp_thread_t *thread)
+      mpcomp_thread_t *thread, int isGhostTask)
      {
+      task->isGhostTask = isGhostTask;
 	  task->func = func;
 	  task->data = data;
 	  mpcomp_task_reset_property(&(task->property));
