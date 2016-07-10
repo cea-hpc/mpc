@@ -586,7 +586,7 @@ __mpcomp_build_tree( mpcomp_instance_t * instance, int n_leaves, int depth, int 
 			 int res;
 
 			 sctk_thread_attr_init(&__attr);
-             sctk_thread_attr_setbinding (& __attr, sctk_get_cpu() + target_vp);
+             sctk_thread_attr_setbinding (& __attr, (sctk_get_cpu() + target_vp) % sctk_get_cpu_number());
 			 sctk_thread_attr_setstacksize (&__attr, 
 			     mpcomp_global_icvs.stacksize_var);
 
