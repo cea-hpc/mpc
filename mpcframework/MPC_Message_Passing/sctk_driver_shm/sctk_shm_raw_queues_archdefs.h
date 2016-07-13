@@ -1,6 +1,8 @@
 #ifndef __SCTK_SHM_RAW_QUEUES_ARCHDEFS_H__
 #define __SCTK_SHM_RAW_QUEUES_ARCHDEFS_H__
 
+#include <libpause.h>
+
 #ifndef PAGE_SIZE
 #define PAGE_SIZE 4096
 #endif /* PAGE_SIZE */
@@ -48,7 +50,7 @@ page_align(void *ptr)
 static inline void 
 cpu_relax(void)
 {
-    __asm__ __volatile__ ("rep;nop":::"memory");
+    sctk_cpu_relax();
 }
 
 #endif /* __SCTK_SHM_RAW_QUEUES_ARCHDEFS_H__ */
