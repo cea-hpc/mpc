@@ -44,9 +44,40 @@ int __kmp_invoke_microtask(
     int gtid, int npr, int argc, void *argv[] );
 
 
-int __kmp_xchg_fixed32( volatile int * p, int d ) ;
-int __kmp_test_then_add32( volatile int * addr, int data ) ;
-long __kmp_test_then_add64( volatile long * addr, long data ) ;
-double __kmp_test_then_add_real64( volatile double *addr, double data );
+
+typedef char               kmp_int8;
+typedef unsigned char      kmp_uint8;
+typedef short              kmp_int16;
+typedef unsigned short     kmp_uint16;
+typedef int                kmp_int32;
+typedef unsigned int       kmp_uint32;
+typedef long long          kmp_int64;
+typedef unsigned long long kmp_uint64;
+
+typedef float              kmp_real32;
+typedef double             kmp_real64;
+
+kmp_int32  __kmp_test_then_add32( volatile kmp_int32 *, kmp_int32  ) ;
+kmp_int64  __kmp_test_then_add64( volatile kmp_int64 *, kmp_int64 ) ;
+
+kmp_int8   __kmp_compare_and_store8( volatile kmp_int8 *, kmp_int8, kmp_int8);
+kmp_int16  __kmp_compare_and_store16( volatile kmp_int16 *, kmp_int16, kmp_int16);
+kmp_int32  __kmp_compare_and_store32( volatile kmp_int32 *, kmp_int32, kmp_int32);
+kmp_int32  __kmp_compare_and_store64( volatile kmp_int64 *, kmp_int64, kmp_int64);
+kmp_int8   __kmp_compare_and_store_ret8( volatile kmp_int8  *p, kmp_int8  cv, kmp_int8  sv );
+kmp_int16  __kmp_compare_and_store_ret16( volatile kmp_int16 *p, kmp_int16 cv, kmp_int16 sv );
+kmp_int32  __kmp_compare_and_store_ret32( volatile kmp_int32 *p, kmp_int32 cv, kmp_int32 sv );
+kmp_int64  __kmp_compare_and_store_ret64( volatile kmp_int64 *p, kmp_int64 cv, kmp_int64 sv );
+
+kmp_int8   __kmp_xchg_fixed8( volatile kmp_int8  *p, kmp_int8  v );
+kmp_int16  __kmp_xchg_fixed16( volatile kmp_int16 *p, kmp_int16 v );
+kmp_int32  __kmp_xchg_fixed32( volatile kmp_int32 *, kmp_int32  ) ;
+kmp_int64  __kmp_xchg_fixed64( volatile kmp_int64 *, kmp_int64  ) ;
+kmp_real32 __kmp_xchg_real32( volatile kmp_real32 *p, kmp_real32 v );
+kmp_real64 __kmp_xchg_real64( volatile kmp_real64 *p, kmp_real64 v );
+
+double     __kmp_test_then_add_real32( kmp_real32 *, kmp_real32 );
+double     __kmp_test_then_add_real64( kmp_real64 *, kmp_real64 );
+
 
 #endif
