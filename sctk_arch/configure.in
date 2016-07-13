@@ -113,6 +113,8 @@ AC_COMPILE_IFELSE(
 #define SCTK_ia64_ARCH_SCTK
 #elif defined(__arm__)
 #define SCTK_arm_ARCH_SCTK
+#elif defined(__aarch64__)
+#define SCTK_arm64_ARCH_SCTK
 #elif defined(__powerpc64__)
 #define SCTK_ppc64_ARCH_SCTK
 #else
@@ -132,6 +134,10 @@ AC_COMPILE_IFELSE(
 #endif
 
 #if defined(SCTK_arm_ARCH_SCTK) && !defined(CONTEXT_GEN)
+#error "Wrong context detection"
+#endif
+
+#if defined(SCTK_arm64_ARCH_SCTK) && !defined(CONTEXT_GEN)
 #error "Wrong context detection"
 #endif
 
