@@ -23,6 +23,7 @@
 #include <mpcomp_abi.h>
 #include <sctk_debug.h>
 #include "mpcomp_internal.h"
+#include <libarch.h>
 
 /* Declaration from MPC
 TODO: put these declarations in header file
@@ -109,13 +110,24 @@ typedef unsigned long long kmp_uint64;
 
 typedef float              kmp_real32;
 typedef double             kmp_real64;
+
+#ifdef SCTK_x86_64_ARCH_SCTK 
 typedef __float128         _Quad;
+/* Check for quad-precision extension. Here, forced to 1 for MPC for x86*/
+#define KMP_HAVE_QUAD 1
+#endif
+
 typedef unsigned char      uchar;
 
-/* Check for quad-precision extension. Here, forced to 1 for MPC */
-#define KMP_HAVE_QUAD 1
-
 /* KMP.H */
+
+#ifndef KMP_INTPTR
+# define KMP_INTPTR 1
+  typedef long             kmp_intptr_t;
+  typedef unsigned long    kmp_uintptr_t;
+# define KMP_INTPTR_SPEC   "ld"
+# define KMP_UINTPTR_SPEC  "lu"
+#endif
 
 typedef struct ident {
   kmp_int32 reserved_1 ;
