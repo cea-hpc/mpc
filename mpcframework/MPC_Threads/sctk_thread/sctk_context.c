@@ -88,7 +88,7 @@ sctk_mctx_save (sctk_mctx_t * mctx)
 static inline int
 sctk_mctx_restore (sctk_mctx_t * mctx)
 {
--  errno = (mctx)->error;
+  errno = (mctx)->error;
   (mctx)->restored = 1;
   setcontext (&((mctx)->uc));
   return (mctx)->restored;
