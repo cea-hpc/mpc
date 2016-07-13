@@ -51,3 +51,6 @@ kmp_real64 __kmp_xchg_real64( volatile kmp_real64 *p, kmp_real64 v ){assert(0);}
 double     __kmp_test_then_add_real32( kmp_real32 *a, kmp_real32 b){assert(0);}
 double     __kmp_test_then_add_real64( kmp_real64 *a, kmp_real64 b){assert(0);}
 
+extern  void __sctk_cpu_relax ();
+int __kmp_x86_pause(){sctk_cpu_relax(); return 0;}
+

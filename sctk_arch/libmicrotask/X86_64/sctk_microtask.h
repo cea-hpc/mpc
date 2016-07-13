@@ -79,5 +79,6 @@ kmp_real64 __kmp_xchg_real64( volatile kmp_real64 *p, kmp_real64 v );
 double     __kmp_test_then_add_real32( kmp_real32 *, kmp_real32 );
 double     __kmp_test_then_add_real64( kmp_real64 *, kmp_real64 );
 
+int __kmp_x86_pause();
 
 #endif
