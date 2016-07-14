@@ -465,7 +465,20 @@ void sctk_net_init_driver ( char *name )
 	for ( k = (cli_option->rails_size - 1); 0 <= k ; k-- )
 	{
 		/* For each RAIL */
-		struct sctk_runtime_config_struct_net_rail *rail_config_struct = sctk_get_rail_config_by_name ( cli_option->rails[k] );
+		struct sctk_runtime_config_struct_net_rail *rail_config_struct;
+#ifndef MPC_USE_INFINIBAND
+		if(strcmp(cli_option->rails[k],"ib_mpi") == 0) {
+		  sctk_warning("Network support %s not available switching to tcp_mpi",cli_option->rails[k]);
+		  cli_option->rails[k] = "tcp_mpi";
+		}
+#endif
+#ifndef MPC_USE_PORTALS
+		if(strcmp(cli_option->rails[k],"portals_mpi") == 0) {
+		  sctk_warning("Network support %s not available switching to tcp_mpi",cli_option->rails[k]);
+		  cli_option->rails[k] = "tcp_mpi";
+		}
+#endif
+		rail_config_struct = sctk_get_rail_config_by_name ( cli_option->rails[k] );
 
 		if ( rail_config_struct == NULL )
 		{
