@@ -56,7 +56,7 @@ extern "C"
       void * owner_task; /* Owner of the lock */
       int nb_nested ; /* Number of times this lock is held */
       sctk_thread_mutex_t l ; /* Real lock */
-  } ;
+  };
   typedef struct omp_nested_lock_s omp_nest_lock_t ;
 
 

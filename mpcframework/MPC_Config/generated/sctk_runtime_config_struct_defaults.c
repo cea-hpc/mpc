@@ -690,6 +690,53 @@ void sctk_runtime_config_struct_init_low_level_comm(void * struct_ptr)
 }
 
 /*******************  FUNCTION  *********************/
+void sctk_runtime_config_enum_init_mpcomp_task_larceny_mode()
+{
+	struct enum_type * current_enum = (struct enum_type *) malloc(sizeof(struct enum_type));
+	struct enum_value * current_value, * values = NULL;
+
+	strncpy(current_enum->name, "enum mpcomp_task_larceny_mode", 50);
+
+	current_value = (struct enum_value *) malloc(sizeof(struct enum_value));
+	strncpy(current_value->name, "MPCOMP_TASK_LARCENY_MODE_HIERARCHICAL", 50);
+	current_value->value = MPCOMP_TASK_LARCENY_MODE_HIERARCHICAL;
+	HASH_ADD_STR(values, name, current_value);
+
+	current_value = (struct enum_value *) malloc(sizeof(struct enum_value));
+	strncpy(current_value->name, "MPCOMP_TASK_LARCENY_MODE_RANDOM", 50);
+	current_value->value = MPCOMP_TASK_LARCENY_MODE_RANDOM;
+	HASH_ADD_STR(values, name, current_value);
+
+	current_value = (struct enum_value *) malloc(sizeof(struct enum_value));
+	strncpy(current_value->name, "MPCOMP_TASK_LARCENY_MODE_RANDOM_ORDER", 50);
+	current_value->value = MPCOMP_TASK_LARCENY_MODE_RANDOM_ORDER;
+	HASH_ADD_STR(values, name, current_value);
+
+	current_value = (struct enum_value *) malloc(sizeof(struct enum_value));
+	strncpy(current_value->name, "MPCOMP_TASK_LARCENY_MODE_ROUNDROBIN", 50);
+	current_value->value = MPCOMP_TASK_LARCENY_MODE_ROUNDROBIN;
+	HASH_ADD_STR(values, name, current_value);
+
+	current_value = (struct enum_value *) malloc(sizeof(struct enum_value));
+	strncpy(current_value->name, "MPCOMP_TASK_LARCENY_MODE_PRODUCER", 50);
+	current_value->value = MPCOMP_TASK_LARCENY_MODE_PRODUCER;
+	HASH_ADD_STR(values, name, current_value);
+
+	current_value = (struct enum_value *) malloc(sizeof(struct enum_value));
+	strncpy(current_value->name, "MPCOMP_TASK_LARCENY_MODE_PRODUCER_ORDER", 50);
+	current_value->value = MPCOMP_TASK_LARCENY_MODE_PRODUCER_ORDER;
+	HASH_ADD_STR(values, name, current_value);
+
+	current_value = (struct enum_value *) malloc(sizeof(struct enum_value));
+	strncpy(current_value->name, "MPCOMP_TASK_LARCENY_MODE_COUNT", 50);
+	current_value->value = MPCOMP_TASK_LARCENY_MODE_COUNT;
+	HASH_ADD_STR(values, name, current_value);
+
+	current_enum->values = values;
+	HASH_ADD_STR(enums_types, name, current_enum);
+}
+
+/*******************  FUNCTION  *********************/
 void sctk_runtime_config_struct_init_openmp(void * struct_ptr)
 {
 	struct sctk_runtime_config_struct_openmp * obj = struct_ptr;
@@ -788,6 +835,7 @@ void sctk_runtime_config_reset(struct sctk_runtime_config * config)
 #endif
 #ifdef MPC_OpenMP
 	sctk_runtime_config_struct_init_openmp(&config->modules.openmp);
+	sctk_runtime_config_enum_init_mpcomp_task_larceny_mode();
 #endif
 #ifdef MPC_Profiler
 	sctk_runtime_config_struct_init_profiler(&config->modules.profiler);

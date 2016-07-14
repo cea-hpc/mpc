@@ -2,6 +2,18 @@
 <!DOCTYPE config SYSTEM "../MPC_Config/extra/config-meta.dtd">
 <config>
 	<usertypes>
+
+            <enum name="mpcomp_task_larceny_mode_t" doc="">
+	            <value>MPCOMP_TASK_LARCENY_MODE_HIERARCHICAL</value>
+	            <value>MPCOMP_TASK_LARCENY_MODE_RANDOM</value>
+	            <value>MPCOMP_TASK_LARCENY_MODE_RANDOM_ORDER</value>
+	            <value>MPCOMP_TASK_LARCENY_MODE_ROUNDROBIN</value>
+	            <value>MPCOMP_TASK_LARCENY_MODE_PRODUCER</value>
+	            <value>MPCOMP_TASK_LARCENY_MODE_PRODUCER_ORDER</value>
+	            <value>MPCOMP_TASK_LARCENY_MODE_COUNT</value>
+            </enum>
+
+            <enum name="mpcomp_task_larceny_mode" doc="">
 		<struct name="openmp" doc="Options for MPC OpenMP.">
 			<param name="vp" type="int" default="0" doc="Number of VPs for each OpenMP team"/>
 			<param name="schedule" type="string" default="static" doc="Runtime schedule type and chunck size"/>
@@ -22,6 +34,7 @@
 			<param name="warn_nested" type="bool" default="false" doc="Emit warning when entering nested parallelism"/>
 			<param name="mode" type="string" default="simple-mixed" doc="MPI/OpenMP hybrid mode (simple-mixed, alternating)"/>
 			<param name="affinity" type="string" default="compact" doc="Affinity of threads for parallel regions (COMPACT, SCATTER, BALANCED)"/>
+            
 		</struct>
 	</usertypes>
 	<modules>

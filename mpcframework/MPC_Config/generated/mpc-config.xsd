@@ -700,6 +700,18 @@
     </xs:all>
   </xs:complexType>
   <!-- ********************************************************* -->
+  <xs:simpleType name="user_type_mpcomp_task_larceny_mode">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="MPCOMP_TASK_LARCENY_MODE_HIERARCHICAL"/>
+      <xs:enumeration value="MPCOMP_TASK_LARCENY_MODE_RANDOM"/>
+      <xs:enumeration value="MPCOMP_TASK_LARCENY_MODE_RANDOM_ORDER"/>
+      <xs:enumeration value="MPCOMP_TASK_LARCENY_MODE_ROUNDROBIN"/>
+      <xs:enumeration value="MPCOMP_TASK_LARCENY_MODE_PRODUCER"/>
+      <xs:enumeration value="MPCOMP_TASK_LARCENY_MODE_PRODUCER_ORDER"/>
+      <xs:enumeration value="MPCOMP_TASK_LARCENY_MODE_COUNT"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <!-- ********************************************************* -->
   <xs:complexType name="user_type_openmp">
     <xs:all>
       <xs:element minOccurs="0" name="vp" type="xs:integer"/>

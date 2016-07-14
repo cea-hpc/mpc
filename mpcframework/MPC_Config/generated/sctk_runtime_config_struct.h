@@ -640,6 +640,19 @@ struct sctk_runtime_config_struct_low_level_comm
 	struct sctk_runtime_config_struct_ib_global ib_global;
 };
 
+/********************************** ENUM ************************************/
+/****/
+enum mpcomp_task_larceny_mode
+{
+	MPCOMP_TASK_LARCENY_MODE_HIERARCHICAL,
+	MPCOMP_TASK_LARCENY_MODE_RANDOM,
+	MPCOMP_TASK_LARCENY_MODE_RANDOM_ORDER,
+	MPCOMP_TASK_LARCENY_MODE_ROUNDROBIN,
+	MPCOMP_TASK_LARCENY_MODE_PRODUCER,
+	MPCOMP_TASK_LARCENY_MODE_PRODUCER_ORDER,
+	MPCOMP_TASK_LARCENY_MODE_COUNT
+};
+
 /******************************** STRUCTURE *********************************/
 /**Options for MPC OpenMP.**/
 struct sctk_runtime_config_struct_openmp
