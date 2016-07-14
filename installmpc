@@ -275,6 +275,15 @@ do
 			SCTK_GETOPT_PREFIX='disabled'
 			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --disable-MPC_MPI --disable-MPC_Allocator --enable-lib-mode"
 			;;
+		--mpc-process-mode)			
+			GCC_PREFIX='disabled'
+			PRIV_PLUGIN_PREFIX='disabled'
+			GMP_PREFIX='disabled'
+			MPFR_PREFIX='disabled'
+			MPC_PREFIX='disabled'
+			BINUTILS_PREFIX='disabled'
+			SCTK_GETOPT_PREFIX='disabled'
+			;;
 		##################### MPC ###################
 		--with-mpc=*)
 			extractParamValue 'MPC_PREFIX' 'with-mpc' "$arg"
