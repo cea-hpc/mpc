@@ -3,6 +3,8 @@
 USER=`whoami`
 FILE=$1
 
+MAIL_DEST="marc.perache@cea.fr"
+
 usage(){
     echo "Usage $0 patch_file"
 }
@@ -13,3 +15,12 @@ exit 1
 fi
 
 curl --negotiate -u $USER -k https://jenkins.ccc.ocre.cea.fr/mpc_nr/job/MPC_Add_hotfix/build -F file0=@$FILE -F json='{"parameter": [{"name":"./patch_file", "file":"file0"}]}'
+if test "$?" != "0" ; then
+    echo "Try to send patch by email with mutt"
+    cat $1 | mutt -s "MPC submit patch $1" -a "$1" -- $MAIL_DEST
+fi
+
+if test "$?" != "0" ; then
+    echo "Try to send patch by email with mail"
+    cat $1 | mailx -s "MPC submit patch $1" $MAIL_DEST
+fi
