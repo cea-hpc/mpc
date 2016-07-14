@@ -138,16 +138,6 @@ extern "C"
 	  MPCOMP_TASK_TYPE_UNTIED = 1,
 	  MPCOMP_TASK_TYPE_COUNT = 2,
      } mpcomp_tasklist_type_t;
-
-     typedef enum mpcomp_task_larceny_mode_t {
-	  MPCOMP_TASK_LARCENY_MODE_HIERARCHICAL = 0,
-	  MPCOMP_TASK_LARCENY_MODE_RANDOM = 1,
-	  MPCOMP_TASK_LARCENY_MODE_RANDOM_ORDER = 2,
-	  MPCOMP_TASK_LARCENY_MODE_ROUNDROBIN = 3,
-	  MPCOMP_TASK_LARCENY_MODE_PRODUCER = 4,
-	  MPCOMP_TASK_LARCENY_MODE_PRODUCER_ORDER = 5,
-	  MPCOMP_TASK_LARCENY_MODE_COUNT = 6,
-     } mpcomp_task_larceny_mode_t;
 #endif
 
      typedef enum mpcomp_mode_t {
@@ -271,8 +261,8 @@ struct common_table {
      {
 	  sctk_atomics_int nb_elements;    /* Number of tasks in the list */
 	  sctk_spinlock_t lock;            /* Lock of the list */
-	  volatile struct mpcomp_task_s *head;      /* First task of the list */
-	  volatile struct mpcomp_task_s *tail;      /* Last task of the list */
+	  struct mpcomp_task_s *head;      /* First task of the list */
+	  struct mpcomp_task_s *tail;      /* Last task of the list */
  	  int total;                       /* Total number of tasks pushed in the list */
 	  sctk_atomics_int nb_larcenies;   /* Number of tasks in the list */
     };

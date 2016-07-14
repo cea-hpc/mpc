@@ -60,12 +60,20 @@ omp_test_lock(omp_lock_t *lock)
 void 
 omp_init_nest_lock(omp_nest_lock_t *lock)
 {
+  mpcomp_thread_t * t ;
+
+  __mpcomp_init ();
+
+  t = sctk_openmp_thread_tls ;
  lock->owner_thread = NULL ;
+
 #if MPCOMP_TASK
- lock->owner_task = NULL ;
+ lock->owner_task = (t->current_task) ? t->current_task : NULL ;
 #endif
  lock->nb_nested = 0 ;
- sctk_thread_mutex_init(&(lock->l),NULL);
+ int ret = sctk_thread_mutex_init(&(lock->l), NULL);
+ sctk_assert( ret == 0);
+ sctk_error("try lock - %p", lock->l);
 }
 
 void 
@@ -146,9 +154,12 @@ omp_test_nest_lock(omp_nest_lock_t *lock)
  
   if(t->current_task != NULL && t->current_task->isGhostTask)
     cur_task = NULL;
-      
+  
+  if(!lock->owner_thread)
+    sctk_error("WHATTTTT!!!!"); 
+
   if (
-          !(
+          (!lock->owner_thread) || (!(
               (
                (lock->owner_task == cur_task)
                && 
@@ -158,24 +169,26 @@ omp_test_nest_lock(omp_nest_lock_t *lock)
                 (lock->owner_task!=NULL)
                )
               )
-           )
+           )) 
      )
 #else
   if ( lock->owner_thread != (void *)t )
 #endif
   {
+      sctk_error("try lock - %p - %p", lock->l, lock);
       if ( sctk_thread_mutex_trylock(&(lock->l)) != 0 ) 
       {
+          sctk_error("CAN'T GET LOCK");
           return 0 ;
       }
       lock->owner_thread = (void *)t ;
 #if MPCOMP_TASK
-      lock->owner_task = cur_task ;
+      lock->owner_task = t->current_task ;
 #endif
   }
   lock->nb_nested++ ;
 
-  sctk_nodebug( "omp_test_nest_lock: SUCCESS owner=(%p,%p), thread=(%p,%p)\n", 
+  sctk_error( "omp_test_nest_lock: SUCCESS owner=(%p,%p), thread=(%p,%p)\n", 
           lock->owner_thread, lock->owner_task,
           t, t->current_task ) ;
 
