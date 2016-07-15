@@ -63,7 +63,7 @@ struct Buffered_FIFO_chunk {
  * @param elem_size the size of the elements to store
  */
 void Buffered_FIFO_chunk_init( struct Buffered_FIFO_chunk *ch, 
-								uint64_t chunk_size, size_t elem_size );
+								uint64_t chunk_size, uint64_t elem_size );
 
 /**
  * @brief Allocates a new Buffered_FIFO_chunk
