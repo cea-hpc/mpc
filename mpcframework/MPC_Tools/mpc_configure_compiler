@@ -371,8 +371,12 @@ done
 #if CC is not present in MPC compiler configuration file
 if test -z "\${is_defined}";
 then
+        if test "$SCTK_MPC_PROCESS_MODE" = "1" ; then 
+                PRIV_FLAG=""
+        else
 	print_if_stdout "Warning: You try to use a compiler not handled by MPC, at your own risks\n"
 	print_if_stdout "Warning: All options will be forwarded 'as is' to the given compiler\n"
+        fi
 else
 	CC_FAMILY="\`echo \${is_defined} | cut -d":" -f1\`"
 	CC_PRIV="\`echo \${is_defined} | cut -d":" -f2\`"
@@ -381,8 +385,10 @@ else
 	#if CC does not support privatization and user provides privatization option
 	if test ! -z "\${PRIV_FLAG}" -a "\${CC_PRIV}" = "N";
 	then
+        if test "$SCTK_MPC_PROCESS_MODE" != "1" ; then 
 		print_if_stdout "Warning: '\${CC} does not support privatization support. Disabling privatization'\n"
 		print_if_stdout "Warning: Do not consider using this compiler for thread-based mode.\n"
+        fi
 		PRIV_FLAG=""
 	else
 		#handle compiler-specific options depending on compiler family

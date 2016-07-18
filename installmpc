@@ -283,6 +283,7 @@ do
 			MPC_PREFIX='disabled'
 			BINUTILS_PREFIX='disabled'
 			SCTK_GETOPT_PREFIX='disabled'
+			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --mpc-process-mode"
 			;;
 		##################### MPC ###################
 		--with-mpc=*)

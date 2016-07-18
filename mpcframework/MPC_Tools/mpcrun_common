@@ -357,9 +357,15 @@ for arg in "$@" ; do
     TASK_NB="`echo A$arg | sed -e 's/A-n=//g'`"
     ;;
     --process-nb=*)
+	if test "$SCTK_MPC_PROCESS_MODE" = "1"; then
+	    echo "MPC is in process mode, process number will be set automatically"
+	fi
     PROCESS_NB="`echo A$arg | sed -e 's/A--process-nb=//g'`"
     ;;
     -p=*)
+	if test "$SCTK_MPC_PROCESS_MODE" = "1"; then
+	    echo "MPC is in process mode, process number will be set automatically"
+	fi
     PROCESS_NB="`echo A$arg | sed -e 's/A-p=//g'`"
     ;;
     --cpu-nb=*)
@@ -456,13 +462,19 @@ done
 export SCTK_BINDIR="${prefix}/bin/"
 export PATH="${SCTK_BINDIR}:${PATH}"
 
-
-if test "$PROCESS_NB" = "0" ; then
-    PROCESS_NB="1"
+if test "$SCTK_MPC_PROCESS_MODE" = "1"; then
+    PROCESS_NB="$TASK_NB"
+else
+    if test "$PROCESS_NB" = "0" ; then
+	PROCESS_NB="1"
+    fi
 fi
+
 if test "$NODE_NB" = "0" ; then
     NODE_NB="1"
 fi
+
+
 
 SCTK_ARGS="--sctk-args--"
 SCTK_LINUX_DISABLE_ADDR_RANDOMIZE="1"

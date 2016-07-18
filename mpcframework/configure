@@ -239,6 +239,7 @@ OPENIB_USER_PREFIX=""
 PORTALS_USER_PREFIX=""
 SCTK_LIBXML2_PREFIX=""
 SCTK_LIBSCTK_ARCH_PREFIX=""
+SCTK_MPC_PROCESS_MODE="0"
 
 for arg in "$@" ; do
     case $arg in
@@ -251,6 +252,9 @@ for arg in "$@" ; do
     ;;
     --no-dep)
     SCTK_NODEP="1"
+    ;;
+    --mpc-process-mode)
+	SCTK_MPC_PROCESS_MODE="1"
     ;;
     --os=*)
     SCTK_OS="`echo A$arg | sed -e 's/A--os=//g'`"
