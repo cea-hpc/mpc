@@ -13566,6 +13566,12 @@ PMPI_Gather (void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 		return MPI_SUCCESS;
 	}
 	
+	if(recvbuf != MPI_BOTTOM){
+	  if(recvbuf == sendbuf){
+	    MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
+	  }
+	}
+		
 	/* Internal */
 	res = __INTERNAL__PMPI_Gather (sendbuf, sendcnt, sendtype, recvbuf, 
 			recvcnt, recvtype, root, comm);
@@ -14373,6 +14379,12 @@ PMPI_Allreduce (void *sendbuf, void *recvbuf, int count,
     }
     if (0 == count) {
         return MPI_SUCCESS;
+    }
+    
+    if(recvbuf != MPI_BOTTOM){
+      if(recvbuf == sendbuf){
+	MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
+      }
     }
     
     /* Internal */
