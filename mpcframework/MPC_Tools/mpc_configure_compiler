@@ -459,6 +459,11 @@ export PATH=\${MPC_RPREFIX}/\${MPC_HOST_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/bin/
 #first definition of compiler & linking flags
 CFLAGS="\`\${MPC_RPREFIX}/\${MPC_HOST_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/bin/mpc_cflags $language\`"
 LDFLAGS="\`\${MPC_RPREFIX}/\${MPC_HOST_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/bin/mpc_ldflags $language\`"
+
+#Used to avoid header global variable privatization when libraries are not privatized
+#mpcmp.h and mpcmicrothread.h have been recopied from GCC patch
+MPC_UNPRIVATIZED_FILES="\${MPC_UNPRIVATIZED_FILES}:mpcmp.h:mpcmicrothread.h:"
+
 EOF
 # Regular flags and compiler (C, C++ or fortran)
 if test "${BINUTILS_PREFIX}" != "disabled" ;
