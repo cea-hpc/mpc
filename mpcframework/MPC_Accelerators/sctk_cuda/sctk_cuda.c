@@ -4,7 +4,9 @@
 #include <sctk_debug.h>
 #include <sctk_device_topology.h>
 #include <sctk_spinlock.h>
-void sctk_accl_cuda_print_ctx_flag(){
+#include <sctk_alloc.h>
+#include <sctk_topology.h>
+static void sctk_accl_cuda_print_ctx_flag(){
 	/*unsigned int currentFlag=7357;*/
 	/*CUcontext currentContext;*/
 	/*CUresult res;*/
@@ -49,9 +51,10 @@ void sctk_accl_cuda_print_ctx_flag(){
 
 int lock=SCTK_SPINLOCK_INITIALIZER;
 int cpt=0;
-int sctk_accl_cuda_get_closest_device(int cpu_id){
+static int sctk_accl_cuda_get_closest_device(int cpu_id){
 	int num_devices = 0;
-	cudaGetDeviceCount(&num_devices);
+	
+	safe_cudart(cudaGetDeviceCount(&num_devices));
 	if(num_devices>0)
 	{
 		sctk_device_t* closest_device = NULL;
@@ -88,8 +91,10 @@ int sctk_accl_cuda_get_closest_device(int cpu_id){
 
 int sctk_accl_cuda_init(void** ptls_cuda){
     int num_devices = 0;
-    cudaGetDeviceCount(&num_devices);
-    if(num_devices>0)
+    
+	safe_cudart(cudaGetDeviceCount(&num_devices));
+    
+	if(num_devices>0)
     {
         tls_cuda_t* cuda=(tls_cuda_t*) *ptls_cuda;
         if(cuda == NULL)
@@ -106,7 +111,6 @@ int sctk_accl_cuda_init(void** ptls_cuda){
 		if(cuda->is_ready==1)
 		{
             cuda = (tls_cuda_t*) *ptls_cuda;
-            CUresult cuda_error;
 
             //TODO mettre les bon flags
             unsigned int flags = CU_CTX_SCHED_YIELD;
@@ -116,17 +120,15 @@ int sctk_accl_cuda_init(void** ptls_cuda){
             sctk_nodebug("CPU_ID=%d\n",cuda->cpu_id);
             CUdevice dev = sctk_accl_cuda_get_closest_device(cuda->cpu_id);
 
-            sctk_nodebug("BEFOREcuCtxCreate=%d, cuda->is_ready=%d, cpu_id=%d,tls_cpu_id=%d, dev=%d\n",
-                    cuda_error,
+            sctk_nodebug("BEFORE: cuda->is_ready=%d, cpu_id=%d,tls_cpu_id=%d, dev=%d\n",
                     cuda->is_ready,
                     sctk_get_cpu(),
                     cuda->cpu_id,
                     dev);
 
-            cuda_error = cuCtxCreate (&cuda->context,flags,dev);
+            safe_cudadv(cuCtxCreate (&cuda->context,flags,dev));
 
-            sctk_nodebug("AFTER cuCtxCreate=%d, cuda->is_ready=%d, cpu_id=%d,tls_cpu_id=%d, dev=%d\n",
-                     cuda_error,
+            sctk_nodebug("AFTER: cuda->is_ready=%d, cpu_id=%d,tls_cpu_id=%d, dev=%d\n",
                      cuda->is_ready,
                      sctk_get_cpu(),
                      cuda->cpu_id,
@@ -145,7 +147,8 @@ int sctk_accl_cuda_init(void** ptls_cuda){
 
 int sctk_accl_cuda_pop_context(void** ptls_cuda){
     int num_devices = 0;
-    cudaGetDeviceCount(&num_devices);
+    
+	safe_cudart(cudaGetDeviceCount(&num_devices));
     if(num_devices>0)
     {
         CUresult cuda_error;
@@ -163,10 +166,9 @@ int sctk_accl_cuda_pop_context(void** ptls_cuda){
 		{
 
             int cuda_device_id;
-            cudaGetDevice(&cuda_device_id);
+            safe_cudart(cudaGetDevice(&cuda_device_id));
+            cuda_error = safe_cudadv(cuCtxPopCurrent(&cuda->context));
             sctk_nodebug("cuCtxPopCurrent=%d, cuda_device_id=%d\n", cuda_error, cuda_device_id);
-
-            cuda_error = cuCtxPopCurrent(&cuda->context);
         }
 
         return cuda_error;
@@ -176,7 +178,8 @@ int sctk_accl_cuda_pop_context(void** ptls_cuda){
 
 int sctk_accl_cuda_push_context(void* tls_cuda){
     int num_devices = 0;
-    cudaGetDeviceCount(&num_devices);
+    
+	safe_cudart(cudaGetDeviceCount(&num_devices));
     if(num_devices>0)
     {
         CUresult cuda_error;
@@ -192,10 +195,10 @@ int sctk_accl_cuda_push_context(void* tls_cuda){
         
 		if(cuda->is_ready==1)
 		{
-            cuda_error = cuCtxPushCurrent(cuda->context);
+            cuda_error = safe_cudadv(cuCtxPushCurrent(cuda->context));
 
             int cuda_device_id;
-            cudaGetDevice(&cuda_device_id);
+            safe_cudart(cudaGetDevice(&cuda_device_id));
             sctk_nodebug("cuCtxPushCurrent=%d, cuda->is_ready=%d, cuda_device_id=%d\n", cuda_error, cuda->is_ready, cuda_device_id);
         }
         

@@ -25,7 +25,16 @@
 
 #include <cuda.h>
 #include <cuda_runtime.h>
+#include <sctk_debug.h>
+//#define safe_cucall(u) assume_m((u == cudaSuccess), "CUDA call return")
 
+#ifdef NDEBUG
+#define safe_cudart(u) assume_m(u == cudaSuccess, "Runtime CUDA call failed with value %d", u)
+#define safe_cudadv(u) assume_m(u == CUDA_SUCCESS, "Driver CUDA call failed with value %d", u)
+#else
+#define safe_cudart(u) u
+#define safe_cudadv(u) u
+#endif
 /* MPC CUDA context */
 
 typedef struct tls_cuda_s{

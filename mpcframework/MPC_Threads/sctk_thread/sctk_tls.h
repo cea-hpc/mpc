@@ -136,7 +136,10 @@ extern "C"
 
 #if defined(MPC_USE_CUDA)
 	tls_restore(tls_cuda);
-	sctk_accl_cuda_push_context(tls_cuda);
+	if(tls_cuda) /* if the thread to be scheduled has an attached cuda ctx: */
+	{
+		sctk_accl_cuda_push_context(tls_cuda);
+	}
 #endif
 
 #endif
