@@ -6744,8 +6744,8 @@ __MPC_Comm_free (MPC_Comm * comm)
   
   MPC_Comm old_comm = *comm;
   *comm = MPC_COMM_NULL;
-  /* INFO("Comm free disabled") */
-  /* MPC_ERROR_SUCESS(); */
+  INFO("Comm free disabled")
+  MPC_ERROR_SUCESS();
   sctk_nodebug ("Comm free %d", old_comm);
   mpc_check_comm (old_comm, MPC_COMM_WORLD);
   sctk_assert (old_comm != MPC_COMM_NULL);

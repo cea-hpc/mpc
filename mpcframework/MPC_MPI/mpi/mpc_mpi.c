@@ -423,19 +423,8 @@ mpc_mpi_per_communicator_t* mpc_mpc_get_per_comm_data(sctk_communicator_t comm){
 
   task_specific = __MPC_get_task_specific ();
   tmp = sctk_thread_getspecific_mpc_per_comm(task_specific,comm);
-  if(tmp == NULL){
-    return NULL;
-  }
+  assume(tmp != NULL);
   return tmp->mpc_mpi_per_communicator;
-}
-
-static inline
-void mpc_mpc_remove_per_comm_data(sctk_communicator_t comm){
-  struct sctk_task_specific_s * task_specific;
-  mpc_per_communicator_t* tmp;
-
-  task_specific = __MPC_get_task_specific ();
-  sctk_thread_removespecific_mpc_per_comm(task_specific,comm);
 }
 
 static inline mpc_mpi_data_t * mpc_mpc_get_per_task_data()
