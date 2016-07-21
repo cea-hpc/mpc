@@ -2433,10 +2433,10 @@ void sctk_thread_generic_polling_init(int vp_number) {
     attr_intern->ptr->stack_size = 8*1024;
 
     //add kind in the attr of the POLLING THREADS
-    attr_intern.ptr->kind.mask=KIND_MASK_MPC_POLLING_THREAD;
-    attr_intern.ptr->basic_priority=sctk_runtime_config_get()->modules.scheduler.task_polling_thread_basic_priority;
-    attr_intern.ptr->kind.priority=sctk_runtime_config_get()->modules.scheduler.task_polling_thread_basic_priority;
-    attr_intern.ptr->current_priority=sctk_runtime_config_get()->modules.scheduler.task_polling_thread_basic_priority;
+    attr_intern->ptr->kind.mask=KIND_MASK_MPC_POLLING_THREAD;
+    attr_intern->ptr->basic_priority=sctk_runtime_config_get()->modules.scheduler.task_polling_thread_basic_priority;
+    attr_intern->ptr->kind.priority=sctk_runtime_config_get()->modules.scheduler.task_polling_thread_basic_priority;
+    attr_intern->ptr->current_priority=sctk_runtime_config_get()->modules.scheduler.task_polling_thread_basic_priority;
 
     for(i = 0; i < vp_number ; i++){
         attr_intern->ptr->bind_to = i;
