@@ -324,6 +324,7 @@ const struct sctk_runtime_config_entry_meta sctk_runtime_config_db[] = {
 	{"spin_delay"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_thread,spin_delay)  , sizeof(int) , "int" , NULL},
 	{"interval"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_thread,interval)  , sizeof(int) , "int" , NULL},
 	{"kthread_stack_size"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_thread,kthread_stack_size)  , sizeof(size_t) , "size_t" , NULL},
+	{"placement_policy"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_thread,placement_policy)  , sizeof(struct sctk_runtime_config_funcptr) , "funcptr" , NULL},
 	/* struct */
 	{"sctk_runtime_config_struct_scheduler" , SCTK_CONFIG_META_TYPE_STRUCT , 0  , sizeof(struct sctk_runtime_config_struct_scheduler) , NULL , sctk_runtime_config_struct_init_scheduler},
 	{"timestamp_threshold"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_scheduler,timestamp_threshold)  , sizeof(double) , "double" , NULL},

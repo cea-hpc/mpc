@@ -2364,16 +2364,20 @@ int sctk_get_init_vp_and_nbvp_numa (int i, int *nbVp)
     return proc_global;
 }
 
-//faire un truc en deux partie homogene et heterogene
 
 
+//function pointer to get the thread placement policy from the config
+int (*thread_placement_policy)(int i, int* nbVp);
 
 int
 sctk_get_init_vp_and_nbvp (int i, int *nbVp)
 {
-     return sctk_get_init_vp_and_nbvp_default (i, nbVp);
-     //return sctk_get_init_vp_and_nbvp_numa (i, nbVp);
-     //return sctk_get_init_vp_and_nbvp_numa_packed (i, nbVp);
+    //return sctk_get_init_vp_and_nbvp_default (i, nbVp);
+    //return sctk_get_init_vp_and_nbvp_numa (i, nbVp);
+    //return sctk_get_init_vp_and_nbvp_numa_packed (i, nbVp);
+    
+    thread_placement_policy = (int(*)(int,int*)) sctk_runtime_config_get()->modules.thread.placement_policy.value;
+    return thread_placement_policy(i, nbVp);
 }
 
 

@@ -1217,6 +1217,10 @@ Type is int. Default value is 10.
 Type is size. Default value is 10MB. 
 .Pp kthread_stack_size
 Define the stack size of MPC user threads
+.It Cm placement_policy
+Type is function pointer. Default value is sctk_get_init_vp_and_nbvp_default. 
+.Pp placement_policy
+Initialize thread placement policy
 .El
 .Sh ENTRIES OF TYPE scheduler
 Scheduler priority parameters

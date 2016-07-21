@@ -723,6 +723,8 @@ struct sctk_runtime_config_struct_thread
 	int interval;
 	/**Define the stack size of MPC user threads**/
 	size_t kthread_stack_size;
+	/**Initialize thread placement policy**/
+	struct sctk_runtime_config_funcptr placement_policy;
 };
 
 /******************************** STRUCTURE *********************************/
