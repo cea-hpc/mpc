@@ -222,7 +222,7 @@ Type is bool. Default value is false.
 .Pp disable_mpc
 Do not use mpc for execution (deprecated?)
 .It Cm thread_init
-Type is function pointer. Default value is sctk_use_ethread_mxn. 
+Type is function pointer. Default value is sctk_use_ethread_mxn_ng. 
 .Pp thread_init
 Initialize multithreading mode
 .It Cm nb_task
@@ -446,7 +446,7 @@ It support parameters :
 .Pp
 .Bl -tag -width Ds
 .It Cm use_progress_thread
-Type is int. Default value is 0. 
+Type is int. Default value is 1. 
 .Pp use_progress_thread
 If use progress threads for non blocking collectives
 .El

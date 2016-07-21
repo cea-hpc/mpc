@@ -642,7 +642,7 @@ struct sctk_runtime_config_struct_low_level_comm
 
 /********************************** ENUM ************************************/
 /****/
-enum mpcomp_task_larceny_mode
+enum mpcomp_task_larceny_mode_t
 {
 	MPCOMP_TASK_LARCENY_MODE_HIERARCHICAL,
 	MPCOMP_TASK_LARCENY_MODE_RANDOM,

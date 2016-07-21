@@ -17,7 +17,7 @@ meta.types = {
 		keep_rand_addr: {mode: 'param', name: "keep_rand_addr", type: "bool", doc: "Activate randomization of base addresses", dflt: "true", },
 		disable_rand_addr: {mode: 'param', name: "disable_rand_addr", type: "bool", doc: "Deactivate randomization of base addresses", dflt: "false", },
 		disable_mpc: {mode: 'param', name: "disable_mpc", type: "bool", doc: "Do not use mpc for execution (deprecated?)", dflt: "false", },
-		thread_init: {mode: 'param', name: "thread_init", type: "funcptr", doc: "Initialize multithreading mode", dflt: "sctk_use_ethread_mxn", },
+		thread_init: {mode: 'param', name: "thread_init", type: "funcptr", doc: "Initialize multithreading mode", dflt: "sctk_use_ethread_mxn_ng", },
 		nb_task: {mode: 'param', name: "nb_task", type: "int", doc: "Define the number of MPI tasks", dflt: "1", },
 		nb_process: {mode: 'param', name: "nb_process", type: "int", doc: "Define the number of MPC processes", dflt: "1", },
 		nb_processor: {mode: 'param', name: "nb_processor", type: "int", doc: "Define the number of virtual processors", dflt: "0", },
@@ -74,7 +74,7 @@ meta.types = {
 		reduce_scatter_block_inter: {mode: 'param', name: "reduce_scatter_block_inter", type: "funcptr", doc: "MPI_Reduce_scatter_block intercom algorithm", dflt: "__INTERNAL__PMPI_Reduce_scatter_block_inter", },
 	}},
 	progress_thread : {type: 'struct', name: "progress_thread", childs: {
-		use_progress_thread: {mode: 'param', name: "use_progress_thread", type: "int", doc: "If use progress threads for non blocking collectives", dflt: "0", },
+		use_progress_thread: {mode: 'param', name: "use_progress_thread", type: "int", doc: "If use progress threads for non blocking collectives", dflt: "1", },
 	}},
 	mpc : {type: 'struct', name: "mpc", childs: {
 		log_debug: {mode: 'param', name: "log_debug", type: "bool", doc: "Print debug messages", dflt: "false", },
@@ -327,7 +327,7 @@ meta.enum = {
 		RAIL_POLL_NUMA: "RAIL_POLL_NUMA",
 		RAIL_POLL_MACHINE: "RAIL_POLL_MACHINE",
 	}},
-	mpcomp_task_larceny_mode : {type: 'enum', name: "mpcomp_task_larceny_mode", doc: "", values: {
+	mpcomp_task_larceny_mode_t : {type: 'enum', name: "mpcomp_task_larceny_mode_t", doc: "", values: {
 		MPCOMP_TASK_LARCENY_MODE_HIERARCHICAL: "MPCOMP_TASK_LARCENY_MODE_HIERARCHICAL",
 		MPCOMP_TASK_LARCENY_MODE_RANDOM: "MPCOMP_TASK_LARCENY_MODE_RANDOM",
 		MPCOMP_TASK_LARCENY_MODE_RANDOM_ORDER: "MPCOMP_TASK_LARCENY_MODE_RANDOM_ORDER",

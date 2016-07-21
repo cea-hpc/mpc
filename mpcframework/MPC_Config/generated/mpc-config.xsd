@@ -700,7 +700,7 @@
     </xs:all>
   </xs:complexType>
   <!-- ********************************************************* -->
-  <xs:simpleType name="user_type_mpcomp_task_larceny_mode">
+  <xs:simpleType name="user_type_mpcomp_task_larceny_mode_t">
     <xs:restriction base="xs:string">
       <xs:enumeration value="MPCOMP_TASK_LARCENY_MODE_HIERARCHICAL"/>
       <xs:enumeration value="MPCOMP_TASK_LARCENY_MODE_RANDOM"/>

@@ -10,7 +10,8 @@
 			<param name="keep_rand_addr" type="bool" default="true" doc="Activate randomization of base addresses"/>
 			<param name="disable_rand_addr" type="bool" default="false" doc="Deactivate randomization of base addresses"/>
 			<param name="disable_mpc" type="bool" default="false" doc="Do not use mpc for execution (deprecated?)"/>
-			<param name="thread_init" type="funcptr" doc="Initialize multithreading mode" default="sctk_use_ethread_mxn"/>
+            <!-- <param name="thread_init" type="funcptr" doc="Initialize multithreading mode" default="sctk_use_ethread_mxn"/> -->
+			<param name="thread_init" type="funcptr" doc="Initialize multithreading mode" default="sctk_use_ethread_mxn_ng"/>
 			<param name="nb_task" type="int" default="1" doc="Define the number of MPI tasks"/>
 			<param name="nb_process" type="int" default="1" doc="Define the number of MPC processes"/>
 			<param name="nb_processor" type="int" default="0" doc="Define the number of virtual processors"/>

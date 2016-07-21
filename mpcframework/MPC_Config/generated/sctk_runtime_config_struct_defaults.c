@@ -65,8 +65,8 @@ void sctk_runtime_config_struct_init_launcher(void * struct_ptr)
 	obj->keep_rand_addr = true;
 	obj->disable_rand_addr = false;
 	obj->disable_mpc = false;
-	obj->thread_init.name = "sctk_use_ethread_mxn";
-	*(void **) &(obj->thread_init.value) = sctk_runtime_config_get_symbol("sctk_use_ethread_mxn");
+	obj->thread_init.name = "sctk_use_ethread_mxn_ng";
+	*(void **) &(obj->thread_init.value) = sctk_runtime_config_get_symbol("sctk_use_ethread_mxn_ng");
 	obj->nb_task = 1;
 	obj->nb_process = 1;
 	obj->nb_processor = 0;
@@ -199,7 +199,7 @@ void sctk_runtime_config_struct_init_progress_thread(void * struct_ptr)
 	if( obj->init_done != 0 ) return;
 
 	/* Simple params : */
-	obj->use_progress_thread = 0;
+	obj->use_progress_thread = 1;
 	obj->init_done = 1;
 }
 
@@ -690,12 +690,12 @@ void sctk_runtime_config_struct_init_low_level_comm(void * struct_ptr)
 }
 
 /*******************  FUNCTION  *********************/
-void sctk_runtime_config_enum_init_mpcomp_task_larceny_mode()
+void sctk_runtime_config_enum_init_mpcomp_task_larceny_mode_t()
 {
 	struct enum_type * current_enum = (struct enum_type *) malloc(sizeof(struct enum_type));
 	struct enum_value * current_value, * values = NULL;
 
-	strncpy(current_enum->name, "enum mpcomp_task_larceny_mode", 50);
+	strncpy(current_enum->name, "enum mpcomp_task_larceny_mode_t", 50);
 
 	current_value = (struct enum_value *) malloc(sizeof(struct enum_value));
 	strncpy(current_value->name, "MPCOMP_TASK_LARCENY_MODE_HIERARCHICAL", 50);
@@ -859,7 +859,7 @@ void sctk_runtime_config_reset(struct sctk_runtime_config * config)
 #endif
 #ifdef MPC_OpenMP
 	sctk_runtime_config_struct_init_openmp(&config->modules.openmp);
-	sctk_runtime_config_enum_init_mpcomp_task_larceny_mode();
+	sctk_runtime_config_enum_init_mpcomp_task_larceny_mode_t();
 #endif
 #ifdef MPC_Profiler
 	sctk_runtime_config_struct_init_profiler(&config->modules.profiler);
