@@ -262,7 +262,7 @@ sctk_internal_setup_lib_cuda()
         #CUDA_PREFIX_INSTALL is defined in the root configure
         SCTK_ARFLAGS="${SCTK_ARFLAGS} ${CUDA_USER_PREFIX}/lib64/stubs/libcuda.so ${CUDA_USER_PREFIX}/lib64/libcudart.so ${SCTK_ARFLAGS} ${CUDA_USER_PREFIX}/lib64/libcuinj64.so"
 		SCTK_CFLAGS="${SCTK_CFLAGS} -I${CUDA_USER_PREFIX}/include/"
-        SCTK_LDFLAGS="${SCTK_LDFLAGS} -L${CUDA_USER_PREFIX}/lib64"
+        SCTK_LDFLAGS="${SCTK_LDFLAGS} -L${CUDA_USER_PREFIX}/lib64 -Wl,-rpath=${CUDA_USER_PREFIX}/lib64 -L${CUDA_USER_PREFIX}/lib64/stubs -Wl,-rpath=${CUDA_USER_PREFIX}/lib64/stubs"
     fi
 
 	#mark as setup
