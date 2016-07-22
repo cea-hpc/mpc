@@ -2905,32 +2905,34 @@ void *NBC_Pthread_func( void *ptr ) {
 
   task_specific->mpc_mpi_data->nbc_initialized_per_task = 1;
 
-  if(sctk_multiple_queues_sched_NBC_Pthread_sched_init!=NULL){
-      sctk_multiple_queues_sched_NBC_Pthread_sched_init();
+  if(strstr(sctk_multithreading_mode, "_ng") != NULL){
+      if(sctk_multiple_queues_sched_NBC_Pthread_sched_init!=NULL){
+          sctk_multiple_queues_sched_NBC_Pthread_sched_init();
+      }
+
+      #ifdef SCTK_DEBUG_SCHEDULER
+      {
+          char hostname[128];
+          char hostname2[128];
+          char current_vp[5];
+          gethostname(hostname,128);
+          strncpy(hostname2,hostname,128);
+          sprintf(current_vp,"_%03d",sctk_thread_get_vp ());
+          strcat(hostname2,current_vp);
+
+          FILE* fd=fopen(hostname2,"a");
+          fprintf(fd,"NBC_THREAD_CREATE\n");
+          fflush(fd);
+          fclose(fd);
+      }
+      #endif
+
+      //kinds are set when we create the thread in the attr
+      //sctk_thread_generic_addkind_mask_self(KIND_MASK_PROGRESS_THREAD);
+      //sctk_thread_generic_set_basic_priority_self(10);
+      //sctk_thread_generic_setkind_priority_self(10);
+      //sctk_thread_generic_set_current_priority_self(10);
   }
-
-  #ifdef SCTK_DEBUG_SCHEDULER
-  {
-      char hostname[128];
-      char hostname2[128];
-      char current_vp[5];
-      gethostname(hostname,128);
-      strncpy(hostname2,hostname,128);
-      sprintf(current_vp,"_%03d",sctk_thread_get_vp ());
-      strcat(hostname2,current_vp);
-
-      FILE* fd=fopen(hostname2,"a");
-      fprintf(fd,"NBC_THREAD_CREATE\n");
-      fflush(fd);
-      fclose(fd);
-  }
-  #endif
-
-  //kinds are set when we create the thread in the attr
-  //sctk_thread_generic_addkind_mask_self(KIND_MASK_PROGRESS_THREAD);
-  //sctk_thread_generic_set_basic_priority_self(10);
-  //sctk_thread_generic_setkind_priority_self(10);
-  //sctk_thread_generic_set_current_priority_self(10);
 
 
   while(1) {
@@ -3679,18 +3681,27 @@ static inline int NBC_Initialize() {
   struct sctk_task_specific_s * task_specific;
   task_specific = __MPC_get_task_specific ();
 
-  sctk_thread_generic_attr_t attr;
-  sctk_thread_generic_attr_init(&attr);
+
+  //sctk_thread_generic_attr_t attr;
+  //sctk_thread_generic_attr_init(&attr);
+
+  sctk_thread_attr_t attr;
+  sctk_thread_attr_init(&attr);
 
   int cpu_id_to_bind_polling_thread =
       sctk_set_polling_thread_binding(SCTK_POLLING_THREAD_BINDING_BIND);
 
   sctk_thread_attr_setbinding ((sctk_thread_attr_t*)&attr,cpu_id_to_bind_polling_thread);
 
-  attr.ptr->kind.mask=KIND_MASK_PROGRESS_THREAD;
-  attr.ptr->basic_priority=sctk_runtime_config_get()->modules.scheduler.sched_NBC_Pthread_basic_priority;
-  attr.ptr->kind.priority=sctk_runtime_config_get()->modules.scheduler.sched_NBC_Pthread_basic_priority;
-  attr.ptr->current_priority=sctk_runtime_config_get()->modules.scheduler.sched_NBC_Pthread_basic_priority;
+  if(strstr(sctk_multithreading_mode, "_ng") != NULL){
+      sctk_thread_generic_attr_t* attr_intern;
+      attr_intern=(sctk_thread_generic_attr_t*)&attr;
+
+      attr_intern->ptr->kind.mask=KIND_MASK_PROGRESS_THREAD;
+      attr_intern->ptr->basic_priority=sctk_runtime_config_get()->modules.scheduler.sched_NBC_Pthread_basic_priority;
+      attr_intern->ptr->kind.priority=sctk_runtime_config_get()->modules.scheduler.sched_NBC_Pthread_basic_priority;
+      attr_intern->ptr->current_priority=sctk_runtime_config_get()->modules.scheduler.sched_NBC_Pthread_basic_priority;
+  }
 
 
   ////DEBUG
@@ -3712,7 +3723,8 @@ static inline int NBC_Initialize() {
   int ret = sctk_user_thread_create( &(task_specific->mpc_mpi_data->NBC_Pthread), (sctk_thread_attr_t*) &attr, NBC_Pthread_func, NULL);
   if(0 != ret) { printf("Error in sctk_user_thread_create() (%i)\n", ret); return NBC_OOR; }
 
-  sctk_thread_generic_attr_destroy(&attr);
+  //sctk_thread_generic_attr_destroy(&attr);
+  sctk_thread_attr_destroy(&attr);
   
   //task_specific->mpc_mpi_data->nbc_initialized_per_task = 1;
   }
@@ -3797,9 +3809,12 @@ static inline int NBC_Start(NBC_Handle *handle, NBC_Schedule *schedule) {
     DL_APPEND(task_specific->mpc_mpi_data->NBC_Pthread_handles, elem_tmp);
     task_specific->mpc_mpi_data->NBC_Pthread_nb++;
     sctk_thread_mutex_unlock(lock);
-    if(sctk_multiple_queues_sched_NBC_Pthread_sched_increase_priority!=NULL){
-        sctk_multiple_queues_sched_NBC_Pthread_sched_increase_priority();
-    } 
+    
+    if(strstr(sctk_multithreading_mode, "_ng") != NULL){
+        if(sctk_multiple_queues_sched_NBC_Pthread_sched_increase_priority!=NULL){
+            sctk_multiple_queues_sched_NBC_Pthread_sched_increase_priority();
+        } 
+    }
 		
     //sctk_thread_wait_for_value_and_poll(&(task_specific->mpc_mpi_data->nbc_initialized_per_task), 1, NULL, NULL);
     ///* wake progress thread up */
