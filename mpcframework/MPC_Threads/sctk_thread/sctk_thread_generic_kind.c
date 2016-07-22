@@ -18,21 +18,27 @@ void sctk_thread_generic_setkind_mask_self(unsigned int kind_mask){
 }
  
 void sctk_thread_generic_setkind_priority_self(int priority){
-    sctk_thread_generic_scheduler_t* sched;
-    sched = &(sctk_thread_generic_self()->sched);
-    sched->th->attr.kind.priority = priority;
+    if(!strcmp(sctk_multithreading_mode, "sctk_use_ethread_mxn_ng")){
+        sctk_thread_generic_scheduler_t* sched;
+        sched = &(sctk_thread_generic_self()->sched);
+        sched->th->attr.kind.priority = priority;
+    }
 }
 
 void sctk_thread_generic_set_basic_priority_self(int basic_priority){
-    sctk_thread_generic_scheduler_t* sched;
-    sched = &(sctk_thread_generic_self()->sched);
-    sched->th->attr.basic_priority = basic_priority;
+    if(!strcmp(sctk_multithreading_mode, "sctk_use_ethread_mxn_ng")){
+        sctk_thread_generic_scheduler_t* sched;
+        sched = &(sctk_thread_generic_self()->sched);
+        sched->th->attr.basic_priority = basic_priority;
+    }
 }
 
 void sctk_thread_generic_set_current_priority_self(int current_priority){
-    sctk_thread_generic_scheduler_t* sched;
-    sched = &(sctk_thread_generic_self()->sched);
-    sched->th->attr.current_priority = current_priority;
+    if(!strcmp(sctk_multithreading_mode, "sctk_use_ethread_mxn_ng")){
+        sctk_thread_generic_scheduler_t* sched;
+        sched = &(sctk_thread_generic_self()->sched);
+        sched->th->attr.current_priority = current_priority;
+    }
 }
 ///////////////////////////////////
 //getters
@@ -67,9 +73,11 @@ int sctk_thread_generic_getkind_priority_self(){
 //functions
 //
 void sctk_thread_generic_addkind_mask_self(unsigned int kind_mask){
-    sctk_thread_generic_scheduler_t* sched;
-    sched = &(sctk_thread_generic_self()->sched);
-    sched->th->attr.kind.mask |= kind_mask;
+    if(!strcmp(sctk_multithreading_mode, "sctk_use_ethread_mxn_ng")){
+        sctk_thread_generic_scheduler_t* sched;
+        sched = &(sctk_thread_generic_self()->sched);
+        sched->th->attr.kind.mask |= kind_mask;
+    }
 }
 
 void sctk_thread_generic_removekind_mask_self(unsigned int kind_mask){
