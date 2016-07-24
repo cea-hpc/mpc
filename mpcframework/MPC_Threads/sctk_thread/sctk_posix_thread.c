@@ -914,9 +914,28 @@ int mpc_atexit(void (*function)(void))
 
 /* Futexes */
 
-int  mpc_thread_futex(int sysop, void *addr1, int op, int val1, 
-					  struct timespec *timeout, void *addr2, int val3)
+long  mpc_thread_futex(int sysop, void *addr1, int op, int val1, 
+					  struct timespec *timeout, void *addr2, int val2)
 {
 	sctk_futex_context_init();
-	return sctk_thread_futex(addr1, op, val1, timeout, addr2, val3);
+	return sctk_thread_futex(addr1, op, val1, timeout, addr2, val2);
+}
+
+long mpc_thread_futex_with_vaargs(int sysop, ...)
+{
+    va_list ap;
+    void* addr1, *addr2;
+    int i, op, val1, val2;
+    struct timespec *timeout;
+
+    va_start(ap, sysop);
+    addr1 = va_arg(ap, void*);
+    op = va_arg(ap, int);
+    val1 = va_arg(ap, int);
+    timeout = va_arg(ap, struct timespec *);
+    addr2 = va_arg(ap, void*);
+    val2 = va_arg(ap, int);
+    va_end(ap);
+
+    return mpc_thread_futex(sysop, addr1, op, val1, timeout, addr2, val2);
 }

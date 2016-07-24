@@ -542,7 +542,6 @@ extern "C"
 #include <linux/futex.h>
 #include <sys/syscall.h>
 
-#if 0
 #ifdef __cplusplus
 
 static inline long int __sctk_cpp_scope_dereferencing_proxy( long int a )
@@ -556,13 +555,11 @@ static inline long int __sctk_cpp_scope_dereferencing_proxy( long int a )
  */
 
 #define syscall(op, ...) \
-    __sctk_cpp_scope_dereferencing_proxy((( op == SYS_futex )?mpc_thread_futex( op, ##__VA_ARGS__):syscall(op, ##__VA_ARGS__)))
+    __sctk_cpp_scope_dereferencing_proxy((( op == SYS_futex )?mpc_thread_futex_with_vaargs( op, ##__VA_ARGS__):syscall(op, ##__VA_ARGS__)))
 #else
 #define syscall(op, ...) \
-    (( op == SYS_futex )?mpc_thread_futex( op, ##__VA_ARGS__):syscall(op, ##__VA_ARGS__))
+    (( op == SYS_futex )?mpc_thread_futex_with_vaargs( op, ##__VA_ARGS__):syscall(op, ##__VA_ARGS__))
 #endif /* __cplusplus */
-
-#endif
 
 #endif /* SCTK_FUTEX_SUPPORTED */
 
