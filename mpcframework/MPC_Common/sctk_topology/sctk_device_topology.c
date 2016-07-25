@@ -514,7 +514,7 @@ void sctk_device_enrich_topology( hwloc_topology_t topology )
             const char s_equal[2]="=";
 
             hwloc_obj_attr_snprintf(string,sizeof(string),device->obj,"|",1);
-            sctk_debug("device->obj=%s",string);
+            sctk_nodebug("device->obj=%s",string);
 
             token = strtok(string,s_pipe);
             while (token != NULL){
@@ -527,7 +527,7 @@ void sctk_device_enrich_topology( hwloc_topology_t topology )
                 }
                 token = strtok(NULL,s_pipe);
             }
-            sctk_debug("pcibusid=%s",pcibusid);
+            sctk_nodebug("pcibusid=%s",pcibusid);
 
             //update device->name to permet that the
             //function sctk_device_matrix_get_closest_from_pu works correctly
@@ -598,7 +598,7 @@ void sctk_device_load_from_topology( hwloc_topology_t topology )
 		pci_dev = hwloc_get_next_pcidev( topology, pci_dev );
 	}
 	
-	sctk_info("sctk_topology located %d PCI devices", sctk_devices_count );
+	sctk_nodebug("sctk_topology located %d PCI devices", sctk_devices_count );
 	
 	/* Allocate devices */
 	sctk_devices = sctk_malloc( sizeof( sctk_device_t ) * sctk_devices_count );
@@ -642,7 +642,7 @@ void sctk_device_load_from_topology( hwloc_topology_t topology )
 	{
 		sctk_device_print( &sctk_devices[i] );
 	}
-	
+	*/
 	/* Now initialize the device distance matrix */
 	sctk_device_matrix_init();
 }
@@ -839,7 +839,7 @@ void sctk_device_matrix_init()
 			/* Compute the distance */
 			*cell = sctk_topology_distance_from_pu( j , device_obj );
 			
-			sctk_info("Distance (PU %d, DEV %d (%s)) == %d", j, i, sctk_devices[i].name, *cell );
+			sctk_nodebug("Distance (PU %d, DEV %d (%s)) == %d", j, i, sctk_devices[i].name, *cell );
 		}
 	}
 	

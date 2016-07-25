@@ -28,9 +28,9 @@
 #include <sctk_debug.h>
 //#define safe_cucall(u) assume_m((u == cudaSuccess), "CUDA call return")
 
-#ifdef NDEBUG
-#define safe_cudart(u) assume_m(u == cudaSuccess, "Runtime CUDA call failed with value %d", u)
-#define safe_cudadv(u) assume_m(u == CUDA_SUCCESS, "Driver CUDA call failed with value %d", u)
+#ifndef NDEBUG
+#define safe_cudart(u) assume_m(((u) == cudaSuccess), "Runtime CUDA call failed with value %d", u)
+#define safe_cudadv(u) assume_m(((u) == CUDA_SUCCESS), "Driver CUDA call failed with value %d", u)
 #else
 #define safe_cudart(u) u
 #define safe_cudadv(u) u
@@ -38,13 +38,13 @@
 /* MPC CUDA context */
 
 typedef struct tls_cuda_s{
-      int is_ready; //when all thread are ready to use cuda contexts
+      char pushed;  /* Set to 1 when the ctx is currently pushed */
       int cpu_id; //save cpu_id when context is created 
       CUcontext context; // thread user's cuda context 
 } tls_cuda_t;
 
-int sctk_accl_cuda_init(void** ptls_cuda);
-int sctk_accl_cuda_push_context(void* tls_cuda);
-int sctk_accl_cuda_pop_context(void** ptls_cuda);
+int sctk_accl_cuda_init();
+int sctk_accl_cuda_push_context();
+int sctk_accl_cuda_pop_context();
 
 #endif

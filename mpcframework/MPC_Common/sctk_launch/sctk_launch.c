@@ -62,6 +62,10 @@
 #include "sctk_profile_render.h"
 #endif
 
+#ifdef MPC_Accelerators
+#include "sctk_accelerators.h"
+#endif
+
 #define SCTK_START_KEYWORD "--sctk-args--"
 
 #define SCTK_LOCAL_VERSION_MAJOR 0
@@ -252,6 +256,10 @@ static void sctk_perform_initialisation (void)
 	sctk_topology_init ();
 #ifndef MPC_DISABLE_HLS
 	extls_hls_topology_construct();	
+#endif
+
+#ifdef MPC_Accelerators
+	sctk_accl_init();
 #endif
 
 /* Do not bind in LIB_MODE */

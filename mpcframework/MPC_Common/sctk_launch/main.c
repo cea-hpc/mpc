@@ -32,6 +32,11 @@ int
 main (int argc, char **argv)
 {
   int tmp;
+
+#ifdef SCTK_DEBUG_MESSAGES
+  fprintf(stderr, "[node/proc/ vp /task/thrd/rank] DEBUG INFO HEADER\n");
+#endif
+
   tmp = main_c (argc, argv);
   return tmp;
 }

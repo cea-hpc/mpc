@@ -567,7 +567,7 @@ void __tbb_init_for_mpc(cpu_set_t * cpuset, int cpuset_len)
 	}
 	else
 	{
-		sctk_debug("Calling fake TBB Finalizer");
+		sctk_nodebug("Calling fake TBB Initializer");
 	}
 }
 
@@ -581,7 +581,7 @@ void __tbb_finalize_for_mpc()
 	}
 	else
 	{
-		sctk_debug("Calling fake TBB Initializer");
+		sctk_nodebug("Calling fake TBB Finalizer");
 	}
 }
 
@@ -689,19 +689,16 @@ sctk_thread_create_tmp_start_routine (sctk_thread_data_t * __arg)
   // endhmt
 
 #if defined(MPC_USE_CUDA)
-  int num_devices = 0;
-  cudaGetDeviceCount(&num_devices);
-  if(num_devices>0)
-  {
-	  //si il y a qu'une seule tache mpi, test marc
-	  sctk_thread_yield();
+  //si il y a qu'une seule tache mpi, test marc
+  sctk_thread_yield();
 
-	  //Si il y a qu'une seule tache mpi, ce pointeur reste a null
-	  tls_cuda_t* cuda=(tls_cuda_t*)tls_cuda;
-	  cuda->is_ready = 1;
-	  cuda->cpu_id= sctk_get_cpu();
-	  sctk_accl_cuda_init(&tls_cuda);
-  }
+  //Si il y a qu'une seule tache mpi, ce pointeur reste a null
+  sctk_accl_cuda_init();
+  /*{*/
+	  /*tls_cuda_t* cuda=(tls_cuda_t*)tls_cuda;*/
+	  /*cuda->is_ready = 1;*/
+	  /*cuda->cpu_id= sctk_get_cpu();*/
+  /*}*/
 #endif
 
   sctk_tls_dtors_init(&(tmp.dtors_head));
@@ -903,20 +900,13 @@ sctk_thread_create_tmp_start_routine_user (sctk_thread_data_t * __arg)
 #endif
 
 #if defined(MPC_USE_CUDA)
-   int num_devices = 0;
-   cudaGetDeviceCount(&num_devices);
-   if(num_devices>0)
-   {
-       sctk_thread_yield();
+   sctk_thread_yield();
 
-       tls_cuda_t* cuda=(tls_cuda_t*)tls_cuda;
-       if(cuda != NULL)
-	   {
-           cuda->is_ready = 1;
-           cuda->cpu_id= sctk_get_cpu();
-           sctk_accl_cuda_init(&tls_cuda);
-       }
-   }
+   /*tls_cuda_t* cuda=(tls_cuda_t*)tls_cuda;*/
+   /*if(cuda != NULL)*/
+   /*{*/
+	   sctk_accl_cuda_init();
+   /*}*/
 #endif
 
    // hmt
