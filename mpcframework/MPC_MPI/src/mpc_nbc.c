@@ -38,7 +38,7 @@
 #include <mpc_nbc_fortran.h>
 #undef ffunc
 
-#include "mpc_nbc_polling_thread_binding.h"
+#include "mpc_nbc_progress_thread_binding.h"
 
 #include "sctk_thread_generic.h"
 
@@ -3641,10 +3641,10 @@ error:
 //  //sctk_thread_attr_setbinding (&attr, sctk_get_cpu());
 //  //
 //
-//  int cpu_id_to_bind_polling_thread =
-//      sctk_set_polling_thread_binding(SCTK_POLLING_THREAD_BINDING_BIND);
+//  int cpu_id_to_bind_progress_thread =
+//      sctk_set_progress_thread_binding(SCTK_PROGRESS_THREAD_BINDING_BIND);
 //
-//  sctk_thread_attr_setbinding (&attr,cpu_id_to_bind_polling_thread);
+//  sctk_thread_attr_setbinding (&attr,cpu_id_to_bind_progress_thread);
 //
 //  ////DEBUG
 //  //char hostname[1024];
@@ -3652,10 +3652,10 @@ error:
 //  //FILE *hostname_fd = fopen(strcat(hostname,".log"),"a");
 //  ////if (hostname_fd == NULL) perror("FAILED FOPEN hostname_fd");
 //
-//  //fprintf(hostname_fd,"task_id %03d, current_cpu=%03d, cpu_id_to_bind_polling_thread = %03d\n",
+//  //fprintf(hostname_fd,"task_id %03d, current_cpu=%03d, cpu_id_to_bind_progress_thread = %03d\n",
 //  //        sctk_get_local_task_rank(),
 //  //        sctk_get_cpu(),
-//  //        cpu_id_to_bind_polling_thread
+//  //        cpu_id_to_bind_progress_thread
 //  //      );
 //  //fflush(hostname_fd);
 //  //fclose(hostname_fd);
@@ -3688,10 +3688,10 @@ static inline int NBC_Initialize() {
   sctk_thread_attr_t attr;
   sctk_thread_attr_init(&attr);
 
-  int cpu_id_to_bind_polling_thread =
-      sctk_set_polling_thread_binding(SCTK_POLLING_THREAD_BINDING_BIND);
+  int cpu_id_to_bind_progress_thread =
+      sctk_set_progress_thread_binding(SCTK_PROGRESS_THREAD_BINDING_BIND);
 
-  sctk_thread_attr_setbinding ((sctk_thread_attr_t*)&attr,cpu_id_to_bind_polling_thread);
+  sctk_thread_attr_setbinding ((sctk_thread_attr_t*)&attr,cpu_id_to_bind_progress_thread);
 
   if(strstr(sctk_multithreading_mode, "_ng") != NULL){
       sctk_thread_generic_attr_t* attr_intern;
@@ -3710,10 +3710,10 @@ static inline int NBC_Initialize() {
   //FILE *hostname_fd = fopen(strcat(hostname,".log"),"a");
   ////if (hostname_fd == NULL) perror("FAILED FOPEN hostname_fd");
 
-  //fprintf(hostname_fd,"task_id %03d, current_cpu=%03d, cpu_id_to_bind_polling_thread = %03d\n",
+  //fprintf(hostname_fd,"task_id %03d, current_cpu=%03d, cpu_id_to_bind_progress_thread = %03d\n",
   //        sctk_get_local_task_rank(),
   //        sctk_get_cpu(),
-  //        cpu_id_to_bind_polling_thread
+  //        cpu_id_to_bind_progress_thread
   //      );
   //fflush(hostname_fd);
   //fclose(hostname_fd);
@@ -3839,7 +3839,7 @@ static inline int NBC_Start(NBC_Handle *handle, NBC_Schedule *schedule) {
     }
     #endif
 
-  //no polling thread
+  //no progress thread
   } else {
   /* kick off first round */
   res = NBC_Start_round(handle);

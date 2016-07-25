@@ -19,8 +19,8 @@
 /* #   - TABOADA Hugo hugo.taboada.ocre@cea.fr                            # */
 /* #                                                                      # */
 /* ######################################################################## */
-#ifndef __MPC_NBC_POLLING_THREAD_BINDING_H__
-#define __MPC_NBC_POLLING_THREAD_BINDING_H__
+#ifndef __MPC_NBC_PROGRESS_THREAD_BINDING_H__
+#define __MPC_NBC_PROGRESS_THREAD_BINDING_H__
 #include <stdio.h>
 #include <stdlib.h>
 #include <sctk_topology.h>
@@ -28,18 +28,18 @@
 #include <sctk_accessor.h>
 #include <sctk_thread.h>
 
-//This enumeration describes how to bind polling threads on one node of 8 cores with 2 numa nodes
+//This enumeration describes how to bind progress threads on one node of 8 cores with 2 numa nodes
 //
-//SCTK_POLLING_THREAD_BINDING_BIND
+//SCTK_PROGRESS_THREAD_BINDING_BIND
 // / / / /   / / / / Polling threads
 // | | | |   | | | | MPI task threads
 // o o o o   o o o o cores
 //
-//SCTK_POLLING_THREAD_BINDING_SMART
+//SCTK_PROGRESS_THREAD_BINDING_SMART
 // | / | /   | / | /
 // o o o o   o o o o
 //
-//SCTK_POLLING_THREAD_BINDING_OVERWEIGHT
+//SCTK_PROGRESS_THREAD_BINDING_OVERWEIGHT
 //   /              
 //   /              
 //   /              
@@ -49,22 +49,22 @@
 // | / | |  | | | | 
 // o o o o  o o o o 
 //
-//SCTK_POLLING_THREAD_BINDING_NUMA
+//SCTK_PROGRESS_THREAD_BINDING_NUMA
 //       /         /
 //       /         /
 // | | | /   | | | /
 // o o o o   o o o o 
 //
-typedef enum sctk_polling_thread_binding_e{
-   SCTK_POLLING_THREAD_BINDING_BIND,
-   SCTK_POLLING_THREAD_BINDING_SMART,
-   SCTK_POLLING_THREAD_BINDING_OVERWEIGHT,
-   SCTK_POLLING_THREAD_BINDING_NUMA
-}sctk_polling_thread_binding_t;
+typedef enum sctk_progress_thread_binding_e{
+   SCTK_PROGRESS_THREAD_BINDING_BIND,
+   SCTK_PROGRESS_THREAD_BINDING_SMART,
+   SCTK_PROGRESS_THREAD_BINDING_OVERWEIGHT,
+   SCTK_PROGRESS_THREAD_BINDING_NUMA
+}sctk_progress_thread_binding_t;
 
 //function used by the function sctk_thread_attr_setbindings in file mpc_nbc.c to
-//define bindings of polling threads
-int sctk_set_polling_thread_binding(sctk_polling_thread_binding_t binding);
+//define bindings of progress threads
+int sctk_set_progress_thread_binding(sctk_progress_thread_binding_t binding);
 
 
-#endif // __MPC_NBC_POLLING_THREAD_BINDING_H__
+#endif // __MPC_NBC_PROGRESS_THREAD_BINDING_H__
