@@ -3338,26 +3338,25 @@ static inline int NBC_Free(NBC_Handle* handle) {
     DL_DELETE(task_specific->mpc_mpi_data->NBC_Pthread_handles, elem_tmp);
     task_specific->mpc_mpi_data->NBC_Pthread_nb--;
 
-    #ifdef SCTK_DEBUG_SCHEDULER
-    {
-        char hostname[128];
-        char hostname2[128];
-        char current_vp[5];
-        gethostname(hostname,128);
-        strncpy(hostname2,hostname,128);
-        sprintf(current_vp,"_%03d",sctk_thread_get_vp ());
-        strcat(hostname2,current_vp);
+    if(strstr(sctk_multithreading_mode, "_ng") != NULL){
+        #ifdef SCTK_DEBUG_SCHEDULER
+        {
+            char hostname[128];
+            char hostname2[128];
+            char current_vp[5];
+            gethostname(hostname,128);
+            strncpy(hostname2,hostname,128);
+            sprintf(current_vp,"_%03d",sctk_thread_get_vp ());
+            strcat(hostname2,current_vp);
 
-        FILE* fd=fopen(hostname2,"a");
-        fprintf(fd,"NBC_DELETE %p %d\n", elem_tmp,task_specific->mpc_mpi_data->NBC_Pthread_nb);
-        //printf("NBC_DELETE\n");
-        //fflush(stdout);
-        fflush(fd);
-        fclose(fd);
-    }
-    #endif
-
-    if(sctk_multiple_queues_sched_NBC_Pthread_sched_decrease_priority!=NULL){
+            FILE* fd=fopen(hostname2,"a");
+            fprintf(fd,"NBC_DELETE %p %d\n", elem_tmp,task_specific->mpc_mpi_data->NBC_Pthread_nb);
+            //printf("NBC_DELETE\n");
+            //fflush(stdout);
+            fflush(fd);
+            fclose(fd);
+        }
+        #endif
         sctk_multiple_queues_sched_NBC_Pthread_sched_decrease_priority();
     }
 
