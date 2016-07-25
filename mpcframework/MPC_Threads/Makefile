@@ -23,7 +23,7 @@
 ########################################################################
 
 
-LOCAL_CFLAGS=$(CFLAGS)
+LOCAL_CFLAGS=-Wall -Wno-unused-function $(CFLAGS)
 
 FILES_include=$(wildcard include/*.c)
 OBJ_include=$(FILES_include:include/%.c=$(M_PWD)/BUILD_MPC_Threads/lib/%.o)

@@ -279,6 +279,19 @@ meta.types = {
 		interval: {mode: 'param', name: "interval", type: "int", doc: "", dflt: "10", },
 		kthread_stack_size: {mode: 'param', name: "kthread_stack_size", type: "size", doc: "Define the stack size of MPC user threads", dflt: "10MB", },
 	}},
+	scheduler : {type: 'struct', name: "scheduler", childs: {
+		timestamp_threshold: {mode: 'param', name: "timestamp_threshold", type: "double", doc: "Threshold for priority scheduling quantum", dflt: "0.0", },
+		task_polling_thread_basic_priority: {mode: 'param', name: "task_polling_thread_basic_priority", type: "int", doc: "Basic priority of polling tasks", dflt: "20", },
+		task_polling_thread_basic_priority_step: {mode: 'param', name: "task_polling_thread_basic_priority_step", type: "int", doc: "Step of basic priority of polling tasks", dflt: "20", },
+		task_polling_thread_current_priority_step: {mode: 'param', name: "task_polling_thread_current_priority_step", type: "int", doc: "Step of current priority of polling tasks", dflt: "20", },
+		sched_NBC_Pthread_basic_priority: {mode: 'param', name: "sched_NBC_Pthread_basic_priority", type: "int", doc: "Basic priority of polling tasks", dflt: "20", },
+		sched_NBC_Pthread_basic_priority_step: {mode: 'param', name: "sched_NBC_Pthread_basic_priority_step", type: "int", doc: "Step of basic priority of nbc progress threads", dflt: "20", },
+		sched_NBC_Pthread_current_priority_step: {mode: 'param', name: "sched_NBC_Pthread_current_priority_step", type: "int", doc: "Step of current priority of nbc progress threads", dflt: "20", },
+		mpi_basic_priority: {mode: 'param', name: "mpi_basic_priority", type: "int", doc: "Basic priority of MPI threads", dflt: "20", },
+		omp_basic_priority: {mode: 'param', name: "omp_basic_priority", type: "int", doc: "Basic priority of OMP threads", dflt: "20", },
+		posix_basic_priority: {mode: 'param', name: "posix_basic_priority", type: "int", doc: "Basic priority of POSIX threads", dflt: "20", },
+		progress_basic_priority: {mode: 'param', name: "progress_basic_priority", type: "int", doc: "Basic priority of POSIX threads", dflt: "20", },
+	}},
 };
 
 meta.modules = {
@@ -294,6 +307,7 @@ meta.modules = {
 	openmp: {name: "openmp", type: "openmp"},
 	profiler: {name: "profiler", type: "profiler"},
 	thread: {name: "thread", type: "thread"},
+	scheduler: {name: "scheduler", type: "scheduler"},
 };
 
 meta.networks = {

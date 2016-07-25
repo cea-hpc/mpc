@@ -22,9 +22,12 @@
 /* ######################################################################## */
 #include <mpc_mpi_internal.h>
 
+
 #ifndef SCTK_DO_NOT_HAVE_WEAK_SYMBOLS
 #include "mpc_mpi_weak.h"
 #endif
+
+#include "sctk_thread_generic.h"
 
 char * sctk_char_fortran_to_c (char *buf, int size, char ** free_ptr)
 {
@@ -13465,9 +13468,18 @@ int PMPI_Barrier (MPI_Comm comm)
 	
 	/* Error checking */
 	mpi_check_comm (comm, comm);
-	
+
 	/* Internal */
+    sctk_thread_generic_scheduler_t* sched;
+    sched = &(sctk_thread_generic_self()->sched);
+    sched->th->attr.basic_priority+=sctk_runtime_config_get()->modules.scheduler.progress_basic_priority;
+    sched->th->attr.current_priority+=sctk_runtime_config_get()->modules.scheduler.progress_basic_priority;
+    unsigned int kind_mask_save = sctk_thread_generic_getkind_mask_self();
+	sctk_thread_generic_addkind_mask_self(KIND_MASK_PROGRESS_THREAD);
 	res = __INTERNAL__PMPI_Barrier (comm);
+    sched->th->attr.basic_priority-=sctk_runtime_config_get()->modules.scheduler.progress_basic_priority;
+    sched->th->attr.current_priority-=sctk_runtime_config_get()->modules.scheduler.progress_basic_priority;
+    sctk_thread_generic_setkind_mask_self(kind_mask_save);
 	
 	/* Profiling */
 	SCTK_PROFIL_END (MPI_Barrier);
@@ -13502,7 +13514,16 @@ int PMPI_Bcast (void *buffer, int count, MPI_Datatype datatype, int root, MPI_Co
 	mpi_check_type (datatype, comm);
 
 	/* Internal */
+    sctk_thread_generic_scheduler_t* sched;
+    sched = &(sctk_thread_generic_self()->sched);
+    sched->th->attr.basic_priority+=sctk_runtime_config_get()->modules.scheduler.progress_basic_priority;
+    sched->th->attr.current_priority+=sctk_runtime_config_get()->modules.scheduler.progress_basic_priority;
+    unsigned int kind_mask_save = sctk_thread_generic_getkind_mask_self();
+	sctk_thread_generic_addkind_mask_self(KIND_MASK_PROGRESS_THREAD);
 	res = __INTERNAL__PMPI_Bcast (buffer, count, datatype, root, comm);
+    sched->th->attr.basic_priority-=sctk_runtime_config_get()->modules.scheduler.progress_basic_priority;
+    sched->th->attr.current_priority-=sctk_runtime_config_get()->modules.scheduler.progress_basic_priority;
+    sctk_thread_generic_setkind_mask_self(kind_mask_save);
 	
 	/* Profiling */
 	SCTK_PROFIL_END (MPI_Bcast);
@@ -13573,8 +13594,17 @@ PMPI_Gather (void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 	}
 		
 	/* Internal */
+    sctk_thread_generic_scheduler_t* sched;
+    sched = &(sctk_thread_generic_self()->sched);
+    sched->th->attr.basic_priority+=sctk_runtime_config_get()->modules.scheduler.progress_basic_priority;
+    sched->th->attr.current_priority+=sctk_runtime_config_get()->modules.scheduler.progress_basic_priority;
+    unsigned int kind_mask_save = sctk_thread_generic_getkind_mask_self();
+	sctk_thread_generic_addkind_mask_self(KIND_MASK_PROGRESS_THREAD);
 	res = __INTERNAL__PMPI_Gather (sendbuf, sendcnt, sendtype, recvbuf, 
 			recvcnt, recvtype, root, comm);
+    sched->th->attr.basic_priority-=sctk_runtime_config_get()->modules.scheduler.progress_basic_priority;
+    sched->th->attr.current_priority-=sctk_runtime_config_get()->modules.scheduler.progress_basic_priority;
+    sctk_thread_generic_setkind_mask_self(kind_mask_save);
 	
 	/* Profiling */
 	SCTK_PROFIL_END (MPI_Gather);
@@ -13615,10 +13645,20 @@ PMPI_Gatherv (void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 	{
 		MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
 	}
+
 	/* Internal */
+    sctk_thread_generic_scheduler_t* sched;
+    sched = &(sctk_thread_generic_self()->sched);
+    sched->th->attr.basic_priority+=sctk_runtime_config_get()->modules.scheduler.progress_basic_priority;
+    sched->th->attr.current_priority+=sctk_runtime_config_get()->modules.scheduler.progress_basic_priority;
+    unsigned int kind_mask_save = sctk_thread_generic_getkind_mask_self();
+	sctk_thread_generic_addkind_mask_self(KIND_MASK_PROGRESS_THREAD);
 	res = __INTERNAL__PMPI_Gatherv (sendbuf, sendcnt, sendtype, 
 			recvbuf, recvcnts, displs, recvtype, root, comm);
-	
+    sched->th->attr.basic_priority-=sctk_runtime_config_get()->modules.scheduler.progress_basic_priority;
+    sched->th->attr.current_priority-=sctk_runtime_config_get()->modules.scheduler.progress_basic_priority;
+    sctk_thread_generic_setkind_mask_self(kind_mask_save);
+
 	/* Profiling */
 	SCTK_PROFIL_END (MPI_Gatherv);
 	SCTK_MPI_CHECK_RETURN_VAL (res, comm);
@@ -13682,10 +13722,20 @@ PMPI_Scatter (void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 	{
 		return MPI_SUCCESS;
 	}
+
 	/* Internal */
+    sctk_thread_generic_scheduler_t* sched;
+    sched = &(sctk_thread_generic_self()->sched);
+    sched->th->attr.basic_priority+=sctk_runtime_config_get()->modules.scheduler.progress_basic_priority;
+    sched->th->attr.current_priority+=sctk_runtime_config_get()->modules.scheduler.progress_basic_priority;
+    unsigned int kind_mask_save = sctk_thread_generic_getkind_mask_self();
+	sctk_thread_generic_addkind_mask_self(KIND_MASK_PROGRESS_THREAD);
 	res = __INTERNAL__PMPI_Scatter (sendbuf, sendcnt, sendtype, recvbuf, 
 			recvcnt, recvtype, root, comm);
-	
+    sctk_thread_generic_setkind_mask_self(kind_mask_save);
+    sched->th->attr.basic_priority-=sctk_runtime_config_get()->modules.scheduler.progress_basic_priority;
+    sched->th->attr.current_priority-=sctk_runtime_config_get()->modules.scheduler.progress_basic_priority;
+
 	/* Profiling */
 	SCTK_PROFIL_END (MPI_Scatter);
 	SCTK_MPI_CHECK_RETURN_VAL (res, comm);
@@ -13770,10 +13820,20 @@ PMPI_Scatterv (void *sendbuf, int *sendcnts, int *displs,
 	{
 		MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
 	}
+
 	/* Internal */
+    sctk_thread_generic_scheduler_t* sched;
+    sched = &(sctk_thread_generic_self()->sched);
+    sched->th->attr.basic_priority+=sctk_runtime_config_get()->modules.scheduler.progress_basic_priority;
+    sched->th->attr.current_priority+=sctk_runtime_config_get()->modules.scheduler.progress_basic_priority;
+    unsigned int kind_mask_save = sctk_thread_generic_getkind_mask_self();
+	sctk_thread_generic_addkind_mask_self(KIND_MASK_PROGRESS_THREAD);
 	res = __INTERNAL__PMPI_Scatterv (sendbuf, sendcnts, displs, sendtype, 
 			recvbuf, recvcnt, recvtype, root, comm);
-			
+    sched->th->attr.basic_priority-=sctk_runtime_config_get()->modules.scheduler.progress_basic_priority;
+    sched->th->attr.current_priority-=sctk_runtime_config_get()->modules.scheduler.progress_basic_priority;
+    sctk_thread_generic_setkind_mask_self(kind_mask_save);
+
 	/* Profiling */
 	SCTK_PROFIL_END (MPI_Scatterv);
 	SCTK_MPI_CHECK_RETURN_VAL (res, comm);
@@ -13821,10 +13881,20 @@ PMPI_Allgather (void *sendbuf, int sendcount, MPI_Datatype sendtype,
 	if (MPI_IN_PLACE == recvbuf) {
 		MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
 	}
+
 	/* Internal */
+    sctk_thread_generic_scheduler_t* sched;
+    sched = &(sctk_thread_generic_self()->sched);
+    sched->th->attr.basic_priority+=sctk_runtime_config_get()->modules.scheduler.progress_basic_priority;
+    sched->th->attr.current_priority+=sctk_runtime_config_get()->modules.scheduler.progress_basic_priority;
+    unsigned int kind_mask_save = sctk_thread_generic_getkind_mask_self();
+	sctk_thread_generic_addkind_mask_self(KIND_MASK_PROGRESS_THREAD);
 	res = __INTERNAL__PMPI_Allgather (sendbuf, sendcount, sendtype, 
 			recvbuf, recvcount, recvtype, comm);
-			
+    sched->th->attr.basic_priority-=sctk_runtime_config_get()->modules.scheduler.progress_basic_priority;
+    sched->th->attr.current_priority-=sctk_runtime_config_get()->modules.scheduler.progress_basic_priority;
+    sctk_thread_generic_setkind_mask_self(kind_mask_save);
+
 	/* Profiling */
 	SCTK_PROFIL_END (MPI_Allgather);
 	SCTK_MPI_CHECK_RETURN_VAL (res, comm);
@@ -13857,9 +13927,19 @@ PMPI_Allgatherv (void *sendbuf, int sendcount, MPI_Datatype sendtype,
 	if (MPI_IN_PLACE == recvbuf) {
 		MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
 	}
+
 	/* Internal */
+    sctk_thread_generic_scheduler_t* sched;
+    sched = &(sctk_thread_generic_self()->sched);
+    sched->th->attr.basic_priority+=sctk_runtime_config_get()->modules.scheduler.progress_basic_priority;
+    sched->th->attr.current_priority+=sctk_runtime_config_get()->modules.scheduler.progress_basic_priority;
+    unsigned int kind_mask_save = sctk_thread_generic_getkind_mask_self();
+	sctk_thread_generic_addkind_mask_self(KIND_MASK_PROGRESS_THREAD);
 	res = __INTERNAL__PMPI_Allgatherv (sendbuf, sendcount, sendtype, 
 			recvbuf, recvcounts, displs, recvtype, comm);
+    sched->th->attr.basic_priority-=sctk_runtime_config_get()->modules.scheduler.progress_basic_priority;
+    sched->th->attr.current_priority-=sctk_runtime_config_get()->modules.scheduler.progress_basic_priority;
+    sctk_thread_generic_setkind_mask_self(kind_mask_save);
 				 
 	/* Profiling */
 	SCTK_PROFIL_END (MPI_Allgatherv);
@@ -13904,8 +13984,17 @@ PMPI_Alltoall (void *sendbuf, int sendcount, MPI_Datatype sendtype,
 		MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
 	}
     /* Internal */
+    sctk_thread_generic_scheduler_t* sched;
+    sched = &(sctk_thread_generic_self()->sched);
+    sched->th->attr.basic_priority+=sctk_runtime_config_get()->modules.scheduler.progress_basic_priority;
+    sched->th->attr.current_priority+=sctk_runtime_config_get()->modules.scheduler.progress_basic_priority;
+    unsigned int kind_mask_save = sctk_thread_generic_getkind_mask_self();
+	sctk_thread_generic_addkind_mask_self(KIND_MASK_PROGRESS_THREAD);
 	res = __INTERNAL__PMPI_Alltoall (sendbuf, sendcount, sendtype, 
 			recvbuf, recvcount, recvtype, comm);
+    sched->th->attr.basic_priority-=sctk_runtime_config_get()->modules.scheduler.progress_basic_priority;
+    sched->th->attr.current_priority-=sctk_runtime_config_get()->modules.scheduler.progress_basic_priority;
+    sctk_thread_generic_setkind_mask_self(kind_mask_save);
 	
 	/* Profiling */
 	SCTK_PROFIL_END (MPI_Alltoall);
@@ -13952,8 +14041,17 @@ PMPI_Alltoallv (void *sendbuf, int *sendcnts, int *sdispls,
 		MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
 	
 	/* Internal */
+    sctk_thread_generic_scheduler_t* sched;
+    sched = &(sctk_thread_generic_self()->sched);
+    sched->th->attr.basic_priority+=sctk_runtime_config_get()->modules.scheduler.progress_basic_priority;
+    sched->th->attr.current_priority+=sctk_runtime_config_get()->modules.scheduler.progress_basic_priority;
+    unsigned int kind_mask_save = sctk_thread_generic_getkind_mask_self();
+	sctk_thread_generic_addkind_mask_self(KIND_MASK_PROGRESS_THREAD);
 	res = __INTERNAL__PMPI_Alltoallv (sendbuf, sendcnts, sdispls, 
 			sendtype, recvbuf, recvcnts, rdispls, recvtype, comm);
+    sched->th->attr.basic_priority-=sctk_runtime_config_get()->modules.scheduler.progress_basic_priority;
+    sched->th->attr.current_priority-=sctk_runtime_config_get()->modules.scheduler.progress_basic_priority;
+    sctk_thread_generic_setkind_mask_self(kind_mask_save);
 	
 	/* Profiling */
 	SCTK_PROFIL_END (MPI_Alltoallv);
@@ -14021,8 +14119,17 @@ int PMPI_Alltoallw(void *sendbuf, int *sendcnts, int *sdispls, MPI_Datatype *sen
 		
 		
 	/* Internal */
+    sctk_thread_generic_scheduler_t* sched;
+    sched = &(sctk_thread_generic_self()->sched);
+    sched->th->attr.basic_priority+=sctk_runtime_config_get()->modules.scheduler.progress_basic_priority;
+    sched->th->attr.current_priority+=sctk_runtime_config_get()->modules.scheduler.progress_basic_priority;
+    unsigned int kind_mask_save = sctk_thread_generic_getkind_mask_self();
+	sctk_thread_generic_addkind_mask_self(KIND_MASK_PROGRESS_THREAD);
 	res = __INTERNAL__PMPI_Alltoallw (sendbuf, sendcnts, sdispls,
 			sendtypes, recvbuf, recvcnts, rdispls, recvtypes, comm);
+    sched->th->attr.basic_priority-=sctk_runtime_config_get()->modules.scheduler.progress_basic_priority;
+    sched->th->attr.current_priority-=sctk_runtime_config_get()->modules.scheduler.progress_basic_priority;
+    sctk_thread_generic_setkind_mask_self(kind_mask_save);
 	
 	/* Profiling */
 	SCTK_PROFIL_END (MPI_Alltoallw);
@@ -14324,7 +14431,16 @@ int PMPI_Reduce (void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
 	}
 	
 	/* Internal */
+    sctk_thread_generic_scheduler_t* sched;
+    sched = &(sctk_thread_generic_self()->sched);
+    sched->th->attr.basic_priority+=sctk_runtime_config_get()->modules.scheduler.progress_basic_priority;
+    sched->th->attr.current_priority+=sctk_runtime_config_get()->modules.scheduler.progress_basic_priority;
+    unsigned int kind_mask_save = sctk_thread_generic_getkind_mask_self();
+	sctk_thread_generic_addkind_mask_self(KIND_MASK_PROGRESS_THREAD);
 	res = __INTERNAL__PMPI_Reduce (sendbuf, recvbuf, count, datatype, op, root, comm);
+    sched->th->attr.basic_priority-=sctk_runtime_config_get()->modules.scheduler.progress_basic_priority;
+    sched->th->attr.current_priority-=sctk_runtime_config_get()->modules.scheduler.progress_basic_priority;
+    sctk_thread_generic_setkind_mask_self(kind_mask_save);
 	
 	/* Profiling */
 	SCTK_PROFIL_END (MPI_Reduce);
@@ -14388,8 +14504,16 @@ PMPI_Allreduce (void *sendbuf, void *recvbuf, int count,
     }
     
     /* Internal */
-	res = __INTERNAL__PMPI_Allreduce (sendbuf, recvbuf, count, datatype, 
-	op, comm);
+    sctk_thread_generic_scheduler_t* sched;
+    sched = &(sctk_thread_generic_self()->sched);
+    sched->th->attr.basic_priority+=sctk_runtime_config_get()->modules.scheduler.progress_basic_priority;
+    sched->th->attr.current_priority+=sctk_runtime_config_get()->modules.scheduler.progress_basic_priority;
+    unsigned int kind_mask_save = sctk_thread_generic_getkind_mask_self();
+	sctk_thread_generic_addkind_mask_self(KIND_MASK_PROGRESS_THREAD);
+	res = __INTERNAL__PMPI_Allreduce (sendbuf, recvbuf, count, datatype, op, comm);
+    sched->th->attr.basic_priority-=sctk_runtime_config_get()->modules.scheduler.progress_basic_priority;
+    sched->th->attr.current_priority-=sctk_runtime_config_get()->modules.scheduler.progress_basic_priority;
+    sctk_thread_generic_setkind_mask_self(kind_mask_save);
 	
 	/* Profiling */
 	SCTK_PROFIL_END (MPI_Allreduce);
@@ -14429,8 +14553,17 @@ PMPI_Reduce_scatter (void *sendbuf, void *recvbuf, int *recvcnts,
 	mpi_check_op (op,datatype, comm);
 	
 	/* Internal */
-	res = __INTERNAL__PMPI_Reduce_scatter (sendbuf, recvbuf, recvcnts, 
-	datatype, op, comm);
+    sctk_thread_generic_scheduler_t* sched;
+    sched = &(sctk_thread_generic_self()->sched);
+    sched->th->attr.basic_priority+=sctk_runtime_config_get()->modules.scheduler.progress_basic_priority;
+    sched->th->attr.current_priority+=sctk_runtime_config_get()->modules.scheduler.progress_basic_priority;
+    unsigned int kind_mask_save = sctk_thread_generic_getkind_mask_self();
+	sctk_thread_generic_addkind_mask_self(KIND_MASK_PROGRESS_THREAD);
+	res = __INTERNAL__PMPI_Reduce_scatter (sendbuf, recvbuf, recvcnts, datatype,
+            op, comm);
+    sched->th->attr.basic_priority-=sctk_runtime_config_get()->modules.scheduler.progress_basic_priority;
+    sched->th->attr.current_priority-=sctk_runtime_config_get()->modules.scheduler.progress_basic_priority;
+    sctk_thread_generic_setkind_mask_self(kind_mask_save);
 	
 	/* Profiling */
 	SCTK_PROFIL_END (MPI_Reduce_scatter);
@@ -14465,8 +14598,17 @@ PMPI_Reduce_scatter_block (void *sendbuf, void *recvbuf, int recvcnt,
 	mpi_check_op (op,datatype, comm);
 
 	/* Internal */
+    sctk_thread_generic_scheduler_t* sched;
+    sched = &(sctk_thread_generic_self()->sched);
+    sched->th->attr.basic_priority+=sctk_runtime_config_get()->modules.scheduler.progress_basic_priority;
+    sched->th->attr.current_priority+=sctk_runtime_config_get()->modules.scheduler.progress_basic_priority;
+    unsigned int kind_mask_save = sctk_thread_generic_getkind_mask_self();
+	sctk_thread_generic_addkind_mask_self(KIND_MASK_PROGRESS_THREAD);
 	res = __INTERNAL__PMPI_Reduce_scatter_block (sendbuf, recvbuf, 
 	recvcnt, datatype, op, comm);
+    sched->th->attr.basic_priority-=sctk_runtime_config_get()->modules.scheduler.progress_basic_priority;
+    sched->th->attr.current_priority-=sctk_runtime_config_get()->modules.scheduler.progress_basic_priority;
+    sctk_thread_generic_setkind_mask_self(kind_mask_save);
 	
 	/* Profiling */
 	SCTK_PROFIL_END (MPI_Reduce_scatter_block);
@@ -14496,7 +14638,16 @@ PMPI_Scan (void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
 	
 	
 	/* Internal */
+    sctk_thread_generic_scheduler_t* sched;
+    sched = &(sctk_thread_generic_self()->sched);
+    sched->th->attr.basic_priority+=sctk_runtime_config_get()->modules.scheduler.progress_basic_priority;
+    sched->th->attr.current_priority+=sctk_runtime_config_get()->modules.scheduler.progress_basic_priority;
+    unsigned int kind_mask_save = sctk_thread_generic_getkind_mask_self();
+	sctk_thread_generic_addkind_mask_self(KIND_MASK_PROGRESS_THREAD);
 	res = __INTERNAL__PMPI_Scan (sendbuf, recvbuf, count, datatype, op, comm);
+    sched->th->attr.basic_priority-=sctk_runtime_config_get()->modules.scheduler.progress_basic_priority;
+    sched->th->attr.current_priority-=sctk_runtime_config_get()->modules.scheduler.progress_basic_priority;
+    sctk_thread_generic_setkind_mask_self(kind_mask_save);
 	
 	/* Profiling */
 	SCTK_PROFIL_END (MPI_Scan);
@@ -14524,7 +14675,16 @@ PMPI_Exscan (void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
 	mpi_check_op (op, datatype,comm);
 	
 	/* Internal */
+    sctk_thread_generic_scheduler_t* sched;
+    sched = &(sctk_thread_generic_self()->sched);
+    sched->th->attr.basic_priority+=sctk_runtime_config_get()->modules.scheduler.progress_basic_priority;
+    sched->th->attr.current_priority+=sctk_runtime_config_get()->modules.scheduler.progress_basic_priority;
+    unsigned int kind_mask_save = sctk_thread_generic_getkind_mask_self();
+	sctk_thread_generic_addkind_mask_self(KIND_MASK_PROGRESS_THREAD);
 	res = __INTERNAL__PMPI_Exscan (sendbuf, recvbuf, count, datatype, op, comm);
+    sched->th->attr.basic_priority-=sctk_runtime_config_get()->modules.scheduler.progress_basic_priority;
+    sched->th->attr.current_priority-=sctk_runtime_config_get()->modules.scheduler.progress_basic_priority;
+    sctk_thread_generic_setkind_mask_self(kind_mask_save);
 	
 	/* Profiling */
 	SCTK_PROFIL_END (MPI_Exscan);

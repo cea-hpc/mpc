@@ -416,18 +416,70 @@ sctk_ethread_mxn_user_create (sctk_ethread_t * threadp,
   }
 }
 
+//hmt
+/**
+ * @brief threads placement on numa nodes
+ *
+ * @param pos current thread position
+ *
+ * @return cpu to bind current thread to have a numa placement
+ */
+//int sctk_ethread_get_init_vp_numa(int pos){
+//    int nb_cpu_per_node = sctk_get_cpu_number();
+//    int nb_numa_node_per_node = sctk_get_numa_node_number();
+//    int nb_cpu_per_numa_node = nb_cpu_per_node / nb_numa_node_per_node;
+//    int current_cpu = sctk_get_cpu();
+//
+//
+//    //TODO algo de bind numa et il faudrais verifier aussi comment les threads
+//    //sont placer au sein d un noeud numa
+//
+//    
+//
+//}
+//hmt
+
+
+//sctk_thread_mutex_t hmtlock = SCTK_THREAD_MUTEX_INITIALIZER;
+
 static int
 sctk_ethread_mxn_create (sctk_ethread_t * threadp,
 			 sctk_ethread_attr_t * attr,
 			 void *(*start_routine) (void *), void *arg)
 {
-  static unsigned int pos = 0;
+  int new_binding;
+
+
+  //pos is a useless variable now we have the patch which uses the arg structure which contain
+  //the new_binding for the thread
+  //static unsigned int pos = 0;
   sctk_ethread_per_thread_t *current;
   sctk_ethread_virtual_processor_t *current_vp;
   current = sctk_ethread_mxn_self ();
 
-  current_vp = sctk_ethread_mxn_vp_list[sctk_get_init_vp (pos)];
-  pos++;
+
+  //new_binding= sctk_get_init_vp(pos); //bind de mpc par defaut
+
+  //PATCH : we dont need rerun sctk_get_init_vp because you have the result in the arg structure
+  sctk_thread_data_t *tmp =(sctk_thread_data_t *) arg;
+  new_binding= tmp->bind_to;
+
+  current_vp = sctk_ethread_mxn_vp_list[new_binding];
+
+
+  //DEBUG
+  //char hostname[1024];
+  //gethostname(hostname,1024);
+  //FILE *hostname_fd = fopen(strcat(hostname,".log"),"a");
+  //fprintf(hostname_fd,"SCTK_ETHREAD current_vp->bind_to %d sctk_get_cpu() %d new_binding %d pos %d\n",current_vp[new_binding].bind_to,sctk_get_cpu(),new_binding, pos);
+  //fflush(hostname_fd);
+  //fclose(hostname_fd);
+  //DEBUG
+
+
+  //pos is a useless variable now we have the patch which uses the arg structure which contain
+  //the new_binding for the thread
+  //pos++;
 
   if (attr != NULL)
     return __sctk_ethread_create (ethread_ready, current_vp,

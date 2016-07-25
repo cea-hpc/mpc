@@ -21,6 +21,8 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
+#include "sctk_thread_generic_kind.h"
+
 #include "sctk_debug.h"
 #include "sctk_topology.h"
 #include "sctk_runtime_config.h"
@@ -622,6 +624,7 @@ __mpcomp_init()
 	  {
 		case MPCOMP_MODE_SIMPLE_MIXED:
 		  /* Compute the number of cores for this task */
+
 		  sctk_get_init_vp_and_nbvp(task_rank, &nb_mvps);
 
 		  sctk_debug( "__mpcomp_init: SIMPLE_MIXED -> #mvps = %d", nb_mvps ) ;
@@ -836,6 +839,19 @@ void in_order_scheduler( mpcomp_mvp_t * mvp ) {
     /* TODO handle out of order */
 
     sctk_openmp_thread_tls = &mvp->threads[i];
+
+    //hmt
+    //set the KIND_MASK_OMP to the current thread
+  //printf("BEFORE OMP: %d\n", sctk_thread_generic_getkind_mask_self());
+    sctk_thread_generic_addkind_mask_self(KIND_MASK_OMP);
+    sctk_thread_generic_set_basic_priority_self(sctk_runtime_config_get()->modules.scheduler.omp_basic_priority);
+    sctk_thread_generic_setkind_priority_self(sctk_runtime_config_get()->modules.scheduler.omp_basic_priority);
+    sctk_thread_generic_set_current_priority_self(sctk_runtime_config_get()->modules.scheduler.omp_basic_priority);
+  //printf("AFTER OMP: %d\n", sctk_thread_generic_getkind_mask_self());
+    //endhmt
+
+
+
 
     sctk_assert( ((mpcomp_thread_t *)sctk_openmp_thread_tls)->instance != NULL ) ;
     sctk_assert( ((mpcomp_thread_t *)sctk_openmp_thread_tls)->instance->team != NULL ) ;

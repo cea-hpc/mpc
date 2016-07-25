@@ -39,9 +39,14 @@
             <param name="reduce_scatter_block_inter" type="funcptr" default="__INTERNAL__PMPI_Reduce_scatter_block_inter" doc="MPI_Reduce_scatter_block intercom algorithm"/>
         </struct>
 
-       	<struct name="progress_thread" doc="Progress thread NBC">
-	    <param name="use_progress_thread" type="int" default="0" doc="If use progress threads for non blocking collectives"/>
-	</struct>
+        <struct name="progress_thread" doc="Progress thread NBC">
+            <param name="use_progress_thread" type="int" default="0" doc="If use progress threads for non blocking collectives"/>
+        </struct>
+        <!--
+        <struct name="scheduler" doc="Scheduler priority parameters">
+            <param name="sched_NBC_Pthread_basic_priority" type="int" default="10" doc="Basic priority of polling tasks"/>
+        </struct>
+        -->
         
         		
 	<!-- ############################## -->

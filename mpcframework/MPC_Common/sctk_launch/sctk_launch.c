@@ -433,40 +433,62 @@ static void sctk_version_details (void)
 {
 	sctk_version_details_val = 1;
 }
-
+//////////////////////////////////
+//OLD SCHEDULER
+//
 static void sctk_use_ethread (void)
 {
-	sctk_multithreading_mode = "ethread";
-	sctk_thread_val = sctk_ethread_thread_init;
+  fprintf(stderr,"INIT :ethread\n");
+  sctk_multithreading_mode = "ethread";
+  sctk_thread_val = sctk_ethread_thread_init;
 }
 
 	void
 sctk_use_ethread_mxn (void)
 {
-	sctk_multithreading_mode = "ethread_mxn";
-	sctk_thread_val = sctk_ethread_mxn_thread_init;
+  fprintf(stderr,"INIT :ethread_mxn\n");
+  sctk_multithreading_mode = "ethread_mxn";
+  sctk_thread_val = sctk_ethread_mxn_thread_init;
 }
+//////////////////////////////////
+//END OLD SCHEDULER
+//
 
-	void
+
+//////////////////////////////////
+//SCHEDULER NG
+//
+/********* ETHREAD MXN ************/
+  void
 sctk_use_ethread_mxn_ng (void)
 {
-	sctk_multithreading_mode = "ethread_mxn_ng";
-	sctk_thread_val = sctk_ethread_mxn_ng_thread_init;
+  fprintf(stderr,"INIT :ethread_mxn_ng\n");
+  sctk_multithreading_mode = "ethread_mxn_ng";
+  sctk_thread_val = sctk_ethread_mxn_ng_thread_init;
 }
+
+/********* ETHREAD ************/
 	void
 sctk_use_ethread_ng (void)
 {
-	sctk_multithreading_mode = "ethread_ng";
-	sctk_thread_val = sctk_ethread_ng_thread_init;
+  fprintf(stderr,"INIT :ethread_ng\n");
+  sctk_multithreading_mode = "ethread_ng";
+  sctk_thread_val = sctk_ethread_ng_thread_init;
 }
 
+/********* PTHREAD ************/
 	void
 sctk_use_pthread_ng (void)
 {
-	sctk_multithreading_mode = "pthread_ng";
-	sctk_thread_val = sctk_pthread_ng_thread_init;
+  fprintf(stderr,"INIT :pthread_ng\n");
+  sctk_multithreading_mode = "pthread_ng";
+  sctk_thread_val = sctk_pthread_ng_thread_init;
 }
-	static void
+/*********  END NG ************/
+
+
+
+  static void
 sctk_def_directory (char *arg)
 {
 	/*   sctk_store_dir = arg; */
@@ -982,6 +1004,9 @@ void sctk_init_mpc_runtime()
 	}
 
 	/* Default values */
+    //this function is called 2 times, one here and one with the function pointer 
+    //"sctk_runtime_config_get()->modules.launcher.thread_init.value()" below
+    
 	sctk_use_ethread_mxn ();
 	sctk_def_task_nb ("1");
 	sctk_def_process_nb ("1");

@@ -17,8 +17,12 @@
 /* #                                                                      # */
 /* # Authors:                                                             # */
 /* #   - JAEGER Julien julien.jaeger@cea.fr                               # */
+/* #   - TABOADA Hugo hugo.taboada.ocre@cea.fr                            # */
 /* #                                                                      # */
 /* ######################################################################## */
+
+//#define SCTK_DEBUG_SCHEDULER
+
 #include <mpc_mpi_internal.h>
 #ifndef SCTK_DO_NOT_HAVE_WEAK_SYMBOLS
 #include "mpc_nbc_weak.h"
@@ -34,7 +38,9 @@
 #include <mpc_nbc_fortran.h>
 #undef ffunc
 
+#include "mpc_nbc_polling_thread_binding.h"
 
+#include "sctk_thread_generic.h"
 
 /* INTERNAL FOR NON-BLOCKING COLLECTIVES - CALL TO libNBC FUNCTIONS*/
 
@@ -98,7 +104,7 @@ static int NBC_Iallgather(void* sendbuf, int sendcount, MPI_Datatype sendtype, v
 	char *rbuf, *sbuf, inplace;
 
 	NBC_IN_PLACE(sendbuf, recvbuf, inplace);
-	
+
 	res = NBC_Init_handle(handle, comm, MPC_IALLGATHER_TAG);
 	if(res != NBC_OK) { printf("Error in NBC_Init_handle(%i)\n", res); return res; }
 	res = PMPC_Comm_rank(comm, &rank);
@@ -314,6 +320,8 @@ static int NBC_Iallreduce(void* sendbuf, void* recvbuf, int count, MPI_Datatype 
 		if (NBC_OK != res) { printf("Error in NBC_Copy() (%i)\n", res); return res; }
 	}
 
+    //TOFIX Segmentation Fault error when we choose the second algorithm
+    //this problem is found and discribed in a mail to JJ in July 28, 2015
 	/* algorithm selection */
 //	if(p < 4 || size*count < 65536*2) {
 		alg = NBC_ARED_BINOMIAL;
@@ -2884,6 +2892,8 @@ static int NBC_Iexscan(void* sendbuf, void* recvbuf, int count, MPI_Datatype dat
 
 
 void *NBC_Pthread_func( void *ptr ) {
+
+
   MPI_Request req=MPI_REQUEST_NULL;
   int tmp_recv;
 
@@ -2892,6 +2902,35 @@ void *NBC_Pthread_func( void *ptr ) {
   struct sctk_list_elem * list_handles;
   sctk_thread_mutex_t * lock;
   task_specific = __MPC_get_task_specific ();
+
+  task_specific->mpc_mpi_data->nbc_initialized_per_task = 1;
+
+  if(sctk_multiple_queues_sched_NBC_Pthread_sched_init!=NULL){
+      sctk_multiple_queues_sched_NBC_Pthread_sched_init();
+  }
+
+  #ifdef SCTK_DEBUG_SCHEDULER
+  {
+      char hostname[128];
+      char hostname2[128];
+      char current_vp[5];
+      gethostname(hostname,128);
+      strncpy(hostname2,hostname,128);
+      sprintf(current_vp,"_%03d",sctk_thread_get_vp ());
+      strcat(hostname2,current_vp);
+
+      FILE* fd=fopen(hostname2,"a");
+      fprintf(fd,"NBC_THREAD_CREATE\n");
+      fflush(fd);
+      fclose(fd);
+  }
+  #endif
+
+  //kinds are set when we create the thread in the attr
+  //sctk_thread_generic_addkind_mask_self(KIND_MASK_PROGRESS_THREAD);
+  //sctk_thread_generic_set_basic_priority_self(10);
+  //sctk_thread_generic_setkind_priority_self(10);
+  //sctk_thread_generic_set_current_priority_self(10);
 
 
   while(1) {
@@ -3277,6 +3316,7 @@ static inline int NBC_Free(NBC_Handle* handle) {
   int use_progress_thread = 0;
   use_progress_thread = sctk_runtime_config_get()->modules.progress_thread.use_progress_thread;
 
+
   if(use_progress_thread == 1)
   {
   
@@ -3294,6 +3334,30 @@ static inline int NBC_Free(NBC_Handle* handle) {
  
     DL_SEARCH_SCALAR(list_handles, elem_tmp, elem, handle);
     DL_DELETE(task_specific->mpc_mpi_data->NBC_Pthread_handles, elem_tmp);
+    task_specific->mpc_mpi_data->NBC_Pthread_nb--;
+
+    #ifdef SCTK_DEBUG_SCHEDULER
+    {
+        char hostname[128];
+        char hostname2[128];
+        char current_vp[5];
+        gethostname(hostname,128);
+        strncpy(hostname2,hostname,128);
+        sprintf(current_vp,"_%03d",sctk_thread_get_vp ());
+        strcat(hostname2,current_vp);
+
+        FILE* fd=fopen(hostname2,"a");
+        fprintf(fd,"NBC_DELETE %p %d\n", elem_tmp,task_specific->mpc_mpi_data->NBC_Pthread_nb);
+        //printf("NBC_DELETE\n");
+        //fflush(stdout);
+        fflush(fd);
+        fclose(fd);
+    }
+    #endif
+
+    if(sctk_multiple_queues_sched_NBC_Pthread_sched_decrease_priority!=NULL){
+        sctk_multiple_queues_sched_NBC_Pthread_sched_decrease_priority();
+    }
 
     sctk_thread_mutex_unlock(lock);
 
@@ -3347,12 +3411,12 @@ static inline int NBC_Progress(NBC_Handle *handle) {
   /* the handle is done if there is no schedule attached */
   if(handle->schedule != NULL) {
 
-    if((handle->req_count > 0) && (handle->req_array != NULL)) {
-			sctk_debug("INSIDE THE PROGRESS THREAD");
-      res = __INTERNAL__PMPI_Waitall(handle->req_count, handle->req_array, /*&flag,*/ MPI_STATUSES_IGNORE);
-      if(res != MPI_SUCCESS) { printf("MPI Error in MPI_Testall() (%i)\n", res); ret=res; goto error; }
-    }
-    /* a round is finished */
+      if((handle->req_count > 0) && (handle->req_array != NULL)) {
+          sctk_debug("INSIDE THE PROGRESS THREAD");
+          res = __INTERNAL__PMPI_Waitall(handle->req_count, handle->req_array, /*&flag,*/ MPI_STATUSES_IGNORE);
+          if(res != MPI_SUCCESS) { printf("MPI Error in MPI_Testall() (%i)\n", res); ret=res; goto error; }
+      }
+      /* a round is finished */
       /* adjust delim to start of current round */
       delim = (char*)*handle->schedule + handle->row_offset;
       NBC_GET_ROUND_SIZE(delim, size);
@@ -3360,29 +3424,29 @@ static inline int NBC_Progress(NBC_Handle *handle) {
       delim = delim + size;
 
       if(handle->req_array != NULL) {
-        /* free request array */
-        sctk_free((void*)handle->req_array);
-        handle->req_array = NULL;
+          /* free request array */
+          sctk_free((void*)handle->req_array);
+          handle->req_array = NULL;
       }
       handle->req_count = 0;
 
       if(*delim == 0) {
-        /* this was the last round - we're done */
-        
-        res = NBC_Free(handle);
-        if((NBC_OK != res)) { printf("Error in NBC_Free() (%i)\n", res); ret=res; goto error; }
-        return NBC_OK;
+          /* this was the last round - we're done */
+
+          res = NBC_Free(handle);
+          if((NBC_OK != res)) { printf("Error in NBC_Free() (%i)\n", res); ret=res; goto error; }
+          return NBC_OK;
       } else {
-        /* move delim to start of next round */
-        delim = delim+1;
-        /* initializing handle for new virgin round */
-        handle->row_offset = (long)delim - (long)*handle->schedule;
-        /* kick it off */
-        res = NBC_Start_round(handle);
-        if(NBC_OK != res) { printf("Error in NBC_Start_round() (%i)\n", res); ret=res; goto error; }
+          /* move delim to start of next round */
+          delim = delim+1;
+          /* initializing handle for new virgin round */
+          handle->row_offset = (long)delim - (long)*handle->schedule;
+          /* kick it off */
+          res = NBC_Start_round(handle);
+          if(NBC_OK != res) { printf("Error in NBC_Start_round() (%i)\n", res); ret=res; goto error; }
       }
   } else {
-    ret= NBC_OK;
+      ret= NBC_OK;
   }
 
 error:
@@ -3562,23 +3626,95 @@ error:
 }
 
 
-static inline int NBC_Initialize() {
+//static inline int NBC_Initialize() {
+//  if(sctk_runtime_config_get()->modules.progress_thread.use_progress_thread == 1)
+//  { 
+//  struct sctk_task_specific_s * task_specific;
+//  task_specific = __MPC_get_task_specific ();
+//
+//  sctk_thread_attr_t attr;
+//  sctk_thread_attr_init(&attr);
+//
+//  //JJ
+//  //sctk_thread_attr_setbinding (&attr, sctk_get_cpu());
+//  //
+//
+//  int cpu_id_to_bind_polling_thread =
+//      sctk_set_polling_thread_binding(SCTK_POLLING_THREAD_BINDING_BIND);
+//
+//  sctk_thread_attr_setbinding (&attr,cpu_id_to_bind_polling_thread);
+//
+//  ////DEBUG
+//  //char hostname[1024];
+//  //gethostname(hostname,1024);
+//  //FILE *hostname_fd = fopen(strcat(hostname,".log"),"a");
+//  ////if (hostname_fd == NULL) perror("FAILED FOPEN hostname_fd");
+//
+//  //fprintf(hostname_fd,"task_id %03d, current_cpu=%03d, cpu_id_to_bind_polling_thread = %03d\n",
+//  //        sctk_get_local_task_rank(),
+//  //        sctk_get_cpu(),
+//  //        cpu_id_to_bind_polling_thread
+//  //      );
+//  //fflush(hostname_fd);
+//  //fclose(hostname_fd);
+//  ////DEBUG
+//
+//
+//
+//  int ret = sctk_user_thread_create( &(task_specific->mpc_mpi_data->NBC_Pthread), &attr, NBC_Pthread_func, NULL);
+//  if(0 != ret) { printf("Error in sctk_user_thread_create() (%i)\n", ret); return NBC_OOR; }
+//
+//  sctk_thread_attr_destroy(&attr);
+//  
+//  task_specific->mpc_mpi_data->nbc_initialized_per_task = 1;
+//  }
+//
+//  return NBC_OK;
+//}
 
+//mettre les attr en generic 
+static inline int NBC_Initialize() {
   if(sctk_runtime_config_get()->modules.progress_thread.use_progress_thread == 1)
   { 
   struct sctk_task_specific_s * task_specific;
   task_specific = __MPC_get_task_specific ();
 
-  sctk_thread_attr_t attr;
-  sctk_thread_attr_init(&attr);
-  sctk_thread_attr_setbinding (&attr, sctk_get_cpu());
+  sctk_thread_generic_attr_t attr;
+  sctk_thread_generic_attr_init(&attr);
 
-  int ret = sctk_user_thread_create( &(task_specific->mpc_mpi_data->NBC_Pthread), &attr, NBC_Pthread_func, NULL);
+  int cpu_id_to_bind_polling_thread =
+      sctk_set_polling_thread_binding(SCTK_POLLING_THREAD_BINDING_BIND);
+
+  sctk_thread_attr_setbinding ((sctk_thread_attr_t*)&attr,cpu_id_to_bind_polling_thread);
+
+  attr.ptr->kind.mask=KIND_MASK_PROGRESS_THREAD;
+  attr.ptr->basic_priority=sctk_runtime_config_get()->modules.scheduler.sched_NBC_Pthread_basic_priority;
+  attr.ptr->kind.priority=sctk_runtime_config_get()->modules.scheduler.sched_NBC_Pthread_basic_priority;
+  attr.ptr->current_priority=sctk_runtime_config_get()->modules.scheduler.sched_NBC_Pthread_basic_priority;
+
+
+  ////DEBUG
+  //char hostname[1024];
+  //gethostname(hostname,1024);
+  //FILE *hostname_fd = fopen(strcat(hostname,".log"),"a");
+  ////if (hostname_fd == NULL) perror("FAILED FOPEN hostname_fd");
+
+  //fprintf(hostname_fd,"task_id %03d, current_cpu=%03d, cpu_id_to_bind_polling_thread = %03d\n",
+  //        sctk_get_local_task_rank(),
+  //        sctk_get_cpu(),
+  //        cpu_id_to_bind_polling_thread
+  //      );
+  //fflush(hostname_fd);
+  //fclose(hostname_fd);
+  ////DEBUG
+
+
+  int ret = sctk_user_thread_create( &(task_specific->mpc_mpi_data->NBC_Pthread), (sctk_thread_attr_t*) &attr, NBC_Pthread_func, NULL);
   if(0 != ret) { printf("Error in sctk_user_thread_create() (%i)\n", ret); return NBC_OOR; }
 
-  sctk_thread_attr_destroy(&attr);
+  sctk_thread_generic_attr_destroy(&attr);
   
-  task_specific->mpc_mpi_data->nbc_initialized_per_task = 1;
+  //task_specific->mpc_mpi_data->nbc_initialized_per_task = 1;
   }
 
   return NBC_OK;
@@ -3587,7 +3723,8 @@ static inline int NBC_Initialize() {
 static inline int NBC_Init_handle(NBC_Handle *handle, MPI_Comm comm, int tag) {
   int res;
 
-// right now, we need this only if we need to start a progress thread
+//fprintf(stderr,"DEBUG###################### %d\n",sctk_runtime_config_get()->modules.progress_thread.use_progress_thread);
+
   if(sctk_runtime_config_get()->modules.progress_thread.use_progress_thread == 1)
 {
   struct sctk_task_specific_s * task_specific;
@@ -3639,8 +3776,6 @@ static inline int NBC_Start(NBC_Handle *handle, NBC_Schedule *schedule) {
    * thread - the handle must not be touched by the user thread from now
    * on !!! */
 
-
-
     struct sctk_task_specific_s * task_specific;
     struct sctk_list_elem * list_handles;
     sctk_thread_mutex_t *lock;
@@ -3650,22 +3785,46 @@ static inline int NBC_Start(NBC_Handle *handle, NBC_Schedule *schedule) {
 
     struct sctk_list_elem *elem_tmp;
 
-
-
     elem_tmp=sctk_malloc(sizeof(struct sctk_list_elem));
     elem_tmp->elem = handle;
 
+    sctk_thread_wait_for_value_and_poll(&(task_specific->mpc_mpi_data->nbc_initialized_per_task), 1, NULL, NULL);
+    /* wake progress thread up */
+    PMPC_Send(&tmp_send, 1, MPI_INT, 0, 0, MPI_COMM_SELF);
+
     sctk_thread_mutex_lock(lock);
     list_handles = task_specific->mpc_mpi_data->NBC_Pthread_handles;
-
     DL_APPEND(task_specific->mpc_mpi_data->NBC_Pthread_handles, elem_tmp);
-
+    task_specific->mpc_mpi_data->NBC_Pthread_nb++;
     sctk_thread_mutex_unlock(lock);
+    if(sctk_multiple_queues_sched_NBC_Pthread_sched_increase_priority!=NULL){
+        sctk_multiple_queues_sched_NBC_Pthread_sched_increase_priority();
+    } 
 		
-    sctk_thread_wait_for_value_and_poll(&(task_specific->mpc_mpi_data->nbc_initialized_per_task), 1, NULL, NULL);
+    //sctk_thread_wait_for_value_and_poll(&(task_specific->mpc_mpi_data->nbc_initialized_per_task), 1, NULL, NULL);
+    ///* wake progress thread up */
+    //PMPC_Send(&tmp_send, 1, MPI_INT, 0, 0, MPI_COMM_SELF);
 
-  /* wake progress thread up */
-  PMPC_Send(&tmp_send, 1, MPI_INT, 0, 0, MPI_COMM_SELF);
+    #ifdef SCTK_DEBUG_SCHEDULER
+    {
+        char hostname[128];
+        char hostname2[128];
+        char current_vp[5];
+        gethostname(hostname,128);
+        strncpy(hostname2,hostname,128);
+        sprintf(current_vp,"_%03d",sctk_thread_get_vp ());
+        strcat(hostname2,current_vp);
+
+        FILE* fd=fopen(hostname2,"a");
+        fprintf(fd,"NBC_APPEND %p %d\n",elem_tmp, task_specific->mpc_mpi_data->NBC_Pthread_nb);
+        //printf("NBC_APPEND\n");
+        //fflush(stdout);
+        fflush(fd);
+        fclose(fd);
+    }
+    #endif
+
+  //no polling thread
   } else {
   /* kick off first round */
   res = NBC_Start_round(handle);

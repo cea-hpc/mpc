@@ -44,6 +44,7 @@ const struct sctk_runtime_config_entry_meta sctk_runtime_config_db[] = {
 	{"openmp"     , SCTK_CONFIG_META_TYPE_PARAM , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_modules,openmp)  , sizeof(struct sctk_runtime_config_struct_openmp) , "sctk_runtime_config_struct_openmp" , sctk_runtime_config_struct_init_openmp},
 	{"profiler"     , SCTK_CONFIG_META_TYPE_PARAM , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_modules,profiler)  , sizeof(struct sctk_runtime_config_struct_profiler) , "sctk_runtime_config_struct_profiler" , sctk_runtime_config_struct_init_profiler},
 	{"thread"     , SCTK_CONFIG_META_TYPE_PARAM , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_modules,thread)  , sizeof(struct sctk_runtime_config_struct_thread) , "sctk_runtime_config_struct_thread" , sctk_runtime_config_struct_init_thread},
+	{"scheduler"     , SCTK_CONFIG_META_TYPE_PARAM , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_modules,scheduler)  , sizeof(struct sctk_runtime_config_struct_scheduler) , "sctk_runtime_config_struct_scheduler" , sctk_runtime_config_struct_init_scheduler},
 	/* struct */
 	{"sctk_runtime_config_struct_allocator" , SCTK_CONFIG_META_TYPE_STRUCT , 0  , sizeof(struct sctk_runtime_config_struct_allocator) , NULL , sctk_runtime_config_struct_init_allocator},
 	{"numa_migration"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_allocator,numa_migration)  , sizeof(bool) , "bool" , NULL},
@@ -323,6 +324,19 @@ const struct sctk_runtime_config_entry_meta sctk_runtime_config_db[] = {
 	{"spin_delay"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_thread,spin_delay)  , sizeof(int) , "int" , NULL},
 	{"interval"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_thread,interval)  , sizeof(int) , "int" , NULL},
 	{"kthread_stack_size"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_thread,kthread_stack_size)  , sizeof(size_t) , "size_t" , NULL},
+	/* struct */
+	{"sctk_runtime_config_struct_scheduler" , SCTK_CONFIG_META_TYPE_STRUCT , 0  , sizeof(struct sctk_runtime_config_struct_scheduler) , NULL , sctk_runtime_config_struct_init_scheduler},
+	{"timestamp_threshold"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_scheduler,timestamp_threshold)  , sizeof(double) , "double" , NULL},
+	{"task_polling_thread_basic_priority"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_scheduler,task_polling_thread_basic_priority)  , sizeof(int) , "int" , NULL},
+	{"task_polling_thread_basic_priority_step"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_scheduler,task_polling_thread_basic_priority_step)  , sizeof(int) , "int" , NULL},
+	{"task_polling_thread_current_priority_step"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_scheduler,task_polling_thread_current_priority_step)  , sizeof(int) , "int" , NULL},
+	{"sched_NBC_Pthread_basic_priority"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_scheduler,sched_NBC_Pthread_basic_priority)  , sizeof(int) , "int" , NULL},
+	{"sched_NBC_Pthread_basic_priority_step"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_scheduler,sched_NBC_Pthread_basic_priority_step)  , sizeof(int) , "int" , NULL},
+	{"sched_NBC_Pthread_current_priority_step"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_scheduler,sched_NBC_Pthread_current_priority_step)  , sizeof(int) , "int" , NULL},
+	{"mpi_basic_priority"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_scheduler,mpi_basic_priority)  , sizeof(int) , "int" , NULL},
+	{"omp_basic_priority"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_scheduler,omp_basic_priority)  , sizeof(int) , "int" , NULL},
+	{"posix_basic_priority"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_scheduler,posix_basic_priority)  , sizeof(int) , "int" , NULL},
+	{"progress_basic_priority"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_scheduler,progress_basic_priority)  , sizeof(int) , "int" , NULL},
 	/* end marker */
 	{NULL , SCTK_CONFIG_META_TYPE_END , 0 , 0 , NULL,  NULL}
 };

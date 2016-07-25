@@ -33,9 +33,13 @@
 #include <utlist.h>
 #include <semaphore.h>
 
+#include "sctk_runtime_config.h"
+
 /***************************************/
 /* THREAD SCHEDULING                   */
 /***************************************/
+
+//Thread status
 typedef enum{
   sctk_thread_generic_blocked,
   sctk_thread_generic_running,
@@ -46,14 +50,17 @@ typedef enum{
 struct sctk_thread_generic_scheduler_s;
 struct sctk_per_vp_data_s;
 
+//structure which contain data for centralized scheduler
 typedef struct{
   int dummy;
 }sctk_centralized_scheduler_t;
 
+//structure which contain data for multiple queues scheduler
 typedef struct{
   int dummy;
 }sctk_multiple_queues_scheduler_t;
 
+//structure which contain data for both scheduler
 typedef struct sctk_thread_generic_scheduler_generic_s{
   int vp_type;
   volatile int is_idle_mode;
@@ -68,6 +75,7 @@ typedef struct sctk_thread_generic_scheduler_generic_s{
   };
 } sctk_thread_generic_scheduler_generic_t;
 
+//scheduler
 typedef struct sctk_thread_generic_scheduler_s{
   sctk_mctx_t ctx;
   sctk_mctx_t ctx_bootstrap;
@@ -78,6 +86,16 @@ typedef struct sctk_thread_generic_scheduler_s{
     sctk_thread_generic_scheduler_generic_t generic;
   };
 } sctk_thread_generic_scheduler_t;
+
+
+//NBC_hook functions
+void (*sctk_multiple_queues_sched_NBC_Pthread_sched_increase_priority)();
+void (*sctk_multiple_queues_sched_NBC_Pthread_sched_decrease_priority)();
+void (*sctk_multiple_queues_sched_NBC_Pthread_sched_init)();
+
+//polling mpc
+void (*sctk_multiple_queues_task_polling_thread_sched_decrease_priority)(int core);
+void (*sctk_multiple_queues_task_polling_thread_sched_increase_priority)(int bind_to);
 
 extern void (*sctk_thread_generic_sched_yield)(sctk_thread_generic_scheduler_t*);
 extern void (*sctk_thread_generic_thread_status)(sctk_thread_generic_scheduler_t*,

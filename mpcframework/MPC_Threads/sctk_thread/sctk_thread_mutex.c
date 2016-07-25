@@ -230,12 +230,16 @@ sctk_thread_generic_mutexes_mutex_lock (sctk_thread_generic_mutex_t * lock,
     lock->owner = sched;
     if(lock->type == SCTK_THREAD_MUTEX_RECURSIVE ) lock->nb_call ++;
     sctk_spinlock_unlock(&(lock->lock));
+    //We can force sched_yield here to increase calls to the priority scheduler
+    //sctk_thread_generic_sched_yield(sched);
     return ret;
   } else {
     if(lock->type == SCTK_THREAD_MUTEX_RECURSIVE 
 			&& lock->owner == sched){
       lock->nb_call ++;
       sctk_spinlock_unlock(&(lock->lock));
+      //We can force sched_yield here to increase calls to the priority scheduler
+      //sctk_thread_generic_sched_yield(sched);
       return ret;
     } 
     if (lock->type == SCTK_THREAD_MUTEX_ERRORCHECK 

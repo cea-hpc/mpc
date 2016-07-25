@@ -183,7 +183,7 @@ for arg in "$@" ; do
 	case $arg in
 		--config=*)
 			MPC_USER_CONFIG="`echo A$arg | sed -e 's/A--config=//g'`"
-			echo "Use config file $MPC_USER_CONFIG"
+			echo "#Use config file $MPC_USER_CONFIG"
 			export MPC_USER_CONFIG
 			;;
 		--profiles=*)

@@ -26,8 +26,8 @@ cat <<EOF > $MPC_USE_MPCRC_FILE
 #                 MPC default configuration               #
 ###########################################################
 
-#Define default thread type (ethread/ethread_mxn/pthread)
-#THREAD_TYPE="ethread_mxn"
+#Define default thread type (ethread/ethread_mxn/pthread/ethread_mxn_ng)
+#THREAD_TYPE="ethread_mxn_ng"
 
 #Define default network type (none/mpi)
 #NET_TYPE="none"

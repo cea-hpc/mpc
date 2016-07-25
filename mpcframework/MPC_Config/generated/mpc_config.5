@@ -147,6 +147,10 @@ See type profiler.
 Options for MPC threads.
 .br
 See type thread.
+.It Cm scheduler
+Scheduler priority parameters
+.br
+See type scheduler.
 .El
 .Sh ENTRIES OF TYPE allocator
 Options for MPC memory allocator.
@@ -1213,4 +1217,55 @@ Type is int. Default value is 10.
 Type is size. Default value is 10MB. 
 .Pp kthread_stack_size
 Define the stack size of MPC user threads
+.El
+.Sh ENTRIES OF TYPE scheduler
+Scheduler priority parameters
+.Pp
+It support parameters :
+.Pp
+.Bl -tag -width Ds
+.It Cm timestamp_threshold
+Type is double. Default value is 0.0. 
+.Pp timestamp_threshold
+Threshold for priority scheduling quantum
+.It Cm task_polling_thread_basic_priority
+Type is int. Default value is 20. 
+.Pp task_polling_thread_basic_priority
+Basic priority of polling tasks
+.It Cm task_polling_thread_basic_priority_step
+Type is int. Default value is 20. 
+.Pp task_polling_thread_basic_priority_step
+Step of basic priority of polling tasks
+.It Cm task_polling_thread_current_priority_step
+Type is int. Default value is 20. 
+.Pp task_polling_thread_current_priority_step
+Step of current priority of polling tasks
+.It Cm sched_NBC_Pthread_basic_priority
+Type is int. Default value is 20. 
+.Pp sched_NBC_Pthread_basic_priority
+Basic priority of polling tasks
+.It Cm sched_NBC_Pthread_basic_priority_step
+Type is int. Default value is 20. 
+.Pp sched_NBC_Pthread_basic_priority_step
+Step of basic priority of nbc progress threads
+.It Cm sched_NBC_Pthread_current_priority_step
+Type is int. Default value is 20. 
+.Pp sched_NBC_Pthread_current_priority_step
+Step of current priority of nbc progress threads
+.It Cm mpi_basic_priority
+Type is int. Default value is 20. 
+.Pp mpi_basic_priority
+Basic priority of MPI threads
+.It Cm omp_basic_priority
+Type is int. Default value is 20. 
+.Pp omp_basic_priority
+Basic priority of OMP threads
+.It Cm posix_basic_priority
+Type is int. Default value is 20. 
+.Pp posix_basic_priority
+Basic priority of POSIX threads
+.It Cm progress_basic_priority
+Type is int. Default value is 20. 
+.Pp progress_basic_priority
+Basic priority of POSIX threads
 .El

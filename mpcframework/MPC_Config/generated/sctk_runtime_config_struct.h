@@ -726,6 +726,34 @@ struct sctk_runtime_config_struct_thread
 };
 
 /******************************** STRUCTURE *********************************/
+/**Scheduler priority parameters**/
+struct sctk_runtime_config_struct_scheduler
+{	int init_done;
+	/**Threshold for priority scheduling quantum**/
+	double timestamp_threshold;
+	/**Basic priority of polling tasks**/
+	int task_polling_thread_basic_priority;
+	/**Step of basic priority of polling tasks**/
+	int task_polling_thread_basic_priority_step;
+	/**Step of current priority of polling tasks**/
+	int task_polling_thread_current_priority_step;
+	/**Basic priority of polling tasks**/
+	int sched_NBC_Pthread_basic_priority;
+	/**Step of basic priority of nbc progress threads**/
+	int sched_NBC_Pthread_basic_priority_step;
+	/**Step of current priority of nbc progress threads**/
+	int sched_NBC_Pthread_current_priority_step;
+	/**Basic priority of MPI threads**/
+	int mpi_basic_priority;
+	/**Basic priority of OMP threads**/
+	int omp_basic_priority;
+	/**Basic priority of POSIX threads**/
+	int posix_basic_priority;
+	/**Basic priority of POSIX threads**/
+	int progress_basic_priority;
+};
+
+/******************************** STRUCTURE *********************************/
 struct sctk_runtime_config_modules
 {
 	struct sctk_runtime_config_struct_allocator allocator;
@@ -740,6 +768,7 @@ struct sctk_runtime_config_modules
 	struct sctk_runtime_config_struct_openmp openmp;
 	struct sctk_runtime_config_struct_profiler profiler;
 	struct sctk_runtime_config_struct_thread thread;
+	struct sctk_runtime_config_struct_scheduler scheduler;
 };
 
 /******************************** STRUCTURE *********************************/

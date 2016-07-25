@@ -17,6 +17,7 @@
 /* #                                                                      # */
 /* # Authors:                                                             # */
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
+/* #   - TABOADA Hugo hugo.taboada.ocre@cea.fr                            # */
 /* #                                                                      # */
 /* ######################################################################## */
 #ifndef __SCTK_THREADS_H_

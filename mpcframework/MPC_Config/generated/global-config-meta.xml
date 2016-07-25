@@ -130,9 +130,14 @@
             <param name="reduce_scatter_block_inter" type="funcptr" default="__INTERNAL__PMPI_Reduce_scatter_block_inter" doc="MPI_Reduce_scatter_block intercom algorithm"/>
         </struct>
 
-       	<struct name="progress_thread" doc="Progress thread NBC">
-	    <param name="use_progress_thread" type="int" default="0" doc="If use progress threads for non blocking collectives"/>
-	</struct>
+        <struct name="progress_thread" doc="Progress thread NBC">
+            <param name="use_progress_thread" type="int" default="0" doc="If use progress threads for non blocking collectives"/>
+        </struct>
+        <!--
+        <struct name="scheduler" doc="Scheduler priority parameters">
+            <param name="sched_NBC_Pthread_basic_priority" type="int" default="10" doc="Basic priority of polling tasks"/>
+        </struct>
+        -->
         
         		
 	<!-- ############################## -->
@@ -486,9 +491,26 @@
 			<param name="interval" type="int" default="10" doc=""/>
 			<param name="kthread_stack_size" type="size" default="10MB" doc="Define the stack size of MPC user threads"/>
 		</struct>
+        <struct name="scheduler" doc="Scheduler priority parameters">
+            <param name="timestamp_threshold" type="double" default="0.0" doc="Threshold for priority scheduling quantum"/>
+
+            <param name="task_polling_thread_basic_priority" type="int" default="20" doc="Basic priority of polling tasks"/>
+            <param name="task_polling_thread_basic_priority_step" type="int" default="20" doc="Step of basic priority of polling tasks"/>
+            <param name="task_polling_thread_current_priority_step" type="int" default="20" doc="Step of current priority of polling tasks"/>
+
+            <param name="sched_NBC_Pthread_basic_priority" type="int" default="20" doc="Basic priority of polling tasks"/>
+            <param name="sched_NBC_Pthread_basic_priority_step" type="int" default="20" doc="Step of basic priority of nbc progress threads"/>
+            <param name="sched_NBC_Pthread_current_priority_step" type="int" default="20" doc="Step of current priority of nbc progress threads"/>
+
+            <param name="mpi_basic_priority" type="int" default="20" doc="Basic priority of MPI threads"/>
+            <param name="omp_basic_priority" type="int" default="20" doc="Basic priority of OMP threads"/>
+            <param name="posix_basic_priority" type="int" default="20" doc="Basic priority of POSIX threads"/>
+            <param name="progress_basic_priority" type="int" default="20" doc="Basic priority of POSIX threads"/>
+        </struct>
 	</usertypes>
 	<modules>
 		<module name="thread" type="thread"/>
+		<module name="scheduler" type="scheduler"/>
 	</modules>
 </config>
 </all>

@@ -810,6 +810,30 @@ void sctk_runtime_config_struct_init_thread(void * struct_ptr)
 }
 
 /*******************  FUNCTION  *********************/
+void sctk_runtime_config_struct_init_scheduler(void * struct_ptr)
+{
+	struct sctk_runtime_config_struct_scheduler * obj = struct_ptr;
+	/* Make sure this element is not initialized yet       */
+	/* It allows us to know when we are facing dynamically */
+	/* allocated objects requiring an init                 */
+	if( obj->init_done != 0 ) return;
+
+	/* Simple params : */
+	obj->timestamp_threshold = 0.0;
+	obj->task_polling_thread_basic_priority = 20;
+	obj->task_polling_thread_basic_priority_step = 20;
+	obj->task_polling_thread_current_priority_step = 20;
+	obj->sched_NBC_Pthread_basic_priority = 20;
+	obj->sched_NBC_Pthread_basic_priority_step = 20;
+	obj->sched_NBC_Pthread_current_priority_step = 20;
+	obj->mpi_basic_priority = 20;
+	obj->omp_basic_priority = 20;
+	obj->posix_basic_priority = 20;
+	obj->progress_basic_priority = 20;
+	obj->init_done = 1;
+}
+
+/*******************  FUNCTION  *********************/
 void sctk_runtime_config_reset(struct sctk_runtime_config * config)
 {
 	memset(config, 0, sizeof(struct sctk_runtime_config));
@@ -842,6 +866,7 @@ void sctk_runtime_config_reset(struct sctk_runtime_config * config)
 #endif
 #ifdef MPC_Threads
 	sctk_runtime_config_struct_init_thread(&config->modules.thread);
+	sctk_runtime_config_struct_init_scheduler(&config->modules.scheduler);
 #endif
 	sctk_runtime_config_struct_init_networks(&config->networks);
 	dlclose(sctk_handler);
@@ -1045,6 +1070,12 @@ void sctk_runtime_config_reset_struct_default_if_needed(const char * structname,
 	if( !strcmp( structname , "sctk_runtime_config_struct_thread") )
 	{
 		sctk_runtime_config_struct_init_thread( ptr );
+		return;
+	}
+
+	if( !strcmp( structname , "sctk_runtime_config_struct_scheduler") )
+	{
+		sctk_runtime_config_struct_init_scheduler( ptr );
 		return;
 	}
 

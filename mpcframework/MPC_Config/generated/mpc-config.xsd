@@ -765,6 +765,22 @@
     </xs:all>
   </xs:complexType>
   <!-- ********************************************************* -->
+  <xs:complexType name="user_type_scheduler">
+    <xs:all>
+      <xs:element minOccurs="0" name="timestamp_threshold" type="xs:decimal"/>
+      <xs:element minOccurs="0" name="task_polling_thread_basic_priority" type="xs:integer"/>
+      <xs:element minOccurs="0" name="task_polling_thread_basic_priority_step" type="xs:integer"/>
+      <xs:element minOccurs="0" name="task_polling_thread_current_priority_step" type="xs:integer"/>
+      <xs:element minOccurs="0" name="sched_NBC_Pthread_basic_priority" type="xs:integer"/>
+      <xs:element minOccurs="0" name="sched_NBC_Pthread_basic_priority_step" type="xs:integer"/>
+      <xs:element minOccurs="0" name="sched_NBC_Pthread_current_priority_step" type="xs:integer"/>
+      <xs:element minOccurs="0" name="mpi_basic_priority" type="xs:integer"/>
+      <xs:element minOccurs="0" name="omp_basic_priority" type="xs:integer"/>
+      <xs:element minOccurs="0" name="posix_basic_priority" type="xs:integer"/>
+      <xs:element minOccurs="0" name="progress_basic_priority" type="xs:integer"/>
+    </xs:all>
+  </xs:complexType>
+  <!-- ********************************************************* -->
   <xs:complexType name="modules">
     <xs:all>
       <xs:element minOccurs="0" name="allocator" type="user_type_allocator"/>
@@ -779,6 +795,7 @@
       <xs:element minOccurs="0" name="openmp" type="user_type_openmp"/>
       <xs:element minOccurs="0" name="profiler" type="user_type_profiler"/>
       <xs:element minOccurs="0" name="thread" type="user_type_thread"/>
+      <xs:element minOccurs="0" name="scheduler" type="user_type_scheduler"/>
     </xs:all>
   </xs:complexType>
   <!-- ********************************************************* -->

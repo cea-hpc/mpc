@@ -34,6 +34,12 @@
 #include "sctk_kernel_thread.h"
 #include "sctk_topology.h"
 #include <libpause.h>
+#include "libtimer.h"
+
+//#define SCTK_DEBUG_SCHEDULER
+
+
+
 
 static void (*sctk_thread_generic_sched_idle_start)(void);
 
@@ -317,22 +323,40 @@ sctk_centralized_thread_generic_wake_on_task_lock( sctk_thread_generic_scheduler
 
 typedef struct {
   sctk_spinlock_t sctk_multiple_queues_sched_list_lock;
+  /*Mettre un pointeur directement sur le thread de progression des NBC */
+  sctk_thread_generic_scheduler_t* sctk_multiple_queues_sched_NBC_Pthread_sched;
   sctk_thread_generic_scheduler_generic_t* sctk_multiple_queues_sched_list;
 /* TODO Optimize to have data locality*/
   char pad[4096];
 } sctk_multiple_queues_sched_list_t;
-#define SCTK_MULTIPLE_QUEUES_SCHED_LIST_INIT {SCTK_SPINLOCK_INITIALIZER,NULL}
+#define SCTK_MULTIPLE_QUEUES_SCHED_LIST_INIT {SCTK_SPINLOCK_INITIALIZER,NULL,NULL}
 
 static sctk_multiple_queues_sched_list_t* sctk_multiple_queues_sched_lists = NULL;
 
 
+
+
 typedef struct {
+ //list of task which are able to be poll by the polling mpc thread
   sctk_thread_generic_task_t* sctk_multiple_queues_task_list;
   sctk_spinlock_t sctk_multiple_queues_task_list_lock ;
+  int task_nb; // number of task in sctk_multiple_queues_task_list
+  /*Mettre un pointeur directement sur le thread de polling mpc*/
+  sctk_thread_generic_scheduler_t* sctk_multiple_queues_task_polling_thread_sched;
+  char pad[4096];
 }sctk_multiple_queues_task_list_t;
-#define SCTK_MULTIPLE_QUEUES_TASK_LIST_INIT {NULL,SCTK_SPINLOCK_INITIALIZER}
+#define SCTK_MULTIPLE_QUEUES_TASK_LIST_INIT {NULL,SCTK_SPINLOCK_INITIALIZER,0,NULL}
 static sctk_multiple_queues_task_list_t* sctk_multiple_queues_task_lists = NULL;
 
+////////////////////////////////////////
+//generic/multiple_queues
+//
+//add_to_list
+//concat_to_list
+//get_from_list
+//
+
+//add_to_list
 static void sctk_multiple_queues_add_to_list(sctk_thread_generic_scheduler_t* sched){
   int core;
   core = sched->th->attr.bind_to;
@@ -349,6 +373,7 @@ static void sctk_multiple_queues_add_to_list(sctk_thread_generic_scheduler_t* sc
   sctk_spinlock_unlock(&(sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list_lock));
 }
 
+//concat_to_list
 static 
 void sctk_multiple_queues_concat_to_list(sctk_thread_generic_scheduler_t* sched,
 					 sctk_thread_generic_scheduler_generic_t*s_list){
@@ -363,30 +388,962 @@ void sctk_multiple_queues_concat_to_list(sctk_thread_generic_scheduler_t* sched,
   sctk_spinlock_unlock(&sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list_lock);    
 }
 
+
+//get_from_list
+sctk_spinlock_t debug_lock= SCTK_SPINLOCK_INITIALIZER;
 static sctk_thread_generic_scheduler_t* sctk_multiple_queues_get_from_list(){
   int core;
 
   core = core_id;
+  assert(core>=0);
 
+  //sctk_spinlock_lock(&debug_lock);
+  //if (core==0)fprintf(stderr,"%s\n",sctk_print_debug_infos());
+  //sctk_spinlock_unlock(&debug_lock);
+
+
+  //hmt
+  int i;
+  char hostname[128];
+  gethostname(hostname,128);
+
+  FILE* fd=fopen(hostname ,"a");
 
   if(sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list != NULL){
-    sctk_thread_generic_scheduler_generic_t* res;
-    sctk_spinlock_lock(&sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list_lock);
-    res = sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list;
-    if(res != NULL){
-      DL_DELETE(sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list,res);
-    }
-    sctk_spinlock_unlock(&sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list_lock);
-    if(res != NULL){
-      sctk_nodebug("REMOVE Thread %p",res->sched);
-      return res->sched;
-    } else {
-      return NULL;
-    }
+      sctk_thread_generic_scheduler_generic_t* res;
+      sctk_thread_generic_scheduler_generic_t* res_tmp;
+
+      sctk_spinlock_lock( &(sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list_lock));
+      res = sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list;
+      if(res != NULL){
+          DL_FOREACH_SAFE(sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list,
+                  res,res_tmp){    
+              fprintf(fd,"hostname=%s core=%d res->sched=%p,scope=%d user_stack=%p stack=%p bind_to %d polling %d kind %d priority %d \n",
+                      hostname,
+                      core,
+                      res->sched,
+                      res->sched->th->attr.scope,
+                      res->sched->th->attr.user_stack,
+                      res->sched->th->attr.stack,
+                      res->sched->th->attr.bind_to,
+                      res->sched->th->attr.polling,
+                      res->sched->th->attr.kind.mask,
+                      res->sched->th->attr.kind.priority);
+
+
+          }
+          fprintf(fd,"\n\n\n");
+      }
+      sctk_spinlock_unlock( &(sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list_lock));
+  }
+
+  fclose(fd);
+  //endhmt
+
+  //est ce que la liste existe et si ya un thread a prendre dedans
+  if(sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list != NULL){
+      sctk_thread_generic_scheduler_generic_t* res;
+      sctk_spinlock_lock(&sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list_lock);
+      res = sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list;
+      if(res != NULL){
+          DL_DELETE(sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list,res);
+      }
+      sctk_spinlock_unlock(&sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list_lock);
+      if(res != NULL){
+          sctk_nodebug("REMOVE Thread %p",res->sched);
+          return res->sched;
+      } else {
+          return NULL;
+      }
   } else {
-    return NULL;
+      return NULL;
   }
 }
+
+////////////////////////////////////////
+//generic/multiple_queues dynamic
+//
+//add_to_list
+//concat_to_list
+//get_from_list
+//
+
+
+//add_to_list
+static void  sctk_multiple_queues_with_priority_dynamic_add_to_list(sctk_thread_generic_scheduler_t* sched){
+  int core;
+  core = sched->th->attr.bind_to;
+  if(core < 0){
+    core = 0;
+  }
+  assume(sched->generic.sched == sched);
+
+  sctk_spinlock_lock(&(sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list_lock));
+  DL_APPEND((sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list),&(sched->generic));
+  sctk_nodebug("ADD Thread %p",sched);
+  sctk_spinlock_unlock(&(sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list_lock));
+}
+
+//concat_to_list
+static 
+void sctk_multiple_queues_with_priority_dynamic_concat_to_list(sctk_thread_generic_scheduler_t* sched,
+					 sctk_thread_generic_scheduler_generic_t*s_list){
+  int core;
+  core = sched->th->attr.bind_to;
+  if(core < 0){
+    core = 0;
+  }
+  assume(sched->generic.sched == sched);
+  
+  sctk_spinlock_lock(&sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list_lock);
+  DL_CONCAT(sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list,s_list);
+  sctk_spinlock_unlock(&sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list_lock);    
+}
+
+//get_from_list with priority_dyn_sorted_list
+static sctk_thread_generic_scheduler_t* sctk_multiple_queues_with_priority_dynamic_get_from_list(){
+    int core;
+
+    core = core_id;
+    assert(core>=0);
+
+    sctk_thread_generic_scheduler_t* sched;
+    sched = &(sctk_thread_generic_self()->sched);
+
+#ifdef SCTK_DEBUG_SCHEDULER
+    {
+        char hostname[128];
+        char hostname2[128];
+        char current_vp[5];
+        gethostname(hostname,128);
+        strncpy(hostname2,hostname,128);
+        sprintf(current_vp,"_%03d",sctk_thread_get_vp ());
+        strcat(hostname2,current_vp);
+
+        FILE* fd=fopen(hostname2,"a");
+        fprintf(fd,"current %p[%2d-%2d|%2d,%2d]\nlist[",
+                sched,
+                sched->th->attr.kind.mask,
+                sched->status,
+                sched->th->attr.current_priority,
+                sched->th->attr.basic_priority);
+
+
+        sctk_spinlock_lock(&sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list_lock);
+
+        if(sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list != NULL){
+            sctk_thread_generic_scheduler_generic_t* res;
+            res = sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list;
+            DL_FOREACH(sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list,res){
+                fprintf(fd,"%p[%2d-%2d|%2d,%2d] ",
+                        res->sched,
+                        res->sched->th->attr.kind.mask,
+                        sched->status,
+                        res->sched->th->attr.current_priority,
+                        res->sched->th->attr.basic_priority);
+            }
+            fprintf(fd,"] task_nb=%d\n",sctk_multiple_queues_task_lists[core].task_nb);
+        } else {
+            fprintf(fd,"null ] task_nb=%d\n",sctk_multiple_queues_task_lists[core].task_nb);
+        }
+        sctk_spinlock_unlock(&sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list_lock);
+
+        fflush(fd);
+        fclose(fd);
+    }
+#endif
+
+    //check if the list exists and if it contains threads
+    if(sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list != NULL){
+        sctk_thread_generic_scheduler_generic_t* res;
+        sctk_spinlock_lock(&sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list_lock);
+        res = sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list;
+        if(res != NULL){
+            DL_DELETE(sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list,res);
+        }
+        sctk_spinlock_unlock(&sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list_lock);
+        if(res != NULL){
+            sctk_nodebug("REMOVE Thread %p",res->sched);
+            return res->sched;
+        } else {
+            return NULL;
+        }
+    } else {
+        return NULL;
+    }
+}
+
+
+
+
+
+
+////////////////////////////////////////
+//generic/multiple_queues_with_priority_default
+//
+//add_to_list
+//concat_to_list
+//get_from_list
+//
+
+
+//add_to_list with priority
+static void sctk_multiple_queues_with_priority_default_add_to_list(sctk_thread_generic_scheduler_t* sched){
+  int core;
+  core = sched->th->attr.bind_to;
+  if(core < 0){
+    core = 0;
+  }
+
+  assume(sched->generic.sched == sched);
+
+  sctk_spinlock_lock(&(sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list_lock));
+  DL_APPEND((sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list),&(sched->generic));
+  sctk_nodebug("ADD Thread %p",sched);
+  sctk_spinlock_unlock(&(sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list_lock));
+}
+
+
+//concat_to_list with priority
+static 
+void sctk_multiple_queues_with_priority_default_concat_to_list(sctk_thread_generic_scheduler_t* sched,
+					 sctk_thread_generic_scheduler_generic_t*s_list){
+  int core;
+  core = sched->th->attr.bind_to;
+  if(core < 0){
+    core = 0;
+  }
+  
+  sctk_spinlock_lock(&sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list_lock);
+  DL_CONCAT(sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list,s_list);
+  sctk_spinlock_unlock(&sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list_lock);    
+}
+
+
+//get_from_list with priority
+static sctk_thread_generic_scheduler_t* sctk_multiple_queues_with_priority_default_get_from_list(){
+  int core;
+
+  core = core_id;
+  assert(core>=0);
+
+ // //hmt
+ // int i;
+ // char hostname[128];
+ // gethostname(hostname,128);
+
+ // FILE* fd=fopen(hostname ,"a");
+
+ // if(sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list != NULL){
+ //     sctk_thread_generic_scheduler_generic_t* res;
+ //     sctk_thread_generic_scheduler_generic_t* res_tmp;
+
+ //     sctk_spinlock_lock( &(sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list_lock));
+ //     res = sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list;
+ //     if(res != NULL){
+ //         DL_FOREACH_SAFE(sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list,
+ //                 res,res_tmp){    
+ //             fprintf(fd,"hostname=%s core=%d res->sched=%p,scope=%d user_stack=%p stack=%p bind_to %d polling %d kind %d priority %d \n",
+ //                     hostname,
+ //                     core,
+ //                     res->sched,
+ //                     res->sched->th->attr.scope,
+ //                     res->sched->th->attr.user_stack,
+ //                     res->sched->th->attr.stack,
+ //                     res->sched->th->attr.bind_to,
+ //                     res->sched->th->attr.polling,
+ //                     res->sched->th->attr.kind.mask,
+ //                     res->sched->th->attr.kind.priority);
+
+
+ //         }
+ //         fprintf(fd,"\n\n\n");
+ //     }
+ //     sctk_spinlock_unlock( &(sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list_lock));
+ // }
+
+ // fclose(fd);
+ // //endhmt
+
+  //est ce que la liste existe et si ya un thread a prendre dedans
+  if(sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list != NULL){
+      sctk_thread_generic_scheduler_generic_t* res;
+      sctk_spinlock_lock(&sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list_lock);
+      res = sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list;
+      if(res != NULL){
+          DL_DELETE(sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list,res);
+      }
+      sctk_spinlock_unlock(&sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list_lock);
+      if(res != NULL){
+          sctk_nodebug("REMOVE Thread %p",res->sched);
+          return res->sched;
+      } else {
+          return NULL;
+      }
+  } else {
+      return NULL;
+  }
+}
+
+////////////////////////////////////////
+//generic/multiple_queues_with_priority_omp
+//
+//add_to_list
+//concat_to_list
+//get_from_list
+//
+
+
+//add_to_list with priority_omp
+static void sctk_multiple_queues_with_priority_omp_add_to_list(sctk_thread_generic_scheduler_t* sched){
+  int core;
+  core = sched->th->attr.bind_to;
+  if(core < 0){
+    core = 0;
+  }
+
+  assume(sched->generic.sched == sched);
+
+  sctk_spinlock_lock(&(sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list_lock));
+  DL_APPEND((sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list),&(sched->generic));
+  sctk_nodebug("ADD Thread %p",sched);
+  sctk_spinlock_unlock(&(sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list_lock));
+}
+
+
+//concat_to_list with priority_omp
+static 
+void sctk_multiple_queues_with_priority_omp_concat_to_list(sctk_thread_generic_scheduler_t* sched,
+					 sctk_thread_generic_scheduler_generic_t*s_list){
+  int core;
+  core = sched->th->attr.bind_to;
+  if(core < 0){
+    core = 0;
+  }
+  
+  sctk_spinlock_lock(&sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list_lock);
+  DL_CONCAT(sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list,s_list);
+  sctk_spinlock_unlock(&sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list_lock);    
+}
+
+
+//get_from_list with priority_omp
+static sctk_thread_generic_scheduler_t* sctk_multiple_queues_with_priority_omp_get_from_list(){
+  int core;
+
+  core = core_id;
+  assert(core>=0);
+
+  //check if the list exists and if it contains threads
+  if(sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list != NULL){
+      sctk_thread_generic_scheduler_generic_t* res;
+      sctk_thread_generic_scheduler_generic_t* res_tmp;
+      sctk_spinlock_lock(&sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list_lock);
+
+      //look for omp threads to schedule them in priority
+      res = sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list;
+      if(res != NULL){
+          //look for a thread OMP to schedule in priority
+          DL_FOREACH_SAFE(sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list,res,res_tmp){
+              if(res->sched->th->attr.kind.mask & KIND_MASK_OMP){
+                  printf("canard %d %d %d\n",res->sched->th->attr.kind.mask,sctk_thread_generic_getkind_mask_self(),sctk_get_cpu());
+                  fflush(stdout);
+                  //remove the omp thread from the list
+                  DL_DELETE(sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list,res);
+                  sctk_spinlock_unlock(&sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list_lock);
+                  //return this thread
+                  return res->sched;
+              }
+          }
+      }
+
+      //if we dont have omp threads, do the default algorithm
+      res = sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list;
+      if(res != NULL){
+          DL_DELETE(sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list,res);
+      }
+      sctk_spinlock_unlock(&sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list_lock);
+      if(res != NULL){
+          sctk_nodebug("REMOVE Thread %p",res->sched);
+          return res->sched;
+      } else {
+          return NULL;
+      }
+  } else {
+      return NULL;
+  }
+}
+
+////////////////////////////////////////
+//generic/multiple_queues_with_priority_nofamine
+//
+//add_to_list
+//concat_to_list
+//get_from_list
+//
+
+//add_to_list with priority_nofamine
+static void sctk_multiple_queues_with_priority_nofamine_add_to_list(sctk_thread_generic_scheduler_t* sched){
+  int core;
+  core = sched->th->attr.bind_to;
+  if(core < 0){
+    core = 0;
+  }
+
+  assume(sched->generic.sched == sched);
+
+  sctk_spinlock_lock(&(sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list_lock));
+  DL_APPEND((sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list),&(sched->generic));
+  sctk_nodebug("ADD Thread %p",sched);
+  sctk_spinlock_unlock(&(sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list_lock));
+}
+
+
+//concat_to_list with priority_nofamine
+static 
+void sctk_multiple_queues_with_priority_nofamine_concat_to_list(sctk_thread_generic_scheduler_t* sched,
+					 sctk_thread_generic_scheduler_generic_t*s_list){
+  int core;
+  core = sched->th->attr.bind_to;
+  if(core < 0){
+    core = 0;
+  }
+  
+  sctk_spinlock_lock(&sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list_lock);
+  DL_CONCAT(sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list,s_list);
+  sctk_spinlock_unlock(&sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list_lock);    
+}
+
+
+//get_from_list with priority_nofamine
+static sctk_thread_generic_scheduler_t* sctk_multiple_queues_with_priority_nofamine_get_from_list(){
+  int core;
+
+  core = core_id;
+  assert(core>=0);
+
+  //check if the list exists and if it contains threads
+  if(sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list != NULL){
+      sctk_thread_generic_scheduler_generic_t* res;
+      sctk_thread_generic_scheduler_generic_t* res_tmp;
+      sctk_thread_generic_scheduler_generic_t* ret;
+      sctk_spinlock_lock(&sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list_lock);
+      //look for omp threads to schedule them in priority
+      res = sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list;
+      ret = res;
+      if(res != NULL){
+          //look for a thread OMP to schedule in priority
+          DL_FOREACH_SAFE(sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list,res,res_tmp){
+              if(res->sched->th->attr.current_priority > ret->sched->th->attr.current_priority){
+                  ret = res;
+
+              }
+          }
+          if(ret->sched->th->attr.current_priority < 0){
+              ret->sched->th->attr.current_priority = ret->sched->th->attr.basic_priority;
+          }else{
+              ret->sched->th->attr.current_priority--;
+          }
+          DL_DELETE(sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list,ret);
+          sctk_spinlock_unlock(&sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list_lock);
+          return ret->sched;
+      } else {
+          return NULL;
+      }
+  } else {
+      return NULL;
+  }
+}
+
+////////////////////////////////////////
+//generic/multiple_queues_with_priority_dyn_sorted_list
+//
+//add_to_list
+//concat_to_list
+//get_from_list
+//
+
+//function to be used on DL_SORT macro to sort the sctk_multiple_queues_sched_list
+//using the current_priority of each thread in the list
+int sctk_multiple_queues_sched_list_sort(void * cmp1, void* cmp2){
+    sctk_thread_generic_scheduler_generic_t* elm1 = (sctk_thread_generic_scheduler_generic_t*) cmp1;
+    sctk_thread_generic_scheduler_generic_t* elm2 = (sctk_thread_generic_scheduler_generic_t*) cmp2;
+
+    if( elm1->sched->th->attr.current_priority == elm2->sched->th->attr.current_priority){
+        return 0;
+    }
+    else if(elm1->sched->th->attr.current_priority > elm2->sched->th->attr.current_priority){
+        return -1;
+    }
+    else{
+        return 1;
+    }
+}
+
+
+//init NBC hook
+void sctk_multiple_queues_with_priority_dyn_sorted_list_sched_NBC_Pthread_sched_init(){
+    sctk_thread_generic_scheduler_t* sched;
+    sched = &(sctk_thread_generic_self()->sched);
+    sctk_multiple_queues_sched_lists[sched->th->attr.bind_to].sctk_multiple_queues_sched_NBC_Pthread_sched = sched;
+}
+
+
+//increase priority of the NBC polling threads
+void sctk_multiple_queues_priority_dyn_sorted_list_sched_NBC_Pthread_sched_increase_priority(){
+    sctk_thread_generic_scheduler_t* sched;
+    sched = &(sctk_thread_generic_self()->sched);
+    assert(sched->th->attr.bind_to >= 0);
+
+    sctk_multiple_queues_sched_lists[sched->th->attr.bind_to].sctk_multiple_queues_sched_NBC_Pthread_sched->th->attr.current_priority+=sctk_runtime_config_get()->modules.scheduler.sched_NBC_Pthread_current_priority_step;
+    sctk_multiple_queues_sched_lists[sched->th->attr.bind_to].sctk_multiple_queues_sched_NBC_Pthread_sched->th->attr.basic_priority+=sctk_runtime_config_get()->modules.scheduler.sched_NBC_Pthread_basic_priority_step;
+    //sort the list to have a sorted ready list
+    sctk_spinlock_lock(&sctk_multiple_queues_sched_lists[sched->th->attr.bind_to].sctk_multiple_queues_sched_list_lock);
+    DL_SORT(sctk_multiple_queues_sched_lists[sched->th->attr.bind_to].sctk_multiple_queues_sched_list, sctk_multiple_queues_sched_list_sort);
+    sctk_spinlock_unlock(&sctk_multiple_queues_sched_lists[sched->th->attr.bind_to].sctk_multiple_queues_sched_list_lock);
+}
+
+//decrease priority of the NBC polling threads
+//this function are called from the NBC thread, so we dont need to sort the list
+//because we are running and we sort the list when we add element on the list
+void sctk_multiple_queues_with_priority_dyn_sorted_list_sched_NBC_Pthread_sched_decrease_priority(){
+    sctk_thread_generic_scheduler_t* sched;
+    sched = &(sctk_thread_generic_self()->sched);
+    assert(sched->th->attr.bind_to >= 0);
+    sctk_multiple_queues_sched_lists[sched->th->attr.bind_to].sctk_multiple_queues_sched_NBC_Pthread_sched->th->attr.current_priority-=sctk_runtime_config_get()->modules.scheduler.sched_NBC_Pthread_current_priority_step;
+    sctk_multiple_queues_sched_lists[sched->th->attr.bind_to].sctk_multiple_queues_sched_NBC_Pthread_sched->th->attr.basic_priority-=sctk_runtime_config_get()->modules.scheduler.sched_NBC_Pthread_basic_priority_step;
+}
+
+//increase priority of the mpc polling threads
+void sctk_multiple_queues_priority_dyn_sorted_list_task_polling_thread_sched_increase_priority(int bind_to){
+    if(sctk_multiple_queues_task_lists[bind_to].sctk_multiple_queues_task_polling_thread_sched != NULL){
+        sctk_multiple_queues_task_lists[bind_to].sctk_multiple_queues_task_polling_thread_sched->th->attr.current_priority+=sctk_runtime_config_get()->modules.scheduler.task_polling_thread_current_priority_step;
+        sctk_multiple_queues_task_lists[bind_to].sctk_multiple_queues_task_polling_thread_sched->th->attr.basic_priority+=sctk_runtime_config_get()->modules.scheduler.task_polling_thread_basic_priority_step;
+
+        sctk_spinlock_lock(&sctk_multiple_queues_sched_lists[bind_to].sctk_multiple_queues_sched_list_lock);
+        DL_SORT(sctk_multiple_queues_sched_lists[bind_to].sctk_multiple_queues_sched_list, sctk_multiple_queues_sched_list_sort);
+        sctk_spinlock_unlock(&sctk_multiple_queues_sched_lists[bind_to].sctk_multiple_queues_sched_list_lock);
+
+        sctk_thread_generic_scheduler_t* sched;
+        sched = &(sctk_thread_generic_self()->sched);
+        #ifdef SCTK_DEBUG_SCHEDULER
+        {
+            char hostname[128];
+            char hostname2[128];
+            char current_vp[5];
+            gethostname(hostname,128);
+            strncpy(hostname2,hostname,128);
+            sprintf(current_vp,"_%03d",sctk_thread_get_vp ());
+            strcat(hostname2,current_vp);
+
+            FILE* fd=fopen(hostname2,"a");
+            fprintf(fd,"multiple_queues_task add SCHED=%p %d %d\n\n",
+                    sched,
+                    sctk_multiple_queues_task_lists[bind_to].task_nb,
+                    sctk_multiple_queues_task_lists[bind_to].sctk_multiple_queues_task_polling_thread_sched->th->attr.basic_priority);
+
+            //fprintf(fd,"add task SCHED=%p %d\n\n",
+            //        sched,
+            //        sctk_multiple_queues_task_lists[bind_to].task_nb);
+            fflush(fd);
+            fclose(fd);
+        }
+        #endif
+    }
+}
+
+//decrease priority of the mpc polling threads
+void sctk_multiple_queues_priority_dyn_sorted_list_task_polling_thread_sched_decrease_priority(int core){
+    if(sctk_multiple_queues_task_lists[core].sctk_multiple_queues_task_polling_thread_sched != NULL && sctk_multiple_queues_task_lists[core].sctk_multiple_queues_task_polling_thread_sched->th->attr.basic_priority !=1 ){
+        sctk_multiple_queues_task_lists[core].sctk_multiple_queues_task_polling_thread_sched->th->attr.current_priority-=sctk_runtime_config_get()->modules.scheduler.task_polling_thread_current_priority_step;
+        sctk_multiple_queues_task_lists[core].sctk_multiple_queues_task_polling_thread_sched->th->attr.basic_priority-=sctk_runtime_config_get()->modules.scheduler.task_polling_thread_basic_priority_step;
+
+        sctk_thread_generic_scheduler_t* sched;
+        sched = &(sctk_thread_generic_self()->sched);
+        #ifdef SCTK_DEBUG_SCHEDULER
+        {
+            char hostname[128];
+            char hostname2[128];
+            char current_vp[5];
+            gethostname(hostname,128);
+            strncpy(hostname2,hostname,128);
+            sprintf(current_vp,"_%03d",sctk_thread_get_vp ());
+            strcat(hostname2,current_vp);
+
+            FILE* fd=fopen(hostname2,"a");
+            fprintf(fd,"multiple_queues_task poll SCHED=%p %d %d\n\n",
+                    sched,
+                    sctk_multiple_queues_task_lists[core].task_nb,
+                    sctk_multiple_queues_task_lists[core].sctk_multiple_queues_task_polling_thread_sched->th->attr.basic_priority);
+            fflush(fd);
+            fclose(fd);
+        }
+        #endif
+    }
+}
+
+
+
+//add_to_list with priority_dyn_sorted_list
+static void sctk_multiple_queues_with_priority_dyn_sorted_list_add_to_list(sctk_thread_generic_scheduler_t* sched){
+    int core;
+    core = sched->th->attr.bind_to;
+    if(core < 0){core = 0;}
+    assume(sched->generic.sched == sched);
+
+    sctk_thread_generic_scheduler_generic_t* res;
+    sctk_spinlock_lock(&(sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list_lock));
+    if(sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list != NULL){
+
+        DL_FOREACH(sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list,res){
+            if(sched->th->attr.current_priority > res->sched->th->attr.current_priority){
+
+                if(sched->th->attr.current_priority < 0){
+                    sched->th->attr.current_priority = sched->th->attr.basic_priority;
+                }
+
+                if(sched->th->attr.timestamp_count > sched->th->attr.timestamp_threshold){
+                    sched->th->attr.current_priority--;
+                    sched->th->attr.timestamp_count=0;
+                }
+
+                DL_PREPEND_ELEM((sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list),&(res->sched->generic),&(sched->generic));
+                sctk_nodebug("ADD Thread %p",sched);
+                goto unlock;
+
+            }
+        }
+    }
+    if(sched->th->attr.current_priority < 0){
+        sched->th->attr.current_priority = sched->th->attr.basic_priority;
+    }
+    if(sched->th->attr.timestamp_count > sched->th->attr.timestamp_threshold){
+        sched->th->attr.current_priority--;
+        sched->th->attr.timestamp_count=0;
+    }
+    DL_APPEND((sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list),&(sched->generic));
+unlock:
+    sctk_spinlock_unlock(&(sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list_lock));
+}
+
+
+//concat_to_list with priority_dyn_sorted_list
+static 
+void sctk_multiple_queues_with_priority_dyn_sorted_list_concat_to_list(sctk_thread_generic_scheduler_t* sched,
+					 sctk_thread_generic_scheduler_generic_t*s_list){
+  int core;
+  core = sched->th->attr.bind_to;
+  if(core < 0){
+    core = 0;
+  }
+  
+  sctk_spinlock_lock(&sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list_lock);
+  DL_CONCAT(sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list,s_list);
+  sctk_spinlock_unlock(&sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list_lock);    
+}
+
+
+//get_from_list with priority_dyn_sorted_list
+static sctk_thread_generic_scheduler_t* sctk_multiple_queues_with_priority_dyn_sorted_list_get_from_list(){
+    int core;
+
+    core = core_id;
+    assert(core>=0);
+
+    sctk_thread_generic_scheduler_t* sched;
+    sched = &(sctk_thread_generic_self()->sched);
+
+#ifdef SCTK_DEBUG_SCHEDULER
+    {
+        char hostname[128];
+        char hostname2[128];
+        char current_vp[5];
+        gethostname(hostname,128);
+        strncpy(hostname2,hostname,128);
+        sprintf(current_vp,"_%03d",sctk_thread_get_vp ());
+        strcat(hostname2,current_vp);
+
+        FILE* fd=fopen(hostname2,"a");
+        fprintf(fd,"current %p[%2d-%2d|%2d,%2d] list[",
+                sched,
+                sched->th->attr.kind.mask,
+                sched->status,
+                sched->th->attr.current_priority,
+                sched->th->attr.basic_priority);
+
+
+        sctk_spinlock_lock(&sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list_lock);
+
+        if(sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list != NULL){
+            sctk_thread_generic_scheduler_generic_t* res;
+            res = sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list;
+            DL_FOREACH(sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list,res){
+                fprintf(fd,"%p[%2d-%2d|%2d,%2d] ",
+                        res->sched,
+                        res->sched->th->attr.kind.mask,
+                        sched->status,
+                        res->sched->th->attr.current_priority,
+                        res->sched->th->attr.basic_priority);
+            }
+            fprintf(fd,"] task_nb=%d\n",sctk_multiple_queues_task_lists[core].task_nb);
+        } else {
+            fprintf(fd,"null ] task_nb=%d\n",sctk_multiple_queues_task_lists[core].task_nb);
+        }
+        sctk_spinlock_unlock(&sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list_lock);
+
+        fflush(fd);
+        fclose(fd);
+    }
+#endif
+
+    //check if the list exists and if it contains threads
+    if(sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list != NULL){
+        sctk_thread_generic_scheduler_generic_t* res;
+        sctk_spinlock_lock(&sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list_lock);
+        res = sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list;
+        if(res != NULL){
+            if(res->sched->th->attr.current_priority >= sched->th->attr.current_priority){
+                DL_DELETE(sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list,res);
+            }
+        }
+
+        sctk_spinlock_unlock(&sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list_lock);
+
+        if(res != NULL){
+            if(res->sched->th->attr.current_priority >= sched->th->attr.current_priority){
+                sctk_nodebug("REMOVE Thread %p",res->sched);
+                return res->sched;
+            }else{
+                sched->th->attr.current_priority--;
+                return NULL;
+            }
+        }else{
+            return NULL;
+        }
+    } else {
+        return NULL;
+    }
+}
+
+//get_from_list with priority_dyn_sorted_list old
+static sctk_thread_generic_scheduler_t* sctk_multiple_queues_with_priority_dyn_sorted_list_get_from_list_old(){
+    int core;
+
+    core = core_id;
+    assert(core>=0);
+
+    sctk_thread_generic_scheduler_t* sched;
+    sched = &(sctk_thread_generic_self()->sched);
+
+#ifdef SCTK_DEBUG_SCHEDULER
+    {
+        char hostname[128];
+        char hostname2[128];
+        char current_vp[5];
+        gethostname(hostname,128);
+        strncpy(hostname2,hostname,128);
+        sprintf(current_vp,"_%03d",sctk_thread_get_vp ());
+        strcat(hostname2,current_vp);
+
+        FILE* fd=fopen(hostname2,"a");
+        fprintf(fd,"current %p[%2d-%2d|%2d,%2d]\nlist[",
+                sched,
+                sched->th->attr.kind.mask,
+                sched->status,
+                sched->th->attr.current_priority,
+                sched->th->attr.basic_priority);
+
+
+        sctk_spinlock_lock(&sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list_lock);
+
+        if(sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list != NULL){
+            sctk_thread_generic_scheduler_generic_t* res;
+            res = sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list;
+            DL_FOREACH(sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list,res){
+                fprintf(fd,"%p[%2d-%2d|%2d,%2d] ",
+                        res->sched,
+                        res->sched->th->attr.kind.mask,
+                        sched->status,
+                        res->sched->th->attr.current_priority,
+                        res->sched->th->attr.basic_priority);
+            }
+            fprintf(fd,"] task_nb=%d\n",sctk_multiple_queues_task_lists[core].task_nb);
+        } else {
+            fprintf(fd,"null ] task_nb=%d\n",sctk_multiple_queues_task_lists[core].task_nb);
+        }
+        sctk_spinlock_unlock(&sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list_lock);
+
+        fflush(fd);
+        fclose(fd);
+    }
+#endif
+
+    //check if the list exists and if it contains threads
+    if(sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list != NULL){
+        sctk_thread_generic_scheduler_generic_t* res;
+        sctk_spinlock_lock(&sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list_lock);
+        res = sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list;
+        if(res != NULL){
+            DL_DELETE(sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list,res);
+        }
+
+        sctk_spinlock_unlock(&sctk_multiple_queues_sched_lists[core].sctk_multiple_queues_sched_list_lock);
+
+        if(res != NULL){
+            sctk_nodebug("REMOVE Thread %p",res->sched);
+            return res->sched;
+        }else{
+            return NULL;
+        }
+    } else {
+        return NULL;
+    }
+}
+
+
+
+
+////////////////////////////////////////
+//Function pointers : allow choice of multifile schedulers
+//
+
+//#define MULTIFILE_DYNAMIC
+//#define MULTIFILE_DEFAULT
+///#define MULTIFILE_OMP
+//#define MULTIFILE_NOFAMINE
+#define MULTIFILE_DYN_SORTED_LIST
+
+#ifdef MULTIFILE_DYNAMIC
+void (*sctk_multiple_queues_sched_NBC_Pthread_sched_increase_priority)()= NULL;
+void (*sctk_multiple_queues_sched_NBC_Pthread_sched_decrease_priority)()= NULL;
+void (*sctk_multiple_queues_sched_NBC_Pthread_sched_init)()=NULL;
+void (*sctk_multiple_queues_task_polling_thread_sched_decrease_priority)(int core)=NULL;
+//add_to_list
+static void
+(*sctk_multiple_queues_with_priority_add_to_list)
+    (sctk_thread_generic_scheduler_t* sched)=
+    sctk_multiple_queues_with_priority_dynamic_add_to_list;
+//concat_to_list
+static void
+(*sctk_multiple_queues_with_priority_concat_to_list)
+    (sctk_thread_generic_scheduler_t* sched,
+     sctk_thread_generic_scheduler_generic_t* s_list)=
+    sctk_multiple_queues_with_priority_dynamic_concat_to_list;
+//get_from_list
+static sctk_thread_generic_scheduler_t*
+(*sctk_multiple_queues_with_priority_get_from_list)()=
+    sctk_multiple_queues_with_priority_dynamic_get_from_list;
+#endif
+
+
+#ifdef MULTIFILE_DEFAULT
+void (*sctk_multiple_queues_sched_NBC_Pthread_sched_increase_priority)()= NULL;
+void (*sctk_multiple_queues_sched_NBC_Pthread_sched_decrease_priority)()= NULL;
+void (*sctk_multiple_queues_sched_NBC_Pthread_sched_init)()=NULL;
+void (*sctk_multiple_queues_task_polling_thread_sched_decrease_priority)(int core)=NULL;
+//add_to_list
+static void
+(*sctk_multiple_queues_with_priority_add_to_list)
+    (sctk_thread_generic_scheduler_t* sched)=
+    sctk_multiple_queues_with_priority_default_add_to_list;
+//concat_to_list
+static void
+(*sctk_multiple_queues_with_priority_concat_to_list)
+    (sctk_thread_generic_scheduler_t* sched,
+     sctk_thread_generic_scheduler_generic_t* s_list)=
+    sctk_multiple_queues_with_priority_default_concat_to_list;
+//get_from_list
+static sctk_thread_generic_scheduler_t*
+(*sctk_multiple_queues_with_priority_get_from_list)()=
+    sctk_multiple_queues_with_priority_default_get_from_list;
+#endif
+
+#ifdef MULTIFILE_OMP
+void (*sctk_multiple_queues_sched_NBC_Pthread_sched_increase_priority)()= NULL;
+void (*sctk_multiple_queues_sched_NBC_Pthread_sched_decrease_priority)()= NULL;
+void (*sctk_multiple_queues_sched_NBC_Pthread_sched_init)()=NULL;
+void (*sctk_multiple_queues_task_polling_thread_sched_decrease_priority)(int core)=NULL;
+//add_to_list
+static void
+(*sctk_multiple_queues_with_priority_add_to_list)
+    (sctk_thread_generic_scheduler_t* sched)=
+    sctk_multiple_queues_with_priority_omp_add_to_list;
+//concat_to_list
+static void
+(*sctk_multiple_queues_with_priority_concat_to_list)
+    (sctk_thread_generic_scheduler_t* sched,
+     sctk_thread_generic_scheduler_generic_t* s_list)=
+    sctk_multiple_queues_with_priority_omp_concat_to_list;
+//get_from_list
+static sctk_thread_generic_scheduler_t*
+(*sctk_multiple_queues_with_priority_get_from_list)()=
+    sctk_multiple_queues_with_priority_omp_get_from_list;
+#endif
+
+
+#ifdef MULTIFILE_NOFAMINE
+void (*sctk_multiple_queues_sched_NBC_Pthread_sched_increase_priority)()= NULL;
+void (*sctk_multiple_queues_sched_NBC_Pthread_sched_decrease_priority)()= NULL;
+void (*sctk_multiple_queues_sched_NBC_Pthread_sched_init)()=NULL;
+void (*sctk_multiple_queues_task_polling_thread_sched_decrease_priority)(int core)=NULL;
+
+void (*sctk_multiple_queues_task_polling_thread_sched_increase_priority)(int bind_to)=NULL;
+
+//add_to_list
+static void
+(*sctk_multiple_queues_with_priority_add_to_list)
+    (sctk_thread_generic_scheduler_t* sched)=
+    sctk_multiple_queues_with_priority_nofamine_add_to_list;
+//concat_to_list
+static void
+(*sctk_multiple_queues_with_priority_concat_to_list)
+    (sctk_thread_generic_scheduler_t* sched,
+     sctk_thread_generic_scheduler_generic_t* s_list)=
+    sctk_multiple_queues_with_priority_nofamine_concat_to_list;
+//get_from_list
+static sctk_thread_generic_scheduler_t*
+(*sctk_multiple_queues_with_priority_get_from_list)()=
+    sctk_multiple_queues_with_priority_nofamine_get_from_list;
+#endif
+
+#ifdef MULTIFILE_DYN_SORTED_LIST
+void (*sctk_multiple_queues_sched_NBC_Pthread_sched_increase_priority)()=
+sctk_multiple_queues_priority_dyn_sorted_list_sched_NBC_Pthread_sched_increase_priority;
+
+void (*sctk_multiple_queues_sched_NBC_Pthread_sched_decrease_priority)()=
+sctk_multiple_queues_with_priority_dyn_sorted_list_sched_NBC_Pthread_sched_decrease_priority;
+
+void (*sctk_multiple_queues_sched_NBC_Pthread_sched_init)()=
+sctk_multiple_queues_with_priority_dyn_sorted_list_sched_NBC_Pthread_sched_init;
+
+void (*sctk_multiple_queues_task_polling_thread_sched_decrease_priority)(int core)=
+sctk_multiple_queues_priority_dyn_sorted_list_task_polling_thread_sched_decrease_priority;
+
+void (*sctk_multiple_queues_task_polling_thread_sched_increase_priority)(int bind_to)=
+sctk_multiple_queues_priority_dyn_sorted_list_task_polling_thread_sched_increase_priority;
+
+//add_to_list
+static void
+(*sctk_multiple_queues_with_priority_add_to_list)
+    (sctk_thread_generic_scheduler_t* sched)=
+    sctk_multiple_queues_with_priority_dyn_sorted_list_add_to_list;
+//concat_to_list
+static void
+(*sctk_multiple_queues_with_priority_concat_to_list)
+    (sctk_thread_generic_scheduler_t* sched,
+     sctk_thread_generic_scheduler_generic_t* s_list)=
+    sctk_multiple_queues_with_priority_dyn_sorted_list_concat_to_list;
+//get_from_list
+static sctk_thread_generic_scheduler_t*
+(*sctk_multiple_queues_with_priority_get_from_list)()=
+    //sctk_multiple_queues_with_priority_dyn_sorted_list_get_from_list;
+    sctk_multiple_queues_with_priority_dyn_sorted_list_get_from_list_old;
+
+
+#endif
+////////////////////////////////////////
+//END
+//
 
 static sctk_thread_generic_scheduler_t* sctk_multiple_queues_get_from_list_pthread_init(){
   int core;
@@ -442,41 +1399,97 @@ static void sctk_multiple_queues_add_task_to_proceed(sctk_thread_generic_task_t*
 
   sctk_spinlock_lock(&sctk_multiple_queues_task_lists[core].sctk_multiple_queues_task_list_lock);
   DL_APPEND(sctk_multiple_queues_task_lists[core].sctk_multiple_queues_task_list,task);
+// we already do the increment of task_nb line 1321 after we call
+// sctk_multiple_queues_add_task_to_proceed
+////hmt
+//sctk_multiple_queues_task_lists[core].task_nb+=vp_data.delegated_task_nb;
+//vp_data.delegated_task_nb=0;
+
+
+
+//hmt
+//increment task_nb
+//
+ // sctk_multiple_queues_task_lists[task->sched->th->attr.bind_to].task_nb+=vp_data.delegated_task_nb;
+ // vp_data.delegated_task_nb=0;
+ // //we increment the polling thread priority when we add a task on the list
+
+ // sctk_thread_generic_scheduler_t* sched;
+ // sched = &(sctk_thread_generic_self()->sched);
+
+ // #ifdef SCTK_DEBUG_SCHEDULER
+ // {
+ //     char hostname[128];
+ //     char hostname2[128];
+ //     char current_vp[5];
+ //     gethostname(hostname,128);
+ //     strncpy(hostname2,hostname,128);
+ //     sprintf(current_vp,"_%03d",sctk_thread_get_vp ());
+ //     strcat(hostname2,current_vp);
+
+ //     FILE* fd=fopen(hostname2,"a");
+ //     fprintf(fd,"add task SCHED=%p %d\n\n",
+ //             sched,
+ //             sctk_multiple_queues_task_lists[sched->th->attr.bind_to].task_nb);
+ //     fflush(fd);
+ //     fclose(fd);
+ // }
+ // #endif
+
+
+ // //endhmt
+
+
+
+
+
+
+////endhmt
   sctk_spinlock_unlock(&sctk_multiple_queues_task_lists[core].sctk_multiple_queues_task_list_lock);
 }
 
 static 
 void sctk_multiple_queues_poll_tasks(sctk_thread_generic_scheduler_t* sched){
-  sctk_thread_generic_task_t* task;
-  sctk_thread_generic_task_t* task_tmp;
-  sctk_thread_generic_scheduler_t* lsched = NULL;
-  int core;
+    sctk_thread_generic_task_t* task;
+    sctk_thread_generic_task_t* task_tmp;
+    sctk_thread_generic_scheduler_t* lsched = NULL;
+    int core;
 
-  core = core_id;
+    core = core_id;
     sctk_spinlock_lock(&sctk_multiple_queues_task_lists[core].sctk_multiple_queues_task_list_lock);
     {
-    /* Exec polling */
-    DL_FOREACH_SAFE(sctk_multiple_queues_task_lists[core].sctk_multiple_queues_task_list,task,task_tmp){
-      if(sctk_thread_generic_scheduler_check_task(task) == 1){
-	DL_DELETE(sctk_multiple_queues_task_lists[core].sctk_multiple_queues_task_list,task);
-	sctk_nodebug("WAKE task %p",task);
+        /* Exec polling */
+        DL_FOREACH_SAFE(sctk_multiple_queues_task_lists[core].sctk_multiple_queues_task_list,task,task_tmp){
+            if(sctk_thread_generic_scheduler_check_task(task) == 1){
+                DL_DELETE(sctk_multiple_queues_task_lists[core].sctk_multiple_queues_task_list,task);
+                //hmt
+                
+                sctk_multiple_queues_task_lists[core].task_nb--;
+                //we decrement the polling thread priority when we remove a
+                //task on the list
+                if(sctk_multiple_queues_task_polling_thread_sched_decrease_priority!=NULL){
+                    sctk_multiple_queues_task_polling_thread_sched_decrease_priority(core);
+                }
 
-	sctk_spinlock_lock(&(sched->generic.lock));
-	lsched = task->sched;
-	if( task->free_func ){
-	  task->free_func( task->arg );
-	  task->free_func( task );
-	}
-	if( lsched ){
-	  void** tmp = NULL;
-	  if( task->sched && task->sched->th && &(task->sched->th->attr )) 
-	    tmp = (void**) task->sched->th->attr.sctk_thread_generic_pthread_blocking_lock_table;
-	  if( tmp ) tmp[sctk_thread_generic_task_lock] = NULL;
-	  sctk_thread_generic_wake(lsched);
-	}
-	sctk_spinlock_unlock(&(sched->generic.lock));
-      }
-    }
+                //endhmt
+                sctk_nodebug("WAKE task %p",task);
+
+                sctk_spinlock_lock(&(sched->generic.lock));
+                lsched = task->sched;
+                if( task->free_func ){
+                    task->free_func( task->arg );
+                    task->free_func( task );
+                }
+                if( lsched ){
+                    void** tmp = NULL;
+                    if( task->sched && task->sched->th && &(task->sched->th->attr )) 
+                        tmp = (void**) task->sched->th->attr.sctk_thread_generic_pthread_blocking_lock_table;
+                    if( tmp ) tmp[sctk_thread_generic_task_lock] = NULL;
+                    sctk_thread_generic_wake(lsched);
+                }
+                sctk_spinlock_unlock(&(sched->generic.lock));
+            }
+        }
     }
     sctk_spinlock_unlock(&sctk_multiple_queues_task_lists[core].sctk_multiple_queues_task_list_lock);  
 }
@@ -527,6 +1540,7 @@ sctk_thread_generic_wake_on_task_lock( sctk_thread_generic_scheduler_t* sched,
 
 typedef struct sctk_per_vp_data_s{
   sctk_thread_generic_task_t* sctk_generic_delegated_task_list;
+  //int delegated_task_nb;
   sctk_thread_generic_scheduler_generic_t* sctk_generic_delegated_zombie_detach_thread;
   sctk_thread_generic_scheduler_t* sctk_generic_delegated_add;
   sctk_spinlock_t* sctk_generic_delegated_spinlock;
@@ -535,7 +1549,10 @@ typedef struct sctk_per_vp_data_s{
   sctk_thread_generic_scheduler_t* swap_to_sched;
 } sctk_per_vp_data_t;
 
+//#define SCTK_PER_VP_DATA_INIT {NULL,0,NULL,NULL,NULL,NULL,NULL,NULL}
 #define SCTK_PER_VP_DATA_INIT {NULL,NULL,NULL,NULL,NULL,NULL,NULL}
+
+static __thread int delegated_task_nb=0;
 
 static __thread sctk_per_vp_data_t vp_data = SCTK_PER_VP_DATA_INIT;
 
@@ -613,22 +1630,35 @@ static void sctk_generic_add_to_list(sctk_thread_generic_scheduler_t* sched, int
 }
 
 static void sctk_generic_add_task(sctk_thread_generic_task_t* task){
-	void** tmp = NULL;
-	if( task->sched && task->sched->th && &(task->sched->th->attr )) 
-		tmp = (void**) task->sched->th->attr.sctk_thread_generic_pthread_blocking_lock_table;
-	if( tmp ) tmp[sctk_thread_generic_task_lock] = (void*) 1;
-  sctk_nodebug("ADD task %p FROM %p",task,task->sched);
-  if(task->is_blocking){
-    sctk_thread_generic_thread_status(task->sched,sctk_thread_generic_blocked);
-    assume(vp_data.sctk_generic_delegated_task_list == NULL);
-    DL_APPEND(vp_data.sctk_generic_delegated_task_list,task);
-    sctk_spinlock_lock(&(task->sched->generic.lock));
-    sctk_thread_generic_register_spinlock_unlock(task->sched,&(task->sched->generic.lock));
-    sctk_thread_generic_sched_yield(task->sched);
-  } else {
-    sctk_generic_add_task_to_proceed(task);
-  }
-  sctk_nodebug("ADD task %p FROM %p DONE",task,task->sched);
+    void** tmp = NULL;
+    if( task->sched && task->sched->th && &(task->sched->th->attr )) 
+        tmp = (void**) task->sched->th->attr.sctk_thread_generic_pthread_blocking_lock_table;
+    if( tmp ) tmp[sctk_thread_generic_task_lock] = (void*) 1;
+    sctk_nodebug("ADD task %p FROM %p",task,task->sched);
+    if(task->is_blocking){
+        sctk_thread_generic_thread_status(task->sched,sctk_thread_generic_blocked);
+        assume(vp_data.sctk_generic_delegated_task_list == NULL);
+        DL_APPEND(vp_data.sctk_generic_delegated_task_list,task);
+        //hmt
+        //increment delegated_task_nb
+        delegated_task_nb++;
+        //endhmt
+        sctk_spinlock_lock(&(task->sched->generic.lock));
+        sctk_thread_generic_register_spinlock_unlock(task->sched,&(task->sched->generic.lock));
+        sctk_thread_generic_sched_yield(task->sched);
+    } else {
+        sctk_generic_add_task_to_proceed(task);
+        //hmt
+        //increment task_nb
+        sctk_multiple_queues_task_lists[task->sched->th->attr.bind_to].task_nb+=delegated_task_nb;
+        delegated_task_nb=0;
+        //we increment the polling thread priority when we add a task on the list
+        if(sctk_multiple_queues_task_polling_thread_sched_increase_priority!=NULL){
+            sctk_multiple_queues_task_polling_thread_sched_increase_priority(task->sched->th->attr.bind_to);
+        }
+        //endhmt
+    }
+    sctk_nodebug("ADD task %p FROM %p DONE",task,task->sched);
 }
 
 static void sctk_generic_sched_yield(sctk_thread_generic_scheduler_t*sched);
@@ -663,149 +1693,390 @@ static inline sctk_thread_generic_scheduler_t* sctk_generic_get_from_list_none()
   return NULL;
 }
 
+
 static inline void sctk_generic_sched_yield_intern(sctk_thread_generic_scheduler_t*sched,
-						   void (*swap)(sctk_thread_generic_scheduler_t* old_th,
-								sctk_thread_generic_scheduler_t* new_th,
-								sctk_per_vp_data_t* vp),
-						   sctk_thread_generic_scheduler_t* (*get_from_list)()){
-  sctk_thread_generic_scheduler_t* next;
-  int have_spinlock_registered = 0;
+        void (*swap)(sctk_thread_generic_scheduler_t* old_th,
+            sctk_thread_generic_scheduler_t* new_th,
+            sctk_per_vp_data_t* vp),
+        sctk_thread_generic_scheduler_t* (*get_from_list)()){
 
-  if( vp_data.swap_to_sched != NULL ){
-	next = vp_data.swap_to_sched;
-	vp_data.swap_to_sched = NULL;
-	goto quick_swap;
-  }
 
-  if(vp_data.sctk_generic_delegated_add){
-    sctk_generic_add_to_list(vp_data.sctk_generic_delegated_add,vp_data.sctk_generic_delegated_add->generic.is_idle_mode);
-    vp_data.sctk_generic_delegated_add = NULL;
-  }
-  
-  if(sched->status == sctk_thread_generic_running){
-    assume(vp_data.sctk_generic_delegated_add == NULL);
-    vp_data.sctk_generic_delegated_add = sched;
+
+
+
+    #ifdef SCTK_DEBUG_SCHEDULER
+    {
+        char hostname[128];
+        char hostname2[128];
+        char current_vp[5];
+        gethostname(hostname,128);
+        strncpy(hostname2,hostname,128);
+        sprintf(current_vp,"_%03d",sctk_thread_get_vp ());
+        strcat(hostname2,current_vp);
+
+        FILE* fd=fopen(hostname2,"a");
+        fprintf(fd,"\nsctk_generic_sched_yield_intern %p[%2d-%2d|%2d,%2d] --> %p %p hook_mpc_polling %p hook_NBC %p\n",
+                        sched,
+                        sched->th->attr.kind.mask,
+                        sched->status,
+                        sched->th->attr.current_priority,
+                        sched->th->attr.basic_priority,
+                        sched->generic.sched,
+                        sched->th,
+                        sctk_multiple_queues_task_lists[sched->th->attr.bind_to].sctk_multiple_queues_task_polling_thread_sched ?
+                        sctk_multiple_queues_task_lists[sched->th->attr.bind_to].sctk_multiple_queues_task_polling_thread_sched : NULL,
+                        sctk_multiple_queues_sched_lists[sched->th->attr.bind_to].sctk_multiple_queues_sched_NBC_Pthread_sched ?
+                        sctk_multiple_queues_sched_lists[sched->th->attr.bind_to].sctk_multiple_queues_sched_NBC_Pthread_sched : NULL
+                        );
+        fflush(fd);
+        fclose(fd);
+    }
+    #endif
+
+
+    //next thread to schedule
+    sctk_thread_generic_scheduler_t* next;
+    int have_spinlock_registered = 0;
+
+    //bypass get_from_list ?
+    if( vp_data.swap_to_sched != NULL ){
+        next = vp_data.swap_to_sched;
+        vp_data.swap_to_sched = NULL;
+        goto quick_swap;
+    }
+
+
+    ////hmt TODO //attention quand sched->th->attr.bind_to vaut -1
+    //if(sctk_multiple_queues_sched_lists[sched->th->attr.bind_to].sctk_multiple_queues_sched_list != NULL){
+    //    sched->th->attr.current_priority = 10;
+
+    //    sctk_thread_generic_scheduler_generic_t* res;
+    //    res = sctk_multiple_queues_sched_lists[sched->th->attr.bind_to].sctk_multiple_queues_sched_list;
+    //    res->sched->th->attr.current_priority = 10;
+    //}
+    ////endhmt
+
+
+
+
+    //Register the current thread for a futur insertion into the ready thread list
+    if(vp_data.sctk_generic_delegated_add){
+
+        #ifdef SCTK_DEBUG_SCHEDULER
+        {
+            char hostname[128];
+            char hostname2[128];
+            char current_vp[5];
+            gethostname(hostname,128);
+            strncpy(hostname2,hostname,128);
+            sprintf(current_vp,"_%03d",sctk_thread_get_vp ());
+            strcat(hostname2,current_vp);
+
+            FILE* fd=fopen(hostname2,"a");
+            fprintf(fd,"if(vp_data.sctk_generic_delegated_add) 1 add_to_list %p %p\n", sched, vp_data.sctk_generic_delegated_add);
+            fflush(fd);
+            fclose(fd);
+        }
+        #endif
+
+        sctk_generic_add_to_list(vp_data.sctk_generic_delegated_add,vp_data.sctk_generic_delegated_add->generic.is_idle_mode);
+        vp_data.sctk_generic_delegated_add = NULL;
+    }
+
+    if(sched->status == sctk_thread_generic_running){
+        assume(vp_data.sctk_generic_delegated_add == NULL);
+        vp_data.sctk_generic_delegated_add = sched;
+
+        //Register a polling task for futur execution
+        if(vp_data.sctk_generic_delegated_task_list != NULL){ 
+            sctk_generic_add_task_to_proceed(vp_data.sctk_generic_delegated_task_list);
+            //hmt
+            sctk_multiple_queues_task_lists[sched->th->attr.bind_to].task_nb+=delegated_task_nb;
+            delegated_task_nb=0;
+            //we increment the polling thread priority when we add a task on the list
+            if(sctk_multiple_queues_task_polling_thread_sched_increase_priority!=NULL){
+                sctk_multiple_queues_task_polling_thread_sched_increase_priority(sched->th->attr.bind_to);
+            }
+            //endhmt
+            vp_data.sctk_generic_delegated_task_list = NULL;
+        }
+
+    } else {
+        sctk_nodebug("TASK %p status %d type %d %d %d",sched,sched->status,sched->generic.vp_type,sctk_thread_generic_zombie,sched->th->attr.cancel_status);
+        //Register the current thread for a futur destruction (zombie state)
+        if(sched->status == sctk_thread_generic_zombie && sched->th->attr.detachstate == SCTK_THREAD_CREATE_DETACHED ){
+            assume(vp_data.sctk_generic_delegated_zombie_detach_thread == NULL);
+            vp_data.sctk_generic_delegated_zombie_detach_thread = &(sched->generic );
+            sctk_nodebug("Detached Zombie %p",sched);
+        }
+
+        if(sched->status == sctk_thread_generic_zombie){
+            sctk_nodebug("Attached Zombie %p",sched);
+        }
+    }
+
+    sched->generic.is_idle_mode = 0;
+
+retry:
+    next = get_from_list();
+
+    if((next == NULL) && (sched->status == sctk_thread_generic_running)){
+        #ifdef SCTK_DEBUG_SCHEDULER
+        {
+            char hostname[128];
+            char hostname2[128];
+            char current_vp[5];
+            gethostname(hostname,128);
+            strncpy(hostname2,hostname,128);
+            sprintf(current_vp,"_%03d",sctk_thread_get_vp ());
+            strcat(hostname2,current_vp);
+
+            FILE* fd=fopen(hostname2,"a");
+            fprintf(fd,"if((next == NULL) && (sched->status == sctk_thread_generic_running)) %p\n\n", sched);
+            fflush(fd);
+            fclose(fd);
+        }
+        #endif
+        vp_data.sctk_generic_delegated_add = NULL;
+        next = sched;
+    }
+
+quick_swap:
+
+        //#ifdef SCTK_DEBUG_SCHEDULER
+        //{
+        //    char hostname[128];
+        //    char hostname2[128];
+        //    char current_vp[5];
+        //    gethostname(hostname,128);
+        //    strncpy(hostname2,hostname,128);
+        //    sprintf(current_vp,"_%03d",sctk_thread_get_vp ());
+        //    strcat(hostname2,current_vp);
+
+        //    FILE* fd=fopen(hostname2,"a");
+        //    fprintf(fd,"label quick_swap next=%p sched=%p\n\n",next, sched);
+        //    fflush(fd);
+        //    fclose(fd);
+        //}
+        //#endif
+    if(next != sched){
+        if(next != NULL){
+            sctk_nodebug("SWAP from %p to %p",sched,next);
+            sctk_nodebug("SLEEP TASK %p status %d type %d %d cancel status %d",sched,sched->status,sched->generic.vp_type,sctk_thread_generic_zombie,sched->th->attr.cancel_status);
+
+            //timers
+            if(sched->th->attr.timestamp_base!=-1){
+                sched->th->attr.timestamp_end=sctk_atomics_get_timestamp_tsc();
+                sched->th->attr.timestamp_count+=sched->th->attr.timestamp_end - sched->th->attr.timestamp_begin;
+
+
+                #ifdef SCTK_DEBUG_SCHEDULER
+                char hostname[128];
+                char hostname2[128];
+                char current_vp[5];
+                gethostname(hostname,128);
+                strncpy(hostname2,hostname,128);
+                sprintf(current_vp,"_%03d",sctk_thread_get_vp ());
+                strcat(hostname2,current_vp);
+
+                FILE* fd=fopen(hostname2,"a");
+                fprintf(fd,"%s from %p[%2d-%2d|%2d,%2d] to %p[%2d-%2d|%2d,%2d] t=[%f count(%f)]\n",
+                        sctk_print_debug_infos(),
+
+                        sched,
+                        sched->th->attr.kind.mask,
+                        sched->status,
+                        sched->th->attr.current_priority,
+                        sched->th->attr.basic_priority,
+
+                        next,
+                        next->th->attr.kind.mask,
+                        sched->status,
+                        next->th->attr.current_priority,
+                        next->th->attr.basic_priority,
+
+                        //sched->th->attr.timestamp_base,
+                        //sched->th->attr.timestamp_begin,
+                        //sched->th->attr.timestamp_end,
+                        sched->th->attr.timestamp_end - sched->th->attr.timestamp_begin,
+                        sched->th->attr.timestamp_count);
+                fflush(fd);
+                fclose(fd);
+                //endhmt
+                #endif //SCTK_DEBUG_SCHEDULER
+
+            }
+            //endtimers
+
+
+
+            /////////////////////////////////////////////////////////////
+            swap(sched,next,&vp_data);
+            /////////////////////////////////////////////////////////////
+            
+
+
+            //timers
+            if(sched->th->attr.timestamp_base==-1){
+                sched->th->attr.timestamp_threshold=sctk_runtime_config_get()->modules.scheduler.timestamp_threshold;
+                sched->th->attr.timestamp_base=sctk_atomics_get_timestamp_tsc();
+                sched->th->attr.timestamp_begin=sched->th->attr.timestamp_base;
+            }else{
+                sched->th->attr.timestamp_begin=sctk_atomics_get_timestamp_tsc();
+            }
+            //endtimers
+
+
+
+
+            sctk_nodebug("Enter %p",sched);
+            sctk_nodebug("WAKE TASK %p status %d type %d %d cancel status %d",sched,sched->status,sched->generic.vp_type,sctk_thread_generic_zombie,sched->th->attr.cancel_status);
+        } else {
+            /* Idle function */
+
+            if(vp_data.sctk_generic_delegated_task_list != NULL){
+                sched->generic.is_idle_mode = 1;
+                sctk_generic_add_task_to_proceed(vp_data.sctk_generic_delegated_task_list);
+                //hmt
+                sctk_multiple_queues_task_lists[sched->th->attr.bind_to].task_nb+=delegated_task_nb;
+                delegated_task_nb=0;
+                //we increment the polling thread priority when we add a task on the list
+                if(sctk_multiple_queues_task_polling_thread_sched_increase_priority!=NULL){
+                    sctk_multiple_queues_task_polling_thread_sched_increase_priority(sched->th->attr.bind_to);
+                }
+                //endhmt
+                vp_data.sctk_generic_delegated_task_list = NULL;
+            }
+
+            if(vp_data.sctk_generic_delegated_spinlock != NULL){
+                sched->generic.is_idle_mode = 1;
+
+                have_spinlock_registered = 1;
+                assume(vp_data.registered_spin_unlock == NULL);
+
+                sctk_nodebug("REGISTER delegated IDLE %p",sched);
+                vp_data.sched_idle = sched;
+                vp_data.registered_spin_unlock = vp_data.sctk_generic_delegated_spinlock;
+
+                sctk_nodebug("Register spinunlock %p execute IDLE",vp_data.sctk_generic_delegated_spinlock);
+                sctk_spinlock_unlock(vp_data.sctk_generic_delegated_spinlock);
+                vp_data.sctk_generic_delegated_spinlock = NULL;
+            }
+
+            sctk_cpu_relax ();
+
+
+            //#ifdef SCTK_DEBUG_SCHEDULER
+            //{
+            //    char hostname[128];
+            //    char hostname2[128];
+            //    char current_vp[5];
+            //    gethostname(hostname,128);
+            //    strncpy(hostname2,hostname,128);
+            //    sprintf(current_vp,"_%03d",sctk_thread_get_vp ());
+            //    strcat(hostname2,current_vp);
+
+            //    FILE* fd=fopen(hostname2,"a");
+            //    fprintf(fd,"before retry sched=%p\n", sched);
+            //    fflush(fd);
+            //    fclose(fd);
+            //}
+            //#endif
+            goto retry;
+        }
+    }
+    /*New thread if next != nil*/
+
+    sched->generic.is_idle_mode = 0;
+
+    if(vp_data.sched_idle != NULL){
+        if(vp_data.sched_idle != sched){
+            if(vp_data.registered_spin_unlock != NULL){
+                sctk_spinlock_lock(vp_data.registered_spin_unlock);
+                vp_data.sched_idle->generic.is_idle_mode = 0;
+                if(vp_data.sched_idle->status == sctk_thread_generic_running){
+                    sctk_nodebug("ADD FROM delegated spinlock %p",vp_data.sched_idle);
+
+                    #ifdef SCTK_DEBUG_SCHEDULER
+                    //hmt
+                    printf("if(vp_data.sched_idle->status == sctk_thread_generic_running) add_to_list\n");
+                    fflush(stdout);
+                    //endhmt
+                    #endif
+                    sctk_generic_add_to_list(vp_data.sched_idle,vp_data.sched_idle->generic.is_idle_mode);
+                }
+                sctk_spinlock_unlock(vp_data.registered_spin_unlock);	
+            }
+        }
+        vp_data.registered_spin_unlock = NULL;
+        vp_data.sched_idle = NULL;
+    }
+
+    if(vp_data.sctk_generic_delegated_spinlock != NULL){
+        sctk_nodebug("Register spinunlock %p execute",vp_data.sctk_generic_delegated_spinlock);
+        sctk_spinlock_unlock(vp_data.sctk_generic_delegated_spinlock);
+        vp_data.sctk_generic_delegated_spinlock = NULL;
+    }
+
+    sctk_nodebug("TASK %p status %d type %d sctk_thread_generic_check_signals",sched,sched->status,sched->generic.vp_type);
+    sctk_thread_generic_check_signals( 1 );
+
+    sctk_nodebug("TASK %p status %d type %d sctk_thread_generic_check_signals done %p ",sched,sched->status,sched->generic.vp_type,vp_data.swap_to_sched);
+    /* To ensure that blocked threads in synchronizaton locks are still able to receive
+       and treat signals for the pthread api, we save the calling thread and schedule the
+       receiving thread. Once signal has been treated, calling thread is scheduled again.
+       */
+    if( vp_data.swap_to_sched != NULL ){
+        next = vp_data.swap_to_sched;
+        vp_data.swap_to_sched = NULL;
+        goto quick_swap;
+    }
+
+    sctk_nodebug("TASK %p status %d type %d Deal with zombie threads",sched,sched->status,sched->generic.vp_type);
+    /* Deal with zombie threads */
+    if(vp_data.sctk_generic_delegated_zombie_detach_thread != NULL){
+        //sctk_thread_generic_handle_zombies( vp_data.sctk_generic_delegated_zombie_detach_thread );
+        //#warning "Handel Zombies"
+        vp_data.sctk_generic_delegated_zombie_detach_thread = NULL;
+    }
 
     if(vp_data.sctk_generic_delegated_task_list != NULL){ 
-      sctk_generic_add_task_to_proceed(vp_data.sctk_generic_delegated_task_list);
-      vp_data.sctk_generic_delegated_task_list = NULL;
+        sctk_generic_add_task_to_proceed(vp_data.sctk_generic_delegated_task_list);
+        //hmt
+        sctk_multiple_queues_task_lists[sched->th->attr.bind_to].task_nb+=delegated_task_nb;
+        delegated_task_nb=0;
+        //we increment the polling thread priority when we add a task on the list
+        if(sctk_multiple_queues_task_polling_thread_sched_increase_priority!=NULL){
+            sctk_multiple_queues_task_polling_thread_sched_increase_priority(sched->th->attr.bind_to);
+        }
+        //endhmt
+        vp_data.sctk_generic_delegated_task_list = NULL;
     }
 
-  } else {
-    sctk_nodebug("TASK %p status %d type %d %d %d",sched,sched->status,sched->generic.vp_type,sctk_thread_generic_zombie,sched->th->attr.cancel_status);
-    if(sched->status == sctk_thread_generic_zombie && sched->th->attr.detachstate == SCTK_THREAD_CREATE_DETACHED ){
-      assume(vp_data.sctk_generic_delegated_zombie_detach_thread == NULL);
-      vp_data.sctk_generic_delegated_zombie_detach_thread = &(sched->generic );
-      sctk_nodebug("Detached Zombie %p",sched);
+    if(vp_data.sctk_generic_delegated_add){
+
+        #ifdef SCTK_DEBUG_SCHEDULER
+        {
+            char hostname[128];
+            char hostname2[128];
+            char current_vp[5];
+            gethostname(hostname,128);
+            strncpy(hostname2,hostname,128);
+            sprintf(current_vp,"_%03d",sctk_thread_get_vp ());
+            strcat(hostname2,current_vp);
+
+            FILE* fd=fopen(hostname2,"a");
+            fprintf(fd,"if(vp_data.sctk_generic_delegated_add) 2 add_to_list %p %p\n\n", sched, vp_data.sctk_generic_delegated_add);
+            fflush(fd);
+            fclose(fd);
+        }
+        #endif
+
+        sctk_generic_add_to_list(vp_data.sctk_generic_delegated_add,vp_data.sctk_generic_delegated_add->generic.is_idle_mode);
+        vp_data.sctk_generic_delegated_add = NULL;
     }
-
-    if(sched->status == sctk_thread_generic_zombie){
-      sctk_nodebug("Attached Zombie %p",sched);
-    }
-  }
-
-  sched->generic.is_idle_mode = 0;
-
- retry:
-  next = get_from_list();
-    
-  if((next == NULL) && (sched->status == sctk_thread_generic_running)){
-    vp_data.sctk_generic_delegated_add = NULL;
-    next = sched;
-  }
-
- quick_swap:
-  if(next != sched){
-    if(next != NULL){
-      sctk_nodebug("SWAP from %p to %p",sched,next);
-      sctk_nodebug("SLEEP TASK %p status %d type %d %d cancel status %d",sched,sched->status,sched->generic.vp_type,sctk_thread_generic_zombie,sched->th->attr.cancel_status);
-      swap(sched,next,&vp_data);
-      sctk_nodebug("Enter %p",sched);
-      sctk_nodebug("WAKE TASK %p status %d type %d %d cancel status %d",sched,sched->status,sched->generic.vp_type,sctk_thread_generic_zombie,sched->th->attr.cancel_status);
-    } else {
-      /* Idle function */
-
-      if(vp_data.sctk_generic_delegated_task_list != NULL){
-	sched->generic.is_idle_mode = 1;
-	sctk_generic_add_task_to_proceed(vp_data.sctk_generic_delegated_task_list);
-	vp_data.sctk_generic_delegated_task_list = NULL;
-      }
-
-      if(vp_data.sctk_generic_delegated_spinlock != NULL){
-	sched->generic.is_idle_mode = 1;
-
-	have_spinlock_registered = 1;
-	assume(vp_data.registered_spin_unlock == NULL);
-
-	sctk_nodebug("REGISTER delegated IDLE %p",sched);
-	vp_data.sched_idle = sched;
-	vp_data.registered_spin_unlock = vp_data.sctk_generic_delegated_spinlock;
-
-	sctk_nodebug("Register spinunlock %p execute IDLE",vp_data.sctk_generic_delegated_spinlock);
-	sctk_spinlock_unlock(vp_data.sctk_generic_delegated_spinlock);
-	vp_data.sctk_generic_delegated_spinlock = NULL;
-      }
-
-      	sctk_cpu_relax ();
-      goto retry;
-    }
-  }
-  sched->generic.is_idle_mode = 0;
-  
-  if(vp_data.sched_idle != NULL){
-    if(vp_data.sched_idle != sched){
-      if(vp_data.registered_spin_unlock != NULL){
-	sctk_spinlock_lock(vp_data.registered_spin_unlock);
-	vp_data.sched_idle->generic.is_idle_mode = 0;
-	if(vp_data.sched_idle->status == sctk_thread_generic_running){
-	  sctk_nodebug("ADD FROM delegated spinlock %p",vp_data.sched_idle);
-	  sctk_generic_add_to_list(vp_data.sched_idle,vp_data.sched_idle->generic.is_idle_mode);
-	}
-	sctk_spinlock_unlock(vp_data.registered_spin_unlock);	
-      }
-    }
-    vp_data.registered_spin_unlock = NULL;
-    vp_data.sched_idle = NULL;
-  }
-  
-  if(vp_data.sctk_generic_delegated_spinlock != NULL){
-    sctk_nodebug("Register spinunlock %p execute",vp_data.sctk_generic_delegated_spinlock);
-    sctk_spinlock_unlock(vp_data.sctk_generic_delegated_spinlock);
-    vp_data.sctk_generic_delegated_spinlock = NULL;
-  }
- 
-  sctk_nodebug("TASK %p status %d type %d sctk_thread_generic_check_signals",sched,sched->status,sched->generic.vp_type);
-  sctk_thread_generic_check_signals( 1 );
-
-  sctk_nodebug("TASK %p status %d type %d sctk_thread_generic_check_signals done %p ",sched,sched->status,sched->generic.vp_type,vp_data.swap_to_sched);
-  /* To ensure that blocked threads in synchronizaton locks are still able to receive
-	 and treat signals for the pthread api, we save the calling thread and schedule the
-	 receiving thread. Once signal has been treated, calling thread is scheduled again.
-	*/
-  if( vp_data.swap_to_sched != NULL ){
-	next = vp_data.swap_to_sched;
-	vp_data.swap_to_sched = NULL;
-	goto quick_swap;
-  }
-
-  sctk_nodebug("TASK %p status %d type %d Deal with zombie threads",sched,sched->status,sched->generic.vp_type);
-  /* Deal with zombie threads */
-  if(vp_data.sctk_generic_delegated_zombie_detach_thread != NULL){
-	//sctk_thread_generic_handle_zombies( vp_data.sctk_generic_delegated_zombie_detach_thread );
-//#warning "Handel Zombies"
-    vp_data.sctk_generic_delegated_zombie_detach_thread = NULL;
-  }
-
-  if(vp_data.sctk_generic_delegated_task_list != NULL){ 
-    sctk_generic_add_task_to_proceed(vp_data.sctk_generic_delegated_task_list);
-    vp_data.sctk_generic_delegated_task_list = NULL;
-  }
-  
-  if(vp_data.sctk_generic_delegated_add){
-    sctk_generic_add_to_list(vp_data.sctk_generic_delegated_add,vp_data.sctk_generic_delegated_add->generic.is_idle_mode);
-    vp_data.sctk_generic_delegated_add = NULL;
-  }
 }
+
 
 static void sctk_generic_sched_yield(sctk_thread_generic_scheduler_t*sched){
   if(sched->generic.vp_type == 0){
@@ -940,12 +2211,20 @@ static void sctk_generic_create_pthread(sctk_thread_generic_p_t*thread){
   }
 }
 
+
+
+
 static void* sctk_generic_polling_func(void*arg){
   sctk_thread_generic_scheduler_t*sched;
 
   assume(arg == NULL); 
 
   sched = &(sctk_thread_generic_self()->sched);
+
+  //set a hook on sctk_multiple_queues_task_lists[sched->th->attr.bind_to] 
+  //allowing accesibility to the polling thread from all threads
+  sctk_multiple_queues_task_lists[sched->th->attr.bind_to].sctk_multiple_queues_task_polling_thread_sched = sched;
+
 
   sctk_nodebug("Start polling func %p",sched);
 
@@ -994,9 +2273,10 @@ static void* sctk_thread_generic_polling_func_bootstrap(void* attr){
   return sctk_thread_generic_polling_func(attr);
 }
 
+//Initialization of function pointers which are used for the scheduling on yield funtion
 static char sched_type[4096];
 void sctk_thread_generic_scheduler_init(char* thread_type,char* scheduler_type, int vp_number){ 
-  int i;
+    int i;
 
   if(vp_number > sctk_get_cpu_number ()){
     sctk_thread_generic_scheduler_use_binding = 0;
@@ -1008,12 +2288,16 @@ void sctk_thread_generic_scheduler_init(char* thread_type,char* scheduler_type, 
   core_id = 0;
   sctk_thread_generic_scheduler_bind_to_cpu (0);
   
+  ///////////////////////////
+  //update function pointers
+  //
+  //generic/centralized scheduler
   if(strcmp("generic/centralized",scheduler_type) == 0){
-    sctk_generic_add_to_list_intern = sctk_centralized_add_to_list;
-    sctk_generic_get_from_list = sctk_centralized_get_from_list;
+    sctk_generic_add_to_list_intern = sctk_centralized_add_to_list; //add to list
+    sctk_generic_get_from_list = sctk_centralized_get_from_list; //get from list
     sctk_generic_get_task = sctk_centralized_get_task;
     sctk_generic_add_task_to_proceed = sctk_centralized_add_task_to_proceed;
-    sctk_generic_concat_to_list = sctk_centralized_concat_to_list;
+    sctk_generic_concat_to_list = sctk_centralized_concat_to_list; //concat to list
     sctk_generic_poll_tasks = sctk_centralized_poll_tasks;
     sctk_thread_generic_wake_on_task_lock_p=sctk_centralized_thread_generic_wake_on_task_lock;
     
@@ -1036,12 +2320,14 @@ void sctk_thread_generic_scheduler_init(char* thread_type,char* scheduler_type, 
       sctk_thread_generic_sched_idle_start = sctk_generic_sched_idle_start_pthread;
       
     }
+  //generic/multiple_queues scheduler
   } else if(strcmp("generic/multiple_queues",scheduler_type) == 0){
-    sctk_generic_add_to_list_intern = sctk_multiple_queues_add_to_list;
-    sctk_generic_get_from_list = sctk_multiple_queues_get_from_list;
+      fprintf(stderr,"SCHEDULER : generic/multiple_queues\n");
+    sctk_generic_add_to_list_intern = sctk_multiple_queues_add_to_list; //add to list
+    sctk_generic_get_from_list = sctk_multiple_queues_get_from_list; //get from list
     sctk_generic_get_task = sctk_multiple_queues_get_task;
     sctk_generic_add_task_to_proceed = sctk_multiple_queues_add_task_to_proceed;
-    sctk_generic_concat_to_list = sctk_multiple_queues_concat_to_list;
+    sctk_generic_concat_to_list = sctk_multiple_queues_concat_to_list; // concat to list
     sctk_generic_poll_tasks = sctk_multiple_queues_poll_tasks;
     sctk_thread_generic_wake_on_task_lock_p=sctk_multiple_queues_thread_generic_wake_on_task_lock;
     
@@ -1075,6 +2361,53 @@ void sctk_thread_generic_scheduler_init(char* thread_type,char* scheduler_type, 
       sctk_multiple_queues_task_list_t init = SCTK_MULTIPLE_QUEUES_TASK_LIST_INIT;
       sctk_multiple_queues_task_lists[i] = init;
     }
+    //////////////////////////////////////////////
+    //we can add others scheduling algorithm  here
+    //
+  } else if(strcmp("generic/multiple_queues_with_priority",scheduler_type) == 0){
+      fprintf(stderr,"SCHEDULER : generic/multiple_queues_with_priority\n");
+    sctk_generic_add_to_list_intern = sctk_multiple_queues_with_priority_add_to_list; //add to list
+    sctk_generic_get_from_list = sctk_multiple_queues_with_priority_get_from_list; //get from list
+    sctk_generic_get_task = sctk_multiple_queues_get_task;
+    sctk_generic_add_task_to_proceed = sctk_multiple_queues_add_task_to_proceed;
+    sctk_generic_concat_to_list = sctk_multiple_queues_with_priority_concat_to_list; // concat to list
+    sctk_generic_poll_tasks = sctk_multiple_queues_poll_tasks;
+    sctk_thread_generic_wake_on_task_lock_p=sctk_multiple_queues_thread_generic_wake_on_task_lock;
+    
+    sctk_thread_generic_sched_idle_start = sctk_generic_sched_idle_start;
+    sctk_thread_generic_sched_yield = sctk_generic_sched_yield;
+    sctk_thread_generic_thread_status = sctk_generic_thread_status;
+    sctk_thread_generic_register_spinlock_unlock = sctk_generic_register_spinlock_unlock;
+    sctk_thread_generic_wake = sctk_generic_wake;
+    sctk_thread_generic_scheduler_init_thread_p = sctk_generic_scheduler_init_thread;
+    sctk_thread_generic_sched_create = sctk_generic_create;
+    sctk_thread_generic_add_task = sctk_generic_add_task;
+    sctk_add_func_type (sctk_generic, freeze_thread_on_vp,
+			void (*)(sctk_thread_mutex_t *, void **));
+    sctk_add_func (sctk_generic, wake_thread_on_vp);
+    sctk_thread_generic_polling_func = sctk_generic_polling_func;
+    if(strcmp("pthread",thread_type) == 0){
+      sctk_thread_generic_sched_create = sctk_generic_create_pthread;
+      sctk_thread_generic_scheduler_init_thread_p = sctk_generic_scheduler_init_pthread;
+      sctk_generic_get_from_list_pthread_init = sctk_multiple_queues_get_from_list_pthread_init;
+      sctk_thread_generic_sched_idle_start = sctk_generic_sched_idle_start_pthread;
+      
+    }
+
+    sctk_multiple_queues_sched_lists = malloc(vp_number*sizeof(sctk_multiple_queues_sched_list_t));
+    for(i = 0; i <  vp_number; i++){
+      sctk_multiple_queues_sched_list_t init = SCTK_MULTIPLE_QUEUES_SCHED_LIST_INIT;
+      sctk_multiple_queues_sched_lists[i] = init;
+    }
+    sctk_multiple_queues_task_lists = malloc(vp_number*sizeof(sctk_multiple_queues_task_list_t));
+    for(i = 0; i <  vp_number; i++){
+      sctk_multiple_queues_task_list_t init = SCTK_MULTIPLE_QUEUES_TASK_LIST_INIT;
+      sctk_multiple_queues_task_lists[i] = init;
+    }
+
+    //////////////////////////////////////////////
+    //End of new schedulers
+    //
   } else {
     not_reachable();
   }
@@ -1086,8 +2419,8 @@ void sctk_thread_generic_scheduler_init(char* thread_type,char* scheduler_type, 
   }
   
   sctk_set_cpu_number (vp_number);
-
 }
+
 void sctk_thread_generic_polling_init(int vp_number) {
     int i;
     sctk_thread_attr_t attr;
@@ -1098,6 +2431,13 @@ void sctk_thread_generic_polling_init(int vp_number) {
     attr_intern=(sctk_thread_generic_attr_t*)&attr;
     attr_intern->ptr->polling = 1;
     attr_intern->ptr->stack_size = 8*1024;
+
+    //add kind in the attr of the POLLING THREADS
+    attr_intern.ptr->kind.mask=KIND_MASK_MPC_POLLING_THREAD;
+    attr_intern.ptr->basic_priority=sctk_runtime_config_get()->modules.scheduler.task_polling_thread_basic_priority;
+    attr_intern.ptr->kind.priority=sctk_runtime_config_get()->modules.scheduler.task_polling_thread_basic_priority;
+    attr_intern.ptr->current_priority=sctk_runtime_config_get()->modules.scheduler.task_polling_thread_basic_priority;
+
     for(i = 0; i < vp_number ; i++){
         attr_intern->ptr->bind_to = i;
         sctk_user_thread_create(&threadp,&attr,sctk_thread_generic_polling_func_bootstrap,NULL);

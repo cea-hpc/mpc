@@ -38,6 +38,7 @@ static __thread sctk_thread_generic_p_t* sctk_thread_generic_self_data;
 
 inline
 sctk_thread_generic_t sctk_thread_generic_self(){
+      //if (sctk_thread_generic_self_data ==NULL) sctk_abort();
   return sctk_thread_generic_self_data;
 }
 
@@ -1071,7 +1072,7 @@ static  void __sctk_start_routine (void * arg){
   thread = arg;
 
   sctk_nodebug("Before yield %p",&(thread->sched));
-  /*It is mandatory to have to yield for pthread mode*/
+  /*It is mandatory to have two yields for pthread mode*/
   sctk_thread_generic_set_self(thread);
   sctk_thread_generic_sched_yield(&(thread->sched));
   sctk_thread_generic_sched_yield(&(thread->sched));
@@ -2461,8 +2462,8 @@ int sctk_get_env_cpu_nuber(){
 /********* ETHREAD MXN ************/
 void
 sctk_ethread_mxn_ng_thread_init (void){
-  
-  sctk_thread_generic_thread_init ("ethread_mxn","generic/multiple_queues",sctk_get_env_cpu_nuber());
+  //sctk_thread_generic_thread_init ("ethread_mxn","generic/multiple_queues",sctk_get_env_cpu_nuber());
+  sctk_thread_generic_thread_init ("ethread_mxn","generic/multiple_queues_with_priority",sctk_get_env_cpu_nuber());
   sctk_register_thread_type("ethread_mxn_ng");
 }
 
