@@ -41,6 +41,7 @@
 
         <struct name="progress_thread" doc="Progress thread NBC">
             <param name="use_progress_thread" type="int" default="1" doc="If use progress threads for non blocking collectives"/>
+            <param name="progress_thread_binding" type="funcptr" default="sctk_get_progress_thread_binding_bind" doc="Algorithm of progress threads binding : sctk_get_progress_thread_binding_[bind,smart,numa_iter,numa]"/>
         </struct>
         <!--
         <struct name="scheduler" doc="Scheduler priority parameters">

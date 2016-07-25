@@ -198,6 +198,8 @@ struct sctk_runtime_config_struct_progress_thread
 {	int init_done;
 	/**If use progress threads for non blocking collectives**/
 	int use_progress_thread;
+	/**Algorithm of progress threads binding : sctk_get_progress_thread_binding_[bind,smart,numa_iter,numa]**/
+	struct sctk_runtime_config_funcptr progress_thread_binding;
 };
 
 /******************************** STRUCTURE *********************************/

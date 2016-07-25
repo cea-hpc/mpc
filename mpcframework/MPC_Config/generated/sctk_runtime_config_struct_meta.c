@@ -121,6 +121,7 @@ const struct sctk_runtime_config_entry_meta sctk_runtime_config_db[] = {
 	/* struct */
 	{"sctk_runtime_config_struct_progress_thread" , SCTK_CONFIG_META_TYPE_STRUCT , 0  , sizeof(struct sctk_runtime_config_struct_progress_thread) , NULL , sctk_runtime_config_struct_init_progress_thread},
 	{"use_progress_thread"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_progress_thread,use_progress_thread)  , sizeof(int) , "int" , NULL},
+	{"progress_thread_binding"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_progress_thread,progress_thread_binding)  , sizeof(struct sctk_runtime_config_funcptr) , "funcptr" , NULL},
 	/* struct */
 	{"sctk_runtime_config_struct_mpc" , SCTK_CONFIG_META_TYPE_STRUCT , 0  , sizeof(struct sctk_runtime_config_struct_mpc) , NULL , sctk_runtime_config_struct_init_mpc},
 	{"log_debug"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_mpc,log_debug)  , sizeof(bool) , "bool" , NULL},

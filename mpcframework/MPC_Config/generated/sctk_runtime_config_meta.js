@@ -75,6 +75,7 @@ meta.types = {
 	}},
 	progress_thread : {type: 'struct', name: "progress_thread", childs: {
 		use_progress_thread: {mode: 'param', name: "use_progress_thread", type: "int", doc: "If use progress threads for non blocking collectives", dflt: "1", },
+		progress_thread_binding: {mode: 'param', name: "progress_thread_binding", type: "funcptr", doc: "Algorithm of progress threads binding : sctk_get_progress_thread_binding_[bind,smart,numa_iter,numa]", dflt: "sctk_get_progress_thread_binding_bind", },
 	}},
 	mpc : {type: 'struct', name: "mpc", childs: {
 		log_debug: {mode: 'param', name: "log_debug", type: "bool", doc: "Print debug messages", dflt: "false", },

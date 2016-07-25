@@ -331,6 +331,13 @@
   <xs:complexType name="user_type_progress_thread">
     <xs:all>
       <xs:element minOccurs="0" name="use_progress_thread" type="xs:integer"/>
+      <xs:element minOccurs="0" name="progress_thread_binding">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
     </xs:all>
   </xs:complexType>
   <!-- ********************************************************* -->

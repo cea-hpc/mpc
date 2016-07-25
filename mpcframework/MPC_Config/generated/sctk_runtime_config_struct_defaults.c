@@ -200,6 +200,8 @@ void sctk_runtime_config_struct_init_progress_thread(void * struct_ptr)
 
 	/* Simple params : */
 	obj->use_progress_thread = 1;
+	obj->progress_thread_binding.name = "sctk_get_progress_thread_binding_bind";
+	*(void **) &(obj->progress_thread_binding.value) = sctk_runtime_config_get_symbol("sctk_get_progress_thread_binding_bind");
 	obj->init_done = 1;
 }
 

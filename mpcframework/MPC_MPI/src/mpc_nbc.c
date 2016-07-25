@@ -3626,54 +3626,6 @@ error:
   return ret;
 }
 
-
-//static inline int NBC_Initialize() {
-//  if(sctk_runtime_config_get()->modules.progress_thread.use_progress_thread == 1)
-//  { 
-//  struct sctk_task_specific_s * task_specific;
-//  task_specific = __MPC_get_task_specific ();
-//
-//  sctk_thread_attr_t attr;
-//  sctk_thread_attr_init(&attr);
-//
-//  //JJ
-//  //sctk_thread_attr_setbinding (&attr, sctk_get_cpu());
-//  //
-//
-//  int cpu_id_to_bind_progress_thread =
-//      sctk_set_progress_thread_binding(SCTK_PROGRESS_THREAD_BINDING_BIND);
-//
-//  sctk_thread_attr_setbinding (&attr,cpu_id_to_bind_progress_thread);
-//
-//  ////DEBUG
-//  //char hostname[1024];
-//  //gethostname(hostname,1024);
-//  //FILE *hostname_fd = fopen(strcat(hostname,".log"),"a");
-//  ////if (hostname_fd == NULL) perror("FAILED FOPEN hostname_fd");
-//
-//  //fprintf(hostname_fd,"task_id %03d, current_cpu=%03d, cpu_id_to_bind_progress_thread = %03d\n",
-//  //        sctk_get_local_task_rank(),
-//  //        sctk_get_cpu(),
-//  //        cpu_id_to_bind_progress_thread
-//  //      );
-//  //fflush(hostname_fd);
-//  //fclose(hostname_fd);
-//  ////DEBUG
-//
-//
-//
-//  int ret = sctk_user_thread_create( &(task_specific->mpc_mpi_data->NBC_Pthread), &attr, NBC_Pthread_func, NULL);
-//  if(0 != ret) { printf("Error in sctk_user_thread_create() (%i)\n", ret); return NBC_OOR; }
-//
-//  sctk_thread_attr_destroy(&attr);
-//  
-//  task_specific->mpc_mpi_data->nbc_initialized_per_task = 1;
-//  }
-//
-//  return NBC_OK;
-//}
-
-//mettre les attr en generic 
 static inline int NBC_Initialize() {
   if(sctk_runtime_config_get()->modules.progress_thread.use_progress_thread == 1)
   { 
@@ -3687,8 +3639,11 @@ static inline int NBC_Initialize() {
   sctk_thread_attr_t attr;
   sctk_thread_attr_init(&attr);
 
-  int cpu_id_to_bind_progress_thread =
-      sctk_set_progress_thread_binding(SCTK_PROGRESS_THREAD_BINDING_BIND);
+  int (*sctk_get_progress_thread_binding)(void);
+  sctk_get_progress_thread_binding =
+      (int(*)(void))sctk_runtime_config_get()->modules.progress_thread.progress_thread_binding.value;
+
+  int cpu_id_to_bind_progress_thread = sctk_get_progress_thread_binding();
 
   sctk_thread_attr_setbinding ((sctk_thread_attr_t*)&attr,cpu_id_to_bind_progress_thread);
 

@@ -28,18 +28,24 @@
 #include <sctk_accessor.h>
 #include <sctk_thread.h>
 
-//This enumeration describes how to bind progress threads on one node of 8 cores with 2 numa nodes
-//
-//SCTK_PROGRESS_THREAD_BINDING_BIND
+//function pointed by 'sctk_get_progress_thread_binding' in file mpc_nbc.c to
+//define progress threads binding
+
+//progress threads binding on one node of 8 cores with 2 numa nodes
+//BIND
 // / / / /   / / / / Polling threads
 // | | | |   | | | | MPI task threads
 // o o o o   o o o o cores
-//
-//SCTK_PROGRESS_THREAD_BINDING_SMART
+int sctk_get_progress_thread_binding_bind(void);
+
+//progress threads binding on one node of 8 cores with 2 numa nodes
+//SMART
 // | / | /   | / | /
 // o o o o   o o o o
-//
-//SCTK_PROGRESS_THREAD_BINDING_OVERWEIGHT
+int sctk_get_progress_thread_binding_smart(void);
+
+//progress threads binding on one node of 8 cores with 2 numa nodes
+//OVERWEIGHT
 //   /              
 //   /              
 //   /              
@@ -48,23 +54,16 @@
 //   /              
 // | / | |  | | | | 
 // o o o o  o o o o 
-//
-//SCTK_PROGRESS_THREAD_BINDING_NUMA
+int sctk_get_progress_thread_binding_overweight(void);
+
+//progress threads binding on one node of 8 cores with 2 numa nodes
+//NUMA
 //       /         /
 //       /         /
 // | | | /   | | | /
 // o o o o   o o o o 
-//
-typedef enum sctk_progress_thread_binding_e{
-   SCTK_PROGRESS_THREAD_BINDING_BIND,
-   SCTK_PROGRESS_THREAD_BINDING_SMART,
-   SCTK_PROGRESS_THREAD_BINDING_OVERWEIGHT,
-   SCTK_PROGRESS_THREAD_BINDING_NUMA
-}sctk_progress_thread_binding_t;
-
-//function used by the function sctk_thread_attr_setbindings in file mpc_nbc.c to
-//define bindings of progress threads
-int sctk_set_progress_thread_binding(sctk_progress_thread_binding_t binding);
+int sctk_get_progress_thread_binding_numa_iter(void);
+int sctk_get_progress_thread_binding_numa(void);
 
 
 #endif // __MPC_NBC_PROGRESS_THREAD_BINDING_H__

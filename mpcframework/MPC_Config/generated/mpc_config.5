@@ -449,6 +449,10 @@ It support parameters :
 Type is int. Default value is 1. 
 .Pp use_progress_thread
 If use progress threads for non blocking collectives
+.It Cm progress_thread_binding
+Type is function pointer. Default value is sctk_get_progress_thread_binding_bind. 
+.Pp progress_thread_binding
+Algorithm of progress threads binding : sctk_get_progress_thread_binding_[bind,smart,numa_iter,numa]
 .El
 .Sh ENTRIES OF TYPE mpc
 Options for MPC Message Passing
