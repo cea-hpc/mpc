@@ -125,6 +125,42 @@ int sctk_get_progress_thread_binding_numa_iter(void){
 
 int sctk_get_progress_thread_binding_numa(void){ 
     int cpu_id_to_bind_progress_thread;
+
+    int task_nb = sctk_get_local_task_number();
+
+    int cpu_per_node = sctk_get_cpu_number();
+
+    int numa_node_per_node_nb = sctk_get_numa_node_number();
+
+    int cpu_per_numa_node = cpu_per_node / numa_node_per_node_nb;
+
+    int current_cpu = sctk_get_cpu();
+
+    int nbVp;
+
+    int global_id = sctk_get_local_task_rank();
+
+    int proc_global = sctk_get_init_vp_and_nbvp(global_id,&nbVp);
+
+
+    int numa_node_id = (global_id*numa_node_per_node_nb)/task_nb;
+
+    int task_per_numa_node =
+        (((numa_node_id+1)*task_nb + numa_node_per_node_nb-1)/numa_node_per_node_nb)
+        - (((numa_node_id  )*task_nb + numa_node_per_node_nb-1)/numa_node_per_node_nb);
+
+    assert(proc_global == current_cpu);
+
+    //compas2016 articlempc commit 82e59e3b049a67bcfe2e9a1889fc3d7e5adb50bd
+    if(task_per_numa_node >= cpu_per_numa_node){
+        cpu_id_to_bind_progress_thread = proc_global;
+    }else{
+        cpu_id_to_bind_progress_thread = (((((proc_global/
+                                (cpu_per_numa_node/(cpu_per_numa_node-task_per_numa_node))+1)
+                            *cpu_per_numa_node)
+                        +(cpu_per_numa_node-task_per_numa_node-1)) /
+                    (cpu_per_numa_node-task_per_numa_node))-1);
+    }
     return cpu_id_to_bind_progress_thread;
 }
 
