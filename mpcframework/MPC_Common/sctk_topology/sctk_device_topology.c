@@ -437,6 +437,8 @@ void sctk_device_init( hwloc_topology_t topology, sctk_device_t * dev , hwloc_ob
 	}
 
 	dev->device_id = -1;
+	dev->nb_res = 0;
+	dev->res_lock = SCTK_SPINLOCK_INITIALIZER;
 }
 
 /************************************************************************/
@@ -553,12 +555,11 @@ void sctk_device_enrich_topology( hwloc_topology_t topology )
                 //printf("res = %s\n",res);
                 device->name = res;
                 //device->device_id = (int)dev;
-                device->device_cuda_id = (int)dev;
-                device->device_id = i;
+                device->device_id = (int)dev;
                 //printf("DEVICES : name=%s, device_id=%d, id=%d\n",device->name,device->device_id,i);
             }else{
                 if(device->name==NULL) device->name = "unknown";
-                device->device_cuda_id = -1746;
+                device->device_id = -1;
             }
             //ENDCUDA
             
@@ -862,16 +863,18 @@ sctk_device_t ** sctk_device_matrix_get_list_closest_from_pu( int pu_id, char * 
 	/* Retrieve devices matching the regexp */
 	int count;
 	sctk_device_t ** device_list = sctk_device_get_from_handle_regexp( matching_regexp, &count );
-	
 	if( !count )
 	{
 		return NULL;
 	}
 	
+	sctk_device_t ** ret_list = sctk_malloc(count * sizeof(sctk_device_t));
 	int i;
+	for (i = 0; i < count; i++)
+		ret_list[i] = NULL;
+
 	int minimal_distance = -1;
-	sctk_device_t * closest_device = NULL;
-	*count_out = count;	
+	*count_out = 0;
 	for( i = 0 ; i < count ; i++ )
 	{
 		sctk_device_t * dev = device_list[i];
@@ -879,25 +882,28 @@ sctk_device_t ** sctk_device_matrix_get_list_closest_from_pu( int pu_id, char * 
 		
 		if( distance < 0 )
 		{
-			device_list[i] = NULL;
-			(*count_out)--;
 			continue;
 		}
 		
 		if( (minimal_distance < 0 ) || ( distance <= minimal_distance ) )
 		{
 			minimal_distance = distance;
-			closest_device = dev;
-		}
-		else
-		{
-			device_list[i] = NULL;
-			(*count_out)--;
 		}
 	}
-	
-	
-	return device_list;
+
+	for ( i = 0; i < count; i++)
+	{
+		sctk_device_t * dev = device_list[i];
+		int distance = sctk_device_matrix_get_value( pu_id, dev->id );
+		if(distance == minimal_distance)
+		{
+			ret_list[*count_out] = dev;
+			(*count_out)++;
+		}
+	}
+
+	sctk_free(device_list);
+	return ret_list;
 }
 
 /** Return 1 if the devices matching the regexp are equidistant */
@@ -943,3 +949,86 @@ int sctk_device_matrix_is_equidistant(char * matching_regexp)
 	/* If we are still here topology is even */
 	return 1;
 }
+
+/** increment the number of associated resource by 1 */
+void sctk_device_attach_device(sctk_device_t * device)
+{
+	sctk_spinlock_lock(&device->res_lock);
+	device->nb_res++;
+	sctk_spinlock_unlock(&device->res_lock);
+}
+
+/** decrement the number of associated resource by 1 */
+void sctk_device_detach_device(sctk_device_t * device)
+{
+	sctk_spinlock_lock(&device->res_lock);
+	device->nb_res--;
+	assert(device->nb_res >= 0);
+	sctk_spinlock_unlock(&device->res_lock);
+}
+
+/** retrieve the device with the smallest number of associated resources from a pool of device.
+ *
+ * To avoid unlocking the elected device between the search and the increment, we register the
+ * currently elected driver in freest_elem. In the case where this driver is replaced by a better
+ * one, we free the lock for the previous driver and lock the new ones.
+ *
+ * This is thread-safe with multiple calls to sctk_device_attach_freest_device_from() and other
+ * calls like attach/detach() routines.
+ */
+sctk_device_t * sctk_device_attach_freest_device_from(sctk_device_t ** device_list, int count)
+{
+	int i;
+	int freest_value = -1;
+	sctk_device_t * freest_elem = NULL;
+	
+	if(!count)
+		return NULL;
+
+	/* for each selected device */
+	for(i = 0; i < count ; i++)
+	{
+		sctk_device_t* current = device_list[i];
+	
+		/* lock the counter */
+		sctk_spinlock_lock(&current->res_lock);
+	
+		/* if it the first checked driver */
+		if(freest_value < 0)
+		{
+			freest_value = current->nb_res;
+			freest_elem = current;
+		}
+		else if ( current->nb_res < freest_value)
+		{
+			/* free the previous selected device */
+			sctk_spinlock_unlock(&freest_elem->res_lock);
+			freest_value = current->nb_res;
+			freest_elem = current;	
+			sctk_info("New best device: %d (%d)", freest_elem->device_id, freest_elem->nb_res);
+		}
+		else
+		{
+			/* this device is not elected as the freest ones -> unlock */
+			sctk_spinlock_unlock(&current->res_lock);
+		}
+	}
+	
+	assert(freest_elem != NULL);
+	freest_elem->nb_res++;
+	sctk_spinlock_unlock(&freest_elem->res_lock);
+	
+	return freest_elem;
+}
+
+/** retrieve the device with the smallest number of associated resources for a matching regexp */
+sctk_device_t * sctk_device_attach_freest_device(char * handle_reg_exp)
+{
+	int count;
+	sctk_device_t ** device_list = sctk_device_get_from_handle_regexp( handle_reg_exp, &count );
+	sctk_device_t *  device_res  = sctk_device_attach_freest_device_from(device_list, count);
+
+	sctk_free(device_list);
+	return device_res;
+}
+

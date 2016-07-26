@@ -22,6 +22,7 @@
 #ifndef SCTK_DEVICE_TOPOLOGY_H
 #define SCTK_DEVICE_TOPOLOGY_H
 
+#include <sctk_spinlock.h>
 #include <hwloc.h>
 
 
@@ -92,12 +93,8 @@ typedef struct sctk_device_s
 	
 	int device_id; /**< The internal ID of the device (for IB, card ID) set in enrich topology */
 
-    #if defined(MPC_Accelerators)
-    //CUDA
-    int device_cuda_id;
-    //ENDCUDA
-    #endif //MPC_Accelerators
-
+	size_t nb_res; /**< How many times this device has been associated to a resources (meaning loading level) */
+	sctk_spinlock_t res_lock; /** lock on previous field to ensure thread safety */
 }sctk_device_t;
 
 
@@ -122,6 +119,16 @@ sctk_device_t * sctk_device_get_from_handle( char * handle );
 int sctk_device_get_id_from_handle( char * handle );
 /** Retrieve the list of devices matching a given regexp (on OSname) */
 sctk_device_t ** sctk_device_get_from_handle_regexp( char * handle_reg_exp, int * count );
+
+/** increment the number of associated resource by 1 */
+void sctk_device_attach_resource(sctk_device_t * device);
+/** decrement the number of associated resource by 1 */
+void sctk_device_detach_resource(sctk_device_t * device);
+
+/** retrieve the device with the smallest number of associated resources from a pool of device*/
+sctk_device_t * sctk_device_attach_freest_device_from(sctk_device_t ** device_list, int count);
+/** retrieve the device with the smallest number of associated resources for a matching regexp */
+sctk_device_t * sctk_device_attach_freest_device(char * handle_reg_exp);
 
 /************************************************************************/
 /* DISTANCE MATRIX                                                      */

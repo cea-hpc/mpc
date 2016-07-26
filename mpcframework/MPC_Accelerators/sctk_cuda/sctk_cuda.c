@@ -68,34 +68,16 @@ static int sctk_accl_cuda_get_closest_device(int cpu_id){
 	int nearest_id = -1;
 
 	/* to recycle, nb_check contains the number of minimum distance device */
-	closest_devices = sctk_device_matrix_get_list_closest_from_pu(sctk_get_cpu(),"card*", &nb_check);
+	closest_devices = sctk_device_matrix_get_list_closest_from_pu(cpu_id,"card*", &nb_check);
 
-	if(nb_check > 1) /* multiple GPU at the same distance from this PU */
-	{
-		/* Round robin */
-		sctk_warning("CUDA: Multiple GPU are pinned as the closest ones !");
-		sctk_spinlock_lock(&device_rr_lock);
-		nearest_id=(cpt+ num_devices)% num_devices;
-		cpt++;
-		sctk_spinlock_unlock(&device_rr_lock);
-	}
-	else /* Only one GPU is the closest */
-	{
-		sctk_warning("CUDA: A single GPU is pinned as the closest ones !");
-		int i;
-		/* as we keep the original device list, we have to retrieve the first non-NULL */
-		for(i=0; i < num_devices; i++)
-		{
-			if(closest_devices[i] != NULL)
-			{
-				nearest_id = closest_devices[0]->device_cuda_id;
-				break;
-			}
-		}
-	}
-
-	assert(nearest_id >= 0);
-	sctk_error("CUDA: (DETECTION) picked up  %d", nearest_id);
+	/* once the list is filtered with the nearest ones, we need to elected the one with the minimum
+	 * number of attached resources */
+	sctk_device_t * elected = sctk_device_attach_freest_device_from(closest_devices, nb_check);
+	assert(elected != NULL);
+	
+	nearest_id = elected->device_id;
+	
+	sctk_error("CUDA: (DETECTION) elected device %d", nearest_id);
 
 	sctk_free(closest_devices);
 	return nearest_id;
