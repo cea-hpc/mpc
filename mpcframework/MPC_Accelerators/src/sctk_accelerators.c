@@ -37,7 +37,7 @@ int sctk_accl_init()
 	 * Maybe there are a better way for doing it...
 	 */
 	sctk_free(list);
-
+	sctk_debug("ACCL: found %d GPUs", nb_devices);
 #ifdef MPC_USE_CUDA
 	cuInit(0);
 #endif

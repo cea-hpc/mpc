@@ -52,8 +52,8 @@ static void sctk_accl_cuda_print_ctx_flag(){
 }
 
 
-int lock=SCTK_SPINLOCK_INITIALIZER;
-int cpt=0;
+sctk_spinlock_t device_rr_lock = SCTK_SPINLOCK_INITIALIZER;
+int cpt = 0;
 static int sctk_accl_cuda_get_closest_device(int cpu_id){
 	int num_devices = sctk_accl_get_nb_devices(), nb_check;
 
@@ -64,31 +64,41 @@ static int sctk_accl_cuda_get_closest_device(int cpu_id){
 	assert(num_devices == nb_check);
 	
 	/* else, we try to find the closest device for the current thread */
-	sctk_device_t* closest_device = NULL;
-	int closest_device_cuda_id = -1;
+	sctk_device_t** closest_devices = NULL;
+	int nearest_id = -1;
 
-	//TODO il faudrait aussi gere le cas ou il y a plusieurs gpu par noeud a egal
-	//distance, et d'autre gpu sur un autre noeud a distance differente
-	if(sctk_device_matrix_is_equidistant("card*"))
+	/* to recycle, nb_check contains the number of minimum distance device */
+	closest_devices = sctk_device_matrix_get_list_closest_from_pu(sctk_get_cpu(),"card*", &nb_check);
+
+	if(nb_check > 1) /* multiple GPU at the same distance from this PU */
 	{
-		int count;
-		sctk_device_t ** device_list = sctk_device_get_from_handle_regexp("card*",&count);
-
-		sctk_spinlock_lock(&lock);
-		closest_device_cuda_id=(cpt+count)%count;
+		/* Round robin */
+		sctk_warning("CUDA: Multiple GPU are pinned as the closest ones !");
+		sctk_spinlock_lock(&device_rr_lock);
+		nearest_id=(cpt+ num_devices)% num_devices;
 		cpt++;
-		sctk_spinlock_unlock(&lock);
-
-		sctk_free(device_list);
+		sctk_spinlock_unlock(&device_rr_lock);
 	}
-	else
+	else /* Only one GPU is the closest */
 	{
-		closest_device = sctk_device_matrix_get_closest_from_pu(sctk_get_cpu(),"card*");
-		closest_device_cuda_id = closest_device->device_cuda_id;
+		sctk_warning("CUDA: A single GPU is pinned as the closest ones !");
+		int i;
+		/* as we keep the original device list, we have to retrieve the first non-NULL */
+		for(i=0; i < num_devices; i++)
+		{
+			if(closest_devices[i] != NULL)
+			{
+				nearest_id = closest_devices[0]->device_cuda_id;
+				break;
+			}
+		}
 	}
-	sctk_nodebug("CUDA: (DETECTION) nearest device = %d", closest_device_cuda_id);
-	return closest_device_cuda_id;
-	//return (closest_device_cuda_id+1)%2;
+
+	assert(nearest_id >= 0);
+	sctk_error("CUDA: (DETECTION) picked up  %d", nearest_id);
+
+	sctk_free(closest_devices);
+	return nearest_id;
 }
 
 /**
@@ -116,13 +126,13 @@ int sctk_accl_cuda_init(){
 
 	sctk_nodebug("CUDA: (MALLOC) pushed?%d, cpu_id=%d, address=%p",cuda->pushed,cuda->cpu_id,cuda);
 	/* TODO: Determine the flags to be forwarded */
-	unsigned int flags = CU_CTX_SCHED_AUTO;
+	unsigned int flags = CU_CTX_SCHED_YIELD;
 
 	CUdevice dev = sctk_accl_cuda_get_closest_device(cuda->cpu_id);
 
 	safe_cudadv(cuCtxCreate (&cuda->context,flags,dev));
 	cuda->pushed = 1;
-	sctk_nodebug("CUDA: (INIT) cpu_id=%d,tls_cpu_id=%d, dev=%d",
+	sctk_warning("CUDA: (INIT) cpu_id=%d,tls_cpu_id=%d, dev=%d",
 			sctk_get_cpu(),
 			cuda->cpu_id,
 			dev);

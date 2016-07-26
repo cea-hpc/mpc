@@ -142,6 +142,7 @@ void sctk_device_matrix_init();
 sctk_device_matrix_t * sctk_device_matrix_get();
 /** Get the closest device from PU matching the regexp "matching_regexp" */
 sctk_device_t * sctk_device_matrix_get_closest_from_pu( int pu_id, char * matching_regexp );
+sctk_device_t** sctk_device_matrix_get_list_closest_from_pu( int pu_id, char * matching_regexp, int * count );
 /** Return 1 if the devices matching the regexp are equidistant */
 int sctk_device_matrix_is_equidistant(char * matching_regexp);
 

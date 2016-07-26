@@ -905,7 +905,7 @@ sctk_thread_create_tmp_start_routine_user (sctk_thread_data_t * __arg)
    /*tls_cuda_t* cuda=(tls_cuda_t*)tls_cuda;*/
    /*if(cuda != NULL)*/
    /*{*/
-	   sctk_accl_cuda_init();
+	   //sctk_accl_cuda_init();
    /*}*/
 #endif
 

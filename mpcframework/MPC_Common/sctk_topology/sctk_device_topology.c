@@ -642,7 +642,7 @@ void sctk_device_load_from_topology( hwloc_topology_t topology )
 	{
 		sctk_device_print( &sctk_devices[i] );
 	}
-	*/
+	//*/
 	/* Now initialize the device distance matrix */
 	sctk_device_matrix_init();
 }
@@ -839,15 +839,25 @@ void sctk_device_matrix_init()
 			/* Compute the distance */
 			*cell = sctk_topology_distance_from_pu( j , device_obj );
 			
-			sctk_nodebug("Distance (PU %d, DEV %d (%s)) == %d", j, i, sctk_devices[i].name, *cell );
+			sctk_debug("Distance (PU %d, DEV %d (%s)) == %d", j, i, sctk_devices[i].name, *cell );
 		}
 	}
 	
 }
 
-
 /** Get the closest device from PU matching the regexp "matching_regexp" */
 sctk_device_t * sctk_device_matrix_get_closest_from_pu( int pu_id, char * matching_regexp )
+{
+	int dummy;
+	sctk_device_t ** device_list = sctk_device_matrix_get_list_closest_from_pu(pu_id, matching_regexp, &dummy);
+	sctk_device_t * first = device_list[0];
+
+	sctk_free(device_list);
+
+	return first;
+}
+
+sctk_device_t ** sctk_device_matrix_get_list_closest_from_pu( int pu_id, char * matching_regexp, int * count_out)
 {
 	/* Retrieve devices matching the regexp */
 	int count;
@@ -861,7 +871,7 @@ sctk_device_t * sctk_device_matrix_get_closest_from_pu( int pu_id, char * matchi
 	int i;
 	int minimal_distance = -1;
 	sctk_device_t * closest_device = NULL;
-	
+	*count_out = count;	
 	for( i = 0 ; i < count ; i++ )
 	{
 		sctk_device_t * dev = device_list[i];
@@ -869,19 +879,25 @@ sctk_device_t * sctk_device_matrix_get_closest_from_pu( int pu_id, char * matchi
 		
 		if( distance < 0 )
 		{
+			device_list[i] = NULL;
+			(*count_out)--;
 			continue;
 		}
 		
-		if( (minimal_distance < 0 ) || ( distance < minimal_distance ) )
+		if( (minimal_distance < 0 ) || ( distance <= minimal_distance ) )
 		{
 			minimal_distance = distance;
 			closest_device = dev;
 		}
+		else
+		{
+			device_list[i] = NULL;
+			(*count_out)--;
+		}
 	}
 	
 	
-	sctk_free( device_list );
-	return closest_device;
+	return device_list;
 }
 
 /** Return 1 if the devices matching the regexp are equidistant */
