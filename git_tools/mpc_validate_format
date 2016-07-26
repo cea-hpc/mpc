@@ -1,0 +1,46 @@
+#!/bin/bash 
+
+ORIGIN="origin/merge_to_devel_hotfixes"
+
+echo "USAGE: $0 [commit]"
+
+if test "$1" != "" ; then 
+    ORIGIN="$1"
+fi
+
+echo "Statrting point $ORIGIN"
+
+module load llvm/3.8.0
+
+git clang-format --commit $ORIGIN -v 
+git clang-format --commit $ORIGIN -v
+
+if test "$?" != "0" ; then 
+    echo "You have to reformat your code"
+    echo "Try to reformat automatically ? [N/y]"
+    read line
+    if test "$line" = "Y"; then 
+        line="y"
+    fi
+    
+    if test "$line" = "y"; then
+        git clang-format --commit $ORIGIN -v
+        RES="$?"        
+        while test "$RES" != "0"; do
+            STATUS="`git clang-format --commit $ORIGIN --force -v | grep 'changed files'`"
+            if test "$STATUS" = "" ;then 
+                RES="0"
+            fi  
+        done
+        echo "Format is now ok update your commits and try $0 $ORIGIN again"
+    fi
+    
+else
+    echo "Format OK"
+    echo "Generate Patch (filename [patch.patch]?)"
+    read line
+    if test "$line" = "" ; then 
+        line="patch.patch"
+    fi
+    git format-patch $ORIGIN --stdout > $line
+fi
