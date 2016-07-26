@@ -840,8 +840,15 @@ if test "$SCTK_FORTRAN" = "1" ; then
 fi
 
 begin_section Generate Deprecated Compilers: backward compatibility
+#deprecated C wrappers
 printf_deprecated_compiler bin/mpc_icc bin/mpc_cc icc
 printf_deprecated_compiler bin/mpc_gcc bin/mpc_cc gcc
+#deprecated C++ wrappers
+printf_deprecated_compiler bin/mpc_icpc bin/mpc_cxx icpc
+printf_deprecated_compiler bin/mpc_g++ bin/mpc_cxx g++
+#deprecated F wrappers
+printf_deprecated_compiler bin/mpc_ifort bin/mpc_f77 ifort
+printf_deprecated_compiler bin/mpc_gfortran bin/mpc_f77 gfortran
 end_section
 
 ########################################
