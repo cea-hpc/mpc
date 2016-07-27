@@ -84,7 +84,7 @@ void sctk_runtime_config_struct_init_low_level_comm(void * struct_ptr);
 void sctk_runtime_config_struct_init_openmp(void * struct_ptr);
 void sctk_runtime_config_struct_init_profiler(void * struct_ptr);
 void sctk_runtime_config_struct_init_thread(void * struct_ptr);
-void sctk_runtime_config_struct_init_scheduler(void * struct_ptr);
+void sctk_runtime_config_struct_init_scheduler(void *struct_ptr);
 void sctk_runtime_config_reset(struct sctk_runtime_config * config);
 void sctk_runtime_config_reset_struct_default_if_needed(const char * structname, void * ptr );
 void * sctk_runtime_config_get_union_value_offset(const char * unionname, void * ptr );

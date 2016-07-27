@@ -38,7 +38,7 @@ static __thread sctk_thread_generic_p_t* sctk_thread_generic_self_data;
 
 inline
 sctk_thread_generic_t sctk_thread_generic_self(){
-      //if (sctk_thread_generic_self_data ==NULL) sctk_abort();
+  // if (sctk_thread_generic_self_data ==NULL) sctk_abort();
   return sctk_thread_generic_self_data;
 }
 
@@ -2462,16 +2462,19 @@ int sctk_get_env_cpu_nuber(){
 /********* ETHREAD MXN ************/
 void
 sctk_ethread_mxn_ng_thread_init (void){
-  sctk_new_scheduler_engine_enabled=1;
-  //sctk_thread_generic_thread_init ("ethread_mxn","generic/multiple_queues",sctk_get_env_cpu_nuber());
-  sctk_thread_generic_thread_init ("ethread_mxn","generic/multiple_queues_with_priority",sctk_get_env_cpu_nuber());
+  sctk_new_scheduler_engine_enabled = 1;
+  // sctk_thread_generic_thread_init
+  // ("ethread_mxn","generic/multiple_queues",sctk_get_env_cpu_nuber());
+  sctk_thread_generic_thread_init("ethread_mxn",
+                                  "generic/multiple_queues_with_priority",
+                                  sctk_get_env_cpu_nuber());
   sctk_register_thread_type("ethread_mxn_ng");
 }
 
 /********* ETHREAD ************/
 void
 sctk_ethread_ng_thread_init (void){
-  sctk_new_scheduler_engine_enabled=1;
+  sctk_new_scheduler_engine_enabled = 1;
   sctk_thread_generic_thread_init ("ethread_mxn","generic/multiple_queues",1);
   sctk_register_thread_type("ethread_ng");
 }
@@ -2479,7 +2482,7 @@ sctk_ethread_ng_thread_init (void){
 /********* PTHREAD ************/
 void
 sctk_pthread_ng_thread_init (void){
-  sctk_new_scheduler_engine_enabled=1;
+  sctk_new_scheduler_engine_enabled = 1;
   sctk_thread_generic_thread_init ("pthread","generic/multiple_queues",sctk_get_env_cpu_nuber());
   sctk_register_thread_type("pthread_ng");
 }

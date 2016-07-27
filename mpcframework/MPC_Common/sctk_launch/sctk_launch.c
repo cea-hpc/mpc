@@ -89,7 +89,7 @@ bool sctk_migration_mode;
 static char topology_name[SCTK_MAX_FILENAME_SIZE];
 
 char *sctk_multithreading_mode;
-int sctk_new_scheduler_engine_enabled=0;
+int sctk_new_scheduler_engine_enabled = 0;
 char *sctk_network_mode = "none";
 bool sctk_enable_smt_capabilities;
 bool sctk_share_node_capabilities;
@@ -435,7 +435,7 @@ static void sctk_version_details (void)
 	sctk_version_details_val = 1;
 }
 //////////////////////////////////
-//OLD SCHEDULER
+// OLD SCHEDULER
 //
 static void sctk_use_ethread (void)
 {
@@ -446,56 +446,42 @@ static void sctk_use_ethread (void)
 	void
 sctk_use_ethread_mxn (void)
 {
-  sctk_multithreading_mode = "ethread_mxn";
-  sctk_thread_val = sctk_ethread_mxn_thread_init;
+          sctk_multithreading_mode = "ethread_mxn";
+          sctk_thread_val = sctk_ethread_mxn_thread_init;
 }
 //////////////////////////////////
-//END OLD SCHEDULER
+// END OLD SCHEDULER
 //
-
 
 //////////////////////////////////
-//SCHEDULER NG
+// SCHEDULER NG
 //
 /********* ETHREAD MXN ************/
-  void
-sctk_use_ethread_mxn_ng (void)
-{
+void sctk_use_ethread_mxn_ng(void) {
   sctk_multithreading_mode = "ethread_mxn_ng";
   sctk_thread_val = sctk_ethread_mxn_ng_thread_init;
 }
 
 /********* ETHREAD ************/
-	void
-sctk_use_ethread_ng (void)
-{
+void sctk_use_ethread_ng(void) {
   sctk_multithreading_mode = "ethread_ng";
   sctk_thread_val = sctk_ethread_ng_thread_init;
 }
 
 /********* PTHREAD ************/
-	void
-sctk_use_pthread_ng (void)
-{
+void sctk_use_pthread_ng(void) {
   sctk_multithreading_mode = "pthread_ng";
   sctk_thread_val = sctk_pthread_ng_thread_init;
 }
 /*********  END NG ************/
 
-
-
-  static void
-sctk_def_directory (char *arg)
-{
-	/*   sctk_store_dir = arg; */
+static void sctk_def_directory(char *arg) { /*   sctk_store_dir = arg; */
 }
 
-	static void
-sctk_def_task_nb (char *arg)
-{
-	int task_nb;
-	task_nb = atoi (arg);
-	sctk_task_nb_val = task_nb;
+static void sctk_def_task_nb(char *arg) {
+  int task_nb;
+  task_nb = atoi(arg);
+  sctk_task_nb_val = task_nb;
 }
 
 	static void
@@ -1000,30 +986,30 @@ void sctk_init_mpc_runtime()
 	}
 
 	/* Default values */
-    //this function is called 2 times, one here and one with the function pointer 
-    //"sctk_runtime_config_get()->modules.launcher.thread_init.value()" below
-    
-	sctk_use_ethread_mxn ();
-	sctk_def_task_nb ("1");
-	sctk_def_process_nb ("1");
+        // this function is called 2 times, one here and one with the function
+        // pointer
+        //"sctk_runtime_config_get()->modules.launcher.thread_init.value()"
+        // below
 
-	// Initializing multithreading mode
-	sctk_runtime_config_get()->modules.launcher.thread_init.value();
-    /* if(strstr(sctk_multithreading_mode, "_ng") != NULL){ */
-    /*     sctk_new_scheduler_engine_enabled=1; */
-    /* }else{ */
-    /*     sctk_new_scheduler_engine_enabled=0; */
-    /* } */
+        sctk_use_ethread_mxn();
+        sctk_def_task_nb("1");
+        sctk_def_process_nb("1");
 
+        // Initializing multithreading mode
+        sctk_runtime_config_get()->modules.launcher.thread_init.value();
+/* if(strstr(sctk_multithreading_mode, "_ng") != NULL){ */
+/*     sctk_new_scheduler_engine_enabled=1; */
+/* }else{ */
+/*     sctk_new_scheduler_engine_enabled=0; */
+/* } */
 
+/* Move this in a post-config function */
 
-	/* Move this in a post-config function */
-	
 #ifdef SCTK_LIB_MODE
-	/* In LIB mode comm size is inherited from
-	 * the host application (not from the launcher) */
-	sctk_process_nb_val = MPC_Net_hook_size();
-	sctk_task_nb_val = MPC_Net_hook_size();
+  /* In LIB mode comm size is inherited from
+   * the host application (not from the launcher) */
+  sctk_process_nb_val = MPC_Net_hook_size();
+  sctk_task_nb_val = MPC_Net_hook_size();
 #else
 	sctk_task_nb_val = sctk_runtime_config_get()->modules.launcher.nb_task;
 	sctk_process_nb_val = sctk_runtime_config_get()->modules.launcher.nb_process;

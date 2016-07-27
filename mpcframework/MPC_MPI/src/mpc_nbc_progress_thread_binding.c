@@ -167,4 +167,3 @@ int sctk_get_progress_thread_binding_numa(void) {
   }
   return cpu_id_to_bind_progress_thread;
 }
-

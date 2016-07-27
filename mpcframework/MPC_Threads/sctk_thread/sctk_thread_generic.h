@@ -36,12 +36,10 @@
 #include <sctk_thread_barrier.h>
 #include <sctk_thread_spinlock.h>
 
-
-
 typedef struct sctk_thread_generic_intern_attr_s{
   int scope;
-  int detachstate; 
-  int schedpolicy; //can I use this field ?
+  int detachstate;
+  int schedpolicy; // can I use this field ?
   int inheritsched;
   int nb_wait_for_join;
   volatile int cancel_state;
@@ -66,20 +64,27 @@ typedef struct sctk_thread_generic_intern_attr_s{
   int basic_priority;
   int current_priority;
 
-  //timers to have the time of the threads
+  // timers to have the time of the threads
   double timestamp_threshold;
   double timestamp_base;
   double timestamp_count;
   double timestamp_begin;
   double timestamp_end;
-  //end of init macro
+  // end of init macro
 
   volatile sigset_t old_thread_sigset;
   volatile sigset_t thread_sigset;
   volatile sigset_t sa_sigset_mask;
   volatile int thread_sigpending[SCTK_NSIG];
 }sctk_thread_generic_intern_attr_t;
-#define sctk_thread_generic_intern_attr_init {SCTK_THREAD_SCOPE_PROCESS,SCTK_THREAD_CREATE_JOINABLE,0,SCTK_THREAD_EXPLICIT_SCHED,0,PTHREAD_CANCEL_ENABLE,PTHREAD_CANCEL_DEFERRED,0,NULL,NULL,0,0,NULL,NULL,NULL,-1,0,NULL,NULL,SCTK_SPINLOCK_INITIALIZER,0,0,sctk_thread_generic_kind_init,10,10,1,-1,0,0,0}
+#define sctk_thread_generic_intern_attr_init                                   \
+  {                                                                            \
+    SCTK_THREAD_SCOPE_PROCESS, SCTK_THREAD_CREATE_JOINABLE, 0,                 \
+        SCTK_THREAD_EXPLICIT_SCHED, 0, PTHREAD_CANCEL_ENABLE,                  \
+        PTHREAD_CANCEL_DEFERRED, 0, NULL, NULL, 0, 0, NULL, NULL, NULL, -1, 0, \
+        NULL, NULL, SCTK_SPINLOCK_INITIALIZER, 0, 0,                           \
+        sctk_thread_generic_kind_init, 10, 10, 1, -1, 0, 0, 0                  \
+  }
 
 typedef struct{
   sctk_thread_generic_intern_attr_t* ptr;

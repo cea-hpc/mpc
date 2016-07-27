@@ -625,40 +625,43 @@ __mpcomp_init()
 		case MPCOMP_MODE_SIMPLE_MIXED:
 		  /* Compute the number of cores for this task */
 
-		  sctk_get_init_vp_and_nbvp(task_rank, &nb_mvps);
+                  sctk_get_init_vp_and_nbvp(task_rank, &nb_mvps);
 
-		  sctk_debug( "__mpcomp_init: SIMPLE_MIXED -> #mvps = %d", nb_mvps ) ;
+                  sctk_debug("__mpcomp_init: SIMPLE_MIXED -> #mvps = %d",
+                             nb_mvps);
 
-		  /* Consider the env variable if between 1 and the number
-		   * of cores for this task */
-		  if ( OMP_MICROVP_NUMBER > 0 && OMP_MICROVP_NUMBER <= nb_mvps ) {
-			nb_mvps = OMP_MICROVP_NUMBER ;
-		  }
-		  break ;
-		case MPCOMP_MODE_ALTERNATING:
-		  nb_mvps = 1 ;
-		  if ( sctk_get_local_task_rank() == 0 ) {
-			nb_mvps = sctk_get_processor_number() ;
-		  }
-		  break ;
-		case MPCOMP_MODE_OVERSUBSCRIBED_MIXED:
-		  not_implemented() ;
-		  break ;
-		case MPCOMP_MODE_FULLY_MIXED:
-		  nb_mvps = sctk_get_processor_number() ;
-		  break ;
-		default :
-		  not_reachable() ;
-		  break ;
-	  }
-	}
+                  /* Consider the env variable if between 1 and the number
+                   * of cores for this task */
+                  if (OMP_MICROVP_NUMBER > 0 && OMP_MICROVP_NUMBER <= nb_mvps) {
+                    nb_mvps = OMP_MICROVP_NUMBER;
+                  }
+                  break;
+                case MPCOMP_MODE_ALTERNATING:
+                  nb_mvps = 1;
+                  if (sctk_get_local_task_rank() == 0) {
+                    nb_mvps = sctk_get_processor_number();
+                  }
+                  break;
+                case MPCOMP_MODE_OVERSUBSCRIBED_MIXED:
+                  not_implemented();
+                  break;
+                case MPCOMP_MODE_FULLY_MIXED:
+                  nb_mvps = sctk_get_processor_number();
+                  break;
+                default:
+                  not_reachable();
+                  break;
+                }
+        }
 
-	if ( sctk_get_local_task_rank() == 0 ) {
-	  sctk_debug( "__mpcomp_init: "
-	      "MPI rank=%d, process_rank=%d, local_task_rank=%d => %d mvp(s) "
-          "out of %d core(s) A",
-	      task_rank, sctk_get_local_process_rank(), sctk_get_local_task_rank(),
-	      sctk_get_processor_number(), sctk_get_processor_number() ) ;
+        if (sctk_get_local_task_rank() == 0) {
+          sctk_debug(
+              "__mpcomp_init: "
+              "MPI rank=%d, process_rank=%d, local_task_rank=%d => %d mvp(s) "
+              "out of %d core(s) A",
+              task_rank, sctk_get_local_process_rank(),
+              sctk_get_local_task_rank(), sctk_get_processor_number(),
+              sctk_get_processor_number());
     } else {
         sctk_debug( "__mpcomp_init: "
                 "MPI rank=%d, process_rank=%d, local_task_rank=%d => %d "
@@ -840,18 +843,18 @@ void in_order_scheduler( mpcomp_mvp_t * mvp ) {
 
     sctk_openmp_thread_tls = &mvp->threads[i];
 
-    //hmt
-    //set the KIND_MASK_OMP to the current thread
-  //printf("BEFORE OMP: %d\n", sctk_thread_generic_getkind_mask_self());
+    // hmt
+    // set the KIND_MASK_OMP to the current thread
+    // printf("BEFORE OMP: %d\n", sctk_thread_generic_getkind_mask_self());
     sctk_thread_generic_addkind_mask_self(KIND_MASK_OMP);
-    sctk_thread_generic_set_basic_priority_self(sctk_runtime_config_get()->modules.scheduler.omp_basic_priority);
-    sctk_thread_generic_setkind_priority_self(sctk_runtime_config_get()->modules.scheduler.omp_basic_priority);
-    sctk_thread_generic_set_current_priority_self(sctk_runtime_config_get()->modules.scheduler.omp_basic_priority);
-  //printf("AFTER OMP: %d\n", sctk_thread_generic_getkind_mask_self());
-    //endhmt
-
-
-
+    sctk_thread_generic_set_basic_priority_self(
+        sctk_runtime_config_get()->modules.scheduler.omp_basic_priority);
+    sctk_thread_generic_setkind_priority_self(
+        sctk_runtime_config_get()->modules.scheduler.omp_basic_priority);
+    sctk_thread_generic_set_current_priority_self(
+        sctk_runtime_config_get()->modules.scheduler.omp_basic_priority);
+    // printf("AFTER OMP: %d\n", sctk_thread_generic_getkind_mask_self());
+    // endhmt
 
     sctk_assert( ((mpcomp_thread_t *)sctk_openmp_thread_tls)->instance != NULL ) ;
     sctk_assert( ((mpcomp_thread_t *)sctk_openmp_thread_tls)->instance->team != NULL ) ;

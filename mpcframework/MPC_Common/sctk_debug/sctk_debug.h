@@ -44,7 +44,7 @@ extern "C"
   extern bool sctk_check_point_restart_mode;
   extern bool sctk_migration_mode;
   extern char *sctk_multithreading_mode;
-  extern int  sctk_new_scheduler_engine_enabled;
+  extern int sctk_new_scheduler_engine_enabled;
   extern char *sctk_network_mode;
 /*   extern const char *sctk_store_dir; */
   extern int sctk_is_in_fortran;
