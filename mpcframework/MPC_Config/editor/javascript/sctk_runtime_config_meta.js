@@ -17,7 +17,7 @@ meta.types = {
 		keep_rand_addr: {mode: 'param', name: "keep_rand_addr", type: "bool", doc: "Activate randomization of base addresses", dflt: "true", },
 		disable_rand_addr: {mode: 'param', name: "disable_rand_addr", type: "bool", doc: "Deactivate randomization of base addresses", dflt: "false", },
 		disable_mpc: {mode: 'param', name: "disable_mpc", type: "bool", doc: "Do not use mpc for execution (deprecated?)", dflt: "false", },
-		thread_init: {mode: 'param', name: "thread_init", type: "funcptr", doc: "Initialize multithreading mode", dflt: "sctk_use_ethread_mxn_ng", },
+		thread_init: {mode: 'param', name: "thread_init", type: "funcptr", doc: "Initialize multithreading mode", dflt: "sctk_use_ethread_mxn", },
 		nb_task: {mode: 'param', name: "nb_task", type: "int", doc: "Define the number of MPI tasks", dflt: "1", },
 		nb_process: {mode: 'param', name: "nb_process", type: "int", doc: "Define the number of MPC processes", dflt: "1", },
 		nb_processor: {mode: 'param', name: "nb_processor", type: "int", doc: "Define the number of virtual processors", dflt: "0", },

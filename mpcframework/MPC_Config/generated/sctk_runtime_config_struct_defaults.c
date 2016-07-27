@@ -65,8 +65,8 @@ void sctk_runtime_config_struct_init_launcher(void * struct_ptr)
 	obj->keep_rand_addr = true;
 	obj->disable_rand_addr = false;
 	obj->disable_mpc = false;
-	obj->thread_init.name = "sctk_use_ethread_mxn_ng";
-	*(void **) &(obj->thread_init.value) = sctk_runtime_config_get_symbol("sctk_use_ethread_mxn_ng");
+	obj->thread_init.name = "sctk_use_ethread_mxn";
+	*(void **) &(obj->thread_init.value) = sctk_runtime_config_get_symbol("sctk_use_ethread_mxn");
 	obj->nb_task = 1;
 	obj->nb_process = 1;
 	obj->nb_processor = 0;
