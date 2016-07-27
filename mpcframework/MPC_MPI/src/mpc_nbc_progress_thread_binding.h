@@ -21,49 +21,48 @@
 /* ######################################################################## */
 #ifndef __MPC_NBC_PROGRESS_THREAD_BINDING_H__
 #define __MPC_NBC_PROGRESS_THREAD_BINDING_H__
+#include <sctk_accessor.h>
+#include <sctk_debug.h>
+#include <sctk_thread.h>
+#include <sctk_topology.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <sctk_topology.h>
-#include <sctk_debug.h>
-#include <sctk_accessor.h>
-#include <sctk_thread.h>
 
-//function pointed by 'sctk_get_progress_thread_binding' in file mpc_nbc.c to
-//define progress threads binding
+// function pointed by 'sctk_get_progress_thread_binding' in file mpc_nbc.c to
+// define progress threads binding
 
-//progress threads binding on one node of 8 cores with 2 numa nodes
-//BIND
+// progress threads binding on one node of 8 cores with 2 numa nodes
+// BIND
 // / / / /   / / / / Polling threads
 // | | | |   | | | | MPI task threads
 // o o o o   o o o o cores
 int sctk_get_progress_thread_binding_bind(void);
 
-//progress threads binding on one node of 8 cores with 2 numa nodes
-//SMART
+// progress threads binding on one node of 8 cores with 2 numa nodes
+// SMART
 // | / | /   | / | /
 // o o o o   o o o o
 int sctk_get_progress_thread_binding_smart(void);
 
-//progress threads binding on one node of 8 cores with 2 numa nodes
-//OVERWEIGHT
-//   /              
-//   /              
-//   /              
-//   /              
-//   /              
-//   /              
-// | / | |  | | | | 
-// o o o o  o o o o 
+// progress threads binding on one node of 8 cores with 2 numa nodes
+// OVERWEIGHT
+//   /
+//   /
+//   /
+//   /
+//   /
+//   /
+// | / | |  | | | |
+// o o o o  o o o o
 int sctk_get_progress_thread_binding_overweight(void);
 
-//progress threads binding on one node of 8 cores with 2 numa nodes
-//NUMA
+// progress threads binding on one node of 8 cores with 2 numa nodes
+// NUMA
 //       /         /
 //       /         /
 // | | | /   | | | /
-// o o o o   o o o o 
+// o o o o   o o o o
 int sctk_get_progress_thread_binding_numa_iter(void);
 int sctk_get_progress_thread_binding_numa(void);
-
 
 #endif // __MPC_NBC_PROGRESS_THREAD_BINDING_H__
