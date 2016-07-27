@@ -89,6 +89,7 @@ bool sctk_migration_mode;
 static char topology_name[SCTK_MAX_FILENAME_SIZE];
 
 char *sctk_multithreading_mode;
+int sctk_new_scheduler_engine_enabled=0;
 char *sctk_network_mode = "none";
 bool sctk_enable_smt_capabilities;
 bool sctk_share_node_capabilities;
@@ -1008,6 +1009,13 @@ void sctk_init_mpc_runtime()
 
 	// Initializing multithreading mode
 	sctk_runtime_config_get()->modules.launcher.thread_init.value();
+    if(strstr(sctk_multithreading_mode, "_ng") != NULL){
+        sctk_new_scheduler_engine_enabled=1;
+    }else{
+        sctk_new_scheduler_engine_enabled=0;
+    }
+
+
 
 	/* Move this in a post-config function */
 	
