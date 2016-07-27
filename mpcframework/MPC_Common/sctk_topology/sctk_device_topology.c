@@ -858,39 +858,56 @@ sctk_device_t * sctk_device_matrix_get_closest_from_pu( int pu_id, char * matchi
 	return first;
 }
 
+/**
+ * Get the list of closest devices from PU matching the regexp.
+ *
+ * @param[in] pu_id the PU id used as starting point
+ * @param[in] matching_regexp the regex as a string
+ * @param[out] count_out the number of elements in the returned list
+ *
+ * @return
+ *   - NULL if the regex does not match any device
+ *   - a malloc'd array of devices, which should be freed after use.
+ */
 sctk_device_t ** sctk_device_matrix_get_list_closest_from_pu( int pu_id, char * matching_regexp, int * count_out)
 {
 	/* Retrieve devices matching the regexp */
 	int count;
 	sctk_device_t ** device_list = sctk_device_get_from_handle_regexp( matching_regexp, &count );
-	if( !count )
+	if( count < 1 )
 	{
 		return NULL;
 	}
 	
 	sctk_device_t ** ret_list = sctk_malloc(count * sizeof(sctk_device_t));
 	int i;
+	/* init the array */
 	for (i = 0; i < count; i++)
 		ret_list[i] = NULL;
 
 	int minimal_distance = -1;
 	*count_out = 0;
+
+	/* for each found device */
 	for( i = 0 ; i < count ; i++ )
 	{
 		sctk_device_t * dev = device_list[i];
 		int distance = sctk_device_matrix_get_value( pu_id, dev->id );
 		
+		/* if the distance is lower than 0, skip it (should we ? ) */
 		if( distance < 0 )
 		{
 			continue;
 		}
 		
+		/* Lookup for the minimum distance */
 		if( (minimal_distance < 0 ) || ( distance <= minimal_distance ) )
 		{
 			minimal_distance = distance;
 		}
 	}
 
+	/* now we have the minimum distance, look for any device which match with it */
 	for ( i = 0; i < count; i++)
 	{
 		sctk_device_t * dev = device_list[i];
@@ -902,6 +919,7 @@ sctk_device_t ** sctk_device_matrix_get_list_closest_from_pu( int pu_id, char * 
 		}
 	}
 
+	/* don't forget to free the malloc'd vector from sctk_device_get_from_handle_regexp() */
 	sctk_free(device_list);
 	return ret_list;
 }
@@ -950,7 +968,10 @@ int sctk_device_matrix_is_equidistant(char * matching_regexp)
 	return 1;
 }
 
-/** increment the number of associated resource by 1 */
+/** 
+ * Increment the number of associated resource by 1
+ * @param[in] device the device to update
+ */
 void sctk_device_attach_device(sctk_device_t * device)
 {
 	sctk_spinlock_lock(&device->res_lock);
@@ -958,7 +979,10 @@ void sctk_device_attach_device(sctk_device_t * device)
 	sctk_spinlock_unlock(&device->res_lock);
 }
 
-/** decrement the number of associated resource by 1 */
+/** 
+ * Decrement the number of associated resource by 1 
+ * @param[in] device the device to update
+ */
 void sctk_device_detach_device(sctk_device_t * device)
 {
 	sctk_spinlock_lock(&device->res_lock);
@@ -967,7 +991,8 @@ void sctk_device_detach_device(sctk_device_t * device)
 	sctk_spinlock_unlock(&device->res_lock);
 }
 
-/** retrieve the device with the smallest number of associated resources from a pool of device.
+/** 
+ * Retrieve the device with the smallest number of associated resources from a pool of device.
  *
  * To avoid unlocking the elected device between the search and the increment, we register the
  * currently elected driver in freest_elem. In the case where this driver is replaced by a better
@@ -975,6 +1000,13 @@ void sctk_device_detach_device(sctk_device_t * device)
  *
  * This is thread-safe with multiple calls to sctk_device_attach_freest_device_from() and other
  * calls like attach/detach() routines.
+ *
+ * @param[in] device_list the list of devices where we will have to look for.
+ * @param[in] count the list size
+ *
+ * @return
+ *   - NULL if count is lower than 1
+ *   - A pointer to the freest device from the list
  */
 sctk_device_t * sctk_device_attach_freest_device_from(sctk_device_t ** device_list, int count)
 {
@@ -982,7 +1014,7 @@ sctk_device_t * sctk_device_attach_freest_device_from(sctk_device_t ** device_li
 	int freest_value = -1;
 	sctk_device_t * freest_elem = NULL;
 	
-	if(!count)
+	if(count < 1)
 		return NULL;
 
 	/* for each selected device */
@@ -1021,7 +1053,14 @@ sctk_device_t * sctk_device_attach_freest_device_from(sctk_device_t ** device_li
 	return freest_elem;
 }
 
-/** retrieve the device with the smallest number of associated resources for a matching regexp */
+/** 
+ * Retrieve the device with the smallest number of associated resources for a matching regexp.
+ *
+ * @param[in] handle_reg_exp the regular expression as a string format
+ * @return
+ *   - NULL if the regexp is not found
+ *   - A pointer to the elected device.
+ */
 sctk_device_t * sctk_device_attach_freest_device(char * handle_reg_exp)
 {
 	int count;
