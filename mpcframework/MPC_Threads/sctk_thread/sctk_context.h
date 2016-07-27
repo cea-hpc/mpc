@@ -195,7 +195,7 @@ Need to check this in more depth for futur version ( > 2.4.0-1).
 
 #if defined(MPC_Accelerators)
     /* MPC CUDA context */
-    void* tls_cuda;
+    void* sctk_cuda_ctx;
 #endif
 
 

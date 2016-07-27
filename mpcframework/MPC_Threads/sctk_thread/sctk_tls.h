@@ -60,7 +60,7 @@ extern "C"
 
 
 #if defined(MPC_USE_CUDA)
-  extern __thread void* tls_cuda;
+  extern __thread void* sctk_cuda_ctx;
 #endif
 
 #if defined (MPC_OpenMP)
@@ -103,7 +103,7 @@ extern "C"
 
 #if defined(MPC_USE_CUDA)
 	sctk_accl_cuda_pop_context();
-	tls_save(tls_cuda);
+	tls_save(sctk_cuda_ctx);
 #endif
 #endif
 
@@ -135,8 +135,8 @@ extern "C"
 #endif
 
 #if defined(MPC_USE_CUDA)
-	tls_restore(tls_cuda);
-	if(tls_cuda) /* if the thread to be scheduled has an attached cuda ctx: */
+	tls_restore(sctk_cuda_ctx);
+	if(sctk_cuda_ctx) /* if the thread to be scheduled has an attached cuda ctx: */
 	{
 		sctk_accl_cuda_push_context();
 	}
@@ -171,21 +171,9 @@ extern "C"
 #endif
 
 #if defined(MPC_USE_CUDA)
-        tls_init(tls_cuda);
-
-    //printf("tls_init(tls_cuda)\n");
-    //sctk_accelerators_cuda__init(&tls_cuda);
-   // printf("&tls_cuda_context=%p\n",&tls_cuda_context);
-   // fflush(stdout);
-   // printf("tls_cuda_context=%p\n",tls_cuda_context);
-   // fflush(stdout);
-    
-    //ucp->tls_cuda=tls_cuda;
-
-   // printf("after init tls.h: tls_cuda_context address=%p\n",tls_cuda_context);
-   // fflush(stdout);
-
+    tls_init(sctk_cuda_ctx);
 #endif
+
 #endif
   }
 
