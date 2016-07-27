@@ -11,15 +11,15 @@ stages:
 build_job:
   stage: build
   script:
-  - mkdir -p $HOME/mpc_tmp_builds/$CI_BUILD_REF
+  - mkdir -p $HOME/mpc_tmp_builds/$CI_PIPELINE_ID
   - mkdir BUILD
   - cd ./BUILD/
-  - ../installmpc --prefix=$HOME/mpc_tmp_builds/$CI_BUILD_REF -j4 --mpc-option="--enable-debug"
+  - ../installmpc --prefix=$HOME/mpc_tmp_builds/$CI_PIPELINE_ID -j4 --mpc-option="--enable-debug"
 
 cleanup_build_job:
   stage: cleanup_build
   script:
-  - rm -fr $HOME/mpc_tmp_builds/$CI_BUILD_REF
+  - rm -fr $HOME/mpc_tmp_builds/$CI_PIPELINE_ID
   when: on_failure
 
 simple:
@@ -29,7 +29,7 @@ simple:
   - sed -i "s/ib tcp/tcp/g" ./config/default.cfg
   - sed -i "s/300/15/g" ./config/default.cfg
   - sed -i "s/4 32/4 8/g" ./config/default.cfg 
-  - ./mpc_validation -X --prefix=$HOME/mpc_tmp_builds/$CI_BUILD_REF --select=./simple --color -vv
+  - ./mpc_validation -X --prefix=$HOME/mpc_tmp_builds/$CI_PIPELINE_ID --select=./simple --color -vv
 
 compil:
   stage: test_compil
@@ -38,7 +38,7 @@ compil:
   - sed -i "s/ib tcp/tcp/g" ./config/default.cfg
   - sed -i "s/300/15/g" ./config/default.cfg
   - sed -i "s/4 32/4 8/g" ./config/default.cfg
-  - ./mpc_validation -X --prefix=$HOME/mpc_tmp_builds/$CI_BUILD_REF --select=./gcc --color -vv
+  - ./mpc_validation -X --prefix=$HOME/mpc_tmp_builds/$CI_PIPELINE_ID --select=./gcc --color -vv
 
 mpi:
   stage: test_mpi
@@ -47,7 +47,7 @@ mpi:
   - sed -i "s/ib tcp/tcp/g" ./config/default.cfg
   - sed -i "s/300/15/g" ./config/default.cfg
   - sed -i "s/4 32/4 8/g" ./config/default.cfg
-  - ./mpc_validation -X --prefix=$HOME/mpc_tmp_builds/$CI_BUILD_REF --select=./MPI/MessagePassing/ --color -vv
+  - ./mpc_validation -X --prefix=$HOME/mpc_tmp_builds/$CI_PIPELINE_ID --select=./MPI/MessagePassing/ --color -vv
 
 imb:
   stage: test_imb
@@ -55,7 +55,7 @@ imb:
   - cd MPC_Test_Suite
   - sed -i "s/ib tcp/tcp/g" ./config/default.cfg
   - sed -i "s/4 32/4/g" ./config/default.cfg
-  - ./mpc_validation -X --prefix=$HOME/mpc_tmp_builds/$CI_BUILD_REF --select=./MPI/IMB/check/ --color -vv
+  - ./mpc_validation -X --prefix=$HOME/mpc_tmp_builds/$CI_PIPELINE_ID --select=./MPI/IMB/check/ --color -vv
 
 communicators:
   stage: test_comm
@@ -63,12 +63,12 @@ communicators:
   - cd MPC_Test_Suite
   - sed -i "s/ib tcp/tcp/g" ./config/default.cfg
   - sed -i "s/4 32/4/g" ./config/default.cfg
-  - ./mpc_validation -X --prefix=$HOME/mpc_tmp_builds/$CI_BUILD_REF --select=./MPI/Intel_ANL/communicators --color -vv
+  - ./mpc_validation -X --prefix=$HOME/mpc_tmp_builds/$CI_PIPELINE_ID --select=./MPI/Intel_ANL/communicators --color -vv
 
 cleanup_job:
   stage: cleanup
   script:
-  - rm -fr $HOME/mpc_tmp_builds/$CI_BUILD_REF
+  - rm -fr $HOME/mpc_tmp_builds/$CI_PIPELINE_ID
   when: always
  
  
