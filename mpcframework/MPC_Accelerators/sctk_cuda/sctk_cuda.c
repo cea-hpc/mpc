@@ -58,7 +58,7 @@ static int sctk_accl_cuda_get_closest_device(int cpu_id){
 	int nearest_id = -1;
 
 	/* to recycle, nb_check contains the number of minimum distance device */
-	closest_devices = sctk_device_matrix_get_list_closest_from_pu(cpu_id,"card*", &nb_check);
+	closest_devices = sctk_device_matrix_get_list_closest_from_pu(cpu_id,"cuda-enabled-card*", &nb_check);
 
 	/* once the list is filtered with the nearest ones, we need to elected the one with the minimum
 	 * number of attached resources */

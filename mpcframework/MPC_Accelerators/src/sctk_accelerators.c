@@ -31,7 +31,11 @@ static size_t nb_devices = 0;
 int sctk_accl_init()
 {
 
-	sctk_device_t** list = sctk_device_get_from_handle_regexp("card*", &nb_devices);
+    /*TODO: should be computed by device_topology...
+     * Due to a bad parsing, the topo returns more device than CUDA
+     * For now, we keep the real CUDA value.
+     */
+	sctk_device_t** list = sctk_device_get_from_handle_regexp("cuda-enabled-card*", &nb_devices);
 
 	/* we don't want the list but the number of devices 
 	 * Maybe there are a better way for doing it...
@@ -40,6 +44,7 @@ int sctk_accl_init()
 	sctk_debug("ACCL: found %d GPUs", nb_devices);
 #ifdef MPC_USE_CUDA
 	cuInit(0);
+    cudaGetDeviceCount(&nb_devices);
 #endif
 }
 
