@@ -438,7 +438,6 @@ static void sctk_version_details (void)
 //
 static void sctk_use_ethread (void)
 {
-  fprintf(stderr,"INIT :ethread\n");
   sctk_multithreading_mode = "ethread";
   sctk_thread_val = sctk_ethread_thread_init;
 }
@@ -446,7 +445,6 @@ static void sctk_use_ethread (void)
 	void
 sctk_use_ethread_mxn (void)
 {
-  fprintf(stderr,"INIT :ethread_mxn\n");
   sctk_multithreading_mode = "ethread_mxn";
   sctk_thread_val = sctk_ethread_mxn_thread_init;
 }
@@ -462,7 +460,6 @@ sctk_use_ethread_mxn (void)
   void
 sctk_use_ethread_mxn_ng (void)
 {
-  fprintf(stderr,"INIT :ethread_mxn_ng\n");
   sctk_multithreading_mode = "ethread_mxn_ng";
   sctk_thread_val = sctk_ethread_mxn_ng_thread_init;
 }
@@ -471,7 +468,6 @@ sctk_use_ethread_mxn_ng (void)
 	void
 sctk_use_ethread_ng (void)
 {
-  fprintf(stderr,"INIT :ethread_ng\n");
   sctk_multithreading_mode = "ethread_ng";
   sctk_thread_val = sctk_ethread_ng_thread_init;
 }
@@ -480,7 +476,6 @@ sctk_use_ethread_ng (void)
 	void
 sctk_use_pthread_ng (void)
 {
-  fprintf(stderr,"INIT :pthread_ng\n");
   sctk_multithreading_mode = "pthread_ng";
   sctk_thread_val = sctk_pthread_ng_thread_init;
 }
