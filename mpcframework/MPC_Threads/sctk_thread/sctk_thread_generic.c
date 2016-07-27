@@ -2462,6 +2462,7 @@ int sctk_get_env_cpu_nuber(){
 /********* ETHREAD MXN ************/
 void
 sctk_ethread_mxn_ng_thread_init (void){
+  sctk_new_scheduler_engine_enabled=1;
   //sctk_thread_generic_thread_init ("ethread_mxn","generic/multiple_queues",sctk_get_env_cpu_nuber());
   sctk_thread_generic_thread_init ("ethread_mxn","generic/multiple_queues_with_priority",sctk_get_env_cpu_nuber());
   sctk_register_thread_type("ethread_mxn_ng");
@@ -2470,6 +2471,7 @@ sctk_ethread_mxn_ng_thread_init (void){
 /********* ETHREAD ************/
 void
 sctk_ethread_ng_thread_init (void){
+  sctk_new_scheduler_engine_enabled=1;
   sctk_thread_generic_thread_init ("ethread_mxn","generic/multiple_queues",1);
   sctk_register_thread_type("ethread_ng");
 }
@@ -2477,6 +2479,7 @@ sctk_ethread_ng_thread_init (void){
 /********* PTHREAD ************/
 void
 sctk_pthread_ng_thread_init (void){
+  sctk_new_scheduler_engine_enabled=1;
   sctk_thread_generic_thread_init ("pthread","generic/multiple_queues",sctk_get_env_cpu_nuber());
   sctk_register_thread_type("pthread_ng");
 }
