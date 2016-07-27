@@ -1030,6 +1030,7 @@ sctk_device_t * sctk_device_attach_freest_device_from(sctk_device_t ** device_li
 		{
 			freest_value = current->nb_res;
 			freest_elem = current;
+			sctk_nodebug("First device: %d (%d)", freest_elem->device_id, freest_elem->nb_res);
 		}
 		else if ( current->nb_res < freest_value)
 		{
@@ -1037,7 +1038,7 @@ sctk_device_t * sctk_device_attach_freest_device_from(sctk_device_t ** device_li
 			sctk_spinlock_unlock(&freest_elem->res_lock);
 			freest_value = current->nb_res;
 			freest_elem = current;	
-			sctk_info("New best device: %d (%d)", freest_elem->device_id, freest_elem->nb_res);
+			sctk_nodebug("New best device: %d (%d)", freest_elem->device_id, freest_elem->nb_res);
 		}
 		else
 		{
