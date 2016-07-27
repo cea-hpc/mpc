@@ -577,7 +577,7 @@ hwloc_cpuset_t sctk_topology_get_roots_for_level( hwloc_obj_type_t type )
 
 
 
-int __sctk_topology_distance_fill_prefix( hwloc_obj_t ** prefix, hwloc_obj_t target_obj )
+int __sctk_topology_distance_fill_prefix( hwloc_obj_t * prefix, hwloc_obj_t target_obj )
 {
 	/* Register in the tree */
 	if( !target_obj )
@@ -606,7 +606,7 @@ int __sctk_topology_distance_fill_prefix( hwloc_obj_t ** prefix, hwloc_obj_t tar
 	
 	while( cur  )
 	{
-		sctk_nodebug("%d == %p == %s\n", cur_depth, cur, hwloc_obj_type_string (cur->type) );
+		sctk_nodebug("%d == %d == %s", cur_depth, cur->logical_index, hwloc_obj_type_string (cur->type) );
 		prefix[cur_depth] = cur;
 		cur_depth --;
 		cur = cur->parent;
@@ -628,8 +628,8 @@ int sctk_topology_distance_from_pu( int source_pu, hwloc_obj_t target_obj )
 	int topo_depth = hwloc_topology_get_depth(topology);
 	
 	/* Allocate prefix lists */
-	hwloc_obj_t ** prefix_PU = sctk_malloc( (topo_depth + 1) * sizeof( hwloc_obj_t * ) );
-	hwloc_obj_t ** prefix_target = sctk_malloc( ( topo_depth + 1) * sizeof( hwloc_obj_t * ) );
+	hwloc_obj_t * prefix_PU = sctk_malloc( (topo_depth + 1) * sizeof( hwloc_obj_t ) );
+	hwloc_obj_t * prefix_target = sctk_malloc( ( topo_depth + 1) * sizeof( hwloc_obj_t ) );
 	
 	assume( prefix_PU != NULL );
 	assume( prefix_target != NULL );
@@ -651,7 +651,8 @@ int sctk_topology_distance_from_pu( int source_pu, hwloc_obj_t target_obj )
 	int common_prefix = 0;
 	for( i = 0 ; i < topo_depth ; i++ )
 	{
-		if( prefix_PU[i] == prefix_target[i] )
+		if(    prefix_PU[i]->type == prefix_target[i]->type 
+            && prefix_PU[i]->logical_index == prefix_target[i]->logical_index )
 		{
 			common_prefix = i;
 		}

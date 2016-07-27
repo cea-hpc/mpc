@@ -535,7 +535,7 @@ void sctk_device_enrich_topology( hwloc_topology_t topology )
             //function sctk_device_matrix_get_closest_from_pu works correctly
 
             //update device->device_cuda_id
-            const char card[5]="card";
+            const char card[18]="cuda-enabled-card";
             char dest[5];
             char buf[16];
             int n;
@@ -638,7 +638,7 @@ void sctk_device_load_from_topology( hwloc_topology_t topology )
 	sctk_device_enrich_topology( topology );
 	//hwloc_topology_export_xml(topology, "-");
 
-	/*
+	//*
 	for( i = 0 ; i < sctk_devices_count ; i++ )
 	{
 		sctk_device_print( &sctk_devices[i] );
@@ -840,7 +840,7 @@ void sctk_device_matrix_init()
 			/* Compute the distance */
 			*cell = sctk_topology_distance_from_pu( j , device_obj );
 			
-			sctk_debug("Distance (PU %d, DEV %d (%s)) == %d", j, i, sctk_devices[i].name, *cell );
+			sctk_nodebug("Distance (PU %d, DEV %d (%s)) == %d", j, i, sctk_devices[i].name, *cell );
 		}
 	}
 	
