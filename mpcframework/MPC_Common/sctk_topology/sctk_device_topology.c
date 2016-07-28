@@ -482,12 +482,6 @@ void sctk_device_fill_in_infiniband_info( sctk_device_t * device, hwloc_topology
 void sctk_device_enrich_topology( hwloc_topology_t topology )
 {
 	int i;
-    #if defined(MPC_Accelerators)
-    //CUDA
-    char string[128];
-    //ENDCUDA
-    #endif //MPC_Accelerators
-	
 	for( i = 0 ; i < sctk_devices_count ; i++ )
 	{
 		sctk_device_t * device = &sctk_devices[i];
@@ -499,72 +493,62 @@ void sctk_device_enrich_topology( hwloc_topology_t topology )
 		#endif
 		}
 
-        #if defined(MPC_Accelerators)
+#if defined(MPC_Accelerators)
         int num_devices = 0;
-        cudaGetDeviceCount(&num_devices);
-        if(num_devices>0)
-        {
+		cudaGetDeviceCount(&num_devices);
+		if(num_devices>0)
+		{
+			char attrs[128], save_ptr[128], busid_str[32];
+			const char * attr_sep = "#";
+			hwloc_obj_attr_snprintf(attrs,128,device->obj,"#",1);
 
-            //CUDA
-            //get devices pcibusid
-            int cpt=-1;
-            char *token=NULL;
-            char ** saveptr = NULL;
-            char *pcibusid=NULL;
-            char *pcibusid_tmp=NULL;
-            const char s_pipe[2]="|";
-            const char s_equal[2]="=";
+			char * cur_attr = NULL;
+			
+			/* if the current attr is the bus ID: STOP */
+			while((cur_attr = strtok_r(attrs, attr_sep, &save_ptr) ) != NULL)
+			{
+				if(strncmp(cur_attr, "busid", 5) == 0)
+				{
+					break;
+				}
+			}
 
-            hwloc_obj_attr_snprintf(string,sizeof(string),device->obj,"|",1);
-            sctk_nodebug("device->obj=%s",string);
+			/* Read the PCI bus ID from the found attr */
+			sscanf(cur_attr, "busid=%s", busid_str);
 
-            token = strtok(string,s_pipe);
-            while (token != NULL){
-                pcibusid_tmp=strtok(token,s_equal);
-                while(pcibusid_tmp != NULL){
-                    if(!cpt)
-                        pcibusid=pcibusid_tmp;
-                    cpt++;
-                    pcibusid_tmp=strtok(NULL,s_equal);
-                }
-                token = strtok(NULL,s_pipe);
-            }
-            sctk_nodebug("pcibusid=%s",pcibusid);
-
-            //update device->name to permet that the
-            //function sctk_device_matrix_get_closest_from_pu works correctly
-
-            //update device->device_cuda_id
-            const char card[18]="cuda-enabled-card";
-            char dest[5];
-            char buf[16];
-            int n;
+			/* maybe the init() should be done only once ? */
             cuInit(0);
-            CUdevice dev;
-            CUresult test;
-            test = cuDeviceGetByPCIBusId(&dev,pcibusid);
-            //printf("CUDA test = %d\n",test);
-            if(test == CUDA_SUCCESS){
-                strcpy(dest,card);
-                //printf("dest = %s\n",dest);
-                n=sprintf(buf,"%d",(int)dev);
-                strcat(dest,buf);
-                //printf("dest = %s\n",dest);
-                char*res=malloc(n*sizeof(char));
-                strcpy(res,dest);
-                //printf("res = %s\n",res);
-                device->name = res;
-                //device->device_id = (int)dev;
-                device->device_id = (int)dev;
-                //printf("DEVICES : name=%s, device_id=%d, id=%d\n",device->name,device->device_id,i);
-            }else{
-                if(device->name==NULL) device->name = "unknown";
-                device->device_id = -1;
-            }
-            //ENDCUDA
-            
-        }
-        #endif //MPC_Accelerators
+            CUdevice dev = 0;
+            CUresult test = cuDeviceGetByPCIBusId(&dev,busid_str);
+
+			/* if the PCI bus ID matches a CUDA-enabled device */
+			if(test == CUDA_SUCCESS){
+				
+				/** RENAMING THE DEVICE */
+				const short name_prefix_size = 17;
+				const char * name_prefix = "cuda-enabled-card";
+				
+				/* we suppose 4 digits to encode GPU ids is enough ! */
+				const short name_size = name_prefix_size + 4;
+				char * name = malloc(sizeof(char) * name_size );
+				int check;
+
+				/* Creating one single string */
+				check = snprintf(name, name_size, "%s%d", name_prefix, (int)dev );
+				assert(check < name_size);
+
+				device->name = name;
+				device->device_id = (int)dev;
+				sctk_nodebug("Detected GPU: %s (%s)", device->name, busid_str);
+			}
+			else
+			{
+				if( device->name == NULL )
+					device->name = "Unknown";
+				device->device_id = -1;
+			}
+		}
+#endif
 
 	}
 
