@@ -2168,30 +2168,30 @@ int sctk_get_init_vp_and_nbvp_default(int i, int *nbVp) {
   /* Normalize i if i the the global number insted of localnumber*/
   // hmt
   if(i >= task_nb) i = i - sctk_first_local;
-  sctk_debug("%s,i normalized=%d", i);
+  sctk_nodebug("i normalized=%d", i);
 
   first = 0;
-  sctk_debug("%s,cpu_per_task %d", cpu_per_task);
+  sctk_nodebug("cpu_per_task %d", cpu_per_task);
   j = 0;
   for (proc = 0; proc < cpu_nb; proc += cpu_per_task) {
     int local_slot_size;
     local_slot_size = slot_size;
-    sctk_debug("%s,local_slot_size=%d", local_slot_size);
+    sctk_nodebug("local_slot_size=%d", local_slot_size);
     if ((task_nb % cpu_nb) > j) {
       local_slot_size++;
-      sctk_debug("%s,local_slot_size inside the if=%d", local_slot_size);
+      sctk_nodebug("local_slot_size inside the if=%d", local_slot_size);
     }
 
-    sctk_debug("%s,%d proc %d slot size", proc, local_slot_size);
+    sctk_nodebug("%d proc %d slot size", proc, local_slot_size);
     last = first + local_slot_size - 1;
-    sctk_debug("%s,First %d last %d", first, last);
+    sctk_nodebug("First %d last %d", first, last);
     if ((i >= first) && (i <= last)) {
       if ((cpu_nb % task_nb > j) && (cpu_nb > task_nb)) {
         *nbVp = cpu_per_task + 1;
       } else {
         *nbVp = cpu_per_task;
       }
-      sctk_debug("%s,sctk_get_init_vp: Put task %d on VP %d", i, proc);
+      sctk_nodebug("sctk_get_init_vp: Put task %d on VP %d", i, proc);
       return proc;
     }
     first = last + 1;
@@ -2199,7 +2199,7 @@ int sctk_get_init_vp_and_nbvp_default(int i, int *nbVp) {
     if ((cpu_nb % task_nb >= j) && (cpu_nb > task_nb))
       proc++;
   }
-  sctk_debug("sctk_get_init_vp: (After loop) Put task %d on VP %d", i, proc);
+  sctk_nodebug("sctk_get_init_vp: (After loop) Put task %d on VP %d", i, proc);
   fflush(stdout);
   sctk_abort();
   return proc;

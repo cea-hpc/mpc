@@ -559,6 +559,7 @@ void sctk_device_load_from_topology( hwloc_topology_t topology )
 	sctk_device_enrich_topology( topology );
 	//hwloc_topology_export_xml(topology, "-");
 
+	/*
 	for( i = 0 ; i < sctk_devices_count ; i++ )
 	{
 		sctk_device_print( &sctk_devices[i] );
