@@ -99,6 +99,10 @@ MPC always use the profile with name "default", others are only enabled with opt
 .Sh AVAILABLE MODULES
 .Pp The <modules> node can contain the following fields :
 .Bl -tag -width Ds
+.It Cm accelerator
+Options for MPC Accelerators module.
+.br
+See type accl.
 .It Cm allocator
 Options for MPC memory allocator.
 .br
@@ -151,6 +155,62 @@ See type thread.
 Scheduler priority parameters
 .br
 See type scheduler.
+.El
+.Sh ENTRIES OF TYPE accl_cuda
+CUDA-specific configuration
+.Pp
+It support parameters :
+.Pp
+.Bl -tag -width Ds
+.It Cm enabled
+Type is bool. Default value is false. 
+.Pp enabled
+Set to true to enable CUDA context-switch
+.El
+.Sh ENTRIES OF TYPE accl_openacc
+OpenACC-specific configuration
+.Pp
+It support parameters :
+.Pp
+.Bl -tag -width Ds
+.It Cm enabled
+Type is bool. Default value is false. 
+.Pp enabled
+Set to true to enable OpenACC in MPC
+.El
+.Sh ENTRIES OF TYPE accl_opencl
+OpenCL-specific configuration
+.Pp
+It support parameters :
+.Pp
+.Bl -tag -width Ds
+.It Cm enabled
+Type is bool. Default value is false. 
+.Pp enabled
+Set to true to enable OpenCL in MPC
+.El
+.Sh ENTRIES OF TYPE accl
+Options for MPC Accelerators module.
+.Pp
+It support parameters :
+.Pp
+.Bl -tag -width Ds
+.It Cm enabled
+Type is bool. Default value is false. 
+.Pp enabled
+Set to true to enable Accelerators support
+.It Cm cuda
+Type is accl_cuda. 
+.Pp cuda
+Define CUDA-specific configuration
+.It Cm openacc
+Type is accl_openacc. 
+.Pp openacc
+Define OpenACC-specific configuration
+.It Cm opencl
+Type is accl_opencl. 
+.Pp opencl
+Define OpenCL-specific configuration
 .El
 .Sh ENTRIES OF TYPE allocator
 Options for MPC memory allocator.

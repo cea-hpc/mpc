@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<!DOCTYPE config SYSTEM "../MPC_Config/extra/config-meta.dtd">
+<config>
+	<usertypes>
+		<struct name="accl_cuda" doc="CUDA-specific configuration">
+			<param name="enabled" type="bool" default="false" doc="Set to true to enable CUDA context-switch" />
+		</struct>
+		<struct name="accl_openacc" doc="OpenACC-specific configuration">
+			<param name="enabled" type="bool" default="false" doc="Set to true to enable OpenACC in MPC" />
+		</struct>
+		<struct name="accl_opencl" doc="OpenCL-specific configuration">
+			<param name="enabled" type="bool" default="false" doc="Set to true to enable OpenCL in MPC" />
+		</struct>
+
+		<struct name="accl" doc="Options for MPC Accelerators module.">
+			<param name="enabled" type="bool" default="false" doc="Set to true to enable Accelerators support" />
+			<param name="cuda" type="accl_cuda" doc="Define CUDA-specific configuration" />
+			<param name="openacc" type="accl_openacc" doc="Define OpenACC-specific configuration" />
+			<param name="opencl" type="accl_opencl" doc="Define OpenCL-specific configuration" />
+		</struct>
+	</usertypes>
+	<modules>
+		<module name="accelerator" type="accl"/>
+	</modules>
+</config>

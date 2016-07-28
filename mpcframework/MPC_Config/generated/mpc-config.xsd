@@ -24,6 +24,33 @@
 ########################################################################-->
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
   <!-- ********************************************************* -->
+  <xs:complexType name="user_type_accl_cuda">
+    <xs:all>
+      <xs:element minOccurs="0" name="enabled" type="xs:boolean"/>
+    </xs:all>
+  </xs:complexType>
+  <!-- ********************************************************* -->
+  <xs:complexType name="user_type_accl_openacc">
+    <xs:all>
+      <xs:element minOccurs="0" name="enabled" type="xs:boolean"/>
+    </xs:all>
+  </xs:complexType>
+  <!-- ********************************************************* -->
+  <xs:complexType name="user_type_accl_opencl">
+    <xs:all>
+      <xs:element minOccurs="0" name="enabled" type="xs:boolean"/>
+    </xs:all>
+  </xs:complexType>
+  <!-- ********************************************************* -->
+  <xs:complexType name="user_type_accl">
+    <xs:all>
+      <xs:element minOccurs="0" name="enabled" type="xs:boolean"/>
+      <xs:element minOccurs="0" name="cuda" type="user_type_accl_cuda"/>
+      <xs:element minOccurs="0" name="openacc" type="user_type_accl_openacc"/>
+      <xs:element minOccurs="0" name="opencl" type="user_type_accl_opencl"/>
+    </xs:all>
+  </xs:complexType>
+  <!-- ********************************************************* -->
   <xs:complexType name="user_type_allocator">
     <xs:all>
       <xs:element minOccurs="0" name="numa_migration" type="xs:boolean"/>
@@ -797,6 +824,7 @@
   <!-- ********************************************************* -->
   <xs:complexType name="modules">
     <xs:all>
+      <xs:element minOccurs="0" name="accelerator" type="user_type_accl"/>
       <xs:element minOccurs="0" name="allocator" type="user_type_allocator"/>
       <xs:element minOccurs="0" name="launcher" type="user_type_launcher"/>
       <xs:element minOccurs="0" name="debugger" type="user_type_debugger"/>
