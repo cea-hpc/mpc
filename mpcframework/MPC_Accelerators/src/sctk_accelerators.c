@@ -31,10 +31,6 @@ extern bool sctk_accl_support;
 int sctk_accl_init()
 {
 
-    /*TODO: should be computed by device_topology...
-     * Due to a bad parsing, the topo returns more device than CUDA
-     * For now, we keep the real CUDA value.
-     */
 	sctk_device_t** list = sctk_device_get_from_handle_regexp("cuda-enabled-card*", &nb_devices);
 
 	/* we don't want the list but the number of devices 
@@ -43,7 +39,6 @@ int sctk_accl_init()
 	sctk_free(list);
 #ifdef MPC_USE_CUDA
 	cuInit(0);
-    cudaGetDeviceCount(&nb_devices);
 #endif
 
 #ifdef MPC_USE_OPENACC

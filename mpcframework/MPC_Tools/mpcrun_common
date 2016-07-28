@@ -44,6 +44,7 @@ SCTK_USE_MPI2=0
 SHARE_NODE='1'
 ENABLE_SMT="0"
 DISABLE_SMT="0"
+ACCL_SUPPORT="0"
 
 if test "$MPC_AUTO_KILL_TIMEOUT" = "" ; then
     MPC_AUTO_KILL_TIMEOUT="0"
@@ -162,7 +163,6 @@ NODE_NB=""
 TASK_NB=""
 CPU_NB=""
 CPU_NB_MPC=""
-ACCL_SUPPORT=""
 
 if test "$REPORT" = "yes" ; then
 REPORT="--report"

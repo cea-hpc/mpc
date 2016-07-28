@@ -595,7 +595,7 @@ sctk_restart (void)
 	static void
 sctk_def_accl_support (void)
 {
-	/*sctk_accl_support = 1;*/
+	sctk_accl_support = 1;
 }
 
 	static void
