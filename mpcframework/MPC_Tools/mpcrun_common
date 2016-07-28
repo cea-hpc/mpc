@@ -162,6 +162,7 @@ NODE_NB=""
 TASK_NB=""
 CPU_NB=""
 CPU_NB_MPC=""
+ACCL_SUPPORT=""
 
 if test "$REPORT" = "yes" ; then
 REPORT="--report"
@@ -336,6 +337,9 @@ for arg in "$@" ; do
     --share-node)
     SHARE_NODE="1"
     ;;
+	--use-accl|--accl|-accl)
+	ACCL_SUPPORT="1"
+	;;
     --dbg=*)
     DEBUG="`echo A$arg | sed -e 's/A--dbg=//g'`"
     ;;
@@ -534,6 +538,10 @@ fi
 
 if test "$NET_TYPE" != ""  ; then
 add_arg "$NET_TYPE"
+fi
+
+if test "$ACCL_SUPPORT" = "1"  ; then
+add_arg "--use-accl"
 fi
 
 MPC_VERBOSE="--mpc-verbose=${MPC_VERBOSE}"

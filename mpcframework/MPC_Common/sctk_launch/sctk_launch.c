@@ -87,6 +87,7 @@ static char **init_argument = NULL;
 bool sctk_restart_mode;
 bool sctk_check_point_restart_mode;
 bool sctk_migration_mode;
+bool sctk_accl_support;
 #define MAX_TERM_LENGTH 80
 #define MAX_NAME_FORMAT 30
 /* const char *sctk_store_dir = "/dev/null"; */
@@ -592,6 +593,12 @@ sctk_restart (void)
 }
 
 	static void
+sctk_def_accl_support (void)
+{
+	/*sctk_accl_support = 1;*/
+}
+
+	static void
 sctk_set_verbosity (char *arg)
 {
 	int tmp =  atoi (arg);
@@ -686,6 +693,8 @@ sctk_proceed_arg (char *word)
 	sctk_add_arg ("--migration", sctk_migration);
 	sctk_add_arg ("--restart", sctk_restart);
 
+	sctk_add_arg("--use-accl", sctk_def_accl_support);
+	
 	if (strcmp (word, "--sctk-args-end--") == 0)
 		return -1;
 
@@ -1035,7 +1044,7 @@ void sctk_init_mpc_runtime()
 	sctk_restart_mode = sctk_runtime_config_get()->modules.launcher.restart;
 	sctk_check_point_restart_mode = sctk_runtime_config_get()->modules.launcher.checkpoint;
 	sctk_migration_mode = sctk_runtime_config_get()->modules.launcher.migration;
-
+	sctk_accl_support = sctk_runtime_config_get()->modules.accelerator.enabled;
 	/* forece smt on MIC */
 #ifdef __MIC__
 	sctk_enable_smt_capabilities = 1;
