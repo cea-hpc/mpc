@@ -100,6 +100,7 @@ Topology:
     --task-nb=n,-n=n Total number of tasks
     --process-nb=n,-p=n Total number of processes
     --cpu-nb=n,-c=n Number of cpus per process
+    --cpu-nb-mpc=n Number of cpus per process for the MPC process
     --node-nb=n,-N=n Total number of nodes
     --enable-smt Enable SMT capabilities (disabled by default, except for MIC)
     --disable-smt Disable SMT capabilities
@@ -160,6 +161,7 @@ PROCESS_NB=""
 NODE_NB=""
 TASK_NB=""
 CPU_NB=""
+CPU_NB_MPC=""
 
 if test "$REPORT" = "yes" ; then
 REPORT="--report"
@@ -372,6 +374,9 @@ for arg in "$@" ; do
     CPU_NB="`echo A$arg | sed -e 's/A--cpu-nb=//g'`"
     DEFAULT_CPU_NB="1"
     ;;
+    --cpu-nb-mpc=*)
+    CPU_NB_MPC="`echo A$arg | sed -e 's/A--cpu-nb-mpc=//g'`"
+    ;;
     -c=*)
     CPU_NB="`echo A$arg | sed -e 's/A-c=//g'`"
     DEFAULT_CPU_NB="1"
@@ -490,8 +495,12 @@ SCTK_ARGS="$SCTK_ARGS $@"
 add_arg "--task-number=$TASK_NB"
 
 if test "$DEFAULT_CPU_NB" = "1" ; then
+if test "$CPU_NB_MPC" != ""  ; then
+add_arg "--processor-number=$CPU_NB_MPC "
+else
 if test "$CPU_NB" != ""  ; then
 add_arg "--processor-number=$CPU_NB "
+fi
 fi
 fi
 
