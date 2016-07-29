@@ -57,7 +57,7 @@ omp_get_thread_num (void)
   t = sctk_openmp_thread_tls ;
   sctk_assert( t != NULL ) ;
 
-  sctk_debug( "[%d] omp_get_thread_num: entering",
+  sctk_nodebug( "[%d] omp_get_thread_num: entering",
 		 t->rank	) ;
 
   return t->rank;
@@ -79,7 +79,7 @@ omp_get_max_threads (void)
   t = sctk_openmp_thread_tls ;
   sctk_assert( t != NULL ) ;
 
-  sctk_debug("[%d] omp_get_max_threads: getting %d thread(s)",
+  sctk_nodebug("[%d] omp_get_max_threads: getting %d thread(s)",
 		 t->rank, t->info.icvs.nthreads_var) ;
 
   return t->info.icvs.nthreads_var;
@@ -255,7 +255,7 @@ omp_get_level (void)
 	t = sctk_openmp_thread_tls;
 	sctk_assert(t != NULL);
 
-	sctk_debug( "omp_get_level: %d", t->info.icvs.levels_var );
+	sctk_nodebug( "omp_get_level: %d", t->info.icvs.levels_var );
 
 	return t->info.icvs.levels_var;
 }
@@ -274,7 +274,7 @@ omp_get_active_level (void)
 	t = sctk_openmp_thread_tls;
 	sctk_assert(t != NULL);
 
-	sctk_debug( "omp_get_active_level: %d", t->info.icvs.active_levels_var );
+	sctk_nodebug( "omp_get_active_level: %d", t->info.icvs.active_levels_var );
 
 	return t->info.icvs.active_levels_var ;
 }
@@ -293,7 +293,7 @@ omp_get_ancestor_thread_num(int level)
 
 	__mpcomp_init();
 
-    sctk_debug( "omp_get_ancestor_thread_num: %d",
+    sctk_nodebug( "omp_get_ancestor_thread_num: %d",
             level ) ;
 
 	t = sctk_openmp_thread_tls;
@@ -329,7 +329,7 @@ omp_get_team_size(int level)
 
 	__mpcomp_init();
 
-    sctk_debug( "omp_get_team_size: %d",
+    sctk_nodebug( "omp_get_team_size: %d",
             level ) ;
 
 	t = sctk_openmp_thread_tls;
