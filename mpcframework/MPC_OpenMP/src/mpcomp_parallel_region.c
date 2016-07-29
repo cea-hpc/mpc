@@ -30,11 +30,12 @@ __mpcomp_save_team_info(
 		mpcomp_thread_t * t ) 
 {
 
-	sctk_nodebug( "__mpcomp_save_team_info: saving single/section %d and for dyn %d",
-			t->single_sections_current, t->for_dyn_current ) ;
+  sctk_nodebug(
+      "__mpcomp_save_team_info: saving single/section %d and for dyn %d",
+      t->single_sections_current, t->for_dyn_current);
 
-	team->info.single_sections_current_save = t->single_sections_current ;
-	team->info.for_dyn_current_save = t->for_dyn_current ;
+  team->info.single_sections_current_save = t->single_sections_current;
+  team->info.for_dyn_current_save = t->for_dyn_current;
 }
 
 static inline void 
@@ -128,14 +129,16 @@ __mpcomp_wakeup_node(
 			if ( master && mpcomp_global_icvs.affinity == MPCOMP_AFFINITY_COMPACT ) {
 				/* Only one subtree => bypass */
 				instance->team->info.new_root = n->children.node[0] ;
-				sctk_nodebug( "__mpcomp_wakeup_node: Bypassing root from depth %d to %d",
-                       n->depth, n->depth+1 ) ;
-			}
-		} else {
-			/* Wake up children and transfer information */
-			for ( i = 1 ; i < n->nb_children ; i++ ) {
-				if ( n->children.node[i]->min_index[mpcomp_global_icvs.affinity] 
-                        < num_threads ) {
+                                sctk_nodebug("__mpcomp_wakeup_node: Bypassing "
+                                             "root from depth %d to %d",
+                                             n->depth, n->depth + 1);
+                        }
+                } else {
+                  /* Wake up children and transfer information */
+                  for (i = 1; i < n->nb_children; i++) {
+                    if (n->children.node[i]
+                            ->min_index[mpcomp_global_icvs.affinity] <
+                        num_threads) {
 #if MPCOMP_TRANSFER_INFO_ON_NODES
 					n->children.node[i]->info = n->info ;
 #endif
@@ -218,64 +221,61 @@ __mpcomp_internal_begin_parallel_region(int arg_num_threads,
 	if ( t->children_instance == NULL ) {
 		mpcomp_team_t * new_team ;
 
-		sctk_nodebug( "__mpcomp_internal_begin_parallel_region: "
-				"children instance is NULL, allocating...",
-				t->info.num_threads	) ;
+                sctk_nodebug("__mpcomp_internal_begin_parallel_region: "
+                             "children instance is NULL, allocating...",
+                             t->info.num_threads);
 
-		new_team = (mpcomp_team_t *)sctk_malloc( sizeof( mpcomp_team_t ) ) ;
-		sctk_assert( new_team != NULL ) ;
-		__mpcomp_team_init( new_team ) ;
+                new_team = (mpcomp_team_t *)sctk_malloc(sizeof(mpcomp_team_t));
+                sctk_assert(new_team != NULL);
+                __mpcomp_team_init(new_team);
 
-		t->children_instance = 
-			(mpcomp_instance_t *)sctk_malloc( sizeof( mpcomp_instance_t ) ) ;
-		sctk_assert( t->children_instance != NULL ) ;
-		__mpcomp_instance_init( t->children_instance, 0, new_team ) ;
-	}
+                t->children_instance =
+                    (mpcomp_instance_t *)sctk_malloc(sizeof(mpcomp_instance_t));
+                sctk_assert(t->children_instance != NULL);
+                __mpcomp_instance_init(t->children_instance, 0, new_team);
+        }
 
-	/* Grab the instance for the future parallel region */
-	instance = t->children_instance ;
-	sctk_assert( instance != NULL ) ;
-	sctk_assert( instance->team != NULL ) ;
+        /* Grab the instance for the future parallel region */
+        instance = t->children_instance;
+        sctk_assert(instance != NULL);
+        sctk_assert(instance->team != NULL);
 
-  /* Compute the number of threads for this parallel region */
-	/* Default number of threads */
-	num_threads = arg_num_threads ;
+        /* Compute the number of threads for this parallel region */
+        /* Default number of threads */
+        num_threads = arg_num_threads;
 
-	/* -1 is default, and < 0 too */
-	if ( num_threads < 0 ) {
-		num_threads = t->info.icvs.nthreads_var ;
-	}
+        /* -1 is default, and < 0 too */
+        if (num_threads < 0) {
+          num_threads = t->info.icvs.nthreads_var;
+        }
 
-	/* If number of threads too large, set to the max
-	 * no oversubscribing */
-	if ( num_threads > t->children_instance->nb_mvps ) {
-		num_threads = t->children_instance->nb_mvps ;
-	}
+        /* If number of threads too large, set to the max
+         * no oversubscribing */
+        if (num_threads > t->children_instance->nb_mvps) {
+          num_threads = t->children_instance->nb_mvps;
+        }
 
-	sctk_assert( num_threads > 0 ) ;
+        sctk_assert(num_threads > 0);
 
-  sctk_nodebug( 
-		  "__mpcomp_internal_begin_parallel_region: "
-		  "Number of threads %d (default %d, #mvps %d arg:%d)",
-		  num_threads, 
-		  t->info.icvs.nthreads_var, 
-		  t->children_instance->nb_mvps, 
-		  arg_num_threads ) ;
+        sctk_nodebug("__mpcomp_internal_begin_parallel_region: "
+                     "Number of threads %d (default %d, #mvps %d arg:%d)",
+                     num_threads, t->info.icvs.nthreads_var,
+                     t->children_instance->nb_mvps, arg_num_threads);
 
-	/* Fill information for the team */
-	instance->team->info.func = info.func ;
-	instance->team->info.shared = info.shared ;
-	instance->team->info.num_threads = num_threads ;
-	instance->team->info.new_root = instance->root ;
-	/* Do not touch to single_sections_current_save and for_dyn_current_save */
-	instance->team->info.combined_pragma = info.combined_pragma ;
-	instance->team->info.icvs = t->info.icvs ;
-    /* Update active_levels_var and levels_var accordingly */
-    instance->team->info.icvs.levels_var = t->info.icvs.levels_var+1;
-    if ( num_threads > 1 ) 
-    {
-        instance->team->info.icvs.active_levels_var = 
-            t->info.icvs.active_levels_var+1;
+        /* Fill information for the team */
+        instance->team->info.func = info.func;
+        instance->team->info.shared = info.shared;
+        instance->team->info.num_threads = num_threads;
+        instance->team->info.new_root = instance->root;
+        /* Do not touch to single_sections_current_save and for_dyn_current_save
+         */
+        instance->team->info.combined_pragma = info.combined_pragma;
+        instance->team->info.icvs = t->info.icvs;
+        /* Update active_levels_var and levels_var accordingly */
+        instance->team->info.icvs.levels_var = t->info.icvs.levels_var + 1;
+        if (num_threads > 1) {
+          instance->team->info.icvs.active_levels_var =
+              t->info.icvs.active_levels_var + 1;
     }
 	instance->team->info.loop_lb = info.loop_lb ;
 	instance->team->info.loop_b = info.loop_b ;
@@ -304,11 +304,11 @@ __mpcomp_internal_begin_parallel_region(int arg_num_threads,
 
 #if MPCOMP_TRANSFER_INFO_ON_NODES
 		n->info = instance->team->info ;
-		sctk_nodebug( "__mpcomp_internal_begin_parallel_region: "
-				"Node transfers ON" ) ;
+                sctk_nodebug("__mpcomp_internal_begin_parallel_region: "
+                             "Node transfers ON");
 #else
-		sctk_nodebug( "__mpcomp_internal_begin_parallel_region: "
-				"Node transfers OFF" ) ;
+    sctk_nodebug("__mpcomp_internal_begin_parallel_region: "
+                 "Node transfers OFF");
 #endif
 
 		/* Wake up children nodes (as the master) */
@@ -443,7 +443,7 @@ void * mpcomp_slave_mvp_node( void * arg ) {
   mpcomp_node_t * n ; /* Spinning node + Traversing node */
   int num_threads ;
 
-  sctk_nodebug( "mpcomp_slave_mvp_node: Entering..." ) ;
+  sctk_nodebug("mpcomp_slave_mvp_node: Entering...");
 
   /* Get the current microVP */
   mvp = (mpcomp_mvp_t *)arg ;
@@ -547,36 +547,34 @@ __mpcomp_start_sections_parallel_region (int arg_num_threads,
   mpcomp_thread_t * t ;
 	mpcomp_new_parallel_region_info_t info ;
 
-  sctk_nodebug( 
-      "__mpcomp_start_parallel_region: "
-			"=== ENTER PARALLEL REGION w/ %d SECTION(s) ===", 
-			nb_sections ) ;
+        sctk_nodebug("__mpcomp_start_parallel_region: "
+                     "=== ENTER PARALLEL REGION w/ %d SECTION(s) ===",
+                     nb_sections);
 
-  /* Initialize OpenMP environment */
-  __mpcomp_init() ;
+        /* Initialize OpenMP environment */
+        __mpcomp_init();
 
-  /* Grab the thread info */
-  t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
-  sctk_assert( t != NULL ) ;
+        /* Grab the thread info */
+        t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
+        sctk_assert(t != NULL);
 
-	__mpcomp_new_parallel_region_info_init( &info ) ;
-	info.func = func ;
-	info.shared = shared ;
-	// info.icvs = t->info.icvs ; 
-	info.combined_pragma = MPCOMP_COMBINED_SECTION ;
-	info.nb_sections = nb_sections ;
+        __mpcomp_new_parallel_region_info_init(&info);
+        info.func = func;
+        info.shared = shared;
+        // info.icvs = t->info.icvs ;
+        info.combined_pragma = MPCOMP_COMBINED_SECTION;
+        info.nb_sections = nb_sections;
 
-	__mpcomp_internal_begin_parallel_region( arg_num_threads, info ) ;
+        __mpcomp_internal_begin_parallel_region(arg_num_threads, info);
 
-	/* Start scheduling */
-	in_order_scheduler(t->children_instance->mvps[0]) ;
+        /* Start scheduling */
+        in_order_scheduler(t->children_instance->mvps[0]);
 
-	__mpcomp_internal_end_parallel_region( t->children_instance ) ;
+        __mpcomp_internal_end_parallel_region(t->children_instance);
 
-  sctk_nodebug( 
-      "__mpcomp_start_parallel_region: "
-			"=== EXIT PARALLEL REGION w/ %d SECTION(s) ===\n", 
-			nb_sections ) ;
+        sctk_nodebug("__mpcomp_start_parallel_region: "
+                     "=== EXIT PARALLEL REGION w/ %d SECTION(s) ===\n",
+                     nb_sections);
 }
 
 void
@@ -587,39 +585,39 @@ __mpcomp_start_parallel_dynamic_loop (int arg_num_threads,
   mpcomp_thread_t * t ;
 	mpcomp_new_parallel_region_info_t info ;
 
-  sctk_nodebug( 
-		  "__mpcomp_start_parallel_dynamic_loop:"
-		  " === ENTER PARALLEL REGION w/ DYN LOOP %ld -> %ld [%ld] cs:%ld ===",
-		  lb, b, incr, chunk_size ) ;
+        sctk_nodebug("__mpcomp_start_parallel_dynamic_loop:"
+                     " === ENTER PARALLEL REGION w/ DYN LOOP %ld -> %ld [%ld] "
+                     "cs:%ld ===",
+                     lb, b, incr, chunk_size);
 
-  /* Initialize OpenMP environment */
-  __mpcomp_init() ;
+        /* Initialize OpenMP environment */
+        __mpcomp_init();
 
-  /* Grab the thread info */
-  t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
-  sctk_assert( t != NULL ) ;
+        /* Grab the thread info */
+        t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
+        sctk_assert(t != NULL);
 
-	__mpcomp_new_parallel_region_info_init( &info ) ;
-	info.func = func ;
-	info.shared = shared ;
-	// info.icvs = t->info.icvs ; 
-	info.combined_pragma = MPCOMP_COMBINED_DYN_LOOP ;
-	info.loop_lb = lb ;
-	info.loop_b = b ;
-	info.loop_incr = incr ;
-	info.loop_chunk_size = chunk_size ;
+        __mpcomp_new_parallel_region_info_init(&info);
+        info.func = func;
+        info.shared = shared;
+        // info.icvs = t->info.icvs ;
+        info.combined_pragma = MPCOMP_COMBINED_DYN_LOOP;
+        info.loop_lb = lb;
+        info.loop_b = b;
+        info.loop_incr = incr;
+        info.loop_chunk_size = chunk_size;
 
-	__mpcomp_internal_begin_parallel_region( arg_num_threads, info ) ;
+        __mpcomp_internal_begin_parallel_region(arg_num_threads, info);
 
-	/* Start scheduling */
-	in_order_scheduler(t->children_instance->mvps[0]) ;
+        /* Start scheduling */
+        in_order_scheduler(t->children_instance->mvps[0]);
 
-	__mpcomp_internal_end_parallel_region( t->children_instance ) ;
+        __mpcomp_internal_end_parallel_region(t->children_instance);
 
-  sctk_nodebug( 
-		  "__mpcomp_start_parallel_dynamic_loop:"
-		  " === EXIT PARALLEL REGION w/ DYN LOOP %ld -> %ld [%ld] cs:%ld ===\n",
-		  lb, b, incr, chunk_size ) ;
+        sctk_nodebug("__mpcomp_start_parallel_dynamic_loop:"
+                     " === EXIT PARALLEL REGION w/ DYN LOOP %ld -> %ld [%ld] "
+                     "cs:%ld ===\n",
+                     lb, b, incr, chunk_size);
 }
 
 void
@@ -630,39 +628,39 @@ __mpcomp_start_parallel_static_loop (int arg_num_threads,
   mpcomp_thread_t * t ;
 	mpcomp_new_parallel_region_info_t info ;
 
-  sctk_nodebug( 
-		  "__mpcomp_start_parallel_static_loop:"
-		  " === ENTER PARALLEL REGION w/ STATIC LOOP %ld -> %ld [%ld] cs:%ld ===",
-		  lb, b, incr, chunk_size ) ;
+        sctk_nodebug("__mpcomp_start_parallel_static_loop:"
+                     " === ENTER PARALLEL REGION w/ STATIC LOOP %ld -> %ld "
+                     "[%ld] cs:%ld ===",
+                     lb, b, incr, chunk_size);
 
-  /* Initialize OpenMP environment */
-  __mpcomp_init() ;
+        /* Initialize OpenMP environment */
+        __mpcomp_init();
 
-  /* Grab the thread info */
-  t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
-  sctk_assert( t != NULL ) ;
+        /* Grab the thread info */
+        t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
+        sctk_assert(t != NULL);
 
-	__mpcomp_new_parallel_region_info_init( &info ) ;
-	info.func = func ;
-	info.shared = shared ;
-	// info.icvs = t->info.icvs ; 
-	info.combined_pragma = MPCOMP_COMBINED_STATIC_LOOP ;
-	info.loop_lb = lb ;
-	info.loop_b = b ;
-	info.loop_incr = incr ;
-	info.loop_chunk_size = chunk_size ;
+        __mpcomp_new_parallel_region_info_init(&info);
+        info.func = func;
+        info.shared = shared;
+        // info.icvs = t->info.icvs ;
+        info.combined_pragma = MPCOMP_COMBINED_STATIC_LOOP;
+        info.loop_lb = lb;
+        info.loop_b = b;
+        info.loop_incr = incr;
+        info.loop_chunk_size = chunk_size;
 
-	__mpcomp_internal_begin_parallel_region( arg_num_threads, info ) ;
+        __mpcomp_internal_begin_parallel_region(arg_num_threads, info);
 
-	/* Start scheduling */
-	in_order_scheduler(t->children_instance->mvps[0]) ;
+        /* Start scheduling */
+        in_order_scheduler(t->children_instance->mvps[0]);
 
-	__mpcomp_internal_end_parallel_region( t->children_instance ) ;
+        __mpcomp_internal_end_parallel_region(t->children_instance);
 
-  sctk_debug( 
-		  "__mpcomp_start_parallel_static_loop:"
-		  " === EXIT PARALLEL REGION w/ STATIC LOOP %ld -> %ld [%ld] cs:%ld ===\n",
-		  lb, b, incr, chunk_size ) ;
+        sctk_debug("__mpcomp_start_parallel_static_loop:"
+                   " === EXIT PARALLEL REGION w/ STATIC LOOP %ld -> %ld [%ld] "
+                   "cs:%ld ===\n",
+                   lb, b, incr, chunk_size);
 }
 
 

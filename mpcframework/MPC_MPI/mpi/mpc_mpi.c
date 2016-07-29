@@ -5279,32 +5279,31 @@ __INTERNAL__PMPI_Gather_intra (void *sendbuf, int sendcnt,
 		
 		res = __INTERNAL__PMPI_Type_extent (recvtype, &dsize);
 		if(res != MPI_SUCCESS){sctk_free(recvrequest); return res;}
-		
-		for (i = 0; i < size;i ++) 
-		  {
-		    if ((sendbuf == MPI_IN_PLACE) && (i == root))
-		      recvrequest[i] = MPI_REQUEST_NULL;
-		    else 
-		      {
-			res = __INTERNAL__PMPI_Irecv (
-						      ((char *) recvbuf) + (i * recvcnt * dsize),
-						      recvcnt, 
-						      recvtype, 
-						      i, 
-						      MPC_GATHER_TAG, 
-						      comm,
-						      &(recvrequest[i]));
-			if(res != MPI_SUCCESS){sctk_free(recvrequest); return res;}
-		      }
-		  }
-		res = __INTERNAL__PMPI_Waitall(size, recvrequest, 
-					       MPI_STATUSES_IGNORE);
-		if(res != MPI_SUCCESS){sctk_free(recvrequest); return res;}
-	}
 
-	res = __INTERNAL__PMPI_Wait (&(request), MPI_STATUS_IGNORE);
-	sctk_free(recvrequest); 	
-	return res;
+                for (i = 0; i < size; i++) {
+                  if ((sendbuf == MPI_IN_PLACE) && (i == root))
+                    recvrequest[i] = MPI_REQUEST_NULL;
+                  else {
+                    res = __INTERNAL__PMPI_Irecv(
+                        ((char *)recvbuf) + (i * recvcnt * dsize), recvcnt,
+                        recvtype, i, MPC_GATHER_TAG, comm, &(recvrequest[i]));
+                    if (res != MPI_SUCCESS) {
+                      sctk_free(recvrequest);
+                      return res;
+                    }
+                  }
+                }
+                res = __INTERNAL__PMPI_Waitall(size, recvrequest,
+                                               MPI_STATUSES_IGNORE);
+                if (res != MPI_SUCCESS) {
+                  sctk_free(recvrequest);
+                  return res;
+                }
+        }
+
+        res = __INTERNAL__PMPI_Wait(&(request), MPI_STATUS_IGNORE);
+        sctk_free(recvrequest);
+        return res;
 }
 
 int

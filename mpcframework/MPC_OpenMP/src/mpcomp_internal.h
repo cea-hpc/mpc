@@ -624,21 +624,21 @@ typedef struct mpcomp_thread_s
 	  t->push_num_threads = -1 ;
 	  t->father = father ;
 
-      sctk_nodebug( "__mpcomp_thread_init: father = %p", father ) ;
+          sctk_nodebug("__mpcomp_thread_init: father = %p", father);
 
-	  /* -- SINGLE CONSTRUCT -- */
-	  // t->single_sections_current = 0 ;
-	  t->single_sections_target_current = 0 ;
-	  t->single_sections_start_current = 0 ;
+          /* -- SINGLE CONSTRUCT -- */
+          // t->single_sections_current = 0 ;
+          t->single_sections_target_current = 0;
+          t->single_sections_start_current = 0;
 
-	  /* -- DYNAMIC FOR LOOP CONSTRUCT -- */
-		t->for_dyn_current = 0 ;
-		t->for_dyn_total = 0 ;
-	  for (i = 0; i < MPCOMP_MAX_ALIVE_FOR_DYN+1; i++)
-	       sctk_atomics_store_int(&(t->for_dyn_remain[i].i), -1);
-	  t->for_dyn_target = NULL ; /* Initialized during the first steal */
-	  t->for_dyn_shift = NULL ; /* Initialized during the first steal */
-		t->for_dyn_last_loop_iteration = 0 ; /* WORKAROUND (pr35196.c) */
+          /* -- DYNAMIC FOR LOOP CONSTRUCT -- */
+          t->for_dyn_current = 0;
+          t->for_dyn_total = 0;
+          for (i = 0; i < MPCOMP_MAX_ALIVE_FOR_DYN + 1; i++)
+            sctk_atomics_store_int(&(t->for_dyn_remain[i].i), -1);
+          t->for_dyn_target = NULL; /* Initialized during the first steal */
+          t->for_dyn_shift = NULL;  /* Initialized during the first steal */
+          t->for_dyn_last_loop_iteration = 0; /* WORKAROUND (pr35196.c) */
 
 #if MPCOMP_TASK
 	  t->tasking_init_done = 0;

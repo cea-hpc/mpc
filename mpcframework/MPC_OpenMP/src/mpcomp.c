@@ -91,7 +91,7 @@ static int OMP_WARN_NESTED = 0 ;
 /* Hybrid MPI/OpenMP mode */
 static mpcomp_mode_t OMP_MODE = MPCOMP_MODE_SIMPLE_MIXED ;
 /* Affinity policy */
-static mpcomp_affinity_t OMP_AFFINITY = MPCOMP_AFFINITY_BALANCED ;
+static mpcomp_affinity_t OMP_AFFINITY = MPCOMP_AFFINITY_BALANCED;
 
 mpcomp_global_icv_t mpcomp_global_icvs;
 
@@ -483,14 +483,14 @@ TODO( "If OMP_NUM_THREADS is 0, let it equal to 0 by default and handle it later
     fprintf( stderr, "\tAffinity " ) ;
     switch ( OMP_AFFINITY ) {
         case MPCOMP_AFFINITY_COMPACT:
-            fprintf( stderr, "COMPACT (fill logical cores first)\n" ) ;
-            break;
+          fprintf(stderr, "COMPACT (fill logical cores first)\n");
+          break;
         case MPCOMP_AFFINITY_SCATTER:
-            fprintf( stderr, "SCATTER (spread over NUMA nodes)\n" ) ;
-            break;
+          fprintf(stderr, "SCATTER (spread over NUMA nodes)\n");
+          break;
         case MPCOMP_AFFINITY_BALANCED:
-            fprintf( stderr, "BALANCED (fill physical cores first)\n" ) ;
-            break;
+          fprintf(stderr, "BALANCED (fill physical cores first)\n");
+          break;
         default:
             fprintf( stderr, "Unknown\n" ) ;
             break ;

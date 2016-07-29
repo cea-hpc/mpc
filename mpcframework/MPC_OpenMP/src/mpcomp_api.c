@@ -57,8 +57,7 @@ omp_get_thread_num (void)
   t = sctk_openmp_thread_tls ;
   sctk_assert( t != NULL ) ;
 
-  sctk_nodebug( "[%d] omp_get_thread_num: entering",
-		 t->rank	) ;
+  sctk_nodebug("[%d] omp_get_thread_num: entering", t->rank);
 
   return t->rank;
 
@@ -79,8 +78,8 @@ omp_get_max_threads (void)
   t = sctk_openmp_thread_tls ;
   sctk_assert( t != NULL ) ;
 
-  sctk_nodebug("[%d] omp_get_max_threads: getting %d thread(s)",
-		 t->rank, t->info.icvs.nthreads_var) ;
+  sctk_nodebug("[%d] omp_get_max_threads: getting %d thread(s)", t->rank,
+               t->info.icvs.nthreads_var);
 
   return t->info.icvs.nthreads_var;
 }
@@ -255,9 +254,9 @@ omp_get_level (void)
 	t = sctk_openmp_thread_tls;
 	sctk_assert(t != NULL);
 
-	sctk_nodebug( "omp_get_level: %d", t->info.icvs.levels_var );
+        sctk_nodebug("omp_get_level: %d", t->info.icvs.levels_var);
 
-	return t->info.icvs.levels_var;
+        return t->info.icvs.levels_var;
 }
 
 /*
@@ -274,9 +273,10 @@ omp_get_active_level (void)
 	t = sctk_openmp_thread_tls;
 	sctk_assert(t != NULL);
 
-	sctk_nodebug( "omp_get_active_level: %d", t->info.icvs.active_levels_var );
+        sctk_nodebug("omp_get_active_level: %d",
+                     t->info.icvs.active_levels_var);
 
-	return t->info.icvs.active_levels_var ;
+        return t->info.icvs.active_levels_var;
 }
 
 /*
@@ -293,23 +293,20 @@ omp_get_ancestor_thread_num(int level)
 
 	__mpcomp_init();
 
-    sctk_nodebug( "omp_get_ancestor_thread_num: %d",
-            level ) ;
+        sctk_nodebug("omp_get_ancestor_thread_num: %d", level);
 
-	t = sctk_openmp_thread_tls;
-	sctk_assert(t != NULL);
-
-    /* If level is outside of bounds, return -1 */
-	if (level < 0 || level > t->info.icvs.levels_var )
-	{
-		return -1;
-	}
-
-    /* Go up to the right level and catch the rank */
-	for ( i = t->info.icvs.levels_var ; i > level ; i-- ) 
-    {
-		t = t->father ;
+        t = sctk_openmp_thread_tls;
         sctk_assert(t != NULL);
+
+        /* If level is outside of bounds, return -1 */
+        if (level < 0 || level > t->info.icvs.levels_var) {
+          return -1;
+        }
+
+        /* Go up to the right level and catch the rank */
+        for (i = t->info.icvs.levels_var; i > level; i--) {
+          t = t->father;
+          sctk_assert(t != NULL);
     }
 	return t->rank ;
 }
@@ -329,23 +326,20 @@ omp_get_team_size(int level)
 
 	__mpcomp_init();
 
-    sctk_nodebug( "omp_get_team_size: %d",
-            level ) ;
+        sctk_nodebug("omp_get_team_size: %d", level);
 
-	t = sctk_openmp_thread_tls;
-	sctk_assert(t != NULL);
-
-    /* If level is outside of bounds, return -1 */
-	if (level < 0 || level > t->info.icvs.levels_var )
-	{
-		return -1;
-	}
-
-    /* Go up to the right level and catch the rank */
-	for ( i = t->info.icvs.levels_var ; i > level ; i-- ) 
-    {
-		t = t->father ;
+        t = sctk_openmp_thread_tls;
         sctk_assert(t != NULL);
+
+        /* If level is outside of bounds, return -1 */
+        if (level < 0 || level > t->info.icvs.levels_var) {
+          return -1;
+        }
+
+        /* Go up to the right level and catch the rank */
+        for (i = t->info.icvs.levels_var; i > level; i--) {
+          t = t->father;
+          sctk_assert(t != NULL);
     }
 	return t->info.num_threads ;
 }

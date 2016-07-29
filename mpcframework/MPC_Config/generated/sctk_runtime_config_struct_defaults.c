@@ -199,10 +199,13 @@ void sctk_runtime_config_struct_init_progress_thread(void * struct_ptr)
 	if( obj->init_done != 0 ) return;
 
 	/* Simple params : */
-	obj->use_progress_thread = 1;
-	obj->progress_thread_binding.name = "sctk_get_progress_thread_binding_bind";
-	*(void **) &(obj->progress_thread_binding.value) = sctk_runtime_config_get_symbol("sctk_get_progress_thread_binding_bind");
-	obj->init_done = 1;
+        obj->use_progress_thread = 1;
+        obj->progress_thread_binding.name =
+            "sctk_get_progress_thread_binding_bind";
+        *(void **)&(obj->progress_thread_binding.value) =
+            sctk_runtime_config_get_symbol(
+                "sctk_get_progress_thread_binding_bind");
+        obj->init_done = 1;
 }
 
 /*******************  FUNCTION  *********************/
@@ -692,50 +695,50 @@ void sctk_runtime_config_struct_init_low_level_comm(void * struct_ptr)
 }
 
 /*******************  FUNCTION  *********************/
-void sctk_runtime_config_enum_init_mpcomp_task_larceny_mode_t()
-{
-	struct enum_type * current_enum = (struct enum_type *) malloc(sizeof(struct enum_type));
-	struct enum_value * current_value, * values = NULL;
+void sctk_runtime_config_enum_init_mpcomp_task_larceny_mode_t() {
+  struct enum_type *current_enum =
+      (struct enum_type *)malloc(sizeof(struct enum_type));
+  struct enum_value *current_value, *values = NULL;
 
-	strncpy(current_enum->name, "enum mpcomp_task_larceny_mode_t", 50);
+  strncpy(current_enum->name, "enum mpcomp_task_larceny_mode_t", 50);
 
-	current_value = (struct enum_value *) malloc(sizeof(struct enum_value));
-	strncpy(current_value->name, "MPCOMP_TASK_LARCENY_MODE_HIERARCHICAL", 50);
-	current_value->value = MPCOMP_TASK_LARCENY_MODE_HIERARCHICAL;
-	HASH_ADD_STR(values, name, current_value);
+  current_value = (struct enum_value *)malloc(sizeof(struct enum_value));
+  strncpy(current_value->name, "MPCOMP_TASK_LARCENY_MODE_HIERARCHICAL", 50);
+  current_value->value = MPCOMP_TASK_LARCENY_MODE_HIERARCHICAL;
+  HASH_ADD_STR(values, name, current_value);
 
-	current_value = (struct enum_value *) malloc(sizeof(struct enum_value));
-	strncpy(current_value->name, "MPCOMP_TASK_LARCENY_MODE_RANDOM", 50);
-	current_value->value = MPCOMP_TASK_LARCENY_MODE_RANDOM;
-	HASH_ADD_STR(values, name, current_value);
+  current_value = (struct enum_value *)malloc(sizeof(struct enum_value));
+  strncpy(current_value->name, "MPCOMP_TASK_LARCENY_MODE_RANDOM", 50);
+  current_value->value = MPCOMP_TASK_LARCENY_MODE_RANDOM;
+  HASH_ADD_STR(values, name, current_value);
 
-	current_value = (struct enum_value *) malloc(sizeof(struct enum_value));
-	strncpy(current_value->name, "MPCOMP_TASK_LARCENY_MODE_RANDOM_ORDER", 50);
-	current_value->value = MPCOMP_TASK_LARCENY_MODE_RANDOM_ORDER;
-	HASH_ADD_STR(values, name, current_value);
+  current_value = (struct enum_value *)malloc(sizeof(struct enum_value));
+  strncpy(current_value->name, "MPCOMP_TASK_LARCENY_MODE_RANDOM_ORDER", 50);
+  current_value->value = MPCOMP_TASK_LARCENY_MODE_RANDOM_ORDER;
+  HASH_ADD_STR(values, name, current_value);
 
-	current_value = (struct enum_value *) malloc(sizeof(struct enum_value));
-	strncpy(current_value->name, "MPCOMP_TASK_LARCENY_MODE_ROUNDROBIN", 50);
-	current_value->value = MPCOMP_TASK_LARCENY_MODE_ROUNDROBIN;
-	HASH_ADD_STR(values, name, current_value);
+  current_value = (struct enum_value *)malloc(sizeof(struct enum_value));
+  strncpy(current_value->name, "MPCOMP_TASK_LARCENY_MODE_ROUNDROBIN", 50);
+  current_value->value = MPCOMP_TASK_LARCENY_MODE_ROUNDROBIN;
+  HASH_ADD_STR(values, name, current_value);
 
-	current_value = (struct enum_value *) malloc(sizeof(struct enum_value));
-	strncpy(current_value->name, "MPCOMP_TASK_LARCENY_MODE_PRODUCER", 50);
-	current_value->value = MPCOMP_TASK_LARCENY_MODE_PRODUCER;
-	HASH_ADD_STR(values, name, current_value);
+  current_value = (struct enum_value *)malloc(sizeof(struct enum_value));
+  strncpy(current_value->name, "MPCOMP_TASK_LARCENY_MODE_PRODUCER", 50);
+  current_value->value = MPCOMP_TASK_LARCENY_MODE_PRODUCER;
+  HASH_ADD_STR(values, name, current_value);
 
-	current_value = (struct enum_value *) malloc(sizeof(struct enum_value));
-	strncpy(current_value->name, "MPCOMP_TASK_LARCENY_MODE_PRODUCER_ORDER", 50);
-	current_value->value = MPCOMP_TASK_LARCENY_MODE_PRODUCER_ORDER;
-	HASH_ADD_STR(values, name, current_value);
+  current_value = (struct enum_value *)malloc(sizeof(struct enum_value));
+  strncpy(current_value->name, "MPCOMP_TASK_LARCENY_MODE_PRODUCER_ORDER", 50);
+  current_value->value = MPCOMP_TASK_LARCENY_MODE_PRODUCER_ORDER;
+  HASH_ADD_STR(values, name, current_value);
 
-	current_value = (struct enum_value *) malloc(sizeof(struct enum_value));
-	strncpy(current_value->name, "MPCOMP_TASK_LARCENY_MODE_COUNT", 50);
-	current_value->value = MPCOMP_TASK_LARCENY_MODE_COUNT;
-	HASH_ADD_STR(values, name, current_value);
+  current_value = (struct enum_value *)malloc(sizeof(struct enum_value));
+  strncpy(current_value->name, "MPCOMP_TASK_LARCENY_MODE_COUNT", 50);
+  current_value->value = MPCOMP_TASK_LARCENY_MODE_COUNT;
+  HASH_ADD_STR(values, name, current_value);
 
-	current_enum->values = values;
-	HASH_ADD_STR(enums_types, name, current_enum);
+  current_enum->values = values;
+  HASH_ADD_STR(enums_types, name, current_enum);
 }
 
 /*******************  FUNCTION  *********************/
@@ -766,8 +769,8 @@ void sctk_runtime_config_struct_init_openmp(void * struct_ptr)
 	obj->max_alive_single = 3;
 	obj->warn_nested = false;
 	obj->mode = "simple-mixed";
-	obj->affinity = "balanced";
-	obj->init_done = 1;
+        obj->affinity = "balanced";
+        obj->init_done = 1;
 }
 
 /*******************  FUNCTION  *********************/
@@ -808,33 +811,34 @@ void sctk_runtime_config_struct_init_thread(void * struct_ptr)
 	obj->spin_delay = 10;
 	obj->interval = 10;
 	obj->kthread_stack_size = sctk_runtime_config_map_entry_parse_size("10MB");
-	obj->placement_policy.name = "sctk_get_init_vp_and_nbvp_default";
-	*(void **) &(obj->placement_policy.value) = sctk_runtime_config_get_symbol("sctk_get_init_vp_and_nbvp_default");
-	obj->init_done = 1;
+        obj->placement_policy.name = "sctk_get_init_vp_and_nbvp_default";
+        *(void **)&(obj->placement_policy.value) =
+            sctk_runtime_config_get_symbol("sctk_get_init_vp_and_nbvp_default");
+        obj->init_done = 1;
 }
 
 /*******************  FUNCTION  *********************/
-void sctk_runtime_config_struct_init_scheduler(void * struct_ptr)
-{
-	struct sctk_runtime_config_struct_scheduler * obj = struct_ptr;
-	/* Make sure this element is not initialized yet       */
-	/* It allows us to know when we are facing dynamically */
-	/* allocated objects requiring an init                 */
-	if( obj->init_done != 0 ) return;
+void sctk_runtime_config_struct_init_scheduler(void *struct_ptr) {
+  struct sctk_runtime_config_struct_scheduler *obj = struct_ptr;
+  /* Make sure this element is not initialized yet       */
+  /* It allows us to know when we are facing dynamically */
+  /* allocated objects requiring an init                 */
+  if (obj->init_done != 0)
+    return;
 
-	/* Simple params : */
-	obj->timestamp_threshold = 0.0;
-	obj->task_polling_thread_basic_priority = 20;
-	obj->task_polling_thread_basic_priority_step = 20;
-	obj->task_polling_thread_current_priority_step = 20;
-	obj->sched_NBC_Pthread_basic_priority = 20;
-	obj->sched_NBC_Pthread_basic_priority_step = 20;
-	obj->sched_NBC_Pthread_current_priority_step = 20;
-	obj->mpi_basic_priority = 20;
-	obj->omp_basic_priority = 20;
-	obj->posix_basic_priority = 20;
-	obj->progress_basic_priority = 20;
-	obj->init_done = 1;
+  /* Simple params : */
+  obj->timestamp_threshold = 0.0;
+  obj->task_polling_thread_basic_priority = 20;
+  obj->task_polling_thread_basic_priority_step = 20;
+  obj->task_polling_thread_current_priority_step = 20;
+  obj->sched_NBC_Pthread_basic_priority = 20;
+  obj->sched_NBC_Pthread_basic_priority_step = 20;
+  obj->sched_NBC_Pthread_current_priority_step = 20;
+  obj->mpi_basic_priority = 20;
+  obj->omp_basic_priority = 20;
+  obj->posix_basic_priority = 20;
+  obj->progress_basic_priority = 20;
+  obj->init_done = 1;
 }
 
 /*******************  FUNCTION  *********************/
@@ -863,14 +867,14 @@ void sctk_runtime_config_reset(struct sctk_runtime_config * config)
 #endif
 #ifdef MPC_OpenMP
 	sctk_runtime_config_struct_init_openmp(&config->modules.openmp);
-	sctk_runtime_config_enum_init_mpcomp_task_larceny_mode_t();
+        sctk_runtime_config_enum_init_mpcomp_task_larceny_mode_t();
 #endif
 #ifdef MPC_Profiler
 	sctk_runtime_config_struct_init_profiler(&config->modules.profiler);
 #endif
 #ifdef MPC_Threads
 	sctk_runtime_config_struct_init_thread(&config->modules.thread);
-	sctk_runtime_config_struct_init_scheduler(&config->modules.scheduler);
+        sctk_runtime_config_struct_init_scheduler(&config->modules.scheduler);
 #endif
 	sctk_runtime_config_struct_init_networks(&config->networks);
 	dlclose(sctk_handler);
@@ -1077,12 +1081,10 @@ void sctk_runtime_config_reset_struct_default_if_needed(const char * structname,
 		return;
 	}
 
-	if( !strcmp( structname , "sctk_runtime_config_struct_scheduler") )
-	{
-		sctk_runtime_config_struct_init_scheduler( ptr );
-		return;
-	}
-
+        if (!strcmp(structname, "sctk_runtime_config_struct_scheduler")) {
+          sctk_runtime_config_struct_init_scheduler(ptr);
+          return;
+        }
 }
 
 
