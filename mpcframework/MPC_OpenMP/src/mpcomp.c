@@ -349,7 +349,6 @@ TODO( "If OMP_NUM_THREADS is 0, let it equal to 0 by default and handle it later
 
   /******* OMP_AFFINITY *******/
   env = sctk_runtime_config_get()->modules.openmp.affinity;
-fprintf( stderr, "env = %s\n", env ) ;
   if ( env != NULL )
   {
     int ok = 0 ;
