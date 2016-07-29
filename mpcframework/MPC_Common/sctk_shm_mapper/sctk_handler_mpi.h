@@ -1,3 +1,4 @@
+#ifndef SCTK_LIB_MODE
 #include <stdlib.h>
 #include "sctk_shm_mapper.h"
 
@@ -28,4 +29,4 @@ struct sctk_alloc_mapper_handler_s* sctk_shm_mpi_handler_init(void);
  * @param option No option implemented 
  */
 void sctk_shm_mpi_handler_free(struct sctk_alloc_mapper_handler_s* mpi_handler);
-
+#endif
