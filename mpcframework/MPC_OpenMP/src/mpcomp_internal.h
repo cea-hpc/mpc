@@ -624,7 +624,7 @@ typedef struct mpcomp_thread_s
 	  t->push_num_threads = -1 ;
 	  t->father = father ;
 
-      sctk_debug( "__mpcomp_thread_init: father = %p\n", father ) ;
+      sctk_nodebug( "__mpcomp_thread_init: father = %p", father ) ;
 
 	  /* -- SINGLE CONSTRUCT -- */
 	  // t->single_sections_current = 0 ;
@@ -870,7 +870,6 @@ typedef struct mpcomp_thread_s
      int __mpcomp_build_tree(mpcomp_instance_t *instance, int n_leaves, int depth, int *degree);
      int __mpcomp_check_tree_coherency(mpcomp_instance_t *instance);
      void __mpcomp_print_tree(mpcomp_instance_t *instance);
-     int *__mpcomp_compute_topo_tree_array(hwloc_topology_t topology, int *depth, int *index) ;
 
      /* mpcomp_loop_dyn.c */
 	 void __mpcomp_dynamic_loop_init_ull(mpcomp_thread_t *t, unsigned long long lb, 
