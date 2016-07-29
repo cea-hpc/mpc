@@ -185,41 +185,43 @@ __mpcomp_check_tree_parameters(int n_leaves, int depth, int *degree)
 /*
  * Compute and return a topological tree array where levels that
  * do not bring any hierarchical structure are ignored.
- * Also return the 'depth' of the array and return in the 'index' array, 
- * the three indexes of, respectively, physical threads level, cores level
- * and socket level. 'index' must be allocated (3 int sized).
+ * Also return the 'depth' of the array.
  */
-int * 
-__mpcomp_compute_topo_tree_array(hwloc_topology_t topology, int *depth, int *index)
+static int * 
+__mpcomp_compute_topo_tree_array(hwloc_topology_t topology, int *depth)
 {
     int * degree ; /* Returned array */
     hwloc_const_cpuset_t topo_cpuset ;
     int topo_depth ;
-    int tree_depth = 0 ;
+    int tree_depth ;
     int i ;
     int save_n ;
+    int current_depth ;
 
     /* Grab the cpuset of the topology */
     topo_cpuset  = hwloc_topology_get_complete_cpuset( topology ) ;
 
     /* Get the depth of the topology */
     topo_depth = hwloc_topology_get_depth( topology );
+    sctk_assert( topo_depth > 0 ) ;
 
     /* First traversal: compute the tree depth */
-    save_n = 1 ;
-    for ( i = 0 ; i < topo_depth ; i++ ) {
+    tree_depth = 0 ;
+    save_n = hwloc_get_nbobjs_inside_cpuset_by_depth( topology, topo_cpuset, topo_depth-1 ) ;
+    for ( i = topo_depth-1 ; i >= 0 ; i-- )
+    {
         int n ;
 
         /* Get the number of elements at depth 'i' for the target cores */
         n = hwloc_get_nbobjs_inside_cpuset_by_depth( topology, topo_cpuset, i ) ;
-        /* If this number is different from the previous level,
-           it means that there is a change in the number of children
-           Record this difference as a new level of the target tree
-          */
-        if ( n != save_n ) {
-            sctk_nodebug( "__mpcomp_compute_topo_tree_array:\t"
-                    "Degree of depth %d -> %d", tree_depth, n/save_n ) ;
 
+        sctk_debug( "__mpcomp_compute_topo_tree_array:\tComparing level %d: n=%d, save_n=%d",
+                i, n, save_n ) ;
+
+        if ( (n != save_n) && (save_n%n == 0) )
+        {
+            sctk_debug( "__mpcomp_compute_topo_tree_array:\t"
+                    "Degree of depth %d -> %d", tree_depth, save_n/n ) ;
             tree_depth++ ;
             save_n = n ;
         }
@@ -228,48 +230,35 @@ __mpcomp_compute_topo_tree_array(hwloc_topology_t topology, int *depth, int *ind
     sctk_debug( "__mpcomp_compute_topo_tree_array: Depth of tree = %d",
             tree_depth ) ;
 
+    sctk_assert( tree_depth > 0 ) ;
+
     /* Allocate array for tree shape */
     degree = (int *)malloc( tree_depth * sizeof( int ) ) ;
     sctk_assert( degree ) ;
 
     /* Second traversal: Fill tree */
-    int current_depth = 0 ;
-    save_n = 1 ;
-    for ( i = 0 ; i < topo_depth ; i++ ) {
+    current_depth = tree_depth-1 ;
+    save_n = hwloc_get_nbobjs_inside_cpuset_by_depth( topology, topo_cpuset, topo_depth-1 ) ;
+    for ( i = topo_depth-1 ; i >= 0 ; i-- )
+    {
         int n ;
-        hwloc_obj_type_t type ;
-
-        type = hwloc_get_depth_type( topology, i ) ;
-        if ( type == HWLOC_OBJ_PU ) { 
-            sctk_debug("__mpcomp_compute_topo_tree_array:\t"
-                    "PU topo depth %d, tree depth %d", i, current_depth-1 ) ;
-            index[MPCOMP_TOPO_OBJ_THREAD] = current_depth-1 ;
-        }
-        if ( type == HWLOC_OBJ_CORE ) { 
-            sctk_debug("__mpcomp_compute_topo_tree_array:\t"
-                    "CORE topo depth %d, tree depth %d", i, current_depth-1 ) ;
-            index[MPCOMP_TOPO_OBJ_CORE] = current_depth-1 ;
-        }
-        if ( type == HWLOC_OBJ_SOCKET ) { 
-            sctk_debug("__mpcomp_compute_topo_tree_array:\t"
-                    "SOCKET topo depth %d, tree depth %d", i, current_depth-1 ) ;
-            index[MPCOMP_TOPO_OBJ_SOCKET] = current_depth-1 ;
-        }
 
         n = hwloc_get_nbobjs_inside_cpuset_by_depth( topology, topo_cpuset, i ) ;
-        if ( n != save_n ) {
-            degree[current_depth] = n/save_n ;
-            current_depth++ ;
+        if ( (n != save_n) && (save_n%n == 0) ) {
+            sctk_assert( current_depth >= 0 ) ;
+            degree[current_depth] = save_n/n ;
+            current_depth-- ;
             save_n = n ;
         }
-    }
 
+    }
 
     /* Update the tree depth */
     *depth = tree_depth ;
 
     /* Return the tree */
     return degree ;
+
 }
 
 
@@ -279,7 +268,6 @@ __mpcomp_compute_topo_tree_array(hwloc_topology_t topology, int *depth, int *ind
 int __mpcomp_build_default_tree(mpcomp_instance_t *instance)
 {
 	int depth ;
-	int index[3] ;
 	int * degree ;
 	int n_leaves ;
 	int i ;
@@ -290,7 +278,7 @@ int __mpcomp_build_default_tree(mpcomp_instance_t *instance)
 	sctk_assert(instance->topology != NULL);
 
 	/* Get the default topology shape */
-	degree = __mpcomp_compute_topo_tree_array(instance->topology, &depth, index ) ;
+	degree = __mpcomp_compute_topo_tree_array(instance->topology, &depth ) ;
 
 	/* Compute the number of leaves */
 	n_leaves = 1 ;
@@ -303,13 +291,6 @@ int __mpcomp_build_default_tree(mpcomp_instance_t *instance)
 	for ( i = 0 ; i < depth ; i++ ) {
 		sctk_debug( "__mpcomp_build_default_tree:\tDegree[%d] = %d", i, degree[i] ) ;
 	}
-
-#if MPCOMP_MIC
-	instance->scatter_depth = index[MPCOMP_TOPO_OBJ_CORE] ;
-#else /* MPCOMP_MIC */
-	instance->scatter_depth = index[MPCOMP_TOPO_OBJ_SOCKET] ;	
-#endif /* MPCOMP_MIC */
-	instance->core_depth = index[MPCOMP_TOPO_OBJ_CORE] ;
 
 	/* Check if the tree shape is correct */
 	if ( !__mpcomp_check_tree_parameters( n_leaves, depth, degree ) ) {
@@ -369,13 +350,28 @@ __mpcomp_build_tree( mpcomp_instance_t * instance, int n_leaves, int depth, int 
 	  sctk_assert( instance != NULL );
 	  sctk_assert( instance->mvps != NULL );
 
+      /***** PRINT ADDITIONAL SUMMARY (only first MPI rank) ******/
+      if (getenv ("MPC_DISABLE_BANNER") == NULL && sctk_process_rank == 0) 
+      {
+          fprintf( stderr, "\tOMP_TREE depth %d [", depth ) ;
+          for ( i = 0 ; i < depth ; i++ ) 
+          {
+              fprintf( stderr, "%d", degree[i] ) ;
+              if ( i != depth - 1 ) 
+              {
+                  fprintf( stderr, ", " ) ;
+              }
+          }
+          fprintf( stderr, "]\n" ) ;
+      }
+
       if ( __mpcomp_check_tree_parameters( n_leaves, depth, degree ) == 0 ) {
           sctk_error("Wrong OMP_TREE!" ) ;
           sctk_abort() ;
       }
 
       if ( n_leaves != instance->nb_mvps ) {
-          sctk_error("Wrong OMP_TREE! (test 2)" ) ;
+          sctk_error("Wrong OMP_TREE! (test 2): nb leaves %d, nb mvps %d", n_leaves, instance->nb_mvps ) ;
           sctk_abort() ;
       }
 
@@ -426,6 +422,32 @@ __mpcomp_build_tree( mpcomp_instance_t * instance, int n_leaves, int depth, int 
      }
 #endif /* MPCOMP_TASK */
 
+     /* Compute the depth for BALANCED and SCATTER */
+     int n_cores, n_numa ;
+
+     n_cores = hwloc_get_nbobjs_by_type( instance->topology, HWLOC_OBJ_CORE ) ;
+     n_numa = hwloc_get_nbobjs_by_type( instance->topology, HWLOC_OBJ_NUMANODE ) ;
+
+     instance->core_depth = -1 ;
+     instance->scatter_depth = -1 ;
+     /* Stop when encountering a level with the right number of elements
+      * or a lower number (it may happen when the user specified the tree shape */
+     for ( i = instance->tree_depth ; i >= 0 ; i-- ) 
+     {
+         if ( instance->core_depth == -1 &&
+                 instance->tree_nb_nodes_per_depth[ i ] <= n_cores ) {
+             instance->core_depth = i ;
+         }
+         if ( instance->scatter_depth == -1 &&
+                 instance->tree_nb_nodes_per_depth[ i ] <= n_numa) {
+             instance->scatter_depth = i ;
+         }
+     }
+
+     sctk_debug( "__mpcomp_build_tree: n_cores=%d, n_numa=%d => core_depth=%d, scatter_depth=%d", 
+             n_cores, n_numa, instance->core_depth, instance->scatter_depth ) ;
+     
+
 
 	  /* Compute the max number of elements on the stack */
 	  max_stack_elements = 1;
@@ -445,7 +467,7 @@ __mpcomp_build_tree( mpcomp_instance_t * instance, int n_leaves, int depth, int 
 	  /* Get the number of CPUs */
 	  nb_cpus = sctk_get_cpu_number_topology(instance->topology) ;
 
-	  sctk_debug( "__mpcomp_build_tree: number of cpus: %d", nb_cpus ) ;
+	  sctk_nodebug( "__mpcomp_build_tree: number of cpus: %d", nb_cpus ) ;
 
 	  /* Grab the right order to allocate microVPs (sctk_get_neighborhood) */
 	  order = sctk_malloc( nb_cpus * sizeof( int ) );
@@ -545,7 +567,19 @@ __mpcomp_build_tree( mpcomp_instance_t * instance, int n_leaves, int depth, int 
 			 instance->mvps[current_mvp]->min_index[MPCOMP_AFFINITY_COMPACT] = n->min_index[MPCOMP_AFFINITY_COMPACT]+i;
              instance->mvps[current_mvp]->min_index[MPCOMP_AFFINITY_SCATTER] = 
                  __mpcomp_compute_scatter_min_index( n, instance, i ) ;
-			 instance->mvps[current_mvp]->min_index[MPCOMP_AFFINITY_BALANCED] = n->min_index[MPCOMP_AFFINITY_COMPACT]+i; /* TODO: compute the real value */
+			 // instance->mvps[current_mvp]->min_index[MPCOMP_AFFINITY_BALANCED] = n->min_index[MPCOMP_AFFINITY_COMPACT]+i; /* TODO: compute the real value */
+             if ( n->depth < instance->core_depth )
+             {
+                 instance->mvps[current_mvp]->min_index[MPCOMP_AFFINITY_BALANCED] = 
+                     n->min_index[MPCOMP_AFFINITY_BALANCED] +
+                     // i * instance->tree_cumulative[n->depth] / instance->tree_nb_nodes_per_depth[instance->core_depth] ;
+                     i * instance->tree_cumulative[n->depth] / instance->tree_cumulative[instance->core_depth-1] ;
+             } else 
+             {
+                 instance->mvps[current_mvp]->min_index[MPCOMP_AFFINITY_BALANCED] =
+                     n->min_index[MPCOMP_AFFINITY_BALANCED] +
+                     i * instance->tree_nb_nodes_per_depth[ n->depth ] ;
+             }
 			 instance->mvps[current_mvp]->enable = 1;
 			 instance->mvps[current_mvp]->tree_rank = 
 			      (int *)mpcomp_malloc(1, depth*sizeof(int), target_numa );
@@ -656,12 +690,21 @@ __mpcomp_build_tree( mpcomp_instance_t * instance, int n_leaves, int depth, int 
 			      i * instance->tree_cumulative[n->depth] ;
              min_index[MPCOMP_AFFINITY_SCATTER] = __mpcomp_compute_scatter_min_index(
                      n, instance, i ) ;
-#if 0
-			 min_index[MPCOMP_AFFINITY_BALANCED] = n->min_index[MPCOMP_AFFINITY_BALANCED] + 
-			      i * (n->max_index[MPCOMP_AFFINITY_BALANCED] - n->min_index[MPCOMP_AFFINITY_BALANCED]) / 
-			      degree[ n->depth ];; /* TODO: compute the real value */
-#endif
-			 min_index[MPCOMP_AFFINITY_BALANCED] = min_index[MPCOMP_AFFINITY_COMPACT] ;
+			 // min_index[MPCOMP_AFFINITY_BALANCED] = min_index[MPCOMP_AFFINITY_COMPACT] ;
+             if ( n->depth < instance->core_depth ) 
+             {
+                 min_index[MPCOMP_AFFINITY_BALANCED] = n->min_index[MPCOMP_AFFINITY_BALANCED] +
+                     // i * instance->tree_cumulative[n->depth] / instance->tree_nb_nodes_per_depth[instance->core_depth] ;
+                     i * instance->tree_cumulative[n->depth] / instance->tree_cumulative[instance->core_depth-1] ;
+             } else
+             {
+                 min_index[MPCOMP_AFFINITY_BALANCED] = n->min_index[MPCOMP_AFFINITY_BALANCED] +
+                     i * instance->tree_nb_nodes_per_depth[ n->depth ] ;
+             }
+             sctk_debug( "__mpcomp_build_tree: i=%d, n->depth=%d, instance->core_depth=%d, min_index[MPCOMP_AFFINITY_BALANCED]=%d "
+                     "n->min_index[MPCOMP_AFFINITY_BALANCED]=%d",
+                     i, n->depth, instance->core_depth, min_index[MPCOMP_AFFINITY_BALANCED],
+                     n->min_index[MPCOMP_AFFINITY_BALANCED] ) ;
 
 			 child_target_numa = sctk_get_node_from_cpu_topology( instance->topology, 
                      order[ min_index[MPCOMP_AFFINITY_COMPACT] ] ) ;
@@ -739,6 +782,7 @@ __mpcomp_print_tree( mpcomp_instance_t * instance ) {
 	 }
 	 fprintf( stderr, "]" ) ;
 
+     /* Print the cumulative array */
 	 fprintf( stderr, " Cumulative = [" ) ;
 	 for ( i = 0 ; i < instance->tree_depth ; i++ ) {
 		 if ( i != 0 ) {
@@ -748,6 +792,7 @@ __mpcomp_print_tree( mpcomp_instance_t * instance ) {
 	 }
 	 fprintf( stderr, "]" ) ;
 
+     /* Print the number of nodes per level */
 	 fprintf( stderr, " #Nodes per depth = [" ) ;
 	 for ( i = 0 ; i <= instance->tree_depth ; i++ ) {
 		 if ( i != 0 ) {
@@ -756,6 +801,9 @@ __mpcomp_print_tree( mpcomp_instance_t * instance ) {
 		 fprintf( stderr, "%d", instance->tree_nb_nodes_per_depth[i] ) ;
 	 }
 	 fprintf( stderr, "]" ) ;
+
+     /* Print the level of physical cores and scatter */
+     fprintf( stderr, " physical_core level=%d, scatter level=%d", instance->core_depth, instance->scatter_depth ) ;
 
      fprintf( stderr, "\n" ) ;
 
