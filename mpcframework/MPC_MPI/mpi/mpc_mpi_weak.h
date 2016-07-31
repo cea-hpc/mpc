@@ -21,6 +21,7 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
+// PROFILER MPI_POINT_TO_POINT MPI point to point
 #pragma weak MPI_Send = PMPI_Send
 #pragma weak mpi_send_ = pmpi_send_
 #pragma weak mpi_send__ = pmpi_send__
@@ -60,6 +61,7 @@
 #pragma weak MPI_Irecv = PMPI_Irecv
 #pragma weak mpi_irecv_ = pmpi_irecv_
 #pragma weak mpi_irecv__ = pmpi_irecv__
+// PROFILER MPI_WAIT MPI Waiting
 #pragma weak MPI_Wait = PMPI_Wait
 #pragma weak mpi_wait_ = pmpi_wait_
 #pragma weak mpi_wait__ = pmpi_wait__
@@ -96,6 +98,7 @@
 #pragma weak MPI_Cancel = PMPI_Cancel
 #pragma weak mpi_cancel_ = pmpi_cancel_
 #pragma weak mpi_cancel__ = pmpi_cancel__
+// PROFILER MPI_PERSIST MPI Persitant communications
 #pragma weak MPI_Send_init = PMPI_Send_init
 #pragma weak mpi_send_init_ = pmpi_send_init_
 #pragma weak mpi_send_init__ = pmpi_send_init__
@@ -117,12 +120,14 @@
 #pragma weak MPI_Startall = PMPI_Startall
 #pragma weak mpi_startall_ = pmpi_startall_
 #pragma weak mpi_startall__ = pmpi_startall__
+// PROFILER MPI_SENDRECV MPI Sendrecv
 #pragma weak MPI_Sendrecv = PMPI_Sendrecv
 #pragma weak mpi_sendrecv_ = pmpi_sendrecv_
 #pragma weak mpi_sendrecv__ = pmpi_sendrecv__
 #pragma weak MPI_Sendrecv_replace = PMPI_Sendrecv_replace
 #pragma weak mpi_sendrecv_replace_ = pmpi_sendrecv_replace_
 #pragma weak mpi_sendrecv_replace__ = pmpi_sendrecv_replace__
+// PROFILER MPI_TYPES MPI type related
 #pragma weak MPI_Type_contiguous = PMPI_Type_contiguous
 #pragma weak mpi_type_contiguous_ = pmpi_type_contiguous_
 #pragma weak mpi_type_contiguous__ = pmpi_type_contiguous__
@@ -174,6 +179,7 @@
 #pragma weak MPI_Get_elements = PMPI_Get_elements
 #pragma weak mpi_get_elements_ = pmpi_get_elements_
 #pragma weak mpi_get_elements__ = pmpi_get_elements__
+// PROFILER MPI_PACK MPI Pack related
 #pragma weak MPI_Pack = PMPI_Pack
 #pragma weak mpi_pack_ = pmpi_pack_
 #pragma weak mpi_pack__ = pmpi_pack__
@@ -183,6 +189,7 @@
 #pragma weak MPI_Pack_size = PMPI_Pack_size
 #pragma weak mpi_pack_size_ = pmpi_pack_size_
 #pragma weak mpi_pack_size__ = pmpi_pack_size__
+// PROFILER MPI_COLLECTIVES MPI Collective communications
 #pragma weak MPI_Barrier = PMPI_Barrier
 #pragma weak mpi_barrier_ = pmpi_barrier_
 #pragma weak mpi_barrier__ = pmpi_barrier__
@@ -258,6 +265,7 @@
 #pragma weak MPI_Exscan = PMPI_Exscan
 #pragma weak mpi_exscan_ = pmpi_exscan_
 #pragma weak mpi_exscan__ = pmpi_exscan__
+// PROFILER MPI_GROUP MPI Group operation
 #pragma weak MPI_Group_size = PMPI_Group_size
 #pragma weak mpi_group_size_ = pmpi_group_size_
 #pragma weak mpi_group_size__ = pmpi_group_size__
@@ -297,6 +305,7 @@
 #pragma weak MPI_Group_free = PMPI_Group_free
 #pragma weak mpi_group_free_ = pmpi_group_free_
 #pragma weak mpi_group_free__ = pmpi_group_free__
+// PROFILER MPI_COMM MPI Communicator operation
 #pragma weak MPI_Comm_size = PMPI_Comm_size
 #pragma weak mpi_comm_size_ = pmpi_comm_size_
 #pragma weak mpi_comm_size__ = pmpi_comm_size__
@@ -333,6 +342,7 @@
 #pragma weak MPI_Intercomm_merge = PMPI_Intercomm_merge
 #pragma weak mpi_intercomm_merge_ = pmpi_intercomm_merge_
 #pragma weak mpi_intercomm_merge__ = pmpi_intercomm_merge__
+// PROFILER MPI_KEYS MPI keys operations
 #pragma weak MPI_Keyval_create = PMPI_Keyval_create
 #pragma weak mpi_keyval_create_ = pmpi_keyval_create_
 #pragma weak mpi_keyval_create__ = pmpi_keyval_create__
@@ -349,6 +359,7 @@
 #pragma weak MPI_Attr_delete = PMPI_Attr_delete
 #pragma weak mpi_attr_delete_ = pmpi_attr_delete_
 #pragma weak mpi_attr_delete__ = pmpi_attr_delete__
+// PROFILER MPI_TOPO MPI Topology operations
 #pragma weak MPI_Topo_test = PMPI_Topo_test
 #pragma weak mpi_topo_test_ = pmpi_topo_test_
 #pragma weak mpi_topo_test__ = pmpi_topo_test__
@@ -403,6 +414,7 @@
 #pragma weak MPI_Get_version = PMPI_Get_version
 #pragma weak mpi_get_version_ = pmpi_get_version_
 #pragma weak mpi_get_version__ = pmpi_get_version__
+// PROFILER MPI_ERROR MPI Errors operations
 #pragma weak MPI_Errhandler_create = PMPI_Errhandler_create
 #pragma weak mpi_errhandler_create_ = pmpi_errhandler_create_
 #pragma weak mpi_errhandler_create__ = pmpi_errhandler_create__
@@ -421,6 +433,7 @@
 #pragma weak MPI_Error_class = PMPI_Error_class
 #pragma weak mpi_error_class_ = pmpi_error_class_
 #pragma weak mpi_error_class__ = pmpi_error_class__
+// PROFILER MPI_TIME MPI_Timing operations
 #pragma weak MPI_Wtime = PMPI_Wtime
 #pragma weak mpi_wtime_ = pmpi_wtime_
 #pragma weak mpi_wtime__ = pmpi_wtime__
@@ -430,6 +443,7 @@
 #pragma weak MPI_Init = PMPI_Init
 #pragma weak mpi_init_ = pmpi_init_
 #pragma weak mpi_init__ = pmpi_init__
+// PROFILER MPI_INIT_FINALIZE MPI Env operations
 #pragma weak MPI_Finalize = PMPI_Finalize
 #pragma weak mpi_finalize_ = pmpi_finalize_
 #pragma weak mpi_finalize__ = pmpi_finalize__
@@ -448,7 +462,7 @@
 
 #pragma weak MPI_Comm_get_attr = PMPI_Attr_get
 #pragma weak mpi_comm_get_attr_ = pmpi_attr_get_
-#pragma weak mpi_comm_get_attr_ = pmpi_attr_get__
+#pragma weak mpi_comm_get_attr__ = pmpi_attr_get__
 
 #pragma weak MPI_Comm_get_name = PMPI_Comm_get_name
 #pragma weak mpi_comm_get_name_ = pmpi_comm_get_name_
@@ -469,6 +483,7 @@
 #pragma weak mpi_query_thread_ = pmpi_query_thread_
 #pragma weak mpi_query_thread__ = pmpi_query_thread__
 
+// PROFILER MPI_FORTRAN MPI C Fortran operation
 #pragma weak MPI_Comm_f2c = PMPI_Comm_f2c
 #pragma weak MPI_Comm_c2f = PMPI_Comm_c2f
 #pragma weak MPI_Type_f2c = PMPI_Type_f2c
@@ -486,6 +501,7 @@
 #pragma weak MPI_Errhandler_f2c = PMPI_Errhandler_f2c
 #pragma weak MPI_Errhandler_c2f = PMPI_Errhandler_c2f
 
+// PROFILER MPI_INFO MPI Info operations
 #pragma weak MPI_Info_create = PMPI_Info_create
 #pragma weak mpi_info_create_ = pmpi_info_create_
 #pragma weak mpi_info_create__ = pmpi_info_create__
@@ -522,6 +538,7 @@
 #pragma weak mpi_info_get_valuelen_ = pmpi_info_get_valuelen_
 #pragma weak mpi_info_get_valuelen__ = pmpi_info_get_valuelen__
 
+// PROFILER MPI_GREQUEST MPI geral requests operations
 #pragma weak MPI_Grequest_start = PMPI_Grequest_start
 #pragma weak mpi_grequest_start_ = pmpi_grequest_start_
 #pragma weak mpi_grequest_start__ = pmpi_grequest_start__
@@ -550,6 +567,7 @@
 #pragma weak mpi_request_get_status_ = pmpi_request_get_status_
 #pragma weak mpi_request_get_status__ = pmpi_request_get_status__
 
+// PROFILER MPI_OTHER MPI other operations
 #pragma weak MPI_Test_cancelled = PMPI_Test_cancelled
 #pragma weak mpi_test_cancelled_ = pmpi_test_cancelled_
 #pragma weak mpi_test_cancelled__ = pmpi_test_cancelled__
@@ -588,7 +606,8 @@
 
 #pragma weak MPI_Type_create_hindexed_block = PMPI_Type_create_hindexed_block
 #pragma weak mpi_type_create_hindexed_block_ = pmpi_type_create_hindexed_block_
-#pragma weak mpi_type_create_hindexed_block__ = pmpi_type_create_hindexed_block__
+#pragma weak mpi_type_create_hindexed_block__ =                                \
+    pmpi_type_create_hindexed_block__
 
 #pragma weak MPI_Type_create_indexed_block = PMPI_Type_create_indexed_block
 #pragma weak mpi_type_create_indexed_block_ = pmpi_type_create_indexed_block_
@@ -631,19 +650,20 @@
 #pragma weak mpi_unpack_external_ = pmpi_unpack_external_
 #pragma weak mpi_unpack_external__ = pmpi_unpack_external__
 
-#pragma weak  MPI_Free_mem = PMPI_Free_mem
-#pragma weak  mpi_free_mem_ = pmpi_free_mem_
-#pragma weak  mpi_free_mem__ = pmpi_free_mem__
+#pragma weak MPI_Free_mem = PMPI_Free_mem
+#pragma weak mpi_free_mem_ = pmpi_free_mem_
+#pragma weak mpi_free_mem__ = pmpi_free_mem__
 
-#pragma weak  MPI_Alloc_mem = PMPI_Alloc_mem
-#pragma weak  mpi_alloc_mem_ = pmpi_alloc_mem_
-#pragma weak  mpi_alloc_mem__ = pmpi_alloc_mem__
+#pragma weak MPI_Alloc_mem = PMPI_Alloc_mem
+#pragma weak mpi_alloc_mem_ = pmpi_alloc_mem_
+#pragma weak mpi_alloc_mem__ = pmpi_alloc_mem__
 
 /************************************************************************/
 /*  NOT IMPLEMENTED                                                     */
 /************************************************************************/
 
 /* One-sided communications */
+// PROFILER MPI_ONE_SIDED MPI One-sided communications
 #pragma weak MPI_Win_set_attr = PMPI_Win_set_attr
 #pragma weak MPI_Win_get_attr = PMPI_Win_get_attr
 #pragma weak MPI_Win_free_keyval = PMPI_Win_free_keyval
@@ -704,7 +724,7 @@
 #pragma weak mpi_win_unlock_ = pmpi_win_unlock_
 #pragma weak mpi_win_post_ = pmpi_win_post_
 #pragma weak mpi_win_wait_ = pmpi_win_wait_
-#pragma weak mpi_win_allocate_= pmpi_win_allocate_
+#pragma weak mpi_win_allocate_ = pmpi_win_allocate_
 #pragma weak mpi_win_test_ = pmpi_win_test_
 #pragma weak mpi_win_set_name_ = pmpi_win_set_name_
 #pragma weak mpi_win_get_name_ = pmpi_win_get_name_
@@ -750,14 +770,14 @@
 #pragma weak mpi_win_unlock__ = pmpi_win_unlock__
 #pragma weak mpi_win_post__ = pmpi_win_post__
 #pragma weak mpi_win_wait__ = pmpi_win_wait__
-#pragma weak mpi_win_allocate__= pmpi_win_allocate__
+#pragma weak mpi_win_allocate__ = pmpi_win_allocate__
 #pragma weak mpi_win_test__ = pmpi_win_test__
 #pragma weak mpi_win_set_name__ = pmpi_win_set_name__
 #pragma weak mpi_win_get_name__ = pmpi_win_get_name__
 #pragma weak mpi_win_create_errhandler__ = pmpi_win_create_errhandler__
 #pragma weak mpi_win_set_errhandler__ = pmpi_win_set_errhandler__
 #pragma weak mpi_win_get_errhandler__ = pmpi_win_get_errhandler__
-#pragma weak mpi_win_get_group_ = pmpi_win_get_group_
+#pragma weak mpi_win_get_group__ = pmpi_win_get_group__
 #pragma weak mpi_win_call_errhandler__ = pmpi_win_call_errhandler__
 #pragma weak mpi_win_allocate_shared__ = pmpi_win_allocate_shared__
 #pragma weak mpi_win_create_dynamic__ = pmpi_win_create_dynamic_
@@ -783,10 +803,11 @@
 #pragma weak mpi_put__ = pmpi_put__
 
 /* Communicator Management */
+// PROFILER MPI_COMM_MANAGE MPI Communicator Management
 #pragma weak MPI_Comm_create_keyval = PMPI_Comm_create_keyval
-#pragma weak MPI_Comm_delete_attr  = PMPI_Comm_delete_attr
-#pragma weak MPI_Comm_free_keyval  = PMPI_Comm_free_keyval
-#pragma weak MPI_Comm_set_attr  = PMPI_Comm_set_attr
+#pragma weak MPI_Comm_delete_attr = PMPI_Comm_delete_attr
+#pragma weak MPI_Comm_free_keyval = PMPI_Comm_free_keyval
+#pragma weak MPI_Comm_set_attr = PMPI_Comm_set_attr
 #pragma weak MPI_Comm_create_errhandler = PMPI_Comm_create_errhandler
 #pragma weak MPI_Comm_dup_with_info = PMPI_Comm_dup_with_info
 #pragma weak MPI_Comm_split_type = PMPI_Comm_split_type
@@ -799,9 +820,9 @@
 #pragma weak MPI_Comm_set_errhandler = PMPI_Comm_set_errhandler
 
 #pragma weak mpi_comm_create_keyval_ = pmpi_comm_create_keyval_
-#pragma weak mpi_comm_delete_attr_  = pmpi_comm_delete_attr_
-#pragma weak mpi_comm_free_keyval_  = pmpi_comm_free_keyval_
-#pragma weak mpi_comm_set_attr_  = pmpi_comm_set_attr_
+#pragma weak mpi_comm_delete_attr_ = pmpi_comm_delete_attr_
+#pragma weak mpi_comm_free_keyval_ = pmpi_comm_free_keyval_
+#pragma weak mpi_comm_set_attr_ = pmpi_comm_set_attr_
 #pragma weak mpi_comm_create_errhandler_ = pmpi_comm_create_errhandler_
 #pragma weak mpi_comm_dup_with_info_ = pmpi_comm_dup_with_info_
 #pragma weak mpi_comm_split_type_ = pmpi_comm_split_type_
@@ -814,9 +835,9 @@
 #pragma weak mpi_comm_set_errhandler_ = pmpi_comm_set_errhandler_
 
 #pragma weak mpi_comm_create_keyval__ = pmpi_comm_create_keyval__
-#pragma weak mpi_comm_delete_attr__  = pmpi_comm_delete_attr__
-#pragma weak mpi_comm_free_keyval__  = pmpi_comm_free_keyval__
-#pragma weak mpi_comm_set_attr__  = pmpi_comm_set_attr__
+#pragma weak mpi_comm_delete_attr__ = pmpi_comm_delete_attr__
+#pragma weak mpi_comm_free_keyval__ = pmpi_comm_free_keyval__
+#pragma weak mpi_comm_set_attr__ = pmpi_comm_set_attr__
 #pragma weak mpi_comm_create_errhandler__ = pmpi_comm_create_errhandler__
 #pragma weak mpi_comm_dup_with_info__ = pmpi_comm_dup_with_info__
 #pragma weak mpi_comm_split_type__ = pmpi_comm_split_type__
@@ -829,6 +850,7 @@
 #pragma weak mpi_comm_set_errhandler__ = pmpi_comm_set_errhandler__
 
 /* datatype handling */
+// PROFILER MPI_TYPE_ENV MPI datatype handling
 #pragma weak MPI_Type_create_keyval = PMPI_Type_create_keyval
 #pragma weak MPI_Type_set_attr = PMPI_Type_set_attr
 #pragma weak MPI_Type_get_attr = PMPI_Type_get_attr
@@ -848,6 +870,7 @@
 #pragma weak mpi_type_free_keyval__ = pmpi_type_free_keyval__
 
 /* MPI environmental management */
+// PROFILER MPI_ENV_MAN MPI environmental management
 #pragma weak MPI_Add_error_class = PMPI_Add_error_class
 #pragma weak MPI_Add_error_code = PMPI_Add_error_code
 #pragma weak MPI_Add_error_string = PMPI_Add_error_string
@@ -867,13 +890,14 @@
 #pragma weak mpi_get_library_version__ = pmpi_get_library_version__
 
 /* Process creation and Management */
+// PROFILER MPI_PROCESS_CREATE Process creation and Management
 #pragma weak MPI_Close_port = PMPI_Close_port
 #pragma weak MPI_Comm_accept = PMPI_Comm_accept
 #pragma weak MPI_Comm_connect = PMPI_Comm_connect
 #pragma weak MPI_Comm_disconnect = PMPI_Comm_disconnect
 #pragma weak MPI_Comm_get_parent = PMPI_Comm_get_parent
 #pragma weak MPI_Comm_join = PMPI_Comm_join
-#pragma weak MPI_Comm_spawn  = PMPI_Comm_spawn
+#pragma weak MPI_Comm_spawn = PMPI_Comm_spawn
 #pragma weak MPI_Comm_spawn_multiple = PMPI_Comm_spawn_multiple
 #pragma weak MPI_Lookup_name = PMPI_Lookup_name
 #pragma weak MPI_Open_port = PMPI_Open_port
@@ -906,8 +930,8 @@
 #pragma weak mpi_publish_name__ = pmpi_publish_name__
 #pragma weak mpi_unpublish_name__ = pmpi_unpublish_name__
 
-
 /* Dist graph operations */
+// PROFILER MPI_DIST_GRAPH MPI Dist graph operations
 #pragma weak MPI_Dist_graph_neighbors_count = PMPI_Dist_graph_neighbors_count
 #pragma weak MPI_Dist_graph_neighbors = PMPI_Dist_graph_neighbors
 #pragma weak MPI_Dist_graph_create = PMPI_Dist_graph_create
@@ -918,10 +942,12 @@
 #pragma weak mpi_dist_graph_create_ = pmpi_dist_graph_create_
 #pragma weak mpi_dist_graph_create_adjacent_ = pmpi_dist_graph_create_adjacent_
 
-#pragma weak mpi_dist_graph_neighbors_count__ = pmpi_dist_graph_neighbors_count__
+#pragma weak mpi_dist_graph_neighbors_count__ =                                \
+    pmpi_dist_graph_neighbors_count__
 #pragma weak mpi_dist_graph_neighbors__ = pmpi_dist_graph_neighbors__
 #pragma weak mpi_dist_graph_create__ = pmpi_dist_graph_create__
-#pragma weak mpi_dist_graph_create_adjacent__ = pmpi_dist_graph_create_adjacent__
+#pragma weak mpi_dist_graph_create_adjacent__ =                                \
+    pmpi_dist_graph_create_adjacent__
 
 /* collectives */
 #pragma weak MPI_Reduce_local = PMPI_Reduce_local
@@ -939,6 +965,7 @@
 #pragma weak mpi_file_call_errhandler__ = pmpi_file_call_errhandler__
 
 /* MPI_T methods */
+// PROFILER MPI_T MPI_T methods
 #pragma weak MPI_T_init_thread = PMPI_T_init_thread
 #pragma weak MPI_T_finalize = PMPI_T_finalize
 
@@ -1049,6 +1076,7 @@
 #pragma weak mpix_comm_shrink__ = pmpix_comm_shrink__
 
 /* probe and cancel */
+// PROFILER MPI_PROBE_CANCEL MPI probe and cancel
 #pragma weak MPI_Mprobe = PMPI_Mprobe
 #pragma weak MPI_Mrecv = PMPI_Mrecv
 #pragma weak MPI_Improbe = PMPI_Improbe
@@ -1066,5 +1094,3 @@
 /************************************************************************/
 /*  NOT IMPLEMENTED                                                     */
 /************************************************************************/
-
-

@@ -11878,10 +11878,8 @@ SCTK__MPI_INIT_REQUEST (MPI_Request * request)
   *request = MPI_REQUEST_NULL;
 }
 
-int
-PMPI_Send (void *buf, int count, MPI_Datatype datatype, int dest, int tag,
-	   MPI_Comm comm)
-{
+static inline int PMPI_Send_p(void *buf, int count, MPI_Datatype datatype,
+                              int dest, int tag, MPI_Comm comm) {
   int res = MPI_ERR_INTERN;
   sctk_debug ("SEND buf %p type %d tag %d dest %d count %d", buf, datatype,tag,dest,count);
   if(dest == MPC_PROC_NULL)
@@ -11909,58 +11907,70 @@ PMPI_Send (void *buf, int count, MPI_Datatype datatype, int dest, int tag,
   SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
 
-int PMPI_Recv (void *buf, int count, MPI_Datatype datatype, int source, int tag,
-	   MPI_Comm comm, MPI_Status * status)
-{
-	sctk_nodebug("MPI_Recv count %d, datatype %d, source %d, tag %d, comm %d", count, datatype, source, tag, comm);
-	int res = MPI_ERR_INTERN;
-	if(source == MPC_PROC_NULL)
-	{
-		res = MPI_SUCCESS;
-		MPI_Status empty_status;
-		empty_status.MPC_SOURCE = MPI_PROC_NULL;
-		empty_status.MPC_TAG = MPI_ANY_TAG;
-		empty_status.MPC_ERROR = MPI_SUCCESS;
-		empty_status.cancelled = 0;
-		empty_status.size = 0;
-             
-		if(status != MPI_STATUS_IGNORE)
-			*status = empty_status;
+int PMPI_Send(void *buf, int count, MPI_Datatype datatype, int dest, int tag,
+              MPI_Comm comm) {
+  int res;
+  SCTK_PROFIL_START(MPI_Send);
+  res = PMPI_Send_p(buf, count, datatype, dest, tag, comm);
+  SCTK_PROFIL_END(MPI_Send);
+  return res;
+}
+static inline int PMPI_Recv_p(void *buf, int count, MPI_Datatype datatype,
+                              int source, int tag, MPI_Comm comm,
+                              MPI_Status *status) {
+  sctk_nodebug("MPI_Recv count %d, datatype %d, source %d, tag %d, comm %d",
+               count, datatype, source, tag, comm);
+  int res = MPI_ERR_INTERN;
+  if (source == MPC_PROC_NULL) {
+    res = MPI_SUCCESS;
+    MPI_Status empty_status;
+    empty_status.MPC_SOURCE = MPI_PROC_NULL;
+    empty_status.MPC_TAG = MPI_ANY_TAG;
+    empty_status.MPC_ERROR = MPI_SUCCESS;
+    empty_status.cancelled = 0;
+    empty_status.size = 0;
 
-		SCTK_MPI_CHECK_RETURN_VAL (res, comm);
-	}
-	SCTK__MPI_INIT_STATUS (status);
-	{
-		int size;
-		mpi_check_comm (comm, comm);
-		mpi_check_type (datatype, comm);
-		mpi_check_count (count, comm);
-		sctk_nodebug ("tag %d", tag);
-		mpi_check_tag (tag, comm);
-		__INTERNAL__PMPI_Comm_size (comm, &size);
-		if(sctk_is_inter_comm(comm) == 0)
-		{
-			mpi_check_rank (source, size, comm);
-		}
-		if (count != 0)
-		{
-			mpi_check_buf (buf, comm);
-		}
-	}
-	
-	res = __INTERNAL__PMPI_Recv (buf, count, datatype, source, tag, comm, status);
+    if (status != MPI_STATUS_IGNORE)
+      *status = empty_status;
 
-	if(status != MPI_STATUS_IGNORE)
-	{
-		if(status->MPI_ERROR != MPI_SUCCESS)
-		{
-			res = status->MPI_ERROR;
-		}
-	}
+    SCTK_MPI_CHECK_RETURN_VAL(res, comm);
+  }
+  SCTK__MPI_INIT_STATUS(status);
+  {
+    int size;
+    mpi_check_comm(comm, comm);
+    mpi_check_type(datatype, comm);
+    mpi_check_count(count, comm);
+    sctk_nodebug("tag %d", tag);
+    mpi_check_tag(tag, comm);
+    __INTERNAL__PMPI_Comm_size(comm, &size);
+    if (sctk_is_inter_comm(comm) == 0) {
+      mpi_check_rank(source, size, comm);
+    }
+    if (count != 0) {
+      mpi_check_buf(buf, comm);
+    }
+  }
 
-	SCTK_MPI_CHECK_RETURN_VAL (res, comm);
+  res = __INTERNAL__PMPI_Recv(buf, count, datatype, source, tag, comm, status);
+
+  if (status != MPI_STATUS_IGNORE) {
+    if (status->MPI_ERROR != MPI_SUCCESS) {
+      res = status->MPI_ERROR;
+    }
+  }
+
+  SCTK_MPI_CHECK_RETURN_VAL(res, comm);
 }
 
+int PMPI_Recv(void *buf, int count, MPI_Datatype datatype, int source, int tag,
+              MPI_Comm comm, MPI_Status *status) {
+  int res;
+  SCTK_PROFIL_START(MPI_Recv);
+  res = PMPI_Recv_p(buf, count, datatype, source, tag, comm, status);
+  SCTK_PROFIL_END(MPI_Recv);
+  return res;
+}
 int PMPI_Get_count (MPI_Status * status, MPI_Datatype datatype, int *count)
 {
 	MPI_Comm comm = MPI_COMM_WORLD;
