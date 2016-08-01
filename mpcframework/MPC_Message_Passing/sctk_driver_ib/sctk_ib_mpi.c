@@ -123,7 +123,7 @@ rdma:
 exit:
 	{}
 
-	PROF_TIME_END ( rail, ib_send_message );
+	//PROF_TIME_END ( rail, ib_send_message );
 }
 
 
