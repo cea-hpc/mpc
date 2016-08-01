@@ -25,6 +25,7 @@
 
 PROBE( MPI, NO_PARENT, MPI Interface)
 #include "sctk_profiler_keys_mpi.h"
+#include "sctk_profiler_keys_mpi_nbc.h"
 
 PROBE(MPC, NO_PARENT, MPC Interface)
 PROBE(MPC_POINT_TO_POINT, MPC, MPC point to point)
