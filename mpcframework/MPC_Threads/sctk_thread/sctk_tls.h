@@ -33,7 +33,6 @@
 #include <sctk_accelerators.h>
 #endif
 
-
 #ifdef __cplusplus
 extern "C"
 {
@@ -58,9 +57,8 @@ extern "C"
   extern __thread struct sctk_alloc_chain * sctk_current_alloc_chain;
 #endif
 
-
 #if defined(MPC_USE_CUDA)
-  extern __thread void* sctk_cuda_ctx;
+  extern __thread void *sctk_cuda_ctx;
 #endif
 
 #if defined (MPC_OpenMP)
@@ -100,19 +98,18 @@ extern "C"
     tls_save (___sctk_message_passing);
 #endif
 
-
 #if defined(MPC_USE_CUDA)
-	sctk_accl_cuda_pop_context();
-	tls_save(sctk_cuda_ctx);
+    sctk_accl_cuda_pop_context();
+    tls_save(sctk_cuda_ctx);
 #endif
 #endif
 
-	/* the tls vector is restored by copy and cannot be changed
-	 * It is then useless to save it at this time
-	 */
-	ucp->tls_ctx = (extls_ctx_t*)sctk_extls_storage;
-	if(ucp->tls_ctx != NULL)
-	    extls_ctx_save(ucp->tls_ctx);
+    /* the tls vector is restored by copy and cannot be changed
+     * It is then useless to save it at this time
+     */
+    ucp->tls_ctx = (extls_ctx_t *)sctk_extls_storage;
+    if (ucp->tls_ctx != NULL)
+      extls_ctx_save(ucp->tls_ctx);
   }
 
   static inline void sctk_context_restore_tls (sctk_mctx_t * ucp)
@@ -135,11 +132,12 @@ extern "C"
 #endif
 
 #if defined(MPC_USE_CUDA)
-	tls_restore(sctk_cuda_ctx);
-	if(sctk_cuda_ctx) /* if the thread to be scheduled has an attached cuda ctx: */
-	{
-		sctk_accl_cuda_push_context();
-	}
+    tls_restore(sctk_cuda_ctx);
+    if (sctk_cuda_ctx) /* if the thread to be scheduled has an attached cuda
+                          ctx: */
+    {
+      sctk_accl_cuda_push_context();
+    }
 #endif
 
 #endif
@@ -179,8 +177,8 @@ extern "C"
 
   void sctk_tls_dtors_init(struct sctk_tls_dtors_s ** head);
   void sctk_tls_dtors_add(struct sctk_tls_dtors_s ** head, void * obj, void (*func)(void *));
-  void sctk_tls_dtors_free(struct sctk_tls_dtors_s ** head);
-  
+  void sctk_tls_dtors_free(struct sctk_tls_dtors_s **head);
+
 #ifdef __cplusplus
 }
 #endif

@@ -260,7 +260,7 @@ static void sctk_perform_initialisation (void)
 #endif
 
 #ifdef MPC_Accelerators
-	sctk_accl_init();
+        sctk_accl_init();
 #endif
 
 /* Do not bind in LIB_MODE */
@@ -592,18 +592,12 @@ sctk_restart (void)
 	sctk_restart_mode = 1;
 }
 
-	static void
-sctk_def_accl_support (void)
-{
-	sctk_accl_support = 1;
-}
+        static void sctk_def_accl_support(void) { sctk_accl_support = 1; }
 
-	static void
-sctk_set_verbosity (char *arg)
-{
-	int tmp =  atoi (arg);
-	if( (0 <= tmp) && (sctk_verbosity < tmp) )
-		sctk_verbosity = tmp;
+        static void sctk_set_verbosity(char *arg) {
+          int tmp = atoi(arg);
+          if ((0 <= tmp) && (sctk_verbosity < tmp))
+            sctk_verbosity = tmp;
 }
 
 	int
@@ -693,13 +687,13 @@ sctk_proceed_arg (char *word)
 	sctk_add_arg ("--migration", sctk_migration);
 	sctk_add_arg ("--restart", sctk_restart);
 
-	sctk_add_arg("--use-accl", sctk_def_accl_support);
-	
-	if (strcmp (word, "--sctk-args-end--") == 0)
-		return -1;
+        sctk_add_arg("--use-accl", sctk_def_accl_support);
 
-	fprintf (stderr, "Argument %s Unknown\n", word);
-	return -1;
+        if (strcmp(word, "--sctk-args-end--") == 0)
+          return -1;
+
+        fprintf(stderr, "Argument %s Unknown\n", word);
+        return -1;
 }
 
 	void
@@ -1044,8 +1038,9 @@ void sctk_init_mpc_runtime()
 	sctk_restart_mode = sctk_runtime_config_get()->modules.launcher.restart;
 	sctk_check_point_restart_mode = sctk_runtime_config_get()->modules.launcher.checkpoint;
 	sctk_migration_mode = sctk_runtime_config_get()->modules.launcher.migration;
-	sctk_accl_support = sctk_runtime_config_get()->modules.accelerator.enabled;
-	/* forece smt on MIC */
+        sctk_accl_support =
+            sctk_runtime_config_get()->modules.accelerator.enabled;
+/* forece smt on MIC */
 #ifdef __MIC__
 	sctk_enable_smt_capabilities = 1;
 #endif

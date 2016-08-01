@@ -575,44 +575,41 @@ hwloc_cpuset_t sctk_topology_get_roots_for_level( hwloc_obj_type_t type )
 	return roots;
 }
 
+int __sctk_topology_distance_fill_prefix(hwloc_obj_t *prefix,
+                                         hwloc_obj_t target_obj) {
+  /* Register in the tree */
+  if (!target_obj)
+    return 0;
 
+  int depth = 0;
 
-int __sctk_topology_distance_fill_prefix( hwloc_obj_t * prefix, hwloc_obj_t target_obj )
-{
-	/* Register in the tree */
-	if( !target_obj )
-		return 0;
-	
-	int depth = 0;
-	
-	/* Compute depth as it is not set for
-	 * PCI devices ... */
-	hwloc_obj_t cur = target_obj;
-	
-	while( cur->parent )
-	{
-		depth++;
-		cur = cur->parent;
-	}
+  /* Compute depth as it is not set for
+   * PCI devices ... */
+  hwloc_obj_t cur = target_obj;
 
-	/* Set depth +1 as NULL */
-	prefix[depth + 1 ] = NULL;
-	
-	/* Prepare to walk up the tree */
-	cur = target_obj;
-	int cur_depth = depth;
-	
-	sctk_nodebug("================\n");
-	
-	while( cur  )
-	{
-		sctk_nodebug("%d == %d == %s", cur_depth, cur->logical_index, hwloc_obj_type_string (cur->type) );
-		prefix[cur_depth] = cur;
-		cur_depth --;
-		cur = cur->parent;
-	}
-	
-	return depth;
+  while (cur->parent) {
+    depth++;
+    cur = cur->parent;
+  }
+
+  /* Set depth +1 as NULL */
+  prefix[depth + 1] = NULL;
+
+  /* Prepare to walk up the tree */
+  cur = target_obj;
+  int cur_depth = depth;
+
+  sctk_nodebug("================\n");
+
+  while (cur) {
+    sctk_nodebug("%d == %d == %s", cur_depth, cur->logical_index,
+                 hwloc_obj_type_string(cur->type));
+    prefix[cur_depth] = cur;
+    cur_depth--;
+    cur = cur->parent;
+  }
+
+  return depth;
 }
 
 
@@ -628,52 +625,51 @@ int sctk_topology_distance_from_pu( int source_pu, hwloc_obj_t target_obj )
 	int topo_depth = hwloc_topology_get_depth(topology);
 	
 	/* Allocate prefix lists */
-	hwloc_obj_t * prefix_PU = sctk_malloc( (topo_depth + 1) * sizeof( hwloc_obj_t ) );
-	hwloc_obj_t * prefix_target = sctk_malloc( ( topo_depth + 1) * sizeof( hwloc_obj_t ) );
-	
-	assume( prefix_PU != NULL );
-	assume( prefix_target != NULL );
-	
-	/* Fill them with zeroes */
-	int i;
-	for( i = 0 ; i < topo_depth ; i++ )
-	{
-		prefix_PU[i] = NULL;
-		prefix_target[i] = NULL;
-	}
-	
-	/* Compute the prefix of the two objects in the tree */
-	int pu_depth = __sctk_topology_distance_fill_prefix( prefix_PU, source_pu_obj );
-	int obj_depth = __sctk_topology_distance_fill_prefix( prefix_target, target_obj );
-	
-	
-	/* Extract the common prefix */
-	int common_prefix = 0;
-	for( i = 0 ; i < topo_depth ; i++ )
-	{
-		if(    prefix_PU[i]->type == prefix_target[i]->type 
-            && prefix_PU[i]->logical_index == prefix_target[i]->logical_index )
-		{
-			common_prefix = i;
-		}
-		else
-		{
-			break;
-		}
-	}
-	
-	/* From this we know that the distance is the sum of the two prefixes
-	 * without the common part plus one */
-	int distance = ( pu_depth + obj_depth - (common_prefix * 2) );
+        hwloc_obj_t *prefix_PU =
+            sctk_malloc((topo_depth + 1) * sizeof(hwloc_obj_t));
+        hwloc_obj_t *prefix_target =
+            sctk_malloc((topo_depth + 1) * sizeof(hwloc_obj_t));
 
-	sctk_nodebug("Common prefix %d PU %d OBJ %d == %d", common_prefix, pu_depth, obj_depth , distance);
-	
-	/* Free prefixes */
-	sctk_free( prefix_PU );
-	sctk_free( prefix_target );
-	 
-	/* Return the distance */
-	return distance;
+        assume(prefix_PU != NULL);
+        assume(prefix_target != NULL);
+
+        /* Fill them with zeroes */
+        int i;
+        for (i = 0; i < topo_depth; i++) {
+          prefix_PU[i] = NULL;
+          prefix_target[i] = NULL;
+        }
+
+        /* Compute the prefix of the two objects in the tree */
+        int pu_depth =
+            __sctk_topology_distance_fill_prefix(prefix_PU, source_pu_obj);
+        int obj_depth =
+            __sctk_topology_distance_fill_prefix(prefix_target, target_obj);
+
+        /* Extract the common prefix */
+        int common_prefix = 0;
+        for (i = 0; i < topo_depth; i++) {
+          if (prefix_PU[i]->type == prefix_target[i]->type &&
+              prefix_PU[i]->logical_index == prefix_target[i]->logical_index) {
+            common_prefix = i;
+          } else {
+            break;
+          }
+        }
+
+        /* From this we know that the distance is the sum of the two prefixes
+         * without the common part plus one */
+        int distance = (pu_depth + obj_depth - (common_prefix * 2));
+
+        sctk_nodebug("Common prefix %d PU %d OBJ %d == %d", common_prefix,
+                     pu_depth, obj_depth, distance);
+
+        /* Free prefixes */
+        sctk_free(prefix_PU);
+        sctk_free(prefix_target);
+
+        /* Return the distance */
+        return distance;
 }
 
 

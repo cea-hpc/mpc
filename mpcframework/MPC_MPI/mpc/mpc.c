@@ -1807,106 +1807,92 @@ int PMPC_Type_get_contents( MPC_Datatype datatype,
  * 
  *  \return the size of the datatype or aborts
  */
-//static removed to test cuda mpi aware
-inline size_t __MPC_Get_datatype_size (MPC_Datatype datatype, sctk_task_specific_t *task_specific)
-{
-	/* Special cases */
-	if (datatype == MPC_DATATYPE_NULL)
-	{
-		/* Here we return 0 for data-type null
-		 * in order to pass the struct-zero-count test */
-		return 0;
-	}
+// static removed to test cuda mpi aware
+inline size_t __MPC_Get_datatype_size(MPC_Datatype datatype,
+                                      sctk_task_specific_t *task_specific) {
+  /* Special cases */
+  if (datatype == MPC_DATATYPE_NULL) {
+    /* Here we return 0 for data-type null
+     * in order to pass the struct-zero-count test */
+    return 0;
+  }
 
-	/* Upper bound measures 0 by definition */
-	if (datatype == MPC_UB)
-	{
-		return 0;
-	}
-	
-	/* Lower bound measures 0 by definition */
-	if (datatype == MPC_LB)
-	{
-		return 0;
-	}
-	
-	/* A pack has a size of one */
-	if (datatype == MPC_PACKED)
-	{
-		return 1;
-	}
-	
-	
-	size_t ret;
-	sctk_contiguous_datatype_t *contiguous_type_target;
-	sctk_derived_datatype_t * derived_type_target;
-	
-	/* Compute the size in function of the datatype */
-	switch( sctk_datatype_kind( datatype ) )
-	{
-		case MPC_DATATYPES_COMMON:
-			/* Common datatype sizes */
-			
-			return sctk_common_datatype_get_size(datatype);
-		break;
-		
-		case MPC_DATATYPES_CONTIGUOUS:
-			/* Contiguous datatype size */
-			
-			/* Get a pointer to the type of interest */
-			contiguous_type_target = sctk_task_specific_get_contiguous_datatype(task_specific, datatype);
-			/* Extract its size field */
-			ret = contiguous_type_target->size;
+  /* Upper bound measures 0 by definition */
+  if (datatype == MPC_UB) {
+    return 0;
+  }
 
-			/* Return */
-			return ret;
-		break;
-		
-		case MPC_DATATYPES_DERIVED:
-			/* Derived datatype size */
-			
-			
-			/* Get a pointer to the object of interest */
-			derived_type_target = sctk_task_specific_get_derived_datatype(task_specific, datatype);
-			
-			/* Is it allocated ? */
-			if( !derived_type_target )
-			{
-				/* ERROR */
-				sctk_fatal("Tried to retrieve an uninitialized datatype %d", datatype);
-			}
-			
-			
-			if( derived_type_target->is_a_padded_struct )
-			{
+  /* Lower bound measures 0 by definition */
+  if (datatype == MPC_LB) {
+    return 0;
+  }
 
-				/* Here we return UB as the size (padded struct) */
-				ret = derived_type_target->ub;
-				
-							
-			}
-			else
-			{
-				/* Extract the size field */
-				ret = derived_type_target->size;
-			}
-			
-			
+  /* A pack has a size of one */
+  if (datatype == MPC_PACKED) {
+    return 1;
+  }
 
+  size_t ret;
+  sctk_contiguous_datatype_t *contiguous_type_target;
+  sctk_derived_datatype_t *derived_type_target;
 
-			/* Return */
-			return ret;
-		break;
-		
-		case MPC_DATATYPES_UNKNOWN:
-			/* No such datatype */
-			/* ERROR */
-			sctk_fatal("An unknown datatype was provided");
-		break;
-	}
-	
-	/* We shall never arrive here ! */
-	sctk_fatal("This error shall never be reached");
+  /* Compute the size in function of the datatype */
+  switch (sctk_datatype_kind(datatype)) {
+  case MPC_DATATYPES_COMMON:
+    /* Common datatype sizes */
+
+    return sctk_common_datatype_get_size(datatype);
+    break;
+
+  case MPC_DATATYPES_CONTIGUOUS:
+    /* Contiguous datatype size */
+
+    /* Get a pointer to the type of interest */
+    contiguous_type_target =
+        sctk_task_specific_get_contiguous_datatype(task_specific, datatype);
+    /* Extract its size field */
+    ret = contiguous_type_target->size;
+
+    /* Return */
+    return ret;
+    break;
+
+  case MPC_DATATYPES_DERIVED:
+    /* Derived datatype size */
+
+    /* Get a pointer to the object of interest */
+    derived_type_target =
+        sctk_task_specific_get_derived_datatype(task_specific, datatype);
+
+    /* Is it allocated ? */
+    if (!derived_type_target) {
+      /* ERROR */
+      sctk_fatal("Tried to retrieve an uninitialized datatype %d", datatype);
+    }
+
+    if (derived_type_target->is_a_padded_struct) {
+
+      /* Here we return UB as the size (padded struct) */
+      ret = derived_type_target->ub;
+
+    } else {
+      /* Extract the size field */
+      ret = derived_type_target->size;
+    }
+
+    /* Return */
+    return ret;
+    break;
+
+  case MPC_DATATYPES_UNKNOWN:
+    /* No such datatype */
+    /* ERROR */
+    sctk_fatal("An unknown datatype was provided");
+    break;
+  }
+
+  /* We shall never arrive here ! */
+  sctk_fatal("This error shall never be reached");
 }
 
 

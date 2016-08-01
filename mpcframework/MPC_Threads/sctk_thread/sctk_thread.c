@@ -567,8 +567,8 @@ void __tbb_init_for_mpc(cpu_set_t * cpuset, int cpuset_len)
 	}
 	else
 	{
-		sctk_nodebug("Calling fake TBB Initializer");
-	}
+          sctk_nodebug("Calling fake TBB Initializer");
+        }
 }
 
 void __tbb_finalize_for_mpc()
@@ -581,8 +581,8 @@ void __tbb_finalize_for_mpc()
 	}
 	else
 	{
-		sctk_nodebug("Calling fake TBB Finalizer");
-	}
+          sctk_nodebug("Calling fake TBB Finalizer");
+        }
 }
 
 static void *

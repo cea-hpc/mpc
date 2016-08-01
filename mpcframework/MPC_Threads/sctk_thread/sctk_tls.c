@@ -26,7 +26,6 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-
 #define _GNU_SOURCE
 #include "sctk_config.h"
 #include "sctk_alloc.h"
@@ -46,7 +45,6 @@
 
 #if defined(SCTK_USE_TLS)
 __thread void* sctk_extls_storage = NULL;
-
 
 struct dyn_sym_s
 {

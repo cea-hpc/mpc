@@ -33,7 +33,7 @@
 
 #if defined(MPC_Accelerators)
 #include <sctk_accelerators.h>
-#endif //MPC_Accelerators
+#endif // MPC_Accelerators
 
 #ifdef MPC_USE_INFINIBAND
 #include <infiniband/verbs.h>
@@ -437,8 +437,8 @@ void sctk_device_init( hwloc_topology_t topology, sctk_device_t * dev , hwloc_ob
 	}
 
 	dev->device_id = -1;
-	dev->nb_res = 0;
-	dev->res_lock = SCTK_SPINLOCK_INITIALIZER;
+        dev->nb_res = 0;
+        dev->res_lock = SCTK_SPINLOCK_INITIALIZER;
 }
 
 /************************************************************************/
@@ -482,78 +482,69 @@ void sctk_device_fill_in_infiniband_info( sctk_device_t * device, hwloc_topology
 void sctk_device_enrich_topology( hwloc_topology_t topology )
 {
 	int i;
-#if defined (MPC_USE_CUDA)
-    int num_devices = 0;
-	cudaGetDeviceCount(&num_devices);
+#if defined(MPC_USE_CUDA)
+        int num_devices = 0;
+        cudaGetDeviceCount(&num_devices);
 #endif
-	for( i = 0 ; i < sctk_devices_count ; i++ )
-	{
-		sctk_device_t * device = &sctk_devices[i];
-		
-		if( device->type == SCTK_DEVICE_NETWORK_OFA )
-		{
-		#ifdef MPC_USE_INFINIBAND
-			sctk_device_fill_in_infiniband_info( device, topology );
-		#endif
-		}
+        for (i = 0; i < sctk_devices_count; i++) {
+          sctk_device_t *device = &sctk_devices[i];
+
+          if (device->type == SCTK_DEVICE_NETWORK_OFA) {
+#ifdef MPC_USE_INFINIBAND
+            sctk_device_fill_in_infiniband_info(device, topology);
+#endif
+          }
 
 #if defined(MPC_USE_CUDA)
-		if(num_devices>0)
-		{
-			char attrs[128], save_ptr[128], busid_str[32];
-			const char * attr_sep = "#";
-			hwloc_obj_attr_snprintf(attrs,128,device->obj,"#",1);
+          if (num_devices > 0) {
+            char attrs[128], save_ptr[128], busid_str[32];
+            const char *attr_sep = "#";
+            hwloc_obj_attr_snprintf(attrs, 128, device->obj, "#", 1);
 
-			char * cur_attr = NULL;
-			
-			/* if the current attr is the bus ID: STOP */
-			while((cur_attr = strtok_r(attrs, attr_sep, &save_ptr) ) != NULL)
-			{
-				if(strncmp(cur_attr, "busid", 5) == 0)
-				{
-					break;
-				}
-			}
+            char *cur_attr = NULL;
 
-			/* Read the PCI bus ID from the found attr */
-			sscanf(cur_attr, "busid=%s", busid_str);
+            /* if the current attr is the bus ID: STOP */
+            while ((cur_attr = strtok_r(attrs, attr_sep, &save_ptr)) != NULL) {
+              if (strncmp(cur_attr, "busid", 5) == 0) {
+                break;
+              }
+            }
 
-			/* maybe the init() should be done only once ? */
+            /* Read the PCI bus ID from the found attr */
+            sscanf(cur_attr, "busid=%s", busid_str);
+
+            /* maybe the init() should be done only once ? */
             cuInit(0);
             CUdevice dev = 0;
-            CUresult test = cuDeviceGetByPCIBusId(&dev,busid_str);
+            CUresult test = cuDeviceGetByPCIBusId(&dev, busid_str);
 
-			/* if the PCI bus ID matches a CUDA-enabled device */
-			if(test == CUDA_SUCCESS){
-				
-				/** RENAMING THE DEVICE */
-				const short name_prefix_size = 17;
-				const char * name_prefix = "cuda-enabled-card";
-				
-				/* we suppose 4 digits to encode GPU ids is enough ! */
-				const short name_size = name_prefix_size + 4;
-				char * name = malloc(sizeof(char) * name_size );
-				int check;
+            /* if the PCI bus ID matches a CUDA-enabled device */
+            if (test == CUDA_SUCCESS) {
 
-				/* Creating one single string */
-				check = snprintf(name, name_size, "%s%d", name_prefix, (int)dev );
-				assert(check < name_size);
+              /** RENAMING THE DEVICE */
+              const short name_prefix_size = 17;
+              const char *name_prefix = "cuda-enabled-card";
 
-				device->name = name;
-				device->device_id = (int)dev;
-				sctk_nodebug("Detected GPU: %s (%s)", device->name, busid_str);
-			}
-			else
-			{
-				if( device->name == NULL )
-					device->name = "Unknown";
-				device->device_id = -1;
-			}
-		}
+              /* we suppose 4 digits to encode GPU ids is enough ! */
+              const short name_size = name_prefix_size + 4;
+              char *name = malloc(sizeof(char) * name_size);
+              int check;
+
+              /* Creating one single string */
+              check = snprintf(name, name_size, "%s%d", name_prefix, (int)dev);
+              assert(check < name_size);
+
+              device->name = name;
+              device->device_id = (int)dev;
+              sctk_nodebug("Detected GPU: %s (%s)", device->name, busid_str);
+            } else {
+              if (device->name == NULL)
+                device->name = "Unknown";
+              device->device_id = -1;
+            }
+          }
 #endif
-
-	}
-
+        }
 }
 
 
@@ -584,54 +575,48 @@ void sctk_device_load_from_topology( hwloc_topology_t topology )
 		
 		pci_dev = hwloc_get_next_pcidev( topology, pci_dev );
 	}
-	
-	sctk_nodebug("sctk_topology located %d PCI devices", sctk_devices_count );
-	
-	/* Allocate devices */
-	sctk_devices = sctk_malloc( sizeof( sctk_device_t ) * sctk_devices_count );
-	
-	/* Then walk again to fill devices */
-	pci_dev =  hwloc_get_next_pcidev( topology, NULL );
-	
-	int off = 0;
-	
-	while( pci_dev )
-	{
-		
-		if( ! pci_dev->arity )
-		{
-			sctk_device_init( topology, &sctk_devices[ off ] , pci_dev, 0 );
-			off++;
-		}
-		else
-		{
-			for( i = 0 ; i < pci_dev->arity ; i++ )
-			{
-				/* Unfold the PCI device to process HOST objs */
-				if( pci_dev->children[i]->type == HWLOC_OBJ_OS_DEVICE )
-				{
-					sctk_device_init( topology, &sctk_devices[ off ] , pci_dev, i );
-					/* Set the ID of the device */
-					sctk_devices[ off ].id = off;
-					off++;
-				}
-			}
-		}
-		
-		pci_dev = hwloc_get_next_pcidev( topology, pci_dev );
-	}
-	
-	sctk_device_enrich_topology( topology );
-	//hwloc_topology_export_xml(topology, "-");
 
-	//*
-	for( i = 0 ; i < sctk_devices_count ; i++ )
-	{
-		sctk_device_print( &sctk_devices[i] );
-	}
-	//*/
-	/* Now initialize the device distance matrix */
-	sctk_device_matrix_init();
+        sctk_nodebug("sctk_topology located %d PCI devices",
+                     sctk_devices_count);
+
+        /* Allocate devices */
+        sctk_devices = sctk_malloc(sizeof(sctk_device_t) * sctk_devices_count);
+
+        /* Then walk again to fill devices */
+        pci_dev = hwloc_get_next_pcidev(topology, NULL);
+
+        int off = 0;
+
+        while (pci_dev) {
+
+          if (!pci_dev->arity) {
+            sctk_device_init(topology, &sctk_devices[off], pci_dev, 0);
+            off++;
+          } else {
+            for (i = 0; i < pci_dev->arity; i++) {
+              /* Unfold the PCI device to process HOST objs */
+              if (pci_dev->children[i]->type == HWLOC_OBJ_OS_DEVICE) {
+                sctk_device_init(topology, &sctk_devices[off], pci_dev, i);
+                /* Set the ID of the device */
+                sctk_devices[off].id = off;
+                off++;
+              }
+            }
+          }
+
+          pci_dev = hwloc_get_next_pcidev(topology, pci_dev);
+        }
+
+        sctk_device_enrich_topology(topology);
+        // hwloc_topology_export_xml(topology, "-");
+
+        //*
+        for (i = 0; i < sctk_devices_count; i++) {
+          sctk_device_print(&sctk_devices[i]);
+        }
+        //*/
+        /* Now initialize the device distance matrix */
+        sctk_device_matrix_init();
 }
 
 void sctk_device_release()
@@ -825,23 +810,24 @@ void sctk_device_matrix_init()
 			
 			/* Compute the distance */
 			*cell = sctk_topology_distance_from_pu( j , device_obj );
-			
-			sctk_nodebug("Distance (PU %d, DEV %d (%s)) == %d", j, i, sctk_devices[i].name, *cell );
-		}
-	}
-	
+
+                        sctk_nodebug("Distance (PU %d, DEV %d (%s)) == %d", j,
+                                     i, sctk_devices[i].name, *cell);
+                }
+        }
 }
 
 /** Get the closest device from PU matching the regexp "matching_regexp" */
 sctk_device_t * sctk_device_matrix_get_closest_from_pu( int pu_id, char * matching_regexp )
 {
-	int dummy;
-	sctk_device_t ** device_list = sctk_device_matrix_get_list_closest_from_pu(pu_id, matching_regexp, &dummy);
-	sctk_device_t * first = device_list[0];
+  int dummy;
+  sctk_device_t **device_list = sctk_device_matrix_get_list_closest_from_pu(
+      pu_id, matching_regexp, &dummy);
+  sctk_device_t *first = device_list[0];
 
-	sctk_free(device_list);
+  sctk_free(device_list);
 
-	return first;
+  return first;
 }
 
 /**
@@ -855,59 +841,57 @@ sctk_device_t * sctk_device_matrix_get_closest_from_pu( int pu_id, char * matchi
  *   - NULL if the regex does not match any device
  *   - a malloc'd array of devices, which should be freed after use.
  */
-sctk_device_t ** sctk_device_matrix_get_list_closest_from_pu( int pu_id, char * matching_regexp, int * count_out)
-{
-	/* Retrieve devices matching the regexp */
-	int count;
-	sctk_device_t ** device_list = sctk_device_get_from_handle_regexp( matching_regexp, &count );
-	if( count < 1 )
-	{
-		return NULL;
-	}
-	
-	sctk_device_t ** ret_list = sctk_malloc(count * sizeof(sctk_device_t));
-	int i;
-	/* init the array */
-	for (i = 0; i < count; i++)
-		ret_list[i] = NULL;
+sctk_device_t **
+sctk_device_matrix_get_list_closest_from_pu(int pu_id, char *matching_regexp,
+                                            int *count_out) {
+  /* Retrieve devices matching the regexp */
+  int count;
+  sctk_device_t **device_list =
+      sctk_device_get_from_handle_regexp(matching_regexp, &count);
+  if (count < 1) {
+    return NULL;
+  }
 
-	int minimal_distance = -1;
-	*count_out = 0;
+  sctk_device_t **ret_list = sctk_malloc(count * sizeof(sctk_device_t));
+  int i;
+  /* init the array */
+  for (i = 0; i < count; i++)
+    ret_list[i] = NULL;
 
-	/* for each found device */
-	for( i = 0 ; i < count ; i++ )
-	{
-		sctk_device_t * dev = device_list[i];
-		int distance = sctk_device_matrix_get_value( pu_id, dev->id );
-		
-		/* if the distance is lower than 0, skip it (should we ? ) */
-		if( distance < 0 )
-		{
-			continue;
-		}
-		
-		/* Lookup for the minimum distance */
-		if( (minimal_distance < 0 ) || ( distance <= minimal_distance ) )
-		{
-			minimal_distance = distance;
-		}
-	}
+  int minimal_distance = -1;
+  *count_out = 0;
 
-	/* now we have the minimum distance, look for any device which match with it */
-	for ( i = 0; i < count; i++)
-	{
-		sctk_device_t * dev = device_list[i];
-		int distance = sctk_device_matrix_get_value( pu_id, dev->id );
-		if(distance == minimal_distance)
-		{
-			ret_list[*count_out] = dev;
-			(*count_out)++;
-		}
-	}
+  /* for each found device */
+  for (i = 0; i < count; i++) {
+    sctk_device_t *dev = device_list[i];
+    int distance = sctk_device_matrix_get_value(pu_id, dev->id);
 
-	/* don't forget to free the malloc'd vector from sctk_device_get_from_handle_regexp() */
-	sctk_free(device_list);
-	return ret_list;
+    /* if the distance is lower than 0, skip it (should we ? ) */
+    if (distance < 0) {
+      continue;
+    }
+
+    /* Lookup for the minimum distance */
+    if ((minimal_distance < 0) || (distance <= minimal_distance)) {
+      minimal_distance = distance;
+    }
+  }
+
+  /* now we have the minimum distance, look for any device which match with it
+   */
+  for (i = 0; i < count; i++) {
+    sctk_device_t *dev = device_list[i];
+    int distance = sctk_device_matrix_get_value(pu_id, dev->id);
+    if (distance == minimal_distance) {
+      ret_list[*count_out] = dev;
+      (*count_out)++;
+    }
+  }
+
+  /* don't forget to free the malloc'd vector from
+   * sctk_device_get_from_handle_regexp() */
+  sctk_free(device_list);
+  return ret_list;
 }
 
 /** Return 1 if the devices matching the regexp are equidistant */
@@ -954,37 +938,39 @@ int sctk_device_matrix_is_equidistant(char * matching_regexp)
 	return 1;
 }
 
-/** 
+/**
  * Increment the number of associated resource by 1
  * @param[in] device the device to update
  */
-void sctk_device_attach_resource(sctk_device_t * device)
-{
-	sctk_spinlock_lock(&device->res_lock);
-	device->nb_res++;
-	sctk_spinlock_unlock(&device->res_lock);
+void sctk_device_attach_resource(sctk_device_t *device) {
+  sctk_spinlock_lock(&device->res_lock);
+  device->nb_res++;
+  sctk_spinlock_unlock(&device->res_lock);
 }
 
-/** 
- * Decrement the number of associated resource by 1 
+/**
+ * Decrement the number of associated resource by 1
  * @param[in] device the device to update
  */
-void sctk_device_detach_resource(sctk_device_t * device)
-{
-	sctk_spinlock_lock(&device->res_lock);
-	device->nb_res--;
-	assert(device->nb_res >= 0);
-	sctk_spinlock_unlock(&device->res_lock);
+void sctk_device_detach_resource(sctk_device_t *device) {
+  sctk_spinlock_lock(&device->res_lock);
+  device->nb_res--;
+  assert(device->nb_res >= 0);
+  sctk_spinlock_unlock(&device->res_lock);
 }
 
-/** 
- * Retrieve the device with the smallest number of associated resources from a pool of device.
+/**
+ * Retrieve the device with the smallest number of associated resources from a
+ * pool of device.
  *
- * To avoid unlocking the elected device between the search and the increment, we register the
- * currently elected driver in freest_elem. In the case where this driver is replaced by a better
+ * To avoid unlocking the elected device between the search and the increment,
+ * we register the
+ * currently elected driver in freest_elem. In the case where this driver is
+ * replaced by a better
  * one, we free the lock for the previous driver and lock the new ones.
  *
- * This is thread-safe with multiple calls to sctk_device_attach_freest_device_from() and other
+ * This is thread-safe with multiple calls to
+ * sctk_device_attach_freest_device_from() and other
  * calls like attach/detach() routines.
  *
  * @param[in] device_list the list of devices where we will have to look for.
@@ -994,67 +980,64 @@ void sctk_device_detach_resource(sctk_device_t * device)
  *   - NULL if count is lower than 1
  *   - A pointer to the freest device from the list
  */
-sctk_device_t * sctk_device_attach_freest_device_from(sctk_device_t ** device_list, int count)
-{
-	int i;
-	int freest_value = -1;
-	sctk_device_t * freest_elem = NULL;
-	
-	if(count < 1)
-		return NULL;
+sctk_device_t *
+sctk_device_attach_freest_device_from(sctk_device_t **device_list, int count) {
+  int i;
+  int freest_value = -1;
+  sctk_device_t *freest_elem = NULL;
 
-	/* for each selected device */
-	for(i = 0; i < count ; i++)
-	{
-		sctk_device_t* current = device_list[i];
-	
-		/* lock the counter */
-		sctk_spinlock_lock(&current->res_lock);
-	
-		/* if it the first checked driver */
-		if(freest_value < 0)
-		{
-			freest_value = current->nb_res;
-			freest_elem = current;
-			sctk_nodebug("First device: %d (%d)", freest_elem->device_id, freest_elem->nb_res);
-		}
-		else if ( current->nb_res < freest_value)
-		{
-			/* free the previous selected device */
-			sctk_spinlock_unlock(&freest_elem->res_lock);
-			freest_value = current->nb_res;
-			freest_elem = current;	
-			sctk_nodebug("New best device: %d (%d)", freest_elem->device_id, freest_elem->nb_res);
-		}
-		else
-		{
-			/* this device is not elected as the freest ones -> unlock */
-			sctk_spinlock_unlock(&current->res_lock);
-		}
-	}
-	
-	assert(freest_elem != NULL);
-	freest_elem->nb_res++;
-	sctk_spinlock_unlock(&freest_elem->res_lock);
-	
-	return freest_elem;
+  if (count < 1)
+    return NULL;
+
+  /* for each selected device */
+  for (i = 0; i < count; i++) {
+    sctk_device_t *current = device_list[i];
+
+    /* lock the counter */
+    sctk_spinlock_lock(&current->res_lock);
+
+    /* if it the first checked driver */
+    if (freest_value < 0) {
+      freest_value = current->nb_res;
+      freest_elem = current;
+      sctk_nodebug("First device: %d (%d)", freest_elem->device_id,
+                   freest_elem->nb_res);
+    } else if (current->nb_res < freest_value) {
+      /* free the previous selected device */
+      sctk_spinlock_unlock(&freest_elem->res_lock);
+      freest_value = current->nb_res;
+      freest_elem = current;
+      sctk_nodebug("New best device: %d (%d)", freest_elem->device_id,
+                   freest_elem->nb_res);
+    } else {
+      /* this device is not elected as the freest ones -> unlock */
+      sctk_spinlock_unlock(&current->res_lock);
+    }
+  }
+
+  assert(freest_elem != NULL);
+  freest_elem->nb_res++;
+  sctk_spinlock_unlock(&freest_elem->res_lock);
+
+  return freest_elem;
 }
 
-/** 
- * Retrieve the device with the smallest number of associated resources for a matching regexp.
+/**
+ * Retrieve the device with the smallest number of associated resources for a
+ * matching regexp.
  *
  * @param[in] handle_reg_exp the regular expression as a string format
  * @return
  *   - NULL if the regexp is not found
  *   - A pointer to the elected device.
  */
-sctk_device_t * sctk_device_attach_freest_device(char * handle_reg_exp)
-{
-	int count;
-	sctk_device_t ** device_list = sctk_device_get_from_handle_regexp( handle_reg_exp, &count );
-	sctk_device_t *  device_res  = sctk_device_attach_freest_device_from(device_list, count);
+sctk_device_t *sctk_device_attach_freest_device(char *handle_reg_exp) {
+  int count;
+  sctk_device_t **device_list =
+      sctk_device_get_from_handle_regexp(handle_reg_exp, &count);
+  sctk_device_t *device_res =
+      sctk_device_attach_freest_device_from(device_list, count);
 
-	sctk_free(device_list);
-	return device_res;
+  sctk_free(device_list);
+  return device_res;
 }
-

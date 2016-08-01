@@ -40,9 +40,8 @@ typedef struct
 #if defined(SCTK_USE_TLS)
 
 #if defined(MPC_Accelerators)
-__thread void* sctk_cuda_ctx;
+__thread void *sctk_cuda_ctx;
 #endif
-
 
 __thread char *mpc_user_tls_1 = NULL;
 
@@ -496,8 +495,9 @@ sctk_makecontext (sctk_mctx_t * ucp,
 {
   int res;
   sctk_mctx_t lucp;
-  /* force temporary ctx to be inited to avoid unconsistent pointers during the save() */
-  sctk_context_init_tls (&lucp);
+  /* force temporary ctx to be inited to avoid unconsistent pointers during the
+   * save() */
+  sctk_context_init_tls(&lucp);
   sctk_context_save_tls (&lucp);
 
   sctk_context_init_tls (ucp);

@@ -35,7 +35,7 @@
 #include <sctk_opencl.h>
 #endif
 
-int    sctk_accl_init();
+int sctk_accl_init();
 size_t sctk_accl_get_nb_devices();
 
 #endif

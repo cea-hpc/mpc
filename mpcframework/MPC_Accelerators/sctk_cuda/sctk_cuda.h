@@ -27,8 +27,10 @@
 #include <sctk_debug.h>
 
 #ifndef NDEBUG
-#define safe_cudart(u) assume_m(((u) == cudaSuccess), "Runtime CUDA call failed with value %d", u)
-#define safe_cudadv(u) assume_m(((u) == CUDA_SUCCESS), "Driver CUDA call failed with value %d", u)
+#define safe_cudart(u)                                                         \
+  assume_m(((u) == cudaSuccess), "Runtime CUDA call failed with value %d", u)
+#define safe_cudadv(u)                                                         \
+  assume_m(((u) == CUDA_SUCCESS), "Driver CUDA call failed with value %d", u)
 #else
 #define safe_cudart(u) u
 #define safe_cudadv(u) u
@@ -39,11 +41,10 @@
  *
  * This structure is part of TLS bundle handled internally by thread context.
  */
-typedef struct cuda_ctx_s
-{
-      char pushed;       /**< Set to 1 when the ctx is currently pushed */
-      int cpu_id;        /**< Register the cpu_id associated to the CUDA ctx */
-      CUcontext context; /**< THE CUDA ctx */
+typedef struct cuda_ctx_s {
+  char pushed;       /**< Set to 1 when the ctx is currently pushed */
+  int cpu_id;        /**< Register the cpu_id associated to the CUDA ctx */
+  CUcontext context; /**< THE CUDA ctx */
 } cuda_ctx_t;
 
 int sctk_accl_cuda_init();

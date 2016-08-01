@@ -23,22 +23,22 @@
 
 #ifdef MPC_Accelerators
 #include <sctk_accelerators.h>
-#include <sctk_device_topology.h>
 #include <sctk_allocator.h>
+#include <sctk_device_topology.h>
 
 static size_t nb_devices = 0;
 extern bool sctk_accl_support;
-int sctk_accl_init()
-{
+int sctk_accl_init() {
 
-	sctk_device_t** list = sctk_device_get_from_handle_regexp("cuda-enabled-card*", &nb_devices);
+  sctk_device_t **list =
+      sctk_device_get_from_handle_regexp("cuda-enabled-card*", &nb_devices);
 
-	/* we don't want the list but the number of devices 
-	 * Maybe there are a better way for doing it...
-	 */
-	sctk_free(list);
+  /* we don't want the list but the number of devices
+   * Maybe there are a better way for doing it...
+   */
+  sctk_free(list);
 #ifdef MPC_USE_CUDA
-	cuInit(0);
+  cuInit(0);
 #endif
 
 #ifdef MPC_USE_OPENACC
@@ -46,24 +46,17 @@ int sctk_accl_init()
 
 #ifdef MPC_USE_OPENCL
 #endif
-	if(sctk_accl_support)
-	{
-		sctk_warning("Accelerators support ENABLED");
-	}
-	else
-	{
-		nb_devices = 0;
-	}
-
+  if (sctk_accl_support) {
+    sctk_warning("Accelerators support ENABLED");
+  } else {
+    nb_devices = 0;
+  }
 }
 
 /**
  * Returns the number of GPUs on the current node.
- * 
+ *
  * Especially used to check CUDA can be used without errors.
  */
-size_t sctk_accl_get_nb_devices()
-{
-	return nb_devices;
-}
+size_t sctk_accl_get_nb_devices() { return nb_devices; }
 #endif

@@ -22,9 +22,8 @@
 #ifndef SCTK_DEVICE_TOPOLOGY_H
 #define SCTK_DEVICE_TOPOLOGY_H
 
-#include <sctk_spinlock.h>
 #include <hwloc.h>
-
+#include <sctk_spinlock.h>
 
 /************************************************************************/
 /* ENUM DEFINITION                                                      */
@@ -93,8 +92,10 @@ typedef struct sctk_device_s
 	
 	int device_id; /**< The internal ID of the device (for IB, card ID) set in enrich topology */
 
-	size_t nb_res; /**< How many times this device has been associated to a resources (meaning loading level) */
-	sctk_spinlock_t res_lock; /** lock on previous field to ensure thread safety */
+        size_t nb_res; /**< How many times this device has been associated to a
+                          resources (meaning loading level) */
+        sctk_spinlock_t
+            res_lock; /** lock on previous field to ensure thread safety */
 }sctk_device_t;
 
 
@@ -121,14 +122,17 @@ int sctk_device_get_id_from_handle( char * handle );
 sctk_device_t ** sctk_device_get_from_handle_regexp( char * handle_reg_exp, int * count );
 
 /** increment the number of associated resource by 1 */
-void sctk_device_attach_resource(sctk_device_t * device);
+void sctk_device_attach_resource(sctk_device_t *device);
 /** decrement the number of associated resource by 1 */
-void sctk_device_detach_resource(sctk_device_t * device);
+void sctk_device_detach_resource(sctk_device_t *device);
 
-/** retrieve the device with the smallest number of associated resources from a pool of device*/
-sctk_device_t * sctk_device_attach_freest_device_from(sctk_device_t ** device_list, int count);
-/** retrieve the device with the smallest number of associated resources for a matching regexp */
-sctk_device_t * sctk_device_attach_freest_device(char * handle_reg_exp);
+/** retrieve the device with the smallest number of associated resources from a
+ * pool of device*/
+sctk_device_t *
+sctk_device_attach_freest_device_from(sctk_device_t **device_list, int count);
+/** retrieve the device with the smallest number of associated resources for a
+ * matching regexp */
+sctk_device_t *sctk_device_attach_freest_device(char *handle_reg_exp);
 
 /************************************************************************/
 /* DISTANCE MATRIX                                                      */
@@ -149,8 +153,11 @@ void sctk_device_matrix_init();
 sctk_device_matrix_t * sctk_device_matrix_get();
 /** Get the closest device from PU matching the regexp "matching_regexp" */
 sctk_device_t * sctk_device_matrix_get_closest_from_pu( int pu_id, char * matching_regexp );
-/** Get the list of closest device from PU matching the regexp "matching_regexp" */
-sctk_device_t** sctk_device_matrix_get_list_closest_from_pu( int pu_id, char * matching_regexp, int * count );
+/** Get the list of closest device from PU matching the regexp "matching_regexp"
+ */
+sctk_device_t **
+sctk_device_matrix_get_list_closest_from_pu(int pu_id, char *matching_regexp,
+                                            int *count);
 /** Return 1 if the devices matching the regexp are equidistant */
 int sctk_device_matrix_is_equidistant(char * matching_regexp);
 
