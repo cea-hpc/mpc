@@ -689,16 +689,8 @@ sctk_thread_create_tmp_start_routine (sctk_thread_data_t * __arg)
   // endhmt
 
 #if defined(MPC_USE_CUDA)
-  //si il y a qu'une seule tache mpi, test marc
   sctk_thread_yield();
-
-  //Si il y a qu'une seule tache mpi, ce pointeur reste a null
   sctk_accl_cuda_init();
-  /*{*/
-	  /*tls_cuda_t* cuda=(tls_cuda_t*)tls_cuda;*/
-	  /*cuda->is_ready = 1;*/
-	  /*cuda->cpu_id= sctk_get_cpu();*/
-  /*}*/
 #endif
 
   sctk_tls_dtors_init(&(tmp.dtors_head));
@@ -897,16 +889,6 @@ sctk_thread_create_tmp_start_routine_user (sctk_thread_data_t * __arg)
 
 #ifdef MPC_MPI
    MPC_Init_thread_specific();
-#endif
-
-#if defined(MPC_USE_CUDA)
-   sctk_thread_yield();
-
-   /*tls_cuda_t* cuda=(tls_cuda_t*)tls_cuda;*/
-   /*if(cuda != NULL)*/
-   /*{*/
-	   //sctk_accl_cuda_init();
-   /*}*/
 #endif
 
    // hmt

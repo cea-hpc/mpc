@@ -482,6 +482,10 @@ void sctk_device_fill_in_infiniband_info( sctk_device_t * device, hwloc_topology
 void sctk_device_enrich_topology( hwloc_topology_t topology )
 {
 	int i;
+#if defined (MPC_USE_CUDA)
+    int num_devices = 0;
+	cudaGetDeviceCount(&num_devices);
+#endif
 	for( i = 0 ; i < sctk_devices_count ; i++ )
 	{
 		sctk_device_t * device = &sctk_devices[i];
@@ -493,9 +497,7 @@ void sctk_device_enrich_topology( hwloc_topology_t topology )
 		#endif
 		}
 
-#if defined(MPC_Accelerators)
-        int num_devices = 0;
-		cudaGetDeviceCount(&num_devices);
+#if defined(MPC_USE_CUDA)
 		if(num_devices>0)
 		{
 			char attrs[128], save_ptr[128], busid_str[32];
@@ -956,7 +958,7 @@ int sctk_device_matrix_is_equidistant(char * matching_regexp)
  * Increment the number of associated resource by 1
  * @param[in] device the device to update
  */
-void sctk_device_attach_device(sctk_device_t * device)
+void sctk_device_attach_resource(sctk_device_t * device)
 {
 	sctk_spinlock_lock(&device->res_lock);
 	device->nb_res++;
@@ -967,7 +969,7 @@ void sctk_device_attach_device(sctk_device_t * device)
  * Decrement the number of associated resource by 1 
  * @param[in] device the device to update
  */
-void sctk_device_detach_device(sctk_device_t * device)
+void sctk_device_detach_resource(sctk_device_t * device)
 {
 	sctk_spinlock_lock(&device->res_lock);
 	device->nb_res--;
