@@ -142,6 +142,10 @@ void sctk_refresh_thread_debug (sctk_ethread_per_thread_t *tid, sctk_thread_stat
   if (!sctk_use_rtdb) return ;
   thread = tid->debug_p;
 
+  if(thread == NULL){
+    return;
+  }
+
 /*   if (!sctk_use_rtdb) return ; */
 /*   if (s == sctk_thread_undef_status) return ; */
   

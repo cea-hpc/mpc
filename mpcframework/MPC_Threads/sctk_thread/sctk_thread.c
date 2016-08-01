@@ -74,6 +74,8 @@
 extern int errno;
 typedef unsigned sctk_long_long sctk_timer_t;
 
+volatile int start_func_done = 0;
+
 static sctk_thread_key_t _sctk_thread_handler_key;
 
 /* #define SCTK_CHECK_CODE_RETURN */
@@ -828,11 +830,17 @@ sctk_thread_create (sctk_thread_t * restrict __threadp,
 extern void MPC_Init_thread_specific();
 extern void MPC_Release_thread_specific();
 
+static void sctk_thread_data_reset();
 static void *
 sctk_thread_create_tmp_start_routine_user (sctk_thread_data_t * __arg)
 {
   void *res;
   sctk_thread_data_t tmp;
+
+  while (start_func_done == 0)
+    sctk_thread_yield();
+  sctk_thread_data_reset();
+
   /* FIXME Intel OMP: at some point, in pthread mode, the ptr_cleanup variable seems to
    * be corrupted. */
   struct _sctk_thread_cleanup_buffer ** ptr_cleanup = malloc(
@@ -2049,9 +2057,14 @@ sctk_thread_data_init ()
   sctk_thread_data_set (&sctk_main_datas);
 }
 
-void
-sctk_thread_data_set (sctk_thread_data_t * task_id)
-{
+static void sctk_thread_data_reset() {
+  sctk_thread_data_t *tmp;
+  tmp = (sctk_thread_data_t *)sctk_thread_getspecific(stck_task_data);
+  if (tmp == NULL)
+    sctk_thread_data_set(&sctk_main_datas);
+}
+
+void sctk_thread_data_set(sctk_thread_data_t *task_id) {
   sctk_thread_setspecific (stck_task_data, (void *) task_id);
 }
 
@@ -2830,36 +2843,39 @@ sctk_start_func (void *(*run) (void *), void *arg)
 	}
 
 	sctk_nodebug("sctk_current_local_tasks_nb %d",sctk_current_local_tasks_nb);
+        start_func_done = 1;
+        __sctk_profiling__end__sctk_init_MPC =
+            sctk_get_time_stamp_gettimeofday();
+        if (sctk_process_rank == 0) {
+          if (sctk_runtime_config_get()->modules.launcher.banner) {
+            fprintf(stderr,
+                    "Initialization time: %.1fs - Memory used: %0.fMB\n",
+                    sctk_profiling_get_init_time(),
+                    sctk_profiling_get_dataused() / (1024.0 * 1024.0));
+          }
+        }
 
-	__sctk_profiling__end__sctk_init_MPC = sctk_get_time_stamp_gettimeofday ();
-	if (sctk_process_rank == 0)
-	{
-		if (sctk_runtime_config_get()->modules.launcher.banner) {
-			fprintf(stderr, "Initialization time: %.1fs - Memory used: %0.fMB\n",
-	    sctk_profiling_get_init_time(), sctk_profiling_get_dataused()/(1024.0*1024.0));
-		}
-	}
+        sctk_thread_wait_for_value_and_poll((int *)&sctk_current_local_tasks_nb,
+                                            0, NULL, NULL);
 
-	sctk_thread_wait_for_value_and_poll ((int *) &sctk_current_local_tasks_nb, 0, NULL, NULL);
+        sctk_multithreading_initialised = 0;
 
-	sctk_multithreading_initialised = 0;
+        sctk_thread_running = 0;
 
-	sctk_thread_running = 0;
+#ifdef MPC_MPI
+        sctk_datatype_release();
+#endif
 
-	#ifdef MPC_MPI
-	sctk_datatype_release();
-	#endif
-	
-	#ifdef MPC_Message_Passing
-	sctk_ignore_sigpipe();
-	sctk_communicator_delete ();
-	#endif
+#ifdef MPC_Message_Passing
+        sctk_ignore_sigpipe();
+        sctk_communicator_delete();
+#endif
 
-	sctk_free (threads);
+        sctk_free(threads);
 
-	remove (name);
+        remove(name);
 
-	sctk_runtime_config_clean_hash_tables();
+        sctk_runtime_config_clean_hash_tables();
 }
 
 void

@@ -32,8 +32,8 @@
 typedef void (*__destr_function_key_t) (void *) ;
 
 static sctk_spinlock_t key_lock = SCTK_SPINLOCK_INITIALIZER;
-static char sctk_key_used[SCTK_THREAD_KEYS_MAX];
-static __destr_function_key_t __destr_function_key [SCTK_THREAD_KEYS_MAX];
+static char sctk_key_used[SCTK_THREAD_KEYS_MAX + 1];
+static __destr_function_key_t __destr_function_key[SCTK_THREAD_KEYS_MAX + 1];
 
 int
 sctk_thread_generic_keys_setspecific (sctk_thread_key_t __key, const void *__pointer,
@@ -64,7 +64,7 @@ sctk_thread_generic_keys_key_create (sctk_thread_key_t * __key,
 {
   int i;
   sctk_spinlock_lock(&key_lock);
-  for(i = 0; i < SCTK_THREAD_KEYS_MAX; i++){
+  for (i = 1; i < SCTK_THREAD_KEYS_MAX + 1; i++) {
     if(sctk_key_used[i] == 0){
       sctk_key_used[i] = 1;
       __destr_function_key[i] = __destr_function;

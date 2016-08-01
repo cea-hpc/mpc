@@ -88,7 +88,8 @@ typedef struct numa_s
 static numa_t *numa_list = NULL;
 
 /** Array of numa nodes */
-static numa_t **numas = NULL;
+static sctk_spinlock_t numas_lock = SCTK_SPINLOCK_INITIALIZER;
+static volatile numa_t *volatile *numas = NULL;
 __thread numa_t **numas_copy = NULL;
 
 static int numa_number = -1;
@@ -197,65 +198,65 @@ void sctk_ib_cp_init_task ( int rank, int vp )
 	task->global_ibufs_list_lock = &__global_ibufs_list_lock;
 
 	/* Initial allocation of structures */
-	if ( !numas )
-	{
-		numa_number = sctk_get_numa_node_number();
+        sctk_spinlock_lock(&numas_lock);
+        if (!numas) {
+          numa_number = sctk_get_numa_node_number();
 
-		if ( numa_number == 0 )
-			numa_number = 1;
+          if (numa_number == 0)
+            numa_number = 1;
 
-		numas = sctk_malloc ( sizeof ( numa_t ) * numa_number );
+          numas = sctk_malloc(sizeof(numa_t) * numa_number);
 
-		int i;
+          int i;
 
-		for ( i = 0; i < numa_number; ++i )
-		{
-			numas[i] = NULL;
-		}
+          for (i = 0; i < numa_number; ++i) {
+            numas[i] = NULL;
+          }
 
-		ib_assume ( numas );
+          ib_assume(numas);
 
-		vp_number = sctk_get_cpu_number();
-		vps = sctk_malloc ( sizeof ( vp_t * ) * vp_number );
-		ib_assume ( vps );
-		memset ( vps, 0, sizeof ( vp_t * ) * vp_number );
-		sctk_nodebug ( "vp: %d - numa: %d", sctk_get_cpu_number(), numa_number );
-	}
+          vp_number = sctk_get_cpu_number();
+          vps = sctk_malloc(sizeof(vp_t *) * vp_number);
+          ib_assume(vps);
+          memset(vps, 0, sizeof(vp_t *) * vp_number);
+          sctk_nodebug("vp: %d - numa: %d", sctk_get_cpu_number(), numa_number);
+        }
 
-	/* Add NUMA node if not already added */
-	if ( numas[node] == NULL )
-	{
-		numa_t *tmp_numa = sctk_malloc ( sizeof ( numa_t ) );
-		memset ( tmp_numa, 0, sizeof ( numa_t ) );
-		CDL_PREPEND ( numa_list, tmp_numa );
-		numa_registered += 1;
-		tmp_numa->number = node;
-		numas[node] = tmp_numa;
-	}
+        /* Add NUMA node if not already added */
+        if (numas[node] == NULL) {
+          numa_t *tmp_numa = sctk_malloc(sizeof(numa_t));
+          memset(tmp_numa, 0, sizeof(numa_t));
+          CDL_PREPEND(numa_list, tmp_numa);
+          numa_registered += 1;
+          tmp_numa->number = node;
+          numas[node] = tmp_numa;
+        }
+        sctk_spinlock_unlock(&numas_lock);
 
-	/* Add the VP to the CDL list of the correct NUMA node if it not already done */
-	if ( vps[vp] == NULL )
-	{
-		vp_t *tmp_vp = sctk_malloc ( sizeof ( vp_t ) );
-		memset ( tmp_vp, 0, sizeof ( vp_t ) );
-		tmp_vp->node = numas[node];
-		numa_on_vp = numas[node];
-		CDL_PREPEND ( numas[node]->vps, tmp_vp );
-		tmp_vp->number = vp;
-		vps[vp] = tmp_vp;
-		numas[node]->tasks_nb++;
-	}
+        /* Add the VP to the CDL list of the correct NUMA node if it not already
+         * done */
+        if (vps[vp] == NULL) {
+          vp_t *tmp_vp = sctk_malloc(sizeof(vp_t));
+          memset(tmp_vp, 0, sizeof(vp_t));
+          tmp_vp->node = numas[node];
+          numa_on_vp = numas[node];
+          CDL_PREPEND(numas[node]->vps, tmp_vp);
+          tmp_vp->number = vp;
+          vps[vp] = tmp_vp;
+          numas[node]->tasks_nb++;
+        }
 
-	HASH_ADD ( hh_vp, vps[vp]->tasks, rank, sizeof ( int ), task );
-	HASH_ADD ( hh_all, all_tasks, rank, sizeof ( int ), task );
-	CDL_PREPEND ( numas[node]->tasks, task );
-	sctk_spinlock_unlock ( &vps_lock );
-	sctk_ib_debug ( "Task %d registered on VP %d (numa:%d:tasks_nb:%d)", rank, vp, node, numas[node]->tasks_nb );
+        HASH_ADD(hh_vp, vps[vp]->tasks, rank, sizeof(int), task);
+        HASH_ADD(hh_all, all_tasks, rank, sizeof(int), task);
+        CDL_PREPEND(numas[node]->tasks, task);
+        sctk_spinlock_unlock(&vps_lock);
+        sctk_ib_debug("Task %d registered on VP %d (numa:%d:tasks_nb:%d)", rank,
+                      vp, node, numas[node]->tasks_nb);
 
-	/* Initialize seed for steal */
-	seed = getpid() * time ( NULL );
+        /* Initialize seed for steal */
+        seed = getpid() * time(NULL);
 
-	task->ready = 1;
+        task->ready = 1;
 }
 
 void sctk_ib_cp_finalize_task ( int rank )
@@ -465,73 +466,74 @@ int sctk_ib_cp_steal ( const sctk_rail_info_t const *rail, struct sctk_ib_pollin
 
 	if ( numas_copy == NULL )
 	{
-		static sctk_spinlock_t lock = SCTK_SPINLOCK_INITIALIZER;
-		sctk_spinlock_lock ( &lock );
+          sctk_spinlock_lock(&numas_lock);
 
-		assume ( numa_number != -1 );
+          assume(numa_number != -1);
 
-		if ( numas_copy == NULL )
-		{
-			numas_copy = malloc ( sizeof ( numa_t ) * numa_number );
-			memcpy ( numas_copy, numas, sizeof ( numa_t ) * numa_number );
-		}
+          if (numas_copy == NULL) {
+            numas_copy = malloc(sizeof(numa_t) * numa_number);
+            memcpy(numas_copy, numas, sizeof(numa_t) * numa_number);
+          }
 
-		sctk_spinlock_unlock ( &lock );
-	}
+          sctk_spinlock_unlock(&numas_lock);
+        }
 
-	if ( vps[vp] != NULL )
-	{
-		/* XXX: Not working with oversubscribing */
-		stealing_task = vps[vp]->tasks;
+        if (vps[vp] != NULL) {
+          /* XXX: Not working with oversubscribing */
+          stealing_task = vps[vp]->tasks;
 
-		/* In PTHREAD mode, the idle task do not call the cp_init_task function.
-		* If task_node_number not initialized, we do it now */
-		if ( task_node_number < 0 )
-			task_node_number =  sctk_get_node_from_cpu ( vp );
+          /* In PTHREAD mode, the idle task do not call the cp_init_task
+          * function.
+          * If task_node_number not initialized, we do it now */
+          if (task_node_number < 0)
+            task_node_number = sctk_get_node_from_cpu(vp);
 
-		/* First, try to steal from the same NUMA node*/
+          /* First, try to steal from the same NUMA node*/
+          assume((task_node_number < numa_number));
+          if (task_node_number >= 0) {
+            numa = numas_copy[task_node_number];
 
-		numa = numas_copy[task_node_number];
+            if (numa != NULL) {
+              CDL_FOREACH(numa->vps, tmp_vp) {
+                for (task = tmp_vp->tasks; task; task = task->hh_vp.next) {
+                  nb_found += __cp_steal(rail, poll, &(task->local_ibufs_list),
+                                         &(task->local_ibufs_list_lock), task,
+                                         stealing_task);
+                }
 
-		{
-			CDL_FOREACH ( numa->vps, tmp_vp )
-			{
-				for ( task = tmp_vp->tasks; task; task = task->hh_vp.next )
-				{
-					nb_found += __cp_steal ( rail, poll, & ( task->local_ibufs_list ), & ( task->local_ibufs_list_lock ), task, stealing_task );
-				}
+                /* Return if message stolen */
+                //        if (nb_found) return nb_found;
+              }
+            } else {
+              sctk_spinlock_lock(&numas_lock);
+              memcpy(numas_copy, numas, sizeof(numa_t) * numa_number);
+              sctk_spinlock_unlock(&numas_lock);
+            }
+          }
+        }
 
-				/* Return if message stolen */
-				//        if (nb_found) return nb_found;
-			}
-		}
+        if (nb_found)
+          return nb_found;
 
-	}
+        if (other_numa && numas_copy) {
+          int random = rand_r(&seed) % numa_registered;
 
-	if ( nb_found )
-		return nb_found;
+          numa = numas_copy[random];
+          if (numa != NULL) {
+            CDL_FOREACH(numa->vps, tmp_vp) {
+              for (task = tmp_vp->tasks; task; task = task->hh_vp.next) {
+                nb_found += __cp_steal(rail, poll, &(task->local_ibufs_list),
+                                       &(task->local_ibufs_list_lock), task,
+                                       stealing_task);
 
-	if ( other_numa )
-	{
-		int random = rand_r ( &seed ) % numa_registered;
+                if (nb_found)
+                  return nb_found;
+              }
+            }
+          }
+        }
 
-		numa = numas_copy[random];
-
-		{
-			CDL_FOREACH ( numa->vps, tmp_vp )
-			{
-				for ( task = tmp_vp->tasks; task; task = task->hh_vp.next )
-				{
-					nb_found += __cp_steal ( rail, poll, & ( task->local_ibufs_list ), & ( task->local_ibufs_list_lock ), task, stealing_task );
-
-					if ( nb_found )
-						return nb_found;
-				}
-			}
-		}
-	}
-
-	return nb_found;
+        return nb_found;
 }
 
 #define CHECK_IS_READY(x)  do {\

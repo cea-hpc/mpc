@@ -80,7 +80,7 @@ static inline int sctk_get_processor_rank (void)
 	if( !sctk_thread_data_get() )
 		return -1;
 
-	return (int) (sctk_thread_data_get ()->virtual_processor);
+        return sctk_thread_data_get()->virtual_processor;
 }
 
 static inline int sctk_get_processor_number (void)

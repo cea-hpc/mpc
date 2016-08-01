@@ -30,7 +30,7 @@
 #include "sctk_internal_thread.h"
 
 typedef struct {
-  const void* keys[SCTK_THREAD_KEYS_MAX];
+  const void *keys[SCTK_THREAD_KEYS_MAX + 1];
 }sctk_thread_generic_keys_t;
 
 void sctk_thread_generic_keys_init(); 

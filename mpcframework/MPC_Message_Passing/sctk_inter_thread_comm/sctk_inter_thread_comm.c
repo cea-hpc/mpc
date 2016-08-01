@@ -2502,19 +2502,24 @@ void sctk_wait_message ( sctk_request_t *request )
 			sctk_nodebug ( "Wait from %d to %d (req %p %d) (%p - %p) %d",
 			               request->header.source_task, request->header.destination_task, request, request->request_type, _wait.send_ptp, _wait.recv_ptp, request->header.message_tag );
 
-			sctk_inter_thread_perform_idle (
-			    ( int * ) & ( _wait.request->completion_flag ), SCTK_MESSAGE_DONE ,
-			    ( void ( * ) ( void * ) ) sctk_perform_messages_wait_for_value_and_poll, &_wait );
-		}
-		else
-		{
-			sctk_perform_messages_done ( &_wait );
-		}
+                        sctk_perform_messages_wait_for_value_and_poll(&_wait);
 
-		sctk_nodebug ( "Wait DONE from %d to %d (req %p %d) (%p - %p)",
-		               request->header.source_task, request->header.destination_task, request, request->request_type, _wait.send_ptp, _wait.recv_ptp );
+                        sctk_inter_thread_perform_idle(
+                            (int *)&(_wait.request->completion_flag),
+                            SCTK_MESSAGE_DONE,
+                            (void (*)(void *))
+                                sctk_perform_messages_wait_for_value_and_poll,
+                            &_wait);
+                } else {
+                  sctk_perform_messages_done(&_wait);
+                }
 
-	}
+                sctk_nodebug("Wait DONE from %d to %d (req %p %d) (%p - %p)",
+                             request->header.source_task,
+                             request->header.destination_task, request,
+                             request->request_type, _wait.send_ptp,
+                             _wait.recv_ptp);
+        }
 }
 
 /*
