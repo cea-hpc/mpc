@@ -426,14 +426,15 @@ static inline int __cp_steal ( const struct sctk_rail_info_s const *rail, struct
 				PROF_TIME_END ( rail, cp_time_steal );
 
 				/* Same node */
-				if ( task->node == stealing_task->node )
-				{
-					PROF_INC ( rail, cp_counter_steal_same_node );
-				}
-				else
-				{
-					PROF_INC ( rail, cp_counter_steal_other_node );
-				}
+                                if (stealing_task == NULL) {
+                                  PROF_INC(rail, cp_counter_steal_other_node);
+                                } else {
+                                  if (task->node == stealing_task->node) {
+                                    PROF_INC(rail, cp_counter_steal_same_node);
+                                  } else {
+                                    PROF_INC(rail, cp_counter_steal_other_node);
+                                  }
+                                }
 
 #endif
 				nb_found++;
