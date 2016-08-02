@@ -95,6 +95,44 @@ canonize()
 {
 	echo "\$1" | sed -e "s#//*#/#g"
 }
+
+#Used by nvcc to automatically blacklist some var patterns
+preprocess_main()
+{
+EOF
+if test "$1" = "bin/mpc_nvcc"
+then
+cat <<EOF >> $1
+CUDA_FILE="/tmp/cuda_tmp_main\${RANDOM}.cu"
+cat<< EOF_FILE > \${CUDA_FILE}
+#include <stdlib.h>
+
+__global__
+void foo(void)
+{
+}
+
+int main(int argc, char ** argv)
+{
+	return 0;
+}
+EOF_FILE
+
+IFS="
+"
+
+tmp=""
+for decl in \`nvcc -ccbin \${CC} \${CFLAGS} -Xcompiler -fmpc-privatize \${CUDA_FILE} -Xcompiler -B\${MPC_RPREFIX}/\${MPC_HOST_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/bin 2>&1 | grep "MPC task" | sed -e 's/.*variable //g' -e 's/ in file.*//g'\`
+do
+	tmp="\${tmp}:\${decl}"
+done
+
+echo "\${tmp}"
+rm \${CUDA_FILE}
+EOF
+fi
+cat <<EOF >> $1
+}
 EOF
 header_sh >> $1
 
@@ -463,7 +501,10 @@ LDFLAGS="\`\${MPC_RPREFIX}/\${MPC_HOST_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/bin/m
 #Used to avoid header global variable privatization when libraries are not privatized
 #mpcmp.h and mpcmicrothread.h have been recopied from GCC patch
 MPC_UNPRIVATIZED_FILES="\${MPC_UNPRIVATIZED_FILES}:mpcmp.h:mpcmicrothread.h:"
+
+MPC_UNPRIVATIZED_VARS="\`preprocess_main\`"
 export MPC_UNPRIVATIZED_FILES
+export MPC_UNPRIVATIZED_VARS
 
 EOF
 # Regular flags and compiler (C, C++ or fortran)
@@ -472,6 +513,17 @@ then
 cat <<EOF >> $1
 #override flags when patched binutils are used
 LDFLAGS="\${LDFLAGS} -B\${MPC_RPREFIX}/\${MPC_HOST_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/bin"
+EOF
+fi
+
+if test "$1" = "bin/mpc_nvcc"
+then
+cat<<EOF >> $1
+LDFLAGS="\`echo "\$LDFLAGS" | sed -e 's/\-Wl,\-rpath/-Xlinker -rpath/g' -e 's/ -B/ -Xcompiler &/g'\`"
+if test -n "\${PRIV_FLAG}"
+then
+	PRIV_FLAG="-Xcompiler \${PRIV_FLAG}"
+fi
 EOF
 fi
 
