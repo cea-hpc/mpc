@@ -361,6 +361,8 @@ SCTK_CHECK_LIB_OPENIB()
 		sctk_internal_setup_lib_openib;
 	fi
 
+	if [ "$SCTK_DETECT_IB" = "1" ]; then 
+
 	begin_section "Check OpenIB:"
 
 	# Lets ty to detec OpenIB in the current environement
@@ -372,6 +374,7 @@ SCTK_CHECK_LIB_OPENIB()
 	fi
 
 	end_section
+	fi
 }
 
 # Setup vars to use lib OpenIB

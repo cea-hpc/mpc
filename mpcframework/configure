@@ -240,6 +240,7 @@ PORTALS_USER_PREFIX=""
 SCTK_LIBXML2_PREFIX=""
 SCTK_LIBSCTK_ARCH_PREFIX=""
 SCTK_MPC_PROCESS_MODE="0"
+SCTK_DETECT_IB="1"
 
 for arg in "$@" ; do
     case $arg in
@@ -348,6 +349,12 @@ for arg in "$@" ; do
 	SCTK_NETWORKS=""
     fi
     SCTK_NETWORKS="$SCTK_NETWORKS `echo A$arg | sed -e 's/A--use-network=//g'`"
+    ;;
+    --enable-ib)
+    SCTK_DETECT_IB="1"
+    ;;
+    --disable-ib)
+    SCTK_DETECT_IB="0"
     ;;
     --enable-mpi)
     SCTK_NETWORKS="$SCTK_NETWORKS mpi"
