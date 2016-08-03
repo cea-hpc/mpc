@@ -30,7 +30,11 @@ extern "C"
 #include "sctk_config.h"
 #include "sctk_thread.h"
 
+#if defined(TDB_i686_ARCH_TDB) || defined(TDB_x86_64_ARCH_TDB)
 #define SCTK_USE_THREAD_DEBUG
+#else
+#warning "Architecture not supported"
+#endif
   
 #if defined(SCTK_USE_THREAD_DEBUG)
 

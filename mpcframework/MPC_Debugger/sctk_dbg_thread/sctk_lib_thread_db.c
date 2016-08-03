@@ -21,6 +21,11 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
+#if !(defined(TDB_i686_ARCH_TDB) || defined(TDB_x86_64_ARCH_TDB))
+#undef LIB_THREAD_DB
+#warning "Architecture not supported (no GDB support)"
+#endif
+  
 #ifdef LIB_THREAD_DB
 
 #if defined(MPC_Debugger)

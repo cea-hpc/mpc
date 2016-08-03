@@ -108,7 +108,7 @@ int sctk_init_thread_debug (sctk_thread_data_t *item) {
   rtdb_set_thread_context (thread, tid->ctx.jb);
 #elif SCTK_MCTX_MTH(libcontext)
   rtdb_set_thread_context (thread, tid->ctx.uc.uc_mcontext.gregs) ;
-#else
+#else "Unknown context switch"
 #error
 #endif
 #else
