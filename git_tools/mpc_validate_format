@@ -12,9 +12,9 @@ echo "Statrting point $ORIGIN"
 
 module load llvm/3.8.0
 
-STATUS="`git clang-format --commit $ORIGIN --force -v | grep 'changed files'`"
+STATUS="`git clang-format --commit $ORIGIN  | grep 'changed files'`"
 
-if test "$RES" != "0" ; then 
+if test "$STATUS" != "" ; then 
     echo "You have to reformat your code"
     echo "Try to reformat automatically ? [N/y]"
     read line
