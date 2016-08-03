@@ -130,6 +130,10 @@ done
 echo "\${tmp}"
 rm \${CUDA_FILE}
 EOF
+else
+cat <<EOF >> $1
+eccho ""
+EOF
 fi
 cat <<EOF >> $1
 }
