@@ -35,7 +35,7 @@ extern "C"
 #else
 #warning "Architecture not supported"
 #endif
-  
+
 #if defined(SCTK_USE_THREAD_DEBUG)
 
   /** ** **/

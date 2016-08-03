@@ -142,19 +142,19 @@ void sctk_refresh_thread_debug (sctk_ethread_per_thread_t *tid, sctk_thread_stat
   if (!sctk_use_rtdb) return ;
   thread = tid->debug_p;
 
-  if(thread == NULL){
+  if (thread == NULL) {
     return;
   }
 
-/*   if (!sctk_use_rtdb) return ; */
-/*   if (s == sctk_thread_undef_status) return ; */
-  
-/*   /\* the kernel threads are not managed bu rtdb *\/ */
-/*   if (thread == NULL) { */
-/*     sctk_nodebug("(NO THREAD/Thread %p NOT) IN THE LIST", tid); */
-/*     return ; */
-/*   } */
- 
+  /*   if (!sctk_use_rtdb) return ; */
+  /*   if (s == sctk_thread_undef_status) return ; */
+
+  /*   /\* the kernel threads are not managed bu rtdb *\/ */
+  /*   if (thread == NULL) { */
+  /*     sctk_nodebug("(NO THREAD/Thread %p NOT) IN THE LIST", tid); */
+  /*     return ; */
+  /*   } */
+
   rtdb_update_thread_state (thread, sctk_get_gdb_status (s));
 }
 
