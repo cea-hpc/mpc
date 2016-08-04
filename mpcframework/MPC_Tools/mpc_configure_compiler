@@ -347,7 +347,7 @@ for arg in "\$@" ; do
 		exit 0
 	;;
 	-cuda)
-		EXTRA_ADDON_FLAGS="-L\$MPC_RPREFIX/\${MPC_SUBPREFIX}/lib/stubs -Wl,-rpath=\$MPC_RPREFIX/\${MPC_SUBPREFIX}/lib/stubs -lmpc_cuda_addon"
+		EXTRA_ADDON_FLAGS="-L\$MPC_RPREFIX/\${MPC_SUBPREFIX}/lib/stubs -Wl,-rpath=\$MPC_RPREFIX/\${MPC_SUBPREFIX}/lib/stubs -lmpc_cuda_addon --Wl,--unresolved-symbols=ignore-in-shared-libs"
 		addarg=no
 	;;
 	-target=*)
@@ -529,10 +529,14 @@ fi
 if test "$1" = "bin/mpc_nvcc"
 then
 cat<<EOF >> $1
-LDFLAGS="\`echo "\$LDFLAGS" | sed -e 's/\-Wl,\-rpath/-Xlinker -rpath/g' -e 's/ -B/ -Xcompiler &/g'\`"
+LDFLAGS="\`echo "\$LDFLAGS" | sed -e 's/\-Wl,/-Xlinker /g' -e 's/ -B/ -Xcompiler &/g'\`"
 if test -n "\${PRIV_FLAG}"
 then
 	PRIV_FLAG="-Xcompiler \${PRIV_FLAG}"
+fi
+if test -n "\${OMP_FLAG}"
+then
+	PRIV_FLAG="-Xcompiler \${OMP_FLAG}"
 fi
 EOF
 fi

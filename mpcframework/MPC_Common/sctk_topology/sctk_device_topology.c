@@ -516,7 +516,7 @@ void sctk_device_enrich_topology( hwloc_topology_t topology )
 
             /* maybe the init() should be done only once ? */
             CUdevice dev = 0;
-            CUresult test = cuDeviceGetByPCIBusId(&dev, busid_str);
+            CUresult test = sctk_cuDeviceGetByPCIBusId(&dev, busid_str);
 
             /* if the PCI bus ID matches a CUDA-enabled device */
             if (test == CUDA_SUCCESS) {
