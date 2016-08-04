@@ -29,7 +29,15 @@
 static size_t nb_devices = 0;
 extern bool sctk_accl_support;
 int sctk_accl_init() {
+	
+  if( ! sctk_accl_support)
+  {
+	  nb_devices = 0;
+	  return 1;
+  }
 
+  sctk_warning("Accelerators support ENABLED");
+  
   sctk_device_t **list =
       sctk_device_get_from_handle_regexp("cuda-enabled-card*", &nb_devices);
 
@@ -38,7 +46,7 @@ int sctk_accl_init() {
    */
   sctk_free(list);
 #ifdef MPC_USE_CUDA
-  cuInit(0);
+	sctk_accl_cuda_init();
 #endif
 
 #ifdef MPC_USE_OPENACC
@@ -46,11 +54,7 @@ int sctk_accl_init() {
 
 #ifdef MPC_USE_OPENCL
 #endif
-  if (sctk_accl_support) {
-    sctk_warning("Accelerators support ENABLED");
-  } else {
-    nb_devices = 0;
-  }
+  return 0;
 }
 
 /**

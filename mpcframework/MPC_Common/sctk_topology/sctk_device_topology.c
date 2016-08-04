@@ -484,6 +484,7 @@ void sctk_device_enrich_topology( hwloc_topology_t topology )
 	int i;
 #if defined(MPC_USE_CUDA)
         int num_devices = 0;
+		sctk_accl_cuda_init();
         cudaGetDeviceCount(&num_devices);
 #endif
         for (i = 0; i < sctk_devices_count; i++) {
@@ -514,7 +515,6 @@ void sctk_device_enrich_topology( hwloc_topology_t topology )
             sscanf(cur_attr, "busid=%s", busid_str);
 
             /* maybe the init() should be done only once ? */
-            cuInit(0);
             CUdevice dev = 0;
             CUresult test = cuDeviceGetByPCIBusId(&dev, busid_str);
 

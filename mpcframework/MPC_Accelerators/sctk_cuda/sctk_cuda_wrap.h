@@ -21,41 +21,30 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#ifndef SCTK_CUDA_H
-#define SCTK_CUDA_H
-
-#ifdef MPC_USE_CUDA
-#include <sctk_cuda_wrap.h>
-#include <cuda_runtime.h>
+#ifndef SCTK_CUDA_WRAP_H
+#define SCTK_CUDA_WRAP_H
 #include <sctk_debug.h>
 
-#ifndef NDEBUG
-#define safe_cudart(u)                                                         \
-  assume_m(((u) == cudaSuccess), "Runtime CUDA call failed with value %d", u)
-#define safe_cudadv(u)                                                         \
-  assume_m(((u) == CUDA_SUCCESS), "Driver CUDA call failed with value %d", u)
-#else
-#define safe_cudart(u) u
-#define safe_cudadv(u) u
-#endif
+#define sctk_cuFatal() do{\
+	sctk_error("You reached fake CUDA %s() call inside MPC", __func__);\
+	sctk_error("Please ensure a valid CUDA driver library is present and you provided --cuda option to mpc_* compilers");\
+	sctk_abort();\
+}while(0)
 
-/**
- * The CUDA context structure as handled by MPC.
- *
- * This structure is part of TLS bundle handled internally by thread context.
- */
-typedef struct cuda_ctx_s {
-  char pushed;       /**< Set to 1 when the ctx is currently pushed */
-  int cpu_id;        /**< Register the cpu_id associated to the CUDA ctx */
-  CUcontext context; /**< THE CUDA ctx */
-} cuda_ctx_t;
+#ifdef MPC_USE_CUDA
 
-int sctk_accl_cuda_init();
+/* As cuda.h is not included, create some bridges */
+#define CUDA_SUCCESS 0
+#define CU_CTX_SCHED_YIELD 0x02
+typedef int CUresult;
+typedef int CUdevice;
+typedef void* CUcontext;
 
-int sctk_accl_cuda_init_context();
-int sctk_accl_cuda_push_context();
-int sctk_accl_cuda_pop_context();
-
+CUresult sctk_cuInit(unsigned flag);
+CUresult sctk_cuCtxCreate(CUcontext* c, unsigned int f, CUdevice d);
+CUresult sctk_cuCtxPopCurrent(CUcontext* c);
+CUresult sctk_cuCtxPushCurrent(CUcontext c);
+CUresult sctk_cuDeviceGetByPCIBusId(CUdevice* d, const char * b);
 #endif
 
 #endif

@@ -21,41 +21,39 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#ifndef SCTK_CUDA_H
-#define SCTK_CUDA_H
-
-#ifdef MPC_USE_CUDA
 #include <sctk_cuda_wrap.h>
-#include <cuda_runtime.h>
 #include <sctk_debug.h>
 
-#ifndef NDEBUG
-#define safe_cudart(u)                                                         \
-  assume_m(((u) == cudaSuccess), "Runtime CUDA call failed with value %d", u)
-#define safe_cudadv(u)                                                         \
-  assume_m(((u) == CUDA_SUCCESS), "Driver CUDA call failed with value %d", u)
-#else
-#define safe_cudart(u) u
-#define safe_cudadv(u) u
+#ifdef MPC_USE_CUDA
+
+#pragma weak sctk_cuInit
+CUresult sctk_cuInit(unsigned flag) {
+  sctk_cuFatal();
+  return -1;
+}
+
+#pragma weak sctk_cuCtxCreate
+CUresult sctk_cuCtxCreate(CUcontext *c, unsigned int f, CUdevice d) {
+  sctk_cuFatal();
+  return -1;
+}
+
+#pragma weak sctk_cuCtxPopCurrent
+CUresult sctk_cuCtxPopCurrent(CUcontext *c) {
+  sctk_cuFatal();
+  return -1;
+}
+
+#pragma weak sctk_cuCtxPushCurrent
+CUresult sctk_cuCtxPushCurrent(CUcontext c) {
+  sctk_cuFatal();
+  return -1;
+}
+
+#pragma weak sctk_cuDeviceGetByPCIBusId
+CUresult sctk_cuDeviceGetByPCIBusId(CUdevice *d, const char *b) {
+  sctk_cuFatal();
+  return -1;
+}
 #endif
 
-/**
- * The CUDA context structure as handled by MPC.
- *
- * This structure is part of TLS bundle handled internally by thread context.
- */
-typedef struct cuda_ctx_s {
-  char pushed;       /**< Set to 1 when the ctx is currently pushed */
-  int cpu_id;        /**< Register the cpu_id associated to the CUDA ctx */
-  CUcontext context; /**< THE CUDA ctx */
-} cuda_ctx_t;
-
-int sctk_accl_cuda_init();
-
-int sctk_accl_cuda_init_context();
-int sctk_accl_cuda_push_context();
-int sctk_accl_cuda_pop_context();
-
-#endif
-
-#endif

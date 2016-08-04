@@ -132,7 +132,7 @@ rm \${CUDA_FILE}
 EOF
 else
 cat <<EOF >> $1
-eccho ""
+echo ""
 EOF
 fi
 cat <<EOF >> $1
@@ -226,6 +226,7 @@ output_file=""
 next_arg_is_output=no
 OUTPUT_FILE_ARGS=""
 PRIV_FLAG="-fmpc-privatize"
+EXTRA_ADDON_FLAGS=""
 unset MPC_DISABLE_TLS_OPT
 NO_TLS_OPT=0
 MPC_HEADER_INCLUDE="-include mpc_main.h"
@@ -344,6 +345,10 @@ for arg in "\$@" ; do
 			fi
 		done
 		exit 0
+	;;
+	-cuda)
+		EXTRA_ADDON_FLAGS="-L\$MPC_RPREFIX/\${MPC_SUBPREFIX}/lib/stubs -Wl,-rpath=\$MPC_RPREFIX/\${MPC_SUBPREFIX}/lib/stubs -lmpc_cuda_addon"
+		addarg=no
 	;;
 	-target=*)
 	TARGET=\`echo A\$arg | sed -e 's/A-target=//g'\`
@@ -501,6 +506,7 @@ export PATH=\${MPC_RPREFIX}/\${MPC_HOST_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/bin/
 #first definition of compiler & linking flags
 CFLAGS="\`\${MPC_RPREFIX}/\${MPC_HOST_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/bin/mpc_cflags $language\`"
 LDFLAGS="\`\${MPC_RPREFIX}/\${MPC_HOST_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/bin/mpc_ldflags $language\`"
+LDFLAGS="\$EXTRA_ADDON_FLAGS \$LDFLAGS"
 
 #Used to avoid header global variable privatization when libraries are not privatized
 #mpcmp.h and mpcmicrothread.h have been recopied from GCC patch

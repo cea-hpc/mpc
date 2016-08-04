@@ -23,7 +23,6 @@
 
 #if defined(MPC_Accelerators) && defined(MPC_USE_CUDA)
 #include <sctk_accelerators.h>
-/*#include <sctk_cuda.h>*/
 #include <sctk_alloc.h>
 #include <sctk_debug.h>
 #include <sctk_device_topology.h>
@@ -87,7 +86,7 @@ static int sctk_accl_cuda_get_closest_device(int cpu_id) {
  * 	- 0 if the init succeeded
  * 	- 1 otherwise
  */
-int sctk_accl_cuda_init() {
+int sctk_accl_cuda_init_context() {
   int num_devices = sctk_accl_get_nb_devices(), check_nb;
 
   /* if CUDA support is loaded but the current configuration does not provide a
@@ -114,9 +113,9 @@ int sctk_accl_cuda_init() {
   CUdevice nearest_device =
       (CUdevice)sctk_accl_cuda_get_closest_device(cuda->cpu_id);
 
-  safe_cudadv(cuCtxCreate(&cuda->context, CU_CTX_SCHED_YIELD, nearest_device));
+  safe_cudadv(sctk_cuCtxCreate(&cuda->context, CU_CTX_SCHED_YIELD, nearest_device));
 
-  /*cuCtxCreate() automatically attaches the ctx to the GPU */
+  /*sctk_cuCtxCreate() automatically attaches the ctx to the GPU */
   cuda->pushed = 1;
 
   sctk_info("CUDA: (INIT) PU %d bound to device %d", cuda->cpu_id,
@@ -166,7 +165,7 @@ int sctk_accl_cuda_pop_context() {
    * other
    */
   if (cuda->pushed) {
-    safe_cudadv(cuCtxPopCurrent(&cuda->context));
+    safe_cudadv(sctk_cuCtxPopCurrent(&cuda->context));
     cuda->pushed = 0;
 
     ///* DEBUG
@@ -213,7 +212,7 @@ int sctk_accl_cuda_push_context() {
 
   /* if the context is not already on the GPU */
   if (!cuda->pushed) {
-    safe_cudadv(cuCtxPushCurrent(cuda->context));
+    safe_cudadv(sctk_cuCtxPushCurrent(cuda->context));
     cuda->pushed = 1;
 
     ///* DEBUG
@@ -223,6 +222,14 @@ int sctk_accl_cuda_push_context() {
                  cuda_id);
     //*/
   }
+  return 0;
 }
 
+extern bool sctk_accl_support;
+int sctk_accl_cuda_init()
+{
+	if (sctk_accl_support) /* && sctk_cuda_support) */
+		safe_cudadv(sctk_cuInit(0));
+	return 0;
+}
 #endif // MPC_Accelerators && USE_CUDA

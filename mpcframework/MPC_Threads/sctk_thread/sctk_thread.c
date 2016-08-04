@@ -690,7 +690,7 @@ sctk_thread_create_tmp_start_routine (sctk_thread_data_t * __arg)
 
 #if defined(MPC_USE_CUDA)
   sctk_thread_yield();
-  sctk_accl_cuda_init();
+  sctk_accl_cuda_init_context();
 #endif
 
   sctk_tls_dtors_init(&(tmp.dtors_head));
