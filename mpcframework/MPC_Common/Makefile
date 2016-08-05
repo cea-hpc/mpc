@@ -1,4 +1,4 @@
-# Makefile generated with ../MPC_Tools/mpc_gen_makefile lundi 21 septembre 2015, 11:08:00 (UTC+0200)
+# Makefile generated with ../MPC_Tools/mpc_gen_makefile
 ############################# MPC License ##############################
 # Wed Nov 19 15:19:19 CET 2008                                         #
 # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          #
@@ -24,15 +24,6 @@
 
 
 LOCAL_CFLAGS=$(CFLAGS)
-
-FILES_include=$(wildcard include/*.c)
-OBJ_include=$(FILES_include:include/%.c=$(M_PWD)/BUILD_MPC_Common/lib/%.o)
-DEP_include=$(FILES_include:include/%.c=$(M_PWD)/BUILD_MPC_Common/lib/%.d)
-
-SFILES_include=$(wildcard include/*.S)
-SOBJ_include=$(SFILES_include:include/%.S=$(M_PWD)/BUILD_MPC_Common/lib/%.o)
-SDEP_include=$(SFILES_include:include/%.S=$(M_PWD)/BUILD_MPC_Common/lib/%.d)
-
 
 FILES_libdict=$(wildcard libdict/*.c)
 OBJ_libdict=$(FILES_libdict:libdict/%.c=$(M_PWD)/BUILD_MPC_Common/lib/%.o)
@@ -133,15 +124,6 @@ SOBJ_shm_mapper=$(SFILES_shm_mapper:sctk_shm_mapper/%.S=$(M_PWD)/BUILD_MPC_Commo
 SDEP_shm_mapper=$(SFILES_shm_mapper:sctk_shm_mapper/%.S=$(M_PWD)/BUILD_MPC_Common/lib/%.d)
 
 
-FILES_shm_raw_queues=$(wildcard sctk_shm_raw_queues/*.c)
-OBJ_shm_raw_queues=$(FILES_shm_raw_queues:sctk_shm_raw_queues/%.c=$(M_PWD)/BUILD_MPC_Common/lib/%.o)
-DEP_shm_raw_queues=$(FILES_shm_raw_queues:sctk_shm_raw_queues/%.c=$(M_PWD)/BUILD_MPC_Common/lib/%.d)
-
-SFILES_shm_raw_queues=$(wildcard sctk_shm_raw_queues/*.S)
-SOBJ_shm_raw_queues=$(SFILES_shm_raw_queues:sctk_shm_raw_queues/%.S=$(M_PWD)/BUILD_MPC_Common/lib/%.o)
-SDEP_shm_raw_queues=$(SFILES_shm_raw_queues:sctk_shm_raw_queues/%.S=$(M_PWD)/BUILD_MPC_Common/lib/%.d)
-
-
 FILES_spinlock=$(wildcard sctk_spinlock/*.c)
 OBJ_spinlock=$(FILES_spinlock:sctk_spinlock/%.c=$(M_PWD)/BUILD_MPC_Common/lib/%.o)
 DEP_spinlock=$(FILES_spinlock:sctk_spinlock/%.c=$(M_PWD)/BUILD_MPC_Common/lib/%.d)
@@ -159,9 +141,6 @@ SFILES_topology=$(wildcard sctk_topology/*.S)
 SOBJ_topology=$(SFILES_topology:sctk_topology/%.S=$(M_PWD)/BUILD_MPC_Common/lib/%.o)
 SDEP_topology=$(SFILES_topology:sctk_topology/%.S=$(M_PWD)/BUILD_MPC_Common/lib/%.d)
 
-
-FFILES_include=$(wildcard include/*.f)
-FOBJ_include=$(FFILES_include:include/%.f=$(M_PWD)/BUILD_MPC_Common/lib/%_f.o)
 
 FFILES_libdict=$(wildcard libdict/*.f)
 FOBJ_libdict=$(FFILES_libdict:libdict/%.f=$(M_PWD)/BUILD_MPC_Common/lib/%_f.o)
@@ -196,19 +175,15 @@ FOBJ_optim=$(FFILES_optim:sctk_optim/$(SCTK_ARCH_OPTIM)/%.f=$(M_PWD)/BUILD_MPC_C
 FFILES_shm_mapper=$(wildcard sctk_shm_mapper/*.f)
 FOBJ_shm_mapper=$(FFILES_shm_mapper:sctk_shm_mapper/%.f=$(M_PWD)/BUILD_MPC_Common/lib/%_f.o)
 
-FFILES_shm_raw_queues=$(wildcard sctk_shm_raw_queues/*.f)
-FOBJ_shm_raw_queues=$(FFILES_shm_raw_queues:sctk_shm_raw_queues/%.f=$(M_PWD)/BUILD_MPC_Common/lib/%_f.o)
-
 FFILES_spinlock=$(wildcard sctk_spinlock/*.f)
 FOBJ_spinlock=$(FFILES_spinlock:sctk_spinlock/%.f=$(M_PWD)/BUILD_MPC_Common/lib/%_f.o)
 
 FFILES_topology=$(wildcard sctk_topology/*.f)
 FOBJ_topology=$(FFILES_topology:sctk_topology/%.f=$(M_PWD)/BUILD_MPC_Common/lib/%_f.o)
 
-all: $(OBJ_include) $(FOBJ_include) $(SOBJ_include) $(OBJ_libdict) $(FOBJ_libdict) $(SOBJ_libdict) $(OBJ_aio) $(FOBJ_aio) $(SOBJ_aio) $(OBJ_alloc) $(FOBJ_alloc) $(SOBJ_alloc) $(OBJ_asm) $(FOBJ_asm) $(SOBJ_asm) $(OBJ_basic) $(FOBJ_basic) $(SOBJ_basic) $(OBJ_datastructures) $(FOBJ_datastructures) $(SOBJ_datastructures) $(OBJ_debug) $(FOBJ_debug) $(SOBJ_debug) $(OBJ_helpers) $(FOBJ_helpers) $(SOBJ_helpers) $(OBJ_launch) $(FOBJ_launch) $(SOBJ_launch) $(OBJ_optim) $(FOBJ_optim) $(SOBJ_optim) $(OBJ_shm_mapper) $(FOBJ_shm_mapper) $(SOBJ_shm_mapper) $(OBJ_shm_raw_queues) $(FOBJ_shm_raw_queues) $(SOBJ_shm_raw_queues) $(OBJ_spinlock) $(FOBJ_spinlock) $(SOBJ_spinlock) $(OBJ_topology) $(FOBJ_topology) $(SOBJ_topology)
+all: $(OBJ_libdict) $(FOBJ_libdict) $(SOBJ_libdict) $(OBJ_aio) $(FOBJ_aio) $(SOBJ_aio) $(OBJ_alloc) $(FOBJ_alloc) $(SOBJ_alloc) $(OBJ_asm) $(FOBJ_asm) $(SOBJ_asm) $(OBJ_basic) $(FOBJ_basic) $(SOBJ_basic) $(OBJ_datastructures) $(FOBJ_datastructures) $(SOBJ_datastructures) $(OBJ_debug) $(FOBJ_debug) $(SOBJ_debug) $(OBJ_helpers) $(FOBJ_helpers) $(SOBJ_helpers) $(OBJ_launch) $(FOBJ_launch) $(SOBJ_launch) $(OBJ_optim) $(FOBJ_optim) $(SOBJ_optim) $(OBJ_shm_mapper) $(FOBJ_shm_mapper) $(SOBJ_shm_mapper) $(OBJ_spinlock) $(FOBJ_spinlock) $(SOBJ_spinlock) $(OBJ_topology) $(FOBJ_topology) $(SOBJ_topology)
 
 $(M_PWD)/include_modules/MPC_Common:
-	@../MPC_Tools/mpc_prepare_includes $(MPC_SOURCE_DIR)MPC_Common/include $(M_PWD)/include_modules
 	@../MPC_Tools/mpc_prepare_includes $(MPC_SOURCE_DIR)MPC_Common/libdict $(M_PWD)/include_modules
 	@../MPC_Tools/mpc_prepare_includes $(MPC_SOURCE_DIR)MPC_Common/sctk_aio $(M_PWD)/include_modules
 	@../MPC_Tools/mpc_prepare_includes $(MPC_SOURCE_DIR)MPC_Common/sctk_alloc $(M_PWD)/include_modules
@@ -220,7 +195,6 @@ $(M_PWD)/include_modules/MPC_Common:
 	@../MPC_Tools/mpc_prepare_includes $(MPC_SOURCE_DIR)MPC_Common/sctk_launch $(M_PWD)/include_modules
 	@../MPC_Tools/mpc_prepare_includes $(MPC_SOURCE_DIR)MPC_Common/sctk_optim/$(SCTK_ARCH_OPTIM) $(M_PWD)/include_modules
 	@../MPC_Tools/mpc_prepare_includes $(MPC_SOURCE_DIR)MPC_Common/sctk_shm_mapper $(M_PWD)/include_modules
-	@../MPC_Tools/mpc_prepare_includes $(MPC_SOURCE_DIR)MPC_Common/sctk_shm_raw_queues $(M_PWD)/include_modules
 	@../MPC_Tools/mpc_prepare_includes $(MPC_SOURCE_DIR)MPC_Common/sctk_spinlock $(M_PWD)/include_modules
 	@../MPC_Tools/mpc_prepare_includes $(MPC_SOURCE_DIR)MPC_Common/sctk_topology $(M_PWD)/include_modules
 	@touch $@
@@ -229,17 +203,12 @@ prepare_includes:$(M_PWD)/include_modules/MPC_Common
 
 
 ifneq ($(SCTK_MAKE_NO_DEP),yes)
-DEPENDS=$(DEP_include) $(DEP_libdict) $(DEP_aio) $(DEP_alloc) $(DEP_asm) $(DEP_basic) $(DEP_datastructures) $(DEP_debug) $(DEP_helpers) $(DEP_launch) $(DEP_optim) $(DEP_shm_mapper) $(DEP_shm_raw_queues) $(DEP_spinlock) $(DEP_topology) 
+DEPENDS=$(DEP_libdict) $(DEP_aio) $(DEP_alloc) $(DEP_asm) $(DEP_basic) $(DEP_datastructures) $(DEP_debug) $(DEP_helpers) $(DEP_launch) $(DEP_optim) $(DEP_shm_mapper) $(DEP_spinlock) $(DEP_topology) 
 
 $(DEPENDS):Makefile 
 endif
 
 ifneq ($(SCTK_MAKE_NO_DEP),yes)
-$(DEP_include):$(M_PWD)/BUILD_MPC_Common/lib/%.d:include/%.c
-	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.d,include/%.c,$@)"
-	@$(CC) $(SCTK_CC_DEP) $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.d,include/%.c,$@) | \
-		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
-
 $(DEP_libdict):$(M_PWD)/BUILD_MPC_Common/lib/%.d:libdict/%.c
 	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.d,libdict/%.c,$@)"
 	@$(CC) $(SCTK_CC_DEP) $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.d,libdict/%.c,$@) | \
@@ -295,11 +264,6 @@ $(DEP_shm_mapper):$(M_PWD)/BUILD_MPC_Common/lib/%.d:sctk_shm_mapper/%.c
 	@$(CC) $(SCTK_CC_DEP) $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.d,sctk_shm_mapper/%.c,$@) | \
 		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
 
-$(DEP_shm_raw_queues):$(M_PWD)/BUILD_MPC_Common/lib/%.d:sctk_shm_raw_queues/%.c
-	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.d,sctk_shm_raw_queues/%.c,$@)"
-	@$(CC) $(SCTK_CC_DEP) $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.d,sctk_shm_raw_queues/%.c,$@) | \
-		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
-
 $(DEP_spinlock):$(M_PWD)/BUILD_MPC_Common/lib/%.d:sctk_spinlock/%.c
 	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.d,sctk_spinlock/%.c,$@)"
 	@$(GCC) -M $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.d,sctk_spinlock/%.c,$@) | \
@@ -311,10 +275,6 @@ $(DEP_topology):$(M_PWD)/BUILD_MPC_Common/lib/%.d:sctk_topology/%.c
 		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
 
 else
-$(DEP_include):$(M_PWD)/BUILD_MPC_Common/lib/%.d:include/%.c
-	@echo "    Generate fake dependencies $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.d,include/%.c,$@)"
-	@echo "$(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.d,include/%.c,$@)" > $@
-
 $(DEP_libdict):$(M_PWD)/BUILD_MPC_Common/lib/%.d:libdict/%.c
 	@echo "    Generate fake dependencies $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.d,libdict/%.c,$@)"
 	@echo "$(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.d,libdict/%.c,$@)" > $@
@@ -359,10 +319,6 @@ $(DEP_shm_mapper):$(M_PWD)/BUILD_MPC_Common/lib/%.d:sctk_shm_mapper/%.c
 	@echo "    Generate fake dependencies $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.d,sctk_shm_mapper/%.c,$@)"
 	@echo "$(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.d,sctk_shm_mapper/%.c,$@)" > $@
 
-$(DEP_shm_raw_queues):$(M_PWD)/BUILD_MPC_Common/lib/%.d:sctk_shm_raw_queues/%.c
-	@echo "    Generate fake dependencies $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.d,sctk_shm_raw_queues/%.c,$@)"
-	@echo "$(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.d,sctk_shm_raw_queues/%.c,$@)" > $@
-
 $(DEP_spinlock):$(M_PWD)/BUILD_MPC_Common/lib/%.d:sctk_spinlock/%.c
 	@echo "    Generate fake dependencies $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.d,sctk_spinlock/%.c,$@)"
 	@echo "$(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.d,sctk_spinlock/%.c,$@)" > $@
@@ -372,10 +328,6 @@ $(DEP_topology):$(M_PWD)/BUILD_MPC_Common/lib/%.d:sctk_topology/%.c
 	@echo "$(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.d,sctk_topology/%.c,$@)" > $@
 
 endif
-
-$(OBJ_include):%.o:%.d
-	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,include/%.c,$@)"
-	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,include/%.c,$@) -o $@
 
 $(OBJ_libdict):%.o:%.d
 	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,libdict/%.c,$@)"
@@ -421,10 +373,6 @@ $(OBJ_shm_mapper):%.o:%.d
 	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,sctk_shm_mapper/%.c,$@)"
 	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,sctk_shm_mapper/%.c,$@) -o $@
 
-$(OBJ_shm_raw_queues):%.o:%.d
-	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,sctk_shm_raw_queues/%.c,$@)"
-	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,sctk_shm_raw_queues/%.c,$@) -o $@
-
 $(OBJ_spinlock):%.o:%.d
 	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,sctk_spinlock/%.c,$@)"
 	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,sctk_spinlock/%.c,$@) -o $@
@@ -432,11 +380,6 @@ $(OBJ_spinlock):%.o:%.d
 $(OBJ_topology):%.o:%.d
 	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,sctk_topology/%.c,$@)"
 	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,sctk_topology/%.c,$@) -o $@
-
-$(SDEP_include):$(M_PWD)/BUILD_MPC_Common/lib/%.d:include/%.S
-	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.d,include/%.S,$@)"
-	@$(GCC) -M $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.d,include/%.S,$@) | \
-		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
 
 $(SDEP_libdict):$(M_PWD)/BUILD_MPC_Common/lib/%.d:libdict/%.S
 	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.d,libdict/%.S,$@)"
@@ -493,11 +436,6 @@ $(SDEP_shm_mapper):$(M_PWD)/BUILD_MPC_Common/lib/%.d:sctk_shm_mapper/%.S
 	@$(GCC) -M $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.d,sctk_shm_mapper/%.S,$@) | \
 		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
 
-$(SDEP_shm_raw_queues):$(M_PWD)/BUILD_MPC_Common/lib/%.d:sctk_shm_raw_queues/%.S
-	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.d,sctk_shm_raw_queues/%.S,$@)"
-	@$(GCC) -M $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.d,sctk_shm_raw_queues/%.S,$@) | \
-		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
-
 $(SDEP_spinlock):$(M_PWD)/BUILD_MPC_Common/lib/%.d:sctk_spinlock/%.S
 	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.d,sctk_spinlock/%.S,$@)"
 	@$(GCC) -M $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.d,sctk_spinlock/%.S,$@) | \
@@ -507,10 +445,6 @@ $(SDEP_topology):$(M_PWD)/BUILD_MPC_Common/lib/%.d:sctk_topology/%.S
 	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.d,sctk_topology/%.S,$@)"
 	@$(GCC) -M $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.d,sctk_topology/%.S,$@) | \
 		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
-
-$(SOBJ_include):%.o:%.d
-	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,include/%.S,$@)"
-	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,include/%.S,$@) -o $@
 
 $(SOBJ_libdict):%.o:%.d
 	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,libdict/%.S,$@)"
@@ -556,10 +490,6 @@ $(SOBJ_shm_mapper):%.o:%.d
 	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,sctk_shm_mapper/%.S,$@)"
 	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,sctk_shm_mapper/%.S,$@) -o $@
 
-$(SOBJ_shm_raw_queues):%.o:%.d
-	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,sctk_shm_raw_queues/%.S,$@)"
-	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,sctk_shm_raw_queues/%.S,$@) -o $@
-
 $(SOBJ_spinlock):%.o:%.d
 	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,sctk_spinlock/%.S,$@)"
 	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,sctk_spinlock/%.S,$@) -o $@
@@ -567,10 +497,6 @@ $(SOBJ_spinlock):%.o:%.d
 $(SOBJ_topology):%.o:%.d
 	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,sctk_topology/%.S,$@)"
 	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,sctk_topology/%.S,$@) -o $@
-
-$(FOBJ_include):$(M_PWD)/BUILD_MPC_Common/lib/%_f.o:include/%.f
-	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%_f.o,include/%.f,$@)"
-	@$(F77) -c $(FFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%_f.o,include/%.f,$@) -o $@
 
 $(FOBJ_libdict):$(M_PWD)/BUILD_MPC_Common/lib/%_f.o:libdict/%.f
 	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%_f.o,libdict/%.f,$@)"
@@ -615,10 +541,6 @@ $(FOBJ_optim):$(M_PWD)/BUILD_MPC_Common/lib/%_f.o:sctk_optim/$(SCTK_ARCH_OPTIM)/
 $(FOBJ_shm_mapper):$(M_PWD)/BUILD_MPC_Common/lib/%_f.o:sctk_shm_mapper/%.f
 	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%_f.o,sctk_shm_mapper/%.f,$@)"
 	@$(F77) -c $(FFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%_f.o,sctk_shm_mapper/%.f,$@) -o $@
-
-$(FOBJ_shm_raw_queues):$(M_PWD)/BUILD_MPC_Common/lib/%_f.o:sctk_shm_raw_queues/%.f
-	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%_f.o,sctk_shm_raw_queues/%.f,$@)"
-	@$(F77) -c $(FFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%_f.o,sctk_shm_raw_queues/%.f,$@) -o $@
 
 $(FOBJ_spinlock):$(M_PWD)/BUILD_MPC_Common/lib/%_f.o:sctk_spinlock/%.f
 	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%_f.o,sctk_spinlock/%.f,$@)"

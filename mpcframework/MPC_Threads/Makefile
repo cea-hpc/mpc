@@ -1,4 +1,4 @@
-# Makefile generated with ../MPC_Tools/mpc_gen_makefile mardi 3 mars 2015, 09:52:57 (UTC+0100)
+# Makefile generated with ../MPC_Tools/mpc_gen_makefile
 ############################# MPC License ##############################
 # Wed Nov 19 15:19:19 CET 2008                                         #
 # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          #
@@ -23,7 +23,7 @@
 ########################################################################
 
 
-LOCAL_CFLAGS=-Wall -Wno-unused-function $(CFLAGS)
+LOCAL_CFLAGS=$(CFLAGS)
 
 FILES_include=$(wildcard include/*.c)
 OBJ_include=$(FILES_include:include/%.c=$(M_PWD)/BUILD_MPC_Threads/lib/%.o)

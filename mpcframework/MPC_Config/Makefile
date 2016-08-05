@@ -1,4 +1,4 @@
-# Makefile generated with ../MPC_Tools/mpc_gen_makefile Thu Sep 19 16:10:19 CEST 2013
+# Makefile generated with ../MPC_Tools/mpc_gen_makefile
 ############################# MPC License ##############################
 # Wed Nov 19 15:19:19 CET 2008                                         #
 # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          #
@@ -25,13 +25,13 @@
 
 LOCAL_CFLAGS=$(CFLAGS)
 
-FILES_doc=$(wildcard doc/*.c)
-OBJ_doc=$(FILES_doc:doc/%.c=$(M_PWD)/BUILD_MPC_Config/lib/%.o)
-DEP_doc=$(FILES_doc:doc/%.c=$(M_PWD)/BUILD_MPC_Config/lib/%.d)
+FILES_editor=$(wildcard editor/*.c)
+OBJ_editor=$(FILES_editor:editor/%.c=$(M_PWD)/BUILD_MPC_Config/lib/%.o)
+DEP_editor=$(FILES_editor:editor/%.c=$(M_PWD)/BUILD_MPC_Config/lib/%.d)
 
-SFILES_doc=$(wildcard doc/*.S)
-SOBJ_doc=$(SFILES_doc:doc/%.S=$(M_PWD)/BUILD_MPC_Config/lib/%.o)
-SDEP_doc=$(SFILES_doc:doc/%.S=$(M_PWD)/BUILD_MPC_Config/lib/%.d)
+SFILES_editor=$(wildcard editor/*.S)
+SOBJ_editor=$(SFILES_editor:editor/%.S=$(M_PWD)/BUILD_MPC_Config/lib/%.o)
+SDEP_editor=$(SFILES_editor:editor/%.S=$(M_PWD)/BUILD_MPC_Config/lib/%.d)
 
 
 FILES_extra=$(wildcard extra/*.c)
@@ -70,8 +70,8 @@ SOBJ_src=$(SFILES_src:src/%.S=$(M_PWD)/BUILD_MPC_Config/lib/%.o)
 SDEP_src=$(SFILES_src:src/%.S=$(M_PWD)/BUILD_MPC_Config/lib/%.d)
 
 
-FFILES_doc=$(wildcard doc/*.f)
-FOBJ_doc=$(FFILES_doc:doc/%.f=$(M_PWD)/BUILD_MPC_Config/lib/%_f.o)
+FFILES_editor=$(wildcard editor/*.f)
+FOBJ_editor=$(FFILES_editor:editor/%.f=$(M_PWD)/BUILD_MPC_Config/lib/%_f.o)
 
 FFILES_extra=$(wildcard extra/*.f)
 FOBJ_extra=$(FFILES_extra:extra/%.f=$(M_PWD)/BUILD_MPC_Config/lib/%_f.o)
@@ -85,10 +85,10 @@ FOBJ_generators=$(FFILES_generators:generators/%.f=$(M_PWD)/BUILD_MPC_Config/lib
 FFILES_src=$(wildcard src/*.f)
 FOBJ_src=$(FFILES_src:src/%.f=$(M_PWD)/BUILD_MPC_Config/lib/%_f.o)
 
-all: $(OBJ_doc) $(FOBJ_doc) $(SOBJ_doc) $(OBJ_extra) $(FOBJ_extra) $(SOBJ_extra) $(OBJ_generated) $(FOBJ_generated) $(SOBJ_generated) $(OBJ_generators) $(FOBJ_generators) $(SOBJ_generators) $(OBJ_src) $(FOBJ_src) $(SOBJ_src) build_bin
+all: $(OBJ_editor) $(FOBJ_editor) $(SOBJ_editor) $(OBJ_extra) $(FOBJ_extra) $(SOBJ_extra) $(OBJ_generated) $(FOBJ_generated) $(SOBJ_generated) $(OBJ_generators) $(FOBJ_generators) $(SOBJ_generators) $(OBJ_src) $(FOBJ_src) $(SOBJ_src) build_bin build_doc
 
 $(M_PWD)/include_modules/MPC_Config:
-	@../MPC_Tools/mpc_prepare_includes $(MPC_SOURCE_DIR)MPC_Config/doc $(M_PWD)/include_modules
+	@../MPC_Tools/mpc_prepare_includes $(MPC_SOURCE_DIR)MPC_Config/editor $(M_PWD)/include_modules
 	@../MPC_Tools/mpc_prepare_includes $(MPC_SOURCE_DIR)MPC_Config/extra $(M_PWD)/include_modules
 	@../MPC_Tools/mpc_prepare_includes $(MPC_SOURCE_DIR)MPC_Config/generated $(M_PWD)/include_modules
 	@../MPC_Tools/mpc_prepare_includes $(MPC_SOURCE_DIR)MPC_Config/generators $(M_PWD)/include_modules
@@ -99,15 +99,15 @@ prepare_includes:$(M_PWD)/include_modules/MPC_Config
 
 
 ifneq ($(SCTK_MAKE_NO_DEP),yes)
-DEPENDS=$(DEP_doc) $(DEP_extra) $(DEP_generated) $(DEP_generators) $(DEP_src) 
+DEPENDS=$(DEP_editor) $(DEP_extra) $(DEP_generated) $(DEP_generators) $(DEP_src) 
 
 $(DEPENDS):Makefile 
 endif
 
 ifneq ($(SCTK_MAKE_NO_DEP),yes)
-$(DEP_doc):$(M_PWD)/BUILD_MPC_Config/lib/%.d:doc/%.c
-	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%.d,doc/%.c,$@)"
-	@$(CC) $(SCTK_CC_DEP) $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%.d,doc/%.c,$@) | \
+$(DEP_editor):$(M_PWD)/BUILD_MPC_Config/lib/%.d:editor/%.c
+	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%.d,editor/%.c,$@)"
+	@$(CC) $(SCTK_CC_DEP) $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%.d,editor/%.c,$@) | \
 		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
 
 $(DEP_extra):$(M_PWD)/BUILD_MPC_Config/lib/%.d:extra/%.c
@@ -131,9 +131,9 @@ $(DEP_src):$(M_PWD)/BUILD_MPC_Config/lib/%.d:src/%.c
 		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
 
 else
-$(DEP_doc):$(M_PWD)/BUILD_MPC_Config/lib/%.d:doc/%.c
-	@echo "    Generate fake dependencies $(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%.d,doc/%.c,$@)"
-	@echo "$(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%.d,doc/%.c,$@)" > $@
+$(DEP_editor):$(M_PWD)/BUILD_MPC_Config/lib/%.d:editor/%.c
+	@echo "    Generate fake dependencies $(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%.d,editor/%.c,$@)"
+	@echo "$(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%.d,editor/%.c,$@)" > $@
 
 $(DEP_extra):$(M_PWD)/BUILD_MPC_Config/lib/%.d:extra/%.c
 	@echo "    Generate fake dependencies $(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%.d,extra/%.c,$@)"
@@ -153,9 +153,9 @@ $(DEP_src):$(M_PWD)/BUILD_MPC_Config/lib/%.d:src/%.c
 
 endif
 
-$(OBJ_doc):%.o:%.d
-	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%.o,doc/%.c,$@)"
-	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%.o,doc/%.c,$@) -o $@
+$(OBJ_editor):%.o:%.d
+	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%.o,editor/%.c,$@)"
+	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%.o,editor/%.c,$@) -o $@
 
 $(OBJ_extra):%.o:%.d
 	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%.o,extra/%.c,$@)"
@@ -173,9 +173,9 @@ $(OBJ_src):%.o:%.d
 	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%.o,src/%.c,$@)"
 	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%.o,src/%.c,$@) -o $@
 
-$(SDEP_doc):$(M_PWD)/BUILD_MPC_Config/lib/%.d:doc/%.S
-	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%.d,doc/%.S,$@)"
-	@$(GCC) -M $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%.d,doc/%.S,$@) | \
+$(SDEP_editor):$(M_PWD)/BUILD_MPC_Config/lib/%.d:editor/%.S
+	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%.d,editor/%.S,$@)"
+	@$(GCC) -M $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%.d,editor/%.S,$@) | \
 		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
 
 $(SDEP_extra):$(M_PWD)/BUILD_MPC_Config/lib/%.d:extra/%.S
@@ -198,9 +198,9 @@ $(SDEP_src):$(M_PWD)/BUILD_MPC_Config/lib/%.d:src/%.S
 	@$(GCC) -M $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%.d,src/%.S,$@) | \
 		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
 
-$(SOBJ_doc):%.o:%.d
-	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%.o,doc/%.S,$@)"
-	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%.o,doc/%.S,$@) -o $@
+$(SOBJ_editor):%.o:%.d
+	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%.o,editor/%.S,$@)"
+	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%.o,editor/%.S,$@) -o $@
 
 $(SOBJ_extra):%.o:%.d
 	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%.o,extra/%.S,$@)"
@@ -218,9 +218,9 @@ $(SOBJ_src):%.o:%.d
 	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%.o,src/%.S,$@)"
 	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%.o,src/%.S,$@) -o $@
 
-$(FOBJ_doc):$(M_PWD)/BUILD_MPC_Config/lib/%_f.o:doc/%.f
-	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%_f.o,doc/%.f,$@)"
-	@$(F77) -c $(FFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%_f.o,doc/%.f,$@) -o $@
+$(FOBJ_editor):$(M_PWD)/BUILD_MPC_Config/lib/%_f.o:editor/%.f
+	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%_f.o,editor/%.f,$@)"
+	@$(F77) -c $(FFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%_f.o,editor/%.f,$@) -o $@
 
 $(FOBJ_extra):$(M_PWD)/BUILD_MPC_Config/lib/%_f.o:extra/%.f
 	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%_f.o,extra/%.f,$@)"
@@ -246,4 +246,6 @@ endif
 endif
 build_bin:
 	@mkdir -p $(M_PWD)/BUILD_MPC_Config/bin
-	@$(MAKE) BUILD_DIR=$(M_PWD)/BUILD_MPC_Config/bin -C bin all
+	@$(MAKE) BUILD_DIR=$(M_PWD)/BUILD_MPC_Config/bin -C bin allbuild_doc:
+	@mkdir -p $(M_PWD)/BUILD_MPC_Config/doc
+	@$(MAKE) BUILD_DIR=$(M_PWD)/BUILD_MPC_Config/doc -C doc all

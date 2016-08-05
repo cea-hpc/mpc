@@ -60,7 +60,7 @@ FILE=Makefile
 #
 # Header
 #
-echo "# Makefile generated with $0 `date`" > $FILE
+echo "# Makefile generated with $0" > $FILE
 CUR_DIR="`pwd`"
 cd ..
 chmod 755 $PWDS/../MPC_Tools/mpc_gen_license

@@ -25,12 +25,8 @@
 MODULES=""
 for i in ${MPC_SOURCE_DIR}MPC_*; do 
     MODULE_NAME="`basename $i`"
-    if test "$MODULE_NAME" != "MPC_Tests"; then 
-	if test "$MODULE_NAME" != "MPC_Tools"; then 
-	    if test "$MODULE_NAME" != "MPC_Doc"; then 
+    if test "$MODULE_NAME" != "MPC_Tests" -a "$MODULE_NAME" != "MPC_Tools" -a "$MODULE_NAME" != "MPC_Doc"; then 
 		MODULES="$MODULES $MODULE_NAME"
-	    fi
-	fi
     fi
 done
 
