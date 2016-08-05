@@ -8,9 +8,20 @@ if test "$1" != "" ; then
     ORIGIN="$1"
 fi
 
-echo "Statrting point $ORIGIN"
+echo "Starting point $ORIGIN"
 
-module load llvm/3.8.0
+type module > /dev/null 2>&1
+if test "$?" = "0";
+then
+	module load llvm/3.8.0
+else
+	git clang-format -h > /dev/null 2>&1
+	if test "$?" = "0"; then
+		printf "Sorry, Your environment does not provide clang-format\n"
+		exit 1
+	fi
+fi
+
 
 STATUS="`git clang-format --commit $ORIGIN  | grep 'changed files'`"
 
