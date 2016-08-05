@@ -227,6 +227,16 @@ next_arg_is_output=no
 OUTPUT_FILE_ARGS=""
 PRIV_FLAG="-fmpc-privatize"
 EXTRA_ADDON_FLAGS=""
+EOF
+
+if test "$1" = "bin/nvcc"
+then
+cat<<EOF >> $1
+EXTRA_ADDON_FLAGS="-L\$MPC_RPREFIX/\${MPC_SUBPREFIX}/lib/stubs -Wl,-rpath=\$MPC_RPREFIX/\${MPC_SUBPREFIX}/lib/stubs -lmpc_cuda_addon -Wl,--unresolved-symbols=ignore-in-shared-libs"
+EOF
+fi
+
+cat<<EOF >> $1
 unset MPC_DISABLE_TLS_OPT
 NO_TLS_OPT=0
 MPC_HEADER_INCLUDE="-include mpc_main.h"
@@ -347,7 +357,7 @@ for arg in "\$@" ; do
 		exit 0
 	;;
 	-cuda)
-		EXTRA_ADDON_FLAGS="-L\$MPC_RPREFIX/\${MPC_SUBPREFIX}/lib/stubs -Wl,-rpath=\$MPC_RPREFIX/\${MPC_SUBPREFIX}/lib/stubs -lmpc_cuda_addon --Wl,--unresolved-symbols=ignore-in-shared-libs"
+		EXTRA_ADDON_FLAGS="-L\$MPC_RPREFIX/\${MPC_SUBPREFIX}/lib/stubs -Wl,-rpath=\$MPC_RPREFIX/\${MPC_SUBPREFIX}/lib/stubs -lmpc_cuda_addon -Wl,--unresolved-symbols=ignore-in-shared-libs"
 		addarg=no
 	;;
 	-target=*)
