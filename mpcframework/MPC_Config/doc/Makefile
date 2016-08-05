@@ -1,4 +1,4 @@
-all: userman.pdf devman.pdf
+all:
 
 pdf: userman.pdf devman.pdf
 

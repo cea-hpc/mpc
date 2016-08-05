@@ -246,6 +246,7 @@ endif
 endif
 build_bin:
 	@mkdir -p $(M_PWD)/BUILD_MPC_Config/bin
-	@$(MAKE) BUILD_DIR=$(M_PWD)/BUILD_MPC_Config/bin -C bin allbuild_doc:
+	@$(MAKE) BUILD_DIR=$(M_PWD)/BUILD_MPC_Config/bin -C bin all
+build_doc:
 	@mkdir -p $(M_PWD)/BUILD_MPC_Config/doc
 	@$(MAKE) BUILD_DIR=$(M_PWD)/BUILD_MPC_Config/doc -C doc all

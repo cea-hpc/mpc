@@ -293,4 +293,5 @@ echo "build_$i:" >> $FILE
 printf "\t@mkdir -p \$(M_PWD)/BUILD_${DIR}/$i" >> $FILE
 echo "" >> $FILE
 printf "\t@\$(MAKE) BUILD_DIR=\$(M_PWD)/BUILD_${DIR}/$i -C $i all" >> $FILE
+echo "" >> $FILE
 done
