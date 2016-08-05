@@ -132,7 +132,11 @@ echo "\$(error \"Please source your root mpcvars.sh or mpcvars.csh before reinst
 echo "endif" >> Makefile
 echo "" >> Makefile
 
-echo "all:lib/libmpc_framework.a lib/libmpc_frameworkf.a lib/libmpc_thread_db.so lib/libmpc_tdb_remote_static.a"  >> Makefile
+ALL="lib/libmpc_framework.a lib/libmpc_frameworkf.a lib/libmpc_thread_db.so lib/libmpc_tdb_remote_static.a"
+
+if test "$SCTK_CUDA" = "1"; then ALL="$ALL lib/stubs/libmpc_cuda_addon.so"; fi
+
+echo "all:$ALL"  >> Makefile
 echo "" >> Makefile
 
 echo "#"  >> Makefile
@@ -203,6 +207,18 @@ printf "\t@mkdir -p lib">> Makefile; echo "">> Makefile
 if test "$SCTK_FORTRAN" = "1"; then
 printf "\t@echo Build \$@">> Makefile; echo "">> Makefile
 printf "\t@\$(AR) rcu \$@ \$(FOBJ_LIST) \$(SCTK_ARFLAGS)">> Makefile; echo "">> Makefile
+fi
+
+#
+# Rule to build libmpc_cuda_addon.a if required
+#
+if test "$SCTK_CUDA" = "1"; then
+echo "" >> Makefile
+echo "lib/stubs/libmpc_cuda_addon.so: \$(COMPIL_DIR)" >> Makefile
+printf "\t@mkdir -p lib">> Makefile; echo "">> Makefile
+printf "\t@echo Build \$@">> Makefile; echo "">> Makefile
+printf "\t@mkdir -p lib/stubs">> Makefile; echo "">> Makefile
+printf "\t@\$(CC) -fPIC -shared -I$CUDA_USER_PREFIX/include ${MPC_SOURCE_DIR}MPC_Accelerators/sctk_cuda/cuda_lib/cuda_lib.c -L$CUDA_USER_PREFIX/lib -L$CUDA_USER_PREFIX/lib64 -L$CUDA_USER_PREFIX/lib64/stubs -lcuda -o \$@ " >> Makefile; echo "">> Makefile
 fi
 
 #
@@ -371,7 +387,7 @@ printf "\t@echo \"Generate FORTRAN MPI/OpenMP includes and modules\"">> Makefile
 printf "\t@MPC_MAKE_FORTRAN_INTERFACE=1 MPC_DISABLE_CONFIG=1 MPC_DISABLE_BANNER=\"1\" LD_LIBRARY_PATH=\$(DESTDIR)/\$(OPENPA_PREFIX_INSTALL)/lib:\$(DESTDIR)/\$(HWLOC_PREFIX_INSTALL)/lib:\$(LD_LIBRARY_PATH) sh ${MPC_SOURCE_DIR}MPC_Tools/fortran_gen/fortran_gen.sh \"${FORTRAN_PYTHON}\" \"${FORTRAN_CC}\" \"${FORTRAN_FC}\" \"${FORTAN_MPIH}\" \"${FORTRAN_INSTALL}\" > fortrangen_script.log ">> Makefile; echo "" >> Makefile
 fi
 
-printf "\t@chmod -R 644 INSTALL/lib/*">> Makefile; echo "">> Makefile
+printf "\t@find INSTALL/lib/* -type f -exec chmod 644 {} +">> Makefile; echo "">> Makefile
 #printf "\t@echo \"Build mpc db\"">> Makefile; echo "">> Makefile
 #printf "\t@\$(CC) $SCTK_CFLAGS ${MPC_SOURCE_DIR}MPC_Tools/mpcrun_tools/mpcdb_client.c -o INSTALL/bin/mpcdb_client $SCTK_LDFLAGS ">> Makefile; echo "">> Makefile
 #printf "\t@\$(CC) $SCTK_CFLAGS ${MPC_SOURCE_DIR}MPC_Tools/mpcrun_tools/mpcdb_server.c -o INSTALL/bin/mpcdb_server $SCTK_LDFLAGS ">> Makefile; echo "">> Makefile
