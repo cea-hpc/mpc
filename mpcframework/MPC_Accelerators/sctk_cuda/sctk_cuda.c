@@ -226,10 +226,18 @@ int sctk_accl_cuda_push_context() {
 }
 
 extern bool sctk_accl_support;
+/**
+ * Initialize the CUDA interface with MPC
+ *
+ * @return 0 if succeeded, 1 otherwise
+ */
 int sctk_accl_cuda_init()
 {
 	if (sctk_accl_support) /* && sctk_cuda_support) */
+	{
 		safe_cudadv(sctk_cuInit(0));
-	return 0;
+		return 0;
+	}
+	return 1;
 }
 #endif // MPC_Accelerators && USE_CUDA
