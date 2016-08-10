@@ -522,7 +522,7 @@ LDFLAGS="\$EXTRA_ADDON_FLAGS \$LDFLAGS"
 #mpcmp.h and mpcmicrothread.h have been recopied from GCC patch
 MPC_UNPRIVATIZED_FILES="\${MPC_UNPRIVATIZED_FILES}:mpcmp.h:mpcmicrothread.h:"
 
-MPC_UNPRIVATIZED_VARS="\`preprocess_main\`"
+MPC_UNPRIVATIZED_VARS="\${MPC_UNPRIVATIZED_VARS}:\`preprocess_main\`"
 export MPC_UNPRIVATIZED_FILES
 export MPC_UNPRIVATIZED_VARS
 
