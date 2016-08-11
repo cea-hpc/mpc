@@ -241,7 +241,6 @@ struct common_table {
      {
 	  void (*func) (void *);             /* Function to execute */
 	  void *data;                         /* Arguments of the function */
-      int isGhostTask;
 	  mpcomp_task_property_t property;        /* Task property */
 	  struct mpcomp_task_s *parent;       /* Mother task */
 	  struct mpcomp_task_s *children;     /* Children list */
@@ -607,55 +606,6 @@ typedef struct mpcomp_thread_s
 #endif /* MPCOMP_TASK */
      }
 
-     static inline void __mpcomp_thread_init(mpcomp_thread_t *t, mpcomp_local_icv_t icvs,
-					     mpcomp_instance_t *instance, mpcomp_thread_t *father )
-     {
-	  int i;
-
-	  t->stack = NULL;
-	  __mpcomp_new_parallel_region_info_init( &(t->info) ) ;
-	  t->info.num_threads = 1 ;
-	  t->info.icvs = icvs;
-	  t->rank = 0;
-	  t->mvp = NULL;
-	  t->done = 0;
-	  t->instance = instance;
-	  t->children_instance = NULL;
-	  t->push_num_threads = -1 ;
-	  t->father = father ;
-
-          sctk_nodebug("__mpcomp_thread_init: father = %p", father);
-
-          /* -- SINGLE CONSTRUCT -- */
-          // t->single_sections_current = 0 ;
-          t->single_sections_target_current = 0;
-          t->single_sections_start_current = 0;
-
-          /* -- DYNAMIC FOR LOOP CONSTRUCT -- */
-          t->for_dyn_current = 0;
-          t->for_dyn_total = 0;
-          for (i = 0; i < MPCOMP_MAX_ALIVE_FOR_DYN + 1; i++)
-            sctk_atomics_store_int(&(t->for_dyn_remain[i].i), -1);
-          t->for_dyn_target = NULL; /* Initialized during the first steal */
-          t->for_dyn_shift = NULL;  /* Initialized during the first steal */
-          t->for_dyn_last_loop_iteration = 0; /* WORKAROUND (pr35196.c) */
-
-#if MPCOMP_TASK
-	  t->tasking_init_done = 0;
-	  t->tied_tasks = NULL;
-	  t->current_task = NULL;
-	  t->larceny_order = NULL;
-#endif /* MPCOMP_TASK */
-
-      t->th_pri_common = (struct common_table *) sctk_malloc(sizeof(struct common_table));
-      for (i = 0; i < KMP_HASH_TABLE_SIZE; ++i)
-        t->th_pri_common->data[ i ] = 0;
-      t->th_pri_head = NULL;
-
-      t->reduction_method = 0;
-     }
-
-
 #if MPCOMP_TASK
     /* Task property primitives */
      static inline void mpcomp_task_reset_property(mpcomp_task_property_t *property)
@@ -681,33 +631,39 @@ typedef struct mpcomp_thread_s
 
 /* Initialization of a task structure */
 
-     static inline void __mpcomp_task_init
-     (struct mpcomp_task_s *task,
-      void (*func) (void *),
-      void *data,
-      mpcomp_thread_t *thread, int isGhostTask)
-     {
-      task->isGhostTask = isGhostTask;
-	  task->func = func;
-	  task->data = data;
-	  mpcomp_task_reset_property(&(task->property));
-	  task->parent = thread->current_task;
-	  if (task->parent)
-	       task->depth = task->parent->depth + 1;
-	  else
-	       task->depth = 0;
-	  task->children = NULL;
-	  task->prev_child = NULL;
-	  task->next_child = NULL;
-	  task->children_lock = SCTK_SPINLOCK_INITIALIZER;
-	  task->thread = NULL;
-	  task->prev = NULL;
-	  task->next = NULL;
-	  task->list = NULL;
+     static inline void __mpcomp_task_init(struct mpcomp_task_s *task,
+                                           void (*func)(void *), void *data,
+                                           mpcomp_thread_t *thread) {
+       task->func = func;
+       task->data = data;
+       mpcomp_task_reset_property(&(task->property));
+       task->parent = thread->current_task;
+       if (task->parent)
+         task->depth = task->parent->depth + 1;
+       else
+         task->depth = 0;
+       task->children = NULL;
+       task->prev_child = NULL;
+       task->next_child = NULL;
+       task->children_lock = SCTK_SPINLOCK_INITIALIZER;
+       task->thread = NULL;
+       task->prev = NULL;
+       task->next = NULL;
+       task->list = NULL;
      }
 
+     static inline void __mpcomp_implicit_task_init(mpcomp_thread_t *t,
+                                                    int id_numa) {
+       t->current_task =
+           mpcomp_malloc(1, sizeof(struct mpcomp_task_s), id_numa);
+       __mpcomp_task_init(t->current_task, NULL, NULL, t);
+       t->current_task->parent = NULL;
+       t->current_task->depth = 0;
+       mpcomp_task_set_property(&(t->current_task->property),
+                                MPCOMP_TASK_IMPLICIT);
+     }
 
-/* Task list primitives */
+     /* Task list primitives */
 
      static inline void mpcomp_task_list_new(struct mpcomp_task_list_s *list)
      {
@@ -849,6 +805,56 @@ typedef struct mpcomp_thread_s
 
 #endif /* MPCOMP_TASK */
 
+     static inline void __mpcomp_thread_init(mpcomp_thread_t *t,
+                                             mpcomp_local_icv_t icvs,
+                                             mpcomp_instance_t *instance,
+                                             mpcomp_thread_t *father,
+                                             int id_numa) {
+       int i;
+
+       t->stack = NULL;
+       __mpcomp_new_parallel_region_info_init(&(t->info));
+       t->info.num_threads = 1;
+       t->info.icvs = icvs;
+       t->rank = 0;
+       t->mvp = NULL;
+       t->done = 0;
+       t->instance = instance;
+       t->children_instance = NULL;
+       t->push_num_threads = -1;
+       t->father = father;
+
+       sctk_nodebug("__mpcomp_thread_init: father = %p", father);
+
+       /* -- SINGLE CONSTRUCT -- */
+       // t->single_sections_current = 0 ;
+       t->single_sections_target_current = 0;
+       t->single_sections_start_current = 0;
+
+       /* -- DYNAMIC FOR LOOP CONSTRUCT -- */
+       t->for_dyn_current = 0;
+       t->for_dyn_total = 0;
+       for (i = 0; i < MPCOMP_MAX_ALIVE_FOR_DYN + 1; i++)
+         sctk_atomics_store_int(&(t->for_dyn_remain[i].i), -1);
+       t->for_dyn_target = NULL; /* Initialized during the first steal */
+       t->for_dyn_shift = NULL;  /* Initialized during the first steal */
+       t->for_dyn_last_loop_iteration = 0; /* WORKAROUND (pr35196.c) */
+
+#if MPCOMP_TASK
+       t->tasking_init_done = 0;
+       t->tied_tasks = NULL;
+       __mpcomp_implicit_task_init(t, id_numa);
+       t->larceny_order = NULL;
+#endif /* MPCOMP_TASK */
+
+       t->th_pri_common =
+           (struct common_table *)sctk_malloc(sizeof(struct common_table));
+       for (i = 0; i < KMP_HASH_TABLE_SIZE; ++i)
+         t->th_pri_common->data[i] = 0;
+       t->th_pri_head = NULL;
+
+       t->reduction_method = 0;
+     }
 
      /* mpcomp.c */
      void __mpcomp_init(void);

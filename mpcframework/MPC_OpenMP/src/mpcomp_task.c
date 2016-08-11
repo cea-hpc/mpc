@@ -337,16 +337,19 @@ void __mpcomp_task_infos_init()
 	  else
 	        id_numa = sctk_get_node_from_cpu(sctk_get_init_vp(sctk_get_task_rank()));
 
+#if 0
       /* Allocate the default current task (no func, no data, no parent) */
 	  t->current_task = mpcomp_malloc(1, sizeof(struct mpcomp_task_s), id_numa);
-	  __mpcomp_task_init(t->current_task, NULL, NULL, t, 1);
+	  __mpcomp_task_init(t->current_task, NULL, NULL, t);
 	  t->current_task->parent = NULL;
+#endif
 
-	  /* Allocate private task data structures */
-	  t->tied_tasks = mpcomp_malloc(1, sizeof(struct mpcomp_task_list_s), id_numa);
-	  mpcomp_task_list_new (t->tied_tasks);
-	  
-	  t->tasking_init_done = 1;
+          /* Allocate private task data structures */
+          t->tied_tasks =
+              mpcomp_malloc(1, sizeof(struct mpcomp_task_list_s), id_numa);
+          mpcomp_task_list_new(t->tied_tasks);
+
+          t->tasking_init_done = 1;
      }
 
 	 /* Executed only when there are multiple threads */
@@ -458,28 +461,28 @@ __mpcomp_task(void (*fn) (void *), void *data, void (*cpyfn) (void *, void *),
 	  struct mpcomp_task_s *prev_task;
 	  mpcomp_local_icv_t icvs;
 
-	  __mpcomp_task_init (&task, NULL, NULL, t, 0);
-	  mpcomp_task_set_property (&(task.property), MPCOMP_TASK_UNDEFERRED);
-	  prev_task = t->current_task;
-      
-	  if ((prev_task
-	       && mpcomp_task_property_isset (prev_task->property, MPCOMP_TASK_FINAL))
-	      || (flags & 2)) {
-	       /* If its parent task is final, the new task must be final too */
-	       mpcomp_task_set_property (&(task.property), MPCOMP_TASK_FINAL);
-	  }
+          __mpcomp_task_init(&task, NULL, NULL, t);
+          mpcomp_task_set_property(&(task.property), MPCOMP_TASK_UNDEFERRED);
+          prev_task = t->current_task;
 
-	  /* Current task is the new task which will be executed immediately */
-	  t->current_task = &task;
-	  sctk_assert(task.thread == NULL);
-	  icvs = t->info.icvs;
-	  task.icvs = t->info.icvs;
-	  task.thread = t;
+          if ((prev_task && mpcomp_task_property_isset(prev_task->property,
+                                                       MPCOMP_TASK_FINAL)) ||
+              (flags & 2)) {
+            /* If its parent task is final, the new task must be final too */
+            mpcomp_task_set_property(&(task.property), MPCOMP_TASK_FINAL);
+          }
 
-		sctk_debug( "[%d] __mpcomp_task: sequential task w/ args size %d",
-				t->rank, arg_size + arg_align - 1 ) ;
+          /* Current task is the new task which will be executed immediately */
+          t->current_task = &task;
+          sctk_assert(task.thread == NULL);
+          icvs = t->info.icvs;
+          task.icvs = t->info.icvs;
+          task.thread = t;
 
-		// fn (data);
+          sctk_debug("[%d] __mpcomp_task: sequential task w/ args size %d",
+                     t->rank, arg_size + arg_align - 1);
+
+// fn (data);
 #if 1
 	  if (cpyfn != NULL) {
 	       char tmp[arg_size + arg_align - 1];
@@ -526,11 +529,11 @@ __mpcomp_task(void (*fn) (void *), void *data, void (*cpyfn) (void *, void *),
 	  }
 
 	  /* Create new task */
-	  __mpcomp_task_init (task, fn, data_cpy, t, 0);
-	  task->icvs = t->info.icvs;
-	  mpcomp_task_set_property (&(task->property), MPCOMP_TASK_TIED);
+          __mpcomp_task_init(task, fn, data_cpy, t);
+          task->icvs = t->info.icvs;
+          mpcomp_task_set_property(&(task->property), MPCOMP_TASK_TIED);
 
-	  parent = task->parent;
+          parent = task->parent;
 
           if ((parent && mpcomp_task_property_isset(parent->property,
                                                     MPCOMP_TASK_FINAL)) ||

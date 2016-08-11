@@ -557,7 +557,7 @@ __mpcomp_init()
   static volatile int done = 0;
   static sctk_thread_mutex_t lock = SCTK_THREAD_MUTEX_INITIALIZER;
   int nb_mvps;
-  int task_rank ;
+  int task_rank, id_numa;
 
   /* Need to initialize the current team */
   if ( sctk_openmp_thread_tls == NULL ) {
@@ -610,47 +610,46 @@ __mpcomp_init()
 
 	/* Get the rank of current MPI task */
 	task_rank = sctk_get_task_rank();
+        /* Get id numa*/
+        id_numa = sctk_get_node_from_cpu(sctk_get_init_vp(task_rank));
 
+        if (task_rank == -1) {
+          /* No parallel OpenMP if MPI has not been initialized yet */
+          nb_mvps = 1;
+        } else {
+          sctk_debug("__mpcomp_init: sctk_get_task_rank = %d", task_rank);
 
-	if ( task_rank == -1 ) {
-		/* No parallel OpenMP if MPI has not been initialized yet */
-		nb_mvps = 1 ;
-	} else {
-	  sctk_debug( "__mpcomp_init: sctk_get_task_rank = %d", task_rank) ;
+          /* Compute the number of microVPs according to Hybrid Mode */
+          switch (OMP_MODE) {
+          case MPCOMP_MODE_SIMPLE_MIXED:
+            /* Compute the number of cores for this task */
 
-	  /* Compute the number of microVPs according to Hybrid Mode */
-	  switch( OMP_MODE ) 
-	  {
-		case MPCOMP_MODE_SIMPLE_MIXED:
-		  /* Compute the number of cores for this task */
+            sctk_get_init_vp_and_nbvp(task_rank, &nb_mvps);
 
-                  sctk_get_init_vp_and_nbvp(task_rank, &nb_mvps);
+            sctk_debug("__mpcomp_init: SIMPLE_MIXED -> #mvps = %d", nb_mvps);
 
-                  sctk_debug("__mpcomp_init: SIMPLE_MIXED -> #mvps = %d",
-                             nb_mvps);
-
-                  /* Consider the env variable if between 1 and the number
-                   * of cores for this task */
-                  if (OMP_MICROVP_NUMBER > 0 && OMP_MICROVP_NUMBER <= nb_mvps) {
-                    nb_mvps = OMP_MICROVP_NUMBER;
-                  }
-                  break;
-                case MPCOMP_MODE_ALTERNATING:
-                  nb_mvps = 1;
-                  if (sctk_get_local_task_rank() == 0) {
-                    nb_mvps = sctk_get_processor_number();
-                  }
-                  break;
-                case MPCOMP_MODE_OVERSUBSCRIBED_MIXED:
-                  not_implemented();
-                  break;
-                case MPCOMP_MODE_FULLY_MIXED:
-                  nb_mvps = sctk_get_processor_number();
-                  break;
-                default:
-                  not_reachable();
-                  break;
-                }
+            /* Consider the env variable if between 1 and the number
+             * of cores for this task */
+            if (OMP_MICROVP_NUMBER > 0 && OMP_MICROVP_NUMBER <= nb_mvps) {
+              nb_mvps = OMP_MICROVP_NUMBER;
+            }
+            break;
+          case MPCOMP_MODE_ALTERNATING:
+            nb_mvps = 1;
+            if (sctk_get_local_task_rank() == 0) {
+              nb_mvps = sctk_get_processor_number();
+            }
+            break;
+          case MPCOMP_MODE_OVERSUBSCRIBED_MIXED:
+            not_implemented();
+            break;
+          case MPCOMP_MODE_FULLY_MIXED:
+            nb_mvps = sctk_get_processor_number();
+            break;
+          default:
+            not_reachable();
+            break;
+          }
         }
 
         if (sctk_get_local_task_rank() == 0) {
@@ -702,7 +701,7 @@ __mpcomp_init()
     sctk_assert( t != NULL ) ;
 
 	/* Thread info initialization */
-    __mpcomp_thread_init( t, icvs, seq_instance, NULL ) ;
+    __mpcomp_thread_init(t, icvs, seq_instance, NULL, id_numa);
 
     /* Current thread information is 't' */
     sctk_openmp_thread_tls = t ;
@@ -789,13 +788,18 @@ __mpcomp_instance_init( mpcomp_instance_t * instance, int nb_mvps,
 		}
 	} else {
         int i ;
-		mpcomp_local_icv_t icvs ;
-		/* Sequential instance and team */
-		instance->mvps = (mpcomp_mvp_t **)sctk_malloc( 1 * sizeof( mpcomp_mvp_t * ) ) ;
-		sctk_assert( instance->mvps != NULL ) ;
+        int id_numa =
+            sctk_get_node_from_cpu(sctk_get_init_vp(sctk_get_task_rank()));
 
-		instance->mvps[0] = (mpcomp_mvp_t *)sctk_malloc( 1 * sizeof( mpcomp_mvp_t ) ) ;
-		sctk_assert( instance->mvps[0] != NULL ) ;
+        mpcomp_local_icv_t icvs;
+        /* Sequential instance and team */
+        instance->mvps =
+            (mpcomp_mvp_t **)sctk_malloc(1 * sizeof(mpcomp_mvp_t *));
+        sctk_assert(instance->mvps != NULL);
+
+        instance->mvps[0] =
+            (mpcomp_mvp_t *)sctk_malloc(1 * sizeof(mpcomp_mvp_t));
+        sctk_assert(instance->mvps[0] != NULL);
 
         for ( i = 0 ; i < MPCOMP_AFFINITY_NB ; i++ ) {
             instance->mvps[0]->min_index[i] = 0 ;
@@ -805,14 +809,13 @@ __mpcomp_instance_init( mpcomp_instance_t * instance, int nb_mvps,
 
 		instance->root = NULL ;
 
-		__mpcomp_thread_init( &(instance->mvps[0]->threads[0]), icvs, instance,
-              sctk_openmp_thread_tls  ) ;
+                __mpcomp_thread_init(&(instance->mvps[0]->threads[0]), icvs,
+                                     instance, sctk_openmp_thread_tls, id_numa);
+        }
 
-	}
+        sctk_nodebug("__mpcomp_instance_init: Exiting...");
 
-	sctk_nodebug( "__mpcomp_instance_init: Exiting..." ) ;
-
-	/* TODO Do we need a TLS for the openmp instance for every microVPs? */
+        /* TODO Do we need a TLS for the openmp instance for every microVPs? */
 }
 
 void in_order_scheduler( mpcomp_mvp_t * mvp ) {
