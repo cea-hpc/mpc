@@ -166,4 +166,10 @@ __mpcomp_internal_full_barrier (mpcomp_mvp_t *mvp)
 		c = c->children.node[mvp->tree_rank[c->depth]];
 		c->barrier_done++; /* No need to lock I think... */
 	}
+
+#if MPCOMP_COHERENCY_CHECKING
+#if MPCOMP_TASK
+        __mpcomp_task_coherency_barrier();
+#endif /* MPCOMP_TASK */
+#endif
 }

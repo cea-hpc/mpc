@@ -603,6 +603,7 @@ typedef struct mpcomp_thread_s
 #if MPCOMP_TASK
 	  sctk_atomics_store_int(&(team_info->tasking_init_done), 0);
 	  sctk_atomics_store_int(&(team_info->tasklist_init_done), 0);
+          sctk_atomics_store_int(&(team_info->nb_tasks), 0);
 #endif /* MPCOMP_TASK */
      }
 
@@ -928,6 +929,9 @@ __mpcomp_get_static_nb_chunks_per_rank_ull (int rank, int nb_threads, unsigned l
      /* mpcomp_task.c */
      void __mpcomp_task_schedule();
      void __mpcomp_task_exit();
+     void __mpcomp_task_coherency_entering_parallel_region();
+     void __mpcomp_task_coherency_ending_parallel_region();
+     void __mpcomp_task_coherency_barrier();
 #endif /* MPCOMP_TASK */
 
 

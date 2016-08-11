@@ -215,6 +215,9 @@ __mpcomp_internal_begin_parallel_region(int arg_num_threads,
 
 #if MPCOMP_COHERENCY_CHECKING
   __mpcomp_single_coherency_entering_parallel_region() ;
+#if MPCOMP_TASK
+  __mpcomp_task_coherency_entering_parallel_region();
+#endif // MPCOMP_TASK
 #endif
 
 	/* Check if the children instance exists */
@@ -385,6 +388,9 @@ __mpcomp_internal_end_parallel_region( mpcomp_instance_t * instance )
 #if MPCOMP_COHERENCY_CHECKING
 		__mpcomp_for_dyn_coherency_end_parallel_region( instance ) ;
 		__mpcomp_single_coherency_end_barrier() ;
+#if MPCOMP_TASK
+                __mpcomp_task_coherency_ending_parallel_region();
+#endif // MPCOMP_TASK
 #endif
 
 }
@@ -406,13 +412,15 @@ __mpcomp_start_parallel_region(int arg_num_threads, void *(*func)
   t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
   sctk_assert( t != NULL ) ;
 
-	__mpcomp_new_parallel_region_info_init( &info ) ;
-	info.func = func ;
-	info.shared = shared ;
-	// info.icvs = t->info.icvs ; 
-	info.combined_pragma = MPCOMP_COMBINED_NONE;
+  if (t->children_instance)
+    __mpcomp_team_init(t->children_instance->team);
+  __mpcomp_new_parallel_region_info_init(&info);
+  info.func = func;
+  info.shared = shared;
+  // info.icvs = t->info.icvs ;
+  info.combined_pragma = MPCOMP_COMBINED_NONE;
 
-	__mpcomp_internal_begin_parallel_region( arg_num_threads, info ) ;
+  __mpcomp_internal_begin_parallel_region(arg_num_threads, info);
 
   sctk_nodebug( 
 		  "__mpcomp_start_parallel_region: calling in order scheduler..."

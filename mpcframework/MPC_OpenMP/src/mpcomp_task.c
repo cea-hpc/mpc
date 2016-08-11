@@ -948,6 +948,141 @@ __mpcomp_taskyield()
      /* Actually, do nothing */
 }
 
+void __mpcomp_task_coherency_entering_parallel_region() {
+  struct mpcomp_team_s *team;
+  struct mpcomp_mvp_s **mvp;
+  mpcomp_thread_t *t;
+  mpcomp_thread_t *lt;
+  int i, nb_mvps;
+
+  t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
+  sctk_assert(t != NULL);
+
+  if (t->children_instance->nb_mvps > 1) {
+    team = t->children_instance->team;
+    sctk_assert(team != NULL);
+
+    /* Check team tasking cohenrency */
+    sctk_debug("__mpcomp_task_coherency_entering_parallel_region: "
+               "Team init %d and tasklist init %d with %d nb_tasks\n",
+               sctk_atomics_load_int(&team->tasking_init_done),
+               sctk_atomics_load_int(&team->tasklist_init_done),
+               sctk_atomics_load_int(&team->nb_tasks));
+
+    sctk_assert(sctk_atomics_load_int(&team->nb_tasks) == 0);
+
+    /* Check per thread task system coherency */
+    mvp = t->children_instance->mvps;
+    sctk_assert(mvp != NULL);
+    nb_mvps = t->children_instance->nb_mvps;
+
+    for (i = 0; i < nb_mvps; i++) {
+      lt = &mvp[i]->threads[0];
+      sctk_assert(lt != NULL);
+
+      sctk_debug("__mpcomp_task_coherency_entering_parallel_region: "
+                 "Thread in mvp %d init %d in implicit task %p\n",
+                 mvp[i]->rank, lt->tasking_init_done, lt->current_task);
+
+      sctk_assert(lt->current_task != NULL);
+      sctk_assert(lt->current_task->children == NULL);
+      sctk_assert(lt->current_task->list == NULL);
+      sctk_assert(lt->current_task->depth == 0);
+      sctk_assert(mpcomp_task_property_isset(lt->current_task->property,
+                                             MPCOMP_TASK_IMPLICIT) != 0);
+    }
+  }
+}
+
+void __mpcomp_task_coherency_ending_parallel_region() {
+  struct mpcomp_team_s *team;
+  struct mpcomp_mvp_s **mvp;
+  mpcomp_thread_t *t;
+  mpcomp_thread_t *lt;
+  int i_task, i, nb_mvps;
+
+  t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
+  sctk_assert(t != NULL);
+
+  if (t->children_instance->nb_mvps > 1) {
+    team = t->children_instance->team;
+    sctk_assert(team != NULL);
+
+    /* Check team tasking cohenrency */
+    sctk_debug("__mpcomp_task_coherency_ending_parallel_region: "
+               "Team init %d and tasklist init %d with %d nb_tasks\n",
+               sctk_atomics_load_int(&team->tasking_init_done),
+               sctk_atomics_load_int(&team->tasklist_init_done),
+               sctk_atomics_load_int(&team->nb_tasks));
+
+    /* Check per thread and mvp task system coherency */
+    mvp = t->children_instance->mvps;
+    sctk_assert(mvp != NULL);
+    nb_mvps = t->children_instance->nb_mvps;
+
+    for (i = 0; i < nb_mvps; i++) {
+      lt = &mvp[i]->threads[0];
+
+      sctk_debug("__mpcomp_task_coherency_ending_parallel_region: "
+                 "Thread %d init %d in implicit task %p\n",
+                 lt->rank, lt->tasking_init_done, lt->current_task);
+
+      sctk_assert(lt->current_task != NULL);
+      sctk_assert(lt->current_task->children == NULL);
+      sctk_assert(lt->current_task->list == NULL);
+      sctk_assert(lt->current_task->depth == 0);
+
+      if (lt->tasking_init_done) {
+        if (mvp[i]->threads[0].tied_tasks)
+          sctk_assert(mpcomp_task_list_isempty(mvp[i]->threads[0].tied_tasks) ==
+                      1);
+
+        for (i_task = 0; i_task < MPCOMP_TASK_TYPE_COUNT; i_task++) {
+          if (mvp[i]->tasklist[i_task]) {
+            sctk_assert(mpcomp_task_list_isempty(mvp[i]->tasklist[i_task]) ==
+                        1);
+          }
+        }
+      }
+    }
+  }
+}
+
+void __mpcomp_task_coherency_barrier() {
+  mpcomp_thread_t *t;
+  struct mpcomp_task_list_s *list = NULL;
+
+  t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
+  sctk_assert(t != NULL);
+
+  sctk_debug("__mpcomp_task_coherency_barrier: "
+             "Thread %d exiting barrier in implicit task %p\n",
+             t->rank, t->current_task);
+
+  sctk_assert(t->current_task != NULL);
+  sctk_assert(t->current_task->children == NULL);
+  sctk_assert(t->current_task->list == NULL);
+  sctk_assert(t->current_task->depth == 0);
+
+  if (t->tasking_init_done) {
+    /* Check tied tasks list */
+    sctk_assert(mpcomp_task_list_isempty(t->tied_tasks) == 1);
+
+    /* Check untied tasks list */
+    list =
+        mpcomp_task_get_list(t->mvp->tasklistNodeRank[MPCOMP_TASK_TYPE_UNTIED],
+                             MPCOMP_TASK_TYPE_UNTIED);
+    sctk_assert(list != NULL);
+    sctk_assert(mpcomp_task_list_isempty(list) == 1);
+
+    /* Check New type tasks list */
+    list = mpcomp_task_get_list(t->mvp->tasklistNodeRank[MPCOMP_TASK_TYPE_NEW],
+                                MPCOMP_TASK_TYPE_NEW);
+    sctk_assert(list != NULL);
+    sctk_assert(mpcomp_task_list_isempty(list) == 1);
+  }
+}
+
 #else /* MPCOMP_TASK */
 
 /* 
