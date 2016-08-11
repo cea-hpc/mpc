@@ -229,7 +229,7 @@ PRIV_FLAG="-fmpc-privatize"
 EXTRA_ADDON_FLAGS=""
 EOF
 
-if test "$1" = "bin/nvcc"
+if test "$1" = "bin/mpc_nvcc"
 then
 cat<<EOF >> $1
 EXTRA_ADDON_FLAGS="-L\$MPC_RPREFIX/\${MPC_SUBPREFIX}/lib/stubs -Wl,-rpath=\$MPC_RPREFIX/\${MPC_SUBPREFIX}/lib/stubs -lmpc_cuda_addon -Wl,--unresolved-symbols=ignore-in-shared-libs"

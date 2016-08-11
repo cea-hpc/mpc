@@ -483,7 +483,7 @@ void sctk_device_enrich_topology( hwloc_topology_t topology )
 {
 	int i;
 #if defined(MPC_USE_CUDA)
-        int num_devices = sctk_accl_cuda_init();
+        int num_devices = 0;
         /* init() returns 0 if succeed (maybe not obvious) */
 		if( ! sctk_accl_cuda_init() )
 		{
