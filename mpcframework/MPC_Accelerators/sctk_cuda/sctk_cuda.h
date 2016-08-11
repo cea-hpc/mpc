@@ -29,11 +29,10 @@
 #include <cuda_runtime.h>
 #include <sctk_debug.h>
 
+/** in debug mode, check all CUDA APIs return codes */
 #ifndef NDEBUG
-#define safe_cudart(u)                                                         \
-  assume_m(((u) == cudaSuccess), "Runtime CUDA call failed with value %d", u)
-#define safe_cudadv(u)                                                         \
-  assume_m(((u) == CUDA_SUCCESS), "Driver CUDA call failed with value %d", u)
+#define safe_cudart(u) assume_m(((u) == cudaSuccess), "Runtime CUDA call failed with value %d", u)
+#define safe_cudadv(u) assume_m(((u) == CUDA_SUCCESS), "Driver CUDA call failed with value %d", u)
 #else
 #define safe_cudart(u) u
 #define safe_cudadv(u) u
@@ -50,10 +49,14 @@ typedef struct cuda_ctx_s {
   CUcontext context; /**< THE CUDA ctx */
 } cuda_ctx_t;
 
+/* CUDA libs init */
 int sctk_accl_cuda_init();
 
+/** create a new CUDA context for the current thread */
 int sctk_accl_cuda_init_context();
+/** Push the CUDA context of the current thread on the elected GPU */
 int sctk_accl_cuda_push_context();
+/** Remove the current CUDA context from the GPU */
 int sctk_accl_cuda_pop_context();
 
 #endif

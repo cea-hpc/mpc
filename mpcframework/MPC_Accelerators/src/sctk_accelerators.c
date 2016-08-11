@@ -28,6 +28,13 @@
 
 static size_t nb_devices = 0;
 extern bool sctk_accl_support;
+
+/**
+ * Initialize MPC_Accelerators.
+ *
+ * Should call sub-module init functions
+ * @return 0 if everything succeded, 1 otherwise
+ */
 int sctk_accl_init() {
 	
   if( ! sctk_accl_support)
@@ -38,13 +45,9 @@ int sctk_accl_init() {
 
   sctk_warning("Accelerators support ENABLED");
   
-  sctk_device_t **list =
-      sctk_device_get_from_handle_regexp("cuda-enabled-card*", &nb_devices);
-
-  /* we don't want the list but the number of devices
-   * Maybe there are a better way for doing it...
-   */
+  sctk_device_t **list = sctk_device_get_from_handle_regexp("cuda-enabled-card*", &nb_devices);
   sctk_free(list);
+
 #ifdef MPC_USE_CUDA
 	sctk_accl_cuda_init();
 #endif
@@ -61,6 +64,10 @@ int sctk_accl_init() {
  * Returns the number of GPUs on the current node.
  *
  * Especially used to check CUDA can be used without errors.
+ * @return the number of devices
  */
-size_t sctk_accl_get_nb_devices() { return nb_devices; }
+size_t sctk_accl_get_nb_devices() 
+{ 
+	return nb_devices; 
+}
 #endif

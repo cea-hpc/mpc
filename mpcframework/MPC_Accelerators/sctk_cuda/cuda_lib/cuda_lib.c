@@ -22,17 +22,12 @@
 /* ######################################################################## */
 #include <cuda.h>
 
-extern CUresult cuInit(unsigned int);
-CUresult sctk_cuInit(unsigned int flag) {return (int) cuInit(flag);}
-
-extern CUresult cuCtxCreate(CUcontext*, unsigned int, CUdevice);
-CUresult sctk_cuCtxCreate(CUcontext* c, unsigned int f, CUdevice d) { return (int) cuCtxCreate(c, f, d);}
-
-extern CUresult cuCtxPopCurrent(CUcontext*);
-CUresult sctk_cuCtxPopCurrent(CUcontext* c) {return (int) cuCtxPopCurrent(c);}
-
-extern CUresult cuCtxPushCurrent(CUcontext);
-CUresult sctk_cuCtxPushCurrent(CUcontext c) {return (int) cuCtxPushCurrent(c);}
-
-extern CUresult cuDeviceGetByPCIBusId(CUdevice*, const char*);
-CUresult sctk_cuDeviceGetByPCIBusId(CUdevice* d, const char * b) {return (int) cuDeviceGetByPCIBusId(d, b);}
+/* libcuda.so wrappers...
+ * Add here each sctk_* CUDA wrappers to handle a new CUDA driver function
+ * Don't forget to add a weak symbol in MPC too (sctk_cuda_wrap.c)
+ */
+CUresult sctk_cuInit(unsigned int flag) {return cuInit(flag);}
+CUresult sctk_cuCtxCreate(CUcontext* c, unsigned int f, CUdevice d) { return cuCtxCreate(c, f, d);}
+CUresult sctk_cuCtxPopCurrent(CUcontext* c) {return cuCtxPopCurrent(c);}
+CUresult sctk_cuCtxPushCurrent(CUcontext c) {return cuCtxPushCurrent(c);}
+CUresult sctk_cuDeviceGetByPCIBusId(CUdevice* d, const char * b) {return cuDeviceGetByPCIBusId(d, b);}
