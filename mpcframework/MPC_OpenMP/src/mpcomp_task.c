@@ -529,44 +529,48 @@ __mpcomp_task(void (*fn) (void *), void *data, void (*cpyfn) (void *, void *),
 	  __mpcomp_task_init (task, fn, data_cpy, t, 0);
 	  task->icvs = t->info.icvs;
 	  mpcomp_task_set_property (&(task->property), MPCOMP_TASK_TIED);
-	  if (flags & 2) {
-	       mpcomp_task_set_property (&(task->property), MPCOMP_TASK_FINAL);
-	  }
 
 	  parent = task->parent;
 
-		sctk_nodebug( "task_depth = %d", task->depth ) ;
+          if ((parent && mpcomp_task_property_isset(parent->property,
+                                                    MPCOMP_TASK_FINAL)) ||
+              (flags & 2)) {
+            /* If its parent task is final, the new task must be final too */
+            mpcomp_task_set_property(&(task->property), MPCOMP_TASK_FINAL);
+          }
 
-		sctk_assert( task->depth <= 8+1 ) ;
+          sctk_nodebug("task_depth = %d", task->depth);
 
-	  //sctk_assert(__mpcomp_task_check_circular_link(task) == 0);
+          sctk_assert(task->depth <= 8 + 1);
 
-	  if (parent) {
-	       /* If task has a parent, add it to the children list */
-	       sctk_spinlock_lock(&(parent->children_lock));
+          // sctk_assert(__mpcomp_task_check_circular_link(task) == 0);
 
-	       if (parent->children) {
-		    /* Parent task already had children */
+          if (parent) {
+            /* If task has a parent, add it to the children list */
+            sctk_spinlock_lock(&(parent->children_lock));
 
-		    task->next_child = parent->children;
-		    task->prev_child = NULL;
-		    task->next_child->prev_child = task;
-	       } else {
-		    /* Children list is empty */
+            if (parent->children) {
+              /* Parent task already had children */
 
-		    task->next_child = NULL;
-		    task->prev_child = NULL;
-	       }
-	       /* The task became the first task */
-	       parent->children = task;
+              task->next_child = parent->children;
+              task->prev_child = NULL;
+              task->next_child->prev_child = task;
+            } else {
+              /* Children list is empty */
 
-	       sctk_spinlock_unlock(&(parent->children_lock));
-	  }
-	  
-	  /* Push the task in the list of new tasks */
-	  mpcomp_task_list_lock(new_list);
-	  mpcomp_task_list_pushtohead(new_list, task);
-	  mpcomp_task_list_unlock(new_list);
+              task->next_child = NULL;
+              task->prev_child = NULL;
+            }
+            /* The task became the first task */
+            parent->children = task;
+
+            sctk_spinlock_unlock(&(parent->children_lock));
+          }
+
+          /* Push the task in the list of new tasks */
+          mpcomp_task_list_lock(new_list);
+          mpcomp_task_list_pushtohead(new_list, task);
+          mpcomp_task_list_unlock(new_list);
      }
 
    //  if(new_list != NULL)
