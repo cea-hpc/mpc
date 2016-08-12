@@ -1,6 +1,8 @@
 #include "mpcomp_internal.h"
 #include "mpcomp_tree_utils.h"
 
+#if MPCOMP_TASK
+
 int 
 mpcomp_is_leaf(int globalRank)
 {
@@ -195,3 +197,4 @@ void __mpcomp_task_check_neighbourhood(void)
 
      __mpcomp_task_check_neighbourhood_r(t->mvp->root);
 }
+#endif /* MPCOMP_TASK */

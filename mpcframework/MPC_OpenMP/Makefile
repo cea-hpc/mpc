@@ -1,4 +1,4 @@
-# Makefile generated with ../MPC_Tools/mpc_gen_makefile
+# Makefile generated with ../MPC_Tools/mpc_gen_makefile Mon Jul 25 10:50:09 CEST 2016
 ############################# MPC License ##############################
 # Wed Nov 19 15:19:19 CET 2008                                         #
 # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          #
@@ -70,6 +70,15 @@ SOBJ_mpcomp_GOMP_wrapper=$(SFILES_mpcomp_GOMP_wrapper:mpcomp_GOMP_wrapper/%.S=$(
 SDEP_mpcomp_GOMP_wrapper=$(SFILES_mpcomp_GOMP_wrapper:mpcomp_GOMP_wrapper/%.S=$(M_PWD)/BUILD_MPC_OpenMP/lib/%.d)
 
 
+FILES_mpcomp_INTEL=$(wildcard mpcomp_INTEL/*.c)
+OBJ_mpcomp_INTEL=$(FILES_mpcomp_INTEL:mpcomp_INTEL/%.c=$(M_PWD)/BUILD_MPC_OpenMP/lib/%.o)
+DEP_mpcomp_INTEL=$(FILES_mpcomp_INTEL:mpcomp_INTEL/%.c=$(M_PWD)/BUILD_MPC_OpenMP/lib/%.d)
+
+SFILES_mpcomp_INTEL=$(wildcard mpcomp_INTEL/*.S)
+SOBJ_mpcomp_INTEL=$(SFILES_mpcomp_INTEL:mpcomp_INTEL/%.S=$(M_PWD)/BUILD_MPC_OpenMP/lib/%.o)
+SDEP_mpcomp_INTEL=$(SFILES_mpcomp_INTEL:mpcomp_INTEL/%.S=$(M_PWD)/BUILD_MPC_OpenMP/lib/%.d)
+
+
 FILES_src=$(wildcard src/*.c)
 OBJ_src=$(FILES_src:src/%.c=$(M_PWD)/BUILD_MPC_OpenMP/lib/%.o)
 DEP_src=$(FILES_src:src/%.c=$(M_PWD)/BUILD_MPC_OpenMP/lib/%.d)
@@ -94,10 +103,13 @@ FOBJ_mpcomp_GOMP_internal=$(FFILES_mpcomp_GOMP_internal:mpcomp_GOMP_internal/%.f
 FFILES_mpcomp_GOMP_wrapper=$(wildcard mpcomp_GOMP_wrapper/*.f)
 FOBJ_mpcomp_GOMP_wrapper=$(FFILES_mpcomp_GOMP_wrapper:mpcomp_GOMP_wrapper/%.f=$(M_PWD)/BUILD_MPC_OpenMP/lib/%_f.o)
 
+FFILES_mpcomp_INTEL=$(wildcard mpcomp_INTEL/*.f)
+FOBJ_mpcomp_INTEL=$(FFILES_mpcomp_INTEL:mpcomp_INTEL/%.f=$(M_PWD)/BUILD_MPC_OpenMP/lib/%_f.o)
+
 FFILES_src=$(wildcard src/*.f)
 FOBJ_src=$(FFILES_src:src/%.f=$(M_PWD)/BUILD_MPC_OpenMP/lib/%_f.o)
 
-all: $(OBJ_include) $(FOBJ_include) $(SOBJ_include) $(OBJ_intel) $(FOBJ_intel) $(SOBJ_intel) $(OBJ_mpcomp_GOMP_include) $(FOBJ_mpcomp_GOMP_include) $(SOBJ_mpcomp_GOMP_include) $(OBJ_mpcomp_GOMP_internal) $(FOBJ_mpcomp_GOMP_internal) $(SOBJ_mpcomp_GOMP_internal) $(OBJ_mpcomp_GOMP_wrapper) $(FOBJ_mpcomp_GOMP_wrapper) $(SOBJ_mpcomp_GOMP_wrapper) $(OBJ_src) $(FOBJ_src) $(SOBJ_src)
+all: $(OBJ_include) $(FOBJ_include) $(SOBJ_include) $(OBJ_intel) $(FOBJ_intel) $(SOBJ_intel) $(OBJ_mpcomp_GOMP_include) $(FOBJ_mpcomp_GOMP_include) $(SOBJ_mpcomp_GOMP_include) $(OBJ_mpcomp_GOMP_internal) $(FOBJ_mpcomp_GOMP_internal) $(SOBJ_mpcomp_GOMP_internal) $(OBJ_mpcomp_GOMP_wrapper) $(FOBJ_mpcomp_GOMP_wrapper) $(SOBJ_mpcomp_GOMP_wrapper) $(OBJ_mpcomp_INTEL) $(FOBJ_mpcomp_INTEL) $(SOBJ_mpcomp_INTEL) $(OBJ_src) $(FOBJ_src) $(SOBJ_src)
 
 $(M_PWD)/include_modules/MPC_OpenMP:
 	@../MPC_Tools/mpc_prepare_includes $(MPC_SOURCE_DIR)MPC_OpenMP/include $(M_PWD)/include_modules
@@ -105,6 +117,7 @@ $(M_PWD)/include_modules/MPC_OpenMP:
 	@../MPC_Tools/mpc_prepare_includes $(MPC_SOURCE_DIR)MPC_OpenMP/mpcomp_GOMP_include $(M_PWD)/include_modules
 	@../MPC_Tools/mpc_prepare_includes $(MPC_SOURCE_DIR)MPC_OpenMP/mpcomp_GOMP_internal $(M_PWD)/include_modules
 	@../MPC_Tools/mpc_prepare_includes $(MPC_SOURCE_DIR)MPC_OpenMP/mpcomp_GOMP_wrapper $(M_PWD)/include_modules
+	@../MPC_Tools/mpc_prepare_includes $(MPC_SOURCE_DIR)MPC_OpenMP/mpcomp_INTEL $(M_PWD)/include_modules
 	@../MPC_Tools/mpc_prepare_includes $(MPC_SOURCE_DIR)MPC_OpenMP/src $(M_PWD)/include_modules
 	@touch $@
 
@@ -112,7 +125,7 @@ prepare_includes:$(M_PWD)/include_modules/MPC_OpenMP
 
 
 ifneq ($(SCTK_MAKE_NO_DEP),yes)
-DEPENDS=$(DEP_include) $(DEP_intel) $(DEP_mpcomp_GOMP_include) $(DEP_mpcomp_GOMP_internal) $(DEP_mpcomp_GOMP_wrapper) $(DEP_src) 
+DEPENDS=$(DEP_include) $(DEP_intel) $(DEP_mpcomp_GOMP_include) $(DEP_mpcomp_GOMP_internal) $(DEP_mpcomp_GOMP_wrapper) $(DEP_mpcomp_INTEL) $(DEP_src) 
 
 $(DEPENDS):Makefile 
 endif
@@ -143,6 +156,11 @@ $(DEP_mpcomp_GOMP_wrapper):$(M_PWD)/BUILD_MPC_OpenMP/lib/%.d:mpcomp_GOMP_wrapper
 	@$(CC) $(SCTK_CC_DEP) $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,mpcomp_GOMP_wrapper/%.c,$@) | \
 		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
 
+$(DEP_mpcomp_INTEL):$(M_PWD)/BUILD_MPC_OpenMP/lib/%.d:mpcomp_INTEL/%.c
+	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,mpcomp_INTEL/%.c,$@)"
+	@$(CC) $(SCTK_CC_DEP) $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,mpcomp_INTEL/%.c,$@) | \
+		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
+
 $(DEP_src):$(M_PWD)/BUILD_MPC_OpenMP/lib/%.d:src/%.c
 	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,src/%.c,$@)"
 	@$(CC) $(SCTK_CC_DEP) $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,src/%.c,$@) | \
@@ -169,6 +187,10 @@ $(DEP_mpcomp_GOMP_wrapper):$(M_PWD)/BUILD_MPC_OpenMP/lib/%.d:mpcomp_GOMP_wrapper
 	@echo "    Generate fake dependencies $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,mpcomp_GOMP_wrapper/%.c,$@)"
 	@echo "$(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,mpcomp_GOMP_wrapper/%.c,$@)" > $@
 
+$(DEP_mpcomp_INTEL):$(M_PWD)/BUILD_MPC_OpenMP/lib/%.d:mpcomp_INTEL/%.c
+	@echo "    Generate fake dependencies $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,mpcomp_INTEL/%.c,$@)"
+	@echo "$(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,mpcomp_INTEL/%.c,$@)" > $@
+
 $(DEP_src):$(M_PWD)/BUILD_MPC_OpenMP/lib/%.d:src/%.c
 	@echo "    Generate fake dependencies $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,src/%.c,$@)"
 	@echo "$(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,src/%.c,$@)" > $@
@@ -194,6 +216,10 @@ $(OBJ_mpcomp_GOMP_internal):%.o:%.d
 $(OBJ_mpcomp_GOMP_wrapper):%.o:%.d
 	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.o,mpcomp_GOMP_wrapper/%.c,$@)"
 	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.o,mpcomp_GOMP_wrapper/%.c,$@) -o $@
+
+$(OBJ_mpcomp_INTEL):%.o:%.d
+	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.o,mpcomp_INTEL/%.c,$@)"
+	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.o,mpcomp_INTEL/%.c,$@) -o $@
 
 $(OBJ_src):%.o:%.d
 	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.o,src/%.c,$@)"
@@ -224,6 +250,11 @@ $(SDEP_mpcomp_GOMP_wrapper):$(M_PWD)/BUILD_MPC_OpenMP/lib/%.d:mpcomp_GOMP_wrappe
 	@$(GCC) -M $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,mpcomp_GOMP_wrapper/%.S,$@) | \
 		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
 
+$(SDEP_mpcomp_INTEL):$(M_PWD)/BUILD_MPC_OpenMP/lib/%.d:mpcomp_INTEL/%.S
+	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,mpcomp_INTEL/%.S,$@)"
+	@$(GCC) -M $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,mpcomp_INTEL/%.S,$@) | \
+		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
+
 $(SDEP_src):$(M_PWD)/BUILD_MPC_OpenMP/lib/%.d:src/%.S
 	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,src/%.S,$@)"
 	@$(GCC) -M $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,src/%.S,$@) | \
@@ -249,6 +280,10 @@ $(SOBJ_mpcomp_GOMP_wrapper):%.o:%.d
 	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.o,mpcomp_GOMP_wrapper/%.S,$@)"
 	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.o,mpcomp_GOMP_wrapper/%.S,$@) -o $@
 
+$(SOBJ_mpcomp_INTEL):%.o:%.d
+	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.o,mpcomp_INTEL/%.S,$@)"
+	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.o,mpcomp_INTEL/%.S,$@) -o $@
+
 $(SOBJ_src):%.o:%.d
 	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.o,src/%.S,$@)"
 	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.o,src/%.S,$@) -o $@
@@ -272,6 +307,10 @@ $(FOBJ_mpcomp_GOMP_internal):$(M_PWD)/BUILD_MPC_OpenMP/lib/%_f.o:mpcomp_GOMP_int
 $(FOBJ_mpcomp_GOMP_wrapper):$(M_PWD)/BUILD_MPC_OpenMP/lib/%_f.o:mpcomp_GOMP_wrapper/%.f
 	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%_f.o,mpcomp_GOMP_wrapper/%.f,$@)"
 	@$(F77) -c $(FFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%_f.o,mpcomp_GOMP_wrapper/%.f,$@) -o $@
+
+$(FOBJ_mpcomp_INTEL):$(M_PWD)/BUILD_MPC_OpenMP/lib/%_f.o:mpcomp_INTEL/%.f
+	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%_f.o,mpcomp_INTEL/%.f,$@)"
+	@$(F77) -c $(FFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%_f.o,mpcomp_INTEL/%.f,$@) -o $@
 
 $(FOBJ_src):$(M_PWD)/BUILD_MPC_OpenMP/lib/%_f.o:src/%.f
 	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%_f.o,src/%.f,$@)"

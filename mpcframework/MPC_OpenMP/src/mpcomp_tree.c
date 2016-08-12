@@ -26,6 +26,7 @@
 #include "sctk_topology.h"
 #include "mpcomp.h"
 #include "mpcomp_internal.h"
+#include "sctk_alloc.h"
 
 /* Called only by __mpcomp_buid_tree */
 static int 
@@ -468,7 +469,8 @@ __mpcomp_build_tree( mpcomp_instance_t * instance, int n_leaves, int depth, int 
      sctk_nodebug("__mpcomp_build_tree: number of cpus: %d", nb_cpus);
 
      /* Grab the right order to allocate microVPs (sctk_get_neighborhood) */
-     order = sctk_malloc(nb_cpus * sizeof(int));
+	  order = (int*) sctk_malloc((nb_cpus+1) * sizeof( int ) );
+      sctk_warning("value : %p", order);
      sctk_assert(order != NULL);
 
      sctk_get_neighborhood_topology(instance->topology, current_mpc_vp, nb_cpus,
@@ -627,8 +629,11 @@ __mpcomp_build_tree( mpcomp_instance_t * instance, int n_leaves, int depth, int 
 
 			 sctk_thread_attr_init(&__attr);
              sctk_thread_attr_setbinding (& __attr, (sctk_get_cpu() + target_vp) % sctk_get_cpu_number());
-			 sctk_thread_attr_setstacksize (&__attr, 
-			     mpcomp_global_icvs.stacksize_var);
+			 res = sctk_thread_attr_setstacksize (&__attr, mpcomp_global_icvs.stacksize_var);
+             if(res)
+                sctk_warning("OMP_STACKSIZE ignored, new value %d", res);
+             sctk_error("stacksize = %ld --  %ld", mpcomp_global_icvs.stacksize_var, PTHREAD_STACK_MIN);
+			  //   mpcomp_global_icvs.stacksize_var);
 
 			 /* User thread create... */
 			 instance->mvps[current_mvp]->to_run = target_node;
@@ -669,10 +674,10 @@ __mpcomp_build_tree( mpcomp_instance_t * instance, int n_leaves, int depth, int 
 			 sctk_thread_attr_destroy(&__attr);
 
 			 current_mvp++;
-
+#if 0
 			 /* Recompute the target vp */
 			 target_vp = order[ current_mvp ];
-
+#endif
 
 			 /* We reached the leaves */
 			 previous_depth++;

@@ -7,6 +7,8 @@
 #include "mpcomp_task_utils.h"
 #include "mpcomp_task_stealing.h"
 
+#if MPCOMP_TASK
+
 /* Compare nb element in first entry of tab
  */
 static inline int 
@@ -247,8 +249,8 @@ mpcomp_task_get_victim_producer(int globalRank, int index, mpcomp_tasklist_type_
     return victim;
 }
 
-int 
-mpcomp_task_prepare_victim_producer_order(int globalRank, int index, mpcomp_tasklist_type_t type)
+static inline int 
+__mpcomp_task_prepare_victim_producer_order(int globalRank, int index, mpcomp_tasklist_type_t type)
 {
     int i;
     
@@ -302,4 +304,4 @@ mpcomp_task_get_victim_producer_order(int globalRank, int index, mpcomp_tasklist
     return t->larceny_order[index-1];
 }
 
-
+#endif /* MPCOMP_TASK */

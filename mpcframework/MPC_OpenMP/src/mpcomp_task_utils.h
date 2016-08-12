@@ -1,4 +1,4 @@
-#ifndef __SCTK_MPCOMP_TASK_UTILS_H__
+#if (!defined( __SCTK_MPCOMP_TASK_UTILS_H__) && MPCOMP_TASK)
 #define __SCTK_MPCOMP_TASK_UTILS_H__
 
 #include "mpcomp_internal.h"

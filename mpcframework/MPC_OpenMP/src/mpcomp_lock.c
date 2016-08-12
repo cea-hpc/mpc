@@ -118,10 +118,15 @@ int omp_test_nest_lock(omp_nest_lock_t *lock) {
   sctk_assert(t->current_task != NULL);
 
   struct omp_nested_lock_s *llock = *lock;
+#if MPCOMP_TASK
+            t->current_task 
+#else /* MPCOMP_TASK */
+    NULL
+#endif /* MPCOMP_TASK */
+) ;
 
   sctk_nodebug("omp_test_nest_lock: TEST owner=(%p,%p), thread=(%p,%p)\n",
                llock->owner_thread, llock->owner_task, t, t->current_task);
-
 #if MPCOMP_TASK
   if (!(((llock->owner_task == t->current_task) &&
          ((llock->owner_thread == (void *)t) || (llock->owner_task != NULL)))))
@@ -141,6 +146,12 @@ int omp_test_nest_lock(omp_nest_lock_t *lock) {
 
   sctk_nodebug("omp_test_nest_lock: SUCCESS owner=(%p,%p), thread=(%p,%p)\n",
                llock->owner_thread, llock->owner_task, t, t->current_task);
+#if MPCOMP_TASK
+          t->current_task
+#else /* MPCOMP_TASK */
+        NULL
+#endif /* MPCOMP_TASK */
+ ) ;
 
   return llock->nb_nested;
 }

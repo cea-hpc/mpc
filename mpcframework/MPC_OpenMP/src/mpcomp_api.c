@@ -452,7 +452,7 @@ omp_in_final()
 
   t = sctk_openmp_thread_tls;
   sctk_assert(t != NULL);
-
+#if MPCOMP_TASK
 #if MPCOMP_TASK
   return ( t->current_task 
              && mpcomp_task_property_isset( t->current_task->property, MPCOMP_TASK_FINAL ));

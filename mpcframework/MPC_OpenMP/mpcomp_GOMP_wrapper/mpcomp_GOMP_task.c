@@ -4,12 +4,20 @@
 #include "mpcomp_internal.h"
 #include "mpcomp_GOMP_common.h"
 
+#if 0
 void __mpcomp_GOMP_task(void (*fn) (void *), void *data, void (*cpyfn) (void *, void *),
 	   long arg_size, long arg_align, bool if_clause, unsigned flags,
 	   void **depend, int priority)
+#else 
+void __mpcomp_GOMP_task(void (*fn) (void *), void *data, void (*cpyfn) (void *, void *),
+	   long arg_size, long arg_align, bool if_clause, unsigned flags)
+#endif
 {
-   sctk_nodebug("[Redirect __mpcomp_GOMP]%s:\tBegin",__func__);
-   __mpcomp_task(fn,data,cpyfn,arg_size,arg_align,if_clause,flags);
+   static int __task_num_counter = 0;
+   if( !(__task_num_counter++ % 1000) ) 
+        fprintf(stderr, "(%d)\t[Redirect __mpcomp_GOMP]%s:\tBegin - %ld\n", __task_num_counter, __func__, arg_size);
+
+   __mpcomp_task((void* (*)(void*)) fn,data,cpyfn,arg_size,arg_align,if_clause,flags);
    sctk_nodebug("[Redirect __mpcomp_GOMP]%s:\tEnd",__func__);
 }
 
