@@ -838,8 +838,8 @@ __mpcomp_taskwait()
      sctk_assert(t != NULL);
 
      /* If only one thread is running, tasks are not delayed. No need to wait */
-     if (t->num_threads == 1)
-	  return;
+     if (t->info.num_threads == 1)
+       return;
 
      /* Save current task pointer */
      prev_task = t->current_task;
