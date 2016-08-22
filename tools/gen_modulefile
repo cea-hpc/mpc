@@ -1,0 +1,106 @@
+#!/bin/sh
+
+#last version
+version="3.1.0"
+output=""
+path=""
+host=x86_64
+target=x86_64
+
+read_param_value()
+{
+	echo "x$1" | sed -e "s/^x$2//g"
+}
+
+usage()
+{
+	printf " Usage: ./gen_modulefile -p=/mpc_install [-v=version] [-o=dest_file] [-host=arch] [-target=arch] [-h|-help|--help]\n"
+}
+
+
+for arg in "$@"
+do
+	case $arg in
+	-v=*)
+	version="`read_param_value "$arg" "-v="`"
+	;;
+	-p=*)
+	mpc_path="`read_param_value "$arg" "-p="`"
+	;;
+	-o=*)
+	output="`read_param_value "$arg" "-o="`"
+	;;
+	-host=*)
+	host="`read_param_value "$arg" "-host="`"
+	;;
+	-target=*)
+	target="`read_param_value "$arg" "-target="`"
+	;;
+	-h|--h|-help|--help)
+	usage
+	exit 0;
+	esac
+done
+
+printf " * Generating MPC module for the version $version\n"
+if test ! -f $mpc_path/mpcvars.sh
+then
+	 printf "You don't provide a valid installation path. Please see --help !\n"
+	 exit 1
+fi
+
+if test ! -f $mpc_path/$host/$target/bin/mpcvars.sh
+then
+	printf " * The combination HOST/TARGET does not match a valid MPC installation. Please see --help !\n"
+	printf " * Available combinations:\n"
+	for rep in `find $mpc_path -maxdepth 2 -mindepth 2 -type d`
+	do
+		if test -f $rep/bin/mpcvars.sh
+		then
+			prefix="`echo $rep | sed -e "s@$mpc_path/@@g"`"
+			printf "     - $prefix\n"
+		fi
+	done
+	exit 2
+fi
+
+if test -z "$output"
+then
+	output="./$version"
+fi
+
+cat<< EOF > $output
+#%Module########################################################################
+##
+## MPC modulefile for the version $version
+##
+proc ModulesHelp { } {
+        global version
+        puts stderr " Loading MPC version $version"
+}
+
+module-whatis	"Load MPC environment for the version tag $version"
+
+set		version 		$version
+set		topdir			$mpc_path
+set		host_prefix 		$host
+set		target_prefix 		$target
+set		mpc_root 		\$topdir/\$host_prefix/\$target_prefix/
+
+setenv 		MPC_INSTALL_DIR_PREFIX 	\$topdir
+setenv  	MPC_RPREFIX		\$topdir
+setenv  	MPC_HOST_SUBPREFIX	\$host_prefix
+setenv 		MPC_TARGET_SUBPREFIX	\$target_prefix
+setenv  	MPC_SUBPREFIX		\$host_prefix/\$target_prefix
+setenv  	MPCROOT			\$mpc_root
+setenv  	MPI_ROOT		\$mpc_root
+
+append-path	PATH 			\$mpc_root/bin
+prepend-path 	MANPATH 		\$mpc_root/man
+prepend-path 	LIBRARY_PATH 		\$mpc_root/lib
+prepend-path 	LD_LIBRARY_PATH 	\$mpc_root/lib:\$mpc_root/lib64:\$mpc_root/libsgcc/lib
+
+conflict mpc
+EOF
+
+printf " * File located in $output\n"
