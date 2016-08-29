@@ -401,8 +401,8 @@ void sctk_network_init_shm ( sctk_rail_info_t *rail )
    sctk_pmi_get_process_on_node_number(&local_process_number);
    sctk_shm_proc_local_rank_on_node = local_process_rank;
 
-   if(local_process_number == 1)
-        return;
+   if (local_process_number == 1 || sctk_get_node_number() > 1)
+     return;
 
    struct process_nb_from_node_rank *nodes_infos = NULL;
    sctk_pmi_get_process_number_from_node_rank(&nodes_infos);
