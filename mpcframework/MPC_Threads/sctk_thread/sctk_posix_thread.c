@@ -902,7 +902,10 @@ unsigned long mpc_thread_atomic_add (volatile unsigned long
   return sctk_thread_atomic_add (ptr, val);
 }
 
-
+unsigned long mpc_thread_tls_entry_add(unsigned long size,
+                                       void (*func)(void *)) {
+  return sctk_tls_entry_add(size, func);
+}
 
 /* At exit */
 

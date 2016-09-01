@@ -58,6 +58,9 @@ extern "C"
 #endif
 
   extern __thread void *sctk_extls_storage;
+  extern __thread char *mpc_user_tls_1;
+  extern unsigned long mpc_user_tls_1_offset;
+  extern unsigned long mpc_user_tls_1_entry_number;
 
 #endif
 
@@ -80,6 +83,7 @@ extern "C"
     /* MPC OpenMP TLS */
     tls_save(sctk_openmp_thread_tls);
 #endif
+    tls_save(mpc_user_tls_1);
 
 #ifdef MPC_MPI
     tls_save (___sctk_message_passing);
@@ -105,6 +109,7 @@ extern "C"
 #if defined (MPC_OpenMP)
     tls_restore (sctk_openmp_thread_tls);
 #endif
+    tls_restore(mpc_user_tls_1);
 
     if(ucp->tls_ctx != NULL)
         extls_ctx_restore(ucp->tls_ctx);
@@ -134,6 +139,8 @@ extern "C"
     /* MPC OpenMP TLS */
     tls_init (sctk_openmp_thread_tls);
 #endif
+
+    ucp->mpc_user_tls_1 = mpc_user_tls_1;
 
 #ifdef MPC_MPI
     tls_init (___sctk_message_passing);

@@ -185,7 +185,10 @@ Need to check this in more depth for futur version ( > 2.4.0-1).
     volatile int restored;
     sigset_t sigs;
     int error;
+    void *thread_lib;
     void *sctk_current_alloc_chain_local;
+    void *sctk_tls_trace_local;
+    void *mpc_user_tls_1;
     extls_ctx_t* tls_ctx;
     void *___sctk_message_passing;
 #if defined (MPC_OpenMP)
@@ -201,6 +204,9 @@ Need to check this in more depth for futur version ( > 2.4.0-1).
 			void *arg,
 			void (*func) (void *),
 			char *stack, size_t stack_size);
+
+  void sctk_tls_init(void);
+
 #ifdef __cplusplus
 }
 #endif

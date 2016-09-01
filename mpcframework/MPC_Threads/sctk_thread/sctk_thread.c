@@ -632,6 +632,12 @@ sctk_thread_create_tmp_start_routine (sctk_thread_data_t * __arg)
 #ifdef MPC_USE_INFINIBAND
       sctk_network_initialize_task_collaborative_ib (tmp.task_id, tmp.virtual_processor);
 #endif
+
+#if defined(SCTK_USE_TLS)
+      /* TLS INTIALIZATION */
+      sctk_tls_init();
+#endif
+
       sctk_register_thread_initial (tmp.task_id);
       sctk_terminaison_barrier (tmp.task_id);
       sctk_online_program = 1;

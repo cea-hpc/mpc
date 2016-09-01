@@ -37,10 +37,94 @@ typedef struct
 
 #if defined(SCTK_USE_TLS)
 
+__thread char *mpc_user_tls_1 = NULL;
+
 #if defined (MPC_OpenMP)
 /* MPC OpenMP TLS */
 __thread void *sctk_openmp_thread_tls;
 #endif
+
+unsigned long mpc_user_tls_1_offset = 0;
+unsigned long mpc_user_tls_1_entry_number = 0;
+unsigned long mpc_user_tls_1_entry_number_max = 0;
+sctk_tls_entry_t *mpc_user_tls_1_tab = NULL;
+
+unsigned long sctk_tls_entry_add(unsigned long size, void (*func)(void *)) {
+  sctk_tls_entry_t *entry;
+
+  size += 32;
+
+  if (size % 32 != 0) {
+    size += 32 - (size % 32);
+  }
+
+  assume(sctk_multithreading_initialised == 0);
+  assume(size % 32 == 0);
+  if (mpc_user_tls_1_entry_number >= mpc_user_tls_1_entry_number_max) {
+    int i;
+    unsigned long old_size;
+    old_size = mpc_user_tls_1_entry_number_max;
+    mpc_user_tls_1_entry_number_max += 100;
+    mpc_user_tls_1_tab =
+        sctk_realloc(mpc_user_tls_1_tab, mpc_user_tls_1_entry_number_max *
+                                             sizeof(sctk_tls_entry_t));
+    for (i = 0; i < 100; i++) {
+      mpc_user_tls_1_tab[old_size + i].func = NULL;
+      mpc_user_tls_1_tab[old_size + i].offset = 0;
+    }
+  }
+
+  entry = mpc_user_tls_1_tab + mpc_user_tls_1_entry_number;
+
+  entry->func = func;
+  entry->offset = mpc_user_tls_1_offset + 32;
+
+  mpc_user_tls_1_offset += size;
+#if 1
+  {
+    char *tmp;
+    tmp = sctk_malloc(mpc_user_tls_1_offset);
+    memset(tmp, 0, mpc_user_tls_1_offset);
+    if (mpc_user_tls_1 != NULL) {
+      memcpy(tmp, mpc_user_tls_1, mpc_user_tls_1_offset - size);
+      free(mpc_user_tls_1);
+    }
+    mpc_user_tls_1 = tmp;
+  }
+#else
+  mpc_user_tls_1 = realloc(mpc_user_tls_1, mpc_user_tls_1_offset);
+
+#endif
+  mpc_user_tls_1_entry_number++;
+
+  sctk_nodebug("%p %p %p", entry->offset, mpc_user_tls_1,
+               mpc_user_tls_1_offset);
+  return entry->offset;
+}
+
+/*Init specific key*/
+void sctk_tls_init_key(unsigned long key, void (*func)(void *)) {
+  int *done;
+  done = (int *)(mpc_user_tls_1 + key - 32);
+  *done = 1;
+  func(mpc_user_tls_1 + key);
+}
+
+void sctk_tls_init() {
+  assume(sctk_multithreading_initialised == 1);
+
+  mpc_user_tls_1 = sctk_malloc(mpc_user_tls_1_offset);
+  memset(mpc_user_tls_1, 0, mpc_user_tls_1_offset);
+}
+
+#else
+
+void sctk_tls_init() {}
+
+unsigned long sctk_tls_entry_add(unsigned long size, void (*func)(void *)) {
+  not_available();
+  return 0;
+}
 
 #endif
 

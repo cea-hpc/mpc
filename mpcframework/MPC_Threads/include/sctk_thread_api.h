@@ -248,7 +248,8 @@ extern "C"
 
   unsigned long sctk_thread_atomic_add (volatile unsigned long *ptr,
 					unsigned long val);
-
+  unsigned long sctk_tls_entry_add(unsigned long size, void (*func)(void *));
+  void sctk_tls_init_key(unsigned long key, void (*func)(void *));
 #ifdef __cplusplus
 }
 #endif

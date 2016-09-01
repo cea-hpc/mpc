@@ -996,7 +996,9 @@ void sctk_init_mpc_runtime()
         sctk_def_process_nb("1");
 
         // Initializing multithreading mode
-        sctk_runtime_config_get()->modules.launcher.thread_init.value();
+        if (sctk_runtime_config_get()->modules.launcher.thread_init.value)
+          sctk_runtime_config_get()->modules.launcher.thread_init.value();
+
 /* if(strstr(sctk_multithreading_mode, "_ng") != NULL){ */
 /*     sctk_new_scheduler_engine_enabled=1; */
 /* }else{ */
