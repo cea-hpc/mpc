@@ -1841,14 +1841,26 @@ static int NBC_Ireduce(void* sendbuf, void* recvbuf, int count, MPI_Datatype dat
     switch(alg) {
         case NBC_RED_BINOMIAL:
             ;
-            for(r=1; r<=maxr && ((vrank % (1<<r)) == 0); r++) {
+            int end = 0;
+//            for(r=1; r<=maxr && ((vrank % (1<<r)) == 0); r++) {
+            for(r=1; r<=maxr; r++) {
                 /* we have to receive this round */
+                if(end==0)
+                {
                 vpeer = vrank + (1<<(r-1));
                 VRANK2RANK(peer, vpeer, root)
                     if(peer<p) {
-                        recv_op_rounds++;
+                        if( (vrank % (1<<r)) == 0 )
+                        {
+                            recv_op_rounds++;
+                        }
+                        else
+                        {
+                            end = 1;
+                        }
 
                     }
+                }
             }
 
             int alloc_size = sizeof(int) 
@@ -1954,8 +1966,8 @@ static inline int red_sched_binomial(int rank, int p, int root, void *sendbuf, v
 							res = NBC_Sched_op_pos(pos, (char *)redbuf-(unsigned long)handle->tmpbuf, 1, (char *)redbuf-(unsigned long)handle->tmpbuf, 1, 0, 1, count, datatype, op, schedule);
                         
 						}
-                    pos += (sizeof(NBC_Args_op)+sizeof(NBC_Fn_type));
 					}
+                    pos += (sizeof(NBC_Args_op)+sizeof(NBC_Fn_type));
 					if (NBC_OK != res) { sctk_free(handle->tmpbuf); printf("Error in NBC_Sched_op() (%i)\n", res); return res; }
 					/* this cannot be done until handle->tmpbuf is unused :-( */
 					res = NBC_Sched_barrier_pos(pos, schedule);
@@ -1992,7 +2004,11 @@ static inline int red_sched_binomial(int rank, int p, int root, void *sendbuf, v
 static __inline__ int red_sched_chain(int rank, int p, int root, void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int ext, int size, NBC_Schedule *schedule, NBC_Handle *handle, int fragsize) {
   int res, vrank, rpeer, speer, numfrag, fragnum, fragcount, thiscount;
   long offset;
-  
+ 
+  fprintf(stderr, "RED_SCHED_CHAIN\n");
+
+
+ 
   RANK2VRANK(rank, vrank, root);
   VRANK2RANK(rpeer, vrank+1, root);
   VRANK2RANK(speer, vrank-1, root);
