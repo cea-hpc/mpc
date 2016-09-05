@@ -25,14 +25,16 @@
 #define SCTK_CUDA_H
 
 #ifdef MPC_USE_CUDA
-#include <sctk_cuda_wrap.h>
 #include <cuda_runtime.h>
+#include <sctk_cuda_wrap.h>
 #include <sctk_debug.h>
 
 /** in debug mode, check all CUDA APIs return codes */
 #ifndef NDEBUG
-#define safe_cudart(u) assume_m(((u) == cudaSuccess), "Runtime CUDA call failed with value %d", u)
-#define safe_cudadv(u) assume_m(((u) == CUDA_SUCCESS), "Driver CUDA call failed with value %d", u)
+#define safe_cudart(u)                                                         \
+  assume_m(((u) == cudaSuccess), "Runtime CUDA call failed with value %d", u)
+#define safe_cudadv(u)                                                         \
+  assume_m(((u) == CUDA_SUCCESS), "Driver CUDA call failed with value %d", u)
 #else
 #define safe_cudart(u) u
 #define safe_cudadv(u) u

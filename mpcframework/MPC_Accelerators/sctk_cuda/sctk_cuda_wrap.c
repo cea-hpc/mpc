@@ -56,4 +56,3 @@ CUresult sctk_cuDeviceGetByPCIBusId(CUdevice *d, const char *b) {
   return -1;
 }
 #endif
-

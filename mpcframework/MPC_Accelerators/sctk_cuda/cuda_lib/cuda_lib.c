@@ -26,8 +26,12 @@
  * Add here each sctk_* CUDA wrappers to handle a new CUDA driver function
  * Don't forget to add a weak symbol in MPC too (sctk_cuda_wrap.c)
  */
-CUresult sctk_cuInit(unsigned int flag) {return cuInit(flag);}
-CUresult sctk_cuCtxCreate(CUcontext* c, unsigned int f, CUdevice d) { return cuCtxCreate(c, f, d);}
-CUresult sctk_cuCtxPopCurrent(CUcontext* c) {return cuCtxPopCurrent(c);}
-CUresult sctk_cuCtxPushCurrent(CUcontext c) {return cuCtxPushCurrent(c);}
-CUresult sctk_cuDeviceGetByPCIBusId(CUdevice* d, const char * b) {return cuDeviceGetByPCIBusId(d, b);}
+CUresult sctk_cuInit(unsigned int flag) { return cuInit(flag); }
+CUresult sctk_cuCtxCreate(CUcontext *c, unsigned int f, CUdevice d) {
+  return cuCtxCreate(c, f, d);
+}
+CUresult sctk_cuCtxPopCurrent(CUcontext *c) { return cuCtxPopCurrent(c); }
+CUresult sctk_cuCtxPushCurrent(CUcontext c) { return cuCtxPushCurrent(c); }
+CUresult sctk_cuDeviceGetByPCIBusId(CUdevice *d, const char *b) {
+  return cuDeviceGetByPCIBusId(d, b);
+}

@@ -28,7 +28,6 @@
 
 #include "sctk_thread_generic.h"
 
-
 #if defined(MPC_Accelerators)
 #include <sctk_accelerators.h>
 #endif

@@ -36,20 +36,20 @@ extern bool sctk_accl_support;
  * @return 0 if everything succeded, 1 otherwise
  */
 int sctk_accl_init() {
-	
-  if( ! sctk_accl_support)
-  {
-	  nb_devices = 0;
-	  return 1;
+
+  if (!sctk_accl_support) {
+    nb_devices = 0;
+    return 1;
   }
 
   sctk_warning("Accelerators support ENABLED");
-  
-  sctk_device_t **list = sctk_device_get_from_handle_regexp("cuda-enabled-card*", (int*)&nb_devices);
+
+  sctk_device_t **list = sctk_device_get_from_handle_regexp(
+      "cuda-enabled-card*", (int *)&nb_devices);
   sctk_free(list);
 
 #ifdef MPC_USE_CUDA
-	sctk_accl_cuda_init();
+  sctk_accl_cuda_init();
 #endif
 
 #ifdef MPC_USE_OPENACC
@@ -66,8 +66,5 @@ int sctk_accl_init() {
  * Especially used to check CUDA can be used without errors.
  * @return the number of devices
  */
-size_t sctk_accl_get_nb_devices() 
-{ 
-	return nb_devices; 
-}
+size_t sctk_accl_get_nb_devices() { return nb_devices; }
 #endif

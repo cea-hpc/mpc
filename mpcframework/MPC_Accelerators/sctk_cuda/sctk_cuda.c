@@ -113,7 +113,8 @@ int sctk_accl_cuda_init_context() {
   CUdevice nearest_device =
       (CUdevice)sctk_accl_cuda_get_closest_device(cuda->cpu_id);
 
-  safe_cudadv(sctk_cuCtxCreate(&cuda->context, CU_CTX_SCHED_YIELD, nearest_device));
+  safe_cudadv(
+      sctk_cuCtxCreate(&cuda->context, CU_CTX_SCHED_YIELD, nearest_device));
 
   /*sctk_cuCtxCreate() automatically attaches the ctx to the GPU */
   cuda->pushed = 1;
@@ -231,13 +232,12 @@ extern bool sctk_accl_support;
  *
  * @return 0 if succeeded, 1 otherwise
  */
-int sctk_accl_cuda_init()
-{
-	if (sctk_accl_support) /* && sctk_cuda_support) */
-	{
-		safe_cudadv(sctk_cuInit(0));
-		return 0;
-	}
-	return 1;
+int sctk_accl_cuda_init() {
+  if (sctk_accl_support) /* && sctk_cuda_support) */
+  {
+    safe_cudadv(sctk_cuInit(0));
+    return 0;
+  }
+  return 1;
 }
 #endif // MPC_Accelerators && USE_CUDA
