@@ -165,7 +165,7 @@ static int NBC_Iallgather(void* sendbuf, int sendcount, MPI_Datatype sendtype, v
 
         sbuf = ((char *)recvbuf) + (rank * recvcount * rcvext);
         /* do p-1 rounds */
-        int pos = 0;
+        int pos = sizeof(int);
         for (r = 0; r < p; r++) {
           if (r != rank) {
             /* recv from rank r */
