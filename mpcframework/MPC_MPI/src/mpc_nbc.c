@@ -2310,8 +2310,6 @@ static int NBC_Iscan(void* sendbuf, void* recvbuf, int count, MPI_Datatype datat
 		schedule = (NBC_Schedule*)sctk_malloc(sizeof(NBC_Schedule));
 		if (NULL == schedule) { printf("Error in sctk_malloc()\n"); return res; }
 
-//		res = NBC_Sched_create(schedule);
-//		if(res != NBC_OK) { printf("Error in NBC_Sched_create (%i)\n", res); return res; }
         
         int alloc_size = sizeof(int) + sizeof(char);
 
@@ -2322,7 +2320,7 @@ static int NBC_Iscan(void* sendbuf, void* recvbuf, int count, MPI_Datatype datat
         *schedule=sctk_malloc(alloc_size);
  	    *(int*)*schedule=alloc_size;
 
-        int pos = sizeof(int);
+        int pos = 0;
 		if(rank != 0) {
             *(int*)((char*)*schedule+sizeof(int)+pos)=1;
             pos += sizeof(int);
@@ -2858,7 +2856,7 @@ static int NBC_Iexscan(void* sendbuf, void* recvbuf, int count, MPI_Datatype dat
         *schedule=sctk_malloc(alloc_size);
  	    *(int*)*schedule=alloc_size;
 
-        int pos = sizeof(int);
+        int pos = 0;
 		if(rank != 0) {
             *(int*)((char*)*schedule+sizeof(int)+pos)=1;
             pos += sizeof(int);
@@ -2877,7 +2875,7 @@ static int NBC_Iexscan(void* sendbuf, void* recvbuf, int count, MPI_Datatype dat
             pos += (sizeof(NBC_Args_op)+sizeof(NBC_Fn_type));
 			if (NBC_OK != res) { sctk_free(handle->tmpbuf); printf("Error in NBC_Sched_op() (%i)\n", res); return res; }
 			/* this cannot be done until handle->tmpbuf is unused :-( */
-			res = NBC_Sched_barrier(schedule);
+			res = NBC_Sched_barrier_pos(pos, schedule);
             pos += sizeof(char);
 			if (NBC_OK != res) { sctk_free(handle->tmpbuf); printf("Error in NBC_Sched_barrier() (%i)\n", res); return res; }
 		}
