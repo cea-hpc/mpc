@@ -87,15 +87,14 @@ intern_main (int argc, char **argv)
   int tmp;
 
   /* WI4MPI hack: avoid MPC initialisation when MPC is not the target MPI */
-  char * mpi_lib = getenv("TRUE_MPI_LIB");
-  if(mpi_lib && ! strstr(mpi_lib, "libmpc_framework") )
-  { 
-	sctk_info("MPC-WI4MPI: Not being the target MPI: Disabling the runtime");
-	sctk_use_pthread();
+  char *mpi_lib = getenv("TRUE_MPI_LIB");
+  if (mpi_lib && !strstr(mpi_lib, "libmpc_framework")) {
+    sctk_info("MPC-WI4MPI: Not being the target MPI: Disabling the runtime");
+    sctk_use_pthread();
 #ifdef HAVE_ENVIRON_VAR
-  	return mpc_user_main__(argc, argv, environ);
+    return mpc_user_main__(argc, argv, environ);
 #else
-  	return mpc_user_main__(argc, argv);
+    return mpc_user_main__(argc, argv);
 #endif
   }
 

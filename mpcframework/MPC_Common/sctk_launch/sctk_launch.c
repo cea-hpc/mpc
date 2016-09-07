@@ -198,11 +198,9 @@ static char* sctk_network_driver_name = NULL;
 /*   sctk_net_val = val; */
 /* } */
 
-
-void sctk_use_pthread (void)
-{
-	sctk_multithreading_mode = "pthread";
-	sctk_thread_val = sctk_pthread_thread_init;
+void sctk_use_pthread(void) {
+  sctk_multithreading_mode = "pthread";
+  sctk_thread_val = sctk_pthread_thread_init;
 }
 
 /* Note that we start with an agressive frequency
