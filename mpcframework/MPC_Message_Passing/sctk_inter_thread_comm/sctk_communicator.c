@@ -28,6 +28,7 @@
 #include "utarray.h"
 #include <opa_primitives.h>
 #include "sctk_pmi.h"
+#include "sctk_handle.h"
 
 
 /************************** MACROS *************************/
@@ -208,6 +209,8 @@ static inline int sctk_set_internal_communicator_no_lock_no_check ( const sctk_c
 		sctk_communicator_array[id] = tmp;
 	}
 
+	sctk_handle_new_from_id( id , SCTK_HANDLE_COMM);
+
 	return 0;
 }
 
@@ -295,6 +298,8 @@ static inline int sctk_del_internal_communicator_no_lock_no_check ( const sctk_c
 		//else delete in the table
 		sctk_communicator_array[id] = NULL;
 	}
+
+	sctk_handle_free( id , SCTK_HANDLE_COMM);
 
 	return 0;
 }

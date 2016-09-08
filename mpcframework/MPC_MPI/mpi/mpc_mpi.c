@@ -368,9 +368,7 @@ typedef struct
 } mpi_topology_per_comm_t;
 
 typedef struct mpc_mpi_per_communicator_s{
-  /****** ERRORS ******/
-  MPI_Handler_function *func;
-  int func_ident;
+
 
   /****** Attributes ******/
   MPI_Caching_key_value_t* key_vals;
@@ -479,52 +477,25 @@ inline int
 SCTK__MPI_ERROR_REPORT__ (MPC_Comm comm, int error, char *message, char *file,
 			  int line)
 {
-  MPI_Comm comm_id;
-  int error_id;
-  MPI_Handler_function *func;
-  mpc_mpi_per_communicator_t* tmp;
 
-  tmp = mpc_mpc_get_per_comm_data(comm);
-
-  if(tmp == NULL){
-    comm = MPC_COMM_WORLD;
-    tmp = mpc_mpc_get_per_comm_data(comm);
+  MPI_Errhandler errh = (MPI_Errhandler) sctk_handle_get_errhandler( (sctk_handle) comm, SCTK_HANDLE_COMM );
+ 
+  if( errh != MPI_ERRHANDLER_NULL )
+  {
+	MPI_Handler_function * func = sctk_errhandler_resolve( errh );
+    int error_id = error;
+	MPI_Comm comm_id = comm;
+  	(func)(&comm_id, &error_id, message, file, line);
   }
 
-  comm_id = comm;
 
-  error_id = error;
-  func = tmp->func;
-  func (&comm_id, &error_id, message, file, line);
-  return error;
-}
 
-static void
-__sctk_init_mpi_errors_per_comm (mpc_mpi_per_communicator_t* tmp)
-{
-  tmp->func = (MPI_Handler_function *)MPI_Default_error;
-  tmp->func_ident = MPI_ERRORS_ARE_FATAL;
 }
 
 static void
 __sctk_init_mpi_errors ()
 {
-  mpc_mpi_data_t* data;
-
-  data = mpc_mpc_get_per_task_data();
-
-  data->user_func = sctk_malloc(MPC_MPI_MAX_NUMBER_FUNC*sizeof(MPI_Handler_user_function_t));
-  data->user_func_nb = MPC_MPI_MAX_NUMBER_FUNC;
-
-  data->user_func[MPI_ERRHANDLER_NULL].func =
-    (MPI_Handler_function *) MPI_Default_error;
-  data->user_func[MPI_ERRHANDLER_NULL].status = 1;
-  data->user_func[MPI_ERRORS_RETURN].func =
-    (MPI_Handler_function *) MPI_Return_error;
-  data->user_func[MPI_ERRORS_RETURN].status = 1;
-  data->user_func[MPI_ERRORS_ARE_FATAL].func =
-    (MPI_Handler_function *) MPI_Abort_error;
-  data->user_func[MPI_ERRORS_ARE_FATAL].status = 1;
+  __MPC_Error_init();
 }
 
 
@@ -11574,93 +11545,23 @@ MPI_Return_error (MPI_Comm * comm, int *error, ...)
 static int
 __INTERNAL__PMPI_Errhandler_set (MPI_Comm comm, MPI_Errhandler errhandler)
 {
-  mpc_mpi_data_t* tmp;
-  mpc_mpi_per_communicator_t* tmp_per_comm;
-
-  if(MPI_ERRHANDLER_NULL == errhandler){
-      MPI_ERROR_REPORT (MPI_COMM_WORLD, MPI_ERR_ARG, "Invalid errhandler");
-  }
-
-  tmp = mpc_mpc_get_per_task_data();
-
-  sctk_spinlock_lock(&(tmp->lock));
-  if ((errhandler < 0) || (errhandler >= tmp->user_func_nb))
-    {
-      sctk_spinlock_unlock(&(tmp->lock));
-      MPI_ERROR_REPORT (MPI_COMM_WORLD, MPI_ERR_OTHER, "Invalid errhandler");
-    }
-
-
-  if (tmp->user_func[errhandler].status == 0)
-    {
-      sctk_spinlock_unlock(&(tmp->lock));
-      MPI_ERROR_REPORT (MPI_COMM_WORLD, MPI_ERR_OTHER, "Invalid errhandler");
-    }
-
-  tmp_per_comm = mpc_mpc_get_per_comm_data(comm);
-  sctk_spinlock_lock(&(tmp_per_comm->lock));
-
-  tmp_per_comm->func = tmp->user_func[errhandler].func;
-  tmp_per_comm->func_ident = errhandler;
-
-  sctk_spinlock_unlock(&(tmp_per_comm->lock));
-  sctk_spinlock_unlock(&(tmp->lock));
+  sctk_handle_set_errhandler( (sctk_handle)comm, SCTK_HANDLE_COMM, (sctk_errhandler_t) errhandler );
   MPI_ERROR_SUCESS ();
 }
 
 static int
 __INTERNAL__PMPI_Errhandler_get (MPI_Comm comm, MPI_Errhandler * errhandler)
 {
-  mpc_mpi_data_t* tmp;
-  mpc_mpi_per_communicator_t* tmp_per_comm;
+  *errhandler = (MPI_Errhandler) sctk_handle_get_errhandler( (sctk_handle)comm, SCTK_HANDLE_COMM );
 
-  tmp = mpc_mpc_get_per_task_data();
-
-  sctk_spinlock_lock(&(tmp->lock));
-  tmp_per_comm = mpc_mpc_get_per_comm_data(comm);
-  sctk_spinlock_lock(&(tmp_per_comm->lock));
-
-  *errhandler = tmp_per_comm->func_ident;
-
-  sctk_spinlock_unlock(&(tmp_per_comm->lock));
-  sctk_spinlock_unlock(&(tmp->lock));
   MPI_ERROR_SUCESS ();
 }
 
 static int
 __INTERNAL__PMPI_Errhandler_free (MPI_Errhandler * errhandler)
 {
-  mpc_mpi_data_t* tmp;
-
-  if(MPI_ERRHANDLER_NULL == *errhandler){
-      MPI_ERROR_REPORT (MPI_COMM_WORLD, MPI_ERR_ARG, "Invalid errhandler");
-  }
-
-  tmp = mpc_mpc_get_per_task_data();
-  sctk_spinlock_lock(&(tmp->lock));
-
-  if ((*errhandler < 0) || (*errhandler >= tmp->user_func_nb))
-    {
-      sctk_spinlock_unlock(&(tmp->lock));
-      MPI_ERROR_REPORT (MPI_COMM_WORLD, MPI_ERR_OTHER, "Invalid errhandler");
-    }
-
-  if (tmp->user_func[*errhandler].status == 0)
-    {
-      sctk_spinlock_unlock(&(tmp->lock));
-      MPI_ERROR_REPORT (MPI_COMM_WORLD, MPI_ERR_OTHER, "Invalid errhandler");
-    }
-
-  tmp->user_func[*errhandler].status--;
-
-  if(tmp->user_func[*errhandler].status <= 0){
-    tmp->user_func[*errhandler].status = 0;
-    tmp->user_func[*errhandler].func = NULL;
-  }
-
-
+  sctk_errhandler_free( (sctk_errhandler_t) *errhandler );
   *errhandler = MPI_ERRHANDLER_NULL;
-  sctk_spinlock_unlock(&(tmp->lock));
   MPI_ERROR_SUCESS ();
 }
 
@@ -11842,7 +11743,6 @@ __INTERNAL__PMPI_Init (int *argc, char ***argv)
 
 	tmp = per_communicator->mpc_mpi_per_communicator;
 
-	__sctk_init_mpi_errors_per_comm (tmp);
 	__sctk_init_mpi_topo_per_comm (tmp);
 	tmp->max_number = 0;
 	tmp->topo.lock = lock;
@@ -15156,20 +15056,6 @@ PMPI_Comm_size (MPI_Comm comm, int *size)
 }
 
 
-int PMPI_Comm_set_errhandler(MPI_Comm comm, MPI_Errhandler errhandler)
-{
-	TODO("PMPI_Comm_set_errhandler is dummy");
-	return MPI_SUCCESS;
-}
-
-
-
-int PMPI_Comm_call_errhandler( MPI_Comm comm, int errorcode )
-{
-	
-	return MPI_SUCCESS;
-}
-
 
 int
 PMPI_Comm_rank (MPI_Comm comm, int *rank)
@@ -16411,11 +16297,75 @@ int PMPI_T_category_changed( int * stamp )
 	return mpc_MPI_T_category_changed( stamp );
 }
 
+
+/* Error Handling */
+int PMPI_Win_call_errhandler(MPI_Win win, int errorcode)
+{
+	not_implemented();
+	return MPI_ERR_INTERN;
+}
+
+
+int PMPI_Add_error_class(int *errorclass)
+{
+	not_implemented();
+	return MPI_ERR_INTERN;
+}
+
+int PMPI_Add_error_code(int errorclass, int *errorcode)
+{
+	not_implemented();
+	return MPI_ERR_INTERN;
+}
+
+int PMPI_Add_error_string(int errorcode, char *string)
+{
+	not_implemented();
+	return MPI_ERR_INTERN;
+}
+
+
+
+int PMPI_Comm_create_errhandler(MPI_Comm_errhandler_function *function, MPI_Errhandler *errhandler)
+{
+	return PMPC_Errhandler_create( function, errhandler);
+}
+
+int PMPI_Comm_get_errhandler(MPI_Comm comm, MPI_Errhandler *errhandler)
+{
+	return PMPC_Errhandler_get (comm, errhandler);
+}
+
+
+int PMPI_Comm_set_errhandler(MPI_Comm comm, MPI_Errhandler errhandler)
+{
+	return PMPC_Errhandler_set (comm, errhandler);
+}
+
+
+int PMPI_Comm_call_errhandler( MPI_Comm comm, int errorcode )
+{
+  sctk_errhandler_t errh = sctk_handle_get_errhandler( (sctk_handle) comm, SCTK_HANDLE_COMM );
+  sctk_generic_handler errf =  sctk_errhandler_resolve( errh );
+  
+  if( errf )
+  {
+  	(errf)((void*)&comm, &errorcode); 
+  }
+
+  sctk_error("C %d(e %d) %d->%p", comm, errorcode , errh,  errf );
+
+  return MPI_SUCCESS;
+}
+
+
+
+
+
 /************************************************************************/
 /*  NOT IMPLEMENTED                                                     */
 /************************************************************************/
 
-/* One-sided communications */
 int PMPI_Win_set_attr(MPI_Win win, int win_keyval, void *attribute_val){not_implemented();return MPI_ERR_INTERN;}
 int PMPI_Win_get_attr(MPI_Win win, int win_keyval, void *attribute_val, int *flag){not_implemented();return MPI_ERR_INTERN;}
 int PMPI_Win_free_keyval(int *win_keyval){not_implemented();return MPI_ERR_INTERN;}
@@ -16438,7 +16388,6 @@ int PMPI_Win_create_errhandler(MPI_Win_errhandler_function *win_errhandler_fn,MP
 int PMPI_Win_set_errhandler(MPI_Win win, MPI_Errhandler errhandler){not_implemented();return MPI_ERR_INTERN;}
 int PMPI_Win_get_errhandler(MPI_Win win, MPI_Errhandler *errhandler){not_implemented();return MPI_ERR_INTERN;}
 int PMPI_Win_get_group(MPI_Win win, MPI_Group *group){not_implemented();return MPI_ERR_INTERN;}
-int PMPI_Win_call_errhandler(MPI_Win win, int errorcode){not_implemented();return MPI_ERR_INTERN;}
 int PMPI_Win_allocate_shared(MPI_Aint size, int disp_unit, MPI_Info info, MPI_Comm comm,void *baseptr, MPI_Win *win){not_implemented();return MPI_ERR_INTERN;}
 int PMPI_Win_create_dynamic(MPI_Info info, MPI_Comm comm, MPI_Win *win){not_implemented();return MPI_ERR_INTERN;}
 int PMPI_Win_shared_query(MPI_Win win, int rank, MPI_Aint *size, int *disp_unit, void *baseptr){not_implemented();return MPI_ERR_INTERN;}
@@ -16463,15 +16412,13 @@ int PMPI_Accumulate(const void *origin_addr, int origin_count, MPI_Datatype orig
 int PMPI_Get(void *origin_addr, int origin_count, MPI_Datatype origin_datatype, int target_rank, MPI_Aint target_disp, int target_count, MPI_Datatype target_datatype, MPI_Win win){not_implemented();return MPI_ERR_INTERN;}
 int PMPI_Put(const void *origin_addr, int origin_count, MPI_Datatype origin_datatype, int target_rank, MPI_Aint target_disp,int target_count, MPI_Datatype target_datatype, MPI_Win win){not_implemented();return MPI_ERR_INTERN;}
 
-
 /* Communicator Management */
 int PMPI_Comm_idup(MPI_Comm comm, MPI_Comm *newcomm, MPI_Request *request){not_implemented();return MPI_ERR_INTERN;}
 int PMPI_Comm_dup_with_info(MPI_Comm comm, MPI_Info info, MPI_Comm * newcomm){not_implemented();return MPI_ERR_INTERN;}
 int PMPI_Comm_split_type(MPI_Comm comm, int split_type, int key, MPI_Info info, MPI_Comm * newcomm){not_implemented();return MPI_ERR_INTERN;}
 int PMPI_Comm_set_info(MPI_Comm comm, MPI_Info info){not_implemented();return MPI_ERR_INTERN;}
 int PMPI_Comm_get_info(MPI_Comm comm, MPI_Info * info_used){not_implemented();return MPI_ERR_INTERN;}
-int PMPI_Comm_create_errhandler(MPI_Comm_errhandler_function *function, MPI_Errhandler *errhandler){not_implemented();return MPI_ERR_INTERN;}
-int PMPI_Comm_get_errhandler(MPI_Comm comm, MPI_Errhandler *errhandler){not_implemented();return MPI_ERR_INTERN;}
+
 int PMPI_Comm_create_group(MPI_Comm comm, MPI_Group group, int tag, MPI_Comm * newcomm){not_implemented();return MPI_ERR_INTERN;}
 
 /* datatype handling */
@@ -16481,9 +16428,7 @@ int PMPI_Type_free_keyval(int *type_keyval){not_implemented();return MPI_ERR_INT
 int PMPI_Type_delete_attr(MPI_Datatype datatype, int type_keyval){not_implemented();return MPI_ERR_INTERN;}
 int PMPI_Type_create_keyval(MPI_Type_copy_attr_function *type_copy_attr_fn, MPI_Type_delete_attr_function *type_delete_attr_fn, int *type_keyval, void *extra_state){not_implemented();return MPI_ERR_INTERN;}
 
-int PMPI_Add_error_class(int *errorclass){not_implemented();return MPI_ERR_INTERN;}
-int PMPI_Add_error_code(int errorclass, int *errorcode){not_implemented();return MPI_ERR_INTERN;}
-int PMPI_Add_error_string(int errorcode, char *string){not_implemented();return MPI_ERR_INTERN;}
+
 int PMPI_Get_library_version(char *version, int *resultlen){not_implemented();return MPI_ERR_INTERN;}
 
 /* Process Creation and Management */

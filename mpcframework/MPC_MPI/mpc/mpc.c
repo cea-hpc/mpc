@@ -40,9 +40,9 @@
 #include "sctk_atomics.h"
 #include "sctk_accessor.h"
 #include "sctk_runtime_config.h"
+#include "sctk_handle.h"
 
-
- /*#define MPC_LOG_DEBUG*/
+/*#define MPC_LOG_DEBUG*/
 #ifdef MPC_LOG_DEBUG
 #include <stdarg.h>
 #endif
@@ -938,23 +938,13 @@ __MPC_ERROR_REPORT__ (MPC_Comm comm, int error, char *message, char *file,
 {
   MPC_Comm comm_id;
   int error_id;
-  MPC_Handler_function *func;
-  sctk_task_specific_t *task_specific;
-  mpc_per_communicator_t* tmp;
-  task_specific = __MPC_get_task_specific ();
-  comm_id = comm;
-  tmp = sctk_thread_getspecific_mpc_per_comm(task_specific,comm_id);
 
-  if (tmp == NULL){
-    comm_id = MPC_COMM_WORLD;
-    tmp = sctk_thread_getspecific_mpc_per_comm(task_specific,comm_id);
-  }
-
+  MPC_Errhandler errh = (MPC_Errhandler) sctk_handle_get_errhandler( (sctk_handle) comm , SCTK_HANDLE_COMM );
+ 
+  MPC_Handler_function * func = sctk_errhandler_resolve( errh );
   error_id = error;
-  sctk_spinlock_lock (&(tmp->err_handler_lock));
-  func = tmp->err_handler;
-  sctk_spinlock_unlock (&(tmp->err_handler_lock));
-  func (&comm_id, &error_id, message, file, line);
+  (func)(&comm_id, &error_id, message, file, line);
+
   return error;
 }
 
@@ -6940,50 +6930,28 @@ int
 PMPC_Errhandler_create (MPC_Handler_function * function,
 			MPC_Errhandler * errhandler)
 {
-  *errhandler = function;
-#ifdef MPC_LOG_DEBUG
-  mpc_log_debug (MPC_COMM_WORLD,
-		 "MPC_Errhandler_create func=%p handler=%p", function,
-		 errhandler);
-#endif
+  sctk_errhandler_register( (sctk_generic_handler) function,  (sctk_errhandler_t *)errhandler );
   MPC_ERROR_SUCESS ();
 }
 
 int
 PMPC_Errhandler_set (MPC_Comm comm, MPC_Errhandler errhandler)
 {
-  sctk_task_specific_t *task_specific;
-  mpc_per_communicator_t* tmp;
-  task_specific = __MPC_get_task_specific ();
-  tmp = sctk_thread_getspecific_mpc_per_comm(task_specific,comm);
-
-  sctk_spinlock_lock (&(tmp->err_handler_lock));
-  tmp->err_handler = errhandler;
-  sctk_spinlock_unlock (&(tmp->err_handler_lock));
+  sctk_handle_set_errhandler( (sctk_handle)comm, SCTK_HANDLE_COMM , (sctk_errhandler_t) errhandler );
   MPC_ERROR_SUCESS ();
 }
 
 int
 PMPC_Errhandler_get (MPC_Comm comm, MPC_Errhandler * errhandler)
 {
-  sctk_task_specific_t *task_specific;
-  mpc_per_communicator_t* tmp;
-  task_specific = __MPC_get_task_specific ();
-  tmp = sctk_thread_getspecific_mpc_per_comm(task_specific,comm);
-
-  sctk_spinlock_lock (&(tmp->err_handler_lock));
-  *errhandler = tmp->err_handler;
-  sctk_spinlock_unlock (&(tmp->err_handler_lock));
+  *errhandler = (MPC_Errhandler)sctk_handle_get_errhandler( (sctk_handle) comm, SCTK_HANDLE_COMM );
   MPC_ERROR_SUCESS ();
 }
 
 int
 PMPC_Errhandler_free (MPC_Errhandler * errhandler)
 {
-#ifdef MPC_LOG_DEBUG
-  mpc_log_debug (MPC_COMM_WORLD, "MPC_Errhandler_free handler=%p",
-		 errhandler);
-#endif
+  sctk_errhandler_free( *errhandler );
   *errhandler = (MPC_Errhandler) MPC_ERRHANDLER_NULL;
   MPC_ERROR_SUCESS ();
 }
@@ -7047,6 +7015,24 @@ PMPC_Error_class (int errorcode, int *errorclass)
   *errorclass = errorcode;
   MPC_ERROR_SUCESS ();
 }
+
+MPC_Errhandler MPC_ERRHANDLER_NULL;
+MPC_Errhandler MPC_ERRORS_RETURN;
+MPC_Errhandler MPC_ERRORS_ARE_FATAL;
+
+static volatile int error_init_done = 0;
+
+int __MPC_Error_init()
+{
+	if(!error_init_done)
+	{
+		error_init_done = 1;
+		sctk_errhandler_register((sctk_generic_handler) PMPC_Default_error, (sctk_errhandler_t *)&MPC_ERRHANDLER_NULL );
+		sctk_errhandler_register((sctk_generic_handler) PMPC_Return_error, (sctk_errhandler_t *)&MPC_ERRORS_RETURN );
+		sctk_errhandler_register((sctk_generic_handler) PMPC_Default_error, (sctk_errhandler_t *)&MPC_ERRORS_ARE_FATAL );
+	}
+}
+
 
 /*Timing*/
 double

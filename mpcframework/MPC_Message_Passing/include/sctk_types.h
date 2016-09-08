@@ -146,6 +146,8 @@ size_t RDMA_type_size( RDMA_type type );
 #define SCTK_COMM_SELF 1
 /** Define the NULL communicator number */
 #define SCTK_COMM_NULL  ((sctk_communicator_t)(-1))
+/** Define the NULL error handler */
+#define SCTK_ERRHANDLER_NULL 0
 /** Not using datatypes */
 #define SCTK_DATATYPE_IGNORE ((sctk_datatype_t)0)
 /** In place collectives **/

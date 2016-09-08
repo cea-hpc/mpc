@@ -44,7 +44,7 @@
 #include <utlist.h>
 #include "sctk_runtime_config.h"
 #include "nbc.h"
-
+#include "sctk_handle.h"
 
 TODO("Optimize algorithme for derived types")
 
@@ -243,6 +243,7 @@ void __sctk_delete_mpc_request(MPI_Request *req,
   SHARED INTERNAL FUNCTIONS
 */
 #define MPI_ERROR_REPORT(comm, error,message) return SCTK__MPI_ERROR_REPORT__(comm, error,message,__FILE__, __LINE__)
+int __MPC_Error_init();
 
 void SCTK__MPI_INIT_REQUEST (MPI_Request * request);
 int SCTK__MPI_ERROR_REPORT__ (MPC_Comm comm, int error, char *message, char *file, int line);

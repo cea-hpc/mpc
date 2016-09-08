@@ -83,8 +83,8 @@ extern const MPC_Group_t mpc_group_null;
 /* Has to match an sctk_datatype_t */
 typedef sctk_datatype_t MPC_Datatype;
 
-typedef void (MPC_Handler_function) (MPC_Comm *, int *, ...);
-typedef MPC_Handler_function *MPC_Errhandler;
+typedef void (MPC_Handler_function)(void *, int *, ...);
+typedef int MPC_Errhandler; 
 
 /** Reduction Operations */
 typedef sctk_Op_f MPC_Op_f;
@@ -907,9 +907,11 @@ int MPC_Test_cancelled (MPC_Status *, int *);
   void PMPC_Default_error (MPC_Comm * comm, int *error, char *msg,
 			  char *file, int line);
   void PMPC_Return_error (MPC_Comm * comm, int *error, ...);
-#define MPC_ERRHANDLER_NULL ((MPC_Handler_function *)PMPC_Default_error)
-#define MPC_ERRORS_RETURN ((MPC_Handler_function *)PMPC_Return_error)
-#define MPC_ERRORS_ARE_FATAL ((MPC_Handler_function *)PMPC_Default_error)
+
+  extern MPC_Errhandler MPC_ERRHANDLER_NULL;
+  extern MPC_Errhandler MPC_ERRORS_RETURN;
+  extern MPC_Errhandler MPC_ERRORS_ARE_FATAL;
+
   int PMPC_Errhandler_create (MPC_Handler_function *, MPC_Errhandler *);
   int PMPC_Errhandler_set (MPC_Comm, MPC_Errhandler);
   int PMPC_Errhandler_get (MPC_Comm, MPC_Errhandler *);

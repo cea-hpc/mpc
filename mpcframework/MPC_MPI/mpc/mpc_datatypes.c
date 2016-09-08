@@ -30,6 +30,7 @@
 #include "sctk_stdint.h"
 #include "sctk_wchar.h"
 #include "mpc_common.h"
+#include "sctk_handle.h"
 
 /************************************************************************/
 /* GLOBALS                                                              */
@@ -434,6 +435,8 @@ void sctk_contiguous_datatype_init( sctk_contiguous_datatype_t * type , size_t i
 	
 	/* Clear context */
 	sctk_datatype_context_clear( &type->context );
+
+	sctk_handle_new_from_id( datatype, SCTK_HANDLE_DATATYPE);
 }
 
 void sctk_contiguous_datatype_release( sctk_contiguous_datatype_t * type )
@@ -443,9 +446,12 @@ void sctk_contiguous_datatype_release( sctk_contiguous_datatype_t * type )
 	if( type->ref_count == 0 )
 	{
 		sctk_datatype_context_free( &type->context );
+
+		sctk_handle_free( type->datatype, SCTK_HANDLE_DATATYPE);
 		/* Counter == 0 then free */
 		memset( type, 0 , sizeof( sctk_contiguous_datatype_t ) );
 	}
+
 }
 
 void sctk_contiguous_datatype_display( sctk_contiguous_datatype_t * target_type )
@@ -560,6 +566,7 @@ void sctk_derived_datatype_init( sctk_derived_datatype_t * type ,
 	/* Clear context */
 	sctk_datatype_context_clear( &type->context );
 
+	sctk_handle_new_from_id( id, SCTK_HANDLE_DATATYPE);
 }
 
 
@@ -573,6 +580,8 @@ int sctk_derived_datatype_release( sctk_derived_datatype_t * type )
 	
 	if ( type->ref_count == 0 )
 	{
+
+	    sctk_handle_free( type->id, SCTK_HANDLE_DATATYPE);
 
 		/* First call free on each embedded derived type
 			* but we must do this only once per type, therefore
