@@ -733,7 +733,7 @@ void __mpcomp_task_schedule()
      if (t->info.num_threads == 1)
 	  return;
 
-     if ( t->tasking_init_done == 0 || sctk_atomics_load_int(&(t->instance->team->nb_tasks)) == 0 ) {
+     if (sctk_atomics_load_int(&(t->instance->team->nb_tasks)) == 0) {
        return ;
      }
 
