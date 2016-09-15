@@ -48,7 +48,7 @@ extern "C"
   void omp_set_nested (int nested);
   int omp_get_nested (void);
 
-  typedef sctk_thread_mutex_t omp_lock_t;
+  typedef sctk_thread_mutex_t *omp_lock_t;
 
   struct omp_nested_lock_s
   {
@@ -57,10 +57,9 @@ extern "C"
       int nb_nested ; /* Number of times this lock is held */
       sctk_thread_mutex_t l ; /* Real lock */
   };
-  typedef struct omp_nested_lock_s omp_nest_lock_t ;
+  typedef struct omp_nested_lock_s *omp_nest_lock_t;
 
-
-/* Lock Functions */
+  /* Lock Functions */
   void omp_init_lock (omp_lock_t * lock);
   void omp_destroy_lock (omp_lock_t * lock);
   void omp_set_lock (omp_lock_t * lock);

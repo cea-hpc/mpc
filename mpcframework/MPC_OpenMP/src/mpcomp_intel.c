@@ -2688,8 +2688,8 @@ __kmpc_init_lock( ident_t *loc, kmp_int32 gtid,  void **user_lock )
     sctk_abort();
   }
 
-  ((iomp_lock_t*) user_lock)->lk = (void*) sctk_malloc( sizeof( omp_lock_t ));
-  omp_init_lock( (omp_lock_t *) ((iomp_lock_t*) user_lock)->lk );
+  //((iomp_lock_t*) user_lock)->lk = (void*) sctk_malloc( sizeof( omp_lock_t ));
+  omp_init_lock((omp_lock_t *)&((iomp_lock_t *)user_lock)->lk);
 }
 
 void
@@ -2700,8 +2700,9 @@ __kmpc_init_nest_lock( ident_t *loc, kmp_int32 gtid, void **user_lock )
     sctk_abort();
   }
 
-  ((iomp_lock_t*) user_lock)->lk = (void*) sctk_malloc( sizeof( omp_nest_lock_t ));
-  omp_init_nest_lock( (omp_nest_lock_t*) ((iomp_lock_t*) user_lock)->lk );
+  //((iomp_lock_t*) user_lock)->lk = (void*) sctk_malloc( sizeof(
+  // omp_nest_lock_t ));
+  omp_init_nest_lock((omp_nest_lock_t *)&((iomp_lock_t *)user_lock)->lk);
 }
 
 void
@@ -2715,9 +2716,9 @@ __kmpc_destroy_lock( ident_t *loc, kmp_int32 gtid, void **user_lock )
   }
 
   llk = ((iomp_lock_t*) user_lock)->lk;
-  omp_destroy_lock( llk );
-  free( llk );
-  llk = NULL;
+  omp_destroy_lock(&llk);
+  // free( llk );
+  // llk = NULL;
 }
 
 void
@@ -2731,9 +2732,9 @@ __kmpc_destroy_nest_lock( ident_t *loc, kmp_int32 gtid, void **user_lock )
   }
 
   llk = ((iomp_lock_t*) user_lock)->lk;
-  omp_destroy_nest_lock( llk );
-  free( llk );
-  llk = NULL;
+  omp_destroy_nest_lock(&llk);
+  // free( llk );
+  // llk = NULL;
 }
 
 void
