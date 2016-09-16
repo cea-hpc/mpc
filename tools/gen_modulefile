@@ -69,6 +69,8 @@ then
 	output="./$version"
 fi
 
+mkdir -p `dirname $output`
+
 cat<< EOF > $output
 #%Module########################################################################
 ##
