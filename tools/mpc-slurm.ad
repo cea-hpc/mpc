@@ -1,0 +1,313 @@
+#!/bin/ksh
+#*****************************************************************************\
+#  scripts/addons/mpc-slurm.ad - 
+#******************************************************************************
+#  Copyright  CEA/DAM/DIF (2012)
+#
+#  This file is part of Bridge, an abstraction layer to ease batch system and
+#  resource manager usage in heterogeneous HPC environments.
+#
+#  Bridge is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  Bridge is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with Bridge.  If not, see <http://www.gnu.org/licenses/>
+#*****************************************************************************/
+
+#################################################################################
+#
+# Addon for MPC support in Bridge with Slurm
+#
+# 3 environment variables can be used to externally configure 
+# MPC launcher and args :
+#
+# BRIDGE_SLURM_MPC_CMD srun by default
+# BRIDGE_SLURM_MPC_CMD_OPTIONS empty by default
+# BRIDGE_SLURM_MPC_CMD_DEFAULT_OPTIONS empty by default (used before the 
+#                                           previous one)
+#
+#################################################################################
+
+function bridge_addon_mprun_setopt {
+
+    typeset MYGETOPTOPTION="e:"
+
+    echo "${BRIDGE_MPRUN_GETOPT_OPTIONS}" | grep -q ${MYGETOPTOPTION}
+
+    if [ $? -ne 0 ]
+	then
+	BRIDGE_MPRUN_GETOPT_OPTIONS="${BRIDGE_MPRUN_GETOPT_OPTIONS}${MYGETOPTOPTION}"
+    fi
+
+    return 0
+
+}
+
+function bridge_addon_mprun_getopt {
+    
+    ## on se place en mode debug si souhaite
+    typeset -i BRIDGE_DEBUG_LEVEL=${BRIDGE_DEBUG_LEVEL:-0}+1
+    if [ "${BRIDGE_DEBUG_MODE}" = "yes" ] && [[ ${BRIDGE_DEBUG_LEVEL} -le ${BRIDGE_DEBUG_MAXLEVEL} ]]
+	then
+	    set -x
+    fi
+   
+    ## on incremente le niveau de log
+    typeset -i BRIDGE_VERBOSE_LEVEL=${BRIDGE_VERBOSE_LEVEL:-0}+1
+    
+    ## on ajoute une entete a la log
+    typeset LOGGER="${LOGGER} MPC Addon :"
+
+    ## on fixe le message d'aide a afficher si demande
+    typeset USAGE="\
+\t*) MPC
+\t\t -e options : additional parameters to pass to mpcrun command (only used with mpcrun backend) \n
+\t\t -e mpc_thread : use MPC in thread mode \n
+\t\t -e mpc_process : use MPC in process mode \n
+"
+    
+    ## on fixe le status de sortie par defaut
+    typeset exit_status=0
+    
+    ## on fixe les options par defaut du launcher
+
+    ## on parse les arguments
+    ${LOGGER} "${BRIDGE_MPRUN_GETOPT_OPTIONS}"
+    
+    if [ -z ${MPC_BRIDGE_EXEC_MODE} ]; then
+        export MPC_BRIDGE_EXEC_MODE="unkown" 
+    fi
+
+    while getopts ${BRIDGE_MPRUN_GETOPT_OPTIONS} option
+      do
+      case ${option} in
+	  
+	  h)
+	      echo -e "${USAGE}" >&2
+	      return 0
+	      ;;
+
+	  e)
+	      MPC_MODE=${OPTARG}
+	      ${LOGGER} "mpcrun options are now  \"${MPC_MODE}\""
+	      case $MPC_MODE in
+		  mpc_process)
+                export MPC_BRIDGE_EXEC_MODE="process"
+		        ${LOGGER} "MPC EXEC MODE: ${MPC_BRIDGE_EXEC_MODE}"
+		        ;;
+		  mpc_thread) 
+                export MPC_BRIDGE_EXEC_MODE="thread"
+		        ${LOGGER} "MPC EXEC MODE: ${MPC_BRIDGE_EXEC_MODE}"
+		      ;;
+
+#          process_per_node)
+#                if [ ${process_per_node} == 1 ]; then
+#                   export MPC_BRIGE_EXEC_MODE="process"
+#                else
+#                   export MPC_BRIGE_EXEC_MODE="mix"
+#                   export MPC_BRIGE_NPROC_PER_NODE=${process_per_node}
+            
+		  *)
+		      export BRIDGE_SLURM_MPC_CMD_OPTIONS="${BRIDGE_SLURM_MPC_CMD_OPTIONS} ${MPC_MODE}"
+		      ;;
+	      esac
+	      ${LOGGER} "MPC execution mode: ${MPC_BRIGE_EXEC_MODE} with option ${BRIDGE_SLURM_MPC_CMD_OPTIONS}"
+	      ;;
+
+	  *)
+	      ;;
+      esac
+    done
+
+    if [ "$MPC_BRIDGE_EXEC_MODE" = 'unkown' ]; then
+        export MPC_BRIDGE_EXEC_MODE="process"
+        ${LOGGER} "MPC execution mode set to ${MPC_BRIDGE_EXEC_MODE} by default"
+    fi    
+
+    return 0
+
+}
+
+function bridge_addon_mprun_alteropt {
+
+    ## on se place en mode debug si souhaite
+    typeset -i BRIDGE_DEBUG_LEVEL=${BRIDGE_DEBUG_LEVEL:-0}+1
+    if [ "${BRIDGE_DEBUG_MODE}" = "yes" ] && [[ ${BRIDGE_DEBUG_LEVEL} -le ${BRIDGE_DEBUG_MAXLEVEL} ]]
+	then
+	    set -x
+    fi
+    
+    ## on incremente le niveau de log
+    typeset -i BRIDGE_VERBOSE_LEVEL=${BRIDGE_VERBOSE_LEVEL:-0}+1
+    
+    ## on ajoute une entete a la log
+    typeset LOGGER="${LOGGER} MPC Addon :"
+
+    #echo $(which mpc_cc 2>/dev/null) | egrep -wq "mpc"
+    #if [ $? -ne 0 ]; then
+	#    return 0
+    #fi
+
+    ${LOGGER} "MPC mpc_cc is the first in the PATH"
+
+    # Force slurm allocation 
+    # We can ask SLURM env variable before mpcrun call
+    if [[ ${BRIDGE_MPRUN_ALLOCATION} != yes ]]; then
+        bridge_mprun_force_allocation=yes
+    else
+        export spmd_run_cmd=${BRIDGE_SLURM_MPC_CMD:-mpcrun}
+        export spmd_run_separator=" "
+        
+        if [ "${spmd_run_cmd}" = 'mpcrun' ]; then
+            ${LOGGER} "Waiting for nodes availability (scontrol wait_job ${SLURM_JOBID})"
+            scontrol wait_job ${SLURM_JOBID} >/dev/null 2>&1
+            
+            ${LOGGER} spmd_run_options: ${spmd_run_options}
+            
+            # Remove --resv_ports
+            export spmd_run_options=""
+
+            ${LOGGER} spmd_run_options: ${spmd_run_options}
+
+            if [[ -n ${BRIDGE_SLURM_MPC_CMD_DEFAULT_OPTIONS} ]]; then 
+	            spmd_run_options="${spmd_run_options} ${BRIDGE_SLURM_MPC_CMD_DEFAULT_OPTIONS}"
+	        fi
+
+            # add MPC_CMD_OPTIONS 
+	        if [[ -n ${BRIDGE_SLURM_MPC_CMD_OPTIONS} ]]; then
+	            spmd_run_options="${spmd_run_options} ${BRIDGE_SLURM_MPC_CMD_OPTIONS}"
+            fi
+        fi
+
+        ${LOGGER} "MPC_EXEC_MODE: ${MPC_BRIDGE_EXEC_MODE}"
+    
+        # Compute MPC arguments 
+        if [ "${MPC_BRIDGE_EXEC_MODE}" = 'thread' ]; then 
+            export bridge_mprun_nnode=${bridge_mprun_pre_allocate_nnode}
+            export bridge_mprun_nproc=${bridge_mprun_nnode}
+            export bridge_mprun_ncore=${SLURM_CPUS_PER_TASK} 
+            export bridge_mprun_mpc_ntask=${bridge_mprun_pre_allocate_nproc}
+        elif [ "${MPC_BRIDGE_EXEC_MODE}" = 'process' ]; then 
+            export bridge_mprun_nnode=${bridge_mprun_pre_allocate_nnode}
+            export bridge_mprun_nproc=${bridge_mprun_pre_allocate_nproc}
+            export bridge_mprun_ncore=${SLURM_CPUS_PER_TASK}
+            export bridge_mprun_mpc_ntask=${bridge_mprun_nproc}
+        elif [ "${MPC_BRIDGE_EXEC_MODE}" = 'mix' ]; then
+            ${LOGGER} "Not implemented"
+            return 1;
+        else
+            ${LOGGER} "Unknown MPC_EXEC_MODE: ${MPC_BRIDGE_EXEC_MODE}"
+            return 1;
+        fi  
+    
+        # add mpc overwrite values
+        spmd_run_options="${spmd_run_options} -N=${bridge_mprun_nnode}"
+        spmd_run_options="${spmd_run_options} -p=${bridge_mprun_nproc}"
+        spmd_run_options="${spmd_run_options} -c=${bridge_mprun_ncore}"
+        spmd_run_options="${spmd_run_options} -n=${bridge_mprun_mpc_ntask}"
+
+        #${LOGGER} spmd_run_options=${spmd_run_options}
+        ${LOGGER} "MPC mode is now enabled"
+    fi
+
+    ${LOGGER} bridge_mprun_cmd $bridge_mprun_cmd
+    ${LOGGER} bridge_mprun_args $bridge_mprun_args
+    ${LOGGER} bridge_mprun_allocate_cmd $bridge_mprun_allocate_cmd
+    ${LOGGER} bridge_mprun_run_cmd $bridge_mprun_run_cmd
+    ${LOGGER} bridge_mprun_options $bridge_mprun_options
+    ${LOGGER} bridge_mprun_args $bridge_mprun_args
+    ${LOGGER} bridge_mprun_force_allocation $bridge_mprun_force_allocation
+    ${LOGGER} bridge_mprun_allocation $bridge_mprun_allocation
+    ${LOGGER} bridge_mprun_mpc_ntask $bridge_mprun_mpc_ntask
+    ${LOGGER} bridge_mprun_ncore $bridge_mprun_ncore
+    ${LOGGER} bridge_mprun_nproc $bridge_mprun_nproc
+    ${LOGGER} bridge_mprun_nnode $bridge_mprun_nnode
+    ${LOGGER} bridge_mprun_partition $bridge_mprun_partition
+    ${LOGGER} bridge_mprun_extra_parameters $bridge_mprun_extra_parameters
+    ${LOGGER} bridge_mprun_maxmem $bridge_mprun_maxmem
+    ${LOGGER} bridge_mprun_maxtime $bridge_mprun_maxtime
+    ${LOGGER} bridge_mprun_mpi_type $bridge_mprun_mpi_type
+    ${LOGGER} "spmd_allocate_options $spmd_allocate_options"
+    
+    return 0
+    
+}
+
+function bridge_addon_mprun_spmd_pre_allocate {
+   
+    # save nnode, nproc and ncore values before overwrite 
+    export bridge_mprun_pre_allocate_nnode=$spmd_allocate_nnode
+    export bridge_mprun_pre_allocate_nproc=$spmd_allocate_nproc
+    export bridge_mprun_pre_allocate_ncore=$spmd_allocate_ncore
+
+    ${LOGGER} "bridge_mprun_pre_allocate_nnode: ${bridge_mprun_pre_allocate_nnode}"
+    ${LOGGER} "bridge_mprun_pre_allocate_nproc: ${bridge_mprun_pre_allocate_nproc}"
+    ${LOGGER} "bridge_mprun_pre_allocate_ncore: ${bridge_mprun_pre_allocate_ncore}"
+    
+    ${LOGGER} "bridge_addon_mprun_spmd_pre_allocate: ${MPC_BRIDGE_EXEC_MODE}"
+
+    # overwrite nnode and nproc values for MPC task and mix mode
+    if [ "${MPC_BRIDGE_EXEC_MODE}" = 'thread' ]; then 
+        ${LOGGER} "NPROC becomes NNODE, NPROC becomes MPC_NTASK"
+        # Compute ceil( nb_process /nb_node ) i.e. (nb_process + nb_node -1) / nb_node
+        task_per_process=$(expr ${bridge_mprun_pre_allocate_nproc} + ${bridge_mprun_pre_allocate_nnode} - 1 )
+        task_per_process=$(expr ${task_per_process} / ${bridge_mprun_pre_allocate_nnode})
+        export spmd_allocate_ncore=$(expr  ${task_per_process} \* ${bridge_mprun_pre_allocate_ncore} )
+        export spmd_allocate_nproc=$spmd_allocate_nnode
+    elif [ "${MPC_BRIDGE_EXEC_MODE}" = 'process' ]; then
+        ${LOGGER} "Nothing to do !"
+    elif [ "${MPC_BRIDGE_EXEC_MODE}" = 'mix' ]; then
+        ${LOGGER} "Not implemented"
+        return 1;
+    else
+        ${LOGGER} "Unknown MPC_EXEC_MODE: ${MPC_BRIDGE_EXEC_MODE}"
+        return 1;
+    fi  
+
+    ${LOGGER} "bridge_mprun_pre_allocate_nnode: ${spmd_allocate_nnode}"
+    ${LOGGER} "bridge_mprun_pre_allocate_nproc: ${spmd_allocate_nproc}"
+    ${LOGGER} "bridge_mprun_pre_allocate_ncore: ${spmd_allocate_ncore}"
+
+    return 0
+    
+}
+
+function bridge_addon_mprun_spmd_post_allocate {
+    
+    return 0
+
+}
+
+function bridge_addon_mprun_spmd_pre_run {
+    
+    typeset LOGGER="${LOGGER} MPC Addon PRE_RUN:"
+    ${LOGGER} "MPC execution mode: ${MPC_BRIDGE_EXEC_MODE}"
+    ${LOGGER} spmd_run_cmd=$spmd_run_cmd
+    ${LOGGER} spmd_run_options=$spmd_run_options
+    ${LOGGER} spmd_run_args=$spmd_run_args
+    ${LOGGER} spmd_run_separator=$spmd_run_separator
+    ${LOGGER} spmd_run_ncore=$spmd_run_ncore
+    ${LOGGER} spmd_run_nproc=$spmd_run_nproc
+    ${LOGGER} spmd_run_mpc_ntask=$spmd_run_mpc_ntask
+    ${LOGGER} spmd_run_nnode=$spmd_run_nnode
+    ${LOGGER} spmd_run_partition=$spmd_run_partition
+    ${LOGGER} spmd_run_extra_parameters=$spmd_run_extra_parameters
+    ${LOGGER} spmd_run_maxmem=$spmd_run_maxmem
+    ${LOGGER} spmd_run_maxtime=$spmd_run_maxtime
+     
+    return 0
+
+}
+
+function bridge_addon_mprun_spmd_post_run {
+
+    return 0
+    
+}
