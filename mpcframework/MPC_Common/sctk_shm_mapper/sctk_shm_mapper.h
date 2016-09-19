@@ -70,6 +70,22 @@ typedef size_t sctk_addr_t;
 
 /************************** STRUCT *************************/
 /**
+ * Permit to get a memorey representation of the /proc/[ALL_PIDS]/maps by merging all tables of participants.
+ * It will contain the free segments, not mapped one, so can directely search a good candidate after filling it.
+**/
+struct sctk_shm_mapper_segment_s
+{
+	/** Starting address of the free segment. **/
+	sctk_addr_t start;
+	/** End address of the free segment. **/
+	sctk_addr_t end;
+	/** Next free segment if not NULL. **/
+	struct sctk_shm_mapper_segment_s * next;
+};
+typedef struct sctk_shm_mapper_segment_s sctk_shm_mapper_segment_t;
+
+/************************** STRUCT *************************/
+/**
  * Structure to store the handler to exchange the name of SHM file between all participant.
  * It provide tha send method used by master and receive one used by slaves.
  * By this way we can support init on top of various communication system (MPI, PMI,...)
@@ -153,21 +169,6 @@ struct sctk_shm_mapper_sync_header_s
 };
 typedef struct sctk_shm_mapper_sync_header_s sctk_shm_mapper_sync_header_t;
 
-/************************** STRUCT *************************/
-/**
- * Permit to get a memorey representation of the /proc/[ALL_PIDS]/maps by merging all tables of participants.
- * It will contain the free segments, not mapped one, so can directely search a good candidate after filling it.
-**/
-struct sctk_shm_mapper_segment_s
-{
-	/** Starting address of the free segment. **/
-	sctk_addr_t start;
-	/** End address of the free segment. **/
-	sctk_addr_t end;
-	/** Next free segment if not NULL. **/
-	struct sctk_shm_mapper_segment_s * next;
-};
-typedef struct sctk_shm_mapper_segment_s sctk_shm_mapper_segment_t;
 
 /************************* FUNCTION ************************/
 //Entry point for user

@@ -60,7 +60,7 @@ struct sctk_alloc_mapper_handler_s* sctk_shm_pmi_handler_init(char* option){
   struct sctk_alloc_mapper_handler_s* pmi_handler;
 
   assume_m(pmi_handler = (struct sctk_alloc_mapper_handler_s*) sctk_malloc(sizeof(struct sctk_alloc_mapper_handler_s)),"failed mpi_handler");
-  assume_m(localhost = sctk_malloc(16),"failed localhost name allocation");
+  assume_m(localhost = sctk_malloc(256),"failed localhost name allocation");
   assume_m(pmi_handler->option = sctk_malloc(sctk_pmi_get_max_key_len()),"failed key allocation");
 
   pmi_handler->send_handler = sctk_pmi_handler_send_filename;
@@ -74,8 +74,8 @@ struct sctk_alloc_mapper_handler_s* sctk_shm_pmi_handler_init(char* option){
   return pmi_handler;
   }
 
-void sctk_shm_pmi_handler_free(struct sctk_alloc_mapper_handler_s* pmi_handler){
+void sctk_shm_pmi_handler_free(struct sctk_alloc_mapper_handler_s* pmi_handler)
+{
 	sctk_free(pmi_handler->option);
 	sctk_free(pmi_handler);
-	}
-
+}

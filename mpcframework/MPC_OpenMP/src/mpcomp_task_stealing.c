@@ -250,7 +250,7 @@ mpcomp_task_get_victim_producer(int globalRank, int index, mpcomp_tasklist_type_
 }
 
 static inline int 
-__mpcomp_task_prepare_victim_producer_order(int globalRank, int index, mpcomp_tasklist_type_t type)
+mpcomp_task_prepare_victim_producer_order(int globalRank, int index, mpcomp_tasklist_type_t type)
 {
     int i;
     

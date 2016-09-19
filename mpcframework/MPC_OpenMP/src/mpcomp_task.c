@@ -529,10 +529,11 @@ __mpcomp_task(void (*fn) (void *), void *data, void (*cpyfn) (void *, void *),
 	    /* Push the task in the list of new tasks */
         //sctk_mcslock_ticket_t ticket;
 	    //mpcomp_task_list_lock(new_list, &ticket);
-	    mpcomp_task_list_lock(new_list, NULL);
+	    //mpcomp_task_list_lock(new_list, NULL);
+	    mpcomp_task_list_lock(new_list);
 	    mpcomp_task_list_pushtohead(new_list, new_task);
         //mpcomp_task_list_unlock(new_list, &ticket);
-        mpcomp_task_list_unlock(new_list, NULL);
+        mpcomp_task_list_unlock(new_list);
     }
     else
     {
@@ -622,12 +623,12 @@ mpcomp_task_steal(struct mpcomp_task_list_s *list)
     sctk_assert(list != NULL);
     //sctk_mcslock_ticket_t ticket; 
     //mpcomp_task_list_lock(list, &ticket);
-    mpcomp_task_list_lock(list, NULL);
+    mpcomp_task_list_lock(list);
      task = mpcomp_task_list_popfromtail(list);
      if (task)
 	  sctk_atomics_incr_int(&list->nb_larcenies);
      //mpcomp_task_list_unlock(list, &ticket);
-     mpcomp_task_list_unlock(list, NULL);
+     mpcomp_task_list_unlock(list);
 	 
      return task;
 }
@@ -792,10 +793,10 @@ void __mpcomp_task_schedule()
 					   MPCOMP_TASK_TYPE_UNTIED);
            //sctk_mcslock_ticket_t ticket; 
 	       //mpcomp_task_list_lock(list, &ticket);
-	       mpcomp_task_list_lock(list, NULL);
+	       mpcomp_task_list_lock(list);
 	       task = mpcomp_task_list_popfromhead(list);
 	       //mpcomp_task_list_unlock(list, &ticket);
-	       mpcomp_task_list_unlock(list, NULL);
+	       mpcomp_task_list_unlock(list);
 	  }
       
 	  if (task == NULL) {
@@ -804,10 +805,10 @@ void __mpcomp_task_schedule()
 					   MPCOMP_TASK_TYPE_NEW);
            //sctk_mcslock_ticket_t ticket; 
 	       //mpcomp_task_list_lock(list, &ticket);
-	       mpcomp_task_list_lock(list, NULL);
+	       mpcomp_task_list_lock(list);
 	       task = mpcomp_task_list_popfromhead(list);
 	       //mpcomp_task_list_unlock(list, &ticket);
-	       mpcomp_task_list_unlock(list, NULL);
+	       mpcomp_task_list_unlock(list);
 	  }
 	  
 	  if (task == NULL) {
@@ -905,10 +906,10 @@ __mpcomp_taskwait()
 	       if (list != NULL) {
             //sctk_mcslock_ticket_t ticket; 
 		    //mpcomp_task_list_lock(list, &ticket);
-		    mpcomp_task_list_lock(list, NULL);
+		    mpcomp_task_list_lock(list);
 		    ret = mpcomp_task_list_remove(list, task);
 		    //mpcomp_task_list_unlock(list, &ticket);
-		    mpcomp_task_list_unlock(list, NULL);
+		    mpcomp_task_list_unlock(list);
 		    
 		    /* If the task has not been remove by another thread */
 		    if (ret == 1) {
