@@ -115,6 +115,12 @@ ssize_t sctk_safe_write(int fd, const void* buf, size_t count)
 			/* on interuption continue to re-read */
 			if (errno == EINTR) {
 				continue;
+			}
+			else if(errno == EBADF) /* possibly closed socket */
+			{
+				sctk_nodebug("Socket %d not valid anymore !", fd);
+				res = -1;
+				break;
 			} else {
 				sctk_debug ("WRITE %p %lu/%lu FAIL\n", buf, count);
 				perror("sctk_safe_write");
