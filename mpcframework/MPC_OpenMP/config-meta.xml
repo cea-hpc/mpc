@@ -13,9 +13,8 @@
             <value>MPCOMP_TASK_LARCENY_MODE_COUNT</value>
         </enum>
 
-        <!--<enum name="mpcomp_task_larceny_mode" doc=""> -->
-
             <struct name="openmp" doc="Options for MPC OpenMP.">
+
                 <param name="vp" type="int" default="0" doc="Number of VPs for each OpenMP team"/>
                 <param name="schedule" type="string" default="static" doc="Runtime schedule type and chunck size"/>
                 <param name="nb_threads" type="int" doc="Number of threads to use during execution"/>
@@ -35,7 +34,13 @@
                 <param name="warn_nested" type="bool" default="false" doc="Emit warning when entering nested parallelism"/>
                 <param name="mode" type="string" default="simple-mixed" doc="MPI/OpenMP hybrid mode (simple-mixed, alternating)"/>
                 <param name="affinity" type="string" default="balanced" doc="Affinity of threads for parallel regions (COMPACT, SCATTER, BALANCED)"/>
-
+			
+					 <!--  task static variables -->	
+					 <param name="omp_new_task_depth" 		type="int" default="0"	doc="Depth of the new tasks lists in the tree" />
+					 <param name="omp_untied_task_depth" 	type="int" default="0"  doc="Depth of the untied tasks lists in the tree" />
+					 <param name="omp_task_larceny_mode" 	type="mpcomp_task_larceny_mode_t" default="MPCOMP_TASK_LARCENY_MODE_HIERARCHICAL" doc="Task stealing policy"/>
+					 <param name="omp_task_nesting_max" 	type="int" default="8" doc="Task max depth in task generation" />
+					
             </struct>
 
             <!-- </enum> -->

@@ -95,15 +95,15 @@ __mpcomp_internal_half_barrier (mpcomp_mvp_t *mvp)
   sctk_nodebug("__mpcomp_internal_half_barrier: incrementing first node %d -> %d out of %d",
 b, b+1, c->barrier_num_threads );
 
-  while ((b+1) == c->barrier_num_threads && c != new_root ) 
-  {
+    while ((b+1) == c->barrier_num_threads && c != new_root ) 
+    {
        sctk_nodebug("__mpcomp_internal_half_barrier: currently %d thread(s), expected %d ", 
 		    b, c->barrier_num_threads);
        
-    sctk_atomics_store_int(&(c->barrier), 0);
-    c = c->father;
-    b = sctk_atomics_fetch_and_incr_int(&(c->barrier));
-  }
+        sctk_atomics_store_int(&(c->barrier), 0);
+        c = c->father;
+        b = sctk_atomics_fetch_and_incr_int(&(c->barrier));
+    }
 
   sctk_nodebug("__mpcomp_internal_half_barrier: exiting");
 }

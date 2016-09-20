@@ -38,40 +38,40 @@ struct sctk_runtime_config_funcptr
 
 /******************************** STRUCTURE *********************************/
 /**CUDA-specific configuration**/
-struct sctk_runtime_config_struct_accl_cuda {
-  int init_done;
-  /**Set to true to enable CUDA context-switch**/
-  bool enabled;
+struct sctk_runtime_config_struct_accl_cuda
+{	int init_done;
+	/**Set to true to enable CUDA context-switch**/
+	bool enabled;
 };
 
 /******************************** STRUCTURE *********************************/
 /**OpenACC-specific configuration**/
-struct sctk_runtime_config_struct_accl_openacc {
-  int init_done;
-  /**Set to true to enable OpenACC in MPC**/
-  bool enabled;
+struct sctk_runtime_config_struct_accl_openacc
+{	int init_done;
+	/**Set to true to enable OpenACC in MPC**/
+	bool enabled;
 };
 
 /******************************** STRUCTURE *********************************/
 /**OpenCL-specific configuration**/
-struct sctk_runtime_config_struct_accl_opencl {
-  int init_done;
-  /**Set to true to enable OpenCL in MPC**/
-  bool enabled;
+struct sctk_runtime_config_struct_accl_opencl
+{	int init_done;
+	/**Set to true to enable OpenCL in MPC**/
+	bool enabled;
 };
 
 /******************************** STRUCTURE *********************************/
 /**Options for MPC Accelerators module.**/
-struct sctk_runtime_config_struct_accl {
-  int init_done;
-  /**Set to true to enable Accelerators support**/
-  bool enabled;
-  /**Define CUDA-specific configuration**/
-  struct sctk_runtime_config_struct_accl_cuda cuda;
-  /**Define OpenACC-specific configuration**/
-  struct sctk_runtime_config_struct_accl_openacc openacc;
-  /**Define OpenCL-specific configuration**/
-  struct sctk_runtime_config_struct_accl_opencl opencl;
+struct sctk_runtime_config_struct_accl
+{	int init_done;
+	/**Set to true to enable Accelerators support**/
+	bool enabled;
+	/**Define CUDA-specific configuration**/
+	struct sctk_runtime_config_struct_accl_cuda cuda;
+	/**Define OpenACC-specific configuration**/
+	struct sctk_runtime_config_struct_accl_openacc openacc;
+	/**Define OpenCL-specific configuration**/
+	struct sctk_runtime_config_struct_accl_opencl opencl;
 };
 
 /******************************** STRUCTURE *********************************/
@@ -236,9 +236,8 @@ struct sctk_runtime_config_struct_progress_thread
 {	int init_done;
 	/**If use progress threads for non blocking collectives**/
 	int use_progress_thread;
-        /**Algorithm of progress threads binding :
-         * sctk_get_progress_thread_binding_[bind,smart,numa_iter,numa]**/
-        struct sctk_runtime_config_funcptr progress_thread_binding;
+	/**Algorithm of progress threads binding : sctk_get_progress_thread_binding_[bind,smart,numa_iter,numa]**/
+	struct sctk_runtime_config_funcptr progress_thread_binding;
 };
 
 /******************************** STRUCTURE *********************************/
@@ -683,14 +682,15 @@ struct sctk_runtime_config_struct_low_level_comm
 
 /********************************** ENUM ************************************/
 /****/
-enum mpcomp_task_larceny_mode_t {
-  MPCOMP_TASK_LARCENY_MODE_HIERARCHICAL,
-  MPCOMP_TASK_LARCENY_MODE_RANDOM,
-  MPCOMP_TASK_LARCENY_MODE_RANDOM_ORDER,
-  MPCOMP_TASK_LARCENY_MODE_ROUNDROBIN,
-  MPCOMP_TASK_LARCENY_MODE_PRODUCER,
-  MPCOMP_TASK_LARCENY_MODE_PRODUCER_ORDER,
-  MPCOMP_TASK_LARCENY_MODE_COUNT
+enum mpcomp_task_larceny_mode_t
+{
+	MPCOMP_TASK_LARCENY_MODE_HIERARCHICAL,
+	MPCOMP_TASK_LARCENY_MODE_RANDOM,
+	MPCOMP_TASK_LARCENY_MODE_RANDOM_ORDER,
+	MPCOMP_TASK_LARCENY_MODE_ROUNDROBIN,
+	MPCOMP_TASK_LARCENY_MODE_PRODUCER,
+	MPCOMP_TASK_LARCENY_MODE_PRODUCER_ORDER,
+	MPCOMP_TASK_LARCENY_MODE_COUNT
 };
 
 /******************************** STRUCTURE *********************************/
@@ -735,6 +735,14 @@ struct sctk_runtime_config_struct_openmp
 	char * mode;
 	/**Affinity of threads for parallel regions (COMPACT, SCATTER, BALANCED)**/
 	char * affinity;
+	/**Depth of the new tasks lists in the tree**/
+	int omp_new_task_depth;
+	/**Depth of the untied tasks lists in the tree**/
+	int omp_untied_task_depth;
+	/**Task stealing policy**/
+	enum mpcomp_task_larceny_mode_t omp_task_larceny_mode;
+	/**Task max depth in task generation**/
+	int omp_task_nesting_max;
 };
 
 /******************************** STRUCTURE *********************************/
@@ -763,55 +771,55 @@ struct sctk_runtime_config_struct_thread
 	int interval;
 	/**Define the stack size of MPC user threads**/
 	size_t kthread_stack_size;
-        /**Initialize thread placement policy**/
-        struct sctk_runtime_config_funcptr placement_policy;
+	/**Initialize thread placement policy**/
+	struct sctk_runtime_config_funcptr placement_policy;
 };
 
 /******************************** STRUCTURE *********************************/
 /**Scheduler priority parameters**/
-struct sctk_runtime_config_struct_scheduler {
-  int init_done;
-  /**Threshold for priority scheduling quantum**/
-  double timestamp_threshold;
-  /**Basic priority of polling tasks**/
-  int task_polling_thread_basic_priority;
-  /**Step of basic priority of polling tasks**/
-  int task_polling_thread_basic_priority_step;
-  /**Step of current priority of polling tasks**/
-  int task_polling_thread_current_priority_step;
-  /**Basic priority of polling tasks**/
-  int sched_NBC_Pthread_basic_priority;
-  /**Step of basic priority of nbc progress threads**/
-  int sched_NBC_Pthread_basic_priority_step;
-  /**Step of current priority of nbc progress threads**/
-  int sched_NBC_Pthread_current_priority_step;
-  /**Basic priority of MPI threads**/
-  int mpi_basic_priority;
-  /**Basic priority of OMP threads**/
-  int omp_basic_priority;
-  /**Basic priority of POSIX threads**/
-  int posix_basic_priority;
-  /**Basic priority of POSIX threads**/
-  int progress_basic_priority;
+struct sctk_runtime_config_struct_scheduler
+{	int init_done;
+	/**Threshold for priority scheduling quantum**/
+	double timestamp_threshold;
+	/**Basic priority of polling tasks**/
+	int task_polling_thread_basic_priority;
+	/**Step of basic priority of polling tasks**/
+	int task_polling_thread_basic_priority_step;
+	/**Step of current priority of polling tasks**/
+	int task_polling_thread_current_priority_step;
+	/**Basic priority of polling tasks**/
+	int sched_NBC_Pthread_basic_priority;
+	/**Step of basic priority of nbc progress threads**/
+	int sched_NBC_Pthread_basic_priority_step;
+	/**Step of current priority of nbc progress threads**/
+	int sched_NBC_Pthread_current_priority_step;
+	/**Basic priority of MPI threads**/
+	int mpi_basic_priority;
+	/**Basic priority of OMP threads**/
+	int omp_basic_priority;
+	/**Basic priority of POSIX threads**/
+	int posix_basic_priority;
+	/**Basic priority of POSIX threads**/
+	int progress_basic_priority;
 };
 
 /******************************** STRUCTURE *********************************/
 struct sctk_runtime_config_modules
 {
-  struct sctk_runtime_config_struct_accl accelerator;
-  struct sctk_runtime_config_struct_allocator allocator;
-  struct sctk_runtime_config_struct_launcher launcher;
-  struct sctk_runtime_config_struct_debugger debugger;
-  struct sctk_runtime_config_struct_collectives_intra collectives_intra;
-  struct sctk_runtime_config_struct_collectives_inter collectives_inter;
-  struct sctk_runtime_config_struct_progress_thread progress_thread;
-  struct sctk_runtime_config_struct_mpc mpc;
-  struct sctk_runtime_config_struct_inter_thread_comm inter_thread_comm;
-  struct sctk_runtime_config_struct_low_level_comm low_level_comm;
-  struct sctk_runtime_config_struct_openmp openmp;
-  struct sctk_runtime_config_struct_profiler profiler;
-  struct sctk_runtime_config_struct_thread thread;
-  struct sctk_runtime_config_struct_scheduler scheduler;
+	struct sctk_runtime_config_struct_accl accelerator;
+	struct sctk_runtime_config_struct_allocator allocator;
+	struct sctk_runtime_config_struct_launcher launcher;
+	struct sctk_runtime_config_struct_debugger debugger;
+	struct sctk_runtime_config_struct_collectives_intra collectives_intra;
+	struct sctk_runtime_config_struct_collectives_inter collectives_inter;
+	struct sctk_runtime_config_struct_progress_thread progress_thread;
+	struct sctk_runtime_config_struct_mpc mpc;
+	struct sctk_runtime_config_struct_inter_thread_comm inter_thread_comm;
+	struct sctk_runtime_config_struct_low_level_comm low_level_comm;
+	struct sctk_runtime_config_struct_openmp openmp;
+	struct sctk_runtime_config_struct_profiler profiler;
+	struct sctk_runtime_config_struct_thread thread;
+	struct sctk_runtime_config_struct_scheduler scheduler;
 };
 
 /******************************** STRUCTURE *********************************/

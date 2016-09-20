@@ -8,7 +8,7 @@ bool __mpcomp_GOMP_single_start (void)
    bool ret;
    sctk_nodebug("[Redirect GOMP]%s:\tBegin",__func__);
    ret = (__mpcomp_do_single()) ? true : false; 
-   sctk_nodebug("[Redirect GOMP]%s:\tEnd",__func__);
+   sctk_nodebug("[Redirect GOMP]%s:\tEnd -- ret: %s",__func__, (ret == true) ? "true" : "false");
    return ret;
 }
 

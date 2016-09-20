@@ -539,7 +539,7 @@ __mpcomp_dynamic_loop_end_nowait ()
 			"[%d]__mpcomp_dynamic_loop_end_nowait: Exiting loop %d: %d -> %d",
 			t->rank, index, nb_threads_exited, nb_threads_exited + 1 ) ;
 
-	sctk_assert( nb_threads_exited >= 0 && nb_threads_exited < num_threads ) ;
+	//sctk_assert( nb_threads_exited >= 0 && nb_threads_exited < num_threads ) ;
 
 	if ( nb_threads_exited == num_threads - 1 ) {
 		int previous_index ;

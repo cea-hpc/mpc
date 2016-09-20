@@ -30,23 +30,12 @@
 #include <sys/time.h>
 #include <ctype.h>
 
+#include "mpcomp_tree_structs.h"
+#include "mpcomp_task_utils.h"
+
 /*****************
   ****** GLOBAL VARIABLES 
   *****************/
-
-/*
-  Avoid mix of MPC with GCC OpenMP runtime.
-  Add other function with the following macro to avoid mixing
-  with any other non-supported OpenMP ABI
- */
-
-#define ABORT_FUNC_OMP(a,b)			\
-  void a(){					\
-    sctk_error(b);				\
-    abort();					\
-  }
-
-//ABORT_FUNC_OMP(GOMP_parallel_start,"Mix GCC OpenMP runtime with MPC")
 
 /* Schedule type */
 static omp_sched_t OMP_SCHEDULE = 1;
@@ -76,16 +65,6 @@ static int OMP_WAIT_POLICY = 0;
 static int OMP_THREAD_LIMIT = 0;
 /* Maximum number of nested active parallel regions */
 static int OMP_MAX_ACTIVE_LEVELS = 0;
-#if MPCOMP_TASK
-/* Depth of the new tasks lists in the tree */
-static int OMP_NEW_TASKS_DEPTH = 0;
-/* Depth of the untied tasks lists in the tree */
-static int OMP_UNTIED_TASKS_DEPTH = 0;
-/* Task stealing policy */
-static int OMP_TASK_LARCENY_MODE = MPCOMP_TASK_LARCENY_MODE_HIERARCHICAL;
-/* Task max depth in task generation */
-static int OMP_TASK_NESTING_MAX = 8;
-#endif /* MPCOMP_TASK */
 /* Should we emit a warning when nesting is used? */
 static int OMP_WARN_NESTED = 0 ;
 /* Hybrid MPI/OpenMP mode */
@@ -94,8 +73,6 @@ static mpcomp_mode_t OMP_MODE = MPCOMP_MODE_SIMPLE_MIXED ;
 static mpcomp_affinity_t OMP_AFFINITY = MPCOMP_AFFINITY_BALANCED;
 
 mpcomp_global_icv_t mpcomp_global_icvs;
-
-
 
 /*****************
   ****** FUNCTIONS  
@@ -424,41 +401,8 @@ TODO( "If OMP_NUM_THREADS is 0, let it equal to 0 by default and handle it later
 	  OMP_TREE = NULL ;
   }
 
-
-#if MPCOMP_TASK
-  /* TODO add variables for tasks to config */
-
-  /******* OMP_NEW_TASKS_DEPTH *********/
-  env = getenv ("OMP_NEW_TASKS_DEPTH");
-  if (env != NULL)
-  {
-       OMP_NEW_TASKS_DEPTH = strtol(env, NULL, 10);       
-  }
-
-  /******* OMP_UNTIED_TASKS_DEPTH *********/
-  env = getenv ("OMP_UNTIED_TASKS_DEPTH");
-  if (env != NULL)
-  {
-       OMP_UNTIED_TASKS_DEPTH = strtol(env, NULL, 10);              
-  }
-
-  /******* OMP_TASK_LARCENY_MODE *********/
-  env = getenv ("OMP_TASK_LARCENY_MODE");
-  if (env != NULL)
-  {
-       OMP_TASK_LARCENY_MODE = strtol(env, NULL, 10);              
-  }
-
-  /******* OMP_TASK_NESTING_MAX *********/
-  env = getenv ("OMP_TASK_NESTING_MAX");
-  if (env != NULL)
-  {
-       OMP_TASK_NESTING_MAX = strtol(env, NULL, 10);              
-  }
-#endif /* MPCOMP_TASK */
-
-  /***** PRINT SUMMARY (only first MPI rank) ******/
-  if (getenv ("MPC_DISABLE_BANNER") == NULL && sctk_process_rank == 0) {
+	/***** PRINT SUMMARY (only first MPI rank) ******/
+  	if (getenv ("MPC_DISABLE_BANNER") == NULL && sctk_process_rank == 0) {
     fprintf (stderr,
 	"MPC OpenMP version %d.%d (Intel and Patched GCC compatibility)\n",
 	SCTK_OMP_VERSION_MAJOR, SCTK_OMP_VERSION_MINOR);
@@ -592,7 +536,7 @@ __mpcomp_init()
     /* Initialize team information */
     seq_team_info = (mpcomp_team_t *)sctk_malloc( sizeof( mpcomp_team_t ) ) ;
     sctk_assert( seq_team_info != NULL ) ;
-    __mpcomp_team_init( seq_team_info ) ;
+    mpcomp_team_infos_init( seq_team_info ) ;
 
     /* Allocate an instance of OpenMP */
     seq_instance = (mpcomp_instance_t *)sctk_malloc( sizeof( mpcomp_instance_t ) ) ;
@@ -606,7 +550,7 @@ __mpcomp_init()
     /* Initialize team information */
     team_info = (mpcomp_team_t *)sctk_malloc( sizeof( mpcomp_team_t ) ) ;
     sctk_assert( team_info != NULL ) ;
-    __mpcomp_team_init( team_info ) ;
+    mpcomp_team_infos_init( team_info ) ;
 
 	/* Get the rank of current MPI task */
 	task_rank = sctk_get_task_rank();
@@ -701,7 +645,7 @@ __mpcomp_init()
     sctk_assert( t != NULL ) ;
 
 	/* Thread info initialization */
-    __mpcomp_thread_init(t, icvs, seq_instance, NULL, id_numa);
+    mpcomp_thread_infos_init( t, icvs, seq_instance, NULL ) ;
 
     /* Current thread information is 't' */
     sctk_openmp_thread_tls = t ;
@@ -714,21 +658,7 @@ __mpcomp_init()
 	t->children_instance = instance ;
 
 #if MPCOMP_TASK
-    /* Ensure tasks lists depths are correct */
-    OMP_UNTIED_TASKS_DEPTH = sctk_max(OMP_UNTIED_TASKS_DEPTH, OMP_NEW_TASKS_DEPTH);
-    team_info->tasklist_depth[MPCOMP_TASK_TYPE_NEW] = sctk_min(instance->tree_depth, OMP_NEW_TASKS_DEPTH);
-    team_info->tasklist_depth[MPCOMP_TASK_TYPE_UNTIED] = sctk_min(instance->tree_depth, OMP_UNTIED_TASKS_DEPTH);
-
-    /* Check the validity of larceny mode */
-    if (OMP_TASK_LARCENY_MODE < 0 || OMP_TASK_LARCENY_MODE >= MPCOMP_TASK_LARCENY_MODE_COUNT)
-	 team_info->task_larceny_mode = MPCOMP_TASK_LARCENY_MODE_HIERARCHICAL;
-    else
-	 team_info->task_larceny_mode = OMP_TASK_LARCENY_MODE;
-
-    /* Check the validity of nesting max depth value */
-    if (OMP_TASK_NESTING_MAX <= 0)
-	 OMP_TASK_NESTING_MAX = 8;
-    team_info->task_nesting_max = OMP_TASK_NESTING_MAX;
+	mpcomp_task_team_infos_init( team_info, instance->tree_depth );
 #endif /* MPCOMP_TASK */
 
     sctk_thread_mutex_unlock (&lock);
@@ -742,7 +672,7 @@ void
 __mpcomp_exit()
 {
 #if MPCOMP_TASK
-     __mpcomp_task_exit();
+     //__mpcomp_task_exit();
 #endif /* MPCOMP_TASK */
 }
 
@@ -809,8 +739,7 @@ __mpcomp_instance_init( mpcomp_instance_t * instance, int nb_mvps,
 
 		instance->root = NULL ;
 
-                __mpcomp_thread_init(&(instance->mvps[0]->threads[0]), icvs,
-                                     instance, sctk_openmp_thread_tls, id_numa);
+		mpcomp_thread_infos_init( &(instance->mvps[0]->threads[0]), icvs, instance, sctk_openmp_thread_tls  ) ;
         }
 
         sctk_nodebug("__mpcomp_instance_init: Exiting...");
@@ -829,7 +758,7 @@ void in_order_scheduler( mpcomp_mvp_t * mvp ) {
      */
 
   int i ;
-	mpcomp_thread_t * t ;
+	mpcomp_thread_t * t, *cur_mvp_thread ;
 
 	sctk_assert( mvp != NULL ) ;
 
@@ -844,6 +773,7 @@ void in_order_scheduler( mpcomp_mvp_t * mvp ) {
     /* TODO handle out of order */
 
     sctk_openmp_thread_tls = &mvp->threads[i];
+    cur_mvp_thread = (mpcomp_thread_t*) sctk_openmp_thread_tls;
 
     // hmt
     // set the KIND_MASK_OMP to the current thread
@@ -927,6 +857,16 @@ void in_order_scheduler( mpcomp_mvp_t * mvp ) {
 
     mvp->threads[i].done = 1 ;
   }
+
+    while( !mpcomp_task_all_task_executed() )
+    {
+        __mpcomp_task_schedule();
+    }
+    
+    __mpcomp_taskwait();
+
+    sctk_assert( cur_mvp_thread->instance );
+    sctk_assert( cur_mvp_thread->instance->team );
 
 	/* Restore previous TLS */
 	sctk_openmp_thread_tls = t ;

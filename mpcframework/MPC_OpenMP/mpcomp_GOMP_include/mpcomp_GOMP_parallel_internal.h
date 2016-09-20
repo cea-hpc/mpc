@@ -5,6 +5,7 @@
 
 void __mpcomp_internal_GOMP_start_parallel_region(void (*fn) (void *), void *data, unsigned num_threads);
 void __mpcomp_internal_GOMP_end_parallel_region(void);
+void __mpcomp_internal_GOMP_parallel_start(void (*fn) (void *), void *data, unsigned num_threads, unsigned int flags);
 void __mpcomp_internal_GOMP_parallel_loop_generic_start (void (*fn) (void *), void *data,
 				  unsigned num_threads, long start, long end,
 				  long incr, long chunk_size, long combined_pragma);

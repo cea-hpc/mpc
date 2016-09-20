@@ -767,6 +767,10 @@
       <xs:element minOccurs="0" name="warn_nested" type="xs:boolean"/>
       <xs:element minOccurs="0" name="mode" type="xs:string"/>
       <xs:element minOccurs="0" name="affinity" type="xs:string"/>
+      <xs:element minOccurs="0" name="omp_new_task_depth" type="xs:integer"/>
+      <xs:element minOccurs="0" name="omp_untied_task_depth" type="xs:integer"/>
+      <xs:element minOccurs="0" name="omp_task_larceny_mode" type="user_type_mpcomp_task_larceny_mode_t"/>
+      <xs:element minOccurs="0" name="omp_task_nesting_max" type="xs:integer"/>
     </xs:all>
   </xs:complexType>
   <!-- ********************************************************* -->

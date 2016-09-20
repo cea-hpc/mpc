@@ -54,8 +54,12 @@ void omp_init_nest_lock(omp_nest_lock_t *lock) {
   *lock = sctk_malloc(sizeof(struct omp_nested_lock_s));
   struct omp_nested_lock_s *llock = *lock;
   llock->owner_thread = NULL;
+  	mpcomp_thread_t * thread = (mpcomp_thread_t*) sctk_openmp_thread_tls;
+
+	sctk_assert( lock );
 #if MPCOMP_TASK
   llock->owner_task = NULL;
+ 	lock->owner_task = ( task ) ? task : NULL ;
 #endif
   llock->nb_nested = 0;
   sctk_thread_mutex_init(&(llock->l), NULL);
@@ -64,15 +68,14 @@ void omp_init_nest_lock(omp_nest_lock_t *lock) {
 void omp_destroy_nest_lock(omp_nest_lock_t *lock) {
   sctk_thread_mutex_destroy(&((*lock)->l));
   sctk_free(*lock);
+	sctk_assert( lock );
 }
 
 void omp_set_nest_lock(omp_nest_lock_t *lock) {
-  mpcomp_thread_t * t ;
+	__mpcomp_init ();
 
-  __mpcomp_init ();
-
-  t = sctk_openmp_thread_tls ;
-  sctk_assert( t != NULL ) ;
+	sctk_assert( sctk_openmp_thread_tls );
+  	mpcomp_thread_t* thread = (mpcomp_thread_t*) sctk_openmp_thread_tls;
   sctk_assert(t->current_task != NULL);
 
   struct omp_nested_lock_s *llock = *lock;
@@ -98,6 +101,7 @@ void omp_set_nest_lock(omp_nest_lock_t *lock) {
 void omp_unset_nest_lock(omp_nest_lock_t *lock) {
   struct omp_nested_lock_s *llock = *lock;
   llock->nb_nested--;
+	sctk_assert( lock );
 
   if (llock->nb_nested == 0) {
     llock->owner_thread = NULL;
@@ -105,25 +109,18 @@ void omp_unset_nest_lock(omp_nest_lock_t *lock) {
     llock->owner_task = NULL;
 #endif
     sctk_thread_mutex_unlock(&(llock->l));
-    }
+	}
 }
 
 int omp_test_nest_lock(omp_nest_lock_t *lock) {
-  mpcomp_thread_t * t ;
 
-  __mpcomp_init ();
+  	__mpcomp_init ();
 
-  t = sctk_openmp_thread_tls ;
-  sctk_assert( t != NULL ) ;
+	sctk_assert( sctk_openmp_thread_tls );
+  	mpcomp_thread_t* thread = (mpcomp_thread_t*) sctk_openmp_thread_tls;
   sctk_assert(t->current_task != NULL);
 
   struct omp_nested_lock_s *llock = *lock;
-#if MPCOMP_TASK
-            t->current_task 
-#else /* MPCOMP_TASK */
-    NULL
-#endif /* MPCOMP_TASK */
-) ;
 
   sctk_nodebug("omp_test_nest_lock: TEST owner=(%p,%p), thread=(%p,%p)\n",
                llock->owner_thread, llock->owner_task, t, t->current_task);
@@ -146,12 +143,5 @@ int omp_test_nest_lock(omp_nest_lock_t *lock) {
 
   sctk_nodebug("omp_test_nest_lock: SUCCESS owner=(%p,%p), thread=(%p,%p)\n",
                llock->owner_thread, llock->owner_task, t, t->current_task);
-#if MPCOMP_TASK
-          t->current_task
-#else /* MPCOMP_TASK */
-        NULL
-#endif /* MPCOMP_TASK */
- ) ;
-
   return llock->nb_nested;
 }

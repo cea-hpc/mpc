@@ -1239,6 +1239,24 @@ MPI/OpenMP hybrid mode (simple-mixed, alternating)
 Type is string. Default value is balanced. 
 .Pp affinity
 Affinity of threads for parallel regions (COMPACT, SCATTER, BALANCED)
+.It Cm omp_new_task_depth
+Type is int. Default value is 0. 
+.Pp omp_new_task_depth
+Depth of the new tasks lists in the tree
+.It Cm omp_untied_task_depth
+Type is int. Default value is 0. 
+.Pp omp_untied_task_depth
+Depth of the untied tasks lists in the tree
+.It Cm omp_task_larceny_mode
+Type is enum mpcomp_task_larceny_mode_t. Possible values are : MPCOMP_TASK_LARCENY_MODE_HIERARCHICAL, MPCOMP_TASK_LARCENY_MODE_RANDOM, MPCOMP_TASK_LARCENY_MODE_RANDOM_ORDER, MPCOMP_TASK_LARCENY_MODE_ROUNDROBIN, MPCOMP_TASK_LARCENY_MODE_PRODUCER, MPCOMP_TASK_LARCENY_MODE_PRODUCER_ORDER, MPCOMP_TASK_LARCENY_MODE_COUNT.
+
+Default value is MPCOMP_TASK_LARCENY_MODE_HIERARCHICAL. 
+.Pp omp_task_larceny_mode
+Task stealing policy
+.It Cm omp_task_nesting_max
+Type is int. Default value is 8. 
+.Pp omp_task_nesting_max
+Task max depth in task generation
 .El
 .Sh ENTRIES OF TYPE profiler
 Options for the internal MPC Profiler

@@ -76,11 +76,15 @@ GOMP_ABI_FUNC(MPCOMP_GOMP_ABI_BARRIER_CANCEL,GOMP_barrier_cancel,400,GOMP_4.0)
 GOMP_ABI_FUNC(MPCOMP_GOMP_ABI_CANCEL,GOMP_cancel,401,GOMP_4.0)
 GOMP_ABI_FUNC(MPCOMP_GOMP_ABI_CANCELLATION_POINT,GOMP_cancellation_point,402,GOMP_4.0)
 GOMP_ABI_FUNC(MPCOMP_GOMP_ABI_LOOP_END_CANCEL,GOMP_loop_end_cancel,403,GOMP_4.0)
-GOMP_ABI_FUNC(MPCOMP_GOMP_ABI_PARALLEL_LOOP_DYNAMIC,GOMP_parallel_loop_dynamic,404,GOMP_4.0)
-GOMP_ABI_FUNC(MPCOMP_GOMP_ABI_PARALLEL_LOOP_GUIDED,GOMP_parallel_loop_guided,405,GOMP_4.0)
-GOMP_ABI_FUNC(MPCOMP_GOMP_ABI_PARALLEL_LOOP_RUNTIME,GOMP_parallel_loop_runtime,406,GOMP_4.0)
-GOMP_ABI_FUNC(MPCOMP_GOMP_ABI_PARALLEL_LOOP_STATIC,GOMP_parallel_loop_static,407,GOMP_4.0)
-GOMP_ABI_FUNC(MPCOMP_GOMP_ABI_PARALLEL_SECTIONS,GOMP_parallel_sections,408,GOMP_4.0)
+*/
+
+GOMP_ABI_FUNC(GOMP_parallel_loop_static, "GOMP_4.0", __mpcomp_GOMP_parallel_loop_static, __mpcomp_GOMP_parallel_loop_static)
+GOMP_ABI_FUNC(GOMP_parallel_loop_dynamic, "GOMP_4.0", __mpcomp_GOMP_parallel_loop_dynamic, __mpcomp_GOMP_parallel_loop_dynamic)
+GOMP_ABI_FUNC(GOMP_parallel_loop_guided, "GOMP_4.0", __mpcomp_GOMP_parallel_loop_guided, __mpcomp_GOMP_parallel_loop_guided)
+GOMP_ABI_FUNC(GOMP_parallel_loop_runtime, "GOMP_4.0", __mpcomp_GOMP_parallel_loop_runtime, __mpcomp_GOMP_parallel_loop_runtime)
+GOMP_ABI_FUNC(GOMP_parallel_sections, "GOMP_4.0", __mpcomp_GOMP_parallel_sections, __mpcomp_GOMP_parallel_sections)
+
+/*
 GOMP_ABI_FUNC(MPCOMP_GOMP_ABI_TASKGROUP_START,GOMP_taskgroup_start,411,GOMP_4.0)
 GOMP_ABI_FUNC(MPCOMP_GOMP_ABI_TASKGROUP_END,GOMP_taskgroup_end,412,GOMP_4.0)
 GOMP_ABI_FUNC(MPCOMP_GOMP_ABI_SECTIONS_END_CANCEL,GOMP_sections_end_cancel,410,GOMP_4.0)

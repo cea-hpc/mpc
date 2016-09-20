@@ -13,11 +13,8 @@ void __mpcomp_GOMP_task(void (*fn) (void *), void *data, void (*cpyfn) (void *, 
 	   long arg_size, long arg_align, bool if_clause, unsigned flags)
 #endif
 {
-   static int __task_num_counter = 0;
-   if( !(__task_num_counter++ % 1000) ) 
-        fprintf(stderr, "(%d)\t[Redirect __mpcomp_GOMP]%s:\tBegin - %ld\n", __task_num_counter, __func__, arg_size);
-
-   __mpcomp_task((void* (*)(void*)) fn,data,cpyfn,arg_size,arg_align,if_clause,flags);
+   sctk_nodebug("[Redirect __mpcomp_GOMP]%s:\tBegin",__func__);
+   __mpcomp_task( (void* (*)(void*) ) fn, data, cpyfn, arg_size, arg_align, if_clause, flags);
    sctk_nodebug("[Redirect __mpcomp_GOMP]%s:\tEnd",__func__);
 }
 

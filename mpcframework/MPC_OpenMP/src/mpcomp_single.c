@@ -68,9 +68,9 @@ __mpcomp_do_single (void)
   current = t->single_sections_current ;
   t->single_sections_current++ ;
 
-  sctk_debug( "[%d]__mpcomp_do_single: Entering with current %d...", 
+  sctk_nodebug( "[%d]__mpcomp_do_single: Entering with current %d...", 
 		  t->rank, current ) ;
-  sctk_debug( "[%d]__mpcomp_do_single:   team current is %d",
+  sctk_nodebug( "[%d]__mpcomp_do_single:   team current is %d",
 		  t->rank, sctk_atomics_load_int( &(team->single_sections_last_current) ) ) ;
 
   if ( current == sctk_atomics_load_int( &(team->single_sections_last_current) ) ) {

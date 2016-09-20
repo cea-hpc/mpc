@@ -387,14 +387,12 @@ omp_unset_nest_lock__ (omp_nest_lock_t * lock)
 int 
 omp_test_nest_lock_ (omp_nest_lock_t * lock) 
 {
-  sctk_error("[%d] lock_ ... : %p", omp_get_thread_num(), lock);
   return omp_test_nest_lock( lock ) ;
 }
 
 int 
 omp_test_nest_lock__ (omp_nest_lock_t * lock) 
 {
-  sctk_error("[%d] lock__ ... : %p", omp_get_thread_num(), lock);
   return omp_test_nest_lock( lock ) ;
 }
 

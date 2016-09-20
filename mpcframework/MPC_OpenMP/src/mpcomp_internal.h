@@ -20,6 +20,9 @@
 /* #   - CARRIBAULT Patrick patrick.carribault@cea.fr                     # */
 /* #                                                                      # */
 /* ######################################################################## */
+
+#include "mpcomp_macros.h"
+
 #ifndef __mpcomp_internal__H
 #define __mpcomp_internal__H
 
@@ -29,7 +32,9 @@
 #include "sctk_asm.h"
 #include "sctk_context.h"
 
-#define MPCOMP_TASK	1
+#include "mpcomp_enum_types.h"
+#include "mpcomp_stack.h"
+
 #include "mpcomp_task.h"
 
 #ifdef __cplusplus
@@ -37,170 +42,15 @@ extern "C"
 {
 #endif
 
-/*****************
- ****** MACROS 
- *****************/
-#define SCTK_OMP_VERSION_MAJOR 3
-#define SCTK_OMP_VERSION_MINOR 1
-
-/* Maximum number of threads for each team of a parallel region */
-#define MPCOMP_MAX_THREADS		256
-/* Number of threads per microVP */
-#define MPCOMP_MAX_THREADS_PER_MICROVP	1
-
-
-/* Maximum number of alive 'for dynamic' and 'for guided'  construct */
-#define MPCOMP_MAX_ALIVE_FOR_DYN 	3
-
-
-#define MPCOMP_NOWAIT_STOP_SYMBOL	(-2)
-
-/* Uncomment to enable coherency checking */
-#define MPCOMP_COHERENCY_CHECKING 0
-#define MPCOMP_OVERFLOW_CHECKING 0
-
-#define MPCOMP_COMBINED_NONE 0
-#define MPCOMP_COMBINED_SECTION 1
-#define MPCOMP_COMBINED_STATIC_LOOP 2
-#define MPCOMP_COMBINED_DYN_LOOP 3
-#define MPCOMP_COMBINED_GUIDED_LOOP 4
-#define MPCOMP_COMBINED_RUNTIME_LOOP 5
-
-/* MACRO FOR PERFORMANCE */
-#define MPCOMP_MALLOC_ON_NODE	1
-#define MPCOMP_TRANSFER_INFO_ON_NODES 0
-#define MPCOMP_ALIGN 1
-
-#define MPCOMP_CHUNKS_NOT_AVAIL 1
-#define MPCOMP_CHUNKS_AVAIL     2
-
-/* Define macro MPCOMP_MIC in case of Xeon Phi compilation */
-#if __MIC__ || __MIC2__
-#define MPCOMP_MIC 1
-#endif /* __MIC__ || __MIC2__ */
-
-/*****************
- ************ ENUM 
- *****************/
-
-     /* Type of element in the stack for dynamic work stealing */
-     typedef enum mpcomp_elem_stack_type_t {
-	  MPCOMP_ELEM_STACK_NODE = 1,
-	  MPCOMP_ELEM_STACK_LEAF = 2,
-     } mpcomp_elem_stack_type_t;
-
-     /* Type of children in the topology tree */
-     typedef enum mpcomp_children_t {
-	  MPCOMP_CHILDREN_NODE = 1,
-	  MPCOMP_CHILDREN_LEAF = 2,
-     } mpcomp_children_t;
-
-
-     typedef enum mpcomp_context_t {
-	  MPCOMP_CONTEXT_IN_ORDER = 1,
-	  MPCOMP_CONTEXT_OUT_OF_ORDER_MAIN = 2,
-	  MPCOMP_CONTEXT_OUT_OF_ORDER_SUB = 3,
-     } mpcomp_context_t;
-
-     enum mpcomp_topo_obj_type {
-	  MPCOMP_TOPO_OBJ_SOCKET, 
-	  MPCOMP_TOPO_OBJ_CORE, 
-	  MPCOMP_TOPO_OBJ_THREAD, 
-	  MPCOMP_TOPO_OBJ_COUNT
-     };
-
-     typedef enum mpcomp_mode_t {
-       MPCOMP_MODE_SIMPLE_MIXED,
-	   MPCOMP_MODE_OVERSUBSCRIBED_MIXED,
-       MPCOMP_MODE_ALTERNATING,
-	   MPCOMP_MODE_FULLY_MIXED
-     } mpcomp_mode_t ;
-
-     typedef enum mpcomp_affinity_t {
-       MPCOMP_AFFINITY_COMPACT,   /* Distribute over logical PUs */
-       MPCOMP_AFFINITY_SCATTER,   /* Distribute over memory controllers */
-       MPCOMP_AFFINITY_BALANCED,   /* Distribute over physical PUs */
-       MPCOMP_AFFINITY_NB
-     } mpcomp_affinity_t ;
-
-
 /********************
  ****** Threadprivate 
  ********************/
-#define KMP_HASH_TABLE_LOG2 9                               /* log2 of the hash table size */
-#define KMP_HASH_TABLE_SIZE (1 << KMP_HASH_TABLE_LOG2)      /* size of the hash table */
-#define KMP_HASH_SHIFT      3                               /* throw away this many low bits from the address */
-#define KMP_HASH(x)         ((((uint64_t) x) >> KMP_HASH_SHIFT) & (KMP_HASH_TABLE_SIZE-1))
-
-struct common_table {
-    struct private_common *data[ KMP_HASH_TABLE_SIZE ];
-};
-
-/*****************
- ****** STRUCTURES 
- *****************/
-
-     /* Global Internal Control Variables */
-     /* One structure per OpenMP instance */
-     typedef struct mpcomp_global_icv_s 
-     {
-	  omp_sched_t def_sched_var;    /* Default schedule when no 'schedule' clause 
-                                       is present */
-	  int bind_var;                 /* Is the OpenMP threads bound to cpu cores */
-	  int stacksize_var;            /* Size of the stack per thread (in Bytes) */
-	  int active_wait_policy_var;   /* Is the threads wait policy active or passive */
-	  int thread_limit_var;         /* Number of Open threads to use for the whole program */
-	  int max_active_levels_var;    /* Maximum number of nested active parallel regions */
-	  int nmicrovps_var;            /* Number of VPs */
-	  int warn_nested ;             /* Emit warning for nested parallelism? */
-	  int affinity;                 /* OpenMP threads affinity  */
-     } mpcomp_global_icv_t;
-
-
-     /* Local Internal Control Variables */
-     /* One structure per OpenMP thread */
-     typedef struct mpcomp_local_icv_s 
-     {
-	  int nthreads_var ;		/* Number of threads for the next team 
-					   creation */
-	  int dyn_var;		        /* Is dynamic thread adjustement on? */
-	  int nest_var;		        /* Is nested OpenMP handled/allowed? */
-	  omp_sched_t run_sched_var;	/* Schedule to use when a 'schedule' clause is
-					   set to 'runtime' */
-	  int modifier_sched_var;	/* Size of chunks for loop schedule */
-      int active_levels_var; /* Number of nested, active enclosing parallel regions */
-      int levels_var ; /* Number of nested enclosing parallel regions */
-     } mpcomp_local_icv_t;
+typedef struct common_table 
+{
+	struct private_common *data[ KMP_HASH_TABLE_SIZE ];
+} mpcomp_kmp_common_table_t;
 
      
-    /* Integer atomic with padding to avoid false sharing */
-     typedef struct mpcomp_atomic_int_pad_s
-     {
-	  sctk_atomics_int i;   /* Value of the integer */
-	  char pad[8];          /* Padding */
-     } mpcomp_atomic_int_pad_t;
-
-
-     /* Element of the stack for dynamic work stealing */
-     typedef struct mpcomp_elem_stack_s
-     {
-	  union node_leaf {
-	       struct mpcomp_node_s *node;
-	       struct mpcomp_mvp_s *leaf;
-	  } elem;                               /* Stack element */
-	  enum mpcomp_elem_stack_type_t type;   /* Type of the 'elem' field */
-     } mpcomp_elem_stack_t;
-
-     
-     /* Stack structure for dynamic work stealing */
-     typedef struct mpcomp_stack_node_leaf_s
-     {
-	  struct mpcomp_elem_stack_s **elements;   /* List of elements */
-	  enum mpcomp_children_t *child_type;      /* Type of childs : nodes or leafs */
-	  int max_elements;                        /* Number of max elements */
-	  int n_elements;                          /* Corresponds to the head of the stack */
-     } mpcomp_stack_node_leaf_t;
-
 /* Information to transfer to every thread
  * when entering a new parallel region
  *
@@ -217,6 +67,7 @@ typedef struct mpcomp_new_parallel_region_info_s {
 	int for_dyn_current_save;
 	long combined_pragma;
 	mpcomp_local_icv_t icvs;	/* Set of ICVs for the child team */
+
 	/* OPTIONAL INFO */
 	long loop_lb;		        /* Lower bound */
 	long loop_b;			/* Upper bound */
@@ -225,34 +76,30 @@ typedef struct mpcomp_new_parallel_region_info_s {
 	int nb_sections ;
 } mpcomp_new_parallel_region_info_t ;
 
-	/* Team of OpenMP threads */
-	typedef struct mpcomp_team_s
-	{
-		mpcomp_new_parallel_region_info_t info ; /* Info for new parallel region */
-		int depth;  /* Depth of the current thread (0 = sequential region) */
+/* Team of OpenMP threads */
+typedef struct mpcomp_team_s
+{
+	mpcomp_new_parallel_region_info_t info ; /* Info for new parallel region */
+	int depth;  /* Depth of the current thread (0 = sequential region) */
 
-		/* -- SINGLE/SECTIONS CONSTRUCT -- */
-		sctk_atomics_int single_sections_last_current ;
-		void *single_copyprivate_data;
+	/* -- SINGLE/SECTIONS CONSTRUCT -- */
+	sctk_atomics_int single_sections_last_current ;
+	void *single_copyprivate_data;
 
-		/* -- DYNAMIC FOR LOOP CONSTRUCT -- */
-		mpcomp_atomic_int_pad_t for_dyn_nb_threads_exited[MPCOMP_MAX_ALIVE_FOR_DYN + 1];
+	/* -- DYNAMIC FOR LOOP CONSTRUCT -- */
+	mpcomp_atomic_int_pad_t for_dyn_nb_threads_exited[MPCOMP_MAX_ALIVE_FOR_DYN + 1];
 
-		/* ORDERED CONSTRUCT */
-		volatile int next_ordered_offset; 
+	/* ORDERED CONSTRUCT */
+	volatile int next_ordered_offset; 
 
 #if MPCOMP_TASK
-	sctk_atomics_int tasking_init_done;	        /* Thread team task's init tag */
-	sctk_atomics_int tasklist_init_done;
-	int tasklist_depth[MPCOMP_TASK_TYPE_COUNT];   /* Depth in the tree of task lists */
-	int task_larceny_mode;
-	int task_nesting_max;
-	sctk_atomics_int nb_tasks;
+	mpcomp_task_team_infos_t task_infos;	
 #endif //MPCOMP_TASK
-	} mpcomp_team_t;
+
+} mpcomp_team_t;
 
 
-     /* OpenMP thread */
+/* OpenMP thread */
 typedef struct mpcomp_thread_s
 {
 	sctk_mctx_t uc;		/* Context (initializes registers, ...)
@@ -302,10 +149,7 @@ typedef struct mpcomp_thread_s
 	int current_ordered_iteration; 
 
 #if MPCOMP_TASK 
-	int tasking_init_done;                   /* Thread task's init tag */
-	struct mpcomp_task_s *current_task;	   /* Currently running task */
-	struct mpcomp_task_list_s *tied_tasks;   /* List of suspended tied tasks */
-	int *larceny_order;
+	mpcomp_task_thread_infos_t	task_infos;
 #endif //MPCOMP_TASK
 
     /* Threadprivate */
@@ -336,9 +180,7 @@ typedef struct mpcomp_thread_s
 	  int balanced_last_thread; /* TODO check */
 	  int balanced_current_core; /* TODO check */
 #if MPCOMP_TASK
-	  int *tree_level_size;
-	  int tree_array_size;
-	  int *tree_array_first_rank;
+	  mpcomp_task_instance_infos_t task_infos;
 #endif /* MPCOMP_TASK */
      } mpcomp_instance_t;
 
@@ -378,7 +220,7 @@ typedef struct mpcomp_thread_s
 
 	  /* OMP 3.0 */
 #if MPCOMP_TASK
-	  mpcomp_task_tree_list_s task_infos;
+	  mpcomp_task_mvp_infos_t task_infos;
 #endif /* MPCOMP_TASK */
 
      } mpcomp_mvp_t;
@@ -440,18 +282,37 @@ typedef struct mpcomp_thread_s
 #endif
 
 #if MPCOMP_TASK
-	  mpcomp_task_tree_list_s task_infos;
+	  mpcomp_task_node_infos_t task_infos;
 #endif /* MPCOMP_TASK */
+		
+     int id_numa;  /* NUMA node on which this node is allocated */
         
      } mpcomp_node_t;
 
+typedef struct mpcomp_node_s* mpcomp_node_ptr_t;
 
-     /* Stack (maybe the same that mpcomp_stack_node_leaf_s structure) */
-     typedef struct mpcomp_stack {
-	  mpcomp_node_t **elements;
-	  int max_elements;
-	  int n_elements;             /* Corresponds to the head of the stack */
-     } mpcomp_stack_t;
+/*********
+ * new meta elt for task initialisation
+ */
+
+typedef enum mpcomp_tree_meta_elt_type_e
+{
+	MPCOMP_TREE_META_ELT_MVP,
+	MPCOMP_TREE_META_ELT_NODE,
+	MPCOMP_TREE_META_ELT_COUNT
+} mpcomp_tree_meta_elt_type_t;
+
+typedef union mpcomp_tree_meta_elt_ptr_u
+{
+	struct mpcomp_node_s *node;
+ 	struct mpcomp_mvp_s *mvp;
+} mpcomp_tree_meta_elt_ptr_t;
+
+typedef struct mpcomp_tree_meta_elt_s
+{
+	mpcomp_tree_meta_elt_type_t type;
+	mpcomp_tree_meta_elt_ptr_t  ptr;
+}mpcomp_tree_meta_elt_t;
 
 
 /*****************
@@ -466,70 +327,14 @@ typedef struct mpcomp_thread_s
  ****** FUNCTIONS  
  *****************/
 
-     static inline void *mpcomp_malloc(int numa_aware, int size, int node)
-     {
-     	  if (numa_aware && MPCOMP_MALLOC_ON_NODE)	
-     	       return sctk_malloc_on_node(size, node);		
-     	  					       
-	  return sctk_malloc(size);			
-     }
-
-     static inline void mpcomp_free(int numa_aware, void *p, int size)
-     {
-	  sctk_free(p);			
-     }     
-     
-	static inline void __mpcomp_new_parallel_region_info_init( 
-			mpcomp_new_parallel_region_info_t * info ) {
-		info->func = NULL ;
-		info->shared = NULL ;
-		info->num_threads = 0 ;
-		info->new_root = NULL ;
-		info->combined_pragma = MPCOMP_COMBINED_NONE ;
-		info->loop_lb = 0 ;
-		info->loop_b = 0 ;
-		info->loop_incr = 0 ;
-		info->loop_chunk_size = 0 ;
-		info->nb_sections = 0 ;
-		info->single_sections_current_save = 0 ;
-		info->for_dyn_current_save = 0 ;
-	}
-
+#include "mpcomp_task_utils.h"
      
      void  __mpcomp_internal_begin_parallel_region(int arg_num_threads, 
         mpcomp_new_parallel_region_info_t info );
 
     void __mpcomp_internal_end_parallel_region( mpcomp_instance_t * instance );
 
-     static inline void __mpcomp_team_init(mpcomp_team_t *team_info)
-     {
-	  int i;
-
-	  /* -- TEAM INFO -- */
-	  __mpcomp_new_parallel_region_info_init( &(team_info->info) ) ;
-	  team_info->depth = 0;
-
-	  /* -- SINGLE/SECTIONS CONSTRUCT -- */
-	  sctk_atomics_store_int(&(team_info->single_sections_last_current), 0);
-	  team_info->single_copyprivate_data = NULL;
-
-	  /* -- DYNAMIC FOR LOOP CONSTRUCT -- */
-	  for (i=0; i<MPCOMP_MAX_ALIVE_FOR_DYN; i++)
-	       sctk_atomics_store_int(&(team_info->for_dyn_nb_threads_exited[i].i), 0);
-	  sctk_atomics_store_int(
-				&(team_info->for_dyn_nb_threads_exited[MPCOMP_MAX_ALIVE_FOR_DYN].i),
-				 MPCOMP_NOWAIT_STOP_SYMBOL);
-
-#if MPCOMP_TASK
-	  sctk_atomics_store_int(&(team_info->tasking_init_done), 0);
-	  sctk_atomics_store_int(&(team_info->tasklist_init_done), 0);
           sctk_atomics_store_int(&(team_info->nb_tasks), 0);
-#endif /* MPCOMP_TASK */
-     }
-
-	mpcomp_thread_task_init(t);
-     static inline void __mpcomp_implicit_task_init(mpcomp_thread_t *t,
-                                                    int id_numa) {
        t->current_task =
            mpcomp_malloc(1, sizeof(struct mpcomp_task_s), id_numa);
        __mpcomp_task_init(t->current_task, NULL, NULL, t);
@@ -543,51 +348,10 @@ typedef struct mpcomp_thread_s
                                              mpcomp_instance_t *instance,
                                              mpcomp_thread_t *father,
                                              int id_numa) {
-       int i;
-
-       t->stack = NULL;
-       __mpcomp_new_parallel_region_info_init(&(t->info));
-       t->info.num_threads = 1;
-       t->info.icvs = icvs;
-       t->rank = 0;
-       t->mvp = NULL;
-       t->done = 0;
-       t->instance = instance;
-       t->children_instance = NULL;
-       t->push_num_threads = -1;
-       t->father = father;
-
-       sctk_nodebug("__mpcomp_thread_init: father = %p", father);
-
-       /* -- SINGLE CONSTRUCT -- */
-       // t->single_sections_current = 0 ;
-       t->single_sections_target_current = 0;
-       t->single_sections_start_current = 0;
-
-       /* -- DYNAMIC FOR LOOP CONSTRUCT -- */
-       t->for_dyn_current = 0;
-       t->for_dyn_total = 0;
-       for (i = 0; i < MPCOMP_MAX_ALIVE_FOR_DYN + 1; i++)
-         sctk_atomics_store_int(&(t->for_dyn_remain[i].i), -1);
-       t->for_dyn_target = NULL; /* Initialized during the first steal */
-       t->for_dyn_shift = NULL;  /* Initialized during the first steal */
-       t->for_dyn_last_loop_iteration = 0; /* WORKAROUND (pr35196.c) */
-
-#if MPCOMP_TASK
-       t->tasking_init_done = 0;
        t->tied_tasks = NULL;
        __mpcomp_implicit_task_init(t, id_numa);
        t->larceny_order = NULL;
-#endif /* MPCOMP_TASK */
-
-       t->th_pri_common =
            (struct common_table *)sctk_malloc(sizeof(struct common_table));
-       for (i = 0; i < KMP_HASH_TABLE_SIZE; ++i)
-         t->th_pri_common->data[i] = 0;
-       t->th_pri_head = NULL;
-
-       t->reduction_method = 0;
-     }
      /* mpcomp.c */
      void __mpcomp_init(void);
      void __mpcomp_exit(void);

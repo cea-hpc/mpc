@@ -28,6 +28,9 @@
 #include "mpcomp_internal.h"
 #include "sctk_alloc.h"
 
+#include "mpcomp_alloc.h"
+#include "mpcomp_tree_structs.h"
+
 /* Called only by __mpcomp_buid_tree */
 static int 
 mpcomp_get_global_index_from_cpu (hwloc_topology_t topo, const int vp)
@@ -397,28 +400,9 @@ __mpcomp_build_tree( mpcomp_instance_t * instance, int n_leaves, int depth, int 
               instance->tree_nb_nodes_per_depth[i-1] * 
               instance->tree_base[i-1] ;
 	  }
-#if MPCOMP_TASK     
-     instance->tree_level_size = mpcomp_malloc(0, 
-			 sizeof(int) * (instance->tree_depth + 1), 0);
-     instance->tree_array_first_rank = mpcomp_malloc(0, 
-			 sizeof(int) * (instance->tree_depth + 1), 0);
-     instance->tree_level_size[0] = 1;
-     instance->tree_array_first_rank[0] = 0;
-     instance->tree_array_size = 1;
-     for (i=1; i<instance->tree_depth + 1; i++) {
-	  instance->tree_level_size[i] = instance->tree_level_size[i-1] * 
-		  instance->tree_base[i-1];
-	  instance->tree_array_size += instance->tree_level_size[i]; 
-	  instance->tree_array_first_rank[i] = 
-		  instance->tree_array_first_rank[i-1] + 
-		  instance->tree_level_size[i-1];
 
-	  sctk_debug( "__mpcomp_build_tree: FirstRank[%d]=%d; "
-			  "tree_level_size[%d]=%d; tree_array_size=%d", 
-			  i, instance->tree_array_first_rank[i], 
-			  i, instance->tree_level_size[i], 
-			  instance->tree_array_size);
-     }
+#if MPCOMP_TASK
+	mpcomp_task_instance_task_infos_init( instance );		
 #endif /* MPCOMP_TASK */
 
      /* Compute the depth for BALANCED and SCATTER */
@@ -473,8 +457,7 @@ __mpcomp_build_tree( mpcomp_instance_t * instance, int n_leaves, int depth, int 
       sctk_warning("value : %p", order);
      sctk_assert(order != NULL);
 
-     sctk_get_neighborhood_topology(instance->topology, current_mpc_vp, nb_cpus,
-                                    order);
+     sctk_get_neighborhood_topology(instance->topology, current_mpc_vp, nb_cpus, order);
 
      /* Build the tree of this OpenMP instance */
 
@@ -531,10 +514,7 @@ __mpcomp_build_tree( mpcomp_instance_t * instance, int n_leaves, int depth, int 
            sctk_get_node_from_cpu_topology(instance->topology, target_vp);
 
 #if MPCOMP_TASK
-	       for (i=0; i<MPCOMP_TASK_TYPE_COUNT; i++) {
-		    n->tasklist[i] = NULL;
-	       }
-	       n->tasklist_randBuffer = NULL;
+		mpcomp_task_node_task_infos_reset( n );	
 #endif /* MPCOMP_TASK */
 
 	       if ( n->depth == depth - 1 ) {
@@ -594,21 +574,15 @@ __mpcomp_build_tree( mpcomp_instance_t * instance, int n_leaves, int depth, int 
 
              instance->mvps[current_mvp]->tree_rank[depth - 1] = i;
 
-             for (i_thread = 0; i_thread < MPCOMP_MAX_THREADS_PER_MICROVP;
-                  i_thread++) {
+             for (i_thread = 0; i_thread < MPCOMP_MAX_THREADS_PER_MICROVP; i_thread++) 
+				{
                mpcomp_local_icv_t icvs;
-               __mpcomp_thread_init(
-                   &(instance->mvps[current_mvp]->threads[i_thread]), icvs,
-                   instance, sctk_openmp_thread_tls, target_numa);
-               instance->mvps[current_mvp]->threads[i_thread].mvp =
-                   instance->mvps[current_mvp];
+               mpcomp_thread_infos_init( &(instance->mvps[current_mvp]->threads[i_thread]), icvs, instance, sctk_openmp_thread_tls);
+               instance->mvps[current_mvp]->threads[i_thread].mvp = instance->mvps[current_mvp];
              }
 
 #if MPCOMP_TASK
-			 for (i_task=0; i_task<MPCOMP_TASK_TYPE_COUNT; i_task++) {
-			      instance->mvps[current_mvp]->tasklist[i_task] = NULL;
-			 }
-			 instance->mvps[current_mvp]->tasklist_randBuffer = NULL;
+			mpcomp_task_mvp_task_infos_reset( instance->mvps[current_mvp] );
 #endif /* MPCOMP_TASK */
 
 			 mpcomp_node_t * current_node = n;
@@ -627,12 +601,9 @@ __mpcomp_build_tree( mpcomp_instance_t * instance, int n_leaves, int depth, int 
 			 sctk_thread_attr_t __attr;
 			 int res;
 
-			 sctk_thread_attr_init(&__attr);
-             sctk_thread_attr_setbinding (& __attr, (sctk_get_cpu() + target_vp) % sctk_get_cpu_number());
-			 res = sctk_thread_attr_setstacksize (&__attr, mpcomp_global_icvs.stacksize_var);
-             if(res)
-                sctk_warning("OMP_STACKSIZE ignored, new value %d", res);
-             sctk_error("stacksize = %ld --  %ld", mpcomp_global_icvs.stacksize_var, PTHREAD_STACK_MIN);
+			sctk_thread_attr_init(&__attr);
+        	sctk_thread_attr_setbinding (& __attr, (sctk_get_cpu() + target_vp) % sctk_get_cpu_number() );
+			res = sctk_thread_attr_setstacksize (&__attr, mpcomp_global_icvs.stacksize_var);
 			  //   mpcomp_global_icvs.stacksize_var);
 
 			 /* User thread create... */
@@ -674,10 +645,9 @@ __mpcomp_build_tree( mpcomp_instance_t * instance, int n_leaves, int depth, int 
 			 sctk_thread_attr_destroy(&__attr);
 
 			 current_mvp++;
-#if 0
+
 			 /* Recompute the target vp */
 			 target_vp = order[ current_mvp ];
-#endif
 
 			 /* We reached the leaves */
 			 previous_depth++;

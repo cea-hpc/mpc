@@ -1,5 +1,6 @@
 #include "mpcomp_abi.h"
 #include "mpcomp_internal.h"
+#include "mpcomp_internal_utils.h"
 #include "mpcomp_GOMP_wrapper.h"
 //#include "mpcomp_GOMP_parallel_internal.h"
 
@@ -73,10 +74,23 @@ static void __mpcomp_internal_GOMP_in_order_scheduler_master_end(void)
           not_implemented();
           break; 
    }
+
    t->done = 1; 
+
+    while( !mpcomp_task_all_task_executed() )
+    {
+	    sctk_thread_yield() ;
+        __mpcomp_task_schedule();
+    }
    /* Restore previous TLS */
    sctk_openmp_thread_tls = t->father;
 }
+
+void __mpcomp_internal_GOMP_parallel_start(void (*fn) (void *), void *data, unsigned num_threads, unsigned int flags)
+{
+    num_threads = (num_threads == 0) ? -1 : num_threads;
+    __mpcomp_start_parallel_region( num_threads, fn, data );
+} 
 
 void __mpcomp_internal_GOMP_start_parallel_region(void (*fn) (void *), void *data, unsigned num_threads)
 {
@@ -110,7 +124,7 @@ void __mpcomp_internal_GOMP_start_parallel_region(void (*fn) (void *), void *dat
    
    /* Start scheduling */
    mpcomp_mvp_t * mvp = t->children_instance->mvps[0];
-   __mpcomp_internal_GOMP_in_order_scheduler_master_begin(mvp);
+   __mpcomp_internal_GOMP_in_order_scheduler_master_begin( mvp );
 
    return;
 }
@@ -125,7 +139,7 @@ void __mpcomp_internal_GOMP_end_parallel_region(void)
    mpcomp_instance_t *instance = t->children_instance;
    sctk_assert(instance != NULL);
 
-   __mpcomp_internal_end_parallel_region(instance);
+   __mpcomp_internal_end_parallel_region( instance );
 }
 
 void __mpcomp_internal_GOMP_parallel_loop_generic_start (void (*fn) (void *), void *data,

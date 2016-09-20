@@ -22,6 +22,7 @@
 /* ######################################################################## */
 
 #include "mpcomp_internal.h"
+#include "mpcomp_tree_structs.h"
 
 
 static inline void 
@@ -230,7 +231,7 @@ __mpcomp_internal_begin_parallel_region(int arg_num_threads,
 
                 new_team = (mpcomp_team_t *)sctk_malloc(sizeof(mpcomp_team_t));
                 sctk_assert(new_team != NULL);
-                __mpcomp_team_init(new_team);
+                mpcomp_team_infos_init(new_team);
 
                 t->children_instance =
                     (mpcomp_instance_t *)sctk_malloc(sizeof(mpcomp_instance_t));
@@ -366,9 +367,6 @@ __mpcomp_internal_end_parallel_region( mpcomp_instance_t * instance )
     while (sctk_atomics_load_int( &(root->barrier) ) !=
 					root->barrier_num_threads ) 
     {
-#if MPCOMP_TASK
-	 __mpcomp_task_schedule(); /* Look for tasks remaining */
-#endif //MPCOMP_TASK
 	 sctk_thread_yield() ;
     }
     sctk_atomics_store_int( &(root->barrier) , 0 ) ;
@@ -377,9 +375,6 @@ __mpcomp_internal_end_parallel_region( mpcomp_instance_t * instance )
 		  "__mpcomp_internal_end_parallel_region: final barrier done..."
 			) ;
 
-#if MPCOMP_TASK
-    __mpcomp_task_schedule();
-#endif //MPCOMP_TASK
 	}
 
     /* Update team info for last values */
@@ -412,9 +407,8 @@ __mpcomp_start_parallel_region(int arg_num_threads, void *(*func)
   t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
   sctk_assert( t != NULL ) ;
 
-  if (t->children_instance)
+	mpcomp_parallel_region_infos_init( &info ) ;
     __mpcomp_team_init(t->children_instance->team);
-  __mpcomp_new_parallel_region_info_init(&info);
   info.func = func;
   info.shared = shared;
   // info.icvs = t->info.icvs ;
@@ -566,7 +560,7 @@ __mpcomp_start_sections_parallel_region (int arg_num_threads,
         t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
         sctk_assert(t != NULL);
 
-        __mpcomp_new_parallel_region_info_init(&info);
+        mpcomp_parallel_region_infos_init(&info);
         info.func = func;
         info.shared = shared;
         // info.icvs = t->info.icvs ;
@@ -605,7 +599,7 @@ __mpcomp_start_parallel_dynamic_loop (int arg_num_threads,
         t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
         sctk_assert(t != NULL);
 
-        __mpcomp_new_parallel_region_info_init(&info);
+        mpcomp_parallel_region_infos_init(&info);
         info.func = func;
         info.shared = shared;
         // info.icvs = t->info.icvs ;
@@ -648,7 +642,7 @@ __mpcomp_start_parallel_static_loop (int arg_num_threads,
         t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
         sctk_assert(t != NULL);
 
-        __mpcomp_new_parallel_region_info_init(&info);
+        mpcomp_parallel_region_infos_init(&info);
         info.func = func;
         info.shared = shared;
         // info.icvs = t->info.icvs ;

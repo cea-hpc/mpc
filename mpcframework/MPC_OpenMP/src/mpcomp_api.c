@@ -443,21 +443,18 @@ omp_get_max_active_levels()
  * The omp_in_final routine returns true if the routine is executed 
  * in a final task region; otherwise, it returns false.
  */
-int
-omp_in_final()
+int omp_in_final( void )
 {
-  mpcomp_thread_t * t;
+  	__mpcomp_init ();
 
-  __mpcomp_init ();
+	sctk_assert( sctk_openmp_thread_tls );
+	mpcomp_thread_t* thread = (mpcomp_thread_t*) sctk_openmp_thread_tls;
 
-  t = sctk_openmp_thread_tls;
-  sctk_assert(t != NULL);
 #if MPCOMP_TASK
-#if MPCOMP_TASK
-  return ( t->current_task 
-             && mpcomp_task_property_isset( t->current_task->property, MPCOMP_TASK_FINAL ));
+	mpcomp_task_t* task = MPCOMP_TASK_THREAD_GET_CURRENT_TASK( thread );
+  	return ( task && mpcomp_task_property_isset( task->property, MPCOMP_TASK_FINAL ) );
 #else
-  return 0;
+	return 0;
 #endif
 }
 
