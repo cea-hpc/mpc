@@ -16195,7 +16195,221 @@ int PMPI_Comm_delete_attr(MPI_Comm comm, int comm_keyval)
 
 }
 
+/************************************************************************/
+/*  The MPI Tools Inteface                                              */
+/************************************************************************/
 
+
+int PMPI_T_init_thread( int required, int * provided )
+{
+	return mpc_MPI_T_init_thread( required, provided );
+}
+
+int PMPI_T_finalize( void )
+{
+	return mpc_MPI_T_finalize();
+}
+
+int PMPI_T_enum_get_info( MPI_T_enum enumtype, int * num, char * name, int * name_len )
+{
+	return mpc_MPI_T_enum_get_info( enumtype, num,  name, name_len );
+}
+
+int PMPI_T_enum_get_item( MPI_T_enum enumtype, int index, int * value, char * name, int * name_len )
+{
+	return mpc_MPI_T_enum_get_item( enumtype, index, value, name, name_len );
+}
+
+int PMPI_T_cvar_get_num( int *num_cvar )
+{
+	return mpc_MPI_T_cvar_get_num( num_cvar );
+}
+
+
+int PMPI_T_cvar_get_info( int cvar_index,
+		   				  char * name,
+						  int * name_len,
+			  			  int * verbosity, 
+              			  MPI_Datatype *datatype,
+              			  MPI_T_enum * enumtype ,
+              			  char * desc, 
+              			  int * desc_len, 
+              			  int * bind, 
+              			  int * scope )
+{
+	return mpc_MPI_T_cvar_get_info( cvar_index , name, name_len,
+								    verbosity, datatype, enumtype,
+									desc, desc_len, bind, scope);
+}
+
+
+int PMPI_T_cvar_get_index( const char * name, int * cvar_index )
+{
+	return mpc_MPI_T_cvar_get_index( name, cvar_index );
+}
+
+
+int PMPI_T_cvar_handle_alloc( int cvar_index , void * obj_handle, 
+							  MPI_T_cvar_handle *handle, int * count )
+{
+	return mpc_MPI_T_cvar_handle_alloc( cvar_index, obj_handle, handle, count );
+}
+
+int PMPI_T_cvar_handle_free( MPI_T_cvar_handle * handle )
+{
+	return mpc_MPI_T_cvar_handle_free( handle );
+}
+
+int PMPI_T_cvar_read( MPI_T_cvar_handle handle, void * buff )
+{
+	return mpc_MPI_T_cvar_read( handle, buff );
+}
+
+int PMPI_T_cvar_write( MPI_T_cvar_handle handle, const void * buff )
+{
+	return mpc_MPI_T_cvar_write( handle, buff );
+}
+
+int PMPI_T_pvar_get_num( int * num_pvar )
+{
+	return mpc_MPI_T_pvar_get_num( num_pvar );
+}
+
+int PMPI_T_pvar_get_info( int pvar_index,
+			 			  char *name,
+			 			  int * name_len,
+			 			  int * verbosity,
+			 			  int * var_class,
+			 			  MPI_Datatype * datatype,
+			 			  MPI_T_enum * enumtype,
+			 			  char * desc,
+			 			  int * desc_len,
+			 			  int * bind,
+			 			  int * readonly,
+			 			  int * continuous,
+			 			  int * atomic )
+{
+	return mpc_MPI_T_pvar_get_info( pvar_index,
+									name,
+									name_len,
+									verbosity,
+									var_class,
+									datatype,
+									enumtype,
+									desc,
+									desc_len,
+									bind,
+									readonly,
+									continuous,
+									atomic );
+}
+
+int PMPI_T_pvar_get_index( char * name , int * pvar_class, int * pvar_index )
+{
+	return mpc_MPI_T_pvar_get_index( name, pvar_class, pvar_index );
+}
+
+int PMPI_T_pvar_session_create( MPI_T_pvar_session * session )
+{
+	return mpc_MPI_T_pvar_session_create( session );
+}
+
+int PMPI_T_pvar_session_free( MPI_T_pvar_session * session )
+{
+	return mpc_MPI_T_pvar_session_free( session );
+}
+
+int PMPI_T_pvar_handle_alloc( MPI_T_pvar_session session,
+			                  int pvar_index,
+                              void * obj_handle,
+                              MPI_T_pvar_handle * handle, 
+                              int * count )
+{
+	return mpc_MPI_T_pvar_handle_alloc( session, pvar_index, obj_handle, handle, count );
+}
+
+
+int PMPI_T_pvar_handle_free( MPI_T_pvar_handle * handle )
+{
+	return mpc_MPI_T_pvar_handle_free( handle );
+}
+
+int PMPI_T_pvar_start( MPI_T_pvar_session session, MPI_T_pvar_handle handle )
+{
+	return mpc_MPI_T_pvar_start( session, handle );
+}
+
+int PMPI_T_pvar_stop( MPI_T_pvar_session session, MPI_T_pvar_handle handle )
+{
+	return mpc_MPI_T_pvar_stop( session, handle );
+}
+
+int PMPI_T_pvar_read( MPI_T_pvar_session session, MPI_T_pvar_handle handle, void * buff )
+{
+	return mpc_MPI_T_pvar_read( session, handle, buff );
+}
+
+int PMPI_T_pvar_readreset( MPI_T_pvar_session session, MPI_T_pvar_handle handle, void * buff )
+{
+	return mpc_MPI_T_pvar_readreset( session, handle, buff );	
+}
+
+int PMPI_T_pvar_write( MPI_T_pvar_session session, MPI_T_pvar_handle handle, const void * buff )
+{
+	return mpc_MPI_T_pvar_write( session, handle, buff );
+}
+
+int PMPI_T_pvar_reset( MPI_T_pvar_session session, MPI_T_pvar_handle handle )
+{
+	return mpc_MPI_T_pvar_reset( session, handle );
+}
+
+int PMPI_T_category_get_num( int * num_cat )
+{
+	return mpc_MPI_T_category_get_num( num_cat );
+}
+
+int PMPI_T_category_get_info( int cat_index,
+							  char * name, 
+							  int * name_len, 
+							  char * desc, 
+							  int * desc_len,
+							  int * num_cvars, 
+							  int * num_pvars,
+							  int * num_categories)
+{
+	return mpc_MPI_T_category_get_info( cat_index,
+										name,
+										name_len,
+										desc,
+										desc_len,
+										num_cvars,
+										num_pvars,
+										num_categories);
+}
+int PMPI_T_category_get_index( char * name, int * cat_index )
+{
+	return mpc_MPI_T_category_get_index( name, cat_index );
+}
+int PMPI_T_category_get_cvars( int cat_index, int len, int indices[])
+{
+	return mpc_MPI_T_category_get_cvars( cat_index, len, indices );
+}
+
+int PMPI_T_category_get_pvars( int cat_index, int len, int indices[])
+{
+	return mpc_MPI_T_category_get_pvars( cat_index, len, indices );
+}
+
+int PMPI_T_category_get_categories( int cat_index, int len, int indices[])
+{
+	return mpc_MPI_T_category_get_categories( cat_index, len, indices );
+}
+
+int PMPI_T_category_changed( int * stamp )
+{
+	return mpc_MPI_T_category_changed( stamp );
+}
 
 /************************************************************************/
 /*  NOT IMPLEMENTED                                                     */
@@ -16300,36 +16514,6 @@ int PMPI_Reduce_local(const void *inbuf, void *inoutbuf, int count, MPI_Datatype
 int PMPI_File_create_errhandler(MPI_File_errhandler_function *file_errhandler_fn, MPI_Errhandler *errhandler){not_implemented();return MPI_ERR_INTERN;}
 int PMPI_File_call_errhandler(void * fh, int errorcode){not_implemented();return MPI_ERR_INTERN;}
 
-/* MPI_T methods */
-int PMPI_T_init_thread(int required, int *provided){not_implemented();return MPI_ERR_INTERN;}
-int PMPI_T_finalize(void){not_implemented();return MPI_ERR_INTERN;}
-
-int PMPI_T_pvar_read(MPI_T_pvar_session session, MPI_T_pvar_handle handle, void *buf){not_implemented();return MPI_ERR_INTERN;}
-int PMPI_T_pvar_write(MPI_T_pvar_session session, MPI_T_pvar_handle handle, void *buf){not_implemented();return MPI_ERR_INTERN;}
-int PMPI_T_pvar_reset(MPI_T_pvar_session session, MPI_T_pvar_handle handle){not_implemented();return MPI_ERR_INTERN;}
-int PMPI_T_pvar_get_num(int *num_pvar){not_implemented();return MPI_ERR_INTERN;}
-int PMPI_T_pvar_get_info(int pvar_index, char *name, int *name_len, int *verbosity, int *var_class, MPI_Datatype *datatype, MPI_T_enum *enumtype, char *desc, int *desc_len, int *binding, int *readonly, int *continuous, int *atomic){not_implemented();return MPI_ERR_INTERN;}
-int PMPI_T_pvar_session_create(MPI_T_pvar_session *session){not_implemented();return MPI_ERR_INTERN;}
-int PMPI_T_pvar_session_free(MPI_T_pvar_session *session){not_implemented();return MPI_ERR_INTERN;}
-int PMPI_T_pvar_handle_alloc(MPI_T_pvar_session session, int pvar_index, void *obj_handle, MPI_T_pvar_handle *handle, int *count){not_implemented();return MPI_ERR_INTERN;}
-int PMPI_T_pvar_handle_free(MPI_T_pvar_session session, MPI_T_pvar_handle *handle){not_implemented();return MPI_ERR_INTERN;}
-int PMPI_T_pvar_start(MPI_T_pvar_session session, MPI_T_pvar_handle handle){not_implemented();return MPI_ERR_INTERN;}
-int PMPI_T_pvar_stop(MPI_T_pvar_session session, MPI_T_pvar_handle handle){not_implemented();return MPI_ERR_INTERN;}
-
-int PMPI_T_cvar_read(MPI_T_cvar_handle handle, void *buf){not_implemented();return MPI_ERR_INTERN;}
-int PMPI_T_cvar_write(MPI_T_cvar_handle handle, void *buf){not_implemented();return MPI_ERR_INTERN;}
-int PMPI_T_cvar_get_num(int *num_cvar){not_implemented();return MPI_ERR_INTERN;}
-int PMPI_T_cvar_get_info(int cvar_index, char *name, int *name_len,int *verbosity, MPI_Datatype *datatype, MPI_T_enum *enumtype,char *desc, int *desc_len, int *binding, int *scope){not_implemented();return MPI_ERR_INTERN;}
-int PMPI_T_cvar_handle_alloc(int cvar_index, void *obj_handle, MPI_T_cvar_handle *handle, int *count){not_implemented();return MPI_ERR_INTERN;}
-int PMPI_T_cvar_handle_free(MPI_T_cvar_handle *handle){not_implemented();return MPI_ERR_INTERN;}
-
-int PMPI_T_category_get_pvars(int cat_index, int len, int indices[]){not_implemented();return MPI_ERR_INTERN;}
-int PMPI_T_category_get_num(int *num_cat){not_implemented();return MPI_ERR_INTERN;}
-int PMPI_T_category_get_categories(int cat_index, int len, int indices[]){not_implemented();return MPI_ERR_INTERN;}
-int PMPI_T_category_get_info(int cat_index, char *name, int *name_len, char *desc,int *desc_len, int *num_cvars, int *num_pvars, int *num_categories){not_implemented();return MPI_ERR_INTERN;}
-int PMPI_T_category_get_cvars(int cat_index, int len, int indices[]){not_implemented();return MPI_ERR_INTERN;}
-
-int PMPI_T_enum_get_info(MPI_T_enum enumtype, int *num, char *name, int *name_len){not_implemented();return MPI_ERR_INTERN;}
 
 /* MPIX methods */
 int PMPIX_Comm_failure_ack( MPI_Comm comm ){not_implemented();return MPI_ERR_INTERN;}

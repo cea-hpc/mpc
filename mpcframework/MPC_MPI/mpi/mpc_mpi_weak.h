@@ -968,7 +968,6 @@
 // PROFILER MPI_T MPI_T methods
 #pragma weak MPI_T_init_thread = PMPI_T_init_thread
 #pragma weak MPI_T_finalize = PMPI_T_finalize
-
 #pragma weak MPI_T_pvar_read = PMPI_T_pvar_read
 #pragma weak MPI_T_pvar_write = PMPI_T_pvar_write
 #pragma weak MPI_T_pvar_reset = PMPI_T_pvar_reset

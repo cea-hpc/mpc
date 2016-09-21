@@ -151,6 +151,21 @@ extern "C"
 #define MPI_ERR_LASTCODE MPC_ERR_LASTCODE
 #define MPI_NOT_IMPLEMENTED MPC_NOT_IMPLEMENTED
 #define MPIR_ERRORS_THROW_EXCEPTIONS MPCR_ERRORS_THROW_EXCEPTIONS
+/* MPI_T Errors */
+#define MPI_T_ERR_MEMORY MPC_T_ERR_MEMORY
+#define MPI_T_ERR_NOT_INITIALIZED MPC_T_ERR_NOT_INITIALIZED
+#define MPI_T_ERR_CANNOT_INIT MPC_T_ERR_CANNOT_INIT
+#define MPI_T_ERR_INVALID_INDEX MPC_T_ERR_INVALID_INDEX
+#define MPI_T_ERR_INVALID_ITEM MPC_T_ERR_INVALID_ITEM
+#define MPI_T_ERR_INVALID_HANDLE MPC_T_ERR_INVALID_HANDLE
+#define MPI_T_ERR_OUT_OF_HANDLES MPC_T_ERR_OUT_OF_HANDLES
+#define MPI_T_ERR_OUT_OF_SESSIONS MPC_T_ERR_OUT_OF_SESSIONS
+#define MPI_T_ERR_INVALID_SESSION MPC_T_ERR_INVALID_SESSION
+#define MPI_T_ERR_CVAR_SET_NOT_NOW MPC_T_ERR_CVAR_SET_NOT_NOW
+#define MPI_T_ERR_CVAR_SET_NEVER MPC_T_ERR_CVAR_SET_NEVER
+#define MPI_T_ERR_PVAR_NO_STARTSTOP MPC_T_ERR_PVAR_NO_STARTSTOP
+#define MPI_T_ERR_PVAR_NO_WRITE MPC_T_ERR_PVAR_NO_WRITE
+#define MPI_T_ERR_PVAR_NO_ATOMIC MPC_T_ERR_PVAR_NO_ATOMIC
 
 /* Data-type Handling */
 #define MPI_DATATYPE_NULL MPC_DATATYPE_NULL
@@ -397,114 +412,6 @@ extern "C"
 #define MPI_ARGV_NULL (char **)0
 #define MPI_ARGVS_NULL (char ***)0
 #define MPI_ERRCODES_IGNORE (int *)0
-
-/* MPI_T definitions (NOT IMPLEMENTED)*/
-typedef int MPI_T_pvar_session;
-typedef int MPI_T_pvar_handle;
-typedef int MPI_T_cvar_handle;
-typedef int MPI_T_enum;
-
-#define MPI_T_ENUM_NULL ((MPI_T_enum)NULL)
-#define MPI_T_CVAR_HANDLE_NULL  ((MPI_T_cvar_handle)NULL)
-#define MPI_T_PVAR_HANDLE_NULL  ((MPI_T_pvar_handle)NULL)
-#define MPI_T_PVAR_SESSION_NULL ((MPI_T_pvar_session)NULL)
-
-#define MPI_T_PVAR_ALL_HANDLES ((MPI_T_pvar_handle) -1)
-
-/* the MPI_T_ interface requires that these VERBOSITY constants occur in this
- * relative order with increasing values */
-typedef enum MPIR_T_verbosity_t {
-    /* don't name-shift this if/when MPI_T_ is accepted, this is an MPICH-only
-     * extension */
-    MPIX_T_VERBOSITY_INVALID = 0,
-
-    /* arbitrarily shift values to aid debugging and reduce accidental errors */
-    MPI_T_VERBOSITY_USER_BASIC = 221,
-    MPI_T_VERBOSITY_USER_DETAIL,
-    MPI_T_VERBOSITY_USER_ALL,
-
-    MPI_T_VERBOSITY_TUNER_BASIC,
-    MPI_T_VERBOSITY_TUNER_DETAIL,
-    MPI_T_VERBOSITY_TUNER_ALL,
-
-    MPI_T_VERBOSITY_MPIDEV_BASIC,
-    MPI_T_VERBOSITY_MPIDEV_DETAIL,
-    MPI_T_VERBOSITY_MPIDEV_ALL
-} MPIR_T_verbosity_t;
-
-typedef enum MPIR_T_bind_t {
-    /* don't name-shift this if/when MPI_T_ is accepted, this is an MPICH-only
-     * extension */
-    MPIX_T_BIND_INVALID = 0,
-
-    /* arbitrarily shift values to aid debugging and reduce accidental errors */
-    MPI_T_BIND_NO_OBJECT = 9700,
-    MPI_T_BIND_MPI_COMM,
-    MPI_T_BIND_MPI_DATATYPE,
-    MPI_T_BIND_MPI_ERRHANDLER,
-    MPI_T_BIND_MPI_FILE,
-    MPI_T_BIND_MPI_GROUP,
-    MPI_T_BIND_MPI_OP,
-    MPI_T_BIND_MPI_REQUEST,
-    MPI_T_BIND_MPI_WIN,
-    MPI_T_BIND_MPI_MESSAGE,
-    MPI_T_BIND_MPI_INFO
-} MPIR_T_bind_t;
-
-typedef enum MPIR_T_scope_t {
-    /* don't name-shift this if/when MPI_T_ is accepted, this is an MPICH-only
-     * extension */
-    MPIX_T_SCOPE_INVALID = 0,
-
-    /* arbitrarily shift values to aid debugging and reduce accidental errors */
-    MPI_T_SCOPE_CONSTANT = 60438,
-    MPI_T_SCOPE_READONLY,
-    MPI_T_SCOPE_LOCAL,
-    MPI_T_SCOPE_GROUP,
-    MPI_T_SCOPE_GROUP_EQ,
-    MPI_T_SCOPE_ALL,
-    MPI_T_SCOPE_ALL_EQ
-} MPIR_T_scope_t;
-
-typedef enum MPIR_T_pvar_class_t {
-    /* don't name-shift this if/when MPI_T_ is accepted, this is an MPICH-only
-     * extension */
-    MPIX_T_PVAR_CLASS_INVALID = 0,
-
-    /* arbitrarily shift values to aid debugging and reduce accidental errors */
-    MPIR_T_PVAR_CLASS_FIRST = 240,
-    MPI_T_PVAR_CLASS_STATE = MPIR_T_PVAR_CLASS_FIRST,
-    MPI_T_PVAR_CLASS_LEVEL,
-    MPI_T_PVAR_CLASS_SIZE,
-    MPI_T_PVAR_CLASS_PERCENTAGE,
-    MPI_T_PVAR_CLASS_HIGHWATERMARK,
-    MPI_T_PVAR_CLASS_LOWWATERMARK,
-    MPI_T_PVAR_CLASS_COUNTER,
-    MPI_T_PVAR_CLASS_AGGREGATE,
-    MPI_T_PVAR_CLASS_TIMER,
-    MPI_T_PVAR_CLASS_GENERIC,
-    MPIR_T_PVAR_CLASS_LAST,
-    MPIR_T_PVAR_CLASS_NUMBER = MPIR_T_PVAR_CLASS_LAST - MPIR_T_PVAR_CLASS_FIRST
-} MPIR_T_pvar_class_t;
-
-/* Return codes for functions in the MPI Tool Information Interface */
-#define MPI_T_ERR_MEMORY            59  /* Out of memory */
-#define MPI_T_ERR_NOT_INITIALIZED   60  /* Interface not initialized */
-#define MPI_T_ERR_CANNOT_INIT       61  /* Interface not in the state to
-                                           be initialized */
-#define MPI_T_ERR_INVALID_INDEX     62  /* The index is invalid or
-                                           has been deleted  */
-#define MPI_T_ERR_INVALID_ITEM      63  /* Item index queried is out of range */
-#define MPI_T_ERR_INVALID_HANDLE    64  /* The handle is invalid */
-#define MPI_T_ERR_OUT_OF_HANDLES    65  /* No more handles available */
-#define MPI_T_ERR_OUT_OF_SESSIONS   66  /* No more sessions available */
-#define MPI_T_ERR_INVALID_SESSION   67  /* Session argument is not valid */
-#define MPI_T_ERR_CVAR_SET_NOT_NOW  68  /* Cvar can't be set at this moment */
-#define MPI_T_ERR_CVAR_SET_NEVER    69  /* Cvar can't be set until
-                                           end of execution */
-#define MPI_T_ERR_PVAR_NO_STARTSTOP 70  /* Pvar can't be started or stopped */
-#define MPI_T_ERR_PVAR_NO_WRITE     71  /* Pvar can't be written or reset */
-#define MPI_T_ERR_PVAR_NO_ATOMIC    72  /* Pvar can't be R/W atomically */
 
 /* Error not implemented */
 #define MPIX_ERR_PROC_FAILED          101 /* Process failure */
@@ -931,6 +838,418 @@ int MPI_Alloc_mem(MPI_Aint size, MPI_Info info, void *baseptr);
 
 
 
+
+/************************************************************************/
+/* The MPI Tools Interface MPI_T                                        */
+/************************************************************************/
+
+/** MPI_T Verbosity levels */
+
+typedef enum
+{
+
+	MPC_T_VERBOSITY_NONE = 0,
+
+	MPI_T_VERBOSITY_USER_BASIC,
+	MPI_T_VERBOSITY_USER_DETAIL,
+	MPI_T_VERBOSITY_USER_ALL,
+
+	MPI_T_VERBOSITY_TUNER_BASIC,
+	MPI_T_VERBOSITY_TUNER_DETAIL,
+	MPI_T_VERBOSITY_TUNER_ALL,
+
+	MPI_T_VERBOSITY_MPIDEV_BASIC,
+	MPI_T_VERBOSITY_MPIDEV_DETAIL,
+	MPI_T_VERBOSITY_MPIDEV_ALL
+
+}MPC_T_verbosity;
+
+/** MPI_T Binding to object */
+
+typedef enum
+{
+
+	MPI_T_BIND_NO_OBJECT = 0,
+	MPI_T_BIND_MPI_COMM,
+	MPI_T_BIND_MPI_DATATYPE,
+	MPI_T_BIND_MPI_ERRHANDLER,
+	MPI_T_BIND_MPI_FILE,
+	MPI_T_BIND_MPI_GROUP,
+	MPI_T_BIND_MPI_OP,
+	MPI_T_BIND_MPI_REQUEST,
+	MPI_T_BIND_MPI_WIN,
+	MPI_T_BIND_MPI_MESSAGE,
+	MPI_T_BIND_MPI_INFO
+}MPC_T_binding;
+
+
+/** Initialization and Finalization */
+
+
+/** Initialize the MPI_T environment
+* @arg required The level of thread safety required
+* @arg provided The level of thread safety provided
+* @return MPI Error
+*/
+int MPI_T_init_thread( int required, int * provided );
+
+/** Close the MPI_T Context
+* @note MPI_T does refcounting
+* @return MPI Error
+*/
+int MPI_T_finalize( void );
+
+/** MPI_T Enum */
+
+#define MPI_T_ENUM_NULL ((MPI_T_enum)NULL)
+
+/** Internal storage class (see mpit_internal.h) */
+struct MPC_T_enum;
+
+/** MPI Storage (just a pointer as no Fortran) */
+typedef struct MPC_T_enum * MPI_T_enum;
+
+/** Retrieve informations about an enum
+* @arg enumtype The enumeration to be queried
+* @arg num The number of objects in the enum
+* @arg name Where to return the string containing the enum name
+* @arg name_len Length of the buffer for "name"
+* @return MPI Error
+*/
+int MPI_T_enum_get_info( MPI_T_enum enumtype, int * num, char * name, int * name_len );
+
+/** Retrieve and element in the enum
+* @arg enumtype The enumeration to be queried
+* @arg index ID of the value to be queried
+* @arg name Name of the value to be queried
+* @arg name_len Length of the target buffer
+* @return MPI Error MPI_T_ERR_INVALID_INDEX (if out of range)
+*/
+int MPI_T_enum_get_item( MPI_T_enum enumtype, int index, int * value, char * name, int * name_len );
+
+/** Control Variables (CVAR) */
+
+/** Get the number of control variables
+* @arg num_cvar Number of control variables
+* @return MPI Error
+*/
+int MPI_T_cvar_get_num( int *num_cvar );
+
+/** This defines the scope of a cvar */
+typedef enum
+{
+	MPI_T_SCOPE_CONSTANT, /*<< Readonly value does not change */
+	MPI_T_SCOPE_READONLY, /*<< Readonly can change but cannot be changed */
+	MPI_T_SCOPE_LOCAL, /*<< Can be writable as a local operation */
+	MPI_T_SCOPE_GROUP, /*<< Can be writable in a group of processes */
+	MPI_T_SCOPE_GROUP_EQ, /*<< Can be writable in a group of processes requiring the same value */
+	MPI_T_SCOPE_ALL, /*<< Can be writable in all connected processes */
+	MPI_T_SCOPE_ALL_EQ, /*<< Can be writable in all connected processes with the same value */
+}MPC_T_cvar_scope;
+
+/** Retrieve the infos from a CVAR
+* @arg cvar_index The CVAR to querry
+* @arg name The name of the CVAR
+* @arg name_len Length of the target buffer 
+* @arg verbosity The verbosity level of this CVAR \ref MPC_T_Verbosity
+* @arg datatype The datatype returned by the CVAR
+* @arg enumtype The enumtype (optionnal) for description
+* @arg desc The description of the control variable
+* @arg desc_len THe length of the desc buffer
+* @arg bind Type of MPI object the variable is bound (see \ref MPC_T_Bind)
+* @arg scope Scope in which this variable can be manipulated (\ref MPC_T_CVAR_scope)
+* @return MPI Error
+*/
+int MPI_T_cvar_get_info( int cvar_index,
+			  char * name,
+			  int * name_len,
+			  int * verbosity, 
+              MPI_Datatype *datatype,
+              MPI_T_enum * enumtype ,
+              char * desc, 
+              int * desc_len, 
+              int * bind, 
+              int * scope );
+
+/** Get the index of a CVAR from its name
+* @arg name Name of the target CVAR
+* @arg cvar_index Index of the target CVAR
+* @return MPI_T_ERR_INVALID_NAME if not found 
+*/
+int MPI_T_cvar_get_index( const char * name, int * cvar_index );
+
+/** Forward declaration of the VAR container */
+
+struct MPC_T_data;
+
+/** CVAR Handles */
+
+#define MPI_T_CVAR_HANDLE_NULL  ((MPI_T_cvar_handle)NULL)
+
+typedef struct MPC_T_data* MPI_T_cvar_handle;
+
+/** Allocate a CVAR handle
+* @arg cvar_index Target CVAR index
+* @arg obj_handle Target MPI handle
+* @arg handle Handle to be created
+* @arg count Number of elements used to represent this variable
+* @return MPI Error
+*/
+int MPI_T_cvar_handle_alloc( int cvar_index , void * obj_handle, MPI_T_cvar_handle *handle, int * count );
+
+
+/** Free a CVAR handle
+* @arg handle Handle to be freed
+* @return MPI Error
+*/
+int MPI_T_cvar_handle_free( MPI_T_cvar_handle * handle );
+
+/** CVAR access */
+
+/** Read a control variables 
+* @arg handle A handle to a given CVAR
+* @arg buff Pointer to where to store the content 
+* @return MPI Error
+*/
+int MPI_T_cvar_read( MPI_T_cvar_handle handle, void * buff );
+
+/** Write a control variable
+* @arg handle A handle to a given CVAR
+* @arg buff The data to be written
+* @return MPI Error
+*/
+int MPI_T_cvar_write( MPI_T_cvar_handle handle, const void * buff );
+
+/** Performance variables (PVAR) */
+
+typedef enum
+{
+	MPC_T_PVAR_CLASS_NONE, /**<< Internal value to catch uninitialized */
+	MPI_T_PVAR_CLASS_STATE, /**<< A set of discrete states */
+	MPI_T_PVAR_CLASS_LEVEL, /**<< Utilization of a ressource */
+	MPI_T_PVAR_CLASS_SIZE, /**<< The size of a ressource */
+	MPI_T_PVAR_CLASS_PERCENTAGE, /**<< The percentage of a ressource use */
+	MPI_T_PVAR_CLASS_HIGHWATERMARK, /**<< High use of a ressource */
+	MPI_T_PVAR_CLASS_LOWWATERMARK, /**<< Low use of a ressource */
+	MPI_T_PVAR_CLASS_COUNTER, /**<< Number of occurences of an event */
+	MPI_T_PVAR_CLASS_AGGREGATE, /**<< Aggregated value of ressource */
+	MPI_T_PVAR_CLASS_TIMER, /**<< Aggregate time spent executing something */
+	MPI_T_PVAR_CLASS_GENERIC /**<< A generic class */
+}MPC_T_pvar_class;
+
+
+/** Get the number of PVAR
+* @arg num_pvar Number of PVAR
+* @return MPI Error
+*/
+int MPI_T_pvar_get_num( int * num_pvar );
+
+
+/** Get the informations associated with a PVAR
+* @arg pvar_index Index of the target PVAR
+* @arg name Name of the PVAR
+* @arg name_len Length of the target buffer for name
+* @arg verbosity Verbosity level associated with this PVAR
+* @arg var_class Class of the PVAR (see \ref MPC_T_pvar_class )
+* @arg datatype Datatype associated with this PVAR
+* @arg desc Description of the PVAR
+* @arg desc_lenght Lenght of the desc buffer
+* @arg bind Binding of this PVAR
+* @arg readonly Whether this PVAR is readlonly
+* @arg continuous Whether the PVAR variable can be started and stopped
+* @arg atomic Whether the PVAR can be attomically read and set
+* @return MPI Error
+*/
+int MPI_T_pvar_get_info( int pvar_index,
+			 char *name,
+			 int * name_len,
+			 int * verbosity,
+			 int * var_class,
+			 MPI_Datatype * datatype,
+			 MPI_T_enum * enumtype,
+			 char * desc,
+			 int * desc_len,
+			 int * bind,
+			 int * readonly,
+			 int * continuous,
+			 int * atomic );
+
+
+/** Get the index of a PVAR by name 
+* @arg name Name to look for
+* @arg var_class Class of the PVAR
+* @arg pvar_index Index of the PVAR found
+* @return MPI_T_ERR_INVALID_NAME if not found
+*/
+int MPI_T_pvar_get_index( char * name , int * pvar_class, int * pvar_index );
+
+/*** Performance experiment sessions */
+
+/* Forward declaration of the session container */
+struct MPC_T_session;
+
+#define MPI_T_PVAR_SESSION_NULL ((MPI_T_pvar_session)NULL)
+
+typedef struct MPC_T_session * MPI_T_pvar_session;
+
+/** Create a PVAR performance sessions
+* @arg session The session to create
+* @return MPI Erorr
+*/
+int MPI_T_pvar_session_create( MPI_T_pvar_session * session ); 
+
+/** Free a PVAR performance session
+* @arg session to be freed
+* @return MPI Error
+*/
+int MPI_T_pvar_session_free( MPI_T_pvar_session * session ); 
+
+/** PVAR Handle allocation */
+
+#define MPI_T_PVAR_ALL_HANDLES ((MPI_T_pvar_handle) -1)
+#define MPI_T_PVAR_HANDLE_NULL  ((MPI_T_pvar_handle)NULL)
+
+typedef struct MPC_T_data* MPI_T_pvar_handle;
+
+/** Allocate a new PVAR handle
+* @arg session Which session to bind the handle to
+* @arg pvar_index Index of the PVAR to bind
+* @arg obj_handle Reference to the MPI object to bind to
+* @arg handle New PVAR handle
+* @arg count Number of elements used to represent the variable
+* @return MPI Error
+*/
+int MPI_T_pvar_handle_alloc( MPI_T_pvar_session session,
+		  		             int pvar_index,
+                             void * obj_handle,
+                             MPI_T_pvar_handle * handle, 
+                             int * count );
+
+
+/** Release a PVAR handle
+* @arg handle PVAR handle to free
+* @return MPI Error
+*/
+int MPI_T_pvar_handle_free( MPI_T_pvar_handle * handle );
+
+/** PVAR start and stop */
+
+/** Start a performance variable
+* @arg session The performance experiment section to start
+* @arg handle The handle of the performance variable
+* @return MPI Error
+*/
+int MPI_T_pvar_start( MPI_T_pvar_session session, MPI_T_pvar_handle handle );
+
+/** Stop and MPIT PVAR
+* @arg session The performance experiment section
+* @arg handle The handle to manipulate
+*/
+int MPI_T_pvar_stop( MPI_T_pvar_session session, MPI_T_pvar_handle handle );
+
+/** PVAR Read and write */
+
+/** Read the value associated with a PVAR
+ * @arg session Performance experiment session to read from
+ * @arg handle Handle of the performance variable
+ * @arg buff Storage location where to write to
+ * @return MPI Error
+ */
+int MPI_T_pvar_read( MPI_T_pvar_session session, MPI_T_pvar_handle handle, void * buff );
+
+/** Read and reset the value associated with a PVAR
+ * @arg session Performance experiment session to read from
+ * @arg handle Handle of the performance variable
+ * @arg buff Storage location where to write to
+ * @return MPI Error
+ */
+int MPI_T_pvar_readreset( MPI_T_pvar_session session, MPI_T_pvar_handle handle, void * buff );
+
+/** Write the value associated with a PVAR
+ * @arg session Performance experiment session to read from
+ * @arg handle Handle of the performance variable
+ * @arg buff Storage location where to read from
+ * @return MPI Error
+ */
+int MPI_T_pvar_write( MPI_T_pvar_session session, MPI_T_pvar_handle handle, const void * buff );
+
+/** Reset the value associated with a PVAR
+ * @arg session Performance experiment session to read from
+ * @arg handle Handle of the performance variable
+ * @return MPI Error
+ */
+int MPI_T_pvar_reset( MPI_T_pvar_session session, MPI_T_pvar_handle handle );
+
+/** Variable categorization */
+
+/** Query the number of categories
+ * @arg num_cat The number of categories
+ * @return MPI Error
+ */
+int MPI_T_category_get_num( int * num_cat );
+
+
+/** Query infos related to a category
+ * @arg cat_index Category to be queried 
+ * @arg name Name of the category
+ * @arg name_len Buffer length for the name of the category
+ * @arg desc Description of the category
+ * @arg desc_len Length of the buffer for description of the category
+ * @arg num_cvars Number of control varaibles in the category
+ * @arg num_pvars Number of performance variables in the category
+ * @arg num_categories Number of categories inside the category
+ * @return MPI Error
+ */
+int MPI_T_category_get_info( int cat_index, 
+							 char * name, 
+							 int * name_len, 
+							 char * desc, 
+							 int * desc_len,
+							 int * num_cvars, 
+							 int * num_pvars,
+							 int * num_categories);
+
+/** Get index of a category by name
+ * @arg name Name to querry
+ * @arg Index of the category
+ * @return MPI_T_ERR_INVALID_NAME if not found
+ */
+int MPI_T_category_get_index( char * name, int * cat_index );
+
+/** Get the CVARS in a given category
+ * @arg cat_index THe index of the target category
+ * @arg len The length of the indices array
+ * @arg indices Array filled with the indices of the CVARS
+ * @return MPI Error
+ */
+int MPI_T_category_get_cvars( int cat_index, int len, int indices[]);
+
+/** Get the PVARS in a given category
+ * @arg cat_index THe index of the target category
+ * @arg len The length of the indices array
+ * @arg indices Array filled with the indices of the PVARS
+ * @return MPI Error
+ */
+int MPI_T_category_get_pvars( int cat_index, int len, int indices[]);
+
+/** Get the categories in a given category
+ * @arg cat_index THe index of the target category
+ * @arg len The length of the indices array
+ * @arg indices Array filled with the indices of the categories
+ * @return MPI Error
+ */
+int MPI_T_category_get_categories( int cat_index, int len, int indices[]);
+
+/** Check wether category information changed
+ * @arg stamp Value identifying the generation of categories
+ * @return MPI Error
+ */
+int MPI_T_category_changed( int * stamp );
+
+/*** THE END OF THE MPI TOOLS INTERFACE */
+
+
+
 /************************************************************************/
 /*  PMPI Profiling Interface                                            */
 /************************************************************************/
@@ -1249,6 +1568,74 @@ int PMPIX_Grequest_class_allocate( MPIX_Grequest_class  target_class, void *extr
 int PMPI_Free_mem (void *ptr);
 int PMPI_Alloc_mem(MPI_Aint size, MPI_Info info, void *baseptr);
 
+/* This is the MPI Tools Interface */
+
+int PMPI_T_init_thread( int required, int * provided );
+int PMPI_T_finalize( void );
+int PMPI_T_enum_get_info( MPI_T_enum enumtype, int * num, char * name, int * name_len );
+int PMPI_T_enum_get_item( MPI_T_enum enumtype, int index, int * value, char * name, int * name_len );
+int PMPI_T_cvar_get_num( int *num_cvar );
+int PMPI_T_cvar_get_info( int cvar_index,
+		   				  char * name,
+						  int * name_len,
+			  			  int * verbosity, 
+              			  MPI_Datatype *datatype,
+              			  MPI_T_enum * enumtype ,
+              			  char * desc, 
+              			  int * desc_len, 
+              			  int * bind, 
+              			  int * scope );
+int PMPI_T_cvar_get_index( const char * name, int * cvar_index );
+int PMPI_T_cvar_handle_alloc( int cvar_index , void * obj_handle, MPI_T_cvar_handle *handle, int * count );
+int PMPI_T_cvar_handle_free( MPI_T_cvar_handle * handle );
+int PMPI_T_cvar_read( MPI_T_cvar_handle handle, void * buff );
+int PMPI_T_cvar_write( MPI_T_cvar_handle handle, const void * buff );
+int PMPI_T_pvar_get_num( int * num_pvar );
+int PMPI_T_pvar_get_info( int pvar_index,
+			 			  char *name,
+			 			  int * name_len,
+			 			  int * verbosity,
+			 			  int * var_class,
+			 			  MPI_Datatype * datatype,
+			 			  MPI_T_enum * enumtype,
+			 			  char * desc,
+			 			  int * desc_len,
+			 			  int * bind,
+			 			  int * readonly,
+			 			  int * continuous,
+			 			  int * atomic );
+int PMPI_T_pvar_get_index( char * name , int * pvar_class, int * pvar_index );
+int PMPI_T_pvar_session_create( MPI_T_pvar_session * session ); 
+int PMPI_T_pvar_session_free( MPI_T_pvar_session * session ); 
+int PMPI_T_pvar_handle( MPI_T_pvar_session session,
+   		  		        int pvar_index,
+                        void * obj_handle,
+                        MPI_T_pvar_handle * handle, 
+                        int * count );
+
+
+int PMPI_T_pvar_handle_free( MPI_T_pvar_handle * handle );
+int PMPI_T_pvar_start( MPI_T_pvar_session session, MPI_T_pvar_handle handle );
+int PMPI_T_pvar_stop( MPI_T_pvar_session session, MPI_T_pvar_handle handle );
+int PMPI_T_pvar_read( MPI_T_pvar_session session, MPI_T_pvar_handle handle, void * buff );
+int PMPI_T_pvar_readreset( MPI_T_pvar_session session, MPI_T_pvar_handle handle, void * buff );
+int PMPI_T_pvar_write( MPI_T_pvar_session session, MPI_T_pvar_handle handle, const void * buff );
+int PMPI_T_pvar_reset( MPI_T_pvar_session session, MPI_T_pvar_handle handle );
+int PMPI_T_category_get_num( int * num_cat );
+int PMPI_T_category_get_info( int cat_index,
+							  char * name, 
+							  int * name_len, 
+							  char * desc, 
+							  int * desc_len,
+							  int * num_cvars, 
+							  int * num_pvars,
+							  int * num_categories);
+int PMPI_T_category_get_index( char * name, int * cat_index );
+int PMPI_T_category_get_cvars( int cat_index, int len, int indices[]);
+int PMPI_T_category_get_pvars( int cat_index, int len, int indices[]);
+int PMPI_T_category_get_categories( int cat_index, int len, int indices[]);
+int PMPI_T_category_changed( int * stamp );
+
 #endif /* MPI_BUILD_PROFILING */
 
 /************************************************************************/
@@ -1385,37 +1772,6 @@ int MPI_Dist_graph_create_adjacent(MPI_Comm ,int , const int [],const int [],int
 int MPI_File_create_errhandler(MPI_File_errhandler_function *, MPI_Errhandler *);
 int PMPI_File_create_errhandler(MPI_File_errhandler_function *file_errhandler_fn, MPI_Errhandler *errhandler);
 int MPI_File_call_errhandler(void * , int );
-
-/* MPI_T methods */
-int MPI_T_init_thread(int , int *);
-int MPI_T_finalize(void);
-
-int MPI_T_pvar_read(MPI_T_pvar_session , MPI_T_pvar_handle , void *);
-int MPI_T_pvar_write(MPI_T_pvar_session , MPI_T_pvar_handle , void *);
-int MPI_T_pvar_reset(MPI_T_pvar_session , MPI_T_pvar_handle );
-int MPI_T_pvar_get_num(int *);
-int MPI_T_pvar_get_info(int , char *, int *, int *, int *, MPI_Datatype *, MPI_T_enum *, char *, int *, int *, int *, int *, int *);
-int MPI_T_pvar_session_create(MPI_T_pvar_session *);
-int MPI_T_pvar_session_free(MPI_T_pvar_session *);
-int MPI_T_pvar_handle_alloc(MPI_T_pvar_session , int , void *, MPI_T_pvar_handle *, int *);
-int MPI_T_pvar_handle_free(MPI_T_pvar_session , MPI_T_pvar_handle *);
-int MPI_T_pvar_start(MPI_T_pvar_session , MPI_T_pvar_handle );
-int MPI_T_pvar_stop(MPI_T_pvar_session , MPI_T_pvar_handle );
-
-int MPI_T_cvar_read(MPI_T_cvar_handle , void *);
-int MPI_T_cvar_write(MPI_T_cvar_handle , void *);
-int MPI_T_cvar_get_num(int *);
-int MPI_T_cvar_get_info(int , char *, int *,int *, MPI_Datatype *, MPI_T_enum *,char *, int *, int *, int *);
-int MPI_T_cvar_handle_alloc(int , void *, MPI_T_cvar_handle *, int *);
-int MPI_T_cvar_handle_free(MPI_T_cvar_handle *);
-
-int MPI_T_category_get_pvars(int , int , int []);
-int MPI_T_category_get_num(int *);
-int MPI_T_category_get_categories(int , int , int []);
-int MPI_T_category_get_info(int , char *, int *, char *,int *, int *, int *, int *);
-int MPI_T_category_get_cvars(int , int , int []);
-
-int MPI_T_enum_get_info(MPI_T_enum , int *, char *, int *);
 
 /* MPIX methods */
 int MPIX_Comm_failure_ack( MPI_Comm  );
