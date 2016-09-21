@@ -397,7 +397,9 @@ for arg in "\$@" ; do
 
     # Update compiler arguments
     if [ \$addarg = yes ] ; then
-        allargs="\$allargs '\$qarg'"
+        # Thanks to Bernd Mohr for the following that handles quotes and spaces (see configure for explanation)
+        modarg=\`echo "x\$arg" | sed -e 's/^x//' -e 's/"/\\\\\"/g' -e s,\',%@%\',g -e 's/%@%/\\\\\/g' -e 's/ /\\\\\ /g' -e 's#(#\\\\\(#g' -e 's#)#\\\\\)#g'\`
+        allargs="\$allargs \$modarg"
     fi
 done
 EOF
