@@ -171,92 +171,85 @@ void sctk_barrier_hetero_messages_inter ( const sctk_communicator_t communicator
 	assume ( myself_ptr );
 	myself = ( myself_ptr - process_array );
 
-	ptp_internal = sctk_get_internal_ptp ( -1 );
+        ptp_internal = sctk_get_internal_ptp(-1, communicator);
 
-	total_max = log ( total ) / log ( barrier_arity );
-	total_max = pow ( barrier_arity, total_max );
+        total_max = log(total) / log(barrier_arity);
+        total_max = pow(barrier_arity, total_max);
 
-	if ( total_max < total )
-	{
-		total_max = total_max * barrier_arity;
-	}
+        if (total_max < total) {
+          total_max = total_max * barrier_arity;
+        }
 
-	assume ( total_max >= total );
+        assume(total_max >= total);
 
-	for ( i = barrier_arity; i <= total_max; i = i * barrier_arity )
-	{
-		if ( myself % i == 0 )
-		{
-			int src;
-			int j;
+        for (i = barrier_arity; i <= total_max; i = i * barrier_arity) {
+          if (myself % i == 0) {
+            int src;
+            int j;
 
-			src = myself;
+            src = myself;
 
-			for ( j = 1; j < barrier_arity; j++ )
-			{
-				if ( ( src + ( j * ( i / barrier_arity ) ) ) < total )
-				{
-					sctk_nodebug ( "Recv %d to %d", src + ( j * ( i / barrier_arity ) ), myself );
-					sctk_hetero_messages_recv ( communicator,
-					                            process_array[src + ( j * ( i / barrier_arity ) )],
-					                            process_array[myself],
-					                            0, &c, 1, SCTK_BARRIER_HETERO_MESSAGE, sctk_hetero_messages_get_item ( &table ), ptp_internal, 1, 1 );
-				}
-			}
+            for (j = 1; j < barrier_arity; j++) {
+              if ((src + (j * (i / barrier_arity))) < total) {
+                sctk_nodebug("Recv %d to %d", src + (j * (i / barrier_arity)),
+                             myself);
+                sctk_hetero_messages_recv(
+                    communicator,
+                    process_array[src + (j * (i / barrier_arity))],
+                    process_array[myself], 0, &c, 1,
+                    SCTK_BARRIER_HETERO_MESSAGE,
+                    sctk_hetero_messages_get_item(&table), ptp_internal, 1, 1);
+              }
+            }
 
-			sctk_hetero_messages_wait ( &table );
-		}
-		else
-		{
-			int dest;
+            sctk_hetero_messages_wait(&table);
+          } else {
+            int dest;
 
-			dest = ( myself / i ) * i;
+            dest = (myself / i) * i;
 
-			if ( dest >= 0 )
-			{
-				sctk_nodebug ( "send %d to %d", myself, dest );
-				sctk_hetero_messages_send ( communicator,
-				                            process_array[myself],
-				                            process_array[dest],
-				                            0, &c, 1, SCTK_BARRIER_HETERO_MESSAGE, sctk_hetero_messages_get_item ( &table ), 0, 1 );
-				sctk_nodebug ( "recv %d to %d", dest, myself );
-				sctk_hetero_messages_recv ( communicator,
-				                            process_array[dest],
-				                            process_array[myself],
-				                            1, &c, 1, SCTK_BARRIER_HETERO_MESSAGE, sctk_hetero_messages_get_item ( &table ), ptp_internal, 0, 1 );
-				sctk_hetero_messages_wait ( &table );
-				break;
-			}
-		}
-	}
+            if (dest >= 0) {
+              sctk_nodebug("send %d to %d", myself, dest);
+              sctk_hetero_messages_send(
+                  communicator, process_array[myself], process_array[dest], 0,
+                  &c, 1, SCTK_BARRIER_HETERO_MESSAGE,
+                  sctk_hetero_messages_get_item(&table), 0, 1);
+              sctk_nodebug("recv %d to %d", dest, myself);
+              sctk_hetero_messages_recv(
+                  communicator, process_array[dest], process_array[myself], 1,
+                  &c, 1, SCTK_BARRIER_HETERO_MESSAGE,
+                  sctk_hetero_messages_get_item(&table), ptp_internal, 0, 1);
+              sctk_hetero_messages_wait(&table);
+              break;
+            }
+          }
+        }
 
-	sctk_hetero_messages_wait ( &table );
+        sctk_hetero_messages_wait(&table);
 
-	for ( ; i >= barrier_arity ; i = i / barrier_arity )
-	{
-		if ( myself % i == 0 )
-		{
-			int dest;
-			int j;
+        for (; i >= barrier_arity; i = i / barrier_arity) {
+          if (myself % i == 0) {
+            int dest;
+            int j;
 
-			dest = myself;
+            dest = myself;
 
-			for ( j = 1; j < barrier_arity; j++ )
-			{
-				if ( ( dest + ( j * ( i / barrier_arity ) ) ) < total )
-				{
-					sctk_nodebug ( "send %d to %d", myself, dest + ( j * ( i / barrier_arity ) ) );
-					sctk_hetero_messages_send ( communicator,
-					                            process_array[myself],
-					                            process_array[dest + ( j * ( i / barrier_arity ) )],
-					                            1, &c, 1, SCTK_BARRIER_HETERO_MESSAGE, sctk_hetero_messages_get_item ( &table ), 1, 1 );
-				}
-			}
-		}
-	}
+            for (j = 1; j < barrier_arity; j++) {
+              if ((dest + (j * (i / barrier_arity))) < total) {
+                sctk_nodebug("send %d to %d", myself,
+                             dest + (j * (i / barrier_arity)));
+                sctk_hetero_messages_send(
+                    communicator, process_array[myself],
+                    process_array[dest + (j * (i / barrier_arity))], 1, &c, 1,
+                    SCTK_BARRIER_HETERO_MESSAGE,
+                    sctk_hetero_messages_get_item(&table), 1, 1);
+              }
+            }
+          }
+        }
 
-	sctk_hetero_messages_wait ( &table );
-	sctk_nodebug ( "End inter" );
+        sctk_hetero_messages_wait(&table);
+        sctk_nodebug("End inter");
 }
 
 static
@@ -360,66 +353,61 @@ void sctk_broadcast_hetero_messages_inter ( void *buffer, const size_t size,
 
 
 		related_myself = ( myself + total - root ) % total;
-		ptp_internal = sctk_get_internal_ptp ( -1 );
+                ptp_internal = sctk_get_internal_ptp(-1, communicator);
 
-		total_max = log ( total ) / log ( BROADCAST_ARRITY );
-		total_max = pow ( BROADCAST_ARRITY, total_max );
+                total_max = log(total) / log(BROADCAST_ARRITY);
+                total_max = pow(BROADCAST_ARRITY, total_max);
 
-		if ( total_max < total )
-		{
-			total_max = total_max * BROADCAST_ARRITY;
-		}
+                if (total_max < total) {
+                  total_max = total_max * BROADCAST_ARRITY;
+                }
 
-		assume ( total_max >= total );
+                assume(total_max >= total);
 
-		for ( i = BROADCAST_ARRITY; i <= total_max; i = i * BROADCAST_ARRITY )
-		{
-			if ( related_myself % i != 0 )
-			{
-				int dest;
+                for (i = BROADCAST_ARRITY; i <= total_max;
+                     i = i * BROADCAST_ARRITY) {
+                  if (related_myself % i != 0) {
+                    int dest;
 
-				dest = ( related_myself / i ) * i;
+                    dest = (related_myself / i) * i;
 
-				if ( dest >= 0 )
-				{
-					sctk_hetero_messages_recv ( communicator,
-					                            process_array[ ( dest + root ) % total],
-					                            process_array[myself],
-					                            root_process,
-					                            buffer, size, specific_tag, sctk_hetero_messages_get_item ( &table ), ptp_internal,
-					                            1, 1 );
-					sctk_hetero_messages_wait ( &table );
-					break;
-				}
-			}
-		}
+                    if (dest >= 0) {
+                      sctk_hetero_messages_recv(
+                          communicator, process_array[(dest + root) % total],
+                          process_array[myself], root_process, buffer, size,
+                          specific_tag, sctk_hetero_messages_get_item(&table),
+                          ptp_internal, 1, 1);
+                      sctk_hetero_messages_wait(&table);
+                      break;
+                    }
+                  }
+                }
 
-		for ( ; i >= BROADCAST_ARRITY ; i = i / BROADCAST_ARRITY )
-		{
-			if ( related_myself % i == 0 )
-			{
-				int dest;
-				int j;
+                for (; i >= BROADCAST_ARRITY; i = i / BROADCAST_ARRITY) {
+                  if (related_myself % i == 0) {
+                    int dest;
+                    int j;
 
-				dest = related_myself;
+                    dest = related_myself;
 
-				for ( j = 1; j < BROADCAST_ARRITY; j++ )
-				{
-					if ( ( dest + ( j * ( i / BROADCAST_ARRITY ) ) ) < total )
-					{
-						sctk_hetero_messages_send ( communicator,
-						                            process_array[myself],
-						                            process_array[ ( dest + root + ( j * ( i / BROADCAST_ARRITY ) ) ) % total],
-						                            root_process,
-						                            buffer, size, specific_tag,
-						                            sctk_hetero_messages_get_item ( &table ), ( size < broadcast_check_threshold ), ( size < broadcast_check_threshold ) );
-					}
-				}
-			}
-		}
+                    for (j = 1; j < BROADCAST_ARRITY; j++) {
+                      if ((dest + (j * (i / BROADCAST_ARRITY))) < total) {
+                        sctk_hetero_messages_send(
+                            communicator, process_array[myself],
+                            process_array[(dest + root +
+                                           (j * (i / BROADCAST_ARRITY))) %
+                                          total],
+                            root_process, buffer, size, specific_tag,
+                            sctk_hetero_messages_get_item(&table),
+                            (size < broadcast_check_threshold),
+                            (size < broadcast_check_threshold));
+                      }
+                    }
+                  }
+                }
 
-		sctk_hetero_messages_wait ( &table );
-	}
+                sctk_hetero_messages_wait(&table);
+        }
 }
 
 
@@ -582,113 +570,96 @@ static void sctk_allreduce_hetero_messages_intern_inter ( const void *buffer_in,
 	myself = ( myself_ptr - process_array );
 
 	/* We get the PTP list -1  */
-	ptp_internal = sctk_get_internal_ptp ( -1 );
+        ptp_internal = sctk_get_internal_ptp(-1, communicator);
 
-	total_max = log ( total ) / log ( ALLREDUCE_ARRITY );
-	total_max = pow ( ALLREDUCE_ARRITY, total_max );
+        total_max = log(total) / log(ALLREDUCE_ARRITY);
+        total_max = pow(ALLREDUCE_ARRITY, total_max);
 
-	if ( total_max < total )
-	{
-		total_max = total_max * ALLREDUCE_ARRITY;
-	}
+        if (total_max < total) {
+          total_max = total_max * ALLREDUCE_ARRITY;
+        }
 
-	assume ( total_max >= total );
+        assume(total_max >= total);
 
-	for ( i = ALLREDUCE_ARRITY; i <= total_max; i = i * ALLREDUCE_ARRITY )
-	{
-		if ( myself % i == 0 )
-		{
-			int src;
-			int j;
-			src = myself;
+        for (i = ALLREDUCE_ARRITY; i <= total_max; i = i * ALLREDUCE_ARRITY) {
+          if (myself % i == 0) {
+            int src;
+            int j;
+            src = myself;
 
-			for ( j = 1; j < ALLREDUCE_ARRITY; j++ )
-			{
-				if ( ( src + ( j * ( i / ALLREDUCE_ARRITY ) ) ) < total )
-				{
+            for (j = 1; j < ALLREDUCE_ARRITY; j++) {
+              if ((src + (j * (i / ALLREDUCE_ARRITY))) < total) {
 
-					sctk_nodebug ( "Recv from %d", src + ( j * ( i / ALLREDUCE_ARRITY ) ) );
-					sctk_hetero_messages_recv ( communicator,
-					                            process_array[src + ( j * ( i / ALLREDUCE_ARRITY ) )],
-					                            process_array[myself],
-					                            0, buffer_table[j - 1], size,
-					                            specific_tag,
-					                            sctk_hetero_messages_get_item ( &table ), ptp_internal, 0, 0 );
-				}
-			}
+                sctk_nodebug("Recv from %d",
+                             src + (j * (i / ALLREDUCE_ARRITY)));
+                sctk_hetero_messages_recv(
+                    communicator,
+                    process_array[src + (j * (i / ALLREDUCE_ARRITY))],
+                    process_array[myself], 0, buffer_table[j - 1], size,
+                    specific_tag, sctk_hetero_messages_get_item(&table),
+                    ptp_internal, 0, 0);
+              }
+            }
 
-			sctk_hetero_messages_wait ( &table );
+            sctk_hetero_messages_wait(&table);
 
-			for ( j = 1; j < ALLREDUCE_ARRITY; j++ )
-			{
-				if ( ( src + ( j * ( i / ALLREDUCE_ARRITY ) ) ) < total )
-				{
-					func ( buffer_table[j - 1], buffer_out, elem_number, data_type );
-				}
-			}
+            for (j = 1; j < ALLREDUCE_ARRITY; j++) {
+              if ((src + (j * (i / ALLREDUCE_ARRITY))) < total) {
+                func(buffer_table[j - 1], buffer_out, elem_number, data_type);
+              }
+            }
 
-		}
-		else
-		{
-			int dest;
+          } else {
+            int dest;
 
-			dest = ( myself / i ) * i;
+            dest = (myself / i) * i;
 
-			if ( dest >= 0 )
-			{
-				memcpy ( buffer_tmp, buffer_out, size );
-				sctk_nodebug ( "src %d Leaf send to %d", myself, dest );
-				sctk_hetero_messages_send ( communicator,
-				                            process_array[myself],
-				                            process_array[dest],
-				                            0, buffer_tmp, size,
-				                            specific_tag,
-				                            sctk_hetero_messages_get_item ( &table ), 1, 1 );
+            if (dest >= 0) {
+              memcpy(buffer_tmp, buffer_out, size);
+              sctk_nodebug("src %d Leaf send to %d", myself, dest);
+              sctk_hetero_messages_send(
+                  communicator, process_array[myself], process_array[dest], 0,
+                  buffer_tmp, size, specific_tag,
+                  sctk_hetero_messages_get_item(&table), 1, 1);
 
-				sctk_nodebug ( "Leaf Recv from %d", dest );
-				sctk_hetero_messages_recv ( communicator,
-				                            process_array[dest],
-				                            process_array[myself], 1, buffer_out, size,
-				                            specific_tag,
-				                            sctk_hetero_messages_get_item ( &table ), ptp_internal, 1, 1 );
-				sctk_hetero_messages_wait ( &table );
-				break;
-			}
+              sctk_nodebug("Leaf Recv from %d", dest);
+              sctk_hetero_messages_recv(
+                  communicator, process_array[dest], process_array[myself], 1,
+                  buffer_out, size, specific_tag,
+                  sctk_hetero_messages_get_item(&table), ptp_internal, 1, 1);
+              sctk_hetero_messages_wait(&table);
+              break;
+            }
+          }
+        }
 
-		}
-	}
+        sctk_hetero_messages_wait(&table);
 
-	sctk_hetero_messages_wait ( &table );
+        for (; i >= ALLREDUCE_ARRITY; i = i / ALLREDUCE_ARRITY) {
+          if (myself % i == 0) {
+            int dest;
+            int j;
 
-	for ( ; i >= ALLREDUCE_ARRITY ; i = i / ALLREDUCE_ARRITY )
-	{
-		if ( myself % i == 0 )
-		{
-			int dest;
-			int j;
+            dest = myself;
 
-			dest = myself;
+            for (j = 1; j < ALLREDUCE_ARRITY; j++) {
+              if ((dest + (j * (i / ALLREDUCE_ARRITY))) < total) {
+                sctk_nodebug("send to %d", dest + (j * (i / ALLREDUCE_ARRITY)));
+                sctk_hetero_messages_send(
+                    communicator, process_array[myself],
+                    process_array[dest + (j * (i / ALLREDUCE_ARRITY))], 1,
+                    buffer_out, size, specific_tag,
+                    sctk_hetero_messages_get_item(&table),
+                    (size < allreduce_check_threshold),
+                    (size < allreduce_check_threshold));
+              }
+            }
+          }
+        }
 
-			for ( j = 1; j < ALLREDUCE_ARRITY; j++ )
-			{
-				if ( ( dest + ( j * ( i / ALLREDUCE_ARRITY ) ) ) < total )
-				{
-					sctk_nodebug ( "send to %d", dest + ( j * ( i / ALLREDUCE_ARRITY ) ) );
-					sctk_hetero_messages_send ( communicator,
-					                            process_array[myself],
-					                            process_array[dest + ( j * ( i / ALLREDUCE_ARRITY ) )],
-					                            1, buffer_out, size,
-					                            specific_tag,
-					                            sctk_hetero_messages_get_item ( &table ),
-					                            ( size < allreduce_check_threshold ), ( size < allreduce_check_threshold ) );
-				}
-			}
-		}
-	}
-
-	sctk_hetero_messages_wait ( &table );
-	sctk_free ( buffer_tmp );
-	sctk_free ( buffer_table );
+        sctk_hetero_messages_wait(&table);
+        sctk_free(buffer_tmp);
+        sctk_free(buffer_table);
 }
 
 

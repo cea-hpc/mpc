@@ -549,14 +549,19 @@ void sctk_perform_messages_wait_init_request_type ( struct sctk_perform_messages
 /************************************************************************/
 
 void sctk_wait_all ( const int task, const sctk_communicator_t com );
-struct sctk_internal_ptp_s *sctk_get_internal_ptp ( int glob_id );
+struct sctk_internal_ptp_s *sctk_get_internal_ptp(int glob_id,
+                                                  sctk_communicator_t com);
 int sctk_is_net_message ( int dest );
 void sctk_ptp_per_task_init ( int i );
 void sctk_unregister_thread ( const int i );
 void sctk_notify_idle_message ();
 void sctk_notify_idle_message_inter ();
-sctk_reorder_list_t *sctk_ptp_get_reorder_from_destination ( int task );
+sctk_reorder_list_t *
+sctk_ptp_get_reorder_from_destination(int task,
+                                      sctk_communicator_t communicator);
 void sctk_inter_thread_perform_idle ( volatile int *data, int value, void ( *func ) ( void * ), void *arg );
+
+#define SCTK_PARALLEL_COMM_QUEUES_NUMBER 8
 
 /************************************************************************/
 /* Specific Message Tagging	                                          */

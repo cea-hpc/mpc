@@ -96,13 +96,17 @@ typedef struct sctk_task_specific_s
 
 	/* TODO */
 	struct mpc_mpi_data_s* mpc_mpi_data;
-	struct sctk_internal_ptp_s* my_ptp_internal;
+        struct sctk_internal_ptp_s **my_ptp_internal;
 
-	/* MPI_Info handling */
-	struct MPC_Info_factory info_fact; /**< This structure is used to store the association between MPI_Infos structs and their ID */
-	
-	/* At EXIT */
-	struct sctk_task_specific_atexit_s * exit_handlers; /**< These functions are called when tasks leaves (atexit) */
+        /* MPI_Info handling */
+        struct MPC_Info_factory
+            info_fact; /**< This structure is used to store the association
+                          between MPI_Infos structs and their ID */
+
+        /* At EXIT */
+        struct sctk_task_specific_atexit_s
+            *exit_handlers; /**< These functions are called when tasks leaves
+                               (atexit) */
 } sctk_task_specific_t;
 
 

@@ -102,11 +102,22 @@ int sctk_cancel_message ( sctk_request_t *msg )
 /*Structres                                                         */
 /********************************************************************/
 
+/* typedef struct */
+/* { */
+/* 	/\*   sctk_communicator_t comm; *\/ */
+/* 	int destination; */
+/* } sctk_comm_dest_key_t; */
+
 typedef struct
 {
-	/*   sctk_communicator_t comm; */
-	int destination;
+  sctk_communicator_t comm;
+  int dest_src;
 } sctk_comm_dest_key_t;
+#define sctk_set_comm_dest_key(key, rank, com)                                 \
+  do {                                                                         \
+    key.dest_src = rank;                                                       \
+    key.comm = com;                                                            \
+  } while (0)
 
 typedef struct
 {
@@ -199,14 +210,17 @@ void sctk_message_isend_class_src( int src , int dest, void * data, size_t size,
 		return;
 	}
 
-	struct sctk_internal_ptp_s * ptp_internal = sctk_get_internal_ptp ( src );
-	
-	sctk_init_request(req,comm, REQUEST_SEND);
-	
-	sctk_thread_ptp_message_t *msg = sctk_create_header( src, SCTK_MESSAGE_CONTIGUOUS);
-	sctk_add_adress_in_message( msg, data, size);
-	sctk_set_header_in_message( msg, tag, comm, src, dest, req, size, class, SCTK_DATATYPE_IGNORE);
-	sctk_send_message (msg);
+        struct sctk_internal_ptp_s *ptp_internal =
+            sctk_get_internal_ptp(src, comm);
+
+        sctk_init_request(req, comm, REQUEST_SEND);
+
+        sctk_thread_ptp_message_t *msg =
+            sctk_create_header(src, SCTK_MESSAGE_CONTIGUOUS);
+        sctk_add_adress_in_message(msg, data, size);
+        sctk_set_header_in_message(msg, tag, comm, src, dest, req, size, class,
+                                   SCTK_DATATYPE_IGNORE);
+        sctk_send_message(msg);
 }
 
 
@@ -226,14 +240,17 @@ void sctk_message_irecv_class_dest( int src, int dest, void * buffer, size_t siz
 		return;
           }
 
-	struct sctk_internal_ptp_s * ptp_internal = sctk_get_internal_ptp ( dest );
-	
-	sctk_init_request(req,comm, REQUEST_RECV);
-	
-	sctk_thread_ptp_message_t *msg = sctk_create_header( src, SCTK_MESSAGE_CONTIGUOUS);
-	sctk_add_adress_in_message( msg, buffer, size);
-	sctk_set_header_in_message( msg, tag, comm, src, dest, req, size, class, SCTK_DATATYPE_IGNORE);
-	sctk_recv_message (msg,ptp_internal, 0);
+          struct sctk_internal_ptp_s *ptp_internal =
+              sctk_get_internal_ptp(dest, comm);
+
+          sctk_init_request(req, comm, REQUEST_RECV);
+
+          sctk_thread_ptp_message_t *msg =
+              sctk_create_header(src, SCTK_MESSAGE_CONTIGUOUS);
+          sctk_add_adress_in_message(msg, buffer, size);
+          sctk_set_header_in_message(msg, tag, comm, src, dest, req, size,
+                                     class, SCTK_DATATYPE_IGNORE);
+          sctk_recv_message(msg, ptp_internal, 0);
 }
 
 void sctk_message_irecv_class( int src, void * buffer, size_t size, int tag, sctk_communicator_t comm , sctk_message_class_t class, sctk_request_t *req )
@@ -452,7 +469,7 @@ static inline void sctk_internal_ptp_add_send_incomming ( sctk_internal_ptp_t *t
 static sctk_internal_ptp_t *sctk_ptp_table = NULL;
 /* Table where all msg lists for the current VP are stored */
 __thread sctk_internal_ptp_t *sctk_ptp_table_on_vp = NULL;
-static sctk_internal_ptp_t **sctk_ptp_array = NULL;
+static sctk_internal_ptp_t ***sctk_ptp_array = NULL;
 /* List for process specific messages */
 static sctk_internal_ptp_t *sctk_ptp_admin = NULL;
 static int sctk_ptp_array_start = 0;
@@ -507,89 +524,42 @@ sctk_ptp_table_read_unlock()
 }
 
 /*
- * Loop on all internal ptp on the node, including the 'sctk_admin_ptp' list
- * The 'func' function is called for each element found.
- * The 'return_on_found' indicates if the function returns if an element has been found.
- */
-#if 0
-static void sctk_ptp_table_loop ( int ( *func ) ( sctk_internal_ptp_t *pair ), char return_on_found )
-{
-	sctk_internal_ptp_t *pair;
-	sctk_internal_ptp_t *tmp;
-	int ret;
-
-	sctk_ptp_table_read_lock();
-
-	if ( sctk_migration_mode )
-	{
-		HASH_ITER ( hh, sctk_ptp_table, pair, tmp )
-		{
-			ret += func ( tmp );
-
-			if ( ( ret > 0 ) && return_on_found )
-				break;
-		}
-	}
-	else
-	{
-		if ( sctk_ptp_array == NULL )
-		{
-			sctk_ptp_table_read_unlock();
-			return;
-		}
-
-		int i;
-		int max = ( sctk_ptp_array_end - sctk_ptp_array_start + 1 );
-
-		for ( i = 0; i < max; ++i )
-		{
-			if ( sctk_ptp_array[i] == NULL )
-				continue;
-
-			ret += func ( sctk_ptp_array[i] );
-
-			if ( ( ret > 0 ) && return_on_found )
-				break;
-		}
-	}
-
-	sctk_ptp_table_read_unlock();
-	return;
-}
-#endif
-/*
  * Find an internal ptp according the a key (this key represents the task number)
  */
-#define sctk_ptp_table_find(key,tmp)  do{				\
-    if(key.destination == -1){						\
-      tmp = sctk_ptp_admin;						\
-    } else {								\
-      if(sctk_migration_mode){						\
-	HASH_FIND(hh,sctk_ptp_table,&(key),sizeof(sctk_comm_dest_key_t),(tmp)); \
-      } else {								\
-	int __dest__id;							\
-	__dest__id = key.destination - sctk_ptp_array_start;		\
-	if((sctk_ptp_array != NULL) && (__dest__id >= 0)		\
-	   && (__dest__id <= sctk_ptp_array_end- sctk_ptp_array_start)){ \
-	  tmp = sctk_ptp_array[__dest__id];				\
-	} else {							\
-	  tmp = NULL;							\
-	}								\
-      }									\
-    }									\
-  }while(0)
+#define sctk_ptp_table_find(key, tmp)                                          \
+  do {                                                                         \
+    if (key.dest_src == -1) {                                                  \
+      tmp = sctk_ptp_admin;                                                    \
+    } else {                                                                   \
+      if (sctk_migration_mode) {                                               \
+        HASH_FIND(hh, sctk_ptp_table, &(key), sizeof(sctk_comm_dest_key_t),    \
+                  (tmp));                                                      \
+      } else {                                                                 \
+        int __dest__id;                                                        \
+        __dest__id = key.dest_src - sctk_ptp_array_start;                      \
+        if ((sctk_ptp_array != NULL) && (__dest__id >= 0) &&                   \
+            (__dest__id <= sctk_ptp_array_end - sctk_ptp_array_start)) {       \
+          tmp = sctk_ptp_array[__dest__id]                                     \
+                              [key.comm % SCTK_PARALLEL_COMM_QUEUES_NUMBER];   \
+        } else {                                                               \
+          tmp = NULL;                                                          \
+        }                                                                      \
+      }                                                                        \
+    }                                                                          \
+  } while (0)
 
-sctk_reorder_list_t *sctk_ptp_get_reorder_from_destination ( int task )
-{
-	struct sctk_internal_ptp_s *internal_ptp = NULL;
-	sctk_comm_dest_key_t key;
-	key.destination = task;
+sctk_reorder_list_t *
+sctk_ptp_get_reorder_from_destination(int task,
+                                      sctk_communicator_t communicator) {
+  struct sctk_internal_ptp_s *internal_ptp = NULL;
+  sctk_comm_dest_key_t key;
+  sctk_set_comm_dest_key(key, task, communicator);
 
-	sctk_ptp_table_read_lock();
-	sctk_ptp_table_find ( key, internal_ptp );
-	sctk_ptp_table_read_unlock();
+  sctk_ptp_table_read_lock();
+  sctk_ptp_table_find(key, internal_ptp);
+  sctk_ptp_table_read_unlock();
 
-	return & ( internal_ptp->reorder );
+  return &(internal_ptp->reorder);
 }
 
 
@@ -603,56 +573,68 @@ static inline void sctk_ptp_table_insert ( sctk_internal_ptp_t *tmp )
 	static volatile int done = 0;
 
 	/* If the destination is -1, the message is for the 'sctk_ptp_admin' list */
-	if ( tmp->key.destination == -1 )
-	{
-		sctk_ptp_admin = tmp;
-		/* Do not needed to be added */
-		return;
-	}
+        if (tmp->key.dest_src == -1) {
+          sctk_ptp_admin = tmp;
+          /* Do not needed to be added */
+          return;
+        }
+#if 0
+        {
+          /* Check if the entry has not been already added */
+          sctk_internal_ptp_t *internal_ptp;
+          sctk_ptp_table_find(tmp->key, internal_ptp);
+          assume(internal_ptp == NULL);
+        }
+#endif
+        sctk_spinlock_lock(&lock);
 
-	{
-		/* Check if the entry has not been already added */
-		sctk_internal_ptp_t *internal_ptp;
-		sctk_ptp_table_find ( tmp->key, internal_ptp );
-		assume ( internal_ptp == NULL );
-	}
+        /* Only one task allocate the structures */
+        if (done == 0) {
+          /* If migration disabled, we use the 'sctk_ptp_array' structure.*/
+          if (!sctk_migration_mode) {
+            sctk_ptp_array_start = sctk_get_first_task_local(SCTK_COMM_WORLD);
+            sctk_ptp_array_end = sctk_get_last_task_local(SCTK_COMM_WORLD);
+            sctk_ptp_array =
+                sctk_malloc((sctk_ptp_array_end - sctk_ptp_array_start + 1) *
+                            sizeof(sctk_internal_ptp_t **));
+            memset(sctk_ptp_array, 0,
+                   (sctk_ptp_array_end - sctk_ptp_array_start + 1) *
+                       sizeof(sctk_internal_ptp_t **));
+          }
 
-	sctk_spinlock_lock ( &lock );
+          done = 1;
+        }
 
-	/* Only one task allocate the structures */
-	if ( done == 0 )
-	{
-		/* If migration disabled, we use the 'sctk_ptp_array' structure.*/
-		if ( !sctk_migration_mode )
-		{
-			sctk_ptp_array_start = sctk_get_first_task_local ( SCTK_COMM_WORLD );
-			sctk_ptp_array_end = sctk_get_last_task_local ( SCTK_COMM_WORLD );
-			sctk_ptp_array = sctk_malloc ( ( sctk_ptp_array_end - sctk_ptp_array_start + 1 ) * sizeof ( sctk_internal_ptp_t * ) );
-			memset ( sctk_ptp_array, 0, ( sctk_ptp_array_end - sctk_ptp_array_start + 1 ) *sizeof ( sctk_internal_ptp_t * ) );
-		}
+        sctk_ptp_table_write_lock();
 
-		done = 1;
-	}
+        /* If migration enabled, we add the current list to sctk_ptp_table */
+        if (sctk_migration_mode) {
+          HASH_ADD(hh, sctk_ptp_table, key, sizeof(sctk_comm_dest_key_t), tmp);
+        } else {
+          assume(tmp->key.dest_src >= sctk_ptp_array_start);
+          assume(tmp->key.dest_src <= sctk_ptp_array_end);
+          if (sctk_ptp_array[tmp->key.dest_src - sctk_ptp_array_start] ==
+              NULL) {
+            sctk_ptp_array[tmp->key.dest_src - sctk_ptp_array_start] =
+                sctk_malloc(SCTK_PARALLEL_COMM_QUEUES_NUMBER *
+                            sizeof(sctk_internal_ptp_t *));
+            memset(sctk_ptp_array[tmp->key.dest_src - sctk_ptp_array_start], 0,
+                   SCTK_PARALLEL_COMM_QUEUES_NUMBER *
+                       sizeof(sctk_internal_ptp_t *));
+          }
+          assume(sctk_ptp_array[tmp->key.dest_src - sctk_ptp_array_start]
+                               [tmp->key.comm %
+                                SCTK_PARALLEL_COMM_QUEUES_NUMBER] == NULL);
+          /* Last thing which has to be done */
+          sctk_ptp_array[tmp->key.dest_src - sctk_ptp_array_start]
+                        [tmp->key.comm % SCTK_PARALLEL_COMM_QUEUES_NUMBER] =
+                            tmp;
+        }
 
-	sctk_ptp_table_write_lock();
-
-	/* If migration enabled, we add the current list to sctk_ptp_table */
-	if ( sctk_migration_mode )
-	{
-		HASH_ADD ( hh, sctk_ptp_table, key, sizeof ( sctk_comm_dest_key_t ), tmp );
-	}
-	else
-	{
-		assume ( tmp->key.destination >= sctk_ptp_array_start );
-		assume ( tmp->key.destination <= sctk_ptp_array_end );
-		assume ( sctk_ptp_array[tmp->key.destination - sctk_ptp_array_start] == NULL );
-		/* Last thing which has to be done */
-		sctk_ptp_array[tmp->key.destination - sctk_ptp_array_start] = tmp;
-	}
-
-	HASH_ADD ( hh_on_vp, sctk_ptp_table_on_vp, key, sizeof ( sctk_comm_dest_key_t ), tmp );
-	sctk_ptp_table_write_unlock();
-	sctk_spinlock_unlock ( &lock );
+        HASH_ADD(hh_on_vp, sctk_ptp_table_on_vp, key,
+                 sizeof(sctk_comm_dest_key_t), tmp);
+        sctk_ptp_table_write_unlock();
+        sctk_spinlock_unlock(&lock);
 }
 
 /********************************************************************/
@@ -1557,45 +1539,46 @@ void sctk_ptp_per_task_init ( int i )
 {
 	sctk_internal_ptp_t *tmp;
 	int j;
+        int k;
 
-	tmp = sctk_malloc ( sizeof ( sctk_internal_ptp_t ) );
-	memset ( tmp, 0, sizeof ( sctk_internal_ptp_t ) );
-	/*   tmp->key.comm = SCTK_COMM_WORLD; */
-	tmp->key.destination = i;
-	sctk_nodebug ( "Destination: %d", i );
+        for (k = 0; k < SCTK_PARALLEL_COMM_QUEUES_NUMBER; k++) {
+          tmp = sctk_malloc(sizeof(sctk_internal_ptp_t));
+          memset(tmp, 0, sizeof(sctk_internal_ptp_t));
+          /*   tmp->key.comm = SCTK_COMM_WORLD; */
+          sctk_set_comm_dest_key(tmp->key, i, k);
+          sctk_nodebug("Destination: %d", i);
 
-	/* Initialize reordering for the list */
-	sctk_reorder_list_init ( &tmp->reorder );
-	
-	/* Initialize the internal ptp lists */
-	sctk_internal_ptp_message_list_init ( & ( tmp->lists ) );
-	/* And insert them */
-	sctk_ptp_table_insert ( tmp );
+          /* Initialize reordering for the list */
+          sctk_reorder_list_init(&tmp->reorder);
 
-	/* Initialize the buffered_ptp_message list for the VP */
-	if ( buffered_ptp_message == NULL )
-	{
-		sctk_spinlock_lock ( &lock_buffered_ptp_message );
+          /* Initialize the internal ptp lists */
+          sctk_internal_ptp_message_list_init(&(tmp->lists));
+          /* And insert them */
+          sctk_ptp_table_insert(tmp);
 
-		/* List not already allocated. We create it */
-		if ( buffered_ptp_message == NULL )
-		{
-			sctk_thread_ptp_message_t *tmp;
-			tmp = sctk_malloc ( sizeof ( sctk_thread_ptp_message_t ) * BUFFERED_PTP_MESSAGE_NUMBER );
-			assume ( tmp );
+          /* Initialize the buffered_ptp_message list for the VP */
+          if (buffered_ptp_message == NULL) {
+            sctk_spinlock_lock(&lock_buffered_ptp_message);
 
-			/* Loop on all buffers and create a list */
-			for ( j = 0; j < BUFFERED_PTP_MESSAGE_NUMBER; ++j )
-			{
-				sctk_thread_ptp_message_t *entry = &tmp[j];
-				entry->from_buffered = 1;
-				/* Add it to the list */
-				LL_PREPEND ( buffered_ptp_message, entry );
-			}
-		}
+            /* List not already allocated. We create it */
+            if (buffered_ptp_message == NULL) {
+              sctk_thread_ptp_message_t *tmp;
+              tmp = sctk_malloc(sizeof(sctk_thread_ptp_message_t) *
+                                BUFFERED_PTP_MESSAGE_NUMBER);
+              assume(tmp);
 
-		sctk_spinlock_unlock ( &lock_buffered_ptp_message );
-	}
+              /* Loop on all buffers and create a list */
+              for (j = 0; j < BUFFERED_PTP_MESSAGE_NUMBER; ++j) {
+                sctk_thread_ptp_message_t *entry = &tmp[j];
+                entry->from_buffered = 1;
+                /* Add it to the list */
+                LL_PREPEND(buffered_ptp_message, entry);
+              }
+            }
+
+            sctk_spinlock_unlock(&lock_buffered_ptp_message);
+          }
+        }
 }
 
 /********************************************************************/
@@ -2345,29 +2328,33 @@ void sctk_perform_messages_wait_init (
 	sctk_comm_dest_key_t send_key;
 	int remote_task;
 	/* key.comm = request->header.communicator; */
-	recv_key.destination = request->header.destination_task;
-	send_key.destination = request->header.source_task;
+        sctk_set_comm_dest_key(recv_key, request->header.destination_task,
+                               request->header.communicator);
+        sctk_set_comm_dest_key(send_key, request->header.source_task,
+                               request->header.communicator);
 
-	sctk_ptp_table_read_lock();
-	/* Searching for the pending list corresponding to the
-	* dest task */
-	sctk_ptp_table_find ( recv_key, *recv_ptp );
-	sctk_ptp_table_find ( send_key, *send_ptp );
-	sctk_ptp_table_read_unlock();
+        sctk_ptp_table_read_lock();
+        /* Searching for the pending list corresponding to the
+        * dest task */
+        sctk_ptp_table_find(recv_key, *recv_ptp);
+        sctk_ptp_table_find(send_key, *send_ptp);
+        sctk_ptp_table_read_unlock();
 
-	/* Compute the rank of the remote process */
-	if ( request->header.source_task != SCTK_ANY_SOURCE && request->header.communicator != SCTK_COMM_NULL )
-	{
-		/* Convert task rank to process rank */
-		*source_task_id = sctk_get_rank ( request->header.communicator, request->header.source_task );
-		*remote_process = sctk_get_process_rank_from_task_rank ( *source_task_id );
-		sctk_nodebug ( "remote process=%d source=%d comm=%d", *remote_process, request->header.source_task, request->header.communicator );
-	}
-	else
-	{
-		*remote_process = -1;
-		*source_task_id = -1;
-	}
+        /* Compute the rank of the remote process */
+        if (request->header.source_task != SCTK_ANY_SOURCE &&
+            request->header.communicator != SCTK_COMM_NULL) {
+          /* Convert task rank to process rank */
+          *source_task_id = sctk_get_rank(request->header.communicator,
+                                          request->header.source_task);
+          *remote_process =
+              sctk_get_process_rank_from_task_rank(*source_task_id);
+          sctk_nodebug("remote process=%d source=%d comm=%d", *remote_process,
+                       request->header.source_task,
+                       request->header.communicator);
+        } else {
+          *remote_process = -1;
+          *source_task_id = -1;
+        }
 }
 
 /*
@@ -2613,10 +2600,10 @@ void sctk_wait_all ( const int task, const sctk_communicator_t com )
 	int i;
 
 	/* Get the pending list associated to the task */
-	pair = sctk_get_internal_ptp ( task );
-	sctk_assert ( pair );
+        pair = sctk_get_internal_ptp(task, com);
+        sctk_assert(pair);
 
-	TODO ( "Rewrite the following section" )
+        TODO("Rewrite the following section")
 #if 1
 
 	do
@@ -2710,82 +2697,75 @@ void sctk_send_message_try_check ( sctk_thread_ptp_message_t *msg, int perform_c
 		sctk_comm_dest_key_t src_key, dest_key;
 		sctk_internal_ptp_t *src_pair, * dest_pair;
 
-		dest_key.destination = SCTK_MSG_DEST_TASK ( msg );
-		src_key.destination = SCTK_MSG_SRC_TASK ( msg );
+                sctk_set_comm_dest_key(dest_key, SCTK_MSG_DEST_TASK(msg),
+                                       SCTK_MSG_COMMUNICATOR(msg));
+                sctk_set_comm_dest_key(src_key, SCTK_MSG_SRC_TASK(msg),
+                                       SCTK_MSG_COMMUNICATOR(msg));
 
-		assume ( SCTK_MSG_COMMUNICATOR ( msg ) >= 0 );
+                assume(SCTK_MSG_COMMUNICATOR(msg) >= 0);
 
-		if ( SCTK_MSG_COMPLETION_FLAG ( msg ) != NULL )
-		{
-			* ( SCTK_MSG_COMPLETION_FLAG ( msg ) ) = SCTK_MESSAGE_PENDING;
-		}
+                if (SCTK_MSG_COMPLETION_FLAG(msg) != NULL) {
+                  *(SCTK_MSG_COMPLETION_FLAG(msg)) = SCTK_MESSAGE_PENDING;
+                }
 
-		if ( msg->tail.request != NULL )
-		{
-			msg->tail.request->need_check_in_wait = msg->tail.need_check_in_wait;
-			msg->tail.request->request_type = REQUEST_SEND;
-			sctk_nodebug ( "Request %p %d", msg->tail.request, msg->tail.request->request_type );
-		}
+                if (msg->tail.request != NULL) {
+                  msg->tail.request->need_check_in_wait =
+                      msg->tail.need_check_in_wait;
+                  msg->tail.request->request_type = REQUEST_SEND;
+                  sctk_nodebug("Request %p %d", msg->tail.request,
+                               msg->tail.request->request_type);
+                }
 
-		msg->tail.remote_source = 0;
-		msg->tail.remote_destination = 0;
+                msg->tail.remote_source = 0;
+                msg->tail.remote_destination = 0;
 
-		/* We are searching for the corresponding pending list.
-		 * If we do not find any entry, we forward the message */
-		sctk_ptp_table_read_lock();
-		sctk_ptp_table_find ( dest_key, dest_pair );
-		sctk_ptp_table_find ( src_key, src_pair );
-		sctk_ptp_table_read_unlock();
+                /* We are searching for the corresponding pending list.
+                 * If we do not find any entry, we forward the message */
+                sctk_ptp_table_read_lock();
+                sctk_ptp_table_find(dest_key, dest_pair);
+                sctk_ptp_table_find(src_key, src_pair);
+                sctk_ptp_table_read_unlock();
 
-		if ( src_pair == NULL )
-		{
-			assume ( dest_pair );
-			msg->tail.internal_ptp = NULL;
-			/*       sctk_internal_ptp_add_pending(dest_pair,msg); */
-		}
-		else
-		{
-			sctk_internal_ptp_add_pending ( src_pair, msg );
-		}
+                if (src_pair == NULL) {
+                  assume(dest_pair);
+                  msg->tail.internal_ptp = NULL;
+                  /*       sctk_internal_ptp_add_pending(dest_pair,msg); */
+                } else {
+                  sctk_internal_ptp_add_pending(src_pair, msg);
+                }
 
-		if ( dest_pair != NULL )
-		{
-			sctk_internal_ptp_add_send_incomming ( dest_pair, msg );
+                if (dest_pair != NULL) {
+                  sctk_internal_ptp_add_send_incomming(dest_pair, msg);
 
-			/* If we ask for a checking, we check it */
-			if ( perform_check )
-			{
-				/* Try to match the message for the remote task */
-				int matched_nb = sctk_try_perform_messages_for_pair ( dest_pair );
-	#ifdef MPC_Profiler
+                  /* If we ask for a checking, we check it */
+                  if (perform_check) {
+                    /* Try to match the message for the remote task */
+                    int matched_nb =
+                        sctk_try_perform_messages_for_pair(dest_pair);
+#ifdef MPC_Profiler
 
-				switch ( matched_nb )
-				{
-					case -1:
-						SCTK_COUNTER_INC ( matching_locked, 1 );
-						break;
+                    switch (matched_nb) {
+                    case -1:
+                      SCTK_COUNTER_INC(matching_locked, 1);
+                      break;
 
-					case 0:
-						SCTK_COUNTER_INC ( matching_not_found, 1 );
-						break;
+                    case 0:
+                      SCTK_COUNTER_INC(matching_not_found, 1);
+                      break;
 
-					default:
-						SCTK_COUNTER_INC ( matching_found, 1 );
-						break;
-				}
+                    default:
+                      SCTK_COUNTER_INC(matching_found, 1);
+                      break;
+                    }
 
-	#endif
-			}
-		}
-		else
-		{
-			/*Entering low level comm and forwarding the message*/
-			msg->tail.remote_destination = 1;
-			sctk_network_send_message ( msg );
-		}
-	
-	}
-
+#endif
+                  }
+                } else {
+                  /*Entering low level comm and forwarding the message*/
+                  msg->tail.remote_destination = 1;
+                  sctk_network_send_message(msg);
+                }
+        }
 }
 
 /*
@@ -2825,66 +2805,62 @@ void sctk_recv_message_try_check ( sctk_thread_ptp_message_t *msg, sctk_internal
 	sctk_comm_dest_key_t send_key;
 	sctk_internal_ptp_t *send_ptp = NULL;
 
-	send_key.destination = SCTK_MSG_SRC_TASK ( msg );
+        sctk_set_comm_dest_key(send_key, SCTK_MSG_SRC_TASK(msg),
+                               SCTK_MSG_COMMUNICATOR(msg));
 
-	if ( SCTK_MSG_COMPLETION_FLAG ( msg ) != NULL )
-	{
-		* ( SCTK_MSG_COMPLETION_FLAG ( msg ) ) = SCTK_MESSAGE_PENDING;
-	}
+        if (SCTK_MSG_COMPLETION_FLAG(msg) != NULL) {
+          *(SCTK_MSG_COMPLETION_FLAG(msg)) = SCTK_MESSAGE_PENDING;
+        }
 
-	if ( msg->tail.request != NULL )
-	{
-		msg->tail.request->request_type = REQUEST_RECV;
-		msg->tail.request->need_check_in_wait = msg->tail.need_check_in_wait;
-	}
+        if (msg->tail.request != NULL) {
+          msg->tail.request->request_type = REQUEST_RECV;
+          msg->tail.request->need_check_in_wait = msg->tail.need_check_in_wait;
+        }
 
-	msg->tail.remote_source = 0;
-	msg->tail.remote_destination = 0;
+        msg->tail.remote_source = 0;
+        msg->tail.remote_destination = 0;
 
-	/* We are searching for the list corresponding to the
-	 * task which receives the message */
-	sctk_ptp_table_read_lock();
+        /* We are searching for the list corresponding to the
+         * task which receives the message */
+        sctk_ptp_table_read_lock();
 
-	if ( recv_ptp == NULL )
-	{
-		sctk_comm_dest_key_t key;
-		key.destination = SCTK_MSG_DEST_TASK ( msg );
-		sctk_ptp_table_find ( key, recv_ptp );
-	}
+        if (recv_ptp == NULL) {
+          sctk_comm_dest_key_t key;
+          sctk_set_comm_dest_key(key, SCTK_MSG_DEST_TASK(msg),
+                                 SCTK_MSG_COMMUNICATOR(msg));
+          sctk_ptp_table_find(key, recv_ptp);
+        }
 
-	if ( !sctk_is_process_specific_message ( SCTK_MSG_HEADER( msg ) ) )
-	{
-		if ( send_key.destination != -1 )
-		{
-			sctk_ptp_table_find ( send_key, send_ptp );
-		}
-	}
+        if (!sctk_is_process_specific_message(SCTK_MSG_HEADER(msg))) {
+          if (send_key.dest_src != -1) {
+            sctk_ptp_table_find(send_key, send_ptp);
+          }
+        }
 
-	sctk_ptp_table_read_unlock();
-	/* We assume that the entry is found. If not, the message received is
-	 * for a task which is not registered on the node. Possible issue. */
-	assume ( recv_ptp );
+        sctk_ptp_table_read_unlock();
+        /* We assume that the entry is found. If not, the message received is
+         * for a task which is not registered on the node. Possible issue. */
+        assume(recv_ptp);
 
-	if ( send_ptp == NULL )
-	{
-		msg->tail.need_check_in_wait = 1;
-		/*Entering low level comm*/
-		msg->tail.remote_source = 1;
-		sctk_network_notify_recv_message ( msg );
-	}
+        if (send_ptp == NULL) {
+          msg->tail.need_check_in_wait = 1;
+          /*Entering low level comm*/
+          msg->tail.remote_source = 1;
+          sctk_network_notify_recv_message(msg);
+        }
 
-	/* We add the message to the pending list */
-	sctk_debug ( "Post recv from PROCESS [%d -> %d] TASK [%d -> %d] (%d) %p",
-	               SCTK_MSG_SRC_PROCESS ( msg ), SCTK_MSG_DEST_PROCESS ( msg ), SCTK_MSG_SRC_TASK ( msg ), SCTK_MSG_DEST_TASK ( msg ),  SCTK_MSG_TAG ( msg ), msg->tail.request );
-	sctk_internal_ptp_add_pending ( recv_ptp, msg );
-	sctk_internal_ptp_add_recv_incomming ( recv_ptp, msg );
+        /* We add the message to the pending list */
+        sctk_debug("Post recv from PROCESS [%d -> %d] TASK [%d -> %d] (%d) %p",
+                   SCTK_MSG_SRC_PROCESS(msg), SCTK_MSG_DEST_PROCESS(msg),
+                   SCTK_MSG_SRC_TASK(msg), SCTK_MSG_DEST_TASK(msg),
+                   SCTK_MSG_TAG(msg), msg->tail.request);
+        sctk_internal_ptp_add_pending(recv_ptp, msg);
+        sctk_internal_ptp_add_recv_incomming(recv_ptp, msg);
 
-	/* Iw we ask for a matching, we run it */
-	if ( perform_check )
-	{
-		sctk_try_perform_messages_for_pair ( recv_ptp );
-	}
-
+        /* Iw we ask for a matching, we run it */
+        if (perform_check) {
+          sctk_try_perform_messages_for_pair(recv_ptp);
+        }
 }
 
 /*
@@ -2903,20 +2879,20 @@ void sctk_recv_message ( sctk_thread_ptp_message_t *msg, sctk_internal_ptp_t *tm
 /*
  * Get the internal pending list for a specific task
  */
-struct sctk_internal_ptp_s *sctk_get_internal_ptp ( int glob_id )
-{
-	sctk_internal_ptp_t *tmp = NULL;
+struct sctk_internal_ptp_s *sctk_get_internal_ptp(int glob_id,
+                                                  sctk_communicator_t com) {
+  sctk_internal_ptp_t *tmp = NULL;
 
-	if ( !sctk_migration_mode )
-	{
-		sctk_comm_dest_key_t key;
-		key.destination = glob_id;
-		sctk_ptp_table_read_lock();
-		sctk_ptp_table_find ( key, tmp );
-		sctk_ptp_table_read_unlock();
-	}
+  if (!sctk_migration_mode) {
+    sctk_comm_dest_key_t key;
+    key.dest_src = glob_id;
+    key.comm = com;
+    sctk_ptp_table_read_lock();
+    sctk_ptp_table_find(key, tmp);
+    sctk_ptp_table_read_unlock();
+  }
 
-	return tmp;
+  return tmp;
 }
 
 /*
@@ -2927,13 +2903,13 @@ int sctk_is_net_message ( int dest )
 	sctk_comm_dest_key_t key;
 	sctk_internal_ptp_t *tmp;
 
-	key.destination = dest;
+        sctk_set_comm_dest_key(key, dest, 0);
 
-	sctk_ptp_table_read_lock();
-	sctk_ptp_table_find ( key, tmp );
-	sctk_ptp_table_read_unlock();
+        sctk_ptp_table_read_lock();
+        sctk_ptp_table_find(key, tmp);
+        sctk_ptp_table_read_unlock();
 
-	return ( tmp == NULL );
+        return (tmp == NULL);
 }
 
 
@@ -2964,39 +2940,35 @@ void sctk_probe_source_tag_func ( int destination, int source, int tag,
 	
 	msg->message_type.type = SCTK_P2P_MESSAGE;
 
-	dest_key.destination = world_destination;
+        sctk_set_comm_dest_key(dest_key, world_destination, comm);
 
-	if ( source != SCTK_ANY_SOURCE && src_ptp == NULL )
-	{
-		src_key.destination = world_source;
-	}
+        if (source != SCTK_ANY_SOURCE && src_ptp == NULL) {
+          sctk_set_comm_dest_key(src_key, world_source, comm);
+        }
 
-	sctk_ptp_table_read_lock();
-	sctk_ptp_table_find ( dest_key, dest_ptp );
+        sctk_ptp_table_read_lock();
+        sctk_ptp_table_find(dest_key, dest_ptp);
 
-	if ( source != SCTK_ANY_SOURCE )
-	{
-		sctk_ptp_table_find ( src_key, src_ptp );
-	}
+        if (source != SCTK_ANY_SOURCE) {
+          sctk_ptp_table_find(src_key, src_ptp);
+        }
 
-	sctk_ptp_table_read_unlock();
+        sctk_ptp_table_read_unlock();
 
-	if ( source != SCTK_ANY_SOURCE && src_ptp == NULL )
-	{
-		int src_process = sctk_get_process_rank_from_task_rank ( world_source );
-		sctk_network_notify_perform_message ( src_process, world_source, world_destination, 0 );
-	}
-	else
-		if ( source == SCTK_ANY_SOURCE )
-		{
-			sctk_network_notify_any_source_message ( world_destination, 0 );
-		}
+        if (source != SCTK_ANY_SOURCE && src_ptp == NULL) {
+          int src_process = sctk_get_process_rank_from_task_rank(world_source);
+          sctk_network_notify_perform_message(src_process, world_source,
+                                              world_destination, 0);
+        } else if (source == SCTK_ANY_SOURCE) {
+          sctk_network_notify_any_source_message(world_destination, 0);
+        }
 
-	assume ( dest_ptp != NULL );
-	sctk_internal_ptp_lock_pending ( & ( dest_ptp->lists ) );
-	*status = sctk_perform_messages_probe_matching ( dest_ptp, msg );
-	sctk_nodebug ( "Find source %d tag %d found ?%d", msg->source_task, msg->message_tag, *status );
-	sctk_internal_ptp_unlock_pending ( & ( dest_ptp->lists ) );
+        assume(dest_ptp != NULL);
+        sctk_internal_ptp_lock_pending(&(dest_ptp->lists));
+        *status = sctk_perform_messages_probe_matching(dest_ptp, msg);
+        sctk_nodebug("Find source %d tag %d found ?%d", msg->source_task,
+                     msg->message_tag, *status);
+        sctk_internal_ptp_unlock_pending(&(dest_ptp->lists));
 }
 void sctk_probe_source_any_tag ( int destination, int source,
                                  const sctk_communicator_t comm,

@@ -170,56 +170,63 @@ int sctk_send_message_from_network_reorder ( sctk_thread_ptp_message_t *msg )
 			return REORDER_NO_NUMBERING;
 		}
 
-		
-		sctk_reorder_list_t *list = sctk_ptp_get_reorder_from_destination ( dest_task );
-		sctk_nodebug("GET REORDER LIST FOR %d -> %d", src_task, dest_task );
-		tmp = sctk_get_task_from_reorder ( src_task, sctk_message_class_is_process_specific(SCTK_MSG_SPECIFIC_CLASS(msg)), list );
-		assume ( tmp != NULL );
-		sctk_nodebug ( "LIST %p ENTRY %p src %d dest %d", list, tmp, src_task, dest_task );
+                sctk_reorder_list_t *list =
+                    sctk_ptp_get_reorder_from_destination(
+                        dest_task, SCTK_MSG_COMMUNICATOR(msg));
+                sctk_nodebug("GET REORDER LIST FOR %d -> %d", src_task,
+                             dest_task);
+                tmp = sctk_get_task_from_reorder(
+                    src_task, sctk_message_class_is_process_specific(
+                                  SCTK_MSG_SPECIFIC_CLASS(msg)),
+                    list);
+                assume(tmp != NULL);
+                sctk_nodebug("LIST %p ENTRY %p src %d dest %d", list, tmp,
+                             src_task, dest_task);
 
-	
-		number = OPA_load_int ( & ( tmp->message_number_src ) );
-		sctk_nodebug ( "wait for %d recv %d", number, SCTK_MSG_NUMBER ( msg ) );
+                number = OPA_load_int(&(tmp->message_number_src));
+                sctk_nodebug("wait for %d recv %d", number,
+                             SCTK_MSG_NUMBER(msg));
 
-		if ( number == SCTK_MSG_NUMBER ( msg ) )
-		{
-			sctk_nodebug ( "Direct Send %d from %p", SCTK_MSG_NUMBER ( msg ), tmp );
+                if (number == SCTK_MSG_NUMBER(msg)) {
+                  sctk_nodebug("Direct Send %d from %p", SCTK_MSG_NUMBER(msg),
+                               tmp);
 
-			sctk_send_message_try_check ( msg, 1 );
+                  sctk_send_message_try_check(msg, 1);
 
-			OPA_fetch_and_incr_int ( & ( tmp->message_number_src ) );
+                  OPA_fetch_and_incr_int(&(tmp->message_number_src));
 
-			/*Search for pending messages*/
-			__send_pending_messages ( tmp );
+                  /*Search for pending messages*/
+                  __send_pending_messages(tmp);
 
-			return REORDER_FOUND_EXPECTED;
+                  return REORDER_FOUND_EXPECTED;
 
-		}
-		else
-		{
-			sctk_reorder_buffer_t *reorder;
+                } else {
+                  sctk_reorder_buffer_t *reorder;
 
-			reorder = & ( msg->tail.reorder );
+                  reorder = &(msg->tail.reorder);
 
-			reorder->key = SCTK_MSG_NUMBER ( msg );
-			reorder->msg = msg;
+                  reorder->key = SCTK_MSG_NUMBER(msg);
+                  reorder->msg = msg;
 
-			sctk_spinlock_lock ( & ( tmp->lock ) );
-			HASH_ADD ( hh, tmp->buffer, key, sizeof ( int ), reorder );
-			sctk_spinlock_unlock ( & ( tmp->lock ) );
-			sctk_nodebug ( "recv %d to %d - delay wait for %d recv %d (expecting:%d, tmp:%p)", SCTK_MSG_SRC_PROCESS ( msg ), SCTK_MSG_DEST_PROCESS ( msg ),
-				     number, SCTK_MSG_NUMBER ( msg ), number, tmp );
+                  sctk_spinlock_lock(&(tmp->lock));
+                  HASH_ADD(hh, tmp->buffer, key, sizeof(int), reorder);
+                  sctk_spinlock_unlock(&(tmp->lock));
+                  sctk_nodebug("recv %d to %d - delay wait for %d recv %d "
+                               "(expecting:%d, tmp:%p)",
+                               SCTK_MSG_SRC_PROCESS(msg),
+                               SCTK_MSG_DEST_PROCESS(msg), number,
+                               SCTK_MSG_NUMBER(msg), number, tmp);
 
-			/* XXX: we *MUST* check once again if there is no pending messages. During
-			* adding a msg to the pending list, a new message with a good PSN could be
-			* received. If we omit this line, the code can deadlock */
-			return __send_pending_messages ( tmp );
-		}
+                  /* XXX: we *MUST* check once again if there is no pending
+                  * messages. During
+                  * adding a msg to the pending list, a new message with a good
+                  * PSN could be
+                  * received. If we omit this line, the code can deadlock */
+                  return __send_pending_messages(tmp);
+                }
+        }
 
-	
-	}
-
-	return 0;
+        return 0;
 }
 
 /*
@@ -244,15 +251,20 @@ int sctk_prepare_send_message_to_network_reorder ( sctk_thread_ptp_message_t *ms
 
 	sctk_nodebug ( "msg->sctk_msg_get_use_message_numbering %d", SCTK_MSG_USE_MESSAGE_NUMBERING ( msg, 0 ); );
 
-	sctk_reorder_list_t *list = sctk_ptp_get_reorder_from_destination ( src_task );
-	tmp = sctk_get_task_from_reorder ( dest_task, sctk_message_class_is_process_specific(SCTK_MSG_SPECIFIC_CLASS(msg)), list );
-	assume ( tmp );
+        sctk_reorder_list_t *list = sctk_ptp_get_reorder_from_destination(
+            src_task, SCTK_MSG_COMMUNICATOR(msg));
+        tmp = sctk_get_task_from_reorder(dest_task,
+                                         sctk_message_class_is_process_specific(
+                                             SCTK_MSG_SPECIFIC_CLASS(msg)),
+                                         list);
+        assume(tmp);
 
-	/* Local numbering */
-	SCTK_MSG_USE_MESSAGE_NUMBERING_SET ( msg, 1 );
-	SCTK_MSG_NUMBER_SET ( msg , OPA_fetch_and_incr_int ( & ( tmp->message_number_dest ) ) );
-	sctk_nodebug ( "send %d to %d (number:%d)", SCTK_MSG_SRC_TASK ( msg ),
-	               SCTK_MSG_DEST_TASK ( msg ), SCTK_MSG_NUMBER ( msg ) );
+        /* Local numbering */
+        SCTK_MSG_USE_MESSAGE_NUMBERING_SET(msg, 1);
+        SCTK_MSG_NUMBER_SET(
+            msg, OPA_fetch_and_incr_int(&(tmp->message_number_dest)));
+        sctk_nodebug("send %d to %d (number:%d)", SCTK_MSG_SRC_TASK(msg),
+                     SCTK_MSG_DEST_TASK(msg), SCTK_MSG_NUMBER(msg));
 
-	return 0;
+        return 0;
 }
