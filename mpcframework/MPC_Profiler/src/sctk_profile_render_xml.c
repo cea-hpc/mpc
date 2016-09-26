@@ -153,7 +153,7 @@ void sctk_profile_render_xml_render_profile( struct sctk_profiler_array *array, 
 		char *to_unit_min = NULL;
 		char *to_unit_max = NULL;
 
-		char *desc = sctk_profile_render_sanitize_string( sctk_profiler_array_get_desc( id ) );
+		char *desc =  sctk_profiler_array_get_desc( id ) ;
 
 
 		if( sctk_profiler_array_get_type( id ) != SCTK_PROFILE_COUNTER_PROBE  )
