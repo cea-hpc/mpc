@@ -86,17 +86,15 @@ void sctk_profile_renderer_register_output_iface( struct sctk_profile_renderer *
 			sctk_profile_render_tex_register( rd );
 		break;
 		case SCTK_PROFILE_RENDER_XML :
-		  //	printf("Reg XML ! \n");
-			sctk_profile_render_xml_register( rd );
-			break;
-		case SCTK_PROFILE_RENDER_HTML :
-			sctk_profile_render_html_register( rd );
-		break;
-		default :
-			return;
-	}
-	
-	
+                  //	printf("Reg XML ! \n");
+                  sctk_profile_render_xml_register(rd);
+                  break;
+                case SCTK_PROFILE_RENDER_HTML:
+                  sctk_profile_render_html_register(rd);
+                  break;
+                default:
+                  return;
+                }
 }
 
 void sctk_profile_renderer_remove_output_iface( struct sctk_profile_renderer *rd )

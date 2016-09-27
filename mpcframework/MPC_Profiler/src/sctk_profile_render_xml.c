@@ -153,68 +153,98 @@ void sctk_profile_render_xml_render_profile( struct sctk_profiler_array *array, 
 		char *to_unit_min = NULL;
 		char *to_unit_max = NULL;
 
-		char *desc =  sctk_profiler_array_get_desc( id ) ;
+                char *desc = sctk_profiler_array_get_desc(id);
 
+                if (sctk_profiler_array_get_type(id) !=
+                    SCTK_PROFILE_COUNTER_PROBE) {
+                  if (sctk_profiler_array_get_type(id) ==
+                      SCTK_PROFILE_COUNTER_SIZE_PROBE) {
+                    to_unit_total = sctk_profile_renderer_convert_to_size(
+                        sctk_profiler_array_get_value(array, id), buffA);
+                    to_unit_avg = sctk_profile_renderer_convert_to_size(
+                        rd->ptree.entry_average_time[id], buffB);
+                    to_unit_min = sctk_profile_renderer_convert_to_size(
+                        sctk_profiler_array_get_min(array, id), buffC);
+                    to_unit_max = sctk_profile_renderer_convert_to_size(
+                        sctk_profiler_array_get_max(array, id), buffD);
+                  } else if (sctk_profiler_array_get_type(id) ==
+                             SCTK_PROFILE_TIME_PROBE) {
+                    to_unit_total = sctk_profile_renderer_convert_to_time(
+                        sctk_profiler_array_get_value(array, id), buffA);
+                    to_unit_avg = sctk_profile_renderer_convert_to_time(
+                        rd->ptree.entry_average_time[id], buffB);
+                    to_unit_min = sctk_profile_renderer_convert_to_time(
+                        sctk_profiler_array_get_min(array, id), buffC);
+                    to_unit_max = sctk_profile_renderer_convert_to_time(
+                        sctk_profiler_array_get_max(array, id), buffD);
+                  }
+                } else {
+                  sprintf(buffA, "%llu",
+                          (unsigned long long int)sctk_profiler_array_get_value(
+                              array, id));
+                  to_unit_total = buffA;
 
-		if( sctk_profiler_array_get_type( id ) != SCTK_PROFILE_COUNTER_PROBE  )
-		{
-			if( sctk_profiler_array_get_type( id ) == SCTK_PROFILE_COUNTER_SIZE_PROBE)
-			{
-				to_unit_total = sctk_profile_renderer_convert_to_size( sctk_profiler_array_get_value(array, id) , buffA );
-				to_unit_avg = sctk_profile_renderer_convert_to_size( rd->ptree.entry_average_time[id] , buffB );
-				to_unit_min = sctk_profile_renderer_convert_to_size( sctk_profiler_array_get_min(array, id) , buffC );
-				to_unit_max = sctk_profile_renderer_convert_to_size( sctk_profiler_array_get_max(array, id) , buffD );
-			}
-			else if( sctk_profiler_array_get_type( id ) == SCTK_PROFILE_TIME_PROBE )
-			{
-				to_unit_total = sctk_profile_renderer_convert_to_time( sctk_profiler_array_get_value(array, id) , buffA );
-				to_unit_avg = sctk_profile_renderer_convert_to_time( rd->ptree.entry_average_time[id] , buffB );
-				to_unit_min = sctk_profile_renderer_convert_to_time( sctk_profiler_array_get_min(array, id) , buffC );
-				to_unit_max = sctk_profile_renderer_convert_to_time( sctk_profiler_array_get_max(array, id) , buffD );
-			}
-		}
-		else
-		{
-			sprintf(buffA, "%llu", (unsigned long long int )sctk_profiler_array_get_value(array, id));
-			to_unit_total = buffA;
+                  sprintf(
+                      buffB, "%llu",
+                      (unsigned long long int)rd->ptree.entry_average_time[id]);
+                  to_unit_avg = buffB;
 
-			sprintf(buffB, "%llu", (unsigned long long int )rd->ptree.entry_average_time[id]);
-			to_unit_avg = buffB;
+                  sprintf(buffC, "%llu",
+                          (unsigned long long int)sctk_profiler_array_get_min(
+                              array, id));
+                  to_unit_min = buffC;
 
-			sprintf(buffC, "%llu", (unsigned long long int )sctk_profiler_array_get_min(array, id));
-			to_unit_min = buffC;
+                  sprintf(buffD, "%llu",
+                          (unsigned long long int)sctk_profiler_array_get_max(
+                              array, id));
+                  to_unit_max = buffD;
+                }
 
-			sprintf(buffD, "%llu", (unsigned long long int )sctk_profiler_array_get_max(array, id));
-			to_unit_max = buffD;
-		}
+                if (sctk_profiler_array_get_hits(array, id)) {
+                  sctk_profile_render_xml_print_n_time(rd->output_file, "\t",
+                                                       depth);
+                  fprintf(rd->output_file, "<probe name=\"%s\">\n", desc);
 
+                  sctk_profile_render_xml_print_n_time(rd->output_file, "\t",
+                                                       depth + 1);
+                  fprintf(rd->output_file, "<hits>%llu</hits>\n",
+                          (unsigned long long int)sctk_profiler_array_get_hits(
+                              array, id));
+                  sctk_profile_render_xml_print_n_time(rd->output_file, "\t",
+                                                       depth + 1);
+                  fprintf(rd->output_file, "<total>%s</total>\n",
+                          to_unit_total);
+                  sctk_profile_render_xml_print_n_time(rd->output_file, "\t",
+                                                       depth + 1);
+                  fprintf(rd->output_file, "<average>%s</average>\n",
+                          to_unit_avg);
+                  sctk_profile_render_xml_print_n_time(rd->output_file, "\t",
+                                                       depth + 1);
+                  fprintf(rd->output_file, "<min>%s</min>\n", to_unit_min);
+                  sctk_profile_render_xml_print_n_time(rd->output_file, "\t",
+                                                       depth + 1);
+                  fprintf(rd->output_file, "<max>%s</max>\n", to_unit_max);
+                  sctk_profile_render_xml_print_n_time(rd->output_file, "\t",
+                                                       depth + 1);
+                  fprintf(rd->output_file,
+                          "<absolute_percentage>%g</absolute_percentage>\n",
+                          rd->ptree.entry_total_percentage_time[id] * 100);
+                  sctk_profile_render_xml_print_n_time(rd->output_file, "\t",
+                                                       depth + 1);
+                  fprintf(rd->output_file,
+                          "<relative_percentage>%g</relative_percentage>\n",
+                          rd->ptree.entry_relative_percentage_time[id] * 100);
+                  sctk_profile_render_xml_print_n_time(rd->output_file, "\t",
+                                                       depth + 1);
+                  fprintf(
+                      rd->output_file, "<color>color_%d</color>\n",
+                      (depth < sctk_profile_get_config()->level_colors_size)
+                          ? (depth)
+                          : (sctk_profile_get_config()->level_colors_size - 1));
+                }
 
-		if( sctk_profiler_array_get_hits( array, id ) )
-		{
-			sctk_profile_render_xml_print_n_time( rd->output_file, "\t", depth);
-			fprintf( rd->output_file, "<probe name=\"%s\">\n", desc);
-
-			sctk_profile_render_xml_print_n_time( rd->output_file, "\t", depth + 1);
-			fprintf( rd->output_file, "<hits>%llu</hits>\n", (unsigned long long int )sctk_profiler_array_get_hits( array, id ));
-			sctk_profile_render_xml_print_n_time( rd->output_file, "\t", depth + 1);
-			fprintf( rd->output_file, "<total>%s</total>\n", to_unit_total);
-			sctk_profile_render_xml_print_n_time( rd->output_file, "\t", depth + 1);
-			fprintf( rd->output_file, "<average>%s</average>\n", to_unit_avg);
-			sctk_profile_render_xml_print_n_time( rd->output_file, "\t", depth + 1);
-			fprintf( rd->output_file, "<min>%s</min>\n", to_unit_min);
-			sctk_profile_render_xml_print_n_time( rd->output_file, "\t", depth + 1);
-			fprintf( rd->output_file, "<max>%s</max>\n", to_unit_max);
-			sctk_profile_render_xml_print_n_time( rd->output_file, "\t", depth + 1);
-			fprintf( rd->output_file, "<absolute_percentage>%g</absolute_percentage>\n", rd->ptree.entry_total_percentage_time[id] * 100 );
-			sctk_profile_render_xml_print_n_time( rd->output_file, "\t", depth + 1);
-			fprintf( rd->output_file, "<relative_percentage>%g</relative_percentage>\n", rd->ptree.entry_relative_percentage_time[id] * 100);
-			sctk_profile_render_xml_print_n_time( rd->output_file, "\t", depth + 1);
-			fprintf( rd->output_file, "<color>color_%d</color>\n", (depth < sctk_profile_get_config()->level_colors_size)?(depth):(sctk_profile_get_config()->level_colors_size - 1) );
-		}
-
-		free(desc);
-	}
-
+                free(desc);
+        }
 }
 
 
