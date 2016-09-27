@@ -78,17 +78,29 @@ void read_entry(entry_t *entry, char *line) {
     }                                                                          \
   } while (0)
 
+int file_nb = 0;
+
+char *status_char(int val) {
+  if (val == 0)
+    return "OK";
+  return "FAIL";
+}
+
 void check_entry(entry_t ref, entry_t cur, char *func) {
   int status;
-  fprintf(stderr, "Func %s:\n", func);
+  fprintf(stderr, "Func %s (file %d):\n", func, file_nb);
   check_jitter(i);
-  fprintf(stderr, "\ti     : %8d (%ld,%ld)\n", status, ref.i, cur.i);
+  fprintf(stderr, "\ti     : %6s (%ld,%ld)\n", status_char(status), ref.i,
+          cur.i);
   check_jitter(total);
-  fprintf(stderr, "\ttotal : %8d (%e,%e)\n", status, ref.total, cur.total);
+  fprintf(stderr, "\ttotal : %6s (%e,%e)\n", status_char(status), ref.total,
+          cur.total);
   check_jitter(min);
-  fprintf(stderr, "\tmin   : %8d (%e,%e)\n", status, ref.min, cur.min);
+  fprintf(stderr, "\tmin   : %6s (%e,%e)\n", status_char(status), ref.min,
+          cur.min);
   check_jitter(max);
-  fprintf(stderr, "\tmax   : %8d (%e,%e)\n", status, ref.max, cur.max);
+  fprintf(stderr, "\tmax   : %6s (%e,%e)\n", status_char(status), ref.max,
+          cur.max);
 }
 
 int main(int argc, char **argv) {
@@ -102,8 +114,8 @@ int main(int argc, char **argv) {
   char cur[4096];
   entry_t ref_entry;
   entry_t cur_entry;
-
   cur[0] = '\0';
+
   while ((read = getline(&line, &len, stdin)) != -1) {
     int done = 0;
     for (i = 0; i < read; i++) {
@@ -120,7 +132,9 @@ int main(int argc, char **argv) {
     if (strcmp(func_name, cur) != 0) {
       strcpy(cur, func_name);
       read_entry(&ref_entry, body);
+      file_nb = 0;
     } else {
+      file_nb++;
       read_entry(&cur_entry, body);
       check_entry(ref_entry, cur_entry, func_name);
     }
