@@ -51,6 +51,50 @@ EOF
 }
 
 #
+# Generate redirection to the main MPC compiler
+# For suporting backard compatibility
+#
+# $1: the name of the noflags script name
+# $2: the real MPC script name
+printf_noflags_compiler()
+{
+    echo "Generate $1"
+	echo "#!/bin/sh" > $1
+	cat <<EOF >> $1
+if test -z \${MPC_RPREFIX}; then
+	echo "################################################################"
+	echo "# No MPC_RPREFIX defined. it is the root of the actual prefix  #"
+	echo "# Yout should source the mpcvars.sh file in root of MPC prefix #"
+	echo "################################################################"
+	exit 1
+fi
+EOF
+	echo "\${MPC_RPREFIX}/\${MPC_HOST_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/$2 --use:command \"\$@\"" >> $1
+}
+
+#
+# Generate redirection to the main MPC compiler
+# For suporting backard compatibility
+#
+# $1: the name of the mpi script name
+# $2: the real MPC script name
+printf_mpi_compiler()
+{
+    echo "Generate $1"
+	echo "#!/bin/sh" > $1
+	cat <<EOF >> $1
+if test -z \${MPC_RPREFIX}; then
+	echo "################################################################"
+	echo "# No MPC_RPREFIX defined. it is the root of the actual prefix  #"
+	echo "# Yout should source the mpcvars.sh file in root of MPC prefix #"
+	echo "################################################################"
+	exit 1
+fi
+EOF
+	echo "\${MPC_RPREFIX}/\${MPC_HOST_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/$2 --use:command \"\$@\"" >> $1
+}
+
+#
 # Generate the main MPC compiler driver
 #
 # $1: target script (e.g., mpc_cc) 
@@ -289,7 +333,25 @@ for arg in "\$@" ; do
     -threads)
     CFLAGS="\$CFLAGS -threads"
     ;;
-
+--showme:link)
+SHOW_LINK="1"
+SHOW_ARGS="1"
+		addarg=no
+;;
+--showme:compile)
+SHOW_COMPILE="1"
+SHOW_ARGS="1"
+		addarg=no
+;;
+--showme:command)
+SHOW_COMMAND="1"
+SHOW_ARGS="1"
+		addarg=no
+;;
+--use:command)
+USE_COMMAND="1"
+		addarg=no
+;;
 	-fmpc-privatize|-fmpcprivatize|-f-mpc-privatize)
 		PRIV_FLAG="\$arg"
     	addarg=no
@@ -402,6 +464,11 @@ for arg in "\$@" ; do
         allargs="\$allargs \$modarg"
     fi
 done
+
+if test "\$USE_COMMAND" = "1"; then 
+MPC_HEADER_INCLUDE=""
+PRIV_FLAG=""
+fi 
 EOF
 if [ "$2" != "fortran" ];
 then
@@ -667,6 +734,23 @@ cat <<EOF >> $1
         fi
     done
 
+if test "\$SHOW_ARGS" = "1" ; then 
+if test "\$SHOW_COMPILE" = "1"; then 
+echo \$FFLAGS \$CFLAGS
+fi 
+if test "\$SHOW_LINK" = "1"; then 
+echo \$LIB_PATH \$LDFLAGS
+fi 
+if test "\$SHOW_COMMAND" = "1"; then 
+echo $3\$CC
+fi 
+else
+if test "\$USE_COMMAND" = "1"; then 
+LIB_PATH=""
+LDFLAGS=""
+CFLAGS=""
+FFLAGS=""
+fi 
     # If there are some source files on command line
     if [ ! -z "\${SOURCE_FILES}" ]
     then
@@ -689,10 +773,28 @@ cat <<EOF >> $1
     if test "\$rc" != "0" ; then
         exit \$rc
     fi
+fi
 EOF
 else
 cat <<EOF >> $1
+if test "\$SHOW_ARGS" = "1" ; then 
+if test "\$SHOW_COMPILE" = "1"; then 
+echo \$CFLAGS
+fi 
+if test "\$SHOW_LINK" = "1"; then 
+echo \$LIB_PATH \$LDFLAGS
+fi 
+if test "\$SHOW_COMMAND" = "1"; then 
+echo $3\$CC
+fi 
+else
+if test "\$USE_COMMAND" = "1"; then 
+LIB_PATH=""
+LDFLAGS=""
+CFLAGS=""
+fi 
     \$Show $3\$CC \$LIB_PATH \$LDFLAGS \$CFLAGS \$allargs \$LDFLAGS \${OUTPUT_FILE_ARGS} 
+fi
     # The first \$LDFLAGS should be removed, but still some issues... 
     # \$Show \$CC \$LIB_PATH \$CFLAGS \$allargs \$LDFLAGS \${OUTPUT_FILE_ARGS} 
     rc=\$?
@@ -874,6 +976,14 @@ printf_deprecated_compiler bin/mpc_g++ bin/mpc_cxx g++
 #deprecated F wrappers
 printf_deprecated_compiler bin/mpc_ifort bin/mpc_f77 ifort
 printf_deprecated_compiler bin/mpc_gfortran bin/mpc_f77 gfortran
+
+for i in bin/mpc_icc bin/mpc_gcc  bin/mpc_icpc bin/mpc_g++ bin/mpc_ifort bin/mpc_gfortran bin/mpc_cc bin/mpc_cxx bin/mpc_f77; do
+printf_noflags_compiler ${i}_noflags $i
+done
+
+for i in cc cxx f77 icc icpc ifort; do
+printf_mpi_compiler bin/mpi$i bin/mpc_$i
+done
 
 if test "$SCTK_CUDA" = "1"; then
 	sctk_echo "Preparing NVIDIA Compiler: mpc_nvcc"
