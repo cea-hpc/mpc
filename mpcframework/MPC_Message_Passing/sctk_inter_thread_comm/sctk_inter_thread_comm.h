@@ -28,7 +28,7 @@
 #include <sctk_collective_communications.h>
 #include <sctk_reorder.h>
 #include <sctk_ib.h>
-#include <opa_primitives.h>
+#include <sctk_atomics.h>
 #include <sctk_types.h>
 #include <sctk_portals.h>
 #ifdef __cplusplus
@@ -225,9 +225,10 @@ typedef struct sctk_thread_message_header_s
 	/* Ordering */
 	int message_number; /**< Message order (for reorder) */
 	char use_message_numbering; /**< Should this message be reordered */
-	/* Content */
-	sctk_datatype_t datatype; /**< Caried data-type (for matching check) */
-	size_t msg_size; /**< Message size */
+        sctk_atomics_int matching_id; /**< 0 By default unique id otherwise */
+        /* Content */
+        sctk_datatype_t datatype; /**< Caried data-type (for matching check) */
+        size_t msg_size;          /**< Message size */
 } sctk_thread_message_header_t;
 
 void sctk_probe_source_any_tag ( int destination, int source, const sctk_communicator_t comm, int *status, sctk_thread_message_header_t *msg );
@@ -260,6 +261,10 @@ void sctk_probe_any_source_tag ( int destination, const sctk_communicator_t comm
 
 #define SCTK_MSG_NUMBER( msg ) msg->body.header.message_number
 #define SCTK_MSG_NUMBER_SET( msg , number ) do{ msg->body.header.message_number = number; }while(0)
+
+#define SCTK_MSG_MATCH(msg) sctk_atomics_load_int(&msg->body.header.matching_id)
+#define SCTK_MSG_MATCH_SET(msg, match)                                         \
+  sctk_atomics_store_int(&msg->body.header.matching_id, match)
 
 #define SCTK_MSG_SPECIFIC_CLASS( msg ) msg->body.header.message_type.type
 #define SCTK_MSG_SPECIFIC_CLASS_SET( msg , specific_tag ) do{ msg->body.header.message_type.type = specific_tag; }while(0)
@@ -574,6 +579,14 @@ static inline int sctk_is_process_specific_message( sctk_thread_message_header_t
 	return sctk_message_class_is_process_specific( class );
 }
 
+/************************************************************************/
+/* Thread-safe message probing	                                        */
+/************************************************************************/
+
+void sctk_m_probe_matching_init();
+void sctk_m_probe_matching_set(int value);
+void sctk_m_probe_matching_reset();
+int sctk_m_probe_matching_get();
 
 #ifdef __cplusplus
 }

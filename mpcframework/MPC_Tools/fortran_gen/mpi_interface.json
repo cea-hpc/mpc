@@ -4742,5 +4742,98 @@
             "MPI_Win", 
             "win"
         ]
-    ]
+    ],
+	"MPI_Mprobe": [
+		[
+			"int",
+			"source"
+		],
+		[
+			"int",
+			"tag"
+		],
+		[
+			"MPI_Comm",
+			"comm"
+		],	
+		[
+			"MPI_Message*",
+			"message"
+		],
+		[
+			"MPI_Status*",
+			"status"
+		]
+	],
+	"MPI_Improbe": [
+		[
+			"int",
+			"source"
+		],
+		[
+			"int",
+			"tag"
+		],
+		[
+			"MPI_Comm",
+			"comm"
+		],
+		[
+			"bool",
+			"flag"
+		],
+		[
+			"MPI_Message*",
+			"message"
+		],
+		[
+			"MPI_Status*",
+			"status"
+		]
+	],
+	"MPI_Mrecv": [
+		[
+			"void*",
+			"buf"
+		],
+		[
+			"int",
+			"count"
+		],
+		[
+			"MPI_Datatype",
+			"datatype"
+		],
+		[
+			"MPI_Message*",
+			"message"
+		],
+		[
+			"MPI_Status*",
+			"status"
+		]
+	],
+	"MPI_Imrecv": [
+		[
+			"void*",
+			"buf"
+		],
+		[
+			"int",
+			"count"
+		],
+		[
+			"MPI_Datatype",
+			"datatype"
+		],
+		[
+			"MPI_Message*",
+			"message"
+		],
+		[
+			"MPI_Request*",
+			"status"
+		]
+	]
 }
+

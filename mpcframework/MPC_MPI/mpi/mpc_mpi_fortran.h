@@ -1805,7 +1805,27 @@ void ffunc (pmpi_unpack_external) (char * datarep  SCTK_CHAR_MIXED (len), void *
   sctk_free (ptr);
 }
 
+/* Matched Probe and Message Recv */
 
+void ffunc(pmpi_mprobe)(int *source, int *tag, MPI_Comm *comm,
+                        MPI_Message *message, MPI_Status *status, int *res) {
+  *res = PMPI_Mprobe(*source, *tag, *comm, message, status);
+}
+
+void ffunc(pmpi_mrecv)(void *buf, int *count, MPI_Datatype *datatype,
+                       MPI_Message *message, MPI_Status *status, int *res) {
+  *res = PMPI_Mrecv(buf, *count, *datatype, message, status);
+}
+
+void ffunc(pmpi_imrecv)(void *buf, int *count, MPI_Datatype *datatype,
+                        MPI_Message *message, MPI_Request *request, int *res) {
+  *res = PMPI_Imrecv(buf, *count, *datatype, message, request);
+}
+
+void ffunc(pmpi_improbe)(int *source, int *tag, MPI_Comm *comm, int *flag,
+                         MPI_Message *message, MPI_Status *status, int *res) {
+  *res = PMPI_Improbe(*source, *tag, *comm, flag, message, status);
+}
 
 /* MPI_Info Handling */
 
@@ -2096,11 +2116,6 @@ void ffunc (pmpix_comm_agree)(MPI_Comm comm, int *flag, int *res){not_implemente
 void ffunc (pmpix_comm_revoke)(MPI_Comm comm, int *res){not_implemented();}
 void ffunc (pmpix_comm_shrink)(MPI_Comm comm, MPI_Comm *newcomm, int *res){not_implemented();}
 
-/* probe and cancel */
-void ffunc (pmpi_mprobe)(int source, int tag, MPI_Comm comm, MPI_Message *message, MPI_Status *status, int *res){not_implemented();}
-void ffunc (pmpi_mrecv)(void *buf, int count, MPI_Datatype datatype, MPI_Message *message, MPI_Status *status, int *res){not_implemented();}
-void ffunc (pmpi_imrecv)(void *buf, int count, MPI_Datatype datatype, MPI_Message *message, MPI_Request *request, int *res){not_implemented();}
-void ffunc (pmpi_improbe)(int source, int tag, MPI_Comm comm, int *flag, MPI_Message *message, MPI_Status *status, int *res){not_implemented();}
 /************************************************************************/
 /*  END NOT IMPLEMENTED                                                     */
 /************************************************************************/

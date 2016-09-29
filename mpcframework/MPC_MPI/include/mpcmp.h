@@ -728,41 +728,39 @@ typedef enum
 
 /* Generalized Requests */
 
-  int MPC_Grequest_start( MPC_Grequest_query_function *query_fn, MPC_Grequest_free_function * free_fn,
-						  MPC_Grequest_cancel_function * cancel_fn, void *extra_state, MPC_Request * request);
-    
-  int MPC_Grequest_complete(  MPC_Request request); 
+  int MPC_Grequest_start(MPC_Grequest_query_function *query_fn,
+                         MPC_Grequest_free_function *free_fn,
+                         MPC_Grequest_cancel_function *cancel_fn,
+                         void *extra_state, MPC_Request *request);
 
+  int MPC_Grequest_complete(MPC_Request request);
 
-/* Extended Generalized Requests */
+  /* Extended Generalized Requests */
 
-int MPCX_Grequest_start(MPC_Grequest_query_function *query_fn,
-                        MPC_Grequest_free_function * free_fn,
-                        MPC_Grequest_cancel_function * cancel_fn, 
-                        MPCX_Grequest_poll_fn * poll_fn, 
-                        void *extra_state, 
-                        MPC_Request * request);
+  int MPCX_Grequest_start(MPC_Grequest_query_function *query_fn,
+                          MPC_Grequest_free_function *free_fn,
+                          MPC_Grequest_cancel_function *cancel_fn,
+                          MPCX_Grequest_poll_fn *poll_fn, void *extra_state,
+                          MPC_Request *request);
 
+  /* Extended Generalized Requests Classes */
 
-/* Extended Generalized Requests Classes */
+  int MPCX_GRequest_class_create(MPC_Grequest_query_function *query_fn,
+                                 MPC_Grequest_cancel_function *cancel_fn,
+                                 MPC_Grequest_free_function *free_fn,
+                                 MPCX_Grequest_poll_fn *poll_fn,
+                                 MPCX_Grequest_wait_fn *wait_fn,
+                                 MPCX_Request_class *new_class);
 
-int MPCX_GRequest_class_create( MPC_Grequest_query_function * query_fn,
-				MPC_Grequest_cancel_function * cancel_fn,
-				MPC_Grequest_free_function * free_fn,
-				MPCX_Grequest_poll_fn * poll_fn,
-				MPCX_Grequest_wait_fn * wait_fn,
-				MPCX_Request_class * new_class );
+  int MPCX_Grequest_class_allocate(MPCX_Request_class target_class,
+                                   void *extra_state, MPC_Request *request);
 
-int MPCX_Grequest_class_allocate( MPCX_Request_class target_class, void *extra_state, MPC_Request *request );
-
-
-/* Status Modification and query */
-int MPC_Status_set_elements(MPC_Status *, MPC_Datatype , int );
-int MPC_Status_set_elements_x(MPC_Status *, MPC_Datatype , MPC_Count );
-int MPC_Status_set_cancelled (MPC_Status *, int);
-int MPC_Request_get_status (MPC_Request, int *, MPC_Status *);
-int MPC_Test_cancelled (MPC_Status *, int *);
-
+  /* Status Modification and query */
+  int MPC_Status_set_elements(MPC_Status *, MPC_Datatype, int);
+  int MPC_Status_set_elements_x(MPC_Status *, MPC_Datatype, MPC_Count);
+  int MPC_Status_set_cancelled(MPC_Status *, int);
+  int MPC_Request_get_status(MPC_Request, int *, MPC_Status *);
+  int MPC_Test_cancelled(MPC_Status *, int *);
 
   /*MPI compatibility*/
 #define MPC_BSEND_OVERHEAD 0

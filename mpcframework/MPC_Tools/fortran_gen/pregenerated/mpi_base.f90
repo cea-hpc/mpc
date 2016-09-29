@@ -914,6 +914,18 @@ SUBROUTINE MPI_ADD_ERROR_STRING(errorcode,string,ierror)
 END SUBROUTINE MPI_ADD_ERROR_STRING
 
 
+SUBROUTINE MPI_MPROBE(source,tag,comm,&
+   message,status,ierror)
+   USE MPI_CONSTANTS,ONLY: MPI_STATUS_SIZE
+   INTEGER	source
+   INTEGER	tag
+   INTEGER	comm
+   INTEGER	message
+   INTEGER status(MPI_STATUS_SIZE)
+   INTEGER	ierror
+END SUBROUTINE MPI_MPROBE
+
+
 SUBROUTINE MPI_INFO_FREE(info,ierror)
    INTEGER	info
    INTEGER	ierror
@@ -1462,6 +1474,20 @@ SUBROUTINE MPI_WIN_WAIT(win,ierror)
    INTEGER	win
    INTEGER	ierror
 END SUBROUTINE MPI_WIN_WAIT
+
+
+SUBROUTINE MPI_IMPROBE(source,tag,comm,&
+   flag,message,status,&
+   ierror)
+   USE MPI_CONSTANTS,ONLY: MPI_STATUS_SIZE
+   INTEGER	source
+   INTEGER	tag
+   INTEGER	comm
+   LOGICAL	flag
+   INTEGER	message
+   INTEGER status(MPI_STATUS_SIZE)
+   INTEGER	ierror
+END SUBROUTINE MPI_IMPROBE
 
 
 SUBROUTINE MPI_TYPE_SIZE(type,size,ierror)

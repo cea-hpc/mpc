@@ -471,26 +471,23 @@ void ___sctk_control_message_process(void * dummy )
 		return;
 	}
 */
-	sctk_spinlock_lock( &__ctrl_msg_list_lock );
-	
-	if( __ctrl_msg_list != NULL )
-	{
-		/* In UTLIST head->prev is the tail */
-		cell = __ctrl_msg_list->prev;
-		DL_DELETE(__ctrl_msg_list,cell);
-		____ctrl_msg_list_count--;
-	}
-	
-	sctk_spinlock_unlock( &__ctrl_msg_list_lock );
-	
-	if( cell )
-	{
-		sctk_control_messages_perform( cell->msg );
-		sctk_free( cell );
-	}
-	
-	__inside_sctk_control_message_process = 0;
+        sctk_spinlock_lock_yield(&__ctrl_msg_list_lock);
 
+        if (__ctrl_msg_list != NULL) {
+          /* In UTLIST head->prev is the tail */
+          cell = __ctrl_msg_list->prev;
+          DL_DELETE(__ctrl_msg_list, cell);
+          ____ctrl_msg_list_count--;
+        }
+
+        sctk_spinlock_unlock(&__ctrl_msg_list_lock);
+
+        if (cell) {
+          sctk_control_messages_perform(cell->msg);
+          sctk_free(cell);
+        }
+
+        __inside_sctk_control_message_process = 0;
 }
 
 

@@ -22,6 +22,8 @@
 /* ######################################################################## */
 #include <mpc_mpi_internal.h>
 
+#include <sctk_ht.h>
+
 #ifndef SCTK_DO_NOT_HAVE_WEAK_SYMBOLS
 #include "mpc_mpi_weak.h"
 #endif
@@ -15777,6 +15779,332 @@ PMPI_Pcontrol (const int level, ...)
   return MPI_SUCCESS;
 }
 
+/*************************************
+*  MPI-3 : Matched Probe             *
+**************************************/
+
+/** This lock protects message handles attribution */
+static sctk_spinlock_t __message_handle_lock = 0;
+
+/** This is where message handle ids are generated */
+static int __message_handle_id = 1;
+
+/** This is a value telling if message handles have
+    been initialized (HT in particular) */
+static volatile int __message_handle_initialized = 0;
+
+/** This is the HT where handle conversion is done */
+struct MPCHT __message_handle_ht;
+
+/** This is the message handle data-structure */
+struct MPC_Message {
+  int message_id;
+  void *buff;
+  size_t size;
+  MPI_Comm comm;
+  MPI_Status status;
+  MPI_Request request;
+};
+
+/** This is how you init the handle table once */
+static void MPC_Message_handle_init_once() {
+  if (__message_handle_initialized)
+    return;
+
+  sctk_spinlock_lock_yield(&__message_handle_lock);
+  if (__message_handle_initialized == 0) {
+    __message_handle_initialized = 1;
+    MPCHT_init(&__message_handle_ht, 64);
+    sctk_m_probe_matching_init();
+  }
+
+  sctk_spinlock_unlock(&__message_handle_lock);
+}
+
+/** This is how you release the handle table once */
+static void MPC_Message_handle_release_once() {
+
+  sctk_spinlock_lock(&__message_handle_lock);
+
+  if (__message_handle_initialized == 1) {
+    __message_handle_initialized = 0;
+    MPCHT_release(&__message_handle_ht);
+  }
+
+  sctk_spinlock_unlock(&__message_handle_lock);
+}
+
+/** This is how you create a new mesage */
+struct MPC_Message *MPC_Message_new() {
+  MPC_Message_handle_init_once();
+
+  struct MPC_Message *new = sctk_malloc(sizeof(struct MPC_Message));
+
+  assume(new != NULL);
+
+  sctk_spinlock_lock(&__message_handle_lock);
+
+  new->message_id = __message_handle_id++;
+  new->request = MPI_REQUEST_NULL;
+  new->buff = NULL;
+
+  sctk_spinlock_unlock(&__message_handle_lock);
+
+  MPCHT_set(&__message_handle_ht, new->message_id, (void *)new);
+
+  return new;
+}
+
+/** This is how you free a received message */
+void MPC_Message_free(struct MPC_Message *m) {
+  MPC_Message_handle_init_once();
+  sctk_free(m->buff);
+  memset(m, 0, sizeof(struct MPC_Message));
+  sctk_free(m);
+}
+
+/** This is how you resolve and delete a message */
+struct MPC_Message *MPC_Message_retrieve(MPI_Message message) {
+
+  struct MPC_Message *ret =
+      (struct MPC_Message *)MPCHT_get(&__message_handle_ht, message);
+
+  if (ret) {
+    MPCHT_delete(&__message_handle_ht, message);
+  }
+
+  return ret;
+}
+
+/* probe and cancel */
+int PMPI_Mprobe(int source, int tag, MPI_Comm comm, MPI_Message *message,
+                MPI_Status *status) {
+  MPI_Status st;
+
+  if (status == MPI_STATUS_IGNORE) {
+    status = &st;
+  }
+
+  if (source == MPI_PROC_NULL) {
+    *message = MPI_MESSAGE_NO_PROC;
+    status->MPI_SOURCE = MPI_PROC_NULL;
+    status->MPI_TAG = MPI_ANY_TAG;
+    return MPI_SUCCESS;
+  }
+
+  struct MPC_Message *m = MPC_Message_new();
+
+  /* Do a probe & pick */
+
+  /* Here we set the probing value */
+  sctk_m_probe_matching_set(m->message_id);
+
+  int ret = PMPI_Probe(source, tag, comm, status);
+
+  if (ret != MPI_SUCCESS) {
+    return ret;
+  }
+
+  /* Allocate Memory */
+  int count = 0;
+  MPI_Get_count(status, MPI_CHAR, &count);
+  m->buff = sctk_malloc(count);
+  assume(m->buff);
+  m->size = count;
+
+  m->comm = comm;
+
+  /* Post Irecv */
+  PMPI_Irecv(m->buff, count, MPI_CHAR, status->MPI_SOURCE, tag, comm,
+             &m->request);
+
+  /* Return the message ID */
+  *((int *)message) = m->message_id;
+
+  sctk_m_probe_matching_reset();
+
+  return MPI_SUCCESS;
+}
+
+int PMPI_Improbe(int source, int tag, MPI_Comm comm, int *flag,
+                 MPI_Message *message, MPI_Status *status) {
+  MPI_Status st;
+
+  if (status == MPI_STATUS_IGNORE) {
+    status = &st;
+  }
+
+  if (source == MPI_PROC_NULL) {
+    *flag = 1;
+    *message = MPI_MESSAGE_NO_PROC;
+    status->MPI_SOURCE = MPI_PROC_NULL;
+    status->MPI_TAG = MPI_ANY_TAG;
+    return MPI_SUCCESS;
+  }
+
+  struct MPC_Message *m = MPC_Message_new();
+
+  sctk_m_probe_matching_set(m->message_id);
+  /* Do a probe & pick */
+  int ret = PMPI_Iprobe(source, tag, comm, flag, status);
+
+  if (ret != MPI_SUCCESS) {
+    return ret;
+  }
+
+  if (*flag) {
+
+    /* Allocate Memory */
+    int count = 0;
+    MPI_Get_count(status, MPI_CHAR, &count);
+    m->buff = sctk_malloc(count);
+    assume(m->buff);
+    m->size = count;
+
+    m->comm = comm;
+
+    /* Post Irecv */
+    PMPI_Irecv(m->buff, count, MPI_CHAR, status->MPI_SOURCE, tag, comm,
+               &m->request);
+
+    /* Return the message ID */
+    *((int *)message) = m->message_id;
+  } else {
+    MPC_Message_free(m);
+    *message = MPI_MESSAGE_NULL;
+  }
+
+  sctk_m_probe_matching_reset();
+
+  return MPI_SUCCESS;
+}
+
+int PMPI_Mrecv(void *buf, int count, MPI_Datatype datatype,
+               MPI_Message *message, MPI_Status *status) {
+  MPI_Status st;
+
+  if (status == MPI_STATUS_IGNORE) {
+    status = &st;
+  }
+
+  if (*message == MPI_MESSAGE_NO_PROC) {
+    *message = MPI_MESSAGE_NULL;
+    status->MPI_SOURCE = MPI_PROC_NULL;
+    status->MPI_TAG = MPI_ANY_TAG;
+    return MPI_SUCCESS;
+  }
+
+  struct MPC_Message *m = MPC_Message_retrieve(*message);
+
+  if (!m) {
+    return MPI_ERR_ARG;
+  }
+
+  /* This message is about to be consumed */
+  *message = MPI_MESSAGE_NULL;
+
+  sctk_nodebug(">>WAITINT FOR MESSAGE");
+  PMPI_Wait(&m->request, MPI_STATUS_IGNORE);
+
+  int pos = 0;
+
+  sctk_nodebug("<< DONE WAITINT FOR MESSAGE");
+
+  sctk_nodebug("UNPACK to %p", buf);
+  PMPI_Unpack(m->buff, m->size, &pos, buf, count, datatype, m->comm);
+
+  memcpy(status, &m->status, sizeof(MPI_Status));
+
+  MPC_Message_free(m);
+
+  return MPI_SUCCESS;
+}
+
+struct MPC_Message_poll {
+  struct MPC_Message *m;
+  MPI_Request *req;
+  void *buff;
+  int count;
+  MPI_Datatype datatype;
+};
+
+int MPI_Grequest_imrecv_query(void *extra_state, MPI_Status *status) {
+  return 0;
+}
+
+int MPI_Grequest_imrecv_poll(void *extra_state, MPI_Status *status) {
+  struct MPC_Message_poll *p = (struct MPC_Message_poll *)extra_state;
+
+  assert(p != NULL);
+
+  int flag = 0;
+  PMPI_Test(&p->m->request, &flag, MPI_STATUS_IGNORE);
+
+  if (flag == 1) {
+    /* Message here then unpack */
+    int pos = 0;
+    PMPI_Unpack(p->m->buff, p->m->size, &pos, p->buff, p->count, p->datatype,
+                p->m->comm);
+
+    memcpy(status, &p->m->status, sizeof(MPI_Status));
+
+    PMPI_Grequest_complete(*p->req);
+  }
+
+  return MPI_SUCCESS;
+}
+
+int MPI_Grequest_imrecv_cancel(void *extra_state, int complete) {
+  return MPI_SUCCESS;
+}
+
+int MPI_Grequest_imrecv_free(void *extra_state) {
+  struct MPC_Message_poll *p = (struct MPC_Message_poll *)extra_state;
+
+  MPC_Message_free(p->m);
+  sctk_free(p);
+
+  return MPI_SUCCESS;
+}
+
+int PMPI_Imrecv(void *buf, int count, MPI_Datatype datatype,
+                MPI_Message *message, MPI_Request *request) {
+
+  if (*message == MPI_MESSAGE_NO_PROC) {
+    *message = MPI_MESSAGE_NULL;
+    return MPI_SUCCESS;
+  }
+
+  struct MPC_Message *m = MPC_Message_retrieve(*message);
+
+  if (!m) {
+    return MPI_ERR_ARG;
+  }
+
+  /* This message is about to be consumed */
+  *message = MPI_MESSAGE_NULL;
+
+  /* Prepare a polling structure for generalized requests */
+  struct MPC_Message_poll *poll = sctk_malloc(sizeof(struct MPC_Message_poll));
+  assume(poll != NULL);
+
+  poll->req = request;
+  poll->m = m;
+  poll->buff = buf;
+  poll->count = count;
+  poll->datatype = datatype;
+
+  /* Start a generalized request to do the work */
+  PMPIX_Grequest_start(MPI_Grequest_imrecv_query, MPI_Grequest_imrecv_free,
+                       MPI_Grequest_imrecv_cancel, MPI_Grequest_imrecv_poll,
+                       (void *)poll, request);
+
+  return MPI_SUCCESS;
+}
+
+/*************************************
+*  Communicator Naming                *
+**************************************/
 
 int
 PMPI_Comm_get_name (MPI_Comm comm, char *comm_name, int *resultlen)
@@ -15795,6 +16123,10 @@ PMPI_Comm_set_name (MPI_Comm comm, char *comm_name)
   res = __INTERNAL__PMPI_Comm_set_name (comm, comm_name);
   SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
+
+/*************************************
+*  NULL Delete handlers              *
+**************************************/
 
 int MPC_Mpi_null_delete_fn( MPI_Datatype datatype, int type_keyval, void* attribute_val_out, void* extra_state )
 {
@@ -15883,7 +16215,10 @@ int MPC_Mpi_win_dup_fn( MPI_Comm comm, int comm_keyval, void* extra_state, void*
    return MPI_SUCCESS;
 }
 
-/* MPI-2 - Language interoperability - Transfer of Handles*/
+/*************************************
+*  MPI-2 : Fortran handle conversion *
+**************************************/
+
 MPI_Comm PMPI_Comm_f2c(MPI_Fint comm)
 {
 	return (MPI_Comm)comm;
@@ -16377,11 +16712,6 @@ int PMPIX_Comm_agree(MPI_Comm comm, int *flag){not_implemented();return MPI_ERR_
 int PMPIX_Comm_revoke(MPI_Comm comm){not_implemented();return MPI_ERR_INTERN;}
 int PMPIX_Comm_shrink(MPI_Comm comm, MPI_Comm *newcomm){not_implemented();return MPI_ERR_INTERN;}
 
-/* probe and cancel */
-int PMPI_Mprobe(int source, int tag, MPI_Comm comm, MPI_Message *message, MPI_Status *status){not_implemented();return MPI_ERR_INTERN;}
-int PMPI_Mrecv(void *buf, int count, MPI_Datatype datatype, MPI_Message *message, MPI_Status *status){not_implemented();return MPI_ERR_INTERN;}
-int PMPI_Imrecv(void *buf, int count, MPI_Datatype datatype, MPI_Message *message, MPI_Request *request){not_implemented();return MPI_ERR_INTERN;}
-int PMPI_Improbe(int source, int tag, MPI_Comm comm, int *flag, MPI_Message *message, MPI_Status *status){not_implemented();return MPI_ERR_INTERN;}
 /************************************************************************/
 /* END NOT IMPLEMENTED                                                     */
 /************************************************************************/

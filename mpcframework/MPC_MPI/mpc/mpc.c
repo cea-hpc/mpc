@@ -1371,19 +1371,20 @@ int PMPCX_Grequest_start_generic( MPC_Grequest_query_function *query_fn,
 	request->request_type = REQUEST_GENERALIZED;
 	/* Set not null as we want to be waited */
 	request->is_null = 0;
-	/* Fill in generalized request CTX */
-	request->pointer_to_source_request = (void *)request;
-	request->query_fn = query_fn;
-	request->free_fn = free_fn;
-	request->cancel_fn = cancel_fn;
-	request->poll_fn = poll_fn;
-	request->wait_fn = wait_fn;
-	request->extra_state = extra_state;
-	
-	/* We set the request as pending */
-	request->completion_flag = SCTK_MESSAGE_PENDING;
-	
-	MPC_ERROR_SUCESS()
+
+        /* Fill in generalized request CTX */
+        request->pointer_to_source_request = (void *)request;
+        request->query_fn = query_fn;
+        request->free_fn = free_fn;
+        request->cancel_fn = cancel_fn;
+        request->poll_fn = poll_fn;
+        request->wait_fn = wait_fn;
+        request->extra_state = extra_state;
+
+        /* We set the request as pending */
+        request->completion_flag = SCTK_MESSAGE_PENDING;
+
+        MPC_ERROR_SUCESS()
 }
 
 /** \brief Starts a generalized request with a polling function

@@ -388,7 +388,7 @@ static inline void sctk_internal_ptp_merge_pending ( sctk_internal_ptp_message_l
 
 static inline void sctk_internal_ptp_lock_pending ( sctk_internal_ptp_message_lists_t *lists )
 {
-	sctk_spinlock_lock ( & ( lists->pending_lock ) );
+  sctk_spinlock_lock_yield(&(lists->pending_lock));
 }
 
 static inline int sctk_internal_ptp_trylock_pending ( sctk_internal_ptp_message_lists_t *lists )
@@ -1936,19 +1936,30 @@ void sctk_set_header_in_message ( sctk_thread_ptp_message_t * msg,
 	msg->body.header.datatype = datatype;
 	SCTK_MSG_TAG_SET ( msg, message_tag );
 	SCTK_MSG_SPECIFIC_CLASS_SET ( msg, message_class );
-	SCTK_MSG_SIZE_SET( msg , count );
 	SCTK_MSG_USE_MESSAGE_NUMBERING_SET ( msg, 1 );
 
-	/* A message can be sent with a NULL request (see the MPI standard) */
-	if ( request )
-	{
-		sctk_request_init_request ( request, SCTK_MESSAGE_PENDING, msg, request->request_type );
-		SCTK_MSG_COMPLETION_FLAG_SET ( msg , & ( request->completion_flag ) );
-	}
+        int match_for_tread = sctk_m_probe_matching_get();
 
-	//sctk_error("SOURCE %d DEST %d COMM %d RSOURCE %d RDEST %d", source, destination,  SCTK_MSG_COMMUNICATOR( msg ), SCTK_MSG_SRC_TASK( msg ), SCTK_MSG_DEST_TASK( msg ) );
+        if (match_for_tread != -1) {
+          sctk_nodebug("SET SEND MATCH TO %d", match_for_tread);
+        }
 
-	msg->tail.need_check_in_wait = 1;
+        SCTK_MSG_MATCH_SET(msg, match_for_tread);
+
+        SCTK_MSG_SIZE_SET(msg, count);
+
+        /* A message can be sent with a NULL request (see the MPI standard) */
+        if (request) {
+          sctk_request_init_request(request, SCTK_MESSAGE_PENDING, msg,
+                                    request->request_type);
+          SCTK_MSG_COMPLETION_FLAG_SET(msg, &(request->completion_flag));
+        }
+
+        // sctk_error("SOURCE %d DEST %d COMM %d RSOURCE %d RDEST %d", source,
+        // destination,  SCTK_MSG_COMMUNICATOR( msg ), SCTK_MSG_SRC_TASK( msg ),
+        // SCTK_MSG_DEST_TASK( msg ) );
+
+        msg->tail.need_check_in_wait = 1;
 }
 
 /********************************************************************/
@@ -2047,6 +2058,48 @@ sctk_add_pack_in_message_absolute ( sctk_thread_ptp_message_t *
 /* Searching functions                                              */
 /********************************************************************/
 
+static __thread sctk_atomics_int m_probe_id;
+static __thread sctk_atomics_int m_probe_id_task;
+
+void sctk_m_probe_matching_init() {
+  sctk_atomics_store_int(&m_probe_id, 0);
+  sctk_atomics_store_int(&m_probe_id_task, -1);
+}
+
+void sctk_m_probe_matching_set(int value) {
+  while (sctk_atomics_cas_int(&m_probe_id, 0, value) != 0) {
+    sctk_nodebug("CAS %d", sctk_atomics_load_int(&m_probe_id));
+    mpc_thread_yield();
+  }
+
+  int task_id;
+  int thread_id;
+  sctk_get_thread_info(&task_id, &thread_id);
+
+  sctk_nodebug("THREAD ID %d", thread_id);
+
+  sctk_atomics_store_int(&m_probe_id_task, thread_id + 1);
+}
+
+void sctk_m_probe_matching_reset() {
+  sctk_atomics_store_int(&m_probe_id, 0);
+  sctk_atomics_store_int(&m_probe_id_task, -1);
+}
+
+int sctk_m_probe_matching_get() {
+  int task_id;
+  int thread_id;
+  sctk_get_thread_info(&task_id, &thread_id);
+
+  if (sctk_atomics_load_int(&m_probe_id_task) != (thread_id + 1)) {
+    return -1;
+  } else {
+    sctk_nodebug("YEEPI ME got %d ", sctk_atomics_load_int(&m_probe_id_task));
+  }
+
+  return sctk_atomics_load_int(&m_probe_id);
+}
+
 /*
  * Function which tries to match a send request ('header' parameter)
  * from a list of 'send' pending messages for a recv request
@@ -2065,59 +2118,70 @@ static inline sctk_msg_list_t *sctk_perform_messages_search_matching (
 		sctk_assert ( ptr_found->msg != NULL );
 		header_found = & ( ptr_found->msg->body.header );
 
-		/* Match the communicator, the tag, the source and the specific message tag */
-		if (    /* Match Communicator */
-		        ( header->communicator == header_found->communicator ) &&
-		        /* Match message type */
-		        ( header->message_type.type == header_found->message_type.type ) &&
-		        /* Match source Process */
-		        ( ( header->source == header_found->source ) || ( header->source == SCTK_ANY_SOURCE ) ) &&
-		        /* Match source task appart for process specific messages which are not matched at task level */
-		        ( ( header->source_task == header_found->source_task ) || ( header->source_task == SCTK_ANY_SOURCE ) || sctk_message_class_is_process_specific(header->message_type.type)  ) &&
-		        /* Match Message Tag while making sure that tags less than 0 are ignored (used for intercomm) */
-		        ( ( header->message_tag == header_found->message_tag ) || ( ( header->message_tag == SCTK_ANY_TAG ) && ( header_found->message_tag >= 0 ) ) ) )
-		{
-			/* update the status with ERR_TYPE if datatypes don't match*/
-			#ifdef MPC_MPI
-			
-			
-			if ( header->datatype != header_found->datatype &&
-			        /* See page 33 of 3.0 PACKED and BYTE are exceptions */
-			        header->datatype != MPC_PACKED && header_found->datatype != MPC_PACKED &&
-			        header->datatype != MPC_BYTE && header_found->datatype != MPC_BYTE &&
-			        header->msg_size > 0 &&
-			        header_found->msg_size > 0
-			   )
-			{				
-				if ( sctk_datatype_is_common ( header->datatype ) && sctk_datatype_is_common ( header_found->datatype ) )
-				{
-			
-					if ( ptr_found->msg->tail.request == NULL )
-					{
-						sctk_request_t req;
-						ptr_found->msg->tail.request = &req;
-					}
+                int send_message_matching_id =
+                    sctk_atomics_load_int(&header_found->matching_id);
 
-					ptr_found->msg->tail.request->status_error = MPC_ERR_TYPE;
-				}
-			}
-			#endif
+                /* Match the communicator, the tag, the source and the specific
+                 * message tag */
+                if (/* Match Communicator */
+                    (header->communicator == header_found->communicator) &&
+                    /* Has either no or the same matching ID */
+                    ((send_message_matching_id == 0) ||
+                     (send_message_matching_id ==
+                      sctk_atomics_load_int(&header->matching_id))) &&
 
-			/* Message found. We delete it  */
-			DL_DELETE ( pending_list->list, ptr_found );
-			/* We return the pointer to the request */
-			return ptr_found;
+                    /* Match message type */
+                    (header->message_type.type ==
+                     header_found->message_type.type) &&
+                    /* Match source Process */
+                    ((header->source == header_found->source) ||
+                     (header->source == SCTK_ANY_SOURCE)) &&
+                    /* Match source task appart for process specific messages
+                       which are not matched at task level */
+                    ((header->source_task == header_found->source_task) ||
+                     (header->source_task == SCTK_ANY_SOURCE) ||
+                     sctk_message_class_is_process_specific(
+                         header->message_type.type)) &&
+                    /* Match Message Tag while making sure that tags less than 0
+                       are ignored (used for intercomm) */
+                    ((header->message_tag == header_found->message_tag) ||
+                     ((header->message_tag == SCTK_ANY_TAG) &&
+                      (header_found->message_tag >= 0)))) {
+/* update the status with ERR_TYPE if datatypes don't match*/
+#ifdef MPC_MPI
 
-		}
+      if (header->datatype != header_found->datatype &&
+          /* See page 33 of 3.0 PACKED and BYTE are exceptions */
+          header->datatype != MPC_PACKED &&
+          header_found->datatype != MPC_PACKED &&
+          header->datatype != MPC_BYTE && header_found->datatype != MPC_BYTE &&
+          header->msg_size > 0 && header_found->msg_size > 0) {
+        if (sctk_datatype_is_common(header->datatype) &&
+            sctk_datatype_is_common(header_found->datatype)) {
 
-		/* Check for canceled send messages*/
-		if ( header_found->message_type.type == SCTK_CANCELLED_SEND )
-		{
-			/* Message found. We delete it  */
-			DL_DELETE ( pending_list->list, ptr_found );
-		}
-	}
-	return NULL;
+          if (ptr_found->msg->tail.request == NULL) {
+            sctk_request_t req;
+            ptr_found->msg->tail.request = &req;
+          }
+
+          ptr_found->msg->tail.request->status_error = MPC_ERR_TYPE;
+        }
+      }
+#endif
+
+      /* Message found. We delete it  */
+      DL_DELETE(pending_list->list, ptr_found);
+      /* We return the pointer to the request */
+      return ptr_found;
+    }
+
+    /* Check for canceled send messages*/
+    if (header_found->message_type.type == SCTK_CANCELLED_SEND) {
+      /* Message found. We delete it  */
+      DL_DELETE(pending_list->list, ptr_found);
+    }
+  }
+  return NULL;
 }
 
 /*
@@ -2138,26 +2202,54 @@ int sctk_perform_messages_probe_matching ( sctk_internal_ptp_t *pair,
 		sctk_thread_message_header_t *header_send;
 		sctk_assert ( ptr_send->msg != NULL );
 		header_send = & ( ptr_send->msg->body.header );
-		 
-		 sctk_nodebug("CHECKING SRC %d TAG %d == EXP == HECKING SRC %d TAG %d", header_send->source_task, header_send->message_tag, header->source_task,  header->message_tag );
-		 
-		if (    /* Ignore Process Specific */
-		        ( sctk_message_class_is_process_specific(header->message_type.type) == 0 ) &&
-		        /* Match Communicator */
-		        ( header->communicator == header_send->communicator ) &&
-		        /* Match datatype */
-		        ( header->message_type.type == header_send->message_type.type ) &&
-		        /* Match source task (note that we ignore source process here as probe only come from the MPI layer == Only tasks */
-		        ( ( header->source_task == header_send->source_task ) || ( header->source_task == SCTK_ANY_SOURCE ) ) &&
-		        /* Match tag while making sure that tags less than 0 are ignored (used for intercomm) */
-		        ( ( header->message_tag == header_send->message_tag ) || ( ( header->message_tag == SCTK_ANY_TAG ) && ( header_send->message_tag >= 0 ) ) ) )
-		{
-			memcpy ( header, & ( ptr_send->msg->body.header ), sizeof ( sctk_thread_message_header_t ) );
-			return 1;
-		}
-	}
 
-	TODO ( "Add another function pointer to indicate that we have matched a message from known process" )
+                sctk_debug(
+                    "CHECKING SRC %d TAG %d == EXP == HECKING SRC %d TAG %d",
+                    header_send->source_task, header_send->message_tag,
+                    header->source_task, header->message_tag);
+
+                int send_message_matching_id =
+                    sctk_atomics_load_int(&header_send->matching_id);
+
+                // sctk_error("SEND MID = %d", send_message_matching_id );
+
+                if (/* Ignore Process Specific */
+                    (sctk_message_class_is_process_specific(
+                         header->message_type.type) == 0) &&
+                    /* Has either no or the same matching ID */
+                    ((send_message_matching_id == -1) ||
+                     (send_message_matching_id ==
+                      sctk_atomics_load_int(&header->matching_id))) &&
+                    /* Match Communicator */
+                    (header->communicator == header_send->communicator) &&
+                    /* Match datatype */
+                    (header->message_type.type ==
+                     header_send->message_type.type) &&
+                    /* Match source task (note that we ignore source process
+                       here as probe only come from the MPI layer == Only tasks
+                       */
+                    ((header->source_task == header_send->source_task) ||
+                     (header->source_task == SCTK_ANY_SOURCE)) &&
+                    /* Match tag while making sure that tags less than 0 are
+                       ignored (used for intercomm) */
+                    ((header->message_tag == header_send->message_tag) ||
+                     ((header->message_tag == SCTK_ANY_TAG) &&
+                      (header_send->message_tag >= 0)))) {
+                  int matching_token = sctk_m_probe_matching_get();
+
+                  if (matching_token != 0) {
+                    sctk_atomics_store_int(&header_send->matching_id,
+                                           matching_token);
+                  }
+
+                  memcpy(header, &(ptr_send->msg->body.header),
+                         sizeof(sctk_thread_message_header_t));
+                  return 1;
+                }
+        }
+
+        TODO("Add another function pointer to indicate that we have matched a "
+             "message from known process")
 #if 0
 
 	if ( header->source == SCTK_ANY_SOURCE )
@@ -2463,49 +2555,46 @@ void sctk_wait_message ( sctk_request_t *request )
 	{
 		if ( request->poll_fn )
 		{
-			/* Here we don't rely on pooling as we have problems with
-			 * the MPI context */
-			while ( ! request->completion_flag )
-			{
-				sctk_status_t status;
-				( request->poll_fn ) ( request->extra_state, &status );
-			}
-		}
-		else
-		{
-			/* No need to poll with a function */
-			/* Here we just have to wait for the flag to be set to SCTK_MESSAGE_DONE
-			* in by the MPC_Grequest_complete function */
-			sctk_inter_thread_perform_idle (	( int * ) & ( request->completion_flag ), SCTK_MESSAGE_DONE , NULL, NULL );
-		}
-	}
-	else
-	{
-		sctk_perform_messages_wait_init ( &_wait, request, 1 );
-		/* Find the PTPs lists */
-		if ( request->completion_flag != SCTK_MESSAGE_DONE )
-		{
-			sctk_perform_messages_wait_init_request_type ( &_wait );
-			sctk_nodebug ( "Wait from %d to %d (req %p %d) (%p - %p) %d",
-			               request->header.source_task, request->header.destination_task, request, request->request_type, _wait.send_ptp, _wait.recv_ptp, request->header.message_tag );
-
-                        sctk_perform_messages_wait_for_value_and_poll(&_wait);
-
-                        sctk_inter_thread_perform_idle(
-                            (int *)&(_wait.request->completion_flag),
-                            SCTK_MESSAGE_DONE,
-                            (void (*)(void *))
-                                sctk_perform_messages_wait_for_value_and_poll,
-                            &_wait);
+                  /* Here we don't rely on polling as we have problems with
+                   * the MPI context */
+                  while (!request->completion_flag) {
+                    sctk_status_t status;
+                    (request->poll_fn)(request->extra_state, &status);
+                  }
                 } else {
-                  sctk_perform_messages_done(&_wait);
+                  /* No need to poll with a function */
+                  /* Here we just have to wait for the flag to be set to
+                  * SCTK_MESSAGE_DONE
+                  * in by the MPC_Grequest_complete function */
+                  sctk_inter_thread_perform_idle(
+                      (int *)&(request->completion_flag), SCTK_MESSAGE_DONE,
+                      NULL, NULL);
                 }
+        } else {
+          sctk_perform_messages_wait_init(&_wait, request, 1);
+          /* Find the PTPs lists */
+          if (request->completion_flag != SCTK_MESSAGE_DONE) {
+            sctk_perform_messages_wait_init_request_type(&_wait);
+            sctk_nodebug("Wait from %d to %d (req %p %d) (%p - %p) %d",
+                         request->header.source_task,
+                         request->header.destination_task, request,
+                         request->request_type, _wait.send_ptp, _wait.recv_ptp,
+                         request->header.message_tag);
 
-                sctk_nodebug("Wait DONE from %d to %d (req %p %d) (%p - %p)",
-                             request->header.source_task,
-                             request->header.destination_task, request,
-                             request->request_type, _wait.send_ptp,
-                             _wait.recv_ptp);
+            sctk_perform_messages_wait_for_value_and_poll(&_wait);
+
+            sctk_inter_thread_perform_idle(
+                (int *)&(_wait.request->completion_flag), SCTK_MESSAGE_DONE,
+                (void (*)(void *))sctk_perform_messages_wait_for_value_and_poll,
+                &_wait);
+          } else {
+            sctk_perform_messages_done(&_wait);
+          }
+
+          sctk_nodebug("Wait DONE from %d to %d (req %p %d) (%p - %p)",
+                       request->header.source_task,
+                       request->header.destination_task, request,
+                       request->request_type, _wait.send_ptp, _wait.recv_ptp);
         }
 }
 
