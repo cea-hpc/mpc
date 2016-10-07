@@ -91,7 +91,7 @@ if test -z \${MPC_RPREFIX}; then
 	exit 1
 fi
 EOF
-	echo "\${MPC_RPREFIX}/\${MPC_HOST_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/$2 --use:command \"\$@\"" >> $1
+	echo "\${MPC_RPREFIX}/\${MPC_HOST_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/$2  \"\$@\"" >> $1
 }
 
 #
