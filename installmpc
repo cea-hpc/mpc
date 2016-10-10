@@ -65,6 +65,7 @@ setModulesToInternal
 
 ## Not sure if here is a good place for this:
 TBB_PREFIX='disabled'
+GDB_PREFIX='disabled'
 ######################################################
 #Parse options
 for arg in "$@"
@@ -158,6 +159,10 @@ do
 		--disable-mpc-gdb)
 			GDB_PREFIX='disabled'
 			;;
+                --enable-mpc-gdb)
+                        enableParamIfNot 'GDB_PREFIX' "$GDB_PREFIX" 'disabled' 'internal'
+                        ;;
+
 		################### MPC GCC #################
 		--with-mpc-gcc=*)
 			extractParamValue 'GCC_PREFIX' 'with-mpc-gcc' "$arg"
@@ -259,6 +264,7 @@ do
 			;;
 		--enable-mpc-debug)
 			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --enable-debug --enable-debug-messages --enable-MPC_Debugger"
+			enableParamIfNot 'GDB_PREFIX' "$GDB_PREFIX" 'disabled' 'internal'
 			;;
 		--with-slurm)
 			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --with-slurm"
