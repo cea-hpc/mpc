@@ -4,6 +4,7 @@
 #include "mpcomp_GOMP_common.h"
 #include "mpcomp_GOMP_parallel_internal.h"
 
+
 unsigned __mpcomp_GOMP_sections_start (unsigned count)
 {
    unsigned ret; 
@@ -34,12 +35,8 @@ void __mpcomp_GOMP_parallel_sections (void (*fn) (void *), void *data,
 			unsigned num_threads, unsigned count, unsigned flags)
 {
    sctk_nodebug("[Redirect GOMP]%s:\tBegin",__func__);
-   MPCOMP_GOMP_UNUSED_VAR(fn);
-   MPCOMP_GOMP_UNUSED_VAR(data);
-   MPCOMP_GOMP_UNUSED_VAR(num_threads);
-   MPCOMP_GOMP_UNUSED_VAR(count);
-   MPCOMP_GOMP_UNUSED_VAR(flags);
-   not_implemented();
+   num_threads = (num_threads == 0) ? -1 : num_threads; 
+    __mpcomp_start_sections_parallel_region( num_threads, (void* (*)(void*)) fn , data, count);
    sctk_nodebug("[Redirect GOMP]%s:\tEnd",__func__);
 }
 
