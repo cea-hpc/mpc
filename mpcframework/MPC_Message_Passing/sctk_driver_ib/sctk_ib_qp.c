@@ -344,6 +344,12 @@ struct ibv_qp *sctk_ib_qp_init ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp
 
 	remote->qp = ibv_create_qp ( device->pd, attr );
 	PROF_INC ( rail_ib->rail, ib_qp_created );
+    if ( !remote->qp )
+    {
+        sctk_warning("IB issue: try to reduce cap.max_send_wr %d -> %d",attr->cap.max_send_wr, attr->cap.max_send_wr /3);
+        attr->cap.max_send_wr = attr->cap.max_send_wr /3;        
+       remote->qp = ibv_create_qp ( device->pd, attr );     
+    }
 
 	if ( !remote->qp )
 	{
@@ -375,7 +381,13 @@ struct ibv_qp_init_attr sctk_ib_qp_init_attr ( struct sctk_ib_rail_info_s *rail_
 	attr.recv_cq  = device->recv_cq;
 	attr.srq      = device->srq;
 	attr.cap.max_send_wr  = config->qp_tx_depth;
-	attr.cap.max_recv_wr  = config->qp_rx_depth;
+    if(attr.cap.max_send_wr >  device->dev_attr.max_qp_wr){
+      attr.cap.max_send_wr = device->dev_attr.max_qp_wr;
+    }
+    attr.cap.max_recv_wr  = config->qp_rx_depth;
+    if(attr.cap.max_recv_wr > device->dev_attr.max_qp_wr){
+      attr.cap.max_recv_wr = device->dev_attr.max_qp_wr;
+    }
 	attr.cap.max_send_sge = config->max_sg_sq;
 	attr.cap.max_recv_sge = config->max_sg_rq;
 	attr.cap.max_inline_data = config->max_inline;
