@@ -344,30 +344,28 @@ struct ibv_qp *sctk_ib_qp_init ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp
 
 	remote->qp = ibv_create_qp ( device->pd, attr );
 	PROF_INC ( rail_ib->rail, ib_qp_created );
-    if ( !remote->qp )
-    {
-        sctk_warning("IB issue: try to reduce cap.max_send_wr %d -> %d",attr->cap.max_send_wr, attr->cap.max_send_wr /3);
-        attr->cap.max_send_wr = attr->cap.max_send_wr /3;        
-       remote->qp = ibv_create_qp ( device->pd, attr );     
-    }
+        if (!remote->qp) {
+          sctk_warning("IB issue: try to reduce cap.max_send_wr %d -> %d",
+                       attr->cap.max_send_wr, attr->cap.max_send_wr / 3);
+          attr->cap.max_send_wr = attr->cap.max_send_wr / 3;
+          remote->qp = ibv_create_qp(device->pd, attr);
+        }
 
-	if ( !remote->qp )
-	{
-		SCTK_IB_ABORT ( "Cannot create QP for rank %d", rank );
-	}
+        if (!remote->qp) {
+          SCTK_IB_ABORT("Cannot create QP for rank %d", rank);
+        }
 
-	sctk_nodebug ( "QP Initialized for rank %d %p", remote->rank, remote->qp );
+        sctk_nodebug("QP Initialized for rank %d %p", remote->rank, remote->qp);
 
-	/* Add QP to HT */
-	struct sctk_ib_qp_s *rem;
-	rem = sctk_ib_qp_ht_find ( rail_ib, remote->qp->qp_num );
+        /* Add QP to HT */
+        struct sctk_ib_qp_s *rem;
+        rem = sctk_ib_qp_ht_find(rail_ib, remote->qp->qp_num);
 
-	if ( rem == NULL )
-	{
-		sctk_ib_qp_ht_add ( rail_ib, remote, remote->qp->qp_num );
-	}
+        if (rem == NULL) {
+          sctk_ib_qp_ht_add(rail_ib, remote, remote->qp->qp_num);
+        }
 
-	return remote->qp;
+        return remote->qp;
 }
 
 struct ibv_qp_init_attr sctk_ib_qp_init_attr ( struct sctk_ib_rail_info_s *rail_ib )
@@ -381,23 +379,23 @@ struct ibv_qp_init_attr sctk_ib_qp_init_attr ( struct sctk_ib_rail_info_s *rail_
 	attr.recv_cq  = device->recv_cq;
 	attr.srq      = device->srq;
 	attr.cap.max_send_wr  = config->qp_tx_depth;
-    if(attr.cap.max_send_wr >  device->dev_attr.max_qp_wr){
-      attr.cap.max_send_wr = device->dev_attr.max_qp_wr;
-    }
-    attr.cap.max_recv_wr  = config->qp_rx_depth;
-    if(attr.cap.max_recv_wr > device->dev_attr.max_qp_wr){
-      attr.cap.max_recv_wr = device->dev_attr.max_qp_wr;
-    }
-	attr.cap.max_send_sge = config->max_sg_sq;
-	attr.cap.max_recv_sge = config->max_sg_rq;
-	attr.cap.max_inline_data = config->max_inline;
-	/* RC Transport by default */
-	attr.qp_type = IBV_QPT_RC;
-	/* if this value is set to 1, all work requests (WR) will
-	* generate completion queue events (CQE). If this value is set to 0,
-	* only WRs that are flagged will generate CQE's*/
-	attr.sq_sig_all = 0;
-	return attr;
+        if (attr.cap.max_send_wr > device->dev_attr.max_qp_wr) {
+          attr.cap.max_send_wr = device->dev_attr.max_qp_wr;
+        }
+        attr.cap.max_recv_wr = config->qp_rx_depth;
+        if (attr.cap.max_recv_wr > device->dev_attr.max_qp_wr) {
+          attr.cap.max_recv_wr = device->dev_attr.max_qp_wr;
+        }
+        attr.cap.max_send_sge = config->max_sg_sq;
+        attr.cap.max_recv_sge = config->max_sg_rq;
+        attr.cap.max_inline_data = config->max_inline;
+        /* RC Transport by default */
+        attr.qp_type = IBV_QPT_RC;
+        /* if this value is set to 1, all work requests (WR) will
+        * generate completion queue events (CQE). If this value is set to 0,
+        * only WRs that are flagged will generate CQE's*/
+        attr.sq_sig_all = 0;
+        return attr;
 }
 
 struct ibv_qp_attr sctk_ib_qp_state_init_attr ( struct sctk_ib_rail_info_s *rail_ib, int *flags )
