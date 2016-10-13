@@ -10,11 +10,11 @@ void __mpcomp_GOMP_task(void (*fn) (void *), void *data, void (*cpyfn) (void *, 
 	   void **depend, int priority)
 #else 
 void __mpcomp_GOMP_task(void (*fn) (void *), void *data, void (*cpyfn) (void *, void *),
-	   long arg_size, long arg_align, bool if_clause, unsigned flags)
+	   long arg_size, long arg_align, bool if_clause, unsigned flags, void **depend)
 #endif
 {
    sctk_nodebug("[Redirect __mpcomp_GOMP]%s:\tBegin",__func__);
-   __mpcomp_task( (void* (*)(void*) ) fn, data, cpyfn, arg_size, arg_align, if_clause, flags);
+   __mpcomp_task_with_deps( (void* (*)(void*) ) fn, data, cpyfn, arg_size, arg_align, if_clause, flags, depend);
    sctk_nodebug("[Redirect __mpcomp_GOMP]%s:\tEnd",__func__);
 }
 

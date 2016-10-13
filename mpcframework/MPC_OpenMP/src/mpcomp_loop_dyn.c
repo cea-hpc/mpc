@@ -107,6 +107,7 @@ __mpcomp_dynamic_loop_get_chunk_from_rank( mpcomp_thread_t * t,
 	int target_index ;
 	int num_threads;
 
+   
 #if 0
 	/* Disable work-stealing */
 	if ( t != target ) {
@@ -284,7 +285,7 @@ __mpcomp_dynamic_loop_next (long *from, long *to)
 	t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
 	sctk_assert( t != NULL ) ;
 
-	sctk_nodebug("[%d] __mpcomp_dynamic_loop_next: start", t->rank);   
+	sctk_nodebug("[%d] __mpcomp_dynamic_loop_next: start -- %p -- %p", t->rank, from, to);   
 
 	/* Number of threads in the current team */
 	num_threads = t->info.num_threads;
@@ -539,7 +540,7 @@ __mpcomp_dynamic_loop_end_nowait ()
 			"[%d]__mpcomp_dynamic_loop_end_nowait: Exiting loop %d: %d -> %d",
 			t->rank, index, nb_threads_exited, nb_threads_exited + 1 ) ;
 
-	//sctk_assert( nb_threads_exited >= 0 && nb_threads_exited < num_threads ) ;
+	sctk_assert( nb_threads_exited >= 0 && nb_threads_exited < num_threads ) ;
 
 	if ( nb_threads_exited == num_threads - 1 ) {
 		int previous_index ;

@@ -100,7 +100,7 @@ __mpcomp_get_specific_chunk_per_rank (int rank, int nb_threads,
       local_from = lb + (trip_count / chunk_size) * chunk_size * incr;
       local_to = lb + trip_count * incr;
 
-      sctk_nodebug ("__mpcomp_static_schedule_get_specific_chunk: "
+      sctk_nodebug ("TRUE__mpcomp_static_schedule_get_specific_chunk: "
 		    "Thread %d: %ld -> %ld (excl) step %ld => "
 		    "%ld -> %ld (excl) step %ld (chunk of %ld)\n",
 		    rank, lb, b, incr, local_from, local_to, incr,
@@ -116,7 +116,7 @@ __mpcomp_get_specific_chunk_per_rank (int rank, int nb_threads,
 	lb + chunk_num * nb_threads * chunk_size * incr +
 	chunk_size * incr * rank + chunk_size * incr;
 
-      sctk_nodebug ("__mpcomp_static_schedule_get_specific_chunk: "
+      sctk_nodebug ("FALSE__mpcomp_static_schedule_get_specific_chunk: "
 		    "Thread %d / Chunk %ld: %ld -> %ld (excl) step %ld => "
 		    "%ld -> %ld (excl) step %ld (chunk of %ld)\n",
 		    rank, chunk_num, lb, b, incr, local_from, local_to, incr,
@@ -143,7 +143,7 @@ __mpcomp_get_static_nb_chunks_per_rank_ull (int rank, int nb_threads, unsigned l
     long long trip_count;
     
     int incr_sign = (lb + incr > lb) ? 1 : -1;
-
+    
     long long incr_signed = (long long)((lb + incr) - lb);
     incr_signed = (incr_signed > 0) ? incr_signed : -incr_signed;
     if(incr_sign > 0)

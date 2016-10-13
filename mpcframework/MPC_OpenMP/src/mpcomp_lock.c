@@ -59,7 +59,6 @@ void omp_init_nest_lock(omp_nest_lock_t *lock) {
 	sctk_assert( lock );
 #if MPCOMP_TASK
   llock->owner_task = NULL;
- 	lock->owner_task = ( task ) ? task : NULL ;
 #endif
   llock->nb_nested = 0;
   sctk_thread_mutex_init(&(llock->l), NULL);

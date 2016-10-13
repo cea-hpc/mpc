@@ -88,7 +88,6 @@ mpcomp_task_list_pushtohead( mpcomp_task_list_t *list, mpcomp_task_t *task)
 	  	list->head = task;
 	}
 
-	sctk_atomics_incr_int( &( list->nb_elements ) );
 	list->total += 1;
 	task->list = list;
 }
@@ -111,7 +110,6 @@ mpcomp_task_list_pushtotail(mpcomp_task_list_t *list, mpcomp_task_t *task)
 	 	list->tail = task;
 	}
 	  
-	sctk_atomics_incr_int( &( list->nb_elements ) );
 	list->total += 1;
 	task->list = list;
 }

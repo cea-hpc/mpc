@@ -49,12 +49,12 @@ __mpcomp_barrier (void)
      if (t->info.num_threads == 1) {
 	  return;
      }
-
+    
      /* Get the corresponding microVP */
      mvp = t->mvp;
      sctk_assert(mvp != NULL);
 
-     sctk_nodebug( "[%d] __mpcomp_barrier: t->mvp = %p", 
+     sctk_error( "[%d] __mpcomp_barrier: t->mvp = %p", 
 	 t->rank, t->mvp ) ;
      
      /* Call the real barrier */
@@ -142,15 +142,9 @@ __mpcomp_internal_full_barrier (mpcomp_mvp_t *mvp)
 		/* Wait for c->barrier == c->barrier_num_threads */
 		while (b_done == c->barrier_done) {
 			sctk_thread_yield();
-#if MPCOMP_TASK
-			__mpcomp_task_schedule(); /* Look for tasks remaining */
-#endif /* MPCOMP_TASK */
 		}
 	} else {
 
-#if MPCOMP_TASK
-		__mpcomp_task_schedule(); /* Look for tasks remaining */
-#endif /* MPCOMP_TASK */
 		sctk_atomics_store_int(&(c->barrier), 0);
 
 #if MPCOMP_COHERENCY_CHECKING

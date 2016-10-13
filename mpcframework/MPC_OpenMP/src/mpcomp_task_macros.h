@@ -11,7 +11,7 @@
 	#define KMP_SIZE_T_MAX (0xFFFFFFFFFFFFFFFF)
 #endif
 
-#define MPCOMP_TASK_MAX_DELAYED 128
+#define MPCOMP_TASK_MAX_DELAYED 16
 
 /*** Tasks property bitmasks ***/
 

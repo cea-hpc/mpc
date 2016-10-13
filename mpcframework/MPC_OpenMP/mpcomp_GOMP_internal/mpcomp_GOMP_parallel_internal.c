@@ -82,6 +82,9 @@ static void __mpcomp_internal_GOMP_in_order_scheduler_master_end(void)
 	    sctk_thread_yield() ;
         __mpcomp_task_schedule();
     }
+
+    __mpcomp_taskwait();
+
    /* Restore previous TLS */
    sctk_openmp_thread_tls = t->father;
 }

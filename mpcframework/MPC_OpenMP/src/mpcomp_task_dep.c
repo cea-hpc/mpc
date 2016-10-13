@@ -95,10 +95,11 @@ __mpcomp_task_with_deps( void (*fn) (void *), void *data, void (*cpyfn) (void *,
     __mpcomp_debug_extract_task_deps( flags, depend );
 
     thread = ( mpcomp_thread_t*) sctk_openmp_thread_tls;
-    current_task = (mpcomp_task_t*) 
+    current_task = (mpcomp_task_t*) MPCOMP_TASK_THREAD_GET_CURRENT_TASK( thread );  
 
     if( mpcomp_task_dep_is_flag_with_deps( flags )  && ( depend != NULL ) )
     {
+        /* Nothing to do */
     }
 
     __mpcomp_task( fn, data, cpyfn, arg_size, arg_align, if_clause, flags );

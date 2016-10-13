@@ -48,6 +48,7 @@ GOMP_ABI_FUNC(GOMP_single_start,"GOMP_1.0",__mpcomp_GOMP_single_start,__mpcomp_d
 
 //All"GOMP_2.0"symbols
 GOMP_ABI_FUNC(GOMP_task,"GOMP_2.0",__mpcomp_GOMP_task,__mpcomp_GOMP_task)
+
 GOMP_ABI_FUNC(GOMP_loop_ull_dynamic_next,"GOMP_2.0",__mpcomp_GOMP_loop_ull_dynamic_next,__mpcomp_loop_ull_dynamic_next)
 GOMP_ABI_FUNC(GOMP_loop_ull_dynamic_start,"GOMP_2.0",__mpcomp_GOMP_loop_ull_dynamic_start,__mpcomp_GOMP_loop_ull_dynamic_start)
 GOMP_ABI_FUNC(GOMP_loop_ull_guided_next,"GOMP_2.0",__mpcomp_GOMP_loop_ull_guided_next,__mpcomp_loop_ull_guided_next)

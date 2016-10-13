@@ -292,7 +292,7 @@ __mpcomp_task_alloc(void (*fn) (void *), void *data, void (*cpyfn) (void *, void
     }
 
 	/* Create new task */
-    mpcomp_task_infos_init( new_task, fn, task_data, t, 0 );
+    mpcomp_task_infos_init( new_task, fn, task_data, t );
 	new_task->icvs = t->info.icvs;
     new_task->children = NULL;
 
@@ -328,6 +328,7 @@ __mpcomp_task_alloc(void (*fn) (void *), void *data, void (*cpyfn) (void *, void
     return new_task;
 }
 
+
 mpcomp_task_list_t* 
 __mpcomp_task_try_delay( bool if_clause )
 {
@@ -337,15 +338,9 @@ __mpcomp_task_try_delay( bool if_clause )
 
 	omp_thread_tls = (mpcomp_thread_t *) sctk_openmp_thread_tls;
 	sctk_assert( omp_thread_tls );
-
-	current_task = MPCOMP_TASK_THREAD_GET_CURRENT_TASK( omp_thread_tls ); 
-    sctk_assert( current_task );
     
     /* Is Serialized Task */
-    if (!if_clause
-        || ( current_task && mpcomp_task_property_isset (current_task->property, MPCOMP_TASK_FINAL ) )
-        || ( omp_thread_tls->info.num_threads == 1 )
-        || ( current_task && current_task->depth > 8/*t->instance->team->task_nesting_max*/ ) )
+    if( !if_clause || mpcomp_task_no_deps_is_serialized( omp_thread_tls ) )
     {
         return NULL;
     }
@@ -570,7 +565,6 @@ int __mpcomp_task_internal_all_task_executed( mpcomp_thread_t* thread, mpcomp_in
         || !MPCOMP_TASK_THREAD_IS_INITIALIZED( thread ) 
         || !MPCOMP_TASK_TEAM_IS_INITIALIZED( team ) )
 	{
-        sctk_error("no_wait ...");
    	    return 1;
   	}
  
@@ -584,7 +578,13 @@ int __mpcomp_task_internal_all_task_executed( mpcomp_thread_t* thread, mpcomp_in
 
         for( i = 0; i < nbTasklists; i++ )
         {
-            mpcomp_task_list_t* list = mpcomp_task_get_list( i, type );
+            mpcomp_task_list_t* list;
+
+	        if( !( list = mpcomp_task_get_list( i, type ) ) )
+            {
+                continue;
+            }
+
             if( !mpcomp_task_list_isempty( list ) )
             {
                 return 0;
@@ -626,9 +626,12 @@ int mpcomp_task_all_task_executed( void )
  */
 void __mpcomp_task_schedule(void)
 {
+	mpcomp_task_t* task = NULL;
+    mpcomp_thread_t* thread = NULL;
+
    /* Retrieve the information (microthread structure and current region) */
    sctk_assert( sctk_openmp_thread_tls );	 
-   mpcomp_thread_t* thread = ( mpcomp_thread_t* ) sctk_openmp_thread_tls;
+   thread = ( mpcomp_thread_t* ) sctk_openmp_thread_tls;
 
 	sctk_assert( thread->instance );
 	sctk_assert( thread->instance->team );
@@ -649,10 +652,7 @@ void __mpcomp_task_schedule(void)
    	    return;
   	}
 
-	mpcomp_task_t* task = NULL;
  
- 	while( 1 ) 
-	{
 		int type;
 		sctk_assert( !task );
 
@@ -667,10 +667,12 @@ void __mpcomp_task_schedule(void)
 			const int node_rank = MPCOMP_TASK_MVP_GET_TASK_LIST_NODE_RANK( mvp, type );
 	        list = mpcomp_task_get_list( node_rank, type );
             sctk_assert( list );
-	      //  if( !( list = mpcomp_task_get_list( node_rank, type ) ) )
-          //  {
-          //      continue;
-          //  }
+
+	        if( !( list = mpcomp_task_get_list( node_rank, type ) ) )
+            {
+                continue;
+            }
+
             assert( list );
 	        mpcomp_task_list_lock(list);
 	        task = mpcomp_task_list_popfromhead(list);
@@ -698,7 +700,6 @@ void __mpcomp_task_schedule(void)
 		/* Free memory */ 
 		mpcomp_free( task );
 		task = NULL;
-	}
 }
 
 void __mpcomp_taskwait( void )

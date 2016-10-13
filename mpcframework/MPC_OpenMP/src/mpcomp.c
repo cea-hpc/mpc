@@ -686,7 +686,7 @@ __mpcomp_instance_init( mpcomp_instance_t * instance, int nb_mvps,
 	 * tree_level_size, tree_array_size, tree_array_first_rank 
 	 */
 
-	sctk_nodebug( "__mpcomp_instance_init: Entering..." ) ;
+	sctk_nodebug( "__mpcomp_instance_init: Entering... %p %d %p", instance, nb_mvps, team ) ;
 
 	/* Assign the current team */
 	instance->team = team ;
@@ -694,7 +694,7 @@ __mpcomp_instance_init( mpcomp_instance_t * instance, int nb_mvps,
     /* If this instance is not sequential... */
 	if ( nb_mvps > 1 ){
         hwloc_topology_t restrictedTopology, flatTopology;
-		int err;
+		int err, i;
 
 		/* Alloc memory for 'nb_mvps' microVPs */
 		instance->mvps = (mpcomp_mvp_t **)sctk_malloc( nb_mvps * sizeof( mpcomp_mvp_t * ) ) ;
@@ -736,7 +736,6 @@ __mpcomp_instance_init( mpcomp_instance_t * instance, int nb_mvps,
         }
 
 		instance->nb_mvps = 1 ;
-
 		instance->root = NULL ;
 
 		mpcomp_thread_infos_init( &(instance->mvps[0]->threads[0]), icvs, instance, sctk_openmp_thread_tls  ) ;
@@ -862,7 +861,7 @@ void in_order_scheduler( mpcomp_mvp_t * mvp ) {
     {
         __mpcomp_task_schedule();
     }
-    
+
     __mpcomp_taskwait();
 
     sctk_assert( cur_mvp_thread->instance );

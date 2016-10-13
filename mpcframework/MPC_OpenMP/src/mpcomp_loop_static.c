@@ -311,6 +311,7 @@ int __mpcomp_static_loop_next (long *from, long *to)
 void __mpcomp_static_loop_end ()
 {
      __mpcomp_barrier();
+     sctk_error( "end barrier" );
 }
 
 void __mpcomp_static_loop_end_nowait ()

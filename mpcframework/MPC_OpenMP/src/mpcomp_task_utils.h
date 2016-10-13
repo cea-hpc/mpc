@@ -51,6 +51,27 @@ mpcomp_task_property_isset(mpcomp_task_property_t property, mpcomp_task_property
 	return ( property & mask );
 }
 
+/* Is Serialized Task Context if_clause not handle */
+static inline int 
+mpcomp_task_no_deps_is_serialized( mpcomp_thread_t* thread )
+{
+    mpcomp_task_t* current_task = NULL;
+    sctk_assert( thread );
+
+    current_task = MPCOMP_TASK_THREAD_GET_CURRENT_TASK( thread );
+    sctk_assert( current_task );
+
+    if ( ( current_task && mpcomp_task_property_isset (current_task->property, MPCOMP_TASK_FINAL ) )
+        || ( thread->info.num_threads == 1 )
+        || ( current_task && current_task->depth > 8/*t->instance->team->task_nesting_max*/ ) )
+    {
+        return 1;
+    }
+
+    return 0;
+}
+
+
 static inline void
 mpcomp_task_infos_reset( mpcomp_task_t* task )
 {
@@ -60,7 +81,7 @@ mpcomp_task_infos_reset( mpcomp_task_t* task )
 
 /* Initialization of a task structure */
 static inline void 
-mpcomp_task_infos_init( mpcomp_task_t *task, void (*func) (void *), void *data, struct mpcomp_thread_s *thread, int isGhostTask)
+mpcomp_task_infos_init( mpcomp_task_t *task, void (*func) (void *), void *data, struct mpcomp_thread_s *thread )
 {
 	sctk_assert( task != NULL );
 	sctk_assert( thread != NULL );
@@ -71,11 +92,10 @@ mpcomp_task_infos_init( mpcomp_task_t *task, void (*func) (void *), void *data, 
     sctk_assert( task->thread == NULL );
 
 	/* Set non null task infos field */
-	task->isGhostTask = isGhostTask;
   	task->func = func;
  	task->data = data;
   	mpcomp_task_reset_property(&(task->property));
-  	task->parent = (task->isGhostTask) ? NULL : MPCOMP_TASK_THREAD_GET_CURRENT_TASK( thread );
+  	task->parent = MPCOMP_TASK_THREAD_GET_CURRENT_TASK( thread );
     task->depth = ( task->parent ) ? task->parent->depth + 1 : 0;
     task->children_lock = SCTK_SPINLOCK_INITIALIZER;
 }
@@ -130,8 +150,9 @@ mpcomp_task_thread_infos_init( struct mpcomp_thread_s* thread )
 		/* Allocate the default current task (no func, no data, no parent) */
 		implicite_task = mpcomp_malloc( 1, sizeof(mpcomp_task_t), numa_node_id );
 		sctk_assert( implicite_task );
-		mpcomp_task_infos_init( implicite_task, NULL, NULL, thread, 1 );
-		implicite_task->parent = NULL;
+		MPCOMP_TASK_THREAD_SET_CURRENT_TASK( thread, NULL );
+
+		mpcomp_task_infos_init( implicite_task, NULL, NULL, thread );
         //sctk_error( "Thread: %p | implicite task: %p", thread, implicite_task );
 
 		/* Allocate private task data structures */ 

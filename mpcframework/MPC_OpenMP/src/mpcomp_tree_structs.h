@@ -11,14 +11,14 @@ static inline void
 mpcomp_thread_infos_reset( mpcomp_thread_t* thread )
 {
 	sctk_assert( thread );
-	memset( thread, sizeof( mpcomp_thread_t ), 0 );
+	memset( thread, 0, sizeof( mpcomp_thread_t  ));
 }
 
 static inline void
 mpcomp_common_table_reset( struct common_table* th_pri_common )
 {
 	sctk_assert( th_pri_common );
-	memset( th_pri_common, sizeof( struct common_table ), 0 );
+	memset( th_pri_common, 0, sizeof( struct common_table ));
 }
 
 static inline struct common_table*

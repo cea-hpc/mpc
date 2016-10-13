@@ -366,24 +366,21 @@ __mpcomp_GOMP_parallel_loop_static (void (*fn) (void *), void *data,
                long incr, long chunk_size, unsigned flags)
 {
     num_threads = (num_threads == 0) ? -1 : num_threads;
-    __mpcomp_static_loop_begin(start,end,incr,chunk_size,start,end);
-    __mpcomp_static_loop_end();
+    __mpcomp_start_parallel_static_loop(num_threads, fn, data, start, end, incr, chunk_size );
 }
 
 void
 __mpcomp_GOMP_parallel_loop_dynamic (void (*fn) (void *), void *data, unsigned num_threads, long start, long end, long incr, long chunk_size, unsigned flags)
 {
     num_threads = (num_threads == 0) ? -1 : num_threads;
-    __mpcomp_dynamic_loop_begin(start,end,incr,chunk_size,start,end);
-    __mpcomp_dynamic_loop_end();
+    __mpcomp_start_parallel_dynamic_loop(num_threads, fn, data, start, end, incr, chunk_size );
 }
 
 void
 __mpcomp_GOMP_parallel_loop_guided (void (*fn) (void *), void *data, unsigned num_threads, long start, long end, long incr, long chunk_size, unsigned flags)
 {
     num_threads = (num_threads == 0) ? -1 : num_threads;
-    __mpcomp_guided_loop_begin(start,end,incr,chunk_size,start,end);
-    __mpcomp_guided_loop_end();
+    __mpcomp_start_parallel_guided_loop(num_threads, fn, data, start, end, incr, chunk_size);
 }
 
 void
@@ -391,7 +388,7 @@ __mpcomp_GOMP_parallel_loop_runtime (void (*fn) (void *), void *data,
                 unsigned num_threads, long start, long end,
                 long incr, unsigned flags)
 {
+    long chunk_size = 1;
     num_threads = (num_threads == 0) ? -1 : num_threads;
-    __mpcomp_runtime_loop_begin(start,end,incr,start,end);
-    __mpcomp_runtime_loop_end();
+    __mpcomp_start_parallel_runtime_loop(num_threads, fn, data, start, end, incr, chunk_size);
 }
