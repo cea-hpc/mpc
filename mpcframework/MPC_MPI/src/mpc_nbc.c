@@ -4486,7 +4486,32 @@ int NBC_Wait(NBC_Handle *handle, MPI_Status *status) {
   return NBC_OK;
 }
 
+int NBC_Test(NBC_Handle *handle, int *flag, MPI_Status *status) {
+  int use_progress_thread = 0;
+  use_progress_thread =
+      sctk_runtime_config_get()->modules.progress_thread.use_progress_thread;
+  int ret = NBC_CONTINUE;
 
+  if (use_progress_thread == 1) {
+    ret = NBC_CONTINUE;
+    sctk_thread_mutex_lock(&handle->lock);
+    if (handle->schedule == NULL) {
+      ret = NBC_OK;
+    }
+    sctk_thread_mutex_unlock(&handle->lock);
+    //        printf("ProgressThread : ret = %d ------ NBC_OK: %d, NBC_CONTINUE:
+    //        %d\n", ret, NBC_OK, NBC_CONTINUE); fflush(stdout);
+  } else {
+    ret = NBC_Progress(handle);
+    //        printf("No PT :  ret = %d\n", ret); fflush(stdout);
+  }
+  if (ret == NBC_OK) {
+    *flag = 1;
+  } else {
+    *flag = 0;
+  }
+  return NBC_OK;
+}
 
 /******************* *
  * NBC_OP.C *
