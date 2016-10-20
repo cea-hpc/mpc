@@ -154,7 +154,7 @@ __mpcomp_task_process_deps( mpcomp_task_dep_node_t* task_node, mpcomp_task_dep_h
 		if( type == MPCOMP_TASK_DEP_OUT && entry->last_in != NULL )
 		{
 			mpcomp_task_dep_node_list_t* node_list;
-			for( node_list = entry->last_in; node_list; node_list->next )
+			for( node_list = entry->last_in; node_list; node_list = node_list->next )
 			{
 				mpcomp_task_dep_node_t* node = node_list->node;
 				if( node->task != NULL )
@@ -230,7 +230,7 @@ __mpcomp_task_with_deps( void (*fn) (void *), void *data, void (*cpyfn) (void *,
 	if( !( current_task->task_dep_infos->htable ) )
 	{
 		current_task->task_dep_infos->htable = mpcomp_task_dep_alloc_task_htable( &mpcomp_task_dep_mpc_hash_func );
-		sctk_assert( current_task->task_dep_infos.htable );
+		sctk_assert( current_task->task_dep_infos->htable );
 	}
 	
 	task_node = mpcomp_task_dep_new_node();	

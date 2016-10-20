@@ -141,7 +141,7 @@ mpcomp_task_dep_new_node( void )
 	mpcomp_task_dep_node_t* new_node;
 	new_node = sctk_malloc( sizeof(  new_node ) );
 	sctk_assert( new_node );
-	memset( new_node, 0, sizeof(  new_node ) );
+	memset( new_node, 0, sizeof(  mpcomp_task_dep_node_t ) );
 	return new_node;
 }
 
@@ -246,7 +246,7 @@ mpcomp_task_dep_ht_find_entry( mpcomp_task_dep_ht_table_t* htable, uintptr_t add
 	/* Search correct entry in bucket */
 	if( htable->buckets[ hash ].num_entries > 0 )
 	{
-		for( entry = htable->buckets[ hash ].entry; entry; entry->next )
+		for( entry = htable->buckets[ hash ].entry; entry; entry = entry->next )
 		{
 			if( entry->base_addr == addr )
 				break;
