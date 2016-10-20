@@ -207,4 +207,3 @@ __mpcomp_loop_ull_ordered_guided_next (unsigned long long *from, unsigned long l
 
      return res;
 }
-

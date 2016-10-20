@@ -79,27 +79,41 @@ mpcomp_task_infos_reset( mpcomp_task_t* task )
 	memset( task, 0,  sizeof( mpcomp_task_t ) );
 }
 
+static inline int
+mpcomp_task_is_final( unsigned int flags, mpcomp_task_t* parent )
+{
+	if( flags & 2 )
+	{
+		return 1;
+	}
+
+	if( parent && mpcomp_task_property_isset ( parent->property, MPCOMP_TASK_FINAL ) )
+	{
+		return 1;
+	}
+
+	return 0;
+}
+  
 /* Initialization of a task structure */
 static inline void 
 mpcomp_task_infos_init( mpcomp_task_t *task, void (*func) (void *), void *data, struct mpcomp_thread_s *thread )
 {
 	sctk_assert( task != NULL );
 	sctk_assert( thread != NULL );
-	/* data can be NULL ?! */
 
 	/* Reset all task infos to NULL */
 	mpcomp_task_infos_reset( task );
-    sctk_assert( task->thread == NULL );
 
 	/* Set non null task infos field */
   	task->func = func;
  	task->data = data;
-  	mpcomp_task_reset_property(&(task->property));
-  	task->parent = MPCOMP_TASK_THREAD_GET_CURRENT_TASK( thread );
-    task->depth = ( task->parent ) ? task->parent->depth + 1 : 0;
-    task->children_lock = SCTK_SPINLOCK_INITIALIZER;
-}
+	task->icvs = thread->info.icvs;
 
+  	task->parent = MPCOMP_TASK_THREAD_GET_CURRENT_TASK( thread );
+   task->depth = ( task->parent ) ? task->parent->depth + 1 : 0;
+   task->children_lock = SCTK_SPINLOCK_INITIALIZER;
+}
 
 static inline void
 mpcomp_task_node_task_infos_reset( struct mpcomp_node_s* node )
@@ -153,7 +167,6 @@ mpcomp_task_thread_infos_init( struct mpcomp_thread_s* thread )
 		MPCOMP_TASK_THREAD_SET_CURRENT_TASK( thread, NULL );
 
 		mpcomp_task_infos_init( implicite_task, NULL, NULL, thread );
-        //sctk_error( "Thread: %p | implicite task: %p", thread, implicite_task );
 
 		/* Allocate private task data structures */ 
 		tied_tasks_list = mpcomp_malloc( 1, sizeof(mpcomp_task_list_t), numa_node_id );
@@ -238,14 +251,14 @@ mpcomp_task_team_infos_init( struct mpcomp_team_s* team, int depth )
 
 /* mpcomp_task.c */
 int mpcomp_task_all_task_executed( void );
-void __mpcomp_task_schedule( void );
+void __mpcomp_task_schedule( int filter );
 void __mpcomp_task_exit( void );
 int paranoiac_test_task_exit_check(void);
 int mpcomp_task_get_task_left_in_team( struct mpcomp_team_s*);
 
 /* Return list of 'type' tasks contained in element of rank 'globalRank' */
 static inline struct mpcomp_task_list_s *
-mpcomp_task_get_list(int globalRank, mpcomp_tasklist_type_t type)
+mpcomp_task_get_list( int globalRank, mpcomp_tasklist_type_t type )
 {
 	mpcomp_thread_t* thread = NULL;
 	struct mpcomp_task_list_s * list = NULL;
@@ -260,14 +273,14 @@ mpcomp_task_get_list(int globalRank, mpcomp_tasklist_type_t type)
 	sctk_assert( thread->mvp != NULL );
 	sctk_assert( globalRank < MPCOMP_TASK_INSTANCE_GET_ARRAY_TREE_TOTAL_SIZE( thread->instance ) );
 
-    if( !MPCOMP_TASK_MVP_GET_TREE_ARRAY_NODES( thread->mvp ) ) 
-    {
-        return NULL;
-    }
+   if( !MPCOMP_TASK_MVP_GET_TREE_ARRAY_NODES( thread->mvp ) ) 
+   {
+   	return NULL;
+   }
 
 	if (mpcomp_is_leaf( thread->instance, globalRank ) ) 
 	{
-   	    struct mpcomp_mvp_s* mvp = (struct mpcomp_mvp_s *) ( MPCOMP_TASK_MVP_GET_TREE_ARRAY_NODE( thread->mvp, globalRank ) );
+   	struct mpcomp_mvp_s* mvp = (struct mpcomp_mvp_s *) ( MPCOMP_TASK_MVP_GET_TREE_ARRAY_NODE( thread->mvp, globalRank ) );
 		list = mvp->task_infos.tasklist[type];
   	}
 	else
@@ -277,7 +290,7 @@ mpcomp_task_get_list(int globalRank, mpcomp_tasklist_type_t type)
 	}
 	
 	sctk_assert( list != NULL );
-    return list;
+   return list;
 }
 
 #endif /* __SCTK_MPCOMP_TASK_UTILS_H__ */

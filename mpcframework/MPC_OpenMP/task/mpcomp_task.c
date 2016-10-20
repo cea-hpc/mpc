@@ -39,12 +39,14 @@
 #include "mpcomp_tree_utils.h"
 #include "mpcomp_task_stealing.h"
 
+#include "mpcomp_task_dep.h"
+
 static sctk_atomics_int total_task_exec = OPA_INT_T_INITIALIZER( 0 );   
 static sctk_atomics_int total_task_create = OPA_INT_T_INITIALIZER( 0 );   
  
 /*
  */
-static inline void
+void
 mpcomp_tast_clear_sister( mpcomp_task_t* task )
 {
 	sctk_assert( task );
@@ -95,8 +97,7 @@ __mpcomp_task_execute( mpcomp_task_t* task )
     mpcomp_local_icv_t saved_icvs;
     mpcomp_task_t* saved_current_task;
 
-	sctk_assert( task );
-
+	 sctk_assert( task );
 
     /* Retrieve the information (microthread structure and current region) */
     sctk_assert( sctk_openmp_thread_tls );	 
@@ -122,6 +123,7 @@ __mpcomp_task_execute( mpcomp_task_t* task )
 	/* Get task icv environnement */
 	thread->info.icvs = task->icvs;
 	
+	//fprintf( stderr, "func = %p -- %p\n", task->func, task->data );
 	/* Execute task */
 	task->func( task->data );
 
@@ -131,14 +133,44 @@ __mpcomp_task_execute( mpcomp_task_t* task )
 	/* Restore current task */
  	MPCOMP_TASK_THREAD_SET_CURRENT_TASK( thread, saved_current_task );
 
-    saved_current_task = MPCOMP_TASK_THREAD_GET_CURRENT_TASK( thread );
+   saved_current_task = MPCOMP_TASK_THREAD_GET_CURRENT_TASK( thread );
 
-    /* Reset task owner for implicite task */
-    task->thread = NULL;
+   /* Reset task owner for implicite task */
+   task->thread = NULL;
 
-    sctk_atomics_incr_int( &( total_task_exec ) );  
+   sctk_atomics_incr_int( &( total_task_exec ) );  
 
-    sctk_nodebug( "TASK DELAYED END" );
+	if( OPA_load_int(  &( total_task_exec ) ) > OPA_load_int(  &( total_task_create ) ) ) 
+		abort();
+
+   sctk_nodebug( "TASK DELAYED END" );
+}
+
+static inline void
+mpcomp_task_add_to_parent( mpcomp_task_t* task )
+{
+	sctk_assert( task );
+
+	/* If task has a parent, add it to the children list */ 
+   if( !( task->parent ))
+	{
+		return;
+	}
+
+	sctk_spinlock_lock( &( task->parent->children_lock ) );
+
+	/* Parent task already had children */
+	if( task->parent->children ) 
+   {
+		task->next_child = task->parent->children;
+      sctk_assert( task->next_child );
+		task->next_child->prev_child = task;
+	} 
+	
+	/* The task became the first task */
+	task->parent->children = task;
+
+	sctk_spinlock_unlock( &( task->parent->children_lock ) );
 }
 
 /*
@@ -244,88 +276,65 @@ void __mpcomp_task_list_infos_exit_r( mpcomp_node_t* node )
 	  
      return;
 }
-
+                                                 
 #if 0
 #endif
               mpcomp_malloc(1, sizeof(struct mpcomp_task_list_s), id_numa);
-                                                 
 /* The new task may be delayed, so copy arguments in a buffer */
 struct mpcomp_task_s*
-__mpcomp_task_alloc(void (*fn) (void *), void *data, void (*cpyfn) (void *, void *),
-           long arg_size, long arg_align, bool if_clause, unsigned flags)
+__mpcomp_task_alloc( void (*fn) (void *), void *data, void (*cpyfn) (void *, void *),
+           long arg_size, long arg_align, bool if_clause, unsigned flags, int deps_num )
 {
-	char *task_data;
-    size_t mpcomp_task_size;	
-    size_t mpcomp_task_total_size;
-    struct mpcomp_task_s* new_task;
-    struct mpcomp_task_s* current_task;
-
   	sctk_assert( sctk_openmp_thread_tls );	 
   	mpcomp_thread_t* t = (mpcomp_thread_t *) sctk_openmp_thread_tls;
-    current_task = MPCOMP_TASK_THREAD_GET_CURRENT_TASK( t );
 
+	sctk_assert( t->mvp );
+	sctk_assert( t->mvp->father );
+	sctk_assert( t->mvp->father->id_numa );
 
-    // mpcomp_task + arg_size
-    mpcomp_task_size = __kmp_round_up_to_val(sizeof(struct mpcomp_task_s), sizeof(void*)); 
-    mpcomp_task_total_size = mpcomp_task_size + arg_size + arg_align -1;
-    new_task = mpcomp_malloc(1, mpcomp_task_total_size, 0 /* t->mvp->father->id_numa */);
-	sctk_assert (new_task != NULL);
+	/* default pading */
+	const long align_size = ( arg_align == 0 ) ? 8 : align_size;
 
-    // new_task + sizeof(mpcomp_task_s) 
-    task_data = (char *)((uintptr_t) new_task + mpcomp_task_size); // Align task_data sur 8 
+   // mpcomp_task + arg_size
+   const long mpcomp_task_info_size = mpcomp_task_align_single_malloc( sizeof( mpcomp_task_t), arg_align);
+	const long mpcomp_task_data_size = mpcomp_task_align_single_malloc( arg_size, arg_align ); 
 
-    if(arg_size > 0)
-    {
-        if( arg_align > 0 )
-            task_data = (char *)(((uintptr_t) task_data + arg_align - 1) & ~(uintptr_t) (arg_align - 1));
+	/* Compute task total size */
+	long mpcomp_task_tot_size = mpcomp_task_info_size;
 
-	    sctk_assert((size_t) task_data + arg_size <= (size_t) new_task + mpcomp_task_total_size);
+	sctk_assert( MPCOMP_OVERFLOW_SANITY_CHECK( mpcomp_task_tot_size, mpcomp_task_data_size ));
+	mpcomp_task_tot_size += mpcomp_task_data_size;
 
-        if(cpyfn)
-        {
-            cpyfn(task_data, data);
-        }
-        else
-        {
-            memcpy(task_data, data, arg_size);
-        }
-    }
+   struct mpcomp_task_s *new_task = mpcomp_malloc( 1, mpcomp_task_tot_size, t->mvp->father->id_numa );
+	sctk_assert( new_task != NULL );
+
+	void* task_data = ( arg_size > 0 ) ? ( void*) ( (uintptr_t) new_task + mpcomp_task_info_size ) : NULL;
 
 	/* Create new task */
-    mpcomp_task_infos_init( new_task, fn, task_data, t );
-	new_task->icvs = t->info.icvs;
-    new_task->children = NULL;
+   mpcomp_task_infos_init( new_task, fn, task_data, t );
+	mpcomp_task_set_property( &( new_task->property ), MPCOMP_TASK_TIED );
 
-	mpcomp_task_set_property ( &( new_task->property ), MPCOMP_TASK_TIED);
-
-    /* If its parent task is final, the new task must be final too */
-	if( flags & 2 || ( current_task
-            && mpcomp_task_property_isset ( current_task->property, MPCOMP_TASK_FINAL ) ) ) 
-	{
-		mpcomp_task_set_property (&(new_task->property), MPCOMP_TASK_FINAL);
+   if(arg_size > 0 )
+   {
+   	if(cpyfn) 
+      {
+      	cpyfn( task_data, data );
+     	}
+      else
+      {
+      	memcpy( task_data, data, arg_size );
+      }
 	}
 
-	/* If task has a parent, add it to the children list */ 
-    if( new_task->parent ) 
-    {
-        sctk_spinlock_lock( &( new_task->parent->children_lock ) );
+   /* If its parent task is final, the new task must be final too */
+	if( mpcomp_task_is_final( flags, new_task->parent ) ) 
+	{
+		mpcomp_task_set_property( &( new_task->property), MPCOMP_TASK_FINAL );
+	}
 
-	    /* Parent task already had children */
-	    if( new_task->parent->children ) 
-        {
-		    new_task->next_child = new_task->parent->children;
-            sctk_assert( new_task->next_child  );
-		    new_task->next_child->prev_child = new_task;
-	     } 
+	mpcomp_task_add_to_parent( new_task );
 
-
-	    /* The task became the first task */
-	    new_task->parent->children = new_task;
-
-	    sctk_spinlock_unlock( &( new_task->parent->children_lock ) );
-    }
-
-    return new_task;
+   return new_task;
 }
 
 
@@ -366,6 +375,44 @@ __mpcomp_task_try_delay( bool if_clause )
     return mvp_task_list;
 }
 
+void
+__mpcomp_task_process( mpcomp_task_t* new_task, bool if_clause ) 
+{
+   mpcomp_thread_t* thread;
+	mpcomp_task_list_t* mvp_task_list;
+
+                                                    MPCOMP_TASK_FINAL)) ||
+              (flags & 2)) {
+            /* If its parent task is final, the new task must be final too */
+            mpcomp_task_set_property(&(task->property), MPCOMP_TASK_FINAL);
+          }
+
+   /* Retrieve the information (microthread structure and current region) */
+   sctk_assert( sctk_openmp_thread_tls );
+   thread = ( mpcomp_thread_t* ) sctk_openmp_thread_tls;
+    
+   sctk_atomics_incr_int( &( total_task_create ) );
+   mvp_task_list = __mpcomp_task_try_delay( if_clause );
+
+   /* Push the task in the list of new tasks */	
+   if( mvp_task_list )	
+   {
+      mpcomp_task_list_lock( mvp_task_list );
+	   mpcomp_task_list_pushtohead( mvp_task_list , new_task );
+ 		mpcomp_task_list_unlock( mvp_task_list );
+   	return;
+   }
+
+   /* Direct task execution */
+   mpcomp_task_set_property ( &( new_task->property ), MPCOMP_TASK_UNDEFERRED );
+   __mpcomp_task_execute( new_task );
+
+   mpcomp_tast_clear_sister( new_task );
+   mpcomp_task_clear_parent( new_task );
+
+   sctk_free(new_task);
+}
+
 /* 
  * Creation of an OpenMP task 
  * Called when encountering an 'omp task' construct 
@@ -374,47 +421,13 @@ void
 __mpcomp_task(void (*fn) (void *), void *data, void (*cpyfn) (void *, void *),
 		   long arg_size, long arg_align, bool if_clause, unsigned flags)
 {
-    mpcomp_task_t* new_task = NULL;
- 	mpcomp_task_list_t* mvp_task_list = NULL;
-     
+	mpcomp_task_t* new_task;
+
   	__mpcomp_init();
  	__mpcomp_task_infos_init();
-                                                    MPCOMP_TASK_FINAL)) ||
-              (flags & 2)) {
-            /* If its parent task is final, the new task must be final too */
-            mpcomp_task_set_property(&(task->property), MPCOMP_TASK_FINAL);
-          }
 
-
-    /* Retrieve the information (microthread structure and current region) */
-    mpcomp_thread_t* thread;
-    sctk_assert( sctk_openmp_thread_tls );
-    thread = ( mpcomp_thread_t* ) sctk_openmp_thread_tls;
-    
-    sctk_atomics_incr_int( &( total_task_create ) );
-    mvp_task_list = __mpcomp_task_try_delay( if_clause );
-
-    /* Allocate new_task */
-    new_task = __mpcomp_task_alloc( fn, data, cpyfn, arg_size, arg_align, if_clause, flags ); 
-    //sctk_error( "CREATE: thread: %p task: %p owner: %p", sctk_openmp_thread_tls, new_task, new_task->thread );
-
-    /* Push the task in the list of new tasks */	
-    if( mvp_task_list )	
-    {
-        mpcomp_task_list_lock( mvp_task_list );
-	    mpcomp_task_list_pushtohead( mvp_task_list , new_task );
-       	mpcomp_task_list_unlock( mvp_task_list );
-        return;
-    }
-
-    /* Direct task execution */
-    mpcomp_task_set_property ( &( new_task->property ), MPCOMP_TASK_UNDEFERRED);
-    __mpcomp_task_execute( new_task );
-
-    mpcomp_tast_clear_sister( new_task );
-    mpcomp_task_clear_parent( new_task );
-
-    sctk_free(new_task);
+   new_task = __mpcomp_task_alloc( fn, data, cpyfn, arg_size, arg_align, if_clause, flags, 0 /* no deps */ ); 
+	__mpcomp_task_process( new_task, if_clause );
 }
 
 
@@ -439,11 +452,11 @@ static mpcomp_task_t* mpcomp_task_steal( mpcomp_task_list_t* list )
 static inline int 
 mpcomp_task_get_victim(int globalRank, int index, mpcomp_tasklist_type_t type)
 {
-     int victim;
+   int victim;
 
-     /* Retrieve the information (microthread structure and current region) */
-     sctk_assert( sctk_openmp_thread_tls );
-     mpcomp_thread_t* thread = ( mpcomp_thread_t* ) sctk_openmp_thread_tls;
+	/* Retrieve the information (microthread structure and current region) */
+   sctk_assert( sctk_openmp_thread_tls );
+   mpcomp_thread_t* thread = ( mpcomp_thread_t* ) sctk_openmp_thread_tls;
 	
 	sctk_assert( thread->instance );
 	sctk_assert( thread->instance->team );	
@@ -497,7 +510,7 @@ __mpcomp_task_larceny( void )
 
   	/* Retrieve the information (microthread structure and current region) */
 	sctk_assert( sctk_openmp_thread_tls );
-    thread = ( mpcomp_thread_t* ) sctk_openmp_thread_tls;
+   thread = ( mpcomp_thread_t* ) sctk_openmp_thread_tls;
 
  	mvp = thread->mvp;
 	sctk_assert( mvp );
@@ -516,28 +529,30 @@ __mpcomp_task_larceny( void )
 	  	/* Retrieve informations about task lists */
 	  	const int tasklistDepth = MPCOMP_TASK_TEAM_GET_TASKLIST_DEPTH( team, type );
 	  	const int nbTasklists   = MPCOMP_TASK_INSTANCE_GET_ARRAY_TREE_LEVEL_SIZE( thread->instance, tasklistDepth );
+		
+		//sctk_error( "tasklistDepth: %d -- nbTasklists: %d", tasklistDepth, nbTasklists);
 
 	  	/* If there are task lists in which we could steal tasks */
-	  	if (nbTasklists > 1) 
+	  	if( nbTasklists > 1 )  
 		{
 
 	        /* Try to steal inside the last stolen list*/
 	        if( ( list = MPCOMP_TASK_MVP_GET_LAST_STOLEN_TASK_LIST( mvp, type ) ) ) 
 	        {
-		   	    if( ( task = mpcomp_task_steal(list) ) )
-				{
-					return task;
-		    	}
+		   	   if( ( task = mpcomp_task_steal(list) ) )
+					{
+						return task;
+		    		}
 	        }
 
 	     	/* Get the rank of the ancestor containing the task list */
 	    	int rank = MPCOMP_TASK_MVP_GET_TASK_LIST_NODE_RANK( mvp, type );
-	     	int nbVictims = ( isMonoVictim ) ? 1 : nbTasklists - 1;
+	     	int nbVictims = ( isMonoVictim ) ? 1 : nbTasklists;
 	      
-	        /* Look for a task in all victims lists */
+	      /* Look for a task in all victims lists */
 	     	for( i = 1; i < nbVictims + 1; i++) 
 			{
-		   	    int victim = mpcomp_task_get_victim( rank, i, type );
+		   	int victim = mpcomp_task_get_victim( rank, i, type );
 		    	sctk_assert( victim != rank );
 		    	list = mpcomp_task_get_list( victim, type );
 		    	task = mpcomp_task_steal( list );
@@ -560,6 +575,7 @@ int __mpcomp_task_internal_all_task_executed( mpcomp_thread_t* thread, mpcomp_in
     sctk_assert( instance );
     sctk_assert( team );
 
+	
   	/* If only one thread is running, tasks are not delayed. No need to schedule */
 	if( ( thread->info.num_threads == 1 ) 
         || !MPCOMP_TASK_THREAD_IS_INITIALIZED( thread ) 
@@ -568,6 +584,17 @@ int __mpcomp_task_internal_all_task_executed( mpcomp_thread_t* thread, mpcomp_in
    	    return 1;
   	}
  
+	//sctk_error( ">> %d -- %d", OPA_load_int( &total_task_exec), OPA_load_int( &total_task_create) );
+
+	if( OPA_load_int( &total_task_exec) != OPA_load_int( &total_task_create) )
+	{
+		return 0;
+	}
+	else
+	{
+		return 1;
+	}
+
     for( type = 0; type < MPCOMP_TASK_TYPE_COUNT; type++ )
     {
         int i;
@@ -580,10 +607,10 @@ int __mpcomp_task_internal_all_task_executed( mpcomp_thread_t* thread, mpcomp_in
         {
             mpcomp_task_list_t* list;
 
-	        if( !( list = mpcomp_task_get_list( i, type ) ) )
-            {
-                continue;
-            }
+	        	if( !( list = mpcomp_task_get_list( i, type ) ) )
+         	{
+          		continue;
+           	}
 
             if( !mpcomp_task_list_isempty( list ) )
             {
@@ -624,7 +651,7 @@ int mpcomp_task_all_task_executed( void )
  *     - in taskwait regions
  *     - in implicit and explicit barrier regions
  */
-void __mpcomp_task_schedule(void)
+void __mpcomp_task_schedule( int filter )
 {
 	mpcomp_task_t* task = NULL;
     mpcomp_thread_t* thread = NULL;
@@ -638,20 +665,22 @@ void __mpcomp_task_schedule(void)
 	mpcomp_team_t* team = thread->instance->team;
  
     if( !( thread->mvp ) )
+	 {
+			abort();
         return;
+	 }
 
 	sctk_assert( thread->mvp );
 	mpcomp_mvp_t* mvp = (mpcomp_mvp_t*) thread->mvp;
 
-  	/* If only one thread is running, tasks are not delayed. No need to schedule */
-	if( ( thread->info.num_threads == 1 ) 
-        || !MPCOMP_TASK_THREAD_IS_INITIALIZED( thread )
-        || !MPCOMP_TASK_TEAM_IS_INITIALIZED( team ) )
-	{
-        //sctk_nodebug("sequential or no task");
-   	    return;
-  	}
-
+  		/* If only one thread is running, tasks are not delayed. No need to schedule */
+		if( ( thread->info.num_threads == 1 ) 
+        		|| !MPCOMP_TASK_THREAD_IS_INITIALIZED( thread )
+        		|| !MPCOMP_TASK_TEAM_IS_INITIALIZED( team ) )
+		{
+      	sctk_error("sequential or no task");
+   	   return;
+  		}
  
 		int type;
 		sctk_assert( !task );
@@ -660,29 +689,21 @@ void __mpcomp_task_schedule(void)
 	  	mpcomp_task_list_t* list = MPCOMP_TASK_THREAD_GET_TIED_TASK_LIST_HEAD( thread ) ;
 		sctk_assert( list );
          
-        task = mpcomp_task_list_popfromhead( list );        
+      task = mpcomp_task_list_popfromhead( list );        
 
 		for( type = 0; !task && type < MPCOMP_TASK_TYPE_COUNT; type++)
 		{
 			const int node_rank = MPCOMP_TASK_MVP_GET_TASK_LIST_NODE_RANK( mvp, type );
-	        list = mpcomp_task_get_list( node_rank, type );
-            sctk_assert( list );
-
-	        if( !( list = mpcomp_task_get_list( node_rank, type ) ) )
-            {
-                continue;
-            }
-
-            assert( list );
-	        mpcomp_task_list_lock(list);
-	        task = mpcomp_task_list_popfromhead(list);
-	        mpcomp_task_list_unlock(list);
+	      list = mpcomp_task_get_list( node_rank, type );
+         sctk_assert( list );
+	      mpcomp_task_list_lock(list);
+	      mpcomp_task_list_unlock(list);
 		} 
-	  
+
 	  	/* If no task found previously, try to thieve a task somewhere */
 	  	if( task == NULL ) 
 		{
-	   	    task = __mpcomp_task_larceny();
+	   	task = __mpcomp_task_larceny();
 	  	}
 	  
 	  	/* All tasks lists are empty, so exit task scheduling function */
@@ -718,14 +739,15 @@ void __mpcomp_taskwait( void )
 
  	if( omp_thread_tls->info.num_threads > 1 )
 	{	
-        current_task = MPCOMP_TASK_THREAD_GET_CURRENT_TASK( omp_thread_tls );
+       current_task = MPCOMP_TASK_THREAD_GET_CURRENT_TASK( omp_thread_tls );
   	    sctk_assert( current_task );
 
   	    /* Look for a children tasks list */
         while( current_task->children != NULL ) 
         {
-		    __mpcomp_task_schedule();
- 	    }
+		  		//__mpcomp_task_schedule( 1 );
+		  		__mpcomp_task_schedule( 0 );
+ 	     }
     }
 
     sctk_nodebug( "end %s", __func__ );

@@ -85,6 +85,7 @@ mpcomp_task_tree_register_node_in_all_numa_node_array( mpcomp_node_ptr_t** tree_
 	sctk_assert( tree_array );
 	sctk_assert( global_rank >= 0 );
 
+	sctk_error("node value = %p", node );
 	const int numa_node_number = sctk_max( sctk_get_numa_node_number(), 1 );
 	
     for( i = 0; i < numa_node_number; i++ )

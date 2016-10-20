@@ -79,8 +79,7 @@ static void __mpcomp_internal_GOMP_in_order_scheduler_master_end(void)
 
     while( !mpcomp_task_all_task_executed() )
     {
-	    sctk_thread_yield() ;
-        __mpcomp_task_schedule();
+        __mpcomp_task_schedule( 0 );
     }
 
     __mpcomp_taskwait();

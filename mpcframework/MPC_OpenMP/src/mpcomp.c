@@ -761,7 +761,7 @@ void in_order_scheduler( mpcomp_mvp_t * mvp ) {
 
 	sctk_assert( mvp != NULL ) ;
 
-	sctk_nodebug( "in_order_scheduler: Starting to schedule %d thread(s)", mvp->nb_threads ) ;
+	sctk_error( "in_order_scheduler: Starting to schedule %d thread(s)", mvp->nb_threads ) ;
 
 	/* Save previous TLS */
 	t = sctk_openmp_thread_tls ;
@@ -773,6 +773,7 @@ void in_order_scheduler( mpcomp_mvp_t * mvp ) {
 
     sctk_openmp_thread_tls = &mvp->threads[i];
     cur_mvp_thread = (mpcomp_thread_t*) sctk_openmp_thread_tls;
+	 fprintf(stderr, "value ... %p\n", cur_mvp_thread );
 
     // hmt
     // set the KIND_MASK_OMP to the current thread
@@ -857,15 +858,10 @@ void in_order_scheduler( mpcomp_mvp_t * mvp ) {
     mvp->threads[i].done = 1 ;
   }
 
-    while( !mpcomp_task_all_task_executed() )
-    {
-        __mpcomp_task_schedule();
-    }
-
-    __mpcomp_taskwait();
-
-    sctk_assert( cur_mvp_thread->instance );
-    sctk_assert( cur_mvp_thread->instance->team );
+	while( !mpcomp_task_all_task_executed() ) 
+	{
+   	__mpcomp_task_schedule( 0 );
+	}
 
 	/* Restore previous TLS */
 	sctk_openmp_thread_tls = t ;

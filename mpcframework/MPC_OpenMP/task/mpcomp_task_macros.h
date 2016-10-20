@@ -11,7 +11,13 @@
 	#define KMP_SIZE_T_MAX (0xFFFFFFFFFFFFFFFF)
 #endif
 
-#define MPCOMP_TASK_MAX_DELAYED 16
+
+#define MPCOMP_OMP_4_0
+
+#define MPCOMP_TASK_DEFAULT_ALIGN 8
+
+#define MPCOMP_TASK_MAX_DELAYED 1024
+
 
 /*** Tasks property bitmasks ***/
 
@@ -35,6 +41,28 @@
 
 /* A task which forces his children to be included  */
 #define MPCOMP_TASK_FINAL        0x00000010 
+
+#define MPCOMP_TASK_DEP_UNUSED_VAR(var) (void)(sizeof(var))
+
+#define MPCOMP_OVERFLOW_SANITY_CHECK( size, size_to_sum ) 							\
+	( size <= KMP_SIZE_T_MAX - size_to_sum )
+
+static inline long
+mpcomp_task_align_single_malloc( long size, long arg_align )
+{
+	if( size & ( arg_align - 1) )
+	{
+		const size_t tmp_size  = size & (~( arg_align - 1 ));
+		if( tmp_size <= KMP_SIZE_T_MAX - arg_align )
+		{
+			return tmp_size + arg_align;
+		}
+	}
+	return size;
+}
+
+#define MPCOMP_TASK_COMPUTE_TASK_DATA_PTR( ptr, size, arg_align	)		\
+	ptr + MPCOMP_TASK_ALIGN_SINGLE( size, arg_align)							\
 
 /*** MPCOMP_TASK_INIT_STATUS ***/
 

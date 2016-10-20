@@ -46,19 +46,21 @@ __mpcomp_barrier (void)
      sctk_nodebug( "[%d] __mpcomp_barrier: Entering w/ %d thread(s)", 
 	 t->rank, t->info.num_threads ) ;
      
-     if (t->info.num_threads == 1) {
-	  return;
-     }
+	if (t->info.num_threads == 1) 
+	{
+		return;
+   }
     
      /* Get the corresponding microVP */
      mvp = t->mvp;
      sctk_assert(mvp != NULL);
+	 
 
-     sctk_error( "[%d] __mpcomp_barrier: t->mvp = %p", 
+    sctk_error( "[%d] __mpcomp_barrier: t->mvp = %p", 
 	 t->rank, t->mvp ) ;
-     
-     /* Call the real barrier */
-     __mpcomp_internal_full_barrier(mvp);
+
+   /* Call the real barrier */
+   __mpcomp_internal_full_barrier(mvp);
 }
 
 

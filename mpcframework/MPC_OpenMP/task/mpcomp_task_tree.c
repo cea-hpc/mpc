@@ -1,4 +1,3 @@
-
 #include "mpcomp_macros.h"
 
 #if MPCOMP_TASK
@@ -35,12 +34,14 @@ mpcomp_task_tree_task_list_alloc( mpcomp_tree_meta_elt_t* meta_elt, int tasklist
 			sctk_assert( meta_elt->ptr.node );
 			tasklistNodeRank[type] = MPCOMP_TASK_NODE_GET_TREE_ARRAY_RANK( meta_elt->ptr.node );
 			MPCOMP_TASK_NODE_SET_TASK_LIST_HEAD( meta_elt->ptr.node, type, list );
+			sctk_error("node: %p -- list : %p -- type : %s", meta_elt->ptr.node, list, (type == MPCOMP_TASK_TYPE_NEW) ? "NEW" : "UNTIED" ); 
 			break;
 
  		case MPCOMP_TREE_META_ELT_MVP:
 			sctk_assert( meta_elt->ptr.mvp );
 			tasklistNodeRank[type] = MPCOMP_TASK_MVP_GET_TREE_ARRAY_RANK( meta_elt->ptr.mvp );
 			MPCOMP_TASK_MVP_SET_TASK_LIST_HEAD( meta_elt->ptr.mvp, type, list );
+			sctk_error("mvp: %p -- list : %p -- type : %s", meta_elt->ptr.mvp, list,  (type == MPCOMP_TASK_TYPE_NEW) ? "NEW" : "UNTIED" ); 
 			break;
 
 		default :
@@ -99,6 +100,8 @@ mpcomp_task_tree_init_task_tree_infos_leaf( mpcomp_mvp_t* mvp, mpcomp_task_tree_
 	MPCOMP_TASK_MVP_SET_TREE_ARRAY_RANK( mvp, rank );	
 	mpcomp_task_tree_register_node_in_all_numa_node_array( task_tree_infos->tree_array, (mpcomp_node_t*) mvp, rank );
 	MPCOMP_TASK_MVP_SET_TREE_ARRAY_NODES( mvp, task_tree_infos->tree_array[id_numa] );
+	
+	sctk_error( "%s -- %p",  __func__, task_tree_infos->tree_array[id_numa][0] );
 
 	/* Init untied and new list */
 	sctk_assert( omp_thread_tls->instance->team );
@@ -113,12 +116,12 @@ mpcomp_task_tree_init_task_tree_infos_node( mpcomp_node_t* node, mpcomp_task_tre
 	mpcomp_task_tree_infos_t* child_task_tree_infos;
 
 	sctk_assert( index >= 0 );
-    sctk_assert( node != NULL);
-    sctk_assert( parent_task_tree_infos != NULL);
+   sctk_assert( node != NULL);
+   sctk_assert( parent_task_tree_infos != NULL);
 
-    /* Retrieve the current thread information */
-    sctk_assert( sctk_openmp_thread_tls );
-    thread = (mpcomp_thread_t *) sctk_openmp_thread_tls;
+   /* Retrieve the current thread information */
+   sctk_assert( sctk_openmp_thread_tls );
+   thread = (mpcomp_thread_t *) sctk_openmp_thread_tls;
 
 	meta_elt.type = MPCOMP_TREE_META_ELT_NODE;
 	meta_elt.ptr.node = node;
@@ -175,7 +178,7 @@ mpcomp_task_tree_infos_init_r( mpcomp_node_t* node, mpcomp_task_tree_infos_t* pa
 	      	break;
 
 	  		case MPCOMP_CHILDREN_LEAF:
-				mpcomp_task_tree_init_task_tree_infos_leaf( node->children.leaf[i], child_task_tree_infos, cur_rank + i, node->depth + 1, node->id_numa ); 
+				mpcomp_task_tree_init_task_tree_infos_leaf( node->children.leaf[i], child_task_tree_infos, cur_rank + i + 1, node->depth + 1, node->id_numa ); 
 	      	break;
 		    
 	  		default:

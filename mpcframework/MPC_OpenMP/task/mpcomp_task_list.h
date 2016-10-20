@@ -119,21 +119,15 @@ mpcomp_task_list_popfromhead( mpcomp_task_list_t *list )
 {
 	if( !mpcomp_task_list_isempty( list ) ) 
 	{
-		mpcomp_task_t *task = list->head;
-    	if( task->list ) 
+		mpcomp_task_t* task = list->head;
+      
+		list->head = task->next;
+		if( !( task->next ) )
 		{
-
-      	    if( task->next )
-			{
-          	    task->next->prev = NULL;
-			}
-
-            list->head = task->next;
-            sctk_atomics_decr_int(&list->nb_elements);
-            task->list = NULL;
-
-         return task;
-     	}
+			list->tail = NULL;
+		}
+      sctk_atomics_decr_int(&list->nb_elements);
+   	return task;
 	}
 	return NULL;
 }
@@ -143,21 +137,18 @@ mpcomp_task_list_popfromtail( mpcomp_task_list_t *list )
 {
 	if( !mpcomp_task_list_isempty( list ) ) 
 	{
-		mpcomp_task_t* tail = list->tail;
+		mpcomp_task_t* task = list->tail;
 
-	    if( tail->list ) 
+      list->tail = task->prev;
+		if( !( task->prev ) )
 		{
-			if( tail->prev )
-			{
-				tail->prev->next = NULL;
-			}
-		   
-			list->tail = tail->prev;
-		    sctk_atomics_decr_int( &( list->nb_elements ) );
-		    tail->list = NULL;
-		    return tail;
-	  	}
+				list->head = NULL;
+		}
+
+		sctk_atomics_decr_int( &( list->nb_elements ) );
+      return task;
 	}
+
 	return NULL;
 } 
 
@@ -177,7 +168,7 @@ mpcomp_task_list_remove( mpcomp_task_list_t *list, mpcomp_task_t *task )
 	if( task->next )
 		task->next->prev = task->prev;
 	  
-	if (task->prev)
+	if( task->prev )
 		task->prev->next = task->next;
 
 	sctk_atomics_decr_int( &( list->nb_elements ) );
