@@ -3,10 +3,10 @@
 libxml2      ; 2.9.3 ;       ; dep     ;                                                   ; target  ; extern       ; generic.autotools
 hwloc        ; 1.11.2 ; 1.11.2 ; install ;                                                   ; target  ; extern		; generic.autotools
 binutils     ; 2.25  ; 2.25  ; install ;                                                   ; host    ; extern		; generic.autotools
-gmp          ; 6.1.0 ;       ; dep     ;                                                   ; host    ; extern		; generic.autotools.libsgcc
-mpfr         ; 3.1.4 ;       ; dep     ; gmp                                               ; host    ; extern		; generic.autotools.libsgcc
+gmp          ; 6.1.1 ;       ; dep     ;                                                   ; host    ; extern		; generic.autotools.libsgcc
+mpfr         ; 3.1.5 ;       ; dep     ; gmp                                               ; host    ; extern		; generic.autotools.libsgcc
 mpc          ; 1.0.3 ;       ; dep     ; gmp mpfr                                          ; host    ; mpc			; generic.autotools.libsgcc
-gcc          ; 4.8.5 ;       ; install ; gmp mpfr mpc binutils                             ; host    ; extern		; generic.autotools.gcc
+gcc          ; 6.2.0 ;       ; install ; gmp mpfr mpc binutils                             ; host    ; extern		; generic.autotools.gcc
 openpa       ; 1.0.2 ;       ; dep     ;                                                   ; target  ; extern		; generic.autotools
 libextls     ; 0.5.0 ;       ; install ; hwloc openpa                                      ; target  ; extern       ; generic.autotools
 sctk_arch    ;       ;       ; install ; openpa                                            ; target  ; local		; local.autotools
