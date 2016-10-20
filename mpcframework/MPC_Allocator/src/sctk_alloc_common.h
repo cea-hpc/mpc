@@ -156,15 +156,6 @@ extern "C"
 **/
 #define SCTK_ALLOC_ALIGN(x,align) ((x) & (~((align) -1 )))
 // #define SCTK_ALLOC_ALIGN(x,align) ((x) - ((x)%(align)))
-#ifdef MPC_ALLOCATOR_DISABLE_STATIC
-	#define SCTK_STATIC /*static*/
-#else
-	#ifdef _MSC_VER
-		#define SCTK_STATIC __inline
-	#else
-		#define SCTK_STATIC inline
-	#endif
-#endif // MPC_ALLOCATOR_DISABLE_STATIC
 //To mark function which are intern to MPC
 #define SCTK_INTERN
 

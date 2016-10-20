@@ -735,7 +735,7 @@ MPI_request_struct_t * __sctk_internal_get_MPC_requests()
 }
 
 /** \brief Initialize MPI interface request handling */
-inline void __sctk_init_mpc_request ()
+void __sctk_init_mpc_request ()
 {
 	static sctk_thread_mutex_t sctk_request_lock =	SCTK_THREAD_MUTEX_INITIALIZER;
 	MPI_request_struct_t *requests;

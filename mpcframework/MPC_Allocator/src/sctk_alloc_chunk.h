@@ -175,13 +175,13 @@ typedef struct sctk_alloc_chunk_info * sctk_alloc_vchunk;
 //static __inline__ sctk_alloc_vchunk sctk_alloc_get_chunk(sctk_addr_t ptr);
 //static inline sctk_alloc_vchunk sctk_alloc_setup_chunk(void * ptr, sctk_size_t size, void * prev);
 //static __inline__ void sctk_alloc_setup_macro_bloc(struct sctk_alloc_macro_bloc * macro_bloc);
-SCTK_STATIC sctk_alloc_vchunk sctk_alloc_setup_chunk_padded(sctk_alloc_vchunk chunk,sctk_size_t boundary);
-SCTK_STATIC sctk_size_t sctk_alloc_calc_chunk_size(sctk_size_t user_size);
-SCTK_STATIC sctk_size_t sctk_alloc_calc_body_size(sctk_size_t chunk_size);
-SCTK_STATIC void * sctk_alloc_chunk_body(sctk_alloc_vchunk vchunk);
-SCTK_STATIC void sctk_alloc_create_stopper(void * ptr,void * prev);
-SCTK_STATIC sctk_size_t sctk_alloc_align_size(sctk_size_t size,sctk_size_t align);
-SCTK_STATIC sctk_alloc_vchunk sctk_alloc_get_prev_chunk(sctk_alloc_vchunk chunk);
+ sctk_alloc_vchunk sctk_alloc_setup_chunk_padded(sctk_alloc_vchunk chunk,sctk_size_t boundary);
+ sctk_size_t sctk_alloc_calc_chunk_size(sctk_size_t user_size);
+ sctk_size_t sctk_alloc_calc_body_size(sctk_size_t chunk_size);
+ void * sctk_alloc_chunk_body(sctk_alloc_vchunk vchunk);
+ void sctk_alloc_create_stopper(void * ptr,void * prev);
+ sctk_size_t sctk_alloc_align_size(sctk_size_t size,sctk_size_t align);
+ sctk_alloc_vchunk sctk_alloc_get_prev_chunk(sctk_alloc_vchunk chunk);
 //static __inline__ sctk_alloc_vchunk sctk_alloc_get_next_chunk(sctk_alloc_vchunk chunk);
 
 #ifdef __cplusplus

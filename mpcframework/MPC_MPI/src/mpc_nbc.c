@@ -82,7 +82,7 @@ static inline int NBC_Sched_copy_pos(int pos, void *src, char tmpsrc,
                                      void *tgt, char tmptgt, int tgtcount,
                                      MPI_Datatype tgttype,
                                      NBC_Schedule *schedule);
-static inline int NBC_Sched_unpack_pos(int pos, void *inbuf, char tmpinbuf,
+int NBC_Sched_unpack_pos(int pos, void *inbuf, char tmpinbuf,
                                        int count, MPI_Datatype datatype,
                                        void *outbuf, char tmpoutbuf,
                                        NBC_Schedule *schedule);

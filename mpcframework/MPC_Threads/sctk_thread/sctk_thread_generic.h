@@ -106,17 +106,11 @@ sctk_thread_generic_user_create (sctk_thread_generic_t * threadp,
 int
 sctk_thread_generic_attr_init (sctk_thread_generic_attr_t * attr);
 
-extern inline void
-sctk_thread_generic_check_signals( int select );
-inline void
-sctk_thread_generic_handle_zombies( sctk_thread_generic_scheduler_generic_t* th );
-
-inline void
-sctk_thread_generic_check_signals( int select );
-inline void
-sctk_thread_generic_handle_zombies( sctk_thread_generic_scheduler_generic_t* th );
-inline void
-sctk_thread_generic_alloc_pthread_blocking_lock_table( const sctk_thread_generic_attr_t* attr);
+extern void sctk_thread_generic_check_signals( int select );
+void sctk_thread_generic_handle_zombies( sctk_thread_generic_scheduler_generic_t* th );
+void sctk_thread_generic_check_signals( int select );
+void sctk_thread_generic_handle_zombies( sctk_thread_generic_scheduler_generic_t* th );
+void sctk_thread_generic_alloc_pthread_blocking_lock_table( const sctk_thread_generic_attr_t* attr);
 int sctk_thread_generic_attr_destroy (sctk_thread_generic_attr_t * attr);
 
 typedef enum{

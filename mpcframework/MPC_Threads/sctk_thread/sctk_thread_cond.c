@@ -270,7 +270,7 @@ struct sctk_cond_timedwait_args_s{
   sctk_thread_generic_cond_t* restrict cond;
 };
 
-inline void
+void
 sctk_thread_conds_init_timedwait_args( struct sctk_cond_timedwait_args_s* arg,
 		const struct timespec* restrict timedout,
 		int* timeout,
@@ -282,7 +282,7 @@ sctk_thread_conds_init_timedwait_args( struct sctk_cond_timedwait_args_s* arg,
   arg->cond = cond;
 }
 
-inline void
+void
 sctk_thread_conds_init_timedwait_task( sctk_thread_generic_task_t* task,
 		volatile int *data,
 		int value,

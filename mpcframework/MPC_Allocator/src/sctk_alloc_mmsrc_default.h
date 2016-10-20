@@ -50,11 +50,11 @@ struct sctk_alloc_mm_source_default
 /********************************* FUNCTION *********************************/
 //default memory source functions
 void sctk_alloc_mm_source_default_init(struct sctk_alloc_mm_source_default * source,sctk_addr_t heap_base,sctk_size_t heap_size);
-extern SCTK_STATIC struct sctk_alloc_macro_bloc * sctk_alloc_mm_source_default_request_memory(struct sctk_alloc_mm_source * source,sctk_size_t size);
-extern SCTK_STATIC void sctk_alloc_mm_source_default_free_memory(struct sctk_alloc_mm_source * source,struct sctk_alloc_macro_bloc * bloc);
-extern SCTK_STATIC void sctk_alloc_mm_source_default_cleanup(struct sctk_alloc_mm_source * source);
-extern SCTK_STATIC struct sctk_alloc_macro_bloc * sctk_alloc_get_macro_bloc(void * ptr);
-extern SCTK_STATIC void sctk_alloc_mm_source_insert_segment(struct sctk_alloc_mm_source_default* source,void * base,sctk_size_t size);
+extern  struct sctk_alloc_macro_bloc * sctk_alloc_mm_source_default_request_memory(struct sctk_alloc_mm_source * source,sctk_size_t size);
+extern  void sctk_alloc_mm_source_default_free_memory(struct sctk_alloc_mm_source * source,struct sctk_alloc_macro_bloc * bloc);
+extern  void sctk_alloc_mm_source_default_cleanup(struct sctk_alloc_mm_source * source);
+extern  struct sctk_alloc_macro_bloc * sctk_alloc_get_macro_bloc(void * ptr);
+extern  void sctk_alloc_mm_source_insert_segment(struct sctk_alloc_mm_source_default* source,void * base,sctk_size_t size);
 
 #ifdef __cplusplus
 }

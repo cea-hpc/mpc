@@ -290,40 +290,6 @@ static inline void BASIC_convert(int type_byte_size, char *src, char *dest)
 */
 
 
-static void FLOAT_convert(int type_byte_size,char * src, char * dest)
-{
-	if( IS_BIG_ENDIAN == 0 )
-	{
-		switch(type_byte_size)                    
-		{                                         
-			case 4:                               
-			{                                     
-				long d;                            
-				BASIC_convert32( src, (char *)&d);     
-				*((float*)dest) = (float)d;                   
-			}                                     
-			break;                                
-			case 8:                               
-			{                                     
-				BASIC_convert64(src, dest);
-			}                                     
-			case 12:                              
-			{                                     
-				BASIC_convert96(src, dest);    
-			}                                     
-			case 16:                              
-			{                                     
-				BASIC_convert128(src, dest);   
-			}                                     
-			break;
-		}
-	}
-	else
-	{
-		memcpy( dest, src, type_byte_size );
-	}                              
-}
-
 
 /** ==========================================================
  * END of MPICH related code

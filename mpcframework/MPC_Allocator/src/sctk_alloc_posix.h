@@ -51,9 +51,9 @@ SCTK_PUBLIC size_t sctk_alloc_posix_get_size_win(void *ptr);
 SCTK_INTERN void sctk_alloc_posix_mmsrc_numa_init_phase_numa(void);
 SCTK_INTERN void sctk_alloc_posix_numa_migrate_chain(struct sctk_alloc_chain * local_chain);
 SCTK_PUBLIC void sctk_alloc_posix_numa_migrate(void);
-SCTK_STATIC void sctk_alloc_posix_mmsrc_uma_init(void);
-SCTK_STATIC void sctk_alloc_posix_mmsrc_numa_init(void);
-SCTK_STATIC struct sctk_alloc_mm_source* sctk_alloc_posix_get_local_mm_source(int);
+ void sctk_alloc_posix_mmsrc_uma_init(void);
+ void sctk_alloc_posix_mmsrc_numa_init(void);
+ struct sctk_alloc_mm_source* sctk_alloc_posix_get_local_mm_source(int);
 
 /************************* FUNCTION ************************/
 SCTK_PUBLIC void * sctk_calloc (size_t nmemb, size_t size);
@@ -63,8 +63,8 @@ SCTK_PUBLIC void * sctk_realloc (void * ptr, size_t size);
 SCTK_PUBLIC int sctk_posix_memalign(void **memptr, size_t boundary, size_t size);
 SCTK_PUBLIC void * sctk_memalign(size_t boundary,size_t size);
 SCTK_INTERN struct sctk_alloc_chain * sctk_get_current_alloc_chain(void);
-SCTK_STATIC void * sctk_realloc_inter_chain (void * ptr, size_t size);
-SCTK_STATIC void sctk_alloc_tls_chain();
+ void * sctk_realloc_inter_chain (void * ptr, size_t size);
+ void sctk_alloc_tls_chain();
 
 /************************* FUNCTION ************************/
 SCTK_PUBLIC void sctk_alloc_posix_chain_print_stat(void);

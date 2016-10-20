@@ -130,7 +130,7 @@ SCTK_PUBLIC void * sctk_memalign_hook(size_t align,size_t size,const void * call
  * Tls chain setter
  * @param chain Define the allocation chain to setup.
 **/
-SCTK_STATIC void sctk_set_tls_chain(struct sctk_alloc_chain * chain){
+ void sctk_set_tls_chain(struct sctk_alloc_chain * chain){
 	#ifdef _WIN32
 		assume_m(sctk_current_alloc_chain != -1,"The TLS wasn't initialized.");
 		TlsSetValue(sctk_current_alloc_chain, (LPVOID)chain);
@@ -143,7 +143,7 @@ SCTK_STATIC void sctk_set_tls_chain(struct sctk_alloc_chain * chain){
 /**
  * Tls chain getter
 **/
-SCTK_STATIC struct sctk_alloc_chain * sctk_get_tls_chain()
+ struct sctk_alloc_chain * sctk_get_tls_chain()
 {
 	#ifdef _WIN32
 		assume_m (sctk_current_alloc_chain != -1,"The TLS wasn't initialized.");
@@ -157,7 +157,7 @@ SCTK_STATIC struct sctk_alloc_chain * sctk_get_tls_chain()
 /**
  * Windows specifics. Tls variables need to be initialised before using.
 **/
-SCTK_STATIC void sctk_alloc_tls_chain()
+ void sctk_alloc_tls_chain()
 {
 	#ifdef _WIN32
 		assume_m (sctk_current_alloc_chain == -1,"Try to double alloc the allocator global TLS");
@@ -200,7 +200,7 @@ SCTK_PUBLIC struct sctk_alloc_chain * sctk_alloc_posix_set_default_chain(struct 
 
 /************************* FUNCTION ************************/
 /** Init the global memory source for UMA architecture. **/
-SCTK_STATIC void sctk_alloc_posix_mmsrc_uma_init(void)
+ void sctk_alloc_posix_mmsrc_uma_init(void)
 {
 	//error
 	assume_m (sctk_global_base_init == SCTK_ALLOC_POSIX_INIT_EGG,"Invalid init state while calling allocator default init phase.");
@@ -211,7 +211,7 @@ SCTK_STATIC void sctk_alloc_posix_mmsrc_uma_init(void)
 }
 
 /************************* FUNCTION ************************/
-SCTK_STATIC void sctk_alloc_posix_mmsrc_numa_init_node(int id)
+ void sctk_alloc_posix_mmsrc_numa_init_node(int id)
 {
 	//errors and debug
 	assume_m(id <= SCTK_MAX_NUMA_NODE,"Caution, you get more node than supported by allocator. Limit is setup by SCTK_MAX_NUMA_NODE macro in sctk_alloc_common.h.");
@@ -227,7 +227,7 @@ SCTK_STATIC void sctk_alloc_posix_mmsrc_numa_init_node(int id)
 }
 
 /************************* FUNCTION ************************/
-SCTK_STATIC void sctk_alloc_posix_mmsrc_numa_init_phase_default(void)
+ void sctk_alloc_posix_mmsrc_numa_init_phase_default(void)
 {
 	//error
 	assume_m (sctk_global_base_init == SCTK_ALLOC_POSIX_INIT_EGG,"Invalid init state while calling allocator default init phase.");
@@ -285,14 +285,14 @@ SCTK_INTERN void sctk_alloc_posix_plug_on_egg_allocator(void)
  * Init the global memory sources for NUMA architecture.
  * It init one source for each available NUMA node.
 **/
-SCTK_STATIC void sctk_alloc_posix_mmsrc_numa_init(void)
+ void sctk_alloc_posix_mmsrc_numa_init(void)
 {
 	//setup default memory source
 	sctk_alloc_posix_mmsrc_numa_init_phase_default();
 }
 
 /************************* FUNCTION ************************/
-SCTK_STATIC int sctk_alloc_posix_source_round_robin(void)
+ int sctk_alloc_posix_source_round_robin(void)
 {
 	static sctk_alloc_spinlock_t lock;
 	static int cnt = -1;
@@ -315,7 +315,7 @@ SCTK_STATIC int sctk_alloc_posix_source_round_robin(void)
  * Return the local memory source depeding on the current NUMA node.
  * It will use numa_preferred() to get the current numa node.
 **/
-SCTK_STATIC struct sctk_alloc_mm_source* sctk_alloc_posix_get_local_mm_source(int force_default_numa_mm_source)
+ struct sctk_alloc_mm_source* sctk_alloc_posix_get_local_mm_source(int force_default_numa_mm_source)
 {
 	//vars
 	struct sctk_alloc_mm_source * res;
@@ -848,7 +848,7 @@ SCTK_PUBLIC void * sctk_realloc (void * ptr, size_t size)
 }
 
 /************************* FUNCTION ************************/
-SCTK_STATIC void * sctk_realloc_inter_chain (void * ptr, size_t size)
+ void * sctk_realloc_inter_chain (void * ptr, size_t size)
 {
 	sctk_size_t copy_size = size;
 	void * res = NULL;

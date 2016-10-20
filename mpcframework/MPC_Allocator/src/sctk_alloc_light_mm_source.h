@@ -95,26 +95,26 @@ struct sctk_alloc_mm_source_light
 /************************* FUNCTION ************************/
 //main functions to manipulate the struct
 void sctk_alloc_mm_source_light_init(struct sctk_alloc_mm_source_light * source,int numa_node,enum sctk_alloc_mm_source_light_flags mode);
-SCTK_STATIC void sctk_alloc_mm_source_light_reg_in_cache(struct sctk_alloc_mm_source_light * light_source,struct sctk_alloc_mm_source_light_free_macro_bloc * free_bloc);
-SCTK_STATIC struct sctk_alloc_mm_source_light_free_macro_bloc * sctk_alloc_mm_source_light_setup_free_macro_bloc(void * ptr,sctk_size_t size);
-SCTK_STATIC struct sctk_alloc_mm_source_light_free_macro_bloc * sctk_alloc_mm_source_light_to_free_macro_bloc(struct sctk_alloc_macro_bloc * macro_bloc);
-SCTK_STATIC struct sctk_alloc_macro_bloc * sctk_alloc_mm_source_light_to_macro_bloc(struct sctk_alloc_mm_source_light_free_macro_bloc * free_bloc);
-SCTK_STATIC struct sctk_alloc_macro_bloc* sctk_alloc_mm_source_light_find_in_cache(struct sctk_alloc_mm_source_light * light_source,sctk_size_t size);
-extern SCTK_STATIC void sctk_alloc_mm_source_light_cleanup(struct sctk_alloc_mm_source* source);
-extern SCTK_STATIC struct sctk_alloc_macro_bloc* sctk_alloc_mm_source_light_request_memory(struct sctk_alloc_mm_source* source, sctk_size_t size);
-extern SCTK_STATIC void sctk_alloc_mm_source_light_free_memory(struct sctk_alloc_mm_source * source,struct sctk_alloc_macro_bloc * bloc);
-SCTK_STATIC void sctk_alloc_mm_source_light_insert_segment(struct sctk_alloc_mm_source_light* light_source, void* base, sctk_size_t size);
-SCTK_STATIC struct sctk_alloc_macro_bloc * sctk_alloc_mm_source_light_mmap_new_segment(struct sctk_alloc_mm_source_light* light_source,sctk_size_t size);
-extern SCTK_STATIC struct sctk_alloc_macro_bloc * sctk_alloc_mm_source_light_remap(struct sctk_alloc_macro_bloc * macro_bloc,sctk_size_t size);
+ void sctk_alloc_mm_source_light_reg_in_cache(struct sctk_alloc_mm_source_light * light_source,struct sctk_alloc_mm_source_light_free_macro_bloc * free_bloc);
+ struct sctk_alloc_mm_source_light_free_macro_bloc * sctk_alloc_mm_source_light_setup_free_macro_bloc(void * ptr,sctk_size_t size);
+ struct sctk_alloc_mm_source_light_free_macro_bloc * sctk_alloc_mm_source_light_to_free_macro_bloc(struct sctk_alloc_macro_bloc * macro_bloc);
+ struct sctk_alloc_macro_bloc * sctk_alloc_mm_source_light_to_macro_bloc(struct sctk_alloc_mm_source_light_free_macro_bloc * free_bloc);
+ struct sctk_alloc_macro_bloc* sctk_alloc_mm_source_light_find_in_cache(struct sctk_alloc_mm_source_light * light_source,sctk_size_t size);
+extern  void sctk_alloc_mm_source_light_cleanup(struct sctk_alloc_mm_source* source);
+extern  struct sctk_alloc_macro_bloc* sctk_alloc_mm_source_light_request_memory(struct sctk_alloc_mm_source* source, sctk_size_t size);
+extern  void sctk_alloc_mm_source_light_free_memory(struct sctk_alloc_mm_source * source,struct sctk_alloc_macro_bloc * bloc);
+ void sctk_alloc_mm_source_light_insert_segment(struct sctk_alloc_mm_source_light* light_source, void* base, sctk_size_t size);
+ struct sctk_alloc_macro_bloc * sctk_alloc_mm_source_light_mmap_new_segment(struct sctk_alloc_mm_source_light* light_source,sctk_size_t size);
+extern  struct sctk_alloc_macro_bloc * sctk_alloc_mm_source_light_remap(struct sctk_alloc_macro_bloc * macro_bloc,sctk_size_t size);
 struct sctk_alloc_mm_source_light * sctk_alloc_get_mm_source_light(struct sctk_alloc_mm_source * source);
-SCTK_STATIC bool sctk_alloc_mm_source_light_keep(struct sctk_alloc_mm_source_light * light_source,sctk_size_t size,bool for_register);
+ bool sctk_alloc_mm_source_light_keep(struct sctk_alloc_mm_source_light * light_source,sctk_size_t size,bool for_register);
 void sctk_alloc_mm_source_light_migrate(struct sctk_alloc_mm_source_light * light_source,int target_numa_node);
 
 /************************* FUNCTION ************************/
 //helpers
-SCTK_STATIC void sctk_alloc_force_segment_binding(struct sctk_alloc_mm_source_light * light_source,void* base, sctk_size_t size);
+ void sctk_alloc_force_segment_binding(struct sctk_alloc_mm_source_light * light_source,void* base, sctk_size_t size);
 #ifdef HAVE_HWLOC
-SCTK_STATIC  hwloc_nodeset_t sctk_alloc_mm_source_light_init_nodeset(int numa_node);
+  hwloc_nodeset_t sctk_alloc_mm_source_light_init_nodeset(int numa_node);
 #endif
 
 #ifdef __cplusplus

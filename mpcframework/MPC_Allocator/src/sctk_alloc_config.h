@@ -88,7 +88,7 @@ static __inline__ const struct sctk_runtime_config_struct_allocator * sctk_alloc
 /************************* FUNCTION ************************/
 void sctk_alloc_config_init(void);
 void sctk_alloc_config_egg_init(void);
-SCTK_STATIC void sctk_alloc_config_init_static_defaults(struct sctk_runtime_config_struct_allocator * config);
+ void sctk_alloc_config_init_static_defaults(struct sctk_runtime_config_struct_allocator * config);
 
 #ifdef __cplusplus
 };

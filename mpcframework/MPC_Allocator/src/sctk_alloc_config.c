@@ -36,7 +36,7 @@ struct sctk_runtime_config_struct_allocator sctk_alloc_global_config;
 #endif //MPC_Common
 
 /************************* FUNCTION ************************/
-SCTK_STATIC const char * sctk_alloc_bool_to_str(bool value)
+ const char * sctk_alloc_bool_to_str(bool value)
 {
 	if (value)
 		return "true";
@@ -46,7 +46,7 @@ SCTK_STATIC const char * sctk_alloc_bool_to_str(bool value)
 
 /************************* FUNCTION ************************/
 #ifndef MPC_Common
-SCTK_STATIC void sctk_alloc_print_config(void)
+ void sctk_alloc_print_config(void)
 {
 	printf("=============== MPC ALLOC CONFIG =================\n");
 	printf("MPCALLOC_PRINT_CONFIG       : %s\n",sctk_alloc_bool_to_str(sctk_alloc_global_config.print_config));
@@ -66,7 +66,7 @@ SCTK_STATIC void sctk_alloc_print_config(void)
 /**
  * !!!! CAUTION !!!! This method has no allocator, so it musn't do any allocation.
 **/
-SCTK_STATIC void sctk_alloc_config_init_static_defaults(struct sctk_runtime_config_struct_allocator * config)
+ void sctk_alloc_config_init_static_defaults(struct sctk_runtime_config_struct_allocator * config)
 {
 	#ifndef MPC_Common
 	config->print_config       = false;
@@ -97,7 +97,7 @@ SCTK_STATIC void sctk_alloc_config_init_static_defaults(struct sctk_runtime_conf
 }
 
 /************************* FUNCTION ************************/
-SCTK_STATIC bool sctk_alloc_get_bool_from_env(const char * var_name,bool default_value)
+ bool sctk_alloc_get_bool_from_env(const char * var_name,bool default_value)
 {
 	//vars
 	char * buffer;
@@ -123,7 +123,7 @@ SCTK_STATIC bool sctk_alloc_get_bool_from_env(const char * var_name,bool default
 }
 
 /************************* FUNCTION ************************/
-SCTK_STATIC sctk_size_t sctk_alloc_get_size_from_env(const char * var_name,sctk_size_t default_value, sctk_size_t factor)
+ sctk_size_t sctk_alloc_get_size_from_env(const char * var_name,sctk_size_t default_value, sctk_size_t factor)
 {
 	//vars
 	char * buffer;

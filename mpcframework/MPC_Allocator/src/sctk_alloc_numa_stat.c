@@ -49,7 +49,7 @@ static SCTK_ALLOC_INIT_LOCK_TYPE sctk_alloc_glob_pagemap_fp_spinlock = SCTK_ALLO
  * Linux kernel >= 2.6.25.
  * This file is thread safe as it was protected by a global spinlock.
 **/
-SCTK_STATIC void sctk_alloc_numa_stat_open_pagemap(void )
+ void sctk_alloc_numa_stat_open_pagemap(void )
 {
 	//otherwise take the lock
 	SCTK_ALLOC_INIT_LOCK_LOCK(&sctk_alloc_glob_pagemap_fp_spinlock);
@@ -75,7 +75,7 @@ SCTK_STATIC void sctk_alloc_numa_stat_open_pagemap(void )
 }
 
 /************************* FUNCTION ************************/
-SCTK_STATIC void sctk_alloc_numa_stat_at_exit(void )
+ void sctk_alloc_numa_stat_at_exit(void )
 {
 	//otherwise take the lock
 	SCTK_ALLOC_INIT_LOCK_LOCK(&sctk_alloc_glob_pagemap_fp_spinlock);

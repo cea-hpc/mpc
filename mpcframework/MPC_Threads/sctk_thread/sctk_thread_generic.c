@@ -36,7 +36,6 @@
 /***************************************/
 static __thread sctk_thread_generic_p_t* sctk_thread_generic_self_data;
 
-inline
 sctk_thread_generic_t sctk_thread_generic_self(){
   // if (sctk_thread_generic_self_data ==NULL) sctk_abort();
   return sctk_thread_generic_self_data;
@@ -46,7 +45,6 @@ void sctk_thread_generic_set_self(sctk_thread_generic_t th){
   sctk_thread_generic_self_data = th;
 }
 
-inline
 sctk_thread_generic_t sctk_thread_generic_self_check(){
   not_implemented();
   return NULL;
@@ -537,7 +535,7 @@ static sigset_t sctk_thread_default_set;
 static int main_thread_sigs_initialized = 0;
 int errno;
 
-static inline void
+static void
 sctk_thread_generic_init_default_sigset(){
 #ifndef WINDOWS_SYS
   sigset_t set;
@@ -555,7 +553,7 @@ sctk_thread_generic_init_default_sigset(){
 #endif
 }
 
-static inline void
+static void
 sctk_thread_generic_attr_init_sigs( const sctk_thread_generic_attr_t* attr){
   int i;
 
@@ -565,7 +563,7 @@ sctk_thread_generic_attr_init_sigs( const sctk_thread_generic_attr_t* attr){
   sigemptyset( (sigset_t*) &(attr->ptr->sa_sigset_mask ));
 }
 
-static inline void
+static void
 sctk_thread_generic_treat_signals( sctk_thread_generic_t threadp ){
 #ifndef WINDOWS_SYS
   sctk_thread_generic_p_t* th = threadp;
@@ -636,7 +634,7 @@ sctk_thread_generic_treat_signals( sctk_thread_generic_t threadp ){
 #endif
 }
 
-inline int
+int
 __sctk_thread_generic_sigpending( sctk_thread_generic_t threadp,
 					sigset_t* set ){
   int i;
@@ -670,7 +668,7 @@ sctk_thread_generic_sigpending( sigset_t * set){
   return 0;
 }
 
-inline int
+int
 __sctk_thread_generic_sigmask( sctk_thread_generic_t threadp, int how, 
 					const sigset_t* newmask, sigset_t* oldmask){
   int res = -1;
@@ -704,7 +702,7 @@ sctk_thread_generic_sigmask( int how, const sigset_t* newmask, sigset_t* oldmask
   return res;
 }
 
-inline int
+int
 __sctk_thread_generic_sigsuspend( sctk_thread_generic_t threadp,
 						const sigset_t* mask ){
   sigset_t oldmask;
@@ -754,7 +752,7 @@ sctk_thread_generic_sigsuspend( const sigset_t* mask ){
 /* THREAD KILL                         */
 /***************************************/
 
-static inline void
+static void
 sctk_thread_generic_wake_on_barrier( sctk_thread_generic_scheduler_t* sched,
 		void* lock, int remove_from_lock_list ){
   sctk_thread_generic_barrier_t* barrier = (sctk_thread_generic_barrier_t*) lock;
@@ -784,7 +782,7 @@ sctk_thread_generic_wake_on_barrier( sctk_thread_generic_scheduler_t* sched,
   }
 }
 
-static inline void
+static void
 sctk_thread_generic_wake_on_cond( sctk_thread_generic_scheduler_t* sched,
 		void* lock, int remove_from_lock_list ){
   sctk_thread_generic_cond_t* cond = (sctk_thread_generic_cond_t*) lock;
@@ -805,7 +803,7 @@ sctk_thread_generic_wake_on_cond( sctk_thread_generic_scheduler_t* sched,
   }
 }
 
-static inline void
+static void
 sctk_thread_generic_wake_on_mutex( sctk_thread_generic_scheduler_t* sched,
 		void* lock, int remove_from_lock_list ){
   sctk_thread_generic_mutex_t* mu = (sctk_thread_generic_mutex_t*) lock;
@@ -833,7 +831,7 @@ sctk_thread_generic_wake_on_mutex( sctk_thread_generic_scheduler_t* sched,
   }
 }
 
-static inline void
+static  void
 sctk_thread_generic_wake_on_rwlock( sctk_thread_generic_scheduler_t* sched,
 		void* lock, int remove_from_lock_list ){
   sctk_thread_generic_rwlock_t* rw = (sctk_thread_generic_rwlock_t*) lock;
@@ -863,7 +861,7 @@ sctk_thread_generic_wake_on_rwlock( sctk_thread_generic_scheduler_t* sched,
   }
 }
 
-static inline void
+static void
 sctk_thread_generic_wake_on_sem( sctk_thread_generic_scheduler_t* sched,
 		void* lock, int remove_from_lock_list ){
   sctk_thread_generic_sem_t* sem = (sctk_thread_generic_sem_t*) lock;
@@ -884,7 +882,7 @@ sctk_thread_generic_wake_on_sem( sctk_thread_generic_scheduler_t* sched,
   }
 }
 
-static inline void
+static void
 sctk_thread_generic_handle_blocked_thread( sctk_thread_generic_t threadp,
 					int remove_from_lock_list ){
   sctk_thread_generic_p_t* th = threadp;
@@ -982,7 +980,7 @@ sctk_thread_generic_kill_other_threads_np(){
 /* THREAD CREATION                     */
 /***************************************/
 
-inline void
+void
 sctk_thread_generic_alloc_pthread_blocking_lock_table( const sctk_thread_generic_attr_t* attr){
   int i;
   void** lock_table = (void**) sctk_malloc( SCTK_BLOCKING_LOCK_TABLE_SIZE * sizeof( void* ));
@@ -1676,7 +1674,7 @@ sctk_thread_generic_setschedparam( sctk_thread_generic_t threadp,
 /* THREAD CANCELATION                  */
 /***************************************/
 
-inline void
+void
 sctk_thread_generic_check_signals( int select ){
 
 	sctk_thread_generic_scheduler_t* sched;
@@ -1943,7 +1941,7 @@ sctk_thread_generic_exit( void* retval ){
 /* THREAD MEMORY                       */
 /***************************************/
 
-inline void
+void
 sctk_thread_generic_handle_zombies( sctk_thread_generic_scheduler_generic_t* th ){
   sctk_thread_generic_scheduler_generic_t* schedg = th;
   sctk_thread_generic_p_t* p_th = schedg->sched->th;
@@ -2045,7 +2043,7 @@ sctk_thread_generic_getcpuclockid( sctk_thread_generic_t threadp,
 /***************************************/
 typedef sctk_spinlock_t sctk_thread_generic_once_t;
 
-  static inline int __sctk_thread_generic_once_initialized (sctk_thread_generic_once_t *
+  static int __sctk_thread_generic_once_initialized (sctk_thread_generic_once_t *
 						     once_control)
   {
 #ifdef sctk_thread_once_t_is_contiguous_int

@@ -1816,8 +1816,7 @@ int PMPC_Type_get_contents( MPC_Datatype datatype,
  * 
  *  \return the size of the datatype or aborts
  */
-// static removed to test cuda mpi aware
-inline size_t __MPC_Get_datatype_size(MPC_Datatype datatype,
+size_t __MPC_Get_datatype_size(MPC_Datatype datatype,
                                       sctk_task_specific_t *task_specific) {
   /* Special cases */
   if (datatype == MPC_DATATYPE_NULL) {

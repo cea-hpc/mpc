@@ -51,7 +51,7 @@
  * @param for_register Must be setup to true if we want to register the bloc into the cache, false
  * if we are searching a bloc.
  */
-SCTK_STATIC bool sctk_alloc_mm_source_light_keep(struct sctk_alloc_mm_source_light * light_source,sctk_size_t size,bool for_register)
+ bool sctk_alloc_mm_source_light_keep(struct sctk_alloc_mm_source_light * light_source,sctk_size_t size,bool for_register)
 {
 	assert(light_source != NULL);
 	return (size <= sctk_alloc_config()->keep_max && (!for_register || light_source->size <= sctk_alloc_config()->keep_mem));
@@ -64,7 +64,7 @@ SCTK_STATIC bool sctk_alloc_mm_source_light_keep(struct sctk_alloc_mm_source_lig
  * managed by the current memory source.
  * @param numa_node Define the specific NUMA node on which to bind.
 **/
-SCTK_STATIC  hwloc_nodeset_t sctk_alloc_mm_source_light_init_nodeset(int numa_node)
+  hwloc_nodeset_t sctk_alloc_mm_source_light_init_nodeset(int numa_node)
 {
 	//allocate node set
 	hwloc_nodeset_t nodeset = hwloc_bitmap_alloc();
@@ -140,7 +140,7 @@ void sctk_alloc_mm_source_light_init(struct sctk_alloc_mm_source_light * source,
  * @param light_source Define the memory source in which to register.
  * @param free_bloc Define the free_bloc to register in the list.
 **/
-SCTK_STATIC void sctk_alloc_mm_source_light_reg_in_cache(struct sctk_alloc_mm_source_light * light_source,struct sctk_alloc_mm_source_light_free_macro_bloc * free_bloc)
+ void sctk_alloc_mm_source_light_reg_in_cache(struct sctk_alloc_mm_source_light * light_source,struct sctk_alloc_mm_source_light_free_macro_bloc * free_bloc)
 {
 	//taks the lock
 	sctk_alloc_spinlock_lock(&light_source->spinlock);
@@ -160,7 +160,7 @@ SCTK_STATIC void sctk_alloc_mm_source_light_reg_in_cache(struct sctk_alloc_mm_so
  * @param ptr Define the base pointer of the macro bloc to setup.
  * @param size Define the size of the macro_bloc to setup.
 **/
-SCTK_STATIC struct sctk_alloc_mm_source_light_free_macro_bloc * sctk_alloc_mm_source_light_setup_free_macro_bloc(void * ptr,sctk_size_t size)
+ struct sctk_alloc_mm_source_light_free_macro_bloc * sctk_alloc_mm_source_light_setup_free_macro_bloc(void * ptr,sctk_size_t size)
 {
 	struct sctk_alloc_mm_source_light_free_macro_bloc * free_bloc = ptr;
 	free_bloc->next = NULL;
@@ -173,7 +173,7 @@ SCTK_STATIC struct sctk_alloc_mm_source_light_free_macro_bloc * sctk_alloc_mm_so
  * Convert a macro bloc into a free macro bloc. It mostly update the header structure.
  * @param macro_bloc Define the macro bloc to mark as free macro_bloc.
 **/
-SCTK_STATIC struct sctk_alloc_mm_source_light_free_macro_bloc * sctk_alloc_mm_source_light_to_free_macro_bloc(struct sctk_alloc_macro_bloc * macro_bloc)
+ struct sctk_alloc_mm_source_light_free_macro_bloc * sctk_alloc_mm_source_light_to_free_macro_bloc(struct sctk_alloc_macro_bloc * macro_bloc)
 {
 	return sctk_alloc_mm_source_light_setup_free_macro_bloc(macro_bloc,sctk_alloc_get_chunk_header_large_size(&macro_bloc->header));
 }
@@ -186,7 +186,7 @@ SCTK_STATIC struct sctk_alloc_mm_source_light_free_macro_bloc * sctk_alloc_mm_so
  * @param base The base address of the segment to insert.
  * @param size The size of the memory segment to insert.
 **/
-SCTK_STATIC void sctk_alloc_mm_source_light_insert_segment(struct sctk_alloc_mm_source_light* light_source, void* base, sctk_size_t size)
+ void sctk_alloc_mm_source_light_insert_segment(struct sctk_alloc_mm_source_light* light_source, void* base, sctk_size_t size)
 {
 	//vars
 	struct sctk_alloc_mm_source_light_free_macro_bloc * free_bloc = base;
@@ -227,7 +227,7 @@ SCTK_STATIC void sctk_alloc_mm_source_light_insert_segment(struct sctk_alloc_mm_
  * @param numa_node The NUMA node on which to bind (unused, to remote).
 **/
 #ifdef HAVE_HWLOC
-SCTK_STATIC void sctk_alloc_force_segment_binding(struct sctk_alloc_mm_source_light * light_source,void* base, sctk_size_t size)
+ void sctk_alloc_force_segment_binding(struct sctk_alloc_mm_source_light * light_source,void* base, sctk_size_t size)
 {
 	//vars
 	int res;
@@ -250,7 +250,7 @@ SCTK_STATIC void sctk_alloc_force_segment_binding(struct sctk_alloc_mm_source_li
  * This is more for unit tests, this function can be called to cleanup the memory source.
  * It will return all free macro blocs to the system.
 **/
-SCTK_STATIC void sctk_alloc_mm_source_light_cleanup(struct sctk_alloc_mm_source* source)
+ void sctk_alloc_mm_source_light_cleanup(struct sctk_alloc_mm_source* source)
 {
 	//vars
 	struct sctk_alloc_mm_source_light_free_macro_bloc * free_bloc;
@@ -288,7 +288,7 @@ SCTK_STATIC void sctk_alloc_mm_source_light_cleanup(struct sctk_alloc_mm_source*
 /**
  * Convert a macro bloc into a free one. It only update the header of the bloc.
 **/
-SCTK_STATIC struct sctk_alloc_macro_bloc * sctk_alloc_mm_source_light_to_macro_bloc(struct sctk_alloc_mm_source_light_free_macro_bloc * free_bloc)
+ struct sctk_alloc_macro_bloc * sctk_alloc_mm_source_light_to_macro_bloc(struct sctk_alloc_mm_source_light_free_macro_bloc * free_bloc)
 {
 	//vars
 	struct sctk_alloc_macro_bloc * macro_bloc = (struct sctk_alloc_macro_bloc * )free_bloc;
@@ -309,7 +309,7 @@ SCTK_STATIC struct sctk_alloc_macro_bloc * sctk_alloc_mm_source_light_to_macro_b
  * zero pages.
 **/
 #ifdef HAVE_MREMAP
-SCTK_STATIC struct sctk_alloc_macro_bloc * sctk_alloc_mm_source_light_to_macro_bloc_resized(struct sctk_alloc_mm_source_light_free_macro_bloc * free_bloc,sctk_size_t size)
+ struct sctk_alloc_macro_bloc * sctk_alloc_mm_source_light_to_macro_bloc_resized(struct sctk_alloc_mm_source_light_free_macro_bloc * free_bloc,sctk_size_t size)
 {
 	//vars
 	struct sctk_alloc_macro_bloc * macro_bloc;
@@ -335,7 +335,7 @@ SCTK_STATIC struct sctk_alloc_macro_bloc * sctk_alloc_mm_source_light_to_macro_b
  * @param light_source Define the memory source in which to search.
  * @param size Define the requested size (accounting the header).
 **/
-SCTK_STATIC struct sctk_alloc_macro_bloc* sctk_alloc_mm_source_light_find_in_cache(struct sctk_alloc_mm_source_light * light_source,sctk_size_t size)
+ struct sctk_alloc_macro_bloc* sctk_alloc_mm_source_light_find_in_cache(struct sctk_alloc_mm_source_light * light_source,sctk_size_t size)
 {
 	//vars
 	struct sctk_alloc_mm_source_light_free_macro_bloc * free_bloc = NULL;
@@ -410,7 +410,7 @@ SCTK_STATIC struct sctk_alloc_macro_bloc* sctk_alloc_mm_source_light_find_in_cac
 /**
  * Implement the request_memory function required to implement a memory source.
 **/
-SCTK_STATIC struct sctk_alloc_macro_bloc* sctk_alloc_mm_source_light_request_memory(struct sctk_alloc_mm_source* source, sctk_size_t size)
+ struct sctk_alloc_macro_bloc* sctk_alloc_mm_source_light_request_memory(struct sctk_alloc_mm_source* source, sctk_size_t size)
 {
 	//vars
 	struct sctk_alloc_mm_source_light * light_source = (struct sctk_alloc_mm_source_light *)source;
@@ -452,7 +452,7 @@ SCTK_STATIC struct sctk_alloc_macro_bloc* sctk_alloc_mm_source_light_request_mem
 /**
  * Internal function to request new segments if can't reuse one.
 **/
-SCTK_STATIC struct sctk_alloc_macro_bloc * sctk_alloc_mm_source_light_mmap_new_segment(struct sctk_alloc_mm_source_light* light_source,sctk_size_t size)
+ struct sctk_alloc_macro_bloc * sctk_alloc_mm_source_light_mmap_new_segment(struct sctk_alloc_mm_source_light* light_source,sctk_size_t size)
 {
 	//vars
 	struct sctk_alloc_macro_bloc * macro_bloc = NULL;
@@ -488,7 +488,7 @@ void sctk_net_memory_free_hook ( void * ptr , size_t size );
  * Free a macro bloc comming from the allocator. Depending on a threashold, the memory is returned to the system or
  * kept for a future reuse.
 **/
-SCTK_STATIC void sctk_alloc_mm_source_light_free_memory(struct sctk_alloc_mm_source * source,struct sctk_alloc_macro_bloc * bloc)
+ void sctk_alloc_mm_source_light_free_memory(struct sctk_alloc_mm_source * source,struct sctk_alloc_macro_bloc * bloc)
 {
 	//vars
 	struct sctk_alloc_mm_source_light * light_source = (struct sctk_alloc_mm_source_light *)source;
@@ -528,7 +528,7 @@ SCTK_STATIC void sctk_alloc_mm_source_light_free_memory(struct sctk_alloc_mm_sou
  * @param size Define the new size of the segment (accounting the header).
 **/
 #ifdef HAVE_MREMAP
-SCTK_STATIC struct sctk_alloc_macro_bloc * sctk_alloc_mm_source_light_remap(struct sctk_alloc_macro_bloc * macro_bloc,sctk_size_t size)
+ struct sctk_alloc_macro_bloc * sctk_alloc_mm_source_light_remap(struct sctk_alloc_macro_bloc * macro_bloc,sctk_size_t size)
 {
 	//errors
 	assert(macro_bloc != NULL);

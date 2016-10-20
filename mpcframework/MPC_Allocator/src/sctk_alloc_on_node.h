@@ -38,14 +38,14 @@ SCTK_PUBLIC void * sctk_malloc_on_node (size_t size, int node);
 /************************* FUNCTION ************************/
 //internal functions
 SCTK_INTERN void sctk_malloc_on_node_init(int numa_nodes);
-SCTK_STATIC void * sctk_malloc_on_node_uma(size_t size,int node);
-SCTK_STATIC void sctk_malloc_on_node_reset(void);
+ void * sctk_malloc_on_node_uma(size_t size,int node);
+ void sctk_malloc_on_node_reset(void);
 
 /************************* FUNCTION ************************/
 //optional intern function depend on NUMA status
 #ifdef HAVE_HWLOC
-SCTK_STATIC void * sctk_malloc_on_node_numa(size_t size,int node);
-SCTK_STATIC struct sctk_alloc_chain * sctk_malloc_on_node_get_chain(int node);
+ void * sctk_malloc_on_node_numa(size_t size,int node);
+ struct sctk_alloc_chain * sctk_malloc_on_node_get_chain(int node);
 #endif //HAVE_HWLOC
 
 #ifdef __cplusplus

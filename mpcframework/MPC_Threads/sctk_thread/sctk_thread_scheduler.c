@@ -143,7 +143,6 @@ void sctk_thread_generic_scheduler_create_vp(sctk_thread_generic_p_t*thread,int 
 /* CONTEXT MANAGEMENT                  */
 /***************************************/
 #include <pthread.h>
-inline
 void sctk_thread_generic_scheduler_swapcontext(sctk_thread_generic_scheduler_t* old_th,
 					       sctk_thread_generic_scheduler_t* new_th){
   sctk_thread_generic_set_self(new_th->th);
@@ -162,7 +161,7 @@ void sctk_thread_generic_scheduler_setcontext(sctk_thread_generic_scheduler_t* n
 /***************************************/
 /* TASKS MANAGEMENT                    */
 /***************************************/
-static inline int sctk_thread_generic_scheduler_check_task(sctk_thread_generic_task_t* task){
+static int sctk_thread_generic_scheduler_check_task(sctk_thread_generic_task_t* task){
   if(*(task->data) == task->value){
     return 1;
   } 
@@ -1674,7 +1673,7 @@ static void (*sctk_generic_poll_tasks)(sctk_thread_generic_scheduler_t* ) = NULL
 static void (*sctk_thread_generic_wake_on_task_lock_p)( sctk_thread_generic_scheduler_t* sched,
 							int remove_from_lock_list ) = NULL;
 
-inline void
+void
 sctk_thread_generic_wake_on_task_lock( sctk_thread_generic_scheduler_t* sched,
 				       int remove_from_lock_list ){
   sctk_thread_generic_wake_on_task_lock_p(sched,remove_from_lock_list);
@@ -1698,7 +1697,7 @@ static __thread int delegated_task_nb = 0;
 
 static __thread sctk_per_vp_data_t vp_data = SCTK_PER_VP_DATA_INIT;
 
-static inline int sctk_sem_wait(sem_t *sem){
+static  int sctk_sem_wait(sem_t *sem){
   int res;
   do{
     res = sem_wait(sem);
@@ -1710,7 +1709,6 @@ static inline int sctk_sem_wait(sem_t *sem){
   return res;
 }
 
-inline
 void sctk_thread_generic_scheduler_swapcontext_pthread(sctk_thread_generic_scheduler_t* old_th,
 						       sctk_thread_generic_scheduler_t* new_th,
 						       sctk_per_vp_data_t* vp){
@@ -1741,7 +1739,6 @@ void sctk_thread_generic_scheduler_swapcontext_pthread(sctk_thread_generic_sched
   sctk_nodebug("RESTART %p",old_th);
 }
 
-inline
 void sctk_thread_generic_scheduler_swapcontext_ethread(sctk_thread_generic_scheduler_t* old_th,
 						       sctk_thread_generic_scheduler_t* new_th,
 						       sctk_per_vp_data_t* vp){
@@ -1749,13 +1746,11 @@ void sctk_thread_generic_scheduler_swapcontext_ethread(sctk_thread_generic_sched
   sctk_thread_generic_scheduler_swapcontext(old_th,new_th);
 }
 
-inline
 void sctk_thread_generic_scheduler_swapcontext_nothing(sctk_thread_generic_scheduler_t* old_th,
 						       sctk_thread_generic_scheduler_t* new_th,
 						       sctk_per_vp_data_t* vp){
 }
 
-inline
 void sctk_thread_generic_scheduler_swapcontext_none(sctk_thread_generic_scheduler_t* old_th,
 						       sctk_thread_generic_scheduler_t* new_th,
 						    sctk_per_vp_data_t* vp){
@@ -1837,11 +1832,11 @@ static void sctk_generic_sched_idle_start_pthread(){
   not_reachable();
 }
 
-static inline sctk_thread_generic_scheduler_t* sctk_generic_get_from_list_none(){
+static sctk_thread_generic_scheduler_t* sctk_generic_get_from_list_none(){
   return NULL;
 }
 
-static inline void sctk_generic_sched_yield_intern(
+static void sctk_generic_sched_yield_intern(
     sctk_thread_generic_scheduler_t *sched,
     void (*swap)(sctk_thread_generic_scheduler_t *old_th,
                  sctk_thread_generic_scheduler_t *new_th,
@@ -2274,7 +2269,7 @@ static void sctk_generic_sched_yield(sctk_thread_generic_scheduler_t*sched){
   }
 }
 
-inline void 
+void 
 sctk_generic_swap_to_sched( sctk_thread_generic_scheduler_t* sched ){
   sctk_thread_generic_scheduler_t* old_sched = &(sctk_thread_generic_self()->sched);
   vp_data.swap_to_sched = old_sched;
@@ -2351,7 +2346,7 @@ sctk_generic_wake_thread_on_vp (void **list)
   }
 }
 
-static inline 
+static 
 void sctk_generic_create_common(sctk_thread_generic_p_t*thread){
   if(thread->attr.scope == SCTK_THREAD_SCOPE_SYSTEM){
     thread->sched.generic.vp_type = 1;
