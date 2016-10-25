@@ -12,7 +12,7 @@
 struct mpcomp_node_s; 
 struct mpcomp_thread_s; 
 
-typedef enum mpcomp_tasklist_type_t 
+typedef enum mpcomp_tasklist_type_e
 {
 	MPCOMP_TASK_TYPE_NEW 	= 0,
 	MPCOMP_TASK_TYPE_UNTIED = 1,
@@ -22,13 +22,21 @@ typedef enum mpcomp_tasklist_type_t
 /** Property of an OpenMP task */
 typedef unsigned int mpcomp_task_property_t;
 
+typedef struct mpcomp_task_taskgroup_s
+{
+	struct mpcomp_task_s* children;
+	struct mpcomp_task_taskgroup_s* prev;
+	unsigned long children_num;
+} mpcomp_task_taskgroup_t;
 
 /** OpenMP task data structure */
 typedef struct mpcomp_task_s
 {
 	void (*func) (void *);             			/**< Function to execute 										*/
    void *data;                         		/**< Arguments of the function 								*/
+	bool if_clause;
    mpcomp_task_property_t property;    		/**< Task property 												*/
+	struct mpcomp_task_taskgroup_s* taskgroup;
    struct mpcomp_task_s *parent;       		/**< Mother task 													*/
    struct mpcomp_task_s *children;     		/**< Children list 												*/
    struct mpcomp_task_s *prev_child;   		/**< Prev sister task in mother task's children list 	*/

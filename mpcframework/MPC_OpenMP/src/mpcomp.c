@@ -761,7 +761,7 @@ void in_order_scheduler( mpcomp_mvp_t * mvp ) {
 
 	sctk_assert( mvp != NULL ) ;
 
-	sctk_error( "in_order_scheduler: Starting to schedule %d thread(s)", mvp->nb_threads ) ;
+	sctk_debug( "in_order_scheduler: Starting to schedule %d thread(s)", mvp->nb_threads ) ;
 
 	/* Save previous TLS */
 	t = sctk_openmp_thread_tls ;
@@ -773,7 +773,6 @@ void in_order_scheduler( mpcomp_mvp_t * mvp ) {
 
     sctk_openmp_thread_tls = &mvp->threads[i];
     cur_mvp_thread = (mpcomp_thread_t*) sctk_openmp_thread_tls;
-	 fprintf(stderr, "value ... %p\n", cur_mvp_thread );
 
     // hmt
     // set the KIND_MASK_OMP to the current thread

@@ -68,12 +68,29 @@ mpcomp_task_dep_htable_op_to_string[ MPCOMP_TASK_DEP_HTABLE_OP_COUNT ] = {
 	"MPCOMP_TASK_DEP_HTABLE_OP_SEARCH"
 };
 
+typedef enum mpcomp_task_dep_task_status_e
+{
+	MPCOMP_TASK_DEP_TASK_PROCESS_DEP = 0,
+	MPCOMP_TASK_DEP_TASK_NOT_EXECUTE = 1,
+	MPCOMP_TASK_DEP_TASK_FINALIZED   = 2,
+	MPCOMP_TASK_DEP_TASK_COUNT 		= 3 
+} mpcomp_task_dep_task_status_t;
+
+static char*
+mpcomp_task_dep_task_status_to_string[MPCOMP_TASK_DEP_TASK_COUNT] =
+{
+	"MPCOMP_TASK_DEP_TASK_PROCESS_DEP",
+	"MPCOMP_TASK_DEP_TASK_NOT_EXECUTE",
+	"MPCOMP_TASK_DEP_TASK_FINALISED"
+};
+
 typedef struct mpcomp_task_dep_node_s
 {	
 	sctk_spinlock_t lock;
 	sctk_atomics_int ref_counter;
-	sctk_atomics_int nbdependers;
-	struct mpcomp_task_t* task;		
+	sctk_atomics_int predecessors;
+	struct mpcomp_task_s* task;		
+	sctk_atomics_int status;
 	struct mpcomp_task_dep_node_list_s* successors;		
 } mpcomp_task_dep_node_t;
 
@@ -85,7 +102,7 @@ typedef struct mpcomp_task_dep_node_list_s
 
 typedef struct mpcomp_task_dep_ht_entry_s
 {
-	uint64_t base_addr;
+	uintptr_t base_addr;
 	mpcomp_task_dep_node_t* last_out;
 	mpcomp_task_dep_node_list_t* last_in;
 	struct mpcomp_task_dep_ht_entry_s* next;
@@ -112,6 +129,7 @@ typedef struct mpcomp_task_dep_ht_table_s
 
 typedef struct mpcomp_task_dep_task_infos_s
 {
+	mpcomp_task_dep_node_t* node;
 	struct mpcomp_task_dep_ht_table_s *htable;
 }mpcomp_task_dep_task_infos_t;
 
@@ -139,9 +157,10 @@ static inline mpcomp_task_dep_node_t*
 mpcomp_task_dep_new_node( void )
 {
 	mpcomp_task_dep_node_t* new_node;
-	new_node = sctk_malloc( sizeof(  new_node ) );
+	new_node = sctk_malloc( sizeof(  mpcomp_task_dep_node_t ) );
 	sctk_assert( new_node );
 	memset( new_node, 0, sizeof(  mpcomp_task_dep_node_t ) );
+	sctk_atomics_store_int( &( new_node->ref_counter ), 1 );
 	return new_node;
 }
 
@@ -149,28 +168,52 @@ static inline mpcomp_task_dep_node_t*
 mpcomp_task_dep_node_ref( mpcomp_task_dep_node_t* node )
 {
 	sctk_assert( node );
-	sctk_atomics_incr_int(  &( node->ref_counter ) );	
+	const int prev = sctk_atomics_fetch_and_incr_int(  &( node->ref_counter ) );	
+   sctk_nodebug( "node : %p -- ref_count : %d", node, prev+1 ); 
 	return node;
 }
 
 static inline int 
 mpcomp_task_dep_node_unref( mpcomp_task_dep_node_t* node )
 {
-	sctk_assert( node );
-	sctk_assert( sctk_atomics_load_int( &( node->ref_counter ) ) ); 
-	const int old = sctk_atomics_fetch_and_decr_int( &( node->ref_counter ) );	
+	
+	if( !node )
+		return 0;
 
-	if( old == 1 )
+	
+	sctk_assert( sctk_atomics_load_int( &( node->ref_counter ) ) ); 
+	/* Fetch and decr to prevent double free */
+	const int prev = sctk_atomics_fetch_and_decr_int( &( node->ref_counter ) ) - 1;	
+	sctk_nodebug( "UNREF node: %p -- count : %d", node, prev );
+	if( !prev )
 	{
+		sctk_nodebug( "free node %p", node );
 		sctk_assert( !sctk_atomics_load_int( &( node->ref_counter ) ) );
 		sctk_free( node );
+		node = NULL;
 		return 1;
 	}	
 	return 0;
 }
 
+static inline void
+mpcomp_task_dep_free_node_list_elt( mpcomp_task_dep_node_list_t* list )
+{
+	mpcomp_task_dep_node_list_t* node_list;
+
+	if( !list )
+		return;
+
+	while( ( node_list = list ) )
+	{
+		mpcomp_task_dep_node_unref( node_list->node );
+		list =  node_list->next;
+		sctk_free( node_list );
+	} 
+}
+
 static inline mpcomp_task_dep_node_list_t*
-mpcomp_task_dep_add_node( mpcomp_task_dep_node_list_t* list, mpcomp_task_dep_node_t* node )
+mpcomp_task_dep_alloc_node_list_elt( mpcomp_task_dep_node_list_t* list, mpcomp_task_dep_node_t* node )
 {	
 	mpcomp_task_dep_node_list_t* new_node;
 
@@ -186,6 +229,33 @@ mpcomp_task_dep_add_node( mpcomp_task_dep_node_list_t* list, mpcomp_task_dep_nod
 	return new_node;
 }
 
+static inline int 
+mpcomp_task_dep_free_task_htable( mpcomp_task_dep_ht_table_t *htable )
+{	
+	int i;
+	int removed_entries = 0;
+	
+
+	for( i = 0; htable && i < htable->hsize; i++ )
+	{
+		if( htable[i].buckets->entry )
+		{
+			mpcomp_task_dep_ht_entry_t* entry;
+			while( ( entry = htable[i].buckets->entry ) )
+			{
+				mpcomp_task_dep_free_node_list( entry->last_in );
+				mpcomp_task_dep_node_unref( entry->last_out );
+				htable[i].buckets->entry = entry;
+				sctk_free( entry );
+#ifdef MPCOMP_TASK_DEP_DEBUG
+				removed_entries++;
+#endif /* MPCOMP_TASK_DEP_DEBUG */
+			}
+		} 
+	}
+	return removed_entries;
+}
+
 /**
  *
  */
@@ -194,15 +264,16 @@ mpcomp_task_dep_alloc_task_htable( mpcomp_task_dep_hash_func_t hfunc )
 {
 	mpcomp_task_dep_ht_table_t* new_htable;
 
+	sctk_assert( hfunc );
 	const long infos_size = mpcomp_task_align_single_malloc( sizeof( mpcomp_task_dep_ht_table_t ), MPCOMP_TASK_DEFAULT_ALIGN );
 	const long array_size = sizeof( mpcomp_task_dep_ht_bucket_t ) * MPCOMP_TASK_DEP_MPC_HTABLE_SIZE;
 	sctk_assert( MPCOMP_OVERFLOW_SANITY_CHECK( infos_size, array_size ));
 
-	new_htable = ( mpcomp_task_dep_ht_table_t* ) sctk_malloc( infos_size + infos_size );
+	new_htable = ( mpcomp_task_dep_ht_table_t* ) sctk_malloc( infos_size + array_size );
 	sctk_assert( new_htable ); 	
 
 	/* Better than a loop */
-   memset( new_htable, 0, infos_size + infos_size );
+   memset( new_htable, 0, infos_size + array_size );
 
 	new_htable->hsize = MPCOMP_TASK_DEP_MPC_HTABLE_SIZE;
 	new_htable->hseed = MPCOMP_TASK_DEP_MPC_HTABLE_SEED;
@@ -216,25 +287,39 @@ mpcomp_task_dep_alloc_task_htable( mpcomp_task_dep_hash_func_t hfunc )
 static inline mpcomp_task_dep_ht_entry_t* 
 mpcomp_task_dep_add_entry( mpcomp_task_dep_ht_table_t* htable, uintptr_t addr )
 {
-	mpcomp_task_dep_ht_entry_t* new_entry;
+	mpcomp_task_dep_ht_entry_t* entry;
 	const uint32_t hash = htable->hfunc( addr, htable->hsize, htable->hseed );
 
+	for( entry = htable->buckets[ hash ].entry; entry; entry = entry->next ) 
+	{
+		if( entry->base_addr == addr ) 
+		{
+			break;
+		}
+	}
+
+	if( entry )
+	{
+		return entry;
+	}
+ 
 	/* Allocation */
-	new_entry = ( mpcomp_task_dep_ht_entry_t*) sctk_malloc( sizeof( mpcomp_task_dep_ht_entry_t ) );
-	sctk_assert( new_entry );
+	entry = ( mpcomp_task_dep_ht_entry_t*) sctk_malloc( sizeof( mpcomp_task_dep_ht_entry_t ) );
+	sctk_assert( entry );
 	
-	memset( new_entry, 0, sizeof( mpcomp_task_dep_ht_entry_t ) );
+	memset( entry, 0, sizeof( mpcomp_task_dep_ht_entry_t ) );
+	entry->base_addr = addr;
 
 	/* No previous addr in bucket */
 	if( htable->buckets[ hash ].num_entries > 0 )
 	{
-		new_entry->next = htable->buckets[ hash ].entry;
+		entry->next = htable->buckets[ hash ].entry;
 	}
 	
-	htable->buckets[ hash ].entry = new_entry;
+	htable->buckets[ hash ].entry = entry;
 	htable->buckets[ hash ].num_entries += 1;
 
-	return new_entry;
+	return entry;
 }
 
 static inline mpcomp_task_dep_ht_entry_t* 

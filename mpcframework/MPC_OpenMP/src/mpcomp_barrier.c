@@ -56,8 +56,7 @@ __mpcomp_barrier (void)
      sctk_assert(mvp != NULL);
 	 
 
-    sctk_error( "[%d] __mpcomp_barrier: t->mvp = %p", 
-	 t->rank, t->mvp ) ;
+    sctk_nodebug( "[%d] __mpcomp_barrier: t->mvp = %p", t->rank, t->mvp ) ;
 
    /* Call the real barrier */
    __mpcomp_internal_full_barrier(mvp);

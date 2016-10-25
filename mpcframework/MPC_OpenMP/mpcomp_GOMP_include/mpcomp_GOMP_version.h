@@ -72,6 +72,7 @@ GOMP_ABI_FUNC(GOMP_taskyield,"GOMP_3.0",__mpcomp_GOMP_taskyield,__mpcomp_taskyie
 
 //AllGOMP_4.0symbols
 GOMP_ABI_FUNC(GOMP_parallel,"GOMP_4.0",__mpcomp_GOMP_parallel,__mpcomp_GOMP_parallel)
+
 /*
 GOMP_ABI_FUNC(MPCOMP_GOMP_ABI_BARRIER_CANCEL,GOMP_barrier_cancel,400,GOMP_4.0)
 GOMP_ABI_FUNC(MPCOMP_GOMP_ABI_CANCEL,GOMP_cancel,401,GOMP_4.0)
@@ -85,9 +86,9 @@ GOMP_ABI_FUNC(GOMP_parallel_loop_guided, "GOMP_4.0", __mpcomp_GOMP_parallel_loop
 GOMP_ABI_FUNC(GOMP_parallel_loop_runtime, "GOMP_4.0", __mpcomp_GOMP_parallel_loop_runtime, __mpcomp_GOMP_parallel_loop_runtime)
 GOMP_ABI_FUNC(GOMP_parallel_sections, "GOMP_4.0", __mpcomp_GOMP_parallel_sections, __mpcomp_GOMP_parallel_sections)
 
+GOMP_ABI_FUNC(GOMP_taskgroup_start, "GOMP_4.0", __mpcomp_GOMP_taskgroup_start, __mpcomp_GOMP_taskgroup_start )
+GOMP_ABI_FUNC(GOMP_taskgroup_end, "GOMP_4.0", __mpcomp_GOMP_taskgroup_end, __mpcomp_GOMP_taskgroup_end )
 /*
-GOMP_ABI_FUNC(MPCOMP_GOMP_ABI_TASKGROUP_START,GOMP_taskgroup_start,411,GOMP_4.0)
-GOMP_ABI_FUNC(MPCOMP_GOMP_ABI_TASKGROUP_END,GOMP_taskgroup_end,412,GOMP_4.0)
 GOMP_ABI_FUNC(MPCOMP_GOMP_ABI_SECTIONS_END_CANCEL,GOMP_sections_end_cancel,410,GOMP_4.0)
 GOMP_ABI_FUNC(MPCOMP_GOMP_ABI_TARGET,GOMP_target,413,GOMP_4.0)
 GOMP_ABI_FUNC(MPCOMP_GOMP_ABI_TARGET_DATA,GOMP_target_data,414,GOMP_4.0)

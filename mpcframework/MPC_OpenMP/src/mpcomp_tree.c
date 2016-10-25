@@ -450,11 +450,10 @@ __mpcomp_build_tree( mpcomp_instance_t * instance, int n_leaves, int depth, int 
      /* Get the number of CPUs */
      nb_cpus = sctk_get_cpu_number_topology(instance->topology);
 
-     sctk_nodebug("__mpcomp_build_tree: number of cpus: %d", nb_cpus);
+	  sctk_nodebug( "__mpcomp_build_tree: number of cpus: %d", nb_cpus ) ;
 
      /* Grab the right order to allocate microVPs (sctk_get_neighborhood) */
 	  order = (int*) sctk_malloc((nb_cpus+1) * sizeof( int ) );
-      sctk_warning("value : %p", order);
      sctk_assert(order != NULL);
 
      sctk_get_neighborhood_topology(instance->topology, current_mpc_vp, nb_cpus, order);
@@ -723,9 +722,9 @@ __mpcomp_build_tree( mpcomp_instance_t * instance, int n_leaves, int depth, int 
      }
 
      /* Free memory */
-     __mpcomp_free_stack(s);
-     free(s);
-     free(order);
+     //__mpcomp_free_stack(s);
+     //free(s);
+     //free(order);
 
      /* Print the final tree */
      __mpcomp_print_tree(instance);
@@ -858,8 +857,8 @@ __mpcomp_print_tree( mpcomp_instance_t * instance ) {
            }
      }
 
-     __mpcomp_free_stack( s );
-     free( s );
+     //__mpcomp_free_stack( s );
+     //free( s );
 
      return;
 }

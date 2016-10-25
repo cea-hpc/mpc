@@ -251,7 +251,6 @@ __mpcomp_internal_begin_parallel_region(int arg_num_threads,
         /* -1 is default, and < 0 too */
         if (num_threads < 0) {
           num_threads = t->info.icvs.nthreads_var;
-           sctk_error( "num_threads: %d", num_threads );
         }
 
         /* If number of threads too large, set to the max
@@ -424,13 +423,13 @@ __mpcomp_start_parallel_region(int arg_num_threads, void *(*func)
 	/* Start scheduling */
 	in_order_scheduler(t->children_instance->mvps[0]) ;
 
-  sctk_error( 
+  sctk_nodebug( 
 		  "__mpcomp_start_parallel_region: finish in order scheduler..."
 			) ;
 
 	__mpcomp_internal_end_parallel_region( t->children_instance ) ;
 
-  sctk_error( 
+  sctk_nodebug( 
       "__mpcomp_start_parallel_region: === EXIT PARALLEL REGION ===\n" ) ;
 
 }

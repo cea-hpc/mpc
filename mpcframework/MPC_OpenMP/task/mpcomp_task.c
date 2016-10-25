@@ -103,14 +103,14 @@ __mpcomp_task_execute( mpcomp_task_t* task )
     sctk_assert( sctk_openmp_thread_tls );	 
     thread = ( mpcomp_thread_t* ) sctk_openmp_thread_tls;
 
-    //sctk_error( "EXEC: thread: %p task: %p owner: %p", thread, task, task->thread );
-
     /* A task can't be execute by multiple thread */
     sctk_assert( task->thread == NULL);
 
 	/* Update task owner */
 	task->thread = thread;
 		
+   //sctk_nodebug( "EXEC: thread: %p task: %p owner: %p", thread, task, task->thread );
+
 	/* Saved thread current task */
  	saved_current_task = MPCOMP_TASK_THREAD_GET_CURRENT_TASK( thread );
 
@@ -123,7 +123,6 @@ __mpcomp_task_execute( mpcomp_task_t* task )
 	/* Get task icv environnement */
 	thread->info.icvs = task->icvs;
 	
-	//fprintf( stderr, "func = %p -- %p\n", task->func, task->data );
 	/* Execute task */
 	task->func( task->data );
 
@@ -312,6 +311,10 @@ __mpcomp_task_alloc( void (*fn) (void *), void *data, void (*cpyfn) (void *, voi
 
 	/* Create new task */
    mpcomp_task_infos_init( new_task, fn, task_data, t );
+	new_task->task_dep_infos = sctk_malloc( sizeof( mpcomp_task_dep_task_infos_t ) );
+
+	sctk_assert( new_task->task_dep_infos );
+	memset( new_task->task_dep_infos, 0, sizeof( mpcomp_task_dep_task_infos_t ));
 	mpcomp_task_set_property( &( new_task->property ), MPCOMP_TASK_TIED );
 
    if(arg_size > 0 )
@@ -326,14 +329,24 @@ __mpcomp_task_alloc( void (*fn) (void *), void *data, void (*cpyfn) (void *, voi
       }
 	}
 
+	sctk_nodebug( "%s: %p -- %p -- %p", __func__, new_task, new_task->func, new_task->data ); 
    /* If its parent task is final, the new task must be final too */
 	if( mpcomp_task_is_final( flags, new_task->parent ) ) 
 	{
 		mpcomp_task_set_property( &( new_task->property), MPCOMP_TASK_FINAL );
 	}
 
-	mpcomp_task_add_to_parent( new_task );
+	/* taskgroup */
+	mpcomp_task_t* current_task = MPCOMP_TASK_THREAD_GET_CURRENT_TASK( t );
+	new_task->taskgroup = current_task->taskgroup;
+	
+	if( new_task->taskgroup )
+	{
+		new_task->taskgroup->children_num += 1;
+	}	
 
+	mpcomp_task_add_to_parent( new_task );
+	
    return new_task;
 }
 
@@ -403,12 +416,15 @@ __mpcomp_task_process( mpcomp_task_t* new_task, bool if_clause )
    	return;
    }
 
+	sctk_nodebug( "%s: %p -- %p -- %p", __func__, new_task, new_task->func, new_task->data ); 
    /* Direct task execution */
-   mpcomp_task_set_property ( &( new_task->property ), MPCOMP_TASK_UNDEFERRED );
+//   mpcomp_task_set_property ( &( new_task->property ), MPCOMP_TASK_UNDEFERRED );
    __mpcomp_task_execute( new_task );
 
    mpcomp_tast_clear_sister( new_task );
    mpcomp_task_clear_parent( new_task );
+
+	__mpcomp_task_finalize_deps( new_task );
 
    sctk_free(new_task);
 }
@@ -530,7 +546,7 @@ __mpcomp_task_larceny( void )
 	  	const int tasklistDepth = MPCOMP_TASK_TEAM_GET_TASKLIST_DEPTH( team, type );
 	  	const int nbTasklists   = MPCOMP_TASK_INSTANCE_GET_ARRAY_TREE_LEVEL_SIZE( thread->instance, tasklistDepth );
 		
-		//sctk_error( "tasklistDepth: %d -- nbTasklists: %d", tasklistDepth, nbTasklists);
+		//sctk_nodebug( "tasklistDepth: %d -- nbTasklists: %d", tasklistDepth, nbTasklists);
 
 	  	/* If there are task lists in which we could steal tasks */
 	  	if( nbTasklists > 1 )  
@@ -584,7 +600,7 @@ int __mpcomp_task_internal_all_task_executed( mpcomp_thread_t* thread, mpcomp_in
    	    return 1;
   	}
  
-	//sctk_error( ">> %d -- %d", OPA_load_int( &total_task_exec), OPA_load_int( &total_task_create) );
+	//sctk_nodebug( ">> %d -- %d", OPA_load_int( &total_task_exec), OPA_load_int( &total_task_create) );
 
 	if( OPA_load_int( &total_task_exec) != OPA_load_int( &total_task_create) )
 	{
@@ -678,7 +694,7 @@ void __mpcomp_task_schedule( int filter )
         		|| !MPCOMP_TASK_THREAD_IS_INITIALIZED( thread )
         		|| !MPCOMP_TASK_TEAM_IS_INITIALIZED( team ) )
 		{
-      	sctk_error("sequential or no task");
+      	sctk_nodebug("sequential or no task");
    	   return;
   		}
  
@@ -697,6 +713,7 @@ void __mpcomp_task_schedule( int filter )
 	      list = mpcomp_task_get_list( node_rank, type );
          sctk_assert( list );
 	      mpcomp_task_list_lock(list);
+			task = mpcomp_task_list_popfromhead( list );
 	      mpcomp_task_list_unlock(list);
 		} 
 
@@ -711,13 +728,16 @@ void __mpcomp_task_schedule( int filter )
 	  	{ 
 	        return;
 	  	}
-        
+      
+		sctk_nodebug( "GOTO EXECUTE: task-%p func-%p", task, task->func ); 
 		__mpcomp_task_execute( task );
 
 		/* Clean function */
 		mpcomp_tast_clear_sister( task );
 		mpcomp_task_clear_parent( task );
 	 
+		__mpcomp_task_finalize_deps( task );
+
 		/* Free memory */ 
 		mpcomp_free( task );
 		task = NULL;
@@ -753,6 +773,53 @@ void __mpcomp_taskwait( void )
     sctk_nodebug( "end %s", __func__ );
 }
 
+void __mpcomp_taskgroup_start( void )
+{
+   mpcomp_task_t* current_task = NULL;         		/* Current task execute 	*/
+   mpcomp_thread_t* omp_thread_tls = NULL;     		/* thread private data  	*/
+	mpcomp_task_taskgroup_t* new_taskgroup = NULL;	/* new_taskgroup allocated */
+
+	sctk_error("hello");
+  	__mpcomp_task_infos_init();
+
+	omp_thread_tls = ( mpcomp_thread_t* ) sctk_openmp_thread_tls;
+	sctk_assert( omp_thread_tls );
+
+	current_task = MPCOMP_TASK_THREAD_GET_CURRENT_TASK( omp_thread_tls );
+	sctk_assert( current_task );	
+
+	new_taskgroup = sctk_malloc( sizeof( mpcomp_task_taskgroup_t ) );
+	sctk_assert( new_taskgroup );
+
+	/* Init new task group and store it in current task */
+	memset( new_taskgroup, 0, sizeof( mpcomp_task_taskgroup_t ) ); 
+	new_taskgroup->prev = current_task->taskgroup;
+	current_task->taskgroup = new_taskgroup;
+}
+
+void __mpcomp_taskgroup_end( void )
+{
+	mpcomp_task_t* current_task = NULL;         /* Current task execute */
+   mpcomp_thread_t* omp_thread_tls = NULL;     /* thread private data  */
+
+   __mpcomp_task_infos_init();
+
+   omp_thread_tls = ( mpcomp_thread_t* ) sctk_openmp_thread_tls;
+	sctk_assert( omp_thread_tls );
+
+	current_task = MPCOMP_TASK_THREAD_GET_CURRENT_TASK( omp_thread_tls );
+	sctk_assert( current_task );
+	
+	__mpcomp_taskwait();
+
+	if( !( current_task->taskgroup ) ) return;
+	
+	while( current_task->taskgroup->children )
+	{
+		__mpcomp_task_schedule( 0 );	
+	} 
+}
+	
 /*
  * The current may be suspended in favor of execution of
  * a different task

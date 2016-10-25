@@ -7,6 +7,7 @@
 
 #include "mpcomp_alloc.h"
 #include "mpcomp_task.h"
+#include "mpcomp_task_dep.h"
 #include "mpcomp_task_list.h"
 #include "mpcomp_tree_utils.h"
 #include "mpcomp_task_macros.h"
@@ -167,6 +168,9 @@ mpcomp_task_thread_infos_init( struct mpcomp_thread_s* thread )
 		MPCOMP_TASK_THREAD_SET_CURRENT_TASK( thread, NULL );
 
 		mpcomp_task_infos_init( implicite_task, NULL, NULL, thread );
+		implicite_task->task_dep_infos = sctk_malloc( sizeof( mpcomp_task_dep_task_infos_t ) );
+		sctk_assert( implicite_task->task_dep_infos );
+		memset( implicite_task->task_dep_infos, 0, sizeof( mpcomp_task_dep_task_infos_t ));
 
 		/* Allocate private task data structures */ 
 		tied_tasks_list = mpcomp_malloc( 1, sizeof(mpcomp_task_list_t), numa_node_id );
@@ -293,4 +297,13 @@ mpcomp_task_get_list( int globalRank, mpcomp_tasklist_type_t type )
    return list;
 }
 
+struct mpcomp_task_s*
+__mpcomp_task_alloc( void (*fn) (void *), void *data, void (*cpyfn) (void *, void *),
+           long arg_size, long arg_align, bool if_clause, unsigned flags, int deps_num );
+void __mpcomp_task_process( mpcomp_task_t* new_task, bool if_clause );
+void __mpcomp_task(void (*fn) (void *), void *data, void (*cpyfn) (void *, void *),
+		   long arg_size, long arg_align, bool if_clause, unsigned flags);
+
+void __mpcomp_taskgroup_start( void );
+void __mpcomp_taskgroup_end( void );
 #endif /* __SCTK_MPCOMP_TASK_UTILS_H__ */

@@ -36,13 +36,13 @@ void __mpcomp_GOMP_taskyield(void)
 void __mpcomp_GOMP_taskgroup_start(void)
 {
    sctk_nodebug("[Redirect __mpcomp_GOMP]%s:\tBegin",__func__);
-   not_implemented();
+	__mpcomp_taskgroup_start();
    sctk_nodebug("[Redirect __mpcomp_GOMP]%s:\tEnd",__func__);
 }
 
 void __mpcomp_GOMP_taskgroup_end(void)
 {
    sctk_nodebug("[Redirect __mpcomp_GOMP]%s:\tBegin",__func__);
-   not_implemented();
+	__mpcomp_taskgroup_end();
    sctk_nodebug("[Redirect __mpcomp_GOMP]%s:\tEnd",__func__);
 }
