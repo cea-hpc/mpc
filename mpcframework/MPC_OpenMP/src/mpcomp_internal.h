@@ -334,24 +334,6 @@ typedef struct mpcomp_tree_meta_elt_s
 
     void __mpcomp_internal_end_parallel_region( mpcomp_instance_t * instance );
 
-          sctk_atomics_store_int(&(team_info->nb_tasks), 0);
-       t->current_task =
-           mpcomp_malloc(1, sizeof(struct mpcomp_task_s), id_numa);
-       __mpcomp_task_init(t->current_task, NULL, NULL, t);
-       t->current_task->parent = NULL;
-       t->current_task->depth = 0;
-       mpcomp_task_set_property(&(t->current_task->property),
-                                MPCOMP_TASK_IMPLICIT);
-     }
-     static inline void __mpcomp_thread_init(mpcomp_thread_t *t,
-                                             mpcomp_local_icv_t icvs,
-                                             mpcomp_instance_t *instance,
-                                             mpcomp_thread_t *father,
-                                             int id_numa) {
-       t->tied_tasks = NULL;
-       __mpcomp_implicit_task_init(t, id_numa);
-       t->larceny_order = NULL;
-           (struct common_table *)sctk_malloc(sizeof(struct common_table));
      /* mpcomp.c */
      void __mpcomp_init(void);
      void __mpcomp_exit(void);

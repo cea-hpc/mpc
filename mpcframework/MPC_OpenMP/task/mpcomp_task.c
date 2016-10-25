@@ -276,9 +276,6 @@ void __mpcomp_task_list_infos_exit_r( mpcomp_node_t* node )
      return;
 }
                                                  
-#if 0
-#endif
-              mpcomp_malloc(1, sizeof(struct mpcomp_task_list_s), id_numa);
 /* The new task may be delayed, so copy arguments in a buffer */
 struct mpcomp_task_s*
 __mpcomp_task_alloc( void (*fn) (void *), void *data, void (*cpyfn) (void *, void *),
@@ -394,12 +391,6 @@ __mpcomp_task_process( mpcomp_task_t* new_task, bool if_clause )
    mpcomp_thread_t* thread;
 	mpcomp_task_list_t* mvp_task_list;
 
-                                                    MPCOMP_TASK_FINAL)) ||
-              (flags & 2)) {
-            /* If its parent task is final, the new task must be final too */
-            mpcomp_task_set_property(&(task->property), MPCOMP_TASK_FINAL);
-          }
-
    /* Retrieve the information (microthread structure and current region) */
    sctk_assert( sctk_openmp_thread_tls );
    thread = ( mpcomp_thread_t* ) sctk_openmp_thread_tls;
@@ -418,7 +409,7 @@ __mpcomp_task_process( mpcomp_task_t* new_task, bool if_clause )
 
 	sctk_nodebug( "%s: %p -- %p -- %p", __func__, new_task, new_task->func, new_task->data ); 
    /* Direct task execution */
-//   mpcomp_task_set_property ( &( new_task->property ), MPCOMP_TASK_UNDEFERRED );
+   mpcomp_task_set_property ( &( new_task->property ), MPCOMP_TASK_UNDEFERRED );
    __mpcomp_task_execute( new_task );
 
    mpcomp_tast_clear_sister( new_task );
@@ -878,6 +869,7 @@ void __mpcomp_task_coherency_entering_parallel_region() {
 }
 
 void __mpcomp_task_coherency_ending_parallel_region() {
+#if 0
   struct mpcomp_team_s *team;
   struct mpcomp_mvp_s **mvp;
   mpcomp_thread_t *t;
@@ -929,9 +921,11 @@ void __mpcomp_task_coherency_ending_parallel_region() {
       }
     }
   }
+#endif
 }
 
 void __mpcomp_task_coherency_barrier() {
+#if 0
   mpcomp_thread_t *t;
   struct mpcomp_task_list_s *list = NULL;
 
@@ -964,6 +958,7 @@ void __mpcomp_task_coherency_barrier() {
     sctk_assert(list != NULL);
     sctk_assert(mpcomp_task_list_isempty(list) == 1);
   }
+#endif
 }
 
 #else /* MPCOMP_TASK */

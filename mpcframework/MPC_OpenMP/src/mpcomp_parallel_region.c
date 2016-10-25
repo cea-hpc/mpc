@@ -22,6 +22,7 @@
 /* ######################################################################## */
 
 #include "mpcomp_internal.h"
+#include "mpcomp_internal_utils.h"
 #include "mpcomp_tree_structs.h"
 
 
@@ -408,7 +409,7 @@ __mpcomp_start_parallel_region(int arg_num_threads, void *(*func)
   sctk_assert( t != NULL ) ;
 
 	mpcomp_parallel_region_infos_init( &info ) ;
-    __mpcomp_team_init(t->children_instance->team);
+   //__mpcomp_team_init(t->children_instance->team);
   info.func = func;
   info.shared = shared;
   // info.icvs = t->info.icvs ;

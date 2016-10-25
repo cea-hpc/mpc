@@ -64,10 +64,8 @@ __mpcomp_thread_init( mpcomp_thread_t *thread, mpcomp_local_icv_t icvs, mpcomp_i
 {
 	int i;
 	sctk_assert( thread );
-    sctk_error( "memset ..");
 	memset( thread, 0,  sizeof( mpcomp_thread_t ) );
 
-    sctk_error( "memset ok");
 	thread->info.num_threads = 1;
 	thread->info.icvs = icvs;
 	thread->instance = instance;
