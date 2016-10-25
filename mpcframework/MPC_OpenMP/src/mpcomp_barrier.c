@@ -24,6 +24,7 @@
 #include "mpcomp.h"
 #include "mpcomp_internal.h"
 
+int mpcomp_task_all_task_executed( void );
 
 /*
    OpenMP barrier.
@@ -125,6 +126,10 @@ __mpcomp_internal_full_barrier (mpcomp_mvp_t *mvp)
 	sctk_assert( new_root != NULL ) ;
 
 	/* TODO: check if we need sctk_atomics_write_barrier() */
+	while( !mpcomp_task_all_task_executed() )
+	{
+		__mpcomp_task_schedule( 0 );
+	}
 
 	/* Step 0: TODO finish the barrier whithin the current micro VP */
 
@@ -143,6 +148,7 @@ __mpcomp_internal_full_barrier (mpcomp_mvp_t *mvp)
 		/* Wait for c->barrier == c->barrier_num_threads */
 		while (b_done == c->barrier_done) {
 			sctk_thread_yield();
+			__mpcomp_task_schedule( 0 );
 		}
 	} else {
 

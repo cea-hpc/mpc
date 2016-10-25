@@ -243,7 +243,6 @@ __mpcomp_task_with_deps( void (*fn) (void *), void *data, void (*cpyfn) (void *,
 	predecessors_num  = __mpcomp_task_process_deps( task_node, current_task->task_dep_infos->htable, depend );		
 	sctk_atomics_store_int( &( task_node->status ), MPCOMP_TASK_DEP_TASK_NOT_EXECUTE );	
 
-	sctk_nodebug( "FOUND: %d deps", predecessors_num );
 	task_node->task = new_task;
 	new_task->task_dep_infos->node = task_node;
 	sctk_atomics_read_write_barrier();

@@ -301,7 +301,7 @@ __mpcomp_task_alloc( void (*fn) (void *), void *data, void (*cpyfn) (void *, voi
 	sctk_assert( MPCOMP_OVERFLOW_SANITY_CHECK( mpcomp_task_tot_size, mpcomp_task_data_size ));
 	mpcomp_task_tot_size += mpcomp_task_data_size;
 
-   struct mpcomp_task_s *new_task = mpcomp_malloc( 1, mpcomp_task_tot_size, t->mvp->father->id_numa );
+   struct mpcomp_task_s *new_task = mpcomp_malloc( 1, mpcomp_task_tot_size, 0/* t->mvp->father->id_numa */);
 	sctk_assert( new_task != NULL );
 
 	void* task_data = ( arg_size > 0 ) ? ( void*) ( (uintptr_t) new_task + mpcomp_task_info_size ) : NULL;
@@ -739,11 +739,9 @@ void __mpcomp_taskwait( void )
     mpcomp_task_t* current_task = NULL;         /* Current task execute */
     mpcomp_thread_t* omp_thread_tls = NULL;     /* thread private data  */
 
-    sctk_nodebug( "begin %s", __func__ );
-
   	__mpcomp_task_infos_init();
      
-    omp_thread_tls = ( mpcomp_thread_t* ) sctk_openmp_thread_tls;
+   omp_thread_tls = ( mpcomp_thread_t* ) sctk_openmp_thread_tls;
 	sctk_assert( omp_thread_tls );
 
     sctk_assert( omp_thread_tls->info.num_threads > 0 );
@@ -756,12 +754,9 @@ void __mpcomp_taskwait( void )
   	    /* Look for a children tasks list */
         while( current_task->children != NULL ) 
         {
-		  		//__mpcomp_task_schedule( 1 );
 		  		__mpcomp_task_schedule( 0 );
  	     }
     }
-
-    sctk_nodebug( "end %s", __func__ );
 }
 
 void __mpcomp_taskgroup_start( void )
@@ -770,7 +765,6 @@ void __mpcomp_taskgroup_start( void )
    mpcomp_thread_t* omp_thread_tls = NULL;     		/* thread private data  	*/
 	mpcomp_task_taskgroup_t* new_taskgroup = NULL;	/* new_taskgroup allocated */
 
-	sctk_error("hello");
   	__mpcomp_task_infos_init();
 
 	omp_thread_tls = ( mpcomp_thread_t* ) sctk_openmp_thread_tls;
