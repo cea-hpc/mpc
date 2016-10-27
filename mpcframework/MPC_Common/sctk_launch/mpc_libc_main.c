@@ -53,15 +53,14 @@ int sctk_unified_main(int argc, char** argv, char ** env)
 		abort();
 	}
 
-	/*fprintf(stderr, "%s = %d, %d\n", tmp, WIFEXITED(ret), WEXITSTATUS(ret));*/
 	if(WIFEXITED(ret) && WEXITSTATUS(ret) == 0)
 	{
-		fprintf(stderr, "Fortran !!\n");
+		/*fprintf(stderr, "Fortran !!\n");*/
 		name = "main_fortran";
 	}
 	else
 	{
-		fprintf(stderr, "C/C++ !!\n");
+		/*fprintf(stderr, "C/C++ !!\n");*/
 		name = "main_c";
 
 	}
@@ -73,7 +72,7 @@ int sctk_unified_main(int argc, char** argv, char ** env)
 		abort();
 	}
 
-	fprintf(stderr, "handler = %p -> %s\n", handler, name);
+	/*fprintf(stderr, "handler = %p -> %s\n", handler, name);*/
 	ret = handler(argc, argv);
 	return ret;
 }
@@ -98,7 +97,6 @@ short sctk_check_main(char * exe_name)
 	tmp = (char*)calloc(MAX_SIZE, sizeof(char));
 	/* an '\' is added before the grep command for using the native commmand (no aliasing) */
 	snprintf(tmp,MAX_SIZE, "nm `which %s` 2>/dev/null | \\egrep -oi \"^[a-fA-F0-9 ]* [a-zA-Z] (%s)(_)?(@@.*)*$\" > /dev/null",exe_name, hpc_syms);
-	
 	/* retrieve the main() address */
 	int ret = system(tmp);
 	if(ret == -1)
@@ -107,7 +105,7 @@ short sctk_check_main(char * exe_name)
 		abort();
 	}
 
-	res = (WEXITSTATUS(ret) == 0);
+	res = (WIFEXITED(ret) && WEXITSTATUS(ret) == 0);
 	
 	if(old)
 	{
@@ -131,6 +129,35 @@ int mpc_user_main__(int argc, char ** argv)
 	return real_main(argc, argv);
 }
 #endif
+
+void sctk_cleanup_preload()
+{
+	char *old = NULL, *cur = NULL, *new = NULL;
+	size_t n;
+
+	old = getenv("LD_PRELOAD");
+	n = strlen(old) + 1;
+
+	new = calloc(n, sizeof(char));
+
+	cur = strtok(old, " ");
+	while(cur != NULL)
+	{
+		if(strstr(cur, "libmpc_hookmain.so") == NULL)
+		{
+			strcat(new, cur);
+			strcat(new, " ");
+		}
+
+		cur = strtok(NULL, " ");
+	}
+
+
+	if(new[0] != '\0')
+	{
+		setenv("LD_PRELOAD", new, 1);
+	}
+}
 
 int __libc_start_main(main_proto_env_t first_main, int argc, char * * ubp_av, void (*init) (void), void (*fini) (void), void (*rtld_fini) (void), void (* stack_end))
 {
@@ -158,7 +185,7 @@ int __libc_start_main(main_proto_env_t first_main, int argc, char * * ubp_av, vo
 	{
 		if(strcmp(basename(user_bin), basename(ubp_av[0])) == 0 || strcmp(user_bin, WRAP_ALL_CONSTANT) == 0)
 		{
-			fprintf(stderr, "%s considered by user\n", ubp_av[0] );
+			/*fprintf(stderr, "%s considered by user\n", ubp_av[0] );*/
 			to_execute = sctk_unified_main;
 		}
 	}
@@ -166,16 +193,20 @@ int __libc_start_main(main_proto_env_t first_main, int argc, char * * ubp_av, vo
 	{
 		if(sctk_check_main(ubp_av[0]))
 		{
-			fprintf(stderr, "%s considered by detection\n", ubp_av[0] );
+			/*fprintf(stderr, "%s considered by detection\n", ubp_av[0] );*/
 			to_execute = sctk_unified_main;
 		}
 		else
 		{
-			fprintf(stderr, "%s not considered\n", ubp_av[0]);
+			/*fprintf(stderr, "%s not considered\n", ubp_av[0]);*/
 			to_execute = first_main;
 		}
 	}
-	
+
+	if(to_execute != first_main)
+	{
+		sctk_cleanup_preload();
+	}
 	real_main = first_main;
 	return real_libc_main(to_execute, argc, ubp_av, init, fini, rtld_fini, stack_end);
 }

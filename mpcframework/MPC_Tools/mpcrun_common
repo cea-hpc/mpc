@@ -204,7 +204,10 @@ fi
 
 # Load config files options
 CONFIG_FILES_VALID=false
-config_files_vars="`${MPC_BIN_DIR}/mpc_print_config --launcher`"
+preload_tmp="$LD_PRELOAD"
+LD_PRELOAD=""
+config_files_vars="`${MPC_BIN_DIR}/mpc_print_config --launcher 2>/dev/null`"
+LD_PRELOAD="$preload_tmp"
 if [ $? -eq 0 ]; then eval "${config_files_vars}"; fi
 if [ "${CONFIG_FILES_VALID}" = "true" ]; then
 	# Default value related to --enable-smt
