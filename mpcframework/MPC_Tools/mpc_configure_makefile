@@ -405,6 +405,7 @@ printf "\t@\$(CC)  \$(COBJ_LIST) ${EXTERN_NON_TESTED_LIB} -fPIC -shared -o \${DE
 if test "$SCTK_FORTRAN" = "1"; then
 printf "\t@\$(CC) \$(FOBJ_LIST) ${EXTERN_NON_TESTED_LIB} -fPIC -shared -o \${DESTDIR}${SCTK_LIB_DIR}/libmpc_frameworkf.so $SCTK_LDFLAGS -Wl,--version-script=\$(MPC_SOURCE_DIR)/MPC_OpenMP/version_gomp.txt || echo \"Unable to build Fortran shared library\"">> Makefile; echo "">> Makefile
 fi
+printf "\t@\$(CC)  -fPIC -shared -Wall -DENABLE_HOOK_MAIN ${MPC_SOURCE_DIR}MPC_Common/sctk_launch/mpc_libc_main.c -o \${DESTDIR}${SCTK_LIB_DIR}/libmpc_hookmain.so -ldl || echo \"Unable to build main() Interposition library\"">> Makefile; echo "">> Makefile
 printf "\t@cp -r INSTALL/bin/* \${DESTDIR}${SCTK_BIN_DIR}">> Makefile; echo "">> Makefile
 printf "\t@cp -r INSTALL/share/mpc/* \${DESTDIR}${SCTK_SHARE_DIR}">> Makefile; echo "">> Makefile
 printf "\t@cp -r INSTALL/share/editor/* \${DESTDIR}${SCTK_SHARE_ED_DIR}">> Makefile; echo "">> Makefile
