@@ -647,6 +647,7 @@ else
 	exit 1
 fi
 
+export MPC_SYMBOL_REGEX="MPI_Init"
 export MPC_LAUNCH_COMMAND="${LAUNCH_COMMAND}"
 
 trap "kill -s 2 0" INT
