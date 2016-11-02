@@ -29,7 +29,7 @@
  * when running in lib mode */
 #ifndef SCTK_LIB_MODE
 
-#pragma weak main
+/*#pragma weak main*/
 int main (int argc, char **argv)
 {
   int tmp;

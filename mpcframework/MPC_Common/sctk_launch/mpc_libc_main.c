@@ -84,9 +84,11 @@ short sctk_check_main(char * exe_name)
 	char *tmp = NULL, *old = NULL, *hpc_syms = NULL;
 	
 	hpc_syms = getenv("MPC_SYMBOL_REGEX");
-	/* if not defined, any symbol will enable the matching */
+	/* if not defined, no binary will match (infinite loop prevention)*/
 	if(!hpc_syms)
-		hpc_syms = ".*";
+	{
+		return 0;
+	}
 
 	/* temporarily unset LD_PRELOAD
 	 * This avoids to preload hook library for popen()
@@ -173,20 +175,23 @@ int __libc_start_main(main_proto_env_t first_main, int argc, char * * ubp_av, vo
 	}
 
 	user_bin = getenv("MPC_USER_BINARY");
-
 	/* here, we made two checks. To hook the main, either one of these conditions have to be true:
 	 * - The user does not set any preference and we check if the current binary contains at least
 	 *   one symbol matching with the regex provided by getenv(MPC_SYMBOL_REGEX) (".*" by default, which means
 	 *   that any symbol will match.
-	 * - OR the user set a specific binary to hook and we check if the current binary is the chosen one. A special
-	 *   pattern, hidden by the macro WRAP_ALL_CONSTANT will cause any main() to be matched
+	 * - OR the user set a specific binary to hook and we check if the current binary is the chosen one.
 	 */
 	if(user_bin)
 	{
-		if(strcmp(basename(user_bin), basename(ubp_av[0])) == 0 || strcmp(user_bin, WRAP_ALL_CONSTANT) == 0)
+		if(strstr(ubp_av[0], user_bin) != NULL || strcmp(user_bin, WRAP_ALL_CONSTANT) == 0)
 		{
 			/*fprintf(stderr, "%s considered by user\n", ubp_av[0] );*/
 			to_execute = sctk_unified_main;
+		}
+		else
+		{
+			/*fprintf(stderr, "%s not considered by user\n", ubp_av[0]);*/
+			to_execute = first_main;
 		}
 	}
 	else
@@ -198,7 +203,7 @@ int __libc_start_main(main_proto_env_t first_main, int argc, char * * ubp_av, vo
 		}
 		else
 		{
-			/*fprintf(stderr, "%s not considered\n", ubp_av[0]);*/
+			/*fprintf(stderr, "%s not considered by detection\n", ubp_av[0]);*/
 			to_execute = first_main;
 		}
 	}
