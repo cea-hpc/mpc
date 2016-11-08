@@ -2321,6 +2321,7 @@ static int __INTERNAL__PMPI_Waitsome (int incount, MPI_Request * array_of_reques
   int i;
   int req_null_count = 0;
   MPI_request_struct_t *requests;
+  int res;
   requests = __sctk_internal_get_MPC_requests();
 
   *outcount = MPI_UNDEFINED;
@@ -2345,10 +2346,12 @@ static int __INTERNAL__PMPI_Waitsome (int incount, MPI_Request * array_of_reques
   do
     {
       //      sctk_thread_yield ();
-      __INTERNAL__PMPI_Testsome (incount, array_of_requests, outcount, array_of_indices, array_of_statuses);
-    }while (*outcount == MPI_UNDEFINED);
+      res = __INTERNAL__PMPI_Testsome(incount, array_of_requests, outcount,
+                                      array_of_indices, array_of_statuses);
+  } while ((res == MPI_SUCCESS) &&
+           ((*outcount == MPI_UNDEFINED) || (*outcount == 0)));
 
-  return MPI_SUCCESS;
+  return res;
 }
 
 static int __INTERNAL__PMPI_Testsome (int incount, MPI_Request * array_of_requests, int *outcount, int *array_of_indices, MPI_Status * array_of_statuses)
@@ -2393,18 +2396,16 @@ static int __INTERNAL__PMPI_Testsome (int incount, MPI_Request * array_of_reques
 			no_active_done++;
 		}
 	}
-	
-	if( done != 0 )
-		*outcount = done;
-	
-	if (no_active_done == incount)
-	{
-		*outcount = MPI_UNDEFINED;
-		  sctk_thread_yield();
-	} else {
-		sctk_thread_yield();
-	}
-	return MPI_SUCCESS;
+
+        *outcount = done;
+
+        if (no_active_done == incount) {
+          *outcount = MPI_UNDEFINED;
+          sctk_thread_yield();
+        } else {
+          sctk_thread_yield();
+        }
+        return MPI_SUCCESS;
 }
 
 static int
