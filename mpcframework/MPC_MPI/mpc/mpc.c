@@ -4171,24 +4171,23 @@ int __MPC_Waitallp (mpc_msg_count count,
 		if (flag == 1)
 			MPC_ERROR_SUCESS();
 
-		sched_yield();
+                sctk_thread_yield();
 
-		trials++;
-	}
-	
+                trials++;
+        }
 
+        /* XXX: Waitall has been ported for using wait_for_value_and_poll
+        * because it provides better results than thread_yield.
+        * It performs well at least on Infiniband on NAS  */
+        struct wfv_waitall_s wfv;
+        wfv.ret = 0;
+        wfv.array_of_requests = parray_of_requests;
+        wfv.array_of_statuses = array_of_statuses;
+        wfv.count = count;
+        sctk_inter_thread_perform_idle(
+            (int *)&(wfv.ret), 1, (void (*)(void *))wfv_waitall, (void *)&wfv);
 
-	/* XXX: Waitall has been ported for using wait_for_value_and_poll
-	* because it provides better results than thread_yield.
-	* It performs well at least on Infiniband on NAS  */
-	struct wfv_waitall_s wfv;
-	wfv.ret = 0;
-	wfv.array_of_requests = parray_of_requests;
-	wfv.array_of_statuses = array_of_statuses;
-	wfv.count = count;
-	sctk_inter_thread_perform_idle((int *) &(wfv.ret), 1 , (void(*)(void*))wfv_waitall,(void*)&wfv);
-
-	MPC_ERROR_SUCESS ();
+        MPC_ERROR_SUCESS();
 }
 
 
