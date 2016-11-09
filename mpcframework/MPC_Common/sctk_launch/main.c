@@ -30,8 +30,7 @@
 #ifndef SCTK_LIB_MODE
 
 /*#pragma weak main*/
-int main (int argc, char **argv)
-{
+int main(int argc, char **argv) {
   int tmp;
   tmp = main_c (argc, argv);
   return tmp;
