@@ -49,18 +49,20 @@ struct sctk_alloc_region
 
 /************************* FUNCTION ************************/
 //Region management
- struct sctk_alloc_region * sctk_alloc_region_setup(void * addr);
- struct sctk_alloc_region * sctk_alloc_region_get(void * addr);
- void sctk_alloc_region_del(struct sctk_alloc_region * region);
+struct sctk_alloc_region *sctk_alloc_region_setup(void *addr);
+struct sctk_alloc_region *sctk_alloc_region_get(void *addr);
+void sctk_alloc_region_del(struct sctk_alloc_region *region);
 SCTK_PUBLIC struct sctk_alloc_region_entry * sctk_alloc_region_get_entry(void* addr);
- bool sctk_alloc_region_exist(void * addr);
- void sctk_alloc_region_init(void);
- void sctk_alloc_region_del_all(void);
- void sctk_alloc_region_set_entry(struct sctk_alloc_chain * chain,struct sctk_alloc_macro_bloc * macro_bloc);
- int sctk_alloc_region_get_id(void * addr);
- bool sctk_alloc_region_has_ref(struct sctk_alloc_region * region);
- void sctk_alloc_region_del_chain(struct sctk_alloc_region * region,struct sctk_alloc_chain * chain);
- void sctk_alloc_region_unset_entry(struct sctk_alloc_macro_bloc * macro_bloc);
+bool sctk_alloc_region_exist(void *addr);
+void sctk_alloc_region_init(void);
+void sctk_alloc_region_del_all(void);
+void sctk_alloc_region_set_entry(struct sctk_alloc_chain *chain,
+                                 struct sctk_alloc_macro_bloc *macro_bloc);
+int sctk_alloc_region_get_id(void *addr);
+bool sctk_alloc_region_has_ref(struct sctk_alloc_region *region);
+void sctk_alloc_region_del_chain(struct sctk_alloc_region *region,
+                                 struct sctk_alloc_chain *chain);
+void sctk_alloc_region_unset_entry(struct sctk_alloc_macro_bloc *macro_bloc);
 SCTK_PUBLIC struct sctk_alloc_macro_bloc * sctk_alloc_region_get_macro_bloc(void * ptr);
 
 #ifdef __cplusplus

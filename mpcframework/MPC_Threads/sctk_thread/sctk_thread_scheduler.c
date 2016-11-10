@@ -161,7 +161,8 @@ void sctk_thread_generic_scheduler_setcontext(sctk_thread_generic_scheduler_t* n
 /***************************************/
 /* TASKS MANAGEMENT                    */
 /***************************************/
-static int sctk_thread_generic_scheduler_check_task(sctk_thread_generic_task_t* task){
+static int
+sctk_thread_generic_scheduler_check_task(sctk_thread_generic_task_t *task) {
   if(*(task->data) == task->value){
     return 1;
   } 
@@ -1673,9 +1674,8 @@ static void (*sctk_generic_poll_tasks)(sctk_thread_generic_scheduler_t* ) = NULL
 static void (*sctk_thread_generic_wake_on_task_lock_p)( sctk_thread_generic_scheduler_t* sched,
 							int remove_from_lock_list ) = NULL;
 
-void
-sctk_thread_generic_wake_on_task_lock( sctk_thread_generic_scheduler_t* sched,
-				       int remove_from_lock_list ){
+void sctk_thread_generic_wake_on_task_lock(
+    sctk_thread_generic_scheduler_t *sched, int remove_from_lock_list) {
   sctk_thread_generic_wake_on_task_lock_p(sched,remove_from_lock_list);
 }
 
@@ -1697,7 +1697,7 @@ static __thread int delegated_task_nb = 0;
 
 static __thread sctk_per_vp_data_t vp_data = SCTK_PER_VP_DATA_INIT;
 
-static  int sctk_sem_wait(sem_t *sem){
+static int sctk_sem_wait(sem_t *sem) {
   int res;
   do{
     res = sem_wait(sem);
@@ -1832,7 +1832,7 @@ static void sctk_generic_sched_idle_start_pthread(){
   not_reachable();
 }
 
-static sctk_thread_generic_scheduler_t* sctk_generic_get_from_list_none(){
+static sctk_thread_generic_scheduler_t *sctk_generic_get_from_list_none() {
   return NULL;
 }
 
@@ -2269,8 +2269,7 @@ static void sctk_generic_sched_yield(sctk_thread_generic_scheduler_t*sched){
   }
 }
 
-void 
-sctk_generic_swap_to_sched( sctk_thread_generic_scheduler_t* sched ){
+void sctk_generic_swap_to_sched(sctk_thread_generic_scheduler_t *sched) {
   sctk_thread_generic_scheduler_t* old_sched = &(sctk_thread_generic_self()->sched);
   vp_data.swap_to_sched = old_sched;
 
@@ -2346,8 +2345,7 @@ sctk_generic_wake_thread_on_vp (void **list)
   }
 }
 
-static 
-void sctk_generic_create_common(sctk_thread_generic_p_t*thread){
+static void sctk_generic_create_common(sctk_thread_generic_p_t *thread) {
   if(thread->attr.scope == SCTK_THREAD_SCOPE_SYSTEM){
     thread->sched.generic.vp_type = 1;
    

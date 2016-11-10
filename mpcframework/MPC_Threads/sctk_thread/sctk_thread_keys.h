@@ -45,7 +45,8 @@ sctk_thread_generic_keys_key_create (sctk_thread_key_t * __key,
 int
 sctk_thread_generic_keys_key_delete (sctk_thread_key_t __key,sctk_thread_generic_keys_t* keys);
 
-extern void sctk_thread_generic_keys_key_delete_all ( sctk_thread_generic_keys_t* keys );
+extern void
+sctk_thread_generic_keys_key_delete_all(sctk_thread_generic_keys_t *keys);
 
 #endif
 

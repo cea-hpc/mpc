@@ -208,28 +208,36 @@ typedef struct MPI_internal_request_s
 
 
 MPI_request_struct_t * __sctk_internal_get_MPC_requests();
-void __sctk_init_mpc_request ();
+void __sctk_init_mpc_request();
 MPI_internal_request_t *
-__sctk_convert_mpc_request_internal_cache_get (MPI_Request * req,
-                                           MPI_request_struct_t *requests);
-void __sctk_convert_mpc_request_internal_cache_register(MPI_internal_request_t * req);
+__sctk_convert_mpc_request_internal_cache_get(MPI_Request *req,
+                                              MPI_request_struct_t *requests);
+void __sctk_convert_mpc_request_internal_cache_register(
+    MPI_internal_request_t *req);
 void sctk_delete_internal_request_clean(MPI_internal_request_t *tmp);
-MPI_internal_request_t * __sctk_new_mpc_request_internal_local_get (MPI_Request * req,
-                                 MPI_request_struct_t *requests);
-int sctk_delete_internal_request_local_put(MPI_internal_request_t *tmp, MPI_request_struct_t *requests );
-void sctk_delete_internal_request(MPI_internal_request_t *tmp, MPI_request_struct_t *requests );
+MPI_internal_request_t *
+__sctk_new_mpc_request_internal_local_get(MPI_Request *req,
+                                          MPI_request_struct_t *requests);
+int sctk_delete_internal_request_local_put(MPI_internal_request_t *tmp,
+                                           MPI_request_struct_t *requests);
+void sctk_delete_internal_request(MPI_internal_request_t *tmp,
+                                  MPI_request_struct_t *requests);
 void sctk_check_auto_free_list(MPI_request_struct_t *requests);
 void __sctk_init_mpc_request_internal(MPI_internal_request_t *tmp);
-MPI_internal_request_t * __sctk_new_mpc_request_internal (MPI_Request * req, 
-				 MPI_request_struct_t *requests);
-MPC_Request * __sctk_new_mpc_request (MPI_Request * req,MPI_request_struct_t *requests);
-MPI_internal_request_t * __sctk_convert_mpc_request_internal (MPI_Request * req,
-				     MPI_request_struct_t *requests);
-MPC_Request * __sctk_convert_mpc_request (MPI_Request * req,MPI_request_struct_t *requests);
-void __sctk_add_in_mpc_request (MPI_Request * req, void *t,MPI_request_struct_t *requests);
-void __sctk_delete_mpc_request (MPI_Request * req,
-					      MPI_request_struct_t *requests);
-
+MPI_internal_request_t *
+__sctk_new_mpc_request_internal(MPI_Request *req,
+                                MPI_request_struct_t *requests);
+MPC_Request *__sctk_new_mpc_request(MPI_Request *req,
+                                    MPI_request_struct_t *requests);
+MPI_internal_request_t *
+__sctk_convert_mpc_request_internal(MPI_Request *req,
+                                    MPI_request_struct_t *requests);
+MPC_Request *__sctk_convert_mpc_request(MPI_Request *req,
+                                        MPI_request_struct_t *requests);
+void __sctk_add_in_mpc_request(MPI_Request *req, void *t,
+                               MPI_request_struct_t *requests);
+void __sctk_delete_mpc_request(MPI_Request *req,
+                               MPI_request_struct_t *requests);
 
 /*
   SHARED INTERNAL FUNCTIONS

@@ -34,17 +34,17 @@ void sctk_thread_generic_rwlocks_init(){
   }
 }
 
-void
-sctk_thread_generic_rwlocks_init_cell( sctk_thread_generic_rwlock_cell_t* cell ){
+void sctk_thread_generic_rwlocks_init_cell(
+    sctk_thread_generic_rwlock_cell_t *cell) {
   cell->sched = NULL;
   cell->type = -1;
   cell->prev = NULL;
   cell->next = NULL;
 }
 
-int
-sctk_thread_generic_rwlocks_store_rwlock( sctk_thread_generic_rwlock_t* _rwlock,
-		sctk_thread_generic_scheduler_t* sched ){
+int sctk_thread_generic_rwlocks_store_rwlock(
+    sctk_thread_generic_rwlock_t *_rwlock,
+    sctk_thread_generic_scheduler_t *sched) {
 
   /*  
 	  ERRORS:
@@ -63,9 +63,9 @@ sctk_thread_generic_rwlocks_store_rwlock( sctk_thread_generic_rwlock_t* _rwlock,
   return 0;
 }
 
-int
-sctk_thread_generic_rwlocks_retrieve_rwlock( sctk_thread_generic_rwlock_t* _rwlock,
-		sctk_thread_generic_scheduler_t* sched ){
+int sctk_thread_generic_rwlocks_retrieve_rwlock(
+    sctk_thread_generic_rwlock_t *_rwlock,
+    sctk_thread_generic_scheduler_t *sched) {
 
   /*  
 	  ERRORS:

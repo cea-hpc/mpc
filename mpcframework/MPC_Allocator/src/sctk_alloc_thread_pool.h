@@ -80,25 +80,52 @@ struct sctk_thread_pool
 
 /********************************* FUNCTION *********************************/
 //thread pool management
- void sctk_alloc_thread_pool_init(struct sctk_thread_pool * pool,const sctk_size_t alloc_free_sizes[SCTK_ALLOC_NB_FREE_LIST]);
- sctk_alloc_free_list_t * sctk_alloc_get_free_list(struct sctk_thread_pool * pool,sctk_size_t size);
- sctk_size_t sctk_alloc_get_list_class(struct sctk_thread_pool* pool,sctk_alloc_free_list_t * list);
- void sctk_alloc_free_list_insert_raw(struct sctk_thread_pool * pool,void* ptr, sctk_size_t size,void * prev);
- void sctk_alloc_free_list_insert(struct sctk_thread_pool * pool,struct sctk_alloc_chunk_header_large * chunk_large,enum sctk_alloc_insert_mode insert_mode);
- void sctk_alloc_free_list_remove(struct sctk_thread_pool * pool,struct sctk_alloc_free_chunk * fchunk);
- struct sctk_alloc_free_chunk * sctk_alloc_find_adapted_free_chunk(sctk_alloc_free_list_t * list,sctk_size_t size);
- struct sctk_alloc_free_chunk * sctk_alloc_find_free_chunk(struct sctk_thread_pool * pool,sctk_size_t size);
- sctk_alloc_free_list_t * sctk_alloc_get_next_list(const struct sctk_thread_pool * pool,sctk_alloc_free_list_t * list);
- bool sctk_alloc_free_list_empty(const sctk_alloc_free_list_t * list);
- sctk_alloc_vchunk sctk_alloc_merge_chunk(struct sctk_thread_pool * pool,sctk_alloc_vchunk chunk,sctk_alloc_vchunk first_page_chunk,sctk_addr_t max_address);
- void sctk_alloc_free_chunk_range(struct sctk_thread_pool * pool,sctk_alloc_vchunk first,sctk_alloc_vchunk last);
- sctk_alloc_vchunk sctk_alloc_split_free_bloc(sctk_alloc_vchunk * chunk,sctk_size_t size);
- sctk_alloc_vchunk sctk_alloc_free_chunk_to_vchunk(struct sctk_alloc_free_chunk * chunk);
- sctk_alloc_free_list_t * sctk_alloc_find_first_free_non_empty_list(struct sctk_thread_pool * pool,sctk_alloc_free_list_t * list);
- void sctk_alloc_free_list_mark_empty(struct sctk_thread_pool * pool,sctk_alloc_free_list_t * list);
- void sctk_alloc_free_list_mark_non_empty(struct sctk_thread_pool * pool,sctk_alloc_free_list_t * list);
- bool sctk_alloc_free_list_is_not_empty_quick(struct sctk_thread_pool * pool,sctk_alloc_free_list_t * list);
-extern  int sctk_alloc_reverse_analytic_free_size(sctk_size_t size,const sctk_size_t * size_list);
+void sctk_alloc_thread_pool_init(
+    struct sctk_thread_pool *pool,
+    const sctk_size_t alloc_free_sizes[SCTK_ALLOC_NB_FREE_LIST]);
+sctk_alloc_free_list_t *sctk_alloc_get_free_list(struct sctk_thread_pool *pool,
+                                                 sctk_size_t size);
+sctk_size_t sctk_alloc_get_list_class(struct sctk_thread_pool *pool,
+                                      sctk_alloc_free_list_t *list);
+void sctk_alloc_free_list_insert_raw(struct sctk_thread_pool *pool, void *ptr,
+                                     sctk_size_t size, void *prev);
+void sctk_alloc_free_list_insert(
+    struct sctk_thread_pool *pool,
+    struct sctk_alloc_chunk_header_large *chunk_large,
+    enum sctk_alloc_insert_mode insert_mode);
+void sctk_alloc_free_list_remove(struct sctk_thread_pool *pool,
+                                 struct sctk_alloc_free_chunk *fchunk);
+struct sctk_alloc_free_chunk *
+sctk_alloc_find_adapted_free_chunk(sctk_alloc_free_list_t *list,
+                                   sctk_size_t size);
+struct sctk_alloc_free_chunk *
+sctk_alloc_find_free_chunk(struct sctk_thread_pool *pool, sctk_size_t size);
+sctk_alloc_free_list_t *
+sctk_alloc_get_next_list(const struct sctk_thread_pool *pool,
+                         sctk_alloc_free_list_t *list);
+bool sctk_alloc_free_list_empty(const sctk_alloc_free_list_t *list);
+sctk_alloc_vchunk sctk_alloc_merge_chunk(struct sctk_thread_pool *pool,
+                                         sctk_alloc_vchunk chunk,
+                                         sctk_alloc_vchunk first_page_chunk,
+                                         sctk_addr_t max_address);
+void sctk_alloc_free_chunk_range(struct sctk_thread_pool *pool,
+                                 sctk_alloc_vchunk first,
+                                 sctk_alloc_vchunk last);
+sctk_alloc_vchunk sctk_alloc_split_free_bloc(sctk_alloc_vchunk *chunk,
+                                             sctk_size_t size);
+sctk_alloc_vchunk
+sctk_alloc_free_chunk_to_vchunk(struct sctk_alloc_free_chunk *chunk);
+sctk_alloc_free_list_t *
+sctk_alloc_find_first_free_non_empty_list(struct sctk_thread_pool *pool,
+                                          sctk_alloc_free_list_t *list);
+void sctk_alloc_free_list_mark_empty(struct sctk_thread_pool *pool,
+                                     sctk_alloc_free_list_t *list);
+void sctk_alloc_free_list_mark_non_empty(struct sctk_thread_pool *pool,
+                                         sctk_alloc_free_list_t *list);
+bool sctk_alloc_free_list_is_not_empty_quick(struct sctk_thread_pool *pool,
+                                             sctk_alloc_free_list_t *list);
+extern int sctk_alloc_reverse_analytic_free_size(sctk_size_t size,
+                                                 const sctk_size_t *size_list);
 
 #ifdef __cplusplus
 }

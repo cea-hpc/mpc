@@ -735,33 +735,32 @@ MPI_request_struct_t * __sctk_internal_get_MPC_requests()
 }
 
 /** \brief Initialize MPI interface request handling */
-void __sctk_init_mpc_request ()
-{
-	static sctk_thread_mutex_t sctk_request_lock =	SCTK_THREAD_MUTEX_INITIALIZER;
-	MPI_request_struct_t *requests;
-	
-	/* Check wether requests are already initalized */
-	PMPC_Get_requests ((void *) &requests);
-	assume (requests == NULL);
+void __sctk_init_mpc_request() {
+  static sctk_thread_mutex_t sctk_request_lock = SCTK_THREAD_MUTEX_INITIALIZER;
+  MPI_request_struct_t *requests;
 
-	sctk_thread_mutex_lock (&sctk_request_lock);
-	
-	/* Allocate the request structure */
-	requests = sctk_malloc (sizeof (MPI_request_struct_t));
+  /* Check wether requests are already initalized */
+  PMPC_Get_requests((void *)&requests);
+  assume(requests == NULL);
 
-	/*Init request struct */
-	requests->lock = 0;
-	requests->tab = NULL;
-	requests->free_list = NULL;
-	requests->auto_free_list = NULL;
-	requests->max_size = 0;
-	/* Create the associated buffered allocator */
-	sctk_buffered_alloc_create (&(requests->buf), sizeof (MPI_internal_request_t));
+  sctk_thread_mutex_lock(&sctk_request_lock);
 
-	/* Register the new array in the task specific data-structure */
-	PMPC_Set_requests (requests);
-	
-	sctk_thread_mutex_unlock (&sctk_request_lock);
+  /* Allocate the request structure */
+  requests = sctk_malloc(sizeof(MPI_request_struct_t));
+
+  /*Init request struct */
+  requests->lock = 0;
+  requests->tab = NULL;
+  requests->free_list = NULL;
+  requests->auto_free_list = NULL;
+  requests->max_size = 0;
+  /* Create the associated buffered allocator */
+  sctk_buffered_alloc_create(&(requests->buf), sizeof(MPI_internal_request_t));
+
+  /* Register the new array in the task specific data-structure */
+  PMPC_Set_requests(requests);
+
+  sctk_thread_mutex_unlock(&sctk_request_lock);
 }
 
 #ifdef MPC_MPI_USE_REQUEST_CACHE

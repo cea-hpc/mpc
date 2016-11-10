@@ -69,11 +69,13 @@ struct sctk_alloc_numa_stat_linux_page_entry_s
 
 /************************* FUNCTION ************************/
 //internal functions
- int sctk_alloc_numa_stat_get_node_of_page(void * ptr);
-extern  void sctk_alloc_numa_stat_at_exit(void);
- void sctk_alloc_numa_stat_open_pagemap(void);
+int sctk_alloc_numa_stat_get_node_of_page(void *ptr);
+extern void sctk_alloc_numa_stat_at_exit(void);
+void sctk_alloc_numa_stat_open_pagemap(void);
 #ifdef HAVE_LINUX_PAGEMAP
- struct sctk_alloc_numa_stat_linux_page_entry_s * sctk_alloc_numa_stat_read_pagemap(sctk_size_t first_page, sctk_size_t last_page);
+struct sctk_alloc_numa_stat_linux_page_entry_s *
+sctk_alloc_numa_stat_read_pagemap(sctk_size_t first_page,
+                                  sctk_size_t last_page);
 #endif //HAVE_LINUX_PAGEMAP
 
 /************************* FUNCTION ************************/

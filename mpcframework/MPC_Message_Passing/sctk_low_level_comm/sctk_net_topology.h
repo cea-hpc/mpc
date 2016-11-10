@@ -95,7 +95,7 @@ void sctk_Torus_init ( int node_count, sctk_uint8_t dimension );
 * \return distance beetween a and b
 *
 */
-int sctk_Torus_Node_distance ( int a, int b , unsigned sdim );
+int sctk_Torus_Node_distance(int a, int b, unsigned sdim);
 
 /**
 * \brief Release a sctk_Torus_t
@@ -136,13 +136,13 @@ int sctk_Torus_neighbour_dimension ( unsigned i, unsigned j );
 * This call will set all the dimensions
 * of the given tupple to 0
 */
-void sctk_Node_zero ( sctk_Node_t *Node );
+void sctk_Node_zero(sctk_Node_t *Node);
 
 /**
 * \brief Display a Node to stdout
 * \param Node pointer to sctk_Node_t
 */
-void sctk_Node_print ( sctk_Node_t *Node );
+void sctk_Node_print(sctk_Node_t *Node);
 
 /**
 * \brief Initialize a Node
@@ -168,15 +168,14 @@ int sctk_Node_id ( sctk_Torus_t *torus, sctk_Node_t *coord );
 * This call just set the dimension to 0
 * making the Node unusable
 */
-void sctk_Node_release ( sctk_Node_t *Node );
+void sctk_Node_release(sctk_Node_t *Node);
 
 /**
 * \brief Set a Node by copy
 * \param Node pointer to sctk_Node_t, it will be updated
 * \param Node pointer to sctk_Node_t
 */
-void sctk_Node_set_from ( sctk_Node_t *Node, sctk_Node_t *NodeToCopy );
-
+void sctk_Node_set_from(sctk_Node_t *Node, sctk_Node_t *NodeToCopy);
 
 /************************************************************************/
 /* None                                                                 */

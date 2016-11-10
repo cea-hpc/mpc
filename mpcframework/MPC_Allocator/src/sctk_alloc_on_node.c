@@ -100,11 +100,10 @@ SCTK_INTERN void sctk_malloc_on_node_init(int numa_nodes)
 /**
  * Reset the global variables, CAUTION, this is ONLY FOR UNIT TESTS.
 **/
- void sctk_malloc_on_node_reset(void)
-{
-	#ifdef HAVE_HWLOC
-	sctk_global_alloc_on_node_initilized = false;
-	#endif //HAVE_HWLOC
+void sctk_malloc_on_node_reset(void) {
+#ifdef HAVE_HWLOC
+  sctk_global_alloc_on_node_initilized = false;
+#endif // HAVE_HWLOC
 }
 
 /************************* FUNCTION ************************/
@@ -113,23 +112,24 @@ SCTK_INTERN void sctk_malloc_on_node_init(int numa_nodes)
  * @param node Define the node on which to do malloc_on_node.
 **/
 #ifdef HAVE_HWLOC
- struct sctk_alloc_chain * sctk_malloc_on_node_get_chain(int node)
-{
-	//vars
-	struct sctk_alloc_chain * chain;
+struct sctk_alloc_chain *sctk_malloc_on_node_get_chain(int node) {
+  // vars
+  struct sctk_alloc_chain *chain;
 
-	//errors
-	assert(sctk_global_alloc_on_node_initilized);
-	assume_m(node >=0 && node < SCTK_MAX_NUMA_NODE,"Invalid NUMA node in sctk_malloc_on_node function.");
+  // errors
+  assert(sctk_global_alloc_on_node_initilized);
+  assume_m(node >= 0 && node < SCTK_MAX_NUMA_NODE,
+           "Invalid NUMA node in sctk_malloc_on_node function.");
 
-	//get the chain
-	chain = sctk_global_alloc_on_node_chain + node;
+  // get the chain
+  chain = sctk_global_alloc_on_node_chain + node;
 
-	//check that it was init
-	assume_m(chain->source != NULL,"Invalid NUMA node in sctk_malloc_on_node function.");
+  // check that it was init
+  assume_m(chain->source != NULL,
+           "Invalid NUMA node in sctk_malloc_on_node function.");
 
-	//return
-	return chain;
+  // return
+  return chain;
 }
 #endif //HAVE_HWLOC
 
@@ -137,14 +137,14 @@ SCTK_INTERN void sctk_malloc_on_node_init(int numa_nodes)
 /**
  * In UMA mode, can directly use the current thread allocator.
 **/
- void * sctk_malloc_on_node_uma(size_t size,int node)
-{
-	assume_m(node == 0,"You request mapping on NUMA node different from 0, but their is no NUMA node or NUMA isn't supported.");
-	#if defined(MPC_Common) && !defined(MPC_PosixAllocator)
-	return malloc(size);
-	#else //defined(MPC_Common) && !defined(MPC_PosixAllocator)
-	return sctk_malloc(size);
-	#endif //defined(MPC_Common) && !defined(MPC_PosixAllocator)
+void *sctk_malloc_on_node_uma(size_t size, int node) {
+  assume_m(node == 0, "You request mapping on NUMA node different from 0, but "
+                      "their is no NUMA node or NUMA isn't supported.");
+#if defined(MPC_Common) && !defined(MPC_PosixAllocator)
+  return malloc(size);
+#else  // defined(MPC_Common) && !defined(MPC_PosixAllocator)
+  return sctk_malloc(size);
+#endif // defined(MPC_Common) && !defined(MPC_PosixAllocator)
 }
 
 /************************* FUNCTION ************************/
@@ -152,27 +152,25 @@ SCTK_INTERN void sctk_malloc_on_node_init(int numa_nodes)
  * In NUMA mode, select the good NUMA chain and alloc on it.
 **/
 #ifdef HAVE_HWLOC
- void * sctk_malloc_on_node_numa(size_t size,int node)
-{
-	//vars
-	void * ptr;
-	struct sctk_alloc_chain * chain;
+void *sctk_malloc_on_node_numa(size_t size, int node) {
+  // vars
+  void *ptr;
+  struct sctk_alloc_chain *chain;
 
-	//check if NUMA is enabled.
-	if (sctk_is_numa_node())
-	{
-		//get the good chain
-		chain = sctk_malloc_on_node_get_chain(node);
-		assert(chain != NULL);
+  // check if NUMA is enabled.
+  if (sctk_is_numa_node()) {
+    // get the good chain
+    chain = sctk_malloc_on_node_get_chain(node);
+    assert(chain != NULL);
 
-		//allocate
-		ptr = sctk_alloc_chain_alloc(chain,size);
-	} else {
-		ptr = sctk_malloc_on_node_uma(size,node);
-	}
+    // allocate
+    ptr = sctk_alloc_chain_alloc(chain, size);
+  } else {
+    ptr = sctk_malloc_on_node_uma(size, node);
+  }
 
-	//return
-	return ptr;
+  // return
+  return ptr;
 }
 #endif //HAVE_HWLOC
 

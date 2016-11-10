@@ -36,29 +36,36 @@ struct sctk_runtime_config_struct_allocator sctk_alloc_global_config;
 #endif //MPC_Common
 
 /************************* FUNCTION ************************/
- const char * sctk_alloc_bool_to_str(bool value)
-{
-	if (value)
-		return "true";
-	else
-		return "false";
+const char *sctk_alloc_bool_to_str(bool value) {
+  if (value)
+    return "true";
+  else
+    return "false";
 }
 
 /************************* FUNCTION ************************/
 #ifndef MPC_Common
- void sctk_alloc_print_config(void)
-{
-	printf("=============== MPC ALLOC CONFIG =================\n");
-	printf("MPCALLOC_PRINT_CONFIG       : %s\n",sctk_alloc_bool_to_str(sctk_alloc_global_config.print_config));
-	printf("MPCALLOC_NUMA_STRICT        : %s\n",sctk_alloc_bool_to_str(sctk_alloc_global_config.strict));
-	printf("MPCALLOC_NUMA_MIGRATION     : %s\n",sctk_alloc_bool_to_str(sctk_alloc_global_config.numa_migration));
-	printf("MPCALLOC_NUMA_ROUND_ROBIN   : %s\n",sctk_alloc_bool_to_str(sctk_alloc_global_config.numa_round_robin));
-	printf("MPCALLOC_KEEP_MAX           : %lu MB\n",sctk_alloc_global_config.keep_max/1024/1024);
-	printf("MPCALLOC_KEEP_MEM           : %lu MB\n",sctk_alloc_global_config.keep_mem/1024/1024);
-	printf("MPCALLOC_REALLOC_THREASHOLD : %lu MB\n",sctk_alloc_global_config.realloc_threashold/1024/1024);
-	printf("MPCALLOC_REALLOC_FACTOR     : %u\n",sctk_alloc_global_config.realloc_factor);
-	printf("MPCALLOC_MM_SOURCES         : %d\n",sctk_alloc_global_config.mm_sources);
-	printf("==================================================\n");
+void sctk_alloc_print_config(void) {
+  printf("=============== MPC ALLOC CONFIG =================\n");
+  printf("MPCALLOC_PRINT_CONFIG       : %s\n",
+         sctk_alloc_bool_to_str(sctk_alloc_global_config.print_config));
+  printf("MPCALLOC_NUMA_STRICT        : %s\n",
+         sctk_alloc_bool_to_str(sctk_alloc_global_config.strict));
+  printf("MPCALLOC_NUMA_MIGRATION     : %s\n",
+         sctk_alloc_bool_to_str(sctk_alloc_global_config.numa_migration));
+  printf("MPCALLOC_NUMA_ROUND_ROBIN   : %s\n",
+         sctk_alloc_bool_to_str(sctk_alloc_global_config.numa_round_robin));
+  printf("MPCALLOC_KEEP_MAX           : %lu MB\n",
+         sctk_alloc_global_config.keep_max / 1024 / 1024);
+  printf("MPCALLOC_KEEP_MEM           : %lu MB\n",
+         sctk_alloc_global_config.keep_mem / 1024 / 1024);
+  printf("MPCALLOC_REALLOC_THREASHOLD : %lu MB\n",
+         sctk_alloc_global_config.realloc_threashold / 1024 / 1024);
+  printf("MPCALLOC_REALLOC_FACTOR     : %u\n",
+         sctk_alloc_global_config.realloc_factor);
+  printf("MPCALLOC_MM_SOURCES         : %d\n",
+         sctk_alloc_global_config.mm_sources);
+  printf("==================================================\n");
 }
 #endif //MPC_Common
 
@@ -66,79 +73,80 @@ struct sctk_runtime_config_struct_allocator sctk_alloc_global_config;
 /**
  * !!!! CAUTION !!!! This method has no allocator, so it musn't do any allocation.
 **/
- void sctk_alloc_config_init_static_defaults(struct sctk_runtime_config_struct_allocator * config)
-{
-	#ifndef MPC_Common
-	config->print_config       = false;
-	config->numa_round_robin   = false;
-	config->mm_sources         = 4;
-	#endif //MPC_Common
+void sctk_alloc_config_init_static_defaults(
+    struct sctk_runtime_config_struct_allocator *config) {
+#ifndef MPC_Common
+  config->print_config = false;
+  config->numa_round_robin = false;
+  config->mm_sources = 4;
+#endif // MPC_Common
 
-	config->strict             = false;
-	config->numa_migration     = false;
-	config->numa               = false;
-	config->realloc_factor     = 2;
-	config->realloc_threashold = 50*1024*1024;//50MB
-	config->keep_max           = 8*1024*1024;//8MB
-	config->keep_mem           = 512*1024*1024;//512MB
+  config->strict = false;
+  config->numa_migration = false;
+  config->numa = false;
+  config->realloc_factor = 2;
+  config->realloc_threashold = 50 * 1024 * 1024; // 50MB
+  config->keep_max = 8 * 1024 * 1024;            // 8MB
+  config->keep_mem = 512 * 1024 * 1024;          // 512MB
 
-	#if !defined(MPC_Common) && defined(__MIC__)
-	config->numa_round_robin   = true;
-	#endif
+#if !defined(MPC_Common) && defined(__MIC__)
+  config->numa_round_robin = true;
+#endif
 
-	#ifdef __MIC__
-	config->keep_mem           = 64*1024*1024;//64MB
-	#endif
+#ifdef __MIC__
+  config->keep_mem = 64 * 1024 * 1024; // 64MB
+#endif
 
-	#ifdef HAVE_HWLOC
-	/** @todo set true when no mode bugs out of MPC. **/
-	config->numa               = false;
-	#endif //HAVE_HWLOC
+#ifdef HAVE_HWLOC
+  /** @todo set true when no mode bugs out of MPC. **/
+  config->numa = false;
+#endif // HAVE_HWLOC
 }
 
 /************************* FUNCTION ************************/
- bool sctk_alloc_get_bool_from_env(const char * var_name,bool default_value)
-{
-	//vars
-	char * buffer;
+bool sctk_alloc_get_bool_from_env(const char *var_name, bool default_value) {
+  // vars
+  char *buffer;
 
-	//errors
-	assert(var_name != NULL);
+  // errors
+  assert(var_name != NULL);
 
-	//read env
-	buffer = getenv(var_name);
+  // read env
+  buffer = getenv(var_name);
 
-	//convert value of return default
-	if (buffer == NULL || *buffer == '\0')
-	{
-		return default_value;
-	} else if (strcmp(buffer,"true") == 0) {
-		return true;
-	} else if (strcmp(buffer,"false") == 0) {
-		return false;
-	} else {
-		sctk_fatal("Invalide value of %s environement variable, expect 'true' or 'false'.",var_name);
-		return default_value;
-	}
+  // convert value of return default
+  if (buffer == NULL || *buffer == '\0') {
+    return default_value;
+  } else if (strcmp(buffer, "true") == 0) {
+    return true;
+  } else if (strcmp(buffer, "false") == 0) {
+    return false;
+  } else {
+    sctk_fatal(
+        "Invalide value of %s environement variable, expect 'true' or 'false'.",
+        var_name);
+    return default_value;
+  }
 }
 
 /************************* FUNCTION ************************/
- sctk_size_t sctk_alloc_get_size_from_env(const char * var_name,sctk_size_t default_value, sctk_size_t factor)
-{
-	//vars
-	char * buffer;
+sctk_size_t sctk_alloc_get_size_from_env(const char *var_name,
+                                         sctk_size_t default_value,
+                                         sctk_size_t factor) {
+  // vars
+  char *buffer;
 
-	//errors
-	assert(var_name != NULL);
+  // errors
+  assert(var_name != NULL);
 
-	//read env
-	buffer = getenv(var_name);
+  // read env
+  buffer = getenv(var_name);
 
-	//convert value of return default
-	if (buffer == NULL || *buffer == '\0')
-		return default_value;
-	else
-		return atol(buffer) * factor;
+  // convert value of return default
+  if (buffer == NULL || *buffer == '\0')
+    return default_value;
+  else
+    return atol(buffer) * factor;
 }
 
 /************************* FUNCTION ************************/

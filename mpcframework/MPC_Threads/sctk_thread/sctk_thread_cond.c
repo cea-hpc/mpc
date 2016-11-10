@@ -270,24 +270,20 @@ struct sctk_cond_timedwait_args_s{
   sctk_thread_generic_cond_t* restrict cond;
 };
 
-void
-sctk_thread_conds_init_timedwait_args( struct sctk_cond_timedwait_args_s* arg,
-		const struct timespec* restrict timedout,
-		int* timeout,
-		sctk_thread_generic_scheduler_t* sched,
-		sctk_thread_generic_cond_t* restrict cond ){
+void sctk_thread_conds_init_timedwait_args(
+    struct sctk_cond_timedwait_args_s *arg,
+    const struct timespec *restrict timedout, int *timeout,
+    sctk_thread_generic_scheduler_t *sched,
+    sctk_thread_generic_cond_t *restrict cond) {
   arg->timedout = timedout;
   arg->timeout = timeout;
   arg->sched = sched;
   arg->cond = cond;
 }
 
-void
-sctk_thread_conds_init_timedwait_task( sctk_thread_generic_task_t* task,
-		volatile int *data,
-		int value,
-		void (*func) (void *),
-		void *arg ){
+void sctk_thread_conds_init_timedwait_task(sctk_thread_generic_task_t *task,
+                                           volatile int *data, int value,
+                                           void (*func)(void *), void *arg) {
   task->is_blocking = 0;
   task->data = data;
   task->value = value;

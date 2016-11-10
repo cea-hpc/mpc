@@ -49,46 +49,42 @@ static SCTK_ALLOC_INIT_LOCK_TYPE sctk_alloc_glob_pagemap_fp_spinlock = SCTK_ALLO
  * Linux kernel >= 2.6.25.
  * This file is thread safe as it was protected by a global spinlock.
 **/
- void sctk_alloc_numa_stat_open_pagemap(void )
-{
-	//otherwise take the lock
-	SCTK_ALLOC_INIT_LOCK_LOCK(&sctk_alloc_glob_pagemap_fp_spinlock);
+void sctk_alloc_numa_stat_open_pagemap(void) {
+  // otherwise take the lock
+  SCTK_ALLOC_INIT_LOCK_LOCK(&sctk_alloc_glob_pagemap_fp_spinlock);
 
-	//if not setup
-	if (sctk_alloc_glob_pagemap_fp == NULL)
-	{
-		//open the file
-		sctk_alloc_glob_pagemap_fp = fopen("/proc/self/pagemap","r");
-		if ( sctk_alloc_glob_pagemap_fp == NULL )
-		{
-			perror("/proc/self/pagemap");
-			warning("Check you have Linux kernel newer than 2.6.25, and check your PID is valid.\n");
-			sctk_alloc_glob_pagemap_fp = SCTK_ALLOC_PAGEMAP_NOT_AVAIL;
-		} else {
-			//register to close the file
-			atexit(sctk_alloc_numa_stat_at_exit);
-		}
-	}
-	
-	//unlock
-	SCTK_ALLOC_INIT_LOCK_UNLOCK(&sctk_alloc_glob_pagemap_fp_spinlock);
+  // if not setup
+  if (sctk_alloc_glob_pagemap_fp == NULL) {
+    // open the file
+    sctk_alloc_glob_pagemap_fp = fopen("/proc/self/pagemap", "r");
+    if (sctk_alloc_glob_pagemap_fp == NULL) {
+      perror("/proc/self/pagemap");
+      warning("Check you have Linux kernel newer than 2.6.25, and check your "
+              "PID is valid.\n");
+      sctk_alloc_glob_pagemap_fp = SCTK_ALLOC_PAGEMAP_NOT_AVAIL;
+    } else {
+      // register to close the file
+      atexit(sctk_alloc_numa_stat_at_exit);
+    }
+  }
+
+  // unlock
+  SCTK_ALLOC_INIT_LOCK_UNLOCK(&sctk_alloc_glob_pagemap_fp_spinlock);
 }
 
 /************************* FUNCTION ************************/
- void sctk_alloc_numa_stat_at_exit(void )
-{
-	//otherwise take the lock
-	SCTK_ALLOC_INIT_LOCK_LOCK(&sctk_alloc_glob_pagemap_fp_spinlock);
+void sctk_alloc_numa_stat_at_exit(void) {
+  // otherwise take the lock
+  SCTK_ALLOC_INIT_LOCK_LOCK(&sctk_alloc_glob_pagemap_fp_spinlock);
 
-	//close the file
-	if (sctk_alloc_glob_pagemap_fp != NULL)
-	{
-		fclose(sctk_alloc_glob_pagemap_fp);
-		sctk_alloc_glob_pagemap_fp = NULL;
-	}
+  // close the file
+  if (sctk_alloc_glob_pagemap_fp != NULL) {
+    fclose(sctk_alloc_glob_pagemap_fp);
+    sctk_alloc_glob_pagemap_fp = NULL;
+  }
 
-	//unlock
-	SCTK_ALLOC_INIT_LOCK_UNLOCK(&sctk_alloc_glob_pagemap_fp_spinlock);
+  // unlock
+  SCTK_ALLOC_INIT_LOCK_UNLOCK(&sctk_alloc_glob_pagemap_fp_spinlock);
 }
 
 /************************* FUNCTION ************************/

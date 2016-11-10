@@ -104,10 +104,10 @@ void sctk_tls_locate_tls_dyn_initializer( char * fname )
 	/* If we found a dynamic initializer call it */
 	if( ret )
 	{
-		sctk_info("Calling Dyn initalizer for %s ret %p", fname, ret );
-		void (*fn)() = (void (*)())ret;
-		(fn)();
-	}
+          sctk_info("Calling Dyn initalizer for %s ret %p", fname, ret);
+          void (*fn)() = (void (*)())ret;
+          (fn)();
+        }
 }
 
 int sctk_load_proc_self_maps()
