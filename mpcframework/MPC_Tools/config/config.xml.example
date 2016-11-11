@@ -67,7 +67,7 @@
 						<device>!mlx*</device>
 						<!-- Restrict Idle Polling only to the device NUMA -->
 						<idle_polling>
-							<range>RAIL_POLL_NUMA</range>
+							<range>RAIL_POLL_MACHINE</range>
 							<trigger>RAIL_POLL_SOCKET</trigger>
 						</idle_polling>
 						<priority>1</priority>
