@@ -11867,9 +11867,9 @@ __INTERNAL__PMPI_Finalize (void)
   struct sctk_task_specific_s * task_specific;
   task_specific = __MPC_get_task_specific ();
   if(task_specific->mpc_mpi_data->nbc_initialized_per_task == 1){
-	task_specific->mpc_mpi_data->nbc_initialized_per_task = -1;	
-	sched_yield();
-	NBC_Finalize(&(task_specific->mpc_mpi_data->NBC_Pthread));
+    task_specific->mpc_mpi_data->nbc_initialized_per_task = -1;
+    sctk_thread_yield();
+    NBC_Finalize(&(task_specific->mpc_mpi_data->NBC_Pthread));
   }
 
   /* Clear attributes on COMM_SELF */

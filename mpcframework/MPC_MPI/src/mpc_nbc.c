@@ -3603,7 +3603,7 @@ void *NBC_Pthread_func( void *ptr ) {
 	if(task_specific->mpc_mpi_data->nbc_initialized_per_task == -1){
 		sctk_thread_exit(0);
 	}
-	sched_yield();
+        sctk_thread_yield();
   }
 }
 
