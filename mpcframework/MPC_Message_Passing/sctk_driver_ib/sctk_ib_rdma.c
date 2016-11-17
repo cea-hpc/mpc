@@ -640,7 +640,7 @@ static inline sctk_thread_ptp_message_t * sctk_ib_rdma_rendezvous_recv_ack ( sct
 	return src_msg_header;
 }
 
-inline void sctk_ib_rdma_rendezvous_prepare_data_write ( sctk_rail_info_t *rail,
+void sctk_ib_rdma_rendezvous_prepare_data_write ( sctk_rail_info_t *rail,
 														 sctk_thread_ptp_message_t *src_msg_header )
 {
 	LOAD_RAIL ( rail );
