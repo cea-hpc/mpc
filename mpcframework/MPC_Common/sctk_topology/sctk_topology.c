@@ -368,6 +368,121 @@ sctk_restrict_topology ()
 	}
 }
 
+/* Called only by __mpcomp_buid_tree */
+int sctk_get_global_index_from_cpu (hwloc_topology_t topo, const int vp)
+{
+    hwloc_obj_t obj;
+    hwloc_topology_t globalTopology = sctk_get_topology_object() ;
+    const hwloc_obj_t pu = hwloc_get_obj_by_type(topo, HWLOC_OBJ_PU, vp);
+     
+    assume(pu);
+    obj = hwloc_get_pu_obj_by_os_index(globalTopology, pu->os_index);
+    return obj->logical_index;
+}
+
+/*
+ * Restrict the topology object of the current mpi task to 'nb_mvps' vps.
+ * This function handles multiple PUs per core.
+ */
+int sctk_restrict_topology_for_mpcomp(hwloc_topology_t *restrictedTopology, int nb_mvps)
+{
+     hwloc_topology_t topology;
+     hwloc_cpuset_t cpuset;
+     hwloc_obj_t obj;
+     int taskRank, taskVp, err, i, nbvps ;
+     int nb_cores, nb_pus, nb_mvps_per_core ;
+     int mvp, core ;
+
+     /* Check input parameters */
+     sctk_assert( nb_mvps > 0 ) ;
+     sctk_assert ( restrictedTopology ) ;
+
+     /* Get the current MPI task rank */
+     taskRank = sctk_get_task_rank();
+
+     /* Initialize the final cpuset */
+     cpuset = hwloc_bitmap_alloc();
+
+     /* Get the current global topology (already restricted by MPC) */
+     topology = sctk_get_topology_object();
+
+     /* Grab the current VP and the number of VPs for the current task */
+     taskVp = sctk_get_init_vp_and_nbvp(taskRank, &nbvps);
+     /* We do not support more mVPs than VPs */
+     sctk_assert( nb_mvps <= nbvps ) ;
+
+     /* BEGIN DEBUG */
+     if (sctk_get_verbosity()>=3) 
+     {
+         fprintf( stderr, 
+                 "[[%d]] __mpcomp_restrict_topology: GENERAL TOPOLOGY (rank= %d, vp=%d, logical range=[%d,%d]) \n", 
+                 taskRank, taskRank, taskVp, taskVp, taskVp + nbvps - 1 ) ;
+         sctk_print_specific_topology( stderr, topology ) ;
+     }
+     /* END DEBUG */
+
+     /* Get information on the current topology */
+     nb_cores = hwloc_get_nbobjs_by_type(topology, HWLOC_OBJ_CORE);
+     nb_pus = hwloc_get_nbobjs_by_type(topology, HWLOC_OBJ_PU);
+     nb_mvps_per_core = nb_mvps / nb_cores;
+
+     if (sctk_get_verbosity()>=3) 
+     {
+fprintf( stderr, "[[%d]] __mpcomp_restrict_topology: General Topo: nb_cores = %d, nb_pus = %d\n",
+taskRank, nb_cores, nb_pus ) ;
+}
+
+     mvp = 0;
+     /* Iterate through all cores */
+     for (core = 0; core < nb_cores && mvp < nb_mvps; core++) 
+     {
+         int local_slot_size ;
+         hwloc_cpuset_t core_cpuset;
+         
+         /* Compute the number of PUs to handle for this core */
+         local_slot_size = nb_mvps_per_core;
+         if ((nb_mvps % nb_cores) > core)
+         {
+             local_slot_size++;
+         }
+
+         /* Get the core cpuset */
+         core_cpuset = (hwloc_get_obj_by_type(topology, HWLOC_OBJ_CORE, core))->cpuset;
+
+         /* Add the PUs we want from the core cpuset to our target cpuset */
+         for (i = 0; i < local_slot_size; i++, mvp++) 
+         {
+             hwloc_obj_t obj;
+             obj = hwloc_get_obj_inside_cpuset_by_type(topology, core_cpuset, HWLOC_OBJ_PU, i);
+             hwloc_bitmap_or(cpuset, cpuset, obj->cpuset);
+         }
+     }
+
+     /* Allocate topology object */
+     if ((err = hwloc_topology_init(restrictedTopology))) return -1;
+
+     /* Duplicate current topology object */
+     if ((err = hwloc_topology_dup(restrictedTopology, topology))) return -1;
+
+     /* Restrict topology */
+     if ((err = hwloc_topology_restrict(*restrictedTopology, 
+                     cpuset, HWLOC_RESTRICT_FLAG_ADAPT_DISTANCES))) return -1;      
+     /* BEGIN DEBUG */
+     if (sctk_get_verbosity()>=3) 
+     {
+         fprintf( stderr, 
+                 "[[%d]] __mpcomp_restrict_topology: RESTRICTED TOPOLOGY\n"
+               , taskRank ) ;
+         sctk_print_specific_topology( stderr, *restrictedTopology ) ;
+     }
+     /* END DEBUG */
+
+     return 0;
+}
+
+
+
+
 #include <sched.h>
 #if defined(HP_UX_SYS)
 #include <sys/param.h>

@@ -144,6 +144,14 @@ hwloc_topology_t sctk_get_topology_object (void);
 
 void sctk_restrict_binding();
 
+/* Called only by __mpcomp_buid_tree */
+int sctk_get_global_index_from_cpu (hwloc_topology_t topo, const int vp);
+
+/*
+ *  * Restrict the topology object of the current mpi task to 'nb_mvps' vps.
+ *   * This function handles multiple PUs per core.
+ *    */
+int sctk_restrict_topology_for_mpcomp(hwloc_topology_t *restrictedTopology, int nb_mvps);
 
 #ifdef MPC_USE_INFINIBAND
 #include <infiniband/verbs.h>

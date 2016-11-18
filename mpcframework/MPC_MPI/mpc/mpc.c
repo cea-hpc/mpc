@@ -50,7 +50,7 @@
 #include "mpc_common.h"
 #include <mpc_internal_thread.h>
 #ifdef MPC_OpenMP
-#include"mpcomp_internal.h"
+#include "mpcomp_core.h"
 #endif
 
 #ifndef SCTK_DO_NOT_HAVE_WEAK_SYMBOLS
@@ -3340,7 +3340,7 @@ int sctk_user_main (int argc, char **argv)
 #endif
 
 #ifdef MPC_OpenMP
-	__mpcomp_exit() ;
+	mpcomp_exit() ;
 #endif
 
 	MPC_Checkpoint_restart_end ();
