@@ -194,7 +194,7 @@ omp_set_schedule( omp_sched_t kind, int modifier )
 
   mpcomp_init ();
 
-  sctk_nodebug( "omp_set_schedule: entering" ) ;
+  sctk_error( "omp_set_schedule: entering" ) ;
 
   t = sctk_openmp_thread_tls;
   sctk_assert( t != NULL);

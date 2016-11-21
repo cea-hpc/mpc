@@ -170,7 +170,7 @@ mpcomp_guided_loop_ull_end_nowait ()
  *
  *****/
 int
-mpcomp_loop_ull_ordered_guided_begin (unsigned long long lb, unsigned long long b, unsigned long long incr, unsigned long long chunk_size,
+mpcomp_loop_ull_ordered_guided_begin (bool up, unsigned long long lb, unsigned long long b, unsigned long long incr, unsigned long long chunk_size,
                     unsigned long long *from, unsigned long long *to)
 {
      int res;
@@ -180,7 +180,7 @@ mpcomp_loop_ull_ordered_guided_begin (unsigned long long lb, unsigned long long 
      t = (mpcomp_thread_t *) sctk_openmp_thread_tls;
      sctk_assert (t != NULL);
     
-     res = mpcomp_loop_ull_guided_begin(1, lb, b, incr, chunk_size, from, to );
+     res = mpcomp_loop_ull_guided_begin(up, lb, b, incr, chunk_size, from, to );
      t->current_ordered_iteration = *from;
 
      return res;

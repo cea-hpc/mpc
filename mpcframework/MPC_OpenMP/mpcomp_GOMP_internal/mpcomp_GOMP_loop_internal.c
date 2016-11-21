@@ -25,9 +25,10 @@ void mpcomp_internal_GOMP_loop_end(void)
       {
          mpcomp_runtime_loop_end();
          break;
-      }
+       }
       default:
       {
+         //not_implemented();
          mpcomp_static_loop_end();
          //mpcomp_dynamic_loop_end();
       }
@@ -59,6 +60,7 @@ void mpcomp_internal_GOMP_loop_end_nowait(void)
       }
       default:
       {
+         //not_implemented();
          mpcomp_static_loop_end_nowait();
       }
    }
@@ -103,5 +105,3 @@ bool mpcomp_internal_GOMP_loop_ordered_guided_start (long start, long end, long 
 {
    return (mpcomp_ordered_dynamic_loop_begin(start,end,incr,chunk_size,istart,iend)) ? true : false;
 }
-
-

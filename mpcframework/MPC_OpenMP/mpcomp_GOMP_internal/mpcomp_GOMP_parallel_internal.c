@@ -79,7 +79,7 @@ static void mpcomp_internal_GOMP_in_order_scheduler_master_end(void)
 
    t->done = 1; 
 
-    mpcomp_taskwait();
+    //mpcomp_taskwait();
 
    /* Restore previous TLS */
    sctk_openmp_thread_tls = t->father;
@@ -113,7 +113,6 @@ void mpcomp_internal_GOMP_start_parallel_region(void (*fn) (void *), void *data,
    info->combined_pragma = MPCOMP_COMBINED_NONE;
    
    /* Begin scheduling */
-   num_threads = (num_threads == 0) ? -1 : num_threads;
    mpcomp_internal_begin_parallel_region(info, num_threads);
    
    /* Start scheduling */

@@ -40,7 +40,7 @@ int mpcomp_dynamic_loop_next_ignore_nowait (long *, long *);
 
 int mpcomp_ordered_dynamic_loop_begin (long, long, long, long, long*, long*);
 int mpcomp_ordered_dynamic_loop_next(long *, long *);
-int mpcomp_loop_ull_ordered_dynamic_begin (unsigned long long, unsigned long long, unsigned long long, unsigned long long, unsigned long long*, unsigned long long*); 
+int mpcomp_loop_ull_ordered_dynamic_begin (bool, unsigned long long, unsigned long long, unsigned long long, unsigned long long, unsigned long long*, unsigned long long*); 
 int mpcomp_loop_ull_ordered_dynamic_next(unsigned long long*, unsigned long long*);
 void mpcomp_ordered_dynamic_loop_end(void);
 void mpcomp_ordered_dynamic_loop_end_nowait(void);

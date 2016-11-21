@@ -199,6 +199,7 @@ void mpcomp_task_ref_parent_task( mpcomp_task_t* task )
 
     if( !( task->parent ) ) return;
 
+    sctk_atomics_fetch_and_incr_int( &( task->refcount ) );
     sctk_atomics_fetch_and_incr_int( &( task->parent->refcount ) );
     mpcomp_task_add_to_parent( task );
 }
@@ -233,8 +234,31 @@ mpcomp_task_clear_parent( mpcomp_task_t* parent )
 
 void mpcomp_task_unref_parent_task( mpcomp_task_t* task )
 {
-    mpcomp_task_t* mother;
+    bool no_more_ref; 
+    mpcomp_task_t *mother, *swap_value;
     sctk_assert( task );
+
+    no_more_ref = ( sctk_atomics_fetch_and_decr_int( &( task->refcount ) ) == 1 );
+    mother = task->parent;
+    
+    if( !mother || !no_more_ref ) return;
+    
+    sctk_free( task );
+    
+    while( mother->parent && ( sctk_atomics_fetch_and_decr_int( &( mother->refcount ) ) == 1 ) )
+    {
+        swap_value = mother; 
+        mother = mother->parent;
+        if( mother )
+            mother->children = NULL;
+        sctk_free( swap_value );
+    } 
+
+    if( !mother->parent && ( sctk_atomics_fetch_and_decr_int( &( mother->refcount ) ) == 1 ) )
+    {
+        mother->children = NULL;
+        sctk_error( "NO MORE TASK ON IMPLICITE TASK" ); 
+    }
 }
 
 /* Initialization of mpcomp tasks lists (new and untied) */
@@ -439,17 +463,17 @@ __mpcomp_task_process( mpcomp_task_t* new_task, bool if_clause )
    	    return;
     }
 
-   sctk_error( "%s: %p -- %p -- %p", __func__, new_task, new_task->func, new_task->data ); 
+   sctk_nodebug( "%s: %p -- %p -- %p", __func__, new_task, new_task->func, new_task->data ); 
    /* Direct task execution */
    mpcomp_task_set_property ( &( new_task->property ), MPCOMP_TASK_UNDEFERRED );
    __mpcomp_task_execute( new_task );
 
    mpcomp_tast_clear_sister( new_task );
-   mpcomp_task_clear_parent( new_task );
+   //mpcomp_task_clear_parent( new_task );
+   mpcomp_task_unref_parent_task( new_task );
    mpcomp_taskgroup_del_task( new_task ); 
 //	__mpcomp_task_finalize_deps( new_task );
 
-   sctk_free(new_task);
 }
 
 /* 
@@ -668,7 +692,8 @@ void mpcomp_task_schedule( int depth )
 
 	/* Clean function */
 	mpcomp_tast_clear_sister( task );
-	mpcomp_task_clear_parent( task );
+	//mpcomp_task_clear_parent( task );
+    mpcomp_task_unref_parent_task( task );
     mpcomp_taskgroup_del_task( task ); 
 	 
 //	__mpcomp_task_finalize_deps( task );

@@ -65,22 +65,12 @@ int mpcomp_static_schedule_get_single_chunk_ull( mpcomp_loop_ull_iter_t* loop, u
  * as a chunk size */
 void __mpcomp_static_schedule_get_specific_chunk_ull(  unsigned long long rank, unsigned long long num_threads, mpcomp_loop_ull_iter_t* loop, unsigned long long chunk_num, unsigned long long *from, unsigned long long *to)
 {
-    mpcomp_thread_t *t;
-
-    t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
-    sctk_assert(t != NULL);  
-
-    const unsigned long long trip_count = mpcomp_internal_loop_get_num_iters_ull( loop->lb, loop->b, loop->incr, loop->up );
     const unsigned long long decal = chunk_num * num_threads * loop->chunk_size * loop->incr;
-
     *from = loop->lb + decal + loop->chunk_size * loop->incr * rank;
     *to = *from + loop->chunk_size * loop->incr; 
 
-    /* The final additionnal chunk is smaller, so its computation is a little bit different */
     *to = ( loop->up  && *to > loop->b ) ? loop->b : *to;
     *to = ( !loop->up && *to < loop->b ) ? loop->b : *to;
-
-    sctk_nodebug ("[%d] %s: (%llu -> %llu step %llu) -> (%llu -> %llu step %llu)", t->rank, __func__, loop->lb, loop->b, loop->incr, *from, *to, loop->incr);
 }
 
 void mpcomp_static_loop_init_ull(mpcomp_thread_t *t, unsigned long long lb, unsigned long long b, unsigned long long incr, unsigned long long chunk_size)
@@ -102,8 +92,6 @@ int mpcomp_loop_ull_static_begin (bool up, unsigned long long lb, unsigned long 
     //sctk_error( "[%d] %s: %d -> %d [%d] cs:%d", t->rank, __func__, lb, b, incr, chunk_size ) ;
     t->schedule_type = ( t->schedule_is_forced ) ? t->schedule_type : MPCOMP_COMBINED_STATIC_LOOP;  
     t->schedule_is_forced = 0;
-        
-    const int signed_execution = (!chunk_size);
 
     /* Fill private info about the loop */
     t->info.loop_infos.type = MPCOMP_LOOP_TYPE_ULL;
@@ -115,21 +103,10 @@ int mpcomp_loop_ull_static_begin (bool up, unsigned long long lb, unsigned long 
     loop->chunk_size = chunk_size;
     t->static_nb_chunks = __mpcomp_compute_static_nb_chunks_per_rank_ull(t->rank, t->info.num_threads, loop );
 
-    /* Automatic chunk size -> at most one chunk */
-    if( signed_execution ) 
-    {
-        sctk_error("SINGLE EXECUTION...");
-        return mpcomp_static_schedule_get_single_chunk_ull( loop, from, to );
-    } 
-    else 
-    {
         /* As the loop_next function consider a chunk as already been realised
              we need to initialize to 0 minus 1 */
-        t->static_current_chunk = -1 ;
-        return mpcomp_loop_ull_static_next (from, to);
-    }
-
-    return 1;
+    t->static_current_chunk = -1 ;
+    return mpcomp_loop_ull_static_next (from, to);
 }
 
 int mpcomp_loop_ull_static_next (unsigned long long *from, unsigned long long *to)
@@ -162,7 +139,7 @@ int mpcomp_loop_ull_static_next (unsigned long long *from, unsigned long long *t
  *
  *
  *****/
-int mpcomp_loop_ull_ordered_static_begin (unsigned long long lb, unsigned long long b, unsigned long long incr, unsigned long long chunk_size,
+int mpcomp_loop_ull_ordered_static_begin (bool up, unsigned long long lb, unsigned long long b, unsigned long long incr, unsigned long long chunk_size,
                     unsigned long long *from, unsigned long long *to)
 {
      mpcomp_thread_t *t; 
@@ -175,7 +152,7 @@ int mpcomp_loop_ull_ordered_static_begin (unsigned long long lb, unsigned long l
     t->schedule_type = ( t->schedule_is_forced ) ? t->schedule_type : MPCOMP_COMBINED_STATIC_LOOP;  
     t->schedule_is_forced = 0;
 
-     res = mpcomp_loop_ull_static_begin(1, lb, b, incr, chunk_size, from, to);
+     res = mpcomp_loop_ull_static_begin(up, lb, b, incr, chunk_size, from, to);
 
      t->current_ordered_iteration = *from;
          

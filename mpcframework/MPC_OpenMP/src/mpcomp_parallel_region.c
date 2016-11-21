@@ -68,13 +68,14 @@ void mpcomp_internal_begin_parallel_region( mpcomp_new_parallel_region_info_t* i
     sctk_assert(instance->team != NULL);
 
     /* Compute the number of threads for this parallel region */
-    num_threads = (arg_num_threads == 0) ? t->info.icvs.nthreads_var: arg_num_threads;
+    num_threads = (arg_num_threads == 0 ) ? t->info.icvs.nthreads_var : arg_num_threads;
     num_threads = sctk_min( num_threads, t->children_instance->nb_mvps ); 
+    num_threads = ( t->instance->team->depth ) ? 1 : num_threads;
     sctk_assert(num_threads > 0);
 
-    sctk_nodebug("%s: Number of threads %d (default %d, #mvps %d arg:%d)", __func__,
-                     num_threads, t->info->icvs.nthreads_var,
-                     t->children_instance->nb_mvps, arg_num_threads);
+    sctk_nodebug("%s: Number of threads %d (default %d, #mvps %d arg:%d) !! %d", __func__,
+                     num_threads, info->icvs.nthreads_var,
+                     t->children_instance->nb_mvps, arg_num_threads, t->instance->team->depth);
 
     /* Fill information for the team */
     instance->team->info.func = info->func;
@@ -175,13 +176,14 @@ void mpcomp_internal_end_parallel_region( mpcomp_instance_t * instance )
     /* Implicit barrier */
     mpcomp_internal_half_barrier( instance->mvps[0] ) ;
     int nb_call = 0;
+
     /* Finish the half barrier by spinning on the root value */
-    while (sctk_atomics_load_int( &(root->barrier) ) !=
-					root->barrier_num_threads ) 
+    while (sctk_atomics_load_int( &(root->barrier) ) != root->barrier_num_threads ) 
     {
 	    sctk_thread_yield() ;
         mpcomp_task_schedule( 0 ); 
     }
+
     sctk_atomics_store_int( &(root->barrier) , 0 ) ;
 
     sctk_openmp_thread_tls = prev;
@@ -192,8 +194,8 @@ void mpcomp_internal_end_parallel_region( mpcomp_instance_t * instance )
 	__mpcomp_save_team_info( instance->team, master ) ;
 
 #if MPCOMP_COHERENCY_CHECKING
-		__mpcomp_for_dyn_coherency_end_parallel_region( instance ) ;
-		__mpcomp_single_coherency_end_barrier() ;
+		//__mpcomp_for_dyn_coherency_end_parallel_region( instance ) ;
+		//__mpcomp_single_coherency_end_barrier() ;
 #if MPCOMP_TASK
                 __mpcomp_task_coherency_ending_parallel_region();
 #endif // MPCOMP_TASK
@@ -201,8 +203,7 @@ void mpcomp_internal_end_parallel_region( mpcomp_instance_t * instance )
 
 }
 
-void 
-mpcomp_start_parallel_region(void (*func) (void *), void *shared, unsigned arg_num_threads ) 
+void mpcomp_start_parallel_region(void (*func) (void *), void *shared, unsigned arg_num_threads ) 
 {
     mpcomp_thread_t * t ;
 	mpcomp_new_parallel_region_info_t* info;

@@ -27,7 +27,7 @@
 #include <sctk_debug.h>
 
 #include "mpcomp_core.h"
-
+#include "mpcomp_loop.h"
 /****
  *
  * CHUNK MANIPULATION
@@ -134,56 +134,32 @@ int __mpcomp_static_schedule_get_nb_chunks (long lb, long b, long incr,
 
 /* Return the chunk #'chunk_num' assuming a static schedule with 'chunk_size'
  * as a chunk size */
-void __mpcomp_static_schedule_get_specific_chunk (long lb, long b, long incr,
+void __mpcomp_static_schedule_get_specific_chunk (long rank, long num_threads, long lb, long b, long incr,
 						  long chunk_size, long chunk_num,
 						  long *from, long *to)
 {
-     mpcomp_thread_t *t;
-     long trip_count;
-     long nb_threads;
-     int rank;
+    mpcomp_thread_t* t;
+    t = (mpcomp_thread_t*) sctk_openmp_thread_tls;
 
-     t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
-     sctk_assert(t != NULL);  
-     
-     nb_threads = t->info.num_threads;
-     rank = t->rank;
+    chunk_size = t->info.loop_chunk_size;
+    const long decal = chunk_num * num_threads * chunk_size * incr;
+    const long trip_count = mpcomp_internal_loop_get_num_iters( lb, b, incr );
+    const long thread_chunk_num = __mpcomp_get_static_nb_chunks_per_rank( rank, num_threads, lb, b, incr, chunk_size );
 
-     /* Compute the trip count (total number of iterations of the original loop) */
-     trip_count = (b - lb) / incr;
-     if((b - lb) % incr != 0)
-        trip_count++;
+    *from = lb + decal + chunk_size * incr * rank;
 
-     /* Retrieve the number of threads and the rank of this thread */
+    if( rank == (trip_count / chunk_size) % num_threads
+        && trip_count % chunk_size != 0
+        && chunk_num == __mpcomp_get_static_nb_chunks_per_rank( rank, num_threads, lb, b, incr, chunk_size )  - 1 )
+    {
+        *to = b;
+    }
+    else
+    {
+        *to = *from + chunk_size * incr;
+    }
 
-     /* The final additionnal chunk is smaller, so its computation is a little bit
-	different */
-     if (rank == (trip_count / chunk_size) % nb_threads
-	 && trip_count % chunk_size != 0
-	 && chunk_num == __mpcomp_static_schedule_get_nb_chunks (lb, b, incr,
-								 chunk_size) - 1) {
-	  //int last_chunk_size = trip_count % chunk_size;
-
-	  *from = lb + (trip_count / chunk_size) * chunk_size * incr;
-	  *to = lb + trip_count * incr;
-
-	  sctk_nodebug ("__mpcomp_static_schedule_get_specific_chunk: "
-			"Thread %d / Chunk %ld: %ld -> %ld (excl) step %ld => "
-			"%ld -> %ld (excl) step %ld (chunk of %ld)\n",
-			rank, chunk_num, lb, b, incr, *from, *to, incr,
-			chunk_size);	  
-     } else {
-	  *from = lb + chunk_num * nb_threads * chunk_size * incr
-	       + chunk_size * incr * rank;
-	  *to = lb + chunk_num * nb_threads * chunk_size * incr +
-	       chunk_size * incr * rank + chunk_size * incr;
-
-	 sctk_nodebug ("__mpcomp_static_schedule_get_specific_chunk: "
-			"Thread %d / Chunk %ld: %ld -> %ld (excl) step %ld => "
-			"%ld -> %ld (excl) step %ld (chunk of %ld)\n",
-			rank, chunk_num, lb, b, incr, *from, *to, incr,
-			chunk_size);
-     }
+    sctk_error( "[%d - %d] %s: from: %ld  %ld - to: %ld %ld  - %ld - %ld", t->rank, rank, __func__, *from, lb, b, *to, incr, chunk_num);
 }
 
 /****
@@ -201,7 +177,6 @@ mpcomp_static_loop_init(mpcomp_thread_t *t,
 
 	/* Get the team info */
 	sctk_assert(t->instance != NULL);
-
 	/* Automatic chunk size -> at most one chunk */
 	if (chunk_size == 0) {
 		t->static_nb_chunks = 1;
@@ -212,7 +187,6 @@ mpcomp_static_loop_init(mpcomp_thread_t *t,
 		t->info.loop_chunk_size = 1;
 		t->static_current_chunk = 0 ;
 	} else {
-
 		/* Compute the number of chunk for this thread */
 		t->static_nb_chunks = __mpcomp_get_static_nb_chunks_per_rank(t->rank, t->info.num_threads, 
 			lb, b, incr, 
@@ -290,7 +264,7 @@ int mpcomp_static_loop_next (long *from, long *to)
 		return 0;
 	}
     
-	__mpcomp_get_specific_chunk_per_rank(rank, nb_threads, t->info.loop_lb,
+    __mpcomp_static_schedule_get_specific_chunk( rank, nb_threads, t->info.loop_lb,
 		t->info.loop_b, t->info.loop_incr, t->info.loop_chunk_size,
 		t->static_current_chunk, from, to);
 	
@@ -305,7 +279,7 @@ int mpcomp_static_loop_next (long *from, long *to)
 void mpcomp_static_loop_end ()
 {
      mpcomp_barrier();
-     sctk_error( "end barrier" );
+     //sctk_error( "end barrier" );
 }
 
 void mpcomp_static_loop_end_nowait ()

@@ -272,7 +272,7 @@ int mpcomp_loop_ull_runtime_begin( bool up, unsigned long long lb, unsigned long
     const int run_sched_var = t->info.icvs.run_sched_var ;
     const unsigned long long chunk_size = (unsigned long long)t->info.icvs.modifier_sched_var;
 
-     sctk_nodebug("%s: value of schedule %d", __func__, run_sched_var ) ;
+    sctk_error("%s: value of schedule %d %d", __func__, run_sched_var, chunk_size ) ;
 
      switch( t->info.icvs.run_sched_var ) {
        case omp_sched_static:
@@ -326,7 +326,7 @@ int mpcomp_loop_ull_runtime_next( unsigned long long * from, unsigned long long 
  *
  *
  *****/
-int mpcomp_loop_ull_ordered_runtime_begin(unsigned long long lb, unsigned long long b, unsigned long long incr, unsigned long long * from, unsigned long long * to )
+int mpcomp_loop_ull_ordered_runtime_begin(bool up,unsigned long long lb, unsigned long long b, unsigned long long incr, unsigned long long * from, unsigned long long * to )
 {
     int ret;
     mpcomp_thread_t *t ;	/* Info on the current thread */
@@ -349,13 +349,13 @@ int mpcomp_loop_ull_ordered_runtime_begin(unsigned long long lb, unsigned long l
     switch( run_sched_var ) 
     {
         case omp_sched_static:
-            ret = mpcomp_loop_ull_ordered_static_begin( lb, b, incr, chunk_size, from, to ) ;
+            ret = mpcomp_loop_ull_ordered_static_begin( up, lb, b, incr, chunk_size, from, to ) ;
             break;
         case omp_sched_dynamic:
-            ret = mpcomp_loop_ull_ordered_dynamic_begin(  lb, b, incr, chunk_size, from, to ) ;
+            ret = mpcomp_loop_ull_ordered_dynamic_begin(  up, lb, b, incr, chunk_size, from, to ) ;
             break ;
         case omp_sched_guided:
-            ret = mpcomp_loop_ull_ordered_guided_begin(  lb, b, incr, chunk_size, from, to ) ;
+            ret = mpcomp_loop_ull_ordered_guided_begin(  up, lb, b, incr, chunk_size, from, to ) ;
             break ;
         default:
 	        not_reachable();

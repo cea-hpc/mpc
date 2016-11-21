@@ -42,7 +42,6 @@ mpcomp_taskgroup_add_task( mpcomp_task_t* new_task )
 
   	sctk_assert( sctk_openmp_thread_tls );	 
 
-    sctk_error("hello...");
     omp_thread_tls = (mpcomp_thread_t *) sctk_openmp_thread_tls;
     current_task = MPCOMP_TASK_THREAD_GET_CURRENT_TASK( omp_thread_tls );
     taskgroup = current_task->taskgroup;
@@ -53,8 +52,8 @@ mpcomp_taskgroup_add_task( mpcomp_task_t* new_task )
 static inline void 
 mpcomp_taskgroup_del_task( mpcomp_task_t* task )
 {
-    sctk_atomics_decr_int( &( task->taskgroup->children_num ) );    
-    sctk_error("bye...");
+    if( task->taskgroup )
+        sctk_atomics_decr_int( &( task->taskgroup->children_num ) );    
 }
 
 #endif /* __MPCOMP_TASGROUP_H__ */

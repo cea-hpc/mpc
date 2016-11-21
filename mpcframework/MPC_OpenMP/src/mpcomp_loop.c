@@ -25,6 +25,7 @@
 #include "sctk_debug.h"
 #include "mpcomp_types.h"
 #include "mpcomp_loop.h"
+#include "mpcomp_loop_dyn_utils.h"
 
 /****
  *
@@ -33,65 +34,39 @@
  *
  *****/
 /* Return the number of chunks that a static schedule will create for the thread 'rank' */
-long __mpcomp_get_static_nb_chunks_per_rank( int rank, int nb_threads, long lb, long b, long incr, long chunk_size )
+int __mpcomp_get_static_nb_chunks_per_rank( int rank, int num_threads, long lb, long b, long incr, long chunk_size )
 {
-    /* Original loop: lb -> b step incr */
-    long nb_chunks_per_thread;
-    
-    /* Compute the trip count (total number of iterations of the original loop) */
-    const long trip_count = ((b - lb) % incr) ? ( b - lb ) / incr + 1 : ( b - lb ) / incr;
+    mpcomp_thread_t* t;
 
-    if ( trip_count <= 0 ) return trip_count;
+    t = (mpcomp_thread_t*) sctk_openmp_thread_tls;
+
+    long nb_chunks_per_thread;
+    const long trip_count = mpcomp_internal_loop_get_num_iters( lb, b, incr );
 
     /* Compute the number of chunks per thread (floor value) */
-    nb_chunks_per_thread = trip_count / (chunk_size * nb_threads);
+    chunk_size = ( chunk_size ) ? chunk_size : trip_count / num_threads;
+    chunk_size = ( chunk_size ) ? chunk_size : 1;
+    t->info.loop_chunk_size = chunk_size;
 
-    /* The first threads will have one more chunk (according to the previous
-    approximation) */
-    if (rank < (trip_count / chunk_size) % nb_threads)
-    {
-        nb_chunks_per_thread++;
-    }
+    nb_chunks_per_thread = trip_count / (chunk_size * num_threads);
 
-    /* One thread may have one more additionnal smaller chunk to finish the
-    iteration domain */
-    if (rank == (trip_count / chunk_size) % nb_threads && trip_count % chunk_size != 0)
-    {
-        nb_chunks_per_thread++;
-    }
+    /* Compute the number of extrat chunk nb_chunk_extra can't be greater than nb_thread */
+    const int nb_chunk_extra = (int) ( ( trip_count / chunk_size ) %  num_threads );
+    const int are_not_multiple = ( trip_count % chunk_size ) ? 1 : 0;
+ 
+    /* The first threads will have one more chunk (according to the previous approximation) */
+    nb_chunks_per_thread += (rank < nb_chunk_extra ) ? (long) 1 : (long) 0;
+
+	/* One thread may have one more additionnal smaller chunk to finish the iteration domain */
+    nb_chunks_per_thread += (rank == nb_chunk_extra && are_not_multiple ) ? (long) 1 : (long) 0;
+    sctk_warning( "%d nb_chunks_per_thread: %ld %ld %ld", rank, lb, b, nb_chunks_per_thread );
 
     return nb_chunks_per_thread;
 }
 
-void __mpcomp_get_specific_chunk_per_rank (int rank, int nb_threads, long lb, long b, long incr, long chunk_size, long chunk_num, long *from, long *to)
+void __mpcomp_get_specific_chunk_per_rank (int rank, int num_threads, long lb, long b, long incr, long chunk_size, long chunk_num, long *from, long *to)
 {
-    long local_from, local_to;
-
-    /* Compute the trip count (total number of iterations of the original loop) */
-    const long trip_count = ( (b - lb) % incr ) ? (b - lb) / incr + 1 : (b - lb) / incr;
-    sctk_nodebug("[%d] %s: trip_count=%ld", rank, __func__, trip_count);
-
-    /* The final additionnal chunk is smaller, so its computation is a little bit different */
-    if( rank == (trip_count / chunk_size) % nb_threads
-        && trip_count % chunk_size != 0
-        && chunk_num == __mpcomp_get_static_nb_chunks_per_rank (rank, nb_threads, lb, b, incr, chunk_size) - 1)
-    {
-
-      local_from = lb + (trip_count / chunk_size) * chunk_size * incr;
-      local_to = lb + trip_count * incr;
-      sctk_nodebug ("[%d - TRUE]%s: %ld -> %ld (excl) step %ld => %ld -> %ld (excl) step %ld (chunk of %ld)\n", rank, __func__, lb, b, incr, local_from, local_to, incr, trip_count % chunk_size);
-
-    }
-    else
-    {
-      local_from = 	lb + chunk_num * nb_threads * chunk_size * incr + chunk_size * incr * rank;
-      local_to = lb + chunk_num * nb_threads * chunk_size * incr + chunk_size * incr * rank + chunk_size * incr;
-      sctk_nodebug ("[%d - FALSE]%s: Chunk %ld: %ld -> %ld (excl) step %ld => %ld -> %ld (excl) step %ld (chunk of %ld)\n", rank, __func__, chunk_num, lb, b, incr, local_from, local_to, incr, chunk_size);
-    }
-
-	sctk_assert((incr > 0) ? (local_to-incr <= b) : (local_to-incr >= b));
-    *from = local_from;
-    *to = local_to;
+    not_implemented();
 }
 
 /****
@@ -105,21 +80,13 @@ unsigned long long __mpcomp_compute_static_nb_chunks_per_rank_ull (unsigned long
 {
     unsigned long long nb_chunks_per_thread, chunk_size;
     const unsigned long long trip_count = mpcomp_internal_loop_get_num_iters_ull( loop->lb, loop->b, loop->incr, loop->up );
-
-    if( rank >= trip_count ) 
-    {
-        return (unsigned long long) 0;
-    }
-    
-    //sctk_error( "%s: start %llu end: %llu incr: %llu - trip count  %llu -%llu", __func__, loop->lb, loop->b, loop->incr, trip_count, rank );
     
     chunk_size = ( loop->chunk_size ) ? loop->chunk_size : trip_count / num_threads; 
-    chunk_size = ( chunk_size ) ? chunk_size : 1;
+    chunk_size = ( chunk_size ) ? chunk_size : (unsigned long long ) 1;
     loop->chunk_size = chunk_size;
 
     /* Compute the number of chunks per thread (floor value) */
     nb_chunks_per_thread = trip_count / ( chunk_size * num_threads );
-    
     /* Compute the number of extrat chunk nb_chunk_extra can't be greater than nb_thread */
     const int nb_chunk_extra = (int) ( ( trip_count / chunk_size ) %  num_threads );
     const int are_not_multiple = ( trip_count % chunk_size ) ? 1 : 0;
@@ -129,7 +96,7 @@ unsigned long long __mpcomp_compute_static_nb_chunks_per_rank_ull (unsigned long
 
 	/* One thread may have one more additionnal smaller chunk to finish the iteration domain */
     nb_chunks_per_thread += (rank == nb_chunk_extra && are_not_multiple ) ? (unsigned long long) 1 : (unsigned long long) 0;
-
+    
     return nb_chunks_per_thread;
 }
 

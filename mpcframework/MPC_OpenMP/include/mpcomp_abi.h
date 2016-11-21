@@ -35,7 +35,7 @@ extern "C"
 {
 #endif
 
-#include "sctk_bool.h"
+#include <stdbool.h>
 #include <mpcomp.h>
 
 /* Conditional compilation -> See section 2.2 */
@@ -321,7 +321,7 @@ extern "C"
 
 int mpcomp_ordered_static_loop_begin (long lb, long b, long incr, long chunk_size, long *from, long *to) ;
 int mpcomp_ordered_static_loop_next(long *from, long *to) ;
-int mpcomp_loop_ull_ordered_static_begin (unsigned long long lb, unsigned long long b, unsigned long long incr, 
+int mpcomp_loop_ull_ordered_static_begin (bool, unsigned long long lb, unsigned long long b, unsigned long long incr, 
 unsigned long long chunk_size, unsigned long long *from, unsigned long long *to) ;
 int mpcomp_loop_ull_ordered_static_next(unsigned long long *from, unsigned long long *to) ;
 void mpcomp_ordered_static_loop_end() ;
@@ -329,7 +329,7 @@ void mpcomp_ordered_static_loop_end_nowait() ;
 
 int mpcomp_ordered_dynamic_loop_begin (long lb, long b, long incr, long chunk_size, long *from, long *to) ;
 int mpcomp_ordered_dynamic_loop_next(long *from, long *to) ;
-int mpcomp_loop_ull_ordered_dynamic_begin (unsigned long long lb, unsigned long long b, unsigned long long incr, 
+int mpcomp_loop_ull_ordered_dynamic_begin ( bool, unsigned long long lb, unsigned long long b, unsigned long long incr, 
 unsigned long long chunk_size, unsigned long long *from, unsigned long long *to) ;
 int mpcomp_loop_ull_ordered_dynamic_next(unsigned long long *from, unsigned long long *to) ;
 void mpcomp_ordered_dynamic_loop_end() ;
@@ -337,7 +337,7 @@ void mpcomp_ordered_dynamic_loop_end_nowait() ;
 
 int mpcomp_ordered_guided_loop_begin (long lb, long b, long incr, long chunk_size, long *from, long *to) ;
 int mpcomp_ordered_guided_loop_next (long *from, long *to) ;
-int mpcomp_loop_ull_ordered_guided_begin (unsigned long long lb, unsigned long long b, unsigned long long incr, 
+int mpcomp_loop_ull_ordered_guided_begin (bool, unsigned long long lb, unsigned long long b, unsigned long long incr, 
 unsigned long long chunk_size, unsigned long long *from, unsigned long long *to) ;
 int mpcomp_loop_ull_ordered_guided_next(unsigned long long *from, unsigned long long *to) ;
 void mpcomp_ordered_guided_loop_end () ;
@@ -345,7 +345,7 @@ void mpcomp_ordered_guided_loop_end_nowait () ;
 
 int mpcomp_ordered_runtime_loop_begin (long lb, long b, long incr, long *from, long *to) ;
 int mpcomp_ordered_runtime_loop_next (long *from, long *to) ;
-int mpcomp_loop_ull_ordered_runtime_begin (unsigned long long lb, unsigned long long b, unsigned long long incr, 
+int mpcomp_loop_ull_ordered_runtime_begin (bool, unsigned long long lb, unsigned long long b, unsigned long long incr, 
 unsigned long long *from, unsigned long long *to) ;
 int mpcomp_loop_ull_ordered_runtime_next(unsigned long long *from, unsigned long long *to) ;
 void mpcomp_ordered_runtime_loop_end () ;

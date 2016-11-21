@@ -100,6 +100,7 @@ typedef struct mpcomp_new_parallel_region_info_s {
 	long num_threads;		/* Current number of threads in the team */
 	struct mpcomp_node_s * new_root ;
 	int single_sections_current_save ;
+    sctk_spinlock_t update_lock;
 	int for_dyn_current_save;
 	long combined_pragma;
 	mpcomp_local_icv_t icvs;	/* Set of ICVs for the child team */
@@ -179,6 +180,7 @@ typedef struct mpcomp_thread_s
 
 	/* -- DYNAMIC FOR LOOP CONSTRUCT -- */
 	int for_dyn_current;    /* Current position in 'for_dyn_chunk_info' array  */
+	sctk_atomics_int for_dyn_ull_current;    /* Current position in 'for_dyn_chunk_info' array  */
 	/* Chunks array for loop dynamic schedule constructs */
 	mpcomp_atomic_int_pad_t for_dyn_remain[MPCOMP_MAX_ALIVE_FOR_DYN + 1]; 
 	int for_dyn_total ;

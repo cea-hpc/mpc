@@ -159,9 +159,9 @@ bool mpcomp_GOMP_loop_dynamic_start (long istart, long iend, long incr, long chu
 			 long *start, long *end)
 {
    bool ret;
-   sctk_warning("[Redirect GOMP]%s:\tBegin",__func__);
+   sctk_nodebug("[Redirect GOMP]%s:\tBegin",__func__);
    ret = mpcomp_dynamic_loop_begin(istart,iend,incr,chunk_size,start,end);
-   sctk_warning("[Redirect GOMP]%s:\tEnd",__func__);
+   sctk_nodebug("[Redirect GOMP]%s:\tEnd",__func__);
    return ret;
 }
 

@@ -34,7 +34,7 @@ void mpcomp_runtime_loop_end_nowait(void);
 
 int mpcomp_ordered_runtime_loop_begin(long, long, long, long*, long*);
 int mpcomp_ordered_runtime_loop_next(long*, long*);
-int mpcomp_loop_ull_ordered_runtime_begin(unsigned long long, unsigned long long, unsigned long long, unsigned long long*, unsigned long long*);
+int mpcomp_loop_ull_ordered_runtime_begin(bool, unsigned long long, unsigned long long, unsigned long long, unsigned long long*, unsigned long long*);
 int mpcomp_loop_ull_ordered_runtime_next( unsigned long long*, unsigned long long* );
 void mpcomp_ordered_runtime_loop_end(void);
 void mpcomp_ordered_runtime_loop_end_nowait(void);

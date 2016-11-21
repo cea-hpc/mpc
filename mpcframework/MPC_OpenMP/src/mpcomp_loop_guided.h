@@ -39,7 +39,7 @@ int mpcomp_loop_ull_guided_begin (bool, unsigned long long, unsigned long long, 
 int mpcomp_loop_ull_guided_next (unsigned long long*, unsigned long long *);
 void mpcomp_guided_loop_ull_end (void);
 void mpcomp_guided_loop_ull_end_nowait (void);
-int mpcomp_loop_ull_ordered_guided_begin (unsigned long long, unsigned long long, unsigned long long, unsigned long long, unsigned long long*, unsigned long long*);
+int mpcomp_loop_ull_ordered_guided_begin (bool,unsigned long long, unsigned long long, unsigned long long, unsigned long long, unsigned long long*, unsigned long long*);
 int mpcomp_loop_ull_ordered_guided_next (unsigned long long*, unsigned long long*);
 
 #endif /* __MPCOMP_LOOP_GUIDED_H__ */

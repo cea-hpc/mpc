@@ -60,6 +60,7 @@ static void __mpcomp_internal_full_barrier(mpcomp_mvp_t *mvp)
 		b = sctk_atomics_fetch_and_incr_int(&(c->barrier)) + 1;
 	}
 
+
 	/* Step 2 - Wait for the barrier to be done */
 	if (c != new_root || (c == new_root && b != c->barrier_num_threads)) 
     {	  
@@ -121,18 +122,13 @@ void mpcomp_internal_half_barrier ( mpcomp_mvp_t *mvp)
 	sctk_assert( thread->instance );
 	sctk_assert( thread->instance->team );
 
-    if( MPCOMP_TASK_TEAM_IS_INITIALIZED( thread->instance->team ) )
-    {
-        sctk_nodebug("%s: full barrier for tasks", __func__);
-        __mpcomp_internal_full_barrier(mvp);
-        sctk_openmp_thread_tls = save_tls;
-    }
+    __mpcomp_internal_full_barrier(mvp);
+    sctk_openmp_thread_tls = save_tls;
+
 #endif /* MPCOMP_TASK */
 
     /* Step 1: Climb in the tree */
     b = sctk_atomics_fetch_and_incr_int(&(c->barrier)) + 1;
-    sctk_nodebug("%s: incr first node %d -> %d out of %d", __func__, b-1, b, c->barrier_num_threads );
-
     while( b == c->barrier_num_threads && c != new_root ) 
     {
         sctk_nodebug("%s: currently %d thread(s), expected %d", __func__, b - 1, c->barrier_num_threads);
