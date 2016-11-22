@@ -53,9 +53,9 @@ if test -e "${SCTK_LIB_DIR}/libmpcgetopt.a"; then
 	fi
 fi
 
-if test -e "${SCTK_LIB_DIR}/libmpcmpisizeof.a"; then
+if test -e "${SCTK_LIB_DIR}/libmpcfwrapper.so"; then
 	if test "x\${MPC_BOOTSTRAP}" != "xyes"; then
-		SCTK_MPCMPISIZEOF="-L${SCTK_LIB_DIR}/ -lmpcmpisizeof"
+		SCTK_MPCMPISIZEOF="-L${SCTK_LIB_DIR}/ -lmpcfwrapper"
 	fi
 fi
 

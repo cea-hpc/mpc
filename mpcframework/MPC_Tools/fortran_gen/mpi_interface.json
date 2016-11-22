@@ -5,365 +5,459 @@
     "MPI_Abort": [
         [
             "MPI_Comm", 
-            "comm"
+            "comm",
+			"in"
         ], 
         [
             "int", 
-            "errorcode"
+            "errorcode",
+            "in"
         ]
     ], 
     "MPI_Accumulate": [
         [
             "void*", 
-            "origin_addr"
+            "origin_addr",
+            "in"
         ], 
         [
             "int", 
-            "origin_count"
+            "origin_count",
+            "in"
         ], 
         [
             "MPI_Datatype", 
-            "origin_datatype"
+            "origin_datatype",
+            "in"
         ], 
         [
             "int", 
-            "target_rank"
+            "target_rank",
+            "in"
         ], 
         [
             "MPI_Aint", 
-            "target_disp"
+            "target_disp",
+            "in"
         ], 
         [
             "int", 
-            "target_count"
+            "target_count",
+            "in"
         ], 
         [
             "MPI_Datatype", 
-            "target_datatype"
+            "target_datatype",
+            "in"
         ], 
         [
             "MPI_Op", 
-            "op"
+            "op",
+            "in"
         ], 
         [
             "MPI_Win", 
-            "win"
+            "win",
+            "in"
         ]
     ], 
     "MPI_Add_error_class": [
         [
             "int*", 
-            "errorclass"
+            "errorclass",
+            "out"
         ]
     ], 
     "MPI_Add_error_code": [
         [
             "int", 
-            "errorclass"
+            "errorclass",
+            "in"
         ], 
         [
             "int*", 
-            "errorcode"
+            "errorcode",
+            "out"
         ]
     ], 
     "MPI_Add_error_string": [
         [
             "int", 
-            "errorcode"
+            "errorcode",
+            "in"
         ], 
         [
             "char*", 
-            "string"
+            "string",
+            "in"
         ]
     ], 
     "MPI_Address": [
         [
             "void*", 
-            "location"
+            "location",
+            "in"
         ], 
         [
             "MPI_Aint*", 
-            "address"
+            "address",
+            "out"
         ]
     ], 
     "MPI_Allgather": [
         [
             "void*", 
-            "sendbuf"
+            "sendbuf",
+            "in"
         ], 
         [
             "int", 
-            "sendcount"
+            "sendcount",
+            "in"
         ], 
         [
             "MPI_Datatype", 
-            "sendtype"
+            "sendtype",
+            "in"
         ], 
         [
             "void*", 
-            "recvbuf"
+            "recvbuf",
+            "out"
         ], 
         [
             "int", 
-            "recvcount"
+            "recvcount",
+            "in"
         ], 
         [
             "MPI_Datatype", 
-            "recvtype"
+            "recvtype",
+            "in"
         ], 
         [
             "MPI_Comm", 
-            "comm"
+            "comm",
+            "in"
         ]
     ], 
     "MPI_Allgatherv": [
         [
             "void*", 
-            "sendbuf"
+            "sendbuf",
+			"in"
         ], 
         [
             "int", 
-            "sendcount"
+            "sendcount",
+			"in"
         ], 
         [
             "MPI_Datatype", 
-            "sendtype"
+            "sendtype",
+			"in"
         ], 
         [
             "void*", 
-            "recvbuf"
+            "recvbuf",
+			"out"
         ], 
         [
             "int[]", 
-            "recvcounts"
+            "recvcounts",
+			"in",
+			"*"
         ], 
         [
             "int[]", 
-            "displs"
+            "displs",
+			"in",
+			"*"
         ], 
         [
             "MPI_Datatype", 
-            "recvtype"
+            "recvtype",
+			"in"
         ], 
         [
             "MPI_Comm", 
-            "comm"
+            "comm",
+			"in"
         ]
     ], 
     "MPI_Alloc_mem": [
         [
             "MPI_Aint", 
-            "size"
+            "size",
+            "in"
         ], 
         [
             "MPI_Info", 
-            "info"
+            "info",
+            "in"
         ], 
         [
             "void*", 
-            "baseptr"
+            "baseptr",
+            "inout"
         ]
     ], 
     "MPI_Allreduce": [
         [
             "void*", 
-            "sendbuf"
+            "sendbuf",
+            "in"
         ], 
         [
             "void*", 
-            "recvbuf"
+            "recvbuf",
+            "out"
         ], 
         [
             "int", 
-            "count"
+            "count",
+            "in"
         ], 
         [
             "MPI_Datatype", 
-            "datatype"
+            "datatype",
+            "in"
         ], 
         [
             "MPI_Op", 
-            "op"
+            "op",
+            "in"
         ], 
         [
             "MPI_Comm", 
-            "comm"
+            "comm",
+            "in"
         ]
     ], 
     "MPI_Alltoall": [
         [
             "void*", 
-            "sendbuf"
+            "sendbuf",
+            "in"
         ], 
         [
             "int", 
-            "sendcount"
+            "sendcount",
+            "in"
         ], 
         [
             "MPI_Datatype", 
-            "sendtype"
+            "sendtype",
+            "in"
         ], 
         [
             "void*", 
-            "recvbuf"
+            "recvbuf",
+            "out"
         ], 
         [
             "int", 
-            "recvcount"
+            "recvcount",
+            "in"
         ], 
         [
             "MPI_Datatype", 
-            "recvtype"
+            "recvtype",
+            "in"
         ], 
         [
             "MPI_Comm", 
-            "comm"
+            "comm",
+            "in"
         ]
     ], 
     "MPI_Alltoallv": [
         [
             "void*", 
-            "sendbuf"
+            "sendbuf",
+			"in"
         ], 
         [
             "int[]", 
-            "sendcounts"
+            "sendcounts",
+			"in",
+			"*"
         ], 
         [
             "int[]", 
-            "sdispls"
+            "sdispls",
+			"in",
+			"*"
         ], 
         [
             "MPI_Datatype", 
-            "sendtype"
+            "sendtype",
+			"in"
         ], 
         [
             "void*", 
-            "recvbuf"
+            "recvbuf",
+			"out"
         ], 
         [
             "int[]", 
-            "recvcounts"
+            "recvcounts",
+			"in",
+			"*"
         ], 
         [
             "int[]", 
-            "rdispls"
+            "rdispls",
+			"in",
+			"*"
         ], 
         [
             "MPI_Datatype", 
-            "recvtype"
+            "recvtype",
+			"in"
         ], 
         [
             "MPI_Comm", 
-            "comm"
+            "comm",
+			"out"
         ]
     ], 
     "MPI_Alltoallw": [
         [
             "void*", 
-            "sendbuf"
+            "sendbuf",
+			"in"
         ], 
         [
             "int[]", 
-            "sendcounts"
+            "sendcounts",
+			"in",
+			"*"
         ], 
         [
             "int[]", 
-            "sdispls"
+            "sdispls",
+			"in",
+			"*"
         ], 
         [
-            "MPI_Datatype*", 
-            "sendtypes"
+            "MPI_Datatype[]", 
+            "sendtypes",
+			"in",
+			"*"
         ], 
         [
             "void*", 
-            "recvbuf"
+            "recvbuf",
+			"out"
         ], 
         [
             "int[]", 
-            "recvcounts"
+            "recvcounts",
+			"in",
+			"*"
         ], 
         [
             "int[]", 
-            "rdispls"
+            "rdispls",
+			"in",
+			"*"
         ], 
         [
-            "MPI_Datatype*", 
-            "recvtypes"
+            "MPI_Datatype[]", 
+            "recvtypes",
+			"in",
+			"*"
         ], 
         [
             "MPI_Comm", 
-            "comm"
+            "comm",
+			"out"
         ]
     ], 
     "MPI_Attr_delete": [
         [
             "MPI_Comm", 
-            "comm"
+            "comm",
+            "in"
         ], 
         [
             "int", 
-            "keyval"
+            "keyval",
+            "in"
         ]
     ], 
     "MPI_Attr_get": [
         [
             "MPI_Comm", 
-            "comm"
+            "comm",
+            "in"
         ], 
         [
             "int", 
-            "keyval"
+            "keyval",
+            "in"
         ], 
         [
             "void*", 
-            "attribute_val"
+            "attribute_val",
+            "out"
         ], 
         [
             "bool", 
-            "flag"
+            "flag",
+            "out"
         ]
     ], 
     "MPI_Attr_put": [
         [
             "MPI_Comm", 
-            "comm"
+            "comm",
+            "in"
         ], 
         [
             "int", 
-            "keyval"
+            "keyval",
+            "in"
         ], 
         [
             "void*", 
-            "attribute_val"
+            "attribute_val",
+            "in"
         ]
     ], 
     "MPI_Barrier": [
         [
             "MPI_Comm", 
-            "comm"
+            "comm",
+            "in"
         ]
     ], 
     "MPI_Bcast": [
         [
             "void*", 
-            "buffer"
+            "buffer",
+            "inout"
         ], 
         [
             "int", 
-            "count"
+            "count",
+            "in"
         ], 
         [
             "MPI_Datatype", 
-            "datatype"
+            "datatype",
+            "in"
         ], 
         [
             "int", 
-            "root"
+            "root",
+            "in"
         ], 
         [
             "MPI_Comm", 
-            "comm"
+            "comm",
+            "in"
         ]
     ], 
     "MPI_Bsend": [
@@ -451,4266 +545,5265 @@
     "MPI_Cart_coords": [
         [
             "MPI_Comm", 
-            "comm"
+            "comm",
+			"in"
         ], 
         [
             "int", 
-            "rank"
+            "rank",
+			"in"
         ], 
         [
             "int", 
-            "maxdims"
+            "maxdims",
+			"in"
         ], 
         [
             "int[]", 
-            "coords"
+            "coords",
+			"out",
+			"maxdims"
         ]
     ], 
     "MPI_Cart_create": [
         [
             "MPI_Comm", 
-            "old_comm"
+            "old_comm",
+			"in"
         ], 
         [
             "int", 
-            "ndims"
+            "ndims",
+			"in"
         ], 
         [
             "int[]", 
-            "dims"
+            "dims",
+			"in",
+			"ndims"
         ], 
         [
-            "bool[]", 
-            "periods"
+            "int[]", 
+            "periods",
+			"in",
+			"ndims"
         ], 
         [
             "bool", 
-            "reorder"
+            "reorder",
+			"in"
         ], 
         [
             "MPI_Comm*", 
-            "comm_cart"
+            "comm_cart",
+			"out"
         ]
     ], 
     "MPI_Cart_get": [
         [
             "MPI_Comm", 
-            "comm"
+            "comm",
+			"in"
         ], 
         [
             "int", 
-            "maxdims"
+            "maxdims",
+			"in"
         ], 
         [
             "int[]", 
-            "dims"
-        ], 
-        [
-            "bool[]", 
-            "periods"
+            "dims",
+			"out",
+			"maxdims"			
         ], 
         [
             "int[]", 
-            "coords"
+            "periods",
+			"out",
+			"maxdims"
+        ], 
+        [
+            "int[]", 
+            "coords",
+			"out",
+			"maxdims"
         ]
     ], 
     "MPI_Cart_map": [
         [
             "MPI_Comm", 
-            "comm"
+            "comm",
+			"in"
         ], 
         [
             "int", 
-            "ndims"
+            "ndims",
+			"in"
         ], 
         [
             "int[]", 
-            "dims"
+            "dims",
+			"in",
+			"ndims"
         ], 
         [
-            "bool[]", 
-            "periods"
+            "int[]", 
+            "periods",
+			"in",
+			"ndims"
         ], 
         [
             "int*", 
-            "newrank"
+            "newrank",
+			"out"
         ]
     ], 
     "MPI_Cart_rank": [
         [
             "MPI_Comm", 
-            "comm"
+            "comm",
+			"in"
         ], 
         [
             "int[]", 
-            "coords"
+            "coords",
+			"out",
+			"*"
         ], 
         [
             "int*", 
-            "rank"
+            "rank",
+			"out"
         ]
     ], 
     "MPI_Cart_shift": [
         [
             "MPI_Comm", 
-            "comm"
+            "comm",
+			"in"
         ], 
         [
             "int", 
-            "direction"
+            "direction",
+			"in"
         ], 
         [
             "int", 
-            "disp"
+            "disp",
+			"in"
         ], 
         [
             "int*", 
-            "rank_source"
+            "rank_source",
+			"out"
         ], 
         [
             "int*", 
-            "rank_dest"
+            "rank_dest",
+			"out"
         ]
     ], 
     "MPI_Cart_sub": [
         [
             "MPI_Comm", 
-            "comm"
-        ], 
+            "comm",
+			"in"
+        ],
         [
-            "bool[]", 
-            "remain_dims"
+            "int[]", 
+            "remain_dims",
+			"in",
+			"*"
         ], 
         [
             "MPI_Comm*", 
-            "new_comm"
+            "new_comm",
+			"out"
         ]
     ], 
     "MPI_Cartdim_get": [
         [
             "MPI_Comm", 
-            "comm"
+            "comm",
+			"in"
         ], 
         [
             "int*", 
-            "ndims"
+            "ndims",
+			"out"
         ]
     ], 
     "MPI_Close_port": [
         [
             "char*", 
-            "port_name"
+            "port_name",
+			"in"
         ]
     ], 
     "MPI_Comm_accept": [
         [
             "char*", 
-            "port_name"
+            "port_name",
+			"in"
         ], 
         [
             "MPI_Info", 
-            "info"
+            "info",
+			"in"
         ], 
         [
             "int", 
-            "root"
+            "root",
+			"in"
         ], 
         [
             "MPI_Comm", 
-            "comm"
+            "comm",
+			"in"
         ], 
         [
             "MPI_Comm*", 
-            "newcomm"
+            "newcomm",
+			"out"
         ]
     ], 
     "MPI_Comm_c2f": [
         [
             "MPI_Comm", 
-            "comm"
+            "comm",
+			"in"
         ]
     ], 
     "MPI_Comm_call_errhandler": [
         [
             "MPI_Comm", 
-            "comm"
+            "comm",
+			"in"
         ], 
         [
             "int", 
-            "errorcode"
+            "errorcode",
+			"in"
         ]
     ], 
     "MPI_Comm_compare": [
         [
             "MPI_Comm", 
-            "comm1"
+            "comm1",
+			"in"
         ], 
         [
             "MPI_Comm", 
-            "comm2"
+            "comm2",
+			"in"
         ], 
         [
             "int*", 
-            "result"
+            "result",
+			"out"
         ]
     ], 
     "MPI_Comm_connect": [
         [
             "char*", 
-            "port_name"
+            "port_name",
+			"in"
         ], 
         [
             "MPI_Info", 
-            "info"
+            "info",
+			"in"
         ], 
         [
             "int", 
-            "root"
+            "root",
+			"in"
         ], 
         [
             "MPI_Comm", 
-            "comm"
+            "comm",
+			"in"
         ], 
         [
             "MPI_Comm*", 
-            "newcomm"
+            "newcomm",
+			"out"
         ]
     ], 
     "MPI_Comm_create": [
         [
             "MPI_Comm", 
-            "comm"
+            "comm",
+			"in"
         ], 
         [
             "MPI_Group", 
-            "group"
+            "group",
+			"in"
         ], 
         [
             "MPI_Comm*", 
-            "newcomm"
+            "newcomm",
+			"out"
         ]
     ], 
     "MPI_Comm_create_errhandler": [
         [
             "MPI_Comm_errhandler_function*", 
-            "function"
+            "function",
+			"in"
         ], 
         [
             "MPI_Errhandler*", 
-            "errhandler"
+            "errhandler",
+			"in"
         ]
     ], 
     "MPI_Comm_create_keyval": [
         [
             "MPI_Comm_copy_attr_function*", 
-            "comm_copy_attr_fn"
+            "comm_copy_attr_fn",
+			"in"
         ], 
         [
             "MPI_Comm_delete_attr_function*", 
-            "comm_delete_attr_fn"
+            "comm_delete_attr_fn",
+			"in"
         ], 
         [
             "int*", 
-            "comm_keyval"
+            "comm_keyval",
+			"out"
         ], 
         [
             "void*", 
-            "extra_state"
+            "extra_state",
+			"in"
         ]
     ], 
     "MPI_Comm_delete_attr": [
         [
             "MPI_Comm", 
-            "comm"
+            "comm",
+			"in"
         ], 
         [
             "int", 
-            "comm_keyval"
+            "comm_keyval",
+			"in"
         ]
     ], 
     "MPI_Comm_disconnect": [
         [
             "MPI_Comm*", 
-            "comm"
+            "comm",
+			"in"
         ]
     ], 
     "MPI_Comm_dup": [
         [
             "MPI_Comm", 
-            "comm"
+            "comm",
+			"in"
         ], 
         [
             "MPI_Comm*", 
-            "newcomm"
+            "newcomm",
+			"out"
         ]
     ], 
     "MPI_Comm_free": [
         [
             "MPI_Comm*", 
-            "comm"
+            "comm",
+			"inout"
         ]
     ], 
     "MPI_Comm_free_keyval": [
         [
             "int*", 
-            "comm_keyval"
+            "comm_keyval",
+			"inout"
         ]
     ], 
     "MPI_Comm_get_attr": [
         [
             "MPI_Comm", 
-            "comm"
+            "comm",
+			"in"
         ], 
         [
             "int", 
-            "comm_keyval"
+            "comm_keyval",
+			"in"
         ], 
         [
             "void*", 
-            "attribute_val"
+            "attribute_val",
+			"out"
         ], 
         [
             "bool", 
-            "flag"
+            "flag",
+			"out"
         ]
     ], 
     "MPI_Comm_get_errhandler": [
         [
             "MPI_Comm", 
-            "comm"
+            "comm",
+			"in"
         ], 
         [
             "MPI_Errhandler*", 
-            "erhandler"
+            "erhandler",
+			"in"
         ]
     ], 
     "MPI_Comm_get_name": [
         [
             "MPI_Comm", 
-            "comm"
+            "comm",
+			"in"
         ], 
         [
             "char*", 
-            "comm_name"
+            "comm_name",
+			"out"
         ], 
         [
             "int*", 
-            "resultlen"
+            "resultlen",
+			"out"
         ]
     ], 
     "MPI_Comm_get_parent": [
         [
             "MPI_Comm*", 
-            "parent"
+            "parent",
+			"out"
         ]
     ], 
     "MPI_Comm_group": [
         [
             "MPI_Comm", 
-            "comm"
+            "comm",
+			"in"
         ], 
         [
             "MPI_Group*", 
-            "group"
+            "group",
+			"out"
         ]
     ], 
     "MPI_Comm_join": [
         [
             "int", 
-            "fd"
+            "fd",
+			"in"
         ], 
         [
             "MPI_Comm*", 
-            "intercomm"
+            "intercomm",
+			"out"
         ]
     ], 
     "MPI_Comm_rank": [
         [
             "MPI_Comm", 
-            "comm"
+            "comm",
+			"in"
         ], 
         [
             "int*", 
-            "rank"
+            "rank",
+			"out"
         ]
     ], 
     "MPI_Comm_remote_group": [
         [
             "MPI_Comm", 
-            "comm"
+            "comm",
+			"in"
         ], 
         [
             "MPI_Group*", 
-            "group"
+            "group",
+			"out"
         ]
     ], 
     "MPI_Comm_remote_size": [
         [
             "MPI_Comm", 
-            "comm"
+            "comm",
+			"in"
         ], 
         [
             "int*", 
-            "size"
+            "size",
+			"out"
         ]
     ], 
     "MPI_Comm_set_attr": [
         [
             "MPI_Comm", 
-            "comm"
+            "comm",
+			"in"
         ], 
         [
             "int", 
-            "comm_keyval"
+            "comm_keyval",
+			"in"
         ], 
         [
             "void*", 
-            "attribute_val"
+            "attribute_val",
+			"in"
         ]
     ], 
     "MPI_Comm_set_errhandler": [
         [
             "MPI_Comm", 
-            "comm"
+            "comm",
+			"in"
         ], 
         [
             "MPI_Errhandler", 
-            "errhandler"
+            "errhandler",
+			"in"
         ]
     ], 
     "MPI_Comm_set_name": [
         [
             "MPI_Comm", 
-            "comm"
+            "comm",
+			"in"
         ], 
         [
             "char*", 
-            "comm_name"
+            "comm_name",
+			"in"
         ]
     ], 
     "MPI_Comm_size": [
         [
             "MPI_Comm", 
-            "comm"
+            "comm",
+			"in"
         ], 
         [
             "int*", 
-            "size"
+            "size",
+			"out"
         ]
     ],
     "MPI_Comm_split": [
         [
             "MPI_Comm", 
-            "comm"
+            "comm",
+			"in"
         ], 
         [
             "int", 
-            "color"
+            "color",
+			"in"
         ], 
         [
             "int", 
-            "key"
+            "key",
+			"in"
         ], 
         [
             "MPI_Comm*", 
-            "newcomm"
+            "newcomm",
+			"out"
         ]
     ], 
     "MPI_Comm_test_inter": [
         [
             "MPI_Comm", 
-            "comm"
+            "comm",
+			"in"
         ], 
         [
             "bool", 
-            "flag"
+            "flag",
+			"out"
         ]
     ], 
     "MPI_Dims_create": [
         [
             "int", 
-            "nnodes"
+            "nnodes",
+			"in"
         ], 
         [
             "int", 
-            "ndims"
+            "ndims",
+			"in"
         ], 
         [
             "int[]", 
-            "dims"
+            "dims",
+			"inout",
+			"ndims"
         ]
     ], 
     "MPI_Errhandler_c2f": [
         [
             "MPI_Errhandler", 
-            "errhandler"
+            "errhandler",
+			"in"
         ]
     ], 
     "MPI_Errhandler_create": [
         [
             "MPI_Handler_function*", 
-            "function"
+            "function",
+			"in"
         ], 
         [
             "MPI_Errhandler*", 
-            "errhandler"
+            "errhandler",
+			"out"
         ]
     ], 
     "MPI_Errhandler_free": [
         [
             "MPI_Errhandler*", 
-            "errhandler"
+            "errhandler",
+			"inout"
         ]
     ], 
     "MPI_Errhandler_get": [
         [
             "MPI_Comm", 
-            "comm"
+            "comm",
+			"in"
         ], 
         [
             "MPI_Errhandler*", 
-            "errhandler"
+            "errhandler",
+			"out"
         ]
     ], 
     "MPI_Errhandler_set": [
         [
             "MPI_Comm", 
-            "comm"
+            "comm",
+			"in"
         ], 
         [
             "MPI_Errhandler", 
-            "errhandler"
+            "errhandler",
+			"in"
         ]
     ], 
     "MPI_Error_class": [
         [
             "int", 
-            "errorcode"
+            "errorcode",
+			"in"
         ], 
         [
             "int*", 
-            "errorclass"
+            "errorclass",
+			"out"
         ]
     ], 
     "MPI_Error_string": [
         [
             "int", 
-            "errorcode"
+            "errorcode",
+			"in"
         ], 
         [
             "char*", 
-            "string"
+            "string",
+			"out"
         ], 
         [
             "int*", 
-            "resultlen"
+            "resultlen",
+			"out"
         ]
     ], 
     "MPI_Exscan": [
         [
             "void*", 
-            "sendbuf"
+            "sendbuf",
+			"in"
         ], 
         [
             "void*", 
-            "recvbuf"
+            "recvbuf",
+			"out"
         ], 
         [
             "int", 
-            "count"
+            "count",
+			"in"
         ], 
         [
             "MPI_Datatype", 
-            "datatype"
+            "datatype",
+			"in"
         ], 
         [
             "MPI_Op", 
-            "op"
+            "op",
+			"in"
         ], 
         [
             "MPI_Comm", 
-            "comm"
+            "comm",
+			"in"
         ]
     ], 
     "MPI_File_c2f": [
         [
             "MPI_File", 
-            "file"
+            "file",
+			"in"
         ]
     ], 
     "MPI_File_call_errhandler": [
         [
             "MPI_File", 
-            "fh"
+            "fh",
+			"in"
         ], 
         [
             "int", 
-            "errorcode"
+            "errorcode",
+			"in"
         ]
     ], 
     "MPI_File_close": [
         [
             "MPI_File*", 
-            "fh"
+            "fh",
+			"in"
         ]
     ], 
     "MPI_File_create_errhandler": [
         [
             "MPI_File_errhandler_function*", 
-            "function"
+            "function",
+			"in"
         ], 
         [
             "MPI_Errhandler*", 
-            "errhandler"
+            "errhandler",
+			"out"
         ]
     ], 
     "MPI_File_delete": [
         [
             "char*", 
-            "filename"
+            "filename",
+			"in"
         ], 
         [
             "MPI_Info", 
-            "info"
+            "info",
+			"in"
         ]
     ], 
     "MPI_File_get_amode": [
         [
             "MPI_File", 
-            "fh"
+            "fh",
+			"in"
         ], 
         [
             "int*", 
-            "amode"
+            "amode",
+			"out"
         ]
     ], 
     "MPI_File_get_atomicity": [
         [
             "MPI_File", 
-            "fh"
+            "fh",
+			"in"
         ], 
         [
             "bool", 
-            "flag"
+            "flag",
+			"out"
         ]
     ], 
     "MPI_File_get_byte_offset": [
         [
             "MPI_File", 
-            "fh"
+            "fh",
+			"in"
         ], 
         [
             "MPI_Offset", 
-            "offset"
+            "offset",
+			"in"
         ], 
         [
             "MPI_Offset*", 
-            "disp"
+            "disp",
+			"out"
         ]
     ], 
     "MPI_File_get_errhandler": [
         [
             "MPI_File", 
-            "file"
+            "file",
+			"in"
         ], 
         [
             "MPI_Errhandler*", 
-            "errhandler"
+            "errhandler",
+			"out"
         ]
     ], 
     "MPI_File_get_group": [
         [
             "MPI_File", 
-            "fh"
+            "fh",
+			"in"
         ], 
         [
             "MPI_Group*", 
-            "group"
+            "group",
+			"out"
         ]
     ], 
     "MPI_File_get_info": [
         [
             "MPI_File", 
-            "fh"
+            "fh",
+			"in"
         ], 
         [
             "MPI_Info*", 
-            "info_used"
+            "info_used",
+			"out"
         ]
     ], 
     "MPI_File_get_position": [
         [
             "MPI_File", 
-            "fh"
+            "fh",
+			"in"
         ], 
         [
             "MPI_Offset*", 
-            "offset"
+            "offset",
+			"out"
         ]
     ], 
     "MPI_File_get_position_shared": [
         [
             "MPI_File", 
-            "fh"
+            "fh",
+			"in"
         ], 
         [
             "MPI_Offset*", 
-            "offset"
+            "offset",
+			"out"
         ]
     ], 
     "MPI_File_get_size": [
         [
             "MPI_File", 
-            "fh"
+            "fh",
+			"in"
         ], 
         [
             "MPI_Offset*", 
-            "size"
+            "size",
+			"out"
         ]
     ], 
     "MPI_File_get_type_extent": [
         [
             "MPI_File", 
-            "fh"
+            "fh",
+			"in"
         ], 
         [
             "MPI_Datatype", 
-            "datatype"
+            "datatype",
+			"in"
         ], 
         [
             "MPI_Aint*", 
-            "extent"
+            "extent",
+			"out"
         ]
     ], 
     "MPI_File_get_view": [
         [
             "MPI_File", 
-            "fh"
+            "fh",
+			"in"
         ], 
         [
             "MPI_Offset*", 
-            "disp"
+            "disp",
+			"out"
         ], 
         [
             "MPI_Datatype*", 
-            "etype"
+            "etype",
+			"out"
         ], 
         [
             "MPI_Datatype*", 
-            "filetype"
+            "filetype",
+			"out"
         ], 
         [
             "char*", 
-            "datarep"
+            "datarep",
+			"out"
         ]
     ], 
     "MPI_File_iread": [
         [
             "MPI_File", 
-            "fh"
+            "fh",
+			"in"
         ], 
         [
             "void*", 
-            "buf"
+            "buf",
+			"out"
         ], 
         [
             "int", 
-            "count"
+            "count",
+			"in"
         ], 
         [
             "MPI_Datatype", 
-            "datatype"
+            "datatype",
+			"in"
         ], 
         [
             "MPI_Request*", 
-            "request"
+            "request",
+			"inout"
         ]
     ], 
     "MPI_File_iread_at": [
         [
             "MPI_File", 
-            "fh"
+            "fh",
+			"in"
         ], 
         [
             "MPI_Offset", 
-            "offset"
+            "offset",
+			"in"
         ], 
         [
             "void*", 
-            "buf"
+            "buf",
+			"out"
         ], 
         [
             "int", 
-            "count"
+            "count",
+			"in"
         ], 
         [
             "MPI_Datatype", 
-            "datatype"
+            "datatype",
+			"in"
         ], 
         [
             "MPI_Request*", 
-            "request"
+            "request",
+			"inout"
         ]
     ], 
     "MPI_File_iread_shared": [
         [
             "MPI_File", 
-            "fh"
+            "fh",
+			"in"
         ], 
         [
             "void*", 
-            "buf"
+            "buf",
+			"out"
         ], 
         [
             "int", 
-            "count"
+            "count",
+			"in"
         ], 
         [
             "MPI_Datatype", 
-            "datatype"
+            "datatype",
+			"in"
         ], 
         [
             "MPI_Request*", 
-            "request"
+            "request",
+			"inout"
         ]
     ], 
     "MPI_File_iwrite": [
         [
             "MPI_File", 
-            "fh"
+            "fh",
+			"in"
         ], 
         [
             "void*", 
-            "buf"
+            "buf",
+			"in"
         ], 
         [
             "int", 
-            "count"
+            "count",
+			"in"
         ], 
         [
             "MPI_Datatype", 
-            "datatype"
+            "datatype",
+			"in"
         ], 
         [
             "MPI_Request*", 
-            "request"
+            "request",
+			"inout"
         ]
     ], 
     "MPI_File_iwrite_at": [
         [
             "MPI_File", 
-            "fh"
+            "fh",
+			"in"
         ], 
         [
             "MPI_Offset", 
-            "offset"
+            "offset",
+			"in"
         ], 
         [
             "void*", 
-            "buf"
+            "buf",
+			"in"
         ], 
         [
             "int", 
-            "count"
+            "count",
+			"in"
         ], 
         [
             "MPI_Datatype", 
-            "datatype"
+            "datatype",
+			"in"
         ], 
         [
             "MPI_Request*", 
-            "request"
+            "request",
+			"inout"
         ]
     ], 
     "MPI_File_iwrite_shared": [
         [
             "MPI_File", 
-            "fh"
+            "fh",
+			"in"
         ], 
         [
             "void*", 
-            "buf"
+            "buf",
+			"in"
         ], 
         [
             "int", 
-            "count"
+            "count",
+			"in"
         ], 
         [
             "MPI_Datatype", 
-            "datatype"
+            "datatype",
+			"in"
         ], 
         [
             "MPI_Request*", 
-            "request"
+            "request",
+			"inout"
         ]
     ], 
     "MPI_File_open": [
         [
             "MPI_Comm", 
-            "comm"
+            "comm",
+			"in"
         ], 
         [
             "char*", 
-            "filename"
+            "filename",
+			"in"
         ], 
         [
             "int", 
-            "amode"
+            "amode",
+			"in"
         ], 
         [
             "MPI_Info", 
-            "info"
+            "info",
+			"in"
         ], 
         [
             "MPI_File*", 
-            "fh"
+            "fh",
+			"out"
         ]
     ], 
     "MPI_File_preallocate": [
         [
             "MPI_File", 
-            "fh"
+            "fh",
+			"in"
         ], 
         [
             "MPI_Offset", 
-            "size"
+            "size",
+			"in"
         ]
     ], 
     "MPI_File_read": [
         [
             "MPI_File", 
-            "fh"
+            "fh",
+			"in"
         ], 
         [
             "void*", 
-            "buf"
+            "buf",
+			"out"
         ], 
         [
             "int", 
-            "count"
+            "count",
+			"in"
         ], 
         [
             "MPI_Datatype", 
-            "datatype"
+            "datatype",
+			"in"
         ], 
         [
             "MPI_Status*", 
-            "status"
+            "status",
+			"in"
         ]
     ], 
     "MPI_File_read_all": [
         [
             "MPI_File", 
-            "fh"
+            "fh",
+			"in"
         ], 
         [
             "void*", 
-            "buf"
+            "buf",
+			"out"
         ], 
         [
             "int", 
-            "count"
+            "count",
+			"in"
         ], 
         [
             "MPI_Datatype", 
-            "datatype"
+            "datatype",
+			"in"
         ], 
         [
             "MPI_Status*", 
-            "status"
+            "status",
+			"inout"
         ]
     ], 
     "MPI_File_read_all_begin": [
         [
             "MPI_File", 
-            "fh"
+            "fh",
+			"in"
         ], 
         [
             "void*", 
-            "buf"
+            "buf",
+			"out"
         ], 
         [
             "int", 
-            "count"
+            "count",
+			"in"
         ], 
         [
             "MPI_Datatype", 
-            "datatype"
+            "datatype",
+			"in"
         ]
     ], 
     "MPI_File_read_all_end": [
         [
             "MPI_File", 
-            "fh"
+            "fh",
+			"in"
         ], 
         [
             "void*", 
-            "buf"
+            "buf",
+			"out"
         ], 
         [
             "MPI_Status*", 
-            "status"
+            "status",
+			"inout"
         ]
     ], 
     "MPI_File_read_at": [
         [
             "MPI_File", 
-            "fh"
+            "fh",
+			"in"
         ], 
         [
             "MPI_Offset", 
-            "offset"
+            "offset",
+			"in"
         ], 
         [
             "void*", 
-            "buf"
+            "buf",
+			"out"
         ], 
         [
             "int", 
-            "count"
+            "count",
+			"in"
         ], 
         [
             "MPI_Datatype", 
-            "datatype"
+            "datatype",
+			"in"
         ], 
         [
             "MPI_Status*", 
-            "status"
+            "status",
+			"inout"
         ]
     ], 
     "MPI_File_read_at_all": [
         [
             "MPI_File", 
-            "fh"
+            "fh",
+			"in"
         ], 
         [
             "MPI_Offset", 
-            "offset"
+            "offset",
+			"in"
         ], 
         [
             "void*", 
-            "buf"
+            "buf",
+			"out"
         ], 
         [
             "int", 
-            "count"
+            "count",
+			"in"
         ], 
         [
             "MPI_Datatype", 
-            "datatype"
+            "datatype",
+			"in"
         ], 
         [
             "MPI_Status*", 
-            "status"
+            "status",
+			"inout"
         ]
     ], 
     "MPI_File_read_at_all_begin": [
         [
             "MPI_File", 
-            "fh"
+            "fh",
+			"in"
         ], 
         [
             "MPI_Offset", 
-            "offset"
+            "offset",
+			"in"
         ], 
         [
             "void*", 
-            "buf"
+            "buf",
+			"out"
         ], 
         [
             "int", 
-            "count"
+            "count",
+			"in"
         ], 
         [
             "MPI_Datatype", 
-            "datatype"
+            "datatype",
+			"in"
         ]
     ], 
     "MPI_File_read_at_all_end": [
         [
             "MPI_File", 
-            "fh"
+            "fh",
+			"in"
         ], 
         [
             "void*", 
-            "buf"
+            "buf",
+			"out"
         ], 
         [
             "MPI_Status*", 
-            "status"
+            "status",
+			"inout"
         ]
     ], 
     "MPI_File_read_ordered": [
         [
             "MPI_File", 
-            "fh"
+            "fh",
+			"in"
         ], 
         [
             "void*", 
-            "buf"
+            "buf",
+			"out"
         ], 
         [
             "int", 
-            "count"
+            "count",
+			"in"
         ], 
         [
             "MPI_Datatype", 
-            "datatype"
+            "datatype",
+			"in"
         ], 
         [
             "MPI_Status*", 
-            "status"
+            "status",
+			"inout"
         ]
     ], 
     "MPI_File_read_ordered_begin": [
         [
             "MPI_File", 
-            "fh"
+            "fh",
+			"in"
         ], 
         [
             "void*", 
-            "buf"
+            "buf",
+			"out"
         ], 
         [
             "int", 
-            "count"
+            "count",
+			"in"
         ], 
         [
             "MPI_Datatype", 
-            "datatype"
+            "datatype",
+			"in"
         ]
     ], 
     "MPI_File_read_ordered_end": [
         [
             "MPI_File", 
-            "fh"
+            "fh",
+			"in"
         ], 
         [
             "void*", 
-            "buf"
+            "buf",
+			"out"
         ], 
         [
             "MPI_Status*", 
-            "status"
+            "status",
+			"inout"
         ]
     ], 
     "MPI_File_read_shared": [
         [
             "MPI_File", 
-            "fh"
+            "fh",
+			"in"
         ], 
         [
             "void*", 
-            "buf"
+            "buf",
+			"out"
         ], 
         [
             "int", 
-            "count"
+            "count",
+			"in"
         ], 
         [
             "MPI_Datatype", 
-            "datatype"
+            "datatype",
+			"in"
         ], 
         [
             "MPI_Status*", 
-            "status"
+            "status",
+			"inout"
         ]
     ], 
     "MPI_File_seek": [
         [
             "MPI_File", 
-            "fh"
+            "fh",
+			"in"
         ], 
         [
             "MPI_Offset", 
-            "offset"
+            "offset",
+			"in"
         ], 
         [
             "int", 
-            "whence"
+            "whence",
+			"in"
         ]
     ], 
     "MPI_File_seek_shared": [
         [
             "MPI_File", 
-            "fh"
+            "fh",
+			"in"
         ], 
         [
             "MPI_Offset", 
-            "offset"
+            "offset",
+			"in"
         ], 
         [
             "int", 
-            "whence"
+            "whence",
+			"in"
         ]
     ], 
     "MPI_File_set_atomicity": [
         [
             "MPI_File", 
-            "fh"
+            "fh",
+			"in"
         ], 
         [
-            "bool", 
-            "flag"
+            "int", 
+            "flag",
+			"in"
         ]
     ], 
     "MPI_File_set_errhandler": [
         [
             "MPI_File", 
-            "file"
+            "file",
+			"in"
         ], 
         [
             "MPI_Errhandler", 
-            "errhandler"
+            "errhandler",
+			"in"
         ]
     ], 
     "MPI_File_set_info": [
         [
             "MPI_File", 
-            "fh"
+            "fh",
+			"in"
         ], 
         [
             "MPI_Info", 
-            "info"
+            "info",
+			"in"
         ]
     ], 
     "MPI_File_set_size": [
         [
             "MPI_File", 
-            "fh"
+            "fh",
+			"in"
         ], 
         [
             "MPI_Offset", 
-            "size"
+            "size",
+			"in"
         ]
     ], 
     "MPI_File_set_view": [
         [
             "MPI_File", 
-            "fh"
+            "fh",
+			"in"
         ], 
         [
             "MPI_Offset", 
-            "disp"
+            "disp",
+			"in"
         ], 
         [
             "MPI_Datatype", 
-            "etype"
+            "etype",
+			"in"
         ], 
         [
             "MPI_Datatype", 
-            "filetype"
+            "filetype",
+			"in"
         ], 
         [
             "char*", 
-            "datarep"
+            "datarep",
+			"in"
         ], 
         [
             "MPI_Info", 
-            "info"
+            "info",
+			"in"
         ]
     ], 
     "MPI_File_sync": [
         [
             "MPI_File", 
-            "fh"
+            "fh",
+			"in"
         ]
     ], 
     "MPI_File_write": [
         [
             "MPI_File", 
-            "fh"
+            "fh",
+			"in"
         ], 
         [
             "void*", 
-            "buf"
+            "buf",
+			"in"
         ], 
         [
             "int", 
-            "count"
+            "count",
+			"in"
         ], 
         [
             "MPI_Datatype", 
-            "datatype"
+            "datatype",
+			"in"
         ], 
         [
             "MPI_Status*", 
-            "status"
+            "status",
+			"inout"
         ]
     ], 
     "MPI_File_write_all": [
         [
             "MPI_File", 
-            "fh"
+            "fh",
+			"in"
         ], 
         [
             "void*", 
-            "buf"
+            "buf",
+			"in"
         ], 
         [
             "int", 
-            "count"
+            "count",
+			"in"
         ], 
         [
             "MPI_Datatype", 
-            "datatype"
+            "datatype",
+			"in"
         ], 
         [
             "MPI_Status*", 
-            "status"
+            "status",
+			"inout"
         ]
     ], 
     "MPI_File_write_all_begin": [
         [
             "MPI_File", 
-            "fh"
+            "fh",
+			"in"
         ], 
         [
             "void*", 
-            "buf"
+            "buf",
+			"in"
         ], 
         [
             "int", 
-            "count"
+            "count",
+			"in"
         ], 
         [
             "MPI_Datatype", 
-            "datatype"
+            "datatype",
+			"in"
         ]
     ], 
     "MPI_File_write_all_end": [
         [
             "MPI_File", 
-            "fh"
+            "fh",
+			"in"
         ], 
         [
             "void*", 
-            "buf"
+            "buf",
+			"in"
         ], 
         [
             "MPI_Status*", 
-            "status"
+            "status",
+			"inout"
         ]
     ], 
     "MPI_File_write_at": [
         [
             "MPI_File", 
-            "fh"
+            "fh",
+			"in"
         ], 
         [
             "MPI_Offset", 
-            "offset"
+            "offset",
+			"in"
         ], 
         [
             "void*", 
-            "buf"
+            "buf",
+			"in"
         ], 
         [
             "int", 
-            "count"
+            "count",
+			"in"
         ], 
         [
             "MPI_Datatype", 
-            "datatype"
+            "datatype",
+			"in"
         ], 
         [
             "MPI_Status*", 
-            "status"
+            "status",
+			"inout"
         ]
     ], 
     "MPI_File_write_at_all": [
         [
             "MPI_File", 
-            "fh"
+            "fh",
+			"in"
         ], 
         [
             "MPI_Offset", 
-            "offset"
+            "offset",
+			"in"
         ], 
         [
             "void*", 
-            "buf"
+            "buf",
+			"in"
         ], 
         [
             "int", 
-            "count"
+            "count",
+			"in"
         ], 
         [
             "MPI_Datatype", 
-            "datatype"
+            "datatype",
+			"in"
         ], 
         [
             "MPI_Status*", 
-            "status"
+            "status",
+			"inout"
         ]
     ], 
     "MPI_File_write_at_all_begin": [
         [
             "MPI_File", 
-            "fh"
+            "fh",
+			"in"
         ], 
         [
             "MPI_Offset", 
-            "offset"
+            "offset",
+			"in"
         ], 
         [
             "void*", 
-            "buf"
+            "buf",
+			"in"
         ], 
         [
             "int", 
-            "count"
+            "count",
+			"in"
         ], 
         [
             "MPI_Datatype", 
-            "datatype"
+            "datatype",
+			"in"
         ]
     ], 
     "MPI_File_write_at_all_end": [
         [
             "MPI_File", 
-            "fh"
+            "fh",
+			"in"
         ], 
         [
             "void*", 
-            "buf"
+            "buf",
+			"in"
         ], 
         [
             "MPI_Status*", 
-            "status"
+            "status",
+			"inout"
         ]
     ], 
     "MPI_File_write_ordered": [
         [
             "MPI_File", 
-            "fh"
+            "fh",
+			"in"
         ], 
         [
             "void*", 
-            "buf"
+            "buf",
+			"in"
         ], 
         [
             "int", 
-            "count"
+            "count",
+			"in"
         ], 
         [
             "MPI_Datatype", 
-            "datatype"
+            "datatype",
+			"in"
         ], 
         [
             "MPI_Status*", 
-            "status"
+            "status",
+			"inout"
         ]
     ], 
     "MPI_File_write_ordered_begin": [
         [
             "MPI_File", 
-            "fh"
+            "fh",
+			"in"
         ], 
         [
             "void*", 
-            "buf"
+            "buf",
+			"in"
         ], 
         [
             "int", 
-            "count"
+            "count",
+			"in"
         ], 
         [
             "MPI_Datatype", 
-            "datatype"
+            "datatype",
+			"in"
         ]
     ], 
     "MPI_File_write_ordered_end": [
         [
             "MPI_File", 
-            "fh"
+            "fh",
+			"in"
         ], 
         [
             "void*", 
-            "buf"
+            "buf",
+			"in"
         ], 
         [
             "MPI_Status*", 
-            "status"
+            "status",
+			"inout"
         ]
     ], 
     "MPI_File_write_shared": [
         [
             "MPI_File", 
-            "fh"
+            "fh",
+			"in"
         ], 
         [
             "void*", 
-            "buf"
+            "buf",
+			"in"
         ], 
         [
             "int", 
-            "count"
+            "count",
+			"in"
         ], 
         [
             "MPI_Datatype", 
-            "datatype"
+            "datatype",
+			"in"
         ], 
         [
             "MPI_Status*", 
-            "status"
+            "status",
+			"inout"
         ]
     ], 
     "MPI_Finalize": [], 
     "MPI_Finalized": [
         [
             "bool", 
-            "flag"
+            "flag",
+			"out"
         ]
     ], 
     "MPI_Free_mem": [
         [
             "void*", 
-            "base"
+            "base",
+			"in"
         ]
     ], 
     "MPI_Gather": [
         [
             "void*", 
-            "sendbuf"
+            "sendbuf",
+			"in"
         ], 
         [
             "int", 
-            "sendcount"
+            "sendcount",
+			"in"
         ], 
         [
             "MPI_Datatype", 
-            "sendtype"
+            "sendtype",
+			"in"
         ], 
         [
             "void*", 
-            "recvbuf"
+            "recvbuf",
+			"out"
         ], 
         [
             "int", 
-            "recvcount"
+            "recvcount",
+			"in"
         ], 
         [
             "MPI_Datatype", 
-            "recvtype"
+            "recvtype",
+			"in"
         ], 
         [
             "int", 
-            "root"
+            "root",
+			"in"
         ], 
         [
             "MPI_Comm", 
-            "comm"
+            "comm",
+			"in"
         ]
     ], 
     "MPI_Gatherv": [
         [
             "void*", 
-            "sendbuf"
+            "sendbuf",
+			"in"
         ], 
         [
             "int", 
-            "sendcount"
+            "sendcount",
+			"in"
         ], 
         [
             "MPI_Datatype", 
-            "sendtype"
+            "sendtype",
+			"in"
         ], 
         [
             "void*", 
-            "recvbuf"
+            "recvbuf",
+			"out"
         ], 
         [
             "int[]", 
-            "recvcounts"
+            "recvcounts",
+			"out",
+			"*"
         ], 
         [
             "int[]", 
-            "displs"
+            "displs",
+			"out",
+			"*"
         ], 
         [
             "MPI_Datatype", 
-            "recvtype"
+            "recvtype",
+			"in"
         ], 
         [
             "int", 
-            "root"
+            "root",
+			"in"
         ], 
         [
             "MPI_Comm", 
-            "comm"
+            "comm",
+			"in"
         ]
     ], 
     "MPI_Get": [
         [
             "void*", 
-            "origin_addr"
+            "origin_addr",
+			"out"
         ], 
         [
             "int", 
-            "origin_count"
+            "origin_count",
+			"in"
         ], 
         [
             "MPI_Datatype", 
-            "origin_datatype"
+            "origin_datatype",
+			"in"
         ], 
         [
             "int", 
-            "target_rank"
+            "target_rank",
+			"in"
         ], 
         [
             "MPI_Aint", 
-            "target_disp"
+            "target_disp",
+			"in"
         ], 
         [
             "int", 
-            "target_count"
+            "target_count",
+			"in"
         ], 
         [
             "MPI_Datatype", 
-            "target_datatype"
+            "target_datatype",
+			"in"
         ], 
         [
             "MPI_Win", 
-            "win"
+            "win",
+			"in"
         ]
     ], 
     "MPI_Get_address": [
         [
             "void*", 
-            "location"
+            "location",
+			"in"
         ], 
         [
             "MPI_Aint*", 
-            "address"
+            "address",
+			"out"
         ]
     ], 
     "MPI_Get_count": [
         [
             "MPI_Status*", 
-            "status"
+            "status",
+			"in"
         ], 
         [
             "MPI_Datatype", 
-            "datatype"
+            "datatype",
+			"in"
         ], 
         [
             "int*", 
-            "count"
+            "count",
+			"out"
         ]
     ], 
     "MPI_Get_elements": [
         [
             "MPI_Status*", 
-            "status"
+            "status",
+			"in"
         ], 
         [
             "MPI_Datatype", 
-            "datatype"
+            "datatype",
+			"in"
         ], 
         [
             "int*", 
-            "count"
+            "count",
+			"out"
         ]
     ], 
     "MPI_Get_processor_name": [
         [
             "char*", 
-            "name"
+            "name",
+			"out"
         ], 
         [
             "int*", 
-            "resultlen"
+            "resultlen",
+			"out"
         ]
     ], 
     "MPI_Get_version": [
         [
             "int*", 
-            "version"
+            "version",
+			"inout"
         ], 
         [
             "int*", 
-            "subversion"
+            "subversion",
+			"inout"
         ]
     ], 
     "MPI_Graph_create": [
         [
             "MPI_Comm", 
-            "comm_old"
+            "comm",
+			"in"
         ], 
         [
             "int", 
-            "nnodes"
+            "nnodes",
+			"in"
         ], 
         [
             "int[]", 
-            "index"
+            "index",
+			"in",
+			"nnodes"
         ], 
         [
             "int[]", 
-            "edges"
+            "edges",
+			"in",
+			"*"
         ], 
         [
             "bool", 
-            "reorder"
+            "reorder",
+			"in"
         ], 
         [
             "MPI_Comm*", 
-            "comm_graph"
+            "comm_graph",
+			"out"
         ]
     ], 
     "MPI_Graph_get": [
         [
             "MPI_Comm", 
-            "comm"
+            "comm",
+			"in"
         ], 
         [
             "int", 
-            "maxindex"
+            "maxindex",
+			"in"
         ], 
         [
             "int", 
-            "maxedges"
+            "maxedges",
+			"in"
         ], 
         [
             "int[]", 
-            "index"
+            "index",
+			"out",
+			"maxindex"
         ], 
         [
             "int[]", 
-            "edges"
+            "edges",
+			"out",
+			"maxedges"
         ]
     ], 
     "MPI_Graph_map": [
         [
             "MPI_Comm", 
-            "comm"
+            "comm",
+			"in"
         ], 
         [
             "int", 
-            "nnodes"
+            "nnodes",
+			"in"
         ], 
         [
             "int[]", 
-            "index"
+            "index",
+			"in",
+			"nnodes"
         ], 
         [
             "int[]", 
-            "edges"
+            "edges",
+			"in",
+			"*"
         ], 
         [
             "int*", 
-            "newrank"
+            "newrank",
+			"out"
         ]
     ], 
     "MPI_Graph_neighbors": [
         [
             "MPI_Comm", 
-            "comm"
+            "comm",
+			"in"
         ], 
         [
             "int", 
-            "rank"
+            "rank",
+			"in"
         ], 
         [
             "int", 
-            "maxneighbors"
+            "maxneighbors",
+			"in"
         ], 
         [
             "int[]", 
-            "neighbors"
+            "neighbors",
+			"out",
+			"maxneighbors"
         ]
     ], 
     "MPI_Graph_neighbors_count": [
         [
             "MPI_Comm", 
-            "comm"
+            "comm",
+			"in"
         ], 
         [
             "int", 
-            "rank"
+            "rank",
+			"in"
         ], 
         [
             "int*", 
-            "nneighbors"
+            "nneighbors",
+			"out"
         ]
     ], 
     "MPI_Graphdims_get": [
         [
             "MPI_Comm", 
-            "comm"
+            "comm",
+			"in"
         ], 
         [
             "int*", 
-            "nnodes"
+            "nnodes",
+			"out"
         ], 
         [
             "int*", 
-            "nedges"
+            "nedges",
+			"out"
         ]
     ], 
     "MPI_Grequest_complete": [
         [
             "MPI_Request", 
-            "request"
+            "request",
+			"inout"
         ]
     ], 
     "MPI_Grequest_start": [
         [
             "MPI_Grequest_query_function*", 
-            "query_fn"
+            "query_fn",
+			"in"
         ], 
         [
             "MPI_Grequest_free_function*", 
-            "free_fn"
+            "free_fn",
+			"in"
         ], 
         [
             "MPI_Grequest_cancel_function*", 
-            "cancel_fn"
+            "cancel_fn",
+			"in"
         ], 
         [
             "void*", 
-            "extra_state"
+            "extra_state",
+			"in"
         ], 
         [
             "MPI_Request*", 
-            "request"
+            "request",
+			"inout"
         ]
     ], 
     "MPI_Group_c2f": [
         [
             "MPI_Group", 
-            "group"
+            "group",
+			"in"
         ]
     ], 
     "MPI_Group_compare": [
         [
             "MPI_Group", 
-            "group1"
+            "group1",
+			"in"
         ], 
         [
             "MPI_Group", 
-            "group2"
+            "group2",
+			"in"
         ], 
         [
             "int*", 
-            "result"
+            "result",
+			"out"
         ]
     ], 
     "MPI_Group_difference": [
         [
             "MPI_Group", 
-            "group1"
+            "group1",
+			"in"
         ], 
         [
             "MPI_Group", 
-            "group2"
+            "group2",
+			"in"
         ], 
         [
             "MPI_Group*", 
-            "newgroup"
+            "newgroup",
+			"out"
         ]
     ], 
     "MPI_Group_excl": [
         [
             "MPI_Group", 
-            "group"
+            "group",
+			"in"
         ], 
         [
             "int", 
-            "n"
+            "n",
+			"in"
         ], 
         [
             "int[]", 
-            "ranks"
+            "ranks",
+			"in",
+			"n"
         ], 
         [
             "MPI_Group*", 
-            "newgroup"
+            "newgroup",
+			"out"
         ]
     ], 
     "MPI_Group_free": [
         [
             "MPI_Group*", 
-            "group"
+            "group",
+			"inout"
         ]
     ], 
     "MPI_Group_incl": [
         [
             "MPI_Group", 
-            "group"
+            "group",
+			"in"
         ], 
         [
             "int", 
-            "n"
+            "n",
+			"in"
         ], 
         [
             "int[]", 
-            "ranks"
+            "ranks",
+			"in",
+			"n"
         ], 
         [
             "MPI_Group*", 
-            "newgroup"
+            "newgroup",
+			"out"
         ]
     ], 
     "MPI_Group_intersection": [
         [
             "MPI_Group", 
-            "group1"
+            "group1",
+			"in"
         ], 
         [
             "MPI_Group", 
-            "group2"
+            "group2",
+			"in"
         ], 
         [
             "MPI_Group*", 
-            "newgroup"
+            "newgroup",
+			"out"
         ]
     ], 
     "MPI_Group_range_excl": [
         [
             "MPI_Group", 
-            "group"
+            "group",
+			"in"
         ], 
         [
             "int", 
-            "n"
+            "n",
+			"in"
         ], 
         [
             "int[][3]", 
-            "ranges"
+            "ranges",
+			"in",
+			"n"
         ], 
         [
             "MPI_Group*", 
-            "newgroup"
+            "newgroup",
+			"out"
         ]
     ], 
     "MPI_Group_range_incl": [
         [
             "MPI_Group", 
-            "group"
+            "group",
+			"in"
         ], 
         [
             "int", 
-            "n"
+            "n",
+			"in"
         ], 
         [
             "int[][3]", 
-            "ranges"
+            "ranges",
+			"in",
+			"n"
         ], 
         [
             "MPI_Group*", 
-            "newgroup"
+            "newgroup",
+			"out"
         ]
     ], 
     "MPI_Group_rank": [
         [
             "MPI_Group", 
-            "group"
+            "group",
+			"in"
         ], 
         [
             "int*", 
-            "rank"
+            "rank",
+			"out"
         ]
     ], 
     "MPI_Group_size": [
         [
             "MPI_Group", 
-            "group"
+            "group",
+			"in"
         ], 
         [
             "int*", 
-            "size"
+            "size",
+			"out"
         ]
     ], 
     "MPI_Group_translate_ranks": [
         [
             "MPI_Group", 
-            "group1"
+            "group1",
+			"in"
         ], 
         [
             "int", 
-            "n"
+            "n",
+			"in"
         ], 
         [
             "int[]", 
-            "ranks1"
+            "ranks1",
+			"in",
+			"n"
         ], 
         [
             "MPI_Group", 
-            "group2"
+            "group2",
+			"in"
         ], 
         [
             "int[]", 
-            "ranks2"
+            "ranks2",
+			"out",
+			"n"
         ]
     ], 
     "MPI_Group_union": [
         [
             "MPI_Group", 
-            "group1"
+            "group1",
+			"in"
         ], 
         [
             "MPI_Group", 
-            "group2"
+            "group2",
+			"in"
         ], 
         [
             "MPI_Group*", 
-            "newgroup"
+            "newgroup",
+			"out"
         ]
     ], 
     "MPI_Ibsend": [
         [
             "void*", 
-            "buf"
+            "buf",
+			"in"
         ], 
         [
             "int", 
-            "count"
+            "count",
+			"in"
         ], 
         [
             "MPI_Datatype", 
-            "datatype"
+            "datatype",
+			"in"
         ], 
         [
             "int", 
-            "dest"
+            "dest",
+			"in"
         ], 
         [
             "int", 
-            "tag"
+            "tag",
+			"in"
         ], 
         [
             "MPI_Comm", 
-            "comm"
+            "comm",
+			"in"
         ], 
         [
             "MPI_Request*", 
-            "request"
+            "request",
+			"inout"
         ]
     ], 
     "MPI_Info_c2f": [
         [
             "MPI_Info", 
-            "info"
+            "info",
+			"in"
         ]
     ], 
     "MPI_Info_create": [
         [
             "MPI_Info*", 
-            "info"
+            "info",
+			"out"
         ]
     ], 
     "MPI_Info_delete": [
         [
             "MPI_Info", 
-            "info"
+            "info",
+			"in"
         ], 
         [
             "char*", 
-            "key"
+            "key",
+			"in"
         ]
     ], 
     "MPI_Info_dup": [
         [
             "MPI_Info", 
-            "info"
+            "info",
+			"in"
         ], 
         [
             "MPI_Info*", 
-            "newinfo"
+            "newinfo",
+			"out"
         ]
     ], 
     "MPI_Info_free": [
         [
             "MPI_Info*", 
-            "info"
+            "info",
+			"inout"
         ]
     ], 
     "MPI_Info_get": [
         [
             "MPI_Info", 
-            "info"
+            "info",
+			"in"
         ], 
         [
             "char*", 
-            "key"
+            "key",
+			"in"
         ], 
         [
             "int", 
-            "valuelen"
+            "valuelen",
+			"in"
         ], 
         [
             "char*", 
-            "value"
+            "value",
+			"out"
         ], 
         [
             "bool", 
-            "flag"
+            "flag",
+			"out"
         ]
     ], 
     "MPI_Info_get_nkeys": [
         [
             "MPI_Info", 
-            "info"
+            "info",
+			"in"
         ], 
         [
             "int*", 
-            "nkeys"
+            "nkeys",
+			"out"
         ]
     ], 
     "MPI_Info_get_nthkey": [
         [
             "MPI_Info", 
-            "info"
+            "info",
+			"in"
         ], 
         [
             "int", 
-            "n"
+            "n",
+			"in"
         ], 
         [
             "char*", 
-            "key"
+            "key",
+			"out"
         ]
     ], 
     "MPI_Info_get_valuelen": [
         [
             "MPI_Info", 
-            "info"
+            "info",
+			"in"
         ], 
         [
             "char*", 
-            "key"
+            "key",
+			"in"
         ], 
         [
             "int*", 
-            "valuelen"
+            "valuelen",
+			"out"
         ], 
         [
             "bool", 
-            "flag"
+            "flag",
+			"out"
         ]
     ], 
     "MPI_Info_set": [
         [
             "MPI_Info", 
-            "info"
+            "info",
+			"in"
         ], 
         [
             "char*", 
-            "key"
+            "key",
+			"in"
         ], 
         [
             "char*", 
-            "value"
+            "value",
+			"in"
         ]
     ], 
-    "MPI_Initialized": [
+	"MPI_Initialized": [
         [
             "bool", 
-            "flag"
+            "flag",
+			"out"
         ]
     ], 
     "MPI_Intercomm_create": [
         [
             "MPI_Comm", 
-            "local_comm"
+            "local_comm",
+			"in"
         ], 
         [
             "int", 
-            "local_leader"
+            "local_leader",
+			"in"
         ], 
         [
             "MPI_Comm", 
-            "bridge_comm"
+            "bridge_comm",
+			"in"
         ], 
         [
             "int", 
-            "remote_leader"
+            "remote_leader",
+			"in"
         ], 
         [
             "int", 
-            "tag"
+            "tag",
+			"in"
         ], 
         [
             "MPI_Comm*", 
-            "newintercomm"
+            "newintercomm",
+			"out"
         ]
     ], 
     "MPI_Intercomm_merge": [
         [
             "MPI_Comm", 
-            "intercomm"
+            "intercomm",
+			"in"
         ], 
         [
-            "bool", 
-            "high"
+            "int", 
+            "high",
+			"in"
         ], 
         [
             "MPI_Comm*", 
-            "newintercomm"
+            "newintercomm",
+			"out"
         ]
     ], 
     "MPI_Iprobe": [
         [
             "int", 
-            "source"
+            "source",
+			"in"
         ], 
         [
             "int", 
-            "tag"
+            "tag",
+			"in"
         ], 
         [
             "MPI_Comm", 
-            "comm"
+            "comm",
+			"in"
         ], 
         [
             "bool", 
-            "flag"
+            "flag",
+			"out"
         ], 
         [
             "MPI_Status*", 
-            "status"
+            "status",
+			"inout"
         ]
     ], 
     "MPI_Irecv": [
         [
             "void*", 
-            "buf"
+            "buf",
+			"out"
         ], 
         [
             "int", 
-            "count"
+            "count",
+			"in"
         ], 
         [
             "MPI_Datatype", 
-            "datatype"
+            "datatype",
+			"in"
         ], 
         [
             "int", 
-            "source"
+            "source",
+			"in"
         ], 
         [
             "int", 
-            "tag"
+            "tag",
+			"in"
         ], 
         [
             "MPI_Comm", 
-            "comm"
+            "comm",
+			"in"
         ], 
         [
             "MPI_Request*", 
-            "request"
+            "request",
+			"inout"
         ]
     ], 
     "MPI_Irsend": [
         [
             "void*", 
-            "buf"
+            "buf",
+			"in"
         ], 
         [
             "int", 
-            "count"
+            "count",
+			"in"
         ], 
         [
             "MPI_Datatype", 
-            "datatype"
+            "datatype",
+			"in"
         ], 
         [
             "int", 
-            "dest"
+            "dest",
+			"in"
         ], 
         [
             "int", 
-            "tag"
+            "tag",
+			"in"
         ], 
         [
             "MPI_Comm", 
-            "comm"
+            "comm",
+			"in"
         ], 
         [
             "MPI_Request*", 
-            "request"
+            "request",
+			"inout"
         ]
     ], 
     "MPI_Is_thread_main": [
         [
             "bool", 
-            "flag"
+            "flag",
+			"inout"
         ]
     ], 
     "MPI_Isend": [
         [
             "void*", 
-            "buf"
+            "buf",
+			"in"
         ], 
         [
             "int", 
-            "count"
+            "count",
+			"in"
         ], 
         [
             "MPI_Datatype", 
-            "datatype"
+            "datatype",
+			"in"
         ], 
         [
             "int", 
-            "dest"
+            "dest",
+			"in"
         ], 
         [
             "int", 
-            "tag"
+            "tag",
+			"in"
         ], 
         [
             "MPI_Comm", 
-            "comm"
+            "comm",
+			"in"
         ], 
         [
             "MPI_Request*", 
-            "request"
+            "request",
+			"inout"
         ]
     ], 
     "MPI_Issend": [
         [
             "void*", 
-            "buf"
+            "buf",
+			"in"
         ], 
         [
             "int", 
-            "count"
+            "count",
+			"in"
         ], 
         [
             "MPI_Datatype", 
-            "datatype"
+            "datatype",
+			"in"
         ], 
         [
             "int", 
-            "dest"
+            "dest",
+			"in"
         ], 
         [
             "int", 
-            "tag"
+            "tag",
+			"in"
         ], 
         [
             "MPI_Comm", 
-            "comm"
+            "comm",
+			"in"
         ], 
         [
             "MPI_Request*", 
-            "request"
+            "request",
+			"inout"
         ]
     ], 
     "MPI_Keyval_create": [
         [
             "MPI_Copy_function*", 
-            "copy_fn"
+            "copy_fn",
+			"in"
         ], 
         [
             "MPI_Delete_function*", 
-            "delete_fn"
+            "delete_fn",
+			"in"
         ], 
         [
             "int*", 
-            "keyval"
+            "keyval",
+			"out"
         ], 
         [
             "void*", 
-            "extra_state"
+            "extra_state",
+			"in"
         ]
     ], 
     "MPI_Keyval_free": [
         [
             "int*", 
-            "keyval"
+            "keyval",
+			"inout"
         ]
     ], 
     "MPI_Lookup_name": [
         [
             "char*", 
-            "service_name"
+            "service_name",
+			"in"
         ], 
         [
             "MPI_Info", 
-            "info"
+            "info",
+			"in"
         ], 
         [
             "char*", 
-            "port_name"
+            "port_name",
+			"in"
         ]
     ], 
     "MPI_Op_c2f": [
         [
             "MPI_Op", 
-            "op"
+            "op",
+			"in"
         ]
     ], 
     "MPI_Op_commutative": [
         [
             "MPI_Op", 
-            "op"
+            "op",
+			"in"
         ], 
         [
-            "bool", 
-            "commute"
+            "int*", 
+            "commute",
+			"out"
         ]
     ], 
     "MPI_Op_create": [
         [
             "MPI_User_function*", 
-            "function"
+            "function",
+			"in"
         ], 
         [
-            "bool", 
-            "commute"
+            "int", 
+            "commute",
+			"in"
         ], 
         [
             "MPI_Op*", 
-            "op"
+            "op",
+			"out"
         ]
     ], 
     "MPI_Op_free": [
         [
             "MPI_Op*", 
-            "op"
+            "op",
+			"inout"
         ]
     ], 
     "MPI_Open_port": [
         [
             "MPI_Info", 
-            "info"
+            "info",
+			"in"
         ], 
         [
             "char*", 
-            "port_name"
+            "port_name",
+			"in"
         ]
     ], 
     "MPI_Pack": [
         [
             "void*", 
-            "inbuf"
+            "inbuf",
+			"in"
         ], 
         [
             "int", 
-            "incount"
+            "incount",
+			"in"
         ], 
         [
             "MPI_Datatype", 
-            "datatype"
+            "datatype",
+			"in"
         ], 
         [
             "void*", 
-            "outbuf"
+            "outbuf",
+			"out"
         ], 
         [
             "int", 
-            "outsize"
+            "outsize",
+			"in"
         ], 
         [
             "int*", 
-            "position"
+            "position",
+			"out"
         ], 
         [
             "MPI_Comm", 
-            "comm"
+            "comm",
+			"in"
         ]
     ], 
     "MPI_Pack_external": [
         [
             "char*", 
-            "datarep"
+            "datarep",
+			"in"
         ], 
         [
             "void*", 
-            "inbuf"
+            "inbuf",
+			"in"
         ], 
         [
             "int", 
-            "incount"
+            "incount",
+			"in"
         ], 
         [
             "MPI_Datatype", 
-            "datatype"
+            "datatype",
+			"in"
         ], 
         [
             "void*", 
-            "outbuf"
+            "outbuf",
+			"out"
         ], 
         [
             "MPI_Aint", 
-            "outsize"
+            "outsize",
+			"in"
         ], 
         [
             "MPI_Aint*", 
-            "position"
+            "position",
+			"out"
         ]
     ], 
     "MPI_Pack_external_size": [
         [
             "char*", 
-            "datarep"
+            "datarep",
+			"in"
         ], 
         [
             "int", 
-            "incount"
+            "incount",
+			"in"
         ], 
         [
             "MPI_Datatype", 
-            "datatype"
+            "datatype",
+			"in"
         ], 
         [
             "MPI_Aint*", 
-            "size"
+            "size",
+			"out"
         ]
     ], 
     "MPI_Pack_size": [
         [
             "int", 
-            "incount"
+            "incount",
+			"in"
         ], 
         [
             "MPI_Datatype", 
-            "datatype"
+            "datatype",
+			"in"
         ], 
         [
             "MPI_Comm", 
-            "comm"
+            "comm",
+			"in"
         ], 
         [
             "int*", 
-            "size"
+            "size",
+			"out"
         ]
     ], 
     "MPI_Probe": [
         [
             "int", 
-            "source"
+            "source",
+			"in"
         ], 
         [
             "int", 
-            "tag"
+            "tag",
+			"in"
         ], 
         [
             "MPI_Comm", 
-            "comm"
+            "comm",
+			"in"
         ], 
         [
             "MPI_Status*", 
-            "status"
+            "status",
+			"inout"
         ]
     ], 
     "MPI_Publish_name": [
         [
             "char*", 
-            "service_name"
+            "service_name",
+			"in"
         ], 
         [
             "MPI_Info", 
-            "info"
+            "info",
+			"in"
         ], 
         [
             "char*", 
-            "port_name"
+            "port_name",
+			"in"
         ]
     ], 
     "MPI_Put": [
         [
             "void*", 
-            "origin_addr"
+            "origin_addr",
+			"in"
         ], 
         [
             "int", 
-            "origin_count"
+            "origin_count",
+			"in"
         ], 
         [
             "MPI_Datatype", 
-            "origin_datatype"
+            "origin_datatype",
+			"in"
         ], 
         [
             "int", 
-            "target_rank"
+            "target_rank",
+			"in"
         ], 
         [
             "MPI_Aint", 
-            "target_disp"
+            "target_disp",
+			"in"
         ], 
         [
             "int", 
-            "target_count"
+            "target_count",
+			"in"
         ], 
         [
             "MPI_Datatype", 
-            "target_datatype"
+            "target_datatype",
+			"in"
         ], 
         [
             "MPI_Win", 
-            "win"
+            "win",
+			"in"
         ]
     ], 
     "MPI_Query_thread": [
         [
             "int*", 
-            "provided"
+            "provided",
+			"out"
         ]
     ], 
     "MPI_Recv": [
         [
             "void*", 
-            "buf"
+            "buf",
+			"out"
         ], 
         [
             "int", 
-            "count"
+            "count",
+			"in"
         ], 
         [
             "MPI_Datatype", 
-            "datatype"
+            "datatype",
+			"in"
         ], 
         [
             "int", 
-            "source"
+            "source",
+			"in"
         ], 
         [
             "int", 
-            "tag"
+            "tag",
+			"in"
         ], 
         [
             "MPI_Comm", 
-            "comm"
+            "comm",
+			"in"
         ], 
         [
             "MPI_Status*", 
-            "status"
+            "status",
+			"inout"
         ]
     ], 
     "MPI_Recv_init": [
         [
             "void*", 
-            "buf"
+            "buf",
+			"in"
         ], 
         [
             "int", 
-            "count"
+            "count",
+			"in"
         ], 
         [
             "MPI_Datatype", 
-            "datatype"
+            "datatype",
+			"in"
         ], 
         [
             "int", 
-            "source"
+            "source",
+			"in"
         ], 
         [
             "int", 
-            "tag"
+            "tag",
+			"in"
         ], 
         [
             "MPI_Comm", 
-            "comm"
+            "comm",
+			"in"
         ], 
         [
             "MPI_Request*", 
-            "request"
+            "request",
+			"inout"
         ]
     ], 
     "MPI_Reduce": [
         [
             "void*", 
-            "sendbuf"
+            "sendbuf",
+			"in"
         ], 
         [
             "void*", 
-            "recvbuf"
+            "recvbuf",
+			"out"
         ], 
         [
             "int", 
-            "count"
+            "count",
+			"in"
         ], 
         [
             "MPI_Datatype", 
-            "datatype"
+            "datatype",
+			"in"
         ], 
         [
             "MPI_Op", 
-            "op"
+            "op",
+			"in"
         ], 
         [
             "int", 
-            "root"
+            "root",
+			"in"
         ], 
         [
             "MPI_Comm", 
-            "comm"
+            "comm",
+			"in"
         ]
     ], 
     "MPI_Reduce_local": [
         [
             "void*", 
-            "inbuf"
+            "inbuf",
+			"in"
         ], 
         [
             "void*", 
-            "inoutbuf"
+            "inoutbuf",
+			"inout"
         ], 
         [
             "int", 
-            "count"
+            "count",
+			"in"
         ], 
         [
             "MPI_Datatype", 
-            "datatype"
+            "datatype",
+			"in"
         ], 
         [
             "MPI_Op", 
-            "op"
+            "op",
+			"in"
         ]
     ], 
     "MPI_Reduce_scatter": [
         [
             "void*", 
-            "sendbuf"
+            "sendbuf",
+			"in"
         ], 
         [
             "void*", 
-            "recvbuf"
+            "recvbuf",
+			"out"
         ], 
         [
             "int[]", 
-            "recvcounts"
+            "recvcounts",
+			"in",
+			"*"
         ], 
         [
             "MPI_Datatype", 
-            "datatype"
+            "datatype",
+			"in"
         ], 
         [
             "MPI_Op", 
-            "op"
+            "op",
+			"in"
         ], 
         [
             "MPI_Comm", 
-            "comm"
+            "comm",
+			"in"
         ]
     ], 
     "MPI_Register_datarep": [
         [
             "char*", 
-            "datarep"
+            "datarep",
+			"in"
         ], 
         [
             "MPI_Datarep_conversion_function*", 
-            "read_conversion_fn"
+            "read_conversion_fn",
+			"in"
         ], 
         [
             "MPI_Datarep_conversion_function*", 
-            "write_conversion_fn"
+            "write_conversion_fn",
+			"in"
         ], 
         [
             "MPI_Datarep_extent_function*", 
-            "dtype_file_extent_fn"
+            "dtype_file_extent_fn",
+			"in"
         ], 
         [
             "void*", 
-            "extra_state"
+            "extra_state",
+			"in"
         ]
     ], 
     "MPI_Request_c2f": [
         [
             "MPI_Request", 
-            "request"
+            "request",
+			"in"
         ]
     ], 
     "MPI_Request_free": [
         [
             "MPI_Request*", 
-            "request"
+            "request",
+			"inout"
         ]
     ], 
     "MPI_Request_get_status": [
         [
             "MPI_Request", 
-            "request"
+            "request",
+			"in"
         ], 
         [
             "bool", 
-            "flag"
+            "flag",
+			"out"
         ], 
         [
             "MPI_Status*", 
-            "status"
+            "status",
+			"inout"
         ]
     ], 
     "MPI_Rsend": [
         [
             "void*", 
-            "ibuf"
+            "ibuf",
+			"in"
         ], 
         [
             "int", 
-            "count"
+            "count",
+			"in"
         ], 
         [
             "MPI_Datatype", 
-            "datatype"
+            "datatype",
+			"in"
         ], 
         [
             "int", 
-            "dest"
+            "dest",
+			"in"
         ], 
         [
             "int", 
-            "tag"
+            "tag",
+			"in"
         ], 
         [
             "MPI_Comm", 
-            "comm"
+            "comm",
+			"in"
         ]
     ], 
     "MPI_Rsend_init": [
         [
             "void*", 
-            "buf"
+            "buf",
+			"in"
         ], 
         [
             "int", 
-            "count"
+            "count",
+			"in"
         ], 
         [
             "MPI_Datatype", 
-            "datatype"
+            "datatype",
+			"in"
         ], 
         [
             "int", 
-            "dest"
+            "dest",
+			"in"
         ], 
         [
             "int", 
-            "tag"
+            "tag",
+			"in"
         ], 
         [
             "MPI_Comm", 
-            "comm"
+            "comm",
+			"in"
         ], 
         [
             "MPI_Request*", 
-            "request"
+            "request",
+			"inout"
         ]
     ], 
     "MPI_Scan": [
         [
             "void*", 
-            "sendbuf"
+            "sendbuf",
+			"in"
         ], 
         [
             "void*", 
-            "recvbuf"
+            "recvbuf",
+			"in"
         ], 
         [
             "int", 
-            "count"
+            "count",
+			"in"
         ], 
         [
             "MPI_Datatype", 
-            "datatype"
+            "datatype",
+			"in"
         ], 
         [
             "MPI_Op", 
-            "op"
+            "op",
+			"in"
         ], 
         [
             "MPI_Comm", 
-            "comm"
+            "comm",
+			"in"
         ]
     ], 
     "MPI_Scatter": [
         [
             "void*", 
-            "sendbuf"
+            "sendbuf",
+			"in"
         ], 
         [
             "int", 
-            "sendcount"
+            "sendcount",
+			"in"
         ], 
         [
             "MPI_Datatype", 
-            "sendtype"
+            "sendtype",
+			"in"
         ], 
         [
             "void*", 
-            "recvbuf"
+            "recvbuf",
+			"out"
         ], 
         [
             "int", 
-            "recvcount"
+            "recvcount",
+			"in"
         ], 
         [
             "MPI_Datatype", 
-            "recvtype"
+            "recvtype",
+			"in"
         ], 
         [
             "int", 
-            "root"
+            "root",
+			"in"
         ], 
         [
             "MPI_Comm", 
-            "comm"
+            "comm",
+			"in"
         ]
     ], 
     "MPI_Scatterv": [
         [
             "void*", 
-            "sendbuf"
+            "sendbuf",
+			"in"
         ], 
         [
             "int[]", 
-            "sendcounts"
+            "sendcounts",
+			"in",
+			"*"
         ], 
         [
             "int[]", 
-            "displs"
+            "displs",
+			"in",
+			"*"
         ], 
         [
             "MPI_Datatype", 
-            "sendtype"
+            "sendtype",
+			"in"
         ], 
         [
             "void*", 
-            "recvbuf"
+            "recvbuf",
+			"out"
         ], 
         [
             "int", 
-            "recvcount"
+            "recvcount",
+			"in"
         ], 
         [
             "MPI_Datatype", 
-            "recvtype"
+            "recvtype",
+			"in"
         ], 
         [
             "int", 
-            "root"
+            "root",
+			"in"
         ], 
         [
             "MPI_Comm", 
-            "comm"
+            "comm",
+			"in"
         ]
     ], 
     "MPI_Send": [
         [
             "void*", 
-            "buf"
+            "buf",
+			"in"
         ], 
         [
             "int", 
-            "count"
+            "count",
+			"in"
         ], 
         [
             "MPI_Datatype", 
-            "datatype"
+            "datatype",
+			"in"
         ], 
         [
             "int", 
-            "dest"
+            "dest",
+			"in"
         ], 
         [
             "int", 
-            "tag"
+            "tag",
+			"in"
         ], 
         [
             "MPI_Comm", 
-            "comm"
+            "comm",
+			"in"
         ]
     ], 
     "MPI_Send_init": [
         [
             "void*", 
-            "buf"
+            "buf",
+			"in"
         ], 
         [
             "int", 
-            "count"
+            "count",
+			"in"
         ], 
         [
             "MPI_Datatype", 
-            "datatype"
+            "datatype",
+			"in"
         ], 
         [
             "int", 
-            "dest"
+            "dest",
+			"in"
         ], 
         [
             "int", 
-            "tag"
+            "tag",
+			"in"
         ], 
         [
             "MPI_Comm", 
-            "comm"
+            "comm",
+			"in"
         ], 
         [
             "MPI_Request*", 
-            "request"
+            "request",
+			"inout"
         ]
     ], 
     "MPI_Sendrecv": [
         [
             "void*", 
-            "sendbuf"
+            "sendbuf",
+			"in"
         ], 
         [
             "int", 
-            "sendcount"
+            "sendcount",
+			"in"
         ], 
         [
             "MPI_Datatype", 
-            "sendtype"
+            "sendtype",
+			"in"
         ], 
         [
             "int", 
-            "dest"
+            "dest",
+			"in"
         ], 
         [
             "int", 
-            "sendtag"
+            "sendtag",
+			"in"
         ], 
         [
             "void*", 
-            "recvbuf"
+            "recvbuf",
+			"out"
         ], 
         [
             "int", 
-            "recvcount"
+            "recvcount",
+			"in"
         ], 
         [
             "MPI_Datatype", 
-            "recvtype"
+            "recvtype",
+			"in"
         ], 
         [
             "int", 
-            "source"
+            "source",
+			"in"
         ], 
         [
             "int", 
-            "recvtag"
+            "recvtag",
+			"in"
         ], 
         [
             "MPI_Comm", 
-            "comm"
+            "comm",
+			"in"
         ], 
         [
             "MPI_Status*", 
-            "status"
+            "status",
+			"inout"
         ]
     ], 
     "MPI_Sendrecv_replace": [
         [
             "void*", 
-            "buf"
+            "buf",
+			"inout"
         ], 
         [
             "int", 
-            "count"
+            "count",
+			"in"
         ], 
         [
             "MPI_Datatype", 
-            "datatype"
+            "datatype",
+			"in"
         ], 
         [
             "int", 
-            "dest"
+            "dest",
+			"in"
         ], 
         [
             "int", 
-            "sendtag"
+            "sendtag",
+			"in"
         ], 
         [
             "int", 
-            "source"
+            "source",
+			"in"
         ], 
         [
             "int", 
-            "recvtag"
+            "recvtag",
+			"in"
         ], 
         [
             "MPI_Comm", 
-            "comm"
+            "comm",
+			"in"
         ], 
         [
             "MPI_Status*", 
-            "status"
+            "status",
+			"inout"
         ]
     ], 
     "MPI_Ssend": [
         [
             "void*", 
-            "buf"
+            "buf",
+			"in"
         ], 
         [
             "int", 
-            "count"
+            "count",
+			"in"
         ], 
         [
             "MPI_Datatype", 
-            "datatype"
+            "datatype",
+			"in"
         ], 
         [
             "int", 
-            "dest"
+            "dest",
+			"in"
         ], 
         [
             "int", 
-            "tag"
+            "tag",
+			"in"
         ], 
         [
             "MPI_Comm", 
-            "comm"
+            "comm",
+			"in"
         ]
     ], 
     "MPI_Ssend_init": [
         [
             "void*", 
-            "buf"
+            "buf",
+			"in"
         ], 
         [
             "int", 
-            "count"
+            "count",
+			"in"
         ], 
         [
             "MPI_Datatype", 
-            "datatype"
+            "datatype",
+			"in"
         ], 
         [
             "int", 
-            "dest"
+            "dest",
+			"in"
         ], 
         [
             "int", 
-            "tag"
+            "tag",
+			"in"
         ], 
         [
             "MPI_Comm", 
-            "comm"
+            "comm",
+			"in"
         ], 
         [
             "MPI_Request*", 
-            "request"
+            "request",
+			"inout"
         ]
     ], 
     "MPI_Start": [
         [
             "MPI_Request*", 
-            "request"
+            "request",
+			"inout"
         ]
     ], 
     "MPI_Startall": [
         [
             "int", 
-            "count"
+            "count",
+			"in"
         ], 
         [
             "MPI_Request[]", 
-            "array_of_requests"
+            "array_of_requests",
+			"inout",
+			"count"
         ]
     ], 
     "MPI_Status_c2f": [
         [
             "MPI_Status*", 
-            "c_status"
+            "c_status",
+			"in"
         ], 
         [
             "int*", 
-            "f_status"
+            "f_status",
+			"out"
         ]
     ], 
     "MPI_Status_f2c": [
         [
             "int*", 
-            "f_status"
+            "f_status",
+			"in"
         ], 
         [
             "MPI_Status*", 
-            "c_status"
+            "c_status",
+			"out"
         ]
     ], 
     "MPI_Status_set_cancelled": [
         [
             "MPI_Status*", 
-            "status"
+            "status",
+			"inout"
         ], 
         [
-            "bool", 
-            "flag"
+            "int", 
+            "flag",
+			"out"
         ]
     ], 
     "MPI_Status_set_elements": [
         [
             "MPI_Status*", 
-            "status"
+            "status",
+			"inout"
         ], 
         [
             "MPI_Datatype", 
-            "datatype"
+            "datatype",
+			"in"
         ], 
         [
             "int", 
-            "count"
+            "count",
+			"in"
         ]
     ], 
     "MPI_Test": [
         [
             "MPI_Request*", 
-            "request"
+            "request",
+			"in"
         ], 
         [
             "bool", 
-            "flag"
+            "flag",
+			"out"
         ], 
         [
             "MPI_Status*", 
-            "status"
+            "status",
+			"inout"
         ]
     ], 
     "MPI_Test_cancelled": [
         [
             "MPI_Status*", 
-            "status"
+            "status",
+			"in"
         ], 
         [
             "bool", 
-            "flag"
+            "flag",
+			"out"
         ]
     ], 
     "MPI_Testall": [
         [
             "int", 
-            "count"
+            "count",
+			"in"
         ], 
         [
             "MPI_Request[]", 
-            "array_of_requests"
+            "array_of_requests",
+			"in",
+			"count"
         ], 
         [
             "bool", 
-            "flag"
+            "flag",
+			"out"
         ], 
         [
             "MPI_Status[]", 
-            "array_of_statuses"
+            "array_of_statuses",
+			"out",
+			"count"
         ]
     ], 
     "MPI_Testany": [
         [
             "int", 
-            "count"
+            "count",
+			"in"
         ], 
         [
             "MPI_Request[]", 
-            "array_of_requests"
+            "array_of_requests",
+			"in",
+			"count"
         ], 
         [
             "int*", 
-            "index"
+            "index",
+			"out"
         ], 
         [
             "bool", 
-            "flag"
+            "flag",
+			"out"
         ], 
         [
             "MPI_Status*", 
-            "status"
+            "status",
+			"inout"
         ]
     ], 
     "MPI_Testsome": [
         [
             "int", 
-            "incount"
+            "incount",
+			"in"
         ], 
         [
             "MPI_Request[]", 
-            "array_of_requests"
+            "array_of_requests",
+			"inout",
+			"incount"
         ], 
         [
             "int*", 
-            "outcount"
+            "outcount",
+			"inout"
         ], 
         [
             "int[]", 
-            "array_of_indices"
+            "array_of_indices",
+			"out",
+			"*"
         ], 
         [
             "MPI_Status[]", 
-            "array_of_statuses"
+            "array_of_statuses",
+			"in",
+			"*"
         ]
     ], 
     "MPI_Topo_test": [
         [
             "MPI_Comm", 
-            "comm"
+            "comm",
+			"in"
         ], 
         [
             "int*", 
-            "status"
+            "status",
+			"out"
         ]
     ], 
     "MPI_Type_c2f": [
         [
             "MPI_Datatype", 
-            "datatype"
+            "datatype",
+			"in"
         ]
     ], 
     "MPI_Type_commit": [
         [
             "MPI_Datatype*", 
-            "type"
+            "type",
+			"inout"
         ]
     ], 
     "MPI_Type_contiguous": [
         [
             "int", 
-            "count"
+            "count",
+			"in"
         ], 
         [
             "MPI_Datatype", 
-            "oldtype"
+            "oldtype",
+			"in"
         ], 
         [
             "MPI_Datatype*", 
-            "newtype"
+            "newtype",
+			"out"
         ]
     ], 
     "MPI_Type_create_darray": [
         [
             "int", 
-            "size"
+            "size",
+			"in"
         ], 
         [
             "int", 
-            "rank"
+            "rank",
+			"in"
         ], 
         [
             "int", 
-            "ndims"
+            "ndims",
+			"in"
         ], 
         [
             "int[]", 
-            "gsize_array"
+            "gsize_array",
+			"in",
+			"ndims"
         ], 
         [
             "int[]", 
-            "distrib_array"
+            "distrib_array",
+			"in",
+			"ndims"
         ], 
         [
             "int[]", 
-            "darg_array"
+            "darg_array",
+			"in",
+			"ndims"
         ], 
         [
             "int[]", 
-            "psize_array"
+            "psize_array",
+			"in",
+			"ndims"
         ], 
         [
             "int", 
-            "order"
+            "order",
+			"in"
         ], 
         [
             "MPI_Datatype", 
-            "oldtype"
+            "oldtype",
+			"in"
         ], 
         [
             "MPI_Datatype*", 
-            "newtype"
+            "newtype",
+			"out"
         ]
     ], 
     "MPI_Type_create_f90_complex": [
         [
             "int", 
-            "p"
+            "p",
+			"in"
         ], 
         [
             "int", 
-            "r"
+            "r",
+			"in"
         ], 
         [
             "MPI_Datatype*", 
-            "newtype"
+            "newtype",
+			"out"
         ]
     ], 
     "MPI_Type_create_f90_integer": [
         [
             "int", 
-            "r"
+            "r",
+			"in"
         ], 
         [
             "MPI_Datatype*", 
-            "newtype"
+            "newtype",
+			"out"
         ]
     ], 
     "MPI_Type_create_f90_real": [
         [
             "int", 
-            "p"
+            "p",
+			"in"
         ], 
         [
             "int", 
-            "r"
+            "r",
+			"in"
         ], 
         [
             "MPI_Datatype*", 
-            "newtype"
+            "newtype",
+			"out"
         ]
     ], 
     "MPI_Type_create_hindexed": [
         [
             "int", 
-            "count"
+            "count",
+			"in"
         ], 
         [
             "int[]", 
-            "array_of_blocklengths"
+            "array_of_blocklengths",
+			"in",
+			"count"
         ], 
         [
             "MPI_Aint[]", 
-            "array_of_displacements"
+            "array_of_displacements",
+			"in",
+			"count"
         ], 
         [
             "MPI_Datatype", 
-            "oldtype"
+            "oldtype",
+			"in"
         ], 
         [
             "MPI_Datatype*", 
-            "newtype"
+            "newtype",
+			"out"
         ]
     ], 
     "MPI_Type_create_hvector": [
         [
             "int", 
-            "count"
+            "count",
+			"in"
         ], 
         [
             "int", 
-            "blocklength"
+            "blocklength",
+			"in"
         ], 
         [
             "MPI_Aint", 
-            "stride"
+            "stride",
+			"in"
         ], 
         [
             "MPI_Datatype", 
-            "oldtype"
+            "oldtype",
+			"in"
         ], 
         [
             "MPI_Datatype*", 
-            "newtype"
+            "newtype",
+			"out"
         ]
     ], 
     "MPI_Type_create_indexed_block": [
         [
             "int", 
-            "count"
+            "count",
+			"in"
         ], 
         [
             "int", 
-            "blocklength"
+            "blocklength",
+			"in"
         ], 
         [
             "int[]", 
-            "array_of_displacements"
+            "array_of_displacements",
+			"in",
+			"count"
         ], 
         [
             "MPI_Datatype", 
-            "oldtype"
+            "oldtype",
+			"in"
         ], 
         [
             "MPI_Datatype*", 
-            "newtype"
+            "newtype",
+			"out"
         ]
     ], 
     "MPI_Type_create_keyval": [
         [
             "MPI_Type_copy_attr_function*", 
-            "type_copy_attr_fn"
+            "type_copy_attr_fn",
+			"in"
         ], 
         [
             "MPI_Type_delete_attr_function*", 
-            "type_delete_attr_fn"
+            "type_delete_attr_fn",
+			"in"
         ], 
         [
             "int*", 
-            "type_keyval"
+            "type_keyval",
+			"out"
         ], 
         [
             "void*", 
-            "extra_state"
+            "extra_state",
+			"in"
         ]
     ], 
     "MPI_Type_create_resized": [
         [
             "MPI_Datatype", 
-            "oldtype"
+            "oldtype",
+			"in"
         ], 
         [
             "MPI_Aint", 
-            "lb"
+            "lb",
+			"in"
         ], 
         [
             "MPI_Aint", 
-            "extent"
+            "extent",
+			"in"
         ], 
         [
             "MPI_Datatype*", 
-            "newtype"
+            "newtype",
+			"out"
         ]
     ], 
     "MPI_Type_create_struct": [
         [
             "int", 
-            "count"
+            "count",
+			"in"
         ], 
         [
             "int[]", 
-            "array_of_block_lengths"
+            "array_of_block_lengths",
+			"in",
+			"count"
         ], 
         [
             "MPI_Aint[]", 
-            "array_of_displacements"
+            "array_of_displacements",
+			"in",
+			"count"
         ], 
         [
             "MPI_Datatype[]", 
-            "array_of_types"
+            "array_of_types",
+			"in",
+			"count"
         ], 
         [
             "MPI_Datatype*", 
-            "newtype"
+            "newtype",
+			"out"
         ]
     ], 
     "MPI_Type_create_subarray": [
         [
             "int", 
-            "ndims"
+            "ndims",
+			"in"
         ], 
         [
             "int[]", 
-            "size_array"
+            "size_array",
+			"in",
+			"ndims"
         ], 
         [
             "int[]", 
-            "subsize_array"
+            "subsize_array",
+			"in",
+			"ndims"
         ], 
         [
             "int[]", 
-            "start_array"
+            "start_array",
+			"in",
+			"ndims"
         ], 
         [
             "int", 
-            "order"
+            "order",
+			"in"
         ], 
         [
             "MPI_Datatype", 
-            "oldtype"
+            "oldtype",
+			"in"
         ], 
         [
             "MPI_Datatype*", 
-            "newtype"
+            "newtype",
+			"out"
         ]
     ], 
     "MPI_Type_delete_attr": [
         [
             "MPI_Datatype", 
-            "type"
+            "type",
+			"in"
         ], 
         [
             "int", 
-            "type_keyval"
+            "type_keyval",
+			"in"
         ]
     ], 
     "MPI_Type_dup": [
         [
             "MPI_Datatype", 
-            "type"
+            "type",
+			"in"
         ], 
         [
             "MPI_Datatype*", 
-            "newtype"
+            "newtype",
+			"out"
         ]
     ], 
     "MPI_Type_extent": [
         [
             "MPI_Datatype", 
-            "type"
+            "type",
+			"in"
         ], 
         [
-            "int", 
-            "extent"
+            "MPI_Aint*", 
+            "extent",
+			"out"
         ]
     ], 
     "MPI_Type_free": [
         [
             "MPI_Datatype*", 
-            "type"
+            "type",
+			"inout"
         ]
     ], 
     "MPI_Type_free_keyval": [
         [
             "int*", 
-            "type_keyval"
+            "type_keyval",
+			"inout"
         ]
     ], 
     "MPI_Type_get_attr": [
         [
             "MPI_Datatype", 
-            "type"
+            "type",
+			"in"
         ], 
         [
             "int", 
-            "type_keyval"
+            "type_keyval",
+			"in"
         ], 
         [
             "void*", 
-            "attribute_val"
+            "attribute_val",
+			"out"
         ], 
         [
             "bool", 
-            "flag"
+            "flag",
+			"out"
         ]
     ], 
     "MPI_Type_get_contents": [
         [
             "MPI_Datatype", 
-            "mtype"
+            "mtype",
+			"in"
         ], 
         [
             "int", 
-            "max_integers"
+            "max_integers",
+			"in"
         ], 
         [
             "int", 
-            "max_addresses"
+            "max_addresses",
+			"in"
         ], 
         [
             "int", 
-            "max_datatypes"
+            "max_datatypes",
+			"in"
         ], 
         [
             "int[]", 
-            "array_of_integers"
+            "array_of_integers",
+			"in",
+			"max_integers"
         ], 
         [
             "MPI_Aint[]", 
-            "array_of_addresses"
+            "array_of_addresses",
+			"in",
+			"max_addresses"
         ], 
         [
             "MPI_Datatype[]", 
-            "array_of_datatypes"
+            "array_of_datatypes",
+			"in",
+			"max_datatypes"
         ]
     ], 
     "MPI_Type_get_envelope": [
         [
             "MPI_Datatype", 
-            "type"
+            "type",
+			"in"
         ], 
         [
             "int*", 
-            "num_integers"
+            "num_integers",
+			"out"
         ], 
         [
             "int*", 
-            "num_addresses"
+            "num_addresses",
+			"out"
         ], 
         [
             "int*", 
-            "num_datatypes"
+            "num_datatypes",
+			"out"
         ], 
         [
             "int*", 
-            "combiner"
+            "combiner",
+			"out"
         ]
     ], 
     "MPI_Type_get_extent": [
         [
             "MPI_Datatype", 
-            "type"
+            "type",
+			"in"
         ], 
         [
             "MPI_Aint*", 
-            "lb"
+            "lb",
+			"out"
         ], 
         [
             "MPI_Aint*", 
-            "extent"
+            "extent",
+			"out"
         ]
     ], 
     "MPI_Type_get_name": [
         [
             "MPI_Datatype", 
-            "type"
+            "type",
+			"in"
         ], 
         [
             "char*", 
-            "type_name"
+            "type_name",
+			"out"
         ], 
         [
             "int*", 
-            "resultlen"
+            "resultlen",
+			"out"
         ]
     ], 
     "MPI_Type_get_true_extent": [
         [
             "MPI_Datatype", 
-            "datatype"
+            "datatype",
+			"in"
         ], 
         [
             "MPI_Aint*", 
-            "true_lb"
+            "true_lb",
+			"out"
         ], 
         [
             "MPI_Aint*", 
-            "true_extent"
+            "true_extent",
+			"out"
         ]
     ], 
     "MPI_Type_hindexed": [
         [
             "int", 
-            "count"
+            "count",
+			"in"
         ], 
         [
             "int[]", 
-            "array_of_blocklengths"
+            "array_of_blocklengths",
+			"in",
+			"count"
         ], 
         [
             "int[]", 
-            "array_of_displacements"
+            "array_of_displacements",
+			"in",
+			"count"
         ], 
         [
             "MPI_Datatype", 
-            "oldtype"
+            "oldtype",
+			"in"
         ], 
         [
             "MPI_Datatype*", 
-            "newtype"
+            "newtype",
+			"out"
         ]
     ], 
     "MPI_Type_hvector": [
         [
             "int", 
-            "count"
+            "count",
+			"in"
         ], 
         [
             "int", 
-            "blocklength"
+            "blocklength",
+			"in"
         ], 
         [
             "int", 
-            "stride"
+            "stride",
+			"in"
         ], 
         [
             "MPI_Datatype", 
-            "oldtype"
+            "oldtype",
+			"in"
         ], 
         [
             "MPI_Datatype*", 
-            "newtype"
+            "newtype",
+			"out"
         ]
     ], 
     "MPI_Type_indexed": [
         [
             "int", 
-            "count"
+            "count",
+			"in"
         ], 
         [
             "int[]", 
-            "array_of_blocklengths"
+            "array_of_blocklengths",
+			"in",
+			"count"
         ], 
         [
             "int[]", 
-            "array_of_displacements"
+            "array_of_displacements",
+			"in",
+			"count"
         ], 
         [
             "MPI_Datatype", 
-            "oldtype"
+            "oldtype",
+			"in"
         ], 
         [
             "MPI_Datatype*", 
-            "newtype"
+            "newtype",
+			"out"
         ]
     ], 
     "MPI_Type_lb": [
         [
             "MPI_Datatype", 
-            "type"
+            "type",
+			"in"
         ], 
         [
-            "int", 
-            "lb"
+            "MPI_Aint*", 
+            "lb",
+			"in"
         ]
     ], 
     "MPI_Type_match_size": [
         [
             "int", 
-            "typeclass"
+            "typeclass",
+			"in"
         ], 
         [
             "int", 
-            "size"
+            "size",
+			"in"
         ], 
         [
             "MPI_Datatype*", 
-            "type"
+            "type",
+			"out"
         ]
     ], 
     "MPI_Type_set_attr": [
         [
             "MPI_Datatype", 
-            "type"
+            "type",
+			"in"
         ], 
         [
             "int", 
-            "type_keyval"
+            "type_keyval",
+			"in"
         ], 
         [
             "void*", 
-            "attr_val"
+            "attr_val",
+			"in"
         ]
     ], 
     "MPI_Type_set_name": [
         [
             "MPI_Datatype", 
-            "type"
+            "type",
+			"in"
         ], 
         [
             "char*", 
-            "type_name"
+            "type_name",
+			"in"
         ]
     ], 
     "MPI_Type_size": [
         [
             "MPI_Datatype", 
-            "type"
+            "type",
+			"in"
         ], 
         [
             "int*", 
-            "size"
+            "size",
+			"out"
         ]
     ], 
     "MPI_Type_struct": [
         [
             "int", 
-            "count"
+            "count",
+			"in"
         ], 
         [
             "int[]", 
-            "array_of_blocklengths"
+            "array_of_blocklengths",
+			"in",
+			"count"
         ], 
         [
             "int[]", 
-            "array_of_displacements"
+            "array_of_displacements",
+			"in",
+			"count"
         ], 
         [
             "MPI_Datatype[]", 
-            "array_of_types"
+            "array_of_types",
+			"in",
+			"count"
         ], 
         [
             "MPI_Datatype*", 
-            "newtype"
+            "newtype",
+			"out"
         ]
     ], 
     "MPI_Type_ub": [
         [
             "MPI_Datatype", 
-            "mtype"
+            "mtype",
+			"in"
         ], 
         [
-            "int", 
-            "ub"
+            "MPI_Aint*", 
+            "ub",
+			"in"
         ]
     ], 
     "MPI_Type_vector": [
         [
             "int", 
-            "count"
+            "count",
+			"in"
         ], 
         [
             "int", 
-            "blocklength"
+            "blocklength",
+			"in"
         ], 
         [
             "int", 
-            "stride"
+            "stride",
+			"in"
         ], 
         [
             "MPI_Datatype", 
-            "oldtype"
+            "oldtype",
+			"in"
         ], 
         [
             "MPI_Datatype*", 
-            "newtype"
+            "newtype",
+			"out"
         ]
     ], 
     "MPI_Unpack": [
         [
             "void*", 
-            "inbuf"
+            "inbuf",
+			"in"
         ], 
         [
             "int", 
-            "insize"
+            "insize",
+			"in"
         ], 
         [
             "int*", 
-            "position"
+            "position",
+			"inout"
         ], 
         [
             "void*", 
-            "outbuf"
+            "outbuf",
+			"out"
         ], 
         [
             "int", 
-            "outcount"
+            "outcount",
+			"in"
         ], 
         [
             "MPI_Datatype", 
-            "datatype"
+            "datatype",
+			"in"
         ], 
         [
             "MPI_Comm", 
-            "comm"
+            "comm",
+			"in"
         ]
     ], 
     "MPI_Unpack_external": [
         [
             "char*", 
-            "datarep"
+            "datarep",
+			"in"
         ], 
         [
             "void*", 
-            "inbuf"
+            "inbuf",
+			"in"
         ], 
         [
             "MPI_Aint", 
-            "insize"
+            "insize",
+			"in"
         ], 
         [
             "MPI_Aint*", 
-            "position"
+            "position",
+			"inout"
         ], 
         [
             "void*", 
-            "outbuf"
+            "outbuf",
+			"out"
         ], 
         [
             "int", 
-            "outcount"
+            "outcount",
+			"in"
         ], 
         [
             "MPI_Datatype", 
-            "datatype"
+            "datatype",
+			"in"
         ]
     ], 
     "MPI_Unpublish_name": [
         [
             "char*", 
-            "service_name"
+            "service_name",
+			"in"
         ], 
         [
             "MPI_Info", 
-            "info"
+            "info",
+			"in"
         ], 
         [
             "char*", 
-            "port_name"
+            "port_name",
+			"in"
         ]
     ], 
     "MPI_Wait": [
         [
             "MPI_Request*", 
-            "request"
+            "request",
+			"inout"
         ], 
         [
             "MPI_Status*", 
-            "status"
+            "status",
+			"inout"
         ]
     ], 
     "MPI_Waitall": [
         [
             "int", 
-            "count"
+            "count",
+			"in"
         ], 
         [
             "MPI_Request[]", 
-            "array_of_requests"
+            "array_of_requests",
+			"inout",
+			"count"
         ], 
         [
             "MPI_Status[]", 
-            "array_of_statuses"
+            "array_of_statuses",
+			"inout",
+			"count"
         ]
     ], 
     "MPI_Waitany": [
         [
             "int", 
-            "count"
+            "count",
+			"in"
         ], 
         [
             "MPI_Request[]", 
-            "array_of_requests"
+            "array_of_requests",
+			"inout",
+			"count"
         ], 
         [
             "int*", 
-            "index"
+            "index",
+			"inout"
         ], 
         [
             "MPI_Status*", 
-            "status"
+            "status",
+			"inout"
         ]
     ], 
     "MPI_Waitsome": [
         [
             "int", 
-            "incount"
+            "incount",
+			"in"
         ], 
         [
             "MPI_Request[]", 
-            "array_of_requests"
+            "array_of_requests",
+			"in",
+			"incount"
         ], 
         [
             "int*", 
-            "outcount"
+            "outcount",
+			"inout"
         ], 
         [
             "int[]", 
-            "array_of_indices"
+            "array_of_indices",
+			"out",
+			"*"
         ], 
         [
             "MPI_Status[]", 
-            "array_of_statuses"
+            "array_of_statuses",
+			"out",
+			"*"
         ]
     ], 
     "MPI_Win_c2f": [
         [
             "MPI_Win", 
-            "win"
+            "win",
+			"in"
         ]
     ], 
     "MPI_Win_call_errhandler": [
         [
             "MPI_Win", 
-            "win"
+            "win",
+			"in"
         ], 
         [
             "int", 
-            "errorcode"
+            "errorcode",
+			"in"
         ]
     ], 
     "MPI_Win_complete": [
         [
             "MPI_Win", 
-            "win"
+            "win",
+			"in"
         ]
     ], 
     "MPI_Win_create": [
         [
             "void*", 
-            "base"
+            "base",
+			"in"
         ], 
         [
             "MPI_Aint", 
-            "size"
+            "size",
+			"in"
         ], 
         [
             "int", 
-            "disp_unit"
+            "disp_unit",
+			"in"
         ], 
         [
             "MPI_Info", 
-            "info"
+            "info",
+			"in"
         ], 
         [
             "MPI_Comm", 
-            "comm"
+            "comm",
+			"in"
         ], 
         [
             "MPI_Win*", 
-            "win"
+            "win",
+			"in"
         ]
     ], 
     "MPI_Win_create_errhandler": [
         [
             "MPI_Win_errhandler_function*", 
-            "function"
+            "function",
+			"in"
         ], 
         [
             "MPI_Errhandler*", 
-            "errhandler"
+            "errhandler",
+			"in"
         ]
     ], 
     "MPI_Win_create_keyval": [
         [
             "MPI_Win_copy_attr_function*", 
-            "win_copy_attr_fn"
+            "win_copy_attr_fn",
+			"in"
         ], 
         [
             "MPI_Win_delete_attr_function*", 
-            "win_delete_attr_fn"
+            "win_delete_attr_fn",
+			"in"
         ], 
         [
             "int*", 
-            "win_keyval"
+            "win_keyval",
+			"out"
         ], 
         [
             "void*", 
-            "extra_state"
+            "extra_state",
+			"in"
         ]
     ], 
     "MPI_Win_delete_attr": [
         [
             "MPI_Win", 
-            "win"
+            "win",
+			"in"
         ], 
         [
             "int", 
-            "win_keyval"
+            "win_keyval",
+			"in"
         ]
     ], 
     "MPI_Win_fence": [
         [
             "int", 
-            "assert"
+            "assert",
+			"in"
         ], 
         [
             "MPI_Win", 
-            "win"
+            "win",
+			"in"
         ]
     ], 
     "MPI_Win_free": [
         [
             "MPI_Win*", 
-            "win"
+            "win",
+			"inout"
         ]
     ], 
     "MPI_Win_free_keyval": [
         [
             "int*", 
-            "win_keyval"
+            "win_keyval",
+			"inout"
         ]
     ], 
     "MPI_Win_get_attr": [
         [
             "MPI_Win", 
-            "win"
+            "win",
+			"in"
         ], 
         [
             "int", 
-            "win_keyval"
+            "win_keyval",
+			"in"
         ], 
         [
             "void*", 
-            "attribute_val"
+            "attribute_val",
+			"out"
         ], 
         [
             "bool", 
-            "flag"
+            "flag",
+			"out"
         ]
     ], 
     "MPI_Win_get_errhandler": [
         [
             "MPI_Win", 
-            "win"
+            "win",
+			"in"
         ], 
         [
             "MPI_Errhandler*", 
-            "errhandler"
+            "errhandler",
+			"out"
         ]
     ], 
     "MPI_Win_get_group": [
         [
             "MPI_Win", 
-            "win"
+            "win",
+			"in"
         ], 
         [
             "MPI_Group*", 
-            "group"
+            "group",
+			"out"
         ]
     ], 
     "MPI_Win_get_name": [
         [
             "MPI_Win", 
-            "win"
+            "win",
+			"in"
         ], 
         [
             "char*", 
-            "win_name"
+            "win_name",
+			"out"
         ], 
         [
             "int*", 
-            "resultlen"
+            "resultlen",
+			"out"
         ]
     ], 
     "MPI_Win_lock": [
         [
             "int", 
-            "lock_type"
+            "lock_type",
+			"in"
         ], 
         [
             "int", 
-            "rank"
+            "rank",
+			"in"
         ], 
         [
             "int", 
-            "assert"
+            "assert",
+			"in"
         ], 
         [
             "MPI_Win", 
-            "win"
+            "win",
+			"in"
         ]
     ], 
     "MPI_Win_post": [
         [
             "MPI_Group", 
-            "group"
+            "group",
+			"in"
         ], 
         [
             "int", 
-            "assert"
+            "assert",
+			"in"
         ], 
         [
             "MPI_Win", 
-            "win"
+            "win",
+			"in"
         ]
     ], 
     "MPI_Win_set_attr": [
         [
             "MPI_Win", 
-            "win"
+            "win",
+			"in"
         ], 
         [
             "int", 
-            "win_keyval"
+            "win_keyval",
+			"in"
         ], 
         [
             "void*", 
-            "attribute_val"
+            "attribute_val",
+			"in"
         ]
     ], 
     "MPI_Win_set_errhandler": [
         [
             "MPI_Win", 
-            "win"
+            "win",
+			"in"
         ], 
         [
             "MPI_Errhandler", 
-            "errhandler"
+            "errhandler",
+			"in"
         ]
     ], 
     "MPI_Win_set_name": [
         [
             "MPI_Win", 
-            "win"
+            "win",
+			"in"
         ], 
         [
             "char*", 
-            "win_name"
+            "win_name",
+			"in"
         ]
     ], 
     "MPI_Win_start": [
         [
             "MPI_Group", 
-            "group"
+            "group",
+			"in"
         ], 
         [
             "int", 
-            "assert"
+            "assert",
+			"in"
         ], 
         [
             "MPI_Win", 
@@ -4720,119 +5813,145 @@
     "MPI_Win_test": [
         [
             "MPI_Win", 
-            "win"
+            "win",
+			"in"
         ], 
         [
             "bool", 
-            "flag"
+            "flag",
+			"out"
         ]
     ], 
     "MPI_Win_unlock": [
         [
             "int", 
-            "rank"
+            "rank",
+			"in"
         ], 
         [
             "MPI_Win", 
-            "win"
+            "win",
+			"in"
         ]
     ], 
     "MPI_Win_wait": [
         [
             "MPI_Win", 
-            "win"
+            "win",
+			"in"
         ]
     ],
 	"MPI_Mprobe": [
 		[
 			"int",
-			"source"
+			"source",
+			"in"
 		],
 		[
 			"int",
-			"tag"
+			"tag",
+			"in"
 		],
 		[
 			"MPI_Comm",
-			"comm"
+			"comm",
+			"in"
 		],	
 		[
 			"MPI_Message*",
-			"message"
+			"message",
+			"inout"
 		],
 		[
 			"MPI_Status*",
-			"status"
+			"status",
+			"out"
 		]
 	],
 	"MPI_Improbe": [
 		[
 			"int",
-			"source"
+			"source",
+			"in"
 		],
 		[
 			"int",
-			"tag"
+			"tag",
+			"in"
 		],
 		[
 			"MPI_Comm",
-			"comm"
+			"comm",
+			"in"
 		],
 		[
 			"bool",
-			"flag"
+			"flag",
+			"out"
 		],
 		[
 			"MPI_Message*",
-			"message"
+			"message",
+			"inout"
 		],
 		[
 			"MPI_Status*",
-			"status"
+			"status",
+			"out"
 		]
 	],
 	"MPI_Mrecv": [
 		[
 			"void*",
-			"buf"
+			"buf",
+			"inout"
 		],
 		[
 			"int",
-			"count"
+			"count",
+			"in"
 		],
 		[
 			"MPI_Datatype",
-			"datatype"
+			"datatype",
+			"in"
 		],
 		[
 			"MPI_Message*",
-			"message"
+			"message",
+			"inout"
 		],
 		[
 			"MPI_Status*",
-			"status"
+			"status",
+			"out"
 		]
 	],
 	"MPI_Imrecv": [
 		[
 			"void*",
-			"buf"
+			"buf",
+			"in"
 		],
 		[
 			"int",
-			"count"
+			"count",
+			"in"
 		],
 		[
 			"MPI_Datatype",
-			"datatype"
+			"datatype",
+			"in"
 		],
 		[
 			"MPI_Message*",
-			"message"
+			"message",
+			"inout"
 		],
 		[
 			"MPI_Request*",
-			"status"
+			"status",
+			"out"
 		]
 	]
 }

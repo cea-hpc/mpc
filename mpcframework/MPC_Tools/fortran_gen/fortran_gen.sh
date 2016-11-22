@@ -1,5 +1,6 @@
 #!/bin/sh
 
+echo "" > fortrangen.log
 
 # This script generates and installs the following Fortran files :
 # - mpif.h
@@ -31,6 +32,13 @@ MPICONSTF=""
 MPISIZEOF=""
 MPIBASEF=""
 
+MPIF08CTYPE=""
+MPIF08CIF=""
+MPIF08MTYPE=""
+MPIF08C=""
+MPIF08CONST=""
+MPIF08=""
+
 #Can the file be generated ?
 GENERATE=1
 
@@ -48,7 +56,14 @@ generate_from_backup()
 	MPISIZEOF="$SCRIPTPATH/pregenerated/mpi_sizeofs.f90"
 	MPICONSTF="$SCRIPTPATH/pregenerated/mpi_constants.f90"
 	MPIBASEF="$SCRIPTPATH/pregenerated/mpi_base.f90"
-		
+
+	MPIF08CTYPE="$SCRIPTPATH/pregenerated/mpi_f08_ctypes.f90"
+	MPIF08CIF="$SCRIPTPATH/pregenerated/mpi_f08_c_iface.c"
+	MPIF08MTYPE="$SCRIPTPATH/pregenerated/mpi_f08_types.f90"
+	MPIF08C="$SCRIPTPATH/pregenerated/mpi_f08_c.f90"
+	MPIF08CONST="$SCRIPTPATH/pregenerated/mpi_f08_constants.f90"
+	MPIF08="$SCRIPTPATH/pregenerated/mpi_f08.f90"
+
 	GENERATE=0
 }
 
@@ -57,7 +72,8 @@ generate_from_backup()
 
 checkFortranGenEnv()
 {
-	rm -fr ./fortrangen.log
+	rm -fr ${INSTALL}/fortrangen.log
+	rm -fr ${INSTALL}/fortrangen_script.log
 	
 	#CHECK ENV DEPENDENCIES
 
@@ -254,7 +270,7 @@ genfortanfiles()
 	fi
 	
 	#And now launch the python generation phase
-	${PYTHON} ${SCRIPTPATH}/genmod.py -f "${MPCFC}" -c "${MPCCC}" -m "${MPIHFILE}" 
+	${PYTHON} ${SCRIPTPATH}/genmod.py -f "${MPCFC}" -c "${MPCCC}" -m "${MPIHFILE}"
 	#2>> ./fortrangen.log
 
 	if test "x$?" != "x0"; then
@@ -270,12 +286,16 @@ genfortanfiles()
 
 genfortranmods()
 {
-	echo -n "(i) Compiling MPI Fortran modules...   "
+	echo -n "(i) Compiling MPI Fortran 90 modules...   "
+	
+	#We do not want to privatize Fortran constants
+	export MPC_UNPRIVATIZED_VARS=mpi_in_place:mpi_status_ignore:mpi_statuses_ignore:$MPC_UNPRIVATIZED_VARS
+
 
 	#Note that it is important to compile twice (Fortran MAGIC dependency resolution)
-	$MPCFC -c ${MPIBASEF} ${MPICONSTF} ${MPIMODF} ${MPISIZEOF}  2>> ./fortrangen.log
-	$MPCFC -c ${MPIBASEF} ${MPICONSTF} ${MPIMODF} ${MPISIZEOF}  2>> ./fortrangen.log
-	
+	$MPCFC -g -fmpc-privatize -fpic -c ${MPIBASEF} ${MPICONSTF} ${MPIMODF} ${MPISIZEOF}  2>> ./fortrangen.log
+	$MPCFC -g -fmpc-privatize -fpic -c ${MPIBASEF} ${MPICONSTF} ${MPIMODF} ${MPISIZEOF}  2>> ./fortrangen.log
+
 
 	if test "x$?" != "x0"; then
 		echo "(E) Module compilation failed"
@@ -286,20 +306,66 @@ genfortranmods()
 		echo "Done"
 	fi	
 	
+	echo -n "(i) Compiling MPI Fortran 08 modules...   "
 	
-	echo -n "(i) Compiling the MPI Sizeof Fortran static library...   "
-	#Generate the .so file
-	$AR rcs libmpcmpisizeof.a mpi_sizeofs.o 2>> ./fortrangen.log
+	#Note that it is important to compile twice (Fortran MAGIC dependency resolution)
+	$MPCFC -g -fmpc-privatize -fpic -c ${MPIF08CTYPE} ${MPIF08MTYPE} ${MPIF08C} ${MPIF08CONST} ${MPIF08}  2>> ./fortrangen.log
+	$MPCFC -g -fmpc-privatize -fpic -c ${MPIF08CTYPE} ${MPIF08MTYPE} ${MPIF08C} ${MPIF08CONST} ${MPIF08}  2>> ./fortrangen.log
 
 	if test "x$?" != "x0"; then
-		echo "(E) Static sizeof library compilation failed"
+		echo "(E) Fortran 08 Module compilation failed"
 		echo "(E) See ./fortrangen.log"
+		generate_from_backup
 		return
 	else
 		echo "Done"
 	fi	
 	
 	rm -f $TEMP $TEMP2
+
+	echo -n "(i) Generating F08 Bindings"
+	
+	$MPCCC -g -fmpc-privatize -fpic -c ${MPIF08CIF}  2>> ./fortrangen.log
+	
+	if test "x$?" != "x0"; then
+		echo "(E) Fortran 08 C interface generation failed"
+		echo "(E) See ./fortrangen.log"
+		exit 1
+	else
+		echo "Done"
+	fi	
+	
+	rm -f $TEMP $TEMP2
+
+
+	echo -n "(i) Generating F90/F08 Link Time Constants"
+	
+	$MPCFC -g -fmpc-privatize -fpic -c -I. $SCRIPTPATH/predef_types.f $SCRIPTPATH/predef_types_08.f90  2>> ./fortrangen.log
+	
+	if test "x$?" != "x0"; then
+		echo "(E) Fortran 08 C interface generation failed"
+		echo "(E) See ./fortrangen.log"
+		exit 1
+	else
+		echo "Done"
+	fi	
+	
+	rm -f $TEMP $TEMP2
+
+	echo -n "(i) Compiling the MPI Wrapper Fortran library...   "
+	#Generate the .so file
+	$MPCFC -shared -fpic -o libmpcfwrapper.so predef_types.o predef_types_08.o mpi_f08.o mpi_sizeofs.o mpi_f08_*.o  2>> ./fortrangen.log
+
+	if test "x$?" != "x0"; then
+		echo "(E) MPI Wrapper library compilation failed"
+		echo "(E) See ./fortrangen.log"
+		return
+	else
+		echo "Done"
+	fi	
+
+	rm -f $TEMP $TEMP2
+
 
 	# Compile OpenMP Fortran module
 	echo -n "(i) Compiling OpenMP Fortran modules...   "
@@ -311,11 +377,13 @@ genfortranmods()
 	if test "x$?" != "x0"; then
 		echo "(E) OpenMP Module compilation failed"
 		echo "(E) See ./fortrangen.log"
-		# generate_from_backup
 		return
 	else
 		echo "Done"
 	fi	
+
+
+
 }
 
 
@@ -340,7 +408,7 @@ proceedwithfortranfilegeneration()
 		#Check that everything is there
 		echo "(i) Checking generated files...   "
 		
-		for f in mpi_base.f90 mpi_constants.f90 mpi_sizeofs.f90  mpi.f90 mpif.h
+		for f in mpi_base.f90 mpi_constants.f90 mpi_sizeofs.f90  mpi.f90 mpif.h mpi_f08_ctypes.f90 mpi_f08_types.f90 mpi_f08_c.f90 mpi_f08_constants.f90 mpi_f08.f90 mpi_f08_c_iface.c
 		do
 			if test -e "$f"; then
 				echo "(i)\t${f}... Found."
@@ -356,7 +424,13 @@ proceedwithfortranfilegeneration()
 			MPICONSTF="${PWD}/mpi_constants.f90"
 			MPISIZEOF="${PWD}/mpi_sizeofs.f90"
 			MPIBASEF="${PWD}/mpi_base.f90"
-			
+		
+			MPIF08CTYPE="${PWD}/mpi_f08_ctypes.f90"
+			MPIF08MTYPE="${PWD}/mpi_f08_types.f90"
+			MPIF08CIF="${PWD}/mpi_f08_c_iface.c"
+			MPIF08C="${PWD}/mpi_f08_c.f90"
+			MPIF08CONST="${PWD}/mpi_f08_constants.f90"
+			MPIF08="${PWD}/mpi_f08.f90"
 		done
 	else
 		echo "\n########################################################"
@@ -386,6 +460,21 @@ proceedwithfortranfilegeneration()
 		fi	
 	done
 
+
+	echo "(i) Checking MPI F08 Module files...   "
+		
+	for f in mpi_f08_c.mod mpi_f08_constants.mod mpi_f08_ctypes.mod mpi_f08_types.mod mpi_f08.mod
+	do
+		if test -e "$f"; then
+			echo "(i)\t${f}... Found."
+		else
+			echo "(E)\t${f}... NOT Found."
+			echo "(FATAL) MPI Fortran module compilation failed"
+			echo "   You might not be able to run F08 codes"
+			return
+		fi	
+	done
+
 	echo "(i) Checking OpenMP Module files...   "
 		
 	for f in omp_lib.mod omp_lib_kinds.mod
@@ -409,13 +498,21 @@ proceedwithfortranfilegeneration()
 	cp mpi_constants.mod ${INSTALL}/
 	cp mpi_base.mod ${INSTALL}/
 	cp mpi_sizeofs.mod ${INSTALL}/
-	cp libmpcmpisizeof.a ${INSTALL}/../../lib/
+
+	cp mpi_f08_c.mod ${INSTALL}/
+	cp mpi_f08_ctypes.mod ${INSTALL}/
+	cp mpi_f08_types.mod ${INSTALL}/
+	cp mpi_f08_constants.mod ${INSTALL}/
+	cp mpi_f08.mod ${INSTALL}/
+
+	cp libmpcfwrapper.so ${INSTALL}/../../lib/
+	
 	cp omp_lib.mod ${INSTALL}/
 	cp omp_lib_kinds.mod ${INSTALL}/
 
 	echo "(i) Checking installed files...   "
 		
-	for f in mpi_base.mod mpi_constants.mod mpi_sizeofs.mod ../../lib/libmpcmpisizeof.a mpi.mod mpif.h
+	for f in mpi_base.mod mpi_constants.mod mpi_sizeofs.mod ../../lib/libmpcfwrapper.so mpi.mod mpif.h
 	do
 		NAME=`basename ${f}` 
 		if test -e "${INSTALL}/${f}"; then
@@ -424,6 +521,19 @@ proceedwithfortranfilegeneration()
 			echo "(E)\t${NAME}... NOT Found."
 			echo "(FATAL) MPI Fortran module compilation failed"
 			echo "   You might not be able to run F90 codes"
+			return
+		fi	
+	done
+	
+	for f in mpi_f08_c.mod mpi_f08_constants.mod mpi_f08_ctypes.mod mpi_f08_types.mod mpi_f08.mod
+	do
+		NAME=`basename ${f}` 
+		if test -e "${INSTALL}/${f}"; then
+			echo "(i)\t${NAME}... Found."
+		else
+			echo "(E)\t${NAME}... NOT Found."
+			echo "(FATAL) MPI Fortran module compilation failed"
+			echo "   You might not be able to run F08 codes"
 			return
 		fi	
 	done

@@ -359,7 +359,6 @@ extern "C"
 #define MPI_WIN_NULL_COPY_FN ((MPI_Copy_function *)MPC_Mpi_win_null_copy_fn)
 #define MPI_WIN_DUP_FN ((MPI_Copy_function *)MPC_Mpi_win_dup_fn)
 
-#define MPI_MAX_KEY_DEFINED 7
 #define MPI_TAG_UB 0
 #define MPI_HOST 1
 #define MPI_IO 2
@@ -367,6 +366,7 @@ extern "C"
 #define MPI_APPNUM 4
 #define MPI_UNIVERSE_SIZE 5
 #define MPI_LASTUSEDCODE 6
+#define MPI_MAX_KEY_DEFINED 7
 
 /* In addition, there are 5 predefined window attributes that are
  *    defined for every window */

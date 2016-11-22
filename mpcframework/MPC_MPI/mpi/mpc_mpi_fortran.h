@@ -18,6 +18,7 @@
 /* # Authors:                                                             # */
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
 /* #   - JAEGER Julien julien.jaeger@cea.fr                               # */
+/* #   - BESNARD Jean-Baptiste jbbesnard@paratools.fr                     # */
 /* #                                                                      # */
 /* ######################################################################## */
 
@@ -506,6 +507,8 @@ void ffunc (mpi_comm_get_name) (MPI_Comm * a, char *b SCTK_CHAR_MIXED (size),
 
 void ffunc (mpi_comm_set_name) (MPI_Comm * a, char *b SCTK_CHAR_MIXED (size),
 				int *res SCTK_CHAR_END (size));
+
+/* Done defining Fortran pointers */
 
 void ffunc (mpi_null_delete_fn) (MPI_Datatype datatype, int type_keyval,
                                  void* attribute_val_out, void* extra_state)
@@ -1123,6 +1126,15 @@ void ffunc (pmpi_gather) (void *sendbuf, int *sendcnt,
 			  int *recvcnt, MPI_Datatype * recvtype, int *root,
 			  MPI_Comm * comm, int *res)
 {
+
+  sctk_error("%s BUFFER it at %p CONTENT %d", __FUNCTION__, sendbuf,
+             *(int *)sendbuf);
+  if (sendbuf == *mpi_predef_inplace() ||
+      (sendbuf == *mpi_predef08_inplace())) {
+    sctk_error("SEND IS IN_PLACE %s", __FUNCTION__);
+    sendbuf = MPI_IN_PLACE;
+  }
+
   *res =
     MPI_Gather (sendbuf, *sendcnt, *sendtype, recvbuf, *recvcnt, *recvtype,
 		 *root, *comm);
@@ -1135,6 +1147,15 @@ void ffunc (pmpi_gatherv) (void *sendbuf, int *sendcnt,
 			   MPI_Datatype * recvtype, int *root,
 			   MPI_Comm * comm, int *res)
 {
+
+  sctk_error("%s BUFFER it at %p CONTENT %d", __FUNCTION__, sendbuf,
+             *(int *)sendbuf);
+  if (sendbuf == *mpi_predef_inplace() ||
+      (sendbuf == *mpi_predef08_inplace())) {
+    sctk_error("SEND IS IN_PLACE %s", __FUNCTION__);
+    sendbuf = MPI_IN_PLACE;
+  }
+
   *res =
     MPI_Gatherv (sendbuf, *sendcnt, *sendtype, recvbuf, recvcnts, displs,
 		  *recvtype, *root, *comm);
@@ -1146,6 +1167,16 @@ void ffunc (pmpi_scatter) (void *sendbuf, int *sendcnt,
 			   int *recvcnt, MPI_Datatype * recvtype, int *root,
 			   MPI_Comm * comm, int *res)
 {
+
+  sctk_error("%s BUFFER it at %p CONTENT %d", __FUNCTION__, recvbuf,
+             *(int *)recvbuf);
+
+  if ((recvbuf == *mpi_predef_inplace()) ||
+      (recvbuf == *mpi_predef08_inplace())) {
+    sctk_error("RECV in place");
+    recvbuf = MPI_IN_PLACE;
+  }
+
   *res =
     MPI_Scatter (sendbuf, *sendcnt, *sendtype, recvbuf, *recvcnt, *recvtype,
 		  *root, *comm);

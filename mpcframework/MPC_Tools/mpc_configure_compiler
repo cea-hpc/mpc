@@ -592,6 +592,20 @@ LDFLAGS="\$EXTRA_ADDON_FLAGS \$LDFLAGS"
 MPC_UNPRIVATIZED_FILES="\${MPC_UNPRIVATIZED_FILES}:mpcmp.h:mpcmicrothread.h:"
 
 MPC_UNPRIVATIZED_VARS="\${MPC_UNPRIVATIZED_VARS}:\`preprocess_main\`"
+
+EOF
+
+
+if test "$2" = "fortran" ; then 
+
+cat <<EOF >> $1
+MPC_UNPRIVATIZED_VARS="\${MPC_UNPRIVATIZED_VARS}:mpi_status_ignore:mpi_statuses_ignore:mpi_in_place"
+EOF
+
+fi
+
+cat <<EOF >> $1
+
 export MPC_UNPRIVATIZED_FILES
 export MPC_UNPRIVATIZED_VARS
 
@@ -643,13 +657,15 @@ cat <<EOF >> $1
         if [ -f "\${1}" ]
         then
             # Be strict here to ensure we get the symbol and not a symbol beginning with name
-            TEST=\$(nm "\${1}" | tr -s " " | cut -d " " -f3 | grep -E '^'"\${2}"'\$' | wc -l)
-            if [ \${TEST} -eq 1 ]
+            TEST=\$(nm "\${1}" | tr -s " " | cut -d " " -f3 | grep -E '^'"\${2}"'$' | wc -l)
+			if test "x\${TEST}" = "x1"
             then
-                return 0
+				HAS_SYMBOL=1
+				return
             fi
         fi
-        return 1
+		
+		HAS_SYMBOL=0
     }
 
     # Renames a symbol in an object file
@@ -665,11 +681,18 @@ cat <<EOF >> $1
         objcopy --globalize-symbol="mpc_user_main_" "\${1}"
         # And ._omp.fn* in case of OpenMP
         index=0
-        while has_symbol "\${1}" "MAIN__._omp_fn.\${index}"
-        do
+        
+		has_symbol "\${1}" "MAIN__._omp_fn.\${index}"
+        
+		while test "x\${HAS_SYMBOL}" = "x1"
+		do
             rename_sym "\${1}" "MAIN__._omp_fn.\${index}" "mpc_user_main_._omp_fn.\${index}"
             index=\$((\${index}+1))
+            
+			has_symbol "\${1}" "MAIN__._omp_fn.\${index}"
+        
         done
+
         # Remove the main
         objcopy --strip-symbol main "\${1}"
     }
@@ -692,7 +715,8 @@ cat <<EOF >> $1
     {
         printf ".%s" \$(echo "\${1}" | rev | cut -d "." -f1 | rev)
     }
-
+    
+	THERE_IS_A_MAIN=0
     SOURCE_FILES=""
     OBJECT_FILES=""
     ARGS_NO_SOURCES=""
@@ -708,10 +732,12 @@ cat <<EOF >> $1
             if has_ext "\${unquotedarg}" ".o"
             then
                 #It is an object file, but is it the main ?
-                if has_symbol "\${unquotedarg}" "MAIN__"
-                then
+                has_symbol "\${unquotedarg}" "MAIN__"
+                if test "x\${HAS_SYMBOL}" = "x1"
+				then
+					THERE_IS_A_MAIN=1
                     #This is main, rename the symbol(s)
-                    \$Show rename_main_symbols "\${unquotedarg}"
+                    $Show rename_main_symbols "\${unquotedarg}"
                 fi
             else
                 #This is a file, but not an object... is it a Fortran source file ?
@@ -759,14 +785,26 @@ fi
             object_file=\$(mktemp --suffix=.o)
             \$Show \$CC \$LIB_PATH \$LDFLAGS \$FFLAGS \$CFLAGS \${ARGS_NO_SOURCES} \$LDFLAGS "\${source_file}" -c -o "\${object_file}"
             # Is this object (ie. source file) main ?
-            if has_symbol "\${object_file}" "MAIN__"
+			has_symbol "\${object_file}" "MAIN__"
+			if test "x\${HAS_SYMBOL}" = "x1"
             then
                 #This is main, rename the symbol(s) (not reached is Show is echo...)
-                \$Show rename_main_symbols "\${object_file}"
+				THERE_IS_A_MAIN=1
+                $Show rename_main_symbols "\${object_file}"
             fi
             OBJECT_FILES="\${OBJECT_FILES} '\${object_file}'"
         done
     fi
+    
+    if test "x\${THERE_IS_A_MAIN}" = "x0"
+	then
+		echo "(MPC) No main found"
+		FORTRAN_OBJ=""
+	else
+		echo "(MPC) Redirecting MAIN to MPC's main"
+	fi
+    
+    
     \$Show \$CC \$LIB_PATH \$FORTRAN_OBJ \$LDFLAGS \$FFLAGS \$CFLAGS \$ARGS_NO_SOURCES \${OBJECT_FILES} \$LDFLAGS \${OUTPUT_FILE_ARGS}
     rc=\$?
     \$Show rm -f \$FORTRAN_OBJ \${OBJECT_FILES} \$FORTRAN_START
@@ -982,8 +1020,13 @@ printf_noflags_compiler ${i}_noflags $i
 done
 
 for i in cc cxx f77 icc icpc ifort; do
-printf_mpi_compiler bin/mpi$i bin/mpc_$i
+	printf_mpi_compiler bin/mpi$i bin/mpc_$i
 done
+
+#Generate Additionnal Fortran Wrappers pointing to 77
+printf_mpi_compiler bin/mpif90 bin/mpc_f77
+printf_mpi_compiler bin/mpif08 bin/mpc_f77
+
 
 if test "$SCTK_CUDA" = "1"; then
 	sctk_echo "Preparing NVIDIA Compiler: mpc_nvcc"

@@ -82,6 +82,144 @@ void sctk_char_c_to_fortran (char *buf, int size)
     }
 }
 
+/* Now Define Special Fortran pointers */
+
+static void **mpi_predef08_bottom(void) {
+  static void *mpi_bottom_ptr = NULL;
+  return &mpi_bottom_ptr;
+}
+
+static void **mpi_predef08_inplace(void) {
+  static void *mpi_in_place_ptr = NULL;
+  return &mpi_in_place_ptr;
+}
+
+static void **mpi_predef08_status_ignore(void) {
+  static void *mpi_status_ignore_ptr = NULL;
+  return &mpi_status_ignore_ptr;
+}
+
+static void **mpi_predef08_statuses_ignore(void) {
+  static void *mpi_statuses_ignore_ptr = NULL;
+  return &mpi_statuses_ignore_ptr;
+}
+
+void mpc_predef08_init_inplace_(void *inplace) {
+  *(mpi_predef08_inplace()) = inplace;
+}
+
+void mpc_predef08_init_bottom_(void *bottom) {
+  *(mpi_predef08_bottom()) = bottom;
+}
+
+void mpc_predef08_init_status_ignore_(void *status_ignore) {
+  *(mpi_predef08_status_ignore()) = status_ignore;
+}
+
+void mpc_predef08_init_statuses_ignore_(void *statuses_ignore) {
+  *(mpi_predef08_statuses_ignore()) = statuses_ignore;
+}
+
+static void **mpi_predef_bottom(void) {
+  static void *mpi_bottom_ptr = NULL;
+  return &mpi_bottom_ptr;
+}
+
+static void **mpi_predef_inplace(void) {
+  static void *mpi_in_place_ptr = NULL;
+  return &mpi_in_place_ptr;
+}
+
+static void **mpi_predef_status_ignore(void) {
+  static void *mpi_status_ignore_ptr = NULL;
+  return &mpi_status_ignore_ptr;
+}
+
+static void **mpi_predef_statuses_ignore(void) {
+  static void *mpi_statuses_ignore_ptr = NULL;
+  return &mpi_statuses_ignore_ptr;
+}
+
+void mpc_predef_init_inplace_(void *inplace) {
+  *(mpi_predef_inplace()) = inplace;
+}
+
+void mpc_predef_init_bottom_(void *bottom) { *(mpi_predef_bottom()) = bottom; }
+
+void mpc_predef_init_status_ignore_(void *status_ignore) {
+  *(mpi_predef_status_ignore()) = status_ignore;
+}
+
+void mpc_predef_init_statuses_ignore_(void *statuses_ignore) {
+  *(mpi_predef_statuses_ignore()) = statuses_ignore;
+}
+
+static volatile int did_resolve_fortran_binds = 0;
+static sctk_spinlock_t did_resolve_fortran_binds_lock;
+
+static inline void fortran_check_binds_resolve() {
+  if (did_resolve_fortran_binds) {
+    return;
+  }
+
+  sctk_spinlock_lock_yield(&did_resolve_fortran_binds_lock);
+
+  if (did_resolve_fortran_binds) {
+    sctk_spinlock_unlock(&did_resolve_fortran_binds_lock);
+    return;
+  }
+
+  void *handle = dlopen(NULL, RTLD_LAZY);
+
+  void (*fortran_init)();
+
+  fortran_init =
+      (void (*)())dlsym(handle, "mpc_fortran_init_predefined_constants_");
+
+  if (!fortran_init) {
+    fortran_init =
+        (void (*)())dlsym(handle, "mpc_fortran_init_predefined_constants__");
+  }
+
+  if (!fortran_init) {
+    fortran_init =
+        (void (*)())dlsym(handle, "mpc_fortran_init_predefined_constants___");
+  }
+
+  if (fortran_init) {
+    (fortran_init)();
+  } else {
+    sctk_error("No symbol");
+  }
+
+  void (*fortran08_init)();
+
+  fortran08_init =
+      (void (*)())dlsym(handle, "mpc_fortran08_init_predefined_constants_");
+
+  if (!fortran08_init) {
+    fortran08_init =
+        (void (*)())dlsym(handle, "mpc_fortran08_init_predefined_constants__");
+  }
+
+  if (!fortran08_init) {
+    fortran_init =
+        (void (*)())dlsym(handle, "mpc_fortran08_init_predefined_constants___");
+  }
+
+  if (fortran08_init) {
+    (fortran08_init)();
+  } else {
+    sctk_error("No symbol08");
+  }
+
+  dlclose(handle);
+
+  did_resolve_fortran_binds = 1;
+
+  sctk_spinlock_unlock(&did_resolve_fortran_binds_lock);
+}
+
 #undef ffunc
 #define ffunc(a) a##_
 #include <mpc_mpi_fortran.h>
@@ -11733,6 +11871,7 @@ __INTERNAL__PMPI_Init (int *argc, char ***argv)
     __sctk_init_mpi_topo ();
     __sctk_init_mpi_op ();
     __sctk_init_mpc_group ();
+    fortran_check_binds_resolve();
 
     sctk_spinlock_lock(&(task_specific->per_communicator_lock));
     HASH_ITER(hh,task_specific->per_communicator,per_communicator,per_communicator_tmp)
