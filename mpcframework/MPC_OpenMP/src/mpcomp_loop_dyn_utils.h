@@ -27,70 +27,55 @@
 #include "sctk_debug.h"
 #include "mpcomp_types.h"
 
-int __mpcomp_get_static_nb_chunks_per_rank( int rank, int num_threads,  mpcomp_loop_long_iter_t* loop );
-
 /* dest = src1+src2 in base 'base' of size 'depth' up to dimension 'max_depth'
  */
-static inline int
-__mpcomp_loop_dyn_dynamic_add( int * dest, int * src1, int *src2, 
-		int * base, int depth, int max_depth, 
-		int include_carry_over ) 
+static inline int __mpcomp_loop_dyn_dynamic_add( int * dest, int * src1, int *src2, int * base, int depth, int max_depth, int include_carry_over ) 
 {
-		int i ;
-		int ret = 1 ;
-		int carry_over = 1 ; 
+	int i, ret, carry_over;
 
-		/* Step to the next target */
-		for ( i = depth -1 ; i >= max_depth ; i-- ) {
-			int value ;
-
-			value = src1[i] + src2[i];
-
-			carry_over = 0 ;
-			dest[i] = value ;
-			if ( value >= base[i] ) {
-				if ( i == max_depth ) {
-					ret = 0 ;
-				}
-				if ( include_carry_over ) {
-					carry_over = value / base[i] ;
-				}
-				dest[i] = (value %  base[i] ) ;
-			}
+    ret = 1; 
+	/* Step to the next target */
+	for ( i = depth -1 ; i >= max_depth ; i-- ) 
+    {
+	    const int value = src1[i] + src2[i];
+		dest[i] = value ;
+		carry_over = 0;
+    
+		if ( value >= base[i] ) 
+        {
+		    ret = ( i == max_depth ) ? 0 : ret;
+            carry_over = ( include_carry_over ) ? value / base[i] : carry_over;
+			dest[i] = ( value %  base[i] );
 		}
+    }
 
-		return ret ;
+	return ret ;
 }
 
 /* Return 1 if overflow, otherwise 0 */
-static inline int
-__mpcomp_loop_dyn_dynamic_increase( int * target, int * base,
-		int depth, int max_depth, int include_carry_over ) 
+static inline int __mpcomp_loop_dyn_dynamic_increase( int * target, int * base, int depth, int max_depth, int include_carry_over ) 
 {
-		int i ;
-		int carry_over = 1;
-		int ret = 0 ;
+    int i, carry_over, ret;
 
-		/* Step to the next target */
-		for ( i = depth -1 ; i >= max_depth ; i-- ) {
-			int value ;
+	ret = 0 ;
+	carry_over = 1;
 
-			value = target[i] + carry_over ;
+	/* Step to the next target */
+	for ( i = depth -1 ; i >= max_depth ; i-- ) 
+    {
+	    const int value = target[i] + carry_over ;
+		carry_over = 0 ;
+		target[i] = value ;
 
-			carry_over = 0 ;
-			target[i] = value ;
-			if ( value >= base[i] ) {
-				if ( i == max_depth ) {
-					ret = 1 ;
-				}
-				if ( include_carry_over ) {
-					carry_over = value / base[i] ;
-				}
-				target[i] = (value %  base[i] ) ;
-			}
+		if ( value >= base[i] ) 
+        {
+            ret = ( i == max_depth ) ? 1 : ret;
+            carry_over = ( include_carry_over ) ? value / base[i] : carry_over;
+		    target[i] = value %  base[i];
 		}
+    }
 
-		return ret ;
+    return ret;
 }
 
 static inline int 
@@ -103,7 +88,7 @@ static inline int
 __mpcomp_loop_dyn_get_for_dyn_prev_index( mpcomp_thread_t* thread ) 
 {
     const int for_dyn_current = __mpcomp_loop_dyn_get_for_dyn_current( thread );
-    return ( for_dyn_current + MPCOMP_MAX_ALIVE_FOR_DYN -1  ) % (MPCOMP_MAX_ALIVE_FOR_DYN + 1);
+    return ( for_dyn_current + MPCOMP_MAX_ALIVE_FOR_DYN - 1 ) % (MPCOMP_MAX_ALIVE_FOR_DYN + 1);
 }   
 
 static inline int 

@@ -26,6 +26,7 @@
 #include "mpcomp_types.h"
 
 #include "mpcomp_loop.h"
+#include "mpcomp_barrier.h"
 #include "mpcomp_loop_dyn.h"
 #include "mpcomp_loop_dyn_utils.h"
 
@@ -77,6 +78,9 @@ void __mpcomp_dynamic_loop_init(mpcomp_thread_t *t, long lb, long b, long incr, 
     const long num_threads = (long) t->info.num_threads;
     const int index = __mpcomp_loop_dyn_get_for_dyn_index( t );
 
+    t->schedule_type = ( t->schedule_is_forced ) ? t->schedule_type : MPCOMP_COMBINED_DYN_LOOP;  
+    t->schedule_is_forced = 0;
+
 	/* Stop if the maximum number of alive loops is reached */
 	while( sctk_atomics_load_int( &(team_info->for_dyn_nb_threads_exited[index].i)) == MPCOMP_NOWAIT_STOP_SYMBOL) 
     {
@@ -87,7 +91,7 @@ void __mpcomp_dynamic_loop_init(mpcomp_thread_t *t, long lb, long b, long incr, 
     __mpcomp_loop_gen_infos_init( &( t->info.loop_infos), lb, b, incr, chunk_size );
 
     /* Try to change the number of remaining chunks */
-    const int for_dyn_total = __mpcomp_get_static_nb_chunks_per_rank(t->rank, num_threads, &( t->info.loop_infos));
+    const int for_dyn_total = __mpcomp_get_static_nb_chunks_per_rank(t->rank, num_threads, &( t->info.loop_infos.loop.mpcomp_long ) );
 	sctk_atomics_cas_int(&(t->for_dyn_remain[index].i), -1, for_dyn_total);
 }
 
@@ -102,8 +106,6 @@ int __mpcomp_dynamic_loop_begin(long lb, long b, long incr, long chunk_size, lon
 	t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
 	sctk_assert( t != NULL ) ;
 
-    t->schedule_type = ( t->schedule_is_forced ) ? t->schedule_type : MPCOMP_COMBINED_DYN_LOOP;  
-    t->schedule_is_forced = 0;
 
 	/* Initialization of loop internals */
 	__mpcomp_dynamic_loop_init(t, lb, b, incr, chunk_size);
@@ -156,7 +158,7 @@ int __mpcomp_dynamic_loop_next (long *from, long *to)
 	}
 
 	int found = 1 ;
-    const int* tree_base = t->instance->tree_base;
+    int* tree_base = t->instance->tree_base;
     const int tree_depth = t->instance->tree_depth;
 
 	/* While it is not possible to get a chunk */
@@ -276,9 +278,7 @@ int __mpcomp_dynamic_loop_next_ignore_nowait (long *from, long *to)
 
 int __mpcomp_ordered_dynamic_loop_begin (long lb, long b, long incr, long chunk_size, long *from, long *to)
 {
-    mpcomp_thread_t *t;
-
-    t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
+    mpcomp_thread_t* t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
     sctk_assert(t != NULL);  
     
     t->schedule_type = ( t->schedule_is_forced ) ? t->schedule_type : MPCOMP_COMBINED_DYN_LOOP;  
@@ -292,9 +292,7 @@ int __mpcomp_ordered_dynamic_loop_begin (long lb, long b, long incr, long chunk_
 
 int __mpcomp_ordered_dynamic_loop_next(long *from, long *to)
 {
-     mpcomp_thread_t *t;
-
-     t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
+     mpcomp_thread_t *t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
      sctk_assert(t != NULL);
      
      const int ret = __mpcomp_dynamic_loop_next(from, to);

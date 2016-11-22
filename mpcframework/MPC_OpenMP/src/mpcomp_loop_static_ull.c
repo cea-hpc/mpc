@@ -89,7 +89,6 @@ int __mpcomp_loop_ull_static_begin (bool up, unsigned long long lb, unsigned lon
     t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
     sctk_assert(t != NULL);
 
-    //sctk_error( "[%d] %s: %d -> %d [%d] cs:%d", t->rank, __func__, lb, b, incr, chunk_size ) ;
     t->schedule_type = ( t->schedule_is_forced ) ? t->schedule_type : MPCOMP_COMBINED_STATIC_LOOP;  
     t->schedule_is_forced = 0;
 
@@ -123,13 +122,10 @@ int __mpcomp_loop_ull_static_next (unsigned long long *from, unsigned long long 
     /* Next chunk */
     t->static_current_chunk++;
 
-    //sctk_error( "[%d] %s: checking if current_chunk %d >= nb_chunks %d?", t->rank, __func__, t->static_current_chunk, t->static_nb_chunks);
-
     /* Check if there is still a chunk to execute */
     if (t->static_current_chunk >= t->static_nb_chunks) return 0;
 
     __mpcomp_static_schedule_get_specific_chunk_ull( rank, num_threads, &( t->info.loop_infos.loop.mpcomp_ull ), t->static_current_chunk, from, to);
-    //sctk_error( "[%d] %s: got a chunk %d -> %d", t->rank, __func__, *from, *to ) ;
     return 1;
 }
 
@@ -142,35 +138,23 @@ int __mpcomp_loop_ull_static_next (unsigned long long *from, unsigned long long 
 int __mpcomp_loop_ull_ordered_static_begin (bool up, unsigned long long lb, unsigned long long b, unsigned long long incr, unsigned long long chunk_size,
                     unsigned long long *from, unsigned long long *to)
 {
-     mpcomp_thread_t *t; 
-     int res;
-
-
-     t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
-     sctk_assert(t != NULL);  
+    mpcomp_thread_t *t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
+    sctk_assert(t != NULL);  
          
     t->schedule_type = ( t->schedule_is_forced ) ? t->schedule_type : MPCOMP_COMBINED_STATIC_LOOP;  
     t->schedule_is_forced = 0;
 
-     res = __mpcomp_loop_ull_static_begin(up, lb, b, incr, chunk_size, from, to);
-
-     t->current_ordered_iteration = *from;
-         
-     return res;
+    const int ret = __mpcomp_loop_ull_static_begin(up, lb, b, incr, chunk_size, from, to);
+    t->info.loop_infos.loop.mpcomp_ull.cur_ordered_iter = *from; 
+    return ret;
 }
 
 int __mpcomp_loop_ull_ordered_static_next(unsigned long long *from, unsigned long long *to)
 {
-     mpcomp_thread_t *t;
-     int res ;
-
-     res = __mpcomp_loop_ull_static_next(from, to);
-
-     t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
-     sctk_assert(t != NULL);
-
-     t->current_ordered_iteration = *from;
-
-     return res;
+    mpcomp_thread_t *t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
+    sctk_assert(t != NULL);
+    const int ret = __mpcomp_loop_ull_static_next(from, to);
+    t->info.loop_infos.loop.mpcomp_ull.cur_ordered_iter = *from; 
+    return ret;
 }
 

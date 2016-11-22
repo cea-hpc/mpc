@@ -39,6 +39,12 @@
  *****/
 int __mpcomp_guided_loop_begin (long lb, long b, long incr, long chunk_size, long *from, long *to)
 {
+    mpcomp_thread_t* t = (mpcomp_thread_t*) sctk_openmp_thread_tls;
+    sctk_assert( t );
+
+    t->schedule_type = ( t->schedule_is_forced ) ? t->schedule_type : MPCOMP_COMBINED_GUIDED_LOOP;  
+    t->schedule_is_forced = 0;
+
     return __mpcomp_dynamic_loop_begin( lb, b, incr, chunk_size, from, to);
 }
 
@@ -87,33 +93,22 @@ __mpcomp_guided_loop_next_ignore_nowait (long *from, long *to)
 int __mpcomp_ordered_guided_loop_begin (long lb, long b, long incr, long chunk_size,
 				    long *from, long *to)
 {
-     mpcomp_thread_t *t;
-     int res;
-
-     res = __mpcomp_guided_loop_begin(lb, b, incr, chunk_size, from, to );
-
-     /* Grab the thread info */
-     t = (mpcomp_thread_t *) sctk_openmp_thread_tls;
-     sctk_assert (t != NULL);
-
-     t->current_ordered_iteration = *from;
-
-     return res;
+    mpcomp_thread_t* t = (mpcomp_thread_t *) sctk_openmp_thread_tls;
+    sctk_assert (t != NULL);
+    t->schedule_type = ( t->schedule_is_forced ) ? t->schedule_type : MPCOMP_COMBINED_GUIDED_LOOP;  
+    t->schedule_is_forced = 0;
+    const int ret = __mpcomp_guided_loop_begin(lb, b, incr, chunk_size, from, to );
+    t->info.loop_infos.loop.mpcomp_long.cur_ordered_iter = *from; 
+    return ret;
 }
 
-int __mpcomp_ordered_guided_loop_next (long *from, long *to) {
-     mpcomp_thread_t *t;
-     int res;
-
-     res = __mpcomp_guided_loop_next(from, to);
-
-     /* Grab the thread info */
-     t = (mpcomp_thread_t *) sctk_openmp_thread_tls;
-     sctk_assert (t != NULL);
-
-     t->current_ordered_iteration = *from;
-
-     return res;
+int __mpcomp_ordered_guided_loop_next (long *from, long *to) 
+{
+    mpcomp_thread_t *t = (mpcomp_thread_t *) sctk_openmp_thread_tls;
+    sctk_assert (t != NULL);
+    const int ret = __mpcomp_guided_loop_next(from, to);
+    t->info.loop_infos.loop.mpcomp_long.cur_ordered_iter = *from; 
+    return ret;
 }
 
 void __mpcomp_ordered_guided_loop_end ()
@@ -135,7 +130,11 @@ void __mpcomp_ordered_guided_loop_end_nowait ()
 int __mpcomp_loop_ull_guided_begin (bool up, unsigned long long lb, unsigned long long b, unsigned long long incr, unsigned long long chunk_size,
                 unsigned long long *from, unsigned long long *to)
 {
-     return __mpcomp_loop_ull_dynamic_begin(up, lb, b, incr, chunk_size, from, to);
+    mpcomp_thread_t* t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
+    sctk_assert(t != NULL); 
+    t->schedule_type = ( t->schedule_is_forced ) ? t->schedule_type : MPCOMP_COMBINED_GUIDED_LOOP;  
+    t->schedule_is_forced = 0;
+    return __mpcomp_loop_ull_dynamic_begin(up, lb, b, incr, chunk_size, from, to);
 }
 
 int __mpcomp_loop_ull_guided_next (unsigned long long *from, unsigned long long *to)
@@ -164,30 +163,22 @@ void __mpcomp_guided_loop_ull_end_nowait ()
 int __mpcomp_loop_ull_ordered_guided_begin (bool up, unsigned long long lb, unsigned long long b, unsigned long long incr, unsigned long long chunk_size,
                     unsigned long long *from, unsigned long long *to)
 {
-     int res;
-     mpcomp_thread_t *t;
+    mpcomp_thread_t *t = (mpcomp_thread_t *) sctk_openmp_thread_tls;
+    sctk_assert (t != NULL);
 
-     /* Grab the thread info */
-     t = (mpcomp_thread_t *) sctk_openmp_thread_tls;
-     sctk_assert (t != NULL);
-    
-     res = __mpcomp_loop_ull_guided_begin(up, lb, b, incr, chunk_size, from, to );
-     t->current_ordered_iteration = *from;
+    t->schedule_type = ( t->schedule_is_forced ) ? t->schedule_type : MPCOMP_COMBINED_GUIDED_LOOP;  
+    t->schedule_is_forced = 0;
 
-     return res;
+    const int ret =__mpcomp_loop_ull_guided_begin(up, lb, b, incr, chunk_size, from, to );
+    t->info.loop_infos.loop.mpcomp_ull.cur_ordered_iter = *from;
+    return ret;
 }
 
-int __mpcomp_loop_ull_ordered_guided_next (unsigned long long *from, unsigned long long *to) {
-     mpcomp_thread_t *t;
-     int res;
-
-     res = __mpcomp_loop_ull_guided_next(from, to);
-
-     /* Grab the thread info */
-     t = (mpcomp_thread_t *) sctk_openmp_thread_tls;
-     sctk_assert (t != NULL);
-
-     t->current_ordered_iteration = *from;
-
-     return res;
+int __mpcomp_loop_ull_ordered_guided_next (unsigned long long *from, unsigned long long *to) 
+{
+    mpcomp_thread_t *t = (mpcomp_thread_t *) sctk_openmp_thread_tls;
+    sctk_assert (t != NULL);
+    const int ret = __mpcomp_loop_ull_guided_next(from, to);
+    t->info.loop_infos.loop.mpcomp_ull.cur_ordered_iter = *from;
+    return ret;
 }

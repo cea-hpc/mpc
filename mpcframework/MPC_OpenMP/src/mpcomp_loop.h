@@ -39,12 +39,8 @@ static inline long __mpcomp_internal_loop_get_num_iters( long start, long end, l
     const bool up = ( step > 0 ); 
     const long abs_step = ( up ) ? abs_step : -abs_step;
     
-    //ret = ( end - start + step + modulo_param ) / step;
-    //ret = ( up   && start > end ) ? 0 : ret;
-    //ret = ( !up  && start < end ) ? 0 : ret;
     ret = ( up  && start < end ) ? ( end - start + step - (long) 1 ) / step : ret;
     ret = ( !up && start > end ) ? ( start - end - step - (long) 1 ) / -step : ret;
-    //sctk_error(" %s - %ld %ld %ld %ld", __func__, start, end, step, ret ); 
     return ( ret >= 0 ) ? ret : -ret ;
 }
 

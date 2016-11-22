@@ -242,7 +242,7 @@ mpcomp_task_dep_free_task_htable( mpcomp_task_dep_ht_table_t *htable )
 			mpcomp_task_dep_ht_entry_t* entry;
 			while( ( entry = htable[i].buckets->entry ) )
 			{
-				mpcomp_task_dep_free_node_list( entry->last_in );
+				mpcomp_task_dep_free_node_list_elt( entry->last_in );
 				mpcomp_task_dep_node_unref( entry->last_out );
 				htable[i].buckets->entry = entry;
 				sctk_free( entry );

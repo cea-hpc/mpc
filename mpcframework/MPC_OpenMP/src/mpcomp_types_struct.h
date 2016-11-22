@@ -134,7 +134,8 @@ typedef struct mpcomp_team_s
 	mpcomp_atomic_int_pad_t for_dyn_nb_threads_exited[MPCOMP_MAX_ALIVE_FOR_DYN + 1];
 
 	/* ORDERED CONSTRUCT */
-	volatile int next_ordered_offset; 
+	volatile long next_ordered_offset; 
+	volatile unsigned long long next_ordered_offset_ull; 
 
 #if MPCOMP_TASK
 	struct mpcomp_task_team_infos_s task_infos;	

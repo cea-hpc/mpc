@@ -115,7 +115,6 @@ void wrapper_function( void * arg )
 void   
 __kmpc_begin ( ident_t * loc, kmp_int32 flags ) 
 {
-    sctk_error("YO --- hihi");
    __mpcomp_init();
 // not_implemented() ;
 }
@@ -2007,7 +2006,6 @@ struct shared_common *
 __kmp_find_shared_task_common( struct shared_table *tbl, int gtid, void *pc_addr )
 {
     struct shared_common *tn;
-    sctk_error( "%s -- YO", __func__ );
     for (tn = tbl->data[ KMP_HASH(pc_addr) ]; tn; tn = tn->next) 
     {
         if (tn->gbl_addr == pc_addr) 
@@ -2026,7 +2024,6 @@ kmp_threadprivate_insert( int gtid, void *pc_addr, void *data_addr, size_t pc_si
     mpcomp_thread_t *t ; 
     t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
 
-    sctk_error( "%s -- YO", __func__ );
     /* critical section */
     sctk_thread_mutex_lock (&lock);
         tn = (struct private_common *) sctk_malloc( sizeof (struct private_common) );

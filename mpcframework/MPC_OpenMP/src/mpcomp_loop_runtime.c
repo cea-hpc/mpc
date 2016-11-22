@@ -272,8 +272,6 @@ int __mpcomp_loop_ull_runtime_begin( bool up, unsigned long long lb, unsigned lo
     const int run_sched_var = t->info.icvs.run_sched_var ;
     const unsigned long long chunk_size = (unsigned long long)t->info.icvs.modifier_sched_var;
 
-    sctk_error("%s: value of schedule %d %d", __func__, run_sched_var, chunk_size ) ;
-
      switch( t->info.icvs.run_sched_var ) {
        case omp_sched_static:
          ret = __mpcomp_loop_ull_static_begin( up, lb, b, incr, chunk_size, from, to ) ;

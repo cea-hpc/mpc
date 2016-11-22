@@ -230,7 +230,7 @@ void __mpcomp_start_parallel_region(void (*func) (void *), void *shared, unsigne
     __mpcomp_parallel_set_specific_infos( info, (void*(*)(void*)) func, shared, t->info.icvs, MPCOMP_COMBINED_NONE );
 
     t->schedule_type = ( t->schedule_is_forced ) ? t->schedule_type : MPCOMP_COMBINED_NONE;  
-    t->schedule_is_forced = 1;
+    t->schedule_is_forced = 0;
 
     __mpcomp_internal_begin_parallel_region( info, arg_num_threads );
 
@@ -375,6 +375,10 @@ void __mpcomp_start_sections_parallel_region( void (*func) (void *), void *share
     __mpcomp_parallel_region_infos_init( info );
     __mpcomp_parallel_set_specific_infos( info, (void*(*)(void*)) func, shared, t->info.icvs, MPCOMP_COMBINED_SECTION );
     info->nb_sections = nb_sections;
+
+    t->schedule_type = ( t->schedule_is_forced ) ? t->schedule_type : MPCOMP_COMBINED_SECTION;  
+    t->schedule_is_forced = 0;
+
     __mpcomp_internal_begin_parallel_region(info, arg_num_threads );
 
     /* Start scheduling */
@@ -410,6 +414,11 @@ void __mpcomp_start_parallel_dynamic_loop( void (*func) (void *), void *shared, 
     __mpcomp_parallel_region_infos_init( info );
     __mpcomp_parallel_set_specific_infos( info, (void*(*)(void*)) func, shared, t->info.icvs, MPCOMP_COMBINED_DYN_LOOP );
     __mpcomp_loop_gen_infos_init( &( info->loop_infos ), lb, b, incr, chunk_size );
+
+    
+    t->schedule_type = ( t->schedule_is_forced ) ? t->schedule_type : MPCOMP_COMBINED_DYN_LOOP;  
+    t->schedule_is_forced = 0;
+
     __mpcomp_internal_begin_parallel_region( info, arg_num_threads);
 
     /* Start scheduling */
@@ -419,8 +428,7 @@ void __mpcomp_start_parallel_dynamic_loop( void (*func) (void *), void *shared, 
     sctk_nodebug( "%s: === EXIT PARALLEL REGION w/ DYN LOOP %ld -> %ld [%ld] cs:%ld ===", __func__, lb, b, incr, chunk_size);
 }
 
-void
-__mpcomp_start_parallel_static_loop( void (*func) (void *), void *shared, unsigned arg_num_threads,
+void __mpcomp_start_parallel_static_loop( void (*func) (void *), void *shared, unsigned arg_num_threads,
 				      long lb, long b, long incr, long chunk_size)
 {
     mpcomp_thread_t* t ;
@@ -447,6 +455,10 @@ __mpcomp_start_parallel_static_loop( void (*func) (void *), void *shared, unsign
     __mpcomp_parallel_region_infos_init( info );
     __mpcomp_parallel_set_specific_infos( info, (void*(*)(void*)) func, shared, t->info.icvs, MPCOMP_COMBINED_STATIC_LOOP );
     __mpcomp_loop_gen_infos_init( &( info->loop_infos ), lb, b, incr, chunk_size );
+
+    t->schedule_type = ( t->schedule_is_forced ) ? t->schedule_type : MPCOMP_COMBINED_STATIC_LOOP;  
+    t->schedule_is_forced = 0;
+
     __mpcomp_internal_begin_parallel_region( info, arg_num_threads );
 
     /* Start scheduling */

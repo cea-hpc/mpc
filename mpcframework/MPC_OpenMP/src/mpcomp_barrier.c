@@ -38,9 +38,8 @@ static void __mpcomp_internal_full_barrier(mpcomp_mvp_t *mvp)
 
     sctk_assert( mvp );
     sctk_assert( mvp->father );
-    sctk_assert( mvp->instance );
-    sctk_assert( mvp->instance->team );
-    sctk_assert( mvp->instance->team->info );
+    sctk_assert( mvp->father->instance );
+    sctk_assert( mvp->father->instance->team );
 
 	c = mvp->father;
 	new_root = c->instance->team->info.new_root; 
@@ -104,9 +103,8 @@ void __mpcomp_internal_half_barrier ( mpcomp_mvp_t *mvp)
 
   sctk_assert( mvp );
   sctk_assert( mvp->father );
-  sctk_assert( mvp->instance );
-  sctk_assert( mvp->instance->team );
-  sctk_assert( mvp->instance->team->info );
+  sctk_assert( mvp->father->instance );
+  sctk_assert( mvp->father->instance->team );
 
   c = mvp->father;
   new_root = c->instance->team->info.new_root ;
@@ -124,7 +122,6 @@ void __mpcomp_internal_half_barrier ( mpcomp_mvp_t *mvp)
 
     __mpcomp_internal_full_barrier(mvp);
     sctk_openmp_thread_tls = save_tls;
-
 #endif /* MPCOMP_TASK */
 
     /* Step 1: Climb in the tree */

@@ -759,6 +759,7 @@ void  __mpcomp_in_order_scheduler( mpcomp_mvp_t * mvp )
     sctk_assert( cur_mvp_thread->instance->team != NULL ) ;
     sctk_assert( cur_mvp_thread->info.func != NULL ) ;
 
+    mpcomp_loop_long_iter_t* loop = &( cur_mvp_thread->info.loop_infos.loop.mpcomp_long );
 	/* Handle beginning of combined parallel region */
 	switch( cur_mvp_thread->info.combined_pragma ) 
     {
@@ -771,11 +772,11 @@ void  __mpcomp_in_order_scheduler( mpcomp_mvp_t * mvp )
 				break ;
 			case MPCOMP_COMBINED_STATIC_LOOP:
 				sctk_nodebug( "%s: BEGIN - Combined parallel/loop", __func__ ) ;
-				__mpcomp_static_loop_init( cur_mvp_thread, cur_mvp_thread->info.loop_lb, cur_mvp_thread->info.loop_b, cur_mvp_thread->info.loop_incr, cur_mvp_thread->info.loop_chunk_size ) ;
+				__mpcomp_static_loop_init( cur_mvp_thread, loop->lb, loop->b, loop->incr, loop->chunk_size ) ;
 				break ;
 			case MPCOMP_COMBINED_DYN_LOOP:
 				sctk_nodebug( "%s: BEGIN - Combined parallel/loop", __func__ ) ;
-				__mpcomp_dynamic_loop_init( cur_mvp_thread, cur_mvp_thread->info.loop_lb, cur_mvp_thread->info.loop_b, cur_mvp_thread->info.loop_incr, cur_mvp_thread->info.loop_chunk_size);
+				__mpcomp_dynamic_loop_init( cur_mvp_thread, loop->lb, loop->b, loop->incr, loop->chunk_size);
 				break ;
 			default:
 				not_implemented() ;

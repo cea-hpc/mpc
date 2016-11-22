@@ -4,6 +4,9 @@
 #include "sctk_debug.h"
 #include "mpcomp_tree_structs.h"
 
+#include "mpcomp_loop.h"
+#include "mpcomp_parallel_region.h"
+
 //#include "mpcomp_GOMP_parallel_internal.h"
 
 /* Declaration from MPC
@@ -87,8 +90,7 @@ static void mpcomp_internal_GOMP_in_order_scheduler_master_end(void)
 
 void mpcomp_internal_GOMP_parallel_start(void (*fn) (void *), void *data, unsigned num_threads, unsigned int flags)
 {
-    num_threads = (num_threads == 0) ? -1 : num_threads;
-    __mpcomp_start_parallel_region( num_threads, fn, data );
+    __mpcomp_start_parallel_region( (void*(*)(void*)) fn, data, num_threads );
 } 
 
 void mpcomp_internal_GOMP_start_parallel_region(void (*fn) (void *), void *data, unsigned num_threads)
@@ -151,24 +153,10 @@ void mpcomp_internal_GOMP_parallel_loop_generic_start (void (*fn) (void *), void
 
    info = sctk_malloc(sizeof(mpcomp_new_parallel_region_info_t));
    sctk_assert(info);
+
    __mpcomp_parallel_region_infos_init(info);
-
-   wrapper_gomp = sctk_malloc(sizeof(mpcomp_GOMP_wrapper_t));
-   sctk_assert(wrapper_gomp);
-   wrapper_gomp->fn = fn;
-   wrapper_gomp->data = data;
-
-   info->func = mpcomp_GOMP_wrapper_fn;
-   info->shared = wrapper_gomp;
-   info->combined_pragma = combined_pragma;
-
-   info->loop_lb = start;
-   info->loop_b = end;
-   info->loop_incr = incr;
-   info->loop_chunk_size = chunk_size;
-
-    /* Begin scheduling */
-   num_threads = (num_threads == 0) ? -1 : num_threads; 
+   __mpcomp_parallel_set_specific_infos( info, (void*(*)(void*)) fn, data, t->info.icvs, combined_pragma );
+   __mpcomp_loop_gen_infos_init( &( t->info.loop_infos ), start, end, incr, chunk_size ); 
    __mpcomp_internal_begin_parallel_region(info, num_threads);
 
    /* Start scheduling */

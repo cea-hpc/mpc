@@ -58,7 +58,7 @@ extern "C"
    'num_threads' -> -1 if the number of threads is not specified through the
    corresponding clause (OpenMP 2.5) 
  */
-  void __mpcomp_start_parallel_region( void *(*func) (void *), void *shared, unsigned num_threads );
+  //void __mpcomp_start_parallel_region( void *(*func) (void *), void *shared, unsigned num_threads );
 
 /* 
    BARRIER construct

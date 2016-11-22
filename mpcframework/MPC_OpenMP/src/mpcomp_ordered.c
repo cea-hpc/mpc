@@ -27,9 +27,54 @@
 #include "sctk_spinlock.h"
 #include "mpcomp_ordered.h"
 
+static inline void __mpcomp_internal_ordered_begin( mpcomp_thread_t *t, mpcomp_loop_gen_info_t* loop_infos )
+{
+    sctk_assert( loop_infos && loop_infos->type == MPCOMP_LOOP_TYPE_LONG );
+    mpcomp_loop_long_iter_t* loop = &( loop_infos->loop.mpcomp_long );
+    const long cur_ordered_iter = loop->cur_ordered_iter;
+
+	/* First iteration of the loop -> initialize 'next_ordered_offset' */
+	if( cur_ordered_iter == loop->lb ) 
+    {
+	    t->instance->team->next_ordered_offset = 0;
+        sctk_nodebug( "[%d] %s: Allowed to schedule iteration %d", t->rank, __func__, cur_ordered_iter ) ;
+        return;
+    }
+
+    /* Do we have to wait for the right iteration? */
+    while( cur_ordered_iter != ( loop->lb + loop->incr * t->instance->team->next_ordered_offset) )
+	{
+	    sctk_thread_yield();
+    }
+
+    sctk_nodebug( "[%d] %s: Allowed to schedule iteration %d", t->rank, __func__, cur_ordered_iter ) ;
+} 
+
+static inline void __mpcomp_internal_ordered_begin_ull( mpcomp_thread_t *t, mpcomp_loop_gen_info_t* loop_infos )
+{
+    sctk_assert( loop_infos && loop_infos->type == MPCOMP_LOOP_TYPE_ULL );
+    mpcomp_loop_ull_iter_t* loop = &( loop_infos->loop.mpcomp_ull );
+    const unsigned long long cur_ordered_iter = loop->cur_ordered_iter;
+
+    /* First iteration of the loop -> initialize 'next_ordered_offset' */
+    if( cur_ordered_iter == loop->lb )                   
+    {
+        t->instance->team->next_ordered_offset_ull = (unsigned long long) 0;
+        sctk_nodebug( "[%d] %s: Allowed to schedule iteration %d", t->rank, __func__, cur_ordered_iter ) ;
+        return;
+    }
+
+    /* Do we have to wait for the right iteration? */
+    while( cur_ordered_iter != ( loop->lb + loop->incr * t->instance->team->next_ordered_offset_ull) )
+    {
+        sctk_thread_yield();
+    }
+}
+
 void __mpcomp_ordered_begin( void )
 {
 	mpcomp_thread_t *t;
+    mpcomp_loop_gen_info_t* loop_infos; 
 
 	__mpcomp_init();
 
@@ -37,58 +82,68 @@ void __mpcomp_ordered_begin( void )
 	sctk_assert(t != NULL); 
 
     /* No need to check something in case of 1 thread */
-    if ( t->info.num_threads == 1 ) return ;
+    if ( t->info.num_threads == 1 )
+    {
+         return ;
+    }
 
 	sctk_nodebug( "[%d] %s: enter w/ iteration %d and team %d",
 			t->rank, __func__, t->current_ordered_iteration, t->instance->team->next_ordered_offset ) ;
 
-	/* First iteration of the loop -> initialize 'next_ordered_offset' */
-	if (t->current_ordered_iteration == t->info.loop_lb) {
-		t->instance->team->next_ordered_offset = 0;
-	} else {
-		/* Do we have to wait for the right iteration? */
-		if (t->current_ordered_iteration != 
-				(t->info.loop_lb + t->info.loop_incr * 
-				 t->instance->team->next_ordered_offset)) {
-			mpcomp_mvp_t *mvp;
+    loop_infos = &( t->info.loop_infos );
 
-			sctk_nodebug("[%d] %s: Waiting to schedule iteration %d",
-					t->rank, __func__, t->current_ordered_iteration);
-
-			/* Grab the corresponding microVP */
-			mvp = t->mvp;
-			while ( t->current_ordered_iteration != 
-					(t->info.loop_lb + t->info.loop_incr * 
-					 t->instance->team->next_ordered_offset) )
-			{
-				sctk_thread_yield();
-			}
-#if 0	       
-			TODO("use correct primitives")
-				mpcomp_fork_when_blocked (my_vp, info->step);
-
-			/* Spin while the condition is not satisfied */
-			mpcomp_macro_scheduler (my_vp, info->step);
-			while ( info->current_ordered_iteration != 
-					(info->loop_lb + info->loop_incr * team->next_ordered_offset) ) {
-				mpcomp_macro_scheduler (my_vp, info->step);
-				if ( info->current_ordered_iteration != 
-						(info->loop_lb + info->loop_incr * team->next_ordered_offset) ) {
-					sctk_thread_yield ();
-				}
-			}
-#endif
-
-		}
-	}
+    if( loop_infos->type == MPCOMP_LOOP_TYPE_LONG )
+    { 
+        __mpcomp_internal_ordered_begin( t, loop_infos );
+    }
+    else
+    {
+        __mpcomp_internal_ordered_begin_ull( t, loop_infos );
+    }
 
 	sctk_nodebug( "[%d] %s: Allowed to schedule iteration %d", t->rank, __func__, t->current_ordered_iteration ) ;
 }
 
+static inline void __mpcomp_internal_ordered_end( mpcomp_thread_t* t, mpcomp_loop_gen_info_t* loop_infos  )
+{
+    int isLastIteration;
+    sctk_assert( loop_infos && loop_infos->type == MPCOMP_LOOP_TYPE_LONG );
+    mpcomp_loop_long_iter_t* loop = &( loop_infos->loop.mpcomp_long );
+
+    isLastIteration = 0;
+    isLastIteration += (loop->up  && loop->cur_ordered_iter >= loop->b) ? ( long) 1 : (long)0;
+    isLastIteration += (!loop->up && loop->cur_ordered_iter <= loop->b) ? ( long) 1 : (long) 0;
+
+	loop->cur_ordered_iter += loop->incr ;
+    t->instance->team->next_ordered_offset = ( isLastIteration ) ? 0 : t->instance->team->next_ordered_offset + 1; 
+}
+
+static inline void __mpcomp_internal_ordered_end_ull( mpcomp_thread_t* t, mpcomp_loop_gen_info_t* loop_infos  )
+{
+    int isLastIteration;
+    sctk_assert( loop_infos && loop_infos->type == MPCOMP_LOOP_TYPE_ULL );
+    mpcomp_loop_ull_iter_t* loop = &( loop_infos->loop.mpcomp_ull );
+
+    isLastIteration = 0;
+    isLastIteration += (loop->up && loop->cur_ordered_iter >= loop->b) ?  (unsigned long long) 1 : (unsigned long long) 0;
+    isLastIteration += (!loop->up && loop->cur_ordered_iter <= loop->b) ? (unsigned long long) 1 : (unsigned long long) 0;
+
+    if( loop->up )
+    {
+	    loop->cur_ordered_iter = loop->cur_ordered_iter + loop->incr;
+    }
+    else
+    {
+	    loop->cur_ordered_iter = loop->cur_ordered_iter - loop->incr;
+    }
+
+    t->instance->team->next_ordered_offset_ull = ( isLastIteration ) ? (unsigned long long ) 0 : t->instance->team->next_ordered_offset_ull + (unsigned long long) 1; 
+}
 
 void __mpcomp_ordered_end( void )
 {
 	mpcomp_thread_t *t;
+    mpcomp_loop_gen_info_t* loop_infos; 
 
 	t = (mpcomp_thread_t *) sctk_openmp_thread_tls;
 	sctk_assert(t != NULL); 
@@ -96,13 +151,16 @@ void __mpcomp_ordered_end( void )
     /* No need to check something in case of 1 thread */
     if ( t->info.num_threads == 1 ) return ;
 
-	t->current_ordered_iteration += t->info.loop_incr ;
-	if ( (t->info.loop_incr > 0 && t->current_ordered_iteration >= t->info.loop_b) ||
-			(t->info.loop_incr < 0 && t->current_ordered_iteration <= t->info.loop_b) ) {
-		t->instance->team->next_ordered_offset = -1 ;
-	} else {
-		t->instance->team->next_ordered_offset++ ;
-	}
+    loop_infos = &( t->info.loop_infos );
+
+    if( loop_infos->type == MPCOMP_LOOP_TYPE_LONG )
+    { 
+        __mpcomp_internal_ordered_end( t, loop_infos );
+    }
+    else
+    {
+        __mpcomp_internal_ordered_end_ull( t, loop_infos );
+    }
 }
 
 #ifndef NO_OPTIMIZED_GOMP_4_0_API_SUPPORT

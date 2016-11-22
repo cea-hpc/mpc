@@ -100,7 +100,7 @@ __mpcomp_task_process_deps( mpcomp_task_dep_node_t* task_node, mpcomp_task_dep_h
 					{
 						node->successors = mpcomp_task_dep_alloc_node_list_elt( node->successors, task_node ); 
 						predecessors_num++;
-					sctk_nodebug("IN predecessors");
+					    sctk_nodebug("IN predecessors");
 					}
 					MPCOMP_TASK_DEP_UNLOCK_NODE( node );
 				}
@@ -163,7 +163,6 @@ __mpcomp_task_finalize_deps( mpcomp_task_t* task )
 	/* No dependers */
 	if( !( task_node ) ) 
 	{
-		sctk_nodebug( " NO DEPS CALL FINALIZE ...");
 		return;
 	}
 
@@ -263,5 +262,4 @@ mpcomp_task_with_deps( void (*fn) (void *), void *data, void (*cpyfn) (void *, v
 		sctk_nodebug( "%s: Direct run ...", __func__);
 		__mpcomp_task_process( new_task, if_clause );
 	}
-	
 }

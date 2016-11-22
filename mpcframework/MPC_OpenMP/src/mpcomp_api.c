@@ -80,7 +80,6 @@ omp_get_max_threads (void)
   t = sctk_openmp_thread_tls ;
   sctk_assert( t != NULL ) ;
 
-  sctk_error("t : %p -- VALUE", t);
   sctk_nodebug("[%d] omp_get_max_threads: getting %d thread(s)", t->rank,
                t->info.icvs.nthreads_var);
   
@@ -193,8 +192,6 @@ omp_set_schedule( omp_sched_t kind, int modifier )
   mpcomp_thread_t * t ;
 
  __mpcomp_init ();
-
-  sctk_error( "omp_set_schedule: entering" ) ;
 
   t = sctk_openmp_thread_tls;
   sctk_assert( t != NULL);

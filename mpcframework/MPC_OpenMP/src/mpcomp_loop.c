@@ -94,7 +94,6 @@ unsigned long long __mpcomp_compute_static_nb_chunks_per_rank_ull (unsigned long
 
 	/* One thread may have one more additionnal smaller chunk to finish the iteration domain */
     nb_chunks_per_thread += (rank == nb_chunk_extra && are_not_multiple ) ? (unsigned long long) 1 : (unsigned long long) 0;
-    //sctk_warning( "%d nb_chunks_per_thread: %llu %llu %llu", rank, loop->lb, loop->b, nb_chunks_per_thread );
     
     return nb_chunks_per_thread;
 }

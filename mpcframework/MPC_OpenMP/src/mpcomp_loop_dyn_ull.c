@@ -65,6 +65,9 @@ void __mpcomp_dynamic_loop_init_ull(mpcomp_thread_t *t, bool up, unsigned long l
     const int num_threads = t->info.num_threads;
 	const int index = __mpcomp_loop_dyn_get_for_dyn_index( t );
 
+    t->schedule_type = ( t->schedule_is_forced ) ? t->schedule_type : MPCOMP_COMBINED_DYN_LOOP;  
+    t->schedule_is_forced = 0;
+
 	/* Stop if the maximum number of alive loops is reached */
 	while (sctk_atomics_load_int( &( t->instance->team->for_dyn_nb_threads_exited[index].i ) ) == MPCOMP_NOWAIT_STOP_SYMBOL ) 
     {
@@ -99,9 +102,6 @@ int __mpcomp_loop_ull_dynamic_begin (bool up, unsigned long long lb, unsigned lo
 	/* Grab the thread info */
 	t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
 	sctk_assert( t != NULL ) ;
-
-    t->schedule_type = ( t->schedule_is_forced ) ? t->schedule_type : MPCOMP_COMBINED_DYN_LOOP;  
-    t->schedule_is_forced = 0;
 
 	/* Initialization of loop internals */
 	__mpcomp_dynamic_loop_init_ull(t, up, lb, b, incr, chunk_size);
@@ -251,26 +251,22 @@ int __mpcomp_loop_ull_ordered_dynamic_begin(bool up, unsigned long long lb, unsi
     //TODO EXTEND MODIF WITH UP VALUE
     sctk_nodebug( "[%d] %s: %d -> %d [%d] cs:%d", t->rank, __func__, lb, b, incr, chunk_size ) ;
     const int res = __mpcomp_loop_ull_dynamic_begin( up, lb, b, incr, chunk_size, from, to); 
-    t->current_ordered_iteration = *from;
+    t->info.loop_infos.loop.mpcomp_ull.cur_ordered_iter = *from; 
     sctk_nodebug( "[%d] %s: exit w/ res=%d", t->rank, __func__, res ) ;
-     
     return res; 
 }
 
 int
 __mpcomp_loop_ull_ordered_dynamic_next(unsigned long long *from, unsigned long long *to)
 {
-     mpcomp_thread_t *t;
-     int res ;
+    mpcomp_thread_t *t;
 
-     res = __mpcomp_loop_ull_dynamic_next(from, to);
+    t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
+    sctk_assert(t != NULL);
 
-     t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
-     sctk_assert(t != NULL);
-
-     t->current_ordered_iteration = *from;
-
-     return res;
+    const int ret = __mpcomp_loop_ull_dynamic_next(from, to);
+    t->info.loop_infos.loop.mpcomp_ull.cur_ordered_iter = *from; 
+    return ret;
 }
 
 /****

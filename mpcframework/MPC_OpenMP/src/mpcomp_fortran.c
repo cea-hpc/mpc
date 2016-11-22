@@ -337,14 +337,12 @@ omp_test_lock__ (omp_lock_t * lock)
 void
 omp_init_nest_lock_ (omp_nest_lock_t * lock) 
 {
-  sctk_error("init : %p", lock);
   omp_init_nest_lock( lock ) ;
 }
 
 void
 omp_init_nest_lock__ (omp_nest_lock_t * lock) 
 {
-  sctk_error("init : %p", lock);
   omp_init_nest_lock( lock ) ;
 }
 

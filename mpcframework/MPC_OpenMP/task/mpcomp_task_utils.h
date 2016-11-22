@@ -295,7 +295,6 @@ mpcomp_task_get_list( int globalRank, mpcomp_tasklist_type_t type )
 	}
 	
     sctk_assert( list != NULL );
-    //sctk_error("value list = %p", list );
     return list;
 }
 

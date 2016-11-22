@@ -27,6 +27,7 @@
 
 #include "sctk_atomics.h"
 #include "mpcomp_types.h"
+#define MPCOMP_TASKGROUP
 
 /* Functions prototypes */
 void mpcomp_taskgroup_start(void);

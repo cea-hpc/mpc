@@ -106,7 +106,6 @@ void mpcomp_task_scheduling_infos_init( void )
 void __mpcomp_task_intel_wrapper( void* task )
 {
     kmp_task_t* kmp_task_addr = (char*) task + sizeof( mpcomp_task_t ); 
-    //sctk_error( "addr task : %p\n", kmp_task_addr );
     kmp_task_addr->routine( 0, kmp_task_addr );
 }
 
@@ -129,8 +128,6 @@ __mpcomp_task_execute( mpcomp_task_t* task )
 	/* Update task owner */
 	task->thread = thread;
 		
-    //sctk_error( "EXEC: thread: %p task: %p owner: %p", thread, task, task->thread );
-
 	/* Saved thread current task */
  	saved_current_task = MPCOMP_TASK_THREAD_GET_CURRENT_TASK( thread );
 
@@ -255,7 +252,6 @@ void mpcomp_task_unref_parent_task( mpcomp_task_t* task )
     if( !mother->parent && ( sctk_atomics_fetch_and_decr_int( &( mother->refcount ) ) == 1 ) )
     {
         mother->children = NULL;
-        sctk_error( "NO MORE TASK ON IMPLICITE TASK" ); 
     }
 }
 
@@ -448,7 +444,6 @@ __mpcomp_task_process( mpcomp_task_t* new_task, bool if_clause )
    sctk_assert( sctk_openmp_thread_tls );
    thread = ( mpcomp_thread_t* ) sctk_openmp_thread_tls;
    
-   //sctk_error( "YO FIRST TACHE" ); 
    sctk_atomics_incr_int( &( total_task_create ) );
    mvp_task_list = __mpcomp_task_try_delay( if_clause );
 
@@ -468,10 +463,9 @@ __mpcomp_task_process( mpcomp_task_t* new_task, bool if_clause )
 
    mpcomp_tast_clear_sister( new_task );
    //mpcomp_task_clear_parent( new_task );
-   mpcomp_task_unref_parent_task( new_task );
    mpcomp_taskgroup_del_task( new_task ); 
-//	__mpcomp_task_finalize_deps( new_task );
-
+   __mpcomp_task_finalize_deps( new_task );
+   mpcomp_task_unref_parent_task( new_task );
 }
 
 /* 
@@ -688,13 +682,14 @@ void mpcomp_task_schedule( int depth )
       
 	__mpcomp_task_execute( task );
 
+    // mpcomp_taskwait( task );
+    
 	/* Clean function */
 	mpcomp_tast_clear_sister( task );
 	//mpcomp_task_clear_parent( task );
-    mpcomp_task_unref_parent_task( task );
     mpcomp_taskgroup_del_task( task ); 
-	 
-//	__mpcomp_task_finalize_deps( task );
+	__mpcomp_task_finalize_deps( task );
+    mpcomp_task_unref_parent_task( task );
 }
 
 void mpcomp_taskwait( void )
@@ -733,6 +728,7 @@ void mpcomp_taskyield( void )
 }
 
 void __mpcomp_task_coherency_entering_parallel_region() {
+#if 0
   struct mpcomp_team_s *team;
   struct mpcomp_mvp_s **mvp;
   mpcomp_thread_t *t;
@@ -753,8 +749,6 @@ void __mpcomp_task_coherency_entering_parallel_region() {
                sctk_atomics_load_int(&team->tasklist_init_done),
                sctk_atomics_load_int(&team->nb_tasks));
 
-    sctk_assert(sctk_atomics_load_int(&team->nb_tasks) == 0);
-
     /* Check per thread task system coherency */
     mvp = t->children_instance->mvps;
     sctk_assert(mvp != NULL);
@@ -768,14 +762,11 @@ void __mpcomp_task_coherency_entering_parallel_region() {
                  "Thread in mvp %d init %d in implicit task %p\n",
                  mvp[i]->rank, lt->tasking_init_done, lt->current_task);
 
-      sctk_assert(lt->current_task != NULL);
-      sctk_assert(lt->current_task->children == NULL);
-      sctk_assert(lt->current_task->list == NULL);
-      sctk_assert(lt->current_task->depth == 0);
       sctk_assert(mpcomp_task_property_isset(lt->current_task->property,
                                              MPCOMP_TASK_IMPLICIT) != 0);
     }
   }
+#endif
 }
 
 void __mpcomp_task_coherency_ending_parallel_region() {
