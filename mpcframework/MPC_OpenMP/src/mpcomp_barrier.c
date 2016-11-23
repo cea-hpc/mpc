@@ -56,6 +56,7 @@ static void __mpcomp_internal_full_barrier(mpcomp_mvp_t *mvp)
     {
 		sctk_atomics_store_int(&(c->barrier), 0);
 		c = c->father;
+        b_done = c->barrier_done;
 		b = sctk_atomics_fetch_and_incr_int(&(c->barrier)) + 1;
 	}
 

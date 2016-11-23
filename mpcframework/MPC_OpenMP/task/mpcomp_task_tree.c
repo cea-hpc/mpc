@@ -70,16 +70,8 @@ static inline void mpcomp_task_tree_allocate_all_task_list( mpcomp_tree_meta_elt
         if( meta_elt->type == MPCOMP_TREE_META_ELT_MVP )
         {
             MPCOMP_TASK_MVP_SET_TASK_LIST_NODE_RANK( meta_elt->ptr.mvp, type, task_tree_infos->tasklistNodeRank[type] );
-            int* test = sctk_malloc( sizeof(int)*2);
-            test[0] = 0;
-            test[1] = task_tree_infos->tasklistNodeRank[type];
-            MPCOMP_TASK_MVP_SET_PATH( meta_elt->ptr.mvp, test );
-        }
-        else
-        {
-            int* test = sctk_malloc( sizeof(int)*1);
-            test[0] = 0;
-            MPCOMP_TASK_MVP_SET_PATH( meta_elt->ptr.node, test );
+            int* path = meta_elt->ptr.mvp->tree_rank;
+            MPCOMP_TASK_MVP_SET_PATH( meta_elt->ptr.mvp, path );
         }
 	}
 
