@@ -25,7 +25,6 @@ mpcomp_task_tree_task_list_alloc( mpcomp_tree_meta_elt_t* meta_elt, int tasklist
    	    return 0;
 	}
 
-    sctk_error("allocation list ... %d %d", depth, type );
 	list = mpcomp_malloc( 1, sizeof( struct mpcomp_task_list_s ), id_numa );
 	sctk_assert( list );
 	mpcomp_task_list_new( list );
@@ -47,13 +46,12 @@ mpcomp_task_tree_task_list_alloc( mpcomp_tree_meta_elt_t* meta_elt, int tasklist
 		default :
 			sctk_fatal( "unkown meta tree elt type" );
 	}
+
 	
   	return 1;
 }
 
-static inline void
-mpcomp_task_tree_allocate_all_task_list( 	mpcomp_tree_meta_elt_t* meta_elt, mpcomp_team_t* team, mpcomp_task_tree_infos_t* task_tree_infos, 
-														const int global_rank, const int depth, const int id_numa )
+static inline void mpcomp_task_tree_allocate_all_task_list( mpcomp_tree_meta_elt_t* meta_elt, mpcomp_team_t* team, mpcomp_task_tree_infos_t* task_tree_infos, const int global_rank, const int depth, const int id_numa )
 {
 	int type, ret;
 	mpcomp_task_list_t* list;
@@ -69,16 +67,29 @@ mpcomp_task_tree_allocate_all_task_list( 	mpcomp_tree_meta_elt_t* meta_elt, mpco
 	{
 		const int tasklist_depth = MPCOMP_TASK_TEAM_GET_TASKLIST_DEPTH( team, type );
         ret += mpcomp_task_tree_task_list_alloc( meta_elt, tasklist_depth, task_tree_infos->tasklistNodeRank, type, depth, id_numa );
+        if( meta_elt->type == MPCOMP_TREE_META_ELT_MVP )
+        {
+            MPCOMP_TASK_MVP_SET_TASK_LIST_NODE_RANK( meta_elt->ptr.mvp, type, task_tree_infos->tasklistNodeRank[type] );
+            int* test = sctk_malloc( sizeof(int)*2);
+            test[0] = 0;
+            test[1] = task_tree_infos->tasklistNodeRank[type];
+            MPCOMP_TASK_MVP_SET_PATH( meta_elt->ptr.mvp, test );
+        }
+        else
+        {
+            int* test = sctk_malloc( sizeof(int)*1);
+            test[0] = 0;
+            MPCOMP_TASK_MVP_SET_PATH( meta_elt->ptr.node, test );
+        }
 	}
 
-	if( ret && (larcenyMode == MPCOMP_TASK_LARCENY_MODE_RANDOM || larcenyMode == MPCOMP_TASK_LARCENY_MODE_RANDOM_ORDER ) )
-   {
-      mpcomp_task_init_victim_random( meta_elt->ptr.node, global_rank );
-   }
+    if( ret && (larcenyMode == MPCOMP_TASK_LARCENY_MODE_RANDOM || larcenyMode == MPCOMP_TASK_LARCENY_MODE_RANDOM_ORDER ) )
+    {
+        mpcomp_task_init_victim_random( meta_elt->ptr.node, global_rank );
+    }
 }
 
-static void
-mpcomp_task_tree_init_task_tree_infos_leaf( mpcomp_mvp_t* mvp, mpcomp_task_tree_infos_t* task_tree_infos, const int rank, const int depth, const int id_numa ) 
+static void mpcomp_task_tree_init_task_tree_infos_leaf( mpcomp_mvp_t* mvp, mpcomp_task_tree_infos_t* task_tree_infos, const int rank, const int depth, const int id_numa ) 
 {
 	mpcomp_thread_t* omp_thread_tls; 
 	mpcomp_tree_meta_elt_t meta_elt;
@@ -114,12 +125,12 @@ mpcomp_task_tree_init_task_tree_infos_node( mpcomp_node_t* node, mpcomp_task_tre
 	mpcomp_task_tree_infos_t* child_task_tree_infos;
 
 	sctk_assert( index >= 0 );
-   sctk_assert( node != NULL);
-   sctk_assert( parent_task_tree_infos != NULL);
+    sctk_assert( node != NULL);
+    sctk_assert( parent_task_tree_infos != NULL);
 
-   /* Retrieve the current thread information */
-   sctk_assert( sctk_openmp_thread_tls );
-   thread = (mpcomp_thread_t *) sctk_openmp_thread_tls;
+    /* Retrieve the current thread information */
+    sctk_assert( sctk_openmp_thread_tls );
+    thread = (mpcomp_thread_t *) sctk_openmp_thread_tls;
 
 	meta_elt.type = MPCOMP_TREE_META_ELT_NODE;
 	meta_elt.ptr.node = node;
@@ -148,8 +159,7 @@ mpcomp_task_tree_init_task_tree_infos_node( mpcomp_node_t* node, mpcomp_task_tre
 }
 
 /* Recursive initialization of mpcomp tasks lists (new and untied) */
-static void 
-mpcomp_task_tree_infos_init_r( mpcomp_node_t* node, mpcomp_task_tree_infos_t* parent_task_tree_infos, int index )
+static void mpcomp_task_tree_infos_init_r( mpcomp_node_t* node, mpcomp_task_tree_infos_t* parent_task_tree_infos, int index )
 {
   	int i;
 	mpcomp_task_tree_infos_t* child_task_tree_infos;
@@ -226,6 +236,7 @@ mpcomp_task_tree_infos_init( void )
 		while( !MPCOMP_TASK_TEAM_IS_INITIALIZED( team ) )
 		{
 			/* All threads wait until allocation is done */
+            sctk_thread_yield();
 		}
 	}
 }

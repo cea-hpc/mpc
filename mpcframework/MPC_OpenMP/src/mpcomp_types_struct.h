@@ -110,7 +110,6 @@ typedef struct mpcomp_new_parallel_region_info_s {
 
     /* META OPTIONAL INFO FOR ULL SUPPORT */
     mpcomp_loop_gen_info_t loop_infos;
-
 	/* OPTIONAL INFO */
 	long loop_lb;		            /* Lower bound */
 	long loop_b;			        /* Upper bound */

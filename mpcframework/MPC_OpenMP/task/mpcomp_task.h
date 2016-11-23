@@ -92,10 +92,10 @@ typedef struct mpcomp_task_node_infos_s
 	struct mpcomp_node_s **tree_array_node;  												/**< Array representation of the tree 	*/
 	unsigned tree_array_rank;           													/**< Rank in tree_array 					*/
 	int *path;                          													/**< Path in the tree 						*/
-   struct mpcomp_task_list_s *tasklist[MPCOMP_TASK_TYPE_COUNT]; 					/**< Lists of tasks 							*/
-   struct mpcomp_task_list_s *lastStolen_tasklist[MPCOMP_TASK_TYPE_COUNT];
-   int tasklistNodeRank[MPCOMP_TASK_TYPE_COUNT];
-   struct drand48_data *tasklist_randBuffer;
+    struct mpcomp_task_list_s *tasklist[MPCOMP_TASK_TYPE_COUNT]; 					/**< Lists of tasks 							*/
+    struct mpcomp_task_list_s *lastStolen_tasklist[MPCOMP_TASK_TYPE_COUNT];
+    int tasklistNodeRank[MPCOMP_TASK_TYPE_COUNT];
+    struct drand48_data *tasklist_randBuffer;
 } mpcomp_task_node_infos_t;
 
 /** mvp and node share same struct */
