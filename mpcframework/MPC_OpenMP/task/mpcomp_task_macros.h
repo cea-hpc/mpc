@@ -214,6 +214,7 @@ typedef enum mpcomp_task_init_status_e
 
 #define MPCOMP_TASK_MVP_GET_TREE_ARRAY_NODES( mvp ) mvp->task_infos.tree_array_node 
 #define MPCOMP_TASK_MVP_SET_TREE_ARRAY_NODES( mvp, ptr ) do{ mvp->task_infos.tree_array_node = ptr; }while(0)  
+#define MPCOMP_TASK_NODE_SET_TREE_ARRAY_NODES( mvp, ptr ) do{ mvp->task_infos.tree_array_node = ptr; }while(0)  
 
 #define MPCOMP_TASK_MVP_GET_TREE_ARRAY_NODE( mvp, rank ) mvp->task_infos.tree_array_node[rank]
 #define MPCOMP_TASK_NODE_GET_TREE_ARRAY_NODE( node, rank ) node->task_infos.tree_array_node[rank]

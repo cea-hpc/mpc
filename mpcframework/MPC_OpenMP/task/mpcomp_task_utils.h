@@ -286,12 +286,12 @@ mpcomp_task_get_list( int globalRank, mpcomp_tasklist_type_t type )
 	if (mpcomp_is_leaf( thread->instance, globalRank ) ) 
 	{
    	    struct mpcomp_mvp_s* mvp = (struct mpcomp_mvp_s *) ( MPCOMP_TASK_MVP_GET_TREE_ARRAY_NODE( thread->mvp, globalRank ) );
-		list = mvp->task_infos.tasklist[type];
+        list = MPCOMP_TASK_MVP_GET_TASK_LIST_HEAD( mvp, type );
   	}
 	else
 	{
 		struct mpcomp_node_s *node = (struct mpcomp_node_s *) ( MPCOMP_TASK_MVP_GET_TREE_ARRAY_NODE( thread->mvp, globalRank ) );
-		list = node->task_infos.tasklist[type];
+        list = MPCOMP_TASK_NODE_GET_TASK_LIST_HEAD( node, type );
 	}
 	
     sctk_assert( list != NULL );

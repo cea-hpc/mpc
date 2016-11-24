@@ -590,6 +590,7 @@ int mpcomp_build_tree( mpcomp_instance_t * instance, int n_leaves, int depth, in
                __mpcomp_thread_infos_init( &(instance->mvps[current_mvp]->threads[i_thread]), icvs, instance, sctk_openmp_thread_tls);
                instance->mvps[current_mvp]->threads[i_thread].mvp = instance->mvps[current_mvp];
              }
+            instance->mvps[current_mvp]->threads[0].rank = current_mvp;
 
 #if MPCOMP_TASK
 			mpcomp_task_mvp_task_infos_reset( instance->mvps[current_mvp] );

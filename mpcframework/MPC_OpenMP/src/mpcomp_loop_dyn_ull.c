@@ -84,11 +84,9 @@ void __mpcomp_dynamic_loop_init_ull(mpcomp_thread_t *t, bool up, unsigned long l
     loop->chunk_size = chunk_size;
 
     /* Compute the total number of chunks for this thread */
-	t->for_dyn_total = __mpcomp_compute_static_nb_chunks_per_rank_ull(t->rank, num_threads, loop );
-
+	const int for_dyn_total = __mpcomp_compute_static_nb_chunks_per_rank_ull(t->rank, num_threads, loop );
 	/* Try to change the number of remaining chunks */
-	const int ret = sctk_atomics_cas_int( &( t->for_dyn_remain[index].i ), -1, t->for_dyn_total );
-    t->for_dyn_total = ( ret == -1 ) ? t->for_dyn_total : ret ;
+	( void ) sctk_atomics_cas_int( &( t->for_dyn_remain[index].i ), -1, for_dyn_total );
 }
 
 int __mpcomp_loop_ull_dynamic_begin (bool up, unsigned long long lb, unsigned long long b, unsigned long long incr,
@@ -104,6 +102,7 @@ int __mpcomp_loop_ull_dynamic_begin (bool up, unsigned long long lb, unsigned lo
 	sctk_assert( t != NULL ) ;
 
 	/* Initialization of loop internals */
+	t->for_dyn_last_loop_iteration = 0; 
 	__mpcomp_dynamic_loop_init_ull(t, up, lb, b, incr, chunk_size);
     __mpcomp_loop_dyn_init_target_chunk_ull( t, t, t->info.num_threads );
 

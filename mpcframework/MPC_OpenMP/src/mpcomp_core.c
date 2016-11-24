@@ -557,14 +557,18 @@ void __mpcomp_init( void )
 
 	/* Get the rank of current MPI task */
 	task_rank = sctk_get_task_rank();
-        /* Get id numa*/
-        id_numa = sctk_get_node_from_cpu(sctk_get_init_vp(task_rank));
+    
+    /* Get id numa*/
+    id_numa = sctk_get_node_from_cpu(sctk_get_init_vp(task_rank));
 
-        if (task_rank == -1) {
-          /* No parallel OpenMP if MPI has not been initialized yet */
-          nb_mvps = 1;
-        } else {
-          sctk_nodebug("[%d] %s: entering...", task_rank, __func__);
+    if (task_rank == -1) 
+    {
+        /* No parallel OpenMP if MPI has not been initialized yet */
+        nb_mvps = 1;
+    } 
+    else 
+    {
+        sctk_nodebug("[%d] %s: entering...", task_rank, __func__);
 
           /* Compute the number of microVPs according to Hybrid Mode */
           switch (OMP_MODE) {
@@ -668,10 +672,10 @@ void __mpcomp_init( void )
 
 }
 
-void mpcomp_exit( void )
+void __mpcomp_exit( void )
 {
 #if MPCOMP_TASK
-     //__mpcomp_task_exit();
+//     __mpcomp_task_exit();
 #endif /* MPCOMP_TASK */
 }
 

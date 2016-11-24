@@ -105,54 +105,56 @@ __mpcomp_loop_dyn_get_chunk_from_target( mpcomp_thread_t* thread, mpcomp_thread_
         
     /* Compute the index of the dynamic for construct */
     const int index = __mpcomp_loop_dyn_get_for_dyn_index( thread );
-    
-        cur = sctk_atomics_load_int( &(target->for_dyn_remain[index].i) );
+    cur = sctk_atomics_load_int( &(target->for_dyn_remain[index].i) );
 
     if( cur <= 0 ) 
     {
         return 0;
     }
 
+    int success = 0;
     do
     {
-        prev = cur;
-        cur = sctk_atomics_cas_int( &(target->for_dyn_remain[index].i), prev, prev-1 );
-    } while( cur > 0 && cur != prev );
+        if( thread == target )
+        {
+            prev = cur;
+            cur = sctk_atomics_cas_int( &(target->for_dyn_remain[index].i), prev, prev-1 );
+            success = ( cur == prev );
+        }
+        else
+        {
+            if(  __mpcomp_loop_dyn_get_for_dyn_current( thread ) > __mpcomp_loop_dyn_get_for_dyn_current( target ) )
+            {
+                if( ! sctk_spinlock_trylock( &( target->info.update_lock ) ) )
+                {
+                    if(( __mpcomp_loop_dyn_get_for_dyn_current( thread ) > __mpcomp_loop_dyn_get_for_dyn_current( target ) ) )
+                    {
+                        prev = cur;
+                        cur = sctk_atomics_cas_int( &(target->for_dyn_remain[index].i), prev, prev-1 );
+                        success = ( cur == prev );
+                    }
+                    else
+                    {
+                        /* NO MORE STEAL */
+                        cur = 0;
+                    }
+                    sctk_spinlock_unlock( &( target->info.update_lock ));
+                }
+                else
+                {
+                    success = 0;
+                }
+            }
+            else
+            {
+                /* NO MORE STEAL */
+                cur = 0;
+            }
+        }
+    } while( cur > 0 && !success);
 
-    return ( cur > 0 ) ? cur : 0;
+    return ( cur > 0 && success ) ? cur : 0;
 }
-
-static inline void 
-__mpcomp_loop_dyn_target_init( mpcomp_thread_t* thread ) 
-{
-    int i ;
-
-    sctk_assert( thread );
-
-    if( thread->for_dyn_target )
-        return;
-
-    sctk_assert( thread->instance );
-    const int tree_depth = thread->instance->tree_depth;
-
-    thread->for_dyn_target = (int *) malloc( tree_depth * sizeof( int ) ) ;
-    sctk_assert( thread->for_dyn_target );
-
-	thread->for_dyn_shift = (int *) malloc( tree_depth * sizeof( int ) ) ;
-    sctk_assert( thread->for_dyn_shift );
-    
-    sctk_assert( thread->mvp );
-    sctk_assert( thread->mvp->tree_rank );
-
-    for ( i = 0 ; i < tree_depth ; i++ ) 
-    {
-		thread->for_dyn_shift[i] = 0 ;
-	    thread->for_dyn_target[i] = thread->mvp->tree_rank[i];
-	}
-
-	sctk_nodebug( "[%d] %s: initialization of target and shift", thread->rank, __func__ );
-}
-
 
 
 static inline void 
@@ -160,13 +162,13 @@ __mpcomp_loop_dyn_init_target_chunk_ull( mpcomp_thread_t* thread, mpcomp_thread_
 {
 	/* Compute the index of the dynamic for construct */
 	const int index = __mpcomp_loop_dyn_get_for_dyn_index( thread );
+    int cur = sctk_atomics_load_int( &(target->for_dyn_remain[index].i) );
      
-    //if( !sctk_spinlock_trylock( &( target->info.update_lock ) ) )
-    //{
-        sctk_spinlock_lock(  &( target->info.update_lock ) );
+    if( cur < 0 && !sctk_spinlock_trylock( &( target->info.update_lock ) ) )
+    {
         /* Get the current id of remaining chunk for the target */
         int cur = sctk_atomics_load_int( &(target->for_dyn_remain[index].i) );
-        if( cur < 0 && ( ( target == thread ) || ( ( __mpcomp_loop_dyn_get_for_dyn_current( thread )  > __mpcomp_loop_dyn_get_for_dyn_current( target ))) ) )
+        if( cur < 0 && ( __mpcomp_loop_dyn_get_for_dyn_current( thread )  > __mpcomp_loop_dyn_get_for_dyn_current( target ) ) )
         {
             /* t->for_dyn_total  = for_dyn_total  ?? */
             mpcomp_loop_ull_iter_t* loop = &(thread->info.loop_infos.loop.mpcomp_ull);
@@ -174,7 +176,7 @@ __mpcomp_loop_dyn_init_target_chunk_ull( mpcomp_thread_t* thread, mpcomp_thread_
 		    int ret =  sctk_atomics_cas_int( &(target->for_dyn_remain[index].i), -1, for_dyn_total );
         }
         sctk_spinlock_unlock(  &( target->info.update_lock ) );
-    //}
+    }
 }
 
 static inline void 
@@ -182,20 +184,19 @@ __mpcomp_loop_dyn_init_target_chunk( mpcomp_thread_t* thread, mpcomp_thread_t* t
 {
 	/* Compute the index of the dynamic for construct */
 	const int index = __mpcomp_loop_dyn_get_for_dyn_index( thread );
+    int cur = sctk_atomics_load_int( &(target->for_dyn_remain[index].i) );
 
-    //if( !sctk_spinlock_trylock( &( target->info.update_lock ) ) )
-    //{
-        sctk_spinlock_lock(  &( target->info.update_lock ) );
+    if( cur < 0 && !sctk_spinlock_trylock( &( target->info.update_lock ) ) )
+    {
         /* Get the current id of remaining chunk for the target */
         int cur = sctk_atomics_load_int( &(target->for_dyn_remain[index].i) );
-
-        if( cur < 0 && ( target == thread ) || ( ( __mpcomp_loop_dyn_get_for_dyn_current( thread )  > __mpcomp_loop_dyn_get_for_dyn_current( target ))) )
+        if( cur < 0 && ( __mpcomp_loop_dyn_get_for_dyn_current( thread )  > __mpcomp_loop_dyn_get_for_dyn_current( target )))
         {
             const int for_dyn_total = __mpcomp_get_static_nb_chunks_per_rank( target->rank, num_threads, &(thread->info.loop_infos.loop.mpcomp_long) );
             int ret = sctk_atomics_cas_int( &(target->for_dyn_remain[index].i), -1, for_dyn_total );
         }
         sctk_spinlock_unlock(  &( target->info.update_lock ) );
-    //}
+    }
 }
 
 static inline int 
@@ -244,6 +245,32 @@ __mpcomp_loop_dyn_target_reset( mpcomp_thread_t* thread )
 	    thread->for_dyn_target[i] = thread->mvp->tree_rank[i] ;
     }
 }
+
+static inline void 
+__mpcomp_loop_dyn_target_init( mpcomp_thread_t* thread ) 
+{
+    sctk_assert( thread );
+
+    if( thread->for_dyn_target )
+        return;
+
+    sctk_assert( thread->instance );
+    const int tree_depth = thread->instance->tree_depth;
+
+    thread->for_dyn_target = (int *) malloc( tree_depth * sizeof( int ) ) ;
+    sctk_assert( thread->for_dyn_target );
+
+	thread->for_dyn_shift = (int *) malloc( tree_depth * sizeof( int ) ) ;
+    sctk_assert( thread->for_dyn_shift );
+    
+    sctk_assert( thread->mvp );
+    sctk_assert( thread->mvp->tree_rank );
+
+    __mpcomp_loop_dyn_target_reset( thread );
+
+	sctk_nodebug( "[%d] %s: initialization of target and shift", thread->rank, __func__ );
+}
+
 
 
 #endif /* __MPCOMP_MPCOMP_LOOP_DYN_UTILS_H__ */

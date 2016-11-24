@@ -24,11 +24,11 @@ mpcomp_get_neighbour(int globalRank, int i)
 	sctk_assert( sctk_openmp_thread_tls );
    mpcomp_thread_t* thread = ( mpcomp_thread_t * ) sctk_openmp_thread_tls;
 
-   sctk_assert(globalRank >= 0 );
+    sctk_assert(globalRank >= 0 );
 	sctk_assert( thread->instance );
 	sctk_assert( globalRank < MPCOMP_TASK_INSTANCE_GET_ARRAY_TREE_TOTAL_SIZE( thread->instance ) ); 
 
-   int* treeBase = thread->instance->tree_base;
+    int* treeBase = thread->instance->tree_base;
 	sctk_assert( treeBase );
 
 	int *path = NULL;
@@ -50,8 +50,8 @@ mpcomp_get_neighbour(int globalRank, int i)
 	int j;
 	int r = i;
  	int id = 0;
-   int firstRank = 0;
-   int nbSubleaves = 1;
+    int firstRank = 0;
+    int nbSubleaves = 1;
 	int v[vectorSize], res[vectorSize];
 
 	for ( j = 0; j < vectorSize; j++ ) 
@@ -152,7 +152,6 @@ __mpcomp_task_check_neighbourhood_r(mpcomp_node_t* node)
    for( j = 1; j < MPCOMP_TASK_INSTANCE_GET_ARRAY_TREE_LEVEL_SIZE( thread->instance, node->depth ); j++)
 	{
 		const int tree_array_rank = MPCOMP_TASK_NODE_GET_TREE_ARRAY_RANK( node );
-	  	fprintf( stderr, "neighbour n°%d of %d: %d\n", j, tree_array_rank, mpcomp_get_neighbour( tree_array_rank, j ) );
 	}
 
 	switch( node->child_type ) 
@@ -175,7 +174,7 @@ __mpcomp_task_check_neighbourhood_r(mpcomp_node_t* node)
 	      	sctk_assert(mvp != NULL);
 
 	      	for( j = 1; j < MPCOMP_TASK_INSTANCE_GET_ARRAY_TREE_LEVEL_SIZE( thread->instance, node->depth + 1 ); j++) 
-				{
+			{
 					const int tree_array_rank = MPCOMP_TASK_MVP_GET_TREE_ARRAY_RANK( mvp );
 		    		fprintf(stderr, "neighbour n°%d of %d: %d\n", j, tree_array_rank, mpcomp_get_neighbour(tree_array_rank, j));
 	       	}

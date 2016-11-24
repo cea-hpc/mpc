@@ -135,6 +135,7 @@ typedef struct mpcomp_team_s
 	/* ORDERED CONSTRUCT */
 	volatile long next_ordered_offset; 
 	volatile unsigned long long next_ordered_offset_ull; 
+    sctk_atomics_int next_ordered_offset_finalized;
 
 #if MPCOMP_TASK
 	struct mpcomp_task_team_infos_s task_infos;	
@@ -189,6 +190,7 @@ typedef struct mpcomp_thread_s
 	int for_dyn_total ;
 	int * for_dyn_target ; /* Coordinates of target thread to steal */
 	int * for_dyn_shift ; /* Shift of target thread to steal */
+    sctk_spinlock_t* for_dyn_lock;
 	int for_dyn_last_loop_iteration ; /* WORKAROUND (pr35196.c)
                                          Did we just execute the last 
                                          iteration of the original loop? */

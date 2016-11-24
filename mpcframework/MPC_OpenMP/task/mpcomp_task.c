@@ -178,7 +178,7 @@ mpcomp_task_add_to_parent( mpcomp_task_t* task )
 
 	/* Parent task already had children */
 	if( task->parent->children ) 
-   {
+    {
 		task->next_child = task->parent->children;
         sctk_assert( task->next_child );
 		task->next_child->prev_child = task;

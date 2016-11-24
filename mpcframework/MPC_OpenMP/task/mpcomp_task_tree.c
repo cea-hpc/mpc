@@ -67,9 +67,16 @@ static inline void mpcomp_task_tree_allocate_all_task_list( mpcomp_tree_meta_elt
 	{
 		const int tasklist_depth = MPCOMP_TASK_TEAM_GET_TASKLIST_DEPTH( team, type );
         ret += mpcomp_task_tree_task_list_alloc( meta_elt, tasklist_depth, task_tree_infos->tasklistNodeRank, type, depth, id_numa );
-        if( meta_elt->type == MPCOMP_TREE_META_ELT_MVP )
+        if( depth != tasklist_depth  )
         {
-            MPCOMP_TASK_MVP_SET_TASK_LIST_NODE_RANK( meta_elt->ptr.mvp, type, task_tree_infos->tasklistNodeRank[type] );
+            MPCOMP_TASK_MVP_SET_TASK_LIST_NODE_RANK( meta_elt->ptr.mvp, type, global_rank );
+            if( task_tree_infos->tasklistNodeRank[type] != global_rank )
+            {
+                mpcomp_node_t* node = (mpcomp_node_t*) task_tree_infos->tree_array[0][task_tree_infos->tasklistNodeRank[type]];
+                mpcomp_task_list_t* list = MPCOMP_TASK_NODE_GET_TASK_LIST_HEAD( node, type );
+                MPCOMP_TASK_MVP_SET_TASK_LIST_HEAD( meta_elt->ptr.mvp, type, list );
+ 
+            }
             int* path = meta_elt->ptr.mvp->tree_rank;
             MPCOMP_TASK_MVP_SET_PATH( meta_elt->ptr.mvp, path );
         }
@@ -142,6 +149,10 @@ mpcomp_task_tree_init_task_tree_infos_node( mpcomp_node_t* node, mpcomp_task_tre
 	child_task_tree_infos->global_rank	= child_task_tree_infos->first_rank + index * tree_base_value;	
 
  	MPCOMP_TASK_NODE_SET_TREE_ARRAY_RANK( node, cur_globalRank );
+	MPCOMP_TASK_NODE_SET_TREE_ARRAY_NODES( node, parent_task_tree_infos->tree_array[node->id_numa] );
+    int i;
+    for (i = 0; i < 2; i++ )
+        parent_task_tree_infos->tree_array[i][cur_globalRank] = node;
 	mpcomp_task_tree_register_node_in_all_numa_node_array( child_task_tree_infos->tree_array, node, cur_globalRank );
 
 	sctk_assert( thread->instance->team );
@@ -153,18 +164,18 @@ mpcomp_task_tree_init_task_tree_infos_node( mpcomp_node_t* node, mpcomp_task_tre
 /* Recursive initialization of mpcomp tasks lists (new and untied) */
 static void mpcomp_task_tree_infos_init_r( mpcomp_node_t* node, mpcomp_task_tree_infos_t* parent_task_tree_infos, int index )
 {
-  	int i;
+  	int i, next_child;
 	mpcomp_task_tree_infos_t* child_task_tree_infos;
 
 	sctk_assert( node );
 	sctk_assert( index >= 0 );
 	sctk_assert( parent_task_tree_infos );
 
-	const int cur_rank = parent_task_tree_infos->global_rank + index;
+	const int cur_rank = parent_task_tree_infos->global_rank;
 	child_task_tree_infos = mpcomp_task_tree_init_task_tree_infos_node( node, parent_task_tree_infos, index );
 
 	const int node_child_type = node->child_type;
-
+    const int branch_child_num = child_task_tree_infos->stage_size / parent_task_tree_infos-> stage_size;
 	/* Call recursively for all children nodes 
 	 * or the children leafs 							*/
 
@@ -174,12 +185,13 @@ static void mpcomp_task_tree_infos_init_r( mpcomp_node_t* node, mpcomp_task_tree
 		switch( node_child_type ) 
  		{
 			case MPCOMP_CHILDREN_NODE:
-		   	mpcomp_task_tree_infos_init_r( node->children.node[i], child_task_tree_infos, i );
-	      	break;
+		   	    mpcomp_task_tree_infos_init_r( node->children.node[i], child_task_tree_infos, i );
+	      	    break;
 
 	  		case MPCOMP_CHILDREN_LEAF:
-				mpcomp_task_tree_init_task_tree_infos_leaf( node->children.leaf[i], child_task_tree_infos, cur_rank + i + 1, node->depth + 1, node->id_numa ); 
-	      	break;
+                next_child = cur_rank + parent_task_tree_infos->stage_size + index * branch_child_num + i;
+				mpcomp_task_tree_init_task_tree_infos_leaf( node->children.leaf[i], child_task_tree_infos, next_child, node->depth + 1, node->id_numa ); 
+	      	    break;
 		    
 	  		default:
 	       	sctk_nodebug("not reachable"); 

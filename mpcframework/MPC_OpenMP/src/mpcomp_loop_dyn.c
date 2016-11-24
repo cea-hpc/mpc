@@ -54,10 +54,11 @@ __mpcomp_dynamic_loop_get_chunk_from_rank( mpcomp_thread_t * t, mpcomp_thread_t 
     {
         return 0;
     }
-   
+  
     const int for_dyn_total = __mpcomp_get_static_nb_chunks_per_rank( rank, num_threads, loop ); 
     __mpcomp_static_schedule_get_specific_chunk( rank, num_threads, loop, for_dyn_total - cur, from, to) ;
 
+    //sctk_error( "%d-%d-%d-%d %s %ld %ld %ld %ld %ld %ld %ld", t->rank, target->rank, __mpcomp_loop_dyn_get_for_dyn_current( t ), __mpcomp_loop_dyn_get_for_dyn_current( target ), __func__, for_dyn_total, cur, loop->lb, *from, loop->b, *to, loop->incr);
 	/* SUCCESS */
     return 1;
 }
@@ -65,7 +66,6 @@ __mpcomp_dynamic_loop_get_chunk_from_rank( mpcomp_thread_t * t, mpcomp_thread_t 
 void __mpcomp_dynamic_loop_init(mpcomp_thread_t *t, long lb, long b, long incr, long chunk_size)
 {
 	mpcomp_team_t *team_info;	/* Info on the team */
-	
     /* Get the team info */
 	sctk_assert(t->instance != NULL);
 	team_info = t->instance->team;
@@ -92,7 +92,7 @@ void __mpcomp_dynamic_loop_init(mpcomp_thread_t *t, long lb, long b, long incr, 
 
     /* Try to change the number of remaining chunks */
     const int for_dyn_total = __mpcomp_get_static_nb_chunks_per_rank(t->rank, num_threads, &( t->info.loop_infos.loop.mpcomp_long ) );
-	sctk_atomics_cas_int(&(t->for_dyn_remain[index].i), -1, for_dyn_total);
+	const int val = sctk_atomics_cas_int(&(t->for_dyn_remain[index].i), -1, for_dyn_total);
 }
 
 int __mpcomp_dynamic_loop_begin(long lb, long b, long incr, long chunk_size, long *from, long *to)
@@ -108,6 +108,7 @@ int __mpcomp_dynamic_loop_begin(long lb, long b, long incr, long chunk_size, lon
 
 
 	/* Initialization of loop internals */
+	t->for_dyn_last_loop_iteration = 0; 
 	__mpcomp_dynamic_loop_init(t, lb, b, incr, chunk_size);
     __mpcomp_loop_dyn_init_target_chunk( t, t, t->info.num_threads );
 
@@ -144,7 +145,6 @@ int __mpcomp_dynamic_loop_next (long *from, long *to)
 
 	/* Compute the index of the target */
     index_target = __mpcomp_loop_dyn_get_victim_rank( t );
-    barrier_num_threads = t->instance->mvps[index_target]->father->barrier_num_threads;
 
     /* 
      * WORKAROUND (pr35196.c):
@@ -160,7 +160,7 @@ int __mpcomp_dynamic_loop_next (long *from, long *to)
 	int found = 1 ;
     int* tree_base = t->instance->tree_base;
     const int tree_depth = t->instance->tree_depth;
-
+    
 	/* While it is not possible to get a chunk */
 	while( !__mpcomp_dynamic_loop_get_chunk_from_rank( t, &(t->instance->mvps[index_target]->threads[0]), from, to ) ) 
     {
@@ -237,7 +237,7 @@ void __mpcomp_dynamic_loop_end_nowait( void )
 	sctk_assert (team_info != NULL);
 
 	/* WARNING: the following order is important */
-    sctk_spinlock_lock(  &( t->info.update_lock ) );
+    sctk_spinlock_lock( &( t->info.update_lock ) );
     sctk_atomics_incr_int( &( t->for_dyn_ull_current ) );
 	sctk_atomics_store_int( &(t->for_dyn_remain[index].i), -1 ) ;
     sctk_spinlock_unlock( &( t->info.update_lock ) );
@@ -429,3 +429,4 @@ void __mpcomp_for_dyn_coherency_end_parallel_region( mpcomp_instance_t * instanc
 
 		 }
 }
+
