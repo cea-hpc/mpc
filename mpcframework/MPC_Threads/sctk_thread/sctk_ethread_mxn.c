@@ -851,19 +851,19 @@ sctk_ethread_mxn_sigsuspend (sigset_t * set)
 }
 
 static void sctk_ethread_mxn_at_fork_child(){
-  sctk_error("Unable to fork with user threads child");
-  sctk_abort();
+  /* sctk_error("Unable to fork with user threads child"); */
+  /* sctk_abort(); */
 }
 
 static void sctk_ethread_mxn_at_fork_parent(){
-  sctk_error("Unable to fork with user threads parent");
-  sctk_abort();
+  /* sctk_error("Unable to fork with user threads parent"); */
+  /* sctk_abort(); */
 }
 
 
 static void sctk_ethread_mxn_at_fork_prepare(){
-  sctk_error("Unable to fork with user threads prepare");
-  sctk_abort();
+  /* sctk_error("Unable to fork with user threads prepare"); */
+  /* sctk_abort(); */
 }
 
 void
