@@ -430,6 +430,17 @@ int pthread_futex(void *addr1, int op, int val1,
 }
 #endif
 
+static void sctk_pthread_at_fork_child() {
+  sem_post(&sctk_pthread_user_create_sem);
+}
+
+static void sctk_pthread_at_fork_parent() {
+  sem_post(&sctk_pthread_user_create_sem);
+}
+
+static void sctk_pthread_at_fork_prepare() {
+  sem_wait(&sctk_pthread_user_create_sem);
+}
 
 void
 sctk_pthread_thread_init (void)
@@ -440,6 +451,9 @@ sctk_pthread_thread_init (void)
   sctk_only_once ();
 
   sem_init (&sctk_pthread_user_create_sem, 0, 1);
+
+  pthread_atfork(sctk_pthread_at_fork_prepare, sctk_pthread_at_fork_parent,
+                 sctk_pthread_at_fork_child);
 
   sctk_print_version ("Init Pthread", SCTK_LOCAL_VERSION_MAJOR,
 		      SCTK_LOCAL_VERSION_MINOR);
