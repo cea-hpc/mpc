@@ -42,8 +42,6 @@
 #include "mpcomp_task_dep.h"
 #include "mpcomp_taskgroup.h"
 
-static sctk_atomics_int total_task_exec = OPA_INT_T_INITIALIZER( 0 );   
-static sctk_atomics_int total_task_create = OPA_INT_T_INITIALIZER( 0 );   
 
 typedef uint32_t (* kmp_routine_entry_t)( uint32_t, void * );
 
@@ -59,8 +57,8 @@ typedef struct kmp_task {                   /* GEH: Shouldn't this be aligned so
  
 /*
  */
-void
-mpcomp_tast_clear_sister( mpcomp_task_t* task )
+#if MPC_USE_SISTER_LIST 
+void mpcomp_tast_clear_sister( mpcomp_task_t* task )
 {
 	sctk_assert( task );
 	mpcomp_task_t* parent_task = task->parent;
@@ -93,6 +91,7 @@ mpcomp_tast_clear_sister( mpcomp_task_t* task )
 	 	sctk_spinlock_unlock( &( parent_task->children_lock ) );
 	}
 }
+#endif /* MPC_USE_SISTER_LIST */
 
 /* 
  * Initialization of OpenMP task environment 
@@ -141,6 +140,8 @@ __mpcomp_task_execute( mpcomp_task_t* task )
 	thread->info.icvs = task->icvs;
 
    // __mpcomp_task_intel_wrapper( task );
+    sctk_error(">>>>>>>>>>>>> EXECUTE TASK %p", task );
+
 	/* Execute task */
 	task->func( task->data );
 
@@ -154,17 +155,11 @@ __mpcomp_task_execute( mpcomp_task_t* task )
 
    /* Reset task owner for implicite task */
    task->thread = NULL;
-
-   sctk_atomics_incr_int( &( total_task_exec ) );  
-
-	if( OPA_load_int(  &( total_task_exec ) ) > OPA_load_int(  &( total_task_create ) ) ) 
-		abort();
-
-   sctk_nodebug( "TASK DELAYED END" );
+   sctk_nodebug("<<<<<<<<<<<<<<<<<< EXECUTE TASK %p", task );
 }
 
-void
-mpcomp_task_add_to_parent( mpcomp_task_t* task )
+#if MPC_USE_SISTER_LIST 
+void mpcomp_task_add_to_parent( mpcomp_task_t* task )
 {
 	sctk_assert( task );
 
@@ -189,16 +184,21 @@ mpcomp_task_add_to_parent( mpcomp_task_t* task )
 
 	sctk_spinlock_unlock( &( task->parent->children_lock ) );
 }
+#endif /* MPC_USE_SISTER_LIST */
 
 void mpcomp_task_ref_parent_task( mpcomp_task_t* task )
 {
     sctk_assert( task );
 
-    if( !( task->parent ) ) return;
+    if( !( task->parent ))
+        return;
 
-    sctk_atomics_fetch_and_incr_int( &( task->refcount ) );
-    sctk_atomics_fetch_and_incr_int( &( task->parent->refcount ) );
+    sctk_atomics_incr_int( &( task->refcount ) );
+    sctk_atomics_incr_int( &( task->parent->refcount ) );
+    sctk_nodebug( "2x UPDATE VALUE FOR TASK -- %p -- %d -- %p -- %d", task, sctk_atomics_load_int( &( task->refcount ) ), task->parent, sctk_atomics_load_int( &( task->parent->refcount ) ));
+#if MPC_USE_SISTER_LIST
     mpcomp_task_add_to_parent( task );
+#endif /* MPC_USE_SISTER_LIST */
 }
 
 /*
@@ -206,8 +206,8 @@ void mpcomp_task_ref_parent_task( mpcomp_task_t* task )
  *  These tasks became orphaned.
  *	TODO: parent may be equal to NULL in between
  */
-void
-mpcomp_task_clear_parent( mpcomp_task_t* parent )
+#if MPC_USE_SISTER_LIST
+void mpcomp_task_clear_parent( mpcomp_task_t* parent )
 {
 	mpcomp_task_t* child;
 	sctk_assert( parent != NULL );
@@ -228,6 +228,7 @@ mpcomp_task_clear_parent( mpcomp_task_t* parent )
  	parent->children = NULL;
   	sctk_spinlock_unlock( &( parent->children_lock ) );	       
 }
+#endif /* MPC_USE_SISTER_LIST */
 
 void mpcomp_task_unref_parent_task( mpcomp_task_t* task )
 {
@@ -235,24 +236,39 @@ void mpcomp_task_unref_parent_task( mpcomp_task_t* task )
     mpcomp_task_t *mother, *swap_value;
     sctk_assert( task );
 
-    no_more_ref = ( sctk_atomics_fetch_and_decr_int( &( task->refcount ) ) == 1 );
     mother = task->parent;
-    
-    if( !mother || !no_more_ref ) return;
-    
-    sctk_free( task );
-    
-    while( mother->parent && ( sctk_atomics_fetch_and_decr_int( &( mother->refcount ) ) == 1 ) )
-    {
-        swap_value = mother; 
-        mother = mother->parent;
-        sctk_free( swap_value );
-    } 
+    no_more_ref = ( sctk_atomics_fetch_and_decr_int( &( task->refcount ) ) == 1 );
+    sctk_nodebug( "DECREASE VALUE FOR TASK -- %p -- %d -- %d", task, sctk_atomics_load_int(&( task->refcount )), no_more_ref );
 
+    if( mother && no_more_ref ) // FREE MY TASK AND CLIMB TREE
+    {
+        sctk_free( task );
+        task = mother;
+        mother = task->parent;
+        no_more_ref = ( sctk_atomics_fetch_and_decr_int( &( task->refcount ) ) == 1  );
+        sctk_nodebug( ">>> DECREASE VALUE FOR TASK -- %p -- %d -- %d", task,  sctk_atomics_load_int(&( task->refcount )), no_more_ref );
+
+        while( no_more_ref && mother )
+        {
+            sctk_free( task );
+            task = mother;
+            mother = task->parent;
+            no_more_ref = ( sctk_atomics_fetch_and_decr_int( &( task->refcount ) ) == 1 ); 
+            sctk_nodebug( "+++ DECREASE VALUE FOR TASK -- %p -- %d -- %d", task,  sctk_atomics_load_int(&( task->refcount )), no_more_ref );
+        } 
+    }
+
+#if MPC_USE_SISTER_LIST
     if( !mother->parent && ( sctk_atomics_fetch_and_decr_int( &( mother->refcount ) ) == 1 ) )
     {
         mother->children = NULL;
     }
+#else /* MPC_USE_SISTER_LIST */
+     if( !mother && no_more_ref ) // ROOT TASK 
+     {
+        sctk_atomics_decr_int( &( task->refcount ) );
+     }
+#endif /* MPC_USE_SISTER_LIST */
 }
 
 /* Initialization of mpcomp tasks lists (new and untied) */
@@ -356,7 +372,7 @@ __mpcomp_task_alloc( void (*fn) (void *), void *data, void (*cpyfn) (void *, voi
 	sctk_assert( MPCOMP_OVERFLOW_SANITY_CHECK( mpcomp_task_tot_size, mpcomp_task_data_size ));
 	mpcomp_task_tot_size += mpcomp_task_data_size;
 
-    struct mpcomp_task_s *new_task = mpcomp_malloc( 1, mpcomp_task_tot_size, 0/* t->mvp->father->id_numa */);
+    struct mpcomp_task_s *new_task = mpcomp_malloc( 1, mpcomp_task_tot_size, 0 /*t->mvp->father->id_numa */);
 	sctk_assert( new_task != NULL );
 
 	void* task_data = ( arg_size > 0 ) ? ( void*) ( (uintptr_t) new_task + mpcomp_task_info_size ) : NULL;
@@ -444,7 +460,6 @@ __mpcomp_task_process( mpcomp_task_t* new_task, bool if_clause )
    sctk_assert( sctk_openmp_thread_tls );
    thread = ( mpcomp_thread_t* ) sctk_openmp_thread_tls;
    
-   sctk_atomics_incr_int( &( total_task_create ) );
    mvp_task_list = __mpcomp_task_try_delay( if_clause );
 
     /* Push the task in the list of new tasks */	
@@ -461,10 +476,10 @@ __mpcomp_task_process( mpcomp_task_t* new_task, bool if_clause )
    mpcomp_task_set_property ( &( new_task->property ), MPCOMP_TASK_UNDEFERRED );
    __mpcomp_task_execute( new_task );
 
-   mpcomp_tast_clear_sister( new_task );
+   //mpcomp_tast_clear_sister( new_task );
    //mpcomp_task_clear_parent( new_task );
    mpcomp_taskgroup_del_task( new_task ); 
-   __mpcomp_task_finalize_deps( new_task );
+   //__mpcomp_task_finalize_deps( new_task );
    mpcomp_task_unref_parent_task( new_task );
 }
 
@@ -636,6 +651,7 @@ void mpcomp_task_schedule( int depth )
     mpcomp_mvp_t* mvp = NULL;
 	mpcomp_task_t* task = NULL;
     mpcomp_thread_t* thread = NULL;
+     mpcomp_task_list_t* list = NULL;
 
     sctk_assert( sctk_openmp_thread_tls );	 
     thread = ( mpcomp_thread_t* ) sctk_openmp_thread_tls;
@@ -658,11 +674,13 @@ void mpcomp_task_schedule( int depth )
 	sctk_assert( !task );
     mpcomp_task_t* current_task = MPCOMP_TASK_THREAD_GET_CURRENT_TASK( thread );
 
+#if 0
   	/* Find a remaining tied task */
-  	mpcomp_task_list_t* list = MPCOMP_TASK_THREAD_GET_TIED_TASK_LIST_HEAD( thread ) ;
+    list = MPCOMP_TASK_THREAD_GET_TIED_TASK_LIST_HEAD( thread ) ;
 	sctk_assert( list );
-         
     task = mpcomp_task_list_popfromhead( list, 0 );        
+#endif 
+         
 
 	for( type = 0; !task && type < MPCOMP_TASK_TYPE_COUNT; type++)
 	{
@@ -685,10 +703,10 @@ void mpcomp_task_schedule( int depth )
     // mpcomp_taskwait( task );
     
 	/* Clean function */
-	mpcomp_tast_clear_sister( task );
+	//mpcomp_tast_clear_sister( task );
 	//mpcomp_task_clear_parent( task );
     mpcomp_taskgroup_del_task( task ); 
-	__mpcomp_task_finalize_deps( task );
+	//__mpcomp_task_finalize_deps( task );
     mpcomp_task_unref_parent_task( task );
 }
 
@@ -710,10 +728,17 @@ void mpcomp_taskwait( void )
   	    sctk_assert( current_task );
 
   	    /* Look for a children tasks list */
-        while( current_task->children != NULL ) 
+#if MPC_USE_SISTER_LIST
+        while( current_task->children )
+#else /* MPC_USE_SISTER_LIST */
+        sctk_nodebug(">>>>>>>>>>>>>>>>>>MPCOMP_TASKWAIT ON %p -- %d", current_task, sctk_atomics_load_int(  &( current_task->refcount ) ));
+        while( sctk_atomics_load_int(  &( current_task->refcount ) ) != 1 )
+#endif /* MPC_USE_SISTER_LIST */
         {
 	        mpcomp_task_schedule( 0 );
  	    }
+        
+        sctk_nodebug("<<<<<<<<<<<<<<<<<<<PCOMP_TASKWAIT ON %p -- %d", current_task, sctk_atomics_load_int(  &( current_task->refcount ) ));
     }
 }
 	

@@ -63,6 +63,7 @@ __mpcomp_task_process_deps( mpcomp_task_dep_node_t* task_node, mpcomp_task_dep_h
 		/* FIND HASH IN HTABLE */
 		const uintptr_t addr = (uintptr_t) depend[ 2 + i ];
 		const int type = ( i < out_deps_num ) ? MPCOMP_TASK_DEP_OUT : MPCOMP_TASK_DEP_IN;
+        sctk_assert( task_already_process_num < tot_deps_num );
 
 		for( j = 0; j < task_already_process_num; j++ ) 
 		{
@@ -91,11 +92,11 @@ __mpcomp_task_process_deps( mpcomp_task_dep_node_t* task_node, mpcomp_task_dep_h
 			for( node_list = entry->last_in; node_list; node_list = node_list->next )
 			{
 				mpcomp_task_dep_node_t* node = node_list->node;
-				if( sctk_atomics_load_int( &( node->status ) ) == MPCOMP_TASK_DEP_TASK_NOT_EXECUTE )
+				if( sctk_atomics_load_int( &( node->status ) ) < MPCOMP_TASK_DEP_TASK_FINALIZED )
 				//if( node->task )
 				{
 					MPCOMP_TASK_DEP_LOCK_NODE( node );
-					if( sctk_atomics_load_int( &( node->status ) ) == MPCOMP_TASK_DEP_TASK_NOT_EXECUTE )
+					if( sctk_atomics_load_int( &( node->status ) ) < MPCOMP_TASK_DEP_TASK_FINALIZED )
 					//if( node->task )
 					{
 						node->successors = mpcomp_task_dep_alloc_node_list_elt( node->successors, task_node ); 
@@ -111,11 +112,11 @@ __mpcomp_task_process_deps( mpcomp_task_dep_node_t* task_node, mpcomp_task_dep_h
 		else
 		{
 			/** Non executed OUT dependency**/
-			if( last_out && ( sctk_atomics_load_int( &( last_out->status ) ) == MPCOMP_TASK_DEP_TASK_NOT_EXECUTE ) ) 
+			if( last_out && ( sctk_atomics_load_int( &( last_out->status ) ) < MPCOMP_TASK_DEP_TASK_FINALIZED ) ) 
 			//if( last_out && last_out->task ) 
 			{
 				MPCOMP_TASK_DEP_LOCK_NODE( last_out );	
-				if( sctk_atomics_load_int( &( last_out->status ) ) == MPCOMP_TASK_DEP_TASK_NOT_EXECUTE )
+				if( sctk_atomics_load_int( &( last_out->status ) ) < MPCOMP_TASK_DEP_TASK_FINALIZED )
 				//if( last_out->task )
 				{
 		 			last_out->successors = mpcomp_task_dep_alloc_node_list_elt( last_out->successors, task_node );
@@ -150,11 +151,12 @@ __mpcomp_task_finalize_deps( mpcomp_task_t* task )
 	mpcomp_task_dep_node_list_t* list_elt;
  
 	sctk_assert( task );
+    
 	if( !( task->task_dep_infos->htable ) )
 	{
 		/* remove all elements from task dep hash table */
-		(void) mpcomp_task_dep_free_task_htable( task->task_dep_infos->htable );
-		task->task_dep_infos->htable = NULL;
+		//(void) mpcomp_task_dep_free_task_htable( task->task_dep_infos->htable );
+		//task->task_dep_infos->htable = NULL;
 	}
 	
 	task_node = task->task_dep_infos->node;
@@ -180,12 +182,11 @@ __mpcomp_task_finalize_deps( mpcomp_task_t* task )
 		const int prev = sctk_atomics_fetch_and_decr_int( &( succ_node->predecessors ) ) - 1; 
 		sctk_nodebug("release sucessors ...");
 
-		if( !prev && sctk_atomics_load_int( &( succ_node->status ) ) == MPCOMP_TASK_DEP_TASK_NOT_EXECUTE ) 
+        
+		if( !prev && 
+            sctk_atomics_cas_int( &( succ_node->status ), MPCOMP_TASK_DEP_TASK_NOT_EXECUTE, MPCOMP_TASK_DEP_TASK_RELEASED ) == MPCOMP_TASK_DEP_TASK_NOT_EXECUTE ) 
 		{
-		//if(  succ_node->task )
-			//{
-				__mpcomp_task_process( succ_node->task, succ_node->task->if_clause );
-			//} 
+	        __mpcomp_task_process( succ_node->task, succ_node->task->if_clause );
 		}
 		
 		mpcomp_task_dep_node_unref( succ_node );	
@@ -194,8 +195,6 @@ __mpcomp_task_finalize_deps( mpcomp_task_t* task )
 	}	
 	
 	mpcomp_task_dep_node_unref( task_node );
-	task_node = NULL;
-
 	return;
 }
 
@@ -241,7 +240,6 @@ mpcomp_task_with_deps( void (*fn) (void *), void *data, void (*cpyfn) (void *, v
 	sctk_atomics_store_int( &( task_node->status ), MPCOMP_TASK_DEP_TASK_PROCESS_DEP );	
 
 	predecessors_num  = __mpcomp_task_process_deps( task_node, current_task->task_dep_infos->htable, depend );		
-	sctk_atomics_store_int( &( task_node->status ), MPCOMP_TASK_DEP_TASK_NOT_EXECUTE );	
 
 	task_node->task = new_task;
 	new_task->task_dep_infos->node = task_node;
@@ -250,6 +248,7 @@ mpcomp_task_with_deps( void (*fn) (void *), void *data, void (*cpyfn) (void *, v
 
 	/* task_node->predecessors can be update by release task */
 	sctk_atomics_add_int( &( task_node->predecessors ), predecessors_num ); 
+	sctk_atomics_store_int( &( task_node->status ), MPCOMP_TASK_DEP_TASK_NOT_EXECUTE );	
 
 	if( !if_clause )
 	{

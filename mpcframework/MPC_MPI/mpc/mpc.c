@@ -3320,7 +3320,7 @@ int sctk_user_main (int argc, char **argv)
 	MPC_Checkpoint_restart_init ();
 
 #ifdef MPC_OpenMP
-	__mpcomp_init() ;
+	//__mpcomp_init() ;
 #endif
 
 	sctk_move_to_temp_dir_if_requested_from_env();
@@ -3340,7 +3340,7 @@ int sctk_user_main (int argc, char **argv)
 #endif
 
 #ifdef MPC_OpenMP
-	__mpcomp_exit() ;
+	//__mpcomp_exit() ;
 #endif
 
 	MPC_Checkpoint_restart_end ();

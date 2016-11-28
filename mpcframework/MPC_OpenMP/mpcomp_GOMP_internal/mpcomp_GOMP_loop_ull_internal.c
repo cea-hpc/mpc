@@ -13,7 +13,7 @@ bool mpcomp_internal_GOMP_loop_ull_static_start(bool up, unsigned long long star
    t = (mpcomp_thread_t *) sctk_openmp_thread_tls;
    sctk_assert(t != NULL);
    t->schedule_type = MPCOMP_COMBINED_STATIC_LOOP;
-   ret = (__mpcomp_loop_ull_static_begin(up, start,end,incr,chunk_size, istart, iend)) ? true : false;
+   ret = (__mpcomp_static_loop_begin_ull(up, start,end,incr,chunk_size, istart, iend)) ? true : false;
    return ret;
 }
 
@@ -65,7 +65,7 @@ bool mpcomp_internal_GOMP_loop_ull_ordered_static_start(bool up, unsigned long l
    t = (mpcomp_thread_t *) sctk_openmp_thread_tls;
    sctk_assert(t != NULL);
    t->schedule_type = MPCOMP_COMBINED_STATIC_LOOP;
-   ret = (__mpcomp_loop_ull_ordered_static_begin(up, start,end,incr,chunk_size, istart, iend)) ? true : false;
+   ret = (__mpcomp_ordered_static_loop_begin_ull(up, start,end,incr,chunk_size, istart, iend)) ? true : false;
    return ret;
 }
 

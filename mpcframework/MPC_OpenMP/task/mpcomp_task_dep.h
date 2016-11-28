@@ -71,8 +71,9 @@ typedef enum mpcomp_task_dep_task_status_e
 {
 	MPCOMP_TASK_DEP_TASK_PROCESS_DEP = 0,
 	MPCOMP_TASK_DEP_TASK_NOT_EXECUTE = 1,
-	MPCOMP_TASK_DEP_TASK_FINALIZED   = 2,
-	MPCOMP_TASK_DEP_TASK_COUNT 		= 3 
+	MPCOMP_TASK_DEP_TASK_RELEASED   = 2,
+	MPCOMP_TASK_DEP_TASK_FINALIZED  = 3,
+	MPCOMP_TASK_DEP_TASK_COUNT 		= 4 
 } mpcomp_task_dep_task_status_t;
 
 static char*

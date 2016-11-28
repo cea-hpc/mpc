@@ -106,6 +106,10 @@ int __mpcomp_loop_ull_dynamic_begin (bool up, unsigned long long lb, unsigned lo
 	__mpcomp_dynamic_loop_init_ull(t, up, lb, b, incr, chunk_size);
     __mpcomp_loop_dyn_init_target_chunk_ull( t, t, t->info.num_threads );
 
+    if( !from )
+    {
+        return -1;
+    }
 	/* Return the next chunk to execute */
 	return __mpcomp_loop_ull_dynamic_next(from, to);
 }
@@ -245,12 +249,15 @@ int __mpcomp_loop_ull_ordered_dynamic_begin(bool up, unsigned long long lb, unsi
     sctk_assert(t != NULL);  
      
     t->schedule_type = ( t->schedule_is_forced ) ? t->schedule_type : MPCOMP_COMBINED_DYN_LOOP;  
-    t->schedule_is_forced = 0;
+    t->schedule_is_forced = 1;
 
     //TODO EXTEND MODIF WITH UP VALUE
     sctk_nodebug( "[%d] %s: %d -> %d [%d] cs:%d", t->rank, __func__, lb, b, incr, chunk_size ) ;
     const int res = __mpcomp_loop_ull_dynamic_begin( up, lb, b, incr, chunk_size, from, to); 
-    t->info.loop_infos.loop.mpcomp_ull.cur_ordered_iter = *from; 
+    if( from )
+    {
+        t->info.loop_infos.loop.mpcomp_ull.cur_ordered_iter = *from; 
+    }
     sctk_nodebug( "[%d] %s: exit w/ res=%d", t->rank, __func__, res ) ;
     return res; 
 }

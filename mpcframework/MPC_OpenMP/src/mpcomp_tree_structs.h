@@ -7,6 +7,11 @@
 #include "mpcomp_types.h"
 #include "mpcomp_task_utils.h"
 
+#ifdef MPCOMP_USE_INTEL_ABI
+#include "mpcomp_intel_types.h"
+#include "mpcomp_intel_threadprivate.h"
+#endif /* MPCOMP_USE_INTEL_ABI */
+
 static inline void
 mpcomp_thread_infos_reset( mpcomp_thread_t* thread )
 {
@@ -14,6 +19,7 @@ mpcomp_thread_infos_reset( mpcomp_thread_t* thread )
 	memset( thread, 0, sizeof( mpcomp_thread_t  ));
 }
 
+#ifdef MPCOMP_USE_INTEL_ABI
 static inline void
 mpcomp_common_table_reset( struct common_table* th_pri_common )
 {
@@ -31,6 +37,7 @@ mpcomp_common_table_allocate( void )
 	mpcomp_common_table_reset( th_pri_common );
 	return th_pri_common;
 }
+#endif /* MPCOMP_USE_INTEL_ABI */
 
 static inline void
 __mpcomp_parallel_region_infos_reset( mpcomp_new_parallel_region_info_t * info )
@@ -75,9 +82,11 @@ __mpcomp_thread_infos_init( mpcomp_thread_t* thread, mpcomp_local_icv_t icvs,
 #endif /* MPCOMP_TASK || MPCOMP_OPENMP_3_0 */
 
 	/* Intel openmp runtime */
+#ifdef MPCOMP_USE_INTEL_ABI
 	thread->push_num_threads = -1 ;
 	thread->th_pri_common = mpcomp_common_table_allocate();
   	thread->reduction_method = 0;
+#endif /* MPCOMP_USE_INTEL_ABI */
 }
 
 static inline void

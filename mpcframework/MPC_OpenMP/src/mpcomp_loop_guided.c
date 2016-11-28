@@ -43,7 +43,7 @@ int __mpcomp_guided_loop_begin (long lb, long b, long incr, long chunk_size, lon
     sctk_assert( t );
 
     t->schedule_type = ( t->schedule_is_forced ) ? t->schedule_type : MPCOMP_COMBINED_GUIDED_LOOP;  
-    t->schedule_is_forced = 0;
+    t->schedule_is_forced = 1; /* avoid dyn scheduling type */
 
     return __mpcomp_dynamic_loop_begin( lb, b, incr, chunk_size, from, to);
 }
@@ -95,10 +95,11 @@ int __mpcomp_ordered_guided_loop_begin (long lb, long b, long incr, long chunk_s
 {
     mpcomp_thread_t* t = (mpcomp_thread_t *) sctk_openmp_thread_tls;
     sctk_assert (t != NULL);
-    t->schedule_type = ( t->schedule_is_forced ) ? t->schedule_type : MPCOMP_COMBINED_GUIDED_LOOP;  
-    t->schedule_is_forced = 0;
     const int ret = __mpcomp_guided_loop_begin(lb, b, incr, chunk_size, from, to );
-    t->info.loop_infos.loop.mpcomp_long.cur_ordered_iter = *from; 
+    if( from )
+    {
+        t->info.loop_infos.loop.mpcomp_long.cur_ordered_iter = *from; 
+    }
     return ret;
 }
 
@@ -133,7 +134,7 @@ int __mpcomp_loop_ull_guided_begin (bool up, unsigned long long lb, unsigned lon
     mpcomp_thread_t* t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
     sctk_assert(t != NULL); 
     t->schedule_type = ( t->schedule_is_forced ) ? t->schedule_type : MPCOMP_COMBINED_GUIDED_LOOP;  
-    t->schedule_is_forced = 0;
+    t->schedule_is_forced = 1;
     return __mpcomp_loop_ull_dynamic_begin(up, lb, b, incr, chunk_size, from, to);
 }
 
@@ -166,11 +167,11 @@ int __mpcomp_loop_ull_ordered_guided_begin (bool up, unsigned long long lb, unsi
     mpcomp_thread_t *t = (mpcomp_thread_t *) sctk_openmp_thread_tls;
     sctk_assert (t != NULL);
 
-    t->schedule_type = ( t->schedule_is_forced ) ? t->schedule_type : MPCOMP_COMBINED_GUIDED_LOOP;  
-    t->schedule_is_forced = 0;
-
     const int ret =__mpcomp_loop_ull_guided_begin(up, lb, b, incr, chunk_size, from, to );
-    t->info.loop_infos.loop.mpcomp_ull.cur_ordered_iter = *from;
+    if( from )
+    {
+        t->info.loop_infos.loop.mpcomp_ull.cur_ordered_iter = *from;
+    }
     return ret;
 }
 

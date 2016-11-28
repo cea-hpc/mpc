@@ -91,7 +91,7 @@ static void __mpcomp_internal_full_barrier(mpcomp_mvp_t *mvp)
 
 #if MPCOMP_TASK
 #if MPCOMP_COHERENCY_CHECKING
-        mpcomp_task_coherency_barrier();
+        //mpcomp_task_coherency_barrier();
 #endif
 #endif /* MPCOMP_TASK */
 }

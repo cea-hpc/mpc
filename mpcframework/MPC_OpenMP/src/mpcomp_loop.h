@@ -49,24 +49,28 @@ static inline void __mpcomp_loop_gen_infos_init( mpcomp_loop_gen_info_t* loop_in
 {
     sctk_assert( loop_infos );
 
+    loop_infos->ischunked = ( chunk_size ) ? 1 : 0;
     loop_infos->type = MPCOMP_LOOP_TYPE_LONG; 
     loop_infos->loop.mpcomp_long.up = ( incr > 0 );
     loop_infos->loop.mpcomp_long.b = b;
     loop_infos->loop.mpcomp_long.lb = lb;
     loop_infos->loop.mpcomp_long.incr = incr;
-    loop_infos->loop.mpcomp_long.chunk_size = chunk_size;
+	/* Automatic chunk size -> at most one chunk */
+    loop_infos->loop.mpcomp_long.chunk_size = ( chunk_size ) ? chunk_size : 1;
 }
 
 static inline void __mpcomp_loop_gen_infos_init_ull( mpcomp_loop_gen_info_t* loop_infos, unsigned long long lb, unsigned long long b, unsigned long long incr, unsigned long long chunk_size, bool up )
 {
     sctk_assert( loop_infos );
 
+    loop_infos->ischunked = ( chunk_size ) ? 1 : 0;
     loop_infos->type = MPCOMP_LOOP_TYPE_ULL; 
     loop_infos->loop.mpcomp_ull.up = ( incr > 0 );
     loop_infos->loop.mpcomp_ull.b = b;
     loop_infos->loop.mpcomp_ull.lb = lb;
     loop_infos->loop.mpcomp_ull.incr = incr;
-    loop_infos->loop.mpcomp_ull.chunk_size = chunk_size;
+	/* Automatic chunk size -> at most one chunk */
+    loop_infos->loop.mpcomp_ull.chunk_size = (chunk_size) ? chunk_size : 1;
 }
 
 static inline void __mpcomp_loop_gen_loop_infos_cpy( mpcomp_loop_gen_info_t* in, mpcomp_loop_gen_info_t* out )

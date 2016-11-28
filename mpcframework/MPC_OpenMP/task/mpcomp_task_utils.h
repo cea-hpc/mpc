@@ -113,8 +113,10 @@ __mpcomp_task_infos_init( mpcomp_task_t *task, void (*func) (void *), void *data
 	task->icvs = thread->info.icvs;
 
   	task->parent = MPCOMP_TASK_THREAD_GET_CURRENT_TASK( thread );
-   task->depth = ( task->parent ) ? task->parent->depth + 1 : 0;
-   task->children_lock = SCTK_SPINLOCK_INITIALIZER;
+    task->depth = ( task->parent ) ? task->parent->depth + 1 : 0;
+#if MPC_USE_SISTER_LIST
+    task->children_lock = SCTK_SPINLOCK_INITIALIZER;
+#endif /* MPC_USE_SISTER_LIST */
 }
 
 static inline void
@@ -179,6 +181,7 @@ mpcomp_task_thread_infos_init( struct mpcomp_thread_s* thread )
 
 		MPCOMP_TASK_THREAD_SET_CURRENT_TASK( thread, implicite_task );
 		MPCOMP_TASK_THREAD_SET_TIED_TASK_LIST_HEAD( thread, tied_tasks_list );
+        sctk_atomics_store_int( &( implicite_task->refcount ), 1 );
 
 		/* Change tasking_init_done to avoid multiple thread init */ 
 		MPCOMP_TASK_THREAD_CMPL_INIT( thread );

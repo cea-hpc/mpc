@@ -274,7 +274,7 @@ int __mpcomp_loop_ull_runtime_begin( bool up, unsigned long long lb, unsigned lo
 
      switch( t->info.icvs.run_sched_var ) {
        case omp_sched_static:
-         ret = __mpcomp_loop_ull_static_begin( up, lb, b, incr, chunk_size, from, to ) ;
+         ret = __mpcomp_static_loop_begin_ull( up, lb, b, incr, chunk_size, from, to ) ;
          break ;
        case omp_sched_dynamic:
          ret = __mpcomp_loop_ull_dynamic_begin( up, lb, b, incr, chunk_size, from, to ) ;
@@ -303,7 +303,7 @@ int __mpcomp_loop_ull_runtime_next( unsigned long long * from, unsigned long lon
 
      switch( t->info.icvs.run_sched_var ) {
        case omp_sched_static:
-         ret =  __mpcomp_loop_ull_static_next( from, to ) ;
+         ret =  __mpcomp_static_loop_next_ull( from, to ) ;
          break ;
        case omp_sched_dynamic:
          ret =  __mpcomp_loop_ull_dynamic_next( from, to ) ;
@@ -347,7 +347,7 @@ int __mpcomp_loop_ull_ordered_runtime_begin(bool up,unsigned long long lb, unsig
     switch( run_sched_var ) 
     {
         case omp_sched_static:
-            ret = __mpcomp_loop_ull_ordered_static_begin( up, lb, b, incr, chunk_size, from, to ) ;
+            ret = __mpcomp_ordered_static_loop_begin_ull( up, lb, b, incr, chunk_size, from, to ) ;
             break;
         case omp_sched_dynamic:
             ret = __mpcomp_loop_ull_ordered_dynamic_begin(  up, lb, b, incr, chunk_size, from, to ) ;
@@ -379,7 +379,7 @@ int __mpcomp_loop_ull_ordered_runtime_next( unsigned long long * from, unsigned 
     switch( run_sched_var ) 
     {
        case omp_sched_static:
-         ret = __mpcomp_loop_ull_ordered_static_next( from, to ) ;
+         ret = __mpcomp_ordered_static_loop_next_ull( from, to ) ;
          break ;
        case omp_sched_dynamic:
          ret = __mpcomp_loop_ull_ordered_dynamic_next( from, to ) ;

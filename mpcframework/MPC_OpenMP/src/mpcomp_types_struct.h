@@ -32,6 +32,10 @@
 #include "mpcomp_types_def.h"
 #include "mpcomp_types_icv.h"
 
+#ifdef MPCOMP_USE_INTEL_ABI
+#include "mpcomp_intel_types.h"
+#endif /* MPCOMP_USE_INTEL_ABI */
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -47,10 +51,6 @@ struct mpcomp_task_instance_infos_s;
 /********************
  ****** Threadprivate 
  ********************/
-typedef struct common_table 
-{
-	struct private_common *data[ KMP_HASH_TABLE_SIZE ];
-} mpcomp_kmp_common_table_t;
 
 typedef struct mpcomp_atomic_int_pad_s
 {
@@ -86,6 +86,7 @@ typedef union mpcomp_loop_gen_iter_u
 
 typedef struct mpcomp_loop_gen_info_s
 {
+    int ischunked;
     mpcomp_loop_gen_type_t type;
     mpcomp_loop_gen_iter_t loop;
 } mpcomp_loop_gen_info_t;
@@ -203,8 +204,11 @@ typedef struct mpcomp_thread_s
 #endif //MPCOMP_TASK
 
     /* Threadprivate */
+
+#ifdef MPCOMP_USE_INTEL_ABI
     struct common_table *th_pri_common;
     struct private_common *th_pri_head;
+#endif /* MPCOMP_USE_INTEL_ABI */
 
     /* reduction method */
     int reduction_method;

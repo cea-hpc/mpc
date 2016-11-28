@@ -33,7 +33,6 @@ static inline void __mpcomp_internal_ordered_begin( mpcomp_thread_t *t, mpcomp_l
     mpcomp_loop_long_iter_t* loop = &( loop_infos->loop.mpcomp_long );
     const long cur_ordered_iter = loop->cur_ordered_iter;
 
-    
 	/* First iteration of the loop -> initialize 'next_ordered_offset' */
 	if( cur_ordered_iter == loop->lb ) 
     {

@@ -113,7 +113,12 @@ int __mpcomp_dynamic_loop_begin(long lb, long b, long incr, long chunk_size, lon
     __mpcomp_loop_dyn_init_target_chunk( t, t, t->info.num_threads );
 
 	/* Return the next chunk to execute */
-	return __mpcomp_dynamic_loop_next(from, to);
+    if( !from && !to  )  
+    {
+        return -1;
+    }
+
+    return __mpcomp_dynamic_loop_next(from, to);
 }
 
 int __mpcomp_dynamic_loop_next (long *from, long *to)
@@ -280,13 +285,12 @@ int __mpcomp_ordered_dynamic_loop_begin (long lb, long b, long incr, long chunk_
 {
     mpcomp_thread_t* t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
     sctk_assert(t != NULL);  
-    
-    t->schedule_type = ( t->schedule_is_forced ) ? t->schedule_type : MPCOMP_COMBINED_DYN_LOOP;  
-    t->schedule_is_forced = 0;
-
     __mpcomp_loop_gen_infos_init( &(t->info.loop_infos) , lb, b, incr, chunk_size );
     const int ret = __mpcomp_dynamic_loop_begin( lb, b, incr, chunk_size, from, to );
-    t->info.loop_infos.loop.mpcomp_long.cur_ordered_iter = *from; 
+    if( from )
+    {
+        t->info.loop_infos.loop.mpcomp_long.cur_ordered_iter = *from; 
+    }
     return ret;
 }
 

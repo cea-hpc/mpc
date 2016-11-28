@@ -119,6 +119,7 @@ static void mpcomp_task_tree_init_task_tree_infos_leaf( mpcomp_mvp_t* mvp, mpcom
 static mpcomp_task_tree_infos_t*
 mpcomp_task_tree_init_task_tree_infos_node( mpcomp_node_t* node, mpcomp_task_tree_infos_t* parent_task_tree_infos, int index ) 
 {
+    int i;
 	mpcomp_thread_t* thread; 
 	mpcomp_tree_meta_elt_t meta_elt;
 	mpcomp_task_tree_infos_t* child_task_tree_infos;
@@ -148,11 +149,12 @@ mpcomp_task_tree_init_task_tree_infos_node( mpcomp_node_t* node, mpcomp_task_tre
 	child_task_tree_infos->first_rank 	= parent_task_tree_infos->first_rank + parent_task_tree_infos->stage_size;	
 	child_task_tree_infos->global_rank	= child_task_tree_infos->first_rank + index * tree_base_value;	
 
+    const int numa_node_number = sctk_max( sctk_get_numa_node_number(), 1 );
+    for (i = 0; i < numa_node_number; i++ )
+        parent_task_tree_infos->tree_array[i][cur_globalRank] = node;
+
  	MPCOMP_TASK_NODE_SET_TREE_ARRAY_RANK( node, cur_globalRank );
 	MPCOMP_TASK_NODE_SET_TREE_ARRAY_NODES( node, parent_task_tree_infos->tree_array[node->id_numa] );
-    int i;
-    for (i = 0; i < 2; i++ )
-        parent_task_tree_infos->tree_array[i][cur_globalRank] = node;
 	mpcomp_task_tree_register_node_in_all_numa_node_array( child_task_tree_infos->tree_array, node, cur_globalRank );
 
 	sctk_assert( thread->instance->team );

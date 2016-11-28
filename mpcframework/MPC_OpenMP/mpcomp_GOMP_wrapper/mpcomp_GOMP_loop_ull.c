@@ -271,7 +271,7 @@ bool mpcomp_GOMP_loop_ull_static_next(unsigned long long *istart, unsigned long 
    bool ret;
    sctk_nodebug("[Redirect GOMP]%s:\tBegin",__func__);
 #ifdef MPC_SUPPORT_ULL_LOOP
-   ret = (__mpcomp_loop_ull_static_next(istart,iend)) ? true : false;
+   ret = (__mpcomp_static_loop_next_ull(istart,iend)) ? true : false;
 #else /* MPC_SUPPORT_ULL_LOOP */
    ret = false;
    not_implemented();
@@ -342,7 +342,7 @@ bool mpcomp_GOMP_loop_ull_ordered_static_next (unsigned long long *istart, unsig
    bool ret;
    sctk_nodebug("[Redirect GOMP]%s:\tBegin",__func__);
 #ifdef MPC_SUPPORT_ULL_LOOP
-   ret = (__mpcomp_loop_ull_ordered_static_next(istart,iend)) ? true : false;
+   ret = (__mpcomp_ordered_static_loop_next_ull(istart,iend)) ? true : false;
 #else /* MPC_SUPPORT_ULL_LOOP */
    ret = false;
    not_implemented();

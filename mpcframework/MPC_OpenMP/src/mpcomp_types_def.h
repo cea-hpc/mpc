@@ -5,6 +5,7 @@
 #define SCTK_OMP_VERSION_MINOR 1
 
 #define MPCOMP_TASK	1
+#define MPCOMP_USE_INTEL_ABI 1
 
 /* Maximum number of threads for each team of a parallel region */
 #define MPCOMP_MAX_THREADS		256
@@ -32,10 +33,5 @@
 #if __MIC__ || __MIC2__
 #define MPCOMP_MIC 1
 #endif /* __MIC__ || __MIC2__ */
-
-#define KMP_HASH_TABLE_LOG2 9                               /* log2 of the hash table size */
-#define KMP_HASH_TABLE_SIZE (1 << KMP_HASH_TABLE_LOG2)      /* size of the hash table */
-#define KMP_HASH_SHIFT      3                               /* throw away this many low bits from the address */
-#define KMP_HASH(x)         ((((uint64_t) x) >> KMP_HASH_SHIFT) & (KMP_HASH_TABLE_SIZE-1))
 
 #endif /* __MPCOMP_ENUM_MACROS_H__ */

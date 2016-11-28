@@ -52,7 +52,7 @@ void __mpcomp_internal_begin_parallel_region( mpcomp_new_parallel_region_info_t*
     if ( t->children_instance == NULL ) 
     {
 	    mpcomp_team_t * new_team ;
-        sctk_nodebug("%s: children instance is NULL, allocating...", __func__, t->info.num_threads);
+        sctk_warning("%s: children instance is NULL, allocating...", __func__, t->info.num_threads);
 
         new_team = (mpcomp_team_t *)sctk_malloc(sizeof(mpcomp_team_t));
         sctk_assert(new_team != NULL);
@@ -74,7 +74,7 @@ void __mpcomp_internal_begin_parallel_region( mpcomp_new_parallel_region_info_t*
     num_threads = ( t->instance->team->depth ) ? 1 : num_threads;
     sctk_assert(num_threads > 0);
 
-    sctk_nodebug("%s: Number of threads %d (default %d, #mvps %d arg:%d) !! %d", __func__,
+    sctk_error("%s: Number of threads %d (default %d, #mvps %d arg:%d) !! %d", __func__,
                      num_threads, info->icvs.nthreads_var,
                      t->children_instance->nb_mvps, arg_num_threads, t->instance->team->depth);
 

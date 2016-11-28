@@ -66,17 +66,19 @@ typedef struct mpcomp_task_s
     mpcomp_task_property_t property;    		/**< Task property 												*/
 	struct mpcomp_task_taskgroup_s* taskgroup;
     struct mpcomp_task_s *parent;       		/**< Mother task 													*/
+#if MPC_USE_SISTER_LIST
     struct mpcomp_task_s *children;     		/**< Children list 												*/
     struct mpcomp_task_s *prev_child;   		/**< Prev sister task in mother task's children list 	*/
     struct mpcomp_task_s *next_child;   		/**< Next sister task in mother task's children list 	*/
    sctk_spinlock_t children_lock;      		/**< Lock for the task's children list 					*/
+#endif /* MPC_USE_SISTER_LIST */
    sctk_spinlock_t task_lock;
    struct mpcomp_thread_s *thread;     		/**< The thread owning the task 								*/
    struct mpcomp_task_list_s *list;    		/**< The current list of the task 							*/
    struct mpcomp_task_s *prev;         		/**< Prev task in the thread's task list 					*/
    struct mpcomp_task_s *next;         		/**< Next task in the thread's task list 					*/
-   int depth;											/**< nested task depth 											*/
-	mpcomp_local_icv_t icvs;            		/**< ICVs of the thread that create the task 			*/
+   int depth;								/**< nested task depth 											*/
+   mpcomp_local_icv_t icvs;            	/**< ICVs of the thread that create the task 			*/
 
 #ifdef MPCOMP_OMP_4_0	/* deps infos */
 	struct mpcomp_task_dep_task_infos_s* task_dep_infos;
