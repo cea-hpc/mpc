@@ -149,6 +149,32 @@ void __kmpc_end_taskgroup( ident_t * loc, int gtid )
     mpcomp_taskgroup_end();
 }
 
+#if 0
+static int mpcomp_intel_translate_taskdep_to_gomp(  kmp_int32 ndeps, kmp_depend_info_t *dep_list, kmp_int32 ndeps_noalias, kmp_depend_info_t *noalias_dep_list )
+{
+    int i, j;
+
+    void ** gomp_list_deps;
+    
+    for ( i = 0; i < ndeps ; i++ ) 
+    { 
+        if ( dep_list[i].base_addr != 0)
+        {
+            for ( j = i+1; j < ndeps; j++ )
+            {
+                if ( dep_list[i].base_addr == dep_list[j].base_addr ) 
+                {
+                    dep_list[i].flags.in |= dep_list[j].flags.in;
+                    dep_list[i].flags.out |= dep_list[j].flags.out;
+                    dep_list[j].base_addr = 0; // Mark j element as void
+                }
+            }
+        }
+    }
+} 
+#endif
+
+
 kmp_int32 
 __kmpc_omp_task_with_deps ( ident_t *loc_ref, kmp_int32 gtid, kmp_task_t * new_task,
     kmp_int32 ndeps, kmp_depend_info_t *dep_list,

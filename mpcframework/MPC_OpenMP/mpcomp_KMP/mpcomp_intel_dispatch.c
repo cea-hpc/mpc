@@ -84,7 +84,7 @@ __kmpc_dispatch_next_4( ident_t *loc, kmp_int32 gtid, kmp_int32 *p_last,
     long from, to ;
     mpcomp_thread_t *t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
     sctk_assert(t != NULL);
-    sctk_assert( t->info.loop_infos.type == MPCOMP_OOP_TYPE_LONG);
+    sctk_assert( t->info.loop_infos.type == MPCOMP_LOOP_TYPE_LONG);
     const long incr = t->info.loop_infos.loop.mpcomp_long.incr;
     const long add = ((*p_ub - *p_lb) % *p_st == 0) ? *p_st : *p_st - ((*p_ub - *p_lb) % *p_st);
 
@@ -119,7 +119,7 @@ __kmpc_dispatch_next_4u( ident_t *loc, kmp_int32 gtid, kmp_int32 *p_last,
   t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
   sctk_assert(t != NULL);
   
-  sctk_assert( t->info.loop_infos.type == MPCOMP_OOP_TYPE_ULL);
+  sctk_assert( t->info.loop_infos.type == MPCOMP_LOOP_TYPE_ULL);
   const unsigned long long incr = t->info.loop_infos.loop.mpcomp_ull.incr;
   const unsigned long long add = ((*p_ub - *p_lb) % *p_st == 0) ? *p_st : *p_st - ((*p_ub - *p_lb) % *p_st);
 
@@ -153,7 +153,7 @@ __kmpc_dispatch_next_8( ident_t *loc, kmp_int32 gtid, kmp_int32 *p_last,
   t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
   sctk_assert(t != NULL);
   
-  sctk_assert( t->info.loop_infos.type == MPCOMP_OOP_TYPE_LONG);
+  sctk_assert( t->info.loop_infos.type == MPCOMP_LOOP_TYPE_LONG);
   const long incr = t->info.loop_infos.loop.mpcomp_long.incr;
   const long add = ((*p_ub - *p_lb) % *p_st == 0) ? *p_st : *p_st - ((*p_ub - *p_lb) % *p_st);
 
@@ -186,7 +186,7 @@ __kmpc_dispatch_next_8u( ident_t *loc, kmp_int32 gtid, kmp_int32 *p_last,
   t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
   sctk_assert(t != NULL);
 
-  sctk_assert( t->info.loop_infos.type == MPCOMP_OOP_TYPE_ULL);
+  sctk_assert( t->info.loop_infos.type == MPCOMP_LOOP_TYPE_ULL);
   const unsigned long long incr = t->info.loop_infos.loop.mpcomp_ull.incr;
   const unsigned long long add = ((*p_ub - *p_lb) % *p_st == 0) ? *p_st : *p_st - ((*p_ub - *p_lb) % *p_st);
   
