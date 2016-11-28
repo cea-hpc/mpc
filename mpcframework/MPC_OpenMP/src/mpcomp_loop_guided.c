@@ -24,6 +24,7 @@
 #include "mpcomp_abi.h"
 #include "sctk_debug.h"
 #include "mpcomp_types.h"
+#include "mpcomp_loop_dyn.h"
 
 /* 
    This file includes the function related to the 'guided' schedule of a shared
@@ -36,27 +37,24 @@
  *
  *
  *****/
-int mpcomp_guided_loop_begin (long lb, long b, long incr, long chunk_size, long *from, long *to)
+int __mpcomp_guided_loop_begin (long lb, long b, long incr, long chunk_size, long *from, long *to)
 {
-    return mpcomp_dynamic_loop_begin( lb, b, incr, chunk_size, from, to);
+    return __mpcomp_dynamic_loop_begin( lb, b, incr, chunk_size, from, to);
 }
 
-int
-mpcomp_guided_loop_next (long *from, long *to)
+int __mpcomp_guided_loop_next (long *from, long *to)
 {
-     return mpcomp_dynamic_loop_next(from, to);
+     return __mpcomp_dynamic_loop_next(from, to);
 }
 
-void
-mpcomp_guided_loop_end ()
+void __mpcomp_guided_loop_end ()
 {
-     mpcomp_dynamic_loop_end();
+     __mpcomp_dynamic_loop_end();
 }
 
-void
-mpcomp_guided_loop_end_nowait ()
+void __mpcomp_guided_loop_end_nowait ()
 {
-     mpcomp_dynamic_loop_end_nowait();
+     __mpcomp_dynamic_loop_end_nowait();
 }
 
 
@@ -65,8 +63,7 @@ mpcomp_guided_loop_end_nowait ()
    !WARNING! This function assumes that there is no loops w/ guided schedule
    and nowait clause previously executed in the same parallel region 
 */
-int
-mpcomp_guided_loop_begin_ignore_nowait (long lb, long b, long incr, long
+int __mpcomp_guided_loop_begin_ignore_nowait (long lb, long b, long incr, long
 					  chunk_size, long *from, long *to)
 {
      not_implemented();
@@ -75,9 +72,9 @@ mpcomp_guided_loop_begin_ignore_nowait (long lb, long b, long incr, long
 
 
 int
-mpcomp_guided_loop_next_ignore_nowait (long *from, long *to)
+__mpcomp_guided_loop_next_ignore_nowait (long *from, long *to)
 {
-     return mpcomp_dynamic_loop_next_ignore_nowait(from, to);
+     return __mpcomp_dynamic_loop_next_ignore_nowait(from, to);
 }
 
 /****
@@ -87,14 +84,13 @@ mpcomp_guided_loop_next_ignore_nowait (long *from, long *to)
  *
  *****/
 
-int
-mpcomp_ordered_guided_loop_begin (long lb, long b, long incr, long chunk_size,
+int __mpcomp_ordered_guided_loop_begin (long lb, long b, long incr, long chunk_size,
 				    long *from, long *to)
 {
      mpcomp_thread_t *t;
      int res;
 
-     res = mpcomp_guided_loop_begin(lb, b, incr, chunk_size, from, to );
+     res = __mpcomp_guided_loop_begin(lb, b, incr, chunk_size, from, to );
 
      /* Grab the thread info */
      t = (mpcomp_thread_t *) sctk_openmp_thread_tls;
@@ -105,12 +101,11 @@ mpcomp_ordered_guided_loop_begin (long lb, long b, long incr, long chunk_size,
      return res;
 }
 
-int
-mpcomp_ordered_guided_loop_next (long *from, long *to) {
+int __mpcomp_ordered_guided_loop_next (long *from, long *to) {
      mpcomp_thread_t *t;
      int res;
 
-     res = mpcomp_guided_loop_next(from, to);
+     res = __mpcomp_guided_loop_next(from, to);
 
      /* Grab the thread info */
      t = (mpcomp_thread_t *) sctk_openmp_thread_tls;
@@ -121,16 +116,14 @@ mpcomp_ordered_guided_loop_next (long *from, long *to) {
      return res;
 }
 
-void
-mpcomp_ordered_guided_loop_end ()
+void __mpcomp_ordered_guided_loop_end ()
 {
-     mpcomp_guided_loop_end();
+     __mpcomp_guided_loop_end();
 }
 
-void
-mpcomp_ordered_guided_loop_end_nowait ()
+void __mpcomp_ordered_guided_loop_end_nowait ()
 {
-     mpcomp_guided_loop_end();
+     __mpcomp_guided_loop_end();
 }
 
 /****
@@ -139,28 +132,27 @@ mpcomp_ordered_guided_loop_end_nowait ()
  *
  *
  *****/
-int mpcomp_loop_ull_guided_begin (bool up, unsigned long long lb, unsigned long long b, unsigned long long incr, unsigned long long chunk_size,
+int __mpcomp_loop_ull_guided_begin (bool up, unsigned long long lb, unsigned long long b, unsigned long long incr, unsigned long long chunk_size,
                 unsigned long long *from, unsigned long long *to)
 {
-     return mpcomp_loop_ull_dynamic_begin(up, lb, b, incr, chunk_size, from, to);
+     return __mpcomp_loop_ull_dynamic_begin(up, lb, b, incr, chunk_size, from, to);
 }
 
-int mpcomp_loop_ull_guided_next (unsigned long long *from, unsigned long long *to)
+int __mpcomp_loop_ull_guided_next (unsigned long long *from, unsigned long long *to)
 {
-     return mpcomp_loop_ull_dynamic_next(from, to);
+     return __mpcomp_loop_ull_dynamic_next(from, to);
 }
 
-void mpcomp_guided_loop_ull_end ()
-{
-	not_implemented() ;
-	mpcomp_guided_loop_end() ;
-}
-
-void
-mpcomp_guided_loop_ull_end_nowait ()
+void __mpcomp_guided_loop_ull_end ()
 {
 	not_implemented() ;
-	mpcomp_guided_loop_end_nowait() ;
+	__mpcomp_guided_loop_end() ;
+}
+
+void __mpcomp_guided_loop_ull_end_nowait ()
+{
+	not_implemented() ;
+	__mpcomp_guided_loop_end_nowait() ;
 }
 
 /****
@@ -169,8 +161,7 @@ mpcomp_guided_loop_ull_end_nowait ()
  *
  *
  *****/
-int
-mpcomp_loop_ull_ordered_guided_begin (bool up, unsigned long long lb, unsigned long long b, unsigned long long incr, unsigned long long chunk_size,
+int __mpcomp_loop_ull_ordered_guided_begin (bool up, unsigned long long lb, unsigned long long b, unsigned long long incr, unsigned long long chunk_size,
                     unsigned long long *from, unsigned long long *to)
 {
      int res;
@@ -180,18 +171,17 @@ mpcomp_loop_ull_ordered_guided_begin (bool up, unsigned long long lb, unsigned l
      t = (mpcomp_thread_t *) sctk_openmp_thread_tls;
      sctk_assert (t != NULL);
     
-     res = mpcomp_loop_ull_guided_begin(up, lb, b, incr, chunk_size, from, to );
+     res = __mpcomp_loop_ull_guided_begin(up, lb, b, incr, chunk_size, from, to );
      t->current_ordered_iteration = *from;
 
      return res;
 }
 
-int
-mpcomp_loop_ull_ordered_guided_next (unsigned long long *from, unsigned long long *to) {
+int __mpcomp_loop_ull_ordered_guided_next (unsigned long long *from, unsigned long long *to) {
      mpcomp_thread_t *t;
      int res;
 
-     res = mpcomp_loop_ull_guided_next(from, to);
+     res = __mpcomp_loop_ull_guided_next(from, to);
 
      /* Grab the thread info */
      t = (mpcomp_thread_t *) sctk_openmp_thread_tls;

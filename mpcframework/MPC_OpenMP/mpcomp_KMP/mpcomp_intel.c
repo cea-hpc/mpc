@@ -116,7 +116,7 @@ void
 __kmpc_begin ( ident_t * loc, kmp_int32 flags ) 
 {
     sctk_error("YO --- hihi");
-    mpcomp_init();
+   __mpcomp_init();
 // not_implemented() ;
 }
 
@@ -164,7 +164,7 @@ __kmpc_fork_call(ident_t * loc, kmp_int32 argc, kmpc_micro microtask, ...)
 #endif
 
   /* Handle orphaned directive (initialize OpenMP environment) */
-  mpcomp_init() ;
+ __mpcomp_init() ;
   
   /* Threadprvate initialisation */
   sctk_thread_mutex_lock(&lock);
@@ -213,7 +213,7 @@ args_copy = intel_temp_args_copy ;
   w->args = args_copy ;
   sctk_error(" f: %p, argc: %d, args: %p", w->f, w->argc, w->args );
 
-  mpcomp_start_parallel_region( wrapper_function, w, t->push_num_threads );
+  __mpcomp_start_parallel_region( wrapper_function, w, t->push_num_threads );
 
   /* restore the number of threads w/ num_threads clause */
   t->push_num_threads = 0 ;
@@ -247,7 +247,7 @@ __kmpc_serialized_parallel(ident_t *loc, kmp_int32 global_tid)
 	info->icvs = t->info.icvs ; 
 	info->combined_pragma = MPCOMP_COMBINED_NONE;
 
-	mpcomp_internal_begin_parallel_region( info, 1 ) ;
+	__mpcomp_internal_begin_parallel_region( info, 1 ) ;
 
 	/* Save the current tls */
 	t->children_instance->mvps[0]->threads[0].father = sctk_openmp_thread_tls ;
@@ -271,7 +271,7 @@ __kmpc_end_serialized_parallel(ident_t *loc, kmp_int32 global_tid)
 
 	/* Restore the previous thread info */
 	sctk_openmp_thread_tls = t->father ;
-    mpcomp_internal_end_parallel_region( t->instance ) ;
+    __mpcomp_internal_end_parallel_region( t->instance ) ;
 
     sctk_nodebug( "%s: leaving (%d)...", __func__, global_tid ) ;
 }
@@ -284,7 +284,7 @@ __kmpc_push_num_threads( ident_t *loc, kmp_int32 global_tid, kmp_int32 num_threa
   sctk_nodebug( "%s: pushing %d thread(s)", __func__, num_threads ) ;
 
   /* Handle orphaned directive (initialize OpenMP environment) */
-  mpcomp_init() ;
+ __mpcomp_init() ;
 
   /* Grab the thread info */
   t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
@@ -367,7 +367,7 @@ __kmpc_barrier(ident_t *loc, kmp_int32 global_tid)
   sctk_nodebug( "[%d] __kmpc_barrier: entering...",
       ((mpcomp_thread_t *) sctk_openmp_thread_tls)->rank  ) ;
 
-  mpcomp_barrier() ;
+  __mpcomp_barrier() ;
 }
 
 kmp_int32
@@ -384,7 +384,7 @@ __kmpc_barrier_master(ident_t *loc, kmp_int32 global_tid)
     return 1 ;
   }
 
-  mpcomp_barrier() ;
+  __mpcomp_barrier() ;
 
   return 0 ;
 }
@@ -394,7 +394,7 @@ __kmpc_end_barrier_master(ident_t *loc, kmp_int32 global_tid)
 {
   not_implemented() ;
 
-  mpcomp_barrier() ;
+  __mpcomp_barrier() ;
 }
 
 kmp_int32
@@ -498,7 +498,7 @@ __kmpc_reduce_nowait( ident_t *loc, kmp_int32 global_tid, kmp_int32 num_vars, si
     t->reduction_method = packed_reduction_method; 
     if( packed_reduction_method == critical_reduce_block ) 
     {
-        mpcomp_anonymous_critical_begin() ;
+        __mpcomp_anonymous_critical_begin() ;
         retval = 1;
     } 
     else if( packed_reduction_method == empty_reduce_block ) 
@@ -511,7 +511,7 @@ __kmpc_reduce_nowait( ident_t *loc, kmp_int32 global_tid, kmp_int32 num_vars, si
     }
     else if ( packed_reduction_method == tree_reduce_block )
     {
-        mpcomp_anonymous_critical_begin() ;
+        __mpcomp_anonymous_critical_begin() ;
         retval = 1;
     }
     else
@@ -536,8 +536,8 @@ __kmpc_end_reduce_nowait( ident_t *loc, kmp_int32 global_tid, kmp_critical_name 
     
     if( packed_reduction_method == critical_reduce_block )
     {
-        mpcomp_anonymous_critical_end() ;
-        mpcomp_barrier();
+        __mpcomp_anonymous_critical_end() ;
+        __mpcomp_barrier();
     } 
     else if( packed_reduction_method == empty_reduce_block ) 
     {
@@ -547,7 +547,7 @@ __kmpc_end_reduce_nowait( ident_t *loc, kmp_int32 global_tid, kmp_critical_name 
     } 
     else if( packed_reduction_method == tree_reduce_block ) 
     {
-        mpcomp_anonymous_critical_end() ;
+        __mpcomp_anonymous_critical_end() ;
     } 
     else 
     {
@@ -605,7 +605,7 @@ __kmpc_reduce( ident_t *loc, kmp_int32 global_tid, kmp_int32 num_vars, size_t re
 
   /* Version with critical section */
   sctk_assert( lck != NULL ) ;
-  mpcomp_anonymous_critical_begin() ;
+  __mpcomp_anonymous_critical_begin() ;
   return 1 ;
 }
 
@@ -624,8 +624,8 @@ __kmpc_end_reduce( ident_t *loc, kmp_int32 global_tid, kmp_critical_name *lck )
 #if 1
   /* Version with critical section */
   sctk_assert( lck != NULL ) ;
-  mpcomp_anonymous_critical_end() ;
-  mpcomp_barrier();
+  __mpcomp_anonymous_critical_end() ;
+  __mpcomp_barrier();
   return ;
 #endif
 
@@ -666,13 +666,13 @@ __kmpc_end_master(ident_t *loc, kmp_int32 global_tid)
 void 
 __kmpc_ordered(ident_t *loc, kmp_int32 global_tid)
 {
-    mpcomp_ordered_begin();
+     __mpcomp_ordered_begin();
 }
 
 void
 __kmpc_end_ordered(ident_t *loc, kmp_int32 global_tid)
 {
-    mpcomp_ordered_end();
+     __mpcomp_ordered_end();
 }
 
 void
@@ -685,14 +685,14 @@ __kmpc_critical(ident_t *loc, kmp_int32 global_tid, kmp_critical_name *crit)
       (*crit)[4], (*crit)[5], (*crit)[6], (*crit)[7]
       ) ;
   /* TODO Handle named critical */
-mpcomp_anonymous_critical_begin () ;
+__mpcomp_anonymous_critical_begin () ;
 }
 
 void
 __kmpc_end_critical(ident_t *loc, kmp_int32 global_tid, kmp_critical_name *crit)
 {
   /* TODO Handle named critical */
-  mpcomp_anonymous_critical_end () ;
+  __mpcomp_anonymous_critical_end () ;
 }
 
 kmp_int32
@@ -701,7 +701,7 @@ __kmpc_single(ident_t *loc, kmp_int32 global_tid)
     mpcomp_thread_t* t = (mpcomp_thread_t *) sctk_openmp_thread_tls;
     sctk_assert( t );
     sctk_nodebug( "[%d] %s: entering...", t->rank, __func__ ) ;
-    return mpcomp_do_single() ;
+    return __mpcomp_do_single() ;
 }
 
 void
@@ -761,7 +761,7 @@ __kmpc_for_static_init_4( ident_t *loc, kmp_int32 gtid, kmp_int32 schedtype,
     {
         case kmp_sch_static:
             /* Get the single chunk for the current thread */
-            res = mpcomp_static_schedule_get_single_chunk( *plower, *pupper+incr, incr, &from, &to ) ;
+            res =  __mpcomp_static_schedule_get_single_chunk( *plower, *pupper+incr, incr, &from, &to ) ;
 
             /* Chunk to execute? */
             if ( res ) 
@@ -888,7 +888,7 @@ __kmpc_for_static_init_4u( ident_t *loc, kmp_int32 gtid, kmp_int32 schedtype,
     {
         case kmp_sch_static:
             /* Get the single chunk for the current thread */
-            res = mpcomp_static_schedule_get_single_chunk_ull( (unsigned long long)*plower, 
+            res =  __mpcomp_static_schedule_get_single_chunk_ull( (unsigned long long)*plower, 
                 (unsigned long long)*pupper+(unsigned long long)incr, (unsigned long long)incr, &from, &to ) ;
 
             /* Chunk to execute? */
@@ -1016,7 +1016,7 @@ __kmpc_for_static_init_8( ident_t *loc, kmp_int32 gtid, kmp_int32 schedtype,
     {
         case kmp_sch_static:
             /* Get the single chunk for the current thread */
-            res = mpcomp_static_schedule_get_single_chunk( *plower, *pupper+incr, incr, &from, &to ) ;
+            res =  __mpcomp_static_schedule_get_single_chunk( *plower, *pupper+incr, incr, &from, &to ) ;
 
             /* Chunk to execute? */
             if ( res ) 
@@ -1155,7 +1155,7 @@ __kmpc_for_static_init_8u( ident_t *loc, kmp_int32 gtid, kmp_int32 schedtype,
     {
         case kmp_sch_static:
             /* Get the single chunk for the current thread */
-            res = mpcomp_static_schedule_get_single_chunk_ull( *plower, *pupper+incr, incr, &from, &to ) ;
+            res =  __mpcomp_static_schedule_get_single_chunk_ull( *plower, *pupper+incr, incr, &from, &to ) ;
 
             /* Chunk to execute? */
             if ( res ) 
@@ -1267,7 +1267,7 @@ __kmpc_dispatch_init_4(ident_t *loc, kmp_int32 gtid, enum sched_type schedule,
     /* regular scheduling */
     case kmp_sch_dynamic_chunked:
     case kmp_ord_dynamic_chunked:
-      mpcomp_dynamic_loop_init( 
+      __mpcomp_dynamic_loop_init( 
 	  ((mpcomp_thread_t *) sctk_openmp_thread_tls),
 	  (long)lb, (long)(ub+add), (long)st, (long)chunk) ;
       break ;
@@ -1278,19 +1278,19 @@ __kmpc_dispatch_init_4(ident_t *loc, kmp_int32 gtid, enum sched_type schedule,
     case kmp_sch_runtime:
     case kmp_ord_runtime:
       t->static_chunk_size_intel = 0;
-      mpcomp_static_loop_init(
+      __mpcomp_static_loop_init(
 	  ((mpcomp_thread_t *) sctk_openmp_thread_tls),
 	  (long)lb, (long)(ub+add), (long)st, (long)0) ;
       break ; 
     case kmp_sch_static_chunked:
     case kmp_ord_static_chunked:
-      mpcomp_static_loop_init(
+      __mpcomp_static_loop_init(
 	  ((mpcomp_thread_t *) sctk_openmp_thread_tls),
 	  (long)lb, (long)(ub+add), (long)st, (long)chunk) ;
       break ;
     case kmp_sch_guided_chunked:
     case kmp_ord_guided_chunked:
-      mpcomp_dynamic_loop_init(
+      __mpcomp_dynamic_loop_init(
 	  ((mpcomp_thread_t *) sctk_openmp_thread_tls),
 	  (long)lb, (long)(ub+add), (long)st, (long)chunk) ;
     break ;
@@ -1327,7 +1327,7 @@ __kmpc_dispatch_init_4u( ident_t *loc, kmp_int32 gtid, enum sched_type schedule,
     /* regular scheduling */
     case kmp_sch_dynamic_chunked:
     case kmp_ord_dynamic_chunked:
-      mpcomp_dynamic_loop_init_ull( 
+      __mpcomp_dynamic_loop_init_ull( 
 	  ((mpcomp_thread_t *) sctk_openmp_thread_tls),
 	  (unsigned long long)lb, (unsigned long long)(ub+add), (unsigned long long)st, (unsigned long long)chunk) ;
       break ;
@@ -1338,19 +1338,19 @@ __kmpc_dispatch_init_4u( ident_t *loc, kmp_int32 gtid, enum sched_type schedule,
     case kmp_sch_runtime:
     case kmp_ord_runtime:
       t->static_chunk_size_intel = 0;
-      mpcomp_static_loop_init_ull(
+      __mpcomp_static_loop_init_ull(
 	  ((mpcomp_thread_t *) sctk_openmp_thread_tls),
 	  (unsigned long long)lb, (unsigned long long)(ub+add), (unsigned long long)st, (unsigned long long)0) ;
       break ; 
     case kmp_sch_static_chunked:
     case kmp_ord_static_chunked:
-      mpcomp_static_loop_init_ull(
+      __mpcomp_static_loop_init_ull(
 	  ((mpcomp_thread_t *) sctk_openmp_thread_tls),
 	  (unsigned long long)lb, (unsigned long long)(ub+add), (unsigned long long)st, (unsigned long long)chunk) ;
       break ;
     case kmp_sch_guided_chunked:
     case kmp_ord_guided_chunked:
-      mpcomp_dynamic_loop_init_ull(
+      __mpcomp_dynamic_loop_init_ull(
 	  ((mpcomp_thread_t *) sctk_openmp_thread_tls),
 	  (unsigned long long)lb, (unsigned long long)(ub+add), (unsigned long long)st, (unsigned long long)chunk) ;
     break ;
@@ -1382,7 +1382,7 @@ __kmpc_dispatch_init_8( ident_t *loc, kmp_int32 gtid, enum sched_type schedule,
     /* regular scheduling */
     case kmp_sch_dynamic_chunked:
     case kmp_ord_dynamic_chunked:
-      mpcomp_dynamic_loop_init( 
+      __mpcomp_dynamic_loop_init( 
 	  ((mpcomp_thread_t *) sctk_openmp_thread_tls),
 	  (long)lb, (long)(ub+add), (long)st, (long)chunk) ;
       break ;
@@ -1393,19 +1393,19 @@ __kmpc_dispatch_init_8( ident_t *loc, kmp_int32 gtid, enum sched_type schedule,
     case kmp_sch_runtime:
     case kmp_ord_runtime:
       t->static_chunk_size_intel = 0;
-      mpcomp_static_loop_init(
+      __mpcomp_static_loop_init(
 	  ((mpcomp_thread_t *) sctk_openmp_thread_tls),
 	  (long)lb, (long)(ub+add), (long)st, (long)0) ;
       break ; 
     case kmp_sch_static_chunked:
     case kmp_ord_static_chunked:
-      mpcomp_static_loop_init(
+      __mpcomp_static_loop_init(
 	  ((mpcomp_thread_t *) sctk_openmp_thread_tls),
 	  (long)lb, (long)(ub+add), (long)st, (long)chunk) ;
       break ;
     case kmp_sch_guided_chunked:
     case kmp_ord_guided_chunked:
-      mpcomp_dynamic_loop_init(
+      __mpcomp_dynamic_loop_init(
 	  ((mpcomp_thread_t *) sctk_openmp_thread_tls),
 	 (long)lb, (long)(ub+add), (long)st, (long)chunk) ;
     break ;
@@ -1437,7 +1437,7 @@ __kmpc_dispatch_init_8u( ident_t *loc, kmp_int32 gtid, enum sched_type schedule,
     /* regular scheduling */
     case kmp_sch_dynamic_chunked:
     case kmp_ord_dynamic_chunked:
-      mpcomp_dynamic_loop_init_ull( 
+      __mpcomp_dynamic_loop_init_ull( 
 	  ((mpcomp_thread_t *) sctk_openmp_thread_tls),
 	  lb, ub+add, st, chunk) ;
       break ;
@@ -1448,19 +1448,19 @@ __kmpc_dispatch_init_8u( ident_t *loc, kmp_int32 gtid, enum sched_type schedule,
     case kmp_sch_runtime:
     case kmp_ord_runtime:
       t->static_chunk_size_intel = 0;
-      mpcomp_static_loop_init_ull(
+      __mpcomp_static_loop_init_ull(
 	  ((mpcomp_thread_t *) sctk_openmp_thread_tls),
 	  lb, ub+add, st, 0) ;
       break ; 
     case kmp_sch_static_chunked:
     case kmp_ord_static_chunked:
-      mpcomp_static_loop_init_ull(
+      __mpcomp_static_loop_init_ull(
 	  ((mpcomp_thread_t *) sctk_openmp_thread_tls),
 	  lb, ub+add, st, chunk) ;
       break ;
     case kmp_sch_guided_chunked:
     case kmp_ord_guided_chunked:
-      mpcomp_dynamic_loop_init_ull(
+      __mpcomp_dynamic_loop_init_ull(
 	  ((mpcomp_thread_t *) sctk_openmp_thread_tls),
 	  lb, ub+add, st, chunk) ;
     break ;
@@ -1497,25 +1497,25 @@ __kmpc_dispatch_next_4( ident_t *loc, kmp_int32 gtid, kmp_int32 *p_last,
   {
     /* regular scheduling */
     case kmp_sch_dynamic_chunked:
-        ret = mpcomp_dynamic_loop_next( &from, &to ) ;
+        ret =  __mpcomp_dynamic_loop_next( &from, &to ) ;
     break;
     case kmp_sch_static:
     case kmp_sch_auto:
     case kmp_sch_runtime:
         if(t->static_chunk_size_intel == 0 && t->first_iteration)
-            ret = mpcomp_static_schedule_get_single_chunk ((long)(*p_lb), (long)((*p_ub)+(add)), (long)(*p_st), &from, &to);
+            ret =  __mpcomp_static_schedule_get_single_chunk ((long)(*p_lb), (long)((*p_ub)+(add)), (long)(*p_st), &from, &to);
         else
-            ret = mpcomp_static_loop_next( &from, &to );
+            ret =  __mpcomp_static_loop_next( &from, &to );
     break;
     case kmp_sch_static_chunked:
-        ret = mpcomp_static_loop_next( &from, &to ) ;
+        ret =  __mpcomp_static_loop_next( &from, &to ) ;
     break;
     case kmp_sch_guided_chunked:
-        ret = mpcomp_guided_loop_next( &from, &to ) ;
+        ret =  __mpcomp_guided_loop_next( &from, &to ) ;
     break ;
     /* ordered scheduling */
     case kmp_ord_dynamic_chunked:
-        ret = mpcomp_ordered_dynamic_loop_next( &from, &to ) ;
+        ret =  __mpcomp_ordered_dynamic_loop_next( &from, &to ) ;
         t->current_ordered_iteration = from;
     break;
     case kmp_ord_static:
@@ -1524,13 +1524,13 @@ __kmpc_dispatch_next_4( ident_t *loc, kmp_int32 gtid, kmp_int32 *p_last,
     case kmp_ord_runtime:
         /* handle intel case for default chunk */
         if(t->static_chunk_size_intel == 0 && t->first_iteration)
-            ret = mpcomp_static_schedule_get_single_chunk ((long)(*p_lb), (long)((*p_ub)+(add)), (long)(*p_st), &from, &to);
+            ret =  __mpcomp_static_schedule_get_single_chunk ((long)(*p_lb), (long)((*p_ub)+(add)), (long)(*p_st), &from, &to);
         else
-            ret = mpcomp_ordered_static_loop_next( &from, &to ) ;
+            ret =  __mpcomp_ordered_static_loop_next( &from, &to ) ;
         t->current_ordered_iteration = from;
     break;
     case kmp_ord_guided_chunked:
-        ret = mpcomp_ordered_guided_loop_next( &from, &to ) ;
+        ret =  __mpcomp_ordered_guided_loop_next( &from, &to ) ;
         t->current_ordered_iteration = from;
     break ;
     default:
@@ -1556,29 +1556,29 @@ __kmpc_dispatch_next_4( ident_t *loc, kmp_int32 gtid, kmp_int32 *p_last,
       {
         //regular scheduling
         case kmp_sch_dynamic_chunked:
-            mpcomp_dynamic_loop_end_nowait() ;
+             __mpcomp_dynamic_loop_end_nowait() ;
         break;
         case kmp_sch_static:
         case kmp_sch_auto:
         case kmp_sch_runtime:
         case kmp_sch_static_chunked:
-            mpcomp_static_loop_end_nowait() ;
+             __mpcomp_static_loop_end_nowait() ;
         break;
         case kmp_sch_guided_chunked:
-            mpcomp_guided_loop_end_nowait() ;
+             __mpcomp_guided_loop_end_nowait() ;
         break ;
         //ordered scheduling
         case kmp_ord_dynamic_chunked:
-            mpcomp_ordered_dynamic_loop_end_nowait() ;
+             __mpcomp_ordered_dynamic_loop_end_nowait() ;
         break;
         case kmp_ord_static:
         case kmp_ord_auto:
         case kmp_ord_static_chunked:
         case kmp_ord_runtime:
-            mpcomp_ordered_static_loop_end_nowait() ;
+             __mpcomp_ordered_static_loop_end_nowait() ;
         break;
         case kmp_ord_guided_chunked:
-            mpcomp_ordered_guided_loop_end_nowait() ;
+             __mpcomp_ordered_guided_loop_end_nowait() ;
         break ;
         default:
             not_implemented();
@@ -1612,25 +1612,25 @@ __kmpc_dispatch_next_4u( ident_t *loc, kmp_int32 gtid, kmp_int32 *p_last,
   {
     /* regular scheduling */
     case kmp_sch_dynamic_chunked:
-        ret = mpcomp_loop_ull_dynamic_next( &from, &to ) ;
+        ret = __mpcomp_loop_ull_dynamic_next( &from, &to ) ;
     break;
     case kmp_sch_static:
     case kmp_sch_auto:
     case kmp_sch_runtime:
         if(t->static_chunk_size_intel == 0 && t->first_iteration)
-            ret = mpcomp_static_schedule_get_single_chunk_ull ((unsigned long long)(*p_lb), (unsigned long long)((*p_ub)+(add)), (unsigned long long)(*p_st), &from, &to);
+            ret =  __mpcomp_static_schedule_get_single_chunk_ull ((unsigned long long)(*p_lb), (unsigned long long)((*p_ub)+(add)), (unsigned long long)(*p_st), &from, &to);
         else
-            ret = mpcomp_loop_ull_static_next( &from, &to );
+            ret = __mpcomp_loop_ull_static_next( &from, &to );
     break;
     case kmp_sch_static_chunked:
-        ret = mpcomp_loop_ull_static_next( &from, &to ) ;
+        ret = __mpcomp_loop_ull_static_next( &from, &to ) ;
     break;
     case kmp_sch_guided_chunked:
-        ret = mpcomp_loop_ull_guided_next( &from, &to ) ;
+        ret = __mpcomp_loop_ull_guided_next( &from, &to ) ;
     break ;
     /* ordered scheduling */
     case kmp_ord_dynamic_chunked:
-        ret = mpcomp_loop_ull_ordered_dynamic_next( &from, &to ) ;
+        ret = __mpcomp_loop_ull_ordered_dynamic_next( &from, &to ) ;
         t->current_ordered_iteration = from;
     break;
     case kmp_ord_static:
@@ -1639,13 +1639,13 @@ __kmpc_dispatch_next_4u( ident_t *loc, kmp_int32 gtid, kmp_int32 *p_last,
     case kmp_ord_runtime:
         /* handle intel case for default chunk */
         if(t->static_chunk_size_intel == 0 && t->first_iteration)
-            ret = mpcomp_static_schedule_get_single_chunk_ull ((unsigned long long)(*p_lb), (unsigned long long)((*p_ub)+(add)), (unsigned long long)(*p_st), &from, &to);
+            ret =  __mpcomp_static_schedule_get_single_chunk_ull ((unsigned long long)(*p_lb), (unsigned long long)((*p_ub)+(add)), (unsigned long long)(*p_st), &from, &to);
         else
-            ret = mpcomp_loop_ull_ordered_static_next( &from, &to ) ;
+            ret = __mpcomp_loop_ull_ordered_static_next( &from, &to ) ;
         t->current_ordered_iteration = from;
     break;
     case kmp_ord_guided_chunked:
-        ret = mpcomp_loop_ull_ordered_guided_next( &from, &to ) ;
+        ret = __mpcomp_loop_ull_ordered_guided_next( &from, &to ) ;
         t->current_ordered_iteration = from;
     break ;
     default:
@@ -1671,29 +1671,29 @@ __kmpc_dispatch_next_4u( ident_t *loc, kmp_int32 gtid, kmp_int32 *p_last,
       {
         //regular scheduling
         case kmp_sch_dynamic_chunked:
-            mpcomp_dynamic_loop_end_nowait() ;
+             __mpcomp_dynamic_loop_end_nowait() ;
         break;
         case kmp_sch_static:
         case kmp_sch_auto:
         case kmp_sch_runtime:
         case kmp_sch_static_chunked:
-            mpcomp_static_loop_end_nowait() ;
+             __mpcomp_static_loop_end_nowait() ;
         break;
         case kmp_sch_guided_chunked:
-            mpcomp_guided_loop_end_nowait() ;
+             __mpcomp_guided_loop_end_nowait() ;
         break ;
         //ordered scheduling
         case kmp_ord_dynamic_chunked:
-            mpcomp_ordered_dynamic_loop_end_nowait() ;
+             __mpcomp_ordered_dynamic_loop_end_nowait() ;
         break;
         case kmp_ord_static:
         case kmp_ord_auto:
         case kmp_ord_static_chunked:
         case kmp_ord_runtime:
-            mpcomp_ordered_static_loop_end_nowait() ;
+             __mpcomp_ordered_static_loop_end_nowait() ;
         break;
         case kmp_ord_guided_chunked:
-            mpcomp_ordered_guided_loop_end_nowait() ;
+             __mpcomp_ordered_guided_loop_end_nowait() ;
         break ;
         default:
             not_implemented();
@@ -1727,25 +1727,25 @@ __kmpc_dispatch_next_8( ident_t *loc, kmp_int32 gtid, kmp_int32 *p_last,
   {
     /* regular scheduling */
     case kmp_sch_dynamic_chunked:
-        ret = mpcomp_dynamic_loop_next( &from, &to ) ;
+        ret =  __mpcomp_dynamic_loop_next( &from, &to ) ;
     break;
     case kmp_sch_static:
     case kmp_sch_auto:
     case kmp_sch_runtime:
         if(t->static_chunk_size_intel == 0 && t->first_iteration)
-            ret = mpcomp_static_schedule_get_single_chunk ((long)(*p_lb), (long)((*p_ub)+(add)), (long)(*p_st), &from, &to);
+            ret =  __mpcomp_static_schedule_get_single_chunk ((long)(*p_lb), (long)((*p_ub)+(add)), (long)(*p_st), &from, &to);
         else
-            ret = mpcomp_static_loop_next( &from, &to );
+            ret =  __mpcomp_static_loop_next( &from, &to );
     break;
     case kmp_sch_static_chunked:
-        ret = mpcomp_static_loop_next( &from, &to ) ;
+        ret =  __mpcomp_static_loop_next( &from, &to ) ;
     break;
     case kmp_sch_guided_chunked:
-        ret = mpcomp_guided_loop_next( &from, &to ) ;
+        ret =  __mpcomp_guided_loop_next( &from, &to ) ;
     break ;
     /* ordered scheduling */
     case kmp_ord_dynamic_chunked:
-        ret = mpcomp_ordered_dynamic_loop_next( &from, &to ) ;
+        ret =  __mpcomp_ordered_dynamic_loop_next( &from, &to ) ;
         t->current_ordered_iteration = from;
     break;
     case kmp_ord_static:
@@ -1754,13 +1754,13 @@ __kmpc_dispatch_next_8( ident_t *loc, kmp_int32 gtid, kmp_int32 *p_last,
     case kmp_ord_runtime:
         /* handle intel case for default chunk */
         if(t->static_chunk_size_intel == 0 && t->first_iteration)
-            ret = mpcomp_static_schedule_get_single_chunk ((long)(*p_lb), (long)((*p_ub)+(add)), (long)(*p_st), &from, &to);
+            ret =  __mpcomp_static_schedule_get_single_chunk ((long)(*p_lb), (long)((*p_ub)+(add)), (long)(*p_st), &from, &to);
         else
-            ret = mpcomp_ordered_static_loop_next( &from, &to ) ;
+            ret =  __mpcomp_ordered_static_loop_next( &from, &to ) ;
         t->current_ordered_iteration = from;
     break;
     case kmp_ord_guided_chunked:
-        ret = mpcomp_ordered_guided_loop_next( &from, &to ) ;
+        ret =  __mpcomp_ordered_guided_loop_next( &from, &to ) ;
         t->current_ordered_iteration = from;
     break ;
     default:
@@ -1786,29 +1786,29 @@ __kmpc_dispatch_next_8( ident_t *loc, kmp_int32 gtid, kmp_int32 *p_last,
       {
         //regular scheduling
         case kmp_sch_dynamic_chunked:
-            mpcomp_dynamic_loop_end_nowait() ;
+             __mpcomp_dynamic_loop_end_nowait() ;
         break;
         case kmp_sch_static:
         case kmp_sch_auto:
         case kmp_sch_runtime:
         case kmp_sch_static_chunked:
-            mpcomp_static_loop_end_nowait() ;
+             __mpcomp_static_loop_end_nowait() ;
         break;
         case kmp_sch_guided_chunked:
-            mpcomp_guided_loop_end_nowait() ;
+             __mpcomp_guided_loop_end_nowait() ;
         break ;
         //ordered scheduling
         case kmp_ord_dynamic_chunked:
-            mpcomp_ordered_dynamic_loop_end_nowait() ;
+             __mpcomp_ordered_dynamic_loop_end_nowait() ;
         break;
         case kmp_ord_static:
         case kmp_ord_auto:
         case kmp_ord_static_chunked:
         case kmp_ord_runtime:
-            mpcomp_ordered_static_loop_end_nowait() ;
+             __mpcomp_ordered_static_loop_end_nowait() ;
         break;
         case kmp_ord_guided_chunked:
-            mpcomp_ordered_guided_loop_end_nowait() ;
+             __mpcomp_ordered_guided_loop_end_nowait() ;
         break ;
         default:
             not_implemented();
@@ -1841,25 +1841,25 @@ __kmpc_dispatch_next_8u( ident_t *loc, kmp_int32 gtid, kmp_int32 *p_last,
   {
     /* regular scheduling */
     case kmp_sch_dynamic_chunked:
-        ret = mpcomp_loop_ull_dynamic_next( &from, &to ) ;
+        ret = __mpcomp_loop_ull_dynamic_next( &from, &to ) ;
     break;
     case kmp_sch_static:
     case kmp_sch_auto:
     case kmp_sch_runtime:
         if(t->static_chunk_size_intel == 0 && t->first_iteration)
-            ret = mpcomp_static_schedule_get_single_chunk_ull (*p_lb, (*p_ub+add), *p_st, &from, &to);
+            ret =  __mpcomp_static_schedule_get_single_chunk_ull (*p_lb, (*p_ub+add), *p_st, &from, &to);
         else
-            ret = mpcomp_loop_ull_static_next( &from, &to );
+            ret = __mpcomp_loop_ull_static_next( &from, &to );
     break;
     case kmp_sch_static_chunked:
-        ret = mpcomp_loop_ull_static_next( &from, &to ) ;
+        ret = __mpcomp_loop_ull_static_next( &from, &to ) ;
     break;
     case kmp_sch_guided_chunked:
-        ret = mpcomp_loop_ull_guided_next( &from, &to ) ;
+        ret = __mpcomp_loop_ull_guided_next( &from, &to ) ;
     break ;
     /* ordered scheduling */
     case kmp_ord_dynamic_chunked:
-        ret = mpcomp_loop_ull_ordered_dynamic_next( &from, &to ) ;
+        ret = __mpcomp_loop_ull_ordered_dynamic_next( &from, &to ) ;
         t->current_ordered_iteration = from;
     break;
     case kmp_ord_static:
@@ -1868,13 +1868,13 @@ __kmpc_dispatch_next_8u( ident_t *loc, kmp_int32 gtid, kmp_int32 *p_last,
     case kmp_ord_runtime:
         /* handle intel case for default chunk */
         if(t->static_chunk_size_intel == 0 && t->first_iteration)
-            ret = mpcomp_static_schedule_get_single_chunk_ull (*p_lb, (*p_ub+add), *p_st, &from, &to);
+            ret =  __mpcomp_static_schedule_get_single_chunk_ull (*p_lb, (*p_ub+add), *p_st, &from, &to);
         else
-            ret = mpcomp_loop_ull_ordered_static_next( &from, &to ) ;
+            ret = __mpcomp_loop_ull_ordered_static_next( &from, &to ) ;
         t->current_ordered_iteration = from;
     break;
     case kmp_ord_guided_chunked:
-        ret = mpcomp_loop_ull_ordered_guided_next( &from, &to ) ;
+        ret = __mpcomp_loop_ull_ordered_guided_next( &from, &to ) ;
         t->current_ordered_iteration = from;
     break ;
     default:
@@ -1900,29 +1900,29 @@ __kmpc_dispatch_next_8u( ident_t *loc, kmp_int32 gtid, kmp_int32 *p_last,
       {
         //regular scheduling
         case kmp_sch_dynamic_chunked:
-            mpcomp_dynamic_loop_end_nowait() ;
+             __mpcomp_dynamic_loop_end_nowait() ;
         break;
         case kmp_sch_static:
         case kmp_sch_auto:
         case kmp_sch_runtime:
         case kmp_sch_static_chunked:
-            mpcomp_static_loop_end_nowait() ;
+             __mpcomp_static_loop_end_nowait() ;
         break;
         case kmp_sch_guided_chunked:
-            mpcomp_guided_loop_end_nowait() ;
+             __mpcomp_guided_loop_end_nowait() ;
         break ;
         //ordered scheduling
         case kmp_ord_dynamic_chunked:
-            mpcomp_ordered_dynamic_loop_end_nowait() ;
+             __mpcomp_ordered_dynamic_loop_end_nowait() ;
         break;
         case kmp_ord_static:
         case kmp_ord_auto:
         case kmp_ord_static_chunked:
         case kmp_ord_runtime:
-            mpcomp_ordered_static_loop_end_nowait() ;
+             __mpcomp_ordered_static_loop_end_nowait() ;
         break;
         case kmp_ord_guided_chunked:
-            mpcomp_ordered_guided_loop_end_nowait() ;
+             __mpcomp_ordered_guided_loop_end_nowait() ;
         break ;
         default:
             not_implemented();
@@ -2098,11 +2098,11 @@ __kmpc_copyprivate(ident_t *loc, kmp_int32 global_tid, size_t cpy_size, void *cp
     data_ptr = &(t->instance->team->single_copyprivate_data);
     if (didit) *data_ptr = cpy_data;
     
-    mpcomp_barrier();
+    __mpcomp_barrier();
 
     if (! didit) (*cpy_func)( cpy_data, *data_ptr );
 
-    mpcomp_barrier();
+    __mpcomp_barrier();
 }
 
 void *
@@ -2327,7 +2327,7 @@ __kmpc_omp_task_alloc( ident_t *loc_ref, kmp_int32 gtid, kmp_int32 flags,
    sctk_assert( sctk_openmp_thread_tls );	 
    mpcomp_thread_t* t = (mpcomp_thread_t *) sctk_openmp_thread_tls;
 
-   mpcomp_init();
+  __mpcomp_init();
 
    sctk_assert( t->mvp );
    sctk_assert( t->mvp->father );
@@ -2672,11 +2672,11 @@ __kmpc_atomic_fixed4_wr(  ident_t *id_ref, int gtid, kmp_int32   * lhs, kmp_int3
         __kmp_xchg_fixed32( lhs, rhs ) ;
 
 #if 0
-  mpcomp_atomic_begin() ;
+  __mpcomp_atomic_begin() ;
 
     *lhs = rhs ;
 
-      mpcomp_atomic_end() ;
+      __mpcomp_atomic_end() ;
 
         /* TODO: use assembly functions by Intel if available */
 #endif
@@ -2699,11 +2699,11 @@ __kmpc_atomic_float8_add(  ident_t *id_ref, int gtid, kmp_real64 * lhs, kmp_real
 
 #if __MIC__ || __MIC2__
 #warning "MIC => atomic locks"
-  mpcomp_atomic_begin() ;
+  __mpcomp_atomic_begin() ;
 
   *lhs += rhs ;
 
-  mpcomp_atomic_end() ;
+  __mpcomp_atomic_end() ;
 #else 
 #warning "NON MIC => atomic optim"
   __kmp_test_then_add_real64( lhs, rhs ) ;

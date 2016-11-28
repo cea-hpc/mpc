@@ -36,7 +36,7 @@ bool mpcomp_GOMP_loop_runtime_next (long *start, long *end)
 {
    bool ret;
    sctk_nodebug("[Redirect GOMP]%s:\tBegin",__func__); 
-   ret = mpcomp_runtime_loop_next(start,end);
+   ret = __mpcomp_runtime_loop_next(start,end);
    sctk_nodebug("[Redirect GOMP]%s:\tEnd",__func__);
    return ret;
 }
@@ -45,7 +45,7 @@ bool mpcomp_GOMP_loop_ordered_runtime_next (long *start, long *end)
 {
    bool ret;
    sctk_nodebug("[Redirect GOMP]%s:\tBegin",__func__); 
-   ret = mpcomp_ordered_runtime_loop_next(start,end);
+   ret = __mpcomp_ordered_runtime_loop_next(start,end);
    sctk_nodebug("[Redirect GOMP]%s:\tEnd",__func__);
    return ret;
 }
@@ -160,7 +160,7 @@ bool mpcomp_GOMP_loop_dynamic_start (long istart, long iend, long incr, long chu
 {
    bool ret;
    sctk_nodebug("[Redirect GOMP]%s:\tBegin",__func__);
-   ret = mpcomp_dynamic_loop_begin(istart,iend,incr,chunk_size,start,end);
+   ret = __mpcomp_dynamic_loop_begin(istart,iend,incr,chunk_size,start,end);
    sctk_nodebug("[Redirect GOMP]%s:\tEnd",__func__);
    return ret;
 }
@@ -292,7 +292,7 @@ bool mpcomp_GOMP_loop_static_next(long *start, long *end)
 {
    bool ret;
    sctk_nodebug("[Redirect GOMP]%s:\tBegin",__func__);
-   ret = (mpcomp_static_loop_next(start,end)) ? true : false; 
+   ret = (__mpcomp_static_loop_next(start,end)) ? true : false; 
    sctk_nodebug("[Redirect GOMP]%s:\tEnd",__func__);
    return ret;
 }
@@ -301,7 +301,7 @@ bool mpcomp_GOMP_loop_dynamic_next(long *start, long *end)
 {
    bool ret;
    sctk_nodebug("[Redirect GOMP]%s:\tBegin",__func__);
-   ret = (mpcomp_dynamic_loop_next(start,end)) ? true : false; 
+   ret = (__mpcomp_dynamic_loop_next(start,end)) ? true : false; 
    sctk_nodebug("[Redirect GOMP]%s:\tEnd",__func__);
    return ret;
 }
@@ -310,7 +310,7 @@ bool mpcomp_GOMP_loop_guided_next(long *start, long *end)
 {
    bool ret;
    sctk_nodebug("[Redirect GOMP]%s:\tBegin",__func__);
-   ret = (mpcomp_guided_loop_next(start,end)) ? true : false; 
+   ret = (__mpcomp_guided_loop_next(start,end)) ? true : false; 
    sctk_nodebug("[Redirect GOMP]%s:\tEnd",__func__);
    return ret;
 }
@@ -343,7 +343,7 @@ bool mpcomp_GOMP_loop_ordered_static_next (long *start, long *end)
 {
    bool ret;
    sctk_nodebug("[Redirect GOMP]%s:\tBegin",__func__);
-   ret = (mpcomp_ordered_static_loop_next(start,end)) ? true : false; 
+   ret = (__mpcomp_ordered_static_loop_next(start,end)) ? true : false; 
    sctk_nodebug("[Redirect GOMP]%s:\tEnd",__func__);
    return ret;
 }
@@ -352,7 +352,7 @@ bool mpcomp_GOMP_loop_ordered_dynamic_next (long *start, long *end)
 {
    bool ret;
    sctk_nodebug("[Redirect GOMP]%s:\tBegin",__func__);
-   ret = (mpcomp_ordered_dynamic_loop_next(start,end)) ? true : false; 
+   ret = (__mpcomp_ordered_dynamic_loop_next(start,end)) ? true : false; 
    sctk_nodebug("[Redirect GOMP]%s:\tEnd",__func__);
    return ret;
 }
@@ -361,7 +361,7 @@ bool mpcomp_GOMP_loop_ordered_guided_next (long *start, long *end)
 {
    bool ret;
    sctk_nodebug("[Redirect GOMP]%s:\tBegin",__func__);
-   ret = (mpcomp_ordered_guided_loop_next(start,end)) ? true : false;
+   ret = (__mpcomp_ordered_guided_loop_next(start,end)) ? true : false;
    sctk_nodebug("[Redirect GOMP]%s:\tEnd",__func__);
    return ret;
 }
@@ -373,19 +373,19 @@ mpcomp_GOMP_parallel_loop_static (void (*fn) (void *), void *data,
                unsigned num_threads, long start, long end,
                long incr, long chunk_size, unsigned flags)
 {
-    mpcomp_start_parallel_static_loop(fn, data, num_threads, start, end, incr, chunk_size );
+    __mpcomp_start_parallel_static_loop(fn, data, num_threads, start, end, incr, chunk_size );
 }
 
 void
 mpcomp_GOMP_parallel_loop_dynamic (void (*fn) (void *), void *data, unsigned num_threads, long start, long end, long incr, long chunk_size, unsigned flags)
 {
-   mpcomp_start_parallel_dynamic_loop(fn, data, num_threads, start, end, incr, chunk_size );
+   __mpcomp_start_parallel_dynamic_loop(fn, data, num_threads, start, end, incr, chunk_size );
 }
 
 void
 mpcomp_GOMP_parallel_loop_guided (void (*fn) (void *), void *data, unsigned num_threads, long start, long end, long incr, long chunk_size, unsigned flags)
 {
-    mpcomp_start_parallel_guided_loop( fn, data, num_threads, start, end, incr, chunk_size);
+    __mpcomp_start_parallel_guided_loop( fn, data, num_threads, start, end, incr, chunk_size);
 }
 
 void
@@ -393,6 +393,6 @@ mpcomp_GOMP_parallel_loop_runtime (void (*fn) (void *), void *data,
                 unsigned num_threads, long start, long end,
                 long incr, unsigned flags)
 {
-    mpcomp_start_parallel_runtime_loop(fn, data, num_threads, start, end, incr);
+    __mpcomp_start_parallel_runtime_loop(fn, data, num_threads, start, end, incr);
 }
 

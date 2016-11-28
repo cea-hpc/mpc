@@ -249,8 +249,6 @@ void mpcomp_task_unref_parent_task( mpcomp_task_t* task )
     {
         swap_value = mother; 
         mother = mother->parent;
-        if( mother )
-            mother->children = NULL;
         sctk_free( swap_value );
     } 
 
@@ -486,7 +484,7 @@ __mpcomp_task(void (*fn) (void *), void *data, void (*cpyfn) (void *, void *),
 {
 	mpcomp_task_t* new_task;
 
-  	mpcomp_init();
+  	__mpcomp_init();
  	mpcomp_task_scheduling_infos_init();
 
    new_task = __mpcomp_task_alloc( fn, data, cpyfn, arg_size, arg_align, if_clause, flags, 0 /* no deps */ ); 

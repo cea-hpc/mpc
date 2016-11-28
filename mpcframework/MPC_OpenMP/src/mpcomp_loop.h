@@ -25,8 +25,7 @@
 #ifndef __MPCOMP_LOOP_CORE_H__
 #define __MPCOMP_LOOP_CORE_H__
 
-static inline unsigned long long
-mpcomp_internal_loop_get_num_iters_ull( unsigned long long start, unsigned long long end, unsigned long long step, bool up )
+static inline unsigned long long __mpcomp_internal_loop_get_num_iters_ull( unsigned long long start, unsigned long long end, unsigned long long step, bool up )
 {
     unsigned long long ret = (unsigned long long) 0;
     ret = (  up && start < end ) ? ( end - start + step - (unsigned long long) 1 ) / step : ret;
@@ -34,8 +33,7 @@ mpcomp_internal_loop_get_num_iters_ull( unsigned long long start, unsigned long 
     return ret; 
 }
 
-static inline long
-mpcomp_internal_loop_get_num_iters( long start, long end, long step )
+static inline long __mpcomp_internal_loop_get_num_iters( long start, long end, long step )
 {
     long ret = 0;
     const bool up = ( step > 0 ); 
@@ -46,8 +44,38 @@ mpcomp_internal_loop_get_num_iters( long start, long end, long step )
     //ret = ( !up  && start < end ) ? 0 : ret;
     ret = ( up  && start < end ) ? ( end - start + step - (long) 1 ) / step : ret;
     ret = ( !up && start > end ) ? ( start - end - step - (long) 1 ) / -step : ret;
-    sctk_error(" %s - %ld %ld %ld %ld", __func__, start, end, step, ret ); 
+    //sctk_error(" %s - %ld %ld %ld %ld", __func__, start, end, step, ret ); 
     return ( ret >= 0 ) ? ret : -ret ;
+}
+
+
+static inline void __mpcomp_loop_gen_infos_init( mpcomp_loop_gen_info_t* loop_infos, long lb, long b, long incr, long chunk_size )
+{
+    sctk_assert( loop_infos );
+
+    loop_infos->type = MPCOMP_LOOP_TYPE_LONG; 
+    loop_infos->loop.mpcomp_long.up = ( incr > 0 );
+    loop_infos->loop.mpcomp_long.b = b;
+    loop_infos->loop.mpcomp_long.lb = lb;
+    loop_infos->loop.mpcomp_long.incr = incr;
+    loop_infos->loop.mpcomp_long.chunk_size = chunk_size;
+}
+
+static inline void __mpcomp_loop_gen_infos_init_ull( mpcomp_loop_gen_info_t* loop_infos, unsigned long long lb, unsigned long long b, unsigned long long incr, unsigned long long chunk_size, bool up )
+{
+    sctk_assert( loop_infos );
+
+    loop_infos->type = MPCOMP_LOOP_TYPE_ULL; 
+    loop_infos->loop.mpcomp_ull.up = ( incr > 0 );
+    loop_infos->loop.mpcomp_ull.b = b;
+    loop_infos->loop.mpcomp_ull.lb = lb;
+    loop_infos->loop.mpcomp_ull.incr = incr;
+    loop_infos->loop.mpcomp_ull.chunk_size = chunk_size;
+}
+
+static inline void __mpcomp_loop_gen_loop_infos_cpy( mpcomp_loop_gen_info_t* in, mpcomp_loop_gen_info_t* out )
+{
+    memcpy( out, in, sizeof( mpcomp_loop_gen_info_t ) );
 }
 
 unsigned long long __mpcomp_compute_static_nb_chunks_per_rank_ull(unsigned long long, unsigned long long, mpcomp_loop_ull_iter_t*);

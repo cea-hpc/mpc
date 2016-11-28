@@ -25,10 +25,10 @@
 #ifndef __MPCOMP_SINGLE_H__
 #define __MPCOMP_SINGLE_H__
 
-int mpcomp_do_single( void );
-void *mpcomp_do_single_copyprivate_begin (void);
-void mpcomp_do_single_copyprivate_end (void *data);
-void mpcomp_single_coherency_entering_parallel_region( void );
-void mpcomp_single_coherency_end_barrier( void );
+int __mpcomp_do_single( void );
+void *__mpcomp_do_single_copyprivate_begin (void);
+void __mpcomp_do_single_copyprivate_end (void *data);
+void __mpcomp_single_coherency_entering_parallel_region( void );
+void __mpcomp_single_coherency_end_barrier( void );
 
 #endif /* __MPCOMP_SINGLE_H__ */

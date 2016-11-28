@@ -9,7 +9,7 @@ unsigned mpcomp_GOMP_sections_start (unsigned count)
 {
    unsigned ret; 
    sctk_nodebug("[Redirect GOMP]%s:\tBegin",__func__);
-   ret = mpcomp_sections_begin(count);
+   ret = __mpcomp_sections_begin(count);
    sctk_nodebug("[Redirect GOMP]%s:\tEnd",__func__);
    return ret;
 }
@@ -18,7 +18,7 @@ unsigned mpcomp_GOMP_sections_next (void)
 {
    unsigned ret;
    sctk_nodebug("[Redirect GOMP]%s:\tBegin",__func__);
-   ret = mpcomp_sections_next();
+   ret = __mpcomp_sections_next();
    sctk_nodebug("[Redirect GOMP]%s:\tEnd",__func__);
    return ret;
 }
@@ -35,7 +35,7 @@ void mpcomp_GOMP_parallel_sections (void (*fn) (void *), void *data,
 			unsigned num_threads, unsigned count, unsigned flags)
 {
    sctk_nodebug("[Redirect GOMP]%s:\tBegin",__func__);
-   mpcomp_start_sections_parallel_region( fn , data, num_threads, count);
+   __mpcomp_start_sections_parallel_region( fn , data, num_threads, count);
    sctk_nodebug("[Redirect GOMP]%s:\tEnd",__func__);
 }
 

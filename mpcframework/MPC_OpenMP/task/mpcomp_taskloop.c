@@ -143,7 +143,7 @@ void mpcomp_taskloop( void (*fn)(void*), void* data, void(*cpyfn)(void*, void*),
     long taskstep;
     unsigned long extra_chunk, grainsize, i;
 
-    mpcomp_init();
+    __mpcomp_init();
 
     const long num_iters = mpcomp_taskloop_compute_num_iters( start, end, step );
 

@@ -32,14 +32,14 @@
    Return '1' if the next single construct has to be executed, '0' otherwise 
  */
 
-int mpcomp_do_single (void)
+int __mpcomp_do_single (void)
 {
   mpcomp_thread_t *t ;	/* Info on the current thread */
   mpcomp_team_t *team ;	/* Info on the team */
   long num_threads ;
 
   /* Handle orphaned directive (initialize OpenMP environment) */
-  mpcomp_init() ;
+  __mpcomp_init() ;
 
   /* Grab the thread info */
   t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
@@ -83,12 +83,12 @@ int mpcomp_do_single (void)
   return 0 ;
 }
 
-void *mpcomp_do_single_copyprivate_begin (void)
+void *__mpcomp_do_single_copyprivate_begin (void)
 {
 	mpcomp_thread_t *t ;	/* Info on the current thread */
 	mpcomp_team_t *team ;	/* Info on the team */
 
-	if ( mpcomp_do_single() ) return NULL;
+	if ( __mpcomp_do_single() ) return NULL;
 
 	/* Grab the thread info */
 	t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
@@ -102,13 +102,13 @@ void *mpcomp_do_single_copyprivate_begin (void)
 	team = t->instance->team ;
 	sctk_assert( team != NULL ) ;
 
-	mpcomp_barrier() ;
+	__mpcomp_barrier() ;
 
 	return team->single_copyprivate_data ;
 
 }
 
-void mpcomp_do_single_copyprivate_end (void *data)
+void __mpcomp_do_single_copyprivate_end (void *data)
 {
 	mpcomp_thread_t *t ;	/* Info on the current thread */
 	mpcomp_team_t *team ;	/* Info on the team */
@@ -125,15 +125,15 @@ void mpcomp_do_single_copyprivate_end (void *data)
 
 	team->single_copyprivate_data = data ;
 
-	mpcomp_barrier() ;
+	__mpcomp_barrier() ;
 }
 
 
-void mpcomp_single_coherency_entering_parallel_region( void ) 
+void __mpcomp_single_coherency_entering_parallel_region( void ) 
 {
 }
 
-void mpcomp_single_coherency_end_barrier( void ) 
+void __mpcomp_single_coherency_end_barrier( void ) 
 {
     int i ;
     mpcomp_thread_t *t ;	/* Info on the current thread */
@@ -158,7 +158,7 @@ void mpcomp_single_coherency_end_barrier( void )
 
 /* GOMP OPTIMIZED_1_0_WRAPPING */
 #ifndef NO_OPTIMIZED_GOMP_4_0_API_SUPPORT
-    __asm__(".symver mpcomp_do_single_copyprivate_end, GOMP_single_copy_end@@GOMP_1.0");
-    __asm__(".symver mpcomp_do_single_copyprivate_begin, GOMP_single_copy_start@@GOMP_1.0");
-    __asm__(".symver mpcomp_do_single, GOMP_single_start@@GOMP_1.0");
+    __asm__(".symver __mpcomp_do_single_copyprivate_end, GOMP_single_copy_end@@GOMP_1.0");
+    __asm__(".symver __mpcomp_do_single_copyprivate_begin, GOMP_single_copy_start@@GOMP_1.0");
+    __asm__(".symver __mpcomp_do_single, GOMP_single_start@@GOMP_1.0");
 #endif /* OPTIMIZED_GOMP_API_SUPPORT */

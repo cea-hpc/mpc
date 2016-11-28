@@ -60,10 +60,12 @@ typedef struct mpcomp_atomic_int_pad_s
 
 typedef struct mpcomp_loop_long_iter_s
 {
+    bool up;
 	long lb;		        /* Lower bound          */
 	long b;			        /* Upper bound          */
 	long incr;			    /* Step                 */
 	long chunk_size;	    /* Size of each chunk   */
+    long cur_ordered_iter;
 } mpcomp_loop_long_iter_t;
 
 typedef struct mpcomp_loop_ull_iter_s
@@ -73,6 +75,7 @@ typedef struct mpcomp_loop_ull_iter_s
 	unsigned long long b;			        /* Upper bound              */
 	unsigned long long incr;			    /* Step                     */
 	unsigned long long chunk_size;	        /* Size of each chunk       */
+    unsigned long long cur_ordered_iter;
 } mpcomp_loop_ull_iter_t; 
 
 typedef union mpcomp_loop_gen_iter_u

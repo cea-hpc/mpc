@@ -97,7 +97,7 @@ static void __mpcomp_internal_full_barrier(mpcomp_mvp_t *mvp)
 }
 
 /* Half barrier for the end of a parallel region */
-void mpcomp_internal_half_barrier ( mpcomp_mvp_t *mvp)
+void __mpcomp_internal_half_barrier ( mpcomp_mvp_t *mvp)
 {
   long b;
   mpcomp_node_t *c, *new_root;
@@ -145,12 +145,12 @@ void mpcomp_internal_half_barrier ( mpcomp_mvp_t *mvp)
    All threads of the same team must meet.
    This barrier uses some optimizations for threads inside the same microVP.
  */
-void mpcomp_barrier(void)
+void __mpcomp_barrier(void)
 {
     mpcomp_thread_t *t;
 
 	/* Handle orphaned directive (initialize OpenMP environment) */
-	mpcomp_init() ;
+	__mpcomp_init() ;
 
     /* Grab info on the current thread */
     t = (mpcomp_thread_t *) sctk_openmp_thread_tls;
@@ -171,5 +171,5 @@ void mpcomp_barrier(void)
 
 /* GOMP OPTIMIZED_1_0_WRAPPING */
 #ifndef NO_OPTIMIZED_GOMP_4_0_API_SUPPORT
-    __asm__(".symver mpcomp_barrier, GOMP_barrier@@GOMP_1.0"); 
+    __asm__(".symver __mpcomp_barrier, GOMP_barrier@@GOMP_1.0"); 
 #endif /* OPTIMIZED_GOMP_API_SUPPORT */

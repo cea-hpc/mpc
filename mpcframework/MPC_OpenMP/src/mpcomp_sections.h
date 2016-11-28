@@ -25,12 +25,12 @@
 #ifndef __MPCOMP_SECTIONS_H__
 #define __MPCOMP_SECTIONS_H__
 
-void mpcomp_sections_init( struct mpcomp_thread_s*, int);
-int mpcomp_sections_begin (int);
-int mpcomp_sections_next (void );
-void mpcomp_sections_end (void);
-void mpcomp_sections_end_nowait (void);
-int mpcomp_sections_coherency_exiting_paralel_region(void);
-int mpcomp_sections_coherency_barrier( void );
+void __mpcomp_sections_init( struct mpcomp_thread_s*, int);
+int __mpcomp_sections_begin (int);
+int __mpcomp_sections_next (void );
+void __mpcomp_sections_end (void);
+void __mpcomp_sections_end_nowait (void);
+int __mpcomp_sections_coherency_exiting_paralel_region(void);
+int __mpcomp_sections_coherency_barrier( void );
 
 #endif /* __MPCOMP_SECTIONS_H__ */

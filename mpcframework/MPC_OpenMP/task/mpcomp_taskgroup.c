@@ -27,13 +27,14 @@
 #include "mpcomp_taskgroup.h"
 #include "mpcomp_types.h"
 
+#ifdef MPCOMP_TASKGROUP
 void mpcomp_taskgroup_start( void )
 {
     mpcomp_task_t* current_task = NULL;         		/* Current task execute 	*/
     mpcomp_thread_t* omp_thread_tls = NULL;     		/* thread private data  	*/
 	mpcomp_task_taskgroup_t* new_taskgroup = NULL;	    /* new_taskgroup allocated  */
 
-    mpcomp_init();
+    __mpcomp_init();
   	mpcomp_task_scheduling_infos_init();
 
 	omp_thread_tls = ( mpcomp_thread_t* ) sctk_openmp_thread_tls;
@@ -74,6 +75,14 @@ void mpcomp_taskgroup_end( void )
     current_task->taskgroup = taskgroup->prev;
     sctk_free( taskgroup );
 }
+#else /* MPCOMP_TASKGROUP */
+void mpcomp_taskgroup_start( void )
+{
+}
+void mpcomp_taskgroup_end( void )
+{
+}
+#endif /* MPCOMP_TASKGROUP */
 
 /* GOMP OPTIMIZED_1_0_WRAPPING */
 #ifndef NO_OPTIMIZED_GOMP_4_0_API_SUPPORT

@@ -27,7 +27,7 @@
 
 #include "mpcomp_types.h"
 
-void mpcomp_barrier( void );
-void mpcomp_internal_half_barrier( mpcomp_mvp_t *mvp );
+void __mpcomp_barrier( void );
+void __mpcomp_internal_half_barrier( mpcomp_mvp_t *mvp );
 
 #endif /* __MPCOMP_BARRIER_H__ */

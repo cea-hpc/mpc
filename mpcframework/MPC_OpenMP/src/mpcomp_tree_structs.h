@@ -33,22 +33,22 @@ mpcomp_common_table_allocate( void )
 }
 
 static inline void
-mpcomp_parallel_region_infos_reset( mpcomp_new_parallel_region_info_t * info )
+__mpcomp_parallel_region_infos_reset( mpcomp_new_parallel_region_info_t * info )
 {
 	sctk_assert( info );
 	memset( info, sizeof( mpcomp_new_parallel_region_info_t ), 0 );
 }
 
 static inline void
-mpcomp_parallel_region_infos_init( mpcomp_new_parallel_region_info_t * info )
+__mpcomp_parallel_region_infos_init( mpcomp_new_parallel_region_info_t * info )
 {
 	sctk_assert( info );
-	mpcomp_parallel_region_infos_reset( info );
+	__mpcomp_parallel_region_infos_reset( info );
 	info->combined_pragma = MPCOMP_COMBINED_NONE;
 }
 
 static inline void
-mpcomp_thread_infos_init( mpcomp_thread_t* thread, mpcomp_local_icv_t icvs,
+__mpcomp_thread_infos_init( mpcomp_thread_t* thread, mpcomp_local_icv_t icvs,
 					     mpcomp_instance_t *instance, mpcomp_thread_t *father )
 {
 	int i;
@@ -62,7 +62,7 @@ mpcomp_thread_infos_init( mpcomp_thread_t* thread, mpcomp_local_icv_t icvs,
 	thread->info.icvs = icvs;
 	thread->instance = instance;
 
-	mpcomp_parallel_region_infos_init( &( thread->info ) ) ;
+	__mpcomp_parallel_region_infos_init( &( thread->info ) ) ;
 
  	/* -- DYNAMIC FOR LOOP CONSTRUCT -- */
  	for( i = 0; i < MPCOMP_MAX_ALIVE_FOR_DYN + 1; i++)
@@ -81,7 +81,7 @@ mpcomp_thread_infos_init( mpcomp_thread_t* thread, mpcomp_local_icv_t icvs,
 }
 
 static inline void
-mpcomp_team_infos_init( mpcomp_team_t* team )
+__mpcomp_team_infos_init( mpcomp_team_t* team )
 {
 	int i;
 	

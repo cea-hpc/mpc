@@ -499,7 +499,7 @@ TODO( "If OMP_NUM_THREADS is 0, let it equal to 0 by default and handle it later
 /* Initialization of the OpenMP runtime
    Called during the initialization of MPC
  */
-void mpcomp_init( void ) 
+void __mpcomp_init( void ) 
 {
   static volatile int done = 0;
   static sctk_thread_mutex_t lock = SCTK_THREAD_MUTEX_INITIALIZER;
@@ -539,12 +539,12 @@ void mpcomp_init( void )
     /* Initialize team information */
     seq_team_info = (mpcomp_team_t *)sctk_malloc( sizeof( mpcomp_team_t ) ) ;
     sctk_assert( seq_team_info != NULL ) ;
-    mpcomp_team_infos_init( seq_team_info ) ;
+    __mpcomp_team_infos_init( seq_team_info ) ;
 
     /* Allocate an instance of OpenMP */
     seq_instance = (mpcomp_instance_t *)sctk_malloc( sizeof( mpcomp_instance_t ) ) ;
     sctk_assert( seq_instance != NULL ) ;
-    mpcomp_instance_init( seq_instance, 1, seq_team_info ) ;
+    __mpcomp_instance_init( seq_instance, 1, seq_team_info ) ;
 
 
 	/*** Initialize PARALLEL information (instance + team for the next parallel
@@ -553,7 +553,7 @@ void mpcomp_init( void )
     /* Initialize team information */
     team_info = (mpcomp_team_t *)sctk_malloc( sizeof( mpcomp_team_t ) ) ;
     sctk_assert( team_info != NULL ) ;
-    mpcomp_team_infos_init( team_info ) ;
+    __mpcomp_team_infos_init( team_info ) ;
 
 	/* Get the rank of current MPI task */
 	task_rank = sctk_get_task_rank();
@@ -645,7 +645,7 @@ void mpcomp_init( void )
     sctk_assert( t != NULL ) ;
 
 	/* Thread info initialization */
-    mpcomp_thread_infos_init( t, icvs, seq_instance, NULL ) ;
+    __mpcomp_thread_infos_init( t, icvs, seq_instance, NULL ) ;
 
     /* Current thread information is 't' */
     sctk_openmp_thread_tls = t ;
@@ -653,7 +653,7 @@ void mpcomp_init( void )
     /* Allocate an instance of OpenMP */
     instance = (mpcomp_instance_t *)sctk_malloc( sizeof( mpcomp_instance_t ) ) ;
     sctk_assert( instance != NULL ) ;
-    mpcomp_instance_init( instance, nb_mvps, team_info ) ;
+    __mpcomp_instance_init( instance, nb_mvps, team_info ) ;
 
 	t->children_instance = instance ;
 
@@ -676,7 +676,7 @@ void mpcomp_exit( void )
 }
 
 void 
-mpcomp_instance_init( mpcomp_instance_t * instance, int nb_mvps,
+__mpcomp_instance_init( mpcomp_instance_t * instance, int nb_mvps,
         struct mpcomp_team_s * team	) 
 {
 
@@ -737,7 +737,7 @@ mpcomp_instance_init( mpcomp_instance_t * instance, int nb_mvps,
 		instance->nb_mvps = 1 ;
 		instance->root = NULL ;
 
-		mpcomp_thread_infos_init( &(instance->mvps[0]->threads[0]), icvs, instance, sctk_openmp_thread_tls  ) ;
+		__mpcomp_thread_infos_init( &(instance->mvps[0]->threads[0]), icvs, instance, sctk_openmp_thread_tls  ) ;
         }
 
         sctk_nodebug("%s: Exiting...", __func__);
@@ -745,7 +745,7 @@ mpcomp_instance_init( mpcomp_instance_t * instance, int nb_mvps,
         /* TODO Do we need a TLS for the openmp instance for every microVPs? */
 }
 
-void  mpcomp_in_order_scheduler( mpcomp_mvp_t * mvp )
+void  __mpcomp_in_order_scheduler( mpcomp_mvp_t * mvp )
 {
 	mpcomp_thread_t * saved_value_thread_tls, *cur_mvp_thread ;
 
@@ -767,15 +767,15 @@ void  mpcomp_in_order_scheduler( mpcomp_mvp_t * mvp )
 			break ;
 		case MPCOMP_COMBINED_SECTION:
 			sctk_nodebug( "%s: BEGIN - Combined parallel/sections w/ %d section(s)", __func__, cur_mvp_thread->info.nb_sections	) ;
-				mpcomp_sections_init( cur_mvp_thread, cur_mvp_thread->info.nb_sections ) ;
+				__mpcomp_sections_init( cur_mvp_thread, cur_mvp_thread->info.nb_sections ) ;
 				break ;
 			case MPCOMP_COMBINED_STATIC_LOOP:
 				sctk_nodebug( "%s: BEGIN - Combined parallel/loop", __func__ ) ;
-				mpcomp_static_loop_init( cur_mvp_thread, cur_mvp_thread->info.loop_lb, cur_mvp_thread->info.loop_b, cur_mvp_thread->info.loop_incr, cur_mvp_thread->info.loop_chunk_size ) ;
+				__mpcomp_static_loop_init( cur_mvp_thread, cur_mvp_thread->info.loop_lb, cur_mvp_thread->info.loop_b, cur_mvp_thread->info.loop_incr, cur_mvp_thread->info.loop_chunk_size ) ;
 				break ;
 			case MPCOMP_COMBINED_DYN_LOOP:
 				sctk_nodebug( "%s: BEGIN - Combined parallel/loop", __func__ ) ;
-				mpcomp_dynamic_loop_init( cur_mvp_thread, cur_mvp_thread->info.loop_lb, cur_mvp_thread->info.loop_b, cur_mvp_thread->info.loop_incr, cur_mvp_thread->info.loop_chunk_size);
+				__mpcomp_dynamic_loop_init( cur_mvp_thread, cur_mvp_thread->info.loop_lb, cur_mvp_thread->info.loop_b, cur_mvp_thread->info.loop_incr, cur_mvp_thread->info.loop_chunk_size);
 				break ;
 			default:
 				not_implemented() ;
@@ -796,7 +796,7 @@ void  mpcomp_in_order_scheduler( mpcomp_mvp_t * mvp )
 				break ;
 			case MPCOMP_COMBINED_DYN_LOOP:
 				sctk_nodebug( "%s: END - Combined parallel/loop", __func__ ) ;
-			    mpcomp_dynamic_loop_end_nowait( cur_mvp_thread) ;
+			    __mpcomp_dynamic_loop_end_nowait( cur_mvp_thread) ;
 				break ;
 			default:
 				not_implemented() ;
@@ -807,7 +807,7 @@ void  mpcomp_in_order_scheduler( mpcomp_mvp_t * mvp )
 	sctk_openmp_thread_tls = saved_value_thread_tls;
 }
 
-void mpcomp_in_order_scheduler_multiple_mvp( mpcomp_mvp_t * mvp ) 
+void __mpcomp_in_order_scheduler_multiple_mvp( mpcomp_mvp_t * mvp ) 
 {
 
   /*
@@ -861,13 +861,13 @@ void mpcomp_in_order_scheduler_multiple_mvp( mpcomp_mvp_t * mvp )
 			case MPCOMP_COMBINED_SECTION:
 				sctk_nodebug( "%s: BEGIN - Combined parallel/sections w/ %d section(s)", __func__,
 						mvp->threads[i].info.nb_sections	) ;
-				mpcomp_sections_init( 
+				__mpcomp_sections_init( 
 						&(mvp->threads[i]),
 						mvp->threads[i].info.nb_sections ) ;
 				break ;
 			case MPCOMP_COMBINED_STATIC_LOOP:
 				sctk_nodebug( "%s: BEGIN - Combined parallel/loop", __func__ ) ;
-				mpcomp_static_loop_init(
+				__mpcomp_static_loop_init(
 						&(mvp->threads[i]),
 						mvp->threads[i].info.loop_lb,
 						mvp->threads[i].info.loop_b,
@@ -877,7 +877,7 @@ void mpcomp_in_order_scheduler_multiple_mvp( mpcomp_mvp_t * mvp )
 				break ;
 			case MPCOMP_COMBINED_DYN_LOOP:
 				sctk_nodebug( "%s: BEGIN - Combined parallel/loop", __func__ ) ;
-				mpcomp_dynamic_loop_init(
+				__mpcomp_dynamic_loop_init(
 						&(mvp->threads[i]),
 						mvp->threads[i].info.loop_lb,
 						mvp->threads[i].info.loop_b,
@@ -905,7 +905,7 @@ void mpcomp_in_order_scheduler_multiple_mvp( mpcomp_mvp_t * mvp )
 				break ;
 			case MPCOMP_COMBINED_DYN_LOOP:
 				sctk_nodebug( "%s: END - Combined parallel/loop", __func__ ) ;
-			    mpcomp_dynamic_loop_end_nowait( &(mvp->threads[i]) ) ;
+			    __mpcomp_dynamic_loop_end_nowait( &(mvp->threads[i]) ) ;
 				break ;
 			default:
 				not_implemented() ;

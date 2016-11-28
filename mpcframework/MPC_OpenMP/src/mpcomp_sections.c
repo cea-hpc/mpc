@@ -70,7 +70,7 @@ static int __mpcomp_sections_internal_next( mpcomp_thread_t * t, mpcomp_team_t *
 }
 
 
-void mpcomp_sections_init( mpcomp_thread_t * t, int nb_sections ) {
+void __mpcomp_sections_init( mpcomp_thread_t * t, int nb_sections ) {
   mpcomp_team_t *team ;	/* Info on the team TODO remove this variable */
   long num_threads ;
 
@@ -95,7 +95,7 @@ void mpcomp_sections_init( mpcomp_thread_t * t, int nb_sections ) {
 /* Return >0 to execute corresponding section.
    Return 0 otherwise to leave sections construct
    */
-int mpcomp_sections_begin (int nb_sections)
+int __mpcomp_sections_begin (int nb_sections)
 {
   mpcomp_thread_t *t ;	/* Info on the current thread */
   mpcomp_team_t *team ;	/* Info on the team */
@@ -107,7 +107,7 @@ int mpcomp_sections_begin (int nb_sections)
   }
 
   /* Handle orphaned directive (initialize OpenMP environment) */
-  mpcomp_init() ;
+  __mpcomp_init() ;
 
   /* Grab the thread info */
   t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
@@ -116,7 +116,7 @@ int mpcomp_sections_begin (int nb_sections)
     sctk_nodebug( "[%d] %s: entering w/ %d section(s)", t->rank, __func__, nb_sections ) ;
 
 
-  mpcomp_sections_init( t, nb_sections ) ;
+  __mpcomp_sections_init( t, nb_sections ) ;
 
   /* Number of threads in the current team */
   num_threads = t->info.num_threads;
@@ -139,7 +139,7 @@ int mpcomp_sections_begin (int nb_sections)
   return __mpcomp_sections_internal_next( t, team ) ;
 }
 
-int mpcomp_sections_next ( void )
+int __mpcomp_sections_next ( void )
 {
   mpcomp_thread_t *t ;	/* Info on the current thread */
   mpcomp_team_t *team ;	/* Info on the team */
@@ -181,21 +181,21 @@ int mpcomp_sections_next ( void )
   return __mpcomp_sections_internal_next( t, team ) ;
 }
 
-void mpcomp_sections_end ( void)
+void __mpcomp_sections_end ( void)
 {
-  mpcomp_barrier() ;
+  __mpcomp_barrier() ;
 }
 
-void mpcomp_sections_end_nowait (void)
+void __mpcomp_sections_end_nowait (void)
 {
   /* Nothing to do */
 }
 
 
-int mpcomp_sections_coherency_exiting_paralel_region(void) {
+int __mpcomp_sections_coherency_exiting_paralel_region(void) {
   return 0 ;
 }
 
-int mpcomp_sections_coherency_barrier(void) {
+int __mpcomp_sections_coherency_barrier(void) {
   return 0 ;
 }

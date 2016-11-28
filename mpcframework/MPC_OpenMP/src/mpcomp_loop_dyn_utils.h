@@ -27,7 +27,7 @@
 #include "sctk_debug.h"
 #include "mpcomp_types.h"
 
-int __mpcomp_get_static_nb_chunks_per_rank( int rank, int num_threads, long lb, long b, long incr, long chunk_size );
+int __mpcomp_get_static_nb_chunks_per_rank( int rank, int num_threads,  mpcomp_loop_long_iter_t* loop );
 
 /* dest = src1+src2 in base 'base' of size 'depth' up to dimension 'max_depth'
  */
@@ -134,7 +134,6 @@ __mpcomp_loop_dyn_get_chunk_from_target( mpcomp_thread_t* thread, mpcomp_thread_
         cur = sctk_atomics_cas_int( &(target->for_dyn_remain[index].i), prev, prev-1 );
     } while( cur > 0 && cur != prev );
 
-    sctk_error( "[%d %p - %d %p - %p] %s ( %d - %d ) - %d - %d",  thread->rank, thread, target->rank,  target, &(target->for_dyn_remain[index].i), __func__, cur, sctk_atomics_load_int( &(target->for_dyn_remain[index].i) ), __mpcomp_loop_dyn_get_for_dyn_index(thread), __mpcomp_loop_dyn_get_for_dyn_current( thread ) ); 
     return ( cur > 0 ) ? cur : 0;
 }
 
@@ -207,10 +206,8 @@ __mpcomp_loop_dyn_init_target_chunk( mpcomp_thread_t* thread, mpcomp_thread_t* t
 
         if( cur < 0 && ( target == thread ) || ( ( __mpcomp_loop_dyn_get_for_dyn_current( thread )  > __mpcomp_loop_dyn_get_for_dyn_current( target ))) )
         {
-            const int for_dyn_total = __mpcomp_get_static_nb_chunks_per_rank( target->rank, num_threads, thread->info.loop_lb, thread->info.loop_b, thread->info.loop_incr, thread->info.loop_chunk_size );
+            const int for_dyn_total = __mpcomp_get_static_nb_chunks_per_rank( target->rank, num_threads, &(thread->info.loop_infos.loop.mpcomp_long) );
             int ret = sctk_atomics_cas_int( &(target->for_dyn_remain[index].i), -1, for_dyn_total );
-            if( ret == -1 )
-                sctk_warning("RESET target %d rank %d index %d new value %d", target->rank, thread->rank, index, for_dyn_total ); 
         }
         sctk_spinlock_unlock(  &( target->info.update_lock ) );
     //}

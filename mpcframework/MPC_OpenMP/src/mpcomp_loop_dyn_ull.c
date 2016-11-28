@@ -2,6 +2,8 @@
 #include "sctk_debug.h"
 #include "sctk_alloc.h"
 #include "mpcomp_types.h"
+#include "mpcomp_loop.h"
+//#include "mpcomp_loop_dyn_ull.h"
 #include "mpcomp_loop_dyn_utils.h"
 
 /****
@@ -48,7 +50,7 @@ static int __mpcomp_dynamic_loop_get_chunk_from_rank_ull( mpcomp_thread_t * t, m
  *
  *
  *****/
-void mpcomp_dynamic_loop_init_ull(mpcomp_thread_t *t, bool up, unsigned long long lb, unsigned long long b, unsigned long long incr, unsigned long long chunk_size)
+void __mpcomp_dynamic_loop_init_ull(mpcomp_thread_t *t, bool up, unsigned long long lb, unsigned long long b, unsigned long long incr, unsigned long long chunk_size)
 {
     mpcomp_loop_ull_iter_t* loop; 
 	
@@ -86,13 +88,13 @@ void mpcomp_dynamic_loop_init_ull(mpcomp_thread_t *t, bool up, unsigned long lon
     t->for_dyn_total = ( ret == -1 ) ? t->for_dyn_total : ret ;
 }
 
-int mpcomp_loop_ull_dynamic_begin (bool up, unsigned long long lb, unsigned long long b, unsigned long long incr,
+int __mpcomp_loop_ull_dynamic_begin (bool up, unsigned long long lb, unsigned long long b, unsigned long long incr,
 				 unsigned long long chunk_size, unsigned long long *from, unsigned long long *to)
 { 
 	mpcomp_thread_t *t ;	/* Info on the current thread */
 
 	/* Handle orphaned directive (initialize OpenMP environment) */
-	mpcomp_init();
+	__mpcomp_init();
 
 	/* Grab the thread info */
 	t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
@@ -102,15 +104,15 @@ int mpcomp_loop_ull_dynamic_begin (bool up, unsigned long long lb, unsigned long
     t->schedule_is_forced = 0;
 
 	/* Initialization of loop internals */
-	mpcomp_dynamic_loop_init_ull(t, up, lb, b, incr, chunk_size);
+	__mpcomp_dynamic_loop_init_ull(t, up, lb, b, incr, chunk_size);
     __mpcomp_loop_dyn_init_target_chunk_ull( t, t, t->info.num_threads );
 
 	/* Return the next chunk to execute */
-	return mpcomp_loop_ull_dynamic_next(from, to);
+	return __mpcomp_loop_ull_dynamic_next(from, to);
 }
 
 /* DEBUG */
-void mpcomp_loop_ull_dynamic_next_debug( char* funcname ) 
+void __mpcomp_loop_ull_dynamic_next_debug( char* funcname ) 
 {
 	int i;
 	mpcomp_thread_t *t ;	/* Info on the current thread */
@@ -129,7 +131,7 @@ void mpcomp_loop_ull_dynamic_next_debug( char* funcname )
 
 }
 
-int mpcomp_loop_ull_dynamic_next (unsigned long long *from, unsigned long long *to)
+int __mpcomp_loop_ull_dynamic_next (unsigned long long *from, unsigned long long *to)
 {
 	mpcomp_thread_t *t, *target_thread;
 	int index_target, barrier_num_threads;
@@ -172,7 +174,7 @@ int mpcomp_loop_ull_dynamic_next (unsigned long long *from, unsigned long long *
 	}
 
 	int found = 1 ;
-    const int* tree_base = t->instance->tree_base;
+    int* tree_base = t->instance->tree_base;
     const int tree_depth = t->instance->tree_depth;
 
 	/* While it is not possible to get a chunk */
@@ -238,7 +240,7 @@ do_increase:
  *
  *
  *****/
-int mpcomp_loop_ull_ordered_dynamic_begin(bool up, unsigned long long lb, unsigned long long b, unsigned long long incr, unsigned long long chunk_size, unsigned long long *from, unsigned long long *to) 
+int __mpcomp_loop_ull_ordered_dynamic_begin(bool up, unsigned long long lb, unsigned long long b, unsigned long long incr, unsigned long long chunk_size, unsigned long long *from, unsigned long long *to) 
 {
     mpcomp_thread_t *t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
     sctk_assert(t != NULL);  
@@ -248,7 +250,7 @@ int mpcomp_loop_ull_ordered_dynamic_begin(bool up, unsigned long long lb, unsign
 
     //TODO EXTEND MODIF WITH UP VALUE
     sctk_nodebug( "[%d] %s: %d -> %d [%d] cs:%d", t->rank, __func__, lb, b, incr, chunk_size ) ;
-    const int res = mpcomp_loop_ull_dynamic_begin( up, lb, b, incr, chunk_size, from, to); 
+    const int res = __mpcomp_loop_ull_dynamic_begin( up, lb, b, incr, chunk_size, from, to); 
     t->current_ordered_iteration = *from;
     sctk_nodebug( "[%d] %s: exit w/ res=%d", t->rank, __func__, res ) ;
      
@@ -256,12 +258,12 @@ int mpcomp_loop_ull_ordered_dynamic_begin(bool up, unsigned long long lb, unsign
 }
 
 int
-mpcomp_loop_ull_ordered_dynamic_next(unsigned long long *from, unsigned long long *to)
+__mpcomp_loop_ull_ordered_dynamic_next(unsigned long long *from, unsigned long long *to)
 {
      mpcomp_thread_t *t;
      int res ;
 
-     res = mpcomp_loop_ull_dynamic_next(from, to);
+     res = __mpcomp_loop_ull_dynamic_next(from, to);
 
      t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
      sctk_assert(t != NULL);

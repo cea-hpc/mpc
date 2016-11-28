@@ -7,7 +7,7 @@
 void mpcomp_GOMP_barrier (void)
 {
    sctk_nodebug("[Redirect GOMP]%s:\tBegin",__func__);
-   mpcomp_barrier();
+   __mpcomp_barrier();
    sctk_nodebug("[Redirect GOMP]%s:\tEnd",__func__);
 }
 

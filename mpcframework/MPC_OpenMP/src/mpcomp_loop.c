@@ -34,32 +34,30 @@
  *
  *****/
 /* Return the number of chunks that a static schedule will create for the thread 'rank' */
-int __mpcomp_get_static_nb_chunks_per_rank( int rank, int num_threads, long lb, long b, long incr, long chunk_size )
+int __mpcomp_get_static_nb_chunks_per_rank( int rank, int num_threads,  mpcomp_loop_long_iter_t* loop )
 {
     mpcomp_thread_t* t;
 
     t = (mpcomp_thread_t*) sctk_openmp_thread_tls;
 
     long nb_chunks_per_thread;
-    const long trip_count = mpcomp_internal_loop_get_num_iters( lb, b, incr );
+    const long trip_count = __mpcomp_internal_loop_get_num_iters( loop->lb, loop->b, loop->incr );
 
     /* Compute the number of chunks per thread (floor value) */
-    chunk_size = ( chunk_size ) ? chunk_size : trip_count / num_threads;
-    chunk_size = ( chunk_size ) ? chunk_size : 1;
-    t->info.loop_chunk_size = chunk_size;
+    loop->chunk_size = ( loop->chunk_size ) ? loop->chunk_size : trip_count / num_threads;
+    loop->chunk_size = ( loop->chunk_size ) ? loop->chunk_size : (long) 1;
 
-    nb_chunks_per_thread = trip_count / (chunk_size * num_threads);
+    nb_chunks_per_thread = trip_count / (loop->chunk_size * num_threads);
 
     /* Compute the number of extrat chunk nb_chunk_extra can't be greater than nb_thread */
-    const int nb_chunk_extra = (int) ( ( trip_count / chunk_size ) %  num_threads );
-    const int are_not_multiple = ( trip_count % chunk_size ) ? 1 : 0;
+    const int nb_chunk_extra = (int) ( ( trip_count / loop->chunk_size ) %  num_threads );
+    const int are_not_multiple = ( trip_count % loop->chunk_size ) ? 1 : 0;
  
     /* The first threads will have one more chunk (according to the previous approximation) */
     nb_chunks_per_thread += (rank < nb_chunk_extra ) ? (long) 1 : (long) 0;
 
 	/* One thread may have one more additionnal smaller chunk to finish the iteration domain */
     nb_chunks_per_thread += (rank == nb_chunk_extra && are_not_multiple ) ? (long) 1 : (long) 0;
-    sctk_warning( "%d nb_chunks_per_thread: %ld %ld %ld", rank, lb, b, nb_chunks_per_thread );
 
     return nb_chunks_per_thread;
 }
@@ -79,7 +77,7 @@ void __mpcomp_get_specific_chunk_per_rank (int rank, int num_threads, long lb, l
 unsigned long long __mpcomp_compute_static_nb_chunks_per_rank_ull (unsigned long long rank, unsigned long long num_threads, mpcomp_loop_ull_iter_t* loop )
 {
     unsigned long long nb_chunks_per_thread, chunk_size;
-    const unsigned long long trip_count = mpcomp_internal_loop_get_num_iters_ull( loop->lb, loop->b, loop->incr, loop->up );
+    const unsigned long long trip_count = __mpcomp_internal_loop_get_num_iters_ull( loop->lb, loop->b, loop->incr, loop->up );
     
     chunk_size = ( loop->chunk_size ) ? loop->chunk_size : trip_count / num_threads; 
     chunk_size = ( chunk_size ) ? chunk_size : (unsigned long long ) 1;
@@ -96,6 +94,7 @@ unsigned long long __mpcomp_compute_static_nb_chunks_per_rank_ull (unsigned long
 
 	/* One thread may have one more additionnal smaller chunk to finish the iteration domain */
     nb_chunks_per_thread += (rank == nb_chunk_extra && are_not_multiple ) ? (unsigned long long) 1 : (unsigned long long) 0;
+    //sctk_warning( "%d nb_chunks_per_thread: %llu %llu %llu", rank, loop->lb, loop->b, nb_chunks_per_thread );
     
     return nb_chunks_per_thread;
 }

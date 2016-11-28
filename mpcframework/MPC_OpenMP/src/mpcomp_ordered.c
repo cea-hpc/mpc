@@ -27,11 +27,11 @@
 #include "sctk_spinlock.h"
 #include "mpcomp_ordered.h"
 
-void mpcomp_ordered_begin( void )
+void __mpcomp_ordered_begin( void )
 {
 	mpcomp_thread_t *t;
 
-	mpcomp_init();
+	__mpcomp_init();
 
 	t = (mpcomp_thread_t *) sctk_openmp_thread_tls;
 	sctk_assert(t != NULL); 
@@ -82,12 +82,11 @@ void mpcomp_ordered_begin( void )
 		}
 	}
 
-	sctk_nodebug( "[%d] %s: Allowed to schedule iteration %d",
-			t->rank, __func__, t->current_ordered_iteration ) ;
+	sctk_nodebug( "[%d] %s: Allowed to schedule iteration %d", t->rank, __func__, t->current_ordered_iteration ) ;
 }
 
 
-void mpcomp_ordered_end( void )
+void __mpcomp_ordered_end( void )
 {
 	mpcomp_thread_t *t;
 
@@ -107,6 +106,6 @@ void mpcomp_ordered_end( void )
 }
 
 #ifndef NO_OPTIMIZED_GOMP_4_0_API_SUPPORT
-    __asm__(".symver mpcomp_ordered_begin, GOMP_ordered_start@@GOMP_1.0"); 
-    __asm__(".symver mpcomp_ordered_end, GOMP_ordered_end@@GOMP_1.0"); 
+    __asm__(".symver __mpcomp_ordered_begin, GOMP_ordered_start@@GOMP_1.0"); 
+    __asm__(".symver __mpcomp_ordered_end, GOMP_ordered_end@@GOMP_1.0"); 
 #endif /* OPTIMIZED_GOMP_API_SUPPORT */

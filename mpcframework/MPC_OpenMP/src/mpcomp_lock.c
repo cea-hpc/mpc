@@ -75,7 +75,7 @@ void omp_destroy_nest_lock(omp_nest_lock_t *lock) {
 }
 
 void omp_set_nest_lock(omp_nest_lock_t *lock) {
-	mpcomp_init ();
+	__mpcomp_init ();
 
 	sctk_assert( sctk_openmp_thread_tls );
   	mpcomp_thread_t* thread = (mpcomp_thread_t*) sctk_openmp_thread_tls;
@@ -117,7 +117,7 @@ void omp_unset_nest_lock(omp_nest_lock_t *lock) {
 
 int omp_test_nest_lock(omp_nest_lock_t *lock) {
 
-  	mpcomp_init ();
+  	__mpcomp_init ();
 
 	sctk_assert( sctk_openmp_thread_tls );
   	mpcomp_thread_t* thread = (mpcomp_thread_t*) sctk_openmp_thread_tls;

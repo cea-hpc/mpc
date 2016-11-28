@@ -11,26 +11,31 @@ void mpcomp_internal_GOMP_loop_end(void)
 
    switch(t->schedule_type)
    {
+      case MPCOMP_COMBINED_STATIC_LOOP:
+      {
+         __mpcomp_static_loop_end();
+         break;
+      }
       case MPCOMP_COMBINED_DYN_LOOP:
       {
-         mpcomp_dynamic_loop_end();
+         __mpcomp_dynamic_loop_end();
          break;
       }
       case MPCOMP_COMBINED_GUIDED_LOOP:
       {
-         mpcomp_guided_loop_end();
+         __mpcomp_guided_loop_end();
          break;
       }
       case MPCOMP_COMBINED_RUNTIME_LOOP:
       {
-         mpcomp_runtime_loop_end();
+         __mpcomp_runtime_loop_end();
          break;
        }
       default:
       {
-         //not_implemented();
-         mpcomp_static_loop_end();
-         //mpcomp_dynamic_loop_end();
+         not_implemented();
+         //__mpcomp_static_loop_end();
+         //__mpcomp_dynamic_loop_end();
       }
    }
 }
@@ -43,65 +48,70 @@ void mpcomp_internal_GOMP_loop_end_nowait(void)
 
    switch(t->schedule_type)
    {
+      case MPCOMP_COMBINED_STATIC_LOOP:
+      {
+         __mpcomp_static_loop_end_nowait();
+         break;
+      }
       case MPCOMP_COMBINED_DYN_LOOP:
       {
-         mpcomp_dynamic_loop_end_nowait();
+         __mpcomp_dynamic_loop_end_nowait();
          break;
       }
       case MPCOMP_COMBINED_GUIDED_LOOP:
       {
-         mpcomp_guided_loop_end_nowait();
+         __mpcomp_guided_loop_end_nowait();
          break;
       }
       case MPCOMP_COMBINED_RUNTIME_LOOP:
       {
-         mpcomp_runtime_loop_end_nowait();
+         __mpcomp_runtime_loop_end_nowait();
          break;
       }
       default:
       {
-         //not_implemented();
-         mpcomp_static_loop_end_nowait();
+         not_implemented();
+         //__mpcomp_static_loop_end_nowait();
       }
    }
 }
 
 bool mpcomp_internal_GOMP_loop_runtime_start (long start, long end, long incr, long *istart, long *iend)
 {
-   return (mpcomp_runtime_loop_begin(start,end,incr,istart,iend)) ? true : false;
+   return (__mpcomp_runtime_loop_begin(start,end,incr,istart,iend)) ? true : false;
 }
 
 bool mpcomp_internal_GOMP_loop_ordered_runtime_start (long start, long end, long incr, long *istart, long *iend)
 {
-   return (mpcomp_ordered_runtime_loop_begin(start,end,incr,istart,iend)) ? true : false;
+   return (__mpcomp_ordered_runtime_loop_begin(start,end,incr,istart,iend)) ? true : false;
 }
 
 bool mpcomp_internal_GOMP_loop_static_start (long start, long end, long incr, long chunk_size, long *istart, long *iend)
 {
-   return (mpcomp_static_loop_begin(start,end,incr,chunk_size,istart,iend)) ? true : false;
+   return (__mpcomp_static_loop_begin(start,end,incr,chunk_size,istart,iend)) ? true : false;
 }
 
 bool mpcomp_internal_GOMP_loop_dynamic_start (long start, long end, long incr, long chunk_size, long *istart, long *iend)
 {
-   return (mpcomp_dynamic_loop_begin(start,end,incr,chunk_size,istart,iend)) ? true : false;
+   return (__mpcomp_dynamic_loop_begin(start,end,incr,chunk_size,istart,iend)) ? true : false;
 }
 
 bool mpcomp_internal_GOMP_loop_guided_start (long start, long end, long incr, long chunk_size, long *istart, long *iend)
 {
-   return ( mpcomp_dynamic_loop_begin(start,end,incr,chunk_size,istart,iend) ) ? true : false;
+   return ( __mpcomp_dynamic_loop_begin(start,end,incr,chunk_size,istart,iend) ) ? true : false;
 }
 
 bool mpcomp_internal_GOMP_loop_ordered_static_start (long start, long end, long incr, long chunk_size, long *istart, long *iend)
 {
-   return (mpcomp_ordered_static_loop_begin(start,end,incr,chunk_size,istart,iend)) ? true : false;
+   return (__mpcomp_ordered_static_loop_begin(start,end,incr,chunk_size,istart,iend)) ? true : false;
 }
 
 bool mpcomp_internal_GOMP_loop_ordered_dynamic_start (long start, long end, long incr, long chunk_size, long *istart, long *iend)
 {
-   return (mpcomp_ordered_dynamic_loop_begin(start,end,incr,chunk_size,istart,iend)) ? true : false;
+   return (__mpcomp_ordered_dynamic_loop_begin(start,end,incr,chunk_size,istart,iend)) ? true : false;
 }
 
 bool mpcomp_internal_GOMP_loop_ordered_guided_start (long start, long end, long incr, long chunk_size, long *istart, long *iend)
 {
-   return (mpcomp_ordered_dynamic_loop_begin(start,end,incr,chunk_size,istart,iend)) ? true : false;
+   return (__mpcomp_ordered_dynamic_loop_begin(start,end,incr,chunk_size,istart,iend)) ? true : false;
 }

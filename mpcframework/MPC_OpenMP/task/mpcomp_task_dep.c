@@ -208,7 +208,7 @@ mpcomp_task_with_deps( void (*fn) (void *), void *data, void (*cpyfn) (void *, v
 	mpcomp_task_dep_node_t* task_node;
    mpcomp_task_t *current_task, *new_task;
 
-  	mpcomp_init();
+  	__mpcomp_init();
  	mpcomp_task_scheduling_infos_init();
 
    thread = ( mpcomp_thread_t*) sctk_openmp_thread_tls;

@@ -587,7 +587,7 @@ int mpcomp_build_tree( mpcomp_instance_t * instance, int n_leaves, int depth, in
              for (i_thread = 0; i_thread < MPCOMP_MAX_THREADS_PER_MICROVP; i_thread++) 
 				{
                mpcomp_local_icv_t icvs;
-               mpcomp_thread_infos_init( &(instance->mvps[current_mvp]->threads[i_thread]), icvs, instance, sctk_openmp_thread_tls);
+               __mpcomp_thread_infos_init( &(instance->mvps[current_mvp]->threads[i_thread]), icvs, instance, sctk_openmp_thread_tls);
                instance->mvps[current_mvp]->threads[i_thread].mvp = instance->mvps[current_mvp];
              }
 

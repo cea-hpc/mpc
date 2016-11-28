@@ -31,7 +31,7 @@
  * Original loop -> lb -> b step incr
  * New loop -> *from -> *to step incr
  */
-int mpcomp_static_schedule_get_single_chunk_ull( mpcomp_loop_ull_iter_t* loop, unsigned long long *from, unsigned long long *to)
+int __mpcomp_static_schedule_get_single_chunk_ull( mpcomp_loop_ull_iter_t* loop, unsigned long long *from, unsigned long long *to)
 {
     mpcomp_thread_t *t;
 
@@ -41,7 +41,7 @@ int mpcomp_static_schedule_get_single_chunk_ull( mpcomp_loop_ull_iter_t* loop, u
     
     const unsigned long long rank = (unsigned long long) t->rank;
     const unsigned long long num_threads = (unsigned long long) t->info.num_threads;
-    const unsigned long long trip_count = mpcomp_internal_loop_get_num_iters_ull( loop->lb, loop->b, loop->incr, loop->up );
+    const unsigned long long trip_count = __mpcomp_internal_loop_get_num_iters_ull( loop->lb, loop->b, loop->incr, loop->up );
  
 	if ( rank >= trip_count ) 
     {
@@ -73,18 +73,18 @@ void __mpcomp_static_schedule_get_specific_chunk_ull(  unsigned long long rank, 
     *to = ( !loop->up && *to < loop->b ) ? loop->b : *to;
 }
 
-void mpcomp_static_loop_init_ull(mpcomp_thread_t *t, unsigned long long lb, unsigned long long b, unsigned long long incr, unsigned long long chunk_size)
+void __mpcomp_static_loop_init_ull(mpcomp_thread_t *t, unsigned long long lb, unsigned long long b, unsigned long long incr, unsigned long long chunk_size)
 {
     return;
 }
 
-int mpcomp_loop_ull_static_begin (bool up, unsigned long long lb, unsigned long long b, unsigned long long incr, unsigned long long chunk_size,
+int __mpcomp_loop_ull_static_begin (bool up, unsigned long long lb, unsigned long long b, unsigned long long incr, unsigned long long chunk_size,
                 unsigned long long *from, unsigned long long *to)
 {
     mpcomp_thread_t *t;
     mpcomp_loop_ull_iter_t* loop;
 
-    mpcomp_init();
+    __mpcomp_init();
 
     t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
     sctk_assert(t != NULL);
@@ -106,10 +106,10 @@ int mpcomp_loop_ull_static_begin (bool up, unsigned long long lb, unsigned long 
         /* As the loop_next function consider a chunk as already been realised
              we need to initialize to 0 minus 1 */
     t->static_current_chunk = -1 ;
-    return mpcomp_loop_ull_static_next (from, to);
+    return __mpcomp_loop_ull_static_next (from, to);
 }
 
-int mpcomp_loop_ull_static_next (unsigned long long *from, unsigned long long *to)
+int __mpcomp_loop_ull_static_next (unsigned long long *from, unsigned long long *to)
 {
     mpcomp_thread_t *t;
 
@@ -139,7 +139,7 @@ int mpcomp_loop_ull_static_next (unsigned long long *from, unsigned long long *t
  *
  *
  *****/
-int mpcomp_loop_ull_ordered_static_begin (bool up, unsigned long long lb, unsigned long long b, unsigned long long incr, unsigned long long chunk_size,
+int __mpcomp_loop_ull_ordered_static_begin (bool up, unsigned long long lb, unsigned long long b, unsigned long long incr, unsigned long long chunk_size,
                     unsigned long long *from, unsigned long long *to)
 {
      mpcomp_thread_t *t; 
@@ -152,19 +152,19 @@ int mpcomp_loop_ull_ordered_static_begin (bool up, unsigned long long lb, unsign
     t->schedule_type = ( t->schedule_is_forced ) ? t->schedule_type : MPCOMP_COMBINED_STATIC_LOOP;  
     t->schedule_is_forced = 0;
 
-     res = mpcomp_loop_ull_static_begin(up, lb, b, incr, chunk_size, from, to);
+     res = __mpcomp_loop_ull_static_begin(up, lb, b, incr, chunk_size, from, to);
 
      t->current_ordered_iteration = *from;
          
      return res;
 }
 
-int mpcomp_loop_ull_ordered_static_next(unsigned long long *from, unsigned long long *to)
+int __mpcomp_loop_ull_ordered_static_next(unsigned long long *from, unsigned long long *to)
 {
      mpcomp_thread_t *t;
      int res ;
 
-     res = mpcomp_loop_ull_static_next(from, to);
+     res = __mpcomp_loop_ull_static_next(from, to);
 
      t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
      sctk_assert(t != NULL);
