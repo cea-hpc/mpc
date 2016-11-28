@@ -1,8 +1,9 @@
 #if (!defined(__SCTK_MPCOMP_TASK_STEALING_H__) && MPCOMP_TASK)
 #define __SCTK_MPCOMP_TASK_STEALING_H__
 
+#include "sctk_debug.h"
 #include "mpcomp_alloc.h"
-#include "mpcomp_internal.h"
+#include "mpcomp_types.h"
 
 struct mpcomp_task_stealing_funcs_s
 {

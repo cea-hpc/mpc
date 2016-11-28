@@ -1,12 +1,13 @@
-#include <stdbool.h>
-#include <sctk_debug.h>
+#include "sctk_bool.h"
+#include "sctk_debug.h"
 #include "mpcomp_abi.h"
+#include "mpcomp_barrier.h"
 #include "mpcomp_GOMP_common.h"
 
-void __mpcomp_GOMP_barrier (void)
+void mpcomp_GOMP_barrier (void)
 {
    sctk_nodebug("[Redirect GOMP]%s:\tBegin",__func__);
-   __mpcomp_barrier();
+   mpcomp_barrier();
    sctk_nodebug("[Redirect GOMP]%s:\tEnd",__func__);
 }
 

@@ -1,4 +1,4 @@
-#include "mpcomp_macros.h"
+#include "mpcomp_types_def.h"
 
 #ifndef __MPCOMP_ALLOC_H__
 #define __MPCOMP_ALLOC_H__

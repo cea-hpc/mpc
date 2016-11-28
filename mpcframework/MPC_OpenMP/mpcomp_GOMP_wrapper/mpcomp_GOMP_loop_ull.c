@@ -1,19 +1,19 @@
 #include <stdbool.h>
-#include <sctk_debug.h>
+#include "sctk_debug.h"
 #include "mpcomp_abi.h"
 #include "mpcomp_GOMP_common.h"
 #include "mpcomp_GOMP_loop_ull_internal.h"
 
 #define MPC_SUPPORT_ULL_LOOP
 
-bool __mpcomp_GOMP_loop_ull_runtime_start(bool up, unsigned long long start, unsigned long long end, 
+bool mpcomp_GOMP_loop_ull_runtime_start(bool up, unsigned long long start, unsigned long long end, 
 				          unsigned long long incr, 
                                           unsigned long long *istart, unsigned long long *iend)
 {
    bool ret;
    sctk_nodebug("[Redirect GOMP]%s:\tBegin",__func__);
 #ifdef MPC_SUPPORT_ULL_LOOP
-   ret = __mpcomp_internal_GOMP_loop_ull_runtime_start(up,start,end,incr,istart,iend);
+   ret = mpcomp_loop_ull_runtime_begin(up,start,end,incr,istart,iend);
 #else /* MPC_SUPPORT_ULL_LOOP */
    ret = false;
    not_implemented();
@@ -22,14 +22,14 @@ bool __mpcomp_GOMP_loop_ull_runtime_start(bool up, unsigned long long start, uns
    return ret;
 }
 
-bool __mpcomp_GOMP_loop_ull_ordered_runtime_start (bool up, unsigned long long start, unsigned long long end,
+bool mpcomp_GOMP_loop_ull_ordered_runtime_start (bool up, unsigned long long start, unsigned long long end,
 				     unsigned long long incr, unsigned long long *istart,
 				     unsigned long long *iend)
 {
    bool ret;
    sctk_nodebug("[Redirect GOMP]%s:\tBegin",__func__);
 #ifdef MPC_SUPPORT_ULL_LOOP
-   ret = __mpcomp_internal_GOMP_loop_ull_ordered_runtime_start(up,start,end,incr,istart,iend);
+   ret = mpcomp_internal_GOMP_loop_ull_ordered_runtime_start(up,start,end,incr,istart,iend);
 #else /* MPC_SUPPORT_ULL_LOOP */
    ret = false;
    not_implemented();
@@ -38,7 +38,7 @@ bool __mpcomp_GOMP_loop_ull_ordered_runtime_start (bool up, unsigned long long s
    return ret;
 }
 
-bool __mpcomp_GOMP_loop_ull_doacross_runtime_start(unsigned ncounts, unsigned long long *counts,
+bool mpcomp_GOMP_loop_ull_doacross_runtime_start(unsigned ncounts, unsigned long long *counts,
 				      unsigned long long *istart, unsigned long long *iend)
 {
    bool ret;
@@ -54,12 +54,12 @@ bool __mpcomp_GOMP_loop_ull_doacross_runtime_start(unsigned ncounts, unsigned lo
    return ret;
 }
 
-bool __mpcomp_GOMP_loop_ull_runtime_next(unsigned long long *istart, unsigned long long *iend)
+bool mpcomp_GOMP_loop_ull_runtime_next(unsigned long long *istart, unsigned long long *iend)
 {
    bool ret;
    sctk_nodebug("[Redirect GOMP]%s:\tBegin",__func__);
 #ifdef MPC_SUPPORT_ULL_LOOP
-   ret = __mpcomp_loop_ull_runtime_next(istart,iend);  
+   ret = mpcomp_loop_ull_runtime_next(istart,iend);  
 #else /* MPC_SUPPORT_ULL_LOOP */
    ret = false;
    not_implemented();
@@ -68,12 +68,12 @@ bool __mpcomp_GOMP_loop_ull_runtime_next(unsigned long long *istart, unsigned lo
    return ret;
 }
 
-bool __mpcomp_GOMP_loop_ull_ordered_runtime_next(unsigned long long *istart, unsigned long long *iend)
+bool mpcomp_GOMP_loop_ull_ordered_runtime_next(unsigned long long *istart, unsigned long long *iend)
 {
    bool ret;
    sctk_nodebug("[Redirect GOMP]%s:\tBegin",__func__);
 #ifdef MPC_SUPPORT_ULL_LOOP
-   ret = __mpcomp_loop_ull_ordered_runtime_next(istart,iend);  
+   ret = mpcomp_loop_ull_ordered_runtime_next(istart,iend);  
 #else /* MPC_SUPPORT_ULL_LOOP */
    ret = false;
    not_implemented();
@@ -83,14 +83,14 @@ bool __mpcomp_GOMP_loop_ull_ordered_runtime_next(unsigned long long *istart, uns
 }
 
 
-bool __mpcomp_GOMP_loop_ull_static_start(bool up, unsigned long long start, unsigned long long end,
+bool mpcomp_GOMP_loop_ull_static_start(bool up, unsigned long long start, unsigned long long end,
 			    unsigned long long incr, unsigned long long chunk_size,
 			    unsigned long long *istart, unsigned long long *iend)
 {
    bool ret;
    sctk_nodebug("[Redirect GOMP]%s:\tBegin",__func__);
 #ifdef MPC_SUPPORT_ULL_LOOP
-   ret = __mpcomp_internal_GOMP_loop_ull_static_start(up,start,end,incr,chunk_size,istart,iend);
+   ret = mpcomp_internal_GOMP_loop_ull_static_start(up,start,end,incr,chunk_size,istart,iend);
 #else /* MPC_SUPPORT_ULL_LOOP */
    ret = false;
    not_implemented();
@@ -99,31 +99,31 @@ bool __mpcomp_GOMP_loop_ull_static_start(bool up, unsigned long long start, unsi
    return ret;
 }
 
-bool __mpcomp_GOMP_loop_ull_dynamic_start (bool up, unsigned long long start, unsigned long long end,
+bool mpcomp_GOMP_loop_ull_dynamic_start(bool up, unsigned long long start, unsigned long long end,
 			     unsigned long long incr, unsigned long long chunk_size,
 			     unsigned long long *istart, unsigned long long *iend)
 {
    bool ret;
-   sctk_nodebug("[Redirect GOMP]%s:\tBegin",__func__);
 #ifdef MPC_SUPPORT_ULL_LOOP
-   ret = __mpcomp_internal_GOMP_loop_ull_dynamic_start(up,start,end,incr,chunk_size,istart,iend);
+   sctk_nodebug("[Redirect GOMP]%s:\tBegin - start: %llu - end: %llu - step: %llu - up: %d",__func__, start, end, incr, up);
+   ret = mpcomp_loop_ull_dynamic_begin( up, start, end, incr, chunk_size, istart, iend);
+   //ret = mpcomp_internal_GOMP_loop_ull_dynamic_start(up,start,end,incr,chunk_size,istart,iend);
    sctk_nodebug("[Redirect GOMP]%s:\tEnd",__func__);
 #else /* MPC_SUPPORT_ULL_LOOP */
    ret = false;
    not_implemented();
 #endif /* MPC_SUPPORT_ULL_LOOP */
-   sctk_nodebug("[Redirect GOMP]%s:\tEnd",__func__);
    return ret;
 }
 
-bool __mpcomp_GOMP_loop_ull_guided_start (bool up, unsigned long long start, unsigned long long end,
+bool mpcomp_GOMP_loop_ull_guided_start (bool up, unsigned long long start, unsigned long long end,
 			    unsigned long long incr, unsigned long long chunk_size,
 			    unsigned long long *istart, unsigned long long *iend)
 {
    bool ret;
    sctk_nodebug("[Redirect GOMP]%s:\tBegin",__func__);
 #ifdef MPC_SUPPORT_ULL_LOOP
-   ret = __mpcomp_internal_GOMP_loop_ull_guided_start(up,start,end,incr,chunk_size,istart,iend);
+   ret = mpcomp_loop_ull_guided_begin( up, start, end, incr, chunk_size, istart, iend);
 #else /* MPC_SUPPORT_ULL_LOOP */
    ret = false;
    not_implemented();
@@ -132,7 +132,7 @@ bool __mpcomp_GOMP_loop_ull_guided_start (bool up, unsigned long long start, uns
    return ret;
 }
 
-bool __mpcomp_GOMP_loop_ull_nonmonotonic_dynamic_start(bool up, unsigned long long start,
+bool mpcomp_GOMP_loop_ull_nonmonotonic_dynamic_start(bool up, unsigned long long start,
 					  unsigned long long end, unsigned long long incr,
 					  unsigned long long chunk_size,
 					  unsigned long long *istart, unsigned long long *iend)
@@ -150,7 +150,7 @@ bool __mpcomp_GOMP_loop_ull_nonmonotonic_dynamic_start(bool up, unsigned long lo
    return ret;
 }
 
-bool __mpcomp_GOMP_loop_ull_nonmonotonic_guided_start (bool up, unsigned long long start, unsigned long long end,
+bool mpcomp_GOMP_loop_ull_nonmonotonic_guided_start (bool up, unsigned long long start, unsigned long long end,
 					 unsigned long long incr, unsigned long long chunk_size,
 					 unsigned long long *istart, unsigned long long *iend)
 {
@@ -167,14 +167,14 @@ bool __mpcomp_GOMP_loop_ull_nonmonotonic_guided_start (bool up, unsigned long lo
    return ret;
 }
 
-bool __mpcomp_GOMP_loop_ull_ordered_static_start (bool up, unsigned long long start, unsigned long long end,
+bool mpcomp_GOMP_loop_ull_ordered_static_start (bool up, unsigned long long start, unsigned long long end,
 				    unsigned long long incr, unsigned long long chunk_size,
 				    unsigned long long *istart, unsigned long long *iend)
 {
    bool ret;
    sctk_nodebug("[Redirect GOMP]%s:\tBegin",__func__);
 #ifdef MPC_SUPPORT_ULL_LOOP
-   ret = (__mpcomp_internal_GOMP_loop_ull_ordered_static_start(up, start, end, incr, chunk_size, istart, iend)) ? true : false;
+   ret = (mpcomp_internal_GOMP_loop_ull_ordered_static_start(up, start, end, incr, chunk_size, istart, iend)) ? true : false;
 #else /* MPC_SUPPORT_ULL_LOOP */
    ret = false;
    not_implemented();
@@ -183,14 +183,14 @@ bool __mpcomp_GOMP_loop_ull_ordered_static_start (bool up, unsigned long long st
    return ret;
 }
 
-bool __mpcomp_GOMP_loop_ull_ordered_dynamic_start (bool up, unsigned long long start, unsigned long long end,
+bool mpcomp_GOMP_loop_ull_ordered_dynamic_start (bool up, unsigned long long start, unsigned long long end,
 				     unsigned long long incr, unsigned long long chunk_size,
 				     unsigned long long *istart, unsigned long long *iend)
 {
    bool ret;
    sctk_nodebug("[Redirect GOMP]%s:\tBegin",__func__);
 #ifdef MPC_SUPPORT_ULL_LOOP
-   ret = (__mpcomp_internal_GOMP_loop_ull_ordered_dynamic_start(up, start, end, incr, chunk_size, istart, iend)) ? true : false;
+   ret = (mpcomp_internal_GOMP_loop_ull_ordered_dynamic_start(up, start, end, incr, chunk_size, istart, iend)) ? true : false;
 #else /* MPC_SUPPORT_ULL_LOOP */
    ret = false;
    not_implemented();
@@ -199,14 +199,14 @@ bool __mpcomp_GOMP_loop_ull_ordered_dynamic_start (bool up, unsigned long long s
    return ret;
 }
 
-bool __mpcomp_GOMP_loop_ull_ordered_guided_start (bool up, unsigned long long start, unsigned long long end,
+bool mpcomp_GOMP_loop_ull_ordered_guided_start (bool up, unsigned long long start, unsigned long long end,
 				    unsigned long long incr, unsigned long long chunk_size,
 				    unsigned long long *istart, unsigned long long *iend)
 {
    bool ret;
    sctk_nodebug("[Redirect GOMP]%s:\tBegin",__func__);
 #ifdef MPC_SUPPORT_ULL_LOOP
-   ret = (__mpcomp_internal_GOMP_loop_ull_ordered_dynamic_start(up, start, end, incr, chunk_size, istart, iend)) ? true : false;
+   ret = (mpcomp_internal_GOMP_loop_ull_ordered_dynamic_start(up, start, end, incr, chunk_size, istart, iend)) ? true : false;
 #else /* MPC_SUPPORT_ULL_LOOP */
    ret = false;
    not_implemented();
@@ -215,7 +215,7 @@ bool __mpcomp_GOMP_loop_ull_ordered_guided_start (bool up, unsigned long long st
    return ret;
 }
 
-bool __mpcomp_GOMP_loop_ull_doacross_static_start (unsigned ncounts, unsigned long long *counts,
+bool mpcomp_GOMP_loop_ull_doacross_static_start (unsigned ncounts, unsigned long long *counts,
 				     unsigned long long chunk_size, unsigned long long *istart,
 				     unsigned long long *iend)
 {
@@ -232,7 +232,7 @@ bool __mpcomp_GOMP_loop_ull_doacross_static_start (unsigned ncounts, unsigned lo
    return ret;
 }
 
-bool __mpcomp_GOMP_loop_ull_doacross_dynamic_start (unsigned ncounts, unsigned long long *counts,
+bool mpcomp_GOMP_loop_ull_doacross_dynamic_start (unsigned ncounts, unsigned long long *counts,
 				      unsigned long long chunk_size, unsigned long long *istart,
 				      unsigned long long *iend)
 {
@@ -249,7 +249,7 @@ bool __mpcomp_GOMP_loop_ull_doacross_dynamic_start (unsigned ncounts, unsigned l
    return ret;
 }
 
-bool __mpcomp_GOMP_loop_ull_doacross_guided_start(unsigned ncounts, unsigned long long *counts,
+bool mpcomp_GOMP_loop_ull_doacross_guided_start(unsigned ncounts, unsigned long long *counts,
 				     unsigned long long chunk_size, unsigned long long *istart,
 				     unsigned long long *iend)
 {
@@ -266,12 +266,12 @@ bool __mpcomp_GOMP_loop_ull_doacross_guided_start(unsigned ncounts, unsigned lon
    return ret;
 }
 
-bool __mpcomp_GOMP_loop_ull_static_next(unsigned long long *istart, unsigned long long *iend)
+bool mpcomp_GOMP_loop_ull_static_next(unsigned long long *istart, unsigned long long *iend)
 {
    bool ret;
    sctk_nodebug("[Redirect GOMP]%s:\tBegin",__func__);
 #ifdef MPC_SUPPORT_ULL_LOOP
-   ret = (__mpcomp_loop_ull_static_next(istart,iend)) ? true : false;
+   ret = (mpcomp_loop_ull_static_next(istart,iend)) ? true : false;
 #else /* MPC_SUPPORT_ULL_LOOP */
    ret = false;
    not_implemented();
@@ -280,12 +280,12 @@ bool __mpcomp_GOMP_loop_ull_static_next(unsigned long long *istart, unsigned lon
    return ret;
 }
 
-bool __mpcomp_GOMP_loop_ull_dynamic_next(unsigned long long *istart, unsigned long long *iend)
+bool mpcomp_GOMP_loop_ull_dynamic_next(unsigned long long *istart, unsigned long long *iend)
 {
    bool ret;
    sctk_nodebug("[Redirect GOMP]%s:\tBegin",__func__);
 #ifdef MPC_SUPPORT_ULL_LOOP
-   ret = (__mpcomp_loop_ull_dynamic_next(istart,iend)) ? true : false;
+   ret = (mpcomp_loop_ull_dynamic_next(istart,iend)) ? true : false;
 #else /* MPC_SUPPORT_ULL_LOOP */
    ret = false;
    not_implemented();
@@ -294,12 +294,12 @@ bool __mpcomp_GOMP_loop_ull_dynamic_next(unsigned long long *istart, unsigned lo
    return ret;
 }
 
-bool __mpcomp_GOMP_loop_ull_guided_next(unsigned long long *istart, unsigned long long *iend)
+bool mpcomp_GOMP_loop_ull_guided_next(unsigned long long *istart, unsigned long long *iend)
 {
    bool ret;
    sctk_nodebug("[Redirect GOMP]%s:\tBegin",__func__);
 #ifdef MPC_SUPPORT_ULL_LOOP
-   ret = (__mpcomp_loop_ull_guided_next(istart,iend)) ? true : false;
+   ret = (mpcomp_loop_ull_guided_next(istart,iend)) ? true : false;
 #else /* MPC_SUPPORT_ULL_LOOP */
    ret = false;
    not_implemented();
@@ -309,7 +309,7 @@ bool __mpcomp_GOMP_loop_ull_guided_next(unsigned long long *istart, unsigned lon
 }
 
 
-bool __mpcomp_GOMP_loop_ull_nonmonotonic_dynamic_next(unsigned long long *istart, unsigned long long *iend)
+bool mpcomp_GOMP_loop_ull_nonmonotonic_dynamic_next(unsigned long long *istart, unsigned long long *iend)
 {
    bool ret;
    sctk_nodebug("[Redirect GOMP]%s:\tBegin",__func__);
@@ -323,7 +323,7 @@ bool __mpcomp_GOMP_loop_ull_nonmonotonic_dynamic_next(unsigned long long *istart
    return ret;
 }
 
-bool __mpcomp_GOMP_loop_ull_nonmonotonic_guided_next(unsigned long long *istart, unsigned long long *iend)
+bool mpcomp_GOMP_loop_ull_nonmonotonic_guided_next(unsigned long long *istart, unsigned long long *iend)
 {
    bool ret;
    sctk_nodebug("[Redirect GOMP]%s:\tBegin",__func__);
@@ -337,12 +337,12 @@ bool __mpcomp_GOMP_loop_ull_nonmonotonic_guided_next(unsigned long long *istart,
    return ret;
 }
 
-bool __mpcomp_GOMP_loop_ull_ordered_static_next (unsigned long long *istart, unsigned long long *iend)
+bool mpcomp_GOMP_loop_ull_ordered_static_next (unsigned long long *istart, unsigned long long *iend)
 {
    bool ret;
    sctk_nodebug("[Redirect GOMP]%s:\tBegin",__func__);
 #ifdef MPC_SUPPORT_ULL_LOOP
-   ret = (__mpcomp_loop_ull_ordered_static_next(istart,iend)) ? true : false;
+   ret = (mpcomp_loop_ull_ordered_static_next(istart,iend)) ? true : false;
 #else /* MPC_SUPPORT_ULL_LOOP */
    ret = false;
    not_implemented();
@@ -351,12 +351,12 @@ bool __mpcomp_GOMP_loop_ull_ordered_static_next (unsigned long long *istart, uns
    return ret;
 }
 
-bool __mpcomp_GOMP_loop_ull_ordered_dynamic_next (unsigned long long *istart, unsigned long long *iend)
+bool mpcomp_GOMP_loop_ull_ordered_dynamic_next (unsigned long long *istart, unsigned long long *iend)
 {
    bool ret;
    sctk_nodebug("[Redirect GOMP]%s:\tBegin",__func__);
 #ifdef MPC_SUPPORT_ULL_LOOP
-   ret = (__mpcomp_loop_ull_ordered_dynamic_next(istart,iend)) ? true : false;
+   ret = (mpcomp_loop_ull_ordered_dynamic_next(istart,iend)) ? true : false;
 #else /* MPC_SUPPORT_ULL_LOOP */
    ret = false;
    not_implemented();
@@ -365,12 +365,12 @@ bool __mpcomp_GOMP_loop_ull_ordered_dynamic_next (unsigned long long *istart, un
    return ret;
 }
 
-bool __mpcomp_GOMP_loop_ull_ordered_guided_next (unsigned long long *istart, unsigned long long *iend)
+bool mpcomp_GOMP_loop_ull_ordered_guided_next (unsigned long long *istart, unsigned long long *iend)
 {
    bool ret;
    sctk_nodebug("[Redirect GOMP]%s:\tBegin",__func__);
 #ifdef MPC_SUPPORT_ULL_LOOP
-   ret = (__mpcomp_loop_ull_ordered_guided_next(istart,iend)) ? true : false;
+   ret = (mpcomp_loop_ull_ordered_guided_next(istart,iend)) ? true : false;
 #else /* MPC_SUPPORT_ULL_LOOP */
    ret = false;
    not_implemented();

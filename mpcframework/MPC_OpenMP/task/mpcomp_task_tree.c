@@ -1,9 +1,10 @@
-#include "mpcomp_macros.h"
+#include "mpcomp_types_def.h"
 
 #if MPCOMP_TASK
 
 #include "sctk_debug.h"
 #include "mpcomp_alloc.h"
+#include "mpcomp_types.h"
 #include "mpcomp_task_list.h"
 #include "mpcomp_task_utils.h"
 #include "mpcomp_task_tree.h"
@@ -21,9 +22,10 @@ mpcomp_task_tree_task_list_alloc( mpcomp_tree_meta_elt_t* meta_elt, int tasklist
 	/* If the node correspond to the new list depth, allocate the data structures */
 	if( depth != tasklist_depth )
 	{
-   	return 0;
+   	    return 0;
 	}
 
+    sctk_error("allocation list ... %d %d", depth, type );
 	list = mpcomp_malloc( 1, sizeof( struct mpcomp_task_list_s ), id_numa );
 	sctk_assert( list );
 	mpcomp_task_list_new( list );
@@ -66,7 +68,7 @@ mpcomp_task_tree_allocate_all_task_list( 	mpcomp_tree_meta_elt_t* meta_elt, mpco
 	for( type = 0, ret = 0; type < MPCOMP_TASK_TYPE_COUNT; type++ )
 	{
 		const int tasklist_depth = MPCOMP_TASK_TEAM_GET_TASKLIST_DEPTH( team, type );
-      ret += mpcomp_task_tree_task_list_alloc( meta_elt, tasklist_depth, task_tree_infos->tasklistNodeRank, type, depth, id_numa );
+        ret += mpcomp_task_tree_task_list_alloc( meta_elt, tasklist_depth, task_tree_infos->tasklistNodeRank, type, depth, id_numa );
 	}
 
 	if( ret && (larcenyMode == MPCOMP_TASK_LARCENY_MODE_RANDOM || larcenyMode == MPCOMP_TASK_LARCENY_MODE_RANDOM_ORDER ) )
@@ -86,7 +88,7 @@ mpcomp_task_tree_init_task_tree_infos_leaf( mpcomp_mvp_t* mvp, mpcomp_task_tree_
 	
    /* Retrieve the current thread information */
 	sctk_assert( sctk_openmp_thread_tls );
-   omp_thread_tls = (mpcomp_thread_t *) sctk_openmp_thread_tls;
+    omp_thread_tls = (mpcomp_thread_t *) sctk_openmp_thread_tls;
 	
 	meta_elt.type = MPCOMP_TREE_META_ELT_MVP;
 	meta_elt.ptr.mvp = mvp;

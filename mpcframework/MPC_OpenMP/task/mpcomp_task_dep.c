@@ -1,7 +1,7 @@
 #include <sctk_bool.h>
 #include <sctk_int.h>
 #include <sctk_asm.h>
-#include "mpcomp_internal.h"
+#include "mpcomp_types.h"
 #include "sctk_runtime_config_struct.h"
 
 #include "mpcomp_task.h"
@@ -16,6 +16,7 @@
 #include "MurmurHash_64.h"
 #include "sctk_atomics.h"
 
+#include "sctk_debug.h"
 #include "mpcomp_task_utils.h"
 
 static int total_task = 0;
@@ -31,7 +32,7 @@ __mpcomp_task_wait_deps( mpcomp_task_dep_node_t* task_node )
 {
 	while( sctk_atomics_load_int( &( task_node->predecessors ) ) )
 	{
-		__mpcomp_task_schedule( 0 );
+		mpcomp_task_schedule( 0 );
 	}
 }
 
@@ -200,24 +201,24 @@ __mpcomp_task_finalize_deps( mpcomp_task_t* task )
 }
 
 void
-__mpcomp_task_with_deps( void (*fn) (void *), void *data, void (*cpyfn) (void *, void *), long arg_size, long arg_align, bool if_clause, unsigned flags, void **depend)
+mpcomp_task_with_deps( void (*fn) (void *), void *data, void (*cpyfn) (void *, void *), long arg_size, long arg_align, bool if_clause, unsigned flags, void **depend)
 {
 	int predecessors_num;
    mpcomp_thread_t* thread;
 	mpcomp_task_dep_node_t* task_node;
    mpcomp_task_t *current_task, *new_task;
 
-  	__mpcomp_init();
- 	__mpcomp_task_infos_init();
+  	mpcomp_init();
+ 	mpcomp_task_scheduling_infos_init();
 
    thread = ( mpcomp_thread_t*) sctk_openmp_thread_tls;
    current_task = (mpcomp_task_t*) MPCOMP_TASK_THREAD_GET_CURRENT_TASK( thread );  
 	
-   if( !(mpcomp_task_dep_is_flag_with_deps) || depend == NULL )
-	{
-		__mpcomp_task( fn, data, cpyfn, arg_size, arg_align, if_clause, flags );
-		return;
-	}
+   if( !(mpcomp_task_dep_is_flag_with_deps( flags ) ) )
+   {
+      __mpcomp_task( fn, data, cpyfn, arg_size, arg_align, if_clause, flags );
+	 return;
+   }
 
 	/* Is it possible ?! See GOMP source code	*/ 
 	sctk_assert( (uintptr_t) depend[0] > (uintptr_t) 0 );

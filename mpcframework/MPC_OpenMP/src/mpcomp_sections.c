@@ -20,39 +20,34 @@
 /* #   - CARRIBAULT Patrick patrick.carribault@cea.fr                     # */
 /* #                                                                      # */
 /* ######################################################################## */
-#include <mpcomp.h>
-#include "mpcomp_internal.h"
 #include <sctk.h>
 #include <sctk_debug.h>
+
+#include "mpcomp_core.h"
+#include "mpcomp_types.h"
 
 /*
    This file contains all functions related to SECTIONS constructs in OpenMP
  */
 
-static int __mpcomp_sections_internal_next( mpcomp_thread_t * t,
-		mpcomp_team_t * team ) 
+static int __mpcomp_sections_internal_next( mpcomp_thread_t * t, mpcomp_team_t * team ) 
 {
   int r ;
   int success ;
 
-  t->single_sections_current = sctk_atomics_load_int( 
-		  &(team->single_sections_last_current) ) ;
-
-  sctk_debug( "[%d] __mpcomp_sections_internal_next: Current = %d (target = %d)",
-		  t->rank, t->single_sections_current, t->single_sections_target_current ) ;
-
+  t->single_sections_current = sctk_atomics_load_int( &( team->single_sections_last_current ) ) ;
+  sctk_nodebug( "[%d] %s: Current = %d (target = %d)", t->rank, __func__, t->single_sections_current, t->single_sections_target_current ) ;
   success = 0 ;
 
-  while ( t->single_sections_current < t->single_sections_target_current &&
-		  !success ) {
-	  r = sctk_atomics_cas_int( &(team->single_sections_last_current),
+  while ( t->single_sections_current < t->single_sections_target_current && !success ) 
+    {
+	    r = sctk_atomics_cas_int( &(team->single_sections_last_current),
 			  t->single_sections_current, t->single_sections_current + 1 ) ;
 
-	  sctk_debug( "[%d] __mpcomp_sections_internal_next: CAS %d -> %d (res %d)",
-			  t->rank, t->single_sections_current,
-			 t->single_sections_current + 1, r ) ;
+	    sctk_nodebug( "[%d] %s: CAS %d -> %d (res %d)", t->rank, __func__,  t->single_sections_current, t->single_sections_current + 1, r ) ;
 
-	  if ( r != t->single_sections_current ) {
+	    if ( r != t->single_sections_current ) 
+        {
 		  t->single_sections_current = sctk_atomics_load_int( 
 				  &(team->single_sections_last_current) ) ;
 		  if ( t->single_sections_current > t->single_sections_target_current ) {
@@ -64,19 +59,18 @@ static int __mpcomp_sections_internal_next( mpcomp_thread_t * t,
   }
 
   if ( t->single_sections_current < t->single_sections_target_current ) {
-	  sctk_debug( "[%d] __mpcomp_sections_internal_next: Success w/ current = %d",
-			  t->rank, t->single_sections_current ) ;
+	  sctk_nodebug( "[%d] %s: Success w/ current = %d",
+			  t->rank, __func__, t->single_sections_current ) ;
 	  return t->single_sections_current - t->single_sections_start_current + 1 ;
   }
 
-  sctk_debug( "[%d] __mpcomp_sections_internal_next: Fail w/ final current = %d",
-		  t->rank, t->single_sections_current ) ;
+  sctk_nodebug( "[%d] %s: Fail w/ final current = %d", t->rank, __func__, t->single_sections_current ) ;
 
   return 0 ;
 }
 
 
-void __mpcomp_sections_init( mpcomp_thread_t * t, int nb_sections ) {
+void mpcomp_sections_init( mpcomp_thread_t * t, int nb_sections ) {
   mpcomp_team_t *team ;	/* Info on the team TODO remove this variable */
   long num_threads ;
 
@@ -84,16 +78,15 @@ void __mpcomp_sections_init( mpcomp_thread_t * t, int nb_sections ) {
   num_threads = t->info.num_threads;
   sctk_assert( num_threads > 0 ) ;
 
-  sctk_debug( "[%d] __mpomp_sections_init: Entering w/ %d section(s)",
-		  t->rank, nb_sections ) ;
+  sctk_nodebug( "[%d] %s: Entering w/ %d section(s)", t->rank, __func__, nb_sections ) ;
 
   /* Update current sections construct and update
    * the target according to the number of sections */
   t->single_sections_start_current = t->single_sections_current ;
   t->single_sections_target_current = t->single_sections_current + nb_sections ;
 
-  sctk_debug( "[%d] __mpomp_sections_init: Current %d, start %d, target %d",
-		  t->rank, t->single_sections_current, 
+  sctk_nodebug( "[%d] %s: Current %d, start %d, target %d",
+		  t->rank, __func__, t->single_sections_current, 
 		  t->single_sections_start_current, t->single_sections_target_current ) ;
 
   return ;
@@ -102,8 +95,7 @@ void __mpcomp_sections_init( mpcomp_thread_t * t, int nb_sections ) {
 /* Return >0 to execute corresponding section.
    Return 0 otherwise to leave sections construct
    */
-int
-__mpcomp_sections_begin (int nb_sections)
+int mpcomp_sections_begin (int nb_sections)
 {
   mpcomp_thread_t *t ;	/* Info on the current thread */
   mpcomp_team_t *team ;	/* Info on the team */
@@ -115,16 +107,16 @@ __mpcomp_sections_begin (int nb_sections)
   }
 
   /* Handle orphaned directive (initialize OpenMP environment) */
-  __mpcomp_init() ;
+  mpcomp_init() ;
 
   /* Grab the thread info */
   t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
   sctk_assert( t != NULL ) ;
 
-	sctk_debug( "[%d] __mpcomp_sections_begin: entering w/ %d section(s)",
-			t->rank, nb_sections ) ;
+    sctk_nodebug( "[%d] %s: entering w/ %d section(s)", t->rank, __func__, nb_sections ) ;
 
-  __mpcomp_sections_init( t, nb_sections ) ;
+
+  mpcomp_sections_init( t, nb_sections ) ;
 
   /* Number of threads in the current team */
   num_threads = t->info.num_threads;
@@ -147,8 +139,7 @@ __mpcomp_sections_begin (int nb_sections)
   return __mpcomp_sections_internal_next( t, team ) ;
 }
 
-int
-__mpcomp_sections_next ()
+int mpcomp_sections_next ( void )
 {
   mpcomp_thread_t *t ;	/* Info on the current thread */
   mpcomp_team_t *team ;	/* Info on the team */
@@ -163,8 +154,8 @@ __mpcomp_sections_next ()
   sctk_assert( num_threads > 0 ) ;
 
 
-  sctk_debug( "[%d] __mpcomp_sections_next: Current %d, start %d, target %d",
-		  t->rank, t->single_sections_current, 
+  sctk_nodebug( "[%d] %s: Current %d, start %d, target %d",
+		  t->rank, __func__, t->single_sections_current, 
 		  t->single_sections_start_current, t->single_sections_target_current ) ;
 
   /* If this function is called from a sequential part (orphaned directive) or 
@@ -190,23 +181,21 @@ __mpcomp_sections_next ()
   return __mpcomp_sections_internal_next( t, team ) ;
 }
 
-void
-__mpcomp_sections_end ()
+void mpcomp_sections_end ( void)
 {
-  __mpcomp_barrier() ;
+  mpcomp_barrier() ;
 }
 
-void
-__mpcomp_sections_end_nowait ()
+void mpcomp_sections_end_nowait (void)
 {
   /* Nothing to do */
 }
 
 
-int __mpcomp_sections_coherency_exiting_paralel_region() {
+int mpcomp_sections_coherency_exiting_paralel_region(void) {
   return 0 ;
 }
 
-int __mpcomp_sections_coherency_barrier() {
+int mpcomp_sections_coherency_barrier(void) {
   return 0 ;
 }

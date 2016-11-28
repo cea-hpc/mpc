@@ -1,12 +1,38 @@
-#include "mpcomp_macros.h"
+/* ############################# MPC License ############################## */
+/* # Wed Nov 19 15:19:19 CET 2008                                         # */
+/* # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          # */
+/* #                                                                      # */
+/* # IDDN.FR.001.230040.000.S.P.2007.000.10000                            # */
+/* # This file is part of the MPC Runtime.                                # */
+/* #                                                                      # */
+/* # This software is governed by the CeCILL-C license under French law   # */
+/* # and abiding by the rules of distribution of free software.  You can  # */
+/* # use, modify and/ or redistribute the software under the terms of     # */
+/* # the CeCILL-C license as circulated by CEA, CNRS and INRIA at the     # */
+/* # following URL http://www.cecill.info.                                # */
+/* #                                                                      # */
+/* # The fact that you are presently reading this means that you have     # */
+/* # had knowledge of the CeCILL-C license and that you accept its        # */
+/* # terms.                                                               # */
+/* #                                                                      # */
+/* # Authors:                                                             # */
+/* #   - PERACHE Marc marc.perache@cea.fr                                 # */
+/* #   - CARRIBAULT Patrick patrick.carribault@cea.fr                     # */
+/* #   - CAPRA Antoine capra@paratools.com                                # */
+/* #                                                                      # */
+/* ######################################################################## */
+
+#include "mpcomp_types_def.h"
 
 #if ( !defined( __SCTK_MPCOMP_TASK_H__ ) && MPCOMP_TASK )
 #define __SCTK_MPCOMP_TASK_H__
 
-#include "mpcomp_enum_types.h"
+#include "sctk_bool.h"
+#include "sctk_spinlock.h"
+#include "mpcomp_types_icv.h"
 #include "mpcomp_task_macros.h"
 
-/** Declaration in mpcomp_internal.h 
+/** Declaration  mpcomp_types.h 
  *  Break loop of include 
  */
 struct mpcomp_node_s; 
@@ -22,26 +48,29 @@ typedef enum mpcomp_tasklist_type_e
 /** Property of an OpenMP task */
 typedef unsigned int mpcomp_task_property_t;
 
+/* Data structures */
 typedef struct mpcomp_task_taskgroup_s
 {
 	struct mpcomp_task_s* children;
 	struct mpcomp_task_taskgroup_s* prev;
-	unsigned long children_num;
+	sctk_atomics_int children_num;
 } mpcomp_task_taskgroup_t;
 
 /** OpenMP task data structure */
 typedef struct mpcomp_task_s
 {
-	void (*func) (void *);             			/**< Function to execute 										*/
-   void *data;                         		/**< Arguments of the function 								*/
+    void (*func) (void *);             			/**< Function to execute 										*/
+    void *data;                         		/**< Arguments of the function 								*/
 	bool if_clause;
-   mpcomp_task_property_t property;    		/**< Task property 												*/
+    sctk_atomics_int refcount;
+    mpcomp_task_property_t property;    		/**< Task property 												*/
 	struct mpcomp_task_taskgroup_s* taskgroup;
-   struct mpcomp_task_s *parent;       		/**< Mother task 													*/
-   struct mpcomp_task_s *children;     		/**< Children list 												*/
-   struct mpcomp_task_s *prev_child;   		/**< Prev sister task in mother task's children list 	*/
-   struct mpcomp_task_s *next_child;   		/**< Next sister task in mother task's children list 	*/
+    struct mpcomp_task_s *parent;       		/**< Mother task 													*/
+    struct mpcomp_task_s *children;     		/**< Children list 												*/
+    struct mpcomp_task_s *prev_child;   		/**< Prev sister task in mother task's children list 	*/
+    struct mpcomp_task_s *next_child;   		/**< Next sister task in mother task's children list 	*/
    sctk_spinlock_t children_lock;      		/**< Lock for the task's children list 					*/
+   sctk_spinlock_t task_lock;
    struct mpcomp_thread_s *thread;     		/**< The thread owning the task 								*/
    struct mpcomp_task_list_s *list;    		/**< The current list of the task 							*/
    struct mpcomp_task_s *prev;         		/**< Prev task in the thread's task list 					*/
@@ -70,7 +99,16 @@ typedef struct mpcomp_task_node_infos_s
 } mpcomp_task_node_infos_t;
 
 /** mvp and node share same struct */
-typedef struct mpcomp_task_node_infos_s mpcomp_task_mvp_infos_t;
+typedef struct mpcomp_task_mvp_infos_s
+{
+	struct mpcomp_node_s **tree_array_node;  												/**< Array representation of the tree 	*/
+	unsigned tree_array_rank;           													/**< Rank in tree_array 					*/
+	int *path;                          													/**< Path in the tree 						*/
+   struct mpcomp_task_list_s *tasklist[MPCOMP_TASK_TYPE_COUNT]; 					/**< Lists of tasks 							*/
+   struct mpcomp_task_list_s *lastStolen_tasklist[MPCOMP_TASK_TYPE_COUNT];
+   int tasklistNodeRank[MPCOMP_TASK_TYPE_COUNT];
+   struct drand48_data *tasklist_randBuffer;
+} mpcomp_task_mvp_infos_t;
 
 /**
  * Extend mpcomp_thread_t struct for openmp task support

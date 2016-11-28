@@ -8,8 +8,7 @@
 #define MPCOMP_GOMP_NO_ALIAS ""
 #define MPCOMP_GOMP_EMPTY_FN ""
  
- 
-#define GOMP_ABI_FUNC(gomp_name,version, wrapper, mpcomp_name) \
+#define GOMP_ABI_FUNC(gomp_name, version, wrapper, mpcomp_name) \
 	versionify(wrapper, gomp_name,version)
 #include "mpcomp_GOMP_version.h"
 #undef GOMP_ABI_FUNC

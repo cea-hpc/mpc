@@ -20,10 +20,11 @@
 /* #   - CARRIBAULT Patrick patrick.carribault@cea.fr                     # */
 /* #                                                                      # */
 /* ######################################################################## */
-#include <mpcomp.h>
-#include "mpcomp_internal.h"
-#include <sctk_debug.h>
 
+#include "sctk_debug.h"
+#include "mpcomp_core.h"
+#include "mpcomp_types.h"
+#include "mpcomp_barrier.h"
 
 /* 
    Perform a single construct.
@@ -31,15 +32,14 @@
    Return '1' if the next single construct has to be executed, '0' otherwise 
  */
 
-int
-__mpcomp_do_single (void)
+int mpcomp_do_single (void)
 {
   mpcomp_thread_t *t ;	/* Info on the current thread */
   mpcomp_team_t *team ;	/* Info on the team */
   long num_threads ;
 
   /* Handle orphaned directive (initialize OpenMP environment) */
-  __mpcomp_init() ;
+  mpcomp_init() ;
 
   /* Grab the thread info */
   t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
@@ -68,38 +68,28 @@ __mpcomp_do_single (void)
   current = t->single_sections_current ;
   t->single_sections_current++ ;
 
-  sctk_nodebug( "[%d]__mpcomp_do_single: Entering with current %d...", 
-		  t->rank, current ) ;
-  sctk_nodebug( "[%d]__mpcomp_do_single:   team current is %d",
-		  t->rank, sctk_atomics_load_int( &(team->single_sections_last_current) ) ) ;
+  sctk_nodebug( "[%d]%s : Entering with current %d...", __func__, t->rank, current ) ;
+  sctk_nodebug( "[%d]%s : team current is %d", __func__, t->rank, sctk_atomics_load_int( &(team->single_sections_last_current) ) ) ;
 
-  if ( current == sctk_atomics_load_int( &(team->single_sections_last_current) ) ) {
-	  int res ;
-	  res = sctk_atomics_cas_int( &(team->single_sections_last_current),
-			  current, current+1 ) ;
-
-	  sctk_debug( "[%d]__mpcomp_do_single: incr team %d -> %d ==> %d",
-			  t->rank, current, current+1, res ) ;
-
+  if ( current == sctk_atomics_load_int( &(team->single_sections_last_current) ) ) 
+  {
+	  const int res = sctk_atomics_cas_int( &(team->single_sections_last_current), current, current+1 ) ;
+	  sctk_nodebug( "[%d]%s: incr team %d -> %d ==> %d", __func__, t->rank, current, current+1, res ) ;
 	  /* Success => execute the single block */
-	  if ( res == current ) {
-		  return 1 ;
-	  }
+	  if ( res == current ) return 1; 
   }
 
   /* Do not execute the single block */
   return 0 ;
 }
 
-void *
-__mpcomp_do_single_copyprivate_begin (void)
+void *mpcomp_do_single_copyprivate_begin (void)
 {
 	mpcomp_thread_t *t ;	/* Info on the current thread */
 	mpcomp_team_t *team ;	/* Info on the team */
 
-	if ( __mpcomp_do_single() ) {
-		return NULL ;
-	}
+	if ( mpcomp_do_single() ) return NULL;
+
 	/* Grab the thread info */
 	t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
 	sctk_assert( t != NULL ) ;
@@ -112,14 +102,13 @@ __mpcomp_do_single_copyprivate_begin (void)
 	team = t->instance->team ;
 	sctk_assert( team != NULL ) ;
 
-	__mpcomp_barrier() ;
+	mpcomp_barrier() ;
 
 	return team->single_copyprivate_data ;
 
 }
 
-void
-__mpcomp_do_single_copyprivate_end (void *data)
+void mpcomp_do_single_copyprivate_end (void *data)
 {
 	mpcomp_thread_t *t ;	/* Info on the current thread */
 	mpcomp_team_t *team ;	/* Info on the team */
@@ -136,38 +125,40 @@ __mpcomp_do_single_copyprivate_end (void *data)
 
 	team->single_copyprivate_data = data ;
 
-	__mpcomp_barrier() ;
+	mpcomp_barrier() ;
 }
 
 
-void __mpcomp_single_coherency_entering_parallel_region( ) {
+void mpcomp_single_coherency_entering_parallel_region( void ) 
+{
 }
 
-void __mpcomp_single_coherency_end_barrier( ) {
-	int i ;
-  mpcomp_thread_t *t ;	/* Info on the current thread */
-  long num_threads ;
+void mpcomp_single_coherency_end_barrier( void ) 
+{
+    int i ;
+    mpcomp_thread_t *t ;	/* Info on the current thread */
+    long num_threads ;
 
-  /* Grab the thread info */
-  t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
-  sctk_assert( t != NULL ) ;
+    /* Grab the thread info */
+    t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
+    sctk_assert( t != NULL ) ;
 
-  /* Number of threads in the current team */
-  num_threads = t->info.num_threads;
-  sctk_assert( num_threads > 0 ) ;
-
-	for ( i = 0 ; i < num_threads ; i++ ) {
-  mpcomp_thread_t *target_t ;	
-
-	target_t = &(t->instance->mvps[i]->threads[0]) ;
-	sctk_nodebug( 
-				"__mpcomp_single_coherency_entering_parallel_region: "
-				"thread %d single_sections_current:%d single_sections_last_current:%d",
-				target_t->rank,
-				target_t->single_sections_current,
+    /* Number of threads in the current team */
+    num_threads = t->info.num_threads;
+    sctk_assert( num_threads > 0 );
+    for ( i = 0 ; i < num_threads ; i++ ) 
+    {
+	    mpcomp_thread_t* target_t = &(t->instance->mvps[i]->threads[0]) ;
+	    sctk_nodebug( 
+				"%s: thread %d single_sections_current:%d single_sections_last_current:%d",
+				__func__, target_t->rank, target_t->single_sections_current,
 				sctk_atomics_load_int( &(t->instance->team->single_sections_last_current) ) ) ;
-
-	
 	}
 }
 
+/* GOMP OPTIMIZED_1_0_WRAPPING */
+#ifndef NO_OPTIMIZED_GOMP_4_0_API_SUPPORT
+    __asm__(".symver mpcomp_do_single_copyprivate_end, GOMP_single_copy_end@@GOMP_1.0");
+    __asm__(".symver mpcomp_do_single_copyprivate_begin, GOMP_single_copy_start@@GOMP_1.0");
+    __asm__(".symver mpcomp_do_single, GOMP_single_start@@GOMP_1.0");
+#endif /* OPTIMIZED_GOMP_API_SUPPORT */

@@ -1,17 +1,19 @@
 #include "mpcomp_abi.h"
-#include "mpcomp_internal.h"
-#include "mpcomp_internal_utils.h"
+#include "mpcomp_types.h"
 #include "mpcomp_GOMP_wrapper.h"
+#include "sctk_debug.h"
+#include "mpcomp_tree_structs.h"
+
 //#include "mpcomp_GOMP_parallel_internal.h"
 
 /* Declaration from MPC
 TODO: put these declarations in header file
     ================================================================================   */
-//void __mpcomp_internal_begin_parallel_region(int arg_num_threads, mpcomp_new_parallel_region_info_t info);
-//void __mpcomp_internal_end_parallel_region(mpcomp_instance_t* instance);
+//void mpcomp_internal_begin_parallel_region(int arg_num_threads, mpcomp_new_parallel_region_info_t info);
+//void mpcomp_internal_end_parallel_region(mpcomp_instance_t* instance);
 /*   ================================================================================   */
 
-static void __mpcomp_internal_GOMP_in_order_scheduler_master_begin(mpcomp_mvp_t * mvp)
+static void mpcomp_internal_GOMP_in_order_scheduler_master_begin(mpcomp_mvp_t * mvp)
 {
    mpcomp_thread_t *t;
    
@@ -33,15 +35,15 @@ static void __mpcomp_internal_GOMP_in_order_scheduler_master_begin(mpcomp_mvp_t 
          break;
       case MPCOMP_COMBINED_SECTION:
          sctk_nodebug("%s:\n BEGIN - Combined parallel/sections w/ %d section(s)",__func__,t->info.nb_sections);
-         __mpcomp_sections_init(t,t->info.nb_sections);
+         mpcomp_sections_init(t,t->info.nb_sections);
          break;
       case MPCOMP_COMBINED_STATIC_LOOP:
          sctk_nodebug("%s:\tBEGIN - Combined parallel/loop",__func__);
-         __mpcomp_static_loop_init(t,t->info.loop_lb,t->info.loop_b,t->info.loop_incr,t->info.loop_chunk_size);
+         mpcomp_static_loop_init(t,t->info.loop_lb,t->info.loop_b,t->info.loop_incr,t->info.loop_chunk_size);
          break;
       case MPCOMP_COMBINED_DYN_LOOP:
          sctk_nodebug("%s:\tBEGIN - Combined parallel/loop",__func__);
-         __mpcomp_dynamic_loop_init(t,t->info.loop_lb,t->info.loop_b,t->info.loop_incr,t->info.loop_chunk_size);
+         mpcomp_dynamic_loop_init(t,t->info.loop_lb,t->info.loop_b,t->info.loop_incr,t->info.loop_chunk_size);
          break;
       default:
          not_implemented();
@@ -49,7 +51,7 @@ static void __mpcomp_internal_GOMP_in_order_scheduler_master_begin(mpcomp_mvp_t 
     }
 }
 
-static void __mpcomp_internal_GOMP_in_order_scheduler_master_end(void)
+static void mpcomp_internal_GOMP_in_order_scheduler_master_end(void)
 {
    mpcomp_thread_t *t = (mpcomp_thread_t*) sctk_openmp_thread_tls;
    sctk_assert(t != NULL);
@@ -68,7 +70,7 @@ static void __mpcomp_internal_GOMP_in_order_scheduler_master_end(void)
           break;
        case MPCOMP_COMBINED_DYN_LOOP:
           sctk_nodebug("%s:\tEND - Combined parallel/loop",__func__);
-          __mpcomp_dynamic_loop_end_nowait(t);
+          mpcomp_dynamic_loop_end_nowait(t);
           break;
        default:
           not_implemented();
@@ -77,31 +79,26 @@ static void __mpcomp_internal_GOMP_in_order_scheduler_master_end(void)
 
    t->done = 1; 
 
-    while( !mpcomp_task_all_task_executed() )
-    {
-        __mpcomp_task_schedule( 0 );
-    }
-
-    __mpcomp_taskwait();
+    mpcomp_taskwait();
 
    /* Restore previous TLS */
    sctk_openmp_thread_tls = t->father;
 }
 
-void __mpcomp_internal_GOMP_parallel_start(void (*fn) (void *), void *data, unsigned num_threads, unsigned int flags)
+void mpcomp_internal_GOMP_parallel_start(void (*fn) (void *), void *data, unsigned num_threads, unsigned int flags)
 {
     num_threads = (num_threads == 0) ? -1 : num_threads;
-    __mpcomp_start_parallel_region( num_threads, fn, data );
+    mpcomp_start_parallel_region( num_threads, fn, data );
 } 
 
-void __mpcomp_internal_GOMP_start_parallel_region(void (*fn) (void *), void *data, unsigned num_threads)
+void mpcomp_internal_GOMP_start_parallel_region(void (*fn) (void *), void *data, unsigned num_threads)
 {
    mpcomp_thread_t* t;
    mpcomp_new_parallel_region_info_t* info;
-   __mpcomp_GOMP_wrapper_t *wrapper_gomp;
+   mpcomp_GOMP_wrapper_t *wrapper_gomp;
 
    /* Initialize OpenMP environment */
-   __mpcomp_init();
+   mpcomp_init();
 
    t = (mpcomp_thread_t *) sctk_openmp_thread_tls; 
    sctk_assert(t != NULL);
@@ -109,31 +106,26 @@ void __mpcomp_internal_GOMP_start_parallel_region(void (*fn) (void *), void *dat
    /* Prepare MPC OpenMP parallel region infos */
    info = sctk_malloc(sizeof(mpcomp_new_parallel_region_info_t));
    sctk_assert(info);
-   __mpcomp_new_parallel_region_info_init(info);
+   mpcomp_parallel_region_infos_init(info);
 
-   wrapper_gomp = sctk_malloc(sizeof(__mpcomp_GOMP_wrapper_t));
-   sctk_assert(wrapper_gomp);
-   wrapper_gomp->fn = fn;
-   wrapper_gomp->data = data;
-
-   info->func = __mpcomp_GOMP_wrapper_fn;
-   info->shared = wrapper_gomp;
+   info->func = fn; 
+   info->shared = data;
    info->combined_pragma = MPCOMP_COMBINED_NONE;
    
    /* Begin scheduling */
    num_threads = (num_threads == 0) ? -1 : num_threads;
-   __mpcomp_internal_begin_parallel_region(num_threads, *info);
+   mpcomp_internal_begin_parallel_region(info, num_threads);
    
    /* Start scheduling */
    mpcomp_mvp_t * mvp = t->children_instance->mvps[0];
-   __mpcomp_internal_GOMP_in_order_scheduler_master_begin( mvp );
+   mpcomp_internal_GOMP_in_order_scheduler_master_begin( mvp );
 
    return;
 }
 
-void __mpcomp_internal_GOMP_end_parallel_region(void)
+void mpcomp_internal_GOMP_end_parallel_region(void)
 {
-   __mpcomp_internal_GOMP_in_order_scheduler_master_end();
+   mpcomp_internal_GOMP_in_order_scheduler_master_end();
 
    mpcomp_thread_t *t = sctk_openmp_thread_tls;   
    sctk_assert(t != NULL);
@@ -141,33 +133,33 @@ void __mpcomp_internal_GOMP_end_parallel_region(void)
    mpcomp_instance_t *instance = t->children_instance;
    sctk_assert(instance != NULL);
 
-   __mpcomp_internal_end_parallel_region( instance );
+   mpcomp_internal_end_parallel_region( instance );
 }
 
-void __mpcomp_internal_GOMP_parallel_loop_generic_start (void (*fn) (void *), void *data,
+void mpcomp_internal_GOMP_parallel_loop_generic_start (void (*fn) (void *), void *data,
 				  unsigned num_threads, long start, long end,
 				  long incr, long chunk_size, long combined_pragma)
 {
    mpcomp_thread_t *t;
    mpcomp_new_parallel_region_info_t* info;
-   __mpcomp_GOMP_wrapper_t *wrapper_gomp;
+   mpcomp_GOMP_wrapper_t *wrapper_gomp;
 
    /* Initialize OpenMP environment */
-   __mpcomp_init() ;
+   mpcomp_init() ;
 
    t = (mpcomp_thread_t *) sctk_openmp_thread_tls; 
    sctk_assert(t != NULL);
 
    info = sctk_malloc(sizeof(mpcomp_new_parallel_region_info_t));
    sctk_assert(info);
-   __mpcomp_new_parallel_region_info_init(info);
+   mpcomp_parallel_region_infos_init(info);
 
-   wrapper_gomp = sctk_malloc(sizeof(__mpcomp_GOMP_wrapper_t));
+   wrapper_gomp = sctk_malloc(sizeof(mpcomp_GOMP_wrapper_t));
    sctk_assert(wrapper_gomp);
    wrapper_gomp->fn = fn;
    wrapper_gomp->data = data;
 
-   info->func = __mpcomp_GOMP_wrapper_fn;
+   info->func = mpcomp_GOMP_wrapper_fn;
    info->shared = wrapper_gomp;
    info->combined_pragma = combined_pragma;
 
@@ -178,24 +170,24 @@ void __mpcomp_internal_GOMP_parallel_loop_generic_start (void (*fn) (void *), vo
 
     /* Begin scheduling */
    num_threads = (num_threads == 0) ? -1 : num_threads; 
-   __mpcomp_internal_begin_parallel_region(num_threads, *info);
+   mpcomp_internal_begin_parallel_region(info, num_threads);
 
    /* Start scheduling */
    mpcomp_mvp_t * mvp = t->children_instance->mvps[0];
-   __mpcomp_internal_GOMP_in_order_scheduler_master_begin(mvp);
+   mpcomp_internal_GOMP_in_order_scheduler_master_begin(mvp);
 
    return;
 }
 
-void __mpcomp_internal_GOMP_parallel_loop_guided_start (void (*fn) (void *), void *data,
+void mpcomp_internal_GOMP_parallel_loop_guided_start (void (*fn) (void *), void *data,
 				  unsigned num_threads, long start, long end,
 				  long incr, long chunk_size)
 {
    //TODO Implemented guided algorithm, Guided fallback to dynamic loop in mpcomp
-    __mpcomp_internal_GOMP_parallel_loop_generic_start(fn,data,num_threads,start,end,incr,chunk_size,(long)MPCOMP_COMBINED_GUIDED_LOOP);
+    mpcomp_internal_GOMP_parallel_loop_generic_start(fn,data,num_threads,start,end,incr,chunk_size,(long)MPCOMP_COMBINED_GUIDED_LOOP);
 }
 
-void __mpcomp_internal_GOMP_parallel_loop_runtime_start (void (*fn) (void *), void *data,
+void mpcomp_internal_GOMP_parallel_loop_runtime_start (void (*fn) (void *), void *data,
 				  unsigned num_threads, long start, long end,
 				  long incr)
 {
@@ -203,7 +195,7 @@ void __mpcomp_internal_GOMP_parallel_loop_runtime_start (void (*fn) (void *), vo
    mpcomp_thread_t *t ;    /* Info on the current thread */
 
    /* Handle orphaned directive (initialize OpenMP environment) */
-   __mpcomp_init();
+   mpcomp_init();
 
    /* Grab the thread info */
    t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
@@ -223,32 +215,32 @@ void __mpcomp_internal_GOMP_parallel_loop_runtime_start (void (*fn) (void *), vo
          break;
    }
    chunk_size = t->info.icvs.modifier_sched_var;
-   __mpcomp_internal_GOMP_parallel_loop_generic_start(fn,data,num_threads,start,end,incr,chunk_size,combined_pragma);
+   mpcomp_internal_GOMP_parallel_loop_generic_start(fn,data,num_threads,start,end,incr,chunk_size,combined_pragma);
 
 }
 
-void __mpcomp_internal_GOMP_parallel_sections_start(void (*fn) (void *), void *data, unsigned num_threads, unsigned count)
+void mpcomp_internal_GOMP_parallel_sections_start(void (*fn) (void *), void *data, unsigned num_threads, unsigned count)
 {
    mpcomp_thread_t *t;
    mpcomp_new_parallel_region_info_t* info;
-   __mpcomp_GOMP_wrapper_t *wrapper_gomp;
+   mpcomp_GOMP_wrapper_t *wrapper_gomp;
 
    /* Initialize OpenMP environment */
-   __mpcomp_init() ;
+   mpcomp_init() ;
 
    t = (mpcomp_thread_t *) sctk_openmp_thread_tls; 
    sctk_assert(t != NULL);
 
    info = sctk_malloc(sizeof(mpcomp_new_parallel_region_info_t));
    sctk_assert(info);
-   __mpcomp_new_parallel_region_info_init(info);
+   mpcomp_parallel_region_infos_init(info);
 
-   wrapper_gomp = sctk_malloc(sizeof(__mpcomp_GOMP_wrapper_t));
+   wrapper_gomp = sctk_malloc(sizeof(mpcomp_GOMP_wrapper_t));
    sctk_assert(wrapper_gomp);
    wrapper_gomp->fn = fn;
    wrapper_gomp->data = data;
 
-   info->func = __mpcomp_GOMP_wrapper_fn;
+   info->func = mpcomp_GOMP_wrapper_fn;
    info->shared = wrapper_gomp;
    info->combined_pragma = MPCOMP_COMBINED_SECTION;
 
@@ -256,11 +248,11 @@ void __mpcomp_internal_GOMP_parallel_sections_start(void (*fn) (void *), void *d
 
     /* Begin scheduling */
    num_threads = (num_threads == 0) ? -1 : num_threads; 
-   __mpcomp_internal_begin_parallel_region(num_threads, *info);
+   mpcomp_internal_begin_parallel_region(info, num_threads);
  
    /* Start scheduling */
    mpcomp_mvp_t * mvp = t->children_instance->mvps[0];
-   __mpcomp_internal_GOMP_in_order_scheduler_master_begin(mvp);
+   mpcomp_internal_GOMP_in_order_scheduler_master_begin(mvp);
 
    return;
 }

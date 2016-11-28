@@ -1,4 +1,4 @@
-#include <sctk_debug.h>
+#include "sctk_debug.h"
 #include "mpcomp_abi.h"
 #include "mpcomp_GOMP_common.h"
 

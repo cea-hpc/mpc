@@ -20,15 +20,19 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#include "mpcomp_internal.h"
+#include "mpcomp.h"
+#include "sctk_alloc.h"
+#include "mpcomp_core.h"
+#include "mpcomp_types.h"
+#include "sctk_debug.h"
 
 /* REGULAR LOCKS */
  
-void 
-omp_init_lock(omp_lock_t *lock)
+void omp_init_lock(omp_lock_t *lock)
 {
-  *lock = sctk_malloc(sizeof(sctk_thread_mutex_t));
-  sctk_thread_mutex_init(*lock, NULL);
+    *lock = sctk_malloc(sizeof(sctk_thread_mutex_t));
+    sctk_assert( *lock );
+    sctk_thread_mutex_init(*lock, NULL);
 }
 
 void 
@@ -71,7 +75,7 @@ void omp_destroy_nest_lock(omp_nest_lock_t *lock) {
 }
 
 void omp_set_nest_lock(omp_nest_lock_t *lock) {
-	__mpcomp_init ();
+	mpcomp_init ();
 
 	sctk_assert( sctk_openmp_thread_tls );
   	mpcomp_thread_t* thread = (mpcomp_thread_t*) sctk_openmp_thread_tls;
@@ -113,7 +117,7 @@ void omp_unset_nest_lock(omp_nest_lock_t *lock) {
 
 int omp_test_nest_lock(omp_nest_lock_t *lock) {
 
-  	__mpcomp_init ();
+  	mpcomp_init ();
 
 	sctk_assert( sctk_openmp_thread_tls );
   	mpcomp_thread_t* thread = (mpcomp_thread_t*) sctk_openmp_thread_tls;
@@ -121,7 +125,7 @@ int omp_test_nest_lock(omp_nest_lock_t *lock) {
   struct omp_nested_lock_s *llock = *lock;
 
   sctk_nodebug("omp_test_nest_lock: TEST owner=(%p,%p), thread=(%p)\n",
-               llock->owner_thread, llock->owner_task, t);
+               llock->owner_thread, llock->owner_task, thread);
 #if MPCOMP_TASK
   struct mpcomp_task_s* current_task = MPCOMP_TASK_THREAD_GET_CURRENT_TASK( thread ); 
   sctk_assert( current_task );
@@ -142,6 +146,6 @@ int omp_test_nest_lock(omp_nest_lock_t *lock) {
   llock->nb_nested++;
 
   sctk_nodebug("omp_test_nest_lock: SUCCESS owner=(%p,%p), thread=(%p)\n",
-               llock->owner_thread, llock->owner_task, t);
+               llock->owner_thread, llock->owner_task, thread);
   return llock->nb_nested;
 }

@@ -21,7 +21,7 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#include "mpcomp_macros.h"
+#include "mpcomp_types_def.h"
 
 #if ( !defined( __MPCOMP_TASK_LIST_H__ ) && defined( MPCOMP_TASK ) )
 #define __MPCOMP_TASK_LIST_H__
@@ -35,6 +35,7 @@
 
 #include "mpcomp_task.h"
 #include "mpcomp_alloc.h"
+#include "sctk_debug.h"
 
 /** OpenMP task list data structure */
 typedef struct mpcomp_task_list_s
@@ -115,22 +116,28 @@ mpcomp_task_list_pushtotail(mpcomp_task_list_t *list, mpcomp_task_t *task)
 }
 
 static inline mpcomp_task_t *
-mpcomp_task_list_popfromhead( mpcomp_task_list_t *list )
+mpcomp_task_list_popfromhead( mpcomp_task_list_t *list, int depth )
 {
-	if( !mpcomp_task_list_isempty( list ) ) 
-	{
-		mpcomp_task_t* task = list->head;
-      
-		list->head = task->next;
-		if( !( task->next ) )
-		{
-			list->tail = NULL;
-		}
-      sctk_atomics_decr_int(&list->nb_elements);
+    mpcomp_task_t* task = NULL;
+
+    /* No task in list */
+	if( mpcomp_task_list_isempty( list ) ) return NULL;
+
+    task = list->head;
+    sctk_assert( task );
+
+    /* No task with depth greater than mine in list */
+    if( task->depth <= depth && depth ) return NULL;
+
+    /* Get First task in list */
+    list->head = task->next;
+    if( !( task->next ) ) list->tail = NULL; 
+    sctk_atomics_decr_int(&list->nb_elements);
+
    	return task;
-	}
-	return NULL;
 }
+
+
 
 static inline mpcomp_task_t*
 mpcomp_task_list_popfromtail( mpcomp_task_list_t *list )
@@ -177,6 +184,26 @@ mpcomp_task_list_remove( mpcomp_task_list_t *list, mpcomp_task_t *task )
 	return 1;
 }
 
+static inline mpcomp_task_t* 
+mpcomp_task_list_search_task_in_list( mpcomp_task_list_t *list, int depth )
+{
+    mpcomp_task_t* cur_task = list->head;
+
+    while( cur_task )
+    {
+        if( cur_task->depth > depth ) break;
+        cur_task = cur_task->next;
+    }
+
+    if( cur_task != NULL )
+    {
+        mpcomp_task_list_remove( list, cur_task );
+    }
+    
+    return cur_task; 
+}
+
+
 static inline void 
 mpcomp_task_list_lock( mpcomp_task_list_t* list )
 {
@@ -189,10 +216,10 @@ mpcomp_task_list_unlock( mpcomp_task_list_t* list )
 	sctk_spinlock_unlock( &( list->lock ) );
 }
 
-static inline void 
+static inline int 
 mpcomp_task_list_trylock( mpcomp_task_list_t* list )
 {
-	sctk_spinlock_trylock( &( list->lock ) );
+	return sctk_spinlock_trylock( &( list->lock ) );
 }
 
 #endif /* !__MPCOMP_TASK_LIST_H__ && MPCOMP_TASK */

@@ -5,7 +5,6 @@
 #include <sctk_int.h>
 #include <sctk_asm.h>
 #include <sctk_atomics.h>
-//#include "mpcomp_internal.h"
 
 #define MPCOMP_TASK_DEP_GOMP_DEPS_FLAG   				8
 #define MPCOMP_TASK_DEP_MAX_DEP_PER_TASK				32000
@@ -136,7 +135,7 @@ typedef struct mpcomp_task_dep_task_infos_s
 static inline int
 mpcomp_task_dep_is_flag_with_deps( const unsigned flags )
 {
-	return (flags & MPCOMP_TASK_DEP_GOMP_DEPS_FLAG);
+	return flags & 8;
 }
 
 /** HASHING INTEL */

@@ -1,30 +1,31 @@
-#include <stdbool.h>
+#include "sctk_bool.h"
 #include "mpcomp_abi.h"
+#include "sctk_debug.h"
 #include "mpcomp_GOMP_common.h"
 #include "mpcomp_GOMP_parallel_internal.h"
 
-void __mpcomp_GOMP_parallel(void (*fn) (void *), void *data, unsigned num_threads, unsigned int flags)
+void mpcomp_GOMP_parallel(void (*fn) (void *), void *data, unsigned num_threads, unsigned flags)
 {
    sctk_nodebug("[Redirect GOMP]%s:\tBegin",__func__);
-    __mpcomp_internal_GOMP_parallel_start(fn, data, num_threads, flags);
+    mpcomp_internal_GOMP_parallel_start( fn, data, num_threads, flags);
    sctk_nodebug("[Redirect GOMP]%s:\tEnd",__func__);
 }
 
-void __mpcomp_GOMP_parallel_start (void (*fn) (void *), void *data, unsigned num_threads)
+void mpcomp_GOMP_parallel_start(void (*fn) (void *), void *data, unsigned num_threads)
 {
    sctk_nodebug("[Redirect GOMP]%s:\tBegin",__func__);
-   __mpcomp_internal_GOMP_start_parallel_region(fn, data, num_threads);
+   mpcomp_internal_GOMP_start_parallel_region( fn, data, num_threads);
    sctk_nodebug("[Redirect GOMP]%s:\tEnd",__func__);
 }
 
-void __mpcomp_GOMP_parallel_end (void)
+void mpcomp_GOMP_parallel_end(void)
 {
    sctk_nodebug("[Redirect GOMP]%s:\tBegin",__func__);
-   __mpcomp_internal_GOMP_end_parallel_region();
+   mpcomp_internal_GOMP_end_parallel_region();
    sctk_nodebug("[Redirect GOMP]%s:\tEnd",__func__);
 }
 
-bool __mpcomp_GOMP_cancellation_point(int which)
+bool mpcomp_GOMP_cancellation_point(int which)
 {
    sctk_nodebug("[Redirect GOMP]%s:\tBegin",__func__);
    not_implemented();
@@ -32,7 +33,7 @@ bool __mpcomp_GOMP_cancellation_point(int which)
    return false;
 }
 
-bool __mpcomp_GOMP_cancel(int which, bool do_cancel)
+bool mpcomp_GOMP_cancel(int which, bool do_cancel)
 {
    sctk_nodebug("[Redirect GOMP]%s:\tBegin",__func__);
    not_implemented();

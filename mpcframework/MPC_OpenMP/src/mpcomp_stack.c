@@ -20,11 +20,10 @@
 /* #   - CARRIBAULT Patrick patrick.carribault@cea.fr                     # */
 /* #                                                                      # */
 /* ######################################################################## */
-#include <mpcomp.h>
-#include <mpcomp_abi.h>
-#include "mpcomp_internal.h"
-#include <sctk_debug.h>
 
+#include "sctk_debug.h"
+#include "mpcomp_types.h"
+#include "mpcomp_stack.h"
 
 mpcomp_stack_t * __mpcomp_create_stack(int max_elements)
 {

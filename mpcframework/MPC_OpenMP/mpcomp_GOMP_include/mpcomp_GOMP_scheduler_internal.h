@@ -2,7 +2,8 @@
 #define __MPCOMP_GOMP_SCHEDULER_INTERNAL_H__
 
 #include "mpcomp_abi.h"
-#include "mpcomp_internal.h"
+#include "sctk_debug.h"
+#include "mpcomp_types.h"
 #include "mpcomp_internal_extended.h"
 
 /* Handle beginning of combined parallel region */

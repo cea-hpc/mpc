@@ -1,10 +1,11 @@
-#include "mpcomp_macros.h"
+#include "mpcomp_types_def.h"
 
 #if ( !defined( __MPCOMP_TASK_TREE_H__ ) && MPCOMP_TASK )
 #define __MPCOMP_TASK_TREE_H__
 
-#include "mpcomp_internal.h"
+#include "mpcomp_types.h"
 #include "mpcomp_alloc.h" 
+#include "sctk_debug.h"
 
 typedef struct mpcomp_task_tree_infos_s
 {

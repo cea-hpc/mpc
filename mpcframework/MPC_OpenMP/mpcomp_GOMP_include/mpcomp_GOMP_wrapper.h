@@ -1,24 +1,26 @@
 #ifndef __MPCOMP_GOMP_WRAPPER_H__
 #define __MPCOMP_GOMP_WRAPPER_H__
 
+#include "sctk_debug.h"
+
 /** 
  *
  */
-typedef struct __mpcomp_GOMP_wrapper_s
+typedef struct mpcomp_GOMP_wrapper_s
 {
    void(*fn)(void*);
    void* data;
-} __mpcomp_GOMP_wrapper_t;
+} mpcomp_GOMP_wrapper_t;
 
 /**
- * \fn void* __mpcomp_GOMP_wrapper_fn(void* args)
+ * \fn void* mpcomp_GOMP_wrapper_fn(void* args)
  * \brief Transform void(*fn)(void*) GOMP args to void*(*fn)(void*) \
- * unpack __mpcomp_gomp_wrapper_t.
+ * unpack mpcomp_gomp_wrapper_t.
  * \param arg opaque type
  */
-static inline void *__mpcomp_GOMP_wrapper_fn(void* args)
+static inline void *mpcomp_GOMP_wrapper_fn(void* args)
 {
-   __mpcomp_GOMP_wrapper_t* w = (__mpcomp_GOMP_wrapper_t*) args;
+   mpcomp_GOMP_wrapper_t* w = (mpcomp_GOMP_wrapper_t*) args;
    sctk_assert(w);
    sctk_assert(w->fn); 
    w->fn( w->data );

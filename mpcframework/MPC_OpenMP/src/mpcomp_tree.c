@@ -25,135 +25,19 @@
 #include "sctk_debug.h"
 #include "sctk_topology.h"
 #include "mpcomp.h"
-#include "mpcomp_internal.h"
 #include "sctk_alloc.h"
 
+#include "mpcomp_types.h"
+#include "mpcomp_stack.h"
 #include "mpcomp_alloc.h"
+#include "mpcomp_parallel_region.h"
+
 #include "mpcomp_tree_structs.h"
-
-/* Called only by __mpcomp_buid_tree */
-static int 
-mpcomp_get_global_index_from_cpu (hwloc_topology_t topo, const int vp)
-{
-     hwloc_topology_t globalTopology = sctk_get_topology_object();
-     // hwloc_topology_t globalTopology = sctk_get_topology_full_object() ;
-     const hwloc_obj_t pu = hwloc_get_obj_by_type(topo, HWLOC_OBJ_PU, vp);
-     hwloc_obj_t obj;
-
-     assume(pu);    
-     obj = hwloc_get_pu_obj_by_os_index(globalTopology, pu->os_index);
- 
-    return obj->logical_index;
-}
-
-/*
- * Restrict the topology object of the current mpi task to 'nb_mvps' vps.
- * This function handles multiple PUs per core.
- */
-int 
-__mpcomp_restrict_topology(hwloc_topology_t *restrictedTopology, int nb_mvps)
-{
-     hwloc_topology_t topology;
-     hwloc_cpuset_t cpuset;
-     hwloc_obj_t obj;
-     int taskRank, taskVp, err, i, nbvps ;
-     int nb_cores, nb_pus, nb_mvps_per_core ;
-     int mvp, core ;
-
-     /* Check input parameters */
-     sctk_assert( nb_mvps > 0 ) ;
-     sctk_assert ( restrictedTopology ) ;
-
-     /* Get the current MPI task rank */
-     taskRank = sctk_get_task_rank();
-
-     /* Initialize the final cpuset */
-     cpuset = hwloc_bitmap_alloc();
-
-     /* Get the current global topology (already restricted by MPC) */
-     topology = sctk_get_topology_object();
-
-     /* Grab the current VP and the number of VPs for the current task */
-     taskVp = sctk_get_init_vp_and_nbvp(taskRank, &nbvps);
-
-     /* We do not support more mVPs than VPs */
-     sctk_assert( nb_mvps <= nbvps ) ;
-
-     /* BEGIN DEBUG */
-     if (sctk_get_verbosity()>=3) 
-     {
-         fprintf( stderr, 
-                 "[[%d]] __mpcomp_restrict_topology: GENERAL TOPOLOGY (rank= %d, vp=%d, logical range=[%d,%d]) \n", 
-                 taskRank, taskRank, taskVp, taskVp, taskVp + nbvps - 1 ) ;
-         sctk_print_specific_topology( stderr, topology ) ;
-     }
-     /* END DEBUG */
-
-     /* Get information on the current topology */
-     nb_cores = hwloc_get_nbobjs_by_type(topology, HWLOC_OBJ_CORE);
-     nb_pus = hwloc_get_nbobjs_by_type(topology, HWLOC_OBJ_PU);
-     nb_mvps_per_core = nb_mvps / nb_cores;
-
-     if (sctk_get_verbosity()>=3) 
-     {
-fprintf( stderr, "[[%d]] __mpcomp_restrict_topology: General Topo: nb_cores = %d, nb_pus = %d\n",
-taskRank, nb_cores, nb_pus ) ;
-}
-
-     mvp = 0;
-     /* Iterate through all cores */
-     for (core = 0; core < nb_cores && mvp < nb_mvps; core++) 
-     {
-         int local_slot_size ;
-         hwloc_cpuset_t core_cpuset;
-         
-         /* Compute the number of PUs to handle for this core */
-         local_slot_size = nb_mvps_per_core;
-         if ((nb_mvps % nb_cores) > core)
-         {
-             local_slot_size++;
-         }
-
-         /* Get the core cpuset */
-         core_cpuset = (hwloc_get_obj_by_type(topology, HWLOC_OBJ_CORE, core))->cpuset;
-
-         /* Add the PUs we want from the core cpuset to our target cpuset */
-         for (i = 0; i < local_slot_size; i++, mvp++) 
-         {
-             hwloc_obj_t obj;
-             obj = hwloc_get_obj_inside_cpuset_by_type(topology, core_cpuset, HWLOC_OBJ_PU, i);
-             hwloc_bitmap_or(cpuset, cpuset, obj->cpuset);
-         }
-     }
-
-     /* Allocate topology object */
-     if ((err = hwloc_topology_init(restrictedTopology))) return -1;
-
-     /* Duplicate current topology object */
-     if ((err = hwloc_topology_dup(restrictedTopology, topology))) return -1;
-
-     /* Restrict topology */
-     if ((err = hwloc_topology_restrict(*restrictedTopology, 
-                     cpuset, HWLOC_RESTRICT_FLAG_ADAPT_DISTANCES))) return -1;      
-
-     /* BEGIN DEBUG */
-     if (sctk_get_verbosity()>=3) 
-     {
-         fprintf( stderr, 
-                 "[[%d]] __mpcomp_restrict_topology: RESTRICTED TOPOLOGY\n"
-               , taskRank ) ;
-         sctk_print_specific_topology( stderr, *restrictedTopology ) ;
-     }
-     /* END DEBUG */
-
-     return 0;
-}
 
 /**
  * Check if the following parameters are correct to build a coherent tree
  */
-int 
-__mpcomp_check_tree_parameters(int n_leaves, int depth, int *degree)
+static int __mpcomp_check_tree_parameters(int n_leaves, int depth, int *degree)
 {
      int i;
      int computed_n_leaves;
@@ -263,11 +147,140 @@ static int *__mpcomp_compute_topo_tree_array(hwloc_topology_t topology,
   return degree;
 }
 
+static void __mpcomp_print_tree( mpcomp_instance_t * instance ) {
+
+     mpcomp_stack_t * s;
+     int i, j;
+
+	 /* Skip the debug messages if not enough verbosity */
+	 if (sctk_get_verbosity()<3)
+		 return ;
+
+     sctk_assert( instance != NULL );
+
+     TODO("compute the real number of max elements for this stack")
+     s = __mpcomp_create_stack( 2048 );
+     sctk_assert( s != NULL );
+
+     __mpcomp_push( s, instance->root );
+
+	 TODO("Port this function w/ sctk_debug function by allocating strings") 
+
+     fprintf( stderr, "==== Printing the current OpenMP tree ====\n" );
+
+	 /* Print general information about the instance and the tree */
+	 fprintf( stderr, "Depth = %d, Degree = [",
+			 instance->tree_depth ) ;
+	 for ( i = 0 ; i < instance->tree_depth ; i++ ) {
+		 if ( i != 0 ) {
+			 fprintf( stderr, ", " ) ;
+		 }
+		 fprintf( stderr, "%d", instance->tree_base[i] ) ;
+	 }
+	 fprintf( stderr, "]" ) ;
+
+         /* Print the cumulative array */
+         fprintf(stderr, " Cumulative = [");
+         for (i = 0; i < instance->tree_depth; i++) {
+           if (i != 0) {
+             fprintf(stderr, ", ");
+           }
+           fprintf(stderr, "%d", instance->tree_cumulative[i]);
+         }
+         fprintf(stderr, "]");
+
+         /* Print the number of nodes per level */
+         fprintf(stderr, " #Nodes per depth = [");
+         for (i = 0; i <= instance->tree_depth; i++) {
+           if (i != 0) {
+             fprintf(stderr, ", ");
+           }
+           fprintf(stderr, "%d", instance->tree_nb_nodes_per_depth[i]);
+         }
+         fprintf(stderr, "]");
+
+         /* Print the level of physical cores and scatter */
+         fprintf(stderr, " physical_core level=%d, scatter level=%d",
+                 instance->core_depth, instance->scatter_depth);
+
+         fprintf(stderr, "\n");
+
+         while (!__mpcomp_is_stack_empty(s)) {
+           mpcomp_node_t *n;
+
+           n = __mpcomp_pop(s);
+           sctk_assert(n != NULL);
+
+           /* Print this node */
+
+           /* Add tab according to depth */
+           for (i = 0; i < n->depth; i++) {
+             fprintf(stderr, "\t");
+           }
+
+           /* Print main information about the node */
+           fprintf(stderr, "Node %ld (@ %p) -> NUMA %d, min/max ", n->rank, n,
+                   n->id_numa);
+
+           /* Print all min_index for each affinity */
+           for (i = 0; i < MPCOMP_AFFINITY_NB; i++) {
+             fprintf(stderr, "[%d]->%.2d ", i, n->min_index[i]);
+           }
+
+           /* Print main information about the node (cont.) */
+           fprintf(stderr, "(barrier_num_threads=%ld)\n",
+                   n->barrier_num_threads);
+
+           switch (n->child_type) {
+           case MPCOMP_CHILDREN_NODE:
+             for (i = n->nb_children - 1; i >= 0; i--) {
+               __mpcomp_push(s, n->children.node[i]);
+             }
+             break;
+           case MPCOMP_CHILDREN_LEAF:
+             for (i = 0; i < n->nb_children; i++) {
+               mpcomp_mvp_t *mvp;
+
+               mvp = n->children.leaf[i];
+               sctk_assert(mvp != NULL);
+
+               /* Add tab according to depth */
+               for (j = 0; j < n->depth + 1; j++) {
+                 fprintf(stderr, "\t");
+               }
+
+               fprintf(stderr, "Instance @ %p Leaf %d rank %d @ %p vp %d "
+                               "spinning on %p",
+                       instance, i, mvp->rank, &mvp, mvp->vp, mvp->to_run);
+
+               /* Print min_index for each affinity */
+               for (j = 0; j < MPCOMP_AFFINITY_NB; j++) {
+                 fprintf(stderr, " [%d]->%.2d", j, mvp->min_index[j]);
+               }
+
+               fprintf(stderr, " tree_rank @ %p", mvp->tree_rank);
+               for (j = 0; j < n->depth + 1; j++) {
+                 fprintf(stderr, " j=%d, %d", j, mvp->tree_rank[j]);
+               }
+
+               fprintf(stderr, "\n");
+             }
+             break;
+           default:
+             not_reachable();
+           }
+     }
+
+     __mpcomp_free_stack( s );
+     free( s );
+
+     return;
+}
 
 /*
  * Build the default tree.
  */
-int __mpcomp_build_default_tree(mpcomp_instance_t *instance)
+int mpcomp_build_default_tree(mpcomp_instance_t *instance)
 {
 	int depth ;
 	int * degree ;
@@ -310,15 +323,14 @@ int __mpcomp_build_default_tree(mpcomp_instance_t *instance)
         TODO("Check the tree in hybrid mode (not w/ sctk_get_cpu_number)")
 
         /* Build the default tree */
-        __mpcomp_build_tree(instance, n_leaves, depth, degree);
+        mpcomp_build_tree(instance, n_leaves, depth, degree);
 
-        sctk_nodebug("__mpcomp_build_auto_tree done");
+        sctk_nodebug("mpcomp_build_auto_tree done");
 
         return 1;
 }
 
-static int 
-__mpcomp_compute_scatter_min_index(
+static int __mpcomp_compute_scatter_min_index(
         mpcomp_node_t * father,
         mpcomp_instance_t * instance,
        int rank_in_children )
@@ -336,8 +348,7 @@ __mpcomp_compute_scatter_min_index(
 /*
  * Build a tree according to three parameters.
  */
-int 
-__mpcomp_build_tree( mpcomp_instance_t * instance, int n_leaves, int depth, int * degree ) 
+int mpcomp_build_tree( mpcomp_instance_t * instance, int n_leaves, int depth, int * degree ) 
 {
 	  mpcomp_node_t * root; /* Root of the tree */
 	  int current_mpc_vp; /* Current VP where the master is */
@@ -611,7 +622,7 @@ __mpcomp_build_tree( mpcomp_instance_t * instance, int n_leaves, int depth, int 
 
 			 if ( target_node != root ) {
 			   sctk_nodebug( "__mpcomp_build_tree: Creating mVPs #%d on VP #%d (index core %d)", 
-			       current_mvp, target_vp, mpcomp_get_global_index_from_cpu(instance->topology, target_vp)  ) ;
+			       current_mvp, target_vp, sctk_get_global_index_from_cpu(instance->topology, target_vp)  ) ;
 			      if ( i == 0 ) {
 				   sctk_assert( target_node != NULL );
 				   /* The first child is spinning on a node */
@@ -722,9 +733,9 @@ __mpcomp_build_tree( mpcomp_instance_t * instance, int n_leaves, int depth, int 
      }
 
      /* Free memory */
-     //__mpcomp_free_stack(s);
-     //free(s);
-     //free(order);
+     __mpcomp_free_stack(s);
+     free(s);
+     free(order);
 
      /* Print the final tree */
      __mpcomp_print_tree(instance);
@@ -732,133 +743,3 @@ __mpcomp_build_tree( mpcomp_instance_t * instance, int n_leaves, int depth, int 
      return 0;
 }
 
-void 
-__mpcomp_print_tree( mpcomp_instance_t * instance ) {
-
-     mpcomp_stack_t * s;
-     int i, j;
-
-	 /* Skip the debug messages if not enough verbosity */
-	 if (sctk_get_verbosity()<3)
-		 return ;
-
-     sctk_assert( instance != NULL );
-
-     TODO("compute the real number of max elements for this stack")
-     s = __mpcomp_create_stack( 2048 );
-     sctk_assert( s != NULL );
-
-     __mpcomp_push( s, instance->root );
-
-	 TODO("Port this function w/ sctk_debug function by allocating strings") 
-
-     fprintf( stderr, "==== Printing the current OpenMP tree ====\n" );
-
-	 /* Print general information about the instance and the tree */
-	 fprintf( stderr, "Depth = %d, Degree = [",
-			 instance->tree_depth ) ;
-	 for ( i = 0 ; i < instance->tree_depth ; i++ ) {
-		 if ( i != 0 ) {
-			 fprintf( stderr, ", " ) ;
-		 }
-		 fprintf( stderr, "%d", instance->tree_base[i] ) ;
-	 }
-	 fprintf( stderr, "]" ) ;
-
-         /* Print the cumulative array */
-         fprintf(stderr, " Cumulative = [");
-         for (i = 0; i < instance->tree_depth; i++) {
-           if (i != 0) {
-             fprintf(stderr, ", ");
-           }
-           fprintf(stderr, "%d", instance->tree_cumulative[i]);
-         }
-         fprintf(stderr, "]");
-
-         /* Print the number of nodes per level */
-         fprintf(stderr, " #Nodes per depth = [");
-         for (i = 0; i <= instance->tree_depth; i++) {
-           if (i != 0) {
-             fprintf(stderr, ", ");
-           }
-           fprintf(stderr, "%d", instance->tree_nb_nodes_per_depth[i]);
-         }
-         fprintf(stderr, "]");
-
-         /* Print the level of physical cores and scatter */
-         fprintf(stderr, " physical_core level=%d, scatter level=%d",
-                 instance->core_depth, instance->scatter_depth);
-
-         fprintf(stderr, "\n");
-
-         while (!__mpcomp_is_stack_empty(s)) {
-           mpcomp_node_t *n;
-
-           n = __mpcomp_pop(s);
-           sctk_assert(n != NULL);
-
-           /* Print this node */
-
-           /* Add tab according to depth */
-           for (i = 0; i < n->depth; i++) {
-             fprintf(stderr, "\t");
-           }
-
-           /* Print main information about the node */
-           fprintf(stderr, "Node %ld (@ %p) -> NUMA %d, min/max ", n->rank, n,
-                   n->id_numa);
-
-           /* Print all min_index for each affinity */
-           for (i = 0; i < MPCOMP_AFFINITY_NB; i++) {
-             fprintf(stderr, "[%d]->%.2d ", i, n->min_index[i]);
-           }
-
-           /* Print main information about the node (cont.) */
-           fprintf(stderr, "(barrier_num_threads=%ld)\n",
-                   n->barrier_num_threads);
-
-           switch (n->child_type) {
-           case MPCOMP_CHILDREN_NODE:
-             for (i = n->nb_children - 1; i >= 0; i--) {
-               __mpcomp_push(s, n->children.node[i]);
-             }
-             break;
-           case MPCOMP_CHILDREN_LEAF:
-             for (i = 0; i < n->nb_children; i++) {
-               mpcomp_mvp_t *mvp;
-
-               mvp = n->children.leaf[i];
-               sctk_assert(mvp != NULL);
-
-               /* Add tab according to depth */
-               for (j = 0; j < n->depth + 1; j++) {
-                 fprintf(stderr, "\t");
-               }
-
-               fprintf(stderr, "Instance @ %p Leaf %d rank %d @ %p vp %d "
-                               "spinning on %p",
-                       instance, i, mvp->rank, &mvp, mvp->vp, mvp->to_run);
-
-               /* Print min_index for each affinity */
-               for (j = 0; j < MPCOMP_AFFINITY_NB; j++) {
-                 fprintf(stderr, " [%d]->%.2d", j, mvp->min_index[j]);
-               }
-
-               fprintf(stderr, " tree_rank @ %p", mvp->tree_rank);
-               for (j = 0; j < n->depth + 1; j++) {
-                 fprintf(stderr, " j=%d, %d", j, mvp->tree_rank[j]);
-               }
-
-               fprintf(stderr, "\n");
-             }
-             break;
-           default:
-             not_reachable();
-           }
-     }
-
-     //__mpcomp_free_stack( s );
-     //free( s );
-
-     return;
-}

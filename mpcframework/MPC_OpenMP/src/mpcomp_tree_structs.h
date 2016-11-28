@@ -1,10 +1,10 @@
-#include "mpcomp_macros.h"
+#include "mpcomp_types_def.h"
 
 #ifndef __MPCOMP_TREE_STRUCTS_H__
 #define __MPCOMP_TREE_STRUCTS_H__
 
 #include "mpcomp_task.h"
-#include "mpcomp_internal.h"
+#include "mpcomp_types.h"
 #include "mpcomp_task_utils.h"
 
 static inline void

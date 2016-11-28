@@ -3,39 +3,39 @@
 
 #include <stdbool.h>
 
-bool __mpcomp_internal_GOMP_loop_ull_static_start(bool up, unsigned long long start, unsigned long long end,
+bool mpcomp_internal_GOMP_loop_ull_static_start(bool up, unsigned long long start, unsigned long long end,
                             unsigned long long incr, unsigned long long chunk_size,
                             unsigned long long *istart, unsigned long long *iend);
 
-bool __mpcomp_internal_GOMP_loop_ull_guided_start(bool up, unsigned long long start, unsigned long long end,
-                            unsigned long long incr, unsigned long long chunk_size,
-                            unsigned long long *istart, unsigned long long *iend);
-
-
-bool __mpcomp_internal_GOMP_loop_ull_dynamic_start(bool up, unsigned long long start, unsigned long long end,
+bool mpcomp_internal_GOMP_loop_ull_guided_start(bool up, unsigned long long start, unsigned long long end,
                             unsigned long long incr, unsigned long long chunk_size,
                             unsigned long long *istart, unsigned long long *iend);
 
 
-bool __mpcomp_internal_GOMP_loop_ull_guided_start(bool up, unsigned long long start, unsigned long long end,
-                            unsigned long long incr, unsigned long long chunk_size,
-                            unsigned long long *istart, unsigned long long *iend);
-
-bool __mpcomp_internal_GOMP_loop_ull_static_start(bool up, unsigned long long start, unsigned long long end,
-                            unsigned long long incr, unsigned long long chunk_size,
-                            unsigned long long *istart, unsigned long long *iend);
-
-bool __mpcomp_internal_GOMP_loop_ull_ordered_static_start(bool up, unsigned long long start, unsigned long long end,
+bool mpcomp_internal_GOMP_loop_ull_dynamic_start(bool up, unsigned long long start, unsigned long long end,
                             unsigned long long incr, unsigned long long chunk_size,
                             unsigned long long *istart, unsigned long long *iend);
 
 
-bool __mpcomp_internal_GOMP_loop_ull_ordered_dynamic_start(bool up, unsigned long long start, unsigned long long end,
+bool mpcomp_internal_GOMP_loop_ull_guided_start(bool up, unsigned long long start, unsigned long long end,
+                            unsigned long long incr, unsigned long long chunk_size,
+                            unsigned long long *istart, unsigned long long *iend);
+
+bool mpcomp_internal_GOMP_loop_ull_static_start(bool up, unsigned long long start, unsigned long long end,
+                            unsigned long long incr, unsigned long long chunk_size,
+                            unsigned long long *istart, unsigned long long *iend);
+
+bool mpcomp_internal_GOMP_loop_ull_ordered_static_start(bool up, unsigned long long start, unsigned long long end,
                             unsigned long long incr, unsigned long long chunk_size,
                             unsigned long long *istart, unsigned long long *iend);
 
 
-bool __mpcomp_internal_GOMP_loop_ull_ordered_guided_start(bool up, unsigned long long start, unsigned long long end,
+bool mpcomp_internal_GOMP_loop_ull_ordered_dynamic_start(bool up, unsigned long long start, unsigned long long end,
+                            unsigned long long incr, unsigned long long chunk_size,
+                            unsigned long long *istart, unsigned long long *iend);
+
+
+bool mpcomp_internal_GOMP_loop_ull_ordered_guided_start(bool up, unsigned long long start, unsigned long long end,
                             unsigned long long incr, unsigned long long chunk_size,
                             unsigned long long *istart, unsigned long long *iend);
 

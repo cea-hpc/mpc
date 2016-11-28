@@ -6,7 +6,8 @@
 #include <sctk_int.h>
 #include <sctk_asm.h>
 
-#include "mpcomp_internal.h"
+#include "sctk_debug.h"
+#include "mpcomp_types.h"
 #include "mpcomp_task_list.h"
 #include "mpcomp_task_utils.h"
 #include "mpcomp_tree_utils.h"

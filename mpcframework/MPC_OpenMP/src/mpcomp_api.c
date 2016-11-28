@@ -20,15 +20,17 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#include "mpcomp_internal.h"
 #include <sys/time.h>
+#include "sctk_debug.h"
+#include "mpcomp_core.h"
+#include "mpcomp_types.h"
+#include "mpcomp_task_utils.h"
 
-void
-omp_set_num_threads(int num_threads) 
+void omp_set_num_threads(int num_threads) 
 {
  mpcomp_thread_t * t;
 
- __mpcomp_init ();
+ mpcomp_init ();
 
  t = sctk_openmp_thread_tls;
  sctk_assert( t != NULL);
@@ -52,7 +54,7 @@ omp_get_thread_num (void)
 {
   mpcomp_thread_t * t ;
 
-  __mpcomp_init ();
+  mpcomp_init ();
 
   t = sctk_openmp_thread_tls ;
   sctk_assert( t != NULL ) ;
@@ -73,14 +75,15 @@ omp_get_max_threads (void)
 {
   mpcomp_thread_t * t ;
 
-  __mpcomp_init ();
+  mpcomp_init ();
 
   t = sctk_openmp_thread_tls ;
   sctk_assert( t != NULL ) ;
 
+  sctk_error("t : %p -- VALUE", t);
   sctk_nodebug("[%d] omp_get_max_threads: getting %d thread(s)", t->rank,
                t->info.icvs.nthreads_var);
-
+  
   return t->info.icvs.nthreads_var;
 }
 
@@ -93,7 +96,7 @@ omp_get_num_procs (void)
 {
   mpcomp_thread_t * t;
   
-  __mpcomp_init ();
+  mpcomp_init ();
 
   t = sctk_openmp_thread_tls;
   sctk_assert(t != NULL);
@@ -111,7 +114,7 @@ omp_set_dynamic (int dynamic_threads)
 {
   mpcomp_thread_t * t ;
 
-  __mpcomp_init ();
+  mpcomp_init ();
 
   sctk_nodebug( "omp_get_dynamic: entering" ) ;
 
@@ -131,7 +134,7 @@ omp_get_dynamic (void)
 {
   mpcomp_thread_t * t ;
 
-  __mpcomp_init ();
+  mpcomp_init ();
 
   sctk_nodebug( "omp_get_dynamic: entering" ) ;
 
@@ -150,7 +153,7 @@ omp_set_nested (int nested)
 {
   mpcomp_thread_t * t ;
 
-  __mpcomp_init ();
+  mpcomp_init ();
 
   sctk_nodebug( "omp_set_nested: entering" ) ;
 
@@ -169,7 +172,7 @@ omp_get_nested (void)
 {
   mpcomp_thread_t * t ;
 
-  __mpcomp_init ();
+  mpcomp_init ();
 
   sctk_nodebug( "omp_get_nested: entering" ) ;
 
@@ -189,7 +192,7 @@ omp_set_schedule( omp_sched_t kind, int modifier )
 {
   mpcomp_thread_t * t ;
 
-  __mpcomp_init ();
+  mpcomp_init ();
 
   sctk_nodebug( "omp_set_schedule: entering" ) ;
 
@@ -209,7 +212,7 @@ omp_get_schedule( omp_sched_t * kind, int * modifier )
 {
   mpcomp_thread_t * t ;
 
-  __mpcomp_init ();
+  mpcomp_init ();
 
   sctk_nodebug( "omp_get_chedule: entering" ) ;
 
@@ -230,7 +233,7 @@ omp_in_parallel (void)
 {
   mpcomp_thread_t * t ;
 
-  __mpcomp_init ();
+  mpcomp_init ();
 
   sctk_nodebug( "omp_in_parallel: entering" ) ;
 
@@ -249,7 +252,7 @@ omp_get_level (void)
 {
 	mpcomp_thread_t *t;
 
-	__mpcomp_init ();
+	mpcomp_init ();
 
 	t = sctk_openmp_thread_tls;
 	sctk_assert(t != NULL);
@@ -268,7 +271,7 @@ omp_get_active_level (void)
 {
 	mpcomp_thread_t *t;
 
-	__mpcomp_init ();
+	mpcomp_init ();
 
 	t = sctk_openmp_thread_tls;
 	sctk_assert(t != NULL);
@@ -291,7 +294,7 @@ omp_get_ancestor_thread_num(int level)
 	mpcomp_thread_t *t;
     int i ;
 
-	__mpcomp_init();
+	mpcomp_init();
 
         sctk_nodebug("omp_get_ancestor_thread_num: %d", level);
 
@@ -324,7 +327,7 @@ omp_get_team_size(int level)
 	mpcomp_thread_t *t;
     int i ;
 
-	__mpcomp_init();
+	mpcomp_init();
 
         sctk_nodebug("omp_get_team_size: %d", level);
 
@@ -355,7 +358,7 @@ omp_get_num_threads (void)
 {
   mpcomp_thread_t * t ;
 
-  __mpcomp_init ();
+  mpcomp_init ();
 
   sctk_nodebug( "omp_get_num_threads: entering" ) ;
 
@@ -395,7 +398,7 @@ omp_get_thread_limit()
 {
   mpcomp_thread_t * t;
   
-  __mpcomp_init ();
+  mpcomp_init ();
 
   t = sctk_openmp_thread_tls;
   sctk_assert(t != NULL);
@@ -431,7 +434,7 @@ omp_get_max_active_levels()
  *  */
   mpcomp_thread_t * t;
 
-  __mpcomp_init ();
+  mpcomp_init ();
 
   t = sctk_openmp_thread_tls;
   sctk_assert(t != NULL);
@@ -445,7 +448,7 @@ omp_get_max_active_levels()
  */
 int omp_in_final( void )
 {
-  	__mpcomp_init ();
+  	mpcomp_init ();
 
 	sctk_assert( sctk_openmp_thread_tls );
 	mpcomp_thread_t* thread = (mpcomp_thread_t*) sctk_openmp_thread_tls;

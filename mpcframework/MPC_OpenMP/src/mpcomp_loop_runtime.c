@@ -20,10 +20,11 @@
 /* #   - CARRIBAULT Patrick patrick.carribault@cea.fr                     # */
 /* #                                                                      # */
 /* ######################################################################## */
-#include <mpcomp.h>
-#include <mpcomp_abi.h>
-#include "mpcomp_internal.h"
-#include <sctk_debug.h>
+#include "mpcomp.h"
+#include "sctk_debug.h"
+#include "mpcomp_core.h"
+#include "mpcomp_types.h"
+#include "mpcomp_loop_runtime.h"
 
 TODO(runtime schedule: ICVs are not well transfered!)
 
@@ -33,127 +34,133 @@ TODO(runtime schedule: ICVs are not well transfered!)
  *
  *
  *****/
-int
-__mpcomp_runtime_loop_begin(
-  long lb, long b, long incr, 
-    long * from, long * to )
+int mpcomp_runtime_loop_begin( long lb, long b, long incr, long *from, long *to )
 {
-     mpcomp_thread_t *t ;	/* Info on the current thread */
-     long chunk_size;
+    int ret;
+    mpcomp_thread_t *t ;	/* Info on the current thread */
 
-     /* Handle orphaned directive (initialize OpenMP environment) */
-     __mpcomp_init();
+    /* Handle orphaned directive (initialize OpenMP environment) */
+    mpcomp_init();
 
-     /* Grab the thread info */
-     t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
-     sctk_assert( t != NULL ) ;
+    /* Grab the thread info */
+    t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
+    sctk_assert( t );
 
-     sctk_debug( "__mpcomp_runtime_loop_begin: value of schedule %d",
-         t->info.icvs.run_sched_var ) ;
+    t->schedule_type = ( t->schedule_is_forced ) ? t->schedule_type : MPCOMP_COMBINED_RUNTIME_LOOP;  
+    t->schedule_is_forced = 1;
+    
+    const int run_sched_var = t->info.icvs.run_sched_var;
+    const long chunk_size = t->info.icvs.modifier_sched_var;
 
-     chunk_size = t->info.icvs.modifier_sched_var;
+    sctk_nodebug( "%s: value of schedule %d", __func__, run_sched_var );
 
-     switch( t->info.icvs.run_sched_var ) {
-       case omp_sched_static:
-         return __mpcomp_static_loop_begin( lb, b, incr, chunk_size, from, to ) ;
-         break ;
-       case omp_sched_dynamic:
-         return __mpcomp_dynamic_loop_begin( lb, b, incr, chunk_size, from, to ) ;
-         break ;
-       case omp_sched_guided:
-         return __mpcomp_guided_loop_begin( lb, b, incr, chunk_size, from, to ) ;
-         break ;
-       default:
-	 not_reachable();
-         break ;
+
+    switch( run_sched_var ) 
+    {
+        case omp_sched_static:
+            ret = mpcomp_static_loop_begin( lb, b, incr, chunk_size, from, to ) ;
+            break;
+        case omp_sched_dynamic:
+            ret = mpcomp_dynamic_loop_begin( lb, b, incr, chunk_size, from, to ) ;
+            break ;
+        case omp_sched_guided:
+            ret = mpcomp_guided_loop_begin( lb, b, incr, chunk_size, from, to ) ;
+            break ;
+        default:
+	        not_reachable();
      }
 
-     return 0 ;
+     return ret ;
 }
 
-int
-__mpcomp_runtime_loop_next( long * from, long * to )
+int mpcomp_runtime_loop_next( long * from, long * to )
 {
-     mpcomp_thread_t *t ;	/* Info on the current thread */
+    int ret;
+    mpcomp_thread_t *t ;	/* Info on the current thread */
 
-     /* Handle orphaned directive (initialize OpenMP environment) */
-     __mpcomp_init();
+    /* Handle orphaned directive (initialize OpenMP environment) */
+    mpcomp_init();
 
-     /* Grab the thread info */
-     t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
-     sctk_assert( t != NULL ) ;
+    /* Grab the thread info */
+    t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
+    sctk_assert( t  ) ;
 
-     switch( t->info.icvs.run_sched_var ) {
-       case omp_sched_static:
-         return __mpcomp_static_loop_next( from, to ) ;
-         break ;
-       case omp_sched_dynamic:
-         return __mpcomp_dynamic_loop_next( from, to ) ;
-         break ;
-       case omp_sched_guided:
-         return __mpcomp_guided_loop_next( from, to ) ;
-         break ;
-       default:
-	 not_reachable();
-         break ;
+    const int run_sched_var = t->info.icvs.run_sched_var;
+
+    switch( run_sched_var ) 
+    {
+        case omp_sched_static:
+            ret = mpcomp_static_loop_next( from, to ) ;
+            break;
+        case omp_sched_dynamic:
+            ret = mpcomp_dynamic_loop_next( from, to ) ;
+            break;
+        case omp_sched_guided:
+            ret = mpcomp_guided_loop_next( from, to ) ;
+            break;
+        default:
+            not_reachable();
      }
 
-     return 0 ;
+     return ret;
 }
 
-void
-__mpcomp_runtime_loop_end ()
+void mpcomp_runtime_loop_end( void )
 {
-     mpcomp_thread_t *t ;	/* Info on the current thread */
+    mpcomp_thread_t *t ;	/* Info on the current thread */
 
-     /* Handle orphaned directive (initialize OpenMP environment) */
-     __mpcomp_init();
+    /* Handle orphaned directive (initialize OpenMP environment) */
+    mpcomp_init();
 
-     /* Grab the thread info */
-     t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
-     sctk_assert( t != NULL ) ;
+    /* Grab the thread info */
+    t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
+    sctk_assert( t != NULL ) ;
 
-     switch( t->info.icvs.run_sched_var ) {
-       case omp_sched_static:
-         return __mpcomp_static_loop_end() ;
-         break ;
-       case omp_sched_dynamic:
-         return __mpcomp_dynamic_loop_end() ;
-         break ;
-       case omp_sched_guided:
-         return __mpcomp_guided_loop_end() ;
-         break ;
-       default:
-	 not_reachable();
-         break ;
+    const int run_sched_var = t->info.icvs.run_sched_var;
+    //const int run_sched_var = t->schedule_type;
+
+    switch( run_sched_var ) 
+    {
+        case omp_sched_static:
+            mpcomp_static_loop_end() ;
+            break ;
+        case omp_sched_dynamic:
+            mpcomp_dynamic_loop_end() ;
+            break;
+        case omp_sched_guided:
+            mpcomp_guided_loop_end() ;
+            break ;
+        default:
+	        not_reachable();
      }
 }
 
-void
-__mpcomp_runtime_loop_end_nowait ()
+void mpcomp_runtime_loop_end_nowait ()
 {
-     mpcomp_thread_t *t ;	/* Info on the current thread */
+    mpcomp_thread_t *t ;	/* Info on the current thread */
 
-     /* Handle orphaned directive (initialize OpenMP environment) */
-     __mpcomp_init();
+    /* Handle orphaned directive (initialize OpenMP environment) */
+     mpcomp_init();
 
-     /* Grab the thread info */
-     t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
-     sctk_assert( t != NULL ) ;
+    /* Grab the thread info */
+    t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
+    sctk_assert( t != NULL ) ;
 
-     switch( t->info.icvs.run_sched_var ) {
-       case omp_sched_static:
-         return __mpcomp_static_loop_end_nowait() ;
-         break ;
-       case omp_sched_dynamic:
-         return __mpcomp_dynamic_loop_end_nowait() ;
-         break ;
-       case omp_sched_guided:
-         return __mpcomp_guided_loop_end_nowait() ;
-         break ;
+    const int run_sched_var = t->info.icvs.run_sched_var;
+
+    switch( run_sched_var ) 
+    {
+        case omp_sched_static:
+            mpcomp_static_loop_end_nowait();
+            break;
+        case omp_sched_dynamic:
+            mpcomp_dynamic_loop_end_nowait();
+            break;
+        case omp_sched_guided:
+            mpcomp_guided_loop_end_nowait();
+            break;
        default:
-	 not_reachable();
-         break ;
+	        not_reachable();
      }
 }
 
@@ -164,80 +171,81 @@ __mpcomp_runtime_loop_end_nowait ()
  *
  *****/
 
-int
-__mpcomp_ordered_runtime_loop_begin (long lb, long b, long incr,
+int mpcomp_ordered_runtime_loop_begin (long lb, long b, long incr,
 				     long *from, long *to)
 {
-     mpcomp_thread_t *t ;	/* Info on the current thread */
-     long chunk_size;
+    int ret;
+    mpcomp_thread_t *t ;	/* Info on the current thread */
 
      /* Handle orphaned directive (initialize OpenMP environment) */
-     __mpcomp_init();
+     mpcomp_init();
 
      /* Grab the thread info */
      t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
      sctk_assert( t != NULL ) ;
 
-     chunk_size = t->info.icvs.modifier_sched_var;
+    t->schedule_type = ( t->schedule_is_forced ) ? t->schedule_type : MPCOMP_COMBINED_RUNTIME_LOOP;  
+    t->schedule_is_forced = 1;
 
-     switch( t->info.icvs.run_sched_var ) {
+    const int run_sched_var = t->info.icvs.run_sched_var;
+    const long chunk_size = t->info.icvs.modifier_sched_var;
+
+     switch( run_sched_var ) {
        case omp_sched_static:
-         return __mpcomp_ordered_static_loop_begin(lb,b,incr,chunk_size,from,to) ;
+         ret =  mpcomp_ordered_static_loop_begin(lb,b,incr,chunk_size,from,to) ;
          break ;
        case omp_sched_dynamic:
-         return __mpcomp_ordered_dynamic_loop_begin(lb,b,incr,chunk_size,from,to) ;
+         ret =  mpcomp_ordered_dynamic_loop_begin(lb,b,incr,chunk_size,from,to) ;
          break ;
        case omp_sched_guided:
-         return __mpcomp_ordered_guided_loop_begin(lb,b,incr,chunk_size,from,to) ;
+         ret = mpcomp_ordered_guided_loop_begin(lb,b,incr,chunk_size,from,to) ;
          break ;
        default:
-	 not_reachable();
-         break ;
+	        not_reachable();
      }
 
-	 return 0 ;
+	 return ret ;
 }
 
-int
-__mpcomp_ordered_runtime_loop_next(long *from, long *to)
+int mpcomp_ordered_runtime_loop_next(long *from, long *to)
 {
+    int ret;
      mpcomp_thread_t *t ;	/* Info on the current thread */
 
      /* Handle orphaned directive (initialize OpenMP environment) */
-     __mpcomp_init();
+     mpcomp_init();
 
      /* Grab the thread info */
      t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
      sctk_assert( t != NULL ) ;
+    
+    const int run_sched_var = t->info.icvs.run_sched_var;
 
-     switch( t->info.icvs.run_sched_var ) {
+     switch( run_sched_var ) {
        case omp_sched_static:
-         return __mpcomp_ordered_static_loop_next(from,to) ;
+         ret =  mpcomp_ordered_static_loop_next(from,to) ;
          break ;
        case omp_sched_dynamic:
-         return __mpcomp_ordered_dynamic_loop_next(from,to) ;
+         ret =  mpcomp_ordered_dynamic_loop_next(from,to) ;
          break ;
        case omp_sched_guided:
-         return __mpcomp_ordered_guided_loop_next(from,to) ;
+         ret =  mpcomp_ordered_guided_loop_next(from,to) ;
          break ;
        default:
 	 not_reachable();
-         break ;
      }
 
-	 return 0 ;
+	 return ret ;
 }
 
-void
-__mpcomp_ordered_runtime_loop_end()
+void mpcomp_ordered_runtime_loop_end( void )
 {
-     __mpcomp_runtime_loop_end();
+     mpcomp_runtime_loop_end();
 }
 
-void
-__mpcomp_ordered_runtime_loop_end_nowait()
+void mpcomp_ordered_runtime_loop_end_nowait( void )
 {
-     __mpcomp_runtime_loop_end();
+     mpcomp_runtime_loop_end();
 }
 
 /****
@@ -246,49 +254,50 @@ __mpcomp_ordered_runtime_loop_end_nowait()
  *
  *
  *****/
-int
-__mpcomp_loop_ull_runtime_begin(unsigned long long lb, unsigned long long b, unsigned long long incr, unsigned long long * from, unsigned long long * to )
+int mpcomp_loop_ull_runtime_begin( bool up, unsigned long long lb, unsigned long long b, unsigned long long incr, unsigned long long * from, unsigned long long * to )
 {
+    int ret;
      mpcomp_thread_t *t ;	/* Info on the current thread */
-     unsigned long long chunk_size;
 
      /* Handle orphaned directive (initialize OpenMP environment) */
-     __mpcomp_init();
+     mpcomp_init();
 
      /* Grab the thread info */
      t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
      sctk_assert( t != NULL ) ;
 
-     sctk_debug( "__mpcomp_runtime_loop_begin: value of schedule %d",
-         t->info.icvs.run_sched_var ) ;
+    t->schedule_type = ( t->schedule_is_forced ) ? t->schedule_type : MPCOMP_COMBINED_RUNTIME_LOOP;  
+    t->schedule_is_forced = 1;
 
-     chunk_size = (unsigned long long)t->info.icvs.modifier_sched_var;
+    const int run_sched_var = t->info.icvs.run_sched_var ;
+    const unsigned long long chunk_size = (unsigned long long)t->info.icvs.modifier_sched_var;
+
+     sctk_nodebug("%s: value of schedule %d", __func__, run_sched_var ) ;
 
      switch( t->info.icvs.run_sched_var ) {
        case omp_sched_static:
-         return __mpcomp_loop_ull_static_begin( lb, b, incr, chunk_size, from, to ) ;
+         ret = mpcomp_loop_ull_static_begin( up, lb, b, incr, chunk_size, from, to ) ;
          break ;
        case omp_sched_dynamic:
-         return __mpcomp_loop_ull_dynamic_begin( lb, b, incr, chunk_size, from, to ) ;
+         ret = mpcomp_loop_ull_dynamic_begin( up, lb, b, incr, chunk_size, from, to ) ;
          break ;
        case omp_sched_guided:
-         return __mpcomp_loop_ull_guided_begin( lb, b, incr, chunk_size, from, to ) ;
+         ret =  mpcomp_loop_ull_guided_begin( up, lb, b, incr, chunk_size, from, to ) ;
          break ;
        default:
 	 not_reachable();
-         break ;
      }
 
-     return 0 ;
+     return ret ;
 }
 
-int
-__mpcomp_loop_ull_runtime_next( unsigned long long * from, unsigned long long * to )
+int mpcomp_loop_ull_runtime_next( unsigned long long * from, unsigned long long * to )
 {
+    int ret;
      mpcomp_thread_t *t ;	/* Info on the current thread */
 
      /* Handle orphaned directive (initialize OpenMP environment) */
-     __mpcomp_init();
+     mpcomp_init();
 
      /* Grab the thread info */
      t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
@@ -296,20 +305,19 @@ __mpcomp_loop_ull_runtime_next( unsigned long long * from, unsigned long long * 
 
      switch( t->info.icvs.run_sched_var ) {
        case omp_sched_static:
-         return __mpcomp_loop_ull_static_next( from, to ) ;
+         ret =  mpcomp_loop_ull_static_next( from, to ) ;
          break ;
        case omp_sched_dynamic:
-         return __mpcomp_loop_ull_dynamic_next( from, to ) ;
+         ret =  mpcomp_loop_ull_dynamic_next( from, to ) ;
          break ;
        case omp_sched_guided:
-         return __mpcomp_loop_ull_guided_next( from, to ) ;
+         ret = mpcomp_loop_ull_guided_next( from, to ) ;
          break ;
        default:
-	 not_reachable();
-         break ;
+	    not_reachable();
      }
 
-     return 0 ;
+     return ret ;
 }
 
 /****
@@ -318,71 +326,74 @@ __mpcomp_loop_ull_runtime_next( unsigned long long * from, unsigned long long * 
  *
  *
  *****/
-int
-__mpcomp_loop_ull_ordered_runtime_begin(unsigned long long lb, unsigned long long b, unsigned long long incr, unsigned long long * from, unsigned long long * to )
+int mpcomp_loop_ull_ordered_runtime_begin(unsigned long long lb, unsigned long long b, unsigned long long incr, unsigned long long * from, unsigned long long * to )
 {
-     mpcomp_thread_t *t ;	/* Info on the current thread */
-     unsigned long long chunk_size;
+    int ret;
+    mpcomp_thread_t *t ;	/* Info on the current thread */
 
-     /* Handle orphaned directive (initialize OpenMP environment) */
-     __mpcomp_init();
+    /* Handle orphaned directive (initialize OpenMP environment) */
+    mpcomp_init();
 
-     /* Grab the thread info */
-     t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
-     sctk_assert( t != NULL ) ;
+    /* Grab the thread info */
+    t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
+    sctk_assert( t != NULL ) ;
 
-     sctk_debug( "__mpcomp_runtime_loop_begin: value of schedule %d",
-         t->info.icvs.run_sched_var ) ;
+    t->schedule_type = ( t->schedule_is_forced ) ? t->schedule_type : MPCOMP_COMBINED_RUNTIME_LOOP;  
+    t->schedule_is_forced = 1;
 
-     chunk_size = (unsigned long long)t->info.icvs.modifier_sched_var;
+    const int run_sched_var = t->info.icvs.run_sched_var ;
+    const unsigned long long chunk_size = (unsigned long long) t->info.icvs.modifier_sched_var;
 
-     switch( t->info.icvs.run_sched_var ) {
-       case omp_sched_static:
-         return __mpcomp_loop_ull_ordered_static_begin( lb, b, incr, chunk_size, from, to ) ;
-         break ;
-       case omp_sched_dynamic:
-         return __mpcomp_loop_ull_ordered_dynamic_begin( lb, b, incr, chunk_size, from, to ) ;
-         break ;
-       case omp_sched_guided:
-         return __mpcomp_loop_ull_ordered_guided_begin( lb, b, incr, chunk_size, from, to ) ;
-         break ;
-       default:
-	 not_reachable();
-         break ;
+    sctk_nodebug( "%s: value of schedule %d", __func__, run_sched_var );
+
+    switch( run_sched_var ) 
+    {
+        case omp_sched_static:
+            ret = mpcomp_loop_ull_ordered_static_begin( lb, b, incr, chunk_size, from, to ) ;
+            break;
+        case omp_sched_dynamic:
+            ret = mpcomp_loop_ull_ordered_dynamic_begin(  lb, b, incr, chunk_size, from, to ) ;
+            break ;
+        case omp_sched_guided:
+            ret = mpcomp_loop_ull_ordered_guided_begin(  lb, b, incr, chunk_size, from, to ) ;
+            break ;
+        default:
+	        not_reachable();
      }
 
-     return 0 ;
+     return ret;
 }
 
-int
-__mpcomp_loop_ull_ordered_runtime_next( unsigned long long * from, unsigned long long * to )
+int mpcomp_loop_ull_ordered_runtime_next( unsigned long long * from, unsigned long long * to )
 {
-     mpcomp_thread_t *t ;	/* Info on the current thread */
+    int ret;
+    mpcomp_thread_t *t ;	/* Info on the current thread */
 
-     /* Handle orphaned directive (initialize OpenMP environment) */
-     __mpcomp_init();
+    /* Handle orphaned directive (initialize OpenMP environment) */
+    mpcomp_init();
 
-     /* Grab the thread info */
-     t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
-     sctk_assert( t != NULL ) ;
+    /* Grab the thread info */
+    t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
+    sctk_assert( t != NULL ) ;
 
-     switch( t->info.icvs.run_sched_var ) {
+    const int run_sched_var = t->info.icvs.run_sched_var ;
+
+    switch( run_sched_var ) 
+    {
        case omp_sched_static:
-         return __mpcomp_loop_ull_ordered_static_next( from, to ) ;
+         ret = mpcomp_loop_ull_ordered_static_next( from, to ) ;
          break ;
        case omp_sched_dynamic:
-         return __mpcomp_loop_ull_ordered_dynamic_next( from, to ) ;
+         ret = mpcomp_loop_ull_ordered_dynamic_next( from, to ) ;
          break ;
        case omp_sched_guided:
-         return __mpcomp_loop_ull_ordered_guided_next( from, to ) ;
+         ret = mpcomp_loop_ull_ordered_guided_next( from, to ) ;
          break ;
        default:
-	 not_reachable();
-         break ;
+	    not_reachable();
      }
 
-     return 0 ;
+    return ret ;
 }
-
 
 

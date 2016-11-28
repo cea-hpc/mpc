@@ -1,9 +1,11 @@
-#include "mpcomp_macros.h"
+#include "mpcomp_types_def.h"
 
 #if ( !defined( __MPCOMP_TASK_MACROS_H__ ) && MPCOMP_TASK )
 #define __MPCOMP_TASK_MACROS_H__
 
 #include "sctk_atomics.h"
+#include "mpcomp_types.h"
+#include "mpcomp_task.h"
 
 #if KMP_ARCH_X86
 	#define KMP_SIZE_T_MAX (0xFFFFFFFF)
@@ -17,7 +19,6 @@
 #define MPCOMP_TASK_DEFAULT_ALIGN 8
 
 #define MPCOMP_TASK_MAX_DELAYED 1024
-
 
 /*** Tasks property bitmasks ***/
 
