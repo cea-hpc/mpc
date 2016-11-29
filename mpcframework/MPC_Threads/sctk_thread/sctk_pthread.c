@@ -173,7 +173,8 @@ tls_start_routine (void *arg)
   void *res;
   tmp = arg;
 #if defined(SCTK_USE_TLS)
-  *((extls_ctx_t**)extls_get_context_storage_addr()) = tmp->tls;
+  /**((extls_ctx_t**)extls_get_context_storage_addr()) = tmp->tls;*/
+  extls_ctx_restore((extls_ctx_t*)tmp->tls);
 #endif
 
   res = tmp->start_routine (tmp->arg);
