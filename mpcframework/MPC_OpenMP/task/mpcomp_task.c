@@ -140,7 +140,6 @@ __mpcomp_task_execute( mpcomp_task_t* task )
 	thread->info.icvs = task->icvs;
 
    // __mpcomp_task_intel_wrapper( task );
-    sctk_error(">>>>>>>>>>>>> EXECUTE TASK %p", task );
 
 	/* Execute task */
 	task->func( task->data );
@@ -155,7 +154,6 @@ __mpcomp_task_execute( mpcomp_task_t* task )
 
    /* Reset task owner for implicite task */
    task->thread = NULL;
-   sctk_nodebug("<<<<<<<<<<<<<<<<<< EXECUTE TASK %p", task );
 }
 
 #if MPC_USE_SISTER_LIST 
@@ -372,7 +370,7 @@ __mpcomp_task_alloc( void (*fn) (void *), void *data, void (*cpyfn) (void *, voi
 	sctk_assert( MPCOMP_OVERFLOW_SANITY_CHECK( mpcomp_task_tot_size, mpcomp_task_data_size ));
 	mpcomp_task_tot_size += mpcomp_task_data_size;
 
-    struct mpcomp_task_s *new_task = mpcomp_malloc( 1, mpcomp_task_tot_size, 0 /*t->mvp->father->id_numa */);
+   struct mpcomp_task_s *new_task = mpcomp_malloc( 1, mpcomp_task_tot_size, 0 /*t->mvp->father->id_numa */);
 	sctk_assert( new_task != NULL );
 
 	void* task_data = ( arg_size > 0 ) ? ( void*) ( (uintptr_t) new_task + mpcomp_task_info_size ) : NULL;
@@ -406,8 +404,8 @@ __mpcomp_task_alloc( void (*fn) (void *), void *data, void (*cpyfn) (void *, voi
 
 	/* taskgroup */
 	mpcomp_task_t* current_task = MPCOMP_TASK_THREAD_GET_CURRENT_TASK( t );
-    mpcomp_taskgroup_add_task( new_task ); 
-    mpcomp_task_ref_parent_task( new_task );
+   mpcomp_taskgroup_add_task( new_task ); 
+   mpcomp_task_ref_parent_task( new_task );
 	
    return new_task;
 }
@@ -476,10 +474,8 @@ __mpcomp_task_process( mpcomp_task_t* new_task, bool if_clause )
    mpcomp_task_set_property ( &( new_task->property ), MPCOMP_TASK_UNDEFERRED );
    __mpcomp_task_execute( new_task );
 
-   //mpcomp_tast_clear_sister( new_task );
-   //mpcomp_task_clear_parent( new_task );
    mpcomp_taskgroup_del_task( new_task ); 
-   //__mpcomp_task_finalize_deps( new_task );
+   __mpcomp_task_finalize_deps( new_task );
    mpcomp_task_unref_parent_task( new_task );
 }
 
@@ -706,7 +702,7 @@ void mpcomp_task_schedule( int depth )
 	//mpcomp_tast_clear_sister( task );
 	//mpcomp_task_clear_parent( task );
     mpcomp_taskgroup_del_task( task ); 
-	//__mpcomp_task_finalize_deps( task );
+	__mpcomp_task_finalize_deps( task );
     mpcomp_task_unref_parent_task( task );
 }
 
