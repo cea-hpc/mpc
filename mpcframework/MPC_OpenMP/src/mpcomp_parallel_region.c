@@ -82,6 +82,7 @@ void __mpcomp_internal_begin_parallel_region( mpcomp_new_parallel_region_info_t*
     instance->team->info.func = info->func;
     instance->team->info.shared = info->shared;
     instance->team->info.num_threads = num_threads;
+    sctk_error( "value : %p", instance->root );
     instance->team->info.new_root = instance->root;
 
     /* Do not touch to single_sections_current_save and for_dyn_current_save */

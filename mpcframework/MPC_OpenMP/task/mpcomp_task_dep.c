@@ -160,7 +160,6 @@ __mpcomp_task_finalize_deps( mpcomp_task_t* task )
 	}
 	
 	task_node = task->task_dep_infos->node;
-	sctk_assert( task_node );
 
 	/* No dependers */
 	if( !( task_node ) ) 

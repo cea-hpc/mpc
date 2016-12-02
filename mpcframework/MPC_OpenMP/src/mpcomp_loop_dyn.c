@@ -134,7 +134,6 @@ int __mpcomp_dynamic_loop_next (long *from, long *to)
 	/* Stop the stealing at the following depth.
 	 * Nodes above this depth will not be traversed */
 	const int num_threads = t->info.num_threads;
-	const int max_depth = t->info.new_root->depth;
 
 	/* 1 thread => no stealing, directly get a chunk */
 	if ( num_threads == 1 ) 
@@ -147,6 +146,8 @@ int __mpcomp_dynamic_loop_next (long *from, long *to)
 #if 0
     __mpcomp_loop_ull_dynamic_next_debug( __func__ );
 #endif
+
+	const int max_depth = t->info.new_root->depth;
 
 	/* Compute the index of the target */
     index_target = __mpcomp_loop_dyn_get_victim_rank( t );
