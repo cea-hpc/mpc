@@ -87,6 +87,7 @@ typedef union mpcomp_loop_gen_iter_u
 typedef struct mpcomp_loop_gen_info_s
 {
     int ischunked;
+    int fresh;
     mpcomp_loop_gen_type_t type;
     mpcomp_loop_gen_iter_t loop;
 } mpcomp_loop_gen_info_t;
@@ -134,9 +135,10 @@ typedef struct mpcomp_team_s
 	mpcomp_atomic_int_pad_t for_dyn_nb_threads_exited[MPCOMP_MAX_ALIVE_FOR_DYN + 1];
 
 	/* ORDERED CONSTRUCT */
-	volatile long next_ordered_offset; 
-	volatile unsigned long long next_ordered_offset_ull; 
-    sctk_atomics_int next_ordered_offset_finalized;
+    int next_ordered_index;
+	volatile long next_ordered_offset[5]; 
+	volatile unsigned long long next_ordered_offset_ull[5]; 
+    sctk_atomics_int next_ordered_offset_finalized[5];
 
 #if MPCOMP_TASK
 	struct mpcomp_task_team_infos_s task_infos;	
@@ -197,7 +199,7 @@ typedef struct mpcomp_thread_s
                                          iteration of the original loop? */
 
 	/* ORDERED CONSTRUCT */
-	int current_ordered_iteration; 
+	int next_ordered_index; 
 
 #if MPCOMP_TASK 
 	struct mpcomp_task_thread_infos_s task_infos;

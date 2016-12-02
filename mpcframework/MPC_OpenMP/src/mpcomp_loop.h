@@ -49,6 +49,7 @@ static inline void __mpcomp_loop_gen_infos_init( mpcomp_loop_gen_info_t* loop_in
 {
     sctk_assert( loop_infos );
 
+    loop_infos->fresh = true;
     loop_infos->ischunked = ( chunk_size ) ? 1 : 0;
     loop_infos->type = MPCOMP_LOOP_TYPE_LONG; 
     loop_infos->loop.mpcomp_long.up = ( incr > 0 );
@@ -63,6 +64,7 @@ static inline void __mpcomp_loop_gen_infos_init_ull( mpcomp_loop_gen_info_t* loo
 {
     sctk_assert( loop_infos );
 
+    loop_infos->fresh = true;
     loop_infos->ischunked = ( chunk_size ) ? 1 : 0;
     loop_infos->type = MPCOMP_LOOP_TYPE_ULL; 
     loop_infos->loop.mpcomp_ull.up = ( incr > 0 );

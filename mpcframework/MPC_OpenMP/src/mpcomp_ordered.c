@@ -32,27 +32,30 @@ static inline void __mpcomp_internal_ordered_begin( mpcomp_thread_t *t, mpcomp_l
     sctk_assert( loop_infos && loop_infos->type == MPCOMP_LOOP_TYPE_LONG );
     mpcomp_loop_long_iter_t* loop = &( loop_infos->loop.mpcomp_long );
     const long cur_ordered_iter = loop->cur_ordered_iter;
+    
+    if( loop_infos->fresh )
+    {
+        t->next_ordered_index = ( t->next_ordered_index + 1 ) % 5;
+        loop_infos->fresh = false;
+    }
+        
+    const int index = t->next_ordered_index;    
 
 	/* First iteration of the loop -> initialize 'next_ordered_offset' */
 	if( cur_ordered_iter == loop->lb ) 
     {
-        while( sctk_atomics_cas_int(&(t->instance->team->next_ordered_offset_finalized), 0, 1 ))
+        while( sctk_atomics_cas_int( &(t->instance->team->next_ordered_offset_finalized[index]), 0, 1 ) )
         {
             sctk_thread_yield();
         } 
-
-        sctk_nodebug( "[%d] %s: Allowed to schedule iteration %d", t->rank, __func__, loop->lb + loop->incr *t->instance->team->next_ordered_offset  ) ;
         return;
     }
 
     /* Do we have to wait for the right iteration? */
-    sctk_nodebug( "______________WAIT %ld %ld %ld %ld", loop->up, loop->cur_ordered_iter, loop->b, loop->lb);
-    while( cur_ordered_iter != ( loop->lb + loop->incr * t->instance->team->next_ordered_offset) )
+    while( cur_ordered_iter != ( loop->lb + loop->incr * t->instance->team->next_ordered_offset[index]) )
 	{
 	    sctk_thread_yield();
     }
-
-    sctk_nodebug( "[%d] %s: Allowed to schedule iteration %d", t->rank, __func__, loop->lb + loop->incr *t->instance->team->next_ordered_offset ) ;
 } 
 
 static inline void __mpcomp_internal_ordered_begin_ull( mpcomp_thread_t *t, mpcomp_loop_gen_info_t* loop_infos )
@@ -61,24 +64,26 @@ static inline void __mpcomp_internal_ordered_begin_ull( mpcomp_thread_t *t, mpco
     mpcomp_loop_ull_iter_t* loop = &( loop_infos->loop.mpcomp_ull );
     const unsigned long long cur_ordered_iter = loop->cur_ordered_iter;
 
-    sctk_nodebug( "%d %llu %llu", t->rank,  cur_ordered_iter, loop->lb );
+    if( loop_infos->fresh )
+    {
+        t->instance->team->next_ordered_index = ( t->next_ordered_index + 1 ) % 5;
+        loop_infos->fresh = false;
+    }
+        
+    const int index = t->instance->team->next_ordered_index;
+
     /* First iteration of the loop -> initialize 'next_ordered_offset' */
     if( cur_ordered_iter == loop->lb )                   
     {
-        while( sctk_atomics_cas_int(&(t->instance->team->next_ordered_offset_finalized), 0, 1 ) )
+        while( sctk_atomics_cas_int(&(t->instance->team->next_ordered_offset_finalized[index]), 0, 1 ) )
         {
             sctk_thread_yield();
         } 
-        
-        sctk_nodebug( "BEGIN");
-        t->instance->team->next_ordered_offset_ull = (unsigned long long) 0;
-        sctk_nodebug( "[%d] %s: Allowed to schedule iteration %d", t->rank, __func__, cur_ordered_iter ) ;
         return;
     }
 
     /* Do we have to wait for the right iteration? */
-    sctk_nodebug( "_____________WAIT %ld %ld %ld %ld", loop->up, loop->cur_ordered_iter, loop->b, loop->lb);
-    while( cur_ordered_iter != ( loop->lb + loop->incr * t->instance->team->next_ordered_offset_ull) )
+    while( cur_ordered_iter != ( loop->lb + loop->incr * t->instance->team->next_ordered_offset_ull[index]) )
     {
         sctk_thread_yield();
     }
@@ -110,13 +115,12 @@ void __mpcomp_ordered_begin( void )
     {
         __mpcomp_internal_ordered_begin_ull( t, loop_infos );
     }
-
-	sctk_nodebug( "[%d] %s: Allowed to schedule iteration %d", t->rank, __func__, t->current_ordered_iteration ) ;
 }
 
 static inline void __mpcomp_internal_ordered_end( mpcomp_thread_t* t, mpcomp_loop_gen_info_t* loop_infos  )
 {
     int isLastIteration;
+    const int index = t->next_ordered_index;
     sctk_assert( loop_infos && loop_infos->type == MPCOMP_LOOP_TYPE_LONG );
     mpcomp_loop_long_iter_t* loop = &( loop_infos->loop.mpcomp_long );
 
@@ -124,29 +128,26 @@ static inline void __mpcomp_internal_ordered_end( mpcomp_thread_t* t, mpcomp_loo
     isLastIteration += (loop->up  && loop->cur_ordered_iter >= loop->b) ? ( long) 1 : (long) 0;
     isLastIteration += (!loop->up && loop->cur_ordered_iter <= loop->b) ? ( long) 1 : (long) 0;
 
-	loop->cur_ordered_iter += loop->incr ;
+	loop->cur_ordered_iter += loop->incr;
 
     isLastIteration += ((loop->incr > 0)  && loop->cur_ordered_iter >= loop->b) ? ( long) 1 : (long) 0;
     isLastIteration += ((loop->incr < 0)  && loop->cur_ordered_iter <= loop->b) ? ( long) 1 : (long) 0;
 
-    sctk_nodebug( "FINISH %ld %ld %ld %ld %d", loop->up, loop->cur_ordered_iter, loop->lb, loop->b, isLastIteration);
     if( isLastIteration )
     {
-	    t->instance->team->next_ordered_offset = 0;
-        int ret = sctk_atomics_cas_int(&(t->instance->team->next_ordered_offset_finalized), 1, 0 );
-        sctk_nodebug( "RESET______________________________________________________________%s",  ( ret != 1 ) ? "FAILED" : "SUCCESSED" );
-        if( ret != 1 ) abort();
+	    t->instance->team->next_ordered_offset[index] = (long) 0;
+        int ret = sctk_atomics_cas_int(&(t->instance->team->next_ordered_offset_finalized[index]), 1, 0 );
     }
     else
     {
-        sctk_nodebug( "NEW VALUE______________________________________________ %ld", t->instance->team->next_ordered_offset);
-        t->instance->team->next_ordered_offset = t->instance->team->next_ordered_offset + 1;
+        t->instance->team->next_ordered_offset[index] += (long) 1;
     }
 }
 
 static inline void __mpcomp_internal_ordered_end_ull( mpcomp_thread_t* t, mpcomp_loop_gen_info_t* loop_infos  )
 {
     int isLastIteration;
+    const int index = t->next_ordered_index;
     sctk_assert( loop_infos && loop_infos->type == MPCOMP_LOOP_TYPE_ULL );
     mpcomp_loop_ull_iter_t* loop = &( loop_infos->loop.mpcomp_ull );
 
@@ -166,16 +167,14 @@ static inline void __mpcomp_internal_ordered_end_ull( mpcomp_thread_t* t, mpcomp
     isLastIteration += (loop->up && loop->cur_ordered_iter >= loop->b) ?  (unsigned long long) 1 : (unsigned long long) 0;
     isLastIteration += (!loop->up && loop->cur_ordered_iter <= loop->b) ? (unsigned long long) 1 : (unsigned long long) 0;
 
-    sctk_nodebug( "%ld %ld %ld %ld %d", loop->up, loop->cur_ordered_iter, loop->b, loop->lb, isLastIteration);
-
     if( isLastIteration )
     {
-	    t->instance->team->next_ordered_offset_ull = 0;
-        sctk_atomics_store_int(&(t->instance->team->next_ordered_offset_finalized), 0 );
+	    t->instance->team->next_ordered_offset_ull[index] = 0;
+        sctk_atomics_store_int(&(t->instance->team->next_ordered_offset_finalized[index]), 0 );
     }
     else
     {
-        t->instance->team->next_ordered_offset_ull = t->instance->team->next_ordered_offset_ull + (unsigned long long)1;
+        t->instance->team->next_ordered_offset_ull[index] += (unsigned long long)1;
     }
 }
 

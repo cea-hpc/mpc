@@ -69,6 +69,7 @@ __mpcomp_thread_infos_init( mpcomp_thread_t* thread, mpcomp_local_icv_t icvs,
 	thread->info.icvs = icvs;
 	thread->instance = instance;
 
+
 	__mpcomp_parallel_region_infos_init( &( thread->info ) ) ;
 
  	/* -- DYNAMIC FOR LOOP CONSTRUCT -- */
