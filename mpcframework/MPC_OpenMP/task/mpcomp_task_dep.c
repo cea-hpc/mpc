@@ -19,20 +19,14 @@
 #include "sctk_debug.h"
 #include "mpcomp_task_utils.h"
 
-static int total_task = 0;
-static float max_percent = 0.0;
-
-int mpcomp_resolve_task_deps( void **depend )
-{
-    return 0;
-}
+#ifdef MPCOMP_USE_TASKDEP
 
 static int
 __mpcomp_task_wait_deps( mpcomp_task_dep_node_t* task_node )
 {
 	while( sctk_atomics_load_int( &( task_node->predecessors ) ) )
 	{
-		mpcomp_task_schedule( 0 );
+		mpcomp_task_schedule();
 	}
 }
 
@@ -185,7 +179,8 @@ __mpcomp_task_finalize_deps( mpcomp_task_t* task )
 		if( !prev && 
             sctk_atomics_cas_int( &( succ_node->status ), MPCOMP_TASK_DEP_TASK_NOT_EXECUTE, MPCOMP_TASK_DEP_TASK_RELEASED ) == MPCOMP_TASK_DEP_TASK_NOT_EXECUTE ) 
 		{
-	        __mpcomp_task_process( succ_node->task, succ_node->task->if_clause );
+            //TODO MANAGE if_clause
+	        __mpcomp_task_process( succ_node->task, 0 );
 		}
 		
 		mpcomp_task_dep_node_unref( succ_node );	
@@ -243,7 +238,6 @@ mpcomp_task_with_deps( void (*fn) (void *), void *data, void (*cpyfn) (void *, v
 	task_node->task = new_task;
 	new_task->task_dep_infos->node = task_node;
 	sctk_atomics_read_write_barrier();
-	task_node->task->if_clause = if_clause;
 
 	/* task_node->predecessors can be update by release task */
 	sctk_atomics_add_int( &( task_node->predecessors ), predecessors_num ); 
@@ -261,3 +255,5 @@ mpcomp_task_with_deps( void (*fn) (void *), void *data, void (*cpyfn) (void *, v
 		__mpcomp_task_process( new_task, if_clause );
 	}
 }
+
+#endif /* MPCOMP_USE_TASKDEP */

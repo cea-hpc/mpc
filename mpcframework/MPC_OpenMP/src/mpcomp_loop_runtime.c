@@ -25,6 +25,7 @@
 #include "mpcomp_core.h"
 #include "mpcomp_types.h"
 #include "mpcomp_loop_runtime.h"
+#include "mpcomp_openmp_tls.h"
 
 TODO(runtime schedule: ICVs are not well transfered!)
 
@@ -37,23 +38,18 @@ TODO(runtime schedule: ICVs are not well transfered!)
 int __mpcomp_runtime_loop_begin( long lb, long b, long incr, long *from, long *to )
 {
     int ret;
-    mpcomp_thread_t *t ;	/* Info on the current thread */
 
     /* Handle orphaned directive (initialize OpenMP environment) */
    __mpcomp_init();
 
     /* Grab the thread info */
-    t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
-    sctk_assert( t );
+    mpcomp_thread_t* t = mpcomp_get_thread_tls(); 
 
     t->schedule_type = ( t->schedule_is_forced ) ? t->schedule_type : MPCOMP_COMBINED_RUNTIME_LOOP;  
     t->schedule_is_forced = 1;
     
     const int run_sched_var = t->info.icvs.run_sched_var;
     const long chunk_size = t->info.icvs.modifier_sched_var;
-
-    sctk_nodebug( "%s: value of schedule %d", __func__, run_sched_var );
-
 
     switch( run_sched_var ) 
     {
@@ -76,14 +72,12 @@ int __mpcomp_runtime_loop_begin( long lb, long b, long incr, long *from, long *t
 int __mpcomp_runtime_loop_next( long * from, long * to )
 {
     int ret;
-    mpcomp_thread_t *t ;	/* Info on the current thread */
 
     /* Handle orphaned directive (initialize OpenMP environment) */
    __mpcomp_init();
 
     /* Grab the thread info */
-    t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
-    sctk_assert( t  ) ;
+    mpcomp_thread_t* t = mpcomp_get_thread_tls(); 
 
     const int run_sched_var = t->info.icvs.run_sched_var;
 
@@ -107,17 +101,13 @@ int __mpcomp_runtime_loop_next( long * from, long * to )
 
 void __mpcomp_runtime_loop_end( void )
 {
-    mpcomp_thread_t *t ;	/* Info on the current thread */
-
     /* Handle orphaned directive (initialize OpenMP environment) */
    __mpcomp_init();
 
     /* Grab the thread info */
-    t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
-    sctk_assert( t != NULL ) ;
+    mpcomp_thread_t* t = mpcomp_get_thread_tls(); 
 
     const int run_sched_var = t->info.icvs.run_sched_var;
-    //const int run_sched_var = t->schedule_type;
 
     switch( run_sched_var ) 
     {
@@ -137,14 +127,11 @@ void __mpcomp_runtime_loop_end( void )
 
 void __mpcomp_runtime_loop_end_nowait ()
 {
-    mpcomp_thread_t *t ;	/* Info on the current thread */
-
     /* Handle orphaned directive (initialize OpenMP environment) */
     __mpcomp_init();
 
     /* Grab the thread info */
-    t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
-    sctk_assert( t != NULL ) ;
+    mpcomp_thread_t* t = mpcomp_get_thread_tls();
 
     const int run_sched_var = t->info.icvs.run_sched_var;
 
@@ -175,14 +162,12 @@ int __mpcomp_ordered_runtime_loop_begin (long lb, long b, long incr,
 				     long *from, long *to)
 {
     int ret;
-    mpcomp_thread_t *t ;	/* Info on the current thread */
 
      /* Handle orphaned directive (initialize OpenMP environment) */
     __mpcomp_init();
 
      /* Grab the thread info */
-     t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
-     sctk_assert( t != NULL ) ;
+    mpcomp_thread_t* t = mpcomp_get_thread_tls();
 
     t->schedule_type = ( t->schedule_is_forced ) ? t->schedule_type : MPCOMP_COMBINED_RUNTIME_LOOP;  
     t->schedule_is_forced = 1;
@@ -210,14 +195,12 @@ int __mpcomp_ordered_runtime_loop_begin (long lb, long b, long incr,
 int __mpcomp_ordered_runtime_loop_next(long *from, long *to)
 {
     int ret;
-     mpcomp_thread_t *t ;	/* Info on the current thread */
 
      /* Handle orphaned directive (initialize OpenMP environment) */
     __mpcomp_init();
 
      /* Grab the thread info */
-     t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
-     sctk_assert( t != NULL ) ;
+    mpcomp_thread_t* t = mpcomp_get_thread_tls();
     
     const int run_sched_var = t->info.icvs.run_sched_var;
 
@@ -257,14 +240,12 @@ void __mpcomp_ordered_runtime_loop_end_nowait( void )
 int __mpcomp_loop_ull_runtime_begin( bool up, unsigned long long lb, unsigned long long b, unsigned long long incr, unsigned long long * from, unsigned long long * to )
 {
     int ret;
-     mpcomp_thread_t *t ;	/* Info on the current thread */
 
      /* Handle orphaned directive (initialize OpenMP environment) */
      __mpcomp_init();
 
      /* Grab the thread info */
-     t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
-     sctk_assert( t != NULL ) ;
+    mpcomp_thread_t* t = mpcomp_get_thread_tls();
 
     t->schedule_type = ( t->schedule_is_forced ) ? t->schedule_type : MPCOMP_COMBINED_RUNTIME_LOOP;  
     t->schedule_is_forced = 1;
@@ -292,14 +273,12 @@ int __mpcomp_loop_ull_runtime_begin( bool up, unsigned long long lb, unsigned lo
 int __mpcomp_loop_ull_runtime_next( unsigned long long * from, unsigned long long * to )
 {
     int ret;
-     mpcomp_thread_t *t ;	/* Info on the current thread */
 
      /* Handle orphaned directive (initialize OpenMP environment) */
      __mpcomp_init();
 
      /* Grab the thread info */
-     t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
-     sctk_assert( t != NULL ) ;
+    mpcomp_thread_t* t = mpcomp_get_thread_tls();
 
      switch( t->info.icvs.run_sched_var ) {
        case omp_sched_static:
@@ -327,14 +306,12 @@ int __mpcomp_loop_ull_runtime_next( unsigned long long * from, unsigned long lon
 int __mpcomp_loop_ull_ordered_runtime_begin(bool up,unsigned long long lb, unsigned long long b, unsigned long long incr, unsigned long long * from, unsigned long long * to )
 {
     int ret;
-    mpcomp_thread_t *t ;	/* Info on the current thread */
 
     /* Handle orphaned directive (initialize OpenMP environment) */
     __mpcomp_init();
 
     /* Grab the thread info */
-    t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
-    sctk_assert( t != NULL ) ;
+    mpcomp_thread_t* t = mpcomp_get_thread_tls();
 
     t->schedule_type = ( t->schedule_is_forced ) ? t->schedule_type : MPCOMP_COMBINED_RUNTIME_LOOP;  
     t->schedule_is_forced = 1;
@@ -365,14 +342,12 @@ int __mpcomp_loop_ull_ordered_runtime_begin(bool up,unsigned long long lb, unsig
 int __mpcomp_loop_ull_ordered_runtime_next( unsigned long long * from, unsigned long long * to )
 {
     int ret;
-    mpcomp_thread_t *t ;	/* Info on the current thread */
 
     /* Handle orphaned directive (initialize OpenMP environment) */
     __mpcomp_init();
 
     /* Grab the thread info */
-    t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
-    sctk_assert( t != NULL ) ;
+    mpcomp_thread_t* t = mpcomp_get_thread_tls(); 
 
     const int run_sched_var = t->info.icvs.run_sched_var ;
 

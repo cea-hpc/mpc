@@ -69,7 +69,7 @@ void mpcomp_taskgroup_end( void )
 
 	while( sctk_atomics_load_int( &( taskgroup->children_num ) ))
 	{
-	    mpcomp_task_schedule( 1 );	
+	    mpcomp_task_schedule();	
 	} 
 
     current_task->taskgroup = taskgroup->prev;

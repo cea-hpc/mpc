@@ -25,6 +25,8 @@
 #ifndef __MPCOMP_LOOP_CORE_H__
 #define __MPCOMP_LOOP_CORE_H__
 
+#include "mpcomp_types_loop.h"
+
 static inline unsigned long long __mpcomp_internal_loop_get_num_iters_ull( unsigned long long start, unsigned long long end, unsigned long long step, bool up )
 {
     unsigned long long ret = (unsigned long long) 0;
@@ -42,42 +44,6 @@ static inline long __mpcomp_internal_loop_get_num_iters( long start, long end, l
     ret = ( up  && start < end ) ? ( end - start + step - (long) 1 ) / step : ret;
     ret = ( !up && start > end ) ? ( start - end - step - (long) 1 ) / -step : ret;
     return ( ret >= 0 ) ? ret : -ret ;
-}
-
-
-static inline void __mpcomp_loop_gen_infos_init( mpcomp_loop_gen_info_t* loop_infos, long lb, long b, long incr, long chunk_size )
-{
-    sctk_assert( loop_infos );
-
-    loop_infos->fresh = true;
-    loop_infos->ischunked = ( chunk_size ) ? 1 : 0;
-    loop_infos->type = MPCOMP_LOOP_TYPE_LONG; 
-    loop_infos->loop.mpcomp_long.up = ( incr > 0 );
-    loop_infos->loop.mpcomp_long.b = b;
-    loop_infos->loop.mpcomp_long.lb = lb;
-    loop_infos->loop.mpcomp_long.incr = incr;
-	/* Automatic chunk size -> at most one chunk */
-    loop_infos->loop.mpcomp_long.chunk_size = ( chunk_size ) ? chunk_size : 1;
-}
-
-static inline void __mpcomp_loop_gen_infos_init_ull( mpcomp_loop_gen_info_t* loop_infos, unsigned long long lb, unsigned long long b, unsigned long long incr, unsigned long long chunk_size, bool up )
-{
-    sctk_assert( loop_infos );
-
-    loop_infos->fresh = true;
-    loop_infos->ischunked = ( chunk_size ) ? 1 : 0;
-    loop_infos->type = MPCOMP_LOOP_TYPE_ULL; 
-    loop_infos->loop.mpcomp_ull.up = ( incr > 0 );
-    loop_infos->loop.mpcomp_ull.b = b;
-    loop_infos->loop.mpcomp_ull.lb = lb;
-    loop_infos->loop.mpcomp_ull.incr = incr;
-	/* Automatic chunk size -> at most one chunk */
-    loop_infos->loop.mpcomp_ull.chunk_size = (chunk_size) ? chunk_size : 1;
-}
-
-static inline void __mpcomp_loop_gen_loop_infos_cpy( mpcomp_loop_gen_info_t* in, mpcomp_loop_gen_info_t* out )
-{
-    memcpy( out, in, sizeof( mpcomp_loop_gen_info_t ) );
 }
 
 unsigned long long __mpcomp_compute_static_nb_chunks_per_rank_ull(unsigned long long, unsigned long long, mpcomp_loop_ull_iter_t*);

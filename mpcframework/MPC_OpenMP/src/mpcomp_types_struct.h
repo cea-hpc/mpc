@@ -31,6 +31,7 @@
 #include "sctk_topology.h"
 #include "mpcomp_types_def.h"
 #include "mpcomp_types_icv.h"
+#include "mpcomp_types_loop.h"
 
 #ifdef MPCOMP_USE_INTEL_ABI
 #include "mpcomp_intel_types.h"
@@ -57,40 +58,6 @@ typedef struct mpcomp_atomic_int_pad_s
 	sctk_atomics_int i;   /**< Value of the integer */
 	char pad[8];          /* Padding */
 } mpcomp_atomic_int_pad_t;
-
-typedef struct mpcomp_loop_long_iter_s
-{
-    bool up;
-	long lb;		        /* Lower bound          */
-	long b;			        /* Upper bound          */
-	long incr;			    /* Step                 */
-	long chunk_size;	    /* Size of each chunk   */
-    long cur_ordered_iter;
-} mpcomp_loop_long_iter_t;
-
-typedef struct mpcomp_loop_ull_iter_s
-{
-    bool up;
-	unsigned long long lb;		            /* Lower bound              */
-	unsigned long long b;			        /* Upper bound              */
-	unsigned long long incr;			    /* Step                     */
-	unsigned long long chunk_size;	        /* Size of each chunk       */
-    unsigned long long cur_ordered_iter;
-} mpcomp_loop_ull_iter_t; 
-
-typedef union mpcomp_loop_gen_iter_u
-{
-    mpcomp_loop_ull_iter_t  mpcomp_ull;
-    mpcomp_loop_long_iter_t mpcomp_long;
-} mpcomp_loop_gen_iter_t;
-
-typedef struct mpcomp_loop_gen_info_s
-{
-    int ischunked;
-    int fresh;
-    mpcomp_loop_gen_type_t type;
-    mpcomp_loop_gen_iter_t loop;
-} mpcomp_loop_gen_info_t;
 
 /* Information to transfer to every thread
  * when entering a new parallel region

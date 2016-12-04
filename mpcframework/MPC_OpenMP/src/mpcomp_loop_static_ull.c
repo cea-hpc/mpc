@@ -25,6 +25,7 @@
 #include "sctk_debug.h"
 #include "mpcomp_types.h"
 #include "mpcomp_loop.h"
+#include "mpcomp_openmp_tls.h"
 #include "mpcomp_loop_static_ull.h"
 
 /* Compute the chunk for a static schedule (without specific chunk size)
@@ -33,11 +34,8 @@
  */
 int __mpcomp_static_schedule_get_single_chunk_ull( mpcomp_loop_ull_iter_t* loop, unsigned long long *from, unsigned long long *to)
 {
-    mpcomp_thread_t *t;
-
     /* Grab info on the current thread */
-    t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
-    sctk_assert(t != NULL);      
+    mpcomp_thread_t *t = mpcomp_get_thread_tls();
     
     const unsigned long long rank = (unsigned long long) t->rank;
     const unsigned long long num_threads = (unsigned long long) t->info.num_threads;
@@ -81,13 +79,12 @@ void __mpcomp_static_loop_init_ull(mpcomp_thread_t *t, unsigned long long lb, un
 int __mpcomp_static_loop_begin_ull (bool up, unsigned long long lb, unsigned long long b, unsigned long long incr, unsigned long long chunk_size,
                 unsigned long long *from, unsigned long long *to)
 {
-    mpcomp_thread_t *t;
     mpcomp_loop_ull_iter_t* loop;
 
     __mpcomp_init();
 
-    t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
-    sctk_assert(t != NULL);
+    /* Grab info on the current thread */
+    mpcomp_thread_t *t = mpcomp_get_thread_tls();
 
     t->schedule_type = ( t->schedule_is_forced ) ? t->schedule_type : MPCOMP_COMBINED_STATIC_LOOP;  
     t->schedule_is_forced = 0;
@@ -116,10 +113,8 @@ int __mpcomp_static_loop_begin_ull (bool up, unsigned long long lb, unsigned lon
 
 int __mpcomp_static_loop_next_ull (unsigned long long *from, unsigned long long *to)
 {
-    mpcomp_thread_t *t;
-
-    t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
-    sctk_assert(t != NULL);
+    /* Grab info on the current thread */
+    mpcomp_thread_t *t = mpcomp_get_thread_tls();
 
     /* Retrieve the number of threads and the rank of this thread */
     const unsigned long long num_threads = t->info.num_threads;
@@ -144,8 +139,8 @@ int __mpcomp_static_loop_next_ull (unsigned long long *from, unsigned long long 
 int __mpcomp_ordered_static_loop_begin_ull (bool up, unsigned long long lb, unsigned long long b, unsigned long long incr, unsigned long long chunk_size,
                     unsigned long long *from, unsigned long long *to)
 {
-    mpcomp_thread_t *t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
-    sctk_assert(t != NULL);  
+    /* Grab info on the current thread */
+    mpcomp_thread_t *t = mpcomp_get_thread_tls();
 
     const int ret = __mpcomp_static_loop_begin_ull(up, lb, b, incr, chunk_size, from, to);
     if( !from )
@@ -158,8 +153,9 @@ int __mpcomp_ordered_static_loop_begin_ull (bool up, unsigned long long lb, unsi
 
 int __mpcomp_ordered_static_loop_next_ull(unsigned long long *from, unsigned long long *to)
 {
-    mpcomp_thread_t *t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
-    sctk_assert(t != NULL);
+    /* Grab info on the current thread */
+    mpcomp_thread_t *t = mpcomp_get_thread_tls();
+
     const int ret = __mpcomp_static_loop_next_ull(from, to);
     t->info.loop_infos.loop.mpcomp_ull.cur_ordered_iter = *from; 
     return ret;

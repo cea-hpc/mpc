@@ -27,8 +27,7 @@
 #include "mpcomp_types.h"
 #include "mpcomp_barrier.h"
 #include "mpcomp_task_utils.h"
-
-int mpcomp_task_all_task_executed( void );
+#include "mpcomp_openmp_tls.h"
 
 /** Barrier for all threads of the same team */
 static void __mpcomp_internal_full_barrier(mpcomp_mvp_t *mvp)
@@ -68,7 +67,7 @@ static void __mpcomp_internal_full_barrier(mpcomp_mvp_t *mvp)
 		while (b_done == c->barrier_done) {
 			sctk_thread_yield();
 #if MPCOMP_TASK
-			mpcomp_task_schedule( 0 );
+			mpcomp_task_schedule();
 #endif /* MPCOMP_TASK */
 		}
 	} else {
@@ -114,15 +113,9 @@ void __mpcomp_internal_half_barrier ( mpcomp_mvp_t *mvp)
   sctk_nodebug("%s: entering", __func__ );
 
 #if MPCOMP_TASK
-    mpcomp_thread_t* save_tls = sctk_openmp_thread_tls;
-    sctk_openmp_thread_tls = &( mvp->threads[0] );
-    mpcomp_thread_t* thread = (mpcomp_thread_t*) sctk_openmp_thread_tls;
-
-	sctk_assert( thread->instance );
-	sctk_assert( thread->instance->team );
-
+    mpcomp_thread_t* saved_thread = mpcomp_thread_tls_swap( &( mvp->threads[0] ) ); 
     __mpcomp_internal_full_barrier(mvp);
-    sctk_openmp_thread_tls = save_tls;
+    mpcomp_thread_tls_store( saved_thread );
 #endif /* MPCOMP_TASK */
 
     /* Step 1: Climb in the tree */
@@ -145,14 +138,11 @@ void __mpcomp_internal_half_barrier ( mpcomp_mvp_t *mvp)
  */
 void __mpcomp_barrier(void)
 {
-    mpcomp_thread_t *t;
-
 	/* Handle orphaned directive (initialize OpenMP environment) */
 	__mpcomp_init() ;
 
     /* Grab info on the current thread */
-    t = (mpcomp_thread_t *) sctk_openmp_thread_tls;
-    sctk_assert(t != NULL);
+    mpcomp_thread_t *t = mpcomp_get_thread_tls(); 
 
     sctk_nodebug( "[%d] %s: Entering w/ %d thread(s)", t->rank, __func__, t->info.num_threads ) ;
      

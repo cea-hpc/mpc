@@ -1,3 +1,6 @@
+
+#ifdef MPCOMP_USE_TASKDEP
+
 #ifndef __MPCOMP_TASK_DEP_H__
 #define __MPCOMP_TASK_DEP_H__
 
@@ -169,7 +172,6 @@ mpcomp_task_dep_node_ref( mpcomp_task_dep_node_t* node )
 {
 	sctk_assert( node );
 	const int prev = sctk_atomics_fetch_and_incr_int(  &( node->ref_counter ) );	
-   sctk_nodebug( "node : %p -- ref_count : %d", node, prev+1 ); 
 	return node;
 }
 
@@ -184,10 +186,8 @@ mpcomp_task_dep_node_unref( mpcomp_task_dep_node_t* node )
 	sctk_assert( sctk_atomics_load_int( &( node->ref_counter ) ) ); 
 	/* Fetch and decr to prevent double free */
 	const int prev = sctk_atomics_fetch_and_decr_int( &( node->ref_counter ) ) - 1;	
-	sctk_nodebug( "UNREF node: %p -- count : %d", node, prev );
 	if( !prev )
 	{
-		sctk_nodebug( "free node %p", node );
 		sctk_assert( !sctk_atomics_load_int( &( node->ref_counter ) ) );
 		sctk_free( node );
 		node = NULL;
@@ -247,9 +247,6 @@ mpcomp_task_dep_free_task_htable( mpcomp_task_dep_ht_table_t *htable )
 				mpcomp_task_dep_node_unref( entry->last_out );
 				htable[i].buckets->entry = entry;
 				sctk_free( entry );
-#ifdef MPCOMP_TASK_DEP_DEBUG
-				removed_entries++;
-#endif /* MPCOMP_TASK_DEP_DEBUG */
 			}
 		} 
 	}
@@ -342,4 +339,5 @@ mpcomp_task_dep_ht_find_entry( mpcomp_task_dep_ht_table_t* htable, uintptr_t add
 }
 
 #endif /* __MPCOMP_TASK_DEP_H__ */
+#endif /* MPCOMP_USE_TASKDEP */
 

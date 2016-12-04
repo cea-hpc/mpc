@@ -25,6 +25,7 @@
 #include "mpcomp_core.h"
 #include "mpcomp_types.h"
 #include "mpcomp_barrier.h"
+#include "mpcomp_openmp_tls.h"
 
 /* 
    Perform a single construct.
@@ -34,7 +35,6 @@
 
 int __mpcomp_do_single (void)
 {
-  mpcomp_thread_t *t ;	/* Info on the current thread */
   mpcomp_team_t *team ;	/* Info on the team */
   long num_threads ;
 
@@ -42,8 +42,7 @@ int __mpcomp_do_single (void)
   __mpcomp_init() ;
 
   /* Grab the thread info */
-  t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
-  sctk_assert( t != NULL ) ;
+  mpcomp_thread_t *t = mpcomp_get_thread_tls();
 
   /* Number of threads in the current team */
   num_threads = t->info.num_threads;
@@ -85,14 +84,12 @@ int __mpcomp_do_single (void)
 
 void *__mpcomp_do_single_copyprivate_begin (void)
 {
-	mpcomp_thread_t *t ;	/* Info on the current thread */
 	mpcomp_team_t *team ;	/* Info on the team */
 
 	if ( __mpcomp_do_single() ) return NULL;
 
 	/* Grab the thread info */
-	t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
-	sctk_assert( t != NULL ) ;
+    mpcomp_thread_t *t = mpcomp_get_thread_tls();
 
 	/* In this flow path, the number of threads should not be 1 */
 	sctk_assert( t->info.num_threads > 0 ) ;
@@ -110,13 +107,8 @@ void *__mpcomp_do_single_copyprivate_begin (void)
 
 void __mpcomp_do_single_copyprivate_end (void *data)
 {
-	mpcomp_thread_t *t ;	/* Info on the current thread */
 	mpcomp_team_t *team ;	/* Info on the team */
-
-
-	/* Grab the thread info */
-	t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
-	sctk_assert( t != NULL ) ;
+    mpcomp_thread_t *t = mpcomp_get_thread_tls();
 
 	/* Grab the team info */
 	sctk_assert( t->instance != NULL ) ;
@@ -128,7 +120,6 @@ void __mpcomp_do_single_copyprivate_end (void *data)
 	__mpcomp_barrier() ;
 }
 
-
 void __mpcomp_single_coherency_entering_parallel_region( void ) 
 {
 }
@@ -136,16 +127,15 @@ void __mpcomp_single_coherency_entering_parallel_region( void )
 void __mpcomp_single_coherency_end_barrier( void ) 
 {
     int i ;
-    mpcomp_thread_t *t ;	/* Info on the current thread */
-    long num_threads ;
 
     /* Grab the thread info */
-    t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
-    sctk_assert( t != NULL ) ;
+    mpcomp_thread_t *t = mpcomp_get_thread_tls();
 
     /* Number of threads in the current team */
-    num_threads = t->info.num_threads;
+    const long num_threads = t->info.num_threads;
+
     sctk_assert( num_threads > 0 );
+
     for ( i = 0 ; i < num_threads ; i++ ) 
     {
 	    mpcomp_thread_t* target_t = &(t->instance->mvps[i]->threads[0]) ;

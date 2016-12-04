@@ -106,10 +106,4 @@ typedef struct mpcomp_tree_meta_elt_s
 	mpcomp_tree_meta_elt_ptr_t  ptr;
 }mpcomp_tree_meta_elt_t;
 
-typedef enum mpcomp_loop_gen_type_e
-{
-    MPCOMP_LOOP_TYPE_LONG, 
-    MPCOMP_LOOP_TYPE_ULL, 
-} mpcomp_loop_gen_type_t;
-
 #endif /* __MPCOMP_TYPES_ENUM_H__ */

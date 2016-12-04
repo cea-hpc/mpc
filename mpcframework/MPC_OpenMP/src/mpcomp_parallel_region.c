@@ -182,7 +182,9 @@ void __mpcomp_internal_end_parallel_region( mpcomp_instance_t * instance )
     while (sctk_atomics_load_int( &(root->barrier) ) != root->barrier_num_threads ) 
     {
 	    sctk_thread_yield() ;
-        mpcomp_task_schedule( 0 ); 
+#ifdef MPCOMP_TASK
+        mpcomp_task_schedule(); 
+#endif /* MPCOMP_TASK */
     }
 
     sctk_atomics_store_int( &(root->barrier) , 0 ) ;

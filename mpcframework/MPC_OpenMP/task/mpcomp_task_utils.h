@@ -171,9 +171,12 @@ mpcomp_task_thread_infos_init( struct mpcomp_thread_s* thread )
 		MPCOMP_TASK_THREAD_SET_CURRENT_TASK( thread, NULL );
 
 		__mpcomp_task_infos_init( implicite_task, NULL, NULL, thread );
+
+#ifdef MPCOMP_USE_TASKDEP
 		implicite_task->task_dep_infos = sctk_malloc( sizeof( mpcomp_task_dep_task_infos_t ) );
 		sctk_assert( implicite_task->task_dep_infos );
 		memset( implicite_task->task_dep_infos, 0, sizeof( mpcomp_task_dep_task_infos_t ));
+#endif /* MPCOMP_USE_TASKDEP */
 
 		/* Allocate private task data structures */ 
 		tied_tasks_list = mpcomp_malloc( 1, sizeof(mpcomp_task_list_t), numa_node_id );
@@ -259,7 +262,7 @@ mpcomp_task_team_infos_init( struct mpcomp_team_s* team, int depth )
 
 /* mpcomp_task.c */
 int mpcomp_task_all_task_executed( void );
-void mpcomp_task_schedule( int filter );
+void mpcomp_task_schedule( void );
 void __mpcomp_task_exit( void );
 int paranoiac_test_task_exit_check(void);
 int mpcomp_task_get_task_left_in_team( struct mpcomp_team_s*);

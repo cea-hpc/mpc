@@ -70,14 +70,13 @@ void __mpcomp_task_intel_wrapper( void* task )
     kmp_task_addr->routine( 0, kmp_task_addr );
 }
 
-void
-__mpcomp_task_execute( mpcomp_task_t* task )
+void __mpcomp_task_execute( mpcomp_task_t* task )
 {
     mpcomp_thread_t* thread;
     mpcomp_local_icv_t saved_icvs;
     mpcomp_task_t* saved_current_task;
 
-	 sctk_assert( task );
+	sctk_assert( task );
 
     /* Retrieve the information (microthread structure and current region) */
     sctk_assert( sctk_openmp_thread_tls );	 
@@ -262,10 +261,14 @@ __mpcomp_task_alloc( void (*fn) (void *), void *data, void (*cpyfn) (void *, voi
 
 	/* Create new task */
     __mpcomp_task_infos_init( new_task, fn, task_data, t );
-	new_task->task_dep_infos = sctk_malloc( sizeof( mpcomp_task_dep_task_infos_t ) );
 
+
+#ifdef MPCOMP_USE_TASKDEP
+	new_task->task_dep_infos = sctk_malloc( sizeof( mpcomp_task_dep_task_infos_t ) );
 	sctk_assert( new_task->task_dep_infos );
 	memset( new_task->task_dep_infos, 0, sizeof( mpcomp_task_dep_task_infos_t ));
+#endif /* MPCOMP_USE_TASKDEP */
+
 	mpcomp_task_set_property( &( new_task->property ), MPCOMP_TASK_TIED );
 
    if(arg_size > 0 )
@@ -360,7 +363,9 @@ __mpcomp_task_process( mpcomp_task_t* new_task, bool if_clause )
    __mpcomp_task_execute( new_task );
 
    mpcomp_taskgroup_del_task( new_task ); 
+#ifdef MPCOMP_USE_TASKDEP
    __mpcomp_task_finalize_deps( new_task );
+#endif /* MPCOMP_USE_TASKDEP */
    mpcomp_task_unref_parent_task( new_task );
 }
 
@@ -450,8 +455,7 @@ mpcomp_task_get_victim(int globalRank, int index, mpcomp_tasklist_type_t type)
 }
 
 /* Look in new and untied tasks lists of others */
-static struct mpcomp_task_s * 
-__mpcomp_task_larceny( void )
+static struct mpcomp_task_s *__mpcomp_task_larceny( void )
 {
     int i, type;
     mpcomp_thread_t *thread;
@@ -513,7 +517,7 @@ __mpcomp_task_larceny( void )
 					MPCOMP_TASK_MVP_SET_LAST_STOLEN_TASK_LIST( mvp, type, list );
 			 		return task;
 		    	}
-	   	}
+	   	    }
 		}
 	}
 	return NULL;
@@ -526,7 +530,7 @@ __mpcomp_task_larceny( void )
  *     - in taskwait regions
  *     - in implicit and explicit barrier regions
  */
-void mpcomp_task_schedule( int depth )
+void mpcomp_task_schedule( void )
 {
 	int type;
     mpcomp_mvp_t* mvp = NULL;
@@ -585,9 +589,12 @@ void mpcomp_task_schedule( int depth )
     
 	/* Clean function */
     mpcomp_taskgroup_del_task( task ); 
+#ifdef MPCOMP_USE_TASKDEP
 	__mpcomp_task_finalize_deps( task );
+#endif /* MPCOMP_USE_TASKDEP */
     mpcomp_task_unref_parent_task( task );
 }
+
 
 void mpcomp_taskwait( void )
 {
@@ -609,7 +616,7 @@ void mpcomp_taskwait( void )
   	    /* Look for a children tasks list */
         while( sctk_atomics_load_int(  &( current_task->refcount ) ) != 1 )
         {
-	        mpcomp_task_schedule( 0 );
+	        mpcomp_task_schedule();
  	    }
         
     }

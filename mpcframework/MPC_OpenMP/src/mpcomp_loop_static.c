@@ -28,6 +28,8 @@
 
 #include "mpcomp_core.h"
 #include "mpcomp_loop.h"
+#include "mpcomp_openmp_tls.h"
+
 /****
  *
  * CHUNK MANIPULATION
@@ -42,15 +44,13 @@ int __mpcomp_static_schedule_get_single_chunk (long lb, long b, long incr, long 
        New loop -> *from -> *to step incr
      */
 
-     mpcomp_thread_t *t;
-     int trip_count, chunk_size, num_threads, rank;
+    int trip_count, chunk_size;
  
-     /* Grab info on the current thread */
-     t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
-     sctk_assert(t != NULL);      
- 
-     num_threads = t->info.num_threads;
-     rank = t->rank;
+    /* Grab info on the current thread */
+    mpcomp_thread_t *t = mpcomp_get_thread_tls();
+
+     const int num_threads = t->info.num_threads;
+     const int rank = t->rank;
      
      trip_count = (b - lb) / incr;
      if((b - lb) % incr != 0)
@@ -95,16 +95,12 @@ int __mpcomp_static_schedule_get_nb_chunks (long lb, long b, long incr,
      
      long trip_count;
      long nb_chunks_per_thread;
-     int nb_threads;
-     mpcomp_thread_t *t;
-     int rank;
 
-     t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
-     sctk_assert(t != NULL);   
+    mpcomp_thread_t *t = mpcomp_get_thread_tls();
 
      /* Retrieve the number of threads and the rank of the current thread */
-     nb_threads = t->info.num_threads;
-     rank = t->rank;
+     const int nb_threads = t->info.num_threads;
+     const int rank = t->rank;
 
      /* Compute the trip count (total number of iterations of the original loop) */
      trip_count = (b - lb) / incr;
@@ -137,8 +133,7 @@ int __mpcomp_static_schedule_get_nb_chunks (long lb, long b, long incr,
  * as a chunk size */
 void __mpcomp_static_schedule_get_specific_chunk (long rank, long num_threads, mpcomp_loop_long_iter_t* loop, long chunk_num, long *from, long *to)
 {
-    mpcomp_thread_t* t;
-    t = (mpcomp_thread_t*) sctk_openmp_thread_tls;
+    mpcomp_thread_t *t = mpcomp_get_thread_tls();
     
     /* Compute the number of chunks per thread (floor value) */
     const long thread_chunk_num = __mpcomp_get_static_nb_chunks_per_rank( rank, num_threads, loop );
@@ -198,12 +193,9 @@ void __mpcomp_static_loop_init(mpcomp_thread_t *t, long lb, long b, long incr, l
 int __mpcomp_static_loop_begin (long lb, long b, long incr, long chunk_size,
 				long *from, long *to)
 {
-	mpcomp_thread_t *t;
-
 	__mpcomp_init ();
 
-	t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
-	sctk_assert(t != NULL);  
+    mpcomp_thread_t *t = mpcomp_get_thread_tls();
 
 	sctk_nodebug( "[%d] %s: %d -> %d [%d] cs:%d", t->rank, __func__, lb, b, incr, chunk_size ) ;
 
@@ -221,9 +213,7 @@ int __mpcomp_static_loop_begin (long lb, long b, long incr, long chunk_size,
 
 int __mpcomp_static_loop_next (long *from, long *to)
 {
-	mpcomp_thread_t *t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
-	sctk_assert(t != NULL);  
-
+    mpcomp_thread_t *t = mpcomp_get_thread_tls();
     mpcomp_loop_gen_info_t* loop_infos = &(t->info.loop_infos); 
 
 	const long rank = ( long ) t->rank;
@@ -272,12 +262,9 @@ void __mpcomp_static_loop_end_nowait ()
  *****/
 int __mpcomp_ordered_static_loop_begin (long lb, long b, long incr, long chunk_size, long *from, long *to)
 {
-    mpcomp_thread_t *t;
-
     __mpcomp_init();
 
-    t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
-    sctk_assert(t != NULL);  
+    mpcomp_thread_t *t = mpcomp_get_thread_tls();
 
     const int ret = __mpcomp_static_loop_begin( lb, b, incr, chunk_size, from, to );
     sctk_nodebug( "%d %s: lb : %ld b: %ld", t->rank, __func__, lb, b);   
@@ -292,8 +279,8 @@ int __mpcomp_ordered_static_loop_begin (long lb, long b, long incr, long chunk_s
 
 int __mpcomp_ordered_static_loop_next(long *from, long *to)
 {
-    mpcomp_thread_t *t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
-    sctk_assert(t != NULL);
+    mpcomp_thread_t *t = mpcomp_get_thread_tls();
+
     const int ret =  __mpcomp_static_loop_next(from, to);
     t->info.loop_infos.loop.mpcomp_long.cur_ordered_iter = *from; 
     return ret;
