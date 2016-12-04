@@ -42,4 +42,18 @@ void omp_set_nest_lock(omp_nest_lock_t *lock);
 void omp_unset_nest_lock(omp_nest_lock_t *lock);
 int omp_test_nest_lock(omp_nest_lock_t *lock);
 
+/* If the current task (thread if implicit task or explicit task)
+*     is not the owner of the lock */
+static inline int mpcomp_nest_lock_test_task( mpcomp_thread_t* thread, mpcomp_nest_lock_t* mpcomp_user_nest_lock )
+{
+#if MPCOMP_TASK
+    struct mpcomp_task_s* current_task = MPCOMP_TASK_THREAD_GET_CURRENT_TASK( thread );
+    sctk_assert( current_task );
+    const bool is_task_owner =  (mpcomp_user_nest_lock->owner_task == current_task);
+    const bool is_thread_owned = (mpcomp_user_nest_lock->owner_thread == (void *)thread);
+    const bool have_task_owner = (mpcomp_user_nest_lock->owner_task != NULL );
+    return !( is_task_owner && ( is_thread_owned || have_task_owner ));
+#endif /* MPCOMP_TASK */
+}
+
 #endif /* __MPCOMP_LOCK_H__ */

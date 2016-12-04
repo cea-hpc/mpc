@@ -48,31 +48,50 @@ extern "C"
   void omp_set_nested (int nested);
   int omp_get_nested (void);
 
-  typedef sctk_thread_mutex_t *omp_lock_t;
+    typedef enum omp_lock_hint_t 
+    {
+        omp_lock_hint_none = 0,
+        omp_lock_hint_uncontended = 1,
+        omp_lock_hint_contended = 2,
+        omp_lock_hint_nonspeculative = 4,
+        omp_lock_hint_speculative = 8
+    } omp_lock_hint_t;
+  
+    typedef struct mpcomp_lock_s
+    {
+        omp_lock_hint_t hint;
+        sctk_thread_mutex_t lock;
+    } mpcomp_lock_t; 
+    
+    typedef mpcomp_lock_t* omp_lock_t;
 
-  struct omp_nested_lock_s
-  {
-      void * owner_thread ; /* Owner of the lock */
-      void * owner_task; /* Owner of the lock */
-      int nb_nested ; /* Number of times this lock is held */
-      sctk_thread_mutex_t l ; /* Real lock */
-  };
-  typedef struct omp_nested_lock_s *omp_nest_lock_t;
+    typedef struct mpcomp_nest_lock_s
+    {
+        int nb_nested ; /* Number of times this lock is held */
+        void * owner_thread ; /* Owner of the lock */
+        void * owner_task; /* Owner of the lock */
+        omp_lock_hint_t hint;
+        sctk_thread_mutex_t lock;
+    } mpcomp_nest_lock_t;
+ 
+    typedef mpcomp_nest_lock_t* omp_nest_lock_t;
 
   /* Lock Functions */
-  void omp_init_lock (omp_lock_t * lock);
-  void omp_destroy_lock (omp_lock_t * lock);
-  void omp_set_lock (omp_lock_t * lock);
-  void omp_unset_lock (omp_lock_t * lock);
-  int omp_test_lock (omp_lock_t * lock);
+  void omp_init_lock (omp_lock_t* lock);
+  void omp_init_lock_with_hint (omp_lock_t* lock, omp_lock_hint_t hint);
+  void omp_destroy_lock (omp_lock_t* lock);
+  void omp_set_lock (omp_lock_t* lock);
+  void omp_unset_lock (omp_lock_t* lock);
+  int omp_test_lock (omp_lock_t* lock);
 
 
 /* Nestable Lock Fuctions */
-  void omp_init_nest_lock (omp_nest_lock_t * lock);
-  void omp_destroy_nest_lock (omp_nest_lock_t * lock);
-  void omp_set_nest_lock (omp_nest_lock_t * lock);
-  void omp_unset_nest_lock (omp_nest_lock_t * lock);
-  int omp_test_nest_lock (omp_nest_lock_t * lock);
+  void omp_init_nest_lock (omp_nest_lock_t* lock);
+  void omp_init_nest_lock_with_hint (omp_nest_lock_t* lock, omp_lock_hint_t hint);
+  void omp_destroy_nest_lock (omp_nest_lock_t* lock);
+  void omp_set_nest_lock (omp_nest_lock_t* lock);
+  void omp_unset_nest_lock (omp_nest_lock_t* lock);
+  int omp_test_nest_lock (omp_nest_lock_t* lock);
 
 /* Timing Routines */
   double omp_get_wtime (void);
