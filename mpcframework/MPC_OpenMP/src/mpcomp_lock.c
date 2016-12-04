@@ -26,6 +26,7 @@
 #include "mpcomp_types.h"
 #include "sctk_debug.h"
 #include "mpcomp_openmp_tls.h"
+#include "mpcomp_lock.h"
 
 /**
  *  \fn void omp_init_lock(omp_lock_t *lock)

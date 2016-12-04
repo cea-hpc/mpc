@@ -51,10 +51,6 @@ kmp_task_t* __kmpc_omp_task_alloc( ident_t *loc_ref, kmp_int32 gtid, kmp_int32 f
 
   __mpcomp_init();
 
-   sctk_assert( t->mvp );
-   sctk_assert( t->mvp->father );
-   sctk_assert( t->mvp->father->id_numa );
-
    /* default pading */
    const long align_size =  sizeof( void* ) ;
     

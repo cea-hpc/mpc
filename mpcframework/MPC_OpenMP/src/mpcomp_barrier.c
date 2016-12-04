@@ -113,9 +113,9 @@ void __mpcomp_internal_half_barrier ( mpcomp_mvp_t *mvp)
   sctk_nodebug("%s: entering", __func__ );
 
 #if MPCOMP_TASK
-    mpcomp_thread_t* saved_thread = mpcomp_thread_tls_swap( &( mvp->threads[0] ) ); 
+    (void) mpcomp_thread_tls_store( &( mvp->threads[0] ) ); 
     __mpcomp_internal_full_barrier(mvp);
-    mpcomp_thread_tls_store( saved_thread );
+    (void) mpcomp_thread_tls_store_father();
 #endif /* MPCOMP_TASK */
 
     /* Step 1: Climb in the tree */

@@ -160,8 +160,6 @@ void __kmpc_push_num_threads( ident_t *loc, kmp_int32 global_tid, kmp_int32 num_
   t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
   sctk_assert( t != NULL ) ;
 
-  sctk_assert( t->push_num_threads == 0 ) ;
-
   t->push_num_threads = num_threads ;
 }
 
