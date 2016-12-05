@@ -125,8 +125,8 @@ static inline void __mpcomp_internal_ordered_end( mpcomp_thread_t* t, mpcomp_loo
     mpcomp_loop_long_iter_t* loop = &( loop_infos->loop.mpcomp_long );
 
     isLastIteration = 0;
-    isLastIteration += (loop->up  && loop->cur_ordered_iter >= loop->b) ? ( long) 1 : (long) 0;
-    isLastIteration += (!loop->up && loop->cur_ordered_iter <= loop->b) ? ( long) 1 : (long) 0;
+    isLastIteration += (loop->up  && loop->cur_ordered_iter >= loop->b) ? 1 : 0;
+    isLastIteration += (!loop->up && loop->cur_ordered_iter <= loop->b) ?  1 : 0;
 
 	loop->cur_ordered_iter += loop->incr;
 
@@ -152,8 +152,8 @@ static inline void __mpcomp_internal_ordered_end_ull( mpcomp_thread_t* t, mpcomp
     mpcomp_loop_ull_iter_t* loop = &( loop_infos->loop.mpcomp_ull );
 
     isLastIteration = 0;
-    isLastIteration += (loop->up && loop->cur_ordered_iter >= loop->b) ?  (unsigned long long) 1 : (unsigned long long) 0;
-    isLastIteration += (!loop->up && loop->cur_ordered_iter <= loop->b) ? (unsigned long long) 1 : (unsigned long long) 0;
+    isLastIteration += (loop->up && loop->cur_ordered_iter >= loop->b) ?  1 : 0;
+    isLastIteration += (!loop->up && loop->cur_ordered_iter <= loop->b) ?  1 : 0;
 
     if( loop->up )
     {
