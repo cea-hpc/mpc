@@ -25,20 +25,23 @@
 #ifndef __MPCOMP_LOOP_STATIC_H__
 #define __MPCOMP_LOOP_STATIC_H__
 
-void __mpcomp_static_loop_init( struct mpcomp_thread_s*, long , long, long , long );
+void __mpcomp_static_loop_init(struct mpcomp_thread_s *, long, long, long,
+                               long);
 
-int __mpcomp_static_schedule_get_single_chunk(long , long, long , long *, long *);
-int __mpcomp_static_schedule_get_nb_chunks(long , long, long , long );
-void __mpcomp_static_schedule_get_specific_chunk(long , long, long, long , long, long *, long *);
+int __mpcomp_static_schedule_get_single_chunk(long, long, long, long *, long *);
+int __mpcomp_static_schedule_get_nb_chunks(long, long, long, long);
+void __mpcomp_static_schedule_get_specific_chunk(long, long, long, long, long,
+                                                 long *, long *);
 
-int __mpcomp_static_loop_begin(long , long, long , long , long*, long *);
+int __mpcomp_static_loop_begin(long, long, long, long, long *, long *);
 int __mpcomp_static_loop_next(long *, long *);
 void __mpcomp_static_loop_end(void);
 void __mpcomp_static_loop_end_nowait(void);
 
-int __mpcomp_ordered_static_loop_begin (long , long b, long , long , long *, long *);
+int __mpcomp_ordered_static_loop_begin(long, long b, long, long, long *,
+                                       long *);
 int __mpcomp_ordered_static_loop_next(long *, long *);
-void __mpcomp_ordered_static_loop_end( void );
-void __mpcomp_ordered_static_loop_end_nowait( void );
+void __mpcomp_ordered_static_loop_end(void);
+void __mpcomp_ordered_static_loop_end_nowait(void);
 
 #endif /* __MPCOMP_LOOP_STATIC_H__ */

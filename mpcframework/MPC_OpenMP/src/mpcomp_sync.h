@@ -25,11 +25,11 @@
 #ifndef __MPCOMP_SYNC_H__
 #define __MPCOMP_SYNC_H__
 
-void __mpcomp_atomic_begin( void );
-void __mpcomp_atomic_end( void );
+void __mpcomp_atomic_begin(void);
+void __mpcomp_atomic_end(void);
 void __mpcomp_anonymous_critical_begin(void);
-void __mpcomp_anonymous_critical_end( void );
-void __mpcomp_named_critical_begin( void** ); 
-void __mpcomp_named_critical_end( void** );
+void __mpcomp_anonymous_critical_end(void);
+void __mpcomp_named_critical_begin(void **);
+void __mpcomp_named_critical_end(void **);
 
 #endif /*  __MPCOMP_SYNC_H__ */

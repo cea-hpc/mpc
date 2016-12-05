@@ -28,37 +28,34 @@
 #include "mpcomp_types_enum.h"
 
 /** Break circle dependencies include */
-struct mpcomp_node_s; 
+struct mpcomp_node_s;
 struct mpcomp_mvp_s;
 
 /* Element of the stack for dynamic work stealing */
-typedef struct mpcomp_elem_stack_s
-{
-	union node_leaf 
-	{
-		struct mpcomp_node_s *node;
-		struct mpcomp_mvp_s *leaf;
-	} elem;                               	/**< Stack element 								*/
-	mpcomp_elem_stack_type_t type;   		/**< Type of the 'elem' field 				*/
+typedef struct mpcomp_elem_stack_s {
+  union node_leaf {
+    struct mpcomp_node_s *node;
+    struct mpcomp_mvp_s *leaf;
+  } elem; /**< Stack element
+             */
+  mpcomp_elem_stack_type_t
+      type; /**< Type of the 'elem' field 				*/
 } mpcomp_elem_stack_t;
 
-     
 /* Stack structure for dynamic work stealing */
-typedef struct mpcomp_stack_node_leaf_s
-{
-	mpcomp_elem_stack_t **elements;   		/**< List of elements 							*/
-	int max_elements;                      /**< Number of max elements 					*/
-	int n_elements;                        /**< Corresponds to the head of the stack */
+typedef struct mpcomp_stack_node_leaf_s {
+  mpcomp_elem_stack_t **elements; /**< List of elements
+                                     */
+  int max_elements;               /**< Number of max elements
+                                     */
+  int n_elements;                 /**< Corresponds to the head of the stack */
 } mpcomp_stack_node_leaf_t;
 
-
 /* Stack (maybe the same that mpcomp_stack_node_leaf_s structure) */
-typedef struct mpcomp_stack 
-{
-	struct mpcomp_node_s **elements;
-	int max_elements;
-	int n_elements;             /* Corresponds to the head of the stack */
+typedef struct mpcomp_stack {
+  struct mpcomp_node_s **elements;
+  int max_elements;
+  int n_elements; /* Corresponds to the head of the stack */
 } mpcomp_stack_t;
 
 #endif /* __MPCOMP_TYPES_STACK_H__ */
-

@@ -24,7 +24,7 @@
 
 #ifndef __MPCOMP_INTEL_LOCK_H__
 #define __MPCOMP_INTEL_LOCK_H__
-    
+
 #include "sctk_debug.h"
 #include "mpcomp_intel_types.h"
 
@@ -32,20 +32,17 @@
  * Lock structure
  */
 
-typedef struct iomp_lock_s
-{
-  void* lk;
-} iomp_lock_t;
+typedef struct iomp_lock_s { void *lk; } iomp_lock_t;
 
-void __kmpc_init_lock( ident_t *loc, kmp_int32 gtid,  void **user_lock );
-void __kmpc_init_nest_lock( ident_t *loc, kmp_int32 gtid, void **user_lock );
-void __kmpc_destroy_lock( ident_t *loc, kmp_int32 gtid, void **user_lock );
-void __kmpc_destroy_nest_lock( ident_t *loc, kmp_int32 gtid, void **user_lock );
-void __kmpc_set_lock( ident_t *loc, kmp_int32 gtid, void **user_lock );
-void __kmpc_set_nest_lock( ident_t *loc, kmp_int32 gtid, void **user_lock );
-void __kmpc_unset_lock( ident_t *loc, kmp_int32 gtid, void **user_lock );
-void __kmpc_unset_nest_lock( ident_t *loc, kmp_int32 gtid, void **user_lock );
-int __kmpc_test_lock( ident_t *loc, kmp_int32 gtid, void **user_lock );
-int __kmpc_test_nest_lock( ident_t *loc, kmp_int32 gtid, void **user_lock );
+void __kmpc_init_lock(ident_t *loc, kmp_int32 gtid, void **user_lock);
+void __kmpc_init_nest_lock(ident_t *loc, kmp_int32 gtid, void **user_lock);
+void __kmpc_destroy_lock(ident_t *loc, kmp_int32 gtid, void **user_lock);
+void __kmpc_destroy_nest_lock(ident_t *loc, kmp_int32 gtid, void **user_lock);
+void __kmpc_set_lock(ident_t *loc, kmp_int32 gtid, void **user_lock);
+void __kmpc_set_nest_lock(ident_t *loc, kmp_int32 gtid, void **user_lock);
+void __kmpc_unset_lock(ident_t *loc, kmp_int32 gtid, void **user_lock);
+void __kmpc_unset_nest_lock(ident_t *loc, kmp_int32 gtid, void **user_lock);
+int __kmpc_test_lock(ident_t *loc, kmp_int32 gtid, void **user_lock);
+int __kmpc_test_nest_lock(ident_t *loc, kmp_int32 gtid, void **user_lock);
 
 #endif /* __MPCOMP_INTEL_LOCK_H__ */

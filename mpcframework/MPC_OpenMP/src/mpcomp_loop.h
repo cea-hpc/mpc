@@ -27,25 +27,31 @@
 
 #include "mpcomp_types_loop.h"
 
-static inline unsigned long long __mpcomp_internal_loop_get_num_iters_ull( unsigned long long start, unsigned long long end, unsigned long long step, bool up )
-{
-    unsigned long long ret = (unsigned long long) 0;
-    ret = (  up && start < end ) ? ( end - start + step - (unsigned long long) 1 ) / step : ret;
-    ret = ( !up && start > end ) ? ( start - end - step - (unsigned long long) 1 ) / -step : ret; 
-    return ret; 
+static inline unsigned long long
+__mpcomp_internal_loop_get_num_iters_ull(unsigned long long start,
+                                         unsigned long long end,
+                                         unsigned long long step, bool up) {
+  unsigned long long ret = (unsigned long long)0;
+  ret = (up && start < end)
+            ? (end - start + step - (unsigned long long)1) / step
+            : ret;
+  ret = (!up && start > end)
+            ? (start - end - step - (unsigned long long)1) / -step
+            : ret;
+  return ret;
 }
 
-static inline long __mpcomp_internal_loop_get_num_iters( long start, long end, long step )
-{
-    long ret = 0;
-    const bool up = ( step > 0 ); 
-    const long abs_step = ( up ) ? abs_step : -abs_step;
-    
-    ret = ( up  && start < end ) ? ( end - start + step - (long) 1 ) / step : ret;
-    ret = ( !up && start > end ) ? ( start - end - step - (long) 1 ) / -step : ret;
-    return ( ret >= 0 ) ? ret : -ret ;
+static inline long __mpcomp_internal_loop_get_num_iters(long start, long end,
+                                                        long step) {
+  long ret = 0;
+  const bool up = (step > 0);
+  const long abs_step = (up) ? abs_step : -abs_step;
+
+  ret = (up && start < end) ? (end - start + step - (long)1) / step : ret;
+  ret = (!up && start > end) ? (start - end - step - (long)1) / -step : ret;
+  return (ret >= 0) ? ret : -ret;
 }
 
-unsigned long long __mpcomp_compute_static_nb_chunks_per_rank_ull(unsigned long long, unsigned long long, mpcomp_loop_ull_iter_t*);
+unsigned long long __mpcomp_compute_static_nb_chunks_per_rank_ull(
+    unsigned long long, unsigned long long, mpcomp_loop_ull_iter_t *);
 #endif /* __MPCOMP_LOOP_CORE_H__ */
-

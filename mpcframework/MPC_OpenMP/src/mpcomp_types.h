@@ -27,7 +27,7 @@
 #define __MPCOMP_TYPES_H__
 
 #include "mpcomp_task.h"
-#include "mpcomp_types_enum.h" 
+#include "mpcomp_types_enum.h"
 #include "mpcomp_types_struct.h"
 
 extern __thread void *sctk_openmp_thread_tls;

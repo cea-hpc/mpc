@@ -28,25 +28,34 @@
 #include "sctk_bool.h"
 #include "mpcomp_types.h"
 
-void __mpcomp_dynamic_loop_init( struct mpcomp_thread_s*, long, long, long, long );
-void __mpcomp_dynamic_loop_init_ull( struct mpcomp_thread_s*, unsigned long long, unsigned long long, unsigned long long, unsigned long long);
+void __mpcomp_dynamic_loop_init(struct mpcomp_thread_s *, long, long, long,
+                                long);
+void __mpcomp_dynamic_loop_init_ull(struct mpcomp_thread_s *,
+                                    unsigned long long, unsigned long long,
+                                    unsigned long long, unsigned long long);
 
-int __mpcomp_dynamic_loop_begin(long, long, long, long, long*, long*);
-int __mpcomp_dynamic_loop_next(long*, long *);
-int __mpcomp_loop_ull_dynamic_begin(bool, unsigned long long , unsigned long long, unsigned long long, unsigned long long, unsigned long long*, unsigned long long*);
-int __mpcomp_loop_ull_dynamic_next (unsigned long long *, unsigned long long*);
-void __mpcomp_dynamic_loop_end ( void );
-void __mpcomp_dynamic_loop_end_nowait( void );
-int __mpcomp_dynamic_loop_next_ignore_nowait (long *, long *);
+int __mpcomp_dynamic_loop_begin(long, long, long, long, long *, long *);
+int __mpcomp_dynamic_loop_next(long *, long *);
+int __mpcomp_loop_ull_dynamic_begin(bool, unsigned long long,
+                                    unsigned long long, unsigned long long,
+                                    unsigned long long, unsigned long long *,
+                                    unsigned long long *);
+int __mpcomp_loop_ull_dynamic_next(unsigned long long *, unsigned long long *);
+void __mpcomp_dynamic_loop_end(void);
+void __mpcomp_dynamic_loop_end_nowait(void);
+int __mpcomp_dynamic_loop_next_ignore_nowait(long *, long *);
 
-int __mpcomp_ordered_dynamic_loop_begin (long, long, long, long, long*, long*);
+int __mpcomp_ordered_dynamic_loop_begin(long, long, long, long, long *, long *);
 int __mpcomp_ordered_dynamic_loop_next(long *, long *);
-int __mpcomp_loop_ull_ordered_dynamic_begin (bool, unsigned long long, unsigned long long, unsigned long long, unsigned long long, unsigned long long*, unsigned long long*); 
-int __mpcomp_loop_ull_ordered_dynamic_next(unsigned long long*, unsigned long long*);
+int __mpcomp_loop_ull_ordered_dynamic_begin(
+    bool, unsigned long long, unsigned long long, unsigned long long,
+    unsigned long long, unsigned long long *, unsigned long long *);
+int __mpcomp_loop_ull_ordered_dynamic_next(unsigned long long *,
+                                           unsigned long long *);
 void __mpcomp_ordered_dynamic_loop_end(void);
 void __mpcomp_ordered_dynamic_loop_end_nowait(void);
 
-void __mpcomp_for_dyn_coherency_end_barrier( void ); 
-void __mpcomp_for_dyn_coherency_end_parallel_region( struct mpcomp_instance_s* ); 
+void __mpcomp_for_dyn_coherency_end_barrier(void);
+void __mpcomp_for_dyn_coherency_end_parallel_region(struct mpcomp_instance_s *);
 
 #endif /* __MPCOMP_LOOP_DYN_H__ */

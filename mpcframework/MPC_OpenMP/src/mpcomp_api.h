@@ -25,29 +25,29 @@
 
 #include "mpcomp_types.h"
 
-void omp_set_num_threads(int); 
-int omp_get_thread_num (void);
-int omp_get_max_threads (void);
-int omp_get_num_procs (void);
-void omp_set_dynamic (int);
-int omp_get_dynamic (void);
-void omp_set_nested (int);
-int omp_get_nested (void);
-void omp_set_schedule( omp_sched_t, int); 
-void omp_get_schedule( omp_sched_t*, int*); 
-int omp_in_parallel (void);
-int omp_get_level (void);
-int omp_get_active_level (void);
-int  omp_get_ancestor_thread_num(int);
-int  omp_get_team_size(int);
-int omp_get_num_threads (void);
-double omp_get_wtime (void);
-double omp_get_wtick (void);
+void omp_set_num_threads(int);
+int omp_get_thread_num(void);
+int omp_get_max_threads(void);
+int omp_get_num_procs(void);
+void omp_set_dynamic(int);
+int omp_get_dynamic(void);
+void omp_set_nested(int);
+int omp_get_nested(void);
+void omp_set_schedule(omp_sched_t, int);
+void omp_get_schedule(omp_sched_t *, int *);
+int omp_in_parallel(void);
+int omp_get_level(void);
+int omp_get_active_level(void);
+int omp_get_ancestor_thread_num(int);
+int omp_get_team_size(int);
+int omp_get_num_threads(void);
+double omp_get_wtime(void);
+double omp_get_wtick(void);
 int omp_get_thread_limit(void);
-void omp_set_max_active_levels( int );
+void omp_set_max_active_levels(int);
 int omp_get_max_active_levels();
-int omp_in_final( void );
-int mpcomp_get_num_threads (void);
-int mpcomp_get_thread_num (void);
+int omp_in_final(void);
+int mpcomp_get_num_threads(void);
+int mpcomp_get_thread_num(void);
 
 #endif /* __MPCOMP_API_H__ */

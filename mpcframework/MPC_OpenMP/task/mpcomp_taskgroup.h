@@ -35,43 +35,32 @@ void mpcomp_taskgroup_end(void);
 
 #ifdef MPCOMP_TASKGROUP
 /* Inline functions */
-static inline void 
-mpcomp_taskgroup_add_task( mpcomp_task_t* new_task )
-{
-    mpcomp_task_t* current_task;
-    mpcomp_thread_t* omp_thread_tls;
-    mpcomp_task_taskgroup_t* taskgroup;
+static inline void mpcomp_taskgroup_add_task(mpcomp_task_t *new_task) {
+  mpcomp_task_t *current_task;
+  mpcomp_thread_t *omp_thread_tls;
+  mpcomp_task_taskgroup_t *taskgroup;
 
-  	sctk_assert( sctk_openmp_thread_tls );	 
+  sctk_assert(sctk_openmp_thread_tls);
 
-    omp_thread_tls = (mpcomp_thread_t *) sctk_openmp_thread_tls;
-    current_task = MPCOMP_TASK_THREAD_GET_CURRENT_TASK( omp_thread_tls );
-    taskgroup = current_task->taskgroup;
-    if( taskgroup )
-    {
-        new_task->taskgroup = taskgroup;
-        sctk_atomics_incr_int( &( taskgroup->children_num ) ); 
-    }
+  omp_thread_tls = (mpcomp_thread_t *)sctk_openmp_thread_tls;
+  current_task = MPCOMP_TASK_THREAD_GET_CURRENT_TASK(omp_thread_tls);
+  taskgroup = current_task->taskgroup;
+  if (taskgroup) {
+    new_task->taskgroup = taskgroup;
+    sctk_atomics_incr_int(&(taskgroup->children_num));
+  }
 }
 
-static inline void 
-mpcomp_taskgroup_del_task( mpcomp_task_t* task )
-{
-    if( task->taskgroup )
-        sctk_atomics_decr_int( &( task->taskgroup->children_num ) );    
+static inline void mpcomp_taskgroup_del_task(mpcomp_task_t *task) {
+  if (task->taskgroup)
+    sctk_atomics_decr_int(&(task->taskgroup->children_num));
 }
 
 #else /* MPCOMP_TASKGROUP */
 
-static inline void 
-mpcomp_taskgroup_add_task( mpcomp_task_t* new_task )
-{
-}
+static inline void mpcomp_taskgroup_add_task(mpcomp_task_t *new_task) {}
 
-static inline void 
-mpcomp_taskgroup_del_task( mpcomp_task_t* task )
-{
-}
+static inline void mpcomp_taskgroup_del_task(mpcomp_task_t *task) {}
 
 #endif /* MPCOMP_TASKGROUP */
 #endif /* __MPCOMP_TASGROUP_H__ */

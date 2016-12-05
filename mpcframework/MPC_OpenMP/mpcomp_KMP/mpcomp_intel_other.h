@@ -26,6 +26,6 @@
 #define __MPCOMP_INTEL_OTHER__
 
 int __kmpc_invoke_task_func(int);
-void kmpc_set_blocktime (int);
+void kmpc_set_blocktime(int);
 
 #endif /* __MPCOMP_INTEL_OTHER__ */

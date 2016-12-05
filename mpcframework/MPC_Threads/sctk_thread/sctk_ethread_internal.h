@@ -1630,7 +1630,7 @@ extern "C"
       th_data->attr.detached = SCTK_ETHREAD_CREATE_DETACHED;
 
     stack = attr->stack;
-    stack_size = attr->stack_size; 
+    stack_size = attr->stack_size;
 
     /*Consitency_check */
     /*    assume (attr->priority == 0); */

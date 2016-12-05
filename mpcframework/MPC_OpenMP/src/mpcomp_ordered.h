@@ -25,7 +25,7 @@
 #ifndef __MPCOMP_ORDERED_H__
 #define __MPCOMP_ORDERED_H__
 
-void mpcomp_ordered_begin( void );
-void mpcomp_ordered_end( void );
+void mpcomp_ordered_begin(void);
+void mpcomp_ordered_end(void);
 
 #endif /* __MPCOMP_ORDERED_H__ */

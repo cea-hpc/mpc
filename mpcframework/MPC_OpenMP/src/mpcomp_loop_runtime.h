@@ -25,21 +25,25 @@
 #ifndef __MPCOMP_LOOP_RUNTIME_H__
 #define __MPCOMP_LOOP_RUNTIME_H__
 
-int __mpcomp_runtime_loop_begin( long, long, long, long*, long* );
-int __mpcomp_runtime_loop_next( long *, long * );
-int __mpcomp_loop_ull_runtime_begin(bool, unsigned long long, unsigned long long, unsigned long long, unsigned long long*, unsigned long long*);
-int __mpcomp_loop_ull_runtime_next( unsigned long long*, unsigned long long*);
-void __mpcomp_runtime_loop_end( void );
+int __mpcomp_runtime_loop_begin(long, long, long, long *, long *);
+int __mpcomp_runtime_loop_next(long *, long *);
+int __mpcomp_loop_ull_runtime_begin(bool, unsigned long long,
+                                    unsigned long long, unsigned long long,
+                                    unsigned long long *, unsigned long long *);
+int __mpcomp_loop_ull_runtime_next(unsigned long long *, unsigned long long *);
+void __mpcomp_runtime_loop_end(void);
 void __mpcomp_runtime_loop_end_nowait(void);
 
-int __mpcomp_ordered_runtime_loop_begin(long, long, long, long*, long*);
-int __mpcomp_ordered_runtime_loop_next(long*, long*);
-int __mpcomp_loop_ull_ordered_runtime_begin(bool, unsigned long long, unsigned long long, unsigned long long, unsigned long long*, unsigned long long*);
-int __mpcomp_loop_ull_ordered_runtime_next( unsigned long long*, unsigned long long* );
+int __mpcomp_ordered_runtime_loop_begin(long, long, long, long *, long *);
+int __mpcomp_ordered_runtime_loop_next(long *, long *);
+int __mpcomp_loop_ull_ordered_runtime_begin(bool, unsigned long long,
+                                            unsigned long long,
+                                            unsigned long long,
+                                            unsigned long long *,
+                                            unsigned long long *);
+int __mpcomp_loop_ull_ordered_runtime_next(unsigned long long *,
+                                           unsigned long long *);
 void __mpcomp_ordered_runtime_loop_end(void);
 void __mpcomp_ordered_runtime_loop_end_nowait(void);
 
 #endif /* __MPCOMP_LOOP_RUNTIME_H__ */
-
-
-

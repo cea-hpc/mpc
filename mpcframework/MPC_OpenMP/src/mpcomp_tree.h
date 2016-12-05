@@ -28,7 +28,8 @@
 
 #include "mpcomp_types.h"
 
-int mpcomp_build_tree( mpcomp_instance_t * instance, int n_leaves, int depth, int * degree );
-void mpcomp_print_tree( mpcomp_instance_t * instance );
+int mpcomp_build_tree(mpcomp_instance_t *instance, int n_leaves, int depth,
+                      int *degree);
+void mpcomp_print_tree(mpcomp_instance_t *instance);
 
 #endif /* __MPCOMP_TREE_H__ */

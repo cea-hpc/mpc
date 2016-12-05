@@ -261,47 +261,43 @@ void sctk_runtime_config_override_by_getenv_openmp(struct sctk_runtime_config * 
 		config->modules.openmp.affinity = tmp;
 	}
 
-  	/******* OMP_NEW_TASKS_DEPTH *********/
-  	if ((tmp = getenv("OMP_NEW_TASKS_DEPTH")) != NULL)
-  	{
-   	config->modules.openmp.omp_new_task_depth = strtol(tmp, NULL, 10);       
-  	}
+        /******* OMP_NEW_TASKS_DEPTH *********/
+        if ((tmp = getenv("OMP_NEW_TASKS_DEPTH")) != NULL) {
+          config->modules.openmp.omp_new_task_depth = strtol(tmp, NULL, 10);
+        }
 
-  	/******* OMP_UNTIED_TASKS_DEPTH *********/
-  	if (( tmp = getenv("OMP_UNTIED_TASKS_DEPTH")) != NULL) 
-  	{
-       config->modules.openmp.omp_untied_task_depth = strtol(tmp, NULL, 10);              
-  	}
+        /******* OMP_UNTIED_TASKS_DEPTH *********/
+        if ((tmp = getenv("OMP_UNTIED_TASKS_DEPTH")) != NULL) {
+          config->modules.openmp.omp_untied_task_depth = strtol(tmp, NULL, 10);
+        }
 
-	/****** FROM MPCOMP.C INIT TEAM TASK STRUCT ******/
-	if( config->modules.openmp.omp_untied_task_depth < config->modules.openmp.omp_new_task_depth )
-	{
-		config->modules.openmp.omp_untied_task_depth = config->modules.openmp.omp_new_task_depth;
-	}
-	
-  	/******* OMP_TASK_LARCENY_MODE *********/
-  	if (( tmp = getenv("OMP_TASK_LARCENY_MODE")) != NULL) 
-  	{
-		int omp_task_larceny_mode = strtol(tmp, NULL, 10);
-		if( omp_task_larceny_mode >= 0 && omp_task_larceny_mode < MPCOMP_TASK_LARCENY_MODE_COUNT )
-		{
-			config->modules.openmp.omp_task_larceny_mode = omp_task_larceny_mode;
-		}
-  	}
+        /****** FROM MPCOMP.C INIT TEAM TASK STRUCT ******/
+        if (config->modules.openmp.omp_untied_task_depth <
+            config->modules.openmp.omp_new_task_depth) {
+          config->modules.openmp.omp_untied_task_depth =
+              config->modules.openmp.omp_new_task_depth;
+        }
 
-  	/******* OMP_TASK_NESTING_MAX *********/
-  	if(( tmp = getenv("OMP_TASK_NESTING_MAX")) != NULL ) 
-  	{
-		int omp_task_nesting_max = strtol(tmp, NULL, 10); 
-		if( omp_task_nesting_max > config->modules.openmp.omp_task_nesting_max )
-		{
-       	config->modules.openmp.omp_task_nesting_max = omp_task_nesting_max; 
-		}
-  	}
-	
-	if( config->modules.openmp.omp_task_nesting_max < 8 )
-	{
-		config->modules.openmp.omp_task_nesting_max = 8;
-	}
+        /******* OMP_TASK_LARCENY_MODE *********/
+        if ((tmp = getenv("OMP_TASK_LARCENY_MODE")) != NULL) {
+          int omp_task_larceny_mode = strtol(tmp, NULL, 10);
+          if (omp_task_larceny_mode >= 0 &&
+              omp_task_larceny_mode < MPCOMP_TASK_LARCENY_MODE_COUNT) {
+            config->modules.openmp.omp_task_larceny_mode =
+                omp_task_larceny_mode;
+          }
+        }
 
+        /******* OMP_TASK_NESTING_MAX *********/
+        if ((tmp = getenv("OMP_TASK_NESTING_MAX")) != NULL) {
+          int omp_task_nesting_max = strtol(tmp, NULL, 10);
+          if (omp_task_nesting_max >
+              config->modules.openmp.omp_task_nesting_max) {
+            config->modules.openmp.omp_task_nesting_max = omp_task_nesting_max;
+          }
+        }
+
+        if (config->modules.openmp.omp_task_nesting_max < 8) {
+          config->modules.openmp.omp_task_nesting_max = 8;
+        }
 }

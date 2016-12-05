@@ -28,9 +28,9 @@
 #include "mpcomp_intel_types.h"
 
 typedef struct kmpc_thunk_t {
-} kmpc_thunk_t ;
+} kmpc_thunk_t;
 
-typedef void (*kmpc_task_t) (kmp_int32 global_tid, struct kmpc_thunk_t *thunk);
+typedef void (*kmpc_task_t)(kmp_int32 global_tid, struct kmpc_thunk_t *thunk);
 
 typedef struct kmpc_shared_vars_t {
 } kmpc_shared_vars_t;

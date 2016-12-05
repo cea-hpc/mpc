@@ -25,9 +25,9 @@
 #ifndef __MPCOMP_INTEL_ALLOC_H__
 #define __MPCOMP_INTEL_ALLOC_H__
 
-void* kmpc_malloc( size_t size );
-void *kmpc_calloc( size_t nelem, size_t elsize );
-void *kmpc_realloc( void *ptr, size_t size );
-void  kmpc_free( void *ptr );
+void *kmpc_malloc(size_t size);
+void *kmpc_calloc(size_t nelem, size_t elsize);
+void *kmpc_realloc(void *ptr, size_t size);
+void kmpc_free(void *ptr);
 
 #endif /* __MPCOMP_INTEL_ALLOC_H__ */

@@ -27,181 +27,176 @@
 #include "sctk_spinlock.h"
 #include "mpcomp_ordered.h"
 
-static inline void __mpcomp_internal_ordered_begin( mpcomp_thread_t *t, mpcomp_loop_gen_info_t* loop_infos )
-{
-    sctk_assert( loop_infos && loop_infos->type == MPCOMP_LOOP_TYPE_LONG );
-    mpcomp_loop_long_iter_t* loop = &( loop_infos->loop.mpcomp_long );
-    const long cur_ordered_iter = loop->cur_ordered_iter;
-    
-    if( loop_infos->fresh )
-    {
-        t->next_ordered_index = ( t->next_ordered_index + 1 ) % 5;
-        loop_infos->fresh = false;
-    }
-        
-    const int index = t->next_ordered_index;    
+static inline void
+__mpcomp_internal_ordered_begin(mpcomp_thread_t *t,
+                                mpcomp_loop_gen_info_t *loop_infos) {
+  sctk_assert(loop_infos && loop_infos->type == MPCOMP_LOOP_TYPE_LONG);
+  mpcomp_loop_long_iter_t *loop = &(loop_infos->loop.mpcomp_long);
+  const long cur_ordered_iter = loop->cur_ordered_iter;
 
-	/* First iteration of the loop -> initialize 'next_ordered_offset' */
-	if( cur_ordered_iter == loop->lb ) 
-    {
-        while( sctk_atomics_cas_int( &(t->instance->team->next_ordered_offset_finalized[index]), 0, 1 ) )
-        {
-            sctk_thread_yield();
-        } 
-        return;
-    }
+  if (loop_infos->fresh) {
+    t->next_ordered_index = (t->next_ordered_index + 1) % 5;
+    loop_infos->fresh = false;
+  }
 
-    /* Do we have to wait for the right iteration? */
-    while( cur_ordered_iter != ( loop->lb + loop->incr * t->instance->team->next_ordered_offset[index]) )
-	{
-	    sctk_thread_yield();
-    }
-} 
+  const int index = t->next_ordered_index;
 
-static inline void __mpcomp_internal_ordered_begin_ull( mpcomp_thread_t *t, mpcomp_loop_gen_info_t* loop_infos )
-{
-    sctk_assert( loop_infos && loop_infos->type == MPCOMP_LOOP_TYPE_ULL );
-    mpcomp_loop_ull_iter_t* loop = &( loop_infos->loop.mpcomp_ull );
-    const unsigned long long cur_ordered_iter = loop->cur_ordered_iter;
-
-    if( loop_infos->fresh )
-    {
-        t->instance->team->next_ordered_index = ( t->next_ordered_index + 1 ) % 5;
-        loop_infos->fresh = false;
+  /* First iteration of the loop -> initialize 'next_ordered_offset' */
+  if (cur_ordered_iter == loop->lb) {
+    while (sctk_atomics_cas_int(
+        &(t->instance->team->next_ordered_offset_finalized[index]), 0, 1)) {
+      sctk_thread_yield();
     }
-        
-    const int index = t->instance->team->next_ordered_index;
+    return;
+  }
 
-    /* First iteration of the loop -> initialize 'next_ordered_offset' */
-    if( cur_ordered_iter == loop->lb )                   
-    {
-        while( sctk_atomics_cas_int(&(t->instance->team->next_ordered_offset_finalized[index]), 0, 1 ) )
-        {
-            sctk_thread_yield();
-        } 
-        return;
-    }
-
-    /* Do we have to wait for the right iteration? */
-    while( cur_ordered_iter != ( loop->lb + loop->incr * t->instance->team->next_ordered_offset_ull[index]) )
-    {
-        sctk_thread_yield();
-    }
+  /* Do we have to wait for the right iteration? */
+  while (
+      cur_ordered_iter !=
+      (loop->lb + loop->incr * t->instance->team->next_ordered_offset[index])) {
+    sctk_thread_yield();
+  }
 }
 
-void __mpcomp_ordered_begin( void )
-{
-	mpcomp_thread_t *t;
-    mpcomp_loop_gen_info_t* loop_infos; 
+static inline void
+__mpcomp_internal_ordered_begin_ull(mpcomp_thread_t *t,
+                                    mpcomp_loop_gen_info_t *loop_infos) {
+  sctk_assert(loop_infos && loop_infos->type == MPCOMP_LOOP_TYPE_ULL);
+  mpcomp_loop_ull_iter_t *loop = &(loop_infos->loop.mpcomp_ull);
+  const unsigned long long cur_ordered_iter = loop->cur_ordered_iter;
 
-	__mpcomp_init();
+  if (loop_infos->fresh) {
+    t->instance->team->next_ordered_index = (t->next_ordered_index + 1) % 5;
+    loop_infos->fresh = false;
+  }
 
-	t = (mpcomp_thread_t *) sctk_openmp_thread_tls;
-	sctk_assert(t != NULL); 
+  const int index = t->instance->team->next_ordered_index;
 
-    /* No need to check something in case of 1 thread */
-    if ( t->info.num_threads == 1 )
-    {
-         return ;
+  /* First iteration of the loop -> initialize 'next_ordered_offset' */
+  if (cur_ordered_iter == loop->lb) {
+    while (sctk_atomics_cas_int(
+        &(t->instance->team->next_ordered_offset_finalized[index]), 0, 1)) {
+      sctk_thread_yield();
     }
+    return;
+  }
 
-    loop_infos = &( t->info.loop_infos );
-
-    if( loop_infos->type == MPCOMP_LOOP_TYPE_LONG )
-    { 
-        __mpcomp_internal_ordered_begin( t, loop_infos );
-    }
-    else
-    {
-        __mpcomp_internal_ordered_begin_ull( t, loop_infos );
-    }
+  /* Do we have to wait for the right iteration? */
+  while (cur_ordered_iter !=
+         (loop->lb +
+          loop->incr * t->instance->team->next_ordered_offset_ull[index])) {
+    sctk_thread_yield();
+  }
 }
 
-static inline void __mpcomp_internal_ordered_end( mpcomp_thread_t* t, mpcomp_loop_gen_info_t* loop_infos  )
-{
-    int isLastIteration;
-    const int index = t->next_ordered_index;
-    sctk_assert( loop_infos && loop_infos->type == MPCOMP_LOOP_TYPE_LONG );
-    mpcomp_loop_long_iter_t* loop = &( loop_infos->loop.mpcomp_long );
+void __mpcomp_ordered_begin(void) {
+  mpcomp_thread_t *t;
+  mpcomp_loop_gen_info_t *loop_infos;
 
-    isLastIteration = 0;
-    isLastIteration += (loop->up  && loop->cur_ordered_iter >= loop->b) ? 1 : 0;
-    isLastIteration += (!loop->up && loop->cur_ordered_iter <= loop->b) ?  1 : 0;
+  __mpcomp_init();
 
-	loop->cur_ordered_iter += loop->incr;
+  t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
+  sctk_assert(t != NULL);
 
-    isLastIteration += ((loop->incr > 0)  && loop->cur_ordered_iter >= loop->b) ? ( long) 1 : (long) 0;
-    isLastIteration += ((loop->incr < 0)  && loop->cur_ordered_iter <= loop->b) ? ( long) 1 : (long) 0;
+  /* No need to check something in case of 1 thread */
+  if (t->info.num_threads == 1) {
+    return;
+  }
 
-    if( isLastIteration )
-    {
-	    t->instance->team->next_ordered_offset[index] = (long) 0;
-        int ret = sctk_atomics_cas_int(&(t->instance->team->next_ordered_offset_finalized[index]), 1, 0 );
-    }
-    else
-    {
-        t->instance->team->next_ordered_offset[index] += (long) 1;
-    }
+  loop_infos = &(t->info.loop_infos);
+
+  if (loop_infos->type == MPCOMP_LOOP_TYPE_LONG) {
+    __mpcomp_internal_ordered_begin(t, loop_infos);
+  } else {
+    __mpcomp_internal_ordered_begin_ull(t, loop_infos);
+  }
 }
 
-static inline void __mpcomp_internal_ordered_end_ull( mpcomp_thread_t* t, mpcomp_loop_gen_info_t* loop_infos  )
-{
-    int isLastIteration;
-    const int index = t->next_ordered_index;
-    sctk_assert( loop_infos && loop_infos->type == MPCOMP_LOOP_TYPE_ULL );
-    mpcomp_loop_ull_iter_t* loop = &( loop_infos->loop.mpcomp_ull );
+static inline void
+__mpcomp_internal_ordered_end(mpcomp_thread_t *t,
+                              mpcomp_loop_gen_info_t *loop_infos) {
+  int isLastIteration;
+  const int index = t->next_ordered_index;
+  sctk_assert(loop_infos && loop_infos->type == MPCOMP_LOOP_TYPE_LONG);
+  mpcomp_loop_long_iter_t *loop = &(loop_infos->loop.mpcomp_long);
 
-    isLastIteration = 0;
-    isLastIteration += (loop->up && loop->cur_ordered_iter >= loop->b) ?  1 : 0;
-    isLastIteration += (!loop->up && loop->cur_ordered_iter <= loop->b) ?  1 : 0;
+  isLastIteration = 0;
+  isLastIteration += (loop->up && loop->cur_ordered_iter >= loop->b) ? 1 : 0;
+  isLastIteration += (!loop->up && loop->cur_ordered_iter <= loop->b) ? 1 : 0;
 
-    if( loop->up )
-    {
-	    loop->cur_ordered_iter = loop->cur_ordered_iter + loop->incr;
-    }
-    else
-    {
-	    loop->cur_ordered_iter = loop->cur_ordered_iter - loop->incr;
-    }
+  loop->cur_ordered_iter += loop->incr;
 
-    isLastIteration += (loop->up && loop->cur_ordered_iter >= loop->b) ?  (unsigned long long) 1 : (unsigned long long) 0;
-    isLastIteration += (!loop->up && loop->cur_ordered_iter <= loop->b) ? (unsigned long long) 1 : (unsigned long long) 0;
+  isLastIteration += ((loop->incr > 0) && loop->cur_ordered_iter >= loop->b)
+                         ? (long)1
+                         : (long)0;
+  isLastIteration += ((loop->incr < 0) && loop->cur_ordered_iter <= loop->b)
+                         ? (long)1
+                         : (long)0;
 
-    if( isLastIteration )
-    {
-	    t->instance->team->next_ordered_offset_ull[index] = 0;
-        sctk_atomics_store_int(&(t->instance->team->next_ordered_offset_finalized[index]), 0 );
-    }
-    else
-    {
-        t->instance->team->next_ordered_offset_ull[index] += (unsigned long long)1;
-    }
+  if (isLastIteration) {
+    t->instance->team->next_ordered_offset[index] = (long)0;
+    int ret = sctk_atomics_cas_int(
+        &(t->instance->team->next_ordered_offset_finalized[index]), 1, 0);
+  } else {
+    t->instance->team->next_ordered_offset[index] += (long)1;
+  }
 }
 
-void __mpcomp_ordered_end( void )
-{
-	mpcomp_thread_t *t;
-    mpcomp_loop_gen_info_t* loop_infos; 
+static inline void
+__mpcomp_internal_ordered_end_ull(mpcomp_thread_t *t,
+                                  mpcomp_loop_gen_info_t *loop_infos) {
+  int isLastIteration;
+  const int index = t->next_ordered_index;
+  sctk_assert(loop_infos && loop_infos->type == MPCOMP_LOOP_TYPE_ULL);
+  mpcomp_loop_ull_iter_t *loop = &(loop_infos->loop.mpcomp_ull);
 
-	t = (mpcomp_thread_t *) sctk_openmp_thread_tls;
-	sctk_assert(t != NULL); 
+  isLastIteration = 0;
+  isLastIteration += (loop->up && loop->cur_ordered_iter >= loop->b) ? 1 : 0;
+  isLastIteration += (!loop->up && loop->cur_ordered_iter <= loop->b) ? 1 : 0;
 
-    /* No need to check something in case of 1 thread */
-    if ( t->info.num_threads == 1 ) return ;
+  if (loop->up) {
+    loop->cur_ordered_iter = loop->cur_ordered_iter + loop->incr;
+  } else {
+    loop->cur_ordered_iter = loop->cur_ordered_iter - loop->incr;
+  }
 
-    loop_infos = &( t->info.loop_infos );
+  isLastIteration += (loop->up && loop->cur_ordered_iter >= loop->b)
+                         ? (unsigned long long)1
+                         : (unsigned long long)0;
+  isLastIteration += (!loop->up && loop->cur_ordered_iter <= loop->b)
+                         ? (unsigned long long)1
+                         : (unsigned long long)0;
 
-    if( loop_infos->type == MPCOMP_LOOP_TYPE_LONG )
-    { 
-        __mpcomp_internal_ordered_end( t, loop_infos );
-    }
-    else
-    {
-        __mpcomp_internal_ordered_end_ull( t, loop_infos );
-    }
+  if (isLastIteration) {
+    t->instance->team->next_ordered_offset_ull[index] = 0;
+    sctk_atomics_store_int(
+        &(t->instance->team->next_ordered_offset_finalized[index]), 0);
+  } else {
+    t->instance->team->next_ordered_offset_ull[index] += (unsigned long long)1;
+  }
+}
+
+void __mpcomp_ordered_end(void) {
+  mpcomp_thread_t *t;
+  mpcomp_loop_gen_info_t *loop_infos;
+
+  t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
+  sctk_assert(t != NULL);
+
+  /* No need to check something in case of 1 thread */
+  if (t->info.num_threads == 1)
+    return;
+
+  loop_infos = &(t->info.loop_infos);
+
+  if (loop_infos->type == MPCOMP_LOOP_TYPE_LONG) {
+    __mpcomp_internal_ordered_end(t, loop_infos);
+  } else {
+    __mpcomp_internal_ordered_end_ull(t, loop_infos);
+  }
 }
 
 #ifndef NO_OPTIMIZED_GOMP_4_0_API_SUPPORT
-    __asm__(".symver __mpcomp_ordered_begin, GOMP_ordered_start@@GOMP_1.0"); 
-    __asm__(".symver __mpcomp_ordered_end, GOMP_ordered_end@@GOMP_1.0"); 
+__asm__(".symver __mpcomp_ordered_begin, GOMP_ordered_start@@GOMP_1.0");
+__asm__(".symver __mpcomp_ordered_end, GOMP_ordered_end@@GOMP_1.0");
 #endif /* OPTIMIZED_GOMP_API_SUPPORT */

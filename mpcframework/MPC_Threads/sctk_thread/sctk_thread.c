@@ -47,7 +47,7 @@
 #include "sctk_posix_thread.h"
 #include "sctk_internal_thread.h"
 #ifdef MPC_OpenMP
-#include"mpcomp_core.h"
+#include "mpcomp_core.h"
 #endif
 #ifdef MPC_Debugger
 #include "sctk_thread_dbg.h"

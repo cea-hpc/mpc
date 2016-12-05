@@ -28,64 +28,58 @@
 #include "mpcomp_types.h"
 
 #ifdef MPCOMP_TASKGROUP
-void mpcomp_taskgroup_start( void )
-{
-    mpcomp_task_t* current_task = NULL;         		/* Current task execute 	*/
-    mpcomp_thread_t* omp_thread_tls = NULL;     		/* thread private data  	*/
-	mpcomp_task_taskgroup_t* new_taskgroup = NULL;	    /* new_taskgroup allocated  */
+void mpcomp_taskgroup_start(void) {
+  mpcomp_task_t *current_task = NULL;            /* Current task execute 	*/
+  mpcomp_thread_t *omp_thread_tls = NULL;        /* thread private data  	*/
+  mpcomp_task_taskgroup_t *new_taskgroup = NULL; /* new_taskgroup allocated  */
 
-    __mpcomp_init();
-  	mpcomp_task_scheduling_infos_init();
+  __mpcomp_init();
+  mpcomp_task_scheduling_infos_init();
 
-	omp_thread_tls = ( mpcomp_thread_t* ) sctk_openmp_thread_tls;
-	sctk_assert( omp_thread_tls );
-	current_task = MPCOMP_TASK_THREAD_GET_CURRENT_TASK( omp_thread_tls );
-	sctk_assert( current_task );	
-    
-	new_taskgroup = sctk_malloc( sizeof( mpcomp_task_taskgroup_t ) );
-	sctk_assert( new_taskgroup );
+  omp_thread_tls = (mpcomp_thread_t *)sctk_openmp_thread_tls;
+  sctk_assert(omp_thread_tls);
+  current_task = MPCOMP_TASK_THREAD_GET_CURRENT_TASK(omp_thread_tls);
+  sctk_assert(current_task);
 
-	/* Init new task group and store it in current task */
-	memset( new_taskgroup, 0, sizeof( mpcomp_task_taskgroup_t ) ); 
-	new_taskgroup->prev = current_task->taskgroup;
-	current_task->taskgroup = new_taskgroup;
+  new_taskgroup = sctk_malloc(sizeof(mpcomp_task_taskgroup_t));
+  sctk_assert(new_taskgroup);
+
+  /* Init new task group and store it in current task */
+  memset(new_taskgroup, 0, sizeof(mpcomp_task_taskgroup_t));
+  new_taskgroup->prev = current_task->taskgroup;
+  current_task->taskgroup = new_taskgroup;
 }
 
-void mpcomp_taskgroup_end( void )
-{
-	mpcomp_task_t* current_task = NULL;             /* Current task execute     */
-    mpcomp_thread_t* omp_thread_tls = NULL;         /* thread private data      */
-    mpcomp_task_taskgroup_t* taskgroup = NULL;      /* new_taskgroup allocated  */
+void mpcomp_taskgroup_end(void) {
+  mpcomp_task_t *current_task = NULL;        /* Current task execute     */
+  mpcomp_thread_t *omp_thread_tls = NULL;    /* thread private data      */
+  mpcomp_task_taskgroup_t *taskgroup = NULL; /* new_taskgroup allocated  */
 
-    omp_thread_tls = ( mpcomp_thread_t* ) sctk_openmp_thread_tls;
-    sctk_assert( omp_thread_tls );
+  omp_thread_tls = (mpcomp_thread_t *)sctk_openmp_thread_tls;
+  sctk_assert(omp_thread_tls);
 
-	current_task = MPCOMP_TASK_THREAD_GET_CURRENT_TASK( omp_thread_tls );
-	sctk_assert( current_task );
+  current_task = MPCOMP_TASK_THREAD_GET_CURRENT_TASK(omp_thread_tls);
+  sctk_assert(current_task);
 
-    taskgroup = current_task->taskgroup;
-    
-    if( !taskgroup ) return;    
+  taskgroup = current_task->taskgroup;
 
-	while( sctk_atomics_load_int( &( taskgroup->children_num ) ))
-	{
-	    mpcomp_task_schedule();	
-	} 
+  if (!taskgroup)
+    return;
 
-    current_task->taskgroup = taskgroup->prev;
-    sctk_free( taskgroup );
+  while (sctk_atomics_load_int(&(taskgroup->children_num))) {
+    mpcomp_task_schedule();
+  }
+
+  current_task->taskgroup = taskgroup->prev;
+  sctk_free(taskgroup);
 }
-#else /* MPCOMP_TASKGROUP */
-void mpcomp_taskgroup_start( void )
-{
-}
-void mpcomp_taskgroup_end( void )
-{
-}
+#else  /* MPCOMP_TASKGROUP */
+void mpcomp_taskgroup_start(void) {}
+void mpcomp_taskgroup_end(void) {}
 #endif /* MPCOMP_TASKGROUP */
 
 /* GOMP OPTIMIZED_1_0_WRAPPING */
 #ifndef NO_OPTIMIZED_GOMP_4_0_API_SUPPORT
-    __asm__(".symver mpcomp_taskgroup_start, GOMP_taskgroup_start@@GOMP_4.0"); 
-    __asm__(".symver mpcomp_taskgroup_end, GOMP_taskgroup_end@@GOMP_4.0"); 
+__asm__(".symver mpcomp_taskgroup_start, GOMP_taskgroup_start@@GOMP_4.0");
+__asm__(".symver mpcomp_taskgroup_end, GOMP_taskgroup_end@@GOMP_4.0");
 #endif /* OPTIMIZED_GOMP_API_SUPPORT */

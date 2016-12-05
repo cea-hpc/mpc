@@ -34,4 +34,4 @@ __mpcomp_task_set_stealing_policy(void)
 {
     /* Source generic pointer */
 }
-#endif 
+#endif

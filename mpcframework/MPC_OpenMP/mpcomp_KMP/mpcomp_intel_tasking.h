@@ -27,34 +27,37 @@
 
 #include "mpcomp_intel_types.h"
 
-#define KMP_TASKDATA_TO_TASK(task_data) (( mpcomp_task_t* ) taskdata - 1 )
-#define KMP_TASKDATA_TO_TASK(task) ((kmp_task_t*) taskdata +1 )
+#define KMP_TASKDATA_TO_TASK(task_data) ((mpcomp_task_t *)taskdata - 1)
+#define KMP_TASKDATA_TO_TASK(task) ((kmp_task_t *)taskdata + 1)
 
-typedef kmp_int32 (* kmp_routine_entry_t)( kmp_int32, void * );
+typedef kmp_int32 (*kmp_routine_entry_t)(kmp_int32, void *);
 
-typedef struct kmp_task {                   /* GEH: Shouldn't this be aligned somehow? */
-    void *              shareds;            /**< pointer to block of pointers to shared vars   */
-    kmp_routine_entry_t routine;            /**< pointer to routine to call for executing task */
-    kmp_int32           part_id;            /**< part id for the task                          */
+typedef struct kmp_task { /* GEH: Shouldn't this be aligned somehow? */
+  void *shareds;          /**< pointer to block of pointers to shared vars   */
+  kmp_routine_entry_t
+      routine;       /**< pointer to routine to call for executing task */
+  kmp_int32 part_id; /**< part id for the task                          */
 #if OMP_40_ENABLED
-    kmp_routine_entry_t destructors;        /* pointer to function to invoke deconstructors of firstprivate C++ objects */
-#endif // OMP_40_ENABLED
-    /*  private vars  */
+  kmp_routine_entry_t
+      destructors; /* pointer to function to invoke deconstructors of
+                      firstprivate C++ objects */
+#endif             // OMP_40_ENABLED
+                   /*  private vars  */
 } kmp_task_t;
 
 /* From kmp_os.h for this type */
-typedef long             kmp_intptr_t;
+typedef long kmp_intptr_t;
 
 typedef struct kmp_depend_info {
-     kmp_intptr_t               base_addr;
-     size_t 	                len;
-     struct {
-         bool                   in:1;
-         bool                   out:1;
-     } flags;
+  kmp_intptr_t base_addr;
+  size_t len;
+  struct {
+    bool in : 1;
+    bool out : 1;
+  } flags;
 } kmp_depend_info_t;
 
-struct kmp_taskdata {                                 /* aligned during dynamic allocation       */
+struct kmp_taskdata { /* aligned during dynamic allocation       */
 #if 0
     kmp_int32               td_task_id;               /* id, assigned by debugger                */
     kmp_tasking_flags_t     td_flags;                 /* task flags                              */
@@ -82,24 +85,29 @@ struct kmp_taskdata {                                 /* aligned during dynamic 
     kmp_uint32              td_dummy[2];
 #endif
 #endif
-} ;
-typedef struct kmp_taskdata  kmp_taskdata_t;
+};
+typedef struct kmp_taskdata kmp_taskdata_t;
 
-kmp_int32 __kmpc_omp_task( ident_t*, kmp_int32, kmp_task_t *);
-void __kmp_omp_task_wrapper( void* );
-kmp_task_t* __kmpc_omp_task_alloc( ident_t*, kmp_int32, kmp_int32, size_t, size_t, kmp_routine_entry_t );
-void __kmpc_omp_task_begin_if0( ident_t*, kmp_int32, kmp_task_t*);
-void __kmpc_omp_task_complete_if0( ident_t*, kmp_int32, kmp_task_t*);
-kmp_int32 __kmpc_omp_task_parts( ident_t*, kmp_int32, kmp_task_t * );
-kmp_int32 __kmpc_omp_taskwait( ident_t *loc_ref, kmp_int32 gtid );
-kmp_int32 __kmpc_omp_taskwait( ident_t *loc_ref, kmp_int32 gtid );
-kmp_int32 __kmpc_omp_taskyield( ident_t *loc_ref, kmp_int32 gtid, int end_part );
-void __kmpc_omp_task_begin( ident_t *loc_ref, kmp_int32 gtid, kmp_task_t * task );
-void __kmpc_omp_task_complete( ident_t *loc_ref, kmp_int32 gtid, kmp_task_t *task );
-void __kmpc_taskgroup( ident_t * loc, int gtid );
-void __kmpc_end_taskgroup( ident_t * loc, int gtid );
-kmp_int32 __kmpc_omp_task_with_deps(ident_t*, kmp_int32, kmp_task_t*, kmp_int32, kmp_depend_info_t*,kmp_int32, kmp_depend_info_t* );
-void __kmpc_omp_wait_deps ( ident_t *, kmp_int32, kmp_int32, kmp_depend_info_t *, kmp_int32, kmp_depend_info_t* );
-void __kmp_release_deps ( kmp_int32, kmp_taskdata_t *);
+kmp_int32 __kmpc_omp_task(ident_t *, kmp_int32, kmp_task_t *);
+void __kmp_omp_task_wrapper(void *);
+kmp_task_t *__kmpc_omp_task_alloc(ident_t *, kmp_int32, kmp_int32, size_t,
+                                  size_t, kmp_routine_entry_t);
+void __kmpc_omp_task_begin_if0(ident_t *, kmp_int32, kmp_task_t *);
+void __kmpc_omp_task_complete_if0(ident_t *, kmp_int32, kmp_task_t *);
+kmp_int32 __kmpc_omp_task_parts(ident_t *, kmp_int32, kmp_task_t *);
+kmp_int32 __kmpc_omp_taskwait(ident_t *loc_ref, kmp_int32 gtid);
+kmp_int32 __kmpc_omp_taskwait(ident_t *loc_ref, kmp_int32 gtid);
+kmp_int32 __kmpc_omp_taskyield(ident_t *loc_ref, kmp_int32 gtid, int end_part);
+void __kmpc_omp_task_begin(ident_t *loc_ref, kmp_int32 gtid, kmp_task_t *task);
+void __kmpc_omp_task_complete(ident_t *loc_ref, kmp_int32 gtid,
+                              kmp_task_t *task);
+void __kmpc_taskgroup(ident_t *loc, int gtid);
+void __kmpc_end_taskgroup(ident_t *loc, int gtid);
+kmp_int32 __kmpc_omp_task_with_deps(ident_t *, kmp_int32, kmp_task_t *,
+                                    kmp_int32, kmp_depend_info_t *, kmp_int32,
+                                    kmp_depend_info_t *);
+void __kmpc_omp_wait_deps(ident_t *, kmp_int32, kmp_int32, kmp_depend_info_t *,
+                          kmp_int32, kmp_depend_info_t *);
+void __kmp_release_deps(kmp_int32, kmp_taskdata_t *);
 
 #endif /*__MPCOMP_INTEL_TASKING_H__ */

@@ -25,21 +25,27 @@
 #ifndef __MPCOMP_LOOP_GUIDED_H__
 #define __MPCOMP_LOOP_GUIDED_H__
 
-int __mpcomp_guided_loop_begin(long, long, long, long, long*, long*);
-int __mpcomp_guided_loop_next (long*, long*);
-void __mpcomp_guided_loop_end( void );
+int __mpcomp_guided_loop_begin(long, long, long, long, long *, long *);
+int __mpcomp_guided_loop_next(long *, long *);
+void __mpcomp_guided_loop_end(void);
 void __mpcomp_guided_loop_end_nowait(void);
-int __mpcomp_guided_loop_begin_ignore_nowait(long, long, long, long, long*, long*);
-int __mpcomp_guided_loop_next_ignore_nowait (long *, long *);
-int __mpcomp_ordered_guided_loop_begin (long, long, long, long, long*, long*);
-int __mpcomp_ordered_guided_loop_next (long*, long*); 
+int __mpcomp_guided_loop_begin_ignore_nowait(long, long, long, long, long *,
+                                             long *);
+int __mpcomp_guided_loop_next_ignore_nowait(long *, long *);
+int __mpcomp_ordered_guided_loop_begin(long, long, long, long, long *, long *);
+int __mpcomp_ordered_guided_loop_next(long *, long *);
 void __mpcomp_ordered_guided_loop_end(void);
 void __mpcomp_ordered_guided_loop_end_nowait(void);
-int __mpcomp_loop_ull_guided_begin (bool, unsigned long long, unsigned long long, unsigned long long , unsigned long long, unsigned long long*, unsigned long long*);
-int __mpcomp_loop_ull_guided_next (unsigned long long*, unsigned long long *);
-void __mpcomp_guided_loop_ull_end (void);
-void __mpcomp_guided_loop_ull_end_nowait (void);
-int __mpcomp_loop_ull_ordered_guided_begin (bool,unsigned long long, unsigned long long, unsigned long long, unsigned long long, unsigned long long*, unsigned long long*);
-int __mpcomp_loop_ull_ordered_guided_next (unsigned long long*, unsigned long long*);
+int __mpcomp_loop_ull_guided_begin(bool, unsigned long long, unsigned long long,
+                                   unsigned long long, unsigned long long,
+                                   unsigned long long *, unsigned long long *);
+int __mpcomp_loop_ull_guided_next(unsigned long long *, unsigned long long *);
+void __mpcomp_guided_loop_ull_end(void);
+void __mpcomp_guided_loop_ull_end_nowait(void);
+int __mpcomp_loop_ull_ordered_guided_begin(
+    bool, unsigned long long, unsigned long long, unsigned long long,
+    unsigned long long, unsigned long long *, unsigned long long *);
+int __mpcomp_loop_ull_ordered_guided_next(unsigned long long *,
+                                          unsigned long long *);
 
 #endif /* __MPCOMP_LOOP_GUIDED_H__ */

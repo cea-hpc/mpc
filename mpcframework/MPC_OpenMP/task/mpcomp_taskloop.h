@@ -25,7 +25,11 @@
 #ifndef __MPCOMP_TASKLOOP_H__
 #define __MPCOMP_TASKLOOP_H__
 
-void mpcomp_taskloop( void (*)(void*), void*, void(*)(void*, void*), long, long, unsigned, unsigned long, int, long, long, long);
-void mpcomp_taskloop_ull( void (*)(void*), void*, void(*)(void*, void*), long, long, unsigned, unsigned long, int, unsigned long long, unsigned long long, unsigned long long);
+void mpcomp_taskloop(void (*)(void *), void *, void (*)(void *, void *), long,
+                     long, unsigned, unsigned long, int, long, long, long);
+void mpcomp_taskloop_ull(void (*)(void *), void *, void (*)(void *, void *),
+                         long, long, unsigned, unsigned long, int,
+                         unsigned long long, unsigned long long,
+                         unsigned long long);
 
 #endif /*  __MPCOMP_TASKLOOP_H__ */

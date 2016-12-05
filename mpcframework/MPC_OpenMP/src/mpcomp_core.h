@@ -27,10 +27,10 @@
 
 #include "mpcomp_types.h" /* need mpcomp_mvp_t && mpcomp_instance_t */
 
-void __mpcomp_init( void );
-void __mpcomp_exit( void );
-void __mpcomp_instance_init( mpcomp_instance_t*, int, mpcomp_team_t*); 
-void __mpcomp_in_order_scheduler( mpcomp_mvp_t *);
-void __mpcomp_flush( void ); 
+void __mpcomp_init(void);
+void __mpcomp_exit(void);
+void __mpcomp_instance_init(mpcomp_instance_t *, int, mpcomp_team_t *);
+void __mpcomp_in_order_scheduler(mpcomp_mvp_t *);
+void __mpcomp_flush(void);
 
 #endif /* __MPCOMP_CORE_H__ */

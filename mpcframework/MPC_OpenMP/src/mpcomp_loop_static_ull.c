@@ -32,102 +32,124 @@
  * Original loop -> lb -> b step incr
  * New loop -> *from -> *to step incr
  */
-int __mpcomp_static_schedule_get_single_chunk_ull( mpcomp_loop_ull_iter_t* loop, unsigned long long *from, unsigned long long *to)
-{
-    /* Grab info on the current thread */
-    mpcomp_thread_t *t = mpcomp_get_thread_tls();
-    
-    const unsigned long long rank = (unsigned long long) t->rank;
-    const unsigned long long num_threads = (unsigned long long) t->info.num_threads;
-    const unsigned long long trip_count = __mpcomp_internal_loop_get_num_iters_ull( loop->lb, loop->b, loop->incr, loop->up );
- 
-	if ( rank >= trip_count ) 
-    {
-		return 0 ;
-	}
+int __mpcomp_static_schedule_get_single_chunk_ull(mpcomp_loop_ull_iter_t *loop,
+                                                  unsigned long long *from,
+                                                  unsigned long long *to) {
+  /* Grab info on the current thread */
+  mpcomp_thread_t *t = mpcomp_get_thread_tls();
 
-    const unsigned long long extra_chunk = ( trip_count % num_threads && trip_count > num_threads ) + ( num_threads == 1 ) ? 1 : 0;
-    const unsigned long long decal = (rank < extra_chunk) ? rank * loop->incr : extra_chunk * loop->incr;
+  const unsigned long long rank = (unsigned long long)t->rank;
+  const unsigned long long num_threads =
+      (unsigned long long)t->info.num_threads;
+  const unsigned long long trip_count =
+      __mpcomp_internal_loop_get_num_iters_ull(loop->lb, loop->b, loop->incr,
+                                               loop->up);
 
-    *from = loop->lb + decal + rank * loop->chunk_size * loop->incr;
-    *to = *from + loop->chunk_size * loop->incr + ( ( rank < extra_chunk ) ? loop->chunk_size * loop->incr : 0 ) ;
+  if (rank >= trip_count) {
+    return 0;
+  }
 
-    /* The final additionnal chunk is smaller, so its computation is a little bit different */
-    *to = ( loop->up  && *to > loop->b ) ? loop->b : *to;
-    *to = ( !loop->up && *to < loop->b ) ? loop->b : *to;
-    
-	return 1 ;
+  const unsigned long long extra_chunk =
+      (trip_count % num_threads && trip_count > num_threads) +
+              (num_threads == 1)
+          ? 1
+          : 0;
+  const unsigned long long decal =
+      (rank < extra_chunk) ? rank * loop->incr : extra_chunk * loop->incr;
+
+  *from = loop->lb + decal + rank * loop->chunk_size * loop->incr;
+  *to = *from + loop->chunk_size * loop->incr +
+        ((rank < extra_chunk) ? loop->chunk_size * loop->incr : 0);
+
+  /* The final additionnal chunk is smaller, so its computation is a little bit
+   * different */
+  *to = (loop->up && *to > loop->b) ? loop->b : *to;
+  *to = (!loop->up && *to < loop->b) ? loop->b : *to;
+
+  return 1;
 }
 
 /* Return the chunk #'chunk_num' assuming a static schedule with 'chunk_size'
  * as a chunk size */
-void __mpcomp_static_schedule_get_specific_chunk_ull(  unsigned long long rank, unsigned long long num_threads, mpcomp_loop_ull_iter_t* loop, unsigned long long chunk_num, unsigned long long *from, unsigned long long *to)
-{
-    const unsigned long long decal = chunk_num * num_threads * loop->chunk_size * loop->incr;
-    *from = loop->lb + decal + loop->chunk_size * loop->incr * rank;
-    *to = *from + loop->chunk_size * loop->incr; 
+void __mpcomp_static_schedule_get_specific_chunk_ull(
+    unsigned long long rank, unsigned long long num_threads,
+    mpcomp_loop_ull_iter_t *loop, unsigned long long chunk_num,
+    unsigned long long *from, unsigned long long *to) {
+  const unsigned long long decal =
+      chunk_num * num_threads * loop->chunk_size * loop->incr;
+  *from = loop->lb + decal + loop->chunk_size * loop->incr * rank;
+  *to = *from + loop->chunk_size * loop->incr;
 
-    *to = ( loop->up  && *to > loop->b ) ? loop->b : *to;
-    *to = ( !loop->up && *to < loop->b ) ? loop->b : *to;
+  *to = (loop->up && *to > loop->b) ? loop->b : *to;
+  *to = (!loop->up && *to < loop->b) ? loop->b : *to;
 }
 
-void __mpcomp_static_loop_init_ull(mpcomp_thread_t *t, unsigned long long lb, unsigned long long b, unsigned long long incr, unsigned long long chunk_size)
-{
-    return;
+void __mpcomp_static_loop_init_ull(mpcomp_thread_t *t, unsigned long long lb,
+                                   unsigned long long b,
+                                   unsigned long long incr,
+                                   unsigned long long chunk_size) {
+  return;
 }
 
-int __mpcomp_static_loop_begin_ull (bool up, unsigned long long lb, unsigned long long b, unsigned long long incr, unsigned long long chunk_size,
-                unsigned long long *from, unsigned long long *to)
-{
-    mpcomp_loop_ull_iter_t* loop;
+int __mpcomp_static_loop_begin_ull(bool up, unsigned long long lb,
+                                   unsigned long long b,
+                                   unsigned long long incr,
+                                   unsigned long long chunk_size,
+                                   unsigned long long *from,
+                                   unsigned long long *to) {
+  mpcomp_loop_ull_iter_t *loop;
 
-    __mpcomp_init();
+  __mpcomp_init();
 
-    /* Grab info on the current thread */
-    mpcomp_thread_t *t = mpcomp_get_thread_tls();
+  /* Grab info on the current thread */
+  mpcomp_thread_t *t = mpcomp_get_thread_tls();
 
-    t->schedule_type = ( t->schedule_is_forced ) ? t->schedule_type : MPCOMP_COMBINED_STATIC_LOOP;  
-    t->schedule_is_forced = 0;
+  t->schedule_type =
+      (t->schedule_is_forced) ? t->schedule_type : MPCOMP_COMBINED_STATIC_LOOP;
+  t->schedule_is_forced = 0;
 
-    /* Fill private info about the loop */
-    t->info.loop_infos.type = MPCOMP_LOOP_TYPE_ULL;
-    loop = &( t->info.loop_infos.loop.mpcomp_ull );
-    loop->up = up;
-    loop->lb = lb; 
-    loop->b = b;
-    loop->incr = incr;
-    loop->chunk_size = chunk_size;
-    t->static_nb_chunks = __mpcomp_compute_static_nb_chunks_per_rank_ull(t->rank, t->info.num_threads, loop );
+  /* Fill private info about the loop */
+  t->info.loop_infos.type = MPCOMP_LOOP_TYPE_ULL;
+  loop = &(t->info.loop_infos.loop.mpcomp_ull);
+  loop->up = up;
+  loop->lb = lb;
+  loop->b = b;
+  loop->incr = incr;
+  loop->chunk_size = chunk_size;
+  t->static_nb_chunks = __mpcomp_compute_static_nb_chunks_per_rank_ull(
+      t->rank, t->info.num_threads, loop);
 
-        /* As the loop_next function consider a chunk as already been realised
-             we need to initialize to 0 minus 1 */
-    t->static_current_chunk = -1 ;
+  /* As the loop_next function consider a chunk as already been realised
+       we need to initialize to 0 minus 1 */
+  t->static_current_chunk = -1;
 
-    if( !from && !to ) 
-    {
-        return -1;
-    }
+  if (!from && !to) {
+    return -1;
+  }
 
-    return __mpcomp_static_loop_next_ull (from, to);
+  return __mpcomp_static_loop_next_ull(from, to);
 }
 
-int __mpcomp_static_loop_next_ull (unsigned long long *from, unsigned long long *to)
-{
-    /* Grab info on the current thread */
-    mpcomp_thread_t *t = mpcomp_get_thread_tls();
+int __mpcomp_static_loop_next_ull(unsigned long long *from,
+                                  unsigned long long *to) {
+  /* Grab info on the current thread */
+  mpcomp_thread_t *t = mpcomp_get_thread_tls();
 
-    /* Retrieve the number of threads and the rank of this thread */
-    const unsigned long long num_threads = t->info.num_threads;
-    const unsigned long long rank = t->rank;
+  /* Retrieve the number of threads and the rank of this thread */
+  const unsigned long long num_threads = t->info.num_threads;
+  const unsigned long long rank = t->rank;
 
-    /* Next chunk */
-    t->static_current_chunk++;
+  /* Next chunk */
+  t->static_current_chunk++;
 
-    /* Check if there is still a chunk to execute */
-    if (t->static_current_chunk >= t->static_nb_chunks) return 0;
+  /* Check if there is still a chunk to execute */
+  if (t->static_current_chunk >= t->static_nb_chunks)
+    return 0;
 
-    __mpcomp_static_schedule_get_specific_chunk_ull( rank, num_threads, &( t->info.loop_infos.loop.mpcomp_ull ), t->static_current_chunk, from, to);
-    return 1;
+  __mpcomp_static_schedule_get_specific_chunk_ull(
+      rank, num_threads, &(t->info.loop_infos.loop.mpcomp_ull),
+      t->static_current_chunk, from, to);
+  return 1;
 }
 
 /****
@@ -136,28 +158,30 @@ int __mpcomp_static_loop_next_ull (unsigned long long *from, unsigned long long 
  *
  *
  *****/
-int __mpcomp_ordered_static_loop_begin_ull (bool up, unsigned long long lb, unsigned long long b, unsigned long long incr, unsigned long long chunk_size,
-                    unsigned long long *from, unsigned long long *to)
-{
-    /* Grab info on the current thread */
-    mpcomp_thread_t *t = mpcomp_get_thread_tls();
+int __mpcomp_ordered_static_loop_begin_ull(bool up, unsigned long long lb,
+                                           unsigned long long b,
+                                           unsigned long long incr,
+                                           unsigned long long chunk_size,
+                                           unsigned long long *from,
+                                           unsigned long long *to) {
+  /* Grab info on the current thread */
+  mpcomp_thread_t *t = mpcomp_get_thread_tls();
 
-    const int ret = __mpcomp_static_loop_begin_ull(up, lb, b, incr, chunk_size, from, to);
-    if( !from )
-    {
-        return -1;
-    }
-    t->info.loop_infos.loop.mpcomp_ull.cur_ordered_iter = *from; 
-    return ret;
+  const int ret =
+      __mpcomp_static_loop_begin_ull(up, lb, b, incr, chunk_size, from, to);
+  if (!from) {
+    return -1;
+  }
+  t->info.loop_infos.loop.mpcomp_ull.cur_ordered_iter = *from;
+  return ret;
 }
 
-int __mpcomp_ordered_static_loop_next_ull(unsigned long long *from, unsigned long long *to)
-{
-    /* Grab info on the current thread */
-    mpcomp_thread_t *t = mpcomp_get_thread_tls();
+int __mpcomp_ordered_static_loop_next_ull(unsigned long long *from,
+                                          unsigned long long *to) {
+  /* Grab info on the current thread */
+  mpcomp_thread_t *t = mpcomp_get_thread_tls();
 
-    const int ret = __mpcomp_static_loop_next_ull(from, to);
-    t->info.loop_infos.loop.mpcomp_ull.cur_ordered_iter = *from; 
-    return ret;
+  const int ret = __mpcomp_static_loop_next_ull(from, to);
+  t->info.loop_infos.loop.mpcomp_ull.cur_ordered_iter = *from;
+  return ret;
 }
-

@@ -28,144 +28,144 @@
 #include "mpcomp_intel_lock.h"
 #include "mpcomp_intel_types.h"
 
-void __kmpc_init_lock( ident_t *loc, kmp_int32 gtid,  void **user_lock )
-{
-    omp_lock_t* user_mpcomp_lock =  NULL;
-    iomp_lock_t* user_iomp_lock = (iomp_lock_t *) user_lock;
-    mpcomp_thread_t *t = (mpcomp_thread_t *) sctk_openmp_thread_tls;
+void __kmpc_init_lock(ident_t *loc, kmp_int32 gtid, void **user_lock) {
+  omp_lock_t *user_mpcomp_lock = NULL;
+  iomp_lock_t *user_iomp_lock = (iomp_lock_t *)user_lock;
+  mpcomp_thread_t *t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
 
-    sctk_assert( t );
-    sctk_assert( user_iomp_lock );
+  sctk_assert(t);
+  sctk_assert(user_iomp_lock);
 
-    user_mpcomp_lock = (omp_lock_t*) ( &( user_iomp_lock->lk ) );
-    sctk_error( "[%d] %s: iomp: %p mpcomp: %p", t->rank, __func__, user_iomp_lock, user_mpcomp_lock ) ;
-    omp_init_lock( user_mpcomp_lock );
+  user_mpcomp_lock = (omp_lock_t *)(&(user_iomp_lock->lk));
+  sctk_error("[%d] %s: iomp: %p mpcomp: %p", t->rank, __func__, user_iomp_lock,
+             user_mpcomp_lock);
+  omp_init_lock(user_mpcomp_lock);
 }
 
-void __kmpc_init_nest_lock( ident_t *loc, kmp_int32 gtid, void **user_lock )
-{
-    omp_nest_lock_t* user_mpcomp_nest_lock =  NULL;
-    iomp_lock_t* user_iomp_lock = (iomp_lock_t *) user_lock;
-    mpcomp_thread_t *t = (mpcomp_thread_t *) sctk_openmp_thread_tls;
+void __kmpc_init_nest_lock(ident_t *loc, kmp_int32 gtid, void **user_lock) {
+  omp_nest_lock_t *user_mpcomp_nest_lock = NULL;
+  iomp_lock_t *user_iomp_lock = (iomp_lock_t *)user_lock;
+  mpcomp_thread_t *t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
 
-    sctk_assert( t );
-    sctk_assert( user_iomp_lock );
+  sctk_assert(t);
+  sctk_assert(user_iomp_lock);
 
-    user_mpcomp_nest_lock = (omp_nest_lock_t*) ( &( user_iomp_lock->lk ) );
-    sctk_error( "[%d] %s: iomp: %p mpcomp: %p", t->rank, __func__, user_iomp_lock, user_mpcomp_nest_lock ) ;
-    omp_init_nest_lock( user_mpcomp_nest_lock );
+  user_mpcomp_nest_lock = (omp_nest_lock_t *)(&(user_iomp_lock->lk));
+  sctk_error("[%d] %s: iomp: %p mpcomp: %p", t->rank, __func__, user_iomp_lock,
+             user_mpcomp_nest_lock);
+  omp_init_nest_lock(user_mpcomp_nest_lock);
 }
 
-void __kmpc_destroy_lock( ident_t *loc, kmp_int32 gtid, void **user_lock )
-{
-    omp_lock_t* user_mpcomp_lock =  NULL;
-    iomp_lock_t* user_iomp_lock = (iomp_lock_t *) user_lock;
-    mpcomp_thread_t *t = (mpcomp_thread_t *) sctk_openmp_thread_tls;
+void __kmpc_destroy_lock(ident_t *loc, kmp_int32 gtid, void **user_lock) {
+  omp_lock_t *user_mpcomp_lock = NULL;
+  iomp_lock_t *user_iomp_lock = (iomp_lock_t *)user_lock;
+  mpcomp_thread_t *t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
 
-    sctk_assert( t );
-    sctk_assert( user_iomp_lock );
+  sctk_assert(t);
+  sctk_assert(user_iomp_lock);
 
-    user_mpcomp_lock = (omp_lock_t*) ( &( user_iomp_lock->lk ) );
-    sctk_error( "[%d] %s: iomp: %p mpcomp: %p", t->rank, __func__, user_iomp_lock, user_mpcomp_lock ) ;
-    omp_destroy_lock(user_mpcomp_lock);
+  user_mpcomp_lock = (omp_lock_t *)(&(user_iomp_lock->lk));
+  sctk_error("[%d] %s: iomp: %p mpcomp: %p", t->rank, __func__, user_iomp_lock,
+             user_mpcomp_lock);
+  omp_destroy_lock(user_mpcomp_lock);
 }
 
-void __kmpc_destroy_nest_lock( ident_t *loc, kmp_int32 gtid, void **user_lock )
-{
-    omp_nest_lock_t* user_mpcomp_nest_lock =  NULL;
-    iomp_lock_t* user_iomp_lock = (iomp_lock_t *) user_lock;
-    mpcomp_thread_t *t = (mpcomp_thread_t *) sctk_openmp_thread_tls;
+void __kmpc_destroy_nest_lock(ident_t *loc, kmp_int32 gtid, void **user_lock) {
+  omp_nest_lock_t *user_mpcomp_nest_lock = NULL;
+  iomp_lock_t *user_iomp_lock = (iomp_lock_t *)user_lock;
+  mpcomp_thread_t *t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
 
-    sctk_assert( t );
-    sctk_assert( user_iomp_lock );
+  sctk_assert(t);
+  sctk_assert(user_iomp_lock);
 
-    user_mpcomp_nest_lock = (omp_nest_lock_t*) ( &( user_iomp_lock->lk ) );
-    sctk_error( "[%d] %s: iomp: %p mpcomp: %p", t->rank, __func__, user_iomp_lock, user_mpcomp_nest_lock ) ;
-    omp_destroy_nest_lock( user_mpcomp_nest_lock );
+  user_mpcomp_nest_lock = (omp_nest_lock_t *)(&(user_iomp_lock->lk));
+  sctk_error("[%d] %s: iomp: %p mpcomp: %p", t->rank, __func__, user_iomp_lock,
+             user_mpcomp_nest_lock);
+  omp_destroy_nest_lock(user_mpcomp_nest_lock);
 }
 
-void __kmpc_set_lock( ident_t *loc, kmp_int32 gtid, void **user_lock )
-{
-    omp_lock_t* user_mpcomp_lock =  NULL;
-    iomp_lock_t* user_iomp_lock = (iomp_lock_t *) user_lock;
-    mpcomp_thread_t *t = (mpcomp_thread_t *) sctk_openmp_thread_tls;
+void __kmpc_set_lock(ident_t *loc, kmp_int32 gtid, void **user_lock) {
+  omp_lock_t *user_mpcomp_lock = NULL;
+  iomp_lock_t *user_iomp_lock = (iomp_lock_t *)user_lock;
+  mpcomp_thread_t *t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
 
-    sctk_assert( t );
-    sctk_assert( user_iomp_lock );
+  sctk_assert(t);
+  sctk_assert(user_iomp_lock);
 
-    user_mpcomp_lock = (omp_lock_t*) ( &( user_iomp_lock->lk ) );
-    sctk_error( "[%d] %s: iomp: %p mpcomp: %p", t->rank, __func__, user_iomp_lock, user_mpcomp_lock ) ;
-    omp_set_lock( user_mpcomp_lock );
+  user_mpcomp_lock = (omp_lock_t *)(&(user_iomp_lock->lk));
+  sctk_error("[%d] %s: iomp: %p mpcomp: %p", t->rank, __func__, user_iomp_lock,
+             user_mpcomp_lock);
+  omp_set_lock(user_mpcomp_lock);
 }
 
-void __kmpc_set_nest_lock( ident_t *loc, kmp_int32 gtid, void **user_lock )
-{
-    omp_nest_lock_t* user_mpcomp_nest_lock =  NULL;
-    iomp_lock_t* user_iomp_lock = (iomp_lock_t *) user_lock;
-    mpcomp_thread_t *t = (mpcomp_thread_t *) sctk_openmp_thread_tls;
+void __kmpc_set_nest_lock(ident_t *loc, kmp_int32 gtid, void **user_lock) {
+  omp_nest_lock_t *user_mpcomp_nest_lock = NULL;
+  iomp_lock_t *user_iomp_lock = (iomp_lock_t *)user_lock;
+  mpcomp_thread_t *t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
 
-    sctk_assert( t );
-    sctk_assert( user_iomp_lock );
+  sctk_assert(t);
+  sctk_assert(user_iomp_lock);
 
-    user_mpcomp_nest_lock = (omp_nest_lock_t*) ( &( user_iomp_lock->lk ) );
-    sctk_error( "[%d] %s: iomp: %p mpcomp: %p", t->rank, __func__, user_iomp_lock, user_mpcomp_nest_lock ) ;
-    omp_set_nest_lock( user_mpcomp_nest_lock );
+  user_mpcomp_nest_lock = (omp_nest_lock_t *)(&(user_iomp_lock->lk));
+  sctk_error("[%d] %s: iomp: %p mpcomp: %p", t->rank, __func__, user_iomp_lock,
+             user_mpcomp_nest_lock);
+  omp_set_nest_lock(user_mpcomp_nest_lock);
 }
 
-void __kmpc_unset_lock( ident_t *loc, kmp_int32 gtid, void **user_lock )
-{
-    omp_lock_t* user_mpcomp_lock =  NULL;
-    iomp_lock_t* user_iomp_lock = (iomp_lock_t *) user_lock;
-    mpcomp_thread_t *t = (mpcomp_thread_t *) sctk_openmp_thread_tls;
+void __kmpc_unset_lock(ident_t *loc, kmp_int32 gtid, void **user_lock) {
+  omp_lock_t *user_mpcomp_lock = NULL;
+  iomp_lock_t *user_iomp_lock = (iomp_lock_t *)user_lock;
+  mpcomp_thread_t *t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
 
-    sctk_assert( t );
-    sctk_assert( user_iomp_lock );
+  sctk_assert(t);
+  sctk_assert(user_iomp_lock);
 
-    user_mpcomp_lock = (omp_lock_t*) ( &( user_iomp_lock->lk ) );
-    sctk_error( "[%d] %s: iomp: %p mpcomp: %p", t->rank, __func__, user_iomp_lock, user_mpcomp_lock ) ;
-    omp_unset_lock( user_mpcomp_lock );
+  user_mpcomp_lock = (omp_lock_t *)(&(user_iomp_lock->lk));
+  sctk_error("[%d] %s: iomp: %p mpcomp: %p", t->rank, __func__, user_iomp_lock,
+             user_mpcomp_lock);
+  omp_unset_lock(user_mpcomp_lock);
 }
 
-void __kmpc_unset_nest_lock( ident_t *loc, kmp_int32 gtid, void **user_lock )
-{
-    omp_nest_lock_t* user_mpcomp_nest_lock =  NULL;
-    iomp_lock_t* user_iomp_lock = (iomp_lock_t *) user_lock;
-    mpcomp_thread_t *t = (mpcomp_thread_t *) sctk_openmp_thread_tls;
+void __kmpc_unset_nest_lock(ident_t *loc, kmp_int32 gtid, void **user_lock) {
+  omp_nest_lock_t *user_mpcomp_nest_lock = NULL;
+  iomp_lock_t *user_iomp_lock = (iomp_lock_t *)user_lock;
+  mpcomp_thread_t *t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
 
-    sctk_assert( t );
-    sctk_assert( user_iomp_lock );
+  sctk_assert(t);
+  sctk_assert(user_iomp_lock);
 
-    user_mpcomp_nest_lock = (omp_nest_lock_t*) ( &( user_iomp_lock->lk ) );
-    sctk_error( "[%d] %s: iomp: %p mpcomp: %p", t->rank, __func__, user_iomp_lock, user_mpcomp_nest_lock ) ;
-    omp_unset_nest_lock( user_mpcomp_nest_lock );
+  user_mpcomp_nest_lock = (omp_nest_lock_t *)(&(user_iomp_lock->lk));
+  sctk_error("[%d] %s: iomp: %p mpcomp: %p", t->rank, __func__, user_iomp_lock,
+             user_mpcomp_nest_lock);
+  omp_unset_nest_lock(user_mpcomp_nest_lock);
 }
 
-int __kmpc_test_lock( ident_t *loc, kmp_int32 gtid, void **user_lock )
-{
-    omp_lock_t* user_mpcomp_lock =  NULL;
-    iomp_lock_t* user_iomp_lock = (iomp_lock_t *) user_lock;
-    mpcomp_thread_t *t = (mpcomp_thread_t *) sctk_openmp_thread_tls;
+int __kmpc_test_lock(ident_t *loc, kmp_int32 gtid, void **user_lock) {
+  omp_lock_t *user_mpcomp_lock = NULL;
+  iomp_lock_t *user_iomp_lock = (iomp_lock_t *)user_lock;
+  mpcomp_thread_t *t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
 
-    sctk_assert( t );
-    sctk_assert( user_iomp_lock );
+  sctk_assert(t);
+  sctk_assert(user_iomp_lock);
 
-    user_mpcomp_lock = (omp_lock_t*) ( &( user_iomp_lock->lk ) );
-    const int ret = omp_test_lock( user_mpcomp_lock );
-    sctk_error( "[%d] %s: iomp: %p mpcomp: %p try: %d", t->rank, __func__, user_iomp_lock, user_mpcomp_lock, ret) ;
-    return ret;
+  user_mpcomp_lock = (omp_lock_t *)(&(user_iomp_lock->lk));
+  const int ret = omp_test_lock(user_mpcomp_lock);
+  sctk_error("[%d] %s: iomp: %p mpcomp: %p try: %d", t->rank, __func__,
+             user_iomp_lock, user_mpcomp_lock, ret);
+  return ret;
 }
 
-int __kmpc_test_nest_lock( ident_t *loc, kmp_int32 gtid, void **user_lock )
-{
-    omp_nest_lock_t* user_mpcomp_nest_lock =  NULL;
-    iomp_lock_t* user_iomp_lock = (iomp_lock_t *) user_lock;
-    mpcomp_thread_t *t = (mpcomp_thread_t *) sctk_openmp_thread_tls;
+int __kmpc_test_nest_lock(ident_t *loc, kmp_int32 gtid, void **user_lock) {
+  omp_nest_lock_t *user_mpcomp_nest_lock = NULL;
+  iomp_lock_t *user_iomp_lock = (iomp_lock_t *)user_lock;
+  mpcomp_thread_t *t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
 
-    sctk_assert( t );
-    sctk_assert( user_iomp_lock );
+  sctk_assert(t);
+  sctk_assert(user_iomp_lock);
 
-    user_mpcomp_nest_lock = (omp_nest_lock_t*) ( &( user_iomp_lock->lk ) );
-    const int ret = omp_test_nest_lock( user_mpcomp_nest_lock );
-    sctk_error( "[%d] %s: iomp: %p mpcomp: %p try: %d", t->rank, __func__, user_iomp_lock, user_mpcomp_nest_lock, ret ) ;
-    return ret;
+  user_mpcomp_nest_lock = (omp_nest_lock_t *)(&(user_iomp_lock->lk));
+  const int ret = omp_test_nest_lock(user_mpcomp_nest_lock);
+  sctk_error("[%d] %s: iomp: %p mpcomp: %p try: %d", t->rank, __func__,
+             user_iomp_lock, user_mpcomp_nest_lock, ret);
+  return ret;
 }
