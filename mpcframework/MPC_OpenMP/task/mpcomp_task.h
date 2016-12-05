@@ -70,6 +70,7 @@ typedef struct mpcomp_task_s
     struct mpcomp_task_s *prev;         		/**< Prev task in the thread's task list 		*/
     struct mpcomp_task_s *next;         		/**< Next task in the thread's task list 		*/
     mpcomp_local_icv_t icvs;            	    /**< ICVs of the thread that create the task    */
+    mpcomp_local_icv_t prev_icvs;            	    /**< ICVs of the thread that create the task    */
     struct mpcomp_task_taskgroup_s* taskgroup;
 #ifdef MPCOMP_OMP_4_0	/* deps infos */
 	struct mpcomp_task_dep_task_infos_s* task_dep_infos;

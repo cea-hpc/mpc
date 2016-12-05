@@ -6,7 +6,7 @@
 
 kmp_int32 __kmpc_global_thread_num(ident_t * loc)
 {
-  sctk_error("[REDIRECT KMP]: %s -> omp_get_max_threads", __func__ ); 
+  sctk_nodebug("[REDIRECT KMP]: %s -> omp_get_max_threads", __func__ ); 
   return (kmp_int32) omp_get_thread_num() ;
 }
 

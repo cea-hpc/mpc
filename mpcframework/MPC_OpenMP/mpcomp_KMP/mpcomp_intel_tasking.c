@@ -88,14 +88,23 @@ kmp_task_t* __kmpc_omp_task_alloc( ident_t *loc_ref, kmp_int32 gtid, kmp_int32 f
 
 void __kmpc_omp_task_begin_if0( ident_t *loc_ref, kmp_int32 gtid, kmp_task_t * task )
 {
-    struct mpcomp_task_s* mpcomp_task = (char*) task - sizeof( struct mpcomp_task_s );
-    __mpcomp_task_process( mpcomp_task, 0 );
+   mpcomp_thread_t* t = (mpcomp_thread_t *) sctk_openmp_thread_tls;
+   struct mpcomp_task_s* mpcomp_task = (char*) task - sizeof( struct mpcomp_task_s );
+   sctk_assert( t );
+   mpcomp_task->icvs = t->info.icvs;
+   mpcomp_task->prev_icvs = t->info.icvs;
+   MPCOMP_TASK_THREAD_SET_CURRENT_TASK( t, mpcomp_task );
 }
 
-void
-__kmpc_omp_task_complete_if0( ident_t *loc_ref, kmp_int32 gtid, kmp_task_t *task )
+void __kmpc_omp_task_complete_if0( ident_t *loc_ref, kmp_int32 gtid, kmp_task_t *task )
 {
-    /* Nothing to do */
+   mpcomp_thread_t* t = (mpcomp_thread_t *) sctk_openmp_thread_tls;
+   struct mpcomp_task_s* mpcomp_task = (char*) task - sizeof( struct mpcomp_task_s );
+   sctk_assert( t );
+   mpcomp_taskgroup_del_task( mpcomp_task );
+   mpcomp_task_unref_parent_task( mpcomp_task );
+   MPCOMP_TASK_THREAD_SET_CURRENT_TASK( t, mpcomp_task->parent );
+   t->info.icvs = mpcomp_task->prev_icvs;
 }
 
 kmp_int32

@@ -572,8 +572,9 @@ void mpcomp_task_schedule( void )
         const int node_rank = MPCOMP_TASK_MVP_GET_TASK_LIST_NODE_RANK( mvp, type );
 	    list = mpcomp_task_get_list( node_rank, type );
         sctk_assert( list );
-	    if( mpcomp_task_list_trylock(list) )
-            continue;
+//	    if( mpcomp_task_list_trylock(list) )
+//            continue;
+        mpcomp_task_list_lock(list);
         task = mpcomp_task_list_popfromhead( list, current_task->depth );
 	    mpcomp_task_list_unlock(list);
     } 

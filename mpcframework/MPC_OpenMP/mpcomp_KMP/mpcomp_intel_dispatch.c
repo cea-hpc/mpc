@@ -32,9 +32,12 @@ __kmpc_dispatch_init_4u( ident_t *loc, kmp_int32 gtid, enum sched_type schedule,
     const long long add = ((ub - lb) % st == 0) ? st : st - ((ub - lb) % st);
     const unsigned long long b = (unsigned long long) ub + add;
     
+    const bool up = (st > 0);
+    const unsigned long long st_ull = (up) ? st : -st;
+
     t->schedule_type = schedule;
     t->schedule_is_forced = 1;
-    __kmpc_dispatch_init_mpcomp_ull(t, lb, b, (unsigned long long) st, (unsigned long long) chunk );
+    __kmpc_dispatch_init_mpcomp_ull(t, up, lb, b, (unsigned long long) st_ull, (unsigned long long) chunk );
 }
 
 void
@@ -67,12 +70,14 @@ __kmpc_dispatch_init_8u( ident_t *loc, kmp_int32 gtid, enum sched_type schedule,
     sctk_nodebug("[%d] %s: enter %llu -> %llud incl, %llu excl [%llu] ck:%llud sch:%d",t->rank, __func__, lb, ub, ub+st, st, chunk, schedule );
     
     /* add to sync with MPC runtime bounds */
+    const bool up = (st > 0);
+    const unsigned long long st_ull = (up) ? st : -st;
+
     const long long add = ((ub - lb) % st == 0) ? st : st - ((ub - lb) % st);
     const unsigned long long b = (unsigned long long) ub + add;
-
     t->schedule_type = schedule;
     t->schedule_is_forced = 1;
-    __kmpc_dispatch_init_mpcomp_ull(t, lb, b, (unsigned long long) st, (unsigned long long) chunk );
+    __kmpc_dispatch_init_mpcomp_ull(t, up, lb, b, (unsigned long long) st_ull, (unsigned long long) chunk );
 }
 
 

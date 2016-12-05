@@ -45,10 +45,10 @@ static inline  void __kmpc_dispatch_init_mpcomp_long(mpcomp_thread_t* t, long lb
 
     /* runtime */
     case kmp_sch_runtime:
-        __mpcomp_runtime_loop_begin( lb, b, incr, chunk, NULL, NULL );
+        __mpcomp_runtime_loop_begin( lb, b, incr, NULL, NULL );
         break;
     case kmp_ord_runtime:
-        __mpcomp_ordered_runtime_loop_begin( lb, b, incr, chunk, NULL, NULL );
+        __mpcomp_ordered_runtime_loop_begin( lb, b, incr, NULL, NULL );
         break ; 
 
     default:
@@ -57,7 +57,7 @@ static inline  void __kmpc_dispatch_init_mpcomp_long(mpcomp_thread_t* t, long lb
   }
 }
 
-static inline  void __kmpc_dispatch_init_mpcomp_ull(mpcomp_thread_t* t, unsigned long long lb, unsigned long long b, unsigned long long incr, unsigned long long chunk )
+static inline  void __kmpc_dispatch_init_mpcomp_ull(mpcomp_thread_t* t, bool up, unsigned long long lb, unsigned long long b, unsigned long long incr, unsigned long long chunk )
 {
   sctk_assert( t );
   switch( t->schedule_type ) 
@@ -67,7 +67,7 @@ static inline  void __kmpc_dispatch_init_mpcomp_ull(mpcomp_thread_t* t, unsigned
     case kmp_sch_static:
         chunk = 0;
     case kmp_sch_static_chunked:
-        __mpcomp_static_loop_begin_ull( lb, b, incr, chunk, NULL, NULL );
+        __mpcomp_static_loop_begin_ull( up, lb, b, incr, chunk, NULL, NULL );
         break ;
 
     /* ORDERED AUTO OR STATIC */
@@ -75,30 +75,30 @@ static inline  void __kmpc_dispatch_init_mpcomp_ull(mpcomp_thread_t* t, unsigned
     case kmp_ord_static:
         chunk = 0;
     case kmp_ord_static_chunked:
-        __mpcomp_ordered_static_loop_begin_ull( lb, b, incr, chunk, NULL, NULL );
+        __mpcomp_ordered_static_loop_begin_ull( up, lb, b, incr, chunk, NULL, NULL );
         break;
 
     /* regular scheduling */
     case kmp_sch_dynamic_chunked:
-        __mpcomp_loop_ull_dynamic_begin( lb, b, incr, chunk, NULL, NULL );
+        __mpcomp_loop_ull_dynamic_begin( up, lb, b, incr, chunk, NULL, NULL );
         break ;
     case kmp_ord_dynamic_chunked:
-        __mpcomp_loop_ull_ordered_dynamic_begin( lb, b, incr, chunk, NULL, NULL );
+        __mpcomp_loop_ull_ordered_dynamic_begin( up, lb, b, incr, chunk, NULL, NULL );
         break ;
 
     case kmp_sch_guided_chunked:
-        __mpcomp_loop_ull_guided_begin( lb, b, incr, chunk, NULL, NULL );
+        __mpcomp_loop_ull_guided_begin( up, lb, b, incr, chunk, NULL, NULL );
         break;
     case kmp_ord_guided_chunked:
-        __mpcomp_loop_ull_guided_begin( lb, b, incr, chunk, NULL, NULL );
+        __mpcomp_loop_ull_guided_begin( up, lb, b, incr, chunk, NULL, NULL );
         break ;
 
     /* runtime */
     case kmp_sch_runtime:
-        __mpcomp_loop_ull_runtime_begin( lb, b, incr, chunk, NULL, NULL );
+        __mpcomp_loop_ull_runtime_begin( up, lb, b, incr,  NULL, NULL );
         break;
     case kmp_ord_runtime:
-        __mpcomp_loop_ull_ordered_runtime_begin( lb, b, incr, chunk, NULL, NULL );
+        __mpcomp_loop_ull_ordered_runtime_begin( up, lb, b, incr,  NULL, NULL );
         break ; 
 
     default:
