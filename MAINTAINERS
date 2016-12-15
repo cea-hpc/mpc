@@ -7,9 +7,9 @@ Maintainers:
 ============
 |             Name                |                 Email Address                 |
 |:-------------------------------:|:---------------------------------------------:|
-| PERACHE Marc                    |   <marc.perache@cea.fr>                       |
 | CARRIBAULT Patrick              |   <patrick.carribault@cea.fr>                 |
 | JAEGER Julien                   |   <julien.jaeger@cea.fr>                      |
+| PERACHE Marc                    |   <marc.perache@cea.fr>                       |
 
 Contributors:
 =============
@@ -23,19 +23,20 @@ please send a email to the maintainers of the project (section above)
 
 |             Name                |                 Email Address                 |
 |:-------------------------------:|:---------------------------------------------:|
+| ADAM Julien                     | <adamj@paratools.com>                         |
 | BESNARD Jean-Baptiste           | <jbbesnard@paratools.com>                     |
+| BISPO VIEIRA Ricardo            | <ricardo.bispo-viera@exascale-computing.eu>   |
 | CAPRA Antoine                   | <capra@paratools.com>                         |
+| CLET-ORTEGA Jerome              | <jerome.clet-ortega@cea.fr>                   |
+| DIDELOT Sylvain                 | <sylvain.didelot@exascale-computing.eu>       |
+| GALLET Camille                  | <camille.gallet@cea.fr>                       |
+| GONCALVES Thomas                | <thomas.goncalves@cea.fr>                     |
+| KOLIAI Souad                    | <souad.koliai@exascale-computing.eu>          |
+| MAHEO Aurele                    | <aurele.maheo@exascale-computing.eu>          |
+| PULVERAIL Sebastien             | <sebastien.pulverail@sogeti.com>              |
 | SCHENDE Sameer                  | <sameer@paratools.com>                        |
 | SERRAZ Augustin                 | <augustin.serraz@exascale-computing.eu>       |
-| MAHEO Aurele                    | <aurele.maheo@exascale-computing.eu>          |
-| GALLET Camille                  | <camille.gallet@cea.fr>                       |
-| VET Jean-Yves                   | <jean-yves.vet@cea.fr>                        |
-| CLET-ORTEGA Jerome              | <jerome.clet-ortega@cea.fr>                   |
+| TABOADA Hugo                    | <hugo.taboada@cea.fr>                         |
 | TCHIBOUKDJIAN Marc              | <marc.tchiboukdjian@exascale-computing.eu>    |
-| BISPO VIEIRA Ricardo            | <ricardo.bispo-viera@exascale-computing.eu>   |
 | VALAT Sebastien                 | <sebastien.valat@cea.fr>                      |
-| PULVERAIL Sebastien             | <sebastien.pulverail@sogeti.com>              |
-| KOLIAI Souad                    | <souad.koliai@exascale-computing.eu>          |
-| DIDELOT Sylvain                 | <sylvain.didelot@exascale-computing.eu>       |
-| GONCALVES Thomas                | <thomas.goncalves@cea.fr>                     |
-| ADAM Julien                     | <adamj@paratools.com>                         |
+| VET Jean-Yves                   | <jean-yves.vet@cea.fr>                        |

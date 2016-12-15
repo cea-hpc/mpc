@@ -26,29 +26,51 @@
 
 #ifdef MPC_USE_CUDA
 
+/**
+ * Weak symbol to let MPC know the cuInit() symbol without linking to it at compile time.
+ * The real symbol will be found at run time.
+ * @param[in] flag not used in this wrapper
+ */
 #pragma weak sctk_cuInit
 CUresult sctk_cuInit(unsigned flag) {
   sctk_cuFatal();
   return -1;
 }
 
+/**
+ * Weak symbol to let MPC know the cuCtxCreate() symbol without linking to it at compile time.
+ * The real symbol will be found at run time.
+ * @param[in] flag not used in this wrapper
+ */
 #pragma weak sctk_cuCtxCreate
 CUresult sctk_cuCtxCreate(CUcontext *c, unsigned int f, CUdevice d) {
   sctk_cuFatal();
   return -1;
 }
 
+/**
+ * Weak symbol to let MPC know the cuCtxPopCurrent() symbol without linking to it at compile time.
+ * @param[in] flag not used in this wrapper
+ */
 #pragma weak sctk_cuCtxPopCurrent
 CUresult sctk_cuCtxPopCurrent(CUcontext *c) {
   sctk_cuFatal();
   return -1;
 }
+/**
+ * Weak symbol to let MPC know the ctxPushCurrent() symbol without linking to it at compile time.
+ * @param[in] flag not used in this wrapper
+ */
 
 #pragma weak sctk_cuCtxPushCurrent
 CUresult sctk_cuCtxPushCurrent(CUcontext c) {
   sctk_cuFatal();
   return -1;
 }
+/**
+ * Weak symbol to let MPC know the cuDeviceGetByPCIBusId() symbol without linking to it at compile time.
+ * @param[in] flag not used in this wrapper
+ */
 
 #pragma weak sctk_cuDeviceGetByPCIBusId
 CUresult sctk_cuDeviceGetByPCIBusId(CUdevice *d, const char *b) {

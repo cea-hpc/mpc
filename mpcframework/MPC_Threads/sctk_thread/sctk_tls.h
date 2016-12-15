@@ -41,11 +41,14 @@ extern "C"
 
 #if defined(SCTK_USE_TLS)
 
+	/**
+	 * Element of destructor list, stored at task-level.
+	 */
   struct sctk_tls_dtors_s
   {
-	  void * obj;
-	  void (*dtor)(void *);
-	  struct sctk_tls_dtors_s * next;
+	  void * obj;                    /**< the object address */
+	  void (*dtor)(void *);          /**< the associated destructor */
+	  struct sctk_tls_dtors_s * next;/**< the next registered item */
   };
 
   size_t sctk_extls_size();
@@ -62,7 +65,6 @@ extern "C"
 #endif
 
 #if defined (MPC_OpenMP)
-  /* MPC OpenMP TLS */
   extern __thread void *sctk_openmp_thread_tls;
 #endif
 
@@ -78,10 +80,18 @@ extern "C"
   extern __thread int __mpc_task_rank;
 #endif
 
+/** macro copying the global value to the context */
 #define tls_save(a) ucp->a = a;
+/** macro copying the context value in the current environment */
 #define tls_restore(a) a = ucp->a;
+/** initialize the context field to NULL */
 #define tls_init(a) ucp->a = NULL;
 
+  /**
+   * Save the current TLS environment in the given context.
+   * This function is called in sctk_context.c.
+   * @param[in,out] ucp the context where current data will be stored
+   */
   static inline void sctk_context_save_tls (sctk_mctx_t * ucp)
   {
 #if defined(SCTK_USE_TLS)
@@ -114,6 +124,11 @@ extern "C"
 #endif
   }
 
+  /**
+   * Set current TLS to the value found in the given context.
+   * Called by sctk_context.c.
+   * @param[in] ucp the context containing the data
+   */
   static inline void sctk_context_restore_tls (sctk_mctx_t * ucp)
   {
 #if defined(SCTK_USE_TLS)
@@ -146,6 +161,11 @@ extern "C"
 #endif
   }
 
+  /**
+   * Initialize a new TLS context for the associated generic context.
+   * Called by sctk_context.c.
+   * @param[in,out] ucp the context containing TLS to initialize
+   */
   static inline void sctk_context_init_tls (sctk_mctx_t * ucp)
   {
 #if defined(SCTK_USE_TLS)
