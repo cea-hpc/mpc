@@ -13,6 +13,7 @@
 	<!ATTLIST param type CDATA #REQUIRED>
 	<!ATTLIST param doc CDATA #REQUIRED>
 	<!ATTLIST param default CDATA #IMPLIED>
+	<!ATTLIST param alias CDATA #IMPLIED>
 
 <!ELEMENT return EMPTY>
 	<!ATTLIST return type CDATA #REQUIRED>

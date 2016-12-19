@@ -436,7 +436,7 @@ void sctk_contiguous_datatype_init( sctk_contiguous_datatype_t * type , size_t i
 	/* Clear context */
 	sctk_datatype_context_clear( &type->context );
 
-	sctk_handle_new_from_id( datatype, SCTK_HANDLE_DATATYPE);
+        sctk_handle_new_from_id(datatype, SCTK_HANDLE_DATATYPE);
 }
 
 void sctk_contiguous_datatype_release( sctk_contiguous_datatype_t * type )
@@ -447,11 +447,10 @@ void sctk_contiguous_datatype_release( sctk_contiguous_datatype_t * type )
 	{
 		sctk_datatype_context_free( &type->context );
 
-		sctk_handle_free( type->datatype, SCTK_HANDLE_DATATYPE);
-		/* Counter == 0 then free */
-		memset( type, 0 , sizeof( sctk_contiguous_datatype_t ) );
-	}
-
+                sctk_handle_free(type->datatype, SCTK_HANDLE_DATATYPE);
+                /* Counter == 0 then free */
+                memset(type, 0, sizeof(sctk_contiguous_datatype_t));
+        }
 }
 
 void sctk_contiguous_datatype_display( sctk_contiguous_datatype_t * target_type )
@@ -566,7 +565,7 @@ void sctk_derived_datatype_init( sctk_derived_datatype_t * type ,
 	/* Clear context */
 	sctk_datatype_context_clear( &type->context );
 
-	sctk_handle_new_from_id( id, SCTK_HANDLE_DATATYPE);
+        sctk_handle_new_from_id(id, SCTK_HANDLE_DATATYPE);
 }
 
 
@@ -581,97 +580,86 @@ int sctk_derived_datatype_release( sctk_derived_datatype_t * type )
 	if ( type->ref_count == 0 )
 	{
 
-	    sctk_handle_free( type->id, SCTK_HANDLE_DATATYPE);
+          sctk_handle_free(type->id, SCTK_HANDLE_DATATYPE);
 
-		/* First call free on each embedded derived type
-			* but we must do this only once per type, therefore
-			* we accumulate counter for each type and only
-			* call on those which are non-zero */
-		short is_datatype_present[ MPC_TYPE_COUNT ];
-		memset( is_datatype_present, 0 , sizeof( short ) * MPC_TYPE_COUNT );
-		
-		
-		/* We now have to decrement the refcounter 
-		 * First we try to get the layout and if we fail we
-		 * abort as it means that this datatype has
-		 * no layout and was not handled in set_context */
+          /* First call free on each embedded derived type
+                  * but we must do this only once per type, therefore
+                  * we accumulate counter for each type and only
+                  * call on those which are non-zero */
+          short is_datatype_present[MPC_TYPE_COUNT];
+          memset(is_datatype_present, 0, sizeof(short) * MPC_TYPE_COUNT);
 
-		/* Try to rely on the datype layout */
-		int i;
-		size_t count;
-		struct Datatype_layout *layout = sctk_datatype_layout( &type->context, &count );
+          /* We now have to decrement the refcounter
+           * First we try to get the layout and if we fail we
+           * abort as it means that this datatype has
+           * no layout and was not handled in set_context */
 
-		if( layout )
-		{
-			int to_free[MPC_TYPE_COUNT];
-			
-			memset( to_free, 0, sizeof( int ) * MPC_TYPE_COUNT );
-			
-			
-			for(i = 0; i < count; i++)
-			{
-				if( sctk_datatype_is_boundary(layout[i].type) )
-					continue;
-				
-				to_free[layout[i].type] = 1;
-			}
+          /* Try to rely on the datype layout */
+          int i;
+          size_t count;
+          struct Datatype_layout *layout =
+              sctk_datatype_layout(&type->context, &count);
 
-			if( count )
-			{
-				if( type->context.internal_type != layout[0].type
-				&&  type->context.internal_type != MPC_DATATYPE_NULL )
-				{
-					to_free[type->context.internal_type] = 1;
-				}
-			}
+          if (layout) {
+            int to_free[MPC_TYPE_COUNT];
 
-			sctk_free(layout);
-			
-			/* Now free each type only once */
-			for(i = 0; i < MPC_TYPE_COUNT; i++)
-			{
-				int not_released_yet = 0;
-				PMPC_Type_is_allocated ( i, & not_released_yet );
-		
-				if( to_free[i] 
-				&&  not_released_yet
-				&&  !sctk_datatype_is_common(i)
-				&&  !sctk_datatype_is_boundary(i) )
-				{
-					MPC_Datatype tmp = i;
-					PMPC_Type_free( &tmp );
-				}
-			}
-		}
-		else
-		{
-			sctk_fatal("We found a derived datatype %d with no layout", type->id); 
-		}
-		
-		
-		/* Counter == 0 then free */
-		if( type->opt_begins != type->begins )
-			sctk_free (type->opt_begins);
-		
-		if( type->opt_ends != type->ends )
-			sctk_free (type->opt_ends);
-		
-		sctk_free (type->begins);
-		sctk_free (type->ends);
-		
-		
-		sctk_free (type->datatypes);
-		
-		sctk_datatype_context_free( &type->context );
-		
-		memset( type, 0 , sizeof( sctk_derived_datatype_t ) );
-		
-		sctk_free (type);
-	
-		return 1;
-	}
-	
-	return 0;
+            memset(to_free, 0, sizeof(int) * MPC_TYPE_COUNT);
+
+            for (i = 0; i < count; i++) {
+              if (sctk_datatype_is_boundary(layout[i].type))
+                continue;
+
+              to_free[layout[i].type] = 1;
+            }
+
+            if (count) {
+              if (type->context.internal_type != layout[0].type &&
+                  type->context.internal_type != MPC_DATATYPE_NULL) {
+                to_free[type->context.internal_type] = 1;
+              }
+            }
+
+            sctk_free(layout);
+
+            /* Now free each type only once */
+            for (i = 0; i < MPC_TYPE_COUNT; i++) {
+              int not_released_yet = 0;
+              PMPC_Type_is_allocated(i, &not_released_yet);
+
+              if (to_free[i] && not_released_yet &&
+                  !sctk_datatype_is_common(i) &&
+                  !sctk_datatype_is_boundary(i)) {
+                MPC_Datatype tmp = i;
+                PMPC_Type_free(&tmp);
+              }
+            }
+          } else {
+            sctk_fatal("We found a derived datatype %d with no layout",
+                       type->id);
+          }
+
+          /* Counter == 0 then free */
+          if (type->opt_begins != type->begins)
+            sctk_free(type->opt_begins);
+
+          if (type->opt_ends != type->ends)
+            sctk_free(type->opt_ends);
+
+          sctk_free(type->begins);
+          sctk_free(type->ends);
+
+          sctk_free(type->datatypes);
+
+          sctk_datatype_context_free(&type->context);
+
+          memset(type, 0, sizeof(sctk_derived_datatype_t));
+
+          sctk_free(type);
+
+          return 1;
+        }
+
+        return 0;
 }
 
 

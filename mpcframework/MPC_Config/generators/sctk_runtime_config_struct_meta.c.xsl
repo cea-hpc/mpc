@@ -81,6 +81,15 @@
 		<xsl:call-template name="gen-type-name2"/>
 		<xsl:text>" , </xsl:text>
 		<xsl:call-template name="gen-init-name"/>
+		<xsl:text> , </xsl:text>
+		<xsl:choose>
+			<xsl:when test="@alias">
+				"<xsl:value-of select='@alias'/>"
+			</xsl:when>
+			<xsl:otherwise>
+				NULL
+			</xsl:otherwise>
+		</xsl:choose>
 		<xsl:text>},&#10;</xsl:text>
 	</xsl:template>
 

@@ -28,12 +28,12 @@
 /* Error Handler                                                        */
 /************************************************************************/
 
-typedef void (*sctk_generic_handler)(void * phandle, int * error_code, ... );
+typedef void (*sctk_generic_handler)(void *phandle, int *error_code, ...);
 typedef int sctk_errhandler_t;
 
-int sctk_errhandler_register(sctk_generic_handler eh,  sctk_errhandler_t * errh );
-sctk_generic_handler sctk_errhandler_resolve( sctk_errhandler_t errh );
-int sctk_errhandler_free( sctk_errhandler_t errh );
+int sctk_errhandler_register(sctk_generic_handler eh, sctk_errhandler_t *errh);
+sctk_generic_handler sctk_errhandler_resolve(sctk_errhandler_t errh);
+int sctk_errhandler_free(sctk_errhandler_t errh);
 
 /************************************************************************/
 /* MPI Handles                                                          */
@@ -43,35 +43,37 @@ int sctk_errhandler_free( sctk_errhandler_t errh );
 
 typedef int sctk_handle;
 
-struct sctk_handle_context
-{
-	sctk_handle id;
-	sctk_errhandler_t handler;
+struct sctk_handle_context {
+  sctk_handle id;
+  sctk_errhandler_t handler;
 };
 
-typedef enum
-{
-	SCTK_HANDLE_COMM,
-	SCTK_HANDLE_DATATYPE,
-	SCTK_HANDLE_WIN,
-	SCTK_HANDLE_FILE,
-	SCTK_HANDLE_ERRHANDLER,
-	SCTK_HANDLE_OP,
-	SCTK_HANDLE_GROUP,
-	SCTK_HANDLE_REQUEST,
-	SCTK_HANDLE_MESSAGE,
-	SCTK_HANDLE_INFO
-}sctk_handle_type;
+typedef enum {
+  SCTK_HANDLE_GLOBAL,
+  SCTK_HANDLE_COMM,
+  SCTK_HANDLE_DATATYPE,
+  SCTK_HANDLE_WIN,
+  SCTK_HANDLE_FILE,
+  SCTK_HANDLE_ERRHANDLER,
+  SCTK_HANDLE_OP,
+  SCTK_HANDLE_GROUP,
+  SCTK_HANDLE_REQUEST,
+  SCTK_HANDLE_MESSAGE,
+  SCTK_HANDLE_INFO
+} sctk_handle_type;
 
-struct sctk_handle_context * sctk_handle_context_new(sctk_handle id);
+struct sctk_handle_context *sctk_handle_context_new(sctk_handle id);
 int sctk_handle_context_release(struct sctk_handle_context *hctx);
-sctk_handle sctk_handle_new_from_id(int previous_id , sctk_handle_type type);
+sctk_handle sctk_handle_new_from_id(int previous_id, sctk_handle_type type);
 sctk_handle sctk_handle_new(sctk_handle_type type);
-int sctk_handle_free( sctk_handle id, sctk_handle_type type );
+int sctk_handle_free(sctk_handle id, sctk_handle_type type);
 
-struct sctk_handle_context * sctk_handle_context( sctk_handle id, sctk_handle_type type );
+struct sctk_handle_context *sctk_handle_context(sctk_handle id,
+                                                sctk_handle_type type);
 
-sctk_errhandler_t sctk_handle_get_errhandler( sctk_handle id, sctk_handle_type type );
-int sctk_handle_set_errhandler( sctk_handle id, sctk_handle_type type,  sctk_errhandler_t errh );
+sctk_errhandler_t sctk_handle_get_errhandler(sctk_handle id,
+                                             sctk_handle_type type);
+int sctk_handle_set_errhandler(sctk_handle id, sctk_handle_type type,
+                               sctk_errhandler_t errh);
 
 #endif /* MPI_HANDLE_H */

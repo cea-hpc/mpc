@@ -369,7 +369,6 @@ typedef struct
 
 typedef struct mpc_mpi_per_communicator_s{
 
-
   /****** Attributes ******/
   MPI_Caching_key_value_t* key_vals;
   int max_number;
@@ -478,26 +477,21 @@ SCTK__MPI_ERROR_REPORT__ (MPC_Comm comm, int error, char *message, char *file,
 			  int line)
 {
 
-  MPI_Errhandler errh = (MPI_Errhandler) sctk_handle_get_errhandler( (sctk_handle) comm, SCTK_HANDLE_COMM );
- 
-  if( errh != MPI_ERRHANDLER_NULL )
-  {
-	MPI_Handler_function * func = sctk_errhandler_resolve( errh );
+  MPI_Errhandler errh = (MPI_Errhandler)sctk_handle_get_errhandler(
+      (sctk_handle)comm, SCTK_HANDLE_COMM);
+
+  if (errh != MPI_ERRHANDLER_NULL) {
+    MPI_Handler_function *func = sctk_errhandler_resolve(errh);
     int error_id = error;
-	MPI_Comm comm_id = comm;
-  	(func)(&comm_id, &error_id, message, file, line);
+    MPI_Comm comm_id = comm;
+    (func)(&comm_id, &error_id, message, file, line);
   }
 
 
 
 }
 
-static void
-__sctk_init_mpi_errors ()
-{
-  __MPC_Error_init();
-}
-
+static void __sctk_init_mpi_errors() { __MPC_Error_init(); }
 
 #define MPI_ERROR_SUCESS() return MPI_SUCCESS
 
@@ -11545,14 +11539,16 @@ MPI_Return_error (MPI_Comm * comm, int *error, ...)
 static int
 __INTERNAL__PMPI_Errhandler_set (MPI_Comm comm, MPI_Errhandler errhandler)
 {
-  sctk_handle_set_errhandler( (sctk_handle)comm, SCTK_HANDLE_COMM, (sctk_errhandler_t) errhandler );
+  sctk_handle_set_errhandler((sctk_handle)comm, SCTK_HANDLE_COMM,
+                             (sctk_errhandler_t)errhandler);
   MPI_ERROR_SUCESS ();
 }
 
 static int
 __INTERNAL__PMPI_Errhandler_get (MPI_Comm comm, MPI_Errhandler * errhandler)
 {
-  *errhandler = (MPI_Errhandler) sctk_handle_get_errhandler( (sctk_handle)comm, SCTK_HANDLE_COMM );
+  *errhandler = (MPI_Errhandler)sctk_handle_get_errhandler((sctk_handle)comm,
+                                                           SCTK_HANDLE_COMM);
 
   MPI_ERROR_SUCESS ();
 }
@@ -11560,7 +11556,7 @@ __INTERNAL__PMPI_Errhandler_get (MPI_Comm comm, MPI_Errhandler * errhandler)
 static int
 __INTERNAL__PMPI_Errhandler_free (MPI_Errhandler * errhandler)
 {
-  sctk_errhandler_free( (sctk_errhandler_t) *errhandler );
+  sctk_errhandler_free((sctk_errhandler_t)*errhandler);
   *errhandler = MPI_ERRHANDLER_NULL;
   MPI_ERROR_SUCESS ();
 }
@@ -16085,282 +16081,197 @@ int PMPI_Comm_delete_attr(MPI_Comm comm, int comm_keyval)
 /*  The MPI Tools Inteface                                              */
 /************************************************************************/
 
-
-int PMPI_T_init_thread( int required, int * provided )
-{
-	return mpc_MPI_T_init_thread( required, provided );
+int PMPI_T_init_thread(int required, int *provided) {
+  sctk_error("INIT THES");
+  return mpc_MPI_T_init_thread(required, provided);
 }
 
-int PMPI_T_finalize( void )
-{
-	return mpc_MPI_T_finalize();
+int PMPI_T_finalize(void) { return mpc_MPI_T_finalize(); }
+
+int PMPI_T_enum_get_info(MPI_T_enum enumtype, int *num, char *name,
+                         int *name_len) {
+  return mpc_MPI_T_enum_get_info(enumtype, num, name, name_len);
 }
 
-int PMPI_T_enum_get_info( MPI_T_enum enumtype, int * num, char * name, int * name_len )
-{
-	return mpc_MPI_T_enum_get_info( enumtype, num,  name, name_len );
+int PMPI_T_enum_get_item(MPI_T_enum enumtype, int index, int *value, char *name,
+                         int *name_len) {
+  return mpc_MPI_T_enum_get_item(enumtype, index, value, name, name_len);
 }
 
-int PMPI_T_enum_get_item( MPI_T_enum enumtype, int index, int * value, char * name, int * name_len )
-{
-	return mpc_MPI_T_enum_get_item( enumtype, index, value, name, name_len );
+int PMPI_T_cvar_get_num(int *num_cvar) {
+  return mpc_MPI_T_cvar_get_num(num_cvar);
 }
 
-int PMPI_T_cvar_get_num( int *num_cvar )
-{
-	return mpc_MPI_T_cvar_get_num( num_cvar );
+int PMPI_T_cvar_get_info(int cvar_index, char *name, int *name_len,
+                         int *verbosity, MPI_Datatype *datatype,
+                         MPI_T_enum *enumtype, char *desc, int *desc_len,
+                         int *bind, int *scope) {
+  return mpc_MPI_T_cvar_get_info(cvar_index, name, name_len, verbosity,
+                                 datatype, enumtype, desc, desc_len, bind,
+                                 scope);
 }
 
-
-int PMPI_T_cvar_get_info( int cvar_index,
-		   				  char * name,
-						  int * name_len,
-			  			  int * verbosity, 
-              			  MPI_Datatype *datatype,
-              			  MPI_T_enum * enumtype ,
-              			  char * desc, 
-              			  int * desc_len, 
-              			  int * bind, 
-              			  int * scope )
-{
-	return mpc_MPI_T_cvar_get_info( cvar_index , name, name_len,
-								    verbosity, datatype, enumtype,
-									desc, desc_len, bind, scope);
+int PMPI_T_cvar_get_index(const char *name, int *cvar_index) {
+  return mpc_MPI_T_cvar_get_index(name, cvar_index);
 }
 
-
-int PMPI_T_cvar_get_index( const char * name, int * cvar_index )
-{
-	return mpc_MPI_T_cvar_get_index( name, cvar_index );
+int PMPI_T_cvar_handle_alloc(int cvar_index, void *obj_handle,
+                             MPI_T_cvar_handle *handle, int *count) {
+  return mpc_MPI_T_cvar_handle_alloc(cvar_index, obj_handle, handle, count);
 }
 
-
-int PMPI_T_cvar_handle_alloc( int cvar_index , void * obj_handle, 
-							  MPI_T_cvar_handle *handle, int * count )
-{
-	return mpc_MPI_T_cvar_handle_alloc( cvar_index, obj_handle, handle, count );
+int PMPI_T_cvar_handle_free(MPI_T_cvar_handle *handle) {
+  return mpc_MPI_T_cvar_handle_free(handle);
 }
 
-int PMPI_T_cvar_handle_free( MPI_T_cvar_handle * handle )
-{
-	return mpc_MPI_T_cvar_handle_free( handle );
+int PMPI_T_cvar_read(MPI_T_cvar_handle handle, void *buff) {
+  return mpc_MPI_T_cvar_read(handle, buff);
 }
 
-int PMPI_T_cvar_read( MPI_T_cvar_handle handle, void * buff )
-{
-	return mpc_MPI_T_cvar_read( handle, buff );
+int PMPI_T_cvar_write(MPI_T_cvar_handle handle, const void *buff) {
+  return mpc_MPI_T_cvar_write(handle, buff);
 }
 
-int PMPI_T_cvar_write( MPI_T_cvar_handle handle, const void * buff )
-{
-	return mpc_MPI_T_cvar_write( handle, buff );
+int PMPI_T_pvar_get_num(int *num_pvar) {
+  return mpc_MPI_T_pvar_get_num(num_pvar);
 }
 
-int PMPI_T_pvar_get_num( int * num_pvar )
-{
-	return mpc_MPI_T_pvar_get_num( num_pvar );
+int PMPI_T_pvar_get_info(int pvar_index, char *name, int *name_len,
+                         int *verbosity, int *var_class, MPI_Datatype *datatype,
+                         MPI_T_enum *enumtype, char *desc, int *desc_len,
+                         int *bind, int *readonly, int *continuous,
+                         int *atomic) {
+  return mpc_MPI_T_pvar_get_info(pvar_index, name, name_len, verbosity,
+                                 var_class, datatype, enumtype, desc, desc_len,
+                                 bind, readonly, continuous, atomic);
 }
 
-int PMPI_T_pvar_get_info( int pvar_index,
-			 			  char *name,
-			 			  int * name_len,
-			 			  int * verbosity,
-			 			  int * var_class,
-			 			  MPI_Datatype * datatype,
-			 			  MPI_T_enum * enumtype,
-			 			  char * desc,
-			 			  int * desc_len,
-			 			  int * bind,
-			 			  int * readonly,
-			 			  int * continuous,
-			 			  int * atomic )
-{
-	return mpc_MPI_T_pvar_get_info( pvar_index,
-									name,
-									name_len,
-									verbosity,
-									var_class,
-									datatype,
-									enumtype,
-									desc,
-									desc_len,
-									bind,
-									readonly,
-									continuous,
-									atomic );
+int PMPI_T_pvar_get_index(char *name, int *pvar_class, int *pvar_index) {
+  return mpc_MPI_T_pvar_get_index(name, pvar_class, pvar_index);
 }
 
-int PMPI_T_pvar_get_index( char * name , int * pvar_class, int * pvar_index )
-{
-	return mpc_MPI_T_pvar_get_index( name, pvar_class, pvar_index );
+int PMPI_T_pvar_session_create(MPI_T_pvar_session *session) {
+  return mpc_MPI_T_pvar_session_create(session);
 }
 
-int PMPI_T_pvar_session_create( MPI_T_pvar_session * session )
-{
-	return mpc_MPI_T_pvar_session_create( session );
+int PMPI_T_pvar_session_free(MPI_T_pvar_session *session) {
+  return mpc_MPI_T_pvar_session_free(session);
 }
 
-int PMPI_T_pvar_session_free( MPI_T_pvar_session * session )
-{
-	return mpc_MPI_T_pvar_session_free( session );
+int PMPI_T_pvar_handle_alloc(MPI_T_pvar_session session, int pvar_index,
+                             void *obj_handle, MPI_T_pvar_handle *handle,
+                             int *count) {
+  return mpc_MPI_T_pvar_handle_alloc(session, pvar_index, obj_handle, handle,
+                                     count);
 }
 
-int PMPI_T_pvar_handle_alloc( MPI_T_pvar_session session,
-			                  int pvar_index,
-                              void * obj_handle,
-                              MPI_T_pvar_handle * handle, 
-                              int * count )
-{
-	return mpc_MPI_T_pvar_handle_alloc( session, pvar_index, obj_handle, handle, count );
+int PMPI_T_pvar_handle_free(MPI_T_pvar_handle *handle) {
+  return mpc_MPI_T_pvar_handle_free(handle);
 }
 
-
-int PMPI_T_pvar_handle_free( MPI_T_pvar_handle * handle )
-{
-	return mpc_MPI_T_pvar_handle_free( handle );
+int PMPI_T_pvar_start(MPI_T_pvar_session session, MPI_T_pvar_handle handle) {
+  return mpc_MPI_T_pvar_start(session, handle);
 }
 
-int PMPI_T_pvar_start( MPI_T_pvar_session session, MPI_T_pvar_handle handle )
-{
-	return mpc_MPI_T_pvar_start( session, handle );
+int PMPI_T_pvar_stop(MPI_T_pvar_session session, MPI_T_pvar_handle handle) {
+  return mpc_MPI_T_pvar_stop(session, handle);
 }
 
-int PMPI_T_pvar_stop( MPI_T_pvar_session session, MPI_T_pvar_handle handle )
-{
-	return mpc_MPI_T_pvar_stop( session, handle );
+int PMPI_T_pvar_read(MPI_T_pvar_session session, MPI_T_pvar_handle handle,
+                     void *buff) {
+  return mpc_MPI_T_pvar_read(session, handle, buff);
 }
 
-int PMPI_T_pvar_read( MPI_T_pvar_session session, MPI_T_pvar_handle handle, void * buff )
-{
-	return mpc_MPI_T_pvar_read( session, handle, buff );
+int PMPI_T_pvar_readreset(MPI_T_pvar_session session, MPI_T_pvar_handle handle,
+                          void *buff) {
+  return mpc_MPI_T_pvar_readreset(session, handle, buff);
 }
 
-int PMPI_T_pvar_readreset( MPI_T_pvar_session session, MPI_T_pvar_handle handle, void * buff )
-{
-	return mpc_MPI_T_pvar_readreset( session, handle, buff );	
+int PMPI_T_pvar_write(MPI_T_pvar_session session, MPI_T_pvar_handle handle,
+                      const void *buff) {
+  return mpc_MPI_T_pvar_write(session, handle, buff);
 }
 
-int PMPI_T_pvar_write( MPI_T_pvar_session session, MPI_T_pvar_handle handle, const void * buff )
-{
-	return mpc_MPI_T_pvar_write( session, handle, buff );
+int PMPI_T_pvar_reset(MPI_T_pvar_session session, MPI_T_pvar_handle handle) {
+  return mpc_MPI_T_pvar_reset(session, handle);
 }
 
-int PMPI_T_pvar_reset( MPI_T_pvar_session session, MPI_T_pvar_handle handle )
-{
-	return mpc_MPI_T_pvar_reset( session, handle );
+int PMPI_T_category_get_num(int *num_cat) {
+  return mpc_MPI_T_category_get_num(num_cat);
 }
 
-int PMPI_T_category_get_num( int * num_cat )
-{
-	return mpc_MPI_T_category_get_num( num_cat );
+int PMPI_T_category_get_info(int cat_index, char *name, int *name_len,
+                             char *desc, int *desc_len, int *num_cvars,
+                             int *num_pvars, int *num_categories) {
+  return mpc_MPI_T_category_get_info(cat_index, name, name_len, desc, desc_len,
+                                     num_cvars, num_pvars, num_categories);
+}
+int PMPI_T_category_get_index(char *name, int *cat_index) {
+  return mpc_MPI_T_category_get_index(name, cat_index);
+}
+int PMPI_T_category_get_cvars(int cat_index, int len, int indices[]) {
+  return mpc_MPI_T_category_get_cvars(cat_index, len, indices);
 }
 
-int PMPI_T_category_get_info( int cat_index,
-							  char * name, 
-							  int * name_len, 
-							  char * desc, 
-							  int * desc_len,
-							  int * num_cvars, 
-							  int * num_pvars,
-							  int * num_categories)
-{
-	return mpc_MPI_T_category_get_info( cat_index,
-										name,
-										name_len,
-										desc,
-										desc_len,
-										num_cvars,
-										num_pvars,
-										num_categories);
-}
-int PMPI_T_category_get_index( char * name, int * cat_index )
-{
-	return mpc_MPI_T_category_get_index( name, cat_index );
-}
-int PMPI_T_category_get_cvars( int cat_index, int len, int indices[])
-{
-	return mpc_MPI_T_category_get_cvars( cat_index, len, indices );
+int PMPI_T_category_get_pvars(int cat_index, int len, int indices[]) {
+  return mpc_MPI_T_category_get_pvars(cat_index, len, indices);
 }
 
-int PMPI_T_category_get_pvars( int cat_index, int len, int indices[])
-{
-	return mpc_MPI_T_category_get_pvars( cat_index, len, indices );
+int PMPI_T_category_get_categories(int cat_index, int len, int indices[]) {
+  return mpc_MPI_T_category_get_categories(cat_index, len, indices);
 }
 
-int PMPI_T_category_get_categories( int cat_index, int len, int indices[])
-{
-	return mpc_MPI_T_category_get_categories( cat_index, len, indices );
+int PMPI_T_category_changed(int *stamp) {
+  return mpc_MPI_T_category_changed(stamp);
 }
-
-int PMPI_T_category_changed( int * stamp )
-{
-	return mpc_MPI_T_category_changed( stamp );
-}
-
 
 /* Error Handling */
-int PMPI_Win_call_errhandler(MPI_Win win, int errorcode)
-{
-	not_implemented();
-	return MPI_ERR_INTERN;
+int PMPI_Win_call_errhandler(MPI_Win win, int errorcode) {
+  not_implemented();
+  return MPI_ERR_INTERN;
 }
 
-
-int PMPI_Add_error_class(int *errorclass)
-{
-	not_implemented();
-	return MPI_ERR_INTERN;
+int PMPI_Add_error_class(int *errorclass) {
+  not_implemented();
+  return MPI_ERR_INTERN;
 }
 
-int PMPI_Add_error_code(int errorclass, int *errorcode)
-{
-	not_implemented();
-	return MPI_ERR_INTERN;
+int PMPI_Add_error_code(int errorclass, int *errorcode) {
+  not_implemented();
+  return MPI_ERR_INTERN;
 }
 
-int PMPI_Add_error_string(int errorcode, char *string)
-{
-	not_implemented();
-	return MPI_ERR_INTERN;
+int PMPI_Add_error_string(int errorcode, char *string) {
+  not_implemented();
+  return MPI_ERR_INTERN;
 }
 
-
-
-int PMPI_Comm_create_errhandler(MPI_Comm_errhandler_function *function, MPI_Errhandler *errhandler)
-{
-	return PMPC_Errhandler_create( function, errhandler);
+int PMPI_Comm_create_errhandler(MPI_Comm_errhandler_function *function,
+                                MPI_Errhandler *errhandler) {
+  return PMPC_Errhandler_create(function, errhandler);
 }
 
-int PMPI_Comm_get_errhandler(MPI_Comm comm, MPI_Errhandler *errhandler)
-{
-	return PMPC_Errhandler_get (comm, errhandler);
+int PMPI_Comm_get_errhandler(MPI_Comm comm, MPI_Errhandler *errhandler) {
+  return PMPC_Errhandler_get(comm, errhandler);
 }
 
-
-int PMPI_Comm_set_errhandler(MPI_Comm comm, MPI_Errhandler errhandler)
-{
-	return PMPC_Errhandler_set (comm, errhandler);
+int PMPI_Comm_set_errhandler(MPI_Comm comm, MPI_Errhandler errhandler) {
+  return PMPC_Errhandler_set(comm, errhandler);
 }
 
+int PMPI_Comm_call_errhandler(MPI_Comm comm, int errorcode) {
+  sctk_errhandler_t errh =
+      sctk_handle_get_errhandler((sctk_handle)comm, SCTK_HANDLE_COMM);
+  sctk_generic_handler errf = sctk_errhandler_resolve(errh);
 
-int PMPI_Comm_call_errhandler( MPI_Comm comm, int errorcode )
-{
-  sctk_errhandler_t errh = sctk_handle_get_errhandler( (sctk_handle) comm, SCTK_HANDLE_COMM );
-  sctk_generic_handler errf =  sctk_errhandler_resolve( errh );
-  
-  if( errf )
-  {
-  	(errf)((void*)&comm, &errorcode); 
+  if (errf) {
+    (errf)((void *)&comm, &errorcode);
   }
 
-  sctk_error("C %d(e %d) %d->%p", comm, errorcode , errh,  errf );
+  sctk_error("C %d(e %d) %d->%p", comm, errorcode, errh, errf);
 
   return MPI_SUCCESS;
 }
-
-
-
-
 
 /************************************************************************/
 /*  NOT IMPLEMENTED                                                     */
@@ -16427,7 +16338,6 @@ int PMPI_Type_get_attr(MPI_Datatype datatype, int type_keyval, void *attribute_v
 int PMPI_Type_free_keyval(int *type_keyval){not_implemented();return MPI_ERR_INTERN;}
 int PMPI_Type_delete_attr(MPI_Datatype datatype, int type_keyval){not_implemented();return MPI_ERR_INTERN;}
 int PMPI_Type_create_keyval(MPI_Type_copy_attr_function *type_copy_attr_fn, MPI_Type_delete_attr_function *type_delete_attr_fn, int *type_keyval, void *extra_state){not_implemented();return MPI_ERR_INTERN;}
-
 
 int PMPI_Get_library_version(char *version, int *resultlen){not_implemented();return MPI_ERR_INTERN;}
 

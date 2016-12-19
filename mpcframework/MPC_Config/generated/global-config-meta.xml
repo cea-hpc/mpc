@@ -80,28 +80,28 @@
 <config name="MPC_Common">
 	<usertypes>
 		<struct name="launcher" doc="Options for MPC launcher.">
-			<param name="verbosity" type="int" default="0" doc="Default verbosity level from 0 to 3. Can be override by -vv on mpcrun."/>
-			<param name="banner" type="bool" default="true" doc="Display the MPC banner at launch time to print some informations about the topology. Can be override by MPC_DISABLE_BANNER."/>
-			<param name="autokill" type="int" default="0" doc="Automatically kill the MPC processes after a given timeout. Use 0 to disable. Can be override by MPC_AUTO_KILL_TIMEOUT."/>
+			<param name="verbosity" type="int" default="0" doc="Default verbosity level from 0 to 3. Can be override by -vv on mpcrun." alias="LN_VERBOSITY" />
+			<param name="banner" type="bool" default="true" doc="Display the MPC banner at launch time to print some informations about the topology. Can be override by MPC_DISABLE_BANNER." alias="LN_BANNER" />
+			<param name="autokill" type="int" default="0" doc="Automatically kill the MPC processes after a given timeout. Use 0 to disable. Can be override by MPC_AUTO_KILL_TIMEOUT." alias="LN_AUTOKILL" />
 			<param name="user_launchers" type="string" default="default" doc="Permit to extend the launchers available via 'mpcrun -l=...' by providing scripts (named mpcrun_XXXX) in a user directory. Can be override by MPC_USER_LAUNCHERS."/>
-			<param name="keep_rand_addr" type="bool" default="true" doc="Activate randomization of base addresses"/>
-			<param name="disable_rand_addr" type="bool" default="false" doc="Deactivate randomization of base addresses"/>
-			<param name="disable_mpc" type="bool" default="false" doc="Do not use mpc for execution (deprecated?)"/>
-            <param name="thread_init" type="funcptr" doc="Initialize multithreading mode" default="sctk_use_ethread_mxn"/>
-			<param name="nb_task" type="int" default="1" doc="Define the number of MPI tasks"/>
-			<param name="nb_process" type="int" default="1" doc="Define the number of MPC processes"/>
-			<param name="nb_processor" type="int" default="0" doc="Define the number of virtual processors"/>
-			<param name="nb_node" type="int" default="1" doc="Define the number of compute nodes"/>
-			<param name="launcher" type="string" default="none" doc="Define which launcher to use"/>
-			<param name="max_try" type="int" default="10" doc="Define the max number of tries to access the topology file before failing"/>
-			<param name="vers_details" type="bool" default="false" doc="Print the MPC version number"/>
-			<param name="profiling" type="string" default="stdout" doc="Select the type of outputs for the profiling"/>
-			<param name="enable_smt" type="bool" default="false" doc="Enable usage of hyperthreaded cores if available on current architecture."/>
-			<param name="share_node" type="bool" default="false" doc="Enable the restriction on CPU number to share node"/>
-			<param name="restart" type="bool" default="false" doc="Restart MPC from a previous checkpoint"/>
-			<param name="checkpoint" type="bool" default="false" doc="Enable MPC checkpointing"/>
-			<param name="migration" type="bool" default="false" doc="Enable migration"/>
-			<param name="report" type="bool" default="false" doc="Enable reporting."/>
+			<param name="keep_rand_addr" type="bool" default="true" doc="Activate randomization of base addresses" />
+			<param name="disable_rand_addr" type="bool" default="false" doc="Deactivate randomization of base addresses" alias="LN_ADDR_RAND_DISABLE" />
+			<param name="disable_mpc" type="bool" default="false" doc="Do not use mpc for execution (deprecated?)" alias="LN_DISABLE_MPC"/>
+            <param name="thread_init" type="funcptr" doc="Initialize multithreading mode" default="sctk_use_ethread_mxn" />
+			<param name="nb_task" type="int" default="1" doc="Define the number of MPI tasks" alias="LN_MPI_TASK" />
+			<param name="nb_process" type="int" default="1" doc="Define the number of MPC processes" alias="LN_MPC_PROCESS" />
+			<param name="nb_processor" type="int" default="0" doc="Define the number of virtual processors" alias="LN_MPC_VP" />
+			<param name="nb_node" type="int" default="1" doc="Define the number of compute nodes" alias="LN_MPC_NODE" />
+			<param name="launcher" type="string" default="none" doc="Define which launcher to use" />
+			<param name="max_try" type="int" default="10" doc="Define the max number of tries to access the topology file before failing" alias="LN_MAX_TOPO_TRY" />
+			<param name="vers_details" type="bool" default="false" doc="Print the MPC version number" alias="LN_DISPLAY_VERS" />
+			<param name="profiling" type="string" default="stdout" doc="Select the type of outputs for the profiling" />
+			<param name="enable_smt" type="bool" default="false" doc="Enable usage of hyperthreaded cores if available on current architecture." alias="LN_ENABLE_SMT" />
+			<param name="share_node" type="bool" default="false" doc="Enable the restriction on CPU number to share node" alias="LN_SHARE_NODE" />
+			<param name="restart" type="bool" default="false" doc="Restart MPC from a previous checkpoint" alias="LN_RESTART" />
+			<param name="checkpoint" type="bool" default="false" doc="Enable MPC checkpointing" alias="LN_CHECKPOINT" />
+			<param name="migration" type="bool" default="false" doc="Enable migration" alias="LN_MIGRATION" />
+			<param name="report" type="bool" default="false" doc="Enable reporting." alias="LN_REPORT" />
 		</struct>
 		
 		<struct name="debugger" doc="Options for MPC Debugger">
@@ -137,7 +137,8 @@
         </struct>
 
         <struct name="collectives_inter" doc="Collectives intercom MPI">
-            <param name="barrier_inter" type="funcptr" default="__INTERNAL__PMPI_Barrier_inter" doc="MPI_Barrier intercom algorithm"/><param name="bcast_inter" type="funcptr" default="__INTERNAL__PMPI_Bcast_inter" doc="MPI_Barrier intercom algorithm"/>
+            <param name="barrier_inter" type="funcptr" default="__INTERNAL__PMPI_Barrier_inter" doc="MPI_Barrier intercom algorithm"/>
+            <param name="bcast_inter" type="funcptr" default="__INTERNAL__PMPI_Bcast_inter" doc="MPI_Barrier intercom algorithm"/>
             <param name="allgather_inter" type="funcptr" default="__INTERNAL__PMPI_Allgather_inter" doc="MPI_Allgather intercom algorithm"/>
             <param name="allgatherv_inter" type="funcptr" default="__INTERNAL__PMPI_Allgatherv_inter" doc="MPI_Allgatherv intercom algorithm"/>
             <param name="alltoall_inter" type="funcptr" default="__INTERNAL__PMPI_Alltoall_inter" doc="MPI_Alltoall intercom algorithm"/>
@@ -181,8 +182,8 @@
 	<modules>
 		<module name="collectives_intra" type="collectives_intra"/>
 		<module name="collectives_inter" type="collectives_inter"/>
-        	<module name="progress_thread" type="progress_thread"/>
-        	<module name="mpc" type="mpc"/>
+		<module name="progress_thread" type="progress_thread"/>
+		<module name="mpc" type="mpc"/>
 	</modules>
       
       
@@ -204,32 +205,32 @@
 			<param name="pkey" type="string" doc="Define the pkey value" default="undefined"/>
 			<param name="network_type" type="int" doc="Define a network's type (0=signalization, 1=data)" default="0"/>
 			<param name="adm_port" type="int" doc="Defines the port number to use." default="1" />
-			<param name="verbose_level" type="int" doc="Defines the verbose level of the Infiniband interface ." default="0" />
-			<param name="eager_limit" type="int" doc="Size of the eager buffers (short messages)." default="12288" />
-			<param name="buffered_limit" type="int" doc="Max size for using the Buffered protocol (message split into several Eager messages)." default="262114" />
-			<param name="qp_tx_depth" type="int" doc="Number of entries to allocate in the QP for sending messages. If too low, may cause an QP overrun" default="15000" />
-			<param name="qp_rx_depth" type="int" doc="Number of entries to allocate in the QP for receiving messages. Must be 0 if using SRQ" default="0" />
-			<param name="cq_depth" type="int" doc="Number of entries to allocate in the CQ. If too low, may cause a CQ overrun" default="40000" />
-			<param name="rdma_depth" type="int" doc="Number of RDMA resources on QP (covers both max_dest_rd_atomic and max_rd_atomic)" default="16" />
-			<param name="max_sg_sq" type="int" doc="Max pending RDMA operations for send" default="4" />
-			<param name="max_sg_rq" type="int" doc="Max pending RDMA operations for recv" default="4" />
-			<param name="max_inline" type="int" doc="Max size for inlining messages" default="128" />
-			<param name="rdma_resizing" type="int" doc="Defines if RDMA connections may be resized." default="0" />
-			<param name="max_rdma_connections" type="int" doc="Number of RDMA buffers allocated for each neighbor" default="0" />
-			<param name="max_rdma_resizing" type="int" doc="Max number of RDMA buffers resizing allowed" default="0" />
-			<param name="init_ibufs" type="int" doc="Max number of Eager buffers to allocate during the initialization step" default="1000" />
-   			<param name="init_recv_ibufs" type="int" doc="Defines the number of receive buffers initially allocated. The number is on-the-fly expanded when needed (see init_recv_ibufs_chunk)" default="200" />
-			<param name="max_srq_ibufs_posted" type="int" doc="Max number of Eager buffers which can be posted to the SRQ. This number cannot be higher than the number fixed by the HW" default="1500" />
-			<param name="max_srq_ibufs" type="int" doc="Max number of Eager buffers which can be used by the SRQ. This number is not fixed by the HW" default="1000" />
-			<param name="srq_credit_limit" type="int" doc="Min number of free recv Eager buffers before posting a new buffer." default="500" />
-			<param name="srq_credit_thread_limit" type="int" doc="Min number of free recv Eager buffers before the activation of the asynchronous thread. If this thread is activated too many times, the performance may be decreased." default="100" />
-			<param name="size_ibufs_chunk" type="int" doc="Number of new buffers allocated when no more buffers are available." default="100" />
-			<param name="init_mr" type="int" doc="Number of MMU entries allocated during the MPC initlization." default="400" />
-			<param name="steal" type="int" doc="Defines if the steal in MPI is allowed " default="2" />
-			<param name="quiet_crash" type="int" doc="Defines if the Infiniband interface must crash quietly." default="0" />
-			<param name="async_thread" type="int" doc="Defines if the asynchronous may be started at the MPC initialization." default="0" />
-			<param name="wc_in_number" type="int" doc="Defines the number of entries for the CQ dedicated to received messages." default="0" />
-			<param name="wc_out_number" type="int" doc="Defines the number of entries for the CQ dedicated to sent messages." default="0" />
+			<param name="verbose_level" type="int" doc="Defines the verbose level of the Infiniband interface ." default="0" alias="IB_VERBOSE" />
+			<param name="eager_limit" type="int" doc="Size of the eager buffers (short messages)." default="12288" alias="IB_EAGER_THRESH" />
+			<param name="buffered_limit" type="int" doc="Max size for using the Buffered protocol (message split into several Eager messages)." default="262114" alias="IB_BUFFERED_THRESH" />
+			<param name="qp_tx_depth" type="int" doc="Number of entries to allocate in the QP for sending messages. If too low, may cause an QP overrun" default="15000" alias="IB_TX_DEPTH" />
+			<param name="qp_rx_depth" type="int" doc="Number of entries to allocate in the QP for receiving messages. Must be 0 if using SRQ" default="0" alias="IB_RX_DEPTH" />
+			<param name="cq_depth" type="int" doc="Number of entries to allocate in the CQ. If too low, may cause a CQ overrun" default="40000" alias="IB_CQ_DEPTH" />
+			<param name="rdma_depth" type="int" doc="Number of RDMA resources on QP (covers both max_dest_rd_atomic and max_rd_atomic)" default="16" alias="IB_RDMA_DEPTH" />
+			<param name="max_sg_sq" type="int" doc="Max pending RDMA operations for send" default="4" alias="IB_MAX_SG_SQ" />
+			<param name="max_sg_rq" type="int" doc="Max pending RDMA operations for recv" default="4" alias="IB_MAX_SG_RQ" />
+			<param name="max_inline" type="int" doc="Max size for inlining messages" default="128" alias="IB_MAX_INLINE" />
+			<param name="rdma_resizing" type="int" doc="Defines if RDMA connections may be resized." default="0" alias="IB_RDMA_RESIZING" />
+			<param name="max_rdma_connections" type="int" doc="Number of RDMA buffers allocated for each neighbor" default="0" alias="IB_RDMA_CONN" />
+			<param name="max_rdma_resizing" type="int" doc="Max number of RDMA buffers resizing allowed" default="0" alias="IB_RDMA_MAX_RESIZING" />
+			<param name="init_ibufs" type="int" doc="Max number of Eager buffers to allocate during the initialization step" default="1000" alias="IB_INIT_IBUF" />
+   			<param name="init_recv_ibufs" type="int" doc="Defines the number of receive buffers initially allocated. The number is on-the-fly expanded when needed (see init_recv_ibufs_chunk)" default="200" alias="IB_INIT_RECV_IBUF" />
+			<param name="max_srq_ibufs_posted" type="int" doc="Max number of Eager buffers which can be posted to the SRQ. This number cannot be higher than the number fixed by the HW" default="1500" alias="IB_MAX_SRQ_IBUF_POSTED" />
+			<param name="max_srq_ibufs" type="int" doc="Max number of Eager buffers which can be used by the SRQ. This number is not fixed by the HW" default="1000" alias="IB_MAX_SRQ_IBUF" />
+			<param name="srq_credit_limit" type="int" doc="Min number of free recv Eager buffers before posting a new buffer." default="500" alias="IB_SRQ_CREDIT_LIMIT" />
+			<param name="srq_credit_thread_limit" type="int" doc="Min number of free recv Eager buffers before the activation of the asynchronous thread. If this thread is activated too many times, the performance may be decreased." default="100" alias="IB_SRQ_CREDIT_LIMIT_THREAD"/>
+			<param name="size_ibufs_chunk" type="int" doc="Number of new buffers allocated when no more buffers are available." default="100" alias="IB_IBUF_CHUNK" />
+			<param name="init_mr" type="int" doc="Number of MMU entries allocated during the MPC initlization." default="400" alias="IB_MMU_INIT" />
+			<param name="steal" type="int" doc="Defines if the steal in MPI is allowed " default="2" alias="IB_CAN_STEAL" />
+			<param name="quiet_crash" type="int" doc="Defines if the Infiniband interface must crash quietly." default="0" alias="IB_QUIET_CRASH" />
+			<param name="async_thread" type="int" doc="Defines if the asynchronous may be started at the MPC initialization." default="0" alias="IB_ASYNC_THREAD" />
+			<param name="wc_in_number" type="int" doc="Defines the number of entries for the CQ dedicated to received messages." default="0" alias="IB_WC_IN" />
+			<param name="wc_out_number" type="int" doc="Defines the number of entries for the CQ dedicated to sent messages." default="0" alias="IB_WC_OUT" />
 			<param name="low_memory" type="bool" doc="Defines if the low memory mode should be activated" default="false" />
 			<param name="rdvz_protocol" type="ibv_rdvz_protocol" doc="Defines the Rendezvous protocol to use (IBV_RDVZ_WRITE_PROTOCOL or IBV_RDVZ_READ_PROTOCOL)" default="IBV_RDVZ_WRITE_PROTOCOL" />
 			<param name="rdma_min_size" type="int" doc="Defines the minimum size for the Eager RDMA buffers" default="1024" />
@@ -240,14 +241,14 @@
 			<param name="rdma_resizing_max_size" type="int" doc="Defines the maximum size for the Eager RDMA buffers (resizing)" default="4096" />
 			<param name="rdma_resizing_min_nb" type="int" doc="Defines the minimum number of Eager RDMA buffers (resizing)" default="8" />
 			<param name="rdma_resizing_max_nb" type="int" doc="Defines the maximum number of Eager RDMA buffers (resizing)" default="32" />
-			<param name="size_recv_ibufs_chunk" type="int" doc="Defines the number of receive buffers allocated on the fly." default="400" />
+			<param name="size_recv_ibufs_chunk" type="int" doc="Defines the number of receive buffers allocated on the fly." default="400" alias="IB_RECV_IBUF_CHUNK" />
 		</struct>
 
 		<struct name="ib_global" doc="Global Parameters for IB common structs.">
-			<param name="mmu_cache_enabled" type="int" doc="Defines if the MMU cache is enabled." default="1" />
-			<param name="mmu_cache_entry_count" type="int" doc="Number of entries to keep in the cache." default="1000" />
-			<param name="mmu_cache_maximum_size" type="size" doc="Total size of entries to keep in the cache." default="4GB" />
-			<param name="mmu_cache_maximum_pin_size" type="size" doc="Maximum size of an pinned entry." default="1GB" />
+			<param name="mmu_cache_enabled" type="int" doc="Defines if the MMU cache is enabled." default="1" alias="IB_MMU_CHACHE_ENABLED" />
+			<param name="mmu_cache_entry_count" type="int" doc="Number of entries to keep in the cache." default="1000" alias="IB_MMU_CHACHE_COUNT" />
+			<param name="mmu_cache_maximum_size" type="size" doc="Total size of entries to keep in the cache." default="4GB"  alias="IB_MMU_CHACHE_MAX_SIZE" />
+			<param name="mmu_cache_maximum_pin_size" type="size" doc="Maximum size of an pinned entry." default="1GB" alias="IB_MMU_CHACHE_MAX_PIN_SIZE" />
 		</struct>
 
 		<enum name="ibv_rdvz_protocol" doc="">
@@ -257,7 +258,7 @@
 
 		<!-- Structure for Portals driver -->
 		<struct name="net_driver_portals" doc="Portals-based driver">
-			<param name="eager_limit" type="int" doc="Size of the eager buffers (short messages)." default="65565" />
+			<param name="eager_limit" type="int" doc="Size of the eager buffers (short messages)." default="65565" alias="PT_EAGER_LIMIT" />
 			<!--<param name="idle_polling" type="int" doc="Number of extra queues accessed by tasks for collaborative polling" default="2" />-->
 		</struct>
 
@@ -273,21 +274,21 @@
 
 		<!-- Structure for Shared Memory driver -->
         <struct name="net_driver_shm" doc="Inter-Process shared memory communication implementation">
-                    <param name="buffered_priority" type="int" doc="Defines priority for the SHM buffered message" default="0" />
-                    <param name="buffered_min_size" type="int" doc="Defines the min size for the SHM buffered message" default="0" />
-                    <param name="buffered_max_size" type="int" doc="Defines the min size for the SHM buffered message" default="4096" />
-                    <param name="buffered_zerocopy" type="bool" doc="Defines if mode zerocopy should be actived for SHM buffered message" default="false" />
-                    <param name="cma_enable" type="bool" doc="" default="true"/>
-                    <param name="cma_priority" type="int" doc="Defines priority for the SHM CMA message" default="1" />
-                    <param name="cma_min_size" type="int" doc="Defines the min size for the SHM CMA message" default="4096" />
-                    <param name="cma_max_size" type="int" doc="Defines the min size for the SHM CMA message" default="0" />
-                    <param name="cma_zerocopy" type="bool" doc="Defines if mode zerocopy should be actived for SHM CMA message" default="false" />
-                    <param name="frag_priority" type="int" doc="Defines priority for the SHM fragmented message" default="2" />
-                    <param name="frag_min_size" type="int" doc="Defines the min size for the SHM fragmented message" default="4096" />
-                    <param name="frag_max_size" type="int" doc="Defines the min size for the SHM fragmented message" default="0" />
-                    <param name="frag_zerocopy" type="bool" doc="Defines if mode zerocopy should be actived for SHM fragmented message" default="false" />
-            		<param name="shmem_size" type="int" doc="Size of shared memory region." default="1024" />
-            		<param name="cells_num" type="int" doc="Size of shared memory region." default="128" />
+                    <param name="buffered_priority" type="int" doc="Defines priority for the SHM buffered message" default="0" alias="SHM_BUFF_PRIORITY" />
+                    <param name="buffered_min_size" type="int" doc="Defines the min size for the SHM buffered message" default="0" alias="SHM_BUFF_MIN_SIZE" />
+                    <param name="buffered_max_size" type="int" doc="Defines the min size for the SHM buffered message" default="4096" alias="SHM_BUFF_MAX_SIZE" />
+                    <param name="buffered_zerocopy" type="bool" doc="Defines if mode zerocopy should be actived for SHM buffered message" default="false" alias="SHM_BUFF_ZEROCOPY" />
+                    <param name="cma_enable" type="bool" doc="" default="true" alias="SHM_CMA_ENABLE"/>
+                    <param name="cma_priority" type="int" doc="Defines priority for the SHM CMA message" default="1" alias="SHM_CMA_PRIORITY" />
+                    <param name="cma_min_size" type="int" doc="Defines the min size for the SHM CMA message" default="4096"  alias="SHM_CMA_MIN_SIZE" />
+                    <param name="cma_max_size" type="int" doc="Defines the min size for the SHM CMA message" default="0" alias="SHM_CMA_MAX_SIZE" />
+                    <param name="cma_zerocopy" type="bool" doc="Defines if mode zerocopy should be actived for SHM CMA message" default="false" alias="SHM_CMA_ZEROCOPY" />
+                    <param name="frag_priority" type="int" doc="Defines priority for the SHM fragmented message" default="2" alias="SHM_FRAG_PRIORITY" />
+                    <param name="frag_min_size" type="int" doc="Defines the min size for the SHM fragmented message" default="4096" alias="SHM_FRAG_MIN_SIZE" />
+                    <param name="frag_max_size" type="int" doc="Defines the min size for the SHM fragmented message" default="0" alias="SHM_FRAG_MAX_SIZE" />
+                    <param name="frag_zerocopy" type="bool" doc="Defines if mode zerocopy should be actived for SHM fragmented message" default="false" alias="SHM_FRAG_ZEROCOPY" />
+            		<param name="shmem_size" type="int" doc="Size of shared memory region." default="1024" alias="SHM_SIZE" />
+            		<param name="cells_num" type="int" doc="Size of shared memory region." default="128" alias="SHM_CELLS" />
         	</struct>
 
 		<!-- Union to merge drivers -->
@@ -412,14 +413,14 @@
 		<!-- ############################## -->
 
 		<struct name="inter_thread_comm" doc="Options for communication between threads">
-			<param name="barrier_arity" type="int" default="8" doc=""/>
-			<param name="broadcast_arity_max" type="int" default="32" doc=""/>
-			<param name="broadcast_max_size" type="int" default="1024" doc=""/>
-			<param name="broadcast_check_threshold" type="int" default="512" doc=""/>
-			<param name="allreduce_arity_max" type="int" default="8" doc=""/>
-			<param name="allreduce_max_size" type="int" default="4096" doc=""/>
-			<param name="allreduce_check_threshold" type="int" default="8192" doc=""/>
-			<param name="ALLREDUCE_MAX_SLOT" type="int" default="65536" doc="Slot size for allreduce"/>
+			<param name="barrier_arity" type="int" default="8" doc="" alias="ITT_BARRIER_ARITY"/>
+			<param name="broadcast_arity_max" type="int" default="32" doc="" alias="ITT_BROADCAST_ARITY"/>
+			<param name="broadcast_max_size" type="int" default="1024" doc="" alias="ITT_BROADCAST_MAX_SIZE"/>
+			<param name="broadcast_check_threshold" type="int" default="512" doc="" alias="ITT_BROADCAST_CHECK_TH"/>
+			<param name="allreduce_arity_max" type="int" default="8" doc="" alias="ITT_ALLREDUCE_ARITY_MAX"/>
+			<param name="allreduce_max_size" type="int" default="4096" doc="" alias="ITT_ALLREDUCE_MAX_SIZE"/>
+			<param name="allreduce_check_threshold" type="int" default="8192" doc="" alias="ITT_ALLREDUCE_CHECK_TH"/>
+			<param name="ALLREDUCE_MAX_SLOT" type="int" default="65536" doc="Slot size for allreduce" alias="ITT_ALLREDUCE_MAX_SLOT"/>
 			<param name="collectives_init_hook" type="funcptr" default="sctk_collectives_init_opt_noalloc_split_messages" doc=""/>
 		</struct>
 

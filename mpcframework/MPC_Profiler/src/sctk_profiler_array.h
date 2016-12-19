@@ -23,9 +23,7 @@
 #define SCTK_PROFILER_ARRAY
 
 #include "stdint.h"
-
-#include "sctk_spinlock.h"
-
+#include "mpit_internal.h"
 
 #undef SIZE_COUNTER
 #undef COUNTER
@@ -34,7 +32,8 @@
 #define SIZE_COUNTER PROBE
 #define COUNTER PROBE
 
-#define PROBE( key, parent, desc ) SCTK_PROFILE_ ## key,
+#define PROBE(key, parent, desc, mpit_hits, mpit_value, mpit_loww, mpit_highw) \
+  SCTK_PROFILE_##key,
 
 typedef enum
 {
@@ -92,6 +91,18 @@ void sctk_profiler_array_release(struct sctk_profiler_array *array);
 void sctk_profiler_array_unify( struct sctk_profiler_array *array );
 void sctk_profiler_array_walk( struct sctk_profiler_array *array, void (*handler)( struct sctk_profiler_array *array, int id, int parent_id, int depth, void *arg, int going_up ), void *arg , sctk_profile_render_walk_mode DFS );
 
+extern sctk_profile_key_type sctk_profile_type[SCTK_PROFILE_KEY_COUNT];
+
+static inline sctk_profile_key_type sctk_profiler_array_get_type(int id) {
+  return sctk_profile_type[id];
+}
+
+MPC_T_pvar_t sctk_profiler_array_get_mpit_hits(int id);
+MPC_T_pvar_t sctk_profiler_array_get_mpit_value(int id);
+MPC_T_pvar_t sctk_profiler_array_get_mpit_size(int id);
+MPC_T_pvar_t sctk_profiler_array_get_mpit_loww(int id);
+MPC_T_pvar_t sctk_profiler_array_get_mpit_highw(int id);
+
 static inline void sctk_profiler_array_hit( struct sctk_profiler_array *array, int id, int64_t value )
 {
 	sctk_spinlock_lock( &array->lock );
@@ -118,8 +129,46 @@ static inline void sctk_profiler_array_hit( struct sctk_profiler_array *array, i
 			array->sctk_profile_max[ id ] = value;
 		}
 
-	}
-	sctk_spinlock_unlock( &array->lock );
+                if (mpc_MPI_T_initialized()) {
+
+                  MPC_T_pvar_t mpit_hits =
+                      sctk_profiler_array_get_mpit_hits(id);
+
+                  if (mpit_hits != MPI_T_PVAR_NULL) {
+                    /* If we are here we have a PVAR */
+                    MPC_T_session_set(-1, MPI_T_PVAR_ALL_HANDLES, mpit_hits,
+                                      &array->sctk_profile_hits[id]);
+                  }
+
+                  MPC_T_pvar_t mpit_value =
+                      sctk_profiler_array_get_mpit_value(id);
+
+                  if (mpit_value != MPI_T_PVAR_NULL) {
+                    /* If we are here we have a PVAR */
+                    MPC_T_session_set(-1, MPI_T_PVAR_ALL_HANDLES, mpit_value,
+                                      &array->sctk_profile_value[id]);
+                  }
+
+                  MPC_T_pvar_t mpit_loww =
+                      sctk_profiler_array_get_mpit_loww(id);
+
+                  if (mpit_loww != MPI_T_PVAR_NULL) {
+                    /* If we are here we have a PVAR */
+                    MPC_T_session_set(-1, MPI_T_PVAR_ALL_HANDLES, mpit_loww,
+                                      &array->sctk_profile_min[id]);
+                  }
+
+                  MPC_T_pvar_t mpit_highw =
+                      sctk_profiler_array_get_mpit_highw(id);
+
+                  if (mpit_highw != MPI_T_PVAR_NULL) {
+                    /* If we are here we have a PVAR */
+                    MPC_T_session_set(-1, MPI_T_PVAR_ALL_HANDLES, mpit_highw,
+                                      &array->sctk_profile_max[id]);
+                  }
+                }
+        }
+        sctk_spinlock_unlock(&array->lock);
 }
 
 /* GETTERS */
@@ -135,13 +184,6 @@ static inline uint64_t sctk_profiler_array_get_from_tab( struct sctk_profiler_ar
 	sctk_spinlock_unlock( &array->lock );
 
 	return ret;
-}
-
-extern sctk_profile_key_type sctk_profile_type[ SCTK_PROFILE_KEY_COUNT ];
-
-static inline sctk_profile_key_type sctk_profiler_array_get_type( int id )
-{
-	return sctk_profile_type[id];
 }
 
 static inline uint64_t sctk_profiler_array_get_hits( struct sctk_profiler_array *array, int id )

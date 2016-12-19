@@ -196,48 +196,59 @@ void sctk_runtime_config_init(void)
 	struct sctk_runtime_config_sources config_sources;
 	const char * disable_config;
 
-	/* if already done do nothing */
-	if (__sctk_global_runtime_config_init__ == false) {
-		disable_config = sctk_runtime_config_get_env_or_value("MPC_DISABLE_CONFIG","0");
-		if (strcmp(disable_config,"1") == 0) {
-			/* reset the structure */
-			sctk_runtime_config_reset(&__sctk_global_runtime_config__);
+        /* Initialize CVARS indiferently from MPIT as
+         * we want to map the config values into them */
+        MPI_T_cvars_array_init();
 
-			/* validate */
-			sctk_runtime_config_validate(&__sctk_global_runtime_config__);
+        /* if already done do nothing */
+        if (__sctk_global_runtime_config_init__ == false) {
+          disable_config =
+              sctk_runtime_config_get_env_or_value("MPC_DISABLE_CONFIG", "0");
+          if (strcmp(disable_config, "1") == 0) {
+            /* reset the structure */
+            sctk_runtime_config_reset(&__sctk_global_runtime_config__);
 
-			/* mark as init */
-			__sctk_global_runtime_config_init__ = true;
-		} else {
-			/* init libxml (safer to manually call it in multi-thread environment as not threadsafe) */
-			xmlInitParser();
+            /* validate */
+            sctk_runtime_config_validate(&__sctk_global_runtime_config__);
 
-			/* made silent errors */
-			sctk_runtime_config_made_libxml_silent();
+            /* mark as init */
+            __sctk_global_runtime_config_init__ = true;
+          } else {
+            /* init libxml (safer to manually call it in multi-thread
+             * environment as not threadsafe) */
+            xmlInitParser();
 
-			/* open */
-			sctk_runtime_config_sources_open(&config_sources);
+            /* made silent errors */
+            sctk_runtime_config_made_libxml_silent();
 
-			/* map to c struct */
-			sctk_runtime_config_runtime_map_sources( &__sctk_global_runtime_config__,&config_sources);
+            /* open */
+            sctk_runtime_config_sources_open(&config_sources);
 
-			/* Retrieve the list of profiles names */
-      int i = 0;
-      __sctk_global_runtime_config__.number_profiles = config_sources.cnt_profile_names;
-      for (i = 0; i < config_sources.cnt_profile_names; i ++) {
-        __sctk_global_runtime_config__.profiles_name_list[i] = (char*) malloc (sizeof(strlen((char *) config_sources.profile_names[i])));
-        strcpy(__sctk_global_runtime_config__.profiles_name_list[i], (char *) config_sources.profile_names[i]);
-      }
+            /* map to c struct */
+            sctk_runtime_config_runtime_map_sources(
+                &__sctk_global_runtime_config__, &config_sources);
 
-			/* close */
-			sctk_runtime_config_sources_close(&config_sources);
+            /* Retrieve the list of profiles names */
+            int i = 0;
+            __sctk_global_runtime_config__.number_profiles =
+                config_sources.cnt_profile_names;
+            for (i = 0; i < config_sources.cnt_profile_names; i++) {
+              __sctk_global_runtime_config__.profiles_name_list[i] =
+                  (char *)malloc(
+                      sizeof(strlen((char *)config_sources.profile_names[i])));
+              strcpy(__sctk_global_runtime_config__.profiles_name_list[i],
+                     (char *)config_sources.profile_names[i]);
+            }
 
-			/* validate */
-			sctk_runtime_config_validate(&__sctk_global_runtime_config__);
+            /* close */
+            sctk_runtime_config_sources_close(&config_sources);
 
-			/* mark as init */
-			__sctk_global_runtime_config_init__ = true;
-		}
-	}
+            /* validate */
+            sctk_runtime_config_validate(&__sctk_global_runtime_config__);
+
+            /* mark as init */
+            __sctk_global_runtime_config_init__ = true;
+          }
+        }
 }
 

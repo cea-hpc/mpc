@@ -18,3 +18,4 @@ priv_plugin   ; 1.1 ;         ; install ; gcc mpcframework                      
 tbb          ;  4.4  ;       ; install ; mpcframework                                      ; target  ; extern        ; generic.make
 romio        ; 2008.03.09 ;       ; install ;    mpcframework priv_plugin                  ; target  ; extern		; generic.autotools.mpc.seq
 sctk_getopt        ; 1.0 ;       ; install ;    mpcframework priv_plugin                   ; target  ; extern		; generic.autotools.mpc
+mpc_mpit        ; 0.1 ;       ; install ;    mpcframework priv_plugin                   ; target  ; extern		; generic.autotools.mpc

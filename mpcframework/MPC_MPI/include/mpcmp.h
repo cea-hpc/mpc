@@ -83,8 +83,8 @@ extern const MPC_Group_t mpc_group_null;
 /* Has to match an sctk_datatype_t */
 typedef sctk_datatype_t MPC_Datatype;
 
-typedef void (MPC_Handler_function)(void *, int *, ...);
-typedef int MPC_Errhandler; 
+typedef void(MPC_Handler_function)(void *, int *, ...);
+typedef int MPC_Errhandler;
 
 /** Reduction Operations */
 typedef sctk_Op_f MPC_Op_f;
@@ -202,30 +202,31 @@ extern MPC_Request mpc_request_null;
 
 #define MPC_NOT_IMPLEMENTED            56
 
-#define MPC_ERR_LASTCODE               57
-
-
 /* HOLE @ 58 */
 
-#define MPC_T_ERR_MEMORY            59  /* Out of memory */
-#define MPC_T_ERR_NOT_INITIALIZED   60  /* Interface not initialized */
-#define MPC_T_ERR_CANNOT_INIT       61  /* Interface not in the state to
-                                           be initialized */
-#define MPC_T_ERR_INVALID_INDEX     62  /* The index is invalid or
-                                           has been deleted  */
-#define MPC_T_ERR_INVALID_ITEM      63  /* Item index queried is out of range */
-#define MPC_T_ERR_INVALID_HANDLE    64  /* The handle is invalid */
-#define MPC_T_ERR_OUT_OF_HANDLES    65  /* No more handles available */
-#define MPC_T_ERR_OUT_OF_SESSIONS   66  /* No more sessions available */
-#define MPC_T_ERR_INVALID_SESSION   67  /* Session argument is not valid */
-#define MPC_T_ERR_CVAR_SET_NOT_NOW  68  /* Cvar can't be set at this moment */
-#define MPC_T_ERR_CVAR_SET_NEVER    69  /* Cvar can't be set until
-                                           end of execution */
-#define MPC_T_ERR_PVAR_NO_STARTSTOP 70  /* Pvar can't be started or stopped */
-#define MPC_T_ERR_PVAR_NO_WRITE     71  /* Pvar can't be written or reset */
-#define MPC_T_ERR_PVAR_NO_ATOMIC    72  /* Pvar can't be R/W atomically */
+#define MPC_T_ERR_MEMORY 59          /* Out of memory */
+#define MPC_T_ERR_NOT_INITIALIZED 60 /* Interface not initialized */
+#define MPC_T_ERR_CANNOT_INIT                                                  \
+  61 /* Interface not in the state to                                          \
+        be initialized */
+#define MPC_T_ERR_INVALID_INDEX                                                \
+  62                                  /* The index is invalid or               \
+                                         has been deleted  */
+#define MPC_T_ERR_INVALID_ITEM 63     /* Item index queried is out of range */
+#define MPC_T_ERR_INVALID_HANDLE 64   /* The handle is invalid */
+#define MPC_T_ERR_OUT_OF_HANDLES 65   /* No more handles available */
+#define MPC_T_ERR_OUT_OF_SESSIONS 66  /* No more sessions available */
+#define MPC_T_ERR_INVALID_SESSION 67  /* Session argument is not valid */
+#define MPC_T_ERR_CVAR_SET_NOT_NOW 68 /* Cvar can't be set at this moment */
+#define MPC_T_ERR_CVAR_SET_NEVER                                               \
+  69                                   /* Cvar can't be set until              \
+                                          end of execution */
+#define MPC_T_ERR_PVAR_NO_STARTSTOP 70 /* Pvar can't be started or stopped */
+#define MPC_T_ERR_PVAR_NO_WRITE 71     /* Pvar can't be written or reset */
+#define MPC_T_ERR_PVAR_NO_ATOMIC 72    /* Pvar can't be R/W atomically */
+#define MPC_T_ERR_INVALID_NAME 73      /* Requested name is invalid */
 
-#define MPC_ERR_LASTCODE 73
+#define MPC_ERR_LASTCODE 74
 
 #define MPC_STATUS_IGNORE NULL
 #define MPC_STATUSES_IGNORE NULL

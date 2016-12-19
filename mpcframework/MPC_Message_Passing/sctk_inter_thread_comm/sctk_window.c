@@ -28,7 +28,7 @@
 #include <sctk_atomics.h>
 #include <sctk_spinlock.h>
 #include <sctk_wchar.h>
-#include "sctk_handle.h" 
+#include "sctk_handle.h"
 
 /************************************************************************/
 /* Window Numbering and translation                                     */
@@ -97,8 +97,6 @@ static void sctk_win_delete( struct sctk_window * win )
 		HASH_DEL(__id_to_win_ht, cell);
 		sctk_free( cell );
 	}
-	
-  
 }
 
 /************************************************************************/
@@ -328,7 +326,6 @@ int sctk_window_map_remote( int remote_rank, sctk_window_t win_id )
 	return new_win->id;
 }
 
-                                                                                                              * just work locally */
 /* Control messages handler */
 
 void sctk_window_map_remote_ctrl_msg_handler( struct sctk_window_map_request * mr )

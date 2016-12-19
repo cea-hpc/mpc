@@ -30,7 +30,6 @@
 #include "sctk_pmi.h"
 #include "sctk_handle.h"
 
-
 /************************** MACROS *************************/
 /** define the max number of communicators in the common table **/
 #define SCTK_MAX_COMMUNICATOR_TAB 64
@@ -209,9 +208,9 @@ static inline int sctk_set_internal_communicator_no_lock_no_check ( const sctk_c
 		sctk_communicator_array[id] = tmp;
 	}
 
-	sctk_handle_new_from_id( id , SCTK_HANDLE_COMM);
+        sctk_handle_new_from_id(id, SCTK_HANDLE_COMM);
 
-	return 0;
+        return 0;
 }
 
 /************************* FUNCTION ************************/
@@ -299,9 +298,9 @@ static inline int sctk_del_internal_communicator_no_lock_no_check ( const sctk_c
 		sctk_communicator_array[id] = NULL;
 	}
 
-	sctk_handle_free( id , SCTK_HANDLE_COMM);
+        sctk_handle_free(id, SCTK_HANDLE_COMM);
 
-	return 0;
+        return 0;
 }
 
 /************************* FUNCTION ************************/

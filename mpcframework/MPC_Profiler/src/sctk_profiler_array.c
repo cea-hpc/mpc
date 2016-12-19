@@ -29,15 +29,20 @@
 uint64_t sctk_profile_has_child[ SCTK_PROFILE_KEY_COUNT ];
 uint64_t sctk_profile_parent_key[ SCTK_PROFILE_KEY_COUNT ];
 
-
 #undef SIZE_COUNTER
 #undef COUNTER
 
 #undef PROBE
-#define PROBE( key, probe_parent, desc ) SCTK_PROFILE_TIME_PROBE,
+#define PROBE(key, probe_parent, desc, mpit_hits, mpit_value, mpit_loww,       \
+              mpit_highw)                                                      \
+  SCTK_PROFILE_TIME_PROBE,
 
-#define SIZE_COUNTER( key, probe_parent, desc )  SCTK_PROFILE_COUNTER_SIZE_PROBE,
-#define COUNTER( key, probe_parent, desc ) SCTK_PROFILE_COUNTER_PROBE,
+#define SIZE_COUNTER(key, probe_parent, desc, mpit_hits, mpit_value,           \
+                     mpit_loww, mpit_highw)                                    \
+  SCTK_PROFILE_COUNTER_SIZE_PROBE,
+#define COUNTER(key, probe_parent, desc, mpit_hits, mpit_value, mpit_loww,     \
+                mpit_highw)                                                    \
+  SCTK_PROFILE_COUNTER_PROBE,
 
 sctk_profile_key_type sctk_profile_type[ SCTK_PROFILE_KEY_COUNT ] =
 {
@@ -50,7 +55,132 @@ sctk_profile_key_type sctk_profile_type[ SCTK_PROFILE_KEY_COUNT ] =
 #undef SIZE_COUNTER
 #undef COUNTER
 
+#undef SIZE_COUNTER
+#undef COUNTER
+#undef PROBE
 
+#define PROBE(key, probe_parent, desc, mpit_hits, mpit_value, mpit_loww,       \
+              mpit_highw)                                                      \
+  mpit_hits,
+#define SIZE_COUNTER(key, probe_parent, desc, mpit_hits, mpit_value,           \
+                     mpit_loww, mpit_highw)                                    \
+  mpit_hits,
+#define COUNTER(key, probe_parent, desc, mpit_hits, mpit_value, mpit_loww,     \
+                mpit_highw)                                                    \
+  mpit_hits,
+
+static MPC_T_pvar_t sctk_profile_mpit_hits[SCTK_PROFILE_KEY_COUNT] = {
+    MPI_T_PVAR_NULL,
+#include "sctk_profiler_keys.h"
+};
+
+#undef PROBE
+#undef SIZE_COUNTER
+#undef COUNTER
+
+#undef SIZE_COUNTER
+#undef COUNTER
+#undef PROBE
+
+#define PROBE(key, probe_parent, desc, mpit_hits, mpit_value, mpit_loww,       \
+              mpit_highw)                                                      \
+  mpit_value,
+#define SIZE_COUNTER(key, probe_parent, desc, mpit_hits, mpit_value,           \
+                     mpit_loww, mpit_highw)                                    \
+  mpit_value,
+#define COUNTER(key, probe_parent, desc, mpit_hits, mpit_value, mpit_loww,     \
+                mpit_highw)                                                    \
+  mpit_value,
+
+static MPC_T_pvar_t sctk_profile_mpit_value[SCTK_PROFILE_KEY_COUNT] = {
+    MPI_T_PVAR_NULL,
+#include "sctk_profiler_keys.h"
+};
+
+#undef PROBE
+#undef SIZE_COUNTER
+#undef COUNTER
+
+#undef SIZE_COUNTER
+#undef COUNTER
+#undef PROBE
+
+#define PROBE(key, probe_parent, desc, mpit_hits, mpit_value, mpit_loww,       \
+              mpit_highw)
+#define SIZE_COUNTER(key, probe_parent, desc, mpit_hits, mpit_value,           \
+                     mpit_loww, mpit_highw)
+#define COUNTER(key, probe_parent, desc, mpit_hits, mpit_value, mpit_loww,     \
+                mpit_highw)
+
+static MPC_T_pvar_t sctk_profile_mpit_size[SCTK_PROFILE_KEY_COUNT] = {
+    MPI_T_PVAR_NULL,
+#include "sctk_profiler_keys.h"
+};
+
+#undef PROBE
+#undef SIZE_COUNTER
+#undef COUNTER
+
+#undef SIZE_COUNTER
+#undef COUNTER
+#undef PROBE
+
+#define PROBE(key, probe_parent, desc, mpit_hits, mpit_value, mpit_loww,       \
+              mpit_highw)                                                      \
+  mpit_loww,
+#define SIZE_COUNTER(key, probe_parent, desc, mpit_hits, mpit_value,           \
+                     mpit_loww, mpit_highw)                                    \
+  mpit_loww,
+#define COUNTER(key, probe_parent, desc, mpit_hits, mpit_value, mpit_loww,     \
+                mpit_highw)                                                    \
+  mpit_loww,
+
+static MPC_T_pvar_t sctk_profile_mpit_loww[SCTK_PROFILE_KEY_COUNT] = {
+    MPI_T_PVAR_NULL,
+#include "sctk_profiler_keys.h"
+};
+
+#undef PROBE
+#undef SIZE_COUNTER
+#undef COUNTER
+
+#undef SIZE_COUNTER
+#undef COUNTER
+#undef PROBE
+
+#define PROBE(key, probe_parent, desc, mpit_hits, mpit_value, mpit_loww,       \
+              mpit_highw)                                                      \
+  mpit_highw,
+#define SIZE_COUNTER(key, probe_parent, desc, mpit_hits, mpit_value,           \
+                     mpit_loww, mpit_highw)                                    \
+  mpit_highw,
+#define COUNTER(key, probe_parent, desc, mpit_hits, mpit_value, mpit_loww,     \
+                mpit_highw)                                                    \
+  mpit_highw,
+
+static MPC_T_pvar_t sctk_profile_mpit_highw[SCTK_PROFILE_KEY_COUNT] = {
+#include "sctk_profiler_keys.h"
+};
+
+#undef PROBE
+#undef SIZE_COUNTER
+#undef COUNTER
+
+MPC_T_pvar_t sctk_profiler_array_get_mpit_hits(int id) {
+  return sctk_profile_mpit_hits[id];
+}
+
+MPC_T_pvar_t sctk_profiler_array_get_mpit_value(int id) {
+  return sctk_profile_mpit_value[id];
+}
+
+MPC_T_pvar_t sctk_profiler_array_get_mpit_loww(int id) {
+  return sctk_profile_mpit_loww[id];
+}
+
+MPC_T_pvar_t sctk_profiler_array_get_mpit_highw(int id) {
+  return sctk_profile_mpit_highw[id];
+}
 
 #undef HIT_COUNTER
 #undef COUNTER
@@ -59,7 +189,8 @@ sctk_profile_key_type sctk_profile_type[ SCTK_PROFILE_KEY_COUNT ] =
 #define SIZE_COUNTER PROBE
 #define COUNTER PROBE
 
-#define PROBE( key, parent, desc ) #desc,
+#define PROBE(key, parent, desc, mpit_hits, mpit_value, mpit_loww, mpit_highw) \
+  #desc,
 
 static const char * const sctk_profile_key_desc[ SCTK_PROFILE_KEY_COUNT ] =
 {
@@ -76,7 +207,8 @@ char * sctk_profiler_array_get_desc( int id )
 }
 
 #undef PROBE
-#define PROBE( key, parent, desc ) #key,
+#define PROBE(key, parent, desc, mpit_hits, mpit_value, mpit_loww, mpit_highw) \
+  #key,
 
 static const char * const sctk_profile_key_name[ SCTK_PROFILE_KEY_COUNT ] =
 {
@@ -94,7 +226,11 @@ char * sctk_profiler_array_get_name( int id )
 
 
 #undef PROBE
-#define PROBE( key, probe_parent, desc ) sctk_profile_parent_key[ SCTK_PROFILE_ ## key ] = SCTK_PROFILE_ ## probe_parent; if( SCTK_PROFILE_ ## probe_parent != SCTK_PROFILE_NO_PARENT) sctk_profile_has_child[ SCTK_PROFILE_ ## key ] |= 1;
+#define PROBE(key, probe_parent, desc, mpit_hits, mpit_value, mpit_loww,       \
+              mpit_highw)                                                      \
+  sctk_profile_parent_key[SCTK_PROFILE_##key] = SCTK_PROFILE_##probe_parent;   \
+  if (SCTK_PROFILE_##probe_parent != SCTK_PROFILE_NO_PARENT)                   \
+    sctk_profile_has_child[SCTK_PROFILE_##key] |= 1;
 
 void sctk_profiler_array_init_parent_keys()
 {
@@ -254,3 +390,90 @@ void sctk_profiler_array_unify( struct sctk_profiler_array *array )
 	array->been_unified = 1;
 }
 
+void gen_c(char *name, char *desc) {
+
+  printf("\n\
+				<pvar>\n\
+					<name>%s_CALL</name>\n\
+					<verbosity>MPI_T_VERBOSITY_USER_BASIC</verbosity>\n\
+					<class>MPI_T_PVAR_CLASS_COUNTER</class>\n\
+					<datatype>MPI_UNSIGNED_LONG_LONG</datatype>\n\
+					<desc>%s number of calls</desc>\n\
+					<bind>MPI_T_BIND_NO_OBJECT</bind>\n\
+					<readonly>1</readonly>\n\
+					<continuous>0</continuous>\n\
+					<atomic>0</atomic>\n\
+				</pvar>",
+         name, desc);
+}
+
+void gen_v(char *name, char *desc) {
+
+  printf("\n\
+				<pvar>\n\
+					<name>%s_TIME</name>\n\
+					<verbosity>MPI_T_VERBOSITY_USER_BASIC</verbosity>\n\
+					<class>MPI_T_PVAR_CLASS_COUNTER</class>\n\
+					<datatype>MPI_UNSIGNED_LONG_LONG</datatype>\n\
+					<desc>%s total time</desc>\n\
+					<bind>MPI_T_BIND_NO_OBJECT</bind>\n\
+					<readonly>1</readonly>\n\
+					<continuous>0</continuous>\n\
+					<atomic>0</atomic>\n\
+				</pvar>\n",
+         name, desc);
+}
+
+void gen_hw(char *name, char *desc) {
+
+  printf("\n\
+				<pvar>\n\
+					<name>%s_TIME_HW</name>\n\
+					<verbosity>MPI_T_VERBOSITY_USER_BASIC</verbosity>\n\
+					<class>MPI_T_PVAR_CLASS_HIGHWATERMARK</class>\n\
+					<datatype>MPI_UNSIGNED_LONG_LONG</datatype>\n\
+					<desc>%s High-watermark</desc>\n\
+					<bind>MPI_T_BIND_NO_OBJECT</bind>\n\
+					<readonly>1</readonly>\n\
+					<continuous>0</continuous>\n\
+					<atomic>0</atomic>\n\
+				</pvar>\n",
+         name, desc);
+}
+
+void gen_lw(char *name, char *desc) {
+
+  printf("\n\
+				<pvar>\n\
+					<name>%s_TIME_LW</name>\n\
+					<verbosity>MPI_T_VERBOSITY_USER_BASIC</verbosity>\n\
+					<class>MPI_T_PVAR_CLASS_LOWWATERMARK</class>\n\
+					<datatype>MPI_UNSIGNED_LONG_LONG</datatype>\n\
+					<desc>%s low-watermark</desc>\n\
+					<bind>MPI_T_BIND_NO_OBJECT</bind>\n\
+					<readonly>1</readonly>\n\
+					<continuous>0</continuous>\n\
+					<atomic>0</atomic>\n\
+				</pvar>\n",
+         name, desc);
+}
+
+#undef PROBE
+#define tos(a) #a
+#define PROBE(key, probe_parent, desc, mpit_hits, mpit_value, mpit_loww,       \
+              mpit_highw)                                                      \
+  if (strcmp(tos(probe_parent), "MPI")) {                                      \
+    printf("<%s>\n", tos(key));                                                \
+    gen_v(tos(key), tos(desc));                                                \
+    gen_c(tos(key), tos(desc));                                                \
+    gen_lw(tos(key), tos(desc));                                               \
+    gen_hw(tos(key), tos(desc));                                               \
+    printf("</%s>\n", tos(key));                                               \
+  }
+
+void gen_xml_keys() {
+
+#include "sctk_profiler_keys.h"
+
+#undef PROBE
+}

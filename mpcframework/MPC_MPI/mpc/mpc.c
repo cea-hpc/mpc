@@ -939,9 +939,10 @@ __MPC_ERROR_REPORT__ (MPC_Comm comm, int error, char *message, char *file,
   MPC_Comm comm_id;
   int error_id;
 
-  MPC_Errhandler errh = (MPC_Errhandler) sctk_handle_get_errhandler( (sctk_handle) comm , SCTK_HANDLE_COMM );
- 
-  MPC_Handler_function * func = sctk_errhandler_resolve( errh );
+  MPC_Errhandler errh = (MPC_Errhandler)sctk_handle_get_errhandler(
+      (sctk_handle)comm, SCTK_HANDLE_COMM);
+
+  MPC_Handler_function *func = sctk_errhandler_resolve(errh);
   error_id = error;
   (func)(&comm_id, &error_id, message, file, line);
 
@@ -6930,28 +6931,31 @@ int
 PMPC_Errhandler_create (MPC_Handler_function * function,
 			MPC_Errhandler * errhandler)
 {
-  sctk_errhandler_register( (sctk_generic_handler) function,  (sctk_errhandler_t *)errhandler );
+  sctk_errhandler_register((sctk_generic_handler)function,
+                           (sctk_errhandler_t *)errhandler);
   MPC_ERROR_SUCESS ();
 }
 
 int
 PMPC_Errhandler_set (MPC_Comm comm, MPC_Errhandler errhandler)
 {
-  sctk_handle_set_errhandler( (sctk_handle)comm, SCTK_HANDLE_COMM , (sctk_errhandler_t) errhandler );
+  sctk_handle_set_errhandler((sctk_handle)comm, SCTK_HANDLE_COMM,
+                             (sctk_errhandler_t)errhandler);
   MPC_ERROR_SUCESS ();
 }
 
 int
 PMPC_Errhandler_get (MPC_Comm comm, MPC_Errhandler * errhandler)
 {
-  *errhandler = (MPC_Errhandler)sctk_handle_get_errhandler( (sctk_handle) comm, SCTK_HANDLE_COMM );
+  *errhandler = (MPC_Errhandler)sctk_handle_get_errhandler((sctk_handle)comm,
+                                                           SCTK_HANDLE_COMM);
   MPC_ERROR_SUCESS ();
 }
 
 int
 PMPC_Errhandler_free (MPC_Errhandler * errhandler)
 {
-  sctk_errhandler_free( *errhandler );
+  sctk_errhandler_free(*errhandler);
   *errhandler = (MPC_Errhandler) MPC_ERRHANDLER_NULL;
   MPC_ERROR_SUCESS ();
 }
@@ -7022,17 +7026,17 @@ MPC_Errhandler MPC_ERRORS_ARE_FATAL;
 
 static volatile int error_init_done = 0;
 
-int __MPC_Error_init()
-{
-	if(!error_init_done)
-	{
-		error_init_done = 1;
-		sctk_errhandler_register((sctk_generic_handler) PMPC_Default_error, (sctk_errhandler_t *)&MPC_ERRHANDLER_NULL );
-		sctk_errhandler_register((sctk_generic_handler) PMPC_Return_error, (sctk_errhandler_t *)&MPC_ERRORS_RETURN );
-		sctk_errhandler_register((sctk_generic_handler) PMPC_Default_error, (sctk_errhandler_t *)&MPC_ERRORS_ARE_FATAL );
-	}
+int __MPC_Error_init() {
+  if (!error_init_done) {
+    error_init_done = 1;
+    sctk_errhandler_register((sctk_generic_handler)PMPC_Default_error,
+                             (sctk_errhandler_t *)&MPC_ERRHANDLER_NULL);
+    sctk_errhandler_register((sctk_generic_handler)PMPC_Return_error,
+                             (sctk_errhandler_t *)&MPC_ERRORS_RETURN);
+    sctk_errhandler_register((sctk_generic_handler)PMPC_Default_error,
+                             (sctk_errhandler_t *)&MPC_ERRORS_ARE_FATAL);
+  }
 }
-
 
 /*Timing*/
 double

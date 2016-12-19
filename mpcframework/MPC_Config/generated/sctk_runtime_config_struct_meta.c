@@ -131,7 +131,7 @@ const struct sctk_runtime_config_entry_meta sctk_runtime_config_db[] = {
     {"enabled", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_accl_cuda, enabled),
-     sizeof(bool), "bool", NULL},
+     sizeof(bool), "bool", NULL, NULL},
     /* struct */
     {"sctk_runtime_config_struct_accl_openacc", SCTK_CONFIG_META_TYPE_STRUCT, 0,
      sizeof(struct sctk_runtime_config_struct_accl_openacc), NULL,
@@ -139,7 +139,7 @@ const struct sctk_runtime_config_entry_meta sctk_runtime_config_db[] = {
     {"enabled", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_accl_openacc, enabled),
-     sizeof(bool), "bool", NULL},
+     sizeof(bool), "bool", NULL, NULL},
     /* struct */
     {"sctk_runtime_config_struct_accl_opencl", SCTK_CONFIG_META_TYPE_STRUCT, 0,
      sizeof(struct sctk_runtime_config_struct_accl_opencl), NULL,
@@ -147,7 +147,7 @@ const struct sctk_runtime_config_entry_meta sctk_runtime_config_db[] = {
     {"enabled", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_accl_opencl, enabled),
-     sizeof(bool), "bool", NULL},
+     sizeof(bool), "bool", NULL, NULL},
     /* struct */
     {"sctk_runtime_config_struct_accl", SCTK_CONFIG_META_TYPE_STRUCT, 0,
      sizeof(struct sctk_runtime_config_struct_accl), NULL,
@@ -155,25 +155,25 @@ const struct sctk_runtime_config_entry_meta sctk_runtime_config_db[] = {
     {"enabled", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_accl, enabled),
-     sizeof(bool), "bool", NULL},
+     sizeof(bool), "bool", NULL, NULL},
     {"cuda", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_accl, cuda),
      sizeof(struct sctk_runtime_config_struct_accl_cuda),
      "sctk_runtime_config_struct_accl_cuda",
-     sctk_runtime_config_struct_init_accl_cuda},
+     sctk_runtime_config_struct_init_accl_cuda, NULL},
     {"openacc", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_accl, openacc),
      sizeof(struct sctk_runtime_config_struct_accl_openacc),
      "sctk_runtime_config_struct_accl_openacc",
-     sctk_runtime_config_struct_init_accl_openacc},
+     sctk_runtime_config_struct_init_accl_openacc, NULL},
     {"opencl", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_accl, opencl),
      sizeof(struct sctk_runtime_config_struct_accl_opencl),
      "sctk_runtime_config_struct_accl_opencl",
-     sctk_runtime_config_struct_init_accl_opencl},
+     sctk_runtime_config_struct_init_accl_opencl, NULL},
     /* struct */
     {"sctk_runtime_config_struct_allocator", SCTK_CONFIG_META_TYPE_STRUCT, 0,
      sizeof(struct sctk_runtime_config_struct_allocator), NULL,
@@ -181,31 +181,31 @@ const struct sctk_runtime_config_entry_meta sctk_runtime_config_db[] = {
     {"numa_migration", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_allocator, numa_migration),
-     sizeof(bool), "bool", NULL},
+     sizeof(bool), "bool", NULL, NULL},
     {"realloc_factor", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_allocator, realloc_factor),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, NULL},
     {"realloc_threashold", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_allocator, realloc_threashold),
-     sizeof(size_t), "size_t", NULL},
+     sizeof(size_t), "size_t", NULL, NULL},
     {"numa", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_allocator, numa),
-     sizeof(bool), "bool", NULL},
+     sizeof(bool), "bool", NULL, NULL},
     {"strict", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_allocator, strict),
-     sizeof(bool), "bool", NULL},
+     sizeof(bool), "bool", NULL, NULL},
     {"keep_mem", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_allocator, keep_mem),
-     sizeof(size_t), "size_t", NULL},
+     sizeof(size_t), "size_t", NULL, NULL},
     {"keep_max", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_allocator, keep_max),
-     sizeof(size_t), "size_t", NULL},
+     sizeof(size_t), "size_t", NULL, NULL},
     /* struct */
     {"sctk_runtime_config_struct_launcher", SCTK_CONFIG_META_TYPE_STRUCT, 0,
      sizeof(struct sctk_runtime_config_struct_launcher), NULL,
@@ -213,91 +213,91 @@ const struct sctk_runtime_config_entry_meta sctk_runtime_config_db[] = {
     {"verbosity", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_launcher, verbosity),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, "LN_VERBOSITY"},
     {"banner", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_launcher, banner),
-     sizeof(bool), "bool", NULL},
+     sizeof(bool), "bool", NULL, "LN_BANNER"},
     {"autokill", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_launcher, autokill),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, "LN_AUTOKILL"},
     {"user_launchers", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_launcher, user_launchers),
-     sizeof(char *), "char *", NULL},
+     sizeof(char *), "char *", NULL, NULL},
     {"keep_rand_addr", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_launcher, keep_rand_addr),
-     sizeof(bool), "bool", NULL},
+     sizeof(bool), "bool", NULL, NULL},
     {"disable_rand_addr", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_launcher, disable_rand_addr),
-     sizeof(bool), "bool", NULL},
+     sizeof(bool), "bool", NULL, "LN_ADDR_RAND_DISABLE"},
     {"disable_mpc", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_launcher, disable_mpc),
-     sizeof(bool), "bool", NULL},
+     sizeof(bool), "bool", NULL, "LN_DISABLE_MPC"},
     {"thread_init", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_launcher, thread_init),
-     sizeof(struct sctk_runtime_config_funcptr), "funcptr", NULL},
+     sizeof(struct sctk_runtime_config_funcptr), "funcptr", NULL, NULL},
     {"nb_task", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_launcher, nb_task),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, "LN_MPI_TASK"},
     {"nb_process", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_launcher, nb_process),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, "LN_MPC_PROCESS"},
     {"nb_processor", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_launcher, nb_processor),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, "LN_MPC_VP"},
     {"nb_node", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_launcher, nb_node),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, "LN_MPC_NODE"},
     {"launcher", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_launcher, launcher),
-     sizeof(char *), "char *", NULL},
+     sizeof(char *), "char *", NULL, NULL},
     {"max_try", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_launcher, max_try),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, "LN_MAX_TOPO_TRY"},
     {"vers_details", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_launcher, vers_details),
-     sizeof(bool), "bool", NULL},
+     sizeof(bool), "bool", NULL, "LN_DISPLAY_VERS"},
     {"profiling", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_launcher, profiling),
-     sizeof(char *), "char *", NULL},
+     sizeof(char *), "char *", NULL, NULL},
     {"enable_smt", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_launcher, enable_smt),
-     sizeof(bool), "bool", NULL},
+     sizeof(bool), "bool", NULL, "LN_ENABLE_SMT"},
     {"share_node", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_launcher, share_node),
-     sizeof(bool), "bool", NULL},
+     sizeof(bool), "bool", NULL, "LN_SHARE_NODE"},
     {"restart", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_launcher, restart),
-     sizeof(bool), "bool", NULL},
+     sizeof(bool), "bool", NULL, "LN_RESTART"},
     {"checkpoint", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_launcher, checkpoint),
-     sizeof(bool), "bool", NULL},
+     sizeof(bool), "bool", NULL, "LN_CHECKPOINT"},
     {"migration", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_launcher, migration),
-     sizeof(bool), "bool", NULL},
+     sizeof(bool), "bool", NULL, "LN_MIGRATION"},
     {"report", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_launcher, report),
-     sizeof(bool), "bool", NULL},
+     sizeof(bool), "bool", NULL, "LN_REPORT"},
     /* struct */
     {"sctk_runtime_config_struct_debugger", SCTK_CONFIG_META_TYPE_STRUCT, 0,
      sizeof(struct sctk_runtime_config_struct_debugger), NULL,
@@ -305,11 +305,11 @@ const struct sctk_runtime_config_entry_meta sctk_runtime_config_db[] = {
     {"colors", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_debugger, colors),
-     sizeof(bool), "bool", NULL},
+     sizeof(bool), "bool", NULL, NULL},
     {"max_filename_size", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_debugger, max_filename_size),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, NULL},
     /* struct */
     {"sctk_runtime_config_struct_collectives_intra",
      SCTK_CONFIG_META_TYPE_STRUCT, 0,
@@ -318,73 +318,73 @@ const struct sctk_runtime_config_entry_meta sctk_runtime_config_db[] = {
     {"barrier_intra", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_collectives_intra, barrier_intra),
-     sizeof(struct sctk_runtime_config_funcptr), "funcptr", NULL},
+     sizeof(struct sctk_runtime_config_funcptr), "funcptr", NULL, NULL},
     {"bcast_intra", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_collectives_intra, bcast_intra),
-     sizeof(struct sctk_runtime_config_funcptr), "funcptr", NULL},
+     sizeof(struct sctk_runtime_config_funcptr), "funcptr", NULL, NULL},
     {"allgather_intra", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_collectives_intra, allgather_intra),
-     sizeof(struct sctk_runtime_config_funcptr), "funcptr", NULL},
+     sizeof(struct sctk_runtime_config_funcptr), "funcptr", NULL, NULL},
     {"allgatherv_intra", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_collectives_intra, allgatherv_intra),
-     sizeof(struct sctk_runtime_config_funcptr), "funcptr", NULL},
+     sizeof(struct sctk_runtime_config_funcptr), "funcptr", NULL, NULL},
     {"alltoall_intra", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_collectives_intra, alltoall_intra),
-     sizeof(struct sctk_runtime_config_funcptr), "funcptr", NULL},
+     sizeof(struct sctk_runtime_config_funcptr), "funcptr", NULL, NULL},
     {"alltoallv_intra", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_collectives_intra, alltoallv_intra),
-     sizeof(struct sctk_runtime_config_funcptr), "funcptr", NULL},
+     sizeof(struct sctk_runtime_config_funcptr), "funcptr", NULL, NULL},
     {"alltoallw_intra", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_collectives_intra, alltoallw_intra),
-     sizeof(struct sctk_runtime_config_funcptr), "funcptr", NULL},
+     sizeof(struct sctk_runtime_config_funcptr), "funcptr", NULL, NULL},
     {"gather_intra", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_collectives_intra, gather_intra),
-     sizeof(struct sctk_runtime_config_funcptr), "funcptr", NULL},
+     sizeof(struct sctk_runtime_config_funcptr), "funcptr", NULL, NULL},
     {"gatherv_intra", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_collectives_intra, gatherv_intra),
-     sizeof(struct sctk_runtime_config_funcptr), "funcptr", NULL},
+     sizeof(struct sctk_runtime_config_funcptr), "funcptr", NULL, NULL},
     {"scatter_intra", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_collectives_intra, scatter_intra),
-     sizeof(struct sctk_runtime_config_funcptr), "funcptr", NULL},
+     sizeof(struct sctk_runtime_config_funcptr), "funcptr", NULL, NULL},
     {"scatterv_intra", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_collectives_intra, scatterv_intra),
-     sizeof(struct sctk_runtime_config_funcptr), "funcptr", NULL},
+     sizeof(struct sctk_runtime_config_funcptr), "funcptr", NULL, NULL},
     {"scan_intra", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_collectives_intra, scan_intra),
-     sizeof(struct sctk_runtime_config_funcptr), "funcptr", NULL},
+     sizeof(struct sctk_runtime_config_funcptr), "funcptr", NULL, NULL},
     {"exscan_intra", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_collectives_intra, exscan_intra),
-     sizeof(struct sctk_runtime_config_funcptr), "funcptr", NULL},
+     sizeof(struct sctk_runtime_config_funcptr), "funcptr", NULL, NULL},
     {"reduce_intra", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_collectives_intra, reduce_intra),
-     sizeof(struct sctk_runtime_config_funcptr), "funcptr", NULL},
+     sizeof(struct sctk_runtime_config_funcptr), "funcptr", NULL, NULL},
     {"allreduce_intra", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_collectives_intra, allreduce_intra),
-     sizeof(struct sctk_runtime_config_funcptr), "funcptr", NULL},
+     sizeof(struct sctk_runtime_config_funcptr), "funcptr", NULL, NULL},
     {"reduce_scatter_intra", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_collectives_intra,
          reduce_scatter_intra),
-     sizeof(struct sctk_runtime_config_funcptr), "funcptr", NULL},
+     sizeof(struct sctk_runtime_config_funcptr), "funcptr", NULL, NULL},
     {"reduce_scatter_block_intra", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_collectives_intra,
          reduce_scatter_block_intra),
-     sizeof(struct sctk_runtime_config_funcptr), "funcptr", NULL},
+     sizeof(struct sctk_runtime_config_funcptr), "funcptr", NULL, NULL},
     /* struct */
     {"sctk_runtime_config_struct_collectives_inter",
      SCTK_CONFIG_META_TYPE_STRUCT, 0,
@@ -393,65 +393,65 @@ const struct sctk_runtime_config_entry_meta sctk_runtime_config_db[] = {
     {"barrier_inter", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_collectives_inter, barrier_inter),
-     sizeof(struct sctk_runtime_config_funcptr), "funcptr", NULL},
+     sizeof(struct sctk_runtime_config_funcptr), "funcptr", NULL, NULL},
     {"bcast_inter", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_collectives_inter, bcast_inter),
-     sizeof(struct sctk_runtime_config_funcptr), "funcptr", NULL},
+     sizeof(struct sctk_runtime_config_funcptr), "funcptr", NULL, NULL},
     {"allgather_inter", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_collectives_inter, allgather_inter),
-     sizeof(struct sctk_runtime_config_funcptr), "funcptr", NULL},
+     sizeof(struct sctk_runtime_config_funcptr), "funcptr", NULL, NULL},
     {"allgatherv_inter", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_collectives_inter, allgatherv_inter),
-     sizeof(struct sctk_runtime_config_funcptr), "funcptr", NULL},
+     sizeof(struct sctk_runtime_config_funcptr), "funcptr", NULL, NULL},
     {"alltoall_inter", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_collectives_inter, alltoall_inter),
-     sizeof(struct sctk_runtime_config_funcptr), "funcptr", NULL},
+     sizeof(struct sctk_runtime_config_funcptr), "funcptr", NULL, NULL},
     {"alltoallv_inter", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_collectives_inter, alltoallv_inter),
-     sizeof(struct sctk_runtime_config_funcptr), "funcptr", NULL},
+     sizeof(struct sctk_runtime_config_funcptr), "funcptr", NULL, NULL},
     {"alltoallw_inter", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_collectives_inter, alltoallw_inter),
-     sizeof(struct sctk_runtime_config_funcptr), "funcptr", NULL},
+     sizeof(struct sctk_runtime_config_funcptr), "funcptr", NULL, NULL},
     {"gather_inter", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_collectives_inter, gather_inter),
-     sizeof(struct sctk_runtime_config_funcptr), "funcptr", NULL},
+     sizeof(struct sctk_runtime_config_funcptr), "funcptr", NULL, NULL},
     {"gatherv_inter", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_collectives_inter, gatherv_inter),
-     sizeof(struct sctk_runtime_config_funcptr), "funcptr", NULL},
+     sizeof(struct sctk_runtime_config_funcptr), "funcptr", NULL, NULL},
     {"scatter_inter", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_collectives_inter, scatter_inter),
-     sizeof(struct sctk_runtime_config_funcptr), "funcptr", NULL},
+     sizeof(struct sctk_runtime_config_funcptr), "funcptr", NULL, NULL},
     {"scatterv_inter", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_collectives_inter, scatterv_inter),
-     sizeof(struct sctk_runtime_config_funcptr), "funcptr", NULL},
+     sizeof(struct sctk_runtime_config_funcptr), "funcptr", NULL, NULL},
     {"reduce_inter", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_collectives_inter, reduce_inter),
-     sizeof(struct sctk_runtime_config_funcptr), "funcptr", NULL},
+     sizeof(struct sctk_runtime_config_funcptr), "funcptr", NULL, NULL},
     {"allreduce_inter", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_collectives_inter, allreduce_inter),
-     sizeof(struct sctk_runtime_config_funcptr), "funcptr", NULL},
+     sizeof(struct sctk_runtime_config_funcptr), "funcptr", NULL, NULL},
     {"reduce_scatter_inter", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_collectives_inter,
          reduce_scatter_inter),
-     sizeof(struct sctk_runtime_config_funcptr), "funcptr", NULL},
+     sizeof(struct sctk_runtime_config_funcptr), "funcptr", NULL, NULL},
     {"reduce_scatter_block_inter", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_collectives_inter,
          reduce_scatter_block_inter),
-     sizeof(struct sctk_runtime_config_funcptr), "funcptr", NULL},
+     sizeof(struct sctk_runtime_config_funcptr), "funcptr", NULL, NULL},
     /* struct */
     {"sctk_runtime_config_struct_progress_thread", SCTK_CONFIG_META_TYPE_STRUCT,
      0, sizeof(struct sctk_runtime_config_struct_progress_thread), NULL,
@@ -460,12 +460,12 @@ const struct sctk_runtime_config_entry_meta sctk_runtime_config_db[] = {
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_progress_thread,
          use_progress_thread),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, NULL},
     {"progress_thread_binding", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_progress_thread,
          progress_thread_binding),
-     sizeof(struct sctk_runtime_config_funcptr), "funcptr", NULL},
+     sizeof(struct sctk_runtime_config_funcptr), "funcptr", NULL, NULL},
     /* struct */
     {"sctk_runtime_config_struct_mpc", SCTK_CONFIG_META_TYPE_STRUCT, 0,
      sizeof(struct sctk_runtime_config_struct_mpc), NULL,
@@ -473,15 +473,15 @@ const struct sctk_runtime_config_entry_meta sctk_runtime_config_db[] = {
     {"log_debug", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_mpc, log_debug),
-     sizeof(bool), "bool", NULL},
+     sizeof(bool), "bool", NULL, NULL},
     {"hard_checking", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_mpc, hard_checking),
-     sizeof(bool), "bool", NULL},
+     sizeof(bool), "bool", NULL, NULL},
     {"buffering", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_mpc, buffering),
-     sizeof(bool), "bool", NULL},
+     sizeof(bool), "bool", NULL, NULL},
     /* struct */
     {"sctk_runtime_config_struct_net_driver_topological",
      SCTK_CONFIG_META_TYPE_STRUCT, 0,
@@ -490,7 +490,7 @@ const struct sctk_runtime_config_entry_meta sctk_runtime_config_db[] = {
     {"dummy", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_net_driver_topological, dummy),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, NULL},
     /* struct */
     {"sctk_runtime_config_struct_net_driver_infiniband",
      SCTK_CONFIG_META_TYPE_STRUCT, 0,
@@ -499,183 +499,183 @@ const struct sctk_runtime_config_entry_meta sctk_runtime_config_db[] = {
     {"pkey", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_net_driver_infiniband, pkey),
-     sizeof(char *), "char *", NULL},
+     sizeof(char *), "char *", NULL, NULL},
     {"network_type", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_net_driver_infiniband, network_type),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, NULL},
     {"adm_port", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_net_driver_infiniband, adm_port),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, NULL},
     {"verbose_level", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_net_driver_infiniband,
          verbose_level),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, "IB_VERBOSE"},
     {"eager_limit", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_net_driver_infiniband, eager_limit),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, "IB_EAGER_THRESH"},
     {"buffered_limit", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_net_driver_infiniband,
          buffered_limit),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, "IB_BUFFERED_THRESH"},
     {"qp_tx_depth", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_net_driver_infiniband, qp_tx_depth),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, "IB_TX_DEPTH"},
     {"qp_rx_depth", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_net_driver_infiniband, qp_rx_depth),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, "IB_RX_DEPTH"},
     {"cq_depth", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_net_driver_infiniband, cq_depth),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, "IB_CQ_DEPTH"},
     {"rdma_depth", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_net_driver_infiniband, rdma_depth),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, "IB_RDMA_DEPTH"},
     {"max_sg_sq", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_net_driver_infiniband, max_sg_sq),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, "IB_MAX_SG_SQ"},
     {"max_sg_rq", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_net_driver_infiniband, max_sg_rq),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, "IB_MAX_SG_RQ"},
     {"max_inline", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_net_driver_infiniband, max_inline),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, "IB_MAX_INLINE"},
     {"rdma_resizing", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_net_driver_infiniband,
          rdma_resizing),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, "IB_RDMA_RESIZING"},
     {"max_rdma_connections", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_net_driver_infiniband,
          max_rdma_connections),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, "IB_RDMA_CONN"},
     {"max_rdma_resizing", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_net_driver_infiniband,
          max_rdma_resizing),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, "IB_RDMA_MAX_RESIZING"},
     {"init_ibufs", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_net_driver_infiniband, init_ibufs),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, "IB_INIT_IBUF"},
     {"init_recv_ibufs", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_net_driver_infiniband,
          init_recv_ibufs),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, "IB_INIT_RECV_IBUF"},
     {"max_srq_ibufs_posted", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_net_driver_infiniband,
          max_srq_ibufs_posted),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, "IB_MAX_SRQ_IBUF_POSTED"},
     {"max_srq_ibufs", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_net_driver_infiniband,
          max_srq_ibufs),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, "IB_MAX_SRQ_IBUF"},
     {"srq_credit_limit", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_net_driver_infiniband,
          srq_credit_limit),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, "IB_SRQ_CREDIT_LIMIT"},
     {"srq_credit_thread_limit", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_net_driver_infiniband,
          srq_credit_thread_limit),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, "IB_SRQ_CREDIT_LIMIT_THREAD"},
     {"size_ibufs_chunk", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_net_driver_infiniband,
          size_ibufs_chunk),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, "IB_IBUF_CHUNK"},
     {"init_mr", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_net_driver_infiniband, init_mr),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, "IB_MMU_INIT"},
     {"steal", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_net_driver_infiniband, steal),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, "IB_CAN_STEAL"},
     {"quiet_crash", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_net_driver_infiniband, quiet_crash),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, "IB_QUIET_CRASH"},
     {"async_thread", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_net_driver_infiniband, async_thread),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, "IB_ASYNC_THREAD"},
     {"wc_in_number", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_net_driver_infiniband, wc_in_number),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, "IB_WC_IN"},
     {"wc_out_number", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_net_driver_infiniband,
          wc_out_number),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, "IB_WC_OUT"},
     {"low_memory", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_net_driver_infiniband, low_memory),
-     sizeof(bool), "bool", NULL},
+     sizeof(bool), "bool", NULL, NULL},
     {"rdvz_protocol", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_net_driver_infiniband,
          rdvz_protocol),
-     sizeof(enum ibv_rdvz_protocol), "enum ibv_rdvz_protocol", NULL},
+     sizeof(enum ibv_rdvz_protocol), "enum ibv_rdvz_protocol", NULL, NULL},
     {"rdma_min_size", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_net_driver_infiniband,
          rdma_min_size),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, NULL},
     {"rdma_max_size", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_net_driver_infiniband,
          rdma_max_size),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, NULL},
     {"rdma_min_nb", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_net_driver_infiniband, rdma_min_nb),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, NULL},
     {"rdma_max_nb", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_net_driver_infiniband, rdma_max_nb),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, NULL},
     {"rdma_resizing_min_size", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_net_driver_infiniband,
          rdma_resizing_min_size),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, NULL},
     {"rdma_resizing_max_size", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_net_driver_infiniband,
          rdma_resizing_max_size),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, NULL},
     {"rdma_resizing_min_nb", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_net_driver_infiniband,
          rdma_resizing_min_nb),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, NULL},
     {"rdma_resizing_max_nb", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_net_driver_infiniband,
          rdma_resizing_max_nb),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, NULL},
     {"size_recv_ibufs_chunk", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_net_driver_infiniband,
          size_recv_ibufs_chunk),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, "IB_RECV_IBUF_CHUNK"},
     /* struct */
     {"sctk_runtime_config_struct_ib_global", SCTK_CONFIG_META_TYPE_STRUCT, 0,
      sizeof(struct sctk_runtime_config_struct_ib_global), NULL,
@@ -683,20 +683,20 @@ const struct sctk_runtime_config_entry_meta sctk_runtime_config_db[] = {
     {"mmu_cache_enabled", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_ib_global, mmu_cache_enabled),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, "IB_MMU_CHACHE_ENABLED"},
     {"mmu_cache_entry_count", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_ib_global, mmu_cache_entry_count),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, "IB_MMU_CHACHE_COUNT"},
     {"mmu_cache_maximum_size", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_ib_global, mmu_cache_maximum_size),
-     sizeof(size_t), "size_t", NULL},
+     sizeof(size_t), "size_t", NULL, "IB_MMU_CHACHE_MAX_SIZE"},
     {"mmu_cache_maximum_pin_size", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_ib_global,
          mmu_cache_maximum_pin_size),
-     sizeof(size_t), "size_t", NULL},
+     sizeof(size_t), "size_t", NULL, "IB_MMU_CHACHE_MAX_PIN_SIZE"},
     /* struct */
     {"sctk_runtime_config_struct_net_driver_portals",
      SCTK_CONFIG_META_TYPE_STRUCT, 0,
@@ -705,7 +705,7 @@ const struct sctk_runtime_config_entry_meta sctk_runtime_config_db[] = {
     {"eager_limit", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_net_driver_portals, eager_limit),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, "PT_EAGER_LIMIT"},
     /* struct */
     {"sctk_runtime_config_struct_net_driver_tcp", SCTK_CONFIG_META_TYPE_STRUCT,
      0, sizeof(struct sctk_runtime_config_struct_net_driver_tcp), NULL,
@@ -713,7 +713,7 @@ const struct sctk_runtime_config_entry_meta sctk_runtime_config_db[] = {
     {"tcpoib", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_net_driver_tcp, tcpoib),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, NULL},
     /* struct */
     {"sctk_runtime_config_struct_net_driver_tcp_rdma",
      SCTK_CONFIG_META_TYPE_STRUCT, 0,
@@ -722,7 +722,7 @@ const struct sctk_runtime_config_entry_meta sctk_runtime_config_db[] = {
     {"tcpoib", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_net_driver_tcp_rdma, tcpoib),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, NULL},
     /* struct */
     {"sctk_runtime_config_struct_net_driver_shm", SCTK_CONFIG_META_TYPE_STRUCT,
      0, sizeof(struct sctk_runtime_config_struct_net_driver_shm), NULL,
@@ -730,63 +730,63 @@ const struct sctk_runtime_config_entry_meta sctk_runtime_config_db[] = {
     {"buffered_priority", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_net_driver_shm, buffered_priority),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, "SHM_BUFF_PRIORITY"},
     {"buffered_min_size", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_net_driver_shm, buffered_min_size),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, "SHM_BUFF_MIN_SIZE"},
     {"buffered_max_size", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_net_driver_shm, buffered_max_size),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, "SHM_BUFF_MAX_SIZE"},
     {"buffered_zerocopy", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_net_driver_shm, buffered_zerocopy),
-     sizeof(bool), "bool", NULL},
+     sizeof(bool), "bool", NULL, "SHM_BUFF_ZEROCOPY"},
     {"cma_enable", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_net_driver_shm, cma_enable),
-     sizeof(bool), "bool", NULL},
+     sizeof(bool), "bool", NULL, "SHM_CMA_ENABLE"},
     {"cma_priority", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_net_driver_shm, cma_priority),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, "SHM_CMA_PRIORITY"},
     {"cma_min_size", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_net_driver_shm, cma_min_size),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, "SHM_CMA_MIN_SIZE"},
     {"cma_max_size", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_net_driver_shm, cma_max_size),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, "SHM_CMA_MAX_SIZE"},
     {"cma_zerocopy", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_net_driver_shm, cma_zerocopy),
-     sizeof(bool), "bool", NULL},
+     sizeof(bool), "bool", NULL, "SHM_CMA_ZEROCOPY"},
     {"frag_priority", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_net_driver_shm, frag_priority),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, "SHM_FRAG_PRIORITY"},
     {"frag_min_size", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_net_driver_shm, frag_min_size),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, "SHM_FRAG_MIN_SIZE"},
     {"frag_max_size", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_net_driver_shm, frag_max_size),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, "SHM_FRAG_MAX_SIZE"},
     {"frag_zerocopy", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_net_driver_shm, frag_zerocopy),
-     sizeof(bool), "bool", NULL},
+     sizeof(bool), "bool", NULL, "SHM_FRAG_ZEROCOPY"},
     {"shmem_size", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_net_driver_shm, shmem_size),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, "SHM_SIZE"},
     {"cells_num", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_net_driver_shm, cells_num),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, "SHM_CELLS"},
     /* union */
     {"sctk_runtime_config_struct_net_driver", SCTK_CONFIG_META_TYPE_UNION, 0,
      sizeof(struct sctk_runtime_config_struct_net_driver), NULL,
@@ -827,13 +827,13 @@ const struct sctk_runtime_config_entry_meta sctk_runtime_config_db[] = {
     {"name", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_net_driver_config, name),
-     sizeof(char *), "char *", NULL},
+     sizeof(char *), "char *", NULL, NULL},
     {"driver", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_net_driver_config, driver),
      sizeof(struct sctk_runtime_config_struct_net_driver),
      "sctk_runtime_config_struct_net_driver",
-     sctk_runtime_config_struct_init_net_driver},
+     sctk_runtime_config_struct_init_net_driver, NULL},
     /* struct */
     {"sctk_runtime_config_struct_gate_boolean", SCTK_CONFIG_META_TYPE_STRUCT, 0,
      sizeof(struct sctk_runtime_config_struct_gate_boolean), NULL,
@@ -841,11 +841,11 @@ const struct sctk_runtime_config_entry_meta sctk_runtime_config_db[] = {
     {"value", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_gate_boolean, value),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, NULL},
     {"gatefunc", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_gate_boolean, gatefunc),
-     sizeof(struct sctk_runtime_config_funcptr), "funcptr", NULL},
+     sizeof(struct sctk_runtime_config_funcptr), "funcptr", NULL, NULL},
     /* struct */
     {"sctk_runtime_config_struct_gate_probabilistic",
      SCTK_CONFIG_META_TYPE_STRUCT, 0,
@@ -854,11 +854,11 @@ const struct sctk_runtime_config_entry_meta sctk_runtime_config_db[] = {
     {"probability", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_gate_probabilistic, probability),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, NULL},
     {"gatefunc", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_gate_probabilistic, gatefunc),
-     sizeof(struct sctk_runtime_config_funcptr), "funcptr", NULL},
+     sizeof(struct sctk_runtime_config_funcptr), "funcptr", NULL, NULL},
     /* struct */
     {"sctk_runtime_config_struct_gate_min_size", SCTK_CONFIG_META_TYPE_STRUCT,
      0, sizeof(struct sctk_runtime_config_struct_gate_min_size), NULL,
@@ -866,11 +866,11 @@ const struct sctk_runtime_config_entry_meta sctk_runtime_config_db[] = {
     {"value", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_gate_min_size, value),
-     sizeof(size_t), "size_t", NULL},
+     sizeof(size_t), "size_t", NULL, NULL},
     {"gatefunc", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_gate_min_size, gatefunc),
-     sizeof(struct sctk_runtime_config_funcptr), "funcptr", NULL},
+     sizeof(struct sctk_runtime_config_funcptr), "funcptr", NULL, NULL},
     /* struct */
     {"sctk_runtime_config_struct_gate_max_size", SCTK_CONFIG_META_TYPE_STRUCT,
      0, sizeof(struct sctk_runtime_config_struct_gate_max_size), NULL,
@@ -878,11 +878,11 @@ const struct sctk_runtime_config_entry_meta sctk_runtime_config_db[] = {
     {"value", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_gate_max_size, value),
-     sizeof(size_t), "size_t", NULL},
+     sizeof(size_t), "size_t", NULL, NULL},
     {"gatefunc", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_gate_max_size, gatefunc),
-     sizeof(struct sctk_runtime_config_funcptr), "funcptr", NULL},
+     sizeof(struct sctk_runtime_config_funcptr), "funcptr", NULL, NULL},
     /* struct */
     {"sctk_runtime_config_struct_gate_message_type",
      SCTK_CONFIG_META_TYPE_STRUCT, 0,
@@ -891,15 +891,15 @@ const struct sctk_runtime_config_entry_meta sctk_runtime_config_db[] = {
     {"process", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_gate_message_type, process),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, NULL},
     {"common", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_gate_message_type, common),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, NULL},
     {"gatefunc", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_gate_message_type, gatefunc),
-     sizeof(struct sctk_runtime_config_funcptr), "funcptr", NULL},
+     sizeof(struct sctk_runtime_config_funcptr), "funcptr", NULL, NULL},
     /* struct */
     {"sctk_runtime_config_struct_gate_user", SCTK_CONFIG_META_TYPE_STRUCT, 0,
      sizeof(struct sctk_runtime_config_struct_gate_user), NULL,
@@ -907,7 +907,7 @@ const struct sctk_runtime_config_entry_meta sctk_runtime_config_db[] = {
     {"gatefunc", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_gate_user, gatefunc),
-     sizeof(struct sctk_runtime_config_funcptr), "funcptr", NULL},
+     sizeof(struct sctk_runtime_config_funcptr), "funcptr", NULL, NULL},
     /* union */
     {"sctk_runtime_config_struct_net_gate", SCTK_CONFIG_META_TYPE_UNION, 0,
      sizeof(struct sctk_runtime_config_struct_net_gate), NULL,
@@ -946,12 +946,12 @@ const struct sctk_runtime_config_entry_meta sctk_runtime_config_db[] = {
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_topological_polling, range),
      sizeof(enum rail_topological_polling_level),
-     "enum rail_topological_polling_level", NULL},
+     "enum rail_topological_polling_level", NULL, NULL},
     {"trigger", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_topological_polling, trigger),
      sizeof(enum rail_topological_polling_level),
-     "enum rail_topological_polling_level", NULL},
+     "enum rail_topological_polling_level", NULL, NULL},
     /* struct */
     {"sctk_runtime_config_struct_net_rail", SCTK_CONFIG_META_TYPE_STRUCT, 0,
      sizeof(struct sctk_runtime_config_struct_net_rail), NULL,
@@ -959,43 +959,43 @@ const struct sctk_runtime_config_entry_meta sctk_runtime_config_db[] = {
     {"name", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_net_rail, name),
-     sizeof(char *), "char *", NULL},
+     sizeof(char *), "char *", NULL, NULL},
     {"priority", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_net_rail, priority),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, NULL},
     {"device", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_net_rail, device),
-     sizeof(char *), "char *", NULL},
+     sizeof(char *), "char *", NULL, NULL},
     {"idle_polling", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_net_rail, idle_polling),
      sizeof(struct sctk_runtime_config_struct_topological_polling),
      "sctk_runtime_config_struct_topological_polling",
-     sctk_runtime_config_struct_init_topological_polling},
+     sctk_runtime_config_struct_init_topological_polling, NULL},
     {"any_source_polling", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_net_rail, any_source_polling),
      sizeof(struct sctk_runtime_config_struct_topological_polling),
      "sctk_runtime_config_struct_topological_polling",
-     sctk_runtime_config_struct_init_topological_polling},
+     sctk_runtime_config_struct_init_topological_polling, NULL},
     {"topology", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_net_rail, topology),
-     sizeof(char *), "char *", NULL},
+     sizeof(char *), "char *", NULL, NULL},
     {"ondemand", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_net_rail, ondemand),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, NULL},
     {"rdma", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_net_rail, rdma),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, NULL},
     {"config", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_net_rail, config),
-     sizeof(char *), "char *", NULL},
+     sizeof(char *), "char *", NULL, NULL},
     {"gates", SCTK_CONFIG_META_TYPE_ARRAY,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_net_rail, gates),
@@ -1013,7 +1013,7 @@ const struct sctk_runtime_config_entry_meta sctk_runtime_config_db[] = {
     {"name", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_net_cli_option, name),
-     sizeof(char *), "char *", NULL},
+     sizeof(char *), "char *", NULL, NULL},
     {"rails", SCTK_CONFIG_META_TYPE_ARRAY,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_net_cli_option, rails),
@@ -1045,47 +1045,47 @@ const struct sctk_runtime_config_entry_meta sctk_runtime_config_db[] = {
     {"barrier_arity", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_inter_thread_comm, barrier_arity),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, "ITT_BARRIER_ARITY"},
     {"broadcast_arity_max", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_inter_thread_comm,
          broadcast_arity_max),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, "ITT_BROADCAST_ARITY"},
     {"broadcast_max_size", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_inter_thread_comm,
          broadcast_max_size),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, "ITT_BROADCAST_MAX_SIZE"},
     {"broadcast_check_threshold", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_inter_thread_comm,
          broadcast_check_threshold),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, "ITT_BROADCAST_CHECK_TH"},
     {"allreduce_arity_max", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_inter_thread_comm,
          allreduce_arity_max),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, "ITT_ALLREDUCE_ARITY_MAX"},
     {"allreduce_max_size", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_inter_thread_comm,
          allreduce_max_size),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, "ITT_ALLREDUCE_MAX_SIZE"},
     {"allreduce_check_threshold", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_inter_thread_comm,
          allreduce_check_threshold),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, "ITT_ALLREDUCE_CHECK_TH"},
     {"ALLREDUCE_MAX_SLOT", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_inter_thread_comm,
          ALLREDUCE_MAX_SLOT),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, "ITT_ALLREDUCE_MAX_SLOT"},
     {"collectives_init_hook", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_inter_thread_comm,
          collectives_init_hook),
-     sizeof(struct sctk_runtime_config_funcptr), "funcptr", NULL},
+     sizeof(struct sctk_runtime_config_funcptr), "funcptr", NULL, NULL},
     /* struct */
     {"sctk_runtime_config_struct_low_level_comm", SCTK_CONFIG_META_TYPE_STRUCT,
      0, sizeof(struct sctk_runtime_config_struct_low_level_comm), NULL,
@@ -1093,29 +1093,29 @@ const struct sctk_runtime_config_entry_meta sctk_runtime_config_db[] = {
     {"checksum", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_low_level_comm, checksum),
-     sizeof(bool), "bool", NULL},
+     sizeof(bool), "bool", NULL, NULL},
     {"send_msg", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_low_level_comm, send_msg),
-     sizeof(struct sctk_runtime_config_funcptr), "funcptr", NULL},
+     sizeof(struct sctk_runtime_config_funcptr), "funcptr", NULL, NULL},
     {"network_mode", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_low_level_comm, network_mode),
-     sizeof(char *), "char *", NULL},
+     sizeof(char *), "char *", NULL, NULL},
     {"dyn_reordering", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_low_level_comm, dyn_reordering),
-     sizeof(bool), "bool", NULL},
+     sizeof(bool), "bool", NULL, NULL},
     {"enable_idle_polling", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_low_level_comm, enable_idle_polling),
-     sizeof(bool), "bool", NULL},
+     sizeof(bool), "bool", NULL, NULL},
     {"ib_global", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_low_level_comm, ib_global),
      sizeof(struct sctk_runtime_config_struct_ib_global),
      "sctk_runtime_config_struct_ib_global",
-     sctk_runtime_config_struct_init_ib_global},
+     sctk_runtime_config_struct_init_ib_global, NULL},
     /* struct */
     {"sctk_runtime_config_struct_openmp", SCTK_CONFIG_META_TYPE_STRUCT, 0,
      sizeof(struct sctk_runtime_config_struct_openmp), NULL,
@@ -1123,96 +1123,96 @@ const struct sctk_runtime_config_entry_meta sctk_runtime_config_db[] = {
     {"vp", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_openmp, vp),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, NULL},
     {"schedule", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_openmp, schedule),
-     sizeof(char *), "char *", NULL},
+     sizeof(char *), "char *", NULL, NULL},
     {"nb_threads", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_openmp, nb_threads),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, NULL},
     {"adjustment", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_openmp, adjustment),
-     sizeof(bool), "bool", NULL},
+     sizeof(bool), "bool", NULL, NULL},
     {"proc_bind", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_openmp, proc_bind),
-     sizeof(bool), "bool", NULL},
+     sizeof(bool), "bool", NULL, NULL},
     {"nested", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_openmp, nested),
-     sizeof(bool), "bool", NULL},
+     sizeof(bool), "bool", NULL, NULL},
     {"stack_size", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_openmp, stack_size),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, NULL},
     {"wait_policy", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_openmp, wait_policy),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, NULL},
     {"thread_limit", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_openmp, thread_limit),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, NULL},
     {"max_active_levels", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_openmp, max_active_levels),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, NULL},
     {"tree", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_openmp, tree),
-     sizeof(char *), "char *", NULL},
+     sizeof(char *), "char *", NULL, NULL},
     {"max_threads", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_openmp, max_threads),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, NULL},
     {"max_alive_for_dyn", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_openmp, max_alive_for_dyn),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, NULL},
     {"max_alive_for_guided", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_openmp, max_alive_for_guided),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, NULL},
     {"max_alive_sections", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_openmp, max_alive_sections),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, NULL},
     {"max_alive_single", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_openmp, max_alive_single),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, NULL},
     {"warn_nested", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_openmp, warn_nested),
-     sizeof(bool), "bool", NULL},
+     sizeof(bool), "bool", NULL, NULL},
     {"mode", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_openmp, mode),
-     sizeof(char *), "char *", NULL},
+     sizeof(char *), "char *", NULL, NULL},
     {"affinity", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_openmp, affinity),
-     sizeof(char *), "char *", NULL},
+     sizeof(char *), "char *", NULL, NULL},
     {"omp_new_task_depth", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_openmp, omp_new_task_depth),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, NULL},
     {"omp_untied_task_depth", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_openmp, omp_untied_task_depth),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, NULL},
     {"omp_task_larceny_mode", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_openmp, omp_task_larceny_mode),
      sizeof(enum mpcomp_task_larceny_mode_t), "enum mpcomp_task_larceny_mode_t",
-     NULL},
+     NULL, NULL},
     {"omp_task_nesting_max", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_openmp, omp_task_nesting_max),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, NULL},
     /* struct */
     {"sctk_runtime_config_struct_profiler", SCTK_CONFIG_META_TYPE_STRUCT, 0,
      sizeof(struct sctk_runtime_config_struct_profiler), NULL,
@@ -1220,15 +1220,15 @@ const struct sctk_runtime_config_entry_meta sctk_runtime_config_db[] = {
     {"file_prefix", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_profiler, file_prefix),
-     sizeof(char *), "char *", NULL},
+     sizeof(char *), "char *", NULL, NULL},
     {"append_date", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_profiler, append_date),
-     sizeof(bool), "bool", NULL},
+     sizeof(bool), "bool", NULL, NULL},
     {"color_stdout", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_profiler, color_stdout),
-     sizeof(bool), "bool", NULL},
+     sizeof(bool), "bool", NULL, NULL},
     {"level_colors", SCTK_CONFIG_META_TYPE_ARRAY,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_profiler, level_colors),
@@ -1240,19 +1240,19 @@ const struct sctk_runtime_config_entry_meta sctk_runtime_config_db[] = {
     {"spin_delay", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_thread, spin_delay),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, NULL},
     {"interval", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_thread, interval),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, NULL},
     {"kthread_stack_size", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_thread, kthread_stack_size),
-     sizeof(size_t), "size_t", NULL},
+     sizeof(size_t), "size_t", NULL, NULL},
     {"placement_policy", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_thread, placement_policy),
-     sizeof(struct sctk_runtime_config_funcptr), "funcptr", NULL},
+     sizeof(struct sctk_runtime_config_funcptr), "funcptr", NULL, NULL},
     /* struct */
     {"sctk_runtime_config_struct_scheduler", SCTK_CONFIG_META_TYPE_STRUCT, 0,
      sizeof(struct sctk_runtime_config_struct_scheduler), NULL,
@@ -1260,52 +1260,52 @@ const struct sctk_runtime_config_entry_meta sctk_runtime_config_db[] = {
     {"timestamp_threshold", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_scheduler, timestamp_threshold),
-     sizeof(double), "double", NULL},
+     sizeof(double), "double", NULL, NULL},
     {"task_polling_thread_basic_priority", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_scheduler,
          task_polling_thread_basic_priority),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, NULL},
     {"task_polling_thread_basic_priority_step", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_scheduler,
          task_polling_thread_basic_priority_step),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, NULL},
     {"task_polling_thread_current_priority_step", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_scheduler,
          task_polling_thread_current_priority_step),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, NULL},
     {"sched_NBC_Pthread_basic_priority", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_scheduler,
          sched_NBC_Pthread_basic_priority),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, NULL},
     {"sched_NBC_Pthread_basic_priority_step", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_scheduler,
          sched_NBC_Pthread_basic_priority_step),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, NULL},
     {"sched_NBC_Pthread_current_priority_step", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_scheduler,
          sched_NBC_Pthread_current_priority_step),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, NULL},
     {"mpi_basic_priority", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_scheduler, mpi_basic_priority),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, NULL},
     {"omp_basic_priority", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_scheduler, omp_basic_priority),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, NULL},
     {"posix_basic_priority", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_scheduler, posix_basic_priority),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, NULL},
     {"progress_basic_priority", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_scheduler, progress_basic_priority),
-     sizeof(int), "int", NULL},
+     sizeof(int), "int", NULL, NULL},
     /* end marker */
     {NULL, SCTK_CONFIG_META_TYPE_END, 0, 0, NULL, NULL}};

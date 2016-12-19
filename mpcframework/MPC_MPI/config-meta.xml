@@ -23,7 +23,8 @@
         </struct>
 
         <struct name="collectives_inter" doc="Collectives intercom MPI">
-            <param name="barrier_inter" type="funcptr" default="__INTERNAL__PMPI_Barrier_inter" doc="MPI_Barrier intercom algorithm"/><param name="bcast_inter" type="funcptr" default="__INTERNAL__PMPI_Bcast_inter" doc="MPI_Barrier intercom algorithm"/>
+            <param name="barrier_inter" type="funcptr" default="__INTERNAL__PMPI_Barrier_inter" doc="MPI_Barrier intercom algorithm"/>
+            <param name="bcast_inter" type="funcptr" default="__INTERNAL__PMPI_Bcast_inter" doc="MPI_Barrier intercom algorithm"/>
             <param name="allgather_inter" type="funcptr" default="__INTERNAL__PMPI_Allgather_inter" doc="MPI_Allgather intercom algorithm"/>
             <param name="allgatherv_inter" type="funcptr" default="__INTERNAL__PMPI_Allgatherv_inter" doc="MPI_Allgatherv intercom algorithm"/>
             <param name="alltoall_inter" type="funcptr" default="__INTERNAL__PMPI_Alltoall_inter" doc="MPI_Alltoall intercom algorithm"/>
@@ -67,8 +68,8 @@
 	<modules>
 		<module name="collectives_intra" type="collectives_intra"/>
 		<module name="collectives_inter" type="collectives_inter"/>
-        	<module name="progress_thread" type="progress_thread"/>
-        	<module name="mpc" type="mpc"/>
+		<module name="progress_thread" type="progress_thread"/>
+		<module name="mpc" type="mpc"/>
 	</modules>
       
       
