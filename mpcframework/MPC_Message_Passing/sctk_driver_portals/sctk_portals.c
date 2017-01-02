@@ -34,8 +34,8 @@ static volatile short rail_is_ready = 0;
 /**
  * @brief Main entry point for sending message (called by higher layers)
  *
- * @param msg message to send
- * @param endpoint connection handler to take for routing
+ * @param[in,out] msg message to send
+ * @param[in]  endpoint connection handler to take for routing
  */
 static void sctk_network_send_message_endpoint_portals ( sctk_thread_ptp_message_t *msg, sctk_endpoint_t *endpoint )
 {
@@ -58,7 +58,7 @@ static void sctk_network_notify_perform_message_portals ( int remote, int remote
 /**
  * @brief NOTIFIER : routine called by idle task (hierarchical election to avoid contention)
  *
- * @param rail driver data from current network
+ * @param[in,out] rail driver data from current network
  */
 static void sctk_network_notify_idle_message_portals (sctk_rail_info_t* rail)
 {
@@ -87,9 +87,9 @@ static void sctk_network_notify_idle_message_portals (sctk_rail_info_t* rail)
 /**
  * @brief NOTIFIER : routine called when an any_source message is arrived
  *
- * @param polling_task_id
- * @param blocking
- * @param rail
+ * @param[in] polling_task_id not used by Portals implementation
+ * @param[in] blocking not used by Portals implementation
+ * @param[in,out] rail associated rail
  */
 static void sctk_network_notify_any_source_message_portals ( int polling_task_id, int blocking, sctk_rail_info_t *rail )
 {
@@ -100,9 +100,9 @@ static void sctk_network_notify_any_source_message_portals ( int polling_task_id
 /**
  * @brief Routine called just before a message is forwarded to higher layer (sctk_inter_thread_comm)
  *
- * @param msg message to forward
+ * @param[in,out] msg message to forward
  *
- * @return
+ * @returns 1, in any case
  */
 static int sctk_send_message_from_network_portals ( sctk_thread_ptp_message_t *msg )
 {
@@ -120,7 +120,7 @@ static int sctk_send_message_from_network_portals ( sctk_thread_ptp_message_t *m
 /**
  * \brief unique initialization for this rail (already created and managed by multirail handler)
  *
- * \param rail
+ * \param[out] rail
  */
 void sctk_network_init_portals (sctk_rail_info_t *rail)
 {

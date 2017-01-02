@@ -32,15 +32,20 @@ extern "C"
 #include <sctk_io_helper.h>
 #ifdef MPC_USE_PORTALS
 #include <sctk_portals_toolkit.h>
-//#ifndef __SCTK_ROUTE_H_
-//#error "sctk_route must be included before sctk_portals.h"
-//#endif
 
+/**
+ * Portals-specific information describing a route.
+ * Is contained by route.h
+ */
 typedef struct sctk_portals_route_info_s
 {
-	sctk_portals_process_id_t dest;//to route
-}sctk_portals_route_info_t;
+	sctk_portals_process_id_t dest; /**< the remote process the route is connected to */	
+}
+sctk_portals_route_info_t;
 
+/**
+ *
+ */
 typedef struct sctk_portals_msg_header_s
 {
 	sctk_portals_process_id_t remote;
@@ -52,15 +57,19 @@ typedef struct sctk_portals_msg_header_s
 
 } sctk_portals_msg_header_t;
 
+/**
+ * Portals-specific information specializing a rail.
+ * Is contained by rail.h
+ */
 typedef struct sctk_portals_rail_info_s
 {
-	sctk_portals_limits_t            max_limits;
-	sctk_portals_interface_handler_t interface_handler;
-	sctk_portals_process_id_t        current_id;
-	sctk_portals_table_t             ptable;
+	sctk_portals_limits_t            max_limits;        /**< container for Portals thresholds */
+	sctk_portals_interface_handler_t interface_handler; /**< Interface handler for the device */
+	sctk_portals_process_id_t        current_id;        /**< Local id identifying this rail */
+	sctk_portals_table_t             ptable;            /**< Portals table for this rail */
 
-    char connection_infos[MAX_STRING_SIZE];
-    size_t connection_infos_size;
+    char connection_infos[MAX_STRING_SIZE];                 /**< string identifying this rail over the PMI */
+    size_t connection_infos_size;                           /**< Size of the above string */
 } sctk_portals_rail_info_t;
 
 void sctk_network_init_portals ( struct sctk_rail_info_s *rail);

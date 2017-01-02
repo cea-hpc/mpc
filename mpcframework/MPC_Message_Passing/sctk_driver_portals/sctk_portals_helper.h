@@ -38,35 +38,44 @@ extern "C"
 #include <string.h>
 #include <sctk_atomics.h>
 
+/** initialize BITS field */
 #define SCTK_PORTALS_BITS_INIT 0UL
+/** define BITS field for header slot */
 #define SCTK_PORTALS_BITS_HEADER 0UL
+/** define BITS field for eager slot */
 #define SCTK_PORTALS_BITS_EAGER_SLOT (~(0UL))
 
-
-//is entry specific or not (=header or not)
-#define SCTK_PORTALS_NOT_SPECIFIC 0
-#define SCTK_PORTALS_SPECIFIC 1
-
-//activate complete polling for idle task
+/** used to force complete polling (all queues are evaluated) */
 #define SCTK_PORTALS_POLL_ALL -1
 
+/** Define the Portals event queue size */
 #define SCTK_PORTALS_EVENTS_QUEUE_SIZE 64
+/** Define the number of ME dedicated to header receieving (rendezvous protocol) */
 #define SCTK_PORTALS_HEADERS_ME_SIZE (SCTK_PORTALS_EVENTS_QUEUE_SIZE + 4)
 
+/** Map with one preprocessor all needed flags to create an ME slot for MPC */
 #define SCTK_PORTALS_ME_OPTIONS PTL_ME_EVENT_CT_COMM | PTL_ME_EVENT_CT_OVERFLOW | PTL_ME_EVENT_LINK_DISABLE | PTL_ME_EVENT_UNLINK_DISABLE
+/** Map with one preprocessor all needed flags to create an ME slot for PUT() messages */
 #define SCTK_PORTALS_ME_PUT_OPTIONS SCTK_PORTALS_ME_OPTIONS | PTL_ME_OP_PUT | PTL_ME_USE_ONCE
+/** Map with one preprocessor all needed flags to create an ME slot for GET() messages */
 #define SCTK_PORTALS_ME_GET_OPTIONS SCTK_PORTALS_ME_OPTIONS | PTL_ME_OP_GET | PTL_ME_USE_ONCE
-
+/** Map with one preprocessor all needed flags to create an ME slot for any kind of messages */
 #define SCTK_PORTALS_ME_ALL_OPTIONS SCTK_PORTALS_ME_OPTIONS | PTL_ME_OP_GET | PTL_ME_OP_PUT
 
+/** Map with one preprocessor all needed flags to create an MD slot for MPC */
 #define SCTK_PORTALS_MD_OPTIONS PTL_MD_EVENT_CT_ACK
+/** Map with one preprocessor all needed flags to create an MD slot for PUT() operations */
 #define SCTK_PORTALS_MD_PUT_OPTIONS SCTK_PORTALS_MD_OPTIONS | PTL_MD_EVENT_CT_SEND
+/** Map with one preprocessor all needed flags to create an MD slot for GET() operations */
 #define SCTK_PORTALS_MD_GET_OPTIONS SCTK_PORTALS_MD_OPTIONS | PTL_MD_EVENT_CT_REPLY
 
+/** lazy typedefs to redirect Portals-specific name to generic ones for MPC : Process ID */
 #define sctk_portals_process_id_t ptl_process_t
+/** lazy typedefs to redirect Portals-specific name to generic ones for MPC : Interface Handler */
 #define sctk_portals_interface_handler_t ptl_handle_ni_t
+/** lazy typedefs to redirect Portals-specific name to generic ones for MPC : Interface limits */
 #define sctk_portals_limits_t ptl_ni_limits_t
-//#define sctk_portals_assume(x) x
+/** extracted from Portals implementation, map return code to a readable output and abort() */
 #define sctk_portals_assume(x) do { int ret; \
     switch (ret = x) { \
 	case PTL_IGNORED: \
@@ -80,41 +89,59 @@ extern "C"
         default: sctk_fatal( "=> %s returned failcode %i (line %u)\n", #x, ret, (unsigned int)__LINE__); break; \
     } } while (0)
 
+/**
+ * Selects if the request have to be completed before continuing.
+ * By its RMDA construction, Portals does not block and prefers
+ * publishing an event when the operation completes. Sometimes we
+ * would prefer waiting for the operation to complete before continuing.
+ */
 typedef enum sctk_portals_request_type_e
 {
-	SCTK_PORTALS_BLOCKING_REQUEST,
-	SCTK_PORTALS_NO_BLOCKING_REQUEST
+	SCTK_PORTALS_BLOCKING_REQUEST,   /**< The request will wait upon completion */
+	SCTK_PORTALS_NO_BLOCKING_REQUEST /**< The request won't wait and an event will have to be polled */
 } sctk_portals_request_type_t;
 
+/**
+ * Selects whether the request will wait for an ACK() request.
+ */
 typedef enum sctk_portals_ack_msg_type_s
 {
-	SCTK_PORTALS_ACK_MSG = PTL_ACK_REQ,
-	SCTK_PORTALS_NO_ACK_MSG = PTL_NO_ACK_REQ
+	SCTK_PORTALS_ACK_MSG = PTL_ACK_REQ,      /**< This message will wait for a response */
+	SCTK_PORTALS_NO_ACK_MSG = PTL_NO_ACK_REQ /**< This message won't wait for a response */
 } sctk_portals_ack_msg_type_t;
 
+/**
+ * Elects a slot to a specific purpose
+ */
 typedef enum sctk_portals_slot_category_s
 {
-	SCTK_PORTALS_CAT_REGULAR,
-	SCTK_PORTALS_CAT_CTLMESSAGE,
-	SCTK_PORTALS_CAT_EAGER,
-	SCTK_PORTALS_CAT_ROUTING_MSG,
-	SCTK_PORTALS_CAT_RESERVED,
-	SCTK_PORTALS_CAT_RDMA
+	SCTK_PORTALS_CAT_REGULAR,     /**< The slot is used for rendezvosu protocol (GET operation)*/
+	SCTK_PORTALS_CAT_CTLMESSAGE,  /**< The slot is used only for control-message treatments */
+	SCTK_PORTALS_CAT_EAGER,       /**< the slot is dedicated to eager messages */
+	SCTK_PORTALS_CAT_ROUTING_MSG, /**< the slot holds a message to be routed */
+	SCTK_PORTALS_CAT_RESERVED,    /**< the slot is reserved (probably used for route init)*/
+	SCTK_PORTALS_CAT_RDMA         /**< the slot is dedicated to host explicit RDMA messages */
 } sctk_portals_slot_category_t;
 
+/**
+ * Extra information attached to a list entry
+ */
 typedef struct sctk_portals_list_entry_extra_s
 {
-	sctk_portals_slot_category_t cat_msg;
-	void* extra_data;
-	ptl_me_t pending_str; // need to rewrite this member
+	sctk_portals_slot_category_t cat_msg; /**< category for this list entry */
+	void* extra_data;                     /**< Custom extra information */
+	ptl_me_t pending_str;                 /**< backup pointer */
 } sctk_portals_list_entry_extra_t;
 
+/**
+ * Structure of a Table entry
+ */
 typedef struct sctk_portals_table_entry_s
 {
-	ptl_pt_index_t                     index;
-	ptl_handle_eq_t *                  event_list;
-	sctk_spinlock_t                    lock;
-	sctk_atomics_int                   entry_cpt;
+	ptl_pt_index_t                     index;      /**< Table index */
+	ptl_handle_eq_t *                  event_list; /**< Event queue for this entry */
+	sctk_spinlock_t                    lock;       /**< entry lock (for collaborative polling)*/
+	sctk_atomics_int                   entry_cpt;  /**< */
 
 } sctk_portals_table_entry_t;
 
