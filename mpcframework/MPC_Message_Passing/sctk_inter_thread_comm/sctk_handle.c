@@ -20,11 +20,12 @@
 /* #                                                                      # */
 /* ######################################################################## */
 #include "sctk_handle.h"
-#include "sctk_spinlock.h"
 #include "sctk_atomics.h"
-#include "sctk_ht.h"
-#include "sctk_thread.h"
 #include "sctk_debug.h"
+#include "sctk_ht.h"
+#include "sctk_spinlock.h"
+#include "sctk_thread.h"
+#include <sctk_inter_thread_comm.h>
 
 /************************************************************************/
 /* Storage for this whole file                                          */
@@ -84,6 +85,7 @@ int sctk_errhandler_register(sctk_generic_handler eh, sctk_errhandler_t *errh) {
   /* Give it to the iface */
   *errh = (sctk_errhandler_t)new_id;
   /* Save in the HT */
+  sctk_nodebug("REGISTER Is %p for %d", eh, *errh);
   MPCHT_set(&error_handlers, new_id, (void *)eh);
   /* All ok */
   return 0;
@@ -92,7 +94,12 @@ int sctk_errhandler_register(sctk_generic_handler eh, sctk_errhandler_t *errh) {
 sctk_generic_handler sctk_errhandler_resolve(sctk_errhandler_t errh) {
   mpc_mpi_err_init_once();
   /* Direct HT lookup */
-  return MPCHT_get(&error_handlers, errh);
+
+  sctk_generic_handler ret = MPCHT_get(&error_handlers, errh);
+
+  sctk_nodebug("RET Is %p for %d", ret, errh);
+
+  return ret;
 }
 
 int sctk_errhandler_free(sctk_errhandler_t errh) {
@@ -118,7 +125,14 @@ int sctk_errhandler_free(sctk_errhandler_t errh) {
 
 static inline sctk_uint64_t sctk_handle_compute(sctk_handle id,
                                                 sctk_handle_type type) {
-  return ((id) << 4) || type;
+  sctk_uint64_t rank = sctk_get_task_rank();
+
+  sctk_uint64_t ret = type;
+  ret |= id << 16;
+  ret |= rank << 32;
+
+  sctk_nodebug("RET (%d %d %d) %ld", sctk_get_task_rank(), id, type, ret);
+  return ret;
 }
 
 struct sctk_handle_context *sctk_handle_context_new(sctk_handle id) {
@@ -147,6 +161,12 @@ struct sctk_handle_context *sctk_handle_context(sctk_handle id,
   sctk_spinlock_lock_yield(&handle_mod_lock);
   ret = sctk_handle_context_no_lock(id, type);
   sctk_spinlock_unlock(&handle_mod_lock);
+
+  if (!ret) {
+    /* If no such context then create it */
+    sctk_handle_new_from_id(id, type);
+    return sctk_handle_context(id, type);
+  }
 
   return ret;
 }
@@ -222,6 +242,8 @@ sctk_errhandler_t sctk_handle_get_errhandler(sctk_handle id,
     return SCTK_ERRHANDLER_NULL;
   }
 
+  sctk_nodebug("GET at %p == %d for %d", hctx, hctx->handler, id);
+
   return hctx->handler;
 }
 
@@ -234,4 +256,8 @@ int sctk_handle_set_errhandler(sctk_handle id, sctk_handle_type type,
   }
 
   hctx->handler = errh;
+
+  sctk_nodebug("SET %d at %p <= %p for %d", errh, hctx, hctx->handler, id);
+
+  return 0;
 }

@@ -732,7 +732,8 @@ int MPI_Keyval_free (int *);
 int MPI_Attr_put (MPI_Comm, int, void *);
 int MPI_Attr_get (MPI_Comm, int, void *, int *);
 int MPI_Attr_delete (MPI_Comm, int);
-  
+int MPI_Attr_get_fortran(MPI_Comm comm, int keyval, int *attr_value, int *flag);
+
 /* Topology Management */
 int MPI_Topo_test (MPI_Comm, int *);
 
@@ -1434,7 +1435,9 @@ int PMPI_Keyval_free (int *);
 int PMPI_Attr_put (MPI_Comm, int, void *);
 int PMPI_Attr_get (MPI_Comm, int, void *, int *);
 int PMPI_Attr_delete (MPI_Comm, int);
-  
+int PMPI_Attr_get_fortran(MPI_Comm comm, int keyval, int *attr_value,
+                          int *flag);
+
 /* Topology Management */
 int PMPI_Topo_test (MPI_Comm, int *);
 
@@ -1588,6 +1591,12 @@ int PMPI_T_category_get_cvars(int cat_index, int len, int indices[]);
 int PMPI_T_category_get_pvars(int cat_index, int len, int indices[]);
 int PMPI_T_category_get_categories(int cat_index, int len, int indices[]);
 int PMPI_T_category_changed(int *stamp);
+
+/* probe and cancel */
+int PMPI_Mprobe(int, int, MPI_Comm, MPI_Message *, MPI_Status *);
+int PMPI_Mrecv(void *, int, MPI_Datatype, MPI_Message *, MPI_Status *);
+int PMPI_Imrecv(void *, int, MPI_Datatype, MPI_Message *, MPI_Request *);
+int PMPI_Improbe(int, int, MPI_Comm, int *, MPI_Message *, MPI_Status *);
 
 #endif /* MPI_BUILD_PROFILING */
 

@@ -29,6 +29,7 @@
 #endif
 
 #include "sctk_thread_generic.h"
+#include "mpit_internal.h"
 
 #if defined(MPC_Accelerators)
 #include <sctk_accelerators.h>
@@ -483,14 +484,18 @@ SCTK__MPI_ERROR_REPORT__ (MPC_Comm comm, int error, char *message, char *file,
       (sctk_handle)comm, SCTK_HANDLE_COMM);
 
   if (errh != MPI_ERRHANDLER_NULL) {
+    sctk_nodebug("ERRH is %d for %d", errh, comm);
     MPI_Handler_function *func = sctk_errhandler_resolve(errh);
     int error_id = error;
     MPI_Comm comm_id = comm;
-    (func)(&comm_id, &error_id, message, file, line);
+
+    sctk_nodebug("CALL %p (%d)", func, errh);
+    if (func) {
+      (func)(&comm_id, &error_id, message, file, line);
+    }
   }
 
-
-
+  return error;
 }
 
 static void __sctk_init_mpi_errors() { __MPC_Error_init(); }
@@ -15640,6 +15645,14 @@ PMPI_Errhandler_create (MPI_Handler_function * function,
 int
 PMPI_Errhandler_set (MPI_Comm comm, MPI_Errhandler errhandler)
 {
+  if (comm == MPI_COMM_NULL) {
+    return MPI_ERR_COMM;
+  }
+
+  if (errhandler == MPI_ERRHANDLER_NULL) {
+    MPI_ERROR_REPORT(comm, MPI_ERR_ARG, "");
+  }
+
   int res = MPI_ERR_INTERN;
   mpi_check_comm (comm, comm);
   res = __INTERNAL__PMPI_Errhandler_set (comm, errhandler);
@@ -15658,6 +15671,15 @@ PMPI_Errhandler_get (MPI_Comm comm, MPI_Errhandler * errhandler)
 int
 PMPI_Errhandler_free (MPI_Errhandler * errhandler)
 {
+
+  if (!errhandler) {
+    return MPI_ERR_ARG;
+  }
+
+  if (*errhandler == MPI_ERRHANDLER_NULL) {
+    return MPI_ERR_ARG;
+  }
+
   MPI_Comm comm = MPI_COMM_WORLD;
   int res = MPI_ERR_INTERN;
   res = __INTERNAL__PMPI_Errhandler_free (errhandler);
@@ -16583,7 +16605,7 @@ int PMPI_Add_error_string(int errorcode, char *string) {
 
 int PMPI_Comm_create_errhandler(MPI_Comm_errhandler_function *function,
                                 MPI_Errhandler *errhandler) {
-  return PMPC_Errhandler_create(function, errhandler);
+  return PMPC_Errhandler_create((MPC_Handler_function *)function, errhandler);
 }
 
 int PMPI_Comm_get_errhandler(MPI_Comm comm, MPI_Errhandler *errhandler) {
@@ -16602,8 +16624,6 @@ int PMPI_Comm_call_errhandler(MPI_Comm comm, int errorcode) {
   if (errf) {
     (errf)((void *)&comm, &errorcode);
   }
-
-  sctk_error("C %d(e %d) %d->%p", comm, errorcode, errh, errf);
 
   return MPI_SUCCESS;
 }
