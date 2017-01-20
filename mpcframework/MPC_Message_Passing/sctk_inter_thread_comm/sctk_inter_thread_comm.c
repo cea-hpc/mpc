@@ -1943,7 +1943,7 @@ void sctk_m_probe_matching_init() {
 void sctk_m_probe_matching_set(int value) {
   while (sctk_atomics_cas_int(&m_probe_id, 0, value) != 0) {
     sctk_nodebug("CAS %d", sctk_atomics_load_int(&m_probe_id));
-    mpc_thread_yield();
+    sctk_thread_yield();
   }
 
   int task_id;

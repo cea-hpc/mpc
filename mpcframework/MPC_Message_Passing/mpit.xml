@@ -288,7 +288,7 @@
 			<cvar>
 				<name>SHM_BUFF_ZEROCOPY</name>
 				<verbosity>MPI_T_VERBOSITY_TUNER_DETAIL</verbosity>
-				<datatype>MPI_CHAR</datatype>
+				<datatype>MPI_INT</datatype>
 				<desc>Defines if mode zerocopy should be actived for SHM buffered message</desc>
 				<bind>MPI_T_BIND_NO_OBJECT</bind>
 				<scope>MPI_T_SCOPE_ALL_EQ</scope>
@@ -296,7 +296,7 @@
 			<cvar>
 				<name>SHM_CMA_ENABLE</name>
 				<verbosity>MPI_T_VERBOSITY_TUNER_DETAIL</verbosity>
-				<datatype>MPI_CHAR</datatype>
+				<datatype>MPI_INT</datatype>
 				<desc>Are CMA messages enabled</desc>
 				<bind>MPI_T_BIND_NO_OBJECT</bind>
 				<scope>MPI_T_SCOPE_ALL_EQ</scope>
@@ -328,7 +328,7 @@
 			<cvar>
 				<name>SHM_CMA_ZEROCOPY</name>
 				<verbosity>MPI_T_VERBOSITY_TUNER_DETAIL</verbosity>
-				<datatype>MPI_CHAR</datatype>
+				<datatype>MPI_INT</datatype>
 				<desc>Defines if mode zerocopy should be actived for SHM CMA message</desc>
 				<bind>MPI_T_BIND_NO_OBJECT</bind>
 				<scope>MPI_T_SCOPE_ALL_EQ</scope>
@@ -360,7 +360,7 @@
 			<cvar>
 				<name>SHM_FRAG_ZEROCOPY</name>
 				<verbosity>MPI_T_VERBOSITY_TUNER_DETAIL</verbosity>
-				<datatype>MPI_CHAR</datatype>
+				<datatype>MPI_INT</datatype>
 				<desc>Defines if mode zerocopy should be actived for SHM fragmented message</desc>
 				<bind>MPI_T_BIND_NO_OBJECT</bind>
 				<scope>MPI_T_SCOPE_ALL_EQ</scope>

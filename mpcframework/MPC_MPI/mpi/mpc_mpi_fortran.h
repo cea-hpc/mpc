@@ -1682,6 +1682,7 @@ void ffunc (pmpi_errhandler_create) (MPI_Handler_function * function,
 void ffunc (pmpi_errhandler_set) (MPI_Comm * comm,
 				  MPI_Errhandler * errhandler, int *res)
 {
+
   *res = MPI_Errhandler_set (*comm, *errhandler);
 
 }

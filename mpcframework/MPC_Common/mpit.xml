@@ -11,7 +11,7 @@
 			<cvar>
 				<name>LN_BANNER</name>
 				<verbosity>MPI_T_VERBOSITY_TUNER_DETAIL</verbosity>
-				<datatype>MPI_CHAR</datatype>
+				<datatype>MPI_INT</datatype>
 				<desc>Display the MPC banner at launch time to print some informations about the topology. Can be override by MPC_DISABLE_BANNER.</desc>
 				<bind>MPI_T_BIND_NO_OBJECT</bind>
 				<scope>MPI_T_SCOPE_ALL_EQ</scope>
@@ -27,7 +27,7 @@
 			<cvar>
 				<name>LN_ADDR_RAND_DISABLE</name>
 				<verbosity>MPI_T_VERBOSITY_TUNER_DETAIL</verbosity>
-				<datatype>MPI_CHAR</datatype>
+				<datatype>MPI_INT</datatype>
 				<desc>Deactivate randomization of base addresses.</desc>
 				<bind>MPI_T_BIND_NO_OBJECT</bind>
 				<scope>MPI_T_SCOPE_ALL_EQ</scope>
@@ -35,7 +35,7 @@
 			<cvar>
 				<name>LN_DISABLE_MPC</name>
 				<verbosity>MPI_T_VERBOSITY_TUNER_DETAIL</verbosity>
-				<datatype>MPI_CHAR</datatype>
+				<datatype>MPI_INT</datatype>
 				<desc>Do not use mpc for execution (deprecated?)</desc>
 				<bind>MPI_T_BIND_NO_OBJECT</bind>
 				<scope>MPI_T_SCOPE_ALL_EQ</scope>
@@ -83,7 +83,7 @@
 			<cvar>
 				<name>LN_DISPLAY_VERS</name>
 				<verbosity>MPI_T_VERBOSITY_TUNER_DETAIL</verbosity>
-				<datatype>MPI_CHAR</datatype>
+				<datatype>MPI_INT</datatype>
 				<desc>Print the MPC version number</desc>
 				<bind>MPI_T_BIND_NO_OBJECT</bind>
 				<scope>MPI_T_SCOPE_ALL_EQ</scope>
@@ -91,7 +91,7 @@
 			<cvar>
 				<name>LN_ENABLE_SMT</name>
 				<verbosity>MPI_T_VERBOSITY_TUNER_DETAIL</verbosity>
-				<datatype>MPI_CHAR</datatype>
+				<datatype>MPI_INT</datatype>
 				<desc>Enable usage of hyperthreaded cores if available on current architecture.</desc>
 				<bind>MPI_T_BIND_NO_OBJECT</bind>
 				<scope>MPI_T_SCOPE_ALL_EQ</scope>
@@ -99,7 +99,7 @@
 			<cvar>
 				<name>LN_SHARE_NODE</name>
 				<verbosity>MPI_T_VERBOSITY_TUNER_DETAIL</verbosity>
-				<datatype>MPI_CHAR</datatype>
+				<datatype>MPI_INT</datatype>
 				<desc>Enable the restriction on CPU number to share node</desc>
 				<bind>MPI_T_BIND_NO_OBJECT</bind>
 				<scope>MPI_T_SCOPE_ALL_EQ</scope>
@@ -107,7 +107,7 @@
 			<cvar>
 				<name>LN_RESTART</name>
 				<verbosity>MPI_T_VERBOSITY_TUNER_DETAIL</verbosity>
-				<datatype>MPI_CHAR</datatype>
+				<datatype>MPI_INT</datatype>
 				<desc>Restart MPC from a previous checkpoint</desc>
 				<bind>MPI_T_BIND_NO_OBJECT</bind>
 				<scope>MPI_T_SCOPE_ALL_EQ</scope>
@@ -115,7 +115,7 @@
 			<cvar>
 				<name>LN_CHECKPOINT</name>
 				<verbosity>MPI_T_VERBOSITY_TUNER_DETAIL</verbosity>
-				<datatype>MPI_CHAR</datatype>
+				<datatype>MPI_INT</datatype>
 				<desc>Enable MPC checkpointing</desc>
 				<bind>MPI_T_BIND_NO_OBJECT</bind>
 				<scope>MPI_T_SCOPE_ALL_EQ</scope>
@@ -123,7 +123,7 @@
 			<cvar>
 				<name>LN_MIGRATION</name>
 				<verbosity>MPI_T_VERBOSITY_TUNER_DETAIL</verbosity>
-				<datatype>MPI_CHAR</datatype>
+				<datatype>MPI_INT</datatype>
 				<desc>Enable migration</desc>
 				<bind>MPI_T_BIND_NO_OBJECT</bind>
 				<scope>MPI_T_SCOPE_ALL_EQ</scope>
@@ -131,7 +131,7 @@
 			<cvar>
 				<name>LN_REPORT</name>
 				<verbosity>MPI_T_VERBOSITY_TUNER_DETAIL</verbosity>
-				<datatype>MPI_CHAR</datatype>
+				<datatype>MPI_INT</datatype>
 				<desc>Enable reporting.</desc>
 				<bind>MPI_T_BIND_NO_OBJECT</bind>
 				<scope>MPI_T_SCOPE_ALL_EQ</scope>

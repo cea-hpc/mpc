@@ -238,6 +238,9 @@ extern MPC_Request mpc_request_null;
 #define MPC_MAX_OBJECT_NAME 256
 #define MPC_MAX_LIBRARY_VERSION_STRING 8192
 
+#define MPC_ERRHANDLER_NULL -1
+#define MPC_ERRORS_RETURN -6
+#define MPC_ERRORS_ARE_FATAL -7
 
 /********************************************************************/
 /*Special TAGS                                                      */
@@ -906,10 +909,6 @@ typedef enum
   void PMPC_Default_error (MPC_Comm * comm, int *error, char *msg,
 			  char *file, int line);
   void PMPC_Return_error (MPC_Comm * comm, int *error, ...);
-
-  extern MPC_Errhandler MPC_ERRHANDLER_NULL;
-  extern MPC_Errhandler MPC_ERRORS_RETURN;
-  extern MPC_Errhandler MPC_ERRORS_ARE_FATAL;
 
   int PMPC_Errhandler_create (MPC_Handler_function *, MPC_Errhandler *);
   int PMPC_Errhandler_set (MPC_Comm, MPC_Errhandler);

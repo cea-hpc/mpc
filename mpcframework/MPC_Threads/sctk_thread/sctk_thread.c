@@ -2502,9 +2502,9 @@ sctk_start_func (void *(*run) (void *), void *arg)
 #endif
 	FILE *file;
 	struct _sctk_thread_cleanup_buffer *ptr_cleanup;
-	char name[SCTK_MAX_FILENAME_SIZE];
-	sctk_thread_t *threads = NULL;
-	int thread_to_join = 0;
+        /*	char name[SCTK_MAX_FILENAME_SIZE]; */
+        sctk_thread_t *threads = NULL;
+        int thread_to_join = 0;
 
 #ifdef MPC_MPI
 	sctk_datatype_init();
@@ -2887,7 +2887,7 @@ sctk_start_func (void *(*run) (void *), void *arg)
 
         sctk_free(threads);
 
-        remove(name);
+        /* remove(name); */
 
         sctk_runtime_config_clean_hash_tables();
 }

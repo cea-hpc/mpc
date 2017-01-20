@@ -481,7 +481,7 @@ int mpc_MPI_T_cvar_get_num(int *num_cvar) {
   *num_cvar = __cvar_array.dyn_cvar_count + MPI_T_CVAR_COUNT;
   sctk_spinlock_unlock(&cvar_array_lock);
 
-  return 0;
+  return MPI_SUCCESS;
 }
 
 int mpc_MPI_T_cvar_get_info(int cvar_index, char *name, int *name_len,
@@ -494,15 +494,26 @@ int mpc_MPI_T_cvar_get_info(int cvar_index, char *name, int *name_len,
     return MPI_T_ERR_INVALID_INDEX;
   }
 
-  sprintf(name, "%s", cvar->name);
-  *name_len = strlen(cvar->name);
-  *verbosity = (int)cvar->verbosity;
-  *datatype = cvar->datatype;
-  *enumtype = (MPI_T_enum)&cvar->enumtype;
-  sprintf(desc, "%s", cvar->desc);
-  *desc_len = strlen(cvar->desc);
-  *bind = (int)cvar->bind;
-  *scope = (int)cvar->scope;
+  if (name && name_len)
+    if (*name_len)
+      snprintf(name, *name_len, "%s", cvar->name);
+  if (name_len)
+    *name_len = strlen(cvar->name) + 1;
+  if (verbosity)
+    *verbosity = (int)cvar->verbosity;
+  if (datatype)
+    *datatype = cvar->datatype;
+  if (enumtype)
+    *enumtype = (MPI_T_enum)&cvar->enumtype;
+  if (desc && desc_len)
+    if (*desc_len)
+      snprintf(desc, *desc_len, "%s", cvar->desc);
+  if (desc_len)
+    *desc_len = strlen(cvar->desc) + 1;
+  if (bind)
+    *bind = (int)cvar->bind;
+  if (scope)
+    *scope = (int)cvar->scope;
 
   return MPI_SUCCESS;
 }
@@ -779,7 +790,7 @@ int mpc_MPI_T_pvar_get_num(int *num_pvar) {
 
   *num_pvar = ret;
 
-  return ret;
+  return MPI_SUCCESS;
 }
 
 int mpc_MPI_T_pvar_get_info(int pvar_index, char *name, int *name_len,
@@ -793,18 +804,32 @@ int mpc_MPI_T_pvar_get_info(int pvar_index, char *name, int *name_len,
     return MPI_T_ERR_INVALID_INDEX;
   }
 
-  sprintf(name, "%s", pv->name);
-  *name_len = strlen(pv->name);
-  *verbosity = (int)pv->verbosity;
-  *var_class = (int)pv->pvar_class;
-  *datatype = pv->datatype;
-  *enumtype = pv->enumtype;
-  sprintf(desc, "%s", pv->desc);
-  *desc_len = strlen(pv->desc);
-  *bind = pv->bind;
-  *readonly = pv->readonly;
-  *continuous = pv->continuous;
-  *atomic = pv->atomic;
+  if (name && name_len)
+    if (*name_len)
+      snprintf(name, *name_len, "%s", pv->name);
+  if (name_len)
+    *name_len = strlen(pv->name) + 1;
+  if (verbosity)
+    *verbosity = (int)pv->verbosity;
+  if (var_class)
+    *var_class = (int)pv->pvar_class;
+  if (datatype)
+    *datatype = pv->datatype;
+  if (enumtype)
+    *enumtype = pv->enumtype;
+  if (desc && desc_len)
+    if (*desc_len)
+      snprintf(desc, *desc_len, "%s", pv->desc);
+  if (desc_len)
+    *desc_len = strlen(pv->desc) + 1;
+  if (bind)
+    *bind = pv->bind;
+  if (readonly)
+    *readonly = pv->readonly;
+  if (continuous)
+    *continuous = pv->continuous;
+  if (atomic)
+    *atomic = pv->atomic;
 
   return MPI_SUCCESS;
 }
@@ -878,7 +903,11 @@ int mpc_MPI_T_pvar_handle_alloc(MPI_T_pvar_session session, int pvar_index,
   return MPI_SUCCESS;
 }
 
-int mpc_MPI_T_pvar_handle_free(MPI_T_pvar_handle *handle) { return 0; }
+int mpc_MPI_T_pvar_handle_free(MPI_T_pvar_session session,
+                               MPI_T_pvar_handle *handle) {
+  MPC_T_session_array_free(session, *handle);
+  return 0;
+}
 
 /************************************************************************/
 /* INTERNAL MPI_T Performance variables PVARS Start and Stop            */
@@ -987,6 +1016,7 @@ int mpc_MPI_T_pvar_reset(MPI_T_pvar_session session, MPI_T_pvar_handle handle) {
              atomic, cat)
 
 static const MPC_T_category_t __mpi_t_category_parent[MPI_T_CATEGORY_COUNT] = {
+    MPI_T_CAT_NULL,
 #include "sctk_mpit.h"
     MPI_T_CAT_NULL};
 
@@ -1001,6 +1031,7 @@ static const MPC_T_category_t __mpi_t_category_parent[MPI_T_CATEGORY_COUNT] = {
              atomic, cat)
 
 static const char *const __mpi_t_category_desc[MPI_T_CATEGORY_COUNT] = {
+    "MPI_T_CAT_VARS",
 #include "sctk_mpit.h"
     "MPI_T_CAT_NULL"};
 
@@ -1015,6 +1046,7 @@ static const char *const __mpi_t_category_desc[MPI_T_CATEGORY_COUNT] = {
              atomic, cat)
 
 static const char *const __mpi_t_category_name[MPI_T_CATEGORY_COUNT] = {
+    "MPI_T_CAT_VARS",
 #include "sctk_mpit.h"
     "MPI_T_CAT_NULL"};
 
@@ -1039,12 +1071,22 @@ int mpc_MPI_T_category_get_info(int cat_index, char *name, int *name_len,
     return MPI_ERR_ARG;
   }
 
-  if (name) {
-    sprintf(name, "%s", __mpi_t_category_name[cat_index]);
+  if (name && name_len) {
+    if (*name_len)
+      snprintf(name, *name_len, "%s", __mpi_t_category_name[cat_index]);
   }
 
-  if (desc) {
-    sprintf(desc, "%s", __mpi_t_category_desc[cat_index]);
+  if (name_len) {
+    *name_len = strlen(__mpi_t_category_name[cat_index]) + 1;
+  }
+
+  if (desc && desc_len) {
+    if (*desc_len)
+      snprintf(desc, *desc_len, "%s", __mpi_t_category_desc[cat_index]);
+  }
+
+  if (desc_len) {
+    *desc_len = strlen(__mpi_t_category_desc[cat_index]) + 1;
   }
 
   int __num_pvars = 0;
@@ -1053,33 +1095,36 @@ int mpc_MPI_T_category_get_info(int cat_index, char *name, int *name_len,
 
   int i;
 
-  for (i = 0; i < MPI_T_PVAR_COUNT; i++) {
-    if (__mpi_t_pvars_categories[i] == cat_index) {
-      __num_pvars++;
-    }
-  }
-
   if (num_pvars) {
+
+    for (i = 0; i < MPI_T_PVAR_COUNT; i++) {
+      if (__mpi_t_pvars_categories[i] == cat_index) {
+        __num_pvars++;
+      }
+    }
+
     *num_pvars = __num_pvars;
   }
 
-  for (i = 0; i < MPI_T_CVAR_COUNT; i++) {
-    if (__mpi_t_cvars_categories[i] == cat_index) {
-      num_cvars++;
-    }
-  }
-
   if (num_cvars) {
+
+    for (i = 0; i < MPI_T_CVAR_COUNT; i++) {
+      if (__mpi_t_cvars_categories[i] == cat_index) {
+        __num_cvars++;
+      }
+    }
+
     *num_cvars = __num_cvars;
   }
 
-  for (i = 0; i < MPI_T_CATEGORY_COUNT; i++) {
-    if (__mpi_t_category_parent[i] == cat_index) {
-      __num_cat++;
-    }
-  }
-
   if (num_categories) {
+
+    for (i = 0; i < MPI_T_CATEGORY_COUNT; i++) {
+      if (__mpi_t_category_parent[i] == cat_index) {
+        __num_cat++;
+      }
+    }
+
     *num_categories = __num_cat;
   }
 

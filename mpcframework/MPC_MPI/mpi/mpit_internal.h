@@ -408,7 +408,8 @@ int mpc_MPI_T_pvar_handle_alloc(MPI_T_pvar_session session, int pvar_index,
                                 void *obj_handle, MPI_T_pvar_handle *handle,
                                 int *count);
 
-int mpc_MPI_T_pvar_handle_free(MPI_T_pvar_handle *handle);
+int mpc_MPI_T_pvar_handle_free(MPI_T_pvar_session session,
+                               MPI_T_pvar_handle *handle);
 
 /************************************************************************/
 /* INTERNAL MPI_T Performance variables PVARS Start and Stop            */
@@ -446,8 +447,8 @@ int mpc_MPI_T_pvar_reset(MPI_T_pvar_session session, MPI_T_pvar_handle handle);
 typedef enum {
   MPI_T_CAT_VARS = 0,
 #include "sctk_mpit.h"
-  MPI_T_CATEGORY_COUNT,
-  MPI_T_CAT_NULL
+  MPI_T_CAT_NULL,
+  MPI_T_CATEGORY_COUNT
 } MPC_T_category_t;
 
 #undef CATEGORIES

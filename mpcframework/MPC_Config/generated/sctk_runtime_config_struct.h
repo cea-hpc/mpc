@@ -41,7 +41,7 @@ struct sctk_runtime_config_funcptr
 struct sctk_runtime_config_struct_accl_cuda {
   int init_done;
   /**Set to true to enable CUDA context-switch**/
-  bool enabled;
+  int enabled;
 };
 
 /******************************** STRUCTURE *********************************/
@@ -49,7 +49,7 @@ struct sctk_runtime_config_struct_accl_cuda {
 struct sctk_runtime_config_struct_accl_openacc {
   int init_done;
   /**Set to true to enable OpenACC in MPC**/
-  bool enabled;
+  int enabled;
 };
 
 /******************************** STRUCTURE *********************************/
@@ -57,7 +57,7 @@ struct sctk_runtime_config_struct_accl_openacc {
 struct sctk_runtime_config_struct_accl_opencl {
   int init_done;
   /**Set to true to enable OpenCL in MPC**/
-  bool enabled;
+  int enabled;
 };
 
 /******************************** STRUCTURE *********************************/
@@ -65,7 +65,7 @@ struct sctk_runtime_config_struct_accl_opencl {
 struct sctk_runtime_config_struct_accl {
   int init_done;
   /**Set to true to enable Accelerators support**/
-  bool enabled;
+  int enabled;
   /**Define CUDA-specific configuration**/
   struct sctk_runtime_config_struct_accl_cuda cuda;
   /**Define OpenACC-specific configuration**/
@@ -79,19 +79,28 @@ struct sctk_runtime_config_struct_accl {
 struct sctk_runtime_config_struct_allocator
 {	int init_done;
 	/**Enable or disable NUMA migration of allocator pages on thread migration.**/
-	bool numa_migration;
-	/**If the new segment is less than N time smaller than factor, realloc will allocate a new segment, otherwise it will keep the same one. Use 1 to force realloc every time (may be slower but consume less memory).**/
-	int realloc_factor;
-	/**If the new segment is smaller of N bytes than threashold, realloc will allocate a new segment, otherwise it will keep the same one. Use 0 to force realloc every time (may be slower but consume less memory).**/
-	size_t realloc_threashold;
-	/**Permit to enable of disable NUMA support in MPC Allocator.**/
-	bool numa;
-	/**If true, enable usage of abort() on free error, otherwise try to continue by skipping.**/
-	bool strict;
-	/**Maximum amount of memory to keep in memory sources (one per NUMA node). Use 0 to disable cache, huge value to keep all.**/
-	size_t keep_mem;
-	/**Maximum size of macro blocs to keep in memory source for reuse. Use 0 to disable cache, huge value to keep all.**/
-	size_t keep_max;
+        int numa_migration;
+        /**If the new segment is less than N time smaller than factor, realloc
+         * will allocate a new segment, otherwise it will keep the same one. Use
+         * 1 to force realloc every time (may be slower but consume less
+         * memory).**/
+        int realloc_factor;
+        /**If the new segment is smaller of N bytes than threashold, realloc
+         * will allocate a new segment, otherwise it will keep the same one. Use
+         * 0 to force realloc every time (may be slower but consume less
+         * memory).**/
+        size_t realloc_threashold;
+        /**Permit to enable of disable NUMA support in MPC Allocator.**/
+        int numa;
+        /**If true, enable usage of abort() on free error, otherwise try to
+         * continue by skipping.**/
+        int strict;
+        /**Maximum amount of memory to keep in memory sources (one per NUMA
+         * node). Use 0 to disable cache, huge value to keep all.**/
+        size_t keep_mem;
+        /**Maximum size of macro blocs to keep in memory source for reuse. Use 0
+         * to disable cache, huge value to keep all.**/
+        size_t keep_max;
 };
 
 /******************************** STRUCTURE *********************************/
@@ -101,47 +110,52 @@ struct sctk_runtime_config_struct_launcher
 	/**Default verbosity level from 0 to 3. Can be override by -vv on mpcrun.**/
 	int verbosity;
 	/**Display the MPC banner at launch time to print some informations about the topology. Can be override by MPC_DISABLE_BANNER.**/
-	bool banner;
-	/**Automatically kill the MPC processes after a given timeout. Use 0 to disable. Can be override by MPC_AUTO_KILL_TIMEOUT.**/
-	int autokill;
-	/**Permit to extend the launchers available via 'mpcrun -l=...' by providing scripts (named mpcrun_XXXX) in a user directory. Can be override by MPC_USER_LAUNCHERS.**/
-	char * user_launchers;
-	/**Activate randomization of base addresses**/
-	bool keep_rand_addr;
-	/**Deactivate randomization of base addresses**/
-	bool disable_rand_addr;
-	/**Do not use mpc for execution (deprecated?)**/
-	bool disable_mpc;
-	/**Initialize multithreading mode**/
-	struct sctk_runtime_config_funcptr thread_init;
-	/**Define the number of MPI tasks**/
-	int nb_task;
-	/**Define the number of MPC processes**/
-	int nb_process;
-	/**Define the number of virtual processors**/
-	int nb_processor;
-	/**Define the number of compute nodes**/
-	int nb_node;
-	/**Define which launcher to use**/
-	char * launcher;
-	/**Define the max number of tries to access the topology file before failing**/
-	int max_try;
-	/**Print the MPC version number**/
-	bool vers_details;
-	/**Select the type of outputs for the profiling**/
-	char * profiling;
-	/**Enable usage of hyperthreaded cores if available on current architecture.**/
-	bool enable_smt;
-	/**Enable the restriction on CPU number to share node**/
-	bool share_node;
-	/**Restart MPC from a previous checkpoint**/
-	bool restart;
-	/**Enable MPC checkpointing**/
-	bool checkpoint;
-	/**Enable migration**/
-	bool migration;
-	/**Enable reporting.**/
-	bool report;
+        int banner;
+        /**Automatically kill the MPC processes after a given timeout. Use 0 to
+         * disable. Can be override by MPC_AUTO_KILL_TIMEOUT.**/
+        int autokill;
+        /**Permit to extend the launchers available via 'mpcrun -l=...' by
+         * providing scripts (named mpcrun_XXXX) in a user directory. Can be
+         * override by MPC_USER_LAUNCHERS.**/
+        char *user_launchers;
+        /**Activate randomization of base addresses**/
+        int keep_rand_addr;
+        /**Deactivate randomization of base addresses**/
+        int disable_rand_addr;
+        /**Do not use mpc for execution (deprecated?)**/
+        int disable_mpc;
+        /**Initialize multithreading mode**/
+        struct sctk_runtime_config_funcptr thread_init;
+        /**Define the number of MPI tasks**/
+        int nb_task;
+        /**Define the number of MPC processes**/
+        int nb_process;
+        /**Define the number of virtual processors**/
+        int nb_processor;
+        /**Define the number of compute nodes**/
+        int nb_node;
+        /**Define which launcher to use**/
+        char *launcher;
+        /**Define the max number of tries to access the topology file before
+         * failing**/
+        int max_try;
+        /**Print the MPC version number**/
+        int vers_details;
+        /**Select the type of outputs for the profiling**/
+        char *profiling;
+        /**Enable usage of hyperthreaded cores if available on current
+         * architecture.**/
+        int enable_smt;
+        /**Enable the restriction on CPU number to share node**/
+        int share_node;
+        /**Restart MPC from a previous checkpoint**/
+        int restart;
+        /**Enable MPC checkpointing**/
+        int checkpoint;
+        /**Enable migration**/
+        int migration;
+        /**Enable reporting.**/
+        int report;
 };
 
 /******************************** STRUCTURE *********************************/
@@ -149,9 +163,9 @@ struct sctk_runtime_config_struct_launcher
 struct sctk_runtime_config_struct_debugger
 {	int init_done;
 	/**Print colored text in terminal**/
-	bool colors;
-	/****/
-	int max_filename_size;
+        int colors;
+        /****/
+        int max_filename_size;
 };
 
 /******************************** STRUCTURE *********************************/
@@ -246,11 +260,11 @@ struct sctk_runtime_config_struct_progress_thread
 struct sctk_runtime_config_struct_mpc
 {	int init_done;
 	/**Print debug messages**/
-	bool log_debug;
-	/****/
-	bool hard_checking;
-	/****/
-	bool buffering;
+        int log_debug;
+        /****/
+        int hard_checking;
+        /****/
+        int buffering;
 };
 
 /********************************** ENUM ************************************/
@@ -344,27 +358,28 @@ struct sctk_runtime_config_struct_net_driver_infiniband
 	/**Defines the number of entries for the CQ dedicated to sent messages.**/
 	int wc_out_number;
 	/**Defines if the low memory mode should be activated**/
-	bool low_memory;
-	/**Defines the Rendezvous protocol to use (IBV_RDVZ_WRITE_PROTOCOL or IBV_RDVZ_READ_PROTOCOL)**/
-	enum ibv_rdvz_protocol rdvz_protocol;
-	/**Defines the minimum size for the Eager RDMA buffers**/
-	int rdma_min_size;
-	/**Defines the maximun size for the Eager RDMA buffers**/
-	int rdma_max_size;
-	/**Defines the minimum number of Eager RDMA buffers**/
-	int rdma_min_nb;
-	/**Defines the maximum number of Eager RDMA buffers**/
-	int rdma_max_nb;
-	/**Defines the minimum size for the Eager RDMA buffers (resizing)**/
-	int rdma_resizing_min_size;
-	/**Defines the maximum size for the Eager RDMA buffers (resizing)**/
-	int rdma_resizing_max_size;
-	/**Defines the minimum number of Eager RDMA buffers (resizing)**/
-	int rdma_resizing_min_nb;
-	/**Defines the maximum number of Eager RDMA buffers (resizing)**/
-	int rdma_resizing_max_nb;
-	/**Defines the number of receive buffers allocated on the fly.**/
-	int size_recv_ibufs_chunk;
+        int low_memory;
+        /**Defines the Rendezvous protocol to use (IBV_RDVZ_WRITE_PROTOCOL or
+         * IBV_RDVZ_READ_PROTOCOL)**/
+        enum ibv_rdvz_protocol rdvz_protocol;
+        /**Defines the minimum size for the Eager RDMA buffers**/
+        int rdma_min_size;
+        /**Defines the maximun size for the Eager RDMA buffers**/
+        int rdma_max_size;
+        /**Defines the minimum number of Eager RDMA buffers**/
+        int rdma_min_nb;
+        /**Defines the maximum number of Eager RDMA buffers**/
+        int rdma_max_nb;
+        /**Defines the minimum size for the Eager RDMA buffers (resizing)**/
+        int rdma_resizing_min_size;
+        /**Defines the maximum size for the Eager RDMA buffers (resizing)**/
+        int rdma_resizing_max_size;
+        /**Defines the minimum number of Eager RDMA buffers (resizing)**/
+        int rdma_resizing_min_nb;
+        /**Defines the maximum number of Eager RDMA buffers (resizing)**/
+        int rdma_resizing_max_nb;
+        /**Defines the number of receive buffers allocated on the fly.**/
+        int size_recv_ibufs_chunk;
 };
 
 /******************************** STRUCTURE *********************************/
@@ -416,29 +431,30 @@ struct sctk_runtime_config_struct_net_driver_shm
 	/**Defines the min size for the SHM buffered message**/
 	int buffered_max_size;
 	/**Defines if mode zerocopy should be actived for SHM buffered message**/
-	bool buffered_zerocopy;
-	/****/
-	bool cma_enable;
-	/**Defines priority for the SHM CMA message**/
-	int cma_priority;
-	/**Defines the min size for the SHM CMA message**/
-	int cma_min_size;
-	/**Defines the min size for the SHM CMA message**/
-	int cma_max_size;
-	/**Defines if mode zerocopy should be actived for SHM CMA message**/
-	bool cma_zerocopy;
-	/**Defines priority for the SHM fragmented message**/
-	int frag_priority;
-	/**Defines the min size for the SHM fragmented message**/
-	int frag_min_size;
-	/**Defines the min size for the SHM fragmented message**/
-	int frag_max_size;
-	/**Defines if mode zerocopy should be actived for SHM fragmented message**/
-	bool frag_zerocopy;
-	/**Size of shared memory region.**/
-	int shmem_size;
-	/**Size of shared memory region.**/
-	int cells_num;
+        int buffered_zerocopy;
+        /****/
+        int cma_enable;
+        /**Defines priority for the SHM CMA message**/
+        int cma_priority;
+        /**Defines the min size for the SHM CMA message**/
+        int cma_min_size;
+        /**Defines the min size for the SHM CMA message**/
+        int cma_max_size;
+        /**Defines if mode zerocopy should be actived for SHM CMA message**/
+        int cma_zerocopy;
+        /**Defines priority for the SHM fragmented message**/
+        int frag_priority;
+        /**Defines the min size for the SHM fragmented message**/
+        int frag_min_size;
+        /**Defines the min size for the SHM fragmented message**/
+        int frag_max_size;
+        /**Defines if mode zerocopy should be actived for SHM fragmented
+         * message**/
+        int frag_zerocopy;
+        /**Size of shared memory region.**/
+        int shmem_size;
+        /**Size of shared memory region.**/
+        int cells_num;
 };
 
 /********************************** ENUM ************************************/
@@ -668,17 +684,17 @@ struct sctk_runtime_config_struct_inter_thread_comm
 struct sctk_runtime_config_struct_low_level_comm
 {	int init_done;
 	/****/
-	bool checksum;
-	/****/
-	struct sctk_runtime_config_funcptr send_msg;
-	/****/
-	char * network_mode;
-	/****/
-	bool dyn_reordering;
-	/**Enable usage of polling during idle.**/
-	bool enable_idle_polling;
-	/**Global parameters for IB**/
-	struct sctk_runtime_config_struct_ib_global ib_global;
+        int checksum;
+        /****/
+        struct sctk_runtime_config_funcptr send_msg;
+        /****/
+        char *network_mode;
+        /****/
+        int dyn_reordering;
+        /**Enable usage of polling during idle.**/
+        int enable_idle_polling;
+        /**Global parameters for IB**/
+        struct sctk_runtime_config_struct_ib_global ib_global;
 };
 
 /********************************** ENUM ************************************/
@@ -704,37 +720,38 @@ struct sctk_runtime_config_struct_openmp
 	/**Number of threads to use during execution**/
 	int nb_threads;
 	/**Dynamic adjustment of the number of threads**/
-	bool adjustment;
-	/**Bind threads to processor core**/
-	bool proc_bind;
-	/**Nested parallelism**/
-	bool nested;
-	/**Stack size for OpenMP threads**/
-	int stack_size;
-	/**Behavior of threads while waiting**/
-	int wait_policy;
-	/**Maximum number of OpenMP threads among all teams**/
-	int thread_limit;
-	/**Maximum depth of nested parallelism**/
-	int max_active_levels;
-	/**Tree shape for OpenMP construct**/
-	char * tree;
-	/**Maximum number of threads for each team of a parallel region**/
-	int max_threads;
-	/**Maximum number of shared for loops w/ dynamic schedule alive**/
-	int max_alive_for_dyn;
-	/**Maximum number of shared for loops w/ guided schedule alive**/
-	int max_alive_for_guided;
-	/**Maximum number of alive sections construct**/
-	int max_alive_sections;
-	/**Maximum number of alive single construct**/
-	int max_alive_single;
-	/**Emit warning when entering nested parallelism**/
-	bool warn_nested;
-	/**MPI/OpenMP hybrid mode (simple-mixed, alternating)**/
-	char * mode;
-	/**Affinity of threads for parallel regions (COMPACT, SCATTER, BALANCED)**/
-	char * affinity;
+        int adjustment;
+        /**Bind threads to processor core**/
+        int proc_bind;
+        /**Nested parallelism**/
+        int nested;
+        /**Stack size for OpenMP threads**/
+        int stack_size;
+        /**Behavior of threads while waiting**/
+        int wait_policy;
+        /**Maximum number of OpenMP threads among all teams**/
+        int thread_limit;
+        /**Maximum depth of nested parallelism**/
+        int max_active_levels;
+        /**Tree shape for OpenMP construct**/
+        char *tree;
+        /**Maximum number of threads for each team of a parallel region**/
+        int max_threads;
+        /**Maximum number of shared for loops w/ dynamic schedule alive**/
+        int max_alive_for_dyn;
+        /**Maximum number of shared for loops w/ guided schedule alive**/
+        int max_alive_for_guided;
+        /**Maximum number of alive sections construct**/
+        int max_alive_sections;
+        /**Maximum number of alive single construct**/
+        int max_alive_single;
+        /**Emit warning when entering nested parallelism**/
+        int warn_nested;
+        /**MPI/OpenMP hybrid mode (simple-mixed, alternating)**/
+        char *mode;
+        /**Affinity of threads for parallel regions (COMPACT, SCATTER,
+         * BALANCED)**/
+        char *affinity;
         /**Depth of the new tasks lists in the tree**/
         int omp_new_task_depth;
         /**Depth of the untied tasks lists in the tree**/
@@ -752,13 +769,13 @@ struct sctk_runtime_config_struct_profiler
 	/**Prefix of MPC Profiler outputs**/
 	char * file_prefix;
 	/**Add a timestamp to profiles file names**/
-	bool append_date;
-	/**Profile in color when outputed to stdout**/
-	bool color_stdout;
-	/**Color for levels of profiler output**/
-	char * * level_colors;
-	/** Number of elements in level_colors array. **/
-	int level_colors_size;
+        int append_date;
+        /**Profile in color when outputed to stdout**/
+        int color_stdout;
+        /**Color for levels of profiler output**/
+        char **level_colors;
+        /** Number of elements in level_colors array. **/
+        int level_colors_size;
 };
 
 /******************************** STRUCTURE *********************************/

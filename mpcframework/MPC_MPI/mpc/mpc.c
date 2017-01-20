@@ -2702,6 +2702,16 @@ void PMPC_Return_error(MPC_Comm *comm, int *error, ...) {
     sctk_error("Warning: %s on comm %d", str, (int)*comm);
 }
 
+void PMPC_Abort_error(MPC_Comm *comm, int *error, ...) {
+  char str[1024];
+  int i;
+  PMPC_Error_string(*error, str, &i);
+  if (i != 0)
+    sctk_error("Error: %s on comm %d, will now ABORT", str, (int)*comm);
+
+  sctk_fatal("MPC Encountered an Error and aborted");
+}
+
 static void MPC_Checkpoint_restart_init() {
   if (sctk_check_point_restart_mode) {
 #if 1
@@ -6439,21 +6449,18 @@ int PMPC_Error_class(int errorcode, int *errorclass) {
   MPC_ERROR_SUCESS();
 }
 
-MPC_Errhandler MPC_ERRHANDLER_NULL;
-MPC_Errhandler MPC_ERRORS_RETURN;
-MPC_Errhandler MPC_ERRORS_ARE_FATAL;
-
 static volatile int error_init_done = 0;
 
 int __MPC_Error_init() {
   if (error_init_done == 0) {
     error_init_done = 1;
-    sctk_errhandler_register((sctk_generic_handler)PMPC_Default_error,
-                             (sctk_errhandler_t *)&MPC_ERRHANDLER_NULL);
-    sctk_errhandler_register((sctk_generic_handler)PMPC_Return_error,
-                             (sctk_errhandler_t *)&MPC_ERRORS_RETURN);
-    sctk_errhandler_register((sctk_generic_handler)PMPC_Default_error,
-                             (sctk_errhandler_t *)&MPC_ERRORS_ARE_FATAL);
+
+    sctk_errhandler_register_on_slot((sctk_generic_handler)PMPC_Default_error,
+                                     MPC_ERRHANDLER_NULL);
+    sctk_errhandler_register_on_slot((sctk_generic_handler)PMPC_Return_error,
+                                     MPC_ERRORS_RETURN);
+    sctk_errhandler_register_on_slot((sctk_generic_handler)PMPC_Abort_error,
+                                     MPC_ERRORS_ARE_FATAL);
 
     PMPC_Errhandler_set(MPC_COMM_WORLD, MPC_ERRORS_ARE_FATAL);
     PMPC_Errhandler_set(MPC_COMM_SELF, MPC_ERRORS_ARE_FATAL);

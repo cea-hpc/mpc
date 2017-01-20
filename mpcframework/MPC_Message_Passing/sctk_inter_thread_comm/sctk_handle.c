@@ -91,6 +91,16 @@ int sctk_errhandler_register(sctk_generic_handler eh, sctk_errhandler_t *errh) {
   return 0;
 }
 
+int sctk_errhandler_register_on_slot(sctk_generic_handler eh,
+                                     sctk_errhandler_t slot) {
+  mpc_mpi_err_init_once();
+  /* Save in the HT */
+  sctk_nodebug("REGISTER Is %p for %d", eh, *errh);
+  MPCHT_set(&error_handlers, slot, (void *)eh);
+  /* All ok */
+  return 0;
+}
+
 sctk_generic_handler sctk_errhandler_resolve(sctk_errhandler_t errh) {
   mpc_mpi_err_init_once();
   /* Direct HT lookup */

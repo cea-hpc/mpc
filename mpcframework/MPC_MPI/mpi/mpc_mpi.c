@@ -189,7 +189,7 @@ static inline void fortran_check_binds_resolve() {
   if (fortran_init) {
     (fortran_init)();
   } else {
-    sctk_error("No symbol");
+    sctk_nodebug("No symbol");
   }
 
   void (*fortran08_init)();
@@ -210,7 +210,7 @@ static inline void fortran_check_binds_resolve() {
   if (fortran08_init) {
     (fortran08_init)();
   } else {
-    sctk_error("No symbol08");
+    sctk_nodebug("No symbol08");
   }
 
   dlclose(handle);
@@ -11607,44 +11607,6 @@ __INTERNAL__PMPI_Get_version (int *version, int *subversion)
   	return MPI_SUCCESS;
 }
 
-static int
-__INTERNAL__PMPI_Errhandler_create (MPI_Handler_function * function,
-				    MPI_Errhandler * errhandler)
-{
-  mpc_mpi_data_t* tmp;
-  int i;
-  int found = 0;
-
-  tmp = mpc_mpc_get_per_task_data();
-  sctk_spinlock_lock(&(tmp->lock));
-
-  for (i = 0; i < tmp->user_func_nb; i++)
-    {
-      if (tmp->user_func[i].status == 0)
-	{
-	  found = 1;
-	  break;
-	}
-    }
-
-  if (found == 0)
-    {
-      tmp->user_func_nb++;
-      tmp->user_func =
-	sctk_realloc (tmp->user_func,
-		      tmp->user_func_nb *
-		      sizeof (MPI_Handler_user_function_t));
-    }
-
-
-  tmp->user_func[i].func = function;
-  tmp->user_func[i].status = 1;
-  *errhandler = i;
-
-  sctk_spinlock_unlock(&(tmp->lock));
-  MPI_ERROR_SUCESS ();
-}
-
 void
 MPI_Default_error (MPI_Comm * comm, int *error, char *msg, char *file,
 		   int line)
@@ -11680,10 +11642,16 @@ MPI_Return_error (MPI_Comm * comm, int *error, ...)
 {
 }
 
+static int __INTERNAL__PMPI_Errhandler_create(MPI_Handler_function *function,
+                                              MPI_Errhandler *errhandler) {
+  sctk_errhandler_register(function, errhandler);
+  MPI_ERROR_SUCESS();
+}
 
 static int
 __INTERNAL__PMPI_Errhandler_set (MPI_Comm comm, MPI_Errhandler errhandler)
 {
+
   sctk_handle_set_errhandler((sctk_handle)comm, SCTK_HANDLE_COMM,
                              (sctk_errhandler_t)errhandler);
   MPI_ERROR_SUCESS ();
@@ -11701,7 +11669,8 @@ __INTERNAL__PMPI_Errhandler_get (MPI_Comm comm, MPI_Errhandler * errhandler)
 static int
 __INTERNAL__PMPI_Errhandler_free (MPI_Errhandler * errhandler)
 {
-  sctk_errhandler_free((sctk_errhandler_t)*errhandler);
+  TODO("Refcounting should be implemented for Error handlers");
+  // sctk_errhandler_free((sctk_errhandler_t)*errhandler);
   *errhandler = MPI_ERRHANDLER_NULL;
   MPI_ERROR_SUCESS ();
 }
@@ -12004,6 +11973,7 @@ int PMPI_Send(void *buf, int count, MPI_Datatype datatype, int dest, int tag,
   SCTK_PROFIL_END(MPI_Send);
   return res;
 }
+
 static inline int PMPI_Recv_p(void *buf, int count, MPI_Datatype datatype,
                               int source, int tag, MPI_Comm comm,
                               MPI_Status *status) {
@@ -15789,7 +15759,7 @@ PMPI_Errhandler_set (MPI_Comm comm, MPI_Errhandler errhandler)
   }
 
   if (errhandler == MPI_ERRHANDLER_NULL) {
-    MPI_ERROR_REPORT(comm, MPI_ERR_ARG, "");
+    return MPI_ERR_ARG;
   }
 
   int res = MPI_ERR_INTERN;
@@ -15810,7 +15780,6 @@ PMPI_Errhandler_get (MPI_Comm comm, MPI_Errhandler * errhandler)
 int
 PMPI_Errhandler_free (MPI_Errhandler * errhandler)
 {
-
   if (!errhandler) {
     return MPI_ERR_ARG;
   }
@@ -16661,8 +16630,9 @@ int PMPI_T_pvar_handle_alloc(MPI_T_pvar_session session, int pvar_index,
                                      count);
 }
 
-int PMPI_T_pvar_handle_free(MPI_T_pvar_handle *handle) {
-  return mpc_MPI_T_pvar_handle_free(handle);
+int PMPI_T_pvar_handle_free(MPI_T_pvar_session session,
+                            MPI_T_pvar_handle *handle) {
+  return mpc_MPI_T_pvar_handle_free(session, handle);
 }
 
 int PMPI_T_pvar_start(MPI_T_pvar_session session, MPI_T_pvar_handle handle) {

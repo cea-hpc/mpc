@@ -32,6 +32,8 @@ typedef void (*sctk_generic_handler)(void *phandle, int *error_code, ...);
 typedef int sctk_errhandler_t;
 
 int sctk_errhandler_register(sctk_generic_handler eh, sctk_errhandler_t *errh);
+int sctk_errhandler_register_on_slot(sctk_generic_handler eh,
+                                     sctk_errhandler_t slot);
 sctk_generic_handler sctk_errhandler_resolve(sctk_errhandler_t errh);
 int sctk_errhandler_free(sctk_errhandler_t errh);
 

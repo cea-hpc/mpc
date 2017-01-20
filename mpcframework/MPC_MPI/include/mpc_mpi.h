@@ -337,9 +337,9 @@ extern "C"
 
 #define MPI_BSEND_OVERHEAD (2*sizeof(mpi_buffer_overhead_t))
 
-#define MPI_ERRHANDLER_NULL ((MPI_Errhandler)0)
-#define MPI_ERRORS_RETURN 1
-#define MPI_ERRORS_ARE_FATAL 2
+#define MPI_ERRHANDLER_NULL MPC_ERRHANDLER_NULL
+#define MPI_ERRORS_RETURN MPC_ERRORS_RETURN       /* 1234 in Fortran */
+#define MPI_ERRORS_ARE_FATAL MPC_ERRORS_ARE_FATAL /* 1235 in Fortran */
 
 #define MPI_KEYVAL_INVALID -1
 
@@ -1106,7 +1106,8 @@ int MPI_T_pvar_handle_alloc(MPI_T_pvar_session session, int pvar_index,
 * @arg handle PVAR handle to free
 * @return MPI Error
 */
-int MPI_T_pvar_handle_free(MPI_T_pvar_handle *handle);
+int MPI_T_pvar_handle_free(MPI_T_pvar_session session,
+                           MPI_T_pvar_handle *handle);
 
 /** PVAR start and stop */
 
@@ -1572,7 +1573,8 @@ int PMPI_T_pvar_session_free(MPI_T_pvar_session *session);
 int PMPI_T_pvar_handle(MPI_T_pvar_session session, int pvar_index,
                        void *obj_handle, MPI_T_pvar_handle *handle, int *count);
 
-int PMPI_T_pvar_handle_free(MPI_T_pvar_handle *handle);
+int PMPI_T_pvar_handle_free(MPI_T_pvar_session session,
+                            MPI_T_pvar_handle *handle);
 int PMPI_T_pvar_start(MPI_T_pvar_session session, MPI_T_pvar_handle handle);
 int PMPI_T_pvar_stop(MPI_T_pvar_session session, MPI_T_pvar_handle handle);
 int PMPI_T_pvar_read(MPI_T_pvar_session session, MPI_T_pvar_handle handle,
