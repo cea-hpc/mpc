@@ -517,7 +517,11 @@ setModulesToInternal()
 	getModules 'LIST'
 
 	for module in $LIST; do
-		genPrefix $module
+		if test -n "`echo "${DEFAULT_DISABLED}" | grep "$module"`"; then
+			genPrefix $module "disabled"
+		else
+			genPrefix $module "${INTERNAL_KEY}"
+		fi
 	done	
 }
 
@@ -525,11 +529,12 @@ setModulesToInternal()
 #function to generate the prefix variable and set it to internal
 #Args   :
 #   -$1 : Module name
+#   -$2 : The var content
 #Result : Create var
 genPrefix()
 {
 	name=`echo "${1}" | tr '[:lower:]' '[:upper:]' | sed -e "s/-/_/g"`
-	eval "${name}_PREFIX=\"${INTERNAL_KEY}\""
+	eval "${name}_PREFIX=\"${2}\""
 }
 
 ######################################################

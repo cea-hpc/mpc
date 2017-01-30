@@ -62,11 +62,9 @@ fi
 
 ######################################################
 # Set all modules to internal
+DEFAULT_DISABLED="tbb gdb dmtcp"
 setModulesToInternal
 
-## Not sure if here is a good place for this:
-TBB_PREFIX='disabled'
-GDB_PREFIX='disabled'
 
 USE_SPACK=0
 SKIP_LIB_CHECK_SPACK=0
@@ -243,7 +241,7 @@ do
 		--with-opencl=*)
 			extractParamValue 'OPENCL_PREFIX' 'with-opencl' "$arg"
 			;;
-		################### HWLOC ###################
+		################### TBB ###################
 		--with-tbb=*)
 			extractParamValue 'TBB_PREFIX' 'with-tbb' "$arg"
 			;;
@@ -256,11 +254,33 @@ do
 		--disable-mpc-tbb)
 			TBB_PREFIX="disabled"
 			;;
+		################### EXTLS ###################
 		--with-libextls=*)
 			extractParamValue 'LIBEXTLS_PREFIX' 'with-libextls' "$arg"
 			;;
 		--libextls-*)
 			extractAndAddPackageOption 'LIBEXTLS_BUILD_PARAMETERS' 'libextls' "$arg"
+			;;
+		################### HBICT ###################
+		--with-hbict=*)
+			extractParamValue 'HBICT_PREFIX' 'with-hbict' "$arg"
+			;;
+		--hbict-*)
+			extractAndAddPackageOption 'HBICT_BUILD_PARAMETERS' 'hbict' "$arg"
+			;;
+		################### DMTCP ###################
+		--with-dmtcp=*)
+			extractParamValue 'DMTCP_PREFIX' 'with-dmtcp' "$arg"
+			;;
+		--dmtcp-*)
+			extractAndAddPackageOption 'DMTCP_BUILD_PARAMETERS' 'dmtcp' "$arg"
+			;;
+		################### GENERIC FT ###################
+		--enable-mpc-ft)
+			enableParamIfNot 'DMTCP_PREFIX' "$DMTCP_PREFIX" 'disabled' 'internal'
+			;;
+		--disable-mpc-ft)
+			DMTCP_PREFIX="disabled"
 			;;
 		################# COMPILER ##################
 		--compiler=*)
