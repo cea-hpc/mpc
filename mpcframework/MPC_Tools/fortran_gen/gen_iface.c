@@ -137,7 +137,7 @@ int generate_mpi_fortran_constants()
         MPI_TYPE_VAL("MPI_WIN_NULL", ((MPI_Win)-1), "MPI_Win");
         MPI_TYPE_VAL("MPI_GROUP_NULL", ((MPI_Group)-1), "MPI_Group");
         MPI_TYPE_VAL("MPI_INFO_NULL", ((MPI_Info)-1), "MPI_Info");
-        MPI_TYPE_VAL("MPI_ERRHANDLER_NULL", MPI_ERRHANDLER_NULL),
+        MPI_TYPE_VAL("MPI_ERRHANDLER_NULL", MPI_ERRHANDLER_NULL,
                      "MPI_Errhandler");
         MPI_TYPE_VAL("MPI_MESSAGE_NULL", MPI_REQUEST_NULL, "MPI_Message");
 
