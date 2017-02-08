@@ -65,7 +65,6 @@ void __mpcomp_internal_begin_parallel_region(
 			ompt_frame_t* parent_frame;
 			ompt_data_t* parallel_data, *parent_task_data;
 
-			sctk_error("CALL %p %p", OMPT_Callbacks, OMPT_Callbacks[ompt_callback_parallel_begin] );
 			const void* code_ra = __builtin_return_address( 0 );
 			callback( NULL, NULL, NULL, 0, 0, 0, code_ra );
 		}

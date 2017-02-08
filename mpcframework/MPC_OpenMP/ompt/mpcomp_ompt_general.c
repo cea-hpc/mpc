@@ -333,7 +333,6 @@ int ompt_set_callback(ompt_callbacks_t callback_type, ompt_callback_t callback)
 			assert( OMPT_Callbacks );
 			memset( OMPT_Callbacks, 0, len* sizeof(ompt_callback_t) );
 		}
-		sctk_error("Set callback - %p", callback);
 		OMPT_Callbacks[callback_type] = callback;
 	}
 	return status;

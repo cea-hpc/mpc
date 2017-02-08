@@ -235,6 +235,9 @@ int omp_test_lock(omp_lock_t *lock)
 static void __internal_omp_init_nest_lock_with_hint(omp_nest_lock_t *lock, omp_lock_hint_t hint) 
 {
  	mpcomp_nest_lock_t *mpcomp_user_nest_lock = NULL;
+	
+	__mpcomp_init();
+
   	mpcomp_user_nest_lock = (mpcomp_nest_lock_t *)sctk_malloc(sizeof(mpcomp_nest_lock_t));
   	sctk_assert(mpcomp_user_nest_lock);
   	memset(mpcomp_user_nest_lock, 0, sizeof(mpcomp_nest_lock_t));
@@ -306,7 +309,8 @@ void omp_destroy_nest_lock(omp_nest_lock_t *lock) {
   *lock = NULL;
 }
 
-void omp_set_nest_lock(omp_nest_lock_t *lock) {
+void omp_set_nest_lock(omp_nest_lock_t *lock) 
+{
   mpcomp_nest_lock_t *mpcomp_user_nest_lock;
   __mpcomp_init();
   mpcomp_thread_t *thread = mpcomp_get_thread_tls();
@@ -395,7 +399,7 @@ void omp_unset_nest_lock(omp_nest_lock_t *lock) {
 			{
 				const void* code_ra = __builtin_return_address(0);	
 				const ompt_wait_id_t wait_id = mpcomp_user_nest_lock->wait_id;			
-				callback( ompt_mutex_lock, wait_id, code_ra);
+				callback( ompt_mutex_nest_lock, wait_id, code_ra);
 			}
 		}
 	}
@@ -434,6 +438,24 @@ int omp_test_nest_lock(omp_nest_lock_t *lock)
   sctk_assert(lock);
   mpcomp_user_nest_lock = (mpcomp_nest_lock_t *)*lock;
 
+#if 1 //OMPT_SUPPORT
+   if( mpcomp_ompt_is_enabled() )
+   {
+      if( OMPT_Callbacks )
+      {
+         ompt_callback_mutex_acquire_t callback;
+         callback = (ompt_callback_mutex_acquire_t) OMPT_Callbacks[ompt_callback_mutex_acquire];
+         if( callback )
+         {
+            const void* code_ra = __builtin_return_address(0);
+            const ompt_wait_id_t wait_id = mpcomp_user_nest_lock->wait_id;
+            const unsigned hint = mpcomp_user_nest_lock->hint;
+            callback( ompt_mutex_nest_lock, hint, mpcomp_mutex, wait_id, code_ra);
+         }
+      }
+   }
+#endif /* OMPT_SUPPORT */
+	
 #if MPCOMP_TASK
   if (mpcomp_nest_lock_test_task(thread, mpcomp_user_nest_lock))
 #else
@@ -449,6 +471,37 @@ int omp_test_nest_lock(omp_nest_lock_t *lock)
         MPCOMP_TASK_THREAD_GET_CURRENT_TASK(thread);
 #endif
   }
+
+#if 1 //OMPT_SUPPORT
+   if( mpcomp_ompt_is_enabled() )
+   {
+      if( OMPT_Callbacks )
+      {
+         ompt_callback_mutex_t callback;
+         callback = (ompt_callback_mutex_t) OMPT_Callbacks[ompt_callback_mutex_acquired];
+         if( callback )
+         {
+            const void* code_ra = __builtin_return_address(0);
+            const ompt_wait_id_t wait_id = mpcomp_user_nest_lock->wait_id;
+            callback( ompt_mutex_nest_lock, wait_id, code_ra);
+         }
+
+         if(mpcomp_user_nest_lock->nb_nested == 0)
+         {
+            ompt_callback_nest_lock_t callback_nest;
+            callback_nest = (ompt_callback_nest_lock_t) OMPT_Callbacks[ompt_callback_nest_lock];
+            if( callback_nest )
+            {
+               const void* code_ra = __builtin_return_address(0);
+               const ompt_wait_id_t wait_id = mpcomp_user_nest_lock->wait_id;
+               callback_nest( ompt_scope_begin, wait_id, code_ra);
+            }
+         }
+      }
+
+   }
+#endif /* OMPT_SUPPORT */
+
   mpcomp_user_nest_lock->nb_nested += 1;
   return mpcomp_user_nest_lock->nb_nested;
 }

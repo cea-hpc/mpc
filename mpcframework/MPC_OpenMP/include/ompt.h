@@ -227,13 +227,13 @@ typedef int (*ompt_callback_get_t)(ompt_callbacks_t event, ompt_callback_t* call
 /** CALLBACK **/
 typedef void (*ompt_callback_parallel_begin_t)
 (
-		ompt_data_t* parent_task_data,
-      const ompt_frame_t* parent_frame,
-      ompt_data_t* parallel_data,
-      unsigned int requested_team_size,
-      unsigned int actual_team_size,
-      ompt_invoker_t invoker,
-      const void * codeptr_ra 
+	ompt_data_t* parent_task_data,
+   const ompt_frame_t* parent_frame,
+   ompt_data_t* parallel_data,
+   unsigned int requested_team_size,
+   unsigned int actual_team_size,
+   ompt_invoker_t invoker,
+   const void * codeptr_ra 
 );
 
 typedef void (*ompt_callback_parallel_end_t)
