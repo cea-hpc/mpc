@@ -25,6 +25,10 @@
 #include "mpcomp_types.h"
 
 #include "ompt.h"
+#include "mpcomp.h"
+#include "sctk_alloc.h"
+#include "sctk_spinlock.h"
+
 extern ompt_callback_t* OMPT_Callbacks;
 
 /*
@@ -47,9 +51,9 @@ static ompt_wait_id_t __mpcomp_ompt_critical_lock_wait_id = 0;
 static sctk_atomics_int __mpcomp_critical_lock_init_once 	= OPA_INT_T_INITIALIZER(0); 
 #endif // OMPT_SUPPORT
 
-static sctk_spinlock_t global_atomic_lock = SCTK_SPINLOCK_INITIALIZER;
-static sctk_thread_mutex_t global_critical_lock = SCTK_THREAD_MUTEX_INITIALIZER;
-static sctk_spinlock_t global_allocate_named_lock = SCTK_SPINLOCK_INITIALIZER;
+static sctk_spinlock_t* __mpcomp_omp_global_atomic_lock = NULL;
+static mpcomp_lock_t* 	__mpcomp_omp_global_critical_lock = NULL;
+static sctk_spinlock_t 	__mpcomp_global_init_critical_named_lock = SCTK_SPINLOCK_INITIALIZER;
 
 void __mpcomp_atomic_begin(void) 
 {
@@ -58,7 +62,9 @@ void __mpcomp_atomic_begin(void)
 		//prevent multi call to init 
 		if( !sctk_atomics_cas_int( &__mpcomp_atomic_lock_init_once, 0, 1))
 		{
-			sctk_spinlock_init(&global_atomic_lock, SCTK_SPINLOCK_INITIALIZER );
+			__mpcomp_omp_global_atomic_lock = (sctk_spinlock_t*) sctk_malloc(sizeof(sctk_spinlock_t));
+			sctk_assert( __mpcomp_omp_global_atomic_lock );
+			sctk_spinlock_init(__mpcomp_omp_global_atomic_lock, SCTK_SPINLOCK_INITIALIZER );
 
 #if 1 //OMPT_SUPPORT
 			if( mpcomp_ompt_is_enabled() )
@@ -104,7 +110,7 @@ void __mpcomp_atomic_begin(void)
 		}
 #endif //OMPT_SUPPORT
 			
-		sctk_spinlock_lock(&global_atomic_lock);
+		sctk_spinlock_lock(__mpcomp_omp_global_atomic_lock);
 
 #if 1 //OMPT_SUPPORT
 		if( mpcomp_ompt_is_enabled() )
@@ -124,7 +130,7 @@ void __mpcomp_atomic_begin(void)
 }
 
 void __mpcomp_atomic_end(void) {
-  sctk_spinlock_unlock(&(global_atomic_lock));
+  sctk_spinlock_unlock(__mpcomp_omp_global_atomic_lock);
 #if 1 //OMPT_SUPPORT
 		if( mpcomp_ompt_is_enabled() )
 		{
@@ -156,20 +162,28 @@ void __mpcomp_anonymous_critical_begin(void)
 		//prevent multi call to init 
 		if( !sctk_atomics_cas_int( &__mpcomp_critical_lock_init_once, 0, 1))
 		{
-			sctk_thread_mutex_init(&global_critical_lock, 0);
+			__mpcomp_omp_global_critical_lock = (mpcomp_lock_t *) sctk_malloc( sizeof( mpcomp_lock_t ));
+			sctk_assert(__mpcomp_omp_global_critical_lock);
+   		memset(__mpcomp_omp_global_critical_lock, 0, sizeof(mpcomp_lock_t));
+   		sctk_thread_mutex_init(&(__mpcomp_omp_global_critical_lock->lock), 0);
+
 #if 1 //OMPT_SUPPORT
 			if( mpcomp_ompt_is_enabled() )
    		{
+				/* Prevent non thread safe wait_id init */
+				__mpcomp_omp_global_critical_lock->wait_id = mpcomp_OMPT_gen_wait_id();
+				__mpcomp_omp_global_critical_lock->hint = omp_lock_hint_none;
+						
       		if( OMPT_Callbacks )
       		{
         	 		ompt_callback_lock_init_t callback_init;
-					/* Prevent non thread safe wait_id init */
-            	__mpcomp_ompt_critical_lock_wait_id = mpcomp_OMPT_gen_wait_id();
          		callback_init = (ompt_callback_lock_init_t) OMPT_Callbacks[ompt_callback_lock_init];
          		if( callback_init )
          		{
             		const void* code_ra = __builtin_return_address(0);
-            		callback_init( ompt_mutex_critical, omp_lock_hint_none, mpcomp_spinlock, __mpcomp_ompt_critical_lock_wait_id, code_ra);
+						const omp_lock_hint_t hint = __mpcomp_omp_global_critical_lock->hint;
+						const ompt_wait_id_t wait_id  = __mpcomp_omp_global_critical_lock->wait_id;
+            		callback_init( ompt_mutex_critical, hint, mpcomp_mutex, wait_id, code_ra);
 					}
 				}
 			}
@@ -178,13 +192,11 @@ void __mpcomp_anonymous_critical_begin(void)
 		}
 		else
 		{
-			sctk_error( "START WAIT ...");
 			/* Wait lock init */
 			while( sctk_atomics_load_int( &__mpcomp_critical_lock_init_once ) != 2 )
 			{
 				sctk_cpu_relax();
 			}
-			sctk_error( "END WAIT ...");
 		}	
 	}	
 #if 1 //OMPT_SUPPORT
@@ -197,13 +209,15 @@ void __mpcomp_anonymous_critical_begin(void)
 				if( callback_acquire )
 				{
 					const void* code_ra = __builtin_return_address(0);
-					callback_acquire( ompt_mutex_critical, omp_lock_hint_none, mpcomp_spinlock, __mpcomp_ompt_critical_lock_wait_id, code_ra);	
+					const omp_lock_hint_t hint = __mpcomp_omp_global_critical_lock->hint;
+					const ompt_wait_id_t wait_id  = __mpcomp_omp_global_critical_lock->wait_id;
+					callback_acquire( ompt_mutex_critical, hint, mpcomp_mutex, wait_id, code_ra);	
 				}
 			}
 		}
 #endif //OMPT_SUPPORT
 		
-		sctk_thread_mutex_lock(&global_critical_lock);
+		sctk_thread_mutex_lock( &( __mpcomp_omp_global_critical_lock->lock));
 
 #if 1 //OMPT_SUPPORT
 		if( mpcomp_ompt_is_enabled() )
@@ -215,7 +229,8 @@ void __mpcomp_anonymous_critical_begin(void)
 				if( callback_acquired )
 				{
 					const void* code_ra = __builtin_return_address(0);
-					callback_acquired( ompt_mutex_critical, __mpcomp_ompt_critical_lock_wait_id, code_ra);	
+					const ompt_wait_id_t wait_id  = __mpcomp_omp_global_critical_lock->wait_id;
+					callback_acquired( ompt_mutex_critical, wait_id, code_ra);	
 				}
 			}
 		}
@@ -224,7 +239,7 @@ void __mpcomp_anonymous_critical_begin(void)
 
 void __mpcomp_anonymous_critical_end(void) 
 {
- 	 sctk_thread_mutex_unlock(&global_critical_lock);
+ 	 sctk_thread_mutex_unlock(&(__mpcomp_omp_global_critical_lock->lock));
 #if 1 //OMPT_SUPPORT
       if( mpcomp_ompt_is_enabled() )
       {
@@ -235,57 +250,117 @@ void __mpcomp_anonymous_critical_end(void)
             if( callback_released )
             {
                const void* code_ra = __builtin_return_address(0);
-               callback_released( ompt_mutex_critical, __mpcomp_ompt_critical_lock_wait_id, code_ra);
+					const ompt_wait_id_t wait_id  = __mpcomp_omp_global_critical_lock->wait_id;
+               callback_released( ompt_mutex_critical, wait_id, code_ra);
             }
          }
       }
 #endif //OMPT_SUPPORT
 }
 
-void __mpcomp_named_critical_begin(void **l) {
-  mpcomp_thread_t *t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
-  sctk_assert(t);
-  sctk_assert(l);
-
-  if (*l == NULL) {
-    sctk_spinlock_lock(&(global_allocate_named_lock));
-    if (*l == NULL) {
-      sctk_thread_mutex_t *temp_l;
-      temp_l = malloc(sizeof(sctk_thread_mutex_t));
-      sctk_assert(temp_l);
-      sctk_thread_mutex_init(temp_l, NULL);
+void __mpcomp_named_critical_begin(void **l) 
+{
+  	sctk_assert(l);
+  	mpcomp_lock_t* named_critical_lock;
+  	if( *l == NULL ) 
+	{
+    	sctk_spinlock_lock(&(__mpcomp_global_init_critical_named_lock));
 		
-      *l = temp_l;
-      sctk_assert(*l);
+    	if( *l == NULL ) 
+		{
+			named_critical_lock = (mpcomp_lock_t *) sctk_malloc( sizeof( mpcomp_lock_t ));
+			sctk_error( "addr: %p", named_critical_lock );
+			sctk_assert( named_critical_lock );
+			memset(named_critical_lock, 0, sizeof(mpcomp_lock_t));
+			sctk_thread_mutex_init(&(named_critical_lock->lock), 0);
+		
+#if 1 //OMPT_SUPPORT	
+		if( mpcomp_ompt_is_enabled() )
+		{
+			named_critical_lock->wait_id = mpcomp_OMPT_gen_wait_id();
+			named_critical_lock->hint = omp_lock_hint_none;
+		}
+#endif //OMPT_SUPPORT	
+
+      *l = named_critical_lock;
     }
-    sctk_spinlock_unlock(&(global_allocate_named_lock));
+    sctk_spinlock_unlock(&(__mpcomp_global_init_critical_named_lock));
   }
 
-  sctk_nodebug("[%d] %s: Before lock", __func__, t->rank);
-  sctk_thread_mutex_lock((sctk_thread_mutex_t *)*l);
-  sctk_nodebug("[%d] %s: After lock", __func__, t->rank);
+ 	named_critical_lock = *l;
+
+#if 1 //OMPT_SUPPORT
+	if( mpcomp_ompt_is_enabled() )
+   {
+   	if( OMPT_Callbacks )
+      {
+      	ompt_callback_mutex_acquire_t callback_acquire;
+         callback_acquire = (ompt_callback_mutex_acquire_t) OMPT_Callbacks[ompt_callback_mutex_acquire];
+         if( callback_acquire )
+         {
+         	const void* code_ra = __builtin_return_address(0);
+            const omp_lock_hint_t hint = named_critical_lock->hint;
+            const ompt_wait_id_t wait_id = named_critical_lock->wait_id;
+            callback_acquire( ompt_mutex_critical, hint, mpcomp_mutex, wait_id, code_ra);
+         }
+     	}
+	}
+#endif //OMPT_SUPPORT
+		
+ 	sctk_thread_mutex_lock(&(named_critical_lock->lock));
+
+#if 1 //OMPT_SUPPORT
+	if( mpcomp_ompt_is_enabled() )
+   {
+   	if( OMPT_Callbacks )
+      {
+      	ompt_callback_mutex_t callback_acquired;
+         callback_acquired = (ompt_callback_mutex_t) OMPT_Callbacks[ompt_callback_mutex_acquired];
+         if( callback_acquired )
+         {
+         	const void* code_ra = __builtin_return_address(0);
+            const omp_lock_hint_t hint = named_critical_lock->hint;
+            const ompt_wait_id_t wait_id = named_critical_lock->wait_id;
+            callback_acquired( ompt_mutex_critical, wait_id, code_ra);
+         }
+     	}
+	}
+#endif //OMPT_SUPPORT
 }
 
 void __mpcomp_named_critical_end(void **l) {
-  mpcomp_thread_t *t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
-  sctk_assert(t);
-  sctk_assert(l);
-  sctk_assert(*l);
+  	sctk_assert(l);
+  	sctk_assert(*l);
+	
+	mpcomp_lock_t* named_critical_lock = *l;
+  	sctk_thread_mutex_unlock(&(named_critical_lock->lock));
+	
+#if 1 //OMPT_SUPPORT
+   if( mpcomp_ompt_is_enabled() )
+   {
+      if( OMPT_Callbacks )
+      {
+         ompt_callback_mutex_t callback_released;
+         callback_released = (ompt_callback_mutex_t) OMPT_Callbacks[ompt_callback_mutex_released];
+         if( callback_released )
+         {
+            const void* code_ra = __builtin_return_address(0);
+            const omp_lock_hint_t hint = named_critical_lock->hint;
+            const ompt_wait_id_t wait_id = named_critical_lock->wait_id;
+            callback_released( ompt_mutex_critical, wait_id, code_ra);
+         }
+      }
+   }
+#endif //OMPT_SUPPORT
 
-  sctk_nodebug("[%d] %s: Before unlock", __func__, t->rank);
-  sctk_thread_mutex_unlock((sctk_thread_mutex_t *)*l);
-  sctk_nodebug("[%d] %s: After unlock", __func__, t->rank);
 }
 
 /* GOMP OPTIMIZED_1_0_WRAPPING */
 #ifndef NO_OPTIMIZED_GOMP_4_0_API_SUPPORT
 __asm__(".symver __mpcomp_atomic_begin, GOMP_atomic_start@@GOMP_1.0");
 __asm__(".symver __mpcomp_atomic_end, GOMP_atomic_end@@GOMP_1.0");
-__asm__(
-    ".symver __mpcomp_anonymous_critical_begin, GOMP_critical_start@@GOMP_1.0");
+__asm__(".symver __mpcomp_anonymous_critical_begin, GOMP_critical_start@@GOMP_1.0");
 __asm__(".symver __mpcomp_anonymous_critical_end, GOMP_critical_end@@GOMP_1.0");
-__asm__(".symver __mpcomp_named_critical_begin, "
-        "GOMP_critical_name_start@@GOMP_1.0");
-__asm__(
-    ".symver __mpcomp_named_critical_end, GOMP_critical_name_end@@GOMP_1.0");
+__asm__(".symver __mpcomp_named_critical_begin, GOMP_critical_name_start@@GOMP_1.0");
+__asm__(".symver __mpcomp_named_critical_end, GOMP_critical_name_end@@GOMP_1.0");
 #endif /* OPTIMIZED_GOMP_API_SUPPORT */

@@ -426,7 +426,8 @@ void omp_unset_nest_lock(omp_nest_lock_t *lock) {
   }
 }
 
-int omp_test_nest_lock(omp_nest_lock_t *lock) {
+int omp_test_nest_lock(omp_nest_lock_t *lock) 
+{
   mpcomp_nest_lock_t *mpcomp_user_nest_lock;
   __mpcomp_init();
   mpcomp_thread_t *thread = mpcomp_get_thread_tls();
