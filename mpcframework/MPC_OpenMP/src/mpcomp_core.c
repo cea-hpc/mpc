@@ -474,6 +474,9 @@ void __mpcomp_init(void) {
 
   /* Need to initialize the current team */
   if (sctk_openmp_thread_tls == NULL) {
+ 
+		mpcomp_ompt_pre_init();
+
     mpcomp_instance_t *seq_instance;
     mpcomp_instance_t *instance;
     mpcomp_team_t *seq_team_info;
@@ -630,8 +633,10 @@ void __mpcomp_init(void) {
 
     sctk_thread_mutex_unlock(&lock);
 
+  	 mpcomp_ompt_post_init();
     sctk_nodebug("%s: Init done...", __func__);
   }
+  
 }
 
 void __mpcomp_exit(void) {
@@ -721,6 +726,7 @@ void __mpcomp_in_order_scheduler(mpcomp_mvp_t *mvp) {
   sctk_assert(cur_mvp_thread->instance != NULL);
   sctk_assert(cur_mvp_thread->instance->team != NULL);
   sctk_assert(cur_mvp_thread->info.func != NULL);
+
 
   mpcomp_loop_long_iter_t *loop =
       &(cur_mvp_thread->info.loop_infos.loop.mpcomp_long);

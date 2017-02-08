@@ -20,7 +20,7 @@
 /* #   - CARRIBAULT Patrick patrick.carribault@cea.fr                     # */
 /* #                                                                      # */
 /* ######################################################################## */
-
+#include "ompt.h"
 #include "sctk_debug.h"
 #include "mpcomp_types.h"
 #include "mpcomp_core.h"
@@ -31,8 +31,10 @@
 #include "mpcomp_task_utils.h"
 #include "mpcomp_tree_structs.h"
 
+extern ompt_callback_t* OMPT_Callbacks;
+
 void __mpcomp_internal_begin_parallel_region(
-    mpcomp_new_parallel_region_info_t *info, unsigned arg_num_threads) {
+  mpcomp_new_parallel_region_info_t *info, unsigned arg_num_threads) {
   mpcomp_thread_t *t;
   unsigned num_threads;
   mpcomp_instance_t *instance;
@@ -47,6 +49,28 @@ void __mpcomp_internal_begin_parallel_region(
   __mpcomp_task_coherency_entering_parallel_region();
 #endif // MPCOMP_TASK
 #endif
+
+#if OMPT_SUPPORT 
+	if( !mpcomp_ompt_is_enabled() )  
+		return;
+
+	if( OMPT_Callbacks )
+	{
+		ompt_callback_parallel_begin_t callback;
+		callback = (ompt_callback_parallel_begin_t) OMPT_Callbacks[ompt_callback_parallel_begin];
+		if( callback )
+		{
+			mpcomp_task_t* task;
+			mpcomp_thread_t *thread;
+			ompt_frame_t* parent_frame;
+			ompt_data_t* parallel_data, *parent_task_data;
+
+			sctk_error("CALL %p %p", OMPT_Callbacks, OMPT_Callbacks[ompt_callback_parallel_begin] );
+			const void* code_ra = __builtin_return_address( 0 );
+			callback( NULL, NULL, NULL, 0, 0, 0, code_ra );
+		}
+	}	
+#endif /* OMPT_SUPPORT */
 
   /* Check if the children instance exists */
   if (t->children_instance == NULL) {
@@ -205,6 +229,27 @@ void __mpcomp_internal_end_parallel_region(mpcomp_instance_t *instance) {
 #endif // MPCOMP_TASK
 #endif
 
+#if OMPT_SUPPORT 
+   if( !mpcomp_ompt_is_enabled() )
+      return;
+
+   if( OMPT_Callbacks )
+   {
+      ompt_callback_parallel_end_t callback;
+      callback = (ompt_callback_parallel_end_t) OMPT_Callbacks[ompt_callback_parallel_end];
+      if( callback )
+      {
+         mpcomp_task_t* task;
+         mpcomp_thread_t *thread;
+         ompt_frame_t* parent_frame;
+         ompt_data_t* parallel_data, *parent_task_data;
+
+         sctk_error("CALL %p %p", OMPT_Callbacks, OMPT_Callbacks[ompt_callback_parallel_begin] );
+         const void* code_ra = __builtin_return_address( 1 );
+         callback( NULL, NULL, 0, code_ra );
+      }
+   }
+#endif /* OMPT_SUPPORT */
 }
 
 void __mpcomp_start_parallel_region(void (*func)(void *), void *shared,

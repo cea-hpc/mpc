@@ -28,6 +28,7 @@ extern "C"
 {
 #endif
 
+#include "ompt.h"
 #include <sctk_config.h>
 #include <errno.h>
 #include <mpc.h>
@@ -49,16 +50,20 @@ extern "C"
   int omp_get_nested (void);
 
   typedef enum omp_lock_hint_t {
-    omp_lock_hint_none = 0,
-    omp_lock_hint_uncontended = 1,
-    omp_lock_hint_contended = 2,
+    omp_lock_hint_none 				= 0,
+    omp_lock_hint_uncontended 	= 1,
+    omp_lock_hint_contended 		= 2,
     omp_lock_hint_nonspeculative = 4,
-    omp_lock_hint_speculative = 8
+    omp_lock_hint_speculative 	= 8
   } omp_lock_hint_t;
 
   typedef struct mpcomp_lock_s {
     omp_lock_hint_t hint;
     sctk_thread_mutex_t lock;
+	 void* opaque;
+#if 1 //OMPT_SUPPORT
+	 ompt_wait_id_t wait_id;	
+#endif /* OMPT_SUPPORT */
   } mpcomp_lock_t;
 
   typedef mpcomp_lock_t *omp_lock_t;
@@ -69,6 +74,10 @@ extern "C"
     void *owner_task;   /* Owner of the lock */
     omp_lock_hint_t hint;
     sctk_thread_mutex_t lock;
+	 void* opaque;
+#if 1 //OMPT_SUPPORT
+	 ompt_wait_id_t wait_id;	
+#endif /* OMPT_SUPPORT */
   } mpcomp_nest_lock_t;
 
   typedef mpcomp_nest_lock_t *omp_nest_lock_t;

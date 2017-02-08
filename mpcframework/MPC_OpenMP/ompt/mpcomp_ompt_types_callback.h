@@ -17,22 +17,16 @@
 /* # terms.                                                               # */
 /* #                                                                      # */
 /* # Authors:                                                             # */
-/* #   - PERACHE Marc marc.perache@cea.fr                                 # */
-/* #   - CARRIBAULT Patrick patrick.carribault@cea.fr                     # */
 /* #   - CAPRA Antoine capra@paratools.com                                # */
 /* #                                                                      # */
 /* ######################################################################## */
 
-#ifndef __MPCOMP_TYPES_H__
-#define __MPCOMP_TYPES_H__
+#ifndef __MPCOMP_OMPT_TYPES_CALLBACK_H__
+#define __MPCOMP_OMPT_TYPES_CALLBACK_H__
 
-#define OMPT_SUPPORT 1
+#define MPCOMP_OMPT_SET_RESULT_MAX	5
+#define MPCOMP_OMPT_CALLBACK_MAX 	29		
 
-#include "mpcomp_task.h"
-#include "mpcomp_types_enum.h"
-#include "mpcomp_types_struct.h"
+typedef void (*ompt_callback_t)(void);
 
-extern __thread void *sctk_openmp_thread_tls;
-extern mpcomp_global_icv_t mpcomp_global_icvs;
-
-#endif /* __MPCOMP_TYPES_H__ */
+#endif /* __MPCOMP_OMPT_TYPES_EVENT_H__ */

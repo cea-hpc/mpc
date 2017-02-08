@@ -132,6 +132,7 @@ void __mpcomp_internal_half_barrier(mpcomp_mvp_t *mvp) {
    This barrier uses some optimizations for threads inside the same microVP.
  */
 void __mpcomp_barrier(void) {
+
   /* Handle orphaned directive (initialize OpenMP environment) */
   __mpcomp_init();
 
@@ -141,16 +142,34 @@ void __mpcomp_barrier(void) {
   sctk_nodebug("[%d] %s: Entering w/ %d thread(s)", t->rank, __func__,
                t->info.num_threads);
 
-  if (t->info.num_threads == 1)
-    return;
+#if OMPT_SUPPORT
+	//__mpcomp_ompt_barrier_begin( false );	
+#endif /* OMPT_SUPPORT */
+
+  	if (t->info.num_threads != 1)
+	{
+
+#if OMPT_SUPPORT 
+	//__mpcomp_ompt_barrier_begin( true );
+#endif /* OMPT_SUPPORT */
 
   /* Get the corresponding microVP */
   mpcomp_mvp_t *mvp = t->mvp;
   sctk_assert(mvp != NULL);
   sctk_nodebug("[%d] %s: t->mvp = %p", t->rank, __func__, t->mvp);
-
+ 
   /* Call the real barrier */
   __mpcomp_internal_full_barrier(mvp);
+
+#if OMPT_SUPPORT 
+	//__mpcomp_ompt_barrier_end( true );
+#endif /* OMPT_SUPPORT */
+}
+
+#if OMPT_SUPPORT
+	//__mpcomp_ompt_barrier_end( true );
+#endif /* OMPT_SUPPORT */
+	
 }
 
 /* GOMP OPTIMIZED_1_0_WRAPPING */
