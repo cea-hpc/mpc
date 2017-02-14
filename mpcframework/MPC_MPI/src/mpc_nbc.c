@@ -2062,10 +2062,23 @@ static int NBC_Ireduce(void* sendbuf, void* recvbuf, int count, MPI_Datatype dat
 
         switch (alg) {
         case NBC_RED_BINOMIAL:;
-          int end = 0;
+    
+    for(r=1; r<=maxr; r++) {
+        if((vrank % (1<<r)) == 0) {
+            vpeer = vrank + (1<<(r-1));
+            VRANK2RANK(peer, vpeer, root)
+                if(peer<p) {
+                    recv_op_rounds ++;
+          }
+        } else {
+            break;
+        }
+    }
+
+/*
+      int end = 0;
           //            for(r=1; r<=maxr && ((vrank % (1<<r)) == 0); r++) {
           for (r = 1; r <= maxr; r++) {
-            /* we have to receive this round */
             if (end == 0) {
               vpeer = vrank + (1 << (r - 1));
               VRANK2RANK(peer, vpeer, root)
@@ -2078,7 +2091,7 @@ static int NBC_Ireduce(void* sendbuf, void* recvbuf, int count, MPI_Datatype dat
               }
             }
           }
-
+*/
           int alloc_size =
               sizeof(int) +
               recv_op_rounds * (sizeof(NBC_Args_recv) + sizeof(NBC_Fn_type) +
@@ -2173,8 +2186,7 @@ static inline int red_sched_binomial(int rank, int p, int root, void *sendbuf, v
             vpeer = vrank + (1<<(r-1));
             VRANK2RANK(peer, vpeer, root)
                 if(peer<p) {
-                    *(int *)((char *)*schedule + pos_rounds) = 1;
-                    pos += sizeof(int);
+                    *(int *)((char *)*schedule + sizeof(int) + pos_rounds) = 1;
                     res = NBC_Sched_recv_pos(pos, 0, 1, count, datatype, peer, schedule);
                     pos += (sizeof(NBC_Args_recv) + sizeof(NBC_Fn_type));
                     if (NBC_OK != res) {
@@ -2217,7 +2229,7 @@ static inline int red_sched_binomial(int rank, int p, int root, void *sendbuf, v
                             res = NBC_Sched_op_pos(pos, (char *)redbuf - (unsigned long)handle->tmpbuf, 1, (char *)redbuf - (unsigned long)handle->tmpbuf, 1, 0, 1, count, datatype, op, schedule);
                         }
                     }
-                    *(int *)((char *)*schedule + pos_rounds) = 1;
+                    *(int *)((char *)*schedule + sizeof(int) + pos_rounds) = 1;
                     pos += (sizeof(NBC_Args_op) + sizeof(NBC_Fn_type));
                     if (NBC_OK != res) {
                         sctk_free(handle->tmpbuf);
@@ -2238,9 +2250,10 @@ static inline int red_sched_binomial(int rank, int p, int root, void *sendbuf, v
                                 res);
                         return res;
                     }
+            *(int *)((char *)*schedule + sizeof(int) + pos_rounds) = 0;
                 }
         } else {
-            *(int *)((char *)*schedule + pos_rounds) = 1;
+            *(int *)((char *)*schedule + sizeof(int) + pos_rounds) = 1;
             /* we have to send this round */
             vpeer = vrank - (1 << (r - 1));
             VRANK2RANK(peer, vpeer, root)
