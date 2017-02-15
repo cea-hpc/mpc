@@ -2435,12 +2435,19 @@ static int NBC_Ireduce_scatter(void* sendbuf, void* recvbuf, int *recvcounts, MP
     }
   }
   int recv_op_rounds = 0;
-  for (r = 1; r <= maxr && ((rank % (1 << r)) == 0); r++) {
-    /* we have to receive this round */
-    peer = rank + (1 << (r - 1));
-    if (peer < p) {
-      recv_op_rounds++;
-    }
+
+  for (r = 1; r <= maxr; r++) {
+      /* we have to receive this round */
+      if ((rank % (1 << r)) == 0) {
+          peer = rank + (1 << (r - 1));
+          if (peer < p) {
+              recv_op_rounds++;
+          }
+      }
+      else
+      {
+          break;
+      }
   }
 
   int alloc_size =
@@ -2453,11 +2460,12 @@ static int NBC_Ireduce_scatter(void* sendbuf, void* recvbuf, int *recvcounts, MP
   if (rank != 0)
     alloc_size += (sizeof(NBC_Args_send) + sizeof(NBC_Fn_type));
 
+  alloc_size += (sizeof(char)+sizeof(int));
   if (rank == 0) {
     alloc_size += (p - 1) * (sizeof(NBC_Args_send) + sizeof(NBC_Fn_type)) +
-                  (sizeof(NBC_Args_copy) + sizeof(NBC_Fn_type)) + sizeof(char);
+                  (sizeof(NBC_Args_copy) + sizeof(NBC_Fn_type));
   } else {
-    alloc_size += (sizeof(NBC_Args_recv) + sizeof(NBC_Fn_type)) + sizeof(char);
+    alloc_size += (sizeof(NBC_Args_recv) + sizeof(NBC_Fn_type));
   }
 
   *schedule = sctk_malloc(alloc_size);
@@ -3071,166 +3079,148 @@ static int NBC_Ialltoallw(void* sendbuf, int *sendcounts, int *sdispls,
 /***************************** *
  * NBC_IREDUCE_SCATTER_BLOCK.C *
  * *****************************/
-
-
 static int NBC_Ireduce_scatter_block(void* sendbuf, void* recvbuf, int recvcount, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, NBC_Handle* handle) {
-	int peer, rank, maxr, p, r, res, count, offset, firstred;
-	MPI_Aint ext;
-	char *redbuf, *sbuf, inplace;
-	NBC_Schedule *schedule;
-	
-	NBC_IN_PLACE(sendbuf, recvbuf, inplace);
+  int peer, rank, maxr, p, r, res, count, offset, firstred;
+  MPI_Aint ext;
+  char *redbuf, *sbuf, inplace;
+  NBC_Schedule *schedule;
 
-	res = NBC_Init_handle(handle, comm, MPC_IREDUCE_SCATTER_BLOCK_TAG);
-	if(res != NBC_OK) { printf("Error in NBC_Init_handle(%i)\n", res); return res; }
-	res = PMPC_Comm_rank(comm, &rank);
-	if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_rank() (%i)\n", res); return res; }
-	res = PMPC_Comm_size(comm, &p);
-	if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Comm_size() (%i)\n", res); return res; }
-	res = __INTERNAL__PMPI_Type_extent(datatype, &ext);
-	if (MPI_SUCCESS != res) { printf("MPI Error in MPI_Type_extent() (%i)\n", res); return res; }
-	
-	schedule = (NBC_Schedule*)sctk_malloc(sizeof(NBC_Schedule));
-	if (NULL == schedule) { printf("Error in sctk_malloc()\n"); return NBC_OOR; }
+  NBC_IN_PLACE(sendbuf, recvbuf, inplace);
 
-	res = NBC_Sched_create(schedule);
-	if(res != NBC_OK) { printf("Error in NBC_Sched_create (%i)\n", res); return res; }
+  res = NBC_Init_handle(handle, comm, MPC_IREDUCE_SCATTER_BLOCK_TAG);
+  if (res != NBC_OK) {
+    printf("Error in NBC_Init_handle(%i)\n", res);
+    return res;
+  }
+  res = PMPC_Comm_rank(comm, &rank);
+  if (MPI_SUCCESS != res) {
+    printf("MPI Error in MPI_Comm_rank() (%i)\n", res);
+    return res;
+  }
+  res = PMPC_Comm_size(comm, &p);
+  if (MPI_SUCCESS != res) {
+    printf("MPI Error in MPI_Comm_size() (%i)\n", res);
+    return res;
+  }
+  res = __INTERNAL__PMPI_Type_extent(datatype, &ext);
+  if (MPI_SUCCESS != res) {
+    printf("MPI Error in MPI_Type_extent() (%i)\n", res);
+    return res;
+  }
 
-	maxr = (int)ceil((log(p)/LOG2));
+  schedule = (NBC_Schedule *)sctk_malloc(sizeof(NBC_Schedule));
+  if (NULL == schedule) {
+    printf("Error in sctk_malloc()\n");
+    return NBC_OOR;
+  }
 
-	count = recvcount * p;
+  //	res = NBC_Sched_create(schedule);
+  //	if(res != NBC_OK) { printf("Error in NBC_Sched_create (%i)\n", res);
+  // return res; }
 
-	handle->tmpbuf = sctk_malloc(ext*count*2);
-	if(handle->tmpbuf == NULL) { printf("Error in sctk_malloc()\n"); return NBC_OOR; }
+  maxr = (int)ceil((log(p) / LOG2));
 
-	redbuf = ((char*)handle->tmpbuf)+(ext*count);
+  count = 0;
+  for (r = 0; r < p; r++)
+    count += recvcount;
 
-	/* copy data to redbuf if we only have a single node */
-	if((p==1) && !inplace) {
-		res = NBC_Copy(sendbuf, count, datatype, redbuf, count, datatype, comm);
-		if (NBC_OK != res) { printf("Error in NBC_Copy() (%i)\n", res); return res; }
-	}
+  handle->tmpbuf = sctk_malloc(ext * count * 2);
+  if (handle->tmpbuf == NULL) {
+    printf("Error in sctk_malloc()\n");
+    return NBC_OOR;
+  }
 
-        int recv_op_rounds = 0;
-        for (r = 1; r <= maxr && ((rank % (1 << r)) == 0); r++) {
-          /* we have to receive this round */
-          peer = rank + (1 << (r - 1));
-          if (peer < p) {
-            recv_op_rounds++;
-          }
+  redbuf = ((char *)handle->tmpbuf) + (ext * count);
+
+  /* copy data to redbuf if we only have a single node */
+  if ((p == 1) && !inplace) {
+    res = NBC_Copy(sendbuf, count, datatype, redbuf, count, datatype, comm);
+    if (NBC_OK != res) {
+      printf("Error in NBC_Copy() (%i)\n", res);
+      return res;
+    }
+  }
+  int recv_op_rounds = 0;
+  for (r = 1; r <= maxr && ((rank % (1 << r)) == 0); r++) {
+    /* we have to receive this round */
+    peer = rank + (1 << (r - 1));
+    if (peer < p) {
+      recv_op_rounds++;
+    }
+  }
+
+  int alloc_size =
+      sizeof(int) +
+      recv_op_rounds * (sizeof(NBC_Args_recv) + sizeof(NBC_Fn_type) +
+                        sizeof(int) + sizeof(char)) +
+      recv_op_rounds * (sizeof(NBC_Args_op) + sizeof(NBC_Fn_type) +
+                        sizeof(int) + sizeof(char)) +
+      sizeof(char) + sizeof(int);
+  if (rank != 0)
+    alloc_size += (sizeof(NBC_Args_send) + sizeof(NBC_Fn_type));
+
+  alloc_size+=(sizeof(int)+sizeof(char));
+  if (rank == 0) {
+    alloc_size += (p - 1) * (sizeof(NBC_Args_send) + sizeof(NBC_Fn_type)) +
+                  (sizeof(NBC_Args_copy) + sizeof(NBC_Fn_type));
+  } else {
+    alloc_size += (sizeof(NBC_Args_recv) + sizeof(NBC_Fn_type));
+  }
+
+  *schedule = sctk_malloc(alloc_size);
+  *(int *)*schedule = alloc_size;
+
+  int pos = 0;
+  int pos_rounds = pos;
+  pos += sizeof(int);
+  firstred = 1;
+  for (r = 1; r <= maxr; r++) {
+    if ((rank % (1 << r)) == 0) {
+      /* we have to receive this round */
+      peer = rank + (1 << (r - 1));
+      if (peer < p) {
+        *(int *)((char *)*schedule + sizeof(int) + pos_rounds) = 1;
+        res = NBC_Sched_recv_pos(pos, 0, 1, count, datatype, peer, schedule);
+        pos += (sizeof(NBC_Args_recv) + sizeof(NBC_Fn_type));
+        if (NBC_OK != res) {
+          sctk_free(handle->tmpbuf);
+          printf("Error in NBC_Sched_recv() (%i)\n", res);
+          return res;
         }
+        /* we have to wait until we have the data */
 
-        int alloc_size =
-            sizeof(int) +
-            recv_op_rounds * (sizeof(NBC_Args_recv) + sizeof(NBC_Fn_type) +
-                              sizeof(int) + sizeof(char)) +
-            recv_op_rounds * (sizeof(NBC_Args_op) + sizeof(NBC_Fn_type) +
-                              sizeof(int) + sizeof(char)) +
-            sizeof(char) + sizeof(int);
-        if (rank != 0)
-          alloc_size += (sizeof(NBC_Args_send) + sizeof(NBC_Fn_type));
-
-        if (rank == 0) {
-          alloc_size +=
-              (p - 1) * (sizeof(NBC_Args_send) + sizeof(NBC_Fn_type)) +
-              (sizeof(NBC_Args_copy) + sizeof(NBC_Fn_type)) + sizeof(char);
-        } else {
-          alloc_size +=
-              (sizeof(NBC_Args_recv) + sizeof(NBC_Fn_type)) + sizeof(char);
-        }
-
-        *schedule = sctk_malloc(alloc_size);
-        *(int *)*schedule = alloc_size;
-
-        int pos = 0;
-        int pos_rounds = pos;
+        res = NBC_Sched_barrier_pos(pos, schedule);
+        pos += sizeof(char);
+        pos_rounds = pos;
         pos += sizeof(int);
-        firstred = 1;
-        for (r = 1; r <= maxr; r++) {
-          if ((rank % (1 << r)) == 0) {
-            /* we have to receive this round */
-            peer = rank + (1 << (r - 1));
-            if (peer < p) {
-              *(int *)((char *)*schedule + sizeof(int) + pos_rounds) = 1;
-              res = NBC_Sched_recv_pos(pos, 0, 1, count, datatype, peer,
-                                       schedule);
-              pos += (sizeof(NBC_Args_recv) + sizeof(NBC_Fn_type));
-              if (NBC_OK != res) {
-                sctk_free(handle->tmpbuf);
-                printf("Error in NBC_Sched_recv() (%i)\n", res);
-                return res;
-              }
-              /* we have to wait until we have the data */
-              res = NBC_Sched_barrier_pos(pos, schedule);
-              pos += sizeof(char);
-              pos_rounds = pos;
-              pos += sizeof(int);
-              *(int *)((char *)*schedule + sizeof(int) + pos_rounds) = 1;
+        *(int *)((char *)*schedule + sizeof(int) + pos_rounds) = 1;
 
-              if (NBC_OK != res) {
-                sctk_free(handle->tmpbuf);
-                printf("Error in NBC_Sched_barrier() (%i)\n", res);
-                return res;
-              }
-
-              if (firstred) {
-                /* take reduce data from the sendbuf in the first
-                 * round -> save copy */
-                res = NBC_Sched_op_pos(
-                    pos, redbuf - (unsigned long)handle->tmpbuf, 1, sendbuf, 0,
-                    0, 1, count, datatype, op, schedule);
-                firstred = 0;
-              } else {
-                /* perform the reduce in my local buffer */
-                res = NBC_Sched_op_pos(
-                    pos, redbuf - (unsigned long)handle->tmpbuf, 1,
-                    redbuf - (unsigned long)handle->tmpbuf, 1, 0, 1, count,
-                    datatype, op, schedule);
-              }
-              pos += (sizeof(NBC_Args_op) + sizeof(NBC_Fn_type));
-              if (NBC_OK != res) {
-                sctk_free(handle->tmpbuf);
-                printf("Error in NBC_Sched_op() (%i)\n", res);
-                return res;
-              }
-              /* this cannot be done until handle->tmpbuf is unused :-( */
-              res = NBC_Sched_barrier_pos(pos, schedule);
-              pos += sizeof(char);
-              pos_rounds = pos;
-              pos += sizeof(int);
-              if (NBC_OK != res) {
-                sctk_free(handle->tmpbuf);
-                printf("Error in NBC_Sched_barrier() (%i)\n", res);
-                return res;
-              }
-              *(int *)((char *)*schedule + sizeof(int) + pos_rounds) = 0;
-            }
-          } else {
-            *(int *)((char *)*schedule + sizeof(int) + pos_rounds) = 1;
-            /* we have to send this round */
-            peer = rank - (1 << (r - 1));
-            if (firstred) {
-              /* we have to send the senbuf */
-              res = NBC_Sched_send_pos(pos, sendbuf, 0, count, datatype, peer,
-                                       schedule);
-            } else {
-              /* we send an already reduced value from redbuf */
-              res = NBC_Sched_send_pos(pos,
-                                       redbuf - (unsigned long)handle->tmpbuf,
-                                       1, count, datatype, peer, schedule);
-            }
-            pos += (sizeof(NBC_Args_send) + sizeof(NBC_Fn_type));
-            if (NBC_OK != res) {
-              sctk_free(handle->tmpbuf);
-              printf("Error in NBC_Sched_send() (%i)\n", res);
-              return res;
-            }
-            /* leave the game */
-            break;
-          }
+        if (NBC_OK != res) {
+          sctk_free(handle->tmpbuf);
+          printf("Error in NBC_Sched_barrier() (%i)\n", res);
+          return res;
         }
-
-        res = NBC_Sched_barrier(schedule);
+        if (firstred) {
+          /* take reduce data from the sendbuf in the first round -> save copy
+           */
+          res =
+              NBC_Sched_op_pos(pos, redbuf - (unsigned long)handle->tmpbuf, 1,
+                               sendbuf, 0, 0, 1, count, datatype, op, schedule);
+          firstred = 0;
+        } else {
+          /* perform the reduce in my local buffer */
+          res = NBC_Sched_op_pos(pos, redbuf - (unsigned long)handle->tmpbuf, 1,
+                                 redbuf - (unsigned long)handle->tmpbuf, 1, 0,
+                                 1, count, datatype, op, schedule);
+        }
+        pos += (sizeof(NBC_Args_op) + sizeof(NBC_Fn_type));
+        if (NBC_OK != res) {
+          sctk_free(handle->tmpbuf);
+          printf("Error in NBC_Sched_op() (%i)\n", res);
+          return res;
+        }
+        /* this cannot be done until handle->tmpbuf is unused :-( */
+        res = NBC_Sched_barrier_pos(pos, schedule);
         pos += sizeof(char);
         pos_rounds = pos;
         pos += sizeof(int);
@@ -3239,63 +3229,102 @@ static int NBC_Ireduce_scatter_block(void* sendbuf, void* recvbuf, int recvcount
           printf("Error in NBC_Sched_barrier() (%i)\n", res);
           return res;
         }
+        *(int *)((char *)*schedule + sizeof(int) + pos_rounds) = 0;
+      }
+    } else {
+      *(int *)((char *)*schedule + sizeof(int) + pos_rounds) = 1;
+      /* we have to send this round */
+      peer = rank - (1 << (r - 1));
+      if (firstred) {
+        /* we have to send the senbuf */
+        res = NBC_Sched_send_pos(pos, sendbuf, 0, count, datatype, peer,
+                                 schedule);
+        pos += (sizeof(NBC_Args_send) + sizeof(NBC_Fn_type));
+      } else {
+        /* we send an already reduced value from redbuf */
+        res = NBC_Sched_send_pos(pos, redbuf - (unsigned long)handle->tmpbuf, 1,
+                                 count, datatype, peer, schedule);
+        pos += (sizeof(NBC_Args_send) + sizeof(NBC_Fn_type));
+      }
+      if (NBC_OK != res) {
+        sctk_free(handle->tmpbuf);
+        printf("Error in NBC_Sched_send() (%i)\n", res);
+        return res;
+      }
+      /* leave the game */
+      break;
+    }
+  }
 
-        /* rank 0 is root and sends - all others receive */
-        if (rank != 0) {
-          *(int *)((char *)*schedule + sizeof(int) + pos_rounds) = 1;
-          res = NBC_Sched_recv_pos(pos, recvbuf, 0, recvcount, datatype, 0,
-                                   schedule);
-          if (NBC_OK != res) {
-            sctk_free(handle->tmpbuf);
-            printf("Error in NBC_Sched_recv() (%i)\n", res);
-            return res;
-          }
-        }
+  res = NBC_Sched_barrier_pos(pos, schedule);
+  pos += sizeof(char);
+  pos_rounds = pos;
+  pos += sizeof(int);
+  if (NBC_OK != res) {
+    sctk_free(handle->tmpbuf);
+    printf("Error in NBC_Sched_barrier() (%i)\n", res);
+    return res;
+  }
 
-        if (rank == 0) {
-          *(int *)((char *)*schedule + sizeof(int) + pos_rounds) = p - 1 + 1;
-          offset = 0;
-          for (r = 1; r < p; r++) {
-            offset += recvcount;
-            sbuf = ((char *)redbuf) + (offset * ext);
-            /* root sends the right buffer to the right receiver */
-            res = NBC_Sched_send_pos(pos, sbuf - (unsigned long)handle->tmpbuf,
-                                     1, recvcount, datatype, r, schedule);
-            pos += sizeof(NBC_Args_send) + sizeof(NBC_Fn_type);
-            if (NBC_OK != res) {
-              sctk_free(handle->tmpbuf);
-              printf("Error in NBC_Sched_send() (%i)\n", res);
-              return res;
-            }
-          }
-          res = NBC_Sched_copy_pos(pos, redbuf - (unsigned long)handle->tmpbuf,
-                                   1, recvcount, datatype, recvbuf, 0,
-                                   recvcount, datatype, schedule);
-          pos += sizeof(NBC_Args_copy) + sizeof(NBC_Fn_type);
-          if (NBC_OK != res) {
-            sctk_free(handle->tmpbuf);
-            printf("Error in NBC_Sched_copy() (%i)\n", res);
-            return res;
-          }
-        }
+  /* rank 0 is root and sends - all others receive */
+  if (rank != 0) {
+    *(int *)((char *)*schedule + sizeof(int) + pos_rounds) = 1;
+    res = NBC_Sched_recv_pos(pos, recvbuf, 0, recvcount, datatype, 0,
+                             schedule);
+    pos += (sizeof(NBC_Args_recv) + sizeof(NBC_Fn_type));
+    if (NBC_OK != res) {
+      sctk_free(handle->tmpbuf);
+      printf("Error in NBC_Sched_recv() (%i)\n", res);
+      return res;
+    }
+  }
 
-        res = NBC_Sched_commit_pos(schedule);
-        if (NBC_OK != res) {
-          sctk_free(handle->tmpbuf);
-          printf("Error in NBC_Sched_commit() (%i)\n", res);
-          return res;
-        }
+  if (rank == 0) {
+    *(int *)((char *)*schedule + sizeof(int) + pos_rounds) = p - 1 + 1;
+    offset = 0;
+    for (r = 1; r < p; r++) {
+      offset += recvcount;
+      sbuf = ((char *)redbuf) + (offset * ext);
+      /* root sends the right buffer to the right receiver */
+      res = NBC_Sched_send_pos(pos, sbuf - (unsigned long)handle->tmpbuf, 1,
+                               recvcount, datatype, r, schedule);
+      pos += sizeof(NBC_Args_send) + sizeof(NBC_Fn_type);
+      if (NBC_OK != res) {
+        sctk_free(handle->tmpbuf);
+        printf("Error in NBC_Sched_send() (%i)\n", res);
+        return res;
+      }
+    }
+    res = NBC_Sched_copy_pos(pos, redbuf - (unsigned long)handle->tmpbuf, 1,
+                             recvcount, datatype, recvbuf, 0, recvcount,
+                             datatype, schedule);
+    pos += sizeof(NBC_Args_copy) + sizeof(NBC_Fn_type);
+    if (NBC_OK != res) {
+      sctk_free(handle->tmpbuf);
+      printf("Error in NBC_Sched_copy() (%i)\n", res);
+      return res;
+    }
+  }
 
-        res = NBC_Start(handle, schedule);
-        if (NBC_OK != res) {
-          sctk_free(handle->tmpbuf);
-          printf("Error in NBC_Start() (%i)\n", res);
-          return res;
-        }
+  res = NBC_Sched_commit_pos(schedule);
+  if (NBC_OK != res) {
+    sctk_free(handle->tmpbuf);
+    printf("Error in NBC_Sched_commit() (%i)\n", res);
+    return res;
+  }
 
-        /* tmpbuf is freed with the handle */
-        return NBC_OK;
+  res = NBC_Start(handle, schedule);
+  if (NBC_OK != res) {
+    sctk_free(handle->tmpbuf);
+    printf("Error in NBC_Start() (%i)\n", res);
+    return res;
+  }
+
+  /* tmpbuf is freed with the handle */
+  return NBC_OK;
 }
+
+
 
 
 
