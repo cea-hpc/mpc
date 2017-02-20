@@ -29,10 +29,8 @@ const struct sctk_runtime_config_entry_meta sctk_runtime_config_db[] = {
     /* sctk_runtime_config */
     {"sctk_runtime_config", SCTK_CONFIG_META_TYPE_STRUCT, 0,
      sizeof(struct sctk_runtime_config), NULL, sctk_runtime_config_reset},
-    {"modules", SCTK_CONFIG_META_TYPE_PARAM,
-     sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config,
                                               modules),
-     sizeof(struct sctk_runtime_config_modules), "sctk_runtime_config_modules",
+     izeof(struct sctk_runtime_config_modules), "sctk_runtime_config_modules",
      NULL},
     {"networks", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config,
@@ -1309,3 +1307,4 @@ const struct sctk_runtime_config_entry_meta sctk_runtime_config_db[] = {
      sizeof(int), "int", NULL, NULL},
     /* end marker */
     {NULL, SCTK_CONFIG_META_TYPE_END, 0, 0, NULL, NULL}};
+

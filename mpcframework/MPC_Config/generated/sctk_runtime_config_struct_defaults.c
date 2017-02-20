@@ -38,62 +38,62 @@ static struct MPC_T_cvar *the_cvar = NULL;
 static int the_temp_index = -1;
 
 /*******************  FUNCTION  *********************/
-void sctk_runtime_config_struct_init_accl_cuda(void *struct_ptr) {
-  struct sctk_runtime_config_struct_accl_cuda *obj = struct_ptr;
-  /* Make sure this element is not initialized yet       */
-  /* It allows us to know when we are facing dynamically */
-  /* allocated objects requiring an init                 */
-  if (obj->init_done != 0)
-    return;
+void sctk_runtime_config_struct_init_accl_cuda(void * struct_ptr)
+{
+	struct sctk_runtime_config_struct_accl_cuda * obj = struct_ptr;
+	/* Make sure this element is not initialized yet       */
+	/* It allows us to know when we are facing dynamically */
+	/* allocated objects requiring an init                 */
+	if( obj->init_done != 0 ) return;
 
-  /* Simple params : */
-  obj->enabled = false;
-  obj->init_done = 1;
+	/* Simple params : */
+	obj->enabled = false;
+	obj->init_done = 1;
 }
 
 /*******************  FUNCTION  *********************/
-void sctk_runtime_config_struct_init_accl_openacc(void *struct_ptr) {
-  struct sctk_runtime_config_struct_accl_openacc *obj = struct_ptr;
-  /* Make sure this element is not initialized yet       */
-  /* It allows us to know when we are facing dynamically */
-  /* allocated objects requiring an init                 */
-  if (obj->init_done != 0)
-    return;
+void sctk_runtime_config_struct_init_accl_openacc(void * struct_ptr)
+{
+	struct sctk_runtime_config_struct_accl_openacc * obj = struct_ptr;
+	/* Make sure this element is not initialized yet       */
+	/* It allows us to know when we are facing dynamically */
+	/* allocated objects requiring an init                 */
+	if( obj->init_done != 0 ) return;
 
-  /* Simple params : */
-  obj->enabled = false;
-  obj->init_done = 1;
+	/* Simple params : */
+	obj->enabled = false;
+	obj->init_done = 1;
 }
 
 /*******************  FUNCTION  *********************/
-void sctk_runtime_config_struct_init_accl_opencl(void *struct_ptr) {
-  struct sctk_runtime_config_struct_accl_opencl *obj = struct_ptr;
-  /* Make sure this element is not initialized yet       */
-  /* It allows us to know when we are facing dynamically */
-  /* allocated objects requiring an init                 */
-  if (obj->init_done != 0)
-    return;
+void sctk_runtime_config_struct_init_accl_opencl(void * struct_ptr)
+{
+	struct sctk_runtime_config_struct_accl_opencl * obj = struct_ptr;
+	/* Make sure this element is not initialized yet       */
+	/* It allows us to know when we are facing dynamically */
+	/* allocated objects requiring an init                 */
+	if( obj->init_done != 0 ) return;
 
-  /* Simple params : */
-  obj->enabled = false;
-  obj->init_done = 1;
+	/* Simple params : */
+	obj->enabled = false;
+	obj->init_done = 1;
 }
 
 /*******************  FUNCTION  *********************/
-void sctk_runtime_config_struct_init_accl(void *struct_ptr) {
-  struct sctk_runtime_config_struct_accl *obj = struct_ptr;
-  /* Make sure this element is not initialized yet       */
-  /* It allows us to know when we are facing dynamically */
-  /* allocated objects requiring an init                 */
-  if (obj->init_done != 0)
-    return;
+void sctk_runtime_config_struct_init_accl(void * struct_ptr)
+{
+	struct sctk_runtime_config_struct_accl * obj = struct_ptr;
+	/* Make sure this element is not initialized yet       */
+	/* It allows us to know when we are facing dynamically */
+	/* allocated objects requiring an init                 */
+	if( obj->init_done != 0 ) return;
 
-  /* Simple params : */
-  obj->enabled = false;
-  sctk_runtime_config_struct_init_accl_cuda(&obj->cuda);
-  sctk_runtime_config_struct_init_accl_openacc(&obj->openacc);
-  sctk_runtime_config_struct_init_accl_opencl(&obj->opencl);
-  obj->init_done = 1;
+	/* Simple params : */
+	obj->enabled = false;
+	sctk_runtime_config_struct_init_accl_cuda(&obj->cuda);
+	sctk_runtime_config_struct_init_accl_openacc(&obj->openacc);
+	sctk_runtime_config_struct_init_accl_opencl(&obj->opencl);
+	obj->init_done = 1;
 }
 
 /*******************  FUNCTION  *********************/
@@ -721,13 +721,10 @@ void sctk_runtime_config_struct_init_progress_thread(void * struct_ptr)
 	if( obj->init_done != 0 ) return;
 
 	/* Simple params : */
-        obj->use_progress_thread = 1;
-        obj->progress_thread_binding.name =
-            "sctk_get_progress_thread_binding_bind";
-        *(void **)&(obj->progress_thread_binding.value) =
-            sctk_runtime_config_get_symbol(
-                "sctk_get_progress_thread_binding_bind");
-        obj->init_done = 1;
+	obj->use_progress_thread = 0;
+	obj->progress_thread_binding.name = "sctk_get_progress_thread_binding_bind";
+	*(void **) &(obj->progress_thread_binding.value) = sctk_runtime_config_get_symbol("sctk_get_progress_thread_binding_bind");
+	obj->init_done = 1;
 }
 
 /*******************  FUNCTION  *********************/
@@ -2696,50 +2693,50 @@ void sctk_runtime_config_struct_init_low_level_comm(void * struct_ptr)
 }
 
 /*******************  FUNCTION  *********************/
-void sctk_runtime_config_enum_init_mpcomp_task_larceny_mode_t() {
-  struct enum_type *current_enum =
-      (struct enum_type *)malloc(sizeof(struct enum_type));
-  struct enum_value *current_value, *values = NULL;
+void sctk_runtime_config_enum_init_mpcomp_task_larceny_mode_t()
+{
+	struct enum_type * current_enum = (struct enum_type *) malloc(sizeof(struct enum_type));
+	struct enum_value * current_value, * values = NULL;
 
-  strncpy(current_enum->name, "enum mpcomp_task_larceny_mode_t", 50);
+	strncpy(current_enum->name, "enum mpcomp_task_larceny_mode_t", 50);
 
-  current_value = (struct enum_value *)malloc(sizeof(struct enum_value));
-  strncpy(current_value->name, "MPCOMP_TASK_LARCENY_MODE_HIERARCHICAL", 50);
-  current_value->value = MPCOMP_TASK_LARCENY_MODE_HIERARCHICAL;
-  HASH_ADD_STR(values, name, current_value);
+	current_value = (struct enum_value *) malloc(sizeof(struct enum_value));
+	strncpy(current_value->name, "MPCOMP_TASK_LARCENY_MODE_HIERARCHICAL", 50);
+	current_value->value = MPCOMP_TASK_LARCENY_MODE_HIERARCHICAL;
+	HASH_ADD_STR(values, name, current_value);
 
-  current_value = (struct enum_value *)malloc(sizeof(struct enum_value));
-  strncpy(current_value->name, "MPCOMP_TASK_LARCENY_MODE_RANDOM", 50);
-  current_value->value = MPCOMP_TASK_LARCENY_MODE_RANDOM;
-  HASH_ADD_STR(values, name, current_value);
+	current_value = (struct enum_value *) malloc(sizeof(struct enum_value));
+	strncpy(current_value->name, "MPCOMP_TASK_LARCENY_MODE_RANDOM", 50);
+	current_value->value = MPCOMP_TASK_LARCENY_MODE_RANDOM;
+	HASH_ADD_STR(values, name, current_value);
 
-  current_value = (struct enum_value *)malloc(sizeof(struct enum_value));
-  strncpy(current_value->name, "MPCOMP_TASK_LARCENY_MODE_RANDOM_ORDER", 50);
-  current_value->value = MPCOMP_TASK_LARCENY_MODE_RANDOM_ORDER;
-  HASH_ADD_STR(values, name, current_value);
+	current_value = (struct enum_value *) malloc(sizeof(struct enum_value));
+	strncpy(current_value->name, "MPCOMP_TASK_LARCENY_MODE_RANDOM_ORDER", 50);
+	current_value->value = MPCOMP_TASK_LARCENY_MODE_RANDOM_ORDER;
+	HASH_ADD_STR(values, name, current_value);
 
-  current_value = (struct enum_value *)malloc(sizeof(struct enum_value));
-  strncpy(current_value->name, "MPCOMP_TASK_LARCENY_MODE_ROUNDROBIN", 50);
-  current_value->value = MPCOMP_TASK_LARCENY_MODE_ROUNDROBIN;
-  HASH_ADD_STR(values, name, current_value);
+	current_value = (struct enum_value *) malloc(sizeof(struct enum_value));
+	strncpy(current_value->name, "MPCOMP_TASK_LARCENY_MODE_ROUNDROBIN", 50);
+	current_value->value = MPCOMP_TASK_LARCENY_MODE_ROUNDROBIN;
+	HASH_ADD_STR(values, name, current_value);
 
-  current_value = (struct enum_value *)malloc(sizeof(struct enum_value));
-  strncpy(current_value->name, "MPCOMP_TASK_LARCENY_MODE_PRODUCER", 50);
-  current_value->value = MPCOMP_TASK_LARCENY_MODE_PRODUCER;
-  HASH_ADD_STR(values, name, current_value);
+	current_value = (struct enum_value *) malloc(sizeof(struct enum_value));
+	strncpy(current_value->name, "MPCOMP_TASK_LARCENY_MODE_PRODUCER", 50);
+	current_value->value = MPCOMP_TASK_LARCENY_MODE_PRODUCER;
+	HASH_ADD_STR(values, name, current_value);
 
-  current_value = (struct enum_value *)malloc(sizeof(struct enum_value));
-  strncpy(current_value->name, "MPCOMP_TASK_LARCENY_MODE_PRODUCER_ORDER", 50);
-  current_value->value = MPCOMP_TASK_LARCENY_MODE_PRODUCER_ORDER;
-  HASH_ADD_STR(values, name, current_value);
+	current_value = (struct enum_value *) malloc(sizeof(struct enum_value));
+	strncpy(current_value->name, "MPCOMP_TASK_LARCENY_MODE_PRODUCER_ORDER", 50);
+	current_value->value = MPCOMP_TASK_LARCENY_MODE_PRODUCER_ORDER;
+	HASH_ADD_STR(values, name, current_value);
 
-  current_value = (struct enum_value *)malloc(sizeof(struct enum_value));
-  strncpy(current_value->name, "MPCOMP_TASK_LARCENY_MODE_COUNT", 50);
-  current_value->value = MPCOMP_TASK_LARCENY_MODE_COUNT;
-  HASH_ADD_STR(values, name, current_value);
+	current_value = (struct enum_value *) malloc(sizeof(struct enum_value));
+	strncpy(current_value->name, "MPCOMP_TASK_LARCENY_MODE_COUNT", 50);
+	current_value->value = MPCOMP_TASK_LARCENY_MODE_COUNT;
+	HASH_ADD_STR(values, name, current_value);
 
-  current_enum->values = values;
-  HASH_ADD_STR(enums_types, name, current_enum);
+	current_enum->values = values;
+	HASH_ADD_STR(enums_types, name, current_enum);
 }
 
 /*******************  FUNCTION  *********************/
@@ -2770,12 +2767,12 @@ void sctk_runtime_config_struct_init_openmp(void * struct_ptr)
 	obj->max_alive_single = 3;
 	obj->warn_nested = false;
 	obj->mode = "simple-mixed";
-        obj->affinity = "balanced";
-        obj->omp_new_task_depth = 0;
-        obj->omp_untied_task_depth = 0;
-        obj->omp_task_larceny_mode = MPCOMP_TASK_LARCENY_MODE_HIERARCHICAL;
-        obj->omp_task_nesting_max = 8;
-        obj->init_done = 1;
+	obj->affinity = "balanced";
+	obj->omp_new_task_depth = 0;
+	obj->omp_untied_task_depth = 0;
+	obj->omp_task_larceny_mode = MPCOMP_TASK_LARCENY_MODE_HIERARCHICAL;
+	obj->omp_task_nesting_max = 8;
+	obj->init_done = 1;
 }
 
 /*******************  FUNCTION  *********************/
@@ -2816,34 +2813,33 @@ void sctk_runtime_config_struct_init_thread(void * struct_ptr)
 	obj->spin_delay = 10;
 	obj->interval = 10;
 	obj->kthread_stack_size = sctk_runtime_config_map_entry_parse_size("10MB");
-        obj->placement_policy.name = "sctk_get_init_vp_and_nbvp_default";
-        *(void **)&(obj->placement_policy.value) =
-            sctk_runtime_config_get_symbol("sctk_get_init_vp_and_nbvp_default");
-        obj->init_done = 1;
+	obj->placement_policy.name = "sctk_get_init_vp_and_nbvp_default";
+	*(void **) &(obj->placement_policy.value) = sctk_runtime_config_get_symbol("sctk_get_init_vp_and_nbvp_default");
+	obj->init_done = 1;
 }
 
 /*******************  FUNCTION  *********************/
-void sctk_runtime_config_struct_init_scheduler(void *struct_ptr) {
-  struct sctk_runtime_config_struct_scheduler *obj = struct_ptr;
-  /* Make sure this element is not initialized yet       */
-  /* It allows us to know when we are facing dynamically */
-  /* allocated objects requiring an init                 */
-  if (obj->init_done != 0)
-    return;
+void sctk_runtime_config_struct_init_scheduler(void * struct_ptr)
+{
+	struct sctk_runtime_config_struct_scheduler * obj = struct_ptr;
+	/* Make sure this element is not initialized yet       */
+	/* It allows us to know when we are facing dynamically */
+	/* allocated objects requiring an init                 */
+	if( obj->init_done != 0 ) return;
 
-  /* Simple params : */
-  obj->timestamp_threshold = 0.0;
-  obj->task_polling_thread_basic_priority = 20;
-  obj->task_polling_thread_basic_priority_step = 20;
-  obj->task_polling_thread_current_priority_step = 20;
-  obj->sched_NBC_Pthread_basic_priority = 20;
-  obj->sched_NBC_Pthread_basic_priority_step = 20;
-  obj->sched_NBC_Pthread_current_priority_step = 20;
-  obj->mpi_basic_priority = 20;
-  obj->omp_basic_priority = 20;
-  obj->posix_basic_priority = 20;
-  obj->progress_basic_priority = 20;
-  obj->init_done = 1;
+	/* Simple params : */
+	obj->timestamp_threshold = 0.0;
+	obj->task_polling_thread_basic_priority = 20;
+	obj->task_polling_thread_basic_priority_step = 20;
+	obj->task_polling_thread_current_priority_step = 20;
+	obj->sched_NBC_Pthread_basic_priority = 20;
+	obj->sched_NBC_Pthread_basic_priority_step = 20;
+	obj->sched_NBC_Pthread_current_priority_step = 20;
+	obj->mpi_basic_priority = 20;
+	obj->omp_basic_priority = 20;
+	obj->posix_basic_priority = 20;
+	obj->progress_basic_priority = 20;
+	obj->init_done = 1;
 }
 
 /*******************  FUNCTION  *********************/
@@ -2852,7 +2848,7 @@ void sctk_runtime_config_reset(struct sctk_runtime_config * config)
 	memset(config, 0, sizeof(struct sctk_runtime_config));
 	sctk_handler = dlopen(0, RTLD_LAZY | RTLD_GLOBAL);
 #ifdef MPC_Accelerators
-        sctk_runtime_config_struct_init_accl(&config->modules.accelerator);
+	sctk_runtime_config_struct_init_accl(&config->modules.accelerator);
 #endif
 #ifdef MPC_Allocator
 	sctk_runtime_config_struct_init_allocator(&config->modules.allocator);
@@ -2875,14 +2871,14 @@ void sctk_runtime_config_reset(struct sctk_runtime_config * config)
 #endif
 #ifdef MPC_OpenMP
 	sctk_runtime_config_struct_init_openmp(&config->modules.openmp);
-        sctk_runtime_config_enum_init_mpcomp_task_larceny_mode_t();
+	sctk_runtime_config_enum_init_mpcomp_task_larceny_mode_t();
 #endif
 #ifdef MPC_Profiler
 	sctk_runtime_config_struct_init_profiler(&config->modules.profiler);
 #endif
 #ifdef MPC_Threads
 	sctk_runtime_config_struct_init_thread(&config->modules.thread);
-        sctk_runtime_config_struct_init_scheduler(&config->modules.scheduler);
+	sctk_runtime_config_struct_init_scheduler(&config->modules.scheduler);
 #endif
 	sctk_runtime_config_struct_init_networks(&config->networks);
 	dlclose(sctk_handler);
@@ -2909,181 +2905,216 @@ void sctk_runtime_config_clean_hash_tables()
 /*******************  FUNCTION  *********************/
 void sctk_runtime_config_reset_struct_default_if_needed(const char * structname, void * ptr )
 {
-  if (!strcmp(structname, "sctk_runtime_config_struct_accl_cuda")) {
-    sctk_runtime_config_struct_init_accl_cuda(ptr);
-    return;
-  }
+	if( !strcmp( structname , "sctk_runtime_config_struct_accl_cuda") )
+	{
+		sctk_runtime_config_struct_init_accl_cuda( ptr );
+		return;
+	}
 
-  if (!strcmp(structname, "sctk_runtime_config_struct_accl_openacc")) {
-    sctk_runtime_config_struct_init_accl_openacc(ptr);
-    return;
-  }
+	if( !strcmp( structname , "sctk_runtime_config_struct_accl_openacc") )
+	{
+		sctk_runtime_config_struct_init_accl_openacc( ptr );
+		return;
+	}
 
-  if (!strcmp(structname, "sctk_runtime_config_struct_accl_opencl")) {
-    sctk_runtime_config_struct_init_accl_opencl(ptr);
-    return;
-  }
+	if( !strcmp( structname , "sctk_runtime_config_struct_accl_opencl") )
+	{
+		sctk_runtime_config_struct_init_accl_opencl( ptr );
+		return;
+	}
 
-  if (!strcmp(structname, "sctk_runtime_config_struct_accl")) {
-    sctk_runtime_config_struct_init_accl(ptr);
-    return;
-  }
+	if( !strcmp( structname , "sctk_runtime_config_struct_accl") )
+	{
+		sctk_runtime_config_struct_init_accl( ptr );
+		return;
+	}
 
-  if (!strcmp(structname, "sctk_runtime_config_struct_allocator")) {
-    sctk_runtime_config_struct_init_allocator(ptr);
-    return;
-  }
+	if( !strcmp( structname , "sctk_runtime_config_struct_allocator") )
+	{
+		sctk_runtime_config_struct_init_allocator( ptr );
+		return;
+	}
 
-  if (!strcmp(structname, "sctk_runtime_config_struct_launcher")) {
-    sctk_runtime_config_struct_init_launcher(ptr);
-    return;
-  }
+	if( !strcmp( structname , "sctk_runtime_config_struct_launcher") )
+	{
+		sctk_runtime_config_struct_init_launcher( ptr );
+		return;
+	}
 
-  if (!strcmp(structname, "sctk_runtime_config_struct_debugger")) {
-    sctk_runtime_config_struct_init_debugger(ptr);
-    return;
-  }
+	if( !strcmp( structname , "sctk_runtime_config_struct_debugger") )
+	{
+		sctk_runtime_config_struct_init_debugger( ptr );
+		return;
+	}
 
-  if (!strcmp(structname, "sctk_runtime_config_struct_collectives_intra")) {
-    sctk_runtime_config_struct_init_collectives_intra(ptr);
-    return;
-  }
+	if( !strcmp( structname , "sctk_runtime_config_struct_collectives_intra") )
+	{
+		sctk_runtime_config_struct_init_collectives_intra( ptr );
+		return;
+	}
 
-  if (!strcmp(structname, "sctk_runtime_config_struct_collectives_inter")) {
-    sctk_runtime_config_struct_init_collectives_inter(ptr);
-    return;
-  }
+	if( !strcmp( structname , "sctk_runtime_config_struct_collectives_inter") )
+	{
+		sctk_runtime_config_struct_init_collectives_inter( ptr );
+		return;
+	}
 
-  if (!strcmp(structname, "sctk_runtime_config_struct_progress_thread")) {
-    sctk_runtime_config_struct_init_progress_thread(ptr);
-    return;
-  }
+	if( !strcmp( structname , "sctk_runtime_config_struct_progress_thread") )
+	{
+		sctk_runtime_config_struct_init_progress_thread( ptr );
+		return;
+	}
 
-  if (!strcmp(structname, "sctk_runtime_config_struct_mpc")) {
-    sctk_runtime_config_struct_init_mpc(ptr);
-    return;
-  }
+	if( !strcmp( structname , "sctk_runtime_config_struct_mpc") )
+	{
+		sctk_runtime_config_struct_init_mpc( ptr );
+		return;
+	}
 
-  if (!strcmp(structname,
-              "sctk_runtime_config_struct_net_driver_topological")) {
-    sctk_runtime_config_struct_init_net_driver_topological(ptr);
-    return;
-  }
+	if( !strcmp( structname , "sctk_runtime_config_struct_net_driver_topological") )
+	{
+		sctk_runtime_config_struct_init_net_driver_topological( ptr );
+		return;
+	}
 
-  if (!strcmp(structname, "sctk_runtime_config_struct_net_driver_infiniband")) {
-    sctk_runtime_config_struct_init_net_driver_infiniband(ptr);
-    return;
-  }
+	if( !strcmp( structname , "sctk_runtime_config_struct_net_driver_infiniband") )
+	{
+		sctk_runtime_config_struct_init_net_driver_infiniband( ptr );
+		return;
+	}
 
-  if (!strcmp(structname, "sctk_runtime_config_struct_ib_global")) {
-    sctk_runtime_config_struct_init_ib_global(ptr);
-    return;
-  }
+	if( !strcmp( structname , "sctk_runtime_config_struct_ib_global") )
+	{
+		sctk_runtime_config_struct_init_ib_global( ptr );
+		return;
+	}
 
-  if (!strcmp(structname, "sctk_runtime_config_struct_net_driver_portals")) {
-    sctk_runtime_config_struct_init_net_driver_portals(ptr);
-    return;
-  }
+	if( !strcmp( structname , "sctk_runtime_config_struct_net_driver_portals") )
+	{
+		sctk_runtime_config_struct_init_net_driver_portals( ptr );
+		return;
+	}
 
-  if (!strcmp(structname, "sctk_runtime_config_struct_net_driver_tcp")) {
-    sctk_runtime_config_struct_init_net_driver_tcp(ptr);
-    return;
-  }
+	if( !strcmp( structname , "sctk_runtime_config_struct_net_driver_tcp") )
+	{
+		sctk_runtime_config_struct_init_net_driver_tcp( ptr );
+		return;
+	}
 
-  if (!strcmp(structname, "sctk_runtime_config_struct_net_driver_tcp_rdma")) {
-    sctk_runtime_config_struct_init_net_driver_tcp_rdma(ptr);
-    return;
-  }
+	if( !strcmp( structname , "sctk_runtime_config_struct_net_driver_tcp_rdma") )
+	{
+		sctk_runtime_config_struct_init_net_driver_tcp_rdma( ptr );
+		return;
+	}
 
-  if (!strcmp(structname, "sctk_runtime_config_struct_net_driver_shm")) {
-    sctk_runtime_config_struct_init_net_driver_shm(ptr);
-    return;
-  }
+	if( !strcmp( structname , "sctk_runtime_config_struct_net_driver_shm") )
+	{
+		sctk_runtime_config_struct_init_net_driver_shm( ptr );
+		return;
+	}
 
-  if (!strcmp(structname, "sctk_runtime_config_struct_net_driver_config")) {
-    sctk_runtime_config_struct_init_net_driver_config(ptr);
-    return;
-  }
+	if( !strcmp( structname , "sctk_runtime_config_struct_net_driver_config") )
+	{
+		sctk_runtime_config_struct_init_net_driver_config( ptr );
+		return;
+	}
 
-  if (!strcmp(structname, "sctk_runtime_config_struct_gate_boolean")) {
-    sctk_runtime_config_struct_init_gate_boolean(ptr);
-    return;
-  }
+	if( !strcmp( structname , "sctk_runtime_config_struct_gate_boolean") )
+	{
+		sctk_runtime_config_struct_init_gate_boolean( ptr );
+		return;
+	}
 
-  if (!strcmp(structname, "sctk_runtime_config_struct_gate_probabilistic")) {
-    sctk_runtime_config_struct_init_gate_probabilistic(ptr);
-    return;
-  }
+	if( !strcmp( structname , "sctk_runtime_config_struct_gate_probabilistic") )
+	{
+		sctk_runtime_config_struct_init_gate_probabilistic( ptr );
+		return;
+	}
 
-  if (!strcmp(structname, "sctk_runtime_config_struct_gate_min_size")) {
-    sctk_runtime_config_struct_init_gate_min_size(ptr);
-    return;
-  }
+	if( !strcmp( structname , "sctk_runtime_config_struct_gate_min_size") )
+	{
+		sctk_runtime_config_struct_init_gate_min_size( ptr );
+		return;
+	}
 
-  if (!strcmp(structname, "sctk_runtime_config_struct_gate_max_size")) {
-    sctk_runtime_config_struct_init_gate_max_size(ptr);
-    return;
-  }
+	if( !strcmp( structname , "sctk_runtime_config_struct_gate_max_size") )
+	{
+		sctk_runtime_config_struct_init_gate_max_size( ptr );
+		return;
+	}
 
-  if (!strcmp(structname, "sctk_runtime_config_struct_gate_message_type")) {
-    sctk_runtime_config_struct_init_gate_message_type(ptr);
-    return;
-  }
+	if( !strcmp( structname , "sctk_runtime_config_struct_gate_message_type") )
+	{
+		sctk_runtime_config_struct_init_gate_message_type( ptr );
+		return;
+	}
 
-  if (!strcmp(structname, "sctk_runtime_config_struct_gate_user")) {
-    sctk_runtime_config_struct_init_gate_user(ptr);
-    return;
-  }
+	if( !strcmp( structname , "sctk_runtime_config_struct_gate_user") )
+	{
+		sctk_runtime_config_struct_init_gate_user( ptr );
+		return;
+	}
 
-  if (!strcmp(structname, "sctk_runtime_config_struct_topological_polling")) {
-    sctk_runtime_config_struct_init_topological_polling(ptr);
-    return;
-  }
+	if( !strcmp( structname , "sctk_runtime_config_struct_topological_polling") )
+	{
+		sctk_runtime_config_struct_init_topological_polling( ptr );
+		return;
+	}
 
-  if (!strcmp(structname, "sctk_runtime_config_struct_net_rail")) {
-    sctk_runtime_config_struct_init_net_rail(ptr);
-    return;
-  }
+	if( !strcmp( structname , "sctk_runtime_config_struct_net_rail") )
+	{
+		sctk_runtime_config_struct_init_net_rail( ptr );
+		return;
+	}
 
-  if (!strcmp(structname, "sctk_runtime_config_struct_net_cli_option")) {
-    sctk_runtime_config_struct_init_net_cli_option(ptr);
-    return;
-  }
+	if( !strcmp( structname , "sctk_runtime_config_struct_net_cli_option") )
+	{
+		sctk_runtime_config_struct_init_net_cli_option( ptr );
+		return;
+	}
 
-  if (!strcmp(structname, "sctk_runtime_config_struct_networks")) {
-    sctk_runtime_config_struct_init_networks(ptr);
-    return;
-  }
+	if( !strcmp( structname , "sctk_runtime_config_struct_networks") )
+	{
+		sctk_runtime_config_struct_init_networks( ptr );
+		return;
+	}
 
-  if (!strcmp(structname, "sctk_runtime_config_struct_inter_thread_comm")) {
-    sctk_runtime_config_struct_init_inter_thread_comm(ptr);
-    return;
-  }
+	if( !strcmp( structname , "sctk_runtime_config_struct_inter_thread_comm") )
+	{
+		sctk_runtime_config_struct_init_inter_thread_comm( ptr );
+		return;
+	}
 
-  if (!strcmp(structname, "sctk_runtime_config_struct_low_level_comm")) {
-    sctk_runtime_config_struct_init_low_level_comm(ptr);
-    return;
-  }
+	if( !strcmp( structname , "sctk_runtime_config_struct_low_level_comm") )
+	{
+		sctk_runtime_config_struct_init_low_level_comm( ptr );
+		return;
+	}
 
-  if (!strcmp(structname, "sctk_runtime_config_struct_openmp")) {
-    sctk_runtime_config_struct_init_openmp(ptr);
-    return;
-  }
+	if( !strcmp( structname , "sctk_runtime_config_struct_openmp") )
+	{
+		sctk_runtime_config_struct_init_openmp( ptr );
+		return;
+	}
 
-  if (!strcmp(structname, "sctk_runtime_config_struct_profiler")) {
-    sctk_runtime_config_struct_init_profiler(ptr);
-    return;
-  }
+	if( !strcmp( structname , "sctk_runtime_config_struct_profiler") )
+	{
+		sctk_runtime_config_struct_init_profiler( ptr );
+		return;
+	}
 
-  if (!strcmp(structname, "sctk_runtime_config_struct_thread")) {
-    sctk_runtime_config_struct_init_thread(ptr);
-    return;
-  }
+	if( !strcmp( structname , "sctk_runtime_config_struct_thread") )
+	{
+		sctk_runtime_config_struct_init_thread( ptr );
+		return;
+	}
 
-  if (!strcmp(structname, "sctk_runtime_config_struct_scheduler")) {
-    sctk_runtime_config_struct_init_scheduler(ptr);
-    return;
-  }
+	if( !strcmp( structname , "sctk_runtime_config_struct_scheduler") )
+	{
+		sctk_runtime_config_struct_init_scheduler( ptr );
+		return;
+	}
+
 }
 
 

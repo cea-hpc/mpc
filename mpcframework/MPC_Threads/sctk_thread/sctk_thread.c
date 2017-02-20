@@ -660,34 +660,16 @@ sctk_thread_create_tmp_start_routine (sctk_thread_data_t * __arg)
   __mpcomp_init() ;
 #endif
 #endif
-  // hmt
   // thread priority
-
-  // sctk_thread_generic_scheduler_t* sched;
-  // sched = &(sctk_thread_generic_self()->sched);
-  // printf("THREAD PRIORITY : %d %d\n",
-  //        sched->th->attr.kind.mask,
-  //        sched->th->attr.kind.priority
-  //      );
-
-  // printf("BEFORE MPI: %d\n", sctk_thread_generic_getkind_mask_self());
-  // set the KIND_MASK_MPI to the current thread
-  sctk_thread_generic_addkind_mask_self(KIND_MASK_MPI);
-  sctk_thread_generic_set_basic_priority_self(
-      sctk_runtime_config_get()->modules.scheduler.mpi_basic_priority);
-  sctk_thread_generic_setkind_priority_self(
-      sctk_runtime_config_get()->modules.scheduler.mpi_basic_priority);
-  sctk_thread_generic_set_current_priority_self(
-      sctk_runtime_config_get()->modules.scheduler.mpi_basic_priority);
-  // printf("AFTER MPI: %d\n", sctk_thread_generic_getkind_mask_self());
-
-  // printf("THREAD PRIORITY : %d %d\n",
-  //        sctk_thread_generic_getkind_mask_self(),
-  //        sctk_thread_generic_getkind_priority_self()
-  //      );
-
-  // endthread priority
-  // endhmt
+  if (sctk_new_scheduler_engine_enabled) {
+      sctk_thread_generic_addkind_mask_self(KIND_MASK_MPI);
+      sctk_thread_generic_set_basic_priority_self(
+              sctk_runtime_config_get()->modules.scheduler.mpi_basic_priority);
+      sctk_thread_generic_setkind_priority_self(
+              sctk_runtime_config_get()->modules.scheduler.mpi_basic_priority);
+      sctk_thread_generic_set_current_priority_self(
+              sctk_runtime_config_get()->modules.scheduler.mpi_basic_priority);
+  }
 
 #if defined(MPC_USE_CUDA)
   sctk_thread_yield();
@@ -892,17 +874,15 @@ sctk_thread_create_tmp_start_routine_user (sctk_thread_data_t * __arg)
    MPC_Init_thread_specific();
 #endif
 
-   // hmt
-   // printf("BEFORE PTHREAD: %d\n", sctk_thread_generic_getkind_mask_self());
-   sctk_thread_generic_addkind_mask_self(KIND_MASK_PTHREAD);
-   sctk_thread_generic_set_basic_priority_self(
-       sctk_runtime_config_get()->modules.scheduler.posix_basic_priority);
-   sctk_thread_generic_setkind_priority_self(
-       sctk_runtime_config_get()->modules.scheduler.posix_basic_priority);
-   sctk_thread_generic_set_current_priority_self(
-       sctk_runtime_config_get()->modules.scheduler.posix_basic_priority);
-   // printf("AFTER PTHREAD: %d\n", sctk_thread_generic_getkind_mask_self());
-   // endhmt
+   if (sctk_new_scheduler_engine_enabled) {
+       sctk_thread_generic_addkind_mask_self(KIND_MASK_PTHREAD);
+       sctk_thread_generic_set_basic_priority_self(
+               sctk_runtime_config_get()->modules.scheduler.posix_basic_priority);
+       sctk_thread_generic_setkind_priority_self(
+               sctk_runtime_config_get()->modules.scheduler.posix_basic_priority);
+       sctk_thread_generic_set_current_priority_self(
+               sctk_runtime_config_get()->modules.scheduler.posix_basic_priority);
+   }
 
    res = tmp.__start_routine(tmp.__arg);
 

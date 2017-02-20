@@ -804,18 +804,15 @@ void __mpcomp_in_order_scheduler_multiple_mvp(mpcomp_mvp_t *mvp) {
     sctk_openmp_thread_tls = &mvp->threads[i];
     cur_mvp_thread = (mpcomp_thread_t *)sctk_openmp_thread_tls;
 
-    // hmt
-    // set the KIND_MASK_OMP to the current thread
-    // printf("BEFORE OMP: %d\n", sctk_thread_generic_getkind_mask_self());
-    sctk_thread_generic_addkind_mask_self(KIND_MASK_OMP);
-    sctk_thread_generic_set_basic_priority_self(
-        sctk_runtime_config_get()->modules.scheduler.omp_basic_priority);
-    sctk_thread_generic_setkind_priority_self(
-        sctk_runtime_config_get()->modules.scheduler.omp_basic_priority);
-    sctk_thread_generic_set_current_priority_self(
-        sctk_runtime_config_get()->modules.scheduler.omp_basic_priority);
-    // printf("AFTER OMP: %d\n", sctk_thread_generic_getkind_mask_self());
-    // endhmt
+    if (sctk_new_scheduler_engine_enabled) {
+        sctk_thread_generic_addkind_mask_self(KIND_MASK_OMP);
+        sctk_thread_generic_set_basic_priority_self(
+                sctk_runtime_config_get()->modules.scheduler.omp_basic_priority);
+        sctk_thread_generic_setkind_priority_self(
+                sctk_runtime_config_get()->modules.scheduler.omp_basic_priority);
+        sctk_thread_generic_set_current_priority_self(
+                sctk_runtime_config_get()->modules.scheduler.omp_basic_priority);
+    }
 
     sctk_assert(((mpcomp_thread_t *)sctk_openmp_thread_tls)->instance != NULL);
     sctk_assert(((mpcomp_thread_t *)sctk_openmp_thread_tls)->instance->team !=
