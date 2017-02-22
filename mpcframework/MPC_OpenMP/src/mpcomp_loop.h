@@ -52,6 +52,23 @@ static inline long __mpcomp_internal_loop_get_num_iters(long start, long end,
   return (ret >= 0) ? ret : -ret;
 }
 
+static inline uint64_t __mpcomp_internal_loop_get_num_iters_gen( mpcomp_loop_gen_info_t* loop_infos )
+{
+	uint64_t count = 0;	
+
+	if( loop_infos->type == MPCOMP_LOOP_TYPE_LONG )
+	{
+		mpcomp_loop_long_iter_t* long_loop = &( loop_infos->loop.mpcomp_long );
+		count = __mpcomp_internal_loop_get_num_iters(long_loop->lb , long_loop->b, long_loop->incr );
+	}
+	else
+	{
+		mpcomp_loop_ull_iter_t* ull_loop = &( loop_infos->loop.mpcomp_ull );
+		count = __mpcomp_internal_loop_get_num_iters_ull(ull_loop->lb , ull_loop->b, ull_loop->incr, ull_loop->up );
+	}
+	return count;
+}
+
 unsigned long long __mpcomp_compute_static_nb_chunks_per_rank_ull(
     unsigned long long, unsigned long long, mpcomp_loop_ull_iter_t *);
 #endif /* __MPCOMP_LOOP_CORE_H__ */

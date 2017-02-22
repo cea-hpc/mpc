@@ -100,6 +100,8 @@ ompt_callback_t *OMPT_Callbacks = NULL;
 //TODO: should be task specific value
 static ompt_fns_t* mpcomp_ompt_fns = NULL; 
 
+const ompt_data_t ompt_data_none = (ompt_data_t) {.value=0};
+
 /**
  * Forward declaration 
  */

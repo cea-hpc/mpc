@@ -6,6 +6,8 @@
 //#include "mpcomp_loop_dyn_ull.h"
 #include "mpcomp_loop_dyn_utils.h"
 
+#include "ompt.h"
+
 /****
  *
  * ULL CHUNK MANIPULATION
@@ -103,19 +105,39 @@ int __mpcomp_loop_ull_dynamic_begin(bool up, unsigned long long lb,
                                     unsigned long long chunk_size,
                                     unsigned long long *from,
                                     unsigned long long *to) {
-  mpcomp_thread_t *t; /* Info on the current thread */
+  	mpcomp_thread_t *t; /* Info on the current thread */
 
-  /* Handle orphaned directive (initialize OpenMP environment) */
-  __mpcomp_init();
+  	/* Handle orphaned directive (initialize OpenMP environment) */
+  	__mpcomp_init();
 
-  /* Grab the thread info */
-  t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
-  sctk_assert(t != NULL);
+  	/* Grab the thread info */
+  	t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
+  	sctk_assert(t != NULL);
 
-  /* Initialization of loop internals */
-  t->for_dyn_last_loop_iteration = 0;
-  __mpcomp_dynamic_loop_init_ull(t, up, lb, b, incr, chunk_size);
-  __mpcomp_loop_dyn_init_target_chunk_ull(t, t, t->info.num_threads);
+  	/* Initialization of loop internals */
+  	t->for_dyn_last_loop_iteration = 0;
+  	__mpcomp_dynamic_loop_init_ull(t, up, lb, b, incr, chunk_size);
+  	__mpcomp_loop_dyn_init_target_chunk_ull(t, t, t->info.num_threads);
+
+#if 1 //OMPT_SUPPORT
+	/* Avoid double call during runtime schedule policy */
+	if( ( t->schedule_type == MPCOMP_COMBINED_DYN_LOOP ) && mpcomp_ompt_is_enabled() )
+	{
+   	if( OMPT_Callbacks )
+   	{
+			ompt_callback_work_t callback; 
+			callback = (ompt_callback_work_t) OMPT_Callbacks[ompt_callback_work];
+			if( callback )
+			{
+				uint64_t ompt_iter_count = 0;
+				ompt_iter_count = __mpcomp_internal_loop_get_num_iters_gen(&(t->info.loop_infos));
+				ompt_data_t* parallel_data = &( t->instance->team->info.ompt_region_data );
+				const void* code_ra = __ompt_get_return_address(3);
+				callback( ompt_worksharing_loop, ompt_scope_begin, parallel_data, NULL, ompt_iter_count, code_ra);
+			}
+		}
+	}
+#endif /* OMPT_SUPPORT */
 
   if (!from) {
     return -1;

@@ -37,6 +37,8 @@
 #include "mpcomp_sections.h"
 #include "mpcomp_core.h"
 
+#include "ompt.h"
+
 /*****************
   ****** GLOBAL VARIABLES
   *****************/
@@ -610,6 +612,8 @@ void __mpcomp_init(void) {
     icvs.active_levels_var = 0;
     icvs.levels_var = 0;
 
+  	 mpcomp_ompt_post_init();
+
     /* Allocate information for the sequential region */
     t = (mpcomp_thread_t *)sctk_malloc(sizeof(mpcomp_thread_t));
     sctk_assert(t != NULL);
@@ -619,7 +623,23 @@ void __mpcomp_init(void) {
 
     /* Current thread information is 't' */
     sctk_openmp_thread_tls = t;
-
+	  	
+#if 1 //OMPT_SUPPORT
+	if( mpcomp_ompt_is_enabled() )
+	{
+   	if( OMPT_Callbacks )
+   	{
+			ompt_callback_thread_begin_t callback; 
+			callback = (ompt_callback_thread_begin_t) OMPT_Callbacks[ompt_callback_thread_begin];
+			if( callback )
+			{
+				t->ompt_thread_data = ompt_data_none;
+				callback( ompt_thread_initial, &( t->ompt_thread_data ) );
+			}
+		}
+	}
+#endif /* OMPT_SUPPORT */
+	
     /* Allocate an instance of OpenMP */
     instance = (mpcomp_instance_t *)sctk_malloc(sizeof(mpcomp_instance_t));
     sctk_assert(instance != NULL);
@@ -633,7 +653,6 @@ void __mpcomp_init(void) {
 
     sctk_thread_mutex_unlock(&lock);
 
-  	 mpcomp_ompt_post_init();
     sctk_nodebug("%s: Init done...", __func__);
   }
   
@@ -727,9 +746,9 @@ void __mpcomp_in_order_scheduler(mpcomp_mvp_t *mvp) {
   sctk_assert(cur_mvp_thread->instance->team != NULL);
   sctk_assert(cur_mvp_thread->info.func != NULL);
 
-
   mpcomp_loop_long_iter_t *loop =
       &(cur_mvp_thread->info.loop_infos.loop.mpcomp_long);
+
   /* Handle beginning of combined parallel region */
   switch (cur_mvp_thread->info.combined_pragma) {
   case MPCOMP_COMBINED_NONE:
@@ -754,7 +773,39 @@ void __mpcomp_in_order_scheduler(mpcomp_mvp_t *mvp) {
     not_implemented();
   }
 
+#if 1 //OMPT_SUPPORT
+	if( mpcomp_ompt_is_enabled() )
+	{
+   	if( OMPT_Callbacks )
+   	{
+			ompt_callback_implicit_task_t callback; 
+			callback = (ompt_callback_implicit_task_t) OMPT_Callbacks[ompt_callback_implicit_task];
+			if( callback )
+			{
+				ompt_data_t* parallel_data = &(cur_mvp_thread->instance->team->info.ompt_region_data);	
+				callback( ompt_scope_begin, parallel_data, NULL, cur_mvp_thread->rank );  
+			}
+		}
+	}
+#endif /* OMPT_SUPPORT */
+	
   cur_mvp_thread->info.func(cur_mvp_thread->info.shared);
+
+#if 1 //OMPT_SUPPORT
+	if( mpcomp_ompt_is_enabled() )
+	{
+   	if( OMPT_Callbacks )
+   	{
+			ompt_callback_implicit_task_t callback; 
+			callback = (ompt_callback_implicit_task_t) OMPT_Callbacks[ompt_callback_implicit_task];
+			if( callback )
+			{
+				ompt_data_t* parallel_data = &(cur_mvp_thread->instance->team->info.ompt_region_data);	
+				callback( ompt_scope_end, parallel_data, NULL, cur_mvp_thread->rank );  
+			}
+		}
+	}
+#endif /* OMPT_SUPPORT */
 
   /* Handle ending of combined parallel region */
   switch (cur_mvp_thread->info.combined_pragma) {

@@ -3,6 +3,7 @@
 
 #include "mpcomp_ompt_types_misc.h"
 
+#if 0
 OMPT_API ompt_data_t *ompt_get_thread_data( void )
 {
 #if SUPPORT_OMPT
@@ -73,3 +74,4 @@ OMPT_API _Bool ompt_get_task_info( int ancestor_level, ompt_task_type_t *type, o
 	return 0;
 #endif /* SUPPORT_OMPT */
 }
+#endif 

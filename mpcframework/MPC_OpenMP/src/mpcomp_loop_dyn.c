@@ -30,6 +30,8 @@
 #include "mpcomp_loop_dyn.h"
 #include "mpcomp_loop_dyn_utils.h"
 
+#include "ompt.h"
+
 static int __mpcomp_dynamic_loop_get_chunk_from_rank(mpcomp_thread_t *t,
                                                      mpcomp_thread_t *target,
                                                      long *from, long *to) {
@@ -105,26 +107,40 @@ void __mpcomp_dynamic_loop_init(mpcomp_thread_t *t, long lb, long b, long incr,
 
 int __mpcomp_dynamic_loop_begin(long lb, long b, long incr, long chunk_size,
                                 long *from, long *to) {
-  mpcomp_thread_t *t; /* Info on the current thread */
+  	mpcomp_thread_t *t; /* Info on the current thread */
 
-  /* Handle orphaned directive (initialize OpenMP environment) */
-  __mpcomp_init();
+  	/* Handle orphaned directive (initialize OpenMP environment) */
+  	__mpcomp_init();
 
-  /* Grab the thread info */
-  t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
-  sctk_assert(t != NULL);
+  	/* Grab the thread info */
+  	t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
+  	sctk_assert(t != NULL);
 
-  /* Initialization of loop internals */
-  t->for_dyn_last_loop_iteration = 0;
-  __mpcomp_dynamic_loop_init(t, lb, b, incr, chunk_size);
-  __mpcomp_loop_dyn_init_target_chunk(t, t, t->info.num_threads);
+  	/* Initialization of loop internals */
+  	t->for_dyn_last_loop_iteration = 0;
+  	__mpcomp_dynamic_loop_init(t, lb, b, incr, chunk_size);
+  	__mpcomp_loop_dyn_init_target_chunk(t, t, t->info.num_threads);
 
-  /* Return the next chunk to execute */
-  if (!from && !to) {
-    return -1;
-  }
+#if 1 //OMPT_SUPPORT
+	if( mpcomp_ompt_is_enabled() )
+	{
+   	if( OMPT_Callbacks )
+   	{
+			ompt_callback_work_t callback; 
+			callback = (ompt_callback_work_t) OMPT_Callbacks[ompt_callback_work];
+			if( callback )
+			{
+				uint64_t ompt_iter_count = 0;
+				ompt_iter_count = __mpcomp_internal_loop_get_num_iters_gen(&(t->info.loop_infos));
+				ompt_data_t* parallel_data = &( t->instance->team->info.ompt_region_data );
+				const void* code_ra = __ompt_get_return_address(2);
+				callback( ompt_worksharing_loop, ompt_scope_begin, parallel_data, NULL, ompt_iter_count, code_ra);
+			}
+		}
+	}
+#endif /* OMPT_SUPPORT */
 
-  return __mpcomp_dynamic_loop_next(from, to);
+  return (!from && !to) ? -1 : __mpcomp_dynamic_loop_next(from, to);
 }
 
 int __mpcomp_dynamic_loop_next(long *from, long *to) {
@@ -233,6 +249,26 @@ void __mpcomp_dynamic_loop_end_nowait(void) {
   const int index = __mpcomp_loop_dyn_get_for_dyn_index(t);
   sctk_assert(index >= 0 && index < MPCOMP_MAX_ALIVE_FOR_DYN + 1);
 
+#if 1 //OMPT_SUPPORT
+	/* Avoid double call during runtime schedule policy */
+	if( mpcomp_ompt_is_enabled() )
+	{
+   	if( OMPT_Callbacks )
+   	{
+			ompt_callback_work_t callback; 
+			callback = (ompt_callback_work_t) OMPT_Callbacks[ompt_callback_work];
+			if( callback )
+			{
+				uint64_t ompt_iter_count = 0;
+				ompt_iter_count = __mpcomp_internal_loop_get_num_iters_gen(&(t->info.loop_infos));
+				ompt_data_t* parallel_data = &( t->instance->team->info.ompt_region_data );
+				const void* code_ra = __builtin_return_address(0);	
+				callback( ompt_worksharing_loop, ompt_scope_end, parallel_data, NULL, ompt_iter_count, code_ra);
+			}
+		}
+	}
+#endif /* OMPT_SUPPORT */
+
   /* In case of 1 thread, re-initialize the number of remaining chunks
        * but do not increase the current index */
   if (num_threads == 1) {
@@ -267,6 +303,7 @@ void __mpcomp_dynamic_loop_end_nowait(void) {
     sctk_atomics_store_int(&(team_info->for_dyn_nb_threads_exited[index].i),
                            MPCOMP_NOWAIT_STOP_SYMBOL);
   }
+
 }
 
 void __mpcomp_dynamic_loop_end(void) {

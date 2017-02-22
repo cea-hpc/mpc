@@ -155,10 +155,8 @@ TODO("BUG w/ nested anonymous critical (and maybe named critical) -> need nested
 
 void __mpcomp_anonymous_critical_begin(void) 
 {
-	sctk_error("val : %d", sctk_atomics_load_int(&__mpcomp_critical_lock_init_once) );
 	if( sctk_atomics_load_int(&__mpcomp_critical_lock_init_once)  != 2)
 	{
-		sctk_error("start init ...");
 		//prevent multi call to init 
 		if( !sctk_atomics_cas_int( &__mpcomp_critical_lock_init_once, 0, 1))
 		{
@@ -269,7 +267,6 @@ void __mpcomp_named_critical_begin(void **l)
     	if( *l == NULL ) 
 		{
 			named_critical_lock = (mpcomp_lock_t *) sctk_malloc( sizeof( mpcomp_lock_t ));
-			sctk_error( "addr: %p", named_critical_lock );
 			sctk_assert( named_critical_lock );
 			memset(named_critical_lock, 0, sizeof(mpcomp_lock_t));
 			sctk_thread_mutex_init(&(named_critical_lock->lock), 0);

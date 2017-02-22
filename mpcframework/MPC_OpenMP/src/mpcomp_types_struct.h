@@ -37,6 +37,8 @@
 #include "mpcomp_intel_types.h"
 #endif /* MPCOMP_USE_INTEL_ABI */
 
+#include "ompt.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -83,6 +85,11 @@ typedef struct mpcomp_new_parallel_region_info_s {
   long loop_incr;       /* Step */
   long loop_chunk_size; /* Size of each chunk */
   int nb_sections;
+
+#if 1 // OMPT_SUPPORT
+	ompt_data_t ompt_region_data;
+#endif /* OMPT_SUPPORT */
+
 } mpcomp_new_parallel_region_info_t;
 
 /* Team of OpenMP threads */
@@ -139,6 +146,7 @@ typedef struct mpcomp_thread_s {
                                          sections construct? */
   int single_sections_start_current;  /* When started the last sections
                                          construct? */
+  int nb_sections;
 
   struct mpcomp_thread_s
       *father; /* Father thread  TODO: use it for ancestors */
@@ -181,6 +189,10 @@ typedef struct mpcomp_thread_s {
   struct private_common *th_pri_head;
 #endif /* MPCOMP_USE_INTEL_ABI */
 
+#if 1 // OMPT_SUPPORT
+	ompt_state_t state;
+	ompt_data_t ompt_thread_data;
+#endif /* OMPT_SUPPORT */
   /* reduction method */
   int reduction_method;
 } mpcomp_thread_t;

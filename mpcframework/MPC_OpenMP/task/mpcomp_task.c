@@ -42,6 +42,9 @@
 #include "mpcomp_task_dep.h"
 #include "mpcomp_taskgroup.h"
 
+#include "ompt.h"
+extern ompt_callback_t* OMPT_Callbacks;
+
 typedef uint32_t (*kmp_routine_entry_t)(uint32_t, void *);
 
 typedef struct kmp_task { /* GEH: Shouldn't this be aligned somehow? */
@@ -90,6 +93,18 @@ void __mpcomp_task_execute(mpcomp_task_t *task) {
   /* Saved thread current task */
   saved_current_task = MPCOMP_TASK_THREAD_GET_CURRENT_TASK(thread);
 
+	#if 1 //OMPT_SUPPORT
+   if( mpcomp_ompt_is_enabled() )
+   {
+      if( OMPT_Callbacks )
+		{
+			ompt_callback_task_schedule_t callback;
+			callback = (ompt_callback_task_schedule_t) OMPT_Callbacks[ompt_callback_task_schedule];
+			callback( &(saved_current_task->ompt_task_data), ompt_task_yield, &(task->ompt_task_data)); 
+		}
+	}
+	#endif /* OMPT_SUPPORT */
+
   /* Update thread current task */
   MPCOMP_TASK_THREAD_SET_CURRENT_TASK(thread, task);
 
@@ -104,6 +119,18 @@ void __mpcomp_task_execute(mpcomp_task_t *task) {
 
   /* Restore thread icv envionnement */
   thread->info.icvs = saved_icvs;
+
+  #if 1 //OMPT_SUPPORT
+  if( mpcomp_ompt_is_enabled() )
+  {
+    if( OMPT_Callbacks )
+	 {
+		ompt_callback_task_schedule_t callback;
+		callback = (ompt_callback_task_schedule_t) OMPT_Callbacks[ompt_callback_task_schedule];
+		callback( &(task->ompt_task_data), ompt_task_complete, &(saved_current_task->ompt_task_data) ); 
+    }
+  }
+  #endif /* OMPT_SUPPORT */
 
   /* Restore current task */
   MPCOMP_TASK_THREAD_SET_CURRENT_TASK(thread, saved_current_task);
@@ -294,6 +321,19 @@ struct mpcomp_task_s *__mpcomp_task_alloc(void (*fn)(void *), void *data,
   mpcomp_task_t *current_task = MPCOMP_TASK_THREAD_GET_CURRENT_TASK(t);
   mpcomp_taskgroup_add_task(new_task);
   mpcomp_task_ref_parent_task(new_task);
+
+  #if 1 //OMPT_SUPPORT
+  if( mpcomp_ompt_is_enabled() )
+  {
+    if( OMPT_Callbacks )
+	 {
+		ompt_callback_task_create_t callback;
+		const void* code_ra = __builtin_return_address(0);
+		callback = (ompt_callback_task_create_t) OMPT_Callbacks[ompt_callback_task_create];
+		callback( &(new_task->parent->ompt_task_data), 0, &( new_task->ompt_task_data ), ompt_task_explicit, deps_num > 0, code_ra ); 
+    }
+  }
+	#endif /* OMPT_SUPPORT */
 
   return new_task;
 }

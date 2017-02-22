@@ -51,7 +51,8 @@ bool mpcomp_GOMP_sections_end_cancel(void) {
 }
 
 void mpcomp_GOMP_sections_end_nowait(void) {
-  sctk_nodebug("[Redirect GOMP]%s:\tBegin",__func__);
+  	sctk_error("[Redirect GOMP]%s:\tBegin",__func__);
    /* Nothing to do */
-  sctk_nodebug("[Redirect GOMP]%s:\tEnd",__func__);
+	__mpcomp_sections_end_nowait(); 
+   sctk_nodebug("[Redirect GOMP]%s:\tEnd",__func__);
 }

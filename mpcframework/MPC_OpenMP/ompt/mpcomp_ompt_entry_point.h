@@ -17,7 +17,4 @@ typedef int (*ompt_enumerate_mutex_impls_t)(
    const char **next_impl_name
 );
 
-typedef int (*ompt_callback_set_t)( ompt_callbacks_t, ompt_callback_t);
-typedef int (*ompt_callback_get_t)( ompt_callbacks_t, ompt_callback_t*);
-
 #endif /* __MPOCMP_OMPT_ENTRY_POINT_H__ */

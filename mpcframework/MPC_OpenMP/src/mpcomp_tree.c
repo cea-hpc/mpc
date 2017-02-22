@@ -585,8 +585,27 @@ int mpcomp_build_tree(mpcomp_instance_t *instance, int n_leaves, int depth,
                __mpcomp_thread_infos_init(
                    &(instance->mvps[current_mvp]->threads[i_thread]), icvs,
                    instance, sctk_openmp_thread_tls);
+					
                instance->mvps[current_mvp]->threads[i_thread].mvp =
                    instance->mvps[current_mvp];
+
+#if 1 //OMPT_SUPPORT
+	if( mpcomp_ompt_is_enabled() )
+	{
+   	if( OMPT_Callbacks )
+   	{
+			ompt_callback_thread_begin_t callback; 
+			callback = (ompt_callback_thread_begin_t) OMPT_Callbacks[ompt_callback_thread_begin];
+			if( callback )
+			{
+				mpcomp_thread_t* ompt_thread_ptr = &(instance->mvps[current_mvp]->threads[i_thread]);
+				ompt_thread_ptr->ompt_thread_data = ompt_data_none;
+				callback( ompt_thread_worker, &( ompt_thread_ptr->ompt_thread_data ) );
+			}
+		}
+	}
+#endif /* OMPT_SUPPORT */
+							
              }
              instance->mvps[current_mvp]->threads[0].rank = current_mvp;
 

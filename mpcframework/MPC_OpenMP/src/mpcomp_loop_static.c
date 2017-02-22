@@ -30,6 +30,8 @@
 #include "mpcomp_loop.h"
 #include "mpcomp_openmp_tls.h"
 
+#include "ompt.h"
+
 /****
  *
  * CHUNK MANIPULATION
@@ -196,22 +198,30 @@ int __mpcomp_static_loop_begin (long lb, long b, long incr, long chunk_size,
 				long *from, long *to)
 {
 	__mpcomp_init ();
+   mpcomp_thread_t *t = mpcomp_get_thread_tls();
 
-        mpcomp_thread_t *t = mpcomp_get_thread_tls();
-
-        sctk_nodebug("[%d] %s: %d -> %d [%d] cs:%d", t->rank, __func__, lb, b,
-                     incr, chunk_size);
-
-        /* Initialization of loop internals */
-        __mpcomp_static_loop_init(t, lb, b, incr, chunk_size);
-
-        if (!from && !to) /* Disable next in begin */
-        {
-          sctk_nodebug("No next call in begin ...");
-          return -1;
-        }
-
-        return __mpcomp_static_loop_next(from, to);
+ 	/* Initialization of loop internals */
+   __mpcomp_static_loop_init(t, lb, b, incr, chunk_size);
+	
+#if 1 //OMPT_SUPPORT
+	if( mpcomp_ompt_is_enabled() )
+	{
+   	if( OMPT_Callbacks )
+   	{
+			ompt_callback_work_t callback; 
+			callback = (ompt_callback_work_t) OMPT_Callbacks[ompt_callback_work];
+			if( callback )
+			{
+				uint64_t ompt_iter_count = 0;
+				ompt_iter_count = __mpcomp_internal_loop_get_num_iters_gen(&(t->info.loop_infos));
+				ompt_data_t* parallel_data = &( t->instance->team->info.ompt_region_data );
+				const void* code_ra = __ompt_get_return_address(2);
+				callback( ompt_worksharing_loop, ompt_scope_begin, parallel_data, NULL, ompt_iter_count, code_ra);
+			}
+		}
+	}
+#endif /* OMPT_SUPPORT */
+	return ( !from && !to) ? -1 : __mpcomp_static_loop_next(from, to);
 }
 
 int __mpcomp_static_loop_next (long *from, long *to)
@@ -247,15 +257,33 @@ int __mpcomp_static_loop_next (long *from, long *to)
   return 1;
 }
 
-void __mpcomp_static_loop_end ()
-{
-     __mpcomp_barrier();
-     // sctk_nodebug( "end barrier" );
-}
-
 void __mpcomp_static_loop_end_nowait ()
 {
-     /* Nothing to do */
+#if 1 //OMPT_SUPPORT
+	if( mpcomp_ompt_is_enabled() )
+	{
+   	if( OMPT_Callbacks )
+   	{
+			ompt_callback_work_t callback; 
+			callback = (ompt_callback_work_t) OMPT_Callbacks[ompt_callback_work];
+			if( callback )
+			{
+				uint64_t ompt_iter_count = 0;
+  				mpcomp_thread_t *t = mpcomp_get_thread_tls();
+				ompt_iter_count = __mpcomp_internal_loop_get_num_iters_gen(&(t->info.loop_infos));
+				ompt_data_t* parallel_data = &( t->instance->team->info.ompt_region_data );
+				const void* code_ra = __builtin_return_address(0);	
+				callback( ompt_worksharing_loop, ompt_scope_end, parallel_data, NULL, ompt_iter_count, code_ra);
+			}
+		}
+	}
+#endif /* OMPT_SUPPORT */
+}
+
+void __mpcomp_static_loop_end ()
+{
+	__mpcomp_static_loop_end_nowait();
+   __mpcomp_barrier();
 }
 
 

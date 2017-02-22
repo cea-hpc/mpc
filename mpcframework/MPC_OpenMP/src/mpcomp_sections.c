@@ -26,6 +26,9 @@
 #include "mpcomp_core.h"
 #include "mpcomp_types.h"
 
+#include "ompt.h"
+extern ompt_callback_t* OMPT_Callbacks;
+
 /*
    This file contains all functions related to SECTIONS constructs in OpenMP
  */
@@ -89,6 +92,7 @@ void __mpcomp_sections_init( mpcomp_thread_t * t, int nb_sections ) {
    * the target according to the number of sections */
   t->single_sections_start_current = t->single_sections_current ;
   t->single_sections_target_current = t->single_sections_current + nb_sections ;
+  t->nb_sections = nb_sections;
 
   sctk_nodebug("[%d] %s: Current %d, start %d, target %d", t->rank, __func__,
                t->single_sections_current, t->single_sections_start_current,
@@ -125,6 +129,22 @@ int __mpcomp_sections_begin(int nb_sections) {
   /* Number of threads in the current team */
   num_threads = t->info.num_threads;
   sctk_assert( num_threads > 0 ) ;
+
+#if 1 //OMPT_SUPPORT
+	if( mpcomp_ompt_is_enabled() )
+	{
+   	if( OMPT_Callbacks )
+   	{
+			ompt_callback_work_t callback; 
+			callback = (ompt_callback_work_t) OMPT_Callbacks[ompt_callback_work];
+			if( callback )
+			{
+				const void* code_ra = __builtin_return_address(0);	
+				callback( ompt_worksharing_sections, ompt_scope_begin, NULL, NULL, nb_sections, code_ra);
+			}
+		}
+	}
+#endif /* OMPT_SUPPORT */
 
   /* If this function is called from a sequential part (orphaned directive) or 
      this team has only 1 thread, the current thread will execute all sections 
@@ -183,9 +203,31 @@ int __mpcomp_sections_next(void) {
   return __mpcomp_sections_internal_next( t, team ) ;
 }
 
-void __mpcomp_sections_end(void) { __mpcomp_barrier(); }
 
-void __mpcomp_sections_end_nowait(void) { /* Nothing to do */
+void __mpcomp_sections_end_nowait(void) { 
+
+#if 1 //OMPT_SUPPORT
+	if( mpcomp_ompt_is_enabled() )
+	{
+   	if( OMPT_Callbacks )
+   	{
+			ompt_callback_work_t callback; 
+			callback = (ompt_callback_work_t) OMPT_Callbacks[ompt_callback_work];
+			if( callback )
+			{
+  				mpcomp_thread_t *t = (mpcomp_thread_t *) sctk_openmp_thread_tls;
+				const void* code_ra = __builtin_return_address(0);	
+				callback( ompt_worksharing_sections, ompt_scope_end, NULL, NULL, t->nb_sections, code_ra);
+			}
+		}
+	}
+#endif /* OMPT_SUPPORT */
+}
+
+void __mpcomp_sections_end(void) 
+{ 
+	__mpcomp_sections_end_nowait();
+	__mpcomp_barrier(); 
 }
 
 int __mpcomp_sections_coherency_exiting_paralel_region(void) { return 0; }

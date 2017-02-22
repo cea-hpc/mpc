@@ -462,13 +462,13 @@ int omp_test_nest_lock(omp_nest_lock_t *lock)
   if (mpcomp_user_nest_lock->owner_thread != (void *)t)
 #endif
   {
-    if (sctk_thread_mutex_trylock(&(mpcomp_user_nest_lock->lock))) {
-      return 0;
-    }
-    mpcomp_user_nest_lock->owner_thread = (void *)thread;
+  		if (sctk_thread_mutex_trylock(&(mpcomp_user_nest_lock->lock))) 
+		{
+      	return 0;
+    	}
+    	mpcomp_user_nest_lock->owner_thread = (void *)thread;
 #if MPCOMP_TASK
-    mpcomp_user_nest_lock->owner_task =
-        MPCOMP_TASK_THREAD_GET_CURRENT_TASK(thread);
+    	mpcomp_user_nest_lock->owner_task = MPCOMP_TASK_THREAD_GET_CURRENT_TASK(thread);
 #endif
   }
 

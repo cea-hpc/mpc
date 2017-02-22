@@ -13,6 +13,9 @@
 #include "mpcomp_tree_utils.h"
 #include "mpcomp_task_macros.h"
 
+#include "ompt.h"
+extern ompt_callback_t* OMPT_Callbacks;
+
 // Round up a size to a power of two specified by val
 // Used to insert padding between structures co-allocated using a single
 // malloc() call
@@ -135,39 +138,56 @@ mpcomp_task_thread_task_infos_reset(struct mpcomp_thread_s *thread) {
   memset(&(thread->task_infos), 0, sizeof(mpcomp_task_thread_infos_t));
 }
 
-static inline void
-mpcomp_task_thread_infos_init(struct mpcomp_thread_s *thread) {
+static inline void mpcomp_task_thread_infos_init(struct mpcomp_thread_s *thread) {
   sctk_assert(thread);
 
   if (!MPCOMP_TASK_THREAD_IS_INITIALIZED(thread)) {
-    mpcomp_task_t *implicite_task;
+    mpcomp_task_t *implicit_task;
     mpcomp_task_list_t *tied_tasks_list;
 
     const int numa_node_id = mpcomp_task_thread_get_numa_node_id(thread);
 
     /* Allocate the default current task (no func, no data, no parent) */
-    implicite_task = mpcomp_malloc(1, sizeof(mpcomp_task_t), numa_node_id);
-    sctk_assert(implicite_task);
+    implicit_task = mpcomp_malloc(1, sizeof(mpcomp_task_t), numa_node_id);
+    sctk_assert(implicit_task);
     MPCOMP_TASK_THREAD_SET_CURRENT_TASK(thread, NULL);
 
-    __mpcomp_task_infos_init(implicite_task, NULL, NULL, thread);
+    __mpcomp_task_infos_init(implicit_task, NULL, NULL, thread);
 
 #ifdef MPCOMP_USE_TASKDEP
-    implicite_task->task_dep_infos =
+    implicit_task->task_dep_infos =
         sctk_malloc(sizeof(mpcomp_task_dep_task_infos_t));
-    sctk_assert(implicite_task->task_dep_infos);
-    memset(implicite_task->task_dep_infos, 0,
+    sctk_assert(implicit_task->task_dep_infos);
+    memset(implicit_task->task_dep_infos, 0,
            sizeof(mpcomp_task_dep_task_infos_t));
 #endif /* MPCOMP_USE_TASKDEP */
+	
+#if 1 //OMPT_SUPPORT
+	if( mpcomp_ompt_is_enabled() )
+	{
+		ompt_task_type_t task_type = ompt_task_implicit;
 
+   	if( OMPT_Callbacks )
+   	{
+			ompt_callback_task_create_t callback; 
+			callback = (ompt_callback_task_create_t) OMPT_Callbacks[ompt_callback_task_create];
+			if( callback )
+			{
+				ompt_data_t* task_data = &( implicit_task->ompt_task_data);
+				const void* code_ra = __builtin_return_address(0);	
+				callback( NULL, NULL, task_data, task_type, ompt_task_initial, code_ra);
+			}
+		}
+	}
+#endif /* OMPT_SUPPORT */
+	
     /* Allocate private task data structures */
-    tied_tasks_list =
-        mpcomp_malloc(1, sizeof(mpcomp_task_list_t), numa_node_id);
+    tied_tasks_list = mpcomp_malloc(1, sizeof(mpcomp_task_list_t), numa_node_id);
     sctk_assert(tied_tasks_list);
 
-    MPCOMP_TASK_THREAD_SET_CURRENT_TASK(thread, implicite_task);
+    MPCOMP_TASK_THREAD_SET_CURRENT_TASK(thread, implicit_task);
     MPCOMP_TASK_THREAD_SET_TIED_TASK_LIST_HEAD(thread, tied_tasks_list);
-    sctk_atomics_store_int(&(implicite_task->refcount), 1);
+    sctk_atomics_store_int(&(implicit_task->refcount), 1);
 
     /* Change tasking_init_done to avoid multiple thread init */
     MPCOMP_TASK_THREAD_CMPL_INIT(thread);

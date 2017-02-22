@@ -32,6 +32,10 @@
 #include "mpcomp_types_icv.h"
 #include "mpcomp_task_macros.h"
 
+#include "ompt.h"
+
+#define MPCOMP_USE_TASKDEP 1
+
 /** Declaration  mpcomp_types.h
  *  Break loop of include
  */
@@ -76,6 +80,10 @@ typedef struct mpcomp_task_s {
 #ifdef MPCOMP_OMP_4_0 /* deps infos */
   struct mpcomp_task_dep_task_infos_s *task_dep_infos;
 #endif /* MPCOMP_GOMP_4_0 */
+
+#if 1 //OMPT_SUPPORT
+	ompt_data_t ompt_task_data;
+#endif /* OMPT_SUPPORT */
 
 } mpcomp_task_t;
 

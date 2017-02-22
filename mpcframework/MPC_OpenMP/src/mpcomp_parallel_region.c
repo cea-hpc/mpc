@@ -20,7 +20,6 @@
 /* #   - CARRIBAULT Patrick patrick.carribault@cea.fr                     # */
 /* #                                                                      # */
 /* ######################################################################## */
-#include "ompt.h"
 #include "sctk_debug.h"
 #include "mpcomp_types.h"
 #include "mpcomp_core.h"
@@ -31,6 +30,7 @@
 #include "mpcomp_task_utils.h"
 #include "mpcomp_tree_structs.h"
 
+#include "ompt.h"
 extern ompt_callback_t* OMPT_Callbacks;
 
 void __mpcomp_internal_begin_parallel_region(
@@ -63,10 +63,12 @@ void __mpcomp_internal_begin_parallel_region(
 			mpcomp_task_t* task;
 			mpcomp_thread_t *thread;
 			ompt_frame_t* parent_frame;
-			ompt_data_t* parallel_data, *parent_task_data;
+			t->info.ompt_region_data = ompt_data_none;
+			ompt_data_t* parallel_data = &( t->children_instance->team->info.ompt_region_data );
+			ompt_data_t *parent_task_data;
 
 			const void* code_ra = __builtin_return_address( 0 );
-			callback( NULL, NULL, NULL, 0, 0, 0, code_ra );
+			callback( NULL, NULL, parallel_data, 0, 0, ompt_invoker_program, code_ra );
 		}
 	}	
 #endif /* OMPT_SUPPORT */
@@ -239,13 +241,11 @@ void __mpcomp_internal_end_parallel_region(mpcomp_instance_t *instance) {
       if( callback )
       {
          mpcomp_task_t* task;
-         mpcomp_thread_t *thread;
-         ompt_frame_t* parent_frame;
-         ompt_data_t* parallel_data, *parent_task_data;
+         ompt_data_t* parallel_data = &( instance->team->info.ompt_region_data );
+			ompt_data_t* task_data;
 
-         sctk_error("CALL %p %p", OMPT_Callbacks, OMPT_Callbacks[ompt_callback_parallel_begin] );
          const void* code_ra = __builtin_return_address( 1 );
-         callback( NULL, NULL, 0, code_ra );
+         callback( parallel_data, NULL, ompt_invoker_program, code_ra );
       }
    }
 #endif /* OMPT_SUPPORT */

@@ -36,39 +36,6 @@ typedef uint64_t ompt_target_time_t;	/**< raw time value on device */
 typedef void ompt_target_buffer_t;	/**< opaque handle for a target buffer */
 typedef uint64_t ompt_target_buffer_cursors_t; /**< opaque handle for position in target buffer */
 
-typedef enum ompt_thread_type_e
-{
-	ompt_thread_initial = 1,
-	ompt_thread_worker = 2,
-	ompt_thread_other = 3,
-	ompt_thread_unknown = 4
-}ompt_thread_type_t;
-
-typedef enum ompt_sync_region_kind_e
-{
-	ompt_sync_region_barrier = 1,
-	ompt_sync_region_taskwait = 2,
-	ompt_sync_region_taskgroup = 3
-}ompt_sync_region_kind_t;
-
-typedef enum ompt_target_data_op_e
-{
-	ompt_target_data_alloc = 1,
-	ompt_target_data_transfer_to_dev = 2,
-	ompt_target_data_transfer_from_dev = 3,
-	ompt_target_data_delete = 4
-} ompt_target_data_op_t;
-
-typedef enum ompt_worksharing_type_e
-{
-	ompt_worksharing_loop = 1,	
-	ompt_worksharing_sections = 2,	
-	ompt_worksharing_single_executor = 3,	
-	ompt_worksharing_single_other = 4,	
-	ompt_worksharing_workshare = 5,	
-	ompt_worksharing_distribute = 6	
-}ompt_worksharing_type_t;
-
 typedef enum ompt_native_mon_flag_e
 {
 ompt_native_data_motion_explicite = 1,
@@ -81,23 +48,6 @@ ompt_native_overhead = 64,
 ompt_native_idleness = 128
 }ompt_native_mon_flag_t;
 
-typedef enum ompt_task_type_e
-{
-	ompt_task_initial = 1,
-	ompt_task_implicite = 2,
-	ompt_task_explicite = 3,
-	ompt_task_target = 4,
-	ompt_task_degenerate = 5
-}ompt_task_type_t;
-
-typedef enum ompt_target_type_e
-{
-	ompt_target = 1,	
-	ompt_target_enter_data = 2,	
-	ompt_target_exit_data = 3,	
-	ompt_target_update = 4
-}ompt_target_type_t;
-
 typedef enum ompt_target_map_flag_e
 {
 	ompt_target_map_flag_to = 1,
@@ -106,20 +56,6 @@ typedef enum ompt_target_map_flag_e
 	ompt_target_map_flag_release = 8,
 	ompt_target_map_flag_delete = 16
 } ompt_target_map_flag_t;
-
-typedef enum ompt_task_dependence_flag_e
-{
-	// a two bit field for the dependence type
-	ompt_task_dependence_type_out = 1,
-	ompt_task_dependence_type_in = 2,
-	ompt_task_dependence_type_inout = 3,
-}ompt_task_dependence_flag_t;
-
-typedef struct ompt_task_dependence_s
-{
-	void* variable_addr;
-	uint32_t dependence_flags;
-} ompt_task_dependence_t;
 
 #define ompt_hwid_none	(-1)
 #define ompt_dev_task_none	(~0ULL)

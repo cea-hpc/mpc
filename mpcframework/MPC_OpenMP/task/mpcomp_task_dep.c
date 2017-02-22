@@ -19,6 +19,9 @@
 #include "sctk_debug.h"
 #include "mpcomp_task_utils.h"
 
+#include "ompt.h"
+extern ompt_callback_t* OMPT_Callbacks;
+
 #ifdef MPCOMP_USE_TASKDEP
 
 static int __mpcomp_task_wait_deps(mpcomp_task_dep_node_t *task_node) {
@@ -64,7 +67,7 @@ static int __mpcomp_task_process_deps(mpcomp_task_dep_node_t *task_node,
         break;
       }
     }
-
+		
     sctk_nodebug("task: %p deps: %p redundant : %d \n", task_node, addr,
                  redundant);
     /** OUT are in first position en OUT > IN deps */
@@ -226,6 +229,38 @@ void mpcomp_task_with_deps(void (*fn)(void *), void *data,
 
   task_node->task = NULL;
 
+#if 1 //OMPT_SUPPORT
+	if( mpcomp_ompt_is_enabled() )
+	{
+   	if( OMPT_Callbacks )
+   	{
+			ompt_callback_task_dependences_t callback; 
+			callback = (ompt_callback_task_dependences_t) OMPT_Callbacks[ompt_callback_task_dependences];
+			if( callback )
+			{
+				uintptr_t i, tot_deps_num, out_deps_num;
+				ompt_task_dependence_t* ompt_task_deps;
+
+  				tot_deps_num = (uintptr_t)depend[0];
+  				out_deps_num = (uintptr_t)depend[1];
+				ompt_task_deps = (ompt_task_dependence_t*) sctk_malloc(sizeof( ompt_task_dependence_t) * tot_deps_num );
+				sctk_assert( ompt_task_deps );
+
+				for( i = 0; i < tot_deps_num; i++ )
+			 	{	
+					ompt_task_dependence_flag_t dep_flag = 0;
+					dep_flag = ( i < out_deps_num) ? ompt_task_dependence_type_out : ompt_task_dependence_type_in;
+					ompt_task_deps[i].variable_addr = (void*) depend[i+2]; 
+					ompt_task_deps[i].dependence_flags = dep_flag; 
+				} 
+
+				new_task->ompt_task_data = ompt_data_none;
+				callback( &( new_task->ompt_task_data ), ompt_task_deps, tot_deps_num );
+			}
+		}
+	}
+#endif /* OMPT_SUPPORT */
+	
   /* Can't be execute by release func */
   sctk_atomics_store_int(&(task_node->predecessors), 0);
   sctk_atomics_store_int(&(task_node->status),

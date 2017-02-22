@@ -27,62 +27,89 @@
 #include "mpcomp_barrier.h"
 #include "mpcomp_openmp_tls.h"
 
+#include "ompt.h"
+extern ompt_callback_t* OMPT_Callbacks; 
+
 /* 
    Perform a single construct.
    This function handles the 'nowait' clause.
    Return '1' if the next single construct has to be executed, '0' otherwise 
  */
 
-int __mpcomp_do_single(void) {
-  mpcomp_team_t *team ;	/* Info on the team */
-  long num_threads ;
+int __mpcomp_do_single(void) 
+{
+	int retval = 0;
+  	mpcomp_team_t *team ;	/* Info on the team */
+  	long num_threads ;
 
-  /* Handle orphaned directive (initialize OpenMP environment) */
-  __mpcomp_init() ;
+  	/* Handle orphaned directive (initialize OpenMP environment) */
+  	__mpcomp_init() ;
 
-  /* Grab the thread info */
-  mpcomp_thread_t *t = mpcomp_get_thread_tls();
+  	/* Grab the thread info */
+ 	mpcomp_thread_t *t = mpcomp_get_thread_tls();
 
-  /* Number of threads in the current team */
-  num_threads = t->info.num_threads;
-  sctk_assert( num_threads > 0 ) ;
+  	/* Number of threads in the current team */
+  	num_threads = t->info.num_threads;
+  	sctk_assert( num_threads > 0 ) ;
 
-  /* If this function is called from a sequential part (orphaned directive) or 
+  	/* If this function is called from a sequential part (orphaned directive) or 
      this team has only 1 thread, the current thread will execute the single block
    */
-  if (num_threads == 1) {
-    return 1;
-  }
+  	if( num_threads == 1	) 
+	{
+		retval = 1;
+	}
+	else
+	{
+  		/* Grab the team info */
+  		sctk_assert( t->instance != NULL ) ;
+  		team = t->instance->team ;
+  		sctk_assert( team != NULL ) ;
 
-  /* Grab the team info */
-  sctk_assert( t->instance != NULL ) ;
-  team = t->instance->team ;
-  sctk_assert( team != NULL ) ;
+  		int current ;
 
-  int current ;
+  		/* Catch the current construct
+   	* and prepare the next single/section construct */
+  		current = t->single_sections_current ;
+  		t->single_sections_current++ ;
 
-  /* Catch the current construct
-   * and prepare the next single/section construct */
-  current = t->single_sections_current ;
-  t->single_sections_current++ ;
-
-  sctk_nodebug("[%d]%s : Entering with current %d...", __func__, t->rank,
+  		sctk_nodebug("[%d]%s : Entering with current %d...", __func__, t->rank,
                current);
-  sctk_nodebug("[%d]%s : team current is %d", __func__, t->rank,
+  		sctk_nodebug("[%d]%s : team current is %d", __func__, t->rank,
                sctk_atomics_load_int(&(team->single_sections_last_current)));
 
-  if (current == sctk_atomics_load_int(&(team->single_sections_last_current))) {
-    const int res = sctk_atomics_cas_int(&(team->single_sections_last_current),
+  		if (current == sctk_atomics_load_int(&(team->single_sections_last_current))) 
+		{
+    		const int res = sctk_atomics_cas_int(&(team->single_sections_last_current),
                                          current, current + 1);
-    sctk_nodebug("[%d]%s: incr team %d -> %d ==> %d", __func__, t->rank,
+    		sctk_nodebug("[%d]%s: incr team %d -> %d ==> %d", __func__, t->rank,
                  current, current + 1, res);
-    /* Success => execute the single block */
-    if (res == current)
-      return 1;
-  }
+    		/* Success => execute the single block */
+    		if (res == current) 
+			{
+				retval = 1;
+			}
+  		}
+	}
 
-  /* Do not execute the single block */
-  return 0 ;
+#if 1 //OMPT_SUPPORT
+	if( mpcomp_ompt_is_enabled() )
+	{
+   	if( OMPT_Callbacks )
+   	{
+			ompt_callback_work_t callback; 
+			callback = (ompt_callback_work_t) OMPT_Callbacks[ompt_callback_work];
+			if( callback )
+			{
+				ompt_worksharing_type_t wstype = (retval) ? ompt_worksharing_single_executor : ompt_worksharing_single_other;
+				const void* code_ra = __builtin_return_address(0);	
+				callback( wstype, ompt_scope_begin, NULL, NULL, 1, code_ra);
+			}
+		}
+	}
+#endif /* OMPT_SUPPORT */
+	/* 0 means not execute */
+ 	return retval ;
 }
 
 void *__mpcomp_do_single_copyprivate_begin(void) {
