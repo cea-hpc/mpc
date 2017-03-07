@@ -25,6 +25,15 @@
 
 LOCAL_CFLAGS=$(CFLAGS)
 
+FILES_env=$(wildcard env/*.c)
+OBJ_env=$(FILES_env:env/%.c=$(M_PWD)/BUILD_MPC_OpenMP/lib/%.o)
+DEP_env=$(FILES_env:env/%.c=$(M_PWD)/BUILD_MPC_OpenMP/lib/%.d)
+
+SFILES_env=$(wildcard env/*.S)
+SOBJ_env=$(SFILES_env:env/%.S=$(M_PWD)/BUILD_MPC_OpenMP/lib/%.o)
+SDEP_env=$(SFILES_env:env/%.S=$(M_PWD)/BUILD_MPC_OpenMP/lib/%.d)
+
+
 FILES_include=$(wildcard include/*.c)
 OBJ_include=$(FILES_include:include/%.c=$(M_PWD)/BUILD_MPC_OpenMP/lib/%.o)
 DEP_include=$(FILES_include:include/%.c=$(M_PWD)/BUILD_MPC_OpenMP/lib/%.d)
@@ -106,6 +115,9 @@ SOBJ_task=$(SFILES_task:task/%.S=$(M_PWD)/BUILD_MPC_OpenMP/lib/%.o)
 SDEP_task=$(SFILES_task:task/%.S=$(M_PWD)/BUILD_MPC_OpenMP/lib/%.d)
 
 
+FFILES_env=$(wildcard env/*.f)
+FOBJ_env=$(FFILES_env:env/%.f=$(M_PWD)/BUILD_MPC_OpenMP/lib/%_f.o)
+
 FFILES_include=$(wildcard include/*.f)
 FOBJ_include=$(FFILES_include:include/%.f=$(M_PWD)/BUILD_MPC_OpenMP/lib/%_f.o)
 
@@ -136,6 +148,7 @@ FOBJ_task=$(FFILES_task:task/%.f=$(M_PWD)/BUILD_MPC_OpenMP/lib/%_f.o)
 all: $(OBJ_include) $(FOBJ_include) $(SOBJ_include) $(OBJ_intel) $(FOBJ_intel) $(SOBJ_intel) $(OBJ_mpcomp_GOMP_include) $(FOBJ_mpcomp_GOMP_include) $(SOBJ_mpcomp_GOMP_include) $(OBJ_mpcomp_GOMP_internal) $(FOBJ_mpcomp_GOMP_internal) $(SOBJ_mpcomp_GOMP_internal) $(OBJ_mpcomp_GOMP_wrapper) $(FOBJ_mpcomp_GOMP_wrapper) $(SOBJ_mpcomp_GOMP_wrapper) $(OBJ_mpcomp_KMP) $(FOBJ_mpcomp_KMP) $(SOBJ_mpcomp_KMP) $(OBJ_ompt) $(FOBJ_ompt) $(SOBJ_ompt) $(OBJ_src) $(FOBJ_src) $(SOBJ_src) $(OBJ_task) $(FOBJ_task) $(SOBJ_task)
 
 $(M_PWD)/include_modules/MPC_OpenMP:
+	@../MPC_Tools/mpc_prepare_includes $(MPC_SOURCE_DIR)MPC_OpenMP/env $(M_PWD)/include_modules
 	@../MPC_Tools/mpc_prepare_includes $(MPC_SOURCE_DIR)MPC_OpenMP/include $(M_PWD)/include_modules
 	@../MPC_Tools/mpc_prepare_includes $(MPC_SOURCE_DIR)MPC_OpenMP/intel $(M_PWD)/include_modules
 	@../MPC_Tools/mpc_prepare_includes $(MPC_SOURCE_DIR)MPC_OpenMP/mpcomp_GOMP_include $(M_PWD)/include_modules
@@ -157,6 +170,11 @@ $(DEPENDS):Makefile
 endif
 
 ifneq ($(SCTK_MAKE_NO_DEP),yes)
+$(DEP_env):$(M_PWD)/BUILD_MPC_OpenMP/lib/%.d:env/%.c
+	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,env/%.c,$@)"
+	@$(CC) $(SCTK_CC_DEP) $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,env/%.c,$@) | \
+		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
+
 $(DEP_include):$(M_PWD)/BUILD_MPC_OpenMP/lib/%.d:include/%.c
 	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,include/%.c,$@)"
 	@$(CC) $(SCTK_CC_DEP) $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,include/%.c,$@) | \
@@ -203,6 +221,10 @@ $(DEP_task):$(M_PWD)/BUILD_MPC_OpenMP/lib/%.d:task/%.c
 		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
 
 else
+$(DEP_env):$(M_PWD)/BUILD_MPC_OpenMP/lib/%.d:env/%.c
+	@echo "    Generate fake dependencies $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,env/%.c,$@)"
+	@echo "$(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,env/%.c,$@)" > $@
+
 $(DEP_include):$(M_PWD)/BUILD_MPC_OpenMP/lib/%.d:include/%.c
 	@echo "    Generate fake dependencies $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,include/%.c,$@)"
 	@echo "$(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,include/%.c,$@)" > $@
@@ -241,6 +263,10 @@ $(DEP_task):$(M_PWD)/BUILD_MPC_OpenMP/lib/%.d:task/%.c
 
 endif
 
+$(OBJ_env):%.o:%.d
+	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.o,env/%.c,$@)"
+	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.o,env/%.c,$@) -o $@
+
 $(OBJ_include):%.o:%.d
 	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.o,include/%.c,$@)"
 	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.o,include/%.c,$@) -o $@
@@ -276,6 +302,11 @@ $(OBJ_src):%.o:%.d
 $(OBJ_task):%.o:%.d
 	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.o,task/%.c,$@)"
 	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.o,task/%.c,$@) -o $@
+
+$(SDEP_env):$(M_PWD)/BUILD_MPC_OpenMP/lib/%.d:env/%.S
+	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,env/%.S,$@)"
+	@$(GCC) -M $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,env/%.S,$@) | \
+		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
 
 $(SDEP_include):$(M_PWD)/BUILD_MPC_OpenMP/lib/%.d:include/%.S
 	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,include/%.S,$@)"
@@ -322,6 +353,10 @@ $(SDEP_task):$(M_PWD)/BUILD_MPC_OpenMP/lib/%.d:task/%.S
 	@$(GCC) -M $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,task/%.S,$@) | \
 		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
 
+$(SOBJ_env):%.o:%.d
+	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.o,env/%.S,$@)"
+	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.o,env/%.S,$@) -o $@
+
 $(SOBJ_include):%.o:%.d
 	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.o,include/%.S,$@)"
 	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.o,include/%.S,$@) -o $@
@@ -357,6 +392,10 @@ $(SOBJ_src):%.o:%.d
 $(SOBJ_task):%.o:%.d
 	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.o,task/%.S,$@)"
 	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%.o,task/%.S,$@) -o $@
+
+$(FOBJ_env):$(M_PWD)/BUILD_MPC_OpenMP/lib/%_f.o:env/%.f
+	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%_f.o,env/%.f,$@)"
+	@$(F77) -c $(FFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%_f.o,env/%.f,$@) -o $@
 
 $(FOBJ_include):$(M_PWD)/BUILD_MPC_OpenMP/lib/%_f.o:include/%.f
 	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_OpenMP/lib/%_f.o,include/%.f,$@)"
