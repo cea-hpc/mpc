@@ -38,6 +38,8 @@
 #include "mpcomp_core.h"
 
 #include "ompt.h"
+/* parsing OMP_PLACES */
+#include "mpcomp_parsing_env.h"
 
 /*****************
   ****** GLOBAL VARIABLES
@@ -77,6 +79,8 @@ static int OMP_WARN_NESTED = 0;
 static mpcomp_mode_t OMP_MODE = MPCOMP_MODE_SIMPLE_MIXED;
 /* Affinity policy */
 static mpcomp_affinity_t OMP_AFFINITY = MPCOMP_AFFINITY_BALANCED;
+/* OMP_PLACES */
+static mpcomp_places_info_t* OMP_PLACES_LIST = NULL;
 
 mpcomp_global_icv_t mpcomp_global_icvs;
 
@@ -225,6 +229,9 @@ static inline void __mpcomp_read_env_variables() {
     OMP_NUM_THREADS = OMP_MICROVP_NUMBER; /* DEFAULT */
   }
   TODO("OMP_NUM_THREADS: need to handle x,y,z,... and keep only x")
+
+  OMP_PLACES_LIST = mpcomp_places_env_variable_parsing();
+  mpcomp_display_places( OMP_PLACES_LIST );
 
   /******* OMP_DYNAMIC *********/
   OMP_DYNAMIC = sctk_runtime_config_get()->modules.openmp.adjustment ? 1 : 0;
