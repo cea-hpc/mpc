@@ -1041,27 +1041,39 @@ static int NBC_Ialltoall(void* sendbuf, int sendcount, MPI_Datatype sendtype, vo
 		schedule = (NBC_Schedule*)sctk_malloc(sizeof(NBC_Schedule));
 		if (NULL == schedule) { printf("Error in sctk_malloc()\n"); return res; }
 
-		res = NBC_Sched_create(schedule);
-		if(res != NBC_OK) { printf("Error in NBC_Sched_create (%i)\n", res); return res; }
-		
+	
+        int alloc_size;
+
 		switch(alg) {
 			case NBC_A2A_LINEAR: 
+                alloc_size = sizeof(int) + sizeof(int) + 
+                (p-1)*(sizeof(NBC_Args_recv) + sizeof(NBC_Fn_type) + 
+                       sizeof(NBC_Args_send) + sizeof(NBC_Fn_type)) + sizeof(char);
+                *schedule = sctk_malloc(alloc_size);
+                *(int *)*schedule = alloc_size;
 				res = a2a_sched_linear(rank, p, sndext, rcvext, schedule, sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm);
+        		if (NBC_OK != res) { return res; }
+        		res = NBC_Sched_commit_pos(schedule);
+        		if (NBC_OK != res) { printf("Error in NBC_Sched_commit() (%i)\n", res); return res; }
 				break;
 			case NBC_A2A_DISS:
-				res = a2a_sched_diss(rank, p, sndext, rcvext, schedule, sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, handle);
+        		res = NBC_Sched_create(schedule);
+	        	if(res != NBC_OK) { printf("Error in NBC_Sched_create (%i)\n", res); return res; }
+					res = a2a_sched_diss(rank, p, sndext, rcvext, schedule, sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, handle);
+        		if (NBC_OK != res) { return res; }
+        		res = NBC_Sched_commit(schedule);
+        		if (NBC_OK != res) { printf("Error in NBC_Sched_commit() (%i)\n", res); return res; }
 				break;
 			case NBC_A2A_PAIRWISE:
-				res = a2a_sched_pairwise(rank, p, sndext, rcvext, schedule, sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm);
+        		res = NBC_Sched_create(schedule);
+        		if(res != NBC_OK) { printf("Error in NBC_Sched_create (%i)\n", res); return res; }
+					res = a2a_sched_pairwise(rank, p, sndext, rcvext, schedule, sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm);
+        		if (NBC_OK != res) { return res; }
+        		res = NBC_Sched_commit(schedule);
+        		if (NBC_OK != res) { printf("Error in NBC_Sched_commit() (%i)\n", res); return res; }
 				break;
 		}
 		
-		if (NBC_OK != res) { return res; }
-
-		res = NBC_Sched_commit(schedule);
-		if (NBC_OK != res) { printf("Error in NBC_Sched_commit() (%i)\n", res); return res; }
- 
-
 	res = NBC_Start(handle, schedule);
 	if (NBC_OK != res) { printf("Error in NBC_Start() (%i)\n", res); return res; }
  
@@ -1102,14 +1114,18 @@ static inline int a2a_sched_linear(int rank, int p, MPI_Aint sndext, MPI_Aint rc
 
 	res = NBC_OK;
 
+    int pos = sizeof(int);
+    *(int *)((char *)*schedule + sizeof(int)) = (p-1)*2; 
 	for(r=0;r<p;r++) {
 		/* easy algorithm */
-		if ((r == rank)) { continue; }
+		if (r == rank) { continue; }
 		rbuf = ((char *) recvbuf) + (r*recvcount*rcvext);
-		res = NBC_Sched_recv(rbuf, 0, recvcount, recvtype, r, schedule);
+		res = NBC_Sched_recv_pos(pos, rbuf, 0, recvcount, recvtype, r, schedule);
+        pos += sizeof(NBC_Args_recv) + sizeof(NBC_Fn_type);
 		if (NBC_OK != res) { printf("Error in NBC_Sched_recv() (%i)\n", res); return res; }
 		sbuf = ((char *) sendbuf) + (r*sendcount*sndext);
-		res = NBC_Sched_send(sbuf, 0, sendcount, sendtype, r, schedule);
+		res = NBC_Sched_send_pos(pos, sbuf, 0, sendcount, sendtype, r, schedule);
+        pos += sizeof(NBC_Args_send) + sizeof(NBC_Fn_type);
 		if (NBC_OK != res) { printf("Error in NBC_Sched_send() (%i)\n", res); return res; }
 	}
 
