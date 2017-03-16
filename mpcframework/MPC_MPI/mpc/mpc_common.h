@@ -65,27 +65,22 @@ struct sctk_task_specific_atexit_s
 	struct sctk_task_specific_atexit_s * next; /**< Following function to call */
 };
 
+struct MPI_Topological_comms {
+  MPC_Comm per_node_socket_comm;
+  MPC_Comm per_node_socket_grp;
 
+  int has_numa;
+  /*{*/
+  MPC_Comm per_node_numa_comm;
+  MPC_Comm per_node_numa_grp;
+  /*}*/
 
-struct MPI_Topological_comms
-{
-	MPC_Comm per_node_socket_comm;
-	MPC_Comm per_node_socket_grp;
+  MPC_Comm per_process_comm;
+  MPC_Comm per_process_grp;
 
-	int has_numa;
-/*{*/
-	MPC_Comm per_node_numa_comm;
-	MPC_Comm per_node_numa_grp;
-/*}*/
-	
-	MPC_Comm per_process_comm;
-	MPC_Comm per_process_grp;
-
-	MPC_Comm per_node_comm;
-	MPC_Comm per_node_grp;
-
+  MPC_Comm per_node_comm;
+  MPC_Comm per_node_grp;
 };
-
 
 /**
  *  \brief Describes the context of an MPI task
@@ -119,20 +114,21 @@ typedef struct sctk_task_specific_s
 	struct mpc_mpi_data_s* mpc_mpi_data;
         struct sctk_internal_ptp_s **my_ptp_internal;
 
-	/* MPI_Info handling */
-	struct MPC_Info_factory
-		info_fact; /**< This structure is used to store the association
-					  between MPI_Infos structs and their ID */
+        /* MPI_Info handling */
+        struct MPC_Info_factory
+            info_fact; /**< This structure is used to store the association
+                                      between MPI_Infos structs and their ID */
 
-	/* At EXIT */
-	struct sctk_task_specific_atexit_s
-		*exit_handlers; /**< These functions are called when tasks leaves
-						   (atexit) */
-						   
-	struct MPI_Topological_comms topo_comms; /**< These are communicators
-												 taking the topology into account */
+        /* At EXIT */
+        struct sctk_task_specific_atexit_s
+            *exit_handlers; /**< These functions are called when tasks leaves
+                                               (atexit) */
+
+        struct MPI_Topological_comms
+            topo_comms; /**< These are communicators
+                                                                        taking
+                           the topology into account */
 } sctk_task_specific_t;
-
 
 struct sctk_task_specific_s *__MPC_get_task_specific();
 

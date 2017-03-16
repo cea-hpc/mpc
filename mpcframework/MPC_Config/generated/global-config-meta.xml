@@ -115,126 +115,6 @@
 		<module name="debugger" type="debugger"/>
 	</modules>
 </config>
-<config name="MPC_MPI">
-	<usertypes>
-
-		
-
-
-
-
-		<struct name="collectives_shm" doc="Shared Memory Collectives for MPC">
-			<!-- Function Pointers -->
-            <param name="barrier_intra_shm" type="funcptr" default="__INTERNAL__PMPI_Barrier_intra_shm" doc="MPI_Barrier intracom algorithm on shared communicators"/>
-            <param name="bcast_intra_shm" type="funcptr" default="__INTERNAL__PMPI_Bcast_intra_shm" doc="Type of MPI_Bcast intracom algorithm on shared communicators"/>
-            <param name="alltoallv_intra_shm" type="funcptr" default="__INTERNAL__PMPI_Alltoallv_intra_shm" doc="Alltoallv intracom algorithm"/>
-            <param name="gatherv_intra_shm" type="funcptr" default="__INTERNAL__PMPI_Gatherv_intra_shm" doc="MPI_Gatherv intracom algorithm for shared communicators"/>
-            <param name="scatterv_intra_shm" type="funcptr" default="__INTERNAL__PMPI_Scatterv_intra_shm" doc="MPI_Scatterv intracom algorithm on shared communicators"/>
-            <param name="reduce_intra_shm" type="funcptr" default="__INTERNAL__PMPI_Reduce_shm" doc="MPI_Reduce intracom shared-mem algorithm"/>
-			
-			<!-- Global Parameters -->	
-            <param name="topo_tree_arity" type="int" default="-1" doc="Arrity being used to build topological communicators  '-1' means auto-compute to match processes and NUMA" alias="MPI_COLL_TOPO_TREE_ARITY"/>
-            <param name="topo_tree_dump" type="bool" default="false" doc="Dump topological comm tree in DOT (fname topoN.cdat) with N the communicator size" alias="MPI_COLL_TOPO_TREE_DUMP"/>
-			<param name="coll_force_nocommute" type="bool" default="false" doc="Force the use of deterministic algorithms" alias="MPI_COLL_NO_COMMUTE" />
-			<!-- MPI_Reduce -->	
-			
-			<param name="reduce_pipelined_blocks" type="int" default="16" doc="Number of blocks for pipelined Reduce" alias="MPI_COLL_REDUCE_PIPELINED_BLOCKS"/>
-            <param name="reduce_pipelined_tresh" type="size" default="1KB" doc="Size required to rely on pipelined reduce" alias="MPI_COLL_REDUCE_INTERLEAVE_TRSH"/>
-            <param name="reduce_interleave" type="int" default="8" doc="Number of reduce slots to allocate (required to be power of 2)" alias="MPI_COLL_REDUCE_INTERLEAVE"/>
-			
-			<!-- MPI_Bcast -->	
-			<param name="bcast_interleave" type="int" default="8" doc="Number of bcast slots to allocate (required to be power of 2)" alias="MPI_COLL_BCAST_INTERLEAVE"/>
-		</struct>
-
-
-		<struct name="collectives_intra" doc="Collectives intracom MPI">
-            <param name="barrier_intra" type="funcptr" default="__INTERNAL__PMPI_Barrier_intra" doc="MPI_Barrier intracom algorithm"/>
-            <param name="bcast_intra" type="funcptr" default="__INTERNAL__PMPI_Bcast_intra" doc="Type of MPI_Bcast intracom algorithm"/>
-            <param name="allgather_intra" type="funcptr" default="__INTERNAL__PMPI_Allgather_intra" doc="MPI_Allgather intracom algorithm"/>
-            <param name="allgatherv_intra" type="funcptr" default="__INTERNAL__PMPI_Allgatherv_intra" doc="MPI_Allgatherv intracom algorithm"/>
-            <param name="alltoall_intra" type="funcptr" default="__INTERNAL__PMPI_Alltoall_intra" doc="MPI_Alltoall intracom algorithm"/>
-            <param name="alltoallv_intra" type="funcptr" default="__INTERNAL__PMPI_Alltoallv_intra" doc="Alltoallv intracom algorithm"/>
-            <param name="alltoallw_intra" type="funcptr" default="__INTERNAL__PMPI_Alltoallw_intra" doc="MPI_Alltoallw intracom algorithm"/>
-            <param name="gather_intra" type="funcptr" default="__INTERNAL__PMPI_Gather_intra" doc="MPI_Gather intracom algorithm"/>
-            <param name="gatherv_intra" type="funcptr" default="__INTERNAL__PMPI_Gatherv_intra" doc="MPI_Gatherv intracom algorithm"/>
-            <param name="scatter_intra" type="funcptr" default="__INTERNAL__PMPI_Scatter_intra" doc="MPI_Scatter intracom algorithm"/>
-            <param name="scatterv_intra" type="funcptr" default="__INTERNAL__PMPI_Scatterv_intra" doc="MPI_Scatterv intracom algorithm"/>
-            <param name="scan_intra" type="funcptr" default="__INTERNAL__PMPI_Scan_intra" doc="MPI_Scan intracom algorithm"/>
-            <param name="exscan_intra" type="funcptr" default="__INTERNAL__PMPI_Exscan_intra" doc="MPI_Exscan intracom algorithm"/>
-            <param name="reduce_intra" type="funcptr" default="__INTERNAL__PMPI_Reduce_intra" doc="MPI_Reduce intracom algorithm"/>
-            <param name="allreduce_intra" type="funcptr" default="__INTERNAL__PMPI_Allreduce_intra" doc="MPI_Allreduce intracom algorithm"/>
-            <param name="reduce_scatter_intra" type="funcptr" default="__INTERNAL__PMPI_Reduce_scatter_intra" doc="MPI_Reduce_scatter intracom algorithm"/>
-            <param name="reduce_scatter_block_intra" type="funcptr" default="__INTERNAL__PMPI_Reduce_scatter_block_intra" doc="MPI_Reduce_scatter_block intracom algorithm"/>
-        </struct>
-
-        <struct name="collectives_inter" doc="Collectives intercom MPI">
-            <param name="barrier_inter" type="funcptr" default="__INTERNAL__PMPI_Barrier_inter" doc="MPI_Barrier intercom algorithm"/>
-            <param name="bcast_inter" type="funcptr" default="__INTERNAL__PMPI_Bcast_inter" doc="MPI_Barrier intercom algorithm"/>
-            <param name="allgather_inter" type="funcptr" default="__INTERNAL__PMPI_Allgather_inter" doc="MPI_Allgather intercom algorithm"/>
-            <param name="allgatherv_inter" type="funcptr" default="__INTERNAL__PMPI_Allgatherv_inter" doc="MPI_Allgatherv intercom algorithm"/>
-            <param name="alltoall_inter" type="funcptr" default="__INTERNAL__PMPI_Alltoall_inter" doc="MPI_Alltoall intercom algorithm"/>
-            <param name="alltoallv_inter" type="funcptr" default="__INTERNAL__PMPI_Alltoallv_inter" doc="MPI_Alltoallv intercom algorithm"/>
-            <param name="alltoallw_inter" type="funcptr" default="__INTERNAL__PMPI_Alltoallw_inter" doc="MPI_Alltoallw intercom algorithm"/>
-            <param name="gather_inter" type="funcptr" default="__INTERNAL__PMPI_Gather_inter" doc="MPI_Gather intercom algorithm"/>
-            <param name="gatherv_inter" type="funcptr" default="__INTERNAL__PMPI_Gatherv_inter" doc="MPI_Gatherv intercom algorithm"/>
-            <param name="scatter_inter" type="funcptr" default="__INTERNAL__PMPI_Scatter_inter" doc="MPI_Scatter intercom algorithm"/>
-            <param name="scatterv_inter" type="funcptr" default="__INTERNAL__PMPI_Scatterv_inter" doc="MPI_Scatterv intercom algorithm"/>
-            <param name="reduce_inter" type="funcptr" default="__INTERNAL__PMPI_Reduce_inter" doc="MPI_Reduce intercom algorithm"/>
-            <param name="allreduce_inter" type="funcptr" default="__INTERNAL__PMPI_Allreduce_inter" doc="MPI_Allreduce intercom algorithm"/>
-            <param name="reduce_scatter_inter" type="funcptr" default="__INTERNAL__PMPI_Reduce_scatter_inter" doc="MPI_Reduce_scatter intercom algorithm"/>
-            <param name="reduce_scatter_block_inter" type="funcptr" default="__INTERNAL__PMPI_Reduce_scatter_block_inter" doc="MPI_Reduce_scatter_block intercom algorithm"/>
-        </struct>
-
-        <struct name="progress_thread" doc="Progress thread NBC">
-            <param name="use_progress_thread" type="int" default="0" doc="If use progress threads for non blocking collectives"/>
-            <param name="progress_thread_binding" type="funcptr" default="sctk_get_progress_thread_binding_bind" doc="Algorithm of progress threads binding : sctk_get_progress_thread_binding_[bind,smart,numa_iter,numa]"/>
-        </struct>
-        <!--
-        <struct name="scheduler" doc="Scheduler priority parameters">
-            <param name="sched_NBC_Pthread_basic_priority" type="int" default="10" doc="Basic priority of polling tasks"/>
-        </struct>
-        -->
-     
-		<!-- ############################## -->
-		<!-- #    MPI RMA OPTIONS         # -->
-		<!-- ############################## -->
-
-		<struct name="mpi_rma" doc="Options related to the MPI RMA support">
-			<param name="alloc_mem_pool_enable" type="int" default="1" doc="Enable the MPI_Alloc_mem shared memory pool"/>
-			<param name="alloc_mem_pool_size" type="size" default="1MB" doc="Size of the MPI_Alloc_mem pool"/>
-			<param name="alloc_mem_pool_autodetect" type="int" default="1" doc="Alloc the MPI_Alloc_mem pool to grow linear for some apps"/>
-			<param name="alloc_mem_pool_force_process_linear" type="int" default="0" doc="Force the size to be a quantum per local process"/>
-			<param name="alloc_mem_pool_per_process_size" type="size" default="32MB" doc="Quantum to allocate to each process when linear forced"/>
-			<param name="win_thread_pool_max" type="int" default="2" doc="Maximum number of window threads to keep"/>
-		</struct>
-
-        		
-	<!-- ############################## -->
-	<!-- #             MPC            # -->
-	<!-- ############################## -->
-
-	<struct name="mpc" doc="Options for MPC Message Passing">
-		<param name="log_debug" type="bool" default="false" doc="Print debug messages"/>
-		<param name="hard_checking" type="bool" default="false" doc=""/>
-		<param name="buffering" type="bool" default="false" doc=""/>
-	</struct>
-	
-	
-	</usertypes>
-	
-	
-	<modules>
-		<module name="collectives_shm" type="collectives_shm"/>
-		<module name="collectives_intra" type="collectives_intra"/>
-		<module name="collectives_inter" type="collectives_inter"/>
-		<module name="progress_thread" type="progress_thread"/>
-		<module name="mpc" type="mpc"/>
-		<module name="rma" type="mpi_rma"/>
-	</modules>
-      
-      
-      
-</config>
 <config name="MPC_Message_Passing">
 	<usertypes>
 
@@ -490,6 +370,126 @@
 		<module name="inter_thread_comm" type="inter_thread_comm" />
 		<module name="low_level_comm" type="low_level_comm" />
 	</modules>
+</config>
+<config name="MPC_MPI">
+	<usertypes>
+
+		
+
+
+
+
+		<struct name="collectives_shm" doc="Shared Memory Collectives for MPC">
+			<!-- Function Pointers -->
+            <param name="barrier_intra_shm" type="funcptr" default="__INTERNAL__PMPI_Barrier_intra_shm" doc="MPI_Barrier intracom algorithm on shared communicators"/>
+            <param name="bcast_intra_shm" type="funcptr" default="__INTERNAL__PMPI_Bcast_intra_shm" doc="Type of MPI_Bcast intracom algorithm on shared communicators"/>
+            <param name="alltoallv_intra_shm" type="funcptr" default="__INTERNAL__PMPI_Alltoallv_intra_shm" doc="Alltoallv intracom algorithm"/>
+            <param name="gatherv_intra_shm" type="funcptr" default="__INTERNAL__PMPI_Gatherv_intra_shm" doc="MPI_Gatherv intracom algorithm for shared communicators"/>
+            <param name="scatterv_intra_shm" type="funcptr" default="__INTERNAL__PMPI_Scatterv_intra_shm" doc="MPI_Scatterv intracom algorithm on shared communicators"/>
+            <param name="reduce_intra_shm" type="funcptr" default="__INTERNAL__PMPI_Reduce_shm" doc="MPI_Reduce intracom shared-mem algorithm"/>
+			
+			<!-- Global Parameters -->	
+            <param name="topo_tree_arity" type="int" default="-1" doc="Arrity being used to build topological communicators  '-1' means auto-compute to match processes and NUMA" alias="MPI_COLL_TOPO_TREE_ARITY"/>
+            <param name="topo_tree_dump" type="bool" default="false" doc="Dump topological comm tree in DOT (fname topoN.cdat) with N the communicator size" alias="MPI_COLL_TOPO_TREE_DUMP"/>
+			<param name="coll_force_nocommute" type="bool" default="false" doc="Force the use of deterministic algorithms" alias="MPI_COLL_NO_COMMUTE" />
+			<!-- MPI_Reduce -->	
+			
+			<param name="reduce_pipelined_blocks" type="int" default="16" doc="Number of blocks for pipelined Reduce" alias="MPI_COLL_REDUCE_PIPELINED_BLOCKS"/>
+            <param name="reduce_pipelined_tresh" type="size" default="1KB" doc="Size required to rely on pipelined reduce" alias="MPI_COLL_REDUCE_INTERLEAVE_TRSH"/>
+            <param name="reduce_interleave" type="int" default="8" doc="Number of reduce slots to allocate (required to be power of 2)" alias="MPI_COLL_REDUCE_INTERLEAVE"/>
+			
+			<!-- MPI_Bcast -->	
+			<param name="bcast_interleave" type="int" default="8" doc="Number of bcast slots to allocate (required to be power of 2)" alias="MPI_COLL_BCAST_INTERLEAVE"/>
+		</struct>
+
+
+		<struct name="collectives_intra" doc="Collectives intracom MPI">
+            <param name="barrier_intra" type="funcptr" default="__INTERNAL__PMPI_Barrier_intra" doc="MPI_Barrier intracom algorithm"/>
+            <param name="bcast_intra" type="funcptr" default="__INTERNAL__PMPI_Bcast_intra" doc="Type of MPI_Bcast intracom algorithm"/>
+            <param name="allgather_intra" type="funcptr" default="__INTERNAL__PMPI_Allgather_intra" doc="MPI_Allgather intracom algorithm"/>
+            <param name="allgatherv_intra" type="funcptr" default="__INTERNAL__PMPI_Allgatherv_intra" doc="MPI_Allgatherv intracom algorithm"/>
+            <param name="alltoall_intra" type="funcptr" default="__INTERNAL__PMPI_Alltoall_intra" doc="MPI_Alltoall intracom algorithm"/>
+            <param name="alltoallv_intra" type="funcptr" default="__INTERNAL__PMPI_Alltoallv_intra" doc="Alltoallv intracom algorithm"/>
+            <param name="alltoallw_intra" type="funcptr" default="__INTERNAL__PMPI_Alltoallw_intra" doc="MPI_Alltoallw intracom algorithm"/>
+            <param name="gather_intra" type="funcptr" default="__INTERNAL__PMPI_Gather_intra" doc="MPI_Gather intracom algorithm"/>
+            <param name="gatherv_intra" type="funcptr" default="__INTERNAL__PMPI_Gatherv_intra" doc="MPI_Gatherv intracom algorithm"/>
+            <param name="scatter_intra" type="funcptr" default="__INTERNAL__PMPI_Scatter_intra" doc="MPI_Scatter intracom algorithm"/>
+            <param name="scatterv_intra" type="funcptr" default="__INTERNAL__PMPI_Scatterv_intra" doc="MPI_Scatterv intracom algorithm"/>
+            <param name="scan_intra" type="funcptr" default="__INTERNAL__PMPI_Scan_intra" doc="MPI_Scan intracom algorithm"/>
+            <param name="exscan_intra" type="funcptr" default="__INTERNAL__PMPI_Exscan_intra" doc="MPI_Exscan intracom algorithm"/>
+            <param name="reduce_intra" type="funcptr" default="__INTERNAL__PMPI_Reduce_intra" doc="MPI_Reduce intracom algorithm"/>
+            <param name="allreduce_intra" type="funcptr" default="__INTERNAL__PMPI_Allreduce_intra" doc="MPI_Allreduce intracom algorithm"/>
+            <param name="reduce_scatter_intra" type="funcptr" default="__INTERNAL__PMPI_Reduce_scatter_intra" doc="MPI_Reduce_scatter intracom algorithm"/>
+            <param name="reduce_scatter_block_intra" type="funcptr" default="__INTERNAL__PMPI_Reduce_scatter_block_intra" doc="MPI_Reduce_scatter_block intracom algorithm"/>
+        </struct>
+
+        <struct name="collectives_inter" doc="Collectives intercom MPI">
+            <param name="barrier_inter" type="funcptr" default="__INTERNAL__PMPI_Barrier_inter" doc="MPI_Barrier intercom algorithm"/>
+            <param name="bcast_inter" type="funcptr" default="__INTERNAL__PMPI_Bcast_inter" doc="MPI_Barrier intercom algorithm"/>
+            <param name="allgather_inter" type="funcptr" default="__INTERNAL__PMPI_Allgather_inter" doc="MPI_Allgather intercom algorithm"/>
+            <param name="allgatherv_inter" type="funcptr" default="__INTERNAL__PMPI_Allgatherv_inter" doc="MPI_Allgatherv intercom algorithm"/>
+            <param name="alltoall_inter" type="funcptr" default="__INTERNAL__PMPI_Alltoall_inter" doc="MPI_Alltoall intercom algorithm"/>
+            <param name="alltoallv_inter" type="funcptr" default="__INTERNAL__PMPI_Alltoallv_inter" doc="MPI_Alltoallv intercom algorithm"/>
+            <param name="alltoallw_inter" type="funcptr" default="__INTERNAL__PMPI_Alltoallw_inter" doc="MPI_Alltoallw intercom algorithm"/>
+            <param name="gather_inter" type="funcptr" default="__INTERNAL__PMPI_Gather_inter" doc="MPI_Gather intercom algorithm"/>
+            <param name="gatherv_inter" type="funcptr" default="__INTERNAL__PMPI_Gatherv_inter" doc="MPI_Gatherv intercom algorithm"/>
+            <param name="scatter_inter" type="funcptr" default="__INTERNAL__PMPI_Scatter_inter" doc="MPI_Scatter intercom algorithm"/>
+            <param name="scatterv_inter" type="funcptr" default="__INTERNAL__PMPI_Scatterv_inter" doc="MPI_Scatterv intercom algorithm"/>
+            <param name="reduce_inter" type="funcptr" default="__INTERNAL__PMPI_Reduce_inter" doc="MPI_Reduce intercom algorithm"/>
+            <param name="allreduce_inter" type="funcptr" default="__INTERNAL__PMPI_Allreduce_inter" doc="MPI_Allreduce intercom algorithm"/>
+            <param name="reduce_scatter_inter" type="funcptr" default="__INTERNAL__PMPI_Reduce_scatter_inter" doc="MPI_Reduce_scatter intercom algorithm"/>
+            <param name="reduce_scatter_block_inter" type="funcptr" default="__INTERNAL__PMPI_Reduce_scatter_block_inter" doc="MPI_Reduce_scatter_block intercom algorithm"/>
+        </struct>
+
+        <struct name="progress_thread" doc="Progress thread NBC">
+            <param name="use_progress_thread" type="int" default="0" doc="If use progress threads for non blocking collectives"/>
+            <param name="progress_thread_binding" type="funcptr" default="sctk_get_progress_thread_binding_bind" doc="Algorithm of progress threads binding : sctk_get_progress_thread_binding_[bind,smart,numa_iter,numa]"/>
+        </struct>
+        <!--
+        <struct name="scheduler" doc="Scheduler priority parameters">
+            <param name="sched_NBC_Pthread_basic_priority" type="int" default="10" doc="Basic priority of polling tasks"/>
+        </struct>
+        -->
+     
+		<!-- ############################## -->
+		<!-- #    MPI RMA OPTIONS         # -->
+		<!-- ############################## -->
+
+		<struct name="mpi_rma" doc="Options related to the MPI RMA support">
+			<param name="alloc_mem_pool_enable" type="int" default="1" doc="Enable the MPI_Alloc_mem shared memory pool"/>
+			<param name="alloc_mem_pool_size" type="size" default="1MB" doc="Size of the MPI_Alloc_mem pool"/>
+			<param name="alloc_mem_pool_autodetect" type="int" default="1" doc="Alloc the MPI_Alloc_mem pool to grow linear for some apps"/>
+			<param name="alloc_mem_pool_force_process_linear" type="int" default="0" doc="Force the size to be a quantum per local process"/>
+			<param name="alloc_mem_pool_per_process_size" type="size" default="32MB" doc="Quantum to allocate to each process when linear forced"/>
+			<param name="win_thread_pool_max" type="int" default="2" doc="Maximum number of window threads to keep"/>
+		</struct>
+
+        		
+	<!-- ############################## -->
+	<!-- #             MPC            # -->
+	<!-- ############################## -->
+
+	<struct name="mpc" doc="Options for MPC Message Passing">
+		<param name="log_debug" type="bool" default="false" doc="Print debug messages"/>
+		<param name="hard_checking" type="bool" default="false" doc=""/>
+		<param name="buffering" type="bool" default="false" doc=""/>
+	</struct>
+	
+	
+	</usertypes>
+	
+	
+	<modules>
+		<module name="collectives_shm" type="collectives_shm"/>
+		<module name="collectives_intra" type="collectives_intra"/>
+		<module name="collectives_inter" type="collectives_inter"/>
+		<module name="progress_thread" type="progress_thread"/>
+		<module name="mpc" type="mpc"/>
+		<module name="rma" type="mpi_rma"/>
+	</modules>
+      
+      
+      
 </config>
 <config name="MPC_OpenMP">
     <usertypes>

@@ -627,22 +627,17 @@ static inline int sctk_datatype_is_boundary (MPC_Datatype data_in)
 	return 0;
 }
 
-
 /** \brief Returns 1 if the datatype is occupying a contiguous memory region
  */
-static inline int sctk_datatype_contig_mem (MPC_Datatype data_in)
-{
-	/* Note that the derived asumption can be optimized 
-	 * for single segment derived with no LB/UB */
-	if( sctk_datatype_is_derived(data_in) || sctk_datatype_is_boundary(data_in) )
-	{
-		return 0;
-	}
+static inline int sctk_datatype_contig_mem(MPC_Datatype data_in) {
+  /* Note that the derived asumption can be optimized
+   * for single segment derived with no LB/UB */
+  if (sctk_datatype_is_derived(data_in) || sctk_datatype_is_boundary(data_in)) {
+    return 0;
+  }
 
-	return 1;
+  return 1;
 }
-
-
 
 /** \brief This functions retuns the \ref MPC_Datatype_kind of an MPC_Datatype
  * 

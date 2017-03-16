@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2003-2016, Troy D. Hanson     http://troydhanson.github.com/uthash/
+Copyright (c) 2003-2016, Troy D. Hanson http://troydhanson.github.com/uthash/
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -48,16 +48,15 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 typedef struct _UT_vector {
   UT_mm mm;
-  unsigned i,n;/* i: index of next available slot, n: num slots */
-  char *d;     /* n slots of size icd->sz*/
+  unsigned i, n; /* i: index of next available slot, n: num slots */
+  char *d;       /* n slots of size icd->sz*/
 } UT_vector;
-
 
 UT_vector *utvector_new(const UT_mm *mm);
 void utvector_init(UT_vector *v, const UT_mm *mm);
 void utvector_reserve(UT_vector *v, unsigned num);
 void utvector_fini(UT_vector *v);
-UT_vector * utvector_clone(UT_vector *src);
+UT_vector *utvector_clone(UT_vector *src);
 void utvector_clear(UT_vector *v);
 void utvector_copy(UT_vector *dst, UT_vector *src);
 void utvector_free(UT_vector *v);
@@ -71,6 +70,5 @@ void utvector_shift(UT_vector *v);
 void utvector_erase(UT_vector *v, unsigned i);
 void *utvector_push(UT_vector *v, void *e);
 unsigned utvector_len(UT_vector *v);
-
 
 #endif /* __UTVECTOR_H_ */

@@ -182,11 +182,21 @@ extern "C"
 
 //If inline is not supported, disable assertions
 
-#define assume_m(x,...) if (!(x)) { sctk_error("Error at %s!%d\n%s\n",__FILE__,__LINE__,#x); sctk_error(__VA_ARGS__); sctk_abort(); }
+#define assume_m(x, ...)                                                       \
+  if (!(x)) {                                                                  \
+    sctk_error("Error at %s!%d\n%s\n", __FILE__, __LINE__, #x);                \
+    sctk_error(__VA_ARGS__);                                                   \
+    sctk_abort();                                                              \
+  }
 
-/** Print an error message and exit. It use the print formatting convention. **/
-#define sctk_fatal(...) { sctk_error("Fatal error at %s!%d\n",__FILE__,__LINE__); sctk_error(__VA_ARGS__); sctk_abort(); }
-
+  /** Print an error message and exit. It use the print formatting convention.
+   * **/
+#define sctk_fatal(...)                                                        \
+  {                                                                            \
+    sctk_error("Fatal error at %s!%d\n", __FILE__, __LINE__);                  \
+    sctk_error(__VA_ARGS__);                                                   \
+    sctk_abort();                                                              \
+  }
 
 #ifndef SCTK_NO_INLINE
 #undef NO_INTERNAL_ASSERT

@@ -145,30 +145,26 @@ int sctk_get_node_from_cpu(const int vp);
 /*! \brief Return the PHYSICAL NUMA node according to the code_id number
  * @param vp VP
 */
-int sctk_get_physical_node_from_cpu (const int vp);
+int sctk_get_physical_node_from_cpu(const int vp);
 
 /*! \brief Return the NUMA node for current CPU
 */
-static inline int sctk_get_numa_node(int os_level)
-{
-		if( !sctk_is_numa_node() )
-		{
-			return -1;
-		}
-	
-		int cpu = sctk_get_cpu();
-		
-		if( 0 <= cpu )
-		{
-			if( os_level )
-				return sctk_get_physical_node_from_cpu( cpu );
-			else
-				return sctk_get_node_from_cpu( cpu );
-		}
+static inline int sctk_get_numa_node(int os_level) {
+  if (!sctk_is_numa_node()) {
+    return -1;
+  }
 
-		return -1;
+  int cpu = sctk_get_cpu();
+
+  if (0 <= cpu) {
+    if (os_level)
+      return sctk_get_physical_node_from_cpu(cpu);
+    else
+      return sctk_get_node_from_cpu(cpu);
+  }
+
+  return -1;
 }
-
 
 /*! \brief Return the NUMA node according to the code_id number
  * @param vp VP

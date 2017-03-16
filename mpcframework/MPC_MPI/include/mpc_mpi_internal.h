@@ -258,108 +258,95 @@ MPC_Op_f sctk_get_common_function(MPC_Datatype datatype, MPC_Op op);
   SHARED INTERNAL FUNCTIONS
 */
 
+static inline int sctk_mpi_type_is_shared_mem(MPI_Datatype type, int count) {
+  if (SHM_COLL_BUFF_MAX_SIZE <= count) {
+    return 0;
+  }
 
+  switch (type) {
+  case MPI_INT:
+  case MPI_FLOAT:
+  case MPI_CHAR:
+  case MPI_DOUBLE:
+    return 1;
 
-static inline int  sctk_mpi_type_is_shared_mem( MPI_Datatype type, int count )
-{
-	if( SHM_COLL_BUFF_MAX_SIZE <= count )
-	{
-		return 0;
-	}
-
-	switch( type )
-	{
-		case MPI_INT:
-		case MPI_FLOAT:
-		case MPI_CHAR:
-		case MPI_DOUBLE:
-			return 1;
-	
-		default:
-			return 0;
-	}
-
+  default:
+    return 0;
+  }
 }
 
+static inline int sctk_mpi_op_is_shared_mem(MPI_Datatype op) {
+  switch (op) {
+  case MPI_SUM:
+    return 1;
 
-static inline int sctk_mpi_op_is_shared_mem( MPI_Datatype op )
-{
-	switch( op )
-	{
-		case MPI_SUM:
-			return 1;
-	
-		default:
-			return 0;
-	}
-
+  default:
+    return 0;
+  }
 }
 
+static inline void sctk_mpi_shared_mem_buffer_fill(union shared_mem_buffer *b,
+                                                   MPI_Datatype type, int count,
+                                                   void *src) {
+  int i;
 
+  switch (type) {
+  case MPI_INT:
+    for (i = 0; i < count; i++)
+      b->i[i] = ((int *)src)[i];
+    break;
+  case MPI_FLOAT:
+    for (i = 0; i < count; i++)
+      b->f[i] = ((float *)src)[i];
+    break;
+  case MPI_CHAR:
+    for (i = 0; i < count; i++)
+      b->c[i] = ((char *)src)[i];
+    break;
 
-static inline void sctk_mpi_shared_mem_buffer_fill( union shared_mem_buffer * b , MPI_Datatype type , int count, void * src )
-{
-	int i;
+  case MPI_DOUBLE:
+    for (i = 0; i < count; i++)
+      b->d[i] = ((double *)src)[i];
+    break;
 
-	switch( type )
-	{
-		case MPI_INT:
-			for( i = 0 ; i < count ; i++)
-				b->i[i] = ((int*)src)[i];
-			break;
-		case MPI_FLOAT:
-			for( i = 0 ; i < count ; i++)
-				b->f[i] = ((float*)src)[i];
-			break;
-		case MPI_CHAR:
-			for( i = 0 ; i < count ; i++)
-				b->c[i] = ((char*)src)[i];
-			break;
-
-		case MPI_DOUBLE:
-			for( i = 0 ; i < count ; i++)
-				b->d[i] = ((double*)src)[i];
-			break;
-	
-		default:
-			sctk_fatal("Unsupported data-type");
-	}
-
+  default:
+    sctk_fatal("Unsupported data-type");
+  }
 }
 
-static inline void sctk_mpi_shared_mem_buffer_get( union shared_mem_buffer * b , MPI_Datatype type , int count, void * dest, size_t source_size )
-{
-	int i;
-	MPI_Aint tsize;
+static inline void sctk_mpi_shared_mem_buffer_get(union shared_mem_buffer *b,
+                                                  MPI_Datatype type, int count,
+                                                  void *dest,
+                                                  size_t source_size) {
+  int i;
+  MPI_Aint tsize;
 
-	switch( type )
-	{
-		case MPI_INT:
-			for( i = 0 ; i < count ; i++)
-				((int*)dest)[i] = b->i[i];
-			break;
-		case MPI_FLOAT:
-			for( i = 0 ; i < count ; i++)
-				((float*)dest)[i] = b->f[i];
-			break;
-		case MPI_CHAR:
-			for( i = 0 ; i < count ; i++)
-				((char*)dest)[i] = b->c[i];
-			break;
+  switch (type) {
+  case MPI_INT:
+    for (i = 0; i < count; i++)
+      ((int *)dest)[i] = b->i[i];
+    break;
+  case MPI_FLOAT:
+    for (i = 0; i < count; i++)
+      ((float *)dest)[i] = b->f[i];
+    break;
+  case MPI_CHAR:
+    for (i = 0; i < count; i++)
+      ((char *)dest)[i] = b->c[i];
+    break;
 
-		case MPI_DOUBLE:
-			for( i = 0 ; i < count ; i++)
-				((double*)dest)[i] = b->d[i];
-			break;
-	
-		default:
-			/* This is the crazy case contig to derived 
-			 * when being packed (non uniform types) */
-			PMPI_Type_extent( type, &tsize );
-			int cnt = 0;
-			PMPI_Unpack( b->c, source_size, &cnt, dest, count, type, MPI_COMM_WORLD  );
-	}
+  case MPI_DOUBLE:
+    for (i = 0; i < count; i++)
+      ((double *)dest)[i] = b->d[i];
+    break;
 
+  default:
+    /* This is the crazy case contig to derived
+     * when being packed (non uniform types) */
+    PMPI_Type_extent(type, &tsize);
+    int cnt = 0;
+    PMPI_Unpack(b->c, source_size, &cnt, dest, count, type, MPI_COMM_WORLD);
+  }
 }
 
 #define MPI_ERROR_REPORT(comm, error,message) return SCTK__MPI_ERROR_REPORT__(comm, error,message,__FILE__, __LINE__)

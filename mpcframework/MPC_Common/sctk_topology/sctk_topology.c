@@ -608,46 +608,37 @@ hwloc_cpuset_t sctk_topology_get_socket_cpuset( int pu_id )
 	return parent->cpuset;
 }
 
-int sctk_topology_get_socket_number()
-{
-	return hwloc_get_nbobjs_by_type(topology, HWLOC_OBJ_SOCKET);
+int sctk_topology_get_socket_number() {
+  return hwloc_get_nbobjs_by_type(topology, HWLOC_OBJ_SOCKET);
 }
 
+int sctk_topology_get_socket_id(int os_level) {
+  int cpu = sctk_get_cpu();
 
-int sctk_topology_get_socket_id(int os_level)
-{
-	int cpu = sctk_get_cpu() ;
-	
-	if( cpu < 0 )
-	{
-		return cpu;
-	}
-	
-	hwloc_obj_t target_pu = hwloc_get_obj_by_type(topology,HWLOC_OBJ_PU, cpu );
-	assume( target_pu != NULL );
-	
-	hwloc_obj_t parent = target_pu->parent;
-	
-	while( parent->type != HWLOC_OBJ_SOCKET )
-	{
-		if( !parent )
-			break;
-		
-		parent = parent->parent;
-	}
-	
-	assume( parent != NULL );
-	
-	if( os_level )
-	{
-		return parent->os_index;
-	}
-	else
-	{
-		return parent->logical_index;
-	}
+  if (cpu < 0) {
+    return cpu;
+  }
+
+  hwloc_obj_t target_pu = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, cpu);
+  assume(target_pu != NULL);
+
+  hwloc_obj_t parent = target_pu->parent;
+
+  while (parent->type != HWLOC_OBJ_SOCKET) {
+    if (!parent)
+      break;
+
+    parent = parent->parent;
+  }
+
+  assume(parent != NULL);
+
+  if (os_level) {
+    return parent->os_index;
+  } else {
+    return parent->logical_index;
+  }
 }
-
 
 hwloc_cpuset_t sctk_topology_get_core_cpuset( int pu_id )
 {
@@ -1216,23 +1207,20 @@ int sctk_get_node_from_cpu (const int vp)
   }
 }
 
-
-int sctk_get_physical_node_from_cpu (const int vp)
-{
-	#ifdef HAVE_HWLOC
-	if(sctk_is_numa_node ()){
-		const hwloc_obj_t pu = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, vp);
-		const hwloc_obj_t node = hwloc_get_ancestor_obj_by_type(topology, HWLOC_OBJ_NODE, pu);
-		return node->os_index;
-	} else {
-		return 0;
-	}
-	#else
-	return 0;
-	#endif
+int sctk_get_physical_node_from_cpu(const int vp) {
+#ifdef HAVE_HWLOC
+  if (sctk_is_numa_node()) {
+    const hwloc_obj_t pu = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, vp);
+    const hwloc_obj_t node =
+        hwloc_get_ancestor_obj_by_type(topology, HWLOC_OBJ_NODE, pu);
+    return node->os_index;
+  } else {
+    return 0;
+  }
+#else
+  return 0;
+#endif
 }
-
-
 
 /*! \brief Return the NUMA node according to the code_id number
  * @param vp VP

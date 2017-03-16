@@ -984,20 +984,20 @@ void sctk_init_mpc_runtime()
 	//load mpc configuration from XML files if not already done.
 	sctk_runtime_config_init();
 
-	//Now attach signal handlers (if allowed by the config)
-	sctk_install_bt_sig_handler();
+        // Now attach signal handlers (if allowed by the config)
+        sctk_install_bt_sig_handler();
 
-	__sctk_profiling__start__sctk_init_MPC = sctk_get_time_stamp_gettimeofday ();
+        __sctk_profiling__start__sctk_init_MPC =
+            sctk_get_time_stamp_gettimeofday();
 
-	auto_kill = sctk_runtime_config_get()->modules.launcher.autokill;
-	if (auto_kill > 0)
-	{
-		pthread_t pid;
-		/*       sctk_warning ("Auto kill in %s s",auto_kill); */
-		pthread_create (&pid, NULL, auto_kill_func, &auto_kill);
-	}
+        auto_kill = sctk_runtime_config_get()->modules.launcher.autokill;
+        if (auto_kill > 0) {
+          pthread_t pid;
+          /*       sctk_warning ("Auto kill in %s s",auto_kill); */
+          pthread_create(&pid, NULL, auto_kill_func, &auto_kill);
+        }
 
-	/* Default values */
+        /* Default values */
         // this function is called 2 times, one here and one with the function
         // pointer
         //"sctk_runtime_config_get()->modules.launcher.thread_init.value()"

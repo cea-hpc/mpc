@@ -124,23 +124,23 @@ static inline sctk_internal_communicator_t *sctk_get_internal_communicator ( con
 /**
  * This method is used to retrieve the collective object
  * @param communicator Identification number of the communicator.
- * @return the collective communicator structure corresponding to the identification number
+ * @return the collective communicator structure corresponding to the
+ *identification number
 **/
-struct sctk_comm_coll * __sctk_communicator_get_coll(const sctk_communicator_t communicator)
-{
-	sctk_internal_communicator_t * ret = sctk_get_internal_communicator ( communicator );
+struct sctk_comm_coll *
+__sctk_communicator_get_coll(const sctk_communicator_t communicator) {
+  sctk_internal_communicator_t *ret =
+      sctk_get_internal_communicator(communicator);
 
-	if( !ret )
-	{
-		return NULL;
-	}
+  if (!ret) {
+    return NULL;
+  }
 
-	if( !ret->is_shared_mem )
-		return NULL;
+  if (!ret->is_shared_mem)
+    return NULL;
 
-	return &ret->coll;
+  return &ret->coll;
 }
-
 
 /************************* FUNCTION ************************/
 /**
@@ -246,14 +246,12 @@ static inline int sctk_del_internal_communicator_no_lock_no_check ( const sctk_c
 
 		//delete in the hash table
 		HASH_DELETE ( hh, sctk_communicator_table, tmp );
-		sctk_error ( "COMM %d DEL in HAS_TAB", id );
-		sctk_spinlock_write_unlock ( &sctk_communicator_local_table_lock );
-	}
-	else
-	{
-		//else delete in the table
-		sctk_communicator_array[id] = NULL;
-	}
+                sctk_error("COMM %d DEL in HAS_TAB", id);
+                sctk_spinlock_write_unlock(&sctk_communicator_local_table_lock);
+        } else {
+          // else delete in the table
+          sctk_communicator_array[id] = NULL;
+        }
 
         sctk_handle_free(id, SCTK_HANDLE_COMM);
 
@@ -975,388 +973,354 @@ static int int_cmp ( const void *a, const void *b )
 	return *ia  - *ib;
 }
 
-int sctk_shared_mem_barrier_sig_init( struct shared_mem_barrier_sig * shmb, int nb_task )
-{
-	shmb->sig_points = sctk_malloc( sizeof(sctk_atomics_ptr) * nb_task );
+int sctk_shared_mem_barrier_sig_init(struct shared_mem_barrier_sig *shmb,
+                                     int nb_task) {
+  shmb->sig_points = sctk_malloc(sizeof(sctk_atomics_ptr) * nb_task);
 
-	assume( shmb->sig_points != NULL );
+  assume(shmb->sig_points != NULL);
 
-	shmb->tollgate = sctk_malloc( nb_task * sizeof(int));
+  shmb->tollgate = sctk_malloc(nb_task * sizeof(int));
 
-	assume( shmb->tollgate != NULL );
+  assume(shmb->tollgate != NULL);
 
-	int i;
-	for (i = 0; i < nb_task ; ++i)
-	{	
-		shmb->tollgate[i] = 0;
-	}
+  int i;
+  for (i = 0; i < nb_task; ++i) {
+    shmb->tollgate[i] = 0;
+  }
 
-	sctk_atomics_store_int( &shmb->fare, 0 );
-	
-	sctk_atomics_store_int( &shmb->counter, nb_task );
+  sctk_atomics_store_int(&shmb->fare, 0);
 
+  sctk_atomics_store_int(&shmb->counter, nb_task);
 
-	return 0;
+  return 0;
 }
 
+int sctk_shared_mem_barrier_sig_release(struct shared_mem_barrier_sig *shmb) {
+  sctk_free(shmb->sig_points);
+  shmb->sig_points = NULL;
 
-int sctk_shared_mem_barrier_sig_release( struct shared_mem_barrier_sig * shmb )
-{
-	sctk_free( shmb->sig_points );
-	shmb->sig_points = NULL;
+  sctk_free((void *)shmb->tollgate);
+  shmb->tollgate = NULL;
 
-	sctk_free( (void*)shmb->tollgate );
-	shmb->tollgate = NULL;
-
-	return 0;
+  return 0;
 }
 
-
-int sctk_shared_mem_barrier_init( struct shared_mem_barrier * shmb , int nb_task )
-{
-	sctk_atomics_store_int( &shmb->counter, nb_task );
-	sctk_atomics_store_int( &shmb->phase, 0 );
-	return 0;
+int sctk_shared_mem_barrier_init(struct shared_mem_barrier *shmb, int nb_task) {
+  sctk_atomics_store_int(&shmb->counter, nb_task);
+  sctk_atomics_store_int(&shmb->phase, 0);
+  return 0;
 }
 
-
-int sctk_shared_mem_barrier_release( struct shared_mem_barrier * shmb )
-{
-	return 0;
+int sctk_shared_mem_barrier_release(struct shared_mem_barrier *shmb) {
+  return 0;
 }
 
-int sctk_shared_mem_reduce_init( struct shared_mem_reduce * shmr, int nb_task )
-{
-	
-	shmr->buffer = sctk_malloc( sizeof( union shared_mem_buffer) * nb_task  );
+int sctk_shared_mem_reduce_init(struct shared_mem_reduce *shmr, int nb_task) {
 
-	assume( shmr->buffer != NULL );
+  shmr->buffer = sctk_malloc(sizeof(union shared_mem_buffer) * nb_task);
 
-	sctk_atomics_store_int( &shmr->owner, -1 );
-	
-	sctk_atomics_store_int( &shmr->left_to_push, nb_task );
+  assume(shmr->buffer != NULL);
 
-	shmr->target_buff = NULL;
+  sctk_atomics_store_int(&shmr->owner, -1);
 
-	int pipelined_blocks = sctk_runtime_config_get()->modules.collectives_shm.reduce_pipelined_blocks;
+  sctk_atomics_store_int(&shmr->left_to_push, nb_task);
 
-	shmr->buff_lock = sctk_malloc( sizeof( sctk_spinlock_t) * pipelined_blocks );
+  shmr->target_buff = NULL;
 
-	assume( shmr->buff_lock != NULL );
+  int pipelined_blocks = sctk_runtime_config_get()
+                             ->modules.collectives_shm.reduce_pipelined_blocks;
 
-	shmr->pipelined_blocks = pipelined_blocks;
+  shmr->buff_lock = sctk_malloc(sizeof(sctk_spinlock_t) * pipelined_blocks);
 
-	int i;
-	for (i = 0; i < pipelined_blocks; ++i) {
-		shmr->buff_lock[i] = 0;
-	}
+  assume(shmr->buff_lock != NULL);
 
-	shmr->tollgate = sctk_malloc( nb_task * sizeof(int));
+  shmr->pipelined_blocks = pipelined_blocks;
 
-	assume( shmr->tollgate != NULL );
+  int i;
+  for (i = 0; i < pipelined_blocks; ++i) {
+    shmr->buff_lock[i] = 0;
+  }
 
-	for (i = 0; i < nb_task ; ++i)
-	{	
-		shmr->tollgate[i] = 0;
-	}
+  shmr->tollgate = sctk_malloc(nb_task * sizeof(int));
 
-	sctk_atomics_store_int( &shmr->fare, 0 );
+  assume(shmr->tollgate != NULL);
 
+  for (i = 0; i < nb_task; ++i) {
+    shmr->tollgate[i] = 0;
+  }
 
-	return 0;
+  sctk_atomics_store_int(&shmr->fare, 0);
+
+  return 0;
 }
 
+int sctk_shared_mem_reduce_release(struct shared_mem_reduce *shmr) {
+  sctk_free(shmr->buffer);
+  shmr->buffer = NULL;
 
-int sctk_shared_mem_reduce_release( struct shared_mem_reduce * shmr )
-{
-	sctk_free( shmr->buffer );
-	shmr->buffer = NULL;
+  sctk_free((void *)shmr->buff_lock);
+  shmr->buff_lock = NULL;
 
-	sctk_free( (void *)shmr->buff_lock );
-	shmr->buff_lock = NULL;
+  sctk_free((void *)shmr->tollgate);
+  shmr->tollgate = NULL;
 
-	sctk_free( (void *)shmr->tollgate );
-	shmr->tollgate = NULL;
-
-	return 0;
+  return 0;
 }
 
-int sctk_shared_mem_bcast_init( struct shared_mem_bcast * shmb, int nb_task )
-{
-	sctk_atomics_store_int( &shmb->owner, -1 );
-	
-	sctk_atomics_store_int( &shmb->left_to_pop, nb_task );
+int sctk_shared_mem_bcast_init(struct shared_mem_bcast *shmb, int nb_task) {
+  sctk_atomics_store_int(&shmb->owner, -1);
 
-	shmb->tollgate = sctk_malloc( nb_task * sizeof(int));
+  sctk_atomics_store_int(&shmb->left_to_pop, nb_task);
 
-	assume( shmb->tollgate != NULL );
+  shmb->tollgate = sctk_malloc(nb_task * sizeof(int));
 
-	int i;
-	for (i = 0; i < nb_task ; ++i)
-	{	
-		shmb->tollgate[i] = 0;
-	}
+  assume(shmb->tollgate != NULL);
 
-	sctk_atomics_store_int( &shmb->fare, 0 );
-	sctk_atomics_store_ptr( &shmb->to_free, 0 );
+  int i;
+  for (i = 0; i < nb_task; ++i) {
+    shmb->tollgate[i] = 0;
+  }
 
-	shmb->scount = 0;
-	shmb->stype_size = 0;
-	shmb->root_in_buff = 0;
+  sctk_atomics_store_int(&shmb->fare, 0);
+  sctk_atomics_store_ptr(&shmb->to_free, 0);
 
-	return 0;
+  shmb->scount = 0;
+  shmb->stype_size = 0;
+  shmb->root_in_buff = 0;
+
+  return 0;
 }
 
+int sctk_shared_mem_bcast_release(struct shared_mem_bcast *shmb) {
+  sctk_free((void *)shmb->tollgate);
+  shmb->tollgate = NULL;
 
-int sctk_shared_mem_bcast_release( struct shared_mem_bcast * shmb )
-{
-	sctk_free( (void *)shmb->tollgate );
-	shmb->tollgate = NULL;
-
-	return 0;
+  return 0;
 }
 
-int sctk_shared_mem_gatherv_init( struct shared_mem_gatherv * shmgv, int nb_task )
-{
-	sctk_atomics_store_int( &shmgv->owner, -1 );
-	sctk_atomics_store_int( &shmgv->left_to_push, nb_task );
+int sctk_shared_mem_gatherv_init(struct shared_mem_gatherv *shmgv,
+                                 int nb_task) {
+  sctk_atomics_store_int(&shmgv->owner, -1);
+  sctk_atomics_store_int(&shmgv->left_to_push, nb_task);
 
-	/* Tollgate */
-	shmgv->tollgate = sctk_malloc( nb_task * sizeof(int));
-	assume( shmgv->tollgate != NULL );
-	sctk_atomics_store_int( &shmgv->fare, 0 );
+  /* Tollgate */
+  shmgv->tollgate = sctk_malloc(nb_task * sizeof(int));
+  assume(shmgv->tollgate != NULL);
+  sctk_atomics_store_int(&shmgv->fare, 0);
 
-	/* Leaf CTX */
-	shmgv->src_buffs = sctk_malloc( nb_task * sizeof(sctk_atomics_ptr));
-	assume( shmgv->src_buffs != NULL );
+  /* Leaf CTX */
+  shmgv->src_buffs = sctk_malloc(nb_task * sizeof(sctk_atomics_ptr));
+  assume(shmgv->src_buffs != NULL);
 
-	/* Root CTX */
-	shmgv->target_buff = NULL;
-	shmgv->counts = NULL;
-	shmgv->disps = NULL;
-	shmgv->rtype_size = 0;
-	shmgv->rcount = 0;
-	shmgv->let_me_unpack = 0;
-	
-	shmgv->send_type_size = sctk_malloc( nb_task * sizeof(size_t));
-	assume( shmgv->send_type_size != NULL );
+  /* Root CTX */
+  shmgv->target_buff = NULL;
+  shmgv->counts = NULL;
+  shmgv->disps = NULL;
+  shmgv->rtype_size = 0;
+  shmgv->rcount = 0;
+  shmgv->let_me_unpack = 0;
 
-	shmgv->send_count = sctk_malloc( nb_task * sizeof(int));
-	assume( shmgv->send_count != NULL );
+  shmgv->send_type_size = sctk_malloc(nb_task * sizeof(size_t));
+  assume(shmgv->send_type_size != NULL);
 
-	/* Fill it all */
-	int i;
-	for (i = 0; i < nb_task ; ++i)
-	{	
-		shmgv->tollgate[i] = 0;
-		shmgv->send_count[i] = 0;
-		shmgv->send_type_size[i] = 0;
-		sctk_atomics_store_ptr( &shmgv->src_buffs[i], 0 );
-	}
+  shmgv->send_count = sctk_malloc(nb_task * sizeof(int));
+  assume(shmgv->send_count != NULL);
 
-	return 0;
+  /* Fill it all */
+  int i;
+  for (i = 0; i < nb_task; ++i) {
+    shmgv->tollgate[i] = 0;
+    shmgv->send_count[i] = 0;
+    shmgv->send_type_size[i] = 0;
+    sctk_atomics_store_ptr(&shmgv->src_buffs[i], 0);
+  }
+
+  return 0;
 }
 
+int sctk_shared_mem_gatherv_release(struct shared_mem_gatherv *shmgv) {
+  sctk_free((void *)shmgv->tollgate);
+  shmgv->tollgate = NULL;
 
-int sctk_shared_mem_gatherv_release( struct shared_mem_gatherv * shmgv )
-{
-	sctk_free( (void*)shmgv->tollgate );
-	shmgv->tollgate = NULL;
+  sctk_free(shmgv->src_buffs);
+  shmgv->src_buffs = NULL;
 
-	sctk_free( shmgv->src_buffs );
-	shmgv->src_buffs = NULL;
+  sctk_free(shmgv->send_type_size);
+  shmgv->send_type_size = NULL;
 
+  sctk_free(shmgv->send_count);
+  shmgv->send_count = NULL;
 
-	sctk_free( shmgv->send_type_size );
-	shmgv->send_type_size = NULL;
-
-
-	sctk_free( shmgv->send_count );
-	shmgv->send_count = NULL;
-
-	return 0;
+  return 0;
 }
 
+int sctk_shared_mem_scatterv_init(struct shared_mem_scatterv *shmsv,
+                                  int nb_task) {
+  sctk_atomics_store_int(&shmsv->owner, -1);
+  sctk_atomics_store_int(&shmsv->left_to_pop, nb_task);
 
-int sctk_shared_mem_scatterv_init( struct shared_mem_scatterv * shmsv, int nb_task )
-{
-	sctk_atomics_store_int( &shmsv->owner, -1 );
-	sctk_atomics_store_int( &shmsv->left_to_pop, nb_task );
+  /* Tollgate */
+  shmsv->tollgate = sctk_malloc(nb_task * sizeof(int));
+  assume(shmsv->tollgate != NULL);
+  sctk_atomics_store_int(&shmsv->fare, 0);
 
-	/* Tollgate */
-	shmsv->tollgate = sctk_malloc( nb_task * sizeof(int));
-	assume( shmsv->tollgate != NULL );
-	sctk_atomics_store_int( &shmsv->fare, 0 );
+  /* Root CTX */
+  shmsv->src_buffs = sctk_malloc(nb_task * sizeof(sctk_atomics_ptr));
+  assume(shmsv->src_buffs != NULL);
 
+  shmsv->was_packed = 0;
+  shmsv->stype_size = 0;
+  shmsv->counts = NULL;
+  shmsv->disps = NULL;
 
-	/* Root CTX */
-	shmsv->src_buffs = sctk_malloc( nb_task * sizeof(sctk_atomics_ptr));
-	assume( shmsv->src_buffs != NULL );
+  /* Fill it all */
+  int i;
+  for (i = 0; i < nb_task; ++i) {
+    shmsv->tollgate[i] = 0;
+    sctk_atomics_store_ptr(&shmsv->src_buffs[i], 0);
+  }
 
-	shmsv->was_packed = 0;
-	shmsv->stype_size = 0;
-	shmsv->counts = NULL;
-	shmsv->disps = NULL;
-	
-	/* Fill it all */
-	int i;
-	for (i = 0; i < nb_task ; ++i)
-	{	
-		shmsv->tollgate[i] = 0;
-		sctk_atomics_store_ptr( &shmsv->src_buffs[i], 0 );
-	}
-
-	return 0;
+  return 0;
 }
 
+int sctk_shared_mem_scatterv_release(struct shared_mem_scatterv *shmgv) {
+  sctk_free((void *)shmgv->tollgate);
+  shmgv->tollgate = NULL;
 
-int sctk_shared_mem_scatterv_release( struct shared_mem_scatterv * shmgv )
-{
-	sctk_free( (void *)shmgv->tollgate );
-	shmgv->tollgate = NULL;
+  sctk_free(shmgv->src_buffs);
+  shmgv->src_buffs = NULL;
 
-	sctk_free( shmgv->src_buffs );
-	shmgv->src_buffs = NULL;
-
-	return 0;
+  return 0;
 }
 
+int sctk_shared_mem_a2a_init(struct shared_mem_a2a *shmaa, int nb_task) {
+  shmaa->infos =
+      sctk_malloc(nb_task * sizeof(struct sctk_shared_mem_a2a_infos *));
+  assume(shmaa->infos != NULL);
 
-int sctk_shared_mem_a2a_init( struct shared_mem_a2a * shmaa, int nb_task )
-{
-	shmaa->infos = sctk_malloc( nb_task * sizeof(struct sctk_shared_mem_a2a_infos *));
-	assume( shmaa->infos != NULL );
-	
-	/* Fill it all */
-	int i;
-	for (i = 0; i < nb_task ; ++i)
-	{
-		shmaa->infos[i] = NULL;
-	}
+  /* Fill it all */
+  int i;
+  for (i = 0; i < nb_task; ++i) {
+    shmaa->infos[i] = NULL;
+  }
 
-	shmaa->has_in_place = 0;
+  shmaa->has_in_place = 0;
 
-	return 0;
+  return 0;
 }
 
-int sctk_shared_mem_a2a_release( struct shared_mem_a2a * shmaa )
-{
-	sctk_free( shmaa->infos );
-	shmaa->infos = NULL;
+int sctk_shared_mem_a2a_release(struct shared_mem_a2a *shmaa) {
+  sctk_free(shmaa->infos);
+  shmaa->infos = NULL;
 
-	return 0;
+  return 0;
 }
 
-
-int powerof2(int x)
-{
- while (((x % 2) == 0) && x > 1)
-   x /= 2;
- return (x == 1);
+int powerof2(int x) {
+  while (((x % 2) == 0) && x > 1)
+    x /= 2;
+  return (x == 1);
 }
 
+int sctk_comm_coll_init(struct sctk_comm_coll *coll, int nb_task) {
+  /* NB task for all */
+  coll->comm_size = nb_task;
+  /* Allocate coll id array */
+  coll->coll_id = sctk_malloc(nb_task * sizeof(unsigned int));
+  assume(coll->coll_id != NULL);
+  memset(coll->coll_id, 0, sizeof(int) * nb_task);
 
-int sctk_comm_coll_init( struct sctk_comm_coll * coll , int nb_task)
-{	
-	/* NB task for all */
-	coll->comm_size = nb_task;
-	/* Allocate coll id array */
-	coll->coll_id = sctk_malloc( nb_task * sizeof(unsigned int));
-	assume( coll->coll_id != NULL );
-	memset(coll->coll_id, 0, sizeof( int ) * nb_task );
+  int i;
+  /* The barrier structure */
+  sctk_shared_mem_barrier_init(&coll->shm_barrier, nb_task);
+  /* The Signalled Barrier */
+  sctk_shared_mem_barrier_sig_init(&coll->shm_barrier_sig, nb_task);
+  /* The reduce structure */
+  coll->reduce_interleave =
+      sctk_runtime_config_get()->modules.collectives_shm.reduce_interleave;
 
-	int i;
-	/* The barrier structure */
-	sctk_shared_mem_barrier_init( &coll->shm_barrier, nb_task );
-	/* The Signalled Barrier */
-	sctk_shared_mem_barrier_sig_init( &coll->shm_barrier_sig, nb_task );
-	/* The reduce structure */
-	coll->reduce_interleave = sctk_runtime_config_get()->modules.collectives_shm.reduce_interleave;
+  if (!powerof2(coll->reduce_interleave)) {
+    sctk_error("INFO : Reduce interleave is required to be power of 2");
+    sctk_error("INFO : now default to 8");
+    coll->reduce_interleave = 8;
+  }
 
-	if( !powerof2(coll->reduce_interleave ) )
-	{
-		sctk_error("INFO : Reduce interleave is required to be power of 2");
-		sctk_error("INFO : now default to 8");
-		coll->reduce_interleave = 8;
-	}
-	
-	coll->shm_reduce = sctk_malloc( sizeof(struct shared_mem_reduce) * coll->reduce_interleave );
-	assume( coll->shm_reduce != NULL );
-	
-	for( i = 0 ; i < coll->reduce_interleave ; i++ )
-		sctk_shared_mem_reduce_init( &coll->shm_reduce[i] , nb_task );
+  coll->shm_reduce =
+      sctk_malloc(sizeof(struct shared_mem_reduce) * coll->reduce_interleave);
+  assume(coll->shm_reduce != NULL);
 
+  for (i = 0; i < coll->reduce_interleave; i++)
+    sctk_shared_mem_reduce_init(&coll->shm_reduce[i], nb_task);
 
-	/* The reduce structure */
-	coll->bcast_interleave = sctk_runtime_config_get()->modules.collectives_shm.bcast_interleave;
+  /* The reduce structure */
+  coll->bcast_interleave =
+      sctk_runtime_config_get()->modules.collectives_shm.bcast_interleave;
 
-	if( !powerof2(coll->bcast_interleave ) )
-	{
-		sctk_error("INFO : Bcast interleave is required to be power of 2");
-		sctk_error("INFO : now default to 8");
-		coll->bcast_interleave = 8;
-	}
+  if (!powerof2(coll->bcast_interleave)) {
+    sctk_error("INFO : Bcast interleave is required to be power of 2");
+    sctk_error("INFO : now default to 8");
+    coll->bcast_interleave = 8;
+  }
 
-	coll->shm_bcast = sctk_malloc( sizeof(struct shared_mem_bcast) * coll->bcast_interleave );
-	assume( coll->shm_bcast != NULL );
-	
-	for( i = 0 ; i < coll->bcast_interleave ; i++ )
-		sctk_shared_mem_bcast_init( &coll->shm_bcast[i] , nb_task );
-	/* The gatherv structure */
-	sctk_shared_mem_gatherv_init( &coll->shm_gatherv, nb_task );
-	/* The scatterv structure */
-	sctk_shared_mem_scatterv_init( &coll->shm_scatterv, nb_task );
-	/* The All2All structure */
-	sctk_shared_mem_a2a_init( &coll->shm_a2a, nb_task );
+  coll->shm_bcast =
+      sctk_malloc(sizeof(struct shared_mem_bcast) * coll->bcast_interleave);
+  assume(coll->shm_bcast != NULL);
 
-	/* Flag init done */
-	coll->init_done = 1;
+  for (i = 0; i < coll->bcast_interleave; i++)
+    sctk_shared_mem_bcast_init(&coll->shm_bcast[i], nb_task);
+  /* The gatherv structure */
+  sctk_shared_mem_gatherv_init(&coll->shm_gatherv, nb_task);
+  /* The scatterv structure */
+  sctk_shared_mem_scatterv_init(&coll->shm_scatterv, nb_task);
+  /* The All2All structure */
+  sctk_shared_mem_a2a_init(&coll->shm_a2a, nb_task);
 
-	return 0;
+  /* Flag init done */
+  coll->init_done = 1;
+
+  return 0;
 }
 
-int sctk_comm_coll_release( struct sctk_comm_coll * coll )
-{	
-	/* NB task for all */
-	coll->comm_size = 0;
-	/* Allocate coll id array */
-	sctk_free( coll->coll_id );
-	coll->coll_id = NULL;
+int sctk_comm_coll_release(struct sctk_comm_coll *coll) {
+  /* NB task for all */
+  coll->comm_size = 0;
+  /* Allocate coll id array */
+  sctk_free(coll->coll_id);
+  coll->coll_id = NULL;
 
-	int i;
-	/* The barrier structure */
-	sctk_shared_mem_barrier_release( &coll->shm_barrier );
-	/* The Signalled Barrier */
-	sctk_shared_mem_barrier_sig_release( &coll->shm_barrier_sig );
-	/* The reduce structure */
-	
-	for( i = 0 ; i < coll->reduce_interleave ; i++ )
-		sctk_shared_mem_reduce_release( &coll->shm_reduce[i] );
+  int i;
+  /* The barrier structure */
+  sctk_shared_mem_barrier_release(&coll->shm_barrier);
+  /* The Signalled Barrier */
+  sctk_shared_mem_barrier_sig_release(&coll->shm_barrier_sig);
+  /* The reduce structure */
 
-	sctk_free( coll->shm_reduce );
-	coll->shm_reduce = NULL;
-	coll->reduce_interleave = 0;
+  for (i = 0; i < coll->reduce_interleave; i++)
+    sctk_shared_mem_reduce_release(&coll->shm_reduce[i]);
 
-	/* The reduce structure */
-	for( i = 0 ; i < coll->bcast_interleave ; i++ )
-		sctk_shared_mem_bcast_release( &coll->shm_bcast[i] );
-	
-	sctk_free( coll->shm_bcast );
-	coll->shm_bcast = NULL;
-	coll->bcast_interleave = 0;
-	
-	/* The gatherv structure */
-	sctk_shared_mem_gatherv_release( &coll->shm_gatherv );
-	/* The scatterv structure */
-	sctk_shared_mem_scatterv_release( &coll->shm_scatterv );
-	/* The All2All structure */
-	sctk_shared_mem_a2a_release( &coll->shm_a2a );
+  sctk_free(coll->shm_reduce);
+  coll->shm_reduce = NULL;
+  coll->reduce_interleave = 0;
 
-	coll->init_done = 0;
+  /* The reduce structure */
+  for (i = 0; i < coll->bcast_interleave; i++)
+    sctk_shared_mem_bcast_release(&coll->shm_bcast[i]);
 
-	return 0;
+  sctk_free(coll->shm_bcast);
+  coll->shm_bcast = NULL;
+  coll->bcast_interleave = 0;
+
+  /* The gatherv structure */
+  sctk_shared_mem_gatherv_release(&coll->shm_gatherv);
+  /* The scatterv structure */
+  sctk_shared_mem_scatterv_release(&coll->shm_scatterv);
+  /* The All2All structure */
+  sctk_shared_mem_a2a_release(&coll->shm_a2a);
+
+  coll->init_done = 0;
+
+  return 0;
 }
-
 
 /************************* FUNCTION ************************/
 /**
@@ -1398,49 +1362,38 @@ static inline void sctk_communicator_init_intern_init_only ( const int nb_task, 
 	tmp->creation_lock = spinlock;
 	tmp->has_zero = 0;
 	tmp->is_comm_self = 0;
-	tmp->is_shared_mem = 0;
-	OPA_store_int ( & ( tmp->nb_to_delete ), 0 );
-	
+        tmp->is_shared_mem = 0;
+        OPA_store_int(&(tmp->nb_to_delete), 0);
 
-	tmp->is_shared_mem = 0;
-		
-	/* Set the shared-memory Flag */
-	if( local_to_global )
-	{	
-		tmp->is_shared_mem = 1;
-		int i;
-		for( i = 0 ; i < nb_task; i++ )
-		{
-			tmp->is_shared_mem = 1;
-			int trank = local_to_global[i];
-			if( sctk_is_net_message( trank ) )
-			{
-				tmp->is_shared_mem = 0;
-				break;
-			}
-		}
-	}
-	else
-	{
-		/* We are building comm_world */
-		if( sctk_process_number == 1 )
-			tmp->is_shared_mem = 1;
-	}
+        tmp->is_shared_mem = 0;
 
+        /* Set the shared-memory Flag */
+        if (local_to_global) {
+          tmp->is_shared_mem = 1;
+          int i;
+          for (i = 0; i < nb_task; i++) {
+            tmp->is_shared_mem = 1;
+            int trank = local_to_global[i];
+            if (sctk_is_net_message(trank)) {
+              tmp->is_shared_mem = 0;
+              break;
+            }
+          }
+        } else {
+          /* We are building comm_world */
+          if (sctk_process_number == 1)
+            tmp->is_shared_mem = 1;
+        }
 
-	if( tmp->is_shared_mem )
-	{
-		sctk_comm_coll_init( &tmp->coll , nb_task);
-		/* After that 
-		tmp->coll.init_done == 1
-		*/
-	}
-	else
-	{
-		/* Flag as not intialized */
-		tmp->coll.init_done = 0;
-	}
-
+        if (tmp->is_shared_mem) {
+          sctk_comm_coll_init(&tmp->coll, nb_task);
+          /* After that
+          tmp->coll.init_done == 1
+          */
+        } else {
+          /* Flag as not intialized */
+          tmp->coll.init_done = 0;
+        }
 }
 
 /************************* FUNCTION ************************/
@@ -1719,21 +1672,18 @@ sctk_communicator_t sctk_delete_communicator ( const sctk_communicator_t comm )
 			sctk_free ( tmp->task_to_process );
 			sctk_del_internal_communicator_no_lock_no_check ( comm );
 
-			if( tmp->coll.init_done )
-			{
-				sctk_comm_coll_release( &tmp->coll );
-			}
+                        if (tmp->coll.init_done) {
+                          sctk_comm_coll_release(&tmp->coll);
+                        }
 
-			sctk_free ( tmp );
-			sctk_spinlock_unlock ( &sctk_communicator_all_table_lock );
-		}
-		else
-		{
-			is_master = 0;
-		}
+                        sctk_free(tmp);
+                        sctk_spinlock_unlock(&sctk_communicator_all_table_lock);
+                } else {
+                  is_master = 0;
+                }
 
-		return SCTK_COMM_NULL;
-	}
+                return SCTK_COMM_NULL;
+        }
 }
 
 /************************************************************************/
@@ -1887,13 +1837,12 @@ int sctk_get_nb_task_remote ( const sctk_communicator_t communicator )
  * @param communicator given communicator.
  * @return 1 if it is, 0 if it is not.
 **/
-int __sctk_is_inter_comm ( const sctk_communicator_t communicator )
-{
+int __sctk_is_inter_comm(const sctk_communicator_t communicator) {
 
-	sctk_internal_communicator_t *tmp;
-	tmp = sctk_get_internal_communicator ( communicator );
-	
-	return tmp->is_inter_comm;
+  sctk_internal_communicator_t *tmp;
+  tmp = sctk_get_internal_communicator(communicator);
+
+  return tmp->is_inter_comm;
 }
 
 /************************* FUNCTION ************************/
@@ -1902,14 +1851,13 @@ int __sctk_is_inter_comm ( const sctk_communicator_t communicator )
  * @param communicator given communicator.
  * @return 1 if it is, 0 if it is not.
 **/
-int __sctk_is_shared_mem ( const sctk_communicator_t communicator )
-{
+int __sctk_is_shared_mem(const sctk_communicator_t communicator) {
 
-	sctk_internal_communicator_t *tmp;
-	tmp = sctk_get_internal_communicator ( communicator );
+  sctk_internal_communicator_t *tmp;
+  tmp = sctk_get_internal_communicator(communicator);
 
-	//sctk_error("%d == %d", communicator, tmp->is_shared_mem );
-	return tmp->is_shared_mem;
+  // sctk_error("%d == %d", communicator, tmp->is_shared_mem );
+  return tmp->is_shared_mem;
 }
 
 /************************* FUNCTION ************************/
@@ -2943,74 +2891,71 @@ sctk_communicator_t sctk_create_communicator ( const sctk_communicator_t origin_
 	tmp = sctk_get_internal_communicator ( origin_communicator );
 	sctk_spinlock_lock ( & ( tmp->creation_lock ) );
 
+        if (tmp->new_comm == NULL) {
+          int local_tasks = 0;
+          int *local_to_global;
+          int *global_to_local;
+          int *task_to_process;
+          sctk_process_ht_t *process = NULL;
+          sctk_process_ht_t *tmp_process = NULL;
+          sctk_process_ht_t *current_process = NULL;
+          int *process_array;
+          int process_nb = 0;
 
-	if ( tmp->new_comm == NULL )
-	{
-		int  local_tasks = 0;
-		int *local_to_global;
-		int *global_to_local;
-		int *task_to_process;
-		sctk_process_ht_t *process = NULL;
-		sctk_process_ht_t *tmp_process = NULL;
-		sctk_process_ht_t *current_process = NULL;
-		int *process_array;
-		int process_nb = 0;
+          local_root = 1;
+          tmp->has_zero = 0;
+          /* allocate new comm */
+          new_tmp = sctk_malloc(sizeof(sctk_internal_communicator_t));
+          memset(new_tmp, 0, sizeof(sctk_internal_communicator_t));
 
-		local_root = 1;
-		tmp->has_zero = 0;
-		/* allocate new comm */
-		new_tmp = sctk_malloc ( sizeof ( sctk_internal_communicator_t ) );
-		memset ( new_tmp, 0, sizeof ( sctk_internal_communicator_t ) );
+          local_to_global = sctk_calloc(nb_task_involved, sizeof(int));
+          global_to_local =
+              sctk_calloc(sctk_get_nb_task_total(SCTK_COMM_WORLD), sizeof(int));
+          task_to_process = sctk_calloc(nb_task_involved, sizeof(int));
 
-                local_to_global = sctk_calloc(nb_task_involved, sizeof(int));
-                global_to_local = sctk_calloc(
-                    sctk_get_nb_task_total(SCTK_COMM_WORLD), sizeof(int));
-                task_to_process = sctk_calloc(nb_task_involved, sizeof(int));
+          /* fill new comm */
+          for (i = 0; i < nb_task_involved; i++) {
+            local_to_global[i] = task_list[i];
+            global_to_local[local_to_global[i]] = i;
+            task_to_process[i] =
+                sctk_get_process_rank_from_task_rank(local_to_global[i]);
 
-                /* fill new comm */
-                for (i = 0; i < nb_task_involved; i++) {
-                  local_to_global[i] = task_list[i];
-                  global_to_local[local_to_global[i]] = i;
-                  task_to_process[i] =
-                      sctk_get_process_rank_from_task_rank(local_to_global[i]);
+            if (task_to_process[i] == sctk_process_rank) {
+              local_tasks++;
+            }
 
-                  if (task_to_process[i] == sctk_process_rank) {
-                    local_tasks++;
-                  }
+            /* build list of processes */
+            HASH_FIND_INT(process, &task_to_process[i], tmp_process);
 
-                  /* build list of processes */
-                  HASH_FIND_INT(process, &task_to_process[i], tmp_process);
+            if (tmp_process == NULL) {
+              tmp_process = sctk_malloc(sizeof(sctk_process_ht_t));
+              tmp_process->process_id = task_to_process[i];
+              HASH_ADD_INT(process, process_id, tmp_process);
+              process_nb++;
+            }
+          }
 
-                  if (tmp_process == NULL) {
-                    tmp_process = sctk_malloc(sizeof(sctk_process_ht_t));
-                    tmp_process->process_id = task_to_process[i];
-                    HASH_ADD_INT(process, process_id, tmp_process);
-                    process_nb++;
-                  }
-                }
+          process_array = sctk_malloc(process_nb * sizeof(int));
+          i = 0;
+          HASH_ITER(hh, process, current_process, tmp_process) {
+            process_array[i++] = current_process->process_id;
+            HASH_DEL(process, current_process);
+            sctk_free(current_process);
+          }
 
-                process_array = sctk_malloc(process_nb * sizeof(int));
-                i = 0;
-                HASH_ITER(hh, process, current_process, tmp_process) {
-                  process_array[i++] = current_process->process_id;
-                  HASH_DEL(process, current_process);
-                  sctk_free(current_process);
-                }
+          tmp->new_comm = new_tmp;
+          /* init new comm */
+          sctk_communicator_init_intern_init_only(
+              nb_task_involved, -1, -1, local_tasks, local_to_global,
+              global_to_local, task_to_process, process_array, process_nb,
+              tmp->new_comm);
 
-                tmp->new_comm = new_tmp;
-                /* init new comm */
-                sctk_communicator_init_intern_init_only(
-                    nb_task_involved, -1, -1, local_tasks, local_to_global,
-                    global_to_local, task_to_process, process_array, process_nb,
-                    tmp->new_comm);
-
-                tmp->new_comm->is_inter_comm = 0;
-                tmp->new_comm->remote_leader = -1;
-                tmp->new_comm->local_leader = 0;
-                tmp->new_comm->new_comm = NULL;
-                tmp->new_comm->remote_comm = NULL;
-                tmp->new_comm->peer_comm = -1;
-		
+          tmp->new_comm->is_inter_comm = 0;
+          tmp->new_comm->remote_leader = -1;
+          tmp->new_comm->local_leader = 0;
+          tmp->new_comm->new_comm = NULL;
+          tmp->new_comm->remote_comm = NULL;
+          tmp->new_comm->peer_comm = -1;
         }
 
         sctk_spinlock_unlock(&(tmp->creation_lock));

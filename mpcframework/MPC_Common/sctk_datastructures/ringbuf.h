@@ -8,11 +8,11 @@
 /* simple ring buffer */
 
 typedef struct _ringbuf {
-    size_t n; /* allocd size */
-    size_t u; /* used space */
-    size_t i; /* input pos */
-    size_t o; /* output pos */
-    char d[]; /* C99 flexible array member */
+  size_t n; /* allocd size */
+  size_t u; /* used space */
+  size_t i; /* input pos */
+  size_t o; /* output pos */
+  char d[]; /* C99 flexible array member */
 } ringbuf;
 
 ringbuf *ringbuf_new(size_t sz);

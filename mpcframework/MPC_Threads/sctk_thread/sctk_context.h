@@ -194,7 +194,7 @@ Need to check this in more depth for futur version ( > 2.4.0-1).
 
 #ifdef MPC_MPI
     void *___sctk_message_passing;
-	int __mpc_task_rank;
+    int __mpc_task_rank;
 #endif
 
 #if defined(MPC_Accelerators)

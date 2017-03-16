@@ -97,7 +97,7 @@ extern "C"
 
 #ifdef MPC_MPI
     tls_save (___sctk_message_passing);
-    tls_save (__mpc_task_rank);
+    tls_save(__mpc_task_rank);
 #endif
 
 #if defined(MPC_USE_CUDA)
@@ -131,7 +131,7 @@ extern "C"
 
 #ifdef MPC_MPI
     tls_restore (___sctk_message_passing);
-    tls_restore (__mpc_task_rank);
+    tls_restore(__mpc_task_rank);
 #endif
 
 #if defined(MPC_USE_CUDA)
@@ -169,7 +169,7 @@ extern "C"
 
 #ifdef MPC_MPI
     tls_init (___sctk_message_passing);
-	ucp->__mpc_task_rank = -2;
+    ucp->__mpc_task_rank = -2;
 #endif
 
 #if defined(MPC_USE_CUDA)

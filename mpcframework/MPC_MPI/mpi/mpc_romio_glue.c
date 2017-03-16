@@ -73,7 +73,6 @@ int MPCX_Type_flatten(MPI_Datatype datatype, MPI_Aint **blocklen,
   sctk_derived_datatype_t *target_derived_type;
   sctk_contiguous_datatype_t *contiguous_type;
 
-
   /* Nothing to do */
   if (datatype == MPI_DATATYPE_NULL) {
     *count = 0;
@@ -92,8 +91,8 @@ int MPCX_Type_flatten(MPI_Datatype datatype, MPI_Aint **blocklen,
   case MPC_DATATYPES_COMMON:
     *count = 1;
 
-	*blocklen = sctk_malloc( *count * sizeof(MPI_Aint ));
-	*indices = sctk_malloc( *count * sizeof(MPI_Aint ));
+    *blocklen = sctk_malloc(*count * sizeof(MPI_Aint));
+    *indices = sctk_malloc(*count * sizeof(MPI_Aint));
 
     assume(*blocklen != NULL);
     assume(*indices != NULL);
@@ -106,8 +105,8 @@ int MPCX_Type_flatten(MPI_Datatype datatype, MPI_Aint **blocklen,
         sctk_task_specific_get_contiguous_datatype(task_specific, datatype);
     *count = 1;
 
-	*blocklen = sctk_malloc( *count * sizeof(MPI_Aint ));
-	*indices = sctk_malloc( *count * sizeof(MPI_Aint ));
+    *blocklen = sctk_malloc(*count * sizeof(MPI_Aint));
+    *indices = sctk_malloc(*count * sizeof(MPI_Aint));
 
     assume(*blocklen != NULL);
     assume(*indices != NULL);
@@ -123,9 +122,8 @@ int MPCX_Type_flatten(MPI_Datatype datatype, MPI_Aint **blocklen,
     /* Note that we extract the optimized version of the data-type */
     *count = target_derived_type->opt_count;
 
-
-	*blocklen = sctk_malloc( *count * sizeof(MPI_Aint ));
-	*indices = sctk_malloc( *count * sizeof(MPI_Aint ));
+    *blocklen = sctk_malloc(*count * sizeof(MPI_Aint));
+    *indices = sctk_malloc(*count * sizeof(MPI_Aint));
 
     assume(*blocklen != NULL);
     assume(*indices != NULL);
@@ -137,7 +135,7 @@ int MPCX_Type_flatten(MPI_Datatype datatype, MPI_Aint **blocklen,
     for (i = 0; i < *count; i++) {
       (*indices)[i] = target_derived_type->opt_begins[i];
       (*blocklen)[i] = target_derived_type->opt_ends[i] -
-                      target_derived_type->opt_begins[i] + 1;
+                       target_derived_type->opt_begins[i] + 1;
     }
 
     break;

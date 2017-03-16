@@ -531,7 +531,7 @@ int mpc_MPI_T_cvar_get_index(const char *name, int *cvar_index) {
     if (!strcmp(cvar->name, name)) {
       *cvar_index = i;
       found = 1;
-	  sctk_nodebug("%s is at %d", name, i );
+      sctk_nodebug("%s is at %d", name, i);
       break;
     }
   }
