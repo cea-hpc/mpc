@@ -58,6 +58,14 @@ void sctk_topology_destroy(void);
 */
 int sctk_get_cpu(void);
 
+/*! \brief Return the Socket ID for current CPU
+ */
+int sctk_topology_get_socket_id(int os_level);
+
+/*! \brief Return the Number of sockets
+ */
+int sctk_topology_get_socket_number();
+
 /*! \brief Return the total number of core for the process
 */
 int sctk_get_cpu_number(void);
@@ -133,6 +141,34 @@ int sctk_get_numa_node_number(void);
  * @param vp VP
 */
 int sctk_get_node_from_cpu(const int vp);
+
+/*! \brief Return the PHYSICAL NUMA node according to the code_id number
+ * @param vp VP
+*/
+int sctk_get_physical_node_from_cpu (const int vp);
+
+/*! \brief Return the NUMA node for current CPU
+*/
+static inline int sctk_get_numa_node(int os_level)
+{
+		if( !sctk_is_numa_node() )
+		{
+			return -1;
+		}
+	
+		int cpu = sctk_get_cpu();
+		
+		if( 0 <= cpu )
+		{
+			if( os_level )
+				return sctk_get_physical_node_from_cpu( cpu );
+			else
+				return sctk_get_node_from_cpu( cpu );
+		}
+
+		return -1;
+}
+
 
 /*! \brief Return the NUMA node according to the code_id number
  * @param vp VP

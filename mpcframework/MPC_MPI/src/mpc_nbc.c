@@ -5313,7 +5313,7 @@ PMPI_Ibarrier (MPI_Comm comm, MPI_Request *request)
   MPI_Comm_size(comm, &csize);
   if(csize == 1)
   {
-    res = __INTERNAL__PMPI_Barrier (comm);
+    res = PMPI_Barrier (comm);
     MPI_internal_request_t *tmp;
     tmp = __sctk_new_mpc_request_internal(request, __sctk_internal_get_MPC_requests());
     tmp->req.completion_flag = SCTK_MESSAGE_DONE;

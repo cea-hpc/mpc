@@ -22,10 +22,20 @@
 /* #   - DIDELOT Sylvain sylvain.didelot@exascale-computing.eu            # */
 /* #                                                                      # */
 /* ######################################################################## */
+#define _GNU_SOURCE 
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <execinfo.h>
+#include <signal.h>
+
+#define HAS_UCTX
+
+#ifdef HAS_UCTX
+#include <sys/ucontext.h>
+#endif 
+
 #include "sctk_config.h"
 #include "sctk_debug.h"
 #include "sctk_spinlock.h"
@@ -198,15 +208,37 @@ sctk_noalloc_printf (const char *format, ...)
 /**********************************************************************/
 /*Backtrace                                                           */
 /**********************************************************************/
+
+void
+sctk_c_backtrace( char * reason, void * override )
+{
+	fprintf(stderr, "============== BACKTRACE =============== [%s]\n", reason);
+	void * bts[100];
+	int bs = backtrace( bts, 100 );
+
+	if( override )
+	{
+		bts[1] = override;	
+	}
+
+	backtrace_symbols_fd( bts + 2, bs - 2, STDERR_FILENO );
+	fprintf(stderr, "========================================\n");
+}
+	
+	
 void
 sctk_debug_print_backtrace (const char *format, ...)
 {
-#ifdef MPC_Debugger
   va_list ap;
   va_start (ap, format);
+#ifdef MPC_Debugger
   sctk_vprint_backtrace (format, ap);
-  va_end (ap);
+#else
+  	char reason[100];
+	vsnprintf(reason, 100, format, ap);
+	sctk_c_backtrace(reason, NULL);
 #endif
+  va_end (ap);
 }
 
 /**********************************************************************/
@@ -219,16 +251,118 @@ void
 sctk_abort (void)
 {
   static volatile int done = 0;
-  sctk_debug_print_backtrace ("Abort\n");
+  sctk_debug_print_backtrace ("sctk_abort");
 #ifdef MPC_Message_Passing
   if(done == 0){
     done = 1;
     sctk_net_abort ();
   }
 #endif
-  fflush (stderr);
-  abort ();
+  abort();
 }
+
+/**********************************************************************/
+/* Backtrace on Signal                                                */
+/**********************************************************************/
+
+void backtrace_sig_handler( int sig, siginfo_t* info, void* arg )
+{
+  char * ssig = strsignal( sig );
+  sctk_error("==========================================================");
+  sctk_error("                                                          " );
+  sctk_error("Process Caught signal %s(%d)", ssig, sig );
+  sctk_error("                                                          " );
+  switch(sig)
+  {
+  	case SIGILL:
+  	case SIGFPE:
+  	case SIGTRAP:
+		sctk_error("Instruction : %p ", info->si_addr);
+	break;
+	
+	case SIGBUS:
+	case SIGSEGV:
+		sctk_error("Faulty address was : %p ", info->si_addr);
+	break;
+  
+  }
+  sctk_error("                                                          " );
+  sctk_error(" INFO : Disable signal capture by exporting MPC_BT_SIG=0  " );
+  sctk_error("        or through MPC's configuration file (mpc_bt_sig)  " );
+  sctk_error("                                                          " );
+  sctk_error("!!! MPC will now segfault indiferently from the signal !!!" );
+  sctk_error("==========================================================");
+
+  
+#ifdef HAS_UCTX
+  fprintf(stderr, "\n");
+  ucontext_t *context = (ucontext_t*)arg;
+  void * caller_add = NULL;
+
+  if( context )
+  {
+#if defined(__i386__) 
+  	caller_add = (void *) context->uc_mcontext.gregs[REG_EIP]; 
+#elif defined(__x86_64__) 
+  	caller_add = (void *) context->uc_mcontext.gregs[REG_RIP]; 
+#endif
+  }
+
+  sctk_c_backtrace( ssig, caller_add );
+  fprintf(stderr, "\n");
+
+  fprintf(stderr, "*************************************************\n");
+  fprintf(stderr, "* MPC has tried to backtrace but note that      *\n");
+  fprintf(stderr, "* this operation is not signal safe you may     *\n");
+  fprintf(stderr, "* get either an incomplete or invalid backtrace *\n");
+  fprintf(stderr, "* you may now launch GDB -- good debugging      *\n");
+  fprintf(stderr, "*************************************************\n");
+
+  fprintf(stderr, "\n");
+#endif /* HAS_UCTX */
+
+  sctk_error("/!\\ CHECK THE ACTUAL SIGNAL IN PREVIOUS ERROR (may not be SIGSEV)");
+
+  CRASH();
+}
+
+
+void sctk_install_bt_sig_handler()
+{
+	char * cmd =  getenv("MPC_BT_SIG");
+
+	struct sigaction action; 
+
+	memset( &action,  0, sizeof( action ) );
+	
+	action.sa_sigaction = backtrace_sig_handler;
+	action.sa_flags = SA_SIGINFO;    
+
+
+	if (cmd )
+	{
+		/* Forced disable */
+		if( !strcmp(cmd, "0") )
+		{
+			return;
+		}
+	}
+
+	if( cmd  || sctk_runtime_config_get()->modules.debugger.mpc_bt_sig )
+	{
+		
+	    sigaction( SIGSEGV, &action,  NULL );
+	    sigaction( SIGHUP, &action,  NULL );
+	    sigaction( SIGINT, &action,  NULL );
+	    sigaction( SIGILL, &action,  NULL );
+	    sigaction( SIGFPE, &action,  NULL );
+	    sigaction( SIGQUIT, &action,  NULL );
+	    sigaction( SIGBUS, &action,  NULL );
+	    sigaction( SIGTERM, &action,  NULL );
+	}
+}
+
+
 
 /**********************************************************************/
 /*Messages                                                            */

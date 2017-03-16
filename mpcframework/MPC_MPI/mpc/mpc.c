@@ -877,6 +877,39 @@ void __MPC_reinit_task_specific(struct sctk_task_specific_s *tmp) {
   sctk_thread_setspecific_mpc(sctk_task_specific, tmp);
 }
 
+
+/** \brief Retrieves current thread task specific context
+ */
+
+struct sctk_task_specific_s *__MPC_get_task_specific() {
+#ifdef SCTK_PROCESS_MODE
+	return ___the_process_specific;
+#endif
+
+	struct sctk_task_specific_s *tmp;
+
+	static __thread int last_rank = -1;
+	static __thread struct sctk_task_specific_s * last_specific = NULL;
+
+	if( last_rank == sctk_get_task_rank())
+	{
+		return last_specific;
+	}
+
+	tmp = (struct sctk_task_specific_s *)sctk_thread_getspecific( sctk_task_specific);
+
+
+	last_specific = tmp;
+	last_rank = sctk_get_task_rank();
+
+
+	return tmp;
+}
+
+
+
+	
+
 /** \brief Retrieves a pointer to a contiguous datatype from its datatype ID
  *
  *  \param task_specific Pointer to current task specific
@@ -2783,14 +2816,21 @@ void PMPC_Return_error(MPC_Comm *comm, int *error, ...) {
     sctk_error("Warning: %s on comm %d", str, (int)*comm);
 }
 
-void PMPC_Abort_error(MPC_Comm *comm, int *error, ...) {
+void PMPC_Abort_error(MPC_Comm *comm, int *error, char * message, char * file, int line) {
   char str[1024];
   int i;
   PMPC_Error_string(*error, str, &i);
+  
+  sctk_error("===================================================");
   if (i != 0)
-    sctk_error("Error: %s on comm %d, will now ABORT", str, (int)*comm);
+    sctk_error("Error: %s on comm %d", str, (int)*comm, message);
+   
+  sctk_error("This occured at %s:%d", file, line);
 
-  sctk_fatal("MPC Encountered an Error and aborted");
+
+  sctk_error("MPC Encountered an Error will now abort");
+  sctk_error("===================================================");
+  sctk_abort();
 }
 
 static void MPC_Checkpoint_restart_init() {
@@ -3291,12 +3331,43 @@ int sctk_user_main(int argc, char **argv) {
 /************************************************************************/
 int PMPC_Comm_rank(MPC_Comm comm, int *rank) {
   SCTK_PROFIL_START(MPC_Comm_rank);
+
+  /* This an optimization when the same
+   * rank is requested multiple times
+   * by the task, note that we compare
+   * to the task rank as a given VP (__thread)
+   * may host multiple tasks */
+  static __thread int last_task = -1;
+  static __thread int last_rank = MPC_PROC_NULL;
+  static __thread int last_comm = MPC_COMM_NULL;
+
+  /* Comm first as no call */
+  if( last_comm == comm )
+  {
+	/* Then rank */
+  	if( last_task == sctk_get_task_rank() )
+	{
+		/* Yes it is cached, we are done */
+		*rank = last_rank;
+  		SCTK_PROFIL_END (MPC_Comm_rank);
+		return MPC_SUCCESS;
+	}
+  
+  }
+
   sctk_task_specific_t *task_specific;
   sctk_nodebug("Get rank of %d", comm);
   mpc_check_comm(comm, comm);
   task_specific = __MPC_get_task_specific();
   __MPC_Comm_rank(comm, rank, task_specific);
   sctk_nodebug("Get rank of %d done", comm);
+
+  /* Save for next call */
+  last_task = sctk_get_task_rank();
+  last_rank = *rank;
+  last_comm = comm;
+
+
   SCTK_PROFIL_END(MPC_Comm_rank);
   MPC_ERROR_SUCESS();
 }
@@ -6192,7 +6263,7 @@ static inline int __MPC_Comm_create(MPC_Comm comm, MPC_Group group,
   __MPC_Barrier(comm);
 
   if (present == 1) {
-    __MPC_Barrier(*comm_out);
+	__MPC_Barrier(*comm_out);
     sctk_thread_createnewspecific_mpc_per_comm(task_specific, *comm_out, comm);
   }
   MPC_ERROR_SUCESS();

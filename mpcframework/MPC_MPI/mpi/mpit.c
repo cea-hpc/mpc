@@ -523,7 +523,7 @@ int mpc_MPI_T_cvar_get_index(const char *name, int *cvar_index) {
   mpc_MPI_T_cvar_get_num(&num_cvar);
 
   int found = 0;
-  int i;
+  int i = -1;
 
   for (i = 0; i < num_cvar; ++i) {
     struct MPC_T_cvar *cvar = MPI_T_cvars_array_get(i);
@@ -531,6 +531,7 @@ int mpc_MPI_T_cvar_get_index(const char *name, int *cvar_index) {
     if (!strcmp(cvar->name, name)) {
       *cvar_index = i;
       found = 1;
+	  sctk_nodebug("%s is at %d", name, i );
       break;
     }
   }

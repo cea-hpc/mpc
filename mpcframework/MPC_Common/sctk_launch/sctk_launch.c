@@ -984,6 +984,9 @@ void sctk_init_mpc_runtime()
 	//load mpc configuration from XML files if not already done.
 	sctk_runtime_config_init();
 
+	//Now attach signal handlers (if allowed by the config)
+	sctk_install_bt_sig_handler();
+
 	__sctk_profiling__start__sctk_init_MPC = sctk_get_time_stamp_gettimeofday ();
 
 	auto_kill = sctk_runtime_config_get()->modules.launcher.autokill;

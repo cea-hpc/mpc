@@ -45,6 +45,7 @@
 
 #if defined(SCTK_USE_TLS)
 __thread void* sctk_extls_storage = NULL;
+__thread int __mpc_task_rank = -2;
 
 struct dyn_sym_s
 {

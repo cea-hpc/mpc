@@ -20,6 +20,7 @@
 /* #   - JAEGER Julien julien.jaeger@cea.fr                               # */
 /* #                                                                      # */
 /* ######################################################################## */
+#include <math.h>
 #include <mpc_mpi_internal.h>
 
 #include "sctk_ht.h"
@@ -331,7 +332,7 @@ int __INTERNAL__PMPI_Pack_external (char *datarep , void *inbuf, int incount, MP
 int __INTERNAL__PMPI_Unpack_external (char * datarep, void * inbuf, MPI_Aint insize, MPI_Aint * position, void * outbuf, int outcount, MPI_Datatype datatype);
 
 
-int __INTERNAL__PMPI_Barrier (MPI_Comm);
+static inline int __INTERNAL__PMPI_Barrier (MPI_Comm);
 int __INTERNAL__PMPI_Bcast (void *, int, MPI_Datatype, int, MPI_Comm);
 int __INTERNAL__PMPI_Gather (void *, int, MPI_Datatype, void *, int,
 				    MPI_Datatype, int, MPI_Comm);
@@ -508,6 +509,9 @@ typedef struct
   sctk_spinlock_t lock;
 } mpi_topology_per_comm_t;
 
+
+#define MAX_TOPO_DEPTH 10
+
 typedef struct mpc_mpi_per_communicator_s{
 
   /****** Attributes ******/
@@ -516,6 +520,11 @@ typedef struct mpc_mpi_per_communicator_s{
 
   /****** Topologies ******/
   mpi_topology_per_comm_t topo;
+
+  /****** Topo Comms */
+  MPI_Comm topo_comms[MAX_TOPO_DEPTH + 1];
+  int topo_comms_depth;
+  int topo_comms_arity;
 
   /****** LOCK ******/
   sctk_spinlock_t lock;
@@ -546,6 +555,15 @@ void mpc_mpi_per_communicator_copy_func(mpc_mpi_per_communicator_t** to, mpc_mpi
 		((*to)->key_vals[i].attr) = NULL;
 		((*to)->key_vals[i].flag) = 0;
 	}
+
+	/* Do not herit topo comms */
+	(*to)->topo_comms[0] = MPI_COMM_NULL;
+	(*to)->topo_comms_depth = 0;
+
+	/* Reset TOPO */
+	(*to)->topo.lock = 0;
+	(*to)->topo.type = MPI_UNDEFINED;
+
 	sctk_spinlock_unlock (&(from->lock));
 	sctk_spinlock_unlock (&((*to)->lock));
 }
@@ -556,23 +574,67 @@ void mpc_mpi_per_communicator_dup_copy_func(mpc_mpi_per_communicator_t** to, mpc
 	sctk_spinlock_lock (&(from->lock));
 	*to = sctk_malloc(sizeof(struct mpc_mpi_per_communicator_s));
 	memcpy(*to,from,sizeof(mpc_mpi_per_communicator_t));
+
+	/* Do not herit topo comms */
+	(*to)->topo_comms[0] = MPI_COMM_NULL;
+	(*to)->topo_comms_depth = 0;
+
+	/* Reset TOPO */
+	(*to)->topo.lock = 0;
+	(*to)->topo.type = MPI_UNDEFINED;
+
 	sctk_spinlock_unlock (&(from->lock));
 	sctk_spinlock_unlock (&((*to)->lock));
 }
 
-static inline
-mpc_mpi_per_communicator_t* mpc_mpc_get_per_comm_data(sctk_communicator_t comm){
-  struct sctk_task_specific_s * task_specific;
-  mpc_per_communicator_t* tmp;
+static inline mpc_mpi_per_communicator_t* mpc_mpc_get_per_comm_data(sctk_communicator_t comm)
+{
+	struct sctk_task_specific_s * task_specific;
+	mpc_per_communicator_t* tmp;
 
-  task_specific = __MPC_get_task_specific ();
-  tmp = sctk_thread_getspecific_mpc_per_comm(task_specific,comm);
+	static __thread int task_rank = -1;
+	static __thread int tcomm = MPI_COMM_NULL;
+	static __thread mpc_mpi_per_communicator_t* data = NULL; 
 
-  if (tmp == NULL)
-    return NULL;
+	if( task_rank == sctk_get_task_rank() )
+	{
+		if( tcomm == comm )
+		{
+			return data;
+		}
+	}
 
-  return tmp->mpc_mpi_per_communicator;
+	task_specific = __MPC_get_task_specific ();
+	tmp = sctk_thread_getspecific_mpc_per_comm(task_specific,comm);
+
+  	if (tmp == NULL)
+    	return NULL;
+
+	data = tmp->mpc_mpi_per_communicator;
+	task_rank = sctk_get_task_rank();
+	tcomm = comm;
+
+	return tmp->mpc_mpi_per_communicator;
 }
+
+
+static void __sctk_init_mpi_topo_per_comm (mpc_mpi_per_communicator_t* tmp){
+  tmp->topo.type = MPI_UNDEFINED;
+  sprintf (tmp->topo.names, "undefined");
+}
+
+int mpc_mpi_per_communicator_init( mpc_mpi_per_communicator_t * pc )
+{
+	__sctk_init_mpi_topo_per_comm (pc);
+	pc->max_number = 0;
+	pc->topo.lock = SCTK_SPINLOCK_INITIALIZER;
+
+	pc->topo_comms[0] = MPI_COMM_NULL;
+	pc->topo_comms_depth = 0;
+
+	return 0;
+}
+
 
 static inline mpc_mpi_data_t * mpc_mpc_get_per_task_data()
 {
@@ -613,6 +675,29 @@ static inline void PMPC_Set_op(struct sctk_mpi_ops_s *ops){
   mpc_mpc_get_per_task_data()->ops = ops;
 }
 
+
+/** Fast yield logic */
+
+static int __do_yield = 0;
+
+/** Do we need to yield in this process for collectives (overloaded)
+ */
+static inline void sctk_init_yield_as_overloaded()
+{
+	if(  sctk_get_cpu_number() < sctk_get_local_task_number() )
+	{
+		__do_yield = 1;	
+	}
+
+	if( 1 < sctk_get_process_number() )
+	{
+		//We need to progress messages
+		__do_yield = 1;
+	}
+
+}
+
+
 /*
   ERRORS HANDLING
 */
@@ -634,7 +719,6 @@ SCTK__MPI_ERROR_REPORT__ (MPC_Comm comm, int error, char *message, char *file,
       (func)(&comm_id, &error_id, message, file, line);
     }
   }
-
   return error;
 }
 
@@ -654,15 +738,15 @@ static int is_finalized = 0;
 static int is_initialized = 0;
 
 TODO("to optimize")
-#define mpi_check_comm(com, comm)                                              \
-  if (0 <= sctk_get_task_rank()) {                                             \
-    if ((is_finalized != 0) || (is_initialized != 1))                          \
-      MPI_ERROR_REPORT(MPC_COMM_WORLD, MPI_ERR_OTHER, "");                     \
-    else if (com == MPI_COMM_NULL)                                             \
-      MPI_ERROR_REPORT(MPC_COMM_WORLD, MPI_ERR_COMM, "Error in communicator"); \
-    else if (mpc_mpc_get_per_comm_data(com) == NULL)                           \
-      MPI_ERROR_REPORT(comm, MPI_ERR_COMM, "Error in communicator");           \
-  }
+#define mpi_check_comm(com,comm)			\
+  if((is_finalized != 0) || (is_initialized != 1))\
+  {\
+	MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_OTHER,""); \
+  }\
+  else if (com == MPI_COMM_NULL)				\
+  {\
+    MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_COMM,"Error in communicator");		\
+  }\
 
 #define mpi_check_status(status,comm)		\
   if(status == MPI_STATUS_IGNORE)	\
@@ -4389,20 +4473,46 @@ static int __INTERNAL__PMPI_Address (void *location, MPI_Aint * address)
 
 int __INTERNAL__PMPI_Type_extent (MPI_Datatype datatype, MPI_Aint * extent)
 {
-	MPI_Aint UB;
-	MPI_Aint LB;
+	switch( datatype )
+	{
+		case MPI_LONG:
+			*extent = sizeof(long);
+			break;
+		case MPI_SHORT:
+			*extent = sizeof(short);
+			break;
+		case MPI_BYTE:
+		case MPI_CHAR:
+			*extent = sizeof(char);
+			break;
+		case MPI_INT:
+			*extent = sizeof(int);
+			break;
+		case MPI_FLOAT:
+			*extent = sizeof(float);
+			break;
+		case MPI_DOUBLE:
+			*extent = sizeof(double);
+			break;
+		default :
+		{
+			MPI_Aint UB;
+			MPI_Aint LB;
 
-	/* Special cases */
-	mpi_check_type( datatype, MPI_COMM_WORLD );
+			/* Special cases */
+			mpi_check_type( datatype, MPI_COMM_WORLD );
 
-	__INTERNAL__PMPI_Type_lb (datatype, &LB);
-	__INTERNAL__PMPI_Type_ub (datatype, &UB);
+			__INTERNAL__PMPI_Type_lb (datatype, &LB);
+			__INTERNAL__PMPI_Type_ub (datatype, &UB);
 
 
-	*extent = (MPI_Aint) ((unsigned long) UB - (unsigned long) LB);
-	
-	sctk_nodebug("UB %d LB %d EXTENT %d", UB, LB,  *extent );
-	
+			*extent = (MPI_Aint) ((unsigned long) UB - (unsigned long) LB);
+
+			sctk_nodebug("UB %d LB %d EXTENT %d", UB, LB,  *extent );
+		}
+	}
+
+
 	return MPI_SUCCESS;
 }
 
@@ -5135,12 +5245,59 @@ int __INTERNAL__PMPI_Unpack_external (char * datarep, void * inbuf, MPI_Aint ins
 	return MPI_SUCCESS;
 }
 
+/* Topological comm getter */
+static inline MPI_Comm sctk_get_topological_comm( int level )
+{
+	struct sctk_task_specific_s * task_specific = __MPC_get_task_specific ();
+	struct MPI_Topological_comms * topo_comms = &task_specific->topo_comms;
+
+	switch( level )
+	{
+		case MPI_COMM_TYPE_SHARED:
+			return topo_comms->per_node_comm;
+		break;
+		case MPI_COMM_TYPE_SHARED_TR:
+			return topo_comms->per_node_grp;
+		break;
+
+		case MPI_COMM_TYPE_SOCKET:
+			return topo_comms->per_node_socket_comm;
+		break;
+		case MPI_COMM_TYPE_SOCKET_TR:
+			return topo_comms->per_node_socket_grp;
+		break;
+		
+		case MPI_COMM_TYPE_NUMA:
+			return topo_comms->per_node_numa_comm;
+		break;
+		case MPI_COMM_TYPE_NUMA_TR:
+			return topo_comms->per_node_numa_grp;
+		break;
+
+		case MPI_COMM_TYPE_MPC_PROCESS:
+			return topo_comms->per_process_comm;
+		break;
+		case MPI_COMM_TYPE_MPC_PROCESS_TR:
+			return topo_comms->per_process_grp;
+		break;
+
+		default:
+			return MPI_COMM_NULL;
+	}
+
+	return MPI_COMM_NULL;
+}
+
+
+
 #define MPI_MAX_CONCURENT 128
 
 /* Function pointer for user collectives */
 int (*barrier_intra)(MPI_Comm);
+int (*barrier_intra_shm)(MPI_Comm);
 int (*barrier_inter)(MPI_Comm);
 
+int (*bcast_intra_shm)(void *, int, MPI_Datatype, int, MPI_Comm);
 int (*bcast_intra)(void *, int, MPI_Datatype, int, MPI_Comm);
 int (*bcast_inter)(void *, int, MPI_Datatype, int, MPI_Comm);
 
@@ -5148,12 +5305,14 @@ int (*gather_intra)(void *, int, MPI_Datatype, void *, int, MPI_Datatype, int, M
 int (*gather_inter)(void *, int, MPI_Datatype, void *, int, MPI_Datatype, int, MPI_Comm);
 
 int (*gatherv_intra)(void *, int, MPI_Datatype, void *, int *, int *, MPI_Datatype, int, MPI_Comm);
+int (*gatherv_intra_shm)(void *, int, MPI_Datatype, void *, int *, int *, MPI_Datatype, int, MPI_Comm);
 int (*gatherv_inter)(void *, int, MPI_Datatype, void *, int *, int *, MPI_Datatype, int, MPI_Comm);
 
 int (*scatter_intra)(void *, int, MPI_Datatype, void *, int, MPI_Datatype, int, MPI_Comm);
 int (*scatter_inter)(void *, int, MPI_Datatype, void *, int, MPI_Datatype, int, MPI_Comm);
 
 int (*scatterv_intra)(void *, int *, int *, MPI_Datatype, void *, int, MPI_Datatype, int, MPI_Comm);
+int (*scatterv_intra_shm)(void *, int *, int *, MPI_Datatype, void *, int, MPI_Datatype, int, MPI_Comm);
 int (*scatterv_inter)(void *, int *, int *, MPI_Datatype, void *, int, MPI_Datatype, int, MPI_Comm);
 
 int (*allgather_intra)(void *, int, MPI_Datatype, void *, int, MPI_Datatype, MPI_Comm);
@@ -5166,12 +5325,14 @@ int (*alltoall_intra)(void *, int, MPI_Datatype, void *, int, MPI_Datatype, MPI_
 int (*alltoall_inter)(void *, int, MPI_Datatype, void *, int, MPI_Datatype, MPI_Comm);
 
 int (*alltoallv_intra)(void *, int *, int *, MPI_Datatype, void *, int *, int *, MPI_Datatype, MPI_Comm);
+int (*alltoallv_intra_shm)(void *, int *, int *, MPI_Datatype, void *, int *, int *, MPI_Datatype, MPI_Comm);
 int (*alltoallv_inter)(void *, int *, int *, MPI_Datatype, void *, int *, int *, MPI_Datatype, MPI_Comm);
 
 int (*alltoallw_intra)(void *, int *, int *, MPI_Datatype *, void *, int *, int *, MPI_Datatype *, MPI_Comm);
 int (*alltoallw_inter)(void *, int *, int *, MPI_Datatype *, void *, int *, int *, MPI_Datatype *, MPI_Comm);
 
 int (*reduce_intra)(void *, void *, int, MPI_Datatype, MPI_Op, int, MPI_Comm);
+int (*reduce_intra_shm)(void *, void *, int, MPI_Datatype, MPI_Op, int, MPI_Comm);
 int (*reduce_inter)(void *, void *, int, MPI_Datatype, MPI_Op, int, MPI_Comm);
 
 int (*allreduce_intra)(void *, void *, int, MPI_Datatype, MPI_Op, MPI_Comm);
@@ -5189,19 +5350,158 @@ int (*exscan_intra)(void *, void *, int, MPI_Datatype, MPI_Op, MPI_Comm);
 
 
 /* Collectives */
+
+
+
+int
+__INTERNAL__PMPI_Barrier_intra_shm_sig (MPI_Comm comm)
+{
+	struct sctk_comm_coll *coll = sctk_communicator_get_coll(comm);
+	struct shared_mem_barrier_sig * barrier_ctx = &coll->shm_barrier_sig;
+
+
+	//sctk_error("BARRIER CTX : %p", barrier_ctx	);
+
+	if( !coll )
+	{
+		return MPI_ERR_COMM;
+	}
+
+	int rank;
+	__INTERNAL__PMPI_Comm_rank( comm, &rank );
+
+
+	volatile int the_signal = 0;
+
+	int * volatile toll = &barrier_ctx->tollgate[rank];
+
+	if( __do_yield )
+	{
+		while( *toll != sctk_atomics_load_int( &barrier_ctx->fare ) )
+		{
+			sctk_thread_yield();
+		}
+	}
+	else
+	{
+		while( *toll != sctk_atomics_load_int( &barrier_ctx->fare ) )
+		{
+			sctk_cpu_relax();
+		}
+	}
+
+	/* I Own the cell */
+	sctk_atomics_store_ptr(&barrier_ctx->sig_points[rank], (void*)&the_signal);
+
+	/* Next time we expect the opposite */
+	*toll = !*toll;
+
+
+
+	if( sctk_atomics_fetch_and_decr_int(&barrier_ctx->counter) == 1 )
+	{
+		/* The last task */
+		int size = coll->comm_size;
+
+		/* Reset counter */
+		sctk_atomics_store_int(&barrier_ctx->counter, size );
+
+		/* Free others */
+		int i;
+		for( i = 0 ; i < size ; i++ )
+		{
+			int * sig = sctk_atomics_load_ptr(&barrier_ctx->sig_points[i]);
+			*sig = 1;
+		}
+
+		/* Reverse the Fare */
+		int current_fare = sctk_atomics_load_int( &barrier_ctx->fare );
+		sctk_atomics_store_int(&barrier_ctx->fare, !current_fare );
+
+	}
+	else
+	{
+		if( __do_yield )
+		{
+			while( the_signal == 0 )
+			{
+				sctk_thread_yield();
+			}
+		}
+		else
+		{
+			while( the_signal == 0 )
+			{
+				sctk_cpu_relax();
+			}
+		}
+	}
+
+
+	return MPI_SUCCESS;
+}
+
+
+
+
+int
+__INTERNAL__PMPI_Barrier_intra_shm (MPI_Comm comm)
+{
+	struct sctk_comm_coll *coll = sctk_communicator_get_coll(comm);
+	struct shared_mem_barrier * barrier_ctx = &coll->shm_barrier;
+
+
+//	sctk_error("BARRIER CTX : %p", barrier_ctx	);
+
+	if( !coll )
+	{
+		return MPI_ERR_COMM;
+	}
+	
+	int my_phase = !sctk_atomics_load_int(&barrier_ctx->phase);
+	
+	if( sctk_atomics_fetch_and_decr_int(&barrier_ctx->counter) == 1 )
+	{
+		sctk_atomics_store_int( &barrier_ctx->counter, coll->comm_size );
+		sctk_atomics_store_int( &barrier_ctx->phase,  my_phase );
+	}
+	else
+	{
+		if( __do_yield )
+		{
+			while( sctk_atomics_load_int( &barrier_ctx->phase ) != my_phase )
+			{
+				sctk_thread_yield();
+			}
+		}
+		else
+		{
+			while( sctk_atomics_load_int( &barrier_ctx->phase ) != my_phase )
+			{
+				sctk_cpu_relax();
+			}
+		}
+	}
+
+	return MPI_SUCCESS;
+}
+
+
+
 int
 __INTERNAL__PMPI_Barrier_intra (MPI_Comm comm)
 {
 	int i, res = MPI_ERR_INTERN, size, rank;
-	
-	res = __INTERNAL__PMPI_Comm_rank(comm, &rank);
-	if(res != MPI_SUCCESS){return res;}
+
 	res = __INTERNAL__PMPI_Comm_size(comm, &size);
 	if(res != MPI_SUCCESS){return res;}
 	
 	if (size == 1)
 		MPI_ERROR_SUCESS();
-		
+
+	res = __INTERNAL__PMPI_Comm_rank(comm, &rank);
+	if(res != MPI_SUCCESS){return res;}
+	
     /* All non-root send & receive zero-length message. */
     if (rank > 0) 
     {
@@ -5231,6 +5531,96 @@ __INTERNAL__PMPI_Barrier_intra (MPI_Comm comm)
 			if(res != MPI_SUCCESS){return res;}
         }
     }
+    MPI_ERROR_SUCESS();
+}
+
+
+
+
+int
+__INTERNAL__PMPI_Barrier_btree_mpi (MPI_Comm comm)
+{
+	int i, res = MPI_ERR_INTERN, size, rank;
+	
+	res = __INTERNAL__PMPI_Comm_size(comm, &size);
+	if(res != MPI_SUCCESS){return res;}
+
+	if (size == 1)
+		MPI_ERROR_SUCESS();
+	
+	res = __INTERNAL__PMPI_Comm_rank(comm, &rank);
+	if(res != MPI_SUCCESS){return res;}
+
+	
+	int parent = -1;
+	
+	if( rank )
+		parent = (( rank + 1 ) / 2) - 1;
+	
+	int left_child = ((rank + 1 ) * 2) - 1; 
+	int right_child = ((rank + 1 ) * 2); 
+	
+	if( size <= left_child )
+	{
+		left_child = -1;
+	}
+	
+	if( size <= right_child )
+	{
+		right_child = -1;
+	}
+
+	//sctk_error("%d P %d LC %d RC %d", rank, parent, left_child, right_child );
+
+	/* To Child */
+
+	if( parent != -1 )
+	{
+        res = __INTERNAL__PMPI_Recv(NULL, 0, MPI_BYTE, parent, 
+        MPC_BARRIER_TAG, comm, MPI_STATUS_IGNORE);
+		if(res != MPI_SUCCESS){return res;}
+	}
+	
+		
+	if( left_child != -1 )
+	{
+        res = __INTERNAL__PMPI_Send(NULL, 0, MPI_BYTE, left_child, 
+        MPC_BARRIER_TAG, comm);
+		if(res != MPI_SUCCESS){return res;}
+	}
+	
+	
+	if( right_child != -1 )
+	{
+        res = __INTERNAL__PMPI_Send(NULL, 0, MPI_BYTE, right_child, 
+        MPC_BARRIER_TAG, comm);
+		if(res != MPI_SUCCESS){return res;}
+	}
+	
+	/* From Child */
+
+	if( left_child != -1 )
+	{
+        res = __INTERNAL__PMPI_Recv(NULL, 0, MPI_BYTE, left_child, 
+        MPC_BARRIER_TAG, comm, MPI_STATUS_IGNORE);
+		if(res != MPI_SUCCESS){return res;}
+	}
+	
+	
+	if( right_child != -1 )
+	{
+        res = __INTERNAL__PMPI_Recv(NULL, 0, MPI_BYTE, right_child, 
+        MPC_BARRIER_TAG, comm, MPI_STATUS_IGNORE);
+		if(res != MPI_SUCCESS){return res;}
+	}
+
+	if( parent != -1 )
+	{
+        res = __INTERNAL__PMPI_Send(NULL, 0, MPI_BYTE, parent, 
+        MPC_BARRIER_TAG, comm);
+		if(res != MPI_SUCCESS){return res;}
+	}	
+
     MPI_ERROR_SUCESS();
 }
 
@@ -5275,37 +5665,91 @@ __INTERNAL__PMPI_Barrier_inter (MPI_Comm comm)
 	return MPI_SUCCESS;
 }
 
-int
+
+static inline int
 __INTERNAL__PMPI_Barrier (MPI_Comm comm)
 {
 	int res = MPI_ERR_INTERN;
 
-        // mpc_Win_exposure_wait();
+	/* Intercomm */
+	if (sctk_is_inter_comm(comm)) 
+	{
+		if (barrier_inter == NULL)
+		{
+			barrier_inter = (int (*)(MPI_Comm))(
+					sctk_runtime_config_get()
+					->modules.collectives_inter.barrier_inter.value);
+		}
 
-        /* Intercomm */
-        if (sctk_is_inter_comm(comm)) {
-          if (barrier_inter == NULL)
-            barrier_inter = (int (*)(MPI_Comm))(
-                sctk_runtime_config_get()
-                    ->modules.collectives_inter.barrier_inter.value);
-          res = barrier_inter(comm);
-          if (res != MPI_SUCCESS) {
-            return res;
-          }
-        } else {
-          /* Intracomm */
-          if (barrier_intra == NULL)
-            barrier_intra = (int (*)(MPI_Comm))(
-                sctk_runtime_config_get()
-                    ->modules.collectives_intra.barrier_intra.value);
-          res = barrier_intra(comm);
-          if (res != MPI_SUCCESS) {
-            return res;
-          }
-        }
+		res = (barrier_inter)(comm);
+	
+	} else {
+		/* Intracomm */
 
-        return res;
+		if(barrier_intra_shm == NULL)
+		{
+			barrier_intra_shm = (int (*)(MPI_Comm))(sctk_runtime_config_get()->modules.collectives_shm.barrier_intra_shm.value);
+		}
+
+		if (barrier_intra == NULL)
+		{
+			barrier_intra = (int (*)(MPI_Comm))(
+					sctk_runtime_config_get()
+					->modules.collectives_intra.barrier_intra.value);
+
+		}
+
+
+		if( sctk_is_shared_mem( comm ) )
+		{
+			/* Here only work in shared-mem */
+			res = (barrier_intra_shm)(comm);
+		}
+		else
+		{
+			/* Use a full net barrier */
+			res = (barrier_intra)(comm);
+		}
+	}
+
+	return res;
 }
+
+
+static inline int __INTERNAL__PMPI_Barrier_hier (MPI_Comm comm)
+{
+	mpc_mpi_per_communicator_t* tmp = mpc_mpc_get_per_comm_data(comm);
+
+	int depth = tmp->topo_comms_depth;
+	MPI_Comm *comms = tmp->topo_comms;
+
+	if( (tmp->topo_comms_depth == 0) || __do_yield  )
+	{
+		return __INTERNAL__PMPI_Barrier(comm);
+	}
+	else
+	{
+		int i;
+		for( i =0 ; i < depth - 1 ; i++)
+		{
+			MPI_Comm c = comms[i];
+			__INTERNAL__PMPI_Barrier(c);
+		}
+		for( i =depth - 2 ; 0 <= i ; i--)
+		{
+			MPI_Comm c = comms[i];
+			__INTERNAL__PMPI_Barrier(c);
+		}
+
+			
+		return MPI_SUCCESS;
+	}
+
+}
+
+
+
+
 
 int
 __INTERNAL__PMPI_Bcast_inter (void *buffer, int count, 
@@ -5345,6 +5789,233 @@ __INTERNAL__PMPI_Bcast_inter (void *buffer, int count,
 	}
 	return res;
 }
+
+
+int __INTERNAL__PMPI_Bcast_intra_shm (void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm)
+{
+	struct sctk_comm_coll *coll = sctk_communicator_get_coll(comm);
+
+
+	int rank,res;
+	PMPI_Comm_rank( comm, &rank );
+
+	struct shared_mem_bcast * bcast_ctx = &coll->shm_bcast[sctk_comm_coll_get_id_bcast(coll, rank)];
+
+	/* First pay the toll gate */
+	if( __do_yield )
+	{
+		while( bcast_ctx->tollgate[rank] != sctk_atomics_load_int(&bcast_ctx->fare ))
+		{
+			sctk_thread_yield();
+		}
+
+	}
+	else
+	{
+		while( bcast_ctx->tollgate[rank] != sctk_atomics_load_int(&bcast_ctx->fare ))
+		{
+			sctk_cpu_relax();
+		}
+	}
+
+	/* Reverse state so that only a root done can unlock by
+	 * also reversing the fare */
+	bcast_ctx->tollgate[rank] = !bcast_ctx->tollgate[rank];
+
+	void * data_buff = buffer;
+	MPI_Aint tsize = 0;
+	res = __INTERNAL__PMPI_Type_extent (datatype, &tsize);
+	if(res != MPI_SUCCESS){return res;}
+
+
+	int is_shared_mem_buffer = sctk_mpi_type_is_shared_mem(datatype, count );
+	int is_contig_type = sctk_datatype_contig_mem( datatype);
+
+	/* Now am I the root ? */
+	if( root == rank )
+	{
+		if( __do_yield )
+		{
+
+			while( sctk_atomics_cas_int(&bcast_ctx->owner, -1, -2) != -1)
+			{
+				sctk_thread_yield();
+			}
+
+		}
+		else
+		{
+
+			while( sctk_atomics_cas_int(&bcast_ctx->owner, -1, -2) != -1)
+			{
+				sctk_cpu_relax();
+			}	
+
+		}
+		
+		bcast_ctx->root_in_buff = 0;
+
+		/* Does root need to pack ? */
+		if( !is_contig_type && (rank == root) )
+		{
+			/* We have a tmp bufer where to reduce */
+			data_buff = sctk_malloc(count*tsize);
+			
+			assume( data_buff != NULL );
+	
+			/* If non-contig, we need to pack to the TMP buffer
+			 * where the reduction will be operated */
+			int cnt=0;
+			PMPI_Pack( buffer,  count, datatype, data_buff, tsize*count, &cnt, comm ); 	
+			
+			/* We had to allocate the segment save it for release by the last */
+			sctk_atomics_store_ptr( &bcast_ctx->to_free, data_buff );
+
+			/* Set pack as reference */
+			bcast_ctx->target_buff = data_buff;
+
+		}
+		else
+		{
+			/* Set the ref buffer */
+			bcast_ctx->target_buff = data_buff;
+	
+			/* Can we use the SHM buffer ? */
+			
+	  		if( is_shared_mem_buffer )
+			{
+				/* Set my value in the TMP buffer */
+				sctk_mpi_shared_mem_buffer_fill( &bcast_ctx->buffer , datatype , count,  data_buff );
+				bcast_ctx->root_in_buff = 1;
+			}
+	
+		}
+
+		/* Save source type infos */
+		bcast_ctx->stype_size = tsize;
+		bcast_ctx->scount = count;
+
+		/* Now unleash the others */
+		sctk_atomics_store_int( &bcast_ctx->owner , rank );
+	
+	}
+	else
+	{
+		/* Wait for the root */
+		if( __do_yield )
+		{
+			while( sctk_atomics_load_int(&bcast_ctx->owner) != root )
+			{
+				sctk_thread_yield();
+			}
+		}
+		else
+		{
+			while( sctk_atomics_load_int(&bcast_ctx->owner) != root )
+			{
+				sctk_cpu_relax();
+			}
+
+		}
+	}
+
+	/* If we are here the root has set its data */
+	if( rank != root )
+	{
+	
+		/* We are in the TMB buffers */
+  		if( bcast_ctx->root_in_buff )
+		{
+			sctk_mpi_shared_mem_buffer_get( &bcast_ctx->buffer , datatype , count, buffer, bcast_ctx->scount * bcast_ctx->stype_size );
+		}
+		else
+		{
+			void * src = bcast_ctx->target_buff;
+			
+			/* Datatype has to be unpacked */
+			if(  !is_contig_type )
+			{
+				/* If non-contig, we need to unpack to the final buffer */
+				int cnt = 0;
+				MPI_Unpack( src, bcast_ctx->scount * bcast_ctx->stype_size, &cnt, buffer, count, datatype, comm);
+			}
+			else
+			{
+				/* Yes ! this type is contiguous */
+				memcpy( buffer, src, tsize * count );
+			}
+		}
+	
+	}
+
+	/* Now leave the pending list and if I am the last I free */
+
+	if( is_shared_mem_buffer )
+	{
+		if( sctk_atomics_fetch_and_decr_int(&bcast_ctx->left_to_pop) == 1 )
+		{
+			goto SHM_BCAST_RELEASE;
+		}
+	}
+	else
+	{
+		/* Sorry rank 0 we have to make sure that the root stays here if we are
+	     * not using the async buffers */
+		
+		sctk_atomics_decr_int(&bcast_ctx->left_to_pop);
+
+		if( rank == root )
+		{
+			/* Wait for everybody */
+
+			if( __do_yield )
+			{
+				while( sctk_atomics_load_int(&bcast_ctx->left_to_pop) != 0 )
+				{
+					sctk_thread_yield();
+				}
+			}
+			else
+			{
+				while( sctk_atomics_load_int(&bcast_ctx->left_to_pop) != 0 )
+				{
+					sctk_cpu_relax();
+				}
+
+			}
+	
+			goto SHM_BCAST_RELEASE;
+		
+		}
+	}
+
+	return MPI_SUCCESS;
+
+SHM_BCAST_RELEASE:
+	{
+		void * to_free = sctk_atomics_load_ptr( &bcast_ctx->to_free );
+	
+		if( to_free )
+		{
+			sctk_atomics_store_ptr( &bcast_ctx->to_free , 0 );
+			sctk_free( to_free );
+		}
+	
+		/* Set the counter */
+		sctk_atomics_store_int( &bcast_ctx->left_to_pop , coll->comm_size );
+			
+	
+		sctk_atomics_store_int(&bcast_ctx->owner, -1 );
+				
+		int current_fare = sctk_atomics_load_int(&bcast_ctx->fare);
+		sctk_atomics_store_int(&bcast_ctx->fare, !current_fare );
+	
+		return MPI_SUCCESS;
+	}
+}
+
+
+
 
 int
 __INTERNAL__PMPI_Bcast_intra (void *buffer, int count, 
@@ -5389,9 +6060,11 @@ __INTERNAL__PMPI_Bcast_intra (void *buffer, int count,
     return res;
 }
 
-int
-__INTERNAL__PMPI_Bcast (void *buffer, int count, MPI_Datatype datatype, 
-	int root, MPI_Comm comm)
+
+
+
+
+int __INTERNAL__PMPI_Bcast (void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm)
 {
 	int res = MPI_ERR_INTERN;
 	
@@ -5405,14 +6078,67 @@ __INTERNAL__PMPI_Bcast (void *buffer, int count, MPI_Datatype datatype,
 	}
 	else
 	{
+
 		/* Intracomm */
+		
+		if(bcast_intra_shm == NULL)
+		{
+			bcast_intra_shm = (int (*)(void *, int, MPI_Datatype, int, MPI_Comm))(sctk_runtime_config_get()->modules.collectives_shm.bcast_intra_shm.value);
+		}
+		
 		if(bcast_intra == NULL)
-		bcast_intra = (int (*)(void *, int, MPI_Datatype, int, MPI_Comm))(sctk_runtime_config_get()->modules.collectives_intra.bcast_intra.value);
-		res = bcast_intra(buffer, count, datatype, root, comm);
-		if(res != MPI_SUCCESS){return res;}
+		{
+			bcast_intra = (int (*)(void *, int, MPI_Datatype, int, MPI_Comm))(sctk_runtime_config_get()->modules.collectives_intra.bcast_intra.value);
+		}
+
+		if( sctk_is_shared_mem( comm ) )
+		{
+			/* Here only work in shared-mem */
+			res = (bcast_intra_shm)(buffer, count, datatype, root,  comm);
+		}
+		else
+		{
+			res = bcast_intra(buffer, count, datatype, root, comm);
+		}
 	}
 	return res;
 }
+
+
+
+int __INTERNAL__PMPI_Bcast_hier (void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm)
+{
+
+	
+	mpc_mpi_per_communicator_t* tmp = mpc_mpc_get_per_comm_data(comm);
+
+	int depth = tmp->topo_comms_depth;
+	MPI_Comm *comms = tmp->topo_comms;
+
+
+	
+	if( (root != 0) || (depth == 0)  )
+	{
+		return __INTERNAL__PMPI_Bcast( buffer, count, datatype, root , comm );
+	}
+
+	int i;
+	for( i = depth - 2 ; 0 <= i ; i--)
+	{
+		//sctk_error("BCAST %d", i);
+		int ret = __INTERNAL__PMPI_Bcast( buffer, count, datatype, root , comms[i] );
+		
+		if( ret != MPI_SUCCESS )
+			return ret;
+	}
+
+
+	return MPI_SUCCESS;
+}
+
+
+
+
 
 int
 __INTERNAL__PMPI_Gather_intra (void *sendbuf, int sendcnt, 
@@ -5536,16 +6262,276 @@ __INTERNAL__PMPI_Gather (void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 	else
 	{
 		/* Intracomm */
+		if(gatherv_intra_shm == NULL)
+		{
+			gatherv_intra_shm = (int (*)(void *, int, MPI_Datatype, 
+									void *, int* , int *, MPI_Datatype, 
+									int, MPI_Comm)) sctk_runtime_config_get()->modules.collectives_shm.gatherv_intra_shm.value;
+		}
+
 		if(gather_intra == NULL)
-		gather_intra = (int (*)(void *, int, MPI_Datatype, void *, 
-		int, MPI_Datatype, int, MPI_Comm))(sctk_runtime_config_get()->modules.collectives_intra.gather_intra.value);
-		res = gather_intra(sendbuf, sendcnt, sendtype, recvbuf, 
-		recvcnt, recvtype, root, comm);
-		if(res != MPI_SUCCESS){return res;}
+		{
+			gather_intra = (int (*)(void *, int, MPI_Datatype, 
+									void *, int, MPI_Datatype, 
+									int, MPI_Comm)) sctk_runtime_config_get()->modules.collectives_intra.gather_intra.value;
+		}
+
+		if( sctk_is_shared_mem( comm ) )
+		{
+			res = (gatherv_intra_shm)(sendbuf, sendcnt, sendtype, recvbuf, 
+									  &recvcnt, NULL, recvtype, root, comm);
+	
+		}
+		else
+		{
+			res = (gather_intra)(sendbuf, sendcnt, sendtype, recvbuf, 
+			recvcnt, recvtype, root, comm);
+		}
 	}
 
 	return res;
 }
+
+int __INTERNAL__PMPI_Gatherv_intra_shm (void *sendbuf, int sendcnt, MPI_Datatype sendtype,
+			  void *recvbuf, int *recvcnts, int *displs,
+			  MPI_Datatype recvtype, int root, MPI_Comm comm)
+{
+	struct sctk_comm_coll *coll = sctk_communicator_get_coll(comm);
+	struct shared_mem_gatherv * gv_ctx = &coll->shm_gatherv;
+
+	int rank,res;
+	PMPI_Comm_rank( comm, &rank );
+	
+	/* First pay the toll gate */
+	if( __do_yield )
+	{
+		while( gv_ctx->tollgate[rank] != sctk_atomics_load_int(&gv_ctx->fare ))
+		{
+			sctk_thread_yield();
+		}
+
+	}
+	else
+	{
+		while( gv_ctx->tollgate[rank] != sctk_atomics_load_int(&gv_ctx->fare ))
+		{
+			sctk_cpu_relax();
+		}
+
+	}
+
+	/* Reverse state so that only a root done can unlock by
+	 * also reversing the fare */
+	gv_ctx->tollgate[rank] = !gv_ctx->tollgate[rank];
+
+
+	void * data_buff = sendbuf;
+	MPI_Aint stsize = 0;
+	res = __INTERNAL__PMPI_Type_extent (sendtype, &stsize);
+	if(res != MPI_SUCCESS){return res;}
+	int did_allocate_send = 0;
+
+	gv_ctx->send_type_size[rank] = stsize;
+
+	/* Does root need to pack ? */
+	if( !sctk_datatype_contig_mem( sendtype ) )
+	{
+		/* We have a tmp bufer where to reduce */
+		data_buff = sctk_malloc(sendcnt*stsize);
+		
+		assume( data_buff != NULL );
+
+		/* If non-contig, we need to pack to the TMP buffer
+		 * where the reduction will be operated */
+		int cnt=0;
+		PMPI_Pack( sendbuf,  sendcnt, sendtype, data_buff, stsize*sendcnt, &cnt, comm ); 	
+		
+		/* We had to allocate the segment save it for release by the last */
+		sctk_atomics_store_ptr( &gv_ctx->src_buffs[rank], data_buff );
+		did_allocate_send = 1;
+	}
+
+	gv_ctx->send_count[rank] = sendcnt;
+
+	/* Now am I the root ? */
+	if( root == rank )
+	{
+		if( __do_yield )
+		{
+			while( sctk_atomics_cas_int(&gv_ctx->owner, -1, -2) != -1)
+			{
+				sctk_thread_yield();
+			}
+		}
+		else
+		{
+			while( sctk_atomics_cas_int(&gv_ctx->owner, -1, -2) != -1)
+			{
+				sctk_cpu_relax();
+			}
+
+		}
+
+		/* Set the ref buffer */
+		gv_ctx->target_buff = recvbuf;
+		gv_ctx->counts = recvcnts;
+		gv_ctx->disps = displs;
+
+		MPI_Aint rtsize = 0;
+		res = __INTERNAL__PMPI_Type_extent (recvtype, &rtsize);
+		gv_ctx->rtype_size = rtsize;
+	
+
+		if( !sctk_datatype_contig_mem( recvtype ) )
+		{
+			gv_ctx->let_me_unpack = 1;
+		}
+		else
+		{
+			gv_ctx->let_me_unpack = 0;	
+		}
+
+		/* Now unleash the others */
+		sctk_atomics_store_int( &gv_ctx->owner , rank );
+	
+	}
+	else
+	{
+		/* Wait for the root */
+		if( __do_yield )
+		{
+			while( sctk_atomics_load_int(&gv_ctx->owner) != root )
+			{
+				sctk_thread_yield();
+			}
+		}
+		else
+		{
+			while( sctk_atomics_load_int(&gv_ctx->owner) != root )
+			{
+				sctk_cpu_relax();
+			}
+
+		}
+	}
+
+
+	/* Where to write ? */
+	if( sendbuf != MPI_IN_PLACE )
+	{
+		if( gv_ctx->let_me_unpack )
+		{
+			/* If we are here the root has a non
+			 * contiguous data-type, we then
+			 * have to save our buffer and
+			 * then leave the root at work to fill the segments */
+
+			/* Is it already packed on our side ? */
+			if( !did_allocate_send )
+			{
+				/* We need to put it in buffer */
+				data_buff = sctk_malloc(sendcnt*stsize);
+				assume( data_buff != NULL );
+				memcpy( data_buff, sendbuf , sendcnt * stsize );
+				sctk_atomics_store_ptr( &gv_ctx->src_buffs[rank], data_buff );
+			}
+			/*else
+			{
+				 sctk_atomics_store_ptr( &gv_ctx->src_buffs[rank], data_buff );
+				 was done when packing 
+			}*/
+		}
+		else
+		{
+			/* If we are here we can directly write
+			 * in the target buffer as the type is contig
+			 * we just have to look for the right disp */
+
+			void *to = NULL;
+			size_t to_cpy = 0;
+
+			if( !gv_ctx->disps )
+			{
+				/* Gather case */
+				to_cpy = gv_ctx->counts[0];
+				to = gv_ctx->target_buff + (to_cpy * gv_ctx->rtype_size)*rank;
+			}
+			else
+			{
+				to_cpy = gv_ctx->counts[rank];
+				to = gv_ctx->target_buff + (gv_ctx->disps[rank] * gv_ctx->rtype_size);	
+			}
+
+			memcpy( to, sendbuf, to_cpy * gv_ctx->rtype_size );
+		}
+	}
+
+	sctk_atomics_decr_int( &gv_ctx->left_to_push );
+
+
+	if( rank == root )
+	{
+		/* Wait for all the others */
+		if( __do_yield )
+		{
+			while( sctk_atomics_load_int(&gv_ctx->left_to_push) != 0 )
+			{
+				sctk_thread_yield();
+			}
+		}
+		else
+		{
+			while( sctk_atomics_load_int(&gv_ctx->left_to_push) != 0 )
+			{
+				sctk_cpu_relax();
+			}
+
+		}
+	
+		/* Was it required that the root
+		 * unpacks the whole thing ? */
+		if( gv_ctx->let_me_unpack )
+		{
+			int i;
+
+			for( i = 0 ; i < coll->comm_size ; i++ )
+			{
+				int cnt=0;
+				void * to = NULL;
+				void * from = NULL;
+
+				from = sctk_atomics_load_ptr(&gv_ctx->src_buffs[i]);
+				
+				if( !gv_ctx->disps )
+				{
+					/* Gather case */
+					sctk_nodebug("UNPACK %d@%d in %d => %d@%d", gv_ctx->send_count[i], gv_ctx->send_type_size[i], i, gv_ctx->counts[0], gv_ctx->rtype_size);
+					to = gv_ctx->target_buff + (gv_ctx->counts[0] * gv_ctx->rtype_size)*i;
+					PMPI_Unpack(from, gv_ctx->send_count[i] * gv_ctx->send_type_size[i] , &cnt, to, gv_ctx->counts[0], recvtype, comm );
+				}
+				else
+				{
+					/* Gatherv case */
+					to = gv_ctx->target_buff + (gv_ctx->disps[i] * gv_ctx->rtype_size);	
+					PMPI_Unpack(from, gv_ctx->send_count[i] * gv_ctx->send_type_size[i] , &cnt, to, gv_ctx->counts[i], recvtype, comm );
+				}
+			
+			}
+		}
+
+		/* On free */
+		sctk_atomics_store_int( &gv_ctx->left_to_push, coll->comm_size );
+		
+		sctk_atomics_store_int( &gv_ctx->owner, -1 );
+
+		int current_fare = sctk_atomics_load_int( &gv_ctx->fare );
+		sctk_atomics_store_int( &gv_ctx->fare, !current_fare );
+	}
+
+	return MPI_SUCCESS;
+}
+
+
 
 int
 __INTERNAL__PMPI_Gatherv_intra (void *sendbuf, int sendcnt, MPI_Datatype sendtype,
@@ -5685,11 +6671,33 @@ __INTERNAL__PMPI_Gatherv (void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 	else
 	{
 		/* Intracomm */
+
+		if(gatherv_intra_shm == NULL)
+		{
+			gatherv_intra_shm = (int (*)(void *, int, MPI_Datatype, 
+						     void *, int *, int *, MPI_Datatype, 
+							 int, MPI_Comm)) sctk_runtime_config_get()->modules.collectives_shm.gatherv_intra_shm.value;
+		}
+
+
 		if(gatherv_intra == NULL)
-		gatherv_intra = (int (*)(void *, int, MPI_Datatype, void *, 
-		int *, int *, MPI_Datatype, int, MPI_Comm))(sctk_runtime_config_get()->modules.collectives_intra.gatherv_intra.value);
-		res = gatherv_intra(sendbuf, sendcnt, sendtype, recvbuf, 
-		recvcnts, displs, recvtype, root, comm);
+		{
+			gatherv_intra = (int (*)(void *, int, MPI_Datatype, 
+						     void *, int *, int *, MPI_Datatype, 
+							 int, MPI_Comm)) sctk_runtime_config_get()->modules.collectives_intra.gatherv_intra.value;
+		}
+
+
+		if( sctk_is_shared_mem(comm))
+		{
+			res = (gatherv_intra_shm)(sendbuf, sendcnt, sendtype, recvbuf, recvcnts, displs, recvtype, root, comm);
+		}
+		else
+		{
+			res = (gatherv_intra)(sendbuf, sendcnt, sendtype, recvbuf, recvcnts, displs, recvtype, root, comm);
+		}
+		
+		
 		if(res != MPI_SUCCESS){return res;}
 	}
 
@@ -5825,14 +6833,315 @@ __INTERNAL__PMPI_Scatter (void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 	else
 	{
 		/* Intracomm */
+
+		if(scatterv_intra_shm == NULL)
+		{
+			scatterv_intra_shm = (int (*)(void *, int *, int *, MPI_Datatype,
+								  void *, int, MPI_Datatype, int, MPI_Comm))
+							 	  sctk_runtime_config_get()->modules.collectives_shm.scatterv_intra_shm.value;
+		}
+
 		if(scatter_intra == NULL)
-		scatter_intra = (int (*)(void *, int, MPI_Datatype, void *, 
-		int, MPI_Datatype, int, MPI_Comm))(sctk_runtime_config_get()->modules.collectives_intra.scatter_intra.value);
-		res = scatter_intra(sendbuf, sendcnt, sendtype, recvbuf, 
-		recvcnt, recvtype, root, comm);
+		{
+			scatter_intra = (int (*)(void *, int, MPI_Datatype, void *, 
+			int, MPI_Datatype, int, MPI_Comm))(sctk_runtime_config_get()->modules.collectives_intra.scatter_intra.value);
+		}
+			
+		/* Note there is a bug we did not find with derived data-types
+		 * on the scatter(v) operation deactivated for now */
+		if( sctk_is_shared_mem( comm ) && sctk_datatype_contig_mem(sendtype) && sctk_datatype_contig_mem(recvtype) )
+		{
+			res = (scatterv_intra_shm)(sendbuf, &sendcnt, NULL, sendtype, recvbuf, recvcnt, recvtype, root, comm);
+		}
+		else
+		{
+			res = (scatter_intra)(sendbuf, sendcnt, sendtype, recvbuf, recvcnt, recvtype, root, comm);
+		}
+		
 		if(res != MPI_SUCCESS){return res;}
 	}
 	return res;
+}
+
+
+
+int
+__INTERNAL__PMPI_Scatterv_intra_shm (void *sendbuf, int *sendcnts, int *displs,
+			   						 MPI_Datatype sendtype, void *recvbuf, int recvcnt,
+			   						 MPI_Datatype recvtype, int root, MPI_Comm comm)
+{
+	struct sctk_comm_coll *coll = sctk_communicator_get_coll(comm);
+	struct shared_mem_scatterv * sv_ctx = &coll->shm_scatterv;
+
+	sctk_nodebug("SCATTER SEND %d CNT %d RECV %d CNT %d", sendtype, sendcnts[0], recvtype, recvcnt );
+
+
+	int rank,res;
+	PMPI_Comm_rank( comm, &rank );
+
+	/* First pay the toll gate */
+	if( __do_yield )
+	{
+		while( sv_ctx->tollgate[rank] != sctk_atomics_load_int(&sv_ctx->fare ))
+		{
+			sctk_thread_yield();
+		}
+
+	}
+	else
+	{
+		while( sv_ctx->tollgate[rank] != sctk_atomics_load_int(&sv_ctx->fare ))
+		{
+			sctk_cpu_relax();
+		}
+	}
+
+	/* Reverse state so that only a root done can unlock by
+	 * also reversing the fare */
+	sv_ctx->tollgate[rank] = !sv_ctx->tollgate[rank];
+
+	void * data_buff = sendbuf;
+	int did_allocate_send = 0;
+
+	MPI_Aint rtype_size = 0;
+	res = __INTERNAL__PMPI_Type_extent (recvtype, &rtype_size);
+	if(res != MPI_SUCCESS){return res;}
+
+	/* RDV with ROOT */
+
+	/* Now am I the root ? */
+	if( root == rank )
+	{
+		MPI_Aint stsize = 0;
+		res = __INTERNAL__PMPI_Type_extent (sendtype, &stsize);
+		if(res != MPI_SUCCESS){return res;}
+
+		if( __do_yield )
+		{
+			while( sctk_atomics_cas_int(&sv_ctx->owner, -1, -2) != -1)
+			{
+				sctk_thread_yield();
+			}
+
+		}
+		else
+		{
+			while( sctk_atomics_cas_int(&sv_ctx->owner, -1, -2) != -1)
+			{
+				sctk_cpu_relax();
+			}
+		}
+
+		/* Does root need to pack ? */
+		if( !sctk_datatype_contig_mem( sendtype ) )
+		{
+			/* Sorry derived data-types involved
+			 * lets pack it all */
+
+	
+			/* Are we in the Scatter config ? */
+			if(!displs)
+			{
+				sctk_nodebug("PACK S t %d cnt %d extent %d", sendtype, sendcnts[0]*coll->comm_size, stsize );
+				/* We are a Scatter */
+				size_t buff_size = sendcnts[0]*stsize*coll->comm_size;
+				data_buff = sctk_malloc( buff_size );
+				assume( data_buff != NULL );
+				int cnt=0;
+				PMPI_Pack( sendbuf,  sendcnts[0]*coll->comm_size, sendtype, data_buff, buff_size, &cnt, comm ); 		
+				/* Only store in 0 the big Pack */
+				sctk_atomics_store_ptr( &sv_ctx->src_buffs[0], data_buff );
+			}
+			else
+			{
+				/* We are a Scatterv */
+				int i;
+				for (i = 0; i < coll->comm_size; ++i)
+				{
+					void * from = sendbuf + displs[i] * stsize;
+					size_t to_cpy = sendcnts[i];
+					
+					data_buff = sctk_malloc(sendcnts[i]*stsize);
+					assume( data_buff != NULL );
+					int cnt=0;
+					PMPI_Pack( from,  sendcnts[i], sendtype, data_buff, stsize*sendcnts[i], &cnt, comm ); 		
+					/* Only store in 0 the big Pack */
+					sctk_atomics_store_ptr( &sv_ctx->src_buffs[i], data_buff );
+				}
+	
+			}
+
+			did_allocate_send = 1;
+
+			/* Notify leaves that it is
+			 * going to be expensive */
+			sv_ctx->was_packed = 1;
+		}
+		else
+		{
+			/* Yes ! We are contiguous we can start
+			 * to perform a little */
+			sctk_atomics_store_ptr( &sv_ctx->src_buffs[0], data_buff );
+			/* Notify leaves that we are on fastpath */
+			sv_ctx->was_packed = 0;
+		}
+
+
+		/* Set root infos */
+		sv_ctx->disps = displs;
+		sv_ctx->counts = sendcnts;
+		sv_ctx->stype_size = stsize;
+	
+
+		/* Now unleash the others */
+		sctk_atomics_store_int( &sv_ctx->owner , rank );
+	
+	}
+	else
+	{
+		/* Wait for the root */
+		if(__do_yield )
+		{
+			while( sctk_atomics_load_int(&sv_ctx->owner) != root )
+			{
+				sctk_thread_yield();
+			}
+		}
+		else
+		{
+			while( sctk_atomics_load_int(&sv_ctx->owner) != root )
+			{
+				sctk_cpu_relax();
+			}
+		}
+	}
+
+
+	/* Where to write ? */
+	if( recvbuf != MPI_IN_PLACE )
+	{
+		if( sv_ctx->was_packed )
+		{
+			void *from = NULL;
+			size_t to_cpy = 0;
+			int do_free = 0;
+			/* Root packed it all for us 
+			 * as it has a non-contig datatype */
+
+			/* Is it already packed on our side ? */
+			if( !displs )
+			{
+				sctk_nodebug("UNPACK S RT %d rcnt %d rext %d FROM %d ext %d", recvtype, recvcnt, rtype_size, sv_ctx->counts[0], sv_ctx->stype_size  );
+				/* We are a Scatter only data in [0] */
+				void * data = sctk_atomics_load_ptr( &sv_ctx->src_buffs[0] );
+				from = data + rank * sv_ctx->counts[0] * sv_ctx->stype_size;
+				to_cpy = sv_ctx->counts[0] * sv_ctx->stype_size;
+				
+				/* Will be freed by root */
+			}
+			else
+			{
+				/* We are a ScatterV data in the whole array */
+				from = sctk_atomics_load_ptr( &sv_ctx->src_buffs[rank] );
+				to_cpy = sv_ctx->counts[rank] * sv_ctx->stype_size;
+				do_free = 1;
+			}
+
+				
+			int cnt=0;
+			PMPI_Unpack(from, to_cpy  , &cnt, recvbuf, recvcnt, recvtype, comm );
+
+
+
+			if( do_free )
+			{
+				sctk_free( from );
+			}
+
+		}
+		else
+		{
+			/* If we are here we can directly read
+			 * in the target buffer as the type is contig
+			 * we just have to look for the right disp */
+			void *from = NULL;
+			size_t to_cpy = 0;
+
+			if( !sv_ctx->disps )
+			{
+				/* Scatter case */
+				void * data = sctk_atomics_load_ptr( &sv_ctx->src_buffs[0] );
+				from = data +  sv_ctx->counts[0] * rank * sv_ctx->stype_size;
+				to_cpy = sv_ctx->counts[0] * sv_ctx->stype_size;
+			}
+			else
+			{
+				/* ScatterV case */
+				void * data = sctk_atomics_load_ptr( &sv_ctx->src_buffs[0] );
+				from = data +  sv_ctx->disps[rank]* sv_ctx->stype_size ;
+				to_cpy = sv_ctx->counts[rank] * sv_ctx->stype_size;
+			}
+
+			if(!sctk_datatype_contig_mem( recvtype ) )
+			{
+				/* Recvtype is non-contig */
+				int cnt=0;
+				PMPI_Unpack(from, to_cpy , &cnt, recvbuf, recvcnt, recvtype, comm );
+			}
+			else
+			{
+				/* Recvtype is contiguous */	
+				memcpy( recvbuf, from, to_cpy );
+			}
+		}
+	}
+
+	sctk_atomics_decr_int( &sv_ctx->left_to_pop );
+
+
+	if( rank == root )
+	{
+		/* Wait for all the others */
+		if( __do_yield )
+		{
+			while( sctk_atomics_load_int(&sv_ctx->left_to_pop) != 0 )
+			{
+				sctk_thread_yield();
+			}
+
+		}
+		else
+		{
+			while( sctk_atomics_load_int(&sv_ctx->left_to_pop) != 0 )
+			{
+				sctk_cpu_relax();
+			}
+		}
+	
+		/* Do we need to free data packed for Scatter case ? */
+		if( !sctk_datatype_contig_mem( sendtype ) )
+		{
+			if(!displs)
+			{
+				void * data = sctk_atomics_load_ptr( &sv_ctx->src_buffs[0] );
+				sctk_free( data );
+			}
+		}
+		
+		
+		/* On free */
+		sctk_atomics_store_int( &sv_ctx->left_to_pop, coll->comm_size );
+		
+		sctk_atomics_store_int( &sv_ctx->owner, -1 );
+
+		int current_fare = sctk_atomics_load_int( &sv_ctx->fare );
+		sctk_atomics_store_int( &sv_ctx->fare, !current_fare );
+	}
+
+	return MPI_SUCCESS;
+
+
+
 }
 
 int
@@ -5972,11 +7281,31 @@ __INTERNAL__PMPI_Scatterv (void *sendbuf, int *sendcnts, int *displs,
 	else
 	{
 		/* Intracomm */
+		if(scatterv_intra_shm == NULL)
+		{
+			scatterv_intra_shm = (int (*)(void *, int *, int *, MPI_Datatype,
+								  void *, int, MPI_Datatype, int, MPI_Comm))
+							 	  sctk_runtime_config_get()->modules.collectives_shm.scatterv_intra_shm.value;
+		}
+
 		if(scatterv_intra == NULL)
-		scatterv_intra = (int (*)(void *, int *, int *, MPI_Datatype, 
-		void *, int, MPI_Datatype, int, MPI_Comm))(sctk_runtime_config_get()->modules.collectives_intra.scatterv_intra.value);
-		res = scatterv_intra(sendbuf, sendcnts, displs, sendtype, 
-		recvbuf, recvcnt, recvtype, root, comm);
+		{
+			scatterv_intra = (int (*)(void *, int *, int *, MPI_Datatype,
+									  void *, int, MPI_Datatype, int, MPI_Comm))
+							 sctk_runtime_config_get()->modules.collectives_intra.scatterv_intra.value;
+		}		
+
+
+		if( sctk_is_shared_mem( comm ))
+		{
+		
+			res = (scatterv_intra_shm)(sendbuf, sendcnts, displs, sendtype, recvbuf, recvcnt, recvtype, root, comm);
+		}
+		else
+		{
+			res = (scatterv_intra)(sendbuf, sendcnts, displs, sendtype, recvbuf, recvcnt, recvtype, root, comm);
+		}
+
 		if(res != MPI_SUCCESS){return res;}
 	}
 	return res;
@@ -6401,16 +7730,225 @@ __INTERNAL__PMPI_Alltoall (void *sendbuf, int sendcount,
 	else
 	{
 		/* Intracomm */
+
+		if(alltoallv_intra_shm == NULL)
+		{
+			alltoallv_intra_shm = (int (*)(void *, int *, int *, MPI_Datatype, 
+								 	  	  void *, int *, int *, MPI_Datatype, 
+								 	  	  MPI_Comm))(sctk_runtime_config_get()->modules.collectives_shm.alltoallv_intra_shm.value);
+		}
+
 		if(alltoall_intra == NULL)
-		alltoall_intra = (int (*)(void *, int, MPI_Datatype, void *, 
-		int, MPI_Datatype, MPI_Comm))(sctk_runtime_config_get()->modules.collectives_intra.alltoall_intra.value);
-		res = alltoall_intra(sendbuf, sendcount, sendtype, recvbuf, 
-		recvcount, recvtype, comm);
-		if(res != MPI_SUCCESS){return res;}
+		{
+			alltoall_intra = (int (*)(void *, int, MPI_Datatype, void *, 
+			int, MPI_Datatype, MPI_Comm))(sctk_runtime_config_get()->modules.collectives_intra.alltoall_intra.value);
+		}
+
+		if( sctk_is_shared_mem(comm) )
+		{
+				res = (alltoallv_intra_shm)(sendbuf, &sendcount, NULL,  sendtype, recvbuf, &recvcount, NULL, recvtype, comm);
+		}
+		else
+		{
+				res = (alltoall_intra)(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm);
+		}
 	}
 
 	return res;
 }
+
+int
+__INTERNAL__PMPI_Alltoallv_intra_shm (void *sendbuf, int *sendcnts, int *sdispls,
+			    MPI_Datatype sendtype, void *recvbuf,
+			    int *recvcnts, int *rdispls,
+			    MPI_Datatype recvtype, MPI_Comm comm)
+{
+	struct sctk_comm_coll *coll = sctk_communicator_get_coll(comm);
+	struct shared_mem_a2a * aa_ctx = &coll->shm_a2a;
+
+	int rank;
+	__INTERNAL__PMPI_Comm_rank( comm, &rank );
+
+
+
+	struct sctk_shared_mem_a2a_infos info;
+
+
+	if( sendbuf == MPI_IN_PLACE )
+	{
+		__INTERNAL__PMPI_Type_extent( recvtype, &info.stype_size );
+		info.source_buff = recvbuf;
+		info.disps = rdispls;
+		info.counts = recvcnts;
+		aa_ctx->has_in_place |= 1;
+	}
+	else
+	{
+		__INTERNAL__PMPI_Type_extent( sendtype, &info.stype_size );
+		info.source_buff = sendbuf;
+		info.disps = sdispls;
+		info.counts = sendcnts;	
+	}
+
+
+	MPI_Aint rtsize;
+	__INTERNAL__PMPI_Type_extent(recvtype, &rtsize );
+
+
+	/* Pack if needed */
+	if( !sctk_datatype_contig_mem(sendtype) )
+	{
+		int i;
+
+		info.packed_buff = sctk_malloc( sizeof(void *) * coll->comm_size );
+
+		assume( info.packed_buff  != NULL );
+
+
+		for( i = 0 ; i < coll->comm_size ; i++ )
+		{
+			size_t to_cpy = 0;
+			void * from = NULL;
+			int scnt = 0;
+
+			if( !sdispls )
+			{
+				/* Alltoall */
+				from = sendbuf + sendcnts[0] * i * info.stype_size; 
+				to_cpy = info.stype_size * sendcnts[0];
+				scnt = sendcnts[0];
+			}
+			else
+			{
+				/* Alltoallv */
+				from = sendbuf + sdispls[i] * info.stype_size; 
+				to_cpy = info.stype_size * sendcnts[i];
+				scnt = sendcnts[i];
+			}
+
+			/* Sendtype is non-contig */
+			info.packed_buff[i] = sctk_malloc( to_cpy );
+			assume( info.source_buff != NULL );
+
+
+			int cnt=0;
+			PMPI_Pack( from, scnt, sendtype, info.packed_buff[i],  to_cpy , &cnt, comm );
+		}
+
+	}
+	else
+	{
+		info.packed_buff = NULL;
+	}
+
+	/* Register the infos in the array */
+	aa_ctx->infos[rank] = &info;
+
+
+	__INTERNAL__PMPI_Barrier( comm );
+
+
+	int i,j;
+
+
+	int current_rank = 0;
+
+
+	for( j = 0 ; j < coll->comm_size ; j++ )
+	{
+		/* Try to split readings */
+		i = (rank + j) % coll->comm_size;
+
+		/* No need to copy if we work in place */
+		if( aa_ctx->has_in_place && (rank == i ))
+			continue;
+
+		/* Get data from each rank */
+		
+		void * from = NULL;
+		void * to = NULL;
+		size_t to_cpy = 0;
+		int rcount = 0;
+
+		/* Choose dest and size */
+		if( sdispls && rdispls )
+		{
+			/* This is All2Allv */
+			//to_cpy = aa_ctx->infos[i]->counts[i] * aa_ctx->infos[i]->stype_size;
+			to_cpy = recvcnts[i] * rtsize;
+			to = recvbuf + (rdispls[i] * rtsize);
+			rcount = recvcnts[i];
+		}
+		else
+		{
+			/* This is All2All */
+			//to_cpy = aa_ctx->infos[i]->counts[0] * aa_ctx->infos[i]->stype_size;
+			to_cpy = recvcnts[0] * rtsize;
+			to = recvbuf + (recvcnts[0] * rtsize) * i;
+			rcount = recvcnts[0];
+		}
+
+		if( aa_ctx->infos[i]->packed_buff )
+		{
+			from = aa_ctx->infos[i]->packed_buff[rank];
+		}
+		else
+		{
+			if( sdispls && rdispls )
+			{
+				/* Alltoallv */
+				from = aa_ctx->infos[i]->source_buff + aa_ctx->infos[i]->disps[rank] * aa_ctx->infos[i]->stype_size;
+			}
+			else
+			{
+				/* Alltoall */
+				from = aa_ctx->infos[i]->source_buff + to_cpy * rank;
+			}
+		}
+
+		if( !sctk_datatype_contig_mem(recvtype))
+		{
+			/* Recvtype is non-contig */
+			int cnt=0; 
+			PMPI_Unpack(from, to_cpy , &cnt, to, rcount, recvtype, comm );
+		
+		}
+		else
+		{
+			/* We can memcpy */
+			memcpy( to, from, to_cpy );
+		}	
+		
+	}
+	
+	__INTERNAL__PMPI_Barrier( comm );
+
+
+
+
+	/* Reset the in-place flag */
+	if( rank == 0 )
+	{
+		aa_ctx->has_in_place = 0;
+	}
+
+	if( !sctk_datatype_contig_mem(sendtype) )
+	{
+		int i;
+
+		for( i = 0 ; i < coll->comm_size ; i++ )
+		{
+			sctk_free( info.packed_buff[i] );
+		}
+
+		sctk_free( info.packed_buff );
+		info.source_buff = NULL;
+	}
+
+	return MPI_SUCCESS;
+}
+
+
 
 int
 __INTERNAL__PMPI_Alltoallv_intra (void *sendbuf, int *sendcnts, int *sdispls,
@@ -6549,12 +8087,30 @@ __INTERNAL__PMPI_Alltoallv (void *sendbuf, int *sendcnts, int *sdispls,
 	else
 	{
 		/* Intracomm */
+		if(alltoallv_intra_shm == NULL)
+		{
+			alltoallv_intra_shm = (int (*)(void *, int *, int *, MPI_Datatype, 
+								 	  	  void *, int *, int *, MPI_Datatype, 
+								 	  	  MPI_Comm))(sctk_runtime_config_get()->modules.collectives_shm.alltoallv_intra_shm.value);
+		}
+
 		if(alltoallv_intra == NULL)
-		alltoallv_intra = (int (*)(void *, int *, int *, MPI_Datatype, 
-		void *, int *, int *, MPI_Datatype, MPI_Comm))(sctk_runtime_config_get()->modules.collectives_intra.alltoallv_intra.value);
-		res = alltoallv_intra(sendbuf, sendcnts, sdispls, sendtype, 
-		recvbuf, recvcnts, rdispls, recvtype, comm);
-		if(res != MPI_SUCCESS){return res;}
+		{
+			alltoallv_intra = (int (*)(void *, int *, int *, MPI_Datatype, 
+								  	  void *, int *, int *, MPI_Datatype, 
+								   	  MPI_Comm))(sctk_runtime_config_get()->modules.collectives_intra.alltoallv_intra.value);
+		}
+		
+
+		if( sctk_is_shared_mem(comm))
+		{
+			res = alltoallv_intra_shm(sendbuf, sendcnts, sdispls, sendtype, recvbuf, recvcnts, rdispls, recvtype, comm);
+		}
+		else
+		{	
+			res = alltoallv_intra(sendbuf, sendcnts, sdispls, sendtype, recvbuf, recvcnts, rdispls, recvtype, comm);
+		}
+
 	}
 	return res;
 }
@@ -7593,13 +9149,109 @@ MPC_Op_f sctk_get_common_function (MPC_Datatype datatype, MPC_Op op)
 	else
 	{
 		sctk_error("No such operation");
-		abort();
+		sctk_abort();
 	}
 
 	
 
   return func;
 }
+
+
+
+#define MPI_SHM_OP_SUM( t ) 			for( i = 0 ; i < size ; i++ )\
+										{\
+											for( j = 0 ; j < count ; j++ )\
+												res.t[j] += b[i].t[j] ;\
+										}\
+
+
+#define MPI_SHM_OP_PROD( t ) 			for( i = 0 ; i < size ; i++ )\
+										{\
+											for( j = 0 ; j < count ; j++ )\
+												res.t[j] *= b[i].t[j] ;\
+										}\
+
+
+static inline void sctk_mpi_shared_mem_buffer_collect( union shared_mem_buffer * b , MPI_Datatype type , int count,  MPI_Op op,  void * dest, int size )
+{
+	int i, j;
+	union shared_mem_buffer res = {0};
+	size_t tsize = 0;
+
+	switch( type )
+	{
+		case MPI_INT:
+			tsize = sizeof(int);
+			break;
+		case MPI_FLOAT:
+			tsize = sizeof(float);
+			break;
+		case MPI_CHAR:
+			tsize = sizeof(char);
+			break;
+
+		case MPI_DOUBLE:
+			tsize = sizeof(double);
+			break;
+
+		default:
+			sctk_fatal("Unsupported data-type");
+	}
+
+
+	switch( op )
+	{
+		case MPI_SUM:
+			switch( type )
+			{
+				case MPI_INT:
+					MPI_SHM_OP_SUM(i)
+						break;
+				case MPI_FLOAT:
+					MPI_SHM_OP_SUM(f)
+						break;
+				case MPI_CHAR:
+					MPI_SHM_OP_SUM(c)
+						break;
+
+				case MPI_DOUBLE:
+					MPI_SHM_OP_SUM(d)
+						break;
+
+				default:
+					sctk_fatal("Unsupported data-type");
+			}
+			break;
+		case MPI_PROD:
+			switch( type )
+			{
+				case MPI_INT:
+					MPI_SHM_OP_PROD(i)
+						break;
+				case MPI_FLOAT:
+					MPI_SHM_OP_PROD(f)
+						break;
+				case MPI_CHAR:
+					MPI_SHM_OP_PROD(c)
+						break;
+
+				case MPI_DOUBLE:
+					MPI_SHM_OP_PROD(d)
+						break;
+
+				default:
+					sctk_fatal("Unsupported data-type");
+			}
+			break;
+	}
+
+	sctk_mpi_shared_mem_buffer_get( &res , type , count,  dest, count * tsize );
+}
+
+
+
+
 
 static inline int
 __INTERNAL__PMPI_Reduce_derived_no_commute (void *sendbuf, void *recvbuf, int count,
@@ -7707,6 +9359,470 @@ __INTERNAL__PMPI_Reduce_derived_commute (void *sendbuf, void *recvbuf, int count
   return __INTERNAL__PMPI_Reduce_derived_no_commute(sendbuf,recvbuf,count,datatype,op,root,comm,mpc_op,mpi_op,size,rank);
 }
 
+
+
+	int
+__INTERNAL__PMPI_Reduce_shm (void *sendbuf, void *recvbuf, int count,
+		MPI_Datatype datatype, MPI_Op op, int root,
+		MPI_Comm comm)
+{
+	struct sctk_comm_coll *coll = sctk_communicator_get_coll(comm);
+
+	int rank;
+	__INTERNAL__PMPI_Comm_rank( comm, &rank );
+
+	struct shared_mem_reduce * reduce_ctx = &coll->shm_reduce[sctk_comm_coll_get_id_red(coll, rank)];
+
+	int res;
+	MPI_Aint tsize = 0;
+	res = __INTERNAL__PMPI_Type_extent (datatype, &tsize);
+	if(res != MPI_SUCCESS){return res;}
+
+	/* Only set when going through FP */
+	int used_fast_path = 0;
+
+	int i, size;
+	size = coll->comm_size;
+
+	/* Handle in-place */
+	if( sendbuf == MPI_IN_PLACE )
+	{
+		/* We will use the local recv data in root
+		 * to reduce in tmp_buff */
+		sendbuf = recvbuf;
+	}
+
+	/* First pay the toll gate */
+
+	if( __do_yield )
+	{
+		while( reduce_ctx->tollgate[rank] != sctk_atomics_load_int(&reduce_ctx->fare ))
+		{
+			sctk_thread_yield();
+		}
+	}
+	else
+	{	
+		while( reduce_ctx->tollgate[rank] != sctk_atomics_load_int(&reduce_ctx->fare ))
+		{
+			sctk_cpu_relax();
+		}
+	}
+
+	/* Reverse state so that only a root done can unlock by
+	 * also reversing the fare */
+	reduce_ctx->tollgate[rank] = !reduce_ctx->tollgate[rank];
+
+
+	void * data_buff = sendbuf;
+	void * result_buff = recvbuf;
+	int allocated = 0;
+
+	//sctk_error("OP %d T %d CONT %d FROM %p to %p (%p, %p)", op, datatype, count , sendbuf, recvbuf, data_buff, result_buff );
+
+	int will_be_in_shm_buff =  sctk_mpi_type_is_shared_mem(datatype, count ) && (sctk_mpi_op_is_shared_mem(op));
+	int is_contig_type = sctk_datatype_contig_mem( datatype);
+
+	/* Do we need to pack ? */
+	if( !is_contig_type )
+	{
+		/* We have a tmp bufer where to reduce */
+		data_buff = sctk_malloc(count*tsize);
+
+		assume( data_buff != NULL );
+
+		/* If non-contig, we need to pack to the TMP buffer
+		 * where the reduction will be operated */
+		int cnt=0;
+		PMPI_Pack( sendbuf,  count, datatype, data_buff, tsize*count, &cnt, comm ); 	
+		/* We had to allocate the segment */
+		allocated = 1;
+
+	}
+	else
+	{
+		if( (rank == root) && (sendbuf != MPI_IN_PLACE ) && !will_be_in_shm_buff )
+			memcpy( result_buff, data_buff, count * tsize );
+	}
+
+
+	/* Root RDV phase */
+
+	if( root == rank )
+	{
+		if( __do_yield )
+		{
+			while( sctk_atomics_cas_int(&reduce_ctx->owner, -1, -2) != -1)
+			{
+				sctk_thread_yield();
+			}
+		}
+		else
+		{
+			while( sctk_atomics_cas_int(&reduce_ctx->owner, -1, -2) != -1)
+			{
+				sctk_cpu_relax();
+
+			}
+		}
+
+		/* Set the local infos */
+
+		/* Now put in the CTX where we would like to reduce */
+		if( is_contig_type )
+		{
+			reduce_ctx->target_buff = result_buff;
+		}
+		else
+		{
+			reduce_ctx->target_buff = data_buff;
+		}
+
+		/* Now unleash the others */
+		sctk_atomics_store_int( &reduce_ctx->owner , rank );
+
+	}
+	else
+	{
+		if( __do_yield )
+		{
+			while( sctk_atomics_load_int(&reduce_ctx->owner ) != root )
+			{
+				sctk_thread_yield();
+			}
+		}
+		else
+		{
+			while( sctk_atomics_load_int(&reduce_ctx->owner ) != root )
+			{
+				sctk_cpu_relax();
+			}
+		}
+	}
+
+
+	/* This is the TMP buffer case fastpath */
+	if( will_be_in_shm_buff )
+	{
+		/* Set my value in the TMB buffer */
+		sctk_mpi_shared_mem_buffer_fill( &reduce_ctx->buffer[rank] , datatype , count,  data_buff );
+
+		goto SHM_REDUCE_DONE;
+	}
+
+
+
+
+	/* If we are here the buffer is probably too large */
+	size_t reduce_pipelined_tresh = sctk_runtime_config_get()->modules.collectives_shm.reduce_pipelined_tresh;
+	size_t reduce_force_nocommute = sctk_runtime_config_get()->modules.collectives_shm.coll_force_nocommute;
+
+	sctk_op_t *mpi_op = sctk_convert_to_mpc_op (op);
+	MPC_Op mpc_op = mpi_op->op;	
+
+	if( (mpi_op->commute == 0) || (datatype == MPI_FLOAT) || (datatype == MPI_DOUBLE) || reduce_force_nocommute )
+	{
+
+		/* Is the target buffer large enough ? */
+		if( reduce_pipelined_tresh <= (count * tsize) )
+		{
+			int per_lock = count / reduce_ctx->pipelined_blocks;
+			int rest = count % per_lock;
+
+			size_t stripe_offset = tsize * per_lock;
+
+			int i;
+			int rest_done = 0;
+
+			for (i = 0; i < reduce_ctx->pipelined_blocks; i++)
+			{
+				/* Now process the core */
+				int target_cell = (rank+i)%reduce_ctx->pipelined_blocks; 
+
+				void * from = data_buff + target_cell * stripe_offset;
+				void * to = reduce_ctx->target_buff + target_cell * stripe_offset;
+
+				/* As we want to process in order we have
+				 * to notify the next rank to allow it
+				 * to start processing the block he have just done */
+				if( rank != 0 )
+				{
+					int dummy_go;
+					PMPC_Recv( &dummy_go, 1, MPI_INT, rank -1, MPC_REDUCE_TAG, comm, MPI_STATUS_IGNORE );
+				}
+
+
+				if( rank != root )
+				{
+					sctk_spinlock_lock_yield(&reduce_ctx->buff_lock[target_cell]);	
+
+					if (mpc_op.u_func != NULL)
+					{
+						mpc_op.u_func(from, to, &per_lock, &datatype);
+					}
+					else
+					{
+						MPC_Op_f func;
+						func = sctk_get_common_function(datatype, mpc_op);
+						func(from, to, per_lock, datatype);
+					}
+
+					sctk_spinlock_unlock(&reduce_ctx->buff_lock[target_cell]);	
+
+
+					if( rest_done == 0 )
+					{
+						from = data_buff + reduce_ctx->pipelined_blocks * stripe_offset;
+						to = reduce_ctx->target_buff + reduce_ctx->pipelined_blocks * stripe_offset;
+
+						if (mpc_op.u_func != NULL)
+						{
+							mpc_op.u_func(from, to, &rest, &datatype);
+						}
+						else
+						{
+							MPC_Op_f func;
+							func = sctk_get_common_function(datatype, mpc_op);
+							func(from, to, rest, datatype);
+						}
+
+						rest_done = 1;
+					}
+
+				}
+
+				if( rank != (size - 1) )
+				{
+					int dummy_go;
+					PMPC_Send( &dummy_go, 1, MPI_INT, rank + 1, MPC_REDUCE_TAG, comm );
+				}
+
+			}
+
+			if( rank == root )
+			{
+				/* Wait for the GO in order */
+
+				if( __do_yield )
+				{
+
+					while( sctk_atomics_load_int( &reduce_ctx->left_to_push ) != 1 )
+					{
+						sctk_thread_yield();
+					}
+
+				}
+				else
+				{
+
+					while( sctk_atomics_load_int( &reduce_ctx->left_to_push ) != 1 )
+					{
+						sctk_cpu_relax();
+					}			
+
+				}
+			}
+		}
+		else
+		{
+			/* Wait for the GO in order */	
+			
+			if( __do_yield )
+			{
+				while( sctk_atomics_load_int( &reduce_ctx->left_to_push ) != (rank + 1) )
+				{
+					sctk_thread_yield();
+				}
+			}
+			else
+			{
+				while( sctk_atomics_load_int( &reduce_ctx->left_to_push ) != (rank + 1) )
+				{
+					sctk_cpu_relax();
+				}
+			}
+
+			if( rank != root )
+			{
+				if (mpc_op.u_func != NULL)
+				{
+					mpc_op.u_func(data_buff, reduce_ctx->target_buff, &count, &datatype);
+				}
+				else
+				{
+					MPC_Op_f func;
+					func = sctk_get_common_function(datatype, mpc_op);
+					func(data_buff, reduce_ctx->target_buff, count, datatype);
+				}
+			}
+
+		}
+
+	}
+	else
+	{
+		if( rank != root )
+		{
+
+			if( reduce_pipelined_tresh < (count * tsize) )
+			{
+				int per_lock = count / reduce_ctx->pipelined_blocks;
+				int rest = count % per_lock;
+
+				size_t stripe_offset = tsize * per_lock;
+
+				int i;
+				int rest_done = 0;
+
+				for (i = 0; i < reduce_ctx->pipelined_blocks ; i++)
+				{
+					/* Now process the rest (only once) */
+					if( (rank%reduce_ctx->pipelined_blocks) == i )
+					{
+						if( (rest != 0) && (rest_done == 0) )
+						{
+							//sctk_error("THe rest %d over %d divided by %d", rest, count, SHM_COLL_BUFF_LOCKS);	
+							void * from = data_buff +  reduce_ctx->pipelined_blocks * stripe_offset;
+							void * to = reduce_ctx->target_buff + reduce_ctx->pipelined_blocks * stripe_offset;
+
+							sctk_spinlock_lock_yield(&reduce_ctx->buff_lock[0]);	
+
+							if (mpc_op.u_func != NULL)
+							{
+								mpc_op.u_func(from, to, &rest, &datatype);
+							}
+							else
+							{
+								MPC_Op_f func;
+								func = sctk_get_common_function(datatype, mpc_op);
+								func(from, to, rest, datatype);
+							}
+
+							sctk_spinlock_unlock(&reduce_ctx->buff_lock[0]);						
+
+							rest_done =1;
+						}
+					}
+
+					/* Now process the core */
+					int target_cell = (rank+i)%reduce_ctx->pipelined_blocks; 
+					//sctk_error("TARG %d R %d i %d/%d SEG %d STR %ld", target_cell, rank, i, reduce_ctx->pipelined_blocks, per_lock, stripe_offset);
+
+					void * from = data_buff + target_cell * stripe_offset;
+					void * to = reduce_ctx->target_buff + target_cell * stripe_offset;
+
+					sctk_spinlock_lock_yield(&reduce_ctx->buff_lock[target_cell]);	
+
+					if (mpc_op.u_func != NULL)
+					{
+						mpc_op.u_func(from, to, &per_lock, &datatype);
+					}
+					else
+					{
+						MPC_Op_f func;
+						func = sctk_get_common_function(datatype, mpc_op);
+						func(from, to, per_lock, datatype);
+					}
+
+					sctk_spinlock_unlock(&reduce_ctx->buff_lock[target_cell]);	
+
+				}
+
+
+			}
+			else
+			{
+
+				sctk_spinlock_lock_yield(&reduce_ctx->buff_lock[0]);	
+
+
+				if (mpc_op.u_func != NULL)
+				{
+					mpc_op.u_func(data_buff, reduce_ctx->target_buff, &count, &datatype);
+				}
+				else
+				{
+					MPC_Op_f func;
+					func = sctk_get_common_function(datatype, mpc_op);
+					func(data_buff, reduce_ctx->target_buff, count, datatype);
+				}
+
+				sctk_spinlock_unlock(&reduce_ctx->buff_lock[0]);	
+
+			}
+
+		}
+
+
+	}
+
+
+
+SHM_REDUCE_DONE:
+
+	/* I'm done, notify */
+	sctk_atomics_decr_int( &reduce_ctx->left_to_push );
+
+	/* Do we need to unpack and/or free ? */
+
+	if( rank == root )
+	{
+		if( __do_yield )
+		{
+			while( sctk_atomics_load_int( &reduce_ctx->left_to_push ) != 0 )
+			{
+				sctk_thread_yield();
+			}
+		}
+		else
+		{
+			while( sctk_atomics_load_int( &reduce_ctx->left_to_push ) != 0 )
+			{
+				sctk_cpu_relax();
+			}
+		}
+
+		if( will_be_in_shm_buff )
+		{
+			sctk_mpi_shared_mem_buffer_collect( reduce_ctx->buffer , datatype , count,  op, result_buff, size );
+		}
+		else if( !sctk_datatype_contig_mem( datatype) )
+		{
+			/* If non-contig, we need to unpack to the final buffer */
+			int cnt = 0;
+			MPI_Unpack(reduce_ctx->target_buff , tsize * count, &cnt, recvbuf, count, datatype, comm);
+
+			/* We had to allocate the segment */
+			sctk_free( data_buff );
+		}
+		/* Set the counter */
+		sctk_atomics_store_int( &reduce_ctx->left_to_push , size );
+
+
+		/* Now flag slot as free */
+		sctk_atomics_store_int( &reduce_ctx->owner , -1 );
+
+		/* And reverse the fare */
+		int current_fare = sctk_atomics_load_int( &reduce_ctx->fare );
+		sctk_atomics_store_int( &reduce_ctx->fare , !current_fare );
+
+	}
+	else
+	{
+		if( allocated )
+		{
+			sctk_free(data_buff);
+		}
+	}
+
+
+	return MPI_SUCCESS;
+}
+
+
+
+
+
 int
 __INTERNAL__PMPI_Reduce_intra (void *sendbuf, void *recvbuf, int count,
 			 MPI_Datatype datatype, MPI_Op op, int root,
@@ -7754,6 +9870,21 @@ __INTERNAL__PMPI_Reduce_intra (void *sendbuf, void *recvbuf, int count,
 	} 
 	else 
 	{
+
+		if(reduce_intra_shm == NULL)
+		{
+			reduce_intra_shm = (int (*)(void *, void *, int, MPI_Datatype, 
+							MPI_Op, int, MPI_Comm))(sctk_runtime_config_get()->modules.collectives_shm.reduce_intra_shm.value);
+			assume(reduce_intra_shm != NULL);
+		}
+
+
+		if( sctk_is_shared_mem(comm) && !sctk_datatype_is_struct_datatype(datatype) && (mpi_op->op.u_func == NULL) )
+		{
+			return 	(reduce_intra_shm)( sendbuf, recvbuf, count, datatype, op, root, comm);
+		}
+
+
 		if(mpi_op->commute == 0)
 		{
 			res = __INTERNAL__PMPI_Reduce_derived_no_commute(sendbuf,
@@ -7846,7 +9977,7 @@ __INTERNAL__PMPI_Reduce (void *sendbuf, void *recvbuf, int count,
 		if(reduce_inter == NULL)
 		reduce_inter = (int (*)(void *, void *, int, MPI_Datatype, 
 		MPI_Op, int, MPI_Comm))(sctk_runtime_config_get()->modules.collectives_inter.reduce_inter.value);
-		res = reduce_inter(sendbuf, recvbuf, count, datatype, op, root, 
+		res = (reduce_inter)(sendbuf, recvbuf, count, datatype, op, root, 
 		comm);
 		if(res != MPI_SUCCESS){return res;}
 	}
@@ -7854,14 +9985,126 @@ __INTERNAL__PMPI_Reduce (void *sendbuf, void *recvbuf, int count,
 	{
 		/* Intracomm */
 		if(reduce_intra == NULL)
-		reduce_intra = (int (*)(void *, void *, int, MPI_Datatype, 
-		MPI_Op, int, MPI_Comm))(sctk_runtime_config_get()->modules.collectives_intra.reduce_intra.value);
-		res = reduce_intra(sendbuf, recvbuf, count, datatype, op, root, 
+		{
+			reduce_intra = (int (*)(void *, void *, int, MPI_Datatype, 
+							MPI_Op, int, MPI_Comm))(sctk_runtime_config_get()->modules.collectives_intra.reduce_intra.value);
+		}
+
+		res = (reduce_intra)(sendbuf, recvbuf, count, datatype, op, root, 
 		comm);
 		if(res != MPI_SUCCESS){return res;}
 	}
 	return res;
 }
+
+
+#define RED_BUFF_STATIC 4096
+
+int
+__INTERNAL__PMPI_Reduce_hier (void *sendbuf, void *recvbuf, int count,
+			 MPI_Datatype datatype, MPI_Op op, int root,
+			 MPI_Comm comm)
+{
+	mpc_mpi_per_communicator_t* pc = mpc_mpc_get_per_comm_data(comm);
+
+	int depth = pc->topo_comms_depth;
+	MPI_Comm *comms = pc->topo_comms;
+
+	if( (root != 0 ) || (!sctk_datatype_is_common(datatype)) || (depth == 0) )
+	{
+		return 	__INTERNAL__PMPI_Reduce(sendbuf, recvbuf, count, datatype, op, root, comm );
+	}
+
+
+	int res;
+	MPI_Aint tsize = 0;
+	res = __INTERNAL__PMPI_Type_extent (datatype, &tsize);
+	if(res != MPI_SUCCESS){return res;}
+
+	int low_comm_rank;
+	res = __INTERNAL__PMPI_Comm_rank( comms[0], &low_comm_rank);
+	if(res != MPI_SUCCESS){return res;}
+
+	int g_comm_rank;
+	res = __INTERNAL__PMPI_Comm_rank( comm, &g_comm_rank);
+	if(res != MPI_SUCCESS){return res;}
+
+	char tmp[RED_BUFF_STATIC];
+	char* recv_tmp = tmp;
+	void * did_alloc = NULL;
+	size_t msize = (tsize * count);
+	void * half_buff = tmp + msize;
+
+	if( (depth == 2) && (g_comm_rank == 0 ) )
+	{
+		recv_tmp = recvbuf;
+	}
+	else
+	{
+
+		if( (RED_BUFF_STATIC <=  (msize * 2)) && (low_comm_rank == 0)  )
+		{
+			recv_tmp = sctk_malloc( msize * 2  );
+			half_buff = recv_tmp + msize;
+			did_alloc = recv_tmp;
+			assume( recv_tmp != NULL );
+		}
+	
+	}
+
+	void * send_tmp = sendbuf;
+
+	int i = 0;
+	while( comms[i] != MPI_COMM_NULL )
+	{
+
+		int ir;
+		PMPI_Comm_rank( comms[i] , &ir );
+		//sctk_error("COMM %d[%d]", i, comms[i]);
+		//if( ir == 0 )
+		//	sctk_error("REDUCE %p => %p", send_tmp, recv_tmp);
+		
+		res = __INTERNAL__PMPI_Reduce( send_tmp, recv_tmp, count, datatype, op, root, comms[i] );
+		if(res != MPI_SUCCESS){return res;}
+
+		/* Is next comm the last ? */
+		if( (comms[i+2] == MPI_COMM_NULL) && ( g_comm_rank == root ) )
+		{
+			sctk_nodebug("LAST");
+			send_tmp = recv_tmp;
+			recv_tmp = recvbuf;
+		}
+		else if( i == 0 )
+		{
+			sctk_nodebug("FIRST");
+			send_tmp = recv_tmp;
+			recv_tmp = half_buff;
+		}
+		else
+		{
+			sctk_nodebug("SWAP");
+			char * tmp = recv_tmp;
+			recv_tmp = send_tmp;
+			send_tmp = tmp;
+		}
+
+		i++;
+	}
+
+
+
+
+	if( did_alloc )
+	{
+		sctk_free( did_alloc );
+	}
+
+
+	return MPI_SUCCESS;
+}
+
+
+
 
 static int
 __INTERNAL__PMPI_Op_create (MPI_User_function * function, int commute,
@@ -7947,9 +10190,12 @@ __INTERNAL__PMPI_Allreduce_intra (void *sendbuf, void *recvbuf, int count,
 	mpi_op = sctk_convert_to_mpc_op (op);
 	mpc_op = mpi_op->op;
 	
-	res = __INTERNAL__PMPI_Reduce (sendbuf, recvbuf, count, datatype, 
+	
+	res = __INTERNAL__PMPI_Reduce (sendbuf, recvbuf, count, datatype,
 	op, 0, comm);
 	if(res != MPI_SUCCESS){return res;}
+	
+
 	res = __INTERNAL__PMPI_Bcast (recvbuf, count, datatype, 0, comm);
 	if(res != MPI_SUCCESS){return res;}
 	return res;
@@ -8149,6 +10395,7 @@ __INTERNAL__PMPI_Allreduce_inter (void *sendbuf, void *recvbuf, int count,
 		op, root, comm);
 		if(res != MPI_SUCCESS){return res;}
 
+
 		root = 0;
 		res = __INTERNAL__PMPI_Reduce(sendbuf, recvbuf, count, datatype, 
 		op, root, comm);
@@ -8166,6 +10413,7 @@ __INTERNAL__PMPI_Allreduce_inter (void *sendbuf, void *recvbuf, int count,
 		op, root, comm);
 		if(res != MPI_SUCCESS){return res;}
 	}
+	
 	
 	res = __INTERNAL__PMPI_Bcast(recvbuf, count, datatype, 0, 
 	sctk_get_local_comm_id(comm));
@@ -9699,13 +11947,54 @@ __INTERNAL__PMPI_Group_free (MPI_Group * mpi_group)
 static int
 __INTERNAL__PMPI_Comm_size (MPI_Comm comm, int *size)
 {
-  return PMPC_Comm_size (comm, size);
+  static __thread int last_comm = -1;
+  static __thread int last_rank = -1;
+  static __thread int last_size = -1;
+
+
+  if( last_comm == comm )
+  {
+  	if( last_rank == sctk_get_task_rank() )
+	{
+		*size = last_size;
+		return MPI_SUCCESS;
+	}
+  }
+
+  int ret =  PMPC_Comm_size (comm, size);
+
+  last_rank = sctk_get_task_rank();
+  last_comm = comm;
+  last_size = *size;
+
+  return ret;
 }
 
 static int
 __INTERNAL__PMPI_Comm_rank (MPI_Comm comm, int *rank)
 {
-  return PMPC_Comm_rank (comm, rank);
+  static __thread int last_comm = -1;
+  static __thread int last_rank = -1;
+  static __thread int last_crank = -1;
+
+
+  if( last_comm == comm )
+  {
+  	if( last_rank == sctk_get_task_rank() )
+	{
+		*rank = last_crank;
+		return MPI_SUCCESS;
+	}
+  }
+
+
+  int ret = PMPC_Comm_rank (comm, rank);
+
+  last_rank = sctk_get_task_rank();
+  last_comm = comm;
+  last_crank = *rank;
+
+  return ret;
 }
 
 static int
@@ -9824,44 +12113,347 @@ __INTERNAL__PMPI_Comm_create_from_intercomm (MPI_Comm comm, MPI_Group group,
   return PMPC_Comm_create_from_intercomm (comm, __sctk_convert_mpc_group (group), newcomm);
 }
 
-static int
-__INTERNAL__PMPI_Comm_split (MPI_Comm comm, int color, int key,
-			     MPI_Comm * newcomm)
+static inline int sctk_MPI_split_on_roots( MPI_Comm comm, int chosen_arity,  MPI_Comm * leaf_comm, MPI_Comm * root_comm )
 {
-  int res;
-  res = PMPC_Comm_split (comm, color, key, newcomm);
+	int size, rank;
+	PMPI_Comm_size( comm, &size );
+	PMPI_Comm_rank( comm, &rank );
 
-  if (res != MPC_SUCCESS)
-    return res;
+	/* First check the split threshold */
+	if( size == 1 )
+	{
+		*leaf_comm = MPI_COMM_NULL;
+		*root_comm = MPI_COMM_NULL;
+		return 0;
+	}
 
-  mpc_mpi_per_communicator_t *tmp;
-  mpi_topology_per_comm_t *topo_new;
 
-  tmp = mpc_mpc_get_per_comm_data(*newcomm);
+	/* Generate Leaf Comm */
+	PMPC_Comm_split (comm, rank/chosen_arity, rank, leaf_comm);
 
-  if (tmp) {
-    topo_new = &(tmp->topo);
-    topo_new->type = 0;
-  }
+	int leaf_comm_rank;
+	PMPI_Comm_rank( *leaf_comm, &leaf_comm_rank );
 
-  return res;
+	int root_color = MPI_UNDEFINED;
+
+	if( leaf_comm_rank == 0 )
+	{
+		root_color = 1;
+	}	
+
+
+	/* Generate Root Comm */
+	PMPC_Comm_split (comm, root_color, rank, root_comm);
+
+
+	return MPI_SUCCESS;
 }
 
-static int
-__INTERNAL__PMPI_Comm_free (MPI_Comm * comm)
+
+
+
+
+static inline int sctk_MPI_gen_localized_comms( MPI_Comm comm )
 {
-  int res;
-  res = SCTK__MPI_Attr_clean_communicator (*comm);
-  if (res != MPI_SUCCESS)
-    {
-      return res;
-    }
-  SCTK__MPI_Comm_communicator_free (*comm);
-  if (res != MPI_SUCCESS)
-    {
-      return res;
-    }
-  return PMPC_Comm_free (comm);
+
+	mpc_mpi_per_communicator_t* per_comm = mpc_mpc_get_per_comm_data(comm);
+	MPI_Comm * comms = per_comm->topo_comms;
+
+	int size;
+	PMPI_Comm_size( comm, &size );
+
+	if( size < 4 )
+	{
+		/* No need to break the critical path */
+		per_comm->topo_comms_depth = 0;
+		per_comm->topo_comms_arity = 0;
+		per_comm->topo_comms[0] = MPI_COMM_NULL;
+		return 0;
+	}
+
+
+	int chosen_arity = sctk_runtime_config_get()->modules.collectives_shm.topo_tree_arity;
+
+	if( chosen_arity == -1 )
+	{
+		/* This is the AUTO mode */
+		int local_tasks = sctk_get_local_task_number();
+		int numa_count = sctk_get_numa_node_number();
+	
+		if( 2 <= numa_count )
+		{
+			if( (local_tasks%numa_count) == 0 )
+			{
+				/* It is divisible lets split */
+				chosen_arity = local_tasks / numa_count;
+			}
+			else
+			{
+				chosen_arity = local_tasks;
+			}
+		}
+		else
+		{
+			/* Use process ganularity */
+			chosen_arity = local_tasks;
+		}
+
+		if( 8 <= chosen_arity )
+		{
+			if( (chosen_arity % 8) == 0 )
+			{
+				chosen_arity = 8;
+			}
+			else if( (chosen_arity%4) == 0 )
+			{
+				chosen_arity = 4;
+			}
+		}
+
+		if( chosen_arity == 1 )
+		{
+			/* It must be at least 2 */
+			chosen_arity = 2;
+		}
+
+		sctk_info("Topological Comm arity is %d", chosen_arity);
+	}
+	else
+	{
+		if( chosen_arity <= 1 )
+		{
+			sctk_error("Topological tree arity must be at least 2 (not %d) defaulting to 2", chosen_arity);
+			chosen_arity = 2;
+		}
+
+	}
+
+	per_comm->topo_comms_arity =  chosen_arity;
+
+	/* Adapt arity with size */
+	double capacity = pow( MAX_TOPO_DEPTH , chosen_arity );
+	
+	while( capacity < size )
+	{
+		chosen_arity+=2;
+		capacity = pow( MAX_TOPO_DEPTH , chosen_arity ); 
+	}
+
+	MPI_Comm leaf_comm;
+	MPI_Comm root_comm;
+	sctk_MPI_split_on_roots( comm, chosen_arity,  &leaf_comm, &root_comm );
+
+	per_comm->topo_comms_depth=0;
+
+	/* For the first split we keep the leaf comm */
+	if( leaf_comm == MPI_COMM_NULL )
+	{
+		/* Too small no need to split */
+		per_comm->topo_comms[0] = MPI_COMM_NULL;
+		per_comm->topo_comms_depth = 0;
+		return MPI_SUCCESS;
+	}
+	else
+	{
+		comms[0] = leaf_comm;
+		per_comm->topo_comms_depth++;
+	}
+
+	if( root_comm == MPI_COMM_NULL )
+	{
+		goto TOPO_COMM_END;
+	}
+
+
+	MPI_Comm target_comm;
+
+	/* Now Generate root comms */
+	do
+	{
+		target_comm = root_comm;
+	
+		int target_size;
+		PMPI_Comm_size(target_comm, &target_size);
+	
+		if( target_size < chosen_arity )
+		{
+			if( target_size != 1 )
+			{
+				comms[per_comm->topo_comms_depth] = target_comm;
+				per_comm->topo_comms_depth++;
+			}
+			else
+			{
+				PMPC_Comm_free( &target_comm );
+			}
+			goto TOPO_COMM_END;
+		}
+
+		sctk_MPI_split_on_roots( target_comm, chosen_arity,  &leaf_comm, &root_comm );
+		
+
+
+		if( leaf_comm != MPI_COMM_NULL )
+		{
+			comms[per_comm->topo_comms_depth] = leaf_comm;
+			per_comm->topo_comms_depth++;
+			PMPC_Comm_free( &target_comm );
+		}
+
+
+	}while( root_comm != MPI_COMM_NULL );
+
+	PMPC_Comm_free( &target_comm );
+
+TOPO_COMM_END:
+	/* End the communicator list with a NULL */
+	comms[per_comm->topo_comms_depth] = MPI_COMM_NULL;
+	per_comm->topo_comms_depth++;
+
+	return MPI_SUCCESS;
+}
+
+
+
+static int __INTERNAL__PMPI_Comm_split (MPI_Comm comm, int color, int key, MPI_Comm * newcomm)
+{
+	int res;
+	res = PMPC_Comm_split (comm, color, key, newcomm);
+
+
+	if( *newcomm != MPI_COMM_NULL )
+	{
+		sctk_MPI_gen_localized_comms( *newcomm );
+
+		mpc_mpi_per_communicator_t* per_comm = mpc_mpc_get_per_comm_data(*newcomm);
+		MPI_Comm * comms = per_comm->topo_comms;
+
+		int i,j, size, rank;
+		PMPI_Comm_size(*newcomm, &size);
+		PMPI_Comm_rank(*newcomm, &rank);
+
+#if 0
+		for( j = 0 ; j < size ; j++)
+		{
+			PMPI_Barrier(*newcomm);
+
+			if( rank == j )
+			{
+				sctk_warning("Rank %d === %d ", rank, per_comm->topo_comms_depth);
+				for( i = 0 ; i < per_comm->topo_comms_depth; i++)
+				{
+					int lcr, lcs;
+					PMPI_Comm_size(comms[i], &lcs);
+					PMPI_Comm_rank(comms[i], &lcr);
+
+					if( comms[i] != MPI_COMM_NULL )
+						sctk_warning("\t%d => %d[ %d / %d ]", i, comms[i], lcr, lcs);
+					else
+						sctk_warning("\tNULL");
+				}
+			}
+		}
+
+#endif
+
+
+		int topo_tree_dump = sctk_runtime_config_get()->modules.collectives_shm.topo_tree_dump;
+
+		if( topo_tree_dump )
+		{
+
+			char fname[150];
+			sprintf( fname, "topo%d.cdat", size );
+			FILE * out = fopen(fname, "a");
+
+
+			if( rank == 0 )
+			{
+				sctk_warning("Dumping topological comm layout in '%s'", fname );
+				truncate(fname, 0);
+				fprintf(out, "Digraph G{\n");
+				fflush(out);
+			}
+
+			PMPI_Barrier(*newcomm);
+
+			for( j = 0 ; j < size ; j++)
+			{
+
+				if( rank == j )
+				{
+					for( i = 0 ; i < per_comm->topo_comms_depth; i++)
+					{
+						if( comms[i] == MPI_COMM_NULL)
+							continue;
+
+						int lcr, lcs;
+						PMPI_Comm_size(comms[i], &lcs);
+						PMPI_Comm_rank(comms[i], &lcr);
+
+
+						fprintf(out, "R%di%d [label=\"[Rank %d] %d in %d\"]\n",  lcr, comms[i], rank, lcr, comms[i]);
+						if( comms[i] != MPI_COMM_NULL )
+						{
+							fprintf(out,"%d -> R%di%d\n", comms[i], lcr, comms[i]);
+							if( 0 < i )
+							{
+								fprintf(out, "R%di%d -> %d\n", lcr, comms[i], comms[i-1]);
+							}
+						}
+						fflush(out);
+					}
+				}
+
+				PMPI_Barrier(*newcomm);
+			}
+
+
+			if(rank == 0 )
+			{
+				fprintf(out, "\n}\n");
+			}
+
+			fclose(out);
+
+		}
+
+
+	}
+	return res;
+}
+
+static int __INTERNAL__PMPI_Comm_free (MPI_Comm * comm)
+{
+
+	mpc_mpi_per_communicator_t* per_comm = mpc_mpc_get_per_comm_data(*comm);
+	MPI_Comm * comms = per_comm->topo_comms;
+	
+	/* Deactivate hierarchical barrier */
+	per_comm->topo_comms_depth = 0;
+
+	int i = 0;
+	while( comms[i] != MPI_COMM_NULL )
+	{
+		__INTERNAL__PMPI_Comm_free(&comms[i]);
+		i++;
+	}
+	
+	int res;
+	res = SCTK__MPI_Attr_clean_communicator (*comm);
+	if (res != MPI_SUCCESS)
+	{
+		return res;
+	}
+	SCTK__MPI_Comm_communicator_free (*comm);
+	if (res != MPI_SUCCESS)
+	{
+		return res;
+	}
+
+
+
+	return PMPC_Comm_free (comm);
 }
 
 static int
@@ -10447,10 +13039,6 @@ static int SCTK__MPI_Attr_communicator_dup (MPI_Comm prev , MPI_Comm newcomm)
 }
 
 
-static void __sctk_init_mpi_topo_per_comm (mpc_mpi_per_communicator_t* tmp){
-  tmp->topo.type = MPI_UNDEFINED;
-  sprintf (tmp->topo.names, "undefined");
-}
 
 static void __sctk_init_mpi_topo ()
 {
@@ -10521,6 +13109,8 @@ static int SCTK__MPI_Comm_communicator_free (MPI_Comm comm)
 		sctk_free (topo->data.graph.index);
 		sctk_free (topo->data.graph.edges);
 	}
+
+	topo->type = MPI_UNDEFINED;
 
 	sctk_spinlock_unlock (&(topo->lock));
 
@@ -11815,34 +14405,243 @@ __INTERNAL__PMPI_Init_thread (int *argc, char ***argv, int required,
   return res;
 }
 
-static int __INTERNAL__PMPI_Init(int *argc, char ***argv) {
-  int res;
-  int flag;
-  int flag_finalized;
-  __INTERNAL__PMPI_Initialized(&flag);
-  __INTERNAL__PMPI_Finalized(&flag_finalized);
-  if ((flag != 0) || (flag_finalized != 0)) {
-    MPI_ERROR_REPORT(MPI_COMM_WORLD, MPI_ERR_OTHER, "MPI_Init issue");
-  } else {
-    int rank;
-    sctk_spinlock_t lock = SCTK_SPINLOCK_INITIALIZER;
-    struct sctk_task_specific_s *task_specific;
-    mpc_per_communicator_t *per_communicator;
-    mpc_per_communicator_t *per_communicator_tmp;
-    res = PMPC_Init(argc, argv);
-    if (res != MPI_SUCCESS) {
-      return res;
-    }
-    is_initialized = 1;
 
-    task_specific = __MPC_get_task_specific();
-    task_specific->mpc_mpi_data = malloc(sizeof(struct mpc_mpi_data_s));
-    memset(task_specific->mpc_mpi_data, 0, sizeof(struct mpc_mpi_data_s));
-    task_specific->mpc_mpi_data->lock = lock;
-    task_specific->mpc_mpi_data->requests = NULL;
-    task_specific->mpc_mpi_data->groups = NULL;
-    task_specific->mpc_mpi_data->buffers = NULL;
-    task_specific->mpc_mpi_data->ops = NULL;
+
+union split_id
+{
+	int id;
+	struct field_s
+	{
+		int topo : 10;
+		int node : 22;
+	}field;
+};
+
+
+static int mpi_init_topological_communicators()
+{
+	int ret = 0;
+	union split_id split_id = {0};
+	int rank, size;
+	
+	struct sctk_task_specific_s * task_specific = __MPC_get_task_specific ();
+	struct MPI_Topological_comms * topo_comms = &task_specific->topo_comms;
+	
+	return MPI_SUCCESS;
+
+	PMPI_Comm_rank( MPI_COMM_WORLD, &rank );
+	PMPI_Comm_size( MPI_COMM_WORLD, &size );
+	
+	sctk_nodebug("RANK %d CORE %d SOCKET %d NUMA %d ISNUMA %d", rank, sctk_get_cpu(), sctk_topology_get_socket_id(), sctk_get_node(), sctk_is_numa_node());
+	
+	sctk_nodebug("SPLIT PROCESS");
+	
+	/* Process LEVEL */
+	split_id.field.topo = 0;
+	split_id.field.node = sctk_get_process_rank();
+	ret = PMPI_Comm_split( MPI_COMM_WORLD, split_id.id, rank, &topo_comms->per_process_comm );
+	
+	/* Process GRP */
+
+	if( sctk_get_process_number() == 1 )
+	{
+		sctk_nodebug("SPLIT PROCESS (SINGLE)");
+		/* Single process */
+		topo_comms->per_process_grp = topo_comms->per_process_comm;
+	}
+	else
+	{
+		sctk_nodebug("SPLIT PROCESS GRP");
+		int in_process_rank;
+		PMPI_Comm_rank( topo_comms->per_process_comm, &in_process_rank );
+		split_id.field.topo = 0;
+		split_id.field.node = in_process_rank;
+		ret = PMPI_Comm_split( MPI_COMM_WORLD, split_id.id, rank, &topo_comms->per_process_grp );	
+	}
+
+	/* Node LEVEL */
+	split_id.field.topo = 0;
+	split_id.field.node = sctk_get_node_rank();
+	ret = PMPI_Comm_split( MPI_COMM_WORLD, split_id.id, rank, &topo_comms->per_node_comm );
+	
+	/* Node GRP */
+
+	if( sctk_get_node_number() == 1 )
+	{
+		sctk_nodebug("SPLIT NODE (SINGLE)");
+		/* Single process */
+		topo_comms->per_node_grp = topo_comms->per_node_comm;
+	}
+	else
+	{
+		sctk_nodebug("SPLIT NODE GRP");
+		int in_node_rank;
+		PMPI_Comm_rank( topo_comms->per_node_comm, &in_node_rank );
+		split_id.field.topo = 0;
+		split_id.field.node = in_node_rank;
+		ret = PMPI_Comm_split( MPI_COMM_WORLD, split_id.id, rank, &topo_comms->per_node_grp );	
+	}
+
+	
+	/* NUMA Level */
+	int local_is_numa = sctk_is_numa_node();
+	topo_comms->has_numa = 0;
+	ret = PMPI_Allreduce( &local_is_numa, &topo_comms->has_numa, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD );
+	
+	if( topo_comms->has_numa )
+	{
+			sctk_nodebug("SPLIT NUMA");
+
+			/* We need to take numa in account we split process comm */
+			split_id.field.topo = sctk_get_numa_node( 1 );
+			split_id.field.node = sctk_get_node_rank();
+			ret = PMPI_Comm_split( MPI_COMM_WORLD, split_id.id, rank, &topo_comms->per_node_numa_comm );
+			
+			int numa_rank;
+			MPI_Comm_rank( topo_comms->per_node_numa_comm, &numa_rank );
+			
+			sctk_nodebug("SPLIT NUMA PAIRS %d", numa_rank);
+
+			/* Split for NUMA rank grp */
+			split_id.field.topo = numa_rank;
+			split_id.field.node = sctk_get_node_rank();
+			ret = PMPI_Comm_split( MPI_COMM_WORLD, split_id.id, rank, &topo_comms->per_node_numa_grp );
+	}
+	else
+	{
+		topo_comms->per_node_numa_comm = topo_comms->per_process_comm;
+		topo_comms->per_node_numa_grp = topo_comms->per_process_grp;
+	}
+
+
+	sctk_nodebug("SPLIT PROCESS SOCKET");
+	/*  we split per socket in the Process */
+	split_id.field.topo = sctk_topology_get_socket_id(1);
+	split_id.field.node = sctk_get_node_rank();
+	ret = PMPI_Comm_split( MPI_COMM_WORLD, split_id.id, rank, &topo_comms->per_node_socket_comm );	
+
+	int socket_rank;
+	MPI_Comm_rank( topo_comms->per_node_socket_comm, &socket_rank );
+	sctk_nodebug("SPLIT PROCESS SOCKET PAIRS");
+
+	/* Split for Process socket groups */
+	split_id.field.topo = socket_rank;
+	split_id.field.node = sctk_get_node_rank();
+
+	ret = PMPI_Comm_split( MPI_COMM_WORLD, split_id.id, rank, &topo_comms->per_node_socket_grp );
+	
+	
+#if 0
+	int i;
+	
+	for( i = 0 ; i < size ; i++ )
+	{
+		
+		PMPI_Barrier( MPI_COMM_WORLD );
+		if( rank == i )
+		{
+		
+			sctk_error("[%d]==========================", rank);
+			
+			int arank, asize;
+
+			PMPI_Comm_rank( topo_comms->per_node_comm, &arank );
+			PMPI_Comm_size( topo_comms->per_node_comm, &asize );
+			
+			sctk_error("Per node comm %d / %d", arank, asize);
+			
+			PMPI_Comm_rank( topo_comms->per_node_grp, &arank );
+			PMPI_Comm_size( topo_comms->per_node_grp, &asize );
+			
+			sctk_error("Per node GRP %d / %d", arank, asize);
+
+
+			PMPI_Comm_rank( topo_comms->per_process_comm, &arank );
+			PMPI_Comm_size( topo_comms->per_process_comm, &asize );
+			
+			sctk_error("Per process comm %d / %d", arank, asize);
+			
+			PMPI_Comm_rank( topo_comms->per_process_grp, &arank );
+			PMPI_Comm_size( topo_comms->per_process_grp, &asize );
+			
+			sctk_error("Per process GRP %d / %d", arank, asize);
+			
+			PMPI_Comm_rank( topo_comms->per_node_socket_comm, &arank );
+			PMPI_Comm_size( topo_comms->per_node_socket_comm, &asize );
+			
+			sctk_error("Per node SOCKET %d / %d", arank, asize);
+			
+			PMPI_Comm_rank( topo_comms->per_node_socket_grp, &arank );
+			PMPI_Comm_size( topo_comms->per_node_socket_grp, &asize );
+			
+			sctk_error("Per node SOCKET GRP %d / %d", arank, asize);
+		
+			if(  topo_comms->has_numa )
+			{
+	
+				PMPI_Comm_rank( topo_comms->per_node_numa_comm, &arank );
+				PMPI_Comm_size( topo_comms->per_node_numa_comm, &asize );
+				
+				sctk_error("Per node NUMA %d / %d", arank, asize);
+				
+				PMPI_Comm_rank( topo_comms->per_node_numa_grp, &arank );
+				PMPI_Comm_size( topo_comms->per_node_numa_grp, &asize );
+	
+				sctk_error("Per node NUMA %d / %d", arank, asize);
+				
+			}
+
+			sctk_error("===============================");
+			
+		}
+		
+	}
+
+
+
+#endif
+	
+	
+	
+}
+
+
+
+static int __INTERNAL__PMPI_Init (int *argc, char ***argv)
+{
+	int res;
+	int flag; 
+	int flag_finalized; 
+	__INTERNAL__PMPI_Initialized(&flag);
+	__INTERNAL__PMPI_Finalized(&flag_finalized);
+	if((flag != 0) || (flag_finalized != 0)){
+		MPI_ERROR_REPORT (MPI_COMM_WORLD, MPI_ERR_OTHER, "MPI_Init issue");
+	}
+	else
+	{
+        int rank;     
+
+	    sctk_spinlock_t lock = SCTK_SPINLOCK_INITIALIZER;
+		struct sctk_task_specific_s * task_specific;
+		mpc_per_communicator_t*per_communicator;
+		mpc_per_communicator_t*per_communicator_tmp;
+		
+		sctk_init_yield_as_overloaded();
+		
+		res = PMPC_Init (argc, argv);
+    if (res != MPI_SUCCESS) {
+			return res;
+		}
+		is_initialized = 1;
+
+		task_specific = __MPC_get_task_specific ();
+		task_specific->mpc_mpi_data = malloc(sizeof(struct mpc_mpi_data_s));
+		memset(task_specific->mpc_mpi_data,0,sizeof(struct mpc_mpi_data_s));
+		task_specific->mpc_mpi_data->lock = SCTK_SPINLOCK_INITIALIZER;
+		task_specific->mpc_mpi_data->requests = NULL;
+		task_specific->mpc_mpi_data->groups = NULL;
+		task_specific->mpc_mpi_data->buffers = NULL;
+		task_specific->mpc_mpi_data->ops = NULL;
     if (sctk_runtime_config_get()
             ->modules.progress_thread.use_progress_thread == 1) {
       task_specific->mpc_mpi_data->NBC_Pthread_handles = NULL;
@@ -11860,7 +14659,7 @@ static int __INTERNAL__PMPI_Init(int *argc, char ***argv) {
     __sctk_init_mpc_group();
     fortran_check_binds_resolve();
 
-    sctk_spinlock_lock(&(task_specific->per_communicator_lock));
+		sctk_spinlock_lock(&(task_specific->per_communicator_lock));
     HASH_ITER(hh, task_specific->per_communicator, per_communicator,
               per_communicator_tmp) {
       mpc_mpi_per_communicator_t *tmp;
@@ -11880,14 +14679,16 @@ static int __INTERNAL__PMPI_Init(int *argc, char ***argv) {
       tmp->max_number = 0;
       tmp->topo.lock = lock;
     }
-    sctk_spinlock_unlock(&(task_specific->per_communicator_lock));
+		sctk_spinlock_unlock(&(task_specific->per_communicator_lock));
 
     mpc_MPI_allocmem_pool_init();
 
-    MPI_APPNUM_VALUE = 0;
-    MPI_LASTUSEDCODE_VALUE = MPI_ERR_LASTCODE;
+		MPI_APPNUM_VALUE = 0;
+		MPI_LASTUSEDCODE_VALUE = MPI_ERR_LASTCODE;
     __INTERNAL__PMPI_Comm_size(MPI_COMM_WORLD, &MPI_UNIVERSE_SIZE_VALUE);
     __INTERNAL__PMPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+   mpi_init_topological_communicators();
     __INTERNAL__PMPI_Barrier(MPI_COMM_WORLD);
   }
   return res;
@@ -13451,12 +16252,12 @@ int PMPI_Pack(void *inbuf,
 	int res = MPI_ERR_INTERN;
 	mpi_check_comm(comm,comm);
 	mpi_check_type(datatype,comm);
-        if ((NULL == outbuf) || (NULL == position)) {
-          MPI_ERROR_REPORT(comm, MPI_ERR_ARG, "");
+	if ((NULL == outbuf) || (NULL == position) ) {
+	  MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"wrong outbuf or position");
         } else if (incount < 0) {
-          MPI_ERROR_REPORT(comm, MPI_ERR_COUNT, "");
+	  MPI_ERROR_REPORT(comm,MPI_ERR_COUNT,"wrong incount");
         } else if (outcount < 0) {
-          MPI_ERROR_REPORT(comm, MPI_ERR_ARG, "");
+	  MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"wrong outcount");
         } else if (incount == 0) {
           return MPI_SUCCESS;
         }
@@ -13479,12 +16280,12 @@ int PMPI_Unpack (void *inbuf,
 	int res = MPI_ERR_INTERN;
 	mpi_check_comm(comm,comm);
 	mpi_check_type(datatype,comm);
-	if ((NULL == outbuf) || (NULL == inbuf) || (NULL == position)) {
-	  MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
+	if ((NULL == inbuf) || (NULL == position)) {
+	  MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"wrong outbuff or position");
 	} else if ((outcount < 0) || (insize < 0)) {
-	  MPI_ERROR_REPORT(comm,MPI_ERR_COUNT,"");
+	  MPI_ERROR_REPORT(comm,MPI_ERR_COUNT,"wrong outcount insize");
 	} else if (datatype < 0) {
-	  MPI_ERROR_REPORT(comm,MPI_ERR_TYPE,"");
+	  MPI_ERROR_REPORT(comm,MPI_ERR_TYPE,"wrong datatype");
 	}
 	res = __INTERNAL__PMPI_Unpack (inbuf, insize, position, outbuf, outcount, datatype, comm);
   SCTK_MPI_CHECK_RETURN_VAL (res, comm);
@@ -13578,37 +16379,37 @@ int PMPI_Barrier (MPI_Comm comm)
 #endif
 	/* Profiling */
 	SCTK_PROFIL_START (MPI_Barrier);
-	
+
 	/* Error checking */
 	mpi_check_comm (comm, comm);
 
-        /* Internal */
-        if (sctk_new_scheduler_engine_enabled) {
-          sctk_thread_generic_scheduler_t *sched;
-          sched = &(sctk_thread_generic_self()->sched);
-          sched->th->attr.basic_priority +=
-              sctk_runtime_config_get()
-                  ->modules.scheduler.progress_basic_priority;
-          sched->th->attr.current_priority +=
-              sctk_runtime_config_get()
-                  ->modules.scheduler.progress_basic_priority;
-          unsigned int kind_mask_save = sctk_thread_generic_getkind_mask_self();
-          sctk_thread_generic_addkind_mask_self(KIND_MASK_PROGRESS_THREAD);
-          res = __INTERNAL__PMPI_Barrier(comm);
-          sched->th->attr.basic_priority -=
-              sctk_runtime_config_get()
-                  ->modules.scheduler.progress_basic_priority;
-          sched->th->attr.current_priority -=
-              sctk_runtime_config_get()
-                  ->modules.scheduler.progress_basic_priority;
-          sctk_thread_generic_setkind_mask_self(kind_mask_save);
-        } else {
-          res = __INTERNAL__PMPI_Barrier(comm);
-        }
+	/* Internal */
+	if (sctk_new_scheduler_engine_enabled) {
+		sctk_thread_generic_scheduler_t *sched;
+		sched = &(sctk_thread_generic_self()->sched);
+		sched->th->attr.basic_priority +=
+			sctk_runtime_config_get()
+			->modules.scheduler.progress_basic_priority;
+		sched->th->attr.current_priority +=
+			sctk_runtime_config_get()
+			->modules.scheduler.progress_basic_priority;
+		unsigned int kind_mask_save = sctk_thread_generic_getkind_mask_self();
+		sctk_thread_generic_addkind_mask_self(KIND_MASK_PROGRESS_THREAD);
+		res = __INTERNAL__PMPI_Barrier_hier(comm);
+		sched->th->attr.basic_priority -=
+			sctk_runtime_config_get()
+			->modules.scheduler.progress_basic_priority;
+		sched->th->attr.current_priority -=
+			sctk_runtime_config_get()
+			->modules.scheduler.progress_basic_priority;
+		sctk_thread_generic_setkind_mask_self(kind_mask_save);
+	} else {
+		res = __INTERNAL__PMPI_Barrier_hier(comm);
+	}
 
-        /* Profiling */
-        SCTK_PROFIL_END(MPI_Barrier);
-        SCTK_MPI_CHECK_RETURN_VAL(res, comm);
+	/* Profiling */
+	SCTK_PROFIL_END(MPI_Barrier);
+	SCTK_MPI_CHECK_RETURN_VAL(res, comm);
 }
 
 int PMPI_Bcast (void *buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm)
@@ -13650,7 +16451,7 @@ int PMPI_Bcast (void *buffer, int count, MPI_Datatype datatype, int root, MPI_Co
                   ->modules.scheduler.progress_basic_priority;
           unsigned int kind_mask_save = sctk_thread_generic_getkind_mask_self();
           sctk_thread_generic_addkind_mask_self(KIND_MASK_PROGRESS_THREAD);
-          res = __INTERNAL__PMPI_Bcast(buffer, count, datatype, root, comm);
+          res = __INTERNAL__PMPI_Bcast_hier(buffer, count, datatype, root, comm);
           sched->th->attr.basic_priority -=
               sctk_runtime_config_get()
                   ->modules.scheduler.progress_basic_priority;
@@ -13659,7 +16460,7 @@ int PMPI_Bcast (void *buffer, int count, MPI_Datatype datatype, int root, MPI_Co
                   ->modules.scheduler.progress_basic_priority;
           sctk_thread_generic_setkind_mask_self(kind_mask_save);
         } else {
-          res = __INTERNAL__PMPI_Bcast(buffer, count, datatype, root, comm);
+          res = __INTERNAL__PMPI_Bcast_hier(buffer, count, datatype, root, comm);
         }
 
         /* Profiling */
@@ -13674,6 +16475,7 @@ PMPI_Gather (void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 {
 	int res = MPI_ERR_INTERN;
 	int size, rank;
+	
 	
 #ifndef ENABLE_COLLECTIVES_ON_INTERCOMM
 	if(sctk_is_inter_comm (comm)){
@@ -13724,11 +16526,6 @@ PMPI_Gather (void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 		return MPI_SUCCESS;
 	}
 	
-	if(recvbuf != MPI_BOTTOM){
-	  if(recvbuf == sendbuf){
-	    MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
-	  }
-	}
 		
 	/* Internal */
         if (sctk_new_scheduler_engine_enabled) {
@@ -14638,7 +17435,7 @@ int PMPI_Reduce (void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
 {
 	int res = MPI_ERR_INTERN;
 	int size, rank;
-	
+
 #ifndef ENABLE_COLLECTIVES_ON_INTERCOMM
 	if(sctk_is_inter_comm (comm)){
 		MPI_ERROR_REPORT(comm,MPI_ERR_COMM,"");
@@ -14646,14 +17443,14 @@ int PMPI_Reduce (void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
 #endif
 	/* Profiling */
 	SCTK_PROFIL_START (MPI_Reduce);
-	
+
 	/* Error checking */
 	mpi_check_comm (comm, comm);
 	res = __INTERNAL__PMPI_Comm_size (comm, &size);
 	if(res != MPI_SUCCESS){return res;}
 	res = __INTERNAL__PMPI_Comm_rank (comm, &rank);
 	if(res != MPI_SUCCESS){return res;}
-	
+
 	mpi_check_root(root,size,comm);
 	mpi_check_count (count, comm);
 	mpi_check_type (datatype, comm);
@@ -14676,46 +17473,53 @@ int PMPI_Reduce (void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
 		} else {
 			mpi_check_buf (sendbuf, comm);
 		}
-    }
+	}
 
 	if( (rank == root && ((MPI_IN_PLACE == recvbuf)
-	|| (sendbuf == recvbuf))) ) 
+					|| (sendbuf == recvbuf))) ) 
 	{
 		MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
 	}
+
 	if (0 == count) {
 		return MPI_SUCCESS;
 	}
-	
-	/* Internal */
-        if (sctk_new_scheduler_engine_enabled) {
-          sctk_thread_generic_scheduler_t *sched;
-          sched = &(sctk_thread_generic_self()->sched);
-          sched->th->attr.basic_priority +=
-              sctk_runtime_config_get()
-                  ->modules.scheduler.progress_basic_priority;
-          sched->th->attr.current_priority +=
-              sctk_runtime_config_get()
-                  ->modules.scheduler.progress_basic_priority;
-          unsigned int kind_mask_save = sctk_thread_generic_getkind_mask_self();
-          sctk_thread_generic_addkind_mask_self(KIND_MASK_PROGRESS_THREAD);
-          res = __INTERNAL__PMPI_Reduce(sendbuf, recvbuf, count, datatype, op,
-                                        root, comm);
-          sched->th->attr.basic_priority -=
-              sctk_runtime_config_get()
-                  ->modules.scheduler.progress_basic_priority;
-          sched->th->attr.current_priority -=
-              sctk_runtime_config_get()
-                  ->modules.scheduler.progress_basic_priority;
-          sctk_thread_generic_setkind_mask_self(kind_mask_save);
-        } else {
-          res = __INTERNAL__PMPI_Reduce(sendbuf, recvbuf, count, datatype, op,
-                                        root, comm);
-        }
 
-        /* Profiling */
-        SCTK_PROFIL_END(MPI_Reduce);
-        SCTK_MPI_CHECK_RETURN_VAL(res, comm);
+	/* Internal */
+	if (sctk_new_scheduler_engine_enabled)
+	{
+		sctk_thread_generic_scheduler_t *sched;
+		sched = &(sctk_thread_generic_self()->sched);
+		sched->th->attr.basic_priority +=
+			sctk_runtime_config_get()
+			->modules.scheduler.progress_basic_priority;
+		sched->th->attr.current_priority +=
+			sctk_runtime_config_get()
+			->modules.scheduler.progress_basic_priority;
+		unsigned int kind_mask_save = sctk_thread_generic_getkind_mask_self();
+		sctk_thread_generic_addkind_mask_self(KIND_MASK_PROGRESS_THREAD);
+
+		res = __INTERNAL__PMPI_Reduce_hier(sendbuf, recvbuf, count, datatype, op,
+				root, comm);
+
+		sched->th->attr.basic_priority -=
+			sctk_runtime_config_get()
+			->modules.scheduler.progress_basic_priority;
+		sched->th->attr.current_priority -=
+			sctk_runtime_config_get()
+			->modules.scheduler.progress_basic_priority;
+		sctk_thread_generic_setkind_mask_self(kind_mask_save);
+	}
+	else
+	{
+
+		res = __INTERNAL__PMPI_Reduce_hier(sendbuf, recvbuf, count, datatype, op,
+				root, comm);
+	}
+
+	/* Profiling */
+	SCTK_PROFIL_END(MPI_Reduce);
+	SCTK_MPI_CHECK_RETURN_VAL(res, comm);
 }
 
 int
@@ -16884,20 +19688,32 @@ int PMPI_Win_get_name(MPI_Win win, char *name, int *len) {
 
 int PMPI_Win_create(void *base, MPI_Aint size, int disp_unit, MPI_Info info,
                     MPI_Comm comm, MPI_Win *win) {
+  /* MPI Windows need more progress
+   * we must give up on agressive collectives */
+  __do_yield |= 1;
   return mpc_MPI_Win_create(base, size, disp_unit, info, comm, win);
 }
 
 int PMPI_Win_allocate(MPI_Aint size, int disp_unit, MPI_Info info,
-                      MPI_Comm comm, void *base, MPI_Win *win) {
-  return mpc_MPI_Win_allocate(size, disp_unit, info, comm, base, win);
+		MPI_Comm comm, void *base, MPI_Win *win) {
+	/* MPI Windows need more progress
+	 * we must give up on agressive collectives */
+	__do_yield |= 1;
+	return mpc_MPI_Win_allocate(size, disp_unit, info, comm, base, win);
 }
 
 int PMPI_Win_allocate_shared(MPI_Aint size, int disp_unit, MPI_Info info,
                              MPI_Comm comm, void *base, MPI_Win *win) {
+  /* MPI Windows need more progress
+   * we must give up on agressive collectives */
+  __do_yield |= 1;
   return mpc_MPI_Win_allocate_shared(size, disp_unit, info, comm, base, win);
 }
 
 int PMPI_Win_create_dynamic(MPI_Info info, MPI_Comm comm, MPI_Win *win) {
+  /* MPI Windows need more progress
+   * we must give up on agressive collectives */
+  __do_yield |= 1;
   return mpc_MPI_Win_create_dynamic(info, comm, win);
 }
 

@@ -29,6 +29,7 @@
 #include "sctk_topology.h"
 #include "sctk.h"
 #include "sctk_pmi.h" 
+#include "sctk_tls.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -47,10 +48,30 @@ static inline int sctk_get_task_rank (void)
   return sctk_process_rank;
 #endif
 
-  if (!sctk_thread_data_get())
-    return -1;
+	/* __mpc_task_rank is a manually switched
+	 * TLS entry. It is initialized at -2,
+	 * meaning that if we have this value
+	 * the request to the actual rank has
+	 * not been made. However, if different
+	 * it contains the task rank */
 
-  return (int)(sctk_thread_data_get()->task_id);
+	int ret = __mpc_task_rank;
+	
+	/* Was it initialized ? Yes then we are done */
+	if( ret != -2 )
+		return ret;
+
+	sctk_thread_data_t * data = sctk_thread_data_get();
+
+  	if (!data)
+    	return -1;
+
+	ret = (int) (data->task_id);
+
+	/* Save for next call */
+	__mpc_task_rank = ret;
+
+	return ret;
 #endif
 }
 
@@ -100,12 +121,26 @@ static inline int sctk_get_processor_rank (void)
 
 static inline int sctk_get_processor_number (void)
 {
-	return sctk_get_cpu_number();
+	static int ret = -1;
+	
+	if( ret == -1 )
+	{
+		ret = sctk_get_cpu_number();
+	}
+	
+	return ret;
 }
 
 static inline int sctk_get_core_number (void)
 {
-	return sctk_get_pu_number();
+	static int ret = -1;
+	
+	if( ret == -1 )
+	{
+		ret = sctk_get_pu_number();
+	}
+	
+	return ret;
 }
 
 static inline int sctk_get_process_rank (void)

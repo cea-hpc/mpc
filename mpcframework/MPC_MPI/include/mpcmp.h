@@ -364,6 +364,13 @@ MPC_CREATE_INTERN_FUNC (MAXLOC);
 
 /* for comm_split method */
 #define MPC_COMM_TYPE_SHARED 1
+#define MPC_COMM_TYPE_SHARED_TR 2
+#define MPC_COMM_TYPE_SOCKET 3
+#define MPC_COMM_TYPE_SOCKET_TR 4
+#define MPC_COMM_TYPE_NUMA 5
+#define MPC_COMM_TYPE_NUMA_TR 6
+#define MPC_COMM_TYPE_MPC_PROCESS 7
+#define MPC_COMM_TYPE_MPC_PROCESS_TR 8
 
 /* BE VERY CAREFUL HERE /!\/!\/!\/!\/!\/!\/!\/!\
  *  You have to note that these types

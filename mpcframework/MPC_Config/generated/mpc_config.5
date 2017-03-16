@@ -115,6 +115,10 @@ See type launcher.
 Options for MPC Debugger
 .br
 See type debugger.
+.It Cm collectives_shm
+Shared Memory Collectives for MPC
+.br
+See type collectives_shm.
 .It Cm collectives_intra
 Collectives intracom MPI
 .br
@@ -360,6 +364,69 @@ Print colored text in terminal
 Type is int. Default value is 1024. 
 .Pp max_filename_size
 
+.It Cm mpc_bt_sig
+Type is int. Default value is 1. 
+.Pp mpc_bt_sig
+Should MPC capture common signals also connected to the MPC_BT_SIG environment variable which supersedes the config
+.El
+.Sh ENTRIES OF TYPE collectives_shm
+Shared Memory Collectives for MPC
+.Pp
+It support parameters :
+.Pp
+.Bl -tag -width Ds
+.It Cm barrier_intra_shm
+Type is function pointer. Default value is __INTERNAL__PMPI_Barrier_intra_shm. 
+.Pp barrier_intra_shm
+MPI_Barrier intracom algorithm on shared communicators
+.It Cm bcast_intra_shm
+Type is function pointer. Default value is __INTERNAL__PMPI_Bcast_intra_shm. 
+.Pp bcast_intra_shm
+Type of MPI_Bcast intracom algorithm on shared communicators
+.It Cm alltoallv_intra_shm
+Type is function pointer. Default value is __INTERNAL__PMPI_Alltoallv_intra_shm. 
+.Pp alltoallv_intra_shm
+Alltoallv intracom algorithm
+.It Cm gatherv_intra_shm
+Type is function pointer. Default value is __INTERNAL__PMPI_Gatherv_intra_shm. 
+.Pp gatherv_intra_shm
+MPI_Gatherv intracom algorithm for shared communicators
+.It Cm scatterv_intra_shm
+Type is function pointer. Default value is __INTERNAL__PMPI_Scatterv_intra_shm. 
+.Pp scatterv_intra_shm
+MPI_Scatterv intracom algorithm on shared communicators
+.It Cm reduce_intra_shm
+Type is function pointer. Default value is __INTERNAL__PMPI_Reduce_shm. 
+.Pp reduce_intra_shm
+MPI_Reduce intracom shared-mem algorithm
+.It Cm topo_tree_arity
+Type is int. Default value is -1. 
+.Pp topo_tree_arity
+Arrity being used to build topological communicators  '-1' means auto-compute to match processes and NUMA
+.It Cm topo_tree_dump
+Type is bool. Default value is false. 
+.Pp topo_tree_dump
+Dump topological comm tree in DOT (fname topoN.cdat) with N the communicator size
+.It Cm coll_force_nocommute
+Type is bool. Default value is false. 
+.Pp coll_force_nocommute
+Force the use of deterministic algorithms
+.It Cm reduce_pipelined_blocks
+Type is int. Default value is 16. 
+.Pp reduce_pipelined_blocks
+Number of blocks for pipelined Reduce
+.It Cm reduce_pipelined_tresh
+Type is size. Default value is 1KB. 
+.Pp reduce_pipelined_tresh
+Size required to rely on pipelined reduce
+.It Cm reduce_interleave
+Type is int. Default value is 8. 
+.Pp reduce_interleave
+Number of reduce slots to allocate (required to be power of 2)
+.It Cm bcast_interleave
+Type is int. Default value is 8. 
+.Pp bcast_interleave
+Number of bcast slots to allocate (required to be power of 2)
 .El
 .Sh ENTRIES OF TYPE collectives_intra
 Collectives intracom MPI

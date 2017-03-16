@@ -23,9 +23,275 @@
 #define __SCTK_COMMUNICATOR_H_
 
 #include <sctk_types.h>
+#include <sctk_atomics.h>
+#include <sctk_spinlock.h>
+
+#include "sctk_runtime_config.h"
 
 /******************************** STRUCTURE *********************************/
 struct sctk_internal_collectives_struct_s;
+
+struct shared_mem_barrier_sig
+{
+	sctk_atomics_ptr * sig_points;
+	volatile int * tollgate;
+	sctk_atomics_int fare;
+	sctk_atomics_int counter;
+};
+
+int sctk_shared_mem_barrier_sig_init( struct shared_mem_barrier_sig * shmb, int nb_task );
+int sctk_shared_mem_barrier_sig_release( struct shared_mem_barrier_sig * shmb );
+
+struct shared_mem_barrier
+{
+	sctk_atomics_int counter;
+	sctk_atomics_int phase;
+};
+
+int sctk_shared_mem_barrier_init( struct shared_mem_barrier * shmb, int nb_task );
+int sctk_shared_mem_barrier_release( struct shared_mem_barrier * shmb );
+
+#define SHM_COLL_BUFF_MAX_SIZE 1024
+
+union shared_mem_buffer
+{
+	float f[SHM_COLL_BUFF_MAX_SIZE];
+	int i[SHM_COLL_BUFF_MAX_SIZE];
+	double d[SHM_COLL_BUFF_MAX_SIZE];
+	char c[SHM_COLL_BUFF_MAX_SIZE];
+};
+
+struct shared_mem_reduce
+{
+	volatile int * tollgate;
+	sctk_atomics_int fare;
+	sctk_spinlock_t *buff_lock;
+	sctk_atomics_int owner;
+	sctk_atomics_int left_to_push;
+	void * target_buff;
+	union shared_mem_buffer * buffer;
+	int pipelined_blocks;
+};
+
+int sctk_shared_mem_reduce_init( struct shared_mem_reduce * shmr, int nb_task );
+int sctk_shared_mem_reduce_release( struct shared_mem_reduce * shmr );
+
+
+struct shared_mem_bcast
+{
+	sctk_atomics_int owner;
+	sctk_atomics_int left_to_pop;
+
+	volatile int * tollgate;
+	sctk_atomics_int fare;
+
+	union shared_mem_buffer buffer;
+
+	sctk_atomics_ptr to_free;
+	void * target_buff;
+	int scount;
+	size_t stype_size;
+	int root_in_buff;
+};
+
+int sctk_shared_mem_bcast_init( struct shared_mem_bcast * shmb, int nb_task );
+int sctk_shared_mem_bcast_release( struct shared_mem_bcast * shmb );
+
+struct shared_mem_gatherv
+{
+	sctk_atomics_int owner;
+	sctk_atomics_int left_to_push;
+
+	volatile int * tollgate;
+	sctk_atomics_int fare;
+
+	/* Leaf infos */
+	sctk_atomics_ptr *src_buffs;
+
+	/* Root infos */
+	void * target_buff;
+	int * counts;
+	int * send_count;
+	size_t * send_type_size;
+	int * disps;
+	size_t rtype_size;
+	int rcount;
+	int let_me_unpack;
+};
+
+
+int sctk_shared_mem_gatherv_init( struct shared_mem_gatherv * shmgv, int nb_task );
+int sctk_shared_mem_gatherv_release( struct shared_mem_gatherv * shmgv );
+
+struct shared_mem_scatterv
+{
+	sctk_atomics_int owner;
+	sctk_atomics_int left_to_pop;
+
+	volatile int * tollgate;
+	sctk_atomics_int fare;
+
+	/* Root infos */
+	sctk_atomics_ptr *src_buffs;
+	int was_packed;
+	size_t stype_size;
+	int * counts;
+	int * disps;
+};
+
+
+int sctk_shared_mem_scatterv_init( struct shared_mem_scatterv * shmgv, int nb_task );
+int sctk_shared_mem_scatterv_release( struct shared_mem_scatterv * shmgv );
+
+
+struct sctk_shared_mem_a2a_infos
+{
+	size_t stype_size;
+	void * source_buff;
+	void ** packed_buff;
+	int * disps;
+	int * counts;
+};
+
+
+struct shared_mem_a2a
+{
+	struct sctk_shared_mem_a2a_infos ** infos;
+	volatile int has_in_place;
+};
+
+int sctk_shared_mem_a2a_init( struct shared_mem_a2a * shmaa, int nb_task );
+int sctk_shared_mem_a2a_release( struct shared_mem_a2a * shmaa );
+
+struct sctk_comm_coll
+{
+	int init_done;
+	unsigned int *coll_id;
+	struct shared_mem_barrier shm_barrier;
+	struct shared_mem_barrier_sig shm_barrier_sig;
+	int reduce_interleave;
+	struct shared_mem_reduce *shm_reduce;
+	int bcast_interleave;
+	struct shared_mem_bcast *shm_bcast;
+	struct shared_mem_gatherv shm_gatherv;
+	struct shared_mem_scatterv shm_scatterv;
+	struct shared_mem_a2a shm_a2a;
+	int comm_size;
+};
+
+int sctk_comm_coll_init( struct sctk_comm_coll * coll, int nb_task );
+int sctk_comm_coll_release( struct sctk_comm_coll * coll );
+
+struct sctk_comm_coll * __sctk_communicator_get_coll(const sctk_communicator_t communicator);
+
+static inline struct sctk_comm_coll * sctk_communicator_get_coll(const sctk_communicator_t communicator)
+{
+	static __thread sctk_communicator_t saved_comm = -1;
+	static __thread struct sctk_comm_coll * saved_coll = NULL;
+
+	if( saved_comm == communicator )
+	{
+		return saved_coll;
+	}
+
+	saved_coll = __sctk_communicator_get_coll(communicator);
+	saved_comm = communicator;
+
+	return saved_coll;
+}
+
+static inline int __sctk_comm_coll_get_id( struct sctk_comm_coll * coll, int rank )
+{
+	return coll->coll_id[rank]++;
+}
+
+static inline int sctk_comm_coll_get_id_red( struct sctk_comm_coll * coll, int rank )
+{
+	return __sctk_comm_coll_get_id( coll, rank ) &  (coll->reduce_interleave - 1);
+
+}
+
+static inline int sctk_comm_coll_get_id_bcast( struct sctk_comm_coll * coll, int rank )
+{
+	return __sctk_comm_coll_get_id( coll, rank ) & ( coll->bcast_interleave - 1);
+}
+
+
+
+/************************** MACROS *************************/
+/** define the max number of communicators in the common table **/
+#define SCTK_MAX_COMMUNICATOR_TAB 512
+
+/******************************** STRUCTURE *********************************/
+
+struct sctk_internal_collectives_struct_s;
+
+/**
+ * Here we define the structure responsible for the communicators.
+ * It works for both intracommunications and intercommunications.
+**/
+typedef struct sctk_internal_communicator_s
+{
+	/** communicator identification number **/
+	sctk_communicator_t id;
+	/** structure for collectives communications **/
+	struct sctk_internal_collectives_struct_s *collectives;
+
+	/** number of tasks in the communicator **/
+	int nb_task;
+
+	/** minimum rank of a local task **/
+	int last_local;
+	/** maximum rank of a local task **/
+	int first_local;
+	/** number of tasks involved with the communicator for the current process **/
+	int local_tasks;
+	/** gives MPI_COMM_WORLD ranks used in this communicator **/
+	int *local_to_global;
+	/** gives task ranks corresponding to MPI_COMM_WORLD ranks**/
+	int *global_to_local;
+	/** gives identification of process which schedules the task **/
+	int *task_to_process;
+	/** processes involved with the communicator **/
+	int *process;
+	/** number of processes for the communicator **/
+	int process_nb;
+
+	sctk_spin_rwlock_t lock;
+	/** spinlock for the creation of the comunicator **/
+	sctk_spinlock_t creation_lock;
+
+	volatile int has_zero;
+
+	OPA_int_t nb_to_delete;
+	/** hash table for communicators **/
+	UT_hash_handle hh;
+
+	struct sctk_internal_communicator_s *new_comm;
+	struct sctk_internal_communicator_s *remote_comm;
+	/** determine if intercommunicator **/
+	int is_inter_comm;
+	/** rank of remote leader **/
+	int remote_leader;
+	/** group rank of local leader **/
+	int local_leader;
+	/** Tells if we have to handle this comm as COMM_SELF */
+	int is_comm_self;
+	/** Tells if all the ranks of the communicator are in shared-mem */
+	int is_shared_mem;
+	/** peer communication (only for intercommunicator) **/
+	sctk_communicator_t peer_comm;
+	/** local id (only for intercommunicators)**/
+	sctk_communicator_t local_id;
+	sctk_communicator_t remote_id;
+
+	/** Collective context */
+	struct sctk_comm_coll coll;
+
+} sctk_internal_communicator_t;
+
+
+
 
 /********************************* FUNCTION *********************************/
 void sctk_set_internal_collectives ( const sctk_communicator_t id, struct sctk_internal_collectives_struct_s *tmp );
@@ -44,7 +310,60 @@ int sctk_get_nb_task_total ( const sctk_communicator_t communicator );
 int sctk_is_in_local_group ( const sctk_communicator_t id );
 int sctk_get_remote_leader ( const sctk_communicator_t );
 int sctk_get_local_leader ( const sctk_communicator_t );
-int sctk_is_inter_comm ( const sctk_communicator_t );
+
+
+/************************* FUNCTION ************************/
+/**
+ * This method check if the communicator is an intercommunicator.
+ * @param communicator given communicator.
+ * @return 1 if it is, 0 if it is not.
+**/
+
+int __sctk_is_inter_comm ( const sctk_communicator_t );
+
+static inline int sctk_is_inter_comm ( const sctk_communicator_t communicator )
+{
+	static int __thread last_comm = -1;
+	static int __thread last_val = -1;
+
+	if( last_comm == communicator )
+	{
+		return last_val;
+	}
+	
+	last_comm = communicator;
+	last_val = __sctk_is_inter_comm( communicator );
+
+	return last_val;
+}
+
+/************************* FUNCTION ************************/
+/**
+ * This method check if the communicator is limited to a shared-memory space.
+ * @param communicator given communicator.
+ * @return 1 if it is, 0 if it is not.
+**/
+
+int __sctk_is_shared_mem ( const sctk_communicator_t communicator );
+
+static inline int sctk_is_shared_mem ( const sctk_communicator_t communicator )
+{
+	static int __thread last_comm = -1;
+	static int __thread last_val = -1;
+
+	if( last_comm == communicator )
+	{
+		return last_val;
+	}
+
+	last_comm = communicator;
+	last_val = __sctk_is_shared_mem( communicator );
+
+	//sctk_error("%d == %d", communicator, tmp->is_shared_mem );
+	return last_val;
+}
+
+
 int sctk_is_in_group ( const sctk_communicator_t communicator );
 int sctk_get_rank ( const sctk_communicator_t communicator, const int comm_world_rank );
 int sctk_get_node_rank_from_task_rank ( const int rank );

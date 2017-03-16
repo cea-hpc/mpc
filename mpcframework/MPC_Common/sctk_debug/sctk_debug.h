@@ -59,6 +59,7 @@ extern "C"
   /* DEBUG FUNCTIONS START */
   void sctk_flush_version (void);
   void sctk_abort (void);
+  void sctk_install_bt_sig_handler();
   void sctk_error (const char *fmt, ...);
   void sctk_formated_assert_print (FILE * stream, const int line,
 				   const char *file, const char *func,
@@ -181,10 +182,10 @@ extern "C"
 
 //If inline is not supported, disable assertions
 
-#define assume_m(x,...) if (!(x)) { sctk_error("Error at %s!%d\n%s\n",__FILE__,__LINE__,#x); sctk_error(__VA_ARGS__); abort(); }
+#define assume_m(x,...) if (!(x)) { sctk_error("Error at %s!%d\n%s\n",__FILE__,__LINE__,#x); sctk_error(__VA_ARGS__); sctk_abort(); }
 
 /** Print an error message and exit. It use the print formatting convention. **/
-#define sctk_fatal(...) { sctk_error("Fatal error at %s!%d\n",__FILE__,__LINE__); sctk_error(__VA_ARGS__); abort(); }
+#define sctk_fatal(...) { sctk_error("Fatal error at %s!%d\n",__FILE__,__LINE__); sctk_error(__VA_ARGS__); sctk_abort(); }
 
 
 #ifndef SCTK_NO_INLINE

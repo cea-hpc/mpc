@@ -118,6 +118,67 @@
     <xs:all>
       <xs:element minOccurs="0" name="colors" type="xs:boolean"/>
       <xs:element minOccurs="0" name="max_filename_size" type="xs:integer"/>
+      <xs:element minOccurs="0" name="mpc_bt_sig" type="xs:integer"/>
+    </xs:all>
+  </xs:complexType>
+  <!-- ********************************************************* -->
+  <xs:complexType name="user_type_collectives_shm">
+    <xs:all>
+      <xs:element minOccurs="0" name="barrier_intra_shm">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+      <xs:element minOccurs="0" name="bcast_intra_shm">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+      <xs:element minOccurs="0" name="alltoallv_intra_shm">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+      <xs:element minOccurs="0" name="gatherv_intra_shm">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+      <xs:element minOccurs="0" name="scatterv_intra_shm">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+      <xs:element minOccurs="0" name="reduce_intra_shm">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+      <xs:element minOccurs="0" name="topo_tree_arity" type="xs:integer"/>
+      <xs:element minOccurs="0" name="topo_tree_dump" type="xs:boolean"/>
+      <xs:element minOccurs="0" name="coll_force_nocommute" type="xs:boolean"/>
+      <xs:element minOccurs="0" name="reduce_pipelined_blocks" type="xs:integer"/>
+      <xs:element minOccurs="0" name="reduce_pipelined_tresh">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[0-9]+[ ]?[K|M|G|T|P]?B"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+      <xs:element minOccurs="0" name="reduce_interleave" type="xs:integer"/>
+      <xs:element minOccurs="0" name="bcast_interleave" type="xs:integer"/>
     </xs:all>
   </xs:complexType>
   <!-- ********************************************************* -->
@@ -857,6 +918,7 @@
       <xs:element minOccurs="0" name="allocator" type="user_type_allocator"/>
       <xs:element minOccurs="0" name="launcher" type="user_type_launcher"/>
       <xs:element minOccurs="0" name="debugger" type="user_type_debugger"/>
+      <xs:element minOccurs="0" name="collectives_shm" type="user_type_collectives_shm"/>
       <xs:element minOccurs="0" name="collectives_intra" type="user_type_collectives_intra"/>
       <xs:element minOccurs="0" name="collectives_inter" type="user_type_collectives_inter"/>
       <xs:element minOccurs="0" name="progress_thread" type="user_type_progress_thread"/>

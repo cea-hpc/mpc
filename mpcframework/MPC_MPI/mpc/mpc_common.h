@@ -66,6 +66,27 @@ struct sctk_task_specific_atexit_s
 };
 
 
+
+struct MPI_Topological_comms
+{
+	MPC_Comm per_node_socket_comm;
+	MPC_Comm per_node_socket_grp;
+
+	int has_numa;
+/*{*/
+	MPC_Comm per_node_numa_comm;
+	MPC_Comm per_node_numa_grp;
+/*}*/
+	
+	MPC_Comm per_process_comm;
+	MPC_Comm per_process_grp;
+
+	MPC_Comm per_node_comm;
+	MPC_Comm per_node_grp;
+
+};
+
+
 /**
  *  \brief Describes the context of an MPI task
  *  
@@ -98,38 +119,22 @@ typedef struct sctk_task_specific_s
 	struct mpc_mpi_data_s* mpc_mpi_data;
         struct sctk_internal_ptp_s **my_ptp_internal;
 
-        /* MPI_Info handling */
-        struct MPC_Info_factory
-            info_fact; /**< This structure is used to store the association
-                          between MPI_Infos structs and their ID */
+	/* MPI_Info handling */
+	struct MPC_Info_factory
+		info_fact; /**< This structure is used to store the association
+					  between MPI_Infos structs and their ID */
 
-        /* At EXIT */
-        struct sctk_task_specific_atexit_s
-            *exit_handlers; /**< These functions are called when tasks leaves
-                               (atexit) */
+	/* At EXIT */
+	struct sctk_task_specific_atexit_s
+		*exit_handlers; /**< These functions are called when tasks leaves
+						   (atexit) */
+						   
+	struct MPI_Topological_comms topo_comms; /**< These are communicators
+												 taking the topology into account */
 } sctk_task_specific_t;
 
 
-/** \brief Retrieves current thread task specific context
- */
-
-#ifdef SCTK_PROCESS_MODE
-extern struct sctk_task_specific_s *___the_process_specific;
-extern sctk_thread_key_t sctk_task_specific;
-#endif
-
-extern sctk_thread_key_t sctk_task_specific;
-
-static inline struct sctk_task_specific_s *__MPC_get_task_specific() {
-#ifdef SCTK_PROCESS_MODE
-  return ___the_process_specific;
-#endif
-
-  struct sctk_task_specific_s *tmp;
-  tmp = (struct sctk_task_specific_s *)sctk_thread_getspecific(
-      sctk_task_specific);
-  return tmp;
-}
+struct sctk_task_specific_s *__MPC_get_task_specific();
 
 /** \brief Unlock the datatype array
  */

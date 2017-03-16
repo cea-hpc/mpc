@@ -29,6 +29,10 @@
 		<profile>
 			<name>default</name>
 			<modules>
+				<collectives_intra>
+					<barrier_intra>__INTERNAL__PMPI_Barrier_btree_mpi</barrier_intra>
+				
+				</collectives_intra>
 			</modules>
 			<networks>
 				<!-- net config contain complexe structures so default value cannot be setup into config-meta.xml -->
