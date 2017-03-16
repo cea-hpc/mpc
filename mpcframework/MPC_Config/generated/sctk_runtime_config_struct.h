@@ -256,6 +256,24 @@ struct sctk_runtime_config_struct_progress_thread
 };
 
 /******************************** STRUCTURE *********************************/
+/**Options related to the MPI RMA support**/
+struct sctk_runtime_config_struct_mpi_rma {
+  int init_done;
+  /**Enable the MPI_Alloc_mem shared memory pool**/
+  int alloc_mem_pool_enable;
+  /**Size of the MPI_Alloc_mem pool**/
+  size_t alloc_mem_pool_size;
+  /**Alloc the MPI_Alloc_mem pool to grow linear for some apps**/
+  int alloc_mem_pool_autodetect;
+  /**Force the size to be a quantum per local process**/
+  int alloc_mem_pool_force_process_linear;
+  /**Quantum to allocate to each process when linear forced**/
+  size_t alloc_mem_pool_per_process_size;
+  /**Maximum number of window threads to keep**/
+  int win_thread_pool_max;
+};
+
+/******************************** STRUCTURE *********************************/
 /**Options for MPC Message Passing**/
 struct sctk_runtime_config_struct_mpc
 {	int init_done;
@@ -541,10 +559,14 @@ struct sctk_runtime_config_struct_gate_message_type
 {	int init_done;
 	/**Process Specific Messages can use this rail**/
 	int process;
-	/**Common messages (MPI) can use this rail**/
-	int common;
-	/**Function to be called for this gate**/
-	struct sctk_runtime_config_funcptr gatefunc;
+        /**Task specific messages can use this rail**/
+        int task;
+        /**Task specific messages can use this rail**/
+        int emulated_rma;
+        /**Common messages (MPI) can use this rail**/
+        int common;
+        /**Function to be called for this gate**/
+        struct sctk_runtime_config_funcptr gatefunc;
 };
 
 /******************************** STRUCTURE *********************************/
@@ -831,6 +853,7 @@ struct sctk_runtime_config_modules
   struct sctk_runtime_config_struct_collectives_inter collectives_inter;
   struct sctk_runtime_config_struct_progress_thread progress_thread;
   struct sctk_runtime_config_struct_mpc mpc;
+  struct sctk_runtime_config_struct_mpi_rma rma;
   struct sctk_runtime_config_struct_inter_thread_comm inter_thread_comm;
   struct sctk_runtime_config_struct_low_level_comm low_level_comm;
   struct sctk_runtime_config_struct_openmp openmp;

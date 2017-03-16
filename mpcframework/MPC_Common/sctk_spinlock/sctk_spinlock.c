@@ -92,9 +92,17 @@ sctk_spinlock_read_lock (sctk_spin_rwlock_t * lock)
   return 0;
 }
 
-int
-sctk_spinlock_write_lock (sctk_spin_rwlock_t * lock)
-{
+int sctk_spinlock_read_trylock(sctk_spin_rwlock_t *lock) {
+  if (sctk_spinlock_trylock(&(lock->writer_lock)) == 0) {
+    OPA_incr_int(&(lock->reader_number));
+    sctk_spinlock_unlock(&(lock->writer_lock));
+    return 0;
+  }
+
+  return 1;
+}
+
+int sctk_spinlock_write_lock(sctk_spin_rwlock_t *lock) {
   sctk_spinlock_lock(&(lock->writer_lock));
   while(expect_true (OPA_load_int(&(lock->reader_number)) != 0)) {
     sctk_cpu_relax ();
@@ -102,16 +110,44 @@ sctk_spinlock_write_lock (sctk_spin_rwlock_t * lock)
   return 0;
 }
 
-int
-sctk_spinlock_read_unlock (sctk_spin_rwlock_t * lock)
-{
-  OPA_decr_int(&(lock->reader_number));
+int sctk_spinlock_write_trylock(sctk_spin_rwlock_t *lock) {
+  if (sctk_spinlock_trylock(&(lock->writer_lock)) == 0) {
+
+    while (expect_true(OPA_load_int(&(lock->reader_number)) != 0)) {
+      sctk_cpu_relax();
+    }
+
+    return 0;
+  }
+
+  return 1;
+}
+
+int sctk_spinlock_write_lock_yield(sctk_spin_rwlock_t *lock) {
+  int cnt = 0;
+  sctk_spinlock_lock_yield(&(lock->writer_lock));
+  while (expect_true(OPA_load_int(&(lock->reader_number)) != 0)) {
+    sctk_cpu_relax();
+    if (!(++cnt % 1000)) {
+#ifdef MPC_Threads
+      sctk_thread_yield();
+#else
+      sched_yield();
+#endif
+    }
+  }
   return 0;
 }
 
-int
-sctk_spinlock_write_unlock (sctk_spin_rwlock_t * lock)
-{
+int sctk_spinlock_read_unlock(sctk_spin_rwlock_t *lock) {
+  return OPA_fetch_and_add_int(&(lock->reader_number), -1) - 1;
+}
+
+int sctk_spinlock_read_unlock_state(sctk_spin_rwlock_t *lock) {
+  return OPA_load_int(&(lock->reader_number));
+}
+
+int sctk_spinlock_write_unlock(sctk_spin_rwlock_t *lock) {
   sctk_spinlock_unlock(&(lock->writer_lock));
   return 0;
 }

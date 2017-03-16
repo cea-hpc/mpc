@@ -577,6 +577,54 @@ meta.types = {
       },
     }
   },
+  mpi_rma : {
+    type : 'struct',
+    name : "mpi_rma",
+    childs : {
+      alloc_mem_pool_enable : {
+        mode : 'param',
+        name : "alloc_mem_pool_enable",
+        type : "int",
+        doc : "Enable the MPI_Alloc_mem shared memory pool",
+        dflt : "1",
+      },
+      alloc_mem_pool_size : {
+        mode : 'param',
+        name : "alloc_mem_pool_size",
+        type : "size",
+        doc : "Size of the MPI_Alloc_mem pool",
+        dflt : "1MB",
+      },
+      alloc_mem_pool_autodetect : {
+        mode : 'param',
+        name : "alloc_mem_pool_autodetect",
+        type : "int",
+        doc : "Alloc the MPI_Alloc_mem pool to grow linear for some apps",
+        dflt : "1",
+      },
+      alloc_mem_pool_force_process_linear : {
+        mode : 'param',
+        name : "alloc_mem_pool_force_process_linear",
+        type : "int",
+        doc : "Force the size to be a quantum per local process",
+        dflt : "0",
+      },
+      alloc_mem_pool_per_process_size : {
+        mode : 'param',
+        name : "alloc_mem_pool_per_process_size",
+        type : "size",
+        doc : "Quantum to allocate to each process when linear forced",
+        dflt : "32MB",
+      },
+      win_thread_pool_max : {
+        mode : 'param',
+        name : "win_thread_pool_max",
+        type : "int",
+        doc : "Maximum number of window threads to keep",
+        dflt : "2",
+      },
+    }
+  },
   mpc : {
     type : 'struct',
     name : "mpc",
@@ -1101,7 +1149,7 @@ meta.types = {
         name : "cells_num",
         type : "int",
         doc : "Size of shared memory region.",
-        dflt : "128",
+        dflt : "2048",
       },
     }
   },
@@ -1228,6 +1276,20 @@ meta.types = {
         name : "process",
         type : "int",
         doc : "Process Specific Messages can use this rail",
+        dflt : "1",
+      },
+      task : {
+        mode : 'param',
+        name : "task",
+        type : "int",
+        doc : "Task specific messages can use this rail",
+        dflt : "1",
+      },
+      emulated_rma : {
+        mode : 'param',
+        name : "emulated_rma",
+        type : "int",
+        doc : "Task specific messages can use this rail",
         dflt : "1",
       },
       common : {
@@ -1869,6 +1931,7 @@ meta.modules = {
   collectives_inter : {name : "collectives_inter", type : "collectives_inter"},
   progress_thread : {name : "progress_thread", type : "progress_thread"},
   mpc : {name : "mpc", type : "mpc"},
+  rma : {name : "rma", type : "mpi_rma"},
   inter_thread_comm : {name : "inter_thread_comm", type : "inter_thread_comm"},
   low_level_comm : {name : "low_level_comm", type : "low_level_comm"},
   openmp : {name : "openmp", type : "openmp"},

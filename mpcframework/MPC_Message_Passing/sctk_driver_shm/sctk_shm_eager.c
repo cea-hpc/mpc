@@ -53,36 +53,38 @@ sctk_network_preform_eager_msg_shm_withcopy(sctk_shm_cell_t * cell)
     return msg;	
 }
 
-
 sctk_thread_ptp_message_t *
-sctk_network_eager_msg_shm_recv(sctk_shm_cell_t * cell,int copy_enabled)
-{ 
-    
-    sctk_thread_ptp_message_t *msg; 
-    void (*shm_free_funct)(void*) = NULL;
-    void (*shm_copy_funct)(sctk_message_to_copy_t *) = NULL;
+sctk_network_eager_msg_shm_recv(sctk_shm_cell_t *cell, int copy_enabled) {
 
-    if( copy_enabled )
-    {
-        msg = sctk_network_preform_eager_msg_shm_withcopy(cell);
-        shm_free_funct = sctk_shm_eager_message_free_withcopy;
-        shm_copy_funct = sctk_shm_eager_message_copy_withcopy;
-        sctk_shm_release_cell(cell);
-    }
-    else
-    {
-        msg = sctk_network_preform_eager_msg_shm_nocopy(cell);
-        shm_free_funct = sctk_shm_eager_message_free_nocopy;
-        shm_copy_funct = sctk_shm_eager_message_copy_nocopy;
-    }
+  sctk_thread_ptp_message_t *msg, *tmp;
+  void (*shm_free_funct)(void *) = NULL;
+  void (*shm_copy_funct)(sctk_message_to_copy_t *) = NULL;
 
-    SCTK_MSG_COMPLETION_FLAG_SET ( msg , NULL );
-    msg->tail.message_type = SCTK_MESSAGE_NETWORK;
-    if ( SCTK_MSG_COMMUNICATOR ( msg ) < 0 )
-        return NULL;
-    sctk_rebuild_header( msg ); 
-    sctk_reinit_header( msg, shm_free_funct, shm_copy_funct);
-    return msg;
+  tmp = (sctk_thread_ptp_message_t *)cell->data;
+  // if ctrl message disable no copy
+  if (sctk_message_class_is_control_message(SCTK_MSG_SPECIFIC_CLASS(tmp))) {
+    copy_enabled = 1;
+  }
+
+  if (copy_enabled) {
+    msg = sctk_network_preform_eager_msg_shm_withcopy(cell);
+    shm_free_funct = sctk_shm_eager_message_free_withcopy;
+    shm_copy_funct = sctk_shm_eager_message_copy_withcopy;
+    sctk_shm_release_cell(cell);
+  } else {
+    msg = sctk_network_preform_eager_msg_shm_nocopy(cell);
+    shm_free_funct = sctk_shm_eager_message_free_nocopy;
+    shm_copy_funct = sctk_shm_eager_message_copy_nocopy;
+  }
+
+  SCTK_MSG_COMPLETION_FLAG_SET(msg, NULL);
+  msg->tail.message_type = SCTK_MESSAGE_NETWORK;
+  if (SCTK_MSG_COMMUNICATOR(msg) < 0)
+    return NULL;
+
+  sctk_rebuild_header(msg);
+  sctk_reinit_header(msg, shm_free_funct, shm_copy_funct);
+  return msg;
 }
 
 int

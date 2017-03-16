@@ -102,7 +102,6 @@ extern "C"
     sctk_accl_cuda_pop_context();
     tls_save(sctk_cuda_ctx);
 #endif
-#endif
 
     /* the tls vector is restored by copy and cannot be changed
      * It is then useless to save it at this time
@@ -110,6 +109,7 @@ extern "C"
     ucp->tls_ctx = (extls_ctx_t *)sctk_extls_storage;
     if (ucp->tls_ctx != NULL)
       extls_ctx_save(ucp->tls_ctx);
+#endif
   }
 
   static inline void sctk_context_restore_tls (sctk_mctx_t * ucp)

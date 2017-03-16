@@ -143,6 +143,7 @@ static void ( *sctk_network_notify_idle_message_ptr ) () = sctk_network_notify_i
 void sctk_network_notify_idle_message ()
 {
 	sctk_network_notify_idle_message_ptr();
+        sctk_control_message_process();
 }
 
 void sctk_network_notify_idle_message_set ( void ( *sctk_network_notify_idle_message_val ) () )
@@ -558,8 +559,6 @@ size_t sctk_net_memory_allocation_hook ( size_t size_origin )
 #endif
 	return 0;
 }
-
-int sctk_network_is_ib_used();
 
 void sctk_net_memory_free_hook ( void * ptr , size_t size )
 {

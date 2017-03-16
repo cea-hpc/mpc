@@ -29,6 +29,20 @@
 
 #include <string.h>
 
+int sctk_ib_device_found() {
+  struct ibv_device **dev_list = NULL;
+
+  int devices_nb;
+
+  dev_list = ibv_get_device_list(&devices_nb);
+
+  if (!dev_list) {
+    return 0;
+  } else {
+    return 1;
+  }
+}
+
 sctk_ib_device_t *sctk_ib_device_init ( struct sctk_ib_rail_info_s *rail_ib )
 {
 	struct ibv_device **dev_list;

@@ -130,7 +130,7 @@ sctk_shm_cma_message_free_withcopy(void *tmp)
     sctk_shm_cell_t * cell = NULL;
     sctk_shm_iovec_info_t * shm_iov = NULL;
     shm_iov = (sctk_shm_iovec_info_t *)(( char * ) tmp + sizeof ( sctk_thread_ptp_message_t ));
-    
+
     dest = SCTK_MSG_SRC_PROCESS(msg); 
     while(!cell)
         cell = sctk_shm_get_cell(dest);

@@ -164,6 +164,7 @@ static __inline__ void sctk_alloc_set_chunk_header_padded_padding(struct sctk_al
  * This method automatically detect the type of chunk depending on their size class.
  * @param ptr Define the pointer used by the final user (next byte after the chunk header).
 **/
+
 static __inline__ sctk_alloc_vchunk sctk_alloc_get_chunk(sctk_addr_t ptr)
 {
 	sctk_alloc_vchunk vchunk = SCTK_ALLOC_DEFAULT_CHUNK;
@@ -181,14 +182,17 @@ static __inline__ sctk_alloc_vchunk sctk_alloc_get_chunk(sctk_addr_t ptr)
 	{
 		SCTK_PDEBUG("Bad address is %p.",ptr);
 		warning("Header content error while trying to find chunk header.");
-		return SCTK_ALLOC_DEFAULT_CHUNK;
-	}
+                warning("Did you free a system malloc chunk with MPC ?");
+                return SCTK_ALLOC_DEFAULT_CHUNK;
+        }
 
-	//check
-	/** @todo maybe can be replaced by assert **/
-	assume_m(vchunk->type == SCTK_ALLOC_CHUNK_TYPE_LARGE || vchunk->type == SCTK_ALLOC_CHUNK_TYPE_PADDED,"Invalid chunk type.");
+        // check
+        /** @todo maybe can be replaced by assert **/
+        assume_m(vchunk->type == SCTK_ALLOC_CHUNK_TYPE_LARGE ||
+                     vchunk->type == SCTK_ALLOC_CHUNK_TYPE_PADDED,
+                 "Invalid chunk type.");
 
-	return vchunk;
+        return vchunk;
 }
 
 /************************* FUNCTION ************************/

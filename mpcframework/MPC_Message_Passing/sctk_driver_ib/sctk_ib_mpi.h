@@ -52,6 +52,10 @@ int sctk_network_poll_send_ibuf ( sctk_rail_info_t *rail, sctk_ibuf_t *ibuf,
                                   const char from_cp, struct sctk_ib_polling_s *poll );
 int sctk_network_poll_all ( sctk_rail_info_t *rail, struct sctk_ib_polling_s *poll );
 
+int sctk_ib_device_found();
+
+char sctk_network_is_ib_used();
+
 #ifdef __cplusplus
 }
 #endif

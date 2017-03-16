@@ -22,15 +22,15 @@
 /* ######################################################################## */
 #include "mpc_datatypes.h"
 
-#include "uthash.h"
+#include "mpc_common.h"
 #include "mpc_reduction.h"
-#include <string.h>
 #include "mpcmp.h"
-#include <sctk_ethread_internal.h>
+#include "sctk_handle.h"
 #include "sctk_stdint.h"
 #include "sctk_wchar.h"
-#include "mpc_common.h"
+#include "uthash.h"
 #include "sctk_handle.h"
+#include <string.h>
 
 /************************************************************************/
 /* GLOBALS                                                              */
@@ -78,18 +78,233 @@ const char * const sctk_datype_combiner(MPC_Type_combiner combiner)
 /************************************************************************/
 /* Datatype Init and Release                                            */
 /************************************************************************/
+static int dt_init = 0;
+
+int sctk_datatype_initialized() { return dt_init; }
 
 void sctk_datatype_init()
 {
-	__sctk_common_type_sizes = sctk_malloc( sizeof( size_t ) * SCTK_COMMON_DATA_TYPE_COUNT );
-	assume( __sctk_common_type_sizes != NULL );
-	sctk_common_datatype_init();
+  if (sctk_datatype_initialized())
+    return;
+
+  __sctk_common_type_sizes =
+      sctk_malloc(sizeof(size_t) * SCTK_COMMON_DATA_TYPE_COUNT);
+  assume(__sctk_common_type_sizes != NULL);
+  sctk_common_datatype_init();
+  dt_init = 1;
 }
 
 void sctk_datatype_release()
 {
-	sctk_datype_name_release();
-	sctk_free( __sctk_common_type_sizes );
+  dt_init = 0;
+  sctk_datype_name_release();
+  sctk_free(__sctk_common_type_sizes);
+}
+
+/************************************************************************/
+/* Datatype  Attribute Handling                                         */
+/************************************************************************/
+
+/** Here we store Type Keyvals as a linear array */
+static struct Datatype_Keyval *__keyval_array = NULL;
+/** This is the current array size */
+static unsigned int __keyval_array_size = 0;
+/** This is the current ID offset */
+static unsigned int __keyval_array_offset = 0;
+/** This is the Keyval array lock */
+sctk_spinlock_t __keyval_array_lock = 0;
+
+struct Datatype_Keyval *Datatype_Keyval_get(int type_keyval) {
+  if (__keyval_array_size <= type_keyval)
+    return NULL;
+
+  sctk_spinlock_lock(&__keyval_array_lock);
+  struct Datatype_Keyval *cell = &__keyval_array[type_keyval];
+  sctk_spinlock_unlock(&__keyval_array_lock);
+
+  if (cell->free_cell) {
+    /* Already freed */
+    return NULL;
+  }
+
+  return cell;
+}
+
+int Datatype_Keyval_delete(int type_keyval) {
+  struct Datatype_Keyval *key = Datatype_Keyval_get(type_keyval);
+
+  if (!key) {
+    return MPC_ERR_ARG;
+  }
+
+  key->free_cell = 1;
+
+  return MPC_SUCCESS;
+}
+
+struct Datatype_Keyval *Datatype_Keyval_new(int *type_keyval) {
+  struct Datatype_Keyval *ret = NULL;
+  int need_realloc = 0;
+
+  sctk_spinlock_lock(&__keyval_array_lock);
+
+  if (__keyval_array_size == 0) {
+    /* No keyval array yet */
+    __keyval_array_size = 4;
+    need_realloc = 1;
+  }
+
+  int new_id = -1;
+
+  int i;
+
+  /* Try to do some recycling */
+  for (i = 0; i < __keyval_array_offset; i++) {
+    if (__keyval_array[i].free_cell) {
+      new_id = i;
+      break;
+    }
+  }
+
+  /* We create a new entry */
+  if (new_id < 0) {
+    new_id = __keyval_array_offset;
+    __keyval_array_offset++;
+  }
+
+  if (__keyval_array_size <= __keyval_array_offset) {
+    /* We are at the end of the array */
+    __keyval_array_size *= 2;
+    need_realloc = 1;
+  }
+
+  if (need_realloc) {
+    /* We are here if we had to realloc */
+    __keyval_array = sctk_realloc(
+        __keyval_array, sizeof(struct Datatype_Keyval) * __keyval_array_size);
+
+    if (!__keyval_array) {
+      perror("realloc");
+      abort();
+    }
+  }
+
+  /* Now that we booked a slot export its ID and prepare to return the entry */
+  *type_keyval = new_id;
+  ret = &__keyval_array[new_id];
+
+  sctk_spinlock_unlock(&__keyval_array_lock);
+
+  return ret;
+}
+
+void Datatype_Keyval_hit_delete(int type_keyval, void *attribute_val,
+                                MPC_Datatype type) {
+  struct Datatype_Keyval *kv = Datatype_Keyval_get(type_keyval);
+
+  if (!kv)
+    return;
+
+  if (kv->delete == MPC_TYPE_NULL_DELETE_FN)
+    return;
+
+  (kv->delete)(type, type_keyval, attribute_val, kv->extra_state);
+}
+
+void Datatype_Keyval_hit_copy(int type_keyval, MPC_Datatype oldtype,
+                              void **attribute_val_in, void **attribute_val_out,
+                              int *flag) {
+  struct Datatype_Keyval *kv = Datatype_Keyval_get(type_keyval);
+
+  if (!kv)
+    return;
+
+  *flag = 0;
+
+  if (kv->delete == MPC_TYPE_NULL_COPY_FN)
+    return;
+
+  if (kv->delete == MPC_TYPE_NULL_DUP_FN) {
+    *flag = 1;
+    *attribute_val_out = *attribute_val_in;
+    return;
+  }
+
+  (kv->copy)(oldtype, type_keyval, kv->extra_state, attribute_val_in,
+             attribute_val_out, flag);
+}
+
+int sctk_type_create_keyval(MPC_Type_copy_attr_function *copy,
+                            MPC_Type_delete_attr_function *delete,
+                            int *type_keyval, void *extra_state) {
+  /* Create a new slot */
+  struct Datatype_Keyval *new = Datatype_Keyval_new(type_keyval);
+
+  if (!new)
+    return MPC_ERR_INTERN;
+
+  /* Fill content */
+  new->copy = copy;
+  new->delete = delete;
+  new->extra_state = extra_state;
+
+  return MPC_SUCCESS;
+}
+
+int sctk_type_free_keyval(int *type_keyval) {
+  /* Is is already freed ? */
+  if (*type_keyval == MPC_KEYVAL_INVALID)
+    return MPC_ERR_ARG;
+
+  /* Delete in the internal container */
+  int ret = Datatype_Keyval_delete(*type_keyval);
+
+  /* Clear key handler */
+  if (ret == MPC_SUCCESS)
+    *type_keyval = MPC_KEYVAL_INVALID;
+
+  return ret;
+}
+
+struct Datatype_Attr *Datatype_Attr_new(int type_keyval, void *attribute_val) {
+  struct Datatype_Attr *new = sctk_malloc(sizeof(struct Datatype_Attr));
+
+  if (!new) {
+    perror("malloc");
+    return NULL;
+  }
+
+  new->type_keyval = type_keyval;
+  new->attribute_val = attribute_val;
+
+  return new;
+}
+
+int Datatype_Attr_store_init(struct Datatype_Attr_store *store) {
+  MPCHT_init(&store->attrs, 11);
+  return 0;
+}
+
+int Datatype_Attr_store_release(struct Datatype_Attr_store *store,
+                                MPC_Datatype container_type) {
+  void *pattr = NULL;
+  struct Datatype_Attr *attr = NULL;
+
+  /* Call delete handlers for this type */
+  MPC_HT_ITER(&store->attrs, pattr)
+
+  if (pattr) {
+    attr = (struct Datatype_Attr *)pattr;
+    Datatype_Keyval_hit_delete(attr->type_keyval, attr->attribute_val,
+                               container_type);
+    sctk_free(attr);
+  }
+
+  MPC_HT_ITER_END
+
+  MPCHT_release(&store->attrs);
+
+  return 0;
 }
 
 /************************************************************************/
@@ -110,8 +325,6 @@ void sctk_common_datatype_set_name_helper( MPC_Datatype datatype, char * name )
 
 void __init_a_composed_common_types(MPC_Datatype target_type, MPC_Aint disp, MPC_Datatype type_a, MPC_Datatype type_b, size_t struct_size )
 {
-	struct sctk_task_specific_s *ts = __MPC_get_task_specific ();
-
 	/* Compute data-type sizes */
 	size_t sa, sb;
 	
@@ -181,159 +394,167 @@ void init_composed_common_types()
 	sctk_common_datatype_set_name_helper( MPC_FLOAT_INT, "MPI_FLOAT_INT" );
 	tmp = MPC_FLOAT_INT;
 	PMPC_Type_commit( &tmp );
-	
-	/* MPC_LONG_INT (SCTK_DERIVED_DATATYPE_BASE + 1 */
-	mpc_long_int foo_1;
-	disp = ((char *)&foo_1.b - (char *)&foo_1.a);
-	__init_a_composed_common_types( MPC_LONG_INT, disp, MPC_LONG, MPC_INT, sizeof(mpc_long_int) );
-	sctk_common_datatype_set_name_helper( MPC_LONG_INT, "MPI_LONG_INT" );
-	tmp = MPC_LONG_INT;
-	PMPC_Type_commit( &tmp );
-	
-	/* MPC_DOUBLE_INT  (SCTK_DERIVED_DATATYPE_BASE + 2 */
-	mpc_double_int foo_2;
-	disp = ((char *)&foo_2.b - (char *)&foo_2.a);
-	__init_a_composed_common_types( MPC_DOUBLE_INT, disp, MPC_DOUBLE, MPC_INT , sizeof(mpc_double_int) );
-	sctk_common_datatype_set_name_helper( MPC_DOUBLE_INT, "MPI_DOUBLE_INT" );
-	tmp = MPC_DOUBLE_INT;
-	PMPC_Type_commit( &tmp );
-	
-	/* MPC_SHORT_INT  (SCTK_DERIVED_DATATYPE_BASE + 3 */
-	mpc_short_int foo_3;
-	disp = ((char *)&foo_3.b - (char *)&foo_3.a);
-	__init_a_composed_common_types( MPC_SHORT_INT, disp, MPC_SHORT, MPC_INT , sizeof(mpc_short_int) );
-	sctk_common_datatype_set_name_helper( MPC_SHORT_INT, "MPI_SHORT_INT" );
-	tmp = MPC_SHORT_INT;
-	PMPC_Type_commit( &tmp );
-	
-	/* MPC_2INT  (SCTK_DERIVED_DATATYPE_BASE + 4 */
-	mpc_int_int foo_4;
-	disp = ((char *)&foo_4.b - (char *)&foo_4.a);
-	__init_a_composed_common_types( MPC_2INT, disp, MPC_INT, MPC_INT , sizeof(mpc_int_int) );
-	sctk_common_datatype_set_name_helper( MPC_2INT, "MPI_2INT" );
-	tmp = MPC_2INT;
-	PMPC_Type_commit( &tmp );
-	
-	/* MPC_2FLOAT  (SCTK_DERIVED_DATATYPE_BASE + 5 */
-	mpc_float_float foo_5;
-	disp = ((char *)&foo_5.b - (char *)&foo_5.a);
-	__init_a_composed_common_types( MPC_2FLOAT, disp, MPC_FLOAT, MPC_FLOAT , sizeof(mpc_float_float) );
-	sctk_common_datatype_set_name_helper( MPC_2FLOAT, "MPI_2FLOAT" );
-	tmp = MPC_2FLOAT;
-	PMPC_Type_commit( &tmp );
-	
-	/* MPC_COMPLEX  (SCTK_DERIVED_DATATYPE_BASE + 6 */
-	__init_a_composed_common_types( MPC_COMPLEX, disp, MPC_FLOAT, MPC_FLOAT  , sizeof(mpc_float_float));
-	sctk_common_datatype_set_name_helper( MPC_COMPLEX, "MPI_COMPLEX" );
-	tmp = MPC_COMPLEX;
-	PMPC_Type_commit( &tmp );
-	
-	/* MPC_COMPLEX8  (SCTK_DERIVED_DATATYPE_BASE + 10 */
-	__init_a_composed_common_types( MPC_COMPLEX8, disp, MPC_FLOAT, MPC_FLOAT  , sizeof(mpc_float_float));
-	sctk_common_datatype_set_name_helper( MPC_COMPLEX8, "MPI_COMPLEX8" );
-	tmp = MPC_COMPLEX8;
-	PMPC_Type_commit( &tmp );
-	
-	/* MPC_2DOUBLE_PRECISION  (SCTK_DERIVED_DATATYPE_BASE + 7 */
-	mpc_double_double foo_6;
-	disp = ((char *)&foo_6.b - (char *)&foo_6.a);
-	__init_a_composed_common_types( MPC_2DOUBLE_PRECISION, disp, MPC_DOUBLE, MPC_DOUBLE , sizeof(mpc_double_double) );
-	sctk_common_datatype_set_name_helper( MPC_2DOUBLE_PRECISION, "MPI_2DOUBLE_PRECISION" );
-	tmp = MPC_2DOUBLE_PRECISION;
-	PMPC_Type_commit( &tmp );
-	
-	/* MPC_COMPLEX16  (SCTK_DERIVED_DATATYPE_BASE + 11 */
-	__init_a_composed_common_types( MPC_COMPLEX16, disp, MPC_DOUBLE, MPC_DOUBLE  , sizeof(mpc_double_double));
-	sctk_common_datatype_set_name_helper( MPC_COMPLEX16, "MPI_COMPLEX16" );
-	tmp = MPC_COMPLEX16;
-	PMPC_Type_commit( &tmp );
-	
-	/* MPC_DOUBLE_COMPLEX  (SCTK_DERIVED_DATATYPE_BASE + 12 */
-	__init_a_composed_common_types( MPC_DOUBLE_COMPLEX, disp, MPC_DOUBLE, MPC_DOUBLE  , sizeof(mpc_double_double));
-	sctk_common_datatype_set_name_helper( MPC_DOUBLE_COMPLEX, "MPI_DOUBLE_COMPLEX" );
-	tmp = MPC_DOUBLE_COMPLEX;
-	PMPC_Type_commit( &tmp );
-	
-	/* MPC_LONG_DOUBLE_INT  (SCTK_DERIVED_DATATYPE_BASE + 8 */
-	mpc_long_double_int foo_7;
-	disp = ((char *)&foo_7.b - (char *)&foo_7.a);
-	__init_a_composed_common_types( MPC_LONG_DOUBLE_INT, disp, MPC_LONG_DOUBLE, MPC_INT  , sizeof(mpc_long_double_int));
-	sctk_common_datatype_set_name_helper( MPC_LONG_DOUBLE_INT, "MPI_LONG_DOUBLE_INT" );
-	tmp = MPC_LONG_DOUBLE_INT;
-	PMPC_Type_commit( &tmp );
-					
-	/* MPC_2INTEGER  (SCTK_DERIVED_DATATYPE_BASE + 13 */
-	mpc_integer_integer foo_13;
-	disp = ((char *)&foo_13.b - (char *)&foo_13.a);
-	__init_a_composed_common_types( MPC_2INTEGER, disp, MPC_INTEGER, MPC_INTEGER , sizeof(mpc_integer_integer) );
-	sctk_common_datatype_set_name_helper( MPC_2INTEGER, "MPI_2INTEGER" );
-	tmp = MPC_2INTEGER;
-	PMPC_Type_commit( &tmp );
-	
-	/* MPC_2REAL  (SCTK_DERIVED_DATATYPE_BASE + 14 */
-	mpc_real_real foo_14;
-	disp = ((char *)&foo_14.b - (char *)&foo_14.a);
-	__init_a_composed_common_types( MPC_2REAL, disp, MPC_REAL, MPC_REAL, sizeof(mpc_real_real) );
-	sctk_common_datatype_set_name_helper( MPC_2REAL, "MPI_2REAL" );
-	tmp = MPC_2REAL;
-	PMPC_Type_commit( &tmp );
-	
-	/* MPC_UNSIGNED_LONG_LONG_INT  (SCTK_DERIVED_DATATYPE_BASE + 9 */
-	/*
-	mpc_unsigned_long_long_int foo_8;
-	disp = ((char *)&foo_8.b - (char *)&foo_8.a);
-	__init_a_composed_common_types( MPC_UNSIGNED_LONG_LONG_INT, disp, MPC_UNSIGNED_LONG_LONG, MPC_INT , sizeof(mpc_unsigned_long_long_int) );
-	sctk_common_datatype_set_name_helper( MPC_UNSIGNED_LONG_LONG_INT, "MPI_UNSIGNED_LONG_LONG_INT" );
-	tmp = MPC_UNSIGNED_LONG_LONG_INT;
-	PMPC_Type_commit( &tmp );
-	*/
-	
-	/* MPC_COMPLEX32  (SCTK_DERIVED_DATATYPE_BASE + 12 */
-	mpc_longdouble_longdouble foo_9;
-	disp = ((char *)&foo_9.b - (char *)&foo_9.a);
-	__init_a_composed_common_types( MPC_COMPLEX32, disp, MPC_LONG_DOUBLE, MPC_LONG_DOUBLE , sizeof(mpc_longdouble_longdouble) );
-	sctk_common_datatype_set_name_helper( MPC_COMPLEX32, "MPI_COMPLEX32" );
-	tmp = MPC_COMPLEX32;
-	PMPC_Type_commit( &tmp );
+
+        /* MPC_LONG_INT (SCTK_DERIVED_DATATYPE_BASE + 1 */
+        mpc_long_int foo_1;
+        disp = ((char *)&foo_1.b - (char *)&foo_1.a);
+        __init_a_composed_common_types(MPC_LONG_INT, disp, MPC_LONG, MPC_INT,
+                                       sizeof(mpc_long_int));
+        sctk_common_datatype_set_name_helper(MPC_LONG_INT, "MPI_LONG_INT");
+        tmp = MPC_LONG_INT;
+        PMPC_Type_commit(&tmp);
+
+        /* MPC_DOUBLE_INT  (SCTK_DERIVED_DATATYPE_BASE + 2 */
+        mpc_double_int foo_2;
+        disp = ((char *)&foo_2.b - (char *)&foo_2.a);
+        __init_a_composed_common_types(MPC_DOUBLE_INT, disp, MPC_DOUBLE,
+                                       MPC_INT, sizeof(mpc_double_int));
+        sctk_common_datatype_set_name_helper(MPC_DOUBLE_INT, "MPI_DOUBLE_INT");
+        tmp = MPC_DOUBLE_INT;
+        PMPC_Type_commit(&tmp);
+
+        /* MPC_SHORT_INT  (SCTK_DERIVED_DATATYPE_BASE + 3 */
+        mpc_short_int foo_3;
+        disp = ((char *)&foo_3.b - (char *)&foo_3.a);
+        __init_a_composed_common_types(MPC_SHORT_INT, disp, MPC_SHORT, MPC_INT,
+                                       sizeof(mpc_short_int));
+        sctk_common_datatype_set_name_helper(MPC_SHORT_INT, "MPI_SHORT_INT");
+        tmp = MPC_SHORT_INT;
+        PMPC_Type_commit(&tmp);
+
+        /* MPC_2INT  (SCTK_DERIVED_DATATYPE_BASE + 4 */
+        mpc_int_int foo_4;
+        disp = ((char *)&foo_4.b - (char *)&foo_4.a);
+        __init_a_composed_common_types(MPC_2INT, disp, MPC_INT, MPC_INT,
+                                       sizeof(mpc_int_int));
+        sctk_common_datatype_set_name_helper(MPC_2INT, "MPI_2INT");
+        tmp = MPC_2INT;
+        PMPC_Type_commit(&tmp);
+
+        /* MPC_2FLOAT  (SCTK_DERIVED_DATATYPE_BASE + 5 */
+        mpc_float_float foo_5;
+        disp = ((char *)&foo_5.b - (char *)&foo_5.a);
+        __init_a_composed_common_types(MPC_2FLOAT, disp, MPC_FLOAT, MPC_FLOAT,
+                                       sizeof(mpc_float_float));
+        sctk_common_datatype_set_name_helper(MPC_2FLOAT, "MPI_2FLOAT");
+        tmp = MPC_2FLOAT;
+        PMPC_Type_commit(&tmp);
+
+        /* MPC_COMPLEX  (SCTK_DERIVED_DATATYPE_BASE + 6 */
+        __init_a_composed_common_types(MPC_COMPLEX, disp, MPC_FLOAT, MPC_FLOAT,
+                                       sizeof(mpc_float_float));
+        sctk_common_datatype_set_name_helper(MPC_COMPLEX, "MPI_COMPLEX");
+        tmp = MPC_COMPLEX;
+        PMPC_Type_commit(&tmp);
+
+        /* MPC_COMPLEX8  (SCTK_DERIVED_DATATYPE_BASE + 10 */
+        __init_a_composed_common_types(MPC_COMPLEX8, disp, MPC_FLOAT, MPC_FLOAT,
+                                       sizeof(mpc_float_float));
+        sctk_common_datatype_set_name_helper(MPC_COMPLEX8, "MPI_COMPLEX8");
+        tmp = MPC_COMPLEX8;
+        PMPC_Type_commit(&tmp);
+
+        /* MPC_2DOUBLE_PRECISION  (SCTK_DERIVED_DATATYPE_BASE + 7 */
+        mpc_double_double foo_6;
+        disp = ((char *)&foo_6.b - (char *)&foo_6.a);
+        __init_a_composed_common_types(MPC_2DOUBLE_PRECISION, disp, MPC_DOUBLE,
+                                       MPC_DOUBLE, sizeof(mpc_double_double));
+        sctk_common_datatype_set_name_helper(MPC_2DOUBLE_PRECISION,
+                                             "MPI_2DOUBLE_PRECISION");
+        tmp = MPC_2DOUBLE_PRECISION;
+        PMPC_Type_commit(&tmp);
+
+        /* MPC_COMPLEX16  (SCTK_DERIVED_DATATYPE_BASE + 11 */
+        __init_a_composed_common_types(MPC_COMPLEX16, disp, MPC_DOUBLE,
+                                       MPC_DOUBLE, sizeof(mpc_double_double));
+        sctk_common_datatype_set_name_helper(MPC_COMPLEX16, "MPI_COMPLEX16");
+        tmp = MPC_COMPLEX16;
+        PMPC_Type_commit(&tmp);
+
+        /* MPC_DOUBLE_COMPLEX  (SCTK_DERIVED_DATATYPE_BASE + 12 */
+        __init_a_composed_common_types(MPC_DOUBLE_COMPLEX, disp, MPC_DOUBLE,
+                                       MPC_DOUBLE, sizeof(mpc_double_double));
+        sctk_common_datatype_set_name_helper(MPC_DOUBLE_COMPLEX,
+                                             "MPI_DOUBLE_COMPLEX");
+        tmp = MPC_DOUBLE_COMPLEX;
+        PMPC_Type_commit(&tmp);
+
+        /* MPC_LONG_DOUBLE_INT  (SCTK_DERIVED_DATATYPE_BASE + 8 */
+        mpc_long_double_int foo_7;
+        disp = ((char *)&foo_7.b - (char *)&foo_7.a);
+        __init_a_composed_common_types(MPC_LONG_DOUBLE_INT, disp,
+                                       MPC_LONG_DOUBLE, MPC_INT,
+                                       sizeof(mpc_long_double_int));
+        sctk_common_datatype_set_name_helper(MPC_LONG_DOUBLE_INT,
+                                             "MPI_LONG_DOUBLE_INT");
+        tmp = MPC_LONG_DOUBLE_INT;
+        PMPC_Type_commit(&tmp);
+
+        /* MPC_2INTEGER  (SCTK_DERIVED_DATATYPE_BASE + 13 */
+        mpc_integer_integer foo_13;
+        disp = ((char *)&foo_13.b - (char *)&foo_13.a);
+        __init_a_composed_common_types(MPC_2INTEGER, disp, MPC_INTEGER,
+                                       MPC_INTEGER,
+                                       sizeof(mpc_integer_integer));
+        sctk_common_datatype_set_name_helper(MPC_2INTEGER, "MPI_2INTEGER");
+        tmp = MPC_2INTEGER;
+        PMPC_Type_commit(&tmp);
+
+        /* MPC_2REAL  (SCTK_DERIVED_DATATYPE_BASE + 14 */
+        mpc_real_real foo_14;
+        disp = ((char *)&foo_14.b - (char *)&foo_14.a);
+        __init_a_composed_common_types(MPC_2REAL, disp, MPC_REAL, MPC_REAL,
+                                       sizeof(mpc_real_real));
+        sctk_common_datatype_set_name_helper(MPC_2REAL, "MPI_2REAL");
+        tmp = MPC_2REAL;
+        PMPC_Type_commit(&tmp);
+
+        /* MPC_COMPLEX32  (SCTK_DERIVED_DATATYPE_BASE + 12 */
+        mpc_longdouble_longdouble foo_9;
+        disp = ((char *)&foo_9.b - (char *)&foo_9.a);
+        __init_a_composed_common_types(MPC_COMPLEX32, disp, MPC_LONG_DOUBLE,
+                                       MPC_LONG_DOUBLE,
+                                       sizeof(mpc_longdouble_longdouble));
+        sctk_common_datatype_set_name_helper(MPC_COMPLEX32, "MPI_COMPLEX32");
+        tmp = MPC_COMPLEX32;
+        PMPC_Type_commit(&tmp);
 }
 
 
 void release_composed_common_types()
 {
-	MPC_Datatype tmp;
-	tmp = MPC_FLOAT_INT;
-	PMPC_Type_free( &tmp );
-	tmp = MPC_LONG_INT;
-	PMPC_Type_free( &tmp );
-	tmp = MPC_DOUBLE_INT;
-	PMPC_Type_free( &tmp );
-	tmp = MPC_SHORT_INT;
-	PMPC_Type_free( &tmp );
-	tmp = MPC_2INT;
-	PMPC_Type_free( &tmp );
-	tmp = MPC_2FLOAT;
-	PMPC_Type_free( &tmp );
-	tmp = MPC_COMPLEX;
-	PMPC_Type_free( &tmp );
-	tmp = MPC_COMPLEX8;
-	PMPC_Type_free( &tmp );
-	tmp = MPC_2DOUBLE_PRECISION;
-	PMPC_Type_free( &tmp );
-	tmp = MPC_COMPLEX16;
-	PMPC_Type_free( &tmp );
-	tmp = MPC_DOUBLE_COMPLEX;
-	PMPC_Type_free( &tmp );
-	tmp = MPC_LONG_DOUBLE_INT;
-	PMPC_Type_free( &tmp );
-	tmp = MPC_2INTEGER;
-	PMPC_Type_free( &tmp );
-	tmp = MPC_2REAL;
-	PMPC_Type_free( &tmp );
-/*	tmp = MPC_UNSIGNED_LONG_LONG_INT;
-	PMPC_Type_free( &tmp );
-*/
-	tmp = MPC_COMPLEX32;
-	PMPC_Type_free( &tmp );
+
+  MPC_Datatype tmp;
+  tmp = MPC_FLOAT_INT;
+  PMPC_Type_free(&tmp);
+  tmp = MPC_LONG_INT;
+  PMPC_Type_free(&tmp);
+  tmp = MPC_DOUBLE_INT;
+  PMPC_Type_free(&tmp);
+  tmp = MPC_SHORT_INT;
+  PMPC_Type_free(&tmp);
+  tmp = MPC_2INT;
+  PMPC_Type_free(&tmp);
+  tmp = MPC_2FLOAT;
+  PMPC_Type_free(&tmp);
+  tmp = MPC_COMPLEX;
+  PMPC_Type_free(&tmp);
+  tmp = MPC_COMPLEX8;
+  PMPC_Type_free(&tmp);
+  tmp = MPC_2DOUBLE_PRECISION;
+  PMPC_Type_free(&tmp);
+  tmp = MPC_COMPLEX16;
+  PMPC_Type_free(&tmp);
+  tmp = MPC_DOUBLE_COMPLEX;
+  PMPC_Type_free(&tmp);
+  tmp = MPC_LONG_DOUBLE_INT;
+  PMPC_Type_free(&tmp);
+  tmp = MPC_2INTEGER;
+  PMPC_Type_free(&tmp);
+  tmp = MPC_2REAL;
+  PMPC_Type_free(&tmp);
+  tmp = MPC_COMPLEX32;
+  PMPC_Type_free(&tmp);
 }
 
 #define tostring(a) #a
@@ -396,13 +617,14 @@ void sctk_common_datatype_init()
 
 size_t sctk_common_datatype_get_size( MPC_Datatype datatype )
 {
-	if( !sctk_datatype_is_common( datatype ) )
-	{
-		sctk_error("Unknown datatype provided to %s\n", __FUNCTION__ );
-		abort();
-	}
-	
-	return __sctk_common_type_sizes[ datatype ];
+  sctk_datatype_init();
+
+  if (!sctk_datatype_is_common(datatype)) {
+    sctk_error("Unknown datatype provided to %s\n", __FUNCTION__);
+    abort();
+  }
+
+  return __sctk_common_type_sizes[datatype];
 }
 
 void sctk_common_datatype_display( MPC_Datatype datatype )
@@ -437,6 +659,9 @@ void sctk_contiguous_datatype_init( sctk_contiguous_datatype_t * type , size_t i
 	sctk_datatype_context_clear( &type->context );
 
         sctk_handle_new_from_id(datatype, SCTK_HANDLE_DATATYPE);
+
+        /* Attrs */
+        Datatype_Attr_store_init(&type->attrs);
 }
 
 void sctk_contiguous_datatype_release( sctk_contiguous_datatype_t * type )
@@ -445,11 +670,15 @@ void sctk_contiguous_datatype_release( sctk_contiguous_datatype_t * type )
 	
 	if( type->ref_count == 0 )
 	{
-		sctk_datatype_context_free( &type->context );
+          /* Attrs */
+          Datatype_Attr_store_release(&type->attrs,
+                                      (MPC_Datatype)type->datatype);
 
-                sctk_handle_free(type->datatype, SCTK_HANDLE_DATATYPE);
-                /* Counter == 0 then free */
-                memset(type, 0, sizeof(sctk_contiguous_datatype_t));
+          sctk_datatype_context_free(&type->context);
+
+          sctk_handle_free(type->datatype, SCTK_HANDLE_DATATYPE);
+          /* Counter == 0 then free */
+          memset(type, 0, sizeof(sctk_contiguous_datatype_t));
         }
 }
 
@@ -566,6 +795,8 @@ void sctk_derived_datatype_init( sctk_derived_datatype_t * type ,
 	sctk_datatype_context_clear( &type->context );
 
         sctk_handle_new_from_id(id, SCTK_HANDLE_DATATYPE);
+        /* Attrs */
+        Datatype_Attr_store_init(&type->attrs);
 }
 
 
@@ -581,6 +812,9 @@ int sctk_derived_datatype_release( sctk_derived_datatype_t * type )
 	{
 
           sctk_handle_free(type->id, SCTK_HANDLE_DATATYPE);
+
+          /* Attrs */
+          Datatype_Attr_store_release(&type->attrs, type->id);
 
           /* First call free on each embedded derived type
                   * but we must do this only once per type, therefore
@@ -634,10 +868,10 @@ int sctk_derived_datatype_release( sctk_derived_datatype_t * type )
               }
             }
           } else {
-            sctk_fatal("We found a derived datatype %d with no layout",
-                       type->id);
+            if (type->context.combiner != MPC_COMBINER_DUMMY)
+              sctk_fatal("We found a derived datatype %d with no layout",
+                         type->id);
           }
-
           /* Counter == 0 then free */
           if (type->opt_begins != type->begins)
             sctk_free(type->opt_begins);
@@ -788,37 +1022,165 @@ void sctk_derived_datatype_display( sctk_derived_datatype_t * target_type )
 	sctk_error("COUNT %ld", target_type->count );
 	sctk_error("OPT_COUNT %ld", target_type->opt_count );
 	
-	
 	int ni, na, nd, c;
 
 	sctk_datatype_fill_envelope( &target_type->context , &ni, &na , &nd , &c );
 	sctk_error("COMBINER : %s[%d]", sctk_datype_combiner(c), c );
 	
 	int i;
-	
-	printf("INT : [");
-	for( i = 0 ; i < ni ; i++ )
-	{
-		printf("[%d] %d , ", i, target_type->context.array_of_integers[i] );
-	}
-	printf("]\n");
-	
-	printf("ADD : [");
-	for( i = 0 ; i < na ; i++ )
-	{
-		printf("[%d] %ld , ", i, target_type->context.array_of_addresses[i] );
-	}
-	printf("]\n");
-	
-	printf("TYP : [");
-	for( i = 0 ; i < nd ; i++ )
-	{
-		printf("[%d] %d (%s), ", i, target_type->context.array_of_types[i], sctk_datype_get_name( target_type->context.array_of_types[i] ) );
-	}
-	printf("]\n");
-	sctk_error("==============================================");
+
+        sctk_error("INT : [");
+        for (i = 0; i < ni; i++) {
+          sctk_error("[%d] %d , ", i,
+                     target_type->context.array_of_integers[i]);
+        }
+        sctk_error("]\n");
+
+        sctk_error("ADD : [");
+        for (i = 0; i < na; i++) {
+          sctk_error("[%d] %ld , ", i,
+                     target_type->context.array_of_addresses[i]);
+        }
+        sctk_error("]\n");
+
+        sctk_error("TYP : [");
+        for (i = 0; i < nd; i++) {
+          sctk_error(
+              "[%d] %d (%s), ", i, target_type->context.array_of_types[i],
+              sctk_datype_get_name(target_type->context.array_of_types[i]));
+        }
+        sctk_error("]\n");
+
+        for (i = 0; i < target_type->opt_count; i++) {
+          sctk_error("[%d , %d]\n", target_type->opt_begins[i],
+                     target_type->opt_ends[i]);
+        }
+
+        sctk_error("==============================================");
 }
 
+extern sctk_derived_datatype_t *
+sctk_get_derived_datatype(MPC_Datatype datatype);
+
+void *sctk_derived_datatype_serialize(sctk_datatype_t type, size_t *size,
+                                      size_t header_pad) {
+  assume(sctk_datatype_is_derived(type));
+  assume(size);
+
+  sctk_derived_datatype_t *dtype = sctk_get_derived_datatype(type);
+
+  assume(dtype != NULL);
+
+  *size = sizeof(size_t) +
+          2 * dtype->count * sizeof(mpc_pack_absolute_indexes_t) +
+          dtype->count * sizeof(sctk_datatype_t) + sizeof(struct inner_lbub) +
+          header_pad + 1;
+
+  void *ret = sctk_malloc(*size);
+
+  if (!ret) {
+    perror("malloc");
+    return NULL;
+  }
+
+  size_t *count = (size_t *)(ret + header_pad);
+  mpc_pack_absolute_indexes_t *begins = (count + 1);
+  mpc_pack_absolute_indexes_t *ends = begins + dtype->count;
+  sctk_datatype_t *types = (sctk_datatype_t *)(ends + dtype->count);
+  struct inner_lbub *lb_ub = (struct inner_lbub *)(types + dtype->count);
+  char *guard = (lb_ub + 1);
+
+  *guard = 77;
+
+  *count = dtype->count;
+
+  size_t i;
+
+  for (i = 0; i < dtype->count; i++) {
+    begins[i] = dtype->begins[i];
+    ends[i] = dtype->ends[i];
+    types[i] = dtype->datatypes[i];
+  }
+
+  lb_ub->lb = dtype->lb;
+  lb_ub->is_lb = dtype->is_lb;
+  lb_ub->ub = dtype->ub;
+  lb_ub->is_ub = dtype->is_ub;
+  lb_ub->is_a_padded_struct = dtype->is_a_padded_struct;
+
+  assert(*guard == 77);
+  assert(guard < (ret + *size));
+
+  return ret;
+}
+
+sctk_datatype_t sctk_derived_datatype_deserialize(void *buff, size_t size,
+                                                  size_t header_pad) {
+  size_t *count = (size_t *)(buff + header_pad);
+  mpc_pack_absolute_indexes_t *begins = (count + 1);
+  mpc_pack_absolute_indexes_t *ends = begins + *count;
+  sctk_datatype_t *types = (sctk_datatype_t *)(ends + *count);
+  struct inner_lbub *lb_ub = (struct inner_lbub *)(types + *count);
+
+  assume(count < (buff + size));
+  assume(count < (begins + size));
+  assume(count < (ends + size));
+  assume(count < (types + size));
+
+  sctk_datatype_t ret;
+
+  struct Datatype_External_context dtctx;
+  sctk_datatype_external_context_clear(&dtctx);
+  dtctx.combiner = MPC_COMBINER_DUMMY;
+
+  PMPC_Derived_datatype(&ret, begins, ends, types, *count, lb_ub->lb,
+                        lb_ub->is_lb, lb_ub->ub, lb_ub->is_ub, &dtctx);
+
+  if (lb_ub->is_a_padded_struct) {
+    PMPC_Type_flag_padded(ret);
+  }
+
+  PMPC_Type_commit(&ret);
+
+  return ret;
+}
+
+sctk_datatype_t sctk_datatype_get_inner_type(sctk_datatype_t type) {
+  assume(!sctk_datatype_is_common(type));
+
+  if (sctk_datatype_is_struct_datatype(type))
+    return type;
+
+  if (sctk_datatype_is_contiguous(type)) {
+    sctk_contiguous_datatype_t *ctype = sctk_get_contiguous_datatype(type);
+    assume(ctype != NULL);
+    return ctype->datatype;
+  }
+
+  sctk_derived_datatype_t *dtype = sctk_get_derived_datatype(type);
+
+  assume(dtype != NULL);
+
+  // sctk_derived_datatype_display( dtype );
+
+  sctk_datatype_t itype = -1;
+
+  size_t i;
+
+  for (i = 0; i < dtype->count; i++) {
+    if (itype < 0) {
+      itype = dtype->datatypes[i];
+    } else {
+      if (itype != dtype->datatypes[i])
+        return -1;
+    }
+  }
+
+  assume(sctk_datatype_is_common(itype));
+
+  /* if we are here, all types are the same */
+  return itype;
+}
 
 /************************************************************************/
 /* Datatype  Array                                                      */
@@ -879,12 +1241,14 @@ void Datatype_Array_release( struct Datatype_Array * da )
 		
 		if( to_release && !sctk_datatype_is_common(i) )
 		{
-			sctk_info("Freeing unfreed datatype [%d] did you call MPI_Type_free on all your MPI_Datatypes ?", i );
-			MPC_Datatype tmp = i;
-			PMPC_Type_free( &tmp );
-			did_free = 1;
-		}
-	}
+                  sctk_debug("Freeing unfreed datatype [%d] did you call "
+                             "MPI_Type_free on all your MPI_Datatypes ?",
+                             i);
+                  MPC_Datatype tmp = i;
+                  PMPC_Type_free(&tmp);
+                  did_free = 1;
+                }
+        }
 }
 
 sctk_contiguous_datatype_t *  Datatype_Array_get_contiguous_datatype( struct Datatype_Array * da ,  MPC_Datatype datatype)
@@ -899,15 +1263,119 @@ sctk_contiguous_datatype_t *  Datatype_Array_get_contiguous_datatype( struct Dat
 sctk_derived_datatype_t * Datatype_Array_get_derived_datatype( struct Datatype_Array * da  ,  MPC_Datatype datatype)
 {
 	assume( sctk_datatype_is_derived( datatype ) );
-	
-	return da->derived_user_types[ MPC_TYPE_MAP_TO_DERIVED(datatype) ];
+
+        return da->derived_user_types[MPC_TYPE_MAP_TO_DERIVED(datatype)];
 }
 
 void Datatype_Array_set_derived_datatype( struct Datatype_Array * da ,  MPC_Datatype datatype, sctk_derived_datatype_t * value )
 {
 	assume( sctk_datatype_is_derived( datatype ) );
-	
-	da->derived_user_types[ MPC_TYPE_MAP_TO_DERIVED(datatype) ] = value;
+
+        da->derived_user_types[MPC_TYPE_MAP_TO_DERIVED(datatype)] = value;
+}
+
+/************************************************************************/
+/* Datatype  Attribute Getters                                          */
+/************************************************************************/
+
+static inline struct Datatype_Attr_store *
+sctk_type_get_attr_store(struct Datatype_Array *da, MPC_Datatype type) {
+
+  MPC_Datatype_kind kind = sctk_datatype_kind(type);
+
+  struct Datatype_Attr_store *store = NULL;
+
+  sctk_contiguous_datatype_t *cont = NULL;
+  sctk_derived_datatype_t *deriv = NULL;
+
+  switch (kind) {
+  case MPC_DATATYPES_CONTIGUOUS:
+    cont = Datatype_Array_get_contiguous_datatype(da, type);
+
+    if (cont)
+      store = &cont->attrs;
+
+    break;
+
+  case MPC_DATATYPES_DERIVED:
+    deriv = Datatype_Array_get_derived_datatype(da, type);
+
+    if (deriv)
+      store = &deriv->attrs;
+    break;
+  default:
+    return NULL;
+  }
+
+  return store;
+}
+
+int sctk_type_set_attr(struct Datatype_Array *da, MPC_Datatype type,
+                       int type_keyval, void *attribute_val) {
+  struct Datatype_Attr_store *store = sctk_type_get_attr_store(da, type);
+
+  if (!store)
+    return MPC_ERR_ARG;
+
+  struct Datatype_Attr *new = NULL;
+
+  void *pnew = MPCHT_get(&store->attrs, type_keyval);
+
+  if (pnew) {
+    new = (struct Datatype_Attr *)pnew;
+    new->attribute_val = attribute_val;
+  } else {
+    new = Datatype_Attr_new(type_keyval, attribute_val);
+    MPCHT_set(&store->attrs, type_keyval, new);
+  }
+
+  return MPC_SUCCESS;
+}
+
+int sctk_type_get_attr(struct Datatype_Array *da, MPC_Datatype type,
+                       int type_keyval, void *attribute_val, int *flag) {
+  struct Datatype_Attr_store *store = sctk_type_get_attr_store(da, type);
+
+  if (!store)
+    return MPC_ERR_ARG;
+
+  struct Datatype_Attr *ret = NULL;
+
+  void *pret = MPCHT_get(&store->attrs, type_keyval);
+
+  if (pret) {
+    ret = (struct Datatype_Attr *)pret;
+
+    *((void **)attribute_val) = ret->attribute_val;
+
+    *flag = 1;
+  } else {
+    *flag = 0;
+  }
+
+  return MPC_SUCCESS;
+}
+
+int sctk_type_delete_attr(struct Datatype_Array *da, MPC_Datatype type,
+                          int type_keyval) {
+  struct Datatype_Attr_store *store = sctk_type_get_attr_store(da, type);
+
+  if (!store)
+    return MPC_ERR_ARG;
+
+  struct Datatype_Attr *ret = NULL;
+
+  void *pret = MPCHT_get(&store->attrs, type_keyval);
+
+  if (!pret) {
+    return MPC_ERR_ARG;
+  }
+
+  MPCHT_delete(&store->attrs, type_keyval);
+
+  sctk_free(pret);
+
+  return MPC_SUCCESS;
 }
 
 /************************************************************************/
@@ -1135,309 +1603,297 @@ void __sctk_datatype_context_set( struct Datatype_context * ctx , struct Datatyp
 	assume( ctx != NULL );
 	assume( dctx != NULL );
 	/* Is the type context initalized */
-	assume( dctx->combiner != MPC_COMBINER_UNKNOWN );
-	
-	/* First we check if there is no previously allocated array
-	 * as it might happen as some datatype constructors
-	 * are built on top of other datatypes */
-	sctk_datatype_context_free( ctx );
-	
-	/* Save the combiner which is always needed */
-	sctk_nodebug("Setting combiner to %d\n", dctx->combiner );
-	ctx->combiner = dctx->combiner;
-	
 
-	/* Save size computing values before calling get envelope */
-	ctx->count = dctx->count;
-	ctx->ndims = dctx->ndims;
-	
-	/* Allocate the arrays according to the envelope */
-	int n_int = 0;
-	int n_addr = 0;
-	int n_type = 0;
-	int dummy_combiner;
-	
-	/* The context is not yet fully initialized but we can
-	 * already switch the data-type as we have just set it */
-	sctk_datatype_fill_envelope( ctx, &n_int, &n_addr, &n_type, &dummy_combiner);
+        assume(dctx->combiner != MPC_COMBINER_UNKNOWN);
 
-	
-	/* We call all allocs as if count == 0 it returns NULL */
-	ctx->array_of_integers = please_allocate_an_array_of_integers( n_int );
-	ctx->array_of_addresses = please_allocate_an_array_of_addresses( n_addr );
-	ctx->array_of_types = please_allocate_an_array_of_datatypes( n_type );
-	
-	int i = 0;
-	int cnt = 0;
+        /* First we check if there is no previously allocated array
+         * as it might happen as some datatype constructors
+         * are built on top of other datatypes */
+        sctk_datatype_context_free(ctx);
 
-	/* Retrieve type dependent information */
-	switch( ctx->combiner )
-	{
-		case MPC_COMBINER_NAMED:
-			sctk_fatal("ERROR : You are setting a context on a common data-type");
-		break;
-		case MPC_COMBINER_DUP:
-			ctx->array_of_types[0] = dctx->oldtype;
-		break;
-		case MPC_COMBINER_CONTIGUOUS:
-			ctx->array_of_integers[0] = ctx->count;
-			ctx->array_of_types[0] = dctx->oldtype;
-			break;
-		case MPC_COMBINER_VECTOR:
-			ctx->array_of_integers[0] = ctx->count;
-			ctx->array_of_integers[1] = dctx->blocklength;
-			ctx->array_of_integers[2] = dctx->stride;
-			ctx->array_of_types[0] = dctx->oldtype;
-		break;
-		case MPC_COMBINER_HVECTOR:
-			ctx->array_of_integers[0] = ctx->count;
-			ctx->array_of_integers[1] = dctx->blocklength;
-			ctx->array_of_addresses[0] = dctx->stride_addr;
-			ctx->array_of_types[0] = dctx->oldtype;
-			/* Here we save the datatype as it might be
-			 * removed from the context when data-types are
-			 * created on top of each other */
-			ctx->internal_type =  dctx->oldtype;
-		break;
-		case MPC_COMBINER_INDEXED:
-			ctx->array_of_integers[0] = ctx->count;
-			
-			cnt = 0;
-			for( i = 1 ; i <= ctx->count ; i++ )
-			{
-				CHECK_OVERFLOW( i , n_int );
-				ctx->array_of_integers[i] = dctx->array_of_blocklenght[cnt];
-				cnt++;
-			}
-			
-			cnt = 0;
-			for( i = (ctx->count + 1) ; i <= (ctx->count * 2) ; i++ )
-			{
-				CHECK_OVERFLOW( i , n_int );
-				ctx->array_of_integers[i] = dctx->array_of_displacements[cnt];
-				cnt++;
-			}
-			
-			ctx->array_of_types[0] = dctx->oldtype;
-		break;
-		case MPC_COMBINER_HINDEXED:
-			ctx->array_of_integers[0] = ctx->count;
-			
-			cnt = 0;
-			for( i = 1 ; i <= ctx->count ; i++ )
-			{
-				CHECK_OVERFLOW( i , n_int );
-				ctx->array_of_integers[i] = dctx->array_of_blocklenght[cnt];
-				cnt++;
-			}
-			
-			cnt = 0;
-			for( i = 0 ; i < ctx->count ; i++ )
-			{
-				CHECK_OVERFLOW( i , n_addr );
-				ctx->array_of_addresses[i] = dctx->array_of_displacements_addr[cnt];
-				cnt++;
-			}
-			
-			ctx->array_of_types[0] = dctx->oldtype;
-			/* Here we save the datatype as it might be
-			 * removed from the context when data-types are
-			 * created on top of each other */
-			ctx->internal_type =  dctx->oldtype;
-		break;
-		case MPC_COMBINER_INDEXED_BLOCK:
-			ctx->array_of_integers[0] = ctx->count;
-			ctx->array_of_integers[1] = dctx->blocklength;
-			
-			cnt = 0;
-			for( i = 2 ; i <= ( ctx->count + 1 ) ; i++ )
-			{
-				CHECK_OVERFLOW( i , n_int );
-				ctx->array_of_integers[i] = dctx->array_of_displacements[cnt];
-				cnt++;
-			}
-			
-			ctx->array_of_types[0] = dctx->oldtype;
-		break;
-		case MPC_COMBINER_HINDEXED_BLOCK:
-			ctx->array_of_integers[0] = ctx->count;
-			ctx->array_of_integers[1] = dctx->blocklength;
-			
-			cnt = 0;
-			for( i = 0 ; i < ctx->count ; i++ )
-			{
-				CHECK_OVERFLOW( i , n_addr );
-				ctx->array_of_addresses[i] = dctx->array_of_displacements_addr[cnt];
-				cnt++;
-			}
-			
-			ctx->array_of_types[0] = dctx->oldtype;
-		break;
-		case MPC_COMBINER_STRUCT:
-			ctx->array_of_integers[0] = ctx->count;
+        /* Save the combiner which is always needed */
+        sctk_nodebug("Setting combiner to %d\n", dctx->combiner);
+        ctx->combiner = dctx->combiner;
 
-			cnt = 0;
-			for( i = 1 ; i <= ctx->count ; i++ )
-			{
-				CHECK_OVERFLOW( i , n_int );
-				ctx->array_of_integers[i] = dctx->array_of_blocklenght[cnt];
-				cnt++;
-			}
+        /* This combiner is used for serialized datatypes
+         * it is never seen outside of the runtime */
+        if (dctx->combiner == MPC_COMBINER_DUMMY) {
+          return;
+        }
 
-			cnt = 0;
-			for( i = 0 ; i < ctx->count ; i++ )
-			{
-				CHECK_OVERFLOW( i , n_addr );
-				ctx->array_of_addresses[i] = dctx->array_of_displacements_addr[cnt];
-				cnt++;
-			}
+        /* Save size computing values before calling get envelope */
+        ctx->count = dctx->count;
+        ctx->ndims = dctx->ndims;
 
-			cnt = 0;
-			for( i = 0 ; i < ctx->count ; i++ )
-			{
-				CHECK_OVERFLOW( i , n_type );
-				ctx->array_of_types[i] = dctx->array_of_types[cnt];
-				cnt++;
-			}
-			
-			/* Here we save the datatype as it might be
-			 * removed from the context when data-types are
-			 * created on top of each other.
-			 * 
-			 * What we do here is VERY ugly ! the only
-			 * type which are built on top of struct are
-			 * darray an subarray and they are built as follows:
-			 * 
-			 * LB CONTENT UB
-			 * 
-			 * Here we just store a reference to the content in
-			 * order to free it later */
-			if( n_type == 3 && dctx->array_of_types[0] == MPC_LB && dctx->array_of_types[2] == MPC_UB)
-				ctx->internal_type =  dctx->array_of_types[1];
-		break;
-		case MPC_COMBINER_SUBARRAY:
-			ctx->array_of_integers[0] = ctx->ndims;
-			
-			cnt = 0;
-			for( i = 1 ; i <= ctx->ndims ; i++ )
-			{
-				CHECK_OVERFLOW( i , n_int );
-				ctx->array_of_integers[i] = dctx->array_of_sizes[cnt];
-				cnt++;
-			}
-			
-			cnt = 0;
-			for( i = (ctx->ndims + 1) ; i <= (2 * ctx->ndims) ; i++ )
-			{
-				CHECK_OVERFLOW( i , n_int );
-				ctx->array_of_integers[i] = dctx->array_of_subsizes[cnt];
-				cnt++;
-			}
-			
-			cnt = 0;
-			for( i = (2 * ctx->ndims + 1) ; i <= (3 * ctx->ndims) ; i++ )
-			{
-				CHECK_OVERFLOW( i , n_int );
-				ctx->array_of_integers[i] = dctx->array_of_starts[cnt];
-				cnt++;
-			}
-			
-			ctx->array_of_integers[3 * ctx->ndims + 1] = dctx->order;
-			ctx->array_of_types[0] = dctx->oldtype;
-		break;
-		case MPC_COMBINER_DARRAY:
-			ctx->array_of_integers[0] = dctx->size;
-			ctx->array_of_integers[1] = dctx->rank;
-			ctx->array_of_integers[2] = dctx->ndims;
-		
-			cnt = 0;
-			for( i = 3 ; i <= (ctx->ndims + 2) ; i++ )
-			{
-				CHECK_OVERFLOW( i , n_int );
-				ctx->array_of_integers[i] = dctx->array_of_gsizes[cnt];
-				cnt++;
-			}
-		
-			cnt = 0;
-			for( i = (ctx->ndims + 3) ; i <= (2 * ctx->ndims + 2) ; i++ )
-			{
-				CHECK_OVERFLOW( i , n_int );
-				ctx->array_of_integers[i] = dctx->array_of_distribs[cnt];
-				cnt++;
-			}
-		
-			cnt = 0;
-			for( i = (2 * ctx->ndims + 3) ; i <= (3 * ctx->ndims + 2) ; i++ )
-			{
-				CHECK_OVERFLOW( i , n_int );
-				ctx->array_of_integers[i] = dctx->array_of_dargs[cnt];
-				cnt++;
-			}
-		
-			cnt = 0;
-			for( i = (3 * ctx->ndims + 3) ; i <= (4 * ctx->ndims + 2) ; i++ )
-			{
-				CHECK_OVERFLOW( i , n_int );
-				ctx->array_of_integers[i] = dctx->array_of_psizes[cnt];
-				cnt++;
-			}
-			
-			ctx->array_of_integers[4 * ctx->ndims + 3] = dctx->order;
-			ctx->array_of_types[0] = dctx->oldtype;
-		break;
-		case MPC_COMBINER_F90_REAL:
-		case MPC_COMBINER_F90_COMPLEX:
-			ctx->array_of_integers[0] = dctx->p;
-			ctx->array_of_integers[1] = dctx->r;
-		break;
-		case MPC_COMBINER_F90_INTEGER:
-			ctx->array_of_integers[1] = dctx->r;
-		break;
-		case MPC_COMBINER_RESIZED:
-			ctx->array_of_addresses[0] = dctx->lb;
-			ctx->array_of_addresses[1] = dctx->extent;
-			ctx->array_of_types[0] = dctx->oldtype;
-		break;
-		case MPC_COMBINER_HINDEXED_INTEGER:
-		case MPC_COMBINER_STRUCT_INTEGER:
-		case MPC_COMBINER_HVECTOR_INTEGER:
-		case MPC_COMBINER_COUNT__:
-		case MPC_COMBINER_UNKNOWN:
-			not_reachable();
-	}
+        /* Allocate the arrays according to the envelope */
+        int n_int = 0;
+        int n_addr = 0;
+        int n_type = 0;
+        int dummy_combiner;
 
-	if( ! enable_refcounting )
-		return;
-	
-	
-	/* Now we increment the embedded type refcounter only once per allocated datatype
-	* to do so we walk the datatype array while incrementing a counter at the
-	* target type offset, later on we just have to refcount the which are non-zero
-	*  */
-	int is_datatype_present[ MPC_TYPE_COUNT ];
-	memset( is_datatype_present, 0 , sizeof( int ) * MPC_TYPE_COUNT );
+        /* The context is not yet fully initialized but we can
+         * already switch the data-type as we have just set it */
+        sctk_datatype_fill_envelope(ctx, &n_int, &n_addr, &n_type,
+                                    &dummy_combiner);
 
-	/* Accumulate present datatypes */
-	int j;
-	for( j = 0 ; j < n_type ; j++ )
-	{
-		/* As UB and LB are negative it would break
-		 * everyting in the array */
-		if( sctk_datatype_is_boundary( ctx->array_of_types[j]) )
-			continue;
+        /* We call all allocs as if count == 0 it returns NULL */
+        ctx->array_of_integers = please_allocate_an_array_of_integers(n_int);
+        ctx->array_of_addresses = please_allocate_an_array_of_addresses(n_addr);
+        ctx->array_of_types = please_allocate_an_array_of_datatypes(n_type);
 
-		is_datatype_present[ ctx->array_of_types[j] ] = 1;
-	}
+        int i = 0;
+        int cnt = 0;
 
-	/* Increment the refcounters of present datatypes */
-	for( j = 0 ; j < MPC_TYPE_COUNT ; j++ )
-	{
-		if( is_datatype_present[ j ] )
-		{
-			PMPC_Type_use( j );
-		}
-	}
+        /* Retrieve type dependent information */
+        switch (ctx->combiner) {
+        case MPC_COMBINER_NAMED:
+          sctk_fatal("ERROR : You are setting a context on a common data-type");
+          break;
+        case MPC_COMBINER_DUP:
+          ctx->array_of_types[0] = dctx->oldtype;
+          break;
+        case MPC_COMBINER_CONTIGUOUS:
+          ctx->array_of_integers[0] = ctx->count;
+          ctx->array_of_types[0] = dctx->oldtype;
+          break;
+        case MPC_COMBINER_VECTOR:
+          ctx->array_of_integers[0] = ctx->count;
+          ctx->array_of_integers[1] = dctx->blocklength;
+          ctx->array_of_integers[2] = dctx->stride;
+          ctx->array_of_types[0] = dctx->oldtype;
+          break;
+        case MPC_COMBINER_HVECTOR:
+          ctx->array_of_integers[0] = ctx->count;
+          ctx->array_of_integers[1] = dctx->blocklength;
+          ctx->array_of_addresses[0] = dctx->stride_addr;
+          ctx->array_of_types[0] = dctx->oldtype;
+          /* Here we save the datatype as it might be
+           * removed from the context when data-types are
+           * created on top of each other */
+          ctx->internal_type = dctx->oldtype;
+          break;
+        case MPC_COMBINER_INDEXED:
+          ctx->array_of_integers[0] = ctx->count;
 
+          cnt = 0;
+          for (i = 1; i <= ctx->count; i++) {
+            CHECK_OVERFLOW(i, n_int);
+            ctx->array_of_integers[i] = dctx->array_of_blocklenght[cnt];
+            cnt++;
+          }
+
+          cnt = 0;
+          for (i = (ctx->count + 1); i <= (ctx->count * 2); i++) {
+            CHECK_OVERFLOW(i, n_int);
+            ctx->array_of_integers[i] = dctx->array_of_displacements[cnt];
+            cnt++;
+          }
+
+          ctx->array_of_types[0] = dctx->oldtype;
+          break;
+        case MPC_COMBINER_HINDEXED:
+          ctx->array_of_integers[0] = ctx->count;
+
+          cnt = 0;
+          for (i = 1; i <= ctx->count; i++) {
+            CHECK_OVERFLOW(i, n_int);
+            ctx->array_of_integers[i] = dctx->array_of_blocklenght[cnt];
+            cnt++;
+          }
+
+          cnt = 0;
+          for (i = 0; i < ctx->count; i++) {
+            CHECK_OVERFLOW(i, n_addr);
+            ctx->array_of_addresses[i] = dctx->array_of_displacements_addr[cnt];
+            cnt++;
+          }
+
+          ctx->array_of_types[0] = dctx->oldtype;
+          /* Here we save the datatype as it might be
+           * removed from the context when data-types are
+           * created on top of each other */
+          ctx->internal_type = dctx->oldtype;
+          break;
+        case MPC_COMBINER_INDEXED_BLOCK:
+          ctx->array_of_integers[0] = ctx->count;
+          ctx->array_of_integers[1] = dctx->blocklength;
+
+          cnt = 0;
+          for (i = 2; i <= (ctx->count + 1); i++) {
+            CHECK_OVERFLOW(i, n_int);
+            ctx->array_of_integers[i] = dctx->array_of_displacements[cnt];
+            cnt++;
+          }
+
+          ctx->array_of_types[0] = dctx->oldtype;
+          break;
+        case MPC_COMBINER_HINDEXED_BLOCK:
+          ctx->array_of_integers[0] = ctx->count;
+          ctx->array_of_integers[1] = dctx->blocklength;
+
+          cnt = 0;
+          for (i = 0; i < ctx->count; i++) {
+            CHECK_OVERFLOW(i, n_addr);
+            ctx->array_of_addresses[i] = dctx->array_of_displacements_addr[cnt];
+            cnt++;
+          }
+
+          ctx->array_of_types[0] = dctx->oldtype;
+          break;
+        case MPC_COMBINER_STRUCT:
+          ctx->array_of_integers[0] = ctx->count;
+
+          cnt = 0;
+          for (i = 1; i <= ctx->count; i++) {
+            CHECK_OVERFLOW(i, n_int);
+            ctx->array_of_integers[i] = dctx->array_of_blocklenght[cnt];
+            cnt++;
+          }
+
+          cnt = 0;
+          for (i = 0; i < ctx->count; i++) {
+            CHECK_OVERFLOW(i, n_addr);
+            ctx->array_of_addresses[i] = dctx->array_of_displacements_addr[cnt];
+            cnt++;
+          }
+
+          cnt = 0;
+          for (i = 0; i < ctx->count; i++) {
+            CHECK_OVERFLOW(i, n_type);
+            ctx->array_of_types[i] = dctx->array_of_types[cnt];
+            cnt++;
+          }
+
+          /* Here we save the datatype as it might be
+           * removed from the context when data-types are
+           * created on top of each other.
+           *
+           * What we do here is VERY ugly ! the only
+           * type which are built on top of struct are
+           * darray an subarray and they are built as follows:
+           *
+           * LB CONTENT UB
+           *
+           * Here we just store a reference to the content in
+           * order to free it later */
+          if (n_type == 3 && dctx->array_of_types[0] == MPC_LB &&
+              dctx->array_of_types[2] == MPC_UB)
+            ctx->internal_type = dctx->array_of_types[1];
+          break;
+        case MPC_COMBINER_SUBARRAY:
+          ctx->array_of_integers[0] = ctx->ndims;
+
+          cnt = 0;
+          for (i = 1; i <= ctx->ndims; i++) {
+            CHECK_OVERFLOW(i, n_int);
+            ctx->array_of_integers[i] = dctx->array_of_sizes[cnt];
+            cnt++;
+          }
+
+          cnt = 0;
+          for (i = (ctx->ndims + 1); i <= (2 * ctx->ndims); i++) {
+            CHECK_OVERFLOW(i, n_int);
+            ctx->array_of_integers[i] = dctx->array_of_subsizes[cnt];
+            cnt++;
+          }
+
+          cnt = 0;
+          for (i = (2 * ctx->ndims + 1); i <= (3 * ctx->ndims); i++) {
+            CHECK_OVERFLOW(i, n_int);
+            ctx->array_of_integers[i] = dctx->array_of_starts[cnt];
+            cnt++;
+          }
+
+          ctx->array_of_integers[3 * ctx->ndims + 1] = dctx->order;
+          ctx->array_of_types[0] = dctx->oldtype;
+          break;
+        case MPC_COMBINER_DARRAY:
+          ctx->array_of_integers[0] = dctx->size;
+          ctx->array_of_integers[1] = dctx->rank;
+          ctx->array_of_integers[2] = dctx->ndims;
+
+          cnt = 0;
+          for (i = 3; i <= (ctx->ndims + 2); i++) {
+            CHECK_OVERFLOW(i, n_int);
+            ctx->array_of_integers[i] = dctx->array_of_gsizes[cnt];
+            cnt++;
+          }
+
+          cnt = 0;
+          for (i = (ctx->ndims + 3); i <= (2 * ctx->ndims + 2); i++) {
+            CHECK_OVERFLOW(i, n_int);
+            ctx->array_of_integers[i] = dctx->array_of_distribs[cnt];
+            cnt++;
+          }
+
+          cnt = 0;
+          for (i = (2 * ctx->ndims + 3); i <= (3 * ctx->ndims + 2); i++) {
+            CHECK_OVERFLOW(i, n_int);
+            ctx->array_of_integers[i] = dctx->array_of_dargs[cnt];
+            cnt++;
+          }
+
+          cnt = 0;
+          for (i = (3 * ctx->ndims + 3); i <= (4 * ctx->ndims + 2); i++) {
+            CHECK_OVERFLOW(i, n_int);
+            ctx->array_of_integers[i] = dctx->array_of_psizes[cnt];
+            cnt++;
+          }
+
+          ctx->array_of_integers[4 * ctx->ndims + 3] = dctx->order;
+          ctx->array_of_types[0] = dctx->oldtype;
+          break;
+        case MPC_COMBINER_F90_REAL:
+        case MPC_COMBINER_F90_COMPLEX:
+          ctx->array_of_integers[0] = dctx->p;
+          ctx->array_of_integers[1] = dctx->r;
+          break;
+        case MPC_COMBINER_F90_INTEGER:
+          ctx->array_of_integers[1] = dctx->r;
+          break;
+        case MPC_COMBINER_RESIZED:
+          ctx->array_of_addresses[0] = dctx->lb;
+          ctx->array_of_addresses[1] = dctx->extent;
+          ctx->array_of_types[0] = dctx->oldtype;
+          break;
+        case MPC_COMBINER_HINDEXED_INTEGER:
+        case MPC_COMBINER_STRUCT_INTEGER:
+        case MPC_COMBINER_HVECTOR_INTEGER:
+        case MPC_COMBINER_COUNT__:
+        case MPC_COMBINER_UNKNOWN:
+          not_reachable();
+        }
+
+        if (!enable_refcounting)
+          return;
+
+        /* Now we increment the embedded type refcounter only once per allocated
+        * datatype
+        * to do so we walk the datatype array while incrementing a counter at
+        * the
+        * target type offset, later on we just have to refcount the which are
+        * non-zero
+        *  */
+        int is_datatype_present[MPC_TYPE_COUNT];
+        memset(is_datatype_present, 0, sizeof(int) * MPC_TYPE_COUNT);
+
+        /* Accumulate present datatypes */
+        int j;
+        for (j = 0; j < n_type; j++) {
+          /* As UB and LB are negative it would break
+           * everyting in the array */
+          if (sctk_datatype_is_boundary(ctx->array_of_types[j]))
+            continue;
+
+          is_datatype_present[ctx->array_of_types[j]] = 1;
+        }
+
+        /* Increment the refcounters of present datatypes */
+        for (j = 0; j < MPC_TYPE_COUNT; j++) {
+          if (is_datatype_present[j]) {
+            PMPC_Type_use(j);
+          }
+        }
 }
 
 

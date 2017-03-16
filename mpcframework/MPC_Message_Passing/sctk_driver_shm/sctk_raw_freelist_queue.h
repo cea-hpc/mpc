@@ -26,13 +26,13 @@ typedef enum {
     SCTK_SHM_ACK, 
 } sctk_shm_msg_type_t;
 
-typedef enum 
-{
-    SCTK_SHM_CELLS_QUEUE_SEND = 0, 
-    SCTK_SHM_CELLS_QUEUE_RECV = 1,
-    SCTK_SHM_CELLS_QUEUE_CMPL = 2,
-    SCTK_SHM_CELLS_QUEUE_FREE = 3,
-    SCTK_SHM_CELLS_QUEUE_POOL = 4, 
+typedef enum {
+  SCTK_SHM_CELLS_QUEUE_SEND = 0,
+  SCTK_SHM_CELLS_QUEUE_RECV = 1,
+  SCTK_SHM_CELLS_QUEUE_CMPL = 2,
+  SCTK_SHM_CELLS_QUEUE_FREE = 3,
+  SCTK_SHM_CELLS_QUEUE_CTRL = 4,
+  SCTK_SHM_CELLS_QUEUE_POOL = 5,
 } sctk_shm_list_type_t;
 
 /**
@@ -44,11 +44,11 @@ typedef struct sctk_shm_cell_s{
     size_t size_to_copy;
     int src;
     int dest;
-    char pad1[4096];
+    char pad1[1024];
     void *opaque_send;                  /* Opaque data used by the sender       */
     void *opaque_recv;                  /* Opaque data used by the recver       */
     int frag_hkey;
-    char pad2[4096];
+    char pad2[1024];
     char data[SCTK_SHM_CELL_SIZE];      /* Actual data transferred              */
 } sctk_shm_cell_t;
 typedef struct sctk_shm_cell_s sctk_shm_cell_t;

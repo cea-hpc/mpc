@@ -17,6 +17,7 @@
 /* #                                                                      # */
 /* # Authors:                                                             # */
 /* #   - VALAT Sébastien sebastien.valat@cea.fr                           # */
+/* #   - CAPRA Antoine capra@paratools.fr                                 # */
 /* #                                                                      # */
 /* ######################################################################## */
 
@@ -24,9 +25,10 @@
 #define SCTK_SHM_MAPPER_H
 
 /************************** HEADERS ************************/
-#include <stdlib.h>
-#include <stdio.h>
+#include "sctk_atomics.h"
 #include "sctk_bool.h"
+#include <stdio.h>
+#include <stdlib.h>
 //#define bool unsigned char
 //#define true 1
 //#define false 0
@@ -51,20 +53,21 @@ extern "C"
  * @param filename Define the name of the file used to find the SHM segment.
  * @param option Optional parameter to transmit to handler implementation.
 **/
-typedef bool (*sctk_shm_mapper_send_handler)(const char * filename,void * option);
+typedef bool (*sctk_shm_mapper_send_handler)(const char *filename, void *option,
+                                             void *option1);
 /**
  * Define a handler to receive the name of shm file on all participant (except the master).
  * Must wait unit receive.
  * @param option Optional parameter to transmit to handler implementation.
  * @return Return a copy of the filename, the caller must use free on it when finish.
 **/
-typedef char * (*sctk_shm_mapper_recv_handler)(void * option);
+typedef char *(*sctk_shm_mapper_recv_handler)(void *option, void *option1);
 /**
  * Function used to generate the SHM filename. Their is one by default, but can be changed
  * depending on the situation.
  * @param option Optional parameter to transmit to handler implementation.
 **/
-typedef char * (*sctk_shm_mapper_filename_handler)(void * option);
+typedef char *(*sctk_shm_mapper_filename_handler)(void *option, void *option1);
 typedef size_t sctk_size_t;
 typedef size_t sctk_addr_t;
 
@@ -103,6 +106,8 @@ struct sctk_alloc_mapper_handler_s
 	sctk_shm_mapper_filename_handler gen_filename;
 	/** An opaque option to transmit the handlers when calling them. **/
 	void * option;
+        /** An opaque option to transmit the handlers when calling them. **/
+        void *option1;
 };
 typedef struct sctk_alloc_mapper_handler_s sctk_alloc_mapper_handler_t;
 
@@ -146,29 +151,39 @@ struct sctk_shm_mapper_sync_header_s
 	 * Counter to sync slaves operations. It start to number of participant and decrement until all are ready (0).
 	 * Slaves and master will spin on this until 0.
 	**/
-	volatile int barrier_cnt;
-	/** Counter to known where slave must write their PID (need atomic inc and read), master put at 0. **/
-	volatile int cnt_pid;
-	/**
-	 * Number of participants which didn't map the segment to same address at first step, so need more complexe
-	 * decision from master if not 0.
-	**/
-	volatile int cnt_invalid;
-	/** Initial address obtained by master, if all slaves map with this one, it's fine, don't need more work. **/
-	volatile void * master_initial_address;
-	/**
-	 * After the first mapping try, the master write the final address choice here for slaves.
-	 * Slavles will spin on this until non NULL.
-	**/
-	volatile void * final_address;
-	/** Just to assert the size on each participant and ensure all request the same one. **/
-	sctk_size_t size;
-	/** To debug by ensuring the current step. **/
-	sctk_shm_mapper_steps_t step;
-	/** List of pids of all participant (writed before decrement sync_cnt), so master can use it for more complexe
-	 * decision if required (to read /proc/[PID]/maps).
-	**/
-	int * pids;
+        sctk_atomics_int barrier_cnt;
+        /**
+         * Counter to sync barrier operations.
+        **/
+        sctk_atomics_int barrier_gen;
+        /** Counter to known where slave must write their PID (need atomic inc
+         * and read), master put at 0. **/
+        sctk_atomics_int cnt_pid;
+        /**
+         * Number of participants which didn't map the segment to same address
+         *at first step, so need more complexe
+         * decision from master if not 0.
+        **/
+        sctk_atomics_int cnt_invalid;
+        /** Initial address obtained by master, if all slaves map with this one,
+         * it's fine, don't need more work. **/
+        volatile void *master_initial_address;
+        /**
+         * After the first mapping try, the master write the final address
+         *choice here for slaves.
+         * Slavles will spin on this until non NULL.
+        **/
+        sctk_atomics_ptr final_address;
+        /** Just to assert the size on each participant and ensure all request
+         * the same one. **/
+        sctk_size_t size;
+        /** To debug by ensuring the current step. **/
+        sctk_shm_mapper_steps_t step;
+        /** List of pids of all participant (writed before decrement sync_cnt),
+         *so master can use it for more complexe
+         * decision if required (to read /proc/[PID]/maps).
+        **/
+        int *pids;
 };
 typedef struct sctk_shm_mapper_sync_header_s sctk_shm_mapper_sync_header_t;
 
@@ -186,7 +201,7 @@ SCTK_STATIC void * sctk_shm_mapper_master_trivial(sctk_size_t size);
 
 /************************* FUNCTION ************************/
 //shm file management
-SCTK_STATIC char * sctk_shm_mapper_get_filename(void * option);
+SCTK_STATIC char *sctk_shm_mapper_get_filename(void *option, void *option1);
 SCTK_STATIC int sctk_shm_mapper_create_shm_file(const char * filename,sctk_size_t size);
 SCTK_STATIC int sctk_shm_mapper_slave_open(const char * filename);
 SCTK_STATIC void sctk_shm_mapper_unlink(const char * filename);
@@ -216,8 +231,10 @@ SCTK_STATIC void * sctk_shm_mapper_find_common_addr(sctk_size_t size,int * pids,
 /************************* FUNCTION ************************/
 //fake handler for test with a global variable, please not use this
 SCTK_STATIC void sctk_shm_mapper_fake_handler_reset(void);
-SCTK_STATIC bool sctk_shm_mapper_fake_handler_send(const char * filename,void * option);
-SCTK_STATIC char* sctk_shm_mapper_fake_handler_recv(void * option);
+SCTK_STATIC bool sctk_shm_mapper_fake_handler_send(const char *filename,
+                                                   void *option, void *option1);
+SCTK_STATIC char *sctk_shm_mapper_fake_handler_recv(void *option,
+                                                    void *option1);
 extern sctk_alloc_mapper_handler_t sctk_shm_mapper_fake_handler;
 
 /************************* FUNCTION ************************/

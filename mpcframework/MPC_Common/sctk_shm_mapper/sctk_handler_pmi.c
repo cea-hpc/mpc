@@ -9,23 +9,22 @@
 
 static int sctk_pmi_handler_generation_number = 0;
 
-char *sctk_pmi_handler_gen_filename(void * option)
-{
-    char *filename = sctk_malloc(sctk_pmi_get_max_key_len());
-    if(filename == NULL)
-    {
-	    sctk_nodebug("Can't gen filename : filename allocation failed");
-  	}
-    sprintf(filename, "%s_%d",(char*) option, getpid());
-    sctk_nodebug("SHM filename generated: %s", filename );
-    return filename;
+char *sctk_pmi_handler_gen_filename(void *option, void *option1) {
+  char *filename = sctk_malloc(sctk_pmi_get_max_key_len());
+  if (filename == NULL) {
+    sctk_nodebug("Can't gen filename : filename allocation failed");
+  }
+  sprintf(filename, "%s_%d", (char *)option, getpid());
+  sctk_nodebug("SHM filename generated: %s", filename);
+  return filename;
 }
 
 /*! \brief Send filename via pmi, filename size must be lesser than 64 bytes  
  * @param option No option implemented 
  */
 
-bool sctk_pmi_handler_send_filename(const char *filename, void* option){
+bool sctk_pmi_handler_send_filename(const char *filename, void *option,
+                                    void *option1) {
   if(option == NULL || filename == NULL){
 	  sctk_nodebug("Can't send filename : incorrect key or filename");
 	  return 0;
@@ -41,16 +40,18 @@ bool sctk_pmi_handler_send_filename(const char *filename, void* option){
  * @param option No option implemented 
  */
 
-char* sctk_pmi_handler_recv_filename(void* option){
-  char* filename = sctk_malloc(sctk_pmi_get_max_key_len());
-  if(option == NULL || filename == NULL){
-	  assume_m(0,"Can't recv filename : incorrect key or filename allocation failed");
-  	  }
-  sctk_nodebug("opt : %s\n", (char*) option);
-  sctk_pmi_barrier();
-  sctk_pmi_get_connection_info_str(filename, 64, (char*) option);
-  sctk_nodebug("filename : %s\n", filename);
-  return filename;
+  char *sctk_pmi_handler_recv_filename(void *option, void *option1) {
+    char *filename = sctk_malloc(sctk_pmi_get_max_key_len());
+    if (option == NULL || filename == NULL) {
+      assume_m(
+          0,
+          "Can't recv filename : incorrect key or filename allocation failed");
+    }
+    sctk_nodebug("opt : %s\n", (char *)option);
+    sctk_pmi_barrier();
+    sctk_pmi_get_connection_info_str(filename, 64, (char *)option);
+    sctk_nodebug("filename : %s\n", filename);
+    return filename;
   }
 
 

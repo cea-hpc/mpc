@@ -1,9 +1,10 @@
+#include "mpc_common.h"
+#include "mpc_datatypes.h"
 #include "mpc_mpi.h"
 #include "sctk_debug.h"
-#include <string.h>
-#include "mpc_datatypes.h"
-#include "mpc_common.h"
+#include "sctk_thread.h"
 #include "uthash.h"
+#include <string.h>
 
 /************************************************************************/
 /* Datatype Optimization                                                */
@@ -66,84 +67,129 @@ void MPIR_Datatype_iscontig(MPI_Datatype datatype, int *flag)
  *  \param indices OUT offsets of block starts
  *  \param count OUT number of entries
  */
-int MPCX_Type_flatten( MPI_Datatype datatype, long int ** blocklen, long int ** indices , MPI_Count * count )
-{
-	sctk_task_specific_t *task_specific = __MPC_get_task_specific ();
-	sctk_derived_datatype_t *target_derived_type;
-	sctk_contiguous_datatype_t *contiguous_type;
-	
-	/* Nothing to do */
-	if( datatype == MPI_DATATYPE_NULL )
-	{
-		*count = 0;
-		return MPI_SUCCESS;
-	}
-	
-	/* Here we decide what to do in function of the data-type kind:
-	 * 
-	 * Common and contiguous :
-	 * 	=> Return start at 0 and the extent
-	 * Derived:
-	 * 	=> Extract the flattened representation from MPC
-	 */ 
-	switch( sctk_datatype_kind( datatype ) )
-	{
-		case MPC_DATATYPES_COMMON:
-			*count = 1;
-			*blocklen = malloc( sizeof( long int ) );
-			*indices = malloc( sizeof( long int ) );
-			
-			assume( *blocklen != NULL );
-			assume( *indices != NULL );
-			
-			(*indices)[0] = 0;
-			(*blocklen)[0] = sctk_common_datatype_get_size( datatype );
-		break;
-		case MPC_DATATYPES_CONTIGUOUS :
-			contiguous_type = sctk_task_specific_get_contiguous_datatype( task_specific, datatype );
-			*count = 1;
-			*blocklen = malloc( sizeof( long int ) );
-			*indices = malloc( sizeof( long int ) );
-			
-			assume( *blocklen != NULL );
-			assume( *indices != NULL );
-			
-			(*indices)[0] = 0;
-			(*blocklen)[0] = contiguous_type->size;
-		break;
-		
-		case MPC_DATATYPES_DERIVED :
-			target_derived_type = sctk_task_specific_get_derived_datatype( task_specific, datatype );
-			
-			/* Note that we extract the optimized version of the data-type */
-			*count = target_derived_type->opt_count;
-			*blocklen = malloc( *count * sizeof( long int ) );
-			*indices = malloc( *count * sizeof( long int ) );
-			
-			assume( *blocklen != NULL );
-			assume( *indices != NULL );
-			
-			int i;
-			
-			/* Here we create start, len pairs from begins/ends pairs
-			 * note +1 in the extent as those boundaries are INCLUSIVE ! */
-			for( i = 0 ; i < *count ; i++ )
-			{
-				(*indices)[i] = target_derived_type->opt_begins[ i ];
-				(*blocklen)[i] = target_derived_type->opt_ends[ i ] - target_derived_type->opt_begins[ i ] + 1;
-			}
-			
-		break;
-		
-		case MPC_DATATYPES_UNKNOWN:
-			sctk_fatal("CANNOT PROCESS AN UNKNOWN DATATYPE");
-		break;
-	}
+int MPCX_Type_flatten(MPI_Datatype datatype, MPI_Aint **blocklen,
+                      MPI_Aint **indices, MPI_Count *count) {
+  sctk_task_specific_t *task_specific = __MPC_get_task_specific();
+  sctk_derived_datatype_t *target_derived_type;
+  sctk_contiguous_datatype_t *contiguous_type;
 
-	return MPI_SUCCESS;
+
+  /* Nothing to do */
+  if (datatype == MPI_DATATYPE_NULL) {
+    *count = 0;
+    return MPI_SUCCESS;
+  }
+
+  /* Here we decide what to do in function of the data-type kind:
+   *
+   * Common and contiguous :
+   * 	=> Return start at 0 and the extent
+   * Derived:
+   * 	=> Extract the flattened representation from MPC
+   */
+
+  switch (sctk_datatype_kind(datatype)) {
+  case MPC_DATATYPES_COMMON:
+    *count = 1;
+
+	*blocklen = sctk_malloc( *count * sizeof(MPI_Aint ));
+	*indices = sctk_malloc( *count * sizeof(MPI_Aint ));
+
+    assume(*blocklen != NULL);
+    assume(*indices != NULL);
+
+    (*indices)[0] = 0;
+    (*blocklen)[0] = sctk_common_datatype_get_size(datatype);
+    break;
+  case MPC_DATATYPES_CONTIGUOUS:
+    contiguous_type =
+        sctk_task_specific_get_contiguous_datatype(task_specific, datatype);
+    *count = 1;
+
+	*blocklen = sctk_malloc( *count * sizeof(MPI_Aint ));
+	*indices = sctk_malloc( *count * sizeof(MPI_Aint ));
+
+    assume(*blocklen != NULL);
+    assume(*indices != NULL);
+
+    (*indices)[0] = 0;
+    (*blocklen)[0] = contiguous_type->size;
+    break;
+
+  case MPC_DATATYPES_DERIVED:
+    target_derived_type =
+        sctk_task_specific_get_derived_datatype(task_specific, datatype);
+
+    /* Note that we extract the optimized version of the data-type */
+    *count = target_derived_type->opt_count;
+
+
+	*blocklen = sctk_malloc( *count * sizeof(MPI_Aint ));
+	*indices = sctk_malloc( *count * sizeof(MPI_Aint ));
+
+    assume(*blocklen != NULL);
+    assume(*indices != NULL);
+
+    int i;
+
+    /* Here we create start, len pairs from begins/ends pairs
+     * note +1 in the extent as those boundaries are INCLUSIVE ! */
+    for (i = 0; i < *count; i++) {
+      (*indices)[i] = target_derived_type->opt_begins[i];
+      (*blocklen)[i] = target_derived_type->opt_ends[i] -
+                      target_derived_type->opt_begins[i] + 1;
+    }
+
+    break;
+
+  case MPC_DATATYPES_UNKNOWN:
+    sctk_fatal("CANNOT PROCESS AN UNKNOWN DATATYPE");
+    break;
+  }
+
+  return MPI_SUCCESS;
 }
 
+int MPIR_Type_flatten(MPI_Datatype type, MPI_Aint *off_array,
+                      MPI_Aint *size_array, MPI_Aint *array_len_p) {
+  sctk_error("Hello flatten");
+  return MPCX_Type_flatten(type, off_array, size_array, array_len_p);
+}
 
+MPI_Aint MPCX_Type_get_count(MPI_Datatype datatype) {
+  sctk_task_specific_t *task_specific = __MPC_get_task_specific();
+  sctk_derived_datatype_t *target_derived_type;
+  sctk_contiguous_datatype_t *contiguous_type;
+
+  /* Nothing to do */
+  if (datatype == MPI_DATATYPE_NULL) {
+    return 0;
+    return MPI_SUCCESS;
+  }
+
+  switch (sctk_datatype_kind(datatype)) {
+  case MPC_DATATYPES_COMMON:
+    return 1;
+    break;
+  case MPC_DATATYPES_CONTIGUOUS:
+    contiguous_type =
+        sctk_task_specific_get_contiguous_datatype(task_specific, datatype);
+    return 1;
+    break;
+
+  case MPC_DATATYPES_DERIVED:
+    target_derived_type =
+        sctk_task_specific_get_derived_datatype(task_specific, datatype);
+
+    return target_derived_type->opt_count;
+    break;
+
+  case MPC_DATATYPES_UNKNOWN:
+    sctk_fatal("CANNOT PROCESS AN UNKNOWN DATATYPE");
+    return 0;
+    break;
+  }
+}
 
 /** \brief This function is an extension to the standard used to fill a status from a size
  *  
@@ -167,6 +213,47 @@ int MPIR_Status_set_bytes(MPI_Status *status, MPI_Datatype datatype, MPI_Count n
 	
 	return PMPI_Status_set_elements_x(status, datatype, count);
 }
+
+/** \brief This function replaces the hostname processing in ROMIO it returns a
+ * node-id
+ * 	In MPC we rely on the SHM compuration
+ *
+ *  \param comm Source COMM
+ *  \param rank Rank in COMM
+ *  \param id (out) id of the target node
+ *  \return MPI_SUCCESS if all OK
+ */
+int MPIR_Get_node_id(MPI_Comm comm, int rank, int *id) {
+  // TODO use the actual node rank
+  int comm_world_rank = sctk_get_comm_world_rank(comm, rank);
+
+  struct process_nb_from_node_rank *nodes_infos = NULL;
+  sctk_pmi_get_process_number_from_node_rank(&nodes_infos);
+
+  int node_number;
+  sctk_pmi_get_node_number(&node_number);
+
+  struct process_nb_from_node_rank *tmp;
+
+  int i, j;
+
+  for (i = 0; i < node_number; i++) {
+    HASH_FIND_INT(nodes_infos, &node_number, tmp);
+    for (j = 0; j < tmp->nb_process; j++) {
+      if (tmp->process_list[j] == comm_world_rank) {
+        *id = i;
+        return MPI_SUCCESS;
+      }
+    }
+  }
+
+  return MPI_SUCCESS;
+}
+
+/** \brief MPICH says check wether the progress engine is blocked assuming
+ * "YIELD"
+ */
+void MPIR_Ext_cs_yield(void) { sctk_thread_yield(); }
 
 /************************************************************************/
 /* Locks                                                                */

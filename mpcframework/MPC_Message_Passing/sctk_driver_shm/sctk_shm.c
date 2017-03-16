@@ -14,7 +14,7 @@
 
 static int sctk_shm_proc_local_rank_on_node = -1;
 static volatile int sctk_shm_driver_initialized = 0;
-static unsigned int sctk_shm_send_max_try = 1;
+static unsigned int sctk_shm_send_max_try = 2;
 static int sctk_cma_enabled = 1;
 
 static unsigned int sctk_shm_pending_ptp_msg_num = 0;
@@ -67,37 +67,42 @@ sctk_network_add_message_to_pending_shm_list( sctk_thread_ptp_message_t *msg, in
       sctk_spinlock_unlock(&sctk_shm_pending_ptp_msg_lock);
 }
 
+static int sctk_network_send_message_dest_shm(sctk_thread_ptp_message_t *msg,
+                                              int sctk_shm_dest,
+                                              int with_lock) {
+  sctk_shm_cell_t *cell = NULL;
+  int sctk_shm_send_cur_try, ret;
+  int is_message_control = 0;
 
-static void
-sctk_network_send_message_dest_shm( sctk_thread_ptp_message_t *msg, int sctk_shm_dest, int with_lock )
-{
-   sctk_shm_cell_t * cell = NULL;
-   int sctk_shm_send_cur_try, ret;
+  if (sctk_message_class_is_control_message(SCTK_MSG_SPECIFIC_CLASS(msg))) {
+    is_message_control = 1;
+  }
 
-   sctk_shm_send_cur_try = 0;
-   while(!cell && sctk_shm_send_cur_try++ < sctk_shm_send_max_try )
-   	cell = sctk_shm_get_cell(sctk_shm_dest);
-   
-   if( !cell )
-   {
-      sctk_network_add_message_to_pending_shm_list(msg,sctk_shm_dest, with_lock);    
-      return;
-   }
+  sctk_shm_send_cur_try = 0;
+  while (!cell && sctk_shm_send_cur_try++ < sctk_shm_send_max_try)
+    cell = sctk_shm_get_cell(sctk_shm_dest, is_message_control);
 
-   cell->dest = sctk_shm_dest;
-   cell->src = SCTK_MSG_SRC_PROCESS(msg);
+  if (!cell) {
+    sctk_network_add_message_to_pending_shm_list(msg, sctk_shm_dest, with_lock);
+    return 1;
+  }
 
-   if(sctk_network_eager_msg_shm_send(msg,cell))
-      return;
+  cell->dest = sctk_shm_dest;
+  cell->src = SCTK_MSG_SRC_PROCESS(msg);
+
+  if (sctk_network_eager_msg_shm_send(msg, cell))
+    return 0;
 #ifdef MPC_USE_CMA
    if(sctk_network_cma_msg_shm_send(msg,cell) && sctk_cma_enabled)
-      return;
+     return 0;
 #endif /* MPC_USE_CMA */
    if(sctk_network_frag_msg_shm_send(msg,cell))
-      return;
+     return 0;
 
    sctk_shm_release_cell(cell); 
    sctk_network_add_message_to_pending_shm_list( msg, sctk_shm_dest, with_lock );
+
+   return 1;
 }
 
 
@@ -114,13 +119,34 @@ sctk_network_send_message_from_pending_shm_list( int sctk_shm_max_message )
 		return;
 
 	DL_FOREACH_SAFE(sctk_shm_pending_ptp_msg_list,elt,tmp) {
-		DL_DELETE( sctk_shm_pending_ptp_msg_list, elt);	
-	    if(elt) sctk_network_send_message_dest_shm(elt->msg, elt->sctk_shm_dest, 0);
-	}
+          DL_DELETE(sctk_shm_pending_ptp_msg_list, elt);
+          if (elt) {
+            if (sctk_network_send_message_dest_shm(elt->msg, elt->sctk_shm_dest,
+                                                   0)) {
+              /* If we are here the element
+               * was back pushed to the pending list */
 
-    sctk_shm_pending_ptp_msg_num--;
-   	sctk_spinlock_unlock(&sctk_shm_pending_ptp_msg_lock);
-	
+              sctk_thread_ptp_message_t *msg = elt->msg;
+
+              sctk_nodebug(
+                  "!%d!  [ %d -> %d ] [ %d -> %d ] (CLASS "
+                  "%s(%d) SPE %d SIZE %d TAG %d)",
+                  sctk_process_rank, SCTK_MSG_SRC_PROCESS(msg),
+                  SCTK_MSG_DEST_PROCESS(msg), SCTK_MSG_SRC_TASK(msg),
+                  SCTK_MSG_DEST_TASK(msg),
+                  sctk_message_class_name[(int)SCTK_MSG_SPECIFIC_CLASS(msg)],
+                  SCTK_MSG_SPECIFIC_CLASS(msg),
+                  sctk_message_class_is_process_specific(
+                      SCTK_MSG_SPECIFIC_CLASS(msg)),
+                  SCTK_MSG_SIZE(msg), SCTK_MSG_TAG(msg));
+
+              sctk_free(elt);
+              sctk_shm_pending_ptp_msg_num--;
+            }
+          }
+        }
+
+        sctk_spinlock_unlock(&sctk_shm_pending_ptp_msg_lock);
 }
 
 static void 
@@ -158,8 +184,8 @@ static void
 sctk_network_notify_idle_message_shm ( sctk_rail_info_t *rail )
 {
     sctk_shm_cell_t * cell;
-    sctk_thread_ptp_message_t *msg; 
-    
+    sctk_thread_ptp_message_t *msg;
+
     if(!sctk_shm_driver_initialized)
         return;
 
@@ -170,16 +196,17 @@ sctk_network_notify_idle_message_shm ( sctk_rail_info_t *rail )
 
     while(1)
     {
-        cell = sctk_shm_recv_cell(); 
-        if( !cell)
-	      break;
+      cell = sctk_shm_recv_cell();
+      if (!cell) {
+        break;
+      }
 
-        switch(cell->msg_type)
-        {
-	    case SCTK_SHM_EAGER: 
-            	msg = sctk_network_eager_msg_shm_recv(cell,0);
-            	if(msg) sctk_send_message_from_network_shm(msg);
-		break;
+      switch (cell->msg_type) {
+      case SCTK_SHM_EAGER:
+        msg = sctk_network_eager_msg_shm_recv(cell, 0);
+        if (msg)
+          sctk_send_message_from_network_shm(msg);
+        break;
 #ifdef MPC_USE_CMA
 	    case SCTK_SHM_RDMA: 
 		msg = sctk_network_cma_msg_shm_recv(cell,1);
@@ -240,18 +267,18 @@ sctk_shm_add_region_slave(sctk_size_t size,sctk_alloc_mapper_handler_t * handler
 	assert(size > 0 && size % SCTK_SHM_MAPPER_PAGE_SIZE == 0);
 
 	//get filename
-	filename = handler->recv_handler(handler->option);
-	assume_m(filename != NULL,"Failed to get the SHM filename.");
+        filename = handler->recv_handler(handler->option, handler->option1);
+        assume_m(filename != NULL, "Failed to get the SHM filename.");
 
-	//firt try to map
-	fd = sctk_shm_mapper_slave_open(filename);
-	ptr = sctk_shm_mapper_mmap(NULL,fd,size);
+        // firt try to map
+        fd = sctk_shm_mapper_slave_open(filename);
+        ptr = sctk_shm_mapper_mmap(NULL, fd, size);
 
         sctk_pmi_barrier();
 
 	close(fd);
-	free(filename);
-	return ptr;
+        sctk_free(filename);
+        return ptr;
 }
 
 static void *
@@ -270,15 +297,17 @@ sctk_shm_add_region_master(sctk_size_t size,sctk_alloc_mapper_handler_t * handle
 	assert(size > 0 && size % SCTK_SHM_MAPPER_PAGE_SIZE == 0);
 
 	//get filename
-	filename = handler->gen_filename(handler->option);
+        filename = handler->gen_filename(handler->option, handler->option1);
 
-	//create file and map it
-	fd = sctk_shm_mapper_create_shm_file(filename,size);
-	ptr = sctk_shm_mapper_mmap(NULL,fd,size);
+        // create file and map it
+        fd = sctk_shm_mapper_create_shm_file(filename, size);
+        ptr = sctk_shm_mapper_mmap(NULL, fd, size);
 
-	//sync filename
-	status = handler->send_handler(filename,handler->option);
-	assume_m(status,"Fail to send the SHM filename to other participants.");
+        // sync filename
+        status =
+            handler->send_handler(filename, handler->option, handler->option1);
+        assume_m(status,
+                 "Fail to send the SHM filename to other participants.");
 
         sctk_pmi_barrier();
 
@@ -286,8 +315,8 @@ sctk_shm_add_region_master(sctk_size_t size,sctk_alloc_mapper_handler_t * handle
 	sctk_shm_mapper_unlink(filename);
 
 	//free temp memory and return
-	free(filename);
-	return ptr;
+        sctk_free(filename);
+        return ptr;
 }
 
 static void* sctk_shm_add_region(sctk_size_t size,sctk_shm_mapper_role_t role,
@@ -393,7 +422,8 @@ void sctk_network_init_shm ( sctk_rail_info_t *rail )
 
    sctk_rail_init_route ( rail, "none", NULL );
 
-   sctk_shmem_cells_num = rail->runtime_config_driver_config->driver.value.shm.cells_num;
+   sctk_shmem_cells_num =
+       2048; // rail->runtime_config_driver_config->driver.value.shm.cells_num;
    sctk_shmem_size = sctk_shm_get_region_size(sctk_shmem_cells_num);
    sctk_shmem_size = sctk_shm_roundup_powerof2(sctk_shmem_size);
 

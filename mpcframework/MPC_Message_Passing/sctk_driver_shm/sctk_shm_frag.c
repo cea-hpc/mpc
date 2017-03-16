@@ -233,23 +233,28 @@ sctk_network_frag_msg_first_recv(sctk_thread_ptp_message_t* msg, sctk_shm_cell_t
 static int
 sctk_network_frag_msg_next_send(sctk_shm_proc_frag_info_t* frag_infos)
 {
-   int msg_key, msg_dest;
-   size_t size = 0;
-   sctk_shm_cell_t* cell = NULL;
-   sctk_thread_ptp_message_t* msg = NULL;
-  
-   if(sctk_spinlock_trylock(&(frag_infos->is_ready)))
-      return 0;
+  int msg_key, msg_dest, is_control_msg;
+  size_t size = 0;
+  sctk_shm_cell_t *cell = NULL;
+  sctk_thread_ptp_message_t *msg = NULL;
 
-   msg_key = frag_infos->msg_frag_key;
-   msg_dest = frag_infos->remote_mpi_rank;
-   
-   sctk_nodebug("[KEY:%d] TRY SEND NEXT PART OF FRAGMENTED MSG", msg_key);
-   cell = sctk_shm_get_cell(msg_dest);
-   if(!cell)
-   {
-      sctk_spinlock_unlock(&(frag_infos->is_ready));
-      return 0;
+  if (sctk_spinlock_trylock(&(frag_infos->is_ready)))
+    return 0;
+
+  is_control_msg = 0;
+  msg_key = frag_infos->msg_frag_key;
+  msg_dest = frag_infos->remote_mpi_rank;
+
+  sctk_nodebug("[KEY:%d] TRY SEND NEXT PART OF FRAGMENTED MSG", msg_key);
+  if (sctk_message_class_is_control_message(
+          SCTK_MSG_SPECIFIC_CLASS(frag_infos->header))) {
+    is_control_msg = 1;
+  }
+
+  cell = sctk_shm_get_cell(msg_dest, is_control_msg);
+  if (!cell) {
+    sctk_spinlock_unlock(&(frag_infos->is_ready));
+    return 0;
    }
 
    size = frag_infos->size_total - frag_infos->size_copied;
@@ -276,8 +281,8 @@ sctk_network_frag_msg_next_send(sctk_shm_proc_frag_info_t* frag_infos)
    if(frag_infos->size_total == frag_infos->size_copied)
    {
         sctk_nodebug("[KEY:%d] SEND END PART MSG", msg_key);
-	    msg = frag_infos->header;
-   	    sctk_free(frag_infos);
+        msg = frag_infos->header;
+        sctk_free(frag_infos);
         sctk_complete_and_free_message(msg) ;
         frag_infos = NULL;
    }

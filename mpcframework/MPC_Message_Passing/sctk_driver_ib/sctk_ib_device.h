@@ -95,5 +95,6 @@ struct ibv_cq *sctk_ib_cq_init ( sctk_ib_device_t *device,
                                  struct sctk_runtime_config_struct_net_driver_infiniband *config,
                                  struct ibv_comp_channel *comp_chan );
 
+int sctk_ib_device_found();
 
 #endif /* SCTK_IB_DEVICE */

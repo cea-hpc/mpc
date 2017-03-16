@@ -168,170 +168,170 @@ int sctk_pmi_init()
 		if ( ( rc = PMI_KVS_Get_my_name ( sctk_kvsname, max_kvsname_len ) ) != PMI_SUCCESS )
 		{
 			printf ( "FAILURE: PMI_KVS_Get_my_name: %d\n", rc );
-			free ( sctk_kvsname );
-			return rc;
-		}
+                        sctk_free(sctk_kvsname);
+                        return rc;
+                }
 
-		int rank, process_nb, nodes_nb = 0, i, j, size;
-		char *value = NULL;
-		char *nodes = NULL;
-		char hostname[SCTK_PMI_NAME_SIZE];
+                int rank, process_nb, nodes_nb = 0, i, j, size;
+                char *value = NULL;
+                char *nodes = NULL;
+                char hostname[SCTK_PMI_NAME_SIZE];
 
-		// check if PMI_Get_size is equal to 1 (could mean application launched without mpiexec)
-		rc = sctk_pmi_get_process_number ( &size );
+                // check if PMI_Get_size is equal to 1 (could mean application
+                // launched without mpiexec)
+                rc = sctk_pmi_get_process_number(&size);
 
-		if ( rc != PMI_SUCCESS )
-		{
-			fprintf ( stderr, "unable to get size\n" );
-			goto fn_exit;
-		}
-		else
-			if ( size == 1 )
-			{
-				// no need of KVS for infos initialization
-				sctk_pmi_process_on_node_rank = 0;
-				sctk_pmi_node_rank = 0;
-				sctk_pmi_nodes_number = 1;
-				sctk_pmi_processes_on_node_number = 1;
-				return rc;
-			}
+                if (rc != PMI_SUCCESS) {
+                  fprintf(stderr, "unable to get size\n");
+                  goto fn_exit;
+                } else if (size == 1) {
+                  // no need of KVS for infos initialization
+                  sctk_pmi_process_on_node_rank = 0;
+                  sctk_pmi_node_rank = 0;
+                  sctk_pmi_nodes_number = 1;
+                  sctk_pmi_processes_on_node_number = 1;
+                  return rc;
+                }
 
+                // now we need to put node info in KVS in order to determine the
+                // following attributes,
+                // since PMI1 does not provide direct access function:
+                // nodes number, node rank, local processes number, local
+                // process rank.
 
-		// now we need to put node info in KVS in order to determine the following attributes,
-		// since PMI1 does not provide direct access function:
-		// nodes number, node rank, local processes number, local process rank.
+                // initialize infos
+                sctk_pmi_process_on_node_rank = -1;
+                sctk_pmi_node_rank = -1;
+                sctk_pmi_nodes_number = 0;
+                sctk_pmi_processes_on_node_number = 0;
 
-		// initialize infos
-		sctk_pmi_process_on_node_rank = -1;
-		sctk_pmi_node_rank = -1;
-		sctk_pmi_nodes_number = 0;
-		sctk_pmi_processes_on_node_number = 0;
+                value = sctk_malloc(sctk_max_val_len);
 
-		value = sctk_malloc ( sctk_max_val_len );
+                // Get hostname
+                gethostname(hostname, SCTK_PMI_NAME_SIZE - 1);
 
-		// Get hostname
-		gethostname ( hostname, SCTK_PMI_NAME_SIZE - 1 );
+                // Get the rank of the current process
+                rc = sctk_pmi_get_process_rank(&rank);
 
-		// Get the rank of the current process
-		rc = sctk_pmi_get_process_rank ( &rank );
+                if (rc != PMI_SUCCESS) {
+                  fprintf(stderr, "unable to get rank %d\n", rc);
+                  goto fn_exit;
+                }
 
-		if ( rc != PMI_SUCCESS )
-		{
-			fprintf ( stderr, "unable to get rank %d\n", rc );
-			goto fn_exit;
-		}
+                // Put hostname on kvs for current process;
+                sprintf(value, "%s", hostname);
+                rc = sctk_pmi_put_connection_info(
+                    value, sctk_max_val_len,
+                    SCTK_PMI_TAG_PMI + SCTK_PMI_TAG_PMI_HOSTNAME);
 
-		// Put hostname on kvs for current process;
-		sprintf ( value, "%s", hostname );
-		rc = sctk_pmi_put_connection_info ( value, sctk_max_val_len, SCTK_PMI_TAG_PMI + SCTK_PMI_TAG_PMI_HOSTNAME );
+                if (rc != PMI_SUCCESS) {
+                  fprintf(stderr, "unable to put hostname %d\n", rc);
+                  goto fn_exit;
+                }
 
-		if ( rc != PMI_SUCCESS )
-		{
-			fprintf ( stderr, "unable to put hostname %d\n", rc );
-			goto fn_exit;
-		}
+                // wait for all processes to put their hostname in KVS
+                rc = sctk_pmi_barrier();
 
+                if (rc != PMI_SUCCESS) {
+                  fprintf(stderr, "barrier failure %d\n", rc);
+                  goto fn_exit;
+                }
 
-		// wait for all processes to put their hostname in KVS
-		rc = sctk_pmi_barrier();
+                // now retrieve hostnames for all processes and compute local
+                // infos
+                // rc = sctk_pmi_get_process_number(&process_nb);
+                rc = sctk_pmi_get_process_number(&process_nb);
 
-		if ( rc != PMI_SUCCESS )
-		{
-			fprintf ( stderr, "barrier failure %d\n", rc );
-			goto fn_exit;
-		}
+                if (rc != PMI_SUCCESS) {
+                  fprintf(stderr, "unable to get process number %d\n", rc);
+                  goto fn_exit;
+                }
 
-		// now retrieve hostnames for all processes and compute local infos
-		//rc = sctk_pmi_get_process_number(&process_nb);
-		rc = sctk_pmi_get_process_number ( &process_nb );
+                nodes = sctk_malloc((size_t)process_nb * sctk_max_val_len);
+                memset(nodes, '\0', (size_t)process_nb * sctk_max_val_len);
 
-		if ( rc != PMI_SUCCESS )
-		{
-			fprintf ( stderr, "unable to get process number %d\n", rc );
-			goto fn_exit;
-		}
+                // build nodes list and compute local ranks and size
+                for (i = 0; i < process_nb; i++) {
+                  j = 0;
+                  // get ith process hostname
+                  rc = sctk_pmi_get_connection_info(
+                      value, sctk_max_val_len,
+                      SCTK_PMI_TAG_PMI + SCTK_PMI_TAG_PMI_HOSTNAME, i);
 
-		nodes = sctk_malloc ( ( size_t ) process_nb * sctk_max_val_len );
-		memset ( nodes, '\0', ( size_t ) process_nb * sctk_max_val_len );
+                  if (rc != PMI_SUCCESS) {
+                    fprintf(stderr, "unable to get connection info %d\n", rc);
+                    goto fn_exit;
+                  }
 
-		// build nodes list and compute local ranks and size
-		for ( i = 0; i < process_nb; i++ )
-		{
-			j = 0;
-			// get ith process hostname
-			rc = sctk_pmi_get_connection_info ( value, sctk_max_val_len, SCTK_PMI_TAG_PMI + SCTK_PMI_TAG_PMI_HOSTNAME, i );
+                  // compare value with current hostname. if the same, increase
+                  // local processes number
+                  if (strcmp(hostname, value) == 0)
+                    sctk_pmi_processes_on_node_number++;
 
-			if ( rc != PMI_SUCCESS )
-			{
-				fprintf ( stderr, "unable to get connection info %d\n", rc );
-				goto fn_exit;
-			}
+                  // if i == rank, local rank ==
+                  // sctk_pmi_processes_on_node_number-1
+                  if (i == rank)
+                    sctk_pmi_process_on_node_rank =
+                        sctk_pmi_processes_on_node_number - 1;
 
-			// compare value with current hostname. if the same, increase local processes number
-			if ( strcmp ( hostname, value ) == 0 )
-				sctk_pmi_processes_on_node_number++;
+                  while (strcmp(nodes + j * sctk_max_val_len, value) != 0 &&
+                         j < nodes_nb)
+                    j++;
 
-			// if i == rank, local rank == sctk_pmi_processes_on_node_number-1
-			if ( i == rank )
-				sctk_pmi_process_on_node_rank = sctk_pmi_processes_on_node_number - 1;
+                  // update number of processes per node data
+                  struct process_nb_from_node_rank *tmp;
+                  HASH_FIND_INT(sctk_pmi_process_nb_from_node_rank, &j, tmp);
 
-			while ( strcmp ( nodes + j * sctk_max_val_len, value ) != 0 && j < nodes_nb )
-				j++;
+                  if (tmp == NULL) {
+                    // new node
+                    tmp = (struct process_nb_from_node_rank *)sctk_malloc(
+                        sizeof(struct process_nb_from_node_rank));
+                    tmp->node_rank = j;
+                    tmp->nb_process = 1;
+                    tmp->process_list = (int *)sctk_malloc(sizeof(int) * 1);
+                    tmp->process_list[0] = i;
+                    HASH_ADD_INT(sctk_pmi_process_nb_from_node_rank, node_rank,
+                                 tmp);
+                  } else {
+                    // one more process on this node
+                    tmp->nb_process++;
+                    int *tmp_tab = sctk_realloc(tmp->process_list,
+                                                sizeof(int) * tmp->nb_process);
+                    assume(tmp_tab != NULL);
+                    tmp_tab[tmp->nb_process - 1] = i;
+                    tmp->process_list = tmp_tab;
+                  }
 
-			//update number of processes per node data
-			struct process_nb_from_node_rank *tmp;
-			HASH_FIND_INT ( sctk_pmi_process_nb_from_node_rank, &j, tmp );
+                  if (j == nodes_nb) {
+                    // found new node
+                    strcpy(nodes + j * sctk_max_val_len, value);
+                    nodes_nb++;
+                  }
+                }
 
-			if ( tmp == NULL )
-			{
-				//new node
-				tmp = ( struct process_nb_from_node_rank * ) sctk_malloc ( sizeof ( struct process_nb_from_node_rank ) );
-				tmp->node_rank = j;
-				tmp->nb_process = 1;
-				tmp->process_list = (int*) sctk_malloc(sizeof(int)*1);
-                		tmp->process_list[0] = i;
-                		HASH_ADD_INT ( sctk_pmi_process_nb_from_node_rank, node_rank, tmp );
-			}
-			else
-			{
-				//one more process on this node
-				tmp->nb_process++;
-			        int *tmp_tab = sctk_realloc(tmp->process_list, sizeof(int)*tmp->nb_process);
-                		assume(tmp_tab != NULL);
-                		tmp_tab[tmp->nb_process -1] = i;
-                		tmp->process_list = tmp_tab;
-			}
+                // Compute node rank
+                j = 0;
 
-			if ( j == nodes_nb )
-			{
-				//found new node
-				strcpy ( nodes + j * sctk_max_val_len, value );
-				nodes_nb++;
-			}
-		}
+                while (strcmp(nodes + j * sctk_max_val_len, hostname) != 0 &&
+                       j < nodes_nb)
+                  j++;
 
-		// Compute node rank
-		j = 0;
+                sctk_pmi_node_rank = j;
+                sctk_pmi_nodes_number = nodes_nb;
 
-		while ( strcmp ( nodes + j * sctk_max_val_len, hostname ) != 0 && j < nodes_nb )
-			j++;
+                sctk_pmi_get_process_rank(&sctk_pmi_process_rank);
+                sctk_pmi_get_process_number(&sctk_pmi_process_number);
+                sctk_pmi_get_node_rank(&sctk_node_rank);
+                sctk_pmi_get_node_number(&sctk_node_number);
+                sctk_pmi_get_process_on_node_rank(&sctk_local_process_rank);
+                sctk_pmi_get_process_on_node_number(&sctk_local_process_number);
+                sctk_pmi_get_process_number_from_node_rank(
+                    &sctk_pmi_process_nb_from_node_rank);
 
-		sctk_pmi_node_rank = j;
-		sctk_pmi_nodes_number = nodes_nb;
-		
-		sctk_pmi_get_process_rank ( &sctk_pmi_process_rank );
-		sctk_pmi_get_process_number ( &sctk_pmi_process_number );
-		sctk_pmi_get_node_rank ( &sctk_node_rank );
-		sctk_pmi_get_node_number ( &sctk_node_number );
-		sctk_pmi_get_process_on_node_rank ( &sctk_local_process_rank );
-		sctk_pmi_get_process_on_node_number ( &sctk_local_process_number );
-		sctk_pmi_get_process_number_from_node_rank(&sctk_pmi_process_nb_from_node_rank);
-
-
-	fn_exit:
-		free ( value );
-		free ( nodes );
-		return rc;
+        fn_exit:
+          sctk_free(value);
+          sctk_free(nodes);
+          return rc;
 
 #endif /* SCTK_LIB_MODE */
 	}
@@ -360,8 +360,8 @@ int sctk_pmi_finalize()
 		fprintf ( stderr, "FAILURE (sctk_pmi): PMI_Finalize: %d\n", rc );
 	}
 
-	free ( sctk_kvsname );
-	return rc;
+        sctk_free(sctk_kvsname);
+        return rc;
 #endif
 }
 

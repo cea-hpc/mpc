@@ -731,6 +731,26 @@ void sctk_runtime_config_struct_init_progress_thread(void * struct_ptr)
 }
 
 /*******************  FUNCTION  *********************/
+void sctk_runtime_config_struct_init_mpi_rma(void *struct_ptr) {
+  struct sctk_runtime_config_struct_mpi_rma *obj = struct_ptr;
+  /* Make sure this element is not initialized yet       */
+  /* It allows us to know when we are facing dynamically */
+  /* allocated objects requiring an init                 */
+  if (obj->init_done != 0)
+    return;
+
+  /* Simple params : */
+  obj->alloc_mem_pool_enable = 1;
+  obj->alloc_mem_pool_size = sctk_runtime_config_map_entry_parse_size("1MB");
+  obj->alloc_mem_pool_autodetect = 1;
+  obj->alloc_mem_pool_force_process_linear = 0;
+  obj->alloc_mem_pool_per_process_size =
+      sctk_runtime_config_map_entry_parse_size("32MB");
+  obj->win_thread_pool_max = 2;
+  obj->init_done = 1;
+}
+
+/*******************  FUNCTION  *********************/
 void sctk_runtime_config_struct_init_mpc(void * struct_ptr)
 {
 	struct sctk_runtime_config_struct_mpc * obj = struct_ptr;
@@ -2153,7 +2173,7 @@ void sctk_runtime_config_struct_init_net_driver_shm(void *struct_ptr) {
     abort();
   }
 #endif
-  obj->cells_num = 128;
+  obj->cells_num = 2048;
 
 #ifdef MPC_MPI
   if (mpc_MPI_T_cvar_get_index("SHM_CELLS", &the_temp_index) == MPI_SUCCESS) {
@@ -2280,10 +2300,13 @@ void sctk_runtime_config_struct_init_gate_message_type(void * struct_ptr)
 
 	/* Simple params : */
 	obj->process = 1;
-	obj->common = 1;
-	obj->gatefunc.name = "sctk_rail_gate_msgtype";
-	*(void **) &(obj->gatefunc.value) = sctk_runtime_config_get_symbol("sctk_rail_gate_msgtype");
-	obj->init_done = 1;
+        obj->task = 1;
+        obj->emulated_rma = 1;
+        obj->common = 1;
+        obj->gatefunc.name = "sctk_rail_gate_msgtype";
+        *(void **)&(obj->gatefunc.value) =
+            sctk_runtime_config_get_symbol("sctk_rail_gate_msgtype");
+        obj->init_done = 1;
 }
 
 /*******************  FUNCTION  *********************/
@@ -2866,6 +2889,7 @@ void sctk_runtime_config_reset(struct sctk_runtime_config * config)
 	sctk_runtime_config_struct_init_collectives_inter(&config->modules.collectives_inter);
 	sctk_runtime_config_struct_init_progress_thread(&config->modules.progress_thread);
 	sctk_runtime_config_struct_init_mpc(&config->modules.mpc);
+        sctk_runtime_config_struct_init_mpi_rma(&config->modules.rma);
 #endif
 #ifdef MPC_Message_Passing
 	sctk_runtime_config_struct_init_inter_thread_comm(&config->modules.inter_thread_comm);
@@ -2956,6 +2980,11 @@ void sctk_runtime_config_reset_struct_default_if_needed(const char * structname,
 
   if (!strcmp(structname, "sctk_runtime_config_struct_progress_thread")) {
     sctk_runtime_config_struct_init_progress_thread(ptr);
+    return;
+  }
+
+  if (!strcmp(structname, "sctk_runtime_config_struct_mpi_rma")) {
+    sctk_runtime_config_struct_init_mpi_rma(ptr);
     return;
   }
 

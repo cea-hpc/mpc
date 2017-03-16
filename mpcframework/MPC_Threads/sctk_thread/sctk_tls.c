@@ -146,40 +146,39 @@ int sctk_load_proc_self_maps()
 		{
 			cont = 0;
 		}
-		
-		//printf("%s\n", line );
-		
-		sscanf(line, "%lx-%lx %4s %s %s %ld %s", &begin, &end, perm,
-		skip, dev, &inode, dsoname);
-		
-		if( (perm[2] == 'x') && !(dsoname[0] == '[') )
-		{
-			
-			//fprintf(stderr,"==>%s (%s)\n", dsoname , perm);
-		
-			struct dsos_s * new = sctk_malloc( sizeof( struct dsos_s ) );
-			
-			if( !new )
-			{
-				return 1;
-			}
-			
-			new->name = strdup( dsoname );
-			new->next = __sctk_dsos;
-			__sctk_dsos = new;
-		
-		}
-		
-		line = next_line;
-		
-		
-	}while( cont );
-	
-	fclose( self );
-	
-	free( maps );
 
-	return 0;
+                if (!strstr(line, "/")) {
+                  line = next_line;
+                  continue;
+                }
+
+                sscanf(line, "%lx-%lx %4s %49s %49s %ld %499s", &begin, &end,
+                       perm, skip, dev, &inode, dsoname);
+
+                if ((perm[2] == 'x') && !(dsoname[0] == '[')) {
+
+                  // fprintf(stderr,"==>%s (%s)\n", dsoname , perm);
+
+                  struct dsos_s *new = sctk_malloc(sizeof(struct dsos_s));
+
+                  if (!new) {
+                    return 1;
+                  }
+
+                  new->name = strdup(dsoname);
+                  new->next = __sctk_dsos;
+                  __sctk_dsos = new;
+                }
+
+                line = next_line;
+
+        } while (cont);
+
+        fclose(self);
+
+        free(maps);
+
+        return 0;
 }
 
 

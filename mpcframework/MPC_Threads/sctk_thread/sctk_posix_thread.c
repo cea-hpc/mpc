@@ -906,7 +906,6 @@ unsigned long mpc_thread_tls_entry_add(unsigned long size,
                                        void (*func)(void *)) {
   return sctk_tls_entry_add(size, func);
 }
-
 /* At exit */
 
 int mpc_atexit(void (*function)(void))

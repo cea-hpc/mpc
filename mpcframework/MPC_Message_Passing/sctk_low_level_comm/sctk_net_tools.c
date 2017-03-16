@@ -731,133 +731,133 @@ void sctk_net_message_copy ( sctk_message_to_copy_t *tmp )
 
 	SCTK_MSG_COMPLETION_FLAG_SET ( send , NULL );
 
-	sctk_nodebug ( "MSG |%s|", ( char * ) body );
+        //	sctk_error( "HERE REQ is %p", recv->tail.request );
 
-	switch ( recv->tail.message_type )
-	{
-		case SCTK_MESSAGE_CONTIGUOUS:
-		{
-			size_t size;
-			size = SCTK_MSG_SIZE ( send );
-			size = sctk_min ( SCTK_MSG_SIZE ( send ), recv->tail.message.contiguous.size );
+        sctk_nodebug("MSG |%s|", (char *)body);
 
-			memcpy ( recv->tail.message.contiguous.addr, body, size );
+        switch (recv->tail.message_type) {
+        case SCTK_MESSAGE_CONTIGUOUS: {
+          size_t size;
+          size = SCTK_MSG_SIZE(send);
+          size =
+              sctk_min(SCTK_MSG_SIZE(send), recv->tail.message.contiguous.size);
 
-			sctk_message_completion_and_free ( send, recv );
-			break;
-		}
+          memcpy(recv->tail.message.contiguous.addr, body, size);
 
-		case SCTK_MESSAGE_PACK:
-		{
-			size_t i;
-			size_t j;
-			size_t size;
-			size_t total = 0;
-			size_t recv_size = 0;
-			size = SCTK_MSG_SIZE ( send );
+          sctk_message_completion_and_free(send, recv);
+          break;
+        }
 
-			if ( size > 0 )
-			{
-				for ( i = 0; i < recv->tail.message.pack.count; i++ )
-				{
-					for ( j = 0; j < recv->tail.message.pack.list.std[i].count; j++ )
-					{
-						size = ( recv->tail.message.pack.list.std[i].ends[j] -
-						         recv->tail.message.pack.list.std[i].begins[j] + 1 ) *
-						       recv->tail.message.pack.list.std[i].elem_size;
-						recv_size += size;
-					}
-				}
+        case SCTK_MESSAGE_PACK: {
+          size_t i;
+          size_t j;
+          size_t size;
+          size_t total = 0;
+          size_t recv_size = 0;
+          size = SCTK_MSG_SIZE(send);
 
-				/* MPI 1.3 : The length of the received message must be less than or equal to the length of the receive buffer */
-				assume ( SCTK_MSG_SIZE ( send ) <= recv_size );
-				char skip = 0;
+          if (size > 0) {
+            for (i = 0; i < recv->tail.message.pack.count; i++) {
+              for (j = 0; j < recv->tail.message.pack.list.std[i].count; j++) {
+                size = (recv->tail.message.pack.list.std[i].ends[j] -
+                        recv->tail.message.pack.list.std[i].begins[j] + 1) *
+                       recv->tail.message.pack.list.std[i].elem_size;
+                recv_size += size;
+              }
+            }
 
-				for ( i = 0; ( ( i < recv->tail.message.pack.count ) && !skip ); i++ )
-				{
-					for ( j = 0; ( ( j < recv->tail.message.pack.list.std[i].count ) && !skip ); j++ )
-					{
-						size = ( recv->tail.message.pack.list.std[i].ends[j] -
-						         recv->tail.message.pack.list.std[i].begins[j] + 1 ) *
-						       recv->tail.message.pack.list.std[i].elem_size;
+            /* MPI 1.3 : The length of the received message must be less than or
+             * equal to the length of the receive buffer */
+            assume(SCTK_MSG_SIZE(send) <= recv_size);
+            char skip = 0;
 
-						if ( total + size > SCTK_MSG_SIZE ( send ) )
-						{
-							skip = 1;
-							size = SCTK_MSG_SIZE ( send ) - total;
-						}
+            for (i = 0; ((i < recv->tail.message.pack.count) && !skip); i++) {
+              for (j = 0;
+                   ((j < recv->tail.message.pack.list.std[i].count) && !skip);
+                   j++) {
+                size = (recv->tail.message.pack.list.std[i].ends[j] -
+                        recv->tail.message.pack.list.std[i].begins[j] + 1) *
+                       recv->tail.message.pack.list.std[i].elem_size;
 
-						memcpy ( ( ( char * ) ( recv->tail.message.pack.list.std[i].addr ) ) +
-						         recv->tail.message.pack.list.std[i].begins[j] *
-						         recv->tail.message.pack.list.std[i].elem_size, body, size );
-						body += size;
-						total += size;
-						assume ( total <= SCTK_MSG_SIZE ( send ) );
-					}
-				}
-			}
+                if (total + size > SCTK_MSG_SIZE(send)) {
+                  skip = 1;
+                  size = SCTK_MSG_SIZE(send) - total;
+                }
 
-			sctk_message_completion_and_free ( send, recv );
-			break;
-		}
+                memcpy(((char *)(recv->tail.message.pack.list.std[i].addr)) +
+                           recv->tail.message.pack.list.std[i].begins[j] *
+                               recv->tail.message.pack.list.std[i].elem_size,
+                       body, size);
+                body += size;
+                total += size;
+                assume(total <= SCTK_MSG_SIZE(send));
+              }
+            }
+          }
 
-		case SCTK_MESSAGE_PACK_ABSOLUTE:
-		{
-			size_t i;
-			size_t j;
-			size_t size;
-			size_t total = 0;
-			size_t recv_size = 0;
-			size = SCTK_MSG_SIZE ( send );
+          sctk_message_completion_and_free(send, recv);
+          break;
+        }
 
-			if ( size > 0 )
-			{
-				for ( i = 0; i < recv->tail.message.pack.count; i++ )
-				{
-					for ( j = 0; j < recv->tail.message.pack.list.absolute[i].count; j++ )
-					{
-						size = ( recv->tail.message.pack.list.absolute[i].ends[j] -
-						         recv->tail.message.pack.list.absolute[i].begins[j] + 1 ) *
-						       recv->tail.message.pack.list.absolute[i].elem_size;
-						recv_size += size;
-					}
-				}
+        case SCTK_MESSAGE_PACK_ABSOLUTE: {
+          size_t i;
+          size_t j;
+          size_t size;
+          size_t total = 0;
+          size_t recv_size = 0;
+          size = SCTK_MSG_SIZE(send);
 
-				/* MPI 1.3 : The length of the received message must be less than or equal to the length of the receive buffer */
-				assume ( SCTK_MSG_SIZE ( send ) <= recv_size );
-				char skip = 0;
+          if (size > 0) {
+            for (i = 0; i < recv->tail.message.pack.count; i++) {
+              for (j = 0; j < recv->tail.message.pack.list.absolute[i].count;
+                   j++) {
+                size =
+                    (recv->tail.message.pack.list.absolute[i].ends[j] -
+                     recv->tail.message.pack.list.absolute[i].begins[j] + 1) *
+                    recv->tail.message.pack.list.absolute[i].elem_size;
+                recv_size += size;
+              }
+            }
 
-				for ( i = 0; ( ( i < recv->tail.message.pack.count ) && !skip ); i++ )
-				{
-					for ( j = 0; ( ( j < recv->tail.message.pack.list.absolute[i].count ) && !skip ); j++ )
-					{
-						size = ( recv->tail.message.pack.list.absolute[i].ends[j] -
-						         recv->tail.message.pack.list.absolute[i].begins[j] + 1 ) *
-						       recv->tail.message.pack.list.absolute[i].elem_size;
+            /* MPI 1.3 : The length of the received message must be less than or
+             * equal to the length of the receive buffer */
+            assume(SCTK_MSG_SIZE(send) <= recv_size);
+            char skip = 0;
 
-						if ( total + size > SCTK_MSG_SIZE ( send ) )
-						{
-							skip = 1;
-							size = SCTK_MSG_SIZE ( send ) - total;
-						}
+            for (i = 0; ((i < recv->tail.message.pack.count) && !skip); i++) {
+              for (j = 0;
+                   ((j < recv->tail.message.pack.list.absolute[i].count) &&
+                    !skip);
+                   j++) {
+                size =
+                    (recv->tail.message.pack.list.absolute[i].ends[j] -
+                     recv->tail.message.pack.list.absolute[i].begins[j] + 1) *
+                    recv->tail.message.pack.list.absolute[i].elem_size;
 
-						memcpy ( ( ( char * ) ( recv->tail.message.pack.list.absolute[i].addr ) ) +
-						         recv->tail.message.pack.list.absolute[i].begins[j] *
-						         recv->tail.message.pack.list.absolute[i].elem_size, body, size );
-						body += size;
-						total += size;
-						assume ( total <= SCTK_MSG_SIZE ( send ) );
-					}
-				}
-			}
+                if (total + size > SCTK_MSG_SIZE(send)) {
+                  skip = 1;
+                  size = SCTK_MSG_SIZE(send) - total;
+                }
 
-			sctk_message_completion_and_free ( send, recv );
-			break;
-		}
+                memcpy(
+                    ((char *)(recv->tail.message.pack.list.absolute[i].addr)) +
+                        recv->tail.message.pack.list.absolute[i].begins[j] *
+                            recv->tail.message.pack.list.absolute[i].elem_size,
+                    body, size);
+                body += size;
+                total += size;
+                assume(total <= SCTK_MSG_SIZE(send));
+              }
+            }
+          }
 
-		default:
-			not_reachable();
-	}
+          sctk_message_completion_and_free(send, recv);
+          break;
+        }
+
+        default:
+          not_reachable();
+        }
 }
 
 void sctk_net_message_copy_from_buffer ( char *body,

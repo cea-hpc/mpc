@@ -85,8 +85,6 @@ sctk_ib_mmu_entry_t * sctk_ib_mmu_entry_new( sctk_ib_rail_info_t *rail_ib, void 
 
 void sctk_ib_mmu_entry_release( sctk_ib_mmu_entry_t * release )
 {
-	sctk_spinlock_write_lock( &release->entry_refcounter );
-	
 	int ret = 0;
 	
 	sctk_nodebug("MMU UNPIN at %p size %ld", release->addr, release->size );

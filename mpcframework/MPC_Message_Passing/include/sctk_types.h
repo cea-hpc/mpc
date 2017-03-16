@@ -61,31 +61,35 @@ typedef int sctk_Request_class;
 /** Request definition **/
 typedef struct
 {
-	int request_type;
-	sctk_header_t header;
-	volatile int completion_flag;
-	struct sctk_thread_ptp_message_s* msg;
-	int is_null;
-	int need_check_in_wait;
-	int truncated;
-	int status_error;
-
-	/* Generalized Request context  */
-	sctk_Grequest_query_function * query_fn;
-	sctk_Grequest_cancel_function * cancel_fn;
-	sctk_Grequest_free_function * free_fn;
-	void * extra_state;
-	/* Extended Request */
-	sctk_Grequest_poll_fn * poll_fn;
-	sctk_Grequest_wait_fn * wait_fn;
-
-	/* MPI_Grequest_complete takes a copy of the struct
-	* not a reference however we have to change a value
-	* in the source struct which is being pulled therefore
-	* we have to do this hack by saving a pointer to the
-	* request inside the request */
-	void * pointer_to_source_request;
+  volatile int request_type;
+  volatile sctk_header_t header;
+  volatile int completion_flag;
+  struct sctk_thread_ptp_message_s *msg;
+  int is_null;
+  int need_check_in_wait;
+  int truncated;
+  int status_error;
+  /* Generalized Request context  */
+  sctk_Grequest_query_function *query_fn;
+  sctk_Grequest_cancel_function *cancel_fn;
+  sctk_Grequest_free_function *free_fn;
+  void *extra_state;
+  /* Extended Request */
+  sctk_Grequest_poll_fn *poll_fn;
+  sctk_Grequest_wait_fn *wait_fn;
+  /* MPI_Grequest_complete takes a copy of the struct
+   * not a reference however we have to change a value
+   * in the source struct which is being pulled therefore
+   * we have to do this hack by saving a pointer to the
+   * request inside the request */
+  void *pointer_to_source_request;
+  /* This is a pointer to the shadow request */
+  void *pointer_to_shadow_request;
+  /* This is a pointer to the registered memory region
+   * in order to unpin when request completes */
+  void *ptr_to_pin_ctx;
 } sctk_request_t;
+
 /** Reduction Operations **/
 typedef void (*sctk_Op_f) (const void *, void *, size_t, sctk_datatype_t);
 typedef void (sctk_Op_User_function) (void *, void *, int *, sctk_datatype_t *);
@@ -99,42 +103,40 @@ typedef struct
 /** RDMA windows */
 typedef int sctk_window_t;
 
+typedef enum {
+  RDMA_SUM,
+  RDMA_INC,
+  RDMA_DEC,
+  RDMA_MIN,
+  RDMA_MAX,
+  RDMA_PROD,
+  RDMA_LAND,
+  RDMA_BAND,
+  RDMA_LOR,
+  RDMA_BOR,
+  RDMA_LXOR,
+  RDMA_BXOR
+} RDMA_op;
 
-typedef enum
-{
-	RDMA_SUM,
-	RDMA_INC,
-	RDMA_DEC,
-	RDMA_MIN,
-	RDMA_MAX,
-	RDMA_PROD,
-	RDMA_LAND,
-	RDMA_BAND,
-	RDMA_LOR,
-	RDMA_BOR,
-	RDMA_LXOR,
-	RDMA_BXOR,
-}RDMA_op;
-
-typedef enum
-{
-	RDMA_TYPE_CHAR,
-	RDMA_TYPE_DOUBLE,
-	RDMA_TYPE_FLOAT,
-	RDMA_TYPE_INT,
-	RDMA_TYPE_LONG,
-	RDMA_TYPE_LONG_DOUBLE,
-	RDMA_TYPE_LONG_LONG,
-	RDMA_TYPE_LONG_LONG_INT,
-	RDMA_TYPE_SHORT,
-	RDMA_TYPE_SIGNED_CHAR,
-	RDMA_TYPE_UNSIGNED,
-	RDMA_TYPE_UNSIGNED_CHAR,
-	RDMA_TYPE_UNSIGNED_LONG,
-	RDMA_TYPE_UNSIGNED_LONG_LONG,
-	RDMA_TYPE_UNSIGNED_SHORT,
-	RDMA_TYPE_WCHAR
-}RDMA_type;
+typedef enum {
+  RDMA_TYPE_CHAR,
+  RDMA_TYPE_DOUBLE,
+  RDMA_TYPE_FLOAT,
+  RDMA_TYPE_INT,
+  RDMA_TYPE_LONG,
+  RDMA_TYPE_LONG_DOUBLE,
+  RDMA_TYPE_LONG_LONG,
+  RDMA_TYPE_LONG_LONG_INT,
+  RDMA_TYPE_SHORT,
+  RDMA_TYPE_SIGNED_CHAR,
+  RDMA_TYPE_UNSIGNED,
+  RDMA_TYPE_UNSIGNED_CHAR,
+  RDMA_TYPE_UNSIGNED_LONG,
+  RDMA_TYPE_UNSIGNED_LONG_LONG,
+  RDMA_TYPE_UNSIGNED_SHORT,
+  RDMA_TYPE_WCHAR,
+  RDMA_TYPE_AINT
+} RDMA_type;
 
 size_t RDMA_type_size( RDMA_type type );
 
@@ -159,5 +161,6 @@ size_t RDMA_type_size( RDMA_type type );
 /** Wildcards **/
 #define SCTK_ANY_TAG -1
 #define SCTK_ANY_SOURCE -1
+#define SCTK_ANY_COMM -99
 
 #endif /* SCTK_TYPES_H */

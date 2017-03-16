@@ -379,8 +379,8 @@ for f in mpi_interface:
 	#check for presence inside MPC
 	if MPIFunctionsisPresentinMPC( functionName ) == 0:
             continue;
-	else:
-		print "\tGEN\t" + functionName + "..."
+
+	print "\tGEN\t" + functionName + "..."
 	
 	#Add the error flag
 	if type( mpi_interface[ functionName ] ) == type( [] ) :

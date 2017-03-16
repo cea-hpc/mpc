@@ -21,30 +21,31 @@
 /* #                                                                      # */
 /* ######################################################################## */
 //#include "sctk_alloc.h"
+#include "mpc_common.h"
+#include "mpc_reduction.h"
+#include "mpcthread.h"
+#include "mpi_alloc_mem.h"
+#include "nbc.h"
+#include "sctk_alloc.h"
+#include "sctk_collective_communications.h"
+#include "sctk_communicator.h"
+#include "sctk_communicator.h"
+#include "sctk_debug.h"
+#include "sctk_handle.h"
+#include "sctk_inter_thread_comm.h"
+#include "sctk_runtime_config.h"
+#include "sctk_spinlock.h"
+#include "sctk_thread.h"
+#include "sctk_topology.h"
 #include <mpc.h>
+#include <mpc_extern32.h>
 #include <mpc_mpi.h>
 #include <sctk_debug.h>
-#include <sctk_spinlock.h>
-#include "sctk_thread.h"
 #include <sctk_ethread_internal.h>
-#include "sctk_communicator.h"
-#include "sctk_collective_communications.h"
-#include "mpc_reduction.h"
-#include "sctk_debug.h"
-#include "sctk_topology.h"
-#include "mpcthread.h"
-#include "sctk_inter_thread_comm.h"
-#include "mpc_common.h"
-#include "sctk_spinlock.h"
-#include "sctk_communicator.h"
-#include "sctk_alloc.h"
-#include <mpc_extern32.h>
+#include <sctk_spinlock.h>
 #include <string.h>
 #include <uthash.h>
 #include <utlist.h>
-#include "sctk_runtime_config.h"
-#include "nbc.h"
-
 TODO("Optimize algorithme for derived types")
 
 #define ENABLE_COLLECTIVES_ON_INTERCOMM  
@@ -237,6 +238,21 @@ void __sctk_add_in_mpc_request(MPI_Request *req, void *t,
                                MPI_request_struct_t *requests);
 void __sctk_delete_mpc_request(MPI_Request *req,
                                MPI_request_struct_t *requests);
+MPC_Request *__sctk_new_mpc_request(MPI_Request *req,
+                                    MPI_request_struct_t *requests);
+
+sctk_derived_datatype_t *sctk_get_derived_datatype(MPC_Datatype datatype);
+int *sctk_group_raw_ranks(MPI_Group group);
+
+typedef struct {
+  MPC_Op op;
+  int used;
+  int commute;
+} sctk_op_t;
+
+sctk_op_t *sctk_convert_to_mpc_op(MPI_Op op);
+
+MPC_Op_f sctk_get_common_function(MPC_Datatype datatype, MPC_Op op);
 
 /*
   SHARED INTERNAL FUNCTIONS

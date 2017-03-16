@@ -163,7 +163,20 @@
             <param name="sched_NBC_Pthread_basic_priority" type="int" default="10" doc="Basic priority of polling tasks"/>
         </struct>
         -->
-        
+     
+		<!-- ############################## -->
+		<!-- #    MPI RMA OPTIONS         # -->
+		<!-- ############################## -->
+
+		<struct name="mpi_rma" doc="Options related to the MPI RMA support">
+			<param name="alloc_mem_pool_enable" type="int" default="1" doc="Enable the MPI_Alloc_mem shared memory pool"/>
+			<param name="alloc_mem_pool_size" type="size" default="1MB" doc="Size of the MPI_Alloc_mem pool"/>
+			<param name="alloc_mem_pool_autodetect" type="int" default="1" doc="Alloc the MPI_Alloc_mem pool to grow linear for some apps"/>
+			<param name="alloc_mem_pool_force_process_linear" type="int" default="0" doc="Force the size to be a quantum per local process"/>
+			<param name="alloc_mem_pool_per_process_size" type="size" default="32MB" doc="Quantum to allocate to each process when linear forced"/>
+			<param name="win_thread_pool_max" type="int" default="2" doc="Maximum number of window threads to keep"/>
+		</struct>
+
         		
 	<!-- ############################## -->
 	<!-- #             MPC            # -->
@@ -184,6 +197,7 @@
 		<module name="collectives_inter" type="collectives_inter"/>
 		<module name="progress_thread" type="progress_thread"/>
 		<module name="mpc" type="mpc"/>
+		<module name="rma" type="mpi_rma"/>
 	</modules>
       
       
@@ -288,7 +302,7 @@
                     <param name="frag_max_size" type="int" doc="Defines the min size for the SHM fragmented message" default="0" alias="SHM_FRAG_MAX_SIZE" />
                     <param name="frag_zerocopy" type="bool" doc="Defines if mode zerocopy should be actived for SHM fragmented message" default="false" alias="SHM_FRAG_ZEROCOPY" />
             		<param name="shmem_size" type="int" doc="Size of shared memory region." default="1024" alias="SHM_SIZE" />
-            		<param name="cells_num" type="int" doc="Size of shared memory region." default="128" alias="SHM_CELLS" />
+            		<param name="cells_num" type="int" doc="Size of shared memory region." default="2048" alias="SHM_CELLS" />
         	</struct>
 
 		<!-- Union to merge drivers -->
@@ -339,6 +353,8 @@
 
 		<struct name="gate_message_type" doc="This gate can be used define which type of message can use a given rail.">
 			<param name="process" type="int" doc="Process Specific Messages can use this rail" default="1" />
+			<param name="task" type="int" doc="Task specific messages can use this rail" default="1" />
+			<param name="emulated_rma" type="int" doc="Task specific messages can use this rail" default="1" />
 			<param name="common" type="int" doc="Common messages (MPI) can use this rail" default="1" />
 			<param name="gatefunc" type="funcptr" default="sctk_rail_gate_msgtype" doc="Function to be called for this gate"/>
 		</struct>

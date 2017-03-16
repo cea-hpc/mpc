@@ -23,16 +23,20 @@
 #ifndef MPC_DATATYPES_H
 #define MPC_DATATYPES_H
 
-#include <stdlib.h>
-#include "sctk_atomics.h"
-#include "sctk_thread.h"
-#include "sctk_collective_communications.h" /* sctk_datatype_t */
 #include "mpcmp.h" /* mpc_pack_absolute_indexes_t */
+#include "sctk_atomics.h"
+#include "sctk_collective_communications.h" /* sctk_datatype_t */
+#include "sctk_ht.h"
 #include "sctk_spinlock.h"
+#include "sctk_thread.h"
+#include <stdlib.h>
 
 /************************************************************************/
 /* Datatype Init and Release                                            */
 /************************************************************************/
+/** \brief Are datatypes initialized ?*/
+int sctk_datatype_initialized();
+
 /** \brief Entry Point in the datatype code
  * Called from sctk_thread.c
  */
@@ -42,6 +46,105 @@ void sctk_datatype_init();
  * Called from sctk_thread.c
  */
 void sctk_datatype_release();
+
+/************************************************************************/
+/* Datatype  Attribute Handling                                         */
+/************************************************************************/
+
+/** \brief This structure defines a Datatype Keyval */
+struct Datatype_Keyval {
+  MPC_Type_copy_attr_function *copy;     /**< Keyval copy func */
+  MPC_Type_delete_attr_function *delete; /**< Keyval delete func */
+  void *extra_state;                     /**< An extra state to be stored */
+  int free_cell; /**< Initally 0, 1 is the keyval is then freed */
+};
+
+/** \brief This function retrieves a keyval from an id
+ * 	\param type_keyval ID of keyval to retrieve (offset in a static table)
+ *  \return Pointer to keyval (or NULL if keyval freed or invalid)
+ */
+struct Datatype_Keyval *Datatype_Keyval_get(int type_keyval);
+
+/** \brief This function deletes a keyval from an id
+ * 	\param type_keyval ID of keyval to delete (offset in a static table)
+ *  \return MPI_SUCCESS if ok
+ */
+int Datatype_Keyval_delete(int type_keyval);
+
+/** \brief This function create a new keyval
+ *  \param type_keyval (OUT) Id of the new keyval
+ *  \return Pointer to a newly created keyval entry
+ */
+struct Datatype_Keyval *Datatype_Keyval_new(int *type_keyval);
+
+/** \brief Trigger delete handler (if present) on a given data-type
+ *  \param type_keyval Target KEYVAL
+ *  \param type Source data-type
+ */
+void Datatype_Keyval_hit_delete(int type_keyval, void *attribute_val,
+                                MPC_Datatype type);
+
+/** \brief Trigger copy handler (if present) on a given data-type
+ *  \param type_keyval Target KEYVAL
+ *  \param oldtype old data-type
+ *  \param attribute_val_in old data-type value
+ *  \param attribute_val_out new data-type value
+ */
+void Datatype_Keyval_hit_copy(int type_keyval, MPC_Datatype oldtype,
+                              void **attribute_val_in, void **attribute_val_out,
+                              int *flag);
+
+/** \brief Create a new data-type keyval
+ *  \param copy Copy func
+ *  \param delete Delete func
+ *  \param type_keyval (OUT) ID of the newly create keyval
+ *  \param extra_state Extra pointer to be stored in the keyval
+ *  \return MPI_SUCCESS if ok
+ */
+int sctk_type_create_keyval(MPC_Type_copy_attr_function *copy,
+                            MPC_Type_delete_attr_function *delete,
+                            int *type_keyval, void *extra_state);
+
+/** \brief Delete a keyval
+ *  \param type_keyval Delete a keyval
+ *  \return MPI_SUCCESS if ok
+ */
+int sctk_type_free_keyval(int *type_keyval);
+
+/** \brief This defines a datatype ATTR storing the attribute val
+ *          to be manipulalted by \ref Datatype_Attr_store
+ */
+struct Datatype_Attr {
+  void *attribute_val; /**< Value of the attribute */
+  int type_keyval;     /**< Referecne keyval */
+};
+
+/** \brief Create a new attr entry (alloc)
+ *  \param type_keyval Associated keyval
+ *  \param attribute_val Attribute to be stored
+ *  \param Return a pointer to a newly allocated Attr (NULL on error)
+ */
+struct Datatype_Attr *Datatype_Attr_new(int type_keyval, void *attribute_val);
+
+/** \brief This is where datatype attrs are stored (in each dt)
+ */
+struct Datatype_Attr_store {
+  struct MPCHT attrs; /**< Just an ATTR ht */
+};
+
+/** \brief Initialize a data-type store
+ *  \param store Pointer to the target store
+ *  \return 0 on success
+ */
+int Datatype_Attr_store_init(struct Datatype_Attr_store *store);
+
+/** \brief Release a data-type store
+ *  \param store Pointer to the target store
+ *  \param container_type Datatype being released
+ *  \return 0 on success
+ */
+int Datatype_Attr_store_release(struct Datatype_Attr_store *store,
+                                MPC_Datatype container_type);
 
 /************************************************************************/
 /* Datatype  Context                                                    */
@@ -74,8 +177,6 @@ struct Datatype_context
 	int * array_of_integers; /** An array of integers */
 	MPC_Aint * array_of_addresses; /* An array of addresses */
 	MPC_Datatype * array_of_types; /** An array of types */
-
-	
 };
 
 /** \brief Clears the context
@@ -249,6 +350,7 @@ typedef struct
 	sctk_datatype_t datatype; /**< Type packed within the datatype */
 	unsigned int ref_count; /**< Flag telling if the datatype slot is free for use */
 	struct Datatype_context context; /**< Saves the creation context for MPI_get_envelope & MPI_Get_contents */
+        struct Datatype_Attr_store attrs; /**< ATTR array for this type */
 } sctk_contiguous_datatype_t;
 
 /** \brief sctk_contiguous_datatype_t initializer
@@ -320,6 +422,9 @@ typedef struct
 	
 	/* Context */
 	struct Datatype_context context; /**< Saves the creation context for MPI_get_envelope & MPI_Get_contents */
+
+        /* Attrs */
+        struct Datatype_Attr_store attrs; /**< ATTR array for this type */
 } sctk_derived_datatype_t;
 
 
@@ -339,14 +444,13 @@ typedef struct
  * \param is_b tells if the type has an upper bound
  * 
  */
-void sctk_derived_datatype_init( sctk_derived_datatype_t * type ,
-				 MPC_Datatype id,
-				 unsigned long count,
-                                 mpc_pack_absolute_indexes_t * begins,
-                                 mpc_pack_absolute_indexes_t * ends,
-                                 sctk_datatype_t * datatypes,
-                                 mpc_pack_absolute_indexes_t lb, int is_lb,
-				 mpc_pack_absolute_indexes_t ub, int is_ub);
+void sctk_derived_datatype_init(sctk_derived_datatype_t *type, MPC_Datatype id,
+                                unsigned long count,
+                                mpc_pack_absolute_indexes_t *begins,
+                                mpc_pack_absolute_indexes_t *ends,
+                                sctk_datatype_t *datatypes,
+                                mpc_pack_absolute_indexes_t lb, int is_lb,
+                                mpc_pack_absolute_indexes_t ub, int is_ub);
 
 /** \brief Releases a derived datatype
  * 
@@ -386,8 +490,40 @@ int sctk_derived_datatype_optimize( sctk_derived_datatype_t * target_type );
  */
 void sctk_derived_datatype_display( sctk_derived_datatype_t * target_type );
 
+/** \brief This struct is used to serialize these boundaries all
+ * at once instead of having to do it one by one (see two next functions) */
+struct inner_lbub {
+  mpc_pack_absolute_indexes_t lb; /**< Lower bound offset  */
+  int is_lb;                      /**< Does type has a lower bound */
+  mpc_pack_absolute_indexes_t ub; /**< Upper bound offset */
+  int is_ub;                      /**< Does type has an upper bound */
+  int is_a_padded_struct; /**< Was the type padded with UB during construction ?
+                             */
+};
 
+/** \brief Serialize a derived datatype in a contiguous segment
+ *  \param type the derived data-type to be serialized
+ *  \param size (OUT) the size of the serialize buffer
+ *  \param header_pad offset to allocate for the header (data will be shifted)
+ *  \return the allocated buffer of size (size) to be used and freed
+ */
+void *sctk_derived_datatype_serialize(sctk_datatype_t type, size_t *size,
+                                      size_t header_pad);
 
+/** \brief Deserialize a derived datatype from a contiguous segment
+ *  \param buff the buffer from a previously serialized datatype
+ *  \param size size of the input buffer (as generated during serialize)
+ *  \param header_pad offset to skip as being the header
+ *  \return a new datatype matching the serialized one (to be freed)
+ */
+sctk_datatype_t sctk_derived_datatype_deserialize(void *buff, size_t size,
+                                                  size_t header_pad);
+
+/** \brief This function gets the basic type constituing a derived type for RMA
+ *  \param type Derived type to be checked
+ *  \return -1 if types are differing, the type if not
+ */
+sctk_datatype_t sctk_datatype_get_inner_type(sctk_datatype_t type);
 
 /************************************************************************/
 /* Datatype ID range calculations                                       */
@@ -577,7 +713,7 @@ void Datatype_Array_release( struct Datatype_Array * da );
 static inline void Datatype_Array_lock( struct Datatype_Array * da )
 {
 #ifdef SCTK_PROCESS_MODE
-  sctk_spinlock_lock(&da->datatype_lock);
+  sctk_spinlock_lock_yield(&da->datatype_lock);
 #endif
 }
 
@@ -622,7 +758,39 @@ sctk_derived_datatype_t * Datatype_Array_get_derived_datatype( struct Datatype_A
  */
 void Datatype_Array_set_derived_datatype( struct Datatype_Array * da ,  MPC_Datatype datatype, sctk_derived_datatype_t * value );
 
+/************************************************************************/
+/* Datatype  Attribute Getters                                          */
+/************************************************************************/
 
+/** \brief Set a Datatype attr in a datatype-store (contained inside DT)
+ *  \param da A pointer to the datatype array
+ * 	\param type Target datatype
+ * 	\param type_keyval Referenced keyval
+ *  \param attribute_val Value to be stored
+ *  \return MPI_SUCCESS if ok
+ */
+int sctk_type_set_attr(struct Datatype_Array *da, MPC_Datatype type,
+                       int type_keyval, void *attribute_val);
+
+/** \brief Get a Datatype attr in a datatype-store (contained inside DT)
+ *  \param da A pointer to the datatype array
+ * 	\param type Target datatype
+ * 	\param type_keyval Referenced keyval
+ *  \param attribute_val (OUT)Value of the attribute
+ *  \param flag (OUT)False if no attribute found
+ *  \return MPI_SUCCESS if ok
+ */
+int sctk_type_get_attr(struct Datatype_Array *da, MPC_Datatype type,
+                       int type_keyval, void *attribute_val, int *flag);
+
+/** \brief Delete a Datatype attr in a datatype-store (contained inside DT)
+ *  \param da A pointer to the datatype array
+ * 	\param type Target datatype
+ * 	\param type_keyval Referenced keyval
+ *  \return MPI_SUCCESS if ok
+ */
+int sctk_type_delete_attr(struct Datatype_Array *da, MPC_Datatype type,
+                          int type_keyval);
 
 /************************************************************************/
 /* Datatype  Naming                                                     */
@@ -673,6 +841,5 @@ char * sctk_datype_get_name( MPC_Datatype datatype );
 /** \brief Release Data-types names
  */
 void sctk_datype_name_release();
-
 
 #endif /* MPC_DATATYPES_H */

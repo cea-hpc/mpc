@@ -126,6 +126,12 @@
 #pragma weak MPC_Derived_datatype = PMPC_Derived_datatype
 #pragma weak MPC_Type_convert_to_derived = PMPC_Type_convert_to_derived
 #pragma weak MPC_Type_use = PMPC_Type_use
+#pragma weak MPC_Type_free_keyval = PMPC_Type_free_keyval
+#pragma weak MPC_Type_create_keyval = PMPC_Type_create_keyval
+#pragma weak MPC_Type_delete_attr = PMPC_Type_delete_attr
+#pragma weak MPC_Type_set_attr = PMPC_Type_set_attr
+#pragma weak MPC_Type_get_attr = PMPC_Type_get_attr
+
 /* #pragma weak MPC_Get_keys = PMPC_Get_keys */
 /* #pragma weak MPC_Set_keys = PMPC_Set_keys */
 /* #pragma weak MPC_Get_requests = PMPC_Get_requests */

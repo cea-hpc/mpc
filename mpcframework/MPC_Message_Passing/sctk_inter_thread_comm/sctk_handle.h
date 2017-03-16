@@ -19,7 +19,7 @@
 /* #   - BESNARD Jean-Baptiste jbbesnard@paratools.fr                     # */
 /* #                                                                      # */
 /* ######################################################################## */
-#ifndef MPI_HANDLER_H
+#ifndef MPI_HANDLE_H
 #define MPI_HANDLE_H
 
 #include "mpcmp.h"

@@ -368,6 +368,29 @@
     </xs:all>
   </xs:complexType>
   <!-- ********************************************************* -->
+  <xs:complexType name="user_type_mpi_rma">
+    <xs:all>
+      <xs:element minOccurs="0" name="alloc_mem_pool_enable" type="xs:integer"/>
+      <xs:element minOccurs="0" name="alloc_mem_pool_size">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[0-9]+[ ]?[K|M|G|T|P]?B"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+      <xs:element minOccurs="0" name="alloc_mem_pool_autodetect" type="xs:integer"/>
+      <xs:element minOccurs="0" name="alloc_mem_pool_force_process_linear" type="xs:integer"/>
+      <xs:element minOccurs="0" name="alloc_mem_pool_per_process_size">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[0-9]+[ ]?[K|M|G|T|P]?B"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+      <xs:element minOccurs="0" name="win_thread_pool_max" type="xs:integer"/>
+    </xs:all>
+  </xs:complexType>
+  <!-- ********************************************************* -->
   <xs:complexType name="user_type_mpc">
     <xs:all>
       <xs:element minOccurs="0" name="log_debug" type="xs:boolean"/>
@@ -578,6 +601,8 @@
   <xs:complexType name="user_type_gate_message_type">
     <xs:all>
       <xs:element minOccurs="0" name="process" type="xs:integer"/>
+      <xs:element minOccurs="0" name="task" type="xs:integer"/>
+      <xs:element minOccurs="0" name="emulated_rma" type="xs:integer"/>
       <xs:element minOccurs="0" name="common" type="xs:integer"/>
       <xs:element minOccurs="0" name="gatefunc">
         <xs:simpleType>
@@ -836,6 +861,7 @@
       <xs:element minOccurs="0" name="collectives_inter" type="user_type_collectives_inter"/>
       <xs:element minOccurs="0" name="progress_thread" type="user_type_progress_thread"/>
       <xs:element minOccurs="0" name="mpc" type="user_type_mpc"/>
+      <xs:element minOccurs="0" name="rma" type="user_type_mpi_rma"/>
       <xs:element minOccurs="0" name="inter_thread_comm" type="user_type_inter_thread_comm"/>
       <xs:element minOccurs="0" name="low_level_comm" type="user_type_low_level_comm"/>
       <xs:element minOccurs="0" name="openmp" type="user_type_openmp"/>

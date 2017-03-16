@@ -540,6 +540,12 @@ cat << EOF >> $1
 					LIBPRIV_FLAG=""
 				fi
 
+EOF
+fi
+
+#Insert the Getopt.h include if not in Fortran
+if [ "$language" != "fortran" ]; then
+cat << EOF >> $1
 				if test -e "\${MPC_RPREFIX}/\${MPC_HOST_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/lib/libmpcgetopt.a"; 
 				then
 					if test "x\${MPC_BOOTSTRAP}" != "xyes"; 
@@ -551,6 +557,8 @@ cat << EOF >> $1
 				fi
 EOF
 fi
+
+
 cat << EOF >> $1
 				override_var_if_isset 'PRIV_FLAG' '-fmpc-privatize'
 				override_var_if_isset 'OMP_FLAG' '-fopenmp'

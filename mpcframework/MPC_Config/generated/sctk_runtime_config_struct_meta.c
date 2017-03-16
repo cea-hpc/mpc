@@ -88,6 +88,12 @@ const struct sctk_runtime_config_entry_meta sctk_runtime_config_db[] = {
          struct sctk_runtime_config_modules, mpc),
      sizeof(struct sctk_runtime_config_struct_mpc),
      "sctk_runtime_config_struct_mpc", sctk_runtime_config_struct_init_mpc},
+    {"rma", SCTK_CONFIG_META_TYPE_PARAM,
+     sctk_runtime_config_get_offset_of_member(
+         struct sctk_runtime_config_modules, rma),
+     sizeof(struct sctk_runtime_config_struct_mpi_rma),
+     "sctk_runtime_config_struct_mpi_rma",
+     sctk_runtime_config_struct_init_mpi_rma},
     {"inter_thread_comm", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_modules, inter_thread_comm),
@@ -466,6 +472,36 @@ const struct sctk_runtime_config_entry_meta sctk_runtime_config_db[] = {
          struct sctk_runtime_config_struct_progress_thread,
          progress_thread_binding),
      sizeof(struct sctk_runtime_config_funcptr), "funcptr", NULL, NULL},
+    /* struct */
+    {"sctk_runtime_config_struct_mpi_rma", SCTK_CONFIG_META_TYPE_STRUCT, 0,
+     sizeof(struct sctk_runtime_config_struct_mpi_rma), NULL,
+     sctk_runtime_config_struct_init_mpi_rma},
+    {"alloc_mem_pool_enable", SCTK_CONFIG_META_TYPE_PARAM,
+     sctk_runtime_config_get_offset_of_member(
+         struct sctk_runtime_config_struct_mpi_rma, alloc_mem_pool_enable),
+     sizeof(int), "int", NULL, NULL},
+    {"alloc_mem_pool_size", SCTK_CONFIG_META_TYPE_PARAM,
+     sctk_runtime_config_get_offset_of_member(
+         struct sctk_runtime_config_struct_mpi_rma, alloc_mem_pool_size),
+     sizeof(size_t), "size_t", NULL, NULL},
+    {"alloc_mem_pool_autodetect", SCTK_CONFIG_META_TYPE_PARAM,
+     sctk_runtime_config_get_offset_of_member(
+         struct sctk_runtime_config_struct_mpi_rma, alloc_mem_pool_autodetect),
+     sizeof(int), "int", NULL, NULL},
+    {"alloc_mem_pool_force_process_linear", SCTK_CONFIG_META_TYPE_PARAM,
+     sctk_runtime_config_get_offset_of_member(
+         struct sctk_runtime_config_struct_mpi_rma,
+         alloc_mem_pool_force_process_linear),
+     sizeof(int), "int", NULL, NULL},
+    {"alloc_mem_pool_per_process_size", SCTK_CONFIG_META_TYPE_PARAM,
+     sctk_runtime_config_get_offset_of_member(
+         struct sctk_runtime_config_struct_mpi_rma,
+         alloc_mem_pool_per_process_size),
+     sizeof(size_t), "size_t", NULL, NULL},
+    {"win_thread_pool_max", SCTK_CONFIG_META_TYPE_PARAM,
+     sctk_runtime_config_get_offset_of_member(
+         struct sctk_runtime_config_struct_mpi_rma, win_thread_pool_max),
+     sizeof(int), "int", NULL, NULL},
     /* struct */
     {"sctk_runtime_config_struct_mpc", SCTK_CONFIG_META_TYPE_STRUCT, 0,
      sizeof(struct sctk_runtime_config_struct_mpc), NULL,
@@ -891,6 +927,14 @@ const struct sctk_runtime_config_entry_meta sctk_runtime_config_db[] = {
     {"process", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(
          struct sctk_runtime_config_struct_gate_message_type, process),
+     sizeof(int), "int", NULL, NULL},
+    {"task", SCTK_CONFIG_META_TYPE_PARAM,
+     sctk_runtime_config_get_offset_of_member(
+         struct sctk_runtime_config_struct_gate_message_type, task),
+     sizeof(int), "int", NULL, NULL},
+    {"emulated_rma", SCTK_CONFIG_META_TYPE_PARAM,
+     sctk_runtime_config_get_offset_of_member(
+         struct sctk_runtime_config_struct_gate_message_type, emulated_rma),
      sizeof(int), "int", NULL, NULL},
     {"common", SCTK_CONFIG_META_TYPE_PARAM,
      sctk_runtime_config_get_offset_of_member(

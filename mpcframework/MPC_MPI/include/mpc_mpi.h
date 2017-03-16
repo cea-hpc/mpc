@@ -132,6 +132,7 @@ extern "C"
 #define MPI_ERR_ASSERT MPC_ERR_ASSERT
 #define MPI_ERR_RMA_CONFLICT MPC_ERR_RMA_CONFLICT
 #define MPI_ERR_RMA_SYNC MPC_ERR_RMA_SYNC
+#define MPI_ERR_RMA_FLAVOR MPC_ERR_RMA_FLAVOR
 #define MPI_ERR_FILE MPC_ERR_FILE
 #define MPI_ERR_NOT_SAME MPC_ERR_NOT_SAME
 #define MPI_ERR_AMODE MPC_ERR_AMODE
@@ -341,7 +342,7 @@ extern "C"
 #define MPI_ERRORS_RETURN MPC_ERRORS_RETURN       /* 1234 in Fortran */
 #define MPI_ERRORS_ARE_FATAL MPC_ERRORS_ARE_FATAL /* 1235 in Fortran */
 
-#define MPI_KEYVAL_INVALID -1
+#define MPI_KEYVAL_INVALID MPC_KEYVAL_INVALID
 
 #define MPI_NULL_DELETE_FN ((MPI_Delete_function *)MPC_Mpi_null_delete_fn)
 #define MPI_NULL_COPY_FN ((MPI_Copy_function *)MPC_Mpi_null_copy_fn)
@@ -370,11 +371,11 @@ extern "C"
 
 /* In addition, there are 5 predefined window attributes that are
  *    defined for every window */
+#define MPI_WIN_MODEL 0
 #define MPI_WIN_BASE          1
 #define MPI_WIN_SIZE          2
 #define MPI_WIN_DISP_UNIT     3
 #define MPI_WIN_CREATE_FLAVOR 4
-#define MPI_WIN_MODEL         5
 
 /* Ordering defines */
 #define MPI_DISTRIBUTE_DFLT_DARG 100
@@ -396,9 +397,9 @@ extern "C"
 /* asserts for one-sided communication */
 #define MPI_MODE_NOCHECK      1
 #define MPI_MODE_NOSTORE      2
-#define MPI_MODE_NOPUT        3
-#define MPI_MODE_NOPRECEDE    4
-#define MPI_MODE_NOSUCCEED    5 
+#define MPI_MODE_NOPUT 4
+#define MPI_MODE_NOPRECEDE 8
+#define MPI_MODE_NOSUCCEED 16
 
 #define MPI_WIN_FLAVOR_CREATE        1
 #define MPI_WIN_FLAVOR_ALLOCATE      2
@@ -475,8 +476,10 @@ typedef MPI_File_errhandler_function MPI_File_errhandler_fn;
 //~ typedef void (MPC_Handler_function) ( MPI_Comm *, int *, ... );
 typedef int (MPI_Comm_copy_attr_function)(MPI_Comm, int, void *, void *, void *, int *);
 typedef int (MPI_Comm_delete_attr_function)(MPI_Comm, int, void *, void *);
-typedef int (MPI_Type_copy_attr_function)(MPI_Datatype, int, void *, void *, void *, int *);
-typedef int (MPI_Type_delete_attr_function)(MPI_Datatype, int, void *, void *);
+
+typedef MPC_Type_copy_attr_function MPI_Type_copy_attr_function;
+typedef MPC_Type_delete_attr_function MPI_Type_delete_attr_function;
+
 typedef int (MPI_Win_copy_attr_function)(MPI_Win, int, void *, void *, void *,int *);
 typedef int (MPI_Win_delete_attr_function)(MPI_Win, int, void *, void *);
 /* added in MPI-2.2 */
@@ -897,6 +900,66 @@ int MPI_T_finalize(void);
 
 #define MPI_T_ENUM_NULL ((MPI_T_enum)NULL)
 
+/* One-Sided Communications */
+int MPI_Win_set_attr(MPI_Win, int, void *);
+int MPI_Win_get_attr(MPI_Win, int, void *, int *);
+int MPI_Win_free_keyval(int *);
+int MPI_Win_delete_attr(MPI_Win, int);
+int MPI_Win_create_keyval(MPI_Win_copy_attr_function *,
+                          MPI_Win_delete_attr_function *, int *, void *);
+int MPI_Win_create(void *, MPI_Aint, int, MPI_Info, MPI_Comm, MPI_Win *);
+int MPI_Win_free(MPI_Win *);
+int MPI_Win_wait(MPI_Win);
+int MPI_Accumulate(void *, int, MPI_Datatype, int, MPI_Aint, int, MPI_Datatype,
+                   MPI_Op, MPI_Win);
+int MPI_Get(void *, int, MPI_Datatype, int, MPI_Aint, int, MPI_Datatype,
+            MPI_Win);
+int MPI_Put(void *, int, MPI_Datatype, int, MPI_Aint, int, MPI_Datatype,
+            MPI_Win);
+int MPI_Win_complete(MPI_Win);
+int MPI_Win_fence(int, MPI_Win);
+int MPI_Win_get_group(MPI_Win, MPI_Group *);
+int MPI_Win_lock(int, int, int, MPI_Win);
+int MPI_Win_post(MPI_Group, int, MPI_Win);
+int MPI_Win_start(MPI_Group, int, MPI_Win);
+int MPI_Win_test(MPI_Win, int *);
+int MPI_Win_unlock(int, MPI_Win);
+int MPI_Win_allocate(MPI_Aint, int, MPI_Info, MPI_Comm, void *, MPI_Win *);
+int MPI_Win_set_name(MPI_Win, const char *);
+int MPI_Win_get_name(MPI_Win, char *, int *);
+int MPI_Win_set_errhandler(MPI_Win, MPI_Errhandler);
+int MPI_Win_get_errhandler(MPI_Win, MPI_Errhandler *);
+int MPI_Win_call_errhandler(MPI_Win win, int errorcode);
+int MPI_Win_allocate_shared(MPI_Aint, int, MPI_Info, MPI_Comm, void *,
+                            MPI_Win *);
+int MPI_Win_create_errhandler(MPI_Win_errhandler_function *, MPI_Errhandler *);
+int MPI_Win_create_dynamic(MPI_Info, MPI_Comm, MPI_Win *);
+int MPI_Win_shared_query(MPI_Win, int, MPI_Aint *, int *, void *);
+int MPI_Win_lock_all(int, MPI_Win);
+int MPI_Win_unlock_all(MPI_Win win);
+int MPI_Win_sync(MPI_Win win);
+int MPI_Win_attach(MPI_Win, void *, MPI_Aint);
+int MPI_Win_detach(MPI_Win, const void *);
+int MPI_Win_flush(int, MPI_Win);
+int MPI_Win_flush_all(MPI_Win);
+int MPI_Win_set_info(MPI_Win, MPI_Info);
+int MPI_Win_get_info(MPI_Win, MPI_Info *);
+int MPI_Get_accumulate(const void *, int, MPI_Datatype, void *, int,
+                       MPI_Datatype, int, MPI_Aint, int, MPI_Datatype, MPI_Op,
+                       MPI_Win);
+int MPI_Fetch_and_op(const void *, void *, MPI_Datatype, int, MPI_Aint, MPI_Op,
+                     MPI_Win);
+int MPI_Compare_and_swap(const void *, const void *, void *, MPI_Datatype, int,
+                         MPI_Aint, MPI_Win);
+int MPI_Rput(const void *, int, MPI_Datatype, int, MPI_Aint, int, MPI_Datatype,
+             MPI_Win, MPI_Request *);
+int MPI_Rget(void *, int, MPI_Datatype, int, MPI_Aint, int, MPI_Datatype,
+             MPI_Win, MPI_Request *);
+int MPI_Raccumulate(const void *, int, MPI_Datatype, int, MPI_Aint, int,
+                    MPI_Datatype, MPI_Op, MPI_Win, MPI_Request *);
+int MPI_Rget_accumulate(const void *, int, MPI_Datatype, void *, int,
+                        MPI_Datatype, int, MPI_Aint, int, MPI_Datatype, MPI_Op,
+                        MPI_Win, MPI_Request *);
 /** Internal storage class (see mpit_internal.h) */
 struct MPC_T_enum;
 
@@ -1143,7 +1206,6 @@ int MPI_T_pvar_read(MPI_T_pvar_session session, MPI_T_pvar_handle handle,
  */
 int MPI_T_pvar_readreset(MPI_T_pvar_session session, MPI_T_pvar_handle handle,
                          void *buff);
-
 /** Write the value associated with a PVAR
  * @arg session Performance experiment session to read from
  * @arg handle Handle of the performance variable
@@ -1152,7 +1214,6 @@ int MPI_T_pvar_readreset(MPI_T_pvar_session session, MPI_T_pvar_handle handle,
  */
 int MPI_T_pvar_write(MPI_T_pvar_session session, MPI_T_pvar_handle handle,
                      const void *buff);
-
 /** Reset the value associated with a PVAR
  * @arg session Performance experiment session to read from
  * @arg handle Handle of the performance variable
@@ -1419,6 +1480,7 @@ int PMPI_Comm_size (MPI_Comm, int *);
 int PMPI_Comm_rank (MPI_Comm, int *);
 int PMPI_Comm_compare (MPI_Comm, MPI_Comm, int *);
 int PMPI_Comm_dup (MPI_Comm, MPI_Comm *);
+int PMPI_Comm_split_type(MPI_Comm, int, int, MPI_Info, MPI_Comm *);
 int PMPI_Comm_create (MPI_Comm, MPI_Group, MPI_Comm *);
 int PMPI_Comm_split (MPI_Comm, int, int, MPI_Comm *);
 int PMPI_Comm_free (MPI_Comm *);
@@ -1600,58 +1662,72 @@ int PMPI_Mrecv(void *, int, MPI_Datatype, MPI_Message *, MPI_Status *);
 int PMPI_Imrecv(void *, int, MPI_Datatype, MPI_Message *, MPI_Request *);
 int PMPI_Improbe(int, int, MPI_Comm, int *, MPI_Message *, MPI_Status *);
 
+/* One-Sided Communications */
+int PMPI_Win_set_attr(MPI_Win, int, void *);
+int PMPI_Win_get_attr(MPI_Win, int, void *, int *);
+int PMPI_Win_free_keyval(int *);
+int PMPI_Win_delete_attr(MPI_Win, int);
+int PMPI_Win_create_keyval(MPI_Win_copy_attr_function *,
+                           MPI_Win_delete_attr_function *, int *, void *);
+int PMPI_Win_create(void *, MPI_Aint, int, MPI_Info, MPI_Comm, MPI_Win *);
+int PMPI_Win_free(MPI_Win *);
+int PMPI_Win_wait(MPI_Win);
+int PMPI_Accumulate(const void *, int, MPI_Datatype, int, MPI_Aint, int,
+                    MPI_Datatype, MPI_Op, MPI_Win);
+int PMPI_Get(void *, int, MPI_Datatype, int, MPI_Aint, int, MPI_Datatype,
+             MPI_Win);
+int PMPI_Put(const void *, int, MPI_Datatype, int, MPI_Aint, int, MPI_Datatype,
+             MPI_Win);
+int PMPI_Win_complete(MPI_Win);
+int PMPI_Win_fence(int, MPI_Win);
+int PMPI_Win_get_group(MPI_Win, MPI_Group *);
+int PMPI_Win_lock(int, int, int, MPI_Win);
+int PMPI_Win_post(MPI_Group, int, MPI_Win);
+int PMPI_Win_start(MPI_Group, int, MPI_Win);
+int PMPI_Win_test(MPI_Win, int *);
+int PMPI_Win_unlock(int, MPI_Win);
+int PMPI_Win_allocate(MPI_Aint, int, MPI_Info, MPI_Comm, void *, MPI_Win *);
+int PMPI_Win_set_name(MPI_Win, const char *);
+int PMPI_Win_get_name(MPI_Win, char *, int *);
+int PMPI_Win_set_errhandler(MPI_Win, MPI_Errhandler);
+int PMPI_Win_get_errhandler(MPI_Win, MPI_Errhandler *);
+int PMPI_Win_call_errhandler(MPI_Win win, int errorcode);
+int PMPI_Win_allocate_shared(MPI_Aint, int, MPI_Info, MPI_Comm, void *,
+                             MPI_Win *);
+int PMPI_Win_create_errhandler(MPI_Win_errhandler_function *, MPI_Errhandler *);
+int PMPI_Win_create_dynamic(MPI_Info, MPI_Comm, MPI_Win *);
+int PMPI_Win_shared_query(MPI_Win, int, MPI_Aint *, int *, void *);
+int PMPI_Win_lock_all(int, MPI_Win);
+int PMPI_Win_unlock_all(MPI_Win win);
+int PMPI_Win_sync(MPI_Win win);
+int PMPI_Win_attach(MPI_Win, void *, MPI_Aint);
+int PMPI_Win_detach(MPI_Win, const void *);
+int PMPI_Win_flush(int, MPI_Win);
+int PMPI_Win_flush_all(MPI_Win);
+int PMPI_Win_set_info(MPI_Win, MPI_Info);
+int PMPI_Win_get_info(MPI_Win, MPI_Info *);
+int PMPI_Get_accumulate(const void *, int, MPI_Datatype, void *, int,
+                        MPI_Datatype, int, MPI_Aint, int, MPI_Datatype, MPI_Op,
+                        MPI_Win);
+int PMPI_Fetch_and_op(const void *, void *, MPI_Datatype, int, MPI_Aint, MPI_Op,
+                      MPI_Win);
+int PMPI_Compare_and_swap(const void *, const void *, void *, MPI_Datatype, int,
+                          MPI_Aint, MPI_Win);
+int PMPI_Rput(const void *, int, MPI_Datatype, int, MPI_Aint, int, MPI_Datatype,
+              MPI_Win, MPI_Request *);
+int PMPI_Rget(void *, int, MPI_Datatype, int, MPI_Aint, int, MPI_Datatype,
+              MPI_Win, MPI_Request *);
+int PMPI_Raccumulate(const void *, int, MPI_Datatype, int, MPI_Aint, int,
+                     MPI_Datatype, MPI_Op, MPI_Win, MPI_Request *);
+int PMPI_Rget_accumulate(const void *, int, MPI_Datatype, void *, int,
+                         MPI_Datatype, int, MPI_Aint, int, MPI_Datatype, MPI_Op,
+                         MPI_Win, MPI_Request *);
+
 #endif /* MPI_BUILD_PROFILING */
 
 /************************************************************************/
 /*  NOT IMPLEMENTED                                                     */
 /************************************************************************/
-
-/* One-Sided Communications */
-int MPI_Win_set_attr(MPI_Win , int , void *);
-int MPI_Win_get_attr(MPI_Win , int , void *, int *);
-int MPI_Win_free_keyval(int *);
-int MPI_Win_delete_attr(MPI_Win , int );
-int MPI_Win_create_keyval(MPI_Win_copy_attr_function *, MPI_Win_delete_attr_function *, int *, void *);
-int MPI_Win_create (void *, MPI_Aint, int, MPI_Info, MPI_Comm, MPI_Win *);
-int MPI_Win_free (MPI_Win *);
-int MPI_Win_wait (MPI_Win);
-int MPI_Accumulate (void *, int, MPI_Datatype, int, MPI_Aint, int, MPI_Datatype, MPI_Op, MPI_Win);
-int MPI_Get (void *, int, MPI_Datatype, int, MPI_Aint, int, MPI_Datatype, MPI_Win);
-int MPI_Put (void *, int, MPI_Datatype, int, MPI_Aint, int, MPI_Datatype, MPI_Win);
-int MPI_Win_complete (MPI_Win);
-int MPI_Win_fence (int, MPI_Win);
-int MPI_Win_get_group (MPI_Win, MPI_Group *);
-int MPI_Win_lock (int, int, int, MPI_Win);
-int MPI_Win_post (MPI_Group, int, MPI_Win);
-int MPI_Win_start (MPI_Group, int, MPI_Win);
-int MPI_Win_test (MPI_Win, int *);
-int MPI_Win_unlock (int, MPI_Win);
-int MPI_Win_allocate(MPI_Aint, int, MPI_Info, MPI_Comm, void *, MPI_Win *);
-int MPI_Win_set_name(MPI_Win, const char *);
-int MPI_Win_get_name(MPI_Win, char *, int *);
-int MPI_Win_set_errhandler(MPI_Win, MPI_Errhandler);
-int MPI_Win_get_errhandler(MPI_Win, MPI_Errhandler *);
-int MPI_Win_call_errhandler(MPI_Win win, int errorcode);
-int MPI_Win_allocate_shared(MPI_Aint , int , MPI_Info , MPI_Comm ,void *, MPI_Win *);
-int MPI_Win_create_errhandler(MPI_Win_errhandler_function *,MPI_Errhandler *);
-int MPI_Win_create_dynamic(MPI_Info , MPI_Comm , MPI_Win *);
-int MPI_Win_shared_query(MPI_Win , int , MPI_Aint *, int *, void *);
-int MPI_Win_lock_all(int , MPI_Win );
-int MPI_Win_unlock_all(MPI_Win win);
-int MPI_Win_sync(MPI_Win win);
-int MPI_Win_attach(MPI_Win , void *, MPI_Aint );
-int MPI_Win_detach(MPI_Win , const void *);
-int MPI_Win_flush(int , MPI_Win );
-int MPI_Win_flush_all(MPI_Win);
-int MPI_Win_set_info(MPI_Win, MPI_Info);
-int MPI_Win_get_info(MPI_Win, MPI_Info *);
-int MPI_Get_accumulate(const void *, int ,MPI_Datatype , void *, int ,MPI_Datatype , int , MPI_Aint ,int , MPI_Datatype , MPI_Op , MPI_Win );
-int MPI_Fetch_and_op(const void *, void *,MPI_Datatype , int , MPI_Aint ,MPI_Op , MPI_Win );
-int MPI_Compare_and_swap(const void *, const void *,void *, MPI_Datatype , int ,MPI_Aint , MPI_Win );
-int MPI_Rput(const void *, int , MPI_Datatype , int , MPI_Aint ,int , MPI_Datatype , MPI_Win , MPI_Request *);
-int MPI_Rget(void *, int , MPI_Datatype , int , MPI_Aint ,int , MPI_Datatype , MPI_Win , MPI_Request *);
-int MPI_Raccumulate(const void *, int , MPI_Datatype , int , MPI_Aint , int , MPI_Datatype , MPI_Op , MPI_Win ,MPI_Request *);
-int MPI_Rget_accumulate(const void *, int ,MPI_Datatype , void *, int ,MPI_Datatype , int , MPI_Aint ,int , MPI_Datatype , MPI_Op , MPI_Win ,MPI_Request *);
 
 /* Datatype Handling & Packs */
 int MPI_Type_dup(MPI_Datatype , MPI_Datatype *);

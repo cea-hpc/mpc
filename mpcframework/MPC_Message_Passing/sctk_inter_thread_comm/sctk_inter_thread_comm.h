@@ -43,14 +43,15 @@ extern "C"
 /************************************************************************/
 /* sctk_request_t		                                          */
 /************************************************************************/
-typedef enum
-{
-    REQUEST_NULL,
-    REQUEST_SEND,
-    REQUEST_RECV,
-    REQUEST_SEND_COLL,
-    REQUEST_RECV_COLL,
-    REQUEST_GENERALIZED
+typedef enum {
+  REQUEST_NULL = 0,
+  REQUEST_SEND,
+  REQUEST_RECV,
+  REQUEST_SEND_COLL,
+  REQUEST_RECV_COLL,
+  REQUEST_GENERALIZED,
+  REQUEST_PICKED = 133,
+  REQUEST_RDMA
 } sctk_request_type_t;
 
 void sctk_wait_message ( sctk_request_t *request );
@@ -61,119 +62,133 @@ int sctk_cancel_message ( sctk_request_t *msg );
 /************************************************************************/
 
 /** This defines the type of a message */
-typedef enum
-{
-	SCTK_CANCELLED_SEND,
-	SCTK_CANCELLED_RECV,
-	
-	SCTK_P2P_MESSAGE,
-	SCTK_RDMA_MESSAGE,
-	SCTK_RDMA_WINDOW_MESSAGES, 		/**< These messages are used to exchange window informations */
-	SCTK_CONTROL_MESSAGE_FENCE,     /**< This message is sent to create a fence on control messages */
-	
-	SCTK_BARRIER_MESSAGE,
-	SCTK_BROADCAST_MESSAGE,
-	SCTK_ALLREDUCE_MESSAGE,
-	
-	SCTK_ALLREDUCE_HETERO_MESSAGE,
-	SCTK_BROADCAST_HETERO_MESSAGE,
-	SCTK_BARRIER_HETERO_MESSAGE,
-	
-	SCTK_CONTROL_MESSAGE_INTERNAL, 		/**< This message is to be used inside a rail logic */
-	SCTK_CONTROL_MESSAGE_RAIL, 		/**< This message goes to a rail */
-	SCTK_CONTROL_MESSAGE_PROCESS,		/**< This message goes to a process (\ref sctk_control_message_process_level) */
-	SCTK_CONTROL_MESSAGE_USER,		/**< This message goes to the application using an optionnal handler */
-	SCTK_CONTROL_MESSAGE_COUNT		/**< Just in case this value allows to track the number of control message types */
-}sctk_message_class_t;
+typedef enum {
+  SCTK_CLASS_NONE,
+  SCTK_CANCELLED_SEND,
+  SCTK_CANCELLED_RECV,
 
-static const char * const sctk_message_class_name[ SCTK_CONTROL_MESSAGE_COUNT ] = 
-{   	"SCTK_CANCELLED_SEND",
-	"SCTK_CANCELLED_RECV",
-	
-	"SCTK_P2P_MESSAGE",
-	"SCTK_RDMA_MESSAGE",
-	"SCTK_RDMA_WINDOW_MESSAGES", 	
-	"SCTK_CONTROL_MESSAGE_FENCE",   
-	
-	"SCTK_BARRIER_MESSAGE",
-	"SCTK_BROADCAST_MESSAGE",
-	"SCTK_ALLREDUCE_MESSAGE",
-	
-	"SCTK_ALLREDUCE_HETERO_MESSAGE",
-	"SCTK_BROADCAST_HETERO_MESSAGE",
-	"SCTK_BARRIER_HETERO_MESSAGE",
-	
-	"SCTK_CONTROL_MESSAGE_INTERNAL",
-	"SCTK_CONTROL_MESSAGE_RAIL", 		
-	"SCTK_CONTROL_MESSAGE_PROCESS",		
-	"SCTK_CONTROL_MESSAGE_USER"
- };
+  SCTK_P2P_MESSAGE,
+  SCTK_RDMA_MESSAGE,
+  SCTK_RDMA_WINDOW_MESSAGES,  /**< These messages are used to exchange window
+                                 informations */
+  SCTK_CONTROL_MESSAGE_FENCE, /**< This message is sent to create a fence on
+                                 control messages */
+
+  SCTK_BARRIER_MESSAGE,
+  SCTK_BROADCAST_MESSAGE,
+  SCTK_ALLREDUCE_MESSAGE,
+
+  SCTK_ALLREDUCE_HETERO_MESSAGE,
+  SCTK_BROADCAST_HETERO_MESSAGE,
+  SCTK_BARRIER_HETERO_MESSAGE,
+
+  SCTK_CONTROL_MESSAGE_INTERNAL, /**< This message is to be used inside a rail
+                                    logic */
+  SCTK_CONTROL_MESSAGE_RAIL,     /**< This message goes to a rail */
+  SCTK_CONTROL_MESSAGE_PROCESS,  /**< This message goes to a process (\ref
+                                    sctk_control_message_process_level) */
+  SCTK_CONTROL_MESSAGE_TASK,     /**< This message goes to a task */
+  SCTK_CONTROL_MESSAGE_USER, /**< This message goes to the application using an
+                                optionnal handler */
+  SCTK_CONTROL_MESSAGE_COUNT /**< Just in case this value allows to track the
+                                number of control message types */
+} sctk_message_class_t;
+
+static const char *const sctk_message_class_name[SCTK_CONTROL_MESSAGE_COUNT] = {
+    "SCTK_CLASS_NONE",
+    "SCTK_CANCELLED_SEND",
+    "SCTK_CANCELLED_RECV",
+
+    "SCTK_P2P_MESSAGE",
+    "SCTK_RDMA_MESSAGE",
+    "SCTK_RDMA_WINDOW_MESSAGES",
+    "SCTK_CONTROL_MESSAGE_FENCE",
+
+    "SCTK_BARRIER_MESSAGE",
+    "SCTK_BROADCAST_MESSAGE",
+    "SCTK_ALLREDUCE_MESSAGE",
+
+    "SCTK_ALLREDUCE_HETERO_MESSAGE",
+    "SCTK_BROADCAST_HETERO_MESSAGE",
+    "SCTK_BARRIER_HETERO_MESSAGE",
+
+    "SCTK_CONTROL_MESSAGE_INTERNAL",
+    "SCTK_CONTROL_MESSAGE_RAIL",
+    "SCTK_CONTROL_MESSAGE_PROCESS",
+    "SCTK_CONTROL_MESSAGE_TASK",
+    "SCTK_CONTROL_MESSAGE_USER"};
 
 static inline int sctk_message_class_is_process_specific( sctk_message_class_t type )
 {
 	switch( type )
 	{
-		case SCTK_CANCELLED_SEND:
-		case SCTK_CANCELLED_RECV:
-		case SCTK_P2P_MESSAGE:
-		case SCTK_RDMA_MESSAGE:
-		case SCTK_BARRIER_MESSAGE:
-		case SCTK_BROADCAST_MESSAGE:
-		case SCTK_ALLREDUCE_MESSAGE:
-		case SCTK_CONTROL_MESSAGE_FENCE:
-		case SCTK_RDMA_WINDOW_MESSAGES: /* Note that the RDMA win message 
-					   * is not process specific to force
-					   * on-demand connections between the
-					   * RDMA peers prior to emitting RDMA */
-					    
-			return 0;
-		
-		
-		case SCTK_CONTROL_MESSAGE_INTERNAL:
-		case SCTK_ALLREDUCE_HETERO_MESSAGE:
-		case SCTK_BROADCAST_HETERO_MESSAGE:
-		case SCTK_BARRIER_HETERO_MESSAGE:
-		case SCTK_CONTROL_MESSAGE_RAIL:
-		case SCTK_CONTROL_MESSAGE_PROCESS:
-		case SCTK_CONTROL_MESSAGE_USER:
-			return 1;
-		
-		case SCTK_CONTROL_MESSAGE_COUNT:
-			return 0;
-	}
-	
-	return 0;
+        case SCTK_CLASS_NONE:
+          not_implemented();
+        case SCTK_CANCELLED_SEND:
+        case SCTK_CANCELLED_RECV:
+        case SCTK_P2P_MESSAGE:
+        case SCTK_RDMA_MESSAGE:
+        case SCTK_BARRIER_MESSAGE:
+        case SCTK_BROADCAST_MESSAGE:
+        case SCTK_ALLREDUCE_MESSAGE:
+        case SCTK_CONTROL_MESSAGE_TASK:
+        case SCTK_CONTROL_MESSAGE_FENCE:
+        case SCTK_RDMA_WINDOW_MESSAGES: /* Note that the RDMA win message
+                                   * is not process specific to force
+                                   * on-demand connections between the
+                                   * RDMA peers prior to emitting RDMA */
+
+          return 0;
+
+        case SCTK_CONTROL_MESSAGE_INTERNAL:
+        case SCTK_ALLREDUCE_HETERO_MESSAGE:
+        case SCTK_BROADCAST_HETERO_MESSAGE:
+        case SCTK_BARRIER_HETERO_MESSAGE:
+        case SCTK_CONTROL_MESSAGE_RAIL:
+        case SCTK_CONTROL_MESSAGE_PROCESS:
+        case SCTK_CONTROL_MESSAGE_USER:
+          return 1;
+
+        case SCTK_CONTROL_MESSAGE_COUNT:
+          return 0;
+        }
+
+        return 0;
 }
 
 static inline int sctk_message_class_is_control_message( sctk_message_class_t type )
 {
 	switch( type )
 	{
-		case SCTK_CANCELLED_SEND:
-		case SCTK_CANCELLED_RECV:
-		case SCTK_P2P_MESSAGE:
-		case SCTK_RDMA_MESSAGE:
-		case SCTK_BARRIER_MESSAGE:
-		case SCTK_BROADCAST_MESSAGE:
-		case SCTK_ALLREDUCE_MESSAGE:
-		case SCTK_ALLREDUCE_HETERO_MESSAGE:
-		case SCTK_BROADCAST_HETERO_MESSAGE:
-		case SCTK_BARRIER_HETERO_MESSAGE:
-		case SCTK_RDMA_WINDOW_MESSAGES:
-		case SCTK_CONTROL_MESSAGE_FENCE:
-		case SCTK_CONTROL_MESSAGE_INTERNAL:
-			return 0;
-		
-		case SCTK_CONTROL_MESSAGE_RAIL:
-		case SCTK_CONTROL_MESSAGE_PROCESS:
-		case SCTK_CONTROL_MESSAGE_USER:
-			return 1;
-		
-		case SCTK_CONTROL_MESSAGE_COUNT:
-			return 0;
-	}
-	
-	return 0;
+        case SCTK_CLASS_NONE:
+          not_implemented();
+
+        case SCTK_CANCELLED_SEND:
+        case SCTK_CANCELLED_RECV:
+        case SCTK_P2P_MESSAGE:
+        case SCTK_RDMA_MESSAGE:
+        case SCTK_BARRIER_MESSAGE:
+        case SCTK_BROADCAST_MESSAGE:
+        case SCTK_ALLREDUCE_MESSAGE:
+        case SCTK_ALLREDUCE_HETERO_MESSAGE:
+        case SCTK_BROADCAST_HETERO_MESSAGE:
+        case SCTK_BARRIER_HETERO_MESSAGE:
+        case SCTK_RDMA_WINDOW_MESSAGES:
+        case SCTK_CONTROL_MESSAGE_FENCE:
+        case SCTK_CONTROL_MESSAGE_INTERNAL:
+          return 0;
+
+        case SCTK_CONTROL_MESSAGE_TASK:
+        case SCTK_CONTROL_MESSAGE_RAIL:
+        case SCTK_CONTROL_MESSAGE_PROCESS:
+        case SCTK_CONTROL_MESSAGE_USER:
+          return 1;
+
+        case SCTK_CONTROL_MESSAGE_COUNT:
+          return 0;
+        }
+
+        return 0;
 }
 
 /************************************************************************/
@@ -235,7 +250,17 @@ void sctk_probe_source_any_tag ( int destination, int source, const sctk_communi
 void sctk_probe_any_source_any_tag ( int destination, const sctk_communicator_t comm, int *status, sctk_thread_message_header_t *msg );
 void sctk_probe_source_tag ( int destination, int source, const sctk_communicator_t comm, int *status, sctk_thread_message_header_t *msg );
 void sctk_probe_any_source_tag ( int destination, const sctk_communicator_t comm, int *status, sctk_thread_message_header_t *msg );
+void sctk_probe_any_source_tag_class(int destination, int tag,
+                                     sctk_message_class_t class,
+                                     const sctk_communicator_t comm,
+                                     int *status,
+                                     sctk_thread_message_header_t *msg);
 
+void sctk_probe_any_source_tag_class_comm(int destination, int tag,
+                                          sctk_message_class_t class,
+                                          const sctk_communicator_t comm,
+                                          int *status,
+                                          sctk_thread_message_header_t *msg);
 /** sctk_thread_message_header_t GETTERS and Setters */
 
 #define SCTK_MSG_USE_MESSAGE_NUMBERING( msg ) msg->body.header.use_message_numbering
@@ -282,6 +307,8 @@ void sctk_probe_any_source_tag ( int destination, const sctk_communicator_t comm
 
 #define SCTK_MSG_SIZE( msg ) msg->body.header.msg_size
 #define SCTK_MSG_SIZE_SET( msg , size ) do{ msg->body.header.msg_size = size; }while(0)
+
+#define SCTK_MSG_REQUEST(msg) msg->tail.request
 
 #define SCTK_MSG_COMPLETION_FLAG( msg ) msg->body.completion_flag
 #define SCTK_MSG_COMPLETION_FLAG_SET( msg , completion ) do{ msg->body.completion_flag = completion; }while(0)
@@ -537,9 +564,10 @@ typedef struct sctk_perform_messages_s
 	struct sctk_internal_ptp_s *send_ptp;
 	int remote_process;
 	int source_task_id;
-	int polling_task_id;
-	/* If we are blocked inside a function similar to MPI_Wait */
-	int blocking;
+        int dest_task_id;
+        int polling_task_id;
+        /* If we are blocked inside a function similar to MPI_Wait */
+        int blocking;
 } sctk_perform_messages_t;
 
 void sctk_perform_messages_wait_init ( struct sctk_perform_messages_s *wait, sctk_request_t *request, int blocking );
@@ -578,6 +606,9 @@ static inline int sctk_is_process_specific_message( sctk_thread_message_header_t
 	sctk_message_class_t class = header->message_type.type;
 	return sctk_message_class_is_process_specific( class );
 }
+
+void sctk_inter_thread_comm_no_control_messages_start();
+void sctk_inter_thread_comm_no_control_messages_end();
 
 /************************************************************************/
 /* Thread-safe message probing	                                        */

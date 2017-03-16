@@ -24,6 +24,8 @@ if test ! -e "${MPIHFILE}"; then
 	return
 fi
 
+echo "" > ./fortrangen.log
+
 #These are the files used for generation
 
 MPIFH=""
@@ -50,6 +52,7 @@ GENERATE=1
 generate_from_backup()
 {
 	echo "(!!)\t\tFallback to pre-generated files"
+	echo "(!!)\t See fortrangen.log for the reason"
 	#Here we fallback to pregenerated files
 	MPIFH="$SCRIPTPATH/pregenerated/mpif.h"
 	MPIMODF="$SCRIPTPATH/pregenerated/mpi.f90"
@@ -80,20 +83,20 @@ checkFortranGenEnv()
 	#CHEK for PYTHON
 	RET=`${PYTHON} -c "print 'ok'"`
 
-	echo -n "(i) Checking for Python...\t"
+	echo -n "(i) Checking for Python...\t" >> ./fortrangen.log
 
 	if test "x$RET" != "xok"; then
 		echo "(E) Could not find Python or Python is not working"
 		generate_from_backup
 		return
 	else
-		echo "Found and Running"
+		echo "Found and Running" >> ./fortrangen.log
 	fi
 
 	rm -f $TEMP
 
 	#CHECK FOR JSON SUPPORT
-	echo -n "(i) Checking for Python JSON...\t"
+	echo -n "(i) Checking for Python JSON...\t" >> ./fortrangen.log
 	
 	
 	TEMP=`mktemp`
@@ -113,7 +116,7 @@ EOF
 		generate_from_backup
 		return
 	else
-		echo "Found and Running"
+		echo "Found and Running" >> ./fortrangen.log
 	fi
 
 
@@ -121,7 +124,7 @@ EOF
 
 	#TEST FORTRAN
 	
-	echo -n "(i) Checking for Fortran compiler...   "
+	echo -n "(i) Checking for Fortran compiler...   " >> ./fortrangen.log
 	
 	TEMP=`mktemp`
 	TEMP="${TEMP}.f90"
@@ -139,10 +142,10 @@ EOF
 		echo "(E) See ./fortrangen.log"
 		generate_from_backup
 	else
-		echo "Found and Compiling"
+		echo "Found and Compiling" >> ./fortrangen.log
 	fi
 
-	echo -n "(i) Checking for Fortran Running Fortran programs...   "
+	echo -n "(i) Checking for Fortran Running Fortran programs...   " >> ./fortrangen.log
 
 	$TEMP2  2>> ./fortrangen.log
 
@@ -151,14 +154,14 @@ EOF
                 echo "(E) See ./fortrangen.log"
                 generate_from_backup
         else
-                echo "Found and Running"
+                echo "Found and Running" >> ./fortrangen.log
         fi
 
 
 	rm -f $TEMP $TEMP2
 
 
-	echo -n "(i) Checking for Fortran Modules...   "
+	echo -n "(i) Checking for Fortran Modules...   " >> ./fortrangen.log
 
 TEMP=`mktemp`
 TEMP="${TEMP}.f90"
@@ -182,10 +185,10 @@ EOF
 		echo "(E) See ./fortrangen.log"
 		generate_from_backup
 	else
-		echo "Compiled"
+		echo "Compiled" >> ./fortrangen.log
 		
 		if test -e "test_mod.mod"; then
-			echo "(i)\tSucessfully generated a test fortran module file"
+			echo "(i)\tSucessfully generated a test fortran module file" >> ./fortrangen.log
 		else
 			echo "(E)\tCould not generate a test module file"
 			generate_from_backup
@@ -197,7 +200,7 @@ EOF
 
 #TEST FOR C COMPILER
 	
-	echo -n "(i) Checking for C compiler...   "
+	echo -n "(i) Checking for C compiler...   " >> ./fortrangen.log
 	
 	TEMP=`mktemp`
 	TEMP="${TEMP}.c"
@@ -217,7 +220,7 @@ EOF
 		echo "(E) See ./fortrangen.log"
 		generate_from_backup
 	else
-		echo "Found and Running"
+		echo "Found and Running" >> ./fortrangen.log
 	fi
 
 	#rm -f $TEMP $TEMP2
@@ -227,7 +230,7 @@ EOF
 genfortanfiles()
 {
 	#First compile the constants code
-	echo -n "(i) Compiling constants file...   "
+	echo -n "(i) Compiling constants file...   " >> ./fortrangen.log
 	
 	TEMP=`mktemp`
 	$MPCCC ${SCRIPTPATH}/gen_iface.c -o ${TEMP} 2>> ./fortrangen.log
@@ -238,16 +241,16 @@ genfortanfiles()
 		generate_from_backup
 		return
 	else
-		echo "Generated"
+		echo "Generated" >> ./fortrangen.log
 	fi
 	
 	#and now generate the constants
-	echo -n "(i) Generating constants.json...   "
+	echo -n "(i) Generating constants.json...   " >> ./fortrangen.log
 	
 	${TEMP} > constants.json 2>> ./fortrangen.log
 	
 	if test -e "constants.json"; then
-		echo "Generated"
+		echo "Generated" >> ./fortrangen.log
 	else
 		echo "(E) Failed to generate the constants.json file"
 		echo "(E) See ./fortrangen.log"
@@ -256,12 +259,12 @@ genfortanfiles()
 	fi
 	
 	#Now preparse MPI.h to allow function detection
-	echo -n "(i) Generating preparsed mpi.h ...   "
+	echo -n "(i) Generating preparsed mpi.h ...   " >> ./fortrangen.log
 	
 	${MPCCC} -E ${MPIHFILE} -o preparsed_mpih.dat 2>> ./fortrangen.log
 	
 	if test -e "preparsed_mpih.dat"; then
-		echo "Generated"
+		echo "Generated" >> ./fortrangen.log
 	else
 		echo "(E) Failed to generate the preparsed mpi.h file"
 		echo "(E) See ./fortrangen.log"
@@ -303,7 +306,7 @@ genfortranmods()
 		generate_from_backup
 		return
 	else
-		echo "Done"
+		echo "Done" >> ./fortrangen.log
 	fi	
 	
 	echo -n "(i) Compiling MPI Fortran 08 modules...   "
@@ -390,28 +393,26 @@ genfortranmods()
 #MAIN FILE
 proceedwithfortranfilegeneration()
 {
-	echo "\n########################################################"
+	echo "\n########################################################" 
 	echo "#   MPC Fortran Header and Module Generation Script    #"
-	echo "########################################################\n"
+	echo "########################################################"
 
 
 	checkFortranGenEnv
 
 	#CAN WE STILL GENERATE ?
 	if test "x${GENERATE}" = "x1"; then
-		echo "\n########################################################"
-		echo "#   Fortran Generation script will generate Headers    #"
-		echo "########################################################\n"
+		echo "   Fortran Generation script will generate Headers"
 		
 		genfortanfiles
 		
 		#Check that everything is there
-		echo "(i) Checking generated files...   "
+		echo "(i) Checking generated files...   " >> ./fortrangen.log
 		
 		for f in mpi_base.f90 mpi_constants.f90 mpi_sizeofs.f90  mpi.f90 mpif.h mpi_f08_ctypes.f90 mpi_f08_types.f90 mpi_f08_c.f90 mpi_f08_constants.f90 mpi_f08.f90 mpi_f08_c_iface.c
 		do
 			if test -e "$f"; then
-				echo "(i)\t${f}... Found."
+				echo "(i)\t${f}... Found." >> ./fortrangen.log
 			else
 				echo "(E)\t${f}... NOT Found."
 				generate_from_backup
@@ -440,18 +441,16 @@ proceedwithfortranfilegeneration()
 	fi
 
 
-	echo "\n########################################################"
-	echo "#  Fortran Generation script about to compile modules    #"
-	echo "########################################################\n"
+	echo "   Fortran Generation script about to compile modules"
 
-	genfortranmods
+	genfortranmods  2>> ./fortrangen.log
 
-	echo "(i) Checking MPI Module files...   "
+	echo "(i) Checking Module files...   " >> ./fortrangen.log
 		
 	for f in mpi_base.mod mpi_constants.mod mpi_sizeofs.mod mpi.mod
 	do
 		if test -e "$f"; then
-			echo "(i)\t${f}... Found."
+			echo "(i)\t${f}... Found." >> ./fortrangen.log
 		else
 			echo "(E)\t${f}... NOT Found."
 			echo "(FATAL) MPI Fortran module compilation failed"
@@ -489,9 +488,7 @@ proceedwithfortranfilegeneration()
 		fi	
 	done
 
-	echo "\n########################################################"
-	echo "#  Installing Fortran Files                              #"
-	echo "########################################################\n"
+	echo "   Installing Fortran Files"
 
 	cp ${MPIFH} ${INSTALL}/
 	cp mpi.mod ${INSTALL}/
@@ -510,13 +507,13 @@ proceedwithfortranfilegeneration()
 	cp omp_lib.mod ${INSTALL}/
 	cp omp_lib_kinds.mod ${INSTALL}/
 
-	echo "(i) Checking installed files...   "
+	echo "(i) Checking installed files...   " >> ./fortrangen.log
 		
 	for f in mpi_base.mod mpi_constants.mod mpi_sizeofs.mod ../../lib/libmpcfwrapper.so mpi.mod mpif.h
 	do
 		NAME=`basename ${f}` 
 		if test -e "${INSTALL}/${f}"; then
-			echo "(i)\t${NAME}... Found."
+			echo "(i)\t${NAME}... Found." >> ./fortrangen.log
 		else
 			echo "(E)\t${NAME}... NOT Found."
 			echo "(FATAL) MPI Fortran module compilation failed"
@@ -551,7 +548,7 @@ proceedwithfortranfilegeneration()
 		fi	
 	done
 	
-	echo " #### FORTRAN DONE ####"
+	echo "#### FORTRAN DONE ####"
 }
 
 

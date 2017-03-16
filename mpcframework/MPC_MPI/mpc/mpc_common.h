@@ -148,7 +148,10 @@ static inline void sctk_datatype_unlock( sctk_task_specific_t *task_specific )
 }
 
 sctk_contiguous_datatype_t * sctk_task_specific_get_contiguous_datatype( sctk_task_specific_t *task_specific, MPC_Datatype datatype );
+sctk_contiguous_datatype_t *sctk_get_contiguous_datatype(MPC_Datatype datatype);
+
 sctk_derived_datatype_t * sctk_task_specific_get_derived_datatype(  sctk_task_specific_t *task_specific, MPC_Datatype datatype );
+sctk_derived_datatype_t *sctk_get_derived_datatype(MPC_Datatype datatype);
 
 /** \brief Retrieves a given per communicator context from task CTX
  */

@@ -62,18 +62,22 @@
 sctk_window_t sctk_window_init( void *addr, size_t size, size_t disp_unit, sctk_communicator_t comm );
 
 /** Map to a remote window in order to initiate RDMAs
- * 
+ *
  * When mapping to a remote window you need to know the ID
  * which can be exchanged using point ot point messages MPI_INT
  * also be careful that a new window is created and that operations
  * on this new window are actually acting on the remote memory.
- * 
+ *
  * @arg remote_rank ID of the remote process hosting the target window
+ * @arg comm The communicator to be used
  * @arg win_id ID of the remote window to be mapped to
- * 
- * @return a NEW window ID mirrorring the remote window on which operations are remote
+ *
+ * @return a NEW window ID mirrorring the remote window on which operations are
+ * remote
  */
-sctk_window_t sctk_window_map_remote( int remote_rank, sctk_window_t win_id );
+
+sctk_window_t sctk_window_map_remote(int remote_rank, sctk_communicator_t comm,
+                                     sctk_window_t win_id);
 
 /** Release a window (either remote or local)
  * 
@@ -101,8 +105,7 @@ void sctk_window_release( sctk_window_t win );
  * 
  * @arg win_id The window to emit a fence on (generally remote)
  */
-void sctk_window_RDMA_fence( sctk_window_t win_id );
-
+void sctk_window_RDMA_fence(sctk_window_t win_id, sctk_request_t *req);
 
 /************************************************************************/
 /* Window Wait Operation                                                */

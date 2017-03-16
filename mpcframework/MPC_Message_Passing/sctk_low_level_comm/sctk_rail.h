@@ -97,7 +97,7 @@ struct sctk_rail_pin_ctx_list
 	int rail_id;
 };
 
-#define SCTK_PIN_LIST_SIZE 25
+#define SCTK_PIN_LIST_SIZE 4
 
 typedef struct
 {

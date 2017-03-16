@@ -49,6 +49,7 @@
 	#ifdef MPC_USE_INFINIBAND
 		#include <sctk_ib_cp.h>
 	#endif /* MPC_USE_INFINIBAND */
+#include "sctk_window.h"
 #endif /* MPC_Message_Passing */
 #include "sctk_topology.h"
 #include "sctk_asm.h"
@@ -366,8 +367,16 @@ static void sctk_perform_initialisation (void)
 
 #ifdef MPC_Message_Passing
 	if (sctk_process_nb_val > 1) {
-		sctk_net_init_driver(sctk_network_driver_name);
-	}
+#ifdef MPC_USE_INFINIBAND
+          if (!sctk_network_driver_name && !sctk_ib_device_found()) {
+            if (!sctk_process_rank)
+              sctk_warning("Could not locate an IB device, fallback to TCP");
+            sctk_network_driver_name = "tcp";
+          }
+#endif
+          sctk_net_init_driver(sctk_network_driver_name);
+        }
+        sctk_window_init_ht();
 #endif
 
 #ifdef SCTK_LIB_MODE
@@ -706,66 +715,53 @@ sctk_launch_contribution (FILE * file)
 	}
 }
 
-	static int
-sctk_env_init_intern (int *argc, char ***argv)
-{
-	int i, j;
-	char **new_argv;
-	sctk_init ();
-	sctk_initial_argc = *argc;
-	init_argument = *argv;
-	sctk_print_version ("Init Launch", SCTK_LOCAL_VERSION_MAJOR,
-			SCTK_LOCAL_VERSION_MINOR);
+static int sctk_env_init_intern(int *argc, char ***argv) {
+  int i, j;
+  char **new_argv;
+  sctk_init();
+  sctk_initial_argc = *argc;
+  init_argument = *argv;
+  sctk_print_version("Init Launch", SCTK_LOCAL_VERSION_MAJOR,
+                     SCTK_LOCAL_VERSION_MINOR);
 
-	for (i = 0; i < sctk_initial_argc; i++)
-	{
-		sctk_start_argc = i;
-		if (strcmp ((*argv)[i], SCTK_START_KEYWORD) == 0)
-		{
-			sctk_start_argc = i - 1;
-			break;
-		}
-	}
+  for (i = 0; i < sctk_initial_argc; i++) {
+    sctk_start_argc = i;
+    if (strcmp((*argv)[i], SCTK_START_KEYWORD) == 0) {
+      sctk_start_argc = i - 1;
+      break;
+    }
+  }
 
-	new_argv = sctk_malloc (sctk_initial_argc * sizeof (char *));
-	sctk_nodebug ("LAUNCH allocate %p of size %lu", new_argv,
-			(unsigned long) (sctk_initial_argc * sizeof (char *)));
+  new_argv = sctk_malloc(sctk_initial_argc * sizeof(char *));
+  sctk_nodebug("LAUNCH allocate %p of size %lu", new_argv,
+               (unsigned long)(sctk_initial_argc * sizeof(char *)));
 
-
-	for (i = 0; i <= sctk_start_argc; i++)
-	{
-		new_argv[i] = (*argv)[i];
-	}
-	for (i = sctk_start_argc + 1; i < sctk_initial_argc; i++)
-	{
-		if (strcmp ((*argv)[i], SCTK_START_KEYWORD) == 0)
-		{
-			*argc = (*argc) - 1;
-		}
-		else
-		{
-			if (strcmp ((*argv)[i], "--sctk-args-end--") == 0)
-			{
-				*argc = (*argc) - 1;
-			}
-			if (sctk_proceed_arg ((*argv)[i]) == -1)
-			{
-				break;
-			}
-			(*argv)[i] = "";
-			*argc = (*argc) - 1;
-		}
-	}
-	i++;
-	for (j = sctk_start_argc + 1; i < sctk_initial_argc; i++)
-	{
-		new_argv[j] = (*argv)[i];
-		sctk_nodebug ("Copy %d %s", j, (*argv)[i]);
-		j++;
-	}
-	*argv = new_argv;
-	sctk_nodebug ("new argc tmp %d", *argc);
-	return 0;
+  for (i = 0; i <= sctk_start_argc; i++) {
+    new_argv[i] = (*argv)[i];
+  }
+  for (i = sctk_start_argc + 1; i < sctk_initial_argc; i++) {
+    if (strcmp((*argv)[i], SCTK_START_KEYWORD) == 0) {
+      *argc = (*argc) - 1;
+    } else {
+      if (strcmp((*argv)[i], "--sctk-args-end--") == 0) {
+        *argc = (*argc) - 1;
+      }
+      if (sctk_proceed_arg((*argv)[i]) == -1) {
+        break;
+      }
+      (*argv)[i] = "";
+      *argc = (*argc) - 1;
+    }
+  }
+  i++;
+  for (j = sctk_start_argc + 1; i < sctk_initial_argc; i++) {
+    new_argv[j] = (*argv)[i];
+    sctk_nodebug("Copy %d %s", j, (*argv)[i]);
+    j++;
+  }
+  *argv = new_argv;
+  sctk_nodebug("new argc tmp %d", *argc);
+  return 0;
 }
 
 	int
@@ -961,6 +957,10 @@ auto_kill_func (void *arg)
 	return NULL;
 }
 
+#ifdef MPC_MPI
+void mpc_MPI_allocmem_adapt(char *exename);
+#endif
+
 void sctk_init_mpc_runtime()
 {
 	if(sctk_mpc_env_initialized == 1)
@@ -1118,20 +1118,25 @@ void sctk_init_mpc_runtime()
 	init_res = sctk_env_init (&argc, &argv);
 	sctk_nodebug ("init argc %d", argc);
 
-	sctk_free (argv);
-	
-	if (tofree != NULL)
-	{
-		int i;
-		for (i = 0; i < tofree_nb; i++)
-		{
-			sctk_free (tofree[i]);
-		}
-		sctk_free (tofree);
-	}
+#ifdef MPC_MPI
+        mpc_MPI_allocmem_adapt(argv[0]);
+#endif
 
+        sctk_free(argv);
+
+        if (tofree != NULL) {
+          int i;
+          for (i = 0; i < tofree_nb; i++) {
+            sctk_free(tofree[i]);
+          }
+          sctk_free(tofree);
+        }
 }
 
+void sctk_release_mpc_runtime() {
+  sctk_window_release_ht();
+  extls_fini();
+}
 
 #ifndef SCTK_LIB_MODE
 
@@ -1171,8 +1176,9 @@ int sctk_launch_main (int argc, char **argv)
 	sctk_start_func ((void *(*)(void *)) run, &arg);
 	sctk_env_exit ();
 
-	extls_fini();
-	return main_result;
+        sctk_release_mpc_runtime();
+
+        return main_result;
 }
 
 #endif /* SCTK_LIB_MODE */

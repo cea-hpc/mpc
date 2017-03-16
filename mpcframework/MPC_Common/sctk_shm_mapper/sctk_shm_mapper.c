@@ -1,13 +1,36 @@
+/* ############################# MPC License ############################## */
+/* # Wed Nov 19 15:19:19 CET 2008                                         # */
+/* # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          # */
+/* #                                                                      # */
+/* # IDDN.FR.001.230040.000.S.P.2007.000.10000                            # */
+/* # This file is part of the MPC Runtime.                                # */
+/* #                                                                      # */
+/* # This software is governed by the CeCILL-C license under French law   # */
+/* # and abiding by the rules of distribution of free software.  You can  # */
+/* # use, modify and/ or redistribute the software under the terms of     # */
+/* # the CeCILL-C license as circulated by CEA, CNRS and INRIA at the     # */
+/* # following URL http://www.cecill.info.                                # */
+/* #                                                                      # */
+/* # The fact that you are presently reading this means that you have     # */
+/* # had knowledge of the CeCILL-C license and that you accept its        # */
+/* # terms.                                                               # */
+/* #                                                                      # */
+/* # Authors:                                                             # */
+/* #   - VALAT Sébastien sebastien.valat@cea.fr                           # */
+/* #   - CAPRA Antoine capra@paratools.fr                                 # */
+/* #                                                                      # */
+/* ######################################################################## */
 /************************** HEADERS ************************/
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/mman.h>
-#include <sys/stat.h>
+#include "sctk_shm_mapper.h"
+#include "sctk_spinlock.h"
+#include <assert.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <string.h>
-#include <assert.h>
-#include "sctk_shm_mapper.h"
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 #define assume_m(x,...) if (!(x)) { printf("ERROR: ");printf(__VA_ARGS__);printf("\n");abort(); }
 #define fatal(...) {printf("ERROR: ");printf(__VA_ARGS__);printf("\n");abort();}
@@ -36,19 +59,21 @@ SCTK_STATIC void sctk_shm_mapper_fake_handler_reset(void)
 
 /************************* FUNCTION ************************/
 /** Fake sync handler used for unit test only as it count on a shared (in sense of thread) global pointer. **/
-SCTK_STATIC bool sctk_shm_mapper_fake_handler_send(const char * filename,void * option)
-{
-	assert(filename != NULL);
-	sctk_shm_mapper_fake_glob = filename;
-	return true;
+SCTK_STATIC bool sctk_shm_mapper_fake_handler_send(const char *filename,
+                                                   void *option,
+                                                   void *option1) {
+  assert(filename != NULL);
+  sctk_shm_mapper_fake_glob = filename;
+  return true;
 }
 
 /************************* FUNCTION ************************/
 /** Fake sync handler used for unit test only as it count on a shared (in sense of thread) global pointer. **/
-SCTK_STATIC char * sctk_shm_mapper_fake_handler_recv(void * option)
-{
-	while (sctk_shm_mapper_fake_glob == NULL){};
-	return strdup((const char*)sctk_shm_mapper_fake_glob);
+SCTK_STATIC char *sctk_shm_mapper_fake_handler_recv(void *option,
+                                                    void *option1) {
+  while (sctk_shm_mapper_fake_glob == NULL) {
+  };
+  return strdup((const char *)sctk_shm_mapper_fake_glob);
 }
 
 /************************* FUNCTION ************************/
@@ -57,13 +82,12 @@ SCTK_STATIC char * sctk_shm_mapper_fake_handler_recv(void * option)
  * The caller need to free the string it return.
  * @TODO ensure to try another filename if file already exist (with a warning)
 **/
-SCTK_STATIC char * sctk_shm_mapper_get_filename(void * option)
-{
-	char * buffer = malloc(64);
-	int res;
-	res = sprintf(buffer,"sctk_shm_mapper_%06d.raw",getpid());
-	assert(res < 64);
-	return buffer;
+SCTK_STATIC char *sctk_shm_mapper_get_filename(void *option, void *option1) {
+  char *buffer = malloc(64);
+  int res;
+  res = sprintf(buffer, "sctk_shm_mapper_%06d.raw", getpid());
+  assert(res < 64);
+  return buffer;
 }
 
 /************************* FUNCTION ************************/
@@ -75,41 +99,51 @@ SCTK_STATIC char * sctk_shm_mapper_get_filename(void * option)
  * @param size Define the size of the shared segment.
  * @param participants Define the number of participants to allocate ensure enough place to store pids.
 **/
-SCTK_STATIC sctk_shm_mapper_sync_header_t * sctk_shm_mapper_sync_header_init(void * ptr,sctk_size_t size,int participants)
-{
-	//vars
-	sctk_shm_mapper_sync_header_t * sync_header = ptr;
+SCTK_STATIC sctk_shm_mapper_sync_header_t *
+sctk_shm_mapper_sync_header_init(void *ptr, sctk_size_t size,
+                                 int participants) {
+  // vars
+  sctk_shm_mapper_sync_header_t *sync_header = ptr;
 
-	//errors
-	assert(ptr != NULL);
-	assert(participants > 0);
+  // errors
+  assert(ptr != NULL);
+  assert(participants > 0);
 
-	//debug
-	//sctk_nodebug("sctk_shm_mapper_sync_header_init(%p,%d,%lu)",ptr,participants,size);
+  // debug
+  // sctk_nodebug("sctk_shm_mapper_sync_header_init(%p,%d,%lu)",ptr,participants,size);
 
-	//setup entries
-	sync_header->cnt_invalid = 0;
-	sync_header->barrier_cnt = -1;
-	sync_header->cnt_pid = 1;
-	sync_header->final_address = NULL;
-	sync_header->size = size;
-	sync_header->master_initial_address = sync_header;
-	sync_header->pids = (int*)(sync_header + 1);
-	sync_header->step = SCTK_SHM_MAPPER_STEP_INIT;
+  // setup entries
+  sctk_atomics_store_int(&sync_header->cnt_invalid, 0);
+  sctk_atomics_store_int(&sync_header->barrier_cnt, participants);
+  sctk_atomics_store_int(&sync_header->barrier_gen, 0);
+  sctk_atomics_store_int(&sync_header->cnt_pid, 1);
+  sctk_atomics_store_ptr(&sync_header->final_address, NULL);
+  sync_header->size = size;
+  sync_header->master_initial_address = sync_header;
+  sync_header->pids = (int *)(sync_header + 1);
+  sync_header->step = SCTK_SHM_MAPPER_STEP_INIT;
 
-	//check alignement of thread/process sync entries
-	//Required alignement on their size to be used with atomics or to count on cache synchro
-	assert((sctk_addr_t)(&sync_header->cnt_invalid) % sizeof(sync_header->cnt_invalid) == 0);
-	assert((sctk_addr_t)(&sync_header->barrier_cnt) % sizeof(sync_header->barrier_cnt) == 0);
-	assert((sctk_addr_t)(&sync_header->final_address) % sizeof(sync_header->final_address) == 0);
+  // check alignement of thread/process sync entries
+  // Required alignement on their size to be used with atomics or to count on
+  // cache synchro
+  assert((sctk_addr_t)(&sync_header->cnt_invalid) %
+             sizeof(sync_header->cnt_invalid) ==
+         0);
+  assert((sctk_addr_t)(&sync_header->barrier_cnt) %
+             sizeof(sync_header->barrier_cnt) ==
+         0);
+  assert((sctk_addr_t)(&sync_header->final_address) %
+             sizeof(sync_header->final_address) ==
+         0);
 
-	//setup pids
-    assume_m(sizeof(int) * participants + sizeof(*sync_header) <= size,"Not enought size in shared segment to store all pids.");
+  // setup pids
+  assume_m(sizeof(int) * participants + sizeof(*sync_header) <= size,
+           "Not enought size in shared segment to store all pids.");
 
-	memset(sync_header->pids,0,sizeof(int) * participants);
-	sync_header->pids[0] = getpid();
+  memset(sync_header->pids, 0, sizeof(int) * participants);
+  sync_header->pids[0] = getpid();
 
-	return sync_header;
+  return sync_header;
 }
 
 /************************* FUNCTION ************************/
@@ -119,32 +153,49 @@ SCTK_STATIC sctk_shm_mapper_sync_header_t * sctk_shm_mapper_sync_header_init(voi
  * @param role Define the role of the caller, must be slaves and strictly 1 master.
  * @TODO rewrite with MPC functions and remove need of role.
 **/
+
+static sctk_atomics_int local_gen;
+static sctk_spinlock_t gen_lock = 0;
+static int gen_init_done = 0;
+
 SCTK_STATIC void sctk_shm_mapper_barrier( sctk_shm_mapper_sync_header_t * sync_header,sctk_shm_mapper_role_t role,int participants)
 {
 	//errors
 	assert(sync_header != NULL);
 
-	switch(role)
-	{
-		case SCTK_SHM_MAPPER_ROLE_MASTER:
-			assert(sync_header->barrier_cnt < 0);
-			sync_header->barrier_cnt = participants - 1;
-			break;
-		case SCTK_SHM_MAPPER_ROLE_SLAVE:
-			// @TODO used atomics here
-			while (sync_header->barrier_cnt < 0) {};
-			__sync_add_and_fetch(&sync_header->barrier_cnt,-1);
-			break;
-		default:
-			fatal("Invalid role on sctk_shm_mapper.");
-	}
-	//loop until pids equal to 0
-	while (sync_header->barrier_cnt > 0) {};
+        sctk_spinlock_lock(&gen_lock);
+        if (gen_init_done == 0) {
+          sctk_atomics_store_int(&local_gen, -1);
+          gen_init_done = 1;
+        }
+        sctk_spinlock_unlock(&gen_lock);
 
-	//a least one must reset for next use
-	// @TODO used atomics here.
-	if (sync_header->barrier_cnt == 0)
-		__sync_add_and_fetch(&sync_header->barrier_cnt,-1);
+        sctk_atomics_incr_int(&local_gen);
+
+        // sctk_error("ROLE %d PART %d (GEN %d VAL %d)", role, participants,
+        // local_gen, sctk_atomics_load_int
+        //				(&sync_header->barrier_cnt));
+
+        while (sctk_atomics_load_int(&local_gen) !=
+               sctk_atomics_load_int(&sync_header->barrier_gen)) {
+          sctk_atomics_read_write_barrier();
+        }
+
+        // sctk_error("VAL %d",sctk_atomics_load_int( &sync_header->barrier_cnt
+        // ) );
+
+        // loop until pids equal to 0
+
+        if (sctk_atomics_fetch_and_add_int(&sync_header->barrier_cnt, -1) ==
+            1) {
+          sctk_atomics_incr_int(&sync_header->barrier_gen);
+          sctk_atomics_store_int(&sync_header->barrier_cnt, participants);
+        }
+
+        while (sctk_atomics_load_int(&sync_header->barrier_gen) !=
+               (sctk_atomics_load_int(&local_gen) + 1)) {
+          sctk_atomics_read_write_barrier();
+        }
 }
 
 
@@ -170,15 +221,15 @@ SCTK_STATIC sctk_shm_mapper_sync_header_t * sctk_shm_mapper_sync_header_slave_up
 
 	//update the PID list
 	/** TODO USE ATOMICS **/
-	cnt_pid = (sync_header->cnt_pid++);
-	assert(cnt_pid > 0 && cnt_pid < participants);
-	pids[cnt_pid] = getpid();
+        cnt_pid = sctk_atomics_fetch_and_add_int(&sync_header->cnt_pid, 1);
+        assert(cnt_pid > 0 && cnt_pid < participants);
+        pids[cnt_pid] = getpid();
 
-	//if didn't has the same address need to notifiy
-	if (ptr != sync_header->master_initial_address)
-		sync_header->cnt_invalid = 1;
+        // if didn't has the same address need to notifiy
+        if (ptr != sync_header->master_initial_address)
+          sctk_atomics_store_int(&sync_header->cnt_invalid, 1);
 
-	return sync_header;
+        return sync_header;
 }
 
 /************************* FUNCTION ************************/
@@ -199,19 +250,24 @@ SCTK_PUBLIC void * sctk_shm_mapper_create(sctk_size_t size,sctk_shm_mapper_role_
         printf("Size must be non NULL and multiple of page size (%lu bytes), get %lu\n",SCTK_SHM_MAPPER_PAGE_SIZE,size);
         abort();
     }
-	//select the method
-	switch(role)
-	{
-		case SCTK_SHM_MAPPER_ROLE_MASTER:
-			if (participants == 1)
-				return sctk_shm_mapper_master_trivial(size);
-			else
-				return sctk_shm_mapper_master(size,participants,handler);
-		case SCTK_SHM_MAPPER_ROLE_SLAVE:
-			return sctk_shm_mapper_slave(size,participants,handler);
-		default:
-			fatal("Invalid role on sctk_shm_mapper.");
-	}
+
+    // Flush the barrier generation value
+    sctk_spinlock_lock(&gen_lock);
+    gen_init_done = 0;
+    sctk_spinlock_unlock(&gen_lock);
+
+    // select the method
+    switch (role) {
+    case SCTK_SHM_MAPPER_ROLE_MASTER:
+      if (participants == 1)
+        return sctk_shm_mapper_master_trivial(size);
+      else
+        return sctk_shm_mapper_master(size, participants, handler);
+    case SCTK_SHM_MAPPER_ROLE_SLAVE:
+      return sctk_shm_mapper_slave(size, participants, handler);
+    default:
+      fatal("Invalid role on sctk_shm_mapper.");
+    }
 }
 
 /************************* FUNCTION ************************/
@@ -262,38 +318,42 @@ SCTK_STATIC void * sctk_shm_mapper_slave(sctk_size_t size,int participants,sctk_
 	assume_m(participants > 1,"Required more than 1 participant.");
 
 	//get filename
-	filename = handler->recv_handler(handler->option);
-	assume_m(filename != NULL,"Failed to get the SHM filename.");
+        filename = handler->recv_handler(handler->option, handler->option1);
+        assume_m(filename != NULL, "Failed to get the SHM filename.");
 
-	//firt try to map
-	fd = sctk_shm_mapper_slave_open(filename);
-	ptr = sctk_shm_mapper_mmap(NULL,fd,size);
-	sync_header = sctk_shm_mapper_sync_header_slave_update(ptr,size,participants);
+        // firt try to map
+        fd = sctk_shm_mapper_slave_open(filename);
+        ptr = sctk_shm_mapper_mmap(NULL, fd, size);
+        sync_header =
+            sctk_shm_mapper_sync_header_slave_update(ptr, size, participants);
 
-	//wait all
-	sctk_shm_mapper_barrier(sync_header,SCTK_SHM_MAPPER_ROLE_SLAVE,participants);
-    
-    
-	//wait final decision of master
-	while ( NULL == sync_header->final_address) {
-    	};
+        // wait all
+        sctk_shm_mapper_barrier(sync_header, SCTK_SHM_MAPPER_ROLE_SLAVE,
+                                participants);
 
-	sctk_shm_mapper_barrier(sync_header,SCTK_SHM_MAPPER_ROLE_SLAVE,participants);
-	
-    	//remap if required
-    	ptr = (void*)sync_header->final_address;
-	sctk_shm_mapper_remap(fd,sync_header,ptr,size);
-	sync_header = ptr;
+        // wait final decision of master
+        while (sctk_atomics_load_ptr(&sync_header->final_address) == NULL) {
+          mpc_thread_yield();
+        }
 
-	//final sync
-	sctk_shm_mapper_barrier(sync_header,SCTK_SHM_MAPPER_ROLE_SLAVE,participants);
+        sctk_shm_mapper_barrier(sync_header, SCTK_SHM_MAPPER_ROLE_SLAVE,
+                                participants);
 
-	//can close
-	close(fd);
+        // remap if required
+        ptr = (void *)sctk_atomics_load_ptr(&sync_header->final_address);
+        sctk_shm_mapper_remap(fd, sync_header, ptr, size);
+        sync_header = ptr;
 
-	//free temp memory and return
-	free(filename);
-	return sync_header;
+        // final sync
+        sctk_shm_mapper_barrier(sync_header, SCTK_SHM_MAPPER_ROLE_SLAVE,
+                                participants);
+
+        // can close
+        close(fd);
+
+        // free temp memory and return
+        free(filename);
+        return sync_header;
 }
 
 /************************* FUNCTION ************************/
@@ -345,60 +405,65 @@ SCTK_STATIC void * sctk_shm_mapper_master(sctk_size_t size,int participants,sctk
 	bool status;
 	void * ptr;
 	sctk_shm_mapper_sync_header_t * sync_header;
-	
-	//check args
-	assert(handler != NULL);
-	assert(handler->recv_handler != NULL);
-	assert(handler->send_handler != NULL);
-	assert(size > 0 && size % SCTK_SHM_MAPPER_PAGE_SIZE == 0);
-	assume_m(participants > 1,"Required more than 1 participant.");
 
-	//debug
-	//sctk_nodebug("sctk_shm_mapper_master(%lu,%d,handler)",size,participants);
+        // check args
+        assert(handler != NULL);
+        assert(handler->recv_handler != NULL);
+        assert(handler->send_handler != NULL);
+        assert(size > 0 && size % SCTK_SHM_MAPPER_PAGE_SIZE == 0);
+        assume_m(participants > 1, "Required more than 1 participant.");
 
-	//get id
-	id = getpid();
+        // debug
+        // sctk_nodebug("sctk_shm_mapper_master(%lu,%d,handler)",size,participants);
 
-	//get filename
-	filename = handler->gen_filename(handler->option);
+        // get id
+        id = getpid();
 
-	//create file and map it
-	fd = sctk_shm_mapper_create_shm_file(filename,size);
-	ptr = sctk_shm_mapper_mmap(NULL,fd,size);
-	sync_header = sctk_shm_mapper_sync_header_init(ptr,size,participants);
+        // get filename
+        filename = handler->gen_filename(handler->option, handler->option1);
 
-	//sync filename
-	sync_header->step = SCTK_SHM_MAPPER_SYNC_FILENAME;
-	status = handler->send_handler(filename,handler->option);
-	assume_m(status,"Fail to send the SHM filename to other participants.");
+        // create file and map it
+        fd = sctk_shm_mapper_create_shm_file(filename, size);
+        ptr = sctk_shm_mapper_mmap(NULL, fd, size);
+        sync_header = sctk_shm_mapper_sync_header_init(ptr, size, participants);
 
-	//wait all slaves
-	sync_header->step = SCTK_SHM_MAPPER_STEP_FIRST_SLAVE_MAPPING;
-	sctk_shm_mapper_barrier(sync_header,SCTK_SHM_MAPPER_ROLE_MASTER,participants);
+        // sync filename
+        sync_header->step = SCTK_SHM_MAPPER_SYNC_FILENAME;
+        status =
+            handler->send_handler(filename, handler->option, handler->option1);
+        assume_m(status,
+                 "Fail to send the SHM filename to other participants.");
 
-	//if some are not with same address,
-	if (sync_header->cnt_invalid > 0)
-	{
-		//search common free space
-		ptr = sctk_shm_mapper_find_common_addr(size,sync_header->pids,participants,ptr);
-		//remap locally
-		sctk_shm_mapper_remap(fd,sync_header,ptr,size);
-		sync_header = ptr;
-		sync_header->pids = (int*)(sync_header + 1);
-	}
-	//mark final address and wait all before exit
-	sync_header->step = SCTK_SHM_MAPPER_STEP_FINAL_CHECK;
-	sync_header->final_address = sync_header;
+        // wait all slaves
+        sync_header->step = SCTK_SHM_MAPPER_STEP_FIRST_SLAVE_MAPPING;
+        sctk_shm_mapper_barrier(sync_header, SCTK_SHM_MAPPER_ROLE_MASTER,
+                                participants);
 
-	sctk_shm_mapper_barrier(sync_header,SCTK_SHM_MAPPER_ROLE_MASTER,participants);
-	sctk_shm_mapper_barrier(sync_header,SCTK_SHM_MAPPER_ROLE_MASTER,participants);
-	//can close and remove the file
-	close(fd);
-	sctk_shm_mapper_unlink(filename);
+        // if some are not with same address,
+        if (sctk_atomics_load_int(&sync_header->cnt_invalid) > 0) {
+          // search common free space
+          ptr = sctk_shm_mapper_find_common_addr(size, sync_header->pids,
+                                                 participants, ptr);
+          // remap locally
+          sctk_shm_mapper_remap(fd, sync_header, ptr, size);
+          sync_header = ptr;
+          sync_header->pids = (int *)(sync_header + 1);
+        }
+        // mark final address and wait all before exit
+        sync_header->step = SCTK_SHM_MAPPER_STEP_FINAL_CHECK;
+        sctk_atomics_store_ptr(&sync_header->final_address, sync_header);
 
-	//free temp memory and return
-	free(filename);
-	return sync_header;
+        sctk_shm_mapper_barrier(sync_header, SCTK_SHM_MAPPER_ROLE_MASTER,
+                                participants);
+        sctk_shm_mapper_barrier(sync_header, SCTK_SHM_MAPPER_ROLE_MASTER,
+                                participants);
+        // can close and remove the file
+        close(fd);
+        sctk_shm_mapper_unlink(filename);
+
+        // free temp memory and return
+        free(filename);
+        return sync_header;
 }
 
 /************************* FUNCTION ************************/
@@ -614,17 +679,18 @@ SCTK_STATIC void * sctk_shm_mapper_find_common_addr(sctk_size_t size,int * pids,
 	free_segments = sctk_alloc_shm_create_free_segment((sctk_addr_t)start,(sctk_addr_t)(-1));
 
 	//merge maps of all pids
-	for ( i = 0 ; i < participants ; i++ )
-		sctk_shm_mapper_merge_map(&free_segments,pids[i],start);
+        for (i = 0; i < participants; i++) {
+          sctk_shm_mapper_merge_map(&free_segments, pids[i], start);
+        }
 
-	//now search a solution
-	res = sctk_shm_mapper_find_common_addr_in_table(free_segments,size);
-	assert(res >= start);
+        // now search a solution
+        res = sctk_shm_mapper_find_common_addr_in_table(free_segments, size);
+        assert(res >= start);
 
-	//free the temporary table
-	sctk_shm_mapper_free_table(free_segments);
+        // free the temporary table
+        sctk_shm_mapper_free_table(free_segments);
 
-	return res;
+        return res;
 }
 
 /************************* FUNCTION ************************/

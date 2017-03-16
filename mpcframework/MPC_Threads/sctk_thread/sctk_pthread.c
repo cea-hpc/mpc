@@ -88,7 +88,6 @@ pthread_wait_for_value_and_poll (volatile int *data, int value,
         sleep(1);
 #endif
 		 sctk_cpu_relax ();
-        sched_yield();
 	  }
 	  /* 	  else */
 /* 	    sched_yield (); */
@@ -192,7 +191,7 @@ init_tls_start_routine_arg (void *(*start_routine) (void *), void *arg)
   tmp->arg = arg;
   tmp->start_routine = start_routine;
 #ifdef SCTK_USE_TLS
-  extls_ctx_t* ctx = sctk_malloc(sizeof(extls_ctx_t));
+  extls_ctx_t *ctx = sctk_calloc(1, sizeof(extls_ctx_t));
   extls_ctx_herit(*((extls_ctx_t**)extls_get_context_storage_addr()), ctx, LEVEL_THREAD);
   tmp->tls = (void*)ctx;
 #endif

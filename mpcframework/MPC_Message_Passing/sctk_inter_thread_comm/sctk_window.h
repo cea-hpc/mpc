@@ -23,14 +23,22 @@
 #ifndef SCTK_WINDOW_H
 #define SCTK_WINDOW_H
 
-#include "sctk_types.h"
-#include "sctk_spinlock.h"
+#include "sctk_atomics.h"
 #include "sctk_rail.h"
 #include "sctk_rdma.h"
+#include "sctk_spinlock.h"
+#include "sctk_thread.h"
+#include "sctk_types.h"
 
 /************************************************************************/
 /* Definition of an RDMA window                                         */
 /************************************************************************/
+
+typedef enum {
+  SCTK_WIN_ACCESS_DIRECT,
+  SCTK_WIN_ACCESS_EMULATED,
+  SCTK_WIN_ACCESS_AUTO
+} sctk_window_access_mode;
 
 struct sctk_window
 {
@@ -40,16 +48,101 @@ struct sctk_window
 	size_t size;
 	size_t disp_unit;
 	int owner;
-	sctk_rail_pin_ctx_t pin;
-	sctk_communicator_t comm;
-	int is_emulated;
-	sctk_spinlock_t lock;
-	unsigned int refcounter;
+        int comm_rank;
+        sctk_rail_pin_ctx_t pin;
+        sctk_communicator_t comm;
+        int is_emulated;
+        sctk_spinlock_t lock;
+        unsigned int refcounter;
+        void *payload;
+        sctk_thread_t th;
+        int poll;
+        sctk_window_access_mode access_mode;
+        sctk_atomics_int outgoing_emulated_rma;
+        sctk_atomics_int *incoming_emulated_rma;
 };
+
+/************************************************************************/
+/* Window Counters                                                      */
+/************************************************************************/
+
+static inline void sctk_window_inc_outgoing(struct sctk_window *win) {
+  sctk_atomics_incr_int(&win->outgoing_emulated_rma);
+}
+
+static inline void sctk_window_inc_incoming(struct sctk_window *win, int rank) {
+  sctk_atomics_incr_int(&win->incoming_emulated_rma[rank]);
+}
+
+/************************************************************************/
+/* Window Translation                                                   */
+/************************************************************************/
+
+static inline void sctk_window_set_access_mode(struct sctk_window *win,
+                                               sctk_window_access_mode mode) {
+  assume(win);
+  win->access_mode = mode;
+}
+
+struct sctk_win_translation {
+  struct sctk_window *win;
+  int generation;
+};
+
+void sctk_win_translation_init(struct sctk_win_translation *wt,
+                               struct sctk_window *win);
+void sctk_window_complete_request(sctk_request_t *req);
+
+extern __thread struct sctk_win_translation __forward_translate;
+extern sctk_atomics_int __rma_generation;
+
+/* Translate to internal type */
+struct sctk_window *__sctk_win_translate(sctk_window_t win_id);
+
+static inline struct sctk_window *sctk_win_translate(sctk_window_t win_id) {
+  int generation = sctk_atomics_load_int(&__rma_generation);
+
+  if (generation == __forward_translate.generation) {
+    if (__forward_translate.win) {
+      if (__forward_translate.win->id == win_id) {
+        return __forward_translate.win;
+      }
+    }
+  }
+
+  return __sctk_win_translate(win_id);
+}
+
+/************************************************************************/
+/* Window Payload                                                       */
+/************************************************************************/
+
+static inline void sctk_window_set_payload(sctk_window_t win_id,
+                                           void *payload) {
+  struct sctk_window *win = sctk_win_translate(win_id);
+  if (!win) {
+    sctk_warning("No such window %d in remote relax", win_id);
+    return;
+  }
+
+  win->payload = payload;
+}
+
+static inline void *sctk_window_get_payload(sctk_window_t win_id) {
+  struct sctk_window *win = sctk_win_translate(win_id);
+
+  if (!win) {
+    sctk_warning("No such window %d in remote relax", win_id);
+    return NULL;
+  }
+
+  return win->payload;
+}
 
 /* Refcounter interactions */
 void sctk_win_acquire( sctk_window_t win_id );
 int sctk_win_relax( sctk_window_t win_id );
+void sctk_window_local_release(sctk_window_t win_id);
 
 /* Remote window mapping */
 
@@ -67,6 +160,10 @@ static inline void sctk_window_map_request_init( struct sctk_window_map_request 
 	mr->win_id = win_id;
 }
 
+void sctk_window_init_ht();
+void sctk_window_release_ht();
+
+int sctk_window_build_from_remote(struct sctk_window *remote_win_data);
 
 /************************************************************************/
 /* Window Emulated Operations  Strutures                                */
@@ -79,6 +176,7 @@ struct sctk_window_emulated_RDMA
 	size_t offset;
 	size_t size;
 	sctk_window_t win_id;
+        char payload[0];
 };
 
 static inline void sctk_window_emulated_RDMA_init( struct sctk_window_emulated_RDMA * erma, int remote_rank, size_t offset, size_t size, sctk_window_t win_id )
@@ -90,7 +188,6 @@ static inline void sctk_window_emulated_RDMA_init( struct sctk_window_emulated_R
 	erma->win_id = win_id;
 }
 
-
 struct sctk_window_emulated_fetch_and_op_RDMA
 {
 	struct sctk_window_emulated_RDMA rdma;
@@ -98,7 +195,6 @@ struct sctk_window_emulated_fetch_and_op_RDMA
 	RDMA_op op;
 	char add[16];
 };
-
 
 static inline void sctk_window_emulated_fetch_and_op_RDMA_init( struct sctk_window_emulated_fetch_and_op_RDMA * fop, int remote_rank, size_t offset, sctk_window_t win_id, RDMA_op op, RDMA_type type, void * add )
 {
@@ -143,13 +239,16 @@ static inline void sctk_window_emulated_CAS_RDMA_init( struct sctk_window_emulat
 /* Control Messages Handlers                                            */
 /************************************************************************/
 
-enum
-{
-	TAG_RDMA_READ,
-	TAG_RDMA_WRITE,
-	TAG_RDMA_FETCH_AND_OP,
-	TAG_RDMA_CAS,
-	TAG_RDMA_MAP
+enum {
+  TAG_RDMA_READ = 7000,
+  TAG_RDMA_WRITE,
+  TAG_RDMA_WRITE_ACK,
+  TAG_RDMA_FETCH_AND_OP,
+  TAG_RDMA_CAS,
+  TAG_RDMA_MAP,
+  TAG_RDMA_ACCUMULATE,
+  TAG_RDMA_ACK = 1337,
+  TAG_RDMA_FENCE
 };
 
 void sctk_window_map_remote_ctrl_msg_handler( struct sctk_window_map_request * mr );

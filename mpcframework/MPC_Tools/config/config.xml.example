@@ -45,20 +45,20 @@
 							<tcp/>
 						</driver>
 					</config>
-                    <config>
-                        <name>portals_config</name>
-                        <driver>
-                            <portals/>
-                        </driver>
-                    </config>
-				
 					<config>
-                        			<name>shm_config_mpi</name>
-                        			<driver>
-                            				<shm/>
-                        			</driver>
-                    			</config>
-				         
+						<name>portals_config</name>
+						<driver>
+							<portals/>
+						</driver>
+					</config>
+
+					<config>
+						<name>shm_config_mpi</name>
+						<driver>
+							<shm/>
+						</driver>
+					</config>
+
 				</configs>
 
 				<rails>
@@ -71,6 +71,7 @@
 							<trigger>RAIL_POLL_SOCKET</trigger>
 						</idle_polling>
 						<priority>1</priority>
+						<rdma>1</rdma>
 						<ondemand>1</ondemand>
 						<topology>ring</topology>
 						<config>ib_config_mpi</config>
@@ -95,32 +96,32 @@
 								</minsize>
 							</gate>
 						</gates>
-                    </rail>
-                    <rail>
-                        <name>portals_mpi_fully</name>
-                        <priority>6</priority>
+					</rail>
+					<rail>
+						<name>portals_mpi_fully</name>
+						<priority>6</priority>
 						<ondemand>1</ondemand>
 						<topology>fully</topology>
-                        <config>portals_config</config>
-                    </rail>
-                    <rail>
-                        <name>portals_mpi</name>
-                        <priority>6</priority>
-                        <ondemand>1</ondemand>
-                        <config>portals_config</config>
-                    </rail>
-		    <rail>
-			<name>portals_rdma</name>
-                        <priority>6</priority>
-                        <ondemand>1</ondemand>
-                        <config>portals_config</config>
-			<rdma>1</rdma>
-		    </rail>
-                    <rail>
-                        <name>portals_large</name>
-                        <priority>6</priority>
-                        <ondemand>1</ondemand>
-                        <config>portals_config</config>
+						<config>portals_config</config>
+					</rail>
+					<rail>
+						<name>portals_mpi</name>
+						<priority>6</priority>
+						<ondemand>1</ondemand>
+						<config>portals_config</config>
+					</rail>
+					<rail>
+						<name>portals_rdma</name>
+						<priority>6</priority>
+						<ondemand>1</ondemand>
+						<config>portals_config</config>
+						<rdma>1</rdma>
+					</rail>
+					<rail>
+						<name>portals_large</name>
+						<priority>6</priority>
+						<ondemand>1</ondemand>
+						<config>portals_config</config>
 						<gates>
 							<gate>
 								<minsize>
@@ -128,71 +129,80 @@
 								</minsize>
 							</gate>
 						</gates>
-                    </rail>
-                    			<rail>
-                        			<name>shm_mpi</name>
-                        			<priority>99</priority>
-                        			<ondemand>0</ondemand>
-                        			<topology>fully</topology>
-                        			<config>shm_config_mpi</config>
-                    			</rail>
+					</rail>
+					<rail>
+						<name>shm_mpi</name>
+						<priority>99</priority>
+						<ondemand>0</ondemand>
+						<topology>fully</topology>
+						<config>shm_config_mpi</config>
+						<gates>
+							<gate>
+								<msgtype>
+									<task>1</task>
+									<emulated_rma>1</emulated_rma>
+								</msgtype>
+							</gate>
+						</gates>
+	
+					</rail>
 				</rails>
 				<cli_options>
 					<cli_option>
 						<name>ib</name>
 						<rails>
-                            				<rail>shm_mpi</rail>
+							<rail>shm_mpi</rail>
 							<rail>ib_mpi</rail>
 						</rails>
 					</cli_option>
 					<cli_option>
 						<name>tcp</name>
 						<rails>
-                            				<rail>shm_mpi</rail>
+							<rail>shm_mpi</rail>
 							<rail>tcp_mpi</rail>
 						</rails>
 					</cli_option>
 					<cli_option>
 						<name>multirail_tcp</name>
 						<rails>
-                            				<rail>shm_mpi</rail>
+							<rail>shm_mpi</rail>
 							<rail>tcp_large</rail>
 						</rails>
-                    </cli_option>
-                    <cli_option>
-                        <name>portals</name>
-                        <rails>
-                            <rail>portals_mpi</rail>
-                        </rails>
-                    </cli_option>
-                    <cli_option>
-                        <name>fully_portals</name>
-                        <rails>
-                            <rail>portals_mpi_fully</rail>
-                        </rails>
-                    </cli_option>
-                    <cli_option>
-                        <name>multirail_portals</name>
-                        <rails>
-                            <rail>portals_large</rail>
-                        </rails>
-                    </cli_option>
-		    <cli_option>
-                        <name>rdma_portals</name>
-                        <rails>
-                            <rail>portals_rdma</rail>
-                        </rails>
-                    </cli_option>
-    					<cli_option>
-                        			<name>shm</name>
-                        			<rails>
-                            				<rail>shm_mpi</rail>
-                        			</rails>
-    					</cli_option>
+					</cli_option>
+					<cli_option>
+						<name>portals</name>
+						<rails>
+							<rail>portals_mpi</rail>
+						</rails>
+					</cli_option>
+					<cli_option>
+						<name>fully_portals</name>
+						<rails>
+							<rail>portals_mpi_fully</rail>
+						</rails>
+					</cli_option>
+					<cli_option>
+						<name>multirail_portals</name>
+						<rails>
+							<rail>portals_large</rail>
+						</rails>
+					</cli_option>
+					<cli_option>
+						<name>rdma_portals</name>
+						<rails>
+							<rail>portals_rdma</rail>
+						</rails>
+					</cli_option>
+					<cli_option>
+						<name>shm</name>
+						<rails>
+							<rail>shm_mpi</rail>
+						</rails>
+					</cli_option>
 					<cli_option>
 						<name>default</name>
 						<rails>
-                            				<rail>shm_mpi</rail>
+							<rail>shm_mpi</rail>
 							<rail>ib_mpi</rail>
 						</rails>
 					</cli_option>

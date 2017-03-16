@@ -2549,19 +2549,20 @@ SCTK_PUBLIC void sctk_alloc_rfq_register(struct sctk_alloc_rfq * rfq,void * ptr)
 	switch(vchunk->type)
 	{
 		case SCTK_ALLOC_CHUNK_TYPE_LARGE://can contain the struct internally
-			entry = ptr;
-			break;
-		default:
-			assume_m(false,"Invalid chunk type.");
-			break;
-	}
+                case SCTK_ALLOC_CHUNK_TYPE_PADDED:
+                  entry = ptr;
+                  break;
+                default:
+                  assume_m(false, "Invalid chunk type.");
+                  break;
+                }
 
-	//setup entry
-	entry->ptr = ptr;
-	entry->entry.next = NULL;
+                // setup entry
+                entry->ptr = ptr;
+                entry->entry.next = NULL;
 
-	//reg in queue
-	sctk_mpscf_queue_insert(&rfq->queue,&entry->entry);
+                // reg in queue
+                sctk_mpscf_queue_insert(&rfq->queue, &entry->entry);
 }
 
 /************************* FUNCTION ************************/

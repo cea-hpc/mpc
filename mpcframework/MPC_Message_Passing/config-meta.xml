@@ -99,7 +99,7 @@
                     <param name="frag_max_size" type="int" doc="Defines the min size for the SHM fragmented message" default="0" alias="SHM_FRAG_MAX_SIZE" />
                     <param name="frag_zerocopy" type="bool" doc="Defines if mode zerocopy should be actived for SHM fragmented message" default="false" alias="SHM_FRAG_ZEROCOPY" />
             		<param name="shmem_size" type="int" doc="Size of shared memory region." default="1024" alias="SHM_SIZE" />
-            		<param name="cells_num" type="int" doc="Size of shared memory region." default="128" alias="SHM_CELLS" />
+            		<param name="cells_num" type="int" doc="Size of shared memory region." default="2048" alias="SHM_CELLS" />
         	</struct>
 
 		<!-- Union to merge drivers -->
@@ -150,6 +150,8 @@
 
 		<struct name="gate_message_type" doc="This gate can be used define which type of message can use a given rail.">
 			<param name="process" type="int" doc="Process Specific Messages can use this rail" default="1" />
+			<param name="task" type="int" doc="Task specific messages can use this rail" default="1" />
+			<param name="emulated_rma" type="int" doc="Task specific messages can use this rail" default="1" />
 			<param name="common" type="int" doc="Common messages (MPI) can use this rail" default="1" />
 			<param name="gatefunc" type="funcptr" default="sctk_rail_gate_msgtype" doc="Function to be called for this gate"/>
 		</struct>

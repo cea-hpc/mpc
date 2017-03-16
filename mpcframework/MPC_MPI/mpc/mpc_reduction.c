@@ -54,34 +54,40 @@ mpc_redution_check_type (MPC_Datatype a, MPC_Datatype b)
     mpc_no_exec(in,inout,size,datatype,__LINE__,__FILE__);		\
   }
 
-#define MPC_DEFINED_FUNCS_IMPL(t,tt)						\
-  void MPC_SUM_func_##t(const tt* mpc_restrict  in ,tt* mpc_restrict inout ,size_t size ,MPC_Datatype datatype){ \
-    size_t i;								\
-    mpc_redution_check_type(datatype,t);				\
-    for(i = 0; i < size; i++){						\
-      inout[i] = in[i] + inout[i];					\
-    }									\
-  }									\
-  void MPC_MIN_func_##t(const tt*  mpc_restrict in ,tt* mpc_restrict inout ,size_t size ,MPC_Datatype datatype){ \
-    size_t i;								\
-    mpc_redution_check_type(datatype,t);				\
-    for(i = 0; i < size; i++){						\
-      if(inout[i] > in[i]) inout[i] = in[i];				\
-    }									\
-  }									\
-  void MPC_MAX_func_##t(const tt* mpc_restrict  in ,tt* mpc_restrict inout ,size_t size ,MPC_Datatype datatype){ \
-    size_t i;								\
-    mpc_redution_check_type(datatype,t);				\
-    for(i = 0; i < size; i++){						\
-      if(inout[i] < in[i]) inout[i] = in[i];				\
-    }									\
-  }									\
-  void MPC_PROD_func_##t(const tt*  mpc_restrict in ,tt* mpc_restrict inout ,size_t size ,MPC_Datatype datatype){ \
-    size_t i;								\
-    mpc_redution_check_type(datatype,t);				\
-    for(i = 0; i < size; i++){						\
-      inout[i] = in[i] * inout[i];					\
-    }									\
+#define MPC_DEFINED_FUNCS_IMPL(t, tt)                                          \
+  void MPC_SUM_func_##t(const tt *mpc_restrict in, tt *mpc_restrict inout,     \
+                        size_t size, MPC_Datatype datatype) {                  \
+    unsigned int i;                                                            \
+    mpc_redution_check_type(datatype, t);                                      \
+    for (i = 0; i < size; i++) {                                               \
+      inout[i] = in[i] + inout[i];                                             \
+    }                                                                          \
+  }                                                                            \
+  void MPC_MIN_func_##t(const tt *mpc_restrict in, tt *mpc_restrict inout,     \
+                        size_t size, MPC_Datatype datatype) {                  \
+    unsigned int i;                                                            \
+    mpc_redution_check_type(datatype, t);                                      \
+    for (i = 0; i < size; i++) {                                               \
+      if (inout[i] > in[i])                                                    \
+        inout[i] = in[i];                                                      \
+    }                                                                          \
+  }                                                                            \
+  void MPC_MAX_func_##t(const tt *mpc_restrict in, tt *mpc_restrict inout,     \
+                        size_t size, MPC_Datatype datatype) {                  \
+    unsigned int i;                                                            \
+    mpc_redution_check_type(datatype, t);                                      \
+    for (i = 0; i < size; i++) {                                               \
+      if (inout[i] < in[i])                                                    \
+        inout[i] = in[i];                                                      \
+    }                                                                          \
+  }                                                                            \
+  void MPC_PROD_func_##t(const tt *mpc_restrict in, tt *mpc_restrict inout,    \
+                         size_t size, MPC_Datatype datatype) {                 \
+    unsigned int i;                                                            \
+    mpc_redution_check_type(datatype, t);                                      \
+    for (i = 0; i < size; i++) {                                               \
+      inout[i] = in[i] * inout[i];                                             \
+    }                                                                          \
   }
 
 void
@@ -370,7 +376,7 @@ MPC_DEFINED_FUNCS_IMPL (MPC_INTEGER, int)
 MPC_DEFINED_FUNCS_IMPL (MPC_LONG, long)
 MPC_DEFINED_FUNCS_IMPL (MPC_LONG_LONG, mpc_long_long)
 MPC_DEFINED_FUNCS_IMPL (MPC_FLOAT, float)
-MPC_DEFINED_FUNCS_IMPL (MPC_DOUBLE, double)
+MPC_DEFINED_FUNCS_IMPL(MPC_DOUBLE, double)
 MPC_DEFINED_FUNCS_IMPL (MPC_DOUBLE_PRECISION, double)
 MPC_DEFINED_FUNCS_IMPL (MPC_UNSIGNED_CHAR, unsigned char)
 MPC_DEFINED_FUNCS_IMPL (MPC_UNSIGNED_SHORT, unsigned short)

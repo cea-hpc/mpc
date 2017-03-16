@@ -76,13 +76,16 @@ static void sctk_opt_noalloc_split_messages_send ( const sctk_communicator_t com
                                                    sctk_message_class_t message_class, sctk_opt_noalloc_split_messages_t *msg_req, int check, int copy_in_send )
 {
 	//sctk_error("BAR %d SEND TO %d", myself, dest );
-	
-	sctk_init_header ( & ( msg_req->msg ), SCTK_MESSAGE_CONTIGUOUS, sctk_free_opt_noalloc_split_messages, sctk_message_copy );
-	sctk_add_adress_in_message ( & ( msg_req->msg ), buffer, size );
-	msg_req->request.request_type = REQUEST_SEND_COLL;
-	sctk_set_header_in_message ( & ( msg_req->msg ), tag, communicator, myself, dest, & ( msg_req->request ), size, message_class, SCTK_DATATYPE_IGNORE );
+        sctk_init_request(&(msg_req->request), communicator, REQUEST_SEND_COLL);
+        sctk_init_header(&(msg_req->msg), SCTK_MESSAGE_CONTIGUOUS,
+                         sctk_free_opt_noalloc_split_messages,
+                         sctk_message_copy);
+        sctk_add_adress_in_message(&(msg_req->msg), buffer, size);
+        sctk_set_header_in_message(&(msg_req->msg), tag, communicator, myself,
+                                   dest, &(msg_req->request), size,
+                                   message_class, SCTK_DATATYPE_IGNORE);
 
-	sctk_send_message ( & ( msg_req->msg ) );
+        sctk_send_message(&(msg_req->msg));
 #if 0
 	msg_req->msg.tail.need_check_in_wait = /* copy_in_send */1;
 	sctk_send_message_try_check ( & ( msg_req->msg ), check );
@@ -94,13 +97,16 @@ static void sctk_opt_noalloc_split_messages_recv ( const sctk_communicator_t com
                                                    int copy_in_recv )
 {
 	//sctk_error("BAR %d RECV FROM %d", myself, src );
-	
-	sctk_init_header ( & ( msg_req->msg ), SCTK_MESSAGE_CONTIGUOUS, sctk_free_opt_noalloc_split_messages, sctk_message_copy );
-	sctk_add_adress_in_message ( & ( msg_req->msg ), buffer, size );
-	msg_req->request.request_type = REQUEST_RECV_COLL;
-	sctk_set_header_in_message ( & ( msg_req->msg ), tag, communicator,  src, myself, & ( msg_req->request ), size, message_class, SCTK_DATATYPE_IGNORE );
+        sctk_init_request(&(msg_req->request), communicator, REQUEST_RECV_COLL);
+        sctk_init_header(&(msg_req->msg), SCTK_MESSAGE_CONTIGUOUS,
+                         sctk_free_opt_noalloc_split_messages,
+                         sctk_message_copy);
+        sctk_add_adress_in_message(&(msg_req->msg), buffer, size);
+        sctk_set_header_in_message(&(msg_req->msg), tag, communicator, src,
+                                   myself, &(msg_req->request), size,
+                                   message_class, SCTK_DATATYPE_IGNORE);
 
-	sctk_recv_message ( & ( msg_req->msg ), ptp_internal, 1 );
+        sctk_recv_message(&(msg_req->msg), ptp_internal, 1);
 #if 0
 	msg_req->msg.tail.need_check_in_wait = /* copy_in_recv */1;
 	sctk_recv_message_try_check ( & ( msg_req->msg ), ptp_internal, check );
@@ -133,13 +139,15 @@ static sctk_opt_noalloc_split_messages_t *sctk_opt_noalloc_split_messages_get_it
 	tmp = & ( tab->msg_req[tab->nb_used] );
 	sctk_nodebug ( "tab->nb_used = %d", tab->nb_used );
 	tab->nb_used++;
-	return tmp;
+
+        memset(&tmp->request, 0, sizeof(sctk_request_t));
+
+        return tmp;
 }
 
 static void sctk_opt_noalloc_split_messages_init_items ( sctk_opt_noalloc_split_messages_table_t *tab )
 {
 	tab->nb_used = 0;
-	
 }
 
 /************************************************************************/

@@ -50,23 +50,23 @@ extern "C"
 #define SCTK_DERIVED_DATATYPE_BASE (SCTK_COMMON_DATA_TYPE_COUNT + SCTK_USER_DATA_TYPES_MAX)
   
 /** \brief Macro to obtain the total number of datatypes */
-#define MPC_TYPE_COUNT (SCTK_COMMON_DATA_TYPE_COUNT + 2 * SCTK_USER_DATA_TYPES_MAX)
-  
-typedef int MPC_Message;
+#define MPC_TYPE_COUNT                                                         \
+  (SCTK_COMMON_DATA_TYPE_COUNT + 2 * SCTK_USER_DATA_TYPES_MAX)
 
-typedef sctk_msg_count_t mpc_msg_count;
+  typedef int MPC_Message;
 
-typedef unsigned int mpc_pack_indexes_t;
-typedef long mpc_pack_absolute_indexes_t;
-typedef long MPC_Aint;
-typedef long MPC_Count;
-typedef sctk_communicator_t MPC_Comm;
+  typedef sctk_msg_count_t mpc_msg_count;
 
-typedef struct
-{
-	int task_nb;
-	/* Task list rank are valid in COMM_WORLD  */
-	int *task_list_in_global_ranks;
+  typedef unsigned int mpc_pack_indexes_t;
+  typedef long mpc_pack_absolute_indexes_t;
+  typedef long MPC_Aint;
+  typedef long MPC_Count;
+  typedef sctk_communicator_t MPC_Comm;
+
+  typedef struct {
+    int task_nb;
+    /* Task list rank are valid in COMM_WORLD  */
+    int *task_list_in_global_ranks;
 } MPC_Group_t;
 
 typedef MPC_Group_t *MPC_Group;
@@ -202,6 +202,8 @@ extern MPC_Request mpc_request_null;
 
 #define MPC_NOT_IMPLEMENTED            56
 
+#define MPC_ERR_RMA_FLAVOR 57 /* Wrong type of RMA window */
+
 /* HOLE @ 58 */
 
 #define MPC_T_ERR_MEMORY 59          /* Out of memory */
@@ -220,12 +222,11 @@ extern MPC_Request mpc_request_null;
 #define MPC_T_ERR_CVAR_SET_NOT_NOW 68 /* Cvar can't be set at this moment */
 #define MPC_T_ERR_CVAR_SET_NEVER                                               \
   69                                   /* Cvar can't be set until              \
-                                          end of execution */
+                                           end of execution */
 #define MPC_T_ERR_PVAR_NO_STARTSTOP 70 /* Pvar can't be started or stopped */
 #define MPC_T_ERR_PVAR_NO_WRITE 71     /* Pvar can't be written or reset */
 #define MPC_T_ERR_PVAR_NO_ATOMIC 72    /* Pvar can't be R/W atomically */
 #define MPC_T_ERR_INVALID_NAME 73      /* Requested name is invalid */
-
 #define MPC_ERR_LASTCODE 74
 
 #define MPC_STATUS_IGNORE NULL
@@ -238,9 +239,16 @@ extern MPC_Request mpc_request_null;
 #define MPC_MAX_OBJECT_NAME 256
 #define MPC_MAX_LIBRARY_VERSION_STRING 8192
 
+/* Type Keyval Defines */
+
+#define MPC_KEYVAL_INVALID -1
+
 #define MPC_ERRHANDLER_NULL -1
 #define MPC_ERRORS_RETURN -6
 #define MPC_ERRORS_ARE_FATAL -7
+#define MPC_TYPE_NULL_DELETE_FN (NULL)
+#define MPC_TYPE_NULL_COPY_FN (NULL)
+#define MPC_TYPE_NULL_DUP_FN ((void *)0x3)
 
 /********************************************************************/
 /*Special TAGS                                                      */
@@ -407,185 +415,183 @@ MPC_CREATE_INTERN_FUNC (MAXLOC);
 
 /* Datatype decoders */
 
-typedef enum
-{
-    MPC_COMBINER_UNKNOWN	  = 0,
-    MPC_COMBINER_NAMED            = 1,
-    MPC_COMBINER_DUP              = 2,
-    MPC_COMBINER_CONTIGUOUS       = 3,
-    MPC_COMBINER_VECTOR           = 4,
-    MPC_COMBINER_HVECTOR          = 5,
-    MPC_COMBINER_INDEXED          = 6,
-    MPC_COMBINER_HINDEXED         = 7,
-    MPC_COMBINER_INDEXED_BLOCK    = 8,
-    MPC_COMBINER_HINDEXED_BLOCK   = 9,
-    MPC_COMBINER_STRUCT           = 10,
-    MPC_COMBINER_SUBARRAY         = 11,
-    MPC_COMBINER_DARRAY           = 12,
-    MPC_COMBINER_F90_REAL         = 13,
-    MPC_COMBINER_F90_COMPLEX      = 14,
-    MPC_COMBINER_F90_INTEGER      = 15,
-    MPC_COMBINER_RESIZED          = 16,
-    /* *_INTEGER COMBINER ARE DEPRECATED
-     * in MPI 3.0 consequently they
-     * are never returned by get_envelope */
-    MPC_COMBINER_HINDEXED_INTEGER = 17,
-    MPC_COMBINER_STRUCT_INTEGER = 18,
-    MPC_COMBINER_HVECTOR_INTEGER = 19,
-    MPC_COMBINER_COUNT__
-}MPC_Type_combiner;
+typedef enum {
+  MPC_COMBINER_UNKNOWN = 0,
+  MPC_COMBINER_NAMED = 1,
+  MPC_COMBINER_DUP = 2,
+  MPC_COMBINER_CONTIGUOUS = 3,
+  MPC_COMBINER_VECTOR = 4,
+  MPC_COMBINER_HVECTOR = 5,
+  MPC_COMBINER_INDEXED = 6,
+  MPC_COMBINER_HINDEXED = 7,
+  MPC_COMBINER_INDEXED_BLOCK = 8,
+  MPC_COMBINER_HINDEXED_BLOCK = 9,
+  MPC_COMBINER_STRUCT = 10,
+  MPC_COMBINER_SUBARRAY = 11,
+  MPC_COMBINER_DARRAY = 12,
+  MPC_COMBINER_F90_REAL = 13,
+  MPC_COMBINER_F90_COMPLEX = 14,
+  MPC_COMBINER_F90_INTEGER = 15,
+  MPC_COMBINER_RESIZED = 16,
+  /* *_INTEGER COMBINER ARE DEPRECATED
+   * in MPI 3.0 consequently they
+   * are never returned by get_envelope */
+  MPC_COMBINER_HINDEXED_INTEGER = 17,
+  MPC_COMBINER_STRUCT_INTEGER = 18,
+  MPC_COMBINER_HVECTOR_INTEGER = 19,
+  MPC_COMBINER_DUMMY,
+  MPC_COMBINER_COUNT__
+} MPC_Type_combiner;
 
-  /*Initialisation */
-  int MPC_Init (int *argc, char ***argv);
-  int MPC_Init_thread (int *argc, char ***argv, int required, int *provided);
-  int MPC_Query_thread(int *provided);
-  int MPC_Initialized (int *flag);
-  int MPC_Finalize (void);
-  int MPC_Abort (MPC_Comm, int);
+/*Initialisation */
+int MPC_Init(int *argc, char ***argv);
+int MPC_Init_thread(int *argc, char ***argv, int required, int *provided);
+int MPC_Query_thread(int *provided);
+int MPC_Initialized(int *flag);
+int MPC_Finalize(void);
+int MPC_Abort(MPC_Comm, int);
 
-  typedef enum {MPC_HAVE_OPTION_HLS,MPC_HAVE_OPTION_ETLS_COW,MPC_HAVE_OPTION_ETLS_OPTIMIZED,MPC_HAVE_OPTION_END} MPC_Config_Status_t;
+typedef enum {
+  MPC_HAVE_OPTION_HLS,
+  MPC_HAVE_OPTION_ETLS_COW,
+  MPC_HAVE_OPTION_ETLS_OPTIMIZED,
+  MPC_HAVE_OPTION_END
+} MPC_Config_Status_t;
 
-  int MPC_Config_Status(MPC_Config_Status_t option);
-  void MPC_Config_Status_Print(FILE* fd);
-  char* MPC_Config_Status_Name(MPC_Config_Status_t option);
+int MPC_Config_Status(MPC_Config_Status_t option);
+void MPC_Config_Status_Print(FILE *fd);
+char *MPC_Config_Status_Name(MPC_Config_Status_t option);
 
-  /* MPI Topology informations */
-  int MPC_Comm_rank (MPC_Comm comm, int *rank);
-  int MPC_Comm_size (MPC_Comm comm, int *size);
-  int MPC_Comm_remote_size (MPC_Comm comm, int *size);
-  int MPC_Comm_test_inter (MPC_Comm comm, int *flag);
+/* MPI Topology informations */
+int MPC_Comm_rank(MPC_Comm comm, int *rank);
+int MPC_Comm_size(MPC_Comm comm, int *size);
+int MPC_Comm_remote_size(MPC_Comm comm, int *size);
+int MPC_Comm_test_inter(MPC_Comm comm, int *flag);
 
-  /* Node topology */
-  int MPC_Node_rank (int *rank);
-  int MPC_Node_number (int *number);
+/* Node topology */
+int MPC_Node_rank(int *rank);
+int MPC_Node_number(int *number);
 
-  /* Processors topology */
-  int MPC_Processor_rank (int *rank);
-  int MPC_Processor_number (int *number);
+/* Processors topology */
+int MPC_Processor_rank(int *rank);
+int MPC_Processor_number(int *number);
 
-  /* Process global numbering */
-  int MPC_Process_rank (int *rank);
-  int MPC_Process_number (int *number);
+/* Process global numbering */
+int MPC_Process_rank(int *rank);
+int MPC_Process_number(int *number);
 
-  /* Process local numbering */
-  int MPC_Local_process_rank (int *rank);
-  int MPC_Local_process_number (int *number);
+/* Process local numbering */
+int MPC_Local_process_rank(int *rank);
+int MPC_Local_process_number(int *number);
 
-  /* Task global topology */
-  int MPC_Task_rank( int *rank );
-  int MPC_Task_number( int *number );
+/* Task global topology */
+int MPC_Task_rank(int *rank);
+int MPC_Task_number(int *number);
 
-  /* Task local topology */
-  int MPC_Local_task_rank( int *rank );
-  int MPC_Local_task_number( int *number );
+/* Task local topology */
+int MPC_Local_task_rank(int *rank);
+int MPC_Local_task_number(int *number);
 
-  int MPC_Get_multithreading (char *name, int size);
-  int MPC_Get_networking (char *name, int size);
-  int MPC_Get_processor_name (char *name, int *resultlen);
+int MPC_Get_multithreading(char *name, int size);
+int MPC_Get_networking(char *name, int size);
+int MPC_Get_processor_name(char *name, int *resultlen);
 
+/*Collective operations */
+int MPC_Barrier(MPC_Comm comm);
+int MPC_Bcast(void *buffer, mpc_msg_count count, MPC_Datatype datatype,
+              int root, MPC_Comm comm);
+int MPC_Allreduce(void *sendbuf, void *recvbuf, mpc_msg_count count,
+                  MPC_Datatype datatype, MPC_Op op, MPC_Comm comm);
+int MPC_Reduce(void *sendbuf, void *recvbuf, mpc_msg_count count,
+               MPC_Datatype datatype, MPC_Op op, int root, MPC_Comm comm);
+int MPC_Op_create(MPC_User_function *, int, MPC_Op *);
+int MPC_Op_free(MPC_Op *);
 
-  /*Collective operations */
-  int MPC_Barrier (MPC_Comm comm);
-  int MPC_Bcast (void *buffer, mpc_msg_count count, MPC_Datatype datatype,
-		 int root, MPC_Comm comm);
-  int MPC_Allreduce (void *sendbuf, void *recvbuf, mpc_msg_count count,
-		     MPC_Datatype datatype, MPC_Op op, MPC_Comm comm);
-  int MPC_Reduce (void *sendbuf, void *recvbuf, mpc_msg_count count,
-		  MPC_Datatype datatype, MPC_Op op, int root, MPC_Comm comm);
-  int MPC_Op_create (MPC_User_function *, int, MPC_Op *);
-  int MPC_Op_free (MPC_Op *);
+/*P-t-P Communications */
+int MPC_Isend(void *buf, mpc_msg_count count, MPC_Datatype datatype, int dest,
+              int tag, MPC_Comm comm, MPC_Request *request);
+int MPC_Ibsend(void *, mpc_msg_count, MPC_Datatype, int, int, MPC_Comm,
+               MPC_Request *);
+int MPC_Issend(void *, mpc_msg_count, MPC_Datatype, int, int, MPC_Comm,
+               MPC_Request *);
+int MPC_Irsend(void *, mpc_msg_count, MPC_Datatype, int, int, MPC_Comm,
+               MPC_Request *);
 
+int MPC_Irecv(void *buf, mpc_msg_count count, MPC_Datatype datatype, int source,
+              int tag, MPC_Comm comm, MPC_Request *request);
 
+int MPC_Wait(MPC_Request *request, MPC_Status *status);
+int MPC_Waitall(mpc_msg_count, MPC_Request *, MPC_Status *);
+int MPC_Waitsome(mpc_msg_count, MPC_Request *, mpc_msg_count *, mpc_msg_count *,
+                 MPC_Status *);
+int MPC_Waitany(mpc_msg_count count, MPC_Request array_of_requests[],
+                mpc_msg_count *index, MPC_Status *status);
+int MPC_Wait_pending(MPC_Comm comm);
+int MPC_Wait_pending_all_comm(void);
 
-  /*P-t-P Communications */
-  int MPC_Isend (void *buf, mpc_msg_count count, MPC_Datatype datatype,
-		 int dest, int tag, MPC_Comm comm, MPC_Request * request);
-  int MPC_Ibsend (void *, mpc_msg_count, MPC_Datatype, int, int, MPC_Comm,
-		  MPC_Request *);
-  int MPC_Issend (void *, mpc_msg_count, MPC_Datatype, int, int, MPC_Comm,
-		  MPC_Request *);
-  int MPC_Irsend (void *, mpc_msg_count, MPC_Datatype, int, int, MPC_Comm,
-		  MPC_Request *);
+int MPC_Test(MPC_Request *, int *, MPC_Status *);
+int MPC_Test_no_check(MPC_Request *, int *, MPC_Status *);
+int MPC_Test_check(MPC_Request *, int *, MPC_Status *);
 
-  int MPC_Irecv (void *buf, mpc_msg_count count, MPC_Datatype datatype,
-		 int source, int tag, MPC_Comm comm, MPC_Request * request);
+int MPC_Iprobe(int, int, MPC_Comm, int *, MPC_Status *);
+int MPC_Probe(int, int, MPC_Comm, MPC_Status *);
+int MPC_Get_count(MPC_Status *, MPC_Datatype, mpc_msg_count *);
 
-  int MPC_Wait (MPC_Request * request, MPC_Status * status);
-  int MPC_Waitall (mpc_msg_count, MPC_Request *, MPC_Status *);
-  int MPC_Waitsome (mpc_msg_count, MPC_Request *, mpc_msg_count *,
-		    mpc_msg_count *, MPC_Status *);
-  int MPC_Waitany (mpc_msg_count count, MPC_Request array_of_requests[],
-		   mpc_msg_count * index, MPC_Status * status);
-  int MPC_Wait_pending (MPC_Comm comm);
-  int MPC_Wait_pending_all_comm (void);
+int MPC_Send(void *, mpc_msg_count, MPC_Datatype, int, int, MPC_Comm);
+int MPC_Bsend(void *, mpc_msg_count, MPC_Datatype, int, int, MPC_Comm);
+int MPC_Ssend(void *, mpc_msg_count, MPC_Datatype, int, int, MPC_Comm);
+int MPC_Rsend(void *, mpc_msg_count, MPC_Datatype, int, int, MPC_Comm);
+int MPC_Recv(void *, mpc_msg_count, MPC_Datatype, int, int, MPC_Comm,
+             MPC_Status *);
 
-  int MPC_Test (MPC_Request *, int *, MPC_Status *);
-  int MPC_Test_no_check (MPC_Request *, int *, MPC_Status *);
-  int MPC_Test_check (MPC_Request *, int *, MPC_Status *);
+int MPC_Sendrecv(void *, mpc_msg_count, MPC_Datatype, int, int, void *,
+                 mpc_msg_count, MPC_Datatype, int, int, MPC_Comm, MPC_Status *);
 
-  int MPC_Iprobe (int, int, MPC_Comm, int *, MPC_Status *);
-  int MPC_Probe (int, int, MPC_Comm, MPC_Status *);
-  int MPC_Get_count (MPC_Status *, MPC_Datatype, mpc_msg_count *);
+/*Status */
+int MPC_Cancel(MPC_Request *);
 
-  int MPC_Send (void *, mpc_msg_count, MPC_Datatype, int, int, MPC_Comm);
-  int MPC_Bsend (void *, mpc_msg_count, MPC_Datatype, int, int, MPC_Comm);
-  int MPC_Ssend (void *, mpc_msg_count, MPC_Datatype, int, int, MPC_Comm);
-  int MPC_Rsend (void *, mpc_msg_count, MPC_Datatype, int, int, MPC_Comm);
-  int MPC_Recv (void *, mpc_msg_count, MPC_Datatype, int, int, MPC_Comm,
-		MPC_Status *);
+/*Gather */
+int MPC_Gather(void *, mpc_msg_count, MPC_Datatype, void *, mpc_msg_count,
+               MPC_Datatype, int, MPC_Comm);
+int MPC_Gatherv(void *, mpc_msg_count, MPC_Datatype, void *, mpc_msg_count *,
+                mpc_msg_count *, MPC_Datatype, int, MPC_Comm);
+int MPC_Allgather(void *, mpc_msg_count, MPC_Datatype, void *, mpc_msg_count,
+                  MPC_Datatype, MPC_Comm);
+int MPC_Allgatherv(void *, mpc_msg_count, MPC_Datatype, void *, mpc_msg_count *,
+                   mpc_msg_count *, MPC_Datatype, MPC_Comm);
 
-  int MPC_Sendrecv (void *, mpc_msg_count, MPC_Datatype, int, int, void *,
-		    mpc_msg_count, MPC_Datatype, int, int, MPC_Comm,
-		    MPC_Status *);
+/*Scatter */
+int MPC_Scatter(void *, mpc_msg_count, MPC_Datatype, void *, mpc_msg_count,
+                MPC_Datatype, int, MPC_Comm);
+int MPC_Scatterv(void *, mpc_msg_count *, mpc_msg_count *, MPC_Datatype, void *,
+                 mpc_msg_count, MPC_Datatype, int, MPC_Comm);
 
-  /*Status */
-  int MPC_Cancel (MPC_Request *);
+/*Alltoall */
+int MPC_Alltoall(void *, mpc_msg_count, MPC_Datatype, void *, mpc_msg_count,
+                 MPC_Datatype, MPC_Comm);
+int MPC_Alltoallv(void *, mpc_msg_count *, mpc_msg_count *, MPC_Datatype,
+                  void *, mpc_msg_count *, mpc_msg_count *, MPC_Datatype,
+                  MPC_Comm);
 
-  /*Gather */
-  int MPC_Gather (void *, mpc_msg_count, MPC_Datatype, void *,
-		  mpc_msg_count, MPC_Datatype, int, MPC_Comm);
-  int MPC_Gatherv (void *, mpc_msg_count, MPC_Datatype, void *,
-		   mpc_msg_count *, mpc_msg_count *, MPC_Datatype, int,
-		   MPC_Comm);
-  int MPC_Allgather (void *, mpc_msg_count, MPC_Datatype, void *,
-		     mpc_msg_count, MPC_Datatype, MPC_Comm);
-  int MPC_Allgatherv (void *, mpc_msg_count, MPC_Datatype, void *,
-		      mpc_msg_count *, mpc_msg_count *, MPC_Datatype,
-		      MPC_Comm);
+/*Informations */
+int MPC_Get_processor_name(char *, int *);
 
-  /*Scatter */
-  int MPC_Scatter (void *, mpc_msg_count, MPC_Datatype, void *,
-		   mpc_msg_count, MPC_Datatype, int, MPC_Comm);
-  int MPC_Scatterv (void *, mpc_msg_count *, mpc_msg_count *,
-		    MPC_Datatype, void *, mpc_msg_count, MPC_Datatype,
-		    int, MPC_Comm);
+/*Groups */
+int MPC_Comm_group(MPC_Comm, MPC_Group *);
+int MPC_Comm_remote_group(MPC_Comm, MPC_Group *);
+int MPC_Group_free(MPC_Group *);
+int MPC_Group_incl(MPC_Group, int, int *, MPC_Group *);
+int MPC_Group_difference(MPC_Group, MPC_Group, MPC_Group *);
 
-  /*Alltoall */
-  int MPC_Alltoall (void *, mpc_msg_count, MPC_Datatype, void *,
-		    mpc_msg_count, MPC_Datatype, MPC_Comm);
-  int MPC_Alltoallv (void *, mpc_msg_count *, mpc_msg_count *,
-		     MPC_Datatype, void *, mpc_msg_count *,
-		     mpc_msg_count *, MPC_Datatype, MPC_Comm);
+/*Communicators */
+int MPC_Convert_to_intercomm(MPC_Comm comm, MPC_Group group);
+int MPC_Comm_create_list(MPC_Comm, int *list, int nb_elem, MPC_Comm *);
+int MPC_Comm_create(MPC_Comm, MPC_Group, MPC_Comm *);
+int MPC_Comm_free(MPC_Comm *);
+int MPC_Comm_dup(MPC_Comm, MPC_Comm *);
+int MPC_Comm_split(MPC_Comm, int, int, MPC_Comm *);
 
-  /*Informations */
-  int MPC_Get_processor_name (char *, int *);
-
-  /*Groups */
-  int MPC_Comm_group (MPC_Comm, MPC_Group *);
-  int MPC_Comm_remote_group (MPC_Comm, MPC_Group *);
-  int MPC_Group_free (MPC_Group *);
-  int MPC_Group_incl (MPC_Group, int, int *, MPC_Group *);
-  int MPC_Group_difference (MPC_Group, MPC_Group, MPC_Group *);
-
-  /*Communicators */
-  int MPC_Convert_to_intercomm (MPC_Comm comm, MPC_Group group);
-  int MPC_Comm_create_list (MPC_Comm, int *list, int nb_elem, MPC_Comm *);
-  int MPC_Comm_create (MPC_Comm, MPC_Group, MPC_Comm *);
-  int MPC_Comm_free (MPC_Comm *);
-  int MPC_Comm_dup (MPC_Comm, MPC_Comm *);
-  int MPC_Comm_split (MPC_Comm, int, int, MPC_Comm *);
-
-  /*Error_handler */
+/*Error_handler */
 #define MPC_MAX_ERROR_STRING 512
   void MPC_Default_error (MPC_Comm * comm, int *error, char *msg,
 			  char *file, int line);
@@ -619,7 +625,16 @@ typedef enum
 			     MPC_Datatype array_of_datatypes[]);
   int MPC_Type_commit( MPC_Datatype * type );
   int MPCX_Type_debug( MPC_Datatype type );
-  
+
+  typedef int(MPC_Type_copy_attr_function)(MPC_Datatype old_type,
+                                           int type_keyval, void *extra_state,
+                                           void *attribute_val_in,
+                                           void *attribute_val_out, int *flag);
+  typedef int(MPC_Type_delete_attr_function)(MPC_Datatype datatype,
+                                             int type_keyval,
+                                             void *attribute_val,
+                                             void *extra_state);
+
   /*MPC specific function */
   int MPC_Copy_in_buffer (void *inbuffer, void *outbuffer, MPC_Datatype datatype);
   int MPC_Copy_from_buffer (void *inbuffer, void *outbuffer, MPC_Datatype datatype);
@@ -940,6 +955,18 @@ typedef enum
 			      MPC_Aint array_of_addresses[],
 			      MPC_Datatype array_of_datatypes[]);
   int PMPC_Type_commit( MPC_Datatype * type );
+
+  /* Types Keyval handling */
+  int PMPC_Type_free_keyval(int *type_keyval);
+  int PMPC_Type_create_keyval(MPC_Type_copy_attr_function *copy,
+                              MPC_Type_delete_attr_function *deletef,
+                              int *type_keyval, void *extra_state);
+  int PMPC_Type_delete_attr(MPC_Datatype datatype, int type_keyval);
+  int PMPC_Type_set_attr(MPC_Datatype datatype, int type_keyval,
+                         void *attribute_val);
+  int PMPC_Type_get_attr(MPC_Datatype datatype, int attribute_val,
+                         void *type_keyval, int *flag);
+
   /*MPC specific function */
   int PMPC_Copy_in_buffer (void *inbuffer, void *outbuffer, MPC_Datatype datatype);
   int PMPC_Copy_from_buffer (void *inbuffer, void *outbuffer, MPC_Datatype datatype);

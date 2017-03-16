@@ -70,18 +70,31 @@ int sctk_rail_gate_msgtype( sctk_rail_info_t * rail, sctk_thread_ptp_message_t *
 	struct sctk_runtime_config_struct_gate_message_type * conf = (struct sctk_runtime_config_struct_gate_message_type *)gate_config;
 	
 	int is_process_specific = sctk_is_process_specific_message ( SCTK_MSG_HEADER ( message ) );
-	
-	/* It is a process specific message
-	 * and it is allowed */
-	if( is_process_specific && conf->process )
-		return 1;
-	
-	/* It is a common message and it is allowed */
-	if( !is_process_specific && conf->common )
-		return 1;
-	
-	
-	return 0;
+        int tag = SCTK_MSG_TAG(message);
+
+        sctk_message_class_t class =
+            (SCTK_MSG_HEADER(message))->message_type.type;
+
+        /* It is a emulated RMA and it is not allowed */
+        if ((class == SCTK_RDMA_MESSAGE) && !conf->emulated_rma) {
+          return 0;
+        }
+
+        /* It is a task level control  message and it is not allowed */
+        if (((class == SCTK_CONTROL_MESSAGE_TASK) || (tag == 16008)) &&
+            !conf->task) {
+          return 0;
+        }
+        /* It is a process specific message
+         * and it is allowed */
+        if (is_process_specific && conf->process)
+          return 1;
+
+        /* It is a common message and it is allowed */
+        if (!is_process_specific && conf->common)
+          return 1;
+
+        return 0;
 }
 
 struct sctk_gate_context

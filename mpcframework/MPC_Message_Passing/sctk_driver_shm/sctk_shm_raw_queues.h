@@ -14,7 +14,7 @@ void sctk_shm_reset_process_queues(int);
 void sctk_shm_release_cell(sctk_shm_cell_t *);
 void sctk_shm_send_cell(sctk_shm_cell_t *);
 sctk_shm_cell_t* sctk_shm_recv_cell(void);
-sctk_shm_cell_t* sctk_shm_get_cell(int);
+sctk_shm_cell_t *sctk_shm_get_cell(int, int);
 
 sctk_shm_cell_t* sctk_shm_pop_cell_dest(sctk_shm_list_type_t,int);
 void sctk_shm_push_cell_dest(sctk_shm_list_type_t,sctk_shm_cell_t*,int); 

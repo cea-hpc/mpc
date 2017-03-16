@@ -61,55 +61,78 @@ void sctk_control_message_context_set_user( void (*fn)( int , int , char , char 
 /* Process Level Messages                                               */
 /************************************************************************/
 
+#ifdef MPC_MPI
+/* MPI Level win handler */
+void mpc_MPI_Win_control_message_handler(void *data, size_t size);
 
-void sctk_control_message_process_level( int source_process, int source_rank, char subtype, char param, void * data, size_t size )
-{
-	struct sctk_window_map_request * mr  = NULL;
-	struct sctk_window_emulated_RDMA *erma = NULL;
-	struct sctk_control_message_fence_ctx * fence = NULL;
-	struct sctk_window_emulated_fetch_and_op_RDMA *fop = NULL;
-	struct sctk_window_emulated_CAS_RDMA *fcas = NULL;
-	int win_id = -1;
-	
-	switch( subtype )
-	{
-		case SCTK_PROCESS_FENCE:
-			fence = (struct sctk_control_message_fence_ctx *)data;
-			sctk_control_message_fence_handler( fence );
-		break;
-		case SCTK_PROCESS_RDMA_WIN_MAPTO:
-			sctk_nodebug("Received a MAP remote from %d", source_rank );
-			mr = (struct sctk_window_map_request *) data;
-			sctk_window_map_remote_ctrl_msg_handler( mr );
-		break;
-		
-		case SCTK_PROCESS_RDMA_WIN_RELAX:
-			memcpy( &win_id, data, sizeof(int) );
-			sctk_nodebug("Received a  WIN relax from %d on %d", source_rank , win_id);
-			sctk_window_relax_ctrl_msg_handler( win_id );
-		break;
-		
-		case SCTK_PROCESS_RDMA_EMULATED_WRITE :
-			erma = (struct sctk_window_emulated_RDMA *)data;
-			sctk_window_RDMA_emulated_write_ctrl_msg_handler( erma );
-		break;
-		
-		case SCTK_PROCESS_RDMA_EMULATED_READ :
-			erma = (struct sctk_window_emulated_RDMA *)data;
-			sctk_window_RDMA_emulated_read_ctrl_msg_handler( erma );
-		break;
-		
-		case SCTK_PROCESS_RDMA_EMULATED_FETCH_AND_OP:
-			fop = (struct sctk_window_emulated_fetch_and_op_RDMA *)data;
-			sctk_window_RDMA_fetch_and_op_ctrl_msg_handler( fop );
-		break;
-		
-		case SCTK_PROCESS_RDMA_EMULATED_CAS:
-			fcas = (struct sctk_window_emulated_CAS_RDMA *)data;
-			sctk_window_RDMA_CAS_ctrl_msg_handler( fcas );
-		break;
-	}
-	
+#else
+/* Dummy substitute implemenentation */
+void mpc_MPI_Win_control_message_handler(void *data, size_t size) {}
+#endif
+
+void sctk_control_message_task_level(int source_process, int source_rank,
+                                     char subtype, char param, void *data,
+                                     size_t size) {
+  switch (subtype) {
+
+  // case SCTK_PROCESS_RDMA_CONTROL_MESSAGE:
+  // mpc_MPI_Win_control_message_handler(data, size);
+  // break;
+  default:
+    not_implemented();
+  }
+}
+
+void sctk_control_message_process_level(int source_process, int source_rank,
+                                        char subtype, char param, void *data,
+                                        size_t size) {
+  struct sctk_window_map_request *mr = NULL;
+  struct sctk_window_emulated_RDMA *erma = NULL;
+  struct sctk_control_message_fence_ctx *fence = NULL;
+  struct sctk_window_emulated_fetch_and_op_RDMA *fop = NULL;
+  struct sctk_window_emulated_CAS_RDMA *fcas = NULL;
+  int win_id = -1;
+
+  switch (subtype) {
+  case SCTK_PROCESS_FENCE:
+    fence = (struct sctk_control_message_fence_ctx *)data;
+    // sctk_control_message_fence_handler(fence);
+    break;
+
+  case SCTK_PROCESS_RDMA_WIN_MAPTO:
+    sctk_nodebug("Received a MAP remote from %d", source_rank);
+    mr = (struct sctk_window_map_request *)data;
+    sctk_window_map_remote_ctrl_msg_handler(mr);
+    break;
+
+  case SCTK_PROCESS_RDMA_WIN_RELAX:
+    memcpy(&win_id, data, sizeof(int));
+    sctk_nodebug("Received a  WIN relax from %d on %d", source_rank, win_id);
+    sctk_window_relax_ctrl_msg_handler(win_id);
+    break;
+
+  case SCTK_PROCESS_RDMA_EMULATED_WRITE:
+    erma = (struct sctk_window_emulated_RDMA *)data;
+    sctk_window_RDMA_emulated_write_ctrl_msg_handler(erma);
+    break;
+
+  case SCTK_PROCESS_RDMA_EMULATED_READ:
+    erma = (struct sctk_window_emulated_RDMA *)data;
+    sctk_window_RDMA_emulated_read_ctrl_msg_handler(erma);
+    break;
+
+  case SCTK_PROCESS_RDMA_EMULATED_FETCH_AND_OP:
+    fop = (struct sctk_window_emulated_fetch_and_op_RDMA *)data;
+    sctk_window_RDMA_fetch_and_op_ctrl_msg_handler(fop);
+    break;
+
+  case SCTK_PROCESS_RDMA_EMULATED_CAS:
+    fcas = (struct sctk_window_emulated_CAS_RDMA *)data;
+    sctk_window_RDMA_CAS_ctrl_msg_handler(fcas);
+    break;
+  default:
+    not_implemented();
+  }
 }
 
 /************************************************************************/
@@ -138,247 +161,301 @@ void printpayload( void * pl , size_t size )
 	
 }
 
-void __sctk_control_messages_send( int dest, sctk_message_class_t message_class, int subtype, int param, void *buffer, size_t size, int  rail_id ) 
-{
-	sctk_communicator_t communicator = SCTK_COMM_WORLD;
-	sctk_communicator_t tag = 0;
-	
-	sctk_request_t request;
+void __sctk_control_messages_send(int dest, int dest_task,
+                                  sctk_message_class_t message_class,
+                                  sctk_communicator_t comm, int subtype,
+                                  int param, void *buffer, size_t size,
+                                  int rail_id, int is_broadcast,
+                                  sctk_communicator_t inner_comm) {
+  sctk_communicator_t communicator = comm;
+  sctk_communicator_t tag = 16000;
 
-	sctk_thread_ptp_message_t msg;
-	
-	/* Add a dummy payload */
-	int dummy_data = 42;
-	
-	if( !buffer && !size )
-	{
-		buffer = &dummy_data;
-		size = sizeof( int );
-	}
-	
-	if( !sctk_message_class_is_process_specific( message_class ) )
-	{
-		sctk_fatal("Cannot send a non-process specific message using this function");
-	}
+  sctk_request_t request;
 
-	sctk_init_header ( &msg, SCTK_MESSAGE_CONTIGUOUS, sctk_free_control_messages, sctk_message_copy );
+  sctk_thread_ptp_message_t msg;
 
-	
-	/* Fill in control message context (note that class is handled by set_header_in_message) */
-	SCTK_MSG_SPECIFIC_CLASS_SET_SUBTYPE( (&msg) , subtype );
-	SCTK_MSG_SPECIFIC_CLASS_SET_PARAM( (&msg) , param );
-	SCTK_MSG_SPECIFIC_CLASS_SET_RAILID( (&msg), rail_id);
-	
-	sctk_add_adress_in_message ( &msg, buffer, size );
-	
-	//printpayload( buffer, size );
-	sctk_set_header_in_message ( &msg, tag, communicator,  sctk_get_process_rank(), dest,  &request, size, message_class, SCTK_DATATYPE_IGNORE );
-	
-	sctk_send_message_try_check ( &msg, 1 );	
-	
-	sctk_wait_message ( &request );
+  /* Add a dummy payload */
+  static int dummy_data = 42;
+
+  if (!buffer && !size) {
+    buffer = &dummy_data;
+    size = sizeof(int);
+  }
+
+  if (!sctk_message_class_is_control_message(message_class)) {
+    sctk_fatal("Cannot send a non-contol message using this function");
+  }
+
+  int source = -1;
+
+  if (dest < 0) {
+    int cw_rank = sctk_get_comm_world_rank(comm, dest_task);
+    dest = sctk_get_process_rank_from_task_rank(cw_rank);
+    source = sctk_get_rank(communicator, sctk_get_task_rank());
+  } else {
+    source = sctk_process_rank;
+  }
+
+  /* Are we sending to our own process ?? */
+  //~ if( dest == sctk_process_rank )
+  //~ {
+  //~ /* If so we call directly */
+  //~ control_message_submit( message_class, rail_id, sctk_process_rank,
+  // sctk_get_rank(communicator, sctk_get_task_rank() ), subtype, param, buffer,
+  // size );
+  //~ return;
+  //~ }
+
+  sctk_init_request(&request, communicator, REQUEST_SEND);
+
+  sctk_init_header(&msg, SCTK_MESSAGE_CONTIGUOUS, sctk_free_control_messages,
+                   sctk_message_copy);
+
+  /* Fill in control message context (note that class is handled by
+   * set_header_in_message) */
+  SCTK_MSG_SPECIFIC_CLASS_SET_SUBTYPE((&msg), subtype);
+  SCTK_MSG_SPECIFIC_CLASS_SET_PARAM((&msg), param);
+  SCTK_MSG_SPECIFIC_CLASS_SET_RAILID((&msg), rail_id);
+
+  sctk_add_adress_in_message(&msg, buffer, size);
+
+  // printpayload( buffer, size );
+  sctk_set_header_in_message(&msg, tag, communicator, source,
+                             (0 <= dest_task) ? dest_task : dest, &request,
+                             size, message_class, SCTK_DATATYPE_IGNORE);
+
+  sctk_send_message_try_check(&msg, 1);
+
+  sctk_wait_message(&request);
 }
 
-void sctk_control_messages_send( int dest, sctk_message_class_t message_class, int subtype, char  param, void *buffer, size_t size ) 
-{
-	__sctk_control_messages_send( dest, message_class, subtype, param, buffer, size, -1 ); 
+void sctk_control_messages_send_process(int dest_process, int subtype,
+                                        char param, void *buffer, size_t size) {
+  __sctk_control_messages_send(dest_process, -1, SCTK_CONTROL_MESSAGE_PROCESS,
+                               SCTK_COMM_WORLD, subtype, param, buffer, size,
+                               -1, 0, SCTK_COMM_WORLD);
+}
+
+void sctk_control_messages_send_to_task(int dest_task, sctk_communicator_t comm,
+                                        int subtype, char param, void *buffer,
+                                        size_t size) {
+  sctk_info("Send task to %d (subtype %d)", dest_task, subtype);
+  __sctk_control_messages_send(-1, dest_task, SCTK_CONTROL_MESSAGE_TASK, comm,
+                               subtype, param, buffer, size, -1, 0,
+                               SCTK_COMM_WORLD);
 }
 
 void sctk_control_messages_send_rail( int dest, int subtype, char  param, void *buffer, size_t size, int  rail_id ) 
 {
-	__sctk_control_messages_send( dest, SCTK_CONTROL_MESSAGE_RAIL, subtype, param, buffer, size, rail_id ); 
+  __sctk_control_messages_send(dest, -1, SCTK_CONTROL_MESSAGE_RAIL,
+                               SCTK_COMM_WORLD, subtype, param, buffer, size,
+                               rail_id, 0, SCTK_COMM_WORLD);
 }
 
 void sctk_control_messages_incoming( sctk_thread_ptp_message_t * msg )
 {
 	sctk_message_class_t class = SCTK_MSG_SPECIFIC_CLASS( msg );
-	
-	switch( class )
-	{
-		/* Direct processing possibly outside of MPI context */
-		case SCTK_CONTROL_MESSAGE_RAIL:
-			sctk_control_messages_perform( msg );
-		break;
-		
-		/* Delayed processing but freeing the network progress threads
-		 * from the handler (avoid deadlocks) */
-		case SCTK_CONTROL_MESSAGE_PROCESS:
-		case SCTK_CONTROL_MESSAGE_USER:
-			sctk_control_message_push( msg );
-		break;
-		
-		default:
-			not_reachable();
-	}
+
+        switch (class) {
+        /* Direct processing possibly outside of MPI context */
+        case SCTK_CONTROL_MESSAGE_RAIL:
+          sctk_control_messages_perform(msg, 0);
+          break;
+
+        /* Delayed processing but freeing the network progress threads
+         * from the handler (avoid deadlocks) */
+        case SCTK_CONTROL_MESSAGE_PROCESS:
+        case SCTK_CONTROL_MESSAGE_USER:
+          sctk_control_message_push(msg);
+          break;
+
+        default:
+          not_reachable();
+        }
 }
 
-#define SCTK_CTRL_MSG_STATICBUFFER_SIZE 4096
+void control_message_submit(sctk_message_class_t class, int rail_id,
+                            int source_process, int source_rank, int subtype,
+                            int param, void *data, size_t msg_size) {
+  switch (class) {
+  case SCTK_CONTROL_MESSAGE_RAIL: {
+    sctk_rail_info_t *rail = sctk_rail_get_by_id(rail_id);
 
-void sctk_control_messages_perform( sctk_thread_ptp_message_t * msg )
-{
-	sctk_message_class_t class = SCTK_MSG_SPECIFIC_CLASS( msg );
+    if (!rail) {
+      sctk_fatal("No such rail %d", rail_id);
+    }
 
-	if( !sctk_message_class_is_process_specific( class ) )
-	{
-		sctk_fatal("Cannot process a non-process specific message using this function");
-	}
+    if (!rail->control_message_handler) {
+      sctk_warning("No handler was set to rail (%d = %s) control messages, set "
+                   "it prior to send such messages",
+                   rail_id, rail->network_name);
+      return;
+    }
 
-	int source_process = SCTK_MSG_SRC_PROCESS( msg );
-	int source_rank = SCTK_MSG_SRC_TASK( msg );
-	size_t msg_size = SCTK_MSG_SIZE( msg );
-	short subtype = SCTK_MSG_SPECIFIC_CLASS_SUBTYPE( msg );
-	char param = SCTK_MSG_SPECIFIC_CLASS_PARAM( msg );
-	char rail_id = SCTK_MSG_SPECIFIC_CLASS_RAILID( msg );
-	
-	
-	int did_allocate = 0;
-	void * tmp_contol_buffer = NULL;
-	char __the_static_buffer_used_instead_of_doing_static_allocation[SCTK_CTRL_MSG_STATICBUFFER_SIZE];
-	
-	/* Do we need to rely on a dynamic allocation */
-	if( SCTK_CTRL_MSG_STATICBUFFER_SIZE <= SCTK_MSG_SIZE ( msg ) )
-	{
-		/* Yes we will have to free */
-		did_allocate = 1;
-		/* Allocate */
-		tmp_contol_buffer = sctk_calloc( SCTK_MSG_SIZE ( msg ), sizeof( char ) );
-	}
-	else
-	{
-		/* No need to free */
-		did_allocate = 0;
-		/* Refference the static buffer */
-		tmp_contol_buffer = __the_static_buffer_used_instead_of_doing_static_allocation;
-	}
+    // printpayload( data, SCTK_MSG_SIZE ( msg ) );
 
-	assume( tmp_contol_buffer != NULL );
-	
-	/* Generate the paired recv message to fill the buffer in
-	 * a portable way (idependently from driver) */
-	
-	sctk_thread_ptp_message_t recvmsg;
-	sctk_request_t request;
-	sctk_init_header ( &recvmsg, SCTK_MESSAGE_CONTIGUOUS, sctk_free_control_messages, sctk_message_copy );
-	sctk_add_adress_in_message ( &recvmsg, tmp_contol_buffer, msg_size );
-	sctk_set_header_in_message ( &recvmsg, 0, SCTK_COMM_WORLD, SCTK_ANY_SOURCE, sctk_get_process_rank(),  &request, SCTK_MSG_SIZE( msg ), class, SCTK_DATATYPE_IGNORE );
-	
-	/* Trigger the receive task (as if we matched) */
-	sctk_message_to_copy_t copy_task;
-	copy_task.msg_send = msg;
-	copy_task.msg_recv = &recvmsg;
-	copy_task.prev = NULL;
-	copy_task.next = NULL;
-	
-	/* Trigger the copy from network task */
-	copy_task.msg_send->tail.message_copy ( &copy_task );
+    (rail->control_message_handler)(rail, source_process, source_rank, subtype,
+                                    param, data, msg_size);
+  } break;
+  case SCTK_CONTROL_MESSAGE_TASK: {
+    sctk_control_message_task_level(source_process, source_rank, subtype, param,
+                                    data, msg_size);
+  } break;
+  case SCTK_CONTROL_MESSAGE_PROCESS: {
+    sctk_control_message_process_level(source_process, source_rank, subtype,
+                                       param, data, msg_size);
+  } break;
+  case SCTK_CONTROL_MESSAGE_USER: {
+    struct sctk_control_message_context *ctx = sctk_control_message_ctx();
 
-	void * data =  tmp_contol_buffer;
+    if (!ctx->sctk_user_control_message) {
+      sctk_warning("No handler was set to process user level control messages, "
+                   "set it prior to send such messages");
+      return;
+    }
 
-	switch( class )
-	{
-		case SCTK_CONTROL_MESSAGE_RAIL:
-		{
-			sctk_rail_info_t * rail = sctk_rail_get_by_id ( rail_id );
-			
-			if(!rail)
-			{
-				sctk_fatal("No such rail %d", rail_id );
-			}
-			
-			if( !rail->control_message_handler )
-			{
-				sctk_warning("No handler was set to rail (%d = %s) control messages, set it prior to send such messages", rail_id, rail->network_name );
-				return;
-			}
-			
-			//printpayload( data, SCTK_MSG_SIZE ( msg ) );
-			
-			(rail->control_message_handler)( rail, source_process, source_rank, subtype, param,  data, msg_size );
-		}
-		break;
-		case SCTK_CONTROL_MESSAGE_PROCESS:
-		{
-			sctk_control_message_process_level( source_process, source_rank, subtype, param,  data, msg_size );
-		}
-		break;
-		case SCTK_CONTROL_MESSAGE_USER:
-		{
-			struct sctk_control_message_context *ctx = sctk_control_message_ctx();
-			
-			if( !ctx->sctk_user_control_message )
-			{
-				sctk_warning("No handler was set to process user level control messages, set it prior to send such messages");
-				return;
-			}
-			
-			(ctx->sctk_user_control_message)( source_process, source_rank, subtype, param,  data, msg_size );
-		}
-		break;
-		default:
-			not_reachable();
-	}
-	
-	/* Free only if the message was too large
-	 * for the static buffer */
-	if( did_allocate )
-	{
-		/* Free the TMP buffer */
-		sctk_free( tmp_contol_buffer );
-	}
-	
-	sctk_complete_and_free_message( &recvmsg );
+    (ctx->sctk_user_control_message)(source_process, source_rank, subtype,
+                                     param, data, msg_size);
+  } break;
+  default:
+    not_reachable();
+  }
 }
 
-void sctk_control_message_fence( int target_task )
-{
-	struct sctk_control_message_fence_ctx ctx;
-	
-	ctx.source = sctk_get_task_rank();
-	ctx.remote = target_task;
-	
-	sctk_control_messages_send( sctk_get_process_rank_from_task_rank(target_task), SCTK_CONTROL_MESSAGE_PROCESS, SCTK_PROCESS_FENCE, 0, &ctx, sizeof(struct sctk_control_message_fence_ctx) ); 
-	
-	int dummy = 0;
-	//sctk_error("FENCE RECV %d -> %d", ctx.remote, ctx.source );
-	sctk_request_t fence_req;
-	sctk_message_irecv_class_dest( ctx.remote, ctx.source, &dummy, sizeof(int) , ctx.source, SCTK_COMM_WORLD, SCTK_CONTROL_MESSAGE_FENCE, &fence_req );
-	
-	while( fence_req.completion_flag != SCTK_MESSAGE_DONE )
-	{
-		sctk_control_message_process_all();
-	}
-	
-	sctk_wait_message ( &fence_req );
-	
-	
+#define SCTK_CTRL_MSG_STATICBUFFER_SIZE 2048
+
+void sctk_control_messages_perform(sctk_thread_ptp_message_t *msg, int force) {
+  sctk_message_class_t class = SCTK_MSG_SPECIFIC_CLASS(msg);
+
+  if (!sctk_message_class_is_control_message(class)) {
+    sctk_fatal("Cannot process a non-control message using this function (%s)",
+               sctk_message_class_name[class]);
+  }
+
+  /* Retrieve message info here as they are freed after match */
+  int source_process = SCTK_MSG_SRC_PROCESS(msg);
+  int source_rank = SCTK_MSG_SRC_TASK(msg);
+  size_t msg_size = SCTK_MSG_SIZE(msg);
+  sctk_communicator_t msg_comm = SCTK_MSG_COMMUNICATOR(msg);
+  short subtype = SCTK_MSG_SPECIFIC_CLASS_SUBTYPE(msg);
+  char param = SCTK_MSG_SPECIFIC_CLASS_PARAM(msg);
+  char rail_id = SCTK_MSG_SPECIFIC_CLASS_RAILID(msg);
+
+  int did_allocate = 0;
+  void *tmp_contol_buffer = NULL;
+  char __the_static_buffer_used_instead_of_doing_static_allocation
+      [SCTK_CTRL_MSG_STATICBUFFER_SIZE];
+
+  /* Do we need to rely on a dynamic allocation */
+  if (SCTK_CTRL_MSG_STATICBUFFER_SIZE <= SCTK_MSG_SIZE(msg)) {
+    /* Yes we will have to free */
+    did_allocate = 1;
+    /* Allocate */
+    tmp_contol_buffer = sctk_calloc(SCTK_MSG_SIZE(msg), sizeof(char));
+  } else {
+    /* No need to free */
+    did_allocate = 0;
+    /* Refference the static buffer */
+    tmp_contol_buffer =
+        __the_static_buffer_used_instead_of_doing_static_allocation;
+  }
+
+  assume(tmp_contol_buffer != NULL);
+
+  sctk_request_t request;
+  memset(&request, 0, sizeof(sctk_request_t));
+
+  if ((SCTK_MSG_DEST_TASK(msg) < 0) || force) {
+    /* Generate the paired recv message to fill the buffer in
+    * a portable way (idependently from driver) */
+
+    sctk_thread_ptp_message_t recvmsg;
+
+    sctk_init_header(&recvmsg, SCTK_MESSAGE_CONTIGUOUS,
+                     sctk_free_control_messages, sctk_message_copy);
+    sctk_add_adress_in_message(&recvmsg, tmp_contol_buffer, msg_size);
+    sctk_set_header_in_message(&recvmsg, 0, msg_comm, SCTK_ANY_SOURCE,
+                               sctk_get_process_rank(), &request,
+                               SCTK_MSG_SIZE(msg), class, SCTK_DATATYPE_IGNORE);
+
+    /* Trigger the receive task (as if we matched) */
+    sctk_message_to_copy_t copy_task;
+    copy_task.msg_send = msg;
+    copy_task.msg_recv = &recvmsg;
+    copy_task.prev = NULL;
+    copy_task.next = NULL;
+    /* Trigger the copy from network task */
+    copy_task.msg_send->tail.message_copy(&copy_task);
+  } else {
+    sctk_message_irecv_class(source_rank, tmp_contol_buffer, msg_size, 16000,
+                             msg_comm, class, &request);
+    sctk_wait_message(&request);
+  }
+
+  void *data = tmp_contol_buffer;
+
+  control_message_submit(class, rail_id, source_process, source_rank, subtype,
+                         param, data, msg_size);
+
+  /* Free only if the message was too large
+   * for the static buffer */
+  if (did_allocate) {
+    /* Free the TMP buffer */
+    sctk_free(tmp_contol_buffer);
+  }
+}
+
+void sctk_control_message_fence_req(int target_task, sctk_communicator_t comm,
+                                    sctk_request_t *req) {
+  struct sctk_control_message_fence_ctx ctx;
+
+  return;
+
+  ctx.source = sctk_get_rank(comm, sctk_get_task_rank());
+  ctx.remote = sctk_get_rank(comm, target_task);
+  ctx.comm = comm;
+
+  static int dummy = 0;
+
+  sctk_message_irecv_class_dest(ctx.remote, ctx.source, &dummy, sizeof(int),
+                                ctx.source, comm, SCTK_CONTROL_MESSAGE_FENCE,
+                                req);
+
+  sctk_control_messages_send_process(
+      sctk_get_process_rank_from_task_rank(
+          sctk_get_comm_world_rank(target_task, comm)),
+      SCTK_PROCESS_FENCE, 0, &ctx,
+      sizeof(struct sctk_control_message_fence_ctx));
+
+  int cnt = 0;
+}
+
+void sctk_control_message_fence(int target_task, sctk_communicator_t comm) {
+  return;
+  sctk_request_t fence_req;
+
+  sctk_control_message_fence_req(target_task, comm, &fence_req);
+
+  sctk_wait_message(&fence_req);
 }
 
 void sctk_control_message_fence_handler( struct sctk_control_message_fence_ctx *ctx )
 {
-	int dummy = 0;
-	//sctk_error("FENCE SEND %d -> %d", ctx->remote, ctx->source );
-	
-	sctk_control_message_process_all();
-	
-	sctk_request_t fence_req;
-	
-	sctk_message_isend_class_src( ctx->remote, ctx->source, &dummy, sizeof(int) , ctx->source, SCTK_COMM_WORLD, SCTK_CONTROL_MESSAGE_FENCE, &fence_req );
+  static int dummy = 0;
+  sctk_error("FENCE SEND %d -> %d", ctx->remote, ctx->source);
 
-	sctk_wait_message ( &fence_req );
+  sctk_control_message_process_local(sctk_get_task_rank());
 
-	
+  sctk_message_isend_class_src(ctx->remote, ctx->source, &dummy, sizeof(int),
+                               ctx->source, ctx->comm,
+                               SCTK_CONTROL_MESSAGE_FENCE, NULL);
 }
 
 /************************************************************************/
 /* Control Messages List                                                */
 /************************************************************************/
 
-sctk_spinlock_t __ctrl_msg_list_lock = SCTK_SPINLOCK_INITIALIZER;
-
-static volatile int ____ctrl_msg_list_count = 0;
-
 struct sctk_topological_polling_tree ___control_message_list_polling_tree;
-
 
 struct sctk_ctrl_msg_cell
 {
@@ -389,9 +466,7 @@ struct sctk_ctrl_msg_cell
 };
 
 struct sctk_ctrl_msg_cell * __ctrl_msg_list = NULL;
-
-
-
+sctk_spinlock_t __ctrl_msg_list_lock = SCTK_SPINLOCK_INITIALIZER;
 
 void sctk_control_message_push( sctk_thread_ptp_message_t * msg )
 {
@@ -400,7 +475,6 @@ void sctk_control_message_push( sctk_thread_ptp_message_t * msg )
 	
 	sctk_spinlock_lock( &__ctrl_msg_list_lock );
 	DL_PREPEND( __ctrl_msg_list, cell );
-	____ctrl_msg_list_count++;
 	sctk_spinlock_unlock( &__ctrl_msg_list_lock );
 }
 
@@ -408,92 +482,89 @@ void sctk_control_message_process_all()
 {
 	struct sctk_ctrl_msg_cell * cell = NULL;
 
-	if( sctk_get_task_rank() < 0 )
-		return;
-	
-	
-	int present = 1;
-	while( present )
-	{
-		sctk_spinlock_lock( &__ctrl_msg_list_lock );
-		
-		if( __ctrl_msg_list )
-		{
-			/* In UTLIST head->prev is the tail */
-			cell = __ctrl_msg_list->prev;
-			DL_DELETE(__ctrl_msg_list,cell);
-			____ctrl_msg_list_count--;
-		}
-		
+        int present = 1;
+        while (present) {
+          sctk_spinlock_lock_yield(&__ctrl_msg_list_lock);
 
-		sctk_spinlock_unlock( &__ctrl_msg_list_lock );
-	
-		if( cell )
-		{
-			sctk_control_messages_perform( cell->msg );
-			sctk_free( cell );
-			cell = NULL;
-		}
-		else
-		{
-			present = 0;
-		}
-	
-	}
-	
-	
+          if (__ctrl_msg_list) {
+            /* In UTLIST head->prev is the tail */
+            cell = __ctrl_msg_list->prev;
+            DL_DELETE(__ctrl_msg_list, cell);
+          }
 
+          sctk_spinlock_unlock(&__ctrl_msg_list_lock);
+
+          if (cell) {
+            sctk_control_messages_perform(cell->msg, 0);
+            sctk_free(cell);
+            cell = NULL;
+          } else {
+            present = 0;
+          }
+        }
 }
 
-static volatile int __inside_sctk_control_message_process = 0;
+__thread int ___is_in_sctk_control_message_process_local = 0;
 
-void ___sctk_control_message_process(void * dummy )
-{
+int sctk_control_message_process_local(int rank) {
+  int ret = 0;
 
-	if( __inside_sctk_control_message_process )
-		return;
-	
-	__inside_sctk_control_message_process = 1;
+  if (rank < 0)
+    return ret;
 
-	struct sctk_ctrl_msg_cell * cell = NULL;
+  if (___is_in_sctk_control_message_process_local)
+    return ret;
 
-/*
-	if( sctk_get_task_rank() < 0 )
-	{
-		__inside_sctk_control_message_process = 0;
-		return;
-	}
+  ___is_in_sctk_control_message_process_local = 1;
 
-	if( 15 < ____ctrl_msg_list_count )
-	{
-		sctk_control_message_process_all();
-		__inside_sctk_control_message_process = 0;
-		return;
-	}
-*/
-        sctk_spinlock_lock_yield(&__ctrl_msg_list_lock);
+  int st;
+  sctk_thread_message_header_t msg;
+  memset(&msg, 0, sizeof(sctk_thread_message_header_t));
 
-        if (__ctrl_msg_list != NULL) {
-          /* In UTLIST head->prev is the tail */
-          cell = __ctrl_msg_list->prev;
-          DL_DELETE(__ctrl_msg_list, cell);
-          ____ctrl_msg_list_count--;
-        }
+  sctk_probe_any_source_tag_class_comm(rank, 16000, SCTK_P2P_MESSAGE,
+                                       SCTK_COMM_WORLD, &st, &msg);
 
-        sctk_spinlock_unlock(&__ctrl_msg_list_lock);
+  ___is_in_sctk_control_message_process_local = 0;
 
-        if (cell) {
-          sctk_control_messages_perform(cell->msg);
-          sctk_free(cell);
-        }
-
-        __inside_sctk_control_message_process = 0;
+  return ret;
 }
 
+void __sctk_control_message_process(void *dummy) {
+  struct sctk_ctrl_msg_cell *cell = NULL;
+
+  sctk_spinlock_lock_yield(&__ctrl_msg_list_lock);
+
+  if (__ctrl_msg_list != NULL) {
+    /* In UTLIST head->prev is the tail */
+    cell = __ctrl_msg_list->prev;
+    DL_DELETE(__ctrl_msg_list, cell);
+  }
+
+  sctk_spinlock_unlock(&__ctrl_msg_list_lock);
+
+  if (cell) {
+    sctk_control_messages_perform(cell->msg, 0);
+    sctk_free(cell);
+  }
+}
+
+static __thread int __inside_sctk_control_message_process = 0;
 
 void sctk_control_message_process()
 {
-	sctk_topological_polling_tree_poll( &___control_message_list_polling_tree,  ___sctk_control_message_process, NULL );
+
+  __inside_sctk_control_message_process = 1;
+
+  if (0 <= sctk_get_task_rank()) {
+    __inside_sctk_control_message_process = 0;
+    return;
+  }
+
+  __sctk_control_message_process(NULL);
+  // sctk_topological_polling_tree_poll(&___control_message_list_polling_tree,
+  //                                   __sctk_control_message_process, NULL);
+
+  __inside_sctk_control_message_process = 0;
 }
 
 

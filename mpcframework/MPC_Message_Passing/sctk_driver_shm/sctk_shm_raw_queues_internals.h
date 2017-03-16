@@ -22,6 +22,7 @@ struct sctk_shm_region_infos_s
     volatile sctk_shm_list_t *recv_queue;
     volatile sctk_shm_list_t *cmpl_queue;
     volatile sctk_shm_list_t *free_queue;
+    volatile sctk_shm_list_t *ctrl_queue;
     char *sctk_shm_asymm_addr;
 };
 typedef struct sctk_shm_region_infos_s sctk_shm_region_infos_t;

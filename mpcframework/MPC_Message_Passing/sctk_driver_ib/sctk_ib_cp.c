@@ -356,31 +356,33 @@ int sctk_ib_cp_poll ( struct sctk_rail_info_s *rail, struct sctk_ib_polling_s *p
 	if ( task_id < 0 )
 #endif
 	{
-		sctk_ib_cp_steal ( rail, poll, 1 );
-		return 0;
-	}
+          sctk_ib_cp_steal(rail, poll, 1);
+          return 0;
+        }
 
-	if ( tls_vp == NULL )
-	{
-		sctk_ib_cp_task_t *task = NULL;
-		sctk_nodebug ( "Try to find task %d", task_id );
-		HASH_FIND ( hh_all, all_tasks, &task_id, sizeof ( int ), task );
-		assume ( task );
+        int vp = -1;
 
-		int vp_num = task->vp;
-		assume ( vp_num >= 0 );
+        if (tls_vp == NULL) {
+          vp = sctk_thread_get_vp();
 
-		CHECK_ONLINE_PROGRAM;
+          if (vp < 0)
+            return 0;
 
-		tls_vp = vps[vp_num];
-	}
+          CHECK_ONLINE_PROGRAM;
 
-	for ( task = tls_vp->tasks; task; task = task->hh_vp.next )
-	{
-		__cp_poll ( rail, poll, & ( task->local_ibufs_list ), & ( task->local_ibufs_list_lock ), task, 0 );
-	}
+          if (vps[vp] == NULL) {
+            return 0;
+          }
 
-	return 0;
+          tls_vp = vps[vp];
+        }
+
+        for (task = tls_vp->tasks; task; task = task->hh_vp.next) {
+          __cp_poll(rail, poll, &(task->local_ibufs_list),
+                    &(task->local_ibufs_list_lock), task, 0);
+        }
+
+        return 0;
 }
 
 static inline int __cp_steal ( const struct sctk_rail_info_s const *rail, struct sctk_ib_polling_s *poll, sctk_ibuf_t *volatile *list, sctk_spinlock_t *lock, sctk_ib_cp_task_t *task, sctk_ib_cp_task_t *stealing_task )

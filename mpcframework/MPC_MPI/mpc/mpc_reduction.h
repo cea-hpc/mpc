@@ -48,8 +48,10 @@ typedef mpc_long_long  mpc_long_long_int;
 
 void mpc_no_exec (const void *in, void *inout, size_t size, MPC_Datatype datatype, int line, char *file);
 
-#define MPC_DEFINED_FUNCS(t,tt,name)					\
-void MPC_##name##_func##_##t(const tt* in ,tt*inout ,size_t size ,MPC_Datatype datatype)
+#define MPC_DEFINED_FUNCS(t, tt, name)                                         \
+  void MPC_##name##_func##_##t(const tt *mpc_restrict in,                      \
+                               tt *mpc_restrict inout, size_t size,            \
+                               MPC_Datatype datatype)
 
 #define MPC_PROTOTYPES(name)						\
 void MPC_##name##_func(const void* in ,void*inout ,size_t size ,MPC_Datatype datatype); \

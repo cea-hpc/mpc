@@ -1027,7 +1027,7 @@ sctk_user_thread_create (sctk_thread_t * restrict __threadp,
 #ifdef SCTK_USE_TLS
   extls_ctx_t* old_ctx = sctk_extls_storage;
   extls_ctx_t** cur_tx = ((extls_ctx_t**)extls_get_context_storage_addr());
-  *cur_tx = malloc(sizeof(extls_ctx_t));
+  *cur_tx = calloc(1, sizeof(extls_ctx_t));
   extls_ctx_herit(old_ctx, *cur_tx, LEVEL_THREAD);
   extls_ctx_restore(*cur_tx);
 #endif

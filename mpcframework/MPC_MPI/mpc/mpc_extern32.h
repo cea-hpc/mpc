@@ -289,8 +289,6 @@ static inline void BASIC_convert(int type_byte_size, char *src, char *dest)
   [ as of 09/04/2003 ]
 */
 
-
-
 /** ==========================================================
  * END of MPICH related code
  */

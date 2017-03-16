@@ -562,24 +562,29 @@ hwloc_const_cpuset_t sctk_topology_get_numa_cpuset( int pu_id )
 	else
 	{
 		hwloc_obj_t target_pu = hwloc_get_obj_by_type(topology,HWLOC_OBJ_PU, pu_id );
-		assume( target_pu != NULL );
-		
-		hwloc_obj_t parent = target_pu->parent;
-		
-		while( parent->type != HWLOC_OBJ_NODE )
-		{
-			if( !parent )
-				break;
-			
-			parent = parent->parent;
-		}
-		
-		assume( parent != NULL );
-		
-		ret = parent->cpuset;
-	}
-	
-	return ret;
+
+                if (!target_pu) {
+                  sctk_warning("INFO : Could not extract NUMA topology");
+                  return hwloc_topology_get_allowed_cpuset(topology);
+                }
+
+                assume(target_pu != NULL);
+
+                hwloc_obj_t parent = target_pu->parent;
+
+                while (parent->type != HWLOC_OBJ_NODE) {
+                  if (!parent)
+                    break;
+
+                  parent = parent->parent;
+                }
+
+                assume(parent != NULL);
+
+                ret = parent->cpuset;
+        }
+
+        return ret;
 }
 
 
@@ -1156,18 +1161,19 @@ int sctk_get_numa_node_number ()
  */
 int sctk_get_node_from_cpu (const int vp)
 {
-	if(sctk_is_numa_node ())
-	{
-		const hwloc_obj_t pu = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, vp);
-		assume(pu);
-		const hwloc_obj_t node = hwloc_get_ancestor_obj_by_type(topology, HWLOC_OBJ_NODE, pu);
+  if (vp < 0)
+    return -1;
 
-		return node->logical_index;
-	}
-	else
-	{
-		return 0;
-	}
+  if (sctk_is_numa_node()) {
+    const hwloc_obj_t pu = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, vp);
+    assume(pu);
+    const hwloc_obj_t node =
+        hwloc_get_ancestor_obj_by_type(topology, HWLOC_OBJ_NODE, pu);
+
+    return node->logical_index;
+  } else {
+    return 0;
+  }
 }
 
 /*! \brief Return the NUMA node according to the code_id number

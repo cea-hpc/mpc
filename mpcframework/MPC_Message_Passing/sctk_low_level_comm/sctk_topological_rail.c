@@ -408,38 +408,37 @@ void sctk_topological_rail_unpin_region( struct sctk_rail_info_s * rail, struct 
 	}
 }
 
+void sctk_topological_rail_rdma_write(
+    sctk_rail_info_t *rail, sctk_thread_ptp_message_t *msg, void *src_addr,
+    struct sctk_rail_pin_ctx_list *local_key, void *dest_addr,
+    struct sctk_rail_pin_ctx_list *remote_key, size_t size) {
+  sctk_endpoint_t *topo_endpoint =
+      sctk_rail_get_any_route_to_process(rail, SCTK_MSG_DEST_PROCESS(msg));
 
-void sctk_topological_rail_rdma_write(  sctk_rail_info_t *rail, sctk_thread_ptp_message_t *msg,
-										 void * src_addr, struct sctk_rail_pin_ctx_list * local_key,
-										 void * dest_addr, struct sctk_rail_pin_ctx_list * remote_key,
-										 size_t size )
-{
-	sctk_endpoint_t * topo_endpoint = sctk_rail_get_any_route_to_process ( rail, SCTK_MSG_DEST_PROCESS( msg ) );
-	
-	if( ! topo_endpoint )
-	{
-		topological_on_demand_connection_handler( rail, SCTK_MSG_DEST_PROCESS( msg ) );
-	}
-	else
-	{
-		topo_endpoint = sctk_topological_rail_ellect_endpoint( SCTK_MSG_DEST_PROCESS( msg ) , msg, topo_endpoint );
-	}
-	
-	/* By default use rail 0 */
-	sctk_rail_info_t * endpoint_rail = rail->subrails[0];
-	
-	/* If we found a topo endpoint, override the 0 */
-	if( topo_endpoint )
-		endpoint_rail = topo_endpoint->rail;
-	
-	assume( endpoint_rail != NULL );
-	assume( endpoint_rail->rdma_write != NULL );
-	
-	int subrail_id = endpoint_rail->subrail_id;
-	assume( 0 <= subrail_id );
-	assume( subrail_id < rail->subrail_count );
-	
-	endpoint_rail->rdma_write( endpoint_rail, msg, src_addr, local_key + subrail_id, dest_addr, remote_key + subrail_id, size );
+  if (!topo_endpoint) {
+    topological_on_demand_connection_handler(rail, SCTK_MSG_DEST_PROCESS(msg));
+  } else {
+    topo_endpoint = sctk_topological_rail_ellect_endpoint(
+        SCTK_MSG_DEST_PROCESS(msg), msg, topo_endpoint);
+  }
+
+  /* By default use rail 0 */
+  sctk_rail_info_t *endpoint_rail = rail->subrails[0];
+
+  /* If we found a topo endpoint, override the 0 */
+  if (topo_endpoint)
+    endpoint_rail = topo_endpoint->rail;
+
+  assume(endpoint_rail != NULL);
+  assume(endpoint_rail->rdma_write != NULL);
+
+  int subrail_id = endpoint_rail->subrail_id;
+  assume(0 <= subrail_id);
+  assume(subrail_id < rail->subrail_count);
+
+  endpoint_rail->rdma_write(endpoint_rail, msg, src_addr,
+                            local_key + subrail_id, dest_addr,
+                            remote_key + subrail_id, size);
 }
 
 void sctk_topological_rail_rdma_read(   sctk_rail_info_t *rail, sctk_thread_ptp_message_t *msg,
@@ -447,33 +446,33 @@ void sctk_topological_rail_rdma_read(   sctk_rail_info_t *rail, sctk_thread_ptp_
                          void * dest_addr, struct  sctk_rail_pin_ctx_list * local_key,
                          size_t size )
 {
-	sctk_endpoint_t * topo_endpoint = sctk_rail_get_any_route_to_process ( rail, SCTK_MSG_SRC_PROCESS( msg ) );
-	
-	if( ! topo_endpoint )
-	{
-		topological_on_demand_connection_handler( rail, SCTK_MSG_SRC_PROCESS( msg ) );
-	}
-	else
-	{
-		topo_endpoint = sctk_topological_rail_ellect_endpoint( SCTK_MSG_SRC_PROCESS( msg ) , msg, topo_endpoint );
-	}
+  sctk_endpoint_t *topo_endpoint =
+      sctk_rail_get_any_route_to_process(rail, SCTK_MSG_DEST_PROCESS(msg));
 
-	/* By default use rail 0 */
-	sctk_rail_info_t * endpoint_rail = rail->subrails[0];
-	
-	/* If we found a topo endpoint, override the 0 */
-	if( topo_endpoint )
-		endpoint_rail = topo_endpoint->rail;
-	
-	
-	assume( endpoint_rail != NULL );
-	assume( endpoint_rail->rdma_read != NULL );
-	
-	int subrail_id = endpoint_rail->subrail_id;
-	assume( 0 <= subrail_id );
-	assume( subrail_id < rail->subrail_count );
-	
-	endpoint_rail->rdma_read( endpoint_rail, msg, src_addr, remote_key + subrail_id, dest_addr, local_key  + subrail_id, size );
+  if (!topo_endpoint) {
+    topological_on_demand_connection_handler(rail, SCTK_MSG_DEST_PROCESS(msg));
+  } else {
+    topo_endpoint = sctk_topological_rail_ellect_endpoint(
+        SCTK_MSG_DEST_PROCESS(msg), msg, topo_endpoint);
+  }
+
+  /* By default use rail 0 */
+  sctk_rail_info_t *endpoint_rail = rail->subrails[0];
+
+  /* If we found a topo endpoint, override the 0 */
+  if (topo_endpoint)
+    endpoint_rail = topo_endpoint->rail;
+
+  assume(endpoint_rail != NULL);
+  assume(endpoint_rail->rdma_read != NULL);
+
+  int subrail_id = endpoint_rail->subrail_id;
+  assume(0 <= subrail_id);
+  assume(subrail_id < rail->subrail_count);
+
+  endpoint_rail->rdma_read(endpoint_rail, msg, src_addr,
+                           remote_key + subrail_id, dest_addr,
+                           local_key + subrail_id, size);
 }
 
 void sctk_topological_rail_rdma_fetch_and_op(   sctk_rail_info_t *rail,
@@ -486,33 +485,33 @@ void sctk_topological_rail_rdma_fetch_and_op(   sctk_rail_info_t *rail,
 												RDMA_op op,
 												RDMA_type type )
 {
-	sctk_endpoint_t * topo_endpoint = sctk_rail_get_any_route_to_process ( rail, SCTK_MSG_SRC_PROCESS( msg ) );
-	
-	if( ! topo_endpoint )
-	{
-		topological_on_demand_connection_handler( rail, SCTK_MSG_SRC_PROCESS( msg ) );
-	}
-	else
-	{
-		topo_endpoint = sctk_topological_rail_ellect_endpoint( SCTK_MSG_SRC_PROCESS( msg ) , msg, topo_endpoint );
-	}
+  sctk_endpoint_t *topo_endpoint =
+      sctk_rail_get_any_route_to_process(rail, SCTK_MSG_DEST_PROCESS(msg));
 
-	/* By default use rail 0 */
-	sctk_rail_info_t * endpoint_rail = rail->subrails[0];
-	
-	/* If we found a topo endpoint, override the 0 */
-	if( topo_endpoint )
-		endpoint_rail = topo_endpoint->rail;
-	
-	
-	assume( endpoint_rail != NULL );
-	assume( endpoint_rail->rdma_read != NULL );
-	
-	int subrail_id = endpoint_rail->subrail_id;
-	assume( 0 <= subrail_id );
-	assume( subrail_id < rail->subrail_count );
-	
-	endpoint_rail->rdma_fetch_and_op( endpoint_rail, msg, fetch_addr, local_key +  subrail_id, remote_addr, remote_key + subrail_id, add, op , type);
+  if (!topo_endpoint) {
+    topological_on_demand_connection_handler(rail, SCTK_MSG_DEST_PROCESS(msg));
+  } else {
+    topo_endpoint = sctk_topological_rail_ellect_endpoint(
+        SCTK_MSG_DEST_PROCESS(msg), msg, topo_endpoint);
+  }
+
+  /* By default use rail 0 */
+  sctk_rail_info_t *endpoint_rail = rail->subrails[0];
+
+  /* If we found a topo endpoint, override the 0 */
+  if (topo_endpoint)
+    endpoint_rail = topo_endpoint->rail;
+
+  assume(endpoint_rail != NULL);
+  assume(endpoint_rail->rdma_read != NULL);
+
+  int subrail_id = endpoint_rail->subrail_id;
+  assume(0 <= subrail_id);
+  assume(subrail_id < rail->subrail_count);
+
+  endpoint_rail->rdma_fetch_and_op(endpoint_rail, msg, fetch_addr,
+                                   local_key + subrail_id, remote_addr,
+                                   remote_key + subrail_id, add, op, type);
 }
 
 void sctk_topological_rail_cas(   sctk_rail_info_t *rail,
@@ -525,32 +524,33 @@ void sctk_topological_rail_cas(   sctk_rail_info_t *rail,
 								  void * new,
 								  RDMA_type type )
 {
-	sctk_endpoint_t * topo_endpoint = sctk_rail_get_any_route_to_process ( rail, SCTK_MSG_SRC_PROCESS( msg ) );
-	
-	if( ! topo_endpoint )
-	{
-		topological_on_demand_connection_handler( rail, SCTK_MSG_SRC_PROCESS( msg ) );
-	}
-	else
-	{
-		topo_endpoint = sctk_topological_rail_ellect_endpoint( SCTK_MSG_SRC_PROCESS( msg ) , msg, topo_endpoint );
-	}
+  sctk_endpoint_t *topo_endpoint =
+      sctk_rail_get_any_route_to_process(rail, SCTK_MSG_DEST_PROCESS(msg));
 
-	/* By default use rail 0 */
-	sctk_rail_info_t * endpoint_rail = rail->subrails[0];
-	
-	/* If we found a topo endpoint, override the 0 */
-	if( topo_endpoint )
-		endpoint_rail = topo_endpoint->rail;
+  if (!topo_endpoint) {
+    topological_on_demand_connection_handler(rail, SCTK_MSG_DEST_PROCESS(msg));
+  } else {
+    topo_endpoint = sctk_topological_rail_ellect_endpoint(
+        SCTK_MSG_DEST_PROCESS(msg), msg, topo_endpoint);
+  }
 
-	assume( endpoint_rail != NULL );
-	assume( endpoint_rail->rdma_read != NULL );
-	
-	int subrail_id = endpoint_rail->subrail_id;
-	assume( 0 <= subrail_id );
-	assume( subrail_id < rail->subrail_count );
-	
-	endpoint_rail->rdma_cas( endpoint_rail, msg, res_addr, local_key + subrail_id,  remote_addr, remote_key + subrail_id, comp, new, type );
+  /* By default use rail 0 */
+  sctk_rail_info_t *endpoint_rail = rail->subrails[0];
+
+  /* If we found a topo endpoint, override the 0 */
+  if (topo_endpoint)
+    endpoint_rail = topo_endpoint->rail;
+
+  assume(endpoint_rail != NULL);
+  assume(endpoint_rail->rdma_read != NULL);
+
+  int subrail_id = endpoint_rail->subrail_id;
+  assume(0 <= subrail_id);
+  assume(subrail_id < rail->subrail_count);
+
+  endpoint_rail->rdma_cas(endpoint_rail, msg, res_addr, local_key + subrail_id,
+                          remote_addr, remote_key + subrail_id, comp, new,
+                          type);
 }
 
 
