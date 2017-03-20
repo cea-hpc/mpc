@@ -28,7 +28,7 @@
 #include "mpcomp_intel_types.h"
 
 #define KMP_TASKDATA_TO_TASK(task_data) ((mpcomp_task_t *)taskdata - 1)
-#define KMP_TASKDATA_TO_TASK(task) ((kmp_task_t *)taskdata + 1)
+#define KMP_TASK_TO_TASKDATA(task) ((kmp_task_t *)taskdata + 1)
 
 typedef kmp_int32 (*kmp_routine_entry_t)(kmp_int32, void *);
 

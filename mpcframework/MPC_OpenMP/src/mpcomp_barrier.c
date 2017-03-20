@@ -110,7 +110,7 @@ void __mpcomp_internal_half_barrier(mpcomp_mvp_t *mvp) {
 #if MPCOMP_TASK
   (void)mpcomp_thread_tls_store(&(mvp->threads[0]));
   __mpcomp_internal_full_barrier(mvp);
-  (void)mpcomp_thread_tls_store_father();
+  (void)mpcomp_thread_tls_store_father(); // To check...
 #endif /* MPCOMP_TASK */
 
   /* Step 1: Climb in the tree */
