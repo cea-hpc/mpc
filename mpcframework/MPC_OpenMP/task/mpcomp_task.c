@@ -431,7 +431,7 @@ static mpcomp_task_t *mpcomp_task_steal(mpcomp_task_list_t *list) {
 
   sctk_assert(list != NULL);
 
-  if (mpcomp_task_list_trylock(list)) {
+  if (!mpcomp_task_list_trylock(list)) {
     task = mpcomp_task_list_popfromtail(list);
     if (task)
       sctk_atomics_incr_int(&(list->nb_larcenies));
@@ -536,7 +536,7 @@ static struct mpcomp_task_s *__mpcomp_task_larceny(void) {
 
       /* Get the rank of the ancestor containing the task list */
       int rank = MPCOMP_TASK_MVP_GET_TASK_LIST_NODE_RANK(mvp, type);
-      int nbVictims = (isMonoVictim) ? 1 : nbTasklists;
+      int nbVictims = (isMonoVictim) ? 1 : nbTasklists - 1;
 
       /* Look for a task in all victims lists */
       for (i = 1; i < nbVictims + 1; i++) {
@@ -605,7 +605,7 @@ void mpcomp_task_schedule(void) {
     const int node_rank = MPCOMP_TASK_MVP_GET_TASK_LIST_NODE_RANK(mvp, type);
     list = mpcomp_task_get_list(node_rank, type);
     sctk_assert(list);
-    //	    if( mpcomp_task_list_trylock(list) )
+    //	    if( !mpcomp_task_list_trylock(list) )
     //            continue;
     mpcomp_task_list_lock(list);
     task = mpcomp_task_list_popfromhead(list, current_task->depth);
@@ -644,7 +644,8 @@ void mpcomp_taskwait(void) {
 
   if (omp_thread_tls->info.num_threads > 1) {
     current_task = MPCOMP_TASK_THREAD_GET_CURRENT_TASK(omp_thread_tls);
-    sctk_assert(current_task);
+    sctk_assert(
+        current_task); // Fail if tasks disable...(from full barrier call)
 
     /* Look for a children tasks list */
     while (sctk_atomics_load_int(&(current_task->refcount)) != 1) {

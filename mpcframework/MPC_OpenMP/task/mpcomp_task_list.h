@@ -120,6 +120,8 @@ mpcomp_task_list_popfromhead(mpcomp_task_list_t *list, int depth) {
   list->head = task->next;
   if (!(task->next))
     list->tail = NULL;
+  else
+    task->next->prev = NULL;
   sctk_atomics_decr_int(&list->nb_elements);
 
   return task;
@@ -131,9 +133,10 @@ mpcomp_task_list_popfromtail(mpcomp_task_list_t *list) {
     mpcomp_task_t *task = list->tail;
 
     list->tail = task->prev;
-    if (!(task->prev)) {
+    if (!(task->prev))
       list->head = NULL;
-    }
+    else
+      task->prev->next = NULL;
 
     sctk_atomics_decr_int(&(list->nb_elements));
     return task;

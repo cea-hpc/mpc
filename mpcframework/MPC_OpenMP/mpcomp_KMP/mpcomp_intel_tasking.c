@@ -35,6 +35,7 @@ kmp_int32 __kmpc_omp_task(ident_t *loc_ref, kmp_int32 gtid,
                           kmp_task_t *new_task) {
   struct mpcomp_task_s *mpcomp_task =
       (char *)new_task - sizeof(struct mpcomp_task_s);
+  // TODO: Handle final clause
   __mpcomp_task_process(mpcomp_task, true);
   return (kmp_int32)0;
 }
@@ -52,6 +53,7 @@ kmp_task_t *__kmpc_omp_task_alloc(ident_t *loc_ref, kmp_int32 gtid,
   mpcomp_thread_t *t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
 
   __mpcomp_init();
+  mpcomp_task_scheduling_infos_init();
 
   /* default pading */
   const long align_size = sizeof(void *);

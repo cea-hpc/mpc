@@ -70,25 +70,15 @@ static inline void mpcomp_task_tree_allocate_all_task_list(
     ret += mpcomp_task_tree_task_list_alloc(meta_elt, tasklist_depth,
                                             task_tree_infos->tasklistNodeRank,
                                             type, depth, id_numa);
-    if (depth != tasklist_depth) {
-      MPCOMP_TASK_MVP_SET_TASK_LIST_NODE_RANK(meta_elt->ptr.mvp, type,
-                                              global_rank);
-      if (task_tree_infos->tasklistNodeRank[type] != global_rank) {
-        mpcomp_node_t *node =
-            (mpcomp_node_t *)task_tree_infos
-                ->tree_array[0][task_tree_infos->tasklistNodeRank[type]];
-        mpcomp_task_list_t *list =
-            MPCOMP_TASK_NODE_GET_TASK_LIST_HEAD(node, type);
-        MPCOMP_TASK_MVP_SET_TASK_LIST_HEAD(meta_elt->ptr.mvp, type, list);
-      }
-      int *path = meta_elt->ptr.mvp->tree_rank;
-      MPCOMP_TASK_MVP_SET_PATH(meta_elt->ptr.mvp, path);
-    }
+    if (meta_elt->type == MPCOMP_TREE_META_ELT_MVP)
+      MPCOMP_TASK_MVP_SET_TASK_LIST_NODE_RANK(
+          meta_elt->ptr.mvp, type, task_tree_infos->tasklistNodeRank[type]);
   }
 
   if (ret && (larcenyMode == MPCOMP_TASK_LARCENY_MODE_RANDOM ||
               larcenyMode == MPCOMP_TASK_LARCENY_MODE_RANDOM_ORDER)) {
-    mpcomp_task_init_victim_random(meta_elt->ptr.node, global_rank);
+    mpcomp_task_init_victim_random(meta_elt->ptr.node, meta_elt->type,
+                                   global_rank);
   }
 }
 
@@ -162,7 +152,8 @@ static mpcomp_task_tree_infos_t *mpcomp_task_tree_init_task_tree_infos_node(
   child_task_tree_infos->first_rank =
       parent_task_tree_infos->first_rank + parent_task_tree_infos->stage_size;
   child_task_tree_infos->global_rank =
-      child_task_tree_infos->first_rank + index * tree_base_value;
+      child_task_tree_infos->first_rank +
+      (cur_globalRank - parent_task_tree_infos->first_rank) * tree_base_value;
 
   const int numa_node_number = sctk_max(sctk_get_numa_node_number(), 1);
   for (i = 0; i < numa_node_number; i++)
@@ -171,8 +162,6 @@ static mpcomp_task_tree_infos_t *mpcomp_task_tree_init_task_tree_infos_node(
   MPCOMP_TASK_NODE_SET_TREE_ARRAY_RANK(node, cur_globalRank);
   MPCOMP_TASK_NODE_SET_TREE_ARRAY_NODES(
       node, parent_task_tree_infos->tree_array[node->id_numa]);
-  mpcomp_task_tree_register_node_in_all_numa_node_array(
-      child_task_tree_infos->tree_array, node, cur_globalRank);
 
   sctk_assert(thread->instance->team);
   mpcomp_task_tree_allocate_all_task_list(&meta_elt, thread->instance->team,
@@ -180,6 +169,23 @@ static mpcomp_task_tree_infos_t *mpcomp_task_tree_init_task_tree_infos_node(
                                           node->depth, node->id_numa);
 
   return child_task_tree_infos;
+}
+
+static inline void mpcomp_task_tree_set_path(mpcomp_mvp_t *mvp, int rank) {
+  mpcomp_node_t *node;
+
+  mpcomp_thread_t *thread;
+  thread = (mpcomp_thread_t *)sctk_openmp_thread_tls;
+
+  sctk_assert(mvp);
+
+  MPCOMP_TASK_MVP_SET_PATH(mvp, mvp->tree_rank);
+
+  node = mvp->father;
+  while (node && !MPCOMP_TASK_NODE_GET_PATH(node)) {
+    MPCOMP_TASK_NODE_SET_PATH(node, MPCOMP_TASK_MVP_GET_PATH(mvp));
+    node = node->father;
+  }
 }
 
 /* Recursive initialization of mpcomp tasks lists (new and untied) */
@@ -194,7 +200,7 @@ mpcomp_task_tree_infos_init_r(mpcomp_node_t *node,
   sctk_assert(index >= 0);
   sctk_assert(parent_task_tree_infos);
 
-  const int cur_rank = parent_task_tree_infos->global_rank;
+  const int cur_rank = parent_task_tree_infos->global_rank + index;
   child_task_tree_infos = mpcomp_task_tree_init_task_tree_infos_node(
       node, parent_task_tree_infos, index);
 
@@ -213,11 +219,11 @@ mpcomp_task_tree_infos_init_r(mpcomp_node_t *node,
       break;
 
     case MPCOMP_CHILDREN_LEAF:
-      next_child = cur_rank + parent_task_tree_infos->stage_size +
-                   index * branch_child_num + i;
+      next_child = child_task_tree_infos->global_rank + i;
       mpcomp_task_tree_init_task_tree_infos_leaf(
           node->children.leaf[i], child_task_tree_infos, next_child,
           node->depth + 1, node->id_numa);
+      mpcomp_task_tree_set_path(node->children.leaf[i], next_child);
       break;
 
     default:

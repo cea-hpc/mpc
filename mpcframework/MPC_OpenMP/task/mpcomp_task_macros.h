@@ -197,17 +197,49 @@ typedef enum mpcomp_task_init_status_e {
 
 /*** NODE ACCESSORS MACROS ***/
 
-#define MPCOMP_TASK_MVP_GET_TREE_ARRAY_RANK(mvp) mvp->task_infos.tree_array_rank
-#define MPCOMP_TASK_MVP_SET_TREE_ARRAY_RANK(mvp, id)                           \
-  do {                                                                         \
-    mvp->task_infos.tree_array_rank = id;                                      \
-  } while (0)
-
 #define MPCOMP_TASK_NODE_GET_TREE_ARRAY_RANK(node)                             \
   node->task_infos.tree_array_rank;
 #define MPCOMP_TASK_NODE_SET_TREE_ARRAY_RANK(node, id)                         \
   do {                                                                         \
     node->task_infos.tree_array_rank = id;                                     \
+  } while (0)
+
+#define MPCOMP_TASK_NODE_GET_TREE_ARRAY_NODES(node)                            \
+  node->task_infos.tree_array_node
+#define MPCOMP_TASK_NODE_SET_TREE_ARRAY_NODES(node, ptr)                       \
+  do {                                                                         \
+    node->task_infos.tree_array_node = ptr;                                    \
+  } while (0)
+
+#define MPCOMP_TASK_NODE_GET_TREE_ARRAY_NODE(node, rank)                       \
+  node->task_infos.tree_array_node[rank]
+
+#define MPCOMP_TASK_NODE_GET_PATH(node) node->task_infos.path
+#define MPCOMP_TASK_NODE_SET_PATH(node, ptr)                                   \
+  do {                                                                         \
+    node->task_infos.path = ptr;                                               \
+  } while (0);
+
+#define MPCOMP_TASK_NODE_GET_TASK_LIST_HEAD(node, type)                        \
+  node->task_infos.tasklist[type]
+#define MPCOMP_TASK_NODE_SET_TASK_LIST_HEAD(node, type, ptr)                   \
+  do {                                                                         \
+    node->task_infos.tasklist[type] = ptr;                                     \
+  } while (0)
+
+#define MPCOMP_TASK_NODE_GET_TASK_LIST_RANDBUFFER(node)                        \
+  node->task_infos.tasklist_randBuffer
+#define MPCOMP_TASK_NODE_SET_TASK_LIST_RANDBUFFER(node, ptr)                   \
+  do {                                                                         \
+    node->task_infos.tasklist_randBuffer = ptr;                                \
+  } while (0)
+
+/*** MVP ACCESSORS MACROS ***/
+
+#define MPCOMP_TASK_MVP_GET_TREE_ARRAY_RANK(mvp) mvp->task_infos.tree_array_rank
+#define MPCOMP_TASK_MVP_SET_TREE_ARRAY_RANK(mvp, id)                           \
+  do {                                                                         \
+    mvp->task_infos.tree_array_rank = id;                                      \
   } while (0)
 
 #define MPCOMP_TASK_MVP_GET_TREE_ARRAY_NODES(mvp)                              \
@@ -216,15 +248,9 @@ typedef enum mpcomp_task_init_status_e {
   do {                                                                         \
     mvp->task_infos.tree_array_node = ptr;                                     \
   } while (0)
-#define MPCOMP_TASK_NODE_SET_TREE_ARRAY_NODES(mvp, ptr)                        \
-  do {                                                                         \
-    mvp->task_infos.tree_array_node = ptr;                                     \
-  } while (0)
 
 #define MPCOMP_TASK_MVP_GET_TREE_ARRAY_NODE(mvp, rank)                         \
   mvp->task_infos.tree_array_node[rank]
-#define MPCOMP_TASK_NODE_GET_TREE_ARRAY_NODE(node, rank)                       \
-  node->task_infos.tree_array_node[rank]
 
 #define MPCOMP_TASK_MVP_GET_PATH(mvp) mvp->task_infos.path
 #define MPCOMP_TASK_MVP_SET_PATH(mvp, ptr)                                     \
@@ -232,31 +258,11 @@ typedef enum mpcomp_task_init_status_e {
     mvp->task_infos.path = ptr;                                                \
   } while (0);
 
-#define MPCOMP_TASK_NODE_GET_PATH(node) node->task_infos.path
-#define MPCOMP_TASK_NODE_SET_PATH(node, ptr)                                   \
-  do {                                                                         \
-    node->task_infos.path = ptr;                                               \
-  } while (0);
-
-#define MPCOMP_TASK_MVP_GET_TASK_LIST_NODE_RANK(mvp, type)                     \
-  mvp->task_infos.tasklistNodeRank[type]
-#define MPCOMP_TASK_MVP_SET_TASK_LIST_NODE_RANK(mvp, type, id)                 \
-  do {                                                                         \
-    mvp->task_infos.tasklistNodeRank[type] = id;                               \
-  } while (0)
-
 #define MPCOMP_TASK_MVP_GET_TASK_LIST_HEAD(mvp, type)                          \
   mvp->task_infos.tasklist[type]
 #define MPCOMP_TASK_MVP_SET_TASK_LIST_HEAD(mvp, type, ptr)                     \
   do {                                                                         \
     mvp->task_infos.tasklist[type] = ptr;                                      \
-  } while (0)
-
-#define MPCOMP_TASK_NODE_GET_TASK_LIST_HEAD(node, type)                        \
-  node->task_infos.tasklist[type]
-#define MPCOMP_TASK_NODE_SET_TASK_LIST_HEAD(node, type, ptr)                   \
-  do {                                                                         \
-    node->task_infos.tasklist[type] = ptr;                                     \
   } while (0)
 
 #define MPCOMP_TASK_MVP_GET_LAST_STOLEN_TASK_LIST(mvp, type)                   \
@@ -266,20 +272,22 @@ typedef enum mpcomp_task_init_status_e {
     mvp->task_infos.lastStolen_tasklist[type] = ptr;                           \
   } while (0)
 
-#define MPCOMP_TASK_NODE_GET_TASK_LIST_RANK_BUFFER(node)                       \
-  node->task_infos.tasklist_randBuffer
-#define MPCOMP_TASK_NODE_SET_TASK_LIST_RANK_BUFFER(node, ptr)                  \
-  do {                                                                         \
-    node->task_infos.tasklist_randBuffer = ptr;                                \
-  } while (0)
-
 #define MPCOMP_TASK_MVP_GET_TASK_LIST_RANK_BUFFER(mvp, rank)                   \
-  MPCOMP_TASK_NODE_GET_TASK_LIST_RANK_BUFFER(                                  \
+  MPCOMP_TASK_NODE_GET_TASK_LIST_RANDBUFFER(                                   \
       MPCOMP_TASK_MVP_GET_TREE_ARRAY_NODE(mvp, rank))
 
-#define MPCOMP_TASK_MVP_SET_TASK_LIST_RANK_BUFFER(mvp, ptr)                    \
+#define MPCOMP_TASK_MVP_GET_TASK_LIST_RANDBUFFER(mvp)                          \
+  mvp->task_infos.tasklist_randBuffer
+#define MPCOMP_TASK_MVP_SET_TASK_LIST_RANDBUFFER(mvp, ptr)                     \
   do {                                                                         \
     mvp->task_infos.tasklist_randBuffer = ptr;                                 \
   } while (0);
+
+#define MPCOMP_TASK_MVP_GET_TASK_LIST_NODE_RANK(mvp, type)                     \
+  mvp->task_infos.tasklistNodeRank[type]
+#define MPCOMP_TASK_MVP_SET_TASK_LIST_NODE_RANK(mvp, type, id)                 \
+  do {                                                                         \
+    mvp->task_infos.tasklistNodeRank[type] = id;                               \
+  } while (0)
 
 #endif /* __MPCOMP_TASK_MACROS_H__ */
