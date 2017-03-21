@@ -122,7 +122,10 @@ void __kmpc_omp_task_complete_if0(ident_t *loc_ref, kmp_int32 gtid,
 
 kmp_int32 __kmpc_omp_task_parts(ident_t *loc_ref, kmp_int32 gtid,
                                 kmp_task_t *new_task) {
-  not_implemented();
+  // TODO: Check if this is the correct way to implement __kmpc_omp_task_parts
+  struct mpcomp_task_s *mpcomp_task =
+      (char *)new_task - sizeof(struct mpcomp_task_s);
+  __mpcomp_task_process(mpcomp_task, true);
   return (kmp_int32)0;
 }
 
