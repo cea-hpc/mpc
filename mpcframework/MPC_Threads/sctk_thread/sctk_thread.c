@@ -662,13 +662,13 @@ sctk_thread_create_tmp_start_routine (sctk_thread_data_t * __arg)
 #endif
   // thread priority
   if (sctk_new_scheduler_engine_enabled) {
-      sctk_thread_generic_addkind_mask_self(KIND_MASK_MPI);
-      sctk_thread_generic_set_basic_priority_self(
-              sctk_runtime_config_get()->modules.scheduler.mpi_basic_priority);
-      sctk_thread_generic_setkind_priority_self(
-              sctk_runtime_config_get()->modules.scheduler.mpi_basic_priority);
-      sctk_thread_generic_set_current_priority_self(
-              sctk_runtime_config_get()->modules.scheduler.mpi_basic_priority);
+    sctk_thread_generic_addkind_mask_self(KIND_MASK_MPI);
+    sctk_thread_generic_set_basic_priority_self(
+        sctk_runtime_config_get()->modules.scheduler.mpi_basic_priority);
+    sctk_thread_generic_setkind_priority_self(
+        sctk_runtime_config_get()->modules.scheduler.mpi_basic_priority);
+    sctk_thread_generic_set_current_priority_self(
+        sctk_runtime_config_get()->modules.scheduler.mpi_basic_priority);
   }
 
 #if defined(MPC_USE_CUDA)
@@ -875,13 +875,13 @@ sctk_thread_create_tmp_start_routine_user (sctk_thread_data_t * __arg)
 #endif
 
    if (sctk_new_scheduler_engine_enabled) {
-       sctk_thread_generic_addkind_mask_self(KIND_MASK_PTHREAD);
-       sctk_thread_generic_set_basic_priority_self(
-               sctk_runtime_config_get()->modules.scheduler.posix_basic_priority);
-       sctk_thread_generic_setkind_priority_self(
-               sctk_runtime_config_get()->modules.scheduler.posix_basic_priority);
-       sctk_thread_generic_set_current_priority_self(
-               sctk_runtime_config_get()->modules.scheduler.posix_basic_priority);
+     sctk_thread_generic_addkind_mask_self(KIND_MASK_PTHREAD);
+     sctk_thread_generic_set_basic_priority_self(
+         sctk_runtime_config_get()->modules.scheduler.posix_basic_priority);
+     sctk_thread_generic_setkind_priority_self(
+         sctk_runtime_config_get()->modules.scheduler.posix_basic_priority);
+     sctk_thread_generic_set_current_priority_self(
+         sctk_runtime_config_get()->modules.scheduler.posix_basic_priority);
    }
 
    res = tmp.__start_routine(tmp.__arg);
