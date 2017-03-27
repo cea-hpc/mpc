@@ -67,10 +67,7 @@ void __mpcomp_internal_begin_parallel_region(
   }
 
 #if OMPT_SUPPORT 
-	if( !mpcomp_ompt_is_enabled() )  
-		return;
-
-	if( OMPT_Callbacks )
+	if( mpcomp_ompt_is_enabled() &&  OMPT_Callbacks )
 	{
 		ompt_callback_parallel_begin_t callback;
 		callback = (ompt_callback_parallel_begin_t) OMPT_Callbacks[ompt_callback_parallel_begin];
@@ -232,10 +229,7 @@ void __mpcomp_internal_end_parallel_region(mpcomp_instance_t *instance) {
 #endif
 
 #if OMPT_SUPPORT 
-   if( !mpcomp_ompt_is_enabled() )
-      return;
-
-   if( OMPT_Callbacks )
+   if( mpcomp_ompt_is_enabled() &&  OMPT_Callbacks )
    {
       ompt_callback_parallel_end_t callback;
       callback = (ompt_callback_parallel_end_t) OMPT_Callbacks[ompt_callback_parallel_end];
