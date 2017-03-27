@@ -5,7 +5,9 @@
 
 #include "ompt.h"
 #include "mpcomp_abi.h"
+#include "mpcomp_types.h"
 #include "mpcomp_ompt_init.h"
+#include "mpcomp_openmp_tls.h"
 #include "mpcomp_ompt_entry_point.h"
 #include "mpcomp_ompt_types_misc.h"
 #include "mpcomp_ompt_macro_inquiry.h"
@@ -182,8 +184,8 @@ void mpcomp_ompt_pre_init( void )
 
 void mpcomp_ompt_post_init(void)
 {
-	mpcomp_ompt_fns->initialize(ompt_fn_lookup, mpcomp_ompt_fns);
-	/* TODO */
+	if( mpcomp_ompt_enabled && mpcomp_ompt_fns )
+		mpcomp_ompt_fns->initialize(ompt_fn_lookup, mpcomp_ompt_fns);
 }
 
 /***
@@ -361,19 +363,32 @@ ompt_get_callback( ompt_callbacks_t callback_type, ompt_callback_t* callback )
 OMPT_API_ROUTINE ompt_data_t* 
 ompt_get_thread_data(void)
 {
-	return NULL;
+	mpcomp_thread_t *thread_infos = mpcomp_get_thread_tls();
+	return ( thread_infos ) ? &(thread_infos->ompt_thread_data) : NULL; 
 }
 
 OMPT_API_ROUTINE ompt_state_t
 ompt_get_state( ompt_wait_id_t* wait_id)
 {
-	return ompt_state_undefined; 
+	mpcomp_thread_t *thread_infos = mpcomp_get_thread_tls();
+	return ( thread_infos ) ? thread_infos->state : ompt_state_undefined; 
 } 
 
 OMPT_API_ROUTINE int
 ompt_get_parallel_info( int ancestor_level, ompt_data_t** parallel_data, int* team_size)
 {
-	return 0;
+	mpcomp_thread_t *thread_infos = mpcomp_get_thread_tls();
+
+	if( ancestor_level != 0 ) // NO NESTED REGION
+	{
+		*parallel_data = NULL;
+		*team_size = 0;
+		return 0;
+	}
+
+	*parallel_data = (thread_infos) ? &(thread_infos->info.ompt_region_data) : NULL;
+	*team_size = (thread_infos) ? thread_infos->info.num_threads : 0;
+	return 1;
 } 
 
 OMPT_API_ROUTINE int
@@ -384,7 +399,46 @@ ompt_get_task_info( 	int ancestor_level,
 							ompt_data_t **parallel_data,
 							int *thread_num )
 {
-	return 0;
+	int i;
+	mpcomp_task_t* current_task = NULL;
+	mpcomp_thread_t *thread_infos = mpcomp_get_thread_tls();
+	
+	if( !thread_infos ) return 0;
+
+	current_task = thread_infos->task_infos.current_task;
+	
+	for( i = 0; i < ancestor_level; i++)
+	{
+		current_task = current_task->parent;
+		if( current_task == NULL ) break;
+	} 
+
+	if( !current_task )
+	{
+		*type = 0;
+		*task_data = NULL;
+		*task_frame = NULL;
+		*parallel_data = NULL;
+		*thread_num = 0;
+	}	
+	else
+	{
+		*type = 0;
+		*task_data = &(current_task->ompt_task_data);
+		*task_frame = &(current_task->ompt_task_frame);
+		if( !ompt_get_parallel_info( 0, parallel_data, thread_num))
+		{
+			*parallel_data = NULL;
+			*thread_num = 0;
+		}
+		else
+		{
+			sctk_error("unexpected ompt error: %s", __func__);
+			sctk_abort();
+		}
+	}
+	
+	return (current_task) ? 1 : 0;
 }
 
 static ompt_interface_fn_t ompt_fn_lookup(const char* name)

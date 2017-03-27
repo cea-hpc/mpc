@@ -50,6 +50,22 @@ void __mpcomp_internal_begin_parallel_region(
 #endif // MPCOMP_TASK
 #endif
 
+  /* Check if the children instance exists */
+  if (t->children_instance == NULL) {
+    mpcomp_team_t *new_team;
+    sctk_nodebug("%s: children instance is NULL, allocating...", __func__,
+                 t->info.num_threads);
+
+    new_team = (mpcomp_team_t *)sctk_malloc(sizeof(mpcomp_team_t));
+    sctk_assert(new_team != NULL);
+    __mpcomp_team_infos_init(new_team);
+
+    t->children_instance =
+        (mpcomp_instance_t *)sctk_malloc(sizeof(mpcomp_instance_t));
+    sctk_assert(t->children_instance != NULL);
+    __mpcomp_instance_init(t->children_instance, 0, new_team);
+  }
+
 #if OMPT_SUPPORT 
 	if( !mpcomp_ompt_is_enabled() )  
 		return;
@@ -73,21 +89,6 @@ void __mpcomp_internal_begin_parallel_region(
 	}	
 #endif /* OMPT_SUPPORT */
 
-  /* Check if the children instance exists */
-  if (t->children_instance == NULL) {
-    mpcomp_team_t *new_team;
-    sctk_nodebug("%s: children instance is NULL, allocating...", __func__,
-                 t->info.num_threads);
-
-    new_team = (mpcomp_team_t *)sctk_malloc(sizeof(mpcomp_team_t));
-    sctk_assert(new_team != NULL);
-    __mpcomp_team_infos_init(new_team);
-
-    t->children_instance =
-        (mpcomp_instance_t *)sctk_malloc(sizeof(mpcomp_instance_t));
-    sctk_assert(t->children_instance != NULL);
-    __mpcomp_instance_init(t->children_instance, 0, new_team);
-  }
 
   /* Grab the instance for the future parallel region */
   instance = t->children_instance;

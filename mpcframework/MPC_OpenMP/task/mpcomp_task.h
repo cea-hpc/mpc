@@ -82,7 +82,9 @@ typedef struct mpcomp_task_s {
 #endif /* MPCOMP_GOMP_4_0 */
 
 #if 1 //OMPT_SUPPORT
-	ompt_data_t ompt_task_data;
+	ompt_data_t 	ompt_task_data;
+	ompt_frame_t 	ompt_task_frame;
+	ompt_task_type_t ompt_task_type;
 #endif /* OMPT_SUPPORT */
 
 } mpcomp_task_t;

@@ -70,6 +70,7 @@ typedef struct mpcomp_new_parallel_region_info_s {
   void *(*func)(void *); /* Function to call by every thread */
   void *shared;          /* Shared variables (for every thread) */
   long num_threads;      /* Current number of threads in the team */
+  struct mpcomp_new_parallel_region_info_s* parent;
   struct mpcomp_node_s *new_root;
   int single_sections_current_save;
   sctk_spinlock_t update_lock;
