@@ -312,6 +312,33 @@ typedef int (*ompt_callback_get_t)
 	ompt_callback_t* callback
 );
 
+typedef ompt_data_t* (*ompt_get_thread_data_t)
+(
+	void
+);
+
+typedef ompt_state_t (*ompt_get_state_t)
+(
+	ompt_wait_id_t *wait_id
+);
+
+typedef int (*ompt_get_parallel_info_t)
+(
+	int ancestor_level,
+	ompt_data_t ** parallel_data,
+	int *team_size
+);
+
+typedef int (*ompt_get_task_info_t)
+(
+	int ancestor_level,
+	ompt_task_type_t *type,
+	ompt_data_t **task_data,
+	ompt_frame_t **task_frame,
+	ompt_data_t ** parallel_data,
+	int *thread_num
+);
+
 /** CALLBACK **/
 typedef void (*ompt_callback_thread_begin_t)
 (

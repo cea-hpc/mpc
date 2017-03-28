@@ -28,6 +28,7 @@
 #include "mpcomp.h"
 #include "sctk_alloc.h"
 #include "sctk_spinlock.h"
+#include "mpcomp_ompt_general.h"
 
 extern ompt_callback_t* OMPT_Callbacks;
 

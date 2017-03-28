@@ -29,6 +29,8 @@
 #include "mpcomp_lock.h"
 
 #include "ompt.h"
+#include "mpcomp_ompt_general.h"
+
 extern ompt_callback_t* OMPT_Callbacks;
 
 /**

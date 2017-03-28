@@ -31,6 +31,7 @@
 #include "mpcomp_tree_structs.h"
 
 #include "ompt.h"
+#include "mpcomp_ompt_general.h"
 extern ompt_callback_t* OMPT_Callbacks;
 
 void __mpcomp_internal_begin_parallel_region(
@@ -97,6 +98,7 @@ void __mpcomp_internal_begin_parallel_region(
       (arg_num_threads == 0) ? t->info.icvs.nthreads_var : arg_num_threads;
   num_threads = sctk_min(num_threads, t->children_instance->nb_mvps);
   num_threads = (t->instance->team->depth) ? 1 : num_threads;
+  num_threads = ( !num_threads ) ? 1 : num_threads;
   sctk_assert(num_threads > 0);
 
   sctk_nodebug("%s: Number of threads %d (default %d, #mvps %d arg:%d) !! %d",

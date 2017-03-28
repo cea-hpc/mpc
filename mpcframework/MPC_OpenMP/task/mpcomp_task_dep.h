@@ -187,7 +187,7 @@ mpcomp_task_dep_alloc_node_list_elt(mpcomp_task_dep_node_list_t *list,
   mpcomp_task_dep_node_list_t *new_node;
 
   sctk_assert(node);
-  sctk_assert(list);
+  //sctk_assert(list);
 
   new_node = sctk_malloc(sizeof(mpcomp_task_dep_node_list_t));
   sctk_assert(new_node);

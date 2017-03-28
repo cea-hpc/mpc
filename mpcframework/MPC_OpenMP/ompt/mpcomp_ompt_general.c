@@ -431,11 +431,6 @@ ompt_get_task_info( 	int ancestor_level,
 			*parallel_data = NULL;
 			*thread_num = 0;
 		}
-		else
-		{
-			sctk_error("unexpected ompt error: %s", __func__);
-			sctk_abort();
-		}
 	}
 	
 	return (current_task) ? 1 : 0;

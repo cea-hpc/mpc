@@ -43,6 +43,7 @@
 #include "mpcomp_taskgroup.h"
 
 #include "ompt.h"
+#include "mpcomp_ompt_general.h"
 extern ompt_callback_t* OMPT_Callbacks;
 
 typedef uint32_t (*kmp_routine_entry_t)(uint32_t, void *);
@@ -100,7 +101,8 @@ void __mpcomp_task_execute(mpcomp_task_t *task) {
 		{
 			ompt_callback_task_schedule_t callback;
 			callback = (ompt_callback_task_schedule_t) OMPT_Callbacks[ompt_callback_task_schedule];
-			callback( &(saved_current_task->ompt_task_data), ompt_task_yield, &(task->ompt_task_data)); 
+			if( callback )
+				callback( &(saved_current_task->ompt_task_data), ompt_task_yield, &(task->ompt_task_data)); 
 		}
 	}
 	#endif /* OMPT_SUPPORT */
@@ -127,7 +129,8 @@ void __mpcomp_task_execute(mpcomp_task_t *task) {
 	 {
 		ompt_callback_task_schedule_t callback;
 		callback = (ompt_callback_task_schedule_t) OMPT_Callbacks[ompt_callback_task_schedule];
-		callback( &(task->ompt_task_data), ompt_task_complete, &(saved_current_task->ompt_task_data) ); 
+		if( callback )
+			callback( &(task->ompt_task_data), ompt_task_complete, &(saved_current_task->ompt_task_data) ); 
     }
   }
   #endif /* OMPT_SUPPORT */
@@ -330,7 +333,8 @@ struct mpcomp_task_s *__mpcomp_task_alloc(void (*fn)(void *), void *data,
 		ompt_callback_task_create_t callback;
 		const void* code_ra = __builtin_return_address(0);
 		callback = (ompt_callback_task_create_t) OMPT_Callbacks[ompt_callback_task_create];
-		callback( &(new_task->parent->ompt_task_data), 0, &( new_task->ompt_task_data ), ompt_task_explicit, deps_num > 0, code_ra ); 
+		if( callback )
+			callback( &(new_task->parent->ompt_task_data), 0, &( new_task->ompt_task_data ), ompt_task_explicit, deps_num > 0, code_ra ); 
     }
   }
 	#endif /* OMPT_SUPPORT */

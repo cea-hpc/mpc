@@ -31,6 +31,7 @@
 #include "mpcomp_loop_dyn_utils.h"
 
 #include "ompt.h"
+#include "mpcomp_ompt_general.h"
 
 static int __mpcomp_dynamic_loop_get_chunk_from_rank(mpcomp_thread_t *t,
                                                      mpcomp_thread_t *target,

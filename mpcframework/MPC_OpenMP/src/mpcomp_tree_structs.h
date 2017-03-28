@@ -3,6 +3,7 @@
 #ifndef __MPCOMP_TREE_STRUCTS_H__
 #define __MPCOMP_TREE_STRUCTS_H__
 
+
 #include "mpcomp_task.h"
 #include "mpcomp_types.h"
 #include "mpcomp_task_utils.h"
@@ -38,7 +39,7 @@ static inline struct common_table *mpcomp_common_table_allocate(void) {
 static inline void
 __mpcomp_parallel_region_infos_reset(mpcomp_new_parallel_region_info_t *info) {
   sctk_assert(info);
-  memset(info, sizeof(mpcomp_new_parallel_region_info_t), 0);
+  memset(info, 0, sizeof(mpcomp_new_parallel_region_info_t));
 }
 
 static inline void

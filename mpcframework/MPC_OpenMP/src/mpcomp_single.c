@@ -28,6 +28,8 @@
 #include "mpcomp_openmp_tls.h"
 
 #include "ompt.h"
+#include "mpcomp_ompt_general.h"
+
 extern ompt_callback_t* OMPT_Callbacks; 
 
 /* 

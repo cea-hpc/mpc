@@ -112,8 +112,8 @@ sctk_network_send_message_from_pending_shm_list( int sctk_shm_max_message )
 	sctk_shm_msg_list_t *elt = NULL;
 	sctk_shm_msg_list_t *tmp = NULL;
 
-    if(!sctk_shm_pending_ptp_msg_num)
-        return;
+   if(!sctk_shm_pending_ptp_msg_num)
+      return;
 
 	if(sctk_spinlock_trylock(&sctk_shm_pending_ptp_msg_lock))
 		return;
