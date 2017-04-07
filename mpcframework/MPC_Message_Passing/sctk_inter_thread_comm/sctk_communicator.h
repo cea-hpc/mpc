@@ -60,7 +60,7 @@ union shared_mem_buffer {
 };
 
 struct shared_mem_reduce {
-  volatile int *tollgate;
+  int * volatile tollgate;
   sctk_atomics_int fare;
   sctk_spinlock_t *buff_lock;
   sctk_atomics_int owner;
@@ -77,7 +77,7 @@ struct shared_mem_bcast {
   sctk_atomics_int owner;
   sctk_atomics_int left_to_pop;
 
-  volatile int *tollgate;
+  int * volatile tollgate;
   sctk_atomics_int fare;
 
   union shared_mem_buffer buffer;
@@ -96,7 +96,7 @@ struct shared_mem_gatherv {
   sctk_atomics_int owner;
   sctk_atomics_int left_to_push;
 
-  volatile int *tollgate;
+  int * volatile tollgate;
   sctk_atomics_int fare;
 
   /* Leaf infos */
@@ -120,7 +120,7 @@ struct shared_mem_scatterv {
   sctk_atomics_int owner;
   sctk_atomics_int left_to_pop;
 
-  volatile int *tollgate;
+  int * volatile tollgate;
   sctk_atomics_int fare;
 
   /* Root infos */
@@ -153,7 +153,7 @@ int sctk_shared_mem_a2a_release(struct shared_mem_a2a *shmaa);
 
 struct sctk_comm_coll {
   int init_done;
-  unsigned int *coll_id;
+  int * volatile coll_id;
   struct shared_mem_barrier shm_barrier;
   struct shared_mem_barrier_sig shm_barrier_sig;
   int reduce_interleave;
@@ -197,9 +197,21 @@ static inline int sctk_comm_coll_get_id_red(struct sctk_comm_coll *coll,
   return __sctk_comm_coll_get_id(coll, rank) & (coll->reduce_interleave - 1);
 }
 
+static inline struct shared_mem_reduce * sctk_comm_coll_get_red(struct sctk_comm_coll *coll, int rank)
+{
+  int xid = sctk_comm_coll_get_id_red(coll, rank);
+  return &coll->shm_reduce[0];
+}
+
 static inline int sctk_comm_coll_get_id_bcast(struct sctk_comm_coll *coll,
                                               int rank) {
   return __sctk_comm_coll_get_id(coll, rank) & (coll->bcast_interleave - 1);
+}
+
+static inline struct shared_mem_bcast * sctk_comm_coll_get_bcast(struct sctk_comm_coll *coll, int rank)
+{
+  int xid = sctk_comm_coll_get_id_bcast(coll, rank);
+  return &coll->shm_bcast[0];
 }
 
 /************************** MACROS *************************/

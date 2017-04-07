@@ -696,7 +696,7 @@ static inline void PMPC_Set_op(struct sctk_mpi_ops_s *ops){
 
 /** Fast yield logic */
 
-static int __do_yield = 0;
+static volatile int __do_yield = 0;
 
 /** Do we need to yield in this process for collectives (overloaded)
  */
@@ -5569,14 +5569,14 @@ int __INTERNAL__PMPI_Barrier_intra_shm(MPI_Comm comm) {
     sctk_atomics_store_int(&barrier_ctx->counter, coll->comm_size);
     sctk_atomics_store_int(&barrier_ctx->phase, my_phase);
   } else {
-    if (__do_yield) {
+    if (__do_yield ) {
       while (sctk_atomics_load_int(&barrier_ctx->phase) != my_phase) {
-        sctk_thread_yield();
-      }
+		sched_yield();
+	  }
     } else {
       while (sctk_atomics_load_int(&barrier_ctx->phase) != my_phase) {
-        sctk_cpu_relax();
-      }
+      	sctk_cpu_relax();
+	  }
     }
   }
 
@@ -5825,7 +5825,7 @@ static inline int __INTERNAL__PMPI_Barrier(MPI_Comm comm) {
               ->modules.collectives_intra.barrier_intra.value);
     }
 
-    if (sctk_is_shared_mem(comm)) {
+    if (sctk_is_shared_mem(comm) ) {
       /* Here only work in shared-mem */
       res = (barrier_intra_shm)(comm);
     } else {
@@ -5907,8 +5907,8 @@ int __INTERNAL__PMPI_Bcast_intra_shm(void *buffer, int count,
   int rank, res;
   PMPI_Comm_rank(comm, &rank);
 
-  struct shared_mem_bcast *bcast_ctx =
-      &coll->shm_bcast[sctk_comm_coll_get_id_bcast(coll, rank)];
+  struct shared_mem_bcast *bcast_ctx =sctk_comm_coll_get_bcast(coll, rank);
+
 
   /* First pay the toll gate */
   if (__do_yield) {
@@ -6152,6 +6152,14 @@ int __INTERNAL__PMPI_Bcast(void *buffer, int count, MPI_Datatype datatype,
   } else {
 
     /* Intracomm */
+    int size;
+	__INTERNAL__PMPI_Comm_size( comm , &size );
+
+	if( size == 1 )
+	{
+		/* Nothing to do */
+		return MPI_SUCCESS;
+	}
 
     if (bcast_intra_shm == NULL) {
       bcast_intra_shm = (int (*)(void *, int, MPI_Datatype, int, MPI_Comm))(
@@ -9372,8 +9380,7 @@ int __INTERNAL__PMPI_Reduce_shm(void *sendbuf, void *recvbuf, int count,
   int rank;
   __INTERNAL__PMPI_Comm_rank(comm, &rank);
 
-  struct shared_mem_reduce *reduce_ctx =
-      &coll->shm_reduce[sctk_comm_coll_get_id_red(coll, rank)];
+  struct shared_mem_reduce *reduce_ctx = sctk_comm_coll_get_red( coll, rank);
 
   int res;
   MPI_Aint tsize = 0;
@@ -9750,29 +9757,37 @@ __INTERNAL__PMPI_Reduce_intra (void *sendbuf, void *recvbuf, int count,
 
 	if(size == 1)
 	{
-		MPI_Request request_send;
-		MPI_Request request_recv;
 
 		if (sendbuf == MPI_IN_PLACE)
 		{
 			return MPI_SUCCESS;
 		}
+
+		if( sctk_datatype_is_contiguous( datatype ) )
+		{
+			MPI_Aint tsize;
+			PMPI_Type_size(datatype , &tsize );
+			memcpy( sendbuf,  recvbuf , tsize * count );
+		}
 		else
 		{
-			res = __INTERNAL__PMPI_Isend (sendbuf, count, datatype, 0, 
-			MPC_REDUCE_TAG, comm, &request_send);
-			if(res != MPI_SUCCESS){return res;}
+			int psize = 0;
+			PMPI_Pack_size( count, datatype, comm, &psize );
+
+			void *tmp = sctk_malloc(psize);
+
+			assume( tmp != NULL );
+
+			int pos = 0;
+			PMPI_Pack( sendbuf, count, datatype, tmp, psize, &pos, comm);
+
+			pos = 0;
+			PMPI_Unpack(tmp, psize, &pos, recvbuf, count, datatype, comm );
+
+			sctk_free( tmp );
 		}
 
-		res = __INTERNAL__PMPI_Irecv (recvbuf, count, datatype, 0, 
-		MPC_REDUCE_TAG, comm, &request_recv);
-		if(res != MPI_SUCCESS){return res;}
-
-		res = __INTERNAL__PMPI_Wait (&(request_recv), MPI_STATUS_IGNORE);
-		if(res != MPI_SUCCESS){return res;}
-		
-		res = __INTERNAL__PMPI_Wait (&(request_send), MPI_STATUS_IGNORE);
-		if(res != MPI_SUCCESS){return res;}
+		return MPI_SUCCESS;
 	} 
 	else 
 	{
@@ -10081,9 +10096,9 @@ __INTERNAL__PMPI_Op_free (MPI_Op * op)
 
 static size_t MPI_Allreduce_derived_type_floor = 1024;
 
-int
+	int
 __INTERNAL__PMPI_Allreduce_intra (void *sendbuf, void *recvbuf, int count,
-			    MPI_Datatype datatype, MPI_Op op, MPI_Comm comm)
+		MPI_Datatype datatype, MPI_Op op, MPI_Comm comm)
 {
 	int res = MPI_ERR_INTERN;
 	MPC_Op mpc_op;
@@ -10092,17 +10107,20 @@ __INTERNAL__PMPI_Allreduce_intra (void *sendbuf, void *recvbuf, int count,
 	mpi_op = sctk_convert_to_mpc_op (op);
 	mpc_op = mpi_op->op;
 
-        res = __INTERNAL__PMPI_Reduce(sendbuf, recvbuf, count, datatype, op, 0,
-                                      comm);
-        if (res != MPI_SUCCESS) {
-          return res;
-        }
+	res = __INTERNAL__PMPI_Reduce(sendbuf, recvbuf, count, datatype, op, 0,
+			comm);
+	if (res != MPI_SUCCESS) {
+		return res;
+	}
+	
+	res = __INTERNAL__PMPI_Bcast(recvbuf, count, datatype, 0, comm);
+	if (res != MPI_SUCCESS) {
+		return res;
+	}
+	
 
-        res = __INTERNAL__PMPI_Bcast(recvbuf, count, datatype, 0, comm);
-        if (res != MPI_SUCCESS) {
-          return res;
-        }
-        return res;
+
+	return res;
 }
 
 static int
@@ -11869,6 +11887,7 @@ static int __INTERNAL__PMPI_Comm_size(MPI_Comm comm, int *size) {
   return ret;
 }
 
+
 static int __INTERNAL__PMPI_Comm_rank(MPI_Comm comm, int *rank) {
   static __thread int last_comm = -1;
   static __thread int last_rank = -1;
@@ -11877,15 +11896,20 @@ static int __INTERNAL__PMPI_Comm_rank(MPI_Comm comm, int *rank) {
   if (last_comm == comm) {
     if (last_rank == sctk_get_task_rank()) {
       *rank = last_crank;
-      return MPI_SUCCESS;
-    }
+  	  return MPI_SUCCESS;
+	}
   }
 
   int ret = PMPC_Comm_rank(comm, rank);
 
-  last_rank = sctk_get_task_rank();
-  last_comm = comm;
-  last_crank = *rank;
+  if( ret == MPI_SUCCESS )
+  {
+ 	//sctk_error("SAVE %d@%d %p", *rank , comm,  rank); 
+  	last_rank = sctk_get_task_rank();
+  	last_comm = comm;
+  	last_crank = *rank;
+
+  }
 
   return ret;
 }
