@@ -1,7 +1,7 @@
 # name       ;   v   ; sup v ; status  ;                        deps                       ; run-on  ;     type     ;    template 
 #############################################################################################################################
 libxml2      ; 2.9.3 ;       ; dep     ;                                                   ; target  ; extern       ; generic.autotools
-hwloc        ; 1.11.2 ; 1.11.2 ; install ;                                                   ; target  ; extern		; generic.autotools
+hwloc        ; 1.11.2 ; 1.11.2 ; install ;                                                 ; all  ; extern		; generic.autotools
 binutils     ; 2.27  ; 2.27  ; install ;                                                   ; host    ; extern		; generic.autotools
 gmp          ; 6.1.1 ;       ; dep     ;                                                   ; host    ; extern		; generic.autotools.libsgcc
 mpfr         ; 3.1.5 ;       ; dep     ; gmp                                               ; host    ; extern		; generic.autotools.libsgcc
@@ -11,7 +11,7 @@ openpa       ; 1.0.2 ;       ; dep     ;                                        
 libextls     ; 0.5.0 ;       ; install ; hwloc openpa                                      ; target  ; extern       ; generic.autotools
 sctk_arch    ;       ;       ; install ; openpa                                            ; target  ; local		; local.autotools
 mpcframework ;       ;       ; install ; libxml2 hwloc openpa libextls sctk_arch hydra hydra_simple gcc; target  ; local		; local.autotools
-hydra        ; 3.1   ;       ; install ;                                                   ; all     ; extern		; generic.autotools
+hydra        ; 3.1   ;       ; install ; hwloc                                             ; all     ; extern		; generic.autotools
 hydra_simple ;       ;       ; install ; hydra                                             ; all     ; hydra_simple	; local.autotools
 gdb          ; 7.6.2 ;       ; install ;                                                   ; target  ; extern		; generic.autotools
 priv_plugin   ; 1.1 ;         ; install ; gcc mpcframework                                 ; target  ; extern		; generic.autotools.mpc
