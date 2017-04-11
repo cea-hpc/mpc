@@ -11,9 +11,10 @@
 #ifndef MPIMEM_H_
 #define MPIMEM_H_
 
-#include "mpl.h"
+#include <stdio.h>
+#include <string.h>
 
-#define MPIU_Snprintf MPL_snprintf
+#define MPIU_Snprintf snprintf
 #define MPIU_Exit exit
 #define MPIU_Internal_error_printf printf
 

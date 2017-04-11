@@ -28,9 +28,9 @@ C_COMPILE_SHL   = $(CC_SHL) $(DEFS) $(INCLUDES) $(CFLAGS) $(CPPFLAGS)
 
 VPATH = .:@srcdir@
 HEADERS = simple_pmiutil.h
-INCLUDES = -I@MPLDIR@/include
-LDFLAGS = -L@MPLDIR@/lib
-LIBS = -lmpl
+INCLUDES = 
+LDFLAGS = 
+LIBS = 
 
 .SUFFIXES:
 .SUFFIXES: .o .lo .c 

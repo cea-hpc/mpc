@@ -397,10 +397,9 @@ int PMI_KVS_Put( const char kvsname[], const char key[], const char value[] )
     return err;
 }
 
-int PMI_KVS_Commit( const char kvsname[] ATTRIBUTE((unused)))
-{
-    /* no-op in this implementation */
-    return( 0 );
+int PMI_KVS_Commit(const char kvsname[]) {
+  /* no-op in this implementation */
+  return (0);
 }
 
 /*FIXME: need to return an error if the value returned is truncated
