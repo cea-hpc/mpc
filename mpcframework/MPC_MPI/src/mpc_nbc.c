@@ -371,7 +371,7 @@ static int NBC_Iallgather(void* sendbuf, int sendcount, MPI_Datatype sendtype, v
           return res;
         }
 
-        return NBC_OK;
+        return MPI_SUCCESS;
 }
 
 
@@ -479,7 +479,7 @@ static int NBC_Iallgatherv(void* sendbuf, int sendcount, MPI_Datatype sendtype, 
           return res;
         }
 
-        return NBC_OK;
+        return MPI_SUCCESS;
 }
 
 
@@ -658,7 +658,7 @@ static int NBC_Iallreduce(void* sendbuf, void* recvbuf, int count, MPI_Datatype 
         }
 
         /* tmpbuf is freed with the handle */
-        return NBC_OK;
+        return MPI_SUCCESS;
 }
 
 
@@ -1242,7 +1242,7 @@ static int NBC_Ialltoall(void* sendbuf, int sendcount, MPI_Datatype sendtype, vo
 	res = NBC_Start(handle, schedule);
 	if (NBC_OK != res) { printf("Error in NBC_Start() (%i)\n", res); return res; }
  
-	return NBC_OK;
+	return MPI_SUCCESS;
 }
 
 static inline int a2a_sched_pairwise(int rank, int p, MPI_Aint sndext, MPI_Aint rcvext, NBC_Schedule* schedule, void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount, MPI_Datatype recvtype, __UNUSED__ MPI_Comm comm) {
@@ -1477,7 +1477,7 @@ static int NBC_Ialltoallv(void* sendbuf, int *sendcounts, int *sdispls,
           return res;
         }
 
-        return NBC_OK;
+        return MPI_SUCCESS;
 }
 
 
@@ -1606,7 +1606,7 @@ static int NBC_Ibarrier(MPI_Comm comm, NBC_Handle* handle) {
     return res;
   }
 
-  return NBC_OK;
+  return MPI_SUCCESS;
 }
 
 
@@ -1756,7 +1756,7 @@ static int NBC_Ibcast(void *buffer, int count, MPI_Datatype datatype, int root, 
     return res;
   }
 
-  return NBC_OK;
+  return MPI_SUCCESS;
 }
 
 /* better binomial bcast 
@@ -2025,7 +2025,7 @@ static int NBC_Igather(void* sendbuf, int sendcount, MPI_Datatype sendtype, void
                   return res;
                 }
 
-                return NBC_OK;
+                return MPI_SUCCESS;
 }
 
 
@@ -2142,7 +2142,7 @@ static int NBC_Igatherv(void* sendbuf, int sendcount, MPI_Datatype sendtype, voi
           return res;
         }
 
-        return NBC_OK;
+        return MPI_SUCCESS;
 }
 
 
@@ -2809,7 +2809,7 @@ static int NBC_Ireduce_scatter(void* sendbuf, void* recvbuf, int *recvcounts, MP
   }
 
   /* tmpbuf is freed with the handle */
-  return NBC_OK;
+  return MPI_SUCCESS;
 }
 
 
@@ -2952,7 +2952,7 @@ static int NBC_Iscan(void* sendbuf, void* recvbuf, int count, MPI_Datatype datat
                 }
 
                 /* tmpbuf is freed with the handle */
-                return NBC_OK;
+                return MPI_SUCCESS;
 }
 
 
@@ -3067,7 +3067,7 @@ static int NBC_Iscatter(void* sendbuf, int sendcount, MPI_Datatype sendtype, voi
                   return res;
                 }
 
-                return NBC_OK;
+                return MPI_SUCCESS;
 }
 
 
@@ -3185,7 +3185,7 @@ static int NBC_Iscatterv(void* sendbuf, int *sendcounts, int *displs, MPI_Dataty
           return res;
         }
 
-        return NBC_OK;
+        return MPI_SUCCESS;
 }
 
 /********************************************************************* *
@@ -3261,7 +3261,7 @@ static int NBC_Ialltoallw(void* sendbuf, int *sendcounts, int *sdispls,
 	res = NBC_Start(handle, schedule);
 	if (NBC_OK != res) { printf("Error in NBC_Start() (%i)\n", res); return res; }
 	
-	return NBC_OK;
+	return MPI_SUCCESS;
 }
 
 
@@ -3510,7 +3510,7 @@ static int NBC_Ireduce_scatter_block(void* sendbuf, void* recvbuf, int recvcount
   }
 
   /* tmpbuf is freed with the handle */
-  return NBC_OK;
+  return MPI_SUCCESS;
 }
 
 /************* *
@@ -3666,7 +3666,7 @@ static int NBC_Iexscan(void* sendbuf, void* recvbuf, int count, MPI_Datatype dat
                 }
 
                 /* tmpbuf is freed with the handle */
-                return NBC_OK;
+                return MPI_SUCCESS;
 }
 
 /********************************************************************* *
@@ -4709,7 +4709,7 @@ int NBC_Wait(NBC_Handle *handle, MPI_Status *status) {
 		while(NBC_OK != NBC_Progress(handle));
 	}   
 
-	return NBC_OK;
+        return MPI_SUCCESS;
 }
 
 int NBC_Test(NBC_Handle *handle, int *flag, __UNUSED__ MPI_Status *status) {
@@ -4736,7 +4736,7 @@ int NBC_Test(NBC_Handle *handle, int *flag, __UNUSED__ MPI_Status *status) {
   } else {
     *flag = 0;
   }
-  return NBC_OK;
+  return MPI_SUCCESS;
 }
 
 /******************* *
