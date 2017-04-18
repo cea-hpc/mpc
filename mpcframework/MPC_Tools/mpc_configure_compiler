@@ -500,8 +500,8 @@ then
         if test "$SCTK_MPC_PROCESS_MODE" = "1" ; then 
                 PRIV_FLAG=""
         else
-	print_if_stdout "Warning: You try to use a compiler not handled by MPC, at your own risks\n"
-	print_if_stdout "Warning: All options will be forwarded 'as is' to the given compiler\n"
+		print_if_stdout "\$ccpath not known: Add it through 'mpc_compiler_manager' call"
+		mpc_compiler_manager add $1 "\$cc_path"
         fi
 else
 	CC_FAMILY="\`echo \${is_defined} | cut -d":" -f1\`"

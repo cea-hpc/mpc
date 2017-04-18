@@ -393,7 +393,7 @@ genfortranmods()
 #MAIN FILE
 proceedwithfortranfilegeneration()
 {
-	echo "\n########################################################" 
+	echo "########################################################"
 	echo "#   MPC Fortran Header and Module Generation Script    #"
 	echo "########################################################"
 
@@ -402,7 +402,9 @@ proceedwithfortranfilegeneration()
 
 	#CAN WE STILL GENERATE ?
 	if test "x${GENERATE}" = "x1"; then
-		echo "   Fortran Generation script will generate Headers"
+		echo "########################################################"
+		echo "#   Fortran Generation script will generate Headers    #"
+		echo "########################################################"
 		
 		genfortanfiles
 		
@@ -434,14 +436,16 @@ proceedwithfortranfilegeneration()
 			MPIF08="${PWD}/mpi_f08.f90"
 		done
 	else
-		echo "\n########################################################"
-		echo "#  (E) Fortran Generation script uses Fallback Headers   #"
-		echo "########################################################\n"
+		echo "########################################################"
+		echo "# (E) Fortran Generation script uses Fallback Headers  #"
+		echo "########################################################"
 		generate_from_backup
 	fi
 
 
-	echo "   Fortran Generation script about to compile modules"
+	echo "########################################################"
+	echo "#  Fortran Generation script about to compile modules  #"
+	echo "########################################################"
 
 	genfortranmods  2>> ./fortrangen.log
 
