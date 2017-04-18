@@ -822,6 +822,7 @@ begin_section "Generating Compilation && runtime wrappers:"
 . ${MPC_SOURCE_DIR}MPC_Tools/mpc_configure_mpcrun
 . ${MPC_SOURCE_DIR}MPC_Tools/mpc_configure_mpc_edit_config
 . ${MPC_SOURCE_DIR}MPC_Tools/mpc_configure_compiler
+. ${MPC_SOURCE_DIR}MPC_Tools/mpc_configure_compiler_manager
 . ${MPC_SOURCE_DIR}MPC_Tools/mpc_configure_install_cleaner
 end_section
 

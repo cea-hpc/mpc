@@ -1,0 +1,294 @@
+#!/bin/sh
+############################# MPC License ############################## 
+# Wed Nov 19 15:19:19 CET 2008                                         # 
+# Copyright or (C) or Copr. Commissariat a l'Energie Atomique          # 
+#                                                                      # 
+# IDDN.FR.001.230040.000.S.P.2007.000.10000                            # 
+# This file is part of the MPC Runtime.                                # 
+#                                                                      # 
+# This software is governed by the CeCILL-C license under French law   # 
+# and abiding by the rules of distribution of free software.  You can  # 
+# use, modify and/ or redistribute the software under the terms of     # 
+# the CeCILL-C license as circulated by CEA, CNRS and INRIA at the     # 
+# following URL http://www.cecill.info.                                # 
+#                                                                      # 
+# The fact that you are presently reading this means that you have     # 
+# had knowledge of the CeCILL-C license and that you accept its        # 
+# terms.                                                               # 
+#                                                                      # 
+# Authors:                                                             # 
+#   - PERACHE Marc marc.perache@cea.fr                                 # 
+#   - CARRIBAULT Patrick patrick.carribault@cea.fr                     # 
+#                                                                      # 
+######################################################################## 
+
+cat <<EOF > bin/mpc_compiler_manager
+#!/bin/sh
+
+if test -z \${MPC_RPREFIX}; then
+	echo "################################################################"
+	echo "# No MPC_RPREFIX defined. it is the root of the actual prefix  #"
+	echo "# Yout should source the mpcvars.sh file in root of MPC prefix #"
+	echo "################################################################"
+	exit 1
+fi
+
+die()
+{
+	printf "\${RED}Error: \$@\n" 1>&2
+	printf "\${RED}Error: Please see --help command.\${DEF}\n" 1>&2
+	exit 1
+}
+
+build_main_files()
+{
+cat <<EOFINT > mpc_main.c
+int i; 
+int main(int argc, char** argv){
+return 0;
+}
+EOFINT
+
+cat <<EOFINT > mpc_main.c++
+int i;
+int main(int argc, char** argv){
+return 0;
+}
+EOFINT
+
+cat <<EOFINT > mpc_main.fortran
+subroutine mpc_user_main
+integer i
+      end
+EOFINT
+}
+
+format_path()
+{
+	readlink -e \$1
+}
+
+help()
+{
+	printf "Usage: mpc_compiler_manager [\${BLU}list|stat|list_default\${DEF} [(c|c++|fortran)]]\n"
+	printf "                            [\${BLU}(add|del)\${DEF} (c|c++|fortran) compiler_path family]\n"
+	printf "                            [\${BLU}set_default\${DEF} (c|c++|fortran) compiler_path]\n"
+	printf "\n"
+	printf "DEFAULT ARGUMENTS (it not specified):\n"
+	printf "Compiler: \${GRE}c\${DEF}\n"
+	printf "Path: \${GRE}\`which gcc\`\${DEF}\n"
+	printf "Family: \${GRE}GNU\${DEF}\n"
+	printf "\n"
+	printf "OPTIONS:\n"
+	printf "\${BLU}list:\${DEF} shows, for each known compiler, the priv. support\n"
+	printf "\${BLU}stat:\${DEF} shows a summary for each language (number of compilers + priv. support)\n"
+	printf "\${BLU}list_default:\${DEF} list, for each language, the default compiler used\n"
+	printf "\n"
+	printf "\${BLU}add:\${DEF} adds a new compiler to the manager\n"
+	printf "\${BLU}del:\${DEF} removes a known compiler from the manager\n"
+	printf "\n"
+	printf "\${BLU}set_default\${DEF} set the given compiler as default (adds it first if not known)\n"
+	exit 0
+}
+
+clean_main_files()
+{
+	rm mpc_main.c mpc_main.c++ mpc_main.fortran mpc_main.o > /dev/null 2>&1
+}
+
+add_compiler()
+{
+	file="\${CONFIG_PREFIX}/.\${1}_compilers.cfg"
+	is_there="\`egrep -n "^[a-zA-Z]+:(Y|N):\${2}$" \$file\`"
+
+	if [ ! -z "\${is_there}" ];
+	then
+		die "Compiler \${2} already added for \${1} language ! Nothing to do"
+	elif [ -z "\`which \${2} 2> /dev/null\`" ];
+	then
+		die "\${2} is not found. We do not add it to MPC configuration"
+	else
+
+		build_main_files
+		PRIV_FLAG="-fmpc-privatize"
+		\${2} \${PRIV_FLAG} -c mpc_main.\${1} > /dev/null 2>&1
+		if [ \$? -eq 0 ];
+		then
+			pattern="Y"
+		else
+			pattern="N"
+		fi
+		echo "\${3}:\${pattern}:\${2}" >> \${file}
+	fi
+}
+
+remove_compiler()
+{
+	file="\${CONFIG_PREFIX}/.\${1}_compilers.cfg"
+	exists="\`egrep -n "^\${3}:(Y|N):\${2}" \$file\`"
+
+	if [ -z "\${exists}" ];
+	then
+		die "Compiler \${2} not found for \${1} language"
+	else
+		line="\`echo "\${exists}" | cut -d":" -f1\`"
+		sed -i "\${line}d" \$file
+	fi
+}
+
+set_default_compiler()
+{
+	file="\${CONFIG_PREFIX}/.\${1}_compilers.cfg"
+	is_there="\`egrep "^[a-zA-Z]+:(Y|N):\${2}" \$file\`"
+	if [ -z "\${is_there}" ];
+	then
+		add_compiler "\${1}" "\$2" "\$3"
+	else
+		family="\`echo \${is_there} | cut -f1 -d":"\`"
+		remove_compiler \${1} \${2} \${family}
+		sed -i "1i \${is_there}" \${file}
+	fi
+}
+
+print_first_compilers()
+{
+	list_languages="c c++ fortran"
+	for language in \${list_languages}
+	do
+		lang_file=\${CONFIG_PREFIX}/.\${language}_compilers.cfg
+		compiler="\`head -n 1 \${lang_file} | cut -d":" -f3\`"
+		echo "Default \${language} Compiler : \${GRE}\${compiler}\${DEF}"
+	done
+}
+
+stat_compilers()
+{
+
+	list_languages="c c++ fortran"
+	if test ! -z "\$1";
+	then
+		list_languages="\${1}"
+	fi
+
+	for language in \${list_languages}
+	do
+		lang_file=\${CONFIG_PREFIX}/.\${language}_compilers.cfg
+		nb_compilers="\`cat \${lang_file} | wc -l\`"
+		nb_priv="\`cat \${lang_file} | cut -d":" -f2 | egrep "^Y$" | wc -l\`"
+
+		echo "MPC \${language} compiler supports \${GRE}\${nb_compilers}\${DEF} compilers, \${RED}\${nb_priv}\${DEF} of them are able to privatize."
+	done
+}
+
+list_compilers()
+{
+
+	list_languages="c c++ fortran"
+	if test ! -z "\$1";
+	then
+		list_languages="\${1}"
+	fi
+
+	for language in \${list_languages}
+	do
+		echo "Available \${BLU}\${language}\${DEF} compilers :"
+		lang_file=\${CONFIG_PREFIX}/.\${language}_compilers.cfg
+		main_file=mpc_main.\${language}
+		for line in \`cat \${lang_file}\`
+		do
+			family="\`echo \${line} | cut -d":" -f1\`"
+			priv="\`echo \${line} | cut -d":" -f2\`"
+			compiler="\`echo \${line} | cut -d":" -f3\`"
+
+			if test -x \$compiler;
+			then
+				printf " - \${GRE}FOUND \${DEF}/"
+				if test "x\$priv" = "xY";
+				then
+					printf "\${GRE} PRIV. SUPPORT OK \${DEF}"
+				else
+					printf "\${RED} NO PRIV. SUPPORT \${DEF}"
+				fi
+			else
+				printf " - \${RED}NFOUND\${DEF}                   "
+			fi
+
+
+			printf "for (\${family}) \${compiler}\n"
+		done
+	done
+}
+
+is_valid_language()
+{
+	if test -z "\`\echo \$1 | egrep -o "^(c|c\\+\\+|fortran)$"\`";
+	then
+		die "Language \${1} not known !"
+	fi
+}
+
+CONFIG_PREFIX=\${MPC_RPREFIX}
+
+RED="\`printf "\033[1;31m"\`"
+GRE="\`printf "\033[1;32m"\`"
+BLU="\`printf "\033[1;36m"\`"
+DEF="\`printf "\033[0;0m"\`"
+
+printf "MPC Installation (Read-only) located at \${BLU}\${MPC_RPREFIX}\${DEF}\n"
+user_prefix=\$HOME/.mpcompil/\`echo \$MPC_RPREFIX | sed -e "s#//*#/#g" | sha1sum | cut -f1 -d" "\`
+if test -d \$user_prefix;
+then
+	CONFIG_PREFIX=\$user_prefix
+fi
+
+printf "Updates stored in \${GRE}\${CONFIG_PREFIX}\${DEF}\n"
+
+#default values
+lang="c"
+path="\`which gcc\`"
+family="GNU"
+
+#retrieve args
+test -n "\$2" && lang="\$2"
+test -n "\$3" && path="\`format_path "\$3"\`"
+test -n "\$4" && family="\$4"
+
+test -z "\$1" && help
+
+is_valid_language "\$lang"
+case "\$1" in
+	help|-help|--help|h|-h|--h)
+		help
+		;;
+	add|+|a)
+		add_compiler "\$lang" "\$path" "\$family"		
+		printf " * Added to \$lang compilers: \$path\n"
+		;;
+	remove|del|delete|rm)
+		remove_compiler "\$lang" "\$path" "\$family"		
+		printf " * Removed from \$lang compilers: \$path\n"
+		;;
+	set_default|def)
+		set_default_compiler "\$lang" "\$path" "\$family"		
+		printf " * Set as \$lang default compiler: \$path\n"
+		;;
+	list|-l)
+		list_compilers
+		;;
+	list_default |-ld|--ld)
+		print_first_compilers
+		;;
+	stat|-s)
+		stat_compilers
+		;;
+	*)
+		die "Unknown rule: \"\$1\""
+		;;
+esac
+
+clean_main_files
+
+exit 0
+EOF
+chmod 755 bin/mpc_compiler_manager
+ln -sf mpc_compiler_manager bin/mpc_compiler_status
