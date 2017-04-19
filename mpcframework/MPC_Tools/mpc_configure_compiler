@@ -500,75 +500,80 @@ then
         if test "$SCTK_MPC_PROCESS_MODE" = "1" ; then 
                 PRIV_FLAG=""
         else
-		print_if_stdout "\$ccpath not known: Add it through 'mpc_compiler_manager' call"
-		mpc_compiler_manager add $1 "\$cc_path"
+		print_if_stdout "Warning: \$cc_path not known: Adding it\n"
+		\${MPC_RPREFIX}/\${MPC_SUBPREFIX}/bin/mpc_compiler_manager add $2 "\$cc_path" > /dev/null
+		is_defined=""
+		for line in \`cat \${CC_FILE_PATH}/.${2}_compilers.cfg\`
+		do
+			cur="\`echo "\$line" | cut -d":" -f3 2> /dev/null\`"
+			cur="\`canonize \$cur\`"
+			if test "\$cur" = "\$cc_path";
+			then
+				is_defined="\$line"
+				break
+			fi
+		done
         fi
-else
-	CC_FAMILY="\`echo \${is_defined} | cut -d":" -f1\`"
-	CC_PRIV="\`echo \${is_defined} | cut -d":" -f2\`"
-	CC="\`echo \${is_defined} | cut -d":" -f3\`"
+fi
+CC_FAMILY="\`echo \${is_defined} | cut -d":" -f1\`"
+CC_PRIV="\`echo \${is_defined} | cut -d":" -f2\`"
+CC="\`echo \${is_defined} | cut -d":" -f3\`"
 
-	#if CC does not support privatization and user provides privatization option
-	if test ! -z "\${PRIV_FLAG}" -a "\${CC_PRIV}" = "N";
-	then
-        if test "$SCTK_MPC_PROCESS_MODE" != "1" ; then 
-		print_if_stdout "Warning: '\${CC} does not support privatization support. Disabling privatization'\n"
-		print_if_stdout "Warning: Do not consider using this compiler for thread-based mode.\n"
-        fi
-		PRIV_FLAG=""
-	else
-		#handle compiler-specific options depending on compiler family
-		case \${CC_FAMILY} in
-			INTEL)
-				NO_TLS_OPT=1
-				override_var_if_isset 'PRIV_FLAG' '-mSYMTAB_mpc_privatize'
-				override_var_if_isset 'OMP_FLAG' '-qopenmp'
-                FFLAGS="\${FFLAGS} -threads -recursive"
-				MPC_USE_INTEL_COMPILER="1"
-                export MPC_USE_INTEL_COMPILER
-				;;
-			GNU)
+#if CC does not support privatization and user provides privatization option
+if test ! -z "\${PRIV_FLAG}" -a "\${CC_PRIV}" = "N";
+then
+if test "$SCTK_MPC_PROCESS_MODE" != "1" ; then 
+	print_if_stdout "Warning: '\${CC} does not support privatization support. Disabling privatization'\n"
+	print_if_stdout "Warning: Do not consider using this compiler for thread-based mode.\n"
+fi
+	PRIV_FLAG=""
+else
+	#handle compiler-specific options depending on compiler family
+	case \${CC_FAMILY} in
+		INTEL)
+			NO_TLS_OPT=1
+			override_var_if_isset 'PRIV_FLAG' '-mSYMTAB_mpc_privatize'
+			override_var_if_isset 'OMP_FLAG' '-qopenmp'
+        FFLAGS="\${FFLAGS} -threads -recursive"
+			MPC_USE_INTEL_COMPILER="1"
+        export MPC_USE_INTEL_COMPILER
+			;;
+		GNU)
 EOF
 
 #Insert a reference to the privatization plugin
 if [ "$language" = "c" ]; then
 cat << EOF >> $1
-				if test -e \${MPC_RPREFIX}/\${MPC_HOST_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/lib/libprivplug.so;
-				then
-					LIBPRIV_FLAG="-fplugin=\${MPC_RPREFIX}/\${MPC_HOST_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/lib/libprivplug.so"
-				else
-					LIBPRIV_FLAG=""
-				fi
-
+		if test -e \${MPC_RPREFIX}/\${MPC_HOST_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/lib/libprivplug.so;
+		then
+			LIBPRIV_FLAG="-fplugin=\${MPC_RPREFIX}/\${MPC_HOST_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/lib/libprivplug.so"
+		else
+			LIBPRIV_FLAG=""
+		fi
 EOF
 fi
 
 #Insert the Getopt.h include if not in Fortran
 if [ "$language" != "fortran" ]; then
 cat << EOF >> $1
-				if test -e "\${MPC_RPREFIX}/\${MPC_HOST_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/lib/libmpcgetopt.a"; 
-				then
-					if test "x\${MPC_BOOTSTRAP}" != "xyes"; 
-					then
-						GETOPT_FLAG="\${PRIV_FLAG} -include \${MPC_RPREFIX}/\${MPC_HOST_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/include/getopt.h"
-					else
-						GETOPT_FLAG=""
-					fi
-				fi
+		if test -e "\${MPC_RPREFIX}/\${MPC_HOST_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/lib/libmpcgetopt.a"; 
+		then
+			GETOPT_FLAG="\${PRIV_FLAG} -include \${MPC_RPREFIX}/\${MPC_HOST_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/include/getopt.h"
+		else
+			GETOPT_FLAG=""
+		fi
 EOF
 fi
 
 
 cat << EOF >> $1
-				override_var_if_isset 'PRIV_FLAG' '-fmpc-privatize'
-				override_var_if_isset 'OMP_FLAG' '-fopenmp'
-				;;
-			*)
-				#Nothing to do, vars set by user option
-				;;
-		esac
-		
-	fi
+			override_var_if_isset 'PRIV_FLAG' '-fmpc-privatize'
+			override_var_if_isset 'OMP_FLAG' '-fopenmp'
+			;;
+		*)
+			#Nothing to do, vars set by user option
+			;;
+	esac
 fi
 
 #Do we need to disable TLS optimizations ?

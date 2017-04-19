@@ -125,86 +125,86 @@ putNewInstall()
 	fi
 }
 
-putNewCompiler()
-{
-	echo "$1::$2"
-}
+#putNewCompiler()
+#{
+	#echo "$1::$2"
+#}
 
-testCompilers()
-{
+#testCompilers()
+#{
 
-	# C files
-cat<<EOF > mpc_main.c
-int i;
-int main(int argc, char ** argv)
-{
-	return 0;
-}
-EOF
+	## C files
+#cat<<EOF > mpc_main.c
+#int i;
+#int main(int argc, char ** argv)
+#{
+	#return 0;
+#}
+#EOF
 
-# CXX files
-cat<<EOF > mpc_main.c++
-int i;
-int main(int argc, char ** argv)
-{
-	return 0;
-}
-EOF
+## CXX files
+#cat<<EOF > mpc_main.c++
+#int i;
+#int main(int argc, char ** argv)
+#{
+	#return 0;
+#}
+#EOF
 
-# F77 files
-cat <<EOF > mpc_main.fortran
-      subroutine mpc_user_main
-      integer ierr
-      end
-EOF
+## F77 files
+#cat <<EOF > mpc_main.fortran
+      #subroutine mpc_user_main
+      #integer ierr
+      #end
+#EOF
 
-	list_languages="c c++ fortran"
-	for language in ${list_languages}
-	do
-		lang_file=${COMPILER_FILE_DIRECTORY}/.${language}_compilers.cfg
-		main_file=mpc_main.${language}
-		for line in `cat ${lang_file}`
-		do
-			family="`echo ${line} | cut -d":" -f1`"
-			compiler="`echo ${line} | cut -d":" -f3`"
+	#list_languages="c c++ fortran"
+	#for language in ${list_languages}
+	#do
+		#lang_file=${COMPILER_FILE_DIRECTORY}/.${language}_compilers.cfg
+		#main_file=mpc_main.${language}
+		#for line in `cat ${lang_file}`
+		#do
+			#family="`echo ${line} | cut -d":" -f1`"
+			#compiler="`echo ${line} | cut -d":" -f3`"
 
-			#switch depending on family
-			if [ "${family}" = "INTEL" ];
-			then
-				PRIV_FLAG="-mSYMTAB_mpc_privatize"
-			else
-				PRIV_FLAG="-fmpc-privatize"
-			fi
-			${compiler} ${PRIV_FLAG} -c ${main_file} > /dev/null 2>&1
-			if [ $? -eq 0 ];
-			then
-				pattern="Y"	
-			else
-				pattern="N"
-			fi
-			# for each line, replace first occurence of "::" by :Y: or :N:
-			# parsed_line is used to match corresponding line in current file
-			parsed_line="`echo $line | sed -e "s@/@\\\\\/@g"`"
-			sed -i "/^${parsed_line}$/{s/::/:${pattern}:/1}" ${lang_file}
-		done
-	done
+			##switch depending on family
+			#if [ "${family}" = "INTEL" ];
+			#then
+				#PRIV_FLAG="-mSYMTAB_mpc_privatize"
+			#else
+				#PRIV_FLAG="-fmpc-privatize"
+			#fi
+			#${compiler} ${PRIV_FLAG} -c ${main_file} > /dev/null 2>&1
+			#if [ $? -eq 0 ];
+			#then
+				#pattern="Y"	
+			#else
+				#pattern="N"
+			#fi
+			## for each line, replace first occurence of "::" by :Y: or :N:
+			## parsed_line is used to match corresponding line in current file
+			#parsed_line="`echo $line | sed -e "s@/@\\\\\/@g"`"
+			#sed -i "/^${parsed_line}$/{s/::/:${pattern}:/1}" ${lang_file}
+		#done
+	#done
 
-	rm mpc_main.c mpc_main.c++ mpc_main.fortran mpc_main.o > /dev/null 2>&1
-}
+	#rm mpc_main.c mpc_main.c++ mpc_main.fortran mpc_main.o > /dev/null 2>&1
+#}
 
 ######################################################
 # set Compiler list and config file
 
-createCompilerManager()
+createHomeLink()
 {
-	COMPILER_FILE_DIRECTORY=${MPC_RPREFIX}/
+	COMPILER_FILE_DIRECTORY=
 	export COMPILER_FILE_DIRECTORY
 
 	which ${CHECKSUM_TOOL} > /dev/null 2>&1
 	if test "$?" != "0";
 	then
 		printf "Warning: This installation cannot find to ${CHECKSUM_TOOL}.\n"
-		printf "Warning: Please ensure a valid checksum tool is available to fully exploit dynamic compiler swith facilities\n"
+		printf "Warning: Please ensure a valid checksum tool is available to fully exploit dynamic compiler switch facilities\n"
 		return
 	fi
 	if test ! -w $HOME;
@@ -213,101 +213,44 @@ createCompilerManager()
 		return
 	fi
 
-	CURRENT_INSTALL_HASH="`echo "$MPC_RPREFIX" | sed -e "s#//*#/#g" | sha1sum | cut -f1 -d" "`"
+	CURRENT_INSTALL_HASH="`echo "$MPC_RPREFIX" | sed -e "s#//*#/#g" | $CHECKSUM_TOOL | cut -f1 -d" "`"
 	COMPILER_FILE_DIRECTORY=$HOME/.mpcompil/${CURRENT_INSTALL_HASH}
-	
+
+	#remove previous installation if exists
+	test -f $COMPILER_FILE_DIRECTORY/mpc_install_path && rm -rf $COMPILER_FILE_DIRECTORY
+
 	mkdir -p $COMPILER_FILE_DIRECTORY
 	echo "${MPC_RPREFIX}" | sed -e "s#//*#/#g" > ${COMPILER_FILE_DIRECTORY}/mpc_install_path
 }
 
-setCompilerList()
+setBuildCompiler()
 {
-	createCompilerManager
+	#if --compiler set or GCC disabled, just let the system handles the default/overriden value
+	test "x$COMPILER_ARG" = "xyes" -o "$GCC_PREFIX" = "disabled" && return
+	#else if --with-mpc-gcc is an argument
+	test "$GCC_PREFIX" != 'internal' && MPC_COMPILER=$GCC_PREFIX
+	#if internal GCC is selected
+	test "$GCC_PREFIX"  = 'internal' && MPC_COMPILER=$MPC_GCC_PRIVATIZED_COMPILER
+}
 
-	outputvar="$1"
-	compiler="${MPC_COMPILER}"
-	gcc_version=`cat "${PROJECT_SOURCE_DIR}/config.txt" | grep "^gcc " | cut -f 2 -d ';' | sed -e 's/\.//g' | xargs echo`
-	config_file_c="${COMPILER_FILE_DIRECTORY}/.c_compilers.cfg"
-	config_file_cplus="${COMPILER_FILE_DIRECTORY}/.c++_compilers.cfg"
-	config_file_fort="${COMPILER_FILE_DIRECTORY}/.fortran_compilers.cfg"
-	
-	cat < /dev/null > "${config_file_c}"
-	cat < /dev/null > "${config_file_cplus}"
-	cat < /dev/null > "${config_file_fort}"
+storeMPCcompilers()
+{
+	createHomeLink
 
-	#Adding GCC if internal is used
-	if [ "${GCC_PREFIX}" = 'internal' ];
-	then
-		is_there="`cat ${config_file_c} | grep \"mpc-gcc_${gcc_version}\"`"
-		if test "${is_there}" = "" ; 
-		then
-			#first patch version
-			echo "GNU:Y:${MPC_RPREFIX}/`uname -m`/`uname -m`/bin/mpc-gcc_${gcc_version}" >> "${config_file_c}"
-			echo "GNU:Y:${MPC_RPREFIX}/`uname -m`/`uname -m`/bin/mpc-g++_${gcc_version}" >> "${config_file_cplus}"
-			echo "GNU:Y:${MPC_RPREFIX}/`uname -m`/`uname -m`/bin/mpc-gfortran_${gcc_version}" >> "${config_file_fort}"
-		fi
-
-	#adding GCC if external path is provided
-	elif [ "${GCC_PREFIX}" != 'disabled' ];
-	then
-			putNewCompiler "GNU" "${GCC_PREFIX}/bin/gcc" >> "${config_file_c}"
-			putNewCompiler "GNU" "${GCC_PREFIX}/bin/g++" >> "${config_file_cplus}"
-			putNewCompiler "GNU" "${GCC_PREFIX}/bin/gfortran" >> "${config_file_fort}"
-	fi
-	
-	#add all intel compilers found in environment
-	list_of_icc=`which -a icc 2> /dev/null`
-	list_of_icpc=`which -a icpc 2> /dev/null`
-	list_of_ifort=`which -a ifort 2> /dev/null`
-	for icc in ${list_of_icc}
-	do
-		is_there="`cat ${config_file_c} | grep \"${icc}$\"`"
-		if test "${is_there}" = "" ; then
-			putNewCompiler "INTEL" "${icc}" >> "${config_file_c}"
-		fi
-	done
-	
-	for icpc in ${list_of_icpc}
-	do
-		is_there="`cat ${config_file_cplus} | grep \"${icpc}$\"`"
-		if test "${is_there}" = "" ; then
-			putNewCompiler "INTEL" "${icpc}" >> "${config_file_cplus}"
-		fi
-	done
-	for ifort in ${list_of_ifort}
-	do
-		is_there="`cat ${config_file_fort} | grep \"${ifort}$\"`"
-		if test "${is_there}" = "" ; then
-			putNewCompiler "INTEL" "${ifort}" >> "${config_file_fort}"
-		fi
-	done
-	
-	#add all GNU compilers found in environment
-	list_of_gcc=`which -a gcc 2> /dev/null`
-	for gcc in ${list_of_gcc}
-	do
-		install_base=`dirname $gcc`
-		is_there="`cat ${config_file_c} | grep \"^${install_base}\"`"
-		if test "${is_there}" = "" ; then
-			putNewCompiler "GNU" "${install_base}/gcc" >> "${config_file_c}"
-			putNewCompiler "GNU" "${install_base}/g++" >> "${config_file_cplus}"
-			putNewCompiler "GNU" "${install_base}/gfortran" >> "${config_file_fort}"
-		fi
-	done
-
-	testCompilers
-
-	echo "Compiler configuration file are stored in:"
-	echo "  - Installation Path: $MPC_RPREFIX/"
-	if test "$COMPILER_FILE_DIRECTORY" != "${MPC_RPREFIX}/"
-	then
-	echo "  - Home Path: $COMPILER_FILE_DIRECTORY/"
-		# we have to copy back configuration file in the installation path, for read-only access
+	if test -n "$COMPILER_FILE_DIRECTORY"; then
 		for language in c c++ fortran
 		do
+			fam="GNU"
+			test -n "`basename $MPC_COMPILER | egrep -o "^i*"`" && fam=INTEL
+			#create the file
+			$MPC_RPREFIX/$MPC_HOST/$MPC_TARGET/bin/mpc_compiler_manager add $language $MPC_COMPILER $fam >/dev/null
+
+			#copy file into installation path
 			cp ${COMPILER_FILE_DIRECTORY}/.${language}_compilers.cfg ${MPC_RPREFIX}/
 		done
 	fi
+
+	$MPC_RPREFIX/$MPC_HOST/$MPC_TARGET/bin/mpc_compiler_manager default
 }
 
 ######################################################
@@ -865,7 +808,7 @@ setupInstallPackage()
 	name="${1}"
 	host="${2}"
 	target="${3}"	
-	compiler="${4}"
+	compiler="`basename ${4}`"
 	varprefix="${5}"
 	template="${PROJECT_TEMPLATE_DIR}/Makefile.${6}.in"
 	type="${7}"

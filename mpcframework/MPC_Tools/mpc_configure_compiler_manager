@@ -63,6 +63,9 @@ integer i
 EOFINT
 }
 
+
+list_languages="c c++ fortran"
+
 format_path()
 {
 	readlink -e \$1
@@ -99,27 +102,28 @@ clean_main_files()
 add_compiler()
 {
 	file="\${CONFIG_PREFIX}/.\${1}_compilers.cfg"
-	is_there="\`egrep -n "^[a-zA-Z]+:(Y|N):\${2}$" \$file\`"
+	hash="\`sha1sum \$2 | cut -f1 -d" "\`"
+	is_there="\`egrep "^[a-zA-Z]+:(Y|N):\${2}:.*$" \$file 2>/dev/null\`"
 
-	if [ ! -z "\${is_there}" ];
-	then
-		die "Compiler \${2} already added for \${1} language ! Nothing to do"
-	elif [ -z "\`which \${2} 2> /dev/null\`" ];
-	then
-		die "\${2} is not found. We do not add it to MPC configuration"
-	else
+	test -z "\`which \${2} 2> /dev/null\`" && die "\${2} not found. Not added."
 
-		build_main_files
-		PRIV_FLAG="-fmpc-privatize"
-		\${2} \${PRIV_FLAG} -c mpc_main.\${1} > /dev/null 2>&1
-		if [ \$? -eq 0 ];
-		then
-			pattern="Y"
-		else
-			pattern="N"
-		fi
-		echo "\${3}:\${pattern}:\${2}" >> \${file}
+	if test -n "\${is_there}"; then 
+		old_hash="\`echo "\$is_there" | cut -f4 -d":"\`"
+
+		test "\$old_hash" = "\$hash" && return;
+		printf "Compiler \$2 changed since the insertion. Updating."
 	fi
+
+	build_main_files
+	PRIV_FLAG="-fmpc-privatize"
+	\${2} \${PRIV_FLAG} -c mpc_main.\${1} > /dev/null 2>&1
+	if [ \$? -eq 0 ];
+	then
+		pattern="Y"
+	else
+		pattern="N"
+	fi
+	echo "\${3}:\${pattern}:\${2}:\${hash}" >> \${file}
 }
 
 remove_compiler()
@@ -152,7 +156,6 @@ set_default_compiler()
 
 print_first_compilers()
 {
-	list_languages="c c++ fortran"
 	for language in \${list_languages}
 	do
 		lang_file=\${CONFIG_PREFIX}/.\${language}_compilers.cfg
@@ -163,8 +166,6 @@ print_first_compilers()
 
 stat_compilers()
 {
-
-	list_languages="c c++ fortran"
 	if test ! -z "\$1";
 	then
 		list_languages="\${1}"
@@ -183,7 +184,6 @@ stat_compilers()
 list_compilers()
 {
 
-	list_languages="c c++ fortran"
 	if test ! -z "\$1";
 	then
 		list_languages="\${1}"
@@ -219,6 +219,27 @@ list_compilers()
 	done
 }
 
+check_compilers()
+{
+	for language in \${list_languages}
+	do
+		lang_file=\${CONFIG_PREFIX}/.\${language}_compilers.cfg
+		for line in \`cat \${lang_file}\`
+		do
+			compiler="\`echo \${line} | cut -d":" -f3\`"
+			old_hash="\`echo \${line} | cut -d":" -f4\`"
+			new_hash="\`sha1sum \$compiler | cut -f1 -d" "\`";
+			if test "\$new_hash" != "\$old_hash"; then
+				printf "MISMATCH hash"
+			else
+				printf "Coherent hash"
+			fi
+			printf " for \$language compiler: \$compiler\n"
+
+		done
+	done
+}
+
 is_valid_language()
 {
 	if test -z "\`\echo \$1 | egrep -o "^(c|c\\+\\+|fortran)$"\`";
@@ -229,10 +250,10 @@ is_valid_language()
 
 CONFIG_PREFIX=\${MPC_RPREFIX}
 
-RED="\`printf "\033[1;31m"\`"
-GRE="\`printf "\033[1;32m"\`"
-BLU="\`printf "\033[1;36m"\`"
-DEF="\`printf "\033[0;0m"\`"
+#RED="\`printf "\033[1;31m"\`"
+#GRE="\`printf "\033[1;32m"\`"
+#BLU="\`printf "\033[1;36m"\`"
+#DEF="\`printf "\033[0;0m"\`"
 
 printf "MPC Installation (Read-only) located at \${BLU}\${MPC_RPREFIX}\${DEF}\n"
 user_prefix=\$HOME/.mpcompil/\`echo \$MPC_RPREFIX | sed -e "s#//*#/#g" | sha1sum | cut -f1 -d" "\`
@@ -275,11 +296,14 @@ case "\$1" in
 	list|-l)
 		list_compilers
 		;;
-	list_default |-ld|--ld)
+	list_default |-ld|--ld|default)
 		print_first_compilers
 		;;
 	stat|-s)
 		stat_compilers
+		;;
+	check|c)
+		check_compilers
 		;;
 	*)
 		die "Unknown rule: \"\$1\""

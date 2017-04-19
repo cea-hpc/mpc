@@ -172,8 +172,8 @@ do
 			;;
 		--disable-mpc-gcc)
 			GCC_PREFIX='disabled'
-			#If we do not have GCC also disable privatization plugin
-			PRIV_PLUGIN_PREFIX='disabled'
+			LIBEXTLS_PREFIX="disabled"			
+			SCTK_GETOPT_PREFIX='disabled'
 			;;
 		################# FORTRAN GCC ###############
 		--disable-mpc-fortran)
@@ -202,7 +202,11 @@ do
 			extractAndAddPackageOption 'BINUTILS_BUILD_PARAMETERS' 'mpc-binutils' "$arg"
 			;;
 		--disable-mpc-binutils)
-		    BINUTILS_PREFIX='disabled'
+		    	BINUTILS_PREFIX='disabled'
+		    	GCC_PREFIX="disablec"
+			PRIV_PLUGIN_PREFIX='disabled'
+			LIBEXTLS_PREFIX="disabled"			
+			SCTK_GETOPT_PREFIX='disabled'
 			;;  
 		################## LIBXML2 ##################
 		--with-libxml2=*)
@@ -249,9 +253,17 @@ do
 			;;
 		################# COMPILER ##################
 		--compiler=*)
-			GCC_PREFIX='disabled'
-			PRIV_PLUGIN_PREFIX='disabled'
 			extractParamValue 'MPC_COMPILER' 'compiler' "$arg"
+
+			COMPILER="`which $MPC_COMPILER 2> /dev/null`"
+			#first, check if the arg can be found in PATH
+			if test -n "$COMPILER"; then
+				MPC_COMPILER="$COMPILER"
+			else #else, canonize the argument
+				MPC_COMPILER="`readlink -e $MPC_COMPILER`"
+			fi
+
+			COMPILER_ARG=yes
 			;;
 		############### MPCFRAMEWORK ################
 		--mpc-option=*)
@@ -281,6 +293,7 @@ do
 			GDB_PREFIX='disabled'
 			MPC_PREFIX='disabled'
 			GCC_PREFIX='disabled'
+			LIBEXTLS_PREFIX='disabled'
 			PRIV_PLUGIN_PREFIX='disabled'
 			HYDRA_PREFIX='disabled'
 			HYDRA_SIMPLE_PREFIX='disabled'
@@ -293,6 +306,7 @@ do
 		--mpc-process-mode)			
 			GCC_PREFIX='disabled'
 			PRIV_PLUGIN_PREFIX='disabled'
+			LIBEXTLS_PREFIX='disabled'
 			GMP_PREFIX='disabled'
 			MPFR_PREFIX='disabled'
 			MPC_PREFIX='disabled'
@@ -416,7 +430,15 @@ then
 fi
 
 ######################################################
-#Check if install is already there
+#Check if install is already there or not writable
+if test ! -w $PREFIX; then
+	echo "#######################################################################"
+	echo "# Installation prefix '$PREFIX' has no write permission access."
+	echo "# Please make it writable or change it with --prefix option."
+	echo "#######################################################################"
+	exit 3
+fi
+
 if test "${CHECK_INSTALL}" = "true"; then
 	checkIfInstallAlreadyExists
 fi
@@ -442,10 +464,6 @@ MPCFRAMEWORK_PREFIX="${INTERNAL_KEY}"
 GMP_INTERNAL_PREFIX="${PREFIX}/${MPC_HOST}/${MPC_HOST}/libsgcc"
 MPFR_INTERNAL_PREFIX="${PREFIX}/${MPC_HOST}/${MPC_HOST}/libsgcc"
 MPC_INTERNAL_PREFIX="${PREFIX}/${MPC_HOST}/${MPC_HOST}/libsgcc"
-
-######################################################
-#Set compiler list
-setCompilerList "COMPILER_LIST"
 
 ######################################################
 #Fill MPC Build parameters
@@ -536,7 +554,7 @@ fillMPCBuildParameters()
 		MPCFRAMEWORK_BUILD_PARAMETERS="--with-opencl=${OPENCL_PREFIX} ${MPCFRAMEWORK_BUILD_PARAMETERS}"
 	fi
 
-	MPCFRAMEWORK_BUILD_PARAMETERS="'--with-libsctk_arch=\$\(PREFIX\)/' ${WRAPPER_CROSS_COMPIL} --arch=${MPC_TARGET} --compilers=\"${COMPILER_LIST}\" ${MPCFRAMEWORK_BUILD_PARAMETERS}"
+	MPCFRAMEWORK_BUILD_PARAMETERS="'--with-libsctk_arch=\$\(PREFIX\)/' ${WRAPPER_CROSS_COMPIL} --arch=${MPC_TARGET} --compiler=\"${MPC_COMPILER}\" ${MPCFRAMEWORK_BUILD_PARAMETERS}"
 }
 
 ######################################################
@@ -562,6 +580,10 @@ fillTLSBuildParameters()
 fillTLSBuildParameters
 fillGCCBuildParameters
 fillMPCBuildParameters
+
+######################################################
+#Set build compiler in MPC_COMPILER
+setBuildCompiler 
 
 genMakefilePerType()
 {
@@ -744,6 +766,7 @@ applyOnTemplate "${PROJECT_TEMPLATE_DIR}/mpcvars.csh.in" > "${PREFIX}/mpcvars.cs
 ######################################################
 #Put the new install in the list
 putNewInstall
+storeMPCcompilers
 
 ######################################################
 echo

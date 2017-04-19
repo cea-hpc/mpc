@@ -585,9 +585,9 @@ if test -d $HOME/.mpcompil/$hash;
 then
 	CUR_CONFIG_PATH=$HOME/.mpcompil/$hash
 fi
-SCTK_CC=`head -n 1 ${CUR_CONFIG_PATH}/.c_compilers.cfg | cut -f3 -d":"`
-SCTK_CXX=`head -n 1 ${CUR_CONFIG_PATH}/.c++_compilers.cfg | cut -f3 -d":"`
-SCTK_F77=`head -n 1 ${CUR_CONFIG_PATH}/.fortran_compilers.cfg | cut -f3 -d":"`
+#SCTK_CC=`head -n 1 ${CUR_CONFIG_PATH}/.c_compilers.cfg | cut -f3 -d":"`
+#SCTK_CXX=`head -n 1 ${CUR_CONFIG_PATH}/.c++_compilers.cfg | cut -f3 -d":"`
+#SCTK_F77=`head -n 1 ${CUR_CONFIG_PATH}/.fortran_compilers.cfg | cut -f3 -d":"`
 SCTK_GCC="${SCTK_CC}"
 #echo "sctk_cc = '${SCTK_CC}'" 2>&1
 #echo "sctk_cxx = '${SCTK_CXX}'" 2>&1
