@@ -125,132 +125,113 @@ putNewInstall()
 	fi
 }
 
-#putNewCompiler()
-#{
-	#echo "$1::$2"
-#}
+######################################################
+#function to define compiler used to build MPC
+#Args   : None
+#Variables: COMPILER_ARG, MPC_COMPILER
+#Result : set BUILD_CC, BUILD_CXX, BUILD_FC according to the configuration
+setBuildCompiler()
+{
+	#compilers used to build MPC framework
+	BUILD_CC=
+	BUILD_CXX=
+	BUILD_FC=
+	BUILD_FAMILY=
 
-#testCompilers()
-#{
+	export BUILD_CC
+	export BUILD_CXX
+	export BUILD_FC
+	export BUILD_FAMILY=
 
-	## C files
-#cat<<EOF > mpc_main.c
-#int i;
-#int main(int argc, char ** argv)
-#{
-	#return 0;
-#}
-#EOF
+	#if user set --compiler option, this overrides any preset
+	#you can add here any alias you want.
+	#by default, PATH will be used to find commands but you can put absolute paths
+	if test "x$COMPILER_ARG" = "xyes"; then
+		case $MPC_COMPILER in
+			icc)
+				BUILD_CC=icc
+				BUILC_CXX=icpc
+				BUILD_FC=ifort
+				BUILD_FAMILY="INTEL"
+				;;
+			gcc)
+				BUILD_CC=gcc
+				BUILD_CXX=g++
+				BUILD_FC=gfortran
+				BUILD_FAMILY="GNU"
+				;;
+			pgi)
+				BUILD_CC=pgcc
+				BUILD_CXX=pgc++
+				BUILD_FC=pgfortran
+				BUILD_FAMILY="PGI"
+				;;
+			*)
+				;;
+		esac
+	elif test "$GCC_PREFIX" != "internal"; then
+		BUILD_CC=$GCC_PREFIX/bin/gcc
+		BUILD_CXX=$GCC_PREFIX/bin/g++
+		BUILD_FC=$GCC_PREFIX/bin/gfortran
+		BUILD_FAMILY="GNU"
 
-## CXX files
-#cat<<EOF > mpc_main.c++
-#int i;
-#int main(int argc, char ** argv)
-#{
-	#return 0;
-#}
-#EOF
-
-## F77 files
-#cat <<EOF > mpc_main.fortran
-      #subroutine mpc_user_main
-      #integer ierr
-      #end
-#EOF
-
-	#list_languages="c c++ fortran"
-	#for language in ${list_languages}
-	#do
-		#lang_file=${COMPILER_FILE_DIRECTORY}/.${language}_compilers.cfg
-		#main_file=mpc_main.${language}
-		#for line in `cat ${lang_file}`
-		#do
-			#family="`echo ${line} | cut -d":" -f1`"
-			#compiler="`echo ${line} | cut -d":" -f3`"
-
-			##switch depending on family
-			#if [ "${family}" = "INTEL" ];
-			#then
-				#PRIV_FLAG="-mSYMTAB_mpc_privatize"
-			#else
-				#PRIV_FLAG="-fmpc-privatize"
-			#fi
-			#${compiler} ${PRIV_FLAG} -c ${main_file} > /dev/null 2>&1
-			#if [ $? -eq 0 ];
-			#then
-				#pattern="Y"	
-			#else
-				#pattern="N"
-			#fi
-			## for each line, replace first occurence of "::" by :Y: or :N:
-			## parsed_line is used to match corresponding line in current file
-			#parsed_line="`echo $line | sed -e "s@/@\\\\\/@g"`"
-			#sed -i "/^${parsed_line}$/{s/::/:${pattern}:/1}" ${lang_file}
-		#done
-	#done
-
-	#rm mpc_main.c mpc_main.c++ mpc_main.fortran mpc_main.o > /dev/null 2>&1
-#}
+	elif test "$GCC_PREFIX" = "internal"; then
+		BUILD_CC=$MPC_GCC_PRIVATIZED_COMPILER
+		BUILD_CXX=$MPC_GPP_PRIVATIZED_COMPILER
+		BUILD_FC=$MPC_GFORT_PRIVATIZED_COMPILER
+		BUILD_FAMILY="GNU"
+	fi
+}
 
 ######################################################
-# set Compiler list and config file
-
+# Create Home link to current installation path, if necessary
+# Args: None
+#Variables: CHECKSUM_TOOL, MPC_RPREFIX
+#Result: Expose HOME_CFILEPATH vars (can be empty if HOME link cannot be created)
 createHomeLink()
 {
-	COMPILER_FILE_DIRECTORY=
-	export COMPILER_FILE_DIRECTORY
+	HOME_CFILEPATH=
+	export HOME_CFILEPATH
 
 	which ${CHECKSUM_TOOL} > /dev/null 2>&1
 	if test "$?" != "0";
 	then
 		printf "Warning: This installation cannot find to ${CHECKSUM_TOOL}.\n"
 		printf "Warning: Please ensure a valid checksum tool is available to fully exploit dynamic compiler switch facilities\n"
-		return
-	fi
-	if test ! -w $HOME;
+	elif test ! -w $HOME;
 	then
 		printf "Warning: HOME directory is not writable. Any modifications to compilers will directly impact the installation directory\n"
-		return
+	else
+		clean_path="`echo "$MPC_RPREFIX" | sed -e "s#//*#/#g"`"
+		install_hash="`echo "$clean_path" | $CHECKSUM_TOOL | cut -f1 -d" "`"
+		HOME_CFILEPATH=$HOME/.mpcompil/${install_hash}
+
+		#remove previous installation if exists (Warning: There are some deletions here)
+		test -f $HOME_CFILEPATH/mpc_install_path && rm -rf $HOME_CFILEPATH
+		mkdir -p $HOME_CFILEPATH
+		echo "$clean_path" > ${HOME_CFILEPATH}/mpc_install_path
 	fi
-
-	CURRENT_INSTALL_HASH="`echo "$MPC_RPREFIX" | sed -e "s#//*#/#g" | $CHECKSUM_TOOL | cut -f1 -d" "`"
-	COMPILER_FILE_DIRECTORY=$HOME/.mpcompil/${CURRENT_INSTALL_HASH}
-
-	#remove previous installation if exists
-	test -f $COMPILER_FILE_DIRECTORY/mpc_install_path && rm -rf $COMPILER_FILE_DIRECTORY
-
-	mkdir -p $COMPILER_FILE_DIRECTORY
-	echo "${MPC_RPREFIX}" | sed -e "s#//*#/#g" > ${COMPILER_FILE_DIRECTORY}/mpc_install_path
 }
 
-setBuildCompiler()
-{
-	#if --compiler set or GCC disabled, just let the system handles the default/overriden value
-	test "x$COMPILER_ARG" = "xyes" -o "$GCC_PREFIX" = "disabled" && return
-	#else if --with-mpc-gcc is an argument
-	test "$GCC_PREFIX" != 'internal' && MPC_COMPILER=$GCC_PREFIX
-	#if internal GCC is selected
-	test "$GCC_PREFIX"  = 'internal' && MPC_COMPILER=$MPC_GCC_PRIVATIZED_COMPILER
-}
-
+######################################################
+#function create compiler configuration file into both HOME and installation path
+#Args   : None
+#Variables: MPC_RPREFIX, MPC_HOST, MPC_TARGET, BUILD_CC, BUILD_CXX, BUILD_FC, BUILD_FAMILY
+#Result : create MPC_RPREFIX/.*_compilers.cfg and HOME/.mpcompil/HASH/.*_compilers.cfg
 storeMPCcompilers()
 {
+	#create and clean $HOME/.mpcompil link
 	createHomeLink
 
-	if test -n "$COMPILER_FILE_DIRECTORY"; then
-		for language in c c++ fortran
-		do
-			fam="GNU"
-			test -n "`basename $MPC_COMPILER | egrep -o "^i*"`" && fam=INTEL
-			#create the file
-			$MPC_RPREFIX/$MPC_HOST/$MPC_TARGET/bin/mpc_compiler_manager add $language $MPC_COMPILER $fam >/dev/null
-
-			#copy file into installation path
-			cp ${COMPILER_FILE_DIRECTORY}/.${language}_compilers.cfg ${MPC_RPREFIX}/
-		done
-	fi
-
-	$MPC_RPREFIX/$MPC_HOST/$MPC_TARGET/bin/mpc_compiler_manager default
+	#create the file
+	$MPC_RPREFIX/$MPC_HOST/$MPC_TARGET/bin/mpc_compiler_manager add c $BUILD_CC $BUILD_FAMILY
+	$MPC_RPREFIX/$MPC_HOST/$MPC_TARGET/bin/mpc_compiler_manager add c++ $BUILD_CXX $BUILD_FAMILY 
+	$MPC_RPREFIX/$MPC_HOST/$MPC_TARGET/bin/mpc_compiler_manager add fortran $BUILD_FC $BUILD_FAMILY 
+	
+	test -n "$HOME_CFILEPATH" && cp ${HOME_CFILEPATH}/.*_compilers.cfg ${MPC_RPREFIX}/
+	
+	#print default compilers
+	$MPC_RPREFIX/$MPC_HOST/$MPC_TARGET/bin/mpc_compiler_manager list_default
 }
 
 ######################################################
@@ -731,39 +712,10 @@ getPackageCompilationOptions()
     
 	options=`echo ${configForCompiler} | cut -f 6 -d ';'`
 	options="${all_options} ${options} `echo ${config} | cut -f 6 -d ';'`"
-	
-	
-	# Make sure the compiler was not manually set (useful for ROMIO)
-	# before setting it to ICC by force
-	COMPILER_OVERIDE_FLAG=0
-	
 
-	echo "${options}" | grep "CC=" 2>&1 > /dev/null
-	
-	if test ${?} -eq 0; then
-		COMPILER_OVERIDE_FLAG=1
-	fi	
-	
-	echo "${options}" | grep "FC=" 2>&1 > /dev/null
-	
-	if test ${?} -eq 0; then
-		COMPILER_OVERIDE_FLAG=1
-	fi
-	
-	echo "${options}" | grep "F77=" 2>&1 > /dev/null
-	
-	if test ${?} -eq 0; then
-		COMPILER_OVERIDE_FLAG=1
-	fi
-	
-	if test ${COMPILER_OVERIDE_FLAG} -eq 0; then
-		
-		case ${compiler} in
-			icc)
-				options="${options} CC=icc CXX=icpc F77=ifort"
-			;;
-		esac
-	fi
+	#prefixing the options line w/ default build compilers
+	#if config.txt defines it too, these vars will be overriden
+	options="CC=$BUILD_CC CXX=$BUILD_CXX FC=$BUILD_FC ${options}"
 
 	echo $options
 }	

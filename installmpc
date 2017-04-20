@@ -10,7 +10,6 @@
 ALL_PACKAGES=''
 ALL_PACKAGES_HOST=''
 ALL_PACKAGES_TARGET=''
-COMPILER_LIST=''
 
 #Default values
 DOWNLOAD='disabled'
@@ -42,6 +41,7 @@ MPC_TARGET="${MPC_HOST}"
 MPC_COMPILER="gcc"
 MPC_GCC_PRIVATIZED_COMPILER="gcc"
 MPC_GPP_PRIVATIZED_COMPILER="g++"
+MPC_GFORT_PRIVATIZED_COMPILER="gfortran"
 
 ######################################################
 #Compute subdirs
@@ -502,6 +502,9 @@ fillGCCBuildParameters()
 
 	MPC_GPP_PRIVATIZED_COMPILER="${PREFIX}/${MPC_HOST}/${MPC_HOST}/bin/mpc-g++_${version}"
 	export MPC_GPP_PRIVATIZED_COMPILER
+	
+	MPC_GFORT_PRIVATIZED_COMPILER="${PREFIX}/${MPC_HOST}/${MPC_HOST}/bin/mpc-gfortran_${version}"
+	export MPC_GFORT_PRIVATIZED_COMPILER
 }
 
 ######################################################
@@ -554,7 +557,7 @@ fillMPCBuildParameters()
 		MPCFRAMEWORK_BUILD_PARAMETERS="--with-opencl=${OPENCL_PREFIX} ${MPCFRAMEWORK_BUILD_PARAMETERS}"
 	fi
 
-	MPCFRAMEWORK_BUILD_PARAMETERS="'--with-libsctk_arch=\$\(PREFIX\)/' ${WRAPPER_CROSS_COMPIL} --arch=${MPC_TARGET} --compiler=\"${MPC_COMPILER}\" ${MPCFRAMEWORK_BUILD_PARAMETERS}"
+	MPCFRAMEWORK_BUILD_PARAMETERS="'--with-libsctk_arch=\$\(PREFIX\)/' ${WRAPPER_CROSS_COMPIL} --arch=${MPC_TARGET} ${MPCFRAMEWORK_BUILD_PARAMETERS}"
 }
 
 ######################################################
