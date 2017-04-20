@@ -135,11 +135,6 @@ print_if_stdout()
     >&2 printf "\$@"
 }
 
-canonize()
-{
-	echo "\$1" | sed -e "s#//*#/#g"
-}
-
 #Used by nvcc to automatically blacklist some var patterns
 preprocess_main()
 {
@@ -243,13 +238,8 @@ fi
 
 # More variable definitions (Library path, show and different shades of args)
 cat << EOF >> $1
-CC_FILE_PATH=\${MPC_RPREFIX}
-hash_name=\${HOME}/.mpcompil/\`echo \$MPC_RPREFIX | sed -e "s#//*#/#g" | sha1sum | cut -f1 -d" "\`
-if test -r \${hash_name}/.${2}_compilers.cfg;
-then
-	CC_FILE_PATH=\${hash_name}
-fi
-CC="\`head -n 1 \${CC_FILE_PATH}/.${2}_compilers.cfg | cut -d":" -f3\`"
+MPC_MANAGER=\$MPC_RPREFIX/\$MPC_SUBPREFIX/bin/mpc_compiler_manager
+CC="\`\$MPC_MANAGER get $2 1\`"
 #LIB_PATH="-Wl,-rpath,\${MPC_RPREFIX}/\${MPC_TARGET_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/lib ${LIB_PATH}"
 if test "\$MPC_MAKEFILE" != "" ; then 
 LIB_PATH=""
@@ -391,14 +381,8 @@ USE_COMMAND="1"
 		addarg=no
 	;;
 	-compilers|--compilers)
-        echo "Compilers available :"
-    	for line in \` cat \${CC_FILE_PATH}/.${2}_compilers.cfg\` ;
-    	do
-			family="\`echo "\$line" | cut -d":" -f1\`"
-			priv="\`echo "\$line" | cut -d":" -f2\`"
-			compiler="\`echo "\$line" | cut -d":" -f3\`"
-			print_if_stdout " - \${compiler} (\${family} Privatization support : \${priv})\n"
-    	done
+		content="\`\$MPC_MANAGER list 2>&1\`"
+		print_if_stdout "\$content\n"
 		exit 0
 		;;
 	-target_list|--target_list)
@@ -477,22 +461,7 @@ allargs="\${allargs} \${MPC_HEADER_INCLUDE}"
 EOF
 fi
 cat << EOF >> $1
-unalias grep > /dev/null 2>&1
-cc_path="\`canonize \${CC}\`"
-
-is_defined=""
-for line in \`cat \${CC_FILE_PATH}/.${2}_compilers.cfg\`
-do
-	cur="\`echo "\$line" | cut -d":" -f3 2> /dev/null\`"
-	cur="\`canonize \$cur\`"
-	if test "\$cur" = "\$cc_path";
-	then
-		is_defined="\$line"
-		break
-	fi
-done
-
-#is_defined="\`grep \"\${cc_path}$\" \${CC_FILE_PATH}/.${2}_compilers.cfg\`"
+is_defined="\`\$MPC_MANAGER get_detail $2 \${CC}\`"
 
 #if CC is not present in MPC compiler configuration file
 if test -z "\${is_defined}";
@@ -500,21 +469,12 @@ then
         if test "$SCTK_MPC_PROCESS_MODE" = "1" ; then 
                 PRIV_FLAG=""
         else
-		print_if_stdout "Warning: \$cc_path not known: Adding it\n"
-		\${MPC_RPREFIX}/\${MPC_SUBPREFIX}/bin/mpc_compiler_manager add $2 "\$cc_path" > /dev/null
-		is_defined=""
-		for line in \`cat \${CC_FILE_PATH}/.${2}_compilers.cfg\`
-		do
-			cur="\`echo "\$line" | cut -d":" -f3 2> /dev/null\`"
-			cur="\`canonize \$cur\`"
-			if test "\$cur" = "\$cc_path";
-			then
-				is_defined="\$line"
-				break
-			fi
-		done
+		print_if_stdout "Warning: \${CC} not known: Adding it\n"
+		\${MPC_RPREFIX}/\${MPC_SUBPREFIX}/bin/mpc_compiler_manager add $2 "\${CC}" > /dev/null
+		is_defined="\`\$MPC_MANAGER get_detail $2 \${CC}\`"
         fi
 fi
+
 CC_FAMILY="\`echo \${is_defined} | cut -d":" -f1\`"
 CC_PRIV="\`echo \${is_defined} | cut -d":" -f2\`"
 CC="\`echo \${is_defined} | cut -d":" -f3\`"
@@ -523,8 +483,8 @@ CC="\`echo \${is_defined} | cut -d":" -f3\`"
 if test ! -z "\${PRIV_FLAG}" -a "\${CC_PRIV}" = "N";
 then
 if test "$SCTK_MPC_PROCESS_MODE" != "1" ; then 
-	print_if_stdout "Warning: '\${CC} does not support privatization support. Disabling privatization'\n"
-	print_if_stdout "Warning: Do not consider using this compiler for thread-based mode.\n"
+	print_if_stdout "Warning: '\${CC} does not support privatization. Disabling it.'\n"
+	print_if_stdout "Warning: Do not consider using this compiler in thread-based mode.\n"
 fi
 	PRIV_FLAG=""
 else
@@ -534,9 +494,9 @@ else
 			NO_TLS_OPT=1
 			override_var_if_isset 'PRIV_FLAG' '-mSYMTAB_mpc_privatize'
 			override_var_if_isset 'OMP_FLAG' '-qopenmp'
-        FFLAGS="\${FFLAGS} -threads -recursive"
+        		FFLAGS="\${FFLAGS} -threads -recursive"
 			MPC_USE_INTEL_COMPILER="1"
-        export MPC_USE_INTEL_COMPILER
+			export MPC_USE_INTEL_COMPILER
 			;;
 		GNU)
 EOF
@@ -918,7 +878,7 @@ cat <<EOF >> "${MPC_RPREFIX}/${MPC_TARGET_SUBPREFIX}/${MPC_TARGET_SUBPREFIX}/.ta
 #!/bin/sh
 SCTK_MIC=0
 export SCTK_MIC
-CC=\`head -n 1 \${MPC_RPREFIX}/.c_compilers.cfg | cut -d":" -f3\`
+CC=\`\${MPC_RPREFIX}/\$MPC_SUBPREFIX}/bin/mpc_compiler_manager get c 1\`
 export CC
 addarg=no
 CFLAGS="\`\${MPC_RPREFIX}/\${MPC_TARGET_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/bin/mpc_cflags c\`"
@@ -961,7 +921,7 @@ cat <<EOF >> "${MPC_RPREFIX}/${MPC_TARGET_SUBPREFIX}/${MPC_TARGET_SUBPREFIX}/.ta
 #!/bin/sh
 SCTK_MIC=0
 export SCTK_MIC
-CC=\`head -n 1 \${MPC_RPREFIX}/.c_compilers.cfg | cut -d":" -f3\`
+CC=\`\${MPC_RPREFIX}/\$MPC_SUBPREFIX}/bin/mpc_compiler_manager get c 1\`
 export CC
 addarg=no
 CFLAGS="\`\${MPC_RPREFIX}/\${MPC_TARGET_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/bin/mpc_cflags c\`"
@@ -991,7 +951,6 @@ fi
 # Generate C compiler
 #
 sctk_echo "Preparing C Compiler: mpc_cc"
-#CC=`head -n 1 ${MPC_RPREFIX}/.c_compilers.cfg | cut -d":" -f3`
 printf_compiler bin/mpc_cc c
 
 #
@@ -1005,7 +964,6 @@ printf_compiler bin/mpc_cc c
 # Generate C++ compiler
 #
 sctk_echo "Preparing C++ Compiler: mpc_cxx"
-#CC=`head -n 1 ${MPC_RPREFIX}/.c++_compilers.cfg | cut -d":" -f3`
 printf_compiler bin/mpc_cxx c++
 
 #
@@ -1013,7 +971,6 @@ printf_compiler bin/mpc_cxx c++
 #
 if test "$SCTK_FORTRAN" = "1" ; then 
 	sctk_echo "Preparing Fortran Compiler: mpc_f77"
-	#CC=`head -n 1 ${MPC_RPREFIX}/.f77_compilers.cfg | cut -d":" -f3`
 	printf_compiler bin/mpc_f77 fortran
 fi
 

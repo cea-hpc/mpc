@@ -324,6 +324,9 @@ for arg in "$@" ; do
     CXX=*)
     SCTK_CXX="`echo A$arg | sed -e 's/ACXX=//g'`"
     ;;
+    FC=*)
+    SCTK_F77="`echo A$arg | sed -e 's/AFC=//g'`"
+    ;;
     CFLAGS=*)
     SCTK_CFLAGS="`echo A$arg | sed -e 's/ACFLAGS=//g'`"
     ;;
@@ -585,15 +588,7 @@ if test -d $HOME/.mpcompil/$hash;
 then
 	CUR_CONFIG_PATH=$HOME/.mpcompil/$hash
 fi
-#SCTK_CC=`head -n 1 ${CUR_CONFIG_PATH}/.c_compilers.cfg | cut -f3 -d":"`
-#SCTK_CXX=`head -n 1 ${CUR_CONFIG_PATH}/.c++_compilers.cfg | cut -f3 -d":"`
-#SCTK_F77=`head -n 1 ${CUR_CONFIG_PATH}/.fortran_compilers.cfg | cut -f3 -d":"`
 SCTK_GCC="${SCTK_CC}"
-#echo "sctk_cc = '${SCTK_CC}'" 2>&1
-#echo "sctk_cxx = '${SCTK_CXX}'" 2>&1
-#echo "sctk_f77 = '${SCTK_F77}'" 2>&1
-#echo "sctk_gcc = '${SCTK_GCC}'" 2>&1
-
 SCTK_LIRARY_PATH="${MPC_RPREFIX}/${MPC_SUBPREFIX}/libsgcc/lib"
 
 if test "$SCTK_LIRARY_PATH" != "" ; then 

@@ -379,7 +379,7 @@ printf "\t@cp ${MPC_SOURCE_DIR}MPC_Config/generated/mpc-config.xsd INSTALL/share
 printf "\t@cp -r ${MPC_SOURCE_DIR}MPC_Config/editor INSTALL/share">> Makefile; echo "">> Makefile
 if test "$SCTK_FORTRAN" = "1"; then
 printf "\t@mkdir -p INSTALL/lib/fortran_mod" >> Makefile; echo "" >> Makefile
-printf "\t@cp -r fortran_mod/* INSTALL/lib/fortran_mod" >> Makefile; echo "" >> Makefile
+#printf "\t@cp -r fortran_mod/* INSTALL/lib/fortran_mod" >> Makefile; echo "" >> Makefile
 fi
 printf "\t@chmod go+r INSTALL/share/mpc/*">> Makefile; echo "">> Makefile
 
