@@ -574,6 +574,20 @@ tmp_cross_gen(){
     echo $TMP_CROSS_NEW
 }
 
+#get privatized compiler if no one was forced by installmpc (--compiler)
+test -z "$SCTK_CC" && SCTK_CC=$BUILD_PRIV_CC
+test -z "$SCTK_CXX" && SCTK_CXX=$BUILD_PRIV_CXX
+test -z "$SCTK_F77" && SCTK_F77=$BUILD_PRIV_FC
+test -z "$SCTK_FAMILY" && SCTK_FAMILY=$BUILD_PRIV_FAMILY
+
+###### sanity checks
+die() { printf "Error: BUILD_$1 and BUILD_PRIV_$1 both not set ! This is a bug in installmpc scipt !\n"; exit 2; }
+test -n $SCTK_CC || die "CC"
+test -n $SCTK_CXX || die "CXX"
+test -n $SCTK_FC || die "FC"
+test -n $SCTK_FAMILY || die "FAMILY"
+################
+
 SCTK_AR="`tmp_cross_gen $SCTK_AR`"
 SCTK_GCC="`tmp_cross_gen $SCTK_GCC`"
 SCTK_CC="`tmp_cross_gen $SCTK_CC`"
@@ -581,13 +595,6 @@ SCTK_CXX="`tmp_cross_gen $SCTK_CXX`"
 SCTK_F77="`tmp_cross_gen $SCTK_F77`"
 SCTK_LIRARY_PATH=""
 
-CUR_CONFIG_PATH=${MPC_RPREFIX}
-
-hash=`echo $MPC_RPREFIX | sed -e "s#//*#/#g" | sha1sum | cut -f1 -d" "`
-if test -d $HOME/.mpcompil/$hash;
-then
-	CUR_CONFIG_PATH=$HOME/.mpcompil/$hash
-fi
 SCTK_GCC="${SCTK_CC}"
 SCTK_LIRARY_PATH="${MPC_RPREFIX}/${MPC_SUBPREFIX}/libsgcc/lib"
 

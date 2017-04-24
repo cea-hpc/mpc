@@ -80,7 +80,6 @@ EOF
 # $2: the real MPC script name
 printf_mpi_compiler()
 {
-    echo "Generate $1"
 	echo "#!/bin/sh" > $1
 	cat <<EOF >> $1
 if test -z \${MPC_RPREFIX}; then

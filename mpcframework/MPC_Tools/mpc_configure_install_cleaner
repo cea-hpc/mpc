@@ -132,7 +132,7 @@ rm_real_install()
 	for el in \$INSTALL_LIST
 	do
 		install_link="\`dirname \$el\`"
-		install_link_hash="\`basename \$el\`"
+		install_link_hash="\`basename \$install_link\`"
 		install_location="\`cat \$el\`"
 
 		#warning from here, we will delete a real installation !!!!!

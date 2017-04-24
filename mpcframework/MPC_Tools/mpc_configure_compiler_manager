@@ -29,11 +29,12 @@ list_languages="c c++ fortran"
 CHECKSUM_TOOL=sha1sum
 
 if test -z \${MPC_RPREFIX}; then
-	echo "################################################################"
-	echo "# No MPC_RPREFIX defined. it is the root of the actual prefix  #"
-	echo "# Yout should source the mpcvars.sh file in root of MPC prefix #"
-	echo "################################################################"
-	exit 1
+	echo "################################################################" 1>&2
+	echo "# No MPC_RPREFIX defined. it is the root of the actual prefix  #" 1>&2
+	echo "# You should source the mpcvars.sh file in root of MPC prefix  #" 1>&2
+	echo "################################################################" 1>&2
+	#attempt to guess MPC prefix = current script looks like PREFIX/host/target/bin/manager
+	MPC_RPREFIX="\`dirname \$0\`/../../../"
 fi
 
 die()
@@ -274,16 +275,10 @@ DEF="\`printf "\033[0;0m"\`"
 fi
 
 user_prefix=\$HOME/.mpcompil/\`echo \$MPC_RPREFIX | sed -e "s#//*#/#g" | hash_content \`
-if test -d \$user_prefix -a -w \$user_prefix
+if test -f \$user_prefix/mpc_install_path -a -w \$user_prefix
 then
 	COMPILER_FILEPATH=\$user_prefix
 fi
-
-#create files if they don't exist yet
-for language in \$list_languages
-do
-	test ! -e \$COMPILER_FILEPATH/.\${language}_compilers.cfg && touch \$COMPILER_FILEPATH/.\${language}_compilers.cfg 
-done
 
 #default values
 lang="c"
@@ -298,6 +293,7 @@ test -n "\$4" && family="\$4"
 test -z "\$1" && help
 
 is_valid_language "\$lang"
+test ! -e \$COMPILER_FILEPATH/.\${lang}_compilers.cfg && touch \$COMPILER_FILEPATH/.\${lang}_compilers.cfg 
 
 case "\$1" in
 	help|-help|--help|h|-h|--h)

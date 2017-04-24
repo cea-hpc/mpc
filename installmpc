@@ -254,15 +254,6 @@ do
 		################# COMPILER ##################
 		--compiler=*)
 			extractParamValue 'MPC_COMPILER' 'compiler' "$arg"
-
-			COMPILER="`which $MPC_COMPILER 2> /dev/null`"
-			#first, check if the arg can be found in PATH
-			if test -n "$COMPILER"; then
-				MPC_COMPILER="$COMPILER"
-			else #else, canonize the argument
-				MPC_COMPILER="`readlink -e $MPC_COMPILER`"
-			fi
-
 			COMPILER_ARG=yes
 			;;
 		############### MPCFRAMEWORK ################

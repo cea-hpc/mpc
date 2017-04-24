@@ -141,7 +141,7 @@ setBuildCompiler()
 	export BUILD_CC
 	export BUILD_CXX
 	export BUILD_FC
-	export BUILD_FAMILY=
+	export BUILD_FAMILY
 
 	#if user set --compiler option, this overrides any preset
 	#you can add here any alias you want.
@@ -175,11 +175,23 @@ setBuildCompiler()
 		BUILD_FC=$GCC_PREFIX/bin/gfortran
 		BUILD_FAMILY="GNU"
 
+	#special case: when MPC has to be compiled w/ patched GCC
 	elif test "$GCC_PREFIX" = "internal"; then
-		BUILD_CC=$MPC_GCC_PRIVATIZED_COMPILER
-		BUILD_CXX=$MPC_GPP_PRIVATIZED_COMPILER
-		BUILD_FC=$MPC_GFORT_PRIVATIZED_COMPILER
-		BUILD_FAMILY="GNU"
+		BUILD_CC=
+		BUILD_CXX=
+		BUILD_FC=
+		BUILD_FAMILY=
+
+		#we create new exported variables, to be handled by MPC configure
+		#by default, BUILD_* is taken if set, otherwise, BUILD_PRIV_* is used to build MPC.
+		BUILD_PRIV_CC=$MPC_GCC_PRIVATIZED_COMPILER
+		BUILD_PRIV_CXX=$MPC_GPP_PRIVATIZED_COMPILER
+		BUILD_PRIV_FC=$MPC_GFORT_PRIVATIZED_COMPILER
+		BUILD_PRIV_FAMILY="GNU"
+		export BUILD_PRIV_CC
+		export BUILD_PRIV_CXX
+		export BUILD_PRIV_FC
+		export BUILD_PRIV_FAMILY
 	fi
 }
 
@@ -220,15 +232,9 @@ createHomeLink()
 #Result : create MPC_RPREFIX/.*_compilers.cfg and HOME/.mpcompil/HASH/.*_compilers.cfg
 storeMPCcompilers()
 {
-	#create and clean $HOME/.mpcompil link
+	#manager called in MPC copied files into HOME_CFILEPATH if set: copy back these files in the installation
 	createHomeLink
-
-	#create the file
-	$MPC_RPREFIX/$MPC_HOST/$MPC_TARGET/bin/mpc_compiler_manager add c $BUILD_CC $BUILD_FAMILY
-	$MPC_RPREFIX/$MPC_HOST/$MPC_TARGET/bin/mpc_compiler_manager add c++ $BUILD_CXX $BUILD_FAMILY 
-	$MPC_RPREFIX/$MPC_HOST/$MPC_TARGET/bin/mpc_compiler_manager add fortran $BUILD_FC $BUILD_FAMILY 
-	
-	test -n "$HOME_CFILEPATH" && cp ${HOME_CFILEPATH}/.*_compilers.cfg ${MPC_RPREFIX}/
+	test -n "$HOME_CFILEPATH" && cp ${MPC_RPREFIX}/.*_compilers.cfg ${HOME_CFILEPATH}/
 	
 	#print default compilers
 	$MPC_RPREFIX/$MPC_HOST/$MPC_TARGET/bin/mpc_compiler_manager list_default
