@@ -1,7 +1,4 @@
 #!/bin/sh
-
-echo "" > fortrangen.log
-
 # This script generates and installs the following Fortran files :
 # - mpif.h
 # - mpi.mod
@@ -18,13 +15,6 @@ MPCCC="mpc_cc"
 AR="ar"
 INSTALL="./TEST/"
 MPIHFILE="${SCRIPTPATH}/../../MPC_MPI/include/mpc_mpi.h"
-
-if test ! -e "${MPIHFILE}"; then
-	echo "Could not locate the mpi.h file in ${MPIHFILE}"
-	return
-fi
-
-echo "" > ./fortrangen.log
 
 #These are the files used for generation
 
@@ -44,6 +34,22 @@ MPIF08=""
 #Can the file be generated ?
 GENERATE=1
 
+die()
+{
+	printf "(EE) $@\n" 1>&2
+	exit 2
+}
+
+warn()
+{
+	printf "(WW) $@\n" 1>&2
+}
+
+info()
+{
+	printf "(II) $@\n"
+}
+
 # This is the emegency function
 # it uses a pregenerated module
 # in case something goes wrong
@@ -51,8 +57,8 @@ GENERATE=1
 
 generate_from_backup()
 {
-	echo "(!!)\t\tFallback to pre-generated files"
-	echo "(!!)\t See fortrangen.log for the reason"
+	warn "$1"
+	warn "Fallback to pregenerated files"
 	#Here we fallback to pregenerated files
 	MPIFH="$SCRIPTPATH/pregenerated/mpif.h"
 	MPIMODF="$SCRIPTPATH/pregenerated/mpi.f90"
@@ -82,22 +88,14 @@ checkFortranGenEnv()
 
 	#CHEK for PYTHON
 	RET=`${PYTHON} -c "print 'ok'"`
-
-	echo -n "(i) Checking for Python...\t" >> ./fortrangen.log
-
-	if test "x$RET" != "xok"; then
-		echo "(E) Could not find Python or Python is not working"
-		generate_from_backup
-		return
-	else
-		echo "Found and Running" >> ./fortrangen.log
-	fi
-
 	rm -f $TEMP
 
-	#CHECK FOR JSON SUPPORT
-	echo -n "(i) Checking for Python JSON...\t" >> ./fortrangen.log
-	
+	if test "x$RET" != "xok"; then
+		generate_from_backup "Python command-line does not work as expected"
+		return
+	fi	
+
+	info "Found and running Python"
 	
 	TEMP=`mktemp`
 
@@ -112,19 +110,12 @@ EOF
 	RET=""
 	RET=`${PYTHON} -c "print 'ok'"`
 	if test "x$RET" != "xok"; then
-		echo "(E) Could not find JSON support in Python"
-		generate_from_backup
+		generate_from_backup "Python does not seem to handle JSON support."
 		return
-	else
-		echo "Found and Running" >> ./fortrangen.log
 	fi
-
-
 	rm -f $TEMP
-
-	#TEST FORTRAN
 	
-	echo -n "(i) Checking for Fortran compiler...   " >> ./fortrangen.log
+	info "Found JSON support for Python"
 	
 	TEMP=`mktemp`
 	TEMP="${TEMP}.f90"
@@ -136,38 +127,23 @@ EOF
 
 	TEMP2=`mktemp`
 	$MPCFC $TEMP -o $TEMP2  2>> ./fortrangen.log
-
 	if test "x$?" != "x0"; then
-		echo "(E) Failed to compile a simple Fortran MAIN"
-		echo "(E) See ./fortrangen.log"
-		generate_from_backup
-	else
-		echo "Found and Compiling" >> ./fortrangen.log
+		generate_from_backup "Failed to compile Fortran program."
+		return
 	fi
-
-	echo -n "(i) Checking for Fortran Running Fortran programs...   " >> ./fortrangen.log
+	rm -f $TEMP
 
 	$TEMP2  2>> ./fortrangen.log
-
 	if test "x$?" != "x0"; then
-                echo "(E) Failed to run a simple Fortran MAIN"
-                echo "(E) See ./fortrangen.log"
-                generate_from_backup
-        else
-                echo "Found and Running" >> ./fortrangen.log
-        fi
-
-
-	rm -f $TEMP $TEMP2
-
-
-	echo -n "(i) Checking for Fortran Modules...   " >> ./fortrangen.log
-
-TEMP=`mktemp`
-TEMP="${TEMP}.f90"
+                generate_from_backup "Failed to run a Fortran program."
+		return
+	fi        
+	rm -f $TEMP2
+	
+	info "Found capable Fortran compiler"
+	
+	TEMP=`mktemp`.f90
 cat << EOF > $TEMP
-
-
 MODULE TEST_MOD
 IMPLICIT NONE
 
@@ -179,31 +155,15 @@ EOF
 
 	TEMP2=`mktemp`
 	$MPCFC $TEMP -o $TEMP2  2>> ./fortrangen.log
-
-	if test "x$?" != "x0"; then
-		echo "(E) Failed to compile a simple Fortran Module"
-		echo "(E) See ./fortrangen.log"
-		generate_from_backup
-	else
-		echo "Compiled" >> ./fortrangen.log
-		
-		if test -e "test_mod.mod"; then
-			echo "(i)\tSucessfully generated a test fortran module file" >> ./fortrangen.log
-		else
-			echo "(E)\tCould not generate a test module file"
-			generate_from_backup
-		fi
-		
-	fi
-
+	if test "x$?" != "x0" -o ! -e "test_mod.mod"; then
+		generate_from_backup "Failed to compile a simple Fortran Module."
+		return
+	fi	
 	rm -f $TEMP $TEMP2 test_mod.mod
 
-#TEST FOR C COMPILER
-	
-	echo -n "(i) Checking for C compiler...   " >> ./fortrangen.log
-	
-	TEMP=`mktemp`
-	TEMP="${TEMP}.c"
+	info "Fortran compiler can successfully build Fortran modules."
+
+	TEMP=`mktemp`.c
 cat << EOF > $TEMP
 #include <mpc.h>
 int main(int argc, char ** argv )
@@ -216,209 +176,103 @@ EOF
 	$MPCCC $TEMP -o $TEMP2  2>> ./fortrangen.log
 
 	if test "x$?" != "x0"; then
-		echo "Failed to compile a simple C MAIN"
-		echo "(E) See ./fortrangen.log"
-		generate_from_backup
-	else
-		echo "Found and Running" >> ./fortrangen.log
+		generate_from_backup "Failed to build a C program."
+		return
 	fi
-
-	#rm -f $TEMP $TEMP2
+	rm -f $TEMP $TEMP2
+	info "Found a capable C Compiler"
 
 }
 
-genfortanfiles()
+genfortranfiles()
 {
-	#First compile the constants code
-	echo -n "(i) Compiling constants file...   " >> ./fortrangen.log
-	
 	TEMP=`mktemp`
 	$MPCCC ${SCRIPTPATH}/gen_iface.c -o ${TEMP} 2>> ./fortrangen.log
-
-	if test "x$?" != "x0"; then
-		echo "(E) Failed to compile constant generation C file"
-		echo "(E) See ./fortrangen.log"
-		generate_from_backup
-		return
-	else
-		echo "Generated" >> ./fortrangen.log
-	fi
-	
-	#and now generate the constants
-	echo -n "(i) Generating constants.json...   " >> ./fortrangen.log
-	
 	${TEMP} > constants.json 2>> ./fortrangen.log
-	
-	if test -e "constants.json"; then
-		echo "Generated" >> ./fortrangen.log
-	else
-		echo "(E) Failed to generate the constants.json file"
-		echo "(E) See ./fortrangen.log"
-		generate_from_backup
+
+	if test "x$?" != "x0" -o ! -e "constants.json"; then
+		generate_from_backup "Failed to generate constants JSON file."
 		return
 	fi
-	
-	#Now preparse MPI.h to allow function detection
-	echo -n "(i) Generating preparsed mpi.h ...   " >> ./fortrangen.log
+	rm -f $TEMP
 	
 	${MPCCC} -E ${MPIHFILE} -o preparsed_mpih.dat 2>> ./fortrangen.log
 	
-	if test -e "preparsed_mpih.dat"; then
-		echo "Generated" >> ./fortrangen.log
-	else
-		echo "(E) Failed to generate the preparsed mpi.h file"
-		echo "(E) See ./fortrangen.log"
-		generate_from_backup
+	if test "x$?" != "x0" -o ! -e "preparsed_mpih.dat"; then
+		generate_from_backup "Failed to generate the preparsed mpi.h file"
 		return
 	fi
+	info "Generated pre-parsed mpi.h file"
 	
-	#And now launch the python generation phase
 	${PYTHON} ${SCRIPTPATH}/genmod.py -f "${MPCFC}" -c "${MPCCC}" -m "${MPIHFILE}"
-	#2>> ./fortrangen.log
 
 	if test "x$?" != "x0"; then
-		echo "(E) Fortran module/header generation failed"
-		echo "(E) See ./fortrangen.log"
-		generate_from_backup
+		generate_from_backup "Fortran module/header generation failed."
 		return
-	else
-		echo "(i) **** GENERATION SUCCESSFUL **** "
 	fi
-	
 }
 
 genfortranmods()
 {
-	echo -n "(i) Compiling MPI Fortran 90 modules...   "
-	
 	#We do not want to privatize Fortran constants
 	export MPC_UNPRIVATIZED_VARS=mpi_in_place:mpi_status_ignore:mpi_statuses_ignore:$MPC_UNPRIVATIZED_VARS
 
-
-	#Note that it is important to compile twice (Fortran MAGIC dependency resolution)
-	$MPCFC -g -fmpc-privatize -fpic -c ${MPIBASEF} ${MPICONSTF} ${MPIMODF} ${MPISIZEOF}  2>> ./fortrangen.log
-	$MPCFC -g -fmpc-privatize -fpic -c ${MPIBASEF} ${MPICONSTF} ${MPIMODF} ${MPISIZEOF}  2>> ./fortrangen.log
-
-
-	if test "x$?" != "x0"; then
-		echo "(E) Module compilation failed"
-		echo "(E) See ./fortrangen.log"
-		generate_from_backup
-		return
-	else
-		echo "Done" >> ./fortrangen.log
-	fi	
+	# Here we run the compilation three times.
+	# This is due to old Fortran compilers, not able to resolve module dependency at once.
+	# Each call resolves a dependency, leading to 3 compilatoins in a row.
+	# TODO: A loop, retrying to compile while return code != 0
+	$MPCFC -g -fpic -c ${MPIBASEF} ${MPICONSTF} ${MPIMODF} ${MPISIZEOF} ${MPIF08CTYPE} ${MPIF08MTYPE} ${MPIF08C} ${MPIF08CONST} ${MPIF08}  2>> ./fortrangen.log
+	$MPCFC -g -fpic -c ${MPIBASEF} ${MPICONSTF} ${MPIMODF} ${MPISIZEOF} ${MPIF08CTYPE} ${MPIF08MTYPE} ${MPIF08C} ${MPIF08CONST} ${MPIF08}  2>> ./fortrangen.log
+	$MPCFC -g -fpic -c ${MPIBASEF} ${MPICONSTF} ${MPIMODF} ${MPISIZEOF} ${MPIF08CTYPE} ${MPIF08MTYPE} ${MPIF08C} ${MPIF08CONST} ${MPIF08}  2>> ./fortrangen.log
 	
-	echo -n "(i) Compiling MPI Fortran 08 modules...   "
+	test "x$?" != "x0" && die "Failed to build pre-computed Fortran modules"
+	info "Built pre-computed Fortran modules"
 	
-	#Note that it is important to compile twice (Fortran MAGIC dependency resolution)
-	$MPCFC -g -fmpc-privatize -fpic -c ${MPIF08CTYPE} ${MPIF08MTYPE} ${MPIF08C} ${MPIF08CONST} ${MPIF08}  2>> ./fortrangen.log
-	$MPCFC -g -fmpc-privatize -fpic -c ${MPIF08CTYPE} ${MPIF08MTYPE} ${MPIF08C} ${MPIF08CONST} ${MPIF08}  2>> ./fortrangen.log
-
-	if test "x$?" != "x0"; then
-		echo "(E) Fortran 08 Module compilation failed"
-		echo "(E) See ./fortrangen.log"
-		generate_from_backup
-		return
-	else
-		echo "Done"
-	fi	
+	$MPCFC -g -fpic -I. -c $SCRIPTPATH/predef_types.f $SCRIPTPATH/predef_types_08.f90  2>> ./fortrangen.log
+	test "x$?" != "x0" && die "Failed to build pre-defined Fortran modules (types)"
+	info "Built pre-defined Fortran modules (types)"
 	
-	rm -f $TEMP $TEMP2
+	$MPCCC -g -fpic -c ${MPIF08CIF}  2>> ./fortrangen.log
+	test "x$?" != "x0" && die "Failed to build Fortran 08 C interface."
+	info "Built MPI interface for Fortran 08"
+		
+	$MPCFC -g -fpic -shared -o libmpcfwrapper.so *.o  2>> ./fortrangen.log
+	test "x$?" != "x0" && die "Failed to build MPI Wrapper C library"
+	info "Built MPI Wrapper library"
 
-	echo -n "(i) Generating F08 Bindings"
-	
-	$MPCCC -g -fmpc-privatize -fpic -c ${MPIF08CIF}  2>> ./fortrangen.log
-	
-	if test "x$?" != "x0"; then
-		echo "(E) Fortran 08 C interface generation failed"
-		echo "(E) See ./fortrangen.log"
-		exit 1
-	else
-		echo "Done"
-	fi	
-	
-	rm -f $TEMP $TEMP2
-
-
-	echo -n "(i) Generating F90/F08 Link Time Constants"
-	
-	$MPCFC -g -fmpc-privatize -fpic -c -I. $SCRIPTPATH/predef_types.f $SCRIPTPATH/predef_types_08.f90  2>> ./fortrangen.log
-	
-	if test "x$?" != "x0"; then
-		echo "(E) Fortran 08 C interface generation failed"
-		echo "(E) See ./fortrangen.log"
-		exit 1
-	else
-		echo "Done"
-	fi	
-	
-	rm -f $TEMP $TEMP2
-
-	echo -n "(i) Compiling the MPI Wrapper Fortran library...   "
-	#Generate the .so file
-	$MPCFC -shared -fpic -o libmpcfwrapper.so predef_types.o predef_types_08.o mpi_f08.o mpi_sizeofs.o mpi_f08_*.o  2>> ./fortrangen.log
-
-	if test "x$?" != "x0"; then
-		echo "(E) MPI Wrapper library compilation failed"
-		echo "(E) See ./fortrangen.log"
-		return
-	else
-		echo "Done"
-	fi	
-
-	rm -f $TEMP $TEMP2
-
-
-	# Compile OpenMP Fortran module
-	echo -n "(i) Compiling OpenMP Fortran modules...   "
-
-	#Note that it is important to compile twice (Fortran MAGIC dependency resolution)
+	#Compiled twice for the same reasons as above
 	$MPCFC -c $SCRIPTPATH/pregenerated/omp.f90  2>> ./fortrangen.log
 	$MPCFC -c $SCRIPTPATH/pregenerated/omp.f90  2>> ./fortrangen.log
-	
-	if test "x$?" != "x0"; then
-		echo "(E) OpenMP Module compilation failed"
-		echo "(E) See ./fortrangen.log"
-		return
-	else
-		echo "Done"
-	fi	
-
-
-
+	test "x$?" != "x0" && die "Failed to build OpenMP for Fortran"
+	info "Built OpenMP for Fortran module"
 }
 
 
 #MAIN FILE
 proceedwithfortranfilegeneration()
 {
-	echo "########################################################"
-	echo "#   MPC Fortran Header and Module Generation Script    #"
-	echo "########################################################"
+	printf "\n########################################################"
+	printf "\n#   MPC Fortran Header and Module Generation Script    #"
+	printf "\n########################################################\n"
 
 
 	checkFortranGenEnv
 
 	#CAN WE STILL GENERATE ?
 	if test "x${GENERATE}" = "x1"; then
-		echo "########################################################"
-		echo "#   Fortran Generation script will generate Headers    #"
-		echo "########################################################"
+		printf "\n########################################################"
+		printf "\n#   Fortran Generation script will generate Headers    #"
+		printf "\n########################################################\n"
 		
-		genfortanfiles
-		
-		#Check that everything is there
-		echo "(i) Checking generated files...   " >> ./fortrangen.log
+		genfortranfiles
 		
 		for f in mpi_base.f90 mpi_constants.f90 mpi_sizeofs.f90  mpi.f90 mpif.h mpi_f08_ctypes.f90 mpi_f08_types.f90 mpi_f08_c.f90 mpi_f08_constants.f90 mpi_f08.f90 mpi_f08_c_iface.c
 		do
 			if test -e "$f"; then
-				echo "(i)\t${f}... Found." >> ./fortrangen.log
+				info "${f}: found"
 			else
-				echo "(E)\t${f}... NOT Found."
-				generate_from_backup
-				return
+				generate_from_backup "${f}: NOT found."
+				break
 			fi
 			
 			#If we are here all generated files are existing
@@ -435,148 +289,92 @@ proceedwithfortranfilegeneration()
 			MPIF08CONST="${PWD}/mpi_f08_constants.f90"
 			MPIF08="${PWD}/mpi_f08.f90"
 		done
-	else
-		echo "########################################################"
-		echo "# (E) Fortran Generation script uses Fallback Headers  #"
-		echo "########################################################"
-		generate_from_backup
 	fi
 
+	printf "\n\n########################################################"
+	printf "\n#  Fortran Generation script about to compile modules  #"
+	printf "\n########################################################\n"
 
-	echo "########################################################"
-	echo "#  Fortran Generation script about to compile modules  #"
-	echo "########################################################"
+	genfortranmods
+	
+	printf "\n\n########################################################"
+	printf "\n#  Fortran Generation script checking built modules    #"
+	printf "\n########################################################\n"
 
-	genfortranmods  2>> ./fortrangen.log
-
-	echo "(i) Checking Module files...   " >> ./fortrangen.log
-		
-	for f in mpi_base.mod mpi_constants.mod mpi_sizeofs.mod mpi.mod
+	for f in \
+	mpi_base.mod \
+	mpi_constants.mod \
+	mpi_sizeofs.mod \
+	mpi.mod \
+	mpi_f08_c.mod \
+	mpi_f08_constants.mod \
+	mpi_f08_ctypes.mod \
+	mpi_f08_types.mod \
+	mpi_f08.mod \
+	omp_lib.mod \
+	omp_lib_kinds.mod \
+	libmpcfwrapper.so
 	do
 		if test -e "$f"; then
-			echo "(i)\t${f}... Found." >> ./fortrangen.log
+			info "${f}: Found."
 		else
-			echo "(E)\t${f}... NOT Found."
-			echo "(FATAL) MPI Fortran module compilation failed"
-			echo "   You might not be able to run F90 codes"
-			return
+			warn "${f}: NOT Found. (Fortran code using it might not be able to compile)"
 		fi	
 	done
 
+	printf "\n\n########################################################"
+	printf "\n#  Installing Fortran Files                            #"
+	printf "\n########################################################\n"
 
-	echo "(i) Checking MPI F08 Module files...   "
-		
-	for f in mpi_f08_c.mod mpi_f08_constants.mod mpi_f08_ctypes.mod mpi_f08_types.mod mpi_f08.mod
-	do
-		if test -e "$f"; then
-			echo "(i)\t${f}... Found."
-		else
-			echo "(E)\t${f}... NOT Found."
-			echo "(FATAL) MPI Fortran module compilation failed"
-			echo "   You might not be able to run F08 codes"
-			return
-		fi	
-	done
+	test ! -w ${INSTALL} && die "Unable to copy generated files into $INSTALL: No write permissions."
 
-	echo "(i) Checking OpenMP Module files...   "
-		
-	for f in omp_lib.mod omp_lib_kinds.mod
-	do
-		if test -e "$f"; then
-			echo "(i)\t${f}... Found."
-		else
-			echo "(E)\t${f}... NOT Found."
-			echo "(FATAL) OpenMP Fortran module compilation failed"
-			echo "   You might not be able to run F90 codes"
-			return
-		fi	
-	done
+	mkdir -p ${INSTALL}/include
+	mkdir -p ${INSTALL}/lib
 
-	echo "   Installing Fortran Files"
+	#copy include
+	cp ${MPIFH} ${INSTALL}/include
 
-	cp ${MPIFH} ${INSTALL}/
-	cp mpi.mod ${INSTALL}/
-	cp mpi_constants.mod ${INSTALL}/
-	cp mpi_base.mod ${INSTALL}/
-	cp mpi_sizeofs.mod ${INSTALL}/
-
-	cp mpi_f08_c.mod ${INSTALL}/
-	cp mpi_f08_ctypes.mod ${INSTALL}/
-	cp mpi_f08_types.mod ${INSTALL}/
-	cp mpi_f08_constants.mod ${INSTALL}/
-	cp mpi_f08.mod ${INSTALL}/
-
-	cp libmpcfwrapper.so ${INSTALL}/../../lib/
-	
-	cp omp_lib.mod ${INSTALL}/
-	cp omp_lib_kinds.mod ${INSTALL}/
-
-	echo "(i) Checking installed files...   " >> ./fortrangen.log
-		
-	for f in mpi_base.mod mpi_constants.mod mpi_sizeofs.mod ../../lib/libmpcfwrapper.so mpi.mod mpif.h
-	do
-		NAME=`basename ${f}` 
-		if test -e "${INSTALL}/${f}"; then
-			echo "(i)\t${NAME}... Found." >> ./fortrangen.log
-		else
-			echo "(E)\t${NAME}... NOT Found."
-			echo "(FATAL) MPI Fortran module compilation failed"
-			echo "   You might not be able to run F90 codes"
-			return
-		fi	
-	done
-	
-	for f in mpi_f08_c.mod mpi_f08_constants.mod mpi_f08_ctypes.mod mpi_f08_types.mod mpi_f08.mod
-	do
-		NAME=`basename ${f}` 
-		if test -e "${INSTALL}/${f}"; then
-			echo "(i)\t${NAME}... Found."
-		else
-			echo "(E)\t${NAME}... NOT Found."
-			echo "(FATAL) MPI Fortran module compilation failed"
-			echo "   You might not be able to run F08 codes"
-			return
-		fi	
-	done
-
-	for f in omp_lib.mod omp_lib_kinds.mod
-	do
-		NAME=`basename ${f}` 
-		if test -e "${INSTALL}/${f}"; then
-			echo "(i)\t${NAME}... Found."
-		else
-			echo "(E)\t${NAME}... NOT Found."
-			echo "(FATAL) OpenMP Fortran module compilation failed"
-			echo "   You might not be able to run F90 codes"
-			return
-		fi	
-	done
-	
-	echo "#### FORTRAN DONE ####"
+	#copy lib:
+	mv omp_lib.mod ${INSTALL}/lib
+	mv omp_lib_kinds.mod ${INSTALL}/lib
+	mv mpi.mod ${INSTALL}/lib
+	mv mpi_constants.mod ${INSTALL}/lib
+	mv mpi_base.mod ${INSTALL}/lib
+	mv mpi_sizeofs.mod ${INSTALL}/lib
+	mv mpi_f08_c.mod ${INSTALL}/lib
+	mv mpi_f08_ctypes.mod ${INSTALL}/lib
+	mv mpi_f08_types.mod ${INSTALL}/lib
+	mv mpi_f08_constants.mod ${INSTALL}/lib
+	mv mpi_f08.mod ${INSTALL}/lib
+	mv libmpcfwrapper.so ${INSTALL}/lib
 }
 
-
-if test "x${#}" != "x5"; then
-
-cat << EOF
+test "x${#}" != "x4" && die "
 ======================
 MPC Fortran Generator
 ======================
 
-${0} [PYTHON] [MPC_CC] [MPC_F77] [MPIH] [INCLUDE_INSTALL]
+${0} [MPC_CC] [MPC_F77] [MPIH] [INSTALL_PATH]
+"
 
-EOF
+MPCCC="$1"
+MPCFC="$2"
+MPIHFILE="$3"
+INSTALL="$4"
 
-exit 1
+test ! -f "${MPIHFILE}" && die "Could not locate the mpi.h file in ${MPIHFILE}"
 
-else
-	PYTHON="$1"
-	MPCCC="$2"
-	MPCFC="$3"
-	MPIHFILE="$4"
-	INSTALL="$5"
-fi
+BUILDIR=`mktemp -d`
+OLDIR=${PWD}
+#move in temporary dir, because this script creates a lot of artefacts
+info "Moving to $BUILDIR"
+cd $BUILDIR
 
+echo "" > fortrangen.log
 
 proceedwithfortranfilegeneration
+
+cd $OLDIR
+rm -rf $BUILDIR
+
 

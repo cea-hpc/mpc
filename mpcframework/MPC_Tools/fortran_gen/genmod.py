@@ -379,8 +379,8 @@ for f in mpi_interface:
 	#check for presence inside MPC
 	if MPIFunctionsisPresentinMPC( functionName ) == 0:
             continue;
-
-	print "\tGEN\t" + functionName + "..."
+	else:
+		print "\tGEN\t" + functionName + "..."
 	
 	#Add the error flag
 	if type( mpi_interface[ functionName ] ) == type( [] ) :
@@ -1861,7 +1861,6 @@ for mpi_func,args in mpi_interface.items():
     module_file_data += f08cwrapperGen( mpi_func, args )
 
 
-print "IM HERE"
 """
  Open Output C FILE
 """
