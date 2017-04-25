@@ -91,6 +91,9 @@ fi
 
 cat <<EOF >> bin/mpc_cflags
 else
+if test -n "\$2"; then
+	echo " -I\$2/include -I\$2/lib"
+fi
 EOF
 
 if test "${SCTK_MIC}" = "1" ; then

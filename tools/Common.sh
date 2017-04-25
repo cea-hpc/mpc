@@ -234,8 +234,12 @@ storeMPCcompilers()
 {
 	#manager called in MPC copied files into HOME_CFILEPATH if set: copy back these files in the installation
 	createHomeLink
-	test -n "$HOME_CFILEPATH" && cp ${MPC_RPREFIX}/.*_compilers.cfg ${HOME_CFILEPATH}/
-	
+	if test -n "$HOME_CFILEPATH"; then
+		cp -r ${MPC_RPREFIX}/fortran_gen ${HOME_CFILEPATH}/
+		cp -r ${MPC_RPREFIX}/fmod ${HOME_CFILEPATH}/
+		cp ${MPC_RPREFIX}/.*_compilers.cfg ${HOME_CFILEPATH}/
+	fi
+
 	#print default compilers
 	$MPC_RPREFIX/$MPC_HOST/$MPC_TARGET/bin/mpc_compiler_manager list_default
 }

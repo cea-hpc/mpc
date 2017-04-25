@@ -59,7 +59,7 @@ if test -e "${SCTK_LIB_DIR}/libmpcfwrapper.so"; then
 	fi
 fi
 
-FLAGS="-Wl,-rpath,${SCTK_LIB_DIR} -Wl,-rpath,${SCTK_LIB_DIR}/../lib64 -lmpc_tdb_remote_static $SCTK_LDFLAGS \${ROMIO} \${SCTK_GETOPT} \${SCTK_MPCMPISIZEOF}"
+FLAGS="-Wl,-rpath,${SCTK_LIB_DIR} -Wl,-rpath,${SCTK_LIB_DIR}/../lib64 -lmpc_tdb_remote_static $SCTK_LDFLAGS \${ROMIO} \${SCTK_GETOPT}"
 
 if test "\$MPC_USE_INTEL_COMPILER" = "1"; then
 MPC_DO_NOT_USE_GNU_LM="1"
@@ -80,7 +80,7 @@ fi
 if test "\$1" != "fortran" ; then
 echo "-L${SCTK_LIB_DIR} -lmpc_framework \$FLAGS"
 else
-echo "-L${SCTK_LIB_DIR} -lmpc_frameworkf \$FLAGS"
+echo "-L${SCTK_LIB_DIR} -lmpc_frameworkf \${SCTK_MPCMPISIZEOF} \$FLAGS"
 fi
 EOF
 

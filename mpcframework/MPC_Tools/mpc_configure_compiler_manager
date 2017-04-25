@@ -25,7 +25,7 @@
 cat <<EOF > bin/mpc_compiler_manager
 #!/bin/sh
 
-list_languages="c c++ fortran"
+list_languages="c cxx fortran"
 CHECKSUM_TOOL=sha1sum
 
 if test -z \${MPC_RPREFIX}; then
@@ -34,7 +34,10 @@ if test -z \${MPC_RPREFIX}; then
 	echo "# You should source the mpcvars.sh file in root of MPC prefix  #" 1>&2
 	echo "################################################################" 1>&2
 	#attempt to guess MPC prefix = current script looks like PREFIX/host/target/bin/manager
-	MPC_RPREFIX="\`dirname \$0\`/../../../"
+	MPC_prefix=\`dirname \$0\`/../
+	MPC_RPREFIX="\$MPC_prefix/../../"
+else
+	MPC_prefix=\$MPC_RPREFIX/\$MPC_SUBPREFIX/
 fi
 
 die()
@@ -46,7 +49,7 @@ die()
 
 clean_main_files()
 {
-	rm mpc_main.c mpc_main.c++ mpc_main.fortran mpc_main.o > /dev/null 2>&1
+	rm mpc_main.c mpc_main.cxx mpc_main.fortran mpc_main.o > /dev/null 2>&1
 }
 
 build_main_files()
@@ -58,7 +61,7 @@ return 0;
 }
 EOFINT
 
-cat <<EOFINT > mpc_main.c++
+cat <<EOFINT > mpc_main.cxx
 int i;
 int main(int argc, char** argv){
 return 0;
@@ -93,7 +96,7 @@ help()
 {
 	printf "Usage: mpc_compiler_manager OPERATION LANGUAGE PATH FAMILY\n"
 	printf "\n"
-	printf "LANGUAGE belongs to {c,c++,fortran} (default: c)\n"
+	printf "LANGUAGE belongs to {c,cxx,fortran} (default: c)\n"
 	printf "PATH is the compiler path (default '1')\n"
 	printf "FAMILY is the compiler type: INTEL, GNU... (default: GNU)\n"
 	printf "OPERATION is one of the following:\n"
@@ -115,6 +118,43 @@ help()
 	exit 0
 }
 
+#######################################
+#for the following functions:
+#\$1 = compiler path
+#\$2 = privatization support
+#\$3 = unique compiler hash
+
+post_add_c()
+{
+	#nothing to do for now
+	dummy=1
+}
+
+post_add_cxx()
+{
+	#nothing to do for now
+	dummy=1
+}
+
+post_add_fortran()
+{
+	#rebuild Fortran modules and store them in HOME/.mpcompil/HASH/fmod
+	test ! -f \$COMPILER_FILEPATH/fortran_gen/fortran_build.sh && die "Unable to generate Fortran module for \$1\n"
+	mkdir -p \$COMPILER_FILEPATH/fmod/\$3
+	printf "Compiling Fortran modules for the new compiler: \$1\n"
+
+
+	#this is absolutely awful... 
+	FLAGS="\$2 -I\$MPC_prefix/include/mpcframework $SCTK_CFLAGS -L\$MPC_prefix/lib $SCTK_LDFLAGS -B\$MPC_prefix/bin"
+	CC="\`lookup_compiler c 1 | cut -f3 -d":"\` \$FLAGS -lmpc_framework"
+	FC="\$1 \$FLAGS"
+
+	MPC_MAKE_FORTRAN_INTERFACE=1 MPC_DISABLE_CONFIG=1 MPC_DISABLE_BANNER=1 sh \$COMPILER_FILEPATH/fortran_gen/fortran_build.sh "\$CC" "\$FC" "\$COMPILER_FILEPATH/fortran_gen/mpc_mpi.h" "\$COMPILER_FILEPATH/fmod/\$3/"
+	test "x\$?" != "x0" && die "Error(s) during Fortran module building for \$1"
+}
+
+
+
 add_compiler()
 {	
 	test "x\$2" = "x1" && die "Can't add a compiler if you don't provide a path."
@@ -124,7 +164,7 @@ add_compiler()
 	# -r: extended regexes
 	# -e: run script
 	# -n: does not create output (only matching w/ /p)
-	exists="\`get_compilers_in "\$1" | sed -n -re "\\,^\$3:(Y|N):\${2}:.*$,p"\`"
+	exists="\`get_compilers_in "\$1" | sed -n -e "\\,^\$3:.*:\${2}:.*$,p"\`"
 
 	if test -n "\$exists"; then 
 		old_hash="\`echo "\$exists" | cut -f4 -d":"\`"
@@ -133,15 +173,27 @@ add_compiler()
 
 	#inserting the compiler
 	build_main_files
-	PRIV_FLAG="-fmpc-privatize"
+
+	case \$3 in
+		GNU)
+			PRIV_FLAG="-fmpc-privatize"
+			;;
+		INTEL)
+			PRIV_FLAG="-mSYMTAB_mpc_privatize"
+			;;
+		PGI)
+			PRIV_FLAG=""
+			;;
+		*)
+			PRIV_FLAG=""
+	esac
+
 	\${2} \${PRIV_FLAG} -c mpc_main.\${1} > /dev/null 2>&1
-	if [ \$? -eq 0 ];
-	then
-		pattern="Y"
-	else
-		pattern="N"
-	fi
-	echo "\${3}:\${pattern}:\${2}:\${hash}" >> "\${COMPILER_FILEPATH}/.\${1}_compilers.cfg"
+	test "x\$?" != "x0" && PRIV_FLAG=""
+
+	post_add_\${1} "\$2" "\$PRIV_FLAG" "\$hash"
+
+	echo "\${3}:\${PRIV_FLAG}:\${2}:\${hash}" >> "\${COMPILER_FILEPATH}/.\${1}_compilers.cfg"
 }
 
 remove_compiler()
@@ -151,7 +203,7 @@ remove_compiler()
 	# -r: extended regexes
 	# -e: exec script
 	# "\,xxx,d": grep lines matching 'xxx' and remove them (using comma separator)
-	sed -i -re "\\,^\$3:(Y|N):\$2:.*$,d" \$COMPILER_FILEPATH/.\$1_compilers.cfg
+	sed -i -e "\\,^\$3:.*:\$2:.*$,d" \$COMPILER_FILEPATH/.\$1_compilers.cfg
 }
 
 set_default_compiler()
@@ -159,7 +211,7 @@ set_default_compiler()
 	# -r: extended regexes
 	# -e: run script
 	# -n: does output (only matching w/ /p)
-	exists="\`get_compilers_in "\$1" | sed -n -re "\\,^\$3:(Y|N):\${2}:.*$,p"\`"
+	exists="\`get_compilers_in "\$1" | sed -n -e "\\,^\$3:.*:\${2}:.*$,p"\`"
 	
 	#add it if not already done (add_compiler() does some extra stuff).
 	if test -z "\$exists"; then
@@ -180,7 +232,7 @@ stat_compilers()
 	do
 		lang_file=\${COMPILER_FILEPATH}/.\${language}_compilers.cfg
 		nb_compilers="\`cat \${lang_file} | wc -l\`"
-		nb_priv="\`cat \${lang_file} | cut -d":" -f2 | egrep "^Y$" | wc -l\`"
+		nb_priv="\`cat \${lang_file} | cut -d":" -f2 | wc -l\`"
 
 		echo "MPC \${language} compiler supports \${GRE}\${nb_compilers}\${DEF} compilers, \${RED}\${nb_priv}\${DEF} of them are able to privatize."
 	done
@@ -198,7 +250,7 @@ list_compilers()
 		if test -x \$compiler;
 		then
 			printf " * \${GRE}FOUND \${DEF}/"
-			if test "x\$priv" = "xY";
+			if test -n "\$priv";
 			then
 				printf "\${GRE} PRIV. SUPPORT OK \${DEF}"
 			else
@@ -249,7 +301,7 @@ lookup_compiler()
 		return
 	fi
 
-	echo "\`get_compilers_in "\$1" | sed -n -re "\\,^.*:(Y|N):\${2}:.*$,p"\`"
+	echo "\`get_compilers_in "\$1" | sed -n -e "\\,^.*:.*:\${2}:.*$,p"\`"
 }
 
 get_first_compiler()
@@ -330,6 +382,10 @@ case "\$1" in
 		;;
 	check|c)
 		check_compilers
+		;;
+	config-path)
+		echo "\$COMPILER_FILEPATH"
+		exit 0
 		;;
 	*)
 		die "Unknown rule: \"\$1\""

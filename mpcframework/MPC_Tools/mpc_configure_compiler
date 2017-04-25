@@ -97,7 +97,7 @@ EOF
 # Generate the main MPC compiler driver
 #
 # $1: target script (e.g., mpc_cc) 
-# $2: target language (c, c++ or fortran)
+# $2: target language (c, cxx or fortran)
 #
 printf_compiler(){
 
@@ -112,6 +112,12 @@ if test -z \${MPC_RPREFIX}; then
 	echo "################################################################"
 	exit 1
 fi
+
+die()
+{
+	printf "Error: \$@\n" 1>&2
+	exit 2
+}
 
 #used to override option w/ compiler specific when option has been provided
 # \$1: var name
@@ -238,10 +244,15 @@ fi
 # More variable definitions (Library path, show and different shades of args)
 cat << EOF >> $1
 MPC_MANAGER=\$MPC_RPREFIX/\$MPC_SUBPREFIX/bin/mpc_compiler_manager
+HOME_FILEPATH=\$MPC_RPREFIX
 CC="\`\$MPC_MANAGER get $2 1\`"
 #LIB_PATH="-Wl,-rpath,\${MPC_RPREFIX}/\${MPC_TARGET_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/lib ${LIB_PATH}"
 if test "\$MPC_MAKEFILE" != "" ; then 
 LIB_PATH=""
+fi
+config_temp=\`\$MPC_MANAGER config-path\`
+if test -r \$config_temp; then
+	HOME_FILEPATH=\$config_temp
 fi
 
 # This variable is updated to 'echo' when '-show' is active
@@ -470,6 +481,7 @@ then
         else
 		print_if_stdout "Warning: \${CC} not known: Adding it\n"
 		\${MPC_RPREFIX}/\${MPC_SUBPREFIX}/bin/mpc_compiler_manager add $2 "\${CC}" > /dev/null
+		test "x\$?" != "x0" && die "Unable to add \$CC (because of errors above). Stop."
 		is_defined="\`\$MPC_MANAGER get_detail $2 \${CC}\`"
         fi
 fi
@@ -477,12 +489,13 @@ fi
 CC_FAMILY="\`echo \${is_defined} | cut -d":" -f1\`"
 CC_PRIV="\`echo \${is_defined} | cut -d":" -f2\`"
 CC="\`echo \${is_defined} | cut -d":" -f3\`"
+CC_HASH="\`echo \${is_defined} | cut -d":" -f4\`"
 
 #if CC does not support privatization and user provides privatization option
-if test ! -z "\${PRIV_FLAG}" -a "\${CC_PRIV}" = "N";
+if test -n "\${PRIV_FLAG}" -a -z "\${CC_PRIV}";
 then
 if test "$SCTK_MPC_PROCESS_MODE" != "1" ; then 
-	print_if_stdout "Warning: '\${CC} does not support privatization. Disabling it.'\n"
+	print_if_stdout "Warning: '\${CC}' does not support privatization. Disabling it.\n"
 	print_if_stdout "Warning: Do not consider using this compiler in thread-based mode.\n"
 fi
 	PRIV_FLAG=""
@@ -554,23 +567,19 @@ fi
 #to override binutils during the compilation
 export PATH=\${MPC_RPREFIX}/\${MPC_HOST_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/bin/:\${PATH}
 
-#first definition of compiler & linking flags
-CFLAGS="\`\${MPC_RPREFIX}/\${MPC_HOST_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/bin/mpc_cflags $language\`"
-LDFLAGS="\`\${MPC_RPREFIX}/\${MPC_HOST_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/bin/mpc_ldflags $language\`"
-LDFLAGS="\$EXTRA_ADDON_FLAGS \$LDFLAGS"
-
 #Used to avoid header global variable privatization when libraries are not privatized
 #mpcmp.h and mpcmicrothread.h have been recopied from GCC patch
 MPC_UNPRIVATIZED_FILES="\${MPC_UNPRIVATIZED_FILES}:mpcmp.h:mpcmicrothread.h:"
-
 MPC_UNPRIVATIZED_VARS="\${MPC_UNPRIVATIZED_VARS}:\`preprocess_main\`"
 
+custompath=""
 EOF
 
 
 if test "$2" = "fortran" ; then 
 
 cat <<EOF >> $1
+custompath="\$HOME_FILEPATH/fmod/\$CC_HASH/"
 MPC_UNPRIVATIZED_VARS="\${MPC_UNPRIVATIZED_VARS}:mpi_status_ignore:mpi_statuses_ignore:mpi_in_place"
 EOF
 
@@ -580,6 +589,12 @@ cat <<EOF >> $1
 
 export MPC_UNPRIVATIZED_FILES
 export MPC_UNPRIVATIZED_VARS
+
+#first definition of compiler & linking flags
+CFLAGS="\`\${MPC_RPREFIX}/\${MPC_HOST_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/bin/mpc_cflags $language \$custompath\`"
+LDFLAGS="\`\${MPC_RPREFIX}/\${MPC_HOST_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/bin/mpc_ldflags $language \$custompath\`"
+LDFLAGS="\$EXTRA_ADDON_FLAGS \$LDFLAGS"
+
 
 EOF
 # Regular flags and compiler (C, C++ or fortran)
@@ -963,7 +978,7 @@ printf_compiler bin/mpc_cc c
 # Generate C++ compiler
 #
 sctk_echo "Preparing C++ Compiler: mpc_cxx"
-printf_compiler bin/mpc_cxx c++
+printf_compiler bin/mpc_cxx cxx
 
 #
 # Generate Fortran compiler
@@ -999,7 +1014,7 @@ printf_mpi_compiler bin/mpif08 bin/mpc_f77
 
 if test "$SCTK_CUDA" = "1"; then
 	sctk_echo "Preparing NVIDIA Compiler: mpc_nvcc"
-	printf_compiler bin/mpc_nvcc c++ "nvcc --compiler-bindir "
+	printf_compiler bin/mpc_nvcc cxx "nvcc --compiler-bindir "
 fi
 
 ########################################
