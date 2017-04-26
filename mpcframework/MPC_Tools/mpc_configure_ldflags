@@ -53,9 +53,13 @@ if test -e "${SCTK_LIB_DIR}/libmpcgetopt.a"; then
 	fi
 fi
 
-if test -e "${SCTK_LIB_DIR}/libmpcfwrapper.so"; then
-	if test "x\${MPC_BOOTSTRAP}" != "xyes"; then
-		SCTK_MPCMPISIZEOF="-L${SCTK_LIB_DIR}/ -lmpcfwrapper"
+#adding custom path (if defined)
+if test -n "\$2"; then
+	echo " -L\$2/lib -Wl,-rpath,\$2/lib "
+	if test -f "\$2/lib/libmpcfwrapper.so"; then
+		if test "x\${MPC_BOOTSTRAP}" != "xyes"; then
+			SCTK_MPCMPISIZEOF="-lmpcfwrapper"
+		fi
 	fi
 fi
 

@@ -75,6 +75,10 @@ fi
 EOF
 
 cat <<EOF >> bin/mpc_cflags
+#adding custom path to include for the given compiler (if provided)
+if test -n "\$2"; then
+	echo " -I\$2/include "
+fi
 if test "\$1" != "fortran" ; then
 EOF
 if test "${SCTK_MIC}" = "1" ; then
@@ -91,8 +95,9 @@ fi
 
 cat <<EOF >> bin/mpc_cflags
 else
+#special cases for Fortran, where *.mod, stored in /lib has to be included too
 if test -n "\$2"; then
-	echo " -I\$2/include -I\$2/lib"
+	echo " -I\$2/lib "
 fi
 EOF
 
