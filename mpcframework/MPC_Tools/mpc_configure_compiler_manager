@@ -151,17 +151,30 @@ post_add_fortran()
 {
 	#rebuild Fortran modules and store them in HOME/.mpcompil/HASH/fmod
 	test ! -f \$COMPILER_FILEPATH/fortran_gen/fortran_build.sh && die "Unable to generate Fortran module for \$1\n"
-	mkdir -p \$COMPILER_FILEPATH/fmod/\$3
 	printf "Compiling Fortran modules for the new compiler: \$1\n"
 
 
-	#this is absolutely awful... 
-	FLAGS="\$2 -I\$MPC_prefix/include/mpcframework $SCTK_CFLAGS -L\$MPC_prefix/lib $SCTK_LDFLAGS -B\$MPC_prefix/bin"
+	#this is absolutely awful...
+	#we have to build twice if compiler is privatizing => give *.mod for privatized or unprivatized usage.
+
+	#build unprivatized usage
+	FLAGS="-I\$MPC_prefix/include/mpcframework $SCTK_CFLAGS -L\$MPC_prefix/lib $SCTK_LDFLAGS -B\$MPC_prefix/bin"
 	CC="\`lookup_compiler c 1 | cut -f3 -d":"\` \$FLAGS -lmpc_framework"
 	FC="\$1 \$FLAGS"
-
-	MPC_MAKE_FORTRAN_INTERFACE=1 MPC_DISABLE_CONFIG=1 MPC_DISABLE_BANNER=1 sh \$COMPILER_FILEPATH/fortran_gen/fortran_build.sh "\$CC" "\$FC" "\$COMPILER_FILEPATH/fortran_gen/mpc_mpi.h" "\$COMPILER_FILEPATH/fmod/\$3/"
+	mkdir -p \$COMPILER_FILEPATH/fmod/\$3/npriv
+	MPC_MAKE_FORTRAN_INTERFACE=1 MPC_DISABLE_CONFIG=1 MPC_DISABLE_BANNER=1 sh \$COMPILER_FILEPATH/fortran_gen/fortran_build.sh "\$CC" "\$FC" "\$COMPILER_FILEPATH/fortran_gen/mpc_mpi.h" "\$COMPILER_FILEPATH/fmod/\$3/npriv"
 	test "x\$?" != "x0" && die "Error(s) during Fortran module building for \$1"
+
+	if test -n "\$2"; then
+		#build privatized usage
+		CC="\$CC \$2"
+		FC="\$FC \$2"
+		mkdir -p \$COMPILER_FILEPATH/fmod/\$3/priv
+		MPC_MAKE_FORTRAN_INTERFACE=1 MPC_DISABLE_CONFIG=1 MPC_DISABLE_BANNER=1 sh \$COMPILER_FILEPATH/fortran_gen/fortran_build.sh "\$CC" "\$FC" "\$COMPILER_FILEPATH/fortran_gen/mpc_mpi.h" "\$COMPILER_FILEPATH/fmod/\$3/priv"
+		test "x\$?" != "x0" && die "Error(s) during Fortran module building for \$1 w/ privatization support"
+	fi
+
+
 }
 
 post_rm_fortran()
