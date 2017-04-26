@@ -129,8 +129,19 @@ post_add_c()
 	#nothing to do for now
 	dummy=1
 }
+post_rm_c()
+{
+	#nothing to do for now
+	dummy=1
+}
 
 post_add_cxx()
+{
+	#nothing to do for now
+	dummy=1
+}
+
+post_rm_cxx()
 {
 	#nothing to do for now
 	dummy=1
@@ -151,6 +162,11 @@ post_add_fortran()
 
 	MPC_MAKE_FORTRAN_INTERFACE=1 MPC_DISABLE_CONFIG=1 MPC_DISABLE_BANNER=1 sh \$COMPILER_FILEPATH/fortran_gen/fortran_build.sh "\$CC" "\$FC" "\$COMPILER_FILEPATH/fortran_gen/mpc_mpi.h" "\$COMPILER_FILEPATH/fmod/\$3/"
 	test "x\$?" != "x0" && die "Error(s) during Fortran module building for \$1"
+}
+
+post_rm_fortran()
+{
+	test -n "\$3" -a -d "\$COMPILER_FILEPATH/fmod/\$3/" && rm -rf \$COMPILER_FILEPATH/fmod/\$3/
 }
 
 
@@ -204,6 +220,7 @@ remove_compiler()
 	# -e: exec script
 	# "\,xxx,d": grep lines matching 'xxx' and remove them (using comma separator)
 	sed -i -e "\\,^\$3:.*:\$2:.*$,d" \$COMPILER_FILEPATH/.\$1_compilers.cfg
+	post_rm_\$1 "\$2" "" "\`hash_content \$2\`"
 }
 
 set_default_compiler()
