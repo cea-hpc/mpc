@@ -1,3 +1,4 @@
+#define _GNU_SOURCE 1
 /* ############################# MPC License ############################## */
 /* # Wed Nov 19 15:19:19 CET 2008                                         # */
 /* # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          # */
@@ -44,22 +45,13 @@ extern char ** environ;
 
 #include <dlfcn.h>
 
-static void run_libgfortran_symbol(char* sym)
+static void sctk_load_symbol(char* sym)
 {
-    void (*ptr_func)(void) = NULL; 
-    static void *handle = NULL;
-      handle = dlopen("libgfortran.so",RTLD_LAZY);
-      if (handle == NULL)
-      {
-        return;
-      }
-      ptr_func = dlsym(handle,sym);
-      if (ptr_func == NULL)
-      {
-        return;
-      }
-    ptr_func();
-    dlclose(handle);
+    void (*ptr_func)(void) = dlsym(RTLD_DEFAULT,sym);
+    if (ptr_func)
+    {
+        ptr_func();
+    }
 }
 
 /* Set up the modified libgfortran if needed */
@@ -68,7 +60,7 @@ static void local_libgfortran_init()
     /* init function for the modified libgfortran */
     if (sctk_is_in_fortran == 1)
     {
-      run_libgfortran_symbol("_gfortran_init_units");
+      sctk_load_symbol("_gfortran_init_units");
     }
 }
 /* Clear the modified libgfortran if needed */
@@ -77,7 +69,7 @@ static void local_libgfortran_close()
     /* init function for the modified libgfortran */
     if (sctk_is_in_fortran == 1)
     {
-        run_libgfortran_symbol("_gfortran_close_units");
+        sctk_load_symbol("_gfortran_close_units");
     }
 }
 
