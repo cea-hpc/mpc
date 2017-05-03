@@ -49,7 +49,7 @@ die()
 
 clean_main_files()
 {
-	rm mpc_main.c mpc_main.cxx mpc_main.fortran mpc_main.o > /dev/null 2>&1
+	rm mpc_main.c mpc_main.cxx mpc_main.f mpc_main.o > /dev/null 2>&1
 }
 
 build_main_files()
@@ -68,10 +68,10 @@ return 0;
 }
 EOFINT
 
-cat <<EOFINT > mpc_main.fortran
-subroutine mpc_user_main
-integer i
-      end
+cat <<EOFINT > mpc_main.f
+        program main
+        integer i
+        end program
 EOFINT
 }
 
@@ -149,7 +149,7 @@ post_rm_cxx()
 
 post_add_fortran()
 {
-	#rebuild Fortran modules and store them in HOME/.mpcompil/HASH/fmod
+	#rebuild Fortran modules and store them in HOME/.mpcompil/HASH
 	test ! -f \$COMPILER_FILEPATH/fortran_gen/fortran_build.sh && die "Unable to generate Fortran module for \$1\n"
 	printf "Compiling Fortran modules for the new compiler: \$1\n"
 
@@ -158,28 +158,31 @@ post_add_fortran()
 	#we have to build twice if compiler is privatizing => give *.mod for privatized or unprivatized usage.
 
 	#build unprivatized usage
-	FLAGS="-I\$MPC_prefix/include/mpcframework $SCTK_CFLAGS -L\$MPC_prefix/lib $SCTK_LDFLAGS -B\$MPC_prefix/bin"
+	FLAGS="-I\$MPC_prefix/include/mpcframework $SCTK_CFLAGS -L\$MPC_prefix/lib -L\${MPC_prefix}/lib64 -Wl,-rpath=\${MPC_prefix}/lib -Wl,-rpath=\${MPC_prefix}/lib64 $SCTK_LDFLAGS -B\$MPC_prefix/bin"
 	CC="\`lookup_compiler c 1 | cut -f3 -d":"\` \$FLAGS -lmpc_framework"
 	FC="\$1 \$FLAGS"
-	mkdir -p \$COMPILER_FILEPATH/fmod/\$3/npriv
-	MPC_MAKE_FORTRAN_INTERFACE=1 MPC_DISABLE_CONFIG=1 MPC_DISABLE_BANNER=1 sh \$COMPILER_FILEPATH/fortran_gen/fortran_build.sh "\$CC" "\$FC" "\$COMPILER_FILEPATH/fortran_gen/mpc_mpi.h" "\$COMPILER_FILEPATH/fmod/\$3/npriv"
+	mkdir -p \$COMPILER_FILEPATH/\$3/npriv
+	MPC_MAKE_FORTRAN_INTERFACE=1 MPC_DISABLE_CONFIG=1 MPC_DISABLE_BANNER=1 sh \$COMPILER_FILEPATH/fortran_gen/fortran_build.sh "\$CC" "\$FC" "\$COMPILER_FILEPATH/fortran_gen/mpc_mpi.h" "\$COMPILER_FILEPATH/\$3/npriv"
 	test "x\$?" != "x0" && die "Error(s) during Fortran module building for \$1"
 
 	if test -n "\$2"; then
 		#build privatized usage
 		CC="\$CC \$2"
 		FC="\$FC \$2"
-		mkdir -p \$COMPILER_FILEPATH/fmod/\$3/priv
-		MPC_MAKE_FORTRAN_INTERFACE=1 MPC_DISABLE_CONFIG=1 MPC_DISABLE_BANNER=1 sh \$COMPILER_FILEPATH/fortran_gen/fortran_build.sh "\$CC" "\$FC" "\$COMPILER_FILEPATH/fortran_gen/mpc_mpi.h" "\$COMPILER_FILEPATH/fmod/\$3/priv"
+		mkdir -p \$COMPILER_FILEPATH/\$3/priv
+		MPC_MAKE_FORTRAN_INTERFACE=1 MPC_DISABLE_CONFIG=1 MPC_DISABLE_BANNER=1 sh \$COMPILER_FILEPATH/fortran_gen/fortran_build.sh "\$CC" "\$FC" "\$COMPILER_FILEPATH/fortran_gen/mpc_mpi.h" "\$COMPILER_FILEPATH/\$3/priv"
 		test "x\$?" != "x0" && die "Error(s) during Fortran module building for \$1 w/ privatization support"
 	fi
+
+	#shortcut to identify the compiler matching the hash folder
+	echo "\$1" >> \$COMPILER_FILEPATH/\$3/compiler
 
 
 }
 
 post_rm_fortran()
 {
-	test -n "\$3" -a -d "\$COMPILER_FILEPATH/fmod/\$3/" && rm -rf \$COMPILER_FILEPATH/fmod/\$3/
+	test -n "\$3" -a -d "\$COMPILER_FILEPATH/\$3/" && rm -rf \$COMPILER_FILEPATH/\$3/
 }
 
 
@@ -217,7 +220,9 @@ add_compiler()
 			PRIV_FLAG=""
 	esac
 
-	\${2} \${PRIV_FLAG} -c mpc_main.\${1} > /dev/null 2>&1
+	ext=\${1}
+	test "x\$ext" = "xfortran" && ext=f
+	\${2} \${PRIV_FLAG} -c mpc_main.\${ext} > /dev/null 2>&1
 	test "x\$?" != "x0" && PRIV_FLAG=""
 
 	post_add_\${1} "\$2" "\$PRIV_FLAG" "\$hash"

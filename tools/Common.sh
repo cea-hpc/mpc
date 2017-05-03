@@ -169,7 +169,7 @@ setBuildCompiler()
 			*)
 				;;
 		esac
-	elif test "$GCC_PREFIX" != "internal"; then
+	elif test "$GCC_PREFIX" != "internal" -a "$GCC_PREFIX" != "disabled"; then
 		BUILD_CC=$GCC_PREFIX/bin/gcc
 		BUILD_CXX=$GCC_PREFIX/bin/g++
 		BUILD_FC=$GCC_PREFIX/bin/gfortran
@@ -235,9 +235,16 @@ storeMPCcompilers()
 	#manager called in MPC copied files into HOME_CFILEPATH if set: copy back these files in the installation
 	createHomeLink
 	if test -n "$HOME_CFILEPATH"; then
-		cp -r ${MPC_RPREFIX}/fortran_gen ${HOME_CFILEPATH}/
-		cp -r ${MPC_RPREFIX}/fmod ${HOME_CFILEPATH}/
+		#copy config files first (needed by manager just few lines later)
 		cp ${MPC_RPREFIX}/.*_compilers.cfg ${HOME_CFILEPATH}/
+		#needed to regen fortran modules
+		cp -r ${MPC_RPREFIX}/fortran_gen ${HOME_CFILEPATH}/
+		#retrieve and copy compiler-specific directories
+		for lang in c cxx fortran; 
+		do 
+			CHASH=`$MPC_RPREFIX/$MPC_HOST/$MPC_TARGET/bin/mpc_compiler_manager get_detail $lang 1 | cut -f4 -d":"`
+			test -n $CHASH -a -d $MPC_RPREFIX/$CHASH/ && cp -r ${MPC_RPREFIX}/${CHASH} ${HOME_CFILEPATH}/
+		done
 	fi
 
 	#print default compilers

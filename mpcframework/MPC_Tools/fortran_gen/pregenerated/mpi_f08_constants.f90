@@ -97,7 +97,7 @@ use :: mpi_f08_types
 	type(MPI_Win) :: MPI_WIN_NULL = MPI_Win(-1)
 	type(MPI_Group) :: MPI_GROUP_NULL = MPI_Group(-1)
 	type(MPI_Info) :: MPI_INFO_NULL = MPI_Info(-1)
-	type(MPI_Errhandler) :: MPI_ERRHANDLER_NULL = MPI_Errhandler(0)
+	type(MPI_Errhandler) :: MPI_ERRHANDLER_NULL = MPI_Errhandler(-1)
 	type(MPI_Message) :: MPI_MESSAGE_NULL = MPI_Message(-1)
 	integer, parameter :: MPI_PROC_NULL = -2
 	integer, parameter :: MPI_ARGV_NULL = 0
@@ -174,8 +174,8 @@ use :: mpi_f08_types
 	integer, parameter :: MPI_ERR_IO = 53
 	integer, parameter :: MPI_ERR_LASTCODE = 74
 	integer, parameter :: MPI_NOT_IMPLEMENTED = 56
-	type(MPI_Errhandler) :: MPI_ERRORS_RETURN = MPI_Errhandler(1)
-	type(MPI_Errhandler) :: MPI_ERRORS_ARE_FATAL = MPI_Errhandler(2)
+	type(MPI_Errhandler) :: MPI_ERRORS_RETURN = MPI_Errhandler(-6)
+	type(MPI_Errhandler) :: MPI_ERRORS_ARE_FATAL = MPI_Errhandler(-7)
 	type(MPI_Datatype) :: MPI_UB = MPI_Datatype(-2)
 	type(MPI_Datatype) :: MPI_LB = MPI_Datatype(-3)
 	type(MPI_Datatype) :: MPI_CHAR = MPI_Datatype(13)
@@ -278,7 +278,7 @@ use :: mpi_f08_types
 	integer, parameter :: MPI_WIN_SIZE = 2
 	integer, parameter :: MPI_WIN_DISP_UNIT = 3
 	integer, parameter :: MPI_WIN_CREATE_FLAVOR = 4
-	integer, parameter :: MPI_WIN_MODEL = 5
+	integer, parameter :: MPI_WIN_MODEL = 0
 	integer, parameter :: MPI_WIN_FLAVOR_CREATE = 1
 	integer, parameter :: MPI_WIN_FLAVOR_ALLOCATE = 2
 	integer, parameter :: MPI_WIN_FLAVOR_DYNAMIC = 3
@@ -287,9 +287,9 @@ use :: mpi_f08_types
 	integer, parameter :: MPI_WIN_UNIFIED = 0
 	integer, parameter :: MPI_MODE_NOCHECK = 1
 	integer, parameter :: MPI_MODE_NOSTORE = 2
-	integer, parameter :: MPI_MODE_NOPUT = 3
-	integer, parameter :: MPI_MODE_NOPRECEDE = 4
-	integer, parameter :: MPI_MODE_NOSUCCEED = 5
+	integer, parameter :: MPI_MODE_NOPUT = 4
+	integer, parameter :: MPI_MODE_NOPRECEDE = 8
+	integer, parameter :: MPI_MODE_NOSUCCEED = 16
 	integer, parameter :: MPI_LOCK_EXCLUSIVE = 234
 	integer, parameter :: MPI_LOCK_SHARED = 235
 

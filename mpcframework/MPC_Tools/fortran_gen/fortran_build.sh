@@ -214,6 +214,8 @@ genfortranfiles()
 
 genfortranmods()
 {
+	mpc_inc_path=""
+	test "x$GENERATE" = "x0" && mpc_inc_path="-I$SCRIPTPATH/pregenerated"
 	#We do not want to privatize Fortran constants
 	export MPC_UNPRIVATIZED_VARS=mpi_in_place:mpi_status_ignore:mpi_statuses_ignore:$MPC_UNPRIVATIZED_VARS
 
@@ -228,7 +230,7 @@ genfortranmods()
 	test "x$?" != "x0" && die "Failed to build pre-computed Fortran modules"
 	info "Built pre-computed Fortran modules"
 	
-	$MPCFC -g -fpic -I. -c $SCRIPTPATH/predef_types.f $SCRIPTPATH/predef_types_08.f90  2>> ./fortrangen.log
+	$MPCFC -g -fpic -I. ${mpc_inc_path} -c $SCRIPTPATH/predef_types.f $SCRIPTPATH/predef_types_08.f90  2>> ./fortrangen.log
 	test "x$?" != "x0" && die "Failed to build pre-defined Fortran modules (types)"
 	info "Built pre-defined Fortran modules (types)"
 	

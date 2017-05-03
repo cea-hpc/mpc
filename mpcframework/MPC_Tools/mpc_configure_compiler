@@ -581,7 +581,7 @@ EOF
 if test "$2" = "fortran" ; then 
 
 cat <<EOF >> $1
-custompath="\$HOME_FILEPATH/fmod/\$CC_HASH/"
+custompath="\$HOME_FILEPATH/\$CC_HASH/"
 MPC_UNPRIVATIZED_VARS="\${MPC_UNPRIVATIZED_VARS}:mpi_status_ignore:mpi_statuses_ignore:mpi_in_place"
 EOF
 
