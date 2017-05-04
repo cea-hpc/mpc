@@ -640,167 +640,178 @@ cat <<EOF >> $1
         exit \$rc
     fi
 
-    # Indicates if symbol exists in object file
+    # FROM HERE, We want to replace main() fortran symbol in each fortran file (object or source)
+    # 3 cases occur
+    # - at least one .o exposes a symbol MAIN -> to be replaced and FORTRAN_OBJ has to be loaded
+    # - at least one .o exposes a symbol mpc_user_main -> nothing to do but FORTRAN_OBJ has to be loaded
+    # - No .o do not provide any MAIN* symbol -> remove FORTRAN_OBJ, nothing indicating its a program (lib?)
+
+    ##########################################
+    # Check if object in \$1 contains symbol \$2
     has_symbol ()
     {
-        if [ -f "\${1}" ]
-        then
-            # Be strict here to ensure we get the symbol and not a symbol beginning with name
-            TEST=\$(nm "\${1}" | tr -s " " | cut -d " " -f3 | grep -E '^'"\${2}"'$' | wc -l)
-			if test "x\${TEST}" = "x1"
-            then
-				HAS_SYMBOL=1
-				return
-            fi
-        fi
-		
-		HAS_SYMBOL=0
+	    if test -f "\${1}"
+	    then
+		    # nm -P -> Posix formating (start w/ symbol name)
+		    nb=\`nm -P "\${1}" | egrep "^\${2} " | wc -l\`
+		    if test "x\${nb}" = "x1"
+		    then
+			    HAS_SYMBOL=1
+			    return
+		    fi
+	    fi
+
+	    HAS_SYMBOL=0
     }
 
-    # Renames a symbol in an object file
+    ##########################################
+    # Replace symbol \$2 by \$3 for the object file \$1
     rename_sym ()
     {
-        objcopy --redefine-sym \${2}=\${3} "\${1}"
+	    objcopy --redefine-sym \${2}=\${3} "\${1}"
     }
 
-    # Renames the fortran entry point and associated symbols. also removes the main symbol
+    ##########################################
+    # Replace any main* symbol in \$1 object file.
+    # this includes:
+    # - the MAIN call
+    # - any outlined OpenMP rountines, which could be located in MAIN function
     rename_main_symbols ()
     {
-        rename_sym "\${1}" "MAIN__" "mpc_user_main_"
-        objcopy --globalize-symbol="mpc_user_main_" "\${1}"
-        # And ._omp.fn* in case of OpenMP
-        index=0
-        
-		has_symbol "\${1}" "MAIN__._omp_fn.\${index}"
-        
-		while test "x\${HAS_SYMBOL}" = "x1"
-		do
-            rename_sym "\${1}" "MAIN__._omp_fn.\${index}" "mpc_user_main_._omp_fn.\${index}"
-            index=\$((\${index}+1))
-            
-			has_symbol "\${1}" "MAIN__._omp_fn.\${index}"
-        
-        done
+	    # rename the MAIN
+	    rename_sym "\${1}" "MAIN__" "mpc_user_main_"
+	    objcopy --globalize-symbol="mpc_user_main_" "\${1}"
 
-        # Remove the main
-        objcopy --strip-symbol main "\${1}"
+	    #rename OpenMP outlined routines
+	    index=0
+	    has_symbol "\${1}" "MAIN__._omp_fn.\${index}"
+
+	    while test "x\${HAS_SYMBOL}" = "x1"
+	    do
+		    rename_sym "\${1}" "MAIN__._omp_fn.\${index}" "mpc_user_main_._omp_fn.\${index}"
+		    index=\`expr \${index} + 1\`
+
+		    has_symbol "\${1}" "MAIN__._omp_fn.\${index}"
+
+	    done
+
+	    # Remove the main
+	    objcopy --strip-symbol main "\${1}"
     }
 
-    # Checks if a file has given extention
+    ##########################################
+    # Checks if the \$1 file ends with \$2 (return 0 means "OK it's good")
     has_ext ()
     {
-        BN=\$(basename "\${1}")
-        BN2=\$(basename "\${1}" "\${2}")
-        # If different, the file has the right extension
-        if [ "\${BN}" != "\${BN2}" ]
-        then
-            return 0
-        fi
-        return 1
-    }
-
-    # Get the file extention
-    get_ext ()
-    {
-        printf ".%s" \$(echo "\${1}" | rev | cut -d "." -f1 | rev)
+	    case "\$1" in
+		    *\$2) return 0;;
+		    *) return 1;;
+	    esac
     }
     
-	THERE_IS_A_MAIN=0
+    MAIN_NEEDED=0
     SOURCE_FILES=""
     OBJECT_FILES=""
     ARGS_NO_SOURCES=""
     # First walk through objects and modify the main one and identify sourcefiles given on link command line
     for arg in \$allargs
     do
-        addarg=1
-        unquotedarg="\$(eval echo \$arg)"
-        #Is it a file ?
-        if [ -f "\$unquotedarg" ]
-        then
-            #Is is an object file ?
-            if has_ext "\${unquotedarg}" ".o"
-            then
-                #It is an object file, but is it the main ?
-                has_symbol "\${unquotedarg}" "MAIN__"
-                if test "x\${HAS_SYMBOL}" = "x1"
-				then
-					THERE_IS_A_MAIN=1
-                    #This is main, rename the symbol(s)
-                    $Show rename_main_symbols "\${unquotedarg}"
-                fi
-            else
-                #This is a file, but not an object... is it a Fortran source file ?
-                file_ext=\$(get_ext "\${unquotedarg}")
-                for ext in .f .F .f90 .F90 .for .FOR .fpp .FPP .r
-                do
-                    if has_ext "\${unquotedarg}" "\${ext}"
-                    then
-                        addarg=0
-                        # This is a Fortran source file, store it...
-                        SOURCE_FILES="\${SOURCE_FILES} \${unquotedarg}"
-                        break
-                    fi
-                done
-            fi
-        fi
-        if [ \${addarg} -eq 1 ]
-        then
-            ARGS_NO_SOURCES="\${ARGS_NO_SOURCES} \${arg}"
-        fi
+	    addarg=1
+	    unquotedarg="\$(eval echo \$arg)"
+	    #Is it a file ?
+	    if test -f "\$unquotedarg"
+	    then
+		    #Is is an object file ?
+		    if has_ext "\${unquotedarg}" ".o"
+		    then
+			    #It is an object file, but is it the real main ?
+			    has_symbol "\${unquotedarg}" "MAIN__"
+			    if test "x\${HAS_SYMBOL}" = "x1"
+			    then
+				    MAIN_NEEDED=1
+				    #This is main, rename the symbol(s)
+				    \$Show rename_main_symbols "\${unquotedarg}"
+
+			    else # Ok, not a real MAIN__ symbol but what about mpc_user_main_ ? (backward compatibility)
+				    # In this case, we need FORTRAN_OBJ but not to rename the main() symbol
+				    has_symbol "\${unquotedarg}" "mpc_user_main_"
+				    test "x\${HAS_SYMBOL}" = "x1" && MAIN_NEEDED=1
+			    fi
+		    else
+			    #This is a file, but not an object... is it a Fortran source file ?
+			    for ext in .f .F .f90 .F90 .f08 .F08 .for .FOR .fpp .FPP .r
+			    do
+				    if has_ext "\${unquotedarg}" "\${ext}"
+				    then
+					    addarg=0
+					    # This is a Fortran source file, store it...
+					    SOURCE_FILES="\${SOURCE_FILES} \${unquotedarg}"
+					    break
+				    fi
+			    done
+		    fi
+	    fi
+	    if [ \${addarg} -eq 1 ]
+	    then
+		    ARGS_NO_SOURCES="\${ARGS_NO_SOURCES} \${arg}"
+	    fi
     done
 
-if test "\$SHOW_ARGS" = "1" ; then 
-if test "\$SHOW_COMPILE" = "1"; then 
-echo \$FFLAGS \$CFLAGS
-fi 
-if test "\$SHOW_LINK" = "1"; then 
-echo \$LIB_PATH \$LDFLAGS
-fi 
-if test "\$SHOW_COMMAND" = "1"; then 
-echo $3\$CC
-fi 
-else
-if test "\$USE_COMMAND" = "1"; then 
-LIB_PATH=""
-LDFLAGS=""
-CFLAGS=""
-FFLAGS=""
-fi 
-    # If there are some source files on command line
-    if [ ! -z "\${SOURCE_FILES}" ]
-    then
-        for source_file in \${SOURCE_FILES}
-        do
-            object_file=\$(mktemp --suffix=.o)
-            \$Show \$CC \$LIB_PATH \$LDFLAGS \$FFLAGS \$CFLAGS \${ARGS_NO_SOURCES} \$LDFLAGS "\${source_file}" -c -o "\${object_file}"
-            # Is this object (ie. source file) main ?
-			has_symbol "\${object_file}" "MAIN__"
-			if test "x\${HAS_SYMBOL}" = "x1"
-            then
-                #This is main, rename the symbol(s) (not reached is Show is echo...)
-				THERE_IS_A_MAIN=1
-                $Show rename_main_symbols "\${object_file}"
-            fi
-            OBJECT_FILES="\${OBJECT_FILES} '\${object_file}'"
-        done
+    if test "\$SHOW_ARGS" = "1" ; then 
+	    if test "\$SHOW_COMPILE" = "1"; then 
+		    echo \$FFLAGS \$CFLAGS
+	    fi 
+	    if test "\$SHOW_LINK" = "1"; then 
+		    echo \$LIB_PATH \$LDFLAGS
+	    fi 
+	    if test "\$SHOW_COMMAND" = "1"; then 
+		    echo $3\$CC
+	    fi 
+    else
+	    if test "\$USE_COMMAND" = "1"; then 
+		    LIB_PATH=""
+		    LDFLAGS=""
+		    CFLAGS=""
+		    FFLAGS=""
+	    fi 
+	    # If there are some source files on command line
+	    if test -n "\${SOURCE_FILES}"
+	    then
+		    for source_file in \${SOURCE_FILES}
+		    do
+			    object_file=\$(mktemp --suffix=.o)
+			    \$Show \$CC \$LIB_PATH \$LDFLAGS \$FFLAGS \$CFLAGS \${ARGS_NO_SOURCES} \$LDFLAGS "\${source_file}" -c -o "\${object_file}"
+			    # Is this object (ie. source file) owning a real main symbol ?
+			    has_symbol "\${object_file}" "MAIN__"
+			    if test "x\${HAS_SYMBOL}" = "x1"
+			    then
+				    #This is main, rename the symbol(s) (not reached is Show is echo...)
+				    MAIN_NEEDED=1
+				    \$Show rename_main_symbols "\${object_file}"
+			    
+			    else # Ok, not a real MAIN__ symbol but what about mpc_user_main_ ? (backward compatibility)
+				    # In this case, we need FORTRAN_OBJ but not to rename the main() symbol
+				    has_symbol "\${object_file}" "mpc_user_main_"
+				    test "x\${HAS_SYMBOL}" = "x1" && MAIN_NEEDED=1
+			    fi
+			    OBJECT_FILES="\${OBJECT_FILES} '\${object_file}'"
+		    done
+	    fi
+
+	    if test "x\${MAIN_NEEDED}" = "x0"
+	    then
+		    #No main() ? probably a lib or module to build -> no need to inject FORTRAN_OBJ
+		    FORTRAN_OBJ=""
+	    fi
+	    #otherwise, FORTRAN_OBJ discard user MAIN() and create a new one calling mpc_start()
+
+	    \$Show \$CC \$LIB_PATH \$FORTRAN_OBJ \$LDFLAGS \$FFLAGS \$CFLAGS \$ARGS_NO_SOURCES \${OBJECT_FILES} \$LDFLAGS \${OUTPUT_FILE_ARGS}
+	    rc=\$?
+	    \$Show rm -f \$FORTRAN_OBJ \${OBJECT_FILES} \$FORTRAN_START
+	    if test "\$rc" != "0" ; then
+		    exit \$rc
+	    fi
     fi
-    
-    if test "x\${THERE_IS_A_MAIN}" = "x0"
-	then
-		echo "(MPC) No main found"
-		FORTRAN_OBJ=""
-	else
-		echo "(MPC) Redirecting MAIN to MPC's main"
-	fi
-    
-    
-    \$Show \$CC \$LIB_PATH \$FORTRAN_OBJ \$LDFLAGS \$FFLAGS \$CFLAGS \$ARGS_NO_SOURCES \${OBJECT_FILES} \$LDFLAGS \${OUTPUT_FILE_ARGS}
-    rc=\$?
-    \$Show rm -f \$FORTRAN_OBJ \${OBJECT_FILES} \$FORTRAN_START
-    if test "\$rc" != "0" ; then
-        exit \$rc
-    fi
-fi
 EOF
 else
 cat <<EOF >> $1
