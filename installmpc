@@ -717,6 +717,7 @@ fi
 
 ######################################################
 printSummary
+checkBasics
 genMakefile
 createRootMakefile
 

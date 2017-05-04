@@ -169,6 +169,14 @@ SCTK_CHECK_PROG 'basename'
 SCTK_CHECK_PROG 'dirname'
 SCTK_CHECK_PROG 'sed'
 SCTK_CHECK_PROG 'grep'
+SCTK_CHECK_PROG 'which'
+SCTK_CHECK_PROG 'find'
+SCTK_CHECK_PROG 'cat'
+#we should list above only programs that MPC process won't install: the following are required but can be missing during configure:
+#SCTK_CHECK_PROG 'readlink'
+#SCTK_CHECK_PROG 'objcopy'
+#SCTK_CHECK_PROG '...'
+
 }
 
 post_update_vars(){

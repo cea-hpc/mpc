@@ -20,6 +20,48 @@ CHECKSUM_TOOL="sha1sum"
 . "${PROJECT_SOURCE_DIR}/tools/Architectures.sh"
 
 ######################################################
+# Inspired from MPC CHECK_PROG, this function will check for
+# essential program to complete the installation
+# - tar / bzip2 / gunzip : extract extern-deps
+# - patch : apply patches if needed
+# - which : shell command lookup tool
+# - basename / dirname : used in a lot of configures
+# - gcc / g++ : Used to build GCC
+# - automake / autoconf : Some dependencies require autotools
+
+PROG_TO_CHECK="tar bzip2 gunzip basename dirname patch which gcc g++ automake autoconf"
+LOOKUP_BIN_LIST=`echo $PATH | sed -e "s,:, ,g"`
+
+lookupProg()
+{
+	if test -x $1; then echo "OK"; return; fi
+
+	for p in $LOOKUP_BIN_LIST
+	do
+		if test -x $p/$1; then echo "OK"; return; fi
+	done
+	
+	echo "KO"
+	return
+}
+
+checkBasics()
+{
+	RES=0
+	for bin in $PROG_TO_CHECK; 
+	do
+		if test "x`lookupProg "$bin"`" != "xOK"; then
+			printf "WARNING: Unable to find program: $bin\n" 1>&2
+			RES=1
+		fi
+	done
+
+	if test "x$RES" != "x0"; then
+		printf "WARNING: Installation process may fail because of aforementioned missing programs.\n" 1>&2
+	fi
+}
+
+######################################################
 # Escape var for to get rid of spaces in names
 # $1 : prefix to escape
 escapeName()
