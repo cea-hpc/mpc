@@ -58,7 +58,7 @@ static sctk_spinlock_t 	__mpcomp_global_init_critical_named_lock = SCTK_SPINLOCK
 
 void __mpcomp_atomic_begin(void) 
 {
-	if( !sctk_atomics_load_int(&__mpcomp_atomic_lock_init_once) )
+	if( sctk_atomics_load_int(&__mpcomp_atomic_lock_init_once) < 2)
 	{
 		//prevent multi call to init 
 		if( !sctk_atomics_cas_int( &__mpcomp_atomic_lock_init_once, 0, 1))
