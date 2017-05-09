@@ -1505,10 +1505,12 @@ void ffunc (pmpi_intercomm_create) (MPI_Comm * local_comm, int *local_leader,
 
 }
 
-void ffunc (pmpi_intercomm_merge) (MPI_Comm * intercomm, int *high,
+void ffunc (pmpi_intercomm_merge) (MPI_Comm * intercomm, char *high,
 				   MPI_Comm * newintracomm, int *res)
 {
-  *res = MPI_Intercomm_merge (*intercomm, *high, newintracomm);
+  int c = (int)*high;
+  *res = MPI_Intercomm_merge (*intercomm, c, newintracomm);
+  *high = (char)c;
 
 }
 
@@ -1552,11 +1554,16 @@ void ffunc (pmpi_topo_test) (MPI_Comm * comm, int *topo_type, int *res)
 }
 
 void ffunc (pmpi_cart_create) (MPI_Comm * comm_old, int *ndims, int *dims,
-			       int *periods, int *reorder,
+			       char *periods, int *reorder,
 			       MPI_Comm * comm_cart, int *res)
 {
+  int *tmp_periods = sctk_malloc(sizeof(int) * (*ndims)), d = *ndims; size_t i = 0;
+  for(i=0;i<d;++i) tmp_periods[i] = (int)periods[i];
+  
   *res =
-    MPI_Cart_create (*comm_old, *ndims, dims, periods, *reorder, comm_cart);
+    MPI_Cart_create (*comm_old, *ndims, dims, tmp_periods, *reorder, comm_cart);
+  
+  for(i=0;i<d;++i) periods[i] = (char)tmp_periods[i];
 
 }
 
@@ -1597,9 +1604,14 @@ void ffunc (pmpi_cartdim_get) (MPI_Comm * comm, int *ndims, int *res)
 }
 
 void ffunc (pmpi_cart_get) (MPI_Comm * comm, int *maxdims, int *dims,
-			    int *periods, int *coords, int *res)
+			    char *periods, int *coords, int *res)
 {
-  *res = MPI_Cart_get (*comm, *maxdims, dims, periods, coords);
+  int* tmp_periods = sctk_malloc(sizeof(int) * (*maxdims)), d = *maxdims; size_t i = 0;
+  for(i=0;i<d;++i) tmp_periods[i] = (int)periods[i];
+  
+  *res = MPI_Cart_get (*comm, *maxdims, dims, tmp_periods, coords);
+  
+  for(i=0;i<d;++i) periods[i] = (char)tmp_periods[i];
 
 }
 
@@ -1639,17 +1651,29 @@ void ffunc (pmpi_cart_shift) (MPI_Comm * comm, int *direction, int *displ,
 
 }
 
-void ffunc (pmpi_cart_sub) (MPI_Comm * comm, int *remain_dims,
+void ffunc (pmpi_cart_sub) (MPI_Comm * comm, char *remain_dims,
 			    MPI_Comm * comm_new, int *res)
 {
-  *res = MPI_Cart_sub (*comm, remain_dims, comm_new);
+  int d = 0;
+  *res = MPI_Cartdim_get (*comm, &d);
 
+  int* tmp_array = sctk_malloc(sizeof(int) * d); size_t i = 0;
+  for(i=0;i<d;++i) tmp_array[i] = (int)remain_dims[i];
+
+  *res = MPI_Cart_sub (*comm, tmp_array, comm_new);
+
+  for(i=0;i<d;++i) remain_dims[i] = (char)tmp_array[i];
 }
 
 void ffunc (pmpi_cart_map) (MPI_Comm * comm_old, int *ndims, int *dims,
-			    int *periods, int *newrank, int *res)
+			    char *periods, int *newrank, int *res)
 {
-  *res = MPI_Cart_map (*comm_old, *ndims, dims, periods, newrank);
+  int* tmp_periods = sctk_malloc(sizeof(int) * (*ndims)), d = *ndims; size_t i = 0;
+  for(i=0;i<d;++i) tmp_periods[i] = (int)periods[i];
+  
+  *res = MPI_Cart_map (*comm_old, *ndims, dims, tmp_periods, newrank);
+  
+  for(i=0;i<d;++i) periods[i] = (char)tmp_periods[i];
 
 }
 

@@ -583,7 +583,7 @@
 			"ndims"
         ], 
         [
-            "int[]", 
+            "bool[]", 
             "periods",
 			"in",
 			"ndims"
@@ -617,7 +617,7 @@
 			"maxdims"			
         ], 
         [
-            "int[]", 
+            "bool[]", 
             "periods",
 			"out",
 			"maxdims"
@@ -647,7 +647,7 @@
 			"ndims"
         ], 
         [
-            "int[]", 
+            "bool[]", 
             "periods",
 			"in",
 			"ndims"
@@ -710,7 +710,7 @@
 			"in"
         ],
         [
-            "int[]", 
+            "bool[]", 
             "remain_dims",
 			"in",
 			"*"
@@ -2013,7 +2013,7 @@
 			"in"
         ], 
         [
-            "int", 
+            "bool", 
             "flag",
 			"in"
         ]
@@ -3238,7 +3238,7 @@
 			"in"
         ], 
         [
-            "int", 
+            "bool", 
             "high",
 			"in"
         ], 
@@ -3490,7 +3490,7 @@
 			"in"
         ], 
         [
-            "int*", 
+            "bool", 
             "commute",
 			"out"
         ]
@@ -3502,7 +3502,7 @@
 			"in"
         ], 
         [
-            "int", 
+            "bool", 
             "commute",
 			"in"
         ], 
@@ -4456,7 +4456,7 @@
 			"inout"
         ], 
         [
-            "int", 
+            "bool", 
             "flag",
 			"out"
         ]
