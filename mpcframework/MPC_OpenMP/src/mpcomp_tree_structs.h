@@ -58,13 +58,13 @@ static inline void __mpcomp_thread_infos_init(mpcomp_thread_t *thread,
   /* RESET all thread_infos to NULL 		*/
   mpcomp_thread_infos_reset(thread);
 
+  __mpcomp_parallel_region_infos_init(&(thread->info));
+
   /* SET all non null thread info fields	*/
   thread->father = father;
   thread->info.num_threads = 1;
   thread->info.icvs = icvs;
   thread->instance = instance;
-
-  __mpcomp_parallel_region_infos_init(&(thread->info));
 
   /* -- DYNAMIC FOR LOOP CONSTRUCT -- */
   for (i = 0; i < MPCOMP_MAX_ALIVE_FOR_DYN + 1; i++) {
