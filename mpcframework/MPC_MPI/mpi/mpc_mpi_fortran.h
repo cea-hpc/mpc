@@ -1505,10 +1505,11 @@ void ffunc (pmpi_intercomm_create) (MPI_Comm * local_comm, int *local_leader,
 
 }
 
-void ffunc (pmpi_intercomm_merge) (MPI_Comm * intercomm, int *high,
+void ffunc (pmpi_intercomm_merge) (MPI_Comm * intercomm, char *high,
 				   MPI_Comm * newintracomm, int *res)
 {
-  *res = MPI_Intercomm_merge (*intercomm, *high, newintracomm);
+  int c = (int)*high;
+  *res = MPI_Intercomm_merge (*intercomm, c, newintracomm);
 
 }
 
