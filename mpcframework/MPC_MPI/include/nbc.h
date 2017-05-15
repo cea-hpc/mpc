@@ -36,8 +36,8 @@ extern "C" {
 #endif
 
 /* Function return codes	*/
-#define NBC_OK 0 /* everything went fine */
-#define NBC_SUCCESS 0 /* everything went fine (MPI compliant :) */
+#define NBC_OK MPI_SUCCESS /* everything went fine */
+#define NBC_SUCCESS MPI_SUCCESS /* everything went fine (MPI compliant :) */
 #define NBC_OOR 1 /* out of resources */
 #define NBC_BAD_SCHED 2 /* bad schedule */
 #define NBC_CONTINUE 3 /* progress not done */
