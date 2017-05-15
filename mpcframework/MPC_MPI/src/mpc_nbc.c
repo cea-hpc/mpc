@@ -4633,39 +4633,44 @@ static inline int NBC_Start(NBC_Handle *handle, NBC_Schedule *schedule) {
 
 
 int NBC_Wait(NBC_Handle *handle, MPI_Status *status) {
-  int use_progress_thread = 0;
-  use_progress_thread = sctk_runtime_config_get()->modules.progress_thread.use_progress_thread;
+	int use_progress_thread = 0;
+	use_progress_thread = sctk_runtime_config_get()->modules.progress_thread.use_progress_thread;
 
-  if(use_progress_thread == 1)
-  { 
-  sctk_thread_mutex_lock(&handle->lock);
-  }
-  if(handle->schedule == NULL) {
-  if(use_progress_thread == 1)
-  {
-    sctk_thread_mutex_unlock(&handle->lock);
-  }
-    return NBC_OK;
-  }
-  if(use_progress_thread == 1)
-  {
-  sctk_thread_mutex_unlock(&handle->lock);
+	if(use_progress_thread == 1)
+	{ 
+		sctk_thread_mutex_lock(&handle->lock);
+	}
+	if(handle->schedule == NULL) {
+		if(use_progress_thread == 1)
+		{
+			sctk_thread_mutex_unlock(&handle->lock);
+		}
+		return NBC_OK;
+	}
+	if(use_progress_thread == 1)
+	{
+		sctk_thread_mutex_unlock(&handle->lock);
 
-  /* wait on semaphore */
-	int szcomm;
-	MPI_Comm_size(handle->mycomm, &szcomm);
-	if(szcomm == 1) sctk_thread_sem_post(&handle->semid);
-  if(sctk_thread_sem_wait(&handle->semid) != 0) { perror("sctk_thread_sem_wait()"); }
-  if(sctk_thread_sem_destroy(&handle->semid) != 0) { perror("sctk_thread_sem_destroy()"); }
-  } 
-  else 
-  {
-  /* poll */
-    while(NBC_OK != NBC_Progress(handle));
-  }   
+		/* wait on semaphore */
+		int szcomm;
+		MPI_Comm_size(handle->mycomm, &szcomm);
+		if(szcomm == 1) sctk_thread_sem_post(&handle->semid);
+		if(sctk_thread_sem_wait(&handle->semid) != 0) { perror("sctk_thread_sem_wait()"); }
+		if(sctk_thread_sem_destroy(&handle->semid) != 0) { perror("sctk_thread_sem_destroy()"); }
+	} 
+	else 
+	{
+		/* poll */
+		while(NBC_OK != NBC_Progress(handle));
+	}   
 
-  
-  return NBC_OK;
+	if( status != MPI_STATUS_IGNORE )
+	{
+		memset(status, 0, sizeof(MPI_Status));
+		status->MPI_ERROR = MPI_SUCCESS;
+	}
+
+	return NBC_OK;
 }
 
 int NBC_Test(NBC_Handle *handle, int *flag, MPI_Status *status) {
