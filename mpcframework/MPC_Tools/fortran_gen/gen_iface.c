@@ -315,8 +315,9 @@ int generate_mpi_fortran_constants()
         MPI_TYPE_VAL("MPI_REAL16", MPI_REAL16, "MPI_Datatype");
         MPI_TYPE_VAL("MPI_SIGNED_CHAR", MPI_SIGNED_CHAR, "MPI_Datatype");
         MPI_TYPE_VAL("MPI_REAL", MPI_REAL, "MPI_Datatype");
-        // MPI_TYPEL_VAL ("MPI_AINT", MPI_AINT, "MPI_Datatype");
-        MPI_TYPEL_VAL("MPI_OFFSET", MPI_OFFSET, "MPI_Datatype");
+        MPI_TYPE_VAL("MPI_COUNT", MPI_COUNT, "MPI_Datatype");
+        /*MPI_TYPE_VAL("MPI_AINT", MPI_AINT, "MPI_Datatype");*/
+        MPI_TYPE_VAL("MPI_OFFSET", MPI_OFFSET, "MPI_Datatype");
 
         /* Operations */
 
