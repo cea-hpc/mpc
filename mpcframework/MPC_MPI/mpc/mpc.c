@@ -1318,21 +1318,20 @@ int __MPC_Barrier(MPC_Comm comm) {
     task_specific = __MPC_get_task_specific();
     __MPC_Comm_rank(comm, &rank, task_specific);
 
+	/* Sync Local */
     if (size > 1)
       __MPC_Barrier(sctk_get_local_comm_id(comm));
 
-    if (sctk_is_in_local_group(comm)) {
-      root = (rank == 0) ? MPC_ROOT : MPC_PROC_NULL;
-      PMPC_Bcast(&buf, 1, MPC_INT, root, comm);
-      root = 0;
-      PMPC_Bcast(&buf, 1, MPC_INT, root, comm);
-    } else {
-      root = 0;
-      PMPC_Bcast(&buf, 1, MPC_INT, root, comm);
+	/* Sync A-B */
+	if( rank == 0 )
+	{
+		MPC_Sendrecv( &buf, 1, MPC_INT, 0, MPC_BARRIER_TAG, &buf, 1, MPC_INT, 0, MPC_BARRIER_TAG, comm, MPC_STATUS_IGNORE);	
+	}
 
-      root = (rank == 0) ? MPC_ROOT : MPC_PROC_NULL;
-      PMPC_Bcast(&buf, 1, MPC_INT, root, comm);
-    }
+	/* Sync Local */
+	if (size > 1)
+      __MPC_Barrier(sctk_get_local_comm_id(comm));
+
   } else {
 
     if (size > 1)

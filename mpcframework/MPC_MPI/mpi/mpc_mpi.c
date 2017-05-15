@@ -5719,6 +5719,32 @@ int __INTERNAL__PMPI_Barrier_btree_mpi(MPI_Comm comm) {
     }
   }
 
+  /* To Child */
+
+  if (parent != -1) {
+    res = __INTERNAL__PMPI_Recv(NULL, 0, MPI_BYTE, parent, MPC_BARRIER_TAG,
+                                comm, MPI_STATUS_IGNORE);
+    if (res != MPI_SUCCESS) {
+      return res;
+    }
+  }
+
+  if (left_child != -1) {
+    res = __INTERNAL__PMPI_Send(NULL, 0, MPI_BYTE, left_child, MPC_BARRIER_TAG,
+                                comm);
+    if (res != MPI_SUCCESS) {
+      return res;
+    }
+  }
+
+  if (right_child != -1) {
+    res = __INTERNAL__PMPI_Send(NULL, 0, MPI_BYTE, right_child, MPC_BARRIER_TAG,
+                                comm);
+    if (res != MPI_SUCCESS) {
+      return res;
+    }
+  }
+
   MPI_ERROR_SUCESS();
 }
 
@@ -5818,7 +5844,7 @@ static inline int __INTERNAL__PMPI_Barrier_hier(MPI_Comm comm) {
   MPI_Comm *comms = tmp->topo_comms;
 
   if ((tmp->topo_comms_depth == 0) || __do_yield) {
-    return __INTERNAL__PMPI_Barrier(comm);
+	return __INTERNAL__PMPI_Barrier(comm);
   } else {
     int i;
     for (i = 0; i < depth - 1; i++) {
