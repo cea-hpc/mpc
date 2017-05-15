@@ -143,7 +143,7 @@ static void ( *sctk_network_notify_idle_message_ptr ) () = sctk_network_notify_i
 void sctk_network_notify_idle_message ()
 {
 	sctk_network_notify_idle_message_ptr();
-        sctk_control_message_process();
+    sctk_control_message_process();
 }
 
 void sctk_network_notify_idle_message_set ( void ( *sctk_network_notify_idle_message_val ) () )

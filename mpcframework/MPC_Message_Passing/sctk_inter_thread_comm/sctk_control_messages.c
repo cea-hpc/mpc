@@ -560,9 +560,8 @@ void sctk_control_message_process()
     return;
   }
 
-  __sctk_control_message_process(NULL);
-  // sctk_topological_polling_tree_poll(&___control_message_list_polling_tree,
-  //                                   __sctk_control_message_process, NULL);
+  sctk_topological_polling_tree_poll(&___control_message_list_polling_tree,
+                                     __sctk_control_message_process, NULL);
 
   __inside_sctk_control_message_process = 0;
 }

@@ -314,18 +314,21 @@ void sctk_topological_polling_tree_poll( struct sctk_topological_polling_tree * 
 	{
 		return;
 	}
-
+	
+	struct sctk_topological_polling_cell * cells = tree->cells;
 
 	/* Check bounds */
-	if( (cpu_id < 0) || ( tree->cell_count <= cpu_id ) )
+	if( (cpu_id < 0) || ( tree->cell_count <= cpu_id ) || (cells == NULL) )
 	{
 		/* Something went wrong the just poll */
 		(func)( arg );
 		return;
 	} 
-	
+
+	struct sctk_topological_polling_cell * cell = &cells[cpu_id];
+
 	/* Am I inside the range ? */
-	if( tree->cells[cpu_id].cell_id == SCTK_POLL_IGNORE )
+	if( cell->cell_id == SCTK_POLL_IGNORE )
 	{
 		/* Nothing to do */
 		return;
