@@ -9767,7 +9767,7 @@ __INTERNAL__PMPI_Reduce_intra (void *sendbuf, void *recvbuf, int count,
 		{
 			MPI_Aint tsize;
 			PMPI_Type_size(datatype , &tsize );
-			memcpy( sendbuf,  recvbuf , tsize * count );
+			memcpy( recvbuf,  sendbuf , tsize * count );
 		}
 		else
 		{
