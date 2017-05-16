@@ -45,8 +45,8 @@ extern "C"
 {
 #endif
 
-#define MPI_VERSION    1
-#define MPI_SUBVERSION    3
+#define MPI_VERSION    3
+#define MPI_SUBVERSION    1
 
 #define MPI_CART (-2)
 #define MPI_GRAPH (-3)
