@@ -60,7 +60,7 @@ union shared_mem_buffer {
 };
 
 struct shared_mem_reduce {
-  int * volatile tollgate;
+  volatile int * tollgate;
   sctk_atomics_int fare;
   sctk_spinlock_t *buff_lock;
   sctk_atomics_int owner;
@@ -77,7 +77,7 @@ struct shared_mem_bcast {
   sctk_atomics_int owner;
   sctk_atomics_int left_to_pop;
 
-  int * volatile tollgate;
+  volatile int * tollgate;
   sctk_atomics_int fare;
 
   union shared_mem_buffer buffer;
@@ -96,7 +96,7 @@ struct shared_mem_gatherv {
   sctk_atomics_int owner;
   sctk_atomics_int left_to_push;
 
-  int * volatile tollgate;
+  volatile int * tollgate;
   sctk_atomics_int fare;
 
   /* Leaf infos */
@@ -120,7 +120,7 @@ struct shared_mem_scatterv {
   sctk_atomics_int owner;
   sctk_atomics_int left_to_pop;
 
-  int * volatile tollgate;
+  volatile int * tollgate;
   sctk_atomics_int fare;
 
   /* Root infos */
@@ -153,7 +153,7 @@ int sctk_shared_mem_a2a_release(struct shared_mem_a2a *shmaa);
 
 struct sctk_comm_coll {
   int init_done;
-  int * volatile coll_id;
+  volatile int * coll_id;
   struct shared_mem_barrier shm_barrier;
   struct shared_mem_barrier_sig shm_barrier_sig;
   int reduce_interleave;
