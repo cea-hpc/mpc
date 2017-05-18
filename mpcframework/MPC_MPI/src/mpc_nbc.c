@@ -4636,6 +4636,13 @@ int NBC_Wait(NBC_Handle *handle, MPI_Status *status) {
 	int use_progress_thread = 0;
 	use_progress_thread = sctk_runtime_config_get()->modules.progress_thread.use_progress_thread;
 
+
+	if( status != MPI_STATUS_IGNORE )
+	{
+		memset(status, 0, sizeof(MPI_Status));
+		status->MPI_ERROR = MPI_SUCCESS;
+	}
+
 	if(use_progress_thread == 1)
 	{ 
 		sctk_thread_mutex_lock(&handle->lock);
@@ -4663,12 +4670,6 @@ int NBC_Wait(NBC_Handle *handle, MPI_Status *status) {
 		/* poll */
 		while(NBC_OK != NBC_Progress(handle));
 	}   
-
-	if( status != MPI_STATUS_IGNORE )
-	{
-		memset(status, 0, sizeof(MPI_Status));
-		status->MPI_ERROR = MPI_SUCCESS;
-	}
 
 	return NBC_OK;
 }

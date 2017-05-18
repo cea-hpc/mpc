@@ -352,6 +352,7 @@ static inline void sctk_mpc_commit_status_from_request(MPC_Request *request,
     if (status == MPC_STATUS_IGNORE)
       status = &static_status;
 
+	memset( status, 0 , sizeof(MPC_Status));
     /* Fill in the status info */
     (request->query_fn)(request->extra_state, status);
     /* Free the request */
@@ -3986,22 +3987,16 @@ static inline int __MPC_Waitall_Grequest(mpc_msg_count count,
  *
  */
 
-#define MAX_TRIALS_WAITALL 5
-
 int __MPC_Waitallp(mpc_msg_count count, MPC_Request *parray_of_requests[],
                    MPC_Status array_of_statuses[]) {
   int i;
-  int trials;
-  int flag = 1;
+  int flag = 0;
   double start, end;
   int show = 1;
 
   sctk_nodebug("waitall count %d\n", count);
   start = MPC_Wtime();
 
-  if (__MPC_Waitall_Grequest(count, parray_of_requests, array_of_statuses)) {
-    MPC_ERROR_SUCESS()
-  }
 
   /* We have to detect generalized requests as we are not able
    * to progress them in the pooling function as we have no
@@ -4009,22 +4004,20 @@ int __MPC_Waitallp(mpc_msg_count count, MPC_Request *parray_of_requests[],
    * when we have generalized requests*/
   int contains_generalized = 0;
 
-  for (i = 0; i < count; i++) {
-    if (parray_of_requests[i]->request_type == REQUEST_GENERALIZED) {
-      contains_generalized = 1;
-      break;
-    }
+  if (__MPC_Waitall_Grequest(count, parray_of_requests, array_of_statuses)) {
+    MPC_ERROR_SUCESS()
   }
 
-  trials = 0;
-  while (
-      (trials < MAX_TRIALS_WAITALL) /* Cassical oportunistic pooling */
-      ||
-      (contains_generalized &&
-       (flag ==
-        0))) /* Here we force the local pooling because of generalized requests
+  for (i = 0; i < count; i++) {
+    if (parray_of_requests[i]->request_type == REQUEST_GENERALIZED) {
+      contains_generalized |= 1;
+      break; 
+	}
+  }
+	  /* Here we force the local polling because of generalized requests
                 This will happen only if classical and generalized requests are
                 mixed or if the wait_fn is not the same for all requests */
+  while( contains_generalized && (flag == 0)) 
   {
     flag = 1;
 
@@ -4034,13 +4027,12 @@ int __MPC_Waitallp(mpc_msg_count count, MPC_Request *parray_of_requests[],
       MPC_Request *request;
 
       if (array_of_statuses != NULL) {
-        status = &(array_of_statuses[(i + trials) % count]);
+        status = &(array_of_statuses[i  % count]);
       } else {
         status = MPC_STATUS_IGNORE;
       }
 
-      request = parray_of_requests[(i + trials) % count];
-
+      request = parray_of_requests[i % count];
       __MPC_Test_check(request, &tmp_flag, status);
 
       /* We set this flag in order to prevent the status
@@ -4056,8 +4048,6 @@ int __MPC_Waitallp(mpc_msg_count count, MPC_Request *parray_of_requests[],
       MPC_ERROR_SUCESS();
 
     sctk_thread_yield();
-
-    trials++;
   }
 
   /* XXX: Waitall has been ported for using wait_for_value_and_poll

@@ -2336,7 +2336,7 @@ int __INTERNAL__PMPI_Irecv (void *buf, int count, MPI_Datatype datatype,
 
 static int __INTERNAL__PMPI_Wait (MPI_Request * request, MPI_Status * status)
 {
-	int res;
+	int res = MPI_SUCCESS;
 	MPI_request_struct_t *requests;
 	MPI_internal_request_t *tmp;
 	sctk_nodebug("wait request %d", *request);
@@ -2350,7 +2350,16 @@ static int __INTERNAL__PMPI_Wait (MPI_Request * request, MPI_Status * status)
 	}
 	else
 	{
-		res = PMPC_Wait (__sctk_convert_mpc_request (request,requests), status);
+		MPC_Request * mpcreq = __sctk_convert_mpc_request (request,requests);
+
+		if( mpcreq->request_type == REQUEST_GENERALIZED )
+		{
+			res = PMPC_Waitall(1, mpcreq, status); 
+		}
+		else
+		{
+			res = PMPC_Wait ( mpcreq , status);
+		}
 	}
 	__sctk_delete_mpc_request (request,requests);
 	
@@ -15225,6 +15234,7 @@ int PMPI_Wait (MPI_Request * request, MPI_Status * status)
 {
 	sctk_nodebug("entering MPI_Wait request = %d", *request);
 	MPI_Comm comm = MPI_COMM_WORLD;
+	
 	int res = MPI_ERR_INTERN;
 
 	if(*request == MPI_REQUEST_NULL)
