@@ -27,7 +27,7 @@
 #if (!defined(__SCTK_MPCOMP_TASK_H__) && MPCOMP_TASK)
 #define __SCTK_MPCOMP_TASK_H__
 
-#include "sctk_bool.h"
+#include "stdbool.h"
 #include "sctk_spinlock.h"
 #include "mpcomp_types_icv.h"
 #include "mpcomp_task_macros.h"

@@ -50,6 +50,7 @@ struct mpcomp_task_team_infos_s;
 struct mpcomp_task_thread_infos_s;
 struct mpcomp_task_instance_infos_s;
 
+
 /********************
  ****** Threadprivate
  ********************/
@@ -200,9 +201,10 @@ typedef struct mpcomp_thread_s {
 
 /* Instance of OpenMP runtime */
 typedef struct mpcomp_instance_s {
-  int nb_mvps;                  /* Number of microVPs for this instance */
-  struct mpcomp_mvp_s **mvps;   /* All microVPs of this instance */
-  struct mpcomp_node_s *root;   /* Root to the tree linking the microVPs */
+  int is_buffered;              /*!< Keep instance allocation               */
+  int nb_mvps;                  /*!< Number of microVPs for this instance   */
+  struct mpcomp_mvp_s **mvps;   /*!< All microVPs of this instance          */
+  struct mpcomp_node_s *root;   /*!< Root to the tree linking the microVPs  */
   struct mpcomp_team_s *team;   /* Information on the team */
   int tree_depth;               /* Depth of the tree */
   int *tree_base;               /* Degree per level of the tree
@@ -331,4 +333,29 @@ typedef struct mpcomp_node_s *mpcomp_node_ptr_t;
 #ifdef __cplusplus
 }
 #endif
+
+typedef enum 
+{ 
+    MPCOMP_META_TREE_UNDEFINED  = 0, 
+    MPCOMP_META_TREE_NODE       = 1, 
+    MPCOMP_META_TREE_LEAF       = 2
+} mpcomp_meta_tree_type_t;
+
+typedef union
+{
+    mpcomp_mvp_t* mvp;
+    mpcomp_node_t* node;
+} mpcomp_meta_tree_addr_t;
+
+typedef struct mpcomp_meta_tree_node_s
+{ 
+    unsigned int rank;
+    unsigned int depth;
+    mpcomp_meta_tree_type_t type;
+    mpcomp_meta_tree_addr_t* addr;
+    mpcomp_meta_tree_addr_t* father;
+    unsigned int num_children;
+    mpcomp_meta_tree_addr_t** children;
+} mpcomp_meta_tree_node_t; 
+
 #endif /* __MPCOMP_TYPES_STRUCT_H__ */

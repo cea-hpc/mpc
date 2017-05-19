@@ -65,6 +65,11 @@ void __mpcomp_internal_begin_parallel_region(
         (mpcomp_instance_t *)sctk_malloc(sizeof(mpcomp_instance_t));
     sctk_assert(t->children_instance != NULL);
     __mpcomp_instance_init(t->children_instance, 0, new_team);
+    fprintf(stderr, "thread: %p -- new instance: %p -- new team: %p\n", t, t->children_instance, new_team );
+  }
+  else
+  {
+    fprintf(stderr, "use predefined instance ...\n");      
   }
 
 #if OMPT_SUPPORT 

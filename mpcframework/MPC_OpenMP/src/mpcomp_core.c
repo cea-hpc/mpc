@@ -549,7 +549,8 @@ void __mpcomp_init(void) {
         /* Compute the number of cores for this task */
 
         sctk_get_init_vp_and_nbvp(task_rank, &nb_mvps);
-
+        if( OMP_NUM_THREADS ) nb_mvps = OMP_NUM_THREADS;
+        
         sctk_nodebug("[%d] %s: SIMPLE_MIXED -> #mvps = %d", task_rank, __func__,
                      nb_mvps);
 
@@ -558,6 +559,7 @@ void __mpcomp_init(void) {
         if (OMP_MICROVP_NUMBER > 0 && OMP_MICROVP_NUMBER <= nb_mvps) {
           nb_mvps = OMP_MICROVP_NUMBER;
         }
+        mpcomp_bfs_root_initialisation( nb_mvps );
         break;
       case MPCOMP_MODE_ALTERNATING:
         nb_mvps = 1;
@@ -711,7 +713,8 @@ void __mpcomp_instance_init(mpcomp_instance_t *instance, int nb_mvps,
     } else {
       mpcomp_build_tree(instance, OMP_TREE_NB_LEAVES, OMP_TREE_DEPTH, OMP_TREE);
     }
-  } else {
+  } 
+    else {
     int i;
     int id_numa =
         sctk_get_node_from_cpu(sctk_get_init_vp(sctk_get_task_rank()));

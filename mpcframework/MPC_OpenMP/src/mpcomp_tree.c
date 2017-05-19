@@ -34,6 +34,8 @@
 
 #include "mpcomp_tree_structs.h"
 
+#if 0
+
 /**
  * Check if the following parameters are correct to build a coherent tree
  */
@@ -773,4 +775,4 @@ int mpcomp_build_tree(mpcomp_instance_t *instance, int n_leaves, int depth,
 
      return 0;
 }
-
+#endif 
