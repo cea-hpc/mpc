@@ -65,11 +65,6 @@ void __mpcomp_internal_begin_parallel_region(
         (mpcomp_instance_t *)sctk_malloc(sizeof(mpcomp_instance_t));
     sctk_assert(t->children_instance != NULL);
     __mpcomp_instance_init(t->children_instance, 0, new_team);
-    fprintf(stderr, "thread: %p -- new instance: %p -- new team: %p\n", t, t->children_instance, new_team );
-  }
-  else
-  {
-    fprintf(stderr, "use predefined instance ...\n");      
   }
 
 #if OMPT_SUPPORT 
@@ -320,7 +315,7 @@ void *mpcomp_slave_mvp_node(void *arg) {
     sctk_thread_wait_for_value_and_poll( (int*)&(n->slave_running), 1, NULL, NULL ) ;
     n->slave_running = 0 ;
 
-	sctk_nodebug( "mpcomp_slave_mvp_node: +++ START parallel region +++" ) ;
+	sctk_nodebug("%s: +++ START parallel region +++ -- @%d\n", __func__, n->depth ) ;
 
 #if MPCOMP_TRANSFER_INFO_ON_NODES
 	sctk_assert( n->father != NULL ) ;
@@ -375,7 +370,7 @@ void * mpcomp_slave_mvp_leaf( void * arg ) {
     sctk_thread_wait_for_value_and_poll( (int*)&(mvp->slave_running), 1, NULL, NULL ) ;
     mvp->slave_running = 0 ;
 
-	sctk_nodebug( "mpcomp_slave_mvp_leaf: +++ START parallel region +++" ) ;
+	sctk_nodebug("mpcomp_slave_mvp_leaf: +++ START parallel region +++\n" ) ;
 
 	__mpcomp_wakeup_mvp( mvp, mvp->father ) ;
 

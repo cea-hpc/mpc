@@ -633,6 +633,8 @@ void mpcomp_taskwait(void) {
   mpcomp_task_t *current_task = NULL;     /* Current task execute */
   mpcomp_thread_t *omp_thread_tls = NULL; /* thread private data  */
 
+  mpcomp_task_scheduling_infos_init();
+
   omp_thread_tls = (mpcomp_thread_t *)sctk_openmp_thread_tls;
   sctk_assert(omp_thread_tls);
 

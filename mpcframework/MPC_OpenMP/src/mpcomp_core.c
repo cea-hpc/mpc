@@ -78,7 +78,7 @@ static int OMP_WARN_NESTED = 0;
 /* Hybrid MPI/OpenMP mode */
 static mpcomp_mode_t OMP_MODE = MPCOMP_MODE_SIMPLE_MIXED;
 /* Affinity policy */
-static mpcomp_affinity_t OMP_AFFINITY = MPCOMP_AFFINITY_BALANCED;
+static mpcomp_affinity_t OMP_AFFINITY = MPCOMP_AFFINITY_SCATTER;
 /* OMP_PLACES */
 static mpcomp_places_info_t* OMP_PLACES_LIST = NULL;
 
@@ -353,6 +353,7 @@ static inline void __mpcomp_read_env_variables() {
               env, OMP_AFFINITY);
     }
   }
+    OMP_AFFINITY = MPCOMP_AFFINITY_SCATTER;
 
   /******* OMP_TREE *********/
   env = sctk_runtime_config_get()->modules.openmp.tree;

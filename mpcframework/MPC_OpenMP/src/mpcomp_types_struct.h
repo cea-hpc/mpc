@@ -227,6 +227,7 @@ typedef struct mpcomp_instance_s {
 typedef struct mpcomp_mvp_s {
   sctk_mctx_t vp_context; /* Context including registers, stack pointer, ... */
   sctk_thread_t pid;      /* Thread ID */
+  void* tree_array_node;
 
 #if MPCOMP_ALIGN
   mpcomp_new_parallel_region_info_t info __attribute__((aligned(128)));
@@ -268,6 +269,7 @@ typedef struct mpcomp_node_s {
   long rank;                    /* Rank among children of my father */
   int depth;                    /* Depth in the tree */
   int nb_children;              /* Number of children */
+  void* tree_array_node;
 
 #if MPCOMP_ALIGN
   mpcomp_new_parallel_region_info_t info __attribute__((aligned(128)));

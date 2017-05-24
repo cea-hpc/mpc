@@ -37,6 +37,7 @@ typedef struct mpcomp_mvp_thread_args_s
 {
     void* thread;
     void* instance;
+    void* root_node;        /* prevent inondation initialisation */
     unsigned int rank;
     unsigned int max_depth;
     unsigned int* tree_shape;

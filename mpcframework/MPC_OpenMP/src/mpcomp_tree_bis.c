@@ -251,7 +251,7 @@ static void __mpcomp_print_tree(mpcomp_instance_t *instance) {
 
         fprintf(stderr, "Instance @ %p Leaf %d rank %d @ %p vp %d "
                         "spinning on %p",
-                instance, i, mvp->rank, &mvp, mvp->vp, mvp->to_run);
+                instance, i, mvp->rank, mvp, mvp->vp, mvp->to_run);
 
         /* Print min_index for each affinity */
         for (j = 0; j < MPCOMP_AFFINITY_NB; j++) {
@@ -405,7 +405,6 @@ int mpcomp_build_tree(mpcomp_instance_t *instance, int n_leaves, int depth,
   for (i = 1; i <= depth; i++) {
     instance->tree_nb_nodes_per_depth[i] =
         instance->tree_nb_nodes_per_depth[i - 1] * instance->tree_base[i - 1];
-        fprintf(stderr, "instance->tree_nb_nodes_per_depth[%d] = %d\n", i, instance->tree_nb_nodes_per_depth[i] );
   }
 
 #if MPCOMP_TASK
@@ -434,7 +433,7 @@ int mpcomp_build_tree(mpcomp_instance_t *instance, int n_leaves, int depth,
        }
      }
 
-     printf("__mpcomp_build_tree: n_cores=%d, n_numa=%d => core_depth=%d, "
+     sctk_nodebug("__mpcomp_build_tree: n_cores=%d, n_numa=%d => core_depth=%d, "
                 "scatter_depth=%d",
                 n_cores, n_numa, instance->core_depth, instance->scatter_depth);
 
@@ -498,9 +497,7 @@ int mpcomp_build_tree(mpcomp_instance_t *instance, int n_leaves, int depth,
      __mpcomp_push(s, root);
 #endif
 
-    fprintf(stderr, "[START] LAUNCH TREE...\n"); 
     instance->root = __mpcomp_alloc_openmp_tree_struct( degree, depth, NULL, instance ); 
-    fprintf(stderr, "[END] LAUNCH TREE...\n"); 
 
 #if 0
      while (!__mpcomp_is_stack_empty(s)) {
@@ -716,8 +713,6 @@ int mpcomp_build_tree(mpcomp_instance_t *instance, int n_leaves, int depth,
                          i * instance->tree_cumulative[n->depth] /
                              instance
                                  ->tree_cumulative[instance->core_depth - 1];
-                        fprintf(stderr, "i = %d, depth = %d, tmp_cumulative_core = %d, tmp_cumulative_core2 = %d prev = %d\n",
-                                i, n->depth, instance->tree_cumulative[n->depth], instance->tree_cumulative[instance->core_depth - 1],  n->min_index[MPCOMP_AFFINITY_BALANCED] );
                    } else {
                      min_index[MPCOMP_AFFINITY_BALANCED] =
                          n->min_index[MPCOMP_AFFINITY_BALANCED] +
