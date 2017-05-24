@@ -35,12 +35,14 @@ typedef struct mpcomp_meta_tree_node_s
 
 typedef struct mpcomp_mvp_thread_args_s
 {
-    void* opaque;
+    void* thread;
     void* instance;
+    unsigned int rank;
     unsigned int max_depth;
     unsigned int* tree_shape;
     unsigned int mvp_global_rank;
     mpcomp_meta_tree_node_t* array;
+    void* options;
 } mpcomp_mvp_thread_args_t;
 
 // Initialize Ghost OpenMP Tree Constraint Homogeneous Array 

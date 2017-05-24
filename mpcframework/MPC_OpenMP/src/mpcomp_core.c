@@ -733,6 +733,9 @@ void __mpcomp_instance_init(mpcomp_instance_t *instance, int nb_mvps,
 
     instance->nb_mvps = 1;
     instance->root = NULL;
+    
+    instance->mvps[0]->threads = (mpcomp_thread_t*) malloc( 1 * sizeof( mpcomp_thread_t ) );
+    assert(  instance->mvps[0]->threads );
 
     __mpcomp_thread_infos_init(&(instance->mvps[0]->threads[0]), icvs, instance,
                                sctk_openmp_thread_tls);

@@ -236,7 +236,7 @@ typedef struct mpcomp_mvp_s {
 
   int nb_threads; /* Total number of threads running on the Micro VP */
   int next_nb_threads;
-  struct mpcomp_thread_s threads[MPCOMP_MAX_THREADS_PER_MICROVP];
+  struct mpcomp_thread_s* threads;
 
   int *tree_rank; /* Array of rank in every node of the tree */
   int rank;       /* Rank within the microVPs */
@@ -333,29 +333,5 @@ typedef struct mpcomp_node_s *mpcomp_node_ptr_t;
 #ifdef __cplusplus
 }
 #endif
-
-typedef enum 
-{ 
-    MPCOMP_META_TREE_UNDEFINED  = 0, 
-    MPCOMP_META_TREE_NODE       = 1, 
-    MPCOMP_META_TREE_LEAF       = 2
-} mpcomp_meta_tree_type_t;
-
-typedef union
-{
-    mpcomp_mvp_t* mvp;
-    mpcomp_node_t* node;
-} mpcomp_meta_tree_addr_t;
-
-typedef struct mpcomp_meta_tree_node_s
-{ 
-    unsigned int rank;
-    unsigned int depth;
-    mpcomp_meta_tree_type_t type;
-    mpcomp_meta_tree_addr_t* addr;
-    mpcomp_meta_tree_addr_t* father;
-    unsigned int num_children;
-    mpcomp_meta_tree_addr_t** children;
-} mpcomp_meta_tree_node_t; 
 
 #endif /* __MPCOMP_TYPES_STRUCT_H__ */
