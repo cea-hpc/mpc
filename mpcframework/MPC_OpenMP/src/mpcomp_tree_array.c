@@ -461,6 +461,7 @@ __mpcomp_openmp_node_initialisation( mpcomp_meta_tree_node_t* root, const int* t
     mpcomp_meta_tree_node_t* me = NULL;
 
     me = &( root[rank] );
+    fprintf(stderr, ">>>>>>>>>>>>>>>>>>>>>>>>> root : %p -- me : %p\n", root, me );
 
     /* Generic infos */
     me->rank = rank;
@@ -487,6 +488,10 @@ __mpcomp_openmp_node_initialisation( mpcomp_meta_tree_node_t* root, const int* t
     new_node = (mpcomp_node_t *) malloc( sizeof(mpcomp_node_t) );
     assert( new_node );     
     memset( new_node, 0, sizeof(mpcomp_node_t) );
+
+    // save Node
+    me->user_pointer = (void*) new_node;
+    fprintf(stderr, "\t\t\t<<>> RANK : %d NODE ADDR : %p==%p <<>>\n", me->rank, new_node, me->user_pointer );
 
     // Get infos from parent node
     new_node->depth = me->depth;
@@ -523,8 +528,6 @@ __mpcomp_openmp_node_initialisation( mpcomp_meta_tree_node_t* root, const int* t
         memset( new_node->children.leaf, 0, sizeof(mpcomp_mvp_t *) * new_node->nb_children );
     }
 
-    // save Node
-    me->user_pointer = (void*) new_node;
     
     /* Wait our children */
     const int wait_number = me->children_num_array[0];
@@ -676,8 +679,9 @@ __mpcomp_openmp_mvp_initialisation( void* args )
 
         if( !( me->stage_rank ) ) 
         {
-            fprintf(stderr, "(2) OpenMP master thread : %ld\n", pthread_self());
-            return &( root[0].user_pointer );   /* Root never wait */
+            const mpcomp_node_t* root_node =  root[0].user_pointer;   /* Root never wait */
+            fprintf(stderr, "\t\t\t(2) OpenMP master thread : %ld - %p\n", pthread_self(), root_node);
+            return root_node; 
         }
 
         fprintf(stderr, "(%d) SLEEP AS A NODE\n\n", me->rank);
