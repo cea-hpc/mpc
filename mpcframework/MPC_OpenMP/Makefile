@@ -154,10 +154,10 @@ FOBJ_src=$(FFILES_src:src/%.f=$(M_PWD)/BUILD_MPC_OpenMP/lib/%_f.o)
 FFILES_task=$(wildcard task/*.f)
 FOBJ_task=$(FFILES_task:task/%.f=$(M_PWD)/BUILD_MPC_OpenMP/lib/%_f.o)
 
-all: $(OBJ_include) $(FOBJ_include) $(SOBJ_include) $(OBJ_intel) $(FOBJ_intel) $(SOBJ_intel) $(OBJ_mpcomp_GOMP_include) $(FOBJ_mpcomp_GOMP_include) $(SOBJ_mpcomp_GOMP_include) $(OBJ_mpcomp_GOMP_internal) $(FOBJ_mpcomp_GOMP_internal) $(SOBJ_mpcomp_GOMP_internal) $(OBJ_mpcomp_GOMP_wrapper) $(FOBJ_mpcomp_GOMP_wrapper) $(SOBJ_mpcomp_GOMP_wrapper) $(OBJ_mpcomp_KMP) $(FOBJ_mpcomp_KMP) $(SOBJ_mpcomp_KMP) $(OBJ_ompt) $(FOBJ_ompt) $(SOBJ_ompt) $(OBJ_src) $(FOBJ_src) $(SOBJ_src) $(OBJ_task) $(FOBJ_task) $(SOBJ_task)
 FFILES_tree=$(wildcard tree/*.f)
 FOBJ_tree=$(FFILES_tree:tree/%.f=$(M_PWD)/BUILD_MPC_OpenMP/lib/%_f.o)
 
+all: $(OBJ_env) $(FOBJ_env) $(SOBJ_env) $(OBJ_include) $(FOBJ_include) $(SOBJ_include) $(OBJ_intel) $(FOBJ_intel) $(SOBJ_intel) $(OBJ_mpcomp_GOMP_include) $(FOBJ_mpcomp_GOMP_include) $(SOBJ_mpcomp_GOMP_include) $(OBJ_mpcomp_GOMP_internal) $(FOBJ_mpcomp_GOMP_internal) $(SOBJ_mpcomp_GOMP_internal) $(OBJ_mpcomp_GOMP_wrapper) $(FOBJ_mpcomp_GOMP_wrapper) $(SOBJ_mpcomp_GOMP_wrapper) $(OBJ_mpcomp_KMP) $(FOBJ_mpcomp_KMP) $(SOBJ_mpcomp_KMP) $(OBJ_ompt) $(FOBJ_ompt) $(SOBJ_ompt) $(OBJ_src) $(FOBJ_src) $(SOBJ_src) $(OBJ_task) $(FOBJ_task) $(SOBJ_task) $(OBJ_tree) $(FOBJ_tree) $(SOBJ_tree)
 
 $(M_PWD)/include_modules/MPC_OpenMP:
 	@../MPC_Tools/mpc_prepare_includes $(MPC_SOURCE_DIR)MPC_OpenMP/env $(M_PWD)/include_modules
@@ -177,7 +177,7 @@ prepare_includes:$(M_PWD)/include_modules/MPC_OpenMP
 
 
 ifneq ($(SCTK_MAKE_NO_DEP),yes)
-DEPENDS=$(DEP_env) $(DEP_include) $(DEP_intel) $(DEP_mpcomp_GOMP_include) $(DEP_mpcomp_GOMP_internal) $(DEP_mpcomp_GOMP_wrapper) $(DEP_mpcomp_KMP) $(DEP_src) $(DEP_task) $(DEP_tree) 
+DEPENDS=$(DEP_env) $(DEP_include) $(DEP_intel) $(DEP_mpcomp_GOMP_include) $(DEP_mpcomp_GOMP_internal) $(DEP_mpcomp_GOMP_wrapper) $(DEP_mpcomp_KMP) $(DEP_ompt) $(DEP_src) $(DEP_task) $(DEP_tree) 
 
 $(DEPENDS):Makefile 
 endif
