@@ -475,6 +475,8 @@ __mpcomp_openmp_node_initialisation( mpcomp_meta_tree_node_t* root, const int* t
     me->local_rank = __mpcomp_tree_array_convert_global_to_local( tree_shape, max_depth, rank );  
     // fprintf(stderr, ">>NODE<<\tGlobal Rank : %d -- Stage Rank : %d -- Local Rank : %d\n", me->rank, me->stage_rank, me->local_rank);
    
+    const int children_num = tree_shape[me->depth];
+
     /* Father initialisation */
     me->fathers_array_size = me->depth; 
     me->fathers_array = __mpcomp_tree_array_get_father_array_by_depth( tree_shape, max_depth, rank );
@@ -482,7 +484,7 @@ __mpcomp_openmp_node_initialisation( mpcomp_meta_tree_node_t* root, const int* t
     /* Children initialisation */
     me->children_array_size = max_depth - me->depth;
     me->first_child_array = __mpcomp_tree_array_get_first_child_array( tree_shape, max_depth, rank );
-    me->children_num_array = __mpcomp_tree_array_get_children_num_array( tree_shape, max_depth, rank );
+//    me->children_num_array = __mpcomp_tree_array_get_children_num_array( tree_shape, max_depth, rank );
 
     /* Affinity initialisation */
     me->min_index = __mpcomp_tree_array_compute_thread_openmp_min_rank( tree_shape, max_depth, rank );
@@ -501,7 +503,7 @@ __mpcomp_openmp_node_initialisation( mpcomp_meta_tree_node_t* root, const int* t
     new_node->depth = me->depth;
     new_node->id_numa = me->numa_id;
     new_node->rank = me->local_rank; 
-    new_node->nb_children = me->children_num_array[0];
+    new_node->nb_children = children_num;
     new_node->instance = instance;
 
     /* Memset already do it ... */
@@ -534,15 +536,13 @@ __mpcomp_openmp_node_initialisation( mpcomp_meta_tree_node_t* root, const int* t
 
     
     /* Wait our children */
-    const int wait_number = me->children_num_array[0];
-
-    while( sctk_atomics_load_int( &( me->children_ready ) ) != wait_number )  
+    while( sctk_atomics_load_int( &( me->children_ready ) ) != children_num)  
     {
         sctk_thread_yield();
     }   
    
     /* Update father and children */
-    for( i = 0; i < me->children_num_array[0]; i++ )
+    for( i = 0; i < children_num; i++ )
     {
         if( new_node->child_type == MPCOMP_CHILDREN_NODE )
         {
