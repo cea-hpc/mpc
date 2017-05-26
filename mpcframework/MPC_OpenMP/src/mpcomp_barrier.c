@@ -42,7 +42,6 @@ static void __mpcomp_internal_full_barrier(mpcomp_mvp_t *mvp) {
   c = mvp->father;
   new_root = c->instance->team->info.new_root;
 
-    sctk_error("REACH BARRIER FULL\n");
 #if MPCOMP_TASK
 //   mpcomp_taskwait();
 #endif /* MPCOMP_TASK */
@@ -61,7 +60,6 @@ static void __mpcomp_internal_full_barrier(mpcomp_mvp_t *mvp) {
 
         /* Step 2 - Wait for the barrier to be done */
         if (c != new_root || (c == new_root && b != c->barrier_num_threads)) {
-        sctk_error("END BARRIER FULL (1/3) A c: %p b_done:%d -- barrier_done: %d\n", c, b_done, c->barrier_done);
           /* Wait for c->barrier == c->barrier_num_threads */
           while (b_done == c->barrier_done) {
             sctk_thread_yield();
@@ -71,7 +69,6 @@ static void __mpcomp_internal_full_barrier(mpcomp_mvp_t *mvp) {
 		}
 	} else {
 
-        sctk_error("END BARRIER FULL (1/3) B\n");
 		sctk_atomics_store_int(&(c->barrier), 0);
 
 #if MPCOMP_COHERENCY_CHECKING
@@ -82,14 +79,11 @@ static void __mpcomp_internal_full_barrier(mpcomp_mvp_t *mvp) {
 		c->barrier_done++ ; /* No need to lock I think... */
 	}
 
-    sctk_error("END BARRIER FULL (1/2)\n");
 	/* Step 3 - Go down */
 	while ( c->child_type != MPCOMP_CHILDREN_LEAF ) {
 		c = c->children.node[mvp->tree_rank[c->depth]];
 		c->barrier_done++; /* No need to lock I think... */
 	}
-
-    sctk_error("END BARRIER FULL\n");
 
 #if MPCOMP_TASK
 #if MPCOMP_COHERENCY_CHECKING
