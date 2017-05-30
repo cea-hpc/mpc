@@ -327,6 +327,9 @@ for arg in "$@" ; do
     FC=*)
     SCTK_F77="`echo A$arg | sed -e 's/AFC=//g'`"
     ;;
+    FAMILY=*)
+    SCTK_FAMILY="`echo A$arg | sed -e 's/AFAMILY=//g'`"
+    ;;
     CFLAGS=*)
     SCTK_CFLAGS="`echo A$arg | sed -e 's/ACFLAGS=//g'`"
     ;;
@@ -574,18 +577,6 @@ tmp_cross_gen(){
     echo $TMP_CROSS_NEW
 }
 
-#get privatized compiler if no one was forced by installmpc (--compiler)
-test -z "$SCTK_CC" && SCTK_CC=$BUILD_PRIV_CC
-test -z "$SCTK_CXX" && SCTK_CXX=$BUILD_PRIV_CXX
-test -z "$SCTK_F77" && SCTK_F77=$BUILD_PRIV_FC
-test -z "$SCTK_FAMILY" && SCTK_FAMILY=$BUILD_PRIV_FAMILY
-
-###### sanity checks
-die() { printf "Error: BUILD_$1 and BUILD_PRIV_$1 both not set ! This is a bug in installmpc scipt !\n"; exit 2; }
-test -n "$SCTK_CC" || die "CC"
-test -n "$SCTK_CXX" || die "CXX"
-test -n "$SCTK_F77" || die "FC"
-# TEMP: disable check of FAMILY because it is not set
 # test -n "$SCTK_FAMILY" || die "FAMILY"
 ################
 

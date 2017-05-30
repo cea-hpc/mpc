@@ -192,7 +192,7 @@ setBuildCompiler()
 		case $MPC_COMPILER in
 			icc)
 				BUILD_CC=icc
-				BUILC_CXX=icpc
+				BUILD_CXX=icpc
 				BUILD_FC=ifort
 				BUILD_FAMILY="INTEL"
 				;;
@@ -233,25 +233,9 @@ setBuildCompiler()
 		export BUILD_PRIV_FC
 		export BUILD_PRIV_FAMILY
 
-
-	#special case: when MPC has to be compiled w/ patched GCC
-	elif test "$GCC_PREFIX" = "internal"; then
-		BUILD_CC=
-		BUILD_CXX=
-		BUILD_FC=
-		BUILD_FAMILY=
-
-		#we create new exported variables, to be handled by MPC configure
-		#by default, BUILD_* is taken if set, otherwise, BUILD_PRIV_* is used to build MPC.
-		BUILD_PRIV_CC=$MPC_GCC_PRIVATIZED_COMPILER
-		BUILD_PRIV_CXX=$MPC_GPP_PRIVATIZED_COMPILER
-		BUILD_PRIV_FC=$MPC_GFORT_PRIVATIZED_COMPILER
-		BUILD_PRIV_FAMILY="GNU"
-		export BUILD_PRIV_CC
-		export BUILD_PRIV_CXX
-		export BUILD_PRIV_FC
-		export BUILD_PRIV_FAMILY
 	fi
+
+	#in case of 'internal', the right compiler is set depending on package dependencies (see below)
 }
 
 ######################################################
@@ -259,7 +243,7 @@ setBuildCompiler()
 # Args: None
 #Variables: CHECKSUM_TOOL, MPC_RPREFIX
 #Result: Expose HOME_CFILEPATH vars (can be empty if HOME link cannot be created)
-createHomeLink()
+cleanHomeLink()
 {
 	HOME_CFILEPATH=
 	export HOME_CFILEPATH
@@ -269,18 +253,27 @@ createHomeLink()
 	then
 		printf "Warning: This installation cannot find to ${CHECKSUM_TOOL}.\n"
 		printf "Warning: Please ensure a valid checksum tool is available to fully exploit dynamic compiler switch facilities\n"
-	elif test ! -w $HOME;
-	then
-		printf "Warning: HOME directory is not writable. Any modifications to compilers will directly impact the installation directory\n"
 	else
 		clean_path="`echo "$MPC_RPREFIX" | sed -e "s#//*#/#g"`"
 		install_hash="`echo "$clean_path" | $CHECKSUM_TOOL | cut -f1 -d" "`"
 		HOME_CFILEPATH=$HOME/.mpcompil/${install_hash}
 
 		#remove previous installation if exists (Warning: There are some deletions here)
-		test -f $HOME_CFILEPATH/mpc_install_path && rm -rf $HOME_CFILEPATH
+		test -w $HOME -a -f $HOME_CFILEPATH/mpc_install_path && rm -rf $HOME_CFILEPATH
+	fi
+	echo $HOME_CFILEPATH
+}
+
+createHomeLink()
+{
+	#Clean again if needed
+	HOME_CFILEPATH="`cleanHomeLink`"
+	if test -w $HOME
+	then
 		mkdir -p $HOME_CFILEPATH
 		echo "$clean_path" > ${HOME_CFILEPATH}/mpc_install_path
+	else
+		printf "Warning: HOME directory is not writable. Any modifications to compilers will directly impact the installation directory\n"
 	fi
 }
 
@@ -796,10 +789,6 @@ getPackageCompilationOptions()
 	options=`echo ${configForCompiler} | cut -f 6 -d ';'`
 	options="${all_options} ${options} `echo ${config} | cut -f 6 -d ';'`"
 
-	#prefixing the options line w/ default build compilers
-	#if config.txt defines it too, these vars will be overriden
-	options="CC=$BUILD_CC CXX=$BUILD_CXX FC=$BUILD_FC ${options}"
-
 	echo $options
 }	
 
@@ -828,6 +817,35 @@ registerPackage()
 		esac
 }
 
+
+updateAccordingToDeps()
+{
+	#handles cases where packages need global infos from 'not-built-yet' dependencies	
+	LOCAL_CC=$BUILD_CC
+	LOCAL_CXX=$BUILD_CXX
+	LOCAL_FC=$BUILD_FC
+	LOCAL_FAMILY="$BUILD_FAMILY"
+	local_prefix="${PREFIX}/${MPC_HOST}/${MPC_TARGET}"
+	LOCAL_FLAGS="-L$local_prefix/lib -L$local_prefix/lib64 -L$local_prefix/libsgcc/lib -Wl,-rpath=$local_prefix/lib -Wl,-rpath=$local_prefix/lib64 -Wl,-rpath=$local_prefix/libsgcc/lib"
+	
+	case "$1" in
+		*.gcc*) # if package have a dependency to GCC & GCC_PREFIX=internal
+			LOCAL_CC="$MPC_GCC_PRIVATIZED_COMPILER"
+			LOCAL_CXX="$MPC_GPP_PRIVATIZED_COMPILER"
+			LOCAL_FC="$MPC_GFORT_PRIVATIZED_COMPILER"
+			LOCAL_FAMILY="GNU"
+			;;
+		*.mpcframework*)
+			LOCAL_CC="\"\$(MPC_ENV) mpc_cc\""
+			LOCAL_CXX="\"\$(MPC_ENV) mpc_cxx\""
+			LOCAL_FC="\"\$(MPC_ENV) mpc_f77\""
+			LOCAL_FAMILY="\"MPCFRAMEWORK\""
+			;;
+		*)
+			;;
+	esac
+	echo "CC=$LOCAL_CC CXX=$LOCAL_CXX FC=$LOCAL_FC F77=$LOCAL_FC FAMILY=$LOCAL_FAMILY"
+}
 ######################################################
 #Generate makefile rules do build package
 # Args :
@@ -880,6 +898,10 @@ setupInstallPackage()
 				PACKAGE_DEPS="${PACKAGE_DEPS} `echo ${dep} | sed 's|[0-9A-Z_a-z\-]\+|.&|g'`"
 			fi
 		done
+		
+		#add some compilation flags depending on related dependencies
+		options="`updateAccordingToDeps "$PACKAGE_DEPS"` ${options}"
+	
 		PACKAGE_VAR_NAME="${varprefix}"
 		PACKAGE_OPTIONS="${options}"
 		PACKAGE_NAME="${name}"
@@ -911,6 +933,7 @@ getVersion()
         outvar="$1"
 	MPC_SOURCE_DIR="${PROJECT_SOURCE_DIR}/mpcframework/"
 	MPC_SOURCE_DIR="${MPC_SOURCE_DIR}"
+
 	export MPC_SOURCE_DIR
 	MPC_VERSION="`${MPC_SOURCE_DIR}/MPC_Tools/mpc_print_version | sed -e 's/_[a-zA-Z0-9]*//g'`"
 

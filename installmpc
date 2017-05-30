@@ -510,6 +510,9 @@ if test "${CHECK_INSTALL}" = "true"; then
 	checkIfInstallAlreadyExists
 fi
 
+#clean HOME link in case of reinstallation (nothing happens for a first installation here)
+cleanHomeLink > /dev/null
+
 ######################################################
 #Check for specific arch libs
 if test "${MPC_TARGET}" = "k1om"; then
@@ -562,7 +565,7 @@ fillGCCBuildParameters()
 		GCC_BUILD_PARAMETERS="'--with-mpc=${MPC_PREFIX}' ${GCC_BUILD_PARAMETERS}"
 	fi
 	
-	version="`cat ${PROJECT_SOURCE_DIR}/config.txt | grep \"gcc\s*;\" | cut -f 2 -d ';' | sed -e 's/\.//g' | xargs echo`"
+	version="`cat ${PROJECT_SOURCE_DIR}/config.txt | grep "^\s*gcc\s*;" | cut -f 2 -d ';' | sed -e 's/\.//g' | xargs echo`"
 	GCC_BUILD_PARAMETERS="--program-prefix=mpc- --program-suffix=_${version} --with-pkgversion=MPC --enable-languages=c,c++,fortran --disable-bootstrap --disable-multilib ${GCC_BUILD_PARAMETERS}"
 
 	if test "$GCC_PREFIX" = "internal" ; then 
