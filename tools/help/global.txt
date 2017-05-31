@@ -36,8 +36,6 @@ Defaults for the options are specified in brackets.
   --with-mpc-gcc=*                        : Specify gcc prefix on the system
   --with-sctk-arch=*                      : Specify sctk_arch prefix on the system
   --with-openpa=*                         : Specify openpa prefix on the system
-  --with-mpfr=*                           : Specify mpfr prefix on the system
-  --with-gmp=*                            : Specify gmp prefix on the system
   --with-mpc-binutils=*                   : Specify binutils prefix on the system
   --with-hwloc=*                          : Specify hwloc prefix on the system
   --with-libxml2=*                        : Specify libxml2 prefix on the system

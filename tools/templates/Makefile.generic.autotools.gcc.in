@@ -23,6 +23,11 @@
 		$(STEP_WRAPPER) "Patch $(@PACKAGE_VAR_NAME@_STEP_NAME)" $(PATCH) -p1 < $(@PACKAGE_VAR_NAME@_PATCH_FILE) && \
 		cd $(PROJECT_BUILD_DIR)/$(SUBPREFIX); \
 	fi && \
+	for dep in $$(ls -1 $(PROJECT_PACKAGE_DIR)/$(@PACKAGE_VAR_NAME@_NAME)/$(@PACKAGE_VAR_NAME@_NAME)-deps/*.tar.*); do \
+		name=$$(echo $${dep} | sed -re "s/^.*\/([a-zA-Z0-9]+)-[0-9.]+\.tar.*/\1/"); \
+		version=$$(echo $${dep} | sed -re "s/^.*\/[a-zA-Z0-9]+-([0-9.]+)\.tar.*/\1/"); \
+		$(TAR) -xf $$dep --transform "s,$$name-$$version,$(@PACKAGE_VAR_NAME@_SOURCE_DIR)/$$name,"; \
+	done; \
 	touch .@PACKAGE_NAME@-prepare;
 	
 @PACKAGE_NAME@: .@PACKAGE_NAME@

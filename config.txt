@@ -3,10 +3,8 @@
 libxml2      ; 2.9.3      ;        ; dep     ; gcc                                                            ; target ; extern       ; generic.autotools
 hwloc        ; 1.11.2     ; 1.11.2 ; install ; gcc                                                            ; all    ; extern       ; generic.autotools
 binutils     ; 2.27       ; 2.27   ; install ;                                                                ; host   ; extern       ; generic.autotools
-gmp          ; 6.1.1      ;        ; dep     ;                                                                ; host   ; extern       ; generic.autotools.libsgcc
-mpfr         ; 3.1.5      ;        ; dep     ; gmp                                                            ; host   ; extern       ; generic.autotools.libsgcc
-mpc          ; 1.0.3      ;        ; dep     ; gmp mpfr                                                       ; host   ; mpc          ; generic.autotools.libsgcc
-gcc          ; 6.2.0      ;        ; install ; gmp mpfr mpc binutils                                          ; host   ; extern       ; generic.autotools.gcc
+gcc          ; 6.2.0      ;        ; install ; binutils                                                       ; host   ; extern       ; generic.autotools.gcc
+priv_plugin  ; 1.1        ;        ; install ; gcc                                                            ; host   ; extern       ; generic.autotools
 openpa       ; 1.0.2      ;        ; dep     ; gcc                                                            ; target ; extern       ; generic.autotools
 libextls     ; 0.5.0      ;        ; install ; gcc hwloc openpa                                               ; target ; extern       ; generic.autotools
 sctk_arch    ;            ;        ; install ; gcc openpa                                                     ; target ; local        ; local.autotools
@@ -16,7 +14,6 @@ mpcframework ;            ;        ; install ; libxml2 hwloc openpa libextls sct
 hydra        ; 3.1        ;        ; install ; hwloc                                                          ; all    ; extern       ; generic.autotools
 hydra_simple ;            ;        ; install ; hydra                                                          ; all    ; hydra_simple ; local.autotools
 gdb          ; 7.6.2      ;        ; install ; gcc                                                            ; target ; extern       ; generic.autotools
-priv_plugin  ; 1.1        ;        ; install ; gcc mpcframework                                               ; target ; extern       ; generic.autotools.mpc
 tbb          ; 4.4        ;        ; install ; mpcframework                                                   ; target ; extern       ; generic.make
 mpl          ; 1.0        ;        ; install ; mpcframework priv_plugin                                       ; target ; extern       ; generic.autotools.mpc
 romio        ; 2016.03.19 ;        ; install ; mpcframework priv_plugin mpl                                   ; target ; extern       ; generic.autotools.mpc.seq

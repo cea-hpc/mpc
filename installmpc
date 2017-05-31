@@ -543,25 +543,19 @@ fillGCCBuildParameters()
 	if test -z "${GMP_PREFIX}" -o "${GMP_PREFIX}" = "internal"; then
 		MPFR_BUILD_PARAMETERS="'--with-gmp=${GMP_INTERNAL_PREFIX}' ${MPFR_BUILD_PARAMETERS}"
 		MPC_BUILD_PARAMETERS="'--with-gmp=${GMP_INTERNAL_PREFIX}' ${MPC_BUILD_PARAMETERS}"
-		GCC_BUILD_PARAMETERS="'--with-gmp=${GMP_INTERNAL_PREFIX}' ${GCC_BUILD_PARAMETERS}"
 	else
 		MPFR_BUILD_PARAMETERS="'--with-gmp=${GMP_PREFIX}' ${MPFR_BUILD_PARAMETERS}"
 		MPC_BUILD_PARAMETERS="'--with-gmp=${GMP_PREFIX}' ${MPC_BUILD_PARAMETERS}"
-		GCC_BUILD_PARAMETERS="'--with-gmp=${GMP_PREFIX}' ${GCC_BUILD_PARAMETERS}"
 		export GMP_PREFIX
 	fi
 	#Verify if users give path for mpfr
 	if test -z "${MPFR_PREFIX}" -o "${MPFR_PREFIX}" = "internal"; then
 		MPC_BUILD_PARAMETERS="--with-mpfr=${MPFR_INTERNAL_PREFIX} ${MPC_BUILD_PARAMETERS}"
-		GCC_BUILD_PARAMETERS="'--with-mpfr=${MPFR_INTERNAL_PREFIX}' ${GCC_BUILD_PARAMETERS}"
 	else
 		MPC_BUILD_PARAMETERS="--with-mpfr=${MPFR_PREFIX} ${MPC_BUILD_PARAMETERS}"
-		GCC_BUILD_PARAMETERS="'--with-mpfr=${MPFR_PREFIX}' ${GCC_BUILD_PARAMETERS}"
 	fi
 	#Verify if users give path for mpc
-	if test -z "${MPC_PREFIX}" -o "${MPC_PREFIX}" = "internal"; then
-		GCC_BUILD_PARAMETERS="'--with-mpc=${MPC_INTERNAL_PREFIX}' ${GCC_BUILD_PARAMETERS}"
-	else
+	if test "${MPC_PREFIX}" != "internal"; then
 		GCC_BUILD_PARAMETERS="'--with-mpc=${MPC_PREFIX}' ${GCC_BUILD_PARAMETERS}"
 	fi
 	
