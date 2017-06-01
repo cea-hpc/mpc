@@ -559,74 +559,78 @@ static struct mpcomp_task_s *__mpcomp_task_larceny(void) {
  *     - in taskwait regions
  *     - in implicit and explicit barrier regions
  */
-void mpcomp_task_schedule(void) {
-  int type;
-  mpcomp_mvp_t *mvp = NULL;
-  mpcomp_task_t *task = NULL;
-  mpcomp_thread_t *thread = NULL;
-  mpcomp_task_list_t *list = NULL;
+void __internal_mpcomp_task_schedule( mpcomp_thread_t* thread, mpcomp_mvp_t* mvp, mpcomp_team_t* team ) {
 
-  sctk_assert(sctk_openmp_thread_tls);
-  thread = (mpcomp_thread_t *)sctk_openmp_thread_tls;
-  mvp = (mpcomp_mvp_t *)thread->mvp;
+    int type;
+    mpcomp_task_t *task;
 
-  if (!mvp)
-    return;
+    /* All argments must be non null */
+    sctk_assert( thread && mvp && team);
 
-  sctk_assert(thread->instance);
-  sctk_assert(thread->instance->team);
+    /*  If only one thread is running, tasks are not delayed. 
+        No need to schedule                                    */
+    if ((thread->info.num_threads == 1) ||
+        !MPCOMP_TASK_THREAD_IS_INITIALIZED(thread) ||
+        !MPCOMP_TASK_TEAM_IS_INITIALIZED(thread->instance->team)) 
+    {
+        sctk_nodebug("sequential or no task");
+        return;
+    }
 
-  /* If only one thread is running, tasks are not delayed. No need to schedule
-   */
-  if ((thread->info.num_threads == 1) ||
-      !MPCOMP_TASK_THREAD_IS_INITIALIZED(thread) ||
-      !MPCOMP_TASK_TEAM_IS_INITIALIZED(thread->instance->team)) {
-    sctk_nodebug("sequential or no task");
-    return;
-  }
+    /*    Executed once per thread    */
+    mpcomp_task_scheduling_infos_init();
 
-  /* Executed once per thread
-   */
-  mpcomp_task_scheduling_infos_init();
+    for (type = 0, task = NULL; !task && type < MPCOMP_TASK_TYPE_COUNT; type++) 
+    {
+        const int node_rank = MPCOMP_TASK_MVP_GET_TASK_LIST_NODE_RANK(mvp, type);
+        mpcomp_task_list_t* list = mpcomp_task_get_list(node_rank, type);
+        sctk_assert(list);
+        mpcomp_task_list_lock(list);
+        task = mpcomp_task_list_popfromhead(list, current_task->depth);
+        mpcomp_task_list_unlock(list);
+    }
 
-  sctk_assert(!task);
-  mpcomp_task_t *current_task = MPCOMP_TASK_THREAD_GET_CURRENT_TASK(thread);
+    /* If no task found previously, try to thieve a task somewhere */
+    if (task == NULL) task = __mpcomp_task_larceny();
 
-#if 0
-  	/* Find a remaining tied task */
-    list = MPCOMP_TASK_THREAD_GET_TIED_TASK_LIST_HEAD( thread ) ;
-	sctk_assert( list );
-    task = mpcomp_task_list_popfromhead( list, 0 );
-#endif
+    /* All tasks lists are empty, so exit task scheduling function */
+    if (task == NULL) return;
 
-  for (type = 0; !task && type < MPCOMP_TASK_TYPE_COUNT; type++) {
-    const int node_rank = MPCOMP_TASK_MVP_GET_TASK_LIST_NODE_RANK(mvp, type);
-    list = mpcomp_task_get_list(node_rank, type);
-    sctk_assert(list);
-    //	    if( !mpcomp_task_list_trylock(list) )
-    //            continue;
-    mpcomp_task_list_lock(list);
-    task = mpcomp_task_list_popfromhead(list, current_task->depth);
-    mpcomp_task_list_unlock(list);
-  }
+    __mpcomp_task_execute(task);
 
-  /* If no task found previously, try to thieve a task somewhere */
-  if (task == NULL)
-    task = __mpcomp_task_larceny();
-  /* All tasks lists are empty, so exit task scheduling function */
-  if (task == NULL)
-    return;
+    /* Clean function */
+    mpcomp_taskgroup_del_task(task);
 
-  __mpcomp_task_execute(task);
-
-  // mpcomp_taskwait( task );
-
-  /* Clean function */
-  mpcomp_taskgroup_del_task(task);
 #ifdef MPCOMP_USE_TASKDEP
-  __mpcomp_task_finalize_deps(task);
+    __mpcomp_task_finalize_deps(task);
 #endif /* MPCOMP_USE_TASKDEP */
-  mpcomp_task_unref_parent_task(task);
+
+    mpcomp_task_unref_parent_task(task);
+}
+
+void __mpcomp_task_schedule( void )
+{
+    mpcomp_mvp_t *mvp;
+    mpcomp_team_t *team;
+    mpcomp_thread_t *thread;
+
+    /* Get thread from current tls */
+    thread = (mpcomp_thread_t *)sctk_openmp_thread_tls;
+    sctk_assert( thread );
+
+    /* Get mvp father from thread */
+    mvp = thread->mvp;
+
+    /* Sequencial execution no delayed task */
+    if( !mvp ) return;
+
+    /* Get team from thread */
+    sctk_assert( thread->instance );
+    team = thread->instance->team;
+    sctk_assert( team );
+
+    __internal_mpcomp_task_schedule( thread, mvp, team ); 
+    return;
 }
 
 void mpcomp_taskwait(void) {
@@ -822,7 +826,9 @@ void mpcomp_taskwait() {}
  * a different task
  * Called when encountering a taskyield construct
  */
-void mpcomp_taskyield() { /* Actually, do nothing */
+void mpcomp_taskyield()
+{ 
+    /* Actually, do nothing */
 }
 
 #endif /* MPCOMP_TASK */

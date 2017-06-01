@@ -71,7 +71,7 @@ int __mpcomp_do_single(void)
   		int current ;
 
   		/* Catch the current construct
-   	* and prepare the next single/section construct */
+   	    * and prepare the next single/section construct */
   		current = t->single_sections_current ;
   		t->single_sections_current++ ;
 

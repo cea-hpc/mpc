@@ -496,9 +496,10 @@ int mpcomp_build_tree(mpcomp_instance_t *instance, int n_leaves, int depth,
 
      __mpcomp_push(s, root);
 #endif
-    struct timeval tv_start, tv_end;
-    (void) gettimeofday( &tv_start, NULL ); 
+//    struct timeval tv_start, tv_end;
+//    (void) gettimeofday( &tv_start, NULL ); 
     instance->root = __mpcomp_alloc_openmp_tree_struct( degree, depth, NULL, instance ); 
+#if 0
     (void) gettimeofday( &tv_end, NULL );
    
     long secs_used = tv_end.tv_sec - tv_start.tv_sec; //avoid overflow by subtracting first
@@ -509,7 +510,7 @@ int mpcomp_build_tree(mpcomp_instance_t *instance, int n_leaves, int depth,
         micros_used += 1000000; 
     }
     fprintf(stderr, "Building tree in %d sec %d msec\n", secs_used, micros_used ); 
-    
+#endif 
 #if 0
      while (!__mpcomp_is_stack_empty(s)) {
        mpcomp_node_t *n;

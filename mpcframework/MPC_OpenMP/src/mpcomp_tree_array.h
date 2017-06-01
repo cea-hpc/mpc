@@ -9,6 +9,12 @@ typedef enum
     MPCOMP_META_TREE_NONE       = 3
 } mpcomp_meta_tree_type_t;
 
+typedef struct mpcomp_tree_array_global_info_s
+{
+    int* tree_shape;
+    int max_depth;
+} mpcomp_tree_array_global_info_t;
+
 typedef struct mpcomp_meta_tree_node_s
 { 
     /* Generic information */
@@ -36,7 +42,6 @@ typedef struct mpcomp_meta_tree_node_s
 typedef struct mpcomp_mvp_thread_args_s
 {
     void* thread;
-    void* instance;
     void* root_node;        /* prevent inondation initialisation */
     unsigned int rank;
     unsigned int max_depth;

@@ -83,7 +83,7 @@ static void mpcomp_internal_GOMP_in_order_scheduler_master_end(void) {
     break;
   }
 
-  t->done = 1;
+  //t->done = 1;
 
   // mpcomp_taskwait();
 

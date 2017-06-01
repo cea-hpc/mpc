@@ -39,6 +39,8 @@ static void __mpcomp_internal_full_barrier(mpcomp_mvp_t *mvp) {
   sctk_assert(mvp->father->instance);
   sctk_assert(mvp->father->instance->team);
 
+  //fprintf(stderr, "STAGE RANK: %d | LOCAL RANK: %d | FATHER: %d\n", mvp->vp, mvp->rank, mvp->father->rank ); 
+
   c = mvp->father;
   new_root = c->instance->team->info.new_root;
 
@@ -81,6 +83,7 @@ static void __mpcomp_internal_full_barrier(mpcomp_mvp_t *mvp) {
 
 	/* Step 3 - Go down */
 	while ( c->child_type != MPCOMP_CHILDREN_LEAF ) {
+        //fprintf(stderr, "[%d] CLIMB TREE : %d - %d\n", mvp->vp, mvp->tree_rank[c->depth], c->depth );  
 		c = c->children.node[mvp->tree_rank[c->depth]];
 		c->barrier_done++; /* No need to lock I think... */
 	}
@@ -143,6 +146,7 @@ void __mpcomp_barrier(void) {
   sctk_nodebug("[%d] %s: Entering w/ %d thread(s)", t->rank, __func__,
                t->info.num_threads);
 
+   //fprintf(stderr, "hello\n");
 #if OMPT_SUPPORT
 	//__mpcomp_ompt_barrier_begin( false );	
 #endif /* OMPT_SUPPORT */

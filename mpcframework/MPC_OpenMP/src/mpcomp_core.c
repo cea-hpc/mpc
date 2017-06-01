@@ -487,12 +487,13 @@ void __mpcomp_init(void) {
  
 		mpcomp_ompt_pre_init();
 
-    mpcomp_instance_t *seq_instance;
-    mpcomp_instance_t *instance;
     mpcomp_team_t *seq_team_info;
-    mpcomp_team_t *team_info;
+    mpcomp_instance_t *seq_instance;
+
     mpcomp_thread_t *t;
     mpcomp_local_icv_t icvs;
+    mpcomp_team_t *team_info;
+    mpcomp_instance_t *instance;
 
     /* Need to initialize the whole runtime (environment variables) This
      * section is shared by every OpenMP instances amon MPI tasks located inside
@@ -747,252 +748,81 @@ void __mpcomp_instance_init(mpcomp_instance_t *instance, int nb_mvps,
   /* TODO Do we need a TLS for the openmp instance for every microVPs? */
 }
 
-void __mpcomp_in_order_scheduler(mpcomp_mvp_t *mvp) {
-  mpcomp_thread_t *saved_value_thread_tls, *cur_mvp_thread;
+void __mpcomp_in_order_scheduler( mpcomp_thread_t* thread ) 
+{
+    mpcomp_loop_long_iter_t *loop;
 
-  sctk_assert(mvp);
+    sctk_assert( thread );
+    sctk_assert( thread->instance );
+    sctk_assert( thread->info.func );
+    sctk_assert( thread->instance->team );
 
-  saved_value_thread_tls = sctk_openmp_thread_tls;
-  sctk_openmp_thread_tls = &(mvp->threads[0]);
-  cur_mvp_thread = (mpcomp_thread_t *)sctk_openmp_thread_tls;
+    loop = &( thread->info.loop_infos.loop.mpcomp_long );
 
-  sctk_assert(cur_mvp_thread->instance != NULL);
-  sctk_assert(cur_mvp_thread->instance->team != NULL);
-  sctk_assert(cur_mvp_thread->info.func != NULL);
+    /* Handle beginning of combined parallel region */
+    switch( thread->info.combined_pragma ) 
+    {
+        case MPCOMP_COMBINED_NONE:
+            break;
+        case MPCOMP_COMBINED_SECTION:
+            __mpcomp_sections_init( thread, thread->info.nb_sections );
+            break;
+        case MPCOMP_COMBINED_STATIC_LOOP:
+            __mpcomp_static_loop_init( thread, loop->lb, loop->b, loop->incr, loop->chunk_size);
+            break;
+        case MPCOMP_COMBINED_DYN_LOOP:
+            __mpcomp_dynamic_loop_init( cur_mvp_thread, loop->lb, loop->b, loop->incr, loop->chunk_size );
+            break;
+        default:
+            not_implemented();
+    }
 
-  mpcomp_loop_long_iter_t *loop =
-      &(cur_mvp_thread->info.loop_infos.loop.mpcomp_long);
-
-  /* Handle beginning of combined parallel region */
-  switch (cur_mvp_thread->info.combined_pragma) {
-  case MPCOMP_COMBINED_NONE:
-    sctk_nodebug("%s: BEGIN - No combined parallel", __func__);
-    break;
-  case MPCOMP_COMBINED_SECTION:
-    sctk_nodebug("%s: BEGIN - Combined parallel/sections w/ %d section(s)",
-                 __func__, cur_mvp_thread->info.nb_sections);
-    __mpcomp_sections_init(cur_mvp_thread, cur_mvp_thread->info.nb_sections);
-    break;
-  case MPCOMP_COMBINED_STATIC_LOOP:
-    sctk_nodebug("%s: BEGIN - Combined parallel/loop", __func__);
-    __mpcomp_static_loop_init(cur_mvp_thread, loop->lb, loop->b, loop->incr,
-                              loop->chunk_size);
-    break;
-  case MPCOMP_COMBINED_DYN_LOOP:
-    sctk_nodebug("%s: BEGIN - Combined parallel/loop", __func__);
-    __mpcomp_dynamic_loop_init(cur_mvp_thread, loop->lb, loop->b, loop->incr,
-                               loop->chunk_size);
-    break;
-  default:
-    not_implemented();
-  }
-
-#if 1 //OMPT_SUPPORT
+#if OMPT_SUPPORT
 	if( mpcomp_ompt_is_enabled() )
 	{
-   	if( OMPT_Callbacks )
-   	{
+   	    if( OMPT_Callbacks )
+   	    {
 			ompt_callback_implicit_task_t callback; 
 			callback = (ompt_callback_implicit_task_t) OMPT_Callbacks[ompt_callback_implicit_task];
 			if( callback )
 			{
-				ompt_data_t* parallel_data = &(cur_mvp_thread->instance->team->info.ompt_region_data);	
-				callback( ompt_scope_begin, parallel_data, NULL, cur_mvp_thread->rank );  
+				ompt_data_t* parallel_data = &(thread->instance->team->info.ompt_region_data);	
+				callback( ompt_scope_begin, parallel_data, NULL, thread->rank );  
 			}
 		}
 	}
 #endif /* OMPT_SUPPORT */
 	
-  cur_mvp_thread->info.func(cur_mvp_thread->info.shared);
+  thread->info.func( thread->info.shared );
 
-#if 1 //OMPT_SUPPORT
+#if OMPT_SUPPORT
 	if( mpcomp_ompt_is_enabled() )
 	{
-   	if( OMPT_Callbacks )
-   	{
+   	    if( OMPT_Callbacks )
+   	    {
 			ompt_callback_implicit_task_t callback; 
 			callback = (ompt_callback_implicit_task_t) OMPT_Callbacks[ompt_callback_implicit_task];
 			if( callback )
 			{
-				ompt_data_t* parallel_data = &(cur_mvp_thread->instance->team->info.ompt_region_data);	
-				callback( ompt_scope_end, parallel_data, NULL, cur_mvp_thread->rank );  
+				ompt_data_t* parallel_data = &(thread->instance->team->info.ompt_region_data);	
+				callback( ompt_scope_end, parallel_data, NULL, thread->rank );  
 			}
 		}
 	}
 #endif /* OMPT_SUPPORT */
 
-  /* Handle ending of combined parallel region */
-  switch (cur_mvp_thread->info.combined_pragma) {
-  case MPCOMP_COMBINED_NONE:
-    sctk_nodebug("%s: END - No combined parallel", __func__);
-    break;
-  case MPCOMP_COMBINED_SECTION:
-    sctk_nodebug("%s: END - Combined parallel/sections w/ %d section(s)",
-                 __func__, cur_mvp_thread->info.nb_sections);
-    break;
-  case MPCOMP_COMBINED_STATIC_LOOP:
-    sctk_nodebug("%s: END - Combined parallel/loop", __func__);
-    break;
-  case MPCOMP_COMBINED_DYN_LOOP:
-    sctk_nodebug("%s: END - Combined parallel/loop", __func__);
-    __mpcomp_dynamic_loop_end_nowait(cur_mvp_thread);
-    break;
-  default:
-    not_implemented();
-    break;
-  }
-
-  /* Restore previous TLS */
-  sctk_openmp_thread_tls = saved_value_thread_tls;
-}
-
-void __mpcomp_in_order_scheduler_multiple_mvp(mpcomp_mvp_t *mvp) {
-
-  /*
-     for i = 0 ; i < #threads in this mVP ; i++ )
-        if (ctx ==0) switch HLS, switch thread
-        call function of threads[i]
-        done = 1
-     #threads = 0
-     */
-
-  int i;
-  mpcomp_thread_t *t, *cur_mvp_thread;
-
-  sctk_assert(mvp != NULL);
-
-  sctk_debug("%s: Starting to schedule %d thread(s)", __func__,
-             mvp->nb_threads);
-
-  /* Save previous TLS */
-  t = sctk_openmp_thread_tls;
-  // t can be NULL for worker thread
-  // sctk_assert( t != NULL ) ;
-
-  for (i = 0; i < mvp->nb_threads; i++) {
-    /* TODO handle out of order */
-
-    sctk_openmp_thread_tls = &mvp->threads[i];
-    cur_mvp_thread = (mpcomp_thread_t *)sctk_openmp_thread_tls;
-
-    if (sctk_new_scheduler_engine_enabled) {
-      sctk_thread_generic_addkind_mask_self(KIND_MASK_OMP);
-      sctk_thread_generic_set_basic_priority_self(
-          sctk_runtime_config_get()->modules.scheduler.omp_basic_priority);
-      sctk_thread_generic_setkind_priority_self(
-          sctk_runtime_config_get()->modules.scheduler.omp_basic_priority);
-      sctk_thread_generic_set_current_priority_self(
-          sctk_runtime_config_get()->modules.scheduler.omp_basic_priority);
-    }
-
-    sctk_assert(((mpcomp_thread_t *)sctk_openmp_thread_tls)->instance != NULL);
-    sctk_assert(((mpcomp_thread_t *)sctk_openmp_thread_tls)->instance->team !=
-                NULL);
-    sctk_assert(mvp->threads[i].info.func != NULL);
-
-    /* Handle beginning of combined parallel region */
-    switch (mvp->threads[i].info.combined_pragma) {
-    case MPCOMP_COMBINED_NONE:
-      sctk_nodebug("%s: BEGIN - No combined parallel", __func__);
-      break;
-    case MPCOMP_COMBINED_SECTION:
-      sctk_nodebug("%s: BEGIN - Combined parallel/sections w/ %d section(s)",
-                   __func__, mvp->threads[i].info.nb_sections);
-      __mpcomp_sections_init(&(mvp->threads[i]),
-                             mvp->threads[i].info.nb_sections);
-      break;
-    case MPCOMP_COMBINED_STATIC_LOOP:
-      sctk_nodebug("%s: BEGIN - Combined parallel/loop", __func__);
-      __mpcomp_static_loop_init(
-          &(mvp->threads[i]), mvp->threads[i].info.loop_lb,
-          mvp->threads[i].info.loop_b, mvp->threads[i].info.loop_incr,
-          mvp->threads[i].info.loop_chunk_size);
-      break;
-    case MPCOMP_COMBINED_DYN_LOOP:
-      sctk_nodebug("%s: BEGIN - Combined parallel/loop", __func__);
-      __mpcomp_dynamic_loop_init(
-          &(mvp->threads[i]), mvp->threads[i].info.loop_lb,
-          mvp->threads[i].info.loop_b, mvp->threads[i].info.loop_incr,
-          mvp->threads[i].info.loop_chunk_size);
-      break;
-    default:
-      not_implemented();
-      break;
-    }
-
-    mvp->threads[i].info.func(mvp->threads[i].info.shared);
-
     /* Handle ending of combined parallel region */
-    switch (mvp->threads[i].info.combined_pragma) {
-    case MPCOMP_COMBINED_NONE:
-      sctk_nodebug("%s: END - No combined parallel", __func__);
-      break;
-    case MPCOMP_COMBINED_SECTION:
-      sctk_nodebug("%s: END - Combined parallel/sections w/ %d section(s)",
-                   __func__, mvp->threads[i].info.nb_sections);
-      break;
-    case MPCOMP_COMBINED_STATIC_LOOP:
-      sctk_nodebug("%s: END - Combined parallel/loop", __func__);
-      break;
-    case MPCOMP_COMBINED_DYN_LOOP:
-      sctk_nodebug("%s: END - Combined parallel/loop", __func__);
-      __mpcomp_dynamic_loop_end_nowait(&(mvp->threads[i]));
-      break;
-    default:
-      not_implemented();
-      break;
+    switch ( info.combined_pragma ) 
+    {
+        case MPCOMP_COMBINED_NONE:
+        case MPCOMP_COMBINED_SECTION:
+        case MPCOMP_COMBINED_STATIC_LOOP:
+            break;
+        case MPCOMP_COMBINED_DYN_LOOP:
+            __mpcomp_dynamic_loop_end_nowait(cur_mvp_thread);
+            break;
+        default:
+            not_implemented();
+            break;
     }
-
-    mvp->threads[i].done = 1;
-  }
-
-  /* Restore previous TLS */
-  sctk_openmp_thread_tls = t;
 }
-
-#if 0
-/* Create contextes for non-terminated threads of the same microVP */
-void expand_microthreads() {
-  /*
-     NEW version of fork_when_blocked
-
-     get mpcomp_thread
-     if (ctx==0 && #threads > 1)
-     	get index inside the microVP
-	for ( i = index+1 ; i < #threads ; i++ ) {
-	  context=1
-	  update func to wrapper_out_of_order_scheduler
-	  create stack+ctx
-	}
-	context=2
-     */
-}
-
-/* Function call when scheduling another thread while the current one is still alive */
-void out_of_order_scheduler() {
-  /* Assume 'expand_microthreads' has been called */
-
-  /* Exit after scheduling one thread */
-
-  /*
-  i = index of current thread in current mVP
-  while i < #threads
-    if is_running[i]!=0 && done[i] == 0
-    	swap context between i and current
-	restore tls mpcomp_thread
-	break ;
-    i++
-    */
-}
-
-void 
-mpcomp_flush() 
-{
-/* TODO TEMP only return, but need to handle oversubscribing */
-}
-
-void mpcomp_warn_nested( void ) 
-{
-  fprintf( stderr, "WARNING: Nested invoked (mpcomp_warn_nested)\n" ) ;
-}
-#endif

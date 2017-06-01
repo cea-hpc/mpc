@@ -547,7 +547,7 @@ int mpcomp_build_tree(mpcomp_instance_t *instance, int n_leaves, int depth,
 			      sizeof(mpcomp_mvp_t), target_numa);
 
 			 /* Get the set of registers */
-			 sctk_getcontext(&(instance->mvps[current_mvp]->vp_context));
+		//	 sctk_getcontext(&(instance->mvps[current_mvp]->vp_context));
 
 			 /* Initialize the corresponding microVP (all but tree-related variables) */
 			 instance->mvps[current_mvp]->nb_threads = 0;
@@ -655,6 +655,9 @@ int mpcomp_build_tree(mpcomp_instance_t *instance, int n_leaves, int depth,
                              sctk_assert(target_node != NULL);
                              /* The first child is spinning on a node */
                              instance->mvps[current_mvp]->to_run = target_node;
+                            instance->mvps[current_mvp]->pid = (sctk_thread_t*) malloc( sizeof( sctk_thread_t) );
+                            sctk_assert( instance->mvps[current_mvp]->pid  );
+                            memset( instance->mvps[current_mvp]->pid, 0, sizeof( sctk_thread_t) );
                              res = sctk_user_thread_create(
                                  &(instance->mvps[current_mvp]->pid), &__attr,
                                  mpcomp_slave_mvp_node,

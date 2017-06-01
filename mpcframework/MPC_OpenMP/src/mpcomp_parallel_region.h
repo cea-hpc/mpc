@@ -45,32 +45,6 @@ static inline void __mpcomp_save_team_info(mpcomp_team_t *team,
   team->info.for_dyn_current_save = t->for_dyn_current;
 }
 
-/* TODO check that this is correct (only 1 thread) */
-static inline void __mpcomp_wakeup_mvp(mpcomp_mvp_t *mvp, mpcomp_node_t *n) {
-
-  if (n) {
-    sctk_assert(n == mvp->father);
-#if MPCOMP_TRANSFER_INFO_ON_NODES
-    mvp->info = n->info;
-#else
-    mvp->info = n->instance->team->info;
-#endif
-  }
-
-  sctk_assert(mvp);
-
-  /* Update the total number of threads for this microVP */
-  mvp->nb_threads = 1;
-  mvp->threads[0].info = mvp->info;
-  mvp->threads[0].rank = mvp->min_index[mpcomp_global_icvs.affinity];
-  mvp->threads[0].single_sections_current =
-      mvp->info.single_sections_current_save;
-  mvp->threads[0].for_dyn_current = mvp->info.for_dyn_current_save;
-
-  sctk_nodebug("%s: value of single_sections_current %d and for_dyn_current %d",
-               __func__, mvp->info.single_sections_current_save,
-               mvp->info.for_dyn_current_save);
-}
 
 static inline void __mpcomp_sendtosleep_mvp(mpcomp_mvp_t *mvp) {
   /* Empty function */
@@ -165,20 +139,14 @@ static inline mpcomp_node_t *__mpcomp_wakeup_leaf(mpcomp_node_t *start_node,
       nb_children_involved++;
     }
   }
-  sctk_nodebug("__mpcomp_wakeup_leaf: nb_leaves_involved=%d",
-               nb_children_involved);
   n->barrier_num_threads = nb_children_involved;
   for (i = 1; i < n->nb_children; i++) {
     if (n->children.leaf[i]->min_index[mpcomp_global_icvs.affinity] <
         num_threads) {
+      n->children.leaf[i]->instance = instance;
 #if MPCOMP_TRANSFER_INFO_ON_NODES
       n->children.leaf[i]->info = n->info;
-#else
-      n->children.leaf[i]->info = instance->team->info;
-#endif
-
-      sctk_nodebug("__mpcomp_wakeup_leaf: waking up leaf %d", i);
-
+#endif /* MPCOMP_TRANSFER_INFO_ON_NODES */
       n->children.leaf[i]->slave_running = 1;
     }
   }

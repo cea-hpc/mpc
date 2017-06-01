@@ -61,10 +61,10 @@ static inline void __mpcomp_thread_infos_init(mpcomp_thread_t *thread,
   __mpcomp_parallel_region_infos_init(&(thread->info));
 
   /* SET all non null thread info fields	*/
-  thread->father = father;
+//  thread->father = father;
   thread->info.num_threads = 1;
   thread->info.icvs = icvs;
-  thread->instance = instance;
+//  thread->instance = instance;
 
   /* -- DYNAMIC FOR LOOP CONSTRUCT -- */
   for (i = 0; i < MPCOMP_MAX_ALIVE_FOR_DYN + 1; i++) {
@@ -83,6 +83,38 @@ static inline void __mpcomp_thread_infos_init(mpcomp_thread_t *thread,
 #endif /* MPCOMP_USE_INTEL_ABI */
 }
 
+static inline void
+__mpcomp_thread_infos_init_and_push(    mpcomp_mvp_t* mvp, 
+                                        mpcomp_local_icv_t icvs, 
+                                        mpcomp_instance_t *instance, 
+                                        mpcomp_thread_t* father_thread )
+{
+    mpcomp_thread_t* new_thread;
+
+    /* Allocation preserve numa affinity throw first touch mecanism */ 
+    new_thread = (mpcomp_thread_t*) malloc( sizeof( mpcomp_thread_t ) );
+    assert( new_thread );
+
+    __mpcomp_thread_infos_init( new_thread, icvs, instance, father_thread );
+    
+    /* One running thread - One MVP | No need lock */  
+    new_thread->next = mvp->threads;
+    mvp->threads = new_thread;
+}
+
+static inline void
+__mpcomp_thread_infos_fini_and_pop( mpcomp_mvp_t* mvp )
+{
+    mpcomp_thread_t* old_thread;
+    
+    assert( mvp->threads );
+    old_thread = mvp->threads;
+    
+    mvp->threads = old_thread->next;
+    free( old_thread );
+}
+
+
 static inline void __mpcomp_team_infos_init(mpcomp_team_t *team) {
   int i;
 
@@ -99,5 +131,6 @@ static inline void __mpcomp_team_infos_init(mpcomp_team_t *team) {
     sctk_atomics_store_int(&(team->for_dyn_nb_threads_exited[i].i), 0);
   }
 }
+
 
 #endif /* __MPCOMP_TREE_STRUCTS_H__ */
