@@ -825,8 +825,6 @@ updateAccordingToDeps()
 	LOCAL_CXX=$BUILD_CXX
 	LOCAL_FC=$BUILD_FC
 	LOCAL_FAMILY="$BUILD_FAMILY"
-	local_prefix="${PREFIX}/${MPC_HOST}/${MPC_TARGET}"
-	LOCAL_FLAGS="-L$local_prefix/lib -L$local_prefix/lib64 -L$local_prefix/libsgcc/lib -Wl,-rpath=$local_prefix/lib -Wl,-rpath=$local_prefix/lib64 -Wl,-rpath=$local_prefix/libsgcc/lib"
 	
 	case "$1" in
 		*.gcc*) # if package have a dependency to GCC & GCC_PREFIX=internal

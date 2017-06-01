@@ -588,17 +588,6 @@ SCTK_F77="`tmp_cross_gen $SCTK_F77`"
 SCTK_LIRARY_PATH=""
 
 SCTK_GCC="${SCTK_CC}"
-SCTK_LIRARY_PATH="${MPC_RPREFIX}/${MPC_SUBPREFIX}/libsgcc/lib"
-
-if test "$SCTK_LIRARY_PATH" != "" ; then 
-    if test "$LD_LIBRARY_PATH" != "" ; then 
-	LD_LIBRARY_PATH=$SCTK_LIRARY_PATH:$LD_LIBRARY_PATH
-    else
-	LD_LIBRARY_PATH=$SCTK_LIRARY_PATH
-    fi
-fi
-
-export LD_LIBRARY_PATH
 
 if test "$SCTK_OS" = "" ; then
 SCTK_OS="`uname`"
@@ -799,6 +788,17 @@ elif test "$SCTK_DEBUG" = "1" ; then
 	SCTK_CHECK_OPTION "-Wall -Wno-unused-variable -Wno-unused-but-set-variable"
 	end_section
 fi
+
+#finally, if previous checks updated LIBRARY_PATH, we propagate it
+if test "$ADD_TO_LIBRARY_PATH" != "" ; then 
+    if test "$LD_LIBRARY_PATH" != "" ; then 
+	LD_LIBRARY_PATH=$ADD_TO_LIBRARY_PATH:$LD_LIBRARY_PATH
+    else
+	LD_LIBRARY_PATH=$ADD_TO_LIBRARY_PATH
+    fi
+fi
+
+export LD_LIBRARY_PATH
 
 #Check for _Pragma message in macro
 #It may be better to move this in MPC_Common/sys_dep file but we need to check with -Werror
