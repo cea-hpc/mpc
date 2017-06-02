@@ -92,11 +92,11 @@ typedef struct mpcomp_new_parallel_region_info_s {
 	ompt_data_t ompt_region_data;
 #endif /* OMPT_SUPPORT */
 
-} mpcomp_new_parallel_region_info_t;
+} mpcomp_parallel_region_t;
 
 /* Team of OpenMP threads */
 typedef struct mpcomp_team_s {
-  mpcomp_new_parallel_region_info_t info; /* Info for new parallel region */
+  mpcomp_parallel_region_t info; /* Info for new parallel region */
   int depth; /* Depth of the current thread (0 = sequential region) */
 
   /* -- SINGLE/SECTIONS CONSTRUCT -- */
@@ -134,7 +134,7 @@ typedef struct mpcomp_thread_s {
     struct mpcomp_thread_s* father; 
     /* -- Parallel region information -- */
     /** Information needed when entering a new parallel region */
-    mpcomp_new_parallel_region_info_t info;
+    mpcomp_parallel_region_t info;
     /** Current instance (team + tree) */
     struct mpcomp_instance_s *instance; 
     /** Instance for nested parallelism */
@@ -266,7 +266,7 @@ typedef struct mpcomp_mvp_s
     int instance_mvps_index;
 #if MPCOMP_TRANSFER_INFO_ON_NODES
     /* Transfert OpenMP region information to OpenMP thread     */
-    mpcomp_new_parallel_region_info_t info;
+    mpcomp_parallel_region_t info;
 #endif /* MPCOMP_TRANSFER_INFO_ON_NODES */
     /* -- Tree array MVP information --                         */
     /* Rank within the microVPs */
@@ -318,7 +318,7 @@ typedef struct mpcomp_node_s
     int instance_mvps_index;
 #if MPCOMP_TRANSFER_INFO_ON_NODES
     /* Transfert OpenMP region information to OpenMP thread     */
-    mpcomp_new_parallel_region_info_t info;
+    mpcomp_parallel_region_t info;
 #endif /* MPCOMP_TRANSFER_INFO_ON_NODES */
     /* -- Tree array MVP information --                         */ 
     /** Rank among children of my father -> local rank          */

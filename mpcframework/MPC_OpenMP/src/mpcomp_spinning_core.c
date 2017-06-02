@@ -161,6 +161,90 @@ void __mpcomp_wakeup_mvp( mpcomp_mvp_t *mvp)
     /* Set thread rank */
     new_thread->rank = mvp->min_index[mpcomp_global_icvs.affinity];
     mvp->threads = new_thread;
+    spinning_val = MPCOMP_MVP_STATE_READY;
+}
+
+void __mpcomp_wakeup_leaf( mpcomp_node_t* start_node, const int num_threads )
+{
+    int i, nb_children_involved;
+    mpcomp_mvp_t **leaves_array;
+
+    /*TODO:  Remove global variable */
+    const int mpcomp_affinity = mpcomp_global_icvs.affinity; 
+    leaves_array = start_node->children.leaf;
+
+    /* Wake up children leaf */
+    sctk_assert( start_node->MPCOMP_CHILDREN_LEAF );
+    
+    /* Count children number involved */
+    for( i = 1, nb_children_involved = 1; i < start_node->nb_children; i++ )
+    {
+        const int leaf_rank = leaves_array[i]->min_index[mpcomp_affinity];
+        if( leaf_rank < num_threads ) nb_children_involved++;
+    }
+
+    start_node->barrier_num_threads = nb_children_involved++;
+
+    for( i = 1; i < start_node->nb_children; i++ )
+    {
+        const int leaf_rank = leaves_array[i]->min_index[mpcomp_affinity];
+        if( leaf_rank < num_threads )
+        {
+            leaves_array[i]->slave_running = MPCOMP_MVP_STATE_AWAKE;
+        }
+    }  
+}
+
+mpcomp_node_t*  __mpcomp_wakeup_node( mpcomp_node_t* start_node, const int num_threads )
+{
+    int i, nb_children_involved;
+    mpcomp_node_t *current_node;
+    mpcomp_node_t **nodes_array; 
+
+    current_node = start_node;
+
+    if( current_node->child_type != MPCOMP_CHILDREN_NODE )
+        return current_node;
+
+    /*TODO:  Remove global variable */
+    const int mpcomp_affinity = mpcomp_global_icvs.affinity; 
+
+    for( i = 0; i < start_node->instance->tree_depth; i++ )
+    {
+        for( j = 1, nb_children_involved = 1; j < current_node->nb_children; i++ )
+        {
+            const int node_rank = nodes_array[j]->min_index[mpcomp_affinity];
+            if( node_rank < num_threads ) nb_children_involved++;
+        }
+
+        for( j = 1; j < current_node->nb_children; j++ ) 
+        {
+            const int node_rank = leaves_array[j]->min_index[mpcomp_affinity];
+            if( node_rank < num_threads ) nodes_array[i]->slave_running = 1;
+        }
+
+        /* Next level must be compute by __mpcomp_wakeup_leaf */ 
+        if( current_node->child_type != MPCOMP_CHILDREN_NODE )
+            break;
+
+        current_node = current_node->children.node[0];
+    }
+
+    return current_node;
+}
+
+void __mpcomp_wakeup_gen_node( mpcomp_node_t* start_node, const int num_threads )
+{
+    mpcomp_node_t current_node;
+
+    const int instance_tree_depth = start_node->instance->tree_depth;
+     
+    current_node = __mpcomp_wakeup_node( start_node, num_threads );
+    const int depth_already_awake = start_node->depth - current_node_node->depth;
+    sctk_assert( depth_already_awake < 2 );
+    
+    if( depth_already_awake == 1 )
+        __mpcomp_wakeup_leaf( current_node, num_threads );
 }
 
 void __mpcomp_start_openmp_thread( mpcomp_mvp_t *mvp )
@@ -196,12 +280,17 @@ void mpcomp_slave_mvp_leaf( mpcomp_mvp_t *mvp, mpcomp_node_t *spinning_node )
     assert( mvp && !spinning_node );
     volatile int* spinning_val = mvp->slave_running;
 
+    /* Sanity check */
+    assert( spinning_val == MPCOMP_MVP_STATE_UNDEF );
+
     /* Spin while this microVP is alive */
     while( mvp->enable ) 
     {
+        /* MVP pause status */
+        spinning_val = MPCOMP_MVP_STATE_SLEEP;
         /* Spin for new parallel region */
-        sctk_thread_wait_for_value_and_poll( spinning_val, 1, NULL, NULL ) ;
-        *spinning_val = 0;
+        sctk_thread_wait_for_value_and_poll( spinning_val, MPCOMP_MVP_STATE_AWAKE, NULL, NULL ) ;
+        spinning_val = MPCOMP_MVP_STATE_AWAKE;
         __mpcomp_start_openmp_thread( mvp );
     }
 }
@@ -219,20 +308,20 @@ void mpcomp_slave_mvp_node( mpcomp_mvp_t *mvp, mpcomp_node_t *spinning_node )
 
     while( mvp->enable ) 
     {
+        *spinning_val = 0;
         /* Spinning on the designed node */
         sctk_thread_wait_for_value_and_poll( spinning_val, 1, NULL, NULL ) ;
-        *spinning_val = 0;
+        spinning_node->instance = spinning_node->father->instance;
 #if MPCOMP_TRANSFER_INFO_ON_NODES
-	    num_threads = n->father->info.num_threads;
+        spinning_node->info = start_node->father->info;
+        num_threads = spinning_node->info.num_threads;
 #else   /* MPCOMP_TRANSFER_INFO_ON_NODES */
-	    num_threads = n->instance->team->info.num_threads;
-#endif  /* MPCOMP_TRANSFER_INFO_ON_NODES */
+        num_threads = spinning_node->instance->team->info.info.num_threads;
+#endif /* MPCOMP_TRANSFER_INFO_ON_NODES */
 	    sctk_assert( num_threads > 0 ) ;
-	    /* Wake up children nodes */
-	    node = __mpcomp_wakeup_node( 0, node, num_threads, node->instance );
-        /* Wake up children leaf */
-	    node = __mpcomp_wakeup_leaf( node, num_threads, node->instance );
-        /* Start Parallel Region */
+	    /* -- Wake up children nodes -- */
+        __mpcomp_wakeup_gen_node( node, num_threads );
+        /* -- Start Parallel Region -- */
         __mpcomp_start_openmp_thread( mvp );
     }
 }
