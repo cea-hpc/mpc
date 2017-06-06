@@ -48,6 +48,8 @@ typedef struct mpcomp_mvp_thread_args_s
     unsigned int max_depth;
     unsigned int* tree_shape;
     unsigned int mvp_global_rank;
+    unsigned int numa_id;
+    int core_depth;
     mpcomp_meta_tree_node_t* array;
     void* options;
 } mpcomp_mvp_thread_args_t;
