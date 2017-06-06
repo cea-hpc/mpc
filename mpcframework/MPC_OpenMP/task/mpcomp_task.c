@@ -562,7 +562,7 @@ static struct mpcomp_task_s *__mpcomp_task_larceny(void) {
 void __internal_mpcomp_task_schedule( mpcomp_thread_t* thread, mpcomp_mvp_t* mvp, mpcomp_team_t* team ) {
 
     int type;
-    mpcomp_task_t *task;
+    mpcomp_task_t *task, *current_task;
 
     /* All argments must be non null */
     sctk_assert( thread && mvp && team);

@@ -149,6 +149,7 @@ static int *__mpcomp_compute_topo_tree_array(hwloc_topology_t topology,
   return degree;
 }
 
+#if 0
 static void __mpcomp_print_tree(mpcomp_instance_t *instance) {
 
   mpcomp_stack_t *s;
@@ -276,6 +277,7 @@ static void __mpcomp_print_tree(mpcomp_instance_t *instance) {
 
   return;
 }
+#endif 
 
 /*
  * Build the default tree.
@@ -775,7 +777,7 @@ int mpcomp_build_tree(mpcomp_instance_t *instance, int n_leaves, int depth,
      free(order);
 #endif
      /* Print the final tree */
-     __mpcomp_print_tree(instance);
+//     __mpcomp_print_tree(instance);
 
      return 0;
 }

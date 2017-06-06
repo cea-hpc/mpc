@@ -37,13 +37,13 @@ static inline struct common_table *mpcomp_common_table_allocate(void) {
 #endif /* MPCOMP_USE_INTEL_ABI */
 
 static inline void
-__mpcomp_parallel_region_infos_reset(mpcomp_new_parallel_region_info_t *info) {
+__mpcomp_parallel_region_infos_reset(mpcomp_parallel_region_t *info) {
   sctk_assert(info);
-  memset(info, 0, sizeof(mpcomp_new_parallel_region_info_t));
+  memset(info, 0, sizeof(mpcomp_parallel_region_t));
 }
 
 static inline void
-__mpcomp_parallel_region_infos_init(mpcomp_new_parallel_region_info_t *info) {
+__mpcomp_parallel_region_infos_init(mpcomp_parallel_region_t *info) {
   sctk_assert(info);
   __mpcomp_parallel_region_infos_reset(info);
   info->combined_pragma = MPCOMP_COMBINED_NONE;

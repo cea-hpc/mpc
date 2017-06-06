@@ -9,13 +9,6 @@ typedef enum
     MPCOMP_META_TREE_NONE       = 3
 } mpcomp_meta_tree_type_t;
 
-typedef enum
-{
-    MPCOMP_MVP_STATE_UNDEF = 0,
-    MPCOMP_MVP_STATE_SLEEP,
-    MPCOMP_MVP_STATE_AWAKE,
-    MPCOMP_MVP_STATE_READY
-} mpcomp_mvp_state_t; 
 
 typedef struct mpcomp_tree_array_global_info_s
 {

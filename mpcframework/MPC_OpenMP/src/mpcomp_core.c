@@ -747,7 +747,7 @@ void __mpcomp_instance_init(mpcomp_instance_t *instance, int nb_mvps,
 
   /* TODO Do we need a TLS for the openmp instance for every microVPs? */
 }
-
+#if 0
 void __mpcomp_in_order_scheduler( mpcomp_thread_t* thread ) 
 {
     mpcomp_loop_long_iter_t *loop;
@@ -826,3 +826,4 @@ void __mpcomp_in_order_scheduler( mpcomp_thread_t* thread )
             break;
     }
 }
+#endif 

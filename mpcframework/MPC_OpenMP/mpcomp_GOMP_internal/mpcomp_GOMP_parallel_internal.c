@@ -13,7 +13,7 @@
 TODO: put these declarations in header file
     ================================================================================   */
 // void mpcomp_internal_begin_parallel_region(int arg_num_threads,
-// mpcomp_new_parallel_region_info_t info);
+// mpcomp_parallel_region_t info);
 // void mpcomp_internal_end_parallel_region(mpcomp_instance_t* instance);
 /*   ================================================================================
  */
@@ -100,7 +100,7 @@ void mpcomp_internal_GOMP_parallel_start(void (*fn)(void *), void *data,
 void mpcomp_internal_GOMP_start_parallel_region(void (*fn)(void *), void *data,
                                                 unsigned num_threads) {
   mpcomp_thread_t *t;
-  mpcomp_new_parallel_region_info_t *info;
+  mpcomp_parallel_region_t *info;
   mpcomp_GOMP_wrapper_t *wrapper_gomp;
 
   /* Initialize OpenMP environment */
@@ -110,7 +110,7 @@ void mpcomp_internal_GOMP_start_parallel_region(void (*fn)(void *), void *data,
   sctk_assert(t != NULL);
 
   /* Prepare MPC OpenMP parallel region infos */
-  info = sctk_malloc(sizeof(mpcomp_new_parallel_region_info_t));
+  info = sctk_malloc(sizeof(mpcomp_parallel_region_t));
   sctk_assert(info);
   __mpcomp_parallel_region_infos_init(info);
 
@@ -144,7 +144,7 @@ void mpcomp_internal_GOMP_parallel_loop_generic_start(
     void (*fn)(void *), void *data, unsigned num_threads, long start, long end,
     long incr, long chunk_size, long combined_pragma) {
   mpcomp_thread_t *t;
-  mpcomp_new_parallel_region_info_t *info;
+  mpcomp_parallel_region_t *info;
   mpcomp_GOMP_wrapper_t *wrapper_gomp;
 
   /* Initialize OpenMP environment */
@@ -153,7 +153,7 @@ void mpcomp_internal_GOMP_parallel_loop_generic_start(
   t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
   sctk_assert(t != NULL);
 
-  info = sctk_malloc(sizeof(mpcomp_new_parallel_region_info_t));
+  info = sctk_malloc(sizeof(mpcomp_parallel_region_t));
   sctk_assert(info);
 
   __mpcomp_parallel_region_infos_init(info);
@@ -217,7 +217,7 @@ void mpcomp_internal_GOMP_parallel_sections_start(void (*fn)(void *),
                                                   unsigned num_threads,
                                                   unsigned count) {
   mpcomp_thread_t *t;
-  mpcomp_new_parallel_region_info_t *info;
+  mpcomp_parallel_region_t *info;
   mpcomp_GOMP_wrapper_t *wrapper_gomp;
 
   /* Initialize OpenMP environment */
@@ -226,7 +226,7 @@ void mpcomp_internal_GOMP_parallel_sections_start(void (*fn)(void *),
   t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
   sctk_assert(t != NULL);
 
-  info = sctk_malloc(sizeof(mpcomp_new_parallel_region_info_t));
+  info = sctk_malloc(sizeof(mpcomp_parallel_region_t));
   sctk_assert(info);
   __mpcomp_parallel_region_infos_init(info);
 

@@ -100,34 +100,34 @@ __mpcomp_internal_begin_parallel_region( mpcomp_parallel_region_t *info, const u
     __mpcomp_internal_parallel_ompt_begin( t );
 #endif /* OMPT_SUPPORT */
 
-    instance_info = &(  t->children_instance->instance->team->info );
+    instance_info = &(  t->children_instance->team->info );
 
     /* Fill information for the team */
-    instance_info.func = info->func;
-    instance_info.shared = info->shared;
-    instance_info.num_threads = num_threads;
+    instance_info->func = info->func;
+    instance_info->shared = info->shared;
+    instance_info->num_threads = real_num_threads;
     //TODO: remove new_root
-    instance_info.new_root = instance->root;
+    instance_info->new_root = t->instance->root;
 
     /* Do not touch to single_sections_current_save and for_dyn_current_save */
-    instance_info.combined_pragma = info->combined_pragma;
-    instance_info.icvs = t->info.icvs;
+    instance_info->combined_pragma = info->combined_pragma;
+    instance_info->icvs = t->info.icvs;
 
     /* Update active_levels_var and levels_var accordingly */
-    instance_info.icvs.levels_var = t->info.icvs.levels_var + 1;
+    instance_info->icvs.levels_var = t->info.icvs.levels_var + 1;
 
-    if( num_threads > 1 ) 
+    if( real_num_threads > 1 ) 
     {
-        instance_info.icvs.active_levels_var +=
+        instance_info->icvs.active_levels_var +=
         t->info.icvs.active_levels_var + 1;
     }
 
-    __mpcomp_loop_gen_loop_infos_cpy( &(info->loop_infos), &(instance_info.loop_infos) );
-    instance->team->info.nb_sections = info->nb_sections;
+    __mpcomp_loop_gen_loop_infos_cpy( &(info->loop_infos), &(instance_info->loop_infos) );
+    t->instance->team->info.nb_sections = info->nb_sections;
 
 	/* Compute depth */
-	instance->team->depth = t->instance->team->depth + 1;
-    __mpcomp_wakeup_gen_node( t->root, num_threads );    
+	t->instance->team->depth = t->instance->team->depth + 1;
+    __mpcomp_wakeup_gen_node( t->root, real_num_threads );    
 	return ;
 }
 

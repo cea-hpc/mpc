@@ -86,13 +86,13 @@ void __kmpc_fork_call(ident_t *loc, kmp_int32 argc, kmpc_micro microtask, ...) {
 
 void __kmpc_serialized_parallel(ident_t *loc, kmp_int32 global_tid) {
   mpcomp_thread_t *t;
-  mpcomp_new_parallel_region_info_t *info;
+  mpcomp_parallel_region_t *info;
 
 #ifdef MPCOMP_FORCE_PARALLEL_REGION_ALLOC
-  info = sctk_malloc(sizeof(mpcomp_new_parallel_region_info_t));
+  info = sctk_malloc(sizeof(mpcomp_parallel_region_t));
   assert(info);
 #else  /* MPCOMP_FORCE_PARALLEL_REGION_ALLOC */
-  mpcomp_new_parallel_region_info_t noallocate_info;
+  mpcomp_parallel_region_t noallocate_info;
   info = &noallocate_info;
 #endif /* MPCOMP_FORCE_PARALLEL_REGION_ALLOC */
 

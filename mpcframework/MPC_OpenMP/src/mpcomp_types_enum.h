@@ -96,4 +96,12 @@ typedef struct mpcomp_tree_meta_elt_s {
   mpcomp_tree_meta_elt_ptr_t ptr;
 } mpcomp_tree_meta_elt_t;
 
+typedef enum
+{
+    MPCOMP_MVP_STATE_UNDEF = 0,
+    MPCOMP_MVP_STATE_SLEEP,
+    MPCOMP_MVP_STATE_AWAKE,
+    MPCOMP_MVP_STATE_READY
+} mpcomp_mvp_state_t; 
+
 #endif /* __MPCOMP_TYPES_ENUM_H__ */

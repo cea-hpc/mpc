@@ -124,6 +124,7 @@ typedef struct mpcomp_team_s {
  * one thread per nested level */
 typedef struct mpcomp_thread_s {
     /* -- Internal specific informations -- */
+    unsigned int depth;
     /** OpenMP rank (0 for master thread per team) */
     long rank;      
     /* Micro-vp of the thread*/
@@ -249,6 +250,7 @@ typedef struct mpcomp_mvp_s
     /** MVP spinning value in topology tree                     */
     volatile int slave_running;
     /* -- MVP Tree related informations                         */
+    unsigned int depth;
     /** Root of the topology tree                               */
     struct mpcomp_node_s *root;   
     /** Father node in the topology tree                        */
@@ -279,9 +281,9 @@ typedef struct mpcomp_mvp_s
     /** Size of topology tree MVP depth level    */
     int stage_size;
     int *tree_rank;                         /* Array of rank in every node of the tree */
+    struct mpcomp_node_s* tree_array_father;
     int min_index[MPCOMP_AFFINITY_NB];
-/* OMP 3.0 */
-#if MPCOMP_TASK
+#if MPCOMP_TASK     /*      OMP 3.0     */
   struct mpcomp_task_mvp_infos_s task_infos;
 #endif /* MPCOMP_TASK */
 } mpcomp_mvp_t;
@@ -301,6 +303,7 @@ typedef struct mpcomp_node_s
     int depth;
     /** Father node in the topology tree                        */
     struct mpcomp_node_s *father;
+    struct mpcomp_node_s *prev_father;
     /** Rigth brother node in the topology tree                 */
     struct mpcomp_node_s* prev_brother;
     /** Rigth brother node in the topology tree                 */
@@ -320,8 +323,14 @@ typedef struct mpcomp_node_s
     /* Transfert OpenMP region information to OpenMP thread     */
     mpcomp_parallel_region_t info;
 #endif /* MPCOMP_TRANSFER_INFO_ON_NODES */
+
     /* -- Tree array MVP information --                         */ 
     /** Rank among children of my father -> local rank          */
+    int tree_depth;
+    int* tree_base;
+    int* tree_cumulative;
+    int* tree_nb_nodes_per_depth;
+     
     long rank;                    
     int local_rank;
     int stage_rank;
