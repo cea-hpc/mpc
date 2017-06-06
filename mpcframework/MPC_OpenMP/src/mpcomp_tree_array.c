@@ -397,13 +397,14 @@ __mpcomp_tree_array_compute_thread_openmp_min_rank_balanced( const int* shape, c
     if( rank )
     {
         const int depth = __mpcomp_tree_array_get_node_depth( shape, max_depth, rank );
-        const int tmp_cumulative_core = __mpcomp_tree_array_get_tree_cumulative( shape, max_depth);
+        const int *tmp_cumulative_core_array = __mpcomp_tree_array_get_tree_cumulative( shape, max_depth);
+        const int tmp_cumulative_core = tmp_cumulative_core_array[depth -1];
         node_parents = __mpcomp_tree_array_get_father_array_by_depth( shape, depth, rank );
         tmp_local_rank = __mpcomp_tree_array_convert_global_to_local(shape, max_depth, rank);
 
         if( depth-1 < core_depth )
         {
-            tmp_cumulative = __mpcomp_tree_array_get_tree_cumulative( shape, max_depth);
+            tmp_cumulative = tmp_cumulative_core_array[depth -1];
             count = tmp_local_rank * tmp_cumulative / tmp_cumulative_core;
         //    fprintf(stderr,  "case 1a -- count :  %d %d %d -- %d -- %d \n", tmp_local_rank,  depth-1, tmp_cumulative, tmp_cumulative_core, count);
         }
@@ -421,7 +422,7 @@ __mpcomp_tree_array_compute_thread_openmp_min_rank_balanced( const int* shape, c
 
             if( parent_depth-1 < core_depth )
             {
-                tmp_cumulative = __mpcomp_tree_array_get_tree_cumulative( shape, max_depth); 
+                tmp_cumulative = tmp_cumulative_core_array[depth - ( i + 1 )]; 
                 count += ( tmp_local_rank * tmp_cumulative / tmp_cumulative_core); 
         //        fprintf(stderr,  "case 1b\n");
             }
@@ -957,8 +958,10 @@ __mpcomp_alloc_openmp_tree_struct( const int* shape, const int max_depth, int *t
 {
     int i, ret;
     sctk_thread_t* thread;
+    mpcomp_thread_t* master;
     mpcomp_meta_tree_node_t* root;
     mpcomp_mvp_thread_args_t* args;
+    void* retval;
 
     char * string_tree_shape = __mpcomp_tree_array_convert_array_to_string( shape, max_depth );
     //fprintf(stderr, "SHAPE : %s\n", string_tree_shape ); 
@@ -983,10 +986,6 @@ __mpcomp_alloc_openmp_tree_struct( const int* shape, const int max_depth, int *t
 
     for( i = n_num - 1; i >= non_leaf_n_num; i-- )
     {
-        thread = ( sctk_thread_t* ) malloc( sizeof( sctk_thread_t ) );  
-        assert( thread ); 
-        memset( thread, 0, sizeof( sctk_thread_t ) );
-
         args = (mpcomp_mvp_thread_args_t*) malloc( sizeof( mpcomp_mvp_thread_args_t));
         assert( args );
         memset( args, 0,  sizeof( mpcomp_mvp_thread_args_t) );
@@ -1000,6 +999,12 @@ __mpcomp_alloc_openmp_tree_struct( const int* shape, const int max_depth, int *t
 
         if( i != non_leaf_n_num )
         {
+            thread = ( sctk_thread_t* ) malloc( sizeof( sctk_thread_t ) );  
+            assert( thread ); 
+            memset( thread, 0, sizeof( sctk_thread_t ) );
+
+            args->thread = ( void* ) thread;
+
             const int target_vp = __mpcomp_tree_array_convert_global_to_stage( shape, max_depth, i );
             const int pu_id = ( sctk_get_cpu() + target_vp ) % sctk_get_cpu_number(); 
 
@@ -1012,10 +1017,27 @@ __mpcomp_alloc_openmp_tree_struct( const int* shape, const int max_depth, int *t
             assert( ret == 0 );
 
             sctk_thread_attr_destroy(&__attr);
+            retval = NULL; // Avoid non initialize variable warning
         }
+        else
+        {
+            /* sctk_thread_self return sctk_thread_t || Why ?! */
+            args->thread = ( void* ) NULL;
+            retval = __mpcomp_openmp_mvp_initialisation( args );
+        } 
 
     }
-    return (void*) __mpcomp_openmp_mvp_initialisation( args );
+    sctk_assert( retval );
+
+    // Create an OpenMP context
+    master = ( mpcomp_thread_t*) malloc( sizeof( mpcomp_thread_t ) ); 
+    sctk_assert( master );
+    memset( master, 0, sizeof( mpcomp_thread_t ) );
+    master->root = instance->root;
+    // Switch OpenMP Thread TLS
+    fprintf(stderr, "Switch TLS: %p %p\n", master, instance->root );
+    sctk_openmp_thread_tls = (void*) master;     
+    return retval;
 }
 
 #ifdef MPCOMP_COMPILE_WITH_MAIN
