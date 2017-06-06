@@ -281,20 +281,19 @@ void __mpcomp_start_openmp_thread( mpcomp_mvp_t *mvp )
  */
 void mpcomp_slave_mvp_leaf( mpcomp_mvp_t *mvp, mpcomp_node_t *spinning_node ) 
 {
-    assert( mvp && !spinning_node );
-    volatile int* spinning_val = mvp->slave_running;
+    assert( mvp );
+    volatile int* spinning_val = &( mvp->slave_running ) ;
 
     /* Sanity check */
-    assert( spinning_val == MPCOMP_MVP_STATE_UNDEF );
+    assert( *spinning_val == MPCOMP_MVP_STATE_UNDEF );
 
     /* Spin while this microVP is alive */
     while( mvp->enable ) 
     {
         /* MVP pause status */
-        spinning_val = MPCOMP_MVP_STATE_SLEEP;
+        *spinning_val = MPCOMP_MVP_STATE_SLEEP;
         /* Spin for new parallel region */
         sctk_thread_wait_for_value_and_poll( spinning_val, MPCOMP_MVP_STATE_AWAKE, NULL, NULL ) ;
-        spinning_val = MPCOMP_MVP_STATE_AWAKE;
         __mpcomp_start_openmp_thread( mvp );
     }
 }
@@ -307,15 +306,16 @@ void mpcomp_slave_mvp_node( mpcomp_mvp_t *mvp, mpcomp_node_t *spinning_node )
 {
     int num_threads;
     mpcomp_node_t* traversing_node = NULL;
-    sctk_assert( mvp && spinning_node ) ;
 
+    sctk_assert( mvp );
     volatile int* spinning_val = &( spinning_node->slave_running );
+    sctk_assert( *spinning_val == MPCOMP_MVP_STATE_UNDEF );
 
     while( mvp->enable ) 
     {
-        *spinning_val = 0;
+        *spinning_val = MPCOMP_MVP_STATE_SLEEP;
         /* Spinning on the designed node */
-        sctk_thread_wait_for_value_and_poll( spinning_val, 1, NULL, NULL ) ;
+        sctk_thread_wait_for_value_and_poll( spinning_val, MPCOMP_MVP_STATE_AWAKE, NULL, NULL ) ;
         spinning_node->instance = spinning_node->father->instance;
 #if MPCOMP_TRANSFER_INFO_ON_NODES
         spinning_node->info = start_node->father->info;
