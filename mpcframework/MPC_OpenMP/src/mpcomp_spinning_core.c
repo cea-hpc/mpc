@@ -166,6 +166,7 @@ void __mpcomp_wakeup_mvp( mpcomp_mvp_t *mvp)
     new_thread->rank = mvp->min_index[mpcomp_global_icvs.affinity];
     mvp->threads = new_thread;
     mvp->slave_running = MPCOMP_MVP_STATE_READY;
+    fprintf(stderr, "Switch Thread : %p to %p -- Instance : %p\n", new_thread->father, new_thread, new_thread->instance );
 }
 
 void __mpcomp_wakeup_leaf( mpcomp_node_t* start_node, const int num_threads )
@@ -247,7 +248,7 @@ void __mpcomp_wakeup_gen_node( mpcomp_node_t* start_node, const int num_threads 
     const int depth_already_awake = start_node->depth - current_node->depth;
     sctk_assert( depth_already_awake < 2 );
     
-    if( depth_already_awake == 1 )
+    //if( depth_already_awake == 1 )
         __mpcomp_wakeup_leaf( current_node, num_threads );
 }
 
@@ -262,11 +263,10 @@ void __mpcomp_start_openmp_thread( mpcomp_mvp_t *mvp )
     sctk_assert( sctk_openmp_thread_tls );
 
     /* Start parallel region */
-    __mpcomp_in_order_scheduler( mvp );
+    __mpcomp_in_order_scheduler( sctk_openmp_thread_tls );
 
     to_free = sctk_openmp_thread_tls; 
     sctk_openmp_thread_tls = mvp->threads->father;
-    sctk_assert( sctk_openmp_thread_tls );
 
     /* Free previous thread */
     free( to_free );
@@ -294,7 +294,9 @@ void mpcomp_slave_mvp_leaf( mpcomp_mvp_t *mvp, mpcomp_node_t *spinning_node )
         *spinning_val = MPCOMP_MVP_STATE_SLEEP;
         /* Spin for new parallel region */
         sctk_thread_wait_for_value_and_poll( spinning_val, MPCOMP_MVP_STATE_AWAKE, NULL, NULL ) ;
+        mvp->instance = mvp->father->instance;
         __mpcomp_start_openmp_thread( mvp );
+        mvp->instance = NULL;
     }
 }
 

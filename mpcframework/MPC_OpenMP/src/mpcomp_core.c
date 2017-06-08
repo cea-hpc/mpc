@@ -747,7 +747,7 @@ void __mpcomp_instance_init(mpcomp_instance_t *instance, int nb_mvps,
 
   /* TODO Do we need a TLS for the openmp instance for every microVPs? */
 }
-#if 0
+
 void __mpcomp_in_order_scheduler( mpcomp_thread_t* thread ) 
 {
     mpcomp_loop_long_iter_t *loop;
@@ -771,7 +771,7 @@ void __mpcomp_in_order_scheduler( mpcomp_thread_t* thread )
             __mpcomp_static_loop_init( thread, loop->lb, loop->b, loop->incr, loop->chunk_size);
             break;
         case MPCOMP_COMBINED_DYN_LOOP:
-            __mpcomp_dynamic_loop_init( cur_mvp_thread, loop->lb, loop->b, loop->incr, loop->chunk_size );
+            __mpcomp_dynamic_loop_init( thread, loop->lb, loop->b, loop->incr, loop->chunk_size );
             break;
         default:
             not_implemented();
@@ -812,18 +812,17 @@ void __mpcomp_in_order_scheduler( mpcomp_thread_t* thread )
 #endif /* OMPT_SUPPORT */
 
     /* Handle ending of combined parallel region */
-    switch ( info.combined_pragma ) 
+    switch ( thread->info.combined_pragma ) 
     {
         case MPCOMP_COMBINED_NONE:
         case MPCOMP_COMBINED_SECTION:
         case MPCOMP_COMBINED_STATIC_LOOP:
             break;
         case MPCOMP_COMBINED_DYN_LOOP:
-            __mpcomp_dynamic_loop_end_nowait(cur_mvp_thread);
+            __mpcomp_dynamic_loop_end_nowait(thread);
             break;
         default:
             not_implemented();
             break;
     }
 }
-#endif 

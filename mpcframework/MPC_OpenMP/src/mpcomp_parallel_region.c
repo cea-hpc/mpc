@@ -34,6 +34,9 @@
 #include "mpcomp_ompt_general.h"
 extern ompt_callback_t* OMPT_Callbacks;
 
+/* Add header for spinning core */
+mpcomp_instance_t* __mpcomp_tree_array_instance_init( mpcomp_thread_t*, const int);
+
 
 static void __mpcomp_internal_parallel_ompt_begin( mpcomp_thread_t* t )
 {
@@ -73,10 +76,9 @@ __mpcomp_internal_begin_parallel_region( mpcomp_parallel_region_t *info, const u
     /* Compute new num threads value */
     if( t->root )
     {
-        const unsigned int max_threads = t->root->tree_nb_nodes_per_depth[root->tree_depth - 1];
+        const unsigned int max_threads = t->root->tree_nb_nodes_per_depth[t->root->tree_depth-1];
         real_num_threads = (!expected_num_threads) ? info->icvs.nthreads_var : expected_num_threads;
-        real_num_threads = sctk_min( real_num_threads, max_threads );
-        real_num_threads = sctk_min( real_num_threads, expected_num_threads );
+        real_num_threads = (!real_num_threads) ? max_threads : real_num_threads;
     }
     else
     {
@@ -87,14 +89,14 @@ __mpcomp_internal_begin_parallel_region( mpcomp_parallel_region_t *info, const u
    
     /* Check if the children instance exists */
     // TODO: Add chained list for previous instance
-    if( t->children_instance )
+    if( !t->children_instance ||
+        (t->children_instance && 
+        t->children_instance->nb_mvps != real_num_threads ) )
     {
-        if( t->children_instance->nb_mvps != real_num_threads )
-        {
-            t->children_instance = __mpcomp_tree_array_instance_init( t, real_num_threads );
-            sctk_assert( t->children_instance );
-        } 
-    } 
+        t->children_instance = __mpcomp_tree_array_instance_init( t, real_num_threads );
+        sctk_assert( t->children_instance );
+    }
+    
 
 #if OMPT_SUPPORT
     __mpcomp_internal_parallel_ompt_begin( t );
@@ -127,6 +129,7 @@ __mpcomp_internal_begin_parallel_region( mpcomp_parallel_region_t *info, const u
 
 	/* Compute depth */
 	t->children_instance->team->depth = ( !( t->instance ) ) ? 0 : t->instance->team->depth + 1;
+    t->root->instance = t->children_instance;
     __mpcomp_wakeup_gen_node( t->root, real_num_threads );    
 	return ;
 }
@@ -136,6 +139,7 @@ void __mpcomp_internal_end_parallel_region(mpcomp_instance_t *instance)
     mpcomp_node_t *root;
     mpcomp_thread_t *master;
 
+#if 0
     /* Grab the master thread of the ending parallel region */
     master = &(instance->mvps[0]->threads[0]);
 
@@ -178,6 +182,7 @@ void __mpcomp_internal_end_parallel_region(mpcomp_instance_t *instance)
 #if MPCOMP_TASK
                 __mpcomp_task_coherency_ending_parallel_region();
 #endif // MPCOMP_TASK
+#endif
 #endif
 
 #if OMPT_SUPPORT 
@@ -231,7 +236,8 @@ void __mpcomp_start_parallel_region(void (*func)(void *), void *shared,
   __mpcomp_internal_begin_parallel_region(info, arg_num_threads);
 
   /* Start scheduling */
-  __mpcomp_in_order_scheduler(t->children_instance->mvps[0]);
+  t->root->mvp->instance = t->children_instance;
+  __mpcomp_start_openmp_thread( t->root->mvp );  
 
   __mpcomp_internal_end_parallel_region(t->children_instance);
 
@@ -281,7 +287,8 @@ void __mpcomp_start_sections_parallel_region(void (*func)(void *), void *shared,
   __mpcomp_internal_begin_parallel_region(info, arg_num_threads);
 
   /* Start scheduling */
-  __mpcomp_in_order_scheduler(t->children_instance->mvps[0]);
+  t->root->mvp->instance = t->children_instance;
+  __mpcomp_start_openmp_thread( t->root->mvp );
 
   __mpcomp_internal_end_parallel_region(t->children_instance);
 

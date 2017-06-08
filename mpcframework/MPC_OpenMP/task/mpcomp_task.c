@@ -608,7 +608,7 @@ void __internal_mpcomp_task_schedule( mpcomp_thread_t* thread, mpcomp_mvp_t* mvp
     mpcomp_task_unref_parent_task(task);
 }
 
-void __mpcomp_task_schedule( void )
+void mpcomp_task_schedule( void )
 {
     mpcomp_mvp_t *mvp;
     mpcomp_team_t *team;
@@ -634,6 +634,7 @@ void __mpcomp_task_schedule( void )
 }
 
 void mpcomp_taskwait(void) {
+#if 0
   mpcomp_task_t *current_task = NULL;     /* Current task execute */
   mpcomp_thread_t *omp_thread_tls = NULL; /* thread private data  */
 
@@ -654,6 +655,7 @@ void mpcomp_taskwait(void) {
       mpcomp_task_schedule();
     }
   }
+#endif
 }
 
 /*
