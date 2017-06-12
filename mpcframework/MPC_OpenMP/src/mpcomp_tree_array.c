@@ -714,7 +714,6 @@ __mpcomp_openmp_node_initialisation( mpcomp_meta_tree_node_t* root, mpcomp_node_
 
     me = &( root[rank] );
 
-    fprintf(stderr, "[%d] hello %s -> [%p]\n", rank, __func__, root_node );
 
     /* Generic infos */
     me->rank = rank;
@@ -744,14 +743,22 @@ __mpcomp_openmp_node_initialisation( mpcomp_meta_tree_node_t* root, mpcomp_node_
         new_node = (mpcomp_node_t *) malloc( sizeof(mpcomp_node_t) );
         assert( new_node );     
         memset( new_node, 0, sizeof(mpcomp_node_t) );
+        //fprintf(stderr, "[%d] hello %s -> [%p,%p]\n", rank, __func__, root_node, new_node );
     }
     else
     {
         new_node = root_node;
+        //fprintf(stderr, "[%d] hello %s -> [%p, ROOT]\n", rank, __func__, root_node );
     }
+
+
 
     // save Node
     me->user_pointer = (void*) new_node;
+
+    // Debug informations ...
+    new_node->global_rank = rank;
+    new_node->stage_rank = me->stage_rank;
 
     // Get infos from parent node
     new_node->depth = me->depth;
@@ -773,7 +780,7 @@ __mpcomp_openmp_node_initialisation( mpcomp_meta_tree_node_t* root, mpcomp_node_
 
     if( (uintptr_t) new_node == (uintptr_t) root_node )
     {
-        fprintf(stderr, "Allocate root array ...\n");
+        //fprintf(stderr, "Allocate root array ...\n");
     }
 
     /* -- TREE BASE -- */
@@ -979,7 +986,7 @@ __mpcomp_openmp_mvp_initialisation( void* args )
 
    //     new_mvp->to_run = root[target_node_rank].user_pointer;
         new_mvp->slave_running = MPCOMP_MVP_STATE_UNDEF;
-        mpcomp_slave_mvp_node( new_mvp, root_node );
+        mpcomp_slave_mvp_node( new_mvp, new_mvp->father );
     }
     else /* The other children are regular leaves */ 
     {
@@ -1070,9 +1077,11 @@ __mpcomp_alloc_openmp_tree_struct( const int* shape, const int max_depth, int *t
     sctk_assert( master );
     memset( master, 0, sizeof( mpcomp_thread_t ) );
     master->root = root_node;
+    master->mvp = root_node->mvp;
+    root_node->mvp->threads = master;
 
     // Switch OpenMP Thread TLS
-    fprintf(stderr, "Switch TLS: %p %p - %p\n", master, root, root_node );
+    fprintf(stderr, "Switch TLS: %p %p <> %p - %p\n", master, root, master->mvp, root_node );
     sctk_openmp_thread_tls = (void*) master;     
 
     return retval;

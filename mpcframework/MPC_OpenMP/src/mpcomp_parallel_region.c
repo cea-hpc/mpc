@@ -76,8 +76,10 @@ __mpcomp_internal_begin_parallel_region( mpcomp_parallel_region_t *info, const u
     /* Compute new num threads value */
     if( t->root )
     {
-        const unsigned int max_threads = t->root->tree_nb_nodes_per_depth[t->root->tree_depth-1];
-        real_num_threads = (!expected_num_threads) ? info->icvs.nthreads_var : expected_num_threads;
+        const unsigned int max_threads = t->root->nb_children;
+        fprintf(stderr, "MAX threads ... %d from %s\n", max_threads, __func__ );
+        //real_num_threads = (!expected_num_threads) ? info->icvs.nthreads_var : expected_num_threads;
+        real_num_threads = expected_num_threads;
         real_num_threads = (!real_num_threads) ? max_threads : real_num_threads;
     }
     else
@@ -86,6 +88,7 @@ __mpcomp_internal_begin_parallel_region( mpcomp_parallel_region_t *info, const u
     }
 
     sctk_assert(real_num_threads > 0);
+    fprintf(stderr, " from %s : Compute parallel region num threads #%d -> %p\n", __func__, real_num_threads, t->root );
    
     /* Check if the children instance exists */
     // TODO: Add chained list for previous instance
@@ -93,8 +96,13 @@ __mpcomp_internal_begin_parallel_region( mpcomp_parallel_region_t *info, const u
         (t->children_instance && 
         t->children_instance->nb_mvps != real_num_threads ) )
     {
+        //fprintf(stderr, "%s : Allocate a new parallel region\n", __func__ );
         t->children_instance = __mpcomp_tree_array_instance_init( t, real_num_threads );
         sctk_assert( t->children_instance );
+    }
+    else
+    {
+        //fprintf(stderr, "%s : Re-use previous parallel region < %p >\n", __func__, t->children_instance );
     }
     
 
@@ -108,7 +116,9 @@ __mpcomp_internal_begin_parallel_region( mpcomp_parallel_region_t *info, const u
     instance_info->func = info->func;
     instance_info->shared = info->shared;
     instance_info->num_threads = real_num_threads;
+
     //TODO: remove new_root
+    //fprintf(stderr, "\n\n%s : instance info new root %p\n\n", __func__, t->root );
     instance_info->new_root = t->root;
 
     /* Do not touch to single_sections_current_save and for_dyn_current_save */
@@ -129,8 +139,14 @@ __mpcomp_internal_begin_parallel_region( mpcomp_parallel_region_t *info, const u
 
 	/* Compute depth */
 	t->children_instance->team->depth = ( !( t->instance ) ) ? 0 : t->instance->team->depth + 1;
-    t->root->instance = t->children_instance;
-    __mpcomp_wakeup_gen_node( t->root, real_num_threads );    
+
+    if( t->root )
+    {
+        //fprintf(stderr, "%s : Wake-up other nodes ...\n", __func__ );
+        t->root->instance = t->children_instance;
+        __mpcomp_wakeup_gen_node( t->root, real_num_threads );    
+    }
+
 	return ;
 }
 
@@ -139,38 +155,41 @@ void __mpcomp_internal_end_parallel_region(mpcomp_instance_t *instance)
     mpcomp_node_t *root;
     mpcomp_thread_t *master;
 
-#if 0
     /* Grab the master thread of the ending parallel region */
-    master = &(instance->mvps[0]->threads[0]);
+//    master = &(instance->root->mvp->threads);
+    master = ( mpcomp_thread_t* ) sctk_openmp_thread_tls;
+    root = master->instance->root;
 
     /* Grab the tree root of the ending parallel region */
-    root = master->info.new_root;
+    //root = master->info.new_root;
 
-    __mpcomp_sendtosleep_mvp(instance->mvps[0]);
+ //   __mpcomp_sendtosleep_mvp(instance->mvps[0]);
 
     /* Someone to wait... */
     if( instance->team->info.num_threads > 1 ) {
-
-    mpcomp_thread_t *prev = sctk_openmp_thread_tls;
-    sctk_openmp_thread_tls = master;
+#if 0
+//    mpcomp_thread_t *prev = sctk_openmp_thread_tls;
+//    sctk_openmp_thread_tls = master;
 
     /* Implicit barrier */
-    __mpcomp_internal_half_barrier( instance->mvps[0] ) ;
-    int nb_call = 0;
+    //__mpcomp_internal_half_barrier( instance->mvps[0] ) ;
+    //int nb_call = 0;
+
+    fprintf(stderr, "[<>] Waitting for %d threads on node %p\n", root->barrier_num_threads, root );  
 
     /* Finish the half barrier by spinning on the root value */
     while (sctk_atomics_load_int(&(root->barrier)) !=
            root->barrier_num_threads) {
       sctk_thread_yield();
 #ifdef MPCOMP_TASK
-      mpcomp_task_schedule();
+//      mpcomp_task_schedule();
 #endif /* MPCOMP_TASK */
     }
 
     sctk_atomics_store_int(&(root->barrier), 0);
 
-    sctk_openmp_thread_tls = prev;
     sctk_nodebug("%s: final barrier done...", __func__);
+#endif
   }
 
   /* Update team info for last values */
@@ -182,7 +201,6 @@ void __mpcomp_internal_end_parallel_region(mpcomp_instance_t *instance)
 #if MPCOMP_TASK
                 __mpcomp_task_coherency_ending_parallel_region();
 #endif // MPCOMP_TASK
-#endif
 #endif
 
 #if OMPT_SUPPORT 
@@ -236,9 +254,10 @@ void __mpcomp_start_parallel_region(void (*func)(void *), void *shared,
   __mpcomp_internal_begin_parallel_region(info, arg_num_threads);
 
   /* Start scheduling */
-  t->root->mvp->instance = t->children_instance;
-  __mpcomp_start_openmp_thread( t->root->mvp );  
+  t->mvp->instance = t->children_instance;
+  __mpcomp_start_openmp_thread( t->mvp );  
 
+  fprintf(stderr, "%s: End outlined OpenMP func\n", __func__ );
   __mpcomp_internal_end_parallel_region(t->children_instance);
 
   sctk_nodebug("%s: === EXIT PARALLEL REGION ===", __func__);

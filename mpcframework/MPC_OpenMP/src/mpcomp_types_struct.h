@@ -284,8 +284,9 @@ typedef struct mpcomp_mvp_s
     struct mpcomp_node_s* tree_array_father;
     int min_index[MPCOMP_AFFINITY_NB];
 #if MPCOMP_TASK     /*      OMP 3.0     */
-  struct mpcomp_task_mvp_infos_s task_infos;
+    struct mpcomp_task_mvp_infos_s task_infos;
 #endif /* MPCOMP_TASK */
+    struct mpcomp_node_chain_elt_s*  prev_node_father;
 } mpcomp_mvp_t;
 
 /* OpenMP Node */
@@ -335,6 +336,8 @@ typedef struct mpcomp_node_s
     int local_rank;
     int stage_rank;
     int stage_size;
+    int global_rank;
+
     /* Flat min index of leaves in this subtree                 */
     int min_index[MPCOMP_AFFINITY_NB]; 
     /* -- Barrier specific information --                       */ 
@@ -347,9 +350,17 @@ typedef struct mpcomp_node_s
 #if MPCOMP_TASK
     struct mpcomp_task_node_infos_s task_infos;
 #endif /* MPCOMP_TASK */
+    struct mpcomp_node_s* mvp_prev_father;
 } mpcomp_node_t;
 
 typedef struct mpcomp_node_s *mpcomp_node_ptr_t;
+
+typedef struct  mpcomp_node_chain_elt_s
+{
+    struct mpcomp_node_s* elt;
+    struct mpcomp_node_s* node;
+    struct mpcomp_node_chain_elt_t* prev;
+} mpcomp_node_chain_elt_t;
 
 #ifdef __cplusplus
 }
