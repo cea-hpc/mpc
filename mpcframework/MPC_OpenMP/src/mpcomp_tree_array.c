@@ -760,6 +760,8 @@ __mpcomp_openmp_node_initialisation( mpcomp_meta_tree_node_t* root, mpcomp_node_
     new_node->global_rank = rank;
     new_node->stage_rank = me->stage_rank;
 
+    fprintf(stderr, "[%d | %d | %d | %d | %p] %s: %d\n", new_node->global_rank, new_node->stage_rank, new_node->local_rank, new_node->rank, new_node, __func__, me->depth ); 
+
     // Get infos from parent node
     new_node->depth = me->depth;
     new_node->id_numa = me->numa_id;
@@ -776,7 +778,7 @@ __mpcomp_openmp_node_initialisation( mpcomp_meta_tree_node_t* root, mpcomp_node_
     memcpy( new_node->min_index, me->min_index, sizeof(int) * MPCOMP_AFFINITY_NB );
 
     /* Tree Array informations */
-    const int array_size = max_depth - new_node->depth + 1;
+    const int array_size = max_depth - new_node->depth + 2;
 
     if( (uintptr_t) new_node == (uintptr_t) root_node )
     {
@@ -839,33 +841,47 @@ __mpcomp_openmp_node_initialisation( mpcomp_meta_tree_node_t* root, mpcomp_node_
     {
         sctk_thread_yield();
     }   
-   
+  
+
     /* Update father and children */
     for( i = 0; i < children_num; i++ )
     {
         mpcomp_meta_tree_node_t* child = &( root[me->first_child_array[0] + i] );
         assert( child && child->user_pointer );
-
-        int prev_brother_idx =  ( i == 0 ) ? children_num - 1 : i -1; 
-        int next_brother_idx =  ( i + 1 ) % children_num;
-
+        
         if( new_node->child_type == MPCOMP_CHILDREN_NODE )
         {
             new_node->children.node[i] = (mpcomp_node_t*) child->user_pointer; 
             new_node->children.node[i]->father = new_node;
-            if( i == 0 ) new_node->mvp = new_node->children.node[i]->mvp;
-            new_node->children.node[i]->prev_brother = new_node->children.node[prev_brother_idx];
-            new_node->children.node[i]->next_brother = new_node->children.node[next_brother_idx];
         }
         else
         {
             new_node->children.leaf[i] = (mpcomp_mvp_t*) child->user_pointer;
             new_node->children.leaf[i]->father = new_node;
-            if( i == 0 ) new_node->mvp = new_node->children.leaf[i];
-            new_node->children.leaf[i]->prev_brother = new_node->children.leaf[prev_brother_idx];
-            new_node->children.leaf[i]->next_brother = new_node->children.leaf[next_brother_idx];
         }
     }
+
+
+    for( i = 0; i < children_num; i++ )
+    {
+        int prev_brother_idx =  ( i == 0 ) ? children_num - 1 : i -1; 
+        int next_brother_idx =  ( i + 1 ) % children_num;
+
+        if( new_node->child_type == MPCOMP_CHILDREN_NODE )
+        {
+            new_node->children.node[i]->prev_brother = new_node->children.node[prev_brother_idx];
+            new_node->children.node[i]->next_brother = new_node->children.node[next_brother_idx];
+            if( i == 0 ) new_node->mvp = new_node->children.node[0]->mvp;
+        }
+        else
+        {
+            new_node->children.leaf[i]->prev_brother = new_node->children.leaf[prev_brother_idx];
+            new_node->children.leaf[i]->next_brother = new_node->children.leaf[next_brother_idx];
+            if( i == 0 ) new_node->mvp = new_node->children.leaf[0];
+        }
+    }
+    
+    fprintf(stderr, "node addr : %p %p\n", new_node, new_node->mvp );
 
     if( !( me->fathers_array ) ) return 0; 
 
@@ -939,6 +955,13 @@ __mpcomp_openmp_mvp_initialisation( void* args )
 
     new_mvp->thread_self = thread;
     new_mvp->rank = me->local_rank;
+
+    /* MVP ranking */
+    new_mvp->stage_rank = me->stage_rank;
+    new_mvp->local_rank = me->local_rank;
+    new_mvp->global_rank = rank;
+    fprintf(stderr, "[%d | %d | %d | %d | %p] %s: %d\n", new_mvp->global_rank, new_mvp->stage_rank, new_mvp->local_rank, new_mvp->rank, new_mvp, __func__, me->depth ); 
+
  //   new_mvp->vp = me->stage_rank;
     memcpy( new_mvp->min_index, me->min_index, sizeof(int) * MPCOMP_AFFINITY_NB );
 

@@ -278,6 +278,7 @@ typedef struct mpcomp_mvp_s
     int local_rank;
     /** Rank within topology tree MVP depth level */
     int stage_rank;
+    int global_rank;
     /** Size of topology tree MVP depth level    */
     int stage_size;
     int *tree_rank;                         /* Array of rank in every node of the tree */
@@ -286,7 +287,8 @@ typedef struct mpcomp_mvp_s
 #if MPCOMP_TASK     /*      OMP 3.0     */
     struct mpcomp_task_mvp_infos_s task_infos;
 #endif /* MPCOMP_TASK */
-    struct mpcomp_node_chain_elt_s*  prev_node_father;
+    struct mpcomp_mvp_rank_chain_elt_s* rank_list;
+    struct mpcomp_mvp_saved_context_s*  prev_node_father;
 } mpcomp_mvp_t;
 
 /* OpenMP Node */
@@ -355,12 +357,19 @@ typedef struct mpcomp_node_s
 
 typedef struct mpcomp_node_s *mpcomp_node_ptr_t;
 
-typedef struct  mpcomp_node_chain_elt_s
+typedef struct mpcomp_mvp_rank_chain_elt_s
 {
-    struct mpcomp_node_s* elt;
+    struct mpcomp_mvp_rank_chain_elt_s* prev;
+    unsigned int rank;
+} mpcomp_mvp_rank_chain_elt_t;
+
+typedef struct  mpcomp_mvp_saved_context_s
+{
+    struct mpcomp_node_s* father;
     struct mpcomp_node_s* node;
+    unsigned int rank;
     struct mpcomp_node_chain_elt_t* prev;
-} mpcomp_node_chain_elt_t;
+} mpcomp_mvp_saved_context_t;
 
 #ifdef __cplusplus
 }

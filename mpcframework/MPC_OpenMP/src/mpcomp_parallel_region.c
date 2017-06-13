@@ -157,8 +157,8 @@ void __mpcomp_internal_end_parallel_region(mpcomp_instance_t *instance)
 
     /* Grab the master thread of the ending parallel region */
 //    master = &(instance->root->mvp->threads);
-    master = ( mpcomp_thread_t* ) sctk_openmp_thread_tls;
-    root = master->instance->root;
+ //   master = ( mpcomp_thread_t* ) sctk_openmp_thread_tls;
+ //   root = master->instance->root;
 
     /* Grab the tree root of the ending parallel region */
     //root = master->info.new_root;
@@ -193,7 +193,7 @@ void __mpcomp_internal_end_parallel_region(mpcomp_instance_t *instance)
   }
 
   /* Update team info for last values */
-  __mpcomp_save_team_info(instance->team, master);
+//  __mpcomp_save_team_info(instance->team, master);
 
 #if MPCOMP_COHERENCY_CHECKING
 //__mpcomp_for_dyn_coherency_end_parallel_region( instance ) ;
