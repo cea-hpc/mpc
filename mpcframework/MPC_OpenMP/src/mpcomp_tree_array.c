@@ -760,8 +760,6 @@ __mpcomp_openmp_node_initialisation( mpcomp_meta_tree_node_t* root, mpcomp_node_
     new_node->global_rank = rank;
     new_node->stage_rank = me->stage_rank;
 
-    fprintf(stderr, "[%d | %d | %d | %d | %p] %s: %d\n", new_node->global_rank, new_node->stage_rank, new_node->local_rank, new_node->rank, new_node, __func__, me->depth ); 
-
     // Get infos from parent node
     new_node->depth = me->depth;
     new_node->id_numa = me->numa_id;
@@ -778,12 +776,11 @@ __mpcomp_openmp_node_initialisation( mpcomp_meta_tree_node_t* root, mpcomp_node_
     memcpy( new_node->min_index, me->min_index, sizeof(int) * MPCOMP_AFFINITY_NB );
 
     /* Tree Array informations */
-    const int array_size = max_depth - new_node->depth + 2;
-
-    if( (uintptr_t) new_node == (uintptr_t) root_node )
-    {
-        //fprintf(stderr, "Allocate root array ...\n");
-    }
+    const int array_size = max_depth - new_node->depth + 1;
+   
+#if 0 /* Debug printf */
+    fprintf(stderr, "%s ::::: new_node->depth : %d, new_node->tree_base :  %d --> array_size : %d\n\n", __func__, new_node->depth, tree_shape[new_node->depth], array_size ); 
+#endif /* Debug printf */
 
     /* -- TREE BASE -- */
     new_node->tree_depth = array_size;
@@ -801,7 +798,16 @@ __mpcomp_openmp_node_initialisation( mpcomp_meta_tree_node_t* root, mpcomp_node_
     memset( new_node->tree_nb_nodes_per_depth, 0, sizeof( int ) * array_size );
 
     /* Init instance tree array informations */
-    memcpy( new_node->tree_base, tree_shape, sizeof( int ) * array_size );
+    new_node->tree_base[0] = 1;
+    const int start_depth = new_node->depth -1;
+    for( i = 1; i < array_size; i++ )
+        new_node->tree_base[i] = tree_shape[start_depth + i];
+
+#if 0 /* Debug printf */
+    for (i = 0; i < array_size; i++)
+        fprintf(stderr, "%s ::tree_base:: %p -- %d -- %d -- %d\n", __func__, new_node, new_node->depth, i, new_node->tree_base[i] );
+#endif /* Debug printf */
+
     /* -- From mpcomp_tree.c -- */
     for (i = 0; i < array_size; i++)
     {
@@ -810,12 +816,22 @@ __mpcomp_openmp_node_initialisation( mpcomp_meta_tree_node_t* root, mpcomp_node_
             new_node->tree_cumulative[i] *= new_node->tree_base[j];
     }
 
+#if 0 /* Debug printf */
+    for (i = 0; i < array_size; i++)
+        fprintf(stderr, "%s ::tree_cumulative:: %p -- %d -- %d -- %d\n", __func__, new_node, new_node->depth, i, new_node->tree_cumulative[i] );
+#endif /* Debug printf */
+
     new_node->tree_nb_nodes_per_depth[0] = 1;
     for (i = 1; i < array_size; i++)
     {
         new_node->tree_nb_nodes_per_depth[i] = new_node->tree_nb_nodes_per_depth[i - 1];
-        new_node->tree_nb_nodes_per_depth[i] *= new_node->tree_base[i - 1]; 
+        new_node->tree_nb_nodes_per_depth[i] *= new_node->tree_base[i]; 
     }
+
+#if 0 /* Debug printf */
+    for (i = 0; i < array_size; i++)
+        fprintf(stderr, "%s ::tree_nb_nodes_per_depth:: %p -- %d -- %d -- %d\n", __func__, new_node, new_node->depth, i, new_node->tree_nb_nodes_per_depth[i] );
+#endif /* Debug printf */
 
     /* Leaf or Node */
     if( new_node->depth < max_depth -1)
@@ -881,7 +897,7 @@ __mpcomp_openmp_node_initialisation( mpcomp_meta_tree_node_t* root, mpcomp_node_
         }
     }
     
-    fprintf(stderr, "node addr : %p %p\n", new_node, new_node->mvp );
+    //fprintf(stderr, "node addr : %p %p\n", new_node, new_node->mvp );
 
     if( !( me->fathers_array ) ) return 0; 
 
@@ -960,7 +976,7 @@ __mpcomp_openmp_mvp_initialisation( void* args )
     new_mvp->stage_rank = me->stage_rank;
     new_mvp->local_rank = me->local_rank;
     new_mvp->global_rank = rank;
-    fprintf(stderr, "[%d | %d | %d | %d | %p] %s: %d\n", new_mvp->global_rank, new_mvp->stage_rank, new_mvp->local_rank, new_mvp->rank, new_mvp, __func__, me->depth ); 
+ //   fprintf(stderr, "[%d | %d | %d | %d | %p] %s: %d\n", new_mvp->global_rank, new_mvp->stage_rank, new_mvp->local_rank, new_mvp->rank, new_mvp, __func__, me->depth ); 
 
  //   new_mvp->vp = me->stage_rank;
     memcpy( new_mvp->min_index, me->min_index, sizeof(int) * MPCOMP_AFFINITY_NB );
@@ -1047,7 +1063,7 @@ __mpcomp_alloc_openmp_tree_struct( const int* shape, const int max_depth, int *t
     root_node = ( mpcomp_node_t* ) malloc( sizeof( mpcomp_node_t ) );
     sctk_assert( root_node ); 
     memset( root_node, 0, sizeof( mpcomp_node_t ) );
-    fprintf(stderr, "hello %s -> [%p]\n", __func__, root_node );
+    //fprintf(stderr, "hello %s -> [%p]\n", __func__, root_node );
 
     for( i = n_num - 1; i >= non_leaf_n_num; i-- )
     {
@@ -1104,7 +1120,7 @@ __mpcomp_alloc_openmp_tree_struct( const int* shape, const int max_depth, int *t
     root_node->mvp->threads = master;
 
     // Switch OpenMP Thread TLS
-    fprintf(stderr, "Switch TLS: %p %p <> %p - %p\n", master, root, master->mvp, root_node );
+    //fprintf(stderr, "Switch TLS: %p %p <> %p - %p\n", master, root, master->mvp, root_node );
     sctk_openmp_thread_tls = (void*) master;     
 
     return retval;
