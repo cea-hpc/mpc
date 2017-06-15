@@ -154,14 +154,10 @@ __mpcomp_tree_array_compute_node_parents(  mpcomp_node_t* root, mpcomp_node_t* n
         }
 
         stage_rank = node_parents[i-1] - prev_num_nodes;
-        fprintf(stderr, "stage_rank : %d -- prev : %d -- node on stage : %d -- -- %d  -- %d -- %d\n", stage_rank, node_parents[i-1], stage_rank, root->tree_nb_nodes_per_depth[node->depth-i+1], root->tree_base[i], prev_num_nodes - root->tree_nb_nodes_per_depth[node->depth-i] );
         prev_num_nodes -= root->tree_nb_nodes_per_depth[node->depth-i];
         node_parents[i] = stage_rank / ( root->tree_nb_nodes_per_depth[node->depth-i+1] / root->tree_base[i] ) + prev_num_nodes; 
         
     }
-    
-    for(i = 0; i < node_tree_size; i++ )
-        fprintf(stderr, "::: %s ::: node : %p -- depth : %d -- rank : %d -- i :%d -- parent : %d\n", __func__, node, node->depth, node->global_rank, i, node_parents[i] );
 }
 
 #endif /* __MPCOMP_TREE_ARRAY_UTILS_H__ */

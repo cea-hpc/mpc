@@ -70,7 +70,6 @@ __mpcomp_spining_get_instance_max_depth( mpcomp_instance_t* instance )
 {
     mpcomp_node_t* root = instance->root;
     assert( root ); //TODO instance root can be NULL when leaf create new parallel region
-    fprintf(stderr, "[%s]: instance ROOT: %p -- root DEPTH: %d -- root TREE_DEPTH: %d -- instance TREE_DEPTH: %d\n", __func__, root, root->depth, root->tree_depth, instance->tree_depth); 
     return root->depth + root->tree_depth -1;
 }
 

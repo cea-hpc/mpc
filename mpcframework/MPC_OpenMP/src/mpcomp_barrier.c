@@ -39,7 +39,6 @@ static void __mpcomp_internal_full_barrier(mpcomp_mvp_t *mvp) {
   sctk_assert(mvp->father->instance);
   sctk_assert(mvp->father->instance->team);
 
-  //fprintf(stderr, "STAGE RANK: %d | LOCAL RANK: %d | FATHER: %d\n", mvp->vp, mvp->rank, mvp->father->rank ); 
 
   mpcomp_thread_t* thread = (mpcomp_thread_t*) sctk_openmp_thread_tls;
   c = mvp->father;
@@ -84,7 +83,6 @@ static void __mpcomp_internal_full_barrier(mpcomp_mvp_t *mvp) {
 
 	/* Step 3 - Go down */
 	while ( c->child_type != MPCOMP_CHILDREN_LEAF ) {
-        //fprintf(stderr, "[%d] CLIMB TREE : %d - %d\n", mvp->vp, mvp->tree_rank[c->depth], c->depth );  
 		c = c->children.node[mvp->tree_rank[c->depth]];
 		c->barrier_done++; /* No need to lock I think... */
 	}
@@ -111,8 +109,6 @@ void __mpcomp_internal_half_barrier(mpcomp_mvp_t *mvp) {
   c = mvp->father;
   sctk_assert(new_root != NULL);
 
-    fprintf(stderr, "[<>] %s : CALL <<<< ! root : %p -- %d - %d - %p  ! threads: %p >>>>\n", __func__, new_root, new_root->rank, mvp->rank, mvp, c );
-
 #if 0 //MPCOMP_TASK
   (void)mpcomp_thread_tls_store(&(mvp->threads[0]));
   __mpcomp_internal_full_barrier(mvp);
@@ -122,8 +118,6 @@ void __mpcomp_internal_half_barrier(mpcomp_mvp_t *mvp) {
   /* Step 1: Climb in the tree */
   b = sctk_atomics_fetch_and_incr_int(&(c->barrier)) + 1;
   while (b == c->barrier_num_threads && c != new_root) {
-    fprintf(stderr,"%s: currently %d thread(s), expected %d\n", __func__, b - 1,
-                 c->barrier_num_threads);
     sctk_atomics_store_int(&(c->barrier), 0);
     c = c->father;
     b = sctk_atomics_fetch_and_incr_int(&(c->barrier)) + 1;
@@ -148,7 +142,6 @@ void __mpcomp_barrier(void) {
   sctk_nodebug(stderr, "[%d] %s: Entering w/ %d thread(s)\n", t->rank, __func__,
                t->info.num_threads);
 
-   //fprintf(stderr, "hello\n");
 #if OMPT_SUPPORT
 	//__mpcomp_ompt_barrier_begin( false );	
 #endif /* OMPT_SUPPORT */
