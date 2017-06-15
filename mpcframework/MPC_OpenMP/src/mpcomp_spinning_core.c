@@ -1,4 +1,3 @@
-
 #include "mpcomp_types.h"
 #include "mpcomp_core.h"
 #include "mpcomp_barrier.h"
@@ -183,8 +182,16 @@ __mpcomp_tree_array_instance_init( mpcomp_thread_t* thread, const int expected_n
             fprintf(stderr, "__mpcomp_start_openmp_thread -- YES ? %p \n", instance);
             /* Init instance tree array informations */
             memcpy(instance->tree_base, root->tree_base, tree_array_size);
-            memcpy(instance->tree_cumulative, root->tree_cumulative, tree_array_size );
             memcpy(instance->tree_nb_nodes_per_depth, root->tree_nb_nodes_per_depth, tree_array_size );
+
+            /* Cumulative can't be just copied */
+            //TODO update utils function to trigger this use
+            for (i = 0; i < instance->tree_depth ; i++) 
+            {
+                instance->tree_cumulative[i] = 1;
+                for (j = i + 1; j < instance->tree_depth; j++)
+                    instance->tree_cumulative[i] *= root->tree_base[j];
+            }
 
             /* Find First node @ root->depth + tree_depth */
             mpcomp_node_t* cur_node = root;
@@ -492,7 +499,7 @@ void mpcomp_slave_mvp_node( mpcomp_mvp_t *mvp, mpcomp_node_t *spinning_node )
     {
         *spinning_val = MPCOMP_MVP_STATE_SLEEP;
         /* Spinning on the designed node */
-        fprintf(stderr, "SPINNING NODE ... -> %p -- %d\n", mvp, mvp->global_rank);
+        fprintf(stderr, "SPINNING NODE ... -> %p -- %d -- %d\n", mvp, mvp->global_rank, spinning_node->global_rank);
         sctk_thread_wait_for_value_and_poll( spinning_val, MPCOMP_MVP_STATE_AWAKE, NULL, NULL ) ;
         fprintf(stderr, "<< %s >> WAKE UP NODE ... -> %p -- %d\n", "__mpcomp_start_openmp_thread", mvp, mvp->global_rank);
         spinning_node->instance = spinning_node->father->instance;

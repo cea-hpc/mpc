@@ -127,7 +127,7 @@ __mpcomp_tree_array_compute_tree_first_children( mpcomp_node_t* root, mpcomp_nod
 static inline int*
 __mpcomp_tree_array_compute_node_parents(  mpcomp_node_t* root, mpcomp_node_t* node )
 {
-    int i, stage_rank, shift_next_stage_stage, cur_rank;
+    int i, prev_num_nodes, stage_rank, shift_next_stage_stage, cur_rank;
     int *node_parents;
 
     sctk_assert( node );
@@ -140,7 +140,11 @@ __mpcomp_tree_array_compute_node_parents(  mpcomp_node_t* root, mpcomp_node_t* n
     memset( node_parents, 0, sizeof(int) * node_tree_size );
 
     node_parents[0] = node->global_rank;
-    
+  
+    prev_num_nodes = 1; 
+    for( i = 1; i < node->depth; i++ )
+        prev_num_nodes += root->tree_nb_nodes_per_depth[i]; 
+
     for(i = 1; i < node_tree_size; i++ )
     {
         if( root->tree_nb_nodes_per_depth[node->depth-i] == 1 )
@@ -149,10 +153,11 @@ __mpcomp_tree_array_compute_node_parents(  mpcomp_node_t* root, mpcomp_node_t* n
             continue;
         }
 
-        stage_rank = node_parents[i-1] - root->tree_nb_nodes_per_depth[node->depth-i];
-        fprintf(stderr, "stage_rank : %d -- prev : %d -- node on stage : %d\n", stage_rank, node_parents[i-1],  root->tree_nb_nodes_per_depth[node->depth-i+1]);
-        shift_next_stage_stage =  root->tree_nb_nodes_per_depth[node->depth-i-1];
-        node_parents[i] = stage_rank / ( root->tree_nb_nodes_per_depth[node->depth-i+1] / root->tree_base[i] ) + shift_next_stage_stage -1; 
+        stage_rank = node_parents[i-1] - prev_num_nodes;
+        fprintf(stderr, "stage_rank : %d -- prev : %d -- node on stage : %d -- -- %d  -- %d -- %d\n", stage_rank, node_parents[i-1], stage_rank, root->tree_nb_nodes_per_depth[node->depth-i+1], root->tree_base[i], prev_num_nodes - root->tree_nb_nodes_per_depth[node->depth-i] );
+        prev_num_nodes -= root->tree_nb_nodes_per_depth[node->depth-i];
+        node_parents[i] = stage_rank / ( root->tree_nb_nodes_per_depth[node->depth-i+1] / root->tree_base[i] ) + prev_num_nodes; 
+        
     }
     
     for(i = 0; i < node_tree_size; i++ )

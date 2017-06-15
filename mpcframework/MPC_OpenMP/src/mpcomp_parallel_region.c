@@ -77,7 +77,6 @@ __mpcomp_internal_begin_parallel_region( mpcomp_parallel_region_t *info, const u
     if( t->root )
     {
         const unsigned int max_threads = t->root->nb_children;
-        fprintf(stderr, "MAX threads ... %d from %s\n", max_threads, __func__ );
         //real_num_threads = (!expected_num_threads) ? info->icvs.nthreads_var : expected_num_threads;
         real_num_threads = expected_num_threads;
         real_num_threads = (!real_num_threads) ? max_threads : real_num_threads;
@@ -88,7 +87,6 @@ __mpcomp_internal_begin_parallel_region( mpcomp_parallel_region_t *info, const u
     }
 
     sctk_assert(real_num_threads > 0);
-    fprintf(stderr, " from %s : Compute parallel region num threads #%d -> %p\n", __func__, real_num_threads, t->root );
    
     /* Check if the children instance exists */
     // TODO: Add chained list for previous instance

@@ -125,8 +125,8 @@ int __mpcomp_dynamic_loop_begin(long lb, long b, long incr, long chunk_size,
 #if 1 //OMPT_SUPPORT
 	if( mpcomp_ompt_is_enabled() )
 	{
-   	if( OMPT_Callbacks )
-   	{
+   	    if( OMPT_Callbacks )
+   	    {
 			ompt_callback_work_t callback; 
 			callback = (ompt_callback_work_t) OMPT_Callbacks[ompt_callback_work];
 			if( callback )
@@ -140,8 +140,9 @@ int __mpcomp_dynamic_loop_begin(long lb, long b, long incr, long chunk_size,
 		}
 	}
 #endif /* OMPT_SUPPORT */
-
-  return (!from && !to) ? -1 : __mpcomp_dynamic_loop_next(from, to);
+    const int ret = __mpcomp_dynamic_loop_next(from, to);
+    fprintf(stderr, ":: %s :: Finished ? %d \n", __func__, ret );
+    return (!from && !to) ? -1 : ret;
 }
 
 int __mpcomp_dynamic_loop_next(long *from, long *to) {

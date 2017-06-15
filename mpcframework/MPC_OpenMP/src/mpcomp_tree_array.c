@@ -861,6 +861,7 @@ __mpcomp_openmp_node_initialisation( mpcomp_meta_tree_node_t* root, mpcomp_node_
 
     father_rank = me->fathers_array[me->depth-1];
     const int value = sctk_atomics_fetch_and_incr_int( &( root[father_rank].children_ready) ) + 1; 
+    fprintf( stderr, "%s> Global rank : @%d Local_rank : @%d\n", __func__, me->rank, me->local_rank );
     return ( !(me->local_rank) ) ? 1 : 0;
 }
 
@@ -970,11 +971,14 @@ __mpcomp_openmp_mvp_initialisation( void* args )
  
     if(  !( me->local_rank ) )  /* The first child is spinning on a node */
     {
+
         while( __mpcomp_openmp_node_initialisation( root, root_node, tree_shape, max_depth, target_node_rank, core_depth ) )
         {
             current_depth--;
             target_node_rank = me->fathers_array[current_depth];
         }
+       
+        fprintf(stderr, "Wait at depth @%d -- node @%d -> root[target_node_rank].user_pointer: %p\n", current_depth, target_node_rank, root[target_node_rank].user_pointer );
 
         if( !( me->stage_rank ) ) 
         {
@@ -983,7 +987,7 @@ __mpcomp_openmp_mvp_initialisation( void* args )
 
    //     new_mvp->to_run = root[target_node_rank].user_pointer;
         new_mvp->slave_running = MPCOMP_MVP_STATE_UNDEF;
-        mpcomp_slave_mvp_node( new_mvp, new_mvp->father );
+        mpcomp_slave_mvp_node( new_mvp, (mpcomp_node_t*) root[target_node_rank].user_pointer );
     }
     else /* The other children are regular leaves */ 
     {

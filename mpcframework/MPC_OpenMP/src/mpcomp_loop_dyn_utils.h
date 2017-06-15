@@ -200,7 +200,7 @@ static inline int __mpcomp_loop_dyn_get_victim_rank(mpcomp_thread_t *thread) {
   sctk_assert(thread->for_dyn_target);
   sctk_assert(thread->instance->tree_cumulative);
 
-  for (i = 0, target = 0; i < tree_depth; i++) {
+  for (i = 1, target = 0; i < tree_depth; i++) {
     target += thread->for_dyn_target[i] * thread->instance->tree_cumulative[i];
   }
 
