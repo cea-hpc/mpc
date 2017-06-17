@@ -125,6 +125,90 @@ static char **__mpcomp_tokenizer(char *string_to_tokenize, int *nb_tokens) {
   return new_argv;
 }
 
+static void
+__mpcomp_aux_reverse_one_dim_array( int* array, const int len )
+{
+	int i, j, tmp;
+
+	for( i = 0, j = len - 1; i < j; i++, j-- )
+	{
+		tmp = array[i];
+		array[i] = array[j];
+		array[j] = tmp;   
+	}
+}
+
+static int*
+__mpcomp_convert_topology_to_tree_shape( hwloc_topology_t topology, int* tree_depth )
+{
+	int i, real_tree_depth, last_stage_size;
+	hwloc_obj_t cur_obj;
+	int *reverse_tree_base;
+
+	sctk_assert( topology );
+	sctk_assert( tree_depth );
+
+	cur_obj = hwloc_get_root_obj( topology );
+	const int max_depth = hwloc_topology_get_depth( topology ); 
+
+	reverse_tree_base = ( int* ) malloc( sizeof( int ) * max_depth );
+	sctk_assert( reverse_tree_base );
+	memset( reverse_tree_base, 0, sizeof( int ) * max_depth );
+
+	real_tree_depth = 0;
+	last_stage_size = -1;	
+
+	for( i = max_depth-2; i >= 0; i-- )
+	{
+		const int stage_number = hwloc_get_nbobjs_by_depth( topology, i );
+		const hwloc_obj_type_t type = hwloc_get_depth_type( topology, i );
+		char* type_str = hwloc_obj_type_string( type ); 
+
+		if( stage_number == last_stage_size )
+			continue;
+
+		fprintf(stderr, "::: %s ::: %d %d (%s)\n", __func__, i, stage_number, type_str );
+		
+		if( (last_stage_size != -1) && (last_stage_size % stage_number) )
+			continue;
+
+		fprintf(stderr, "::: %s ::: %d %d (%s) - 2\n", __func__, i, stage_number, type_str );
+		last_stage_size = stage_number;
+		reverse_tree_base[real_tree_depth] = stage_number;
+		real_tree_depth++;	
+	}
+
+	fprintf(stderr, "::: %s ::: %d\n", __func__, real_tree_depth );
+	__mpcomp_aux_reverse_one_dim_array( reverse_tree_base, real_tree_depth );
+
+	*tree_depth = real_tree_depth;
+	return sctk_realloc( reverse_tree_base, real_tree_depth * sizeof( int ) );
+}
+
+static hwloc_topology_t
+__mpcomp_prepare_omp_task_tree_init( const int num_mvps ) 
+{
+	int err;
+   hwloc_topology_t restrictedTopology;
+	err = __mpcomp_restrict_topology_for_mpcomp( &restrictedTopology, num_mvps );
+	assert( !err );
+
+	sctk_assert( restrictedTopology );
+	return restrictedTopology;	
+}
+
+static void
+__mpcomp_init_omp_task_tree( const int num_mvps )
+{
+	 int i, max_depth;
+	 int * tree_shape;
+
+	 hwloc_topology_t omp_task_topo;
+	 omp_task_topo = __mpcomp_prepare_omp_task_tree_init( num_mvps );
+	 tree_shape = __mpcomp_convert_topology_to_tree_shape( omp_task_topo, &max_depth );
+	 __mpcomp_alloc_openmp_tree_struct( tree_shape+1, max_depth-1, omp_task_topo );	
+}
+
 /*
  * Read environment variables for OpenMP.
  * Actually, the values are read from configuration: those values can be
@@ -513,26 +597,6 @@ void __mpcomp_init(void) {
       done = 1;
     }
 
-    /*** Initialize SEQUENTIAL information (current instance + team) ***/
-
-    /* Initialize team information */
-    seq_team_info = (mpcomp_team_t *)sctk_malloc(sizeof(mpcomp_team_t));
-    sctk_assert(seq_team_info != NULL);
-    __mpcomp_team_infos_init(seq_team_info);
-
-    /* Allocate an instance of OpenMP */
-    seq_instance = (mpcomp_instance_t *)sctk_malloc(sizeof(mpcomp_instance_t));
-    sctk_assert(seq_instance != NULL);
-    __mpcomp_instance_init(seq_instance, 1, seq_team_info);
-
-    /*** Initialize PARALLEL information (instance + team for the next parallel
-     * region) ***/
-
-    /* Initialize team information */
-    team_info = (mpcomp_team_t *)sctk_malloc(sizeof(mpcomp_team_t));
-    sctk_assert(team_info != NULL);
-    __mpcomp_team_infos_init(team_info);
-
     /* Get the rank of current MPI task */
     task_rank = sctk_get_task_rank();
 
@@ -543,7 +607,6 @@ void __mpcomp_init(void) {
       /* No parallel OpenMP if MPI has not been initialized yet */
       nb_mvps = 1;
     } else {
-      sctk_nodebug("[%d] %s: entering...", task_rank, __func__);
 
       /* Compute the number of microVPs according to Hybrid Mode */
       switch (OMP_MODE) {
@@ -561,7 +624,9 @@ void __mpcomp_init(void) {
         if (OMP_MICROVP_NUMBER > 0 && OMP_MICROVP_NUMBER <= nb_mvps) {
           nb_mvps = OMP_MICROVP_NUMBER;
         }
-        mpcomp_bfs_root_initialisation( nb_mvps );
+
+        //mpcomp_bfs_root_initialisation( nb_mvps );
+
         break;
       case MPCOMP_MODE_ALTERNATING:
         nb_mvps = 1;
@@ -629,9 +694,6 @@ void __mpcomp_init(void) {
     t = (mpcomp_thread_t *)sctk_malloc(sizeof(mpcomp_thread_t));
     sctk_assert(t != NULL);
 
-    /* Thread info initialization */
-    __mpcomp_thread_infos_init(t, icvs, seq_instance, NULL);
-
     /* Current thread information is 't' */
     sctk_openmp_thread_tls = t;
 	  	
@@ -650,16 +712,11 @@ void __mpcomp_init(void) {
 		}
 	}
 #endif /* OMPT_SUPPORT */
+
+	__mpcomp_init_omp_task_tree( 0 );
 	
-    /* Allocate an instance of OpenMP */
-    instance = (mpcomp_instance_t *)sctk_malloc(sizeof(mpcomp_instance_t));
-    sctk_assert(instance != NULL);
-    __mpcomp_instance_init(instance, nb_mvps, team_info);
-
-    t->children_instance = instance;
-
 #if MPCOMP_TASK
-    mpcomp_task_team_infos_init(team_info, instance->tree_depth);
+//    mpcomp_task_team_infos_init(team_info, instance->tree_depth);
 #endif /* MPCOMP_TASK */
 
     sctk_thread_mutex_unlock(&lock);
@@ -675,78 +732,6 @@ void __mpcomp_exit(void) {
 #endif /* MPCOMP_TASK */
 }
 
-void __mpcomp_instance_init(mpcomp_instance_t *instance, int nb_mvps,
-                            struct mpcomp_team_s *team) {
-
-  /* TODO Field to update:
-   * tree_depth, tree_base, tree_cumulative, topology,
-   * tree_level_size, tree_array_size, tree_array_first_rank
-   */
-
-  sctk_nodebug("%s: Entering... %p %d %p", __func__, instance, nb_mvps, team);
-
-  /* Assign the current team */
-  instance->team = team;
-
-  /* If this instance is not sequential... */
-  if (nb_mvps > 1) {
-    hwloc_topology_t restrictedTopology, flatTopology;
-    int err, i;
-
-    /* Alloc memory for 'nb_mvps' microVPs */
-    instance->mvps =
-        (mpcomp_mvp_t **)sctk_malloc(nb_mvps * sizeof(mpcomp_mvp_t *));
-    sctk_assert(instance->mvps != NULL);
-
-    instance->nb_mvps = nb_mvps;
-
-    /* Restrict the global topology to the number of microVPs */
-    err = sctk_restrict_topology_for_mpcomp(&restrictedTopology,
-                                            instance->nb_mvps);
-    if (err != 0) {
-      sctk_error("MPC_OpenMP Internal error in __mpcomp_restrict_topology");
-      sctk_abort();
-    }
-
-    instance->topology = restrictedTopology;
-
-    if (OMP_TREE == NULL) {
-      mpcomp_build_default_tree(instance);
-    } else {
-      mpcomp_build_tree(instance, OMP_TREE_NB_LEAVES, OMP_TREE_DEPTH, OMP_TREE);
-    }
-  } 
-    else {
-    int i;
-    int id_numa =
-        sctk_get_node_from_cpu(sctk_get_init_vp(sctk_get_task_rank()));
-
-    mpcomp_local_icv_t icvs;
-    /* Sequential instance and team */
-    instance->mvps = (mpcomp_mvp_t **)sctk_malloc(1 * sizeof(mpcomp_mvp_t *));
-    sctk_assert(instance->mvps != NULL);
-
-    instance->mvps[0] = (mpcomp_mvp_t *)sctk_malloc(1 * sizeof(mpcomp_mvp_t));
-    sctk_assert(instance->mvps[0] != NULL);
-
-    for (i = 0; i < MPCOMP_AFFINITY_NB; i++) {
-      instance->mvps[0]->min_index[i] = 0;
-    }
-
-    instance->nb_mvps = 1;
-    instance->root = NULL;
-    
-    instance->mvps[0]->threads = (mpcomp_thread_t*) malloc( 1 * sizeof( mpcomp_thread_t ) );
-    assert(  instance->mvps[0]->threads );
-
-    __mpcomp_thread_infos_init(&(instance->mvps[0]->threads[0]), icvs, instance,
-                               sctk_openmp_thread_tls);
-  }
-
-  sctk_nodebug("%s: Exiting...", __func__);
-
-  /* TODO Do we need a TLS for the openmp instance for every microVPs? */
-}
 
 void __mpcomp_in_order_scheduler( mpcomp_thread_t* thread ) 
 {

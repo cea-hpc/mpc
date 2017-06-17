@@ -21,7 +21,7 @@
 #endif
 */
 
-#define MPCOMP_TREE_ARRAY_COMPUTE_WITH_LOG 1
+#define MPCOMP_TREE_ARRAY_COMPUTE_WITH_LOG 0
 
 #if MPCOMP_TREE_ARRAY_COMPUTE_WITH_LOG
 #include "sctk_pm_json.h"
@@ -231,14 +231,17 @@ __mpcomp_tree_array_convert_array_to_string( const int* tab, const int size )
     ret = snprintf( tmp, 1024-used, "%d", tab[0] ); 
     tmp += ret;
     used += ret;
+	 fprintf(stderr, "::: %s ::: %d ( %d / %d )\n", __func__, tab[0], i+1, size );
 
     for( i = 1; i < size; i++ )
     {
+		  fprintf(stderr, "::: %s ::: %d %d\n", __func__, i, tab[i] );
         ret = snprintf( tmp, 1024-used, ",%d", tab[i] ); 
         tmp += ret;
         used += ret;
     } 
     string[used] = '\0';
+
     return string; 
 }
 
@@ -887,13 +890,6 @@ __mpcomp_openmp_mvp_initialisation( void* args )
     /* Father initialisation */
     me->fathers_array_size = me->depth; 
     me->fathers_array = __mpcomp_tree_array_get_father_array_by_depth( tree_shape, max_depth, rank );
-    
-#if 0 /* Memset already did it */
-    /* Children initialisation */
-    me->children_array_size = 0;
-    me->first_child_array = NULL;
-    me->children_num_array = NULL;
-#endif /* Memset already did it */
 
     /* Affinity initialisation */
     me->min_index = __mpcomp_tree_array_compute_thread_openmp_min_rank( tree_shape, max_depth, rank, core_depth );
@@ -907,13 +903,6 @@ __mpcomp_openmp_mvp_initialisation( void* args )
     new_mvp->tree_rank = __mpcomp_tree_array_get_tree_rank( tree_shape, max_depth, rank );
     
     /* Initialize the corresponding microVP (all but tree-related variables) */ 
-
-#if 0 /* Memset already did it */
-    new_mvp->nb_threads = 0;
-    new_mvp->next_nb_threads = 0;
-    new_mvp->slave_running = 0;
-#endif /* Memset already did it */
-
     new_mvp->thread_self = thread;
     new_mvp->rank = me->local_rank;
 
@@ -928,13 +917,6 @@ __mpcomp_openmp_mvp_initialisation( void* args )
     new_mvp->root = root;
 
     new_mvp->threads = NULL;
- //   new_mvp->threads = (mpcomp_thread_t*) malloc( 1 * sizeof( mpcomp_thread_t ) ); 
- //    assert( new_mvp->threads );
-    
- //   mpcomp_local_icv_t icvs;
-
- //   new_mvp->threads[0].mvp = new_mvp;
- //   new_mvp->threads[0].rank = me->stage_rank;
 
 #if MPCOMP_TASK
     mpcomp_task_mvp_task_infos_reset( new_mvp );   
@@ -942,8 +924,6 @@ __mpcomp_openmp_mvp_initialisation( void* args )
 
     /* Store mvp pointer */
     me->user_pointer = (void*) new_mvp;
-  //  new_mvp->tree_array_node = (void*) me;
-
 
     /* Tree initialisation election */
     int current_depth = me->depth - 1;
@@ -972,7 +952,6 @@ __mpcomp_openmp_mvp_initialisation( void* args )
     }
     else /* The other children are regular leaves */ 
     {
-     //   new_mvp->to_run = NULL;
         new_mvp->slave_running = MPCOMP_MVP_STATE_UNDEF;
         mpcomp_slave_mvp_leaf( new_mvp, NULL ); 
     }
@@ -980,8 +959,8 @@ __mpcomp_openmp_mvp_initialisation( void* args )
     return NULL;
 }
 
-void*
-__mpcomp_alloc_openmp_tree_struct( const int* shape, const int max_depth, int *tree_size, hwloc_topology_t topology )
+void
+__mpcomp_alloc_openmp_tree_struct( const int* shape, const int max_depth, hwloc_topology_t topology )
 {
     int i, ret;
     sctk_thread_t* thread;
@@ -992,6 +971,7 @@ __mpcomp_alloc_openmp_tree_struct( const int* shape, const int max_depth, int *t
     void* retval;
 
     char * string_tree_shape = __mpcomp_tree_array_convert_array_to_string( shape, max_depth );
+	 fprintf(stderr, "Current shape : %s\n", string_tree_shape );
     free( string_tree_shape );
 
     const int n_num = __mpcomp_tree_array_get_parent_nodes_num_per_depth( shape, max_depth );
@@ -1068,8 +1048,6 @@ __mpcomp_alloc_openmp_tree_struct( const int* shape, const int max_depth, int *t
 
     // Switch OpenMP Thread TLS
     sctk_openmp_thread_tls = (void*) master;     
-
-    return retval;
 }
 
 #ifdef MPCOMP_COMPILE_WITH_MAIN

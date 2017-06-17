@@ -123,6 +123,8 @@ typedef struct mpcomp_team_s {
  * An OpenMP thread is attached to a MVP, 
  * one thread per nested level */
 typedef struct mpcomp_thread_s {
+	 /* Original thread only */
+	 hwloc_topology_t topology;
     /* -- Internal specific informations -- */
     unsigned int depth;
     /** OpenMP rank (0 for master thread per team) */

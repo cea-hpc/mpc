@@ -202,6 +202,7 @@ __mpcomp_tree_array_instance_init( mpcomp_thread_t* thread, const int expected_n
 
 void __mpcomp_wakeup_mvp( mpcomp_mvp_t *mvp) 
 {
+    int i;
     mpcomp_local_icv_t icvs;
     mpcomp_thread_t* new_thread;
 
@@ -225,10 +226,18 @@ void __mpcomp_wakeup_mvp( mpcomp_mvp_t *mvp)
     /* Set thread rank */
     new_thread->rank = mvp->rank;
     mvp->threads = new_thread;
-    //new_thread->root = mvp->father;
     new_thread->root = (mvp->prev_node_father ) ? mvp->prev_node_father->node : mvp->father;// mvp->father; //TODO just for test
     new_thread->mvp = mvp;
     mvp->slave_running = MPCOMP_MVP_STATE_READY;
+
+	/* Init thread parallel infos */
+	new_thread->info.combined_pragma = MPCOMP_COMBINED_NONE;
+
+	/* Reset pragma for dynamic internal */
+	for (i = 0; i < MPCOMP_MAX_ALIVE_FOR_DYN + 1; i++) 
+		sctk_atomics_store_int(&(new_thread->for_dyn_remain[i].i), -1);
+
+	return;	
 }
 
 void __mpcomp_wakeup_leaf( mpcomp_node_t* start_node, const int num_threads )
@@ -243,55 +252,39 @@ void __mpcomp_wakeup_leaf( mpcomp_node_t* start_node, const int num_threads )
     if( start_node->child_type == MPCOMP_CHILDREN_NODE )
         return;
 
-    /* Wake up children leaf */
-    //sctk_assert( start_node->child_type == MPCOMP_CHILDREN_LEAF );
-
-
-#if 0
-    /* Count children number involved */
-    for( i = 1, nb_children_involved = 1; i < start_node->nb_children; i++ )
-    {
-        const int leaf_rank = leaves_array[i]->min_index[mpcomp_affinity];
-        if( leaf_rank < num_threads ) nb_children_involved++;
-    }
-
-    start_node->barrier_num_threads = nb_children_involved;
-
-    for( i = 1; i < start_node->nb_children; i++ )
-    {
-        const int leaf_rank = leaves_array[i]->min_index[mpcomp_affinity];
-        if( leaf_rank < num_threads )
-        {
-            leaves_array[i]->slave_running = MPCOMP_MVP_STATE_AWAKE;
-            
-        }
-    }  
-#else
-    //assert( start_node->nb_children <= num_threads ); 
     start_node->barrier_num_threads = num_threads;
     for( i = 0; i < num_threads; i++ )
     {
         __mpcomp_update_mvp_saved_context( leaves_array[i], start_node, start_node );
         leaves_array[i]->slave_running = MPCOMP_MVP_STATE_AWAKE;
     }
-#endif
 }
 
 mpcomp_node_t*  __mpcomp_wakeup_node( mpcomp_node_t* start_node, const int num_threads )
 {
-    int i, j, nb_children_involved;
-    mpcomp_node_t *current_node;
-    mpcomp_node_t **nodes_array; 
+   int i, j, nb_children_involved, rest_num_threads;
+   mpcomp_node_t *current_node;
+   mpcomp_node_t **nodes_array; 
 
-    current_node = start_node;
+	rest_num_threads = num_threads; 
+   current_node = start_node;
 
     if( current_node->child_type != MPCOMP_CHILDREN_NODE )
     {
         return current_node;
     }
 
-    nodes_array = start_node->children.node;
+
 #if 0
+	while( current_node->nb_children > num_threads )
+	{
+    	nodes_array = current_node->children.node;
+		current_node->barrier_num_threads = current_node->nb_children;
+
+		rest_num_threads = :
+    	current_node->barrier_num_threads = num_threads;
+
+	}
     /*TODO:  Remove global variable */
     const int mpcomp_affinity = mpcomp_global_icvs.affinity; 
 
@@ -324,7 +317,7 @@ mpcomp_node_t*  __mpcomp_wakeup_node( mpcomp_node_t* start_node, const int num_t
     }
 #else
     assert( start_node->nb_children <= num_threads );
-    start_node->barrier_num_threads = num_threads;
+    current_node->barrier_num_threads = num_threads;
 
     for( i = 1; i < num_threads; i++ )
     {

@@ -253,6 +253,7 @@ void __mpcomp_start_parallel_region(void (*func)(void *), void *shared,
 
   /* Start scheduling */
   t->mvp->instance = t->children_instance;
+  sctk_assert( t->children_instance );
   __mpcomp_start_openmp_thread( t->mvp );  
 
   fprintf(stderr, "%s: End outlined OpenMP func\n", __func__ );
