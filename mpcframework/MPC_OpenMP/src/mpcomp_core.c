@@ -166,19 +166,15 @@ __mpcomp_convert_topology_to_tree_shape( hwloc_topology_t topology, int* tree_de
 
 		if( stage_number == last_stage_size )
 			continue;
-
-		fprintf(stderr, "::: %s ::: %d %d (%s)\n", __func__, i, stage_number, type_str );
 		
 		if( (last_stage_size != -1) && (last_stage_size % stage_number) )
 			continue;
 
-		fprintf(stderr, "::: %s ::: %d %d (%s) - 2\n", __func__, i, stage_number, type_str );
 		last_stage_size = stage_number;
 		reverse_tree_base[real_tree_depth] = stage_number;
 		real_tree_depth++;	
 	}
 
-	fprintf(stderr, "::: %s ::: %d\n", __func__, real_tree_depth );
 	__mpcomp_aux_reverse_one_dim_array( reverse_tree_base, real_tree_depth );
 
 	*tree_depth = real_tree_depth;

@@ -197,7 +197,6 @@ void __mpcomp_restrict_topology_for_mpcomp( hwloc_topology_t* restrictedTopology
 	
 		for( i = 0; i < num_pus_select; i ++ )
 		{
-			fprintf(stderr, "[%d] ::: %s ::: %d - > %d\n", taskVp, __func__, core, i );
 			pu_obj = hwloc_get_obj_inside_cpuset_by_type(topology, core_obj->cpuset, HWLOC_OBJ_PU, i);
 			sctk_assert( pu_obj );
 			hwloc_bitmap_or( final_cpuset, final_cpuset, pu_obj->cpuset );
@@ -214,8 +213,6 @@ void __mpcomp_restrict_topology_for_mpcomp( hwloc_topology_t* restrictedTopology
 
 	if((err = hwloc_topology_restrict(*restrictedTopology,final_cpuset,HWLOC_RESTRICT_FLAG_ADAPT_DISTANCES)))
 		return -1;
-	
-	sctk_print_specific_topology(stderr, *restrictedTopology);
 
 	return 0;	
 }

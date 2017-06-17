@@ -231,11 +231,9 @@ __mpcomp_tree_array_convert_array_to_string( const int* tab, const int size )
     ret = snprintf( tmp, 1024-used, "%d", tab[0] ); 
     tmp += ret;
     used += ret;
-	 fprintf(stderr, "::: %s ::: %d ( %d / %d )\n", __func__, tab[0], i+1, size );
 
     for( i = 1; i < size; i++ )
     {
-		  fprintf(stderr, "::: %s ::: %d %d\n", __func__, i, tab[i] );
         ret = snprintf( tmp, 1024-used, ",%d", tab[i] ); 
         tmp += ret;
         used += ret;

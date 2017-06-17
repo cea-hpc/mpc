@@ -219,47 +219,33 @@ void __mpcomp_internal_end_parallel_region(mpcomp_instance_t *instance)
 #endif /* OMPT_SUPPORT */
 }
 
+typedef void*(*mpcomp_start_func_t)(void*);
+
 void __mpcomp_start_parallel_region(void (*func)(void *), void *shared,
                                     unsigned arg_num_threads) {
-  mpcomp_thread_t *t;
-  mpcomp_parallel_region_t *info;
+ 	mpcomp_thread_t *t;
+  	mpcomp_parallel_region_t info;
 
-  sctk_nodebug("%s: === ENTER PARALLEL REGION ===", __func__);
+	mpcomp_start_func_t start = ( mpcomp_start_func_t ) func;
+	sctk_assert( start );
 
-#ifdef MPCOMP_FORCE_PARALLEL_REGION_ALLOC
-  info = sctk_malloc(sizeof(mpcomp_parallel_region_t));
-  assert(info);
-#else  /* MPCOMP_FORCE_PARALLEL_REGION_ALLOC */
-  mpcomp_parallel_region_t noallocate_info;
-  info = &noallocate_info;
-#endif /* MPCOMP_FORCE_PARALLEL_REGION_ALLOC */
+  	__mpcomp_init();
 
-  /* Initialize OpenMP environment */
-  __mpcomp_init();
 
-  /* Grab the thread info */
-  t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
-  sctk_assert(t != NULL);
+  	t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
+  	sctk_assert(t != NULL);
 
-  __mpcomp_parallel_region_infos_init(info);
-  __mpcomp_parallel_set_specific_infos(info, (void *(*)(void *))func, shared,
-                                       t->info.icvs, MPCOMP_COMBINED_NONE);
+  	__mpcomp_parallel_region_infos_init(&info);
+  	__mpcomp_parallel_set_specific_infos(&info, start, shared, t->info.icvs, MPCOMP_COMBINED_NONE);
 
-  t->schedule_type =
-      (t->schedule_is_forced) ? t->schedule_type : MPCOMP_COMBINED_NONE;
-  t->schedule_is_forced = 0;
+	if( !( t->schedule_is_forced ) )
+		 t->schedule_type = MPCOMP_COMBINED_NONE;
+  	t->schedule_is_forced = 0;
 
-  __mpcomp_internal_begin_parallel_region(info, arg_num_threads);
-
-  /* Start scheduling */
-  t->mvp->instance = t->children_instance;
-  sctk_assert( t->children_instance );
-  __mpcomp_start_openmp_thread( t->mvp );  
-
-  fprintf(stderr, "%s: End outlined OpenMP func\n", __func__ );
-  __mpcomp_internal_end_parallel_region(t->children_instance);
-
-  sctk_nodebug("%s: === EXIT PARALLEL REGION ===", __func__);
+  	__mpcomp_internal_begin_parallel_region(&info, arg_num_threads);
+  	t->mvp->instance = t->children_instance;
+  	__mpcomp_start_openmp_thread( t->mvp );  
+  	__mpcomp_internal_end_parallel_region(t->children_instance);
 }
 
 /****
@@ -272,137 +258,88 @@ void __mpcomp_start_parallel_region(void (*func)(void *), void *shared,
 void __mpcomp_start_sections_parallel_region(void (*func)(void *), void *shared,
                                              unsigned arg_num_threads,
                                              unsigned nb_sections) {
-  mpcomp_thread_t *t;
-  mpcomp_parallel_region_t *info;
+  	mpcomp_thread_t *t;
+  	mpcomp_parallel_region_t info;
 
-  sctk_nodebug("%s: === ENTER PARALLEL REGION w/ %d SECTION(s) ===", __func__,
-               nb_sections);
+  	__mpcomp_init();
 
-#ifdef MPCOMP_FORCE_PARALLEL_REGION_ALLOC
-  info = sctk_malloc(sizeof(mpcomp_parallel_region_t));
-  assert(info);
-#else  /* MPCOMP_FORCE_PARALLEL_REGION_ALLOC */
-  mpcomp_parallel_region_t noallocate_info;
-  info = &noallocate_info;
-#endif /* MPCOMP_FORCE_PARALLEL_REGION_ALLOC */
+	mpcomp_start_func_t start = ( mpcomp_start_func_t ) func;
+	sctk_assert( start );
 
-  /* Initialize OpenMP environment */
-  __mpcomp_init();
+  	t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
+  	sctk_assert(t != NULL);
 
-  /* Grab the thread info */
-  t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
-  sctk_assert(t != NULL);
+  	__mpcomp_parallel_region_infos_init(&info);
+  	__mpcomp_parallel_set_specific_infos(&info,start,shared,t->info.icvs,MPCOMP_COMBINED_SECTION);
+  	info.nb_sections = nb_sections;
 
-  __mpcomp_parallel_region_infos_init(info);
-  __mpcomp_parallel_set_specific_infos(info, (void *(*)(void *))func, shared,
-                                       t->info.icvs, MPCOMP_COMBINED_SECTION);
-  info->nb_sections = nb_sections;
+	if( !( t->schedule_is_forced ) )
+		 t->schedule_type = MPCOMP_COMBINED_SECTION;
+  	t->schedule_is_forced = 0;
 
-  t->schedule_type =
-      (t->schedule_is_forced) ? t->schedule_type : MPCOMP_COMBINED_SECTION;
-  t->schedule_is_forced = 0;
-
-  __mpcomp_internal_begin_parallel_region(info, arg_num_threads);
-
-  /* Start scheduling */
-  t->root->mvp->instance = t->children_instance;
-  __mpcomp_start_openmp_thread( t->root->mvp );
-
-  __mpcomp_internal_end_parallel_region(t->children_instance);
-
-  sctk_nodebug("%s: === EXIT PARALLEL REGION w/ %d SECTION(s) ===\n", __func__,
-               nb_sections);
+  	__mpcomp_internal_begin_parallel_region(&info, arg_num_threads);
+  	t->mvp->instance = t->children_instance;
+  	__mpcomp_start_openmp_thread( t->mvp );  
+  	__mpcomp_internal_end_parallel_region(t->children_instance);
 }
 
 void __mpcomp_start_parallel_dynamic_loop(void (*func)(void *), void *shared,
                                           unsigned arg_num_threads, long lb,
                                           long b, long incr, long chunk_size) {
-  mpcomp_thread_t *t;
-  mpcomp_parallel_region_t *info;
+  	mpcomp_thread_t *t;
+ 	mpcomp_parallel_region_t info;
 
-  sctk_nodebug(
-      "%s: === ENTER PARALLEL REGION w/ DYN LOOP %ld -> %ld [%ld] cs:%ld ===",
-      __func__, lb, b, incr, chunk_size);
+	mpcomp_start_func_t start = ( mpcomp_start_func_t ) func;
+	sctk_assert( start );
 
-#ifdef MPCOMP_FORCE_PARALLEL_REGION_ALLOC
-  info = sctk_malloc(sizeof(mpcomp_parallel_region_t));
-  assert(info);
-#else  /* MPCOMP_FORCE_PARALLEL_REGION_ALLOC */
-  mpcomp_parallel_region_t noallocate_info;
-  info = &noallocate_info;
-#endif /* MPCOMP_FORCE_PARALLEL_REGION_ALLOC */
+  	__mpcomp_init();
 
-  /* Initialize OpenMP environment */
-  __mpcomp_init();
+  	t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
+  	sctk_assert(t != NULL);
 
-  /* Grab the thread info */
-  t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
-  sctk_assert(t != NULL);
-
-  __mpcomp_parallel_region_infos_init(info);
-  __mpcomp_parallel_set_specific_infos(info, (void *(*)(void *))func, shared,
+  	__mpcomp_parallel_region_infos_init(&info);
+  	__mpcomp_parallel_set_specific_infos(&info,start, shared,
                                        t->info.icvs, MPCOMP_COMBINED_DYN_LOOP);
-  __mpcomp_loop_gen_infos_init(&(info->loop_infos), lb, b, incr, chunk_size);
+  	__mpcomp_loop_gen_infos_init(&(info.loop_infos), lb, b, incr, chunk_size);
 
-  t->schedule_type =
-      (t->schedule_is_forced) ? t->schedule_type : MPCOMP_COMBINED_DYN_LOOP;
-  t->schedule_is_forced = 0;
+	if( !( t->schedule_is_forced ) )
+		 t->schedule_type = MPCOMP_COMBINED_DYN_LOOP;
+  	t->schedule_is_forced = 0;
 
-  __mpcomp_internal_begin_parallel_region(info, arg_num_threads);
-
-  /* Start scheduling */
-  __mpcomp_in_order_scheduler(t->children_instance->mvps[0]);
-  __mpcomp_internal_end_parallel_region(t->children_instance);
-
-  sctk_nodebug(
-      "%s: === EXIT PARALLEL REGION w/ DYN LOOP %ld -> %ld [%ld] cs:%ld ===",
-      __func__, lb, b, incr, chunk_size);
+  	__mpcomp_internal_begin_parallel_region(&info, arg_num_threads);
+  	t->mvp->instance = t->children_instance;
+  	__mpcomp_start_openmp_thread( t->mvp );  
+  	__mpcomp_internal_end_parallel_region(t->children_instance);
 }
 
 void __mpcomp_start_parallel_static_loop(void (*func)(void *), void *shared,
                                          unsigned arg_num_threads, long lb,
                                          long b, long incr, long chunk_size) {
   mpcomp_thread_t *t;
-  mpcomp_parallel_region_t *info;
+  mpcomp_parallel_region_t info;
 
-  sctk_nodebug("%s: === ENTER PARALLEL REGION w/ STATIC LOOP %ld -> %ld [%ld] "
-               "cs:%ld ===",
-               __func__, lb, b, incr, chunk_size);
+	mpcomp_start_func_t start = ( mpcomp_start_func_t ) func;
+	sctk_assert( start );
 
-#ifdef MPCOMP_FORCE_PARALLEL_REGION_ALLOC
-  info = sctk_malloc(sizeof(mpcomp_parallel_region_t));
-  assert(info);
-#else  /* MPCOMP_FORCE_PARALLEL_REGION_ALLOC */
-  mpcomp_parallel_region_t noallocate_info;
-  info = &noallocate_info;
-#endif /* MPCOMP_FORCE_PARALLEL_REGION_ALLOC */
+  	__mpcomp_init();
 
-  /* Initialize OpenMP environment */
-  __mpcomp_init();
+  	t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
+  	sctk_assert(t != NULL);
 
-  /* Grab the thread info */
-  t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
-  sctk_assert(t != NULL);
-
-  __mpcomp_parallel_region_infos_init(info);
-  __mpcomp_parallel_set_specific_infos(info, (void *(*)(void *))func, shared,
+  	__mpcomp_parallel_region_infos_init(&info);
+  	__mpcomp_parallel_set_specific_infos(&info, start, shared,
                                        t->info.icvs,
                                        MPCOMP_COMBINED_STATIC_LOOP);
-  __mpcomp_loop_gen_infos_init(&(info->loop_infos), lb, b, incr, chunk_size);
+  	__mpcomp_loop_gen_infos_init(&(info.loop_infos), lb, b, incr, chunk_size);
 
-  t->schedule_type =
-      (t->schedule_is_forced) ? t->schedule_type : MPCOMP_COMBINED_STATIC_LOOP;
-  t->schedule_is_forced = 0;
+	if( !( t->schedule_is_forced ) )
+		 t->schedule_type = MPCOMP_COMBINED_STATIC_LOOP;
+  	t->schedule_is_forced = 0;
 
-  __mpcomp_internal_begin_parallel_region(info, arg_num_threads);
-
-  /* Start scheduling */
-  __mpcomp_in_order_scheduler(t->children_instance->mvps[0]);
-  __mpcomp_internal_end_parallel_region(t->children_instance);
-
-  sctk_nodebug(
-      "%s: === EXIT PARALLEL REGION w/ STATIC LOOP %ld -> %ld [%ld] cs:%ld ===",
-      __func__, lb, b, incr, chunk_size);
+  	__mpcomp_internal_begin_parallel_region(&info, arg_num_threads);
+  	t->mvp->instance = t->children_instance;
+  	__mpcomp_start_openmp_thread( t->mvp );  
+  	__mpcomp_internal_end_parallel_region(t->children_instance);
 }
 
 void __mpcomp_start_parallel_guided_loop(void (*func)(void *), void *shared,
