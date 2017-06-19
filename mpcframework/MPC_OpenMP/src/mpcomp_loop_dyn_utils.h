@@ -150,7 +150,9 @@ __mpcomp_loop_dyn_init_target_chunk_ull(mpcomp_thread_t *thread,
   const int index = __mpcomp_loop_dyn_get_for_dyn_index(thread);
   int cur = sctk_atomics_load_int(&(target->for_dyn_remain[index].i));
 
-  if (cur < 0 && !sctk_spinlock_trylock(&(target->info.update_lock))) {
+  if (cur < 0 )
+	{
+	if( !sctk_spinlock_trylock(&(target->info.update_lock))) {
     /* Get the current id of remaining chunk for the target */
     int cur = sctk_atomics_load_int(&(target->for_dyn_remain[index].i));
     if (cur < 0 && (__mpcomp_loop_dyn_get_for_dyn_current(thread) >
@@ -164,6 +166,7 @@ __mpcomp_loop_dyn_init_target_chunk_ull(mpcomp_thread_t *thread,
     }
     sctk_spinlock_unlock(&(target->info.update_lock));
   }
+	}
 }
 
 static inline void
@@ -174,7 +177,9 @@ __mpcomp_loop_dyn_init_target_chunk(mpcomp_thread_t *thread,
   const int index = __mpcomp_loop_dyn_get_for_dyn_index(thread);
   int cur = sctk_atomics_load_int(&(target->for_dyn_remain[index].i));
 
-  if (cur < 0 && !sctk_spinlock_trylock(&(target->info.update_lock))) {
+  if (cur < 0 )
+	{
+	if(!sctk_spinlock_trylock(&(target->info.update_lock))) {
     /* Get the current id of remaining chunk for the target */
     int cur = sctk_atomics_load_int(&(target->for_dyn_remain[index].i));
     if (cur < 0 && (__mpcomp_loop_dyn_get_for_dyn_current(thread) >
@@ -186,6 +191,7 @@ __mpcomp_loop_dyn_init_target_chunk(mpcomp_thread_t *thread,
                                      for_dyn_total);
     }
     sctk_spinlock_unlock(&(target->info.update_lock));
+	}
   }
 }
 

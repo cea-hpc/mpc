@@ -77,9 +77,9 @@ __mpcomp_internal_begin_parallel_region( mpcomp_parallel_region_t *info, const u
     if( t->root )
     {
         const unsigned int max_threads = t->root->nb_children;
-        //real_num_threads = (!expected_num_threads) ? info->icvs.nthreads_var : expected_num_threads;
         real_num_threads = expected_num_threads;
         real_num_threads = (!real_num_threads) ? max_threads : real_num_threads;
+		  fprintf(stderr, "::: %s ::: %d -- %d\n", __func__, real_num_threads, expected_num_threads );
     }
     else
     {

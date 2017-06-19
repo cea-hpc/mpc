@@ -104,7 +104,7 @@ static int __mpcomp_tree_rank_get_next_depth( mpcomp_node_t* node, const int exp
         }
     }
    
-    *nb_mvps = num_nodes;
+    *nb_mvps = ( num_nodes < expected_nb_mvps ) ? num_nodes : expected_nb_mvps;
     return next_depth;
 }
 
@@ -221,7 +221,7 @@ __mpcomp_tree_array_instance_init( mpcomp_thread_t* thread, const int expected_n
             mpcomp_mvp_t* cur_mvp = root->mvp;
             for( i = 0; i < instance->nb_mvps; i++, cur_mvp = cur_mvp->next_brother ) 
             {
-				    //fprintf(stderr, "value : %d -- %p\n", mvps_local[i], cur_mvp );
+//				    fprintf(stderr, "value : %d -- %p\n", mvps_local[i], cur_mvp );
                 instance->mvps[i] = (mpcomp_mvp_t*) root->tree_array[mvps_local[i]].user_pointer; 
                 (void) __mpcomp_add_mvp_saved_context( instance->mvps[i], instance, (unsigned int) i );
             }
@@ -293,6 +293,7 @@ void __mpcomp_wakeup_mvp( mpcomp_mvp_t *mvp)
     	new_thread->root = (mvp->prev_node_father ) ? mvp->prev_node_father->node : mvp->father;// mvp->father; //TODO just for test
     	new_thread->mvp = mvp;
 
+	   sctk_spinlock_init( &( new_thread->info.update_lock ), 0 );
 		/* Reset pragma for dynamic internal */
 		for (i = 0; i < MPCOMP_MAX_ALIVE_FOR_DYN + 1; i++) 
 			sctk_atomics_store_int(&(new_thread->for_dyn_remain[i].i), -1);

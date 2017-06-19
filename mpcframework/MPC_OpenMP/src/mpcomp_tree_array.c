@@ -969,9 +969,9 @@ __mpcomp_alloc_openmp_tree_struct( const int* shape, const int max_depth, hwloc_
     mpcomp_mvp_thread_args_t* args;
     void* retval;
 
-    char * string_tree_shape = __mpcomp_tree_array_convert_array_to_string( shape, max_depth );
-	 fprintf(stderr, "Current shape : %s\n", string_tree_shape );
-    free( string_tree_shape );
+//    char * string_tree_shape = __mpcomp_tree_array_convert_array_to_string( shape, max_depth );
+//	 fprintf(stderr, "Current shape : %s\n", string_tree_shape );
+//    free( string_tree_shape );
 
     const int n_num = __mpcomp_tree_array_get_parent_nodes_num_per_depth( shape, max_depth );
     const int non_leaf_n_num = (max_depth > 0 ) ? __mpcomp_tree_array_get_parent_nodes_num_per_depth( shape, max_depth -1 ) : 1;
