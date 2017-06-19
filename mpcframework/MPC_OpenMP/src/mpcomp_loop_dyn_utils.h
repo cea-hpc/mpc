@@ -204,8 +204,11 @@ static inline int __mpcomp_loop_dyn_get_victim_rank(mpcomp_thread_t *thread) {
     target += thread->for_dyn_target[i] * thread->instance->tree_cumulative[i];
   }
 
+	target = ( thread->rank + target ) % thread->instance->nb_mvps;
+
   sctk_assert(target >= 0);
   sctk_assert(target < thread->instance->nb_mvps);
+	fprintf(stderr, "[%d] ::: %s ::: Get Victim  %d\n", thread->rank, __func__, target );
 
   return target;
 }

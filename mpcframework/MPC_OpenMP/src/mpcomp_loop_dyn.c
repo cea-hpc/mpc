@@ -173,6 +173,7 @@ int __mpcomp_dynamic_loop_next(long *from, long *to) {
   /* Compute the index of the target */
   index_target = __mpcomp_loop_dyn_get_victim_rank(t);
 
+
   /*
    * WORKAROUND (pr35196.c):
    * Stop if the current thread already executed
@@ -183,10 +184,16 @@ int __mpcomp_dynamic_loop_next(long *from, long *to) {
     return 0;
   }
 
+  if( !( t->instance->mvps[index_target]->threads ) )
+		__mpcomp_wakeup_mvp( t->instance->mvps[index_target] );			
+
+  fprintf(stderr, "::: %s ::: Update index_target : %d -- %p\n", __func__, index_target, t->instance->mvps[index_target]->threads );
+
   int found = 1;
   int *tree_base = t->instance->tree_base;
   const int tree_depth = t->instance->tree_depth;
 
+  sctk_assert( &( t->instance->mvps[index_target]->threads[0]) );
   /* While it is not possible to get a chunk */
   while (!__mpcomp_dynamic_loop_get_chunk_from_rank(
       t, &(t->instance->mvps[index_target]->threads[0]), from, to)) {
@@ -209,6 +216,15 @@ int __mpcomp_dynamic_loop_next(long *from, long *to) {
 
     /* Compute the index of the target */
     index_target = __mpcomp_loop_dyn_get_victim_rank(t);
+
+	 if( !( t->instance->mvps[index_target]->threads ) )
+	    __mpcomp_wakeup_mvp( t->instance->mvps[index_target] );			
+
+	 if( !( t->instance->mvps[index_target]->threads ) )
+		goto do_increase;
+
+    fprintf(stderr, "::: %s ::: Update index_target : %d -- %p\n", __func__, index_target, t->instance->mvps[index_target]->threads );
+
     barrier_num_threads =
         t->instance->mvps[index_target]->father->barrier_num_threads;
 

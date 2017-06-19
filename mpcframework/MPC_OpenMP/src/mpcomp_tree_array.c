@@ -751,6 +751,7 @@ __mpcomp_openmp_node_initialisation( mpcomp_meta_tree_node_t* root, mpcomp_node_
     
     // save Node
     me->user_pointer = (void*) new_node;
+    new_node->tree_array = root;
 
     // Debug informations ...
     new_node->global_rank = rank;
@@ -989,6 +990,7 @@ __mpcomp_alloc_openmp_tree_struct( const int* shape, const int max_depth, hwloc_
     root_node->tree_base = __mpcomp_tree_array_compute_tree_shape( root_node, shape, max_depth );     
     root_node->tree_cumulative = __mpcomp_tree_array_compute_cumulative_num_nodes_per_depth( root_node );
     root_node->tree_nb_nodes_per_depth = __mpcomp_tree_array_compute_tree_num_nodes_per_depth( root_node );
+	 root_node->tree_array = root;
 
     for( i = n_num - 1; i >= non_leaf_n_num; i-- )
     {

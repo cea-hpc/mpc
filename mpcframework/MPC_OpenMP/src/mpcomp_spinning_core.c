@@ -14,7 +14,8 @@ static void __mpcomp_tree_array_team_reset( mpcomp_team_t *team )
     sctk_atomics_store_int(last_array_slot, MPCOMP_NOWAIT_STOP_SYMBOL);
 }
 
-static inline int __mpcomp_del_mvp_saved_context( mpcomp_mvp_t* mvp )
+static inline int 
+__mpcomp_del_mvp_saved_context( mpcomp_mvp_t* mvp )
 {
     mpcomp_mvp_saved_context_t* prev_mvp_context = NULL;
 
@@ -35,7 +36,8 @@ static inline int __mpcomp_del_mvp_saved_context( mpcomp_mvp_t* mvp )
     return 0; 
 } 
 
-static inline int __mpcomp_update_mvp_saved_context( mpcomp_mvp_t* mvp, mpcomp_node_t* node, mpcomp_node_t* father )
+static inline int 
+__mpcomp_update_mvp_saved_context( mpcomp_mvp_t* mvp, mpcomp_node_t* node, mpcomp_node_t* father )
 {
     mpcomp_mvp_saved_context_t* prev_mvp_context = NULL;
 
@@ -44,7 +46,6 @@ static inline int __mpcomp_update_mvp_saved_context( mpcomp_mvp_t* mvp, mpcomp_n
     
     /* Get previous context */
     prev_mvp_context =  mvp->prev_node_father;
-    assume_m( prev_mvp_context, "[%d | %d | %d | %d | %p]", mvp->global_rank, mvp->stage_rank, mvp->local_rank, mvp->rank, mvp );
    
     /* Update prev context information */
     prev_mvp_context->node = node;
@@ -54,7 +55,8 @@ static inline int __mpcomp_update_mvp_saved_context( mpcomp_mvp_t* mvp, mpcomp_n
     return 0;
 }
 
-static inline int __mpcomp_add_mvp_saved_context( mpcomp_mvp_t* mvp, const unsigned int rank )
+static inline int 
+__mpcomp_add_mvp_saved_context( mpcomp_mvp_t* mvp, mpcomp_instance_t* instance, const unsigned int rank )
 {
     mpcomp_mvp_saved_context_t* prev_mvp_context = NULL;
 
@@ -70,7 +72,14 @@ static inline int __mpcomp_add_mvp_saved_context( mpcomp_mvp_t* mvp, const unsig
     prev_mvp_context->rank = mvp->rank;
     mvp->rank = rank;
     mvp->prev_node_father = prev_mvp_context;
-  
+
+#if MPCOMP_TRANSFER_INFO_ON_NODES
+	 mvp->info = instance->team->info;
+#endif /* MPCOMP_TRANSFER_INFO_ON_NODES */
+
+	/* Old value can be restore by mpcomp_thread */
+ 	 mvp->instance = instance;  
+
     return 0; 
 }
 
@@ -97,6 +106,45 @@ static int __mpcomp_tree_rank_get_next_depth( mpcomp_node_t* node, const int exp
    
     *nb_mvps = num_nodes;
     return next_depth;
+}
+
+static inline int*
+__mpcomp_instance_get_mvps_local_rank( mpcomp_node_t *root, const int instance_depth, const int num_mvps )
+{
+	int i, j, next;
+	int *array;
+
+	sctk_assert( root );
+	sctk_assert( instance_depth > 0 );
+	sctk_assert( num_mvps > 0 );
+
+	const int cur_degree = root->tree_base[instance_depth-2];
+	const int prev_degree = root->tree_base[instance_depth-1];
+	const int cumulative = root->tree_cumulative[instance_depth-1];
+
+	const int quot = num_mvps / prev_degree;
+	const int rest = num_mvps % prev_degree;	
+	const int shift = root->mvp->global_rank;
+
+	fprintf(stderr, "::: %s ::: %d %d %d %d %d\n", __func__, prev_degree, quot, rest, cur_degree, instance_depth );
+	
+	
+	array = (int*) malloc( num_mvps * sizeof( int ) );
+	sctk_assert( array );
+	memset( array, 0, num_mvps * sizeof( int ) );
+
+	for( next = 0, i = 0; i < prev_degree && next < num_mvps; i++ )
+	{
+		const int num_children = ( i < rest ) ? quot +1 : quot;
+		for( j = 0; j < num_children; j++ )
+		{
+			array[next] = ( i * cur_degree + j ) * cumulative;
+			array[next] += shift;
+			next++;
+		}
+	}	
+	return array;
+	
 }
 
 mpcomp_instance_t* 
@@ -127,9 +175,18 @@ __mpcomp_tree_array_instance_init( mpcomp_thread_t* thread, const int expected_n
     sctk_assert( instance->mvps );
     memset( instance->mvps, 0, sizeof(mpcomp_mvp_t*) * instance->nb_mvps);
 
+	 instance->mvps_is_ready = (sctk_atomics_int*) malloc( sizeof(sctk_atomics_int)*instance->nb_mvps );
+	 sctk_assert( instance->mvps_is_ready );
+	 memset( instance->mvps_is_ready, 0, sizeof(sctk_atomics_int)*instance->nb_mvps );
+
     /* -- First instance MVP  -- */
     instance->root = root;
     instance->mvps[0] = thread->mvp;
+
+		for( i = 0; i < root->tree_depth; i++ )
+		{
+			fprintf(stderr, "::: %s ::: %d -- %d -- %d -- %d\n", __func__, i, root->tree_base[i], root->tree_cumulative[i], instance->tree_depth );	
+		}
 
     if( instance->tree_depth > 1 )
     {
@@ -160,11 +217,13 @@ __mpcomp_tree_array_instance_init( mpcomp_thread_t* thread, const int expected_n
             memcpy(instance->tree_cumulative, root->tree_cumulative, tree_array_size);
             memcpy(instance->tree_nb_nodes_per_depth, root->tree_nb_nodes_per_depth, tree_array_size);
             /* Collect instance mvps */
+	 	  		int * mvps_local = __mpcomp_instance_get_mvps_local_rank( root, instance->tree_depth, expected_nb_mvps );
             mpcomp_mvp_t* cur_mvp = root->mvp;
             for( i = 0; i < instance->nb_mvps; i++, cur_mvp = cur_mvp->next_brother ) 
             {
-                instance->mvps[i] = cur_mvp; 
-                (void) __mpcomp_add_mvp_saved_context( cur_mvp, (unsigned int) i );
+				    fprintf(stderr, "value : %d -- %p\n", mvps_local[i], cur_mvp );
+                instance->mvps[i] = (mpcomp_mvp_t*) root->tree_array[mvps_local[i]].user_pointer; 
+                (void) __mpcomp_add_mvp_saved_context( instance->mvps[i], instance, (unsigned int) i );
             }
         }
         else
@@ -193,7 +252,7 @@ __mpcomp_tree_array_instance_init( mpcomp_thread_t* thread, const int expected_n
             for( i = 0; i < instance->nb_mvps && i < expected_nb_mvps; i++, cur_node = cur_node->next_brother )
             {
                 instance->mvps[i] = cur_node->mvp;
-                (void) __mpcomp_add_mvp_saved_context( cur_node->mvp, (unsigned int) i );
+                (void) __mpcomp_add_mvp_saved_context( cur_node->mvp, instance, (unsigned int) i );
             }
         }
     }
@@ -202,41 +261,50 @@ __mpcomp_tree_array_instance_init( mpcomp_thread_t* thread, const int expected_n
 
 void __mpcomp_wakeup_mvp( mpcomp_mvp_t *mvp) 
 {
-    int i;
+    int i, ret;
     mpcomp_local_icv_t icvs;
     mpcomp_thread_t* new_thread;
 
     /* Sanity check */
     sctk_assert(mvp);
 
-    new_thread = (mpcomp_thread_t*) malloc( sizeof( mpcomp_thread_t) );
-    sctk_assert( new_thread );
-    memset( new_thread, 0, sizeof( mpcomp_thread_t ) );
+	 ret = !sctk_atomics_cas_int( &( mvp->instance->mvps_is_ready[mvp->rank] ), 0, 1 );
+	 
+	 if( ret )
+	 {
+		fprintf(stderr, "::: %s ::: Init Thread MVP @%d\n", __func__, mvp->rank );
+    	new_thread = (mpcomp_thread_t*) malloc( sizeof( mpcomp_thread_t) );
+    	sctk_assert( new_thread );
+    	memset( new_thread, 0, sizeof( mpcomp_thread_t ) );
 
-    new_thread->father = mvp->threads;
-    new_thread->info.num_threads = 1; 
-    new_thread->instance = mvp->instance;
+    	new_thread->father = mvp->threads;
+    	new_thread->info.num_threads = 1; 
+    	new_thread->instance = mvp->instance;
 
 #if MPCOMP_TRANSFER_INFO_ON_NODES
-    new_thread->info = mvp->info;
+    	new_thread->info = mvp->info;
 #else /* MPCOMP_TRANSFER_INFO_ON_NODES */
-    new_thread->info = mvp->instance->team->info;
+    	new_thread->info = mvp->instance->team->info;
 #endif
 
-    /* Set thread rank */
-    new_thread->rank = mvp->rank;
-    mvp->threads = new_thread;
-    new_thread->root = (mvp->prev_node_father ) ? mvp->prev_node_father->node : mvp->father;// mvp->father; //TODO just for test
-    new_thread->mvp = mvp;
-    mvp->slave_running = MPCOMP_MVP_STATE_READY;
+    	/* Set thread rank */
+    	new_thread->rank = mvp->rank;
+    	mvp->threads = new_thread;
+    	new_thread->root = (mvp->prev_node_father ) ? mvp->prev_node_father->node : mvp->father;// mvp->father; //TODO just for test
+    	new_thread->mvp = mvp;
 
-	/* Init thread parallel infos */
-	new_thread->info.combined_pragma = MPCOMP_COMBINED_NONE;
+		/* Reset pragma for dynamic internal */
+		for (i = 0; i < MPCOMP_MAX_ALIVE_FOR_DYN + 1; i++) 
+			sctk_atomics_store_int(&(new_thread->for_dyn_remain[i].i), -1);
 
-	/* Reset pragma for dynamic internal */
-	for (i = 0; i < MPCOMP_MAX_ALIVE_FOR_DYN + 1; i++) 
-		sctk_atomics_store_int(&(new_thread->for_dyn_remain[i].i), -1);
-
+		 sctk_atomics_store_int( &( mvp->instance->mvps_is_ready[mvp->rank] ), 2);
+	}
+	else
+	{
+		while( sctk_atomics_load_int( &(mvp->instance->mvps_is_ready[mvp->rank])) != 2 ){};
+	}
+	
+	
 	return;	
 }
 
@@ -385,7 +453,9 @@ void __mpcomp_start_openmp_thread( mpcomp_mvp_t *mvp )
     __mpcomp_in_order_scheduler( sctk_openmp_thread_tls );
 
     /* Implicite barrier */
-    __mpcomp_internal_half_barrier( mvp );
+	 __mpcomp_internal_half_barrier( mvp );
+
+	 fprintf(stderr, "[%d] ::: PASSED HALF BARRIER :::\n", cur_thread->rank);
 
     /* End barrier for master thread */
     if( !( cur_thread->rank ) )
@@ -397,11 +467,6 @@ void __mpcomp_start_openmp_thread( mpcomp_mvp_t *mvp )
         
        sctk_atomics_store_int( &( root->barrier ), 0); 
     }
-    else
-    {
-        mpcomp_node_t* root = cur_thread->instance->root; 
-    }
-
 
     sctk_openmp_thread_tls = mvp->threads->father;
     mvp->threads = mvp->threads->father;
@@ -416,7 +481,6 @@ void __mpcomp_start_openmp_thread( mpcomp_mvp_t *mvp )
  
     /* Free previous thread */
     free( cur_thread );
-    
 }
 
 /**
@@ -438,7 +502,7 @@ void mpcomp_slave_mvp_leaf( mpcomp_mvp_t *mvp, mpcomp_node_t *spinning_node )
         *spinning_val = MPCOMP_MVP_STATE_SLEEP;
         /* Spin for new parallel region */
         sctk_thread_wait_for_value_and_poll( spinning_val, MPCOMP_MVP_STATE_AWAKE, NULL, NULL ) ;
-        mvp->instance = mvp->father->instance;
+        //mvp->instance = mvp->father->instance;
         __mpcomp_start_openmp_thread( mvp );
     }
 }
@@ -473,12 +537,12 @@ void mpcomp_slave_mvp_node( mpcomp_mvp_t *mvp, mpcomp_node_t *spinning_node )
         rest = num_threads % father_num_children;
         quot = num_threads / father_num_children; 
         num_threads = quot; // MANAGE non multiple number
-	    sctk_assert( num_threads > 0 ) ;
+	     sctk_assert( num_threads > 0 ) ;
+
 	    /* -- Wake up children nodes -- */
-        
         __mpcomp_wakeup_gen_node( spinning_node, num_threads );
         /* -- Start Parallel Region -- */
-        mvp->instance = spinning_node->instance;
+        //mvp->instance = spinning_node->instance;
        __mpcomp_start_openmp_thread( mvp );
     }
 }

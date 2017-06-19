@@ -33,6 +33,8 @@
 #include "mpcomp_types_icv.h"
 #include "mpcomp_types_loop.h"
 
+#include "mpcomp_tree_array.h"
+
 #ifdef MPCOMP_USE_INTEL_ABI
 #include "mpcomp_intel_types.h"
 #endif /* MPCOMP_USE_INTEL_ABI */
@@ -208,25 +210,18 @@ typedef struct mpcomp_thread_s {
 
 /* Instance of OpenMP runtime */
 typedef struct mpcomp_instance_s {
-  hwloc_topology_t topology;
+  	struct mpcomp_node_s *root;   /*!< Root to the tree linking the microVPs  */
+  	struct mpcomp_team_s *team;   /* Information on the team */
 
-  int is_buffered;              /*!< Keep instance allocation               */
-  int nb_mvps;                  /*!< Number of microVPs for this instance   */
-  struct mpcomp_mvp_s **mvps;   /*!< All microVPs of this instance          */
-  struct mpcomp_node_s *root;   /*!< Root to the tree linking the microVPs  */
-  struct mpcomp_team_s *team;   /* Information on the team */
-  int tree_depth;               /* Depth of the tree */
-  int *tree_base;               /* Degree per level of the tree
-                                                       (array of size 'tree_depth' */
-  int *tree_cumulative;         /* Initialized in __mpcomp_build_tree */
-  int *tree_nb_nodes_per_depth; /* Number of nodes at each depth ([0] = root =
-                                   1) */
-  int scatter_depth;         /* TODO check */
-  int core_depth;            /* TODO check */
-  int nb_cores;              /* TODO check */
-  int balanced_last_thread;  /* TODO check */
-  int balanced_current_core; /* TODO check */
+	/* Instance MVP */
+  	int nb_mvps;                  /*!< Number of microVPs for this instance   */
+  	struct mpcomp_mvp_s **mvps;   /*!< All microVPs of this instance          */
+  	sctk_atomics_int* mvps_is_ready;
 
+  	int tree_depth;               /* Depth of the tree */
+  	int *tree_base;               /* Degree per level of the tree */
+  	int *tree_cumulative;         /* Initialized in __mpcomp_build_tree */
+  	int *tree_nb_nodes_per_depth; /* Number of nodes at each depth ([0] = root */
 #if MPCOMP_TASK
   struct mpcomp_task_instance_infos_s task_infos;
 #endif /* MPCOMP_TASK */
@@ -297,6 +292,7 @@ typedef struct mpcomp_mvp_s
 typedef struct mpcomp_node_s 
 {
     /* -- MVP Thread specific informations --                   */
+	 mpcomp_meta_tree_node_t *tree_array;
     /** MVP spinning as a node                                  */
     struct mpcomp_mvp_s *mvp;
     /** MVP spinning value in topology tree                     */

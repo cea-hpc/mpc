@@ -30,7 +30,7 @@
 #include "mpcomp_openmp_tls.h"
 
 /** Barrier for all threads of the same team */
-static void __mpcomp_internal_full_barrier(mpcomp_mvp_t *mvp) {
+void __mpcomp_internal_full_barrier(mpcomp_mvp_t *mvp) {
   long b, b_done;
   mpcomp_node_t *c, *new_root;
 

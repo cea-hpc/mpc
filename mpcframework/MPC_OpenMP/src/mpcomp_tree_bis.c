@@ -238,10 +238,10 @@ int mpcomp_build_default_tree(mpcomp_instance_t *instance) {
   sctk_nodebug("__mpcomp_build_auto_tree begin");
 
   sctk_assert(instance != NULL);
-  sctk_assert(instance->topology != NULL);
+  //sctk_assert(instance->topology != NULL);
 
   /* Get the default topology shape */
-  degree = __mpcomp_compute_topo_tree_array(instance->topology, &depth);
+  degree = 0; //__mpcomp_compute_topo_tree_array(instance->topology, &depth);
 
   /* Compute the number of leaves */
   n_leaves = 1;
@@ -263,7 +263,7 @@ int mpcomp_build_default_tree(mpcomp_instance_t *instance) {
     depth = 1;
     n_leaves = sctk_get_cpu_number();
     degree[0] = n_leaves;
-    instance->scatter_depth = 0;
+    //instance->scatter_depth = 0;
   }
 
   TODO("Check the tree in hybrid mode (not w/ sctk_get_cpu_number)")
@@ -381,15 +381,15 @@ int mpcomp_build_tree(mpcomp_instance_t *instance, int n_leaves, int depth, int 
      }
 #endif 
      /* Get the number of CPUs */
-     const int nb_cpus = sctk_get_cpu_number_topology(instance->topology);
+     //const int nb_cpus = sctk_get_cpu_number_topology(instance->topology);
 
      /* Grab the right order to allocate microVPs (sctk_get_neighborhood) */
-     order = (int *)sctk_malloc((nb_cpus + 1) * sizeof(int));
-     sctk_assert(order != NULL);
+     //order = (int *)sctk_malloc((nb_cpus + 1) * sizeof(int));
+     //sctk_assert(order != NULL);
 
  //	sctk_get_neighborhood_topology(instance->topology, current_mpc_vp, nb_cpus, order);
  	//__mpcomp_alloc_openmp_tree_struct( degree, depth, NULL, instance ); 
- 	free(order);
+ 	//free(order);
 
 	return 0;
 }

@@ -33,7 +33,8 @@ void mpcomp_internal_GOMP_loop_end(void) {
   }
 }
 
-void mpcomp_internal_GOMP_loop_end_nowait(void) {
+void mpcomp_internal_GOMP_loop_end_nowait(void) 
+{
   mpcomp_thread_t *t;
   t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
   sctk_assert(t != NULL);
