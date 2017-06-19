@@ -126,7 +126,7 @@ __mpcomp_instance_get_mvps_local_rank( mpcomp_node_t *root, const int instance_d
 	const int rest = num_mvps % prev_degree;	
 	const int shift = root->mvp->global_rank;
 
-	fprintf(stderr, "::: %s ::: %d %d %d %d %d\n", __func__, prev_degree, quot, rest, cur_degree, instance_depth );
+	//fprintf(stderr, "::: %s ::: %d %d %d %d %d\n", __func__, prev_degree, quot, rest, cur_degree, instance_depth );
 	
 	
 	array = (int*) malloc( num_mvps * sizeof( int ) );
@@ -185,7 +185,7 @@ __mpcomp_tree_array_instance_init( mpcomp_thread_t* thread, const int expected_n
 
 		for( i = 0; i < root->tree_depth; i++ )
 		{
-			fprintf(stderr, "::: %s ::: %d -- %d -- %d -- %d\n", __func__, i, root->tree_base[i], root->tree_cumulative[i], instance->tree_depth );	
+			//fprintf(stderr, "::: %s ::: %d -- %d -- %d -- %d\n", __func__, i, root->tree_base[i], root->tree_cumulative[i], instance->tree_depth );	
 		}
 
     if( instance->tree_depth > 1 )
@@ -221,7 +221,7 @@ __mpcomp_tree_array_instance_init( mpcomp_thread_t* thread, const int expected_n
             mpcomp_mvp_t* cur_mvp = root->mvp;
             for( i = 0; i < instance->nb_mvps; i++, cur_mvp = cur_mvp->next_brother ) 
             {
-				    fprintf(stderr, "value : %d -- %p\n", mvps_local[i], cur_mvp );
+				    //fprintf(stderr, "value : %d -- %p\n", mvps_local[i], cur_mvp );
                 instance->mvps[i] = (mpcomp_mvp_t*) root->tree_array[mvps_local[i]].user_pointer; 
                 (void) __mpcomp_add_mvp_saved_context( instance->mvps[i], instance, (unsigned int) i );
             }
@@ -272,7 +272,7 @@ void __mpcomp_wakeup_mvp( mpcomp_mvp_t *mvp)
 	 
 	 if( ret )
 	 {
-		fprintf(stderr, "::: %s ::: Init Thread MVP @%d\n", __func__, mvp->rank );
+		//fprintf(stderr, "::: %s ::: Init Thread MVP @%d\n", __func__, mvp->rank );
     	new_thread = (mpcomp_thread_t*) malloc( sizeof( mpcomp_thread_t) );
     	sctk_assert( new_thread );
     	memset( new_thread, 0, sizeof( mpcomp_thread_t ) );
@@ -455,7 +455,7 @@ void __mpcomp_start_openmp_thread( mpcomp_mvp_t *mvp )
     /* Implicite barrier */
 	 __mpcomp_internal_half_barrier( mvp );
 
-	 fprintf(stderr, "[%d] ::: PASSED HALF BARRIER :::\n", cur_thread->rank);
+	 //fprintf(stderr, "[%d] ::: PASSED HALF BARRIER :::\n", cur_thread->rank);
 
     /* End barrier for master thread */
     if( !( cur_thread->rank ) )

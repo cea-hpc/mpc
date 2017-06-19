@@ -141,7 +141,7 @@ int __mpcomp_dynamic_loop_begin(long lb, long b, long incr, long chunk_size,
 	}
 #endif /* OMPT_SUPPORT */
     const int ret = __mpcomp_dynamic_loop_next(from, to);
-    fprintf(stderr, ":: %s :: Finished ? %d \n", __func__, ret );
+    //fprintf(stderr, ":: %s :: Finished ? %d \n", __func__, ret );
     return (!from && !to) ? -1 : ret;
 }
 
@@ -173,7 +173,6 @@ int __mpcomp_dynamic_loop_next(long *from, long *to) {
   /* Compute the index of the target */
   index_target = __mpcomp_loop_dyn_get_victim_rank(t);
 
-
   /*
    * WORKAROUND (pr35196.c):
    * Stop if the current thread already executed
@@ -186,14 +185,14 @@ int __mpcomp_dynamic_loop_next(long *from, long *to) {
 
   if( !( t->instance->mvps[index_target]->threads ) )
 		__mpcomp_wakeup_mvp( t->instance->mvps[index_target] );			
+  sctk_assert( &( t->instance->mvps[index_target]->threads[0]) );
 
-  fprintf(stderr, "::: %s ::: Update index_target : %d -- %p\n", __func__, index_target, t->instance->mvps[index_target]->threads );
+  //fprintf(stderr, "::: %s ::: Update index_target : %d -- %p\n", __func__, index_target, t->instance->mvps[index_target]->threads );
 
   int found = 1;
   int *tree_base = t->instance->tree_base;
   const int tree_depth = t->instance->tree_depth;
 
-  sctk_assert( &( t->instance->mvps[index_target]->threads[0]) );
   /* While it is not possible to get a chunk */
   while (!__mpcomp_dynamic_loop_get_chunk_from_rank(
       t, &(t->instance->mvps[index_target]->threads[0]), from, to)) {
@@ -223,7 +222,7 @@ int __mpcomp_dynamic_loop_next(long *from, long *to) {
 	 if( !( t->instance->mvps[index_target]->threads ) )
 		goto do_increase;
 
-    fprintf(stderr, "::: %s ::: Update index_target : %d -- %p\n", __func__, index_target, t->instance->mvps[index_target]->threads );
+    //fprintf(stderr, "::: %s ::: Update index_target : %d -- %p\n", __func__, index_target, t->instance->mvps[index_target]->threads );
 
     barrier_num_threads =
         t->instance->mvps[index_target]->father->barrier_num_threads;
