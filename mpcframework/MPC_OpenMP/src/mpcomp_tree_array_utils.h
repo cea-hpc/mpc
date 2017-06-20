@@ -160,4 +160,70 @@ __mpcomp_tree_array_compute_node_parents(  mpcomp_node_t* root, mpcomp_node_t* n
     }
 }
 
+static void inline 
+__mpcomp_update_node_children_node_ptr( const int first_idx, 
+                                        mpcomp_node_t* node, 
+                                        mpcomp_meta_tree_node_t* root )
+{
+    int i;
+    mpcomp_meta_tree_node_t* me;
+
+    sctk_assert( node );
+    sctk_assert( first_idx > 0 );
+
+    sctk_assert( root );
+    assert( node->child_type == MPCOMP_CHILDREN_NODE );
+
+    const int children_num = node->nb_children;
+    me = &(root[node->global_rank]);
+    assert(sctk_atomics_load_int(&(me->children_ready)) == children_num);
+
+    for( i = 0; i < children_num; i++ ) 
+    { 
+        const int global_child_idx = first_idx + i; 
+        mpcomp_meta_tree_node_t* child = &( root[global_child_idx] );
+        node->children.node[i] = (mpcomp_node_t*) child->user_pointer;
+        sctk_assert( node->children.node[i]->local_rank == i );
+        node->children.node[i]->father = node;
+    }
+    
+    node->mvp = node->children.node[0]->mvp;
+
+    sctk_assert( me->fathers_array_size == root[first_idx].fathers_array_size -1 );
+    sctk_assert( me->fathers_array );
+
+    for( i = 0; i < me->fathers_array_size; i++ )
+        me->fathers_array[i] = root[first_idx].fathers_array[i];
+
+    return;
+}  
+
+static void inline
+__mpcomp_update_node_children_mvp_ptr(  const int first_idx, 
+                                        mpcomp_node_t* node, 
+                                        mpcomp_meta_tree_node_t* root )
+{
+    int i;
+
+    sctk_assert( node );
+    sctk_assert( first_idx > 0 );
+
+    sctk_assert( root );
+    assert( node->child_type == MPCOMP_CHILDREN_LEAF );
+
+    const int children_num = node->nb_children;
+    assert(sctk_atomics_load_int(&(root[node->global_rank].children_ready)) == children_num);
+
+    for( i = 0; i < children_num; i++ ) 
+    { 
+        const int global_child_idx = first_idx + i; 
+        mpcomp_meta_tree_node_t* child = &( root[global_child_idx] );
+        node->children.leaf[i] = (mpcomp_node_t*) child->user_pointer;
+        sctk_assert( node->children.leaf[i]->local_rank == i );
+        node->children.leaf[i]->father = node;
+    }
+    
+    node->mvp = node->children.leaf[0];
+}  
+
 #endif /* __MPCOMP_TREE_ARRAY_UTILS_H__ */

@@ -428,8 +428,7 @@ void mpcomp_slave_mvp_leaf( mpcomp_mvp_t *mvp, mpcomp_node_t *spinning_node )
 {
     assert( mvp );
     volatile int* spinning_val = &( mvp->slave_running ) ;
-    assert( *spinning_val == MPCOMP_MVP_STATE_UNDEF );
-
+    
     /* Spin while this microVP is alive */
     while( mvp->enable ) 
     {
