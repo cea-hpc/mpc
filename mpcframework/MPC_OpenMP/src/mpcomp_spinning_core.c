@@ -174,64 +174,45 @@ __mpcomp_tree_array_instance_init( mpcomp_thread_t* thread, const int expected_n
     instance->mvps = (mpcomp_mvp_t**) malloc(sizeof(mpcomp_mvp_t*)*instance->nb_mvps);
     sctk_assert( instance->mvps );
     memset( instance->mvps, 0, sizeof(mpcomp_mvp_t*) * instance->nb_mvps);
-
-	 instance->mvps_is_ready = (sctk_atomics_int*) malloc( sizeof(sctk_atomics_int)*instance->nb_mvps );
-	 sctk_assert( instance->mvps_is_ready );
-	 memset( instance->mvps_is_ready, 0, sizeof(sctk_atomics_int)*instance->nb_mvps );
+    
+    instance->mvps_is_ready = (sctk_atomics_int*) malloc( sizeof(sctk_atomics_int)*instance->nb_mvps );
+    sctk_assert( instance->mvps_is_ready );
+    memset( instance->mvps_is_ready, 0, sizeof(sctk_atomics_int)*instance->nb_mvps );
 
     /* -- First instance MVP  -- */
     instance->root = root;
     instance->mvps[0] = thread->mvp;
-
-		for( i = 0; i < root->tree_depth; i++ )
-		{
-			//fprintf(stderr, "::: %s ::: %d -- %d -- %d -- %d\n", __func__, i, root->tree_base[i], root->tree_cumulative[i], instance->tree_depth );	
-		}
+    root->num_threads = instance->nb_mvps;
+    root->instance = instance;
 
     if( instance->tree_depth > 1 )
     {
-        const size_t tree_array_size = sizeof( int ) * instance->tree_depth; 
-
-        /* -- Allocation Tree Base Array -- */
-        instance->tree_base = (int*) malloc( tree_array_size );
-        sctk_assert( instance->tree_base );
-        memset( instance->tree_base, 0, tree_array_size );
+        /* -- Forward Tree Array from node to instance-- */
+	instance->tree_base = root->tree_base;
+	instance->tree_nb_nodes_per_depth = root->tree_nb_nodes_per_depth;
 
         /* -- Allocation Tree cumulative Array -- */ 
-        instance->tree_cumulative = (int*) malloc( tree_array_size );
+        instance->tree_cumulative = (int*) malloc( instance->tree_depth * sizeof( int ) );
         sctk_assert( instance->tree_cumulative );
-        memset( instance->tree_cumulative, 0, tree_array_size );
-
-        /* -- Allocation Tree Node Per Depth -- */
-        instance->tree_nb_nodes_per_depth = (int*) malloc( tree_array_size ); 
-        sctk_assert( instance->tree_nb_nodes_per_depth ); 
-        memset( instance->tree_nb_nodes_per_depth, 0, tree_array_size );
 
         const int next_depth = __mpcomp_spining_get_instance_max_depth(instance);
 
         /* -- Instance include topology tree leaf level -- */
         if( instance->tree_depth == root->tree_depth )
         {
-            /* Init instance tree array informations */
-            memcpy(instance->tree_base, root->tree_base, tree_array_size);
-            memcpy(instance->tree_cumulative, root->tree_cumulative, tree_array_size);
-            memcpy(instance->tree_nb_nodes_per_depth, root->tree_nb_nodes_per_depth, tree_array_size);
-            /* Collect instance mvps */
-	 	  		int * mvps_local = __mpcomp_instance_get_mvps_local_rank( root, instance->tree_depth, expected_nb_mvps );
-            mpcomp_mvp_t* cur_mvp = root->mvp;
-            for( i = 0; i < instance->nb_mvps; i++, cur_mvp = cur_mvp->next_brother ) 
+            memcpy(instance->tree_cumulative, root->tree_cumulative, instance->tree_depth * sizeof( int ));
+	    int * mvps_local = __mpcomp_instance_get_mvps_local_rank( root, instance->tree_depth, expected_nb_mvps );
+
+            for( i = 0; i < instance->nb_mvps; i++ ) 
             {
-//				    fprintf(stderr, "value : %d -- %p\n", mvps_local[i], cur_mvp );
-                instance->mvps[i] = (mpcomp_mvp_t*) root->tree_array[mvps_local[i]].user_pointer; 
-                (void) __mpcomp_add_mvp_saved_context( instance->mvps[i], instance, (unsigned int) i );
+		const int cur_mvp = i + root->mvp->global_rank;
+		fprintf(stderr, "::: %s ::: %d %d\n", __func__, i, mvps_local[i] );
+                instance->mvps[cur_mvp] = (mpcomp_mvp_t*) root->tree_array[cur_mvp].user_pointer; 
+                (void) __mpcomp_add_mvp_saved_context( instance->mvps[cur_mvp], instance, (unsigned int) i );
             }
         }
         else
         {
-            /* Init instance tree array informations */
-            memcpy(instance->tree_base, root->tree_base, tree_array_size);
-            memcpy(instance->tree_nb_nodes_per_depth, root->tree_nb_nodes_per_depth, tree_array_size );
-
             /* Cumulative can't be just copied */
             //TODO update utils function to trigger this use
             for (i = 0; i < instance->tree_depth ; i++) 
@@ -309,93 +290,47 @@ void __mpcomp_wakeup_mvp( mpcomp_mvp_t *mvp)
 	return;	
 }
 
-void __mpcomp_wakeup_leaf( mpcomp_node_t* start_node, const int num_threads )
+void __mpcomp_wakeup_leaf( mpcomp_node_t* start_node )
 {
-    int i, nb_children_involved;
+    int i;
     mpcomp_mvp_t **leaves_array;
 
-    /*TODO:  Remove global variable */
-    const int mpcomp_affinity = mpcomp_global_icvs.affinity; 
     leaves_array = start_node->children.leaf;
 
     if( start_node->child_type == MPCOMP_CHILDREN_NODE )
         return;
 
-    start_node->barrier_num_threads = num_threads;
-    for( i = 0; i < num_threads; i++ )
+    start_node->barrier_num_threads = start_node->num_threads;
+    for( i = 0; i < start_node->num_threads; i++ )
     {
         __mpcomp_update_mvp_saved_context( leaves_array[i], start_node, start_node );
         leaves_array[i]->slave_running = MPCOMP_MVP_STATE_AWAKE;
     }
 }
 
-mpcomp_node_t*  __mpcomp_wakeup_node( mpcomp_node_t* start_node, const int num_threads )
+mpcomp_node_t*  __mpcomp_wakeup_node( mpcomp_node_t* start_node )
 {
-   int i, j, nb_children_involved, rest_num_threads;
-   mpcomp_node_t *current_node;
+   int i, rest_num_threads;
    mpcomp_node_t **nodes_array; 
 
-	rest_num_threads = num_threads; 
-   current_node = start_node;
+    sctk_assert( start_node->child_type == MPCOMP_CHILDREN_NODE );
 
-    if( current_node->child_type != MPCOMP_CHILDREN_NODE )
+    const int quot = start_node->num_threads / start_node->nb_children;
+    const int rest = start_node->num_threads % start_node->nb_children;
+    const int min = ( start_node->num_threads > start_node->nb_children ) ? start_node->nb_children :  start_node->num_threads;
+
+    start_node->barrier_num_threads = min;
+
+    nodes_array = start_node->children.node;
+    sctk_assert( nodes_array );
+
+    for( i = 0; i < min; i++ )
     {
-        return current_node;
-    }
-
-
-#if 0
-	while( current_node->nb_children > num_threads )
-	{
-    	nodes_array = current_node->children.node;
-		current_node->barrier_num_threads = current_node->nb_children;
-
-		rest_num_threads = :
-    	current_node->barrier_num_threads = num_threads;
-
-	}
-    /*TODO:  Remove global variable */
-    const int mpcomp_affinity = mpcomp_global_icvs.affinity; 
-
-    for( i = 0; i < start_node->instance->tree_depth; i++ )
-    {
-        for( j = 1, nb_children_involved = 1; j < current_node->nb_children; j++ )
-        {
-            const int node_rank = nodes_array[j]->min_index[mpcomp_affinity];
-            if( node_rank < num_threads ) nb_children_involved++;
-        }
-
-        current_node->barrier_num_threads = nb_children_involved; 
-
-        for( j = 1, nb_children_involved = 1; j < current_node->nb_children; j++ ) 
-        {
-            const int node_rank = nodes_array[j]->min_index[mpcomp_affinity];
-            if( node_rank < num_threads )
-            {
-                nb_children_involved++;
-                nodes_array[j]->slave_running = MPCOMP_MVP_STATE_AWAKE;
-            }
-        }
-
-
-        /* Next level must be compute by __mpcomp_wakeup_leaf */ 
-        if( current_node->child_type != MPCOMP_CHILDREN_NODE )
-            break;
-
-        current_node = current_node->children.node[0];
-    }
-#else
-    assert( start_node->nb_children <= num_threads );
-    current_node->barrier_num_threads = num_threads;
-
-    for( i = 1; i < num_threads; i++ )
-    {
+	nodes_array[i]->num_threads = ( i < rest ) ? quot +1 : quot;
         nodes_array[i]->slave_running = MPCOMP_MVP_STATE_AWAKE; 
     }
-#endif
-    
+    nodes_array[0]->instance = start_node->instance; 
     return nodes_array[0];
-
 }
 
 void __mpcomp_wakeup_gen_node( mpcomp_node_t* start_node, const int num_threads )
@@ -413,23 +348,24 @@ void __mpcomp_wakeup_gen_node( mpcomp_node_t* start_node, const int num_threads 
 
     mvp = start_node->mvp;
     sctk_assert( mvp );
-    const int instance_max_depth = instance->tree_depth + instance->root->depth; 
+
+    const int depth_target = instance->tree_depth + instance->root->depth - 1; 
+
 
     /* Continue Wake-Up */
-    if( start_node->depth+1 < instance_max_depth )
+    current_node = start_node;
+    while( current_node->depth < depth_target )
     {
-        current_node = __mpcomp_wakeup_node( start_node, num_threads );
+	if( current_node->child_type != MPCOMP_CHILDREN_NODE ) 
+		break;
+        current_node = __mpcomp_wakeup_node( current_node );
+	fprintf(stderr, "::: %s ::: node @%d depth @%d num_threads @%d\n", __func__, current_node->rank, current_node->depth, current_node->num_threads );
     }
-    else
-    {
-        current_node = start_node;
-    } 
-   
      
     mvp = current_node->mvp;
-    if( current_node->depth+1 < instance_max_depth )
+    if( current_node->depth < depth_target )
     {
-        __mpcomp_wakeup_leaf( current_node, num_threads );
+        __mpcomp_wakeup_leaf( current_node );
     }
     else
     {
@@ -492,8 +428,6 @@ void mpcomp_slave_mvp_leaf( mpcomp_mvp_t *mvp, mpcomp_node_t *spinning_node )
 {
     assert( mvp );
     volatile int* spinning_val = &( mvp->slave_running ) ;
-
-    /* Sanity check */
     assert( *spinning_val == MPCOMP_MVP_STATE_UNDEF );
 
     /* Spin while this microVP is alive */
@@ -517,7 +451,6 @@ void mpcomp_slave_mvp_node( mpcomp_mvp_t *mvp, mpcomp_node_t *spinning_node )
     int num_threads, rest, quot, father_num_children;
     mpcomp_node_t* traversing_node = NULL;
 
-
     sctk_assert( mvp );
     volatile int* spinning_val = &( spinning_node->slave_running );
     sctk_assert( *spinning_val == MPCOMP_MVP_STATE_UNDEF );
@@ -535,15 +468,9 @@ void mpcomp_slave_mvp_node( mpcomp_mvp_t *mvp, mpcomp_node_t *spinning_node )
         num_threads = spinning_node->instance->team->info.num_threads;
 #endif /* MPCOMP_TRANSFER_INFO_ON_NODES */
         father_num_children = spinning_node->father->nb_children;
-        rest = num_threads % father_num_children;
-        quot = num_threads / father_num_children; 
-        num_threads = quot; // MANAGE non multiple number
-	     sctk_assert( num_threads > 0 ) ;
-
-	    /* -- Wake up children nodes -- */
+    /* -- Wake up children nodes -- */
         __mpcomp_wakeup_gen_node( spinning_node, num_threads );
         /* -- Start Parallel Region -- */
-        //mvp->instance = spinning_node->instance;
        __mpcomp_start_openmp_thread( mvp );
     }
 }

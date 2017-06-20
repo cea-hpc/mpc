@@ -158,27 +158,35 @@ __mpcomp_convert_topology_to_tree_shape( hwloc_topology_t topology, int* tree_de
 	real_tree_depth = 0;
 	last_stage_size = -1;	
 
-	for( i = max_depth-2; i >= 0; i-- )
+	for( i = max_depth-1; i > 0; i-- )
 	{
 		const int stage_number = hwloc_get_nbobjs_by_depth( topology, i );
 		const hwloc_obj_type_t type = hwloc_get_depth_type( topology, i );
 		char* type_str = hwloc_obj_type_string( type ); 
 
-		if( stage_number == last_stage_size )
+		if( !strcmp( "NUMANode", type_str ) )
+			continue;
+
+		if( stage_number == last_stage_size || stage_number == 1)
 			continue;
 		
 		if( (last_stage_size != -1) && (last_stage_size % stage_number) )
 			continue;
 
+		fprintf(stderr, "::: %s ::: Found %d elts at depth @%d (type: %s)\n", __func__, stage_number, i, type_str );
 		last_stage_size = stage_number;
 		reverse_tree_base[real_tree_depth] = stage_number;
+		reverse_tree_base[real_tree_depth-1] /= stage_number;
 		real_tree_depth++;	
 	}
 
 	__mpcomp_aux_reverse_one_dim_array( reverse_tree_base, real_tree_depth );
 
+	for( i =0; i < real_tree_depth; i++ )
+		fprintf(stderr, "::: %s ::: Found %d elts at depth @%d\n", __func__, reverse_tree_base[i], i );
+
 	*tree_depth = real_tree_depth;
-	return sctk_realloc( reverse_tree_base, real_tree_depth * sizeof( int ) );
+	return reverse_tree_base;
 }
 
 static hwloc_topology_t
@@ -202,7 +210,7 @@ __mpcomp_init_omp_task_tree( const int num_mvps )
 	 hwloc_topology_t omp_task_topo;
 	 omp_task_topo = __mpcomp_prepare_omp_task_tree_init( num_mvps );
 	 tree_shape = __mpcomp_convert_topology_to_tree_shape( omp_task_topo, &max_depth );
-	 __mpcomp_alloc_openmp_tree_struct( tree_shape+1, max_depth-1, omp_task_topo );	
+	 __mpcomp_alloc_openmp_tree_struct( tree_shape, max_depth, omp_task_topo );	
 }
 
 /*

@@ -292,7 +292,7 @@ typedef struct mpcomp_mvp_s
 typedef struct mpcomp_node_s 
 {
     /* -- MVP Thread specific informations --                   */
-	 mpcomp_meta_tree_node_t *tree_array;
+    mpcomp_meta_tree_node_t *tree_array;
     /** MVP spinning as a node                                  */
     struct mpcomp_mvp_s *mvp;
     /** MVP spinning value in topology tree                     */
@@ -303,6 +303,7 @@ typedef struct mpcomp_node_s
     /** Depth in the tree                                       */
     int depth;
     /** Father node in the topology tree                        */
+    int num_threads;
     struct mpcomp_node_s *father;
     struct mpcomp_node_s *prev_father;
     /** Rigth brother node in the topology tree                 */
