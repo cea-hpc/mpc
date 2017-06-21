@@ -9,7 +9,6 @@ __mpcomp_tree_array_compute_tree_shape( mpcomp_node_t* node, int* tree_shape, co
  
     sctk_assert( node );
     sctk_assert( tree_shape );
-    sctk_assert( node->depth < size );
     
     const int node_tree_size = size - node->depth + 1; 
     sctk_assert( node_tree_size );

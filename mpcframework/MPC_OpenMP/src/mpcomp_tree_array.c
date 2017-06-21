@@ -731,7 +731,7 @@ __mpcomp_openmp_node_initialisation( mpcomp_meta_tree_node_t* root, const int* t
     sctk_assert( me->user_pointer );
 	 new_node = me->user_pointer;
     
-    const int num_children = tree_shape[me->depth];
+    const int num_children = tree_shape[node->depth];
     
 	 if( rank )
 	 {
@@ -818,7 +818,7 @@ __mpcomp_openmp_node_initialisation( mpcomp_meta_tree_node_t* root, const int* t
 
     if( !( me->fathers_array ) ) return 0; 
 
-    father_rank = me->fathers_array[me->depth-1];
+    father_rank = me->fathers_array[node->depth-1];
 
     // save Node
     me->type = MPCOMP_META_TREE_NODE;
