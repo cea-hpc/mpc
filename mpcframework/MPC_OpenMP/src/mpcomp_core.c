@@ -173,7 +173,6 @@ __mpcomp_convert_topology_to_tree_shape( hwloc_topology_t topology, int* tree_de
 		if( (last_stage_size != -1) && (last_stage_size % stage_number) )
 			continue;
 
-		fprintf(stderr, "::: %s ::: Found %d elts at depth @%d (type: %s)\n", __func__, stage_number, i, type_str );
 		last_stage_size = stage_number;
 		reverse_tree_base[real_tree_depth] = stage_number;
 		reverse_tree_base[real_tree_depth-1] /= stage_number;
@@ -181,9 +180,6 @@ __mpcomp_convert_topology_to_tree_shape( hwloc_topology_t topology, int* tree_de
 	}
 
 	__mpcomp_aux_reverse_one_dim_array( reverse_tree_base, real_tree_depth );
-
-	for( i =0; i < real_tree_depth; i++ )
-		fprintf(stderr, "::: %s ::: Found %d elts at depth @%d\n", __func__, reverse_tree_base[i], i );
 
 	*tree_depth = real_tree_depth;
 	return reverse_tree_base;

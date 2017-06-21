@@ -10,6 +10,8 @@ static void __mpcomp_tree_array_team_reset( mpcomp_team_t *team )
 {
     sctk_assert(team);
     sctk_atomics_int *last_array_slot;
+	 memset( team, 0, sizeof( mpcomp_team_t ) );
+
     last_array_slot = &(team->for_dyn_nb_threads_exited[MPCOMP_MAX_ALIVE_FOR_DYN].i);
     sctk_atomics_store_int(last_array_slot, MPCOMP_NOWAIT_STOP_SYMBOL);
 }
@@ -126,9 +128,6 @@ __mpcomp_instance_get_mvps_local_rank( mpcomp_node_t *root, const int instance_d
 	const int rest = num_mvps % prev_degree;	
 	const int shift = root->mvp->global_rank;
 
-	//fprintf(stderr, "::: %s ::: %d %d %d %d %d\n", __func__, prev_degree, quot, rest, cur_degree, instance_depth );
-	
-	
 	array = (int*) malloc( num_mvps * sizeof( int ) );
 	sctk_assert( array );
 	memset( array, 0, num_mvps * sizeof( int ) );
@@ -170,8 +169,8 @@ __mpcomp_tree_array_instance_init( mpcomp_thread_t* thread, const int expected_n
     __mpcomp_tree_array_team_reset( instance->team );
 
     /* -- Find next depth and real_nb_mvps -- */
-    instance->tree_depth = __mpcomp_tree_rank_get_next_depth( root, expected_nb_mvps, &(instance->nb_mvps) ) +1; 
-    instance->mvps = (mpcomp_mvp_t**) malloc(sizeof(mpcomp_mvp_t*)*instance->nb_mvps);
+    instance->tree_depth = __mpcomp_tree_rank_get_next_depth( root, expected_nb_mvps, &(instance->nb_mvps) )+1; 
+    instance->mvps = (mpcomp_mvp_t**) malloc( sizeof( mpcomp_mvp_t* ) * instance->nb_mvps );
     sctk_assert( instance->mvps );
     memset( instance->mvps, 0, sizeof(mpcomp_mvp_t*) * instance->nb_mvps);
     
@@ -188,8 +187,8 @@ __mpcomp_tree_array_instance_init( mpcomp_thread_t* thread, const int expected_n
     if( instance->tree_depth > 1 )
     {
         /* -- Forward Tree Array from node to instance-- */
-	instance->tree_base = root->tree_base;
-	instance->tree_nb_nodes_per_depth = root->tree_nb_nodes_per_depth;
+		  instance->tree_base = root->tree_base;
+		  instance->tree_nb_nodes_per_depth = root->tree_nb_nodes_per_depth;
 
         /* -- Allocation Tree cumulative Array -- */ 
         instance->tree_cumulative = (int*) malloc( instance->tree_depth * sizeof( int ) );
@@ -201,12 +200,11 @@ __mpcomp_tree_array_instance_init( mpcomp_thread_t* thread, const int expected_n
         if( instance->tree_depth == root->tree_depth )
         {
             memcpy(instance->tree_cumulative, root->tree_cumulative, instance->tree_depth * sizeof( int ));
-	    int * mvps_local = __mpcomp_instance_get_mvps_local_rank( root, instance->tree_depth, expected_nb_mvps );
+	         int * mvps_local = __mpcomp_instance_get_mvps_local_rank( root, instance->tree_depth, expected_nb_mvps );
 
             for( i = 0; i < instance->nb_mvps; i++ ) 
             {
-		const int cur_mvp = i + root->mvp->global_rank;
-		fprintf(stderr, "::: %s ::: %d %d\n", __func__, i, mvps_local[i] );
+					 const int cur_mvp = i + root->mvp->global_rank;
                 instance->mvps[cur_mvp] = (mpcomp_mvp_t*) root->tree_array[cur_mvp].user_pointer; 
                 (void) __mpcomp_add_mvp_saved_context( instance->mvps[cur_mvp], instance, (unsigned int) i );
             }
@@ -249,11 +247,11 @@ void __mpcomp_wakeup_mvp( mpcomp_mvp_t *mvp)
     /* Sanity check */
     sctk_assert(mvp);
 
+	 mpcomp_thread_t* thread = (mpcomp_thread_t*) sctk_openmp_thread_tls;
 	 ret = !sctk_atomics_cas_int( &( mvp->instance->mvps_is_ready[mvp->rank] ), 0, 1 );
 	 
 	 if( ret )
 	 {
-		//fprintf(stderr, "::: %s ::: Init Thread MVP @%d\n", __func__, mvp->rank );
     	new_thread = (mpcomp_thread_t*) malloc( sizeof( mpcomp_thread_t) );
     	sctk_assert( new_thread );
     	memset( new_thread, 0, sizeof( mpcomp_thread_t ) );
@@ -285,7 +283,6 @@ void __mpcomp_wakeup_mvp( mpcomp_mvp_t *mvp)
 	{
 		while( sctk_atomics_load_int( &(mvp->instance->mvps_is_ready[mvp->rank])) != 2 ){};
 	}
-	
 	
 	return;	
 }
@@ -359,7 +356,6 @@ void __mpcomp_wakeup_gen_node( mpcomp_node_t* start_node, const int num_threads 
 	if( current_node->child_type != MPCOMP_CHILDREN_NODE ) 
 		break;
         current_node = __mpcomp_wakeup_node( current_node );
-	fprintf(stderr, "::: %s ::: node @%d depth @%d num_threads @%d\n", __func__, current_node->rank, current_node->depth, current_node->num_threads );
     }
      
     mvp = current_node->mvp;
@@ -381,6 +377,7 @@ void __mpcomp_start_openmp_thread( mpcomp_mvp_t *mvp )
 
     sctk_assert( mvp );
     __mpcomp_wakeup_mvp( mvp );
+	 
 
     sctk_openmp_thread_tls = mvp->threads;
     sctk_assert( sctk_openmp_thread_tls );
@@ -390,11 +387,10 @@ void __mpcomp_start_openmp_thread( mpcomp_mvp_t *mvp )
     __mpcomp_in_order_scheduler( sctk_openmp_thread_tls );
 
     /* Implicite barrier */
-	 __mpcomp_internal_half_barrier( mvp );
-
-	 //fprintf(stderr, "[%d] ::: PASSED HALF BARRIER :::\n", cur_thread->rank);
+	 __mpcomp_internal_full_barrier( mvp );
 
     /* End barrier for master thread */
+#ifdef MPCOMP_USE_HALF_BARRIER
     if( !( cur_thread->rank ) )
     {
         mpcomp_node_t* root = cur_thread->instance->root; 
@@ -402,9 +398,10 @@ void __mpcomp_start_openmp_thread( mpcomp_mvp_t *mvp )
         while (sctk_atomics_load_int(&(root->barrier)) != expected_num_threads) 
             sctk_thread_yield();
         
-       sctk_atomics_store_int( &( root->barrier ), 0); 
+      sctk_atomics_store_int( &( root->barrier ), 0); 
     }
-
+#endif /* MPCOMP_USE_HALF_BARRIER */
+ 
     sctk_openmp_thread_tls = mvp->threads->father;
     mvp->threads = mvp->threads->father;
 

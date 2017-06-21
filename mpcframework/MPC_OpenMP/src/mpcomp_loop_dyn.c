@@ -49,7 +49,7 @@ static int __mpcomp_dynamic_loop_get_chunk_from_rank(mpcomp_thread_t *t,
                         __mpcomp_loop_dyn_get_for_dyn_current(target))) {
     return 0;
   }
-
+  
   __mpcomp_loop_dyn_init_target_chunk(t, target, num_threads);
   cur = __mpcomp_loop_dyn_get_chunk_from_target(t, target);
 
@@ -102,8 +102,7 @@ void __mpcomp_dynamic_loop_init(mpcomp_thread_t *t, long lb, long b, long incr,
   /* Try to change the number of remaining chunks */
   const int for_dyn_total = __mpcomp_get_static_nb_chunks_per_rank(
       t->rank, num_threads, &(t->info.loop_infos.loop.mpcomp_long));
-  const int val =
-      sctk_atomics_cas_int(&(t->for_dyn_remain[index].i), -1, for_dyn_total);
+  (void) sctk_atomics_cas_int(&(t->for_dyn_remain[index].i), -1, for_dyn_total);
 }
 
 int __mpcomp_dynamic_loop_begin(long lb, long b, long incr, long chunk_size,
@@ -141,12 +140,11 @@ int __mpcomp_dynamic_loop_begin(long lb, long b, long incr, long chunk_size,
 	}
 #endif /* OMPT_SUPPORT */
     const int ret = __mpcomp_dynamic_loop_next(from, to);
-    //fprintf(stderr, ":: %s :: Finished ? %d \n", __func__, ret );
     return (!from && !to) ? -1 : ret;
 }
 
 int __mpcomp_dynamic_loop_next(long *from, long *to) {
-  mpcomp_thread_t *t, *target_thread;
+  mpcomp_thread_t *t, *target;
   int index_target, barrier_num_threads;
 
   /* Grab the thread info */
@@ -185,17 +183,19 @@ int __mpcomp_dynamic_loop_next(long *from, long *to) {
 
   if( !( t->instance->mvps[index_target]->threads ) )
 		__mpcomp_wakeup_mvp( t->instance->mvps[index_target] );			
-  sctk_assert( &( t->instance->mvps[index_target]->threads[0]) );
 
-  //fprintf(stderr, "::: %s ::: Update index_target : %d -- %p\n", __func__, index_target, t->instance->mvps[index_target]->threads );
+  sctk_assert( t->instance->mvps[index_target]->threads );
 
   int found = 1;
   int *tree_base = t->instance->tree_base;
   const int tree_depth = t->instance->tree_depth;
+  int i;
+
+  target = t;
 
   /* While it is not possible to get a chunk */
-  while (!__mpcomp_dynamic_loop_get_chunk_from_rank(
-      t, &(t->instance->mvps[index_target]->threads[0]), from, to)) {
+  while (!__mpcomp_dynamic_loop_get_chunk_from_rank(t, target, from, to)) 
+  {
 
   do_increase:
     if (__mpcomp_loop_dyn_dynamic_increase(t->for_dyn_shift, tree_base,
@@ -219,13 +219,15 @@ int __mpcomp_dynamic_loop_next(long *from, long *to) {
 	 if( !( t->instance->mvps[index_target]->threads ) )
 	    __mpcomp_wakeup_mvp( t->instance->mvps[index_target] );			
 
-	 if( !( t->instance->mvps[index_target]->threads ) )
-		goto do_increase;
+    target = t->instance->mvps[index_target]->threads;
 
-    //fprintf(stderr, "::: %s ::: Update index_target : %d -- %p\n", __func__, index_target, t->instance->mvps[index_target]->threads );
+	 if( !target )
+			goto do_increase;
+
 
     barrier_num_threads =
         t->instance->mvps[index_target]->father->barrier_num_threads;
+
 
     /* Stop if the target is not a launch thread */
     if (t->for_dyn_target[tree_depth - 1] >= barrier_num_threads) {

@@ -18,7 +18,7 @@ __mpcomp_tree_array_compute_tree_shape( mpcomp_node_t* node, int* tree_shape, co
     sctk_assert( node_tree_shape );
     memset( node_tree_shape, 0, sizeof(int) * node_tree_size );
     
-    const int start_depth = node->depth - 1;
+    const int start_depth = node->depth-1;
     node_tree_shape[0] = 1;
     for( i = 1; i < node_tree_size; i++ )
     {
