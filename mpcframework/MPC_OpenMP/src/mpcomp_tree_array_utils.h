@@ -29,12 +29,14 @@ __mpcomp_tree_array_compute_tree_shape( mpcomp_node_t* node, int* tree_shape, co
 }
 
 static inline int*
-__mpcomp_tree_array_compute_tree_num_nodes_per_depth( mpcomp_node_t* node )
+__mpcomp_tree_array_compute_tree_num_nodes_per_depth( mpcomp_node_t* node, int* total )
 {
     int i;
     int* num_nodes_per_depth;
+    int total_nodes;
 
     sctk_assert( node );
+    sctk_assert( total );
 
     const int node_tree_size = node->tree_depth;
     sctk_assert( node_tree_size );
@@ -45,14 +47,18 @@ __mpcomp_tree_array_compute_tree_num_nodes_per_depth( mpcomp_node_t* node )
 
     sctk_assert( node->tree_base );
 
+    
     num_nodes_per_depth[0] = 1;
+    total_nodes = num_nodes_per_depth[0]; 
     for (i = 1; i < node_tree_size ; i++)
     {
         num_nodes_per_depth[i] = num_nodes_per_depth[i-1];
         num_nodes_per_depth[i] *= node->tree_base[i];
         sctk_assert( num_nodes_per_depth[i] );
+        total_nodes += num_nodes_per_depth[i];
     }
-    
+   
+    *total = total_nodes;     
     return num_nodes_per_depth;
 }
 
@@ -188,6 +194,7 @@ __mpcomp_update_node_children_node_ptr( const int first_idx,
     
     node->mvp = node->children.node[0]->mvp;
 
+    if( !node->global_rank ) return;
     sctk_assert( me->fathers_array_size == root[first_idx].fathers_array_size -1 );
     sctk_assert( me->fathers_array );
 

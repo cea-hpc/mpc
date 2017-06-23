@@ -889,6 +889,24 @@ void sctk_topology_init_cpu()
 	sctk_get_cpu_val = -1;
 }
 
+int sctk_get_ht_per_core(void)
+{
+    int pu_per_core;
+    hwloc_obj_t first_core;
+    hwloc_topology_t topology;
+
+    hwloc_topology_init(&topology);
+    hwloc_topology_load(topology);
+
+    first_core = hwloc_get_obj_by_type( topology, HWLOC_OBJ_CORE, 0 );
+    sctk_assert( first_core );
+
+    pu_per_core = hwloc_get_nbobjs_inside_cpuset_by_type( topology, first_core->cpuset, HWLOC_OBJ_PU );
+    assert( pu_per_core > 0 );
+    
+    return pu_per_core; 
+}
+
 int sctk_get_pu_number()
 {
 	int core_number;

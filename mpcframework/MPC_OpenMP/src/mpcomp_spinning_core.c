@@ -58,7 +58,7 @@ __mpcomp_update_mvp_saved_context( mpcomp_mvp_t* mvp, mpcomp_node_t* node, mpcom
 }
 
 static inline int 
-__mpcomp_add_mvp_saved_context( mpcomp_mvp_t* mvp, mpcomp_instance_t* instance, const unsigned int rank )
+__mpcomp_add_mvp_saved_context( mpcomp_mvp_t* mvp, const mpcomp_instance_t* instance, const unsigned int rank )
 {
     mpcomp_mvp_saved_context_t* prev_mvp_context = NULL;
 
@@ -178,6 +178,9 @@ __mpcomp_tree_array_instance_init( mpcomp_thread_t* thread, const int expected_n
     sctk_assert( instance->mvps_is_ready );
     memset( instance->mvps_is_ready, 0, sizeof(sctk_atomics_int)*instance->nb_mvps );
 
+    for( i = 0; i < instance->nb_mvps; i++ )
+        assert( sctk_atomics_load_int( &( instance->mvps_is_ready[i] ) ) == 0 ); 
+
     /* -- First instance MVP  -- */
     instance->root = root;
     instance->mvps[0] = thread->mvp;
@@ -204,9 +207,9 @@ __mpcomp_tree_array_instance_init( mpcomp_thread_t* thread, const int expected_n
 
             for( i = 0; i < instance->nb_mvps; i++ ) 
             {
-					 const int cur_mvp = i + root->mvp->global_rank;
-                instance->mvps[cur_mvp] = (mpcomp_mvp_t*) root->tree_array[cur_mvp].user_pointer; 
-                (void) __mpcomp_add_mvp_saved_context( instance->mvps[cur_mvp], instance, (unsigned int) i );
+		        const int cur_mvp = i + root->mvp->global_rank;
+                instance->mvps[i] = (mpcomp_mvp_t*) root->tree_array[cur_mvp].user_pointer; 
+                (void) __mpcomp_add_mvp_saved_context( instance->mvps[i], instance, (unsigned int) i );
             }
         }
         else
@@ -246,9 +249,7 @@ void __mpcomp_wakeup_mvp( mpcomp_mvp_t *mvp)
 
     /* Sanity check */
     sctk_assert(mvp);
-
-	 mpcomp_thread_t* thread = (mpcomp_thread_t*) sctk_openmp_thread_tls;
-	 ret = !sctk_atomics_cas_int( &( mvp->instance->mvps_is_ready[mvp->rank] ), 0, 1 );
+    ret = !sctk_atomics_cas_int( &( mvp->instance->mvps_is_ready[mvp->rank] ), 0, 1 );
 	 
 	 if( ret )
 	 {
@@ -323,7 +324,7 @@ mpcomp_node_t*  __mpcomp_wakeup_node( mpcomp_node_t* start_node )
 
     for( i = 0; i < min; i++ )
     {
-	nodes_array[i]->num_threads = ( i < rest ) ? quot +1 : quot;
+	    nodes_array[i]->num_threads = ( i < rest ) ? quot +1 : quot;
         nodes_array[i]->slave_running = MPCOMP_MVP_STATE_AWAKE; 
     }
     nodes_array[0]->instance = start_node->instance; 
@@ -353,8 +354,8 @@ void __mpcomp_wakeup_gen_node( mpcomp_node_t* start_node, const int num_threads 
     current_node = start_node;
     while( current_node->depth < depth_target )
     {
-	if( current_node->child_type != MPCOMP_CHILDREN_NODE ) 
-		break;
+	    if( current_node->child_type != MPCOMP_CHILDREN_NODE ) 
+		    break;
         current_node = __mpcomp_wakeup_node( current_node );
     }
      
@@ -365,7 +366,6 @@ void __mpcomp_wakeup_gen_node( mpcomp_node_t* start_node, const int num_threads 
     }
     else
     {
-        /* Allocate new chained elt */
         __mpcomp_update_mvp_saved_context( current_node->mvp, current_node, current_node->father );
     }
 
@@ -377,7 +377,6 @@ void __mpcomp_start_openmp_thread( mpcomp_mvp_t *mvp )
 
     sctk_assert( mvp );
     __mpcomp_wakeup_mvp( mvp );
-	 
 
     sctk_openmp_thread_tls = mvp->threads;
     sctk_assert( sctk_openmp_thread_tls );
@@ -387,20 +386,7 @@ void __mpcomp_start_openmp_thread( mpcomp_mvp_t *mvp )
     __mpcomp_in_order_scheduler( sctk_openmp_thread_tls );
 
     /* Implicite barrier */
-	 __mpcomp_internal_full_barrier( mvp );
-
-    /* End barrier for master thread */
-#ifdef MPCOMP_USE_HALF_BARRIER
-    if( !( cur_thread->rank ) )
-    {
-        mpcomp_node_t* root = cur_thread->instance->root; 
-        const int expected_num_threads = root->barrier_num_threads;
-        while (sctk_atomics_load_int(&(root->barrier)) != expected_num_threads) 
-            sctk_thread_yield();
-        
-      sctk_atomics_store_int( &( root->barrier ), 0); 
-    }
-#endif /* MPCOMP_USE_HALF_BARRIER */
+	__mpcomp_internal_full_barrier( mvp );
  
     sctk_openmp_thread_tls = mvp->threads->father;
     mvp->threads = mvp->threads->father;
@@ -418,27 +404,6 @@ void __mpcomp_start_openmp_thread( mpcomp_mvp_t *mvp )
 }
 
 /**
-  Entry point for microVP working on their own
-  Spinning on a variables inside the microVP.
- */
-void mpcomp_slave_mvp_leaf( mpcomp_mvp_t *mvp, mpcomp_node_t *spinning_node ) 
-{
-    assert( mvp );
-    volatile int* spinning_val = &( mvp->slave_running ) ;
-    
-    /* Spin while this microVP is alive */
-    while( mvp->enable ) 
-    {
-        /* MVP pause status */
-        *spinning_val = MPCOMP_MVP_STATE_SLEEP;
-        /* Spin for new parallel region */
-        sctk_thread_wait_for_value_and_poll( spinning_val, MPCOMP_MVP_STATE_AWAKE, NULL, NULL ) ;
-        //mvp->instance = mvp->father->instance;
-        __mpcomp_start_openmp_thread( mvp );
-    }
-}
-
-/**
   Entry point for microVP in charge of passing information to other microVPs.
   Spinning on a specific node to wake up
  */
@@ -448,25 +413,33 @@ void mpcomp_slave_mvp_node( mpcomp_mvp_t *mvp, mpcomp_node_t *spinning_node )
     mpcomp_node_t* traversing_node = NULL;
 
     sctk_assert( mvp );
-    volatile int* spinning_val = &( spinning_node->slave_running );
-    sctk_assert( *spinning_val == MPCOMP_MVP_STATE_UNDEF );
 
-    while( mvp->enable ) 
+    if( spinning_node ) 
     {
-        *spinning_val = MPCOMP_MVP_STATE_SLEEP;
-        /* Spinning on the designed node */
-        sctk_thread_wait_for_value_and_poll( spinning_val, MPCOMP_MVP_STATE_AWAKE, NULL, NULL ) ;
-        spinning_node->instance = spinning_node->father->instance;
+        volatile int* spinning_val = &( spinning_node->slave_running );
+        while( mvp->enable ) 
+        {
+            sctk_thread_wait_for_value_and_poll( spinning_val, MPCOMP_MVP_STATE_AWAKE, NULL, NULL ) ;
+            spinning_node->instance = spinning_node->father->instance;
 #if MPCOMP_TRANSFER_INFO_ON_NODES
-        spinning_node->info = spinning_node->father->info;
-        num_threads = spinning_node->info.num_threads;
+            spinning_node->info = spinning_node->father->info;
+            num_threads = spinning_node->info.num_threads;
 #else   /* MPCOMP_TRANSFER_INFO_ON_NODES */
-        num_threads = spinning_node->instance->team->info.num_threads;
+            num_threads = spinning_node->instance->team->info.num_threads;
 #endif /* MPCOMP_TRANSFER_INFO_ON_NODES */
-        father_num_children = spinning_node->father->nb_children;
-    /* -- Wake up children nodes -- */
-        __mpcomp_wakeup_gen_node( spinning_node, num_threads );
-        /* -- Start Parallel Region -- */
-       __mpcomp_start_openmp_thread( mvp );
+            __mpcomp_wakeup_gen_node( spinning_node, spinning_node->num_threads );
+            __mpcomp_start_openmp_thread( mvp );
+            *spinning_val = MPCOMP_MVP_STATE_SLEEP;
+        }
+    }
+    else
+    {
+        volatile int* spinning_val = &( mvp->slave_running ) ;
+        while( mvp->enable )
+        {
+            sctk_thread_wait_for_value_and_poll( spinning_val, MPCOMP_MVP_STATE_AWAKE, NULL, NULL ) ;
+            __mpcomp_start_openmp_thread( mvp );
+            *spinning_val = MPCOMP_MVP_STATE_SLEEP;
+        }
     }
 }

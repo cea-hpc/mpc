@@ -19,11 +19,6 @@ typedef struct mpcomp_tree_array_global_info_s
 typedef struct mpcomp_meta_tree_node_s
 { 
     /* Generic information */
-    unsigned int rank;
-    unsigned int depth;
-    unsigned int numa_id;
-    unsigned int local_rank;
-    unsigned int stage_rank;
     mpcomp_meta_tree_type_t type;
     /* Father information */
     unsigned int* fathers_array;
@@ -33,25 +28,14 @@ typedef struct mpcomp_meta_tree_node_s
     unsigned int* children_num_array;
     unsigned int children_array_size;
     /* Min index */
-    int * min_index;
-    /* User infos */
     void* user_pointer;
     sctk_atomics_int children_ready;
-    sctk_atomics_int user_init_step;
 } mpcomp_meta_tree_node_t; 
 
 typedef struct mpcomp_mvp_thread_args_s
 {
-    void* thread;
-    void* root_node;        /* prevent inondation initialisation */
     unsigned int rank;
-    unsigned int max_depth;
-    unsigned int* tree_shape;
-    unsigned int mvp_global_rank;
-    unsigned int numa_id;
-    int core_depth;
     mpcomp_meta_tree_node_t* array;
-    void* options;
 } mpcomp_mvp_thread_args_t;
 
 // Initialize Ghost OpenMP Tree Constraint Homogeneous Array 
