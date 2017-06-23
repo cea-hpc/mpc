@@ -214,35 +214,6 @@ static int* __mpcomp_tree_array_get_tree_cumulative( int* shape, int max_depth )
     return tree_cumulative;
 }
 
-static char* 
-__mpcomp_tree_array_convert_array_to_string( const int* tab, const int size )
-{
-    int i, ret, used;
-    char *tmp, *string;
-    
-    if( size == 0 ) return NULL;
-    
-    string = (char*) malloc( sizeof(char) * 1024 );
-    assert( string );
-    memset( string, 0, sizeof(char) * 1024 );
-    tmp = string;
-    used = 0;
-
-    ret = snprintf( tmp, 1024-used, "%d", tab[0] ); 
-    tmp += ret;
-    used += ret;
-
-    for( i = 1; i < size; i++ )
-    {
-        ret = snprintf( tmp, 1024-used, ",%d", tab[i] ); 
-        tmp += ret;
-        used += ret;
-    } 
-    string[used] = '\0';
-
-    return string; 
-}
-
 static int*
 __mpcomp_tree_array_get_father_array_by_depth( const int* shape, const int max_depth, const int rank )
 {
@@ -619,14 +590,12 @@ __mpcomp_openmp_node_initialisation( mpcomp_meta_tree_node_t* root, const int* t
     }
    
 	new_node = me->user_pointer;
-    const int num_children = tree_shape[new_node->depth];
-    
-
     new_node->tree_array = root;
 
     // Get infos from parent node
-    new_node->nb_children = num_children;
     new_node->depth = __mpcomp_tree_array_get_node_depth( tree_shape, max_depth, rank );
+    const int num_children = tree_shape[new_node->depth];
+    new_node->nb_children = num_children;
 
     new_node->global_rank = rank;
     new_node->stage_rank = __mpcomp_tree_array_convert_global_to_stage( tree_shape, max_depth, rank );
@@ -663,7 +632,7 @@ __mpcomp_openmp_node_initialisation( mpcomp_meta_tree_node_t* root, const int* t
             new_node->tree_nb_nodes_per_depth[i] = root_node->tree_nb_nodes_per_depth[j];
         }   
     }
-    
+
     /* Leaf or Node */
     if( new_node->depth < max_depth -1)
     {
@@ -681,7 +650,7 @@ __mpcomp_openmp_node_initialisation( mpcomp_meta_tree_node_t* root, const int* t
         assert( children );
         new_node->children.leaf = children;
     }
-    
+
     /* Wait our children */
     while( sctk_atomics_load_int( &( me->children_ready ) ) != num_children)  
         sctk_thread_yield();
@@ -705,12 +674,8 @@ __mpcomp_openmp_node_initialisation( mpcomp_meta_tree_node_t* root, const int* t
 
     father_rank = me->fathers_array[new_node->depth-1];
 
-    // save Node
-    me->type = MPCOMP_META_TREE_NODE;
-    me->user_pointer = (void*) new_node;
-
     (void) sctk_atomics_fetch_and_incr_int( &(root[father_rank].children_ready) ); 
-    return ( !(new_node->rank) ) ? 1 : 0;
+    return ( !(new_node->local_rank) ) ? 1 : 0;
 }
 
 static inline void* 
@@ -736,10 +701,6 @@ __mpcomp_openmp_mvp_initialisation( void* args )
     const int max_depth = root_node->tree_depth -1;
     tree_shape = root_node->tree_base + 1;
 
-    /* Father initialisation */
-    me->fathers_array_size = max_depth; 
-    me->fathers_array = __mpcomp_tree_array_get_father_array_by_depth( tree_shape, max_depth, rank );
-    
     /* User defined infos */ 
     new_mvp = (mpcomp_mvp_t *) malloc( sizeof(mpcomp_mvp_t) );
     assert( new_mvp );
@@ -755,7 +716,10 @@ __mpcomp_openmp_mvp_initialisation( void* args )
     new_mvp->local_rank = __mpcomp_tree_array_convert_global_to_local( tree_shape, max_depth, rank );
     new_mvp->rank = new_mvp->local_rank;
 
-    fprintf(stderr, "::: %s ::: Init new MVP global @%d stage @%d local @%d\n", __func__, new_mvp->global_rank, new_mvp->stage_rank, new_mvp->local_rank );
+    /* Father initialisation */
+    me->fathers_array_size = max_depth; 
+    me->fathers_array = __mpcomp_tree_array_get_father_array_by_depth( tree_shape, max_depth, rank );
+
 	new_mvp->tree_rank = __mpcomp_tree_array_get_tree_rank( tree_shape, max_depth, rank );
     new_mvp->threads = NULL;
     new_mvp->enable = 1;
@@ -771,7 +735,8 @@ __mpcomp_openmp_mvp_initialisation( void* args )
     // Transfert to slave_node_leaf function ...
     current_depth = max_depth -1;
     target_node_rank = me->fathers_array[current_depth]; 
-    ( void ) sctk_atomics_fetch_and_incr_int( &( root[target_node_rank].children_ready) ); 
+
+    ( void ) sctk_atomics_incr_int( &( root[target_node_rank].children_ready) ); 
  
     if(  !( new_mvp->local_rank ) )  /* The first child is spinning on a node */
     {
@@ -780,11 +745,14 @@ __mpcomp_openmp_mvp_initialisation( void* args )
             current_depth--;
             target_node_rank = me->fathers_array[current_depth];
         }
-       
-        if( !( new_mvp->stage_rank ) ) 
-            return (void*) root[0].user_pointer;   /* Root never wait */
 
+        if( !( new_mvp->stage_rank ) ) 
+        {
+            return (void*) root[0].user_pointer;   /* Root never wait */
+        }
+    
         spinning_node = (mpcomp_node_t*) root[target_node_rank].user_pointer;
+        sctk_assert( spinning_node );
         spinning_node->slave_running = MPCOMP_MVP_STATE_SLEEP;
     }
     else /* The other children are regular leaves */ 

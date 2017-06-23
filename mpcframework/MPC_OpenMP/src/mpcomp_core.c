@@ -139,50 +139,70 @@ __mpcomp_aux_reverse_one_dim_array( int* array, const int len )
 }
 
 static int*
-__mpcomp_convert_topology_to_tree_shape( hwloc_topology_t topology, int* tree_depth )
+__mpcomp_convert_topology_to_tree_shape( hwloc_topology_t topology, int* shape_depth )
 {
-	int i, real_tree_depth, last_stage_size;
-	hwloc_obj_t cur_obj;
-	int *reverse_tree_base;
+    int* reverse_shape;
+    int i, j, reverse_shape_depth;
+    const int max_depth = hwloc_topology_get_depth( topology );
 
-	sctk_assert( topology );
-	sctk_assert( tree_depth );
+    reverse_shape = ( int* ) malloc( sizeof( int ) * max_depth );
+    sctk_assert( reverse_shape );
+    memset( reverse_shape, 0, sizeof( int ) * max_depth );
 
-	cur_obj = hwloc_get_root_obj( topology );
-	const int max_depth = hwloc_topology_get_depth( topology ); 
+    /* Last level size */
+    reverse_shape[0] = hwloc_get_nbobjs_by_depth( topology, max_depth-1 );
+    reverse_shape_depth = 1;
 
-	reverse_tree_base = ( int* ) malloc( sizeof( int ) * max_depth );
-	sctk_assert( reverse_tree_base );
-	memset( reverse_tree_base, 0, sizeof( int ) * max_depth );
+    for( i = max_depth - 2; i >= 0; i-- )
+    {
+        int cur_stage_num = hwloc_get_nbobjs_by_depth( topology, i );
+        const int last_stage_num = reverse_shape[reverse_shape_depth-1];
 
-	real_tree_depth = 0;
-	last_stage_size = -1;	
+        if( cur_stage_num == 1 ) break;
+        if( cur_stage_num == last_stage_num || last_stage_num % cur_stage_num )
+            continue;
 
-	for( i = max_depth-1; i > 0; i-- )
-	{
-		const int stage_number = hwloc_get_nbobjs_by_depth( topology, i );
-		const hwloc_obj_type_t type = hwloc_get_depth_type( topology, i );
-		char* type_str = hwloc_obj_type_string( type ); 
+        int num_cores_per_node = -1;
+        int real_stage_num = cur_stage_num;
+        for( j = 0; j < cur_stage_num; j++ )
+        {
+            hwloc_obj_t cur = hwloc_get_obj_by_depth( topology, i, j );
+            const int num_cores = hwloc_get_nbobjs_inside_cpuset_by_type( topology, cur->cpuset, HWLOC_OBJ_PU );
 
-		if( !strcmp( "NUMANode", type_str ) )
-			continue;
+            if( num_cores == 0 )
+            {
+                real_stage_num -= 1;
+                continue;
+            }
 
-		if( stage_number == last_stage_size || stage_number == 1)
-			continue;
-		
-		if( (last_stage_size != -1) && (last_stage_size % stage_number) )
-			continue;
+            if( num_cores_per_node == -1 )
+            {
+                num_cores_per_node = num_cores;
+            }
+    
+            else
+            {
+                if( num_cores_per_node != num_cores )
+                    break;
+            }
+        }
+        
+        if( real_stage_num == 1 ) break;
 
-		last_stage_size = stage_number;
-		reverse_tree_base[real_tree_depth] = stage_number;
-		reverse_tree_base[real_tree_depth-1] /= stage_number;
-		real_tree_depth++;	
-	}
+        if( cur_stage_num != j ) continue;
+        if( real_stage_num == last_stage_num || last_stage_num % real_stage_num )
+            continue;
 
-	__mpcomp_aux_reverse_one_dim_array( reverse_tree_base, real_tree_depth );
+        reverse_shape[reverse_shape_depth] = real_stage_num;
+        reverse_shape[reverse_shape_depth-1] /= real_stage_num;
+        reverse_shape_depth++;
+    }
 
-	*tree_depth = real_tree_depth;
-	return reverse_tree_base;
+    if( reverse_shape_depth > 1 )
+        __mpcomp_aux_reverse_one_dim_array( reverse_shape, reverse_shape_depth );
+ 
+    *shape_depth = reverse_shape_depth;
+    return reverse_shape;
 }
 
 static hwloc_topology_t

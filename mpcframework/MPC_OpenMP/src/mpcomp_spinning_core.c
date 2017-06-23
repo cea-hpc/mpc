@@ -413,7 +413,7 @@ void mpcomp_slave_mvp_node( mpcomp_mvp_t *mvp, mpcomp_node_t *spinning_node )
     mpcomp_node_t* traversing_node = NULL;
 
     sctk_assert( mvp );
-
+    
     if( spinning_node ) 
     {
         volatile int* spinning_val = &( spinning_node->slave_running );

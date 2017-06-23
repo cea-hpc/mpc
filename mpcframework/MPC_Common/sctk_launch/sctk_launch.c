@@ -534,8 +534,6 @@ sctk_get_total_tasks_number()
 sctk_def_processor_nb (char *arg)
 {
 	sctk_processor_nb_val = atoi (arg);
-    if( sctk_enable_smt_capabilities )
-        sctk_processor_nb_val *= sctk_get_ht_per_core();
 }
 
 	int
@@ -666,6 +664,9 @@ sctk_def_use_host (char *arg)
 	static inline int
 sctk_proceed_arg (char *word)
 {
+	sctk_add_arg_eq ("--enable-smt", sctk_def_enable_smt);
+	sctk_add_arg_eq ("--disable-smt", sctk_def_disable_smt);
+
 	sctk_add_arg_eq ("--directory", sctk_def_directory);
 	sctk_add_arg ("--version-details", sctk_version_details);
 	sctk_add_arg_eq ("--mpc-verbose", sctk_set_verbosity);
@@ -687,8 +688,6 @@ sctk_proceed_arg (char *word)
 	sctk_add_arg_eq ("--task-number", sctk_def_task_nb);
 	sctk_add_arg_eq ("--process-number", sctk_def_process_nb);
 	sctk_add_arg_eq ("--node-number", sctk_def_node_nb);
-	sctk_add_arg_eq ("--enable-smt", sctk_def_enable_smt);
-	sctk_add_arg_eq ("--disable-smt", sctk_def_disable_smt);
 	sctk_add_arg_eq ("--share-node", sctk_def_share_node);
 	sctk_add_arg_eq ("--processor-number", sctk_def_processor_nb);
 
@@ -759,6 +758,12 @@ static int sctk_env_init_intern(int *argc, char ***argv) {
       *argc = (*argc) - 1;
     }
   }
+  
+  if( sctk_enable_smt_capabilities == 1)
+  {
+     sctk_processor_nb_val *= sctk_get_ht_per_core();
+  }
+ 
   i++;
   for (j = sctk_start_argc + 1; i < sctk_initial_argc; i++) {
     new_argv[j] = (*argv)[i];

@@ -1,6 +1,35 @@
 #ifndef __MPCOMP_TREE_ARRAY_UTILS_H__
 #define __MPCOMP_TREE_ARRAY_UTILS_H__
 
+static char*
+__mpcomp_tree_array_convert_array_to_string( int* tab, const int size )
+{   
+    int i, ret, used;
+    char *tmp, *string;
+    
+    if( size == 0 ) return NULL;
+    
+    string = (char*) malloc( sizeof(char) * 1024 );
+    assert( string );
+    memset( string, 0, sizeof(char) * 1024 ); 
+    tmp = string;
+    used = 0;
+    
+    ret = snprintf( tmp, 1024-used, "%d", tab[0] );
+    tmp += ret;
+    used += ret;
+    
+    for( i = 1; i < size; i++ )
+    {
+        ret = snprintf( tmp, 1024-used, ",%d", tab[i] );
+        tmp += ret;
+        used += ret;
+    }
+    string[used] = '\0';
+
+    return string;
+}
+
 static inline int*
 __mpcomp_tree_array_compute_tree_shape( mpcomp_node_t* node, int* tree_shape, const int size  )
 {
@@ -195,13 +224,12 @@ __mpcomp_update_node_children_node_ptr( const int first_idx,
     node->mvp = node->children.node[0]->mvp;
 
     if( !node->global_rank ) return;
+
     sctk_assert( me->fathers_array_size == root[first_idx].fathers_array_size -1 );
     sctk_assert( me->fathers_array );
 
     for( i = 0; i < me->fathers_array_size; i++ )
         me->fathers_array[i] = root[first_idx].fathers_array[i];
-
-    return;
 }  
 
 static void inline
@@ -211,6 +239,8 @@ __mpcomp_update_node_children_mvp_ptr(  const int first_idx,
 {
     int i;
 
+    mpcomp_meta_tree_node_t* me;
+
     sctk_assert( node );
     sctk_assert( first_idx > 0 );
 
@@ -218,7 +248,8 @@ __mpcomp_update_node_children_mvp_ptr(  const int first_idx,
     assert( node->child_type == MPCOMP_CHILDREN_LEAF );
 
     const int children_num = node->nb_children;
-    assert(sctk_atomics_load_int(&(root[node->global_rank].children_ready)) == children_num);
+    me = &(root[node->global_rank]);
+    assert(sctk_atomics_load_int(&(me->children_ready)) == children_num);
 
     for( i = 0; i < children_num; i++ ) 
     { 
@@ -230,6 +261,12 @@ __mpcomp_update_node_children_mvp_ptr(  const int first_idx,
     }
     
     node->mvp = node->children.leaf[0];
+
+    sctk_assert( me->fathers_array_size == root[first_idx].fathers_array_size -1 );
+    sctk_assert( me->fathers_array );
+
+    for( i = 0; i < me->fathers_array_size; i++ )
+        me->fathers_array[i] = root[first_idx].fathers_array[i];
 }  
 
 #endif /* __MPCOMP_TREE_ARRAY_UTILS_H__ */
