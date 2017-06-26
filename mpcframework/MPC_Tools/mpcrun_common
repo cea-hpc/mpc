@@ -48,6 +48,8 @@ GRAPHIC_PLACEMENT="0"
 TEXT_PLACEMENT="0"
 DISABLE_SMT="0"
 ACCL_SUPPORT="0"
+FT_WRAP=
+FT_SCRIPTPATH=
 
 if test "$MPC_AUTO_KILL_TIMEOUT" = "" ; then
     MPC_AUTO_KILL_TIMEOUT="0"
@@ -136,7 +138,11 @@ Launcher:
 
 Debugger:
     --dbg=<debugger_name> to use a debugger
-    
+
+Fault-tolerance (if compiled with --enable-ft):
+    --ft Enabling Fault-tolerance support
+    --ft-debug Run the FT deamon in xterm console for debug
+
 Profiling (if compiled with --enable-MPC_Profiler) :
 	--profiling=AA,BB,...
 	
@@ -159,7 +165,6 @@ mpi_only=no
 BINARY=""
 USER_ARGS=""
 SHOW_COM=""
-RESTART=""
 MIGRATION=""
 DEBUG=""
 NET_TYPE=""
@@ -231,7 +236,7 @@ if [ "${CONFIG_FILES_VALID}" = "true" ]; then
     fi
     # Enable checkpoint
     if [ "${CONFIG_LAUNCHER_CHECKPOINT}" = "true" ]; then
-       CHECKPOINT="--checkpoint"
+       FT_WRAP="--checkpoint"
     fi
     # Enable migration
     if [ "${CONFIG_LAUNCHER_MIGRATION}" = "true" ]; then
@@ -243,7 +248,7 @@ if [ "${CONFIG_FILES_VALID}" = "true" ]; then
     fi
     # Enable restart mode
     if [ "${CONFIG_LAUNCHER_RESTART}" = "true" ]; then
-       RESTART="--restart"
+       FT_WRAP="--restart"
     fi
 	# Number of process
 	PROCESS_NB="${CONFIG_LAUNCHER_NB_PROCESS}"
@@ -319,14 +324,14 @@ for arg in "$@" ; do
     fi
     exit 0
     ;;
-    --nocheckpoint)
-    CHECKPOINT=""
+    --checkpoint|--ckpt)
+    FT_WRAP="--checkpoint"
     ;;
-    --checkpoint)
-    CHECKPOINT="--checkpoint"
-    ;;
-    --restart)
-    RESTART="--restart"
+    --restart*|--rstr*)
+    FT_WRAP="--restart"
+    FT_SCRIPTPATH="`echo "A$arg" | sed -re 's/A--re?sta?rt?=?//g'`"
+    #if the optioanl argument is a relative path -> expand it
+    test -n "$FT_SCRIPTPATH" && test -z "`echo "$FT_SCRIPTPATH" | egrep "^/"`" && FT_SCRIPTPATH="$PWD/$FT_SCRIPTPATH"
     ;;
     --migration)
     MIGRATION="--migration"
@@ -465,6 +470,12 @@ for arg in "$@" ; do
     --mic-config=*)
     MPCRUN_CONFIG_FILE="`echo A$arg | sed -e 's/A--mic-config=//g'`"
     ;;
+    --ft-host=*)
+    FT_HOST="`echo A$arg | sed -e 's/A--ft-host=//g'`"
+    ;;
+    --ft-port=*)
+    FT_PORT="`echo A$arg | sed -e 's/A--ft-port=//g'`"
+    ;;
     --)
     READ_MPC_ARG="false"
     ;;
@@ -573,7 +584,7 @@ fi
 MPC_VERBOSE="--mpc-verbose=${MPC_VERBOSE}"
 MPC_PROFILING="--profiling=${MPC_PROFILING}"
 
-SCTK_ARGS="$SCTK_ARGS $VERSION_DETAILS $CHECKPOINT $RESTART $MIGRATION $MPC_VERBOSE $MPC_PROFILING"
+SCTK_ARGS="$SCTK_ARGS $VERSION_DETAILS $FT_WRAP $MIGRATION $MPC_VERBOSE $MPC_PROFILING"
 
 SCTK_ARGS="$SCTK_ARGS --sctk_use_port_number=0 --sctk_use_host=0 --sctk-args-end--"
 
@@ -597,9 +608,55 @@ if test "$show" = "eval" ; then
 	which $BINARY > /dev/null 2>&1
 	if test "$?" != "0" ; then
 	    mpcrun_error "Binary $BINARY not found"
-	fi
+    fi
     fi
 fi
+
+if test -n "$FT_WRAP" ; then
+	which -- dmtcp_launch dmtcp_coordinator > /dev/null 2>&1
+	if test "$?" != "0"; then
+		mpcrun_error "FT programs not found (Did you compile with --enable-mpc-ft ?)"
+	fi
+
+	#if the coordinator has to be embedded
+	if test -z "$FT_HOST" -a -z "$FT_PORT"; then
+		port_file="`mktemp`"
+		FT_PORT=""
+		FT_HOST="`hostname`"
+
+		$show dmtcp_coordinator -q --daemon --exit-on-last -p 0 --port-file $port_file
+
+		#wait for coordinator booting... (copied from DMTCP's examples)
+		if test -z "$show"; then
+			while true; do 
+				if [ -f "$port_file" ]; then
+					FT_PORT=`cat $port_file`
+					if [ -n "$FT_PORT" ]; then
+						break
+					fi
+				fi
+			done
+		fi
+		rm $port_file
+	else
+		test -z "$FT_PORT" && FT_PORT="7779"
+		test -z "$FT_HOST" && FT_HOST="localhost"
+	fi
+
+	#workaround because 'h' & '-p' opts don't affect DMTCP under SLURM (patch attempted in DMTCP sources)
+	export DMTCP_COORD_HOST="$FT_HOST"
+	export DMTCP_COORD_PORT="$FT_PORT"
+
+	if test "x$FT_WRAP" = "x--checkpoint"; then
+		#this disallows the 'option forwarding capability'
+		BINARY="dmtcp_launch -h $DMTCP_COORD_HOST -p $DMTCP_COORD_PORT --rm --ckpt-signal 30 ${BINARY}"
+
+	elif test "x$FT_WRAP" = "x--restart"; then
+		test -z "$FT_SCRIPTPATH" && FT_SCRIPTPATH="$PWD/dmtcp_restart_script.sh"
+		BINARY="$FT_SCRIPTPATH -h $DMTCP_COORD_HOST -p $DMTCP_COORD_PORT"
+	fi
+fi
+
 
 TMP_SCTK_ARG="$SCTK_ARGS"
 SCTK_ARGS=""

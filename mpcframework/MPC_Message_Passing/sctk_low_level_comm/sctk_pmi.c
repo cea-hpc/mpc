@@ -423,7 +423,7 @@ int sctk_pmi_barrier()
 		fprintf ( stderr, "FAILURE (sctk_pmi): barrier failed with error %d\n", rc );
 	}
 
-	return PMI_SUCCESS;
+	return rc;
 #endif /* SCTK_LIB_MODE */
 }
 
