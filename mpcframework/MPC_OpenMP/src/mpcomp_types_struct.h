@@ -34,6 +34,7 @@
 #include "mpcomp_types_loop.h"
 
 #include "mpcomp_tree_array.h"
+#include "sctk_spinlock.h"
 
 #ifdef MPCOMP_USE_INTEL_ABI
 #include "mpcomp_intel_types.h"
@@ -207,21 +208,36 @@ typedef struct mpcomp_thread_s {
 } mpcomp_thread_t;
 
 /* Instance of OpenMP runtime */
-typedef struct mpcomp_instance_s {
-  	struct mpcomp_node_s *root;   /*!< Root to the tree linking the microVPs  */
-  	struct mpcomp_team_s *team;   /* Information on the team */
+typedef struct mpcomp_instance_s 
+{
+    /** Root to the tree linking the microVPs */
+  	struct mpcomp_node_s *root;
+    /** OpenMP information on the team */
+  	struct mpcomp_team_s *team;   
 
-	/* Instance MVP */
-  	int nb_mvps;                  /*!< Number of microVPs for this instance   */
-  	struct mpcomp_mvp_s **mvps;   /*!< All microVPs of this instance          */
+	/*-- Instance MVP --*/
+
+    /** Number of microVPs for this instance   */
+  	int nb_mvps;
+    /** All microVPs of this instance  */
+    struct mpcomp_mvp_s **mvps;   
+    /** microVPs initialisation status */
   	sctk_atomics_int* mvps_is_ready;
 
-  	int tree_depth;               /* Depth of the tree */
-  	int *tree_base;               /* Degree per level of the tree */
-  	int *tree_cumulative;         /* Initialized in __mpcomp_build_tree */
-  	int *tree_nb_nodes_per_depth; /* Number of nodes at each depth ([0] = root */
+    /*-- Tree array informations --*/
+
+    /** Depth of the tree */
+  	int tree_depth;
+    /** Degree per level of the tree */
+  	int *tree_base;               
+    /** Instance microVPs child number per depth */
+  	int *tree_cumulative;         
+    /** microVPs number at each depth */
+  	int *tree_nb_nodes_per_depth;
+
 #if MPCOMP_TASK
-  struct mpcomp_task_instance_infos_s task_infos;
+    /** Task information of this instance */
+    struct mpcomp_task_instance_infos_s task_infos;
 #endif /* MPCOMP_TASK */
 
 } mpcomp_instance_t;
@@ -243,7 +259,8 @@ typedef struct mpcomp_mvp_s
     /** MVP keep alive after fall asleep                        */
     volatile int enable;
     /** MVP spinning value in topology tree                     */
-    volatile int slave_running;
+    volatile int spin_status;
+    struct mpcomp_node_s* spin_node;
     /* -- MVP Tree related informations                         */
     unsigned int depth;
     /** Root of the topology tree                               */
@@ -265,6 +282,7 @@ typedef struct mpcomp_mvp_s
     /* Transfert OpenMP region information to OpenMP thread     */
     mpcomp_parallel_region_t info;
 #endif /* MPCOMP_TRANSFER_INFO_ON_NODES */
+    mpcomp_thread_t* buffered_threads;
     /* -- Tree array MVP information --                         */
     /* Rank within the microVPs */
     //TODO Remove duplicate value    
@@ -294,7 +312,7 @@ typedef struct mpcomp_node_s
     /** MVP spinning as a node                                  */
     struct mpcomp_mvp_s *mvp;
     /** MVP spinning value in topology tree                     */
-    volatile int slave_running;
+    volatile int spin_status;
     /* NUMA node on which this node is allocated                */
     int id_numa; 
     /* -- MVP Tree related information --                       */
@@ -302,6 +320,7 @@ typedef struct mpcomp_node_s
     int depth;
     /** Father node in the topology tree                        */
     int num_threads;
+    int mvp_first_id;
     struct mpcomp_node_s *father;
     struct mpcomp_node_s *prev_father;
     /** Rigth brother node in the topology tree                 */

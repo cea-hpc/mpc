@@ -25,6 +25,7 @@ __mpcomp_tree_array_convert_array_to_string( int* tab, const int size )
         tmp += ret;
         used += ret;
     }
+
     string[used] = '\0';
 
     return string;
@@ -223,6 +224,7 @@ __mpcomp_update_node_children_node_ptr( const int first_idx,
     
     node->mvp = node->children.node[0]->mvp;
 
+    /* ROOT issue */
     if( !node->global_rank ) return;
 
     sctk_assert( me->fathers_array_size == root[first_idx].fathers_array_size -1 );
@@ -262,8 +264,10 @@ __mpcomp_update_node_children_mvp_ptr(  const int first_idx,
     
     node->mvp = node->children.leaf[0];
 
+    /* MVP singleton issue */
+    if( !( me->fathers_array ) ) return;
+
     sctk_assert( me->fathers_array_size == root[first_idx].fathers_array_size -1 );
-    sctk_assert( me->fathers_array );
 
     for( i = 0; i < me->fathers_array_size; i++ )
         me->fathers_array[i] = root[first_idx].fathers_array[i];

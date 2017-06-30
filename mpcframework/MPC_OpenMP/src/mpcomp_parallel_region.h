@@ -54,6 +54,7 @@ static inline mpcomp_node_t *__mpcomp_wakeup_node(int master,
                                                   mpcomp_node_t *start_node,
                                                   unsigned num_threads,
                                                   mpcomp_instance_t *instance) {
+#if 0
   int i;
   mpcomp_node_t *n;
 
@@ -117,14 +118,16 @@ static inline mpcomp_node_t *__mpcomp_wakeup_node(int master,
     /* Go down towards the leaves */
     n = n->children.node[0];
   }
-
-  return n;
+  return n
+#endif
+return NULL;
 }
 
 static inline mpcomp_node_t *__mpcomp_wakeup_leaf(mpcomp_node_t *start_node,
                                                   int num_threads,
                                                   mpcomp_instance_t *instance) {
 
+#if 0
   int i;
   mpcomp_node_t *n;
 
@@ -150,8 +153,9 @@ static inline mpcomp_node_t *__mpcomp_wakeup_leaf(mpcomp_node_t *start_node,
       n->children.leaf[i]->slave_running = 1;
     }
   }
-
   return n;
+#endif
+  return NULL;
 }
 
 #endif /* __MPCOMP_PARALLEL_REGION_H__ */

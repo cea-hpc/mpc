@@ -40,6 +40,7 @@ void mpcomp_GOMP_taskyield(void) {
   sctk_nodebug("[Redirect mpcomp_GOMP]%s:\tEnd", __func__);
 }
 
+#if MPCOMP_TASK
 void mpcomp_GOMP_taskgroup_start(void) {
   sctk_nodebug("[Redirect mpcomp_GOMP]%s:\tBegin", __func__);
   mpcomp_taskgroup_start();
@@ -51,3 +52,4 @@ void mpcomp_GOMP_taskgroup_end(void) {
   mpcomp_taskgroup_end();
   sctk_nodebug("[Redirect mpcomp_GOMP]%s:\tEnd", __func__);
 }
+#endif /* MPCOMP_TASK */

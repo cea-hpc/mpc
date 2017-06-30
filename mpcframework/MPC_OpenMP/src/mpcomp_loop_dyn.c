@@ -116,6 +116,15 @@ int __mpcomp_dynamic_loop_begin(long lb, long b, long incr, long chunk_size,
   	t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
   	sctk_assert(t != NULL);
 
+    if( !( t->instance->root ) )
+    {
+        *from = lb;
+        *to = b;
+  t->schedule_type =
+      (t->schedule_is_forced) ? t->schedule_type : MPCOMP_COMBINED_DYN_LOOP;
+  t->schedule_is_forced = 0;
+        return 1;
+    }
   	/* Initialization of loop internals */
   	t->for_dyn_last_loop_iteration = 0;
   	__mpcomp_dynamic_loop_init(t, lb, b, incr, chunk_size);
@@ -181,8 +190,8 @@ int __mpcomp_dynamic_loop_next(long *from, long *to) {
     return 0;
   }
 
-  if( !( t->instance->mvps[index_target]->threads ) )
-		__mpcomp_wakeup_mvp( t->instance->mvps[index_target] );			
+  if( !( t->instance->mvps[index_target] ) )
+        return 0;
 
   sctk_assert( t->instance->mvps[index_target]->threads );
 
@@ -216,14 +225,8 @@ int __mpcomp_dynamic_loop_next(long *from, long *to) {
     /* Compute the index of the target */
     index_target = __mpcomp_loop_dyn_get_victim_rank(t);
 
-	 if( !( t->instance->mvps[index_target]->threads ) )
-	    __mpcomp_wakeup_mvp( t->instance->mvps[index_target] );			
-
-    target = t->instance->mvps[index_target]->threads;
-
-	 if( !target )
-			goto do_increase;
-
+	 if( !( t->instance->mvps[index_target] ) )
+        goto do_increase;
 
     barrier_num_threads =
         t->instance->mvps[index_target]->father->barrier_num_threads;

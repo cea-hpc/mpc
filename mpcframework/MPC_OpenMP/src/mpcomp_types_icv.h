@@ -69,4 +69,9 @@ typedef struct mpcomp_local_icv_s {
                                 */
 } mpcomp_local_icv_t;
 
+static inline void 
+__mpcomp_apply_icvs_global_to_local( mpcomp_global_icv_t* global, mpcomp_local_icv_t* local )
+{
+}
+
 #endif /* __MPCOMP_TYPES_ICV_H__ */

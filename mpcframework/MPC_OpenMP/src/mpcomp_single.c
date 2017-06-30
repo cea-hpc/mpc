@@ -140,6 +140,7 @@ void __mpcomp_do_single_copyprivate_end(void *data) {
   mpcomp_team_t *team; /* Info on the team */
   mpcomp_thread_t *t = mpcomp_get_thread_tls();
 
+  if( t->info.num_threads == 1 ) return;
   /* Grab the team info */
   sctk_assert(t->instance != NULL);
   team = t->instance->team;

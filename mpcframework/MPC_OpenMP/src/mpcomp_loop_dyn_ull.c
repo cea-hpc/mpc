@@ -114,6 +114,16 @@ int __mpcomp_loop_ull_dynamic_begin(bool up, unsigned long long lb,
   	t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
   	sctk_assert(t != NULL);
 
+        if( !( t->instance->root ) )
+    {
+        *from = lb;
+        *to = b;
+  t->schedule_type =
+      (t->schedule_is_forced) ? t->schedule_type : MPCOMP_COMBINED_DYN_LOOP;
+  t->schedule_is_forced = 0;
+        return 1;
+    }
+
   	/* Initialization of loop internals */
   	t->for_dyn_last_loop_iteration = 0;
   	__mpcomp_dynamic_loop_init_ull(t, up, lb, b, incr, chunk_size);
@@ -184,16 +194,7 @@ int __mpcomp_loop_ull_dynamic_next(unsigned long long *from,
 
   /* Check that the target is allocated */
   __mpcomp_loop_dyn_target_init(t);
-#if 0
-    __mpcomp_loop_ull_dynamic_next_debug( __func__ );
-#endif
-
   const int max_depth = t->info.new_root->depth;
-
-  /* Compute the index of the target */
-  index_target = __mpcomp_loop_dyn_get_victim_rank(t);
-  barrier_num_threads =
-      t->instance->mvps[index_target]->father->barrier_num_threads;
 
   /*
    * WORKAROUND (pr35196.c):
@@ -204,6 +205,11 @@ int __mpcomp_loop_ull_dynamic_next(unsigned long long *from,
     __mpcomp_loop_dyn_target_reset(t);
     return 0;
   }
+
+  /* Compute the index of the target */
+  index_target = t->rank;
+  assert( t->instance->mvps[index_target] );
+  fprintf(stderr,":: %s :: NEXT CALL for thread @%d\n", __func__, t->rank );
 
   int found = 1;
   int *tree_base = t->instance->tree_base;
@@ -225,6 +231,7 @@ int __mpcomp_loop_ull_dynamic_next(unsigned long long *from,
                                     t->mvp->tree_rank, tree_base, tree_depth,
                                     max_depth, 0);
       found = 0;
+      fprintf(stderr,":: %s :: FINISH for thread @%d\n", __func__, t->rank );
       break;
     }
 
@@ -236,6 +243,10 @@ int __mpcomp_loop_ull_dynamic_next(unsigned long long *from,
 
     /* Compute the index of the target */
     index_target = __mpcomp_loop_dyn_get_victim_rank(t);
+
+    if( !( t->instance->mvps[index_target] ) )
+        goto do_increase;
+    
     barrier_num_threads =
         t->instance->mvps[index_target]->father->barrier_num_threads;
 

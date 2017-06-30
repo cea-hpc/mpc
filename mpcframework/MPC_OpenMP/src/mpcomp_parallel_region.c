@@ -25,6 +25,8 @@
 #include "mpcomp_core.h"
 #include "mpcomp_barrier.h"
 
+#include "mpcomp_alloc.h"
+
 #include "mpcomp_parallel_region.h"
 #include "mpcomp_loop.h"
 #include "mpcomp_task_utils.h"
@@ -47,7 +49,6 @@ static void __mpcomp_internal_parallel_ompt_begin( mpcomp_thread_t* t )
 		callback = (ompt_callback_parallel_begin_t) OMPT_Callbacks[ompt_callback_parallel_begin];
 		if( callback )
 		{
-			mpcomp_task_t* task;
 			mpcomp_thread_t *thread;
 			ompt_frame_t* parent_frame;
 			t->info.ompt_region_data = ompt_data_none;
@@ -67,18 +68,29 @@ __mpcomp_internal_begin_parallel_region( mpcomp_parallel_region_t *info, const u
     mpcomp_thread_t *t;
     mpcomp_node_t* root;
     unsigned real_num_threads;
+    mpcomp_thread_t* new_thread;
     mpcomp_parallel_region_t* instance_info;
 
     /* Grab the thread info */
     t = (mpcomp_thread_t *) sctk_openmp_thread_tls;
     sctk_assert(t != NULL);
     
+    new_thread = (mpcomp_thread_t*) malloc( sizeof( mpcomp_thread_t) );
+    sctk_assert( new_thread );
+    memset( new_thread, 0, sizeof( mpcomp_thread_t ) );
+   
+    fprintf(stderr, "::: %s ::: >> %p\n", __func__, t->root );
+
     /* Compute new num threads value */
     if( t->root )
     {
+        fprintf(stderr, ":: %s :: thread> %d\n", __func__, t->info.icvs.nthreads_var);
         const unsigned int max_threads = t->root->tree_cumulative[0];
         real_num_threads = expected_num_threads;
         real_num_threads = (!real_num_threads) ? max_threads : real_num_threads;
+        fprintf(stderr, ":: %s :: thread> %d\n", __func__, real_num_threads);
+        real_num_threads = ( t->info.icvs.nthreads_var < real_num_threads ) ? t->info.icvs.nthreads_var : real_num_threads;
+        fprintf(stderr, ":: %s :: thread> %d\n", __func__, real_num_threads);
     }
     else
     {
@@ -87,21 +99,13 @@ __mpcomp_internal_begin_parallel_region( mpcomp_parallel_region_t *info, const u
 
     sctk_assert(real_num_threads > 0);
    
-    /* Check if the children instance exists */
-    // TODO: Add chained list for previous instance
-    if( !t->children_instance ||
+    if( 1 || !t->children_instance ||
         (t->children_instance && 
         t->children_instance->nb_mvps != real_num_threads ) )
     {
-        //fprintf(stderr, "%s : Allocate a new parallel region\n", __func__ );
         t->children_instance = __mpcomp_tree_array_instance_init( t, real_num_threads );
         sctk_assert( t->children_instance );
     }
-    else
-    {
-        //fprintf(stderr, "%s : Re-use previous parallel region < %p >\n", __func__, t->children_instance );
-    }
-    
 
 #if OMPT_SUPPORT
     __mpcomp_internal_parallel_ompt_begin( t );
@@ -109,20 +113,14 @@ __mpcomp_internal_begin_parallel_region( mpcomp_parallel_region_t *info, const u
 
     instance_info = &( t->children_instance->team->info );
 
-    /* Fill information for the team */
     instance_info->func = info->func;
     instance_info->shared = info->shared;
     instance_info->num_threads = real_num_threads;
 
-    //TODO: remove new_root
-    //fprintf(stderr, "\n\n%s : instance info new root %p\n\n", __func__, t->root );
     instance_info->new_root = t->root;
 
-    /* Do not touch to single_sections_current_save and for_dyn_current_save */
     instance_info->combined_pragma = info->combined_pragma;
     instance_info->icvs = info->icvs;
-
-    /* Update active_levels_var and levels_var accordingly */
     instance_info->icvs.levels_var = t->info.icvs.levels_var + 1;
 
     if( real_num_threads > 1 ) 
@@ -134,15 +132,20 @@ __mpcomp_internal_begin_parallel_region( mpcomp_parallel_region_t *info, const u
     __mpcomp_loop_gen_loop_infos_cpy( &(info->loop_infos), &(instance_info->loop_infos) );
     instance_info->nb_sections = info->nb_sections;
 
-	/* Compute depth */
 	t->children_instance->team->depth = ( !( t->instance ) ) ? 0 : t->instance->team->depth + 1;
 
-    if( t->root )
+    if( instance_info->num_threads > 1 )
     {
-        //fprintf(stderr, "%s : Wake-up other nodes ...\n", __func__ );
         t->root->instance = t->children_instance;
         __mpcomp_wakeup_gen_node( t->root, real_num_threads );    
     }
+
+    /* Prepare nested_thread */
+    mpcomp_thread_t* next_thread = (mpcomp_thread_t*) mpcomp_alloc( sizeof( mpcomp_thread_t ) );
+    sctk_assert( next_thread );
+    memset( next_thread, 0, sizeof( mpcomp_thread_t ) );
+    next_thread->father = t->mvp->threads;
+    t->mvp->threads = next_thread;
 
 	return ;
 }
@@ -207,7 +210,6 @@ void __mpcomp_internal_end_parallel_region(mpcomp_instance_t *instance)
       callback = (ompt_callback_parallel_end_t) OMPT_Callbacks[ompt_callback_parallel_end];
       if( callback )
       {
-         mpcomp_task_t* task;
          ompt_data_t* parallel_data = &( instance->team->info.ompt_region_data );
 			ompt_data_t* task_data;
 

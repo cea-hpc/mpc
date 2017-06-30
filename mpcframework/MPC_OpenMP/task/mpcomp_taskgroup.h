@@ -29,6 +29,7 @@
 #include "mpcomp_types.h"
 #define MPCOMP_TASKGROUP
 
+#if MPCOMP_TASK
 /* Functions prototypes */
 void mpcomp_taskgroup_start(void);
 void mpcomp_taskgroup_end(void);
@@ -62,5 +63,6 @@ static inline void mpcomp_taskgroup_add_task(mpcomp_task_t *new_task) {}
 
 static inline void mpcomp_taskgroup_del_task(mpcomp_task_t *task) {}
 
+#endif /* MPCOMP_TASK */
 #endif /* MPCOMP_TASKGROUP */
 #endif /* __MPCOMP_TASGROUP_H__ */

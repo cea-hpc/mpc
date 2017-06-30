@@ -3,7 +3,7 @@
 #ifndef __MPCOMP_TREE_STRUCTS_H__
 #define __MPCOMP_TREE_STRUCTS_H__
 
-
+#include "sctk_alloc.h"
 #include "mpcomp_task.h"
 #include "mpcomp_types.h"
 #include "mpcomp_task_utils.h"

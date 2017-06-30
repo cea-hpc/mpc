@@ -31,6 +31,7 @@
 #include "mpcomp_intel_tasking.h"
 #include "mpcomp_taskgroup.h"
 
+#if MPCOMP_TASK
 kmp_int32 __kmpc_omp_task(ident_t *loc_ref, kmp_int32 gtid,
                           kmp_task_t *new_task) {
   struct mpcomp_task_s *mpcomp_task =
@@ -199,3 +200,4 @@ void __kmpc_omp_wait_deps(ident_t *loc_ref, kmp_int32 gtid, kmp_int32 ndeps,
 void __kmp_release_deps(kmp_int32 gtid, kmp_taskdata_t *task) {
   not_implemented();
 }
+#endif

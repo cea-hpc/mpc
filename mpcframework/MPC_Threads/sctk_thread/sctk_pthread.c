@@ -19,6 +19,9 @@
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
 /* #                                                                      # */
 /* ######################################################################## */
+#define _GNU_SOURCE             /* See feature_test_macros(7) */
+#include <sched.h>
+
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
@@ -38,6 +41,7 @@
 #include "sctk_asm.h"
 #endif
 #include "sctk_asm.h"
+
 
 #if !defined(HAVE_PTHREAD_CREATE)
 #error "Bad pthread detection"
@@ -401,7 +405,11 @@ local_pthread_create (pthread_t * restrict thread,
 static int
 sctk_pthread_thread_attr_setbinding (sctk_thread_attr_t * __attr, int __binding)
 {
-  return 0;
+    cpu_set_t mask;
+    CPU_ZERO(&mask);
+    CPU_SET(__binding, &mask);
+    pthread_attr_setaffinity_np(__attr, sizeof(cpu_set_t), &mask);
+    return 0;
 }
 
 static int

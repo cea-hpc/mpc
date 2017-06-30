@@ -79,4 +79,66 @@ __mpcomp_spinning_get_debug_thread_infos( mpcomp_thread_t* thread )
     return NULL; 
 }
 
+static inline mpcomp_node_t*
+__mpcomp_spinning_get_mvp_father_node( mpcomp_mvp_t* mvp, mpcomp_instance_t* instance )
+{
+    unsigned int* mvp_father_array;
+    mpcomp_meta_tree_node_t* tree_array_node, *tree_array; 
+
+    sctk_assert( mvp );
+    sctk_assert( instance );
+
+    if( !( instance->root ) ) return  mvp->father;
+
+    const int max_depth = mvp->depth;
+    const int father_depth = instance->root->depth + instance->tree_depth -1;
+    const int mvp_ancestor_node = max_depth - father_depth;
+
+    if( !mvp_ancestor_node ) return mvp->father;
+
+    sctk_assert( mvp->father );
+    tree_array = mvp->father->tree_array;
+    sctk_assert( tree_array );
+
+    mvp_father_array = tree_array[mvp->global_rank].fathers_array;
+    sctk_assert( mvp_ancestor_node < tree_array[mvp->global_rank].fathers_array_size );
+
+    tree_array_node = &( tree_array[mvp_father_array[father_depth-1]] );
+    return ( mpcomp_node_t* ) tree_array_node->user_pointer;
+}
+
+static inline int
+__mpcomp_spinning_node_compute_rank( mpcomp_node_t* node, const int num_threads, int rank, int *first ) 
+{
+    sctk_assert( node );
+    sctk_assert( num_threads > 0 );
+    sctk_assert( first );
+
+    const int quot = num_threads / node->nb_children;
+    const int rest = num_threads % node->nb_children;
+    const int min = (num_threads > node->nb_children) ? node->nb_children : num_threads; 
+
+    *first = -1;
+    if( rank >= min ) return 0;
+    
+    *first = ( rank < rest ) ? ((quot+1) * rank) : (quot * rank + rest);
+    return ( rank < rest ) ? quot+1 : quot; 
+}
+
+static inline int
+__mpcomp_spinning_leaf_compute_rank( mpcomp_node_t* node, const int num_threads, const int first_rank, const int rank )
+{
+    int i;
+    sctk_assert( node );
+    sctk_assert( num_threads > 0 );
+
+    const int quot = node->nb_children / num_threads;
+    for( i = 0; i < node->nb_children; i++ )
+    {
+        if( i * quot + first_rank == rank )
+            break;
+    }
+    return i; 
+}
+
 #endif /* __MPCOMP_SPINNING_CORE_H__ */

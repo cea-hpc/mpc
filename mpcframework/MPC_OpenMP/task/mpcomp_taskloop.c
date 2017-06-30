@@ -30,6 +30,8 @@
 #include "mpcomp_taskgroup.h"
 #include "mpcomp_task_gomp_constants.h"
 
+#if MPCOMP_TASK
+
 static unsigned long mpcomp_taskloop_compute_num_iters(long start, long end,
                                                        long step) {
   long decal = (step > 0) ? -1 : 1;
@@ -181,6 +183,8 @@ void mpcomp_taskloop_ull(void (*fn)(void *), void *data,
                          unsigned long num_tasks, int priority,
                          unsigned long long start, unsigned long long end,
                          unsigned long long step) {}
+
+#endif /* MPCOMP_TASK */
 
 /* GOMP OPTIMIZED_1_0_WRAPPING */
 #ifndef NO_OPTIMIZED_GOMP_4_0_API_SUPPORT

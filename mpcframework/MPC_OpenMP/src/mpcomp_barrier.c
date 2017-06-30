@@ -39,6 +39,10 @@ void __mpcomp_internal_full_barrier(mpcomp_mvp_t *mvp) {
   sctk_assert(mvp->father->instance);
   sctk_assert(mvp->father->instance->team);
 
+  if( !( mvp->threads->instance->root ))
+  {
+    return;
+  }
 
   mpcomp_thread_t* thread = (mpcomp_thread_t*) sctk_openmp_thread_tls;
   c = mvp->father;
@@ -95,9 +99,8 @@ void __mpcomp_internal_full_barrier(mpcomp_mvp_t *mvp) {
 }
 
 /* Half barrier for the end of a parallel region */
-void __mpcomp_internal_half_barrier(mpcomp_mvp_t *mvp) {
-
-  long b;
+void __mpcomp_internal_half_barrier_start( mpcomp_mvp_t *mvp ) 
+{
   mpcomp_node_t *c, *new_root;
 
   sctk_assert(mvp);
@@ -107,6 +110,8 @@ void __mpcomp_internal_half_barrier(mpcomp_mvp_t *mvp) {
 
   new_root = mvp->instance->team->info.new_root;
   c = mvp->father;
+   
+  sctk_assert( c );
   sctk_assert(new_root != NULL);
 
 #if 0 //MPCOMP_TASK
@@ -116,14 +121,30 @@ void __mpcomp_internal_half_barrier(mpcomp_mvp_t *mvp) {
 #endif /* MPCOMP_TASK */
 
   /* Step 1: Climb in the tree */
-  b = sctk_atomics_fetch_and_incr_int(&(c->barrier)) + 1;
+  long b = sctk_atomics_fetch_and_incr_int(&(c->barrier)) + 1;
   while (b == c->barrier_num_threads && c != new_root) {
     sctk_atomics_store_int(&(c->barrier), 0);
     c = c->father;
     b = sctk_atomics_fetch_and_incr_int(&(c->barrier)) + 1;
   }
+}
 
-  sctk_nodebug("%s: exiting", __func__);
+void __mpcomp_internal_half_barrier_end( mpcomp_mvp_t *mvp )
+{
+    mpcomp_thread_t* cur_thread;
+    mpcomp_node_t* root;
+    assert( mvp->threads );
+
+    cur_thread = mvp->threads;
+
+    /* End barrier for master thread */
+    if( cur_thread->rank ) return;
+    
+    root = cur_thread->instance->root; 
+    const int expected_num_threads = root->barrier_num_threads;
+    while (sctk_atomics_load_int(&(root->barrier)) != expected_num_threads) 
+        sctk_thread_yield();        
+    sctk_atomics_store_int( &( root->barrier ), 0); 
 }
 
 /*

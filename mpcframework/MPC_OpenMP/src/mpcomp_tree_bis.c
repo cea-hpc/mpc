@@ -22,6 +22,7 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
+#include "sctk.h"
 #include "sctk_debug.h"
 #include "sctk_topology.h"
 #include "mpcomp.h"
@@ -214,6 +215,7 @@ void __mpcomp_restrict_topology_for_mpcomp( hwloc_topology_t* restrictedTopology
 	if((err = hwloc_topology_restrict(*restrictedTopology,final_cpuset,HWLOC_RESTRICT_FLAG_ADAPT_DISTANCES)))
 		return -1;
 
+    hwloc_bitmap_free( final_cpuset );
 	return 0;	
 }
 
@@ -235,6 +237,7 @@ int mpcomp_build_default_tree(mpcomp_instance_t *instance) {
   int n_leaves;
   int i;
 
+#if 0
   sctk_nodebug("__mpcomp_build_auto_tree begin");
 
   sctk_assert(instance != NULL);
@@ -272,7 +275,7 @@ int mpcomp_build_default_tree(mpcomp_instance_t *instance) {
   mpcomp_build_tree(instance, n_leaves, depth, degree);
 
   sctk_nodebug("mpcomp_build_auto_tree done");
-
+#endif
   return 1;
 }
 
@@ -336,7 +339,7 @@ int mpcomp_build_tree(mpcomp_instance_t *instance, int n_leaves, int depth, int 
   int *order; /* Topological sort of VPs where order[0] is the current VP */
 
   /***** PRINT ADDITIONAL SUMMARY (only first MPI rank) ******/
-  if (getenv("MPC_DISABLE_BANNER") == NULL && sctk_process_rank == 0) {
+  if (getenv("MPC_DISABLE_BANNER") == NULL && sctk_get_task_rank() == 0) {
     fprintf(stderr, "\tOMP_TREE depth %d [", depth);
     for (i = 0; i < depth; i++) {
       fprintf(stderr, "%d", degree[i]);

@@ -23,9 +23,10 @@
 
 #include "mpcomp_types_def.h"
 
+#include "sctk_bool.h"
+
 #if MPCOMP_TASK
 
-#include "sctk_bool.h"
 #include <sctk_int.h>
 #include <sctk_asm.h>
 #include "mpcomp_types.h"

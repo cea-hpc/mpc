@@ -27,7 +27,10 @@
 #include "mpcomp_taskgroup.h"
 #include "mpcomp_types.h"
 
+#if MPCOMP_TASK
+
 #ifdef MPCOMP_TASKGROUP
+
 void mpcomp_taskgroup_start(void) {
   mpcomp_task_t *current_task = NULL;            /* Current task execute 	*/
   mpcomp_thread_t *omp_thread_tls = NULL;        /* thread private data  	*/
@@ -83,3 +86,4 @@ void mpcomp_taskgroup_end(void) {}
 __asm__(".symver mpcomp_taskgroup_start, GOMP_taskgroup_start@@GOMP_4.0");
 __asm__(".symver mpcomp_taskgroup_end, GOMP_taskgroup_end@@GOMP_4.0");
 #endif /* OPTIMIZED_GOMP_API_SUPPORT */
+#endif /* MPCOMP_TASK */

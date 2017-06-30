@@ -36,6 +36,7 @@ typedef struct mpcomp_mvp_thread_args_s
 {
     unsigned int rank;
     mpcomp_meta_tree_node_t* array;
+    unsigned int target_vp;
 } mpcomp_mvp_thread_args_t;
 
 // Initialize Ghost OpenMP Tree Constraint Homogeneous Array 

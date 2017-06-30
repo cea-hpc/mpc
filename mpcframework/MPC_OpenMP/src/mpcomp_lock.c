@@ -21,12 +21,13 @@
 /* ######################################################################## */
 
 #include "mpcomp.h"
-#include "sctk_alloc.h"
 #include "mpcomp_core.h"
 #include "mpcomp_types.h"
 #include "sctk_debug.h"
 #include "mpcomp_openmp_tls.h"
 #include "mpcomp_lock.h"
+
+#include "mpcomp_alloc.h"
 
 #include "ompt.h"
 #include "mpcomp_ompt_general.h"
@@ -45,7 +46,7 @@ static void __internal_omp_init_lock_with_hint(omp_lock_t *lock, omp_lock_hint_t
 
 	__mpcomp_init();
 
-  	mpcomp_user_lock = (mpcomp_lock_t *)sctk_malloc(sizeof(mpcomp_lock_t));
+  	mpcomp_user_lock = (mpcomp_lock_t *)mpcomp_alloc(sizeof(mpcomp_lock_t));
   	sctk_assert(mpcomp_user_lock);
   	memset(mpcomp_user_lock, 0, sizeof(mpcomp_lock_t));
   	sctk_thread_mutex_init(&(mpcomp_user_lock->lock), 0);
@@ -240,7 +241,7 @@ static void __internal_omp_init_nest_lock_with_hint(omp_nest_lock_t *lock, omp_l
 	
 	__mpcomp_init();
 
-  	mpcomp_user_nest_lock = (mpcomp_nest_lock_t *)sctk_malloc(sizeof(mpcomp_nest_lock_t));
+  	mpcomp_user_nest_lock = (mpcomp_nest_lock_t *)mpcomp_alloc(sizeof(mpcomp_nest_lock_t));
   	sctk_assert(mpcomp_user_nest_lock);
   	memset(mpcomp_user_nest_lock, 0, sizeof(mpcomp_nest_lock_t));
   	sctk_thread_mutex_init(&(mpcomp_user_nest_lock->lock), 0);
@@ -461,7 +462,7 @@ int omp_test_nest_lock(omp_nest_lock_t *lock)
 #if MPCOMP_TASK
   if (mpcomp_nest_lock_test_task(thread, mpcomp_user_nest_lock))
 #else
-  if (mpcomp_user_nest_lock->owner_thread != (void *)t)
+  if (mpcomp_user_nest_lock->owner_thread != (void *)thread)
 #endif
   {
   		if (sctk_thread_mutex_trylock(&(mpcomp_user_nest_lock->lock))) 

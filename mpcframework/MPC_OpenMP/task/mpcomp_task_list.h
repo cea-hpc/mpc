@@ -37,6 +37,7 @@
 #include "mpcomp_alloc.h"
 #include "sctk_debug.h"
 
+#if MPCOMP_TASK
 /** OpenMP task list data structure */
 typedef struct mpcomp_task_list_s {
   sctk_atomics_int nb_elements; /**< Number of tasks in the list */
@@ -198,4 +199,5 @@ static inline int mpcomp_task_list_trylock(mpcomp_task_list_t *list) {
   return sctk_spinlock_trylock(&(list->lock));
 }
 
+#endif /* MPCOMP_TASK */
 #endif /* !__MPCOMP_TASK_LIST_H__ && MPCOMP_TASK */

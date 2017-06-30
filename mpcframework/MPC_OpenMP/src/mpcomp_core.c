@@ -24,6 +24,7 @@
 
 #include "sctk_thread_generic_kind.h"
 
+#include "sctk.h"
 #include "sctk_debug.h"
 #include "sctk_topology.h"
 #include "sctk_runtime_config.h"
@@ -36,6 +37,9 @@
 #include "mpcomp_task_utils.h"
 #include "mpcomp_sections.h"
 #include "mpcomp_core.h"
+
+#include "sctk_thread.h"
+#include "mpcomp_alloc.h"
 
 #include "ompt.h"
 /* parsing OMP_PLACES */
@@ -97,9 +101,9 @@ static char **__mpcomp_tokenizer(char *string_to_tokenize, int *nb_tokens) {
   char **new_argv;
   int new_argc = 0;
 
-  /* TODO check sizes of every malloc... */
+  /* TODO check sizes of every mpcomp_alloc... */
 
-  new_argv = (char **)sctk_malloc(32 * sizeof(char *));
+  new_argv = (char **)mpcomp_alloc(32 * sizeof(char *));
   sctk_assert(new_argv != NULL);
 
   cursor = string_to_tokenize;
@@ -108,7 +112,7 @@ static char **__mpcomp_tokenizer(char *string_to_tokenize, int *nb_tokens) {
     cursor++;
   while (*cursor != '\0') {
     int word_len = 0;
-    new_argv[new_argc] = (char *)sctk_malloc(1024 * sizeof(char));
+    new_argv[new_argc] = (char *)mpcomp_alloc(1024 * sizeof(char));
     while ((word_len < 1024) && (*cursor != '\0') && (*cursor != ' ')) {
       new_argv[new_argc][word_len] = *cursor;
       cursor++;
@@ -144,8 +148,9 @@ __mpcomp_convert_topology_to_tree_shape( hwloc_topology_t topology, int* shape_d
     int* reverse_shape;
     int i, j, reverse_shape_depth;
     const int max_depth = hwloc_topology_get_depth( topology );
+    sctk_assert( max_depth > 1 );
 
-    reverse_shape = ( int* ) malloc( sizeof( int ) * max_depth );
+    reverse_shape = ( int* ) mpcomp_alloc( sizeof( int ) * max_depth );
     sctk_assert( reverse_shape );
     memset( reverse_shape, 0, sizeof( int ) * max_depth );
 
@@ -211,7 +216,7 @@ __mpcomp_prepare_omp_task_tree_init( const int num_mvps )
 	int err;
    hwloc_topology_t restrictedTopology;
 	err = __mpcomp_restrict_topology_for_mpcomp( &restrictedTopology, num_mvps );
-	assert( !err );
+//	assert( !err );
 
 	sctk_assert( restrictedTopology );
 	return restrictedTopology;	
@@ -472,7 +477,7 @@ static inline void __mpcomp_read_env_variables() {
 
     /* TODO check that arguments are ok and #leaves is correct */
 
-    OMP_TREE = (int *)sctk_malloc(nb_tokens * sizeof(int));
+    OMP_TREE = (int *)mpcomp_alloc(nb_tokens * sizeof(int));
     OMP_TREE_DEPTH = nb_tokens;
     OMP_TREE_NB_LEAVES = 1;
     for (i = 0; i < nb_tokens; i++) {
@@ -487,7 +492,7 @@ static inline void __mpcomp_read_env_variables() {
   }
 
   /***** PRINT SUMMARY (only first MPI rank) ******/
-  if (getenv("MPC_DISABLE_BANNER") == NULL && sctk_process_rank == 0) {
+  if (getenv("MPC_DISABLE_BANNER") == NULL && sctk_get_task_rank() == 0) {
     fprintf(stderr,
             "MPC OpenMP version %d.%d (Intel and Patched GCC compatibility)\n",
             SCTK_OMP_VERSION_MAJOR, SCTK_OMP_VERSION_MINOR);
@@ -711,7 +716,7 @@ void __mpcomp_init(void) {
   	 mpcomp_ompt_post_init();
 
     /* Allocate information for the sequential region */
-    t = (mpcomp_thread_t *)sctk_malloc(sizeof(mpcomp_thread_t));
+    t = (mpcomp_thread_t *)mpcomp_alloc(sizeof(mpcomp_thread_t));
     sctk_assert(t != NULL);
 
     /* Current thread information is 't' */

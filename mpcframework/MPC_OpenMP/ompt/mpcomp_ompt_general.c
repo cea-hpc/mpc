@@ -399,6 +399,7 @@ ompt_get_task_info( 	int ancestor_level,
 							ompt_data_t **parallel_data,
 							int *thread_num )
 {
+#if MPCOMP_TASK
 	int i;
 	mpcomp_task_t* current_task = NULL;
 	mpcomp_thread_t *thread_infos = mpcomp_get_thread_tls();
@@ -434,6 +435,8 @@ ompt_get_task_info( 	int ancestor_level,
 	}
 	
 	return (current_task) ? 1 : 0;
+#endif /* MPCOMP_TASK */
+    return 0;
 }
 
 static ompt_interface_fn_t ompt_fn_lookup(const char* name)
