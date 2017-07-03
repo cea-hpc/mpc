@@ -84,7 +84,7 @@ format_path()
 {
 	#special case: '1' means 'first'
 	test "x\$1" = "x1" && echo "\$1" && return
-	readlink -e \$1
+	readlink -e \` which \$1\`
 }
 
 is_valid_language()

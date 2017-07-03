@@ -297,13 +297,14 @@ do
 		--mpc-process-mode)			
 			GCC_PREFIX='disabled'
 			PRIV_PLUGIN_PREFIX='disabled'
-			LIBEXTLS_PREFIX='disabled'
+			#LIBEXTLS_PREFIX='disabled'
 			GMP_PREFIX='disabled'
 			MPFR_PREFIX='disabled'
 			MPC_PREFIX='disabled'
 			BINUTILS_PREFIX='disabled'
 			SCTK_GETOPT_PREFIX='disabled'
 			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --mpc-process-mode"
+            COMPILER_ARG=yes
 			;;
 		##################### MPC ###################
 		--with-mpc=*)
