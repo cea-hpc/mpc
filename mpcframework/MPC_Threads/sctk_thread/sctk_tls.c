@@ -494,7 +494,7 @@ size_t sctk_extls_size()
   size = extls_get_sz_static_tls_segments();
 #else
   /* no extra space allocated for TLS when libextls is not present */
-  size = 0; 
+  size = getpagesize(); 
 #endif
   return size;
 }
