@@ -132,19 +132,18 @@ end_section
 
 begin_section TLS support
 #check main headers
-SCTK_CHECK_HEADER extls.h
-SCTK_CHECK_HEADER extls_common.h
-SCTK_CHECK_LDOPTION_NOADD "-lextls"
-#setup rpaths and -L
-if [ -e "${MPC_RPREFIX}/${MPC_SUBPREFIX}/lib64/libextls.so" ]; then
-	SCTK_LDFLAGS="-L`echo \"\\${MPC_RPREFIX}\"`/${MPC_SUBPREFIX}/lib64 -lextls ${SCTK_LDFLAGS}"
-	#SCTK_ARFLAGS="${SCTK_ARFLAGS} ${LIBEXTLS_USER_PREFIX}/lib64/libextls.so"
-elif [ -e "${MPC_RPREFIX}/${MPC_SUBPREFIX}/lib/libextls.so" ]; then
-	SCTK_LDFLAGS="-L`echo \"\\${MPC_RPREFIX}\"`/${MPC_SUBPREFIX}/lib -lextls ${SCTK_LDFLAGS}"
-	#SCTK_ARFLAGS="${SCTK_ARFLAGS} ${LIBEXTLS_USER_PREFIX}/lib/libextls.so"
-fi
 
-#SCTK_CHECK_LDOPTION "-lextls"
+SCTK_CHECK_HEADER_NOFAIL extls.h
+if test "$SCTK_SCTK_CHECK_HEADER_RES" = "0" ; then 
+	SCTK_CHECK_HEADER extls_common.h
+	SCTK_CHECK_LDOPTION_NOADD "-lextls"
+	#setup rpaths and -L
+	if [ -e "${MPC_RPREFIX}/${MPC_SUBPREFIX}/lib64/libextls.so" ]; then
+		SCTK_LDFLAGS="-L`echo \"\\${MPC_RPREFIX}\"`/${MPC_SUBPREFIX}/lib64 -lextls ${SCTK_LDFLAGS}"
+	elif [ -e "${MPC_RPREFIX}/${MPC_SUBPREFIX}/lib/libextls.so" ]; then
+		SCTK_LDFLAGS="-L`echo \"\\${MPC_RPREFIX}\"`/${MPC_SUBPREFIX}/lib -lextls ${SCTK_LDFLAGS}"
+	fi
+fi
 
 end_section
 
