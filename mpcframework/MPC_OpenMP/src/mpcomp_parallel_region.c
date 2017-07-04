@@ -135,17 +135,7 @@ __mpcomp_internal_begin_parallel_region( mpcomp_parallel_region_t *info, const u
 	t->children_instance->team->depth = ( !( t->instance ) ) ? 0 : t->instance->team->depth + 1;
 
     if( instance_info->num_threads > 1 )
-    {
-        t->root->instance = t->children_instance;
-        __mpcomp_wakeup_gen_node( t->root, real_num_threads );    
-    }
-
-    /* Prepare nested_thread */
-    mpcomp_thread_t* next_thread = (mpcomp_thread_t*) mpcomp_alloc( sizeof( mpcomp_thread_t ) );
-    sctk_assert( next_thread );
-    memset( next_thread, 0, sizeof( mpcomp_thread_t ) );
-    next_thread->father = t->mvp->threads;
-    t->mvp->threads = next_thread;
+        __mpcomp_wakeup_node( t->root );    
 
 	return ;
 }

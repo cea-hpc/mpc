@@ -203,6 +203,11 @@ typedef struct mpcomp_thread_s {
     /** Thread data for OMPT */ 
 	ompt_data_t ompt_thread_data;
 #endif /* OMPT_SUPPORT */
+
+    /* MVP prev context */
+    int instance_ghost_rank;
+    struct mpcomp_node_s* father_node;
+
     /** Nested thread chaining ( heap ) */
     struct mpcomp_thread_s *next;
 } mpcomp_thread_t;

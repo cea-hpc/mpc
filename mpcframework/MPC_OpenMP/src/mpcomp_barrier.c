@@ -35,14 +35,15 @@ void __mpcomp_internal_full_barrier(mpcomp_mvp_t *mvp) {
   mpcomp_node_t *c, *new_root;
 
   sctk_assert(mvp);
-  sctk_assert(mvp->father);
-  sctk_assert(mvp->father->instance);
-  sctk_assert(mvp->father->instance->team);
 
-  if( !( mvp->threads->instance->root ))
+  if( mvp->threads->info.num_threads == 1)
   {
     return;
   }
+
+  sctk_assert(mvp->father);
+  sctk_assert(mvp->father->instance);
+  sctk_assert(mvp->father->instance->team);
 
   mpcomp_thread_t* thread = (mpcomp_thread_t*) sctk_openmp_thread_tls;
   c = mvp->father;

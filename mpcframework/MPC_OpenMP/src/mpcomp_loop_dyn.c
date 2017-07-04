@@ -179,7 +179,9 @@ int __mpcomp_dynamic_loop_next(long *from, long *to) {
 
   /* Compute the index of the target */
   index_target = __mpcomp_loop_dyn_get_victim_rank(t);
-
+  if( !( t->instance->mvps[index_target] ) )
+    index_target = __mpcomp_loop_dyn_get_victim_rank(t);
+    
   /*
    * WORKAROUND (pr35196.c):
    * Stop if the current thread already executed
@@ -189,9 +191,6 @@ int __mpcomp_dynamic_loop_next(long *from, long *to) {
     __mpcomp_loop_dyn_target_reset(t);
     return 0;
   }
-
-  if( !( t->instance->mvps[index_target] ) )
-        return 0;
 
   sctk_assert( t->instance->mvps[index_target]->threads );
 
