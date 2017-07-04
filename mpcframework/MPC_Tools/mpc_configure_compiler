@@ -516,7 +516,8 @@ EOF
 #Insert a reference to the privatization plugin
 if [ "$language" = "c" ]; then
 cat << EOF >> $1
-		if test -e \${MPC_RPREFIX}/\${MPC_HOST_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/lib/libprivplug.so;
+		#a getenv() is not enough to disable the plugin: better to skip the option
+		if test -e \${MPC_RPREFIX}/\${MPC_HOST_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/lib/libprivplug.so -a -n "\$MPC_DYN_PRIV_ENABLED";
 		then
 			LIBPRIV_FLAG="-fplugin=\${MPC_RPREFIX}/\${MPC_HOST_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/lib/libprivplug.so"
 		else

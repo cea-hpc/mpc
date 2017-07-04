@@ -293,6 +293,9 @@ do
 			BINUTILS_PREFIX='disabled'
 			SCTK_GETOPT_PREFIX='disabled'
 			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --disable-MPC_MPI --disable-MPC_Allocator --enable-lib-mode"
+			#special case, when installmpc does not handle any available compiler
+			#by default, GCC compiler will be used, this behavior can be altered through the --compiler= option
+			COMPILER_ARG=yes
 			;;
 		--mpc-process-mode)			
 			GCC_PREFIX='disabled'
@@ -304,7 +307,9 @@ do
 			BINUTILS_PREFIX='disabled'
 			SCTK_GETOPT_PREFIX='disabled'
 			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --mpc-process-mode"
-            COMPILER_ARG=yes
+			#special case, when installmpc does not handle any available compiler
+			#by default, GCC compiler will be used, this behavior can be altered through the --compiler= option
+			COMPILER_ARG=yes
 			;;
 		##################### MPC ###################
 		--with-mpc=*)
