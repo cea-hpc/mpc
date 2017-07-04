@@ -503,7 +503,6 @@ else
 	#handle compiler-specific options depending on compiler family
 	case \${CC_FAMILY} in
 		INTEL)
-			NO_TLS_OPT=1
 			override_var_if_isset 'PRIV_FLAG' '-mSYMTAB_mpc_privatize'
 			override_var_if_isset 'OMP_FLAG' '-qopenmp'
         		FFLAGS="\${FFLAGS} -threads -recursive"
