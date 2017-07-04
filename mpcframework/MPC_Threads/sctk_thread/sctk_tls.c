@@ -49,7 +49,7 @@
  */
 __thread void* sctk_extls_storage = NULL;
 __thread int __mpc_task_rank = -2;
-
+#endif
 
 /**
  * Represent a dynamic symbol for the dynamic initializer interface.
@@ -99,8 +99,6 @@ int MPC_Config_Status_MPC_HAVE_OPTION_ETLS_OPTIMIZED(){
 int MPC_Config_Status_MPC_HAVE_OPTION_ETLS_OPTIMIZED(){
   return 0;
 }
-#endif
-
 #endif
 
 /** 
@@ -390,46 +388,6 @@ int MPC_Config_Status_MPC_HAVE_OPTION_ETLS_COW(){
 #endif
 
 /**
- * alter the given address to align the pointer to the beginning of the page.
- * @param[in] ptr the address to align
- * @returns the aligned address (can returns the same value as the input)
- */
-void* sctk_align_ptr_to_page(void* ptr){
-  if(!page_size)
-	  page_size = getpagesize ();
-  ptr = (char*)ptr - ((size_t) ptr % page_size);
-  return ptr;
-}
-
-/**
- * Alter the given size to make the value rounded up (value % page_size = 0).
- * @param[in] size the size to round up
- * @returns the rounded up size (can returns the same value than the input)
- */
-size_t sctk_align_size_to_page(size_t size){
-  if(!page_size)
-	  page_size = getpagesize ();
-  if(size % page_size == 0){
-    return size;
-  }
-  size += page_size - (size % page_size);
-  return size;
-}
-
-/**
- * Interface call to get the TLS block size for the current program.
- * This size contains the sum of all static TLS segment sizes discovered at
- * the beginning of the program
- * @returns the size as a size_t
- */
-size_t sctk_extls_size()
-{
-  size_t size;
-  size = extls_get_sz_static_tls_segments();
-  return size;
-}
-
-/**
  * initialize the head of registered destructors (C++).
  * This list contains pointers to object which have to be
  * handled by each task, independently.
@@ -521,4 +479,52 @@ int MPC_Config_Status_MPC_HAVE_OPTION_ETLS_COW(){
 int MPC_Config_Status_MPC_HAVE_OPTION_ETLS_OPTIMIZED(){
   return 0;
 }
+#endif /* SCTK_USE_TLS */
+
+/**
+ * Interface call to get the TLS block size for the current program.
+ * This size contains the sum of all static TLS segment sizes discovered at
+ * the beginning of the program
+ * @returns the size as a size_t
+ */
+size_t sctk_extls_size()
+{
+  size_t size;
+#ifdef MPC_USE_EXTLS
+  size = extls_get_sz_static_tls_segments();
+#else
+  /* no extra space allocated for TLS when libextls is not present */
+  size = 0; 
 #endif
+  return size;
+}
+
+/**
+ * alter the given address to align the pointer to the beginning of the page.
+ * @param[in] ptr the address to align
+ * @returns the aligned address (can returns the same value as the input)
+ */
+void* sctk_align_ptr_to_page(void* ptr){
+  if(!page_size)
+	  page_size = getpagesize ();
+  ptr = (char*)ptr - ((size_t) ptr % page_size);
+  return ptr;
+}
+
+
+
+/**
+ * Alter the given size to make the value rounded up (value % page_size = 0).
+ * @param[in] size the size to round up
+ * @returns the rounded up size (can returns the same value than the input)
+ */
+size_t sctk_align_size_to_page(size_t size){
+  if(!page_size)
+	  page_size = getpagesize ();
+  if(size % page_size == 0){
+    return size;
+  }
+  size += page_size - (size % page_size);
+  return size;
+}
+

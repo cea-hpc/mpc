@@ -31,7 +31,6 @@
 #include "sctk_alloc.h"
 #include "sctk_thread_api.h"
 #include "sctk_dummy.h"
-#include <extls.h>
 
 #ifdef __cplusplus
 extern "C"
@@ -118,7 +117,6 @@ extern "C"
     int local_task_id;
     int virtual_processor;
     int user_thread;
-	extls_object_level_type_t tls_level;
 
     volatile struct sctk_thread_data_s *prev;
     volatile struct sctk_thread_data_s *next;
@@ -130,7 +128,8 @@ extern "C"
     /* Where the thread must be bound */
     unsigned int bind_to;
   } sctk_thread_data_t;
-#define SCTK_THREAD_DATA_INIT { NULL, NULL, NULL, -1, -1, -1 , -1,LEVEL_PROCESS,\
+
+#define SCTK_THREAD_DATA_INIT { NULL, NULL, NULL, -1, -1, -1 , -1,\
       NULL,NULL,-1,(void*)NULL,sctk_thread_undef_status,NULL}
 
   void sctk_thread_data_init (void);

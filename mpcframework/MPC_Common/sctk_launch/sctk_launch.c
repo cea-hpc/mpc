@@ -57,7 +57,10 @@
 /* #include "sctk_io.h" */
 #include "sctk_runtime_config.h"
 #include "sctk_bool.h"
+
+#ifdef MPC_USE_EXTLS
 #include <extls_hls.h>
+#endif
 
 #ifdef MPC_Profiler
 #include "sctk_profile_render.h"
@@ -254,7 +257,7 @@ static void sctk_perform_initialisation (void)
 	}
 
 	sctk_topology_init ();
-#ifndef MPC_DISABLE_HLS
+#if defined (MPC_USE_EXTLS) && !defined(MPC_DISABLE_HLS)
 	extls_hls_topology_construct();	
 #endif
 
@@ -1138,7 +1141,9 @@ void sctk_init_mpc_runtime()
 
 void sctk_release_mpc_runtime() {
   sctk_window_release_ht();
+#ifdef MPC_USE_EXTLS
   extls_fini();
+#endif
 }
 
 #ifndef SCTK_LIB_MODE
@@ -1147,7 +1152,9 @@ int sctk_launch_main (int argc, char **argv)
 {
 	sctk_startup_args_t arg;
 
+#ifdef MPC_USE_EXTLS
 	extls_init();
+#endif
 	/* MPC_MAKE_FORTRAN_INTERFACE is set when compiling fortran headers.
 	 * To check why ? */
 	if (getenv("MPC_MAKE_FORTRAN_INTERFACE") != NULL) {

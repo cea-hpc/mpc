@@ -25,7 +25,9 @@
 
 #include <stdlib.h>
 #include <string.h>
+#ifdef MPC_USE_EXTLS
 #include <extls.h>
+#endif
 #include "sctk_config.h"
 
 #ifdef __cplusplus
@@ -190,7 +192,9 @@ Need to check this in more depth for futur version ( > 2.4.0-1).
     void *sctk_current_alloc_chain_local;
     void *sctk_tls_trace_local;
     void *mpc_user_tls_1;
+#ifdef MPC_USE_EXTLS
     extls_ctx_t* tls_ctx;
+#endif
 
 #ifdef MPC_MPI
     void *___sctk_message_passing;

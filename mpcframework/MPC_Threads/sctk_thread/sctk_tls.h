@@ -118,10 +118,12 @@ extern "C"
     /* the tls vector is restored by copy and cannot be changed
      * It is then useless to save it at this time
      */
+#ifdef MPC_USE_EXTLS
     ucp->tls_ctx = (extls_ctx_t *)sctk_extls_storage;
     if (ucp->tls_ctx != NULL)
       extls_ctx_save(ucp->tls_ctx);
 #endif
+#endif /* SCTK_USE_TLS */
   }
 
   /**
@@ -141,8 +143,10 @@ extern "C"
 #endif
     tls_restore(mpc_user_tls_1);
 
+#if defined (MPC_USE_EXTLS)
     if(ucp->tls_ctx != NULL)
         extls_ctx_restore(ucp->tls_ctx);
+#endif
 
 #ifdef MPC_MPI
     tls_restore (___sctk_message_passing);
@@ -174,7 +178,9 @@ extern "C"
 	 * Moreover, it should use ctx_herit instead of ctx_init (need to reference process level)
 	 */
 	  /* Nothing should have to be done here. The init is done per thread in sctk_thread.c */
+#ifdef MPC_USE_EXTLS
     ucp->tls_ctx = (extls_ctx_t*)sctk_extls_storage;
+#endif
 
 #if defined (MPC_Allocator)
     ucp->sctk_current_alloc_chain_local = NULL;

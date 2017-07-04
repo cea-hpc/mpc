@@ -42,7 +42,6 @@
 #include "sctk_topology.h"
 #include "sctk_asm.h"
 #include "sctk_tls.h"
-#include <extls.h>
 #include <unistd.h>
 #include "sctk_posix_thread.h"
 #include "sctk_internal_thread.h"
@@ -58,6 +57,10 @@
 #include "sctk_runtime_config_struct_defaults.h"
 
 #include "sctk_thread_generic.h"
+
+#ifdef MPC_USE_EXTLS
+#include <extls.h>
+#endif
 
 #ifdef MPC_MPI
 #include <mpc_internal_thread.h>
@@ -636,7 +639,7 @@ sctk_thread_create_tmp_start_routine (sctk_thread_data_t * __arg)
       sctk_network_initialize_task_collaborative_ib (tmp.task_id, tmp.virtual_processor);
 #endif
 
-#if defined(SCTK_USE_TLS)
+#if defined(MPC_USE_EXTLS)
       /* TLS INTIALIZATION */
       sctk_tls_init();
 #endif
@@ -796,7 +799,7 @@ sctk_thread_create (sctk_thread_t * restrict __threadp,
   tmp->task_id = sctk_safe_cast_long_int (task_id);
   tmp->local_task_id = sctk_safe_cast_long_int (local_task_id);
 
-#ifdef SCTK_USE_TLS
+#ifdef MPC_USE_EXTLS
   extls_ctx_t* old_ctx = sctk_extls_storage;
   extls_ctx_t** cur_tx = ((extls_ctx_t**)extls_get_context_storage_addr());
   *cur_tx = malloc(sizeof(extls_ctx_t));
@@ -815,7 +818,9 @@ sctk_thread_create (sctk_thread_t * restrict __threadp,
   /* We reset the binding */
   {
     sctk_bind_to_cpu(previous_binding);
+#ifdef MPC_USE_EXTLS
   	extls_ctx_restore(old_ctx);
+#endif
   }
 
   sctk_check (res, 0);
@@ -1002,8 +1007,6 @@ sctk_user_thread_create (sctk_thread_t * restrict __threadp,
   tmp->father_data = NULL;
 #endif
 
-  tmp->tls_level = LEVEL_THREAD;
-
   if (tmp_father)
     {
       tmp->task_id = tmp_father->task_id;
@@ -1024,7 +1027,7 @@ sctk_user_thread_create (sctk_thread_t * restrict __threadp,
     }
 #endif
 
-#ifdef SCTK_USE_TLS
+#ifdef MPC_USE_EXTLS
   extls_ctx_t* old_ctx = sctk_extls_storage;
   extls_ctx_t** cur_tx = ((extls_ctx_t**)extls_get_context_storage_addr());
   *cur_tx = calloc(1, sizeof(extls_ctx_t));
@@ -1038,7 +1041,7 @@ sctk_user_thread_create (sctk_thread_t * restrict __threadp,
 				       (void *) tmp);
   sctk_check (res, 0);
 
-#ifdef SCTK_USE_TLS
+#ifdef MPC_USE_EXTLS
   extls_ctx_restore(old_ctx);
 #endif
 

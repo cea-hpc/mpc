@@ -300,7 +300,7 @@ do
 		--mpc-process-mode)			
 			GCC_PREFIX='disabled'
 			PRIV_PLUGIN_PREFIX='disabled'
-			#LIBEXTLS_PREFIX='disabled'
+			LIBEXTLS_PREFIX='disabled'
 			GMP_PREFIX='disabled'
 			MPFR_PREFIX='disabled'
 			MPC_PREFIX='disabled'

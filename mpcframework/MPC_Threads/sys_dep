@@ -86,15 +86,6 @@ SCTK_CHECK_FUNC opendir
 SCTK_CHECK_FUNC readdir
 SCTK_CHECK_FUNC closedir
 
-# Check if binutils are installed and pass the macro SCTK_USE_OPTIMIZED_TLS
-# It's not portable up to now (manpage say only Linux x86_64)
-if test "${BINUTILS_PREFIX}" != "disabled" ; then
-	SCTK_CHECK_FUNC_NOFAIL arch_prctl
-	if test "${SCTK_SCTK_CHECK_FUNC_RES}" = "0"; then
-		SCTK_CHECK_OPTION "-DSCTK_USE_OPTIMIZED_TLS"
-	fi
-fi
-
 begin_section Binding
 check_binding
 end_section 
@@ -136,6 +127,7 @@ begin_section TLS support
 SCTK_CHECK_HEADER_NOFAIL extls.h
 if test "$SCTK_SCTK_CHECK_HEADER_RES" = "0" ; then 
 	SCTK_CHECK_HEADER extls_common.h
+	SCTK_CHECK_OPTION "-DMPC_USE_EXTLS"
 	SCTK_CHECK_LDOPTION_NOADD "-lextls"
 	#setup rpaths and -L
 	if [ -e "${MPC_RPREFIX}/${MPC_SUBPREFIX}/lib64/libextls.so" ]; then
