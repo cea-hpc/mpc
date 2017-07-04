@@ -335,7 +335,7 @@ __mpcomp_scatter_wakeup_intermediate_node( mpcomp_node_t* node )
             /* Set MVP infos */
             sctk_assert( mvp->threads );        
             mvp->threads->father_node = node;
-            mvp->threads->instance_ghost_rank = cur_vnode;
+            mvp->threads->instance_ghost_rank = node->mvp_first_id + cur_vnode;
             mvp->threads->rank = node->mvp_first_id + i;
             mvp->instance = node->instance;
             /* WakeUp NODE */
@@ -382,7 +382,7 @@ __mpcomp_scatter_wakeup_final_mvp( mpcomp_node_t* node )
         /* Set MVP instance rank in thread structure */ 
         sctk_assert( mvp->threads );        
         mvp->threads->father_node = node;
-        mvp->threads->instance_ghost_rank = cur_vmvp;
+        mvp->threads->instance_ghost_rank = node->mvp_first_id + cur_vmvp;
         mvp->threads->rank = node->mvp_first_id + i;
         /* WakeUp MVP */
         mvp->spin_status = MPCOMP_MVP_STATE_AWAKE;
@@ -431,5 +431,7 @@ void __mpcomp_scatter_instance_post_init( mpcomp_thread_t* thread )
 {
     sctk_assert( thread );
     sctk_assert( thread->mvp );
+    mpcomp_mvp_t* mvp = thread->mvp;
+    fprintf(stderr, ":: %s :: thread> %d mvp> %d mvp->father> %p\n", __func__, mvp->rank,  mvp->global_rank,  mvp->father );
     __mpcomp_internal_full_barrier( thread->mvp );
 }

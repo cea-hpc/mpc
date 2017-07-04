@@ -766,10 +766,6 @@ static void
     seq_instance->mvps = ( mpcomp_mvp_t**) mpcomp_alloc( sizeof( mpcomp_mvp_t* ) );
     sctk_assert( seq_instance->mvps );
     seq_instance->mvps[0] = root->mvp;
-    
-    seq_instance->mvps_is_ready = (sctk_atomics_int*) mpcomp_alloc( sizeof( sctk_atomics_int ) );
-    sctk_assert( seq_instance->mvps_is_ready );
-    sctk_atomics_store_int( &( seq_instance->mvps_is_ready[0] ), 2 );
 
     seq_instance->tree_depth = 1;
     seq_instance->tree_base = NULL;

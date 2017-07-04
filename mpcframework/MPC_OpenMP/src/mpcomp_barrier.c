@@ -47,7 +47,7 @@ void __mpcomp_internal_full_barrier(mpcomp_mvp_t *mvp) {
 
   mpcomp_thread_t* thread = (mpcomp_thread_t*) sctk_openmp_thread_tls;
   c = mvp->father;
-  new_root = thread->instance->team->info.new_root;
+  new_root = thread->instance->root;
 
 #if MPCOMP_TASK
 //   mpcomp_taskwait();

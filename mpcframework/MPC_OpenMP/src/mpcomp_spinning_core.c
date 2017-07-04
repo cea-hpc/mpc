@@ -125,6 +125,8 @@ __mpcomp_tree_array_instance_init( mpcomp_thread_t* thread, const int expected_n
     instance =  __mpcomp_scatter_instance_pre_init( thread, expected_nb_mvps );
     sctk_assert( instance );
 
+    instance->nb_mvps = expected_nb_mvps;
+
     instance->team = (mpcomp_team_t*) mpcomp_alloc( sizeof( mpcomp_team_t ) );
     sctk_assert( instance->team );
     memset( instance->team, 0, sizeof( mpcomp_team_t ) );
@@ -183,6 +185,7 @@ __mpcomp_wakeup_mvp( mpcomp_mvp_t *mvp )
     new_thread->mvp = mvp;
     new_thread->root = (mvp->prev_node_father ) ? mvp->prev_node_father->node : mvp->father;// mvp->father; //TODO just for test
 
+    fprintf(stderr, ":: %s :: thread> %d mvp> %d mvp->father> %p\n", __func__, mvp->rank,  mvp->global_rank,  mvp->father );
 	return new_thread;	
 }
 
@@ -195,6 +198,7 @@ __mpcomp_instance_post_init( mpcomp_thread_t* thread )
 mpcomp_mvp_t*
 __mpcomp_wakeup_node( mpcomp_node_t* node )
 {
+    
     return __mpcomp_scatter_wakeup( node );
 }
 

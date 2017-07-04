@@ -38,6 +38,9 @@ static int __mpcomp_dynamic_loop_get_chunk_from_rank(mpcomp_thread_t *t,
                                                      long *from, long *to) {
 
   int cur;
+
+  if ( !target ) return 0;
+
   const long rank = (long)target->rank;
   const long num_threads = (long)t->info.num_threads;
 
@@ -62,11 +65,6 @@ static int __mpcomp_dynamic_loop_get_chunk_from_rank(mpcomp_thread_t *t,
   __mpcomp_static_schedule_get_specific_chunk(rank, num_threads, loop,
                                               for_dyn_total - cur, from, to);
 
-  // sctk_error( "%d-%d-%d-%d %s %ld %ld %ld %ld %ld %ld %ld", t->rank,
-  // target->rank, __mpcomp_loop_dyn_get_for_dyn_current( t ),
-  // __mpcomp_loop_dyn_get_for_dyn_current( target ), __func__, for_dyn_total,
-  // cur, loop->lb, *from, loop->b, *to, loop->incr);
-  /* SUCCESS */
   return 1;
 }
 
@@ -152,89 +150,76 @@ int __mpcomp_dynamic_loop_begin(long lb, long b, long incr, long chunk_size,
     return (!from && !to) ? -1 : ret;
 }
 
-int __mpcomp_dynamic_loop_next(long *from, long *to) {
-  mpcomp_thread_t *t, *target;
-  int index_target, barrier_num_threads;
+int __mpcomp_dynamic_loop_next(long *from, long *to) 
+{
+    mpcomp_mvp_t* target_mvp;
+    mpcomp_thread_t *t, *target;
+    int i, found, target_idx, barrier_nthreads, ret;
 
-  /* Grab the thread info */
-  t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
-  sctk_assert(t != NULL);
+    /* Grab the thread info */
+    t = (mpcomp_thread_t *) sctk_openmp_thread_tls;
+    sctk_assert( t != NULL );
 
-  /* Stop the stealing at the following depth.
-   * Nodes above this depth will not be traversed */
-  const int num_threads = t->info.num_threads;
+    /* Stop the stealing at the following depth.
+     * Nodes above this depth will not be traversed */
+    const int num_threads = t->info.num_threads;
 
-  /* 1 thread => no stealing, directly get a chunk */
-  if (num_threads == 1) {
-    return __mpcomp_dynamic_loop_get_chunk_from_rank(t, t, from, to);
-  }
+    /* 1 thread => no stealing, directly get a chunk */
+    if (num_threads == 1)
+        return __mpcomp_dynamic_loop_get_chunk_from_rank(t, t, from, to);
 
-  /* Check that the target is allocated */
-  __mpcomp_loop_dyn_target_init(t);
-#if 0
-    __mpcomp_loop_ull_dynamic_next_debug( __func__ );
-#endif
+    /* Check that the target is allocated */
+    __mpcomp_loop_dyn_target_init(t);
 
-  const int max_depth = t->info.new_root->depth;
 
-  /* Compute the index of the target */
-  index_target = __mpcomp_loop_dyn_get_victim_rank(t);
-  if( !( t->instance->mvps[index_target] ) )
-    index_target = __mpcomp_loop_dyn_get_victim_rank(t);
-    
-  /*
-   * WORKAROUND (pr35196.c):
-   * Stop if the current thread already executed
-   * the last iteration of the current loop
-   */
-  if (t->for_dyn_last_loop_iteration == 1) {
-    __mpcomp_loop_dyn_target_reset(t);
-    return 0;
-  }
+    /*
+     * WORKAROUND (pr35196.c):
+     * Stop if the current thread already executed
+     * the last iteration of the current loop
+     */
+    if (t->for_dyn_last_loop_iteration == 1) {
+        __mpcomp_loop_dyn_target_reset(t);
+        return 0;
+    }
 
-  sctk_assert( t->instance->mvps[index_target]->threads );
-
-  int found = 1;
   int *tree_base = t->instance->tree_base;
   const int tree_depth = t->instance->tree_depth;
-  int i;
-
-  target = t;
-
-  /* While it is not possible to get a chunk */
-  while (!__mpcomp_dynamic_loop_get_chunk_from_rank(t, target, from, to)) 
-  {
-
-  do_increase:
-    if (__mpcomp_loop_dyn_dynamic_increase(t->for_dyn_shift, tree_base,
-                                           tree_depth, max_depth, 1)) {
-      __mpcomp_loop_dyn_dynamic_add(t->for_dyn_target, t->for_dyn_shift,
-                                    t->mvp->tree_rank, tree_base, tree_depth,
-                                    max_depth, 0);
-      found = 0;
-      break;
-    }
-
-    /* Add t->for_dyn_shift and t->mvp->tree_rank[i] w/out carry over and store
-     * it into t->for_dyn_target */
-    __mpcomp_loop_dyn_dynamic_add(t->for_dyn_target, t->for_dyn_shift,
-                                  t->mvp->tree_rank, tree_base, tree_depth,
-                                  max_depth, 0);
+  const int max_depth = t->info.new_root->depth;
 
     /* Compute the index of the target */
-    index_target = __mpcomp_loop_dyn_get_victim_rank(t);
+    target_idx = __mpcomp_loop_dyn_get_victim_rank(t);
+    target_mvp = t->instance->mvps[target_idx];
+    target = ( target_mvp ) ? target_mvp->threads : NULL; 
 
-	 if( !( t->instance->mvps[index_target] ) )
-        goto do_increase;
+  found = 1;
 
-    barrier_num_threads =
-        t->instance->mvps[index_target]->father->barrier_num_threads;
+  /* While it is not possible to get a chunk */
+  while(!__mpcomp_dynamic_loop_get_chunk_from_rank( t, target, from, to)) 
+  {
 
+do_increase:
+        ret = __mpcomp_loop_dyn_dynamic_increase(t->for_dyn_shift, tree_base, tree_depth, max_depth, 1);
+        /* Add t->for_dyn_shift and t->mvp->tree_rank[i] w/out carry over and store it into t->for_dyn_target */
+        __mpcomp_loop_dyn_dynamic_add(t->for_dyn_target, t->for_dyn_shift, t->mvp->tree_rank, tree_base, tree_depth, max_depth, 0);
+
+        if( ret ) 
+        {
+            found = 0;
+            break;
+        }
+
+    /* Compute the index of the target */
+    target_idx = __mpcomp_loop_dyn_get_victim_rank(t);
+    target_mvp = t->instance->mvps[target_idx];
+    target = ( target_mvp ) ? target_mvp->threads : NULL;
+
+    if( !( target ) ) goto do_increase;
+    
+    barrier_nthreads = target_mvp->father->barrier_num_threads;
 
     /* Stop if the target is not a launch thread */
-    if (t->for_dyn_target[tree_depth - 1] >= barrier_num_threads) {
+    if (t->for_dyn_target[tree_depth - 1] >= barrier_nthreads)
       goto do_increase;
-    }
   }
 
   /* Did we exit w/ or w/out a chunk? */

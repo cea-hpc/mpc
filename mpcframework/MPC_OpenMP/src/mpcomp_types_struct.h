@@ -226,8 +226,6 @@ typedef struct mpcomp_instance_s
   	int nb_mvps;
     /** All microVPs of this instance  */
     struct mpcomp_mvp_s **mvps;   
-    /** microVPs initialisation status */
-  	sctk_atomics_int* mvps_is_ready;
 
     /*-- Tree array informations --*/
 
