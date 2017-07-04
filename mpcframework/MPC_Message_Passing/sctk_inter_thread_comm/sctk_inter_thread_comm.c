@@ -35,6 +35,10 @@
 #include <sctk_control_messages.h>
 #include <sctk_rail.h>
 
+#ifdef SCTK_LIB_MODE
+#include "sctk_handle.h"
+#endif /* SCTK_LIB_MODE */
+
 #ifdef MPC_MPI
 #include <mpc_datatypes.h>
 #endif

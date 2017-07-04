@@ -196,9 +196,12 @@ void sctk_runtime_config_init(void)
 	struct sctk_runtime_config_sources config_sources;
 	const char * disable_config;
 
+
+		#ifndef SCTK_LIB_MODE
         /* Initialize CVARS indiferently from MPIT as
          * we want to map the config values into them */
         MPI_T_cvars_array_init();
+		#endif /* SCTK_LIB_MODE */
 
         /* if already done do nothing */
         if (__sctk_global_runtime_config_init__ == false) {
