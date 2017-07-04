@@ -18,6 +18,7 @@ MULTI_ARCH='false'
 CHECK_INSTALL="true"
 CHECK_DEPS="false"
 SYSROOT_PATH="/"
+MPCINSTALL_LIB_MODE='no'
 
 ######################################################
 #Setup paths
@@ -284,7 +285,7 @@ do
 			GDB_PREFIX='disabled'
 			MPC_PREFIX='disabled'
 			GCC_PREFIX='disabled'
-			LIBEXTLS_PREFIX='disabled'
+			#LIBEXTLS_PREFIX='disabled'
 			PRIV_PLUGIN_PREFIX='disabled'
 			HYDRA_PREFIX='disabled'
 			HYDRA_SIMPLE_PREFIX='disabled'
@@ -292,6 +293,9 @@ do
 			MPFR_PREFIX='disabled'
 			BINUTILS_PREFIX='disabled'
 			SCTK_GETOPT_PREFIX='disabled'
+			MPC_MPIT_PREFIX='disabled'
+			MPL_PREFIX='disabled'
+			MPCINSTALL_LIB_MODE='yes'
 			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --disable-MPC_MPI --disable-MPC_Allocator --enable-lib-mode"
 			#special case, when installmpc does not handle any available compiler
 			#by default, GCC compiler will be used, this behavior can be altered through the --compiler= option
@@ -767,7 +771,10 @@ applyOnTemplate "${PROJECT_TEMPLATE_DIR}/mpcvars.csh.in" > "${PREFIX}/mpcvars.cs
 ######################################################
 #Put the new install in the list
 putNewInstall
+
+if test "$MPCINSTALL_LIB_MODE" = "no"; then
 storeMPCcompilers
+fi
 
 ######################################################
 echo
