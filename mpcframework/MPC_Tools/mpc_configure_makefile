@@ -396,6 +396,8 @@ printf "\t@\$(CC)  -fPIC -shared -Wall -DENABLE_HOOK_MAIN ${MPC_SOURCE_DIR}MPC_C
 printf "\t@cp -r INSTALL/bin/* \${DESTDIR}${SCTK_BIN_DIR}">> Makefile; echo "">> Makefile
 printf "\t@cp -r INSTALL/share/mpc/* \${DESTDIR}${SCTK_SHARE_DIR}">> Makefile; echo "">> Makefile
 printf "\t@cp -r INSTALL/share/editor/* \${DESTDIR}${SCTK_SHARE_ED_DIR}">> Makefile; echo "">> Makefile
+
+if test "$SCTK_LIB_MODE" != "1" ; then
 #call the manager to directly register build compilers
 printf "\t@echo \"Building Fortran modules for build compiler\"" >> Makefile; echo "" >> Makefile
 printf "\t@cp -r \${MPC_SOURCE_DIR}/MPC_Tools/fortran_gen \${MPC_RPREFIX}/" >> Makefile; echo "" >> Makefile
@@ -404,6 +406,7 @@ printf "\t@MPC_RPREFIX=\${DESTDIR} \${DESTDIR}${SCTK_BIN_DIR}/mpc_compiler_manag
 printf "\t@MPC_RPREFIX=\${DESTDIR} \${DESTDIR}${SCTK_BIN_DIR}/mpc_compiler_manager add cxx ${SCTK_CXX} ${SCTK_FAMILY} >/dev/null 2>&1" >> Makefile; echo "" >> Makefile
 if test "$SCTK_FORTRAN" = "1"; then
 printf "\t@MPC_RPREFIX=\${DESTDIR} \${DESTDIR}${SCTK_BIN_DIR}/mpc_compiler_manager add fortran ${SCTK_F77} ${SCTK_FAMILY} >/dev/null 2>&1" >> Makefile; echo "" >> Makefile
+fi
 fi
 
 #
