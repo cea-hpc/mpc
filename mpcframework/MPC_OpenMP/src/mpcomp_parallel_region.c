@@ -87,6 +87,7 @@ __mpcomp_internal_begin_parallel_region( mpcomp_parallel_region_t *info, const u
     }
     else
     {
+        fprintf(stderr, ":: %s :: SEQUENTIAL\n", __func__ );
         real_num_threads = 1;
     }
 

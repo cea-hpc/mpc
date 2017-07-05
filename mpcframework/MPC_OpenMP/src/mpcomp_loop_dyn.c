@@ -296,7 +296,7 @@ void __mpcomp_dynamic_loop_end_nowait(void) {
   /* Update the number of threads which ended this loop */
   nb_threads_exited = sctk_atomics_fetch_and_incr_int(
       &(team_info->for_dyn_nb_threads_exited[index].i)) + 1;
-  sctk_assert(nb_threads_exited >= 0 && nb_threads_exited < num_threads);
+  sctk_assert(nb_threads_exited > 0 && nb_threads_exited <= num_threads);
 
   if (nb_threads_exited == num_threads ) 
     {

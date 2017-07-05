@@ -128,10 +128,7 @@ __mpcomp_wakeup_mvp( mpcomp_mvp_t *mvp )
     new_thread = mvp->threads;
     sctk_assert( new_thread );
 
-    const int combined_pragma = mvp->instance->team->info.combined_pragma;
-    sctk_assert( combined_pragma >= 0 && combined_pragma < MPCOMP_COMBINED_COUNT); 
-
-    new_thread->instance = mvp->instance;
+    fprintf(stderr, ":: %s :: Wake-Up #%d #%p #%d\n", __func__, mvp->global_rank, new_thread, new_thread->rank ); 
 
     mvp->father = new_thread->father_node;
     mvp->rank = new_thread->rank;
@@ -143,14 +140,14 @@ __mpcomp_wakeup_mvp( mpcomp_mvp_t *mvp )
     new_thread->info = mvp->instance->team->info;
 #endif
     
+    /* Set thread rank */
+    new_thread->mvp = mvp;
+    new_thread->instance = mvp->instance;
+
     sctk_spinlock_init( &( new_thread->info.update_lock ), 0 ); 
     /* Reset pragma for dynamic internal */
     for (i = 0; i < MPCOMP_MAX_ALIVE_FOR_DYN + 1; i++) 
 	    sctk_atomics_store_int(&(new_thread->for_dyn_remain[i].i), -1);
-
-    /* Set thread rank */
-    new_thread->mvp = mvp;
-    new_thread->root = (mvp->prev_node_father ) ? mvp->prev_node_father->node : mvp->father;// mvp->father; //TODO just for test
 
 	return new_thread;	
 }
@@ -177,6 +174,7 @@ void __mpcomp_start_openmp_thread( mpcomp_mvp_t *mvp )
 
     __mpcomp_add_mvp_saved_context( mvp );
     cur_thread =  __mpcomp_wakeup_mvp( mvp );
+    fprintf(stderr, ":: %s :: [B-%d] SWAP %p -> %p\n", __func__, mvp->global_rank, sctk_openmp_thread_tls, cur_thread );
     sctk_openmp_thread_tls = (void*) cur_thread; 
 
     __mpcomp_instance_post_init( cur_thread );
@@ -189,7 +187,12 @@ void __mpcomp_start_openmp_thread( mpcomp_mvp_t *mvp )
        
 	__mpcomp_internal_full_barrier( mvp );
  
+    fprintf(stderr, ":: %s :: [B-%d] SWAP %p -> %p\n", __func__, mvp->global_rank, sctk_openmp_thread_tls, mvp->threads->father );
     sctk_openmp_thread_tls = mvp->threads->father;
+    
+    if( mvp->threads->father )
+        mvp->threads = mvp->threads->father;
+ 
     __mpcomp_del_mvp_saved_context( mvp );
 
     if( sctk_openmp_thread_tls )

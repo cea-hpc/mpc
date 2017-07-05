@@ -42,7 +42,6 @@ int __mpcomp_do_single(void)
 {
 	int retval = 0;
   	mpcomp_team_t *team ;	/* Info on the team */
-  	long num_threads ;
 
   	/* Handle orphaned directive (initialize OpenMP environment) */
   	__mpcomp_init() ;
@@ -51,7 +50,7 @@ int __mpcomp_do_single(void)
  	mpcomp_thread_t *t = mpcomp_get_thread_tls();
 
   	/* Number of threads in the current team */
-  	num_threads = t->info.num_threads;
+  	const long num_threads = t->info.num_threads;
   	sctk_assert( num_threads > 0 ) ;
 
   	/* If this function is called from a sequential part (orphaned directive) or 
@@ -59,6 +58,7 @@ int __mpcomp_do_single(void)
    */
   	if( num_threads == 1	) 
 	{
+        fprintf(stderr, ":: %s :: Skip single\n", __func__ );
 		retval = 1;
 	}
 	else
