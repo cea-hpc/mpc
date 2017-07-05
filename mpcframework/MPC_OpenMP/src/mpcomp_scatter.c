@@ -155,7 +155,7 @@ __mpcomp_scatter_compute_instance_tree_depth( mpcomp_node_t* node, const int exp
         if( num_nodes >= expected_nb_mvps ) break;
     }
 
-    return next_depth;
+    return next_depth + 1;
 }
 
 static inline void
@@ -169,6 +169,8 @@ __mpcomp_scatter_compute_instance_tree_array_infos( mpcomp_instance_t* instance,
     root = instance->root;
     
     sctk_assert( instance->tree_depth > 0 );
+
+    fprintf( stderr, ":: %s :: depth: %d\n", __func__, instance->tree_depth );
 
     if( instance->tree_depth == 1 )
     {
@@ -251,7 +253,7 @@ __mpcomp_scatter_instance_pre_init( mpcomp_thread_t* thread, const int num_mvps 
     __mpcomp_scatter_compute_instance_tree_array_infos( instance, num_mvps );
 
     const int instance_last_stage_size = instance->tree_cumulative[0];
-    sctk_assert( instance_last_stage_size <= root->tree_nb_nodes_per_depth[instance->tree_depth] );
+    sctk_assert( instance_last_stage_size <= root->tree_nb_nodes_per_depth[instance->tree_depth-1] );
 
     instance->mvps = mpcomp_alloc( sizeof( mpcomp_mvp_t*) * instance_last_stage_size );
     sctk_assert( instance->mvps );

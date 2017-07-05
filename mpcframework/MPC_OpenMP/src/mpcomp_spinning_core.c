@@ -103,6 +103,8 @@ __mpcomp_tree_array_instance_init( mpcomp_thread_t* thread, const int expected_n
     sctk_assert( instance->team );
     memset( instance->team, 0, sizeof( mpcomp_team_t ) );
 
+    __mpcomp_tree_array_team_reset( instance->team );
+
     /* Allocate new thread context */
     master = ( mpcomp_thread_t* ) mpcomp_alloc( sizeof( mpcomp_thread_t ) );  
     sctk_assert( master );
@@ -173,37 +175,28 @@ void __mpcomp_start_openmp_thread( mpcomp_mvp_t *mvp )
 
     sctk_assert( mvp );
 
-
     __mpcomp_add_mvp_saved_context( mvp );
-    sctk_assert( mvp->prev_node_father );
-
-    /* Switch thread TLS */
     cur_thread =  __mpcomp_wakeup_mvp( mvp );
     sctk_openmp_thread_tls = (void*) cur_thread; 
 
-    /* Last call before parallel region */
     __mpcomp_instance_post_init( cur_thread );
 
-    /* Start parallel region */
     __mpcomp_in_order_scheduler( sctk_openmp_thread_tls );
     
     /* Must be set before barrier for thread safety*/
     spin_status = ( mvp->spin_node ) ? &( mvp->spin_node->spin_status ) : &( mvp->spin_status );    
     *spin_status = MPCOMP_MVP_STATE_SLEEP;
        
-    /* Implicite barrier */
 	__mpcomp_internal_full_barrier( mvp );
  
-    fprintf(stderr, ":: %s :: Switch TLS  > %p to %p\n", __func__, sctk_openmp_thread_tls, mvp->threads->father );
     sctk_openmp_thread_tls = mvp->threads->father;
-
     __mpcomp_del_mvp_saved_context( mvp );
 
     if( sctk_openmp_thread_tls )
     {
-        mpcomp_thread_t* test = (mpcomp_thread_t*) sctk_openmp_thread_tls;
-        mvp->instance = test->instance;
-    }    
+        cur_thread = (mpcomp_thread_t*) sctk_openmp_thread_tls;
+        mvp->instance = cur_thread->instance;
+    }
 }
 
 /**

@@ -295,19 +295,21 @@ void __mpcomp_dynamic_loop_end_nowait(void) {
 
   /* Update the number of threads which ended this loop */
   nb_threads_exited = sctk_atomics_fetch_and_incr_int(
-      &(team_info->for_dyn_nb_threads_exited[index].i));
+      &(team_info->for_dyn_nb_threads_exited[index].i)) + 1;
   sctk_assert(nb_threads_exited >= 0 && nb_threads_exited < num_threads);
 
-  if (nb_threads_exited == (num_threads - 1)) {
+  if (nb_threads_exited == num_threads ) 
+    {
+    
     const int previous_index = __mpcomp_loop_dyn_get_for_dyn_prev_index(t);
     sctk_assert(previous_index >= 0 &&
                 previous_index < MPCOMP_MAX_ALIVE_FOR_DYN + 1);
-    sctk_atomics_store_int(
-        &(team_info->for_dyn_nb_threads_exited[previous_index].i), 0);
-    sctk_nodebug("%s: Move STOP symbol %d -> %d", __func__, previous_index,
-                 index);
+
     sctk_atomics_store_int(&(team_info->for_dyn_nb_threads_exited[index].i),
                            MPCOMP_NOWAIT_STOP_SYMBOL);
+    int prev = sctk_atomics_swap_int(
+        &(team_info->for_dyn_nb_threads_exited[previous_index].i), 0);
+     
   }
 
 }
