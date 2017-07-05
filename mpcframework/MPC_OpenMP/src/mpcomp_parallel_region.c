@@ -74,12 +74,8 @@ __mpcomp_internal_begin_parallel_region( mpcomp_parallel_region_t *info, const u
     /* Grab the thread info */
     t = (mpcomp_thread_t *) sctk_openmp_thread_tls;
     sctk_assert(t != NULL);
-    
-    new_thread = (mpcomp_thread_t*) malloc( sizeof( mpcomp_thread_t) );
-    sctk_assert( new_thread );
-    memset( new_thread, 0, sizeof( mpcomp_thread_t ) );
    
-    fprintf(stderr, "::: %s ::: >> %p\n", __func__, t->root );
+    fprintf(stderr, ":: %s :: master thread> %p\n", __func__, t ); 
 
     /* Compute new num threads value */
     if( t->root )
@@ -95,6 +91,7 @@ __mpcomp_internal_begin_parallel_region( mpcomp_parallel_region_t *info, const u
     }
 
     sctk_assert(real_num_threads > 0);
+    fprintf(stderr, "::: %s ::: >> %d\n", __func__, real_num_threads );
    
     if( 1 || !t->children_instance ||
         (t->children_instance && 
@@ -104,36 +101,39 @@ __mpcomp_internal_begin_parallel_region( mpcomp_parallel_region_t *info, const u
         sctk_assert( t->children_instance );
     }
 
+    /* Switch to instance thread */
+    mpcomp_instance_t* instance = t->children_instance;
+
 #if OMPT_SUPPORT
     __mpcomp_internal_parallel_ompt_begin( t );
 #endif /* OMPT_SUPPORT */
 
-    instance_info = &( t->children_instance->team->info );
+    instance_info = &( instance->team->info );
 
     instance_info->func = info->func;
     instance_info->shared = info->shared;
     instance_info->num_threads = real_num_threads;
-
-    instance_info->new_root = t->root;
 
     instance_info->combined_pragma = info->combined_pragma;
     instance_info->icvs = info->icvs;
     instance_info->icvs.levels_var = t->info.icvs.levels_var + 1;
 
     if( real_num_threads > 1 ) 
-    {
-        instance_info->icvs.active_levels_var +=
-        t->info.icvs.active_levels_var + 1;
-    }
+        instance_info->icvs.active_levels_var = t->info.icvs.active_levels_var + 1;
 
     __mpcomp_loop_gen_loop_infos_cpy( &(info->loop_infos), &(instance_info->loop_infos) );
     instance_info->nb_sections = info->nb_sections;
 
-	t->children_instance->team->depth = ( !( t->instance ) ) ? 0 : t->instance->team->depth + 1;
+    instance->team->depth = t->instance->team->depth + 1;
 
     if( instance_info->num_threads > 1 )
     {
+        /* Set root node data */
+        t->root->mvp_first_id = 0;
         t->root->instance = t->children_instance;
+        t->root->num_threads = instance_info->num_threads;
+
+        /* Start nodes wake up */
         __mpcomp_wakeup_node( t->root );    
     }
 
@@ -291,6 +291,8 @@ void __mpcomp_start_parallel_dynamic_loop(void (*func)(void *), void *shared,
   	__mpcomp_parallel_region_infos_init(&info);
   	__mpcomp_parallel_set_specific_infos(&info,start, shared,
                                        t->info.icvs, MPCOMP_COMBINED_DYN_LOOP);
+
+    sctk_assert( info.combined_pragma == MPCOMP_COMBINED_DYN_LOOP );
   	__mpcomp_loop_gen_infos_init(&(info.loop_infos), lb, b, incr, chunk_size);
 
 	if( !( t->schedule_is_forced ) )

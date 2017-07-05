@@ -184,7 +184,7 @@ int __mpcomp_dynamic_loop_next(long *from, long *to)
 
   int *tree_base = t->instance->tree_base;
   const int tree_depth = t->instance->tree_depth;
-  const int max_depth = t->info.new_root->depth;
+  const int max_depth = t->instance->root->depth;
 
     /* Compute the index of the target */
     target_idx = __mpcomp_loop_dyn_get_victim_rank(t);

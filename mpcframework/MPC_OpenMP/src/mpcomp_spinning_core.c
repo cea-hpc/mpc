@@ -19,7 +19,7 @@ static void __mpcomp_tree_array_team_reset( mpcomp_team_t *team )
     sctk_atomics_store_int(last_array_slot, MPCOMP_NOWAIT_STOP_SYMBOL);
 }
 
-static inline int 
+static inline void 
 __mpcomp_del_mvp_saved_context( mpcomp_mvp_t* mvp )
 {
     mpcomp_mvp_saved_context_t* prev_mvp_context = NULL;
@@ -41,32 +41,13 @@ __mpcomp_del_mvp_saved_context( mpcomp_mvp_t* mvp )
     return 0; 
 } 
 
-static inline int 
-__mpcomp_update_mvp_saved_context( mpcomp_mvp_t* mvp, mpcomp_node_t* node, mpcomp_node_t* father )
+static inline void
+__mpcomp_add_mvp_saved_context( mpcomp_mvp_t* mvp )
 {
     mpcomp_mvp_saved_context_t* prev_mvp_context = NULL;
 
     sctk_assert( mvp );
-    sctk_assert( father );
-    
-    /* Get previous context */
-    prev_mvp_context =  mvp->prev_node_father;
    
-    /* Update prev context information */
-    prev_mvp_context->node = node;
-    prev_mvp_context->father = mvp->father; 
-    mvp->father = father;
-
-    return 0;
-}
-
-static inline int 
-__mpcomp_add_mvp_saved_context( mpcomp_mvp_t* mvp, const mpcomp_instance_t* instance, const unsigned int rank )
-{
-    mpcomp_mvp_saved_context_t* prev_mvp_context = NULL;
-
-    sctk_assert( mvp );
-
     /* Allocate new chained elt */
     prev_mvp_context = (mpcomp_mvp_saved_context_t* ) mpcomp_alloc( sizeof( mpcomp_mvp_saved_context_t ) );
     sctk_assert( prev_mvp_context );
@@ -75,17 +56,8 @@ __mpcomp_add_mvp_saved_context( mpcomp_mvp_t* mvp, const mpcomp_instance_t* inst
     /* Get previous context */
     prev_mvp_context->prev = mvp->prev_node_father;
     prev_mvp_context->rank = mvp->rank;
-    mvp->rank = rank;
+    prev_mvp_context->father = mvp->father;
     mvp->prev_node_father = prev_mvp_context;
-
-#if MPCOMP_TRANSFER_INFO_ON_NODES
-	 mvp->info = instance->team->info;
-#endif /* MPCOMP_TRANSFER_INFO_ON_NODES */
-
-	/* Old value can be restore by mpcomp_thread */
- 	 mvp->instance = instance;  
-
-    return 0; 
 }
 
 static int __mpcomp_tree_rank_get_next_depth( mpcomp_node_t* node, const int expected_nb_mvps, int* nb_mvps )
@@ -138,6 +110,7 @@ __mpcomp_tree_array_instance_init( mpcomp_thread_t* thread, const int expected_n
 
     master->father = thread;
     thread->mvp->threads = master;
+
     return instance;
 }
 
@@ -149,25 +122,17 @@ __mpcomp_wakeup_mvp( mpcomp_mvp_t *mvp )
     mpcomp_thread_t* new_thread, *cur_thread;
 
     sctk_assert(mvp);
-
-    cur_thread = (mpcomp_thread_t*) sctk_openmp_thread_tls;
+    
     new_thread = mvp->threads;
+    sctk_assert( new_thread );
 
-    /* Allocate new chained elt */
-    mpcomp_mvp_saved_context_t* prev_mvp_context;
-    prev_mvp_context = (mpcomp_mvp_saved_context_t* ) mpcomp_alloc( sizeof( mpcomp_mvp_saved_context_t ) );                                        
-    sctk_assert( prev_mvp_context );
-    memset( prev_mvp_context, 0, sizeof( mpcomp_mvp_saved_context_t ) );                                                                     
-    
-    /* Get previous context */
-    prev_mvp_context->prev = mvp->prev_node_father;                                                                                          
-    prev_mvp_context->rank = mvp->rank;                                                                                                      
-    prev_mvp_context->father = mvp->father;
-    mvp->prev_node_father = prev_mvp_context; 
-    
+    const int combined_pragma = mvp->instance->team->info.combined_pragma;
+    sctk_assert( combined_pragma >= 0 && combined_pragma < MPCOMP_COMBINED_COUNT); 
+
+    new_thread->instance = mvp->instance;
+
     mvp->father = new_thread->father_node;
     mvp->rank = new_thread->rank;
-    new_thread->instance = mvp->instance;
     mvp->instance->mvps[new_thread->instance_ghost_rank] = mvp;
 
 #if MPCOMP_TRANSFER_INFO_ON_NODES
@@ -175,7 +140,7 @@ __mpcomp_wakeup_mvp( mpcomp_mvp_t *mvp )
 #else /* MPCOMP_TRANSFER_INFO_ON_NODES */
     new_thread->info = mvp->instance->team->info;
 #endif
-
+    
     sctk_spinlock_init( &( new_thread->info.update_lock ), 0 ); 
     /* Reset pragma for dynamic internal */
     for (i = 0; i < MPCOMP_MAX_ALIVE_FOR_DYN + 1; i++) 
@@ -185,7 +150,6 @@ __mpcomp_wakeup_mvp( mpcomp_mvp_t *mvp )
     new_thread->mvp = mvp;
     new_thread->root = (mvp->prev_node_father ) ? mvp->prev_node_father->node : mvp->father;// mvp->father; //TODO just for test
 
-    fprintf(stderr, ":: %s :: thread> %d mvp> %d mvp->father> %p\n", __func__, mvp->rank,  mvp->global_rank,  mvp->father );
 	return new_thread;	
 }
 
@@ -208,12 +172,14 @@ void __mpcomp_start_openmp_thread( mpcomp_mvp_t *mvp )
     volatile int * spin_status;
 
     sctk_assert( mvp );
-    __mpcomp_wakeup_mvp( mvp );
+
+
+    __mpcomp_add_mvp_saved_context( mvp );
+    sctk_assert( mvp->prev_node_father );
 
     /* Switch thread TLS */
-    sctk_openmp_thread_tls = mvp->threads;
-    sctk_assert( sctk_openmp_thread_tls );
-    cur_thread = (mpcomp_thread_t*) sctk_openmp_thread_tls; 
+    cur_thread =  __mpcomp_wakeup_mvp( mvp );
+    sctk_openmp_thread_tls = (void*) cur_thread; 
 
     /* Last call before parallel region */
     __mpcomp_instance_post_init( cur_thread );
@@ -228,9 +194,10 @@ void __mpcomp_start_openmp_thread( mpcomp_mvp_t *mvp )
     /* Implicite barrier */
 	__mpcomp_internal_full_barrier( mvp );
  
+    fprintf(stderr, ":: %s :: Switch TLS  > %p to %p\n", __func__, sctk_openmp_thread_tls, mvp->threads->father );
     sctk_openmp_thread_tls = mvp->threads->father;
 
-    ( void ) __mpcomp_del_mvp_saved_context( mvp );
+    __mpcomp_del_mvp_saved_context( mvp );
 
     if( sctk_openmp_thread_tls )
     {
