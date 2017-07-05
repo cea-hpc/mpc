@@ -2917,10 +2917,12 @@ int PMPC_Restarted(int *flag) {
   MPC_ERROR_SUCESS();
 }
 
-int PMPC_Checkpoint() {
+int PMPC_Checkpoint(MPC_Checkpoint_state* state) {
+	fprintf(stderr, "Hello, from %s", __FUNCTION__);
   if (sctk_check_point_restart_mode) {
     PMPC_Checkpoint_timed(0, MPC_COMM_WORLD);
   }
+
   MPC_ERROR_SUCESS();
 }
 

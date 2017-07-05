@@ -713,6 +713,7 @@ sctk_proceed_arg (char *word)
 	sctk_add_arg_eq ("--launcher", sctk_def_launcher_mode);
 
 	sctk_add_arg ("--checkpoint", sctk_checkpoint);
+	sctk_add_arg ("--ft", sctk_checkpoint);
 	sctk_add_arg ("--migration", sctk_migration);
 	sctk_add_arg ("--restart", sctk_restart);
 

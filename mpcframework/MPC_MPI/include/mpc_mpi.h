@@ -479,6 +479,9 @@ typedef int MPIX_Grequest_wait_fn(int count, void **array_of_states, double, MPI
 typedef int MPI_Halo;
 typedef int MPI_Halo_exchange;
 
+/* Checkpoint */
+typedef MPC_Checkpoint_state MPIX_Checkpoint_state;
+
 /* NOT IMPLEMENTED >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
 typedef int MPI_Win;
 typedef long MPI_Count;
@@ -807,7 +810,9 @@ int MPIX_Halo_iexchange( MPI_Halo_exchange ex );
 int MPIX_Halo_iexchange_wait( MPI_Halo_exchange ex );
 int MPIX_Halo_cell_bind_local( MPI_Halo_exchange ex, MPI_Halo halo );
 int MPIX_Halo_cell_bind_remote( MPI_Halo_exchange ex, MPI_Halo halo, int remote, char * remote_label );
- 
+
+/* Checkpointing */
+int MPIX_Checkpoint(MPIX_Checkpoint_state* state);
 /* Note that we may need to define a @PCONTROL_LIST@ depending on whether
 stdargs are supported */
 int MPI_Pcontrol (const int, ...);
@@ -1666,6 +1671,9 @@ int PMPIX_Halo_iexchange( MPI_Halo_exchange ex );
 int PMPIX_Halo_iexchange_wait( MPI_Halo_exchange ex );
 int PMPIX_Halo_cell_bind_local( MPI_Halo_exchange ex, MPI_Halo halo );
 int PMPIX_Halo_cell_bind_remote( MPI_Halo_exchange ex, MPI_Halo halo, int remote, char * remote_label );
+
+/* Checkpointing */
+int PMPIX_Checkpoint(MPIX_Checkpoint_state* state);
 
 /* This is the MPI Tools Interface */
 

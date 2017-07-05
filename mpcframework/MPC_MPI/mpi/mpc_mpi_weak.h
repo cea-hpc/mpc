@@ -693,6 +693,11 @@
 #pragma weak  MPIX_Halo_cell_bind_local = PMPIX_Halo_cell_bind_local
 #pragma weak  MPIX_Halo_cell_bind_remote = PMPIX_Halo_cell_bind_remote
 
+/* checkpointing routines */
+#pragma weak MPIX_Checkpoint = PMPIX_Checkpoint
+#pragma weak mpix_checkpoint_ = pmpix_checkpoint_
+#pragma weak mpix_checkpoint__ = pmpix_checkpoint__
+
 // PROFILER MPI_ONE_SIDED MPI One-sided communications
 /* Communicator Management */
 // PROFILER MPI_COMM_MANAGE MPI Communicator Management

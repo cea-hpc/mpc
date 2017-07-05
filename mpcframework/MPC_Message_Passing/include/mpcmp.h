@@ -455,6 +455,14 @@ typedef enum {
   MPC_COMBINER_COUNT__
 } MPC_Type_combiner;
 
+/* Checkpoint */
+typedef enum MPC_Checkpoint_state_e
+{
+  MPC_STATE_CHECKPOINTED,
+  MPC_STATE_RESTARTED,
+  MPC_STATE_ERROR
+} MPC_Checkpoint_state;
+
 /*Initialisation */
 int MPC_Init(int *argc, char ***argv);
 int MPC_Init_thread(int *argc, char ***argv, int required, int *provided);
@@ -685,7 +693,7 @@ int MPC_Comm_split(MPC_Comm, int, int, MPC_Comm *);
 
   /*Scheduling */
   int MPC_Proceed (void);
-  int MPC_Checkpoint (void);
+  int MPC_Checkpoint (MPC_Checkpoint_state* state);
   int MPC_Checkpoint_timed (unsigned int sec, MPC_Comm comm);
   int MPC_Migrate (void);
   int MPC_Restart (int rank);
@@ -1017,7 +1025,7 @@ int MPC_Comm_split(MPC_Comm, int, int, MPC_Comm *);
 
   /*Scheduling */
   int PMPC_Proceed (void);
-  int PMPC_Checkpoint (void);
+  int PMPC_Checkpoint (MPC_Checkpoint_state* st);
   int PMPC_Checkpoint_timed (unsigned int sec, MPC_Comm comm);
   int PMPC_Migrate (void);
   int PMPC_Restart (int rank);

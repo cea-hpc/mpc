@@ -472,6 +472,9 @@ static int __INTERNAL__PMPI_Comm_set_name (MPI_Comm, char *);
 static int __INTERNAL__PMPI_Init_thread (int *, char ***, int, int *);
 static int __INTERNAL__PMPI_Query_thread (int *);
 
+/* checkpoint */
+static int __INTERNAL__PMPIX_Checkpoint(MPIX_Checkpoint_state*);
+
 /* Halo */
 
 static int __INTERNAL__PMPIX_Halo_cell_init( MPI_Halo * halo, char * label, MPI_Datatype type, int count );
@@ -14757,6 +14760,12 @@ static int __INTERNAL__PMPIX__Halo_cell_bind_remote( MPI_Halo_exchange ex, MPI_H
 	return MPI_SUCCESS;
 }
 
+/* Checkpoint */
+static int __INTERNAL__PMPIX_Checkpoint(MPIX_Checkpoint_state* st)
+{
+	return PMPC_Checkpoint(st);
+}
+
 /*
   PMPI FUNCTIONS
 */
@@ -20072,6 +20081,12 @@ int PMPI_Win_attach(MPI_Win win, void *base, MPI_Aint size) {
 }
 
 int PMPI_Win_detach(MPI_Win win, const void *base) { return MPI_SUCCESS; }
+
+/* Checkpointing */
+int PMPIX_Checkpoint(MPIX_Checkpoint_state* state)
+{
+	return __INTERNAL__PMPIX_Checkpoint(state);
+}
 
 /************************************************************************/
 /*  NOT IMPLEMENTED                                                     */

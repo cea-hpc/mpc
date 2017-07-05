@@ -121,7 +121,7 @@ void ffunc (mpc_bcast) (void *buffer, int *count, MPC_Datatype * datatype,
   *err = MPC_Bcast (buffer, *count, *datatype, *root, *comm);
 }
 
-/*Il y a un petit pb avec icc et ia64 sur le passage en argument des op il faut déréférencer une fois de plus*/
+/*Il y a un petit pb avec icc et ia64 sur le passage en argument des op il faut d?r?f?rencer une fois de plus*/
 #if defined(SCTK_ia64_ARCH_SCTK)
 void ffunc (mpc_allreduce) (void *sendbuf, void *recvbuf, int *count,
 			    MPC_Datatype * datatype, MPC_Op *** op,
@@ -513,9 +513,9 @@ void ffunc (mpc_proceed) (int *err)
   *err = MPC_Proceed ();
 }
 
-void ffunc (mpc_checkpoint) (int *err)
+void ffunc (mpc_checkpoint) (MPC_Checkpoint_state* st, int *err)
 {
-  *err = MPC_Checkpoint ();
+  *err = MPC_Checkpoint (st);
 }
 
 void ffunc (mpc_checkpoint_timed) (unsigned int *sec, MPC_Comm * comm,

@@ -2442,6 +2442,9 @@ void ffunc (pmpix_comm_agree)(MPI_Comm comm, int *flag, int *res){not_implemente
 void ffunc (pmpix_comm_revoke)(MPI_Comm comm, int *res){not_implemented();}
 void ffunc (pmpix_comm_shrink)(MPI_Comm comm, MPI_Comm *newcomm, int *res){not_implemented();}
 
+/* checkpointing */
+void ffunc (pmpix_checkpoint)(MPIX_Checkpoint_state* st){not_implemented();}
+
 /************************************************************************/
 /*  END NOT IMPLEMENTED                                                     */
 /************************************************************************/

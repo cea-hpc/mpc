@@ -234,7 +234,7 @@ extern "C"
 
 /*Scheduling */
   void ffunc (mpc_proceed) (int *err);
-  void ffunc (mpc_checkpoint) (int *err);
+  void ffunc (mpc_checkpoint) (MPC_Checkpoint_state* st, int *err);
   void ffunc (mpc_checkpoint_timed) (unsigned int *sec, MPC_Comm * comm,
 				     int *err);
   void ffunc (mpc_migrate) (int *err);
