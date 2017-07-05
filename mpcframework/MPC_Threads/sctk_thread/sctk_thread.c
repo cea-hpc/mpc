@@ -2732,7 +2732,7 @@ sctk_start_func (void *(*run) (void *), void *arg)
 				start_thread += total_tasks_number % sctk_process_number;
 		}
 
-/* 		if (sctk_check_point_restart_mode) */
+/* 		if (sctk_checkpoint_mode) */
 /* 		{ */
 /* 			file = fopen (name, "w"); */
 /* 			fprintf (file, "Task %d->%d\n", start_thread, */

@@ -277,6 +277,7 @@ do
 			;;
 		################### GENERIC FT ###################
 		--enable-mpc-ft)
+			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --enable-MPC_Fault_Tolerance"
 			enableParamIfNot 'DMTCP_PREFIX' "$DMTCP_PREFIX" 'disabled' 'internal'
 			;;
 		--disable-mpc-ft)

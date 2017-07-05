@@ -90,7 +90,7 @@ static int sctk_initial_argc = 0;
 static int sctk_start_argc = 0;
 static char **init_argument = NULL;
 bool sctk_restart_mode;
-bool sctk_check_point_restart_mode;
+bool sctk_checkpoint_mode;
 bool sctk_migration_mode;
 bool sctk_accl_support;
 #define MAX_TERM_LENGTH 80
@@ -601,14 +601,13 @@ sctk_def_share_node (char *arg)
 	static void
 sctk_checkpoint (void)
 {
-	sctk_nodebug ("use sctk_check_point_restart_mode");
-	sctk_check_point_restart_mode = 1;
+	sctk_checkpoint_mode = 1;
 }
 
 	static void
 sctk_migration (void)
 {
-	sctk_check_point_restart_mode = 1;
+	sctk_checkpoint_mode = 1;
 	sctk_migration_mode = 1;
 }
 
@@ -713,7 +712,6 @@ sctk_proceed_arg (char *word)
 	sctk_add_arg_eq ("--launcher", sctk_def_launcher_mode);
 
 	sctk_add_arg ("--checkpoint", sctk_checkpoint);
-	sctk_add_arg ("--ft", sctk_checkpoint);
 	sctk_add_arg ("--migration", sctk_migration);
 	sctk_add_arg ("--restart", sctk_restart);
 
@@ -1066,7 +1064,7 @@ void sctk_init_mpc_runtime()
 	sctk_enable_smt_capabilities = sctk_runtime_config_get()->modules.launcher.enable_smt;
 	sctk_share_node_capabilities = sctk_runtime_config_get()->modules.launcher.share_node;
 	sctk_restart_mode = sctk_runtime_config_get()->modules.launcher.restart;
-	sctk_check_point_restart_mode = sctk_runtime_config_get()->modules.launcher.checkpoint;
+	sctk_checkpoint_mode = sctk_runtime_config_get()->modules.launcher.checkpoint;
 	sctk_migration_mode = sctk_runtime_config_get()->modules.launcher.migration;
         sctk_accl_support =
             sctk_runtime_config_get()->modules.accelerator.enabled;

@@ -61,6 +61,10 @@
 #include "sctk_low_level_comm.h"
 #endif
 
+#ifdef MPC_Fault_Tolerance
+#include "sctk_ft_iface.h"
+#endif
+
 MPC_Op_f sctk_get_common_function(MPC_Datatype datatype, MPC_Op op);
 
 /************************************************************************/
@@ -2827,7 +2831,7 @@ void PMPC_Abort_error(MPC_Comm *comm, int *error, char *message, char *file,
 }
 
 static void MPC_Checkpoint_restart_init() {
-  if (sctk_check_point_restart_mode) {
+  if (sctk_checkpoint_mode) {
 #if 1
     not_implemented();
 #else
@@ -2891,7 +2895,7 @@ static void MPC_Checkpoint_restart_init() {
   }
 }
 static void MPC_Checkpoint_restart_end() {
-  if (sctk_check_point_restart_mode) {
+  if (sctk_checkpoint_mode) {
 #if 0
       char name[SCTK_MAX_FILENAME_SIZE];
       int rank;
@@ -2918,17 +2922,20 @@ int PMPC_Restarted(int *flag) {
 }
 
 int PMPC_Checkpoint(MPC_Checkpoint_state* state) {
-	fprintf(stderr, "Hello, from %s", __FUNCTION__);
-  if (sctk_check_point_restart_mode) {
-    PMPC_Checkpoint_timed(0, MPC_COMM_WORLD);
+#ifdef MPC_Fault_Tolerance
+  if (sctk_checkpoint_mode) {
+    if(!sctk_ft_enabled())
+	    sctk_ft_init();
+    
+    sctk_ft_checkpoint();
   }
-
+#endif
   MPC_ERROR_SUCESS();
 }
 
 int PMPC_Checkpoint_timed(unsigned int sec, MPC_Comm comm) {
 #if 0
-  if (sctk_check_point_restart_mode)
+  if (sctk_checkpoint_mode)
     {
       static volatile unsigned long perform_check = 1;
       static volatile unsigned long long last_time = 0;
@@ -3020,7 +3027,7 @@ INFO("Si on redemarre , recreation des commnicateurs")
 
 int PMPC_Migrate() {
 #if 0
-  if (sctk_check_point_restart_mode)
+  if (sctk_checkpoint_mode)
     {
       FILE *file;
       char name[SCTK_MAX_FILENAME_SIZE];
@@ -3065,7 +3072,7 @@ int PMPC_Migrate() {
 
 int PMPC_Restart(int rank) {
 #if 0
-  if (sctk_check_point_restart_mode)
+  if (sctk_checkpoint_mode)
     {
       FILE *file;
       char name[SCTK_MAX_FILENAME_SIZE];
@@ -3280,7 +3287,7 @@ int sctk_user_main(int argc, char **argv) {
   MPC_Task_hook(sctk_get_task_rank());
 #endif
 
-  MPC_Checkpoint_restart_init();
+  /*MPC_Checkpoint_restart_init();*/
 
 #ifdef MPC_OpenMP
 //__mpcomp_init() ;
@@ -3306,7 +3313,7 @@ int sctk_user_main(int argc, char **argv) {
 //__mpcomp_exit() ;
 #endif
 
-  MPC_Checkpoint_restart_end();
+  /*MPC_Checkpoint_restart_end();*/
 
   sctk_nodebug("Wait for pending messages");
 

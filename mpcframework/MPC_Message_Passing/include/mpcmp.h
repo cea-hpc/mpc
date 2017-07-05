@@ -35,6 +35,10 @@ extern "C"
 #include <stdio.h>
 #include <sctk_types.h>
 
+#if defined(MPC_Fault_Tolerance) || defined(MPC_MODULE_MPC_Fault_Tolerance)
+#include "sctk_ft_types.h"
+#endif
+
   int PMPC_Main (int argc, char **argv);
   int PMPC_User_Main (int argc, char **argv);
 
@@ -456,12 +460,7 @@ typedef enum {
 } MPC_Type_combiner;
 
 /* Checkpoint */
-typedef enum MPC_Checkpoint_state_e
-{
-  MPC_STATE_CHECKPOINTED,
-  MPC_STATE_RESTARTED,
-  MPC_STATE_ERROR
-} MPC_Checkpoint_state;
+typedef sctk_ft_state_t MPC_Checkpoint_state;
 
 /*Initialisation */
 int MPC_Init(int *argc, char ***argv);

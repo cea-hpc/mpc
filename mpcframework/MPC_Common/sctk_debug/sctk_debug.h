@@ -41,7 +41,7 @@ extern "C"
 #define SCTK_DBG_INFO stderr,__LINE__,__FILE__,SCTK_FUNCTION
 
   extern bool sctk_restart_mode;
-  extern bool sctk_check_point_restart_mode;
+  extern bool sctk_checkpoint_mode;
   extern bool sctk_migration_mode;
   extern char *sctk_multithreading_mode;
   extern int sctk_new_scheduler_engine_enabled;
