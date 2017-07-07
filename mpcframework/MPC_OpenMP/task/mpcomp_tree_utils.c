@@ -1,7 +1,7 @@
 
 #include "mpcomp_types_def.h"
 
-#if MPCOMP_TASK
+#if( MPCOMP_TASK || defined( MPCOMP_OPENMP_3_0 ) )
 
 #include "sctk_debug.h"
 #include "sctk_atomics.h"

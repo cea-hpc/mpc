@@ -73,8 +73,7 @@ kmp_task_t *__kmpc_omp_task_alloc(ident_t *loc_ref, kmp_int32 gtid,
                                            mpcomp_task_data_size));
   mpcomp_task_tot_size += mpcomp_task_data_size;
 
-  struct mpcomp_task_s *new_task =
-      mpcomp_malloc(1, mpcomp_task_tot_size, 0 /* t->mvp->father->id_numa */);
+  struct mpcomp_task_s *new_task = mpcomp_alloc(mpcomp_task_tot_size );
   sctk_assert(new_task != NULL);
 
   void *task_data = (sizeof_shareds > 0)

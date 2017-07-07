@@ -1,5 +1,5 @@
 
-#if (!defined(__SCTK_MPCOMP_TASK_UTILS_H__) && MPCOMP_TASK)
+#if (!defined(__SCTK_MPCOMP_TASK_UTILS_H__) && ( MPCOMP_TASK || defined( MPCOMP_OPENMP_3_0 ) ) ) 
 #define __SCTK_MPCOMP_TASK_UTILS_H__
 
 #include "sctk_runtime_config.h"
@@ -138,6 +138,33 @@ mpcomp_task_thread_task_infos_reset(struct mpcomp_thread_s *thread) {
   memset(&(thread->task_infos), 0, sizeof(mpcomp_task_thread_infos_t));
 }
 
+static inline void
+mpcomp_tree_array_task_thread_init( struct mpcomp_thread_s* thread )
+{
+    mpcomp_task_t *implicit_task;
+    mpcomp_task_list_t *tied_tasks_list;
+
+    implicit_task = mpcomp_alloc( sizeof(mpcomp_task_t) );
+    sctk_assert( implicit_task );
+    memset( implicit_task, 0, sizeof(mpcomp_task_t) );
+
+    thread->task_infos.current_task = implicit_task;
+    __mpcomp_task_infos_init(implicit_task, NULL, NULL, thread); 
+    sctk_atomics_store_int( &( implicit_task->refcount ), 1);  
+
+#if MPCOMP_TASK_DEP_SUPPORT
+    implicit_task->task_dep_infos = mpcomp_alloc(sizeof(mpcomp_task_dep_task_infos_t));
+    sctk_assert(implicit_task->task_dep_infos); 
+    memset(implicit_task->task_dep_infos, 0, sizeof(mpcomp_task_dep_task_infos_t ));
+#endif /* MPCOMP_TASK_DEP_SUPPORT */
+    
+    tied_tasks_list = mpcomp_alloc( sizeof(mpcomp_task_list_t) );
+    sctk_assert(tied_tasks_list);
+    memset( tied_tasks_list, 0, sizeof(mpcomp_task_list_t) );
+  
+    thread->task_infos.tied_tasks = tied_tasks_list; 
+}
+
 static inline void mpcomp_task_thread_infos_init(struct mpcomp_thread_s *thread) {
   sctk_assert(thread);
 
@@ -148,7 +175,7 @@ static inline void mpcomp_task_thread_infos_init(struct mpcomp_thread_s *thread)
     const int numa_node_id = mpcomp_task_thread_get_numa_node_id(thread);
 
     /* Allocate the default current task (no func, no data, no parent) */
-    implicit_task = mpcomp_malloc(1, sizeof(mpcomp_task_t), numa_node_id);
+    implicit_task = mpcomp_alloc( sizeof(mpcomp_task_t) );
     sctk_assert(implicit_task);
     MPCOMP_TASK_THREAD_SET_CURRENT_TASK(thread, NULL);
 
@@ -156,12 +183,13 @@ static inline void mpcomp_task_thread_infos_init(struct mpcomp_thread_s *thread)
 
 #ifdef MPCOMP_USE_TASKDEP
     implicit_task->task_dep_infos =
-        sctk_malloc(sizeof(mpcomp_task_dep_task_infos_t));
+        mpcomp_alloc(sizeof(mpcomp_task_dep_task_infos_t));
     sctk_assert(implicit_task->task_dep_infos);
     memset(implicit_task->task_dep_infos, 0,
            sizeof(mpcomp_task_dep_task_infos_t));
 #endif /* MPCOMP_USE_TASKDEP */
 	
+
 #if 1 //OMPT_SUPPORT
 	if( mpcomp_ompt_is_enabled() )
 	{
@@ -182,7 +210,7 @@ static inline void mpcomp_task_thread_infos_init(struct mpcomp_thread_s *thread)
 #endif /* OMPT_SUPPORT */
 	
     /* Allocate private task data structures */
-    tied_tasks_list = mpcomp_malloc(1, sizeof(mpcomp_task_list_t), numa_node_id);
+    tied_tasks_list = mpcomp_alloc( sizeof(mpcomp_task_list_t) );
     sctk_assert(tied_tasks_list);
 
     MPCOMP_TASK_THREAD_SET_CURRENT_TASK(thread, implicit_task);
@@ -209,11 +237,11 @@ mpcomp_task_instance_task_infos_init(struct mpcomp_instance_s *instance) {
   tree_base = instance->tree_base;
 
   const int depth = instance->tree_depth;
-  array_tree_level_size = (int *)mpcomp_malloc(0, sizeof(int) * (depth + 1), 0);
+  array_tree_level_size = (int *)mpcomp_alloc( sizeof(int) * (depth + 1) );
   sctk_assert(array_tree_level_size);
 
   array_tree_level_first =
-      (int *)mpcomp_malloc(0, sizeof(int) * (depth + 1), 0);
+      (int *)mpcomp_alloc( sizeof(int) * (depth + 1) );
   sctk_assert(array_tree_level_first);
 
   array_tree_total_size = 1;
@@ -239,6 +267,43 @@ mpcomp_task_instance_task_infos_init(struct mpcomp_instance_s *instance) {
 static inline void mpcomp_task_team_infos_reset(struct mpcomp_team_s *team) {
   sctk_assert(team);
   memset(&(team->task_infos), 0, sizeof(mpcomp_task_team_infos_t));
+}
+
+static inline void 
+mpcomp_task_tree_array_node_init(struct mpcomp_node_s* parent, struct mpcomp_node_s* child, const int index)
+{
+    struct mpcomp_generic_node_s* meta_node;
+
+    const int vdepth = parent->depth - parent->instance->root->depth;
+    const int tree_base_val = parent->instance->tree_base[vdepth];
+    const int next_tree_base_val = parent->instance->tree_base[vdepth+1];
+
+    const int global_rank = parent->instance_global_rank + index; 
+    child->instance_stage_size = parent->instance_stage_size * tree_base_val;
+    child->instance_stage_first_rank = parent->instance_stage_first_rank + parent->instance_stage_size;
+    const int local_rank = global_rank - parent->instance_stage_first_rank;
+    child->instance_global_rank = child->instance_stage_first_rank + local_rank * next_tree_base_val;
+
+    meta_node = &( parent->instance->tree_array[global_rank] );
+    sctk_assert( meta_node );
+    meta_node->ptr.node = child;    
+    meta_node->type = MPCOMP_CHILDREN_NODE;
+
+    /* Task list */
+}
+
+static inline void 
+mpcomp_task_tree_array_mvp_init( struct mpcomp_node_s* parent, struct mpcomp_mvp_s* mvp, const int index )
+{
+    struct mpcomp_generic_node_s* meta_node;
+
+    const int global_rank = parent->instance_global_rank + index;
+    meta_node = &( parent->instance->tree_array[global_rank] );
+    sctk_assert( meta_node );
+    meta_node->ptr.node = mvp; 
+    meta_node->type = MPCOMP_CHILDREN_LEAF;
+
+    /* Task list */
 }
 
 static inline void mpcomp_task_team_infos_init(struct mpcomp_team_s *team,

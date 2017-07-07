@@ -44,6 +44,7 @@ typedef enum mpcomp_elem_stack_type_e {
 
 /* Type of children in the topology tree */
 typedef enum mpcomp_children_e {
+  MPCOMP_CHILDREN_NULL = 0,
   MPCOMP_CHILDREN_NODE = 1,
   MPCOMP_CHILDREN_LEAF = 2,
 } mpcomp_children_t;

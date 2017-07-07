@@ -42,13 +42,7 @@ static inline void mpcomp_task_allocate_larceny_order(mpcomp_thread_t *thread) {
       1;
   sctk_assert(max_num_victims >= 0);
 
-  sctk_assert(thread->mvp);
-  sctk_assert(thread->mvp->father);
-  const int numa_node_id = thread->mvp->father->id_numa;
-  sctk_assert(numa_node_id >= 0);
-
-  int *larceny_order =
-      (int *)mpcomp_malloc(1, max_num_victims * sizeof(int), numa_node_id);
+  int *larceny_order = (int *) mpcomp_alloc( max_num_victims * sizeof(int) );
   MPCOMP_TASK_THREAD_SET_LARCENY_ORDER(thread, larceny_order);
 }
 

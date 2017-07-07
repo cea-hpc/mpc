@@ -25,7 +25,7 @@ static int mpcomp_task_tree_task_list_alloc(
     return 0;
   }
 
-  list = mpcomp_malloc(1, sizeof(struct mpcomp_task_list_s), id_numa);
+  list = mpcomp_alloc( sizeof(struct mpcomp_task_list_s) );
   sctk_assert(list);
   mpcomp_task_list_new(list);
 

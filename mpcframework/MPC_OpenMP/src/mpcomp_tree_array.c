@@ -457,75 +457,6 @@ static int __mpcomp_tree_array_find_next_running_stage_depth(   const int* tree_
     return i;
 }
 
-static mpcomp_node_t*
-__mpcomp_tree_array_wake_up_node( mpcomp_node_t *start_node, mpcomp_instance_t *instance, const int unsigned num_threads )
-{
-    mpcomp_node_t* current_node;
-    int i, nb_children_involved, rest, quot, node_num_threads, target_node;
-
-    current_node = start_node;
-    node_num_threads = num_threads;
-
-    while( current_node->nb_children < num_threads && current_node->child_type != MPCOMP_CHILDREN_LEAF )
-    {
-        quot = node_num_threads / ( current_node->nb_children ); 
-        rest = node_num_threads % ( current_node->nb_children ); 
-        assert( rest != 0 ); //TODO MANAGE REST
-
-        /* Update the number of threads for the barrier */
-        current_node->barrier_num_threads = quot + ( ( rest ) ? 1 : 0 );  
-        
-        for( i = 1; i < quot; i++ )
-        {
-            int target_node_idx = i * current_node->nb_children;
-            mpcomp_node_t* target_node = current_node->children.node[target_node_idx];
-#if MPCOMP_TRANSFER_INFO_ON_NODES
-            target_node->info = current_node->info;
-#endif /* MPCOMP_TRANSFER_INFO_ON_NODES */ 
-            target_node->spin_status = 1;
-        } 
-
-        mpcomp_node_t* target_node = current_node->children.node[0];
-#if MPCOMP_TRANSFER_INFO_ON_NODES
-        target_node->info = current_node->info;
-#endif /* MPCOMP_TRANSFER_INFO_ON_NODES */
-        current_node = target_node;
-        node_num_threads = quot;
-    }
-
-    return current_node;
-} 
-
-static mpcomp_node_t*
-__mpcomp_tree_array_wake_up_leaf( mpcomp_node_t *start_node, mpcomp_instance_t *instance, const int unsigned num_threads )
-{
-    int i;
-    mpcomp_mvp_t* target_mvp;
-
-    // Nothing to do ...
-    if( num_threads == 1 ) return start_node;
-
-    /* Wake up children leaf */
-    const int quot = num_threads / ( start_node->nb_children ); 
-    const int rest = num_threads % ( start_node->nb_children );
-    assert( rest != 0 ); //TODO MANAGE REST 
-
-    /* Update the number of threads for the barrier */
-    start_node->barrier_num_threads = quot + ( ( rest ) ? 1 : 0 );
-    
-    for( i = 1; i < quot; i++ )
-    {
-        target_mvp->instance = instance;
-        target_mvp = start_node->children.leaf[i]; 
-#if MPCOMP_TRANSFER_INFO_ON_NODES 
-        target_mvp->info = start_node->info; 
-#endif /* MPCOMP_TRANSFER_INFO_ON_NODES */
-        target_mvp->spin_status = 1;
-    }
-
-    return start_node;
-}
-
 static inline int 
 __mpcomp_openmp_node_initialisation( mpcomp_meta_tree_node_t* root, const int* tree_shape, const int max_depth, const int rank )
 {
@@ -690,6 +621,10 @@ __mpcomp_openmp_mvp_initialisation( void* args )
     sctk_assert( new_mvp->threads );
     memset( new_mvp->threads, 0, sizeof( mpcomp_thread_t ) );
 
+#if defined( MPCOMP_OPENMP_3_0 )
+    mpcomp_tree_array_task_thread_init( new_mvp->threads );  
+#endif /* MPCOMP_OPENMP_3_0 */
+
     new_mvp->threads->father = NULL;
     new_mvp->threads->info.num_threads = 1;
 
@@ -737,6 +672,7 @@ __mpcomp_openmp_mvp_initialisation( void* args )
 static void
  __mpcomp_init_thread_master( mpcomp_node_t* root, mpcomp_meta_tree_node_t* tree_array )
 {
+    int* singleton;
     mpcomp_thread_t* master;
     mpcomp_instance_t* seq_instance;
 
@@ -763,14 +699,20 @@ static void
     seq_instance->root = NULL;
     seq_instance->nb_mvps = 1;
 
-    seq_instance->mvps = ( mpcomp_mvp_t**) mpcomp_alloc( sizeof( mpcomp_mvp_t* ) );
-    sctk_assert( seq_instance->mvps );
-    seq_instance->mvps[0] = root->mvp;
+    seq_instance->tree_array = mpcomp_alloc( sizeof( mpcomp_generic_node_t ) );
+    sctk_assert( seq_instance->tree_array );
+    seq_instance->tree_array[0].ptr.mvp = root->mvp;
+    seq_instance->tree_array[0].type = MPCOMP_CHILDREN_LEAF;
+
+    seq_instance->mvps = seq_instance->tree_array;
 
     seq_instance->tree_depth = 1;
-    seq_instance->tree_base = NULL;
-    seq_instance->tree_cumulative = NULL;
-    seq_instance->tree_nb_nodes_per_depth = NULL;
+    singleton = (int*) mpcomp_alloc( sizeof( int ) );
+    sctk_assert( singleton );
+    singleton[0] = 1;
+    seq_instance->tree_base = singleton;
+    seq_instance->tree_cumulative = singleton;
+    seq_instance->tree_nb_nodes_per_depth = singleton;
 
     master->instance = seq_instance;
 

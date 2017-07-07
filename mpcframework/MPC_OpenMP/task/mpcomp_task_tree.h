@@ -25,24 +25,24 @@ mpcomp_task_tree_infos_alloc(const int tree_array_size) {
   const int numa_node_number = sctk_max(sctk_get_numa_node_number(), 1);
   sctk_assert(numa_node_number > 0);
 
-  task_tree_infos = mpcomp_malloc(0, sizeof(mpcomp_task_tree_infos_t), 0);
+  task_tree_infos = mpcomp_alloc( sizeof(mpcomp_task_tree_infos_t) );
   sctk_assert(task_tree_infos);
 
   task_tree_infos->tree_array =
-      mpcomp_malloc(0, sizeof(mpcomp_node_ptr_t *) * numa_node_number, 0);
+      mpcomp_alloc( sizeof(mpcomp_node_ptr_t *) * numa_node_number );
   sctk_assert(task_tree_infos->tree_array);
 
   sctk_assert(tree_array_size > 0);
   for (i = 0; i < numa_node_number; i++) {
     task_tree_infos->tree_array[i] =
-        mpcomp_malloc(1, sizeof(mpcomp_node_ptr_t) * tree_array_size, i);
+        mpcomp_alloc( sizeof(mpcomp_node_ptr_t) * tree_array_size );
     sctk_assert(task_tree_infos->tree_array[i]);
     memset(task_tree_infos->tree_array[i], 0,
            sizeof(mpcomp_node_ptr_t) * tree_array_size);
   }
 
   task_tree_infos->tasklistNodeRank =
-      mpcomp_malloc(1, sizeof(int) * MPCOMP_TASK_TYPE_COUNT, 0);
+      mpcomp_alloc( sizeof(int) * MPCOMP_TASK_TYPE_COUNT );
   sctk_assert(task_tree_infos->tasklistNodeRank);
   memset(task_tree_infos->tasklistNodeRank, 0,
          MPCOMP_TASK_TYPE_COUNT * sizeof(int));
@@ -62,7 +62,7 @@ static inline mpcomp_task_tree_infos_t *mpcomp_task_tree_infos_duplicate(
   sctk_assert(parent_task_tree_infos);
 
   new_task_tree_infos =
-      mpcomp_malloc(1, sizeof(mpcomp_task_tree_infos_t), id_numa);
+      mpcomp_alloc( sizeof(mpcomp_task_tree_infos_t) );
   sctk_assert(new_task_tree_infos);
 
   memcpy(new_task_tree_infos, parent_task_tree_infos,

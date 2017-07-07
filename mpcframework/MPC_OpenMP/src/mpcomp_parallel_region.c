@@ -133,7 +133,11 @@ __mpcomp_internal_begin_parallel_region( mpcomp_parallel_region_t *info, const u
         t->root->mvp_first_id = 0;
         t->root->instance = t->children_instance;
         t->root->num_threads = instance_info->num_threads;
-
+#if defined( MPCOMP_OPENMP_3_0 ) 
+        t->root->instance_stage_size = 2;
+        t->root->instance_global_rank = 1;
+        t->root->instance_stage_first_rank = 1;
+#endif /* defined( MPCOMP_OPENMP_3_0 ) */
         /* Start nodes wake up */
         __mpcomp_wakeup_node( t->root );    
     }
@@ -146,17 +150,6 @@ void __mpcomp_internal_end_parallel_region(mpcomp_instance_t *instance)
     mpcomp_node_t *root;
     mpcomp_thread_t *master;
 
-    /* Grab the master thread of the ending parallel region */
-//    master = &(instance->root->mvp->threads);
- //   master = ( mpcomp_thread_t* ) sctk_openmp_thread_tls;
- //   root = master->instance->root;
-
-    /* Grab the tree root of the ending parallel region */
-    //root = master->info.new_root;
-
- //   __mpcomp_sendtosleep_mvp(instance->mvps[0]);
-
-    /* Someone to wait... */
     if( instance->team->info.num_threads > 1 ) {
 #if 0
 //    mpcomp_thread_t *prev = sctk_openmp_thread_tls;

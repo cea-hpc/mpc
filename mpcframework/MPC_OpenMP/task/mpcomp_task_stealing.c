@@ -77,8 +77,7 @@ void mpcomp_task_init_victim_random(mpcomp_node_t *node,
        MPCOMP_TASK_MVP_GET_TASK_LIST_RANDBUFFER((mpcomp_mvp_t *)node)))
     return;
 
-  randBuffer = (struct drand48_data *)mpcomp_malloc(
-      1, sizeof(struct drand48_data), node->id_numa);
+  randBuffer = (struct drand48_data *) mpcomp_alloc( sizeof(struct drand48_data) );
   sctk_assert(randBuffer);
   srand48_r(sctk_get_time_stamp() * globalRank, randBuffer);
 

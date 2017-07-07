@@ -205,7 +205,7 @@ typedef struct mpcomp_thread_s {
 #endif /* OMPT_SUPPORT */
 
     /* MVP prev context */
-    int instance_ghost_rank;
+    //int instance_ghost_rank;
     struct mpcomp_node_s* father_node;
 
     /** Nested thread chaining ( heap ) */
@@ -223,12 +223,12 @@ typedef struct mpcomp_instance_s
 	/*-- Instance MVP --*/
 
     /** Number of microVPs for this instance   */
-  	int nb_mvps;
     /** All microVPs of this instance  */
-    struct mpcomp_mvp_s **mvps;   
-
+  	int nb_mvps;
+    struct mpcomp_generic_node_s* mvps;
+    int tree_array_size;
+    struct mpcomp_generic_node_s* tree_array;
     /*-- Tree array informations --*/
-
     /** Depth of the tree */
   	int tree_depth;
     /** Degree per level of the tree */
@@ -346,6 +346,11 @@ typedef struct mpcomp_node_s
     mpcomp_parallel_region_t info;
 #endif /* MPCOMP_TRANSFER_INFO_ON_NODES */
 
+#if defined( MPCOMP_OPENMP_3_0 )
+    int instance_stage_size;
+    int instance_global_rank;
+    int instance_stage_first_rank;
+#endif /* MPCOMP_OPENMP_3_0 */
     /* -- Tree array MVP information --                         */ 
     /** Rank among children of my father -> local rank          */
     int tree_depth;
@@ -389,6 +394,19 @@ typedef struct  mpcomp_mvp_saved_context_s
     unsigned int rank;
     struct mpcomp_node_chain_elt_t* prev;
 } mpcomp_mvp_saved_context_t;
+
+typedef union mpcomp_node_gen_ptr_u
+{
+    struct mpcomp_mvp_s *mvp;
+    struct mpcomp_node_s *node;
+} mpcomp_node_gen_ptr_t;
+
+typedef struct mpcomp_generic_node_s
+{
+    mpcomp_node_gen_ptr_t ptr;
+    /* Kind of children (node or leaf) */
+    mpcomp_children_t type;
+} mpcomp_generic_node_t;
 
 #ifdef __cplusplus
 }

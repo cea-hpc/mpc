@@ -1,9 +1,13 @@
 #include "mpcomp_types.h"
 #include "mpcomp_core.h"
-#include "mpcomp_barrier.h"
 #include "sctk_atomics.h"
+#include "mpcomp_barrier.h"
 
 #include "mpcomp_alloc.h"
+
+#if defined( MPCOMP_OPENMP_3_0 )
+#include "mpcomp_task_utils.h"
+#endif /* defined( MPCOMP_OPENMP_3_0 ) */
 
 #include "mpcomp_scatter.h"
 #include "mpcomp_spinning_core.h"
@@ -13,8 +17,7 @@ static void __mpcomp_tree_array_team_reset( mpcomp_team_t *team )
 {
     sctk_assert(team);
     sctk_atomics_int *last_array_slot;
-	 memset( team, 0, sizeof( mpcomp_team_t ) );
-
+    memset( team, 0, sizeof( mpcomp_team_t ) );
     last_array_slot = &(team->for_dyn_nb_threads_exited[MPCOMP_MAX_ALIVE_FOR_DYN].i);
     sctk_atomics_store_int(last_array_slot, MPCOMP_NOWAIT_STOP_SYMBOL);
 }
@@ -31,7 +34,6 @@ __mpcomp_del_mvp_saved_context( mpcomp_mvp_t* mvp )
     sctk_assert( prev_mvp_context );
 
     /* Restore MVP previous status */
-    mvp->rank = prev_mvp_context->rank;
     mvp->father = prev_mvp_context->father; 
     mvp->prev_node_father = prev_mvp_context->prev;
 
@@ -55,7 +57,6 @@ __mpcomp_add_mvp_saved_context( mpcomp_mvp_t* mvp )
 
     /* Get previous context */
     prev_mvp_context->prev = mvp->prev_node_father;
-    prev_mvp_context->rank = mvp->rank;
     prev_mvp_context->father = mvp->father;
     mvp->prev_node_father = prev_mvp_context;
 }
@@ -109,7 +110,12 @@ __mpcomp_tree_array_instance_init( mpcomp_thread_t* thread, const int expected_n
     master = ( mpcomp_thread_t* ) mpcomp_alloc( sizeof( mpcomp_thread_t ) );  
     sctk_assert( master );
     memset( master, 0, sizeof( mpcomp_thread_t ) );
+    
+#if defined( MPCOMP_OPENMP_3_0 )
+    mpcomp_task_team_infos_init( instance->team, instance->tree_depth );
+#endif /* MPCOMP_OPENMP_3_0 */
 
+    master->root = thread->root;
     master->father = thread;
     thread->mvp->threads = master;
 
@@ -128,11 +134,7 @@ __mpcomp_wakeup_mvp( mpcomp_mvp_t *mvp )
     new_thread = mvp->threads;
     sctk_assert( new_thread );
 
-    fprintf(stderr, ":: %s :: Wake-Up #%d #%p #%d\n", __func__, mvp->global_rank, new_thread, new_thread->rank ); 
-
     mvp->father = new_thread->father_node;
-    mvp->rank = new_thread->rank;
-    mvp->instance->mvps[new_thread->instance_ghost_rank] = mvp;
 
 #if MPCOMP_TRANSFER_INFO_ON_NODES
     new_thread->info = mvp->info;
@@ -149,6 +151,7 @@ __mpcomp_wakeup_mvp( mpcomp_mvp_t *mvp )
     for (i = 0; i < MPCOMP_MAX_ALIVE_FOR_DYN + 1; i++) 
 	    sctk_atomics_store_int(&(new_thread->for_dyn_remain[i].i), -1);
 
+    mpcomp_tree_array_task_thread_init( new_thread );  
 	return new_thread;	
 }
 
@@ -174,7 +177,7 @@ void __mpcomp_start_openmp_thread( mpcomp_mvp_t *mvp )
 
     __mpcomp_add_mvp_saved_context( mvp );
     cur_thread =  __mpcomp_wakeup_mvp( mvp );
-    fprintf(stderr, ":: %s :: [B-%d] SWAP %p -> %p\n", __func__, mvp->global_rank, sctk_openmp_thread_tls, cur_thread );
+
     sctk_openmp_thread_tls = (void*) cur_thread; 
 
     __mpcomp_instance_post_init( cur_thread );
@@ -187,12 +190,14 @@ void __mpcomp_start_openmp_thread( mpcomp_mvp_t *mvp )
        
 	__mpcomp_internal_full_barrier( mvp );
  
-    fprintf(stderr, ":: %s :: [B-%d] SWAP %p -> %p\n", __func__, mvp->global_rank, sctk_openmp_thread_tls, mvp->threads->father );
     sctk_openmp_thread_tls = mvp->threads->father;
     
     if( mvp->threads->father )
+    {
         mvp->threads = mvp->threads->father;
- 
+        mpcomp_free( cur_thread ); 
+    }
+
     __mpcomp_del_mvp_saved_context( mvp );
 
     if( sctk_openmp_thread_tls )

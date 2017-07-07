@@ -112,10 +112,10 @@ void __kmpc_serialized_parallel(ident_t *loc, kmp_int32 global_tid) {
   __mpcomp_internal_begin_parallel_region(info, 1);
 
   /* Save the current tls */
-  t->children_instance->mvps[0]->threads[0].father = sctk_openmp_thread_tls;
+  t->children_instance->mvps[0].ptr.mvp->threads[0].father = sctk_openmp_thread_tls;
 
   /* Switch TLS to nested thread for region-body execution */
-  sctk_openmp_thread_tls = &(t->children_instance->mvps[0]->threads[0]);
+  sctk_openmp_thread_tls = &(t->children_instance->mvps[0].ptr.mvp->threads[0]);
 
   sctk_nodebug("%s: leaving (%d) ...", __func__, global_tid);
 }

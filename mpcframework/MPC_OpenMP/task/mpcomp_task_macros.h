@@ -80,6 +80,7 @@ typedef enum mpcomp_task_init_status_e {
 #define MPCOMP_TASK_STATUS_CMPL_INIT(status)                                   \
   (sctk_atomics_store_int(&(status), MPCOMP_TASK_INIT_STATUS_INITIALIZED))
 
+
 /*** THREAD ACCESSORS MACROS ***/
 
 /** Check if thread is initialized */

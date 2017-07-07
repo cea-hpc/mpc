@@ -4,8 +4,15 @@
 #define SCTK_OMP_VERSION_MAJOR 3
 #define SCTK_OMP_VERSION_MINOR 1
 
-#define MPCOMP_TASK 0
+#define MPCOMP_TASK 1
 #define MPCOMP_USE_INTEL_ABI 1
+
+#define MPCOMP_OPENMP_3_0
+
+#if defined( MPCOMP_OPENMP_3_0 )
+#define MPCOMP_TASK 1
+#endif /* MPCOMP_OPENMP_3_0 */
+
 
 /* Maximum number of threads for each team of a parallel region */
 #define MPCOMP_MAX_THREADS 256

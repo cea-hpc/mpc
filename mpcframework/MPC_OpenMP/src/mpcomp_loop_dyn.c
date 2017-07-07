@@ -188,7 +188,7 @@ int __mpcomp_dynamic_loop_next(long *from, long *to)
 
     /* Compute the index of the target */
     target_idx = __mpcomp_loop_dyn_get_victim_rank(t);
-    target_mvp = t->instance->mvps[target_idx];
+    target_mvp = t->instance->mvps[target_idx].ptr.mvp;
     target = ( target_mvp ) ? target_mvp->threads : NULL; 
 
   found = 1;
@@ -210,7 +210,7 @@ do_increase:
 
     /* Compute the index of the target */
     target_idx = __mpcomp_loop_dyn_get_victim_rank(t);
-    target_mvp = t->instance->mvps[target_idx];
+    target_mvp = t->instance->mvps[target_idx].ptr.mvp;
     target = ( target_mvp ) ? target_mvp->threads : NULL;
 
     if( !( target ) ) goto do_increase;
@@ -400,12 +400,12 @@ void __mpcomp_for_dyn_coherency_end_parallel_region(
   /* Check tree coherency */
 
   /* Check thread coherency */
-  t_first = &(instance->mvps[0]->threads[0]);
+  t_first = &(instance->mvps[0].ptr.mvp->threads[0]);
   for (i = 0; i < team->info.num_threads; i++) {
     mpcomp_thread_t *target_t;
     int j;
 
-    target_t = &(instance->mvps[i]->threads[0]);
+    target_t = &(instance->mvps[i].ptr.mvp->threads[0]);
 
     sctk_nodebug("[X] __mpcomp_for_dyn_coherency_checking_end_barrier: "
                  "Checking thread %d...",

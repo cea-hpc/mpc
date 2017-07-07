@@ -215,7 +215,7 @@ int __mpcomp_loop_ull_dynamic_next(unsigned long long *from,
 
     /* Compute the index of the target */
     target_idx = __mpcomp_loop_dyn_get_victim_rank(t);
-    target_mvp = t->instance->mvps[target_idx];
+    target_mvp = t->instance->mvps[target_idx].ptr.mvp;
     target = ( target_mvp ) ? target_mvp->threads : NULL; 
 
     found = 1;
@@ -237,7 +237,7 @@ do_increase:
 
     /* Compute the index of the target */
     target_idx = __mpcomp_loop_dyn_get_victim_rank(t);
-    target_mvp = t->instance->mvps[target_idx];
+    target_mvp = t->instance->mvps[target_idx].ptr.mvp;
     target = ( target_mvp ) ? target_mvp->threads : NULL;
 
     if( !( target ) ) goto do_increase;
@@ -379,7 +379,7 @@ mpcomp_for_dyn_coherency_end_barrier()
 			 mpcomp_thread_t * target_t ;
 			 int j ;
 
-			 target_t = &(instance->mvps[i]->threads[0]) ;
+			 target_t = &(instance->mvps[i].ptr.mvp->threads[0]) ;
 
 			 sctk_nodebug( "[%d] __mpcomp_for_dyn_coherency_checking_end_barrier: "
 					 "Checking thread %d...",
