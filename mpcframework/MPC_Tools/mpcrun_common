@@ -644,16 +644,16 @@ if test -n "$FT_WRAP" ; then
 	fi
 
 	#workaround because 'h' & '-p' opts don't affect DMTCP under SLURM (patch attempted in DMTCP sources)
-	export DMTCP_COORD_HOST="$FT_HOST"
-	export DMTCP_COORD_PORT="$FT_PORT"
+	#export DMTCP_COORD_HOST="$FT_HOST"
+	#export DMTCP_COORD_PORT="$FT_PORT"
 
 	if test "x$FT_WRAP" = "x--checkpoint"; then
 		#this disallows the 'option forwarding capability'
-		BINARY="dmtcp_launch -h $DMTCP_COORD_HOST -p $DMTCP_COORD_PORT --rm --ckpt-signal 30 ${BINARY}"
+		BINARY="dmtcp_launch -h $FT_HOST -p $FT_PORT --rm --ckpt-signal 30 ${BINARY}"
 
 	elif test "x$FT_WRAP" = "x--restart"; then
 		test -z "$FT_SCRIPTPATH" && FT_SCRIPTPATH="$PWD/dmtcp_restart_script.sh"
-		BINARY="$FT_SCRIPTPATH -h $DMTCP_COORD_HOST -p $DMTCP_COORD_PORT"
+		BINARY="$FT_SCRIPTPATH -h $FT_HOST -p $FT_PORT"
 	fi
 fi
 

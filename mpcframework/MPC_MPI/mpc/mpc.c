@@ -2921,16 +2921,99 @@ int PMPC_Restarted(int *flag) {
   MPC_ERROR_SUCESS();
 }
 
+static MPC_Checkpoint_state global_state;
+
+/**
+ * Trigger a checkpoint for the whole application.
+ *
+ * We are aware this functino implements somehow a barrier through three "expensive" atomics
+ * But keep in mind that creating a checkpoint for the whole application is far more expensive
+ * than that.
+ *
+ * This function sets "state" depending on the application state:
+ *   - If we reach this function, it is a simple checkpoint -> MPC_STATE_CHECKPOINT
+ *   - If we restart from a snapshot, it is a restart -> MPC_STATE_RESTART
+ *
+ * \param[out] state The state after the procedure.
+ */
 int PMPC_Checkpoint(MPC_Checkpoint_state* state) {
+	assert(state != NULL);
 #ifdef MPC_Fault_Tolerance
-  if (sctk_checkpoint_mode) {
-    if(!sctk_ft_enabled())
-	    sctk_ft_init();
-    
-    sctk_ft_checkpoint();
-  }
+	if (sctk_checkpoint_mode)
+	{
+		int total_nbprocs = sctk_get_process_number();
+		int local_nbtasks = sctk_get_local_task_number();
+		int local_tasknum = sctk_get_local_task_rank();
+		int pmi_rank = -1;
+		static sctk_atomics_int init_once = OPA_INT_T_INITIALIZER(0);
+		static sctk_atomics_int gen_acquire = OPA_INT_T_INITIALIZER(0);
+		static sctk_atomics_int gen_release = OPA_INT_T_INITIALIZER(0);
+		static sctk_atomics_int gen_current = OPA_INT_T_INITIALIZER(0);
+		int * task_generations;
+
+		/* init once the genration array */
+		if(sctk_atomics_cas_int(&init_once, 0, 1))
+		{
+			task_generations = (int*)malloc(sizeof(int) * local_nbtasks);
+			memset(task_generations, 0, sizeof(int) * local_nbtasks);
+			sctk_atomics_store_int(&init_once, 2);
+		}
+		else
+		{
+			while(sctk_atomics_load_int(&init_once) != 2)
+				sctk_thread_yield();
+
+		}
+
+		/* ensure there won't be any overlapping betwen different MPC_Checkpoint() calls */
+		while(sctk_atomics_load_int(&gen_current) < task_generations[local_tasknum])
+			sctk_thread_yield();
+
+		/* if I'm the last task to process: do the work */
+		if(sctk_atomics_fetch_and_incr_int(&gen_acquire) == local_nbtasks -1)
+		{	
+			/* synchronize all processes */
+			sctk_pmi_barrier();
+
+			/* Only one process triggers the checkpoint (=notify the coordinator) */
+			sctk_pmi_get_process_rank(&pmi_rank);
+			if(pmi_rank == 0)
+			{
+				global_state = sctk_ft_checkpoint();
+			}
+			
+			sctk_pmi_barrier();
+
+			/* set gen_release to 0, prepare the end of current generation */ 
+			sctk_atomics_store_int(&gen_release, 0);
+			/* set gen_aquire to 0: unlock waiting tasks */
+			sctk_atomics_store_int(&gen_acquire, 0);
+
+
+		}
+		else
+		{
+			/* waiting tasks */
+			while(sctk_atomics_load_int(&gen_acquire) != 0)
+				sctk_thread_yield();
+		}
+	
+		/* update the state for all tasks of this process 
+		 * The state should also be broadcasted to other processes */
+		*state = global_state;
+
+		/* If I'm the last task to reach here, increment the global generation counter */ 
+		if(sctk_atomics_fetch_and_incr_int(&gen_release) == local_nbtasks -1)
+		{
+			sctk_atomics_incr_int(&gen_current);
+			sctk_atomics_store_int(&gen_release, 0);
+		}
+
+		/* the current task finished the work for the current generation */
+		task_generations[local_tasknum]++;
+	}
 #endif
-  MPC_ERROR_SUCESS();
+	MPC_ERROR_SUCESS();
 }
 
 int PMPC_Checkpoint_timed(unsigned int sec, MPC_Comm comm) {

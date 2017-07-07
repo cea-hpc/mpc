@@ -30,7 +30,7 @@
 #include <dmtcp.h>
 #endif
 
-const char * state_names[] = {"MPC_STATE_CHECKPOINT", "MPC_STATE_RESTART", "MPC_STATE_ERROR"};
+const char * state_names[] = {"MPC_STATE_CHECKPOINT", "MPC_STATE_RESTART", "MPC_STATE_IGNORE", "MPC_STATE_ERROR"};
 
 static inline void sctk_ft_set_ckptdir(char * dir)
 {
@@ -54,11 +54,11 @@ int sctk_ft_init()
 	assume_m(dmtcp_is_enabled() == 1, "DMTCP not running but reaching FT interface");
 	sctk_ft_set_ckptdir(".");
 	sctk_ft_set_tmpdir(".");
-	/*if(dmtcp_get_ckpt_signal() != SIGUSR2)*/
-	/*{*/
-		/*sctk_error("DMTCP and MPC both set an handler for SIGUSR2");*/
-		/*sctk_fatal("Signal value: %d", dmtcp_get_ckpt_signal());*/
-	/*}*/
+	if(dmtcp_get_ckpt_signal() != SIGUSR2)
+	{
+		sctk_error("DMTCP and MPC both set an handler for SIGUSR2");
+		sctk_fatal("Signal value: %d", dmtcp_get_ckpt_signal());
+	}
 #endif
 }
 
@@ -84,10 +84,10 @@ int sctk_ft_checkpoint()
 		default: st = MPC_STATE_ERROR; break;
 	}
 	
-	sctk_warning("FT: checkpoint: %s", state_names[st] );
-
 	/* Probably not necessary to re-enable network (delegate it to on-demand support) */
 #endif
+
+	return st;
 }
 
 int sctk_ft_disable()
