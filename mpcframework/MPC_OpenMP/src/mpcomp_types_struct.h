@@ -130,6 +130,8 @@ typedef struct mpcomp_thread_s {
     unsigned int depth;
     /** OpenMP rank (0 for master thread per team) */
     long rank;      
+    long tree_array_rank;
+    int* tree_array_ancestor_path;
     /* Micro-vp of the thread*/
     struct mpcomp_mvp_s *mvp; 
     /** Root node for nested parallel region */ 
@@ -237,6 +239,7 @@ typedef struct mpcomp_instance_s
   	int *tree_cumulative;         
     /** microVPs number at each depth */
   	int *tree_nb_nodes_per_depth;
+    int *tree_first_node_per_depth;
 
 #if MPCOMP_TASK
     /** Task information of this instance */
@@ -292,6 +295,8 @@ typedef struct mpcomp_mvp_s
     int rank;                               
     /** Rank within sibbling MVP        */ 
     int local_rank;
+    int* tree_array_ancestor_path;  
+    long tree_array_rank; 
     /** Rank within topology tree MVP depth level */
     int stage_rank;
     int global_rank;
@@ -312,6 +317,8 @@ typedef struct mpcomp_node_s
 {
     /* -- MVP Thread specific informations --                   */
     mpcomp_meta_tree_node_t *tree_array;
+    int* tree_array_ancestor_path;  
+    long tree_array_rank; 
     /** MVP spinning as a node                                  */
     struct mpcomp_mvp_s *mvp;
     /** MVP spinning value in topology tree                     */

@@ -122,7 +122,7 @@ void mpcomp_internal_GOMP_start_parallel_region(void (*fn)(void *), void *data,
   __mpcomp_internal_begin_parallel_region(info, num_threads);
 
   /* Start scheduling */
-  mpcomp_mvp_t *mvp = t->children_instance->mvps[0];
+  mpcomp_mvp_t *mvp = t->children_instance->mvps[0].ptr.mvp;
   mpcomp_internal_GOMP_in_order_scheduler_master_begin(mvp);
 
   return;
@@ -164,7 +164,7 @@ void mpcomp_internal_GOMP_parallel_loop_generic_start(
   __mpcomp_internal_begin_parallel_region(info, num_threads);
 
   /* Start scheduling */
-  mpcomp_mvp_t *mvp = t->children_instance->mvps[0];
+  mpcomp_mvp_t *mvp = t->children_instance->mvps[0].ptr.mvp;
   mpcomp_internal_GOMP_in_order_scheduler_master_begin(mvp);
 
   return;
@@ -246,7 +246,7 @@ void mpcomp_internal_GOMP_parallel_sections_start(void (*fn)(void *),
   __mpcomp_internal_begin_parallel_region(info, num_threads);
 
   /* Start scheduling */
-  mpcomp_mvp_t *mvp = t->children_instance->mvps[0];
+  mpcomp_mvp_t *mvp = t->children_instance->mvps[0].ptr.mvp;
   mpcomp_internal_GOMP_in_order_scheduler_master_begin(mvp);
 
   return;
