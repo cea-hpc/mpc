@@ -3,6 +3,78 @@
 
 #include "mpcomp_types.h"
 
+static inline void 
+__mpcomp_instance_tree_array_node_init(struct mpcomp_node_s* parent, struct mpcomp_node_s* child, const int index)
+{
+    int i;
+    struct mpcomp_generic_node_s* meta_node;
+
+    const int vdepth = parent->depth - parent->instance->root->depth;
+    const int tree_base_val = parent->instance->tree_base[vdepth];
+    const int next_tree_base_val = parent->instance->tree_base[vdepth+1];
+
+    const int global_rank = parent->instance_global_rank + index; 
+    child->instance_stage_size = parent->instance_stage_size * tree_base_val;
+    child->instance_stage_first_rank = parent->instance_stage_first_rank + parent->instance_stage_size;
+    const int local_rank = global_rank - parent->instance_stage_first_rank;
+    child->instance_global_rank = child->instance_stage_first_rank + local_rank * next_tree_base_val;
+    
+    meta_node = &( parent->instance->tree_array[global_rank] );
+    sctk_assert( meta_node );
+    meta_node->ptr.node = child;    
+    meta_node->type = MPCOMP_CHILDREN_NODE;
+
+    child->tree_array_rank = global_rank; 
+
+    child->tree_array_ancestor_path = (int*) mpcomp_alloc( (vdepth + 1) * sizeof( int ) );
+    sctk_assert( child->tree_array_ancestor_path );
+    memset( child->tree_array_ancestor_path, 0, ( vdepth + 1) * sizeof( int ) );
+    
+    for( i = 0; i < vdepth; i++ )
+        child->tree_array_ancestor_path[i] = parent->tree_array_ancestor_path[i];
+
+    child->tree_array_ancestor_path[vdepth] = parent->tree_array_rank;
+
+#if defined( MPCOMP_OPENMP_3_0 ) 
+    __mpcomp_task_node_infos_init( parent, child );
+#endif /* defined( MPCOMP_OPENMP_3_0 ) */
+    
+}
+
+static inline void 
+__mpcomp_instance_tree_array_mvp_init( struct mpcomp_node_s* parent, struct mpcomp_mvp_s* mvp, const int index )
+{
+    int i;
+    struct mpcomp_generic_node_s* meta_node;
+
+    const int vdepth = parent->depth - parent->instance->root->depth; 
+
+    const int global_rank = parent->instance_global_rank + index;
+    meta_node = &( parent->instance->tree_array[global_rank] );
+    sctk_assert( meta_node );
+    meta_node->ptr.mvp = mvp; 
+    meta_node->type = MPCOMP_CHILDREN_LEAF;
+    sctk_assert( mvp->threads );
+    sctk_assert( mvp->threads );
+
+    mvp->threads->tree_array_rank = global_rank;
+
+    mvp->threads->tree_array_ancestor_path = (int*) mpcomp_alloc( ( vdepth + 1) * sizeof( int ) );
+    sctk_assert( mvp->threads->tree_array_ancestor_path );
+    memset( mvp->threads->tree_array_ancestor_path, 0,  ( vdepth + 1) * sizeof( int ) );
+    
+    for( i = 0; i < vdepth; i++ )
+       mvp->threads->tree_array_ancestor_path[i] = parent->tree_array_ancestor_path[i];
+
+    mvp->threads->tree_array_ancestor_path[vdepth] = parent->tree_array_rank;
+
+#if defined( MPCOMP_OPENMP_3_0 ) 
+    __mpcomp_task_mvp_infos_init( parent, mvp );
+#endif /* defined( MPCOMP_OPENMP_3_0 ) */
+}
+
+
+
 static inline mpcomp_thread_t* 
 __mpcomp_spinning_push_mvp_thread( mpcomp_mvp_t* mvp, mpcomp_thread_t* new_thread )
 {

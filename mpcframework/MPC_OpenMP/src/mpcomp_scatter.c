@@ -313,7 +313,7 @@ __mpcomp_scatter_wakeup_intermediate_node( mpcomp_node_t* node )
             child_node->mvp_first_id = min_nthreads * i + ( ( i < ext_nthreads ) ? i : ext_nthreads );
             child_node->mvp_first_id += node_first_mvp;
             child_node->instance = node->instance;
-            mpcomp_task_tree_array_node_init( node, child_node, i );
+            mpcomp_instance_tree_array_node_init( node, child_node, i );
             child_node->spin_status = MPCOMP_MVP_STATE_AWAKE;
         }
     }
@@ -347,7 +347,7 @@ __mpcomp_scatter_wakeup_intermediate_node( mpcomp_node_t* node )
             mvp->threads->father_node = node;
             mvp->threads->rank = node->mvp_first_id + i;
             mvp->instance = node->instance;
-            mpcomp_task_tree_array_mvp_init( node, mvp, i );
+            mpcomp_instance_tree_array_mvp_init( node, mvp, i );
             /* WakeUp NODE */
             child_node->spin_status = MPCOMP_MVP_STATE_AWAKE;
             cur_node += min_shift + ( ( i < ext_shift ) ? 1 : 0 ); 
@@ -396,7 +396,7 @@ __mpcomp_scatter_wakeup_final_mvp( mpcomp_node_t* node )
         mvp->threads->father = father;
         mvp->threads->father_node = node;
         mvp->threads->rank = node->mvp_first_id + i;
-        mpcomp_task_tree_array_mvp_init( node, mvp, i );
+        mpcomp_instance_tree_array_mvp_init( node, mvp, i );
         /* WakeUp MVP */
         mvp->spin_status = MPCOMP_MVP_STATE_AWAKE;
         cur_mvp += min_shift + ( ( i < ext_shift ) ? 1 : 0 ); 
