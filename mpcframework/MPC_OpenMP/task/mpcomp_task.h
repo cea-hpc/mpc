@@ -93,13 +93,8 @@ typedef struct mpcomp_task_s {
  * Used by mpcomp_mvp_t and mpcomp_node_t
  */
 typedef struct mpcomp_task_node_infos_s {
-  int *path; /**< Path in the tree */
-  struct mpcomp_node_s *
-      *tree_array_node;     /**< Array representation of the tree 	    */
-  unsigned tree_array_rank; /**< Rank in tree_array */
-  struct mpcomp_task_list_s *tasklist[MPCOMP_TASK_TYPE_COUNT]; /**< Lists of
-                                                                  tasks
-                                                                  */
+  /** Lists of  tasks */
+  struct mpcomp_task_list_s *tasklist[MPCOMP_TASK_TYPE_COUNT];
   struct mpcomp_task_list_s *lastStolen_tasklist[MPCOMP_TASK_TYPE_COUNT];
   int tasklistNodeRank[MPCOMP_TASK_TYPE_COUNT];
   struct drand48_data *tasklist_randBuffer;
@@ -107,13 +102,8 @@ typedef struct mpcomp_task_node_infos_s {
 
 /** mvp and node share same struct */
 typedef struct mpcomp_task_mvp_infos_s {
-  int *path; /**< Path in the tree */
-  struct mpcomp_node_s *
-      *tree_array_node;     /**< Array representation of the tree 	    */
-  unsigned tree_array_rank; /**< Rank in tree_array */
-  struct mpcomp_task_list_s *tasklist[MPCOMP_TASK_TYPE_COUNT]; /**< Lists of
-                                                                  tasks
-                                                                  */
+  /** Lists of  tasks */
+  struct mpcomp_task_list_s *tasklist[MPCOMP_TASK_TYPE_COUNT];
   struct mpcomp_task_list_s *lastStolen_tasklist[MPCOMP_TASK_TYPE_COUNT];
   int tasklistNodeRank[MPCOMP_TASK_TYPE_COUNT];
   struct drand48_data *tasklist_randBuffer;

@@ -10,6 +10,7 @@
 #include "mpcomp_task_tree.h"
 #include "mpcomp_task_stealing.h"
 
+#if 0
 static int mpcomp_task_tree_task_list_alloc(
     mpcomp_tree_meta_elt_t *meta_elt, int tasklist_depth, int *tasklistNodeRank,
     mpcomp_tasklist_type_t type, const int depth, const int id_numa) {
@@ -25,9 +26,6 @@ static int mpcomp_task_tree_task_list_alloc(
     return 0;
   }
 
-  list = mpcomp_alloc( sizeof(struct mpcomp_task_list_s) );
-  sctk_assert(list);
-  mpcomp_task_list_new(list);
 
   switch (meta_elt->type) {
   case MPCOMP_TREE_META_ELT_NODE:
@@ -295,5 +293,6 @@ void __mpcomp_task_list_infos_exit(void) {
     }
   }
 }
+#endif 
 
 #endif /* MPCOMP_TASK */

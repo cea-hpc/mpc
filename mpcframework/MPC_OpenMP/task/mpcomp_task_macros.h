@@ -253,11 +253,7 @@ typedef enum mpcomp_task_init_status_e {
 #define MPCOMP_TASK_MVP_GET_TREE_ARRAY_NODE(mvp, rank)                         \
   mvp->task_infos.tree_array_node[rank]
 
-#define MPCOMP_TASK_MVP_GET_PATH(mvp) mvp->task_infos.path
-#define MPCOMP_TASK_MVP_SET_PATH(mvp, ptr)                                     \
-  do {                                                                         \
-    mvp->task_infos.path = ptr;                                                \
-  } while (0);
+#define MPCOMP_TASK_MVP_GET_PATH(mvp) mvp->path
 
 #define MPCOMP_TASK_MVP_GET_TASK_LIST_HEAD(mvp, type)                          \
   mvp->task_infos.tasklist[type]

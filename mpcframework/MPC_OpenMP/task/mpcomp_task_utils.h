@@ -13,6 +13,8 @@
 #include "mpcomp_tree_utils.h"
 #include "mpcomp_task_macros.h"
 
+#include "mpcomp_task_stealing.h"
+
 #include "ompt.h"
 extern ompt_callback_t* OMPT_Callbacks;
 
@@ -228,87 +230,132 @@ mpcomp_task_instance_task_infos_reset(struct mpcomp_instance_s *instance) {
   memset(&(instance->task_infos), 0, sizeof(mpcomp_task_instance_infos_t));
 }
 
-static inline void
-mpcomp_task_instance_task_infos_init(struct mpcomp_instance_s *instance) {
-  int i, array_tree_total_size;
-  int *tree_base, *array_tree_level_size, *array_tree_level_first;
+static inline int
+__mpcomp_task_node_list_init( struct mpcomp_node_s* parent, struct mpcomp_node_s* child, const mpcomp_tasklist_type_t type )
+{
+    int tasklistNodeRank, allocation;
+    mpcomp_task_list_t* list;
 
-  sctk_assert(instance && instance->tree_base);
-  tree_base = instance->tree_base;
+    const int task_vdepth = MPCOMP_TASK_TEAM_GET_TASKLIST_DEPTH( parent->instance->team, type );
+    const int child_vdepth = child->depth - parent->instance->root->depth;
+ 
+    if( child_vdepth < task_vdepth + 1 )
+        return 0;
+    
+    if( parent->depth >= task_vdepth )
+    {
+        allocation = 0;
+        list = parent->task_infos.tasklist[type]; 
+        sctk_assert( list );
+        tasklistNodeRank = MPCOMP_TASK_NODE_GET_TASK_LIST_NODE_RANK(parent, type); 
+    }
+    else
+    {
+        sctk_assert( child->depth == task_vdepth );
+        allocation = 1;
+        list = mpcomp_alloc( sizeof(struct mpcomp_task_list_s) );
+        sctk_assert(list);
+        mpcomp_task_list_new(list);
+        tasklistNodeRank = child->tree_array_rank; 
+    }
 
-  const int depth = instance->tree_depth;
-  array_tree_level_size = (int *)mpcomp_alloc( sizeof(int) * (depth + 1) );
-  sctk_assert(array_tree_level_size);
+    MPCOMP_TASK_NODE_SET_TASK_LIST_HEAD( child, type, list ); 
+    MPCOMP_TASK_NODE_SET_LAST_STOLEN_TASK_LIST( child, type, NULL );
+    MPCOMP_TASK_NODE_SET_TASK_LIST_NODE_RANK(child, type, tasklistNodeRank);     
 
-  array_tree_level_first =
-      (int *)mpcomp_alloc( sizeof(int) * (depth + 1) );
-  sctk_assert(array_tree_level_first);
+    return allocation;
+} 
 
-  array_tree_total_size = 1;
-  array_tree_level_size[0] = 1;
-  array_tree_level_first[0] = 0;
-
-  for (i = 1; i < depth + 1; i++) {
-    const int prev_tree_level_size = array_tree_level_size[i - 1];
-    array_tree_level_size[i] = prev_tree_level_size * tree_base[i - 1];
-    array_tree_level_first[i] =
-        array_tree_level_first[i - 1] + prev_tree_level_size;
-    array_tree_total_size += array_tree_level_size[i];
-  }
-
-  MPCOMP_TASK_INSTANCE_SET_ARRAY_TREE_TOTAL_SIZE(instance,
-                                                 array_tree_total_size);
-  MPCOMP_TASK_INSTANCE_SET_ARRAY_TREE_LEVEL_SIZE(instance,
-                                                 array_tree_level_size);
-  MPCOMP_TASK_INSTANCE_SET_ARRAY_TREE_LEVEL_FIRST(instance,
-                                                  array_tree_level_first);
-}
-
-static inline void mpcomp_task_team_infos_reset(struct mpcomp_team_s *team) {
-  sctk_assert(team);
-  memset(&(team->task_infos), 0, sizeof(mpcomp_task_team_infos_t));
-}
+static inline int 
+__mpcomp_task_mvp_list_init( struct mpcomp_node_s* parent, struct mpcomp_mvp_s* child, const mpcomp_tasklist_type_t type  )
+{
+    int tasklistNodeRank, allocation;
+    mpcomp_task_list_t* list = NULL;
+    
+    if( parent->task_infos.tasklist[type] )
+    {
+        allocation = 0;
+        list = parent->task_infos.tasklist[type]; 
+        tasklistNodeRank = MPCOMP_TASK_NODE_GET_TASK_LIST_NODE_RANK( parent, type ); 
+    }
+    else
+    {
+        allocation = 1;
+        list = mpcomp_alloc( sizeof(struct mpcomp_task_list_s) );
+        sctk_assert(list);
+        mpcomp_task_list_new(list);
+        sctk_assert( child->threads );
+        tasklistNodeRank = child->threads->tree_array_rank; 
+    }
+    
+    MPCOMP_TASK_MVP_SET_TASK_LIST_HEAD( child, type, list ); 
+    MPCOMP_TASK_MVP_SET_LAST_STOLEN_TASK_LIST( child, type, NULL );
+    MPCOMP_TASK_MVP_SET_TASK_LIST_NODE_RANK( child, type, tasklistNodeRank );     
+    return allocation;
+} 
 
 static inline void 
-mpcomp_task_tree_array_node_init(struct mpcomp_node_s* parent, struct mpcomp_node_s* child, const int index)
+__mpcomp_task_node_infos_init( struct mpcomp_node_s* parent, struct mpcomp_node_s* child )
 {
-    struct mpcomp_generic_node_s* meta_node;
+    int ret, type;
+    mpcomp_instance_t* instance;
+    
+    sctk_assert( child );
+    sctk_assert( parent );
+    sctk_assert( parent->instance );
 
-    const int vdepth = parent->depth - parent->instance->root->depth;
-    const int tree_base_val = parent->instance->tree_base[vdepth];
-    const int next_tree_base_val = parent->instance->tree_base[vdepth+1];
+    instance = parent->instance;
+    sctk_assert( instance->team );
 
-    const int global_rank = parent->instance_global_rank + index; 
-    child->instance_stage_size = parent->instance_stage_size * tree_base_val;
-    child->instance_stage_first_rank = parent->instance_stage_first_rank + parent->instance_stage_size;
-    const int local_rank = global_rank - parent->instance_stage_first_rank;
-    child->instance_global_rank = child->instance_stage_first_rank + local_rank * next_tree_base_val;
+    const int larcenyMode = MPCOMP_TASK_TEAM_GET_TASK_LARCENY_MODE( instance->team ); 
 
-    meta_node = &( parent->instance->tree_array[global_rank] );
-    sctk_assert( meta_node );
-    meta_node->ptr.node = child;    
-    meta_node->type = MPCOMP_CHILDREN_NODE;
+    for (type = 0, ret = 0; type < MPCOMP_TASK_TYPE_COUNT; type++) 
+        ret += __mpcomp_task_node_list_init( parent, child, type );
 
-    /* Task list */
+    if (ret )
+    {
+        if( larcenyMode == MPCOMP_TASK_LARCENY_MODE_RANDOM ||
+            larcenyMode == MPCOMP_TASK_LARCENY_MODE_RANDOM_ORDER)
+        {
+            const int global_rank = child->tree_array_rank;
+            mpcomp_task_init_victim_random( &( instance->tree_array[global_rank] ) );   
+        }
+    }
 }
 
-static inline void 
-mpcomp_task_tree_array_mvp_init( struct mpcomp_node_s* parent, struct mpcomp_mvp_s* mvp, const int index )
+static inline void __mpcomp_task_mvp_infos_init( struct mpcomp_node_s* parent, struct mpcomp_mvp_s* child )
 {
-    struct mpcomp_generic_node_s* meta_node;
+    int ret, type;
+    mpcomp_instance_t* instance;
+    
+    sctk_assert( child );
+    sctk_assert( parent );
+    sctk_assert( parent->instance );
 
-    const int global_rank = parent->instance_global_rank + index;
-    meta_node = &( parent->instance->tree_array[global_rank] );
-    sctk_assert( meta_node );
-    meta_node->ptr.node = mvp; 
-    meta_node->type = MPCOMP_CHILDREN_LEAF;
+    instance = parent->instance;
+    sctk_assert( instance->team );
 
-    /* Task list */
+    const int larcenyMode = MPCOMP_TASK_TEAM_GET_TASK_LARCENY_MODE( instance->team ); 
+
+    for (type = 0, ret = 0; type < MPCOMP_TASK_TYPE_COUNT; type++) 
+        ret += __mpcomp_task_mvp_list_init( parent, child, type );
+
+    if (ret )
+    {
+        if( larcenyMode == MPCOMP_TASK_LARCENY_MODE_RANDOM ||
+            larcenyMode == MPCOMP_TASK_LARCENY_MODE_RANDOM_ORDER)
+        {
+            sctk_assert( child->threads );
+            const int global_rank = child->threads->tree_array_rank;
+            mpcomp_task_init_victim_random( &( instance->tree_array[global_rank] ) );   
+        }
+    }
 }
 
 static inline void mpcomp_task_team_infos_init(struct mpcomp_team_s *team,
                                                int depth) {
-  mpcomp_task_team_infos_reset(team);
+
+  memset(&(team->task_infos), 0, sizeof(mpcomp_task_team_infos_t));
 
   const int new_tasks_depth_value =
       sctk_runtime_config_get()->modules.openmp.omp_new_task_depth;
@@ -344,39 +391,38 @@ int mpcomp_task_get_task_left_in_team(struct mpcomp_team_s *);
 
 /* Return list of 'type' tasks contained in element of rank 'globalRank' */
 static inline struct mpcomp_task_list_s *
-mpcomp_task_get_list(int globalRank, mpcomp_tasklist_type_t type) {
-  mpcomp_thread_t *thread = NULL;
-  struct mpcomp_task_list_s *list = NULL;
+mpcomp_task_get_list(int globalRank, mpcomp_tasklist_type_t type) 
+{
+    mpcomp_thread_t* thread;
+    mpcomp_instance_t* instance;
+    mpcomp_generic_node_t* gen_node;
+    struct mpcomp_task_list_s* list;
 
-  sctk_assert(globalRank >= 0);
-  sctk_assert(sctk_openmp_thread_tls != NULL);
-  sctk_assert(type >= 0 && type < MPCOMP_TASK_TYPE_COUNT);
+    sctk_assert(type >= 0 && type < MPCOMP_TASK_TYPE_COUNT);
+  
+    /* Retrieve the current thread information */
+    sctk_assert(sctk_openmp_thread_tls != NULL);
+    thread = (mpcomp_thread_t *)sctk_openmp_thread_tls;
+    sctk_assert( thread->mvp );
 
-  /* Retrieve the current thread information */
-  thread = (mpcomp_thread_t *)sctk_openmp_thread_tls;
+    /* Retrieve the current thread instance */
+    sctk_assert( thread->instance );
+    instance = thread->instance;
 
-  sctk_assert(thread->mvp != NULL);
-  sctk_assert(globalRank <
-              MPCOMP_TASK_INSTANCE_GET_ARRAY_TREE_TOTAL_SIZE(thread->instance));
+    /* Retrieve target node or mvp generic node */
+    sctk_assert( globalRank >= 0 && globalRank < instance->tree_array_size );
+    gen_node = &(instance->tree_array[globalRank] );
+    
+    /* Retrieve target node or mvp tasklist */
+    if( gen_node->type == MPCOMP_CHILDREN_LEAF )
+        return  MPCOMP_TASK_MVP_GET_TASK_LIST_HEAD(gen_node->ptr.mvp, type);
 
-  if (!MPCOMP_TASK_MVP_GET_TREE_ARRAY_NODES(thread->mvp)) {
+    if( gen_node->type == MPCOMP_CHILDREN_NODE )
+        return MPCOMP_TASK_NODE_GET_TASK_LIST_HEAD(gen_node->ptr.node, type);
+
+    /* Extra node to preserve regular tree_shape */
+    sctk_assert( gen_node->type == MPCOMP_CHILDREN_NULL );
     return NULL;
-  }
-
-  if (mpcomp_is_leaf(thread->instance, globalRank)) {
-    struct mpcomp_mvp_s *mvp =
-        (struct mpcomp_mvp_s *)(MPCOMP_TASK_MVP_GET_TREE_ARRAY_NODE(
-            thread->mvp, globalRank));
-    list = MPCOMP_TASK_MVP_GET_TASK_LIST_HEAD(mvp, type);
-  } else {
-    struct mpcomp_node_s *node =
-        (struct mpcomp_node_s *)(MPCOMP_TASK_MVP_GET_TREE_ARRAY_NODE(
-            thread->mvp, globalRank));
-    list = MPCOMP_TASK_NODE_GET_TASK_LIST_HEAD(node, type);
-  }
-
-  sctk_assert(list != NULL);
-  return list;
 }
 
 struct mpcomp_task_s *__mpcomp_task_alloc(void (*fn)(void *), void *data,
