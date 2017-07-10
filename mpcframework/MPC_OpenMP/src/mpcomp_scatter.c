@@ -330,6 +330,7 @@ __mpcomp_scatter_wakeup_intermediate_node( mpcomp_node_t* node )
         {
             child_node = node->children.node[i];
             sctk_assert( child_node );
+            child_node->already_init = 0;
             child_node->num_threads = min_nthreads + ( ( i < ext_nthreads ) ? 1 : 0 );
             child_node->mvp_first_id = min_nthreads * i + ( ( i < ext_nthreads ) ? i : ext_nthreads );
             child_node->mvp_first_id += node_first_mvp;
@@ -348,6 +349,7 @@ __mpcomp_scatter_wakeup_intermediate_node( mpcomp_node_t* node )
 
         node->barrier_num_threads = nthreads;
         cur_node = 0;
+        
 
         for( i = 0; i < nthreads; i++ )
         {
@@ -356,6 +358,7 @@ __mpcomp_scatter_wakeup_intermediate_node( mpcomp_node_t* node )
             sctk_assert( child_node );
             mvp = child_node->mvp;
             sctk_assert( mvp );
+            child_node->already_init = 1;
             child_node->num_threads = 1; 
             child_node->instance = node->instance;
             child_node->mvp_first_id = node_first_mvp + i;
@@ -365,7 +368,6 @@ __mpcomp_scatter_wakeup_intermediate_node( mpcomp_node_t* node )
             memset( mvp->threads, 0, sizeof( mpcomp_thread_t ) );
             mvp->threads->root = child_node;
             mvp->threads->next = next;
-            fprintf(stderr, ":: %s :: Diffusion ancestor: %p\n", __func__, node->instance->thread_ancestor );
             mvp->threads->father = node->instance->thread_ancestor;
             mvp->threads->father_node = node;
             mvp->threads->rank = node->mvp_first_id + i;
@@ -417,7 +419,6 @@ __mpcomp_scatter_wakeup_final_mvp( mpcomp_node_t* node )
         memset( mvp->threads, 0, sizeof( mpcomp_thread_t ) );
         mvp->threads->root = NULL;
         mvp->threads->next = next;
-        fprintf(stderr, ":: %s :: Diffusion ancestor: %p\n", __func__, node->instance->thread_ancestor );
         mvp->threads->father = node->instance->thread_ancestor;
         mvp->threads->father_node = node;
         mvp->threads->rank = node->mvp_first_id + i;
@@ -436,6 +437,7 @@ __mpcomp_scatter_wakeup_final_node( mpcomp_node_t* node )
 {
     assert( node );
     assert( node->mvp ); 
+    node->already_init = 0;
     fprintf(stderr, ":: %s :: Wake Up MVP #%d max next nested %d\n", __func__, node->mvp->global_rank, node->mvp->threads->root->tree_cumulative[0]); 
     return node->mvp;
 }
@@ -452,16 +454,22 @@ __mpcomp_scatter_wakeup( mpcomp_node_t* node )
 
     /* Node Wake-Up */
     cur_node = node;
+
     while( cur_node->depth < target_depth )
     {
-        if( cur_node->child_type != MPCOMP_CHILDREN_NODE )
+        if( cur_node->already_init || cur_node->child_type != MPCOMP_CHILDREN_NODE )
             break;
+        
         cur_node = __mpcomp_scatter_wakeup_intermediate_node( cur_node );
     }    
-
-    if( cur_node->depth == target_depth )
+    
+    if( cur_node->depth == target_depth || cur_node->already_init )
+    {
+        fprintf(stderr, ":: %s :: Already complete : %d\n", __func__, cur_node->global_rank ); 
         return __mpcomp_scatter_wakeup_final_node( cur_node );
+    }
 
+    fprintf(stderr, ":: %s :: Final mvp from node %d\n", __func__, cur_node->global_rank );
     return __mpcomp_scatter_wakeup_final_mvp( cur_node );
 }
 

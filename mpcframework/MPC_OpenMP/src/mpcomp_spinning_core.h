@@ -7,6 +7,27 @@
 #include "mpcomp_task_utils.h"
 #endif /* defined( MPCOMP_OPENMP_3_0 ) */
 
+
+static inline void
+__mpcomp_instance_tree_array_root_init( struct mpcomp_node_s* root, mpcomp_instance_t* instance, const int nthreads )
+{
+
+    if( !root ) return;
+
+    root->mvp_first_id = 0;
+    root->instance = instance;
+    root->num_threads = nthreads;
+
+    root->instance_global_rank = 1;
+    root->instance_stage_first_rank = 1;
+    root->instance_stage_size = instance->tree_base[0]; 
+
+    #if defined( MPCOMP_OPENMP_3_0 ) 
+        __mpcomp_task_root_infos_init( root );
+    #endif /* defined( MPCOMP_OPENMP_3_0 )  */
+
+}
+
 static inline void 
 __mpcomp_instance_tree_array_node_init(struct mpcomp_node_s* parent, struct mpcomp_node_s* child, const int index)
 {
@@ -35,9 +56,13 @@ __mpcomp_instance_tree_array_node_init(struct mpcomp_node_s* parent, struct mpco
     memset( child->tree_array_ancestor_path, 0, ( vdepth + 1) * sizeof( int ) );
     
     for( i = 0; i < vdepth; i++ )
+    {
         child->tree_array_ancestor_path[i] = parent->tree_array_ancestor_path[i];
+        fprintf(stderr, ":: %s :: Node #%d Depth: #%d Ancestor: #%d\n", __func__, child->global_rank, i, child->tree_array_ancestor_path[i] );
+    }
 
     child->tree_array_ancestor_path[vdepth] = parent->tree_array_rank;
+    fprintf(stderr, ":: %s :: Node #%d Depth: #%d Ancestor: #%d\n", __func__, child->global_rank, vdepth, child->tree_array_ancestor_path[vdepth] );
 
 #if defined( MPCOMP_OPENMP_3_0 ) 
     __mpcomp_task_node_infos_init( parent, child );
@@ -62,6 +87,8 @@ __mpcomp_instance_tree_array_mvp_init( struct mpcomp_node_s* parent, struct mpco
     sctk_assert( mvp->threads );
 
     mvp->threads->tree_array_rank = global_rank;
+
+    fprintf(stderr, ":: %s :: parent->global_rank : %d\n", __func__, parent->global_rank );
 
     mvp->threads->tree_array_ancestor_path = (int*) mpcomp_alloc( ( vdepth + 1 ) * sizeof( int ) );
     sctk_assert( mvp->threads->tree_array_ancestor_path );

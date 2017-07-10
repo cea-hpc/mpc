@@ -26,6 +26,7 @@
 #include "mpcomp_barrier.h"
 
 #include "mpcomp_alloc.h"
+#include "mpcomp_spinning_core.h"
 
 #include "mpcomp_parallel_region.h"
 #include "mpcomp_loop.h"
@@ -127,21 +128,8 @@ __mpcomp_internal_begin_parallel_region( mpcomp_parallel_region_t *info, const u
 
     instance->team->depth = t->instance->team->depth + 1;
 
-    if( instance_info->num_threads > 1 )
-    {
-        /* Set root node data */
-        t->root->mvp_first_id = 0;
-        t->root->instance = t->children_instance;
-        t->root->num_threads = instance_info->num_threads;
-        t->root->instance_stage_size = 2;
-        t->root->instance_global_rank = 1;
-        t->root->instance_stage_first_rank = 1;
-#if defined( MPCOMP_OPENMP_3_0 ) 
-        __mpcomp_task_root_infos_init( t->root );
-#endif /* defined( MPCOMP_OPENMP_3_0 )  */
-        /* Start nodes wake up */
-        __mpcomp_wakeup_node( t->root );    
-    }
+    __mpcomp_instance_tree_array_root_init( t->root, t->children_instance, instance_info->num_threads );
+    __mpcomp_wakeup_node( t->root );    
 
 	return ;
 }

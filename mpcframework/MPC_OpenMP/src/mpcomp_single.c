@@ -58,7 +58,6 @@ int __mpcomp_do_single(void)
    */
   	if( num_threads == 1	) 
 	{
-        fprintf(stderr, ":: %s :: Skip single\n", __func__ );
 		retval = 1;
 	}
 	else
@@ -120,6 +119,7 @@ void *__mpcomp_do_single_copyprivate_begin(void) {
   if (__mpcomp_do_single())
     return NULL;
 
+ 
   /* Grab the thread info */
   mpcomp_thread_t *t = mpcomp_get_thread_tls();
 

@@ -317,6 +317,7 @@ typedef struct mpcomp_mvp_s
 /* OpenMP Node */
 typedef struct mpcomp_node_s 
 {
+    int already_init;
     /* -- MVP Thread specific informations --                   */
     mpcomp_meta_tree_node_t *tree_array;
     int* tree_array_ancestor_path;  
