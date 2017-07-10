@@ -136,8 +136,6 @@ typedef struct mpcomp_thread_s {
     struct mpcomp_mvp_s *mvp; 
     /** Root node for nested parallel region */ 
     struct mpcomp_node_s* root;
-    /** Father thread */
-    struct mpcomp_thread_s* father; 
     /* -- Parallel region information -- */
     /** Information needed when entering a new parallel region */
     mpcomp_parallel_region_t info;
@@ -212,6 +210,8 @@ typedef struct mpcomp_thread_s {
 
     /** Nested thread chaining ( heap ) */
     struct mpcomp_thread_s *next;
+    /** Father thread */
+    struct mpcomp_thread_s *father;
 } mpcomp_thread_t;
 
 /* Instance of OpenMP runtime */
@@ -240,6 +240,8 @@ typedef struct mpcomp_instance_s
     /** microVPs number at each depth */
   	int *tree_nb_nodes_per_depth;
     int *tree_first_node_per_depth;
+
+    struct mpcomp_thread_t* thread_ancestor;
 
 #if MPCOMP_TASK
     /** Task information of this instance */

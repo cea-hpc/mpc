@@ -235,6 +235,7 @@ __mpcomp_task_node_list_init( struct mpcomp_node_s* parent, struct mpcomp_node_s
 {
     int tasklistNodeRank, allocation;
     mpcomp_task_list_t* list;
+    mpcomp_task_node_infos_t* infos;
 
     const int task_vdepth = MPCOMP_TASK_TEAM_GET_TASKLIST_DEPTH( parent->instance->team, type );
     const int child_vdepth = child->depth - parent->instance->root->depth;
@@ -242,12 +243,14 @@ __mpcomp_task_node_list_init( struct mpcomp_node_s* parent, struct mpcomp_node_s
     if( child_vdepth < task_vdepth + 1 )
         return 0;
     
+    infos = &( child->task_infos );
+
     if( parent->depth >= task_vdepth )
     {
         allocation = 0;
         list = parent->task_infos.tasklist[type]; 
         sctk_assert( list );
-        tasklistNodeRank = MPCOMP_TASK_NODE_GET_TASK_LIST_NODE_RANK(parent, type); 
+        tasklistNodeRank = parent->task_infos.tasklistNodeRank[type];
     }
     else
     {
@@ -259,9 +262,9 @@ __mpcomp_task_node_list_init( struct mpcomp_node_s* parent, struct mpcomp_node_s
         tasklistNodeRank = child->tree_array_rank; 
     }
 
-    MPCOMP_TASK_NODE_SET_TASK_LIST_HEAD( child, type, list ); 
-    MPCOMP_TASK_NODE_SET_LAST_STOLEN_TASK_LIST( child, type, NULL );
-    MPCOMP_TASK_NODE_SET_TASK_LIST_NODE_RANK(child, type, tasklistNodeRank);     
+    infos->tasklist[type] = list; 
+    infos->lastStolen_tasklist[type] = NULL;
+    infos->tasklistNodeRank[type] = tasklistNodeRank; 
 
     return allocation;
 } 
@@ -270,13 +273,16 @@ static inline int
 __mpcomp_task_mvp_list_init( struct mpcomp_node_s* parent, struct mpcomp_mvp_s* child, const mpcomp_tasklist_type_t type  )
 {
     int tasklistNodeRank, allocation;
-    mpcomp_task_list_t* list = NULL;
+    mpcomp_task_list_t* list;
+    mpcomp_task_mvp_infos_t* infos;
     
+    infos = &( child->task_infos );
+
     if( parent->task_infos.tasklist[type] )
     {
         allocation = 0;
         list = parent->task_infos.tasklist[type]; 
-        tasklistNodeRank = MPCOMP_TASK_NODE_GET_TASK_LIST_NODE_RANK( parent, type ); 
+        tasklistNodeRank = parent->task_infos.tasklistNodeRank[type];
     }
     else
     {
@@ -288,11 +294,35 @@ __mpcomp_task_mvp_list_init( struct mpcomp_node_s* parent, struct mpcomp_mvp_s* 
         tasklistNodeRank = child->threads->tree_array_rank; 
     }
     
-    MPCOMP_TASK_MVP_SET_TASK_LIST_HEAD( child, type, list ); 
-    MPCOMP_TASK_MVP_SET_LAST_STOLEN_TASK_LIST( child, type, NULL );
-    MPCOMP_TASK_MVP_SET_TASK_LIST_NODE_RANK( child, type, tasklistNodeRank );     
+    infos->tasklist[type] = list; 
+    infos->lastStolen_tasklist[type] = NULL;
+    infos->tasklistNodeRank[type] = tasklistNodeRank; 
+
     return allocation;
 } 
+
+static inline int
+__mpcomp_task_root_list_init( struct mpcomp_node_s* root, const mpcomp_tasklist_type_t type  )
+{
+    mpcomp_task_list_t* list;
+    mpcomp_task_node_infos_t* infos;
+
+    const int task_vdepth = MPCOMP_TASK_TEAM_GET_TASKLIST_DEPTH( root->instance->team, type );
+   
+    if( task_vdepth > 0 ) return 0; 
+
+    infos = &( root->task_infos );
+
+    list = mpcomp_alloc( sizeof(struct mpcomp_task_list_s) );
+    sctk_assert(list);
+    mpcomp_task_list_new(list);
+    
+    infos->tasklist[type] = list; 
+    infos->lastStolen_tasklist[type] = NULL;
+    infos->tasklistNodeRank[type] = 0; 
+
+    return 1;
+}
 
 static inline void 
 __mpcomp_task_node_infos_init( struct mpcomp_node_s* parent, struct mpcomp_node_s* child )
@@ -348,6 +378,33 @@ static inline void __mpcomp_task_mvp_infos_init( struct mpcomp_node_s* parent, s
             sctk_assert( child->threads );
             const int global_rank = child->threads->tree_array_rank;
             mpcomp_task_init_victim_random( &( instance->tree_array[global_rank] ) );   
+        }
+    }
+}
+
+static inline void 
+__mpcomp_task_root_infos_init( struct mpcomp_node_s* root )
+{
+    int ret, type;
+    mpcomp_instance_t* instance;
+    
+    sctk_assert( root );
+    sctk_assert( root->instance );
+
+    instance = root->instance;
+    sctk_assert( instance->team );
+
+    const int larcenyMode = MPCOMP_TASK_TEAM_GET_TASK_LARCENY_MODE( instance->team ); 
+
+    for (type = 0, ret = 0; type < MPCOMP_TASK_TYPE_COUNT; type++) 
+        ret += __mpcomp_task_root_list_init( root, type );
+
+    if (ret )
+    {
+        if( larcenyMode == MPCOMP_TASK_LARCENY_MODE_RANDOM ||
+            larcenyMode == MPCOMP_TASK_LARCENY_MODE_RANDOM_ORDER)
+        {
+            mpcomp_task_init_victim_random( &( instance->tree_array[0] ) );   
         }
     }
 }

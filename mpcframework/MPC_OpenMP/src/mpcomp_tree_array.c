@@ -517,11 +517,14 @@ __mpcomp_openmp_node_initialisation( mpcomp_meta_tree_node_t* root, const int* t
         new_node->tree_nb_nodes_per_depth = mpcomp_alloc( sizeof( int ) * new_node->tree_depth );
         sctk_assert( new_node->tree_nb_nodes_per_depth );
         
+        const int tmp = root_node->tree_base[new_node->depth];
+        const int tmp2 = root_node->tree_nb_nodes_per_depth[new_node->depth];
+
         for( i = 0, j = new_node->depth; i < new_node->tree_depth; i++, j++ )
         {
-            new_node->tree_base[i] = root_node->tree_base[j];
+            new_node->tree_base[i] = root_node->tree_base[j] / tmp;
             new_node->tree_cumulative[i] = root_node->tree_cumulative[j];
-            new_node->tree_nb_nodes_per_depth[i] = root_node->tree_nb_nodes_per_depth[j];
+            new_node->tree_nb_nodes_per_depth[i] = root_node->tree_nb_nodes_per_depth[j] / tmp2;
         }   
     }
 
@@ -625,7 +628,7 @@ __mpcomp_openmp_mvp_initialisation( void* args )
     mpcomp_tree_array_task_thread_init( new_mvp->threads );  
 #endif /* MPCOMP_OPENMP_3_0 */
 
-    new_mvp->threads->father = NULL;
+    new_mvp->threads->next = NULL;
     new_mvp->threads->info.num_threads = 1;
 
     new_mvp->depth = max_depth;

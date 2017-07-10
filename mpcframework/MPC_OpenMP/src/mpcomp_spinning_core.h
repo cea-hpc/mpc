@@ -3,6 +3,10 @@
 
 #include "mpcomp_types.h"
 
+#if defined( MPCOMP_OPENMP_3_0 ) 
+#include "mpcomp_task_utils.h"
+#endif /* defined( MPCOMP_OPENMP_3_0 ) */
+
 static inline void 
 __mpcomp_instance_tree_array_node_init(struct mpcomp_node_s* parent, struct mpcomp_node_s* child, const int index)
 {
@@ -59,9 +63,9 @@ __mpcomp_instance_tree_array_mvp_init( struct mpcomp_node_s* parent, struct mpco
 
     mvp->threads->tree_array_rank = global_rank;
 
-    mvp->threads->tree_array_ancestor_path = (int*) mpcomp_alloc( ( vdepth + 1) * sizeof( int ) );
+    mvp->threads->tree_array_ancestor_path = (int*) mpcomp_alloc( ( vdepth + 1 ) * sizeof( int ) );
     sctk_assert( mvp->threads->tree_array_ancestor_path );
-    memset( mvp->threads->tree_array_ancestor_path, 0,  ( vdepth + 1) * sizeof( int ) );
+    memset( mvp->threads->tree_array_ancestor_path, 0,  ( vdepth + 1 ) * sizeof( int ) );
     
     for( i = 0; i < vdepth; i++ )
        mvp->threads->tree_array_ancestor_path[i] = parent->tree_array_ancestor_path[i];

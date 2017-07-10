@@ -66,8 +66,8 @@ typedef struct kmp_task { /* GEH: Shouldn't this be aligned somehow? */
  * Initialization of OpenMP task environment
  */
 void mpcomp_task_scheduling_infos_init(void) {
-  mpcomp_task_thread_infos_init(sctk_openmp_thread_tls);
-  mpcomp_task_tree_infos_init();
+  //mpcomp_task_thread_infos_init(sctk_openmp_thread_tls);
+  //mpcomp_task_tree_infos_init();
 }
 
 void __mpcomp_task_intel_wrapper(void *task) {

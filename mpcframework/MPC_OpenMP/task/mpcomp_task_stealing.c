@@ -38,7 +38,7 @@ mpcomp_task_get_depth_from_global_rank( const int globalRank)
     instance = thread->instance;
 
     sctk_assert( globalRank >= 0 && globalRank < instance->tree_array_size );
-    stk_assert( instance->tree_array );
+    sctk_assert( instance->tree_array );
 
     gen_node = &( instance->tree_array[globalRank] );
     sctk_assert( gen_node->type != MPCOMP_CHILDREN_NULL ); 

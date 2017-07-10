@@ -89,7 +89,7 @@ static int __mpcomp_tree_rank_get_next_depth( mpcomp_node_t* node, const int exp
 mpcomp_instance_t* 
 __mpcomp_tree_array_instance_init( mpcomp_thread_t* thread, const int expected_nb_mvps )
 {
-    mpcomp_thread_t* master;
+    mpcomp_thread_t* master, *current_thread;
     mpcomp_instance_t* instance;
 
     sctk_assert( thread );
@@ -115,9 +115,16 @@ __mpcomp_tree_array_instance_init( mpcomp_thread_t* thread, const int expected_n
     mpcomp_task_team_infos_init( instance->team, instance->tree_depth );
 #endif /* MPCOMP_OPENMP_3_0 */
 
+    master->next = thread;
+    master->mvp = thread->mvp;
     master->root = thread->root;
-    master->father = thread;
+    master->father = thread->father;
+    instance->thread_ancestor = master;
+    
+    fprintf(stderr, ":: %s :: new thread: %p father: %p mvp: %p\n", __func__, master, master->father, thread->mvp );
     thread->mvp->threads = master;
+
+
 
     return instance;
 }
@@ -144,6 +151,7 @@ __mpcomp_wakeup_mvp( mpcomp_mvp_t *mvp )
     
     /* Set thread rank */
     new_thread->mvp = mvp;
+    fprintf(stderr, ":: %s :: Update mvp info thread: %p mvp: %p\n", __func__, new_thread, new_thread->mvp );
     new_thread->instance = mvp->instance;
 
     sctk_spinlock_init( &( new_thread->info.update_lock ), 0 ); 
@@ -178,6 +186,9 @@ void __mpcomp_start_openmp_thread( mpcomp_mvp_t *mvp )
     __mpcomp_add_mvp_saved_context( mvp );
     cur_thread =  __mpcomp_wakeup_mvp( mvp );
 
+    if( sctk_openmp_thread_tls )
+        fprintf(stderr, "[WAKE] Switch TLS : %p -> %p\n", sctk_openmp_thread_tls, cur_thread  );
+
     sctk_openmp_thread_tls = (void*) cur_thread; 
 
     __mpcomp_instance_post_init( cur_thread );
@@ -190,11 +201,12 @@ void __mpcomp_start_openmp_thread( mpcomp_mvp_t *mvp )
        
 	__mpcomp_internal_full_barrier( mvp );
  
-    sctk_openmp_thread_tls = mvp->threads->father;
+    sctk_openmp_thread_tls = mvp->threads->next;
     
-    if( mvp->threads->father )
+    if( mvp->threads->next )
     {
-        mvp->threads = mvp->threads->father;
+        fprintf(stderr, "[SLEEP] Switch TLS : %p -> %p\n", mvp->threads,  mvp->threads->next );
+        mvp->threads = mvp->threads->next;
         mpcomp_free( cur_thread ); 
     }
 

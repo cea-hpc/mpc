@@ -133,11 +133,12 @@ __mpcomp_internal_begin_parallel_region( mpcomp_parallel_region_t *info, const u
         t->root->mvp_first_id = 0;
         t->root->instance = t->children_instance;
         t->root->num_threads = instance_info->num_threads;
-#if defined( MPCOMP_OPENMP_3_0 ) 
         t->root->instance_stage_size = 2;
         t->root->instance_global_rank = 1;
         t->root->instance_stage_first_rank = 1;
-#endif /* defined( MPCOMP_OPENMP_3_0 ) */
+#if defined( MPCOMP_OPENMP_3_0 ) 
+        __mpcomp_task_root_infos_init( t->root );
+#endif /* defined( MPCOMP_OPENMP_3_0 )  */
         /* Start nodes wake up */
         __mpcomp_wakeup_node( t->root );    
     }
