@@ -2921,7 +2921,7 @@ int PMPC_Restarted(int *flag) {
   MPC_ERROR_SUCESS();
 }
 
-static MPC_Checkpoint_state global_state;
+static volatile MPC_Checkpoint_state global_state = MPC_STATE_ERROR;
 
 /**
  * Trigger a checkpoint for the whole application.
@@ -2949,10 +2949,10 @@ int PMPC_Checkpoint(MPC_Checkpoint_state* state) {
 		static sctk_atomics_int gen_acquire = OPA_INT_T_INITIALIZER(0);
 		static sctk_atomics_int gen_release = OPA_INT_T_INITIALIZER(0);
 		static sctk_atomics_int gen_current = OPA_INT_T_INITIALIZER(0);
-		int * task_generations;
+		static int * task_generations;
 
 		/* init once the genration array */
-		if(sctk_atomics_cas_int(&init_once, 0, 1))
+		if(sctk_atomics_cas_int(&init_once, 0, 1) == 0)
 		{
 			task_generations = (int*)malloc(sizeof(int) * local_nbtasks);
 			memset(task_generations, 0, sizeof(int) * local_nbtasks);
@@ -2962,7 +2962,6 @@ int PMPC_Checkpoint(MPC_Checkpoint_state* state) {
 		{
 			while(sctk_atomics_load_int(&init_once) != 2)
 				sctk_thread_yield();
-
 		}
 
 		/* ensure there won't be any overlapping betwen different MPC_Checkpoint() calls */
@@ -2981,15 +2980,14 @@ int PMPC_Checkpoint(MPC_Checkpoint_state* state) {
 			{
 				global_state = sctk_ft_checkpoint();
 			}
-			
+		
+			/* TODO: propagate the global_state to all proceses */
 			sctk_pmi_barrier();
 
 			/* set gen_release to 0, prepare the end of current generation */ 
 			sctk_atomics_store_int(&gen_release, 0);
 			/* set gen_aquire to 0: unlock waiting tasks */
 			sctk_atomics_store_int(&gen_acquire, 0);
-
-
 		}
 		else
 		{
@@ -3002,11 +3000,18 @@ int PMPC_Checkpoint(MPC_Checkpoint_state* state) {
 		 * The state should also be broadcasted to other processes */
 		*state = global_state;
 
+		/* depending on status, deferring the work to the FT system */
+		switch(global_state)
+		{
+			case MPC_STATE_CHECKPOINT: sctk_ft_post_checkpoint(); break;
+			case MPC_STATE_RESTART:    sctk_ft_post_restart(); break;
+			default: break;
+		}
+
 		/* If I'm the last task to reach here, increment the global generation counter */ 
 		if(sctk_atomics_fetch_and_incr_int(&gen_release) == local_nbtasks -1)
 		{
 			sctk_atomics_incr_int(&gen_current);
-			sctk_atomics_store_int(&gen_release, 0);
 		}
 
 		/* the current task finished the work for the current generation */

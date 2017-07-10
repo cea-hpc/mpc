@@ -54,7 +54,7 @@ int sctk_ft_init()
 	assume_m(dmtcp_is_enabled() == 1, "DMTCP not running but reaching FT interface");
 	sctk_ft_set_ckptdir(".");
 	sctk_ft_set_tmpdir(".");
-	if(dmtcp_get_ckpt_signal() != SIGUSR2)
+	if(dmtcp_get_ckpt_signal() == SIGUSR2)
 	{
 		sctk_error("DMTCP and MPC both set an handler for SIGUSR2");
 		sctk_fatal("Signal value: %d", dmtcp_get_ckpt_signal());
@@ -73,6 +73,7 @@ int sctk_ft_checkpoint()
 {
 	sctk_ft_state_t st = MPC_STATE_ERROR;
 #ifdef MPC_USE_DMTCP
+	sctk_debug("Triggers DMTCP checkpoint");
 	int ev = dmtcp_checkpoint();
 
 	/* TODO: Disabling networks (only IB ? ) */
@@ -83,10 +84,7 @@ int sctk_ft_checkpoint()
 		case DMTCP_NOT_PRESENT: sctk_fatal("MPC C/R system does not have any initialized FT layer"); break;
 		default: st = MPC_STATE_ERROR; break;
 	}
-	
-	/* Probably not necessary to re-enable network (delegate it to on-demand support) */
 #endif
-
 	return st;
 }
 
@@ -108,4 +106,14 @@ int sctk_ft_finalize()
 {
 #ifdef MPC_USE_DMTCP
 #endif
+}
+
+int sctk_ft_post_checkpoint()
+{
+	sctk_debug("Post-Checkpoint");
+}
+
+int sctk_ft_post_restart()
+{
+	sctk_debug("Post-Restart");
 }

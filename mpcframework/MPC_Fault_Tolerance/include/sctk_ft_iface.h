@@ -34,6 +34,10 @@ int sctk_ft_enabled();
 
 int sctk_ft_checkpoint();
 
+int sctk_ft_post_checkpoint();
+
+int sctk_ft_post_restart();
+
 int sctk_ft_finalize();
 
 #endif /* ifndef __FT_IFACE_H */
