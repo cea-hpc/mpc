@@ -10,6 +10,7 @@
 #define MPCOMP_OPENMP_3_0
 
 #if defined( MPCOMP_OPENMP_3_0 )
+#warning "MPC_OpenMP use MPCOMP_OPENMP_3_0 support"
 #define MPCOMP_TASK 1
 #endif /* MPCOMP_OPENMP_3_0 */
 

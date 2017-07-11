@@ -154,11 +154,12 @@ mpcomp_tree_array_task_thread_init( struct mpcomp_thread_s* thread )
     __mpcomp_task_infos_init(implicit_task, NULL, NULL, thread); 
     sctk_atomics_store_int( &( implicit_task->refcount ), 1);  
 
-#if MPCOMP_TASK_DEP_SUPPORT
+#ifdef MPCOMP_USE_TASKDEP
     implicit_task->task_dep_infos = mpcomp_alloc(sizeof(mpcomp_task_dep_task_infos_t));
     sctk_assert(implicit_task->task_dep_infos); 
     memset(implicit_task->task_dep_infos, 0, sizeof(mpcomp_task_dep_task_infos_t ));
-#endif /* MPCOMP_TASK_DEP_SUPPORT */
+    fprintf(stderr, ":: %s :: thread: %p init task_dep_infos\n", __func__, thread);
+#endif /* MPCOMP_USE_TASKDEP */
     
     tied_tasks_list = mpcomp_alloc( sizeof(mpcomp_task_list_t) );
     sctk_assert(tied_tasks_list);
@@ -170,9 +171,11 @@ mpcomp_tree_array_task_thread_init( struct mpcomp_thread_s* thread )
 static inline void mpcomp_task_thread_infos_init(struct mpcomp_thread_s *thread) {
   sctk_assert(thread);
 
+
   if (!MPCOMP_TASK_THREAD_IS_INITIALIZED(thread)) {
     mpcomp_task_t *implicit_task;
     mpcomp_task_list_t *tied_tasks_list;
+
 
     const int numa_node_id = mpcomp_task_thread_get_numa_node_id(thread);
 

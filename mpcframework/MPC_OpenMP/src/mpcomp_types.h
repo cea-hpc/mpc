@@ -29,6 +29,7 @@
 #define OMPT_SUPPORT 1
 
 #include "mpcomp_task.h"
+#include "mpcomp_types_def.h"
 #include "mpcomp_types_enum.h"
 #include "mpcomp_types_struct.h"
 

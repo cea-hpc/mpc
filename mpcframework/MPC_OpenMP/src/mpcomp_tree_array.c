@@ -624,7 +624,10 @@ __mpcomp_openmp_mvp_initialisation( void* args )
     sctk_assert( new_mvp->threads );
     memset( new_mvp->threads, 0, sizeof( mpcomp_thread_t ) );
 
+    fprintf(stderr, ":: %s :: Init mvp default threads\n", __func__ );
+
 #if defined( MPCOMP_OPENMP_3_0 )
+    fprintf(stderr, ":: %s :: Init mvp default threads TASK_INFOS\n", __func__);
     mpcomp_tree_array_task_thread_init( new_mvp->threads );  
 #endif /* MPCOMP_OPENMP_3_0 */
 
@@ -632,10 +635,6 @@ __mpcomp_openmp_mvp_initialisation( void* args )
     new_mvp->threads->info.num_threads = 1;
 
     new_mvp->depth = max_depth;
-
-#if MPCOMP_TASK
-    mpcomp_task_mvp_task_infos_reset( new_mvp );   
-#endif /* MPCOMP_TASK */
 
     /* Generic infos */
     me->type = MPCOMP_META_TREE_LEAF;
@@ -724,6 +723,10 @@ static void
     master->info.icvs.run_sched_var = mpcomp_global_icvs.def_sched_var; 
     master->info.num_threads = 1;
     assert( root->mvp );
+
+#if defined( MPCOMP_OPENMP_3_0 )
+    mpcomp_tree_array_task_thread_init( master );
+#endif /* MPCOMP_OPENMP_3_0 */
 }
 
 void

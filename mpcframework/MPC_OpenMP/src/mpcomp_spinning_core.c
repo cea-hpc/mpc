@@ -104,23 +104,28 @@ __mpcomp_tree_array_instance_init( mpcomp_thread_t* thread, const int expected_n
     sctk_assert( instance->team );
     memset( instance->team, 0, sizeof( mpcomp_team_t ) );
 
+    instance->thread_ancestor = master;
+
+#if defined( MPCOMP_OPENMP_3_0 )
+    mpcomp_task_team_infos_init( instance->team, instance->tree_depth );
+#endif /* MPCOMP_OPENMP_3_0 */
+
     __mpcomp_tree_array_team_reset( instance->team );
 
     /* Allocate new thread context */
     master = ( mpcomp_thread_t* ) mpcomp_alloc( sizeof( mpcomp_thread_t ) );  
     sctk_assert( master );
     memset( master, 0, sizeof( mpcomp_thread_t ) );
-    
-#if defined( MPCOMP_OPENMP_3_0 )
-    mpcomp_task_team_infos_init( instance->team, instance->tree_depth );
-#endif /* MPCOMP_OPENMP_3_0 */
 
     master->next = thread;
     master->mvp = thread->mvp;
     master->root = thread->root;
     master->father = thread->father;
-    instance->thread_ancestor = master;
     thread->mvp->threads = master;
+
+#if defined( MPCOMP_OPENMP_3_0 )
+    mpcomp_tree_array_task_thread_init( master );
+#endif /* MPCOMP_OPENMP_3_0 */
 
     return instance;
 }
@@ -231,7 +236,6 @@ void mpcomp_slave_mvp_node( mpcomp_mvp_t *mvp )
 #if MPCOMP_TRANSFER_INFO_ON_NODES
             spin_node->info = spin_node->father->info;
 #endif /* MPCOMP_TRANSFER_INFO_ON_NODES */
-            fprintf(stderr, ":: %s :: Node #%d\n", __func__,  spin_node->global_rank );
             __mpcomp_wakeup_node( spin_node );
             __mpcomp_start_openmp_thread( mvp );
         }

@@ -206,7 +206,7 @@ void __mpcomp_start_parallel_region(void (*func)(void *), void *shared,
   	__mpcomp_init();
 
 
-  	t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
+  	t = (mpcomp_thread_t *) sctk_openmp_thread_tls;
   	sctk_assert(t != NULL);
 
   	__mpcomp_parallel_region_infos_init(&info);

@@ -51,7 +51,7 @@ void __mpcomp_internal_full_barrier(mpcomp_mvp_t *mvp) {
   new_root = thread->instance->root;
 
 #if MPCOMP_TASK
-//   mpcomp_taskwait();
+   mpcomp_taskwait();
 #endif /* MPCOMP_TASK */
 
 	/* Step 1: Climb in the tree */
@@ -72,7 +72,7 @@ void __mpcomp_internal_full_barrier(mpcomp_mvp_t *mvp) {
           while (b_done == c->barrier_done) {
             sctk_thread_yield();
 #if MPCOMP_TASK
-//            mpcomp_task_schedule();
+            mpcomp_task_schedule();
 #endif /* MPCOMP_TASK */
 		}
 	} else {
@@ -116,7 +116,7 @@ void __mpcomp_internal_half_barrier_start( mpcomp_mvp_t *mvp )
   sctk_assert( c );
   sctk_assert(new_root != NULL);
 
-#if 0 //MPCOMP_TASK
+#if 1 //MPCOMP_TASK
   (void)mpcomp_thread_tls_store(&(mvp->threads[0]));
   __mpcomp_internal_full_barrier(mvp);
   (void)mpcomp_thread_tls_store_father(); // To check...
