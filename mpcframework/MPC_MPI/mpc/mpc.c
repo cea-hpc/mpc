@@ -2830,87 +2830,6 @@ void PMPC_Abort_error(MPC_Comm *comm, int *error, char *message, char *file,
   sctk_abort();
 }
 
-static void MPC_Checkpoint_restart_init() {
-  if (sctk_checkpoint_mode) {
-#if 1
-    not_implemented();
-#else
-    int rank;
-    sctk_task_specific_t *task_specific;
-    task_specific = __MPC_get_task_specific();
-    __MPC_Barrier(MPC_COMM_WORLD);
-    __MPC_Comm_rank(MPC_COMM_WORLD, &rank, task_specific);
-    if (rank == 0) {
-      FILE *file;
-      int size;
-      int nb_processes;
-      char filename[SCTK_MAX_FILENAME_SIZE];
-      __MPC_Comm_size(MPC_COMM_WORLD, &size);
-      PMPC_Process_number(&nb_processes);
-      if (sctk_restart_mode == 0) {
-        /*Normal start */
-        sprintf(filename, "%s/Job_description", sctk_store_dir);
-        file = fopen(filename, "w+");
-        assume(file != NULL);
-        fprintf(file, "Job with %d tasks on %d processes\n", size,
-                nb_processes);
-        sctk_launch_contribution(file);
-        fclose(file);
-      } else {
-        sctk_warning("Restart the job");
-        not_reachable();
-      }
-    }
-    __MPC_Barrier(MPC_COMM_WORLD);
-    {
-      FILE *file;
-      char name[SCTK_MAX_FILENAME_SIZE];
-      sctk_thread_t self;
-      void *self_p = NULL;
-      int vp;
-
-      self = sctk_thread_self();
-      memcpy(&self_p, &self, sizeof(long));
-      PMPC_Processor_rank(&vp);
-      sprintf(name, "%s/Task_%d", sctk_store_dir, rank);
-
-      file = fopen(name, "w+");
-      assume(file != NULL);
-      fprintf(file, "Restart 0\n");
-      fprintf(file, "Process %d\n", sctk_process_rank);
-      fprintf(file, "Thread %p\n", self_p);
-      fprintf(file, "Virtual processor %d\n", vp);
-      fclose(file);
-    }
-    {
-      char name[1024];
-      PMPC_Wait_pending_all_comm();
-      sprintf(name, "task_%p_%lu", sctk_thread_self(), (unsigned long)0);
-
-      sctk_thread_dump(name);
-    }
-    __MPC_Barrier(MPC_COMM_WORLD);
-    sctk_restart_mode = 0;
-#endif
-  }
-}
-static void MPC_Checkpoint_restart_end() {
-  if (sctk_checkpoint_mode) {
-#if 0
-      char name[SCTK_MAX_FILENAME_SIZE];
-      int rank;
-      sctk_task_specific_t *task_specific;
-      task_specific = __MPC_get_task_specific ();
-      __MPC_Comm_rank (MPC_COMM_WORLD, &rank, task_specific);
-      sctk_thread_dump_clean ();
-      sprintf (name, "%s/Task_%d", sctk_store_dir, rank);
-      remove (name);
-#else
-    not_implemented();
-#endif
-  }
-}
-
 int PMPC_Restarted(int *flag) {
   void *f;
   f = sctk_thread_getspecific_mpc(sctk_check_point_key);
@@ -3023,98 +2942,6 @@ int PMPC_Checkpoint(MPC_Checkpoint_state* state) {
 	}
 #endif
 	MPC_ERROR_SUCESS();
-}
-
-int PMPC_Checkpoint_timed(unsigned int sec, MPC_Comm comm) {
-#if 0
-  if (sctk_checkpoint_mode)
-    {
-      static volatile unsigned long perform_check = 1;
-      static volatile unsigned long long last_time = 0;
-      unsigned long perform;
-      unsigned long tmp_perform;
-      int rank;
-      char name[1024];
-      static unsigned long step = 1;
-      int restarted;
-      sctk_task_specific_t *task_specific;
-      task_specific = __MPC_get_task_specific ();
-
-      sctk_thread_setspecific_mpc (sctk_check_point_key, ((void *) 0));
-
-      mpc_check_comm (comm, comm);
-      __MPC_Comm_rank (comm, &rank, task_specific);
-      perform = perform_check;
-
-      if (perform != 0)
-	{
-	  int total_rank;
-
-	  __MPC_Comm_rank (MPC_COMM_WORLD, &total_rank, task_specific);
-	  assume (rank == total_rank);
-
-	  sprintf (name, "task_%p_%lu", sctk_thread_self (), perform);
-
-	  PMPC_Wait_pending_all_comm ();
-
-	  if (rank == 0)
-	    {
-	      fprintf (stderr, "Checkpoint %lu in file %s\n", perform, name);
-	    }
-	  sctk_thread_dump (name);
-	  step = perform + 1;
-	  if (perform >= 2)
-	    {
-	      sprintf (name, "%s/task_%p_%lu", sctk_store_dir,
-		       sctk_thread_self (), perform - 2);
-	      remove (name);
-	    }
-	  last_time = sctk_timer;
-	  PMPC_Restarted (&restarted);
-	  if (restarted == 1)
-	    {
-	      sctk_ptp_per_task_init (rank);
-	      __MPC_Barrier (MPC_COMM_WORLD);
-
-#if defined(__GNU_COMPILER) || defined(__INTEL_COMPILER)
-INFO("Si on redemarre , recreation des commnicateurs")
-#endif
-	    }
-	}
-
-      if (rank == 0)
-	{
-	  unsigned long long tmp_time = 0;
-	  tmp_time = sctk_timer;
-	  if ((tmp_time - last_time) * sctk_time_interval >= sec * 1000)
-	    {
-	      FILE *last;
-	      tmp_perform = step;
-
-	      sprintf (name, "%s/last_point", sctk_store_dir);
-	      last = fopen (name, "w");
-	      assume (last != NULL);
-	      fprintf (last, "%lu\n", step);
-	      fclose (last);
-
-	      step++;
-	      last_time = tmp_time;
-	    }
-	  else
-	    {
-	      tmp_perform = 0;
-	    }
-	}
-
-      PMPC_Bcast (&tmp_perform, 1, MPC_LONG, 0, comm);
-
-      perform_check = tmp_perform;
-    }
-  MPC_ERROR_SUCESS ();
-#else
-  not_implemented();
-#endif
-  return 0;
 }
 
 int PMPC_Migrate() {
@@ -3379,8 +3206,6 @@ int sctk_user_main(int argc, char **argv) {
   MPC_Task_hook(sctk_get_task_rank());
 #endif
 
-  /*MPC_Checkpoint_restart_init();*/
-
 #ifdef MPC_OpenMP
 //__mpcomp_init() ;
 #endif
@@ -3404,8 +3229,6 @@ int sctk_user_main(int argc, char **argv) {
 #ifdef MPC_OpenMP
 //__mpcomp_exit() ;
 #endif
-
-  /*MPC_Checkpoint_restart_end();*/
 
   sctk_nodebug("Wait for pending messages");
 
