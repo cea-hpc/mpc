@@ -459,8 +459,12 @@ typedef enum {
   MPC_COMBINER_COUNT__
 } MPC_Type_combiner;
 
+#if defined(MPC_Fault_Tolerance) || defined(MPC_MODULE_MPC_Fault_Tolerance)
 /* Checkpoint */
 typedef sctk_ft_state_t MPC_Checkpoint_state;
+#else
+typedef char MPC_Checkpoint_state;
+#endif
 
 /*Initialisation */
 int MPC_Init(int *argc, char ***argv);

@@ -2921,7 +2921,11 @@ int PMPC_Restarted(int *flag) {
   MPC_ERROR_SUCESS();
 }
 
+#ifdef MPC_Fault_Tolerance
 static volatile MPC_Checkpoint_state global_state = MPC_STATE_ERROR;
+#else
+static volatile MPC_Checkpoint_state global_state = '\0';
+#endif
 
 /**
  * Trigger a checkpoint for the whole application.
