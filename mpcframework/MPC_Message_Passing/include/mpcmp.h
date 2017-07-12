@@ -697,7 +697,6 @@ int MPC_Comm_split(MPC_Comm, int, int, MPC_Comm *);
   /*Scheduling */
   int MPC_Proceed (void);
   int MPC_Checkpoint (MPC_Checkpoint_state* state);
-  int MPC_Checkpoint_timed (unsigned int sec, MPC_Comm comm);
   int MPC_Migrate (void);
   int MPC_Restart (int rank);
   int MPC_Restarted (int *flag);
@@ -1029,7 +1028,6 @@ int MPC_Comm_split(MPC_Comm, int, int, MPC_Comm *);
   /*Scheduling */
   int PMPC_Proceed (void);
   int PMPC_Checkpoint (MPC_Checkpoint_state* st);
-  int PMPC_Checkpoint_timed (unsigned int sec, MPC_Comm comm);
   int PMPC_Migrate (void);
   int PMPC_Restart (int rank);
   int PMPC_Restarted (int *flag);

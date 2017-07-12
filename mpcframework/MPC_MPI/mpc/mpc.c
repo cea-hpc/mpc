@@ -2893,19 +2893,26 @@ int PMPC_Checkpoint(MPC_Checkpoint_state* state) {
 
 		/* if I'm the last task to process: do the work */
 		if(sctk_atomics_fetch_and_incr_int(&gen_acquire) == local_nbtasks -1)
-		{	
+		{
+
+                        sctk_warning("First syncing !!!!");
+                        /* From here: One task per process will do the work */
 			/* synchronize all processes */
 			sctk_pmi_barrier();
 
 			/* Only one process triggers the checkpoint (=notify the coordinator) */
 			sctk_pmi_get_process_rank(&pmi_rank);
+                        sctk_warning("Registered: %d", pmi_rank);
 			if(pmi_rank == 0)
 			{
-				global_state = sctk_ft_checkpoint();
+                                sctk_warning("Doing the chekpoint");
+                                global_state = sctk_ft_checkpoint();
 			}
 		
+                        sctk_warning("Going to wait(): %d", pmi_rank);
 			/* TODO: propagate the global_state to all proceses */
 			sctk_pmi_barrier();
+                        sctk_warning("Everything is good: %d", pmi_rank);
 
 			/* set gen_release to 0, prepare the end of current generation */ 
 			sctk_atomics_store_int(&gen_release, 0);
@@ -2939,6 +2946,7 @@ int PMPC_Checkpoint(MPC_Checkpoint_state* state) {
 
 		/* the current task finished the work for the current generation */
 		task_generations[local_tasknum]++;
+                sctk_error("gone.");
 	}
 #endif
 	MPC_ERROR_SUCESS();

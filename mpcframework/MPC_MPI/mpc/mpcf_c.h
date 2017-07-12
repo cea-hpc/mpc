@@ -518,12 +518,6 @@ void ffunc (mpc_checkpoint) (MPC_Checkpoint_state* st, int *err)
   *err = MPC_Checkpoint (st);
 }
 
-void ffunc (mpc_checkpoint_timed) (unsigned int *sec, MPC_Comm * comm,
-				   int *err)
-{
-  *err = MPC_Checkpoint_timed (*sec, *comm);
-}
-
 void ffunc (mpc_migrate) (int *err)
 {
   *err = MPC_Migrate ();

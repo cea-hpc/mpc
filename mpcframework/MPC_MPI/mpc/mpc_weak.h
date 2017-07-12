@@ -151,7 +151,6 @@
   /*Scheduling */
 #pragma weak MPC_Proceed = PMPC_Proceed
 #pragma weak MPC_Checkpoint = PMPC_Checkpoint
-#pragma weak MPC_Checkpoint_timed = PMPC_Checkpoint_timed
 #pragma weak MPC_Migrate = PMPC_Migrate
 #pragma weak MPC_Restart = PMPC_Restart
 #pragma weak MPC_Restarted = PMPC_Restarted
