@@ -174,9 +174,6 @@ static void __mpcomp_task_check_neighbourhood_r( mpcomp_node_t *node )
             {
                 mpcomp_mvp_t *mvp = node->children.leaf[i];
                 sctk_assert( mvp && mvp->threads );
-                const int tree_array_rank = mvp->threads->tree_array_rank; 
-                for (j = 1; j < instance_level_size; j++ ) 
-                    fprintf(stderr, "neighbour n°%d of %d: %d\n", j, tree_array_rank,mpcomp_get_neighbour(tree_array_rank, j));
             }
             break;
 

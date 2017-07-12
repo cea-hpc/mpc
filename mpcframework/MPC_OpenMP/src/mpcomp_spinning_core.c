@@ -83,7 +83,7 @@ static int __mpcomp_tree_rank_get_next_depth( mpcomp_node_t* node, const int exp
     }
    
     *nb_mvps = ( num_nodes < expected_nb_mvps ) ? num_nodes : expected_nb_mvps;
-    return next_depth;
+    return next_depth + 1;
 }
 
 mpcomp_instance_t* 
@@ -142,6 +142,8 @@ __mpcomp_wakeup_mvp( mpcomp_mvp_t *mvp )
     new_thread = mvp->threads;
     sctk_assert( new_thread );
 
+    mpcomp_tree_array_task_thread_init( new_thread );  
+
     mvp->father = new_thread->father_node;
 
 #if MPCOMP_TRANSFER_INFO_ON_NODES
@@ -159,7 +161,6 @@ __mpcomp_wakeup_mvp( mpcomp_mvp_t *mvp )
     for (i = 0; i < MPCOMP_MAX_ALIVE_FOR_DYN + 1; i++) 
 	    sctk_atomics_store_int(&(new_thread->for_dyn_remain[i].i), -1);
 
-    mpcomp_tree_array_task_thread_init( new_thread );  
 	return new_thread;	
 }
 
@@ -185,6 +186,7 @@ void __mpcomp_start_openmp_thread( mpcomp_mvp_t *mvp )
 
     __mpcomp_add_mvp_saved_context( mvp );
     cur_thread =  __mpcomp_wakeup_mvp( mvp );
+    sctk_assert( cur_thread->mvp );
 
     sctk_openmp_thread_tls = (void*) cur_thread; 
 

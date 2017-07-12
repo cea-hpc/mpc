@@ -34,7 +34,7 @@ __mpcomp_tree_array_convert_array_to_string( int* tab, const int size )
 static inline int*
 __mpcomp_tree_array_compute_tree_shape( mpcomp_node_t* node, int* tree_shape, const int size  )
 {
-    int i;
+    int i, tmp;
     int *node_tree_shape;
  
     sctk_assert( node );

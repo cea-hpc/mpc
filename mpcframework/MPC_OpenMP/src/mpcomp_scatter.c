@@ -7,6 +7,10 @@
 #include "mpcomp_task_utils.h"
 #endif /* defined( MPCOMP_OPENMP_3_0 ) */
 
+#ifndef NDEBUG
+#include "sctk_pm_json.h"
+#endif /* !NDEBUG */
+
 static inline int
 __mpcomp_scatter_compute_node_num_threads( mpcomp_node_t* node, const int num_threads, int rank, int *first ) 
 {
@@ -155,24 +159,20 @@ __mpcomp_scatter_compute_instance_tree_depth( mpcomp_node_t* node, const int exp
     if( node == NULL || expected_nb_mvps == 1 )
         return 1;
 
-    for( next_depth = 1; next_depth < node->tree_depth; next_depth++ ) 
+    for( next_depth = 0; next_depth < node->tree_depth; next_depth++ ) 
     {
-        fprintf(stderr, ":: %s :: %d %d\n", __func__, next_depth, node->tree_nb_nodes_per_depth[next_depth] );
         num_nodes = node->tree_nb_nodes_per_depth[next_depth];
         if( num_nodes >= expected_nb_mvps ) break;
     }
 
-    //next_depth += ( node->father ) ? 1 : 0;
-    fprintf(stderr, ":: %s :: Next depth : %d\n", __func__, next_depth );
-
-    return next_depth;
+    return next_depth + 1;
 }
 
 static inline int
 __mpcomp_scatter_compute_instance_tree_array_infos( mpcomp_instance_t* instance, const int expected_nb_mvps )
 {
     mpcomp_node_t* root;
-    int i, last_level_shape, tot_nnodes;
+    int i, j, last_level_shape, tot_nnodes;
     int* num_nodes_per_depth, *shape, *num_children_per_depth, *first_rank_per_depth;
 
     sctk_assert( instance );
@@ -200,8 +200,6 @@ __mpcomp_scatter_compute_instance_tree_array_infos( mpcomp_instance_t* instance,
     const int array_size = instance->tree_depth;
     last_level_shape = expected_nb_mvps; 
 
-    fprintf(stderr, ":: %s :: array_size = %d\n", __func__, array_size );
-
     /* Instance tree_base */
     shape = (int*) mpcomp_alloc( array_size * sizeof(int));
     sctk_assert( shape );
@@ -223,15 +221,15 @@ __mpcomp_scatter_compute_instance_tree_array_infos( mpcomp_instance_t* instance,
     memset( num_children_per_depth, 0, array_size * sizeof(int) );
     
     /* Intermediate stage */
-    tot_nnodes = 1;
-    first_rank_per_depth[0] = 1;
+    tot_nnodes = 0;
+    first_rank_per_depth[0] = 0;
     for( i = 0; i < array_size - 1; i++ )
     {
-        shape[i] = root->tree_base[i+1];
-        tot_nnodes += root->tree_nb_nodes_per_depth[i+1];
-        num_nodes_per_depth[i] = root->tree_nb_nodes_per_depth[i+1];
-        const int quot = last_level_shape / root->tree_base[i+1];
-        const int rest = last_level_shape % root->tree_base[i+1];
+        shape[i] = root->tree_base[i];
+        tot_nnodes += root->tree_nb_nodes_per_depth[i];
+        num_nodes_per_depth[i] = root->tree_nb_nodes_per_depth[i];
+        const int quot = last_level_shape / root->tree_base[i];
+        const int rest = last_level_shape % root->tree_base[i];
         last_level_shape = ( rest ) ? ( quot + 1 ) : quot;
         first_rank_per_depth[i+1] = first_rank_per_depth[i] + shape[i];  
     }
@@ -243,11 +241,14 @@ __mpcomp_scatter_compute_instance_tree_array_infos( mpcomp_instance_t* instance,
     tot_nnodes += num_nodes_per_depth[array_size-1];
 
     /* tree_cumulative update */
-    num_children_per_depth[array_size] = 1;
-    for( i = array_size - 1; i >= 0; i-- )
+    for( i = 0; i < array_size; i++ )
     {
-        num_children_per_depth[i] = num_children_per_depth[i+1];
-        num_children_per_depth[i] *= shape[i];
+        num_children_per_depth[i] = 1;
+        for (j = i + 1; j < array_size; j++)
+        {
+            num_children_per_depth[i] *= shape[j];
+            sctk_assert( num_children_per_depth[i] );
+        }
     }
 
     /* Update instance */
@@ -256,6 +257,28 @@ __mpcomp_scatter_compute_instance_tree_array_infos( mpcomp_instance_t* instance,
     instance->tree_cumulative = num_children_per_depth;
     instance->tree_first_node_per_depth = first_rank_per_depth;
 
+#if 0 // NDEBUG
+        json_t* json_node_tree_base = json_array();
+        json_t* json_node_tree_cumul = json_array();
+        json_t* json_node_tree_lsize = json_array();
+
+        for( i = 0; i < array_size; i++)
+        {
+            json_array_push( json_node_tree_base, json_int( instance->tree_base[i] ) );
+            json_array_push( json_node_tree_cumul, json_int( instance->tree_cumulative[i] ) );
+            json_array_push( json_node_tree_lsize, json_int( instance->tree_nb_nodes_per_depth[i] ) );
+        }
+
+        json_t* json_node_obj = json_object();
+        json_object_set( json_node_obj, "tree_array_size", json_int( tot_nnodes) );
+        json_object_set( json_node_obj, "tree_base", json_node_tree_base );
+        json_object_set( json_node_obj, "tree_cumulative", json_node_tree_cumul );
+        json_object_set( json_node_obj, "tree_nb_nodes_per_depth", json_node_tree_lsize );;
+        char *json_char_node = json_dump( json_node_obj, JSON_COMPACT );
+        json_decref( json_node_obj );
+        fprintf( stderr, ":: %s :: %s\n", __func__, json_char_node );
+        free( json_char_node );
+#endif /* NDEBUG */
     return tot_nnodes;
 }
 
@@ -285,7 +308,7 @@ __mpcomp_scatter_instance_pre_init( mpcomp_thread_t* thread, const int num_mvps 
 
     /* First Mvp entry in tree_array */
     const int instance_last_stage_size = instance->tree_cumulative[0];
-    sctk_assert( !root || instance_last_stage_size <= root->tree_nb_nodes_per_depth[instance->tree_depth] );
+    sctk_assert( !root || instance_last_stage_size <= root->tree_nb_nodes_per_depth[instance->tree_depth-1] );
 
     const int first_mvp = instance->tree_array_size - instance_last_stage_size;
     instance->mvps = &( instance->tree_array[first_mvp] );
@@ -305,7 +328,7 @@ __mpcomp_scatter_wakeup_intermediate_node( mpcomp_node_t* node )
     sctk_assert( node->child_type == MPCOMP_CHILDREN_NODE );
     sctk_assert( node->instance->root->depth <= node->depth );
 
-    const int node_vdepth = node->depth - node->instance->root->depth;
+    const int node_vdepth = node->depth - node->instance->root->depth + 1;
     const int num_vchildren = node->instance->tree_base[node_vdepth]; 
     const int num_children = node->nb_children;
     const int nthreads = node->num_threads;
@@ -315,8 +338,6 @@ __mpcomp_scatter_wakeup_intermediate_node( mpcomp_node_t* node )
     const int node_first_mvp = node->mvp_first_id;
      
     sctk_assert( node->children.node );
-    const int tree_base_val = node->instance->tree_base[node_vdepth];
-    const int next_tree_base_val = node->instance->tree_base[node_vdepth+1];
 
     /** Instance id : First id next step + cur_node * tree_base + i */
     if( nthreads > num_vchildren )
@@ -394,7 +415,7 @@ __mpcomp_scatter_wakeup_final_mvp( mpcomp_node_t* node )
     sctk_assert( combined_pragma >= 0 && combined_pragma < MPCOMP_COMBINED_COUNT); 
 
     sctk_assert( node->instance->root->depth <= node->depth );
-    const int node_vdepth = node->depth - node->instance->root->depth;
+    const int node_vdepth = node->depth - node->instance->root->depth +1;
     const int num_vchildren = node->instance->tree_base[node_vdepth];               
     sctk_assert( node->num_threads <= num_vchildren );
 
@@ -438,7 +459,6 @@ __mpcomp_scatter_wakeup_final_node( mpcomp_node_t* node )
     assert( node );
     assert( node->mvp ); 
     node->already_init = 0;
-    fprintf(stderr, ":: %s :: Wake Up MVP #%d max next nested %d\n", __func__, node->mvp->global_rank, node->mvp->threads->root->tree_cumulative[0]); 
     return node->mvp;
 }
 
@@ -450,7 +470,7 @@ __mpcomp_scatter_wakeup( mpcomp_node_t* node )
     sctk_assert( node->instance );
     sctk_assert( node->instance->root );
 
-    const int target_depth = node->instance->tree_depth + node->instance->root->depth;
+    const int target_depth = node->instance->tree_depth + node->instance->root->depth - 1;
 
     /* Node Wake-Up */
     cur_node = node;
@@ -465,11 +485,9 @@ __mpcomp_scatter_wakeup( mpcomp_node_t* node )
     
     if( cur_node->depth == target_depth || cur_node->already_init )
     {
-        fprintf(stderr, ":: %s :: Already complete : %d\n", __func__, cur_node->global_rank ); 
         return __mpcomp_scatter_wakeup_final_node( cur_node );
     }
 
-    fprintf(stderr, ":: %s :: Final mvp from node %d\n", __func__, cur_node->global_rank );
     return __mpcomp_scatter_wakeup_final_mvp( cur_node );
 }
 
@@ -482,6 +500,7 @@ void __mpcomp_scatter_instance_post_init( mpcomp_thread_t* thread )
     mpcomp_mvp_t* mvp = thread->mvp;
     __mpcomp_internal_full_barrier( thread->mvp );
 
+#if 0
     if( thread->rank == 0 )
     {
     instance = thread->mvp->instance;
@@ -503,5 +522,7 @@ void __mpcomp_scatter_instance_post_init( mpcomp_thread_t* thread )
         }
     }
     }
+#endif
     __mpcomp_internal_full_barrier( thread->mvp );
+//    MPCOMP_TASK_TEAM_CMPL_INIT(thread->instance->team);
 }

@@ -182,8 +182,8 @@ int __mpcomp_dynamic_loop_next(long *from, long *to)
         return 0;
     }
 
-  int *tree_base = t->instance->tree_base;
-  const int tree_depth = t->instance->tree_depth;
+  int *tree_base = t->instance->tree_base + 1;
+  const int tree_depth = t->instance->tree_depth -1;
   const int max_depth = t->instance->root->depth;
 
     /* Compute the index of the target */
@@ -367,6 +367,7 @@ void __mpcomp_for_dyn_coherency_end_parallel_region(
   team = instance->team;
   sctk_assert(team != NULL);
 
+  const int tree_depth = instance->tree_depth -1;
   sctk_nodebug("[X] __mpcomp_for_dyn_coherency_checking_end_barrier: "
                "Checking for %d thread(s)...",
                team->info.num_threads);
@@ -428,13 +429,13 @@ void __mpcomp_for_dyn_coherency_end_parallel_region(
            * since the beginning of the program
            */
     if (target_t->for_dyn_target != NULL) {
-      for (j = 0; j < instance->tree_depth; j++) {
+      for (j = 0; j < tree_depth; j++) {
         if (target_t->for_dyn_target[j] != target_t->mvp->tree_rank[j]) {
           sctk_nodebug("[X] __mpcomp_for_dyn_coherency_checking_end_barrier: "
                        "error rank %d has target[%d] = %d (depth: %d, "
                        "max_depth: %d, for_dyn_current=%d)",
                        target_t->rank, j, target_t->for_dyn_target[j],
-                       instance->tree_depth, team->info.new_root->depth,
+                       tree_depth, team->info.new_root->depth,
                        target_t->for_dyn_current);
 
           not_reachable();
@@ -448,13 +449,13 @@ void __mpcomp_for_dyn_coherency_end_parallel_region(
            */
     if (target_t->for_dyn_shift != NULL) {
       // for ( j = t->info.new_root->depth ; j < instance->tree_depth ; j++ )
-      for (j = 0; j < instance->tree_depth; j++) {
+      for (j = 0; j < tree_depth; j++) {
         if (target_t->for_dyn_shift[j] != 0) {
           sctk_nodebug("[X] __mpcomp_for_dyn_coherency_checking_end_barrier: "
                        "error rank %d has shift[%d] = %d (depth: %d, "
                        "max_depth: %d, for_dyn_current=%d)",
                        target_t->rank, j, target_t->for_dyn_shift[j],
-                       instance->tree_depth, team->info.new_root->depth,
+                       tree_depth, team->info.new_root->depth,
                        target_t->for_dyn_current);
 
           not_reachable();

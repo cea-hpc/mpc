@@ -738,7 +738,7 @@ void __mpcomp_init(void) {
 	}
 #endif /* OMPT_SUPPORT */
 	
-	__mpcomp_init_omp_task_tree( OMP_NUM_THREADS );
+	__mpcomp_init_omp_task_tree( nb_mvps );
 	
 #if MPCOMP_TASK
 //    mpcomp_task_team_infos_init(team_info, instance->tree_depth);

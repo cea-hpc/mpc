@@ -158,7 +158,6 @@ mpcomp_tree_array_task_thread_init( struct mpcomp_thread_s* thread )
     implicit_task->task_dep_infos = mpcomp_alloc(sizeof(mpcomp_task_dep_task_infos_t));
     sctk_assert(implicit_task->task_dep_infos); 
     memset(implicit_task->task_dep_infos, 0, sizeof(mpcomp_task_dep_task_infos_t ));
-    fprintf(stderr, ":: %s :: thread: %p init task_dep_infos\n", __func__, thread);
 #endif /* MPCOMP_USE_TASKDEP */
     
     tied_tasks_list = mpcomp_alloc( sizeof(mpcomp_task_list_t) );
@@ -166,6 +165,15 @@ mpcomp_tree_array_task_thread_init( struct mpcomp_thread_s* thread )
     memset( tied_tasks_list, 0, sizeof(mpcomp_task_list_t) );
   
     thread->task_infos.tied_tasks = tied_tasks_list; 
+
+#ifdef MPCOMP_USE_MCS_LOCK 
+    sctk_mcslock_ticket_t *new_ticket = sctk_mcslock_alloc_ticket();        
+    thread->task_infos.opaque = ( void* ) new_ticket;
+#else /* MPCOMP_USE_MCS_LOCK  */
+    thread->task_infos.opaque = (void*) NULL;   
+#endif /* MPCOMP_USE_MCS_LOCK  */
+
+    MPCOMP_TASK_THREAD_CMPL_INIT(thread);
 }
 
 static inline void mpcomp_task_thread_infos_init(struct mpcomp_thread_s *thread) {
@@ -261,7 +269,7 @@ __mpcomp_task_node_list_init( struct mpcomp_node_s* parent, struct mpcomp_node_s
         allocation = 1;
         list = mpcomp_alloc( sizeof(struct mpcomp_task_list_s) );
         sctk_assert(list);
-        mpcomp_task_list_new(list);
+        mpcomp_task_list_reset(list);
         tasklistNodeRank = child->tree_array_rank; 
     }
 
@@ -292,7 +300,7 @@ __mpcomp_task_mvp_list_init( struct mpcomp_node_s* parent, struct mpcomp_mvp_s* 
         allocation = 1;
         list = mpcomp_alloc( sizeof(struct mpcomp_task_list_s) );
         sctk_assert(list);
-        mpcomp_task_list_new(list);
+        mpcomp_task_list_reset(list);
         sctk_assert( child->threads );
         tasklistNodeRank = child->threads->tree_array_rank; 
     }
@@ -318,7 +326,7 @@ __mpcomp_task_root_list_init( struct mpcomp_node_s* root, const mpcomp_tasklist_
 
     list = mpcomp_alloc( sizeof(struct mpcomp_task_list_s) );
     sctk_assert(list);
-    mpcomp_task_list_new(list);
+    mpcomp_task_list_reset(list);
     
     infos->tasklist[type] = list; 
     infos->lastStolen_tasklist[type] = NULL;

@@ -32,7 +32,6 @@ static inline void __mpcomp_internal_ordered_begin( mpcomp_thread_t *t, mpcomp_l
     sctk_assert( loop_infos && loop_infos->type == MPCOMP_LOOP_TYPE_LONG );
     mpcomp_loop_long_iter_t* loop = &( loop_infos->loop.mpcomp_long );
     const long cur_ordered_iter = loop->cur_ordered_iter;
-    
 
 	/* First iteration of the loop -> initialize 'next_ordered_offset' */
 	if( cur_ordered_iter == loop->lb ) 
@@ -80,14 +79,13 @@ void __mpcomp_ordered_begin( void )
 
     /* No need to check something in case of 1 thread */
     if ( t->info.num_threads == 1 )
-    {
          return ;
-    }
 
     loop_infos = &( t->info.loop_infos );
 
     if( loop_infos->type == MPCOMP_LOOP_TYPE_LONG )
     { 
+//        fprintf(stderr, ":: %s :: Start ordered  %d\n", __func__, t->rank);
         __mpcomp_internal_ordered_begin( t, loop_infos );
     }
     else
@@ -114,12 +112,12 @@ static inline void __mpcomp_internal_ordered_end( mpcomp_thread_t* t, mpcomp_loo
 
     if( isLastIteration )
     {
-	    t->instance->team->next_ordered_offset[index] = (long) 0;
-        int ret = sctk_atomics_cas_int(&(t->instance->team->next_ordered_offset_finalized[index]), 1, 0 );
+	    t->instance->team->next_ordered_offset = (long) 0;
+        int ret = sctk_atomics_cas_int(&(t->instance->team->next_ordered_offset_finalized), 1, 0 );
     }
     else
     {
-        t->instance->team->next_ordered_offset[index] += (long) 1;
+        t->instance->team->next_ordered_offset += (long) 1;
     }
 }
 
@@ -146,7 +144,14 @@ static inline void __mpcomp_internal_ordered_end_ull( mpcomp_thread_t* t, mpcomp
     isLastIteration += (!loop->up && loop->cur_ordered_iter <= loop->b) ? (unsigned long long) 1 : (unsigned long long) 0;
 
     if( isLastIteration )
-        sctk_atomics_store_int(&(t->instance->team->next_ordered_offset_finalized[index]), 0 );
+    {
+	    t->instance->team->next_ordered_offset = (long) 0;
+        int ret = sctk_atomics_cas_int(&(t->instance->team->next_ordered_offset_finalized), 1, 0 );
+    }
+    else
+    {
+        t->instance->team->next_ordered_offset += (long) 1;
+    }
 }
 
 void __mpcomp_ordered_end( void )

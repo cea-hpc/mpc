@@ -11,6 +11,7 @@
 static inline void
 __mpcomp_instance_tree_array_root_init( struct mpcomp_node_s* root, mpcomp_instance_t* instance, const int nthreads )
 {
+    struct mpcomp_generic_node_s* meta_node;
 
     if( !root ) return;
 
@@ -20,7 +21,10 @@ __mpcomp_instance_tree_array_root_init( struct mpcomp_node_s* root, mpcomp_insta
 
     root->instance_global_rank = 1;
     root->instance_stage_first_rank = 1;
-    root->instance_stage_size = instance->tree_base[0]; 
+
+    meta_node = &( instance->tree_array[0] );
+    meta_node->ptr.node = root;
+    meta_node->type = MPCOMP_CHILDREN_NODE;
 
     #if defined( MPCOMP_OPENMP_3_0 ) 
         __mpcomp_task_root_infos_init( root );
@@ -32,15 +36,18 @@ static inline void
 __mpcomp_instance_tree_array_node_init(struct mpcomp_node_s* parent, struct mpcomp_node_s* child, const int index)
 {
     int i;
+    mpcomp_instance_t* instance;
     struct mpcomp_generic_node_s* meta_node;
 
-    const int vdepth = parent->depth - parent->instance->root->depth;
+    sctk_assert( parent->instance );
+    instance = parent->instance;
+
+    const int vdepth = parent->depth - parent->instance->root->depth +1;
     const int tree_base_val = parent->instance->tree_base[vdepth];
     const int next_tree_base_val = parent->instance->tree_base[vdepth+1];
 
     const int global_rank = parent->instance_global_rank + index; 
-    child->instance_stage_size = parent->instance_stage_size * tree_base_val;
-    child->instance_stage_first_rank = parent->instance_stage_first_rank + parent->instance_stage_size;
+    child->instance_stage_first_rank = parent->instance_stage_first_rank + instance->tree_nb_nodes_per_depth[vdepth];
     const int local_rank = global_rank - parent->instance_stage_first_rank;
     child->instance_global_rank = child->instance_stage_first_rank + local_rank * next_tree_base_val;
     
@@ -51,18 +58,16 @@ __mpcomp_instance_tree_array_node_init(struct mpcomp_node_s* parent, struct mpco
 
     child->tree_array_rank = global_rank; 
 
-    child->tree_array_ancestor_path = (int*) mpcomp_alloc( (vdepth + 1) * sizeof( int ) );
+    child->tree_array_ancestor_path = (int*) mpcomp_alloc( (vdepth) * sizeof( int ) );
     sctk_assert( child->tree_array_ancestor_path );
     memset( child->tree_array_ancestor_path, 0, ( vdepth + 1) * sizeof( int ) );
     
-    for( i = 0; i < vdepth; i++ )
+    for( i = 0; i < vdepth-1; i++ )
     {
         child->tree_array_ancestor_path[i] = parent->tree_array_ancestor_path[i];
-        fprintf(stderr, ":: %s :: Node #%d Depth: #%d Ancestor: #%d\n", __func__, child->global_rank, i, child->tree_array_ancestor_path[i] );
     }
 
-    child->tree_array_ancestor_path[vdepth] = parent->tree_array_rank;
-    fprintf(stderr, ":: %s :: Node #%d Depth: #%d Ancestor: #%d\n", __func__, child->global_rank, vdepth, child->tree_array_ancestor_path[vdepth] );
+    child->tree_array_ancestor_path[vdepth-1] = parent->tree_array_rank;
 
 #if defined( MPCOMP_OPENMP_3_0 ) 
     __mpcomp_task_node_infos_init( parent, child );
@@ -76,7 +81,7 @@ __mpcomp_instance_tree_array_mvp_init( struct mpcomp_node_s* parent, struct mpco
     int i;
     struct mpcomp_generic_node_s* meta_node;
 
-    const int vdepth = parent->depth - parent->instance->root->depth; 
+    const int vdepth = parent->depth - parent->instance->root->depth +1; 
 
     const int global_rank = parent->instance_global_rank + index;
     meta_node = &( parent->instance->tree_array[global_rank] );
@@ -88,13 +93,11 @@ __mpcomp_instance_tree_array_mvp_init( struct mpcomp_node_s* parent, struct mpco
 
     mvp->threads->tree_array_rank = global_rank;
 
-    fprintf(stderr, ":: %s :: parent->global_rank : %d\n", __func__, parent->global_rank );
-
     mvp->threads->tree_array_ancestor_path = (int*) mpcomp_alloc( ( vdepth + 1 ) * sizeof( int ) );
     sctk_assert( mvp->threads->tree_array_ancestor_path );
     memset( mvp->threads->tree_array_ancestor_path, 0,  ( vdepth + 1 ) * sizeof( int ) );
     
-    for( i = 0; i < vdepth; i++ )
+    for( i = 0; i < vdepth -1; i++ )
        mvp->threads->tree_array_ancestor_path[i] = parent->tree_array_ancestor_path[i];
 
     mvp->threads->tree_array_ancestor_path[vdepth] = parent->tree_array_rank;

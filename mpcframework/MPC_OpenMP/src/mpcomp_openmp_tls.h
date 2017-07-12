@@ -14,8 +14,6 @@ static inline mpcomp_thread_t *mpcomp_get_ancestor_thread_tls(int level) {
   int i;
   mpcomp_thread_t *thread = mpcomp_get_thread_tls();
   const int max_level_var = thread->info.icvs.levels_var;
-  
-  fprintf(stderr, "max_level_var: %d -- target: %d\n", max_level_var, level );
 
   /* If level is outside of bounds, return -1 */
   if (level < 0 || level >= max_level_var) {
@@ -24,7 +22,6 @@ static inline mpcomp_thread_t *mpcomp_get_ancestor_thread_tls(int level) {
 
   /* Go up to the right level and catch the rank */
   for (i = max_level_var; i > level; i--) {
-    fprintf(stderr, ":: %s :: %p -> %d\n", __func__, thread, thread->rank );
     thread = thread->father;
     sctk_assert(thread != NULL);
   }

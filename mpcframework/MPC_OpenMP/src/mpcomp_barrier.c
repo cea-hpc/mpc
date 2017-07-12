@@ -38,7 +38,6 @@ void __mpcomp_internal_full_barrier(mpcomp_mvp_t *mvp) {
 
   if( mvp->threads->info.num_threads == 1)
   {
-    fprintf(stderr, ":: %s :: SKIP\n", __func__ );
     return;
   }
 
@@ -182,7 +181,6 @@ void __mpcomp_barrier(void) {
   sctk_nodebug("[%d] %s: t->mvp = %p", t->rank, __func__, t->mvp);
  
   /* Call the real barrier */
-  fprintf(stderr, ":: %s :: Start Real Barrier ...\n", __func__);
   sctk_assert( t->info.num_threads == t->mvp->threads->info.num_threads );
   __mpcomp_internal_full_barrier(mvp);
 

@@ -14,6 +14,10 @@
 
 #include "mpcomp_tree_array_utils.h"
 
+#ifndef NDEBUG
+#include "sctk_pm_json.h"
+#endif /* !NDEBUG */
+
 static int 
 __mpcomp_tree_array_get_parent_nodes_num_per_depth( const int* shape, const int depth )
 {
@@ -508,7 +512,7 @@ __mpcomp_openmp_node_initialisation( mpcomp_meta_tree_node_t* root, const int* t
     /* -- TREE BASE -- */
     if( rank )
     {
-        new_node->tree_depth = max_depth - new_node->depth + 1;;
+        new_node->tree_depth = max_depth - new_node->depth +1;
         sctk_assert( new_node->tree_depth > 1 );
         new_node->tree_base = mpcomp_alloc( sizeof( int ) * new_node->tree_depth );
         sctk_assert( new_node->tree_base );
@@ -517,16 +521,43 @@ __mpcomp_openmp_node_initialisation( mpcomp_meta_tree_node_t* root, const int* t
         new_node->tree_nb_nodes_per_depth = mpcomp_alloc( sizeof( int ) * new_node->tree_depth );
         sctk_assert( new_node->tree_nb_nodes_per_depth );
         
-        const int tmp = root_node->tree_base[new_node->depth];
-        const int tmp2 = root_node->tree_nb_nodes_per_depth[new_node->depth];
+        const int tmp = root_node->tree_nb_nodes_per_depth[new_node->depth];
 
-        for( i = 0, j = new_node->depth; i < new_node->tree_depth; i++, j++ )
+        new_node->tree_base[0] = 1;
+        new_node->tree_nb_nodes_per_depth[0] = 1;
+        new_node->tree_cumulative[0] = root_node->tree_cumulative[ new_node->depth ];
+
+        for( i = 1, j = new_node->depth+1; i < new_node->tree_depth; i++, j++ )
         {
-            new_node->tree_base[i] = root_node->tree_base[j] / tmp;
+            new_node->tree_base[i] = root_node->tree_base[j];
             new_node->tree_cumulative[i] = root_node->tree_cumulative[j];
-            new_node->tree_nb_nodes_per_depth[i] = root_node->tree_nb_nodes_per_depth[j] / tmp2;
+            new_node->tree_nb_nodes_per_depth[i] = root_node->tree_nb_nodes_per_depth[j] / tmp;
         }   
     }
+
+#if 0
+        json_t* json_node_tree_base = json_array(); 
+        json_t* json_node_tree_cumul = json_array(); 
+        json_t* json_node_tree_lsize = json_array(); 
+
+        for( i = 0; i < new_node->tree_depth; i++)
+        {
+            json_array_push( json_node_tree_base, json_int( new_node->tree_base[i] ) );
+            json_array_push( json_node_tree_cumul, json_int( new_node->tree_cumulative[i] ) );
+            json_array_push( json_node_tree_lsize, json_int( new_node->tree_nb_nodes_per_depth[i] ) );
+        }
+
+        json_t* json_node_obj = json_object();
+        json_object_set( json_node_obj, "depth", json_int(new_node->depth) );
+        json_object_set( json_node_obj, "global_rank", json_int(new_node->global_rank) );
+        json_object_set( json_node_obj, "tree_base", json_node_tree_base );
+        json_object_set( json_node_obj, "tree_cumulative", json_node_tree_cumul );
+        json_object_set( json_node_obj, "tree_nb_nodes_per_depth", json_node_tree_lsize );;
+        char *json_char_node = json_dump( json_node_obj, JSON_COMPACT );
+        json_decref( json_node_obj );
+        fprintf( stderr, ":: %s :: %s\n", __func__, json_char_node );
+        free( json_char_node );
+#endif /* NDEBUG */
 
     /* Leaf or Node */
     if( new_node->depth < max_depth -1)
@@ -606,7 +637,6 @@ __mpcomp_openmp_mvp_initialisation( void* args )
     new_mvp->root = root;
     new_mvp->thread_self = sctk_thread_self();
 
-
     /* MVP ranking */
     new_mvp->global_rank = rank;
     new_mvp->stage_rank = __mpcomp_tree_array_convert_global_to_stage( tree_shape, max_depth, rank );
@@ -624,10 +654,7 @@ __mpcomp_openmp_mvp_initialisation( void* args )
     sctk_assert( new_mvp->threads );
     memset( new_mvp->threads, 0, sizeof( mpcomp_thread_t ) );
 
-    fprintf(stderr, ":: %s :: Init mvp default threads\n", __func__ );
-
 #if defined( MPCOMP_OPENMP_3_0 )
-    fprintf(stderr, ":: %s :: Init mvp default threads TASK_INFOS\n", __func__);
     mpcomp_tree_array_task_thread_init( new_mvp->threads );  
 #endif /* MPCOMP_OPENMP_3_0 */
 
@@ -742,6 +769,11 @@ __mpcomp_alloc_openmp_tree_struct( int* shape, int max_depth, hwloc_topology_t t
     sctk_assert( root ); 
     memset( root, 0, sizeof( mpcomp_node_t ) );
 
+#if 0    
+    for( i = 0; i < max_depth; i++ )
+        fprintf(stderr, ":: %s :: shape %d -> %d\n", __func__, i, shape[i]);
+#endif
+
     /* Pre-Init root to avoid mutliple computing */
     root->tree_depth = max_depth +1;
     root->tree_base = __mpcomp_tree_array_compute_tree_shape( root, shape, max_depth );     
@@ -773,9 +805,11 @@ __mpcomp_alloc_openmp_tree_struct( int* shape, int max_depth, hwloc_topology_t t
     /* Worker threads */
     for( i = 1; i < leaf_n_num; i++ )
     {
-        const int target_vp = __mpcomp_tree_array_convert_global_to_stage( shape, max_depth, i );
+        const int target_vp = i; //__mpcomp_tree_array_convert_global_to_stage( shape, max_depth, i );
         const int pu_id = ( sctk_get_cpu() + target_vp ) % sctk_get_cpu_number(); 
         args[i].target_vp = target_vp;
+
+        fprintf(stderr, "Bind thread on core #%d -- %d -- %d --%d\n", pu_id, target_vp, sctk_get_cpu(), sctk_get_cpu_number() );
 
         sctk_thread_attr_t __attr;
         sctk_thread_attr_init( &__attr );

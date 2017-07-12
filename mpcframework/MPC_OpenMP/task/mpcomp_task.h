@@ -72,8 +72,12 @@ typedef struct mpcomp_task_s {
       *thread; /**< The thread owning the task 				*/
   struct mpcomp_task_list_s
       *list;                  /**< The current list of the task 				*/
+#if 0
   struct mpcomp_task_s *prev; /**< Prev task in the thread's task list */
   struct mpcomp_task_s *next; /**< Next task in the thread's task list */
+#else
+  sctk_atomics_ptr next;
+#endif
   mpcomp_local_icv_t icvs;    /**< ICVs of the thread that create the task    */
   mpcomp_local_icv_t prev_icvs; /**< ICVs of the thread that create the task */
   struct mpcomp_task_taskgroup_s *taskgroup;
@@ -117,6 +121,7 @@ typedef struct mpcomp_task_thread_infos_s {
   sctk_atomics_int status;               /**< Thread task's init tag */
   struct mpcomp_task_s *current_task;    /**< Currently running task */
   struct mpcomp_task_list_s *tied_tasks; /**< List of suspended tied tasks */
+  void* opaque /**< use mcslock buffered */
 } mpcomp_task_thread_infos_t;
 
 /**

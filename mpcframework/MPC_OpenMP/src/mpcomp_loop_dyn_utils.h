@@ -196,24 +196,27 @@ __mpcomp_loop_dyn_init_target_chunk(mpcomp_thread_t *thread,
 }
 
 static inline int __mpcomp_loop_dyn_get_victim_rank(mpcomp_thread_t *thread) {
-  int i, target;
+    int i, target;
+    int* tree_cumulative;
 
-  sctk_assert(thread);
-  sctk_assert(thread->instance);
+    sctk_assert(thread);
+    sctk_assert(thread->instance);
 
-  const int tree_depth = thread->instance->tree_depth;
+    tree_cumulative = thread->instance->tree_cumulative +1;
+    const int tree_depth = thread->instance->tree_depth -1;
+    
 
-  sctk_assert(thread->for_dyn_target);
-  sctk_assert(thread->instance->tree_cumulative);
+    sctk_assert(thread->for_dyn_target);
+    sctk_assert(thread->instance->tree_cumulative);
 
-  for (i = 1, target = 0; i < tree_depth; i++) {
-    target += thread->for_dyn_target[i] * thread->instance->tree_cumulative[i];
-  }
+    for (i = 0, target = 0; i < tree_depth; i++) {
+        target += thread->for_dyn_target[i] * tree_cumulative[i];
+    }
 
 	target = ( thread->rank + target ) % thread->instance->nb_mvps;
 
-  sctk_assert(target >= 0);
-  sctk_assert(target < thread->instance->nb_mvps);
+    sctk_assert(target >= 0);
+    sctk_assert(target < thread->instance->nb_mvps);
 	//fprintf(stderr, "[%d] ::: %s ::: Get Victim  %d\n", thread->rank, __func__, target );
 
   return target;
@@ -224,7 +227,7 @@ static inline void __mpcomp_loop_dyn_target_reset(mpcomp_thread_t *thread) {
   sctk_assert(thread);
 
   sctk_assert(thread->instance);
-  const int tree_depth = thread->instance->tree_depth;
+  const int tree_depth = thread->instance->tree_depth -1;
 
   sctk_assert(thread->mvp);
   sctk_assert(thread->mvp->tree_rank);
@@ -246,7 +249,7 @@ static inline void __mpcomp_loop_dyn_target_init(mpcomp_thread_t *thread) {
     return;
 
   sctk_assert(thread->instance);
-  const int tree_depth = thread->instance->tree_depth;
+  const int tree_depth = thread->instance->tree_depth -1;
 
   thread->for_dyn_target = (int *)malloc(tree_depth * sizeof(int));
   sctk_assert(thread->for_dyn_target);

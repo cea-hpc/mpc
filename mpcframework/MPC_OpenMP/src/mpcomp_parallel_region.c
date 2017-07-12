@@ -76,8 +76,6 @@ __mpcomp_internal_begin_parallel_region( mpcomp_parallel_region_t *info, const u
     t = (mpcomp_thread_t *) sctk_openmp_thread_tls;
     sctk_assert(t != NULL);
    
-    fprintf(stderr, ":: %s :: master thread> %p\n", __func__, t ); 
-
     /* Compute new num threads value */
     if( t->root )
     {
@@ -88,12 +86,10 @@ __mpcomp_internal_begin_parallel_region( mpcomp_parallel_region_t *info, const u
     }
     else
     {
-        fprintf(stderr, ":: %s :: SEQUENTIAL\n", __func__ );
         real_num_threads = 1;
     }
 
     sctk_assert(real_num_threads > 0);
-    fprintf(stderr, "::: %s ::: >> %d\n", __func__, real_num_threads );
    
     if( 1 || !t->children_instance ||
         (t->children_instance && 

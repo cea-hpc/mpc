@@ -388,9 +388,10 @@ void __mpcomp_task_process(mpcomp_task_t *new_task, bool if_clause) {
 
   /* Push the task in the list of new tasks */
   if (mvp_task_list) {
-    mpcomp_task_list_lock(mvp_task_list);
+    sctk_atomics_cas_int(&(thread->instance->team->task_infos.status), 0, MPCOMP_TASK_INIT_STATUS_INITIALIZED);
+    mpcomp_task_list_producer_lock(mvp_task_list, thread->task_infos.opaque);
     mpcomp_task_list_pushtohead(mvp_task_list, new_task);
-    mpcomp_task_list_unlock(mvp_task_list);
+    mpcomp_task_list_producer_unlock(mvp_task_list, thread->task_infos.opaque);
     return;
   }
 
@@ -425,18 +426,27 @@ void __mpcomp_task(void (*fn)(void *), void *data,
 }
 
 /* Steal a task in the 'type' task list of node identified by 'globalRank' */
-static mpcomp_task_t *mpcomp_task_steal(mpcomp_task_list_t *list) {
-  struct mpcomp_task_s *task = NULL;
+static mpcomp_task_t *mpcomp_task_steal(mpcomp_task_list_t *list) 
+{
+    mpcomp_thread_t* thread = (mpcomp_thread_t *)sctk_openmp_thread_tls;
+    mpcomp_task_t* current_task = MPCOMP_TASK_THREAD_GET_CURRENT_TASK(thread); 
 
-  sctk_assert(list != NULL);
+    struct mpcomp_task_s *task = NULL;
+    sctk_assert(list != NULL);
 
-  if (!mpcomp_task_list_trylock(list)) {
-    task = mpcomp_task_list_popfromtail(list);
-    if (task)
-      sctk_atomics_incr_int(&(list->nb_larcenies));
-    mpcomp_task_list_unlock(list);
-  }
-  return task;
+#ifdef MPCOMP_USE_MCS_LOCK 
+     mpcomp_task_list_consummer_lock(list, thread->task_infos.opaque);
+#else /* MPCOMP_USE_MCS_LOCK */
+    if( mpcomp_task_list_consummer_trylock(list, thread->task_infos.opaque))
+        return NULL;
+#endif /* MPCOMP_USE_MCS_LOCK */
+
+    task = mpcomp_task_list_popfromtail(list, current_task->depth );
+    
+    if( task ) sctk_atomics_incr_int(&(list->nb_larcenies));
+
+    mpcomp_task_list_consummer_unlock(list, thread->task_infos.opaque);
+    return task;
 }
 
 /* Return the ith victim for task stealing initiated from element at
@@ -499,7 +509,7 @@ static struct mpcomp_task_s *__mpcomp_task_larceny(void) {
 
   /* Retrieve the information (microthread structure and current region) */
   sctk_assert(sctk_openmp_thread_tls);
-  thread = (mpcomp_thread_t *)sctk_openmp_thread_tls;
+  thread = (mpcomp_thread_t *) sctk_openmp_thread_tls;
 
   mvp = thread->mvp;
   sctk_assert(mvp);
@@ -517,14 +527,13 @@ static struct mpcomp_task_s *__mpcomp_task_larceny(void) {
 
     /* Retrieve informations about task lists */
     const int tasklistDepth = MPCOMP_TASK_TEAM_GET_TASKLIST_DEPTH(team, type);
-    const int nbTasklists = MPCOMP_TASK_INSTANCE_GET_ARRAY_TREE_LEVEL_SIZE(
-        thread->instance, tasklistDepth);
+    const int nbTasklists = (!tasklistDepth) ? 1 : thread->instance->tree_nb_nodes_per_depth[tasklistDepth-1];
 
     // sctk_nodebug( "tasklistDepth: %d -- nbTasklists: %d", tasklistDepth,
     // nbTasklists);
 
     /* If there are task lists in which we could steal tasks */
-    if (nbTasklists > 1) {
+    if ( nbTasklists > 1) {
 
       /* Try to steal inside the last stolen list*/
       if ((list = MPCOMP_TASK_MVP_GET_LAST_STOLEN_TASK_LIST(mvp, type))) {
@@ -579,16 +588,22 @@ void __internal_mpcomp_task_schedule( mpcomp_thread_t* thread, mpcomp_mvp_t* mvp
     }
 
     /*    Executed once per thread    */
-    mpcomp_task_scheduling_infos_init();
+    //mpcomp_task_scheduling_infos_init();
+    current_task = thread->task_infos.current_task;
 
     for (type = 0, task = NULL; !task && type < MPCOMP_TASK_TYPE_COUNT; type++) 
     {
         const int node_rank = MPCOMP_TASK_MVP_GET_TASK_LIST_NODE_RANK(mvp, type);
         mpcomp_task_list_t* list = mpcomp_task_get_list(node_rank, type);
         sctk_assert(list);
-        mpcomp_task_list_lock(list);
+#ifdef MPCOMP_USE_MCS_LOCK 
+     mpcomp_task_list_consummer_lock(list, thread->task_infos.opaque);
+#else /* MPCOMP_USE_MCS_LOCK */
+    if( mpcomp_task_list_consummer_trylock(list, thread->task_infos.opaque))
+        continue;
+#endif /* MPCOMP_USE_MCS_LOCK */
         task = mpcomp_task_list_popfromhead(list, current_task->depth);
-        mpcomp_task_list_unlock(list);
+        mpcomp_task_list_consummer_unlock(list,  thread->task_infos.opaque);
     }
 
     /* If no task found previously, try to thieve a task somewhere */

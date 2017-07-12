@@ -209,8 +209,8 @@ int __mpcomp_loop_ull_dynamic_next(unsigned long long *from,
         return 0;
     }
 
-    int *tree_base = t->instance->tree_base;
-    const int tree_depth = t->instance->tree_depth;
+    int *tree_base = t->instance->tree_base + 1;
+    const int tree_depth = t->instance->tree_depth -1;
     const int max_depth = t->instance->root->depth;
 
     /* Compute the index of the target */

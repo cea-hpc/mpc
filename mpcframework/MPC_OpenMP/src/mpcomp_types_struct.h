@@ -112,9 +112,9 @@ typedef struct mpcomp_team_s {
 
   /* ORDERED CONSTRUCT */
   int next_ordered_index;
-  volatile long next_ordered_offset[5];
-  volatile unsigned long long next_ordered_offset_ull[5];
-  sctk_atomics_int next_ordered_offset_finalized[5];
+  volatile long next_ordered_offset;
+  volatile unsigned long long next_ordered_offset_ull;
+  sctk_atomics_int next_ordered_offset_finalized;
 
 #if MPCOMP_TASK
   struct mpcomp_task_team_infos_s task_infos;
@@ -126,6 +126,7 @@ typedef struct mpcomp_team_s {
  * An OpenMP thread is attached to a MVP, 
  * one thread per nested level */
 typedef struct mpcomp_thread_s {
+    
     /* -- Internal specific informations -- */
     unsigned int depth;
     /** OpenMP rank (0 for master thread per team) */
@@ -259,6 +260,8 @@ typedef union mpcomp_node_or_leaf_u
 /* OpenMP Micro VP */
 typedef struct mpcomp_mvp_s 
 {
+    sctk_mctx_t vp_context;   /* Context including registers, stack pointer, ... */
+    sctk_thread_t pid;
     /* -- MVP Thread specific informations --                   */
     /** VP on which microVP is executed                         */
     int thread_vp_idx;        
