@@ -32,12 +32,16 @@ int sctk_ft_init();
 
 int sctk_ft_enabled();
 
-int sctk_ft_checkpoint();
+void sctk_ft_checkpoint_init();
 
-int sctk_ft_post_checkpoint();
+void sctk_ft_checkpoint();
 
-int sctk_ft_post_restart();
+sctk_ft_state_t sctk_ft_checkpoint_wait();
+
+void sctk_ft_checkpoint_finalize();
 
 int sctk_ft_finalize();
+
+const char* sctk_ft_str_status(sctk_ft_state_t);
 
 #endif /* ifndef __FT_IFACE_H */

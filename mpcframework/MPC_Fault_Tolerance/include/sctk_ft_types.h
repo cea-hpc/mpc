@@ -26,10 +26,11 @@
 
 typedef enum sctk_ft_state_e
 {
+  MPC_STATE_ERROR,
   MPC_STATE_CHECKPOINT,
   MPC_STATE_RESTART,
   MPC_STATE_IGNORE,
-  MPC_STATE_ERROR
+  MPC_STATE_COUNT
 } sctk_ft_state_t;
 
 #endif /* ifndef __SCTK_FT_TYPES_H */

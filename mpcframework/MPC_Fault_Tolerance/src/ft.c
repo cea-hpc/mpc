@@ -30,9 +30,10 @@
 #include <dmtcp.h>
 #endif
 
-const char * state_names[] = {"MPC_STATE_CHECKPOINT", "MPC_STATE_RESTART", "MPC_STATE_IGNORE", "MPC_STATE_ERROR"};
+static inline void __sctk_ft_post_checkpoint();
+static inline void __sctk_ft_post_restart();
 
-static inline void sctk_ft_set_ckptdir(char * dir)
+static inline void __sctk_ft_set_ckptdir(char * dir)
 {
 #ifdef MPC_USE_DMTCP
 	dmtcp_set_global_ckpt_dir(dir);
@@ -40,7 +41,7 @@ static inline void sctk_ft_set_ckptdir(char * dir)
 #endif
 }
 
-static inline void sctk_ft_set_tmpdir(char * dir)
+static inline void __sctk_ft_set_tmpdir(char * dir)
 {
 #ifdef MPC_USE_DMTCP
 	sctk_warning("DMTCP commented dmtcp_set_tmpdir() func");
@@ -51,13 +52,15 @@ static inline void sctk_ft_set_tmpdir(char * dir)
 int sctk_ft_init()
 {
 #ifdef MPC_USE_DMTCP
-	assume_m(dmtcp_is_enabled() == 1, "DMTCP not running but reaching FT interface");
-	sctk_ft_set_ckptdir(".");
-	sctk_ft_set_tmpdir(".");
-	if(dmtcp_get_ckpt_signal() == SIGUSR2)
+	if(dmtcp_is_enabled())
 	{
-		sctk_error("DMTCP and MPC both set an handler for SIGUSR2");
-		sctk_fatal("Signal value: %d", dmtcp_get_ckpt_signal());
+		__sctk_ft_set_ckptdir(".");
+		__sctk_ft_set_tmpdir(".");
+		if(dmtcp_get_ckpt_signal() == SIGUSR2)
+		{
+			sctk_error("DMTCP and MPC both set an handler for SIGUSR2");
+			sctk_fatal("Signal value: %d", dmtcp_get_ckpt_signal());
+		}
 	}
 #endif
 }
@@ -69,23 +72,35 @@ int sctk_ft_enabled()
 #endif
 }
 
-int sctk_ft_checkpoint()
-{
-	sctk_ft_state_t st = MPC_STATE_ERROR;
-#ifdef MPC_USE_DMTCP
-	sctk_debug("Triggers DMTCP checkpoint");
-	int ev = dmtcp_checkpoint();
+static volatile int nb_checkpoints = 0;
+static volatile int nb_restarts = 0;
+static sctk_ft_state_t __state = MPC_STATE_ERROR;
 
-	/* TODO: Disabling networks (only IB ? ) */
-	switch(ev)
+void sctk_ft_checkpoint_init()
+{
+#ifdef MPC_USE_DMTCP
+	dmtcp_get_local_status(&nb_checkpoints, &nb_restarts);
+#endif
+}
+
+void sctk_ft_checkpoint()
+{
+#ifdef MPC_USE_DMTCP
+	dmtcp_checkpoint();
+#endif
+}
+
+void sctk_ft_checkpoint_finalize()
+{
+#ifdef MPC_USE_DMTCP
+	/* depending on status, deferring the work to the FT system */
+	switch(__state)
 	{
-		case DMTCP_AFTER_CHECKPOINT: st = MPC_STATE_CHECKPOINT; break;
-	        case DMTCP_AFTER_RESTART: st = MPC_STATE_RESTART; break;
-		case DMTCP_NOT_PRESENT: sctk_fatal("MPC C/R system does not have any initialized FT layer"); break;
-		default: st = MPC_STATE_ERROR; break;
+		case MPC_STATE_CHECKPOINT: __sctk_ft_post_checkpoint(); break;
+		case MPC_STATE_RESTART:    __sctk_ft_post_restart(); break;
+		default: break;
 	}
 #endif
-	return st;
 }
 
 int sctk_ft_disable()
@@ -108,12 +123,42 @@ int sctk_ft_finalize()
 #endif
 }
 
-int sctk_ft_post_checkpoint()
+sctk_ft_state_t sctk_ft_checkpoint_wait()
+{
+#ifdef MPC_USE_DMTCP
+	int new_nb_checkpoints, new_nb_restarts;
+	do
+	{
+		dmtcp_get_local_status(&new_nb_checkpoints, &new_nb_restarts);
+	}
+	while(new_nb_checkpoints == nb_checkpoints && new_nb_restarts == nb_restarts);
+
+	__state = (new_nb_restarts == nb_restarts) ? MPC_STATE_CHECKPOINT : MPC_STATE_RESTART;
+	
+#endif
+	return __state;
+}
+
+static inline void __sctk_ft_post_checkpoint()
 {
 	sctk_debug("Post-Checkpoint");
 }
 
-int sctk_ft_post_restart()
+static inline void __sctk_ft_post_restart()
 {
 	sctk_debug("Post-Restart");
+}
+
+char* sctk_ft_str_status(sctk_ft_state_t s)
+{
+	static  char * state_names[] = {
+		"MPC_STATE_ERROR",
+		"MPC_STATE_CHECKPOINT",
+		"MPC_STATE_RESTART",
+		"MPC_STATE_IGNORE",
+		"MPC_STATE_COUNT"
+	};
+
+	sctk_assert(s >= 0 && s < MPC_STATE_COUNT);
+	return strdup(state_names[s]);
 }

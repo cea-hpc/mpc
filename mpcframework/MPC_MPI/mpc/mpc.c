@@ -2895,24 +2895,30 @@ int PMPC_Checkpoint(MPC_Checkpoint_state* state) {
 		if(sctk_atomics_fetch_and_incr_int(&gen_acquire) == local_nbtasks -1)
 		{
 
-                        sctk_warning("First syncing !!!!");
                         /* From here: One task per process will do the work */
 			/* synchronize all processes */
-			sctk_pmi_barrier();
+			if(total_nbprocs > 1)
+			{
+				sctk_ft_disable();
+				sctk_pmi_get_process_rank(&pmi_rank);
+				sctk_pmi_barrier();
+				sctk_ft_enable();
+			}
+			else
+				pmi_rank = 0;
+
+			sctk_ft_checkpoint_init();
 
 			/* Only one process triggers the checkpoint (=notify the coordinator) */
-			sctk_pmi_get_process_rank(&pmi_rank);
-                        sctk_warning("Registered: %d", pmi_rank);
 			if(pmi_rank == 0)
 			{
-                                sctk_warning("Doing the chekpoint");
-                                global_state = sctk_ft_checkpoint();
+                                sctk_debug("Doing the chekpoint");
+                                sctk_ft_checkpoint(); /* we can ignore the return value here, by construction */
 			}
 		
-                        sctk_warning("Going to wait(): %d", pmi_rank);
-			/* TODO: propagate the global_state to all proceses */
-			sctk_pmi_barrier();
-                        sctk_warning("Everything is good: %d", pmi_rank);
+			global_state = sctk_ft_checkpoint_wait();
+
+			sctk_ft_checkpoint_finalize();
 
 			/* set gen_release to 0, prepare the end of current generation */ 
 			sctk_atomics_store_int(&gen_release, 0);
@@ -2926,17 +2932,8 @@ int PMPC_Checkpoint(MPC_Checkpoint_state* state) {
 				sctk_thread_yield();
 		}
 	
-		/* update the state for all tasks of this process 
-		 * The state should also be broadcasted to other processes */
+		/* update the state for all tasks of this process */
 		*state = global_state;
-
-		/* depending on status, deferring the work to the FT system */
-		switch(global_state)
-		{
-			case MPC_STATE_CHECKPOINT: sctk_ft_post_checkpoint(); break;
-			case MPC_STATE_RESTART:    sctk_ft_post_restart(); break;
-			default: break;
-		}
 
 		/* If I'm the last task to reach here, increment the global generation counter */ 
 		if(sctk_atomics_fetch_and_incr_int(&gen_release) == local_nbtasks -1)
@@ -2946,7 +2943,11 @@ int PMPC_Checkpoint(MPC_Checkpoint_state* state) {
 
 		/* the current task finished the work for the current generation */
 		task_generations[local_tasknum]++;
-                sctk_error("gone.");
+		sctk_debug("Done Checkpoint routine");
+	}
+	else
+	{
+		*state = MPC_STATE_IGNORE;
 	}
 #endif
 	MPC_ERROR_SUCESS();
