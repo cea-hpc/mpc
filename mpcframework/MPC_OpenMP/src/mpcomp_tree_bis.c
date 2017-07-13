@@ -148,20 +148,6 @@ static int *__mpcomp_compute_topo_tree_array(hwloc_topology_t topology,
   return degree;
 }
 
-#if 1
-static int __mpcomp_get_available_vp_by_mpi_task( int* first_cpu )
-{
-	int num_mvps;
-	const int mpi_task_rank = sctk_get_task_rank(); 
-	*first_cpu = sctk_get_init_vp_and_nbvp( mpi_task_rank, &num_mvps );	
-	return &num_mvps;
-}
-#else
-static int __mpcomp_get_available_vp_by_mpi_task( int* first_cpu )
-{	
-	// Call hwloc and get n_cores;
-}
-#endif 
 
 void __mpcomp_restrict_topology_for_mpcomp( hwloc_topology_t* restrictedTopology, const int omp_threads_expected )
 {
@@ -219,120 +205,6 @@ void __mpcomp_restrict_topology_for_mpcomp( hwloc_topology_t* restrictedTopology
 	return 0;	
 }
 
-void __mpcomp_prepare_mpcomp_tree_build( const int omp_threads_expected, const int mpi_num_tasks )
-{
-
-	
-	/* Compute the number of cores for this task */
-//	const max_num_mvps = __mpcomp_get_available_vp_by_mpi_task();
-
-}
-
-/*
- * Build the default tree.
- */
-int mpcomp_build_default_tree(mpcomp_instance_t *instance) {
-  int depth;
-  int *degree;
-  int n_leaves;
-  int i;
-
-#if 0
-  sctk_nodebug("__mpcomp_build_auto_tree begin");
-
-  sctk_assert(instance != NULL);
-  //sctk_assert(instance->topology != NULL);
-
-  /* Get the default topology shape */
-  degree = 0; //__mpcomp_compute_topo_tree_array(instance->topology, &depth);
-
-  /* Compute the number of leaves */
-  n_leaves = 1;
-  for (i = 0; i < depth; i++) {
-    n_leaves *= degree[i];
-  }
-
-  sctk_debug("__mpcomp_build_default_tree: Building tree depth:%d, n_leaves:%d",
-             depth, n_leaves);
-  for (i = 0; i < depth; i++) {
-    sctk_debug("__mpcomp_build_default_tree:\tDegree[%d] = %d", i, degree[i]);
-  }
-
-  /* Check if the tree shape is correct */
-  if (!__mpcomp_check_tree_parameters(n_leaves, depth, degree)) {
-    /* TODO put warning or failed if needed */
-    /* Fall back to a flat tree */
-    sctk_debug("__mpcomp_build_default_tree: fall back to flat tree");
-    depth = 1;
-    n_leaves = sctk_get_cpu_number();
-    degree[0] = n_leaves;
-    //instance->scatter_depth = 0;
-  }
-
-  TODO("Check the tree in hybrid mode (not w/ sctk_get_cpu_number)")
-
-  /* Build the default tree */
-  mpcomp_build_tree(instance, n_leaves, depth, degree);
-
-  sctk_nodebug("mpcomp_build_auto_tree done");
-#endif
-  return 1;
-}
-
-#if 0
-static int
-__mpcomp_tree_find_depth( int* nnodes_per_depth, const int tree_depth, const int n_elts )
-{
-   int cur_depth;
-
-   sctk_assert( n_elts > 0 );
-   sctk_assert( tree_depth > 0 );
-   sctk_assert( nnodes_per_depth );
-
-   for (cur_depth = tree_depth; cur_depth >= 0; cur_depth--)
-   {
-      if( nnodes_per_depth[cur_depth] <= n_elts )
-         break;
-   }
-   return cur_depth;
-}
-
-static void
-mpcomp_build_tree_set_node_numa_depth( mpcomp_node_t* node, const int n_numa )
-{
-	int depth;
-	int* nnodes_per_depth;
-
-	sctk_assert( node );
-	sctk_assert( n_cores > 0 );
-
-	const int tree_depth = node->tree_depth;
-	nnodes_per_depth = node->tree_nb_nodes_per_depth;
-
-	depth = __mpcomp_tree_find_depth( nnodes_per_depth, tree_depth, n_numa );
-	node->numa_depth = depth;
-}
-
-static void 
-mpcomp_build_tree_set_node_core_depth( mpcomp_node_t* node, const int n_cores )
-{
-	int depth;
-	int* nnodes_per_depth;
-	
-	sctk_assert( node );
-	sctk_assert( n_cores > 0 );
-
-	const int tree_depth = node->tree_depth;
-	nnodes_per_depth = node->tree_nb_nodes_per_depth;
-	
-	depth = __mpcomp_tree_find_depth( nnodes_per_depth, tree_depth, n_cores );
-	node->core_depth = depth;
-}
-#endif 
-
-/*
- * Build a tree according to three parameters.
- */
 int mpcomp_build_tree(mpcomp_instance_t *instance, int n_leaves, int depth, int *degree) 
 {
   int i;
@@ -360,39 +232,6 @@ int mpcomp_build_tree(mpcomp_instance_t *instance, int n_leaves, int depth, int 
                instance->nb_mvps);
     sctk_abort();
   }
-
-#if 0
- 	/* Compute the depth for BALANCED and SCATTER */
-  	const int n_cores = hwloc_get_nbobjs_by_type(instance->topology, HWLOC_OBJ_CORE);
-  	const int n_numa = hwloc_get_nbobjs_by_type(instance->topology, HWLOC_OBJ_NUMANODE);
-
-  	instance->core_depth = -1;
- 	instance->scatter_depth = -1;
-   
-	/* Stop when encountering a level with the right number of elements
-  	 * or a lower number (it may happen when the user specified the tree shape
-  	 */
-     for (i = instance->tree_depth; i >= 0; i--) {
-       if (instance->core_depth == -1 &&
-           instance->tree_nb_nodes_per_depth[i] <= n_cores) {
-         instance->core_depth = i;
-       }
-       if (instance->scatter_depth == -1 &&
-           instance->tree_nb_nodes_per_depth[i] <= n_numa) {
-         instance->scatter_depth = i;
-       }
-     }
-#endif 
-     /* Get the number of CPUs */
-     //const int nb_cpus = sctk_get_cpu_number_topology(instance->topology);
-
-     /* Grab the right order to allocate microVPs (sctk_get_neighborhood) */
-     //order = (int *)sctk_malloc((nb_cpus + 1) * sizeof(int));
-     //sctk_assert(order != NULL);
-
- //	sctk_get_neighborhood_topology(instance->topology, current_mpc_vp, nb_cpus, order);
- 	//__mpcomp_alloc_openmp_tree_struct( degree, depth, NULL, instance ); 
- 	//free(order);
 
 	return 0;
 }

@@ -104,7 +104,7 @@ __mpcomp_tree_array_instance_init( mpcomp_thread_t* thread, const int expected_n
     sctk_assert( instance->team );
     memset( instance->team, 0, sizeof( mpcomp_team_t ) );
 
-    instance->thread_ancestor = master;
+    instance->thread_ancestor = thread;
 
 #if defined( MPCOMP_OPENMP_3_0 )
     mpcomp_task_team_infos_init( instance->team, instance->tree_depth );
@@ -116,7 +116,7 @@ __mpcomp_tree_array_instance_init( mpcomp_thread_t* thread, const int expected_n
     master = ( mpcomp_thread_t* ) mpcomp_alloc( sizeof( mpcomp_thread_t ) );  
     sctk_assert( master );
     memset( master, 0, sizeof( mpcomp_thread_t ) );
-
+    
     master->next = thread;
     master->mvp = thread->mvp;
     master->root = thread->root;
@@ -126,6 +126,8 @@ __mpcomp_tree_array_instance_init( mpcomp_thread_t* thread, const int expected_n
 #if defined( MPCOMP_OPENMP_3_0 )
     mpcomp_tree_array_task_thread_init( master );
 #endif /* MPCOMP_OPENMP_3_0 */
+    
+    instance->master = master;
 
     return instance;
 }
@@ -198,14 +200,15 @@ void __mpcomp_start_openmp_thread( mpcomp_mvp_t *mvp )
     spin_status = ( mvp->spin_node ) ? &( mvp->spin_node->spin_status ) : &( mvp->spin_status );    
     *spin_status = MPCOMP_MVP_STATE_SLEEP;
        
-	__mpcomp_internal_full_barrier( mvp );
+    __mpcomp_internal_half_barrier_start( mvp );
+    __mpcomp_internal_half_barrier_end( mvp ); 
  
     sctk_openmp_thread_tls = mvp->threads->next;
     
     if( mvp->threads->next )
     {
         mvp->threads = mvp->threads->next;
-        mpcomp_free( cur_thread ); 
+        //mpcomp_free( cur_thread ); 
     }
 
     __mpcomp_del_mvp_saved_context( mvp );

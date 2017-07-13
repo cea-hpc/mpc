@@ -147,9 +147,15 @@ __mpcomp_convert_topology_to_tree_shape( hwloc_topology_t topology, int* shape_d
 {
     int* reverse_shape;
     int i, j, reverse_shape_depth;
+#if 0 // test
+    const int max_depth = 1;
+    reverse_shape = ( int* ) mpcomp_alloc( sizeof( int ) * max_depth );
+    sctk_assert( reverse_shape );
+    memset( reverse_shape, 0, sizeof( int ) * max_depth );
+    reverse_shape[0] = 32;
+#else 
     const int max_depth = hwloc_topology_get_depth( topology );
     sctk_assert( max_depth > 1 );
-
     reverse_shape = ( int* ) mpcomp_alloc( sizeof( int ) * max_depth );
     sctk_assert( reverse_shape );
     memset( reverse_shape, 0, sizeof( int ) * max_depth );
@@ -206,6 +212,7 @@ __mpcomp_convert_topology_to_tree_shape( hwloc_topology_t topology, int* shape_d
     if( reverse_shape_depth > 1 )
         __mpcomp_aux_reverse_one_dim_array( reverse_shape, reverse_shape_depth );
  
+#endif 
     *shape_depth = reverse_shape_depth;
     return reverse_shape;
 }

@@ -37,7 +37,6 @@ void mpcomp_taskgroup_start(void) {
   mpcomp_task_taskgroup_t *new_taskgroup = NULL; /* new_taskgroup allocated  */
 
   __mpcomp_init();
-  mpcomp_task_scheduling_infos_init();
 
   omp_thread_tls = (mpcomp_thread_t *)sctk_openmp_thread_tls;
   sctk_assert(omp_thread_tls);

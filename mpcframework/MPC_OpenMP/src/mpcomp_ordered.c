@@ -127,30 +127,34 @@ static inline void __mpcomp_internal_ordered_end_ull( mpcomp_thread_t* t, mpcomp
     sctk_assert( loop_infos && loop_infos->type == MPCOMP_LOOP_TYPE_ULL );
     mpcomp_loop_ull_iter_t* loop = &( loop_infos->loop.mpcomp_ull );
 
+    unsigned long long cast_cur_ordered_iter = (unsigned long long) loop->cur_ordered_iter;
+
     isLastIteration = 0;
-    isLastIteration += (loop->up && loop->cur_ordered_iter >= loop->b) ?  (unsigned long long) 1 : (unsigned long long) 0;
-    isLastIteration += (!loop->up && loop->cur_ordered_iter <= loop->b) ? (unsigned long long) 1 : (unsigned long long) 0;
+    isLastIteration += (loop->up && cast_cur_ordered_iter >= loop->b) ?  (unsigned long long) 1 : (unsigned long long) 0;
+    isLastIteration += (!loop->up && cast_cur_ordered_iter <= loop->b) ? (unsigned long long) 1 : (unsigned long long) 0;
 
     if( loop->up )
     {
-	    loop->cur_ordered_iter = loop->cur_ordered_iter + loop->incr;
+	    cast_cur_ordered_iter += loop->incr;
     }
     else
     {
-	    loop->cur_ordered_iter = loop->cur_ordered_iter - loop->incr;
+	    cast_cur_ordered_iter -=  loop->incr;
     }
 
-    isLastIteration += (loop->up && loop->cur_ordered_iter >= loop->b) ?  (unsigned long long) 1 : (unsigned long long) 0;
-    isLastIteration += (!loop->up && loop->cur_ordered_iter <= loop->b) ? (unsigned long long) 1 : (unsigned long long) 0;
+    loop->cur_ordered_iter = ( long ) cast_cur_ordered_iter; 
+
+    isLastIteration += (loop->up && cast_cur_ordered_iter >= loop->b) ?  (unsigned long long) 1 : (unsigned long long) 0;
+    isLastIteration += (!loop->up && cast_cur_ordered_iter <= loop->b) ? (unsigned long long) 1 : (unsigned long long) 0;
 
     if( isLastIteration )
     {
-	    t->instance->team->next_ordered_offset = (long) 0;
+	    t->instance->team->next_ordered_offset_ull = (long) 0;
         int ret = sctk_atomics_cas_int(&(t->instance->team->next_ordered_offset_finalized), 1, 0 );
     }
     else
     {
-        t->instance->team->next_ordered_offset += (long) 1;
+        t->instance->team->next_ordered_offset_ull += (long) 1;
     }
 }
 

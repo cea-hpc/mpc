@@ -54,7 +54,6 @@ kmp_task_t *__kmpc_omp_task_alloc(ident_t *loc_ref, kmp_int32 gtid,
   mpcomp_thread_t *t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
 
   __mpcomp_init();
-  mpcomp_task_scheduling_infos_init();
 
   /* default pading */
   const long align_size = sizeof(void *);

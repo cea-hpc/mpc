@@ -201,7 +201,6 @@ void mpcomp_task_with_deps(void (*fn)(void *), void *data,
   mpcomp_task_t *current_task, *new_task;
 
   __mpcomp_init();
-  mpcomp_task_scheduling_infos_init();
 
   thread = (mpcomp_thread_t *)sctk_openmp_thread_tls;
   current_task = (mpcomp_task_t *)MPCOMP_TASK_THREAD_GET_CURRENT_TASK(thread);

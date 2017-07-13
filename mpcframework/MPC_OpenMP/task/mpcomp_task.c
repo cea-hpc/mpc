@@ -62,14 +62,6 @@ typedef struct kmp_task { /* GEH: Shouldn't this be aligned somehow? */
                    /*  private vars  */
 } kmp_task_t;
 
-/*
- * Initialization of OpenMP task environment
- */
-void mpcomp_task_scheduling_infos_init(void) {
-  //mpcomp_task_thread_infos_init(sctk_openmp_thread_tls);
-  //mpcomp_task_tree_infos_init();
-}
-
 void __mpcomp_task_intel_wrapper(void *task) {
   kmp_task_t *kmp_task_addr = (char *)task + sizeof(mpcomp_task_t);
   kmp_task_addr->routine(0, kmp_task_addr);
@@ -180,84 +172,6 @@ void mpcomp_task_unref_parent_task(mpcomp_task_t *task) {
   {
     sctk_atomics_decr_int(&(task->refcount));
   }
-}
-
-/* Initialization of mpcomp tasks lists (new and untied) */
-
-void __mpcomp_task_list_infos_exit_r(mpcomp_node_t *node) {
-  int i, j;
-  mpcomp_thread_t *thread;
-
-  sctk_assert(node != NULL);
-  sctk_assert(sctk_openmp_thread_tls != NULL);
-
-  /* Retrieve the current thread information */
-  thread = (mpcomp_thread_t *)sctk_openmp_thread_tls;
-
-  sctk_assert(thread->instance);
-  sctk_assert(thread->instance->team);
-
-  const int team_task_new_list_depth = MPCOMP_TASK_TEAM_GET_TASKLIST_DEPTH(
-      thread->instance->team, MPCOMP_TASK_TYPE_NEW);
-  const int team_task_untied_list_depth = MPCOMP_TASK_TEAM_GET_TASKLIST_DEPTH(
-      thread->instance->team, MPCOMP_TASK_TYPE_UNTIED);
-
-  /* If the node correspond to the new list depth, release the data structure */
-  if (node->depth == team_task_new_list_depth) {
-    mpcomp_task_list_free(
-        MPCOMP_TASK_NODE_GET_TASK_LIST_HEAD(node, MPCOMP_TASK_TYPE_NEW));
-    MPCOMP_TASK_NODE_SET_TASK_LIST_HEAD(node, MPCOMP_TASK_TYPE_NEW, NULL);
-  }
-
-  /* If the node correspond to the untied list depth, release the data structure
-   */
-  if (node->depth == team_task_untied_list_depth) {
-    mpcomp_task_list_free(
-        MPCOMP_TASK_NODE_GET_TASK_LIST_HEAD(node, MPCOMP_TASK_TYPE_UNTIED));
-    MPCOMP_TASK_NODE_SET_TASK_LIST_HEAD(node, MPCOMP_TASK_TYPE_UNTIED, NULL);
-  }
-
-  /* If the untied or the new lists are at a lower level, look deeper */
-  if ((node->depth <= team_task_new_list_depth) ||
-      (node->depth <= team_task_untied_list_depth)) {
-    switch (node->child_type) {
-    case MPCOMP_CHILDREN_NODE:
-      for (i = 0; i < node->nb_children; i++) {
-        /* Call recursively for all children nodes */
-        __mpcomp_task_list_infos_exit_r(node->children.node[i]);
-      }
-      break;
-
-    case MPCOMP_CHILDREN_LEAF:
-      for (i = 0; i < node->nb_children; i++) {
-        /* All the children are leafs */
-        mpcomp_mvp_t *mvp = node->children.leaf[i];
-        sctk_assert(mvp != NULL);
-
-        /* If the node correspond to the new list depth, release the data
-         * structure */
-        if ((node->depth + 1) == team_task_new_list_depth) {
-          mpcomp_task_list_free(
-              MPCOMP_TASK_MVP_GET_TASK_LIST_HEAD(mvp, MPCOMP_TASK_TYPE_NEW));
-          MPCOMP_TASK_MVP_SET_TASK_LIST_HEAD(mvp, MPCOMP_TASK_TYPE_NEW, NULL);
-        }
-
-        /* If the node correspond to the untied list depth, release the data
-         * structure */
-        if ((node->depth + 1) == team_task_untied_list_depth) {
-          mpcomp_task_list_free(
-              MPCOMP_TASK_MVP_GET_TASK_LIST_HEAD(mvp, MPCOMP_TASK_TYPE_UNTIED));
-          MPCOMP_TASK_MVP_SET_TASK_LIST_HEAD(mvp, MPCOMP_TASK_TYPE_UNTIED,
-                                             NULL);
-        }
-      }
-      break;
-    default:
-      sctk_nodebug("not reachable");
-    }
-  }
-
-  return;
 }
 
 /* The new task may be delayed, so copy arguments in a buffer */
@@ -418,7 +332,6 @@ void __mpcomp_task(void (*fn)(void *), void *data,
   mpcomp_task_t *new_task;
 
   __mpcomp_init();
-  mpcomp_task_scheduling_infos_init();
 
   new_task = __mpcomp_task_alloc(fn, data, cpyfn, arg_size, arg_align,
                                  if_clause, flags, 0 /* no deps */);
@@ -588,7 +501,6 @@ void __internal_mpcomp_task_schedule( mpcomp_thread_t* thread, mpcomp_mvp_t* mvp
     }
 
     /*    Executed once per thread    */
-    //mpcomp_task_scheduling_infos_init();
     current_task = thread->task_infos.current_task;
 
     for (type = 0, task = NULL; !task && type < MPCOMP_TASK_TYPE_COUNT; type++) 
@@ -653,8 +565,6 @@ void mpcomp_taskwait(void)
 {
   mpcomp_task_t *current_task = NULL;     /* Current task execute */
   mpcomp_thread_t *omp_thread_tls = NULL; /* thread private data  */
-
-  mpcomp_task_scheduling_infos_init();
 
   omp_thread_tls = (mpcomp_thread_t *)sctk_openmp_thread_tls;
   sctk_assert(omp_thread_tls);

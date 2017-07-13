@@ -69,7 +69,7 @@ void __mpcomp_internal_full_barrier(mpcomp_mvp_t *mvp) {
         if (c != new_root || (c == new_root && b != c->barrier_num_threads)) {
           /* Wait for c->barrier == c->barrier_num_threads */
           while (b_done == c->barrier_done) {
-            sctk_thread_yield();
+  //          sctk_thread_yield();
 #if MPCOMP_TASK
             mpcomp_task_schedule();
 #endif /* MPCOMP_TASK */
@@ -109,14 +109,14 @@ void __mpcomp_internal_half_barrier_start( mpcomp_mvp_t *mvp )
   sctk_assert(mvp->father->instance);
   sctk_assert(mvp->father->instance->team);
 
-  new_root = mvp->instance->team->info.new_root;
+  new_root = mvp->instance->root;
   c = mvp->father;
    
   sctk_assert( c );
   sctk_assert(new_root != NULL);
 
-#if 1 //MPCOMP_TASK
-  (void)mpcomp_thread_tls_store(&(mvp->threads[0]));
+#if 0 //MPCOMP_TASK
+  (void)mpcomp_thread_tls_store(mvp->threads[0]);
   __mpcomp_internal_full_barrier(mvp);
   (void)mpcomp_thread_tls_store_father(); // To check...
 #endif /* MPCOMP_TASK */

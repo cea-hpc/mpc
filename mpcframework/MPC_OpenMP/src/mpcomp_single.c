@@ -30,7 +30,9 @@
 #include "ompt.h"
 #include "mpcomp_ompt_general.h"
 
+#if OMPT_SUPPORT
 extern ompt_callback_t* OMPT_Callbacks; 
+#endif /* OMPT_SUPPORT */
 
 /* 
    Perform a single construct.
@@ -93,7 +95,7 @@ int __mpcomp_do_single(void)
   		}
 	}
 
-#if 1 //OMPT_SUPPORT
+#if OMPT_SUPPORT
 	if( mpcomp_ompt_is_enabled() )
 	{
    	if( OMPT_Callbacks )

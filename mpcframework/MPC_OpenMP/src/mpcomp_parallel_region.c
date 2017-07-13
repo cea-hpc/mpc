@@ -33,9 +33,11 @@
 #include "mpcomp_task_utils.h"
 #include "mpcomp_tree_structs.h"
 
+#if OMPT_SUPPORT
 #include "ompt.h"
 #include "mpcomp_ompt_general.h"
 extern ompt_callback_t* OMPT_Callbacks;
+#endif /* OMPT_SUPPORT */
 
 /* Add header for spinning core */
 mpcomp_instance_t* __mpcomp_tree_array_instance_init( mpcomp_thread_t*, const int);
@@ -72,6 +74,7 @@ __mpcomp_internal_begin_parallel_region( mpcomp_parallel_region_t *info, const u
     mpcomp_thread_t* new_thread;
     mpcomp_parallel_region_t* instance_info;
 
+    static int once = 0;
     /* Grab the thread info */
     t = (mpcomp_thread_t *) sctk_openmp_thread_tls;
     sctk_assert(t != NULL);
@@ -91,12 +94,19 @@ __mpcomp_internal_begin_parallel_region( mpcomp_parallel_region_t *info, const u
 
     sctk_assert(real_num_threads > 0);
    
-    if( 1 || !t->children_instance ||
+    if( !t->children_instance ||
         (t->children_instance && 
         t->children_instance->nb_mvps != real_num_threads ) )
     {
         t->children_instance = __mpcomp_tree_array_instance_init( t, real_num_threads );
         sctk_assert( t->children_instance );
+        once++; 
+        sctk_assert( once == 1 );
+    }
+    else
+    {
+        sctk_assert( once == 1 );
+        t->mvp->threads = t->children_instance->master;
     }
 
     /* Switch to instance thread */
@@ -124,7 +134,9 @@ __mpcomp_internal_begin_parallel_region( mpcomp_parallel_region_t *info, const u
 
     instance->team->depth = t->instance->team->depth + 1;
 
-    __mpcomp_instance_tree_array_root_init( t->root, t->children_instance, instance_info->num_threads );
+    if( !t->children_instance->buffered ) 
+        __mpcomp_instance_tree_array_root_init( t->root, t->children_instance, instance_info->num_threads );
+
     __mpcomp_wakeup_node( t->root );    
 
 	return ;

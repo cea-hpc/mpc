@@ -26,8 +26,10 @@
 #include "mpcomp_core.h"
 #include "mpcomp_types.h"
 
+#if OMPT_SUPPORT
 #include "ompt.h"
 extern ompt_callback_t* OMPT_Callbacks;
+#endif /* OMPT_SUPPORT */
 
 /*
    This file contains all functions related to SECTIONS constructs in OpenMP
@@ -130,7 +132,7 @@ int __mpcomp_sections_begin(int nb_sections) {
   num_threads = t->info.num_threads;
   sctk_assert( num_threads > 0 ) ;
 
-#if 1 //OMPT_SUPPORT
+#if OMPT_SUPPORT
 	if( mpcomp_ompt_is_enabled() )
 	{
    	if( OMPT_Callbacks )
@@ -206,7 +208,7 @@ int __mpcomp_sections_next(void) {
 
 void __mpcomp_sections_end_nowait(void) { 
 
-#if 1 //OMPT_SUPPORT
+#if OMPT_SUPPORT
 	if( mpcomp_ompt_is_enabled() )
 	{
    	if( OMPT_Callbacks )

@@ -636,7 +636,7 @@ __mpcomp_openmp_mvp_initialisation( void* args )
     /* Initialize the corresponding microVP (all but tree-related variables) */ 
     new_mvp->root = root;
     new_mvp->thread_self = sctk_thread_self();
-
+    
     /* MVP ranking */
     new_mvp->global_rank = rank;
     new_mvp->stage_rank = __mpcomp_tree_array_convert_global_to_stage( tree_shape, max_depth, rank );
@@ -774,7 +774,6 @@ __mpcomp_alloc_openmp_tree_struct( int* shape, int max_depth, hwloc_topology_t t
         fprintf(stderr, ":: %s :: shape %d -> %d\n", __func__, i, shape[i]);
 #endif
 
-    /* Pre-Init root to avoid mutliple computing */
     root->tree_depth = max_depth +1;
     root->tree_base = __mpcomp_tree_array_compute_tree_shape( root, shape, max_depth );     
     root->tree_cumulative = __mpcomp_tree_array_compute_cumulative_num_nodes_per_depth( root );
@@ -808,8 +807,6 @@ __mpcomp_alloc_openmp_tree_struct( int* shape, int max_depth, hwloc_topology_t t
         const int target_vp = i; //__mpcomp_tree_array_convert_global_to_stage( shape, max_depth, i );
         const int pu_id = ( sctk_get_cpu() + target_vp ) % sctk_get_cpu_number(); 
         args[i].target_vp = target_vp;
-
-        fprintf(stderr, "Bind thread on core #%d -- %d -- %d --%d\n", pu_id, target_vp, sctk_get_cpu(), sctk_get_cpu_number() );
 
         sctk_thread_attr_t __attr;
         sctk_thread_attr_init( &__attr );

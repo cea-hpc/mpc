@@ -223,7 +223,10 @@ typedef struct mpcomp_instance_s
     /** OpenMP information on the team */
   	struct mpcomp_team_s *team;   
 
+    struct mpcomp_thread_s* master;
+
 	/*-- Instance MVP --*/
+    int buffered;
 
     /** Number of microVPs for this instance   */
     /** All microVPs of this instance  */

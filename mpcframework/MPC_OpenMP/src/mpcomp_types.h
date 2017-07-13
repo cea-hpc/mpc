@@ -26,7 +26,7 @@
 #ifndef __MPCOMP_TYPES_H__
 #define __MPCOMP_TYPES_H__
 
-#define OMPT_SUPPORT 1
+#define OMPT_SUPPORT 0
 
 #include "mpcomp_task.h"
 #include "mpcomp_types_def.h"

@@ -349,14 +349,18 @@ __mpcomp_scatter_wakeup_intermediate_node( mpcomp_node_t* node )
         
         for( i = 0; i < num_vchildren; i++ )
         {
+            
             child_node = node->children.node[i];
             sctk_assert( child_node );
             child_node->already_init = 0;
-            child_node->num_threads = min_nthreads + ( ( i < ext_nthreads ) ? 1 : 0 );
-            child_node->mvp_first_id = min_nthreads * i + ( ( i < ext_nthreads ) ? i : ext_nthreads );
-            child_node->mvp_first_id += node_first_mvp;
-            child_node->instance = node->instance;
-            __mpcomp_instance_tree_array_node_init( node, child_node, i );
+            if( !node->instance->buffered )
+            {
+                child_node->num_threads = min_nthreads + ( ( i < ext_nthreads ) ? 1 : 0 );
+                child_node->mvp_first_id = min_nthreads * i + ( ( i < ext_nthreads ) ? i : ext_nthreads );
+                child_node->mvp_first_id += node_first_mvp;
+                child_node->instance = node->instance;
+                __mpcomp_instance_tree_array_node_init( node, child_node, i );
+            }
             child_node->spin_status = MPCOMP_MVP_STATE_AWAKE;
         }
     }
@@ -370,7 +374,6 @@ __mpcomp_scatter_wakeup_intermediate_node( mpcomp_node_t* node )
 
         node->barrier_num_threads = nthreads;
         cur_node = 0;
-        
 
         for( i = 0; i < nthreads; i++ )
         {
@@ -380,20 +383,25 @@ __mpcomp_scatter_wakeup_intermediate_node( mpcomp_node_t* node )
             mvp = child_node->mvp;
             sctk_assert( mvp );
             child_node->already_init = 1;
-            child_node->num_threads = 1; 
-            child_node->instance = node->instance;
-            child_node->mvp_first_id = node_first_mvp + i;
-            /* Set MVP infos */
-            sctk_assert( mvp->threads );        
-            next = mvp->threads->next; 
-            memset( mvp->threads, 0, sizeof( mpcomp_thread_t ) );
-            mvp->threads->root = child_node;
-            mvp->threads->next = next;
-            mvp->threads->father = node->instance->thread_ancestor;
-            mvp->threads->father_node = node;
-            mvp->threads->rank = node->mvp_first_id + i;
-            mvp->instance = node->instance;
-            __mpcomp_instance_tree_array_mvp_init( node, mvp, i );
+            if( !node->instance->buffered )
+            {
+                child_node->num_threads = 1; 
+                child_node->instance = node->instance;
+                child_node->mvp_first_id = node_first_mvp + i;
+                /* Set MVP infos */
+                sctk_assert( mvp->threads );        
+                next = mvp->threads->next; 
+                memset( mvp->threads, 0, sizeof( mpcomp_thread_t ) );
+                mvp->threads->mvp = mvp;
+                mvp->threads->instance = child_node->instance;
+                mvp->threads->root = child_node;
+                mvp->threads->next = next;
+                mvp->threads->father = node->instance->thread_ancestor;
+                mvp->threads->father_node = node;
+                mvp->threads->rank = node->mvp_first_id + i;
+                mvp->instance = node->instance;
+                __mpcomp_instance_tree_array_mvp_init( node, mvp, i );
+            }
             /* WakeUp NODE */
             child_node->spin_status = MPCOMP_MVP_STATE_AWAKE;
             cur_node += min_shift + ( ( i < ext_shift ) ? 1 : 0 ); 
@@ -407,43 +415,46 @@ static mpcomp_mvp_t*
 __mpcomp_scatter_wakeup_final_mvp( mpcomp_node_t* node )
 {
     int i, cur_mvp;
+    //int node_vdepth, num_vchildren, nthreads, num_children, min_shift, ext_shift;
 
     sctk_assert( node );
     sctk_assert( node->child_type == MPCOMP_CHILDREN_LEAF ); 
 
-    const int combined_pragma = node->instance->team->info.combined_pragma;
-    sctk_assert( combined_pragma >= 0 && combined_pragma < MPCOMP_COMBINED_COUNT); 
+        sctk_assert( node->instance->root->depth <= node->depth );
+        const int node_vdepth = node->depth - node->instance->root->depth +1;
+        const int num_vchildren = node->instance->tree_base[node_vdepth];               
+        sctk_assert( node->num_threads <= num_vchildren );
 
-    sctk_assert( node->instance->root->depth <= node->depth );
-    const int node_vdepth = node->depth - node->instance->root->depth +1;
-    const int num_vchildren = node->instance->tree_base[node_vdepth];               
-    sctk_assert( node->num_threads <= num_vchildren );
+        const int nthreads = node->num_threads;
+        const int num_children = node->nb_children;
+        sctk_assert( nthreads <= num_children );
 
-    const int nthreads = node->num_threads;
-    const int num_children = node->nb_children;
-    sctk_assert( nthreads <= num_children );
+        const int min_shift = num_children / nthreads; 
+        const int ext_shift = num_children % nthreads;
 
-    const int min_shift = num_children / nthreads; 
-    const int ext_shift = num_children % nthreads;
-
-    node->barrier_num_threads = node->num_threads;
-    cur_mvp = 0; 
+        node->barrier_num_threads = node->num_threads;
+        cur_mvp = 0; 
 
     for( i = 0; i < nthreads; i++ )
     {
         mpcomp_thread_t* father, *next;
         mpcomp_mvp_t* mvp = node->children.leaf[cur_mvp]; 
-        mvp->instance = node->instance;
-        /* Set MVP instance rank in thread structure */ 
-        sctk_assert( mvp->threads );        
-        next = mvp->threads->next;
-        memset( mvp->threads, 0, sizeof( mpcomp_thread_t ) );
-        mvp->threads->root = NULL;
-        mvp->threads->next = next;
-        mvp->threads->father = node->instance->thread_ancestor;
-        mvp->threads->father_node = node;
-        mvp->threads->rank = node->mvp_first_id + i;
-        __mpcomp_instance_tree_array_mvp_init( node, mvp, i );
+        if( !node->instance->buffered )
+        {
+            mvp->instance = node->instance;
+            /* Set MVP instance rank in thread structure */ 
+            sctk_assert( mvp->threads );        
+            next = mvp->threads->next;
+            memset( mvp->threads, 0, sizeof( mpcomp_thread_t ) );
+            mvp->threads->mvp = mvp;
+            mvp->threads->instance = node->instance;
+            mvp->threads->root = NULL;
+            mvp->threads->next = next;
+            mvp->threads->father = node->instance->thread_ancestor;
+            mvp->threads->father_node = node;
+            mvp->threads->rank = node->mvp_first_id + i;
+            __mpcomp_instance_tree_array_mvp_init( node, mvp, i );
+        }
         /* WakeUp MVP */
         mvp->spin_status = MPCOMP_MVP_STATE_AWAKE;
         cur_mvp += min_shift + ( ( i < ext_shift ) ? 1 : 0 ); 
@@ -498,8 +509,10 @@ void __mpcomp_scatter_instance_post_init( mpcomp_thread_t* thread )
     sctk_assert( thread->mvp );
     mpcomp_instance_t* instance;
     mpcomp_mvp_t* mvp = thread->mvp;
-    __mpcomp_internal_full_barrier( thread->mvp );
 
+    if( ! thread->mvp->instance->buffered )
+        __mpcomp_internal_full_barrier( thread->mvp );
+    thread->mvp->instance->buffered = 1;
 #if 0
     if( thread->rank == 0 )
     {
@@ -523,6 +536,5 @@ void __mpcomp_scatter_instance_post_init( mpcomp_thread_t* thread )
     }
     }
 #endif
-    __mpcomp_internal_full_barrier( thread->mvp );
 //    MPCOMP_TASK_TEAM_CMPL_INIT(thread->instance->team);
 }

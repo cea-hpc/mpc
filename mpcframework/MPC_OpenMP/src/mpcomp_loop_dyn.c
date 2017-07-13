@@ -30,8 +30,10 @@
 #include "mpcomp_loop_dyn.h"
 #include "mpcomp_loop_dyn_utils.h"
 
+#if OMPT_SUPPORT
 #include "ompt.h"
 #include "mpcomp_ompt_general.h"
+#endif /* OMPT_SUPPORT */
 
 static int __mpcomp_dynamic_loop_get_chunk_from_rank(mpcomp_thread_t *t,
                                                      mpcomp_thread_t *target,
@@ -128,7 +130,7 @@ int __mpcomp_dynamic_loop_begin(long lb, long b, long incr, long chunk_size,
   	__mpcomp_dynamic_loop_init(t, lb, b, incr, chunk_size);
   	__mpcomp_loop_dyn_init_target_chunk(t, t, t->info.num_threads);
 
-#if 1 //OMPT_SUPPORT
+#if OMPT_SUPPORT
 	if( mpcomp_ompt_is_enabled() )
 	{
    	    if( OMPT_Callbacks )
@@ -255,7 +257,7 @@ void __mpcomp_dynamic_loop_end_nowait(void) {
   const int index = __mpcomp_loop_dyn_get_for_dyn_index(t);
   sctk_assert(index >= 0 && index < MPCOMP_MAX_ALIVE_FOR_DYN + 1);
 
-#if 1 //OMPT_SUPPORT
+#if OMPT_SUPPORT
 	/* Avoid double call during runtime schedule policy */
 	if( mpcomp_ompt_is_enabled() )
 	{
