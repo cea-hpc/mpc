@@ -19,8 +19,13 @@
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
 /* #                                                                      # */
 /* ######################################################################## */
-#define _GNU_SOURCE             /* See feature_test_macros(7) */
+
+#include "sctk_config_pthread.h"
+
+#if HAVE_PTHREAD_ATTR_SETAFFINITY_NP
+#define _GNU_SOURCE
 #include <sched.h>
+#endif /* HAVE_PTHREAD_ATTR_SETAFFINITY_NP */
 
 #include <stdio.h>
 #include <unistd.h>
@@ -32,7 +37,6 @@
 #include "sctk_tls.h"
 #include "sctk_internal_thread.h"
 #include "sctk_posix_pthread.h"
-#include "sctk_config_pthread.h"
 #include "sctk_kernel_thread.h"
 #include <semaphore.h>
 #ifdef MPC_Message_Passing
@@ -401,14 +405,15 @@ local_pthread_create (pthread_t * restrict thread,
     }
 }
 
-
 static int
 sctk_pthread_thread_attr_setbinding (sctk_thread_attr_t * __attr, int __binding)
 {
+#if HAVE_PTHREAD_ATTR_SETAFFINITY_NP
     cpu_set_t mask;
     CPU_ZERO(&mask);
     CPU_SET(__binding, &mask);
     pthread_attr_setaffinity_np(__attr, sizeof(cpu_set_t), &mask);
+#endif /* HAVE_PTHREAD_ATTR_SETAFFINITY_NP */
     return 0;
 }
 
