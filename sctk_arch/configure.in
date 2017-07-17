@@ -206,6 +206,7 @@ AC_CHECK_FUNCS(pthread_attr_setscope )
 AC_CHECK_FUNCS(pthread_attr_setstack )
 AC_CHECK_FUNCS(pthread_attr_setstackaddr )
 AC_CHECK_FUNCS(pthread_attr_setstacksize )
+AC_CHECK_FUNCS(pthread_attr_setaffinity_np )
 fi
 
 
