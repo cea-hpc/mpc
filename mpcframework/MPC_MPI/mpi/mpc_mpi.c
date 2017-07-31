@@ -14505,7 +14505,7 @@ static int __INTERNAL__PMPI_Init(int *argc, char ***argv) {
     }
     sctk_spinlock_unlock(&(task_specific->per_communicator_lock));
 
-    mpc_MPI_allocmem_pool_init();
+    /*mpc_MPI_allocmem_pool_init();*/
 
     MPI_APPNUM_VALUE = 0;
     MPI_LASTUSEDCODE_VALUE = MPI_ERR_LASTCODE;
@@ -14531,7 +14531,7 @@ __INTERNAL__PMPI_Finalize (void)
     NBC_Finalize(&(task_specific->mpc_mpi_data->NBC_Pthread));
   }
 
-  mpc_MPI_allocmem_pool_release();
+  /*mpc_MPI_allocmem_pool_release();*/
 
   /* Clear attributes on COMM_SELF */
   SCTK__MPI_Attr_clean_communicator (MPI_COMM_SELF);

@@ -587,6 +587,8 @@ sctk_ptp_get_reorder_from_destination(int task,
   sctk_ptp_table_find(key, internal_ptp);
   sctk_ptp_table_read_unlock();
 
+  sctk_assert(internal_ptp);
+
   return &(internal_ptp->reorder);
 }
 
