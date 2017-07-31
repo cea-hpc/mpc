@@ -147,6 +147,7 @@ void sctk_network_init_portals (sctk_rail_info_t *rail)
     rail->rdma_cas = sctk_portals_rdma_cas;
 
     rail->network_name = "PORTALS";
+    rail->network_type = SCTK_NET_PORTALS;
 
     sctk_rail_init_route ( rail, rail->runtime_config_rail->topology, sctk_portals_on_demand_connection_handler );
     sctk_network_init_portals_all ( rail );

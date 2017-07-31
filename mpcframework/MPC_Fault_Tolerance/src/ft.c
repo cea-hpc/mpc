@@ -25,11 +25,13 @@
 #include <signal.h>
 #include "sctk_debug.h"
 #include "sctk_ft_types.h"
+#include "sctk_multirail.h"
 
 #ifdef MPC_USE_DMTCP
 #include <dmtcp.h>
 #endif
 
+static inline void __sctk_ft_pre_checkpoint();
 static inline void __sctk_ft_post_checkpoint();
 static inline void __sctk_ft_post_restart();
 
@@ -85,6 +87,8 @@ void sctk_ft_checkpoint_init()
 
 void sctk_ft_checkpoint()
 {
+	__sctk_ft_pre_checkpoint();
+
 #ifdef MPC_USE_DMTCP
 	dmtcp_checkpoint();
 #endif
@@ -137,6 +141,23 @@ sctk_ft_state_t sctk_ft_checkpoint_wait()
 	
 #endif
 	return __state;
+}
+
+static inline void __sctk_ft_pre_checkpoint()
+{
+	size_t nb = sctk_rail_count();
+	size_t i;
+
+	for (i = 0; i < nb; ++i) {
+		sctk_rail_info_t* rail = sctk_rail_get_by_id(i);
+		if(!rail) continue;
+#ifdef MPC_USE_DMTCP
+		if(sctk_rail_get_type(rail) == SCTK_NET_INFINIBAND)
+		{
+			sctk_multirail_on_demand_disconnection_rail(rail);
+		}
+#endif
+	}
 }
 
 static inline void __sctk_ft_post_checkpoint()

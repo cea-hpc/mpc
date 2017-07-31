@@ -72,7 +72,7 @@ void sctk_ib_config_print ( sctk_ib_rail_info_t *rail_ib )
 
 	if ( sctk_process_rank == 0 )
 	{
-		fprintf ( stderr, "############# IB configuration for %s\n"
+		fprintf ( stderr, "############# IB configuration\n"
 		          "eager_limit      = %d\n"
 		          "buffered_limit = %d\n"
 		          "max_rdma_connections = %d\n"
@@ -110,7 +110,7 @@ void sctk_ib_config_print ( sctk_ib_rail_info_t *rail_ib )
 		          EXPERIMENTAL ( steal ) "            = %d\n"
 		          "Stealing desc        = %s\n"
 		          EXPERIMENTAL ( low_memory ) "            = %d\n"
-		          "#############\n",  rail_ib->network_type,
+		          "#############\n",
 		          config->eager_limit,
 		          config->buffered_limit,
 		          config->max_rdma_connections,
@@ -164,7 +164,6 @@ void sctk_ib_config_init ( sctk_ib_rail_info_t *rail_ib, char *network_name )
 
 	rail_ib->config = &rail_ib->rail->runtime_config_driver_config->driver.value.infiniband;
 	sctk_ib_config_mutate ( rail_ib );
-	rail_ib->network_type = strdup ( network_name );
 
 	//Check if the variables are well set
 	sctk_ib_config_check ( rail_ib );

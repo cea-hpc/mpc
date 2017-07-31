@@ -192,7 +192,6 @@ sctk_rail_info_t * sctk_rail_get_by_id ( int i )
 	return & ( __rails.rails[i] );
 }
 
-
 int sctk_rail_get_rdma_id()
 {
 	return __rails.rdma_rail;

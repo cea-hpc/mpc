@@ -912,6 +912,7 @@ void sctk_network_init_mpi_ib ( sctk_rail_info_t *rail )
 	rail->rdma_cas = sctk_ib_rdma_cas;
 	
 	rail->network_name = network_name;
+	rail->network_type = SCTK_NET_INFINIBAND;
 
 	rail->send_message_from_network = sctk_send_message_from_network_mpi_ib;
 

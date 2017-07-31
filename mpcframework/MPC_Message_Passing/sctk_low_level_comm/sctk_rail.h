@@ -44,7 +44,9 @@ typedef struct sctk_endpoint_s sctk_endpoint_t;
 typedef union
 {
 	sctk_tcp_rail_info_t tcp;	/**< TCP Rail Info */
+#ifdef MPC_USE_INFINIBAND
 	sctk_ib_rail_info_t ib;		/**< IB Rail Info */
+#endif
 	sctk_shm_rail_info_t shm;	/**< SHM Rail Info */
 #ifdef MPC_USE_PORTALS
         sctk_portals_rail_info_t portals; /**< Portals Info */
@@ -105,6 +107,16 @@ typedef struct
 	int size;
 }sctk_rail_pin_ctx_t;
 
+
+typedef enum
+{
+	SCTK_NET_INFINIBAND,
+	SCTK_NET_SHM,
+	SCTK_NET_TCP,
+	SCTK_NET_PORTALS,
+	SCTK_NET_COUNT
+} sctk_net_type_t;
+
 void sctk_rail_pin_ctx_init( sctk_rail_pin_ctx_t * ctx, void * addr, size_t size );
 void sctk_rail_pin_ctx_release( sctk_rail_pin_ctx_t * ctx );
 
@@ -124,6 +136,7 @@ struct sctk_rail_info_s
 	int subrail_id; /**< ID of this rail if it is a subrail (-1 otherwise) */
 	int priority; /** Priority of this rail */
 	char *network_name; /**< Name of this rail */
+	sctk_net_type_t network_type; /**< network identfier */
 	sctk_device_t * rail_device; /**< Device associated with the rail */
 
 	struct sctk_rail_info_s * parent_rail; /**< This is used for rail hierarchies
@@ -258,6 +271,9 @@ void sctk_rail_commit();
 int sctk_rail_committed();
 void sctk_rail_init_route ( sctk_rail_info_t *rail, char *topology, void (*on_demand)( struct sctk_rail_info_s * rail , int dest ) );
 void sctk_rail_dump_routes();
+
+static inline sctk_net_type_t sctk_rail_get_type(sctk_rail_info_t* rail) { return rail->network_type;}
+static inline sctk_net_type_t sctk_rail_get_nb_types() {return SCTK_NET_COUNT;}
 
 /** Retrieve the HWLOC device associated with a rail */
 static inline hwloc_obj_t sctk_rail_get_device_hwloc_obj( sctk_rail_info_t *rail )
