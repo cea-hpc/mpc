@@ -154,7 +154,8 @@ static inline void __sctk_ft_pre_checkpoint()
 #ifdef MPC_USE_DMTCP
 		if(sctk_rail_get_type(rail) == SCTK_NET_INFINIBAND)
 		{
-			sctk_multirail_on_demand_disconnection_rail(rail);
+                        sctk_warning("Disconnect rail %d", i);
+			/*sctk_multirail_on_demand_disconnection_rail(rail);*/
 		}
 #endif
 	}

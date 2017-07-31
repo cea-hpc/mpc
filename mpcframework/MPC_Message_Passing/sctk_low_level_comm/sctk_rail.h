@@ -114,6 +114,7 @@ typedef enum
 	SCTK_NET_SHM,
 	SCTK_NET_TCP,
 	SCTK_NET_PORTALS,
+        SCTK_NET_TOPOLOGICAL,
 	SCTK_NET_COUNT
 } sctk_net_type_t;
 

@@ -633,6 +633,7 @@ void sctk_network_init_topological ( sctk_rail_info_t *rail )
 	rail->rdma_cas = sctk_topological_rail_cas;
 	
 	rail->network_name = "Topological RAIL";
+        rail->network_type = SCTK_NET_TOPOLOGICAL;
 
 	sctk_network_init_topological_rail_info( rail );
 	
