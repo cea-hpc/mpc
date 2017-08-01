@@ -31,7 +31,18 @@ if [ "$SCTK_JOB_MANAGER" = "SLURM" ]; then
                 fi
     fi
 
-  LAUNCH_COMMAND="srun $LAUNCH_OPTIONS  --ntasks=$PROCESS_NB --nodes=$NODE_NB --cpus-per-task=$CPU_NB $BINARY $USER_ARGS $SCTK_ARGS"
+  if test "$LAUNCH_MODE" = "exec"; then
+	  local_launch=srun
+  else
+	  PROCESS_NB=$NODE_NB
+	  local_launch=salloc
+  fi
+  LAUNCH_COMMAND="$local_launch $LAUNCH_OPTIONS --ntasks=$PROCESS_NB --nodes=$NODE_NB --cpus-per-task=$CPU_NB $BINARY $USER_ARGS $SCTK_ARGS"
 else
-  LAUNCH_COMMAND="${SCTK_HYDRA_BINDIR}mpiexec.hydra $LAUNCH_OPTIONS -n $PROCESS_NB $BINARY $USER_ARGS $SCTK_ARGS"
+  
+  if test "$LAUNCH_MODE" = "alloc"; then
+	  LAUNCH_COMMAND="$BINARY $USER_ARGS $SCTK_ARGS"
+  else
+	  LAUNCH_COMMAND="${SCTK_HYDRA_BINDIR}mpiexec.hydra $LAUNCH_OPTIONS -n $PROCESS_NB $BINARY $USER_ARGS $SCTK_ARGS"
+  fi
 fi

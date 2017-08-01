@@ -23,6 +23,7 @@
 ########################################################################
 
 LAUNCH="mpiexec"
+LAUNCH_MODE="exec"
 BINS_HOME="${MPC_BIN_DIR}/mpcrun_opt/mpcrun"
 
 GDB_LIBTHREAD_DB="${MPC_LIB_DIR}/libmpc_thread_db.so"
@@ -613,6 +614,9 @@ if test "$show" = "eval" ; then
 fi
 
 if test -n "$FT_WRAP" ; then
+	SLURM_PMI_KVS_DUP_KEYS=1
+	export SLURM_PMI_KVS_DUP_KEYS
+
 	which -- dmtcp_launch dmtcp_coordinator > /dev/null 2>&1
 	if test "$?" != "0"; then
 		mpcrun_error "FT programs not found (Did you compile with --enable-mpc-ft ?)"
@@ -643,10 +647,6 @@ if test -n "$FT_WRAP" ; then
 		test -z "$FT_HOST" && FT_HOST="localhost"
 	fi
 
-	#workaround because 'h' & '-p' opts don't affect DMTCP under SLURM (patch attempted in DMTCP sources)
-	#export DMTCP_COORD_HOST="$FT_HOST"
-	#export DMTCP_COORD_PORT="$FT_PORT"
-
 	if test "x$FT_WRAP" = "x--checkpoint"; then
 		#this disallows the 'option forwarding capability'
 		BINARY="dmtcp_launch -h $FT_HOST -p $FT_PORT --rm --ckpt-signal 30 ${BINARY}"
@@ -654,8 +654,10 @@ if test -n "$FT_WRAP" ; then
 	elif test "x$FT_WRAP" = "x--restart"; then
 		test -z "$FT_SCRIPTPATH" && FT_SCRIPTPATH="$PWD/dmtcp_restart_script.sh"
 		BINARY="$FT_SCRIPTPATH -h $FT_HOST -p $FT_PORT"
+		LAUNCH_MODE="alloc"
 	fi
-fi
+	
+ fi
 
 
 TMP_SCTK_ARG="$SCTK_ARGS"
