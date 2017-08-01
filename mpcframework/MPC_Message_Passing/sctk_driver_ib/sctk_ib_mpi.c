@@ -800,6 +800,10 @@ void sctk_ib_unpin_region( struct sctk_rail_info_s * rail, struct sctk_rail_pin_
 	list->rail_id = -1;
 }
 
+void sctk_network_finalize_mpi_ib( sctk_rail_info_t *rail)
+{
+	sctk_ib_device_close(&rail->network.ib);
+}
 
 void sctk_network_init_mpi_ib ( sctk_rail_info_t *rail )
 {
@@ -888,6 +892,7 @@ void sctk_network_init_mpi_ib ( sctk_rail_info_t *rail )
 	rail->connect_to = sctk_network_connection_to_ib;
 	rail->connect_from = sctk_network_connection_from_ib;
 	rail->connect_on_demand = sctk_connect_on_demand_mpi_ib;
+	rail->route_finalize = sctk_network_finalize_mpi_ib;
 	
 	rail->send_message_endpoint = sctk_network_send_message_ib_endpoint;
 

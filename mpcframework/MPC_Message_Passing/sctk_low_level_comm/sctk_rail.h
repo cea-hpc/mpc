@@ -238,6 +238,7 @@ struct sctk_rail_info_s
 
 	int ( *route ) ( int , sctk_rail_info_t * );
 	void ( *route_init ) ( sctk_rail_info_t * );
+	void (*route_finalize)(sctk_rail_info_t*);
 };
 
 /* Rail  Array                                                          */

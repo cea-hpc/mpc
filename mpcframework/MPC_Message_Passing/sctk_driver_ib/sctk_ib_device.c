@@ -221,6 +221,11 @@ sctk_ib_device_t *sctk_ib_device_open ( struct sctk_ib_rail_info_s *rail_ib, cha
 	return device;
 }
 
+void sctk_ib_device_close (struct sctk_ib_rail_info_s *rail_ib)
+{
+	ibv_close_device(rail_ib->device->dev);
+}
+
 
 struct ibv_pd *sctk_ib_pd_init ( sctk_ib_device_t *device )
 {
