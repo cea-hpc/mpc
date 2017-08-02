@@ -1089,12 +1089,16 @@ It support parameters :
 Type is function pointer. Default value is __INTERNAL__PMPI_Barrier_intra. 
 .Pp barrier_intra
 MPI_Barrier intracom algorithm
+.It Cm barrier_intra_for_trsh
+Type is int. Default value is 33. 
+.Pp barrier_intra_for_trsh
+Maximum number of process for using a trivial for for the Barrier
 .It Cm bcast_intra
 Type is function pointer. Default value is __INTERNAL__PMPI_Bcast_intra. 
 .Pp bcast_intra
 Type of MPI_Bcast intracom algorithm
 .It Cm bcast_intra_for_trsh
-Type is int. Default value is 16. 
+Type is int. Default value is 33. 
 .Pp bcast_intra_for_trsh
 Maximum number of process for using a trivial for for the Bcast
 .It Cm allgather_intra
@@ -1146,7 +1150,7 @@ Type is function pointer. Default value is __INTERNAL__PMPI_Reduce_intra.
 .Pp reduce_intra
 MPI_Reduce intracom algorithm
 .It Cm reduce_intra_for_trsh
-Type is int. Default value is 16. 
+Type is int. Default value is 33. 
 .Pp reduce_intra_for_trsh
 Maximum number of process for using a trivial for for the Reduce
 .It Cm allreduce_intra

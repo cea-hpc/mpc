@@ -5656,13 +5656,10 @@ int __INTERNAL__PMPI_Barrier_intra_shm(MPI_Comm comm) {
   return MPI_SUCCESS;
 }
 
-int __INTERNAL__PMPI_Barrier_intra(MPI_Comm comm) {
-  int i, res = MPI_ERR_INTERN, size, rank;
+#define FOR_MPI_BARRIER_STATIC_REQ 32
 
-  res = __INTERNAL__PMPI_Comm_size(comm, &size);
-  if (res != MPI_SUCCESS) {
-    return res;
-  }
+static inline int __INTERNAL__PMPI_Barrier_intra_for(MPI_Comm comm, int size) {
+  int i, res = MPI_ERR_INTERN, rank;
 
   if (size == 1)
     MPI_ERROR_SUCESS();
@@ -5688,31 +5685,65 @@ int __INTERNAL__PMPI_Barrier_intra(MPI_Comm comm) {
 
   /* The root collects and broadcasts the messages. */
   else {
-    for (i = 1; i < size; ++i) {
-      res = __INTERNAL__PMPI_Recv(NULL, 0, MPI_BYTE, MPI_ANY_SOURCE,
-                                  MPC_BARRIER_TAG, comm, MPI_STATUS_IGNORE);
-      if (res != MPI_SUCCESS) {
-        return res;
-      }
-    }
 
-    for (i = 1; i < size; ++i) {
-      res = __INTERNAL__PMPI_Send(NULL, 0, MPI_BYTE, i, MPC_BARRIER_TAG, comm);
-      if (res != MPI_SUCCESS) {
-        return res;
-      }
-    }
+	if( (size - 1) < FOR_MPI_BARRIER_STATIC_REQ )
+	{
+		MPI_Request reqs[FOR_MPI_BARRIER_STATIC_REQ];
+
+		for (i = 1; i < size; ++i) {
+    	  res = __INTERNAL__PMPI_Irecv(NULL, 0, MPI_BYTE, MPI_ANY_SOURCE,
+    	                              MPC_BARRIER_TAG, comm, &reqs[i-1] );
+    	  if (res != MPI_SUCCESS) {
+    	    return res;
+    	  }
+    	}
+
+		res = __INTERNAL__PMPI_Waitall( size -1 , reqs, MPI_STATUSES_IGNORE );
+
+    	if (res != MPI_SUCCESS) {
+    	    return res;
+   	    }
+
+		for (i = 1; i < size; ++i) {
+    	  res = __INTERNAL__PMPI_Isend(NULL, 0, MPI_BYTE, i, MPC_BARRIER_TAG, comm, &reqs[i-1]);
+    	  if (res != MPI_SUCCESS) {
+    	    return res;
+    	  }
+    	}
+
+		res = __INTERNAL__PMPI_Waitall( size -1 , reqs, MPI_STATUSES_IGNORE );
+
+    	if (res != MPI_SUCCESS) {
+    	    return res;
+   	    }
+
+	}
+	else
+	{
+
+    	for (i = 1; i < size; ++i) {
+    	  res = __INTERNAL__PMPI_Recv(NULL, 0, MPI_BYTE, MPI_ANY_SOURCE,
+    	                              MPC_BARRIER_TAG, comm, MPI_STATUS_IGNORE);
+    	  if (res != MPI_SUCCESS) {
+    	    return res;
+    	  }
+    	}
+
+    	for (i = 1; i < size; ++i) {
+    	  res = __INTERNAL__PMPI_Send(NULL, 0, MPI_BYTE, i, MPC_BARRIER_TAG, comm);
+    	  if (res != MPI_SUCCESS) {
+    	    return res;
+    	  }
+    	}
+
+	}
   }
   MPI_ERROR_SUCESS();
 }
 
-int __INTERNAL__PMPI_Barrier_btree_mpi(MPI_Comm comm) {
-  int i, res = MPI_ERR_INTERN, size, rank;
+static inline int __INTERNAL__PMPI_Barrier_btree_mpi(MPI_Comm comm, int size) {
+  int i, res = MPI_ERR_INTERN, rank;
 
-  res = __INTERNAL__PMPI_Comm_size(comm, &size);
-  if (res != MPI_SUCCESS) {
-    return res;
-  }
 
   if (size == 1)
     MPI_ERROR_SUCESS();
@@ -5820,6 +5851,27 @@ int __INTERNAL__PMPI_Barrier_btree_mpi(MPI_Comm comm) {
 
   MPI_ERROR_SUCESS();
 }
+
+
+int __INTERNAL__PMPI_Barrier_intra(MPI_Comm comm) {
+
+	int size, res;
+	__INTERNAL__PMPI_Comm_size( comm, &size );
+
+	if( size < sctk_runtime_config_get()->modules.collectives_intra.barrier_intra_for_trsh )
+	{
+		res = __INTERNAL__PMPI_Barrier_intra_for( comm, size );
+	}
+	else
+	{
+		res = __INTERNAL__PMPI_Barrier_btree_mpi( comm , size);
+	}
+
+	return res;
+}
+
+
+
 
 int __INTERNAL__PMPI_Barrier_inter(MPI_Comm comm) {
   int root = 0, buf = 0, rank, size;
@@ -16593,7 +16645,7 @@ int PMPI_Barrier (MPI_Comm comm)
                   ->modules.scheduler.progress_basic_priority;
           unsigned int kind_mask_save = sctk_thread_generic_getkind_mask_self();
           sctk_thread_generic_addkind_mask_self(KIND_MASK_PROGRESS_THREAD);
-          res = __INTERNAL__PMPI_Barrier_intra(comm);
+          res = __INTERNAL__PMPI_Barrier(comm);
           sched->th->attr.basic_priority -=
               sctk_runtime_config_get()
                   ->modules.scheduler.progress_basic_priority;
@@ -16602,7 +16654,7 @@ int PMPI_Barrier (MPI_Comm comm)
                   ->modules.scheduler.progress_basic_priority;
           sctk_thread_generic_setkind_mask_self(kind_mask_save);
         } else {
-          res = __INTERNAL__PMPI_Barrier_intra(comm);
+          res = __INTERNAL__PMPI_Barrier(comm);
         }
 
         /* Profiling */

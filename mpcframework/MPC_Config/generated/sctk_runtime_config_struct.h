@@ -636,6 +636,8 @@ struct sctk_runtime_config_struct_collectives_intra
 {	int init_done;
 	/**MPI_Barrier intracom algorithm**/
 	struct sctk_runtime_config_funcptr barrier_intra;
+	/**Maximum number of process for using a trivial for for the Barrier**/
+	int barrier_intra_for_trsh;
 	/**Type of MPI_Bcast intracom algorithm**/
 	struct sctk_runtime_config_funcptr bcast_intra;
 	/**Maximum number of process for using a trivial for for the Bcast**/
