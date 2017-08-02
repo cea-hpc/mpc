@@ -194,7 +194,11 @@ int __libc_start_main(main_proto_env_t first_main, int argc, char **ubp_av,
   if (to_execute != first_main) {
     sctk_cleanup_preload();
   }
+#ifdef HAVE_ENVIRON_VAR
   real_main = first_main;
+#else
+  real_main = (main_proto_t)first_main;
+#endif
   return real_libc_main(to_execute, argc, ubp_av, init, fini, rtld_fini,
                         stack_end);
 }

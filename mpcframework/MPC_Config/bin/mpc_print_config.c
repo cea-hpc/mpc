@@ -216,7 +216,7 @@ void cleanup_options(struct command_options * options)
 }
 
 /********************************* FUNCTION *********************************/
-int load_mpc_config(const struct command_options * options, struct sctk_runtime_config ** config )
+int load_mpc_config(const struct command_options * options, const struct sctk_runtime_config ** config )
 {
 	/* overwrite files */
 	if (options->system_file != NULL)
@@ -238,7 +238,7 @@ int load_mpc_config(const struct command_options * options, struct sctk_runtime_
 }
 
 /********************************* FUNCTION *********************************/
-int print_mpc_config(const struct command_options * options, struct sctk_runtime_config ** config)
+int print_mpc_config(const struct command_options * options, const struct sctk_runtime_config ** config)
 {
   /* vars */
   int res = EXIT_SUCCESS;
@@ -265,7 +265,7 @@ int print_mpc_config(const struct command_options * options, struct sctk_runtime
 }
 
 /********************************* FUNCTION *********************************/
-int print_profiles_names_config(struct sctk_runtime_config ** config)
+int print_profiles_names_config(const struct sctk_runtime_config ** config)
 {
   /* vars */
   int res = EXIT_SUCCESS;
@@ -291,7 +291,7 @@ int main(int argc, char ** argv)
 	/* vars */
 	int res = EXIT_SUCCESS;
 	struct command_options options;
-	struct sctk_runtime_config *config;
+	const struct sctk_runtime_config *config;
 
 	/** To avoid crash on symbol load when running mpc_print_config (mpc not linked). **/
 	sctk_crash_on_symbol_load = false;
