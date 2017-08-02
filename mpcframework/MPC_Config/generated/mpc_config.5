@@ -1145,6 +1145,10 @@ MPI_Exscan intracom algorithm
 Type is function pointer. Default value is __INTERNAL__PMPI_Reduce_intra. 
 .Pp reduce_intra
 MPI_Reduce intracom algorithm
+.It Cm reduce_intra_for_trsh
+Type is int. Default value is 16. 
+.Pp reduce_intra_for_trsh
+Maximum number of process for using a trivial for for the Reduce
 .It Cm allreduce_intra
 Type is function pointer. Default value is __INTERNAL__PMPI_Allreduce_intra. 
 .Pp allreduce_intra

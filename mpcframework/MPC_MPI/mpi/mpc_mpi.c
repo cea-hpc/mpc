@@ -9382,7 +9382,7 @@ sctk_mpi_shared_mem_buffer_collect(union shared_mem_buffer *b,
   sctk_mpi_shared_mem_buffer_get(&res, type, count, dest, count * tsize);
 }
 
-static inline int __INTERNAL__PMPI_Reduce_derived_no_commute(
+static inline int __INTERNAL__PMPI_Reduce_derived_no_commute_ring(
 		void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op,
 		int root, MPI_Comm comm, MPC_Op mpc_op, sctk_op_t *mpi_op, int size,
 		int rank) {
@@ -9486,6 +9486,137 @@ static inline int __INTERNAL__PMPI_Reduce_derived_no_commute(
 
 	return res;
 }
+
+#define MAX_FOR_RED_STATIC_BUFF 4096
+#define MAX_FOR_RED_STATIC_REQ 24
+
+static inline int __INTERNAL__PMPI_Reduce_derived_no_commute_for(
+		void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op,
+		int root, MPI_Comm comm, MPC_Op mpc_op, sctk_op_t *mpi_op, int size,
+		int rank) {
+
+	int res;
+
+	if( rank == root )
+	{
+		void * sumbuff = NULL;
+		int root_did_alloc = 0;
+		char red_buffer[MAX_FOR_RED_STATIC_BUFF];
+	
+		MPI_Aint dsize;
+	
+		res = __INTERNAL__PMPI_Type_extent(datatype, &dsize);
+		
+		if (res != MPI_SUCCESS) {
+			return res;
+		}
+	
+
+		size_t blob = dsize * count;
+	
+		if( MAX_FOR_RED_STATIC_BUFF <= (blob * (size-1)) )
+		{
+
+			sumbuff = sctk_malloc( blob * (size - 1) );
+
+			if( !sumbuff )
+			{
+				perror("malloc");
+				return MPI_ERR_INTERN;
+			}
+
+		}
+		else
+		{
+			sumbuff = red_buffer;
+		}
+
+		MPI_Request staticrreqs[MAX_FOR_RED_STATIC_REQ];
+		MPI_Request * rreqs = NULL;
+
+		if( MAX_FOR_RED_STATIC_REQ <=  size )
+		{
+			rreqs = sctk_malloc( (size-1) * sizeof(MPI_Request) );
+
+			if( !rreqs )
+			{
+				perror("malloc");
+				return MPI_ERR_INTERN;
+			}
+
+		}
+		else
+		{
+			rreqs = staticrreqs;
+		}
+
+		int i;
+
+		for( i = 1 ; i  < size ; i++ )
+		{
+			__INTERNAL__PMPI_Irecv( sumbuff + (blob * (i-1)) , count , datatype , i , MPC_REDUCE_TAG, comm , &rreqs[i-1] );
+		}
+
+		if( sendbuf != MPI_IN_PLACE )
+		{
+			memcpy( recvbuf, sendbuf , blob );
+		}
+
+		__INTERNAL__PMPI_Waitall( size -1 , rreqs , MPI_STATUSES_IGNORE );
+
+		for(i=1 ; i<size ; i++)
+		{
+			if (mpc_op.u_func != NULL) {
+					mpc_op.u_func( sumbuff + (blob * (i-1)), recvbuf, &count, &datatype);
+			} else {
+				MPC_Op_f func;
+				func = sctk_get_common_function(datatype, mpc_op);
+				func(sumbuff + (blob * (i-1)), recvbuf, count, datatype);
+			}
+		}
+
+	}
+	else
+	{
+		res = __INTERNAL__PMPI_Send( sendbuf , count , datatype , 0 , MPC_REDUCE_TAG , comm );
+
+		if (res != MPI_SUCCESS) {
+			return res;
+		}
+
+	}
+
+
+	return MPI_SUCCESS;
+}
+
+
+
+
+static inline int __INTERNAL__PMPI_Reduce_derived_no_commute(
+		void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op,
+		int root, MPI_Comm comm, MPC_Op mpc_op, sctk_op_t *mpi_op, int size,
+		int rank) {
+
+	int res;
+
+	if( (size < sctk_runtime_config_get()->modules.collectives_intra.bcast_intra_for_trsh)
+	&&  sctk_datatype_contig_mem(datatype) )
+	{
+		res = __INTERNAL__PMPI_Reduce_derived_no_commute_for(
+				sendbuf, recvbuf, count, datatype, op,
+				root, comm, mpc_op, mpi_op, size, rank);
+	}
+	else
+	{
+		res = __INTERNAL__PMPI_Reduce_derived_no_commute_ring(
+				sendbuf, recvbuf, count, datatype, op,
+				root, comm, mpc_op, mpi_op, size, rank);
+	}
+
+	return res;
+}
+
 
 #define MPI_RED_TREE_STATIC_BUFF 1024
 
@@ -10116,7 +10247,7 @@ __INTERNAL__PMPI_Reduce_intra (void *sendbuf, void *recvbuf, int count,
                                       root, comm);
           }
 
-          if ( !sctk_op_can_commute(mpi_op, datatype) ) {
+          if ( !sctk_op_can_commute(mpi_op, datatype) || !sctk_datatype_contig_mem( datatype ) ) {
             res = __INTERNAL__PMPI_Reduce_derived_no_commute(
                 sendbuf, recvbuf, count, datatype, op, root, comm, mpc_op,
                 mpi_op, size, rank);
@@ -10151,7 +10282,6 @@ __INTERNAL__PMPI_Reduce_intra (void *sendbuf, void *recvbuf, int count,
           }
         }
 
-        res = __INTERNAL__PMPI_Barrier(comm);
         return res;
 }
 
