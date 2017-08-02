@@ -91,7 +91,7 @@ sctk_internal_setup_lib_slurm()
 			elif [ -f ${SLURM_PREFIX}/lib/libpmi.so ]; then
 				SLURM_LIBDIR=${SLURM_PREFIX}/lib
 			else
-				sctk_error "libpmi found neither in ${SLURM_PREFIX}/lib nor ${SLURM_PREFIX}/lib64"
+				error "libpmi found neither in ${SLURM_PREFIX}/lib nor ${SLURM_PREFIX}/lib64"
 				exit 1
 			fi
 			#setup vars
