@@ -243,6 +243,7 @@ meta.types = {
 	collectives_intra : {type: 'struct', name: "collectives_intra", childs: {
 		barrier_intra: {mode: 'param', name: "barrier_intra", type: "funcptr", doc: "MPI_Barrier intracom algorithm", dflt: "__INTERNAL__PMPI_Barrier_intra", },
 		bcast_intra: {mode: 'param', name: "bcast_intra", type: "funcptr", doc: "Type of MPI_Bcast intracom algorithm", dflt: "__INTERNAL__PMPI_Bcast_intra", },
+		bcast_intra_for_trsh: {mode: 'param', name: "bcast_intra_for_trsh", type: "int", doc: "Maximum number of process for using a trivial for for the Bcast", dflt: "16", },
 		allgather_intra: {mode: 'param', name: "allgather_intra", type: "funcptr", doc: "MPI_Allgather intracom algorithm", dflt: "__INTERNAL__PMPI_Allgather_intra", },
 		allgatherv_intra: {mode: 'param', name: "allgatherv_intra", type: "funcptr", doc: "MPI_Allgatherv intracom algorithm", dflt: "__INTERNAL__PMPI_Allgatherv_intra", },
 		alltoall_intra: {mode: 'param', name: "alltoall_intra", type: "funcptr", doc: "MPI_Alltoall intracom algorithm", dflt: "__INTERNAL__PMPI_Alltoall_intra", },
@@ -290,7 +291,7 @@ meta.types = {
 		alloc_mem_pool_size: {mode: 'param', name: "alloc_mem_pool_size", type: "size", doc: "Size of the MPI_Alloc_mem pool", dflt: "1MB", },
 		alloc_mem_pool_autodetect: {mode: 'param', name: "alloc_mem_pool_autodetect", type: "int", doc: "Alloc the MPI_Alloc_mem pool to grow linear for some apps", dflt: "1", },
 		alloc_mem_pool_force_process_linear: {mode: 'param', name: "alloc_mem_pool_force_process_linear", type: "int", doc: "Force the size to be a quantum per local process", dflt: "0", },
-		alloc_mem_pool_per_process_size: {mode: 'param', name: "alloc_mem_pool_per_process_size", type: "size", doc: "Quantum to allocate to each process when linear forced", dflt: "32MB", },
+		alloc_mem_pool_per_process_size: {mode: 'param', name: "alloc_mem_pool_per_process_size", type: "size", doc: "Quantum to allocate to each process when linear forced", dflt: "1MB", },
 		win_thread_pool_max: {mode: 'param', name: "win_thread_pool_max", type: "int", doc: "Maximum number of window threads to keep", dflt: "2", },
 	}},
 	mpc : {type: 'struct', name: "mpc", childs: {

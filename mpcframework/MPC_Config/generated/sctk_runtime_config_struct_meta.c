@@ -617,6 +617,9 @@ const struct sctk_runtime_config_entry_meta sctk_runtime_config_db[] = {
 	{"bcast_intra"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_collectives_intra,bcast_intra)  , sizeof(struct sctk_runtime_config_funcptr) , "funcptr" , NULL , 
 				NULL
 			},
+	{"bcast_intra_for_trsh"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_collectives_intra,bcast_intra_for_trsh)  , sizeof(int) , "int" , NULL , 
+				"MPI_COLL_BCAST_FOR_TRSH"
+			},
 	{"allgather_intra"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_collectives_intra,allgather_intra)  , sizeof(struct sctk_runtime_config_funcptr) , "funcptr" , NULL , 
 				NULL
 			},

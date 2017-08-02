@@ -250,6 +250,29 @@ typedef struct {
 
 sctk_op_t *sctk_convert_to_mpc_op(MPI_Op op);
 
+
+static inline sctk_op_can_commute( sctk_op_t * op , MPI_Datatype type )
+{
+	if( op->commute == 0 )
+	{
+		return 0;
+	}
+
+	if( type == MPI_FLOAT )
+	{
+		return 0;
+	}
+
+	if( type == MPI_DOUBLE )
+	{
+		return 0;
+	}
+
+	return 1;
+}
+
+
+
 MPC_Op_f sctk_get_common_function(MPC_Datatype datatype, MPC_Op op);
 
 /*

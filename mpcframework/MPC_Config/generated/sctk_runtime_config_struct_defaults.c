@@ -3197,7 +3197,40 @@ void sctk_runtime_config_struct_init_collectives_intra(void * struct_ptr)
 	*(void **) &(obj->barrier_intra.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Barrier_intra");
 	obj->bcast_intra.name = "__INTERNAL__PMPI_Bcast_intra";
 	*(void **) &(obj->bcast_intra.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Bcast_intra");
-	obj->allgather_intra.name = "__INTERNAL__PMPI_Allgather_intra";
+	obj->bcast_intra_for_trsh = 16;
+
+#ifdef MPC_MPI
+		if( mpc_MPI_T_cvar_get_index( "MPI_COLL_BCAST_FOR_TRSH" , &the_temp_index ) == MPI_SUCCESS )
+		{
+			the_cvar = MPI_T_cvars_array_get( the_temp_index );
+
+			
+			if( MPC_T_data_get_size( &the_cvar->data ) != sizeof( 
+			obj->bcast_intra_for_trsh ) )
+			{
+				fprintf(stderr,"Error size mismatch for MPI_COLL_BCAST_FOR_TRSH");
+				abort();	
+			}
+
+			if( the_cvar )
+			{
+									MPC_T_data_alias(&the_cvar->data, &obj->bcast_intra_for_trsh);
+	
+			}
+			else
+			{
+				fprintf(stderr,"ERROR in CONFIG : MPIT var was found but no entry for MPI_COLL_BCAST_FOR_TRSH");
+				abort();
+			}
+		
+		}
+		else
+		{
+			fprintf(stderr,"ERROR in CONFIG : No such MPIT CVAR alias for MPI_COLL_BCAST_FOR_TRSH");
+			abort();
+		}
+#endif
+				obj->allgather_intra.name = "__INTERNAL__PMPI_Allgather_intra";
 	*(void **) &(obj->allgather_intra.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Allgather_intra");
 	obj->allgatherv_intra.name = "__INTERNAL__PMPI_Allgatherv_intra";
 	*(void **) &(obj->allgatherv_intra.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Allgatherv_intra");
@@ -3308,7 +3341,7 @@ void sctk_runtime_config_struct_init_mpi_rma(void * struct_ptr)
 	obj->alloc_mem_pool_size = sctk_runtime_config_map_entry_parse_size("1MB");
 	obj->alloc_mem_pool_autodetect = 1;
 	obj->alloc_mem_pool_force_process_linear = 0;
-	obj->alloc_mem_pool_per_process_size = sctk_runtime_config_map_entry_parse_size("32MB");
+	obj->alloc_mem_pool_per_process_size = sctk_runtime_config_map_entry_parse_size("1MB");
 	obj->win_thread_pool_max = 2;
 	obj->init_done = 1;
 }

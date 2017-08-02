@@ -58,5 +58,15 @@
 				<scope>MPI_T_SCOPE_ALL_EQ</scope>
 			</cvar>
 		</shm_coll>
+		<inter_coll>
+			<cvar>
+				<name>MPI_COLL_BCAST_FOR_TRSH</name>
+				<verbosity>MPI_T_VERBOSITY_MPIDEV_BASIC</verbosity>
+				<datatype>MPI_INT</datatype>
+				<desc>Comm size threshold to use a for loop for Bcast</desc>
+				<bind>MPI_T_BIND_NO_OBJECT</bind>
+				<scope>MPI_T_SCOPE_ALL_EQ</scope>
+			</cvar>
+		</inter_coll>
 	</collectives>
 </cvars>
