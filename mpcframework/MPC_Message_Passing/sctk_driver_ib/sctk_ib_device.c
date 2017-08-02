@@ -223,7 +223,7 @@ sctk_ib_device_t *sctk_ib_device_open ( struct sctk_ib_rail_info_s *rail_ib, cha
 
 void sctk_ib_device_close (struct sctk_ib_rail_info_s *rail_ib)
 {
-	ibv_close_device(rail_ib->device->dev);
+	ibv_close_device(rail_ib->device->context);
 }
 
 

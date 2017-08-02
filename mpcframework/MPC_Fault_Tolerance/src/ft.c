@@ -31,21 +31,19 @@
 #include <dmtcp.h>
 #endif
 
-static inline void __sctk_ft_pre_checkpoint();
 static inline void __sctk_ft_post_checkpoint();
 static inline void __sctk_ft_post_restart();
 
-static inline void __sctk_ft_set_ckptdir(char * dir)
+static inline void __sctk_ft_set_ckptdir()
 {
 #ifdef MPC_USE_DMTCP
-	dmtcp_set_global_ckpt_dir(dir);
-	dmtcp_set_coord_ckpt_dir(dir);
-#endif
-}
+        char path[256], *dummy=NULL;
+        memset(path, 0, 256);
+        dummy = getcwd(path, 256);
+        assert(dummy);
 
-static inline void __sctk_ft_set_tmpdir(char * dir)
-{
-#ifdef MPC_USE_DMTCP
+	dmtcp_set_global_ckpt_dir(path);
+	dmtcp_set_coord_ckpt_dir(path);
 	sctk_warning("DMTCP commented dmtcp_set_tmpdir() func");
 	//dmtcp_set_tmpdir(dir);
 #endif
@@ -56,8 +54,7 @@ int sctk_ft_init()
 #ifdef MPC_USE_DMTCP
 	if(dmtcp_is_enabled())
 	{
-		__sctk_ft_set_ckptdir(".");
-		__sctk_ft_set_tmpdir(".");
+		__sctk_ft_set_ckptdir();
 		if(dmtcp_get_ckpt_signal() == SIGUSR2)
 		{
 			sctk_error("DMTCP and MPC both set an handler for SIGUSR2");
@@ -65,6 +62,7 @@ int sctk_ft_init()
 		}
 	}
 #endif
+	return 1;
 }
 
 int sctk_ft_enabled()
@@ -74,12 +72,29 @@ int sctk_ft_enabled()
 #endif
 }
 
-static volatile int nb_checkpoints = 0;
-static volatile int nb_restarts = 0;
+static int nb_checkpoints = 0;
+static int nb_restarts = 0;
 static sctk_ft_state_t __state = MPC_STATE_ERROR;
 
 void sctk_ft_checkpoint_init()
 {
+	size_t nb = sctk_rail_count();
+	size_t i;
+
+	for (i = 0; i < nb; ++i) {
+		sctk_rail_info_t* rail = sctk_rail_get_by_id(i);
+		if(!rail) continue;
+#ifdef MPC_USE_DMTCP
+		if(sctk_rail_get_type(rail) == SCTK_NET_INFINIBAND)
+		{
+                        sctk_warning("Disconnect rail %d", i);
+			/*sctk_multirail_on_demand_disconnection_rail(rail);*/
+                        if(rail->route_finalize)
+                                rail->route_finalize(rail);
+		}
+#endif
+	}
+
 #ifdef MPC_USE_DMTCP
 	dmtcp_get_local_status(&nb_checkpoints, &nb_restarts);
 #endif
@@ -87,8 +102,6 @@ void sctk_ft_checkpoint_init()
 
 void sctk_ft_checkpoint()
 {
-	__sctk_ft_pre_checkpoint();
-
 #ifdef MPC_USE_DMTCP
 	dmtcp_checkpoint();
 #endif
@@ -125,6 +138,7 @@ int sctk_ft_finalize()
 {
 #ifdef MPC_USE_DMTCP
 #endif
+	return 1;
 }
 
 sctk_ft_state_t sctk_ft_checkpoint_wait()
@@ -141,26 +155,6 @@ sctk_ft_state_t sctk_ft_checkpoint_wait()
 	
 #endif
 	return __state;
-}
-
-static inline void __sctk_ft_pre_checkpoint()
-{
-	size_t nb = sctk_rail_count();
-	size_t i;
-
-	for (i = 0; i < nb; ++i) {
-		sctk_rail_info_t* rail = sctk_rail_get_by_id(i);
-		if(!rail) continue;
-#ifdef MPC_USE_DMTCP
-		if(sctk_rail_get_type(rail) == SCTK_NET_INFINIBAND)
-		{
-                        sctk_warning("Disconnect rail %d", i);
-			sctk_multirail_on_demand_disconnection_rail(rail);
-			if(rail->route_finalize)
-				rail->route_finalize(rail);
-		}
-#endif
-	}
 }
 
 static inline void __sctk_ft_post_checkpoint()
