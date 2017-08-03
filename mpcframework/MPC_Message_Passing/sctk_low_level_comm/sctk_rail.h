@@ -239,7 +239,7 @@ struct sctk_rail_info_s
 
 	int ( *route ) ( int , sctk_rail_info_t * );
 	void ( *route_init ) ( sctk_rail_info_t * );
-	void (*route_finalize)(sctk_rail_info_t*);
+	void (*driver_finalize)(sctk_rail_info_t*);
 };
 
 /* Rail  Array                                                          */
@@ -272,7 +272,8 @@ sctk_rail_info_t * sctk_rail_get_rdma ();
 void sctk_rail_commit();
 int sctk_rail_committed();
 void sctk_rail_init_route ( sctk_rail_info_t *rail, char *topology, void (*on_demand)( struct sctk_rail_info_s * rail , int dest ) );
-void sctk_rail_finalize_route(sctk_rail_info_t *rail);
+void sctk_rail_finalize(sctk_rail_info_t *rail);
+void sctk_rail_drop_routes(sctk_rail_info_t *rail);
 void sctk_rail_dump_routes();
 
 static inline sctk_net_type_t sctk_rail_get_type(sctk_rail_info_t* rail) { return rail->network_type;}

@@ -148,7 +148,7 @@ void sctk_network_init_portals (sctk_rail_info_t *rail)
 
     rail->network_name = "PORTALS";
     rail->network_type = SCTK_NET_PORTALS;
-    rail->route_finalize = sctk_network_finalize_portals;
+    rail->driver_finalize = sctk_network_finalize_portals;
 
     sctk_rail_init_route ( rail, rail->runtime_config_rail->topology, sctk_portals_on_demand_connection_handler );
     sctk_network_init_portals_all ( rail );

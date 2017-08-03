@@ -186,14 +186,16 @@ void sctk_rail_unregister(sctk_rail_info_t* rail)
 	rail->enabled = 0;
 
 	/* first, close routes properly */
-	/*sctk_multirail_on_demand_disconnection_rail(rail);*/
+	sctk_multirail_on_demand_disconnection_rail(rail);
+
+	/*TODO: Need to wait for disconnection completion */
 
 	/* driver-specific call */
-	if(rail->route_finalize)
-		rail->route_finalize(rail);
+	if(rail->driver_finalize)
+		rail->driver_finalize(rail);
 
 	/* rail-generic call */
-	sctk_rail_finalize_route(rail);
+	sctk_rail_finalize(rail);
 }
 
 int sctk_rail_count()
@@ -614,7 +616,12 @@ void sctk_rail_init_route ( sctk_rail_info_t *rail, char *topology, void (*on_de
 	}
 }
 
-void sctk_rail_finalize_route(sctk_rail_info_t* rail)
+/** To be called once per process to drop a specific network (consider MPC_Process_root())*/
+void sctk_rail_drop_routes(sctk_rail_info_t *rail)
+{
+}
+
+void sctk_rail_finalize(sctk_rail_info_t* rail)
 {
 	rail->route_init = sctk_route_none_init;
 	rail->topology_name = "none";
@@ -624,6 +631,10 @@ void sctk_rail_finalize_route(sctk_rail_info_t* rail)
 	rail->requires_bootstrap_ring = 0;
 
 	/*TODO: Should check route_table does not have remaining routes */
+	if(!sctk_route_table_empty(rail->route_table))
+	{
+		sctk_error("Cannot shutdown rail '%s' with remaining active routes", rail->network_name);
+	}
 }
 
 /**************************/

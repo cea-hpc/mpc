@@ -87,7 +87,6 @@ void sctk_ft_checkpoint_init()
 #ifdef MPC_USE_DMTCP
 		if(sctk_rail_get_type(rail) == SCTK_NET_INFINIBAND)
 		{
-                        sctk_warning("Disconnect rail %d", i);
 			sctk_rail_unregister(rail);
 		}
 #endif

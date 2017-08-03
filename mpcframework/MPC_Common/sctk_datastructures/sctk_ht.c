@@ -373,3 +373,14 @@ void MPCHT_delete(  struct MPCHT * ht, sctk_uint64_t key )
 
 	MPCHT_unlock_write( ht, bucket );
 }
+int MPCHT_empty(struct MPCHT * ht)
+{
+	int i, sz = ht->table_size;
+	
+	for (i = 0; i < sz; ++i)
+	{
+		if(ht->cells[i].use_flag != 0)
+			return 0;
+	}
+	return 1;
+}

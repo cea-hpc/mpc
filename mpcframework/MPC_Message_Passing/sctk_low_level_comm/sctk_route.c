@@ -53,6 +53,10 @@ sctk_route_table_t * sctk_route_table_new()
 	return ret;
 }
 
+int sctk_route_table_empty(sctk_route_table_t *table)
+{
+	return MPCHT_empty(&table->dynamic_route_table) && MPCHT_empty(&table->static_route_table);
+}
 
 /************************************************************************/
 /* Routes Memory Status                                                 */

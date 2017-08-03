@@ -230,7 +230,7 @@ void sctk_network_init_tcp_rdma ( sctk_rail_info_t *rail )
 	}
 
 	rail->network_type = SCTK_NET_TCP;
-	rail->route_finalize = sctk_network_finalize_tcp_rdma;
+	rail->driver_finalize = sctk_network_finalize_tcp_rdma;
 
 	/* Actually Init the TCP layer */
 	sctk_network_init_tcp_all ( rail, sctk_use_tcp_o_ib, sctk_tcp_rdma_thread, rail->route_init );
