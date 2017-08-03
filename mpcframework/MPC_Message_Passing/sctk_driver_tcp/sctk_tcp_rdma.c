@@ -203,6 +203,9 @@ static void sctk_network_notify_any_source_message_tcp_rdma ( int polling_task_i
 /************************************************************************/
 /* TCP RDMA Init                                                        */
 /************************************************************************/
+void sctk_network_finalize_tcp_rdma(sctk_rail_info_t* rail)
+{
+}
 
 void sctk_network_init_tcp_rdma ( sctk_rail_info_t *rail )
 {
@@ -225,6 +228,9 @@ void sctk_network_init_tcp_rdma ( sctk_rail_info_t *rail )
 	{
 		rail->network_name = "TCP_O_IB RDMA";
 	}
+
+	rail->network_type = SCTK_NET_TCP;
+	rail->route_finalize = sctk_network_finalize_tcp_rdma;
 
 	/* Actually Init the TCP layer */
 	sctk_network_init_tcp_all ( rail, sctk_use_tcp_o_ib, sctk_tcp_rdma_thread, rail->route_init );

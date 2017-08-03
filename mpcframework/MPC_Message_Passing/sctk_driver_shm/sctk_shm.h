@@ -32,6 +32,7 @@ typedef struct
 } sctk_shm_rail_info_t;
 
 void sctk_network_init_shm ( sctk_rail_info_t *rail );
+void sctk_network_finalize_shm(sctk_rail_info_t *rail);
 char *sctk_get_qemu_shm_process_filename(void);
 size_t sctk_get_qemu_shm_process_size(void);
 

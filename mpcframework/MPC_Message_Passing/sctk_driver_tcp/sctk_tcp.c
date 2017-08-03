@@ -181,6 +181,15 @@ static int sctk_send_message_from_network_tcp ( sctk_thread_ptp_message_t *msg )
 /********************************************************************/
 /* TCP Init                                                         */
 /********************************************************************/
+void sctk_network_finalize_tcp(sctk_rail_info_t *rail)
+{
+	rail->connect_from = NULL;
+	rail->connect_to = NULL;
+	rail->control_message_handler = NULL;
+
+	/*TODO: What's about remove PMI keys before cleaning  ? */
+	memset((void*)&rail->network.tcp, 0, sizeof(sctk_tcp_rail_info_t));
+}
 
 void sctk_network_init_tcp ( sctk_rail_info_t *rail )
 {
@@ -208,6 +217,7 @@ void sctk_network_init_tcp ( sctk_rail_info_t *rail )
 	}
 
 	rail->network_type = SCTK_NET_TCP;
+	rail->route_finalize = sctk_network_finalize_tcp;
 
 	/* Actually initialize the network (note TCP kind specific functions) */
 	sctk_network_init_tcp_all ( rail, sctk_use_tcp_o_ib, sctk_tcp_thread, rail->route_init );

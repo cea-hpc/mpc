@@ -397,6 +397,11 @@ void sctk_shm_check_raw_queue(int local_process_number)
     sctk_pmi_barrier();
 }
 
+void sctk_network_finalize_shm(sctk_rail_info_t *rail)
+{
+	/*TODO: move every global data into sctk_shm_rail_info_t struct */
+}
+
 /*! \brief Generate filename with localhost and pid  
  * @param option No option implemented 
  */
@@ -418,6 +423,7 @@ void sctk_network_init_shm ( sctk_rail_info_t *rail )
 
    rail->network_name = "SHM";
    rail->network_type = SCTK_NET_SHM; 
+   rail->route_finalize = sctk_network_finalize_shm;
 //   if( strcmp(rail->runtime_config_rail->topology, "none"))
 //	sctk_nodebug("SHM topology must be 'none'");
 

@@ -133,6 +133,7 @@ void sctk_rail_pin_ctx_release( sctk_rail_pin_ctx_t * ctx );
 struct sctk_rail_info_s
 {
 	/* Global Info */
+	short enabled; /**< is this rail usable ? */
 	int rail_number; /**< ID of this rail */
 	int subrail_id; /**< ID of this rail if it is a subrail (-1 otherwise) */
 	int priority; /** Priority of this rail */
@@ -252,8 +253,6 @@ struct sctk_rail_array
 	/** Number of rails */
 	int rail_number;
 	int rail_current_id;
-	/** Set to 1 when routes have been committed by a call to \ref sctk_rail_commit */
-	int rails_committed;
 	/** Id of the RDMA rail */
 	int rdma_rail;
 };
@@ -265,6 +264,7 @@ void sctk_rail_allocate ( int count );
 
 sctk_rail_info_t *sctk_rail_register( struct sctk_runtime_config_struct_net_rail *runtime_config_rail,
                                   struct sctk_runtime_config_struct_net_driver_config *runtime_config_driver_config );
+void sctk_rail_unregister(sctk_rail_info_t* rail);
 int sctk_rail_count();
 sctk_rail_info_t * sctk_rail_get_by_id ( int i );
 int sctk_rail_get_rdma_id();
@@ -272,6 +272,7 @@ sctk_rail_info_t * sctk_rail_get_rdma ();
 void sctk_rail_commit();
 int sctk_rail_committed();
 void sctk_rail_init_route ( sctk_rail_info_t *rail, char *topology, void (*on_demand)( struct sctk_rail_info_s * rail , int dest ) );
+void sctk_rail_finalize_route(sctk_rail_info_t *rail);
 void sctk_rail_dump_routes();
 
 static inline sctk_net_type_t sctk_rail_get_type(sctk_rail_info_t* rail) { return rail->network_type;}

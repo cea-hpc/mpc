@@ -73,6 +73,7 @@ typedef struct sctk_portals_rail_info_s
 } sctk_portals_rail_info_t;
 
 void sctk_network_init_portals ( struct sctk_rail_info_s *rail);
+void sctk_network_finalize_portals ( struct sctk_rail_info_s *rail);
 #endif
 #ifdef __cplusplus
 }

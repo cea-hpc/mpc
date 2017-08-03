@@ -181,6 +181,21 @@ sctk_rail_info_t * sctk_rail_register( struct sctk_runtime_config_struct_net_rai
 	return sctk_rail_register_with_parent( runtime_config_rail, runtime_config_driver_config, NULL, -1 );
 }
 
+void sctk_rail_unregister(sctk_rail_info_t* rail)
+{
+	rail->enabled = 0;
+
+	/* first, close routes properly */
+	/*sctk_multirail_on_demand_disconnection_rail(rail);*/
+
+	/* driver-specific call */
+	if(rail->route_finalize)
+		rail->route_finalize(rail);
+
+	/* rail-generic call */
+	sctk_rail_finalize_route(rail);
+}
+
 int sctk_rail_count()
 {
 	return __rails.rail_number;
@@ -316,22 +331,12 @@ void sctk_rail_commit()
 		rail->route_init( rail );
 		sprintf ( name_ptr, "\n%sRail(%d) [%s (%s) (%s)] %s", (rail->parent_rail)?"\tSub-":"", rail->rail_number, rail->network_name, rail->topology_name , rail->runtime_config_rail->device, rail->is_rdma?"RDMA":"" );
 		name_ptr = net_name + strlen ( net_name );
+		rail->enabled = 1;
 		sctk_pmi_barrier();
 	}
 
 	sctk_network_mode = net_name;
-	__rails.rails_committed = 1;
 }
-
-
-
-/* Returs wether the route has been finalized */
-int sctk_rail_committed()
-{
-	return __rails.rails_committed;
-}
-
-
 
 
 struct sctk_rail_dump_context
@@ -609,6 +614,17 @@ void sctk_rail_init_route ( sctk_rail_info_t *rail, char *topology, void (*on_de
 	}
 }
 
+void sctk_rail_finalize_route(sctk_rail_info_t* rail)
+{
+	rail->route_init = sctk_route_none_init;
+	rail->topology_name = "none";
+	rail->connect_on_demand = NULL;
+	rail->disconnect_on_demand = NULL;
+	rail->on_demand = 0;
+	rail->requires_bootstrap_ring = 0;
+
+	/*TODO: Should check route_table does not have remaining routes */
+}
 
 /**************************/
 

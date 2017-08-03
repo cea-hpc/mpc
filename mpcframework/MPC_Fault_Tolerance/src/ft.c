@@ -88,9 +88,7 @@ void sctk_ft_checkpoint_init()
 		if(sctk_rail_get_type(rail) == SCTK_NET_INFINIBAND)
 		{
                         sctk_warning("Disconnect rail %d", i);
-			/*sctk_multirail_on_demand_disconnection_rail(rail);*/
-                        if(rail->route_finalize)
-                                rail->route_finalize(rail);
+			sctk_rail_unregister(rail);
 		}
 #endif
 	}

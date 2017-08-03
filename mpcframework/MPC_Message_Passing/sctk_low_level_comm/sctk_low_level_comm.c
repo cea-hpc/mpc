@@ -447,10 +447,6 @@ void sctk_net_init_driver ( char *name )
 	 * should not change during the whole execution */
 	sctk_rail_allocate ( total_rail_nb );
 
-
-	/* Compute the number of rails for each type: */
-	int nb_rails_portals = 0;
-
 	if( 255 < total_rail_nb )
 	{
 		sctk_fatal("There cannot be more than 255 rails");

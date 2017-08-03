@@ -71,6 +71,10 @@
 #include "sctk_accelerators.h"
 #endif
 
+#ifdef MPC_Fault_Tolerance
+#include "sctk_ft_iface.h"
+#endif
+
 #define SCTK_START_KEYWORD "--sctk-args--"
 
 #define SCTK_LOCAL_VERSION_MAJOR 0
