@@ -269,9 +269,16 @@ void sctk_topological_polling_tree_init( struct sctk_topological_polling_tree * 
 }
 
 
-static inline void sctk_topological_polling_cell_poll( struct sctk_topological_polling_cell * cells, int offset,  void (*func)( void *), void * arg )
+static inline void sctk_topological_polling_cell_poll( struct sctk_topological_polling_cell * cells, int offset,  void (*func)( void *), void * arg , int cell_count )
 {
-	assert( 0 <= offset );
+
+	if( (offset < 0) || (cell_count < offset ) )
+	{
+		/*Something went wrong do call */
+		(func)(arg);
+		return;
+	}
+	
 	struct sctk_topological_polling_cell * cell = &cells[offset];
 	
 	int polling_counter = sctk_atomics_fetch_and_incr_int( &cell->polling_counter );
@@ -294,7 +301,7 @@ static inline void sctk_topological_polling_cell_poll( struct sctk_topological_p
 			int target_cell = offset - delta;
 
 			/* Now Poll the parent cell */
-			sctk_topological_polling_cell_poll( cells, target_cell, func, arg );
+			sctk_topological_polling_cell_poll( cells, target_cell, func, arg , cell_count);
 		}
 		
 	}
@@ -341,5 +348,6 @@ void sctk_topological_polling_tree_poll( struct sctk_topological_polling_tree * 
     if(!init_done){
         return ;
     }
-        sctk_topological_polling_cell_poll( tree->cells, cpu_id,  func, arg );
+	sctk_topological_polling_cell_poll( tree->cells, cpu_id,  func, arg, tree->cell_count );
+	
 }
