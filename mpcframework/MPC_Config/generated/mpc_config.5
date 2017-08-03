@@ -1153,6 +1153,10 @@ MPI_Reduce intracom algorithm
 Type is int. Default value is 33. 
 .Pp reduce_intra_for_trsh
 Maximum number of process for using a trivial for for the Reduce
+.It Cm reduce_intra_for_count_trsh
+Type is int. Default value is 1024. 
+.Pp reduce_intra_for_count_trsh
+Maximum number of elements for using a trivial for for the Reduce
 .It Cm allreduce_intra
 Type is function pointer. Default value is __INTERNAL__PMPI_Allreduce_intra. 
 .Pp allreduce_intra

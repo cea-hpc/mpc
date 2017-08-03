@@ -258,6 +258,7 @@ meta.types = {
 		exscan_intra: {mode: 'param', name: "exscan_intra", type: "funcptr", doc: "MPI_Exscan intracom algorithm", dflt: "__INTERNAL__PMPI_Exscan_intra", },
 		reduce_intra: {mode: 'param', name: "reduce_intra", type: "funcptr", doc: "MPI_Reduce intracom algorithm", dflt: "__INTERNAL__PMPI_Reduce_intra", },
 		reduce_intra_for_trsh: {mode: 'param', name: "reduce_intra_for_trsh", type: "int", doc: "Maximum number of process for using a trivial for for the Reduce", dflt: "33", },
+		reduce_intra_for_count_trsh: {mode: 'param', name: "reduce_intra_for_count_trsh", type: "int", doc: "Maximum number of elements for using a trivial for for the Reduce", dflt: "1024", },
 		allreduce_intra: {mode: 'param', name: "allreduce_intra", type: "funcptr", doc: "MPI_Allreduce intracom algorithm", dflt: "__INTERNAL__PMPI_Allreduce_intra", },
 		reduce_scatter_intra: {mode: 'param', name: "reduce_scatter_intra", type: "funcptr", doc: "MPI_Reduce_scatter intracom algorithm", dflt: "__INTERNAL__PMPI_Reduce_scatter_intra", },
 		reduce_scatter_block_intra: {mode: 'param', name: "reduce_scatter_block_intra", type: "funcptr", doc: "MPI_Reduce_scatter_block intracom algorithm", dflt: "__INTERNAL__PMPI_Reduce_scatter_block_intra", },

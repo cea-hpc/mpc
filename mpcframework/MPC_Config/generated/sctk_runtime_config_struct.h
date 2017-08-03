@@ -668,6 +668,8 @@ struct sctk_runtime_config_struct_collectives_intra
 	struct sctk_runtime_config_funcptr reduce_intra;
 	/**Maximum number of process for using a trivial for for the Reduce**/
 	int reduce_intra_for_trsh;
+	/**Maximum number of elements for using a trivial for for the Reduce**/
+	int reduce_intra_for_count_trsh;
 	/**MPI_Allreduce intracom algorithm**/
 	struct sctk_runtime_config_funcptr allreduce_intra;
 	/**MPI_Reduce_scatter intracom algorithm**/

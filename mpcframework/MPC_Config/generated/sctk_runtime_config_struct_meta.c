@@ -662,6 +662,9 @@ const struct sctk_runtime_config_entry_meta sctk_runtime_config_db[] = {
 	{"reduce_intra_for_trsh"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_collectives_intra,reduce_intra_for_trsh)  , sizeof(int) , "int" , NULL , 
 				"MPI_COLL_REDUCE_FOR_TRSH"
 			},
+	{"reduce_intra_for_count_trsh"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_collectives_intra,reduce_intra_for_count_trsh)  , sizeof(int) , "int" , NULL , 
+				"MPI_COLL_REDUCE_FOR_ELEM_TRSH"
+			},
 	{"allreduce_intra"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_collectives_intra,allreduce_intra)  , sizeof(struct sctk_runtime_config_funcptr) , "funcptr" , NULL , 
 				NULL
 			},

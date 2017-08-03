@@ -795,31 +795,31 @@ static inline RDMA_op mpc_RMA_convert_op(MPI_Op op) {
     return RDMA_SUM;
     break;
   case MPI_MIN:
-    return RDMA_SUM;
+    return RDMA_MIN;
     break;
   case MPI_MAX:
-    return RDMA_SUM;
+    return RDMA_MAX;
     break;
   case MPI_PROD:
-    return RDMA_SUM;
+    return RDMA_PROD;
     break;
   case MPI_LAND:
-    return RDMA_SUM;
+    return RDMA_LAND;
     break;
   case MPI_BAND:
-    return RDMA_SUM;
+    return RDMA_BAND;
     break;
   case MPI_LOR:
-    return RDMA_SUM;
+    return RDMA_LOR;
     break;
   case MPI_BOR:
-    return RDMA_SUM;
+    return RDMA_BOR;
     break;
   case MPI_LXOR:
-    return RDMA_SUM;
+    return RDMA_LXOR;
     break;
   case MPI_BXOR:
-    return RDMA_SUM;
+    return RDMA_BXOR;
     break;
   default:
     return -1;

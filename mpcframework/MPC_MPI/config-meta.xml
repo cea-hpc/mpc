@@ -46,6 +46,7 @@
 			
 			<param name="reduce_intra" type="funcptr" default="__INTERNAL__PMPI_Reduce_intra" doc="MPI_Reduce intracom algorithm"/>
 			<param name="reduce_intra_for_trsh" type="int" default="33" doc="Maximum number of process for using a trivial for for the Reduce" alias="MPI_COLL_REDUCE_FOR_TRSH"/>
+			<param name="reduce_intra_for_count_trsh" type="int" default="1024" doc="Maximum number of elements for using a trivial for for the Reduce" alias="MPI_COLL_REDUCE_FOR_ELEM_TRSH"/>
 			
 			<param name="allreduce_intra" type="funcptr" default="__INTERNAL__PMPI_Allreduce_intra" doc="MPI_Allreduce intracom algorithm"/>
 			

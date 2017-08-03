@@ -9616,17 +9616,63 @@ static inline int __INTERNAL__PMPI_Reduce_derived_no_commute_for(
 
 		__INTERNAL__PMPI_Waitall( size -1 , rreqs , MPI_STATUSES_IGNORE );
 
-		for(i=1 ; i<size ; i++)
+		int j;
+
+		/* These are the fastpaths */
+		if( (datatype == MPI_FLOAT) && (op = MPI_SUM) )
 		{
-			if (mpc_op.u_func != NULL) {
-					mpc_op.u_func( sumbuff + (blob * (i-1)), recvbuf, &count, &datatype);
-			} else {
-				MPC_Op_f func;
-				func = sctk_get_common_function(datatype, mpc_op);
-				func(sumbuff + (blob * (i-1)), recvbuf, count, datatype);
+			for( i = 1 ; i < size ; i ++ )
+			{
+				float * fsrc = (float *)sumbuff + (blob * (i-1));
+			
+				for( j = 0 ; j < count ; j++ )
+				{
+					((float*)recvbuf)[i] += fsrc[i];
+				}
+			
+			}
+		
+		}
+		else if( (datatype == MPI_DOUBLE) && (op = MPI_SUM) )
+		{
+			for( i = 1 ; i < size ; i ++ )
+			{
+				double * dsrc = (double *)sumbuff + (blob * (i-1));
+			
+				for( j = 0 ; j < count ; j++ )
+				{
+					((double*)recvbuf)[i] += dsrc[i];
+				}
+			
 			}
 		}
-
+		else if( (datatype == MPI_INT) && (op = MPI_SUM) )
+		{
+			for( i = 1 ; i < size ; i ++ )
+			{
+				int * isrc = (int *)sumbuff + (blob * (i-1));
+			
+				for( j = 0 ; j < count ; j++ )
+				{
+					((int*)recvbuf)[i] += isrc[i];
+				}
+			
+			}
+		}
+		else
+		{
+			/* This is the genreric Slow-Path */
+			for(i=1 ; i<size ; i++)
+			{
+				if (mpc_op.u_func != NULL) {
+						mpc_op.u_func( sumbuff + (blob * (i-1)), recvbuf, &count, &datatype);
+				} else {
+					MPC_Op_f func;
+					func = sctk_get_common_function(datatype, mpc_op);
+					func(sumbuff + (blob * (i-1)), recvbuf, count, datatype);
+				}
+			}
+		}
 	}
 	else
 	{
@@ -9652,8 +9698,9 @@ static inline int __INTERNAL__PMPI_Reduce_derived_no_commute(
 
 	int res;
 
-	if( (size < sctk_runtime_config_get()->modules.collectives_intra.bcast_intra_for_trsh)
-	&&  sctk_datatype_contig_mem(datatype) )
+	if( (size < sctk_runtime_config_get()->modules.collectives_intra.reduce_intra_for_trsh)
+	&&  sctk_datatype_contig_mem(datatype)
+	&&  (count <  sctk_runtime_config_get()->modules.collectives_intra.reduce_intra_for_count_trsh) )
 	{
 		res = __INTERNAL__PMPI_Reduce_derived_no_commute_for(
 				sendbuf, recvbuf, count, datatype, op,
