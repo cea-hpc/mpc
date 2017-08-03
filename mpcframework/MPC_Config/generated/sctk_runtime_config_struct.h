@@ -642,6 +642,8 @@ struct sctk_runtime_config_struct_collectives_intra
 	struct sctk_runtime_config_funcptr bcast_intra;
 	/**Maximum number of process for using a trivial for for the Bcast**/
 	int bcast_intra_for_trsh;
+	/**Maximum number of elems for using a trivial for for the Bcast**/
+	int bcast_intra_for_count_trsh;
 	/**MPI_Allgather intracom algorithm**/
 	struct sctk_runtime_config_funcptr allgather_intra;
 	/**MPI_Allgatherv intracom algorithm**/

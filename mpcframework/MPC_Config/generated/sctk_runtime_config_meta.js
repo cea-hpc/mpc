@@ -245,6 +245,7 @@ meta.types = {
 		barrier_intra_for_trsh: {mode: 'param', name: "barrier_intra_for_trsh", type: "int", doc: "Maximum number of process for using a trivial for for the Barrier", dflt: "33", },
 		bcast_intra: {mode: 'param', name: "bcast_intra", type: "funcptr", doc: "Type of MPI_Bcast intracom algorithm", dflt: "__INTERNAL__PMPI_Bcast_intra", },
 		bcast_intra_for_trsh: {mode: 'param', name: "bcast_intra_for_trsh", type: "int", doc: "Maximum number of process for using a trivial for for the Bcast", dflt: "33", },
+		bcast_intra_for_count_trsh: {mode: 'param', name: "bcast_intra_for_count_trsh", type: "int", doc: "Maximum number of elems for using a trivial for for the Bcast", dflt: "1024", },
 		allgather_intra: {mode: 'param', name: "allgather_intra", type: "funcptr", doc: "MPI_Allgather intracom algorithm", dflt: "__INTERNAL__PMPI_Allgather_intra", },
 		allgatherv_intra: {mode: 'param', name: "allgatherv_intra", type: "funcptr", doc: "MPI_Allgatherv intracom algorithm", dflt: "__INTERNAL__PMPI_Allgatherv_intra", },
 		alltoall_intra: {mode: 'param', name: "alltoall_intra", type: "funcptr", doc: "MPI_Alltoall intracom algorithm", dflt: "__INTERNAL__PMPI_Alltoall_intra", },

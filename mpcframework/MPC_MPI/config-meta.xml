@@ -31,6 +31,7 @@
 			<param name="barrier_intra_for_trsh" type="int" default="33" doc="Maximum number of process for using a trivial for for the Barrier" alias="MPI_COLL_BARRIER_FOR_TRSH"/>
 			<param name="bcast_intra" type="funcptr" default="__INTERNAL__PMPI_Bcast_intra" doc="Type of MPI_Bcast intracom algorithm"/>
 			<param name="bcast_intra_for_trsh" type="int" default="33" doc="Maximum number of process for using a trivial for for the Bcast" alias="MPI_COLL_BCAST_FOR_TRSH"/>
+			<param name="bcast_intra_for_count_trsh" type="int" default="1024" doc="Maximum number of elems for using a trivial for for the Bcast" alias="MPI_COLL_BCAST_FOR_ELEM_TRSH"/>
 
             <param name="allgather_intra" type="funcptr" default="__INTERNAL__PMPI_Allgather_intra" doc="MPI_Allgather intracom algorithm"/>
             <param name="allgatherv_intra" type="funcptr" default="__INTERNAL__PMPI_Allgatherv_intra" doc="MPI_Allgatherv intracom algorithm"/>

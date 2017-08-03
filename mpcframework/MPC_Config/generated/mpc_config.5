@@ -1101,6 +1101,10 @@ Type of MPI_Bcast intracom algorithm
 Type is int. Default value is 33. 
 .Pp bcast_intra_for_trsh
 Maximum number of process for using a trivial for for the Bcast
+.It Cm bcast_intra_for_count_trsh
+Type is int. Default value is 1024. 
+.Pp bcast_intra_for_count_trsh
+Maximum number of elems for using a trivial for for the Bcast
 .It Cm allgather_intra
 Type is function pointer. Default value is __INTERNAL__PMPI_Allgather_intra. 
 .Pp allgather_intra

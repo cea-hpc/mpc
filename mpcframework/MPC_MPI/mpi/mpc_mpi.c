@@ -6199,7 +6199,8 @@ int __INTERNAL__PMPI_Bcast_intra(void *buffer, int count, MPI_Datatype datatype,
 		return res;
 	}
 
-	if( size < sctk_runtime_config_get()->modules.collectives_intra.bcast_intra_for_trsh )
+	if( (size < sctk_runtime_config_get()->modules.collectives_intra.bcast_intra_for_trsh)
+	&&  (count < sctk_runtime_config_get()->modules.collectives_intra.bcast_intra_for_count_trsh) )
 	{
 		int i,j;
 		MPI_Request req_recv;
@@ -6289,43 +6290,125 @@ int __INTERNAL__PMPI_Bcast_intra(void *buffer, int count, MPI_Datatype datatype,
 		{
 			parent = -1;
 		}
+		
+		MPI_Request reqs[2];
 
+		int min_pipeline_blk = 1024;
 
-		if( 0 <= parent )
+		if( (count < min_pipeline_blk)
+		|| ! sctk_datatype_contig_mem( datatype ) )
 		{
-			res = __INTERNAL__PMPI_Recv( buffer , count , datatype , parent , MPC_BROADCAST_TAG , comm , MPI_STATUS_IGNORE );	
-			
+
+
+			if( 0 <= parent )
+			{
+				res = __INTERNAL__PMPI_Recv( buffer , count , datatype , parent , MPC_BROADCAST_TAG , comm , MPI_STATUS_IGNORE );	
+				
+				if (res != MPI_SUCCESS) {
+					return res;
+				}
+			}
+
+
+			reqs[0]= MPI_REQUEST_NULL;
+			reqs[1]= MPI_REQUEST_NULL;
+
+			if( 0<= lc )
+			{
+					res = __INTERNAL__PMPI_Isend( buffer , count , datatype , lc , MPC_BROADCAST_TAG , comm , &reqs[0] );	
+				
+					if (res != MPI_SUCCESS) {
+						return res;
+					}
+		
+			}
+
+			if( 0<= rc )
+			{
+					res = __INTERNAL__PMPI_Isend( buffer , count , datatype , rc , MPC_BROADCAST_TAG , comm , &reqs[1] );	
+				
+					if (res != MPI_SUCCESS) {
+						return res;
+					}
+		
+			}
+
+			res = MPI_Waitall( 2 , reqs , MPI_STATUSES_IGNORE );
+
+		}
+		else
+		{
+			int left_to_process = count;
+			int current_offset = 0;
+
+			MPI_Aint tsize = 0;
+  			res = __INTERNAL__PMPI_Type_extent(datatype, &tsize);
+ 			
 			if (res != MPI_SUCCESS) {
 				return res;
+ 			}
+
+			
+			while( left_to_process )
+			{
+				int count_this_step = count / 16;
+
+				if( count_this_step < 1024 )
+				{
+					count_this_step = 1024;
+				}
+
+
+				if( left_to_process < min_pipeline_blk )
+				{
+					count_this_step = left_to_process;
+				}
+
+				if( 0 <= parent )
+				{
+					res = __INTERNAL__PMPI_Recv( buffer + current_offset * tsize , count_this_step , datatype , parent , MPC_BROADCAST_TAG , comm , MPI_STATUS_IGNORE );	
+					
+					if (res != MPI_SUCCESS) {
+						return res;
+					}
+				}
+
+
+				reqs[0]= MPI_REQUEST_NULL;
+				reqs[1]= MPI_REQUEST_NULL;
+
+				if( 0<= lc )
+				{
+						res = __INTERNAL__PMPI_Isend( buffer  + current_offset * tsize  , count_this_step , datatype , lc , MPC_BROADCAST_TAG , comm , &reqs[0] );	
+					
+						if (res != MPI_SUCCESS) {
+							return res;
+						}
+		
+				}
+
+				if( 0<= rc )
+				{
+						res = __INTERNAL__PMPI_Isend( buffer   + current_offset * tsize , count_this_step , datatype , rc , MPC_BROADCAST_TAG , comm , &reqs[1] );	
+					
+						if (res != MPI_SUCCESS) {
+							return res;
+						}
+		
+				}
+
+				res = MPI_Waitall( 2 , reqs , MPI_STATUSES_IGNORE );
+
+
+				current_offset += count_this_step;
+				left_to_process -= count_this_step;
 			}
+		
+		
+		
+		
+		
 		}
-
-
-		MPI_Request reqs[2];
-		reqs[0]= MPI_REQUEST_NULL;
-		reqs[1]= MPI_REQUEST_NULL;
-
-		if( 0<= lc )
-		{
-				res = __INTERNAL__PMPI_Isend( buffer , count , datatype , rc , MPC_BROADCAST_TAG , comm , &reqs[0] );	
-			
-				if (res != MPI_SUCCESS) {
-					return res;
-				}
-	
-		}
-
-		if( 0<= rc )
-		{
-				res = __INTERNAL__PMPI_Isend( buffer , count , datatype , lc , MPC_BROADCAST_TAG , comm , &reqs[1] );	
-			
-				if (res != MPI_SUCCESS) {
-					return res;
-				}
-	
-		}
-
-		res = MPI_Waitall( 2 , reqs , MPI_STATUSES_IGNORE );
 	}
 
 	return res;

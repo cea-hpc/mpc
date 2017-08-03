@@ -579,6 +579,7 @@
         </xs:simpleType>
       </xs:element>
       <xs:element minOccurs="0" name="bcast_intra_for_trsh" type="xs:integer"/>
+      <xs:element minOccurs="0" name="bcast_intra_for_count_trsh" type="xs:integer"/>
       <xs:element minOccurs="0" name="allgather_intra">
         <xs:simpleType>
           <xs:restriction base="xs:string">
