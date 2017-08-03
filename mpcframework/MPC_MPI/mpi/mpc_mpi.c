@@ -6397,7 +6397,7 @@ int __INTERNAL__PMPI_Bcast_intra(void *buffer, int count, MPI_Datatype datatype,
 		
 				}
 
-				res = MPI_Waitall( 2 , reqs , MPI_STATUSES_IGNORE );
+				res = PMPI_Waitall( 2 , reqs , MPI_STATUSES_IGNORE );
 
 
 				current_offset += count_this_step;
@@ -10621,18 +10621,12 @@ __INTERNAL__PMPI_Op_free (MPI_Op * op)
   return MPI_SUCCESS;
 }
 
-static size_t MPI_Allreduce_derived_type_floor = 1024;
 
-	int
-__INTERNAL__PMPI_Allreduce_intra (void *sendbuf, void *recvbuf, int count,
+int
+__INTERNAL__PMPI_Allreduce_intra_simple(void *sendbuf, void *recvbuf, int count,
 		MPI_Datatype datatype, MPI_Op op, MPI_Comm comm)
 {
-	int res = MPI_ERR_INTERN;
-	MPC_Op mpc_op;
-	sctk_op_t *mpi_op;
-
-	mpi_op = sctk_convert_to_mpc_op (op);
-	mpc_op = mpi_op->op;
+	int res;
 
 	res = __INTERNAL__PMPI_Reduce(sendbuf, recvbuf, count, datatype, op, 0,
 			comm);
@@ -10644,8 +10638,181 @@ __INTERNAL__PMPI_Allreduce_intra (void *sendbuf, void *recvbuf, int count,
 	if (res != MPI_SUCCESS) {
 		return res;
 	}
-	
 
+	return res;
+}
+
+#define STATIC_ALLRED_BLOB 4096
+
+int
+__INTERNAL__PMPI_Allreduce_intra_pipeline(void *sendbuf, void *recvbuf, int count,
+										  MPI_Datatype datatype, MPI_Op op, MPI_Comm comm)
+{
+	int res;
+
+	char blob[STATIC_ALLRED_BLOB];
+	char blob1[STATIC_ALLRED_BLOB];
+	void * tmp_buff = blob;
+	void * tmp_buff1 = blob1;
+	int to_free = 0;
+
+	sctk_op_t *mpi_op = sctk_convert_to_mpc_op(op);
+  	MPC_Op mpc_op = mpi_op->op;
+
+
+	MPI_Aint dsize;
+	
+	res = __INTERNAL__PMPI_Type_extent(datatype, &dsize);
+		
+	if (res != MPI_SUCCESS) {
+		return res;
+	}
+
+	int per_block = 1024;
+
+	if( STATIC_ALLRED_BLOB <= (dsize * per_block) )
+	{
+		tmp_buff = sctk_malloc( dsize * per_block );
+		to_free = 1;
+	}
+
+        if( STATIC_ALLRED_BLOB <= (dsize * per_block) )
+	{
+		tmp_buff1 = sctk_malloc( dsize * per_block );
+		to_free = 1;
+	}
+
+
+
+	int size;
+	__INTERNAL__PMPI_Comm_size( comm, &size );
+	int rank;
+	__INTERNAL__PMPI_Comm_rank( comm, &rank );
+
+	int left_to_send = count;
+	int sent = 0;
+
+	void * sbuff = sendbuf;
+
+	if( sendbuf == MPI_IN_PLACE )
+	{
+		sendbuf = recvbuf;
+	}
+
+	int left = (rank - 1);
+	int right = (rank + 1) % size;
+
+	if( (left < 0)  )
+	{
+		left = (size - 1);
+	}
+
+
+	/* Create Blocks in the COUNT */
+	while( left_to_send )
+	{
+
+		int to_send = per_block;
+	
+		if( left_to_send < to_send)
+		{
+			to_send = left_to_send;
+		}
+
+		int i;
+		MPI_Request rr;
+		MPI_Request lr;
+
+		for( i = 0 ; i < size ; i++ )
+		{
+			if( i == 0 )
+			{
+				/* Is is now time to send local buffer to the right while accumulating it locally */
+				__INTERNAL__PMPI_Isend( sbuff + dsize * sent , to_send , datatype , right , MPC_ALLREDUCE_TAG , comm , &rr );
+
+				/* Copy local block in recv */
+				if( (sendbuf != MPI_IN_PLACE) )
+				{
+					memcpy( recvbuf + dsize * sent , sbuff + dsize * sent, to_send *dsize );
+				}
+			}
+			else
+			{
+				PMPI_Wait( &lr, MPI_STATUS_IGNORE );
+				/* Our data is already moving around we now forward tmp_buff */
+		
+                                memcpy(tmp_buff1, tmp_buff, dsize * to_send );
+
+				if( i != (size - 1))
+				{
+					__INTERNAL__PMPI_Isend( tmp_buff1 , to_send , datatype , right , MPC_ALLREDUCE_TAG , comm , &rr );
+				}
+			}
+                        
+                        if( i != (size-1))
+			{
+				__INTERNAL__PMPI_Irecv( tmp_buff , to_send , datatype , left , MPC_ALLREDUCE_TAG , comm , &lr );
+			}
+                        
+                        if( i != 0 )
+			{
+				/* Data is ready now accumulate */
+				if (mpc_op.u_func != NULL) {
+						mpc_op.u_func(tmp_buff1, recvbuf + sent * dsize, &to_send, &datatype);
+				} else {
+						MPC_Op_f func;
+						func = sctk_get_common_function(datatype, mpc_op);
+						func(tmp_buff1, recvbuf + sent * dsize, to_send, datatype);
+				}
+			}
+
+			if( i != (size-1))
+			{
+				__INTERNAL__PMPI_Wait( &rr, MPI_STATUS_IGNORE );
+			}
+
+
+			
+			
+		}
+
+
+
+
+		left_to_send -= to_send;
+		sent += to_send;
+	}
+
+
+
+
+	if( to_free == 1 )
+	{
+		sctk_free( tmp_buff );
+		sctk_free( tmp_buff1 );
+	}
+
+	return res;
+
+
+}
+
+
+int
+__INTERNAL__PMPI_Allreduce_intra (void *sendbuf, void *recvbuf, int count,
+		MPI_Datatype datatype, MPI_Op op, MPI_Comm comm)
+{
+	int res = MPI_ERR_INTERN;
+
+	if( !sctk_datatype_contig_mem(datatype) )
+//|| ! sctk_op_can_commute( op, datatype ))
+	{
+		res = __INTERNAL__PMPI_Allreduce_intra_simple( sendbuf, recvbuf, count, datatype, op, comm );
+	}
+	else
+	{
+		res = __INTERNAL__PMPI_Allreduce_intra_pipeline( sendbuf, recvbuf, count, datatype, op, comm );	
+	}
 
 	return res;
 }

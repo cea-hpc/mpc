@@ -211,7 +211,7 @@ struct sctk_progress_work_unit * sctk_progress_list_add( struct sctk_progress_li
 }
 
 
-#define PROGRESS_THRESH 2
+#define PROGRESS_THRESH 5
 
 
 int sctk_progress_list_poll( struct sctk_progress_list * pl )
