@@ -219,7 +219,8 @@ void MPCHT_release( struct MPCHT * ht )
 		}
 	}
 	
-	sctk_free( ht->cells );
+	sctk_free( ht->cells ); ht->cells = NULL;
+	sctk_free(ht->rwlocks); ht->rwlocks = NULL;
 	
 	ht->table_size = 0;
 }

@@ -157,6 +157,7 @@ struct sctk_route_table_s
 
 
 sctk_route_table_t * sctk_route_table_new();
+void sctk_route_table_destroy(sctk_route_table_t*);
 /* Functions for adding a route */
 void sctk_route_table_add_static_route (  sctk_route_table_t * table, sctk_endpoint_t *tmp, int push_in_multirail );
 void sctk_route_table_add_dynamic_route (  sctk_route_table_t * table, sctk_endpoint_t *tmp, int push_in_multirail );

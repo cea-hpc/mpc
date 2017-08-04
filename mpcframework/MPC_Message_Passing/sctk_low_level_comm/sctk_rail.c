@@ -52,22 +52,34 @@ void sctk_rail_allocate ( int count )
 
 
 
-sctk_rail_info_t * sctk_rail_register_with_parent( struct sctk_runtime_config_struct_net_rail *runtime_config_rail,
+static inline sctk_rail_info_t * sctk_rail_register_with_parent( struct sctk_runtime_config_struct_net_rail *runtime_config_rail,
                                          struct sctk_runtime_config_struct_net_driver_config *runtime_config_driver_config,
                                          sctk_rail_info_t * parent,
-                                         int subrail_id )
+                                         int subrail_id,
+					 int reuse_id)
 {
-	if ( __rails.rail_current_id ==  sctk_rail_count() )
-	{
-		sctk_fatal ( "Error : Rail overflow detected\n" );
-	}
-
 	/* Store rail */
 
-	sctk_rail_info_t * new_rail = &__rails.rails[__rails.rail_current_id];
-	/* Set rail Number */
-	new_rail->rail_number = __rails.rail_current_id;
-	__rails.rail_current_id++;
+	sctk_rail_info_t * new_rail = NULL;
+	if(reuse_id < 0)
+	{
+		/* This avoid dynamic rail creation (rail array is statically sized) */
+		if ( __rails.rail_current_id ==  sctk_rail_count() )
+		{
+			sctk_fatal ( "Error : Rail overflow detected\n" );
+		}
+
+		/* Set rail Number */
+		new_rail = &__rails.rails[__rails.rail_current_id];
+		new_rail->rail_number = __rails.rail_current_id;
+		__rails.rail_current_id++;
+		assert(new_rail->state == SCTK_RAIL_ST_INIT);
+	} 
+	else
+	{
+		new_rail = &__rails.rails[reuse_id];
+		assert(new_rail->state == SCTK_RAIL_ST_DISABLED);
+	}
 
 
 	/* Load Config */
@@ -81,6 +93,7 @@ sctk_rail_info_t * sctk_rail_register_with_parent( struct sctk_runtime_config_st
 	new_rail->parent_rail = parent;
 
 	/* Init Empty route table */
+	assert(!new_rail->route_table);
 	new_rail->route_table = sctk_route_table_new();
 
 	/* Load and save Rail Device (NULL if not found) */
@@ -155,7 +168,7 @@ sctk_rail_info_t * sctk_rail_register_with_parent( struct sctk_runtime_config_st
 			}
 
 			/* Now do the init */
-			sctk_rail_info_t * child_rail = sctk_rail_register_with_parent( subrail_rail_conf, subrail_driver_conf, new_rail, i );
+			sctk_rail_info_t * child_rail = sctk_rail_register_with_parent( subrail_rail_conf, subrail_driver_conf, new_rail, i , -1 );
 
 			/* Register the subrail in current rail */
 			new_rail->subrails[i] = child_rail;
@@ -178,24 +191,43 @@ sctk_rail_info_t * sctk_rail_register_with_parent( struct sctk_runtime_config_st
 sctk_rail_info_t * sctk_rail_register( struct sctk_runtime_config_struct_net_rail *runtime_config_rail,
                                          struct sctk_runtime_config_struct_net_driver_config *runtime_config_driver_config )
 {
-	return sctk_rail_register_with_parent( runtime_config_rail, runtime_config_driver_config, NULL, -1 );
+	return sctk_rail_register_with_parent( runtime_config_rail, runtime_config_driver_config, NULL, -1, -1 );
 }
 
-void sctk_rail_unregister(sctk_rail_info_t* rail)
+void sctk_rail_disable(sctk_rail_info_t* rail)
 {
-	rail->enabled = 0;
-
 	/* first, close routes properly */
 	sctk_multirail_on_demand_disconnection_rail(rail);
 
 	/*TODO: Need to wait for disconnection completion */
+	rail->state = SCTK_RAIL_ST_DISABLED;
 
 	/* driver-specific call */
 	if(rail->driver_finalize)
 		rail->driver_finalize(rail);
 
 	/* rail-generic call */
-	sctk_rail_finalize(rail);
+	rail->route_init = sctk_route_none_init;
+	rail->topology_name = "none";
+	rail->connect_on_demand = NULL;
+	rail->disconnect_on_demand = NULL;
+	rail->on_demand = 0;
+	rail->requires_bootstrap_ring = 0;
+
+	/*TODO: Should check route_table does not have remaining routes */
+	if(!sctk_route_table_empty(rail->route_table))
+	{
+		sctk_error("Cannot shutdown rail '%s' with remaining active routes", rail->network_name);
+	}
+	sctk_route_table_destroy(rail->route_table);
+	rail->route_table = NULL;
+}
+
+void sctk_rail_enable(sctk_rail_info_t *rail)
+{
+	assert(rail);
+	sctk_warning("Recreate rail %s (%d)", rail->network_name, rail->rail_number);
+	sctk_rail_register_with_parent(rail->runtime_config_rail, rail->runtime_config_driver_config, rail->parent_rail, rail->subrail_id,  rail->rail_number);
 }
 
 int sctk_rail_count()
@@ -333,7 +365,7 @@ void sctk_rail_commit()
 		rail->route_init( rail );
 		sprintf ( name_ptr, "\n%sRail(%d) [%s (%s) (%s)] %s", (rail->parent_rail)?"\tSub-":"", rail->rail_number, rail->network_name, rail->topology_name , rail->runtime_config_rail->device, rail->is_rdma?"RDMA":"" );
 		name_ptr = net_name + strlen ( net_name );
-		rail->enabled = 1;
+		rail->state = SCTK_RAIL_ST_ENABLED;
 		sctk_pmi_barrier();
 	}
 
@@ -451,6 +483,7 @@ void sctk_rail_dump_routes()
 		for ( i = 0; i <  sctk_rail_count(); i++ )
 		{
 			sctk_rail_info_t *  rail = sctk_rail_get_by_id ( i );
+      printf("Dumping '%s', priority: %d\n", rail->network_name, rail->priority);
 
 			if( rail->parent_rail )
 				continue;
@@ -472,8 +505,7 @@ void sctk_rail_dump_routes()
 			int j;
 
 			for( j = 0 ; j < size ; j++ )
-			{
-
+	fprintf(global_f, "%d\n", j);
 				char tmp_path[512];
 				snprintf( tmp_path, 512, "./%d.%d.%s.dot.tmp", j, i,  rail->network_name );
 
@@ -613,27 +645,6 @@ void sctk_rail_init_route ( sctk_rail_info_t *rail, char *topology, void (*on_de
 				}
 			}
 		}
-	}
-}
-
-/** To be called once per process to drop a specific network (consider MPC_Process_root())*/
-void sctk_rail_drop_routes(sctk_rail_info_t *rail)
-{
-}
-
-void sctk_rail_finalize(sctk_rail_info_t* rail)
-{
-	rail->route_init = sctk_route_none_init;
-	rail->topology_name = "none";
-	rail->connect_on_demand = NULL;
-	rail->disconnect_on_demand = NULL;
-	rail->on_demand = 0;
-	rail->requires_bootstrap_ring = 0;
-
-	/*TODO: Should check route_table does not have remaining routes */
-	if(!sctk_route_table_empty(rail->route_table))
-	{
-		sctk_error("Cannot shutdown rail '%s' with remaining active routes", rail->network_name);
 	}
 }
 

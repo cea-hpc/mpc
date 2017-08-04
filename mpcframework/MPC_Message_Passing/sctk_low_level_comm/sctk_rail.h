@@ -118,6 +118,14 @@ typedef enum
 	SCTK_NET_COUNT
 } sctk_net_type_t;
 
+typedef enum
+{
+	SCTK_RAIL_ST_INIT = 0,
+	SCTK_RAIL_ST_ENABLED,
+	SCTK_RAIL_ST_DISABLED,
+	SCTK_RAIL_ST_COUNT
+} sctk_rail_state_t;
+
 void sctk_rail_pin_ctx_init( sctk_rail_pin_ctx_t * ctx, void * addr, size_t size );
 void sctk_rail_pin_ctx_release( sctk_rail_pin_ctx_t * ctx );
 
@@ -133,13 +141,13 @@ void sctk_rail_pin_ctx_release( sctk_rail_pin_ctx_t * ctx );
 struct sctk_rail_info_s
 {
 	/* Global Info */
-	short enabled; /**< is this rail usable ? */
 	int rail_number; /**< ID of this rail */
 	int subrail_id; /**< ID of this rail if it is a subrail (-1 otherwise) */
 	int priority; /** Priority of this rail */
 	char *network_name; /**< Name of this rail */
 	sctk_net_type_t network_type; /**< network identfier */
 	sctk_device_t * rail_device; /**< Device associated with the rail */
+	sctk_rail_state_t state; /**< is this rail usable ? */
 
 	struct sctk_rail_info_s * parent_rail; /**< This is used for rail hierarchies
 	                                            (note that parent initializes it for the child) */
@@ -272,8 +280,8 @@ sctk_rail_info_t * sctk_rail_get_rdma ();
 void sctk_rail_commit();
 int sctk_rail_committed();
 void sctk_rail_init_route ( sctk_rail_info_t *rail, char *topology, void (*on_demand)( struct sctk_rail_info_s * rail , int dest ) );
-void sctk_rail_finalize(sctk_rail_info_t *rail);
-void sctk_rail_drop_routes(sctk_rail_info_t *rail);
+void sctk_rail_enable(sctk_rail_info_t *rail);
+void sctk_rail_disable(sctk_rail_info_t *rail);
 void sctk_rail_dump_routes();
 
 static inline sctk_net_type_t sctk_rail_get_type(sctk_rail_info_t* rail) { return rail->network_type;}

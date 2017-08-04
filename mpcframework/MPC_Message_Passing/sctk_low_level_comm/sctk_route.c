@@ -53,6 +53,14 @@ sctk_route_table_t * sctk_route_table_new()
 	return ret;
 }
 
+void sctk_route_table_destroy(sctk_route_table_t* table)
+{
+	MPCHT_release(&table->dynamic_route_table);
+	MPCHT_release(&table->static_route_table);
+	
+	sctk_free(table); table = NULL;
+}
+
 int sctk_route_table_empty(sctk_route_table_t *table)
 {
 	return MPCHT_empty(&table->dynamic_route_table) && MPCHT_empty(&table->static_route_table);
@@ -238,6 +246,8 @@ void sctk_walk_all_dynamic_routes ( sctk_route_table_t * table, void ( *func ) (
 {
 	sctk_endpoint_t *current_route, *tmp, **tmp2;
 	UT_array *routes;
+
+	if(table == NULL) return; /* no routes */
 	utarray_new ( routes, &ptr_icd );
 
 	/* Do not walk on static routes */
@@ -271,8 +281,11 @@ void sctk_walk_all_dynamic_routes ( sctk_route_table_t * table, void ( *func ) (
  * Only dynamic routes are involved */
 void sctk_walk_all_static_routes( sctk_route_table_t * table, void ( *func ) (  sctk_endpoint_t *endpoint, void * arg  ), void * arg )
 {
+
 	sctk_endpoint_t *current_route, *tmp, **tmp2;
 	UT_array *routes;
+
+	if(table == NULL) return;/* no route */
 	utarray_new ( routes, &ptr_icd );
 
 	/* Do not walk on static routes */
