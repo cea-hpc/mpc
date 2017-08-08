@@ -97,12 +97,12 @@ INITIALIZATION/FINALIZE
  */
 int sctk_pmi_init()
 {
-	static int done = 0;
+	/*static int done = 0;*/
 	
-	if ( done == 0 )
-	{
+	/*if ( done == 0 )*/
+	/*{*/
 		int rc;
-		done = 1;
+		/*done = 1;*/
 #ifdef SCTK_LIB_MODE
 		sctk_pmi_process_rank = MPC_Net_hook_rank();
 		sctk_pmi_process_number = MPC_Net_hook_size();
@@ -334,11 +334,11 @@ int sctk_pmi_init()
           return rc;
 
 #endif /* SCTK_LIB_MODE */
-	}
-	else
-	{
-		return 0;
-	}
+	/*}*/
+	/*else*/
+	/*{*/
+		/*return 0;*/
+	/*}*/
 }
 
 /*! \brief Finalization function

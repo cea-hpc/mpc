@@ -107,6 +107,9 @@ void sctk_ft_checkpoint()
 void sctk_ft_checkpoint_finalize()
 {
 #ifdef MPC_USE_DMTCP
+	/* we have to reinit PMI from MPC, each time */
+	sctk_pmi_init();
+
 	/* depending on status, deferring the work to the FT system */
 	switch(__state)
 	{
