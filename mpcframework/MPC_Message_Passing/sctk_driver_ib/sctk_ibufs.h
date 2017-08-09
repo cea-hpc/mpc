@@ -320,6 +320,7 @@ typedef struct sctk_ibuf_s
  *  FUNCTIONS
  *----------------------------------------------------------*/
 void sctk_ibuf_pool_init ( struct sctk_ib_rail_info_s *rail );
+void sctk_ibuf_pool_free ( struct sctk_ib_rail_info_s *rail );
 
 sctk_ibuf_t *sctk_ibuf_pick_send_tst ( struct sctk_ib_rail_info_s *rail_ib, struct sctk_ib_qp_s *remote, size_t *size );
 
@@ -418,6 +419,7 @@ void sctk_ibuf_init_numa_node ( struct sctk_ib_rail_info_s *rail_ib,
                                 struct sctk_ibuf_numa_s *node,
                                 int nb_ibufs,
                                 char is_initial_allocation );
+void sctk_ibuf_free_numa_node( struct sctk_ib_rail_info_s *rail_ib, struct sctk_ibuf_numa_s *node);
 
 
 #endif

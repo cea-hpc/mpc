@@ -111,8 +111,6 @@ buffered:
 	}
 
 	/***** RDMA RENDEZVOUS CHANNEL *****/
-rdma:
-	{}
 	sctk_debug ( "Size of message: %lu", size );
 	ibuf = sctk_ib_rdma_rendezvous_prepare_req ( rail, remote, msg, size, -1 );
 

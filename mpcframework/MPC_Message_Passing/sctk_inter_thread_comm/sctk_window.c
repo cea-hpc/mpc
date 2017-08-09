@@ -865,6 +865,7 @@ size_t RDMA_type_size( RDMA_type type )
                 }
 
                 sctk_fatal("Found an unhandled RDMA datatype");
+		return -1;
 }
 
 static inline void sctk_window_fetch_and_op_operate_int(RDMA_op op, void *add,

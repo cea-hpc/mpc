@@ -2594,9 +2594,12 @@ sctk_start_func (void *(*run) (void *), void *arg)
 	kthread_create (&timer_thread, sctk_thread_timer, NULL);
 
 #ifdef MPC_MPI
-	sctk_thread_attr_init (&migration_thread_attr);
-	sctk_thread_attr_setscope (&migration_thread_attr, SCTK_THREAD_SCOPE_SYSTEM);
-	sctk_user_thread_create (&migration_thread, &migration_thread_attr, sctk_thread_migration, NULL);
+	if(sctk_migration_mode)
+	{
+		sctk_thread_attr_init (&migration_thread_attr);
+		sctk_thread_attr_setscope (&migration_thread_attr, SCTK_THREAD_SCOPE_SYSTEM);
+		sctk_user_thread_create (&migration_thread, &migration_thread_attr, sctk_thread_migration, NULL);
+	}
 	sctk_mpc_init_keys ();
 #endif
 

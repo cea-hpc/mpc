@@ -28,6 +28,7 @@
 #include "sctk_device_topology.h"
 
 #include <string.h>
+#include <arpa/inet.h> /* ntohs() */
 
 int sctk_ib_device_found() {
   struct ibv_device **dev_list = NULL;

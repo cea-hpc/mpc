@@ -78,6 +78,7 @@ static inline int sctk_topological_polling_trigget_to_hwloc_type( sctk_topologic
 			sctk_fatal("Bad polling trigger provided");
 		break;
 	}
+	return -1;
 }
 
 
@@ -106,7 +107,7 @@ sctk_topological_polling_set_t sctk_rail_convert_polling_set_from_config( enum r
 		default:
 			sctk_fatal("Error converting polling value from config");
 	}
-
+	return -1;
 }
 
 int init_done = 0;

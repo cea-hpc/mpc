@@ -37,7 +37,7 @@
 /* Rails Storage                                                        */
 /************************************************************************/
 
-static struct sctk_rail_array __rails = { NULL, 0, 0, 0, -1 };
+static struct sctk_rail_array __rails = { NULL, 0, 0, 0 };
 
 /************************************************************************/
 /* Rail Init and Getters                                                */
@@ -196,10 +196,15 @@ sctk_rail_info_t * sctk_rail_register( struct sctk_runtime_config_struct_net_rai
 
 void sctk_rail_disable(sctk_rail_info_t* rail)
 {
+
+        /* we don't disable abstract rails */
+        if(rail->subrail_count) return;
 	/* first, close routes properly */
 	sctk_multirail_on_demand_disconnection_rail(rail);
 
-	/*TODO: Need to wait for disconnection completion */
+	/*TODO: Need to wait for disconnection completion
+	 *TODO: We will have a race condition some day here
+	 */
 	rail->state = SCTK_RAIL_ST_DISABLED;
 
 	/* driver-specific call */
@@ -226,6 +231,8 @@ void sctk_rail_disable(sctk_rail_info_t* rail)
 void sctk_rail_enable(sctk_rail_info_t *rail)
 {
 	assert(rail);
+        if(rail->state != SCTK_RAIL_ST_DISABLED) return;
+        assert(!rail->subrail_count); /* should not be a composed rail */
 	sctk_warning("Recreate rail %s (%d)", rail->network_name, rail->rail_number);
 	sctk_rail_register_with_parent(rail->runtime_config_rail, rail->runtime_config_driver_config, rail->parent_rail, rail->subrail_id,  rail->rail_number);
 }

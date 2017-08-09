@@ -848,7 +848,7 @@ void sctk_multirail_notify_idle()
 	{
 		sctk_rail_info_t * rail = sctk_rail_get_by_id ( i );
 		
-		if( rail->notify_idle_message )
+		if( rail->state == SCTK_RAIL_ST_ENABLED && rail->notify_idle_message )
 		{
 			sctk_topological_polling_tree_poll( &rail->idle_polling_tree , notify_idle_message_trampoline , (void *)rail );
 		}

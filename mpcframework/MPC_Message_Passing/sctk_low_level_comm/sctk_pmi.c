@@ -45,6 +45,8 @@ static int sctk_pmi_process_number;
 
 struct process_nb_from_node_rank *sctk_pmi_process_nb_from_node_rank = NULL;
 
+
+static int max_kvsname_len  = 0;
 static int sctk_max_val_len = 0;
 static int sctk_max_key_len = 0;
 static char *sctk_kvsname = "0";
@@ -115,7 +117,6 @@ int sctk_pmi_init()
 
 		return 0;
 #else /* SCTK_LIB_MODE */
-		int max_kvsname_len;
 
 		// Initialized PMI/SLURM
 		rc = PMI_Init ( &spawned );
