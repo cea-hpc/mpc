@@ -61,6 +61,26 @@ void sctk_ib_eager_init ( sctk_ib_rail_info_t *rail_ib )
 		/* Add the entry to the list */
 		LL_PREPEND ( rail_ib->eager_buffered_ptp_message, entry );
 	}
+	rail_ib->eager_buffered_start_addr = tmp;
+}
+
+void sctk_ib_eager_finalize(sctk_ib_rail_info_t *rail_ib)
+{
+	sctk_thread_ptp_message_t *elt, *tmp;
+	int i;
+	LL_FOREACH_SAFE(rail_ib->eager_buffered_ptp_message, elt, tmp)
+	{
+		/* if the ptp_message has been dynamically allocated */
+		if(((unsigned long int)elt) > ((unsigned long int) (rail_ib->eager_buffered_start_addr + (EAGER_BUFFER_SIZE * sizeof( sctk_thread_ptp_message_t)))))
+			sctk_free(elt);
+
+		LL_DELETE(rail_ib->eager_buffered_ptp_message, elt);
+	}
+
+	/* free the static segment just once */
+	sctk_free(rail_ib->eager_buffered_start_addr);
+	rail_ib->eager_buffered_start_addr = NULL;
+	rail_ib->eager_buffered_ptp_message = NULL;
 }
 
 /*

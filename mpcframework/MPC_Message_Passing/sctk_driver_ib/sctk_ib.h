@@ -99,6 +99,7 @@ typedef struct sctk_ib_rail_info_s
 
 	/* For Eager messages -> pool of MPC headers */
 	struct sctk_thread_ptp_message_s *eager_buffered_ptp_message;
+	void* eager_buffered_start_addr;
 	sctk_spinlock_t eager_lock_buffered_ptp_message;
 } sctk_ib_rail_info_t;
 

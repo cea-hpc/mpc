@@ -800,7 +800,40 @@ void sctk_ib_unpin_region( struct sctk_rail_info_s * rail, struct sctk_rail_pin_
 
 void sctk_network_finalize_mpi_ib( sctk_rail_info_t *rail)
 {
+	sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
+	LOAD_CONFIG (rail_ib);
+	LOAD_DEVICE(rail_ib);
+	/*TODO: for proper closing or IB Rail:                        */
+	/* - Close all routes: Done by rail-generic closing procedure */
+	/* - Check connect_ring does not leave incoherent data        */
+	/* - MMU not required (just a lock)                           */
+	/* - Destroy task init (sctk_ib_topology_init_task) (!!!)     */
+	/* - Free NUMA buffers                                        */
+	sctk_ib_topology_free_task(rail_ib);
+
+	/* - Free IB topology                                         */
+	sctk_ib_topology_free(rail_ib);
+
+	/* - Flush the eager entries (sctk_ib_eager_init)             */
+	sctk_ib_eager_finalize(rail_ib);
+
+	/* - Destroy the Shared Receive Queue (sctk_ib_srq_init)      */
+	sctk_ib_srq_free(rail_ib);
+
+	/* - Free completion queues (send & recv) sctk_ib_cq_init)    */
+	sctk_ib_cq_free(device->send_cq); device->send_cq = NULL;
+	sctk_ib_cq_free(device->recv_cq); device->recv_cq = NULL;
+
+	/* - Free the protected domain (sctk_ib_pd_init)              */
+	sctk_ib_pd_free(device);
+
+	/* - unload IB device (sctk_ib_device_open)                   */
+	/* - close IB device struct (sctk_ib_device_init)             */
 	sctk_ib_device_close(&rail->network.ib);
+
+	/* - Reset ib config struct (sctk_ib_config_init)             */
+	config = NULL;
+
 }
 
 void sctk_network_init_mpi_ib ( sctk_rail_info_t *rail )

@@ -159,6 +159,22 @@ void sctk_ib_topology_init_task ( struct sctk_rail_info_s *rail, int vp )
 
 }
 
+void sctk_ib_topology_free_task(sctk_ib_rail_info_t *rail_ib)
+{
+	int i = -1;
+	for (i = 0; i < sctk_get_numa_node_number(); ++i)
+	{
+		if(rail_ib->topology->nodes[i])
+			sctk_ibuf_free_numa_node(rail_ib, &rail_ib->topology->nodes[i]->ibufs);
+		sctk_free(rail_ib->topology->nodes[i]);
+	}
+	
+	if(numa_node_task)
+	{
+		sctk_free(numa_node_task); numa_node_task = NULL;
+	}
+}
+
 static int sctk_ib_topology_use_default_node = 0;
 
 void sctk_ib_topology_init( sctk_ib_topology_t * topology )
@@ -220,6 +236,15 @@ void sctk_ib_topology_init_rail( struct sctk_ib_rail_info_s *rail_ib )
 
 	/* Initialize the pool */
 	sctk_ibuf_pool_init ( rail_ib );
+}
+
+void sctk_ib_topology_free(struct sctk_ib_rail_info_s *rail_ib)
+{
+	sctk_ibuf_pool_free(rail_ib);
+
+	sctk_free(rail_ib->topology->nodes) ;  rail_ib->topology->nodes = NULL;
+	sctk_free(rail_ib->topology->init)  ;  rail_ib->topology->init = NULL;
+	sctk_free(rail_ib->topology)        ;  rail_ib->topology = NULL;
 }
 
 sctk_ib_topology_numa_node_t *

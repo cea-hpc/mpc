@@ -136,6 +136,20 @@ void sctk_ibuf_init_numa_node ( struct sctk_ib_rail_info_s *rail_ib,
 	sctk_ib_debug ( "Allocation of %d buffers (free_nb:%u got:%u)", nb_ibufs, free_nb, node->nb - free_nb );
 }
 
+void sctk_ibuf_free_numa_node(sctk_ib_rail_info_t *rail, struct sctk_ibuf_numa_s *node)
+{
+	struct sctk_ibuf_region_s *region, *tmp;
+
+	DL_FOREACH_SAFE(node->regions, region, tmp)
+	{
+		sctk_free(region->mmu_entry->addr); /* MMU entry */
+		sctk_free(region->list);
+		sctk_free(region->mmu_entry);
+		DL_DELETE(node->regions, region);
+		sctk_free(region);
+	}
+}
+
 void sctk_ibuf_pool_set_node_srq_buffers ( struct sctk_ib_rail_info_s *rail_ib,
                                            sctk_ibuf_numa_t *node )
 {
@@ -156,6 +170,12 @@ void sctk_ibuf_pool_init ( struct sctk_ib_rail_info_s *rail_ib )
 	pool->post_srq_lock = SCTK_SPINLOCK_INITIALIZER;
 	/* update pool buffer */
 	rail_ib->pool_buffers = pool;
+}
+
+void sctk_ibuf_pool_free(sctk_ib_rail_info_t *rail_ib)
+{
+	sctk_free(rail_ib->pool_buffers);
+	rail_ib->pool_buffers = NULL;
 }
 
 sctk_ibuf_t *sctk_ibuf_pick_send_sr ( struct sctk_ib_rail_info_s *rail_ib )

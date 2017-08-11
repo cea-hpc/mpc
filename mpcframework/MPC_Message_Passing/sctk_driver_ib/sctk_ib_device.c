@@ -225,6 +225,7 @@ sctk_ib_device_t *sctk_ib_device_open ( struct sctk_ib_rail_info_s *rail_ib, cha
 void sctk_ib_device_close (struct sctk_ib_rail_info_s *rail_ib)
 {
 	ibv_close_device(rail_ib->device->context);
+	sctk_free(rail_ib->device); rail_ib->device = NULL;
 }
 
 
@@ -238,6 +239,12 @@ struct ibv_pd *sctk_ib_pd_init ( sctk_ib_device_t *device )
 	}
 
 	return device->pd;
+}
+
+void sctk_ib_pd_free(sctk_ib_device_t *device)
+{
+	ibv_dealloc_pd(device->pd);
+	device->pd = NULL;
 }
 
 struct ibv_comp_channel *sctk_ib_comp_channel_init ( sctk_ib_device_t *device )
@@ -281,5 +288,10 @@ struct ibv_cq *sctk_ib_cq_init ( sctk_ib_device_t *device,
 	}
 
 	return cq;
+}
+
+void sctk_ib_cq_free(struct ibv_cq * queue)
+{
+	ibv_destroy_cq(queue);
 }
 #endif

@@ -546,6 +546,13 @@ struct ibv_srq *sctk_ib_srq_init ( struct sctk_ib_rail_info_s *rail_ib, struct i
 	return device->srq;
 }
 
+void sctk_ib_srq_free(sctk_ib_rail_info_t *rail_ib)
+{
+	LOAD_DEVICE (rail_ib);
+	ibv_destroy_srq(device->srq);
+	device->srq = NULL;
+}
+
 struct ibv_srq_init_attr sctk_ib_srq_init_attr ( struct sctk_ib_rail_info_s *rail_ib )
 {
 	LOAD_CONFIG ( rail_ib );
