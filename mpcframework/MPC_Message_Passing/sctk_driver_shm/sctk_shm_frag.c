@@ -8,7 +8,6 @@
 
 static volatile int sctk_shm_idle_frag_msg = 0;
 static volatile int sctk_shm_process_msg_id = 0;
-static int sctk_shm_max_frag_msg_per_process = SCTK_SHM_MAX_FRAG_MSG_PER_PROCESS;
 
 static sctk_spinlock_t sctk_shm_sending_frag_hastable_lock = SCTK_SPINLOCK_INITIALIZER;
 static sctk_spinlock_t sctk_shm_recving_frag_hastable_lock = SCTK_SPINLOCK_INITIALIZER;
@@ -94,13 +93,13 @@ sctk_shm_send_register_new_frag_msg(int dest)
       sctk_shm_process_msg_id = (sctk_shm_process_msg_id+1) % SCTK_SHM_MAX_FRAG_MSG_PER_PROCESS;
       frag_infos->msg_frag_key = sctk_shm_process_msg_id;
 
-      if(try > sctk_shm_max_frag_msg_per_process)
+      if(try > SCTK_SHM_MAX_FRAG_MSG_PER_PROCESS)
          break;
 
    } while(sctk_shm_frag_get_elt_from_hash(frag_infos->msg_frag_key, dest, SCTK_SHM_SENDER_HT)); 
    
    /* Abort frag sending message */ 
-   if( try > sctk_shm_max_frag_msg_per_process)
+   if( try > SCTK_SHM_MAX_FRAG_MSG_PER_PROCESS)
    {
       sctk_free(frag_infos);
       frag_infos = NULL;
@@ -383,7 +382,7 @@ sctk_network_frag_shm_interface_init(void)
     for(i=0; i < sctk_shm_process_on_node; i++)
     { 
         sctk_nodebug("%d %d %p", sctk_get_local_process_rank(), i, &(sctk_shm_recving_frag_hastable_ptr[i]));
-    	MPCHT_init(&(sctk_shm_recving_frag_hastable_ptr[i]), sctk_shm_max_frag_msg_per_process);
-    	MPCHT_init(&(sctk_shm_sending_frag_hastable_ptr[i]), sctk_shm_max_frag_msg_per_process);
+    	MPCHT_init(&(sctk_shm_recving_frag_hastable_ptr[i]), SCTK_SHM_MAX_FRAG_MSG_PER_PROCESS);
+    	MPCHT_init(&(sctk_shm_sending_frag_hastable_ptr[i]), SCTK_SHM_MAX_FRAG_MSG_PER_PROCESS);
     }
 }

@@ -1,7 +1,7 @@
 
 #ifdef MPC_USE_VIRTUAL_MACHINE
-static char* sctk_qemu_shm_process_filename = NULL;
-static size_t sctk_qemu_shm_process_size = 0;
+/*static char* sctk_qemu_shm_process_filename = NULL;*/
+/*static size_t sctk_qemu_shm_process_size = 0;*/
 static void* sctk_qemu_shm_shmem_base = NULL;
 
 // FROM Henry S. Warren, Jr.'s "Hacker's Delight."
@@ -17,25 +17,25 @@ static long sctk_shm_roundup_powerof2(unsigned long n)
     return n+1;
 }
 
-char *sctk_get_qemu_shm_process_filename( void )
-{
-    return sctk_qemu_shm_process_filename;
-}
+/*char *sctk_get_qemu_shm_process_filename( void )*/
+/*{*/
+    /*return sctk_qemu_shm_process_filename;*/
+/*}*/
 
-void sctk_set_qemu_shm_process_filename( char *filename )
-{
-    sctk_qemu_shm_process_filename = filename;
-}
+/*void sctk_set_qemu_shm_process_filename( char *filename )*/
+/*{*/
+    /*sctk_qemu_shm_process_filename = filename;*/
+/*}*/
 
-size_t sctk_get_qemu_shm_process_size( void )
-{
-    return sctk_qemu_shm_process_size;
-}
+/*size_t sctk_get_qemu_shm_process_size( void )*/
+/*{*/
+    /*return sctk_qemu_shm_process_size;*/
+/*}*/
 
-void sctk_set_qemu_shm_process_size( size_t size )
-{
-    sctk_qemu_shm_process_size = size;
-}
+/*void sctk_set_qemu_shm_process_size( size_t size )*/
+/*{*/
+    /*sctk_qemu_shm_process_size = size;*/
+/*}*/
 
 void *sctk_get_shm_host_pmi_infos(void)
 {

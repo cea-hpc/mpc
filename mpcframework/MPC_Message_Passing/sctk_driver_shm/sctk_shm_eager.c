@@ -1,8 +1,6 @@
 #include "sctk_shm_eager.h"
 #include "sctk_net_tools.h"
 
-static int sctk_shm_eager_max_try = 10;
-
 /**
  * NO COPY FUNCTION
  */
