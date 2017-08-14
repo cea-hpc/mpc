@@ -24,6 +24,7 @@
 #include <sctk_debug.h>
 #include <sctk_net_tools.h>
 #include <sctk_tcp_toolkit.h>
+#include <sys/socket.h> /* shutdown() */
 
 extern volatile int sctk_online_program;
 
@@ -184,12 +185,15 @@ static int sctk_send_message_from_network_tcp ( sctk_thread_ptp_message_t *msg )
 /********************************************************************/
 void sctk_network_finalize_tcp(sctk_rail_info_t *rail)
 {
-	rail->connect_from = NULL;
-	rail->connect_to = NULL;
-	rail->control_message_handler = NULL;
+	sctk_tcp_rail_info_t *rail_tcp = &rail->network.tcp;
 
-	/*TODO: What's about remove PMI keys before cleaning  ? */
-	memset((void*)&rail->network.tcp, 0, sizeof(sctk_tcp_rail_info_t));
+	shutdown(rail_tcp->sockfd, SHUT_RDWR);
+	close(rail_tcp->sockfd);
+	rail_tcp->sockfd = -1;
+	rail_tcp->portno = -1;
+	rail_tcp->connection_infos[0] = '\0';
+	rail_tcp->connection_infos_size = 0;
+
 }
 
 void sctk_network_init_tcp ( sctk_rail_info_t *rail )
