@@ -386,3 +386,17 @@ sctk_network_frag_shm_interface_init(void)
     	MPCHT_init(&(sctk_shm_sending_frag_hastable_ptr[i]), SCTK_SHM_MAX_FRAG_MSG_PER_PROCESS);
     }
 }
+
+void sctk_network_frag_shm_interface_free(void)
+{
+	const int max = sctk_get_local_process_number();
+	int i;
+
+	for (i = 0; i < max; ++i) {
+		MPCHT_release(sctk_shm_recving_frag_hastable_ptr + i);
+		MPCHT_release(sctk_shm_sending_frag_hastable_ptr + i);
+	}
+
+	sctk_free(sctk_shm_recving_frag_hastable_ptr);
+	sctk_free(sctk_shm_sending_frag_hastable_ptr);
+}

@@ -239,4 +239,9 @@ sctk_network_cma_shm_interface_init(void *options)
     //sctk_shm_cma_zerocopy_enabled = rail->runtime_config_driver_config->driver.value.shm.cells_num 
     return 1;
 }
+
+void sctk_network_cma_shm_interface_free()
+{
+	sctk_shm_process_sys_id = -1;
+}
 #endif /* MPC_USE_CMA */

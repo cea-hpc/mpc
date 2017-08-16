@@ -384,6 +384,11 @@ static void sctk_shm_init_raw_queue(size_t size, int cells_num, int rank, int pa
     sctk_shm_pmi_handler_free(pmi_handler);
 }
 
+static void sctk_shm_free_raw_queue()
+{
+	
+}
+
 void sctk_shm_check_raw_queue(int local_process_number)
 {
     int i;
@@ -399,6 +404,19 @@ void sctk_shm_check_raw_queue(int local_process_number)
 
 void sctk_network_finalize_shm(sctk_rail_info_t *rail)
 {
+	if(!sctk_shm_driver_initialized)
+		return;
+
+	/** complementary condition to init func: @see sctk_network_inif_shm */
+	sctk_network_frag_shm_interface_free();
+#ifdef MPC_USE_CMA
+	sctk_shm_network_cma_shm_interface_free();
+#endif
+	int nb_process = -1, i = -1;
+	for (i = 0; i < nb_process; ++i) {
+		sctk_shm_free_raw_queue(i);
+	}
+	sctk_shm_free_regions_infos();
 	/*TODO: move every global data into sctk_shm_rail_info_t struct */
 }
 
@@ -439,7 +457,10 @@ void sctk_network_init_shm ( sctk_rail_info_t *rail )
    sctk_shm_proc_local_rank_on_node = local_process_rank;
 
    if (local_process_number == 1 || sctk_get_node_number() > 1)
+   {
+     sctk_shm_driver_initialized = 0;
      return;
+   }
 
    struct process_nb_from_node_rank *nodes_infos = NULL;
    sctk_pmi_get_process_number_from_node_rank(&nodes_infos);
@@ -449,7 +470,7 @@ void sctk_network_init_shm ( sctk_rail_info_t *rail )
 
    struct process_nb_from_node_rank *tmp;
    HASH_FIND_INT( nodes_infos, &node_rank, tmp);
-
+   assert(tmp != NULL);
 
    sctk_shm_init_regions_infos(local_process_number);
    for(i=0; i < tmp->nb_process; i++)

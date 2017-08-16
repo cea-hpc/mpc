@@ -33,7 +33,7 @@ typedef struct
 
 void sctk_network_init_shm ( sctk_rail_info_t *rail );
 void sctk_network_finalize_shm(sctk_rail_info_t *rail);
-char *sctk_get_qemu_shm_process_filename(void);
-size_t sctk_get_qemu_shm_process_size(void);
+//char *sctk_get_qemu_shm_process_filename(void);
+//size_t sctk_get_qemu_shm_process_size(void);
 
 #endif /* __SCTK_SHM_H__ */

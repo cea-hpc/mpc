@@ -25,6 +25,12 @@ void sctk_shm_init_regions_infos(int participants)
         sctk_shm_regions_infos[i] = NULL;
 }
 
+void sctk_shm_free_regions_infos()
+{
+	sctk_free(sctk_shm_regions_infos);
+	sctk_shm_regions_infos = NULL;
+}
+
 void 
 sctk_shm_add_region_infos(char* shmem_base,size_t shmem_size,int cells_num,int rank,int participants)
 {
