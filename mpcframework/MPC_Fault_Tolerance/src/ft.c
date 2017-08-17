@@ -85,7 +85,7 @@ void sctk_ft_checkpoint_init()
 		sctk_rail_info_t* rail = sctk_rail_get_by_id(i);
 		if(!rail) continue;
 #ifdef MPC_USE_DMTCP
-		/*if(sctk_rail_get_type(rail) == SCTK_NET_INFINIBAND)*/
+                if(sctk_rail_get_type(rail) == SCTK_NET_INFINIBAND)
 		{
 			sctk_rail_disable(rail);
 		}
@@ -127,7 +127,7 @@ void sctk_ft_checkpoint_finalize()
 		sctk_rail_info_t* rail = sctk_rail_get_by_id(i);
 		if(!rail) continue;
 #ifdef MPC_USE_DMTCP
-		/*if(sctk_rail_get_type(rail) == SCTK_NET_INFINIBAND)*/
+                if(sctk_rail_get_type(rail) == SCTK_NET_INFINIBAND)
 		{
 			sctk_rail_enable(rail);
 		}

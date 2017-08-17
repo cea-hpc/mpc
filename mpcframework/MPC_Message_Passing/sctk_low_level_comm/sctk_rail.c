@@ -233,7 +233,6 @@ void sctk_rail_enable(sctk_rail_info_t *rail)
 	assert(rail);
         if(rail->state != SCTK_RAIL_ST_DISABLED) return;
         assert(!rail->subrail_count); /* should not be a composed rail */
-	sctk_warning("Recreate rail %s (%d)", rail->network_name, rail->rail_number);
 	sctk_rail_register_with_parent(rail->runtime_config_rail, rail->runtime_config_driver_config, rail->parent_rail, rail->subrail_id,  rail->rail_number);
 }
 
