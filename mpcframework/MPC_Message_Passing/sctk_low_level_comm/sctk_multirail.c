@@ -339,6 +339,25 @@ void sctk_endpoint_list_release( sctk_endpoint_list_t ** list )
 	*list = NULL;
 }
 
+void sctk_endpoint_list_prune( sctk_endpoint_list_t ** list)
+{
+	sctk_endpoint_list_t *entry = *list;
+	sctk_endpoint_list_t *tofree = NULL;
+	sctk_endpoint_t *route;
+	sctk_endpoint_state_t rstate;
+	while( entry )
+	{
+		route = entry->endpoint;
+		rstate = sctk_endpoint_get_state(route);
+
+		if(route->rail->state == SCTK_RAIL_ST_DISABLED || rstate != STATE_CONNECTED)
+		{
+			tofree = entry;
+			entry = entry->next;
+			*list = sctk_endpoint_list_pop(*list, tofree);
+		}
+	}
+}
 
 /************************************************************************/
 /* sctk_multirail_destination_table_entry                               */
@@ -368,6 +387,13 @@ void sctk_multirail_destination_table_entry_free( sctk_multirail_destination_tab
 {
 	sctk_multirail_destination_table_entry_release( entry );
 	sctk_free( entry );
+}
+
+void sctk_multirail_destination_table_entry_prune(sctk_multirail_destination_table_entry_t * entry)
+{
+	sctk_spinlock_write_lock(&entry->endpoints_lock);
+	sctk_endpoint_list_prune(&entry->endpoints);
+	sctk_spinlock_write_unlock(&entry->endpoints_lock);
 }
 
 sctk_multirail_destination_table_entry_t * sctk_multirail_destination_table_entry_new(int destination)
@@ -937,6 +963,20 @@ void sctk_multirail_destination_table_release()
 	
 }
 
+void sctk_multirail_destination_table_prune(void)
+{
+	struct sctk_multirail_destination_table* table = sctk_multirail_destination_table_get();
+	sctk_multirail_destination_table_entry_t *entry = NULL, *tmp = NULL;
+
+	sctk_spinlock_write_lock( &table->table_lock);
+        
+	HASH_ITER(hh, table->destinations, entry, tmp)
+	{
+		sctk_multirail_destination_table_entry_prune(entry);
+	}
+
+	sctk_spinlock_write_unlock(&table->table_lock);
+}
 
 sctk_multirail_destination_table_entry_t * sctk_multirail_destination_table_acquire_routes(int destination )
 {

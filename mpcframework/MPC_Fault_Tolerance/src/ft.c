@@ -93,6 +93,8 @@ void sctk_ft_checkpoint_init()
 	}
 
 #ifdef MPC_USE_DMTCP
+	/* clear multirail table from pending disconnection procedures */
+	sctk_multirail_destination_table_prune();
 	dmtcp_get_local_status(&nb_checkpoints, &nb_restarts);
 #endif
 }
@@ -131,6 +133,8 @@ void sctk_ft_checkpoint_finalize()
 		}
 #endif
 	}
+	/* recall driver init function & update sctk_network_mode string */
+        sctk_rail_commit();
 }
 
 int sctk_ft_disable()
