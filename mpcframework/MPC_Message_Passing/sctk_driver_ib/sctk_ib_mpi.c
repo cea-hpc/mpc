@@ -898,9 +898,7 @@ void sctk_network_init_mpi_ib ( sctk_rail_info_t *rail )
 	
 	/* Initialize network */
 	int init_cpu = sctk_get_cpu();
-	sprintf ( network_name, "IB-MT (v2.0) MPI      %d/%d:%s - %dx %s (%d Gb/s) - %d PKEY INDEX %d]",
-	          device->dev_index + 1, device->dev_nb, ibv_get_device_name ( device->dev ),
-	          device->link_width, device->link_rate, device->data_rate, init_cpu , device->index_pkey);
+        sprintf(network_name, "IB-MT - %dx %s (%d Gb/s)", device->link_width,device->link_rate, device->data_rate);
 
 #ifdef IB_DEBUG
 

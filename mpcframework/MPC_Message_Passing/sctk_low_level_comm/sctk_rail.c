@@ -341,15 +341,76 @@ void rdma_rail_ellection()
 	{
 		__rails.rdma_rail = -1;
 
-		if( !sctk_get_process_rank() )
-		{
-				sctk_warning("No RDMA capable rail found (using emulated calls)");
-		}
+		/*if( !sctk_get_process_rank() )*/
+		/*{*/
+				/*sctk_warning("No RDMA capable rail found (using emulated calls)");*/
+		/*}*/
 	}
 
 }
 
+#define SCTK_RAIL_TYPE_STR(u) rail_type_str[u]
+const char * rail_type_str[] = {
+	"Infiniband",
+	"SHM",
+	"TCP/IP",
+	"Portals",
+	"Topological",
+	"!! ERROR !! "
+};
 
+static inline size_t sctk_rail_print_infos( sctk_rail_info_t * rail, char * start, size_t sz, int depth)
+{
+	assert(depth >= 0);
+	assert(rail);
+	assert(start);
+	assert(sz >=0);
+
+	int i;
+	size_t cur_sz = 0;
+
+	cur_sz += snprintf (start, sz, "\n");
+	/* indent */
+	for (i = 0; i < depth; ++i) {
+		cur_sz += snprintf(start + cur_sz, sz - cur_sz, "|  ");
+	}
+
+	cur_sz += snprintf ( start + cur_sz, sz - cur_sz, "%s Rail %d: \"%s\" (Type: %s) (Init: %s) (Device: %s) (Priority: %d) %s%s", (rail->state == SCTK_RAIL_ST_ENABLED) ? "+":"-", rail->rail_number, rail->network_name, SCTK_RAIL_TYPE_STR(rail->network_type), rail->topology_name , rail->runtime_config_rail->device, rail->priority, rail->is_rdma?"+rdma":"", rail->on_demand?"+od":"");
+
+	if(rail->subrails)
+	{
+		char * cursor = start + cur_sz;
+
+		for (i = 0; i < rail->subrail_count; ++i)
+		{
+			cur_sz += sctk_rail_print_infos(rail->subrails[i], cursor, sz - cur_sz, depth + 1);
+			assert(cur_sz > 0);
+			assert(sz > cur_sz);
+			cursor = start + cur_sz;
+		}
+	}
+
+	return cur_sz;
+}
+
+size_t sctk_rail_print_topology( char * start, size_t sz)
+{
+	int i = 0, nb_rails = sctk_rail_count(), cur_sz = 0;
+	char *cursor = start;
+	sctk_rail_info_t *rail;
+
+	for (i = 0; i < nb_rails; ++i) {
+		rail = sctk_rail_get_by_id(i);
+		if(rail->parent_rail) continue; /* printed by parent rail */
+
+		cur_sz += sctk_rail_print_infos(rail, cursor, sz - cur_sz, 0);
+		assert(cur_sz > 0);
+		assert(sz > cur_sz);
+
+		cursor = start + cur_sz;
+	}
+	return cur_sz;
+}
 
 /* Finalize Rails (call the rail route init func ) */
 void sctk_rail_commit()
@@ -360,21 +421,20 @@ void sctk_rail_commit()
 	/* Display network context */
 	char *net_name;
 	int i;
-	char *name_ptr;
+	size_t sz;
 
 	net_name = sctk_malloc ( sctk_rail_count() * 1024 );
-	name_ptr = net_name;
 
 	for ( i = 0; i <  sctk_rail_count(); i++ )
 	{
 		sctk_rail_info_t *  rail = sctk_rail_get_by_id ( i );
 		rail->route_init( rail );
-		sprintf ( name_ptr, "\n%sRail(%d) [%s (%s) (%s)] %s", (rail->parent_rail)?"\tSub-":"", rail->rail_number, rail->network_name, rail->topology_name , rail->runtime_config_rail->device, rail->is_rdma?"RDMA":"" );
-		name_ptr = net_name + strlen ( net_name );
 		rail->state = SCTK_RAIL_ST_ENABLED;
 		sctk_pmi_barrier();
 	}
 
+	sz = sctk_rail_print_topology(net_name, sctk_rail_count() * 1024);
+	assert(sz <= sctk_rail_count() * 1024);
 	sctk_network_mode = net_name;
 }
 
