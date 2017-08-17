@@ -379,7 +379,6 @@ void sctk_rail_commit()
 	sctk_network_mode = net_name;
 }
 
-
 struct sctk_rail_dump_context
 {
 	FILE * file;

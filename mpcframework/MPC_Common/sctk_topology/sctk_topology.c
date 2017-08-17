@@ -1721,13 +1721,8 @@ void sctk_topology_init ()
 	char* xml_path;
 
 	#ifdef MPC_Message_Passing
-	
-	#ifndef SCTK_LIB_MODE
-	if(sctk_process_number > 1)
-	#endif
-	{
-		sctk_pmi_init();
-	}
+	/* let the interface choose to init or not */
+	sctk_pmi_init();
 	#endif
 
 	xml_path = getenv("MPC_SET_XML_TOPOLOGY_FILE");

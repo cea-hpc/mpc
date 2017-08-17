@@ -181,7 +181,7 @@ static inline void __sctk_ft_post_checkpoint()
 
 static inline void __sctk_ft_post_restart()
 {
-	sctk_debug("Post-Restart");
+	sctk_print_banner(__state == MPC_STATE_RESTART);
 }
 
 char* sctk_ft_str_status(sctk_ft_state_t s)

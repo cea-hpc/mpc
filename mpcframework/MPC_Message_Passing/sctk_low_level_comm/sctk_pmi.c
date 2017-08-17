@@ -25,6 +25,7 @@
 #include "sctk_launch.h"
 #include "sctk_io_helper.h"
 #include "sctk_debug.h"
+#include "sctk.h"
 
 
 #ifndef SCTK_LIB_MODE
@@ -99,6 +100,11 @@ INITIALIZATION/FINALIZE
  */
 int sctk_pmi_init()
 {
+	/* let the MPC PMI interface choose if it need to be initialized */
+#ifndef SCTK_LIB_MODE
+	if(sctk_process_number <= 1)
+		return PMI_FAIL;
+#endif
 	/*static int done = 0;*/
 	
 	/*if ( done == 0 )*/

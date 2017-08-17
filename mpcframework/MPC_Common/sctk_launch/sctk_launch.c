@@ -245,6 +245,43 @@ void * polling_thread( void * dummy )
 	return NULL;
 }
 
+void sctk_print_banner(bool restart)
+{
+	if (sctk_process_rank == 0)
+	{
+		char *mpc_lang = "C/C++";
+		if (sctk_is_in_fortran == 1)
+		{
+			mpc_lang = "Fortran";
+		}
+
+		if (sctk_runtime_config_get()->modules.launcher.banner)
+		{
+			if(sctk_checkpoint_mode && restart)
+				fprintf (stderr, "+++ Application restarting from checkpoint with the following configuration:\n");
+
+			if (SCTK_VERSION_MINOR >= 0)
+			{
+				fprintf (stderr,
+						"MPC version %d.%d.%d%s %s (%d tasks %d processes %d cpus (%2.2fGHz) %s) %s %s %s\n",
+						SCTK_VERSION_MAJOR, SCTK_VERSION_MINOR, SCTK_VERSION_REVISION,
+						SCTK_VERSION_PRE, mpc_lang, sctk_task_nb_val,
+						sctk_process_nb_val, sctk_get_cpu_number (),sctk_atomics_get_cpu_freq()/1000000000.0,
+						sctk_multithreading_mode,
+						sctk_alloc_mode (), SCTK_DEBUG_MODE, sctk_network_mode);
+			}
+			else
+			{
+				fprintf (stderr,
+						"MPC experimental version %s (%d tasks %d processes %d cpus (%2.2fGHz) %s) %s %s %s\n",
+						mpc_lang, sctk_task_nb_val, sctk_process_nb_val,
+						sctk_get_cpu_number (),sctk_atomics_get_cpu_freq()/1000000000.0,  sctk_multithreading_mode,
+						sctk_alloc_mode (), SCTK_DEBUG_MODE, sctk_network_mode);
+			}
+		}
+	}
+}
+
 static void sctk_perform_initialisation (void)
 {
 	/*   mkdir (sctk_store_dir, 0777); */
@@ -402,40 +439,7 @@ static void sctk_perform_initialisation (void)
 #endif
 
 	sctk_atomics_cpu_freq_init();
-	if (sctk_process_rank == 0)
-	{
-		char *mpc_lang = "C/C++";
-		if (sctk_is_in_fortran == 1)
-		{
-			mpc_lang = "Fortran";
-		}
-
-		if (sctk_runtime_config_get()->modules.launcher.banner)
-		{
-			if (SCTK_VERSION_MINOR >= 0)
-			{
-				fprintf (stderr,
-						"MPC version %d.%d.%d%s %s (%d tasks %d processes %d cpus (%2.2fGHz) %s) %s %s %s\n",
-						SCTK_VERSION_MAJOR, SCTK_VERSION_MINOR, SCTK_VERSION_REVISION,
-						SCTK_VERSION_PRE, mpc_lang, sctk_task_nb_val,
-						sctk_process_nb_val, sctk_get_cpu_number (),sctk_atomics_get_cpu_freq()/1000000000.0,
-						sctk_multithreading_mode,
-						sctk_alloc_mode (), SCTK_DEBUG_MODE, sctk_network_mode);
-			}
-			else
-			{
-				fprintf (stderr,
-						"MPC experimental version %s (%d tasks %d processes %d cpus (%2.2fGHz) %s) %s %s %s\n",
-						mpc_lang, sctk_task_nb_val, sctk_process_nb_val,
-						sctk_get_cpu_number (),sctk_atomics_get_cpu_freq()/1000000000.0,  sctk_multithreading_mode,
-						sctk_alloc_mode (), SCTK_DEBUG_MODE, sctk_network_mode);
-			}
-		}
-		if (sctk_restart_mode == 1)
-		{
-			fprintf (stderr, "Restart Job\n");
-		}
-	}
+	sctk_print_banner(0 /* not in restart mode */);
 
 	/*  { */
 	/*     FILE *topo_file = NULL; */
