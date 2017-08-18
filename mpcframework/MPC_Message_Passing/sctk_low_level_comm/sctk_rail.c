@@ -349,14 +349,15 @@ void rdma_rail_ellection()
 
 }
 
-#define SCTK_RAIL_TYPE_STR(u) rail_type_str[u]
+#define SCTK_RAIL_TYPE_STR(u) rail_type_str[SCTK_RAIL_TYPE(u)]
 const char * rail_type_str[] = {
+	"None",
 	"Infiniband",
-	"SHM",
-	"TCP/IP",
 	"Portals",
-	"Topological",
-	"!! ERROR !! "
+	"TCP/IP",
+	"TCP/IP (RMDA)",
+	"SHM",
+	"Topological"
 };
 
 static inline size_t sctk_rail_print_infos( sctk_rail_info_t * rail, char * start, size_t sz, int depth)
@@ -375,7 +376,7 @@ static inline size_t sctk_rail_print_infos( sctk_rail_info_t * rail, char * star
 		cur_sz += snprintf(start + cur_sz, sz - cur_sz, "|  ");
 	}
 
-	cur_sz += snprintf ( start + cur_sz, sz - cur_sz, "%s Rail %d: \"%s\" (Type: %s) (Init: %s) (Device: %s) (Priority: %d) %s%s", (rail->state == SCTK_RAIL_ST_ENABLED) ? "+":"-", rail->rail_number, rail->network_name, SCTK_RAIL_TYPE_STR(rail->network_type), rail->topology_name , rail->runtime_config_rail->device, rail->priority, rail->is_rdma?"+rdma":"", rail->on_demand?"+od":"");
+	cur_sz += snprintf ( start + cur_sz, sz - cur_sz, "%s Rail %d: \"%s\" (Type: %s) (Init: %s) (Device: %s) (Priority: %d) %s%s", (rail->state == SCTK_RAIL_ST_ENABLED) ? "+":"-", rail->rail_number, rail->network_name, SCTK_RAIL_TYPE_STR(rail), rail->topology_name , rail->runtime_config_rail->device, rail->priority, rail->is_rdma?"+rdma":"", rail->on_demand?"+od":"");
 
 	if(rail->subrails)
 	{

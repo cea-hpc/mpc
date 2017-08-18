@@ -350,10 +350,11 @@ void sctk_endpoint_list_prune( sctk_endpoint_list_t ** list)
 		route = entry->endpoint;
 		rstate = sctk_endpoint_get_state(route);
 
+		tofree = entry;
+		entry = entry->next;
+		
 		if(route->rail->state == SCTK_RAIL_ST_DISABLED || rstate != STATE_CONNECTED)
 		{
-			tofree = entry;
-			entry = entry->next;
 			*list = sctk_endpoint_list_pop(*list, tofree);
 		}
 	}

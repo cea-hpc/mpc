@@ -221,7 +221,6 @@ void sctk_network_init_tcp ( sctk_rail_info_t *rail )
 		rail->network_name = "TCP_O_IB";
 	}
 
-	rail->network_type = SCTK_NET_TCP;
 	rail->driver_finalize = sctk_network_finalize_tcp;
 
 	/* Actually initialize the network (note TCP kind specific functions) */

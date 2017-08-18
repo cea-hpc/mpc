@@ -827,6 +827,9 @@ void sctk_network_finalize_mpi_ib( sctk_rail_info_t *rail)
 	/* - Free the protected domain (sctk_ib_pd_init)              */
 	sctk_ib_pd_free(device);
 
+	/* - Free MMU */
+	sctk_ib_mmu_release();
+
 	/* - unload IB device (sctk_ib_device_open)                   */
 	/* - close IB device struct (sctk_ib_device_init)             */
 	sctk_ib_device_close(&rail->network.ib);
@@ -946,7 +949,6 @@ void sctk_network_init_mpi_ib ( sctk_rail_info_t *rail )
 	rail->rdma_cas = sctk_ib_rdma_cas;
 	
 	rail->network_name = network_name;
-	rail->network_type = SCTK_NET_INFINIBAND;
 
 	rail->send_message_from_network = sctk_send_message_from_network_mpi_ib;
 

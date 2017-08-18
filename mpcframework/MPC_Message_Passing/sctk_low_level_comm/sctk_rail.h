@@ -107,17 +107,6 @@ typedef struct
 	int size;
 }sctk_rail_pin_ctx_t;
 
-
-typedef enum
-{
-	SCTK_NET_INFINIBAND,
-	SCTK_NET_SHM,
-	SCTK_NET_TCP,
-	SCTK_NET_PORTALS,
-        SCTK_NET_TOPOLOGICAL,
-	SCTK_NET_COUNT
-} sctk_net_type_t;
-
 typedef enum
 {
 	SCTK_RAIL_ST_INIT = 0,
@@ -132,7 +121,7 @@ void sctk_rail_pin_ctx_release( sctk_rail_pin_ctx_t * ctx );
 /************************************************************************/
 /* Rail                                                                 */
 /************************************************************************/
-
+#define SCTK_RAIL_TYPE(r) (r->runtime_config_driver_config->driver.type) 
 /** This structure gathers all informations linked to a network rail
  *
  *  All rails informations are stored in the sctk_route file
@@ -145,7 +134,6 @@ struct sctk_rail_info_s
 	int subrail_id; /**< ID of this rail if it is a subrail (-1 otherwise) */
 	int priority; /** Priority of this rail */
 	char *network_name; /**< Name of this rail */
-	sctk_net_type_t network_type; /**< network identfier */
 	sctk_device_t * rail_device; /**< Device associated with the rail */
 	sctk_rail_state_t state; /**< is this rail usable ? */
 
@@ -283,9 +271,6 @@ void sctk_rail_init_route ( sctk_rail_info_t *rail, char *topology, void (*on_de
 void sctk_rail_enable(sctk_rail_info_t *rail);
 void sctk_rail_disable(sctk_rail_info_t *rail);
 void sctk_rail_dump_routes();
-
-static inline sctk_net_type_t sctk_rail_get_type(sctk_rail_info_t* rail) { return rail->network_type;}
-static inline sctk_net_type_t sctk_rail_get_nb_types() {return SCTK_NET_COUNT;}
 
 /** Retrieve the HWLOC device associated with a rail */
 static inline hwloc_obj_t sctk_rail_get_device_hwloc_obj( sctk_rail_info_t *rail )

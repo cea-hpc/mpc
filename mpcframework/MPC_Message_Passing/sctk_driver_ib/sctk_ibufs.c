@@ -139,12 +139,21 @@ void sctk_ibuf_init_numa_node ( struct sctk_ib_rail_info_s *rail_ib,
 void sctk_ibuf_free_numa_node(sctk_ib_rail_info_t *rail, struct sctk_ibuf_numa_s *node)
 {
 	struct sctk_ibuf_region_s *region, *tmp;
+	sctk_ibuf_t *buf, *tmp2;
+
+	DL_FOREACH_SAFE(node->free_entry, buf, tmp2)
+	{
+		DL_DELETE(node->free_entry, buf);
+	}
+	OPA_store_int(&node->free_nb, 0);
+	node->nb = 0;
 
 	DL_FOREACH_SAFE(node->regions, region, tmp)
 	{
 		sctk_free(region->mmu_entry->addr); /* MMU entry */
 		sctk_free(region->list);
-		sctk_free(region->mmu_entry);
+		sctk_ib_mmu_entry_release(region->mmu_entry);
+		region->mmu_entry = NULL;
 		DL_DELETE(node->regions, region);
 		sctk_free(region);
 	}

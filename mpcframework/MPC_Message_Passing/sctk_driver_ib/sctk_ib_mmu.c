@@ -511,9 +511,9 @@ void sctk_ib_mmu_init()
 
 void sctk_ib_mmu_release()
 {
-	_sctk_ib_mmu_release( &__main_ib_mmu );	
+	_sctk_ib_mmu_release( &__main_ib_mmu );
+	__main_ib_mmu_init_done = 0;
 }
-
 
 sctk_ib_mmu_entry_t * sctk_ib_mmu_pin( sctk_ib_rail_info_t *rail_ib, void * addr, size_t size)
 {
