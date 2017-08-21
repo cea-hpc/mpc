@@ -2895,7 +2895,8 @@ int PMPC_Checkpoint(MPC_Checkpoint_state* state) {
 		if(sctk_atomics_fetch_and_incr_int(&gen_acquire) == local_nbtasks -1)
 		{
 
-                        /* From here: One task per process will do the work */
+			sctk_ft_checkpoint_init();
+			/* From here: One task per process will do the work */
 			/* synchronize all processes */
 			if(total_nbprocs > 1)
 			{
@@ -2906,8 +2907,6 @@ int PMPC_Checkpoint(MPC_Checkpoint_state* state) {
 			}
 			else
 				pmi_rank = 0;
-
-			sctk_ft_checkpoint_init();
 
 			/* Only one process triggers the checkpoint (=notify the coordinator) */
 			if(pmi_rank == 0)
