@@ -207,7 +207,7 @@ void *async_thread ( void *arg )
 /********************************************************************/
 /* Async thread Init                                                */
 /********************************************************************/
-
+static sctk_thread_t async_pidt;
 void sctk_ib_async_init ( sctk_rail_info_t *rail )
 {
 	sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
@@ -217,13 +217,25 @@ void sctk_ib_async_init ( sctk_rail_info_t *rail )
 	if ( config->async_thread )
 	{
 		sctk_thread_attr_t attr;
-		sctk_thread_t pidt;
 
 		sctk_thread_attr_init ( &attr );
 		/* The thread *MUST* be in a system scope (calls a blocking call) */
 		sctk_thread_attr_setscope ( &attr, SCTK_THREAD_SCOPE_SYSTEM );
-		sctk_user_thread_create ( &pidt, &attr, async_thread, rail );
+		sctk_user_thread_create ( &async_pidt, &attr, async_thread, rail );
 	}
+}
+
+void sctk_ib_async_finalize( sctk_rail_info_t *rail)
+{
+	sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
+	LOAD_CONFIG ( rail_ib );
+
+	if(config->async_thread)
+	{
+		sctk_thread_kill(&async_pidt, 15);
+	}
+
+	async_pidt = NULL;
 }
 
 #endif

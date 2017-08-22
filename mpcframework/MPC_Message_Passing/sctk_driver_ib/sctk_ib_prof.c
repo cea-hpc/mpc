@@ -47,16 +47,11 @@
 #define SCTK_IB_MODULE_NAME "PROF"
 #include "sctk_ib_toolkit.h"
 
-__thread int vp_number = -1;
-
-/* Variable only modified by th __mem_thread */
-static size_t mem_used = 0;
-
 /* Reference clock */
-__thread volatile double reference_clock = -1;
+static __thread volatile double reference_clock = -1;
 
 #ifdef SCTK_IB_PROF
-OPA_int_t sctk_ib_prof_glob_counters[IB_PROF_GLOB_COUNTERS_MAX];
+static OPA_int_t sctk_ib_prof_glob_counters[IB_PROF_GLOB_COUNTERS_MAX];
 #endif
 
 /*-----------------------------------------------------------

@@ -50,6 +50,7 @@ void sctk_ib_eager_free_msg_no_recopy ( void *arg );
 void sctk_ib_eager_recv_msg_no_recopy ( sctk_message_to_copy_t *tmp );
 void sctk_ib_eager_recv_free ( struct sctk_rail_info_s *rail, sctk_thread_ptp_message_t *msg,  sctk_ibuf_t *ibuf, int recopy );
 void sctk_ib_eager_init ( struct sctk_ib_rail_info_s *rail_ib );
+void sctk_ib_eager_finalize( struct sctk_ib_rail_info_s *rail_ib);
 int sctk_ib_eager_poll_recv ( struct sctk_rail_info_s *rail, sctk_ibuf_t *ibuf );
 
 #endif

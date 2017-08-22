@@ -84,31 +84,23 @@ typedef struct numa_s
 	char pad[128];				/**< Padding avoiding false sharing */
 } numa_t;
 
-/** CDL list of numa nodes */
-static numa_t *numa_list = NULL;
-
 /** Array of numa nodes */
 static sctk_spinlock_t numas_lock = SCTK_SPINLOCK_INITIALIZER;
 static volatile numa_t *volatile *numas = NULL;
-__thread numa_t **numas_copy = NULL;
+static __thread numa_t **numas_copy = NULL;
 
 static int numa_number = -1;
 int numa_registered = 0;
 
 /** Array of vps */
 static vp_t   **vps = NULL;
-__thread vp_t **loc_vps = NULL;
-static int vp_number = -1;
 static sctk_spinlock_t vps_lock = SCTK_SPINLOCK_INITIALIZER;
 
 static sctk_ib_cp_task_t *all_tasks = NULL;
-__thread unsigned int seed;
+static __thread unsigned int seed;
 
 /** NUMA node where the task is located */
-__thread int task_node_number = -1;
-
-/** Pointer to the NUMA node on VP */
-__thread numa_t *numa_on_vp = NULL;
+static __thread int task_node_number = -1;
 
 #define CHECK_AND_QUIT(rail_ib) do {  \
   LOAD_CONFIG(rail_ib);                             \
@@ -165,6 +157,51 @@ void sctk_ib_cp_init ( struct sctk_ib_rail_info_s *rail_ib )
 	OPA_store_int ( &cp_nb_pending_msg, 0 );
 }
 
+void sctk_ib_cp_finalize(struct sctk_ib_rail_info_s *rail_ib)
+{
+	int i;
+
+	/* free vps struct */
+	int nbvps = sctk_get_cpu_number();
+	if(vps)
+	{
+		for (i = 0; i < nbvps; ++i)
+		{
+			if(vps[i])
+			{
+				int node_number = vps[i]->node->number;
+				numas[node_number]->tasks_nb--;
+				CDL_DELETE(numas[node_number]->vps, vps[i]);
+				sctk_free(vps[i]);
+			}
+		}
+		sctk_free(vps);
+		vps = NULL;
+	}
+	
+	/* free numas struct */
+	int max_node = sctk_get_numa_node_number();
+	max_node = (max_node < 1) ? 1 : max_node;
+
+	if(numas)
+	{
+
+		for (i = 0; i < max_node; ++i)
+		{
+			if(numas[i])
+				sctk_free(numas[i]);
+		}
+		sctk_free(numas);
+		sctk_free(numas_copy); /* Issue: This is a __thread var */
+		numas = NULL;
+	}
+	
+	sctk_free(rail_ib->cp);
+	rail_ib->cp = NULL;
+	OPA_store_int(&cp_nb_pending_msg, 0);
+
+}
+
 void sctk_ib_cp_init_task ( int rank, int vp )
 {
 	sctk_ib_cp_task_t *task = NULL;
@@ -215,7 +252,7 @@ void sctk_ib_cp_init_task ( int rank, int vp )
 
           ib_assume(numas);
 
-          vp_number = sctk_get_cpu_number();
+          int vp_number = sctk_get_cpu_number();
           vps = sctk_malloc(sizeof(vp_t *) * vp_number);
           ib_assume(vps);
           memset(vps, 0, sizeof(vp_t *) * vp_number);
@@ -226,7 +263,6 @@ void sctk_ib_cp_init_task ( int rank, int vp )
         if (numas[node] == NULL) {
           numa_t *tmp_numa = sctk_malloc(sizeof(numa_t));
           memset(tmp_numa, 0, sizeof(numa_t));
-          CDL_PREPEND(numa_list, tmp_numa);
           numa_registered += 1;
           tmp_numa->number = node;
           numas[node] = tmp_numa;
@@ -239,7 +275,6 @@ void sctk_ib_cp_init_task ( int rank, int vp )
           vp_t *tmp_vp = sctk_malloc(sizeof(vp_t));
           memset(tmp_vp, 0, sizeof(vp_t));
           tmp_vp->node = numas[node];
-          numa_on_vp = numas[node];
           CDL_PREPEND(numas[node]->vps, tmp_vp);
           tmp_vp->number = vp;
           vps[vp] = tmp_vp;
@@ -262,9 +297,22 @@ void sctk_ib_cp_init_task ( int rank, int vp )
 void sctk_ib_cp_finalize_task ( int rank )
 {
 	sctk_ib_cp_task_t *task = NULL;
+	int vp, node;
 
 	HASH_FIND ( hh_all, all_tasks, &rank, sizeof ( int ), task );
 	ib_assume ( task );
+	task->ready = 0;
+	seed = 0;
+	vp = task->vp;
+	node = sctk_get_node_from_cpu(vp);
+
+	CDL_DELETE(numas[node]->tasks, task);
+	HASH_DELETE(hh_vp, vps[vp]->tasks, task);
+	HASH_DELETE(hh_all, all_tasks, task);
+
+
+	sctk_free(task);
+	
 }
 
 static inline int __cp_poll ( const sctk_rail_info_t const *rail, struct sctk_ib_polling_s *poll, sctk_ibuf_t *volatile *list, sctk_spinlock_t *lock, sctk_ib_cp_task_t *task, char from_global )
@@ -641,6 +689,25 @@ void sctk_network_initialize_task_collaborative_ib ( int rank, int vp )
 
 void sctk_network_finalize_task_collaborative_ib ( int rank )
 {
+	int i;
+	for (i = 0; i < sctk_rail_count(); ++i) {
+		sctk_rail_info_t * rail = sctk_rail_get_by_id ( i );
+		
+		/* It can happen for topological rails */
+		if( ! rail->runtime_config_driver_config )
+			continue;
+		
+		/* Skip topological rails */
+		if( 0 < rail->subrail_count )
+			continue;
+		
+		if( rail->runtime_config_driver_config->driver.type != SCTK_RTCFG_net_driver_infiniband )
+			continue;
+		
+		/* Register task for topology infos */
+		sctk_ib_topology_free_task ( rail );
+	}
+
 	if ( sctk_process_number > 1 && sctk_network_is_ib_used() )
 	{
 		sctk_ib_cp_finalize_task ( rank );

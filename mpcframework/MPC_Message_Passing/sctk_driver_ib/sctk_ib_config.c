@@ -39,7 +39,7 @@
 #include "sctk_ib_buffered.h"
 #include "sctk_runtime_config.h"
 
-char *steal_names[2] =
+static const char *steal_names[2] =
 {
 	"Normal mode",
 	"Collaborative-polling mode"

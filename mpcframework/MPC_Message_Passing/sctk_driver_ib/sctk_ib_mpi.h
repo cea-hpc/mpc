@@ -43,6 +43,7 @@ struct sctk_ibuf_s;
 struct sctk_ib_polling_s;
 
 void sctk_network_init_mpi_ib ( sctk_rail_info_t *rail );
+void sctk_network_finalize_mpi_ib(sctk_rail_info_t *rail);
 
 void sctk_network_memory_free_hook_ib ( void * ptr, size_t size );
 

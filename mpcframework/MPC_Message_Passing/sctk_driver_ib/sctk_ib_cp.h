@@ -33,8 +33,6 @@
 #include <sctk_ibufs.h>
 #include "sctk_ib_polling.h"
 
-extern __thread int task_node_number;
-
 typedef struct sctk_ib_cp_task_s
 {
 	UT_hash_handle hh_vp;
@@ -81,6 +79,8 @@ typedef struct sctk_ib_cp_task_s
 struct sctk_rail_info_s;
 
 void sctk_ib_cp_init ( struct sctk_ib_rail_info_s *rail_ib );
+
+void sctk_ib_cp_finalize( struct sctk_ib_rail_info_s *rail_ib);
 
 void sctk_ib_cp_init_task ( int rank, int vp );
 

@@ -89,6 +89,7 @@ sctk_ib_device_t *sctk_ib_device_open ( struct sctk_ib_rail_info_s *rail_ib, cha
 void sctk_ib_device_close( struct sctk_ib_rail_info_s *);
 
 struct ibv_pd *sctk_ib_pd_init ( sctk_ib_device_t *device );
+void sctk_ib_pd_free(sctk_ib_device_t *device);
 
 struct ibv_comp_channel *sctk_ib_comp_channel_init ( sctk_ib_device_t *device );
 

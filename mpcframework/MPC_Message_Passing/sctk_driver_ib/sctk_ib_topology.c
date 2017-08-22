@@ -47,7 +47,7 @@
 
 /* TLS variable sized according the number of IB rails. Allows a more efficient access to the structure
  * of the closest node */
-__thread struct sctk_ib_topology_numa_node_s **numa_node_task = NULL;
+static __thread struct sctk_ib_topology_numa_node_s **numa_node_task = NULL;
 
 __UNUSED__ static void sctk_ib_topology_check_and_allocate_tls ( sctk_ib_rail_info_t *rail_ib )
 {
@@ -159,16 +159,8 @@ void sctk_ib_topology_init_task ( struct sctk_rail_info_s *rail, int vp )
 
 }
 
-void sctk_ib_topology_free_task(sctk_ib_rail_info_t *rail_ib)
+void sctk_ib_topology_free_task(sctk_rail_info_t *rail_ib)
 {
-	int i = -1;
-	for (i = 0; i < sctk_get_numa_node_number(); ++i)
-	{
-		if(rail_ib->topology->nodes[i])
-			sctk_ibuf_free_numa_node(rail_ib, &rail_ib->topology->nodes[i]->ibufs);
-		sctk_free(rail_ib->topology->nodes[i]);
-	}
-	
 	if(numa_node_task)
 	{
 		sctk_free(numa_node_task); numa_node_task = NULL;
@@ -241,6 +233,14 @@ void sctk_ib_topology_init_rail( struct sctk_ib_rail_info_s *rail_ib )
 void sctk_ib_topology_free(struct sctk_ib_rail_info_s *rail_ib)
 {
 	sctk_ibuf_pool_free(rail_ib);
+	
+	int i = -1;
+	for (i = 0; i < sctk_get_numa_node_number(); ++i)
+	{
+		if(rail_ib->topology->nodes[i])
+			sctk_ibuf_free_numa_node(rail_ib, &rail_ib->topology->nodes[i]->ibufs);
+		sctk_free(rail_ib->topology->nodes[i]);
+	}
 
 	sctk_free(rail_ib->topology->nodes) ;  rail_ib->topology->nodes = NULL;
 	sctk_free(rail_ib->topology->init)  ;  rail_ib->topology->init = NULL;

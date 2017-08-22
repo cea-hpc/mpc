@@ -39,6 +39,7 @@ struct sctk_rail_info_s;
  * is created. It allows the monitoring of card events for rail context.
  */
 void sctk_ib_async_init ( struct sctk_rail_info_s *rail_ib );
+void sctk_ib_async_finalize( struct sctk_rail_info_s * rail_ib);
 
 #endif
 #endif

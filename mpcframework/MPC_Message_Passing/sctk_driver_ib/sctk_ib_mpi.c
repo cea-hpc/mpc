@@ -437,17 +437,14 @@ static int sctk_network_poll_send ( sctk_rail_info_t *rail, struct ibv_wc *wc, s
  * allow recursive calls to the polling function */
 
 
-pthread_mutex_t poll_mutex = PTHREAD_MUTEX_INITIALIZER;
-pthread_cond_t  poll_cond = PTHREAD_COND_INITIALIZER;
-int ib_thread_first_to_poll = 1;
-__thread int ib_thread_has_cq_lock  = 0;
-int retry;
+static pthread_mutex_t poll_mutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_cond_t  poll_cond = PTHREAD_COND_INITIALIZER;
+static int retry;
 
 
 static void __release_cq_broadcast ()
 {
 	pthread_mutex_lock ( &poll_mutex );
-	ib_thread_first_to_poll = 1;
 	pthread_cond_broadcast ( &poll_cond );
 	pthread_mutex_unlock ( &poll_mutex );
 }
@@ -455,7 +452,6 @@ static void __release_cq_broadcast ()
 static void __release_cq_signal ()
 {
 	pthread_mutex_lock ( &poll_mutex );
-	ib_thread_first_to_poll = 1;
 	pthread_cond_signal ( &poll_cond );
 	pthread_mutex_unlock ( &poll_mutex );
 }
@@ -517,7 +513,6 @@ void sctk_network_poll_all_cq ( sctk_rail_info_t *rail, sctk_ib_polling_t *poll,
 		}
 		while ( retry == 1 );
 
-		ib_thread_has_cq_lock --;
 	}
 	else
 		if ( blocking == 0 )
@@ -544,7 +539,6 @@ void sctk_network_poll_all_cq ( sctk_rail_info_t *rail, sctk_ib_polling_t *poll,
 		while ( 0 )
 			;
 
-		ib_thread_has_cq_lock --;
 		__release_cq_broadcast();
 	}
 	else
@@ -803,11 +797,18 @@ void sctk_network_finalize_mpi_ib( sctk_rail_info_t *rail)
 	sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
 	LOAD_CONFIG (rail_ib);
 	LOAD_DEVICE(rail_ib);
+
 	/*TODO: for proper closing or IB Rail:                        */
 	/* - Close all routes: Done by rail-generic closing procedure */
 	/* - Check connect_ring does not leave incoherent data        */
 	/* - MMU not required (just a lock)                           */
 	/* - Destroy task init (sctk_ib_topology_init_task) (!!!)     */
+	/* - Destroy leader task init                                 */
+	sctk_ib_async_finalize(rail);
+
+	/* collaborative polling shutdown (from leader_initialize)    */
+	sctk_ib_cp_finalize(rail_ib);
+
 	/* - Free NUMA buffers                                        */
 	sctk_ib_topology_free_task(rail_ib);
 

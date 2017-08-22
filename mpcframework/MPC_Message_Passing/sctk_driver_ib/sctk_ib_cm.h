@@ -133,6 +133,7 @@ int sctk_ib_cm_on_demand_recv_check ( sctk_thread_ptp_message_body_t *msg );
 void sctk_ib_cm_control_message_handler( struct sctk_rail_info_s * rail, int process_src, int source_rank, char subtype,  char param, void * payload, size_t size );
 
 sctk_endpoint_t *sctk_ib_cm_on_demand_request ( int dest, sctk_rail_info_t *rail );
+int sctk_ib_cm_on_demand_closing_request (sctk_endpoint_t *endpoint, sctk_rail_info_t *rail);
 
 void sctk_ib_cm_deco_ack ( sctk_rail_info_t *rail,
                            sctk_endpoint_t *route_table, int ack );
@@ -147,16 +148,16 @@ void sctk_ib_cm_resizing_rdma_ack ( sctk_rail_info_t *rail_targ,  struct sctk_ib
  *  On demand QP deconnexion
  *----------------------------------------------------------*/
 /* Recv */
-void sctk_ib_cm_deco_request_recv ( sctk_rail_info_t *rail, void *payload, int src );
-void sctk_ib_cm_deco_ack_recv ( sctk_rail_info_t *rail, void *ack, int src );
-void sctk_ib_cm_deco_done_ack_recv ( sctk_rail_info_t *rail, void *ack, int src );
-void sctk_ib_cm_deco_done_request_recv ( sctk_rail_info_t *rail, void *ack, int src );
+//void sctk_ib_cm_deco_request_recv ( sctk_rail_info_t *rail, void *payload, int src );
+//void sctk_ib_cm_deco_ack_recv ( sctk_rail_info_t *rail, void *ack, int src );
+//void sctk_ib_cm_deco_done_ack_recv ( sctk_rail_info_t *rail, void *ack, int src );
+//void sctk_ib_cm_deco_done_request_recv ( sctk_rail_info_t *rail, void *ack, int src );
 
 /* Send */
-void sctk_ib_cm_deco_request_send ( sctk_rail_info_t *rail, sctk_endpoint_t *route_table );
-void sctk_ib_cm_deco_done_request_send ( sctk_rail_info_t *rail, sctk_endpoint_t *route_table );
-void sctk_ib_cm_deco_ack_send ( sctk_rail_info_t *rail, sctk_endpoint_t *route_table, int ack );
-void sctk_ib_cm_deco_done_ack_send ( sctk_rail_info_t *rail, sctk_endpoint_t *route_table, int ack );
+//void sctk_ib_cm_deco_request_send ( sctk_rail_info_t *rail, sctk_endpoint_t *route_table );
+//void sctk_ib_cm_deco_done_request_send ( sctk_rail_info_t *rail, sctk_endpoint_t *route_table );
+//void sctk_ib_cm_deco_ack_send ( sctk_rail_info_t *rail, sctk_endpoint_t *route_table, int ack );
+//void sctk_ib_cm_deco_done_ack_send ( sctk_rail_info_t *rail, sctk_endpoint_t *route_table, int ack );
 
 int sctk_ib_cm_on_demand_rdma_check_request (
     sctk_rail_info_t *rail_targ, struct sctk_ib_qp_s *remote );

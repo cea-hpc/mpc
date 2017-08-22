@@ -54,9 +54,9 @@
 #define IBUF_GET_RDMA_POINTER(x) ((x)->msg_pointer)
 #define IBUF_SET_RDMA_POINTER(x, __msg_pointer) ((x)->msg_pointer = __msg_pointer)
 
-sctk_ib_header_rdma_t *recv_rdma_headers = NULL;
-sctk_spinlock_t recv_rdma_headers_lock = SCTK_SPINLOCK_INITIALIZER;
-OPA_int_t recv_rdma_headers_nb = OPA_INT_T_INITIALIZER ( 0 );
+static sctk_ib_header_rdma_t *recv_rdma_headers = NULL;
+static sctk_spinlock_t recv_rdma_headers_lock = SCTK_SPINLOCK_INITIALIZER;
+static OPA_int_t recv_rdma_headers_nb = OPA_INT_T_INITIALIZER ( 0 );
 
 static inline void sctk_ib_rdma_align_msg ( void *addr, size_t  size,
                                             void **aligned_addr, size_t *aligned_size )
