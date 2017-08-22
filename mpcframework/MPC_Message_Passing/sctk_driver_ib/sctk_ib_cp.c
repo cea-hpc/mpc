@@ -102,6 +102,9 @@ static __thread unsigned int seed;
 /** NUMA node where the task is located */
 static __thread int task_node_number = -1;
 
+static __thread vp_t *tls_vp = NULL;
+
+
 #define CHECK_AND_QUIT(rail_ib) do {  \
   LOAD_CONFIG(rail_ib);                             \
   int steal = config->steal;                    \
@@ -155,12 +158,17 @@ void sctk_ib_cp_init ( struct sctk_ib_rail_info_s *rail_ib )
 	ib_assume ( cp );
 	rail_ib->cp = cp;
 	OPA_store_int ( &cp_nb_pending_msg, 0 );
+	numa_number = -1;
+	numa_registered = 0;
+	assume(numas == NULL);
+	assume(all_tasks == NULL);
 }
 
 void sctk_ib_cp_finalize(struct sctk_ib_rail_info_s *rail_ib)
 {
 	int i;
 
+	sctk_spinlock_lock(&vps_lock);
 	/* free vps struct */
 	int nbvps = sctk_get_cpu_number();
 	if(vps)
@@ -183,19 +191,29 @@ void sctk_ib_cp_finalize(struct sctk_ib_rail_info_s *rail_ib)
 	int max_node = sctk_get_numa_node_number();
 	max_node = (max_node < 1) ? 1 : max_node;
 
+	sctk_spinlock_lock(&numas_lock);
 	if(numas)
 	{
-
 		for (i = 0; i < max_node; ++i)
 		{
 			if(numas[i])
 				sctk_free(numas[i]);
 		}
 		sctk_free(numas);
-		sctk_free(numas_copy); /* Issue: This is a __thread var */
+		sctk_free(numas_copy);
 		numas = NULL;
 	}
-	
+	sctk_spinlock_unlock(&numas_lock);
+
+	sctk_ib_cp_task_t *tofree = NULL;
+	while(all_tasks)
+	{
+		tofree = all_tasks;
+		HASH_DELETE(hh_all, all_tasks, tofree);
+		sctk_free(tofree);
+	}
+	assume(all_tasks == NULL); /* all elements should be removed */
+	sctk_spinlock_unlock(&vps_lock);
 	sctk_free(rail_ib->cp);
 	rail_ib->cp = NULL;
 	OPA_store_int(&cp_nb_pending_msg, 0);
@@ -237,7 +255,12 @@ void sctk_ib_cp_init_task ( int rank, int vp )
 	/* Initial allocation of structures */
         sctk_spinlock_lock(&numas_lock);
         if (!numas) {
-          numa_number = sctk_get_numa_node_number();
+          if(numas_copy)
+	  {
+		sctk_free(numas_copy);
+		numas_copy = NULL;
+	  }
+	  numa_number = sctk_get_numa_node_number();
 
           if (numa_number == 0)
             numa_number = 1;
@@ -292,6 +315,7 @@ void sctk_ib_cp_init_task ( int rank, int vp )
         seed = getpid() * time(NULL);
 
         task->ready = 1;
+	tls_vp = vps[vp];
 }
 
 void sctk_ib_cp_finalize_task ( int rank )
@@ -299,6 +323,7 @@ void sctk_ib_cp_finalize_task ( int rank )
 	sctk_ib_cp_task_t *task = NULL;
 	int vp, node;
 
+	sctk_spinlock_lock(&vps_lock);
 	HASH_FIND ( hh_all, all_tasks, &rank, sizeof ( int ), task );
 	ib_assume ( task );
 	task->ready = 0;
@@ -310,9 +335,8 @@ void sctk_ib_cp_finalize_task ( int rank )
 	HASH_DELETE(hh_vp, vps[vp]->tasks, task);
 	HASH_DELETE(hh_all, all_tasks, task);
 
-
+	sctk_spinlock_unlock(&vps_lock);
 	sctk_free(task);
-	
 }
 
 static inline int __cp_poll ( const sctk_rail_info_t const *rail, struct sctk_ib_polling_s *poll, sctk_ibuf_t *volatile *list, sctk_spinlock_t *lock, sctk_ib_cp_task_t *task, char from_global )
@@ -392,8 +416,6 @@ int sctk_ib_cp_poll_global_list ( const struct sctk_rail_info_s const *rail, str
 
 	return __cp_poll ( rail, poll, task->global_ibufs_list, task->global_ibufs_list_lock, task, 1 );
 }
-
-__thread vp_t *tls_vp = NULL;
 
 int sctk_ib_cp_poll ( struct sctk_rail_info_s *rail, struct sctk_ib_polling_s *poll, int task_id )
 {
@@ -666,11 +688,11 @@ void sctk_network_initialize_task_collaborative_ib (sctk_rail_info_t *rail, int 
 
 	/* It can happen for topological rails */
 	if( ! rail->runtime_config_driver_config )
-		continue;
+		return;
 		
 	/* Skip topological rails */
 	if( 0 < rail->subrail_count )
-		continue;
+		return;
 		
 	/* Register task for topology infos */
 	sctk_ib_topology_init_task ( rail, vp );
@@ -681,17 +703,17 @@ void sctk_network_finalize_task_collaborative_ib (sctk_rail_info_t *rail, int ta
 {
 	/* It can happen for topological rails */
 	if( ! rail->runtime_config_driver_config )
-		continue;
+		return;
 
 	/* Skip topological rails */
 	if( 0 < rail->subrail_count )
-		continue;
+		return;
 	/* Register task for topology infos */
 	sctk_ib_topology_free_task ( rail );
 
 	if ( sctk_process_number > 1 && sctk_network_is_ib_used() )
 	{
-		sctk_ib_cp_finalize_task ( rank );
+		sctk_ib_cp_finalize_task ( taskid );
 	}
 }
 

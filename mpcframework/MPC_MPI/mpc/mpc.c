@@ -2934,6 +2934,11 @@ int PMPC_Checkpoint(MPC_Checkpoint_state* state) {
 		/* update the state for all tasks of this process */
 		*state = global_state;
 
+		/* re-init the network at task level if necessary */
+		int task_rank = sctk_get_task_rank();
+		sctk_net_init_task_level(task_rank, sctk_get_cpu());
+		sctk_terminaison_barrier(task_rank);
+
 		/* If I'm the last task to reach here, increment the global generation counter */ 
 		if(sctk_atomics_fetch_and_incr_int(&gen_release) == local_nbtasks -1)
 		{

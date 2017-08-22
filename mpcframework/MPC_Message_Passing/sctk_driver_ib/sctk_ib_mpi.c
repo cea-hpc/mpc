@@ -759,6 +759,7 @@ void sctk_network_initialize_task_mpi_ib ( sctk_rail_info_t *rail, int taskid, i
 void sctk_network_finalize_task_mpi_ib ( sctk_rail_info_t *rail, int taskid, int vp )
 {
 	sctk_ib_prof_finalize ( &rail->network.ib );
+	sctk_ib_topology_free_task(&rail->network.ib);
 	sctk_network_finalize_task_collaborative_ib(rail, taskid, vp);
 }
 
@@ -795,6 +796,7 @@ void sctk_ib_unpin_region( struct sctk_rail_info_s * rail, struct sctk_rail_pin_
 
 void sctk_network_finalize_mpi_ib( sctk_rail_info_t *rail)
 {
+	sctk_network_set_ib_unused();
 	sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
 	LOAD_CONFIG (rail_ib);
 	LOAD_DEVICE(rail_ib);
@@ -809,9 +811,6 @@ void sctk_network_finalize_mpi_ib( sctk_rail_info_t *rail)
 
 	/* collaborative polling shutdown (from leader_initialize)    */
 	sctk_ib_cp_finalize(rail_ib);
-
-	/* - Free NUMA buffers                                        */
-	sctk_ib_topology_free_task(rail_ib);
 
 	/* - Free IB topology                                         */
 	sctk_ib_topology_free(rail_ib);
