@@ -35,7 +35,7 @@ if test -z \${MPC_RPREFIX}; then
 	echo "################################################################" 1>&2
 	#attempt to guess MPC prefix = current script looks like PREFIX/host/target/bin/manager
 	MPC_prefix=\`dirname \$0\`/../
-	MPC_RPREFIX="\$MPC_prefix/../../"
+	MPC_RPREFIX="\`readlink -e \$MPC_prefix/../../\`"
 else
 	MPC_prefix=\$MPC_RPREFIX/\$MPC_SUBPREFIX/
 fi
@@ -352,8 +352,6 @@ print_first_compilers()
 	done
 }
 
-COMPILER_FILEPATH=\${MPC_RPREFIX}
-
 if test -n "\$MANAGER_COLOR"; then
 RED="\`printf "\033[1;31m"\`"
 GRE="\`printf "\033[1;32m"\`"
@@ -361,9 +359,30 @@ BLU="\`printf "\033[1;36m"\`"
 DEF="\`printf "\033[0;0m"\`"
 fi
 
-user_prefix=\$HOME/.mpcompil/\`echo \$MPC_RPREFIX | sed -e "s#//*#/#g" | hash_content \`
-if test -f \$user_prefix/mpc_install_path -a -w \$user_prefix
+install_hash=\`echo \$MPC_RPREFIX | sed -e "s#//*#/#g" | hash_content \`
+user_prefix=\$HOME/.mpcompil/\$install_hash
+
+if test -w \$MPC_RPREFIX -a ! -e \$user_prefix
 then
+	#case when MPC is compiling: store in base installation by default
+	COMPILER_FILEPATH="\$MPC_RPREFIX"
+else
+# in any other case, everything should be stored in the HOME
+# 1. When the user does not have write permission in the base installation
+# 2. When the home diretory for this installation already exist (later manager usage)
+	#if the HOME installation does not exist, create it
+	if test ! -e \$user_prefix;
+	then
+		mkdir -p \$user_prefix
+		echo "\$MPC_RPREFIX" | sed -e "s#//*#/#g" > \$user_prefix/mpc_install_path
+		cp \${MPC_RPREFIX}/.*_compilers.cfg \$user_prefix/
+		cp -r \${MPC_RPREFIX}/fortran_gen \$user_prefix/
+		for lang in \$list_languages
+		do
+			chash=\`lookup_compiler \$lang 1 | cut -f4 -d":"\`
+			test -n \$chash -a -d \$MPC_RPREFIX/\$chash/ && cp -r \${MPC_RPREFIX}/\$chash  \$user_prefix/
+		done
+	fi
 	COMPILER_FILEPATH=\$user_prefix
 fi
 
