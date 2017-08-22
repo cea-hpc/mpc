@@ -433,9 +433,7 @@ static void sctk_perform_initialisation (void)
 #endif
 
 #ifdef SCTK_LIB_MODE
-	#ifdef MPC_USE_INFINIBAND
-		sctk_network_initialize_task_collaborative_ib (my_rank, 0);
-	#endif
+	sctk_net_init_task_level (my_rank, 0);
 #endif
 
 	sctk_atomics_cpu_freq_init();

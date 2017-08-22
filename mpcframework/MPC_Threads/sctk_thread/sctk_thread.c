@@ -636,9 +636,7 @@ sctk_thread_create_tmp_start_routine (sctk_thread_data_t * __arg)
   if (tmp.task_id >= 0)
     {
       sctk_ptp_per_task_init (tmp.task_id);
-#ifdef MPC_USE_INFINIBAND
-      sctk_network_initialize_task_collaborative_ib (tmp.task_id, tmp.virtual_processor);
-#endif
+      sctk_net_init_task_level(tmp.task_id, tmp.virtual_processor);
 
 #if defined(MPC_USE_EXTLS)
       /* TLS INTIALIZATION */
@@ -734,9 +732,7 @@ sctk_thread_create_tmp_start_routine (sctk_thread_data_t * __arg)
       sctk_online_program = 0;
       sctk_terminaison_barrier (tmp.task_id);
       sctk_nodebug ("sctk_terminaison_barrier done");
-#ifdef MPC_USE_INFINIBAND
-      sctk_network_finalize_task_collaborative_ib(tmp.task_id);
-#endif
+      sctk_net_finalize_task_level(tmp.task_id, tmp.virtual_processor);
       sctk_unregister_task (tmp.task_id);
       sctk_net_send_task_end (tmp.task_id, sctk_process_rank);
     }

@@ -656,7 +656,7 @@ void sctk_network_notify_idle_message_multirail_ib_wait_send ()
 
 
 
-void sctk_network_initialize_task_collaborative_ib ( int rank, int vp )
+void sctk_network_initialize_task_collaborative_ib (sctk_rail_info_t *rail, int rank, int vp )
 {
 	if ( sctk_process_number > 1 && sctk_network_is_ib_used() )
 	{
@@ -664,49 +664,30 @@ void sctk_network_initialize_task_collaborative_ib ( int rank, int vp )
 		sctk_ib_cp_init_task ( rank, vp );
 	}
 
-	int i;
-
-	for ( i = 0; i < sctk_rail_count(); i++ )
-	{
-		sctk_rail_info_t * rail = sctk_rail_get_by_id ( i );
+	/* It can happen for topological rails */
+	if( ! rail->runtime_config_driver_config )
+		continue;
 		
-		/* It can happen for topological rails */
-		if( ! rail->runtime_config_driver_config )
-			continue;
+	/* Skip topological rails */
+	if( 0 < rail->subrail_count )
+		continue;
 		
-		/* Skip topological rails */
-		if( 0 < rail->subrail_count )
-			continue;
-		
-		if( rail->runtime_config_driver_config->driver.type != SCTK_RTCFG_net_driver_infiniband )
-			continue;
-		
-		/* Register task for topology infos */
-		sctk_ib_topology_init_task ( rail, vp );
-	}
+	/* Register task for topology infos */
+	sctk_ib_topology_init_task ( rail, vp );
 }
 
 
-void sctk_network_finalize_task_collaborative_ib ( int rank )
+void sctk_network_finalize_task_collaborative_ib (sctk_rail_info_t *rail, int taskid, int vp )
 {
-	int i;
-	for (i = 0; i < sctk_rail_count(); ++i) {
-		sctk_rail_info_t * rail = sctk_rail_get_by_id ( i );
-		
-		/* It can happen for topological rails */
-		if( ! rail->runtime_config_driver_config )
-			continue;
-		
-		/* Skip topological rails */
-		if( 0 < rail->subrail_count )
-			continue;
-		
-		if( rail->runtime_config_driver_config->driver.type != SCTK_RTCFG_net_driver_infiniband )
-			continue;
-		
-		/* Register task for topology infos */
-		sctk_ib_topology_free_task ( rail );
-	}
+	/* It can happen for topological rails */
+	if( ! rail->runtime_config_driver_config )
+		continue;
+
+	/* Skip topological rails */
+	if( 0 < rail->subrail_count )
+		continue;
+	/* Register task for topology infos */
+	sctk_ib_topology_free_task ( rail );
 
 	if ( sctk_process_number > 1 && sctk_network_is_ib_used() )
 	{

@@ -164,9 +164,8 @@ struct sctk_rail_info_s
 	/* HOOKS */
 
 	/* Task Init and release */
-	void ( *finalize_task ) ( struct sctk_rail_info_s * );
-	void ( *initialize_task ) ( struct sctk_rail_info_s * );
-	void ( *initialize_leader_task ) ( struct sctk_rail_info_s * );
+	void ( *finalize_task ) ( struct sctk_rail_info_s *, int taskid, int rank);
+	void ( *initialize_task ) ( struct sctk_rail_info_s * , int taskid, int rank);
 
 	/* Network interactions */
 	void ( *send_message_endpoint ) ( sctk_thread_ptp_message_t *, sctk_endpoint_t * );

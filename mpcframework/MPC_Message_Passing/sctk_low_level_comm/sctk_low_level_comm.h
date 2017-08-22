@@ -48,7 +48,7 @@ void sctk_rail_init_driver( struct sctk_rail_info_s * rail, int driver_type );
  *  \param name Name of the configuration from the command line (can be NULL)
  */
 void sctk_net_init_driver ( char *name );
-
+void sctk_net_init_task_level(int taskid, int vp);
 /** \brief Get a pointer to a given rail
 *   \param name Name of the requested rail
 *   \return The rail or NULL

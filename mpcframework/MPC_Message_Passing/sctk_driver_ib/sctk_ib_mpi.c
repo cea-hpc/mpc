@@ -751,14 +751,15 @@ void sctk_network_initialize_leader_task_mpi_ib ( sctk_rail_info_t *rail )
 	ib_assume ( rc == 0 );
 }
 
-void sctk_network_initialize_task_mpi_ib ( sctk_rail_info_t *rail )
+void sctk_network_initialize_task_mpi_ib ( sctk_rail_info_t *rail, int taskid, int vp )
 {
-
+	sctk_network_initialize_task_collaborative_ib(rail, taskid, vp);
 }
 
-void sctk_network_finalize_task_mpi_ib ( sctk_rail_info_t *rail )
+void sctk_network_finalize_task_mpi_ib ( sctk_rail_info_t *rail, int taskid, int vp )
 {
 	sctk_ib_prof_finalize ( &rail->network.ib );
+	sctk_network_finalize_task_collaborative_ib(rail, taskid, vp);
 }
 
 
@@ -914,11 +915,10 @@ void sctk_network_init_mpi_ib ( sctk_rail_info_t *rail )
 #endif
 
 	rail->initialize_task = sctk_network_initialize_task_mpi_ib;
-
-	rail->initialize_leader_task = sctk_network_initialize_leader_task_mpi_ib;
-	rail->initialize_leader_task ( rail );
-
 	rail->finalize_task = sctk_network_finalize_task_mpi_ib;
+
+	sctk_network_initialize_leader_task_mpi_ib ( rail );
+
 	
 	rail->control_message_handler = sctk_ib_cm_control_message_handler;
 
