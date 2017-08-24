@@ -21,6 +21,7 @@
 /* #                                                                      # */
 /* ######################################################################## */
 #include <math.h>
+#include <string.h>
 #include <mpc_mpi_internal.h>
 
 #include "sctk_ht.h"
@@ -20084,8 +20085,16 @@ int PMPI_Comm_get_info(MPI_Comm comm, MPI_Info * info_used){not_implemented();re
 
 int PMPI_Comm_create_group(MPI_Comm comm, MPI_Group group, int tag, MPI_Comm * newcomm){not_implemented();return MPI_ERR_INTERN;}
 
-
-int PMPI_Get_library_version(char *version, int *resultlen){not_implemented();return MPI_ERR_INTERN;}
+int PMPI_Get_library_version( char *version, int *resultlen )
+{
+	snprintf( version, MPI_MAX_LIBRARY_VERSION_STRING - 1,
+			  "MPC version %d.%d.%d%s %s %s",
+			  SCTK_VERSION_MAJOR, SCTK_VERSION_MINOR, SCTK_VERSION_REVISION,
+			  SCTK_VERSION_PRE,
+			  sctk_alloc_mode(), get_debug_mode() );
+	*resultlen = strlen( version );
+	return MPI_SUCCESS;
+}
 
 /* Process Creation and Management */
 int PMPI_Close_port(const char *port_name){not_implemented();return MPI_ERR_INTERN;}

@@ -48,6 +48,7 @@ extern "C"
   int sctk_get_process_nb (void);
   int sctk_get_processor_nb (void);
   char* sctk_get_launcher_mode(void);
+  char *get_debug_mode();
   int sctk_get_node_nb();
   int sctk_get_verbosity();
   void (*sctk_get_thread_val(void)) ();

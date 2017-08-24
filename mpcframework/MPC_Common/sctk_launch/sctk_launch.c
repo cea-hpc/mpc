@@ -107,9 +107,11 @@ double __sctk_profiling__start__sctk_init_MPC;
 double __sctk_profiling__end__sctk_init_MPC;
 char * sctk_profiling_outputs;
 
-
-	void
-format_output (char *name, char *def)
+char *get_debug_mode()
+{
+	return SCTK_DEBUG_MODE;
+}
+void format_output( char *name, char *def )
 {
 	char n[MAX_NAME_FORMAT];
 	char *tmp;
