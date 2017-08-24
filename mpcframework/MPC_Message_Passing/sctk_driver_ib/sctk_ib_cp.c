@@ -51,6 +51,8 @@
 #define SCTK_IB_PROFILER
 
 extern sctk_request_t *blocked_request;
+/* used to remember __thread var init for IB re-enabling */
+extern volatile char* vps_reset;
 
 typedef struct sctk_ib_cp_s
 {
@@ -87,7 +89,6 @@ typedef struct numa_s
 /** Array of numa nodes */
 static sctk_spinlock_t numas_lock = SCTK_SPINLOCK_INITIALIZER;
 static volatile numa_t *volatile *numas = NULL;
-static __thread numa_t **numas_copy = NULL;
 
 static int numa_number = -1;
 int numa_registered = 0;
@@ -97,13 +98,13 @@ static vp_t   **vps = NULL;
 static sctk_spinlock_t vps_lock = SCTK_SPINLOCK_INITIALIZER;
 
 static sctk_ib_cp_task_t *all_tasks = NULL;
-static __thread unsigned int seed;
 
 /** NUMA node where the task is located */
+/** vars used to reducde latency access */
 static __thread int task_node_number = -1;
-
 static __thread vp_t *tls_vp = NULL;
-
+static __thread unsigned int seed;
+static __thread numa_t **numas_copy = NULL;
 
 #define CHECK_AND_QUIT(rail_ib) do {  \
   LOAD_CONFIG(rail_ib);                             \
@@ -200,7 +201,6 @@ void sctk_ib_cp_finalize(struct sctk_ib_rail_info_s *rail_ib)
 				sctk_free(numas[i]);
 		}
 		sctk_free(numas);
-		sctk_free(numas_copy);
 		numas = NULL;
 	}
 	sctk_spinlock_unlock(&numas_lock);
@@ -224,7 +224,6 @@ void sctk_ib_cp_init_task ( int rank, int vp )
 {
 	sctk_ib_cp_task_t *task = NULL;
 	int node =  sctk_get_node_from_cpu( vp );
-	task_node_number = node;
 	/* Process specific list of messages */
 	static sctk_ibuf_t *volatile __global_ibufs_list = NULL;
 	static sctk_spinlock_t __global_ibufs_list_lock = SCTK_SPINLOCK_INITIALIZER;
@@ -239,7 +238,20 @@ void sctk_ib_cp_init_task ( int rank, int vp )
 		return;
 	}
 
+	/* check if the current __thread vars need to be reset (once per VP)
+	 * This is ok without locks, because MPC do not preempt user-level threads on top of VP
+	 * */
+	if(vps_reset[vp] == 0)
+	{
+		/* re-init all __thread vars (globals are reset at finalize() time) */
+		vps_reset[vp] = 1;
+		if(numas_copy) {sctk_free(numas_copy); numas_copy = NULL; }
+		seed = 0;
+		task_node_number = -1;
 
+	}
+
+	task_node_number = node;
 	task = sctk_malloc ( sizeof ( sctk_ib_cp_task_t ) );
 	memset ( task, 0, sizeof ( sctk_ib_cp_task_t ) );
 	ib_assume ( task );
@@ -255,11 +267,6 @@ void sctk_ib_cp_init_task ( int rank, int vp )
 	/* Initial allocation of structures */
         sctk_spinlock_lock(&numas_lock);
         if (!numas) {
-          if(numas_copy)
-	  {
-		sctk_free(numas_copy);
-		numas_copy = NULL;
-	  }
 	  numa_number = sctk_get_numa_node_number();
 
           if (numa_number == 0)
@@ -325,18 +332,23 @@ void sctk_ib_cp_finalize_task ( int rank )
 
 	sctk_spinlock_lock(&vps_lock);
 	HASH_FIND ( hh_all, all_tasks, &rank, sizeof ( int ), task );
-	ib_assume ( task );
-	task->ready = 0;
-	seed = 0;
-	vp = task->vp;
-	node = sctk_get_node_from_cpu(vp);
+	if ( task )
+	{
+		vp = task->vp;
+		node = sctk_get_node_from_cpu(vp);
 
-	CDL_DELETE(numas[node]->tasks, task);
-	HASH_DELETE(hh_vp, vps[vp]->tasks, task);
-	HASH_DELETE(hh_all, all_tasks, task);
-
+		CDL_DELETE(numas[node]->tasks, task);
+		HASH_DELETE(hh_vp, vps[vp]->tasks, task);
+		HASH_DELETE(hh_all, all_tasks, task);
+		task->ready = 0;
+		sctk_free(task);
+	}
 	sctk_spinlock_unlock(&vps_lock);
-	sctk_free(task);
+	
+	seed = 0;
+	if(numas_copy){ sctk_free(numas_copy); numas_copy = NULL; }
+	task_node_number = -1;
+
 }
 
 static inline int __cp_poll ( const sctk_rail_info_t const *rail, struct sctk_ib_polling_s *poll, sctk_ibuf_t *volatile *list, sctk_spinlock_t *lock, sctk_ib_cp_task_t *task, char from_global )
@@ -403,9 +415,11 @@ int sctk_ib_cp_poll_global_list ( const struct sctk_rail_info_s const *rail, str
 		return 0;
 
 	CHECK_ONLINE_PROGRAM;
-
-	if ( vps[vp] == NULL )
+        
+	if ( vps == NULL || vps[vp] == NULL )
+	{
 		return 0;
+	}
 
 	task = vps[vp]->tasks;
 
@@ -440,7 +454,7 @@ int sctk_ib_cp_poll ( struct sctk_rail_info_s *rail, struct sctk_ib_polling_s *p
 
           CHECK_ONLINE_PROGRAM;
 
-          if (vps[vp] == NULL) {
+          if (vps == NULL || vps[vp] == NULL) {
             return 0;
           }
 
@@ -531,7 +545,7 @@ int sctk_ib_cp_steal ( const sctk_rail_info_t const *rail, struct sctk_ib_pollin
 	vp_t *tmp_vp;
 	numa_t *numa;
 
-	if ( vp < 0 )
+	if ( vp < 0 || !vps)
 		return 0;
 
 	CHECK_ONLINE_PROGRAM;

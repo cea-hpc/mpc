@@ -47,6 +47,10 @@
 #include "sctk_atomics.h"
 #include "sctk_asm.h"
 
+/** array of VPS, for remembering __thread vars to reset when rail is re-enabled */
+volatile char *vps_reset = NULL;
+
+
 static void sctk_network_send_message_ib_endpoint ( sctk_thread_ptp_message_t *msg , sctk_endpoint_t *endpoint )
 {
 	sctk_rail_info_t * rail = endpoint->rail;
@@ -838,6 +842,8 @@ void sctk_network_finalize_mpi_ib( sctk_rail_info_t *rail)
 	/* - Reset ib config struct (sctk_ib_config_init)             */
 	config = NULL;
 
+	memset(vps_reset, 0, sizeof(char) * sctk_get_cpu_number());
+
 }
 
 void sctk_network_init_mpi_ib ( sctk_rail_info_t *rail )
@@ -850,6 +856,16 @@ void sctk_network_init_mpi_ib ( sctk_rail_info_t *rail )
 	/* Retrieve config pointers */
 	struct sctk_runtime_config_struct_net_rail *rail_config = rail->runtime_config_rail;
 	struct sctk_runtime_config_struct_net_driver_config *driver_config = rail->runtime_config_driver_config;
+
+	/* init the first time the rail is enabled */
+	if(!vps_reset)
+	{
+		int nbvps = sctk_get_cpu_number();
+		vps_reset = sctk_malloc(nbvps * sizeof(char));
+		assert(vps_reset);
+		memset(vps_reset, 0, sizeof(char) * nbvps);
+	}
+
 
 	/* Register topology */
 	sctk_rail_init_route ( rail, rail_config->topology, NULL );

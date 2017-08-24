@@ -69,7 +69,6 @@ void sctk_ibuf_init_numa_node ( struct sctk_ib_rail_info_s *rail_ib,
 	/* If this allocation is done during initialization */
 	if ( is_initial_allocation )
 	{
-		sctk_error("Reinit new numa node");
 		if ( pool->default_node == NULL )
 		{
 			pool->default_node = node;

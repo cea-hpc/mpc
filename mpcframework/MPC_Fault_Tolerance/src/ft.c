@@ -44,7 +44,7 @@ static inline void __sctk_ft_set_ckptdir()
 
 	dmtcp_set_global_ckpt_dir(path);
 	dmtcp_set_coord_ckpt_dir(path);
-	sctk_warning("DMTCP commented dmtcp_set_tmpdir() func");
+	sctk_debug("DMTCP commented dmtcp_set_tmpdir() func");
 	//dmtcp_set_tmpdir(dir);
 #endif
 }
@@ -94,7 +94,6 @@ void sctk_ft_checkpoint_init()
 
 #ifdef MPC_USE_DMTCP
 	/* clear multirail table from pending disconnection procedures */
-	sctk_multirail_destination_table_prune();
 	dmtcp_get_local_status(&nb_checkpoints, &nb_restarts);
 #endif
 }

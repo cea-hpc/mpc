@@ -220,12 +220,9 @@ void sctk_rail_disable(sctk_rail_info_t* rail)
 	rail->requires_bootstrap_ring = 0;
 
 	/*TODO: Should check route_table does not have remaining routes */
-	if(!sctk_route_table_empty(rail->route_table))
-	{
-		sctk_error("Cannot shutdown rail '%s' with remaining active routes", rail->network_name);
-	}
 	sctk_route_table_destroy(rail->route_table);
 	rail->route_table = NULL;
+	sctk_multirail_destination_table_prune();
 }
 
 void sctk_rail_enable(sctk_rail_info_t *rail)

@@ -37,6 +37,9 @@
 #include "sctk_ib_topology.h"
 #include "sctk_rail.h"
 
+/* used to remember __thread var init for IB re-enabling */
+extern volatile char* vps_reset;
+
 /* For the moment, the following structures are supported by the TOPOLOGY interface :
  *  - Network buffers
  *  - Pinned cache memory
@@ -51,6 +54,14 @@ static __thread struct sctk_ib_topology_numa_node_s **numa_node_task = NULL;
 
 __UNUSED__ static void sctk_ib_topology_check_and_allocate_tls ( sctk_ib_rail_info_t *rail_ib )
 {
+	int nvp = sctk_get_cpu_number();
+	/* if __thread vars need to be reset when re-enabling the rail */
+	if(vps_reset[nvp] == 0)
+	{
+		vps_reset[nvp] = 1;
+		if(numa_node_task) { sctk_free(numa_node_task); numa_node_task = NULL; }
+	}
+
 	/* Create the TLS variable if not already created */
 	if ( numa_node_task == NULL )
 	{
