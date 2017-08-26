@@ -93,6 +93,7 @@ libsimple.a: safestr2.o simple_pmiutil.o simple_pmi.o
 	
 install:all
 	@mkdir -p ${prefix}/include
+	@mkdir -p ${prefix}/lib
 	@cp ${srcdir}/*.h ${prefix}/include
 	@cp *.h ${prefix}/include
 	@cp *.a ${prefix}/lib
