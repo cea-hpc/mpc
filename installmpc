@@ -67,6 +67,9 @@ setModulesToInternal
 ## Not sure if here is a good place for this:
 TBB_PREFIX='disabled'
 GDB_PREFIX='disabled'
+
+USE_SPACK=0
+SKIP_LIB_CHECK_SPACK=0
 ######################################################
 #Parse options
 for arg in "$@"
@@ -392,11 +395,42 @@ do
 		--version)
 			showVersion
 			;;
+		--spack)
+			USE_SPACK=1
+			SKIP_LIB_CHECK_SPACK=1
+			;;
+		--spack-build)
+			SKIP_LIB_CHECK_SPACK=1
+			;;
 		*)
 			echo "Invalid argument '$arg', please check your command line or get help with --help." 1>&2
 			exit 1
 	esac
 done
+
+check_spack_package(){
+if test "$USE_SPACK" = "1"; then
+	output_var="$1"
+	name="$2"
+	eval "val=\$${output_var}"
+#	echo "SPACK mode for $name $val"
+	if test "$val" = "internal"; then 
+		TMP_PREFIX="`spack location --install-dir $name 2> /dev/null`"
+		if test "$TMP_PREFIX" != "" ; then 
+			eval "${output_var}=\"$TMP_PREFIX\""
+		fi	
+	fi	
+fi
+}
+check_spack_package 'HYDRA_PREFIX' 'hydra'
+check_spack_package 'HWLOC_PREFIX' 'hwloc'
+check_spack_package 'LIBXML2_PREFIX' 'libxml2'
+check_spack_package 'GMP_PREFIX' 'gmp'
+check_spack_package 'MPFR_PREFIX' 'mpfr'
+check_spack_package 'MPC_PREFIX' 'mpc'
+check_spack_package 'GCC_PREFIX' 'mpc-gcc'
+check_spack_package 'GDB_PREFIX' 'mpc-gdb'
+check_spack_package 'BINUTILS_PREFIX' 'mpc-binutils'
 
 #######################################################
 # Check for dependencies
@@ -486,6 +520,7 @@ fillGCCBuildParameters()
 		MPFR_BUILD_PARAMETERS="'--with-gmp=${GMP_PREFIX}' ${MPFR_BUILD_PARAMETERS}"
 		MPC_BUILD_PARAMETERS="'--with-gmp=${GMP_PREFIX}' ${MPC_BUILD_PARAMETERS}"
 		GCC_BUILD_PARAMETERS="'--with-gmp=${GMP_PREFIX}' ${GCC_BUILD_PARAMETERS}"
+		export GMP_PREFIX
 	fi
 	#Verify if users give path for mpfr
 	if test -z "${MPFR_PREFIX}" -o "${MPFR_PREFIX}" = "internal"; then
@@ -505,14 +540,25 @@ fillGCCBuildParameters()
 	version="`cat ${PROJECT_SOURCE_DIR}/config.txt | grep \"gcc\s*;\" | cut -f 2 -d ';' | sed -e 's/\.//g' | xargs echo`"
 	GCC_BUILD_PARAMETERS="--program-prefix=mpc- --program-suffix=_${version} --with-pkgversion=MPC --enable-languages=c,c++,fortran --disable-bootstrap --disable-multilib ${GCC_BUILD_PARAMETERS}"
 
-	MPC_GCC_PRIVATIZED_COMPILER="${PREFIX}/${MPC_HOST}/${MPC_HOST}/bin/mpc-gcc_${version}"
-	export MPC_GCC_PRIVATIZED_COMPILER
+	if test "$GCC_PREFIX" = "internal" ; then 
+		MPC_GCC_PRIVATIZED_COMPILER="${PREFIX}/${MPC_HOST}/${MPC_HOST}/bin/mpc-gcc_${version}"
+		export MPC_GCC_PRIVATIZED_COMPILER
 
-	MPC_GPP_PRIVATIZED_COMPILER="${PREFIX}/${MPC_HOST}/${MPC_HOST}/bin/mpc-g++_${version}"
-	export MPC_GPP_PRIVATIZED_COMPILER
+		MPC_GPP_PRIVATIZED_COMPILER="${PREFIX}/${MPC_HOST}/${MPC_HOST}/bin/mpc-g++_${version}"
+		export MPC_GPP_PRIVATIZED_COMPILER
 	
-	MPC_GFORT_PRIVATIZED_COMPILER="${PREFIX}/${MPC_HOST}/${MPC_HOST}/bin/mpc-gfortran_${version}"
-	export MPC_GFORT_PRIVATIZED_COMPILER
+		MPC_GFORT_PRIVATIZED_COMPILER="${PREFIX}/${MPC_HOST}/${MPC_HOST}/bin/mpc-gfortran_${version}"
+		export MPC_GFORT_PRIVATIZED_COMPILER
+	else
+		MPC_GCC_PRIVATIZED_COMPILER="${GCC_PREFIX}/bin/mpc-gcc_${version}"
+		export MPC_GCC_PRIVATIZED_COMPILER
+
+		MPC_GPP_PRIVATIZED_COMPILER="${GCC_PREFIX}/bin/mpc-g++_${version}"
+		export MPC_GPP_PRIVATIZED_COMPILER
+	
+		MPC_GFORT_PRIVATIZED_COMPILER="${GCC_PREFIX}/bin/mpc-gfortran_${version}"
+		export MPC_GFORT_PRIVATIZED_COMPILER
+	fi
 }
 
 ######################################################

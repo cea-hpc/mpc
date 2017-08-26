@@ -58,6 +58,29 @@ echo "Generate archive..."
 echo "git archive --format=tar --prefix=MPC_${VERSION}/ HEAD | gzip > MPC_${VERSION}.tar.gz"
 git archive --format=tar --prefix=MPC_${VERSION}/ HEAD | gzip > MPC_${VERSION}.tar.gz || exit 1
 
+cp MPC_${VERSION}.tar.gz MPC_light_${VERSION}.tar.gz 
+
+gunzip MPC_light_${VERSION}.tar.gz
+
+REMOVE_LIST=""
+REMOVE_LIST_SIZE=""
+for j in binutils  gcc  gdb  gmp  hwloc  hydra  libxml2  mpc mpfr; do 
+for i in extern-deps/$j/*.tar.*; do 
+	echo "Exclude $i"
+	REMOVE_LIST="$REMOVE_LIST MPC_${VERSION}/$i"
+	REMOVE_LIST_SIZE="$REMOVE_LIST_SIZE $i"
+done
+done
+
+echo "Remove"
+du -csh $REMOVE_LIST_SIZE
+
+tar -vf MPC_light_${VERSION}.tar --delete $REMOVE_LIST
+gzip MPC_light_${VERSION}.tar 
+
+md5sum MPC_${VERSION}.tar.gz MPC_light_${VERSION}.tar.gz 
+
+
 if test "$1" = "--check"; then
 	do_check
 fi

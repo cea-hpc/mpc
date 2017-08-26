@@ -212,10 +212,27 @@ setBuildCompiler()
 				;;
 		esac
 	elif test "$GCC_PREFIX" != "internal" -a "$GCC_PREFIX" != "disabled"; then
-		BUILD_CC=$GCC_PREFIX/bin/gcc
-		BUILD_CXX=$GCC_PREFIX/bin/g++
-		BUILD_FC=$GCC_PREFIX/bin/gfortran
-		BUILD_FAMILY="GNU"
+#		BUILD_CC=$GCC_PREFIX/bin/gcc
+#		BUILD_CXX=$GCC_PREFIX/bin/g++
+#		BUILD_FC=$GCC_PREFIX/bin/gfortran
+#		BUILD_FAMILY="GNU"
+		BUILD_CC=
+		BUILD_CXX=
+		BUILD_FC=
+		BUILD_FAMILY=
+
+		#we create new exported variables, to be handled by MPC configure
+		#by default, BUILD_* is taken if set, otherwise, BUILD_PRIV_* is used to build MPC.
+		BUILD_PRIV_CC=$MPC_GCC_PRIVATIZED_COMPILER
+		BUILD_PRIV_CXX=$MPC_GPP_PRIVATIZED_COMPILER
+		BUILD_PRIV_FC=$MPC_GFORT_PRIVATIZED_COMPILER
+
+		BUILD_PRIV_FAMILY="GNU"
+		export BUILD_PRIV_CC
+		export BUILD_PRIV_CXX
+		export BUILD_PRIV_FC
+		export BUILD_PRIV_FAMILY
+
 
 	#special case: when MPC has to be compiled w/ patched GCC
 	elif test "$GCC_PREFIX" = "internal"; then
@@ -363,8 +380,10 @@ findPackage()
 		    then
 		    	downloadDep ${package} ${packageVersion}
 		    else
-		    	echo "Download disabled. Try to launch the script with --download-missing-deps"
-		    	exit 1
+			if test "$SKIP_LIB_CHECK_SPACK" = "0"; then 
+		    		echo "Download disabled. Try to launch the script with --download-missing-deps"
+		    		exit 1
+			fi	
 		    fi
 		fi
 	fi

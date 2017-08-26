@@ -1,0 +1,8 @@
+#!/bin/sh
+
+cd `dirname $0`
+
+SPACK_DIR=`which spack`
+SPACK_DIR=`dirname $SPACK_DIR`/../
+
+cp -rvL mpc* $SPACK_DIR/var/spack/repos/builtin/packages/

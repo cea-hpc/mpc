@@ -20,7 +20,7 @@
 #   - PERACHE Marc marc.perache@cea.fr                                 # 
 #                                                                      # 
 ######################################################################## 
-SCTK_BIN_DIR_LIST="`echo $PATH | sed s/:/' '/g`"
+SCTK_BIN_DIR_LIST="`echo $PATH | sed s/:/' '/g` /"
 
 sctk_store_in_arg(){
     eval "$1=\"$2\""
