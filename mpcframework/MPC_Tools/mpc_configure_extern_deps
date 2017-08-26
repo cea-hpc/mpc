@@ -188,19 +188,19 @@ sctk_internal_setup_lib_hwloc()
 			SCTK_LDFLAGS="${SCTK_LDFLAGS} -L${HWLOC_PREFIX_BUILD}/src/.libs"
 		elif [ -n "${HWLOC_USER_PREFIX}" ]; then
 			#We are relying on a provided HWLOC
-			if [ -e "${MPC_RPREFIX}/${MPC_SUBPREFIX}/include/hwloc.h" ]; then
-				SCTK_CFLAGS="${SCTK_CFLAGS} -I`echo \"\\${MPC_RPREFIX}\"`/${MPC_SUBPREFIX}/include/"
+			if [ -e "${HWLOC_USER_PREFIX}/include/hwloc.h" ]; then
+				SCTK_CFLAGS="${SCTK_CFLAGS} -I${HWLOC_USER_PREFIX}/include/"
 			else
-				sctk_printf "Could not locate hwloc.h header in directory ${MPC_RPREFIX}/${MPC_SUBPREFIX}/include/"
+				sctk_printf "Could not locate hwloc.h header in directory ${HWLOC_USER_PREFIX}/include/"
 				error "You might build using root configure to build the hwloc library"
 			fi
 
 			#setup rpaths and -L
-			if [ -e "${MPC_RPREFIX}/${MPC_SUBPREFIX}/lib64/libhwloc.so" ]; then
-				SCTK_LDFLAGS="${SCTK_LDFLAGS} -L`echo \"\\${MPC_RPREFIX}\"`/${MPC_SUBPREFIX}/lib64"
+			if [ -e "${HWLOC_USER_PREFIX}/lib64/libhwloc.so" ]; then
+				SCTK_LDFLAGS="${SCTK_LDFLAGS} -L${HWLOC_USER_PREFIX}/lib64"
 				SCTK_ARFLAGS="${SCTK_ARFLAGS} ${HWLOC_USER_PREFIX}/lib64/libhwloc.so"
-			elif [ -e "${MPC_RPREFIX}/${MPC_SUBPREFIX}/lib/libhwloc.so" ]; then
-				SCTK_LDFLAGS="${SCTK_LDFLAGS} -L`echo \"\\${MPC_RPREFIX}\"`/${MPC_SUBPREFIX}/lib"
+			elif [ -e "${HWLOC_USER_PREFIX}/lib/libhwloc.so" ]; then
+				SCTK_LDFLAGS="${SCTK_LDFLAGS} -L${HWLOC_USER_PREFIX}/lib"
 				SCTK_ARFLAGS="${SCTK_ARFLAGS} ${HWLOC_USER_PREFIX}/lib/libhwloc.so"
 			fi
 		fi
@@ -498,18 +498,18 @@ SCTK_CHECK_LIB_PORTALS(){
 #   - SCTK_CFLAGS , SCTK_LDFLAGS , SCTK_ARFLAGS
 sctk_internal_setup_libxml()
 {
-	if [ -f "${MPC_RPREFIX}/${MPC_SUBPREFIX}/lib64/libxml2.so" ]; then
-			LIBXML_LIBDIR="`echo \"\\${MPC_RPREFIX}\"`/${MPC_SUBPREFIX}/lib64"
-	elif [ -f "${MPC_RPREFIX}/${MPC_SUBPREFIX}/lib/libxml2.so" ]; then
-		LIBXML_LIBDIR="`echo \"\\${MPC_RPREFIX}\"`/${MPC_SUBPREFIX}/lib"
+	if [ -f "${SCTK_LIBXML2_PREFIX}/lib64/libxml2.so" ]; then
+			LIBXML_LIBDIR="${SCTK_LIBXML2_PREFIX}/lib64"
+	elif [ -f "${SCTK_LIBXML2_PREFIX}/lib/libxml2.so" ]; then
+		LIBXML_LIBDIR="${SCTK_LIBXML2_PREFIX}/lib"
 	else
-		sctk_error "libxml2.so found neither in ${SCTK_LIBXML2_PREFIX}/lib nor ${SCTK_LIBXML2_PREFIX}/lib64"
+		error "libxml2.so found neither in ${SCTK_LIBXML2_PREFIX}/lib nor ${SCTK_LIBXML2_PREFIX}/lib64"
 		exit 1
 	fi
 	#setup vars
 	SCTK_ARFLAGS="${SCTK_ARFLAGS} ${LIBXML_LIBDIR}/libxml2.so"
-	SCTK_LDFLAGS="${SCTK_LDFLAGS} -L`echo \"\\${MPC_RPREFIX}\"`/${MPC_SUBPREFIX}/lib"
-	SCTK_CFLAGS="${SCTK_CFLAGS} -I`echo \"\\${MPC_RPREFIX}\"`/${MPC_SUBPREFIX}/include/libxml2"
+	SCTK_LDFLAGS="${SCTK_LDFLAGS} -L${LIBXML2_LIBDIR}"
+	SCTK_CFLAGS="${SCTK_CFLAGS} -I${SCTK_LIBXML2_PREFIX}/include/libxml2"
 }
 
 # Setup vars to use libxml2
