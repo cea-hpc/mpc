@@ -227,7 +227,7 @@ int sctk_load_wrapper_symbols( char * dso , void * handle )
 
 	/* because DMTCP waste too much time to track these commands */
 	char * ckpt_wrapper = (sctk_checkpoint_mode) ? "dmtcp_nocheckpoint" : "";
-	snprintf(command, 1000, "%s nm  %s 2>&1 | %s grep \"___mpc_TLS_w\\|_ZTW\"", ckpt_wrapper, dso );
+	snprintf(command, 1000, "%s nm  %s 2>&1 | %s grep \"___mpc_TLS_w\\|_ZTW\"", ckpt_wrapper, dso, ckpt_wrapper);
 	
 	
 	FILE * wrapper_symbols = popen(command, "r");
