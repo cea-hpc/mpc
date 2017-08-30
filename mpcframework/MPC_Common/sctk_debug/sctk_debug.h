@@ -177,8 +177,28 @@ extern "C"
 #endif
 
 
+#define GDB_BREAKPOINT() do{                                                    \
+	int _block = 1;                                                         \
+	sctk_error("Breakpoint set to %s:%d", __FILE__, __LINE__);              \
+	sctk_error("You can trace/unblock this process by running under GDB:"); \
+	sctk_error("(gdb) attach %d", getpid());                                \
+	sctk_error("(gdb) p _block = 0");                                       \
+	sctk_error("(gdb) continue");                                           \
+	while(_block);                                                          \
+}while(0)
+
 /* Some Debug Helpers */
-#define CRASH() do{ ((void (*)())0x0)();}while(0)
+#define CRASH() do{                                                                            \
+	if(getenv("MPC_DEBUG_CRASH"))                                                          \
+	{                                                                                      \
+		sctk_error("MPC will not create a \"breakpoint\" where the SIGSEGV occurs");   \
+		GDB_BREAKPOINT();                                                              \
+	}                                                                                      \
+	else                                                                                   \
+	{                                                                                      \
+		((void (*)())0x0)();                                                           \
+	}                                                                                      \
+}while(0)
 
 //If inline is not supported, disable assertions
 
