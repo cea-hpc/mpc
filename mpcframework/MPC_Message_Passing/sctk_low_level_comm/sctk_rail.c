@@ -200,7 +200,7 @@ void sctk_rail_disable(sctk_rail_info_t* rail)
         /* we don't disable abstract rails */
         if(rail->subrail_count) return;
 	/* first, close routes properly */
-	sctk_multirail_on_demand_disconnection_rail(rail);
+	/*sctk_multirail_on_demand_disconnection_rail(rail);*/
 
 	/*TODO: Need to wait for disconnection completion
 	 *TODO: We will have a race condition some day here
