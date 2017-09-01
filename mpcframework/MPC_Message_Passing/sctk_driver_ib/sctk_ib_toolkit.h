@@ -104,6 +104,7 @@ static inline void sctk_ib_nodebug ( const char *fmt, ... )
 
 char sctk_network_is_ib_used();
 void sctk_network_set_ib_used();
+void sctk_network_set_ib_unused();
 
 #endif
 #endif

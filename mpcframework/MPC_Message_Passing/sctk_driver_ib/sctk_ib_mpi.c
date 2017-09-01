@@ -763,7 +763,6 @@ void sctk_network_initialize_task_mpi_ib ( sctk_rail_info_t *rail, int taskid, i
 void sctk_network_finalize_task_mpi_ib ( sctk_rail_info_t *rail, int taskid, int vp )
 {
 	sctk_ib_prof_finalize ( &rail->network.ib );
-	sctk_ib_topology_free_task(&rail->network.ib);
 	sctk_network_finalize_task_collaborative_ib(rail, taskid, vp);
 }
 
@@ -805,12 +804,10 @@ void sctk_network_finalize_mpi_ib( sctk_rail_info_t *rail)
 	LOAD_CONFIG (rail_ib);
 	LOAD_DEVICE(rail_ib);
 
-	/*TODO: for proper closing or IB Rail:                        */
-	/* - Close all routes: Done by rail-generic closing procedure */
-	/* - Check connect_ring does not leave incoherent data        */
-	/* - MMU not required (just a lock)                           */
-	/* - Destroy task init (sctk_ib_topology_init_task) (!!!)     */
-	/* - Destroy leader task init                                 */
+	/* Clear the QPs                                              */
+	sctk_ib_qp_free_all(rail_ib);
+
+	/* Stop the async event polling thread                        */
 	sctk_ib_async_finalize(rail);
 
 	/* collaborative polling shutdown (from leader_initialize)    */

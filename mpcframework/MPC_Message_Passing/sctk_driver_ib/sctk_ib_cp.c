@@ -198,21 +198,23 @@ void sctk_ib_cp_finalize(struct sctk_ib_rail_info_s *rail_ib)
 		for (i = 0; i < max_node; ++i)
 		{
 			if(numas[i])
+			{
 				sctk_free(numas[i]);
+				numas[i] = NULL;
+			}
 		}
 		sctk_free(numas);
 		numas = NULL;
 	}
 	sctk_spinlock_unlock(&numas_lock);
 
-	sctk_ib_cp_task_t *tofree = NULL;
-	while(all_tasks)
+	sctk_ib_cp_task_t *tofree = NULL, *tmp = NULL;
+	HASH_ITER(hh_all, all_tasks, tofree, tmp)
 	{
-		tofree = all_tasks;
 		HASH_DELETE(hh_all, all_tasks, tofree);
 		sctk_free(tofree);
 	}
-	assume(all_tasks == NULL); /* all elements should be removed */
+	assert(HASH_CNT(hh_all, all_tasks) == 0); /* all elements should be removed */
 	sctk_spinlock_unlock(&vps_lock);
 	sctk_free(rail_ib->cp);
 	rail_ib->cp = NULL;
@@ -272,14 +274,7 @@ void sctk_ib_cp_init_task ( int rank, int vp )
           if (numa_number == 0)
             numa_number = 1;
 
-          numas = sctk_malloc(sizeof(numa_t) * numa_number);
-
-          int i;
-
-          for (i = 0; i < numa_number; ++i) {
-            numas[i] = NULL;
-          }
-
+          numas = sctk_calloc(numa_number, sizeof(numa_t));
           ib_assume(numas);
 
           int vp_number = sctk_get_cpu_number();
@@ -458,7 +453,9 @@ int sctk_ib_cp_poll ( struct sctk_rail_info_s *rail, struct sctk_ib_polling_s *p
             return 0;
           }
 
+          sctk_spinlock_lock(&vps_lock);
           tls_vp = vps[vp];
+          sctk_spinlock_unlock(&vps_lock);
         }
 
         for (task = tls_vp->tasks; task; task = task->hh_vp.next) {
@@ -545,7 +542,7 @@ int sctk_ib_cp_steal ( const sctk_rail_info_t const *rail, struct sctk_ib_pollin
 	vp_t *tmp_vp;
 	numa_t *numa;
 
-	if ( vp < 0 || !vps)
+	if ( vp < 0 || vps_reset[vp] == 0 || !vps || !numas)
 		return 0;
 
 	CHECK_ONLINE_PROGRAM;

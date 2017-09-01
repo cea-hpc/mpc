@@ -145,15 +145,16 @@ void sctk_ibuf_free_numa_node(sctk_ib_rail_info_t *rail, struct sctk_ibuf_numa_s
 	{
 		DL_DELETE(node->free_entry, buf);
 	}
+	assume(node->free_entry == NULL);
 	OPA_store_int(&node->free_nb, 0);
 	node->nb = 0;
 
 	DL_FOREACH_SAFE(node->regions, region, tmp)
 	{
 		sctk_free(region->mmu_entry->addr); /* MMU entry */
-		sctk_free(region->list);
 		sctk_ib_mmu_entry_release(region->mmu_entry);
 		region->mmu_entry = NULL;
+		sctk_free(region->list);
 		DL_DELETE(node->regions, region);
 		sctk_free(region);
 	}

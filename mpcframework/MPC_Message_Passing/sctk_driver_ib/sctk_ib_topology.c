@@ -250,14 +250,23 @@ void sctk_ib_topology_free(struct sctk_ib_rail_info_s *rail_ib)
 {
 	sctk_ibuf_pool_free(rail_ib);
 	
-	int i = -1;
-	for (i = 0; i < sctk_get_numa_node_number(); ++i)
+	int i = -1, numa_node_nb = rail_ib->topology->numa_node_count;
+	for (i = 0; i < numa_node_nb; ++i)
 	{
 		if(rail_ib->topology->nodes[i])
 		{
 			sctk_ibuf_free_numa_node(rail_ib, &rail_ib->topology->nodes[i]->ibufs);
 			sctk_free(rail_ib->topology->nodes[i]);
+			rail_ib->topology->nodes[i] = NULL;
 		}
+	}
+
+	if(rail_ib->topology->nodes[numa_node_nb])
+	{
+		sctk_ibuf_free_numa_node(rail_ib, &rail_ib->topology->nodes[numa_node_nb]->ibufs);
+		sctk_free(rail_ib->topology->nodes[numa_node_nb]);
+		rail_ib->topology->nodes[numa_node_nb] = NULL;
+
 	}
 
 	sctk_free(rail_ib->topology->nodes) ;  rail_ib->topology->nodes = NULL;

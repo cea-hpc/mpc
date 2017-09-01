@@ -325,7 +325,7 @@ sctk_ib_qp_t *sctk_ib_qp_new()
 	return remote;
 }
 
-void sctk_ib_qp_free ( sctk_ib_qp_t *remote )
+void sctk_ib_qp_destroy ( sctk_ib_qp_t *remote )
 {
 	if ( !remote )
 	{
@@ -335,7 +335,7 @@ void sctk_ib_qp_free ( sctk_ib_qp_t *remote )
 	/* destroy the QP */
 	ibv_destroy_qp ( remote->qp );
 	/* We do not remove the entry. */
-	/* free(remote); */
+	 free(remote); 
 }
 
 struct ibv_qp *sctk_ib_qp_init ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *remote, struct ibv_qp_init_attr *attr, int rank )
@@ -366,6 +366,19 @@ struct ibv_qp *sctk_ib_qp_init ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp
         }
 
         return remote->qp;
+}
+
+void sctk_ib_qp_free_all(struct sctk_ib_rail_info_s *rail_ib)
+{
+	struct sctk_ib_qp_ht_s* head = rail_ib->remotes, *tofree, *tmp;
+
+	HASH_ITER(hh, head, tofree, tmp)
+	{
+		HASH_DELETE(hh, head, tofree);
+		sctk_ib_qp_destroy(tofree->remote);
+		tofree->remote = NULL;
+	}
+	assert(HASH_CNT(hh, head) == 0);
 }
 
 struct ibv_qp_init_attr sctk_ib_qp_init_attr ( struct sctk_ib_rail_info_s *rail_ib )

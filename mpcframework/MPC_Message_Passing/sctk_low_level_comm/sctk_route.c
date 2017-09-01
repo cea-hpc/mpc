@@ -55,8 +55,11 @@ sctk_route_table_t * sctk_route_table_new()
 
 void sctk_route_table_destroy(sctk_route_table_t* table)
 {
+
+	sctk_spinlock_write_lock(&table->dynamic_route_table_lock);
 	MPCHT_release(&table->dynamic_route_table);
 	MPCHT_release(&table->static_route_table);
+	sctk_spinlock_write_unlock(&table->dynamic_route_table_lock);
 	
 	sctk_free(table); table = NULL;
 }

@@ -143,8 +143,10 @@ void sctk_ib_qp_keys_send ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *r
 sctk_ib_cm_qp_connection_t sctk_ib_qp_keys_recv ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *remote, int dest_process );
 
 sctk_ib_qp_t *sctk_ib_qp_new();
+void sctk_ib_qp_destroy(sctk_ib_qp_t *remote);
 
 struct ibv_qp *sctk_ib_qp_init ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *remote, struct ibv_qp_init_attr *attr, int rank );
+void sctk_ib_qp_free_all(struct sctk_ib_rail_info_s* rail_ib);
 
 struct ibv_qp_init_attr sctk_ib_qp_init_attr ( struct sctk_ib_rail_info_s *rail_ib );
 
@@ -163,8 +165,6 @@ void sctk_ib_qp_allocate_rtr ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t
 void sctk_ib_qp_allocate_rts ( struct sctk_ib_rail_info_s *rail_ib,  sctk_ib_qp_t *remote );
 
 void sctk_ib_qp_allocate_reset ( struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *remote );
-
-void sctk_ib_qp_free ( sctk_ib_qp_t *remote );
 
 struct ibv_srq *sctk_ib_srq_init ( struct sctk_ib_rail_info_s *rail_ib,  struct ibv_srq_init_attr *attr );
 void sctk_ib_srq_free(sctk_ib_rail_info_t *rail_ib);
