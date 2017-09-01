@@ -2867,6 +2867,7 @@ int PMPC_Checkpoint(MPC_Checkpoint_state* state) {
 		int total_nbprocs = sctk_get_process_number();
 		int local_nbtasks = sctk_get_local_task_number();
 		int local_tasknum = sctk_get_local_task_rank();
+		int task_rank = sctk_get_task_rank();
 		int pmi_rank = -1;
 		static sctk_atomics_int init_once = OPA_INT_T_INITIALIZER(0);
 		static sctk_atomics_int gen_acquire = OPA_INT_T_INITIALIZER(0);
@@ -2894,24 +2895,24 @@ int PMPC_Checkpoint(MPC_Checkpoint_state* state) {
 		/* if I'm the last task to process: do the work */
 		if(sctk_atomics_fetch_and_incr_int(&gen_acquire) == local_nbtasks -1)
 		{
-
+                        /* save the old checkpoint/restart counters */
 			sctk_ft_checkpoint_init();
-			/* From here: One task per process will do the work */
+
 			/* synchronize all processes */
-			if(total_nbprocs > 1)
-			{
-				sctk_ft_disable();
-				sctk_pmi_get_process_rank(&pmi_rank);
-				sctk_pmi_barrier();
-				sctk_ft_enable();
-			}
-			else
-				pmi_rank = 0;
+                        sctk_ft_disable();
+                        if(total_nbprocs > 1)
+                                sctk_pmi_get_process_rank(&pmi_rank);
+                        else
+                                pmi_rank = 0;
+                        sctk_terminaison_barrier(task_rank);
+
+                        /* close the network */
+                        sctk_ft_checkpoint_prepare();
+                        sctk_ft_enable();
 
 			/* Only one process triggers the checkpoint (=notify the coordinator) */
 			if(pmi_rank == 0)
 			{
-                                sctk_debug("Doing the chekpoint");
                                 sctk_ft_checkpoint(); /* we can ignore the return value here, by construction */
 			}
 		
@@ -2923,6 +2924,7 @@ int PMPC_Checkpoint(MPC_Checkpoint_state* state) {
 			sctk_atomics_store_int(&gen_release, 0);
 			/* set gen_aquire to 0: unlock waiting tasks */
 			sctk_atomics_store_int(&gen_acquire, 0);
+                        
 		}
 		else
 		{
@@ -2935,7 +2937,6 @@ int PMPC_Checkpoint(MPC_Checkpoint_state* state) {
 		*state = global_state;
 
 		/* re-init the network at task level if necessary */
-		int task_rank = sctk_get_task_rank();
 		sctk_net_init_task_level(task_rank, sctk_get_cpu());
 		sctk_terminaison_barrier(task_rank);
 
@@ -2947,7 +2948,6 @@ int PMPC_Checkpoint(MPC_Checkpoint_state* state) {
 
 		/* the current task finished the work for the current generation */
 		task_generations[local_tasknum]++;
-		sctk_debug("Done Checkpoint routine");
 	}
 	else
 	{

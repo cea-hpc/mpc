@@ -34,6 +34,8 @@ int sctk_ft_enabled();
 
 void sctk_ft_checkpoint_init();
 
+void sctk_ft_checkpoint_prepare();
+
 void sctk_ft_checkpoint();
 
 sctk_ft_state_t sctk_ft_checkpoint_wait();

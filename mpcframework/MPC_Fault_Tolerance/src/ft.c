@@ -78,6 +78,13 @@ static sctk_ft_state_t __state = MPC_STATE_ERROR;
 
 void sctk_ft_checkpoint_init()
 {
+#ifdef MPC_USE_DMTCP
+	dmtcp_get_local_status(&nb_checkpoints, &nb_restarts);
+#endif
+}
+
+void sctk_ft_checkpoint_prepare()
+{
 	size_t nb = sctk_rail_count();
 	size_t i;
 
@@ -91,11 +98,6 @@ void sctk_ft_checkpoint_init()
 		}
 #endif
 	}
-
-#ifdef MPC_USE_DMTCP
-	/* clear multirail table from pending disconnection procedures */
-	dmtcp_get_local_status(&nb_checkpoints, &nb_restarts);
-#endif
 }
 
 void sctk_ft_checkpoint()
