@@ -149,8 +149,8 @@ int main(){
 EOF
 cat ${SCTK_CONF_C} >> ${LOG_FILE} 2>&1
 sctk_printf "Checking type $1: "
-echo "$SCTK_CC -D${SCTK_OS}_SYS $SCTK_CFLAGS ${SCTK_CONF_C} -o ${SCTK_CONF_BIN}">> ${SCTK_CONF_LOG} 2>&1
-eval "$SCTK_CC -D${SCTK_OS}_SYS $SCTK_CFLAGS ${SCTK_CONF_C} -o ${SCTK_CONF_BIN}">> ${SCTK_CONF_LOG} 2>&1
+echo "$SCTK_CC -D${SCTK_OS}_SYS $SCTK_CFLAGS ${SCTK_CONF_C} -o ${SCTK_CONF_BIN} ${SCTK_LDFLAGS}">> ${SCTK_CONF_LOG} 2>&1
+eval "$SCTK_CC -D${SCTK_OS}_SYS $SCTK_CFLAGS ${SCTK_CONF_C} -o ${SCTK_CONF_BIN} ${SCTK_LDFLAGS}">> ${SCTK_CONF_LOG} 2>&1
 if test "$?" = "0" ; then 
 	rm ${SCTK_CONF_C} ${SCTK_CONF_BIN} >> ${SCTK_CONF_LOG} 2>&1
 	result yes
@@ -173,8 +173,8 @@ int main(){
 EOF
 cat ${SCTK_CONF_C} >> ${LOG_FILE} 2>&1
 sctk_printf "Checking keyword $1: "
-echo "$SCTK_CC -D${SCTK_OS}_SYS $SCTK_CFLAGS ${SCTK_CONF_C} -o ${SCTK_CONF_BIN}">> ${SCTK_CONF_LOG} 2>&1
-eval "$SCTK_CC -D${SCTK_OS}_SYS $SCTK_CFLAGS ${SCTK_CONF_C} -o ${SCTK_CONF_BIN}">> ${SCTK_CONF_LOG} 2>&1
+echo "$SCTK_CC -D${SCTK_OS}_SYS $SCTK_CFLAGS ${SCTK_CONF_C} -o ${SCTK_CONF_BIN} $SCTK_LDFLAGS">> ${SCTK_CONF_LOG} 2>&1
+eval "$SCTK_CC -D${SCTK_OS}_SYS $SCTK_CFLAGS ${SCTK_CONF_C} -o ${SCTK_CONF_BIN} $SCTK_LDFLAGS">> ${SCTK_CONF_LOG} 2>&1
 if test "$?" = "0" ; then 
 	rm ${SCTK_CONF_C} ${SCTK_CONF_BIN} >> ${SCTK_CONF_LOG} 2>&1
 	result yes
@@ -197,8 +197,8 @@ int main(){
 EOF
 cat ${SCTK_CONF_C} >> ${LOG_FILE} 2>&1
 sctk_printf "Checking keyword $1: "
-echo "$SCTK_CC -D${SCTK_OS}_SYS $SCTK_CFLAGS ${SCTK_CONF_C} -o ${SCTK_CONF_BIN}">> ${SCTK_CONF_LOG} 2>&1
-eval "$SCTK_CC -D${SCTK_OS}_SYS $SCTK_CFLAGS ${SCTK_CONF_C} -o ${SCTK_CONF_BIN}">> ${SCTK_CONF_LOG} 2>&1
+echo "$SCTK_CC -D${SCTK_OS}_SYS $SCTK_CFLAGS ${SCTK_CONF_C} -o ${SCTK_CONF_BIN} $SCTK_LDFLAGS">> ${SCTK_CONF_LOG} 2>&1
+eval "$SCTK_CC -D${SCTK_OS}_SYS $SCTK_CFLAGS ${SCTK_CONF_C} -o ${SCTK_CONF_BIN} $SCTK_LDFLAGS">> ${SCTK_CONF_LOG} 2>&1
 if test "$?" = "0" ; then 
 	rm ${SCTK_CONF_C} ${SCTK_CONF_BIN} >> ${SCTK_CONF_LOG} 2>&1
 	result yes
