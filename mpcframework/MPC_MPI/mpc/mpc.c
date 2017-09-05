@@ -2899,12 +2899,16 @@ int PMPC_Checkpoint(MPC_Checkpoint_state* state) {
 			sctk_ft_checkpoint_init();
 
 			/* synchronize all processes */
-                        sctk_ft_disable();
-                        if(total_nbprocs > 1)
-                                sctk_pmi_get_process_rank(&pmi_rank);
-                        else
-                                pmi_rank = 0;
-                        sctk_terminaison_barrier(task_rank);
+			sctk_ft_disable();
+			if(total_nbprocs > 1)
+			{
+				sctk_pmi_get_process_rank(&pmi_rank);
+				sctk_pmi_barrier();
+			}
+			else
+			{
+				pmi_rank = 0;
+			}
 
                         /* close the network */
                         sctk_ft_checkpoint_prepare();
@@ -2924,7 +2928,7 @@ int PMPC_Checkpoint(MPC_Checkpoint_state* state) {
 			sctk_atomics_store_int(&gen_release, 0);
 			/* set gen_aquire to 0: unlock waiting tasks */
 			sctk_atomics_store_int(&gen_acquire, 0);
-                        
+
 		}
 		else
 		{
