@@ -155,6 +155,7 @@ void sctk_ibuf_free_numa_node(sctk_ib_rail_info_t *rail, struct sctk_ibuf_numa_s
 		sctk_ib_mmu_entry_release(region->mmu_entry);
 		region->mmu_entry = NULL;
 		sctk_free(region->list);
+		sctk_free(region->ibuf);
 		DL_DELETE(node->regions, region);
 		sctk_free(region);
 	}

@@ -217,8 +217,9 @@ void MPCHT_release( struct MPCHT * ht )
 		{
 			MPCHT_Cell_release( ht->cells[i].next );
 		}
+		MPCHT_unlock_write(ht, i);
 	}
-	
+
 	sctk_free( ht->cells ); ht->cells = NULL;
 	sctk_free(ht->rwlocks); ht->rwlocks = NULL;
 	

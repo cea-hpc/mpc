@@ -614,7 +614,7 @@ static void sctk_network_notify_idle_message_ib ( sctk_rail_info_t *rail )
     LOAD_CONFIG ( rail_ib );
     struct sctk_ib_polling_s poll;
 
-    if(rail->status != SCTK_RAIL_ST_ENABLED)
+    if(rail->state != SCTK_RAIL_ST_ENABLED)
 	    return;
 
 	idle_poll_all++;

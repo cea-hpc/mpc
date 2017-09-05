@@ -79,6 +79,8 @@ static inline sctk_rail_info_t * sctk_rail_register_with_parent( struct sctk_run
 	{
 		new_rail = &__rails.rails[reuse_id];
 		assert(new_rail->state == SCTK_RAIL_ST_DISABLED);
+		memset(new_rail, 0, sizeof(sctk_rail_info_t));
+		new_rail->rail_number = reuse_id;
 	}
 
 
@@ -199,11 +201,8 @@ void sctk_rail_disable(sctk_rail_info_t* rail)
 
         /* we don't disable abstract rails */
         if(rail->subrail_count) return;
-	/* first, close routes properly */
-	/*sctk_multirail_on_demand_disconnection_rail(rail);*/
 
-	/*TODO: Need to wait for disconnection completion
-	 *TODO: We will have a race condition some day here
+	 /*TODO: We will have a race condition some day here
 	 */
 	rail->state = SCTK_RAIL_ST_DISABLED;
 
@@ -215,13 +214,13 @@ void sctk_rail_disable(sctk_rail_info_t* rail)
 	rail->route_init = sctk_route_none_init;
 	rail->topology_name = "none";
 	rail->connect_on_demand = NULL;
-	rail->disconnect_on_demand = NULL;
 	rail->on_demand = 0;
 	rail->requires_bootstrap_ring = 0;
 
-	/*TODO: Should check route_table does not have remaining routes */
 	sctk_route_table_destroy(rail->route_table);
 	rail->route_table = NULL;
+
+	/* TODO: We have to remove routes from topological rails ! */
 	sctk_multirail_destination_table_prune();
 }
 
@@ -546,7 +545,7 @@ void sctk_rail_dump_routes()
 		for ( i = 0; i <  sctk_rail_count(); i++ )
 		{
 			sctk_rail_info_t *  rail = sctk_rail_get_by_id ( i );
-      printf("Dumping '%s', priority: %d\n", rail->network_name, rail->priority);
+			printf("Dumping '%s', priority: %d\n", rail->network_name, rail->priority);
 
 			if( rail->parent_rail )
 				continue;
@@ -567,8 +566,8 @@ void sctk_rail_dump_routes()
 
 			int j;
 
-			for( j = 0 ; j < size ; j++ )
-	fprintf(global_f, "%d\n", j);
+			for( j = 0 ; j < size ; j++ ) {
+				fprintf(global_f, "%d\n", j);
 				char tmp_path[512];
 				snprintf( tmp_path, 512, "./%d.%d.%s.dot.tmp", j, i,  rail->network_name );
 
