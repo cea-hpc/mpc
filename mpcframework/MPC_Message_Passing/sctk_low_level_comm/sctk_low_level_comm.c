@@ -31,6 +31,9 @@
 #include <sctk_ib_mpi.h>
 #include <sctk_route.h>
 #include <sctk_multirail.h>
+#ifdef MPC_Fault_Tolerance
+#include "sctk_ft_iface.h"
+#endif
 
 /************************************************************************/
 /* Net Error Messages                                                   */
@@ -142,8 +145,16 @@ static void ( *sctk_network_notify_idle_message_ptr ) () = sctk_network_notify_i
 
 void sctk_network_notify_idle_message ()
 {
+#ifdef MPC_Fault_Tolerance
+	sctk_ft_no_suspend_start();
+#endif
+
 	sctk_network_notify_idle_message_ptr();
     sctk_control_message_process();
+
+#ifdef MPC_Fault_Tolerance
+	sctk_ft_no_suspend_end();
+#endif
 }
 
 void sctk_network_notify_idle_message_set ( void ( *sctk_network_notify_idle_message_val ) () )

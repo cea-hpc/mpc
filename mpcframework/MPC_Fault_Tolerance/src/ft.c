@@ -34,6 +34,8 @@
 static inline void __sctk_ft_post_checkpoint();
 static inline void __sctk_ft_post_restart();
 
+static sctk_spin_rwlock_t checkpoint_lock = SCTK_SPIN_RWLOCK_INITIALIZER;
+
 static inline void __sctk_ft_set_ckptdir()
 {
 #ifdef MPC_USE_DMTCP
@@ -78,6 +80,7 @@ static sctk_ft_state_t __state = MPC_STATE_ERROR;
 
 void sctk_ft_checkpoint_init()
 {
+	sctk_spinlock_write_lock(&checkpoint_lock);
 #ifdef MPC_USE_DMTCP
 	dmtcp_get_local_status(&nb_checkpoints, &nb_restarts);
 #endif
@@ -98,6 +101,16 @@ void sctk_ft_checkpoint_prepare()
 		}
 #endif
 	}
+}
+
+void sctk_ft_no_suspend_start()
+{
+	sctk_spinlock_read_lock(&checkpoint_lock);
+}
+
+void sctk_ft_no_suspend_end()
+{
+	sctk_spinlock_read_unlock(&checkpoint_lock);
 }
 
 void sctk_ft_checkpoint()
@@ -136,6 +149,8 @@ void sctk_ft_checkpoint_finalize()
 	}
 	/* recall driver init function & update sctk_network_mode string */
         sctk_rail_commit();
+	
+	sctk_spinlock_write_unlock(&checkpoint_lock);
 }
 
 int sctk_ft_disable()
