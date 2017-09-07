@@ -92,9 +92,10 @@ void sctk_ib_mmu_entry_release( sctk_ib_mmu_entry_t * release )
 	/* Unregister memory */
 	if( release->mr )
 	{
-		if ( ( ret = ibv_dereg_mr ( release->mr ) ) != 0 )
+		ret = ibv_dereg_mr ( release->mr );
+		if(ret)
 		{
-			sctk_error ( "ibv_dereg_mr returned an error: %d %s (%p)", ret, strerror ( errno ), release->mr );
+			sctk_fatal ( "Failure to de-register the MR: %s (%p)", strerror ( ret ) );
 		}
 	}
 	

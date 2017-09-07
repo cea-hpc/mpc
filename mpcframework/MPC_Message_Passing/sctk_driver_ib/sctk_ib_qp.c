@@ -333,7 +333,9 @@ void sctk_ib_qp_destroy ( sctk_ib_qp_t *remote )
 	}
 
 	/* destroy the QP */
-	ibv_destroy_qp ( remote->qp );
+	int ret = ibv_destroy_qp ( remote->qp );
+	if(ret)
+		sctk_fatal("Failure to destroy QP: %s", strerror(ret));
 	/* We do not remove the entry. */
 	 free(remote); 
 }
@@ -562,7 +564,9 @@ struct ibv_srq *sctk_ib_srq_init ( struct sctk_ib_rail_info_s *rail_ib, struct i
 void sctk_ib_srq_free(sctk_ib_rail_info_t *rail_ib)
 {
 	LOAD_DEVICE (rail_ib);
-	ibv_destroy_srq(device->srq);
+	int ret = ibv_destroy_srq(device->srq);
+	if(ret)
+		sctk_fatal("Failure to destroy the SRQ: %s", strerror(ret));
 	device->srq = NULL;
 }
 
@@ -593,6 +597,30 @@ int sctk_ib_qp_get_cap_flags ( struct sctk_ib_rail_info_s *rail_ib )
 	return device->dev_attr.device_cap_flags;
 }
 
+char* qp_states[] = { "RESET", "INIT", "RTR", "RTS", "SQD", "SQE", "ERR"};
+
+char * sctk_ib_qp_print_state( struct ibv_qp *qp)
+{
+	struct ibv_qp_attr attr;
+	struct ibv_qp_init_attr init_attr;
+	int ret = ibv_query_qp(qp, &attr , IBV_QP_STATE, &init_attr);
+	if(!ret)
+	{
+		switch(attr.qp_state)
+		{
+			case IBV_QPS_RESET: return qp_states[0]; break;
+			case IBV_QPS_INIT: return qp_states[1]; break;
+			case IBV_QPS_RTR: return qp_states[2]; break;
+			case IBV_QPS_RTS: return qp_states[3]; break;
+			case IBV_QPS_SQD: return qp_states[4]; break;
+			case IBV_QPS_SQE: return qp_states[5]; break;
+			case IBV_QPS_ERR: return qp_states[6]; break;
+		}
+	}
+	sctk_fatal("Unable to query the QP !");
+	return NULL;
+}
+	
 
 /*-----------------------------------------------------------
  *  ALLOCATION

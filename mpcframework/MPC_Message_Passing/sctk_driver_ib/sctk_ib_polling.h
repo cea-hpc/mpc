@@ -70,103 +70,6 @@ typedef struct sctk_ib_polling_s
 #define POLL_GET_RECV_CQ(x) ((x)->recv_cq)
 #define POLL_SET_RECV_CQ(x, y) ((x)->recv_cq = y)
 
-__UNUSED__  static inline char *sctk_ib_polling_print_status ( enum ibv_wc_status status )
-{
-	switch ( status )
-	{
-		case IBV_WC_SUCCESS:
-				return ( "IBV_WC_SUCCESS: success" );
-			break;
-
-		case IBV_WC_LOC_LEN_ERR:
-			return ( "IBV_WC_LOC_LEN_ERR: local length error" );
-			break;
-
-		case IBV_WC_LOC_QP_OP_ERR:
-			return ( "IBV_WC_LOC_QP_OP_ERR: local QP op error" );
-			break;
-
-		case IBV_WC_LOC_EEC_OP_ERR:
-			return ( "IBV_WC_LOC_EEC_OP_ERR: local EEC op error" );
-			break;
-
-		case IBV_WC_LOC_PROT_ERR:
-			return ( "IBV_WC_LOC_PROT_ERR: local protection error" );
-			break;
-
-		case IBV_WC_WR_FLUSH_ERR:
-			return ( "IBV_WC_WR_FLUSH_ERR: write flush error" );
-			break;
-
-		case IBV_WC_MW_BIND_ERR:
-			return ( "IBV_WC_MW_BIND_ERR: MW bind error" );
-			break;
-
-		case IBV_WC_BAD_RESP_ERR:
-			return ( "IBV_WC_BAD_RESP_ERR: bad response error" );
-			break;
-
-		case IBV_WC_LOC_ACCESS_ERR:
-			return ( "IBV_WC_LOC_ACCESS_ERR: local access error" );
-			break;
-
-		case IBV_WC_REM_INV_REQ_ERR:
-			return ( "IBV_WC_REM_INV_REQ_ERR: remote invalid request error" );
-			break;
-
-		case IBV_WC_REM_ACCESS_ERR:
-			return ( "IBV_WC_REM_ACCESS_ERR: remote access error" );
-			break;
-
-		case IBV_WC_REM_OP_ERR:
-			return ( "IBV_WC_REM_OP_ERR: remote op error" );
-			break;
-
-		case IBV_WC_RETRY_EXC_ERR:
-			return ( "IBV_WC_RETRY_EXC_ERR: retry exceded error" );
-			break;
-
-		case IBV_WC_RNR_RETRY_EXC_ERR:
-			return ( "IBV_WC_RNR_RETRY_EXC_ERR: RNR retry exceded error" );
-			break;
-
-		case IBV_WC_LOC_RDD_VIOL_ERR:
-			return ( "IBV_WC_LOC_RDD_VIOL_ERR: local RDD violation error" );
-			break;
-
-		case IBV_WC_REM_INV_RD_REQ_ERR:
-			return ( "IBV_WC_REM_INV_RD_REQ_ERR: remote invalid read request error" );
-			break;
-
-		case IBV_WC_REM_ABORT_ERR:
-			return ( "IBV_WC_REM_ABORT_ERR: remote abort error" );
-			break;
-
-		case IBV_WC_INV_EECN_ERR:
-			return ( "IBV_WC_INV_EECN_ERR: invalid EECN error" );
-			break;
-
-		case IBV_WC_INV_EEC_STATE_ERR:
-			return ( "IBV_WC_INV_EEC_STATE_ERR: invalid EEC state error" );
-			break;
-
-		case IBV_WC_FATAL_ERR:
-			return ( "IBV_WC_FATAL_ERR: fatal error" );
-			break;
-
-		case IBV_WC_RESP_TIMEOUT_ERR:
-			return ( "IBV_WC_RESP_TIMEOUT_ERR: response timeout error" );
-			break;
-
-		case IBV_WC_GENERAL_ERR:
-			return ( "IBV_WC_GENERAL_ERR: general error" );
-			break;
-	}
-
-	return ( "ERROR NOT KNOWN" );
-}
-
-
 __UNUSED__ static inline void sctk_ib_polling_check_wc ( struct sctk_ib_rail_info_s *rail_ib,  struct ibv_wc wc )
 {
 	struct sctk_runtime_config_struct_net_driver_infiniband *config = ( rail_ib )->config;
@@ -183,7 +86,7 @@ __UNUSED__ static inline void sctk_ib_polling_check_wc ( struct sctk_ib_rail_inf
 		if ( config->quiet_crash )
 		{
 			sctk_error ( "\nIB - PROCESS %d CRASHED (%s): %s",
-			             sctk_process_rank, host, sctk_ib_polling_print_status ( wc.status ) );
+			             sctk_process_rank, host, ibv_wc_status_str ( wc.status ) );
 		}
 		else
 		{
@@ -200,7 +103,7 @@ __UNUSED__ static inline void sctk_ib_polling_check_wc ( struct sctk_ib_rail_inf
 			             "################################", sctk_process_rank,
 			             host,
 			             wc.wr_id,
-			             sctk_ib_polling_print_status ( wc.status ),
+			             ibv_wc_status_str ( wc.status ),
 			             wc.vendor_err,
 			             wc.byte_len,
 			             /* Remote can be NULL if the buffer comes from SRQ */
