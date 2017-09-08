@@ -246,7 +246,6 @@ void sctk_ib_cp_init_task ( int rank, int vp )
 	if(vps_reset[vp] == 0)
 	{
 		/* re-init all __thread vars (globals are reset at finalize() time) */
-		vps_reset[vp] = 1;
 		if(numas_copy) {sctk_free(numas_copy); numas_copy = NULL; }
 		seed = 0;
 		task_node_number = -1;
@@ -707,6 +706,8 @@ void sctk_network_initialize_task_collaborative_ib (sctk_rail_info_t *rail, int 
 		
 	/* Register task for topology infos */
 	sctk_ib_topology_init_task ( rail, vp );
+
+        vps_reset[vp] = 1;
 }
 
 
@@ -726,6 +727,8 @@ void sctk_network_finalize_task_collaborative_ib (sctk_rail_info_t *rail, int ta
 	{
 		sctk_ib_cp_finalize_task ( taskid );
 	}
+
+        vps_reset[vp] = 0;
 }
 
 
