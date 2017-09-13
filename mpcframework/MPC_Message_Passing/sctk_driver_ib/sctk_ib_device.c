@@ -227,7 +227,7 @@ void sctk_ib_device_close (struct sctk_ib_rail_info_s *rail_ib)
 	int ret = ibv_close_device(rail_ib->device->context);
 
 	if(ret)
-		sctk_fatal("Failure to close IB device");
+		sctk_error("Failure to close IB device");
 
 	sctk_free(rail_ib->device); rail_ib->device = NULL;
 }
@@ -250,7 +250,7 @@ void sctk_ib_pd_free(sctk_ib_device_t *device)
 	int ret = ibv_dealloc_pd(device->pd);
 
 	if(ret)
-		sctk_fatal("Failure to de-alloc PD: %s", strerror(ret));
+		sctk_error("Failure to de-alloc PD: %s", strerror(ret));
 
 	device->pd = NULL;
 }

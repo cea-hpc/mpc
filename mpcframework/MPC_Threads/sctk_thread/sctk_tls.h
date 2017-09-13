@@ -68,6 +68,10 @@ extern "C"
   extern __thread void *sctk_openmp_thread_tls;
 #endif
 
+#if defined (MPC_Fault_Tolerance)
+  extern __thread int sctk_ft_critical_section;
+#endif
+
   extern __thread void *sctk_extls_storage;
   extern __thread char *mpc_user_tls_1;
   extern unsigned long mpc_user_tls_1_offset;
@@ -115,6 +119,10 @@ extern "C"
     tls_save(sctk_cuda_ctx);
 #endif
 
+#if defined MPC_Fault_Tolerance
+    tls_save(sctk_ft_critical_section);
+#endif
+
     /* the tls vector is restored by copy and cannot be changed
      * It is then useless to save it at this time
      */
@@ -151,6 +159,10 @@ extern "C"
 #ifdef MPC_MPI
     tls_restore (___sctk_message_passing);
     tls_restore(__mpc_task_rank);
+#endif
+
+#if defined MPC_Fault_Tolerance
+    tls_restore(sctk_ft_critical_section);
 #endif
 
 #if defined(MPC_USE_CUDA)
@@ -200,6 +212,10 @@ extern "C"
 
 #if defined(MPC_USE_CUDA)
     tls_init(sctk_cuda_ctx);
+#endif
+    
+#if defined MPC_Fault_Tolerance
+    sctk_ft_critical_section = 0;
 #endif
 
 #endif

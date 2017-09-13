@@ -35,6 +35,7 @@ static inline void __sctk_ft_post_checkpoint();
 static inline void __sctk_ft_post_restart();
 
 static sctk_spin_rwlock_t checkpoint_lock = SCTK_SPIN_RWLOCK_INITIALIZER;
+__thread int sctk_ft_critical_section = 0;
 
 static inline void __sctk_ft_set_ckptdir()
 {
@@ -105,12 +106,23 @@ void sctk_ft_checkpoint_prepare()
 
 void sctk_ft_no_suspend_start()
 {
-	sctk_spinlock_read_lock(&checkpoint_lock);
+
+        int old = sctk_ft_critical_section++;
+        
+        if(old == 0)
+        {
+                sctk_spinlock_read_lock(&checkpoint_lock);
+        }
 }
 
 void sctk_ft_no_suspend_end()
 {
-	sctk_spinlock_read_unlock(&checkpoint_lock);
+        int nw = --sctk_ft_critical_section;
+
+        if(nw == 0)
+        {
+                sctk_spinlock_read_unlock(&checkpoint_lock);
+        }
 }
 
 void sctk_ft_checkpoint()

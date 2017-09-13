@@ -210,6 +210,10 @@ Need to check this in more depth for futur version ( > 2.4.0-1).
     /* MPC OpenMP TLS */
     void *sctk_openmp_thread_tls ;
 #endif
+
+#if defined MPC_Fault_Tolerance
+    int sctk_ft_critical_section;
+#endif
   } sctk_mctx_t;
 
   int sctk_getcontext (sctk_mctx_t * ucp);
