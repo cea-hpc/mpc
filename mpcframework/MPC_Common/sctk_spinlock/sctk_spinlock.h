@@ -51,6 +51,7 @@ extern int sctk_thread_yield( void );
   OPA_store_int(&(a)->reader_number, 0);\
 }while(0)
   int sctk_spinlock_read_lock (sctk_spin_rwlock_t * lock);
+  int sctk_spinlock_read_lock_yield (sctk_spin_rwlock_t * lock);
   int sctk_spinlock_read_trylock(sctk_spin_rwlock_t *lock);
   int sctk_spinlock_write_lock (sctk_spin_rwlock_t * lock);
   int sctk_spinlock_write_trylock(sctk_spin_rwlock_t *lock);

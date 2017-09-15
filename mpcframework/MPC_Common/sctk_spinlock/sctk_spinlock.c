@@ -32,7 +32,7 @@ int sctk_spinlock_lock_yield (sctk_spinlock_t * lock)
   volatile int *p = (volatile int *) lock;
   while (expect_true (sctk_test_and_set (p)))
 	{
-      do
+      while (*p)
 	{
 	int i;
 #ifdef MPC_Threads
@@ -44,7 +44,6 @@ int sctk_spinlock_lock_yield (sctk_spinlock_t * lock)
 		 sctk_cpu_relax ();
 	}
 	}
-      while (*p);
     }
 
   return 0 ;
@@ -87,6 +86,15 @@ int
 sctk_spinlock_read_lock (sctk_spin_rwlock_t * lock)
 {
   sctk_spinlock_lock(&(lock->writer_lock));
+  OPA_incr_int(&(lock->reader_number));
+  sctk_spinlock_unlock(&(lock->writer_lock));
+  return 0;
+}
+
+int
+sctk_spinlock_read_lock_yield(sctk_spin_rwlock_t *lock)
+{
+  sctk_spinlock_lock_yield(&(lock->writer_lock));
   OPA_incr_int(&(lock->reader_number));
   sctk_spinlock_unlock(&(lock->writer_lock));
   return 0;

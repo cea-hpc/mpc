@@ -81,7 +81,7 @@ static sctk_ft_state_t __state = MPC_STATE_ERROR;
 
 void sctk_ft_checkpoint_init()
 {
-	sctk_spinlock_write_lock(&checkpoint_lock);
+	sctk_spinlock_write_lock_yield(&checkpoint_lock);
 #ifdef MPC_USE_DMTCP
 	dmtcp_get_local_status(&nb_checkpoints, &nb_restarts);
 #endif
@@ -111,7 +111,7 @@ void sctk_ft_no_suspend_start()
         
         if(old == 0)
         {
-                sctk_spinlock_read_lock(&checkpoint_lock);
+                sctk_spinlock_read_lock_yield(&checkpoint_lock);
         }
 }
 
