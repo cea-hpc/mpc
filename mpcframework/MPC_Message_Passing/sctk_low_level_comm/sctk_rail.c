@@ -775,6 +775,8 @@ void sctk_rail_add_dynamic_route_no_lock (  sctk_rail_info_t * rail, sctk_endpoi
 		tmp->parent_rail = rail->parent_rail;
 		/* Add in local rail without pushing in multirail */
 		sctk_route_table_add_dynamic_route_no_lock (  rail->route_table, tmp, 0 );
+		/* Add in parent rail without pushing in multirail */
+		sctk_route_table_add_dynamic_route_no_lock ( rail->parent_rail->route_table, tmp, 0 );
 		/* Push in multirail */
 		sctk_multirail_destination_table_push_endpoint( tmp );
 	}

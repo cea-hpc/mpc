@@ -353,7 +353,7 @@ void sctk_endpoint_list_prune( sctk_endpoint_list_t ** list)
 		tofree = entry;
 		entry = entry->next;
 		
-		if(route->rail->state == SCTK_RAIL_ST_DISABLED || rstate != STATE_CONNECTED)
+		if(route->rail->state == SCTK_RAIL_ST_DISABLED)
 		{
 			*list = sctk_endpoint_list_pop(*list, tofree);
 		}
@@ -1025,12 +1025,8 @@ void sctk_multirail_destination_table_push_endpoint(sctk_endpoint_t * endpoint )
 		dest_entry = sctk_multirail_destination_table_entry_new(endpoint->dest);
 		HASH_ADD_INT( table->destinations, destination, dest_entry );
 	}
-	else
-	{
-		sctk_multirail_destination_table_entry_push_endpoint( dest_entry, endpoint );
-	}
 	
-	sctk_multirail_destination_table_entry_push_endpoint( dest_entry, endpoint );
+        sctk_multirail_destination_table_entry_push_endpoint( dest_entry, endpoint );
 	
 	sctk_spinlock_write_unlock( &table->table_lock );
 	

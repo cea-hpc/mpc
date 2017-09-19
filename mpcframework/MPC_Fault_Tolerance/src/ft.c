@@ -81,6 +81,12 @@ static sctk_ft_state_t __state = MPC_STATE_ERROR;
 
 void sctk_ft_checkpoint_init()
 {
+        /* IMPORTANT: After this function, the calling thread
+         * should never call a function leading to a critical section.
+         * In this case, sctk_thread_yield (for ethread_mxn) should not
+         * be called for waiting. This thread should not be preempted
+         * (leading to deadlock to acquire read after write).
+         */
 	sctk_spinlock_write_lock_yield(&checkpoint_lock);
 #ifdef MPC_USE_DMTCP
 	dmtcp_get_local_status(&nb_checkpoints, &nb_restarts);
