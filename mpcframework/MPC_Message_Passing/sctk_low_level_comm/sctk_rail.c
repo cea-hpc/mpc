@@ -217,6 +217,9 @@ void sctk_rail_disable(sctk_rail_info_t* rail)
 	rail->on_demand = 0;
 	rail->requires_bootstrap_ring = 0;
 
+        if(rail->parent_rail)
+	        sctk_route_table_clear(&rail->parent_rail->route_table);
+
 	sctk_route_table_destroy(rail->route_table);
 	rail->route_table = NULL;
 

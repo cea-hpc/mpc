@@ -64,6 +64,12 @@ void sctk_route_table_destroy(sctk_route_table_t* table)
 	sctk_free(table); table = NULL;
 }
 
+void sctk_route_table_clear(sctk_route_table_t** table)
+{
+        sctk_route_table_destroy(*table);
+        *table = sctk_route_table_new();
+}
+
 int sctk_route_table_empty(sctk_route_table_t *table)
 {
 	return MPCHT_empty(&table->dynamic_route_table) && MPCHT_empty(&table->static_route_table);
