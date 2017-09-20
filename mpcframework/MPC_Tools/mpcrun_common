@@ -141,8 +141,8 @@ Debugger:
     --dbg=<debugger_name> to use a debugger
 
 Fault-tolerance (if compiled with --enable-ft):
-    --ft Enabling Fault-tolerance support
-    --ft-debug Run the FT deamon in xterm console for debug
+    --checkpoint Enabling Fault-tolerance support
+    --restart[=<path>] Restart from previous checkpoint (path to restart script)
 
 Profiling (if compiled with --enable-MPC_Profiler) :
 	--profiling=AA,BB,...
@@ -655,6 +655,7 @@ if test -n "$FT_WRAP" ; then
 		test -z "$FT_SCRIPTPATH" && FT_SCRIPTPATH="$PWD/dmtcp_restart_script.sh"
 		BINARY="$FT_SCRIPTPATH -h $FT_HOST -p $FT_PORT"
 		LAUNCH_MODE="alloc"
+		echo "Application Restarting. Please wait..."
 	fi
 	
  fi

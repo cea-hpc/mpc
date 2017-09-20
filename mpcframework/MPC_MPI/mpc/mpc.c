@@ -2860,7 +2860,6 @@ static volatile MPC_Checkpoint_state global_state = '\0';
  * \param[out] state The state after the procedure.
  */
 int PMPC_Checkpoint(MPC_Checkpoint_state* state) {
-	assert(state != NULL);
 #ifdef MPC_Fault_Tolerance
 	if (sctk_checkpoint_mode)
 	{
@@ -2938,7 +2937,8 @@ int PMPC_Checkpoint(MPC_Checkpoint_state* state) {
 		}
 	
 		/* update the state for all tasks of this process */
-		*state = global_state;
+		if(state)
+			*state = global_state;
 
 		/* re-init the network at task level if necessary */
 		sctk_net_init_task_level(task_rank, sctk_get_cpu());
@@ -2955,7 +2955,8 @@ int PMPC_Checkpoint(MPC_Checkpoint_state* state) {
 	}
 	else
 	{
-		*state = MPC_STATE_IGNORE;
+		if(state)
+			*state = MPC_STATE_IGNORE;
 	}
 #endif
 	MPC_ERROR_SUCESS();

@@ -31,6 +31,8 @@
 #include <dmtcp.h>
 #endif
 
+extern char *sctk_checkpoint_str;
+
 static inline void __sctk_ft_post_checkpoint();
 static inline void __sctk_ft_post_restart();
 
@@ -64,6 +66,7 @@ int sctk_ft_init()
 			sctk_fatal("Signal value: %d", dmtcp_get_ckpt_signal());
 		}
 	}
+	sctk_checkpoint_str = "C/R (DMTCP)";
 #endif
 	return 1;
 }

@@ -105,6 +105,7 @@ static char topology_name[SCTK_MAX_FILENAME_SIZE];
 char *sctk_multithreading_mode;
 int sctk_new_scheduler_engine_enabled = 0;
 char *sctk_network_mode = "none";
+char *sctk_checkpoint_str = "";
 bool sctk_enable_smt_capabilities;
 bool sctk_enable_graphic_placement;
 bool sctk_enable_text_placement;
@@ -263,20 +264,20 @@ void sctk_print_banner(bool restart)
 			if (SCTK_VERSION_MINOR >= 0)
 			{
 				fprintf (stderr,
-						"MPC version %d.%d.%d%s %s (%d tasks %d processes %d cpus (%2.2fGHz) %s) %s %s %s\n",
+						"MPC version %d.%d.%d%s %s (%d tasks %d processes %d cpus (%2.2fGHz) %s) %s %s %s %s\n",
 						SCTK_VERSION_MAJOR, SCTK_VERSION_MINOR, SCTK_VERSION_REVISION,
 						SCTK_VERSION_PRE, mpc_lang, sctk_task_nb_val,
 						sctk_process_nb_val, sctk_get_cpu_number (),sctk_atomics_get_cpu_freq()/1000000000.0,
 						sctk_multithreading_mode,
-						sctk_alloc_mode (), SCTK_DEBUG_MODE, sctk_network_mode);
+						sctk_alloc_mode (), SCTK_DEBUG_MODE, sctk_checkpoint_str, sctk_network_mode);
 			}
 			else
 			{
 				fprintf (stderr,
-						"MPC experimental version %s (%d tasks %d processes %d cpus (%2.2fGHz) %s) %s %s %s\n",
+						"MPC experimental version %s (%d tasks %d processes %d cpus (%2.2fGHz) %s) %s %s %s %s\n",
 						mpc_lang, sctk_task_nb_val, sctk_process_nb_val,
 						sctk_get_cpu_number (),sctk_atomics_get_cpu_freq()/1000000000.0,  sctk_multithreading_mode,
-						sctk_alloc_mode (), SCTK_DEBUG_MODE, sctk_network_mode);
+						sctk_alloc_mode (), SCTK_DEBUG_MODE, sctk_checkpoint_str, sctk_network_mode);
 			}
 		}
 	}
