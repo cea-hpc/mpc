@@ -48,7 +48,7 @@ const char* sctk_ft_str_status(sctk_ft_state_t);
 int sctk_ft_disable();
 int sctk_ft_enable();
 
-void sctk_ft_no_suspend_start();
+int sctk_ft_no_suspend_start();
 void sctk_ft_no_suspend_end();
 
 #endif /* ifndef __FT_IFACE_H */

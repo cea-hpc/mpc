@@ -113,15 +113,20 @@ void sctk_ft_checkpoint_prepare()
 	}
 }
 
-void sctk_ft_no_suspend_start()
+int sctk_ft_no_suspend_start()
 {
 
         int old = sctk_ft_critical_section++;
         
         if(old == 0)
         {
-                sctk_spinlock_read_lock_yield(&checkpoint_lock);
+                if(sctk_spinlock_read_trylock(&checkpoint_lock) != 0)
+                {
+                        sctk_ft_critical_section--;
+                        return false;
+                }
         }
+        return true;
 }
 
 void sctk_ft_no_suspend_end()

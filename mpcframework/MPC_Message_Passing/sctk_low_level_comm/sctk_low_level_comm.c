@@ -127,12 +127,14 @@ static void ( *sctk_network_notify_perform_message_ptr ) ( int, int, int, int ) 
 void sctk_network_notify_perform_message ( int remote_process, int remote_task_id, int polling_task_id, int blocking )
 {
 #ifdef MPC_Fault_Tolerance
-	sctk_ft_no_suspend_start();
+	if(sctk_ft_no_suspend_start())
+        {
 #endif
 	sctk_network_notify_perform_message_ptr ( remote_process, remote_task_id, polling_task_id, blocking );
 
 #ifdef MPC_Fault_Tolerance
 	sctk_ft_no_suspend_end();
+       }
 #endif
 }
 
@@ -153,7 +155,8 @@ static void ( *sctk_network_notify_idle_message_ptr ) () = sctk_network_notify_i
 void sctk_network_notify_idle_message ()
 {
 #ifdef MPC_Fault_Tolerance
-	sctk_ft_no_suspend_start();
+	if(sctk_ft_no_suspend_start())
+        {
 #endif
 
 	sctk_network_notify_idle_message_ptr();
@@ -161,6 +164,7 @@ void sctk_network_notify_idle_message ()
 
 #ifdef MPC_Fault_Tolerance
 	sctk_ft_no_suspend_end();
+       }
 #endif
 }
 
@@ -182,12 +186,14 @@ void sctk_network_notify_any_source_message ( int polling_task_id, int blocking 
 {
 
 #ifdef MPC_Fault_Tolerance
-	sctk_ft_no_suspend_start();
+	if(sctk_ft_no_suspend_start())
+        {
 #endif
 	sctk_network_notify_any_source_message_ptr ( polling_task_id, blocking );
 
 #ifdef MPC_Fault_Tolerance
 	sctk_ft_no_suspend_end();
+        }
 #endif
 }
 
