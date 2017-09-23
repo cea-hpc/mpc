@@ -126,7 +126,7 @@ ompt_callback_t mpcomp_ompt_get_callback(int callback_type)
 #pragma weak ompt_start_tool
 ompt_fns_t* ompt_start_tool( unsigned int omp_version, const char *runtime_version )
 {
-   sctk_info("No ompt_start_tool function from tool\n");
+   sctk_info("No ompt_start_tool function from tool");
    return NULL;
 }
 
