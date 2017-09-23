@@ -121,7 +121,7 @@ typedef struct mpcomp_task_thread_infos_s {
   sctk_atomics_int status;               /**< Thread task's init tag */
   struct mpcomp_task_s *current_task;    /**< Currently running task */
   struct mpcomp_task_list_s *tied_tasks; /**< List of suspended tied tasks */
-  void* opaque /**< use mcslock buffered */
+  void* opaque; /**< use mcslock buffered */
 } mpcomp_task_thread_infos_t;
 
 /**
