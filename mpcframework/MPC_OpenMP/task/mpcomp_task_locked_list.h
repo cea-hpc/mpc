@@ -37,10 +37,16 @@
 #include "mpcomp_alloc.h"
 #include "sctk_debug.h"
 
+#ifdef MPCOMP_USE_MCS_LOCK
+typedef sctk_mcslock_t sctk_mpcomp_task_lock_t;
+#else /* MPCOMP_USE_MCS_LOCK */
+typedef sctk_spinlock_t sctk_mpcomp_task_lock_t; 
+#endif /* MPCOMP_USE_MCS_LOCK */
+
 /** OpenMP task list data structure */
 typedef struct mpcomp_task_list_s {
   sctk_atomics_int nb_elements; /**< Number of tasks in the list */
-  sctk_spinlock_t lock; /**< Lock of the list                                 */
+  sctk_mpcomp_task_lock_t mpcomp_task_lock; /**< Lock of the list                                 */
   struct mpcomp_task_s *head; /**< First task of the list */
   struct mpcomp_task_s *tail; /**< Last task of the list */
   int total; /**< Total number of tasks pushed in the list         */
@@ -121,7 +127,7 @@ mpcomp_task_list_popfromhead(mpcomp_task_list_t *list, int depth) {
 }
 
 static inline mpcomp_task_t *
-mpcomp_task_list_popfromtail(mpcomp_task_list_t *list) {
+mpcomp_task_list_popfromtail(mpcomp_task_list_t *list, int depth) {
   if (!mpcomp_task_list_isempty(list)) {
     mpcomp_task_t *task = list->tail;
 
@@ -178,16 +184,53 @@ mpcomp_task_list_search_task_in_list(mpcomp_task_list_t *list, int depth) {
   return cur_task;
 }
 
-static inline void mpcomp_task_list_lock(mpcomp_task_list_t *list) {
-  sctk_spinlock_lock(&(list->lock));
+static inline void mpcomp_task_list_consummer_lock( mpcomp_task_list_t *list, void* opaque ) 
+{
+#ifdef MPCOMP_USE_MCS_LOCK
+    sctk_mcslock_push_ticket(&( list->mpcomp_task_lock ), (sctk_mcslock_ticket_t *) opaque, SCTK_MCSLOCK_WAIT );
+#else /* MPCOMP_USE_MCS_LOCK */
+  	sctk_spinlock_lock(&(list->mpcomp_task_lock));
+#endif /* MPCOMP_USE_MCS_LOCK */
 }
 
-static inline void mpcomp_task_list_unlock(mpcomp_task_list_t *list) {
-  sctk_spinlock_unlock(&(list->lock));
+static inline void mpcomp_task_list_consummer_unlock( mpcomp_task_list_t *list, void* opaque ) {
+#ifdef MPCOMP_USE_MCS_LOCK
+    sctk_mcslock_trash_ticket( &(list->mpcomp_task_lock), (sctk_mcslock_ticket_t *) opaque );
+#else /* MPCOMP_USE_MCS_LOCK */
+  	sctk_spinlock_unlock(&(list->mpcomp_task_lock));
+#endif /* MPCOMP_USE_MCS_LOCK */
 }
 
-static inline int mpcomp_task_list_trylock(mpcomp_task_list_t *list) {
-  return sctk_spinlock_trylock(&(list->lock));
+static inline int mpcomp_task_list_consummer_trylock(mpcomp_task_list_t *list, void* opaque ) {
+#ifdef MPCOMP_USE_MCS_LOCK
+    not_implemented();
+#else /* MPCOMP_USE_MCS_LOCK */
+  return sctk_spinlock_trylock(&(list->mpcomp_task_lock));
+#endif /* MPCOMP_USE_MCS_LOCK */
+}
+
+static inline void mpcomp_task_list_producer_lock(mpcomp_task_list_t *list, void* opaque) {
+#ifdef MPCOMP_USE_MCS_LOCK
+    sctk_mcslock_push_ticket(&( list->mpcomp_task_lock ), (sctk_mcslock_ticket_t *) opaque, SCTK_MCSLOCK_WAIT );
+#else /* MPCOMP_USE_MCS_LOCK */
+  	sctk_spinlock_lock(&(list->mpcomp_task_lock));
+#endif /* MPCOMP_USE_MCS_LOCK */
+}
+
+static inline void mpcomp_task_list_producer_unlock(mpcomp_task_list_t *list, void* opaque) {
+#ifdef MPCOMP_USE_MCS_LOCK
+    sctk_mcslock_trash_ticket( &(list->mpcomp_task_lock), (sctk_mcslock_ticket_t *) opaque );
+#else /* MPCOMP_USE_MCS_LOCK */
+  	sctk_spinlock_unlock(&(list->mpcomp_task_lock));
+#endif /* MPCOMP_USE_MCS_LOCK */
+}
+
+static inline int mpcomp_task_list_producer_trylock(mpcomp_task_list_t *list, void* opaque) {
+#ifdef MPCOMP_USE_MCS_LOCK
+    not_implemented();
+#else /* MPCOMP_USE_MCS_LOCK */
+  return sctk_spinlock_trylock(&(list->mpcomp_task_lock));
+#endif /* MPCOMP_USE_MCS_LOCK */
 }
 
 #endif /* !__MPCOMP_TASK_LOCKED_LIST_H__ && MPCOMP_TASK */

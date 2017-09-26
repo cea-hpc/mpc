@@ -200,9 +200,8 @@ void __mpcomp_start_openmp_thread( mpcomp_mvp_t *mvp )
     spin_status = ( mvp->spin_node ) ? &( mvp->spin_node->spin_status ) : &( mvp->spin_status );    
     *spin_status = MPCOMP_MVP_STATE_SLEEP;
        
-    __mpcomp_internal_half_barrier_start( mvp );
-    __mpcomp_internal_half_barrier_end( mvp ); 
- 
+    __mpcomp_internal_full_barrier( mvp ); 
+
     sctk_openmp_thread_tls = mvp->threads->next;
     
     if( mvp->threads->next )

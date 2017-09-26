@@ -24,8 +24,6 @@
 #if (!defined(__MPCOMP_TASK_LIST_H__) && defined(MPCOMP_TASK))
 #define __MPCOMP_TASK_LIST_H__
 
-//#define MPCOMP_USE_MCS_LOCK 1
-#define MPCOMP_USE_LOCKFREE_QUEUE 1
 
 #ifdef MPCOMP_USE_LOCKFREE_QUEUE
 	#include "mpcomp_task_lockfree_list.h"

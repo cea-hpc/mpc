@@ -161,7 +161,6 @@ void __mpcomp_task_finalize_deps(mpcomp_task_t *task) {
 
   /* Release Task Deps */
   MPCOMP_TASK_DEP_LOCK_NODE(task_node);
-  sctk_nodebug("Update STATUS !!");
   sctk_atomics_store_int(&(task_node->status), MPCOMP_TASK_DEP_TASK_FINALIZED);
   // task_node->task = NULL;
   MPCOMP_TASK_DEP_UNLOCK_NODE(task_node);
@@ -172,6 +171,7 @@ void __mpcomp_task_finalize_deps(mpcomp_task_t *task) {
     const int prev =
         sctk_atomics_fetch_and_decr_int(&(succ_node->predecessors)) - 1;
     sctk_nodebug("release sucessors ...");
+    task_node->successors = list_elt->next;
 
     if (!prev &&
         sctk_atomics_cas_int(&(succ_node->status),
@@ -179,11 +179,12 @@ void __mpcomp_task_finalize_deps(mpcomp_task_t *task) {
                              MPCOMP_TASK_DEP_TASK_RELEASED) ==
             MPCOMP_TASK_DEP_TASK_NOT_EXECUTE) {
       // TODO MANAGE if_clause
-      __mpcomp_task_process(succ_node->task, 0);
+      sctk_atomics_read_write_barrier();
+      if( succ_node->task )
+         __mpcomp_task_process(succ_node->task, 0);
     }
 
     mpcomp_task_dep_node_unref(succ_node);
-    task_node->successors = list_elt->next;
     sctk_free(list_elt);
   }
 
@@ -277,7 +278,7 @@ void mpcomp_task_with_deps(void (*fn)(void *), void *data,
   sctk_atomics_store_int(&(task_node->status),
                          MPCOMP_TASK_DEP_TASK_NOT_EXECUTE);
 
-  if (!if_clause) {
+  if (if_clause) {
     sctk_atomics_store_int(&(task_node->status),
                            MPCOMP_TASK_DEP_TASK_FINALIZED);
     __mpcomp_task_wait_deps(task_node);

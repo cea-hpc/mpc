@@ -646,7 +646,7 @@ void __mpcomp_init(void) {
         /* Compute the number of cores for this task */
 
         sctk_get_init_vp_and_nbvp(task_rank, &nb_mvps);
-        if( OMP_NUM_THREADS ) nb_mvps = OMP_NUM_THREADS;
+//        if( OMP_NUM_THREADS ) nb_mvps = OMP_NUM_THREADS;
         
         sctk_nodebug("[%d] %s: SIMPLE_MIXED -> #mvps = %d", task_rank, __func__,
                      nb_mvps);
