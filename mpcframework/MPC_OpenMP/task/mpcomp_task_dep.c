@@ -4,6 +4,7 @@
 #include "mpcomp_types.h"
 #include "sctk_runtime_config_struct.h"
 
+#include "mpcomp_core.h"
 #include "mpcomp_task.h"
 #include "mpcomp_task_tree.h"
 #include "mpcomp_task_macros.h"
@@ -204,7 +205,8 @@ void mpcomp_task_with_deps(void (*fn)(void *), void *data,
   thread = (mpcomp_thread_t *)sctk_openmp_thread_tls;
   current_task = (mpcomp_task_t *)MPCOMP_TASK_THREAD_GET_CURRENT_TASK(thread);
 
-  if (!(mpcomp_task_dep_is_flag_with_deps(flags))) {
+  if ( thread->info.num_threads == 1 ||
+       !(mpcomp_task_dep_is_flag_with_deps(flags))) {
     __mpcomp_task(fn, data, cpyfn, arg_size, arg_align, if_clause, flags);
     return;
   }
@@ -269,6 +271,7 @@ void mpcomp_task_with_deps(void (*fn)(void *), void *data,
 
   task_node->task = new_task;
   new_task->task_dep_infos->node = task_node;
+  /* Should be remove TOTEST */
   sctk_atomics_read_write_barrier();
 
   /* task_node->predecessors can be update by release task */
@@ -277,8 +280,10 @@ void mpcomp_task_with_deps(void (*fn)(void *), void *data,
                          MPCOMP_TASK_DEP_TASK_NOT_EXECUTE);
 
   if (!if_clause) {
-    sctk_atomics_store_int(&(task_node->status),
-                           MPCOMP_TASK_DEP_TASK_FINALIZED);
+    /* Task with if_clause can be add to list */
+    if( sctk_atomics_cas_int(&(task_node->status), MPCOMP_TASK_DEP_TASK_NOT_EXECUTE, MPCOMP_TASK_DEP_TASK_FINALIZED )
+      != MPCOMP_TASK_DEP_TASK_NOT_EXECUTE )
+      return; //If clause should be prevent __mpcomp_task_process when deps are resolved -> More info in task 
     __mpcomp_task_wait_deps(task_node);
   }
 

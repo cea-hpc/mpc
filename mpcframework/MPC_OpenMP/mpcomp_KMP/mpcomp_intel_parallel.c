@@ -4,6 +4,9 @@
 #include "mpcomp_intel_types.h"
 #include "mpcomp_intel_wrapper.h"
 #include "mpcomp_intel_global.h"
+#include "mpcomp_core.h"
+
+#include "mpcomp_parallel_region.h"
 
 kmp_int32 __kmpc_ok_to_fork(ident_t *loc) {
   sctk_nodebug("%s: entering...", __func__);

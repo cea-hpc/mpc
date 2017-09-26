@@ -23,6 +23,7 @@
 /* ######################################################################## */
 
 #include "sctk_debug.h"
+#include "mpcomp_core.h"
 #include "mpcomp_types.h"
 #include "sctk_spinlock.h"
 #include "mpcomp_ordered.h"

@@ -66,5 +66,7 @@ __mpcomp_tree_array_node_type_from_node_by_depth( mpcomp_meta_tree_node_t* node,
     return MPCOMP_META_TREE_NODE;
 }
 
+void
+__mpcomp_alloc_openmp_tree_struct( int* shape, int max_depth, const int* cpus_order, const int place_depth, const int place_size, const mpcomp_local_icv_t icvs );
 
 #endif /* __MPCOMP_TREE_ARRAY_H__ */

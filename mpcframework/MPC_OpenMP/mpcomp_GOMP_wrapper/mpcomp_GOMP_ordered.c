@@ -3,6 +3,8 @@
 #include "mpcomp_abi.h"
 #include "mpcomp_GOMP_common.h"
 
+#include "mpcomp_ordered.h"
+
 void mpcomp_GOMP_ordered_start(void) {
   sctk_nodebug("[Redirect GOMP]%s:\tBegin", __func__);
   __mpcomp_ordered_begin();

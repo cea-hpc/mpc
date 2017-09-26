@@ -4,6 +4,9 @@
 #include "mpcomp_intel_global.h"
 #include "mpcomp_intel_reduction.h"
 
+#include "mpcomp_sync.h"
+#include "mpcomp_barrier.h"
+
 int __kmp_determine_reduction_method(
     ident_t *loc, kmp_int32 global_tid, kmp_int32 num_vars, size_t reduce_size,
     void *reduce_data, void (*reduce_func)(void *lhs_data, void *rhs_data),

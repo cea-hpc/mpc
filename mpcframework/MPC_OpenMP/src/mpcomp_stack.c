@@ -21,6 +21,7 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
+#if 0 // NO MORE USED
 #include "sctk_debug.h"
 #include "mpcomp_types.h"
 #include "mpcomp_stack.h"
@@ -69,3 +70,4 @@ void __mpcomp_free_stack(mpcomp_stack_t *s)
 {
      free(s->elements);
 }
+#endif // NO MORE USED

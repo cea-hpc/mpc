@@ -74,7 +74,8 @@ static inline mpcomp_ompt_parallel_info_t* mpcomp_ompt_parallel_info_alloc( void
 	return info;
 }
 
-static inline mpcomp_ompt_thread_info_reset( mpcomp_ompt_thread_info_t* info )
+static inline void 
+mpcomp_ompt_thread_info_reset( mpcomp_ompt_thread_info_t* info )
 {
 	sctk_assert( info );
 	memset( info, 0, sizeof( mpcomp_ompt_thread_info_t ));

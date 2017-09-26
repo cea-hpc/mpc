@@ -71,4 +71,7 @@ static inline uint64_t __mpcomp_internal_loop_get_num_iters_gen( mpcomp_loop_gen
 
 unsigned long long __mpcomp_compute_static_nb_chunks_per_rank_ull(
     unsigned long long, unsigned long long, mpcomp_loop_ull_iter_t *);
+
+int __mpcomp_get_static_nb_chunks_per_rank(int rank, int num_threads,
+                                           mpcomp_loop_long_iter_t *loop);
 #endif /* __MPCOMP_LOOP_CORE_H__ */

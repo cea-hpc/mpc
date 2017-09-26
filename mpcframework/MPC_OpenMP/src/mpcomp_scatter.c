@@ -1,6 +1,6 @@
 #include "mpcomp_types.h"
 #include "mpcomp_alloc.h"
-
+#include "mpcomp_barrier.h"
 #include "mpcomp_spinning_core.h"
 
 #if defined( MPCOMP_OPENMP_3_0 )
@@ -302,10 +302,12 @@ __mpcomp_scatter_instance_pre_init( mpcomp_thread_t* thread, const int num_mvps 
     instance->tree_depth = __mpcomp_scatter_compute_instance_tree_depth( root, num_mvps );
     instance->tree_array_size = __mpcomp_scatter_compute_instance_tree_array_infos( instance, num_mvps );
 
+    //fprintf(stderr, "%s> tree_depth: %d tree_array: %d num_mvps : %d\n", __func__, instance->tree_depth, instance->tree_array_size, num_mvps);
+
     instance->tree_array = mpcomp_alloc( sizeof( mpcomp_generic_node_t ) * instance->tree_array_size );
     sctk_assert( instance->tree_array );
     memset( instance->tree_array, 0, sizeof( mpcomp_generic_node_t ) * instance->tree_array_size );
-
+ 
     /* First Mvp entry in tree_array */
     const int instance_last_stage_size = instance->tree_cumulative[0];
     sctk_assert( !root || instance_last_stage_size <= root->tree_nb_nodes_per_depth[instance->tree_depth-1] );
@@ -504,7 +506,6 @@ __mpcomp_scatter_wakeup( mpcomp_node_t* node )
 
 void __mpcomp_scatter_instance_post_init( mpcomp_thread_t* thread )
 {
-    int i;
     sctk_assert( thread );
     sctk_assert( thread->mvp );
     mpcomp_instance_t* instance;
@@ -512,6 +513,25 @@ void __mpcomp_scatter_instance_post_init( mpcomp_thread_t* thread )
 
     if( ! thread->mvp->instance->buffered )
         __mpcomp_internal_full_barrier( thread->mvp );
+
+#if 0  /* Check victim list for each thread */
+    int  i, total, current, nbList;
+    int* victim_list;
+    const int nb_victims = __mpcomp_task_utils_extract_victims_list( &victim_list, &nbList, 0 );     
+    char string_array[256];
+
+   for( i = 0, total = 0; i < nb_victims; i++ )
+   {
+      current = snprintf( string_array+total, 256-total, " %d", victim_list[i] );
+      total += current;
+   }
+   string_array[total] = '\0';
+
+   const int node_rank = MPCOMP_TASK_MVP_GET_TASK_LIST_NODE_RANK(mvp, 0);
+   fprintf(stderr, "#%d - Me : %d -- Stealing list =%s nbList : %d\n", thread->rank, node_rank, string_array, nbList );
+    __mpcomp_internal_full_barrier( thread->mvp ); 
+#endif /* Check victim list for each thread */
+
     thread->mvp->instance->buffered = 1;
 #if 0
     if( thread->rank == 0 )

@@ -38,6 +38,12 @@
 #include "mpcomp_sections.h"
 #include "mpcomp_core.h"
 
+/* Loop declaration */
+#include "mpcomp_loop_dyn.h"
+#include "mpcomp_loop_guided.h"
+#include "mpcomp_loop_runtime.h"
+#include "mpcomp_loop_static.h"
+
 #include "sctk_thread.h"
 #include "mpcomp_alloc.h"
 
@@ -211,6 +217,88 @@ __mpcomp_convert_topology_to_tree_shape( hwloc_topology_t topology, int* shape_d
     return reverse_shape;
 }
 
+/* MOVE FROM mpcomp_tree_bis.c */
+int __mpcomp_restrict_topology_for_mpcomp( hwloc_topology_t* restrictedTopology, const int omp_threads_expected, const int* cpulist )
+{
+	int i, err, num_mvps, core;	
+	hwloc_topology_t topology;
+	hwloc_bitmap_t final_cpuset;
+	hwloc_obj_t core_obj, pu_obj;
+	
+	final_cpuset = hwloc_bitmap_alloc();
+	topology = sctk_get_topology_object();
+
+	const int taskRank = sctk_get_task_rank();
+	const int taskVp = sctk_get_init_vp_and_nbvp( taskRank, &num_mvps );
+	const int npus = hwloc_get_nbobjs_by_type(topology, HWLOC_OBJ_PU); 
+	const int ncores = hwloc_get_nbobjs_by_type(topology, HWLOC_OBJ_CORE); 
+
+	// Every core must have the same number of PU
+	sctk_assert( npus % ncores  == 0 );
+
+	if( omp_threads_expected > 0 && num_mvps > omp_threads_expected )
+		num_mvps = omp_threads_expected;
+
+    if( cpulist )
+    {
+        /* If smt is enable we use cpu_id as HT_id else core_id 
+         * We can iterate on OBJ_PU directly for both configuration */   
+         assume( omp_threads_expected == num_mvps );
+
+         /* Restrict core_id to core in OMP_PLACES */
+         for( i = 0; i < num_mvps; i++ )
+         {
+             const int cur_pu_id = cpulist[i];
+             pu_obj = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, cur_pu_id);
+             sctk_assert( pu_obj );
+             hwloc_bitmap_or( final_cpuset, final_cpuset, pu_obj->cpuset );
+         }
+    } 
+    else  /* No places */
+    {
+	   const int quot = num_mvps / ncores; 	
+	   const int rest = num_mvps % ncores;
+	
+	   // Get min between ncores and num_mvps
+	   const int ncores_select = ( num_mvps > ncores ) ? ncores : num_mvps;
+
+	   for( core = 0; core < ncores_select; core++ )
+	   {
+	      const int num_pus_select = ( rest > core ) ? quot+1 : quot; 
+		  core_obj = hwloc_get_obj_by_type(topology, HWLOC_OBJ_CORE, taskVp+core );	
+		  sctk_assert( core_obj );
+	
+		  for( i = 0; i < num_pus_select; i ++ )
+		  {
+		     pu_obj = hwloc_get_obj_inside_cpuset_by_type(topology, core_obj->cpuset, HWLOC_OBJ_PU, i);
+			 sctk_assert( pu_obj );
+			 hwloc_bitmap_or( final_cpuset, final_cpuset, pu_obj->cpuset );
+		  }
+	    }
+    }	
+
+	sctk_assert( num_mvps == hwloc_bitmap_weight( final_cpuset ) );	
+
+	if((err = hwloc_topology_init(restrictedTopology)))
+		return -1;
+
+	if((err = hwloc_topology_dup(restrictedTopology,topology)))
+		return -1;
+
+	if((err = hwloc_topology_restrict(*restrictedTopology,final_cpuset,HWLOC_RESTRICT_FLAG_ADAPT_DISTANCES)))
+		return -1;
+
+    hwloc_obj_t prev_pu, next_pu;
+    prev_pu = NULL; // Init hwloc iterator
+    while( next_pu = hwloc_get_next_obj_by_type( *restrictedTopology, HWLOC_OBJ_PU, prev_pu ) )
+    {
+       prev_pu = next_pu;
+    }
+    hwloc_bitmap_free( final_cpuset );
+	return 0;	
+}
+
+
 static hwloc_topology_t
 __mpcomp_prepare_omp_task_tree_init( const int num_mvps, const int* cpus_order ) 
 {
@@ -224,7 +312,7 @@ __mpcomp_prepare_omp_task_tree_init( const int num_mvps, const int* cpus_order )
 }
 
 static void
-__mpcomp_init_omp_task_tree( const int num_mvps, const int* shape, const int* cpus_order )
+__mpcomp_init_omp_task_tree( const int num_mvps, int* shape, const int* cpus_order, const mpcomp_local_icv_t icvs )
 {
 	 int i,  max_depth, place_depth, place_size;
 	 int * tree_shape;
@@ -263,7 +351,7 @@ __mpcomp_init_omp_task_tree( const int num_mvps, const int* shape, const int* cp
         place_size = 1;
      }
 
-	 __mpcomp_alloc_openmp_tree_struct( tree_shape, max_depth, cpus_order, place_depth, place_size );	
+	 __mpcomp_alloc_openmp_tree_struct( tree_shape, max_depth, cpus_order, place_depth, place_size, icvs );	
 }
 
 /*
@@ -624,7 +712,10 @@ void __mpcomp_init(void) {
   /* Need to initialize the current team */
   if (sctk_openmp_thread_tls == NULL) {
  
+
+#if OMPT_SUPPORT
 		mpcomp_ompt_pre_init();
+#endif /* OMPT_SUPPORT */
 
     mpcomp_team_t *seq_team_info;
     mpcomp_instance_t *seq_instance;
@@ -669,7 +760,6 @@ void __mpcomp_init(void) {
         /* Compute the number of cores for this task */
 
         sctk_get_init_vp_and_nbvp(task_rank, &nb_mvps);
-        
         sctk_nodebug("[%d] %s: SIMPLE_MIXED -> #mvps = %d", task_rank, __func__,
                      nb_mvps);
 
@@ -740,7 +830,9 @@ void __mpcomp_init(void) {
     icvs.active_levels_var = 0;
     icvs.levels_var = 0;
 
+#if OMPT_SUPPORT
   	 mpcomp_ompt_post_init();
+#endif /* MPT_SUPPORT */
 
     /* Allocate information for the sequential region */
     t = (mpcomp_thread_t *)mpcomp_alloc(sizeof(mpcomp_thread_t));
@@ -772,7 +864,6 @@ void __mpcomp_init(void) {
     if( OMP_PLACES_LIST )
     {
        places_nb_mvps = mpcomp_places_get_topo_info( OMP_PLACES_LIST, &shape, &cpus_order );    
-       mpcomp_display_places( OMP_PLACES_LIST );
        assert( places_nb_mvps <= nb_mvps );
        nb_mvps = places_nb_mvps;
     }
@@ -781,7 +872,7 @@ void __mpcomp_init(void) {
         shape = NULL; cpus_order = NULL;
     }
    
-    __mpcomp_init_omp_task_tree( nb_mvps, shape, cpus_order );
+    __mpcomp_init_omp_task_tree( nb_mvps, shape, cpus_order, icvs );
 	
 #if MPCOMP_TASK
 //    mpcomp_task_team_infos_init(team_info, instance->tree_depth);
@@ -873,7 +964,7 @@ void __mpcomp_in_order_scheduler( mpcomp_thread_t* thread )
         case MPCOMP_COMBINED_STATIC_LOOP:
             break;
         case MPCOMP_COMBINED_DYN_LOOP:
-            __mpcomp_dynamic_loop_end_nowait(thread);
+            __mpcomp_dynamic_loop_end_nowait();
             break;
         default:
             not_implemented();

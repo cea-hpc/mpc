@@ -38,6 +38,14 @@
 #include "sctk_debug.h"
 
 #ifdef MPCOMP_USE_MCS_LOCK
+#include "sctk_mcslock.h"
+#else /* MPCOMP_USE_MCS_LOCK */
+#include "sctk_spinlock.h"
+#endif /* MPCOMP_USE_MCS_LOCK */
+
+#define MPCOMP_TASK_LOCKFREE_CACHELINE_PADDING 128
+
+#ifdef MPCOMP_USE_MCS_LOCK
 typedef sctk_mcslock_t sctk_mpcomp_task_lock_t;
 #else /* MPCOMP_USE_MCS_LOCK */
 typedef sctk_spinlock_t sctk_mpcomp_task_lock_t; 

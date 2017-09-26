@@ -15,9 +15,60 @@
 
 #include "mpcomp_task_stealing.h"
 
+void mpcomp_task_ref_parent_task(mpcomp_task_t *task);
+void mpcomp_task_unref_parent_task(mpcomp_task_t *task);
+
 #include "ompt.h"
 extern ompt_callback_t* OMPT_Callbacks;
 
+/* Missing forward declaration */
+int mpcomp_task_get_victim(int, int, mpcomp_tasklist_type_t );
+void mpcomp_taskwait( void );
+void mpcomp_taskyield( void );
+
+
+/* FOR DEBUG */
+static inline int __mpcomp_task_utils_extract_victims_list( int** victims_list, int* nbList, const int type )
+{
+   int i, nbVictims;
+   int* __victims_list;
+
+   sctk_assert(sctk_openmp_thread_tls); 
+   mpcomp_thread_t* thread = (mpcomp_thread_t *) sctk_openmp_thread_tls;
+
+   mpcomp_mvp_t* mvp = thread->mvp;
+   sctk_assert(mvp);
+
+   sctk_assert(thread->instance);
+   mpcomp_team_t* team = thread->instance->team;
+   sctk_assert(team);
+
+   const int larcenyMode = MPCOMP_TASK_TEAM_GET_TASK_LARCENY_MODE(team);
+   const int isMonoVictim = (larcenyMode == MPCOMP_TASK_LARCENY_MODE_RANDOM ||
+                            larcenyMode == MPCOMP_TASK_LARCENY_MODE_PRODUCER);
+
+   const int tasklistDepth = MPCOMP_TASK_TEAM_GET_TASKLIST_DEPTH(team, type);
+   const int nbTasklists = (!tasklistDepth) ? 1 : thread->instance->tree_nb_nodes_per_depth[tasklistDepth];
+   *nbList = nbTasklists;
+
+   if( nbTasklists > 1 )
+   {
+      int rank = MPCOMP_TASK_MVP_GET_TASK_LIST_NODE_RANK(mvp, type);
+      nbVictims = (isMonoVictim) ? 1 : nbTasklists - 1; 
+      __victims_list = ( int* ) malloc( sizeof( int ) * nbVictims ); 
+      for (i = 1; i < nbVictims + 1; i++)
+         __victims_list[i-1] = mpcomp_task_get_victim(rank, i, type);
+   } 
+   else
+   {
+      nbVictims = 0;    
+      __victims_list = NULL;
+   }
+
+   *victims_list = __victims_list;
+   return nbVictims;
+}
+ 
 // Round up a size to a power of two specified by val
 // Used to insert padding between structures co-allocated using a single
 // malloc() call
@@ -64,7 +115,7 @@ static inline int mpcomp_task_no_deps_is_serialized(mpcomp_thread_t *thread) {
        mpcomp_task_property_isset(current_task->property, MPCOMP_TASK_FINAL)) ||
       (thread->info.num_threads == 1) ||
       (current_task &&
-       current_task->depth > 8 /*t->instance->team->task_nesting_max*/)) {
+       current_task->depth > 16 /*t->instance->team->task_nesting_max*/)) {
     return 1;
   }
 
@@ -203,7 +254,7 @@ static inline void mpcomp_task_thread_infos_init(struct mpcomp_thread_s *thread)
 #endif /* MPCOMP_USE_TASKDEP */
 	
 
-#if 1 //OMPT_SUPPORT
+#if OMPT_SUPPORT
 	if( mpcomp_ompt_is_enabled() )
 	{
 		ompt_task_type_t task_type = ompt_task_implicit;
@@ -251,9 +302,12 @@ __mpcomp_task_node_list_init( struct mpcomp_node_s* parent, struct mpcomp_node_s
     const int task_vdepth = MPCOMP_TASK_TEAM_GET_TASKLIST_DEPTH( parent->instance->team, type );
     const int child_vdepth = child->depth - parent->instance->root->depth;
  
-    if( child_vdepth < task_vdepth + 1 )
+    if( child_vdepth < task_vdepth )
+    {
+        //fprintf(stderr, "%s: SKIPPED NOLIST @depth: %d -- child depth: %d\n", __func__, task_vdepth, child_vdepth );
         return 0;
-    
+    }
+
     infos = &( child->task_infos );
 
     if( parent->depth >= task_vdepth )
@@ -262,6 +316,7 @@ __mpcomp_task_node_list_init( struct mpcomp_node_s* parent, struct mpcomp_node_s
         list = parent->task_infos.tasklist[type]; 
         sctk_assert( list );
         tasklistNodeRank = parent->task_infos.tasklistNodeRank[type];
+//        fprintf(stderr, "Found tasklist %d @depth : %d\n", tasklistNodeRank, parent->depth );
     }
     else
     {
@@ -271,6 +326,7 @@ __mpcomp_task_node_list_init( struct mpcomp_node_s* parent, struct mpcomp_node_s
         sctk_assert(list);
         mpcomp_task_list_reset(list);
         tasklistNodeRank = child->tree_array_rank; 
+  //      fprintf(stderr, "%s: Create List at depth ... %d -- child depth: %d\n", __func__, task_vdepth, child_vdepth );
     }
 
     infos->tasklist[type] = list; 
@@ -288,11 +344,13 @@ __mpcomp_task_mvp_list_init( struct mpcomp_node_s* parent, struct mpcomp_mvp_s* 
     mpcomp_task_mvp_infos_t* infos;
     
     infos = &( child->task_infos );
+    const int child_vdepth = child->depth - parent->instance->root->depth;
 
     if( parent->task_infos.tasklist[type] )
     {
         allocation = 0;
         list = parent->task_infos.tasklist[type]; 
+        //fprintf(stderr, "Found tasklist %d @depth : %d\n", tasklistNodeRank, parent->depth );
         tasklistNodeRank = parent->task_infos.tasklistNodeRank[type];
     }
     else
@@ -302,6 +360,7 @@ __mpcomp_task_mvp_list_init( struct mpcomp_node_s* parent, struct mpcomp_mvp_s* 
         sctk_assert(list);
         mpcomp_task_list_reset(list);
         sctk_assert( child->threads );
+        //fprintf(stderr, "%s: Create List at depth ... %d\n", __func__, child_vdepth );
         tasklistNodeRank = child->threads->tree_array_rank; 
     }
     
@@ -320,7 +379,13 @@ __mpcomp_task_root_list_init( struct mpcomp_node_s* root, const mpcomp_tasklist_
 
     const int task_vdepth = MPCOMP_TASK_TEAM_GET_TASKLIST_DEPTH( root->instance->team, type );
    
-    if( task_vdepth > 0 ) return 0; 
+    if( task_vdepth != 0 ) 
+    {
+        //fprintf(stderr, "%s: SKIPPED NOLIST @depth: %d -- child depth: %d\n", __func__, task_vdepth, 0 );
+        return 0; 
+    }
+    
+    //fprintf(stderr, "%s: Create List at depth ... %d -- child depth: %d\n", __func__, task_vdepth, 0 );
 
     infos = &( root->task_infos );
 
@@ -425,15 +490,16 @@ static inline void mpcomp_task_team_infos_init(struct mpcomp_team_s *team,
 
   memset(&(team->task_infos), 0, sizeof(mpcomp_task_team_infos_t));
 
+  
   const int new_tasks_depth_value =
       sctk_runtime_config_get()->modules.openmp.omp_new_task_depth;
   const int untied_tasks_depth_value =
       sctk_runtime_config_get()->modules.openmp.omp_untied_task_depth;
   const int omp_task_nesting_max =
       sctk_runtime_config_get()->modules.openmp.omp_task_nesting_max;
-  const int omp_task_larceny_mode =
-      sctk_runtime_config_get()->modules.openmp.omp_task_larceny_mode;
-
+  const int omp_task_larceny_mode = sctk_runtime_config_get()->modules.openmp.omp_task_larceny_mode;
+  //const int omp_task_larceny_mode = MPCOMP_TASK_LARCENY_MODE_RANDOM_ORDER;
+ 
   /* Ensure tasks lists depths are correct */
   const int new_tasks_depth =
       (new_tasks_depth_value < depth) ? new_tasks_depth_value : depth;

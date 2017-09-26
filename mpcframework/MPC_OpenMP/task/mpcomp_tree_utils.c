@@ -59,35 +59,53 @@ int mpcomp_get_neighbour( const int globalRank, const int index )
     sctk_assert( thread->instance );
     instance = thread->instance;
 
-    path = mpcomp_get_tree_array_ancestor_path( instance, globalRank, &currentDepth ); 
+    /* Shift ancestor array 0-depth -> 1-depth : Root is depth 0 */
+    path = mpcomp_get_tree_array_ancestor_path( instance, globalRank, &currentDepth ) +1; 
     sctk_assert( path && currentDepth > 0 );
 
-    treeShape = instance->tree_base;
+    treeShape = instance->tree_base + 1;
     sctk_assert( treeShape );
     treeNumNodePerDepth = instance->tree_nb_nodes_per_depth;
     sctk_assert( treeNumNodePerDepth );
+
+#if 0 /* DEBUG PRINT */
+    char __treeShape_string[256], __treeNumNodePerDepth_string[256], __path_string[256];
+    int _a, _b, _c, _tota, _totb, _totc;
+
+//    currentDepth++;
+
+    for( i = 0, _tota = 0, _totb = 0, _totc = 0; i < currentDepth; i++ )  
+    {
+       _a = snprintf( __treeShape_string+_tota, 256-_tota, " %d", treeShape[currentDepth - i -1] );
+       _b = snprintf( __treeNumNodePerDepth_string+_totb, 256-_totb, " %d", treeNumNodePerDepth[i] );
+       _c = snprintf( __path_string+_totc, 256-_totc, " %d", path[currentDepth - i -1] );
+       _tota += _a; _totb += _b; _totc += _c;
+    }
+
+    fprintf(stderr, "%s:%d << %d >> treebase: %s nodePerDepth: %s, path : %s\n", __func__, __LINE__, thread->tree_array_rank, __treeShape_string, __treeNumNodePerDepth_string, __path_string );
+#endif /* DEBUG PRINT */
 
     int r = index;
     int id = 0;
     int firstRank = 0;
     int nbSubleaves = 1;
     int v[currentDepth], res[currentDepth];
-
-    for (i = 0; i < currentDepth; i++) 
+    
+    for( i = 0; i < currentDepth; i++ ) 
     {
         sctk_assert( currentDepth - 1 - i >= 0 ); 
         sctk_assert( currentDepth - 1 - i < thread->father_node->depth + 1 );
         sctk_assert( i <= thread->father_node->depth + 1 );
 
-        const int base = treeShape[currentDepth - 1 - i];
+        const int base = treeShape[currentDepth - i -1];
         const int level_size = treeNumNodePerDepth[i];
-
+        
         /* Somme de I avec le codage de 0 dans le vecteur de l'arbre */
         v[i] = r % base;
         r /= base;
 
         /* Addition sans retenue avec le vecteur de n */
-        res[i] = (path[currentDepth - 1 - i] + v[i]) % base;
+        res[i] = (path[currentDepth -1 - i] + v[i]) % base;
 
         /* Calcul de l'identifiant du voisin dans l'arbre */
         id += res[i] * nbSubleaves;

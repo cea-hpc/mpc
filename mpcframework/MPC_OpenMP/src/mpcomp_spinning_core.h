@@ -7,6 +7,9 @@
 #include "mpcomp_task_utils.h"
 #endif /* defined( MPCOMP_OPENMP_3_0 ) */
 
+void __mpcomp_start_openmp_thread( mpcomp_mvp_t *mvp );
+mpcomp_mvp_t* __mpcomp_wakeup_node( mpcomp_node_t* node );
+void mpcomp_slave_mvp_node( mpcomp_mvp_t *mvp );
 
 static inline void
 __mpcomp_instance_tree_array_root_init( struct mpcomp_node_s* root, mpcomp_instance_t* instance, const int nthreads )
@@ -27,9 +30,8 @@ __mpcomp_instance_tree_array_root_init( struct mpcomp_node_s* root, mpcomp_insta
     meta_node->type = MPCOMP_CHILDREN_NODE;
 
     #if defined( MPCOMP_OPENMP_3_0 ) 
-        __mpcomp_task_root_infos_init( root );
+    __mpcomp_task_root_infos_init( root );
     #endif /* defined( MPCOMP_OPENMP_3_0 )  */
-
 }
 
 static inline void 
@@ -66,13 +68,12 @@ __mpcomp_instance_tree_array_node_init(struct mpcomp_node_s* parent, struct mpco
     {
         child->tree_array_ancestor_path[i] = parent->tree_array_ancestor_path[i];
     }
-
     child->tree_array_ancestor_path[vdepth-1] = parent->tree_array_rank;
+    child->tree_array_ancestor_path[vdepth] = child->tree_array_rank;
 
 #if defined( MPCOMP_OPENMP_3_0 ) 
     __mpcomp_task_node_infos_init( parent, child );
 #endif /* defined( MPCOMP_OPENMP_3_0 ) */
-    
 }
 
 static inline void 
@@ -97,10 +98,12 @@ __mpcomp_instance_tree_array_mvp_init( struct mpcomp_node_s* parent, struct mpco
     sctk_assert( mvp->threads->tree_array_ancestor_path );
     memset( mvp->threads->tree_array_ancestor_path, 0,  ( vdepth + 1 ) * sizeof( int ) );
     
-    for( i = 0; i < vdepth -1; i++ )
+    for( i = 0; i < vdepth-1; i++ )
+    {
        mvp->threads->tree_array_ancestor_path[i] = parent->tree_array_ancestor_path[i];
-
-    mvp->threads->tree_array_ancestor_path[vdepth] = parent->tree_array_rank;
+    }
+    mvp->threads->tree_array_ancestor_path[vdepth-1] = parent->tree_array_rank;
+    mvp->threads->tree_array_ancestor_path[vdepth] = mvp->threads->tree_array_rank;
 
 #if defined( MPCOMP_OPENMP_3_0 ) 
     __mpcomp_task_mvp_infos_init( parent, mvp );

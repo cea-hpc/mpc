@@ -31,11 +31,13 @@
 #include "mpcomp_intel_tasking.h"
 #include "mpcomp_taskgroup.h"
 
+#include "mpcomp_core.h"
+
 #if MPCOMP_TASK
 kmp_int32 __kmpc_omp_task(ident_t *loc_ref, kmp_int32 gtid,
                           kmp_task_t *new_task) {
   struct mpcomp_task_s *mpcomp_task =
-      (char *)new_task - sizeof(struct mpcomp_task_s);
+      (struct mpcomp_task_s * ) ( (char *)new_task - sizeof(struct mpcomp_task_s));
   // TODO: Handle final clause
   __mpcomp_task_process(mpcomp_task, true);
   return (kmp_int32)0;
@@ -99,8 +101,8 @@ kmp_task_t *__kmpc_omp_task_alloc(ident_t *loc_ref, kmp_int32 gtid,
 void __kmpc_omp_task_begin_if0(ident_t *loc_ref, kmp_int32 gtid,
                                kmp_task_t *task) {
   mpcomp_thread_t *t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
-  struct mpcomp_task_s *mpcomp_task =
-      (char *)task - sizeof(struct mpcomp_task_s);
+  struct mpcomp_task_s *mpcomp_task = (struct mpcomp_task_s *) (
+      (char *)task - sizeof(struct mpcomp_task_s));
   sctk_assert(t);
   mpcomp_task->icvs = t->info.icvs;
   mpcomp_task->prev_icvs = t->info.icvs;
@@ -110,8 +112,8 @@ void __kmpc_omp_task_begin_if0(ident_t *loc_ref, kmp_int32 gtid,
 void __kmpc_omp_task_complete_if0(ident_t *loc_ref, kmp_int32 gtid,
                                   kmp_task_t *task) {
   mpcomp_thread_t *t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
-  struct mpcomp_task_s *mpcomp_task =
-      (char *)task - sizeof(struct mpcomp_task_s);
+  struct mpcomp_task_s *mpcomp_task = (struct mpcomp_task_s *)
+      ((char *)task - sizeof(struct mpcomp_task_s));
   sctk_assert(t);
   mpcomp_taskgroup_del_task(mpcomp_task);
   mpcomp_task_unref_parent_task(mpcomp_task);
@@ -122,8 +124,8 @@ void __kmpc_omp_task_complete_if0(ident_t *loc_ref, kmp_int32 gtid,
 kmp_int32 __kmpc_omp_task_parts(ident_t *loc_ref, kmp_int32 gtid,
                                 kmp_task_t *new_task) {
   // TODO: Check if this is the correct way to implement __kmpc_omp_task_parts
-  struct mpcomp_task_s *mpcomp_task =
-      (char *)new_task - sizeof(struct mpcomp_task_s);
+  struct mpcomp_task_s *mpcomp_task = (struct mpcomp_task_s *)
+      ((char *)new_task - sizeof(struct mpcomp_task_s));
   __mpcomp_task_process(mpcomp_task, true);
   return (kmp_int32)0;
 }

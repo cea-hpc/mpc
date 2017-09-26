@@ -245,7 +245,7 @@ typedef struct mpcomp_instance_s
   	int *tree_nb_nodes_per_depth;
     int *tree_first_node_per_depth;
 
-    struct mpcomp_thread_t* thread_ancestor;
+    mpcomp_thread_t* thread_ancestor;
 
 #if MPCOMP_TASK
     /** Task information of this instance */
@@ -408,7 +408,7 @@ typedef struct  mpcomp_mvp_saved_context_s
     struct mpcomp_node_s* father;
     struct mpcomp_node_s* node;
     unsigned int rank;
-    struct mpcomp_node_chain_elt_t* prev;
+    struct mpcomp_mvp_saved_context_s* prev;
 } mpcomp_mvp_saved_context_t;
 
 typedef union mpcomp_node_gen_ptr_u

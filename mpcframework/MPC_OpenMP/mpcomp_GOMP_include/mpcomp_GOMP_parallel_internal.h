@@ -25,5 +25,10 @@ void mpcomp_internal_GOMP_parallel_sections_start(void (*fn)(void *),
 void mpcomp_start_sections_parallel_region(int arg_num_threads,
                                            void *(*func)(void *), void *shared,
                                            int nb_sections);
+void mpcomp_internal_GOMP_parallel_loop_runtime_start(void (*fn)(void *),
+                                                      void *data,
+                                                      unsigned num_threads,
+                                                      long start, long end,
+                                                      long incr);
 
 #endif /* __MPCOMP_GOMP_PARALLEL_H__ */

@@ -43,4 +43,10 @@ bool mpcomp_internal_GOMP_loop_ull_ordered_guided_start(
     unsigned long long incr, unsigned long long chunk_size,
     unsigned long long *istart, unsigned long long *iend);
 
+bool mpcomp_internal_GOMP_loop_ull_ordered_runtime_start(
+    bool up, unsigned long long start, unsigned long long end,
+    unsigned long long incr, unsigned long long *istart,
+    unsigned long long *iend);
+
+
 #endif /* __MPCOMP_GOMP_LOOP_ULL_INTERNAL_H__ */

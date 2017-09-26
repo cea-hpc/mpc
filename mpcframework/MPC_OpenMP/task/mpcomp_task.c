@@ -42,10 +42,20 @@
 #include "sctk_atomics.h"
 #include "mpcomp_task_dep.h"
 #include "mpcomp_taskgroup.h"
+#include "mpcomp_core.h" /* mpcomp_init */
 
 #include "ompt.h"
 #include "mpcomp_ompt_general.h"
 extern ompt_callback_t* OMPT_Callbacks;
+
+//#define MPC_OPENMP_PERF_TASK_COUNTERS
+ 
+#ifdef MPC_OPENMP_PERF_TASK_COUNTERS
+  static sctk_atomics_int __private_perf_call_steal = SCTK_ATOMICS_INT_T_INIT(0);
+  static sctk_atomics_int __private_perf_success_steal = SCTK_ATOMICS_INT_T_INIT(0);
+  static sctk_atomics_int __private_perf_create_task = SCTK_ATOMICS_INT_T_INIT(0);
+  static sctk_atomics_int __private_perf_executed_task = SCTK_ATOMICS_INT_T_INIT(0);
+#endif /* MPC_OPENMP_PERF_TASK_COUNTERS */
 
 typedef uint32_t (*kmp_routine_entry_t)(uint32_t, void *);
 
@@ -63,7 +73,7 @@ typedef struct kmp_task { /* GEH: Shouldn't this be aligned somehow? */
 } kmp_task_t;
 
 void __mpcomp_task_intel_wrapper(void *task) {
-  kmp_task_t *kmp_task_addr = (char *)task + sizeof(mpcomp_task_t);
+  kmp_task_t *kmp_task_addr = (kmp_task_t* ) ( (char*) task + sizeof(mpcomp_task_t) );
   kmp_task_addr->routine(0, kmp_task_addr);
 }
 
@@ -86,6 +96,10 @@ void __mpcomp_task_execute(mpcomp_task_t *task) {
 
   /* Saved thread current task */
   saved_current_task = MPCOMP_TASK_THREAD_GET_CURRENT_TASK(thread);
+
+#ifdef MPC_OPENMP_PERF_TASK_COUNTERS
+   sctk_atomics_incr_int( &__private_perf_executed_task );
+#endif /* MPC_OPENMP_PERF_TASK_COUNTERS */
 
    #if OMPT_SUPPORT
    if( mpcomp_ompt_is_enabled() )
@@ -275,16 +289,19 @@ mpcomp_task_list_t *__mpcomp_task_try_delay(bool if_clause) {
   // No list for a mvp should be an error ??
   if (!(mvp_task_list =
             mpcomp_task_get_list(node_rank, MPCOMP_TASK_TYPE_NEW))) {
+    abort();
     return NULL;
   }
 
-  // To must delayed tasks
+  const int __max_delayed = sctk_runtime_config_get()->modules.openmp.mpcomp_task_max_delayed;
+
+  // Too much delayed tasks
   if (sctk_atomics_fetch_and_incr_int(&(mvp_task_list->nb_elements)) >=
-      MPCOMP_TASK_MAX_DELAYED) {
+      __max_delayed) {
     sctk_atomics_decr_int(&(mvp_task_list->nb_elements));
     return NULL;
   }
-
+  //fprintf(stderr, "PUSH IN QUEUE : %p  -- %p \n", sctk_openmp_thread_tls, mvp_task_list );
   return mvp_task_list;
 }
 
@@ -295,6 +312,10 @@ void __mpcomp_task_process(mpcomp_task_t *new_task, bool if_clause) {
   /* Retrieve the information (microthread structure and current region) */
   sctk_assert(sctk_openmp_thread_tls);
   thread = (mpcomp_thread_t *)sctk_openmp_thread_tls;
+
+#ifdef MPC_OPENMP_PERF_TASK_COUNTERS
+   sctk_atomics_incr_int( &__private_perf_create_task );
+#endif /* MPC_OPENMP_PERF_TASK_COUNTERS */
 
   mvp_task_list = __mpcomp_task_try_delay(if_clause);
 
@@ -331,6 +352,7 @@ void __mpcomp_task(void (*fn)(void *), void *data,
 
   __mpcomp_init();
 
+
   new_task = __mpcomp_task_alloc(fn, data, cpyfn, arg_size, arg_align,
                                  if_clause, flags, 0 /* no deps */);
   __mpcomp_task_process(new_task, if_clause);
@@ -362,7 +384,7 @@ static mpcomp_task_t *mpcomp_task_steal(mpcomp_task_list_t *list)
 
 /* Return the ith victim for task stealing initiated from element at
  * 'globalRank' */
-static inline int mpcomp_task_get_victim(int globalRank, int index,
+int mpcomp_task_get_victim(int globalRank, int index,
                                          mpcomp_tasklist_type_t type) {
   int victim;
 
@@ -418,6 +440,10 @@ static struct mpcomp_task_s *__mpcomp_task_larceny(void) {
   struct mpcomp_team_s *team;
   struct mpcomp_task_list_s *list;
 
+#ifdef MPC_OPENMP_PERF_TASK_COUNTERS
+  sctk_atomics_incr_int( &__private_perf_call_steal );
+#endif /* MPC_OPENMP_PERF_TASK_COUNTERS */
+
   /* Retrieve the information (microthread structure and current region) */
   sctk_assert(sctk_openmp_thread_tls);
   thread = (mpcomp_thread_t *) sctk_openmp_thread_tls;
@@ -442,13 +468,15 @@ static struct mpcomp_task_s *__mpcomp_task_larceny(void) {
 
     // sctk_nodebug( "tasklistDepth: %d -- nbTasklists: %d", tasklistDepth,
     // nbTasklists);
-
     /* If there are task lists in which we could steal tasks */
     if ( nbTasklists > 1) {
 
       /* Try to steal inside the last stolen list*/
       if ((list = MPCOMP_TASK_MVP_GET_LAST_STOLEN_TASK_LIST(mvp, type))) {
         if ((task = mpcomp_task_steal(list))) {
+#ifdef MPC_OPENMP_PERF_TASK_COUNTERS
+         sctk_atomics_incr_int( &__private_perf_success_steal );
+#endif /* MPC_OPENMP_PERF_TASK_COUNTERS */
           return task;
         }
       }
@@ -458,13 +486,16 @@ static struct mpcomp_task_s *__mpcomp_task_larceny(void) {
       int nbVictims = (isMonoVictim) ? 1 : nbTasklists - 1;
 
       /* Look for a task in all victims lists */
-      for (i = 1; i < nbVictims + 1; i++) {
+      for (i = 1; i < nbVictims+1; i++) {
         int victim = mpcomp_task_get_victim(rank, i, type);
         sctk_assert(victim != rank);
         list = mpcomp_task_get_list(victim, type);
         task = mpcomp_task_steal(list);
         if (task) {
           MPCOMP_TASK_MVP_SET_LAST_STOLEN_TASK_LIST(mvp, type, list);
+#ifdef MPC_OPENMP_PERF_TASK_COUNTERS
+         sctk_atomics_incr_int( &__private_perf_success_steal );
+#endif /* MPC_OPENMP_PERF_TASK_COUNTERS */
           return task;
         }
       }
@@ -516,6 +547,17 @@ void __internal_mpcomp_task_schedule( mpcomp_thread_t* thread, mpcomp_mvp_t* mvp
         mpcomp_task_list_consummer_unlock(list,  thread->task_infos.opaque);
     }
 
+#if 0 /* Task get from thead != 0 in centralized queue ar count as a larceny */
+#ifdef MPC_OPENMP_PERF_TASK_COUNTERS
+     /* Retrieve informations about task lists */
+    const int tasklistDepth = MPCOMP_TASK_TEAM_GET_TASKLIST_DEPTH(team, type);
+    const int nbTasklists = (!tasklistDepth) ? 1 : thread->instance->tree_nb_nodes_per_depth[tasklistDepth];
+    if( task && thread->rank > 0 && nbTasklists == 1 )
+       sctk_atomics_incr_int( &__private_perf_success_steal );
+#endif /* MPC_OPENMP_PERF_TASK_COUNTERS */
+#endif
+      
+
     /* If no task found previously, try to thieve a task somewhere */
     if (task == NULL) task = __mpcomp_task_larceny();
 
@@ -532,31 +574,6 @@ void __internal_mpcomp_task_schedule( mpcomp_thread_t* thread, mpcomp_mvp_t* mvp
 #endif /* MPCOMP_USE_TASKDEP */
 
     mpcomp_task_unref_parent_task(task);
-}
-
-void mpcomp_task_schedule( void )
-{
-    mpcomp_mvp_t *mvp;
-    mpcomp_team_t *team;
-    mpcomp_thread_t *thread;
-
-    /* Get thread from current tls */
-    thread = (mpcomp_thread_t *)sctk_openmp_thread_tls;
-    sctk_assert( thread );
-
-    /* Get mvp father from thread */
-    mvp = thread->mvp;
-
-    /* Sequencial execution no delayed task */
-    if( !mvp ) return;
-
-    /* Get team from thread */
-    sctk_assert( thread->instance );
-    team = thread->instance->team;
-    sctk_assert( team );
-
-    __internal_mpcomp_task_schedule( thread, mvp, team ); 
-    return;
 }
 
 void mpcomp_taskwait(void) 
@@ -579,7 +596,48 @@ void mpcomp_taskwait(void)
       mpcomp_task_schedule();
     }
   }
+
+#ifdef MPC_OPENMP_PERF_TASK_COUNTERS
+    const int a = sctk_atomics_load_int( &__private_perf_call_steal );
+    const int b = sctk_atomics_load_int( &__private_perf_success_steal );
+    const int c = sctk_atomics_load_int( &__private_perf_create_task );
+    const int d = sctk_atomics_load_int( &__private_perf_executed_task );
+//    if( 0 && a &&  !(a % 10000) )
+    if( 1 && !omp_thread_tls->rank )
+       fprintf(stderr, "try steal : %d - success steal : %d -- total tasks : %d -- performed tasks : %d\n", a,b,c,d);
+#endif /* MPC_OPENMP_PERF_TASK_COUNTERS */
 }
+
+void mpcomp_task_schedule( void )
+{
+    mpcomp_mvp_t *mvp;
+    mpcomp_team_t *team;
+    mpcomp_thread_t *thread;
+
+
+    /* Get thread from current tls */
+    thread = (mpcomp_thread_t *)sctk_openmp_thread_tls;
+    sctk_assert( thread );
+
+    /* Get mvp father from thread */
+    mvp = thread->mvp;
+
+    /* Sequencial execution no delayed task */
+    if( !mvp ) return;
+
+    /* Get team from thread */
+    sctk_assert( thread->instance );
+    team = thread->instance->team;
+    sctk_assert( team );
+
+    __internal_mpcomp_task_schedule( thread, mvp, team ); 
+
+    /* schedule task can produce task ... */
+    mpcomp_taskwait();
+    
+    return;
+}
+
 
 /*
  * The current may be suspended in favor of execution of

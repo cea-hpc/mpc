@@ -198,10 +198,6 @@ void ____mpcomp_barrier(void);
 						    long chunk_size,
 						    long chunk_num, long *from,
 						    long *to);
-  void __mpcomp_static_schedule_get_specific_chunk_ull (unsigned long long lb, unsigned long long b, unsigned long long incr,
-						    unsigned long long chunk_size,
-						    unsigned long long chunk_num, unsigned long long *from,
-						    unsigned long long *to);
 #endif
 
   int __mpcomp_static_loop_begin (long lb, long b, long incr, long chunk_size,

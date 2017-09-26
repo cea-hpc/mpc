@@ -6,6 +6,7 @@
 #include "mpcomp_GOMP_loop_internal.h"
 #include "mpcomp_GOMP_parallel_internal.h"
 
+#include "mpcomp_parallel_region.h"
 #include "mpcomp_GOMP_versionning.h"
 
 /* Include de MPCOMP function protos */
@@ -386,5 +387,5 @@ void mpcomp_GOMP_parallel_loop_guided(void (*fn)(void *), void *data,
 void mpcomp_GOMP_parallel_loop_runtime(void (*fn)(void *), void *data,
                                        unsigned num_threads, long start,
                                        long end, long incr, unsigned flags) {
-  __mpcomp_start_parallel_runtime_loop(fn, data, num_threads, start, end, incr);
+  __mpcomp_start_parallel_runtime_loop(fn, data, num_threads, start, end, incr, 0);
 }

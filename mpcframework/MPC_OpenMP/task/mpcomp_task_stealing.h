@@ -28,18 +28,16 @@ int mpcomp_task_get_victim_producer(int globalRank, int index,
 int mpcomp_task_get_victim_producer_order(int globalRank, int i,
                                           mpcomp_tasklist_type_t type);
 
+void mpcomp_task_init_victim_random( mpcomp_generic_node_t* gen_node );
+
 static inline void mpcomp_task_allocate_larceny_order(mpcomp_thread_t *thread) {
   sctk_assert(thread);
   sctk_assert(thread->instance);
   sctk_assert(thread->instance->team);
-
-  const int depth = MPCOMP_TASK_TEAM_GET_TASKLIST_DEPTH(
-      thread->instance->team, MPCOMP_TASK_TYPE_UNTIED);
-  sctk_assert(depth >= 0);
-
-  const int max_num_victims =
-      MPCOMP_TASK_INSTANCE_GET_ARRAY_TREE_LEVEL_SIZE(thread->instance, depth) -
-      1;
+ 
+  mpcomp_team_t* team = thread->instance->team;
+  const int tasklistDepth = MPCOMP_TASK_TEAM_GET_TASKLIST_DEPTH(team, MPCOMP_TASK_TYPE_UNTIED);
+  const int max_num_victims = thread->instance->tree_nb_nodes_per_depth[tasklistDepth];
   sctk_assert(max_num_victims >= 0);
 
   int *larceny_order = (int *) mpcomp_alloc( max_num_victims * sizeof(int) );

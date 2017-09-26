@@ -25,4 +25,16 @@
 #ifndef __MPCOMP_LOOP_STATIC_ULL_H__
 #define __MPCOMP_LOOP_STATIC_ULL_H__
 
+#include "mpcomp_loop_static_ull_no_mpc_types.h"
+
+void __mpcomp_static_loop_init_ull(mpcomp_thread_t *t, unsigned long long lb,
+                                   unsigned long long b,
+                                   unsigned long long incr,
+                                   unsigned long long chunk_size);
+
+void __mpcomp_static_schedule_get_specific_chunk_ull(
+    unsigned long long rank, unsigned long long num_threads,
+    mpcomp_loop_ull_iter_t *loop, unsigned long long chunk_num,
+    unsigned long long *from, unsigned long long *to);
+
 #endif /* __MPCOMP_LOOP_STATIC_ULL_H__ */

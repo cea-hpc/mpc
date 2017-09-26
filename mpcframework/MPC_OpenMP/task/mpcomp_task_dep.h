@@ -299,5 +299,12 @@ mpcomp_task_dep_ht_find_entry(mpcomp_task_dep_ht_table_t *htable,
   return entry;
 }
 
+void mpcomp_task_with_deps(void (*fn)(void *), void *data,
+                           void (*cpyfn)(void *, void *), long arg_size,
+                           long arg_align, bool if_clause, unsigned flags,
+                           void **depend);
+
+void __mpcomp_task_finalize_deps(mpcomp_task_t *task);
+
 #endif /* __MPCOMP_TASK_DEP_H__ */
 #endif /* MPCOMP_USE_TASKDEP */

@@ -24,8 +24,10 @@
 
 #include "sctk_debug.h"
 #include "sctk_alloc.h"
+#include "mpcomp_core.h"
 #include "mpcomp_taskgroup.h"
 #include "mpcomp_types.h"
+#include "mpcomp_task_utils.h"
 
 #if MPCOMP_TASK
 

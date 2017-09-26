@@ -29,6 +29,9 @@
 #include "mpcomp_task_utils.h"
 #include "mpcomp_openmp_tls.h"
 
+// missing forward declaration
+void mpcomp_taskwait( void );
+
 /** Barrier for all threads of the same team */
 void __mpcomp_internal_full_barrier(mpcomp_mvp_t *mvp) {
   long b, b_done;

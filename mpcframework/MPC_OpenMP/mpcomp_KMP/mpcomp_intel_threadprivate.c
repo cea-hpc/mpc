@@ -4,6 +4,7 @@
 #include "mpcomp_intel_types.h"
 #include "mpcomp_intel_threadprivate.h"
 #include "mpcomp_intel_global.h"
+#include "mpcomp_barrier.h"
 
 struct private_common *
 __kmp_threadprivate_find_task_common(struct common_table *tbl, int gtid,

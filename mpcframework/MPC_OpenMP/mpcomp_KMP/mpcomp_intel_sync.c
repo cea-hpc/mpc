@@ -4,6 +4,9 @@
 #include "mpcomp_intel_types.h"
 #include "mpcomp_intel_sync.h"
 
+#include "mpcomp_sync.h"
+#include "mpcomp_ordered.h"
+
 kmp_int32 __kmpc_master(ident_t *loc, kmp_int32 global_tid) {
   mpcomp_thread_t *t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
   sctk_assert(t != NULL);

@@ -4,7 +4,11 @@
 #include "sctk_debug.h"
 #include "mpcomp_tree_structs.h"
 
+#include "mpcomp_core.h"
 #include "mpcomp_loop.h"
+#include "mpcomp_loop_dyn.h"
+#include "mpcomp_loop_static.h"
+#include "mpcomp_sections.h"
 #include "mpcomp_parallel_region.h"
 
 //#include "mpcomp_GOMP_parallel_internal.h"
@@ -76,7 +80,7 @@ static void mpcomp_internal_GOMP_in_order_scheduler_master_end(void) {
     break;
   case MPCOMP_COMBINED_DYN_LOOP:
     sctk_nodebug("%s:\tEND - Combined parallel/loop", __func__);
-    __mpcomp_dynamic_loop_end_nowait(t);
+    __mpcomp_dynamic_loop_end_nowait();
     break;
   default:
     not_implemented();
@@ -94,7 +98,7 @@ static void mpcomp_internal_GOMP_in_order_scheduler_master_end(void) {
 void mpcomp_internal_GOMP_parallel_start(void (*fn)(void *), void *data,
                                          unsigned num_threads,
                                          unsigned int flags) {
-  __mpcomp_start_parallel_region((void *(*)(void *))fn, data, num_threads);
+  __mpcomp_start_parallel_region((void (*)(void *))fn, data, num_threads);
 }
 
 void mpcomp_internal_GOMP_start_parallel_region(void (*fn)(void *), void *data,
@@ -114,7 +118,7 @@ void mpcomp_internal_GOMP_start_parallel_region(void (*fn)(void *), void *data,
   sctk_assert(info);
   __mpcomp_parallel_region_infos_init(info);
 
-  info->func = fn;
+  info->func = (void* (*)(void *)) fn;
   info->shared = data;
   info->combined_pragma = MPCOMP_COMBINED_NONE;
 

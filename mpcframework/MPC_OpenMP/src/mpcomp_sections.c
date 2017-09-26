@@ -25,6 +25,7 @@
 
 #include "mpcomp_core.h"
 #include "mpcomp_types.h"
+#include "mpcomp_barrier.h"
 
 #if OMPT_SUPPORT
 #include "ompt.h"

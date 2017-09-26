@@ -26,6 +26,8 @@
 #define MPCOMP_USE_MCS_LOCK 1
 #define MPCOMP_USE_LOCKFREE_QUEUE 1
 
+/*** Tasks property bitmasks ***/
+
 /* A task for which execution is not deferred
  * with respect to its generating task region */
 #define MPCOMP_TASK_UNDEFERRED 0x00000001

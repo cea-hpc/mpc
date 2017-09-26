@@ -4,6 +4,8 @@
 #include "mpcomp_types.h"
 #include "mpcomp_GOMP_loop_ull_internal.h"
 
+#include "mpcomp_loop_static_ull.h"
+
 bool mpcomp_internal_GOMP_loop_ull_static_start(
     bool up, unsigned long long start, unsigned long long end,
     unsigned long long incr, unsigned long long chunk_size,

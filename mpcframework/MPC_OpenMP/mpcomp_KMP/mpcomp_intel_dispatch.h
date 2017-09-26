@@ -6,6 +6,14 @@
 #include "mpcomp_types.h"
 #include "mpcomp_intel_types.h"
 
+/* Loop declaration */
+#include "mpcomp_loop_dyn.h"
+#include "mpcomp_loop_guided.h"
+#include "mpcomp_loop_runtime.h"
+#include "mpcomp_loop_static.h"
+
+#include "mpcomp_loop_static_ull.h"
+
 static inline void __kmpc_dispatch_init_mpcomp_long(mpcomp_thread_t *t, long lb,
                                                     long b, long incr,
                                                     long chunk) {

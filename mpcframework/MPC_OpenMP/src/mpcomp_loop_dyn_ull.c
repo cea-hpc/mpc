@@ -3,9 +3,12 @@
 #include "sctk_alloc.h"
 #include "mpcomp_types.h"
 #include "mpcomp_loop.h"
-//#include "mpcomp_loop_dyn_ull.h"
+#include "mpcomp_loop_dyn.h"
 #include "mpcomp_loop_dyn_utils.h"
 
+#include "mpcomp_loop_static_ull.h"
+
+#include "mpcomp_core.h"
 #include "ompt.h"
 
 /****
@@ -131,7 +134,7 @@ int __mpcomp_loop_ull_dynamic_begin(bool up, unsigned long long lb,
   	__mpcomp_dynamic_loop_init_ull(t, up, lb, b, incr, chunk_size);
   	__mpcomp_loop_dyn_init_target_chunk_ull(t, t, t->info.num_threads);
 
-#if 1 //OMPT_SUPPORT
+#if OMPT_SUPPORT
 	/* Avoid double call during runtime schedule policy */
 	if( ( t->schedule_type == MPCOMP_COMBINED_DYN_LOOP ) && mpcomp_ompt_is_enabled() )
 	{

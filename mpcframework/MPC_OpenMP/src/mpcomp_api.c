@@ -188,7 +188,7 @@ int omp_get_active_level(void) {
  */
 int omp_get_ancestor_thread_num(int level) {
   __mpcomp_init();
-  if( !level ) return NULL;
+  if( !level ) return 0; 
   mpcomp_thread_t *t = mpcomp_get_ancestor_thread_tls(level);
   return (t == NULL) ? -1 : t->rank;
 }

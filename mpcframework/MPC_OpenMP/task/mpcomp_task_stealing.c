@@ -18,7 +18,8 @@
 /* Compare nb element in first entry of tab
  */
 static inline int mpcomp_task_cmp_decr_func(const void *opq_a,
-                                            const void *opq_b) {
+                                            const void *opq_b, 
+                                            void* args) {
   const int *a = (int *)opq_a;
   const int *b = (int *)opq_b;
   return (a[0] == b[0]) ? b[1] - a[1] : b[0] - a[0];
@@ -188,12 +189,12 @@ mpcomp_task_prepare_victim_random_order(const int globalRank, const int index, m
     sctk_assert( instance->tree_array );
     sctk_assert( instance->tree_nb_nodes_per_depth );
     sctk_assert( instance->tree_first_node_per_depth );
-
+    
     /* Only victim id and value while change */
     const int __globalRank = globalRank;
-    const int __depth = mpcomp_task_get_depth_from_global_rank( globalRank );
-    const int __nbVictims = instance->tree_nb_nodes_per_depth[__depth] - 1;
-    const int __first_rank = instance->tree_first_node_per_depth[__depth];
+    const int tasklistDepth = MPCOMP_TASK_TEAM_GET_TASKLIST_DEPTH(instance->team, type);
+    const int __nbVictims = thread->instance->tree_nb_nodes_per_depth[tasklistDepth]-1;
+    const int __first_rank = instance->tree_first_node_per_depth[tasklistDepth];
 
     sctk_assert( globalRank >= 0 && globalRank < instance->tree_array_size );
     gen_node = &( instance->tree_array[globalRank] );

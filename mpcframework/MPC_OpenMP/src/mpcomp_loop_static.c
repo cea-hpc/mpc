@@ -25,12 +25,14 @@
 #include <mpcomp_abi.h>
 #include "mpcmicrothread_internal.h"
 #include <sctk_debug.h>
+#include "mpcomp_barrier.h"
 
 #include "mpcomp_core.h"
 #include "mpcomp_loop.h"
 #include "mpcomp_openmp_tls.h"
 
 #include "ompt.h"
+#include "mpcomp_ompt_general.h"
 
 /****
  *
@@ -203,7 +205,7 @@ int __mpcomp_static_loop_begin (long lb, long b, long incr, long chunk_size,
  	/* Initialization of loop internals */
    __mpcomp_static_loop_init(t, lb, b, incr, chunk_size);
 	
-#if 1 //OMPT_SUPPORT
+#if OMPT_SUPPORT
 	if( mpcomp_ompt_is_enabled() )
 	{
    	if( OMPT_Callbacks )
@@ -259,7 +261,7 @@ int __mpcomp_static_loop_next (long *from, long *to)
 
 void __mpcomp_static_loop_end_nowait ()
 {
-#if 1 //OMPT_SUPPORT
+#if OMPT_SUPPORT
 	if( mpcomp_ompt_is_enabled() )
 	{
    	if( OMPT_Callbacks )

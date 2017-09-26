@@ -40,6 +40,7 @@
 					 <param name="omp_untied_task_depth" 	type="int" default="0"  doc="Depth of the untied tasks lists in the tree" />
 					 <param name="omp_task_larceny_mode" 	type="mpcomp_task_larceny_mode_t" default="MPCOMP_TASK_LARCENY_MODE_HIERARCHICAL" doc="Task stealing policy"/>
 					 <param name="omp_task_nesting_max" 	type="int" default="8" doc="Task max depth in task generation" />
+                     <param name="mpcomp_task_max_delayed"  type="int" default="1024" doc=" Max tasks in mpcomp list" />
 					
             </struct>
 

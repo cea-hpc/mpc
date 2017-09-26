@@ -257,7 +257,7 @@ __mpcomp_update_node_children_mvp_ptr(  const int first_idx,
     { 
         const int global_child_idx = first_idx + i; 
         mpcomp_meta_tree_node_t* child = &( root[global_child_idx] );
-        node->children.leaf[i] = (mpcomp_node_t*) child->user_pointer;
+        node->children.leaf[i] = (mpcomp_mvp_t*) child->user_pointer;
         sctk_assert( node->children.leaf[i]->local_rank == i );
         node->children.leaf[i]->father = node;
     }

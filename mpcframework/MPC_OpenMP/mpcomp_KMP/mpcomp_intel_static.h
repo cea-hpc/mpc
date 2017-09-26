@@ -5,6 +5,7 @@
 #include "sctk_debug.h"
 #include "mpcomp_types.h"
 #include "mpcomp_intel_types.h"
+#include "mpcomp_loop_static.h"
 
 #if 0
 void __kmpc_for_static_init_4( ident_t*,kmp_int32, kmp_int32, kmp_int32*, kmp_uint32*, kmp_uint32*, kmp_int32*, kmp_int32, kmp_int32); 

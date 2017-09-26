@@ -30,6 +30,8 @@
 #include "mpcomp_ompt_general.h"
 
 #include "mpcomp_alloc.h"
+#include "sched.h"
+#include "sctk_asm.h"
 
 extern ompt_callback_t* OMPT_Callbacks;
 
@@ -44,14 +46,12 @@ extern ompt_callback_t* OMPT_Callbacks;
  */
 TODO("OpenMP: Anonymous critical and global atomic are not per-task locks")
  
-#if 1 // OMPT_SUPPORT
 /* Atomic emulated */
 static ompt_wait_id_t __mpcomp_ompt_atomic_lock_wait_id = 0;
 static sctk_atomics_int __mpcomp_atomic_lock_init_once 		= OPA_INT_T_INITIALIZER(0); 
 /* Critical anonymous */
 static ompt_wait_id_t __mpcomp_ompt_critical_lock_wait_id = 0;
 static sctk_atomics_int __mpcomp_critical_lock_init_once 	= OPA_INT_T_INITIALIZER(0); 
-#endif // OMPT_SUPPORT
 
 static sctk_spinlock_t* __mpcomp_omp_global_atomic_lock = NULL;
 static mpcomp_lock_t* 	__mpcomp_omp_global_critical_lock = NULL;
@@ -68,7 +68,7 @@ void __mpcomp_atomic_begin(void)
 			sctk_assert( __mpcomp_omp_global_atomic_lock );
 			sctk_spinlock_init(__mpcomp_omp_global_atomic_lock, SCTK_SPINLOCK_INITIALIZER );
 
-#if 1 //OMPT_SUPPORT
+#if OMPT_SUPPORT
 			if( mpcomp_ompt_is_enabled() )
    		{
       		if( OMPT_Callbacks )
@@ -96,7 +96,7 @@ void __mpcomp_atomic_begin(void)
 			}
 		}	
 	}	
-#if 1 //OMPT_SUPPORT
+#if OMPT_SUPPORT
 		if( mpcomp_ompt_is_enabled() )
 		{
 			if( OMPT_Callbacks )
@@ -114,7 +114,7 @@ void __mpcomp_atomic_begin(void)
 			
 		sctk_spinlock_lock(__mpcomp_omp_global_atomic_lock);
 
-#if 1 //OMPT_SUPPORT
+#if OMPT_SUPPORT
 		if( mpcomp_ompt_is_enabled() )
 		{
 			if( OMPT_Callbacks )
@@ -133,7 +133,7 @@ void __mpcomp_atomic_begin(void)
 
 void __mpcomp_atomic_end(void) {
   sctk_spinlock_unlock(__mpcomp_omp_global_atomic_lock);
-#if 1 //OMPT_SUPPORT
+#if OMPT_SUPPORT
 		if( mpcomp_ompt_is_enabled() )
 		{
 			if( OMPT_Callbacks )
@@ -167,7 +167,7 @@ void __mpcomp_anonymous_critical_begin(void)
    		memset(__mpcomp_omp_global_critical_lock, 0, sizeof(mpcomp_lock_t));
    		sctk_thread_mutex_init(&(__mpcomp_omp_global_critical_lock->lock), 0);
 
-#if 1 //OMPT_SUPPORT
+#if OMPT_SUPPORT
 			if( mpcomp_ompt_is_enabled() )
    		{
 				/* Prevent non thread safe wait_id init */
@@ -199,7 +199,7 @@ void __mpcomp_anonymous_critical_begin(void)
 			}
 		}	
 	}	
-#if 1 //OMPT_SUPPORT
+#if OMPT_SUPPORT
 		if( mpcomp_ompt_is_enabled() )
 		{
 			if( OMPT_Callbacks )
@@ -219,7 +219,7 @@ void __mpcomp_anonymous_critical_begin(void)
 		
 		sctk_thread_mutex_lock( &( __mpcomp_omp_global_critical_lock->lock));
 
-#if 1 //OMPT_SUPPORT
+#if  OMPT_SUPPORT
 		if( mpcomp_ompt_is_enabled() )
 		{
 			if( OMPT_Callbacks )
@@ -240,7 +240,7 @@ void __mpcomp_anonymous_critical_begin(void)
 void __mpcomp_anonymous_critical_end(void) 
 {
  	 sctk_thread_mutex_unlock(&(__mpcomp_omp_global_critical_lock->lock));
-#if 1 //OMPT_SUPPORT
+#if OMPT_SUPPORT
       if( mpcomp_ompt_is_enabled() )
       {
          if( OMPT_Callbacks )
@@ -273,7 +273,7 @@ void __mpcomp_named_critical_begin(void **l)
 			memset(named_critical_lock, 0, sizeof(mpcomp_lock_t));
 			sctk_thread_mutex_init(&(named_critical_lock->lock), 0);
 		
-#if 1 //OMPT_SUPPORT	
+#if OMPT_SUPPORT	
 		if( mpcomp_ompt_is_enabled() )
 		{
 			named_critical_lock->wait_id = mpcomp_OMPT_gen_wait_id();
@@ -288,7 +288,7 @@ void __mpcomp_named_critical_begin(void **l)
 
  	named_critical_lock = *l;
 
-#if 1 //OMPT_SUPPORT
+#if OMPT_SUPPORT
 	if( mpcomp_ompt_is_enabled() )
    {
    	if( OMPT_Callbacks )
@@ -308,7 +308,7 @@ void __mpcomp_named_critical_begin(void **l)
 		
  	sctk_thread_mutex_lock(&(named_critical_lock->lock));
 
-#if 1 //OMPT_SUPPORT
+#if OMPT_SUPPORT
 	if( mpcomp_ompt_is_enabled() )
    {
    	if( OMPT_Callbacks )
@@ -334,7 +334,7 @@ void __mpcomp_named_critical_end(void **l) {
 	mpcomp_lock_t* named_critical_lock = *l;
   	sctk_thread_mutex_unlock(&(named_critical_lock->lock));
 	
-#if 1 //OMPT_SUPPORT
+#if OMPT_SUPPORT
    if( mpcomp_ompt_is_enabled() )
    {
       if( OMPT_Callbacks )

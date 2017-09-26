@@ -11,6 +11,7 @@
 #include "mpcomp_types.h"
 #include "mpcomp_tree_array.h"
 #include "mpcomp_tree_structs.h"
+#include "mpcomp_spinning_core.h"
 
 #include "mpcomp_tree_array_utils.h"
 
@@ -158,7 +159,7 @@ __mpcomp_tree_array_get_tree_rank( const int* shape, const int max_depth, const 
     return tree_array;
 }
 
-static int* __mpcomp_tree_array_get_tree_cumulative( int* shape, int max_depth )
+static int* __mpcomp_tree_array_get_tree_cumulative( const int* shape, int max_depth )
 {
     int i, j;
     int* tree_cumulative;
@@ -634,7 +635,7 @@ __mpcomp_openmp_mvp_initialisation( void* args )
     memset( new_mvp, 0, sizeof(mpcomp_mvp_t) ); 
     
     /* Initialize the corresponding microVP (all but tree-related variables) */ 
-    new_mvp->root = root;
+    new_mvp->root = root_node;
     new_mvp->thread_self = sctk_thread_self();
     
     /* MVP ranking */
@@ -699,7 +700,7 @@ __mpcomp_openmp_mvp_initialisation( void* args )
 }
 
 static void
- __mpcomp_init_thread_master( mpcomp_node_t* root, mpcomp_meta_tree_node_t* tree_array )
+ __mpcomp_init_thread_master( mpcomp_node_t* root, mpcomp_meta_tree_node_t* tree_array, const mpcomp_local_icv_t icvs )
 {
     int* singleton;
     mpcomp_thread_t* master;
@@ -746,8 +747,7 @@ static void
     master->instance = seq_instance;
 
     // Protect Orphan OpenMP construct
-    master->info.icvs.nthreads_var = root->tree_cumulative[0]; 
-    master->info.icvs.run_sched_var = mpcomp_global_icvs.def_sched_var; 
+    master->info.icvs = icvs; 
     master->info.num_threads = 1;
     assert( root->mvp );
 
@@ -759,7 +759,7 @@ static void
 
 
 void
-__mpcomp_alloc_openmp_tree_struct( int* shape, int max_depth, const int* cpus_order, const int place_depth, const int place_size )
+__mpcomp_alloc_openmp_tree_struct( int* shape, int max_depth, const int* cpus_order, const int place_depth, const int place_size, const mpcomp_local_icv_t icvs )
 {
     int i, n_num, ret, place_id;
     mpcomp_node_t* root;
@@ -828,7 +828,7 @@ __mpcomp_alloc_openmp_tree_struct( int* shape, int max_depth, const int* cpus_or
 
     /* Root initialisation */
     __mpcomp_openmp_mvp_initialisation( &( args[0]) );
-    __mpcomp_init_thread_master( root, tree_array );
+    __mpcomp_init_thread_master( root, tree_array, icvs );
     sctk_openmp_thread_tls = ( void* ) root->mvp->threads; 
 
     /* Free is thread-safety due to half barrier perform by tree build */

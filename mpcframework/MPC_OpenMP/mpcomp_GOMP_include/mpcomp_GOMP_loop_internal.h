@@ -3,8 +3,8 @@
 
 #include <stdbool.h>
 
-void __mpcomp_internal_GOMP_loop_end(void);
-void __mpcomp_internal_GOMP_loop_end_nowait(void);
+void mpcomp_internal_GOMP_loop_end(void);
+void mpcomp_internal_GOMP_loop_end_nowait(void);
 
 /* LOOP STANDARD */
 bool mpcomp_internal_GOMP_loop_static_start(long start, long end, long incr,

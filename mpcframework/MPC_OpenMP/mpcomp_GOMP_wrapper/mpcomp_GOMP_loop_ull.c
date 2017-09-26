@@ -4,6 +4,8 @@
 #include "mpcomp_GOMP_common.h"
 #include "mpcomp_GOMP_loop_ull_internal.h"
 
+#include "mpcomp_loop_static_ull_no_mpc_types.h"
+
 #define MPC_SUPPORT_ULL_LOOP
 
 bool mpcomp_GOMP_loop_ull_runtime_start(bool up, unsigned long long start,

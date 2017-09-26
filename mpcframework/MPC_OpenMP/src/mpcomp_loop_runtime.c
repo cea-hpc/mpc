@@ -27,6 +27,12 @@
 #include "mpcomp_loop_runtime.h"
 #include "mpcomp_openmp_tls.h"
 
+/* Other Loop type headers */
+#include "mpcomp_loop_dyn.h"
+#include "mpcomp_loop_guided.h"
+#include "mpcomp_loop_static.h"
+#include "mpcomp_loop_static_ull.h"
+
 TODO(runtime schedule: ICVs are not well transfered!)
 
 /****

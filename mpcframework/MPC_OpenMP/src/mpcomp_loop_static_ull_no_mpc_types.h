@@ -22,10 +22,26 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#ifndef __MPCOMP_ORDERED_H__
-#define __MPCOMP_ORDERED_H__
+#ifndef __MPCOMP_LOOP_STATIC_ULL_NOMPC_H__
+#define __MPCOMP_LOOP_STATIC_ULL_NOMPC_H__
 
-void __mpcomp_ordered_begin( void );
-void __mpcomp_ordered_end( void );
+int __mpcomp_static_loop_begin_ull(bool up, unsigned long long lb,
+                                   unsigned long long b,
+                                   unsigned long long incr,
+                                   unsigned long long chunk_size,
+                                   unsigned long long *from,
+                                   unsigned long long *to);
 
-#endif /* __MPCOMP_ORDERED_H__ */
+int __mpcomp_static_loop_next_ull(unsigned long long *from,
+                                  unsigned long long *to);
+
+int __mpcomp_ordered_static_loop_begin_ull(bool up, unsigned long long lb,
+                                           unsigned long long b,
+                                           unsigned long long incr,
+                                           unsigned long long chunk_size,
+                                           unsigned long long *from,
+                                           unsigned long long *to);
+
+int __mpcomp_ordered_static_loop_next_ull(unsigned long long *from,
+                                          unsigned long long *to);
+#endif /* __MPCOMP_LOOP_STATIC_ULL_NOMPCH__ */

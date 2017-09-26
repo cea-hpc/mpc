@@ -297,6 +297,13 @@ void sctk_runtime_config_override_by_getenv_openmp(struct sctk_runtime_config * 
           }
         }
 
+        if ((tmp = getenv("OMP_TASK_MAX_DELAYED")) != NULL) {
+           int mpcomp_task_max_delayed = strtol(tmp, NULL, 10);
+           config->modules.openmp.mpcomp_task_max_delayed = mpcomp_task_max_delayed;
+        }
+        int ___val = config->modules.openmp.mpcomp_task_max_delayed;
+        fprintf( stdout, "OMP_TASK_MAX_DELAYED = %d\n", ___val );
+        
         if (config->modules.openmp.omp_task_nesting_max < 8) {
           config->modules.openmp.omp_task_nesting_max = 8;
         }

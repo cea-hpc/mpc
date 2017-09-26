@@ -1,30 +1,36 @@
+/* ############################# MPC License ############################## */
+/* # Wed Nov 19 15:19:19 CET 2008                                         # */
+/* # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          # */
+/* #                                                                      # */
+/* # IDDN.FR.001.230040.000.S.P.2007.000.10000                            # */
+/* # This file is part of the MPC Runtime.                                # */
+/* #                                                                      # */
+/* # This software is governed by the CeCILL-C license under French law   # */
+/* # and abiding by the rules of distribution of free software.  You can  # */
+/* # use, modify and/ or redistribute the software under the terms of     # */
+/* # the CeCILL-C license as circulated by CEA, CNRS and INRIA at the     # */
+/* # following URL http://www.cecill.info.                                # */
+/* #                                                                      # */
+/* # The fact that you are presently reading this means that you have     # */
+/* # had knowledge of the CeCILL-C license and that you accept its        # */
+/* # terms.                                                               # */
+/* #                                                                      # */
+/* # Authors:                                                             # */
+/* #   - PERACHE Marc marc.perache@cea.fr                                 # */
+/* #   - CARRIBAULT Patrick patrick.carribault@cea.fr                     # */
+/* #                                                                      # */
+/* ######################################################################## */
+
 #ifndef __MPCOMP_PARALLEL_REGION_H__
-#define __MPCOMP_PARALLEL_REGION_H__
+#define  __MPCOMP_PARALLEL_REGION_H__
 
-#include "sctk_debug.h"
-#include "mpcomp_types.h"
+#include "mpcomp_parallel_region_no_mpc_types.h"
 
-void __mpcomp_internal_begin_parallel_region(
-    struct mpcomp_new_parallel_region_info_s *, unsigned arg_num_threads);
-void __mpcomp_internal_end_parallel_region(struct mpcomp_instance_s *instance);
+void 
+__mpcomp_internal_begin_parallel_region( mpcomp_parallel_region_t *info, const unsigned expected_num_threads ); 
 
-void *mpcomp_slave_mvp_node(void *);
-void *mpcomp_slave_mvp_leaf(void *);
+void __mpcomp_internal_end_parallel_region(mpcomp_instance_t *instance);
 
-void __mpcomp_start_parallel_region(void (*)(void *), void *, unsigned);
-void __mpcomp_start_sections_parallel_region(void (*)(void *), void *, unsigned,
-                                             unsigned);
-
-void __mpcomp_start_parallel_dynamic_loop(void (*)(void *), void *, unsigned,
-                                          long, long, long, long);
-void __mpcomp_start_parallel_static_loop(void (*)(void *), void *, unsigned,
-                                         long, long, long, long);
-void __mpcomp_start_parallel_guided_loop(void (*)(void *), void *, unsigned,
-                                         long, long, long, long);
-void __mpcomp_start_parallel_runtime_loop(void (*)(void *), void *, unsigned,
-                                          long, long, long, long);
-
-/* INLINED FUNCTION */
 static inline void __mpcomp_parallel_set_specific_infos(
     mpcomp_parallel_region_t *info, void *(*func)(void *), void *data,
     mpcomp_local_icv_t icvs, mpcomp_combined_mode_t type) {
@@ -36,18 +42,4 @@ static inline void __mpcomp_parallel_set_specific_infos(
   info->icvs = icvs;
   info->combined_pragma = type;
 }
-
-static inline void __mpcomp_save_team_info(mpcomp_team_t *team,
-                                           mpcomp_thread_t *t) {
-  sctk_nodebug("%s:  saving single/section %d and for dyn %d", __func__,
-               t->single_sections_current, t->for_dyn_current);
-  team->info.single_sections_current_save = t->single_sections_current;
-  team->info.for_dyn_current_save = t->for_dyn_current;
-}
-
-
-static inline void __mpcomp_sendtosleep_mvp(mpcomp_mvp_t *mvp) {
-  /* Empty function */
-}
-
-#endif /* __MPCOMP_PARALLEL_REGION_H__ */
+#endif /*  __MPCOMP_PARALLEL_REGION_H__ */

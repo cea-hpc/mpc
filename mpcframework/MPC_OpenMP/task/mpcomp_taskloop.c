@@ -29,6 +29,7 @@
 #include "mpcomp_task_utils.h"
 #include "mpcomp_taskgroup.h"
 #include "mpcomp_task_gomp_constants.h"
+#include "mpcomp_core.h" /* mpcomp_init */
 
 #if MPCOMP_TASK
 

@@ -4,6 +4,8 @@
 #include "mpcomp_GOMP_common.h"
 #include "mpcomp_GOMP_parallel_internal.h"
 
+#include "mpcomp_parallel_region_no_mpc_types.h"
+
 unsigned mpcomp_GOMP_sections_start(unsigned count) {
   unsigned ret;
   sctk_nodebug("[Redirect GOMP]%s:\tBegin", __func__);

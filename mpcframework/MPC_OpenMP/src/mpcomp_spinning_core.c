@@ -39,8 +39,6 @@ __mpcomp_del_mvp_saved_context( mpcomp_mvp_t* mvp )
 
     /* Free -- TODO: reuse mechanism */
     free( prev_mvp_context );
-    
-    return 0; 
 } 
 
 static inline void
@@ -106,12 +104,13 @@ __mpcomp_tree_array_instance_init( mpcomp_thread_t* thread, const int expected_n
 
     instance->thread_ancestor = thread;
 
-#if defined( MPCOMP_OPENMP_3_0 )
-    mpcomp_task_team_infos_init( instance->team, instance->tree_depth );
-#endif /* MPCOMP_OPENMP_3_0 */
-
     __mpcomp_tree_array_team_reset( instance->team );
 
+#if defined( MPCOMP_OPENMP_3_0 )
+    mpcomp_task_team_infos_init( instance->team, instance->tree_depth );
+    /* Compute first id for tasklist depth */
+#endif /* MPCOMP_OPENMP_3_0 */
+    
     /* Allocate new thread context */
     master = ( mpcomp_thread_t* ) mpcomp_alloc( sizeof( mpcomp_thread_t ) );  
     sctk_assert( master );
@@ -175,7 +174,7 @@ __mpcomp_instance_post_init( mpcomp_thread_t* thread )
 mpcomp_mvp_t*
 __mpcomp_wakeup_node( mpcomp_node_t* node )
 {
-    if( !node ) return node;    
+    if( !node ) return NULL; 
     return __mpcomp_scatter_wakeup( node );
 }
 
