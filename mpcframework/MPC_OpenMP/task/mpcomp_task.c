@@ -87,7 +87,7 @@ void __mpcomp_task_execute(mpcomp_task_t *task) {
   /* Saved thread current task */
   saved_current_task = MPCOMP_TASK_THREAD_GET_CURRENT_TASK(thread);
 
-	#if 1 //OMPT_SUPPORT
+   #if OMPT_SUPPORT
    if( mpcomp_ompt_is_enabled() )
    {
       if( OMPT_Callbacks )
@@ -115,7 +115,7 @@ void __mpcomp_task_execute(mpcomp_task_t *task) {
   /* Restore thread icv envionnement */
   thread->info.icvs = saved_icvs;
 
-  #if 1 //OMPT_SUPPORT
+  #if OMPT_SUPPORT
   if( mpcomp_ompt_is_enabled() )
   {
     if( OMPT_Callbacks )
@@ -226,8 +226,6 @@ struct mpcomp_task_s *__mpcomp_task_alloc(void (*fn)(void *), void *data,
     }
   }
 
-  sctk_nodebug("%s: %p -- %p -- %p", __func__, new_task, new_task->func,
-               new_task->data);
   /* If its parent task is final, the new task must be final too */
   if (mpcomp_task_is_final(flags, new_task->parent)) {
     mpcomp_task_set_property(&(new_task->property), MPCOMP_TASK_FINAL);
@@ -238,7 +236,7 @@ struct mpcomp_task_s *__mpcomp_task_alloc(void (*fn)(void *), void *data,
   mpcomp_taskgroup_add_task(new_task);
   mpcomp_task_ref_parent_task(new_task);
 
-  #if 1 //OMPT_SUPPORT
+  #if OMPT_SUPPORT
   if( mpcomp_ompt_is_enabled() )
   {
     if( OMPT_Callbacks )
@@ -250,7 +248,7 @@ struct mpcomp_task_s *__mpcomp_task_alloc(void (*fn)(void *), void *data,
 			callback( &(new_task->parent->ompt_task_data), 0, &( new_task->ompt_task_data ), ompt_task_explicit, deps_num > 0, code_ra ); 
     }
   }
-	#endif /* OMPT_SUPPORT */
+  #endif /* OMPT_SUPPORT */
 
   return new_task;
 }
@@ -509,10 +507,10 @@ void __internal_mpcomp_task_schedule( mpcomp_thread_t* thread, mpcomp_mvp_t* mvp
         mpcomp_task_list_t* list = mpcomp_task_get_list(node_rank, type);
         sctk_assert(list);
 #ifdef MPCOMP_USE_MCS_LOCK 
-     mpcomp_task_list_consummer_lock(list, thread->task_infos.opaque);
+        mpcomp_task_list_consummer_lock(list, thread->task_infos.opaque);
 #else /* MPCOMP_USE_MCS_LOCK */
-    if( mpcomp_task_list_consummer_trylock(list, thread->task_infos.opaque))
-        continue;
+        if( mpcomp_task_list_consummer_trylock(list, thread->task_infos.opaque))
+           continue;
 #endif /* MPCOMP_USE_MCS_LOCK */
         task = mpcomp_task_list_popfromhead(list, current_task->depth);
         mpcomp_task_list_consummer_unlock(list,  thread->task_infos.opaque);

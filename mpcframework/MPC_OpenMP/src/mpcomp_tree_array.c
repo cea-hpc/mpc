@@ -756,10 +756,12 @@ static void
 #endif /* MPCOMP_OPENMP_3_0 */
 }
 
+
+
 void
-__mpcomp_alloc_openmp_tree_struct( int* shape, int max_depth, hwloc_topology_t topology )
+__mpcomp_alloc_openmp_tree_struct( int* shape, int max_depth, const int* cpus_order, const int place_depth, const int place_size )
 {
-    int i, n_num, ret;
+    int i, n_num, ret, place_id;
     mpcomp_node_t* root;
     sctk_thread_t* threads;
     mpcomp_mvp_thread_args_t* args;
@@ -795,17 +797,22 @@ __mpcomp_alloc_openmp_tree_struct( int* shape, int max_depth, hwloc_topology_t t
     args = (mpcomp_mvp_thread_args_t*) mpcomp_alloc( sizeof( mpcomp_mvp_thread_args_t) * leaf_n_num );
     sctk_assert( args );
 
-    for( i = 0; i < leaf_n_num; i++ )
+    for( i = 0, place_id = 0; i < leaf_n_num; i++ )
     {
-        args[i].rank = i + non_leaf_n_num;
+        place_id += ( !( i % place_size ) && !i ) ? 1 : 0; 
         args[i].array = tree_array;
+        args[i].place_id = place_id;          
+        args[i].place_depth = place_depth;          
+        args[i].rank = i + non_leaf_n_num;
     }
 
     /* Worker threads */
     for( i = 1; i < leaf_n_num; i++ )
     {
-        const int target_vp = i; //__mpcomp_tree_array_convert_global_to_stage( shape, max_depth, i );
+        const int target_vp = ( cpus_order ) ? cpus_order[i] : i; 
         const int pu_id = ( sctk_get_cpu() + target_vp ) % sctk_get_cpu_number(); 
+        place_id += ( !( i % place_size ) ) ? 1 : 0;
+
         args[i].target_vp = target_vp;
 
         sctk_thread_attr_t __attr;

@@ -27,6 +27,9 @@ typedef struct mpcomp_meta_tree_node_s
     unsigned int* first_child_array;
     unsigned int* children_num_array;
     unsigned int children_array_size;
+
+    /* Places */
+
     /* Min index */
     void* user_pointer;
     sctk_atomics_int children_ready;
@@ -36,7 +39,9 @@ typedef struct mpcomp_mvp_thread_args_s
 {
     unsigned int rank;
     mpcomp_meta_tree_node_t* array;
+    unsigned int place_id;
     unsigned int target_vp;
+    unsigned int place_depth;
 } mpcomp_mvp_thread_args_t;
 
 // Initialize Ghost OpenMP Tree Constraint Homogeneous Array 

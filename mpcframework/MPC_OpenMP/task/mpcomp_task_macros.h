@@ -17,13 +17,13 @@
 
 #define MPCOMP_TASK_DEFAULT_ALIGN 8
 
-#define MPCOMP_TASK_MAX_DELAYED 1024
+#define MPCOMP_TASK_MAX_DELAYED 600
 
 /*** Tasks property bitmasks ***/
 
 /* Task list type and lock type */
 
-//#define MPCOMP_USE_MCS_LOCK 1
+#define MPCOMP_USE_MCS_LOCK 1
 #define MPCOMP_USE_LOCKFREE_QUEUE 1
 
 /* A task for which execution is not deferred

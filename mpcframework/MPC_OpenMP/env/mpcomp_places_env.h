@@ -10,16 +10,17 @@ typedef struct mpcomp_places_info_s
 {
     unsigned int id;
     hwloc_bitmap_t interval;
+    hwloc_bitmap_t logical_interval;
     struct mpcomp_places_info_s *prev, *next;
 } mpcomp_places_info_t; 
 
-hwloc_bitmap_t mpcomp_places_get_default_include_bitmap(void);
+hwloc_bitmap_t mpcomp_places_get_default_include_bitmap(const int );
 
 static inline void
-mpcomp_places_restrict_bitmap(hwloc_bitmap_t res)
+mpcomp_places_restrict_bitmap(hwloc_bitmap_t res, const int nb_mvps)
 {
     hwloc_bitmap_t default_bitmap;
-    default_bitmap = mpcomp_places_get_default_include_bitmap();
+    default_bitmap = mpcomp_places_get_default_include_bitmap( nb_mvps );
     hwloc_bitmap_and( res, res, default_bitmap );
     hwloc_bitmap_free(default_bitmap);
 }
@@ -29,7 +30,7 @@ mpcomp_safe_atoi( const char* env, char* string, char** next )
 {
     long retval = strtol( string, next, 10 );
     assert( retval > INT_MIN && retval < INT_MAX ); 
-    if( string == next )
+    if( string == *next )
     {
         fprintf(stderr, "error: missing numeric value\n");
     }
@@ -71,7 +72,8 @@ mpcomp_places_build_interval_bitmap( int res, int num_places, int stride )
 static inline void
 mpcomp_places_merge_interval(   hwloc_bitmap_t res, 
                                 const hwloc_bitmap_t include, 
-                                const hwloc_bitmap_t exclude )
+                                const hwloc_bitmap_t exclude,
+                                const int nb_mvps )
 {
 
     assert( res );
@@ -97,12 +99,12 @@ mpcomp_places_merge_interval(   hwloc_bitmap_t res,
             hwloc_bitmap_andnot( res, include, exclude );
         }
     }
-    mpcomp_places_restrict_bitmap( res );
+    mpcomp_places_restrict_bitmap( res, nb_mvps );
 }
 
 
 static inline hwloc_bitmap_t
-mpcomp_places_dup_with_stride( const hwloc_bitmap_t origin, int stride, int idx )
+mpcomp_places_dup_with_stride( const hwloc_bitmap_t origin, int stride, int idx, const int nb_mvps )
 {
     int index;
     hwloc_bitmap_t new_bitmap;
@@ -118,13 +120,13 @@ mpcomp_places_dup_with_stride( const hwloc_bitmap_t origin, int stride, int idx 
     hwloc_bitmap_set( new_bitmap, index + idx * stride );  
     hwloc_bitmap_foreach_end();
    
-    mpcomp_places_restrict_bitmap( new_bitmap );
+    mpcomp_places_restrict_bitmap( new_bitmap, nb_mvps );
 
     return new_bitmap;
 }
 
 static inline int 
-mpcomp_places_expand_place_bitmap( mpcomp_places_info_t* list, mpcomp_places_info_t* place, int len, int stride)
+mpcomp_places_expand_place_bitmap( mpcomp_places_info_t* list, mpcomp_places_info_t* place, int len, int stride, const int nb_mvps)
 {
     int i;
     unsigned int index;
@@ -137,7 +139,7 @@ mpcomp_places_expand_place_bitmap( mpcomp_places_info_t* list, mpcomp_places_inf
     for( i = 1; i <  len; i++ )
     {
         new_place = mpcomp_places_infos_init(0);
-        new_place->interval = mpcomp_places_dup_with_stride( place->interval, i, stride ); 
+        new_place->interval = mpcomp_places_dup_with_stride( place->interval, i, stride, nb_mvps ); 
         if( !( new_place->interval ) ) return 1;
         DL_APPEND( list, new_place ); 
         new_place->id = place_id + i;

@@ -161,8 +161,7 @@ void __mpcomp_task_finalize_deps(mpcomp_task_t *task) {
 
   /* Release Task Deps */
   MPCOMP_TASK_DEP_LOCK_NODE(task_node);
-  sctk_atomics_store_int(&(task_node->status), MPCOMP_TASK_DEP_TASK_FINALIZED);
-  // task_node->task = NULL;
+  sctk_atomics_store_int( &( task_node->status ), MPCOMP_TASK_DEP_TASK_FINALIZED );
   MPCOMP_TASK_DEP_UNLOCK_NODE(task_node);
 
   /* Unref my successors */
@@ -170,20 +169,16 @@ void __mpcomp_task_finalize_deps(mpcomp_task_t *task) {
     succ_node = list_elt->node;
     const int prev =
         sctk_atomics_fetch_and_decr_int(&(succ_node->predecessors)) - 1;
-    sctk_nodebug("release sucessors ...");
-    task_node->successors = list_elt->next;
 
-    if (!prev &&
-        sctk_atomics_cas_int(&(succ_node->status),
-                             MPCOMP_TASK_DEP_TASK_NOT_EXECUTE,
-                             MPCOMP_TASK_DEP_TASK_RELEASED) ==
-            MPCOMP_TASK_DEP_TASK_NOT_EXECUTE) {
-      // TODO MANAGE if_clause
-      sctk_atomics_read_write_barrier();
-      if( succ_node->task )
+    if( !prev )
+    {
+      if( sctk_atomics_load_int( &( task_node->status ) ) != MPCOMP_TASK_DEP_TASK_FINALIZED )
+       if( sctk_atomics_cas_int( &( task_node->status ), MPCOMP_TASK_DEP_TASK_NOT_EXECUTE, MPCOMP_TASK_DEP_TASK_FINALIZED )
+           == MPCOMP_TASK_DEP_TASK_NOT_EXECUTE )
          __mpcomp_task_process(succ_node->task, 0);
     }
 
+    task_node->successors = list_elt->next;
     mpcomp_task_dep_node_unref(succ_node);
     sctk_free(list_elt);
   }
@@ -200,6 +195,9 @@ void mpcomp_task_with_deps(void (*fn)(void *), void *data,
   mpcomp_thread_t *thread;
   mpcomp_task_dep_node_t *task_node;
   mpcomp_task_t *current_task, *new_task;
+ 
+  static sctk_atomics_int path_clause = SCTK_ATOMICS_INT_T_INIT(0); 
+  static sctk_atomics_int path_noclause = SCTK_ATOMICS_INT_T_INIT(0); 
 
   __mpcomp_init();
 
@@ -229,7 +227,7 @@ void mpcomp_task_with_deps(void (*fn)(void *), void *data,
 
   task_node->task = NULL;
 
-#if 1 //OMPT_SUPPORT
+#if OMPT_SUPPORT
 	if( mpcomp_ompt_is_enabled() )
 	{
    	if( OMPT_Callbacks )
@@ -278,15 +276,17 @@ void mpcomp_task_with_deps(void (*fn)(void *), void *data,
   sctk_atomics_store_int(&(task_node->status),
                          MPCOMP_TASK_DEP_TASK_NOT_EXECUTE);
 
-  if (if_clause) {
+  if (!if_clause) {
     sctk_atomics_store_int(&(task_node->status),
                            MPCOMP_TASK_DEP_TASK_FINALIZED);
     __mpcomp_task_wait_deps(task_node);
   }
 
   if (sctk_atomics_load_int(&(task_node->predecessors)) == 0) {
-    sctk_nodebug("%s: Direct run ...", __func__);
-    __mpcomp_task_process(new_task, if_clause);
+      if( sctk_atomics_load_int( &( task_node->status ) ) != MPCOMP_TASK_DEP_TASK_FINALIZED )
+       if( sctk_atomics_cas_int( &( task_node->status ), MPCOMP_TASK_DEP_TASK_NOT_EXECUTE, MPCOMP_TASK_DEP_TASK_FINALIZED )
+           == MPCOMP_TASK_DEP_TASK_NOT_EXECUTE )
+         __mpcomp_task_process(new_task, if_clause);
   }
 }
 

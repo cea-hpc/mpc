@@ -147,13 +147,7 @@ __mpcomp_convert_topology_to_tree_shape( hwloc_topology_t topology, int* shape_d
 {
     int* reverse_shape;
     int i, j, reverse_shape_depth;
-#if 0 // test
-    const int max_depth = 1;
-    reverse_shape = ( int* ) mpcomp_alloc( sizeof( int ) * max_depth );
-    sctk_assert( reverse_shape );
-    memset( reverse_shape, 0, sizeof( int ) * max_depth );
-    reverse_shape[0] = 32;
-#else 
+
     const int max_depth = hwloc_topology_get_depth( topology );
     sctk_assert( max_depth > 1 );
     reverse_shape = ( int* ) mpcomp_alloc( sizeof( int ) * max_depth );
@@ -211,34 +205,65 @@ __mpcomp_convert_topology_to_tree_shape( hwloc_topology_t topology, int* shape_d
 
     if( reverse_shape_depth > 1 )
         __mpcomp_aux_reverse_one_dim_array( reverse_shape, reverse_shape_depth );
- 
-#endif 
+
     *shape_depth = reverse_shape_depth;
+    
     return reverse_shape;
 }
 
 static hwloc_topology_t
-__mpcomp_prepare_omp_task_tree_init( const int num_mvps ) 
+__mpcomp_prepare_omp_task_tree_init( const int num_mvps, const int* cpus_order ) 
 {
 	int err;
-   hwloc_topology_t restrictedTopology;
-	err = __mpcomp_restrict_topology_for_mpcomp( &restrictedTopology, num_mvps );
-//	assert( !err );
+    hwloc_topology_t restrictedTopology;
+	err = __mpcomp_restrict_topology_for_mpcomp( &restrictedTopology, num_mvps, cpus_order );
+	assert( !err );
 
 	sctk_assert( restrictedTopology );
 	return restrictedTopology;	
 }
 
 static void
-__mpcomp_init_omp_task_tree( const int num_mvps )
+__mpcomp_init_omp_task_tree( const int num_mvps, const int* shape, const int* cpus_order )
 {
-	 int i, max_depth;
+	 int i,  max_depth, place_depth, place_size;
 	 int * tree_shape;
 
 	 hwloc_topology_t omp_task_topo;
-	 omp_task_topo = __mpcomp_prepare_omp_task_tree_init( num_mvps );
+	 omp_task_topo = __mpcomp_prepare_omp_task_tree_init(num_mvps, cpus_order);
 	 tree_shape = __mpcomp_convert_topology_to_tree_shape( omp_task_topo, &max_depth );
-	 __mpcomp_alloc_openmp_tree_struct( tree_shape, max_depth, omp_task_topo );	
+
+     if( shape ) // Force shape
+     {
+        int cumul = 1;
+        /* Test if PLACES arity is in tree */
+        for( i = 0; i < max_depth; i++ )
+        {
+            cumul *= tree_shape[i];
+            if( cumul == shape[0] ) break;
+        }
+
+        /* Not found */
+        if( i == max_depth )  
+        {
+            max_depth = 2;
+            place_depth = 0;
+            tree_shape = shape;
+            fprintf(stderr, "Default Tree w/ places at level %d\n", place_depth );
+        }
+        else
+        {
+            place_depth = i;
+            fprintf(stderr, "Topological Tree w/ places at level %d\n", place_depth );
+        }
+        place_size = shape[1];
+     }
+     else
+     {
+        place_size = 1;
+     }
+
+	 __mpcomp_alloc_openmp_tree_struct( tree_shape, max_depth, cpus_order, place_depth, place_size );	
 }
 
 /*
@@ -346,8 +371,6 @@ static inline void __mpcomp_read_env_variables() {
   }
   TODO("OMP_NUM_THREADS: need to handle x,y,z,... and keep only x")
 
-  OMP_PLACES_LIST = mpcomp_places_env_variable_parsing();
-  mpcomp_display_places( OMP_PLACES_LIST );
 
   /******* OMP_DYNAMIC *********/
   OMP_DYNAMIC = sctk_runtime_config_get()->modules.openmp.adjustment ? 1 : 0;
@@ -646,7 +669,6 @@ void __mpcomp_init(void) {
         /* Compute the number of cores for this task */
 
         sctk_get_init_vp_and_nbvp(task_rank, &nb_mvps);
-//        if( OMP_NUM_THREADS ) nb_mvps = OMP_NUM_THREADS;
         
         sctk_nodebug("[%d] %s: SIMPLE_MIXED -> #mvps = %d", task_rank, __func__,
                      nb_mvps);
@@ -656,8 +678,6 @@ void __mpcomp_init(void) {
         if (OMP_MICROVP_NUMBER > 0 && OMP_MICROVP_NUMBER <= nb_mvps) {
           nb_mvps = OMP_MICROVP_NUMBER;
         }
-
-        //mpcomp_bfs_root_initialisation( nb_mvps );
 
         break;
       case MPCOMP_MODE_ALTERNATING:
@@ -729,7 +749,7 @@ void __mpcomp_init(void) {
     /* Current thread information is 't' */
     sctk_openmp_thread_tls = t;
 	  	
-#if 1 //OMPT_SUPPORT
+#if OMPT_SUPPORT
 	if( mpcomp_ompt_is_enabled() )
 	{
    	if( OMPT_Callbacks )
@@ -745,15 +765,29 @@ void __mpcomp_init(void) {
 	}
 #endif /* OMPT_SUPPORT */
 	
-	__mpcomp_init_omp_task_tree( nb_mvps );
+    int places_nb_mvps;
+    int *shape, *cpus_order;
+     
+    OMP_PLACES_LIST = mpcomp_places_env_variable_parsing( nb_mvps );
+    if( OMP_PLACES_LIST )
+    {
+       places_nb_mvps = mpcomp_places_get_topo_info( OMP_PLACES_LIST, &shape, &cpus_order );    
+       mpcomp_display_places( OMP_PLACES_LIST );
+       assert( places_nb_mvps <= nb_mvps );
+       nb_mvps = places_nb_mvps;
+    }
+    else
+    {
+        shape = NULL; cpus_order = NULL;
+    }
+   
+    __mpcomp_init_omp_task_tree( nb_mvps, shape, cpus_order );
 	
 #if MPCOMP_TASK
 //    mpcomp_task_team_infos_init(team_info, instance->tree_depth);
 #endif /* MPCOMP_TASK */
 
     sctk_thread_mutex_unlock(&lock);
-
-    sctk_nodebug("%s: Init done...", __func__);
   }
   
 }
