@@ -178,6 +178,7 @@ mpcomp_places_build_sockets_places( const int places_number, int *error )
    char* places_string;
    hwloc_topology_t topology;
    hwloc_obj_t prev_socket, next_socket;
+   hwloc_obj_t prev_pu, next_pu;
 
    topology = sctk_get_topology_object();
    prev_socket = NULL;
@@ -194,8 +195,20 @@ mpcomp_places_build_sockets_places( const int places_number, int *error )
       if( hwloc_get_nbobjs_inside_cpuset_by_type( topology, next_socket->cpuset, HWLOC_OBJ_PU ) <= 0 )
           continue;
  
-      char currend_bitmap_list[255];
-      hwloc_bitmap_list_snprintf( currend_bitmap_list, 255, next_socket->cpuset );
+      size_t current_index = 0; int pu_found = 0;
+      char currend_bitmap_list[255]; prev_pu = NULL;
+
+      while( next_pu = hwloc_get_next_obj_inside_cpuset_by_type( topology, next_socket->cpuset, HWLOC_OBJ_PU, prev_pu ) )
+      {
+         int tmp_write;
+         assert( current_index < 254 );
+         if( pu_found )
+             tmp_write = snprintf( currend_bitmap_list+current_index, 255 - current_index, ",%d", next_pu->logical_index );
+         else
+             tmp_write = snprintf( currend_bitmap_list+current_index, 255 - current_index, "%d", next_pu->logical_index );
+         current_index += tmp_write;
+         pu_found++; prev_pu = next_pu;
+      }
       
       /* {"pulist"} */
       const size_t size2copy = strlen( currend_bitmap_list ) + 2 + ( ( socket_found ) ? 1 : 0 );
