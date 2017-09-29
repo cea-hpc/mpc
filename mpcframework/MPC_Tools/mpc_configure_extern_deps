@@ -197,10 +197,10 @@ sctk_internal_setup_lib_hwloc()
 
 			#setup rpaths and -L
 			if [ -e "${HWLOC_USER_PREFIX}/lib64/libhwloc.so" ]; then
-				SCTK_LDFLAGS="${SCTK_LDFLAGS} -L${HWLOC_USER_PREFIX}/lib64"
+				SCTK_LDFLAGS="${SCTK_LDFLAGS} -Wl,-rpath,${HWLOC_USER_PREFIX}/lib64 -L${HWLOC_USER_PREFIX}/lib64"
 				SCTK_ARFLAGS="${SCTK_ARFLAGS} ${HWLOC_USER_PREFIX}/lib64/libhwloc.so"
 			elif [ -e "${HWLOC_USER_PREFIX}/lib/libhwloc.so" ]; then
-				SCTK_LDFLAGS="${SCTK_LDFLAGS} -L${HWLOC_USER_PREFIX}/lib"
+				SCTK_LDFLAGS="${SCTK_LDFLAGS} -Wl,-rpath,${HWLOC_USER_PREFIX}/lib -L${HWLOC_USER_PREFIX}/lib"
 				SCTK_ARFLAGS="${SCTK_ARFLAGS} ${HWLOC_USER_PREFIX}/lib/libhwloc.so"
 			fi
 		fi
