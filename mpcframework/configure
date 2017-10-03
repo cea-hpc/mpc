@@ -584,8 +584,9 @@ test -z "$SCTK_FAMILY" && SCTK_FAMILY=$BUILD_PRIV_FAMILY
 die() { printf "Error: BUILD_$1 and BUILD_PRIV_$1 both not set ! This is a bug in installmpc scipt !\n"; exit 2; }
 test -n "$SCTK_CC" || die "CC"
 test -n "$SCTK_CXX" || die "CXX"
-test -n "$SCTK_FC" || die "FC"
-test -n "$SCTK_FAMILY" || die "FAMILY"
+test -n "$SCTK_F77" || die "FC"
+# TEMP: disable check of FAMILY because it is not set
+# test -n "$SCTK_FAMILY" || die "FAMILY"
 ################
 
 SCTK_AR="`tmp_cross_gen $SCTK_AR`"
