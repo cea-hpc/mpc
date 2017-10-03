@@ -362,7 +362,7 @@ fi
 install_hash=\`echo \$MPC_RPREFIX | sed -e "s#//*#/#g" | hash_content \`
 user_prefix=\$HOME/.mpcompil/\$install_hash
 
-if test -w \$MPC_RPREFIX -a ! -e \$user_prefix
+if test -w \$MPC_RPREFIX
 then
 	#case when MPC is compiling: store in base installation by default
 	COMPILER_FILEPATH="\$MPC_RPREFIX"
