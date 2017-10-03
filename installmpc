@@ -179,6 +179,9 @@ do
 			GMP_PREFIX='disabled'
 			MPFR_PREFIX='disabled'
 			MPC_PREFIX='disabled'
+            # Be sure to use dy default GNU compilers
+            # This can be overidden by --compiler= option
+			COMPILER_ARG=yes
 			;;
 		################# FORTRAN GCC ###############
 		--disable-mpc-fortran)
