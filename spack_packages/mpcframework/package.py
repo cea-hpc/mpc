@@ -50,7 +50,7 @@ class Mpcframework(Package):
     homepage = "http://exemple.com"
     url      = "http://exemple.com/MPC_light_3.2.1.tar.gz"
 
-    version('3.2.1_devel', 'a86b75cc11fe518547ec13887a9aa242')
+    version('3.2.1_devel', '96e50190285cf0d585867be8f5729490')
 
     # FIXME: Add dependencies if required.
 
