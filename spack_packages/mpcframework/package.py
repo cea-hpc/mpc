@@ -50,7 +50,11 @@ class Mpcframework(Package):
     homepage = "http://exemple.com"
     url      = "http://exemple.com/MPC_light_3.2.1.tar.gz"
 
+    version('mpc_spack', git='ssh://git@gitocre/mpc.git', branch='mpc_spack')
+    version('master', git='ssh://git@gitocre/mpc.git', branch='devel')
+    version('devel', git='ssh://git@gitocre/mpc.git', branch='master')
     version('3.2.1_devel', '96e50190285cf0d585867be8f5729490')
+
 
     # FIXME: Add dependencies if required.
 
