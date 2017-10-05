@@ -53,8 +53,9 @@ class Mpcframework(Package):
     version('mpc_spack', git='ssh://git@gitocre/mpc.git', branch='mpc_spack')
     version('master', git='ssh://git@gitocre/mpc.git', branch='devel')
     version('devel', git='ssh://git@gitocre/mpc.git', branch='master')
-    version('3.2.1_devel', '96e50190285cf0d585867be8f5729490')
+    version('merge_to_devel_hotfixes', git='ssh://git@gitocre/mpc.git', branch='merge_to_devel_hotfixes')
 
+    version('3.2.1_devel', '96e50190285cf0d585867be8f5729490')
 
     # FIXME: Add dependencies if required.
 
