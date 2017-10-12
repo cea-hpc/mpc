@@ -41,6 +41,12 @@
 							<infiniband/>
 						</driver>
 					</config>
+					<config>
+						<name>opa_config_mpi</name>
+						<driver>
+							<infiniband/>
+						</driver>
+					</config>
 
 					<config>
 						<name>tcp_config_mpi</name>
@@ -78,6 +84,20 @@
 						<ondemand>1</ondemand>
 						<topology>ring</topology>
 						<config>ib_config_mpi</config>
+					</rail>
+					<rail>
+						<name>opa_mpi</name>
+						<device>!hfi1*</device>
+						<!-- Restrict Idle Polling only to the device NUMA -->
+						<idle_polling>
+							<range>RAIL_POLL_MACHINE</range>
+							<trigger>RAIL_POLL_SOCKET</trigger>
+						</idle_polling>
+						<priority>1</priority>
+						<rdma>1</rdma>
+						<ondemand>1</ondemand>
+						<topology>ring</topology>
+						<config>opa_config_mpi</config>
 					</rail>
 					<rail>
 						<name>tcp_mpi</name>
@@ -158,6 +178,15 @@
 							<rail>ib_mpi</rail>
 						</rails>
 					</cli_option>
+					<cli_option>
+						<name>opa</name>
+						<rails>
+							<rail>shm_mpi</rail>
+							<rail>opa_mpi</rail>
+						</rails>
+					</cli_option>
+
+
 					<cli_option>
 						<name>tcp</name>
 						<rails>
