@@ -28,6 +28,11 @@ if (HAVE_MOVE_PAGES)
 	add_definitions(-DHAVE_MOVE_PAGES)
 endif (HAVE_MOVE_PAGES)
 
+CHECK_SYMBOL_EXISTS (__malloc_initialize_hook malloc.h HAVE_MALLOC_INITIALIZE_HOOK)
+if (HAVE_MALLOC_INITIALIZE_HOOK)
+	add_definitions(-DENABLE_GLIBC_ALLOC_HOOKS)
+endif (HAVE_MALLOC_INITIALIZE_HOOK)	
+
 #################### CHECK PAGEMAP ######################
 if (EXISTS /proc/self/pagemap)
 	add_definitions(-DHAVE_LINUX_PAGEMAP)
@@ -63,9 +68,9 @@ target_link_libraries(mpcalloc_primitives_for_test ${HWLOC_LIBRARY} ${INCLUDE_PT
 target_link_libraries(mpcalloc_primitives ${HWLOC_LIBRARY} ${INCLUDE_PTHREAD})
 
 ################### EXTRA FLAGS #########################
-set_target_properties(mpcalloc PROPERTIES COMPILE_FLAGS "-DENABLE_STATIC=yes -DENABLE_GLIBC_ALLOC_HOOKS")
+set_target_properties(mpcalloc PROPERTIES COMPILE_FLAGS "-DENABLE_STATIC=yes")
 set_target_properties(mpcalloc_primitives PROPERTIES COMPILE_FLAGS "-DENABLE_STATIC=yes")
-set_target_properties(mpcalloc_trace PROPERTIES COMPILE_FLAGS "-DENABLE_STATIC=yes -DENABLE_TRACE=yes -DENABLE_GLIBC_ALLOC_HOOKS")
+set_target_properties(mpcalloc_trace PROPERTIES COMPILE_FLAGS "-DENABLE_STATIC=yes -DENABLE_TRACE=yes")
 set_target_properties(mpcalloc_primitives_for_test PROPERTIES COMPILE_FLAGS "-DMPC_ALLOCATOR_DISABLE_STATIC=yes")
 
 if(WIN32)
