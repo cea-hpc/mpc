@@ -483,15 +483,15 @@ sctk_internal_setup_lib_portals()
 SCTK_CHECK_LIB_PORTALS(){
 	if [ "$PORTALS_USER_PREFIX" != "" ]; then
                 sctk_internal_setup_lib_portals;
-                begin_section "Check Portals:"
-                SCTK_CHECK_HEADER_NOFAIL portals4.h
-                if test "$SCTK_SCTK_CHECK_HEADER_RES" = 0 ; then
-                        SCTK_CHECK_OPTION "-DMPC_USE_PORTALS"
-                        SCTK_CHECK_LDOPTION "-lportals"
-                        SCTK_NET_LIST="$SCTK_NET_LIST portals"
-                fi
-                end_section
-        fi
+	fi
+	begin_section "Check Portals:"
+	SCTK_CHECK_HEADER_NOFAIL portals4.h
+	if test "$SCTK_SCTK_CHECK_HEADER_RES" = 0 ; then
+		SCTK_CHECK_OPTION "-DMPC_USE_PORTALS"
+		SCTK_CHECK_LDOPTION "-lportals"
+		SCTK_NET_LIST="$SCTK_NET_LIST portals"
+	fi
+	end_section
 }
 
 
