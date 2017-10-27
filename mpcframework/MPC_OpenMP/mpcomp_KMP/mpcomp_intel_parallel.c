@@ -38,15 +38,16 @@ void __kmpc_fork_call(ident_t *loc, kmp_int32 argc, kmpc_micro microtask, ...) {
   /* Handle orphaned directive (initialize OpenMP environment) */
   __mpcomp_init();
 
-  /* Threadprvate initialisation */
-  sctk_thread_mutex_lock(&lock);
-  if (!__kmp_init_common) {
-    for (i = 0; i < KMP_HASH_TABLE_SIZE; ++i)
-      __kmp_threadprivate_d_table.data[i] = 0;
-    __kmp_init_common = 1;
+  /* Threadprivate initialisation */
+  if ( !__kmp_init_common ) {
+    sctk_thread_mutex_lock(&lock);
+    if (!__kmp_init_common) {
+      for (i = 0; i < KMP_HASH_TABLE_SIZE; ++i)
+        __kmp_threadprivate_d_table.data[i] = 0;
+      __kmp_init_common = 1;
+    }
+    sctk_thread_mutex_unlock(&lock);
   }
-  sctk_thread_mutex_unlock(&lock);
-
   /* Grab info on the current thread */
   t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
   sctk_assert(t != NULL);
