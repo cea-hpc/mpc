@@ -43,6 +43,7 @@ SCTK_USE_MPI=1
 SCTK_USE_MPI2=0
 SHARE_NODE='1'
 ENABLE_SMT="0"
+GRAPHIC_PLACEMENT="0"
 DISABLE_SMT="0"
 ACCL_SUPPORT="0"
 
@@ -104,6 +105,8 @@ Topology:
     --cpu-nb-mpc=n Number of cpus per process for the MPC process
     --node-nb=n,-N=n Total number of nodes
     --enable-smt Enable SMT capabilities (disabled by default, except for MIC)
+    --graphic-placement Output a xml file to visualize thread placement and topology for each compute node
+    --text-placement Output a txt file to visualize thread placement and their infos on the topology for each compute node
     --disable-smt Disable SMT capabilities
     --disable-share-node Do not restrict on CPU number to share node
 
@@ -212,6 +215,8 @@ if [ $? -eq 0 ]; then eval "${config_files_vars}"; fi
 if [ "${CONFIG_FILES_VALID}" = "true" ]; then
 	# Default value related to --enable-smt
 	ENABLE_SMT="${CONFIG_LAUNCHER_SMT}"
+	# Default value related to --graphic-placement
+	GRAPHIC_PLACEMENT="${CONFIG_LAUNCHER_GRAPHIC_PLACEMENT}"
 	# Default value related to -v/-vv/-vvv
 	MPC_VERBOSE="${CONFIG_LAUNCHER_VERBOSITY}"
 	# User launchers
@@ -330,6 +335,9 @@ for arg in "$@" ; do
     ;;
     --enable-smt)
     ENABLE_SMT="1"
+    ;;
+    --graphic-placement)
+    GRAPHIC_PLACEMENT="1"
     ;;
     --disable-smt)
     DISABLE_SMT="1"
@@ -517,6 +525,10 @@ fi
 
 if test "$ENABLE_SMT" = "1"  ; then
 add_arg "--enable-smt"
+fi
+
+if test "$GRAPHIC_PLACEMENT" = "1"  ; then
+add_arg "--graphic-placement"
 fi
 
 if test "$DISABLE_SMT" = "1"  ; then

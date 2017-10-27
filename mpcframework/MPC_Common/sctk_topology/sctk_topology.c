@@ -68,10 +68,470 @@ int bind_processor_current = 0;
 /* The topology of the machine + its cpuset */
 static hwloc_topology_t topology;
 static hwloc_bitmap_t topology_cpuset;
+/* used by the graphical option */
+static hwloc_bitmap_t topology_cpuset_compute_node;
 /* Describe the full topology of the machine.
  * Only used for binding*/
 static hwloc_topology_t topology_full;
+/* used by the graphical option */
+static hwloc_topology_t topology_compute_node;
 const struct hwloc_topology_support *support;
+
+
+/* used by graphic option */
+static void compute_master_color(int r, int g, int b,  int *r_m, int *g_m, int *b_m){
+    if(r > g && r > b){
+        *r_m = r + 25;
+        *g_m = g + 25;
+        *b_m = b + 25;
+    }
+    if(g > r && g > b){
+        *r_m = r + 25;
+        *g_m = g + 25;
+        *b_m = b + 25;
+    }
+    if(b > g && b > r){
+        *r_m = r + 25;
+        *g_m = g + 25;
+        *b_m = b + 25;
+    }
+}
+
+/* used by graphic option */
+static void chose_color_task(int task_id, int nb_task, int *r, int *g, int *b, int *r_m, int *g_m, int *b_m){
+    int red, green, blue;
+    int red_m, green_m, blue_m;
+    int init_x;
+    int step = (230) / nb_task;
+    switch((task_id + 6) % 6){
+        case 0:
+            init_x = 0;
+            red = 230;
+            green = 0;
+            blue = 0;
+            if(init_x == 0){
+                green = 0 + step * task_id;
+                compute_master_color(red, green, blue, &red_m, &green_m, &blue_m);
+            }
+            else{
+                green = 230 - step * task_id;
+                compute_master_color(red, green, blue, &red_m, &green_m, &blue_m);
+            }
+
+            break;
+
+        case 1:
+            init_x = 230;
+            red = 0;
+            green = 230;
+            blue = 0;
+            if(init_x == 0){
+                red = 0 + step * task_id;
+                compute_master_color(red, green, blue, &red_m, &green_m, &blue_m);
+            }
+            else{
+                red = 230 - step * task_id;
+                compute_master_color(red, green, blue, &red_m, &green_m, &blue_m);
+            }
+
+            break;
+
+        case 2:
+            init_x = 0;
+            red = 0;
+            green = 230;
+            blue = 0;
+            if(init_x == 0){
+                blue = 0 + step * task_id;
+                compute_master_color(red, green, blue, &red_m, &green_m, &blue_m);
+            }
+            else{
+                blue = 230 - step * task_id;
+                compute_master_color(red, green, blue, &red_m, &green_m, &blue_m);
+            }
+
+            break;
+        case 3:
+            init_x = 230;
+            red = 0;
+            green = 230;
+            blue = 230;
+            if(init_x == 0){
+                green= 0 + step * task_id;
+                compute_master_color(red, green, blue, &red_m, &green_m, &blue_m);
+            }
+            else{
+                green = 230 - step * task_id;
+                compute_master_color(red, green, blue, &red_m, &green_m, &blue_m);
+            }
+
+            break;
+        case 4:
+            init_x = 0;
+            red = 0;
+            green = 0;
+            blue = 230;
+            if(init_x == 0){
+                red = 0 + step * task_id;
+                compute_master_color(red, green, blue, &red_m, &green_m, &blue_m);
+            }
+            else{
+                red = 230 - step * task_id;
+                compute_master_color(red, green, blue, &red_m, &green_m, &blue_m);
+            }
+
+            break;
+        case 5:
+            init_x = 230;
+            red = 230;
+            green = 0;
+            blue = 230;
+            if(init_x == 0){
+                blue = 0 + step * task_id;
+                compute_master_color(red, green, blue, &red_m, &green_m, &blue_m);
+            }
+            else{
+                blue = 230 - step * task_id;
+                compute_master_color(red, green, blue, &red_m, &green_m, &blue_m);
+            }
+
+            break;
+        default:
+            red = 0;
+            green = 0;
+            blue = 0;
+            red_m = 0;
+            green_m = 0;
+            blue_m = 0;
+            break;
+
+    }
+    *r = red;
+    *g = green; 
+    *b = blue;
+    *r_m = red_m;
+    *g_m = green_m;
+    *b_m = blue_m;
+}
+
+static char *convert_rgb_to_string(int red, int green, int blue, char * rgb){                                          
+    char r[8];                                                                                  
+    char g[8];                                                                                  
+    char b[8];
+    char temp1[8];
+    char temp2[8];
+    char temp3[8];
+    sprintf(r, "%x", red);
+    sprintf(g, "%x", green);                                                                   
+    sprintf(b, "%x", blue);                                                                    
+    char * r1;                                                                                  
+    char * g1;                                                                                  
+    char * b1;
+    if(red < 16){
+        sprintf(temp1, "%d", 0);
+        r1 = strcat(temp1, r);                                                               
+    }
+    else{   
+        sprintf(temp1, "");
+        r1 = strcat(temp1, r);                                                               
+    }
+    if(green < 16){
+        sprintf(temp2, "%d", 0);
+        g1 = strcat(temp2, g);                                                               
+    }
+    else{   
+        sprintf(temp2, "");
+        g1 = strcat(temp2, g);                                                               
+    }
+    if(blue < 16){
+        sprintf(temp3, "%d", 0);
+        b1 = strcat(temp3, b);                                                               
+    }
+    else{   
+        sprintf(temp3, "");
+        b1 = strcat(temp3, b);                                                               
+    }
+    char *temp = strcat(g1,b1);
+    strcat(r1, temp);                                                                
+    strcpy(rgb, r1);
+} 
+
+/* fill thread placement informations in file to communicate between processes of the same node for graphic placement option */
+void create_placement_rendering(int os_pu, int os_master_pu, int task_id, int vp, int rank_open_mp, int* min_idex, int pid){
+    int red, green, blue;
+    int red_m, green_m, blue_m;
+    char string_rgb_hexa[512];
+    char string_rgb_hexa_master[512];
+
+
+    chose_color_task(task_id, sctk_get_task_number(), &red, &green, &blue, &red_m, &green_m, &blue_m);
+
+    convert_rgb_to_string(red, green, blue, string_rgb_hexa);
+    convert_rgb_to_string(red, green, blue, string_rgb_hexa_master);
+
+    /*acces global topo*/
+    hwloc_topology_load(topology_full);
+    /*add color info on pu*/
+    hwloc_obj_t obj_pu;
+    hwloc_obj_t obj_master;
+
+    if(os_pu == os_master_pu){
+        char temp_background_master[128];
+
+        sprintf(temp_background_master, "Background=#");
+        strcat(temp_background_master, string_rgb_hexa_master);
+        strcpy(string_rgb_hexa_master, temp_background_master);
+
+        strcat( string_rgb_hexa_master, ";");
+        strcat(string_rgb_hexa_master, "Text=#ffffff");
+            /* implemtation txt */
+            FILE *f = fopen(placement_txt, "a");
+            if(f != NULL){
+                fprintf(f,"%d %s\n", os_master_pu, string_rgb_hexa_master);
+                fclose(f);
+            }
+    }
+    else{
+            char temp_background[128];
+
+            sprintf(temp_background, "Background=#");
+            strcat(temp_background, string_rgb_hexa);
+            strcpy(string_rgb_hexa, temp_background);
+
+            strcat( string_rgb_hexa, ";");
+            strcat(string_rgb_hexa, "Text=#000000");
+            /* implemtation txt */
+            FILE *f = fopen(placement_txt, "a");
+            if(f != NULL){
+                fprintf(f,"%d %s\n", os_pu, string_rgb_hexa);
+                fclose(f);
+            }
+    }
+}
+
+/* return the os index of the topology_compute_node of the thread executed */
+int sctk_get_cpu_compute_node_topology()
+{
+    hwloc_cpuset_t set = hwloc_bitmap_alloc();
+
+    int ret = hwloc_get_last_cpu_location(topology_compute_node, set, HWLOC_CPUBIND_THREAD);
+
+    assume(ret!=-1);
+    assume(!hwloc_bitmap_iszero(set));
+
+
+
+    hwloc_obj_t pu;
+    if(sctk_enable_smt_capabilities){
+        pu = hwloc_get_obj_inside_cpuset_by_type(topology_compute_node, set, HWLOC_OBJ_PU, 0);
+    }
+    else{
+        pu = hwloc_get_obj_inside_cpuset_by_type(topology_compute_node, set, HWLOC_OBJ_CORE, 0);
+    }
+
+    if (!pu)
+    {
+        hwloc_bitmap_free(set);
+        return -1;
+    }
+
+    /* return the os index */
+    int cpu_os = pu->os_index;
+    //int cpu = sctk_get_logical_from_os_compute_node_topology(cpu_os);
+
+    return cpu_os;
+}
+
+/* return logical index from topology_compute_node os index */
+int sctk_get_logical_from_os_compute_node_topology(int cpu_os){
+    /* hwloc_get_pu_obj_by_os_inde give false resultat i suppose */
+    /*hwloc_obj_t cpu = hwloc_get_pu_obj_by_os_index(topology_compute_node, cpu_os);
+    return cpu->logical_index;*/
+    int nb;
+    if(sctk_enable_smt_capabilities){
+        nb =hwloc_get_nbobjs_by_type(topology_compute_node, HWLOC_OBJ_PU);
+        int i;
+        for(i = 0; i <  nb; i++){
+            if(hwloc_get_obj_by_type(topology_compute_node, HWLOC_OBJ_PU, i)->os_index == cpu_os){
+                hwloc_obj_t pu = hwloc_get_obj_by_type(topology_compute_node, HWLOC_OBJ_PU, i);
+                return pu->logical_index;
+            }
+        }
+    }
+    else{
+        nb =hwloc_get_nbobjs_by_type(topology_compute_node, HWLOC_OBJ_CORE);
+        int i;
+        for(i = 0; i <  nb; i++){
+            if(hwloc_get_obj_by_type(topology_compute_node, HWLOC_OBJ_CORE, i)->os_index == cpu_os){
+                hwloc_obj_t pu = hwloc_get_obj_by_type(topology_compute_node, HWLOC_OBJ_CORE, i);
+                return pu->logical_index;
+            }
+        }
+    }
+    return -1;
+}
+
+
+/* return the os index of the topology_compute_node from logical index */
+int sctk_get_cpu_compute_node_topology_from_logical( int logical_pu)
+{
+    hwloc_obj_t pu;
+    if(sctk_enable_smt_capabilities){
+        pu = hwloc_get_obj_by_type(topology_compute_node, HWLOC_OBJ_PU,logical_pu);
+    }
+    else{
+        pu = hwloc_get_obj_by_type(topology_compute_node, HWLOC_OBJ_CORE,logical_pu);
+    }
+
+    if (pu)
+    {
+        return pu->os_index;
+    }
+    else{
+        return - 1;
+    }
+}
+
+/* used by graphic and text option */
+    static void
+sctk_restrict_topology_compute_node ()
+{
+    int rank ;
+    fflush(stdout);
+
+restart_restrict:
+
+    if (sctk_enable_smt_capabilities)
+    {
+        int i;
+        sctk_warning ("SMT capabilities ENABLED");
+
+        sctk_processor_number_on_node = hwloc_get_nbobjs_by_type(topology_compute_node, HWLOC_OBJ_PU);
+        hwloc_bitmap_zero(topology_cpuset_compute_node);
+
+        for(i=0;i < sctk_processor_number_on_node; ++i)
+        {
+            hwloc_obj_t core = hwloc_get_obj_by_type(topology_compute_node, HWLOC_OBJ_PU, i);
+            hwloc_bitmap_or(topology_cpuset_compute_node, topology_cpuset_compute_node, core->cpuset);
+        }
+
+    }
+    else
+    {
+        /* disable SMT capabilities */
+        unsigned int i;
+        int err;
+        hwloc_bitmap_t cpuset = hwloc_bitmap_alloc();
+        hwloc_cpuset_t set = hwloc_bitmap_alloc();
+        hwloc_bitmap_zero(cpuset);
+        const int core_number = hwloc_get_nbobjs_by_type(topology_compute_node, HWLOC_OBJ_CORE);
+
+        for(i=0;i < core_number; ++i)
+        {
+            hwloc_obj_t core = hwloc_get_obj_by_type(topology_compute_node, HWLOC_OBJ_CORE, i);
+            hwloc_bitmap_copy(set, core->cpuset);
+            hwloc_bitmap_singlify(set);
+            hwloc_bitmap_or(cpuset, cpuset, set);
+        }
+        /* restrict the topology to physical CPUs */
+        err = hwloc_topology_restrict(topology_compute_node, cpuset, HWLOC_RESTRICT_FLAG_ADAPT_DISTANCES);
+        if(err)
+        {
+            hwloc_bitmap_free(cpuset);
+            hwloc_bitmap_free(set);
+            sctk_enable_smt_capabilities = 1;
+            sctk_warning ("Topology reduction issue");
+            goto restart_restrict;
+        }
+    }
+
+}
+
+/* used by graphic and text option */
+static void read_char(char * buff, int *cpt, char *c, FILE *f){
+    buff[*cpt] = *c;
+    (*cpt)++;
+    *c = getc(f);
+}
+
+/* used by graphic and text option */
+static void sctk_read_format_option_graphic_placement_and_complet_topo_infos(FILE *f, int lenght){
+    while(1){
+        //malloc buffer for infos of other ranks in the same processus
+        char * os_indbuff = (char *)malloc(64*lenght);
+        char * infosbuff = (char *)malloc(64*lenght);
+        char c = getc(f);
+        if(c == EOF){
+            break;
+        }
+        /* read os ind infos */
+        int cpt = 0;
+        while((c != ' ') && (c != EOF)){
+            read_char(os_indbuff, &cpt, &c, f);
+        }
+        if(c == EOF){
+            break;
+        }
+        os_indbuff [cpt] = '\0';
+        char os_ind[cpt + 1];
+        strncpy(os_ind, os_indbuff , (cpt+ 1));
+        c = getc(f);
+        cpt = 0;
+        while((c != '\n') && (c != EOF)){
+            read_char(infosbuff, &cpt, &c, f);
+        }
+
+        /* read infos lstopoStyle */
+        infosbuff[cpt] = '\0';
+        char infos[cpt + 1];
+        strncpy(infos, infosbuff, (cpt+ 1));
+        if(c == EOF){
+            break;
+        }
+        int logical_ind = 
+            sctk_get_logical_from_os_compute_node_topology(atoi(os_ind));
+        hwloc_obj_t obj;
+        if(sctk_enable_smt_capabilities){
+            obj = hwloc_get_obj_by_type(topology_compute_node, HWLOC_OBJ_PU, logical_ind);
+        }
+        else{
+            obj = hwloc_get_obj_by_type(topology_compute_node, HWLOC_OBJ_CORE, logical_ind);
+        }
+        hwloc_obj_add_info(obj, "lstopoStyle", infos);
+        free(infosbuff);
+        free(os_indbuff );
+    }
+    fclose(f);
+}
+
+static void transform_char(char *str){
+    int x = 0;
+    while(str[x] != '\0'){
+        if(str[x] == ' '){
+            str[x] = '_';
+        }
+        x++;
+    }
+    str[x - 1] = str[x];
+}
+
+/* used by graphic and text option */
+static void name_and_date_file_text(char *file_name){
+
+    time_t timestamp = time(NULL);
+    const char *buffer= ctime(&timestamp); 
+    transform_char(buffer);
+    strcat(file_name, "_");
+    strcat(file_name, buffer);
+}
+
+/* used by the reader for text placement option file */
+static void convert_char(char * buff,int cpt, int *tab, int cpt_line){
+    buff [cpt] = '\0';
+    char temp[cpt + 1];
+    strncpy(temp, buff , (cpt+ 1));
+    tab[cpt_line] = atoi(temp);
+}
 
 hwloc_topology_t sctk_get_topology_object(void)
 {
@@ -971,19 +1431,48 @@ void sctk_topology_init ()
 
 	hwloc_topology_load(topology);
 
+    hwloc_topology_init(&topology_compute_node);
 	hwloc_topology_init(&topology_full);
 
 	if(xml_path != NULL)
 	{
 		hwloc_topology_set_xml(topology_full,xml_path);
+        hwloc_topology_set_xml(topology_compute_node,xml_path);
 	}
 
 	/* Set flags to make sure devices are also loaded */
 	hwloc_topology_set_flags( topology_full, HWLOC_TOPOLOGY_FLAG_IO_DEVICES );
 
 	hwloc_topology_load(topology_full);
+    hwloc_topology_load(topology_compute_node);
 
 	topology_cpuset = hwloc_bitmap_alloc();
+
+    /*graphical option*/
+    if(sctk_enable_graphic_placement){
+        hwloc_cpuset_t newset;
+        newset = hwloc_bitmap_alloc();
+        int ret = hwloc_get_last_cpu_location(topology, newset, HWLOC_CPUBIND_THREAD);
+        assert(ret == 0);
+        hwloc_obj_t obj;
+        obj = hwloc_get_obj_inside_cpuset_by_type(topology, newset,HWLOC_OBJ_PU, 0);
+        hwloc_obj_t cluster = hwloc_get_ancestor_obj_by_type(topology, HWLOC_OBJ_MACHINE, obj);
+        strcpy(file_placement, "");
+        strcat(file_placement, "placement_");
+        strcpy(placement_txt, "");
+        strcat(placement_txt, "placement_");
+        if(cluster != NULL){
+            const char * HostName  = hwloc_obj_get_info_by_name(cluster, "HostName");
+            //sprintf(proc_id, "%d", syscall(SYS_gettid));
+            strcat(file_placement, HostName);
+            strcat(placement_txt, HostName);
+            remove(placement_txt);
+        }
+        topology_cpuset_compute_node = hwloc_bitmap_alloc();
+        /* topology usesd by the graphic option */
+        sctk_restrict_topology_compute_node ();
+    }
+    /*end graphical*/
 
 	support = hwloc_topology_get_support(topology);
 
@@ -1012,12 +1501,43 @@ void sctk_topology_init ()
 
 }
 
-
 /*! \brief Destroy the topology module
 */
 void sctk_topology_destroy (void)
 {
-	hwloc_topology_destroy(topology);
+    hwloc_topology_destroy(topology);
+    if(sctk_enable_graphic_placement){
+        unsigned long flags = HWLOC_TOPOLOGY_FLAG_WHOLE_SYSTEM;
+        if(sctk_get_local_process_rank() == 0){
+            hwloc_obj_t cluster = hwloc_get_obj_by_type(topology_compute_node, HWLOC_OBJ_MACHINE, 0);
+            int lenght_max;
+            int lenght_min;
+            int lenght;
+            lenght_max = hwloc_get_nbobjs_by_type(topology_compute_node, HWLOC_OBJ_PU);
+            lenght_min = hwloc_get_nbobjs_by_type(topology_compute_node, HWLOC_OBJ_CORE);
+            if(sctk_enable_smt_capabilities){
+                lenght = lenght_max;
+            }
+            else{
+                lenght = lenght_min;
+            }
+            if(cluster != NULL){
+                FILE *f = fopen(placement_txt, "r");
+                if(f != NULL){
+                    sctk_read_format_option_graphic_placement_and_complet_topo_infos(f, lenght_max);
+                }
+                const char * HostName  = hwloc_obj_get_info_by_name(cluster, "HostName");
+                name_and_date_file_text(file_placement);
+                strcat(file_placement, ".xml");
+                hwloc_topology_export_xml(topology_compute_node,file_placement); 
+                if(1){//TODO si proc 0
+                    fprintf(stdout,"/* --graphic-placement : \n.xml dated file has been generated for each compute node to vizualise topology and thread placement with their infos.\nYou can use the command \"lstopo -i file.xml\" to vizualise graphicaly */\n");
+                    fprintf(stdout, "\n/* .xml legend : one color per MPI task. White text policy means the thread is master of a MPI task in MPC */\n\n"); 
+                    fflush(stdout);
+                }
+            }
+        }
+    }
 }
 
 

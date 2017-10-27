@@ -755,6 +755,8 @@ sctk_thread_create_tmp_start_routine (sctk_thread_data_t * __arg)
   return res;
 }
 
+static sctk_spinlock_t lock_graphic;
+
 int
 sctk_thread_create (sctk_thread_t * restrict __threadp,
 		    const sctk_thread_attr_t * restrict __attr,
@@ -814,6 +816,17 @@ sctk_thread_create (sctk_thread_t * restrict __threadp,
   res = __sctk_ptr_thread_create (__threadp, __attr, (void *(*)(void *))
 				  sctk_thread_create_tmp_start_routine,
 				  (void *) tmp);
+
+	/* graphic placement option */
+    if(1){
+        /* get os ind */
+        int master = sctk_get_cpu_compute_node_topology();
+        sctk_spinlock_lock(&lock_graphic);
+        int min_index[3] = {0,0,0};
+        /* fill file to communicate between process of the same compute node */
+        create_placement_rendering(master, master, tmp->task_id, 0, 0, min_index, syscall(SYS_gettid));     
+        sctk_spinlock_unlock(&lock_graphic);
+    }
 
   /* We reset the binding */
   {
@@ -1052,6 +1065,27 @@ sctk_user_thread_create (sctk_thread_t * restrict __threadp,
       sctk_nodebug ("Thread created with scope %d", scope_init);
     }
 #endif
+
+    /* option graphic placement */
+    if(1){
+        /* to be sure of __arg type to cast */
+        if(tmp->task_id != -1){
+            struct mpcomp_mvp_s *temp = (struct mpcomp_mvp_s *)__arg;
+            int vp_local_processus = temp->thread_vp_idx;
+            /* get os ind */
+            int master = sctk_get_cpu_compute_node_topology();
+            /* need the logical pu of the master from the total compute node topo computing with the os index */
+            int master_logical = sctk_get_logical_from_os_compute_node_topology(master);
+            /* in the global scope of compute node topology the pu is*/
+            int logical_pu = (master_logical + vp_local_processus);
+            /* convert logical in os ind in topology_compute_node */
+            int os_pu = sctk_get_cpu_compute_node_topology_from_logical(logical_pu);
+            sctk_spinlock_lock(&lock_graphic);
+            /* fill file to communicate between process of the same compute node */
+            create_placement_rendering(os_pu, master, tmp->task_id, vp_local_processus, 0, temp->min_index, 0); 
+            sctk_spinlock_unlock(&lock_graphic);
+        }
+    }
 
   return res;
 }

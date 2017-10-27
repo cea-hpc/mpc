@@ -101,6 +101,7 @@ char *sctk_multithreading_mode;
 int sctk_new_scheduler_engine_enabled = 0;
 char *sctk_network_mode = "none";
 bool sctk_enable_smt_capabilities;
+bool sctk_enable_graphic_placement;
 bool sctk_share_node_capabilities;
 
 double __sctk_profiling__start__sctk_init_MPC;
@@ -577,6 +578,11 @@ sctk_def_disable_smt (char *arg)
 	sctk_enable_smt_capabilities = 0;
 }
 
+sctk_def_graphic_placement(char *arg)
+{
+	sctk_enable_graphic_placement = 1;
+}
+
 	static void
 sctk_def_share_node (char *arg)
 {
@@ -665,6 +671,7 @@ sctk_def_use_host (char *arg)
 sctk_proceed_arg (char *word)
 {
 	sctk_add_arg_eq ("--enable-smt", sctk_def_enable_smt);
+	sctk_add_arg_eq ("--graphic-placement", sctk_def_graphic_placement);
 	sctk_add_arg_eq ("--disable-smt", sctk_def_disable_smt);
 
 	sctk_add_arg_eq ("--directory", sctk_def_directory);

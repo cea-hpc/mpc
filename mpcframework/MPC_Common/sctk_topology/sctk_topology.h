@@ -34,6 +34,9 @@
 #include <hwloc/openfabrics-verbs.h>
 #endif
 
+//TODO ifdef OPTION_GRAPHIC
+char file_placement[128];
+char placement_txt[128];
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -237,6 +240,18 @@ int sctk_topology_distance_from_pu(int source_pu, hwloc_obj_t target_obj);
 void sctk_topology_init_cpu();
 
 int sctk_get_pu_number();
+
+/* used by option graphic */
+void create_placement_rendering(int pu, int master_pu,int task_id, int vp, int rank_open_mp, int *min_idex, int pid);
+
+/* Get the os index from the topology_compute_node where the current thread is binding */
+int sctk_get_cpu_compute_node_topology();
+
+/* Get the logical index from the os one from the topology_compute_node */
+int sctk_get_logical_from_os_compute_node_topology(int cpu_os);
+
+/* Get the os index from the logical one from the topology_compute_node */
+int sctk_get_cpu_compute_node_topology_from_logical( int logical_pu);
 #ifdef __cplusplus
 }
 #endif

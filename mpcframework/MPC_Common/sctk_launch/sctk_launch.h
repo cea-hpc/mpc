@@ -55,6 +55,7 @@ extern "C"
   void sctk_set_net_val (void (*val) (int *, char ***));
 
   extern bool sctk_enable_smt_capabilities;
+  extern bool sctk_enable_graphic_placement;
   extern bool sctk_share_node_capabilities;
 
   void mpc_start_ (void);
