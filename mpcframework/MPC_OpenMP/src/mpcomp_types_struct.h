@@ -213,6 +213,12 @@ typedef struct mpcomp_thread_s {
     struct mpcomp_thread_s *next;
     /** Father thread */
     struct mpcomp_thread_s *father;
+
+    /* copy __kmpc_fork_call args */
+    void** args_copy;
+    /* Current size of args_copy */
+    int temp_argc;
+
 } mpcomp_thread_t;
 
 /* Instance of OpenMP runtime */

@@ -13,11 +13,6 @@ kmp_int32 __kmpc_ok_to_fork(ident_t *loc) {
   return (kmp_int32)1;
 }
 
-#if MPCOMP_INTEL_USE_BUFFERED_ARGS_LIST
-int intel_temp_argc = 10;
-void **intel_temp_args_copy = NULL;
-#endif /* MPCOMP_INTEL_USE_BUFFERED_ARGS_LIST */
-
 void __kmpc_fork_call(ident_t *loc, kmp_int32 argc, kmpc_micro microtask, ...) {
   va_list args;
   int i;
@@ -28,12 +23,8 @@ void __kmpc_fork_call(ident_t *loc, kmp_int32 argc, kmpc_micro microtask, ...) {
 
   sctk_nodebug("__kmpc_fork_call: entering w/ %d arg(s)...", argc);
 
-#if 1
-  w = malloc(sizeof(mpcomp_intel_wrapper_t));
-#else
   mpcomp_intel_wrapper_t w_noalloc;
   w = &w_noalloc;
-#endif
 
   /* Handle orphaned directive (initialize OpenMP environment) */
   __mpcomp_init();
@@ -51,19 +42,17 @@ void __kmpc_fork_call(ident_t *loc, kmp_int32 argc, kmpc_micro microtask, ...) {
   /* Grab info on the current thread */
   t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
   sctk_assert(t != NULL);
-#if MPCOMP_INTEL_USE_BUFFERED_ARGS_LIST
-  if (intel_temp_args_copy == NULL) {
-    intel_temp_args_copy = (void **)malloc(intel_temp_argc * sizeof(void *));
+
+  if ( t->args_copy == NULL || argc > t->temp_argc )
+  {
+    if(t->args_copy != NULL)
+      free(t->args_copy);
+    t->args_copy = (void **) malloc( argc * sizeof( void * ) );
+    t->temp_argc = argc;
   }
-  if (argc <= intel_temp_argc) {
-    args_copy = intel_temp_args_copy;
-  } else {
-#endif /* MPCOMP_INTEL_USE_BUFFERED_ARGS_LIST */
-    args_copy = (void **)malloc(argc * sizeof(void *));
-    sctk_assert(args_copy);
-#if MPCOMP_INTEL_USE_BUFFERED_ARGS_LIST
-  }
-#endif /* MPCOMP_INTEL_USE_BUFFERED_ARGS_LIST */
+
+  args_copy = t->args_copy;
+  sctk_assert( args_copy );
 
   va_start(args, microtask);
 
