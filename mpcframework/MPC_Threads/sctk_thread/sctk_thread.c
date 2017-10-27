@@ -818,13 +818,22 @@ sctk_thread_create (sctk_thread_t * restrict __threadp,
 				  (void *) tmp);
 
 	/* graphic placement option */
-    if(1){
+    if(sctk_enable_graphic_placement){
         /* get os ind */
         int master = sctk_get_cpu_compute_node_topology();
         sctk_spinlock_lock(&lock_graphic);
         int min_index[3] = {0,0,0};
         /* fill file to communicate between process of the same compute node */
         create_placement_rendering(master, master, tmp->task_id, 0, 0, min_index, syscall(SYS_gettid));     
+        sctk_spinlock_unlock(&lock_graphic);
+    }
+	/* text placement option */
+    if(sctk_enable_text_placement){
+        int master = sctk_get_cpu_compute_node_topology();
+        sctk_spinlock_lock(&lock_graphic);
+        /* need to lock to write in the node file for each mpi master of the processus */
+        int min_index[3] = {0,0,0};
+        create_placement_text(master, master, tmp->task_id, 0, 0, min_index, syscall(SYS_gettid));     
         sctk_spinlock_unlock(&lock_graphic);
     }
 
@@ -1067,7 +1076,7 @@ sctk_user_thread_create (sctk_thread_t * restrict __threadp,
 #endif
 
     /* option graphic placement */
-    if(1){
+    if(sctk_enable_graphic_placement){
         /* to be sure of __arg type to cast */
         if(tmp->task_id != -1){
             struct mpcomp_mvp_s *temp = (struct mpcomp_mvp_s *)__arg;
@@ -1083,6 +1092,25 @@ sctk_user_thread_create (sctk_thread_t * restrict __threadp,
             sctk_spinlock_lock(&lock_graphic);
             /* fill file to communicate between process of the same compute node */
             create_placement_rendering(os_pu, master, tmp->task_id, vp_local_processus, 0, temp->min_index, 0); 
+            sctk_spinlock_unlock(&lock_graphic);
+        }
+    }
+    /* option text placement */
+    if(sctk_enable_text_placement){
+        /* to be sure of __arg type to cast */
+        if(tmp->task_id != -1){
+            struct mpcomp_mvp_s *temp = (struct mpcomp_mvp_s *)__arg;
+            int vp_local_processus = temp->thread_vp_idx;
+            /* get os ind */
+            int master = sctk_get_cpu_compute_node_topology();
+            // need the logical pu of the master from the total compute node topo computin with the os index to use for origin */
+            int master_logical = sctk_get_logical_from_os_compute_node_topology(master);
+            /* in the global compute node topology the processus is*/
+            int logical_pu = (master_logical + vp_local_processus);
+            /* convert logical in os ind in topology_compute_node */
+            int os_pu = sctk_get_cpu_compute_node_topology_from_logical(logical_pu);
+            sctk_spinlock_lock(&lock_graphic);
+            create_placement_text(os_pu, master, tmp->task_id, vp_local_processus, 0, temp->min_index, 0); 
             sctk_spinlock_unlock(&lock_graphic);
         }
     }

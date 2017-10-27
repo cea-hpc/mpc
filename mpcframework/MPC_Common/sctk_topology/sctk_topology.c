@@ -256,6 +256,34 @@ static char *convert_rgb_to_string(int red, int green, int blue, char * rgb){
     strcpy(rgb, r1);
 } 
 
+/* fill thread placement informations in file to communicate between processes of the same node for text placement option */
+void create_placement_text(int os_pu, int os_master_pu, int task_id, int vp, int rank_open_mp, int* min_idex, int pid){
+
+    /*acces global topo*/
+    hwloc_topology_load(topology_full);
+    /*add color info on pu*/
+    hwloc_obj_t obj_pu;
+    hwloc_obj_t obj_master;
+
+    if(os_pu == os_master_pu){
+            /* implemtation txt */
+            FILE *f_textual = fopen(textual_file, "a");
+            if(f_textual != NULL){
+                fprintf(f_textual,"%d %d %d %d %d %d %d\n", os_master_pu, vp, task_id, min_idex[0], min_idex[1],min_idex[2] , pid);
+                fclose(f_textual);
+            }
+    }
+    else{
+            /* implemtation txt */
+            FILE *f_textual = fopen(textual_file, "a");
+            if(f_textual != NULL){
+                fprintf(f_textual,"%d %d %d %d %d %d %d\n", os_pu, vp, task_id, min_idex[0], min_idex[1],min_idex[2], pid);
+                fclose(f_textual);
+            }
+
+    }
+}
+
 /* fill thread placement informations in file to communicate between processes of the same node for graphic placement option */
 void create_placement_rendering(int os_pu, int os_master_pu, int task_id, int vp, int rank_open_mp, int* min_idex, int pid){
     int red, green, blue;
@@ -322,12 +350,12 @@ int sctk_get_cpu_compute_node_topology()
 
 
     hwloc_obj_t pu;
-    if(sctk_enable_smt_capabilities){
+    //if(sctk_enable_smt_capabilities)i{
         pu = hwloc_get_obj_inside_cpuset_by_type(topology_compute_node, set, HWLOC_OBJ_PU, 0);
-    }
-    else{
+    //}
+    /*else{
         pu = hwloc_get_obj_inside_cpuset_by_type(topology_compute_node, set, HWLOC_OBJ_CORE, 0);
-    }
+    }*/
 
     if (!pu)
     {
@@ -525,12 +553,225 @@ static void name_and_date_file_text(char *file_name){
     strcat(file_name, buffer);
 }
 
+/* init struct for text placement option */
+static void sctk_init_text_option(struct sctk_text_option_s **tab_option){
+    int lenght = hwloc_get_nbobjs_by_type(topology_compute_node, HWLOC_OBJ_PU);
+    *tab_option = (struct sctk_text_option_s *)malloc(sizeof(struct sctk_text_option_s)); 
+    (*tab_option)->os_index = (int *)malloc(sizeof(int)*lenght);
+    (*tab_option)->vp_tab = malloc(sizeof(int)*lenght);
+    (*tab_option)->rank_mpi= malloc(sizeof(int)*lenght);
+    (*tab_option)->compact_tab = malloc(sizeof(int)*lenght);
+    (*tab_option)->scatter_tab = malloc(sizeof(int)*lenght);
+    (*tab_option)->balanced_tab = malloc(sizeof(int)*lenght);
+    (*tab_option)->pid_tab = malloc(sizeof(int)*lenght);
+    int l=0;
+    struct sctk_text_option_s * temp = *tab_option;
+    for(l; l< lenght; l++){
+        temp->vp_tab[l] = -1;
+        temp->os_index[l] = -1;
+        temp->rank_mpi[l] = -1;
+        temp->compact_tab[l] = -1;
+        temp->scatter_tab[l] = -1;
+        temp->balanced_tab[l] = -1;
+        temp->pid_tab[l] = -1;
+    }
+}
+
 /* used by the reader for text placement option file */
 static void convert_char(char * buff,int cpt, int *tab, int cpt_line){
     buff [cpt] = '\0';
     char temp[cpt + 1];
     strncpy(temp, buff , (cpt+ 1));
     tab[cpt_line] = atoi(temp);
+}
+
+/* read file of the node for text placement option */
+static void sctk_read_format_option_text_placement(FILE *f_textual, struct sctk_text_option_s *tab_option, int lenght){
+    /*! \brief Destroy the topology module
+    */
+
+    int cpt_ligne = 0;
+    while(1){// one ligne per iteration
+        //malloc buffer for infos of other ranks in the same processus
+        char * os_indbuff = (char *)malloc(64*lenght);
+        char * infosbuff = (char *)malloc(64*lenght);
+        char * infos_rank_mpibuff= (char *)malloc(64*lenght);
+        char * infos_compactbuff = (char *)malloc(64*lenght);
+        char * infos_scatterbuff = (char *)malloc(64*lenght);
+        char * infos_balancedbuff = (char *)malloc(64*lenght);
+        char * infos_pidbuff = (char *)malloc(64*lenght);
+        /* read os ind infos */
+        char c = getc(f_textual);
+        int cpt = 0;
+        while((c != ' ') && (c != EOF)){
+            read_char(os_indbuff, &cpt, &c, f_textual);
+        }
+        if(c == EOF){
+            break;
+        }
+        convert_char(os_indbuff, cpt, tab_option->os_index, cpt_ligne);
+
+        /* read vp infos */
+        c = getc(f_textual);
+        cpt = 0;
+        while((c != ' ') && (c != EOF)){
+            read_char(infosbuff, &cpt, &c, f_textual);
+        }
+        if(c == EOF){
+            break;
+        }
+        convert_char(infosbuff, cpt, tab_option->vp_tab, cpt_ligne);
+
+        /* read mpi rank infos */
+        c = getc(f_textual);
+        cpt = 0;
+        while((c != ' ') && (c != EOF)){
+            read_char(infos_rank_mpibuff, &cpt, &c, f_textual);
+        }
+        if(c == EOF){
+            break;
+        }
+        convert_char(infos_rank_mpibuff, cpt, tab_option->rank_mpi, cpt_ligne);
+
+        /* read COMPACT policy*/
+        c = getc(f_textual);
+        cpt = 0;
+        while((c != ' ') && (c != EOF)){
+            read_char(infos_compactbuff, &cpt, &c, f_textual);
+        }
+        if(c == EOF){
+            break;
+        }
+        convert_char(infos_compactbuff, cpt, tab_option->compact_tab, cpt_ligne);
+
+        /* read SCATTER policy*/
+        c = getc(f_textual);
+        cpt = 0;
+        while((c != ' ') && (c != EOF)){
+            read_char(infos_scatterbuff, &cpt, &c, f_textual);
+        }
+        if(c == EOF){
+            break;
+        }
+        convert_char(infos_scatterbuff, cpt, tab_option->scatter_tab, cpt_ligne);
+
+        /* read BALANCED policy*/
+        c = getc(f_textual);
+        cpt = 0;
+        while((c != ' ') && (c != EOF)){
+            read_char(infos_balancedbuff, &cpt, &c, f_textual);
+        }
+        if(c == EOF){
+            break;
+        }
+        convert_char(infos_balancedbuff, cpt, tab_option->balanced_tab, cpt_ligne);
+
+        /* read pid */
+        c = getc(f_textual);
+        cpt = 0;
+        while((c != '\n') && (c != EOF)){ /*end ligne*/
+            read_char(infos_pidbuff, &cpt, &c, f_textual);
+        }
+        if(c == EOF){
+            break;
+        }
+        convert_char(infos_pidbuff, cpt, tab_option->pid_tab, cpt_ligne);
+
+        /* free buff */
+        free(os_indbuff );
+        free(infos_rank_mpibuff);
+        free(infosbuff );
+        free(infos_balancedbuff);
+        free(infos_scatterbuff);
+        free(infos_compactbuff);
+        free(infos_pidbuff);
+        cpt_ligne++;
+    }
+    fclose(f_textual);
+}
+
+/* determine the higher logical index pu used for text placement option */
+static int sctk_determine_higher_logical(int *os_index, int lenght){
+    int i;
+    int higher_logical = -1;
+    int current_logical = 0;
+    for(i=0;i<lenght;i++){
+        if(os_index[i] != -1){
+            hwloc_obj_t pu = 
+                hwloc_get_pu_obj_by_os_index(topology_compute_node, os_index[i]);
+                if(pu == NULL){
+                    return higher_logical;
+                }
+                current_logical = pu->logical_index;
+        }
+        if( current_logical > higher_logical){
+            higher_logical = current_logical;
+        }
+    }
+    return higher_logical;
+}
+
+/* Write in file as lstopo adding informations on the topology and thread placmeent (text option) */
+static void print_children(hwloc_topology_t topology, hwloc_obj_t obj, 
+        int depth, struct sctk_text_option_s *tab_option, int num_os, int higher_logical, const char* HostName, FILE* f, int ind_child, int last_arity)
+{
+    char string[128];
+    char string_mpc[128];
+    unsigned i;
+    int cpt = 0;
+    int k;
+    static hwloc_obj_type_t type;
+    static int cpt_output = 0;
+    type = HWLOC_OBJ_PU;
+
+    hwloc_obj_snprintf(string, sizeof(string), topology, obj, "#", 0);
+/* Check if os ind for pus and cores are always the same for the first pu of a core */
+    if(obj->type == type){
+        for(k = 0; k < num_os; k++){
+            if(obj->os_index == tab_option->os_index[k]){
+                sprintf(string_mpc, "Virtual Processor %d | rank MPI %d | Policy : compact %d, scatter %d, balanced %d | tid %d", tab_option->vp_tab[k], tab_option->rank_mpi[k], tab_option->compact_tab[k], tab_option->scatter_tab[k], tab_option->balanced_tab[k],  tab_option->pid_tab[k]);
+                    if(last_arity == 1){
+                        fprintf(f," + %s#%d %s", string,obj->logical_index, string_mpc);
+                    }
+                    else{
+                        fprintf(f,"\n%*s%s#%d %s", 2*depth, "", string,obj->logical_index, string_mpc);
+                    }
+                if(obj->logical_index == higher_logical && obj->type == type){
+                    fprintf(f,"\n\n|------------------------------END RESERVATION HOST %s------------------------------|\n", HostName); 
+                }
+                goto boucle;
+            }
+        }
+    }
+    if(last_arity == 1){
+        fprintf(f," + %s#%d", string,obj->logical_index);
+    }
+    else{
+        fprintf(f,"\n%*s%s#%d", 2*depth, "", string,obj->logical_index);
+    }
+
+    boucle:
+
+    if(obj->arity == 1){
+        last_arity = 1;
+    }
+    else{
+        last_arity = 0;
+    }
+    for (i = 0; i < obj->arity; i++) {
+        print_children(topology, obj->children[i], depth + 1, tab_option,  num_os, higher_logical, HostName, f, i, last_arity);
+    }
+}
+
+static void sctk_destroy_text_option(struct sctk_text_option_s *tab_option){
+                    free(tab_option->os_index);
+                    free(tab_option->vp_tab);
+                    free(tab_option->rank_mpi);
+                    free(tab_option->compact_tab);
+                    free(tab_option->scatter_tab);
+                    free(tab_option->balanced_tab);
+                    free(tab_option->pid_tab);
+                    free(tab_option);
 }
 
 hwloc_topology_t sctk_get_topology_object(void)
@@ -1449,7 +1690,7 @@ void sctk_topology_init ()
 	topology_cpuset = hwloc_bitmap_alloc();
 
     /*graphical option*/
-    if(sctk_enable_graphic_placement){
+    if(sctk_enable_graphic_placement || sctk_enable_text_placement){
         hwloc_cpuset_t newset;
         newset = hwloc_bitmap_alloc();
         int ret = hwloc_get_last_cpu_location(topology, newset, HWLOC_CPUBIND_THREAD);
@@ -1459,14 +1700,21 @@ void sctk_topology_init ()
         hwloc_obj_t cluster = hwloc_get_ancestor_obj_by_type(topology, HWLOC_OBJ_MACHINE, obj);
         strcpy(file_placement, "");
         strcat(file_placement, "placement_");
+        strcpy(textual_file, "");
+        strcat(textual_file, "textual_");
+        strcpy(textual_file_output, "");
+        strcat(textual_file_output, "textual_");
         strcpy(placement_txt, "");
         strcat(placement_txt, "placement_");
         if(cluster != NULL){
             const char * HostName  = hwloc_obj_get_info_by_name(cluster, "HostName");
             //sprintf(proc_id, "%d", syscall(SYS_gettid));
             strcat(file_placement, HostName);
+            strcat(textual_file, HostName);
+            strcat(textual_file_output, HostName);
             strcat(placement_txt, HostName);
             remove(placement_txt);
+            remove(textual_file);
         }
         topology_cpuset_compute_node = hwloc_bitmap_alloc();
         /* topology usesd by the graphic option */
@@ -1536,6 +1784,52 @@ void sctk_topology_destroy (void)
                     fflush(stdout);
                 }
             }
+        }
+    }
+    if(sctk_enable_text_placement){
+        hwloc_obj_t cluster = hwloc_get_obj_by_type(topology_compute_node, HWLOC_OBJ_MACHINE, 0);
+        int lenght_max;
+        int lenght_min;
+        int lenght;
+        lenght_max = hwloc_get_nbobjs_by_type(topology_compute_node, HWLOC_OBJ_PU);
+        lenght_min = hwloc_get_nbobjs_by_type(topology_compute_node, HWLOC_OBJ_CORE);
+        if(sctk_enable_smt_capabilities){
+            lenght = lenght_max;
+        }
+        else{
+            lenght = lenght_min;
+        }
+        /* read textual informations */
+        FILE *f_textual = fopen(textual_file, "r");
+        if(f_textual != NULL){
+            struct sctk_text_option_s *tab_option;
+
+            sctk_init_text_option(&tab_option);
+
+            sctk_read_format_option_text_placement(f_textual, tab_option, lenght_max);
+
+            const char * HostName  = hwloc_obj_get_info_by_name(cluster, "HostName");
+
+            name_and_date_file_text(textual_file_output);
+            strcat(textual_file_output, ".txt");
+
+            hwloc_obj_t root = hwloc_get_root_obj(topology_compute_node);
+            FILE *f = fopen(textual_file_output, "a");
+
+            if(f != NULL){
+                fprintf(f,"|------------------------------HOST                 %s------------------------------|\n", HostName); 
+                int higher_logical = sctk_determine_higher_logical(tab_option->os_index, lenght);
+                if(1){//TODO si proc 0
+                    fprintf(stdout,"/* --text-placement : \n.txt dated file has been generated for each compute node to vizualise topology and thread placement with their infos. */\n");
+                    fflush(stdout);
+                }
+                print_children(topology_compute_node, root, 0, tab_option, lenght_max, higher_logical, HostName, f, 0, 0);
+                fclose(f);
+            }
+            /* remove temp files */
+            sctk_destroy_text_option(tab_option);
+            //remove(textual_file);
+            //remove(placement_txt);
         }
     }
 }

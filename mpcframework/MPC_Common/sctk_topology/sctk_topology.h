@@ -37,6 +37,18 @@
 //TODO ifdef OPTION_GRAPHIC
 char file_placement[128];
 char placement_txt[128];
+char textual_file[128];
+char textual_file_output[128];
+typedef struct sctk_text_option_s{
+                int *os_index ; 
+                int *vp_tab ; 
+                int *rank_mpi; 
+                int *compact_tab ; 
+                int *scatter_tab ; 
+                int *balanced_tab ; 
+                int *pid_tab; 
+} sctk_text_option_t;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
