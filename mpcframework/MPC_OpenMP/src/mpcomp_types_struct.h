@@ -399,6 +399,12 @@ typedef struct mpcomp_node_s
     struct mpcomp_task_node_infos_s task_infos;
 #endif /* MPCOMP_TASK */
     struct mpcomp_node_s* mvp_prev_father;
+
+    /* Tree reduction flag */
+    volatile int* isArrived;
+    /* Tree reduction data */
+    void** reduce_data;
+
 } mpcomp_node_t;
 
 typedef struct mpcomp_node_s *mpcomp_node_ptr_t;

@@ -341,6 +341,13 @@ __mpcomp_scatter_wakeup_intermediate_node( mpcomp_node_t* node )
      
     sctk_assert( node->children.node );
 
+    node->reduce_data = (void**) mpcomp_alloc( node->nb_children * 64 * sizeof( void* ));
+    node->isArrived = (int *) mpcomp_alloc( node->nb_children * 64 * sizeof( int ) );
+    for ( i = 0; i < node->nb_children * 64; i++ ) {
+      node->reduce_data[i] = NULL;
+      node->isArrived[i] = 0;
+    }
+
     /** Instance id : First id next step + cur_node * tree_base + i */
     if( nthreads > num_vchildren )
     {
@@ -370,7 +377,6 @@ __mpcomp_scatter_wakeup_intermediate_node( mpcomp_node_t* node )
     {
         int cur_node;
         mpcomp_mvp_t* mvp;
-
         const int min_shift = num_children / nthreads;
         const int ext_shift = num_children % nthreads;
 
@@ -436,6 +442,12 @@ __mpcomp_scatter_wakeup_final_mvp( mpcomp_node_t* node )
 
         node->barrier_num_threads = node->num_threads;
         cur_mvp = 0; 
+        node->reduce_data = (void**) mpcomp_alloc( node->nb_children * 64 * sizeof( void* ));
+        node->isArrived = (int *) mpcomp_alloc( node->nb_children * 64 * sizeof( int ) );
+        for ( i = 0; i < node->nb_children * 64; i++ ) {
+		      node->reduce_data[i] = NULL;
+		      node->isArrived[i] = 0;
+        }
 
     for( i = 0; i < nthreads; i++ )
     {
