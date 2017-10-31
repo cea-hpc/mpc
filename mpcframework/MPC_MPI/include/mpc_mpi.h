@@ -732,8 +732,8 @@ int MPI_Group_intersection (MPI_Group, MPI_Group, MPI_Group *);
 int MPI_Group_difference (MPI_Group, MPI_Group, MPI_Group *);
 int MPI_Group_incl (MPI_Group, int, int *, MPI_Group *);
 int MPI_Group_excl (MPI_Group, int, int *, MPI_Group *);
-int MPI_Group_range_incl (MPI_Group, int, int[][3], MPI_Group *);
-int MPI_Group_range_excl (MPI_Group, int, int[][3], MPI_Group *);
+int MPI_Group_range_incl (MPI_Group, int, int [][3], MPI_Group *);
+int MPI_Group_range_excl (MPI_Group, int, int [][3], MPI_Group *);
 int MPI_Group_free (MPI_Group *);
   
 /* Communicators and Intercommunicators */

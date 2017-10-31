@@ -329,8 +329,19 @@ static void sctk_perform_initialisation (void)
 	sctk_alloc_posix_mmsrc_numa_init_phase_numa();
 #endif
 	
+    // MALP FIX...
+    char *env = NULL;
+    if( env = getenv( "LD_PRELOAD") )
+    {
+       env = strdup( env );
+       setenv("LD_PRELOAD", "", 1 );
+    }
+
 	sctk_locate_dynamic_initializers();
 	
+    if( env )
+       setenv( "LD_PRELOAD", env, 1 );
+
 	sctk_thread_init ();
 
 	if (sctk_version_details_val)
