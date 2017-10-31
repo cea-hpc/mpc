@@ -17,6 +17,7 @@
 /* #                                                                      # */
 /* # Authors:                                                             # */
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
+/* #   - BOUHROUR Stephane stephane.bouhrour@exascale-computing.eu        # */
 /* #                                                                      # */
 /* ######################################################################## */
 #ifndef __SCTK_LAUNCH_H_

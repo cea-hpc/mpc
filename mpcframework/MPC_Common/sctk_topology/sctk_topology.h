@@ -21,6 +21,7 @@
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
 /* #   - DIDELOT Sylvain sylvain.didelot@exascale-computing.eu            # */
 /* #   - TCHIBOUKDJIAN Marc marc.tchiboukdjian@exascale-computing.eu      # */
+/* #   - BOUHROUR Stephane stephane.bouhrour@exascale-computing.eu        # */
 /* #                                                                      # */
 /* ######################################################################## */
 #ifndef __SCTK_TOPOLOGY_H_

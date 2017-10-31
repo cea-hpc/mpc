@@ -21,6 +21,7 @@
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
 /* #   - DIDELOT Sylvain sylvain.didelot@exascale-computing.eu            # */
 /* #   - TCHIBOUKDJIAN Marc marc.tchiboukdjian@exascale-computing.eu      # */
+/* #   - BOUHROUR Stephane stephane.bouhrour@exascale-computing.eu        # */
 /* #                                                                      # */
 /* ######################################################################## */
 #include "sctk_config.h"
@@ -525,6 +526,10 @@ static void sctk_read_format_option_graphic_placement_and_complet_topo_infos(FIL
         else{
             obj = hwloc_get_obj_by_type(topology_compute_node, HWLOC_OBJ_CORE, logical_ind);
         }
+        if(!obj){
+        printf("logical %d\n", logical_ind);
+            return -1;
+        }
         hwloc_obj_add_info(obj, "lstopoStyle", infos);
         free(infosbuff);
         free(os_indbuff );
@@ -690,6 +695,27 @@ static void sctk_read_format_option_text_placement(FILE *f_textual, struct sctk_
     fclose(f_textual);
 }
 
+/* determine the lower logical index pu used for text placement option */
+static int determine_lower_logical(int *os_index, int lenght){
+    int i;
+    int lower_logical = hwloc_get_nbobjs_by_type(topology_compute_node, HWLOC_OBJ_PU);
+    int current_logical = 0;
+    for(i=0;i<lenght;i++){
+        if(os_index[i] != -1){
+            hwloc_obj_t pu = 
+                hwloc_get_pu_obj_by_os_index(topology_compute_node, os_index[i]);
+                if(pu == NULL){
+                    return lower_logical;
+                }
+                current_logical = pu->logical_index;
+        }
+        if( current_logical < lower_logical){
+            lower_logical = current_logical;
+        }
+    }
+    return lower_logical;
+}
+
 /* determine the higher logical index pu used for text placement option */
 static int sctk_determine_higher_logical(int *os_index, int lenght){
     int i;
@@ -708,12 +734,14 @@ static int sctk_determine_higher_logical(int *os_index, int lenght){
             higher_logical = current_logical;
         }
     }
+    int val = sctk_get_task_number();
+    printf("higher_logical + val %d\n",  val);
     return higher_logical;
 }
 
 /* Write in file as lstopo adding informations on the topology and thread placmeent (text option) */
 static void print_children(hwloc_topology_t topology, hwloc_obj_t obj, 
-        int depth, struct sctk_text_option_s *tab_option, int num_os, int higher_logical, const char* HostName, FILE* f, int ind_child, int last_arity)
+        int depth, struct sctk_text_option_s *tab_option, int num_os,int higher_logical , int lower_logical, const char* HostName, FILE* f, int ind_child, int last_arity)
 {
     char string[128];
     char string_mpc[128];
@@ -721,10 +749,19 @@ static void print_children(hwloc_topology_t topology, hwloc_obj_t obj,
     int cpt = 0;
     int k;
     static hwloc_obj_type_t type;
-    static int cpt_output = 0;
     type = HWLOC_OBJ_PU;
 
     hwloc_obj_snprintf(string, sizeof(string), topology, obj, "#", 0);
+    static int already_begining_done = 1;
+    if(already_begining_done){
+        hwloc_obj_t lower_index_obj_pu = hwloc_get_obj_by_type(topology_compute_node, HWLOC_OBJ_PU, lower_logical);
+        /* if ancestor of the first pu booked */
+        if(hwloc_get_ancestor_obj_by_type(topology_compute_node, obj->type, lower_index_obj_pu)->logical_index == obj->logical_index
+        && obj->type != HWLOC_OBJ_MACHINE && obj->type != HWLOC_OBJ_NODE && obj->type != HWLOC_OBJ_SOCKET && obj->type != HWLOC_OBJ_SYSTEM){
+            fprintf(f,"\n\n|------------------------------BEGINING RESERVATION HOST %s-------------------------|\n", HostName); 
+            already_begining_done = 0;
+        }
+    }
 /* Check if os ind for pus and cores are always the same for the first pu of a core */
     if(obj->type == type){
         for(k = 0; k < num_os; k++){
@@ -745,9 +782,15 @@ static void print_children(hwloc_topology_t topology, hwloc_obj_t obj,
     }
     if(last_arity == 1){
         fprintf(f," + %s#%d", string,obj->logical_index);
+        if(obj->logical_index == higher_logical && obj->type == type){
+            fprintf(f,"\n\n|------------------------------END RESERVATION HOST %s------------------------------|\n", HostName); 
+        }
     }
     else{
         fprintf(f,"\n%*s%s#%d", 2*depth, "", string,obj->logical_index);
+        if(obj->logical_index == higher_logical && obj->type == type){
+            fprintf(f,"\n\n|------------------------------END RESERVATION HOST %s------------------------------|\n", HostName); 
+        }
     }
 
     boucle:
@@ -759,7 +802,7 @@ static void print_children(hwloc_topology_t topology, hwloc_obj_t obj,
         last_arity = 0;
     }
     for (i = 0; i < obj->arity; i++) {
-        print_children(topology, obj->children[i], depth + 1, tab_option,  num_os, higher_logical, HostName, f, i, last_arity);
+        print_children(topology, obj->children[i], depth + 1, tab_option,  num_os, higher_logical, lower_logical, HostName, f, i, last_arity);
     }
 }
 
@@ -1753,7 +1796,6 @@ void sctk_topology_init ()
 */
 void sctk_topology_destroy (void)
 {
-    hwloc_topology_destroy(topology);
     if(sctk_enable_graphic_placement){
         unsigned long flags = HWLOC_TOPOLOGY_FLAG_WHOLE_SYSTEM;
         if(sctk_get_local_process_rank() == 0){
@@ -1818,12 +1860,14 @@ void sctk_topology_destroy (void)
 
             if(f != NULL){
                 fprintf(f,"|------------------------------HOST                 %s------------------------------|\n", HostName); 
-                int higher_logical = sctk_determine_higher_logical(tab_option->os_index, lenght);
+                //int higher_logical = sctk_determine_higher_logical(tab_option->os_index, lenght);
+                int lower_logical = determine_lower_logical(tab_option->os_index, lenght);
+                int higher_logical = lower_logical + sctk_get_cpu_number();
                 if(1){//TODO si proc 0
                     fprintf(stdout,"/* --text-placement : \n.txt dated file has been generated for each compute node to vizualise topology and thread placement with their infos. */\n");
                     fflush(stdout);
                 }
-                print_children(topology_compute_node, root, 0, tab_option, lenght_max, higher_logical, HostName, f, 0, 0);
+                print_children(topology_compute_node, root, 0, tab_option, lenght_max, higher_logical, lower_logical, HostName, f, 0, 0);
                 fclose(f);
             }
             /* remove temp files */
@@ -1832,6 +1876,7 @@ void sctk_topology_destroy (void)
             //remove(placement_txt);
         }
     }
+    hwloc_topology_destroy(topology);
 }
 
 

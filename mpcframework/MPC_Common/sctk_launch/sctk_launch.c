@@ -17,6 +17,7 @@
 /* #                                                                      # */
 /* # Authors:                                                             # */
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
+/* #   - BOUHROUR Stephane stephane.perache@exascale-computing.eu         # */
 /* #                                                                      # */
 /* ######################################################################## */
 #if defined(MPC_Message_Passing) || defined(MPC_Threads)
