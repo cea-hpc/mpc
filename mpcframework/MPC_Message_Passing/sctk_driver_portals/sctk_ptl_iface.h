@@ -37,29 +37,29 @@
 /**************************************************************/
 
 /* Hardware-related init */
-void sctk_ptl_hardware_init();
+sctk_ptl_rail_info_t sctk_ptl_hardware_init();
 void sctk_ptl_hardware_fini();
 
 /* Software-related init */
-sctk_ptl_pte_t* sctk_ptl_software_init(int);
-void sctk_ptl_software_fini(sctk_ptl_pte_t*);
+sctk_ptl_pte_t* sctk_ptl_software_init(sctk_ptl_rail_info_t*, int);
+void sctk_ptl_software_fini(sctk_ptl_rail_info_t*);
 
 /* ME management */
 sctk_ptl_me_t* sctk_ptl_me_create(void*, size_t, sctk_ptl_id_t, sctk_ptl_matchbits_t, sctk_ptl_matchbits_t, int);
-sctk_ptl_meh_t* sctk_ptl_me_register(sctk_ptl_me_t*, sctk_ptl_pte_t*, ptl_list_t);
+sctk_ptl_meh_t* sctk_ptl_me_register(sctk_ptl_rail_info_t* srail, sctk_ptl_me_t*, sctk_ptl_pte_t*, ptl_list_t);
 void sctk_ptl_me_release(sctk_ptl_meh_t*);
 
 /* MD management */
-sctk_ptl_md_t* sctk_ptl_md_create(void*, size_t, int);
-sctk_ptl_mdh_t* sctk_ptl_md_register(const sctk_ptl_md_t*);
+sctk_ptl_md_t* sctk_ptl_md_create(sctk_ptl_rail_info_t* srail, void*, size_t, int);
+sctk_ptl_mdh_t* sctk_ptl_md_register(sctk_ptl_rail_info_t* srail, const sctk_ptl_md_t*);
 void sctk_ptl_md_release(sctk_ptl_mdh_t*);
 
 /* EQ management */
-int sctk_ptl_eq_poll_md(sctk_ptl_event_t*);
-int sctk_ptl_eq_poll_me(sctk_ptl_pte_t*, sctk_ptl_event_t*);
+int sctk_ptl_eq_poll_md(sctk_ptl_rail_info_t* srail, sctk_ptl_event_t*);
+int sctk_ptl_eq_poll_me(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t*, sctk_ptl_event_t*);
 
 /* Request management */
-int sctk_ptl_emit_get(sctk_ptl_mdh_t* mdh, size_t size, sctk_ptl_id_t remote, sctk_ptl_pte_t* pte, sctk_ptl_matchbits_t match);
+int sctk_ptl_emit_get(sctk_ptl_mdh_t*, size_t, sctk_ptl_id_t, ptl_pt_index_t, sctk_ptl_matchbits_t);
 int sctk_ptl_emit_push();
 int sctk_ptl_emit_atomic();
 int sctk_ptl_emit_fetch_atomic();
@@ -68,7 +68,7 @@ int sctk_ptl_emit_fetch_atomic();
 /**************************************************************/
 /*************************** HELPERS **************************/
 /**************************************************************/
-sctk_ptl_id_t sctk_ptl_self();
+sctk_ptl_id_t sctk_ptl_self(sctk_ptl_rail_info_t* srail);
 
 static inline const char const * sctk_ptl_rc_decode(int rc)
 {
@@ -138,10 +138,10 @@ static inline const char const * sctk_ptl_event_decode(sctk_ptl_event_t ev)
 /**
  * De-serialize an object an map it into its base struct.
  *
- * \param[in] inval the serialized data, as a string
+ * \param[in] inval the serialized data, as a string or NULL if the outvallen is not large enough
  * \param[out] outval the effective struct to fill
  * \param[in] outvallen size of the final struct
- * \return 1 if an error occured, 0 otherwise
+ * \return Size of the string if serialization succeeded, -1 otherwise
  */
 static inline int sctk_ptl_data_deserialize ( const char *inval, void *outval, int outvallen )
 {
@@ -150,7 +150,7 @@ static inline int sctk_ptl_data_deserialize ( const char *inval, void *outval, i
 
     if ( outvallen != strlen ( inval ) / 2 )
     {
-        return 1;
+        return -1;
     }
 
     for ( i = 0 ; i < outvallen ; ++i )
@@ -178,7 +178,7 @@ static inline int sctk_ptl_data_deserialize ( const char *inval, void *outval, i
         inval++;
     }
 
-    return 0;
+    return outvallen;
 }
 
 /**
@@ -187,7 +187,7 @@ static inline int sctk_ptl_data_deserialize ( const char *inval, void *outval, i
  * \param[in] invallen input object size
  * \param[out] outval the string version of the object
  * \param[in] outvallen the max string length
- * \return 1 if an error occured, 0 otherwise
+ * \return the effective string size if succeeded, -1 otherwise 
  */
 static inline int sctk_ptl_data_serialize ( const void *inval, int invallen, char *outval, int outvallen )
 {
@@ -199,7 +199,7 @@ static inline int sctk_ptl_data_serialize ( const void *inval, int invallen, cha
     int i;
 	if ( invallen * 2 + 1 > outvallen )
     {
-        return 1;
+        return -1;
     }
 
     for ( i = 0; i < invallen; i++ )
@@ -209,7 +209,7 @@ static inline int sctk_ptl_data_serialize ( const void *inval, int invallen, cha
     }
 
     outval[invallen * 2] = '\0';
-    return 0;
+    return (invallen * 2);
 }
 #endif
 

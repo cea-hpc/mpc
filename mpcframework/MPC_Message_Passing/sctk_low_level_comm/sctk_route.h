@@ -50,10 +50,12 @@ typedef struct
 typedef union
 {
 	sctk_tcp_route_info_t tcp; /**< TCP route info */
+#ifdef MPC_USE_INFINIBAND
 	sctk_ib_route_info_t ib; /**< IB route info */
+#endif
 	sctk_shm_route_info_t shm;
 #ifdef MPC_USE_PORTALS
-    sctk_portals_route_info_t portals; /*< Portals route info */
+	sctk_ptl_route_info_t ptl; /*< Portals route info */
 #endif
 } sctk_route_info_spec_t;
 

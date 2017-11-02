@@ -49,7 +49,7 @@ typedef union
 #endif
 	sctk_shm_rail_info_t shm;	/**< SHM Rail Info */
 #ifdef MPC_USE_PORTALS
-        sctk_portals_rail_info_t portals; /**< Portals Info */
+	sctk_ptl_rail_info_t ptl; /**< Portals Info */
 #endif
 	sctk_topological_rail_info_t topological; /**< Topological rail info */
 } sctk_rail_info_spec_t;
@@ -71,14 +71,13 @@ struct sctk_rail_ib_pin_ctx
 #endif
 
 #ifdef MPC_USE_PORTALS
-
-#include <sctk_portals_helper.h>
-struct sctk_rail_portals_pin_ctx
+#include "sctk_ptl_types.h"
+struct sctk_rail_ptl_pin_ctx
 {
-    ptl_handle_me_t me_handler;
-    ptl_me_t me;
-    ptl_match_bits_t match;
-    ptl_process_t id;
+    sctk_ptl_meh_t me_handler;
+    sctk_ptl_me_t me;
+    sctk_ptl_matchbits_t match;
+    sctk_ptl_id_t id;
     void* start_addr;
 };
 #endif /* MPC_USE_PORTALS */
@@ -89,7 +88,7 @@ typedef union
 	struct sctk_rail_ib_pin_ctx ib;
 #endif
 #ifdef MPC_USE_PORTALS
-	struct sctk_rail_portals_pin_ctx portals;
+	struct sctk_rail_ptl_pin_ctx ptl;
 #endif /* MPC_USE_PORTALS */
 }sctk_rail_pin_ctx_internal_t;
 

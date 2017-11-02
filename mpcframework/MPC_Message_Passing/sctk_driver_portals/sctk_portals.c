@@ -24,10 +24,8 @@
 
 #ifdef MPC_USE_PORTALS
 #include <sctk_debug.h>
-#include <sctk_route.h>
-#include <sctk_inter_thread_comm.h>
-#include <sctk_portals.h>
-#include <sctk_portals_rdma.h>
+#include "sctk_rail.h"
+#include "sctk_ptl_toolkit.h"
 
 static volatile short rail_is_ready = 0;
 
@@ -37,21 +35,19 @@ static volatile short rail_is_ready = 0;
  * @param[in,out] msg message to send
  * @param[in]  endpoint connection handler to take for routing
  */
-static void sctk_network_send_message_endpoint_portals ( sctk_thread_ptp_message_t *msg, sctk_endpoint_t *endpoint )
-{
-    sctk_portals_send_put(endpoint, msg);
-}
-
-static void sctk_network_notify_recv_message_portals ( sctk_thread_ptp_message_t *msg, sctk_rail_info_t *rail )
-{
-    sctk_portals_polling_queue_for(rail, SCTK_MSG_DEST_PROCESS(msg) % rail->network.portals.ptable.nb_entries);
-}
-
-static void sctk_network_notify_matching_message_portals ( sctk_thread_ptp_message_t *msg, sctk_rail_info_t *rail )
+static void sctk_network_send_message_endpoint_ptl ( sctk_thread_ptp_message_t *msg, sctk_endpoint_t *endpoint )
 {
 }
 
-static void sctk_network_notify_perform_message_portals ( int remote, int remote_task_id, int polling_task_id, int blocking, sctk_rail_info_t *rail )
+static void sctk_network_notify_recv_message_ptl ( sctk_thread_ptp_message_t *msg, sctk_rail_info_t *rail )
+{
+}
+
+static void sctk_network_notify_matching_message_ptl ( sctk_thread_ptp_message_t *msg, sctk_rail_info_t *rail )
+{
+}
+
+static void sctk_network_notify_perform_message_ptl ( int remote, int remote_task_id, int polling_task_id, int blocking, sctk_rail_info_t *rail )
 {
 }
 
@@ -60,28 +56,8 @@ static void sctk_network_notify_perform_message_portals ( int remote, int remote
  *
  * @param[in,out] rail driver data from current network
  */
-static void sctk_network_notify_idle_message_portals (sctk_rail_info_t* rail)
+static void sctk_network_notify_idle_message_ptl (sctk_rail_info_t* rail)
 {
-	if(!rail_is_ready) return;
-
-	size_t mytask = sctk_get_task_rank() % rail->network.portals.ptable.nb_entries;
-
-	// check if current task and neighbors have pending message. If not, poll the entire portals table
-	if(sctk_portals_polling_queue_for(rail, mytask)){
-		sctk_portals_polling_queue_for(rail, SCTK_PORTALS_POLL_ALL);
-	}
-
-	//progress RDMA messages queue
-	sctk_portals_poll_one_queue(rail, rail->network.portals.ptable.nb_entries);
-
-	//progress special messages queue
-	sctk_portals_poll_one_queue(rail, rail->network.portals.ptable.nb_entries+1);
-
-	//check pending requests
-	if(sctk_spinlock_trylock(&rail->network.portals.ptable.pending_list.msg_lock) == 0){
-		sctk_portals_poll_pending_msg_list(rail);
-		sctk_spinlock_unlock(&rail->network.portals.ptable.pending_list.msg_lock);
-	}
 }
 
 /**
@@ -91,10 +67,8 @@ static void sctk_network_notify_idle_message_portals (sctk_rail_info_t* rail)
  * @param[in] blocking not used by Portals implementation
  * @param[in,out] rail associated rail
  */
-static void sctk_network_notify_any_source_message_portals ( int polling_task_id, int blocking, sctk_rail_info_t *rail )
+static void sctk_network_notify_any_source_message_ptl ( int polling_task_id, int blocking, sctk_rail_info_t *rail )
 {
-	//need to poll all messages entries to find any_source's target
-	sctk_portals_polling_queue_for(rail, SCTK_PORTALS_POLL_ALL);
 }
 
 /**
@@ -104,58 +78,80 @@ static void sctk_network_notify_any_source_message_portals ( int polling_task_id
  *
  * @returns 1, in any case
  */
-static int sctk_send_message_from_network_portals ( sctk_thread_ptp_message_t *msg )
+static int sctk_send_message_from_network_ptl ( sctk_thread_ptp_message_t *msg )
 {
-    if ( sctk_send_message_from_network_reorder ( msg ) == REORDER_NO_NUMBERING )
-    {
-        /* No reordering */
-        sctk_send_message_try_check ( msg, 1 );
-    }
+	if ( sctk_send_message_from_network_reorder ( msg ) == REORDER_NO_NUMBERING )
+	{
+		/* No reordering */
+		sctk_send_message_try_check ( msg, 1 );
+	}
 
 	return 1;
 }
 
+void sctk_network_finalize_ptl(sctk_rail_info_t* rail)
+{
+	sctk_ptl_fini_interface(rail);
+}
+
+void sctk_network_finalize_task_ptl(sctk_rail_info_t* rail, int taskid, int vp)
+{
+}
+
+void sctk_network_initialize_task_ptl(sctk_rail_info_t* rail, int taskid, int vp)
+{
+}
+
+
+
 
 /************ INIT ****************/
 /**
- * \brief unique initialization for this rail (already created and managed by multirail handler)
+ * Entry point to initialize a Portals rail.
  *
- * \param[out] rail
+ * \param[in,out] rail
  */
-void sctk_network_init_portals (sctk_rail_info_t *rail)
+void sctk_network_init_ptl (sctk_rail_info_t *rail)
 {
-    /* Register hooks in rail */
-    rail->send_message_endpoint = sctk_network_send_message_endpoint_portals;
-    rail->notify_recv_message = sctk_network_notify_recv_message_portals;
-    rail->notify_matching_message = sctk_network_notify_matching_message_portals;
-    rail->notify_perform_message = sctk_network_notify_perform_message_portals;
-    rail->notify_idle_message = sctk_network_notify_idle_message_portals;
-    rail->notify_any_source_message = sctk_network_notify_any_source_message_portals;
-    rail->send_message_from_network = sctk_send_message_from_network_portals;
+	/* just select the type of init for this rail (ring,full..), nothing more */
+	sctk_rail_init_route ( rail, rail->runtime_config_rail->topology, NULL );
+	rail->network_name                 = "Portals Process-Based optimization";
 
-    /* PIN */
-    rail->rail_pin_region = sctk_portals_pin_region;
-    rail->rail_unpin_region = sctk_portals_unpin_region;
+	/* Register msg hooks in rail */
+	rail->send_message_endpoint     = sctk_network_send_message_endpoint_ptl;
+	rail->notify_recv_message       = sctk_network_notify_recv_message_ptl;
+	rail->notify_matching_message   = sctk_network_notify_matching_message_ptl;
+	rail->notify_perform_message    = sctk_network_notify_perform_message_ptl;
+	rail->notify_idle_message       = sctk_network_notify_idle_message_ptl;
+	rail->notify_any_source_message = sctk_network_notify_any_source_message_ptl;
+	rail->send_message_from_network = sctk_send_message_from_network_ptl;
 
-    /* RDMA */
-    rail->rdma_write = sctk_portals_rdma_write;
-    rail->rdma_read = sctk_portals_rdma_read;
+	/* RDMA */
+	/*rail->rail_pin_region        = sctk_ptl_pin_region;*/
+	/*rail->rail_unpin_region      = sctk_ptl_unpin_region;*/
+	/*rail->rdma_write             = sctk_ptl_rdma_write;*/
+	/*rail->rdma_read              = sctk_ptl_rdma_read;*/
+	/*rail->rdma_fetch_and_op_gate = sctk_ptl_rdma_fetch_and_op_gate;*/
+	/*rail->rdma_fetch_and_op      = sctk_ptl_rdma_fetch_and_op;*/
+	/*rail->rdma_cas_gate          = sctk_ptl_rdma_cas_gate;*/
+	/*rail->rdma_cas               = sctk_ptl_rdma_cas;*/
 
-    rail->rdma_fetch_and_op_gate = sctk_portals_rdma_fetch_and_op_gate;
-    rail->rdma_fetch_and_op = sctk_portals_rdma_fetch_and_op;
-    rail->rdma_cas_gate = sctk_portals_rdma_cas_gate;
-    rail->rdma_cas = sctk_portals_rdma_cas;
+	/* rail closing/re-opening calls */
+	rail->driver_finalize         = sctk_network_finalize_ptl;
+	rail->finalize_task           = sctk_network_finalize_task_ptl;
+	rail->initialize_task         = sctk_network_initialize_task_ptl;
+	rail->connect_to              = sctk_network_connect_to_ptl;
+	rail->connect_from            = sctk_network_connect_from_ptl;
+	rail->connect_on_demand       = sctk_network_connect_on_demand_ptl;
+	rail->control_message_handler = sctk_cm_handler_ptl;
 
-    rail->network_name = "PORTALS";
-    rail->driver_finalize = sctk_network_finalize_portals;
+	sctk_ptl_init_interface( rail );
 
-    sctk_rail_init_route ( rail, rail->runtime_config_rail->topology, sctk_portals_on_demand_connection_handler );
-    sctk_network_init_portals_all ( rail );
+
+	if(rail->requires_bootstrap_ring)
+		sctk_ptl_create_ring( rail );
+
 	rail_is_ready = 1;
-}
-
-void sctk_network_finalize_portals(sctk_rail_info_t* rail)
-{
 }
 
 #endif

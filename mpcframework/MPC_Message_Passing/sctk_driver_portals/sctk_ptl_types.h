@@ -1,6 +1,9 @@
 #ifndef SCTK_PTL_TYPES_H_
 #define SCTK_PTL_TYPES_H_
 
+#include <portals4.h>
+#include "sctk_io_helper.h"
+
 #define SCTK_PTL_IGNORE_NONE (sctk_ptl_matchbits_t){.data.comm = 0, .data.tag = 0 }
 #define SCTK_PTL_IGNORE_ALL (sctk_ptl_matchbits_t){.data.comm = UINT32_MAX, .data.tag = UINT32_MAX }
 #define SCTK_PTL_IGNORE_COMM (sctk_ptl_matchbits_t){.data.comm = UINT32_MAX, .data.tag = 0 }
@@ -21,6 +24,7 @@
 #define SCTK_PTL_MD_GET_FLAGS SCTK_PTL_MD_FLAGS
 
 #define sctk_ptl_nih_t ptl_handle_ni_t
+#define sctk_ptl_limits_t ptl_ni_limits_t
 
 #define sctk_ptl_eq_t ptl_handle_eq_t
 
@@ -32,8 +36,12 @@
 #define sctk_ptl_id_t ptl_process_t
 
 #define SCTK_PTL_PTE_FLAGS PTL_PT_FLOWCTRL
-#define SCTK_PTL_EQ_PTE_SIZE 10
+#define SCTK_PTL_PTE_GET 0
+#define SCTK_PTL_PTE_PUT 1
+#define SCTK_PTL_PTE_CM  2
+#define SCTK_PTL_EQ_PTE_SIZE 512
 #define SCTK_PTL_EQ_MDS_SIZE 128
+
 
 struct sctk_ptl_bits_content_s
 {
@@ -54,5 +62,21 @@ typedef struct sctk_ptl_pte_s
 	sctk_ptl_eq_t eq;
 	sctk_ptl_meh_t uniq_meh;
 } sctk_ptl_pte_t;
+
+/**
+ * Portals-specific information specializing a rail.
+ */
+typedef struct sctk_ptl_rail_info_s
+{
+	sctk_ptl_limits_t max_limits;           /**< container for Portals thresholds */
+	sctk_ptl_nih_t iface;                   /**< Interface handler for the device */
+	sctk_ptl_id_t id;                       /**< Local id identifying this rail */
+	sctk_ptl_pte_t* pt_entries;             /**< Portals table for this rail */
+	size_t nb_entries;                      /**< Number of Portals entries */
+	sctk_ptl_eq_t mds_eq;                   /**< EQ for all MDs emited from this NI */
+
+	char connection_infos[MAX_STRING_SIZE]; /**< string identifying this rail over the PMI */
+	size_t connection_infos_size;           /**< Size of the above string */
+} sctk_ptl_rail_info_t;
 
 #endif

@@ -1,20 +1,18 @@
 #include <limits.h>
-#include "sctk_ptl_iface.h"
 #include "sctk_debug.h"
+#include "sctk_alloc.h"
+#include "sctk_io_helper.h"
+#include "sctk_ptl_iface.h"
 
 
-static sctk_ptl_nih_t iface_handler;  /* *< The NI handler, scoped only in this file */
 static sctk_ptl_eq_t mds_eq;          /* *< the global EQ, shared by registerd MDs */
-static ptl_ni_limits_t driver_limits; /* *< global max values allowed by the NIC */
-static sctk_ptl_id_t process_id;      /* *< local process id */
-static int table_dims;                /* *< number of Portals entries */
 
 /**
  * Init max values for driver config limits.
  */
-static inline void __sctk_ptl_set_limits()
+static inline void __sctk_ptl_set_limits(sctk_ptl_limits_t* l)
 {
-	driver_limits = (ptl_ni_limits_t){
+	*l = (ptl_ni_limits_t){
 		.max_entries = INT_MAX,                /* Max number of entries allocated at any time */
 		.max_unexpected_headers = INT_MAX,     /* max number of headers at any time */
 		.max_mds = INT_MAX,                    /* Max number of MD allocated at any time */
@@ -38,38 +36,43 @@ static inline void __sctk_ptl_set_limits()
 /**
  * Create the link between our program and the real driver.
  */
-void sctk_ptl_hardware_init()
+sctk_ptl_rail_info_t sctk_ptl_hardware_init()
 {
+	sctk_ptl_rail_info_t res;
+	sctk_ptl_limits_t l;
+
 	/* init the driver */
 	sctk_ptl_chk(PtlInit());
 
 	/* set max values */
-	__sctk_ptl_set_limits();
+	__sctk_ptl_set_limits(&l);
 
 	/* init one physical interface */
 	sctk_ptl_chk(PtlNIInit(
 		PTL_IFACE_DEFAULT,                 /* Type of interface */
 		PTL_NI_MATCHING | PTL_NI_PHYSICAL, /* physical NI, w/ matching enabled */
 		PTL_PID_ANY,                       /* Let Portals decide process's PID */
-		&driver_limits,                    /* desired Portals boundaries */
-		&driver_limits,                    /* effective Portals limits */
-		&iface_handler                     /* THE handler */
+		&l,                                /* desired Portals boundaries */
+		&res.max_limits,                   /* effective Portals limits */
+		&res.iface                         /* THE handler */
 	));
 
 	/* retrieve the process identifier */
 	sctk_ptl_chk(PtlGetPhysId(
-		iface_handler,     /* The NI handler */
-		&process_id        /* the structure to store it */
+		res.iface, /* The NI handler */
+		&res.id    /* the structure to store it */
 	));
+
+	return res;
 }
 
 /**
  * Shut down the link between our program and the driver.
  */
-void sctk_ptl_hardware_fini()
+void sctk_ptl_hardware_fini(sctk_ptl_rail_info_t* srail)
 {
 	/* tear down the interface */
-	sctk_ptl_chk(PtlNIFini(iface_handler));
+	sctk_ptl_chk(PtlNIFini(srail->iface));
 
 	/* tear down the driver */
 	PtlFini();
@@ -84,26 +87,26 @@ void sctk_ptl_hardware_fini()
  * \param[in] dims PT dimensions
  * \return the pointer to the PT
  */
-sctk_ptl_pte_t* sctk_ptl_software_init(int dims)
+sctk_ptl_pte_t* sctk_ptl_software_init(sctk_ptl_rail_info_t* srail, int dims)
 {
 	sctk_ptl_pte_t * table = NULL;
 	int i;
 
 	assert(dims > 0);
 	table = sctk_malloc(sizeof(sctk_ptl_pte_t) * dims);
-	table_dims = dims;
-	for (i = 0; i < dims; ++i) 
+	srail->nb_entries = dims;
+	for (i = 0; i < dims; ++i)
 	{
 		/* create the EQ for this PT */
 		sctk_ptl_chk(PtlEQAlloc(
-			iface_handler,        /* the NI handler */
+			srail->iface,         /* the NI handler */
 			SCTK_PTL_EQ_PTE_SIZE, /* the number of slots in the EQ */
 			&table[i].eq          /* the returned handler */
 		));
 
 		/* register the PT */
 		sctk_ptl_chk(PtlPTAlloc(
-			iface_handler,      /* the NI handler */
+			srail->iface,       /* the NI handler */
 			SCTK_PTL_PTE_FLAGS, /* PT entry specific flags */
 			table[i].eq,        /* the EQ for this entry */
 			i,                  /* the desired index value */
@@ -126,7 +129,7 @@ sctk_ptl_pte_t* sctk_ptl_software_init(int dims)
 		};
 
 		sctk_ptl_chk(PtlMEAppend(
-			iface_handler,      /* the NI handler */
+			srail->iface,      /* the NI handler */
 			table[i].idx,       /* the targeted PTE */
 			me,                 /* the ME to append */
 			PTL_OVERFLOW_LIST,  /* in which list to append it */
@@ -137,9 +140,9 @@ sctk_ptl_pte_t* sctk_ptl_software_init(int dims)
 
 	/* create the global EQ, shared by pending MDs */
 	sctk_ptl_chk(PtlEQAlloc(
-		iface_handler,        /* The NI handler */
+		srail->iface,        /* The NI handler */
 		SCTK_PTL_EQ_MDS_SIZE, /* number of slots available for events */
-		&mds_eq               /* out: the EQ handler */
+		&srail->mds_eq        /* out: the EQ handler */
 	));
 
 	return table;
@@ -150,8 +153,10 @@ sctk_ptl_pte_t* sctk_ptl_software_init(int dims)
  *
  * After here, no communication should be made on these resources
  */
-void sctk_ptl_software_fini(sctk_ptl_pte_t* table)
+void sctk_ptl_software_fini(sctk_ptl_rail_info_t* srail)
 {
+	int table_dims = srail->nb_entries;
+	sctk_ptl_pte_t* table = srail->pt_entries;
 	assert(table_dims > 0);
 	int i;
 	for(i = 0; i < table_dims; i++)
@@ -161,22 +166,22 @@ void sctk_ptl_software_fini(sctk_ptl_pte_t* table)
 		));
 
 		sctk_ptl_chk(PtlEQFree(
-			table[i].eq        /* the EQ handler */
+			table[i].eq       /* the EQ handler */
 		));
 
 		sctk_ptl_chk(PtlPTFree(
-			iface_handler,     /* the NI handler */
-			table[i].idx       /* the PTE to destroy */
+			srail->iface,     /* the NI handler */
+			table[i].idx      /* the PTE to destroy */
 		));
 	}
 
 	sctk_ptl_chk(PtlEQFree(
-		mds_eq                     /* the EQ handler */
+		srail->mds_eq             /* the EQ handler */
 	));
 	/* write 'NULL' to be sure */
 	memset(table, 0, sizeof(sctk_ptl_pte_t) * table_dims);
 	sctk_free(table);
-	table_dims = 0;
+	srail->nb_entries = 0;
 }
 
 /**
@@ -217,11 +222,11 @@ sctk_ptl_me_t* sctk_ptl_me_create(void * start, size_t size, sctk_ptl_id_t remot
  * \param[in] list in which list this ME has to be registed ? PRIORITY || OVERFLOW
  * \return a pointer to the ME handler
  */
-sctk_ptl_meh_t* sctk_ptl_me_register(sctk_ptl_me_t* slot, sctk_ptl_pte_t* pte, ptl_list_t list)
+sctk_ptl_meh_t* sctk_ptl_me_register(sctk_ptl_rail_info_t* srail, sctk_ptl_me_t* slot, sctk_ptl_pte_t* pte, ptl_list_t list)
 {
 	sctk_ptl_meh_t* slot_h = sctk_malloc(sizeof(sctk_ptl_meh_t));
 	sctk_ptl_chk(PtlMEAppend(
-		iface_handler, /* the NI handler */
+		srail->iface, /* the NI handler */
 		pte->idx,      /* the targeted PT entry */
 		slot,          /* the ME to register in the table */
 		list,          /* in which list the ME has to be appended */
@@ -260,7 +265,7 @@ void sctk_ptl_me_release(sctk_ptl_meh_t* meh)
  * \param[in] flags MD-specific flags (PUT, GET...)
  * \return a pointer to the MD
  */
-sctk_ptl_md_t* sctk_ptl_md_create(void* start, size_t length, int flags)
+sctk_ptl_md_t* sctk_ptl_md_create(sctk_ptl_rail_info_t* srail, void* start, size_t length, int flags)
 {
 	sctk_ptl_md_t* md = sctk_malloc(sizeof(sctk_ptl_md_t));
 
@@ -269,7 +274,7 @@ sctk_ptl_md_t* sctk_ptl_md_create(void* start, size_t length, int flags)
 		.length = (ptl_size_t)length,
 		.options = flags,
 		.ct_handle = PTL_CT_NONE,
-		.eq_handle = mds_eq
+		.eq_handle = srail->mds_eq
 	};
 
 	return md;
@@ -280,12 +285,12 @@ sctk_ptl_md_t* sctk_ptl_md_create(void* start, size_t length, int flags)
  * \param[in] md the MD to register
  * \return a pointer to the MD handler
  */
-sctk_ptl_mdh_t* sctk_ptl_md_register(const sctk_ptl_md_t* md)
+sctk_ptl_mdh_t* sctk_ptl_md_register(sctk_ptl_rail_info_t* srail, const sctk_ptl_md_t* md)
 {
 	assert(md);
 	sctk_ptl_mdh_t* mdh = sctk_malloc(sizeof(sctk_ptl_mdh_t));
 	sctk_ptl_chk(PtlMDBind(
-		iface_handler, /* the NI handler */
+		srail->iface, /* the NI handler */
 		md,            /* the MD to bind with memory region */
 		mdh            /* out: the MD handler */
 	));
@@ -320,12 +325,12 @@ void sctk_ptl_md_release(sctk_ptl_mdh_t* mdh)
  * <li><b>any other code</b> is an error</li>
  * </ul>
  */
-int sctk_ptl_eq_poll_md(sctk_ptl_event_t* ev)
+int sctk_ptl_eq_poll_md(sctk_ptl_rail_info_t* srail, sctk_ptl_event_t* ev)
 {
 	int ret;
 	
 	assert(ev);
-	ret = PtlEQGet(mds_eq, ev);
+	ret = PtlEQGet(srail->mds_eq, ev);
 
 	if (ret == PTL_EQ_EMPTY || ret == PTL_EQ_DROPPED)
 	{
@@ -360,7 +365,7 @@ int sctk_ptl_eq_poll_md(sctk_ptl_event_t* ev)
  * <li><b>any other code</b> is an error</li>
  * </ul>
  */
-int sctk_ptl_eq_poll_me(sctk_ptl_pte_t* pte, sctk_ptl_event_t* ev)
+int sctk_ptl_eq_poll_me(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte, sctk_ptl_event_t* ev)
 {
 	int ret;
 	
@@ -404,19 +409,19 @@ int sctk_ptl_eq_poll_me(sctk_ptl_pte_t* pte, sctk_ptl_event_t* ev)
 	return PTL_OK;
 }
 
-sctk_ptl_id_t sctk_ptl_self()
+sctk_ptl_id_t sctk_ptl_self(sctk_ptl_rail_info_t* srail)
 {
-	return process_id;
+	return srail->id;
 }
 
-int sctk_ptl_emit_get(sctk_ptl_mdh_t* mdh, size_t size, sctk_ptl_id_t remote, sctk_ptl_pte_t* pte, sctk_ptl_matchbits_t match)
+int sctk_ptl_emit_get(sctk_ptl_mdh_t* mdh, size_t size, sctk_ptl_id_t remote, ptl_pt_index_t idx, sctk_ptl_matchbits_t match)
 {
 	sctk_ptl_chk(PtlGet(
 		*mdh,
 		0,
 		size,
 		remote,
-		pte->idx,
+		idx,
 		match.raw,
 		0,
 		NULL

@@ -398,10 +398,9 @@ void sctk_rail_init_driver( sctk_rail_info_t * rail, int driver_type )
 		break;
 #endif
 #ifdef MPC_USE_PORTALS
-
-        case SCTK_RTCFG_net_driver_portals: /* PORTALS */
-            sctk_network_init_portals ( rail );
-        break;
+        	case SCTK_RTCFG_net_driver_portals: /* PORTALS */
+			sctk_network_init_ptl ( rail );
+		break;
 #endif
 		case SCTK_RTCFG_net_driver_topological:
 			sctk_network_init_topological( rail );
