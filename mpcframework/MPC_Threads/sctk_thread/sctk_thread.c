@@ -1080,8 +1080,8 @@ sctk_user_thread_create (sctk_thread_t * restrict __threadp,
     if(sctk_enable_graphic_placement){
         /* to be sure of __arg type to cast */
         if(tmp->task_id != -1){
-            struct mpcomp_mvp_s *temp = (struct mpcomp_mvp_s *)__arg;
-            int vp_local_processus = temp->thread_vp_idx;
+            struct mpcomp_mvp_thread_args_s *temp = (struct mpcomp_mvp_thread_args_s *)__arg;
+            int vp_local_processus = temp->target_vp;
             /* get os ind */
             int master = sctk_get_cpu_compute_node_topology();
             /* need the logical pu of the master from the total compute node topo computing with the os index */
@@ -1100,8 +1100,8 @@ sctk_user_thread_create (sctk_thread_t * restrict __threadp,
     if(sctk_enable_text_placement){
         /* to be sure of __arg type to cast */
         if(tmp->task_id != -1){
-            struct mpcomp_mvp_s *temp = (struct mpcomp_mvp_s *)__arg;
-            int vp_local_processus = temp->thread_vp_idx;
+            struct mpcomp_mvp_thread_args_s *temp = (struct mpcomp_mvp_thread_args_s *)__arg;
+            int vp_local_processus = temp->target_vp;
             /* get os ind */
             int master = sctk_get_cpu_compute_node_topology();
             // need the logical pu of the master from the total compute node topo computin with the os index to use for origin */
