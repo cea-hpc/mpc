@@ -41,12 +41,12 @@ sctk_ptl_rail_info_t sctk_ptl_hardware_init();
 void sctk_ptl_hardware_fini();
 
 /* Software-related init */
-sctk_ptl_pte_t* sctk_ptl_software_init(sctk_ptl_rail_info_t*, int);
+sctk_ptl_pte_t* sctk_ptl_software_init(sctk_ptl_rail_info_t*);
 void sctk_ptl_software_fini(sctk_ptl_rail_info_t*);
 
 /* ME management */
-sctk_ptl_me_t* sctk_ptl_me_create(void*, size_t, sctk_ptl_id_t, sctk_ptl_matchbits_t, sctk_ptl_matchbits_t, int);
-sctk_ptl_meh_t* sctk_ptl_me_register(sctk_ptl_rail_info_t* srail, sctk_ptl_me_t*, sctk_ptl_pte_t*, ptl_list_t);
+sctk_ptl_local_data_t* sctk_ptl_me_create(void*, size_t, sctk_ptl_id_t, sctk_ptl_matchbits_t, sctk_ptl_matchbits_t, int);
+void sctk_ptl_me_register(sctk_ptl_rail_info_t* srail, sctk_ptl_local_data_t*, sctk_ptl_pte_t*);
 void sctk_ptl_me_release(sctk_ptl_meh_t*);
 
 /* MD management */
@@ -59,8 +59,8 @@ int sctk_ptl_eq_poll_md(sctk_ptl_rail_info_t* srail, sctk_ptl_event_t*);
 int sctk_ptl_eq_poll_me(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t*, sctk_ptl_event_t*);
 
 /* Request management */
-int sctk_ptl_emit_get(sctk_ptl_mdh_t*, size_t, sctk_ptl_id_t, ptl_pt_index_t, sctk_ptl_matchbits_t);
-int sctk_ptl_emit_push();
+int sctk_ptl_emit_get(sctk_ptl_mdh_t*, size_t, sctk_ptl_id_t, sctk_ptl_pte_t*, sctk_ptl_matchbits_t);
+int sctk_ptl_emit_put(sctk_ptl_mdh_t*, size_t, sctk_ptl_id_t, sctk_ptl_pte_t*, sctk_ptl_matchbits_t);
 int sctk_ptl_emit_atomic();
 int sctk_ptl_emit_fetch_atomic();
 
@@ -128,6 +128,8 @@ static inline const char const * sctk_ptl_event_decode(sctk_ptl_event_t ev)
 	case PTL_EVENT_AUTO_UNLINK: return "PTL_EVENT_AUTO_UNLINK"; break;
 	case PTL_EVENT_AUTO_FREE: return "PTL_EVENT_AUTO_FREE"; break;
 	case PTL_EVENT_SEARCH: return "PTL_EVENT_SEARCH"; break;
+	
+	case -1: return "NO EVENT"; break;
 	default:
 		return "Portals Event not known"; break;
 	}

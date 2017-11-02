@@ -26,6 +26,8 @@
 #include <sctk_debug.h>
 #include "sctk_rail.h"
 #include "sctk_ptl_toolkit.h"
+#include "sctk_ptl_rdma.h"
+#include "sctk_route.h"
 
 static volatile short rail_is_ready = 0;
 
@@ -37,18 +39,22 @@ static volatile short rail_is_ready = 0;
  */
 static void sctk_network_send_message_endpoint_ptl ( sctk_thread_ptp_message_t *msg, sctk_endpoint_t *endpoint )
 {
+	sctk_ptl_send_message(msg, endpoint);
 }
 
 static void sctk_network_notify_recv_message_ptl ( sctk_thread_ptp_message_t *msg, sctk_rail_info_t *rail )
 {
+	sctk_ptl_recv_message(msg, rail);
 }
 
 static void sctk_network_notify_matching_message_ptl ( sctk_thread_ptp_message_t *msg, sctk_rail_info_t *rail )
 {
+	/* nothing to do */
 }
 
 static void sctk_network_notify_perform_message_ptl ( int remote, int remote_task_id, int polling_task_id, int blocking, sctk_rail_info_t *rail )
 {
+	/* nothing to do */
 }
 
 /**
@@ -58,6 +64,9 @@ static void sctk_network_notify_perform_message_ptl ( int remote, int remote_tas
  */
 static void sctk_network_notify_idle_message_ptl (sctk_rail_info_t* rail)
 {
+	sctk_ptl_poll_initiated( rail );
+	sctk_ptl_poll_targeted( rail );
+	sctk_ptl_poll_cm( rail );
 }
 
 /**
@@ -102,8 +111,54 @@ void sctk_network_initialize_task_ptl(sctk_rail_info_t* rail, int taskid, int vp
 {
 }
 
+/**
+ * Proceed to establish a connection to a given destination.
+ * \param[in] rail the route owner
+ * \param[in] dest the remote process id
+ */
+static void sctk_network_connect_on_demand_ptl ( struct sctk_rail_info_s * rail , int dest )
+{
+	sctk_ptl_id_t id = sctk_ptl_map_id(rail, dest);
+	sctk_ptl_add_route(dest, id, rail, ROUTE_ORIGIN_DYNAMIC, STATE_CONNECTED);
+}
 
+/**
+ * Handle incoming messages, flagged as control_messages.
+ * \param[in] rail the rail owner
+ * \param[in] source_process the process that requested the CM
+ * \param[in] source_rank the task requesting the CM (can be -1 if not a MPI task)
+ * \param[in] subtype type of CM
+ * \param[in] param
+ * \param[in] data the payload embedded w/ the CM
+ * \param[in] size datatype's size
+ */
+static void sctk_network_cm_handler_ptl( struct sctk_rail_info_s * rail, int source_process, int source_rank, char subtype, char param, void * data, size_t size )
+{
+	not_implemented();
+}
 
+/**
+ * Nothing to do here for Portals.
+ * Because we suppose that a connect_to maps with a connect_from during the
+ * first topology setup, we only have to support one end (here, connect_from().
+ * The other and will respond through control messages
+ */
+static void sctk_network_connect_to_ptl( int from, int to, sctk_rail_info_t * rail )
+{
+	/* nothing to do */
+}
+
+/**
+ * Simply create a route to a given destination by using On-demand support.
+ * \see sctk_network_connect_on_demand_ptl.
+ * \param[in] from the process id initiating the request
+ * \param[in] to the targeted process
+ * \param[in] rail the forthcoming route owner.
+ */
+static void sctk_network_connect_from_ptl( int from, int to, sctk_rail_info_t * rail)
+{
+	sctk_network_connect_on_demand_ptl(rail, to);
+}
 
 /************ INIT ****************/
 /**
@@ -143,7 +198,7 @@ void sctk_network_init_ptl (sctk_rail_info_t *rail)
 	rail->connect_to              = sctk_network_connect_to_ptl;
 	rail->connect_from            = sctk_network_connect_from_ptl;
 	rail->connect_on_demand       = sctk_network_connect_on_demand_ptl;
-	rail->control_message_handler = sctk_cm_handler_ptl;
+	rail->control_message_handler = sctk_network_cm_handler_ptl;
 
 	sctk_ptl_init_interface( rail );
 

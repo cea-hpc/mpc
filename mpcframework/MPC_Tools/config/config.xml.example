@@ -121,38 +121,12 @@
 						</gates>
 					</rail>
 					<rail>
-						<name>portals_mpi_fully</name>
-						<priority>6</priority>
-						<ondemand>1</ondemand>
-						<topology>fully</topology>
-						<config>portals_config</config>
-					</rail>
-					<rail>
 						<name>portals_mpi</name>
 						<priority>6</priority>
 						<ondemand>1</ondemand>
 						<config>portals_config</config>
 					</rail>
-					<rail>
-						<name>portals_rdma</name>
-						<priority>6</priority>
-						<ondemand>1</ondemand>
-						<config>portals_config</config>
-						<rdma>1</rdma>
-					</rail>
-					<rail>
-						<name>portals_large</name>
-						<priority>6</priority>
-						<ondemand>1</ondemand>
-						<config>portals_config</config>
-						<gates>
-							<gate>
-								<minsize>
-									<value>128B</value>
-								</minsize>
-							</gate>
-						</gates>
-					</rail>
+
 					<rail>
 						<name>shm_mpi</name>
 						<priority>99</priority>
@@ -205,24 +179,6 @@
 						<name>portals</name>
 						<rails>
 							<rail>portals_mpi</rail>
-						</rails>
-					</cli_option>
-					<cli_option>
-						<name>fully_portals</name>
-						<rails>
-							<rail>portals_mpi_fully</rail>
-						</rails>
-					</cli_option>
-					<cli_option>
-						<name>multirail_portals</name>
-						<rails>
-							<rail>portals_large</rail>
-						</rails>
-					</cli_option>
-					<cli_option>
-						<name>rdma_portals</name>
-						<rails>
-							<rail>portals_rdma</rail>
 						</rails>
 					</cli_option>
 					<cli_option>

@@ -33,15 +33,6 @@ extern "C"
 #ifdef MPC_USE_PORTALS
 #include "sctk_ptl_types.h"
 
-/**
- * Portals-specific information describing a route.
- * Is contained by route.h
- */
-typedef struct sctk_ptl_route_info_s
-{
-	sctk_ptl_id_t dest; /**< the remote process the route is connected to */	
-}
-sctk_ptl_route_info_t;
 
 /**
  *

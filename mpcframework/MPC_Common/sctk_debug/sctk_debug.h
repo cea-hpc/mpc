@@ -204,7 +204,7 @@ extern "C"
 
 #define assume_m(x, ...)                                                       \
   if (!(x)) {                                                                  \
-    sctk_error("Error at %s!%d\n%s\n", __FILE__, __LINE__, #x);                \
+    sctk_error("Error at %s!%d\n%s", __FILE__, __LINE__, #x);                \
     sctk_error(__VA_ARGS__);                                                   \
     sctk_abort();                                                              \
   }
@@ -213,7 +213,7 @@ extern "C"
    * **/
 #define sctk_fatal(...)                                                        \
   {                                                                            \
-    sctk_error("Fatal error at %s!%d\n", __FILE__, __LINE__);                  \
+    sctk_error("Fatal error at %s!%d", __FILE__, __LINE__);                  \
     sctk_error(__VA_ARGS__);                                                   \
     sctk_abort();                                                              \
   }

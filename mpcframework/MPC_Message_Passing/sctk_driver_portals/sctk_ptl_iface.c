@@ -3,9 +3,7 @@
 #include "sctk_alloc.h"
 #include "sctk_io_helper.h"
 #include "sctk_ptl_iface.h"
-
-
-static sctk_ptl_eq_t mds_eq;          /* *< the global EQ, shared by registerd MDs */
+#include "sctk_ptl_types.h"
 
 /**
  * Init max values for driver config limits.
@@ -87,15 +85,17 @@ void sctk_ptl_hardware_fini(sctk_ptl_rail_info_t* srail)
  * \param[in] dims PT dimensions
  * \return the pointer to the PT
  */
-sctk_ptl_pte_t* sctk_ptl_software_init(sctk_ptl_rail_info_t* srail, int dims)
+sctk_ptl_pte_t* sctk_ptl_software_init(sctk_ptl_rail_info_t* srail)
 {
 	sctk_ptl_pte_t * table = NULL;
-	int i;
+	size_t i, dims, eager_size;
 
-	assert(dims > 0);
-	table = sctk_malloc(sizeof(sctk_ptl_pte_t) * dims);
-	srail->nb_entries = dims;
-	for (i = 0; i < dims; ++i)
+	dims = srail->nb_entries + SCTK_PTL_PTE_HIDDEN;
+	eager_size = srail->eager_limit;
+
+	sctk_warning("Init for %d entries (%d + %d)", dims, dims - SCTK_PTL_PTE_HIDDEN, SCTK_PTL_PTE_HIDDEN);
+	table = sctk_malloc(sizeof(sctk_ptl_pte_t) * dims); /* one CM, one recovery, one RDMA */
+	for (i = SCTK_PTL_PTE_HIDDEN; i < dims; ++i)
 	{
 		/* create the EQ for this PT */
 		sctk_ptl_chk(PtlEQAlloc(
@@ -113,30 +113,28 @@ sctk_ptl_pte_t* sctk_ptl_software_init(sctk_ptl_rail_info_t* srail, int dims)
 			&table[i].idx       /* the effective index value */
 		));
 
-		/* Populate the unique & generic ME in the overflow_list, to detect late-send patterns
-		 */
-		sctk_ptl_me_t* me = sctk_malloc(sizeof(sctk_ptl_me_t));
-		*me = (sctk_ptl_me_t) {
-			.start  = me,                          /* don't care here */
-			.length = (ptl_size_t)0,               /* important: 0 will be seen as a truncated message and it is what we want */
-			.uid = PTL_UID_ANY,
-			.match_id.phys.nid = PTL_NID_ANY,
-			.match_id.phys.pid = PTL_PID_ANY,
-			.match_bits = 0 ,                      /* don't care here */
-			.ignore_bits = SCTK_PTL_IGNORE_ALL.raw,/* we will match any request */
-			.options = SCTK_PTL_ME_OVERFLOW_FLAGS, /* only GET events */
-			.ct_handle = PTL_CT_NONE               /* no need of this counting event */
-		};
+		int j;
+		for (j = 0; j < SCTK_PTL_ME_OVERFLOW_NB; j++)
+		{
+			void* buf = sctk_malloc(eager_size);
+			sctk_ptl_local_data_t* user;
 
-		sctk_ptl_chk(PtlMEAppend(
-			srail->iface,      /* the NI handler */
-			table[i].idx,       /* the targeted PTE */
-			me,                 /* the ME to append */
-			PTL_OVERFLOW_LIST,  /* in which list to append it */
-			&me,                /* user pointer to add at event-polling step */
-			&table[i].uniq_meh  /* returned handler */
-		));
+			user = sctk_ptl_me_create(
+					buf, /* temporary buffer to pin */
+					eager_size, /* buffer size */
+					SCTK_PTL_ANY_PROCESS, /* targetable by any process */
+					SCTK_PTL_MATCH_INIT, /* we don't care the match_bits */ 
+					SCTK_PTL_IGN_ALL, /* triggers all requestss */
+					SCTK_PTL_ME_OVERFLOW_FLAGS /* OVERFLOW-specifics flags */
+			);
+			user->msg = NULL;
+			user->list = SCTK_PTL_OVERFLOW_LIST;
+
+			sctk_ptl_me_register(srail, user, table + i);
+		}
 	}
+
+
 
 	/* create the global EQ, shared by pending MDs */
 	sctk_ptl_chk(PtlEQAlloc(
@@ -145,7 +143,8 @@ sctk_ptl_pte_t* sctk_ptl_software_init(sctk_ptl_rail_info_t* srail, int dims)
 		&srail->mds_eq        /* out: the EQ handler */
 	));
 
-	return table;
+	srail->pt_entries = (sctk_ptl_pte_t*)table + SCTK_PTL_PTE_HIDDEN;
+	return srail->pt_entries;
 }
 
 /**
@@ -161,10 +160,6 @@ void sctk_ptl_software_fini(sctk_ptl_rail_info_t* srail)
 	int i;
 	for(i = 0; i < table_dims; i++)
 	{
-		sctk_ptl_chk(PtlMEUnlink(
-			table[i].uniq_meh /* The ME handler */
-		));
-
 		sctk_ptl_chk(PtlEQFree(
 			table[i].eq       /* the EQ handler */
 		));
@@ -179,9 +174,24 @@ void sctk_ptl_software_fini(sctk_ptl_rail_info_t* srail)
 		srail->mds_eq             /* the EQ handler */
 	));
 	/* write 'NULL' to be sure */
-	memset(table, 0, sizeof(sctk_ptl_pte_t) * table_dims);
-	sctk_free(table);
+	void * base_ptr = table - (sizeof(sctk_ptl_pte_t) * SCTK_PTL_PTE_HIDDEN);
+	memset(base_ptr, 0, sizeof(sctk_ptl_pte_t) * (table_dims + SCTK_PTL_PTE_HIDDEN));
+	sctk_free(base_ptr);
 	srail->nb_entries = 0;
+}
+
+
+/**
+ * create a new PTE, to append to the Portals table.
+ *
+ * \param[in,out] srail the Portals-specific rial
+ * \param[in] comm_id the communicator id
+ * \return a pointer to the (potentially newly-allocated) portals table.
+ */
+sctk_ptl_pte_t* sctk_ptl_entry_add(sctk_ptl_rail_info_t* srail, int comm_id)
+{
+	not_implemented();
+	return NULL;
 }
 
 /**
@@ -193,25 +203,30 @@ void sctk_ptl_software_fini(sctk_ptl_rail_info_t* srail)
  * \param[in] match the matching bits for this slot
  * \param[in] ign the ignoring bits from the above parameter
  * \param[in] flags ME-specific flags (PUT,GET,...)
- * \return a pointer to the ME
  */
-sctk_ptl_me_t* sctk_ptl_me_create(void * start, size_t size, sctk_ptl_id_t remote, sctk_ptl_matchbits_t match, sctk_ptl_matchbits_t ign, int flags )
+sctk_ptl_local_data_t* sctk_ptl_me_create(void * start, size_t size, sctk_ptl_id_t remote, sctk_ptl_matchbits_t match, sctk_ptl_matchbits_t ign, int flags )
 {
-	sctk_ptl_me_t* slot = sctk_malloc(sizeof(sctk_ptl_me_t));
+	sctk_ptl_local_data_t* user_ptr = sctk_malloc(sizeof(sctk_ptl_local_data_t));
 
-	*slot = (sctk_ptl_me_t){
-		.start = start,
-		.length = (ptl_size_t) size,
-		.ct_handle = PTL_CT_NONE,
-		.uid = PTL_UID_ANY,
-		.match_id.phys.nid = remote.phys.nid,
-		.match_id.phys.pid = remote.phys.pid,
-		.match_bits = match.raw,
-		.ignore_bits = ign.raw,
-		.options = flags,
-		.min_free = 0
+	*user_ptr = (sctk_ptl_local_data_t){
+		.slot.me = (sctk_ptl_me_t){
+			.start = start,
+			.length = (ptl_size_t) size,
+			.ct_handle = PTL_CT_NONE,
+			.uid = PTL_UID_ANY,
+			.match_id.phys.nid = remote.phys.nid,
+			.match_id.phys.pid = remote.phys.pid,
+			.match_bits = match.raw,
+			.ignore_bits = ign.raw,
+			.options = flags,
+			.min_free = 0
+		},
+		.slot_h.meh = PTL_INVALID_HANDLE,
+		.list = SCTK_PTL_PRIORITY_LIST,
+		.msg = NULL /* later filled */
 	};
-	return slot;
+
+	return user_ptr;
 }
 
 /**
@@ -220,21 +235,19 @@ sctk_ptl_me_t* sctk_ptl_me_create(void * start, size_t size, sctk_ptl_id_t remot
  * \param[in] slot the already created ME
  * \param[in] pte  the PT index where the ME will be attached to
  * \param[in] list in which list this ME has to be registed ? PRIORITY || OVERFLOW
- * \return a pointer to the ME handler
  */
-sctk_ptl_meh_t* sctk_ptl_me_register(sctk_ptl_rail_info_t* srail, sctk_ptl_me_t* slot, sctk_ptl_pte_t* pte, ptl_list_t list)
+void sctk_ptl_me_register(sctk_ptl_rail_info_t* srail, sctk_ptl_local_data_t* user_ptr, sctk_ptl_pte_t* pte)
 {
-	sctk_ptl_meh_t* slot_h = sctk_malloc(sizeof(sctk_ptl_meh_t));
+	assert(user_ptr);
 	sctk_ptl_chk(PtlMEAppend(
-		srail->iface, /* the NI handler */
-		pte->idx,      /* the targeted PT entry */
-		slot,          /* the ME to register in the table */
-		list,          /* in which list the ME has to be appended */
-		slot,          /* usr_ptr: forwarded when polling the event */
-		slot_h         /* out: the ME handler */
+		srail->iface,         /* the NI handler */
+		pte->idx,             /* the targeted PT entry */
+		&user_ptr->slot.me,   /* the ME to register in the table */
+		user_ptr->list,       /* in which list the ME has to be appended */
+		user_ptr,             /* usr_ptr: forwarded when polling the event */
+		&user_ptr->slot_h.meh /* out: the ME handler */
 	));
 
-	return slot_h;
 }
 
 /**
@@ -341,15 +354,6 @@ int sctk_ptl_eq_poll_md(sctk_ptl_rail_info_t* srail, sctk_ptl_event_t* ev)
 	
 	sctk_ptl_chk(ret);
 	
-	switch(ev->type)
-	{
-		case PTL_EVENT_SEND:  /* in case of Put/Atomic, data left the local process */
-		case PTL_EVENT_ACK:   /* in case of Put/Atomic, data reached the remote process */
-		case PTL_EVENT_REPLY: /* in case of Get/Atomic, data returned to the local process */
-			break;
-		default:
-			sctk_fatal("Portals MD event not recognized: %d", ev->type);
-	}
 	return PTL_OK;
 }
 
@@ -414,14 +418,14 @@ sctk_ptl_id_t sctk_ptl_self(sctk_ptl_rail_info_t* srail)
 	return srail->id;
 }
 
-int sctk_ptl_emit_get(sctk_ptl_mdh_t* mdh, size_t size, sctk_ptl_id_t remote, ptl_pt_index_t idx, sctk_ptl_matchbits_t match)
+int sctk_ptl_emit_get(sctk_ptl_mdh_t* mdh, size_t size, sctk_ptl_id_t remote, sctk_ptl_pte_t* pte, sctk_ptl_matchbits_t match)
 {
 	sctk_ptl_chk(PtlGet(
 		*mdh,
 		0,
 		size,
 		remote,
-		idx,
+		pte->idx,
 		match.raw,
 		0,
 		NULL
@@ -430,10 +434,21 @@ int sctk_ptl_emit_get(sctk_ptl_mdh_t* mdh, size_t size, sctk_ptl_id_t remote, pt
 	return PTL_OK;
 }
 
-int sctk_ptl_emit_put()
+int sctk_ptl_emit_put(sctk_ptl_mdh_t* mdh, size_t size, sctk_ptl_id_t remote, sctk_ptl_pte_t* pte, sctk_ptl_matchbits_t match)
 {
-	/*sctk_ptl_chk(PtlPut(*/
-	/*));*/
+	sctk_ptl_chk(PtlPut(
+		*mdh,
+		0, 
+		size,
+		PTL_ACK_REQ,
+		remote,
+		pte->idx,
+		match.raw,
+		0,
+		NULL,
+		0
+
+	));
 
 	return PTL_OK;
 }
