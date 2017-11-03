@@ -35,7 +35,7 @@ char *sctk_mpi_handler_gen_filename(void *option, void *option1) {
 
     MPI_Comm comm = (MPI_Comm)option1;
 
-    MPI_Bcast((void *)filename, 128, MPI_CHAR, 0, comm);
+    PMPI_Bcast((void *)filename, 128, MPI_CHAR, 0, comm);
     return true;
   }
 
@@ -52,7 +52,7 @@ char *sctk_mpi_handler_gen_filename(void *option, void *option1) {
 
     MPI_Comm comm = (MPI_Comm)option1;
 
-    MPI_Bcast((void *)filename, 128, MPI_CHAR, 0, comm);
+    PMPI_Bcast((void *)filename, 128, MPI_CHAR, 0, comm);
 
     return filename;
   }

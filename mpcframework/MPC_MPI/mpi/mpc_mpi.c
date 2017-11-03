@@ -19654,7 +19654,6 @@ int PMPIX_Halo_cell_bind_remote( MPI_Halo_exchange ex, MPI_Halo halo, int remote
 /************************************************************************/
 
 int PMPI_T_init_thread(int required, int *provided) {
-  sctk_error("INIT THES");
   return mpc_MPI_T_init_thread(required, provided);
 }
 

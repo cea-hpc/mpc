@@ -922,7 +922,8 @@ int mpc_MPI_T_pvar_start(MPI_T_pvar_session session, MPI_T_pvar_handle handle) {
   struct MPC_T_pvar_handle *th = handle;
 
   if (handle == MPI_T_PVAR_ALL_HANDLES) {
-    return MPC_T_session_start(session, MPI_T_PVAR_ALL_HANDLES, th->index);
+    return MPI_T_ERR_PVAR_NO_STARTSTOP;
+    //MPC_T_session_start(session, MPI_T_PVAR_ALL_HANDLES, th->index);
   } else {
     MPC_T_data_start(&th->data);
   }
@@ -938,7 +939,8 @@ int mpc_MPI_T_pvar_stop(MPI_T_pvar_session session, MPI_T_pvar_handle handle) {
   struct MPC_T_pvar_handle *th = handle;
 
   if (handle == MPI_T_PVAR_ALL_HANDLES) {
-    return MPC_T_session_stop(session, MPI_T_PVAR_ALL_HANDLES, th->index);
+    return MPI_T_ERR_PVAR_NO_STARTSTOP;
+    //return MPC_T_session_stop(session, MPI_T_PVAR_ALL_HANDLES, th->index);
   } else {
     MPC_T_data_stop(&th->data);
   }
