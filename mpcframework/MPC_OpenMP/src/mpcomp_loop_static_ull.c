@@ -29,49 +29,9 @@
 #include "mpcomp_openmp_tls.h"
 #include "mpcomp_loop_static_ull.h"
 
-/* Compute the chunk for a static schedule (without specific chunk size)
- * Original loop -> lb -> b step incr
- * New loop -> *from -> *to step incr
- */
-int __mpcomp_static_schedule_get_single_chunk_ull(mpcomp_loop_ull_iter_t *loop,
-                                                  unsigned long long *from,
-                                                  unsigned long long *to) {
-  /* Grab info on the current thread */
-  mpcomp_thread_t *t = mpcomp_get_thread_tls();
-
-  const unsigned long long rank = (unsigned long long)t->rank;
-  const unsigned long long num_threads =
-      (unsigned long long)t->info.num_threads;
-  const unsigned long long trip_count =
-      __mpcomp_internal_loop_get_num_iters_ull(loop->lb, loop->b, loop->incr,
-                                               loop->up);
-
-  if (rank >= trip_count) {
-    return 0;
-  }
-
-  const unsigned long long extra_chunk =
-      (trip_count % num_threads && trip_count > num_threads) +
-              (num_threads == 1)
-          ? 1
-          : 0;
-  const unsigned long long decal =
-      (rank < extra_chunk) ? rank * loop->incr : extra_chunk * loop->incr;
-
-  *from = loop->lb + decal + rank * loop->chunk_size * loop->incr;
-  *to = *from + loop->chunk_size * loop->incr +
-        ((rank < extra_chunk) ? loop->chunk_size * loop->incr : 0);
-
-  /* The final additionnal chunk is smaller, so its computation is a little bit
-   * different */
-  *to = (loop->up && *to > loop->b) ? loop->b : *to;
-  *to = (!loop->up && *to < loop->b) ? loop->b : *to;
-
-  return 1;
-}
-
 /* Return the chunk #'chunk_num' assuming a static schedule with 'chunk_size'
  * as a chunk size */
+
 void __mpcomp_static_schedule_get_specific_chunk_ull(
     unsigned long long rank, unsigned long long num_threads,
     mpcomp_loop_ull_iter_t *loop, unsigned long long chunk_num,

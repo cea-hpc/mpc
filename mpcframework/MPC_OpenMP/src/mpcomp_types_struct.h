@@ -19,6 +19,7 @@
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
 /* #   - CARRIBAULT Patrick patrick.carribault@cea.fr                     # */
 /* #   - CAPRA Antoine capra@paratools.com                                # */
+/* #   - DIONISI Thomas thomas.dionisi@exascale-computing.eu              # */
 /* #                                                                      # */
 /* ######################################################################## */
 
