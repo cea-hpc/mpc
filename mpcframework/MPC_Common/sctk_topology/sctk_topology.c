@@ -286,7 +286,7 @@ void create_placement_text(int os_pu, int os_master_pu, int task_id, int vp, int
 }
 
 /* fill thread placement informations in file to communicate between processes of the same node for graphic placement option */
-void create_placement_rendering(int os_pu, int os_master_pu, int task_id, int vp, int rank_open_mp, int* min_idex, int pid){
+void create_placement_rendering(int os_pu, int os_master_pu, int task_id){
     int red, green, blue;
     int red_m, green_m, blue_m;
     char string_rgb_hexa[512];
@@ -351,12 +351,12 @@ int sctk_get_cpu_compute_node_topology()
 
 
     hwloc_obj_t pu;
-    //if(sctk_enable_smt_capabilities)i{
+    if(sctk_enable_smt_capabilities){
         pu = hwloc_get_obj_inside_cpuset_by_type(topology_compute_node, set, HWLOC_OBJ_PU, 0);
-    //}
-    /*else{
+    }
+    else{
         pu = hwloc_get_obj_inside_cpuset_by_type(topology_compute_node, set, HWLOC_OBJ_CORE, 0);
-    }*/
+    }
 
     if (!pu)
     {
@@ -527,7 +527,6 @@ static void sctk_read_format_option_graphic_placement_and_complet_topo_infos(FIL
             obj = hwloc_get_obj_by_type(topology_compute_node, HWLOC_OBJ_CORE, logical_ind);
         }
         if(!obj){
-        printf("logical %d\n", logical_ind);
             return -1;
         }
         hwloc_obj_add_info(obj, "lstopoStyle", infos);
@@ -735,11 +734,10 @@ static int sctk_determine_higher_logical(int *os_index, int lenght){
         }
     }
     int val = sctk_get_task_number();
-    printf("higher_logical + val %d\n",  val);
     return higher_logical;
 }
 
-/* Write in file as lstopo adding informations on the topology and thread placmeent (text option) */
+/* Write in file as lstopo adding informations on the topology and thread placement (text option) */
 static void print_children(hwloc_topology_t topology, hwloc_obj_t obj, 
         int depth, struct sctk_text_option_s *tab_option, int num_os,int higher_logical , int lower_logical, const char* HostName, FILE* f, int ind_child, int last_arity)
 {
@@ -754,9 +752,9 @@ static void print_children(hwloc_topology_t topology, hwloc_obj_t obj,
     hwloc_obj_snprintf(string, sizeof(string), topology, obj, "#", 0);
     static int already_begining_done = 1;
     if(already_begining_done){
-        hwloc_obj_t lower_index_obj_pu = hwloc_get_obj_by_type(topology_compute_node, HWLOC_OBJ_PU, lower_logical);
+        hwloc_obj_t lower_index_obj_pu = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, lower_logical);
         /* if ancestor of the first pu booked */
-        if(hwloc_get_ancestor_obj_by_type(topology_compute_node, obj->type, lower_index_obj_pu)->logical_index == obj->logical_index
+        if(hwloc_get_ancestor_obj_by_type(topology, obj->type, lower_index_obj_pu)->logical_index == obj->logical_index
         && obj->type != HWLOC_OBJ_MACHINE && obj->type != HWLOC_OBJ_NODE && obj->type != HWLOC_OBJ_SOCKET && obj->type != HWLOC_OBJ_SYSTEM){
             fprintf(f,"\n\n|------------------------------BEGINING RESERVATION HOST %s-------------------------|\n", HostName); 
             already_begining_done = 0;
@@ -765,9 +763,18 @@ static void print_children(hwloc_topology_t topology, hwloc_obj_t obj,
 /* Check if os ind for pus and cores are always the same for the first pu of a core */
     if(obj->type == type){
         for(k = 0; k < num_os; k++){
-            if(obj->os_index == tab_option->os_index[k]){
+            hwloc_obj_t pu;
+            int os_index_to_compare;
+            if(sctk_enable_smt_capabilities){
+                os_index_to_compare = tab_option->os_index[k];
+            }
+            else{
+                pu = hwloc_get_ancestor_obj_by_type(topology, HWLOC_OBJ_CORE, obj);
+                os_index_to_compare = pu->os_index;
+            }
+            if(tab_option->os_index[k] == os_index_to_compare){
                 sprintf(string_mpc, "Virtual Processor %d | rank MPI %d | Policy : compact %d, scatter %d, balanced %d | tid %d", tab_option->vp_tab[k], tab_option->rank_mpi[k], tab_option->compact_tab[k], tab_option->scatter_tab[k], tab_option->balanced_tab[k],  tab_option->pid_tab[k]);
-                    if(last_arity == 1){
+                if(last_arity == 1){
                         fprintf(f," + %s#%d %s", string,obj->logical_index, string_mpc);
                     }
                     else{
@@ -1862,7 +1869,7 @@ void sctk_topology_destroy (void)
                 fprintf(f,"|------------------------------HOST                 %s------------------------------|\n", HostName); 
                 //int higher_logical = sctk_determine_higher_logical(tab_option->os_index, lenght);
                 int lower_logical = determine_lower_logical(tab_option->os_index, lenght);
-                int higher_logical = lower_logical + sctk_get_cpu_number();
+                int higher_logical = lower_logical + sctk_get_cpu_number() - 1;
                 if(1){//TODO si proc 0
                     fprintf(stdout,"/* --text-placement : \n.txt dated file has been generated for each compute node to vizualise topology and thread placement with their infos. */\n");
                     fflush(stdout);

@@ -255,7 +255,10 @@ void sctk_topology_init_cpu();
 int sctk_get_pu_number();
 
 /* used by option graphic */
-void create_placement_rendering(int pu, int master_pu,int task_id, int vp, int rank_open_mp, int *min_idex, int pid);
+void create_placement_rendering(int pu, int master_pu,int task_id);
+
+/* used by option text */
+void create_placement_text(int os_pu, int os_master_pu, int task_id, int vp, int rank_open_mp, int* min_idex, int pid);
 
 /* Get the os index from the topology_compute_node where the current thread is binding */
 int sctk_get_cpu_compute_node_topology();

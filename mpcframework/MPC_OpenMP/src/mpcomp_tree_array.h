@@ -69,4 +69,7 @@ __mpcomp_tree_array_node_type_from_node_by_depth( mpcomp_meta_tree_node_t* node,
 void
 __mpcomp_alloc_openmp_tree_struct( int* shape, int max_depth, const int* cpus_order, const int place_depth, const int place_size, const mpcomp_local_icv_t icvs );
 
+int*
+__mpcomp_tree_array_compute_thread_openmp_min_rank( const int* shape, const int max_depth, const int rank, const int core_depth );
+
 #endif /* __MPCOMP_TREE_ARRAY_H__ */

@@ -416,7 +416,7 @@ __mpcomp_tree_array_compute_thread_openmp_min_rank_scatter( const int* shape, co
     return count;
 }
 
-static int*
+int*
 __mpcomp_tree_array_compute_thread_openmp_min_rank( const int* shape, const int max_depth, const int rank, const int core_depth )
 {
     int index;
