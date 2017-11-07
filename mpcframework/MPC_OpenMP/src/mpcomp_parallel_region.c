@@ -74,7 +74,7 @@ __mpcomp_internal_begin_parallel_region( mpcomp_parallel_region_t *info, const u
     mpcomp_thread_t* new_thread;
     mpcomp_parallel_region_t* instance_info;
 
-    static int __thread once = 0;
+    static int once = 0;
     /* Grab the thread info */
     t = (mpcomp_thread_t *) sctk_openmp_thread_tls;
     sctk_assert(t != NULL);
