@@ -766,7 +766,7 @@ static void print_children(hwloc_topology_t topology, hwloc_obj_t obj,
             hwloc_obj_t pu;
             int os_index_to_compare;
             if(sctk_enable_smt_capabilities){
-                os_index_to_compare = tab_option->os_index[k];
+                os_index_to_compare = obj->os_index;
             }
             else{
                 pu = hwloc_get_ancestor_obj_by_type(topology, HWLOC_OBJ_CORE, obj);
