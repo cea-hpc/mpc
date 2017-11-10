@@ -776,7 +776,7 @@ static int sctk_env_init_intern(int *argc, char ***argv) {
   
   if( sctk_enable_smt_capabilities == 1)
   {
-     sctk_processor_nb_val *= sctk_get_ht_per_core();
+     /*sctk_processor_nb_val *= sctk_get_ht_per_core();*/
   }
  
   i++;
