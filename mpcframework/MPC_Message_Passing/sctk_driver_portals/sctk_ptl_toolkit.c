@@ -64,19 +64,16 @@ void sctk_ptl_recv_message(sctk_thread_ptp_message_t* msg, sctk_rail_info_t* rai
 
 	user_ptr = sctk_ptl_me_create(start, size, remote, match, ign, flags); assert(user_ptr);
 	user_ptr->msg = msg;
-	user_ptr->list = SCTK_PTL_OVERFLOW_LIST;
+	user_ptr->list = SCTK_PTL_PRIORITY_LIST;
 	sctk_ptl_me_register(srail, user_ptr, pte);
 	/* We've done here... anything else will be handled when the event will be polled */
-	sctk_error("Posted a recv from %d!", SCTK_MSG_SRC_PROCESS(msg));
+	sctk_error("Posted a recv from %d (nid/pid=%llu/%llu, idx=%llu, match=%llu, ign=%llu)", SCTK_MSG_SRC_TASK(msg), remote.phys.nid, remote.phys.pid, pte->idx, match.raw, ign.raw);
 }
 
 void sctk_ptl_send_message(sctk_thread_ptp_message_t* msg, sctk_endpoint_t* endpoint)
 {
 	int process_rank = sctk_get_process_rank();
 	sctk_ptl_rail_info_t* srail = &endpoint->rail->network.ptl;
-	sctk_ptl_route_info_t* infos = &endpoint->data.ptl;
-	sctk_ptl_id_t dest;
-
 
 	/* If it is a control_message: send it through a Put() (can be a routed msg) */
 	if(sctk_message_class_is_control_message(SCTK_MSG_SPECIFIC_CLASS(msg)))
@@ -93,31 +90,64 @@ void sctk_ptl_send_message(sctk_thread_ptp_message_t* msg, sctk_endpoint_t* endp
 	{
 		sctk_ptl_rdv_send_message(msg, endpoint);
 	}
-	sctk_error("Posted a send to %d!", SCTK_MSG_DEST_PROCESS(msg));
 }
 
-void sctk_ptl_poll_initiated(sctk_rail_info_t* rail, int threshold)
+void sctk_ptl_eqs_poll(sctk_rail_info_t* rail, int threshold)
 {
-	int ret = -1;
-	sctk_ptl_rail_info_t* srail = &rail->network.ptl;
 	sctk_ptl_event_t ev;
-	sctk_ptl_eq_poll_md(srail, &ev);
-}
-
-void sctk_ptl_poll_targeted(sctk_rail_info_t* rail, int threshold)
-{
-	int ret = -1;
 	sctk_ptl_rail_info_t* srail = &rail->network.ptl;
-	ret = sctk_ptl_rdv_poll(srail);
-	ret = sctk_ptl_eager_poll(srail);
+	size_t i = 0, size = srail->nb_entries;
+	int ret, max = 0;
+	while(max++ < threshold)
+	{
+		ret = sctk_ptl_eq_poll_me(srail, srail->pt_entries + (i%size), &ev);
+		if(ret == PTL_OK)
+		{
+			sctk_warning("EVENT ME: %s (fail_type = %d, nid/pid=%llu/%llu, idx=%d, match=%llu, list=%s)!", sctk_ptl_event_decode(ev), ev.ni_fail_type, ev.initiator.phys.nid, ev.initiator.phys.pid, ev.pt_index, ev.match_bits, SCTK_PTL_STR_LIST(((sctk_ptl_local_data_t*)ev.user_ptr)->list));
+			switch(ev.type)
+			{
+				case PTL_EVENT_GET: /* a Get() reached the local process */
+					break;
+				case PTL_EVENT_GET_OVERFLOW: /* a previous received GET matched a just appended ME */
+					break;
 
-}
+				case PTL_EVENT_PUT: /* a Put() reached the local process */
+					break;
+				case PTL_EVENT_PUT_OVERFLOW: /* a previous received PUT matched a just appended ME */
+					break;
 
-void sctk_ptl_poll_cm(sctk_rail_info_t* rail)
-{
-	int ret = -1;
-	sctk_ptl_rail_info_t* srail = &rail->network.ptl;
-	ret = sctk_ptl_cm_poll(srail);
+				case PTL_EVENT_ATOMIC: /* an Atomic() reached the local process */
+					break;
+				case PTL_EVENT_ATOMIC_OVERFLOW: /* a previously received ATOMIC matched a just appended one */
+					break;
+
+				case PTL_EVENT_FETCH_ATOMIC: /* a FetchAtomic() reached the local process */
+					break;
+
+				case PTL_EVENT_FETCH_ATOMIC_OVERFLOW: /* a previously received FETCH-ATOMIC matched a just appended one */
+					break;
+				case PTL_EVENT_PT_DISABLED: /* ERROR: The local PTE is disabeld (FLOW_CTRL) */
+					break;
+				case PTL_EVENT_LINK: /* MISC: A new ME has been linked, (maybe not useful) */
+					not_reachable();
+					break;
+
+				case PTL_EVENT_AUTO_UNLINK: /* an USE_ONCE ME has been automatically unlinked */
+					break;
+				case PTL_EVENT_AUTO_FREE: /* an USE_ONCE ME can be now reused */
+					/* can be helpful to know if the OVERFLOW ME don't have
+					 * remaining unexpected header to match */
+					break;
+				case PTL_EVENT_SEARCH: /* a PtlMESearch completed */
+					/* probably nothing to do here */
+					break;
+				default:
+					sctk_fatal("Portals ME event not recognized: %d", ev.type);
+					break;
+			}
+		}
+		i++;
+	}
 }
 
 void sctk_ptl_create_ring ( sctk_rail_info_t *rail )

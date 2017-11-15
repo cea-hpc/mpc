@@ -9,7 +9,7 @@
 #define SCTK_PTL_MATCH_INIT (sctk_ptl_matchbits_t) {.data.rank = 0, .data.tag = 0}
 #define SCTK_PTL_IGN_TAG  (UINT32_MAX)
 #define SCTK_PTL_IGN_RANK  (UINT32_MAX)
-#define SCTK_PTL_IGN_ALL SCTK_PTL_MATCH_INIT
+#define SCTK_PTL_IGN_ALL (sctk_ptl_matchbits_t){.data.rank = SCTK_PTL_IGN_RANK, .data.tag = SCTK_PTL_IGN_TAG}
 #define SCTK_PTL_MATCH_TAG  ((uint32_t)0)
 #define SCTK_PTL_MATCH_RANK  ((uint32_t)0)
 #define SCTK_PTL_MATCH_ALL  (sctk_ptl_matchbits_t) {.data.rank = SCTK_PTL_MATCH_RANK, .data.tag = SCTK_PTL_MATCH_TAG}
@@ -26,6 +26,7 @@
 #define sctk_ptl_list_t ptl_list_t
 #define SCTK_PTL_PRIORITY_LIST PTL_PRIORITY_LIST
 #define SCTK_PTL_OVERFLOW_LIST PTL_OVERFLOW_LIST
+#define SCTK_PTL_STR_LIST(u) ((u==SCTK_PTL_PRIORITY_LIST) ? "PRIORITY_LIST" : "OVERFLOW_LIST")
 
 
 /* MDs */
@@ -48,7 +49,6 @@
 #define SCTK_PTL_ANY_PROCESS (sctk_ptl_id_t) {.phys.nid = PTL_NID_ANY, .phys.pid = PTL_PID_ANY}
 
 /* Portals entry */
-#define TRANSLATE_COMM_TO_PTE(rail, comm) (srail->pt_entries + (comm + 1)) /* 0 is the CM slot */
 #define SCTK_PTL_PTE_FLAGS PTL_PT_FLOWCTRL
 #define SCTK_PTL_PTE_HIDDEN 3
 #define SCTK_PTL_PTE_RECOVERY ( -3)
@@ -125,6 +125,7 @@ typedef struct sctk_ptl_rail_info_s
 
 	size_t eager_limit;
 	size_t nb_entries;
+	sctk_thread_t async_tid;
 
 	char connection_infos[MAX_STRING_SIZE]; /**< string identifying this rail over the PMI */
 	size_t connection_infos_size;           /**< Size of the above string */

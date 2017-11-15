@@ -5,6 +5,51 @@
 #include "sctk_ptl_iface.h"
 #include "sctk_ptl_types.h"
 
+void sctk_ptl_print_structure(sctk_ptl_rail_info_t* srail)
+{
+	sctk_warning(
+	"\n======== PORTALS STRUCTURE ========\n"
+	"\n"
+	" PORTALS ENTRIES            : \n"
+	"  - PTE flags               : 0x%x\n"
+	"  - Comm. nb entries        : %d\n"
+	"  - HIDDEN nb entries       : %d\n"
+	"  - First Comm entry addr   : %p\n"
+	"  - First HIDDEN entry addr : %p\n"
+	"  - each EQ size            : %d\n"
+	"\n"
+	" ME management              : \n"
+	"  - Nb OVERFLOW slots       : %d\n"
+	"  - OVERFLOW slot size      : %d\n"
+	"  - ME PUT flags            : 0x%x\n"
+	"  - ME GET flags            : 0x%x\n"
+	"  - ME OVERFLOW FLAGS       : 0x%x\n"
+	"\n"
+	" MD management              : \n"
+	"  - shared EQ size          : %d\n"
+	"  - MD PUT flags            : 0x%x\n"
+	"  - MD GET flags            : 0x%x\n"
+	"\n===================================",
+	SCTK_PTL_PTE_FLAGS,
+	srail->nb_entries,
+	SCTK_PTL_PTE_HIDDEN,
+	srail->pt_entries,
+	srail->pt_entries - SCTK_PTL_PTE_HIDDEN,
+	SCTK_PTL_EQ_PTE_SIZE,
+
+	SCTK_PTL_ME_OVERFLOW_NB,
+	srail->eager_limit,
+	SCTK_PTL_ME_PUT_FLAGS,
+	SCTK_PTL_ME_GET_FLAGS,
+	SCTK_PTL_ME_OVERFLOW_FLAGS,
+
+	SCTK_PTL_EQ_MDS_SIZE,
+	SCTK_PTL_MD_PUT_FLAGS,
+	SCTK_PTL_MD_GET_FLAGS
+	);
+	
+}
+
 /**
  * Init max values for driver config limits.
  */
@@ -93,9 +138,8 @@ sctk_ptl_pte_t* sctk_ptl_software_init(sctk_ptl_rail_info_t* srail)
 	dims = srail->nb_entries + SCTK_PTL_PTE_HIDDEN;
 	eager_size = srail->eager_limit;
 
-	sctk_warning("Init for %d entries (%d + %d)", dims, dims - SCTK_PTL_PTE_HIDDEN, SCTK_PTL_PTE_HIDDEN);
 	table = sctk_malloc(sizeof(sctk_ptl_pte_t) * dims); /* one CM, one recovery, one RDMA */
-	for (i = SCTK_PTL_PTE_HIDDEN; i < dims; ++i)
+	for (i = 0; i < dims; ++i)
 	{
 		/* create the EQ for this PT */
 		sctk_ptl_chk(PtlEQAlloc(
@@ -142,6 +186,8 @@ sctk_ptl_pte_t* sctk_ptl_software_init(sctk_ptl_rail_info_t* srail)
 		SCTK_PTL_EQ_MDS_SIZE, /* number of slots available for events */
 		&srail->mds_eq        /* out: the EQ handler */
 	));
+
+	sctk_ptl_print_structure(srail);
 
 	srail->pt_entries = (sctk_ptl_pte_t*)table + SCTK_PTL_PTE_HIDDEN;
 	return srail->pt_entries;
@@ -214,8 +260,7 @@ sctk_ptl_local_data_t* sctk_ptl_me_create(void * start, size_t size, sctk_ptl_id
 			.length = (ptl_size_t) size,
 			.ct_handle = PTL_CT_NONE,
 			.uid = PTL_UID_ANY,
-			.match_id.phys.nid = remote.phys.nid,
-			.match_id.phys.pid = remote.phys.pid,
+			.match_id = remote,
 			.match_bits = match.raw,
 			.ignore_bits = ign.raw,
 			.options = flags,
@@ -259,16 +304,16 @@ void sctk_ptl_me_register(sctk_ptl_rail_info_t* srail, sctk_ptl_local_data_t* us
  *
  *  \param[in] meh the ME handler.
  */
-void sctk_ptl_me_release(sctk_ptl_meh_t* meh)
+void sctk_ptl_me_release(sctk_ptl_local_data_t* request)
 {
 	/* WARN: This function can return
 	 * PTL_IN_USE if the targeted ME is in OVERFLOW_LIST
 	 * and at least one unexpected header exists for it
 	 */
 	sctk_ptl_chk(PtlMEUnlink(
-		*meh
+		request->slot_h.meh
 	));
-	sctk_free(meh);
+	sctk_free(request);
 }
 
 /**
@@ -278,19 +323,24 @@ void sctk_ptl_me_release(sctk_ptl_meh_t* meh)
  * \param[in] flags MD-specific flags (PUT, GET...)
  * \return a pointer to the MD
  */
-sctk_ptl_md_t* sctk_ptl_md_create(sctk_ptl_rail_info_t* srail, void* start, size_t length, int flags)
+sctk_ptl_local_data_t* sctk_ptl_md_create(sctk_ptl_rail_info_t* srail, void* start, size_t length, int flags)
 {
-	sctk_ptl_md_t* md = sctk_malloc(sizeof(sctk_ptl_md_t));
-
-	*md = (sctk_ptl_md_t){
-		.start = start,
-		.length = (ptl_size_t)length,
-		.options = flags,
-		.ct_handle = PTL_CT_NONE,
-		.eq_handle = srail->mds_eq
+	sctk_ptl_local_data_t* user = sctk_malloc(sizeof(sctk_ptl_local_data_t));
+	
+	*user = (sctk_ptl_local_data_t){
+		.slot.md = (sctk_ptl_md_t){
+			.start = start,
+			.length = (ptl_size_t)length,
+			.options = flags,
+			.ct_handle = PTL_CT_NONE,
+			.eq_handle = srail->mds_eq
+		},
+		.slot_h.mdh = PTL_INVALID_HANDLE,
+		.list = SCTK_PTL_PRIORITY_LIST,
+		.msg = NULL /* later filled */
 	};
 
-	return md;
+	return user;
 }
 
 /**
@@ -298,17 +348,14 @@ sctk_ptl_md_t* sctk_ptl_md_create(sctk_ptl_rail_info_t* srail, void* start, size
  * \param[in] md the MD to register
  * \return a pointer to the MD handler
  */
-sctk_ptl_mdh_t* sctk_ptl_md_register(sctk_ptl_rail_info_t* srail, const sctk_ptl_md_t* md)
+void sctk_ptl_md_register(sctk_ptl_rail_info_t* srail, sctk_ptl_local_data_t* user)
 {
-	assert(md);
-	sctk_ptl_mdh_t* mdh = sctk_malloc(sizeof(sctk_ptl_mdh_t));
+	assert(user && srail);
 	sctk_ptl_chk(PtlMDBind(
-		srail->iface, /* the NI handler */
-		md,            /* the MD to bind with memory region */
-		mdh            /* out: the MD handler */
+		srail->iface,     /* the NI handler */
+		&user->slot.md,   /* the MD to bind with memory region */
+		&user->slot_h.mdh /* out: the MD handler */
 	));
-
-	return mdh;
 }
 
 /**
@@ -318,99 +365,13 @@ sctk_ptl_mdh_t* sctk_ptl_md_register(sctk_ptl_rail_info_t* srail, const sctk_ptl
  *
  * \param[in] mdh the MD handler to release
  */
-void sctk_ptl_md_release(sctk_ptl_mdh_t* mdh)
+void sctk_ptl_md_release(sctk_ptl_local_data_t* request)
 {
-	assert(mdh);
+	assert(request);
 	sctk_ptl_chk(PtlMDRelease(
-		*mdh
+		request->slot_h.mdh
 	));
-	sctk_free(mdh);
-}
-
-/**
- * Attempt to progress pending requests by getting the next MD-related event.
- *
- * \param[out] ev the event to fill
- * \return <ul>
- * <li><b>PTL_OK</b> if an event has been found with no error</li>
- * <li><b>PTL_EQ_EMPTY</b> if not event are present in the queue </li>
- * <li><b>PTL_EQ_DROPPED</b> if a event has been polled but at least one event has been dropped due to a lack of space in the queue</lib>
- * <li><b>any other code</b> is an error</li>
- * </ul>
- */
-int sctk_ptl_eq_poll_md(sctk_ptl_rail_info_t* srail, sctk_ptl_event_t* ev)
-{
-	int ret;
-	
-	assert(ev);
-	ret = PtlEQGet(srail->mds_eq, ev);
-
-	if (ret == PTL_EQ_EMPTY || ret == PTL_EQ_DROPPED)
-	{
-			memset(ev, 0, sizeof(sctk_ptl_event_t));
-			ev->type = -1;
-			return ret;
-	}
-	
-	sctk_ptl_chk(ret);
-	
-	return PTL_OK;
-}
-
-/**
- * Poll asynchronous notification from the NIC, about registered memory regions.
- *
- * \param[in] pte the Portals entry which contains the EQ to process
- * \param[out] ev the event to fill
- * \return <ul>
- * <li><b>PTL_OK</b> if an event has been found with no error</li>
- * <li><b>PTL_EQ_EMPTY</b> if not event are present in the queue </li>
- * <li><b>PTL_EQ_DROPPED</b> if a event has been polled but at least one event has been dropped due to a lack of space in the queue</lib>
- * <li><b>any other code</b> is an error</li>
- * </ul>
- */
-int sctk_ptl_eq_poll_me(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte, sctk_ptl_event_t* ev)
-{
-	int ret;
-	
-	assert(ev);
-	ret = PtlEQGet(pte->eq, ev);
-
-	if (ret == PTL_EQ_EMPTY || ret == PTL_EQ_DROPPED)
-	{
-			memset(ev, 0, sizeof(sctk_ptl_event_t));
-			ev->type = -1;
-			return ret;
-	}
-
-
-	sctk_ptl_chk(ret);
-
-	switch(ev->type)
-	{
-		case PTL_EVENT_GET:                   /* The target received a matching Get() request */
-		case PTL_EVENT_GET_OVERFLOW:          /* the initiator did not match the data (late-send) */
-
-		case PTL_EVENT_PUT:                   /* the remote pushed back the data after we failed to get at first place */
-		case PTL_EVENT_PUT_OVERFLOW:          /* Control_message (it is never considered as an expected message) */
-
-		case PTL_EVENT_ATOMIC:                /* Deal with Atomic operation, and matched it with an already posted request */
-		case PTL_EVENT_ATOMIC_OVERFLOW:       /* received an unexpected incoming atomic request */
-
-		case PTL_EVENT_FETCH_ATOMIC:          /* same as the one above but with FETCH_ATOMIC op */
-		case PTL_EVENT_FETCH_ATOMIC_OVERFLOW: /* same as the one above but with FETCH_ATOMIC op */
-
-		case PTL_EVENT_PT_DISABLED:           /* Error: this event is emitted when a request has been posted to a disabled PT */
-		case PTL_EVENT_LINK:                  /* a new memory entry has been posted */
-		case PTL_EVENT_AUTO_UNLINK:           /* the memory entry has been automatically unlinked (PTL_*E_USE_ONCE) */
-		case PTL_EVENT_AUTO_FREE:             /* the previously automatic unlinked memory entry can now be reused */
-		case PTL_EVENT_SEARCH:                /* A memory entry search has completed (but did not necessary succeeded) */
-			break;
-		default:
-			sctk_fatal("Portals ME event not recognized: %d", ev->type);
-	}
-
-	return PTL_OK;
+	sctk_free(request);
 }
 
 sctk_ptl_id_t sctk_ptl_self(sctk_ptl_rail_info_t* srail)
@@ -418,36 +379,36 @@ sctk_ptl_id_t sctk_ptl_self(sctk_ptl_rail_info_t* srail)
 	return srail->id;
 }
 
-int sctk_ptl_emit_get(sctk_ptl_mdh_t* mdh, size_t size, sctk_ptl_id_t remote, sctk_ptl_pte_t* pte, sctk_ptl_matchbits_t match)
+int sctk_ptl_emit_get(sctk_ptl_local_data_t* user, size_t size, sctk_ptl_id_t remote, sctk_ptl_pte_t* pte, sctk_ptl_matchbits_t match)
 {
 	sctk_ptl_chk(PtlGet(
-		*mdh,
+		user->slot_h.mdh,
 		0,
 		size,
 		remote,
 		pte->idx,
 		match.raw,
 		0,
-		NULL
+		user
 	));
 
 	return PTL_OK;
 }
 
-int sctk_ptl_emit_put(sctk_ptl_mdh_t* mdh, size_t size, sctk_ptl_id_t remote, sctk_ptl_pte_t* pte, sctk_ptl_matchbits_t match)
+int sctk_ptl_emit_put(sctk_ptl_local_data_t* user, size_t size, sctk_ptl_id_t remote, sctk_ptl_pte_t* pte, sctk_ptl_matchbits_t match)
 {
+	assert (size <= user->slot.md.length);
 	sctk_ptl_chk(PtlPut(
-		*mdh,
-		0, 
+		user->slot_h.mdh,
+		0, /* offset */
 		size,
 		PTL_ACK_REQ,
 		remote,
 		pte->idx,
 		match.raw,
-		0,
-		NULL,
-		0
-
+		0, /* offset */
+		user,
+		0 /* TBD */
 	));
 
 	return PTL_OK;

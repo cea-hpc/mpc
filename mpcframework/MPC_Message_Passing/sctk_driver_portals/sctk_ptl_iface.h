@@ -10,18 +10,14 @@
 #include "sctk_ptl_types.h"
 #include "sctk_debug.h"
 
-#ifdef VERY_VERBOSE
-#define sctk_ptl_chk(x) do { int __ret = x; \
-    sctk_debug("%s -> %s (%s:%u)", #x, sctk_ptl_rc_decode(__ret), __FILE__, (unsigned int)__LINE__); \
-    switch (__ret) { \
-	case PTL_EQ_EMPTY: \
-	case PTL_CT_NONE_REACHED: \
-        case PTL_OK: break; \
-	default: \
-		 sctk_abort(); \
-    } } while (0)
-#elif !defined(NDEBUG)
+#if !defined(NDEBUG)
 #define sctk_ptl_chk(x) do { int __ret = 0; \
+    static int ___env = -1; \
+	if(___env) { \
+		___env = (getenv("MPC_PTL_DEBUG") != NULL);\
+	}\
+	if(___env) \
+    		sctk_debug("%s -> %s (%s:%u)", #x, sctk_ptl_rc_decode(__ret), __FILE__, (unsigned int)__LINE__); \
     switch (__ret = x) { \
 	case PTL_EQ_EMPTY: \
 	case PTL_CT_NONE_REACHED: \
@@ -47,20 +43,16 @@ void sctk_ptl_software_fini(sctk_ptl_rail_info_t*);
 /* ME management */
 sctk_ptl_local_data_t* sctk_ptl_me_create(void*, size_t, sctk_ptl_id_t, sctk_ptl_matchbits_t, sctk_ptl_matchbits_t, int);
 void sctk_ptl_me_register(sctk_ptl_rail_info_t* srail, sctk_ptl_local_data_t*, sctk_ptl_pte_t*);
-void sctk_ptl_me_release(sctk_ptl_meh_t*);
+void sctk_ptl_me_release(sctk_ptl_local_data_t*);
 
 /* MD management */
-sctk_ptl_md_t* sctk_ptl_md_create(sctk_ptl_rail_info_t* srail, void*, size_t, int);
-sctk_ptl_mdh_t* sctk_ptl_md_register(sctk_ptl_rail_info_t* srail, const sctk_ptl_md_t*);
-void sctk_ptl_md_release(sctk_ptl_mdh_t*);
-
-/* EQ management */
-int sctk_ptl_eq_poll_md(sctk_ptl_rail_info_t* srail, sctk_ptl_event_t*);
-int sctk_ptl_eq_poll_me(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t*, sctk_ptl_event_t*);
+sctk_ptl_local_data_t* sctk_ptl_md_create(sctk_ptl_rail_info_t* srail, void*, size_t, int);
+void sctk_ptl_md_register(sctk_ptl_rail_info_t* srail, sctk_ptl_local_data_t*);
+void sctk_ptl_md_release(sctk_ptl_local_data_t*);
 
 /* Request management */
-int sctk_ptl_emit_get(sctk_ptl_mdh_t*, size_t, sctk_ptl_id_t, sctk_ptl_pte_t*, sctk_ptl_matchbits_t);
-int sctk_ptl_emit_put(sctk_ptl_mdh_t*, size_t, sctk_ptl_id_t, sctk_ptl_pte_t*, sctk_ptl_matchbits_t);
+int sctk_ptl_emit_get(sctk_ptl_local_data_t*, size_t, sctk_ptl_id_t, sctk_ptl_pte_t*, sctk_ptl_matchbits_t);
+int sctk_ptl_emit_put(sctk_ptl_local_data_t*, size_t, sctk_ptl_id_t, sctk_ptl_pte_t*, sctk_ptl_matchbits_t);
 int sctk_ptl_emit_atomic();
 int sctk_ptl_emit_fetch_atomic();
 
@@ -212,6 +204,51 @@ static inline int sctk_ptl_data_serialize ( const void *inval, int invallen, cha
 
     outval[invallen * 2] = '\0';
     return (invallen * 2);
+}
+
+/**
+ * Attempt to progress pending requests by getting the next MD-related event.
+ *
+ * \param[out] ev the event to fill
+ * \return <ul>
+ * <li><b>PTL_OK</b> if an event has been found with no error</li>
+ * <li><b>PTL_EQ_EMPTY</b> if not event are present in the queue </li>
+ * <li><b>PTL_EQ_DROPPED</b> if a event has been polled but at least one event has been dropped due to a lack of space in the queue</lib>
+ * <li><b>any other code</b> is an error</li>
+ * </ul>
+ */
+static inline int sctk_ptl_eq_poll_md(sctk_ptl_rail_info_t* srail, sctk_ptl_event_t* ev)
+{
+	int ret;
+	
+	assert(ev);
+	ret = PtlEQGet(srail->mds_eq, ev);
+	sctk_ptl_chk(ret);
+	
+	return PTL_OK;
+}
+
+/**
+ * Poll asynchronous notification from the NIC, about registered memory regions.
+ *
+ * \param[in] pte the Portals entry which contains the EQ to process
+ * \param[out] ev the event to fill
+ * \return <ul>
+ * <li><b>PTL_OK</b> if an event has been found with no error</li>
+ * <li><b>PTL_EQ_EMPTY</b> if not event are present in the queue </li>
+ * <li><b>PTL_EQ_DROPPED</b> if a event has been polled but at least one event has been dropped due to a lack of space in the queue</lib>
+ * <li><b>any other code</b> is an error</li>
+ * </ul>
+ */
+static inline int sctk_ptl_eq_poll_me(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte, sctk_ptl_event_t* ev)
+{
+	int ret;
+	
+	assert(ev && pte && srail);
+	ret = PtlEQGet(pte->eq, ev);
+	sctk_ptl_chk(ret);
+
+	return PTL_OK;
 }
 #endif
 

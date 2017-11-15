@@ -26,7 +26,9 @@
 #include <sctk_debug.h>
 #include "sctk_rail.h"
 #include "sctk_ptl_toolkit.h"
+#include "sctk_ptl_iface.h"
 #include "sctk_ptl_rdma.h"
+#include "sctk_ptl_async.h"
 #include "sctk_route.h"
 
 static volatile short rail_is_ready = 0;
@@ -64,9 +66,7 @@ static void sctk_network_notify_perform_message_ptl ( int remote, int remote_tas
  */
 static void sctk_network_notify_idle_message_ptl (sctk_rail_info_t* rail)
 {
-	sctk_ptl_poll_initiated( rail );
-	sctk_ptl_poll_targeted( rail );
-	sctk_ptl_poll_cm( rail );
+	sctk_ptl_eqs_poll( rail, 20 );
 }
 
 /**
@@ -207,6 +207,8 @@ void sctk_network_init_ptl (sctk_rail_info_t *rail)
 		sctk_ptl_create_ring( rail );
 
 	rail_is_ready = 1;
+	sctk_error("Hello I'm nid/pid %llu/%llu", rail->network.ptl.id.phys.nid, rail->network.ptl.id.phys.pid);
+	sctk_ptl_async_start(rail);
 }
 
 #endif
