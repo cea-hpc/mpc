@@ -54,6 +54,9 @@
 #define SCTK_PTL_PTE_RECOVERY ( -3)
 #define SCTK_PTL_PTE_CM       ( -2)
 #define SCTK_PTL_PTE_RDMA     ( -1)
+#define SCTK_PTL_PTE_RECOVERY_IDX (0)
+#define SCTK_PTL_PTE_CM_IDX       (1)
+#define SCTK_PTL_PTE_RDMA_IDX     (2)
 
 /* MISCS */
 #define sctk_ptl_nih_t ptl_handle_ni_t

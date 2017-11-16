@@ -9,6 +9,7 @@
 #include "sctk_ptl_eager.h"
 #include "sctk_ptl_rdma.h"
 #include "sctk_ptl_cm.h"
+#include "sctk_ptl_toolkit.h"
 
 void sctk_ptl_add_route(int dest, sctk_ptl_id_t id, sctk_rail_info_t* rail, sctk_route_origin_t origin, sctk_endpoint_state_t state)
 {
@@ -96,11 +97,14 @@ void sctk_ptl_eqs_poll(sctk_rail_info_t* rail, int threshold)
 {
 	sctk_ptl_event_t ev;
 	sctk_ptl_rail_info_t* srail = &rail->network.ptl;
+	sctk_ptl_local_data_t* user_ptr;
 	size_t i = 0, size = srail->nb_entries;
 	int ret, max = 0;
 	while(max++ < threshold)
 	{
 		ret = sctk_ptl_eq_poll_me(srail, srail->pt_entries + (i%size), &ev);
+		user_ptr = (sctk_ptl_local_data_t*)ev.user_ptr;
+
 		if(ret == PTL_OK)
 		{
 			sctk_warning("EVENT ME: %s (fail_type = %d, nid/pid=%llu/%llu, idx=%d, match=%llu, list=%s)!", sctk_ptl_event_decode(ev), ev.ni_fail_type, ev.initiator.phys.nid, ev.initiator.phys.pid, ev.pt_index, ev.match_bits, SCTK_PTL_STR_LIST(((sctk_ptl_local_data_t*)ev.user_ptr)->list));
@@ -111,10 +115,36 @@ void sctk_ptl_eqs_poll(sctk_rail_info_t* rail, int threshold)
 				case PTL_EVENT_GET_OVERFLOW: /* a previous received GET matched a just appended ME */
 					break;
 
-				case PTL_EVENT_PUT: /* a Put() reached the local process */
-					break;
 				case PTL_EVENT_PUT_OVERFLOW: /* a previous received PUT matched a just appended ME */
-					break;
+					/*sctk_ptl_me_feed_overflow(srail, ev.pt_index, srail->eager_limit, 1);*/
+					/* NO BREAK !!! */
+				case PTL_EVENT_PUT: /* a Put() reached the local process */
+					if(user_ptr->list == SCTK_PTL_OVERFLOW_LIST) break;
+					/* Multiple scenario can trigger this event:
+					 *  1 - An incoming header put() (RDV or eager)
+					 *  2 - an incoming RDMA request
+					 *  3 - an incoming CM request
+					 *  4 - an incoming FLOW_CTRL request
+					 *  Selection is done depending on the target PTE.
+					 */
+					{
+						/* indexes from 0 to SCTK_PTL_PTE_HIDDEN-1 maps RECOVERY, CM & RDMA queues
+						 * indexes from SCTK_PTL_PTE_HIDDEN to N maps communicators
+						 */
+						if(ev.pt_index >= SCTK_PTL_PTE_HIDDEN) /* 'normal header */
+						{
+							break;
+						}
+						else if(ev.pt_index == SCTK_PTL_PTE_CM_IDX) /* Control message */
+						{
+							break;
+						}
+						else if(ev.pt_index == SCTK_PTL_PTE_RDMA_IDX) /* RDMA */
+						{
+							break;
+						}
+						not_reachable();
+					}
 
 				case PTL_EVENT_ATOMIC: /* an Atomic() reached the local process */
 					break;
@@ -275,6 +305,14 @@ void sctk_ptl_init_interface(sctk_rail_info_t* rail)
 }
 
 void sctk_ptl_fini_interface(sctk_rail_info_t* rail)
+{
+}
+
+void sctk_ptl_free_memory(void* msg)
+{
+}
+
+void sctk_ptl_message_copy(sctk_message_to_copy_t bundle)
 {
 }
 

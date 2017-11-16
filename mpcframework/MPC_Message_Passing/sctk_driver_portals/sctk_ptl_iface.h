@@ -44,6 +44,7 @@ void sctk_ptl_software_fini(sctk_ptl_rail_info_t*);
 sctk_ptl_local_data_t* sctk_ptl_me_create(void*, size_t, sctk_ptl_id_t, sctk_ptl_matchbits_t, sctk_ptl_matchbits_t, int);
 void sctk_ptl_me_register(sctk_ptl_rail_info_t* srail, sctk_ptl_local_data_t*, sctk_ptl_pte_t*);
 void sctk_ptl_me_release(sctk_ptl_local_data_t*);
+void sctk_ptl_me_feed_overflow(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte, size_t me_size, int nb);
 
 /* MD management */
 sctk_ptl_local_data_t* sctk_ptl_md_create(sctk_ptl_rail_info_t* srail, void*, size_t, int);
@@ -225,7 +226,7 @@ static inline int sctk_ptl_eq_poll_md(sctk_ptl_rail_info_t* srail, sctk_ptl_even
 	ret = PtlEQGet(srail->mds_eq, ev);
 	sctk_ptl_chk(ret);
 	
-	return PTL_OK;
+	return ret;
 }
 
 /**
@@ -248,7 +249,7 @@ static inline int sctk_ptl_eq_poll_me(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_
 	ret = PtlEQGet(pte->eq, ev);
 	sctk_ptl_chk(ret);
 
-	return PTL_OK;
+	return ret;
 }
 #endif
 

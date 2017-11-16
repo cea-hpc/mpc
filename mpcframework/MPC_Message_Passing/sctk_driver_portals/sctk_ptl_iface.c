@@ -157,25 +157,7 @@ sctk_ptl_pte_t* sctk_ptl_software_init(sctk_ptl_rail_info_t* srail)
 			&table[i].idx       /* the effective index value */
 		));
 
-		int j;
-		for (j = 0; j < SCTK_PTL_ME_OVERFLOW_NB; j++)
-		{
-			void* buf = sctk_malloc(eager_size);
-			sctk_ptl_local_data_t* user;
-
-			user = sctk_ptl_me_create(
-					buf, /* temporary buffer to pin */
-					eager_size, /* buffer size */
-					SCTK_PTL_ANY_PROCESS, /* targetable by any process */
-					SCTK_PTL_MATCH_INIT, /* we don't care the match_bits */ 
-					SCTK_PTL_IGN_ALL, /* triggers all requestss */
-					SCTK_PTL_ME_OVERFLOW_FLAGS /* OVERFLOW-specifics flags */
-			);
-			user->msg = NULL;
-			user->list = SCTK_PTL_OVERFLOW_LIST;
-
-			sctk_ptl_me_register(srail, user, table + i);
-		}
+		sctk_ptl_me_feed_overflow(srail, table + i, eager_size, SCTK_PTL_ME_OVERFLOW_NB);
 	}
 
 
@@ -377,6 +359,29 @@ void sctk_ptl_md_release(sctk_ptl_local_data_t* request)
 sctk_ptl_id_t sctk_ptl_self(sctk_ptl_rail_info_t* srail)
 {
 	return srail->id;
+}
+
+void sctk_ptl_me_feed_overflow(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte, size_t me_size, int nb)
+{
+	int j;
+	for (j = 0; j < nb; j++)
+	{
+		void* buf = sctk_malloc(me_size);
+		sctk_ptl_local_data_t* user;
+
+		user = sctk_ptl_me_create(
+				buf, /* temporary buffer to pin */
+				me_size, /* buffer size */
+				SCTK_PTL_ANY_PROCESS, /* targetable by any process */
+				SCTK_PTL_MATCH_INIT, /* we don't care the match_bits */ 
+				SCTK_PTL_IGN_ALL, /* triggers all requestss */
+				SCTK_PTL_ME_OVERFLOW_FLAGS /* OVERFLOW-specifics flags */
+				);
+		user->msg = NULL;
+		user->list = SCTK_PTL_OVERFLOW_LIST;
+
+		sctk_ptl_me_register(srail, user, pte);
+	}
 }
 
 int sctk_ptl_emit_get(sctk_ptl_local_data_t* user, size_t size, sctk_ptl_id_t remote, sctk_ptl_pte_t* pte, sctk_ptl_matchbits_t match)
