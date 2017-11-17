@@ -1,3 +1,5 @@
+#ifdef MPC_USE_PORTALS
+
 #include "sctk_ptl_async.h"
 #include "sctk_ptl_iface.h"
 
@@ -59,3 +61,4 @@ void sctk_ptl_async_stop(sctk_rail_info_t* rail)
 	sctk_thread_kill(rail->network.ptl.async_tid, SIGTERM);
 	rail->network.ptl.async_tid = NULL;
 }
+#endif

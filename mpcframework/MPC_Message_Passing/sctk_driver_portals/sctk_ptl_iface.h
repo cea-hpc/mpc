@@ -1,3 +1,4 @@
+#ifdef MPC_USE_PORTALS
 #ifndef SCTK_PTL_IFACE_H_
 #define SCTK_PTL_IFACE_H_
 
@@ -252,4 +253,4 @@ static inline int sctk_ptl_eq_poll_me(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_
 	return ret;
 }
 #endif
-
+#endif

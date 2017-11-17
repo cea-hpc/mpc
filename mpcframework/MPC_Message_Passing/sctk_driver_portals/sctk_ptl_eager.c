@@ -1,3 +1,4 @@
+#ifdef MPC_USE_PORTALS
 #include "sctk_route.h"
 #include "sctk_ptl_iface.h"
 #include "sctk_ptl_eager.h"
@@ -31,3 +32,4 @@ void sctk_ptl_eager_send_message(sctk_thread_ptp_message_t* msg, sctk_endpoint_t
 	sctk_error("Posted a eager send to %d (nid/pid=%llu/%llu, idx=%d, match=%llu)", SCTK_MSG_DEST_TASK(msg), remote.phys.nid, remote.phys.pid, pte->idx, match.raw);
 	sctk_ptl_emit_put(request, size, remote, pte, match);
 }
+#endif

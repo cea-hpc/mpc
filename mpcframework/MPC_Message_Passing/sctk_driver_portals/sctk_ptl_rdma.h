@@ -1,3 +1,4 @@
+#ifdef MPC_USE_PORTALS
 #ifndef __SCTK_PTL_RDMA_H_
 #define __SCTK_PTL_RDMA_H_
 
@@ -33,3 +34,4 @@ void sctk_ptl_rdma_read(  sctk_rail_info_t *rail, sctk_thread_ptp_message_t *msg
 void sctk_ptl_pin_region( struct sctk_rail_info_s * rail, struct sctk_rail_pin_ctx_list * list, void * addr, size_t size );
 void sctk_ptl_unpin_region( struct sctk_rail_info_s * rail, struct sctk_rail_pin_ctx_list * list );
 #endif /* ifndef __SCTK_PTL_RDMA_H_ */
+#endif

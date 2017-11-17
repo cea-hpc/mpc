@@ -1,3 +1,4 @@
+#ifdef MPC_USE_PORTALS
 #ifndef SCTK_PTL_TYPES_H_
 #define SCTK_PTL_TYPES_H_
 
@@ -140,5 +141,5 @@ typedef struct sctk_ptl_rail_info_s
 	char connection_infos[MAX_STRING_SIZE]; /**< string identifying this rail over the PMI */
 	size_t connection_infos_size;           /**< Size of the above string */
 } sctk_ptl_rail_info_t;
-
+#endif
 #endif

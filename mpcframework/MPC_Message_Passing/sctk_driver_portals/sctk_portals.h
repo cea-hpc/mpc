@@ -22,6 +22,7 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
+#ifdef MPC_USE_PORTALS
 #ifndef __SCTK_PORTALS_H_
 #define __SCTK_PORTALS_H_
 #ifdef __cplusplus
@@ -30,7 +31,6 @@ extern "C"
 #endif
 
 #include <sctk_io_helper.h>
-#ifdef MPC_USE_PORTALS
 #include "sctk_ptl_types.h"
 
 
@@ -52,8 +52,8 @@ typedef struct sctk_portals_msg_header_s
 void sctk_network_init_ptl ( struct sctk_rail_info_s *rail);
 void sctk_network_finalize_ptl ( struct sctk_rail_info_s *rail);
 
-#endif
 #ifdef __cplusplus
 }
+#endif
 #endif
 #endif

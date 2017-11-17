@@ -1,3 +1,4 @@
+#ifdef MPC_USE_PORTALS
 #include <limits.h>
 #include "sctk_debug.h"
 #include "sctk_alloc.h"
@@ -435,3 +436,4 @@ int sctk_ptl_emit_fetch_atomic()
 
 	return PTL_OK;
 }
+#endif

@@ -1,3 +1,4 @@
+#ifdef MPC_USE_PORTALS
 #ifndef SCTK_PTL_TOOLKIT_H_
 #define SCTK_PTL_TOOLKIT_H_
 
@@ -12,4 +13,5 @@ void sctk_ptl_fini_interface(sctk_rail_info_t* rail);
 
 void sctk_ptl_send_message(sctk_thread_ptp_message_t* msg, sctk_endpoint_t* endpoint);
 void sctk_ptl_recv_message(sctk_thread_ptp_message_t* msg, sctk_rail_info_t* rail);
+#endif
 #endif

@@ -1,3 +1,5 @@
+#ifdef MPC_USE_PORTALS
+
 #include "sctk_types.h"
 #include "sctk_route.h"
 #include "sctk_ptl_rdma.h"
@@ -117,4 +119,4 @@ void sctk_ptl_unpin_region( struct sctk_rail_info_s * rail, struct sctk_rail_pin
 {
 	not_implemented();
 }
-
+#endif
