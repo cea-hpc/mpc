@@ -104,6 +104,12 @@ typedef struct sctk_ptl_local_data_s
 	void* msg;
 } sctk_ptl_local_data_t;
 
+typedef struct sctk_ptl_rdma_ctx_s
+{
+	struct sctk_ptl_local_data_s* me_data;
+	struct sctk_ptl_local_data_s* md_data;
+} sctk_ptl_rdma_ctx_t;
+
 /**
  * Portals-specific information describing a route.
  * Is contained by route.h
@@ -129,6 +135,7 @@ typedef struct sctk_ptl_rail_info_s
 	size_t eager_limit;
 	size_t nb_entries;
 	sctk_thread_t async_tid;
+	sctk_atomics_int rdma_cpt;,
 
 	char connection_infos[MAX_STRING_SIZE]; /**< string identifying this rail over the PMI */
 	size_t connection_infos_size;           /**< Size of the above string */

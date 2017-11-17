@@ -182,14 +182,14 @@ void sctk_network_init_ptl (sctk_rail_info_t *rail)
 	rail->send_message_from_network = sctk_send_message_from_network_ptl;
 
 	/* RDMA */
-	/*rail->rail_pin_region        = sctk_ptl_pin_region;*/
-	/*rail->rail_unpin_region      = sctk_ptl_unpin_region;*/
-	/*rail->rdma_write             = sctk_ptl_rdma_write;*/
-	/*rail->rdma_read              = sctk_ptl_rdma_read;*/
-	/*rail->rdma_fetch_and_op_gate = sctk_ptl_rdma_fetch_and_op_gate;*/
-	/*rail->rdma_fetch_and_op      = sctk_ptl_rdma_fetch_and_op;*/
-	/*rail->rdma_cas_gate          = sctk_ptl_rdma_cas_gate;*/
-	/*rail->rdma_cas               = sctk_ptl_rdma_cas;*/
+	rail->rail_pin_region        = sctk_ptl_pin_region;
+	rail->rail_unpin_region      = sctk_ptl_unpin_region;
+	rail->rdma_write             = sctk_ptl_rdma_write;
+	rail->rdma_read              = sctk_ptl_rdma_read;
+	rail->rdma_fetch_and_op_gate = sctk_ptl_rdma_fetch_and_op_gate;
+	rail->rdma_fetch_and_op      = sctk_ptl_rdma_fetch_and_op;
+	rail->rdma_cas_gate          = sctk_ptl_rdma_cas_gate;
+	rail->rdma_cas               = sctk_ptl_rdma_cas;
 
 	/* rail closing/re-opening calls */
 	rail->driver_finalize         = sctk_network_finalize_ptl;

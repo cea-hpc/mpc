@@ -72,15 +72,7 @@ struct sctk_rail_ib_pin_ctx
 
 #ifdef MPC_USE_PORTALS
 #include "sctk_ptl_types.h"
-struct sctk_rail_ptl_pin_ctx
-{
-    sctk_ptl_meh_t me_handler;
-    sctk_ptl_me_t me;
-    sctk_ptl_matchbits_t match;
-    sctk_ptl_id_t id;
-    void* start_addr;
-};
-#endif /* MPC_USE_PORTALS */
+#endif
 
 typedef union
 {
@@ -88,7 +80,7 @@ typedef union
 	struct sctk_rail_ib_pin_ctx ib;
 #endif
 #ifdef MPC_USE_PORTALS
-	struct sctk_rail_ptl_pin_ctx ptl;
+	struct sctk_ptl_rdma_ctx ptl;
 #endif /* MPC_USE_PORTALS */
 }sctk_rail_pin_ctx_internal_t;
 
