@@ -29,7 +29,6 @@
 #define SCTK_PTL_OVERFLOW_LIST PTL_OVERFLOW_LIST
 #define SCTK_PTL_STR_LIST(u) ((u==SCTK_PTL_PRIORITY_LIST) ? "PRIORITY_LIST" : "OVERFLOW_LIST")
 
-
 /* MDs */
 #define sctk_ptl_mdh_t ptl_handle_md_t
 #define sctk_ptl_md_t ptl_md_t
@@ -48,6 +47,10 @@
 /* id */
 #define sctk_ptl_id_t ptl_process_t
 #define SCTK_PTL_ANY_PROCESS (sctk_ptl_id_t) {.phys.nid = PTL_NID_ANY, .phys.pid = PTL_PID_ANY}
+
+/* RDMA */
+#define sctk_ptl_rdma_type_t ptl_datatype_t
+#define sctk_ptl_rdma_op_t ptl_op_t
 
 /* Portals entry */
 #define SCTK_PTL_PTE_FLAGS PTL_PT_FLOWCTRL
@@ -109,6 +112,7 @@ typedef struct sctk_ptl_rdma_ctx
 {
 	struct sctk_ptl_local_data_s* me_data;
 	struct sctk_ptl_local_data_s* md_data;
+	sctk_ptl_id_t origin;
 } sctk_ptl_rdma_ctx_t;
 
 /**

@@ -60,6 +60,6 @@ void sctk_ptl_rdv_send_message(sctk_thread_ptp_message_t* msg, sctk_endpoint_t* 
 	sctk_ptl_me_register(srail, me_request, me_pte);
 
 	sctk_error("Posted a rdv send to %d (nid/pid=%llu/%llu, idx=%d, match=%llu)", SCTK_MSG_DEST_TASK(msg), me_remote.phys.nid, me_remote.phys.pid, me_pte->idx, me_match.raw);
-	sctk_ptl_emit_put(md_request, md_size, md_remote, md_pte, md_match);
+	sctk_ptl_emit_put(md_request, md_size, md_remote, md_pte, md_match, 0, 0);
 }
 #endif

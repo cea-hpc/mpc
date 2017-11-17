@@ -30,6 +30,6 @@ void sctk_ptl_eager_send_message(sctk_thread_ptp_message_t* msg, sctk_endpoint_t
 
 	sctk_ptl_md_register(srail, request);
 	sctk_error("Posted a eager send to %d (nid/pid=%llu/%llu, idx=%d, match=%llu)", SCTK_MSG_DEST_TASK(msg), remote.phys.nid, remote.phys.pid, pte->idx, match.raw);
-	sctk_ptl_emit_put(request, size, remote, pte, match);
+	sctk_ptl_emit_put(request, size, remote, pte, match, 0, 0);
 }
 #endif
