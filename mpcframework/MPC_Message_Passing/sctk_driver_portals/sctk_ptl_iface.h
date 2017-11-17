@@ -123,7 +123,6 @@ static inline const char const * sctk_ptl_event_decode(sctk_ptl_event_t ev)
 	case PTL_EVENT_AUTO_FREE: return "PTL_EVENT_AUTO_FREE"; break;
 	case PTL_EVENT_SEARCH: return "PTL_EVENT_SEARCH"; break;
 	
-	case -1: return "NO EVENT"; break;
 	default:
 		return "Portals Event not known"; break;
 	}

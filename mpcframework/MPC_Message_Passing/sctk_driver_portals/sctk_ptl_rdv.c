@@ -25,7 +25,7 @@ void sctk_ptl_rdv_send_message(sctk_thread_ptp_message_t* msg, sctk_endpoint_t* 
 	int md_flags                      , me_flags;
 	sctk_ptl_matchbits_t md_match     , me_match, me_ign;
 	sctk_ptl_pte_t *md_pte            , *me_pte;
-	sctk_ptl_id_t *md_remote          , *me_remote;
+	sctk_ptl_id_t md_remote           , me_remote;
 
 	md_request = me_request = NULL;
 	md_match   = me_match   = me_ign = SCTK_PTL_MATCH_INIT;
@@ -54,12 +54,12 @@ void sctk_ptl_rdv_send_message(sctk_thread_ptp_message_t* msg, sctk_endpoint_t* 
 	me_match.data.rank = SCTK_MSG_SRC_TASK(msg);
 	me_pte = srail->pt_entries + SCTK_MSG_COMMUNICATOR(msg);
 	me_remote = srail->id;
-	me_request = sctk_ptl_me_create(me_start, me_size, me_remote, me_match.raw, me_ign.raw, me_flags);
+	me_request = sctk_ptl_me_create(me_start, me_size, me_remote, me_match, me_ign, me_flags);
 
 	/* the MEappend and the Put() should be done atomically to preserve order */
-	sctk_ptl_me_register(srail, me_user, me_pte);
+	sctk_ptl_me_register(srail, me_request, me_pte);
 
-	sctk_error("Posted a rdv send to %d (nid/pid=%llu/%llu, idx=%d, match=%llu)", SCTK_MSG_DEST_TASK(msg), remote.phys.nid, remote.phys.pid, pte->idx, match.raw);
-	sctk_ptl_emit_put(request, size, remote, pte, match);
+	sctk_error("Posted a rdv send to %d (nid/pid=%llu/%llu, idx=%d, match=%llu)", SCTK_MSG_DEST_TASK(msg), me_remote.phys.nid, me_remote.phys.pid, me_pte->idx, me_match.raw);
+	sctk_ptl_emit_put(md_request, md_size, md_remote, md_pte, md_match);
 }
 #endif
