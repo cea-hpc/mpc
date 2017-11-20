@@ -46,7 +46,7 @@ static void sctk_network_send_message_endpoint_ptl ( sctk_thread_ptp_message_t *
 
 static void sctk_network_notify_recv_message_ptl ( sctk_thread_ptp_message_t *msg, sctk_rail_info_t *rail )
 {
-	sctk_ptl_recv_message(msg, rail);
+	sctk_ptl_notify_recv(msg, rail);
 }
 
 static void sctk_network_notify_matching_message_ptl ( sctk_thread_ptp_message_t *msg, sctk_rail_info_t *rail )
@@ -168,6 +168,11 @@ static void sctk_network_connect_from_ptl( int from, int to, sctk_rail_info_t * 
  */
 void sctk_network_init_ptl (sctk_rail_info_t *rail)
 {
+	if(sctk_rail_count() > 1 && sctk_get_process_rank() == 0)
+	{
+		sctk_warning("This Portals 4 process-based driver is not suited for multi-rail usage.");
+		sctk_warning("Please do not consider using more than one rail to avoid memory leaks.");
+	}
 	/* just select the type of init for this rail (ring,full..), nothing more */
 	sctk_rail_init_route ( rail, rail->runtime_config_rail->topology, NULL );
 	rail->network_name                 = "Portals Process-Based optimization";

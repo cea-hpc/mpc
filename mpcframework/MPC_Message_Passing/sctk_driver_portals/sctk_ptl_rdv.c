@@ -3,6 +3,11 @@
 #include "sctk_ptl_rdv.h"
 #include "sctk_ptl_iface.h"
 
+void sctk_ptl_rdv_recv_message(sctk_ptl_rail_info_t* srail, sctk_ptl_event_t ev)
+{
+	not_implemented();
+}
+
 void sctk_ptl_rdv_send_message(sctk_thread_ptp_message_t* msg, sctk_endpoint_t* endpoint)
 {
 	/* pack the data if necessary */
@@ -59,6 +64,7 @@ void sctk_ptl_rdv_send_message(sctk_thread_ptp_message_t* msg, sctk_endpoint_t* 
 	/* the MEappend and the Put() should be done atomically to preserve order */
 	sctk_ptl_me_register(srail, me_request, me_pte);
 
+	/* TODO: Need to handle the case where the data is larger than the max ME size */
 	sctk_error("Posted a rdv send to %d (nid/pid=%llu/%llu, idx=%d, match=%llu)", SCTK_MSG_DEST_TASK(msg), me_remote.phys.nid, me_remote.phys.pid, me_pte->idx, me_match.raw);
 	sctk_ptl_emit_put(md_request, md_size, md_remote, md_pte, md_match, 0, 0);
 }

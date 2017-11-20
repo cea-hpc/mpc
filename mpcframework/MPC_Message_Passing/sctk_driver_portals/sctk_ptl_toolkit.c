@@ -33,7 +33,7 @@ void sctk_ptl_add_route(int dest, sctk_ptl_id_t id, sctk_rail_info_t* rail, sctk
 	}
 }
 
-void sctk_ptl_recv_message(sctk_thread_ptp_message_t* msg, sctk_rail_info_t* rail)
+void sctk_ptl_notify_recv(sctk_thread_ptp_message_t* msg, sctk_rail_info_t* rail)
 {
 	sctk_ptl_rail_info_t* srail     = &rail->network.ptl;
 	void* start                     = NULL;
@@ -113,6 +113,7 @@ void sctk_ptl_eqs_poll(sctk_rail_info_t* rail, int threshold)
 				case PTL_EVENT_GET: /* a Get() reached the local process */
 					break;
 				case PTL_EVENT_GET_OVERFLOW: /* a previous received GET matched a just appended ME */
+					not_reachable();
 					break;
 
 				case PTL_EVENT_PUT_OVERFLOW: /* a previous received PUT matched a just appended ME */
@@ -133,28 +134,41 @@ void sctk_ptl_eqs_poll(sctk_rail_info_t* rail, int threshold)
 						 */
 						if(ev.pt_index >= SCTK_PTL_PTE_HIDDEN) /* 'normal header */
 						{
+							if(ev.hdr_data < rail->network.ptl.eager_limit)
+							{
+								sctk_ptl_eager_recv_message(srail, ev);
+							}
+							else
+							{
+								sctk_ptl_rdv_recv_message(srail, ev);
+							}
 							break;
 						}
 						else if(ev.pt_index == SCTK_PTL_PTE_CM_IDX) /* Control message */
 						{
-							break;
-						}
-						else if(ev.pt_index == SCTK_PTL_PTE_RDMA_IDX) /* RDMA */
-						{
+							sctk_ptl_cm_recv_message(srail, ev);
 							break;
 						}
 						not_reachable();
 					}
 
 				case PTL_EVENT_ATOMIC: /* an Atomic() reached the local process */
+					assume(ev.pt_index == SCTK_PTL_PTE_RDMA_IDX); /* RDMA */
+					sctk_debug("It is an RDMA message !");
+					not_implemented();
 					break;
 				case PTL_EVENT_ATOMIC_OVERFLOW: /* a previously received ATOMIC matched a just appended one */
+					not_implemented();
 					break;
 
 				case PTL_EVENT_FETCH_ATOMIC: /* a FetchAtomic() reached the local process */
+					assume(ev.pt_index == SCTK_PTL_PTE_RDMA_IDX); /* RDMA */
+					sctk_debug("It is an RDMA message !");
+					not_implemented();
 					break;
 
 				case PTL_EVENT_FETCH_ATOMIC_OVERFLOW: /* a previously received FETCH-ATOMIC matched a just appended one */
+					not_implemented();
 					break;
 				case PTL_EVENT_PT_DISABLED: /* ERROR: The local PTE is disabeld (FLOW_CTRL) */
 					break;
