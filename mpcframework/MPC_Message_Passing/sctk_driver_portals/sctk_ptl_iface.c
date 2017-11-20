@@ -8,7 +8,7 @@
 
 void sctk_ptl_print_structure(sctk_ptl_rail_info_t* srail)
 {
-	sctk_warning(
+	sctk_info(
 	"\n======== PORTALS STRUCTURE ========\n"
 	"\n"
 	" PORTALS ENTRIES            : \n"
@@ -402,7 +402,7 @@ int sctk_ptl_emit_get(sctk_ptl_local_data_t* user, size_t size, sctk_ptl_id_t re
 	return PTL_OK;
 }
 
-int sctk_ptl_emit_put(sctk_ptl_local_data_t* user, size_t size, sctk_ptl_id_t remote, sctk_ptl_pte_t* pte, sctk_ptl_matchbits_t match, size_t local_off, size_t remote_off)
+int sctk_ptl_emit_put(sctk_ptl_local_data_t* user, size_t size, sctk_ptl_id_t remote, sctk_ptl_pte_t* pte, sctk_ptl_matchbits_t match, size_t local_off, size_t remote_off, size_t extra)
 {
 	assert (size <= user->slot.md.length);
 	sctk_ptl_chk(PtlPut(
@@ -415,7 +415,7 @@ int sctk_ptl_emit_put(sctk_ptl_local_data_t* user, size_t size, sctk_ptl_id_t re
 		match.raw,
 		remote_off, /* offset */
 		user,
-		0 /* TBD */
+		extra
 	));
 
 	return PTL_OK;

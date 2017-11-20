@@ -54,8 +54,11 @@ void sctk_ptl_notify_recv(sctk_thread_ptp_message_t* msg, sctk_rail_info_t* rail
 	/* Build the match_bits */
 	match.data.tag = SCTK_MSG_TAG(msg);
 	match.data.rank = SCTK_MSG_SRC_TASK(msg);
+	match.data.uid = SCTK_MSG_NUMBER(msg);
+	
 	ign.data.tag  = (match.data.tag  == SCTK_ANY_TAG)    ? SCTK_PTL_IGN_TAG  : SCTK_PTL_MATCH_TAG;
 	ign.data.rank = (match.data.rank == SCTK_ANY_SOURCE) ? SCTK_PTL_IGN_RANK : SCTK_PTL_MATCH_RANK;
+	ign.data.uid  = SCTK_PTL_IGN_UID;
 
 	assert(msg->tail.message_type == SCTK_MESSAGE_CONTIGUOUS); /* temp */
 	start = msg->tail.message.contiguous.addr;
@@ -68,7 +71,7 @@ void sctk_ptl_notify_recv(sctk_thread_ptp_message_t* msg, sctk_rail_info_t* rail
 	user_ptr->list = SCTK_PTL_PRIORITY_LIST;
 	sctk_ptl_me_register(srail, user_ptr, pte);
 	/* We've done here... anything else will be handled when the event will be polled */
-	sctk_error("Posted a recv from %d (nid/pid=%llu/%llu, idx=%llu, match=%llu, ign=%llu)", SCTK_MSG_SRC_TASK(msg), remote.phys.nid, remote.phys.pid, pte->idx, match.raw, ign.raw);
+	sctk_debug("PORTALS: POSTED-RECV from %d (idx=%llu, match=%s, ign=%llu start=%p, sz=%llu)", SCTK_MSG_SRC_TASK(msg), pte->idx, __sctk_ptl_match_str(malloc(32), 32, match.raw), __sctk_ptl_match_str(malloc(32), 32, ign.raw), start, size);
 }
 
 void sctk_ptl_send_message(sctk_thread_ptp_message_t* msg, sctk_endpoint_t* endpoint)
@@ -107,7 +110,8 @@ void sctk_ptl_eqs_poll(sctk_rail_info_t* rail, int threshold)
 
 		if(ret == PTL_OK)
 		{
-			sctk_warning("EVENT ME: %s (fail_type = %d, nid/pid=%llu/%llu, idx=%d, match=%llu, list=%s)!", sctk_ptl_event_decode(ev), ev.ni_fail_type, ev.initiator.phys.nid, ev.initiator.phys.pid, ev.pt_index, ev.match_bits, SCTK_PTL_STR_LIST(((sctk_ptl_local_data_t*)ev.user_ptr)->list));
+			sctk_debug("PORTALS: EQS EVENT '%s' idx=%d, match=%s from %s, sz=%llu)!", sctk_ptl_event_decode(ev), ev.pt_index, __sctk_ptl_match_str(malloc(32), 32, ev.match_bits), SCTK_PTL_STR_LIST(((sctk_ptl_local_data_t*)ev.user_ptr)->list), ev.mlength);
+			if(ev.ni_fail_type != PTL_NI_OK) sctk_fatal("Failed targeted event !!");
 			switch(ev.type)
 			{
 				case PTL_EVENT_GET: /* a Get() reached the local process */
@@ -134,13 +138,13 @@ void sctk_ptl_eqs_poll(sctk_rail_info_t* rail, int threshold)
 						 */
 						if(ev.pt_index >= SCTK_PTL_PTE_HIDDEN) /* 'normal header */
 						{
-							if(ev.hdr_data < rail->network.ptl.eager_limit)
+							if(ev.rlength < rail->network.ptl.eager_limit)
 							{
-								sctk_ptl_eager_recv_message(srail, ev);
+								sctk_ptl_eager_recv_message(rail, ev);
 							}
 							else
 							{
-								sctk_ptl_rdv_recv_message(srail, ev);
+								sctk_ptl_rdv_recv_message(rail, ev);
 							}
 							break;
 						}
@@ -323,10 +327,6 @@ void sctk_ptl_fini_interface(sctk_rail_info_t* rail)
 }
 
 void sctk_ptl_free_memory(void* msg)
-{
-}
-
-void sctk_ptl_message_copy(sctk_message_to_copy_t bundle)
 {
 }
 

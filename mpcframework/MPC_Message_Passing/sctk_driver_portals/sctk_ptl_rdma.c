@@ -136,7 +136,8 @@ void sctk_ptl_rdma_write(sctk_rail_info_t *rail, sctk_thread_ptp_message_t *msg,
 		remote,                                           /* target process */
 		rail->network.ptl.pt_entries + SCTK_PTL_PTE_RDMA, /* Portals entry */
 		(sctk_ptl_matchbits_t)me->slot.me.match_bits,     /* match bits */
-		local_off, remote_off                             /* offsets */
+		local_off, remote_off,                            /* offsets */
+		size                                              /* Number of bytes sent */
 	);
 }
 

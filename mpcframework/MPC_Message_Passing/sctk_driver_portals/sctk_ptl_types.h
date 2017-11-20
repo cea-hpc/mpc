@@ -7,13 +7,15 @@
 #include "sctk_atomics.h"
 
 /* match bits */
-#define SCTK_PTL_MATCH_INIT (sctk_ptl_matchbits_t) {.data.rank = 0, .data.tag = 0}
+#define SCTK_PTL_MATCH_INIT (sctk_ptl_matchbits_t) {.data.rank = 0, .data.tag = 0, .data.uid = 0}
 #define SCTK_PTL_IGN_TAG  (UINT32_MAX)
-#define SCTK_PTL_IGN_RANK  (UINT32_MAX)
-#define SCTK_PTL_IGN_ALL (sctk_ptl_matchbits_t){.data.rank = SCTK_PTL_IGN_RANK, .data.tag = SCTK_PTL_IGN_TAG}
+#define SCTK_PTL_IGN_RANK  (UINT16_MAX)
+#define SCTK_PTL_IGN_UID  (UINT16_MAX)
+#define SCTK_PTL_IGN_ALL (sctk_ptl_matchbits_t){.data.rank = SCTK_PTL_IGN_RANK, .data.tag = SCTK_PTL_IGN_TAG, .data.uid = SCTK_PTL_IGN_UID}
 #define SCTK_PTL_MATCH_TAG  ((uint32_t)0)
-#define SCTK_PTL_MATCH_RANK  ((uint32_t)0)
-#define SCTK_PTL_MATCH_ALL  (sctk_ptl_matchbits_t) {.data.rank = SCTK_PTL_MATCH_RANK, .data.tag = SCTK_PTL_MATCH_TAG}
+#define SCTK_PTL_MATCH_RANK  ((uint16_t)0)
+#define SCTK_PTL_MATCH_UID  ((uint16_t)0)
+#define SCTK_PTL_MATCH_ALL  (sctk_ptl_matchbits_t) {.data.rank = SCTK_PTL_MATCH_RANK, .data.tag = SCTK_PTL_MATCH_TAG, .data.uid = SCTK_PTL_MATCH_UID}
 
 /* MEs */
 #define sctk_ptl_meh_t ptl_handle_me_t
@@ -66,11 +68,10 @@
 #define sctk_ptl_nih_t ptl_handle_ni_t
 #define sctk_ptl_limits_t ptl_ni_limits_t
 
-
-
 struct sctk_ptl_bits_content_s
 {
-	uint32_t rank;    /**< MPI/MPC rank */
+	uint16_t uid;     /**< unique per-route ID */
+	uint16_t rank;    /**< MPI/MPC rank */
 	uint32_t tag;     /**< MPI tag */
 };
 
@@ -114,6 +115,16 @@ typedef struct sctk_ptl_rdma_ctx
 	struct sctk_ptl_local_data_s* md_data;
 	sctk_ptl_id_t origin;
 } sctk_ptl_rdma_ctx_t;
+
+/**
+ *
+ */
+typedef struct sctk_ptl_tail_s
+{
+	struct sctk_ptl_local_data_s* user_ptr;
+	int copy;
+} sctk_ptl_tail_t;
+
 
 /**
  * Portals-specific information describing a route.

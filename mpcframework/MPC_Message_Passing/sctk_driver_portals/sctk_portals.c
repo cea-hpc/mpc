@@ -212,7 +212,7 @@ void sctk_network_init_ptl (sctk_rail_info_t *rail)
 		sctk_ptl_create_ring( rail );
 
 	rail_is_ready = 1;
-	sctk_error("Hello I'm nid/pid %llu/%llu", rail->network.ptl.id.phys.nid, rail->network.ptl.id.phys.pid);
+	sctk_info("rank %d mapped to Portals ID (nid/pid): %llu/%llu", sctk_get_process_rank(), rail->network.ptl.id.phys.nid, rail->network.ptl.id.phys.pid);
 	sctk_ptl_async_start(rail);
 }
 

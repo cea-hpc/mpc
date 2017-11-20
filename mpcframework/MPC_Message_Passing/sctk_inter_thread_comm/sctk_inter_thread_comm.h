@@ -483,7 +483,7 @@ typedef struct
 
 #ifdef MPC_USE_PORTALS
 	/* Portals infos */
-	struct sctk_portals_msg_header_s portals;
+	struct sctk_ptl_tail_s ptl;
 #endif
 
 	/* XXX:Specific to IB */

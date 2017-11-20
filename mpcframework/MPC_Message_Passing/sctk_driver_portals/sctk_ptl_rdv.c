@@ -3,7 +3,7 @@
 #include "sctk_ptl_rdv.h"
 #include "sctk_ptl_iface.h"
 
-void sctk_ptl_rdv_recv_message(sctk_ptl_rail_info_t* srail, sctk_ptl_event_t ev)
+void sctk_ptl_rdv_recv_message(sctk_rail_info_t* srail, sctk_ptl_event_t ev)
 {
 	not_implemented();
 }
@@ -44,6 +44,7 @@ void sctk_ptl_rdv_send_message(sctk_thread_ptp_message_t* msg, sctk_endpoint_t* 
 	md_flags = SCTK_PTL_MD_PUT_FLAGS;
 	md_match.data.tag = SCTK_MSG_TAG(msg);
 	md_match.data.rank = SCTK_MSG_SRC_TASK(msg);
+	md_match.data.uid = 0;
 	md_pte = srail->pt_entries + SCTK_MSG_COMMUNICATOR(msg);
 	md_remote = infos->dest;
 	md_request = sctk_ptl_md_create(srail, md_start, md_size, md_flags);
@@ -57,15 +58,19 @@ void sctk_ptl_rdv_send_message(sctk_thread_ptp_message_t* msg, sctk_endpoint_t* 
 	me_flags = SCTK_PTL_ME_GET_FLAGS;
 	me_match.data.tag = SCTK_MSG_TAG(msg);
 	me_match.data.rank = SCTK_MSG_SRC_TASK(msg);
+	me_match.data.uid = SCTK_MSG_NUMBER(msg);
 	me_pte = srail->pt_entries + SCTK_MSG_COMMUNICATOR(msg);
 	me_remote = srail->id;
 	me_request = sctk_ptl_me_create(me_start, me_size, me_remote, me_match, me_ign, me_flags);
 
-	/* the MEappend and the Put() should be done atomically to preserve order */
+	/* the MEappend and the Put() should be done atomically to preserve order
+	 * OR
+	 * the msg numbering should be used
+	 */
 	sctk_ptl_me_register(srail, me_request, me_pte);
 
 	/* TODO: Need to handle the case where the data is larger than the max ME size */
 	sctk_error("Posted a rdv send to %d (nid/pid=%llu/%llu, idx=%d, match=%llu)", SCTK_MSG_DEST_TASK(msg), me_remote.phys.nid, me_remote.phys.pid, me_pte->idx, me_match.raw);
-	sctk_ptl_emit_put(md_request, md_size, md_remote, md_pte, md_match, 0, 0);
+	sctk_ptl_emit_put(md_request, 0, md_remote, md_pte, md_match, 0, 0, md_size);
 }
 #endif

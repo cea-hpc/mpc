@@ -5,15 +5,22 @@
 
 static void* __async_thread_routine(void* arg)
 {
-	sctk_ptl_rail_info_t* srail = &((sctk_rail_info_t*)arg)->network.ptl;
+	sctk_rail_info_t* rail = (sctk_rail_info_t*)arg;
+	sctk_ptl_rail_info_t* srail = &rail->network.ptl;
 	sctk_ptl_event_t ev;
+	sctk_ptl_local_data_t* user_ptr;
+	sctk_thread_ptp_message_t* msg;
 	int ret;
 	while(1)
 	{
 		ret = sctk_ptl_eq_poll_md(srail, &ev);
+		user_ptr = (sctk_ptl_local_data_t*)ev.user_ptr;
+		msg = (sctk_thread_ptp_message_t*) user_ptr->msg;
+
 		if(ret == PTL_OK)
 		{
-			sctk_debug("EVENT MD: %s (fail_type = %d, target=%s)",sctk_ptl_event_decode(ev), ev.ni_fail_type, SCTK_PTL_STR_LIST(ev.ptl_list));
+			sctk_debug("PORTALS: ASYNC MD '%s' from %s",sctk_ptl_event_decode(ev), SCTK_PTL_STR_LIST(ev.ptl_list));
+			if(ev.ni_fail_type != PTL_NI_OK) sctk_fatal("Failed event !");
 			switch(ev.type)
 			{
 				case PTL_EVENT_SEND: /* a Put() left the local process */
@@ -26,7 +33,24 @@ static void* __async_thread_routine(void* arg)
 					 *   3 - It is a RDMA message --> nothing to do (probably)
 					 *   4 - it is a recovery (flow-control) message
 					 */
-					break;
+					if(sctk_message_class_is_control_message(SCTK_MSG_SPECIFIC_CLASS(msg))) /* Control message */
+					{
+						break;
+					}
+					else if(SCTK_MSG_COMMUNICATOR(msg) != SCTK_ANY_COMM) /* 'normal header */
+					{
+						if(SCTK_MSG_SIZE(msg) < rail->network.ptl.eager_limit)
+						{
+							sctk_complete_and_free_message((sctk_thread_ptp_message_t*)user_ptr->msg);
+						}
+						
+						break;
+					}
+					else /* RDMA */
+					{
+						break;
+					}
+					not_reachable();
 				case PTL_EVENT_REPLY: /* a Get() reply reached the local process */
 					/* It depends on the message type (=Portals entry)
 					 *   1 - it is a "normal" message --> RDV: complete_and_free

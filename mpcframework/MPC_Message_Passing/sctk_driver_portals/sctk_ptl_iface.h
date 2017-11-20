@@ -54,7 +54,7 @@ void sctk_ptl_md_release(sctk_ptl_local_data_t*);
 
 /* Request management */
 int sctk_ptl_emit_get(sctk_ptl_local_data_t*, size_t, sctk_ptl_id_t, sctk_ptl_pte_t*, sctk_ptl_matchbits_t, size_t, size_t);
-int sctk_ptl_emit_put(sctk_ptl_local_data_t*, size_t, sctk_ptl_id_t, sctk_ptl_pte_t*, sctk_ptl_matchbits_t, size_t, size_t);
+int sctk_ptl_emit_put(sctk_ptl_local_data_t*, size_t, sctk_ptl_id_t, sctk_ptl_pte_t*, sctk_ptl_matchbits_t, size_t, size_t, size_t);
 
 int sctk_ptl_emit_atomic(
 		sctk_ptl_local_data_t* user,
@@ -266,5 +266,14 @@ static inline int sctk_ptl_eq_poll_me(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_
 
 	return ret;
 }
+
+static inline const char const* __sctk_ptl_match_str(char*buf, size_t s, ptl_match_bits_t m)
+{
+	sctk_ptl_matchbits_t m2 = (sctk_ptl_matchbits_t)m;
+	snprintf(buf, s, "%u:%d[%u]", m2.data.rank, m2.data.tag, m2.data.uid);
+	return buf;
+}
+
+
 #endif
 #endif
