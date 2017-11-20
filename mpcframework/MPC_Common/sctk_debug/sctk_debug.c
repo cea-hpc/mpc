@@ -263,6 +263,12 @@ sctk_abort (void)
 
 void backtrace_sig_handler(int sig, siginfo_t *info, void *arg) {
   char *ssig = strsignal(sig);
+
+  if(sig == SIGINT)
+  {
+	  fprintf(stderr, "MPC has been interrupted by user --> SIGINT\n");
+	  exit(sig);
+  }
   sctk_error("==========================================================");
   sctk_error("                                                          ");
   sctk_error("Process Caught signal %s(%d)", ssig, sig);

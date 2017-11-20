@@ -191,7 +191,7 @@ extern "C"
 #define CRASH() do{                                                                            \
 	if(getenv("MPC_DEBUG_CRASH"))                                                          \
 	{                                                                                      \
-		sctk_error("MPC will not create a \"breakpoint\" where the SIGSEGV occurs");   \
+		sctk_error("MPC will now create a \"breakpoint\" where the SIGSEGV occurs");   \
 		GDB_BREAKPOINT();                                                              \
 	}                                                                                      \
 	else                                                                                   \
