@@ -358,11 +358,23 @@ void sctk_ptl_md_release(sctk_ptl_local_data_t* request)
 	sctk_free(request);
 }
 
+/**
+ * Get the current process Portals ID.
+ * \param[in] srail the Portals-specific info struct
+ * \return the current sctk_ptl_id_t
+ */
 sctk_ptl_id_t sctk_ptl_self(sctk_ptl_rail_info_t* srail)
 {
 	return srail->id;
 }
 
+/**
+ * Append some OVERFLOW slots to the requested PT entry.
+ * \param[in] srail the Portals-specific info struct
+ * \param[in] pte the PT to enlarge with OVERFLOW ME
+ * \param[in] size the ME size
+ * \param[in] nb numberof ME to add
+ */
 void sctk_ptl_me_feed_overflow(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte, size_t me_size, int nb)
 {
 	int j;
@@ -386,6 +398,18 @@ void sctk_ptl_me_feed_overflow(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte,
 	}
 }
 
+/**
+ * Send a PTL Get() request.
+ *
+ * \param[in] user the preset request, associated to a MD slot
+ * \param[in] size the length (in bytes) targeted by the request
+ * \param[in] remote the remote ID
+ * \param[in] pte the PT entry to target remotely (all processes init the table in the same order)
+ * \param[in] match the match_bits
+ * \param[in] local_off the offset in the local buffer (MD)
+ * \param[in] remote_off the offset in the remote buffer (ME)
+ * \return PTL_OK, abort() otherwise.
+ */
 int sctk_ptl_emit_get(sctk_ptl_local_data_t* user, size_t size, sctk_ptl_id_t remote, sctk_ptl_pte_t* pte, sctk_ptl_matchbits_t match, size_t local_off, size_t remote_off)
 {
 	sctk_ptl_chk(PtlGet(
@@ -402,6 +426,17 @@ int sctk_ptl_emit_get(sctk_ptl_local_data_t* user, size_t size, sctk_ptl_id_t re
 	return PTL_OK;
 }
 
+/**
+ * Emit a PTL Put() request.
+ * \param[in] user the preset request, associated to a MD slot
+ * \param[in] size the length (in bytes) targeted by the request
+ * \param[in] remote the remote ID
+ * \param[in] pte the PT entry to target remotely (all processes init the table in the same order)
+ * \param[in] match the match_bits
+ * \param[in] local_off the offset in the local buffer (MD)
+ * \param[in] remote_off the offset in the remote buffer (ME)
+ * \return PTL_OK, abort() otherwise.
+ */
 int sctk_ptl_emit_put(sctk_ptl_local_data_t* user, size_t size, sctk_ptl_id_t remote, sctk_ptl_pte_t* pte, sctk_ptl_matchbits_t match, size_t local_off, size_t remote_off, size_t extra)
 {
 	assert (size <= user->slot.md.length);

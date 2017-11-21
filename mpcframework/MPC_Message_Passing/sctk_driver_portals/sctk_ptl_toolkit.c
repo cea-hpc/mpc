@@ -11,6 +11,13 @@
 #include "sctk_ptl_cm.h"
 #include "sctk_ptl_toolkit.h"
 
+/**
+ * Add a route to the multirail, for Portals use.
+ * \param[in] dest the remote process rank
+ * \param[in] id the associated Portals-related ID
+ * \param[in] origin route type
+ * \param[in] state route initial state
+ */
 void sctk_ptl_add_route(int dest, sctk_ptl_id_t id, sctk_rail_info_t* rail, sctk_route_origin_t origin, sctk_endpoint_state_t state)
 {
 	sctk_endpoint_t * route;
@@ -33,6 +40,12 @@ void sctk_ptl_add_route(int dest, sctk_ptl_id_t id, sctk_rail_info_t* rail, sctk
 	}
 }
 
+/**
+ * Routine called when the current process posted a RECV call.
+ * As we are in a single-rail configuration, we can optimize msg incomings.
+ * \param[in] msg the local request
+ * \param[in] rail the Portals rail
+ */
 void sctk_ptl_notify_recv(sctk_thread_ptp_message_t* msg, sctk_rail_info_t* rail)
 {
 	sctk_ptl_rail_info_t* srail     = &rail->network.ptl;
@@ -55,46 +68,60 @@ void sctk_ptl_notify_recv(sctk_thread_ptp_message_t* msg, sctk_rail_info_t* rail
 	match.data.tag = SCTK_MSG_TAG(msg);
 	match.data.rank = SCTK_MSG_SRC_TASK(msg);
 	match.data.uid = SCTK_MSG_NUMBER(msg);
-	
+
+	/* apply the mask, depending on request infos
+	 * The UID is always ignored, it we only be used to make RDV requests consistent
+	 */
 	ign.data.tag  = (match.data.tag  == SCTK_ANY_TAG)    ? SCTK_PTL_IGN_TAG  : SCTK_PTL_MATCH_TAG;
 	ign.data.rank = (match.data.rank == SCTK_ANY_SOURCE) ? SCTK_PTL_IGN_RANK : SCTK_PTL_MATCH_RANK;
 	ign.data.uid  = SCTK_PTL_IGN_UID;
 
+	/* is the message contiguous ? */
 	if(msg->tail.message_type == SCTK_MESSAGE_CONTIGUOUS)
 	{
 		start = msg->tail.message.contiguous.addr;
 	}
 	else
 	{
+		/* if not, we map a temporary buffer, ready for network serialized data */
 		start = sctk_malloc(SCTK_MSG_SIZE(msg));
 		sctk_net_copy_in_buffer(msg, start);
+		/* and we flag the copy to 1, to remember some buffers will have to be recopied */
 		msg->tail.ptl.copy = 1;
 	}
 
-	size = SCTK_MSG_SIZE(msg);
-	pte = srail->pt_entries + SCTK_MSG_COMMUNICATOR(msg);
-	flags = SCTK_PTL_ME_PUT_FLAGS;
-
+	/* complete the ME data, this ME will be appended to the PRIORITY_LIST */
+	size     = SCTK_MSG_SIZE(msg);
+	pte      = srail->pt_entries + SCTK_MSG_COMMUNICATOR(msg);
+	flags    = SCTK_PTL_ME_PUT_FLAGS;
 	user_ptr = sctk_ptl_me_create(start, size, remote, match, ign, flags); assert(user_ptr);
-	user_ptr->msg = msg;
+
+	user_ptr->msg  = msg;
 	user_ptr->list = SCTK_PTL_PRIORITY_LIST;
 	sctk_ptl_me_register(srail, user_ptr, pte);
-	/* We've done here... anything else will be handled when the event will be polled */
+	
 	sctk_debug("PORTALS: POSTED-RECV from %d (idx=%llu, match=%s, ign=%llu start=%p, sz=%llu)", SCTK_MSG_SRC_TASK(msg), pte->idx, __sctk_ptl_match_str(malloc(32), 32, match.raw), __sctk_ptl_match_str(malloc(32), 32, ign.raw), start, size);
 }
 
+/**
+ * Send a message through Portals API.
+ * This is the main entry point for sending message, when requested by the low_level_comm
+ * \param[in] msg the message to send
+ * \param[in] endpoint the route to use
+ */
 void sctk_ptl_send_message(sctk_thread_ptp_message_t* msg, sctk_endpoint_t* endpoint)
 {
-	int process_rank = sctk_get_process_rank();
+	int process_rank            = sctk_get_process_rank();
 	sctk_ptl_rail_info_t* srail = &endpoint->rail->network.ptl;
 
-	/* If it is a control_message: send it through a Put() (can be a routed msg) */
+	/* specific cases: control messages */
 	if(sctk_message_class_is_control_message(SCTK_MSG_SPECIFIC_CLASS(msg)))
 	{
 		sctk_ptl_cm_send_message(msg, endpoint);
 		return;
 	}
 
+	/* if the message is lower than the fixed boundary, send it as an eager */
 	if(SCTK_MSG_SIZE(msg) < srail->eager_limit)
 	{
 		sctk_ptl_eager_send_message(msg, endpoint);
@@ -105,6 +132,11 @@ void sctk_ptl_send_message(sctk_thread_ptp_message_t* msg, sctk_endpoint_t* endp
 	}
 }
 
+/**
+ * Routine called periodically to notify upper-layer from incoming messages.
+ * \param[in] rail the Portals rail
+ * \param[in] threshold max number of messages to poll, if any
+ */
 void sctk_ptl_eqs_poll(sctk_rail_info_t* rail, int threshold)
 {
 	sctk_ptl_event_t ev;
@@ -120,6 +152,7 @@ void sctk_ptl_eqs_poll(sctk_rail_info_t* rail, int threshold)
 		if(ret == PTL_OK)
 		{
 			sctk_debug("PORTALS: EQS EVENT '%s' idx=%d, match=%s from %s, sz=%llu)!", sctk_ptl_event_decode(ev), ev.pt_index, __sctk_ptl_match_str(malloc(32), 32, ev.match_bits), SCTK_PTL_STR_LIST(((sctk_ptl_local_data_t*)ev.user_ptr)->list), ev.mlength);
+			/* we only consider Portals-succeded events */
 			if(ev.ni_fail_type != PTL_NI_OK) sctk_fatal("Failed targeted event !!");
 			switch(ev.type)
 			{
@@ -133,6 +166,7 @@ void sctk_ptl_eqs_poll(sctk_rail_info_t* rail, int threshold)
 					/*sctk_ptl_me_feed_overflow(srail, ev.pt_index, srail->eager_limit, 1);*/
 					/* NO BREAK !!! */
 				case PTL_EVENT_PUT: /* a Put() reached the local process */
+					/* we don't care about unexpected messaged reaching the OVERFLOW_LIST, we will just wait for their local counter-part */
 					if(user_ptr->list == SCTK_PTL_OVERFLOW_LIST) break;
 					/* Multiple scenario can trigger this event:
 					 *  1 - An incoming header put() (RDV or eager)
@@ -147,6 +181,7 @@ void sctk_ptl_eqs_poll(sctk_rail_info_t* rail, int threshold)
 						 */
 						if(ev.pt_index >= SCTK_PTL_PTE_HIDDEN) /* 'normal header */
 						{
+							/* ev.rlength is the size as requested by the remote */
 							if(ev.rlength < rail->network.ptl.eager_limit)
 							{
 								sctk_ptl_eager_recv_message(rail, ev);
@@ -207,6 +242,10 @@ void sctk_ptl_eqs_poll(sctk_rail_info_t* rail, int threshold)
 	}
 }
 
+/**
+ * Create the initial Portals topology: the ring.
+ * \param[in] rail the just-initialized Portals rail
+ */
 void sctk_ptl_create_ring ( sctk_rail_info_t *rail )
 {
 	int right_rank, left_rank, tmp_ret;
@@ -293,6 +332,12 @@ void sctk_ptl_create_ring ( sctk_rail_info_t *rail )
 	sctk_pmi_barrier();
 }
 
+/** 
+ * Retrieve the ptl_process_id object, associated with a given MPC process rank.
+ * \param[in] rail the Portals rail
+ * \param[in] dest the MPC process rank
+ * \return the Portals process id
+ */
 sctk_ptl_id_t sctk_ptl_map_id(sctk_rail_info_t* rail, int dest)
 {
 	int tmp_ret;
@@ -318,11 +363,15 @@ sctk_ptl_id_t sctk_ptl_map_id(sctk_rail_info_t* rail, int dest)
 	return id;
 }
 
+/**
+ * Initialize the Portals API and main structs.
+ * \param[in,out] rail the Portals rail
+ */
 void sctk_ptl_init_interface(sctk_rail_info_t* rail)
 {
-	rail->network.ptl = sctk_ptl_hardware_init();
+	rail->network.ptl             = sctk_ptl_hardware_init();
 	rail->network.ptl.eager_limit = rail->runtime_config_driver_config->driver.value.portals.eager_limit;
-	rail->network.ptl.nb_entries = rail->runtime_config_driver_config->driver.value.portals.max_comms;
+	rail->network.ptl.nb_entries  = rail->runtime_config_driver_config->driver.value.portals.max_comms;
 
 	(void)sctk_ptl_software_init( &rail->network.ptl);
 
@@ -331,6 +380,10 @@ void sctk_ptl_init_interface(sctk_rail_info_t* rail)
 
 }
 
+/**
+ * Close the Portals API.
+ * \param[in] rail the rail to close
+ */
 void sctk_ptl_fini_interface(sctk_rail_info_t* rail)
 {
 }

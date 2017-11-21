@@ -267,6 +267,13 @@ static inline int sctk_ptl_eq_poll_me(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_
 	return ret;
 }
 
+/**
+ * Format the match_bits in a human-readable form and stores in a pre-allocated buffer.
+ * \param[out] buf the string buffer (also returned)
+ * \param[in] s the buffer max size
+ * \param[in] m the match_bits to format
+ * \return buf (first parameter)
+ */
 static inline const char const* __sctk_ptl_match_str(char*buf, size_t s, ptl_match_bits_t m)
 {
 	sctk_ptl_matchbits_t m2 = (sctk_ptl_matchbits_t)m;
