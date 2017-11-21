@@ -41,6 +41,11 @@ static void* __async_thread_routine(void* arg)
 					{
 						if(SCTK_MSG_SIZE(msg) < rail->network.ptl.eager_limit)
 						{
+							/* non-contiguous, need to free temporary */
+							if(msg->tail.ptl.copy)
+							{
+								sctk_free(user_ptr->slot.md.start);
+							}
 							sctk_complete_and_free_message((sctk_thread_ptp_message_t*)user_ptr->msg);
 						}
 						

@@ -6,20 +6,24 @@
 
 void sctk_ptl_eager_free_memory(void* msg)
 {
+	sctk_free(msg);
 }
 
 void sctk_ptl_eager_message_copy(sctk_message_to_copy_t* msg)
 {
 	sctk_ptl_local_data_t* send_data = msg->msg_send->tail.ptl.user_ptr;
 	
-	if(!msg->msg_send->tail.ptl.copy && msg->msg_recv.tail.message_type == SCTK_MESSAGE_CONTIGUOUS)
+	if(!msg->msg_send->tail.ptl.copy && !msg->msg_recv->tail.ptl.copy)
 	{
 		sctk_message_completion_and_free(msg->msg_send, msg->msg_recv);
 	}
 	else
 	{
-		/* complete_and_free() called by this function */
-		sctk_net_message_copy_from_buffer(send_data->slot.me.start, msg, 1);
+		sctk_net_message_copy_from_buffer(send_data->slot.me.start, msg, 0);
+		/*TODO: free the memory */
+
+		sctk_complete_and_free_message(msg->msg_send);
+		sctk_complete_and_free_message(msg->msg_recv);
 	}
 }
 
@@ -66,9 +70,17 @@ void sctk_ptl_eager_send_message(sctk_thread_ptp_message_t* msg, sctk_endpoint_t
 	sctk_ptl_id_t remote           = SCTK_PTL_ANY_PROCESS;
 	sctk_ptl_route_info_t* infos   = &endpoint->data.ptl;
 
+	if(msg->tail.message_type == SCTK_MESSAGE_CONTIGUOUS)
+	{
+		start = msg->tail.message.contiguous.addr;
+	}
+	else
+	{
+		start = sctk_malloc(SCTK_MSG_SIZE(msg));
+		sctk_net_copy_in_buffer(msg, start);
+		msg->tail.ptl.copy = 1;
 
-	assert(msg->tail.message_type == SCTK_MESSAGE_CONTIGUOUS); /* temp */
-	start = msg->tail.message.contiguous.addr;
+	}
 
 	size = SCTK_MSG_SIZE(msg);
 	flags = SCTK_PTL_MD_PUT_FLAGS;
@@ -80,6 +92,7 @@ void sctk_ptl_eager_send_message(sctk_thread_ptp_message_t* msg, sctk_endpoint_t
 	remote = infos->dest;
 	request = sctk_ptl_md_create(srail, start, size, flags);
 	request->msg = msg;
+	msg->tail.ptl.user_ptr = request;
 
 	sctk_ptl_md_register(srail, request);
 	sctk_debug("PORTALS: SEND-EAGER to %d (idx=%d, match=%s, sz=%llu)", SCTK_MSG_DEST_TASK(msg), pte->idx, __sctk_ptl_match_str(malloc(32), 32, match.raw), size);

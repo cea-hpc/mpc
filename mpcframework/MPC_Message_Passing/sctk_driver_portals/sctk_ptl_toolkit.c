@@ -60,8 +60,17 @@ void sctk_ptl_notify_recv(sctk_thread_ptp_message_t* msg, sctk_rail_info_t* rail
 	ign.data.rank = (match.data.rank == SCTK_ANY_SOURCE) ? SCTK_PTL_IGN_RANK : SCTK_PTL_MATCH_RANK;
 	ign.data.uid  = SCTK_PTL_IGN_UID;
 
-	assert(msg->tail.message_type == SCTK_MESSAGE_CONTIGUOUS); /* temp */
-	start = msg->tail.message.contiguous.addr;
+	if(msg->tail.message_type == SCTK_MESSAGE_CONTIGUOUS)
+	{
+		start = msg->tail.message.contiguous.addr;
+	}
+	else
+	{
+		start = sctk_malloc(SCTK_MSG_SIZE(msg));
+		sctk_net_copy_in_buffer(msg, start);
+		msg->tail.ptl.copy = 1;
+	}
+
 	size = SCTK_MSG_SIZE(msg);
 	pte = srail->pt_entries + SCTK_MSG_COMMUNICATOR(msg);
 	flags = SCTK_PTL_ME_PUT_FLAGS;
