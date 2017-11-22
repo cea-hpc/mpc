@@ -535,23 +535,6 @@ static inline void sctk_ptp_table_read_unlock() {
  * number)
  */
 
-#ifdef SCTK_PROCESS_MODE
-
-#define sctk_ptp_table_find(key, tmp)                                          \
-  do {                                                                         \
-    if (key.dest_src == -1) {                                                  \
-      tmp = sctk_ptp_admin;                                                    \
-    } else {                                                                   \
-      if (sctk_ptp_array != NULL) {                                            \
-        tmp = sctk_ptp_array[0][key.comm % SCTK_PARALLEL_COMM_QUEUES_NUMBER];  \
-      } else {                                                                 \
-        tmp = NULL;                                                            \
-      }                                                                        \
-    }                                                                          \
-  } while (0)
-
-#else
-
 #define sctk_ptp_table_find(key, tmp)                                          \
   do {                                                                         \
     if (key.dest_src == -1) {                                                  \
@@ -573,8 +556,6 @@ static inline void sctk_ptp_table_read_unlock() {
       }                                                                        \
     }                                                                          \
   } while (0)
-
-#endif
 
 sctk_reorder_list_t *
 sctk_ptp_get_reorder_from_destination(int task,
