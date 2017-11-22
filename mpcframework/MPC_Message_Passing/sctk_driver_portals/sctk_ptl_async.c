@@ -20,14 +20,17 @@ static void* __async_thread_routine(void* arg)
 	while(1)
 	{
 		ret = sctk_ptl_eq_poll_md(srail, &ev);
-		user_ptr = (sctk_ptl_local_data_t*)ev.user_ptr;
-		msg = (sctk_thread_ptp_message_t*) user_ptr->msg;
 
 		if(ret == PTL_OK)
 		{
+			user_ptr = (sctk_ptl_local_data_t*)ev.user_ptr;
+			msg = (sctk_thread_ptp_message_t*) user_ptr->msg;
+			sctk_assert(user_ptr != NULL);
+			sctk_assert(msg != NULL);
+			sctk_assert(msg->tail.ptl.user_ptr == user_ptr);
 			sctk_debug("PORTALS: ASYNC MD '%s' from %s",sctk_ptl_event_decode(ev), SCTK_PTL_STR_LIST(ev.ptl_list));
 			/* we only care about Portals-sucess events */
-			if(ev.ni_fail_type != PTL_NI_OK) sctk_fatal("Failed event !");
+			if(ev.ni_fail_type != PTL_NI_OK) sctk_fatal("Failed event %d: %d!", ev.type, ev.ni_fail_type);
 			switch(ev.type)
 			{
 				case PTL_EVENT_SEND: /* a Put() left the local process */

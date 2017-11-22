@@ -96,8 +96,9 @@ void sctk_ptl_notify_recv(sctk_thread_ptp_message_t* msg, sctk_rail_info_t* rail
 	flags    = SCTK_PTL_ME_PUT_FLAGS;
 	user_ptr = sctk_ptl_me_create(start, size, remote, match, ign, flags); assert(user_ptr);
 
-	user_ptr->msg  = msg;
-	user_ptr->list = SCTK_PTL_PRIORITY_LIST;
+	user_ptr->msg          = msg;
+	user_ptr->list         = SCTK_PTL_PRIORITY_LIST;
+	msg->tail.ptl.user_ptr = user_ptr;
 	sctk_ptl_me_register(srail, user_ptr, pte);
 	
 	sctk_debug("PORTALS: POSTED-RECV from %d (idx=%llu, match=%s, ign=%llu start=%p, sz=%llu)", SCTK_MSG_SRC_TASK(msg), pte->idx, __sctk_ptl_match_str(malloc(32), 32, match.raw), __sctk_ptl_match_str(malloc(32), 32, ign.raw), start, size);

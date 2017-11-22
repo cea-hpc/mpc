@@ -23,21 +23,15 @@ void sctk_ptl_eager_message_copy(sctk_message_to_copy_t* msg)
 	 *  2 - The recv has been posted before the network message arrived. This means that Portals directly
 	 *      matched the request with a PRIORITY_LIST ME.
 	 */
-	if(!msg->msg_send->tail.ptl.copy && !msg->msg_recv->tail.ptl.copy)
-	{
-		/* zero-copy: nothing to do but tagging the message as completed */
-		sctk_message_completion_and_free(msg->msg_send, msg->msg_recv);
-	}
-	else
+	if(msg->msg_send->tail.ptl.copy || msg->msg_recv->tail.ptl.copy)
 	{
 		/* here, we have to copy the message from the network buffer to the user buffer */
 		sctk_net_message_copy_from_buffer(send_data->slot.me.start, msg, 0);
 		/*TODO: free the memory */
-
-		/* flag request as completed */
-		sctk_complete_and_free_message(msg->msg_send);
-		sctk_complete_and_free_message(msg->msg_recv);
 	}
+	/* flag request as completed */
+	sctk_complete_and_free_message(msg->msg_send);
+	sctk_complete_and_free_message(msg->msg_recv);
 }
 
 /**
@@ -53,6 +47,7 @@ void sctk_ptl_eager_recv_message(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 	/* sanity checks */
 	sctk_assert(rail);
 	sctk_assert(ev.ni_fail_type == PTL_NI_OK);
+	sctk_assert(ev.mlength <= rail->network.ptl.eager_limit);
 	
 	/* rebuild a complete MPC header msg (inter_thread_comm needs it) */
 	sctk_init_header(net_msg, SCTK_MESSAGE_CONTIGUOUS , sctk_ptl_eager_free_memory, sctk_ptl_eager_message_copy);

@@ -170,10 +170,10 @@ sctk_ptl_pte_t* sctk_ptl_software_init(sctk_ptl_rail_info_t* srail)
 		&srail->mds_eq        /* out: the EQ handler */
 	));
 
-	sctk_ptl_print_structure(srail);
 
 	srail->pt_entries = (sctk_ptl_pte_t*)table + SCTK_PTL_PTE_HIDDEN;
 	sctk_atomics_store_int(&srail->rdma_cpt, 0);
+	sctk_ptl_print_structure(srail);
 	return srail->pt_entries;
 }
 
