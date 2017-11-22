@@ -164,11 +164,15 @@ void sctk_ptl_eqs_poll(sctk_rail_info_t* rail, int threshold)
 					break;
 
 				case PTL_EVENT_PUT_OVERFLOW: /* a previous received PUT matched a just appended ME */
-					/*sctk_ptl_me_feed_overflow(srail, ev.pt_index, srail->eager_limit, 1);*/
-					/* NO BREAK !!! */
 				case PTL_EVENT_PUT: /* a Put() reached the local process */
 					/* we don't care about unexpected messaged reaching the OVERFLOW_LIST, we will just wait for their local counter-part */
-					if(user_ptr->list == SCTK_PTL_OVERFLOW_LIST) break;
+					if(user_ptr->list == SCTK_PTL_OVERFLOW_LIST)
+					{
+					sctk_ptl_pte_t fake = (sctk_ptl_pte_t){.idx = ev.pt_index};
+					sctk_ptl_me_feed_overflow(srail,  &fake,  srail->eager_limit, 1);
+					sctk_ptl_me_release(user_ptr);
+						break;
+					}
 					/* Multiple scenario can trigger this event:
 					 *  1 - An incoming header put() (RDV or eager)
 					 *  2 - an incoming RDMA request
@@ -247,7 +251,6 @@ void sctk_ptl_eqs_poll(sctk_rail_info_t* rail, int threshold)
  * Make locally-initiated request progress.
  * Here, only MD-specific events are processed.
  * \param[in] arg the Portals rail, to cast before use.
- * \return NULL
  */
 void sctk_ptl_mds_poll(sctk_rail_info_t* rail, int threshold)
 {
@@ -295,6 +298,7 @@ void sctk_ptl_mds_poll(sctk_rail_info_t* rail, int threshold)
 							 * the user buffer has been copied in a temporary one 
 							 * and need to be freed (ex: non-contiguous request
 							 */
+							sctk_ptl_md_release(user_ptr);
 							if(msg->tail.ptl.copy)
 							{
 								sctk_free(user_ptr->slot.md.start);
@@ -331,9 +335,6 @@ void sctk_ptl_mds_poll(sctk_rail_info_t* rail, int threshold)
 
 		}
 	}
-
-	return NULL;
-
 }
 
 /**

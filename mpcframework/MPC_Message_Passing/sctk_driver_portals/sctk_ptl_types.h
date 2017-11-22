@@ -86,7 +86,6 @@ typedef struct sctk_ptl_pte_s
 {
 	ptl_pt_index_t idx;
 	sctk_ptl_eq_t eq;
-	sctk_ptl_meh_t uniq_meh;
 } sctk_ptl_pte_t;
 
 union sctk_ptl_slot_u
@@ -150,7 +149,6 @@ typedef struct sctk_ptl_rail_info_s
 
 	size_t eager_limit;
 	size_t nb_entries;
-	sctk_thread_t async_tid;
 	sctk_atomics_int rdma_cpt;
 
 	char connection_infos[MAX_STRING_SIZE]; /**< string identifying this rail over the PMI */
