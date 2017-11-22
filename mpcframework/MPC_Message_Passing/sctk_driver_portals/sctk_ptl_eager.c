@@ -29,6 +29,9 @@ void sctk_ptl_eager_message_copy(sctk_message_to_copy_t* msg)
 		sctk_net_message_copy_from_buffer(send_data->slot.me.start, msg, 0);
 		/*TODO: free the memory */
 	}
+	else
+	{
+	}
 	/* flag request as completed */
 	sctk_complete_and_free_message(msg->msg_send);
 	sctk_complete_and_free_message(msg->msg_recv);
