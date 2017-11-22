@@ -294,7 +294,6 @@ static void sctk_perform_initialisation (void)
 			abort();
 		}
 	}
-	sctk_debug("nb process = %d, nb threads = %d", sctk_process_nb_val, sctk_task_nb_val);
 	sctk_only_once ();
 
 	if (sctk_process_nb_val > 1)

@@ -255,12 +255,12 @@ int sctk_device_get_ith_logical_on_numa(  hwloc_topology_t topology, int numa_id
 
 void sctk_device_print( sctk_device_t * dev )
 {
-	sctk_info("#######################################");
-	sctk_info("Type : %s", sctk_device_type_to_char( dev->type) );
-	sctk_info("Container : %s", sctk_device_container_to_char( dev->container) );
-	sctk_info("Name : %s", dev->name );
-	sctk_info("Vendor : '%s'", dev->vendor );
-	sctk_info("Device : '%s'", dev->device );
+	sctk_nodebug("#######################################");
+	sctk_nodebug("Type : %s", sctk_device_type_to_char( dev->type) );
+	sctk_nodebug("Container : %s", sctk_device_container_to_char( dev->container) );
+	sctk_nodebug("Name : %s", dev->name );
+	sctk_nodebug("Vendor : '%s'", dev->vendor );
+	sctk_nodebug("Device : '%s'", dev->device );
 	
 	char cpuset[512];
 	hwloc_bitmap_list_snprintf (cpuset, 512, dev->cpuset);
@@ -268,7 +268,7 @@ void sctk_device_print( sctk_device_t * dev )
 	char cpusetraw[512];
 	hwloc_bitmap_snprintf(cpusetraw, 512, dev->cpuset);
 
-	sctk_info("CPU set : '%s' (%s)", cpuset , cpusetraw );
+	sctk_nodebug("CPU set : '%s' (%s)", cpuset , cpusetraw );
 	
 	char nodeset[512];
 	hwloc_bitmap_list_snprintf (nodeset, 512, dev->nodeset);
@@ -276,12 +276,12 @@ void sctk_device_print( sctk_device_t * dev )
 	char nodesetraw[512];
 	hwloc_bitmap_snprintf(nodesetraw, 512, dev->nodeset);
 	
-	sctk_info("NODE set : '%s' (%s)", nodeset, nodesetraw );
-	sctk_info("Root numa : '%d'", dev->root_numa );
-	sctk_info("Root core : '%d'", dev->root_core );
-	sctk_info("Device ID : '%d'", dev->device_id );
+	sctk_nodebug("NODE set : '%s' (%s)", nodeset, nodesetraw );
+	sctk_nodebug("Root numa : '%d'", dev->root_numa );
+	sctk_nodebug("Root core : '%d'", dev->root_core );
+	sctk_nodebug("Device ID : '%d'", dev->device_id );
 	
-	sctk_info("#######################################");
+	sctk_nodebug("#######################################");
 }
 
 

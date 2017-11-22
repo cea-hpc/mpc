@@ -161,13 +161,13 @@ void sctk_topological_polling_tree_init( struct sctk_topological_polling_tree * 
 
 	assume( range_cpuset );
 	
-	sctk_info("POLLING TREE ============");
+	sctk_nodebug("POLLING TREE ============");
 	
 	unsigned int trigger_vp_id = -1;
 	
 	/* Update the calling cells accordingly */
 	hwloc_bitmap_foreach_begin( trigger_vp_id, range_cpuset )
-	sctk_info("range_vp_id : %d (LOG : %d)",  trigger_vp_id,  sctk_topology_convert_os_pu_to_logical( trigger_vp_id ) );
+	sctk_nodebug("range_vp_id : %d (LOG : %d)",  trigger_vp_id,  sctk_topology_convert_os_pu_to_logical( trigger_vp_id ) );
 	hwloc_bitmap_foreach_end(); 	
 	
 	/* Now do the same for the trigger */
@@ -196,7 +196,7 @@ void sctk_topological_polling_tree_init( struct sctk_topological_polling_tree * 
 	
 	/* Debug print */
 	hwloc_bitmap_foreach_begin( trigger_vp_id, roots_cpuset )
-	sctk_info("trigger_vp_id : %d (LOG %d)",  trigger_vp_id,  sctk_topology_convert_os_pu_to_logical( trigger_vp_id ) );
+	sctk_nodebug("trigger_vp_id : %d (LOG %d)",  trigger_vp_id,  sctk_topology_convert_os_pu_to_logical( trigger_vp_id ) );
 	hwloc_bitmap_foreach_end(); 		
 
 	/* Now we can register trigger roots in the cell tree */
@@ -252,17 +252,17 @@ void sctk_topological_polling_tree_init( struct sctk_topological_polling_tree * 
 		
 		if( !hwloc_bitmap_isset(range_cpuset, os_index) )
 		{
-			sctk_info("Outside of range : %d",  i );
+			sctk_nodebug("Outside of range : %d",  i );
 			tree->cells[i].cell_id = SCTK_POLL_IGNORE;
 		}
 	}
 	for( i= 0 ; i < tree->cell_count ; i++ )
 	{
-		sctk_info("[%d]{%d}", i, tree->cells[i].cell_id );
+		sctk_nodebug("[%d]{%d}", i, tree->cells[i].cell_id );
 	}
 	
 	
-	sctk_info("POLLING TREE ======(END)==");
+	sctk_nodebug("POLLING TREE ======(END)==");
 		
 	
 	hwloc_bitmap_free( roots_cpuset );

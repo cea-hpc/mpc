@@ -476,7 +476,7 @@ int sctk_pmi_put_connection_info ( void *info, size_t size, int tag )
 		}
 	}
 
-	free ( sKeyValue );
+	sctk_free ( sKeyValue );
 	return rc;
 #endif /* SCTK_LIB_MODE */
 }
@@ -509,7 +509,7 @@ int sctk_pmi_get_connection_info ( void *info, size_t size, int tag, int rank )
 		fprintf ( stderr, "FAILURE (sctk_pmi): PMI_KVS_Get: %d\n", rc );
 	}
 
-	free ( sKeyValue );
+	sctk_free ( sKeyValue );
 	return rc;
 #endif /* SCTK_LIB_MODE */
 }
