@@ -5,6 +5,7 @@
 #include "sctk_io_helper.h"
 #include "sctk_ptl_iface.h"
 #include "sctk_ptl_types.h"
+#include "sctk_ht.h"
 
 void sctk_ptl_print_structure(sctk_ptl_rail_info_t* srail)
 {
@@ -15,8 +16,6 @@ void sctk_ptl_print_structure(sctk_ptl_rail_info_t* srail)
 	"  - PTE flags               : 0x%x\n"
 	"  - Comm. nb entries        : %d\n"
 	"  - HIDDEN nb entries       : %d\n"
-	"  - First Comm entry addr   : %p\n"
-	"  - First HIDDEN entry addr : %p\n"
 	"  - each EQ size            : %d\n"
 	"\n"
 	" ME management              : \n"
@@ -34,8 +33,6 @@ void sctk_ptl_print_structure(sctk_ptl_rail_info_t* srail)
 	SCTK_PTL_PTE_FLAGS,
 	srail->nb_entries,
 	SCTK_PTL_PTE_HIDDEN,
-	srail->pt_entries,
-	srail->pt_entries - SCTK_PTL_PTE_HIDDEN,
 	SCTK_PTL_EQ_PTE_SIZE,
 
 	SCTK_PTL_ME_OVERFLOW_NB,
@@ -129,39 +126,20 @@ void sctk_ptl_hardware_fini(sctk_ptl_rail_info_t* srail)
  * is different from hardware init beceause it is possible to have multiple 
  * software implementation relying on the same NI (why not?).
  * \param[in] dims PT dimensions
- * \return the pointer to the PT
  */
-sctk_ptl_pte_t* sctk_ptl_software_init(sctk_ptl_rail_info_t* srail)
+void sctk_ptl_software_init(sctk_ptl_rail_info_t* srail)
 {
-	sctk_ptl_pte_t * table = NULL;
-	size_t i, dims, eager_size;
+	size_t i, dims;
 
+	sctk_ptl_pte_t * table = NULL;
 	dims = srail->nb_entries + SCTK_PTL_PTE_HIDDEN;
-	eager_size = srail->eager_limit;
 
 	table = sctk_malloc(sizeof(sctk_ptl_pte_t) * dims); /* one CM, one recovery, one RDMA */
+	MPCHT_init(&srail->pt_table, (dims < 64) ? 64 : dims);
 	for (i = 0; i < dims; ++i)
 	{
-		/* create the EQ for this PT */
-		sctk_ptl_chk(PtlEQAlloc(
-			srail->iface,         /* the NI handler */
-			SCTK_PTL_EQ_PTE_SIZE, /* the number of slots in the EQ */
-			&table[i].eq          /* the returned handler */
-		));
-
-		/* register the PT */
-		sctk_ptl_chk(PtlPTAlloc(
-			srail->iface,       /* the NI handler */
-			SCTK_PTL_PTE_FLAGS, /* PT entry specific flags */
-			table[i].eq,        /* the EQ for this entry */
-			i,                  /* the desired index value */
-			&table[i].idx       /* the effective index value */
-		));
-
-		sctk_ptl_me_feed_overflow(srail, table + i, eager_size, SCTK_PTL_ME_OVERFLOW_NB);
+		sctk_ptl_pte_create(srail, table + i, i);
 	}
-
-
 
 	/* create the global EQ, shared by pending MDs */
 	sctk_ptl_chk(PtlEQAlloc(
@@ -171,10 +149,33 @@ sctk_ptl_pte_t* sctk_ptl_software_init(sctk_ptl_rail_info_t* srail)
 	));
 
 
-	srail->pt_entries = (sctk_ptl_pte_t*)table + SCTK_PTL_PTE_HIDDEN;
 	sctk_atomics_store_int(&srail->rdma_cpt, 0);
 	sctk_ptl_print_structure(srail);
-	return srail->pt_entries;
+}
+
+void sctk_ptl_pte_create(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte, size_t key)
+{
+	size_t eager_size = srail->eager_limit;
+
+	/* create the EQ for this PT */
+	sctk_ptl_chk(PtlEQAlloc(
+		srail->iface,         /* the NI handler */
+		SCTK_PTL_EQ_PTE_SIZE, /* the number of slots in the EQ */
+		&pte->eq          /* the returned handler */
+	));
+
+	/* register the PT */
+	sctk_ptl_chk(PtlPTAlloc(
+		srail->iface,       /* the NI handler */
+		SCTK_PTL_PTE_FLAGS, /* PT entry specific flags */
+		pte->eq,        /* the EQ for this entry */
+		key,           /* the desired index value */
+		&pte->idx       /* the effective index value */
+	));
+
+	sctk_ptl_me_feed_overflow(srail, pte, eager_size, SCTK_PTL_ME_OVERFLOW_NB);
+
+	MPCHT_set(&srail->pt_table, key, pte);
 }
 
 /**
@@ -185,43 +186,34 @@ sctk_ptl_pte_t* sctk_ptl_software_init(sctk_ptl_rail_info_t* srail)
 void sctk_ptl_software_fini(sctk_ptl_rail_info_t* srail)
 {
 	int table_dims = srail->nb_entries;
-	sctk_ptl_pte_t* table = srail->pt_entries;
 	assert(table_dims > 0);
 	int i;
+	void* base_ptr = NULL;
+
 	for(i = 0; i < table_dims; i++)
 	{
+		sctk_ptl_pte_t* cur = MPCHT_get(&srail->pt_table, i);
+		if(i==0)
+			base_ptr = cur;
+
 		sctk_ptl_chk(PtlEQFree(
-			table[i].eq       /* the EQ handler */
+			cur->eq       /* the EQ handler */
 		));
 
 		sctk_ptl_chk(PtlPTFree(
 			srail->iface,     /* the NI handler */
-			table[i].idx      /* the PTE to destroy */
+			cur->idx      /* the PTE to destroy */
 		));
 	}
 
 	sctk_ptl_chk(PtlEQFree(
 		srail->mds_eq             /* the EQ handler */
 	));
+
 	/* write 'NULL' to be sure */
-	void * base_ptr = table - (sizeof(sctk_ptl_pte_t) * SCTK_PTL_PTE_HIDDEN);
-	memset(base_ptr, 0, sizeof(sctk_ptl_pte_t) * (table_dims + SCTK_PTL_PTE_HIDDEN));
 	sctk_free(base_ptr);
+	MPCHT_release(&srail->pt_table);
 	srail->nb_entries = 0;
-}
-
-
-/**
- * create a new PTE, to append to the Portals table.
- *
- * \param[in,out] srail the Portals-specific rial
- * \param[in] comm_id the communicator id
- * \return a pointer to the (potentially newly-allocated) portals table.
- */
-sctk_ptl_pte_t* sctk_ptl_entry_add(sctk_ptl_rail_info_t* srail, int comm_id)
-{
-	not_implemented();
-	return NULL;
 }
 
 /**

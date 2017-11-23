@@ -92,7 +92,7 @@ void sctk_ptl_notify_recv(sctk_thread_ptp_message_t* msg, sctk_rail_info_t* rail
 
 	/* complete the ME data, this ME will be appended to the PRIORITY_LIST */
 	size     = SCTK_MSG_SIZE(msg);
-	pte      = srail->pt_entries + SCTK_MSG_COMMUNICATOR(msg);
+	pte      = SCTK_PTL_PTE_ENTRY(srail->pt_table, SCTK_MSG_COMMUNICATOR(msg));
 	flags    = SCTK_PTL_ME_PUT_FLAGS;
 	user_ptr = sctk_ptl_me_create(start, size, remote, match, ign, flags); assert(user_ptr);
 
@@ -114,6 +114,14 @@ void sctk_ptl_send_message(sctk_thread_ptp_message_t* msg, sctk_endpoint_t* endp
 {
 	int process_rank            = sctk_get_process_rank();
 	sctk_ptl_rail_info_t* srail = &endpoint->rail->network.ptl;
+
+	if(SCTK_MSG_COMMUNICATOR(msg) >= srail->nb_entries)
+	{
+		sctk_error("COMM = %d, nb = %d", SCTK_MSG_COMMUNICATOR(msg), srail->nb_entries);
+		++srail->nb_entries;
+		sctk_ptl_pte_t* tmp = sctk_malloc(sizeof(sctk_ptl_pte_t));
+		sctk_ptl_pte_create(srail, tmp, SCTK_MSG_COMMUNICATOR(msg) + SCTK_PTL_PTE_HIDDEN);
+	}
 
 	/* specific cases: control messages */
 	if(sctk_message_class_is_control_message(SCTK_MSG_SPECIFIC_CLASS(msg)))
@@ -147,7 +155,7 @@ void sctk_ptl_eqs_poll(sctk_rail_info_t* rail, int threshold)
 	int ret, max = 0;
 	while(max++ < threshold)
 	{
-		ret = sctk_ptl_eq_poll_me(srail, srail->pt_entries + (i%size), &ev);
+		ret = sctk_ptl_eq_poll_me(srail, SCTK_PTL_PTE_ENTRY(srail->pt_table, (i%size)), &ev);
 		user_ptr = (sctk_ptl_local_data_t*)ev.user_ptr;
 
 		if(ret == PTL_OK)
@@ -196,7 +204,7 @@ void sctk_ptl_eqs_poll(sctk_rail_info_t* rail, int threshold)
 							}
 							break;
 						}
-						else if(ev.pt_index == SCTK_PTL_PTE_CM_IDX) /* Control message */
+						else if(ev.pt_index == SCTK_PTL_PTE_CM) /* Control message */
 						{
 							sctk_ptl_cm_recv_message(srail, ev);
 							break;
@@ -205,7 +213,7 @@ void sctk_ptl_eqs_poll(sctk_rail_info_t* rail, int threshold)
 					}
 
 				case PTL_EVENT_ATOMIC: /* an Atomic() reached the local process */
-					assume(ev.pt_index == SCTK_PTL_PTE_RDMA_IDX); /* RDMA */
+					assume(ev.pt_index == SCTK_PTL_PTE_RDMA); /* RDMA */
 					sctk_debug("It is an RDMA message !");
 					not_implemented();
 					break;
@@ -214,7 +222,7 @@ void sctk_ptl_eqs_poll(sctk_rail_info_t* rail, int threshold)
 					break;
 
 				case PTL_EVENT_FETCH_ATOMIC: /* a FetchAtomic() reached the local process */
-					assume(ev.pt_index == SCTK_PTL_PTE_RDMA_IDX); /* RDMA */
+					assume(ev.pt_index == SCTK_PTL_PTE_RDMA); /* RDMA */
 					sctk_debug("It is an RDMA message !");
 					not_implemented();
 					break;
@@ -467,11 +475,7 @@ void sctk_ptl_init_interface(sctk_rail_info_t* rail)
 	rail->network.ptl.eager_limit = rail->runtime_config_driver_config->driver.value.portals.eager_limit;
 	rail->network.ptl.nb_entries  = rail->runtime_config_driver_config->driver.value.portals.max_comms;
 
-	(void)sctk_ptl_software_init( &rail->network.ptl);
-
-	sctk_assert(rail->network.ptl.pt_entries);
-	sctk_assert(rail->network.ptl.nb_entries == rail->network.ptl.nb_entries);
-
+	sctk_ptl_software_init( &rail->network.ptl);
 }
 
 /**

@@ -45,7 +45,7 @@ void sctk_ptl_rdv_send_message(sctk_thread_ptp_message_t* msg, sctk_endpoint_t* 
 	md_match.data.tag = SCTK_MSG_TAG(msg);
 	md_match.data.rank = SCTK_MSG_SRC_TASK(msg);
 	md_match.data.uid = 0;
-	md_pte = srail->pt_entries + SCTK_MSG_COMMUNICATOR(msg);
+	md_pte = SCTK_PTL_PTE_ENTRY(srail->pt_table, SCTK_MSG_COMMUNICATOR(msg));
 	md_remote = infos->dest;
 	md_request = sctk_ptl_md_create(srail, md_start, md_size, md_flags);
 	md_request->msg = msg;
@@ -59,7 +59,7 @@ void sctk_ptl_rdv_send_message(sctk_thread_ptp_message_t* msg, sctk_endpoint_t* 
 	me_match.data.tag = SCTK_MSG_TAG(msg);
 	me_match.data.rank = SCTK_MSG_SRC_TASK(msg);
 	me_match.data.uid = SCTK_MSG_NUMBER(msg);
-	me_pte = srail->pt_entries + SCTK_MSG_COMMUNICATOR(msg);
+	me_pte = SCTK_PTL_PTE_ENTRY(srail->pt_table, SCTK_MSG_COMMUNICATOR(msg));
 	me_remote = srail->id;
 	me_request = sctk_ptl_me_create(me_start, me_size, me_remote, me_match, me_ign, me_flags);
 

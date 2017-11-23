@@ -137,7 +137,7 @@ void sctk_ptl_eager_send_message(sctk_thread_ptp_message_t* msg, sctk_endpoint_t
 	match.data.tag  = SCTK_MSG_TAG(msg);
 	match.data.rank = SCTK_MSG_SRC_PROCESS(msg);
 	match.data.uid  = SCTK_MSG_NUMBER(msg);
-	pte             = srail->pt_entries + SCTK_MSG_COMMUNICATOR(msg);
+	pte             = SCTK_PTL_PTE_ENTRY(srail->pt_table, SCTK_MSG_COMMUNICATOR(msg));
 	remote          = infos->dest;
 	request         = sctk_ptl_md_create(srail, start, size, flags);
 

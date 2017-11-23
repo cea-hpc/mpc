@@ -38,8 +38,11 @@ sctk_ptl_rail_info_t sctk_ptl_hardware_init();
 void sctk_ptl_hardware_fini();
 
 /* Software-related init */
-sctk_ptl_pte_t* sctk_ptl_software_init(sctk_ptl_rail_info_t*);
+void sctk_ptl_software_init(sctk_ptl_rail_info_t*);
 void sctk_ptl_software_fini(sctk_ptl_rail_info_t*);
+
+/* Portals table management */
+void sctk_ptl_pte_create(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte, size_t key);
 
 /* ME management */
 sctk_ptl_local_data_t* sctk_ptl_me_create(void*, size_t, sctk_ptl_id_t, sctk_ptl_matchbits_t, sctk_ptl_matchbits_t, int);

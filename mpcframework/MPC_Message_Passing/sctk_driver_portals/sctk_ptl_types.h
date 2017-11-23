@@ -3,6 +3,7 @@
 #define SCTK_PTL_TYPES_H_
 
 #include <portals4.h>
+#include "sctk_ht.h"
 #include "sctk_io_helper.h"
 #include "sctk_atomics.h"
 
@@ -57,12 +58,10 @@
 /* Portals entry */
 #define SCTK_PTL_PTE_FLAGS PTL_PT_FLOWCTRL
 #define SCTK_PTL_PTE_HIDDEN 3
-#define SCTK_PTL_PTE_RECOVERY ( -3)
-#define SCTK_PTL_PTE_CM       ( -2)
-#define SCTK_PTL_PTE_RDMA     ( -1)
-#define SCTK_PTL_PTE_RECOVERY_IDX (0)
-#define SCTK_PTL_PTE_CM_IDX       (1)
-#define SCTK_PTL_PTE_RDMA_IDX     (2)
+#define SCTK_PTL_PTE_RECOVERY (0)
+#define SCTK_PTL_PTE_CM       (1)
+#define SCTK_PTL_PTE_RDMA     (2)
+#define SCTK_PTL_PTE_ENTRY(table, comm) (MPCHT_get(&table, (comm)+SCTK_PTL_PTE_HIDDEN))
 
 /* MISCS */
 #define sctk_ptl_nih_t ptl_handle_ni_t
@@ -143,8 +142,8 @@ typedef struct sctk_ptl_rail_info_s
 	sctk_ptl_limits_t max_limits;           /**< container for Portals thresholds */
 	sctk_ptl_nih_t iface;                   /**< Interface handler for the device */
 	sctk_ptl_id_t id;                       /**< Local id identifying this rail */
-	sctk_ptl_pte_t* pt_entries;             /**< Portals table for this rail */
 	sctk_ptl_eq_t mds_eq;                   /**< EQ for all MDs emited from this NI */
+	struct MPCHT pt_table;
 
 
 	size_t eager_limit;
