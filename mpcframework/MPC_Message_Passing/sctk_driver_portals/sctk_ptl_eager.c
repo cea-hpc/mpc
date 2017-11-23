@@ -28,15 +28,19 @@ void sctk_ptl_eager_message_copy(sctk_message_to_copy_t* msg)
 	{
 		/* here, we have to copy the message from the network buffer to the user buffer */
 		sctk_net_message_copy_from_buffer(send_data->slot.me.start, msg, 0);
-		/*free the memory */
-		/*sctk_ptl_me_free(send_data, 1);*/
+		sctk_free(send_data->slot.me.start);
 	}
 	else
 	{
 	}
 
-	/* free Portals request (not a release because of USE_ONCE) */
-	sctk_ptl_me_free(recv_data, 0);
+	/* First, free local resources (PRIORITY ME) (not unlinked, of USE_ONCE)
+	 * Free the temp buffer (for contiguous) if necessary (copy)
+	 */
+	sctk_ptl_me_free(recv_data, msg->msg_recv->tail.ptl.copy);
+
+	/*TODO: if late-recv -> free the send request */
+
 
 	/* flag request as completed */
 	sctk_complete_and_free_message(msg->msg_send);
