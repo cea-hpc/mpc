@@ -45,6 +45,7 @@ void sctk_ptl_software_fini(sctk_ptl_rail_info_t*);
 sctk_ptl_local_data_t* sctk_ptl_me_create(void*, size_t, sctk_ptl_id_t, sctk_ptl_matchbits_t, sctk_ptl_matchbits_t, int);
 void sctk_ptl_me_register(sctk_ptl_rail_info_t* srail, sctk_ptl_local_data_t*, sctk_ptl_pte_t*);
 void sctk_ptl_me_release(sctk_ptl_local_data_t*);
+void sctk_ptl_me_free(sctk_ptl_local_data_t*, int);
 void sctk_ptl_me_feed_overflow(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte, size_t me_size, int nb);
 
 /* MD management */

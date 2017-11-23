@@ -276,15 +276,14 @@ void sctk_ptl_me_register(sctk_ptl_rail_info_t* srail, sctk_ptl_local_data_t* us
 		user_ptr,             /* usr_ptr: forwarded when polling the event */
 		&user_ptr->slot_h.meh /* out: the ME handler */
 	));
-
 }
 
 /**
  * Remove the ME from the Portals table.
  *
- * This function WILL NOT free the ME. The unlink will generate
- * an event that will be in charge of freeing memory.
+ * The unlink will generate an event that will be in charge of freeing memory.
  * This function should not be used if ME can be set with PTL_ME_USE_ONCE flag.
+ * That's why we have \see sctk_ptl_me_free.
  *
  *  \param[in] meh the ME handler.
  */
@@ -297,6 +296,14 @@ void sctk_ptl_me_release(sctk_ptl_local_data_t* request)
 	sctk_ptl_chk(PtlMEUnlink(
 		request->slot_h.meh
 	));
+}
+
+void sctk_ptl_me_free(sctk_ptl_local_data_t* request, int free_buffer)
+{
+	if(free_buffer)
+	{
+		sctk_free(request->slot.me.start);
+	}
 	sctk_free(request);
 }
 

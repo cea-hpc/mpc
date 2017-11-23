@@ -16,6 +16,7 @@ void sctk_ptl_eager_free_memory(void* msg)
 void sctk_ptl_eager_message_copy(sctk_message_to_copy_t* msg)
 {
 	sctk_ptl_local_data_t* send_data = msg->msg_send->tail.ptl.user_ptr;
+	sctk_ptl_local_data_t* recv_data = msg->msg_send->tail.ptl.user_ptr;
 	
 	/* We ensure data are already stored in the user buffer (zero-copy) only if the two condition are met:
 	 *  1 - The message is a contiguous one (the locally-posted request is contiguous, the network request
@@ -27,12 +28,16 @@ void sctk_ptl_eager_message_copy(sctk_message_to_copy_t* msg)
 	{
 		/* here, we have to copy the message from the network buffer to the user buffer */
 		sctk_net_message_copy_from_buffer(send_data->slot.me.start, msg, 0);
-		/*TODO: free the memory */
+		/*free the memory */
+		/*sctk_ptl_me_free(send_data, 1);*/
 	}
 	else
 	{
 	}
-	sctk_ptl_me_release(msg->msg_recv->tail.ptl.user_ptr);
+
+	/* free Portals request (not a release because of USE_ONCE) */
+	sctk_ptl_me_free(recv_data, 0);
+
 	/* flag request as completed */
 	sctk_complete_and_free_message(msg->msg_send);
 	sctk_complete_and_free_message(msg->msg_recv);

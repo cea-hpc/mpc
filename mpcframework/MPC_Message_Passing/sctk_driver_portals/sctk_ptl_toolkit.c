@@ -170,7 +170,6 @@ void sctk_ptl_eqs_poll(sctk_rail_info_t* rail, int threshold)
 					{
 					sctk_ptl_pte_t fake = (sctk_ptl_pte_t){.idx = ev.pt_index};
 					sctk_ptl_me_feed_overflow(srail,  &fake,  srail->eager_limit, 1);
-					sctk_ptl_me_release(user_ptr);
 						break;
 					}
 					/* Multiple scenario can trigger this event:
