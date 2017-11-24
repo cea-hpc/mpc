@@ -593,10 +593,10 @@ It support parameters :
 Type is int. Default value is 8192. 
 .Pp eager_limit
 Max size of messages allowed to use the eager protocol.
-.It Cm max_comms
-Type is int. Default value is 4. 
-.Pp max_comms
-Max number of communicators (temporary used to avoid brutal realloc())
+.It Cm min_comms
+Type is int. Default value is 1. 
+.Pp min_comms
+Min number of communicators (help to avoid dynamic PT entry allocation)
 .El
 .Sh ENTRIES OF TYPE net_driver_tcp
 TCP-based driver

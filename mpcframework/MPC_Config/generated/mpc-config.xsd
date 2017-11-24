@@ -209,7 +209,7 @@
   <xs:complexType name="user_type_net_driver_portals">
     <xs:all>
       <xs:element minOccurs="0" name="eager_limit" type="xs:integer"/>
-      <xs:element minOccurs="0" name="max_comms" type="xs:integer"/>
+      <xs:element minOccurs="0" name="min_comms" type="xs:integer"/>
     </xs:all>
   </xs:complexType>
   <!-- ********************************************************* -->

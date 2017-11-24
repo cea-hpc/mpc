@@ -328,7 +328,7 @@ const struct sctk_runtime_config_entry_meta sctk_runtime_config_db[] = {
 	{"eager_limit"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_driver_portals,eager_limit)  , sizeof(int) , "int" , NULL , 
 				NULL
 			},
-	{"max_comms"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_driver_portals,max_comms)  , sizeof(int) , "int" , NULL , 
+	{"min_comms"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_driver_portals,min_comms)  , sizeof(int) , "int" , NULL , 
 				NULL
 			},
 	/* struct */

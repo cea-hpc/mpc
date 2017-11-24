@@ -296,8 +296,8 @@ struct sctk_runtime_config_struct_net_driver_portals
 {	int init_done;
 	/**Max size of messages allowed to use the eager protocol.**/
 	int eager_limit;
-	/**Max number of communicators (temporary used to avoid brutal realloc())**/
-	int max_comms;
+	/**Min number of communicators (help to avoid dynamic PT entry allocation)**/
+	int min_comms;
 };
 
 /******************************** STRUCTURE *********************************/

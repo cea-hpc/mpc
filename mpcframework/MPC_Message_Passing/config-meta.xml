@@ -69,7 +69,7 @@
 		<!-- Structure for Portals driver -->
 		<struct name="net_driver_portals" doc="Portals-based driver">
 			<param name="eager_limit" type="int" doc="Max size of messages allowed to use the eager protocol." default="8192" />
-			<param name="max_comms" type="int" doc="Max number of communicators (temporary used to avoid brutal realloc())" default="4" />
+			<param name="min_comms" type="int" doc="Min number of communicators (help to avoid dynamic PT entry allocation)" default="1" />
 		</struct>
 
 		<!-- Structure for TCP driver -->
