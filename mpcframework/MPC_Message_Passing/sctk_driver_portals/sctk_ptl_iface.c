@@ -31,7 +31,7 @@ void sctk_ptl_print_structure(sctk_ptl_rail_info_t* srail)
 	"  - MD GET flags            : 0x%x\n"
 	"\n===================================",
 	SCTK_PTL_PTE_FLAGS,
-	srail->nb_entries,
+	sctk_atomics_load_int(&srail->nb_entries),
 	SCTK_PTL_PTE_HIDDEN,
 	SCTK_PTL_EQ_PTE_SIZE,
 
@@ -132,7 +132,7 @@ void sctk_ptl_software_init(sctk_ptl_rail_info_t* srail)
 	size_t i, dims;
 
 	sctk_ptl_pte_t * table = NULL;
-	dims = srail->nb_entries + SCTK_PTL_PTE_HIDDEN;
+	dims = sctk_atomics_load_int(&srail->nb_entries) + SCTK_PTL_PTE_HIDDEN;
 
 	table = sctk_malloc(sizeof(sctk_ptl_pte_t) * dims); /* one CM, one recovery, one RDMA */
 	MPCHT_init(&srail->pt_table, (dims < 64) ? 64 : dims);
@@ -156,7 +156,6 @@ void sctk_ptl_software_init(sctk_ptl_rail_info_t* srail)
 void sctk_ptl_pte_create(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte, size_t key)
 {
 	size_t eager_size = srail->eager_limit;
-
 	/* create the EQ for this PT */
 	sctk_ptl_chk(PtlEQAlloc(
 		srail->iface,         /* the NI handler */
@@ -176,6 +175,8 @@ void sctk_ptl_pte_create(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte, size_
 	sctk_ptl_me_feed_overflow(srail, pte, eager_size, SCTK_PTL_ME_OVERFLOW_NB);
 
 	MPCHT_set(&srail->pt_table, key, pte);
+	sctk_error("Create PTE IDX %d", key);
+	sctk_atomics_incr_int(&srail->nb_entries);
 }
 
 /**
@@ -185,7 +186,7 @@ void sctk_ptl_pte_create(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte, size_
  */
 void sctk_ptl_software_fini(sctk_ptl_rail_info_t* srail)
 {
-	int table_dims = srail->nb_entries;
+	int table_dims = sctk_atomics_load_int(&srail->nb_entries);
 	assert(table_dims > 0);
 	int i;
 	void* base_ptr = NULL;
@@ -213,7 +214,7 @@ void sctk_ptl_software_fini(sctk_ptl_rail_info_t* srail)
 	/* write 'NULL' to be sure */
 	sctk_free(base_ptr);
 	MPCHT_release(&srail->pt_table);
-	srail->nb_entries = 0;
+	sctk_atomics_store_int(&srail->nb_entries, 0);
 }
 
 /**

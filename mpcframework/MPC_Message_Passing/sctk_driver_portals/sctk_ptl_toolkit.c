@@ -59,15 +59,15 @@ void sctk_ptl_notify_recv(sctk_thread_ptp_message_t* msg, sctk_rail_info_t* rail
 	sctk_ptl_id_t remote            = SCTK_PTL_ANY_PROCESS;
 
 	/* pre-actions */
-	assert(msg);
-	assert(rail);
-	assert(srail);
-	assert(SCTK_MSG_COMMUNICATOR(msg) >= 0 && SCTK_MSG_COMMUNICATOR(msg) < srail->nb_entries);
+	sctk_assert(msg);
+	sctk_assert(rail);
+	sctk_assert(srail);
+	sctk_assert(SCTK_PTL_PTE_EXIST(srail->pt_table, SCTK_MSG_COMMUNICATOR(msg)));
 	
 	/* Build the match_bits */
-	match.data.tag = SCTK_MSG_TAG(msg);
+	match.data.tag  = SCTK_MSG_TAG(msg);
 	match.data.rank = SCTK_MSG_SRC_TASK(msg);
-	match.data.uid = SCTK_MSG_NUMBER(msg);
+	match.data.uid  = SCTK_MSG_NUMBER(msg);
 
 	/* apply the mask, depending on request infos
 	 * The UID is always ignored, it we only be used to make RDV requests consistent
@@ -96,6 +96,9 @@ void sctk_ptl_notify_recv(sctk_thread_ptp_message_t* msg, sctk_rail_info_t* rail
 	flags    = SCTK_PTL_ME_PUT_FLAGS;
 	user_ptr = sctk_ptl_me_create(start, size, remote, match, ign, flags); assert(user_ptr);
 
+	sctk_assert(user_ptr);
+	sctk_assert(pte);
+
 	user_ptr->msg          = msg;
 	user_ptr->list         = SCTK_PTL_PRIORITY_LIST;
 	msg->tail.ptl.user_ptr = user_ptr;
@@ -114,14 +117,9 @@ void sctk_ptl_send_message(sctk_thread_ptp_message_t* msg, sctk_endpoint_t* endp
 {
 	int process_rank            = sctk_get_process_rank();
 	sctk_ptl_rail_info_t* srail = &endpoint->rail->network.ptl;
+	int nb_entries              = sctk_atomics_load_int(&srail->nb_entries);
 
-	if(SCTK_MSG_COMMUNICATOR(msg) >= srail->nb_entries)
-	{
-		sctk_error("COMM = %d, nb = %d", SCTK_MSG_COMMUNICATOR(msg), srail->nb_entries);
-		++srail->nb_entries;
-		sctk_ptl_pte_t* tmp = sctk_malloc(sizeof(sctk_ptl_pte_t));
-		sctk_ptl_pte_create(srail, tmp, SCTK_MSG_COMMUNICATOR(msg) + SCTK_PTL_PTE_HIDDEN);
-	}
+	sctk_assert(SCTK_PTL_PTE_EXIST(srail->pt_table, SCTK_MSG_COMMUNICATOR(msg)));
 
 	/* specific cases: control messages */
 	if(sctk_message_class_is_control_message(SCTK_MSG_SPECIFIC_CLASS(msg)))
@@ -151,11 +149,20 @@ void sctk_ptl_eqs_poll(sctk_rail_info_t* rail, int threshold)
 	sctk_ptl_event_t ev;
 	sctk_ptl_rail_info_t* srail = &rail->network.ptl;
 	sctk_ptl_local_data_t* user_ptr;
-	size_t i = 0, size = srail->nb_entries;
+	sctk_ptl_pte_t* cur_pte;
+
+	size_t i = 0, size = sctk_atomics_load_int(&srail->nb_entries) + SCTK_PTL_PTE_HIDDEN;
 	int ret, max = 0;
-	while(max++ < threshold)
+	while(max++ < threshold && i < size)
 	{
-		ret = sctk_ptl_eq_poll_me(srail, SCTK_PTL_PTE_ENTRY(srail->pt_table, (i%size)), &ev);
+		cur_pte = SCTK_PTL_PTE_ENTRY(srail->pt_table, ((i++)%size));
+		if(!cur_pte)
+		{
+			/* current PTE is empty, try the next one */
+			continue;
+		}
+
+		ret = sctk_ptl_eq_poll_me(srail, cur_pte , &ev);
 		user_ptr = (sctk_ptl_local_data_t*)ev.user_ptr;
 
 		if(ret == PTL_OK)
@@ -250,7 +257,6 @@ void sctk_ptl_eqs_poll(sctk_rail_info_t* rail, int threshold)
 					break;
 			}
 		}
-		i++;
 	}
 }
 
@@ -465,6 +471,17 @@ sctk_ptl_id_t sctk_ptl_map_id(sctk_rail_info_t* rail, int dest)
 	return id;
 }
 
+void sctk_ptl_comm_register(sctk_ptl_rail_info_t* srail, int comm_idx, size_t comm_size)
+{
+	if(!SCTK_PTL_PTE_EXIST(srail->pt_table, comm_idx))
+	{
+		sctk_ptl_pte_t* new_entry = sctk_malloc(sizeof(sctk_ptl_pte_t));
+		sctk_ptl_pte_create(srail, new_entry, comm_idx + SCTK_PTL_PTE_HIDDEN);
+		sctk_warning("PORTALS: register comm %d (size: %d)", comm_idx, comm_size);
+
+	}
+}
+
 /**
  * Initialize the Portals API and main structs.
  * \param[in,out] rail the Portals rail
@@ -473,7 +490,7 @@ void sctk_ptl_init_interface(sctk_rail_info_t* rail)
 {
 	rail->network.ptl             = sctk_ptl_hardware_init();
 	rail->network.ptl.eager_limit = rail->runtime_config_driver_config->driver.value.portals.eager_limit;
-	rail->network.ptl.nb_entries  = rail->runtime_config_driver_config->driver.value.portals.max_comms;
+	sctk_atomics_store_int(&rail->network.ptl.nb_entries, rail->runtime_config_driver_config->driver.value.portals.min_comms);
 
 	sctk_ptl_software_init( &rail->network.ptl);
 }

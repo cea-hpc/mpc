@@ -10,6 +10,7 @@ void sctk_ptl_eqs_poll(sctk_rail_info_t* rail, int threshold);
 void sctk_ptl_mds_poll(sctk_rail_info_t* rail, int threshold);
 void sctk_ptl_free_memory(void* msg);
 void sctk_ptl_message_copy(sctk_message_to_copy_t);
+void sctk_ptl_comm_register(sctk_ptl_rail_info_t* srail, int comm_idx, size_t comm_size);
 void sctk_ptl_init_interface(sctk_rail_info_t* rail);
 void sctk_ptl_fini_interface(sctk_rail_info_t* rail);
 

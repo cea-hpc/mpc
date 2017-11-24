@@ -8,6 +8,8 @@ void sctk_ptl_eager_free_memory(void* msg)
 {
 	sctk_free(msg);
 }
+sctk_atomics_int zc = SCTK_ATOMICS_INT_T_INIT(0);
+sctk_atomics_int t = SCTK_ATOMICS_INT_T_INIT(0);
 
 /** What to do when a network message matched a locally posted request ?.
  *  
@@ -32,7 +34,9 @@ void sctk_ptl_eager_message_copy(sctk_message_to_copy_t* msg)
 	}
 	else
 	{
+		sctk_atomics_incr_int(&zc);
 	}
+	sctk_atomics_incr_int(&t);
 
 	/* First, free local resources (PRIORITY ME) (not unlinked, of USE_ONCE)
 	 * Free the temp buffer (for contiguous) if necessary (copy)
@@ -140,6 +144,9 @@ void sctk_ptl_eager_send_message(sctk_thread_ptp_message_t* msg, sctk_endpoint_t
 	pte             = SCTK_PTL_PTE_ENTRY(srail->pt_table, SCTK_MSG_COMMUNICATOR(msg));
 	remote          = infos->dest;
 	request         = sctk_ptl_md_create(srail, start, size, flags);
+
+	sctk_assert(request);
+	sctk_assert(pte);
 
 	/* double-linking */
 	request->msg           = msg;

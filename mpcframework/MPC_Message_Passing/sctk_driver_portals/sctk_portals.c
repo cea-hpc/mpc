@@ -65,8 +65,8 @@ static void sctk_network_notify_perform_message_ptl ( int remote, int remote_tas
  */
 static void sctk_network_notify_idle_message_ptl (sctk_rail_info_t* rail)
 {
-	sctk_ptl_eqs_poll( rail, 10 );
-	sctk_ptl_mds_poll( rail, 10 );
+	sctk_ptl_eqs_poll( rail, 5 );
+	sctk_ptl_mds_poll( rail, 5 );
 }
 
 /**
@@ -78,6 +78,11 @@ static void sctk_network_notify_idle_message_ptl (sctk_rail_info_t* rail)
  */
 static void sctk_network_notify_any_source_message_ptl ( int polling_task_id, int blocking, sctk_rail_info_t *rail )
 {
+}
+
+static void sctk_network_notify_new_communicator_ptl(sctk_rail_info_t* rail, int comm_idx, size_t comm_size)
+{
+	sctk_ptl_comm_register(&rail->network.ptl, comm_idx, comm_size);
 }
 
 /**
@@ -184,6 +189,7 @@ void sctk_network_init_ptl (sctk_rail_info_t *rail)
 	rail->notify_perform_message    = sctk_network_notify_perform_message_ptl;
 	rail->notify_idle_message       = sctk_network_notify_idle_message_ptl;
 	rail->notify_any_source_message = sctk_network_notify_any_source_message_ptl;
+	rail->notify_new_comm           = sctk_network_notify_new_communicator_ptl;
 	rail->send_message_from_network = sctk_send_message_from_network_ptl;
 
 	/* RDMA */

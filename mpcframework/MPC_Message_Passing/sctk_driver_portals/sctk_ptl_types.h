@@ -30,7 +30,7 @@
 #define sctk_ptl_list_t ptl_list_t
 #define SCTK_PTL_PRIORITY_LIST PTL_PRIORITY_LIST
 #define SCTK_PTL_OVERFLOW_LIST PTL_OVERFLOW_LIST
-#define SCTK_PTL_STR_LIST(u) ((u==SCTK_PTL_PRIORITY_LIST) ? "PRIORITY_LIST" : "OVERFLOW_LIST")
+#define SCTK_PTL_STR_LIST(u) ((u==SCTK_PTL_PRIORITY_LIST) ? "PRIORITY" : "OVERFLOW")
 
 /* MDs */
 #define sctk_ptl_mdh_t ptl_handle_md_t
@@ -62,6 +62,7 @@
 #define SCTK_PTL_PTE_CM       (1)
 #define SCTK_PTL_PTE_RDMA     (2)
 #define SCTK_PTL_PTE_ENTRY(table, comm) (MPCHT_get(&table, (comm)+SCTK_PTL_PTE_HIDDEN))
+#define SCTK_PTL_PTE_EXIST(table, comm) (SCTK_PTL_PTE_ENTRY(table, comm) != NULL)
 
 /* MISCS */
 #define sctk_ptl_nih_t ptl_handle_ni_t
@@ -147,7 +148,7 @@ typedef struct sctk_ptl_rail_info_s
 
 
 	size_t eager_limit;
-	size_t nb_entries;
+	sctk_atomics_int nb_entries;
 	sctk_atomics_int rdma_cpt;
 
 	char connection_infos[MAX_STRING_SIZE]; /**< string identifying this rail over the PMI */

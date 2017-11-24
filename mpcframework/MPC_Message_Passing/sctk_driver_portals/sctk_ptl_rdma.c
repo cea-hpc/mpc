@@ -6,7 +6,7 @@
 #include "sctk_ptl_iface.h"
 #include "sctk_atomics.h"
 
-static inline sctk_ptl_pte_t* rdma_pte = NULL;
+static sctk_ptl_pte_t* rdma_pte = NULL;
 
 static inline ptl_datatype_t __sctk_ptl_convert_type(RDMA_type type)
 {
