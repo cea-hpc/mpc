@@ -2965,6 +2965,7 @@ sctk_communicator_t sctk_create_communicator ( const sctk_communicator_t origin_
           local_root = 1;
           tmp->has_zero = 1;
         }
+
         sctk_barrier(origin_communicator);
 
         if ((grank != 0) && (tmp->has_zero == 1)) {
@@ -2989,6 +2990,9 @@ sctk_communicator_t sctk_create_communicator ( const sctk_communicator_t origin_
         assume(new_tmp->id != origin_communicator);
         sctk_nodebug("new intracomm %d with size %d and local_comm %d",
                      new_tmp->id, new_tmp->nb_task, new_tmp->local_id);
+
+	sctk_network_notify_new_communicator(new_tmp->id, new_tmp->nb_task);
+
         /*If not involved return SCTK_COMM_NULL*/
         for (i = 0; i < nb_task_involved; i++) {
           if (task_list[i] == rank) {

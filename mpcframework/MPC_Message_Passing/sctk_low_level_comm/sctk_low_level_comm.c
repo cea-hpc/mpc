@@ -202,6 +202,23 @@ void sctk_network_notify_any_source_message_set ( void ( *sctk_network_notify_an
 	sctk_network_notify_any_source_message_ptr = sctk_network_notify_any_source_message_val;
 }
 
+/********** NOTIFY_NEW_COMM ************/
+static void sctk_network_notify_new_communicator_default(int comm_idx, size_t comm_size)
+{
+}
+
+static void (*sctk_network_notify_new_communicator_ptr)(int, size_t) = sctk_network_notify_new_communicator_default;
+
+void sctk_network_notify_new_communicator(int comm_idx, size_t comm_size)
+{
+	sctk_network_notify_new_communicator_ptr(comm_idx, comm_size);
+}
+
+void sctk_network_notify_new_communicator_set( void (*func)(int, size_t))
+{
+	sctk_network_notify_new_communicator_ptr = func;
+}
+
 /************************************************************************/
 /* PMI Init                                                             */
 /************************************************************************/

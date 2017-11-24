@@ -920,8 +920,21 @@ void sctk_multirail_notify_anysource( int polling_task_id, int blocking )
 	}
 }
 
-
-
+void sctk_multirail_notify_new_comm(int comm_idx, size_t size)
+{
+	int count = sctk_rail_count();
+	int i;
+	
+	for( i = 0 ; i < count ; i++ )
+	{
+		sctk_rail_info_t * rail = sctk_rail_get_by_id ( i );
+		
+		if( rail->notify_new_comm )
+		{
+			rail->notify_new_comm(rail, comm_idx, size);
+		}
+	}
+}
 
 /************************************************************************/
 /* sctk_multirail_destination_table                                     */
@@ -943,6 +956,7 @@ void sctk_multirail_destination_table_init()
 	sctk_network_notify_perform_message_set ( sctk_multirail_notify_perform );
 	sctk_network_notify_idle_message_set ( sctk_multirail_notify_idle );
 	sctk_network_notify_any_source_message_set ( sctk_multirail_notify_anysource );
+	sctk_network_notify_new_communicator_set( sctk_multirail_notify_new_comm );
 	
 	
 }
