@@ -156,7 +156,7 @@ void sctk_ptl_eager_send_message(sctk_thread_ptp_message_t* msg, sctk_endpoint_t
 
 	/* emit the request */
 	sctk_ptl_md_register(srail, request);
-	sctk_ptl_emit_put(request, size, remote, pte, match, 0, 0, hdr.raw);
+	sctk_ptl_emit_put(request, size, remote, pte, match, 0, 0, hdr.raw, request);
 	
 	sctk_debug("PORTALS: SEND-EAGER to %d (idx=%d, match=%s, sz=%llu)", SCTK_MSG_DEST_TASK(msg), pte->idx, __sctk_ptl_match_str(malloc(32), 32, match.raw), size);
 }

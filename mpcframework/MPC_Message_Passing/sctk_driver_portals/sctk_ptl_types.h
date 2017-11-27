@@ -21,11 +21,12 @@
 /* MEs */
 #define sctk_ptl_meh_t ptl_handle_me_t
 #define sctk_ptl_me_t ptl_me_t
-#define SCTK_PTL_ME_FLAGS PTL_ME_EVENT_LINK_DISABLE | PTL_ME_USE_ONCE | PTL_ME_EVENT_UNLINK_DISABLE
+#define SCTK_PTL_ME_FLAGS PTL_ME_EVENT_LINK_DISABLE | PTL_ME_EVENT_UNLINK_DISABLE
 #define SCTK_PTL_ME_PUT_FLAGS SCTK_PTL_ME_FLAGS | PTL_ME_OP_PUT
 #define SCTK_PTL_ME_GET_FLAGS SCTK_PTL_ME_FLAGS | PTL_ME_OP_GET
 #define SCTK_PTL_ME_OVERFLOW_FLAGS SCTK_PTL_ME_PUT_FLAGS
-#define SCTK_PTL_ME_OVERFLOW_NB 16 /* number of ME in OVERFLOW_LIST (for each PTE) */
+#define SCTK_PTL_ME_OVERFLOW_NB 24 /* number of ME in OVERFLOW_LIST (for each PTE) */
+#define SCTK_PTL_ONCE PTL_ME_USE_ONCE
 
 #define sctk_ptl_list_t ptl_list_t
 #define SCTK_PTL_PRIORITY_LIST PTL_PRIORITY_LIST
@@ -44,8 +45,8 @@
 #define sctk_ptl_cnt_t ptl_ct_event_t
 #define sctk_ptl_cnth_t ptl_handle_ct_t
 #define sctk_ptl_eq_t ptl_handle_eq_t
-#define SCTK_PTL_EQ_PTE_SIZE 512 /* size of EQ for PTE */
-#define SCTK_PTL_EQ_MDS_SIZE 128 /* size of EQ for MD unique EQ */
+#define SCTK_PTL_EQ_PTE_SIZE 10240 /* size of EQ for PTE */
+#define SCTK_PTL_EQ_MDS_SIZE 10240 /* size of EQ for MD unique EQ */
 
 /* id */
 #define sctk_ptl_id_t ptl_process_t
@@ -144,6 +145,8 @@ typedef struct sctk_ptl_rdma_ctx
 {
 	struct sctk_ptl_local_data_s* me_data;
 	struct sctk_ptl_local_data_s* md_data;
+	void* start;
+	sctk_ptl_matchbits_t match;
 	sctk_ptl_id_t origin;
 } sctk_ptl_rdma_ctx_t;
 

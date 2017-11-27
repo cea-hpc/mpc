@@ -102,7 +102,7 @@ void sctk_ptl_cm_send_message(sctk_thread_ptp_message_t* msg, sctk_endpoint_t* e
 
 
 	sctk_ptl_md_register(srail, request);
-	sctk_ptl_emit_put(request, size, remote, pte, match, 0, 0, hdr.raw);
+	sctk_ptl_emit_put(request, size, remote, pte, match, 0, 0, hdr.raw, request);
 
 
 	

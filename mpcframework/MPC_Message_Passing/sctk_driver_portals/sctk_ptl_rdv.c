@@ -55,7 +55,7 @@ void sctk_ptl_rdv_send_message(sctk_thread_ptp_message_t* msg, sctk_endpoint_t* 
 	assert(msg->tail.message_type == SCTK_MESSAGE_CONTIGUOUS); /* temp */
 	me_start = msg->tail.message.contiguous.addr;
 	me_size = SCTK_MSG_SIZE(msg);
-	me_flags = SCTK_PTL_ME_GET_FLAGS;
+	me_flags = SCTK_PTL_ME_GET_FLAGS | SCTK_PTL_ONCE;
 	me_match.data.tag = SCTK_MSG_TAG(msg);
 	me_match.data.rank = SCTK_MSG_SRC_TASK(msg);
 	me_match.data.uid = SCTK_MSG_NUMBER(msg);
@@ -71,6 +71,6 @@ void sctk_ptl_rdv_send_message(sctk_thread_ptp_message_t* msg, sctk_endpoint_t* 
 
 	/* TODO: Need to handle the case where the data is larger than the max ME size */
 	sctk_error("Posted a rdv send to %d (nid/pid=%llu/%llu, idx=%d, match=%llu)", SCTK_MSG_DEST_TASK(msg), me_remote.phys.nid, me_remote.phys.pid, me_pte->idx, me_match.raw);
-	sctk_ptl_emit_put(md_request, 0, md_remote, md_pte, md_match, 0, 0, md_size);
+	sctk_ptl_emit_put(md_request, 0, md_remote, md_pte, md_match, 0, 0, md_size, md_request);
 }
 #endif

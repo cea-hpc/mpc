@@ -157,9 +157,13 @@ void sctk_ptl_software_init(sctk_ptl_rail_info_t* srail, int comm_dims)
 			&table[i].idx       /* the effective index value */
 		));
 
-		sctk_ptl_me_feed(srail, table + i, eager_size, SCTK_PTL_ME_OVERFLOW_NB, SCTK_PTL_PRIORITY_LIST);
+		/* don't queue pre-allocated ME for RDMA entry */
+		if(i != SCTK_PTL_PTE_RDMA)
+		{
+			sctk_ptl_me_feed(srail, table + i, eager_size, SCTK_PTL_ME_OVERFLOW_NB, SCTK_PTL_PRIORITY_LIST);
+		}
+		
 		MPCHT_set(&srail->pt_table, i, table + i);
-		sctk_error("HT: Add data to %lu", i);
 	}
 
 	for (i = SCTK_PTL_PTE_HIDDEN; i < comm_dims; ++i)
@@ -201,7 +205,6 @@ void sctk_ptl_pte_create(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte, size_
 	sctk_ptl_me_feed(srail, pte, eager_size, SCTK_PTL_ME_OVERFLOW_NB, SCTK_PTL_OVERFLOW_LIST);
 
 	MPCHT_set(&srail->pt_table, key, pte);
-	sctk_error("HT: Add data to %lu", key);
 	sctk_atomics_incr_int(&srail->nb_entries);
 }
 
@@ -216,6 +219,9 @@ void sctk_ptl_software_fini(sctk_ptl_rail_info_t* srail)
 	assert(table_dims > 0);
 	int i;
 	void* base_ptr = NULL;
+
+	/* don't want to hang the NIC */
+	return;
 
 	for(i = 0; i < table_dims; i++)
 	{
@@ -437,7 +443,7 @@ void sctk_ptl_me_feed(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte, size_t m
  * \param[in] remote_off the offset in the remote buffer (ME)
  * \return PTL_OK, abort() otherwise.
  */
-int sctk_ptl_emit_get(sctk_ptl_local_data_t* user, size_t size, sctk_ptl_id_t remote, sctk_ptl_pte_t* pte, sctk_ptl_matchbits_t match, size_t local_off, size_t remote_off)
+int sctk_ptl_emit_get(sctk_ptl_local_data_t* user, size_t size, sctk_ptl_id_t remote, sctk_ptl_pte_t* pte, sctk_ptl_matchbits_t match, size_t local_off, size_t remote_off, void* user_ptr)
 {
 	sctk_ptl_chk(PtlGet(
 		user->slot_h.mdh,
@@ -447,7 +453,7 @@ int sctk_ptl_emit_get(sctk_ptl_local_data_t* user, size_t size, sctk_ptl_id_t re
 		pte->idx,
 		match.raw,
 		remote_off,
-		user
+		user_ptr
 	));
 
 	return PTL_OK;
@@ -464,7 +470,7 @@ int sctk_ptl_emit_get(sctk_ptl_local_data_t* user, size_t size, sctk_ptl_id_t re
  * \param[in] remote_off the offset in the remote buffer (ME)
  * \return PTL_OK, abort() otherwise.
  */
-int sctk_ptl_emit_put(sctk_ptl_local_data_t* user, size_t size, sctk_ptl_id_t remote, sctk_ptl_pte_t* pte, sctk_ptl_matchbits_t match, size_t local_off, size_t remote_off, size_t extra)
+int sctk_ptl_emit_put(sctk_ptl_local_data_t* user, size_t size, sctk_ptl_id_t remote, sctk_ptl_pte_t* pte, sctk_ptl_matchbits_t match, size_t local_off, size_t remote_off, size_t extra, void* user_ptr)
 {
 	assert (size <= user->slot.md.length);
 	sctk_ptl_chk(PtlPut(
@@ -476,7 +482,7 @@ int sctk_ptl_emit_put(sctk_ptl_local_data_t* user, size_t size, sctk_ptl_id_t re
 		pte->idx,
 		match.raw,
 		remote_off, /* offset */
-		user,
+		user_ptr,
 		extra
 	));
 
