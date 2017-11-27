@@ -69,6 +69,10 @@
 #define sctk_ptl_nih_t ptl_handle_ni_t
 #define sctk_ptl_limits_t ptl_ni_limits_t
 
+/**
+ * How the match_bits is divided to store essential information to 
+ * match MPI msg
+ */
 struct sctk_ptl_bits_content_s
 {
 	uint16_t uid;     /**< unique per-route ID */
@@ -76,22 +80,26 @@ struct sctk_ptl_bits_content_s
 	uint32_t tag;     /**< MPI tag */
 };
 
-/* should all be sized to raw 64 bits */
+/** struct to make match_bits management easier
+ */
 typedef union sctk_ptl_matchbits_t
 {
-	ptl_match_bits_t raw;
-	struct sctk_ptl_bits_content_s data;
+	ptl_match_bits_t raw; /**< raw */
+	struct sctk_ptl_bits_content_s data; /**< driver-managed */
 } sctk_ptl_matchbits_t;
 
 
-/* sized to 64 bits */
+/** the eager-specific imm_data
+ */
 typedef struct sctk_ptl_eager_data_s
 {
-	int datatype;
-	char pad[4];
+	int datatype; /**< datatype, for matching */
+	char pad[4];  /**< padding */
 } sctk_ptl_eager_data_t;
 
-/* please look at sctk_control_messages.c for updating this struct */
+/**
+ * the CM-specfic imm_data.
+ * please look at sctk_control_messages.c before updating this struct */
 typedef struct sctk_ptl_cm_data_s
 {
 	char type;
@@ -101,62 +109,82 @@ typedef struct sctk_ptl_cm_data_s
 	char pad[4];
 } sctk_ptl_cm_data_t;
 
+/**
+ * RDV-specific imm_data
+ */
 typedef struct sctk_ptl_rdv_data_s
 {
-	int datatype;
-	char pad[4];
+	int datatype; /**< the datatype, for the matching */
+	char pad[4];  /**< padding */
 } sctk_ptl_rdv_data_t;
 
+/**
+ * Selector for the 64 bits immediate data
+ * contained in every Put() request.
+ */
 typedef union sctk_ptl_imm_data_s
 {
-	uint64_t raw;
-	struct sctk_ptl_cm_data_s cm;
-	struct sctk_ptl_eager_data_s eager;
-	struct sctk_ptl_rdv_data_s rdv;
+	uint64_t raw;                       /**< the raw */
+	struct sctk_ptl_cm_data_s cm;       /**< imm_data for CM */
+	struct sctk_ptl_eager_data_s eager; /**< imm-data for eager */
+	struct sctk_ptl_rdv_data_s rdv;     /**< imm_data for rdv */
 } sctk_ptl_imm_data_t;
 
+/**
+ * Representing a PT entry in the driver.
+ */
 typedef struct sctk_ptl_pte_s
 {
-	ptl_pt_index_t idx;
-	sctk_ptl_eq_t eq;
+	ptl_pt_index_t idx; /**< the effective PT index */
+	sctk_ptl_eq_t eq; /**< the EQ for this entry */
 } sctk_ptl_pte_t;
 
+/** union to select MD or ME in the user_ptr without dirty casting */
 union sctk_ptl_slot_u
 {
-	sctk_ptl_me_t me;
-	sctk_ptl_md_t md;
+	sctk_ptl_me_t me; /* request is a ME */
+	sctk_ptl_md_t md; /* request is a MD */
 };
 
+/** union to select MD or ME in the user_ptr without dirty casting */
 union sctk_ptl_slot_h_u
 {
-	sctk_ptl_meh_t meh;
-	sctk_ptl_mdh_t mdh;
+	sctk_ptl_meh_t meh; /* request is a ME */
+	sctk_ptl_mdh_t mdh; /* request is a MD */
 };
 
+/**
+ * Structure storing everything we need locally to map 
+ * a msg with a PTL request
+ */
 typedef struct sctk_ptl_local_data_s
 {
-	union sctk_ptl_slot_u slot;
-	union sctk_ptl_slot_h_u slot_h;
-	sctk_ptl_list_t list;
-	void* msg;
+	union sctk_ptl_slot_u slot;     /* the request (MD or ME) */
+	union sctk_ptl_slot_h_u slot_h; /* the request Handle */
+	sctk_ptl_list_t list;           /* the list the request issued from */
+	void* msg;                      /* link to the msg */
 } sctk_ptl_local_data_t;
 
+/**
+ * RDMA structure, mapping a Portals window.
+ * Please remind that this struct is exchanged with remote through CM.
+ */
 typedef struct sctk_ptl_rdma_ctx
 {
-	struct sctk_ptl_local_data_s* me_data;
-	struct sctk_ptl_local_data_s* md_data;
-	void* start;
-	sctk_ptl_matchbits_t match;
+	struct sctk_ptl_local_data_s* me_data; /**< ME infos about the pinned region */
+	struct sctk_ptl_local_data_s* md_data; /**< MD infos about the pinned region */
+	void* start;                           /**< start address */
+	sctk_ptl_matchbits_t match;            /**< unique match_bits (=atomic counter */
 	sctk_ptl_id_t origin;
 } sctk_ptl_rdma_ctx_t;
 
 /**
- *
+ * Portals-specific data stored in msg tail.
  */
 typedef struct sctk_ptl_tail_s
 {
-	struct sctk_ptl_local_data_s* user_ptr;
-	int copy;
+	struct sctk_ptl_local_data_s* user_ptr; /**< user_ptr, attached to the request */
+	int copy;                               /**< true if data has been temporarily copied */
 } sctk_ptl_tail_t;
 
 
@@ -179,12 +207,11 @@ typedef struct sctk_ptl_rail_info_s
 	sctk_ptl_nih_t iface;                   /**< Interface handler for the device */
 	sctk_ptl_id_t id;                       /**< Local id identifying this rail */
 	sctk_ptl_eq_t mds_eq;                   /**< EQ for all MDs emited from this NI */
-	struct MPCHT pt_table;
+	struct MPCHT pt_table;                  /**< The PT hash table */
 
-
-	size_t eager_limit;
-	sctk_atomics_int nb_entries;
-	sctk_atomics_int rdma_cpt;
+	size_t eager_limit;                     /**< the max size for an eager msg */
+	sctk_atomics_int nb_entries;            /**< current number of PT entries dedicated to comms */
+	sctk_atomics_int rdma_cpt;              /**< RDMA match_bits counter */
 
 	char connection_infos[MAX_STRING_SIZE]; /**< string identifying this rail over the PMI */
 	size_t connection_infos_size;           /**< Size of the above string */

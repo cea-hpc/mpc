@@ -9,26 +9,39 @@
 
 void sctk_ptl_print_structure(sctk_ptl_rail_info_t* srail)
 {
+	sctk_ptl_limits_t l = srail->max_limits;
 	sctk_info(
 	"\n======== PORTALS STRUCTURE ========\n"
 	"\n"
-	" PORTALS ENTRIES            : \n"
-	"  - PTE flags               : 0x%x\n"
-	"  - Comm. nb entries        : %d\n"
-	"  - HIDDEN nb entries       : %d\n"
-	"  - each EQ size            : %d\n"
+	" PORTALS ENTRIES       : \n"
+	"  - PTE flags          : 0x%x\n"
+	"  - Comm. nb entries   : %d\n"
+	"  - HIDDEN nb entries  : %d\n"
+	"  - each EQ size       : %d\n"
 	"\n"
-	" ME management              : \n"
-	"  - Nb OVERFLOW slots       : %d\n"
-	"  - OVERFLOW slot size      : %d\n"
-	"  - ME PUT flags            : 0x%x\n"
-	"  - ME GET flags            : 0x%x\n"
-	"  - ME OVERFLOW FLAGS       : 0x%x\n"
+	" ME management         : \n"
+	"  - Nb OVERFLOW slots  : %d\n"
+	"  - OVERFLOW slot size : %d\n"
+	"  - ME PUT flags       : 0x%x\n"
+	"  - ME GET flags       : 0x%x\n"
+	"  - ME OVERFLOW FLAGS  : 0x%x\n"
 	"\n"
-	" MD management              : \n"
-	"  - shared EQ size          : %d\n"
-	"  - MD PUT flags            : 0x%x\n"
-	"  - MD GET flags            : 0x%x\n"
+	" MD management         : \n"
+	"  - shared EQ size     : %d\n"
+	"  - MD PUT flags       : 0x%x\n"
+	"  - MD GET flags       : 0x%x\n"
+	"\n"
+	" PORTALS LIMITS        : \n"
+	"  - MAX PT entries     : %d\n"
+	"  - MAX unexpected     : %d\n"
+	"  - MAX MDs            : %d\n"
+	"  - MAX MEs            : %d\n"
+	"  - MAX CTs            : %d\n"
+	"  - MAX EQs            : %d\n"
+	"  - MAX IOVECs         : %d\n"
+	"  - MAX MEs/PTE        : %d\n"
+	"  - MAX TriggeredOps   : %d\n"
+	"  - MAX Msg Size (MB)  : %d\n"
 	"\n===================================",
 	SCTK_PTL_PTE_FLAGS,
 	sctk_atomics_load_int(&srail->nb_entries),
@@ -43,7 +56,18 @@ void sctk_ptl_print_structure(sctk_ptl_rail_info_t* srail)
 
 	SCTK_PTL_EQ_MDS_SIZE,
 	SCTK_PTL_MD_PUT_FLAGS,
-	SCTK_PTL_MD_GET_FLAGS
+	SCTK_PTL_MD_GET_FLAGS,
+
+	l.max_pt_index,
+	l.max_unexpected_headers,
+	l.max_mds,
+	l.max_entries,
+	l.max_cts,
+	l.max_eqs,
+	l.max_iovecs,
+	l.max_list_size,
+	l.max_triggered_ops,
+	((size_t)l.max_msg_size / (1024 * 1024))
 	);
 	
 }

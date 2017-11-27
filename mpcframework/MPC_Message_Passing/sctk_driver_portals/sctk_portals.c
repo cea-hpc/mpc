@@ -43,21 +43,33 @@ static void sctk_network_send_message_endpoint_ptl ( sctk_thread_ptp_message_t *
 	sctk_ptl_send_message(msg, endpoint);
 }
 
+/**
+ * Callback used to notify the driver a new 'recv' message has been locally posted.
+ * \param[in] msg the posted msdg
+ * \param[in] rail the Portals rail
+ */
 static void sctk_network_notify_recv_message_ptl ( sctk_thread_ptp_message_t *msg, sctk_rail_info_t *rail )
 {
+	/* by construction, a network-received CM will generate a local recv
+	 * So, in this case, we have nothing to do here
+	 */
 	if(sctk_message_class_is_control_message(SCTK_MSG_SPECIFIC_CLASS(msg)))
 	{
-		/* no need to handle recv-posted CM */
 		return;
 	}
+
+	/* in any other case... */
 	sctk_ptl_notify_recv(msg, rail);
 }
 
+/**
+ * Not relevant in this implementation */
 static void sctk_network_notify_matching_message_ptl ( sctk_thread_ptp_message_t *msg, sctk_rail_info_t *rail )
 {
 	/* nothing to do */
 }
 
+/** Not relevant in this implementation */
 static void sctk_network_notify_perform_message_ptl ( int remote, int remote_task_id, int polling_task_id, int blocking, sctk_rail_info_t *rail )
 {
 	/* nothing to do */
@@ -70,6 +82,7 @@ static void sctk_network_notify_perform_message_ptl ( int remote, int remote_tas
  */
 static void sctk_network_notify_idle_message_ptl (sctk_rail_info_t* rail)
 {
+	/* '5' has been chosen arbitrarly for now */
 	sctk_ptl_eqs_poll( rail, 5 );
 	sctk_ptl_mds_poll( rail, 5 );
 }
@@ -85,6 +98,14 @@ static void sctk_network_notify_any_source_message_ptl ( int polling_task_id, in
 {
 }
 
+/**
+ * Notify the driver a new MPI communicator has been created.
+ * Becasue Portals driver has been split according to MPI_Comm semantics, each 
+ * new communicator creation has to trigger a new PT entry creation.
+ * \param[in] rail the Portals rail
+ * \param[in] comm_idx the communicator ID
+ * \param[in] comm_size number of processes in this comm
+ */
 static void sctk_network_notify_new_communicator_ptl(sctk_rail_info_t* rail, int comm_idx, size_t comm_size)
 {
 	sctk_ptl_comm_register(&rail->network.ptl, comm_idx, comm_size);
@@ -108,15 +129,31 @@ static int sctk_send_message_from_network_ptl ( sctk_thread_ptp_message_t *msg )
 	return 1;
 }
 
+/** 
+ * Function called globally when C/R is enabled, to close the rail before checkpointing.
+ * \param[in] rail the Portals rail to shut down.
+ */
 void sctk_network_finalize_ptl(sctk_rail_info_t* rail)
 {
 	sctk_ptl_fini_interface(rail);
 }
 
+/**
+ * Function called at task scope, before closing the rail.
+ * \param[in] rail the Portals rail
+ * \param[in] taskid the Task ID to stop
+ * \param[in] vp the VP the task is bound
+ */
 void sctk_network_finalize_task_ptl(sctk_rail_info_t* rail, int taskid, int vp)
 {
 }
 
+/**
+ * Function called at task scope, to re-init the Portals context for each task.
+ * \param[in] rail the Portals rail
+ * \param[in] taskid the Task ID to restart
+ * \param[in] vp the VP the task is bound
+ */
 void sctk_network_initialize_task_ptl(sctk_rail_info_t* rail, int taskid, int vp)
 {
 }
@@ -134,6 +171,7 @@ static void sctk_network_connect_on_demand_ptl ( struct sctk_rail_info_s * rail 
 
 /**
  * Handle incoming messages, flagged as control_messages.
+ * Portals does not need (for now) to handle rail-specific control-messages.
  * \param[in] rail the rail owner
  * \param[in] source_process the process that requested the CM
  * \param[in] source_rank the task requesting the CM (can be -1 if not a MPI task)

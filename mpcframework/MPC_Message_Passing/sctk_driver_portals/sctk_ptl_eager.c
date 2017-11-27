@@ -4,6 +4,9 @@
 #include "sctk_ptl_eager.h"
 #include "sctk_net_tools.h"
 
+/**
+ * Function to release the allocated message from the network.
+ */
 void sctk_ptl_eager_free_memory(void* msg)
 {
 	sctk_free(msg);
@@ -22,15 +25,16 @@ void sctk_ptl_eager_message_copy(sctk_message_to_copy_t* msg)
 	
 	/* We ensure data are already stored in the user buffer (zero-copy) only if the two condition are met:
 	 *  1 - The message is a contiguous one (the locally-posted request is contiguous, the network request
-	 *      is always contiguous).
+	 *      is always contiguous). This is notified by the 'copy' field true in the recv msdg.
 	 *  2 - The recv has been posted before the network message arrived. This means that Portals directly
-	 *      matched the request with a PRIORITY_LIST ME.
+	 *      matched the request with a PRIORITY_LIST ME. This is notified by the 'copy' field true 
+	 *      in the 'send' msg.
 	 */
 	if(msg->msg_send->tail.ptl.copy || msg->msg_recv->tail.ptl.copy)
 	{
 		/* here, we have to copy the message from the network buffer to the user buffer */
 		sctk_net_message_copy_from_buffer(send_data->slot.me.start, msg, 0);
-		sctk_free(send_data->slot.me.start);
+		/*sctk_ptl_me_free(send_data, msg->msg_send->tail.ptl.copy);*/
 	}
 	else
 	{
@@ -80,7 +84,9 @@ void sctk_ptl_eager_recv_message(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 	SCTK_MSG_SIZE_SET            ( net_msg ,  ev.mlength);
 	SCTK_MSG_COMPLETION_FLAG_SET ( net_msg ,  NULL);
 
-	/* save the Portals context in the tail */
+	/* save the Portals context in the tail
+	 * Whatever the origin, the user_ptr here is the one attached to the PRIORITY one
+	 */
 	net_msg->tail.ptl.user_ptr = (sctk_ptl_local_data_t*)ev.user_ptr;
 
 	/* this value let us know if the message reached the OVERFLOW_LIST before being matched to the PRIORITY_LIST
@@ -88,6 +94,7 @@ void sctk_ptl_eager_recv_message(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 	 * Thus, we can know if some data need to be freed when the msg will complete
 	 */
 	net_msg->tail.ptl.copy = (net_msg->tail.ptl.user_ptr->slot.me.start != ev.start);
+
 	/* We don't need to save the old ME start value, as it points to the user buffer and this info
 	 * can be retrieved through the msg itself. We have to store where Portals effectively put the data.
 	 * By convenience, it uses the same attribute.
@@ -137,14 +144,14 @@ void sctk_ptl_eager_send_message(sctk_thread_ptp_message_t* msg, sctk_endpoint_t
 	}
 
 	/* prepare the Put() MD */
-	size            = SCTK_MSG_SIZE(msg);
-	flags           = SCTK_PTL_MD_PUT_FLAGS;
-	match.data.tag  = SCTK_MSG_TAG(msg);
-	match.data.rank = SCTK_MSG_SRC_PROCESS(msg);
-	match.data.uid  = SCTK_MSG_NUMBER(msg);
-	pte             = SCTK_PTL_PTE_ENTRY(srail->pt_table, SCTK_MSG_COMMUNICATOR(msg));
-	remote          = infos->dest;
-	request         = sctk_ptl_md_create(srail, start, size, flags);
+	size                   = SCTK_MSG_SIZE(msg);
+	flags                  = SCTK_PTL_MD_PUT_FLAGS;
+	match.data.tag         = SCTK_MSG_TAG(msg);
+	match.data.rank        = SCTK_MSG_SRC_PROCESS(msg);
+	match.data.uid         = SCTK_MSG_NUMBER(msg);
+	pte                    = SCTK_PTL_PTE_ENTRY(srail->pt_table, SCTK_MSG_COMMUNICATOR(msg));
+	remote                 = infos->dest;
+	request                = sctk_ptl_md_create(srail, start, size, flags);
 
 	sctk_assert(request);
 	sctk_assert(pte);
@@ -152,6 +159,8 @@ void sctk_ptl_eager_send_message(sctk_thread_ptp_message_t* msg, sctk_endpoint_t
 	/* double-linking */
 	request->msg           = msg;
 	msg->tail.ptl.user_ptr = request;
+	
+	/* for eager, build the immediate data, contained in Put() request */
 	hdr.eager.datatype     = SCTK_MSG_SPECIFIC_CLASS(msg);
 
 	/* emit the request */
