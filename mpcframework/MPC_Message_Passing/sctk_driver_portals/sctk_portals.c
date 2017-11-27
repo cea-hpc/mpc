@@ -45,6 +45,11 @@ static void sctk_network_send_message_endpoint_ptl ( sctk_thread_ptp_message_t *
 
 static void sctk_network_notify_recv_message_ptl ( sctk_thread_ptp_message_t *msg, sctk_rail_info_t *rail )
 {
+	if(sctk_message_class_is_control_message(SCTK_MSG_SPECIFIC_CLASS(msg)))
+	{
+		/* no need to handle recv-posted CM */
+		return;
+	}
 	sctk_ptl_notify_recv(msg, rail);
 }
 

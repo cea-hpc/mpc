@@ -124,6 +124,7 @@
 						<name>portals_mpi</name>
 						<priority>6</priority>
 						<ondemand>1</ondemand>
+						<rdma>1</rdma>
 						<config>portals_config</config>
 					</rail>
 

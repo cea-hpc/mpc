@@ -167,7 +167,7 @@ void sctk_ptl_eqs_poll(sctk_rail_info_t* rail, int threshold)
 
 		if(ret == PTL_OK)
 		{
-			sctk_debug("PORTALS: EQS EVENT '%s' idx=%d, match=%s from %s, sz=%llu)!", sctk_ptl_event_decode(ev), ev.pt_index, __sctk_ptl_match_str(malloc(32), 32, ev.match_bits), SCTK_PTL_STR_LIST(((sctk_ptl_local_data_t*)ev.user_ptr)->list), ev.mlength);
+			sctk_info("PORTALS: EQS EVENT '%s' idx=%d, match=%s from %s, sz=%llu)!", sctk_ptl_event_decode(ev), ev.pt_index, __sctk_ptl_match_str(malloc(32), 32, ev.match_bits), SCTK_PTL_STR_LIST(((sctk_ptl_local_data_t*)ev.user_ptr)->list), ev.mlength);
 			/* we only consider Portals-succeded events */
 			if(ev.ni_fail_type != PTL_NI_OK) sctk_fatal("Failed targeted event !!");
 			switch(ev.type)
@@ -213,7 +213,9 @@ void sctk_ptl_eqs_poll(sctk_rail_info_t* rail, int threshold)
 						}
 						else if(ev.pt_index == SCTK_PTL_PTE_CM) /* Control message */
 						{
-							sctk_ptl_cm_recv_message(srail, ev);
+							sctk_ptl_pte_t fake = (sctk_ptl_pte_t){.idx = ev.pt_index};
+							sctk_ptl_me_feed(srail,  &fake,  srail->eager_limit, 1, SCTK_PTL_PRIORITY_LIST);
+							sctk_ptl_cm_recv_message(rail, ev);
 							break;
 						}
 						not_reachable();
@@ -283,7 +285,7 @@ void sctk_ptl_mds_poll(sctk_rail_info_t* rail, int threshold)
 			sctk_assert(user_ptr != NULL);
 			sctk_assert(msg != NULL);
 			sctk_assert(msg->tail.ptl.user_ptr == user_ptr);
-			sctk_debug("PORTALS: ASYNC MD '%s' from %s",sctk_ptl_event_decode(ev), SCTK_PTL_STR_LIST(ev.ptl_list));
+			sctk_info("PORTALS: ASYNC MD '%s' from %s",sctk_ptl_event_decode(ev), SCTK_PTL_STR_LIST(ev.ptl_list));
 			/* we only care about Portals-sucess events */
 			if(ev.ni_fail_type != PTL_NI_OK) sctk_fatal("Failed event %d: %d!", ev.type, ev.ni_fail_type);
 			switch(ev.type)
@@ -300,6 +302,8 @@ void sctk_ptl_mds_poll(sctk_rail_info_t* rail, int threshold)
 					 */
 					if(sctk_message_class_is_control_message(SCTK_MSG_SPECIFIC_CLASS(msg))) /* Control message */
 					{
+						sctk_complete_and_free_message((sctk_thread_ptp_message_t*)user_ptr->msg);
+						sctk_ptl_md_release(user_ptr);
 						break;
 					}
 					else if(SCTK_MSG_COMMUNICATOR(msg) != SCTK_ANY_COMM) /* 'normal header */
