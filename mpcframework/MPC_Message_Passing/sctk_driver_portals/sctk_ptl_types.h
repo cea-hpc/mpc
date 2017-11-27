@@ -21,7 +21,7 @@
 /* MEs */
 #define sctk_ptl_meh_t ptl_handle_me_t
 #define sctk_ptl_me_t ptl_me_t
-#define SCTK_PTL_ME_FLAGS PTL_ME_EVENT_LINK_DISABLE | PTL_ME_USE_ONCE
+#define SCTK_PTL_ME_FLAGS PTL_ME_EVENT_LINK_DISABLE | PTL_ME_USE_ONCE | PTL_ME_EVENT_UNLINK_DISABLE
 #define SCTK_PTL_ME_PUT_FLAGS SCTK_PTL_ME_FLAGS | PTL_ME_OP_PUT
 #define SCTK_PTL_ME_GET_FLAGS SCTK_PTL_ME_FLAGS | PTL_ME_OP_GET
 #define SCTK_PTL_ME_OVERFLOW_FLAGS SCTK_PTL_ME_PUT_FLAGS
@@ -35,7 +35,7 @@
 /* MDs */
 #define sctk_ptl_mdh_t ptl_handle_md_t
 #define sctk_ptl_md_t ptl_md_t
-#define SCTK_PTL_MD_FLAGS 0
+#define SCTK_PTL_MD_FLAGS PTL_MD_EVENT_SEND_DISABLE
 #define SCTK_PTL_MD_PUT_FLAGS SCTK_PTL_MD_FLAGS
 #define SCTK_PTL_MD_GET_FLAGS SCTK_PTL_MD_FLAGS
 
@@ -81,6 +81,38 @@ typedef union sctk_ptl_matchbits_t
 	ptl_match_bits_t raw;
 	struct sctk_ptl_bits_content_s data;
 } sctk_ptl_matchbits_t;
+
+
+/* sized to 64 bits */
+typedef struct sctk_ptl_eager_data_s
+{
+	int datatype;
+	char pad[4];
+} sctk_ptl_eager_data_t;
+
+/* please look at sctk_control_messages.c for updating this struct */
+typedef struct sctk_ptl_cm_data_s
+{
+	char type;
+	char subtype;
+	char param;
+	char rail_id;
+	char pad[4];
+} sctk_ptl_cm_data_t;
+
+typedef struct sctk_ptl_rdv_data_s
+{
+	int datatype;
+	char pad[4];
+} sctk_ptl_rdv_data_t;
+
+typedef union sctk_ptl_imm_data_s
+{
+	uint64_t raw;
+	struct sctk_ptl_cm_data_s cm;
+	struct sctk_ptl_eager_data_s eager;
+	struct sctk_ptl_rdv_data_s rdv;
+} sctk_ptl_imm_data_t;
 
 typedef struct sctk_ptl_pte_s
 {

@@ -155,7 +155,7 @@ void sctk_ptl_eqs_poll(sctk_rail_info_t* rail, int threshold)
 	int ret, max = 0;
 	while(max++ < threshold && i < size)
 	{
-		cur_pte = SCTK_PTL_PTE_ENTRY(srail->pt_table, ((i++)%size));
+		cur_pte = MPCHT_get(&srail->pt_table, ((i++)%size));
 		if(!cur_pte)
 		{
 			/* current PTE is empty, try the next one */
@@ -184,7 +184,7 @@ void sctk_ptl_eqs_poll(sctk_rail_info_t* rail, int threshold)
 					if(user_ptr->list == SCTK_PTL_OVERFLOW_LIST)
 					{
 					sctk_ptl_pte_t fake = (sctk_ptl_pte_t){.idx = ev.pt_index};
-					sctk_ptl_me_feed_overflow(srail,  &fake,  srail->eager_limit, 1);
+					sctk_ptl_me_feed(srail,  &fake,  srail->eager_limit, 1, SCTK_PTL_OVERFLOW_LIST);
 						break;
 					}
 					/* Multiple scenario can trigger this event:
@@ -311,13 +311,13 @@ void sctk_ptl_mds_poll(sctk_rail_info_t* rail, int threshold)
 							 * the user buffer has been copied in a temporary one 
 							 * and need to be freed (ex: non-contiguous request
 							 */
-							sctk_ptl_md_release(user_ptr);
 							if(msg->tail.ptl.copy)
 							{
 								sctk_free(user_ptr->slot.md.start);
 							}
 							/* tag the message as completed */
 							sctk_complete_and_free_message((sctk_thread_ptp_message_t*)user_ptr->msg);
+							sctk_ptl_md_release(user_ptr);
 						}
 						else
 						{
@@ -477,7 +477,6 @@ void sctk_ptl_comm_register(sctk_ptl_rail_info_t* srail, int comm_idx, size_t co
 	{
 		sctk_ptl_pte_t* new_entry = sctk_malloc(sizeof(sctk_ptl_pte_t));
 		sctk_ptl_pte_create(srail, new_entry, comm_idx + SCTK_PTL_PTE_HIDDEN);
-		sctk_warning("PORTALS: register comm %d (size: %d)", comm_idx, comm_size);
 
 	}
 }
@@ -490,9 +489,8 @@ void sctk_ptl_init_interface(sctk_rail_info_t* rail)
 {
 	rail->network.ptl             = sctk_ptl_hardware_init();
 	rail->network.ptl.eager_limit = rail->runtime_config_driver_config->driver.value.portals.eager_limit;
-	sctk_atomics_store_int(&rail->network.ptl.nb_entries, rail->runtime_config_driver_config->driver.value.portals.min_comms);
 
-	sctk_ptl_software_init( &rail->network.ptl);
+	sctk_ptl_software_init( &rail->network.ptl, rail->runtime_config_driver_config->driver.value.portals.min_comms);
 }
 
 /**

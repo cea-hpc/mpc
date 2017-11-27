@@ -127,16 +127,42 @@ void sctk_ptl_hardware_fini(sctk_ptl_rail_info_t* srail)
  * software implementation relying on the same NI (why not?).
  * \param[in] dims PT dimensions
  */
-void sctk_ptl_software_init(sctk_ptl_rail_info_t* srail)
+void sctk_ptl_software_init(sctk_ptl_rail_info_t* srail, int comm_dims)
 {
-	size_t i, dims;
+	size_t i;
+	size_t eager_size = srail->eager_limit;
 
 	sctk_ptl_pte_t * table = NULL;
-	dims = sctk_atomics_load_int(&srail->nb_entries) + SCTK_PTL_PTE_HIDDEN;
+	comm_dims += SCTK_PTL_PTE_HIDDEN;
 
-	table = sctk_malloc(sizeof(sctk_ptl_pte_t) * dims); /* one CM, one recovery, one RDMA */
-	MPCHT_init(&srail->pt_table, (dims < 64) ? 64 : dims);
-	for (i = 0; i < dims; ++i)
+	table = sctk_malloc(sizeof(sctk_ptl_pte_t) * comm_dims); /* one CM, one recovery, one RDMA */
+	MPCHT_init(&srail->pt_table, (comm_dims < 64) ? 64 : comm_dims);
+	sctk_atomics_store_int(&srail->nb_entries, 0);
+
+	for (i = 0; i < SCTK_PTL_PTE_HIDDEN; i++)
+	{
+		/* create the EQ for this PT */
+		sctk_ptl_chk(PtlEQAlloc(
+			srail->iface,         /* the NI handler */
+			SCTK_PTL_EQ_PTE_SIZE, /* the number of slots in the EQ */
+			&table[i].eq          /* the returned handler */
+		));
+
+		/* register the PT */
+		sctk_ptl_chk(PtlPTAlloc(
+			srail->iface,       /* the NI handler */
+			SCTK_PTL_PTE_FLAGS, /* PT entry specific flags */
+			table[i].eq,        /* the EQ for this entry */
+			i,           /* the desired index value */
+			&table[i].idx       /* the effective index value */
+		));
+
+		sctk_ptl_me_feed(srail, table + i, eager_size, SCTK_PTL_ME_OVERFLOW_NB, SCTK_PTL_PRIORITY_LIST);
+		MPCHT_set(&srail->pt_table, i, table + i);
+		sctk_error("HT: Add data to %lu", i);
+	}
+
+	for (i = SCTK_PTL_PTE_HIDDEN; i < comm_dims; ++i)
 	{
 		sctk_ptl_pte_create(srail, table + i, i);
 	}
@@ -172,10 +198,10 @@ void sctk_ptl_pte_create(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte, size_
 		&pte->idx       /* the effective index value */
 	));
 
-	sctk_ptl_me_feed_overflow(srail, pte, eager_size, SCTK_PTL_ME_OVERFLOW_NB);
+	sctk_ptl_me_feed(srail, pte, eager_size, SCTK_PTL_ME_OVERFLOW_NB, SCTK_PTL_OVERFLOW_LIST);
 
 	MPCHT_set(&srail->pt_table, key, pte);
-	sctk_error("Create PTE IDX %d", key);
+	sctk_error("HT: Add data to %lu", key);
 	sctk_atomics_incr_int(&srail->nb_entries);
 }
 
@@ -375,9 +401,11 @@ sctk_ptl_id_t sctk_ptl_self(sctk_ptl_rail_info_t* srail)
  * \param[in] size the ME size
  * \param[in] nb numberof ME to add
  */
-void sctk_ptl_me_feed_overflow(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte, size_t me_size, int nb)
+void sctk_ptl_me_feed(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte, size_t me_size, int nb, int list)
 {
 	int j;
+
+	sctk_assert(list == SCTK_PTL_PRIORITY_LIST || list == SCTK_PTL_OVERFLOW_LIST);
 	for (j = 0; j < nb; j++)
 	{
 		void* buf = sctk_malloc(me_size);
@@ -389,10 +417,9 @@ void sctk_ptl_me_feed_overflow(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte,
 				SCTK_PTL_ANY_PROCESS, /* targetable by any process */
 				SCTK_PTL_MATCH_INIT, /* we don't care the match_bits */ 
 				SCTK_PTL_IGN_ALL, /* triggers all requestss */
-				SCTK_PTL_ME_OVERFLOW_FLAGS /* OVERFLOW-specifics flags */
-				);
+				(list == SCTK_PTL_PRIORITY_LIST) ? SCTK_PTL_ME_PUT_FLAGS : SCTK_PTL_ME_OVERFLOW_FLAGS);
 		user->msg = NULL;
-		user->list = SCTK_PTL_OVERFLOW_LIST;
+		user->list = list;
 
 		sctk_ptl_me_register(srail, user, pte);
 	}

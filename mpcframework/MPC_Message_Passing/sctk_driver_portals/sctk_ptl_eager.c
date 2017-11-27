@@ -76,7 +76,7 @@ void sctk_ptl_eager_recv_message(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 	SCTK_MSG_TAG_SET             ( net_msg ,  match.data.tag);
 	SCTK_MSG_NUMBER_SET          ( net_msg ,  match.data.uid);
 	SCTK_MSG_MATCH_SET           ( net_msg ,  0);
-	SCTK_MSG_SPECIFIC_CLASS_SET  ( net_msg ,  ev.hdr_data);
+	SCTK_MSG_SPECIFIC_CLASS_SET  ( net_msg ,  ((sctk_ptl_imm_data_t)ev.hdr_data).eager.datatype);
 	SCTK_MSG_SIZE_SET            ( net_msg ,  ev.mlength);
 	SCTK_MSG_COMPLETION_FLAG_SET ( net_msg ,  NULL);
 
@@ -120,6 +120,7 @@ void sctk_ptl_eager_send_message(sctk_thread_ptp_message_t* msg, sctk_endpoint_t
 	sctk_ptl_pte_t* pte            = NULL;
 	sctk_ptl_id_t remote           = SCTK_PTL_ANY_PROCESS;
 	sctk_ptl_route_info_t* infos   = &endpoint->data.ptl;
+	sctk_ptl_imm_data_t hdr;
 
 	/* if the message is non-contiguous, we need a copy to 'pack' it first */
 	if(msg->tail.message_type == SCTK_MESSAGE_CONTIGUOUS)
@@ -151,10 +152,11 @@ void sctk_ptl_eager_send_message(sctk_thread_ptp_message_t* msg, sctk_endpoint_t
 	/* double-linking */
 	request->msg           = msg;
 	msg->tail.ptl.user_ptr = request;
+	hdr.eager.datatype     = SCTK_MSG_SPECIFIC_CLASS(msg);
 
 	/* emit the request */
 	sctk_ptl_md_register(srail, request);
-	sctk_ptl_emit_put(request, size, remote, pte, match, 0, 0, SCTK_MSG_SPECIFIC_CLASS(msg));
+	sctk_ptl_emit_put(request, size, remote, pte, match, 0, 0, hdr.raw);
 	
 	sctk_debug("PORTALS: SEND-EAGER to %d (idx=%d, match=%s, sz=%llu)", SCTK_MSG_DEST_TASK(msg), pte->idx, __sctk_ptl_match_str(malloc(32), 32, match.raw), size);
 }
