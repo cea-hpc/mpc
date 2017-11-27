@@ -2375,6 +2375,7 @@ sctk_communicator_t sctk_duplicate_communicator ( const sctk_communicator_t orig
 
 		sctk_nodebug ( "new id DUP INTRA for rank %d, local_root %d, has_zero %d", rank, local_root, tmp->has_zero );
 		new_tmp->id = sctk_communicator_get_new_id ( local_root, rank, origin_communicator, new_tmp );
+		sctk_network_notify_new_communicator(new_tmp->id, new_tmp->nb_task);
 
 		sctk_get_internal_communicator ( new_tmp->id );
 		assume ( new_tmp->id >= 0 );
@@ -2522,6 +2523,7 @@ sctk_communicator_t sctk_duplicate_communicator ( const sctk_communicator_t orig
 
 		sctk_nodebug ( "new id DUP INTER for rank %d, local_root %d, has_zero %d", rank, local_root, tmp->has_zero );
 		new_tmp->id = sctk_communicator_get_new_id_from_intercomm ( local_root, rank, local_leader, remote_leader, origin_communicator, new_tmp );
+		sctk_network_notify_new_communicator(new_tmp->id, new_tmp->nb_task);
 		sctk_nodebug ( "comm %d duplicated =============> (%d - %d)", origin_communicator, new_tmp->id, new_tmp->id );
 		sctk_get_internal_communicator ( new_tmp->id );
 		assume ( new_tmp->id >= 0 );
@@ -2844,6 +2846,7 @@ sctk_communicator_t sctk_create_intercommunicator ( const sctk_communicator_t lo
 	sctk_get_internal_communicator ( comm );
 	assume ( comm >= 0 );
 	sctk_collectives_init_hook ( comm );
+	sctk_network_notify_new_communicator(comm, local_size);
 
 	assume ( comm != local_comm );
 
@@ -3141,6 +3144,7 @@ sctk_communicator_t sctk_create_communicator_from_intercomm ( const sctk_communi
 	sctk_nodebug ( "new id FROM INTERCOMM for rank %d, grank %d, local_root %d, has_zero %d, tmp %p", rank, grank, local_root, tmp->has_zero, tmp );
 	/* get new id for comm */
 	comm = sctk_communicator_get_new_id_from_intercomm ( local_root, grank, local_leader, remote_leader, origin_communicator, new_tmp );
+	sctk_network_notify_new_communicator(comm, new_tmp->nb_task);
 	sctk_nodebug ( "new comm from intercomm %d", comm );
 	/* Check if the communicator has been well created */
 	sctk_get_internal_communicator ( comm );
