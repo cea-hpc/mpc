@@ -84,7 +84,6 @@ void sctk_ptl_send_message(sctk_thread_ptp_message_t* msg, sctk_endpoint_t* endp
 {
 	int process_rank            = sctk_get_process_rank();
 	sctk_ptl_rail_info_t* srail = &endpoint->rail->network.ptl;
-	int nb_entries              = sctk_atomics_load_int(&srail->nb_entries);
 
 	sctk_assert(SCTK_PTL_PTE_EXIST(srail->pt_table, SCTK_MSG_COMMUNICATOR(msg)));
 
@@ -118,15 +117,21 @@ void sctk_ptl_eqs_poll(sctk_rail_info_t* rail, int threshold)
 	sctk_ptl_local_data_t* user_ptr;
 	sctk_ptl_pte_t* cur_pte;
 
-	size_t i = 0, size = sctk_atomics_load_int(&srail->nb_entries) + SCTK_PTL_PTE_HIDDEN;
+	size_t i = 0, size = srail->nb_entries;
 	int ret, max = 0;
-	while(max++ < threshold && i < size)
+
+	sctk_assert(threshold > 0);
+	while(max++ < threshold)
 	{
-		cur_pte = MPCHT_get(&srail->pt_table, ((i++)%size));
+		do
+		{
+			cur_pte = MPCHT_get(&srail->pt_table, ((i++)%size));
+		}
+		while(!cur_pte && i < size);
 		if(!cur_pte)
 		{
-			/* current PTE is empty, try the next one */
-			continue;
+			/* no valid PTE found (after the last 'i'): stop the polling */
+			break;
 		}
 
 		ret = sctk_ptl_eq_poll_me(srail, cur_pte , &ev);
@@ -135,101 +140,52 @@ void sctk_ptl_eqs_poll(sctk_rail_info_t* rail, int threshold)
 		if(ret == PTL_OK)
 		{
 			sctk_info("PORTALS: EQS EVENT '%s' idx=%d, match=%s from %s, sz=%llu)!", sctk_ptl_event_decode(ev), ev.pt_index, __sctk_ptl_match_str(malloc(32), 32, ev.match_bits), SCTK_PTL_STR_LIST(((sctk_ptl_local_data_t*)ev.user_ptr)->list), ev.mlength);
+
+	
 			/* we only consider Portals-succeded events */
-			if(ev.ni_fail_type != PTL_NI_OK) sctk_fatal("Failed targeted event !!");
-			switch(ev.type)
+			if(ev.ni_fail_type != PTL_NI_OK) 
+				sctk_fatal("ME: Failed event %s: %d", sctk_ptl_event_decode(ev), ev.ni_fail_type);
+		
+			/* if the request consumed an unexpected slot, append a new one */
+			if(user_ptr->list == SCTK_PTL_OVERFLOW_LIST)
 			{
-				case PTL_EVENT_GET: /* a Get() reached the local process */
-					if(ev.pt_index >= SCTK_PTL_PTE_HIDDEN)
-					{
-						break;
-					}
-					else if(ev.pt_index == SCTK_PTL_PTE_RDMA)
-					{
-						/* nothing to do */
-						break;
-					}
-					not_reachable();
-					break;
-				case PTL_EVENT_GET_OVERFLOW: /* a previous received GET matched a just appended ME */
-					not_reachable();
-					break;
+				sctk_ptl_pte_t fake = (sctk_ptl_pte_t){.idx = ev.pt_index};
+				sctk_ptl_me_feed(srail,  &fake,  srail->eager_limit, 1, SCTK_PTL_OVERFLOW_LIST);
+				continue;
+			}
 
-				case PTL_EVENT_PUT_OVERFLOW: /* a previous received PUT matched a just appended ME */
-				case PTL_EVENT_PUT: /* a Put() reached the local process */
-					/* we don't care about unexpected messaged reaching the OVERFLOW_LIST, we will just wait for their local counter-part */
-					if(user_ptr->list == SCTK_PTL_OVERFLOW_LIST)
-					{
-						sctk_ptl_pte_t fake = (sctk_ptl_pte_t){.idx = ev.pt_index};
-						sctk_ptl_me_feed(srail,  &fake,  srail->eager_limit, 1, SCTK_PTL_OVERFLOW_LIST);
+			/* Now, handle the event depending on its type:
+			 *  0 - SCTK_PTL_PTE_HIDDEN : internal entries (RECOVERY, RDMA or CM
+			 *  SCTK_PTL_PTE_HIDDEN - N : MPI messages entries
+			 */
+			if(ev.pt_index >= SCTK_PTL_PTE_HIDDEN) /* normal message */
+			{
+				/* ev.rlength is the size as requested by the remote */
+				if(ev.rlength < rail->network.ptl.eager_limit)
+				{
+					sctk_ptl_eager_event_me(rail, ev);
+				}
+				else
+				{
+					sctk_ptl_rdv_event_me(rail, ev);
+				}
+			}
+			else /* internal msg */
+			{
+				switch(ev.pt_index)
+				{
+					case SCTK_PTL_PTE_RDMA:
+						sctk_ptl_rdma_event_me(rail, ev);
 						break;
-					}
-					/* Multiple scenario can trigger this event:
-					 *  1 - An incoming header put() (RDV or eager)
-					 *  2 - an incoming RDMA request
-					 *  3 - an incoming CM request
-					 *  4 - an incoming FLOW_CTRL request
-					 *  Selection is done depending on the target PTE.
-					 */
-					/* indexes from 0 to SCTK_PTL_PTE_HIDDEN-1 maps RECOVERY, CM & RDMA queues
-					 * indexes from SCTK_PTL_PTE_HIDDEN to N maps communicators
-					 */
-					if(ev.pt_index >= SCTK_PTL_PTE_HIDDEN) /* 'normal header */
-					{
-						/* ev.rlength is the size as requested by the remote */
-						if(ev.rlength < rail->network.ptl.eager_limit)
-						{
-							sctk_ptl_eager_recv_message(rail, ev);
-						}
-						else
-						{
-							sctk_ptl_rdv_recv_message(rail, ev);
-						}
+					case SCTK_PTL_PTE_CM:
+						sctk_ptl_cm_event_me(rail, ev);
 						break;
-					}
-					else if(ev.pt_index == SCTK_PTL_PTE_CM) /* Control message */
-					{
-						sctk_ptl_pte_t fake = (sctk_ptl_pte_t){.idx = ev.pt_index};
-						sctk_ptl_me_feed(srail,  &fake,  srail->eager_limit, 1, SCTK_PTL_PRIORITY_LIST);
-						sctk_ptl_cm_recv_message(rail, ev);
+					case SCTK_PTL_PTE_RECOVERY:
+						not_implemented();
 						break;
-					}
-					else if(ev.pt_index == SCTK_PTL_PTE_RDMA)
-					{
-						/* Nothing to do */
-						break;
-					}
-					not_reachable();
-
-				case PTL_EVENT_ATOMIC: /* an Atomic() reached the local process */
-					assume(ev.pt_index == SCTK_PTL_PTE_RDMA); /* RDMA */
-					not_implemented();
-					break;
-				case PTL_EVENT_ATOMIC_OVERFLOW: /* a previously received ATOMIC matched a just appended one */
-					not_implemented();
-					break;
-
-				case PTL_EVENT_FETCH_ATOMIC: /* a FetchAtomic() reached the local process */
-					assume(ev.pt_index == SCTK_PTL_PTE_RDMA); /* RDMA */
-					not_implemented();
-					break;
-
-				case PTL_EVENT_FETCH_ATOMIC_OVERFLOW: /* a previously received FETCH-ATOMIC matched a just appended one */
-					not_implemented();
-					break;
-				case PTL_EVENT_PT_DISABLED: /* ERROR: The local PTE is disabeld (FLOW_CTRL) */
-					break;
-				case PTL_EVENT_SEARCH: /* a PtlMESearch completed */
-					/* probably nothing to do here */
-					break;
-				case PTL_EVENT_LINK: /* MISC: A new ME has been linked, (maybe not useful) */
-				case PTL_EVENT_AUTO_UNLINK: /* an USE_ONCE ME has been automatically unlinked */
-				case PTL_EVENT_AUTO_FREE: /* an USE_ONCE ME can be now reused */
-					not_reachable(); /* have been disabled */
-					break;
-				default:
-					sctk_fatal("Portals ME event not recognized: %d", ev.type);
-					break;
+					default:
+						not_reachable();
+				}
 			}
 		}
 	}
@@ -254,85 +210,42 @@ void sctk_ptl_mds_poll(sctk_rail_info_t* rail, int threshold)
 		if(ret == PTL_OK)
 		{
 			user_ptr = (sctk_ptl_local_data_t*)ev.user_ptr;
-			msg = (sctk_thread_ptp_message_t*) user_ptr->msg;
 			sctk_assert(user_ptr != NULL);
-			sctk_assert(msg != NULL);
-			sctk_assert(msg->tail.ptl.user_ptr == user_ptr);
 			sctk_info("PORTALS: ASYNC MD '%s' from %s",sctk_ptl_event_decode(ev), SCTK_PTL_STR_LIST(ev.ptl_list));
 			/* we only care about Portals-sucess events */
-			if(ev.ni_fail_type != PTL_NI_OK) sctk_fatal("Failed event %d: %d!", ev.type, ev.ni_fail_type);
-			switch(ev.type)
-			{
-				case PTL_EVENT_ACK: /* a Put() reached the remote process (don't mean it suceeded !) */
-					/* Here, it depends on message type (in case of success) 
-					 *   1 - it is a "normal" message" --> RDV || eager ?
-					 *   2 - it is a routing CM --> forward the put() (OD ?)
-					 *   3 - It is a RDMA message --> nothing to do (probably)
-					 *   4 - it is a recovery (flow-control) message
-					 */
-					if(SCTK_MSG_SPECIFIC_CLASS(msg) == SCTK_RDMA_MESSAGE) /* RDMA */
-					{
-						sctk_complete_and_free_message(msg);
-						break;
-					}
-					else if(sctk_message_class_is_control_message(SCTK_MSG_SPECIFIC_CLASS(msg))) /* Control message */
-					{
-						sctk_complete_and_free_message(msg);
-						sctk_ptl_md_release(user_ptr);
-						break;
-					}
-					else if(SCTK_MSG_COMMUNICATOR(msg) != SCTK_ANY_COMM) /* 'normal header */
-					{
-						
-						/* was the msg a eager one ? */
-						if(SCTK_MSG_SIZE(msg) < rail->network.ptl.eager_limit)
-						{
-							/* In case of MD request, this attribute means that
-							 * the user buffer has been copied in a temporary one 
-							 * and need to be freed (ex: non-contiguous request
-							 */
-							if(msg->tail.ptl.copy)
-							{
-								sctk_free(user_ptr->slot.md.start);
-							}
-							/* tag the message as completed */
-							sctk_complete_and_free_message(msg);
-							sctk_ptl_md_release(user_ptr);
-						}
-						else
-						{
-							/* it is a RDV msg, we wait for the remote Get().
-							 * Probably nothing to do.
-							 */
-						}
-						
-						break;
-					}
-					not_reachable();
-				case PTL_EVENT_REPLY: /* a Get() reply reached the local process */
-					/* It depends on the message type (=Portals entry)
-					 *   1 - it is a "normal" message --> RDV: complete_and_free
-					 *   2 - it is a RDMA message --> just complete the msg
-					 *   3 - A CM could be big enough to ben send through RDV protocool ?
-					 */
-					if(SCTK_MSG_SPECIFIC_CLASS(msg) == SCTK_RDMA_MESSAGE) /* RDMA */
-					{
-						sctk_complete_and_free_message(msg);
-						break;
-					}
-					else if(SCTK_MSG_COMMUNICATOR(msg) != SCTK_ANY_COMM) /* 'normal header */
-					{
-						break;
-					}
-					not_reachable();
-				case PTL_EVENT_SEND: /* a Put() left the local process: should be disabled */
-					not_reachable();
-					break;
-				default:
-					sctk_fatal("Unrecognized MD event: %d", ev.type);
-					break;
-			}
+			if(ev.ni_fail_type != PTL_NI_OK)
+				sctk_fatal("MD: Failed event %s: %d", sctk_ptl_event_decode(ev), ev.ni_fail_type);
 
+
+			if(user_ptr->pt_idx >= SCTK_PTL_PTE_HIDDEN)
+			{
+				/* ev.rlength is the size as requested by the remote */
+				if(ev.mlength < rail->network.ptl.eager_limit)
+				{
+					sctk_ptl_eager_event_md(rail, ev);
+				}
+				else
+				{
+					sctk_ptl_rdv_event_md(rail, ev);
+				}
+			}
+			else /* internal msg */
+			{
+				switch(user_ptr->pt_idx)
+				{
+					case SCTK_PTL_PTE_RDMA:
+						sctk_ptl_rdma_event_md(rail, ev);
+						break;
+					case SCTK_PTL_PTE_CM:
+						sctk_ptl_cm_event_md(rail, ev);
+						break;
+					case SCTK_PTL_PTE_RECOVERY:
+						not_implemented();
+						break;
+					default:
+						not_reachable();
+				}
+			}
 		}
 	}
 }
@@ -464,7 +377,6 @@ void sctk_ptl_comm_register(sctk_ptl_rail_info_t* srail, int comm_idx, size_t co
 	{
 		sctk_ptl_pte_t* new_entry = sctk_malloc(sizeof(sctk_ptl_pte_t));
 		sctk_ptl_pte_create(srail, new_entry, comm_idx + SCTK_PTL_PTE_HIDDEN);
-
 	}
 }
 

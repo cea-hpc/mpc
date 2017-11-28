@@ -22,7 +22,7 @@ void sctk_ptl_rdv_message_copy(sctk_message_to_copy_t* msg)
 	not_implemented();
 }
 
-void sctk_ptl_rdv_recv_message(sctk_rail_info_t* srail, sctk_ptl_event_t ev)
+static inline void sctk_ptl_rdv_recv_message(sctk_rail_info_t* srail, sctk_ptl_event_t ev)
 {
 	not_implemented();
 }
@@ -82,6 +82,8 @@ void sctk_ptl_rdv_send_message(sctk_thread_ptp_message_t* msg, sctk_endpoint_t* 
 	/* double-linking */
 	md_request->msg        = msg;
 	me_request->msg        = msg;
+	md_request->pt_idx     = pte->idx;
+	me_request->pt_idx     = pte->idx;
 	msg->tail.ptl.user_ptr = md_request;
 	hdr.rdv.datatype       = SCTK_MSG_SPECIFIC_CLASS(msg);
 
@@ -181,6 +183,57 @@ void sctk_ptl_rdv_notify_recv(sctk_thread_ptp_message_t* msg, sctk_ptl_rail_info
 
 	/* this should be the last operation, to optimize the triggeredOps use */
 	sctk_ptl_me_register(srail, put_request, pte);
+}
+
+void sctk_ptl_rdv_event_me(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
+{
+	switch(ev.type)
+	{
+		case PTL_EVENT_PUT_OVERFLOW: /* a previous received PUT matched a just appended ME */
+		case PTL_EVENT_PUT: /* a Put() reached the local process */
+			/* we don't care about unexpected messaged reaching the OVERFLOW_LIST, we will just wait for their local counter-part */
+			/* indexes from 0 to SCTK_PTL_PTE_HIDDEN-1 maps RECOVERY, CM & RDMA queues
+			 * indexes from SCTK_PTL_PTE_HIDDEN to N maps communicators
+			 */
+			sctk_ptl_rdv_recv_message(rail, ev);
+			break;
+
+		case PTL_EVENT_GET: /* a Get() reached the local process */
+		case PTL_EVENT_GET_OVERFLOW: /* a previous received GET matched a just appended ME */
+			break;
+		case PTL_EVENT_ATOMIC: /* an Atomic() reached the local process */
+		case PTL_EVENT_ATOMIC_OVERFLOW: /* a previously received ATOMIC matched a just appended one */
+		case PTL_EVENT_FETCH_ATOMIC: /* a FetchAtomic() reached the local process */
+		case PTL_EVENT_FETCH_ATOMIC_OVERFLOW: /* a previously received FETCH-ATOMIC matched a just appended one */
+		case PTL_EVENT_PT_DISABLED: /* ERROR: The local PTE is disabeld (FLOW_CTRL) */
+		case PTL_EVENT_SEARCH: /* a PtlMESearch completed */
+			/* probably nothing to do here */
+		case PTL_EVENT_LINK: /* MISC: A new ME has been linked, (maybe not useful) */
+		case PTL_EVENT_AUTO_UNLINK: /* an USE_ONCE ME has been automatically unlinked */
+		case PTL_EVENT_AUTO_FREE: /* an USE_ONCE ME can be now reused */
+			not_reachable(); /* have been disabled */
+			break;
+		default:
+			sctk_fatal("Portals ME event not recognized: %d", ev.type);
+			break;
+	}
+}
+
+void sctk_ptl_rdv_event_md(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
+{
+	switch(ev.type)
+	{
+		case PTL_EVENT_ACK:
+		case PTL_EVENT_REPLY:
+			
+			break;
+		case PTL_EVENT_SEND:
+			not_reachable();
+		default:
+			sctk_fatal("Unrecognized MD event: %d", ev.type);
+			break;
+
+	}
 }
 
 #endif

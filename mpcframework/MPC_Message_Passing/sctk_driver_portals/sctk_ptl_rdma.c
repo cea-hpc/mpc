@@ -199,9 +199,10 @@ void sctk_ptl_rdma_write(sctk_rail_info_t *rail, sctk_thread_ptp_message_t *msg,
 	remote_off = dest_addr - remote_start;
 
 	/* this is dirty: see comments in sctk_ptl_pin_region() */
-	copy = sctk_malloc(sizeof(sctk_ptl_local_data_t));
-	*copy = *local_key->pin.ptl.md_data;
-	copy->msg = msg;
+	copy                   = sctk_malloc(sizeof(sctk_ptl_local_data_t));
+	*copy                  = *local_key->pin.ptl.md_data;
+	copy->msg              = msg;
+	copy->pt_idx           = rdma_pte->idx;
 	msg->tail.ptl.user_ptr = copy;
 	
 	sctk_ptl_emit_put(
@@ -255,9 +256,10 @@ void sctk_ptl_rdma_read(sctk_rail_info_t *rail, sctk_thread_ptp_message_t *msg,
 	remote_off = src_addr  - remote_start;
 
 	/* this is dirty: please read comments in sctk_ptl_pin_region() */
-	copy = sctk_malloc(sizeof(sctk_ptl_local_data_t));
-	*copy = *local_key->pin.ptl.md_data;
-	copy->msg = msg;
+	copy                   = sctk_malloc(sizeof(sctk_ptl_local_data_t));
+	*copy                  = *local_key->pin.ptl.md_data;
+	copy->msg              = msg;
+	copy->pt_idx           = rdma_pte->idx;
 	msg->tail.ptl.user_ptr = copy;
 
 	sctk_ptl_emit_get(
@@ -353,4 +355,52 @@ void sctk_ptl_unpin_region( struct sctk_rail_info_s * rail, struct sctk_rail_pin
 
 	sctk_nodebug("RELEASE RDMA %p->%p", list->pin.ptl.me_data->slot.me.start, list->pin.ptl.me_data->slot.me.start + list->pin.ptl.me_data->slot.me.length);
 }
+
+void sctk_ptl_rdma_event_me(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
+{
+	sctk_ptl_pte_t fake;
+	switch(ev.type)
+	{
+		case PTL_EVENT_PUT: /* a Put() reached the local process */
+		case PTL_EVENT_GET: /* a Get() reached the local process */
+		case PTL_EVENT_ATOMIC: /* an Atomic() reached the local process */
+		case PTL_EVENT_FETCH_ATOMIC: /* a FetchAtomic() reached the local process */
+			break;
+
+		case PTL_EVENT_PUT_OVERFLOW: /* a previous received PUT matched a just appended ME */
+		case PTL_EVENT_GET_OVERFLOW: /* a previous received GET matched a just appended ME */
+		case PTL_EVENT_FETCH_ATOMIC_OVERFLOW: /* a previously received FETCH-ATOMIC matched a just appended one */
+		case PTL_EVENT_ATOMIC_OVERFLOW: /* a previously received ATOMIC matched a just appended one */
+		case PTL_EVENT_PT_DISABLED: /* ERROR: The local PTE is disabeld (FLOW_CTRL) */
+		case PTL_EVENT_SEARCH: /* a PtlMESearch completed */
+			/* probably nothing to do here */
+		case PTL_EVENT_LINK: /* MISC: A new ME has been linked, (maybe not useful) */
+		case PTL_EVENT_AUTO_UNLINK: /* an USE_ONCE ME has been automatically unlinked */
+		case PTL_EVENT_AUTO_FREE: /* an USE_ONCE ME can be now reused */
+			not_reachable(); /* have been disabled */
+			break;
+		default:
+			sctk_fatal("Portals ME event not recognized: %d", ev.type);
+			break;
+	}
+
+}
+
+void sctk_ptl_rdma_event_md(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
+{
+	sctk_thread_ptp_message_t* msg = (sctk_thread_ptp_message_t*)((sctk_ptl_local_data_t*)ev.user_ptr)->msg;
+	switch(ev.type)
+	{
+		case PTL_EVENT_ACK:
+		case PTL_EVENT_REPLY:
+			sctk_complete_and_free_message(msg);
+			break;
+		case PTL_EVENT_SEND:
+			not_reachable();
+		default:
+			sctk_fatal("Unrecognized MD event: %d", ev.type);
+			break;
+	}
+}
+
 #endif

@@ -162,6 +162,7 @@ typedef struct sctk_ptl_local_data_s
 	union sctk_ptl_slot_u slot;     /* the request (MD or ME) */
 	union sctk_ptl_slot_h_u slot_h; /* the request Handle */
 	sctk_ptl_list_t list;           /* the list the request issued from */
+	int pt_idx;                     /* the key this slot belongs to */
 	void* msg;                      /* link to the msg */
 } sctk_ptl_local_data_t;
 
@@ -210,7 +211,7 @@ typedef struct sctk_ptl_rail_info_s
 	struct MPCHT pt_table;                  /**< The PT hash table */
 
 	size_t eager_limit;                     /**< the max size for an eager msg */
-	sctk_atomics_int nb_entries;            /**< current number of PT entries dedicated to comms */
+	size_t nb_entries;                      /**< current number of PT entries dedicated to comms */
 	sctk_atomics_int rdma_cpt;              /**< RDMA match_bits counter */
 
 	char connection_infos[MAX_STRING_SIZE]; /**< string identifying this rail over the PMI */

@@ -33,5 +33,7 @@ void sctk_ptl_rdma_read(  sctk_rail_info_t *rail, sctk_thread_ptp_message_t *msg
 /* Pinning */
 void sctk_ptl_pin_region( struct sctk_rail_info_s * rail, struct sctk_rail_pin_ctx_list * list, void * addr, size_t size );
 void sctk_ptl_unpin_region( struct sctk_rail_info_s * rail, struct sctk_rail_pin_ctx_list * list );
+void sctk_ptl_rdma_event_me(sctk_rail_info_t* rail, sctk_ptl_event_t ev);
+void sctk_ptl_rdma_event_md(sctk_rail_info_t* rail, sctk_ptl_event_t ev);
 #endif /* ifndef __SCTK_PTL_RDMA_H_ */
 #endif
