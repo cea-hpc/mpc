@@ -307,6 +307,20 @@ sctk_ptl_local_data_t* sctk_ptl_me_create(void * start, size_t size, sctk_ptl_id
 	return user_ptr;
 }
 
+sctk_ptl_local_data_t* sctk_ptl_me_create_with_cnt(sctk_ptl_rail_info_t* srail, void * start, size_t size, sctk_ptl_id_t remote, sctk_ptl_matchbits_t match, sctk_ptl_matchbits_t ign, int flags )
+{
+	sctk_ptl_local_data_t* ret; 
+	
+	ret = sctk_ptl_me_create(start, size, remote, match, ign, flags);
+
+	sctk_ptl_chk(PtlCTAlloc(
+		srail->iface,
+		&ret->slot.me.ct_handle
+	));
+
+	return ret;
+}
+
 /**
  * Register a memory entry to the specific PTE.
  *
@@ -483,6 +497,8 @@ int sctk_ptl_emit_get(sctk_ptl_local_data_t* user, size_t size, sctk_ptl_id_t re
 	return PTL_OK;
 }
 
+
+
 /**
  * Emit a PTL Put() request.
  * \param[in] user the preset request, associated to a MD slot
@@ -586,4 +602,44 @@ int sctk_ptl_emit_fetch_atomic(sctk_ptl_local_data_t* get_user, sctk_ptl_local_d
 
 	return PTL_OK;
 }
+
+/**
+ * Same as Get(), but will be hardware-triggered when 'cnt' reaches the set threshold.
+ *
+ * \param[in] user the preset request, associated to a MD slot
+ * \param[in] size the length (in bytes) targeted by the request
+ * \param[in] remote the remote ID
+ * \param[in] pte the PT entry to target remotely (all processes init the table in the same order)
+ * \param[in] match the match_bits
+ * \param[in] local_off the offset in the local buffer (MD)
+ * \param[in] remote_off the offset in the remote buffer (ME)
+ * \param[in] user_ptr the data to associate with the request
+ * \param[in] cnt the counter triggering the Get()
+ * \param[in] threshold the value triggering the Get()
+ * \return PTL_OK, abort() otherwise.
+ */
+int sctk_ptl_emit_triggeredGet(sctk_ptl_local_data_t* user, size_t size, sctk_ptl_id_t remote, sctk_ptl_pte_t* pte, sctk_ptl_matchbits_t match, size_t local_off, size_t remote_off, void* user_ptr, sctk_ptl_cnth_t cnt, size_t threshold)
+{
+	/** WARNING: the API provide a prototype where user_ptr & remote_off are inverted.
+	 *
+	 * It is probably a typo error in the API  but be careful if some implementation chose to 
+	 * be strict with the standard. The BXI implementation use invert them to be consistent
+	 * with Get() initial syntax
+	 */
+	sctk_ptl_chk(PtlTriggeredGet(
+		user->slot_h.mdh,
+		local_off,
+		size,
+		remote,
+		pte->idx,
+		match.raw,
+		remote_off,
+		user_ptr,
+		cnt,
+		threshold
+	));
+
+	return PTL_OK;
+}
+
 #endif

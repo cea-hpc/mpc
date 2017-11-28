@@ -46,6 +46,7 @@ void sctk_ptl_pte_create(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte, size_
 
 /* ME management */
 sctk_ptl_local_data_t* sctk_ptl_me_create(void*, size_t, sctk_ptl_id_t, sctk_ptl_matchbits_t, sctk_ptl_matchbits_t, int);
+sctk_ptl_local_data_t* sctk_ptl_me_create_with_cnt(sctk_ptl_rail_info_t* srail, void*, size_t, sctk_ptl_id_t, sctk_ptl_matchbits_t, sctk_ptl_matchbits_t, int);
 void sctk_ptl_me_register(sctk_ptl_rail_info_t* srail, sctk_ptl_local_data_t*, sctk_ptl_pte_t*);
 void sctk_ptl_me_release(sctk_ptl_local_data_t*);
 void sctk_ptl_me_free(sctk_ptl_local_data_t*, int);
@@ -77,6 +78,8 @@ int sctk_ptl_emit_swap(
 		size_t size, sctk_ptl_id_t remote, sctk_ptl_pte_t* pte, sctk_ptl_matchbits_t match,
 		size_t local_getoff, size_t local_putoff, size_t remote_off,
 		const void* cmp, sctk_ptl_rdma_type_t type);
+
+int sctk_ptl_emit_triggeredGet(sctk_ptl_local_data_t* user, size_t size, sctk_ptl_id_t remote, sctk_ptl_pte_t* pte, sctk_ptl_matchbits_t match, size_t local_off, size_t remote_off, void* user_ptr, sctk_ptl_cnth_t cnt, size_t threshold);
 
 /**************************************************************/
 /*************************** HELPERS **************************/
