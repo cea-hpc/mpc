@@ -2,12 +2,36 @@
 #include "sctk_route.h"
 #include "sctk_ptl_rdv.h"
 #include "sctk_ptl_iface.h"
+#include "sctk_net_tools.h"
+
+/**
+ * Function to release the allocated message from the network.
+ */
+void sctk_ptl_rdv_free_memory(void* msg)
+{
+	/*sctk_free(msg);*/
+	not_implemented();
+}
+
+/** What to do when a network message matched a locally posted request ?.
+ *  
+ *  \param[in,out] msg the send/recv bundle where both message headers are stored
+ */
+void sctk_ptl_rdv_message_copy(sctk_message_to_copy_t* msg)
+{
+	not_implemented();
+}
 
 void sctk_ptl_rdv_recv_message(sctk_rail_info_t* srail, sctk_ptl_event_t ev)
 {
 	not_implemented();
 }
 
+/**
+ * Send a message through the RDV protocol.
+ * \param[in] msg the msg to send
+ * \param[in] endpoint the route to use
+ */
 void sctk_ptl_rdv_send_message(sctk_thread_ptp_message_t* msg, sctk_endpoint_t* endpoint)
 {
 	sctk_ptl_rail_info_t* srail    = &endpoint->rail->network.ptl;
@@ -49,7 +73,7 @@ void sctk_ptl_rdv_send_message(sctk_thread_ptp_message_t* msg, sctk_endpoint_t* 
 	
 	/* Configure the Put() */
 	md_flags           = SCTK_PTL_MD_PUT_FLAGS;
-	md_request         = sctk_ptl_md_create(srail, NULL, 0, md_flags);
+	md_request         = sctk_ptl_md_create(srail, &srail->id, sizeof(sctk_ptl_id_t), md_flags);
 	
 	/* prepare for the Get() */
 	me_flags           = SCTK_PTL_ME_GET_FLAGS | SCTK_PTL_ONCE;
@@ -63,29 +87,100 @@ void sctk_ptl_rdv_send_message(sctk_thread_ptp_message_t* msg, sctk_endpoint_t* 
 
 	sctk_ptl_md_register(srail, md_request);
 	sctk_ptl_me_register(srail, me_request, pte);
-	sctk_ptl_emit_put(md_request, 0, remote, pte, match, 0, 0, hdr.raw, md_request); /* empty Put() */
+	sctk_ptl_emit_put(md_request, sizeof(sctk_ptl_id_t), remote, pte, match, 0, 0, hdr.raw, md_request); /* empty Put() */
 	
 	/* TODO: Need to handle the case where the data is larger than the max ME size */
 	sctk_warning("PORTALS: SEND-RDV to %d (idx=%d, match=%s, sz=%llu)", SCTK_MSG_DEST_TASK(msg), pte->idx, __sctk_ptl_match_str(malloc(32), 32, match.raw), size);
 }
 
+/**
+ * Notification from upper layer that a local RECV has been posted.
+ * \param[in] the generated msg
+ * \param[in] srail the Portals-specific rail
+ */
 void sctk_ptl_rdv_notify_recv(sctk_thread_ptp_message_t* msg, sctk_ptl_rail_info_t* srail)
 {
-	void  *start = NULL;
-	/* is the message contiguous ? Maybe we could try to get an IOVEC instead of packing ? */
-	if(msg->tail.message_type == SCTK_MESSAGE_CONTIGUOUS)
+	void  *get_start = NULL, *put_start = NULL;
+	size_t put_size, get_size;
+	sctk_ptl_matchbits_t match, ign;
+	sctk_ptl_pte_t* pte;
+	sctk_ptl_id_t remote;
+	sctk_ptl_local_data_t *put_request, *get_request;
+	int put_flags, get_flags;
+	
+	/****** INIT COMMON ATTRIBUTES ******/
+	pte             = SCTK_PTL_PTE_ENTRY(srail->pt_table, SCTK_MSG_COMMUNICATOR(msg));
+	match.data.tag  = SCTK_MSG_TAG(msg);
+	match.data.rank = SCTK_MSG_SRC_PROCESS(msg);
+	match.data.uid  = SCTK_MSG_NUMBER(msg);
+	ign.data.tag    = (match.data.tag  == SCTK_ANY_TAG)    ? SCTK_PTL_IGN_TAG  : SCTK_PTL_MATCH_TAG;
+	ign.data.rank   = (match.data.rank == SCTK_ANY_SOURCE) ? SCTK_PTL_IGN_RANK : SCTK_PTL_MATCH_RANK;
+	ign.data.uid    = SCTK_PTL_IGN_UID;
+
+	/****** FIRST, take care of the PUT operation to receive *******/
+	/***************************************************************/
+	/* complete the ME data, this ME will be appended to the PRIORITY_LIST
+	 * Here, we want a CT event attached to this ME (for triggered Op)
+	 */
+	put_flags = SCTK_PTL_ME_PUT_FLAGS | SCTK_PTL_ONCE;
+	remote    = SCTK_PTL_ANY_PROCESS;
+	put_request  = sctk_ptl_me_create_with_cnt(srail, NULL, 0, remote, match, ign, put_flags);
+
+	sctk_assert(put_request);
+	sctk_assert(pte);
+
+	put_request->msg       = msg;
+	put_request->list      = SCTK_PTL_PRIORITY_LIST;
+	msg->tail.ptl.user_ptr = put_request;
+	
+	/****** SECOND, attempt to use TriggeredOps if possible  *******/
+	/***************************************************************/
+	if(SCTK_MSG_SRC_PROCESS(msg) != SCTK_ANY_SOURCE)
 	{
-		start = msg->tail.message.contiguous.addr;
+		/* is the message contiguous ? Maybe we could try to get an IOVEC instead of packing ? */
+		if(msg->tail.message_type == SCTK_MESSAGE_CONTIGUOUS)
+		{
+			get_start = msg->tail.message.contiguous.addr;
+		}
+		else
+		{
+			/* if not, we map a temporary buffer, ready for network serialized data */
+			get_start = sctk_malloc(SCTK_MSG_SIZE(msg));
+			/* and we flag the copy to 1, to remember some buffers will have to be recopied */
+			msg->tail.ptl.copy = 1;
+		}
+
+		/* configure the MD */
+		get_size = SCTK_MSG_SIZE(msg);
+		get_flags = SCTK_PTL_ME_GET_FLAGS | SCTK_PTL_ONCE;
+		/*remote = ;*/
+
+		get_request = sctk_ptl_md_create(srail, get_start, get_size, get_flags);
+		sctk_ptl_md_register(srail, get_request);
+		get_request->msg = msg;
+
+		sctk_ptl_emit_triggeredGet(
+				get_request,
+				get_size,
+				remote,
+				pte,
+				match,
+				0,
+				0,
+				get_request,
+				put_request->slot.me.ct_handle,
+				1
+		);
 	}
 	else
 	{
-		/* if not, we map a temporary buffer, ready for network serialized data */
-		start = sctk_malloc(SCTK_MSG_SIZE(msg));
-		sctk_net_copy_in_buffer(msg, start);
-		/* and we flag the copy to 1, to remember some buffers will have to be recopied */
-		msg->tail.ptl.copy = 1;
+		/* can't predict the remote ID.
+		 * We will trigget the Get() when the Put() will match
+		 */
 	}
 
+	/* this should be the last operation, to optimize the triggeredOps use */
+	sctk_ptl_me_register(srail, put_request, pte);
 }
 
 #endif

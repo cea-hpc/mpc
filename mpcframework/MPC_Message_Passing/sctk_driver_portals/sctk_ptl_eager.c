@@ -140,7 +140,6 @@ void sctk_ptl_eager_send_message(sctk_thread_ptp_message_t* msg, sctk_endpoint_t
 		start = sctk_malloc(SCTK_MSG_SIZE(msg));
 		sctk_net_copy_in_buffer(msg, start);
 		msg->tail.ptl.copy = 1;
-
 	}
 
 	/* prepare the Put() MD */
@@ -190,7 +189,6 @@ void sctk_ptl_eager_notify_recv(sctk_thread_ptp_message_t* msg, sctk_ptl_rail_in
 	{
 		/* if not, we map a temporary buffer, ready for network serialized data */
 		start = sctk_malloc(SCTK_MSG_SIZE(msg));
-		sctk_net_copy_in_buffer(msg, start);
 		/* and we flag the copy to 1, to remember some buffers will have to be recopied */
 		msg->tail.ptl.copy = 1;
 	}
