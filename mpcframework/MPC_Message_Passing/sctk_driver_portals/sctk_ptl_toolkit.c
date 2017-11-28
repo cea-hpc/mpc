@@ -345,10 +345,19 @@ void sctk_ptl_mds_poll(sctk_rail_info_t* rail, int threshold)
 				case PTL_EVENT_REPLY: /* a Get() reply reached the local process */
 					/* It depends on the message type (=Portals entry)
 					 *   1 - it is a "normal" message --> RDV: complete_and_free
-					 *   2 - it is a RDMA message --> nothing to to
+					 *   2 - it is a RDMA message --> just complete the msg
 					 *   3 - A CM could be big enough to ben send through RDV protocool ?
 					 */
-					break;
+					if(SCTK_MSG_SPECIFIC_CLASS(msg) == SCTK_RDMA_MESSAGE) /* RDMA */
+					{
+						sctk_complete_and_free_message(msg);
+						break;
+					}
+					else if(SCTK_MSG_COMMUNICATOR(msg) != SCTK_ANY_COMM) /* 'normal header */
+					{
+						break;
+					}
+					not_reachable();
 				case PTL_EVENT_SEND: /* a Put() left the local process: should be disabled */
 					not_reachable();
 					break;
