@@ -45,11 +45,11 @@ void sctk_ptl_rdv_send_message(sctk_thread_ptp_message_t* msg, sctk_endpoint_t* 
 	sctk_ptl_matchbits_t match, ign;
 	sctk_ptl_imm_data_t hdr;
 
-	md_request = me_request = NULL;
-	md_flags   = me_flags   = 0;
-	remote  = SCTK_PTL_ANY_PROCESS;
-	size    = 0;
-	start   = NULL;
+	md_request      = me_request = NULL;
+	md_flags        = me_flags   = 0;
+	remote          = infos->dest;
+	size            = 0;
+	start           = NULL;
 	match.data.tag  = SCTK_MSG_TAG(msg);
 	match.data.rank = SCTK_MSG_SRC_PROCESS(msg);
 	match.data.uid  = SCTK_MSG_NUMBER(msg);
@@ -67,13 +67,12 @@ void sctk_ptl_rdv_send_message(sctk_thread_ptp_message_t* msg, sctk_endpoint_t* 
 		start = sctk_malloc(SCTK_MSG_SIZE(msg));
 		sctk_net_copy_in_buffer(msg, start);
 		msg->tail.ptl.copy = 1;
-
 	}
 	size               = SCTK_MSG_SIZE(msg);
 	
 	/* Configure the Put() */
 	md_flags           = SCTK_PTL_MD_PUT_FLAGS;
-	md_request         = sctk_ptl_md_create(srail, &srail->id, sizeof(sctk_ptl_id_t), md_flags);
+	md_request         = sctk_ptl_md_create(srail, NULL, 0, md_flags);
 	
 	/* prepare for the Get() */
 	me_flags           = SCTK_PTL_ME_GET_FLAGS | SCTK_PTL_ONCE;
@@ -85,11 +84,12 @@ void sctk_ptl_rdv_send_message(sctk_thread_ptp_message_t* msg, sctk_endpoint_t* 
 	md_request->pt_idx     = pte->idx;
 	me_request->pt_idx     = pte->idx;
 	msg->tail.ptl.user_ptr = md_request;
-	hdr.rdv.datatype       = SCTK_MSG_SPECIFIC_CLASS(msg);
+	hdr.std.datatype       = SCTK_MSG_SPECIFIC_CLASS(msg);
+	hdr.std.protocol       = SCTK_PTL_PROT_RDV;
 
 	sctk_ptl_md_register(srail, md_request);
 	sctk_ptl_me_register(srail, me_request, pte);
-	sctk_ptl_emit_put(md_request, sizeof(sctk_ptl_id_t), remote, pte, match, 0, 0, hdr.raw, md_request); /* empty Put() */
+	sctk_ptl_emit_put(md_request, 0, remote, pte, match, 0, 0, hdr.raw, md_request); /* empty Put() */
 	
 	/* TODO: Need to handle the case where the data is larger than the max ME size */
 	sctk_warning("PORTALS: SEND-RDV to %d (idx=%d, match=%s, sz=%llu)", SCTK_MSG_DEST_TASK(msg), pte->idx, __sctk_ptl_match_str(malloc(32), 32, match.raw), size);
@@ -177,12 +177,14 @@ void sctk_ptl_rdv_notify_recv(sctk_thread_ptp_message_t* msg, sctk_ptl_rail_info
 	else
 	{
 		/* can't predict the remote ID.
-		 * We will trigget the Get() when the Put() will match
+		 * We will trigger the Get() when the Put() will match
 		 */
 	}
 
 	/* this should be the last operation, to optimize the triggeredOps use */
 	sctk_ptl_me_register(srail, put_request, pte);
+	
+	sctk_warning("PORTALS: NOTIFY-RECV-RDV from %d (idx=%llu, match=%s, ign=%llu start=%p, sz=%llu)", SCTK_MSG_SRC_PROCESS(msg), pte->idx, __sctk_ptl_match_str(malloc(32), 32, match.raw), __sctk_ptl_match_str(malloc(32), 32, ign.raw), get_start, get_size);
 }
 
 void sctk_ptl_rdv_event_me(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
@@ -200,6 +202,8 @@ void sctk_ptl_rdv_event_me(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 
 		case PTL_EVENT_GET: /* a Get() reached the local process */
 		case PTL_EVENT_GET_OVERFLOW: /* a previous received GET matched a just appended ME */
+			not_implemented();
+			
 			break;
 		case PTL_EVENT_ATOMIC: /* an Atomic() reached the local process */
 		case PTL_EVENT_ATOMIC_OVERFLOW: /* a previously received ATOMIC matched a just appended one */

@@ -64,7 +64,7 @@ void sctk_ptl_notify_recv(sctk_thread_ptp_message_t* msg, sctk_rail_info_t* rail
 	sctk_assert(srail);
 	sctk_assert(SCTK_PTL_PTE_EXIST(srail->pt_table, SCTK_MSG_COMMUNICATOR(msg)));
 	
-	if(size <= srail->eager_limit)
+	if(SCTK_MSG_SIZE(msg) <= srail->eager_limit)
 	{
 		sctk_ptl_eager_notify_recv(msg, srail);
 	}
@@ -105,6 +105,12 @@ void sctk_ptl_send_message(sctk_thread_ptp_message_t* msg, sctk_endpoint_t* endp
 	}
 }
 
+static inline int __sctk_ptl_resolve_protocol(sctk_ptl_event_t ev)
+{
+	/* to be an eager msg, it has to be a PUT & protocol is set in imm_data */
+	return (ev.type == PTL_EVENT_PUT || ev.type == PTL_EVENT_PUT_OVERFLOW) ? ((sctk_ptl_imm_data_t)ev.hdr_data).std.protocol : SCTK_PTL_PROT_RDV;
+}
+
 /**
  * Routine called periodically to notify upper-layer from incoming messages.
  * \param[in] rail the Portals rail
@@ -134,7 +140,7 @@ void sctk_ptl_eqs_poll(sctk_rail_info_t* rail, int threshold)
 			break;
 		}
 
-		ret = sctk_ptl_eq_poll_me(srail, cur_pte , &ev);
+		ret      = sctk_ptl_eq_poll_me(srail, cur_pte , &ev);
 		user_ptr = (sctk_ptl_local_data_t*)ev.user_ptr;
 
 		if(ret == PTL_OK)
@@ -161,8 +167,7 @@ void sctk_ptl_eqs_poll(sctk_rail_info_t* rail, int threshold)
 			 */
 			if(ev.pt_index >= SCTK_PTL_PTE_HIDDEN) /* normal message */
 			{
-				/* ev.rlength is the size as requested by the remote */
-				if(ev.rlength < rail->network.ptl.eager_limit)
+				if(__sctk_ptl_resolve_protocol(ev) == SCTK_PTL_PROT_EAGER)
 				{
 					sctk_ptl_eager_event_me(rail, ev);
 				}
@@ -220,8 +225,12 @@ void sctk_ptl_mds_poll(sctk_rail_info_t* rail, int threshold)
 
 			if(user_ptr->pt_idx >= SCTK_PTL_PTE_HIDDEN)
 			{
-				/* ev.rlength is the size as requested by the remote */
-				if(ev.mlength < rail->network.ptl.eager_limit)
+				/* to  distinguish rdv & eager here,
+				 * we consider a rdv msg send a empty Put()
+				 * with a start address set to NULL
+				 * This avoid to duplicate the info in the user_ptr
+				 */
+				if(user_ptr->slot.md.start != NULL)
 				{
 					sctk_ptl_eager_event_md(rail, ev);
 				}

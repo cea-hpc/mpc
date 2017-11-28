@@ -498,8 +498,6 @@ int sctk_ptl_emit_get(sctk_ptl_local_data_t* user, size_t size, sctk_ptl_id_t re
 	return PTL_OK;
 }
 
-
-
 /**
  * Emit a PTL Put() request.
  * \param[in] user the preset request, associated to a MD slot

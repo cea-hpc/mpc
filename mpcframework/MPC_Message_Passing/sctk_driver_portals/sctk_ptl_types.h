@@ -68,6 +68,8 @@
 /* MISCS */
 #define sctk_ptl_nih_t ptl_handle_ni_t
 #define sctk_ptl_limits_t ptl_ni_limits_t
+#define SCTK_PTL_PROT_EAGER 0
+#define SCTK_PTL_PROT_RDV   1
 
 /**
  * How the match_bits is divided to store essential information to 
@@ -88,15 +90,6 @@ typedef union sctk_ptl_matchbits_t
 	struct sctk_ptl_bits_content_s data; /**< driver-managed */
 } sctk_ptl_matchbits_t;
 
-
-/** the eager-specific imm_data
- */
-typedef struct sctk_ptl_eager_data_s
-{
-	int datatype; /**< datatype, for matching */
-	char pad[4];  /**< padding */
-} sctk_ptl_eager_data_t;
-
 /**
  * the CM-specfic imm_data.
  * please look at sctk_control_messages.c before updating this struct */
@@ -112,11 +105,12 @@ typedef struct sctk_ptl_cm_data_s
 /**
  * RDV-specific imm_data
  */
-typedef struct sctk_ptl_rdv_data_s
+typedef struct sctk_ptl_std_data_s
 {
 	int datatype; /**< the datatype, for the matching */
-	char pad[4];  /**< padding */
-} sctk_ptl_rdv_data_t;
+	char protocol; /**< set the protocol: eager | rdv */
+	char pad[3];  /**< padding */
+} sctk_ptl_std_data_t;
 
 /**
  * Selector for the 64 bits immediate data
@@ -126,8 +120,7 @@ typedef union sctk_ptl_imm_data_s
 {
 	uint64_t raw;                       /**< the raw */
 	struct sctk_ptl_cm_data_s cm;       /**< imm_data for CM */
-	struct sctk_ptl_eager_data_s eager; /**< imm-data for eager */
-	struct sctk_ptl_rdv_data_s rdv;     /**< imm_data for rdv */
+	struct sctk_ptl_std_data_s std;     /**< imm-data for eager */
 } sctk_ptl_imm_data_t;
 
 /**
