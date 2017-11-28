@@ -151,6 +151,7 @@ void sctk_ptl_eqs_poll(sctk_rail_info_t* rail, int threshold)
 			{
 				sctk_ptl_pte_t fake = (sctk_ptl_pte_t){.idx = ev.pt_index};
 				sctk_ptl_me_feed(srail,  &fake,  srail->eager_limit, 1, SCTK_PTL_OVERFLOW_LIST);
+				sctk_free(user_ptr);
 				continue;
 			}
 

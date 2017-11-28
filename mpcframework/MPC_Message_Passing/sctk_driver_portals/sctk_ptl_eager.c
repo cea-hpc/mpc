@@ -21,7 +21,7 @@ sctk_atomics_int t = SCTK_ATOMICS_INT_T_INIT(0);
 void sctk_ptl_eager_message_copy(sctk_message_to_copy_t* msg)
 {
 	sctk_ptl_local_data_t* send_data = msg->msg_send->tail.ptl.user_ptr;
-	sctk_ptl_local_data_t* recv_data = msg->msg_send->tail.ptl.user_ptr;
+	sctk_ptl_local_data_t* recv_data = msg->msg_recv->tail.ptl.user_ptr;
 	
 	/* We ensure data are already stored in the user buffer (zero-copy) only if the two condition are met:
 	 *  1 - The message is a contiguous one (the locally-posted request is contiguous, the network request
@@ -34,7 +34,14 @@ void sctk_ptl_eager_message_copy(sctk_message_to_copy_t* msg)
 	{
 		/* here, we have to copy the message from the network buffer to the user buffer */
 		sctk_net_message_copy_from_buffer(send_data->slot.me.start, msg, 0);
-		/*sctk_ptl_me_free(send_data, msg->msg_send->tail.ptl.copy);*/
+		/*
+		 * If msg reached the OVERFLOW_LIST --> free the request & the temp buffer
+		 * otherwise, the request is the same than the one free'd above
+		 */
+		if(msg->msg_send->tail.ptl.copy)
+		{
+			sctk_free(send_data->slot.me.start);
+		}
 	}
 	else
 	{
@@ -42,13 +49,10 @@ void sctk_ptl_eager_message_copy(sctk_message_to_copy_t* msg)
 	}
 	sctk_atomics_incr_int(&t);
 
-	/* First, free local resources (PRIORITY ME) (not unlinked, of USE_ONCE)
+	/* First, free local resources (PRIORITY ME)
 	 * Free the temp buffer (for contiguous) if necessary (copy)
 	 */
 	sctk_ptl_me_free(recv_data, msg->msg_recv->tail.ptl.copy);
-
-	/*TODO: if late-recv -> free the send request */
-
 
 	/* flag request as completed */
 	sctk_complete_and_free_message(msg->msg_send);

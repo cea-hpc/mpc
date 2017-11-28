@@ -461,7 +461,8 @@ void sctk_ptl_me_feed(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte, size_t m
 				SCTK_PTL_ANY_PROCESS, /* targetable by any process */
 				SCTK_PTL_MATCH_INIT, /* we don't care the match_bits */ 
 				SCTK_PTL_IGN_ALL, /* triggers all requestss */
-				(list == SCTK_PTL_PRIORITY_LIST) ? SCTK_PTL_ME_PUT_FLAGS : SCTK_PTL_ME_OVERFLOW_FLAGS);
+				((list == SCTK_PTL_PRIORITY_LIST) ? SCTK_PTL_ME_PUT_FLAGS : SCTK_PTL_ME_OVERFLOW_FLAGS) | SCTK_PTL_ONCE
+		);
 		user->msg = NULL;
 		user->list = list;
 
