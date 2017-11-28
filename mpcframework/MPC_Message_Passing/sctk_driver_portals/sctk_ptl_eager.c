@@ -169,4 +169,59 @@ void sctk_ptl_eager_send_message(sctk_thread_ptp_message_t* msg, sctk_endpoint_t
 	
 	sctk_debug("PORTALS: SEND-EAGER to %d (idx=%d, match=%s, sz=%llu)", SCTK_MSG_DEST_TASK(msg), pte->idx, __sctk_ptl_match_str(malloc(32), 32, match.raw), size);
 }
+
+void sctk_ptl_eager_notify_recv(sctk_thread_ptp_message_t* msg, sctk_ptl_rail_info_t* srail)
+{
+	void* start                     = NULL;
+	size_t size                     = 0;
+	sctk_ptl_matchbits_t match      = SCTK_PTL_MATCH_INIT;
+	sctk_ptl_matchbits_t ign        = SCTK_PTL_MATCH_INIT;
+	int flags                       = 0;
+	sctk_ptl_pte_t* pte             = NULL;
+	sctk_ptl_local_data_t* user_ptr = NULL;
+	sctk_ptl_id_t remote            = SCTK_PTL_ANY_PROCESS;
+	
+	/* is the message contiguous ? */
+	if(msg->tail.message_type == SCTK_MESSAGE_CONTIGUOUS)
+	{
+		start = msg->tail.message.contiguous.addr;
+	}
+	else
+	{
+		/* if not, we map a temporary buffer, ready for network serialized data */
+		start = sctk_malloc(SCTK_MSG_SIZE(msg));
+		sctk_net_copy_in_buffer(msg, start);
+		/* and we flag the copy to 1, to remember some buffers will have to be recopied */
+		msg->tail.ptl.copy = 1;
+	}
+
+	/* Build the match_bits */
+	match.data.tag  = SCTK_MSG_TAG(msg);
+	match.data.rank = SCTK_MSG_SRC_TASK(msg);
+	match.data.uid  = SCTK_MSG_NUMBER(msg);
+
+	/* apply the mask, depending on request infos
+	 * The UID is always ignored, it we only be used to make RDV requests consistent
+	 */
+	ign.data.tag  = (match.data.tag  == SCTK_ANY_TAG)    ? SCTK_PTL_IGN_TAG  : SCTK_PTL_MATCH_TAG;
+	ign.data.rank = (match.data.rank == SCTK_ANY_SOURCE) ? SCTK_PTL_IGN_RANK : SCTK_PTL_MATCH_RANK;
+	ign.data.uid  = SCTK_PTL_IGN_UID;
+
+	/* complete the ME data, this ME will be appended to the PRIORITY_LIST */
+	size     = SCTK_MSG_SIZE(msg);
+	pte      = SCTK_PTL_PTE_ENTRY(srail->pt_table, SCTK_MSG_COMMUNICATOR(msg));
+	flags    = SCTK_PTL_ME_PUT_FLAGS | SCTK_PTL_ONCE;
+	user_ptr = sctk_ptl_me_create(start, size, remote, match, ign, flags); assert(user_ptr);
+
+	sctk_assert(user_ptr);
+	sctk_assert(pte);
+
+	user_ptr->msg          = msg;
+	user_ptr->list         = SCTK_PTL_PRIORITY_LIST;
+	msg->tail.ptl.user_ptr = user_ptr;
+	sctk_ptl_me_register(srail, user_ptr, pte);
+	
+	sctk_debug("PORTALS: POSTED-RECV from %d (idx=%llu, match=%s, ign=%llu start=%p, sz=%llu)", SCTK_MSG_SRC_TASK(msg), pte->idx, __sctk_ptl_match_str(malloc(32), 32, match.raw), __sctk_ptl_match_str(malloc(32), 32, ign.raw), start, size);
+}
+
 #endif

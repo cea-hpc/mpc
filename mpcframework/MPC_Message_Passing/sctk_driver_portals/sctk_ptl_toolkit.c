@@ -64,47 +64,14 @@ void sctk_ptl_notify_recv(sctk_thread_ptp_message_t* msg, sctk_rail_info_t* rail
 	sctk_assert(srail);
 	sctk_assert(SCTK_PTL_PTE_EXIST(srail->pt_table, SCTK_MSG_COMMUNICATOR(msg)));
 	
-	/* Build the match_bits */
-	match.data.tag  = SCTK_MSG_TAG(msg);
-	match.data.rank = SCTK_MSG_SRC_TASK(msg);
-	match.data.uid  = SCTK_MSG_NUMBER(msg);
-
-	/* apply the mask, depending on request infos
-	 * The UID is always ignored, it we only be used to make RDV requests consistent
-	 */
-	ign.data.tag  = (match.data.tag  == SCTK_ANY_TAG)    ? SCTK_PTL_IGN_TAG  : SCTK_PTL_MATCH_TAG;
-	ign.data.rank = (match.data.rank == SCTK_ANY_SOURCE) ? SCTK_PTL_IGN_RANK : SCTK_PTL_MATCH_RANK;
-	ign.data.uid  = SCTK_PTL_IGN_UID;
-
-	/* is the message contiguous ? */
-	if(msg->tail.message_type == SCTK_MESSAGE_CONTIGUOUS)
+	if(size <= srail->eager_limit)
 	{
-		start = msg->tail.message.contiguous.addr;
+		sctk_ptl_eager_notify_recv(msg, srail);
 	}
 	else
 	{
-		/* if not, we map a temporary buffer, ready for network serialized data */
-		start = sctk_malloc(SCTK_MSG_SIZE(msg));
-		sctk_net_copy_in_buffer(msg, start);
-		/* and we flag the copy to 1, to remember some buffers will have to be recopied */
-		msg->tail.ptl.copy = 1;
+		sctk_ptl_rdv_notify_recv(msg, srail);
 	}
-
-	/* complete the ME data, this ME will be appended to the PRIORITY_LIST */
-	size     = SCTK_MSG_SIZE(msg);
-	pte      = SCTK_PTL_PTE_ENTRY(srail->pt_table, SCTK_MSG_COMMUNICATOR(msg));
-	flags    = SCTK_PTL_ME_PUT_FLAGS | SCTK_PTL_ONCE;
-	user_ptr = sctk_ptl_me_create(start, size, remote, match, ign, flags); assert(user_ptr);
-
-	sctk_assert(user_ptr);
-	sctk_assert(pte);
-
-	user_ptr->msg          = msg;
-	user_ptr->list         = SCTK_PTL_PRIORITY_LIST;
-	msg->tail.ptl.user_ptr = user_ptr;
-	sctk_ptl_me_register(srail, user_ptr, pte);
-	
-	sctk_debug("PORTALS: POSTED-RECV from %d (idx=%llu, match=%s, ign=%llu start=%p, sz=%llu)", SCTK_MSG_SRC_TASK(msg), pte->idx, __sctk_ptl_match_str(malloc(32), 32, match.raw), __sctk_ptl_match_str(malloc(32), 32, ign.raw), start, size);
 }
 
 /**
@@ -193,8 +160,8 @@ void sctk_ptl_eqs_poll(sctk_rail_info_t* rail, int threshold)
 					/* we don't care about unexpected messaged reaching the OVERFLOW_LIST, we will just wait for their local counter-part */
 					if(user_ptr->list == SCTK_PTL_OVERFLOW_LIST)
 					{
-					sctk_ptl_pte_t fake = (sctk_ptl_pte_t){.idx = ev.pt_index};
-					sctk_ptl_me_feed(srail,  &fake,  srail->eager_limit, 1, SCTK_PTL_OVERFLOW_LIST);
+						sctk_ptl_pte_t fake = (sctk_ptl_pte_t){.idx = ev.pt_index};
+						sctk_ptl_me_feed(srail,  &fake,  srail->eager_limit, 1, SCTK_PTL_OVERFLOW_LIST);
 						break;
 					}
 					/* Multiple scenario can trigger this event:
@@ -335,7 +302,7 @@ void sctk_ptl_mds_poll(sctk_rail_info_t* rail, int threshold)
 						else
 						{
 							/* it is a RDV msg, we wait for the remote Get().
-							 * Probably nothing to do
+							 * Probably nothing to do.
 							 */
 						}
 						
