@@ -68,8 +68,6 @@
 /* MISCS */
 #define sctk_ptl_nih_t ptl_handle_ni_t
 #define sctk_ptl_limits_t ptl_ni_limits_t
-#define SCTK_PTL_PROT_EAGER 0
-#define SCTK_PTL_PROT_RDV   1
 
 /**
  * How the match_bits is divided to store essential information to 
@@ -108,7 +106,6 @@ typedef struct sctk_ptl_cm_data_s
 typedef struct sctk_ptl_std_data_s
 {
 	int datatype; /**< the datatype, for the matching */
-	char protocol; /**< set the protocol: eager | rdv */
 	char pad[3];  /**< padding */
 } sctk_ptl_std_data_t;
 
@@ -155,9 +152,18 @@ typedef struct sctk_ptl_local_data_s
 	union sctk_ptl_slot_u slot;     /* the request (MD or ME) */
 	union sctk_ptl_slot_h_u slot_h; /* the request Handle */
 	sctk_ptl_list_t list;           /* the list the request issued from */
-	int pt_idx;                     /* the key this slot belongs to */
+	char type;                    /* 8 bytes of extra infos (protocol & type) */
+	char prot;
 	void* msg;                      /* link to the msg */
 } sctk_ptl_local_data_t;
+
+#define SCTK_PTL_TYPE_RECOVERY (0)
+#define SCTK_PTL_TYPE_CM       (1)
+#define SCTK_PTL_TYPE_RDMA     (2)
+#define SCTK_PTL_TYPE_STD      (3)
+
+#define SCTK_PTL_PROT_RDV      (0)
+#define SCTK_PTL_PROT_EAGER    (1)
 
 /**
  * RDMA structure, mapping a Portals window.

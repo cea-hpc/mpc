@@ -105,12 +105,6 @@ void sctk_ptl_send_message(sctk_thread_ptp_message_t* msg, sctk_endpoint_t* endp
 	}
 }
 
-static inline int __sctk_ptl_resolve_protocol(sctk_ptl_event_t ev)
-{
-	/* to be an eager msg, it has to be a PUT & protocol is set in imm_data */
-	return (ev.type == PTL_EVENT_PUT || ev.type == PTL_EVENT_PUT_OVERFLOW) ? ((sctk_ptl_imm_data_t)ev.hdr_data).std.protocol : SCTK_PTL_PROT_RDV;
-}
-
 /**
  * Routine called periodically to notify upper-layer from incoming messages.
  * \param[in] rail the Portals rail
@@ -145,7 +139,7 @@ void sctk_ptl_eqs_poll(sctk_rail_info_t* rail, int threshold)
 
 		if(ret == PTL_OK)
 		{
-			sctk_info("PORTALS: EQS EVENT '%s' idx=%d, match=%s from %s, sz=%llu)!", sctk_ptl_event_decode(ev), ev.pt_index, __sctk_ptl_match_str(malloc(32), 32, ev.match_bits), SCTK_PTL_STR_LIST(((sctk_ptl_local_data_t*)ev.user_ptr)->list), ev.mlength);
+			sctk_info("PORTALS: EQS EVENT '%s' idx=%d, type=%x, prot=%x, match=%s from %s, sz=%llu", sctk_ptl_event_decode(ev), ev.pt_index, user_ptr->type, user_ptr->prot, __sctk_ptl_match_str(malloc(32), 32, ev.match_bits), SCTK_PTL_STR_LIST(((sctk_ptl_local_data_t*)ev.user_ptr)->list), ev.mlength);
 
 	
 			/* we only consider Portals-succeded events */
@@ -160,38 +154,31 @@ void sctk_ptl_eqs_poll(sctk_rail_info_t* rail, int threshold)
 				sctk_free(user_ptr);
 				continue;
 			}
-
-			/* Now, handle the event depending on its type:
-			 *  0 - SCTK_PTL_PTE_HIDDEN : internal entries (RECOVERY, RDMA or CM
-			 *  SCTK_PTL_PTE_HIDDEN - N : MPI messages entries
-			 */
-			if(ev.pt_index >= SCTK_PTL_PTE_HIDDEN) /* normal message */
+			
+			switch((int)user_ptr->type) /* normal message */
 			{
-				if(__sctk_ptl_resolve_protocol(ev) == SCTK_PTL_PROT_EAGER)
-				{
-					sctk_ptl_eager_event_me(rail, ev);
-				}
-				else
-				{
-					sctk_ptl_rdv_event_me(rail, ev);
-				}
-			}
-			else /* internal msg */
-			{
-				switch(ev.pt_index)
-				{
-					case SCTK_PTL_PTE_RDMA:
-						sctk_ptl_rdma_event_me(rail, ev);
-						break;
-					case SCTK_PTL_PTE_CM:
-						sctk_ptl_cm_event_me(rail, ev);
-						break;
-					case SCTK_PTL_PTE_RECOVERY:
-						not_implemented();
-						break;
-					default:
-						not_reachable();
-				}
+				case SCTK_PTL_TYPE_STD:
+					switch((int)user_ptr->prot)
+					{
+						case SCTK_PTL_PROT_EAGER:
+							sctk_ptl_eager_event_me(rail, ev); break;
+						case SCTK_PTL_PROT_RDV:
+							sctk_ptl_rdv_event_me(rail, ev); break;
+						default:
+							not_reachable();
+					}
+					break;
+				case SCTK_PTL_TYPE_RDMA:
+					sctk_ptl_rdma_event_me(rail, ev);
+					break;
+				case SCTK_PTL_TYPE_CM:
+					sctk_ptl_cm_event_me(rail, ev);
+					break;
+				case SCTK_PTL_TYPE_RECOVERY:
+					not_implemented();
+					break;
+				default:
+					not_reachable();
 			}
 		}
 	}
@@ -217,44 +204,43 @@ void sctk_ptl_mds_poll(sctk_rail_info_t* rail, int threshold)
 		{
 			user_ptr = (sctk_ptl_local_data_t*)ev.user_ptr;
 			sctk_assert(user_ptr != NULL);
-			sctk_info("PORTALS: ASYNC MD '%s' from %s",sctk_ptl_event_decode(ev), SCTK_PTL_STR_LIST(ev.ptl_list));
+			sctk_info("PORTALS: MDS EVENT '%s' from %s, type=%d, prot=%d",sctk_ptl_event_decode(ev), SCTK_PTL_STR_LIST(ev.ptl_list), user_ptr->type, user_ptr->prot);
 			/* we only care about Portals-sucess events */
 			if(ev.ni_fail_type != PTL_NI_OK)
 				sctk_fatal("MD: Failed event %s: %d", sctk_ptl_event_decode(ev), ev.ni_fail_type);
 
 
-			if(user_ptr->pt_idx >= SCTK_PTL_PTE_HIDDEN)
+			switch((int)user_ptr->type)
 			{
-				/* to  distinguish rdv & eager here,
-				 * we consider a rdv msg send a empty Put()
-				 * with a start address set to NULL
-				 * This avoid to duplicate the info in the user_ptr
-				 */
-				if(user_ptr->slot.md.start != NULL)
-				{
-					sctk_ptl_eager_event_md(rail, ev);
-				}
-				else
-				{
-					sctk_ptl_rdv_event_md(rail, ev);
-				}
-			}
-			else /* internal msg */
-			{
-				switch(user_ptr->pt_idx)
-				{
-					case SCTK_PTL_PTE_RDMA:
-						sctk_ptl_rdma_event_md(rail, ev);
-						break;
-					case SCTK_PTL_PTE_CM:
-						sctk_ptl_cm_event_md(rail, ev);
-						break;
-					case SCTK_PTL_PTE_RECOVERY:
-						not_implemented();
-						break;
-					default:
-						not_reachable();
-				}
+				case SCTK_PTL_TYPE_STD:
+					/*
+					 * Dirty way to distiguish RDV vs EAGER.
+					 * Remember that full event at initiator-side are really limited.
+					 * (Only type, list, length, user_ptr & fail_type)
+					 *
+					 * As we know that 
+					 */
+					switch((int)user_ptr->prot)
+					{
+						case SCTK_PTL_PROT_EAGER:
+							sctk_ptl_eager_event_md(rail, ev); break;
+						case SCTK_PTL_PROT_RDV:
+							sctk_ptl_rdv_event_md(rail, ev); break;
+						default:
+							not_reachable();
+					}
+					break;
+				case SCTK_PTL_TYPE_RDMA:
+					sctk_ptl_rdma_event_md(rail, ev);
+					break;
+				case SCTK_PTL_TYPE_CM:
+					sctk_ptl_cm_event_md(rail, ev);
+					break;
+				case SCTK_PTL_TYPE_RECOVERY:
+					not_implemented();
+					break;
+				default:
+					not_reachable();
 			}
 		}
 	}

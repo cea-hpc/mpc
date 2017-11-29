@@ -202,8 +202,8 @@ void sctk_ptl_rdma_write(sctk_rail_info_t *rail, sctk_thread_ptp_message_t *msg,
 	copy                   = sctk_malloc(sizeof(sctk_ptl_local_data_t));
 	*copy                  = *local_key->pin.ptl.md_data;
 	copy->msg              = msg;
-	copy->pt_idx           = rdma_pte->idx;
 	msg->tail.ptl.user_ptr = copy;
+	copy->type = SCTK_PTL_TYPE_RDMA;
 	
 	sctk_ptl_emit_put(
 		local_key->pin.ptl.md_data, /* The base MD */
@@ -259,8 +259,8 @@ void sctk_ptl_rdma_read(sctk_rail_info_t *rail, sctk_thread_ptp_message_t *msg,
 	copy                   = sctk_malloc(sizeof(sctk_ptl_local_data_t));
 	*copy                  = *local_key->pin.ptl.md_data;
 	copy->msg              = msg;
-	copy->pt_idx           = rdma_pte->idx;
 	msg->tail.ptl.user_ptr = copy;
+	copy->type = SCTK_PTL_TYPE_RDMA;
 
 	sctk_ptl_emit_get(
 		local_key->pin.ptl.md_data, /* the base MD */

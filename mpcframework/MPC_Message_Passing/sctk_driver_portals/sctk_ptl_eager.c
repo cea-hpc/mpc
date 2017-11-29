@@ -20,7 +20,6 @@ sctk_atomics_int t = SCTK_ATOMICS_INT_T_INIT(0);
  */
 void sctk_ptl_eager_message_copy(sctk_message_to_copy_t* msg)
 {
-	sctk_ptl_local_data_t* send_data = msg->msg_send->tail.ptl.user_ptr;
 	sctk_ptl_local_data_t* recv_data = msg->msg_recv->tail.ptl.user_ptr;
 	
 	/* We ensure data are already stored in the user buffer (zero-copy) only if the two condition are met:
@@ -32,6 +31,7 @@ void sctk_ptl_eager_message_copy(sctk_message_to_copy_t* msg)
 	 */
 	if(msg->msg_send->tail.ptl.copy || msg->msg_recv->tail.ptl.copy)
 	{
+		sctk_ptl_local_data_t* send_data = msg->msg_send->tail.ptl.user_ptr;
 		/* here, we have to copy the message from the network buffer to the user buffer */
 		sctk_net_message_copy_from_buffer(send_data->slot.me.start, msg, 0);
 		/*
@@ -162,11 +162,11 @@ void sctk_ptl_eager_send_message(sctk_thread_ptp_message_t* msg, sctk_endpoint_t
 	/* double-linking */
 	request->msg           = msg;
 	msg->tail.ptl.user_ptr = request;
-	request->pt_idx        = pte->idx;
+	request->type = SCTK_PTL_TYPE_STD;
 	
 	/* for eager, build the immediate data, contained in Put() request */
 	hdr.std.datatype     = SCTK_MSG_SPECIFIC_CLASS(msg);
-	hdr.std.protocol     = SCTK_PTL_PROT_EAGER;
+	request->prot = SCTK_PTL_PROT_EAGER;
 
 	/* emit the request */
 	sctk_ptl_md_register(srail, request);
@@ -201,14 +201,14 @@ void sctk_ptl_eager_notify_recv(sctk_thread_ptp_message_t* msg, sctk_ptl_rail_in
 
 	/* Build the match_bits */
 	match.data.tag  = SCTK_MSG_TAG(msg);
-	match.data.rank = SCTK_MSG_SRC_TASK(msg);
+	match.data.rank = SCTK_MSG_SRC_PROCESS(msg);
 	match.data.uid  = SCTK_MSG_NUMBER(msg);
 
 	/* apply the mask, depending on request infos
 	 * The UID is always ignored, it we only be used to make RDV requests consistent
 	 */
-	ign.data.tag  = (match.data.tag  == SCTK_ANY_TAG)    ? SCTK_PTL_IGN_TAG  : SCTK_PTL_MATCH_TAG;
-	ign.data.rank = (match.data.rank == SCTK_ANY_SOURCE) ? SCTK_PTL_IGN_RANK : SCTK_PTL_MATCH_RANK;
+	ign.data.tag  = (SCTK_MSG_TAG(msg)         == SCTK_ANY_TAG)    ? SCTK_PTL_IGN_TAG  : SCTK_PTL_MATCH_TAG;
+	ign.data.rank = (SCTK_MSG_SRC_PROCESS(msg) == SCTK_ANY_SOURCE) ? SCTK_PTL_IGN_RANK : SCTK_PTL_MATCH_RANK;
 	ign.data.uid  = SCTK_PTL_IGN_UID;
 
 	/* complete the ME data, this ME will be appended to the PRIORITY_LIST */
@@ -222,8 +222,9 @@ void sctk_ptl_eager_notify_recv(sctk_thread_ptp_message_t* msg, sctk_ptl_rail_in
 
 	user_ptr->msg          = msg;
 	user_ptr->list         = SCTK_PTL_PRIORITY_LIST;
-	user_ptr->pt_idx       = pte->idx;
 	msg->tail.ptl.user_ptr = user_ptr;
+	user_ptr->type         = SCTK_PTL_TYPE_STD;
+	user_ptr->prot         = SCTK_PTL_PROT_EAGER;
 	sctk_ptl_me_register(srail, user_ptr, pte);
 	
 	sctk_debug("PORTALS: NOTIFY-RECV-EAGER from %d (idx=%llu, match=%s, ign=%llu start=%p, sz=%llu)", SCTK_MSG_SRC_TASK(msg), pte->idx, __sctk_ptl_match_str(malloc(32), 32, match.raw), __sctk_ptl_match_str(malloc(32), 32, ign.raw), start, size);
