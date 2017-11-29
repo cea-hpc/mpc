@@ -311,7 +311,7 @@ sctk_ptl_local_data_t* sctk_ptl_me_create_with_cnt(sctk_ptl_rail_info_t* srail, 
 {
 	sctk_ptl_local_data_t* ret; 
 	
-	ret = sctk_ptl_me_create(start, size, remote, match, ign, flags);
+	ret = sctk_ptl_me_create(start, size, remote, match, ign, flags | PTL_ME_EVENT_CT_COMM);
 
 	sctk_ptl_chk(PtlCTAlloc(
 		srail->iface,
@@ -465,6 +465,8 @@ void sctk_ptl_me_feed(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte, size_t m
 		);
 		user->msg = NULL;
 		user->list = list;
+		user->type = 0xf;
+		user->prot = 0xf;
 
 		sctk_ptl_me_register(srail, user, pte);
 	}
@@ -622,7 +624,7 @@ int sctk_ptl_emit_triggeredGet(sctk_ptl_local_data_t* user, size_t size, sctk_pt
 	/** WARNING: the API provide a prototype where user_ptr & remote_off are inverted.
 	 *
 	 * It is probably a typo error in the API  but be careful if some implementation chose to 
-	 * be strict with the standard. The BXI implementation use invert them to be consistent
+	 * be strict with the standard. The BXI implementation inverts them to be consistent
 	 * with Get() initial syntax
 	 */
 	sctk_ptl_chk(PtlTriggeredGet(
