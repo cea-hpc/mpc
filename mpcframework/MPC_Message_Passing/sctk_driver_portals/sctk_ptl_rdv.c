@@ -4,6 +4,8 @@
 #include "sctk_ptl_iface.h"
 #include "sctk_net_tools.h"
 
+extern sctk_ptl_id_t* ranks_ids_map;
+
 static inline sctk_ptl_local_data_t* sctk_ptl_rdv_create_triggerGet(sctk_thread_ptp_message_t* msg, sctk_ptl_rail_info_t* srail, sctk_ptl_id_t remote, sctk_ptl_matchbits_t match, sctk_ptl_cnth_t trig )
 {
 	void* start = NULL;
@@ -349,9 +351,12 @@ void sctk_ptl_rdv_notify_recv(sctk_thread_ptp_message_t* msg, sctk_ptl_rail_info
 	/****** SECOND, attempt to use TriggeredOps if possible  *******/
 	/***************************************************************/
 #if 0
-	if(SCTK_MSG_SRC_PROCESS(msg) != SCTK_ANY_SOURCE)
+	int dest = SCTK_MSG_SRC_PROCESS(msg);
+	if(dest != SCTK_ANY_SOURCE && SCTK_MSG_TAG(msg) != SCTK_ANY_TAG)
 	{
-		get_request = sctk_ptl_rdv_create_triggerGet(msg, srail, SCTK_PTL_ANY_PROCESS, match, put_request->slot.me.ct_handle);
+		sctk_ptl_local_data_t* get_request;
+		sctk_assert(ranks_ids_map[dest] != SCTK_PTL_ANY_PROCESS);
+		get_request = sctk_ptl_rdv_create_triggerGet(msg, srail, ranks_ids_map[dest], match, put_request->slot.me.ct_handle);
 		msg->tail.ptl.user_ptr = get_request; /* set w/ the GET request */
 	}
 	else
@@ -363,6 +368,7 @@ void sctk_ptl_rdv_notify_recv(sctk_thread_ptp_message_t* msg, sctk_ptl_rail_info
 		sctk_assert(ign.data.rank == SCTK_PTL_IGN_RANK);
 	}
 #endif
+
 	/* this should be the last operation, to optimize the triggeredOps use */
 	sctk_ptl_me_register(srail, put_request, pte);
 	

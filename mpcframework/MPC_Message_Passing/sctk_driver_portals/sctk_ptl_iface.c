@@ -186,6 +186,12 @@ void sctk_ptl_software_init(sctk_ptl_rail_info_t* srail, int comm_dims)
 		{
 			sctk_ptl_me_feed(srail, table + i, eager_size, SCTK_PTL_ME_OVERFLOW_NB, SCTK_PTL_PRIORITY_LIST);
 		}
+		/*table[i].taglocks = sctk_malloc(sizeof(sctk_spinlock_t) * SCTK_PTL_PTE_NB_LOCKS);*/
+		/*int j;*/
+		/*for (j = 0; j < SCTK_PTL_PTE_NB_LOCKS; ++j) */
+		/*{*/
+			/*table[i].taglocks[j] = SCTK_SPINLOCK_INITIALIZER;*/
+		/*}*/
 		
 		MPCHT_set(&srail->pt_table, i, table + i);
 	}
@@ -227,6 +233,14 @@ void sctk_ptl_pte_create(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte, size_
 	));
 
 	sctk_ptl_me_feed(srail, pte, eager_size, SCTK_PTL_ME_OVERFLOW_NB, SCTK_PTL_OVERFLOW_LIST);
+	
+	/*pte->taglocks = sctk_malloc(sizeof(sctk_spinlock_t) * SCTK_PTL_PTE_NB_LOCKS);*/
+	/*int j;*/
+	/*for (j = 0; j < SCTK_PTL_PTE_NB_LOCKS; ++j) */
+	/*{*/
+		/*pte->taglocks[j] = SCTK_SPINLOCK_INITIALIZER;*/
+	/*}*/
+
 
 	MPCHT_set(&srail->pt_table, key, pte);
 	srail->nb_entries = key + SCTK_PTL_PTE_HIDDEN;

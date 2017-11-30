@@ -11,6 +11,9 @@
 #include "sctk_ptl_cm.h"
 #include "sctk_ptl_toolkit.h"
 
+/* global shortcut */
+sctk_ptl_id_t* ranks_ids_map = NULL;
+
 /**
  * Add a route to the multirail, for Portals use.
  * \param[in] dest the remote process rank
@@ -29,6 +32,7 @@ void sctk_ptl_add_route(int dest, sctk_ptl_id_t id, sctk_rail_info_t* rail, sctk
 	sctk_endpoint_set_state(route, state);
 
 	route->data.ptl.dest = id;
+	ranks_ids_map[dest] = id;
 
 	if(origin == ROUTE_ORIGIN_STATIC)
 	{
@@ -280,6 +284,7 @@ void sctk_ptl_create_ring ( sctk_rail_info_t *rail )
 			rail->rail_number             /* rail ID: PMI tag */
 	);
 	assert(tmp_ret == 0);
+	ranks_ids_map[sctk_get_process_rank()] = srail->id;
 
 	/* what are my neighbour ranks ? */
 	right_rank = ( sctk_process_rank + 1 ) % sctk_process_number;
@@ -386,6 +391,11 @@ void sctk_ptl_init_interface(sctk_rail_info_t* rail)
 	rail->network.ptl.eager_limit = rail->runtime_config_driver_config->driver.value.portals.eager_limit;
 
 	sctk_ptl_software_init( &rail->network.ptl, rail->runtime_config_driver_config->driver.value.portals.min_comms);
+
+	if(!ranks_ids_map)
+	{
+		ranks_ids_map = sctk_calloc(sctk_get_process_number(), sizeof(sctk_ptl_id_t));
+	}
 }
 
 /**

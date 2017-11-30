@@ -57,6 +57,7 @@
 #define sctk_ptl_rdma_op_t ptl_op_t
 
 /* Portals entry */
+#define SCTK_PTL_PTE_NB_LOCKS 4
 #define SCTK_PTL_PTE_FLAGS PTL_PT_FLOWCTRL
 #define SCTK_PTL_PTE_HIDDEN 3
 #define SCTK_PTL_PTE_RECOVERY (0)
@@ -127,6 +128,7 @@ typedef struct sctk_ptl_pte_s
 {
 	ptl_pt_index_t idx; /**< the effective PT index */
 	sctk_ptl_eq_t eq; /**< the EQ for this entry */
+	//sctk_spinlock_t* taglocks;
 } sctk_ptl_pte_t;
 
 /** union to select MD or ME in the user_ptr without dirty casting */
