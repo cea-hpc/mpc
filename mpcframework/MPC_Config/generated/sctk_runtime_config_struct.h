@@ -298,6 +298,8 @@ struct sctk_runtime_config_struct_net_driver_portals
 	int eager_limit;
 	/**Min number of communicators (help to avoid dynamic PT entry allocation)**/
 	int min_comms;
+	/**Max msg bytes per ME/MD slots (larger requests are split)**/
+	int mr_max_size;
 };
 
 /******************************** STRUCTURE *********************************/

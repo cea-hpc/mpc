@@ -18,6 +18,7 @@ void sctk_ptl_print_structure(sctk_ptl_rail_info_t* srail)
 	"  - Comm. nb entries   : %d\n"
 	"  - HIDDEN nb entries  : %d\n"
 	"  - each EQ size       : %d\n"
+	"  - Max msg size       : %llu\n"
 	"\n"
 	" ME management         : \n"
 	"  - Nb OVERFLOW slots  : %d\n"
@@ -47,6 +48,7 @@ void sctk_ptl_print_structure(sctk_ptl_rail_info_t* srail)
 	srail->nb_entries,
 	SCTK_PTL_PTE_HIDDEN,
 	SCTK_PTL_EQ_PTE_SIZE,
+	srail->max_mr,
 
 	SCTK_PTL_ME_OVERFLOW_NB,
 	srail->eager_limit,
@@ -208,8 +210,10 @@ void sctk_ptl_software_init(sctk_ptl_rail_info_t* srail, int comm_dims)
 		&srail->mds_eq        /* out: the EQ handler */
 	));
 
-
 	sctk_atomics_store_int(&srail->rdma_cpt, 0);
+	if(srail->max_mr > srail->max_limits.max_msg_size)
+		srail->max_mr = srail->max_limits.max_msg_size;
+
 	sctk_ptl_print_structure(srail);
 }
 

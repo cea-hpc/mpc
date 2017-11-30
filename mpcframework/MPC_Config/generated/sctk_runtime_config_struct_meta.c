@@ -331,6 +331,9 @@ const struct sctk_runtime_config_entry_meta sctk_runtime_config_db[] = {
 	{"min_comms"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_driver_portals,min_comms)  , sizeof(int) , "int" , NULL , 
 				NULL
 			},
+	{"mr_max_size"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_driver_portals,mr_max_size)  , sizeof(int) , "int" , NULL , 
+				NULL
+			},
 	/* struct */
 	{"sctk_runtime_config_struct_net_driver_tcp" , SCTK_CONFIG_META_TYPE_STRUCT , 0  , sizeof(struct sctk_runtime_config_struct_net_driver_tcp) , NULL , sctk_runtime_config_struct_init_net_driver_tcp},
 	{"tcpoib"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_driver_tcp,tcpoib)  , sizeof(int) , "int" , NULL , 

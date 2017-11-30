@@ -9,7 +9,7 @@ extern sctk_ptl_id_t* ranks_ids_map;
 static inline sctk_ptl_local_data_t* sctk_ptl_rdv_create_triggerGet(sctk_thread_ptp_message_t* msg, sctk_ptl_rail_info_t* srail, sctk_ptl_id_t remote, sctk_ptl_matchbits_t match, sctk_ptl_cnth_t trig )
 {
 	void* start = NULL;
-	size_t size;
+	size_t size, max_chunks;
 	int flags;
 	sctk_ptl_pte_t *pte;
 	sctk_ptl_local_data_t* request;
@@ -28,6 +28,8 @@ static inline sctk_ptl_local_data_t* sctk_ptl_rdv_create_triggerGet(sctk_thread_
 		msg->tail.ptl.copy = 1;
 	}
 
+	max_chunks = srail->max_mr;
+	
 	/* configure the MD */
 	pte                    = SCTK_PTL_PTE_ENTRY(srail->pt_table, SCTK_MSG_COMMUNICATOR(msg));
 	size                   = SCTK_MSG_SIZE(msg);

@@ -213,6 +213,7 @@ typedef struct sctk_ptl_rail_info_s
 	sctk_ptl_eq_t mds_eq;                   /**< EQ for all MDs emited from this NI */
 	struct MPCHT pt_table;                  /**< The PT hash table */
 
+	size_t max_mr;                          /**< Max size of a memory region (MD | ME ) */
 	size_t eager_limit;                     /**< the max size for an eager msg */
 	size_t nb_entries;                      /**< current number of PT entries dedicated to comms */
 	sctk_atomics_int rdma_cpt;              /**< RDMA match_bits counter */

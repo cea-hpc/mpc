@@ -109,6 +109,7 @@ meta.types = {
 	net_driver_portals : {type: 'struct', name: "net_driver_portals", childs: {
 		eager_limit: {mode: 'param', name: "eager_limit", type: "int", doc: "Max size of messages allowed to use the eager protocol.", dflt: "8192", },
 		min_comms: {mode: 'param', name: "min_comms", type: "int", doc: "Min number of communicators (help to avoid dynamic PT entry allocation)", dflt: "1", },
+		mr_max_size: {mode: 'param', name: "mr_max_size", type: "int", doc: "Max msg bytes per ME/MD slots (larger requests are split)", dflt: "65536", },
 	}},
 	net_driver_tcp : {type: 'struct', name: "net_driver_tcp", childs: {
 		tcpoib: {mode: 'param', name: "tcpoib", type: "int", doc: "Enable TCP over Infiniband (if elligible).", dflt: "1", },

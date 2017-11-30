@@ -597,6 +597,10 @@ Max size of messages allowed to use the eager protocol.
 Type is int. Default value is 1. 
 .Pp min_comms
 Min number of communicators (help to avoid dynamic PT entry allocation)
+.It Cm mr_max_size
+Type is int. Default value is 65536. 
+.Pp mr_max_size
+Max msg bytes per ME/MD slots (larger requests are split)
 .El
 .Sh ENTRIES OF TYPE net_driver_tcp
 TCP-based driver
