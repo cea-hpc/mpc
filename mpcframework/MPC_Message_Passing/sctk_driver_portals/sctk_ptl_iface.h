@@ -52,6 +52,9 @@ void sctk_ptl_me_release(sctk_ptl_local_data_t*);
 void sctk_ptl_me_free(sctk_ptl_local_data_t*, int);
 void sctk_ptl_me_feed(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte, size_t me_size, int nb, int list);
 
+/* event management */
+void sctk_ptl_ct_free(sctk_ptl_cnth_t cth);
+
 /* MD management */
 sctk_ptl_local_data_t* sctk_ptl_md_create(sctk_ptl_rail_info_t* srail, void*, size_t, int);
 void sctk_ptl_md_register(sctk_ptl_rail_info_t* srail, sctk_ptl_local_data_t*);

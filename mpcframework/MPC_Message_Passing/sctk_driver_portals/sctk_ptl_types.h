@@ -152,6 +152,8 @@ typedef struct sctk_ptl_local_data_s
 	union sctk_ptl_slot_u slot;     /* the request (MD or ME) */
 	union sctk_ptl_slot_h_u slot_h; /* the request Handle */
 	sctk_ptl_list_t list;           /* the list the request issued from */
+	sctk_ptl_matchbits_t match;
+	sctk_ptl_cnth_t cth;
 	char type;                    /* 8 bytes of extra infos (protocol & type) */
 	char prot;
 	void* msg;                      /* link to the msg */

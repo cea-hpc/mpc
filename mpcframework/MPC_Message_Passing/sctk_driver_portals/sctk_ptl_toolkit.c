@@ -63,8 +63,8 @@ void sctk_ptl_notify_recv(sctk_thread_ptp_message_t* msg, sctk_rail_info_t* rail
 	sctk_assert(rail);
 	sctk_assert(srail);
 	sctk_assert(SCTK_PTL_PTE_EXIST(srail->pt_table, SCTK_MSG_COMMUNICATOR(msg)));
-	
-	if(SCTK_MSG_SIZE(msg) <= srail->eager_limit)
+
+	if(SCTK_MSG_SIZE(msg) < srail->eager_limit)
 	{
 		sctk_ptl_eager_notify_recv(msg, srail);
 	}

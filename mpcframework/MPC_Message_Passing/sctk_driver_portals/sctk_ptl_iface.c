@@ -370,6 +370,13 @@ void sctk_ptl_me_free(sctk_ptl_local_data_t* request, int free_buffer)
 	sctk_free(request);
 }
 
+void sctk_ptl_ct_free(sctk_ptl_cnth_t cth)
+{
+	sctk_ptl_chk(PtlCTFree(
+		cth
+	));
+}
+
 /**
  * Create a local memory region to be registered to Portals.
  * \param[in] start buffer first address

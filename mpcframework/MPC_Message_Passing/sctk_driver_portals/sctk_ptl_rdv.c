@@ -38,6 +38,8 @@ static inline sctk_ptl_local_data_t* sctk_ptl_rdv_create_triggerGet(sctk_thread_
 	msg->tail.ptl.user_ptr = request; /* exception: we store the GET-MD here (having the net buffer) */
 	request->type = SCTK_PTL_TYPE_STD;
 	request->prot = SCTK_PTL_PROT_RDV;
+	request->match = match;
+	request->cth   = trig;
 	
 	sctk_ptl_md_register(srail, request);
 
@@ -53,7 +55,7 @@ static inline sctk_ptl_local_data_t* sctk_ptl_rdv_create_triggerGet(sctk_thread_
 			trig,
 			1
 			);
-	sctk_warning("TRIGGERED to %d/%d, match=%s, pte=%d, sz=%d", remote.phys.nid, remote.phys.pid, __sctk_ptl_match_str(sctk_malloc(32), 32, match.raw), pte->idx, size);
+	sctk_debug("TRIGGERED to %d/%d, match=%s, pte=%d, sz=%llu", remote.phys.nid, remote.phys.pid, __sctk_ptl_match_str(sctk_malloc(32), 32, match.raw), pte->idx, size);
 	return request;
 }
 
@@ -62,8 +64,8 @@ static inline sctk_ptl_local_data_t* sctk_ptl_rdv_create_triggerGet(sctk_thread_
  */
 void sctk_ptl_rdv_free_memory(void* msg)
 {
-	/*sctk_free(msg);*/
-	not_implemented();
+	sctk_free(msg);
+	/*not_implemented();*/
 }
 
 /** What to do when a network message matched a locally posted request ?.
@@ -128,26 +130,22 @@ static inline void sctk_ptl_rdv_recv_message(sctk_rail_info_t* rail, sctk_ptl_ev
 	 *         to avoid code duplication, we could publish a TriggeredGet on the previous ct_handle and
 	 *         use the same 'if' than for (B-1) to trigger the operation.
 	 */
-	
-	/* scenario (A-1) */
-	if(ev.type == PTL_EVENT_PUT && SCTK_MSG_SRC_PROCESS(msg) != SCTK_ANY_SOURCE)
-	{
-		sctk_warning("PORTALS: RDV (A-1)");
-		return;
 
+	/* scenario (A-1) */
+	if(ev.type == PTL_EVENT_PUT && SCTK_MSG_SRC_PROCESS(msg) != SCTK_ANY_SOURCE && 0)
+	{
+		return;
 	}
 
 	/* scenario (A/B-2) */
-	if(SCTK_MSG_SRC_PROCESS(msg) == SCTK_ANY_SOURCE)
+	if(SCTK_MSG_SRC_PROCESS(msg) == SCTK_ANY_SOURCE || 1)
 	{
-		sctk_warning("PORTALS: RDV (*-2)");
 		sctk_ptl_local_data_t* get_request;
 		sctk_ptl_pte_t* pte = NULL;
 		sctk_ptl_rail_info_t* srail = &rail->network.ptl;
 		
 		/* create the GET op */
 		pte = SCTK_PTL_PTE_ENTRY(srail->pt_table, SCTK_MSG_COMMUNICATOR(msg));
-		sctk_info("remote = %d/%d", ev.initiator.phys.nid, ev.initiator.phys.pid);
 		get_request = sctk_ptl_rdv_create_triggerGet(
 			msg,
 			srail,
@@ -160,16 +158,12 @@ static inline void sctk_ptl_rdv_recv_message(sctk_rail_info_t* rail, sctk_ptl_ev
 	}
 
 	/* scenario (B-1) + (*-2), just inc the ct_handle (should be wrapped by the interface) */
-	sctk_warning("PORTALS: RDV CTInc");
 	sctk_ptl_chk(PtlCTInc(
 		cnth,
 		(sctk_ptl_cnt_t) {.success=1, .failure=0}
 	));
 
-	
-
-	sctk_nodebug("PORTALS: RECV-RDV to %d (idx=%d, match=%s, sz=%llu)", SCTK_MSG_DEST_TASK(msg), pte->idx, __sctk_ptl_match_str(malloc(32), 32, match.raw), size);
-	/*not_implemented();*/
+	sctk_debug("PORTALS: RECV-RDV to %d (idx=%d, match=%s, sz=%llu)", SCTK_MSG_DEST_PROCESS(msg), ev.pt_index, __sctk_ptl_match_str(malloc(32), 32, ev.match_bits), ev.mlength);
 }
 
 /**
@@ -184,39 +178,40 @@ static inline void sctk_ptl_rdv_recv_message(sctk_rail_info_t* rail, sctk_ptl_ev
 static inline void sctk_ptl_rdv_reply_message(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 {
 	sctk_thread_ptp_message_t* net_msg = sctk_malloc(sizeof(sctk_thread_ptp_message_t));
-	sctk_ptl_matchbits_t match = (sctk_ptl_matchbits_t) ev.match_bits;
+	sctk_ptl_local_data_t* ptr = (sctk_ptl_local_data_t*)ev.user_ptr;
+	sctk_thread_ptp_message_t* recv_msg = (sctk_thread_ptp_message_t*)ptr->msg;
 
-	not_implemented();
 	/* sanity checks */
 	sctk_assert(rail);
 	sctk_assert(ev.ni_fail_type == PTL_NI_OK);
+
+	/* Free the counter used as a trigger */
+	sctk_ptl_ct_free(ptr->cth);
 	
 	/* rebuild a complete MPC header msg (inter_thread_comm needs it) */
 	sctk_init_header(net_msg, SCTK_MESSAGE_CONTIGUOUS , sctk_ptl_rdv_free_memory, sctk_ptl_rdv_message_copy);
-	SCTK_MSG_SRC_PROCESS_SET     ( net_msg ,  match.data.rank);
-	SCTK_MSG_SRC_TASK_SET        ( net_msg ,  match.data.rank);
+	SCTK_MSG_SRC_PROCESS_SET     ( net_msg ,  ptr->match.data.rank);
+	SCTK_MSG_SRC_TASK_SET        ( net_msg ,  ptr->match.data.rank);
 	SCTK_MSG_DEST_PROCESS_SET    ( net_msg ,  sctk_get_process_rank());
 	SCTK_MSG_DEST_TASK_SET       ( net_msg ,  sctk_get_process_rank());
-	SCTK_MSG_COMMUNICATOR_SET    ( net_msg ,  ev.pt_index - SCTK_PTL_PTE_HIDDEN);
-	SCTK_MSG_TAG_SET             ( net_msg ,  match.data.tag);
-	SCTK_MSG_NUMBER_SET          ( net_msg ,  match.data.uid);
+	SCTK_MSG_COMMUNICATOR_SET    ( net_msg ,  SCTK_MSG_COMMUNICATOR(recv_msg));
+	SCTK_MSG_TAG_SET             ( net_msg ,  ptr->match.data.tag);
+	SCTK_MSG_NUMBER_SET          ( net_msg ,  ptr->match.data.uid);
 	SCTK_MSG_MATCH_SET           ( net_msg ,  0);
-	SCTK_MSG_SPECIFIC_CLASS_SET  ( net_msg ,  ((sctk_ptl_imm_data_t)ev.hdr_data).std.datatype);
+	SCTK_MSG_SPECIFIC_CLASS_SET  ( net_msg ,  SCTK_MSG_SPECIFIC_CLASS(recv_msg));
 	SCTK_MSG_SIZE_SET            ( net_msg ,  ev.mlength);
 	SCTK_MSG_COMPLETION_FLAG_SET ( net_msg ,  NULL);
 
 	/* save the Portals context in the tail
 	 * Whatever the origin, the user_ptr here is the one attached to the PRIORITY one
 	 */
-	net_msg->tail.ptl.user_ptr = (sctk_ptl_local_data_t*)ev.user_ptr;
+	net_msg->tail.ptl.user_ptr = ptr;
 	net_msg->tail.ptl.copy = 0;
 	
-	sctk_assert(net_msg->tail.ptl.user_ptr->slot.me.start == ev.start);
-
-	/* finish creating an MPC message heder */
+	/* finish creating an MPC message header */
 	sctk_rebuild_header(net_msg);
 
-	sctk_warning("PORTALS: REPLY-RDV from %d (idx=%d, match=%s, size=%lu) -> %p", SCTK_MSG_SRC_TASK(net_msg), ev.pt_index, __sctk_ptl_match_str(malloc(32), 32, match.raw), ev.mlength, ev.start);
+	sctk_debug("PORTALS: REPLY-RDV from %d (match=%s, rsize=%llu, size=%llu) -> %p", SCTK_MSG_SRC_TASK(net_msg), __sctk_ptl_match_str(malloc(32), 32, ptr->match.raw),ptr->slot.md.length , ev.mlength, ptr->slot.md.start);
 
 	/* notify ther inter_thread_comm a new message has arrived */
 	rail->send_message_from_network(net_msg);
@@ -236,7 +231,7 @@ static inline void sctk_ptl_rdv_complete_message(sctk_rail_info_t* rail, sctk_pt
 	sctk_ptl_local_data_t* ptr = (sctk_ptl_local_data_t*) ev.user_ptr;
 	sctk_thread_ptp_message_t *msg = (sctk_thread_ptp_message_t*)ptr->msg;
 
-	sctk_warning("PORTALS: COMPLETE-RDV");
+	sctk_debug("PORTALS: COMPLETE-RDV to %d (idx=%d, match=%s, rsize=%llu, size=%llu) -> %p", SCTK_MSG_SRC_PROCESS(msg), ev.pt_index, __sctk_ptl_match_str(malloc(32), 32, ev.match_bits),ev.mlength , ev.mlength, ev.start);
 	if(msg->tail.ptl.copy)
 		sctk_free(ptr->slot.me.start);
 
@@ -310,7 +305,7 @@ void sctk_ptl_rdv_send_message(sctk_thread_ptp_message_t* msg, sctk_endpoint_t* 
 	sctk_ptl_emit_put(md_request, 0, remote, pte, match, 0, 0, hdr.raw, md_request); /* empty Put() */
 	
 	/* TODO: Need to handle the case where the data is larger than the max ME size */
-	sctk_warning("PORTALS: SEND-RDV to %d (idx=%d, match=%s, sz=%llu)", SCTK_MSG_DEST_TASK(msg), pte->idx, __sctk_ptl_match_str(malloc(32), 32, match.raw), 0);
+	sctk_debug("PORTALS: SEND-RDV to %d (idx=%d, match=%s, sz=%llu)", SCTK_MSG_DEST_TASK(msg), pte->idx, __sctk_ptl_match_str(malloc(32), 32, match.raw), me_request->slot.me.length);
 }
 
 /**
@@ -353,9 +348,11 @@ void sctk_ptl_rdv_notify_recv(sctk_thread_ptp_message_t* msg, sctk_ptl_rail_info
 	
 	/****** SECOND, attempt to use TriggeredOps if possible  *******/
 	/***************************************************************/
+#if 0
 	if(SCTK_MSG_SRC_PROCESS(msg) != SCTK_ANY_SOURCE)
 	{
 		get_request = sctk_ptl_rdv_create_triggerGet(msg, srail, SCTK_PTL_ANY_PROCESS, match, put_request->slot.me.ct_handle);
+		msg->tail.ptl.user_ptr = get_request; /* set w/ the GET request */
 	}
 	else
 	{
@@ -365,11 +362,11 @@ void sctk_ptl_rdv_notify_recv(sctk_thread_ptp_message_t* msg, sctk_ptl_rail_info
 		sctk_error("ANY_SOURCE");
 		sctk_assert(ign.data.rank == SCTK_PTL_IGN_RANK);
 	}
-
+#endif
 	/* this should be the last operation, to optimize the triggeredOps use */
 	sctk_ptl_me_register(srail, put_request, pte);
 	
-	sctk_warning("PORTALS: NOTIFY-RECV-RDV from %d (idx=%llu, match=%s, ign=%llu, sz=%llu)", SCTK_MSG_SRC_PROCESS(msg), pte->idx, __sctk_ptl_match_str(malloc(32), 32, match.raw), __sctk_ptl_match_str(malloc(32), 32, ign.raw), SCTK_MSG_SRC_PROCESS(msg));
+	sctk_debug("PORTALS: NOTIFY-RECV-RDV from %d (idx=%llu, match=%s, ign=%llu)", SCTK_MSG_SRC_PROCESS(msg), pte->idx, __sctk_ptl_match_str(malloc(32), 32, match.raw), __sctk_ptl_match_str(malloc(32), 32, ign.raw));
 }
 
 void sctk_ptl_rdv_event_me(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
@@ -420,6 +417,7 @@ void sctk_ptl_rdv_event_md(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 
 		case PTL_EVENT_REPLY: /* a GET operation completed */
 			sctk_ptl_rdv_reply_message(rail, ev);
+			sctk_ptl_md_release(ptr);
 			
 			break;
 		case PTL_EVENT_SEND:
