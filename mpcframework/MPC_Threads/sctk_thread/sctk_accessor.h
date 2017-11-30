@@ -30,6 +30,7 @@
 #include "sctk.h"
 #include "sctk_pmi.h"
 #include "sctk_tls.h"
+#include "mpc_internal_thread.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -48,28 +49,45 @@ static inline int sctk_get_task_rank (void)
   return sctk_process_rank;
 #endif
 
-  /* __mpc_task_rank is a manually switched
-   * TLS entry. It is initialized at -2,
-   * meaning that if we have this value
-   * the request to the actual rank has
-   * not been made. However, if different
-   * it contains the task rank */
+  int can_be_disguised = __MPC_Maybe_disguised();
 
-  int ret = __mpc_task_rank;
+  int ret = -1;
 
-  /* Was it initialized ? Yes then we are done */
-  if (ret != -2)
-    return ret;
+  if( can_be_disguised == 0 )
+  {
 
-  sctk_thread_data_t *data = sctk_thread_data_get();
-
-  if (!data)
-    return -1;
-
-  ret = (int)(data->task_id);
-
-  /* Save for next call */
-  __mpc_task_rank = ret;
+      /* __mpc_task_rank is a manually switched
+       * TLS entry. It is initialized at -2,
+       * meaning that if we have this value
+       * the request to the actual rank has
+       * not been made. However, if different
+       * it contains the task rank */
+    
+      ret = __mpc_task_rank;
+    
+      /* Was it initialized ? Yes then we are done */
+      if (ret != -2)
+        return ret;
+    
+      sctk_thread_data_t *data = sctk_thread_data_get();
+    
+      if (!data)
+        return -1;
+    
+      ret = (int)(data->task_id);
+    
+      /* Save for next call */
+      __mpc_task_rank = ret;
+ }
+ else
+ {
+    sctk_thread_data_t *data = sctk_thread_data_get();
+    
+    if( !data )
+        return -1;
+    
+    ret = (int)(data->task_id);
+ }
 
   return ret;
 #endif

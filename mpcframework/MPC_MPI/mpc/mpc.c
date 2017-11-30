@@ -697,14 +697,144 @@ void MPC_Release_thread_specific() {
 struct sctk_task_specific_s *___the_process_specific = NULL;
 #endif
 
+static int * ___local_to_global_table = NULL;
+static struct sctk_task_specific_s **___disguisements = NULL;
+sctk_atomics_int ________is_disguised;
+
+int __MPC_init_disguise( struct sctk_task_specific_s * my_specific )
+{
+
+    int my_id = sctk_get_local_task_rank();
+
+    if( my_id == 0 )
+    {
+        sctk_atomics_store_int(&________is_disguised, 0);
+        int local_count = sctk_get_local_task_number();
+        ___disguisements = sctk_malloc( sizeof(struct sctk_task_specific_s *) * local_count );
+
+        if( ___disguisements == NULL )
+        {
+            perror("malloc");
+            abort();
+        }
+
+        ___local_to_global_table = sctk_malloc( sizeof(int) * local_count );
+
+        if( ___local_to_global_table == NULL )
+        {
+            perror("malloc");
+            abort();
+        }
+
+    }
+
+    sctk_barrier( SCTK_COMM_WORLD );
+
+    ___disguisements[ my_id ] = my_specific;
+    ___local_to_global_table[ my_id ] = sctk_get_task_rank();
+
+    sctk_barrier( SCTK_COMM_WORLD );
+
+    return 0;
+}
+
+int MPCX_Disguise( MPC_Comm comm, int target_rank )
+{
+  /* Retrieve the ctx pointer */
+  int cwr = sctk_get_comm_world_rank( (sctk_communicator_t) comm, target_rank );
+
+  int local_count = sctk_get_local_task_number();
+  
+  int i;
+
+
+  for (i = 0; i < local_count; ++i) {
+      if( ___local_to_global_table[i] == cwr )
+      {
+        sctk_atomics_incr_int( &________is_disguised );
+        sctk_thread_data_t * th = __sctk_thread_data_get(1);
+        th->my_disguisement = ___disguisements[i]->thread_data;
+        th->ctx_disguisement = (void *)___disguisements[i];
+        return MPC_SUCCESS;
+      }
+  }
+  
+  return MPC_ERR_ARG;
+}
+
+int MPCX_Undisguise()
+{
+  sctk_thread_data_t * th = __sctk_thread_data_get(1);
+
+  if( th->my_disguisement == NULL )
+      return MPC_ERR_ARG;
+
+
+  th->my_disguisement = NULL;
+  th->ctx_disguisement = NULL;
+  sctk_atomics_decr_int( &________is_disguised );
+
+  return MPC_SUCCESS;
+}
+
+
+
+
+static struct progressEnginePool __mpc_progress_pool;
+
+
+
+int __MPC_init_progress(sctk_task_specific_t * tmp )
+{
+
+  int my_local_id = sctk_get_local_task_rank();
+  if( my_local_id == 0 )
+  {
+    int local_count = sctk_get_local_task_number();
+    progressEnginePool_init( &__mpc_progress_pool, local_count );
+  }
+
+  sctk_barrier((sctk_communicator_t) MPC_COMM_WORLD );
+
+  /* Retrieve the ctx pointer */
+  tmp->progress_list = progressEnginePool_join( &__mpc_progress_pool );
+  tmp->progress_list = NULL;
+}
+
+int __MPC_release_progress()
+{
+    static sctk_spinlock_t l = 0;
+    static sctk_spinlock_t d = 0;
+
+    int done = 0;
+    sctk_spinlock_lock( &l );
+    done = d;
+    sctk_spinlock_unlock( &l );
+
+    if( done )
+        return;
+
+    progressEnginePool_release( &__mpc_progress_pool );
+}
+
+
+
+
 /** \brief Initalizes a structure of type \ref sctk_task_specific_t
  */
 static inline void __MPC_init_task_specific_t(sctk_task_specific_t *tmp) {
   /* First empty the whole sctk_task_specific_t */
   memset(tmp, 0, sizeof(sctk_task_specific_t));
 
+  tmp->thread_data = sctk_thread_data_get();
+  tmp->progress_list = NULL;
+
   /* Set task id */
   tmp->task_id = sctk_get_task_rank();
+
+  __MPC_init_progress(tmp);
+
+  sctk_barrier((sctk_communicator_t) MPC_COMM_WORLD );
 
   /* Initialize Data-type array */
   Datatype_Array_init(&tmp->datatype_array);
@@ -786,6 +916,9 @@ static void __MPC_setup_task_specific() {
   /* Set the sctk_task_specific key in thread CTX */
   sctk_thread_setspecific_mpc(sctk_task_specific, tmp);
 
+  /* Register the task specific in the disguisemement array */
+  __MPC_init_disguise(tmp);
+
   /* Initialize composed datatypes */
   init_composed_common_types();
 }
@@ -856,6 +989,9 @@ static void __MPC_delete_task_specific() {
   sctk_task_specific_t *tmp;
   tmp = (sctk_task_specific_t *)sctk_thread_getspecific_mpc(sctk_task_specific);
 
+  /* Clear progress */
+  __MPC_release_progress();
+
   /* Free composed datatypes */
   release_composed_common_types();
 
@@ -890,22 +1026,31 @@ struct sctk_task_specific_s *__MPC_get_task_specific() {
   return ___the_process_specific;
 #endif
 
-  struct sctk_task_specific_s *tmp;
+  struct sctk_task_specific_s *ret = NULL;
+  int maybe_disguised = __MPC_Maybe_disguised();
+
+  if( maybe_disguised )
+  {
+    sctk_thread_data_t * th = __sctk_thread_data_get(1);
+    if( th->ctx_disguisement )
+        return th->ctx_disguisement;
+  }
 
   static __thread int last_rank = -1;
   static __thread struct sctk_task_specific_s *last_specific = NULL;
 
-  if (last_rank == sctk_get_task_rank()) {
-    return last_specific;
-  }
+   if ( last_rank == sctk_get_task_rank() ) {
+       return last_specific;
+   }
 
-  tmp = (struct sctk_task_specific_s *)sctk_thread_getspecific(
-      sctk_task_specific);
+  
+    ret = (struct sctk_task_specific_s *)sctk_thread_getspecific(
+            sctk_task_specific);
 
-  last_specific = tmp;
+  last_specific = ret;
   last_rank = sctk_get_task_rank();
-
-  return tmp;
+  
+  return ret;
 }
 
 /** \brief Retrieves a pointer to a contiguous datatype from its datatype ID
@@ -1352,7 +1497,7 @@ int __MPC_Barrier(MPC_Comm comm) {
 
 void MPC_Progress_engine_poll()
 {
-    int rank = stck_get_task_rank();
+    int rank = sctk_get_task_rank();
 
 
 
@@ -3279,25 +3424,6 @@ int sctk_user_main(int argc, char **argv) {
 int PMPC_Comm_rank(MPC_Comm comm, int *rank) {
   SCTK_PROFIL_START(MPC_Comm_rank);
 
-  /* This an optimization when the same
-   * rank is requested multiple times
-   * by the task, note that we compare
-   * to the task rank as a given VP (__thread)
-   * may host multiple tasks */
-  static __thread int last_task = -1;
-  static __thread int last_rank = MPC_PROC_NULL;
-  static __thread int last_comm = MPC_COMM_NULL;
-
-  /* Comm first as no call */
-  if (last_comm == comm) {
-    /* Then rank */
-    if (last_task == sctk_get_task_rank()) {
-      /* Yes it is cached, we are done */
-      *rank = last_rank;
-      SCTK_PROFIL_END(MPC_Comm_rank);
-      return MPC_SUCCESS;
-    }
-  }
 
   sctk_task_specific_t *task_specific;
   sctk_nodebug("Get rank of %d", comm);
@@ -3305,11 +3431,6 @@ int PMPC_Comm_rank(MPC_Comm comm, int *rank) {
   task_specific = __MPC_get_task_specific();
   __MPC_Comm_rank(comm, rank, task_specific);
   sctk_nodebug("Get rank of %d done", comm);
-
-  /* Save for next call */
-  last_task = sctk_get_task_rank();
-  last_rank = *rank;
-  last_comm = comm;
 
   SCTK_PROFIL_END(MPC_Comm_rank);
   MPC_ERROR_SUCESS();

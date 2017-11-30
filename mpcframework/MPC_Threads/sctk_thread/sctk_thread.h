@@ -127,6 +127,9 @@ extern "C"
 	struct sctk_tls_dtors_s* dtors_head;
     /* Where the thread must be bound */
     unsigned int bind_to;
+    /* The thread disguisement if present */
+    struct sctk_thread_data_s *my_disguisement;
+    void * ctx_disguisement;
   } sctk_thread_data_t;
 
 #define SCTK_THREAD_DATA_INIT { NULL, NULL, NULL, -1, -1, -1 , -1,\
@@ -135,6 +138,7 @@ extern "C"
   void sctk_thread_data_init (void);
   void sctk_thread_data_set (sctk_thread_data_t * task_id);
   sctk_thread_data_t *sctk_thread_data_get (void);
+  sctk_thread_data_t *__sctk_thread_data_get (int no_disguise);
 
   extern volatile int sctk_thread_running;
   int sctk_thread_get_current_local_tasks_nb();

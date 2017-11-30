@@ -20,6 +20,11 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
+#ifndef MPC_INTERNAL_THREAD_H
+#define MPC_INTERNAL_THREAD_H
+
+#include <sctk_atomics.h>
+
 struct sctk_task_specific_s;
 struct sctk_thread_specific_s;
 
@@ -28,3 +33,14 @@ extern int __MPC_atexit_task_specific(void (*function)(void));
 extern void __MPC_init_thread_specific();
 extern void __MPC_delete_thread_specific();
 
+
+/* Disguisement Fast Path Checker */
+
+extern sctk_atomics_int ________is_disguised;
+
+static inline int __MPC_Maybe_disguised()
+{
+    return sctk_atomics_load_int(&________is_disguised);
+}
+
+#endif /* end of include guard: MPC_INTERNAL_THREAD_H */

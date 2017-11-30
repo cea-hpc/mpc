@@ -444,7 +444,7 @@ int do_work( void * pval )
 
 
 
-
+#if 0
 int main(int argc, char *argv[])
 {
     struct progressEnginePool pool;
@@ -491,3 +491,5 @@ int main(int argc, char *argv[])
 
     return 0;
 }
+#endif
+

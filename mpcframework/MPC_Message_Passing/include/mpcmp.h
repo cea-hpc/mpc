@@ -795,6 +795,10 @@ int MPC_Comm_split(MPC_Comm, int, int, MPC_Comm *);
   int MPCX_Grequest_class_allocate(MPCX_Request_class target_class,
                                    void *extra_state, MPC_Request *request);
 
+  /* Disguising Interface */
+  int MPCX_Disguise( MPC_Comm comm, int rank );
+  int MPCX_Undisguise();
+
   /* Status Modification and query */
   int MPC_Status_set_elements(MPC_Status *, MPC_Datatype, int);
   int MPC_Status_set_elements_x(MPC_Status *, MPC_Datatype, MPC_Count);

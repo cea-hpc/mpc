@@ -551,6 +551,7 @@ void sctk_unregister_task (const int i){
 }
 
 void sctk_register_task (const int i){
+  sctk_error("REG !!!!!!!");
   sctk_thread_mutex_lock (&sctk_current_local_tasks_lock);
   sctk_current_local_tasks_nb++;
   sctk_thread_mutex_unlock (&sctk_current_local_tasks_lock);
@@ -611,6 +612,10 @@ sctk_thread_create_tmp_start_routine (sctk_thread_data_t * __arg)
 
   //mark the given TLS as currant thread allocator
   sctk_set_tls (tmp.tls);
+
+  // Set no disguise
+  tmp.my_disguisement = NULL;
+  tmp.ctx_disguisement = NULL;
 
   //do NUMA migration if required
   sctk_alloc_posix_numa_migrate();
@@ -2156,7 +2161,7 @@ void sctk_thread_data_set(sctk_thread_data_t *task_id) {
 }
 
 sctk_thread_data_t *
-sctk_thread_data_get ()
+__sctk_thread_data_get (int no_disguise)
 {
   sctk_thread_data_t *tmp;
   if (sctk_multithreading_initialised == 0)
@@ -2164,8 +2169,26 @@ sctk_thread_data_get ()
   else
     tmp = (sctk_thread_data_t *) sctk_thread_getspecific (stck_task_data);
 
+  if( tmp )
+  {
+    if( (tmp->my_disguisement != NULL) && (no_disguise == 0) )
+    {
+        return tmp->my_disguisement;
+    }
+  }
+
   return tmp;
 }
+
+
+sctk_thread_data_t *
+sctk_thread_data_get ()
+{
+    return __sctk_thread_data_get(0);
+}
+
+
+
 
 #if 0
 static void
@@ -2899,6 +2922,7 @@ sctk_start_func (void *(*run) (void *), void *arg)
 			sctk_nodebug ("Task %d is in %d with %p on vp %d", i, proc,
 			self_p, vp);
 
+                        sctk_error("MISTER T");
 #ifdef MPC_Message_Passing
 			sctk_register_task(i);
 			sctk_register_restart_thread (i, proc);

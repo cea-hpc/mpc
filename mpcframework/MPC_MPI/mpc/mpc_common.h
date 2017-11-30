@@ -29,6 +29,7 @@
 #include "mpc_datatypes.h"
 #include "mpc_extended_request.h"
 #include "sctk_debug.h"
+#include "progress_engine.h"
 
 /************************************************************************/
 /* Per communicator context                                             */
@@ -128,6 +129,12 @@ typedef struct sctk_task_specific_s
             topo_comms; /**< These are communicators
                                                                         taking
                            the topology into account */
+
+        /* For disguisement */
+        struct sctk_thread_data_s * thread_data;
+
+        /* Progresss List */
+        struct progressList * progress_list;
 } sctk_task_specific_t;
 
 struct sctk_task_specific_s *__MPC_get_task_specific();

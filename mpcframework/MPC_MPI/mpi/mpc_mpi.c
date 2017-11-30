@@ -23,6 +23,7 @@
 #include <math.h>
 #include <string.h>
 #include <mpc_mpi_internal.h>
+#include <mpc_internal_thread.h>
 
 #include "sctk_ht.h"
 #include "sctk_handle.h"
@@ -11908,14 +11909,16 @@ static int __INTERNAL__PMPI_Comm_rank(MPI_Comm comm, int *rank) {
 
   if (last_comm == comm) {
     if (last_rank == sctk_get_task_rank()) {
-      *rank = last_crank;
-  	  return MPI_SUCCESS;
-	}
+        if (!__MPC_Maybe_disguised()) {
+            *rank = last_crank;
+  	    return MPI_SUCCESS;
+        }
+     }
   }
 
   int ret = PMPC_Comm_rank(comm, rank);
 
-  if( ret == MPI_SUCCESS )
+  if( (ret == MPI_SUCCESS) && (!__MPC_Maybe_disguised()) )
   {
  	//sctk_error("SAVE %d@%d %p", *rank , comm,  rank); 
   	last_rank = sctk_get_task_rank();
