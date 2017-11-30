@@ -1349,6 +1349,18 @@ int __MPC_Barrier(MPC_Comm comm) {
 /* Extended Generalized Requests                                        */
 /************************************************************************/
 
+
+void MPC_Progress_engine_poll()
+{
+    int rank = stck_get_task_rank();
+
+
+
+}
+
+
+
+
 /** \brief This function handles request starting for every generalized request
  * types
  *
