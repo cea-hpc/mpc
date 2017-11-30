@@ -186,7 +186,7 @@ void sctk_ptl_software_init(sctk_ptl_rail_info_t* srail, int comm_dims)
 		/* don't queue pre-allocated ME for RDMA entry */
 		if(i != SCTK_PTL_PTE_RDMA)
 		{
-			sctk_ptl_me_feed(srail, table + i, eager_size, SCTK_PTL_ME_OVERFLOW_NB, SCTK_PTL_PRIORITY_LIST);
+			sctk_ptl_me_feed(srail, table + i, eager_size, SCTK_PTL_ME_OVERFLOW_NB, SCTK_PTL_PRIORITY_LIST, SCTK_PTL_TYPE_CM, SCTK_PTL_PROT_NONE);
 		}
 		/*table[i].taglocks = sctk_malloc(sizeof(sctk_spinlock_t) * SCTK_PTL_PTE_NB_LOCKS);*/
 		/*int j;*/
@@ -236,7 +236,7 @@ void sctk_ptl_pte_create(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte, size_
 		&pte->idx       /* the effective index value */
 	));
 
-	sctk_ptl_me_feed(srail, pte, eager_size, SCTK_PTL_ME_OVERFLOW_NB, SCTK_PTL_OVERFLOW_LIST);
+	sctk_ptl_me_feed(srail, pte, eager_size, SCTK_PTL_ME_OVERFLOW_NB, SCTK_PTL_OVERFLOW_LIST, SCTK_PTL_TYPE_STD, SCTK_PTL_PROT_NONE);
 	
 	/*pte->taglocks = sctk_malloc(sizeof(sctk_spinlock_t) * SCTK_PTL_PTE_NB_LOCKS);*/
 	/*int j;*/
@@ -244,8 +244,6 @@ void sctk_ptl_pte_create(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte, size_
 	/*{*/
 		/*pte->taglocks[j] = SCTK_SPINLOCK_INITIALIZER;*/
 	/*}*/
-
-
 	MPCHT_set(&srail->pt_table, key, pte);
 	srail->nb_entries = key + SCTK_PTL_PTE_HIDDEN;
 }
@@ -470,7 +468,7 @@ sctk_ptl_id_t sctk_ptl_self(sctk_ptl_rail_info_t* srail)
  * \param[in] size the ME size
  * \param[in] nb numberof ME to add
  */
-void sctk_ptl_me_feed(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte, size_t me_size, int nb, int list)
+void sctk_ptl_me_feed(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte, size_t me_size, int nb, int list, char type, char protocol)
 {
 	int j;
 
@@ -490,8 +488,8 @@ void sctk_ptl_me_feed(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte, size_t m
 		);
 		user->msg = NULL;
 		user->list = list;
-		user->type = 0xf;
-		user->prot = 0xf;
+		user->type = type;
+		user->prot = protocol;
 
 		sctk_ptl_me_register(srail, user, pte);
 	}

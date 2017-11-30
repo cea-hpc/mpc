@@ -138,7 +138,7 @@ void sctk_ptl_cm_event_me(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 	{
 		case PTL_EVENT_PUT: /* a Put() reached the local process */
 			fake = (sctk_ptl_pte_t){.idx = ev.pt_index};
-			sctk_ptl_me_feed(srail,  &fake,  srail->eager_limit, 1, SCTK_PTL_PRIORITY_LIST);
+			sctk_ptl_me_feed(srail,  &fake,  srail->eager_limit, 1, SCTK_PTL_PRIORITY_LIST, SCTK_PTL_TYPE_CM, SCTK_PTL_PROT_NONE);
 			sctk_ptl_cm_recv_message(rail, ev);
 			break;
 

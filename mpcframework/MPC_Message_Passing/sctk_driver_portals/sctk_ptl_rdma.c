@@ -260,7 +260,6 @@ void sctk_ptl_rdma_read(sctk_rail_info_t *rail, sctk_thread_ptp_message_t *msg,
 	*copy                  = *local_key->pin.ptl.md_data;
 	copy->msg              = msg;
 	msg->tail.ptl.user_ptr = copy;
-	copy->type = SCTK_PTL_TYPE_RDMA;
 
 	sctk_ptl_emit_get(
 		local_key->pin.ptl.md_data, /* the base MD */
@@ -314,6 +313,7 @@ void sctk_ptl_pin_region( struct sctk_rail_info_s * rail, struct sctk_rail_pin_c
 	/* Configure the MD */
 	md_flags   = SCTK_PTL_MD_PUT_FLAGS | SCTK_PTL_MD_GET_FLAGS;
 	md_request = sctk_ptl_md_create(srail, addr, size, md_flags);
+	md_request->type = SCTK_PTL_TYPE_RDMA;
 	sctk_ptl_md_register(srail, md_request);
 
 	/* configure the ME */
@@ -324,6 +324,7 @@ void sctk_ptl_pin_region( struct sctk_rail_info_s * rail, struct sctk_rail_pin_c
 	pte            = rdma_pte;
 	remote         = SCTK_PTL_ANY_PROCESS;
 	me_request     = sctk_ptl_me_create(addr, size, remote, match, ign, me_flags);
+	me_request->type = SCTK_PTL_TYPE_RDMA;
 	sctk_ptl_me_register(srail, me_request, pte);
 
 	/* Register infos in the RDMA ctx.

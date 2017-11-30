@@ -50,7 +50,7 @@ sctk_ptl_local_data_t* sctk_ptl_me_create_with_cnt(sctk_ptl_rail_info_t* srail, 
 void sctk_ptl_me_register(sctk_ptl_rail_info_t* srail, sctk_ptl_local_data_t*, sctk_ptl_pte_t*);
 void sctk_ptl_me_release(sctk_ptl_local_data_t*);
 void sctk_ptl_me_free(sctk_ptl_local_data_t*, int);
-void sctk_ptl_me_feed(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte, size_t me_size, int nb, int list);
+void sctk_ptl_me_feed(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte, size_t me_size, int nb, int list, char type, char protocol);
 
 /* event management */
 void sctk_ptl_ct_free(sctk_ptl_cnth_t cth);

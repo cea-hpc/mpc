@@ -165,9 +165,11 @@ typedef struct sctk_ptl_local_data_s
 #define SCTK_PTL_TYPE_CM       (1)
 #define SCTK_PTL_TYPE_RDMA     (2)
 #define SCTK_PTL_TYPE_STD      (3)
+#define SCTK_PTL_TYPE_NONE     (255)
 
 #define SCTK_PTL_PROT_RDV      (0)
 #define SCTK_PTL_PROT_EAGER    (1)
+#define SCTK_PTL_PROT_NONE     (255)
 
 /**
  * RDMA structure, mapping a Portals window.
