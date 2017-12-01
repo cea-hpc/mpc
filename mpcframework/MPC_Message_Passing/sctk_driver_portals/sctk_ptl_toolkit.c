@@ -68,7 +68,7 @@ void sctk_ptl_notify_recv(sctk_thread_ptp_message_t* msg, sctk_rail_info_t* rail
 	sctk_assert(srail);
 	sctk_assert(SCTK_PTL_PTE_EXIST(srail->pt_table, SCTK_MSG_COMMUNICATOR(msg)));
 
-	if(SCTK_MSG_SIZE(msg) < srail->eager_limit)
+	if(SCTK_MSG_SIZE(msg) <= srail->eager_limit)
 	{
 		sctk_ptl_eager_notify_recv(msg, srail);
 	}
@@ -99,7 +99,7 @@ void sctk_ptl_send_message(sctk_thread_ptp_message_t* msg, sctk_endpoint_t* endp
 	}
 
 	/* if the message is lower than the fixed boundary, send it as an eager */
-	if(SCTK_MSG_SIZE(msg) < srail->eager_limit)
+	if(SCTK_MSG_SIZE(msg) <= srail->eager_limit)
 	{
 		sctk_ptl_eager_send_message(msg, endpoint);
 	}
@@ -387,35 +387,30 @@ void sctk_ptl_comm_register(sctk_ptl_rail_info_t* srail, int comm_idx, size_t co
  */
 void sctk_ptl_init_interface(sctk_rail_info_t* rail)
 {
-	size_t max_mr, eager_limit, min_comms;
+	size_t cut, eager_limit, min_comms;
 
 	/* get back the Portals config */
-	max_mr      = rail->runtime_config_driver_config->driver.value.portals.mr_max_size;
+	cut         = rail->runtime_config_driver_config->driver.value.portals.block_cut;
 	eager_limit = rail->runtime_config_driver_config->driver.value.portals.eager_limit;
 	min_comms   = rail->runtime_config_driver_config->driver.value.portals.min_comms;
 
-	if(max_mr < eager_limit)
+	if(cut < eager_limit)
 	{
-		sctk_warning("PORTALS: eager are larger than max memory region size ! Resize eager limits.");
-		eager_limit = max_mr;
+		sctk_warning("PORTALS: eager are larger than allowed memory region size ! Resize eager limits.");
+		eager_limit = cut;
 	}
 
 	/* init low-level driver */
 	rail->network.ptl             = sctk_ptl_hardware_init();
 	rail->network.ptl.eager_limit = eager_limit;
-	rail->network.ptl.max_mr      = max_mr;
 	
 	sctk_ptl_software_init( &rail->network.ptl, min_comms);
-
-	sctk_assert(eager_limit == rail->network.ptl.eager_limit);
-
-	if(max_mr < rail->network.ptl.max_mr)
-	{
-		sctk_warning("PORTALS: Max memory region size value has been limited by the harware implementation !");
-		sctk_warning("PORTALS: Maybe try to export PORTALS4_MAX_MSG_SIZE before running the application.");
-	}
-
 	
+	sctk_assert(eager_limit == rail->network.ptl.eager_limit);
+	rail->network.ptl.max_mr      = rail->network.ptl.max_limits.max_msg_size;
+	rail->network.ptl.cutoff      = cut;
+	/*rail->network.ptl.max_mr = (1024 * 1024 * 8);*/
+
 	if(!ranks_ids_map)
 	{
 		ranks_ids_map = sctk_calloc(sctk_get_process_number(), sizeof(sctk_ptl_id_t));

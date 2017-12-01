@@ -57,7 +57,6 @@
 #define sctk_ptl_rdma_op_t ptl_op_t
 
 /* Portals entry */
-#define SCTK_PTL_PTE_NB_LOCKS 4
 #define SCTK_PTL_PTE_FLAGS PTL_PT_FLOWCTRL
 #define SCTK_PTL_PTE_HIDDEN 3
 #define SCTK_PTL_PTE_RECOVERY (0)
@@ -69,6 +68,7 @@
 /* MISCS */
 #define sctk_ptl_nih_t ptl_handle_ni_t
 #define sctk_ptl_limits_t ptl_ni_limits_t
+#define SCTK_PTL_MAX_RDV_BLOCKS 4
 
 /**
  * How the match_bits is divided to store essential information to 
@@ -214,6 +214,7 @@ typedef struct sctk_ptl_rail_info_s
 	sctk_ptl_eq_t mds_eq;                   /**< EQ for all MDs emited from this NI */
 	struct MPCHT pt_table;                  /**< The PT hash table */
 
+	size_t cutoff;                          /**< cutoff for large RDV messages */
 	size_t max_mr;                          /**< Max size of a memory region (MD | ME ) */
 	size_t eager_limit;                     /**< the max size for an eager msg */
 	size_t nb_entries;                      /**< current number of PT entries dedicated to comms */

@@ -6,29 +6,41 @@
 
 extern sctk_ptl_id_t* ranks_ids_map;
 
-static inline void __sctk_ptl_rdv_compute_chunks(sctk_ptl_rail_info_t* srail, sctk_thread_ptp_message_t* msg, size_t* sz, size_t* nb)
+static inline void __sctk_ptl_rdv_compute_chunks(sctk_ptl_rail_info_t* srail, sctk_thread_ptp_message_t* msg, size_t* sz_out, size_t* nb_out, size_t* rest_out)
 {
-	size_t size = SCTK_MSG_SIZE(msg);
+	size_t total = SCTK_MSG_SIZE(msg);
+	size_t size = 0;
+	size_t nb = 1;
 
 	sctk_assert(srail);
 	sctk_assert(msg);
-	sctk_assert(sz);
-	sctk_assert(nb);
+	sctk_assert(sz_out);
+	sctk_assert(nb_out);
+	sctk_assert(rest_out);
 
-	/* what to do for extreme case ? :
-	 *   - What if number of GET-MDs exceeded the max number of MD ?
-	 *   - What if number of GET-MEs exceeded the max number of ME ?
+	/* first, if the msg size reached the cufoff, the chunk size if a simple division */
+	size = (total > srail->cutoff) ? (size_t)(total / SCTK_PTL_MAX_RDV_BLOCKS) : total;
+	nb   = (size < total) ? SCTK_PTL_MAX_RDV_BLOCKS : 1;
+		
+	/* if sub-blocks are larger than the largest possible ME/MD
+	 * Set dimension to the system one.
+	 * NOTE: This can lead to resource exhaustion if srail->max_mr << MSG_SIZE
 	 */
-	if(size > srail->max_mr)
+	if(size >= srail->max_mr)
 	{
-		*sz = srail->max_mr;
-		*nb = (int)(size / (*sz)) + (((size % (*sz)) == 0) ? 0 : 1);
+		/* compute how many chunks we need (add one if necessary if not well-balanced) */
+		nb = (size_t)(total / srail->max_mr) + ((total % srail->max_mr == 0) ? 0 : 1);
+		sctk_assert(nb > 0);
+		/* compute the effective size per chunk (load-balancing if an extra-chunk is needed */
+		size = (size_t)(total / nb);
 	}
-	else
-	{
-		*sz = size;
-		*nb = 1;
-	}
+
+	sctk_assert(size >= 0);
+	sctk_assert(nb > 0);
+
+	*sz_out   = size;
+	*nb_out   = nb;
+	*rest_out = total % size;
 }
 
 /**
@@ -85,7 +97,8 @@ static inline void sctk_ptl_rdv_recv_message(sctk_rail_info_t* rail, sctk_ptl_ev
 	sctk_ptl_local_data_t* ptr         = (sctk_ptl_local_data_t*) ev.user_ptr;
 	sctk_thread_ptp_message_t* msg     = (sctk_thread_ptp_message_t*) ptr->msg;
 	void* start                        = NULL;
-	size_t chunk_sz, chunk_nb, chunk;
+	void* chunk_addr;
+	size_t chunk_sz, chunk_nb, chunk, chunk_rest;
 	int flags;
 
 	sctk_assert(msg);
@@ -131,21 +144,32 @@ static inline void sctk_ptl_rdv_recv_message(sctk_rail_info_t* rail, sctk_ptl_ev
 	flags     = SCTK_PTL_MD_GET_FLAGS;
 	sctk_assert(pte);
 
-	__sctk_ptl_rdv_compute_chunks(srail, msg, &chunk_sz, &chunk_nb);
+	/* this function will compute byte equal distribution between multiple GET, if needed */
+	__sctk_ptl_rdv_compute_chunks(srail, msg, &chunk_sz, &chunk_nb, &chunk_rest);
+	
 	sctk_assert(chunk_sz >= 0ull);
 	sctk_assert(chunk_nb > 0);
+	sctk_assert(chunk_rest < chunk_nb);
+	
+	chunk_addr = start;
 	chunk = 0;
 	for (chunk = 0; chunk < chunk_nb; ++chunk) 
 	{
-		/* for loop */
-		get_request           = sctk_ptl_md_create(srail, start, chunk_sz, flags);
+		size_t cur_sz = (chunk < chunk_rest) ? chunk_sz + 1 : chunk_sz;
+
+		get_request = sctk_ptl_md_create(
+			srail, 
+			chunk_addr, 
+			cur_sz,
+			flags
+		);
 		sctk_assert(get_request);
 		get_request->msg      = NULL;
 		get_request->list     = SCTK_PTL_PRIORITY_LIST;
 		get_request->type     = SCTK_PTL_TYPE_STD;
 		get_request->prot     = SCTK_PTL_PROT_RDV;
 		get_request->match    = (sctk_ptl_matchbits_t)ev.match_bits;
-		start += chunk_sz;
+		chunk_addr += cur_sz;
 
 		sctk_ptl_md_register(srail, get_request);
 	
@@ -157,11 +181,12 @@ static inline void sctk_ptl_rdv_recv_message(sctk_rail_info_t* rail, sctk_ptl_ev
 		{
 			msg->tail.ptl.user_ptr = get_request;
 			get_request->msg = msg;
+			sctk_assert(start + SCTK_MSG_SIZE(msg) == chunk_addr);
 		}
 
 		sctk_ptl_emit_get(
 			get_request,
-			chunk_sz,
+			cur_sz,
 			ev.initiator,
 			pte,
 			get_request->match,
@@ -172,7 +197,7 @@ static inline void sctk_ptl_rdv_recv_message(sctk_rail_info_t* rail, sctk_ptl_ev
 
 	}
 	
-	sctk_debug("PORTALS: RECV-RDV to %d (idx=%d, match=%s, ch_nb=%llu, ch_sz=%llu)", SCTK_MSG_DEST_PROCESS(msg), ev.pt_index, __sctk_ptl_match_str(malloc(32), 32, ev.match_bits), chunk_nb, chunk_sz);
+	sctk_info("PORTALS: RECV-RDV to %d (idx=%d, match=%s, ch_nb=%llu, ch_sz=%llu)", SCTK_MSG_DEST_PROCESS(msg), ev.pt_index, __sctk_ptl_match_str(malloc(32), 32, ev.match_bits), chunk_nb, chunk_sz);
 }
 
 /**
@@ -256,8 +281,8 @@ void sctk_ptl_rdv_send_message(sctk_thread_ptp_message_t* msg, sctk_endpoint_t* 
 	sctk_ptl_route_info_t* infos   = &endpoint->data.ptl;
 	sctk_ptl_local_data_t *md_request , *me_request;
 	int md_flags                      , me_flags;
-	void* start;
-	size_t chunk_nb, chunk_sz, chunk;
+	void* start, *chunk_addr;
+	size_t chunk_nb, chunk_sz, chunk, chunk_rest;
 	sctk_ptl_id_t remote;
 	sctk_ptl_pte_t* pte;
 	sctk_ptl_matchbits_t match, ign;
@@ -301,22 +326,34 @@ void sctk_ptl_rdv_send_message(sctk_thread_ptp_message_t* msg, sctk_endpoint_t* 
 		msg->tail.ptl.copy = 1;
 	}
 
-	__sctk_ptl_rdv_compute_chunks(srail, msg, &chunk_sz, &chunk_nb);
+	__sctk_ptl_rdv_compute_chunks(srail, msg, &chunk_sz, &chunk_nb, &chunk_rest);
+	
 	sctk_assert(chunk_sz >= 0ull); /* msg sz can be NULL */
 	sctk_assert(chunk_nb > 0ull);
+	sctk_assert(chunk_rest < chunk_nb);
 
+	chunk_addr = start;
 	/* split GET into multiple request if size exceeds */
 	for (chunk = 0; chunk < chunk_nb; ++chunk) 
 	{
 		/* prepare for the Get()s */
+		size_t cur_sz = (chunk < chunk_rest) ? chunk_sz + 1 : chunk_sz;
 
-		me_request       = sctk_ptl_me_create(start, chunk_sz, remote, match, ign, me_flags);
+		me_request = sctk_ptl_me_create(
+				chunk_addr,
+				cur_sz, 
+				remote, 
+				match,
+				ign,
+				me_flags
+			);
 		me_request->msg  = NULL; /* the only case where a msg can be NULL */
 		me_request->type = SCTK_PTL_TYPE_STD;
 		me_request->prot = SCTK_PTL_PROT_RDV;
 		sctk_ptl_me_register(srail, me_request, pte);
-		start += chunk_sz;
+		chunk_addr += cur_sz;
 	}
+	sctk_assert(start + SCTK_MSG_SIZE(msg) == chunk_addr);
 	/* save the last ME request in the msg */
 	msg->tail.ptl.user_ptr = me_request;
 	me_request->msg = msg;
@@ -422,13 +459,6 @@ void sctk_ptl_rdv_event_md(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 	sctk_ptl_local_data_t* ptr = (sctk_ptl_local_data_t*) ev.user_ptr;
 	sctk_thread_ptp_message_t* msg = (sctk_thread_ptp_message_t*)ptr->msg;
 
-	/* if msg is NULL, it means that the event is associated
-	 * to an intermediate request (=multiple GET)
-	 * Msg will be released when all requests will complete.
-	 */
-	if(msg == NULL)
-		return;
-
 	switch(ev.type)
 	{
 		case PTL_EVENT_ACK: /* a PUT reached a remote process */
@@ -437,12 +467,17 @@ void sctk_ptl_rdv_event_md(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 			break;
 
 		case PTL_EVENT_REPLY: /* a GET operation completed */
-			sctk_ptl_rdv_reply_message(rail, ev);
+			/* if msg is NULL, it means that the event is associated
+			 * to an intermediate request (=multiple GET)
+			 * Msg will be released when all requests will complete.
+			 */
+			if(msg != NULL)
+				sctk_ptl_rdv_reply_message(rail, ev);
+			
 			sctk_ptl_md_release(ptr);
 
 			break;
 		case PTL_EVENT_SEND:
-			sctk_error("whut?");
 			not_reachable();
 		default:
 			sctk_fatal("Unrecognized MD event: %d", ev.type);

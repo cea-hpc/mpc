@@ -7,6 +7,9 @@
 #include "sctk_ptl_types.h"
 #include "sctk_ht.h"
 
+static sctk_atomics_int nb_mes = SCTK_ATOMICS_INT_T_INIT(0);
+static sctk_atomics_int nb_mds = SCTK_ATOMICS_INT_T_INIT(0);
+
 void sctk_ptl_print_structure(sctk_ptl_rail_info_t* srail)
 {
 	sctk_ptl_limits_t l = srail->max_limits;
@@ -428,6 +431,14 @@ sctk_ptl_local_data_t* sctk_ptl_md_create(sctk_ptl_rail_info_t* srail, void* sta
 void sctk_ptl_md_register(sctk_ptl_rail_info_t* srail, sctk_ptl_local_data_t* user)
 {
 	assert(user && srail);
+	size_t max = srail->max_limits.max_mds;
+
+	while(sctk_atomics_fetch_and_incr_int(&nb_mds) >= max)
+	{
+		sctk_atomics_decr_int(&nb_mds);
+		sctk_thread_yield();
+	}
+
 	sctk_ptl_chk(PtlMDBind(
 		srail->iface,     /* the NI handler */
 		&user->slot.md,   /* the MD to bind with memory region */
@@ -448,6 +459,7 @@ void sctk_ptl_md_release(sctk_ptl_local_data_t* request)
 	sctk_ptl_chk(PtlMDRelease(
 		request->slot_h.mdh
 	));
+	sctk_atomics_decr_int(&nb_mds);
 	sctk_free(request);
 }
 
