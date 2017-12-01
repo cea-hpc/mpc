@@ -17,8 +17,8 @@
 /* #                                                                      # */
 /* # Authors:                                                             # */
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
-/* #   - GONCALVES Thomas thomas.goncalves@cea.fr                         # */
-/* #   - ADAM Julien adamj@paratools.fr                                   # */
+/* #   - ADAM Julien julien.adam@paratools.com                            # */
+/* #   - BESNARD Jean-Baptiste jean-baptiste.besnard@paratools.com        # */
 /* #                                                                      # */
 /* ######################################################################## */
 
