@@ -6,6 +6,23 @@
 
 extern sctk_ptl_id_t* ranks_ids_map;
 
+/**
+ * Static function (only for RDV protocol) in charge of cutting a GET request if it exceeed a given size.
+ *
+ * Especially, this allow use to handle msg larger than Portals ME capacity.
+ * This function tries to load-balance requests. For exaple, if we have a msg size = MAX_SIZE + 4,
+ * the driver should create two chunks of (MAX_SIZE/2)+2 bytes, instead of one with MAX_SIZE and one with 4 bytes.
+ *
+ * That is why we need the rest. It contains number of bytes that can't be equally distributed between
+ * the chunks. It is the responsability of the called to increment by one any chunk size when emiting GET requests.
+ * The condition (num_chunk < num_rest) ? sz+1 : sz is enought for that.
+ *
+ * \param[in] srail the Portals rail
+ * \param[in] msg the mesage (used for the size contained in it)
+ * \param[out] sz_out a chunk size, for one GET request
+ * \param[out] nb_out number of computed chunks
+ * \param[out] rest_out number of bytes not spread between chunks
+ */
 static inline void __sctk_ptl_rdv_compute_chunks(sctk_ptl_rail_info_t* srail, sctk_thread_ptp_message_t* msg, size_t* sz_out, size_t* nb_out, size_t* rest_out)
 {
 	size_t total = SCTK_MSG_SIZE(msg);
@@ -120,11 +137,7 @@ static inline void sctk_ptl_rdv_recv_message(sctk_rail_info_t* rail, sctk_ptl_ev
 	 *         to avoid code duplication, we could publish a TriggeredGet on the previous ct_handle and
 	 *         use the same 'if' than for (B-1) to trigger the operation.
 	 */
-
-
-	/* create the GET op */
-
-
+	
 	/* is the message contiguous ? Maybe we could try to get an IOVEC instead of packing ? */
 	if(msg->tail.message_type == SCTK_MESSAGE_CONTIGUOUS)
 	{
@@ -138,7 +151,6 @@ static inline void sctk_ptl_rdv_recv_message(sctk_rail_info_t* rail, sctk_ptl_ev
 		msg->tail.ptl.copy = 1;
 	}
 
-
 	/* configure the MD */
 	pte       = SCTK_PTL_PTE_ENTRY(srail->pt_table, SCTK_MSG_COMMUNICATOR(msg));
 	flags     = SCTK_PTL_MD_GET_FLAGS;
@@ -147,16 +159,19 @@ static inline void sctk_ptl_rdv_recv_message(sctk_rail_info_t* rail, sctk_ptl_ev
 	/* this function will compute byte equal distribution between multiple GET, if needed */
 	__sctk_ptl_rdv_compute_chunks(srail, msg, &chunk_sz, &chunk_nb, &chunk_rest);
 	
+	/* sanity checks */
 	sctk_assert(chunk_sz >= 0ull);
 	sctk_assert(chunk_nb > 0);
 	sctk_assert(chunk_rest < chunk_nb);
 	
+	/* just copy the start address because we need it for later checks */
 	chunk_addr = start;
-	chunk = 0;
 	for (chunk = 0; chunk < chunk_nb; ++chunk) 
 	{
+		/* if the should take '+1' to compensate non-distributed bytes */
 		size_t cur_sz = (chunk < chunk_rest) ? chunk_sz + 1 : chunk_sz;
 
+		/* create a new MD and configure it */
 		get_request = sctk_ptl_md_create(
 			srail, 
 			chunk_addr, 
@@ -169,11 +184,14 @@ static inline void sctk_ptl_rdv_recv_message(sctk_rail_info_t* rail, sctk_ptl_ev
 		get_request->type     = SCTK_PTL_TYPE_STD;
 		get_request->prot     = SCTK_PTL_PROT_RDV;
 		get_request->match    = (sctk_ptl_matchbits_t)ev.match_bits;
+
+		/* compute next chunk address */
 		chunk_addr += cur_sz;
 
 		sctk_ptl_md_register(srail, get_request);
 	
-		/* register the last request, here is an exception --> GET-MD request 
+		/*
+		 * register the last request, here is an exception --> GET-MD request 
 		 * Done before emiting the GET because no event should be posted before
 		 * this attribute is set.
 		 */
@@ -185,19 +203,18 @@ static inline void sctk_ptl_rdv_recv_message(sctk_rail_info_t* rail, sctk_ptl_ev
 		}
 
 		sctk_ptl_emit_get(
-			get_request,
-			cur_sz,
-			ev.initiator,
-			pte,
-			get_request->match,
-			0,
-			0,
-			get_request
+			get_request,        /* the current GET request */
+			cur_sz,             /* the size for this chunk */
+			ev.initiator,       /* the ID contained in the PUT request */
+			pte,                /* the PT entry */
+			get_request->match, /* the match_bits used by the remote to expose the memory */
+			0,                  /* local_offset */
+			0,                  /* remote_offset */
+			get_request         /* user_ptr */
 		);
-
 	}
 	
-	sctk_info("PORTALS: RECV-RDV to %d (idx=%d, match=%s, ch_nb=%llu, ch_sz=%llu)", SCTK_MSG_DEST_PROCESS(msg), ev.pt_index, __sctk_ptl_match_str(malloc(32), 32, ev.match_bits), chunk_nb, chunk_sz);
+	sctk_debug("PORTALS: RECV-RDV to %d (idx=%d, match=%s, ch_nb=%llu, ch_sz=%llu)", SCTK_MSG_DEST_PROCESS(msg), ev.pt_index, __sctk_ptl_match_str(malloc(32), 32, ev.match_bits), chunk_nb, chunk_sz);
 }
 
 /**
@@ -326,19 +343,24 @@ void sctk_ptl_rdv_send_message(sctk_thread_ptp_message_t* msg, sctk_endpoint_t* 
 		msg->tail.ptl.copy = 1;
 	}
 
+	/* compute how many chunks we'll need to expose the memory  */
 	__sctk_ptl_rdv_compute_chunks(srail, msg, &chunk_sz, &chunk_nb, &chunk_rest);
 	
+	/* sanity checks */
 	sctk_assert(chunk_sz >= 0ull); /* msg sz can be NULL */
 	sctk_assert(chunk_nb > 0ull);
 	sctk_assert(chunk_rest < chunk_nb);
 
+	/* just copyt the start address for some assert() later */
 	chunk_addr = start;
-	/* split GET into multiple request if size exceeds */
-	for (chunk = 0; chunk < chunk_nb; ++chunk) 
+	for (chunk = 0; chunk < chunk_nb; ++chunk)
 	{
-		/* prepare for the Get()s */
+		/* distribute remaining bytes to the first buffers to send
+		 * (the compute is handled by __sctk_ptl_rdv_compute_chunks()
+		 */
 		size_t cur_sz = (chunk < chunk_rest) ? chunk_sz + 1 : chunk_sz;
 
+		/* create the MD request and configure it */
 		me_request = sctk_ptl_me_create(
 				chunk_addr,
 				cur_sz, 
@@ -354,7 +376,10 @@ void sctk_ptl_rdv_send_message(sctk_thread_ptp_message_t* msg, sctk_endpoint_t* 
 		chunk_addr += cur_sz;
 	}
 	sctk_assert(start + SCTK_MSG_SIZE(msg) == chunk_addr);
-	/* save the last ME request in the msg */
+
+	/* store the last request in the msg, to free the complete msg when
+	 * the request complete
+	 */
 	msg->tail.ptl.user_ptr = me_request;
 	me_request->msg = msg;
 
@@ -385,8 +410,6 @@ void sctk_ptl_rdv_notify_recv(sctk_thread_ptp_message_t* msg, sctk_ptl_rail_info
 	ign.data.rank   = (SCTK_MSG_SRC_PROCESS(msg) == SCTK_ANY_SOURCE) ? SCTK_PTL_IGN_RANK : SCTK_PTL_MATCH_RANK;
 	ign.data.uid    = SCTK_PTL_IGN_UID;
 
-	/****** FIRST, take care of the PUT operation to receive *******/
-	/***************************************************************/
 	/* complete the ME data, this ME will be appended to the PRIORITY_LIST
 	 * Here, we want a CT event attached to this ME (for triggered Op)
 	 */
@@ -398,9 +421,9 @@ void sctk_ptl_rdv_notify_recv(sctk_thread_ptp_message_t* msg, sctk_ptl_rail_info
 
 	put_request->msg       = msg;
 	put_request->list      = SCTK_PTL_PRIORITY_LIST;
-	msg->tail.ptl.user_ptr = NULL; /* set w/ the GET request */
-	put_request->type = SCTK_PTL_TYPE_STD;
-	put_request->prot = SCTK_PTL_PROT_RDV;
+	put_request->type      = SCTK_PTL_TYPE_STD;
+	put_request->prot      = SCTK_PTL_PROT_RDV;
+	msg->tail.ptl.user_ptr = NULL; /* set w/ the GET request when the PUT will be received */
 
 	/* this should be the last operation, to optimize the triggeredOps use */
 	sctk_ptl_me_register(srail, put_request, pte);
@@ -408,17 +431,16 @@ void sctk_ptl_rdv_notify_recv(sctk_thread_ptp_message_t* msg, sctk_ptl_rail_info
 	sctk_debug("PORTALS: NOTIFY-RECV-RDV from %d (idx=%llu, match=%s, ign=%llu)", SCTK_MSG_SRC_PROCESS(msg), pte->idx, __sctk_ptl_match_str(malloc(32), 32, match.raw), __sctk_ptl_match_str(malloc(32), 32, ign.raw));
 }
 
+/**
+ * Function called by sctk_ptl_toolkit.c when an incoming ME event is issued to the RDV protocol.
+ *
+ * \param[in] rail the Portals rail
+ * \param[in] ev the generated event
+ */
 void sctk_ptl_rdv_event_me(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 {
 	sctk_ptl_local_data_t* ptr = (sctk_ptl_local_data_t*) ev.user_ptr;
 	sctk_thread_ptp_message_t* msg = (sctk_thread_ptp_message_t*)ptr->msg;
-
-	/* if msg is NULL, it means that the event is associated
-	 * to an intermediate request (=multiple GET)
-	 * Msg will be released when all requests will complete.
-	 */
-	if(msg == NULL)
-		return;
 
 	switch(ev.type)
 	{
@@ -432,6 +454,13 @@ void sctk_ptl_rdv_event_me(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 			break;
 
 		case PTL_EVENT_GET: /* a remote process get the data back */
+
+			/* if msg is NULL, it means that the event is associated
+			 * to an intermediate request (=multiple GET)
+			 * Msg will be released when all requests will complete.
+			 */
+			if(msg == NULL)
+				return;
 			sctk_ptl_rdv_complete_message(rail, ev);
 
 			break;
@@ -454,6 +483,11 @@ void sctk_ptl_rdv_event_me(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 	}
 }
 
+/**
+ * Function called by sctk_ptl_toolkit.c when an incoming MD event is for a RDV msg.
+ * \param[in] rail the Portals rail
+ * \param[in] ev the generated event
+ */
 void sctk_ptl_rdv_event_md(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 {
 	sctk_ptl_local_data_t* ptr = (sctk_ptl_local_data_t*) ev.user_ptr;
