@@ -6,61 +6,26 @@
 
 extern sctk_ptl_id_t* ranks_ids_map;
 
-static inline sctk_ptl_local_data_t* sctk_ptl_rdv_create_triggerGet(sctk_thread_ptp_message_t* msg, sctk_ptl_rail_info_t* srail, sctk_ptl_id_t remote, sctk_ptl_matchbits_t match, sctk_ptl_cnth_t trig )
-{
-	void* start = NULL;
-	size_t size, max_chunks;
-	int flags;
-	sctk_ptl_pte_t *pte;
-	sctk_ptl_local_data_t* request;
-	
 
-	/* is the message contiguous ? Maybe we could try to get an IOVEC instead of packing ? */
-	if(msg->tail.message_type == SCTK_MESSAGE_CONTIGUOUS)
+static inline void __sctk_ptl_rdv_compute_chunks(sctk_ptl_rail_info_t* srail, sctk_thread_ptp_message_t* msg, size_t* sz, size_t* nb)
+{
+	size_t size = SCTK_MSG_SIZE(msg);
+
+	sctk_assert(srail);
+	sctk_assert(msg);
+	sctk_assert(sz);
+	sctk_assert(nb);
+
+	if(size > srail->max_mr)
 	{
-		start = msg->tail.message.contiguous.addr;
+		*sz = srail->max_mr;
+		*nb = (int)(size / (*sz)) + (((size % (*sz)) == 0) ? 0 : 1);
 	}
 	else
 	{
-		/* if not, we map a temporary buffer, ready for network serialized data */
-		start = sctk_malloc(SCTK_MSG_SIZE(msg));
-		/* and we flag the copy to 1, to remember some buffers will have to be recopied */
-		msg->tail.ptl.copy = 1;
+		*sz = size;
+		*nb = 1;
 	}
-
-	max_chunks = srail->max_mr;
-	
-	/* configure the MD */
-	pte                    = SCTK_PTL_PTE_ENTRY(srail->pt_table, SCTK_MSG_COMMUNICATOR(msg));
-	size                   = SCTK_MSG_SIZE(msg);
-	flags                  = SCTK_PTL_MD_GET_FLAGS;
-	request                = sctk_ptl_md_create(srail, start, size, flags);
-	sctk_assert(pte);
-	sctk_assert(request);
-	request->msg           = msg;
-	request->list          = SCTK_PTL_PRIORITY_LIST;
-	msg->tail.ptl.user_ptr = request; /* exception: we store the GET-MD here (having the net buffer) */
-	request->type = SCTK_PTL_TYPE_STD;
-	request->prot = SCTK_PTL_PROT_RDV;
-	request->match = match;
-	request->cth   = trig;
-	
-	sctk_ptl_md_register(srail, request);
-
-	sctk_ptl_emit_triggeredGet(
-			request,
-			size,
-			remote,
-			pte,
-			match,
-			0,
-			0,
-			request,
-			trig,
-			1
-			);
-	sctk_debug("TRIGGERED to %d/%d, match=%s, pte=%d, sz=%llu", remote.phys.nid, remote.phys.pid, __sctk_ptl_match_str(sctk_malloc(32), 32, match.raw), pte->idx, size);
-	return request;
 }
 
 /**
@@ -111,9 +76,14 @@ void sctk_ptl_rdv_message_copy(sctk_message_to_copy_t* msg)
  */
 static inline void sctk_ptl_rdv_recv_message(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 {
-	sctk_ptl_local_data_t* ptr = (sctk_ptl_local_data_t*) ev.user_ptr;
-	sctk_thread_ptp_message_t* msg = (sctk_thread_ptp_message_t*) ptr->msg;
-	sctk_ptl_cnth_t cnth = ptr->slot.me.ct_handle;
+	sctk_ptl_local_data_t* get_request = NULL;
+	sctk_ptl_pte_t* pte                = NULL;
+	sctk_ptl_rail_info_t* srail        = &rail->network.ptl;
+	sctk_ptl_local_data_t* ptr         = (sctk_ptl_local_data_t*) ev.user_ptr;
+	sctk_thread_ptp_message_t* msg     = (sctk_thread_ptp_message_t*) ptr->msg;
+	void* start                        = NULL;
+	size_t chunk_sz, chunk_nb, chunk;
+	int flags;
 
 	sctk_assert(msg);
 
@@ -135,39 +105,69 @@ static inline void sctk_ptl_rdv_recv_message(sctk_rail_info_t* rail, sctk_ptl_ev
 	 *         use the same 'if' than for (B-1) to trigger the operation.
 	 */
 
-	/* scenario (A-1) */
-	if(ev.type == PTL_EVENT_PUT && SCTK_MSG_SRC_PROCESS(msg) != SCTK_ANY_SOURCE && 0)
+
+	/* create the GET op */
+
+
+	/* is the message contiguous ? Maybe we could try to get an IOVEC instead of packing ? */
+	if(msg->tail.message_type == SCTK_MESSAGE_CONTIGUOUS)
 	{
-		return;
+		start = msg->tail.message.contiguous.addr;
+	}
+	else
+	{
+		/* if not, we map a temporary buffer, ready for network serialized data */
+		start = sctk_malloc(SCTK_MSG_SIZE(msg));
+		/* and we flag the copy to 1, to remember some buffers will have to be recopied */
+		msg->tail.ptl.copy = 1;
 	}
 
-	/* scenario (A/B-2) */
-	if(SCTK_MSG_SRC_PROCESS(msg) == SCTK_ANY_SOURCE || 1)
+
+	/* configure the MD */
+	pte       = SCTK_PTL_PTE_ENTRY(srail->pt_table, SCTK_MSG_COMMUNICATOR(msg));
+	flags     = SCTK_PTL_MD_GET_FLAGS;
+	sctk_assert(pte);
+
+	__sctk_ptl_rdv_compute_chunks(srail, msg, &chunk_sz, &chunk_nb);
+	chunk = 0;
+	for (chunk = 0; chunk < chunk_nb; ++chunk) 
 	{
-		sctk_ptl_local_data_t* get_request;
-		sctk_ptl_pte_t* pte = NULL;
-		sctk_ptl_rail_info_t* srail = &rail->network.ptl;
-		
-		/* create the GET op */
-		pte = SCTK_PTL_PTE_ENTRY(srail->pt_table, SCTK_MSG_COMMUNICATOR(msg));
-		get_request = sctk_ptl_rdv_create_triggerGet(
-			msg,
-			srail,
-			ev.initiator,
-			(sctk_ptl_matchbits_t)ev.match_bits,
-			cnth
-		);
+		/* for loop */
+		get_request           = sctk_ptl_md_create(srail, start, chunk_sz, flags);
 		sctk_assert(get_request);
-		sctk_assert(pte);
+		get_request->msg      = NULL;
+		get_request->list     = SCTK_PTL_PRIORITY_LIST;
+		get_request->type     = SCTK_PTL_TYPE_STD;
+		get_request->prot     = SCTK_PTL_PROT_RDV;
+		get_request->match    = (sctk_ptl_matchbits_t)ev.match_bits;
+		start += chunk_sz;
+
+		sctk_ptl_md_register(srail, get_request);
+	
+		/* register the last request, here is an exception --> GET-MD request 
+		 * Done before emiting the GET because no event should be posted before
+		 * this attribute is set.
+		 */
+		if(chunk == chunk_nb - 1)
+		{
+			msg->tail.ptl.user_ptr = get_request;
+			get_request->msg = msg;
+		}
+
+		sctk_ptl_emit_get(
+			get_request,
+			chunk_sz,
+			ev.initiator,
+			pte,
+			get_request->match,
+			0,
+			0,
+			get_request
+		);
+
 	}
-
-	/* scenario (B-1) + (*-2), just inc the ct_handle (should be wrapped by the interface) */
-	sctk_ptl_chk(PtlCTInc(
-		cnth,
-		(sctk_ptl_cnt_t) {.success=1, .failure=0}
-	));
-
-	sctk_debug("PORTALS: RECV-RDV to %d (idx=%d, match=%s, sz=%llu)", SCTK_MSG_DEST_PROCESS(msg), ev.pt_index, __sctk_ptl_match_str(malloc(32), 32, ev.match_bits), ev.mlength);
+	
+	sctk_debug("PORTALS: RECV-RDV to %d (idx=%d, match=%s, ch_nb=%llu, ch_sz=%llu)", SCTK_MSG_DEST_PROCESS(msg), ev.pt_index, __sctk_ptl_match_str(malloc(32), 32, ev.match_bits), chunk_nb, chunk_sz);
 }
 
 /**
@@ -189,9 +189,6 @@ static inline void sctk_ptl_rdv_reply_message(sctk_rail_info_t* rail, sctk_ptl_e
 	sctk_assert(rail);
 	sctk_assert(ev.ni_fail_type == PTL_NI_OK);
 
-	/* Free the counter used as a trigger */
-	sctk_ptl_ct_free(ptr->cth);
-	
 	/* rebuild a complete MPC header msg (inter_thread_comm needs it) */
 	sctk_init_header(net_msg, SCTK_MESSAGE_CONTIGUOUS , sctk_ptl_rdv_free_memory, sctk_ptl_rdv_message_copy);
 	SCTK_MSG_SRC_PROCESS_SET     ( net_msg ,  ptr->match.data.rank);
@@ -211,7 +208,7 @@ static inline void sctk_ptl_rdv_reply_message(sctk_rail_info_t* rail, sctk_ptl_e
 	 */
 	net_msg->tail.ptl.user_ptr = ptr;
 	net_msg->tail.ptl.copy = 0;
-	
+
 	/* finish creating an MPC message header */
 	sctk_rebuild_header(net_msg);
 
@@ -255,7 +252,7 @@ void sctk_ptl_rdv_send_message(sctk_thread_ptp_message_t* msg, sctk_endpoint_t* 
 	sctk_ptl_local_data_t *md_request , *me_request;
 	int md_flags                      , me_flags;
 	void* start;
-	size_t size;
+	size_t chunk_nb, chunk_sz, chunk;
 	sctk_ptl_id_t remote;
 	sctk_ptl_pte_t* pte;
 	sctk_ptl_matchbits_t match, ign;
@@ -264,7 +261,6 @@ void sctk_ptl_rdv_send_message(sctk_thread_ptp_message_t* msg, sctk_endpoint_t* 
 	md_request      = me_request = NULL;
 	md_flags        = me_flags   = 0;
 	remote          = infos->dest;
-	size            = 0;
 	start           = NULL;
 	match.data.tag  = SCTK_MSG_TAG(msg);
 	match.data.rank = SCTK_MSG_SRC_PROCESS(msg);
@@ -272,6 +268,21 @@ void sctk_ptl_rdv_send_message(sctk_thread_ptp_message_t* msg, sctk_endpoint_t* 
 	ign             = SCTK_PTL_MATCH_INIT;
 	pte             = SCTK_PTL_PTE_ENTRY(srail->pt_table, SCTK_MSG_COMMUNICATOR(msg));
 
+	/************************/
+	/* 1. Configure the PUT */
+	/************************/
+	md_flags         = SCTK_PTL_MD_PUT_FLAGS;
+	md_request       = sctk_ptl_md_create(srail, NULL, 0, md_flags);
+	md_request->msg  = msg;
+	md_request->type = SCTK_PTL_TYPE_STD;
+	md_request->prot = SCTK_PTL_PROT_RDV;
+	hdr.std.datatype = SCTK_MSG_SPECIFIC_CLASS(msg);
+	sctk_ptl_md_register(srail, md_request);
+
+	/***************************/
+	/* 2. Configure the GET(s) */
+	/***************************/
+	me_flags         = SCTK_PTL_ME_GET_FLAGS | SCTK_PTL_ONCE;
 	/* if the message is non-contiguous, we need a copy to 'pack' it first */
 	if(msg->tail.message_type == SCTK_MESSAGE_CONTIGUOUS)
 	{
@@ -284,32 +295,31 @@ void sctk_ptl_rdv_send_message(sctk_thread_ptp_message_t* msg, sctk_endpoint_t* 
 		sctk_net_copy_in_buffer(msg, start);
 		msg->tail.ptl.copy = 1;
 	}
-	size               = SCTK_MSG_SIZE(msg);
-	
-	/* Configure the Put() */
-	md_flags           = SCTK_PTL_MD_PUT_FLAGS;
-	md_request         = sctk_ptl_md_create(srail, NULL, 0, md_flags);
-	
-	/* prepare for the Get() */
-	me_flags           = SCTK_PTL_ME_GET_FLAGS | SCTK_PTL_ONCE;
-	me_request         = sctk_ptl_me_create(start, size, remote, match, ign, me_flags);
 
-	/* double-linking */
-	md_request->msg        = msg;
-	me_request->msg        = msg;
-	md_request->type       = SCTK_PTL_TYPE_STD;
-	md_request->prot       = SCTK_PTL_PROT_RDV;
-	me_request->type       = SCTK_PTL_TYPE_STD;
-	me_request->prot       = SCTK_PTL_PROT_RDV;
+	__sctk_ptl_rdv_compute_chunks(srail, msg, &chunk_sz, &chunk_nb);
+	sctk_assert(chunk_sz > 0);
+	sctk_assert(chunk_nb > 0);
+
+	/* split GET into multiple request if size exceeds */
+	for (chunk = 0; chunk < chunk_nb; ++chunk) 
+	{
+		/* prepare for the Get()s */
+
+		me_request       = sctk_ptl_me_create(start, chunk_sz, remote, match, ign, me_flags);
+		me_request->msg  = NULL; /* the only case where a msg can be NULL */
+		me_request->type = SCTK_PTL_TYPE_STD;
+		me_request->prot = SCTK_PTL_PROT_RDV;
+		sctk_ptl_me_register(srail, me_request, pte);
+		start += chunk_sz;
+	}
+	/* save the last ME request in the msg */
 	msg->tail.ptl.user_ptr = me_request;
-	hdr.std.datatype       = SCTK_MSG_SPECIFIC_CLASS(msg);
+	me_request->msg = msg;
 
-	sctk_ptl_md_register(srail, md_request);
-	sctk_ptl_me_register(srail, me_request, pte);
 	sctk_ptl_emit_put(md_request, 0, remote, pte, match, 0, 0, hdr.raw, md_request); /* empty Put() */
-	
+
 	/* TODO: Need to handle the case where the data is larger than the max ME size */
-	sctk_debug("PORTALS: SEND-RDV to %d (idx=%d, match=%s, sz=%llu)", SCTK_MSG_DEST_TASK(msg), pte->idx, __sctk_ptl_match_str(malloc(32), 32, match.raw), me_request->slot.me.length);
+	sctk_debug("PORTALS: SEND-RDV to %d (idx=%d, match=%s, chunk_nb=%llu, ch_sz=%llu)", SCTK_MSG_DEST_TASK(msg), pte->idx, __sctk_ptl_match_str(malloc(32), 32, match.raw), chunk_nb , chunk_sz);
 }
 
 /**
@@ -323,7 +333,7 @@ void sctk_ptl_rdv_notify_recv(sctk_thread_ptp_message_t* msg, sctk_ptl_rail_info
 	sctk_ptl_pte_t* pte;
 	sctk_ptl_local_data_t *put_request, *get_request;
 	int put_flags;
-	
+
 	/****** INIT COMMON ATTRIBUTES ******/
 	pte             = SCTK_PTL_PTE_ENTRY(srail->pt_table, SCTK_MSG_COMMUNICATOR(msg));
 	match.data.tag  = SCTK_MSG_TAG(msg);
@@ -339,7 +349,7 @@ void sctk_ptl_rdv_notify_recv(sctk_thread_ptp_message_t* msg, sctk_ptl_rail_info
 	 * Here, we want a CT event attached to this ME (for triggered Op)
 	 */
 	put_flags = SCTK_PTL_ME_PUT_FLAGS | SCTK_PTL_ONCE;
-	put_request  = sctk_ptl_me_create_with_cnt(srail, NULL, 0, SCTK_PTL_ANY_PROCESS, match, ign, put_flags);
+	put_request  = sctk_ptl_me_create(NULL, 0, SCTK_PTL_ANY_PROCESS, match, ign, put_flags);
 
 	sctk_assert(put_request);
 	sctk_assert(pte);
@@ -349,36 +359,25 @@ void sctk_ptl_rdv_notify_recv(sctk_thread_ptp_message_t* msg, sctk_ptl_rail_info
 	msg->tail.ptl.user_ptr = NULL; /* set w/ the GET request */
 	put_request->type = SCTK_PTL_TYPE_STD;
 	put_request->prot = SCTK_PTL_PROT_RDV;
-	
-	/****** SECOND, attempt to use TriggeredOps if possible  *******/
-	/***************************************************************/
-#if 0
-	int dest = SCTK_MSG_SRC_PROCESS(msg);
-	if(dest != SCTK_ANY_SOURCE && SCTK_MSG_TAG(msg) != SCTK_ANY_TAG)
-	{
-		sctk_ptl_local_data_t* get_request;
-		sctk_assert(ranks_ids_map[dest] != SCTK_PTL_ANY_PROCESS);
-		get_request = sctk_ptl_rdv_create_triggerGet(msg, srail, ranks_ids_map[dest], match, put_request->slot.me.ct_handle);
-		msg->tail.ptl.user_ptr = get_request; /* set w/ the GET request */
-	}
-	else
-	{
-		/* can't predict the remote ID.
-		 * We will trigger the Get() when the Put() will match
-		 */
-		sctk_error("ANY_SOURCE");
-		sctk_assert(ign.data.rank == SCTK_PTL_IGN_RANK);
-	}
-#endif
 
 	/* this should be the last operation, to optimize the triggeredOps use */
 	sctk_ptl_me_register(srail, put_request, pte);
-	
+
 	sctk_debug("PORTALS: NOTIFY-RECV-RDV from %d (idx=%llu, match=%s, ign=%llu)", SCTK_MSG_SRC_PROCESS(msg), pte->idx, __sctk_ptl_match_str(malloc(32), 32, match.raw), __sctk_ptl_match_str(malloc(32), 32, ign.raw));
 }
 
 void sctk_ptl_rdv_event_me(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 {
+	sctk_ptl_local_data_t* ptr = (sctk_ptl_local_data_t*) ev.user_ptr;
+	sctk_thread_ptp_message_t* msg = (sctk_thread_ptp_message_t*)ptr->msg;
+
+	/* if msg is NULL, it means that the event is associated
+	 * to an intermediate request (=multiple GET)
+	 * Msg will be released when all requests will complete.
+	 */
+	if(msg == NULL)
+		return;
+
 	switch(ev.type)
 	{
 		case PTL_EVENT_PUT_OVERFLOW: /* a previous received PUT matched a just appended ME */
@@ -392,7 +391,7 @@ void sctk_ptl_rdv_event_me(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 
 		case PTL_EVENT_GET: /* a remote process get the data back */
 			sctk_ptl_rdv_complete_message(rail, ev);
-			
+
 			break;
 		case PTL_EVENT_GET_OVERFLOW: /* a previous received GET matched a just appended ME */
 		case PTL_EVENT_ATOMIC: /* an Atomic() reached the local process */
@@ -416,6 +415,15 @@ void sctk_ptl_rdv_event_me(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 void sctk_ptl_rdv_event_md(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 {
 	sctk_ptl_local_data_t* ptr = (sctk_ptl_local_data_t*) ev.user_ptr;
+	sctk_thread_ptp_message_t* msg = (sctk_thread_ptp_message_t*)ptr->msg;
+
+	/* if msg is NULL, it means that the event is associated
+	 * to an intermediate request (=multiple GET)
+	 * Msg will be released when all requests will complete.
+	 */
+	if(msg == NULL)
+		return;
+
 	switch(ev.type)
 	{
 		case PTL_EVENT_ACK: /* a PUT reached a remote process */
@@ -426,7 +434,7 @@ void sctk_ptl_rdv_event_md(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 		case PTL_EVENT_REPLY: /* a GET operation completed */
 			sctk_ptl_rdv_reply_message(rail, ev);
 			sctk_ptl_md_release(ptr);
-			
+
 			break;
 		case PTL_EVENT_SEND:
 			sctk_error("whut?");
