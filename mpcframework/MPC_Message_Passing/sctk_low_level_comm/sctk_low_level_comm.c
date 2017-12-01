@@ -160,7 +160,7 @@ void sctk_network_notify_idle_message ()
 #endif
 
 	sctk_network_notify_idle_message_ptr();
-    sctk_control_message_process();
+	sctk_control_message_process();
 
 #ifdef MPC_Fault_Tolerance
 	sctk_ft_no_suspend_end();

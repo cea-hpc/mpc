@@ -69,7 +69,10 @@ typedef struct
   int need_check_in_wait;
   int truncated;
   int status_error;
+  /* int ref rank */
   /* Generalized Request context  */
+  int grequest_rank;
+  void * progress_unit;
   sctk_Grequest_query_function *query_fn;
   sctk_Grequest_cancel_function *cancel_fn;
   sctk_Grequest_free_function *free_fn;

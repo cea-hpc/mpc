@@ -380,7 +380,6 @@ int progressEnginePool_poll( struct progressEnginePool * p, int my_id )
         targ = my_id % p->booked;
     }
 
-
     int ret = progressList_poll( &p->lists[targ] );
 
     if( ret != PWU_NO_PROGRESS )
@@ -397,11 +396,12 @@ int progressEnginePool_poll( struct progressEnginePool * p, int my_id )
 
     /* If I'm here I did no progress */
 
-    if( p->lists[targ].no_work_count < 1024 )
-        return ret;
+    //if( p->lists[targ].no_work_count < 1024 )
+    //    return ret;
 
     /* Try to steal progress neighbor */
     targ = rand() % p->booked;
+
 
     ret = progressList_poll( &p->lists[targ] );
 

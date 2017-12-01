@@ -613,6 +613,9 @@ sctk_thread_create_tmp_start_routine (sctk_thread_data_t * __arg)
   //mark the given TLS as currant thread allocator
   sctk_set_tls (tmp.tls);
 
+  // we do not have an MPI
+  tmp.mpi_per_thread = NULL;
+
   // Set no disguise
   tmp.my_disguisement = NULL;
   tmp.ctx_disguisement = NULL;

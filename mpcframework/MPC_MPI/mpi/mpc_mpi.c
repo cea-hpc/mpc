@@ -941,6 +941,70 @@ static int SCTK__MPI_Attr_communicator_dup (MPI_Comm old, MPI_Comm new);
 
 /* const MPI_Comm MPI_COMM_SELF = MPC_COMM_SELF; */
 
+/*
+ * MPI Level Per Thread CTX 
+ *
+ */
+
+
+#ifdef MPC_MPI_USE_REQUEST_CACHE
+    #define MPC_MPI_REQUEST_CACHE_SIZE 128
+#endif
+
+
+#ifdef MPC_MPI_USE_LOCAL_REQUESTS_QUEUE
+    #define MPC_MPI_LOCAL_REQUESTS_QUEUE_SIZE 10
+#endif
+
+typedef struct MPI_per_thread_ctx_s
+{
+#ifdef MPC_MPI_USE_REQUEST_CACHE
+    MPI_internal_request_t* mpc_mpi_request_cache[MPC_MPI_REQUEST_CACHE_SIZE];
+#endif
+
+#ifdef MPC_MPI_USE_LOCAL_REQUESTS_QUEUE
+    MPI_internal_request_t * mpc_mpi_local_request_queue;
+    int mpc_mpi_local_request_queue_nb_req;
+#endif
+}MPI_per_thread_ctx_t;
+
+
+
+static inline MPI_per_thread_ctx_t * MPI_per_thread_ctx_new()
+{
+    MPI_per_thread_ctx_t * ret = sctk_malloc(sizeof(MPI_per_thread_ctx_t));
+
+    if( !ret )
+    {
+        sctk_abort();
+    }
+
+#ifdef MPC_MPI_USE_LOCAL_REQUESTS_QUEUE
+    ret->mpc_mpi_local_request_queue = NULL;
+    ret->mpc_mpi_local_request_queue_nb_req = 0;
+#endif 
+
+    return ret;
+}
+
+
+
+static inline MPI_per_thread_ctx_t * MPI_per_thread_ctx_get()
+{
+
+    sctk_thread_data_t * th = sctk_thread_data_get();
+
+    if( !th->mpi_per_thread )
+    {
+        th->mpi_per_thread = MPI_per_thread_ctx_new();
+    }
+
+    return th->mpi_per_thread;
+}
+
+
+
+
 MPI_request_struct_t * __sctk_internal_get_MPC_requests()
 {
   MPI_request_struct_t *requests;
@@ -978,8 +1042,6 @@ void __sctk_init_mpc_request() {
 }
 
 #ifdef MPC_MPI_USE_REQUEST_CACHE
-#define MPC_MPI_REQUEST_CACHE_SIZE 128
-__thread MPI_internal_request_t* mpc_mpi_request_cache[MPC_MPI_REQUEST_CACHE_SIZE];
 
 inline MPI_internal_request_t *
 __sctk_convert_mpc_request_internal_cache_get (MPI_Request * req,
@@ -1007,8 +1069,10 @@ inline void __sctk_convert_mpc_request_internal_cache_register(MPI_internal_requ
         mpc_mpi_request_cache[id] = req;
 }
 #else
+
 #define __sctk_convert_mpc_request_internal_cache_get(a,b) NULL
 #define __sctk_convert_mpc_request_internal_cache_register(a) (void)(0)
+
 #endif
 
 inline void sctk_delete_internal_request_clean(MPI_internal_request_t *tmp)
@@ -1023,20 +1087,20 @@ inline void sctk_delete_internal_request_clean(MPI_internal_request_t *tmp)
 
 #ifdef MPC_MPI_USE_LOCAL_REQUESTS_QUEUE
 #define MPC_MPI_LOCAL_REQUESTS_QUEUE_SIZE 10
-__thread MPI_internal_request_t * mpc_mpi_local_request_queue = NULL;
-__thread int mpc_mpi_local_request_queue_nb_req = 0;
-inline MPI_internal_request_t *
-__sctk_new_mpc_request_internal_local_get (MPI_Request * req,
+
+inline MPI_internal_request_t * __sctk_new_mpc_request_internal_local_get (MPI_Request * req,
                                  MPI_request_struct_t *requests)
 {
 	MPI_internal_request_t *tmp = NULL;
 
-	tmp = mpc_mpi_local_request_queue;
+        MPI_per_thread_ctx_t *tctx = MPI_per_thread_ctx_get();
+
+	tmp = tctx->mpc_mpi_local_request_queue;
 	
 	if(tmp != NULL){
 		if(tmp->task_req_id == requests) {
-			mpc_mpi_local_request_queue = tmp->next;
-			mpc_mpi_local_request_queue_nb_req --;
+			tctx->mpc_mpi_local_request_queue = tmp->next;
+			tctx->mpc_mpi_local_request_queue_nb_req --;
 		} else {
 			tmp = NULL;
 		}
@@ -1047,14 +1111,16 @@ __sctk_new_mpc_request_internal_local_get (MPI_Request * req,
 
 inline int sctk_delete_internal_request_local_put(MPI_internal_request_t *tmp, MPI_request_struct_t *requests )
 {
-	if(mpc_mpi_local_request_queue_nb_req < MPC_MPI_LOCAL_REQUESTS_QUEUE_SIZE){
+        MPI_per_thread_ctx_t *tctx = MPI_per_thread_ctx_get();
+
+	if(tctx->mpc_mpi_local_request_queue_nb_req < MPC_MPI_LOCAL_REQUESTS_QUEUE_SIZE){
 
 		sctk_delete_internal_request_clean(tmp);
 
-		tmp->next = mpc_mpi_local_request_queue;
-		mpc_mpi_local_request_queue = tmp;
+		tmp->next = tctx->mpc_mpi_local_request_queue;
+		tctx->mpc_mpi_local_request_queue = tmp;
 
-		mpc_mpi_local_request_queue_nb_req ++;
+		tctx->mpc_mpi_local_request_queue_nb_req ++;
 
 		return 1;
 	} else {

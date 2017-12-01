@@ -2490,6 +2490,11 @@ void sctk_inter_thread_perform_idle(volatile int *data, int value,
 #endif
 }
 
+#ifdef MPC_MPI
+int __MPC_poll_progress();
+#endif
+
+
 void sctk_wait_message(sctk_request_t *request) {
   struct sctk_perform_messages_s _wait;
 
@@ -2502,21 +2507,8 @@ void sctk_wait_message(sctk_request_t *request) {
   }
 
   if (request->request_type == REQUEST_GENERALIZED) {
-    if (request->poll_fn) {
-      /* Here we don't rely on polling as we have problems with
-       * the MPI context */
-      while (!request->completion_flag) {
-        sctk_status_t status;
-        (request->poll_fn)(request->extra_state, &status);
-      }
-    } else {
-      /* No need to poll with a function */
-      /* Here we just have to wait for the flag to be set to
-      * SCTK_MESSAGE_DONE
-      * in by the MPC_Grequest_complete function */
       sctk_inter_thread_perform_idle((int *)&(request->completion_flag),
-                                     SCTK_MESSAGE_DONE, NULL, NULL);
-    }
+                                     SCTK_MESSAGE_DONE, __MPC_poll_progress, NULL);
   } else {
     sctk_perform_messages_wait_init(&_wait, request, 1);
     /* Find the PTPs lists */

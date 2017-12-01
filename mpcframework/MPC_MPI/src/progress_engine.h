@@ -30,7 +30,7 @@ int progressWorkUnit_poll( struct progressWorkUnit *pwu );
 int progressWorkUnit_complete( struct progressWorkUnit *pwu );
 
 
-#define PROGRESS_PWU_STATIC_ARRAY 32
+#define PROGRESS_PWU_STATIC_ARRAY 128
 
 struct progressList
 {

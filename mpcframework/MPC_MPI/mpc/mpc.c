@@ -385,16 +385,14 @@ sctk_mpc_get_communicator_from_request(MPC_Request *request) {
   return ((sctk_request_t *)request)->header.communicator;
 }
 
+
+int __MPC_poll_progress();
+
 static inline void sctk_mpc_perform_messages(MPC_Request *request) {
   struct sctk_perform_messages_s _wait;
-
   if (request->request_type == REQUEST_GENERALIZED) {
     /* Try to poll the request */
-    if (request->poll_fn != NULL) {
-      MPC_Status tmp_status;
-      (request->poll_fn)(request->extra_state, &tmp_status);
-    }
-
+    __MPC_poll_progress();
     /* We are done here */
     return;
   }
@@ -415,6 +413,7 @@ static inline void sctk_mpc_init_request_null() {
   mpc_request_null.request_type = REQUEST_NULL;
   mpc_request_null.completion_flag = SCTK_MESSAGE_DONE;
   mpc_request_null.truncated = 0;
+  mpc_request_null.grequest_rank = -1;
   mpc_request_null.query_fn = NULL;
   mpc_request_null.cancel_fn = NULL;
   mpc_request_null.free_fn = NULL;
@@ -740,6 +739,16 @@ int __MPC_init_disguise( struct sctk_task_specific_s * my_specific )
 
 int MPCX_Disguise( MPC_Comm comm, int target_rank )
 {
+
+  sctk_thread_data_t * th = __sctk_thread_data_get(1);
+  
+  if( th->my_disguisement )
+  {
+      sctk_error("NIOE");
+    /* Sorry I'm already wearing a mask */
+    return MPC_ERR_ARG;
+  }
+
   /* Retrieve the ctx pointer */
   int cwr = sctk_get_comm_world_rank( (sctk_communicator_t) comm, target_rank );
 
@@ -752,13 +761,13 @@ int MPCX_Disguise( MPC_Comm comm, int target_rank )
       if( ___local_to_global_table[i] == cwr )
       {
         sctk_atomics_incr_int( &________is_disguised );
-        sctk_thread_data_t * th = __sctk_thread_data_get(1);
         th->my_disguisement = ___disguisements[i]->thread_data;
         th->ctx_disguisement = (void *)___disguisements[i];
         return MPC_SUCCESS;
       }
   }
   
+      sctk_error("NIOE");
   return MPC_ERR_ARG;
 }
 
@@ -798,13 +807,14 @@ int __MPC_init_progress(sctk_task_specific_t * tmp )
 
   /* Retrieve the ctx pointer */
   tmp->progress_list = progressEnginePool_join( &__mpc_progress_pool );
-  tmp->progress_list = NULL;
 }
 
-int __MPC_release_progress()
+int __MPC_release_progress( sctk_task_specific_t * tmp  )
 {
     static sctk_spinlock_t l = 0;
     static sctk_spinlock_t d = 0;
+  
+    tmp->progress_list = NULL;
 
     int done = 0;
     sctk_spinlock_lock( &l );
@@ -812,11 +822,17 @@ int __MPC_release_progress()
     sctk_spinlock_unlock( &l );
 
     if( done )
-        return;
+        return MPC_SUCCESS;
 
     progressEnginePool_release( &__mpc_progress_pool );
+    return MPC_SUCCESS;
 }
 
+
+int __MPC_poll_progress()
+{
+    return progressEnginePool_poll( &__mpc_progress_pool , sctk_get_task_rank()  );
+}
 
 
 
@@ -990,7 +1006,7 @@ static void __MPC_delete_task_specific() {
   tmp = (sctk_task_specific_t *)sctk_thread_getspecific_mpc(sctk_task_specific);
 
   /* Clear progress */
-  __MPC_release_progress();
+  __MPC_release_progress( tmp );
 
   /* Free composed datatypes */
   release_composed_common_types();
@@ -1033,8 +1049,10 @@ struct sctk_task_specific_s *__MPC_get_task_specific() {
   {
     sctk_thread_data_t * th = __sctk_thread_data_get(1);
     if( th->ctx_disguisement )
+    {
         return th->ctx_disguisement;
-  }
+    }
+ }
 
   static __thread int last_rank = -1;
   static __thread struct sctk_task_specific_s *last_specific = NULL;
@@ -1494,15 +1512,54 @@ int __MPC_Barrier(MPC_Comm comm) {
 /* Extended Generalized Requests                                        */
 /************************************************************************/
 
-
-void MPC_Progress_engine_poll()
+int ___grequest_disguise_poll( void * arg )
 {
-    int rank = sctk_get_task_rank();
+    int my_rank = sctk_get_task_rank();
+
+    MPC_Request * req = (MPC_Request *)arg;
+   
+    if( !req->poll_fn )
+    {
+        return 1;
+    }
+
+    if( req->completion_flag == SCTK_MESSAGE_DONE )
+    {
+        return 1;
+    }
+    
+    int disguised = 0;
+    if( my_rank != req->grequest_rank )
+    {
+        disguised = 1;
+        if( MPCX_Disguise( MPC_COMM_WORLD, req->grequest_rank ) != MPC_SUCCESS )
+        {
+            return 0;
+        }
+    }
+
+
+    MPC_Status tmp_status;
+    (req->poll_fn)(req->extra_state, &tmp_status);   
 
 
 
+    if( disguised )
+    {
+        MPCX_Undisguise();
+    }
+
+    return (req->completion_flag == SCTK_MESSAGE_DONE);
 }
 
+
+void sctk_generic_request_poll( MPC_Request * req )
+{
+    if(req->completion_flag == SCTK_MESSAGE_DONE)
+        return;
+    
+    progressWorkUnit_poll( req->progress_unit );
+}
 
 
 
@@ -1536,6 +1593,8 @@ int PMPCX_Grequest_start_generic(MPC_Grequest_query_function *query_fn,
   /* Set not null as we want to be waited */
   request->is_null = 0;
 
+  request->grequest_rank = sctk_get_task_rank();
+
   /* Fill in generalized request CTX */
   request->pointer_to_source_request = (void *)request;
   request->query_fn = query_fn;
@@ -1547,6 +1606,12 @@ int PMPCX_Grequest_start_generic(MPC_Grequest_query_function *query_fn,
 
   /* We set the request as pending */
   request->completion_flag = SCTK_MESSAGE_PENDING;
+
+  /* We now push the request inside the progress list */
+
+  struct sctk_task_specific_s *ctx = __MPC_get_task_specific();
+
+  request->progress_unit = progressList_add(ctx->progress_list, ___grequest_disguise_poll, (void *)request );
 
   MPC_ERROR_SUCESS()
 }
@@ -4108,6 +4173,10 @@ int __MPC_Waitallp(mpc_msg_count count, MPC_Request *parray_of_requests[],
       }
 
       request = parray_of_requests[i % count];
+      
+      if( request == &MPC_REQUEST_NULL )
+          continue;
+     
       __MPC_Test_check(request, &tmp_flag, status);
 
       /* We set this flag in order to prevent the status

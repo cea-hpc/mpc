@@ -127,6 +127,8 @@ extern "C"
 	struct sctk_tls_dtors_s* dtors_head;
     /* Where the thread must be bound */
     unsigned int bind_to;
+    /* This is the MPI interface per th ctx */
+    void * mpi_per_thread;
     /* The thread disguisement if present */
     struct sctk_thread_data_s *my_disguisement;
     void * ctx_disguisement;
