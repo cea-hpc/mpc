@@ -208,9 +208,21 @@
   <!-- ********************************************************* -->
   <xs:complexType name="user_type_net_driver_portals">
     <xs:all>
-      <xs:element minOccurs="0" name="eager_limit" type="xs:integer"/>
+      <xs:element minOccurs="0" name="eager_limit">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[0-9]+[ ]?[K|M|G|T|P]?B"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
       <xs:element minOccurs="0" name="min_comms" type="xs:integer"/>
-      <xs:element minOccurs="0" name="mr_max_size" type="xs:integer"/>
+      <xs:element minOccurs="0" name="block_cut">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[0-9]+[ ]?[K|M|G|T|P]?B"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
     </xs:all>
   </xs:complexType>
   <!-- ********************************************************* -->

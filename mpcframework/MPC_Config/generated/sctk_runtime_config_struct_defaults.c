@@ -1833,9 +1833,9 @@ void sctk_runtime_config_struct_init_net_driver_portals(void * struct_ptr)
 	if( obj->init_done != 0 ) return;
 
 	/* Simple params : */
-	obj->eager_limit = 8192;
+	obj->eager_limit = sctk_runtime_config_map_entry_parse_size("8 KB");
 	obj->min_comms = 1;
-	obj->mr_max_size = 65536;
+	obj->block_cut = sctk_runtime_config_map_entry_parse_size("2 GB");
 	obj->init_done = 1;
 }
 

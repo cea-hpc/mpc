@@ -590,17 +590,17 @@ It support parameters :
 .Pp
 .Bl -tag -width Ds
 .It Cm eager_limit
-Type is int. Default value is 8192. 
+Type is size. Default value is 8 KB. 
 .Pp eager_limit
 Max size of messages allowed to use the eager protocol.
 .It Cm min_comms
 Type is int. Default value is 1. 
 .Pp min_comms
 Min number of communicators (help to avoid dynamic PT entry allocation)
-.It Cm mr_max_size
-Type is int. Default value is 65536. 
-.Pp mr_max_size
-Max msg bytes per ME/MD slots (larger requests are split)
+.It Cm block_cut
+Type is size. Default value is 2 GB. 
+.Pp block_cut
+Above this value, RDV messages will be split in multiple GET requests
 .El
 .Sh ENTRIES OF TYPE net_driver_tcp
 TCP-based driver

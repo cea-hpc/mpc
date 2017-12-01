@@ -193,9 +193,9 @@
 
 		<!-- Structure for Portals driver -->
 		<struct name="net_driver_portals" doc="Portals-based driver">
-			<param name="eager_limit" type="int" doc="Max size of messages allowed to use the eager protocol." default="8192" />
+			<param name="eager_limit" type="size" doc="Max size of messages allowed to use the eager protocol." default="8 KB" />
 			<param name="min_comms" type="int" doc="Min number of communicators (help to avoid dynamic PT entry allocation)" default="1" />
-			<param name="mr_max_size" type="int" doc="Max msg bytes per ME/MD slots (larger requests are split)" default="65536" />
+			<param name="block_cut" type="size" doc="Above this value, RDV messages will be split in multiple GET requests" default="2 GB" />
 		</struct>
 
 		<!-- Structure for TCP driver -->

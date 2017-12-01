@@ -6,7 +6,6 @@
 
 extern sctk_ptl_id_t* ranks_ids_map;
 
-
 static inline void __sctk_ptl_rdv_compute_chunks(sctk_ptl_rail_info_t* srail, sctk_thread_ptp_message_t* msg, size_t* sz, size_t* nb)
 {
 	size_t size = SCTK_MSG_SIZE(msg);
@@ -16,6 +15,10 @@ static inline void __sctk_ptl_rdv_compute_chunks(sctk_ptl_rail_info_t* srail, sc
 	sctk_assert(sz);
 	sctk_assert(nb);
 
+	/* what to do for extreme case ? :
+	 *   - What if number of GET-MDs exceeded the max number of MD ?
+	 *   - What if number of GET-MEs exceeded the max number of ME ?
+	 */
 	if(size > srail->max_mr)
 	{
 		*sz = srail->max_mr;
@@ -129,6 +132,8 @@ static inline void sctk_ptl_rdv_recv_message(sctk_rail_info_t* rail, sctk_ptl_ev
 	sctk_assert(pte);
 
 	__sctk_ptl_rdv_compute_chunks(srail, msg, &chunk_sz, &chunk_nb);
+	sctk_assert(chunk_sz >= 0ull);
+	sctk_assert(chunk_nb > 0);
 	chunk = 0;
 	for (chunk = 0; chunk < chunk_nb; ++chunk) 
 	{
@@ -297,8 +302,8 @@ void sctk_ptl_rdv_send_message(sctk_thread_ptp_message_t* msg, sctk_endpoint_t* 
 	}
 
 	__sctk_ptl_rdv_compute_chunks(srail, msg, &chunk_sz, &chunk_nb);
-	sctk_assert(chunk_sz > 0);
-	sctk_assert(chunk_nb > 0);
+	sctk_assert(chunk_sz >= 0ull); /* msg sz can be NULL */
+	sctk_assert(chunk_nb > 0ull);
 
 	/* split GET into multiple request if size exceeds */
 	for (chunk = 0; chunk < chunk_nb; ++chunk) 

@@ -325,13 +325,13 @@ const struct sctk_runtime_config_entry_meta sctk_runtime_config_db[] = {
 			},
 	/* struct */
 	{"sctk_runtime_config_struct_net_driver_portals" , SCTK_CONFIG_META_TYPE_STRUCT , 0  , sizeof(struct sctk_runtime_config_struct_net_driver_portals) , NULL , sctk_runtime_config_struct_init_net_driver_portals},
-	{"eager_limit"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_driver_portals,eager_limit)  , sizeof(int) , "int" , NULL , 
+	{"eager_limit"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_driver_portals,eager_limit)  , sizeof(size_t) , "size_t" , NULL , 
 				NULL
 			},
 	{"min_comms"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_driver_portals,min_comms)  , sizeof(int) , "int" , NULL , 
 				NULL
 			},
-	{"mr_max_size"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_driver_portals,mr_max_size)  , sizeof(int) , "int" , NULL , 
+	{"block_cut"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_driver_portals,block_cut)  , sizeof(size_t) , "size_t" , NULL , 
 				NULL
 			},
 	/* struct */

@@ -295,11 +295,11 @@ struct sctk_runtime_config_struct_ib_global
 struct sctk_runtime_config_struct_net_driver_portals
 {	int init_done;
 	/**Max size of messages allowed to use the eager protocol.**/
-	int eager_limit;
+	size_t eager_limit;
 	/**Min number of communicators (help to avoid dynamic PT entry allocation)**/
 	int min_comms;
-	/**Max msg bytes per ME/MD slots (larger requests are split)**/
-	int mr_max_size;
+	/**Above this value, RDV messages will be split in multiple GET requests**/
+	size_t block_cut;
 };
 
 /******************************** STRUCTURE *********************************/
