@@ -44,22 +44,22 @@ static inline ptl_datatype_t __sctk_ptl_convert_type(RDMA_type type)
 {
 	switch(type)
 	{
-		case RDMA_TYPE_CHAR:               return PTL_INT8_T; break;
-		case RDMA_TYPE_DOUBLE:             return PTL_DOUBLE; break;
-		case RDMA_TYPE_FLOAT:              return PTL_FLOAT; break;
-		case RDMA_TYPE_INT:                return PTL_INT32_T; break;
-		case RDMA_TYPE_LONG:               return PTL_INT64_T; break;
-		case RDMA_TYPE_LONG_DOUBLE:        return PTL_LONG_DOUBLE; break;
-		case RDMA_TYPE_LONG_LONG:          return PTL_INT64_T; break;
-		case RDMA_TYPE_LONG_LONG_INT:      return PTL_INT64_T; break;
-		case RDMA_TYPE_SHORT:              return PTL_INT16_T; break;
-		case RDMA_TYPE_SIGNED_CHAR:        return PTL_INT8_T; break;
-		case RDMA_TYPE_UNSIGNED:           return PTL_UINT32_T; break;
-		case RDMA_TYPE_UNSIGNED_CHAR:      return PTL_UINT8_T; break;
-		case RDMA_TYPE_UNSIGNED_LONG:      return PTL_UINT64_T; break;
-		case RDMA_TYPE_UNSIGNED_LONG_LONG: return PTL_UINT64_T; break;
-		case RDMA_TYPE_UNSIGNED_SHORT:     return PTL_UINT16_T; break;
-		case RDMA_TYPE_WCHAR:              return PTL_INT16_T; break;
+		case RDMA_TYPE_CHAR               : return PTL_INT8_T      ; break ;
+		case RDMA_TYPE_DOUBLE             : return PTL_DOUBLE      ; break ;
+		case RDMA_TYPE_FLOAT              : return PTL_FLOAT       ; break ;
+		case RDMA_TYPE_INT                : return PTL_INT32_T     ; break ;
+		case RDMA_TYPE_LONG               : return PTL_INT64_T     ; break ;
+		case RDMA_TYPE_LONG_DOUBLE        : return PTL_LONG_DOUBLE ; break ;
+		case RDMA_TYPE_LONG_LONG          : return PTL_INT64_T     ; break ;
+		case RDMA_TYPE_LONG_LONG_INT      : return PTL_INT64_T     ; break ;
+		case RDMA_TYPE_SHORT              : return PTL_INT16_T     ; break ;
+		case RDMA_TYPE_SIGNED_CHAR        : return PTL_INT8_T      ; break ;
+		case RDMA_TYPE_UNSIGNED           : return PTL_UINT32_T    ; break ;
+		case RDMA_TYPE_UNSIGNED_CHAR      : return PTL_UINT8_T     ; break ;
+		case RDMA_TYPE_UNSIGNED_LONG      : return PTL_UINT64_T    ; break ;
+		case RDMA_TYPE_UNSIGNED_LONG_LONG : return PTL_UINT64_T    ; break ;
+		case RDMA_TYPE_UNSIGNED_SHORT     : return PTL_UINT16_T    ; break ;
+		case RDMA_TYPE_WCHAR              : return PTL_INT16_T     ; break ;
 		default: 
 			sctk_fatal("Type not handled by Portals: %d", type);
 	}
@@ -75,26 +75,159 @@ static inline ptl_op_t __sctk_ptl_convert_op(RDMA_op op)
 {
 	switch(op)
 	{
-		case RDMA_SUM: return PTL_SUM; break;
-		case RDMA_MIN: return PTL_MIN; break;
-		case RDMA_MAX: return PTL_MAX; break;
-		case RDMA_PROD: return PTL_PROD; break;
-		case RDMA_LAND: return PTL_LAND; break;
-		case RDMA_BAND: return PTL_BAND; break;
-		case RDMA_LOR: return PTL_LOR; break;
-		case RDMA_BOR: return PTL_BOR; break;
-		case RDMA_LXOR: return PTL_LXOR; break;
-		case RDMA_BXOR: return PTL_BXOR; break;
+		case RDMA_SUM  : return PTL_SUM  ; break ;
+		case RDMA_MIN  : return PTL_MIN  ; break ;
+		case RDMA_MAX  : return PTL_MAX  ; break ;
+		case RDMA_PROD : return PTL_PROD ; break ;
+		case RDMA_LAND : return PTL_LAND ; break ;
+		case RDMA_BAND : return PTL_BAND ; break ;
+		case RDMA_LOR  : return PTL_LOR  ; break ;
+		case RDMA_BOR  : return PTL_BOR  ; break ;
+		case RDMA_LXOR : return PTL_LXOR ; break ;
+		case RDMA_BXOR : return PTL_BXOR ; break ;
 		default:
 			sctk_fatal("Operation not supported by Portals %d", op);
 	}
 	return 0;
 }
 
+static inline short __sctk_ptl_is_unary_op(RDMA_op op, RDMA_type type, char* buf, size_t size)
+{
+	if(op != RDMA_INC && op != RDMA_DEC)
+	{
+		return 0;
+	}
+
+	sctk_assert(size >= RDMA_type_size(type));
+	
+	memset(buf, 0, size);
+	if(op == RDMA_INC)
+	{
+		switch(type)
+		{
+			case RDMA_TYPE_CHAR:
+			case RDMA_TYPE_UNSIGNED_CHAR:
+			case RDMA_TYPE_SIGNED_CHAR:
+			{
+				int8_t x = 1;
+				memcpy(buf, &x, sizeof(int8_t));
+				break;
+			}
+			case RDMA_TYPE_SHORT:
+			case RDMA_TYPE_WCHAR:
+			case RDMA_TYPE_UNSIGNED_SHORT:
+			{
+				int16_t x = 1;
+				memcpy(buf, &x, sizeof(int16_t));
+				break;
+			}
+			case RDMA_TYPE_DOUBLE:
+			{
+				double x = 1.0;
+				memcpy(buf, &x, sizeof(double));
+				break;
+			}
+			case RDMA_TYPE_FLOAT:
+			{
+				float x = 1.0;
+				memcpy(buf, &x, sizeof(float));
+				break;
+			}
+			case RDMA_TYPE_INT:
+			case RDMA_TYPE_UNSIGNED:
+			{
+				int32_t x = 1;
+				memcpy(buf, &x, sizeof(int32_t));
+				break;
+			}
+			case RDMA_TYPE_LONG_LONG:
+			case RDMA_TYPE_LONG:
+			case RDMA_TYPE_LONG_LONG_INT:
+			case RDMA_TYPE_UNSIGNED_LONG:
+			case RDMA_TYPE_UNSIGNED_LONG_LONG:
+			{
+				int64_t x = 1;
+				memcpy(buf, &x, sizeof(int64_t));
+				break;
+			}
+			case RDMA_TYPE_LONG_DOUBLE:
+			{
+				long double x = 1.0;
+				memcpy(buf, &x, sizeof(long double));
+				break;
+			}
+			default:
+				not_reachable();
+		}
+	}
+	else if( op == RDMA_DEC)
+	{
+		switch(type)
+		{
+			case RDMA_TYPE_CHAR:
+			case RDMA_TYPE_UNSIGNED_CHAR:
+			case RDMA_TYPE_SIGNED_CHAR:
+			{
+				int8_t x = -1;
+				memcpy(buf, &x, sizeof(int8_t));
+				break;
+			}
+			case RDMA_TYPE_SHORT:
+			case RDMA_TYPE_WCHAR:
+			case RDMA_TYPE_UNSIGNED_SHORT:
+			{
+				int16_t x = -1;
+				memcpy(buf, &x, sizeof(int16_t));
+				break;
+			}
+			case RDMA_TYPE_DOUBLE:
+			{
+				double x = -1.0;
+				memcpy(buf, &x, sizeof(double));
+				break;
+			}
+			case RDMA_TYPE_FLOAT:
+			{
+				float x = -1.0;
+				memcpy(buf, &x, sizeof(float));
+				break;
+			}
+			case RDMA_TYPE_INT:
+			case RDMA_TYPE_UNSIGNED:
+			{
+				int32_t x = -1;
+				memcpy(buf, &x, sizeof(int32_t));
+				break;
+			}
+			case RDMA_TYPE_LONG_LONG:
+			case RDMA_TYPE_LONG:
+			case RDMA_TYPE_LONG_LONG_INT:
+			case RDMA_TYPE_UNSIGNED_LONG:
+			case RDMA_TYPE_UNSIGNED_LONG_LONG:
+			{
+				int64_t x = -1;
+				memcpy(buf, &x, sizeof(int64_t));
+				break;
+			}
+			case RDMA_TYPE_LONG_DOUBLE:
+			{
+				long double x = -1.0;
+				memcpy(buf, &x, sizeof(long double));
+				break;
+			}
+			default:
+				not_reachable();
+		}
+	}
+
+	return 1;
+}
+
 /** boolean to check if Portals support 'fetch_and_op', which it supports */
 int sctk_ptl_rdma_fetch_and_op_gate( sctk_rail_info_t *rail, size_t size, RDMA_op op, RDMA_type type )
 {
-	return 1;
+	/* don't support directly INC & DEC w/ Portals... */
+	return (op != RDMA_INC && op != RDMA_DEC);
 }
 
 /**
@@ -110,6 +243,7 @@ int sctk_ptl_rdma_fetch_and_op_gate( sctk_rail_info_t *rail, size_t size, RDMA_o
  * \param[in] op the operation to apply (remote_addr op add)
  * \param[in] type the type of fetch_addr, remote_addr & add
  */
+#define BUF_SIZE 32
 void sctk_ptl_rdma_fetch_and_op(  sctk_rail_info_t *rail,
 		sctk_thread_ptp_message_t *msg,
 		void * fetch_addr,
@@ -120,7 +254,61 @@ void sctk_ptl_rdma_fetch_and_op(  sctk_rail_info_t *rail,
 		RDMA_op op,
 		RDMA_type type )
 {
-	not_implemented();
+	sctk_ptl_rail_info_t* srail = &rail->network.ptl;
+	sctk_ptl_id_t remote = remote_key->pin.ptl.origin;
+	void* remote_start   = remote_key->pin.ptl.start;
+	void* local_start    = local_key->pin.ptl.start;
+	size_t local_off, remote_off, add_off, size;
+	sctk_ptl_local_data_t* add_md = NULL;
+	sctk_ptl_local_data_t* copy = NULL;
+	char buf[BUF_SIZE];
+
+	size = RDMA_type_size(type);
+
+	if(__sctk_ptl_is_unary_op(op, type, buf, BUF_SIZE))
+	{
+		add = (void*)(&buf);
+	}
+
+	/* sanity checks */
+	sctk_assert(local_start == local_key->pin.ptl.md_data->slot.md.start);
+	sctk_assert(fetch_addr  >= local_start);
+	sctk_assert(fetch_addr + size <= local_start + local_key->pin.ptl.md_data->slot.md.length);
+	sctk_assert(remote_addr >= remote_start);
+	
+	local_off  = fetch_addr  - local_start;
+	remote_off = remote_addr - remote_start;
+
+	add_md = sctk_ptl_md_create(srail, add, RDMA_type_size(type), SCTK_PTL_MD_PUT_FLAGS);
+	add_off = 0;
+	sctk_ptl_md_register(srail, add_md);
+
+	add_md->type = SCTK_PTL_TYPE_RDMA;
+	add_md->msg = NULL;
+	
+	/* this is dirty: see comments in sctk_ptl_pin_region() */
+	copy                   = sctk_malloc(sizeof(sctk_ptl_local_data_t));
+	*copy                  = *local_key->pin.ptl.md_data;
+	copy->msg              = msg;
+	msg->tail.ptl.user_ptr = copy;
+	copy->type = SCTK_PTL_TYPE_RDMA;
+
+	sctk_ptl_emit_fetch_atomic(
+		local_key->pin.ptl.md_data,   /* GET MD --> fetch_addr */
+		add_md,                       /* PUT MD  --> add */
+		size,                         /* request size */
+		remote,                       /* target */
+		rdma_pte,                     /* PT entry */
+		remote_key->pin.ptl.match,    /* unique match ID */
+		local_off,                    /* local window offset */
+		add_off,                      /* because GET MD is locally created */
+		remote_off,                   /* remote window offset */
+		__sctk_ptl_convert_op(op),    /* element used for comparison (same type as others) */
+		__sctk_ptl_convert_type(type),/* Portals-converted RDMA type */
+		copy
+
+	);
+	sctk_warning("PORTALS: SEND-FETCH-AND-OP (loff=%llu, roff=%llu, op=%d, add=%p)", local_off, remote_off, op, add);
 }
 
 /** boolean to check if Portals support 'compare_and_swap', which it supports */
@@ -139,12 +327,12 @@ int sctk_ptl_rdma_cas_gate( sctk_rail_info_t *rail, size_t size, RDMA_type type 
  *
  * \param[in] rail the Portail rail
  * \param[in] msg the MPC built msg
- * \param[in] res_addr the data to send if the compare succeed
+ * \param[in] res_addr the data where the result will be stored
  * \param[in] local_key the local RDMA struct, associated to res_addr
  * \param[in] remote_addr the data to access to if to compare & swap
  * \param[in] remote_key the remote RDMA struct, associated to remote_addr
  * \param[in] comp the 'comp' attribute
- * \param[in] new the returned value from compare&swap
+ * \param[in] new the value to update if the compare matched
  * \param[in] type the type of res_addr, remote_addr, comp & new
  */
 void sctk_ptl_rdma_cas(sctk_rail_info_t *rail,
@@ -157,31 +345,54 @@ void sctk_ptl_rdma_cas(sctk_rail_info_t *rail,
 		void * new,
 		RDMA_type type )
 {
-	sctk_ptl_local_data_t* md  = local_key->pin.ptl.md_data;
-	sctk_ptl_local_data_t* me  = local_key->pin.ptl.me_data;
-	sctk_ptl_id_t remote       = remote_key->pin.ptl.origin;
-	sctk_ptl_rdma_type_t ptype = __sctk_ptl_convert_type(type);
-	size_t local_getoff, local_putoff, remote_off;
+	sctk_ptl_rail_info_t* srail = &rail->network.ptl;
+	sctk_ptl_id_t remote = remote_key->pin.ptl.origin;
+	void* remote_start   = remote_key->pin.ptl.start;
+	void* local_start    = local_key->pin.ptl.start;
+	size_t local_off, remote_off, new_off, size;
+	sctk_ptl_local_data_t* new_md = NULL;
+	sctk_ptl_local_data_t* copy = NULL;
 
-
-
-	not_implemented();
-#if 0
-	/*TODO: 'new' is not in a mapped region !*/
-	local_getoff = res_addr - ;
-	local_putoff = ;
-	remote_off   = remote_addr - me->slot.me.start;
+	size = RDMA_type_size(type);
+	/* sanity checks */
+	sctk_assert(local_start == local_key->pin.ptl.md_data->slot.md.start);
+	sctk_assert(res_addr  >= local_start);
+	sctk_assert(res_addr + size <= local_start + local_key->pin.ptl.md_data->slot.md.length);
+	sctk_assert(remote_addr >= remote_start);
 	
+	local_off  = res_addr  - local_start;
+	remote_off = remote_addr - remote_start;
+
+	new_md = sctk_ptl_md_create(srail, new, RDMA_type_size(type), SCTK_PTL_MD_PUT_FLAGS);
+	new_off = 0;
+	sctk_ptl_md_register(srail, new_md);
+
+	new_md->type = SCTK_PTL_TYPE_RDMA;
+	new_md->msg = NULL;
+	
+	/* this is dirty: see comments in sctk_ptl_pin_region() */
+	copy                   = sctk_malloc(sizeof(sctk_ptl_local_data_t));
+	*copy                  = *local_key->pin.ptl.md_data;
+	copy->msg              = msg;
+	msg->tail.ptl.user_ptr = copy;
+	copy->type = SCTK_PTL_TYPE_RDMA;
+
 	sctk_ptl_emit_swap(
-		md,                                               /* The base MD for this windows */
-		RDMA_type_size(type),                             /* request size */
-		remote,                                           /* target process */
-		rdma_pte, /* Portals entry */
-		(sctk_ptl_matchbits_t)me->slot.me.match_bits,     /* match_bits */
-		local_getoff, local_putoff, remote_off,           /* offsets */
-		comp, ptype                                       /* value to compare with + RDMA type */
+		local_key->pin.ptl.md_data,   /* GET MD --> res_addr */
+		new_md,                       /* PUT MD  --> new */
+		size,                         /* request size */
+		remote,                       /* target */
+		rdma_pte,                     /* PT entry */
+		remote_key->pin.ptl.match,    /* unique match ID */
+		local_off,                    /* local window offset */
+		new_off,                      /* because GET MD is locally created */
+		remote_off,                   /* remote window offset */
+		comp,                         /* element used for comparison (same type as others) */
+		__sctk_ptl_convert_type(type),/* Portals-converted RDMA type */
+		copy
+
 	);
-#endif
+	sctk_nodebug("PORTALS: SEND-CAS (loff=%llu, roff=%llu, comp=%p, new=%p)", local_off, remote_off, comp, new);
 }
 
 /**
@@ -413,11 +624,14 @@ void sctk_ptl_rdma_event_me(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 
 void sctk_ptl_rdma_event_md(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 {
-	sctk_thread_ptp_message_t* msg = (sctk_thread_ptp_message_t*)((sctk_ptl_local_data_t*)ev.user_ptr)->msg;
+	sctk_ptl_local_data_t* ptr = (sctk_ptl_local_data_t*)ev.user_ptr;
+	sctk_thread_ptp_message_t* msg = (sctk_thread_ptp_message_t*)ptr->msg;
 	switch(ev.type)
 	{
-		case PTL_EVENT_ACK:
-		case PTL_EVENT_REPLY:
+		case PTL_EVENT_ACK: /* write  || CAS || FETCH_AND_OP */
+			/*sctk_ptl_md_release(ptr);*/
+			break;
+		case PTL_EVENT_REPLY: /* READ || CAS || FETCH_AND_OP */
 			sctk_complete_and_free_message(msg);
 			break;
 		case PTL_EVENT_SEND:

@@ -458,11 +458,15 @@ void sctk_ptl_md_register(sctk_ptl_rail_info_t* srail, sctk_ptl_local_data_t* us
 {
 	assert(user && srail);
 	size_t max = srail->max_limits.max_mds;
+	int i = 0;
 
 	while(sctk_atomics_fetch_and_incr_int(&nb_mds) >= max)
 	{
 		sctk_atomics_decr_int(&nb_mds);
-		sctk_thread_yield();
+		if((i++)%20000 == 0)
+			sctk_network_notify_idle_message();
+		else
+			sctk_thread_yield();
 	}
 
 	sctk_ptl_chk(PtlMDBind(
@@ -591,7 +595,7 @@ int sctk_ptl_emit_put(sctk_ptl_local_data_t* user, size_t size, sctk_ptl_id_t re
 	return PTL_OK;
 }
 
-int sctk_ptl_emit_swap(sctk_ptl_local_data_t* get_user, sctk_ptl_local_data_t* put_user, size_t size, sctk_ptl_id_t remote, sctk_ptl_pte_t* pte, sctk_ptl_matchbits_t match, size_t local_getoff, size_t local_putoff, size_t remote_off, const void* cmp, sctk_ptl_rdma_type_t type)
+int sctk_ptl_emit_swap(sctk_ptl_local_data_t* get_user, sctk_ptl_local_data_t* put_user, size_t size, sctk_ptl_id_t remote, sctk_ptl_pte_t* pte, sctk_ptl_matchbits_t match, size_t local_getoff, size_t local_putoff, size_t remote_off, const void* cmp, sctk_ptl_rdma_type_t type, void* user_ptr)
 {
 	sctk_ptl_rdma_op_t op = PTL_CSWAP;
 
@@ -605,7 +609,7 @@ int sctk_ptl_emit_swap(sctk_ptl_local_data_t* get_user, sctk_ptl_local_data_t* p
 		pte->idx,             /* Portals index */
 		match.raw,            /* match bits */
 		remote_off,           /* remote offset */
-		get_user,             /* attached user_ptr */
+		user_ptr,             /* attached user_ptr */
 		0,                    /* TBD */
 		cmp,                  /* The value used to compare */
 		op,                   /* RDMA operation */
@@ -628,7 +632,7 @@ int sctk_ptl_emit_atomic(sctk_ptl_local_data_t* user, size_t size, sctk_ptl_id_t
 		match.raw,        /* match */
 		remote_off,       /* remote offset */
 		user,             /* custom user_ptr */
-		0,                /* TBD */
+		0,                /* Not needed here */
 		op,               /* RDMA op */
 		type              /* RDMA type */
 	));
@@ -636,12 +640,8 @@ int sctk_ptl_emit_atomic(sctk_ptl_local_data_t* user, size_t size, sctk_ptl_id_t
 	return PTL_OK;
 }
 
-int sctk_ptl_emit_fetch_atomic(sctk_ptl_local_data_t* get_user, sctk_ptl_local_data_t* put_user, size_t size, sctk_ptl_id_t remote, sctk_ptl_pte_t* pte, sctk_ptl_matchbits_t match, size_t local_getoff, size_t local_putoff, size_t remote_off, sctk_ptl_rdma_op_t op, sctk_ptl_rdma_type_t type)
+int sctk_ptl_emit_fetch_atomic(sctk_ptl_local_data_t* get_user, sctk_ptl_local_data_t* put_user, size_t size, sctk_ptl_id_t remote, sctk_ptl_pte_t* pte, sctk_ptl_matchbits_t match, size_t local_getoff, size_t local_putoff, size_t remote_off, sctk_ptl_rdma_op_t op, sctk_ptl_rdma_type_t type, void* user_ptr)
 {
-	sctk_ptl_local_data_t** user = sctk_malloc(sizeof(sctk_ptl_local_data_t*) * 2);
-	user[0] = get_user;
-	user[1] = put_user;
-
 	sctk_ptl_chk(PtlFetchAtomic(
 		get_user->slot_h.mdh, /* Where data will be copied locally */
 		local_getoff,         /* local offset */
@@ -652,8 +652,8 @@ int sctk_ptl_emit_fetch_atomic(sctk_ptl_local_data_t* get_user, sctk_ptl_local_d
 		pte->idx,             /* Portals index */
 		match.raw,            /* match bits */
 		remote_off,           /* remote offset */
-		user,                 /* attached user_ptr */
-		0,                    /* TBD */
+		user_ptr,             /* attached user_ptr */
+		0,                    /* Not needed here */
 		op,                   /* RDMA operation */
 		type                  /* RDMA type */
 
