@@ -280,11 +280,11 @@ int progressEnginePool_init( struct progressEnginePool * p, unsigned int size )
     }
     else
     {
-        p->lists = malloc( sizeof(struct progressList) * size );
+        p->lists = sctk_malloc( sizeof(struct progressList) * size );
 
         if( !p->lists )
         {
-            perror("malloc");
+            perror("sctk_malloc");
             return 1;
         }
     }
@@ -304,7 +304,6 @@ int progressEnginePool_init( struct progressEnginePool * p, unsigned int size )
     }
 
     p->pool_lock = 0;
-
 
     return 0;
 }
@@ -330,7 +329,7 @@ int progressEnginePool_release( struct progressEnginePool * p)
 
     if( p->lists != p->__lists )
     {
-        free( p->lists );
+        sctk_free( p->lists );
         p->lists = NULL;
     }
 
@@ -347,10 +346,11 @@ struct progressList * progressEnginePool_join( struct progressEnginePool * p )
     if( p->booked == p->size )
     {
         fprintf(stderr, "Error no free pool\n");
-        abort();
+        sctk_abort();
     }
     
     ret = &p->lists[ p->booked ];
+    ret->id = p->booked;
     p->booked++;
 
     sctk_spinlock_unlock( &p->pool_lock );
@@ -362,6 +362,8 @@ struct progressList * progressEnginePool_join( struct progressEnginePool * p )
 
 int progressEnginePool_poll( struct progressEnginePool * p, int my_id )
 {
+    //sctk_error("POLL as %d", my_id);
+
     if( !p->booked )
         return PWU_NO_PROGRESS;
 
@@ -398,7 +400,6 @@ int progressEnginePool_poll( struct progressEnginePool * p, int my_id )
 
     //if( p->lists[targ].no_work_count < 1024 )
     //    return ret;
-
     /* Try to steal progress neighbor */
     targ = rand() % p->booked;
 
@@ -415,81 +416,4 @@ int progressEnginePool_poll( struct progressEnginePool * p, int my_id )
 }
 
 
-
-#include <omp.h>
-
-#define NUM_WORK 10
-
-int vals[NUM_WORK] = {0};
-
-int do_work( void * pval )
-{
-    int * val = (int *)pval;
-
-    int id = omp_get_thread_num();
-    //printf("%d done a quantum @ %d\n", id, *val);
-    usleep(100);
-    *val = *val + 1;
-
-    if( 10000 <= *val )
-    {
-        printf("BLOCK DONE %d\n", id);
-        /* Done */
-        return 1;
-    }
-
-    /* Not done */
-    return 0;
-}
-
-
-
-#if 0
-int main(int argc, char *argv[])
-{
-    struct progressEnginePool pool;
-
-    int num = -1;
-#pragma omp parallel
-{
-#pragma omp master
-    num = omp_get_num_threads();
-}
-    printf("%d\n", num);
-
-    progressEnginePool_init(&pool, num);
-
-#pragma omp parallel
-{
-
-    struct progressList * pl = progressEnginePool_join( &pool );
-
-    int id = omp_get_thread_num();
-
-    printf("Hello %d\n", id);
-
-    int i;
-    
-    if( id == 0)
-    {
-        for (i = 0; i < NUM_WORK; ++i) {
-            progressList_add( pl, do_work, (void*)&vals[i] );
-            
-        }
-    }
-
-    for (i = 0; i < 1e6; ++i) {
-        progressEnginePool_poll( &pool, id );
-    }
-
-}
-
-
-
-    progressEnginePool_release(&pool);
-
-
-    return 0;
-}
-#endif
 

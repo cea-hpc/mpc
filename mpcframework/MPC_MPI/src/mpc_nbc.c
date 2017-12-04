@@ -69,7 +69,7 @@ static inline int NBC_Copy(void *src, int srccount, MPI_Datatype srctype, void *
 /*static inline NBC_Comminfo* NBC_Init_comm(MPI_Comm comm, int keyval);*/
 /*static inline int NBC_Create_fortran_handle(int *fhandle, NBC_Handle **handle);*/
 static inline int NBC_Free(NBC_Handle* handle);
-static inline int NBC_Operation(void *buf3, void *buf1, void *buf2, MPI_Op op, MPI_Datatype type, int count);
+int NBC_Operation(void *buf3, void *buf1, void *buf2, MPI_Op op, MPI_Datatype type, int count);
 
 /*New functions by JJ*/
 static inline int NBC_Sched_send_pos(int pos, void* buf, char tmpbuf, int count, MPI_Datatype datatype, int dest, NBC_Schedule *schedule);
@@ -3660,8 +3660,7 @@ static int JJ_NBC_Iexscan(void *sendbuf, void *recvbuf, int count,
  */
 
 
- 
-
+int __MPC_poll_progress_id(int id);
 
 void *NBC_Pthread_func( void *ptr ) {
 
@@ -3709,7 +3708,7 @@ void *NBC_Pthread_func( void *ptr ) {
   
     int cpt = 1;
     int size = 10;
- 
+
       MPI_Request * requests;
       int * requests_locations;
       NBC_Handle ** requests_handles;
@@ -4716,7 +4715,7 @@ int NBC_Test(NBC_Handle *handle, int *flag, MPI_Status *status) {
  *
  */
 
-static inline int NBC_Operation(void *buf3, void *buf1, void *buf2, MPI_Op op, MPI_Datatype type, int count) {
+int NBC_Operation(void *buf3, void *buf1, void *buf2, MPI_Op op, MPI_Datatype type, int count) {
   int i;
      
   if(type == MPI_INT) { 
@@ -5312,6 +5311,9 @@ int NBC_Finalize(sctk_thread_t * NBC_thread)
 int
 PMPI_Ibarrier (MPI_Comm comm, MPI_Request *request)
 {
+
+  return MPI_Ixbarrier( comm );
+
   sctk_nodebug ("Entering IBARRIER %d", comm);
   int res = MPI_ERR_INTERN;
   SCTK__MPI_INIT_REQUEST (request);
@@ -5339,6 +5341,12 @@ int
 PMPI_Ibcast (void *buffer, int count, MPI_Datatype datatype, int root,
 	    MPI_Comm comm, MPI_Request *request)
 {
+  if( sctk_datatype_contig_mem( datatype ) )
+  {
+    return MPI_Ixbcast( buffer, count, datatype, root, comm, request );
+  }
+
+
   int res = MPI_ERR_INTERN;
   sctk_nodebug ("Entering IBCAST %d with count %d", comm, count);
   SCTK__MPI_INIT_REQUEST (request);
@@ -5366,6 +5374,12 @@ PMPI_Igather (void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 	     void *recvbuf, int recvcnt, MPI_Datatype recvtype,
 	     int root, MPI_Comm comm, MPI_Request * request)
 {
+
+  if( sctk_datatype_contig_mem(sendtype) && sctk_datatype_contig_mem(recvtype ))
+  {
+    return MPI_Ixgather(sendbuf, sendcnt, sendtype, recvbuf, recvcnt, recvtype, root, comm, request);
+  }
+
   int res = MPI_ERR_INTERN;
   sctk_nodebug ("Entering IGATHER %d", comm);
   SCTK__MPI_INIT_REQUEST (request);
@@ -5398,6 +5412,7 @@ PMPI_Igatherv (void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 	      MPI_Datatype recvtype, int root, MPI_Comm comm,
 	      MPI_Request *request)
 {
+
   int res = MPI_ERR_INTERN;
   sctk_nodebug ("Entering IGATHERV %d", comm);
   SCTK__MPI_INIT_REQUEST (request);
@@ -5429,6 +5444,12 @@ PMPI_Iscatter (void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 	      void *recvbuf, int recvcnt, MPI_Datatype recvtype, int root,
 	      MPI_Comm comm, MPI_Request * request)
 {
+
+  if(  sctk_datatype_contig_mem(sendtype) && sctk_datatype_contig_mem(recvtype ))
+  {
+    return MPI_Ixscatter(sendbuf, sendcnt, sendtype, recvbuf, recvcnt, recvtype, root, comm, request);
+  }
+
   int res = MPI_ERR_INTERN;
   sctk_nodebug ("Entering ISCATTER %d", comm);
   SCTK__MPI_INIT_REQUEST (request);
@@ -5644,6 +5665,13 @@ int
 PMPI_Ireduce (void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
 	     MPI_Op op, int root, MPI_Comm comm, MPI_Request *request)
 {
+
+  if( sctk_datatype_contig_mem(datatype ))
+  {
+  
+    return MPI_Ixreduce( sendbuf, recvbuf, count, datatype, op, root, comm, request);
+  }
+
   int res = MPI_ERR_INTERN;
   sctk_nodebug ("Entering IREDUCE %d", comm);
   SCTK__MPI_INIT_REQUEST (request);

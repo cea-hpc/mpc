@@ -744,7 +744,6 @@ int MPCX_Disguise( MPC_Comm comm, int target_rank )
   
   if( th->my_disguisement )
   {
-      sctk_error("NIOE");
     /* Sorry I'm already wearing a mask */
     return MPC_ERR_ARG;
   }
@@ -767,7 +766,6 @@ int MPCX_Disguise( MPC_Comm comm, int target_rank )
       }
   }
   
-      sctk_error("NIOE");
   return MPC_ERR_ARG;
 }
 
@@ -803,10 +801,12 @@ int __MPC_init_progress(sctk_task_specific_t * tmp )
     progressEnginePool_init( &__mpc_progress_pool, local_count );
   }
 
-  sctk_barrier((sctk_communicator_t) MPC_COMM_WORLD );
+  sctk_barrier(MPC_COMM_WORLD);
 
   /* Retrieve the ctx pointer */
   tmp->progress_list = progressEnginePool_join( &__mpc_progress_pool );
+
+
 }
 
 int __MPC_release_progress( sctk_task_specific_t * tmp  )
@@ -829,9 +829,15 @@ int __MPC_release_progress( sctk_task_specific_t * tmp  )
 }
 
 
+int __MPC_poll_progress_id(int id)
+{
+    return progressEnginePool_poll( &__mpc_progress_pool , id  );
+}
+
 int __MPC_poll_progress()
 {
-    return progressEnginePool_poll( &__mpc_progress_pool , sctk_get_task_rank()  );
+    struct sctk_task_specific_s * spe = __MPC_get_task_specific();
+    return __MPC_poll_progress_id( spe->progress_list->id );
 }
 
 
@@ -1546,7 +1552,7 @@ int ___grequest_disguise_poll( void * arg )
 
     if( disguised )
     {
-        MPCX_Undisguise();
+       MPCX_Undisguise();
     }
 
     return (req->completion_flag == SCTK_MESSAGE_DONE);
@@ -1608,7 +1614,7 @@ int PMPCX_Grequest_start_generic(MPC_Grequest_query_function *query_fn,
   request->completion_flag = SCTK_MESSAGE_PENDING;
 
   /* We now push the request inside the progress list */
-
+  MPCX_Undisguise();
   struct sctk_task_specific_s *ctx = __MPC_get_task_specific();
 
   request->progress_unit = progressList_add(ctx->progress_list, ___grequest_disguise_poll, (void *)request );

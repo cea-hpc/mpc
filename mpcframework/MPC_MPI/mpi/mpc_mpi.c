@@ -5566,6 +5566,7 @@ int (*exscan_intra)(void *, void *, int, MPI_Datatype, MPI_Op, MPI_Comm);
 
 
 /* Collectives */
+int __MPC_poll_progress();
 
 int __INTERNAL__PMPI_Barrier_intra_shm_sig(MPI_Comm comm) {
   struct sctk_comm_coll *coll = sctk_communicator_get_coll(comm);
@@ -5584,13 +5585,19 @@ int __INTERNAL__PMPI_Barrier_intra_shm_sig(MPI_Comm comm) {
 
   int *volatile toll = &barrier_ctx->tollgate[rank];
 
+  int cnt = 0;
+
   if (__do_yield) {
     while (*toll != sctk_atomics_load_int(&barrier_ctx->fare)) {
       sctk_thread_yield();
+      if( (cnt++ && 0xFF) == 0 )
+        __MPC_poll_progress();
     }
   } else {
     while (*toll != sctk_atomics_load_int(&barrier_ctx->fare)) {
       sctk_cpu_relax();
+      if( (cnt++ && 0xFF) == 0 )
+        __MPC_poll_progress();
     }
   }
 
@@ -5622,10 +5629,14 @@ int __INTERNAL__PMPI_Barrier_intra_shm_sig(MPI_Comm comm) {
     if (__do_yield) {
       while (the_signal == 0) {
         sctk_thread_yield();
+        if( (cnt++ && 0xFF) == 0 )
+            __MPC_poll_progress();
       }
     } else {
       while (the_signal == 0) {
         sctk_cpu_relax();
+        if( (cnt++ && 0xFF) == 0 )
+            __MPC_poll_progress();
       }
     }
   }

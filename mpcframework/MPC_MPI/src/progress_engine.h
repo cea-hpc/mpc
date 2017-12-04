@@ -30,7 +30,7 @@ int progressWorkUnit_poll( struct progressWorkUnit *pwu );
 int progressWorkUnit_complete( struct progressWorkUnit *pwu );
 
 
-#define PROGRESS_PWU_STATIC_ARRAY 128
+#define PROGRESS_PWU_STATIC_ARRAY 32
 
 struct progressList
 {
@@ -39,7 +39,7 @@ struct progressList
     sctk_spinlock_t list_lock;
     int is_free;
     unsigned int no_work_count;
-    char __pad[64];
+    int id;
 };
 
 int progressList_init( struct progressList * pl );
