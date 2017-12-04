@@ -224,7 +224,6 @@ void sctk_ptl_mds_poll(sctk_rail_info_t* rail, int threshold)
 	sctk_ptl_rail_info_t* srail = &rail->network.ptl;
 	sctk_ptl_event_t ev;
 	sctk_ptl_local_data_t* user_ptr;
-	sctk_thread_ptp_message_t* msg;
 	int ret, max = 0;
 	while(max++ < threshold)
 	{

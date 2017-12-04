@@ -49,7 +49,7 @@
 #define SCTK_PTL_ME_PUT_FLAGS SCTK_PTL_ME_FLAGS | PTL_ME_OP_PUT
 #define SCTK_PTL_ME_GET_FLAGS SCTK_PTL_ME_FLAGS | PTL_ME_OP_GET
 #define SCTK_PTL_ME_OVERFLOW_FLAGS SCTK_PTL_ME_PUT_FLAGS
-#define SCTK_PTL_ME_OVERFLOW_NB 24 /* number of ME in OVERFLOW_LIST (for each PTE) */
+#define SCTK_PTL_ME_OVERFLOW_NB 128 /* number of ME in OVERFLOW_LIST (for each PTE) */
 #define SCTK_PTL_ONCE PTL_ME_USE_ONCE
 
 #define sctk_ptl_list_t ptl_list_t
