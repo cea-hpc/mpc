@@ -148,6 +148,8 @@ void sctk_ptl_eqs_poll(sctk_rail_info_t* rail, int threshold)
 	size_t i = 0, size = srail->nb_entries;
 	int ret, max = 0;
 
+	/* at least, try each entry once */
+	threshold = (size > threshold) ? size : threshold;
 	sctk_assert(threshold > 0);
 	while(max++ < threshold)
 	{

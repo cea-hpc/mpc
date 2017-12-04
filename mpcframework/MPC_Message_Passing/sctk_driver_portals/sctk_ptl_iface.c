@@ -272,7 +272,9 @@ void sctk_ptl_pte_create(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte, size_
 		/*pte->taglocks[j] = SCTK_SPINLOCK_INITIALIZER;*/
 	/*}*/
 	MPCHT_set(&srail->pt_table, key, pte);
-	srail->nb_entries = key + SCTK_PTL_PTE_HIDDEN;
+	/* suppose that comm_idx always increase
+	 * We add 1, because  (key + HIDDEN) is an idx */
+	srail->nb_entries = (key + SCTK_PTL_PTE_HIDDEN) + 1;
 }
 
 /**
@@ -592,9 +594,6 @@ int sctk_ptl_emit_put(sctk_ptl_local_data_t* user, size_t size, sctk_ptl_id_t re
 int sctk_ptl_emit_swap(sctk_ptl_local_data_t* get_user, sctk_ptl_local_data_t* put_user, size_t size, sctk_ptl_id_t remote, sctk_ptl_pte_t* pte, sctk_ptl_matchbits_t match, size_t local_getoff, size_t local_putoff, size_t remote_off, const void* cmp, sctk_ptl_rdma_type_t type)
 {
 	sctk_ptl_rdma_op_t op = PTL_CSWAP;
-	sctk_ptl_local_data_t** user = sctk_malloc(sizeof(sctk_ptl_local_data_t*) * 2);
-	user[0] = get_user;
-	user[1] = put_user;
 
 	sctk_ptl_chk(PtlSwap(
 		get_user->slot_h.mdh, /* Where data will be copied locally */
@@ -606,7 +605,7 @@ int sctk_ptl_emit_swap(sctk_ptl_local_data_t* get_user, sctk_ptl_local_data_t* p
 		pte->idx,             /* Portals index */
 		match.raw,            /* match bits */
 		remote_off,           /* remote offset */
-		user,                 /* attached user_ptr */
+		get_user,             /* attached user_ptr */
 		0,                    /* TBD */
 		cmp,                  /* The value used to compare */
 		op,                   /* RDMA operation */
