@@ -35,7 +35,7 @@
 #include "sctk_ptl_cm.h"
 #include "sctk_ptl_toolkit.h"
 
-/* global shortcut */
+/** global shortcut, where each cell maps to the portals process object */
 sctk_ptl_id_t* ranks_ids_map = NULL;
 
 /**
@@ -397,6 +397,13 @@ sctk_ptl_id_t sctk_ptl_map_id(sctk_rail_info_t* rail, int dest)
 	return id;
 }
 
+/**
+ * Notify the driver that a new communicator has been created.
+ * Will trigger the creation of new Portals entry.
+ * \param[in] srail the Portals rail
+ * \param[in] com_idx the communicator ID
+ * \param[in] comm_size the number of processes in that communicator
+ */
 void sctk_ptl_comm_register(sctk_ptl_rail_info_t* srail, int comm_idx, size_t comm_size)
 {
 	if(!SCTK_PTL_PTE_EXIST(srail->pt_table, comm_idx))
@@ -447,10 +454,6 @@ void sctk_ptl_init_interface(sctk_rail_info_t* rail)
  * \param[in] rail the rail to close
  */
 void sctk_ptl_fini_interface(sctk_rail_info_t* rail)
-{
-}
-
-void sctk_ptl_free_memory(void* msg)
 {
 }
 

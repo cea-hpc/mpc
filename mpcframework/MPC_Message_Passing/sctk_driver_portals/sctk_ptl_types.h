@@ -31,68 +31,138 @@
 #include "sctk_io_helper.h"
 #include "sctk_atomics.h"
 
-/* match bits */
+/*********************************/
+/********** MATCH BITS ***********/
+/*********************************/
+/** default struct to initialize a new sctk_ptl_matchbits_t */
 #define SCTK_PTL_MATCH_INIT (sctk_ptl_matchbits_t) {.data.rank = 0, .data.tag = 0, .data.uid = 0}
+/** Set the 'tag' member to be ignored during the matching */
 #define SCTK_PTL_IGN_TAG  (UINT32_MAX)
+/** Set the 'rank' member to be ignored during the matching */
 #define SCTK_PTL_IGN_RANK  (UINT16_MAX)
+/** Set the 'usage ID' member to be ignored during the matching */
 #define SCTK_PTL_IGN_UID  (UINT16_MAX)
+/** A combination of SCTK_PTL_IGN_{TAG,RANK,UID} */
 #define SCTK_PTL_IGN_ALL (sctk_ptl_matchbits_t){.data.rank = SCTK_PTL_IGN_RANK, .data.tag = SCTK_PTL_IGN_TAG, .data.uid = SCTK_PTL_IGN_UID}
+/** Set the 'tag' to be used for the matching step */
 #define SCTK_PTL_MATCH_TAG  ((uint32_t)0)
+/** Set the 'rank' to be used for the matching step */
 #define SCTK_PTL_MATCH_RANK  ((uint16_t)0)
+/** Set the 'usage ID' to be used for the matching step */
 #define SCTK_PTL_MATCH_UID  ((uint16_t)0)
+/** A combination of SCTK_PTL_MATCH_{TAG,RANK,UID} */
 #define SCTK_PTL_MATCH_ALL  (sctk_ptl_matchbits_t) {.data.rank = SCTK_PTL_MATCH_RANK, .data.tag = SCTK_PTL_MATCH_TAG, .data.uid = SCTK_PTL_MATCH_UID}
 
-/* MEs */
-#define sctk_ptl_meh_t ptl_handle_me_t
-#define sctk_ptl_me_t ptl_me_t
+/*********************************/
+/******* MATCHING ENTRIES ********/
+/*********************************/
+/* typedefs */
+#define sctk_ptl_meh_t ptl_handle_me_t /**< ME handler */
+#define sctk_ptl_me_t ptl_me_t         /**< ME */
+/** Default flags for new added ME: No EVENT_LINK/UNLINK */
 #define SCTK_PTL_ME_FLAGS PTL_ME_EVENT_LINK_DISABLE | PTL_ME_EVENT_UNLINK_DISABLE
+/** Default flags for new PUT-ME */
 #define SCTK_PTL_ME_PUT_FLAGS SCTK_PTL_ME_FLAGS | PTL_ME_OP_PUT
+/** Default flags for new GET-ME */
 #define SCTK_PTL_ME_GET_FLAGS SCTK_PTL_ME_FLAGS | PTL_ME_OP_GET
+/** default flags for OVERFLOW ME --> unexpected PUTs */
 #define SCTK_PTL_ME_OVERFLOW_FLAGS SCTK_PTL_ME_PUT_FLAGS
-#define SCTK_PTL_ME_OVERFLOW_NB 128 /* number of ME in OVERFLOW_LIST (for each PTE) */
+/** Macro to automatically unlink an ME when a match occurs (not always used, ex: RDMA) */
 #define SCTK_PTL_ONCE PTL_ME_USE_ONCE
+/** Number of slots to maintain in the OVERFLOW8LIST of each PT entry */
+#define SCTK_PTL_ME_OVERFLOW_NB 128
 
-#define sctk_ptl_list_t ptl_list_t
-#define SCTK_PTL_PRIORITY_LIST PTL_PRIORITY_LIST
-#define SCTK_PTL_OVERFLOW_LIST PTL_OVERFLOW_LIST
-#define SCTK_PTL_STR_LIST(u) ((u==SCTK_PTL_PRIORITY_LIST) ? "PRIORITY" : "OVERFLOW")
 
-/* MDs */
-#define sctk_ptl_mdh_t ptl_handle_md_t
-#define sctk_ptl_md_t ptl_md_t
+/*********************************/
+/****** MEMORY DESCRIPTORS *******/
+/*********************************/
+/* typedefs */
+#define sctk_ptl_mdh_t ptl_handle_md_t /**< MD handler */
+#define sctk_ptl_md_t ptl_md_t         /**< MD */
+/** default flags for new adde MD --> no EVENT_SEND (not used to ATOMICS ops w/ RDMA) */
 #define SCTK_PTL_MD_FLAGS PTL_MD_EVENT_SEND_DISABLE
-#define SCTK_PTL_MD_PUT_FLAGS SCTK_PTL_MD_FLAGS
-#define SCTK_PTL_MD_GET_FLAGS SCTK_PTL_MD_FLAGS
-#define SCTK_PTL_MD_ATOMICS_FLAGS 0 /* we need SEND to know about sent buffer to be freed */
+#define SCTK_PTL_MD_PUT_FLAGS SCTK_PTL_MD_FLAGS /**< no effect yet */
+#define SCTK_PTL_MD_GET_FLAGS SCTK_PTL_MD_FLAGS /**< no effect yet */
+/** default flags for RDMA requests --> here we need the EVENT_SEND flag */
+#define SCTK_PTL_MD_ATOMICS_FLAGS 0
 
-/* events */
-#define sctk_ptl_event_t ptl_event_t
-#define sctk_ptl_cnt_t ptl_ct_event_t
-#define sctk_ptl_cnth_t ptl_handle_ct_t
-#define sctk_ptl_eq_t ptl_handle_eq_t
-#define SCTK_PTL_EQ_PTE_SIZE 10240 /* size of EQ for PTE */
-#define SCTK_PTL_EQ_MDS_SIZE 10240 /* size of EQ for MD unique EQ */
+/*********************************/
+/************ EVENTS *************/
+/*********************************/
+/* typedefs */
+#define sctk_ptl_event_t ptl_event_t    /**< event */
+#define sctk_ptl_cnt_t ptl_ct_event_t   /**< counting event */
+#define sctk_ptl_cnth_t ptl_handle_ct_t /**< couting event handler */
+#define sctk_ptl_eq_t ptl_handle_eq_t   /**< event queue handler */
+/** default size for the EQ associated with an PT entry */
+#define SCTK_PTL_EQ_PTE_SIZE 10240
+/** default size for the EQ associated with each MD registered by the process */
+#define SCTK_PTL_EQ_MDS_SIZE 10240
 
-/* id */
+/*********************************/
+/******** IDENTIFICATION *********/
+/*********************************/
+/** a Portals identifier */
 #define sctk_ptl_id_t ptl_process_t
+/** Refer to any physical process */
 #define SCTK_PTL_ANY_PROCESS (sctk_ptl_id_t) {.phys.nid = PTL_NID_ANY, .phys.pid = PTL_PID_ANY}
 
-/* RDMA */
-#define sctk_ptl_rdma_type_t ptl_datatype_t
-#define sctk_ptl_rdma_op_t ptl_op_t
-
-/* Portals entry */
+/*********************************/
+/******* PORTALS ENTRIES *********/
+/*********************************/
+/** default flags for allocating a new PT entry */
 #define SCTK_PTL_PTE_FLAGS PTL_PT_FLOWCTRL
+/** number of PT in addition of one per comm */
 #define SCTK_PTL_PTE_HIDDEN 3
+/** one extra PT for the recovery system */
 #define SCTK_PTL_PTE_RECOVERY (0)
+/** one extra PT for the CM management */
 #define SCTK_PTL_PTE_CM       (1)
+/** one extra PT for RDMA management */
 #define SCTK_PTL_PTE_RDMA     (2)
+/** Translate the communicator ID to the PT entry object */
 #define SCTK_PTL_PTE_ENTRY(table, comm) (MPCHT_get(&table, (comm)+SCTK_PTL_PTE_HIDDEN))
+/** Check if a given comm already has corresponding PT entry */
 #define SCTK_PTL_PTE_EXIST(table, comm) (SCTK_PTL_PTE_ENTRY(table, comm) != NULL)
+/** 'RECOVERY' value in request type member */
+#define SCTK_PTL_TYPE_RECOVERY (0)
+/** 'CM' value in request type member */
+#define SCTK_PTL_TYPE_CM       (1)
+/** 'RDMA' value in request type member */
+#define SCTK_PTL_TYPE_RDMA     (2)
+/** 'STANDARD' value in request type member */
+#define SCTK_PTL_TYPE_STD      (3)
+/** 'INVALID' value in request type member */
+#define SCTK_PTL_TYPE_NONE     (255)
+/** 'RDV' value in request protocol member */
+#define SCTK_PTL_PROT_RDV      (0)
+/** 'EAGER' value in request protocol member */
+#define SCTK_PTL_PROT_EAGER    (1)
+/** 'INVALID' value in request protocol member */
+#define SCTK_PTL_PROT_NONE     (255)
+/** Typedef for a Portals list type */
+#define sctk_ptl_list_t ptl_list_t
+/** Typedef for a Portals priority_list type */
+#define SCTK_PTL_PRIORITY_LIST PTL_PRIORITY_LIST
+/** typedef for a Portals overflow8list type */
+#define SCTK_PTL_OVERFLOW_LIST PTL_OVERFLOW_LIST
+/** Translate a Portals list type into a human-readable string */
+#define SCTK_PTL_STR_LIST(u) ((u==SCTK_PTL_PRIORITY_LIST) ? "PRIORITY" : "OVERFLOW")
 
-/* MISCS */
-#define sctk_ptl_nih_t ptl_handle_ni_t
-#define sctk_ptl_limits_t ptl_ni_limits_t
+/*********************************/
+/************* RDMA **************/
+/*********************************/
+/* typedefs */
+#define sctk_ptl_rdma_type_t ptl_datatype_t /**< RDMA data type */
+#define sctk_ptl_rdma_op_t ptl_op_t         /**< RDMA operation */
+
+/*********************************/
+/**** OTHER USEFUL CONSTANTS  ****/
+/*********************************/
+/* typedefs */
+#define sctk_ptl_nih_t ptl_handle_ni_t    /**< NIC handler */
+#define sctk_ptl_limits_t ptl_ni_limits_t /**< Portals NIC limits */
+/** default number of chunks when RDV protocol wants to split big messages */
 #define SCTK_PTL_MAX_RDV_BLOCKS 4
 
 /**
@@ -110,7 +180,7 @@ struct sctk_ptl_bits_content_s
  */
 typedef union sctk_ptl_matchbits_t
 {
-	ptl_match_bits_t raw; /**< raw */
+	ptl_match_bits_t raw;                /**< raw */
 	struct sctk_ptl_bits_content_s data; /**< driver-managed */
 } sctk_ptl_matchbits_t;
 
@@ -119,11 +189,11 @@ typedef union sctk_ptl_matchbits_t
  * please look at sctk_control_messages.c before updating this struct */
 typedef struct sctk_ptl_cm_data_s
 {
-	char type;
-	char subtype;
-	char param;
-	char rail_id;
-	char pad[4];
+	char type;    /**< CM type */
+	char subtype; /**< CM subtype */
+	char param;   /**< CM param */
+	char rail_id; /**< referent rail ID */
+	char pad[4];  /**< aligment */
 } sctk_ptl_cm_data_t;
 
 /**
@@ -141,9 +211,9 @@ typedef struct sctk_ptl_std_data_s
  */
 typedef union sctk_ptl_imm_data_s
 {
-	uint64_t raw;                       /**< the raw */
-	struct sctk_ptl_cm_data_s cm;       /**< imm_data for CM */
-	struct sctk_ptl_std_data_s std;     /**< imm-data for eager */
+	uint64_t raw;                   /**< the raw */
+	struct sctk_ptl_cm_data_s cm;   /**< imm_data for CM */
+	struct sctk_ptl_std_data_s std; /**< imm-data for eager */
 } sctk_ptl_imm_data_t;
 
 /**
@@ -152,22 +222,22 @@ typedef union sctk_ptl_imm_data_s
 typedef struct sctk_ptl_pte_s
 {
 	ptl_pt_index_t idx; /**< the effective PT index */
-	sctk_ptl_eq_t eq; /**< the EQ for this entry */
+	sctk_ptl_eq_t eq;   /**< the EQ for this entry */
 	//sctk_spinlock_t* taglocks;
 } sctk_ptl_pte_t;
 
 /** union to select MD or ME in the user_ptr without dirty casting */
 union sctk_ptl_slot_u
 {
-	sctk_ptl_me_t me; /* request is a ME */
-	sctk_ptl_md_t md; /* request is a MD */
+	sctk_ptl_me_t me; /**< request is a ME */
+	sctk_ptl_md_t md; /**< request is a MD */
 };
 
 /** union to select MD or ME in the user_ptr without dirty casting */
 union sctk_ptl_slot_h_u
 {
-	sctk_ptl_meh_t meh; /* request is a ME */
-	sctk_ptl_mdh_t mdh; /* request is a MD */
+	sctk_ptl_meh_t meh; /**< request is a ME */
+	sctk_ptl_mdh_t mdh; /**< request is a MD */
 };
 
 /**
@@ -176,24 +246,14 @@ union sctk_ptl_slot_h_u
  */
 typedef struct sctk_ptl_local_data_s
 {
-	union sctk_ptl_slot_u slot;     /* the request (MD or ME) */
-	union sctk_ptl_slot_h_u slot_h; /* the request Handle */
-	sctk_ptl_list_t list;           /* the list the request issued from */
-	sctk_ptl_matchbits_t match;
-	char type;                    /* 8 bytes of extra infos (protocol & type) */
-	char prot;
-	void* msg;                      /* link to the msg */
+	union sctk_ptl_slot_u slot;     /**< the request (MD or ME) */
+	union sctk_ptl_slot_h_u slot_h; /**< the request Handle */
+	sctk_ptl_list_t list;           /**< the list the request issued from */
+	sctk_ptl_matchbits_t match;     /**< request match bits */
+	char type;                      /**< request type */
+	char prot;                      /**< request protocol */
+	void* msg;                      /**< link to the msg */
 } sctk_ptl_local_data_t;
-
-#define SCTK_PTL_TYPE_RECOVERY (0)
-#define SCTK_PTL_TYPE_CM       (1)
-#define SCTK_PTL_TYPE_RDMA     (2)
-#define SCTK_PTL_TYPE_STD      (3)
-#define SCTK_PTL_TYPE_NONE     (255)
-
-#define SCTK_PTL_PROT_RDV      (0)
-#define SCTK_PTL_PROT_EAGER    (1)
-#define SCTK_PTL_PROT_NONE     (255)
 
 /**
  * RDMA structure, mapping a Portals window.
@@ -205,7 +265,7 @@ typedef struct sctk_ptl_rdma_ctx
 	struct sctk_ptl_local_data_s* md_data; /**< MD infos about the pinned region */
 	void* start;                           /**< start address */
 	sctk_ptl_matchbits_t match;            /**< unique match_bits (=atomic counter */
-	sctk_ptl_id_t origin;
+	sctk_ptl_id_t origin;                  /**< the process that initiated the new region */
 } sctk_ptl_rdma_ctx_t;
 
 /**
@@ -238,13 +298,11 @@ typedef struct sctk_ptl_rail_info_s
 	sctk_ptl_id_t id;                       /**< Local id identifying this rail */
 	sctk_ptl_eq_t mds_eq;                   /**< EQ for all MDs emited from this NI */
 	struct MPCHT pt_table;                  /**< The PT hash table */
-
 	size_t cutoff;                          /**< cutoff for large RDV messages */
 	size_t max_mr;                          /**< Max size of a memory region (MD | ME ) */
 	size_t eager_limit;                     /**< the max size for an eager msg */
 	size_t nb_entries;                      /**< current number of PT entries dedicated to comms */
 	sctk_atomics_int rdma_cpt;              /**< RDMA match_bits counter */
-
 	char connection_infos[MAX_STRING_SIZE]; /**< string identifying this rail over the PMI */
 	size_t connection_infos_size;           /**< Size of the above string */
 } sctk_ptl_rail_info_t;

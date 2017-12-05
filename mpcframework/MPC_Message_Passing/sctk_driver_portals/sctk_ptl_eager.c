@@ -35,8 +35,6 @@ void sctk_ptl_eager_free_memory(void* msg)
 {
 	sctk_free(msg);
 }
-sctk_atomics_int zc = SCTK_ATOMICS_INT_T_INIT(0);
-sctk_atomics_int t = SCTK_ATOMICS_INT_T_INIT(0);
 
 /** What to do when a network message matched a locally posted request ?.
  *  
@@ -67,11 +65,6 @@ void sctk_ptl_eager_message_copy(sctk_message_to_copy_t* msg)
 			sctk_free(send_data->slot.me.start);
 		}
 	}
-	else
-	{
-		sctk_atomics_incr_int(&zc);
-	}
-	sctk_atomics_incr_int(&t);
 
 	/* First, free local resources (PRIORITY ME)
 	 * Free the temp buffer (for contiguous) if necessary (copy)
@@ -132,7 +125,7 @@ static inline void sctk_ptl_eager_recv_message(sctk_rail_info_t* rail, sctk_ptl_
 	/* finish creating an MPC message heder */
 	sctk_rebuild_header(net_msg);
 
-	sctk_debug("PORTALS: RECV-EAGER from %d (idx=%d, match=%s, size=%lu) -> %p", SCTK_MSG_SRC_TASK(net_msg), ev.pt_index, __sctk_ptl_match_str(malloc(32), 32, match.raw), ev.mlength, ev.start);
+	sctk_nodebug("PORTALS: RECV-EAGER from %d (idx=%d, match=%s, size=%lu) -> %p", SCTK_MSG_SRC_TASK(net_msg), ev.pt_index, __sctk_ptl_match_str(malloc(32), 32, match.raw), ev.mlength, ev.start);
 
 	/* notify ther inter_thread_comm a new message has arrived */
 	rail->send_message_from_network(net_msg);
@@ -196,9 +189,16 @@ void sctk_ptl_eager_send_message(sctk_thread_ptp_message_t* msg, sctk_endpoint_t
 	sctk_ptl_md_register(srail, request);
 	sctk_ptl_emit_put(request, size, remote, pte, match, 0, 0, hdr.raw, request);
 	
-	sctk_debug("PORTALS: SEND-EAGER to %d (idx=%d, match=%s, sz=%llu)", SCTK_MSG_DEST_TASK(msg), pte->idx, __sctk_ptl_match_str(malloc(32), 32, match.raw), size);
+	sctk_nodebug("PORTALS: SEND-EAGER to %d (idx=%d, match=%s, sz=%llu)", SCTK_MSG_DEST_TASK(msg), pte->idx, __sctk_ptl_match_str(malloc(32), 32, match.raw), size);
 }
 
+/**
+ * Notificatio that a local recv has been posted.
+ *
+ * This function will pin memory region to be ready for incoming network data.
+ * \param[in] msg the generated RECV
+ * \param[in] srail the Portals rail
+ */
 void sctk_ptl_eager_notify_recv(sctk_thread_ptp_message_t* msg, sctk_ptl_rail_info_t* srail)
 {
 	void* start                     = NULL;
@@ -251,15 +251,20 @@ void sctk_ptl_eager_notify_recv(sctk_thread_ptp_message_t* msg, sctk_ptl_rail_in
 	user_ptr->prot         = SCTK_PTL_PROT_EAGER;
 	sctk_ptl_me_register(srail, user_ptr, pte);
 	
-	sctk_debug("PORTALS: NOTIFY-RECV-EAGER from %d (idx=%llu, match=%s, ign=%llu start=%p, sz=%llu)", SCTK_MSG_SRC_TASK(msg), pte->idx, __sctk_ptl_match_str(malloc(32), 32, match.raw), __sctk_ptl_match_str(malloc(32), 32, ign.raw), start, size);
+	sctk_nodebug("PORTALS: NOTIFY-RECV-EAGER from %d (idx=%llu, match=%s, ign=%llu start=%p, sz=%llu)", SCTK_MSG_SRC_TASK(msg), pte->idx, __sctk_ptl_match_str(malloc(32), 32, match.raw), __sctk_ptl_match_str(malloc(32), 32, ign.raw), start, size);
 }
 
+/**
+ * Notification that an incoming eager msg reached the local process.
+ * \param[in] rail the Portals rail
+ * \param[in] ev the generated event
+ */
 void sctk_ptl_eager_event_me(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 {
 	switch(ev.type)
 	{
-		case PTL_EVENT_PUT_OVERFLOW: /* a previous received PUT matched a just appended ME */
-		case PTL_EVENT_PUT: /* a Put() reached the local process */
+		case PTL_EVENT_PUT_OVERFLOW:          /* a previous received PUT matched a just appended ME */
+		case PTL_EVENT_PUT:                   /* a Put() reached the local process */
 			/* we don't care about unexpected messaged reaching the OVERFLOW_LIST, we will just wait for their local counter-part */
 			/* indexes from 0 to SCTK_PTL_PTE_HIDDEN-1 maps RECOVERY, CM & RDMA queues
 			 * indexes from SCTK_PTL_PTE_HIDDEN to N maps communicators
@@ -267,19 +272,18 @@ void sctk_ptl_eager_event_me(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 			sctk_ptl_eager_recv_message(rail, ev);
 			break;
 
-		case PTL_EVENT_GET: /* a Get() reached the local process */
-		case PTL_EVENT_GET_OVERFLOW: /* a previous received GET matched a just appended ME */
-		case PTL_EVENT_ATOMIC: /* an Atomic() reached the local process */
-		case PTL_EVENT_ATOMIC_OVERFLOW: /* a previously received ATOMIC matched a just appended one */
-		case PTL_EVENT_FETCH_ATOMIC: /* a FetchAtomic() reached the local process */
+		case PTL_EVENT_GET:                   /* a Get() reached the local process */
+		case PTL_EVENT_GET_OVERFLOW:          /* a previous received GET matched a just appended ME */
+		case PTL_EVENT_ATOMIC:                /* an Atomic() reached the local process */
+		case PTL_EVENT_ATOMIC_OVERFLOW:       /* a previously received ATOMIC matched a just appended one */
+		case PTL_EVENT_FETCH_ATOMIC:          /* a FetchAtomic() reached the local process */
 		case PTL_EVENT_FETCH_ATOMIC_OVERFLOW: /* a previously received FETCH-ATOMIC matched a just appended one */
-		case PTL_EVENT_PT_DISABLED: /* ERROR: The local PTE is disabeld (FLOW_CTRL) */
-		case PTL_EVENT_SEARCH: /* a PtlMESearch completed */
-			/* probably nothing to do here */
-		case PTL_EVENT_LINK: /* MISC: A new ME has been linked, (maybe not useful) */
-		case PTL_EVENT_AUTO_UNLINK: /* an USE_ONCE ME has been automatically unlinked */
-		case PTL_EVENT_AUTO_FREE: /* an USE_ONCE ME can be now reused */
-			not_reachable(); /* have been disabled */
+		case PTL_EVENT_PT_DISABLED:           /* ERROR: The local PTE is disabeld (FLOW_CTRL) */
+		case PTL_EVENT_SEARCH:                /* a PtlMESearch completed */
+		case PTL_EVENT_LINK:                  /* MISC: A new ME has been linked, (maybe not useful) */
+		case PTL_EVENT_AUTO_UNLINK:           /* an USE_ONCE ME has been automatically unlinked */
+		case PTL_EVENT_AUTO_FREE:             /* an USE_ONCE ME can be now reused */
+			not_reachable();              /* have been disabled */
 			break;
 		default:
 			sctk_fatal("Portals ME event not recognized: %d", ev.type);
@@ -287,13 +291,18 @@ void sctk_ptl_eager_event_me(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 	}
 }
 
+/**
+ * Notification that a locally-emitted request has been asynchronously progressed.
+ * \param[in] rail the portals rail
+ * \param[in] ev the generated event
+ */
 void sctk_ptl_eager_event_md(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 {
 	sctk_ptl_local_data_t* user_ptr = (sctk_ptl_local_data_t*)ev.user_ptr;
 	sctk_thread_ptp_message_t* msg = (sctk_thread_ptp_message_t*)user_ptr->msg;
 	switch(ev.type)
 	{
-		case PTL_EVENT_ACK:
+		case PTL_EVENT_ACK:  /* the Put() reached the remote process */
 			if(msg->tail.ptl.copy)
 			{
 				sctk_free(user_ptr->slot.md.start);
@@ -303,14 +312,13 @@ void sctk_ptl_eager_event_md(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 			sctk_ptl_md_release(user_ptr);
 			break;
 
-		case PTL_EVENT_REPLY:
-		case PTL_EVENT_SEND:
+		case PTL_EVENT_REPLY: /* the Get() downloaded the data from the remote process */
+		case PTL_EVENT_SEND:  /* a local request left the local process */
 			not_reachable();
 			break;
 		default:
 			sctk_fatal("Unrecognized MD event: %d", ev.type);
 			break;
-
 	}
 }
 

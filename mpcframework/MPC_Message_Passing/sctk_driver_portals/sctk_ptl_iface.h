@@ -88,17 +88,11 @@ void sctk_ptl_md_release(sctk_ptl_local_data_t*);
 int sctk_ptl_emit_get(sctk_ptl_local_data_t*, size_t, sctk_ptl_id_t, sctk_ptl_pte_t*, sctk_ptl_matchbits_t, size_t, size_t, void*);
 int sctk_ptl_emit_put(sctk_ptl_local_data_t*, size_t, sctk_ptl_id_t, sctk_ptl_pte_t*, sctk_ptl_matchbits_t, size_t, size_t, size_t, void*);
 
-int sctk_ptl_emit_atomic(
-		sctk_ptl_local_data_t* user,
-		size_t size, sctk_ptl_id_t remote, sctk_ptl_pte_t* pte, sctk_ptl_matchbits_t match,
-		sctk_ptl_rdma_op_t op, size_t local_off, size_t remote_off, sctk_ptl_rdma_type_t type);
-
 int sctk_ptl_emit_fetch_atomic(
 		sctk_ptl_local_data_t* get_user, sctk_ptl_local_data_t* put_user,
 		size_t size, sctk_ptl_id_t remote, sctk_ptl_pte_t* pte, sctk_ptl_matchbits_t match,
 		size_t local_getoff, size_t local_putoff, size_t remote_off,
 		sctk_ptl_rdma_op_t op, sctk_ptl_rdma_type_t type, void* user_ptr);
-
 
 int sctk_ptl_emit_swap(
 		sctk_ptl_local_data_t* get_user, sctk_ptl_local_data_t* put_user,

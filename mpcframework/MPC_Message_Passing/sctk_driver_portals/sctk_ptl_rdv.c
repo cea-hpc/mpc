@@ -28,6 +28,7 @@
 #include "sctk_ptl_iface.h"
 #include "sctk_net_tools.h"
 
+/** see sctk_portals.c */
 extern sctk_ptl_id_t* ranks_ids_map;
 
 /**
@@ -86,6 +87,7 @@ static inline void __sctk_ptl_rdv_compute_chunks(sctk_ptl_rail_info_t* srail, sc
 
 /**
  * Function to release the allocated message from the network.
+ * \param[in] msg the net incoming msg.
  */
 void sctk_ptl_rdv_free_memory(void* msg)
 {
@@ -468,8 +470,8 @@ void sctk_ptl_rdv_event_me(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 
 	switch(ev.type)
 	{
-		case PTL_EVENT_PUT_OVERFLOW: /* a previous received PUT matched a just appended ME */
-		case PTL_EVENT_PUT: /* a Put() reached the local process */
+		case PTL_EVENT_PUT_OVERFLOW:         /* a previous received PUT matched a just appended ME */
+		case PTL_EVENT_PUT:                  /* a Put() reached the local process */
 			/* we don't care about unexpected messaged reaching the OVERFLOW_LIST, we will just wait for their local counter-part */
 			/* indexes from 0 to SCTK_PTL_PTE_HIDDEN-1 maps RECOVERY, CM & RDMA queues
 			 * indexes from SCTK_PTL_PTE_HIDDEN to N maps communicators
@@ -477,7 +479,7 @@ void sctk_ptl_rdv_event_me(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 			sctk_ptl_rdv_recv_message(rail, ev);
 			break;
 
-		case PTL_EVENT_GET: /* a remote process get the data back */
+		case PTL_EVENT_GET:                  /* a remote process get the data back */
 
 			/* if msg is NULL, it means that the event is associated
 			 * to an intermediate request (=multiple GET)
@@ -488,18 +490,17 @@ void sctk_ptl_rdv_event_me(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 			sctk_ptl_rdv_complete_message(rail, ev);
 
 			break;
-		case PTL_EVENT_GET_OVERFLOW: /* a previous received GET matched a just appended ME */
-		case PTL_EVENT_ATOMIC: /* an Atomic() reached the local process */
-		case PTL_EVENT_ATOMIC_OVERFLOW: /* a previously received ATOMIC matched a just appended one */
-		case PTL_EVENT_FETCH_ATOMIC: /* a FetchAtomic() reached the local process */
+		case PTL_EVENT_GET_OVERFLOW:          /* a previous received GET matched a just appended ME */
+		case PTL_EVENT_ATOMIC:                /* an Atomic() reached the local process */
+		case PTL_EVENT_ATOMIC_OVERFLOW:       /* a previously received ATOMIC matched a just appended one */
+		case PTL_EVENT_FETCH_ATOMIC:          /* a FetchAtomic() reached the local process */
 		case PTL_EVENT_FETCH_ATOMIC_OVERFLOW: /* a previously received FETCH-ATOMIC matched a just appended one */
-		case PTL_EVENT_PT_DISABLED: /* ERROR: The local PTE is disabeld (FLOW_CTRL) */
-		case PTL_EVENT_SEARCH: /* a PtlMESearch completed */
-			/* probably nothing to do here */
-		case PTL_EVENT_LINK: /* MISC: A new ME has been linked, (maybe not useful) */
-		case PTL_EVENT_AUTO_UNLINK: /* an USE_ONCE ME has been automatically unlinked */
-		case PTL_EVENT_AUTO_FREE: /* an USE_ONCE ME can be now reused */
-			not_reachable(); /* have been disabled */
+		case PTL_EVENT_PT_DISABLED:           /* ERROR: The local PTE is disabeld (FLOW_CTRL) */
+		case PTL_EVENT_SEARCH:                /* a PtlMESearch completed */
+		case PTL_EVENT_LINK:                  /* MISC: A new ME has been linked, (maybe not useful) */
+		case PTL_EVENT_AUTO_UNLINK:           /* an USE_ONCE ME has been automatically unlinked */
+		case PTL_EVENT_AUTO_FREE:             /* an USE_ONCE ME can be now reused */
+			not_reachable();              /* have been disabled */
 			break;
 		default:
 			sctk_fatal("Portals ME event not recognized: %d", ev.type);
@@ -519,7 +520,7 @@ void sctk_ptl_rdv_event_md(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 
 	switch(ev.type)
 	{
-		case PTL_EVENT_ACK: /* a PUT reached a remote process */
+		case PTL_EVENT_ACK:   /* a PUT reached a remote process */
 			/* just release the PUT MD, (no memory to free) */
 			sctk_ptl_md_release(ptr);
 			break;
@@ -535,12 +536,11 @@ void sctk_ptl_rdv_event_md(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 			sctk_ptl_md_release(ptr);
 
 			break;
-		case PTL_EVENT_SEND:
+		case PTL_EVENT_SEND: /* a Put() left the local process */
 			not_reachable();
 		default:
 			sctk_fatal("Unrecognized MD event: %d", ev.type);
 			break;
-
 	}
 }
 

@@ -34,6 +34,10 @@
 static sctk_atomics_int nb_mes = SCTK_ATOMICS_INT_T_INIT(0);
 static sctk_atomics_int nb_mds = SCTK_ATOMICS_INT_T_INIT(0);
 
+/**
+ * Will print the Portals structure.
+ * \param[in] srail the Portals rail to dump
+ */
 void sctk_ptl_print_structure(sctk_ptl_rail_info_t* srail)
 {
 	sctk_ptl_limits_t l = srail->max_limits;
@@ -103,6 +107,7 @@ void sctk_ptl_print_structure(sctk_ptl_rail_info_t* srail)
 
 /**
  * Init max values for driver config limits.
+ * \param[in] l the limits to set
  */
 static inline void __sctk_ptl_set_limits(sctk_ptl_limits_t* l)
 {
@@ -129,6 +134,7 @@ static inline void __sctk_ptl_set_limits(sctk_ptl_limits_t* l)
 
 /**
  * Create the link between our program and the real driver.
+ * \return the Portals rail object
  */
 sctk_ptl_rail_info_t sctk_ptl_hardware_init()
 {
@@ -162,6 +168,7 @@ sctk_ptl_rail_info_t sctk_ptl_hardware_init()
 
 /**
  * Shut down the link between our program and the driver.
+ * \param[in] srail the Portals rail, created by sctk_ptl_hardware_init
  */
 void sctk_ptl_hardware_fini(sctk_ptl_rail_info_t* srail)
 {
@@ -178,6 +185,7 @@ void sctk_ptl_hardware_fini(sctk_ptl_rail_info_t* srail)
  * After this functions, Portals entries should be ready to use. This function
  * is different from hardware init beceause it is possible to have multiple 
  * software implementation relying on the same NI (why not?).
+ * \param[in] srail the Portals rail
  * \param[in] dims PT dimensions
  */
 void sctk_ptl_software_init(sctk_ptl_rail_info_t* srail, int comm_dims)
@@ -244,6 +252,12 @@ void sctk_ptl_software_init(sctk_ptl_rail_info_t* srail, int comm_dims)
 	sctk_ptl_print_structure(srail);
 }
 
+/**
+ * Dynamically create a new Portals entry.
+ * \param[in] srail the Portals rail
+ * \param[out] pte Portals entry pointer, to init
+ * \param[in] key the Portals desired ID
+ */
 void sctk_ptl_pte_create(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte, size_t key)
 {
 	size_t eager_size = srail->eager_limit;
@@ -281,6 +295,7 @@ void sctk_ptl_pte_create(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte, size_
  * Release Portals structure from our program.
  *
  * After here, no communication should be made on these resources
+ * \param[in] srail the Portals rail
  */
 void sctk_ptl_software_fini(sctk_ptl_rail_info_t* srail)
 {
@@ -319,7 +334,7 @@ void sctk_ptl_software_fini(sctk_ptl_rail_info_t* srail)
 }
 
 /**
- * This function creates a new memory entry and register it in the table.
+ * This function creates a new memory entry.
  *
  * \param[in] start first buffer address
  * \param[in] size number of bytes to include into the ME
@@ -327,6 +342,7 @@ void sctk_ptl_software_fini(sctk_ptl_rail_info_t* srail)
  * \param[in] match the matching bits for this slot
  * \param[in] ign the ignoring bits from the above parameter
  * \param[in] flags ME-specific flags (PUT,GET,...)
+ * \return the allocated request
  */
 sctk_ptl_local_data_t* sctk_ptl_me_create(void * start, size_t size, sctk_ptl_id_t remote, sctk_ptl_matchbits_t match, sctk_ptl_matchbits_t ign, int flags )
 {
@@ -352,6 +368,18 @@ sctk_ptl_local_data_t* sctk_ptl_me_create(void * start, size_t size, sctk_ptl_id
 	return user_ptr;
 }
 
+/**
+ * This function will create an ME with an attached counting event.
+ * This function calls sctk_ptl_me_create.
+ * \param[in] srail the Portals rail
+ * \param[in] start first buffer address
+ * \param[in] size number of bytes to include into the ME
+ * \param[in] remote the target process id
+ * \param[in] match the matching bits for this slot
+ * \param[in] ign the ignoring bits from the above parameter
+ * \param[in] flags ME-specific flags (PUT,GET,...)
+ * \return the allocated request
+ */
 sctk_ptl_local_data_t* sctk_ptl_me_create_with_cnt(sctk_ptl_rail_info_t* srail, void * start, size_t size, sctk_ptl_id_t remote, sctk_ptl_matchbits_t match, sctk_ptl_matchbits_t ign, int flags )
 {
 	sctk_ptl_local_data_t* ret; 
@@ -406,6 +434,11 @@ void sctk_ptl_me_release(sctk_ptl_local_data_t* request)
 	));
 }
 
+/**
+ * Free the memory associated with a Portals request and free the request depending on parameters.
+ * \param[in] request the request to free
+ * \param[in] free_buffer is the 'start' buffer to be freed too ?
+ */
 void sctk_ptl_me_free(sctk_ptl_local_data_t* request, int free_buffer)
 {
 	if(free_buffer)
@@ -415,6 +448,10 @@ void sctk_ptl_me_free(sctk_ptl_local_data_t* request, int free_buffer)
 	sctk_free(request);
 }
 
+/**
+ * Free the counting event allocated with sctk_ptl_me_create_with_cnt.
+ * \param[in] cth the counting event handler.
+ */
 void sctk_ptl_ct_free(sctk_ptl_cnth_t cth)
 {
 	sctk_ptl_chk(PtlCTFree(
@@ -547,6 +584,7 @@ void sctk_ptl_me_feed(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte, size_t m
  * \param[in] match the match_bits
  * \param[in] local_off the offset in the local buffer (MD)
  * \param[in] remote_off the offset in the remote buffer (ME)
+ * \param[in] user_ptr the request to attach to the Portals command.
  * \return PTL_OK, abort() otherwise.
  */
 int sctk_ptl_emit_get(sctk_ptl_local_data_t* user, size_t size, sctk_ptl_id_t remote, sctk_ptl_pte_t* pte, sctk_ptl_matchbits_t match, size_t local_off, size_t remote_off, void* user_ptr)
@@ -574,6 +612,7 @@ int sctk_ptl_emit_get(sctk_ptl_local_data_t* user, size_t size, sctk_ptl_id_t re
  * \param[in] match the match_bits
  * \param[in] local_off the offset in the local buffer (MD)
  * \param[in] remote_off the offset in the remote buffer (ME)
+ * \param[in] user_ptr the request to attach to the Portals command.
  * \return PTL_OK, abort() otherwise.
  */
 int sctk_ptl_emit_put(sctk_ptl_local_data_t* user, size_t size, sctk_ptl_id_t remote, sctk_ptl_pte_t* pte, sctk_ptl_matchbits_t match, size_t local_off, size_t remote_off, size_t extra, void* user_ptr)
@@ -595,6 +634,22 @@ int sctk_ptl_emit_put(sctk_ptl_local_data_t* user, size_t size, sctk_ptl_id_t re
 	return PTL_OK;
 }
 
+/**
+ * Emit a PTL Swap() request.
+ * \param[in] get_user the preset request, where data will be stored
+ * \param[in] get_user the preset request, data to send
+ * \param[in] size the length (in bytes) targeted by the request
+ * \param[in] remote the remote ID
+ * \param[in] pte the PT entry to target remotely (all processes init the table in the same order)
+ * \param[in] match the match_bits
+ * \param[in] local_getoff the offset in the local GET buffer (MD)
+ * \param[in] local_putoff the offset in the local PUT buffer (MD)
+ * \param[in] remote_off the offset in the remote buffer (ME)
+ * \param[in] cmp the compare element
+ * \param[in] type the Portals RDMA type
+ * \param[in] user_ptr the request to attach to the Portals command.
+ * \return PTL_OK, abort() otherwise
+ */
 int sctk_ptl_emit_swap(sctk_ptl_local_data_t* get_user, sctk_ptl_local_data_t* put_user, size_t size, sctk_ptl_id_t remote, sctk_ptl_pte_t* pte, sctk_ptl_matchbits_t match, size_t local_getoff, size_t local_putoff, size_t remote_off, const void* cmp, sctk_ptl_rdma_type_t type, void* user_ptr)
 {
 	sctk_ptl_rdma_op_t op = PTL_CSWAP;
@@ -620,26 +675,22 @@ int sctk_ptl_emit_swap(sctk_ptl_local_data_t* get_user, sctk_ptl_local_data_t* p
 	return PTL_OK;
 }
 
-int sctk_ptl_emit_atomic(sctk_ptl_local_data_t* user, size_t size, sctk_ptl_id_t remote, sctk_ptl_pte_t* pte, sctk_ptl_matchbits_t match, sctk_ptl_rdma_op_t op, size_t local_off, size_t remote_off, sctk_ptl_rdma_type_t type)
-{
-	sctk_ptl_chk(PtlAtomic(
-		user->slot_h.mdh, /* the data to send */
-		local_off,        /* local offset */
-		size,             /* data size */
-		PTL_ACK_REQ,      /* need an ACK msg ? */
-		remote,           /* target */
-		pte->idx,         /* Portals idx */
-		match.raw,        /* match */
-		remote_off,       /* remote offset */
-		user,             /* custom user_ptr */
-		0,                /* Not needed here */
-		op,               /* RDMA op */
-		type              /* RDMA type */
-	));
-
-	return PTL_OK;
-}
-
+/**
+ * Emit a PTL FetchAtomic() request.
+ * \param[in] get_user the preset request, where data will be stored
+ * \param[in] get_user the preset request, data to send
+ * \param[in] size the length (in bytes) targeted by the request
+ * \param[in] remote the remote ID
+ * \param[in] pte the PT entry to target remotely (all processes init the table in the same order)
+ * \param[in] match the match_bits
+ * \param[in] local_getoff the offset in the local GET buffer (MD)
+ * \param[in] local_putoff the offset in the local PUT buffer (MD)
+ * \param[in] remote_off the offset in the remote buffer (ME)
+ * \param[in] op the Portals RDMA operation
+ * \param[in] type the Portals RDMA type
+ * \param[in] user_ptr the request to attach to the Portals command.
+ * \return PTL_OK, abort() otherwise
+ */
 int sctk_ptl_emit_fetch_atomic(sctk_ptl_local_data_t* get_user, sctk_ptl_local_data_t* put_user, size_t size, sctk_ptl_id_t remote, sctk_ptl_pte_t* pte, sctk_ptl_matchbits_t match, size_t local_getoff, size_t local_putoff, size_t remote_off, sctk_ptl_rdma_op_t op, sctk_ptl_rdma_type_t type, void* user_ptr)
 {
 	sctk_ptl_chk(PtlFetchAtomic(

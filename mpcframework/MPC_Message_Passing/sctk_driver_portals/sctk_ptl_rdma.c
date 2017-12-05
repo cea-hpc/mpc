@@ -91,6 +91,14 @@ static inline ptl_op_t __sctk_ptl_convert_op(RDMA_op op)
 	return 0;
 }
 
+/**
+ * Check if the given operation is unary (INC | DEC).
+ * If so, prepare a buffer with the adequat increment/decrement.
+ * \param[in] op the MPC RDMA operation
+ * \param[in] type the MPC RDMA type
+ * \param[out] buf the buffer to store the increment/decrement.
+ * \param[out] size buf size.
+ */
 static inline short __sctk_ptl_is_unary_op(RDMA_op op, RDMA_type type, char* buf, size_t size)
 {
 	if(op != RDMA_INC && op != RDMA_DEC)
@@ -594,6 +602,13 @@ void sctk_ptl_unpin_region( struct sctk_rail_info_s * rail, struct sctk_rail_pin
 	sctk_nodebug("RELEASE RDMA %p->%p %s", list->pin.ptl.me_data->slot.me.start, list->pin.ptl.me_data->slot.me.start + list->pin.ptl.me_data->slot.me.length, __sctk_ptl_match_str(sctk_malloc(32), 32, list->pin.ptl.me_data->slot.me.match_bits));
 }
 
+/**
+ * Notification that a remote RDMA request reached the local process.
+ * By definition of RDMA, there are nothing to do from this side.
+ *
+ * \param[in] rail the Portals rail
+ * \param[in] ev the generated event
+ */
 void sctk_ptl_rdma_event_me(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 {
 	sctk_ptl_pte_t fake;
@@ -624,6 +639,12 @@ void sctk_ptl_rdma_event_me(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 
 }
 
+/**
+ * Notification that a locally-emited request reached the remote process.
+ *
+ * \param[in] rail the Portals rail
+ * \param[in] ev the generated event.
+ */
 void sctk_ptl_rdma_event_md(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 {
 	sctk_ptl_local_data_t* ptr = (sctk_ptl_local_data_t*)ev.user_ptr;

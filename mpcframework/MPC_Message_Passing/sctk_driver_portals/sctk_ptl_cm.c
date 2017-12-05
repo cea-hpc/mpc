@@ -154,31 +154,36 @@ void sctk_ptl_cm_send_message(sctk_thread_ptp_message_t* msg, sctk_endpoint_t* e
 	sctk_nodebug("PORTALS: SEND-CM to %d (idx=%d, match=%s, addr=%p, sz=%llu)", SCTK_MSG_DEST_PROCESS(msg), pte->idx, __sctk_ptl_match_str(malloc(32), 32, match.raw), start, size);
 }
 
+/**
+ * Notify the local process that a new CM reached the local process.
+ * \param[in] rail the Portals rail
+ * \param[in] ev the generated event
+ */
 void sctk_ptl_cm_event_me(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 {
 	sctk_ptl_pte_t fake;
 	sctk_ptl_rail_info_t* srail = &rail->network.ptl;
 	switch(ev.type)
 	{
-		case PTL_EVENT_PUT: /* a Put() reached the local process */
+		case PTL_EVENT_PUT:                   /* a Put() reached the local process */
 			fake = (sctk_ptl_pte_t){.idx = ev.pt_index};
 			sctk_ptl_me_feed(srail,  &fake,  srail->eager_limit, 1, SCTK_PTL_PRIORITY_LIST, SCTK_PTL_TYPE_CM, SCTK_PTL_PROT_NONE);
 			sctk_ptl_cm_recv_message(rail, ev);
 			break;
 
-		case PTL_EVENT_GET: /* a Get() reached the local process */
-		case PTL_EVENT_PUT_OVERFLOW: /* a previous received PUT matched a just appended ME */
-		case PTL_EVENT_GET_OVERFLOW: /* a previous received GET matched a just appended ME */
-		case PTL_EVENT_ATOMIC: /* an Atomic() reached the local process */
-		case PTL_EVENT_ATOMIC_OVERFLOW: /* a previously received ATOMIC matched a just appended one */
-		case PTL_EVENT_FETCH_ATOMIC: /* a FetchAtomic() reached the local process */
+		case PTL_EVENT_GET:                   /* a Get() reached the local process */
+		case PTL_EVENT_PUT_OVERFLOW:          /* a previous received PUT matched a just appended ME */
+		case PTL_EVENT_GET_OVERFLOW:          /* a previous received GET matched a just appended ME */
+		case PTL_EVENT_ATOMIC:                /* an Atomic() reached the local process */
+		case PTL_EVENT_ATOMIC_OVERFLOW:       /* a previously received ATOMIC matched a just appended one */
+		case PTL_EVENT_FETCH_ATOMIC:          /* a FetchAtomic() reached the local process */
 		case PTL_EVENT_FETCH_ATOMIC_OVERFLOW: /* a previously received FETCH-ATOMIC matched a just appended one */
-		case PTL_EVENT_PT_DISABLED: /* ERROR: The local PTE is disabeld (FLOW_CTRL) */
-		case PTL_EVENT_SEARCH: /* a PtlMESearch completed */
-			/* probably nothing to do here */
-		case PTL_EVENT_LINK: /* MISC: A new ME has been linked, (maybe not useful) */
-		case PTL_EVENT_AUTO_UNLINK: /* an USE_ONCE ME has been automatically unlinked */
-		case PTL_EVENT_AUTO_FREE: /* an USE_ONCE ME can be now reused */
+		case PTL_EVENT_PT_DISABLED:           /* ERROR: The local PTE is disabeld (FLOW_CTRL) */
+		case PTL_EVENT_SEARCH:                /* a PtlMESearch completed */
+			                              /* probably nothing to do here */
+		case PTL_EVENT_LINK:                  /* MISC: A new ME has been linked, (maybe not useful) */
+		case PTL_EVENT_AUTO_UNLINK:           /* an USE_ONCE ME has been automatically unlinked */
+		case PTL_EVENT_AUTO_FREE:             /* an USE_ONCE ME can be now reused */
 			not_reachable(); /* have been disabled */
 			break;
 		default:
@@ -187,19 +192,24 @@ void sctk_ptl_cm_event_me(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 	}
 }
 
+/**
+ * Notify the local process that a new CM reached the remote process.
+ * \param[in] rail the Portals rail
+ * \param[in] ev the generated event
+ */
 void sctk_ptl_cm_event_md(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 {
 	sctk_ptl_local_data_t* user_ptr = (sctk_ptl_local_data_t*)ev.user_ptr;
 	sctk_thread_ptp_message_t* msg = (sctk_thread_ptp_message_t*)user_ptr->msg;
 	switch(ev.type)
 	{
-		case PTL_EVENT_ACK:
+		case PTL_EVENT_ACK:   /* the request reached the process */
 			sctk_complete_and_free_message(msg);
 			sctk_ptl_md_release(user_ptr);
 			break;
 
-		case PTL_EVENT_REPLY:
-		case PTL_EVENT_SEND:
+		case PTL_EVENT_REPLY: /* a Get() reached the local process */
+		case PTL_EVENT_SEND:  /* a Put() just left the local process */
 			not_reachable();
 		default:
 			sctk_fatal("Unrecognized MD event: %d", ev.type);
