@@ -3290,6 +3290,7 @@ void sctk_runtime_config_struct_init_nbc(void * struct_ptr)
 	obj->use_egreq_scatter = 0;
 	obj->use_egreq_gather = 0;
 	obj->use_egreq_reduce = 0;
+	obj->use_egreq_barrier = 0;
 	obj->init_done = 1;
 }
 

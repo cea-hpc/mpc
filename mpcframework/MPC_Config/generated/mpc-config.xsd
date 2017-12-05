@@ -809,6 +809,7 @@
       <xs:element minOccurs="0" name="use_egreq_scatter" type="xs:integer"/>
       <xs:element minOccurs="0" name="use_egreq_gather" type="xs:integer"/>
       <xs:element minOccurs="0" name="use_egreq_reduce" type="xs:integer"/>
+      <xs:element minOccurs="0" name="use_egreq_barrier" type="xs:integer"/>
     </xs:all>
   </xs:complexType>
   <!-- ********************************************************* -->

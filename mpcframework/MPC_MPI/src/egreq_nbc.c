@@ -753,7 +753,7 @@ int MPI_Ixbcast(void* buffer, int count, MPI_Datatype datatype, int root, MPI_Co
 
 int MPI_Ixbarrier( MPI_Comm comm , MPI_Request * req )
 {
-    xMPI_Request * xreq = xMPI_Request_new(req, 10);
+    xMPI_Request * xreq = xMPI_Request_new(req, 9);
 
     ////LOG(stderr, "INIT on %p\n", req);
 
@@ -776,9 +776,10 @@ int MPI_Ixbarrier( MPI_Comm comm , MPI_Request * req )
         nbc_op_init( &xreq->op[1], TYPE_RECV, rc, comm, MPI_CHAR, 1, &c, 12345 );
     }
 
+    if( (0 <= lc) || (0 <= rc) )
+        nbc_op_wait_init(&xreq->op[2]);
     //LOG(stderr, "POST %d WAIT\n", rank );
     //nbc_op_init( &xreq->op[2], TYPE_WAIT, 0, comm, 0, 0, NULL, 0 );
-    nbc_op_wait_init(&xreq->op[2]);
 
 
     if( 0 <= parent ) {
@@ -786,12 +787,14 @@ int MPI_Ixbarrier( MPI_Comm comm , MPI_Request * req )
         nbc_op_init( &xreq->op[3], TYPE_SEND, parent, comm, MPI_CHAR, 1, &c, 12345 );
         //LOG(stderr, "POST %d RECV from Par %d\n", rank, parent );
         nbc_op_init( &xreq->op[4], TYPE_RECV, parent, comm, MPI_CHAR, 1, &c, 12345 );
+        
+        nbc_op_wait_init(&xreq->op[8]);
     }
+    
 
 
     //LOG(stderr, "POST %d WAIT\n", rank );
     //nbc_op_init( &xreq->op[5], TYPE_WAIT, parent, comm, MPI_CHAR, 1, &c, 12345 );
-    nbc_op_wait_init(&xreq->op[5]);
 
 
     if( 0 <= lc )
@@ -808,7 +811,8 @@ int MPI_Ixbarrier( MPI_Comm comm , MPI_Request * req )
 
     //LOG(stderr, "POST %d WAIT\n", rank );
     //nbc_op_init( &xreq->op[8], TYPE_WAIT, parent, comm, MPI_CHAR, 1, &c, 12345 );
-    nbc_op_wait_init(&xreq->op[8]);
+    if( (0 <= lc) || (0 <= rc) )
+        nbc_op_wait_init(&xreq->op[8]);
 
     return start_request(xreq, req);
 }

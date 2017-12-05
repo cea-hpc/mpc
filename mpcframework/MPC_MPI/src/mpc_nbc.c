@@ -41,7 +41,7 @@
 #include "mpc_nbc_progress_thread_binding.h"
 
 #include "sctk_thread_generic.h"
-
+#include "egreq_nbc.h"
 /* INTERNAL FOR NON-BLOCKING COLLECTIVES - CALL TO libNBC FUNCTIONS*/
 
 
@@ -1317,7 +1317,6 @@ static int NBC_Ialltoallv(void* sendbuf, int *sendcounts, int *sdispls,
 
 
 /* Dissemination implementation of MPI_Ibarrier */
-
 static int NBC_Ibarrier(MPI_Comm comm, NBC_Handle* handle) {
 
   int round, rank, p, maxround, res, recvpeer, sendpeer;
@@ -5312,8 +5311,10 @@ int NBC_Finalize(sctk_thread_t * NBC_thread)
 int
 PMPI_Ibarrier (MPI_Comm comm, MPI_Request *request)
 {
-
-  return MPI_Ixbarrier( comm );
+  if( sctk_runtime_config_get()->modules.nbc.use_egreq_barrier )
+  {
+      return MPI_Ixbarrier( comm, request );
+  }
 
   sctk_nodebug ("Entering IBARRIER %d", comm);
   int res = MPI_ERR_INTERN;
@@ -5342,8 +5343,7 @@ int
 PMPI_Ibcast (void *buffer, int count, MPI_Datatype datatype, int root,
 	    MPI_Comm comm, MPI_Request *request)
 {
-  if( sctk_datatype_contig_mem( datatype )
-  && sctk_runtime_config_get()->modules.nbc.use_egreq_bcast )
+  if( sctk_runtime_config_get()->modules.nbc.use_egreq_bcast )
   {
     return MPI_Ixbcast( buffer, count, datatype, root, comm, request );
   }

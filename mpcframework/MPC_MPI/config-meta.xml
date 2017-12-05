@@ -71,6 +71,7 @@
             <param name="use_egreq_scatter" type="int" default="0" doc="Should scatter rely on Egreq progress"/>
             <param name="use_egreq_gather" type="int" default="0" doc="Should gather rely on Egreq progress"/>
             <param name="use_egreq_reduce" type="int" default="0" doc="Should reduce rely on Egreq progress"/>
+            <param name="use_egreq_barrier" type="int" default="0" doc="Should barrier rely on Egreq progress"/>
         </struct>
         <!--
         <struct name="scheduler" doc="Scheduler priority parameters">

@@ -283,6 +283,7 @@ meta.types = {
 		use_egreq_scatter: {mode: 'param', name: "use_egreq_scatter", type: "int", doc: "Should scatter rely on Egreq progress", dflt: "0", },
 		use_egreq_gather: {mode: 'param', name: "use_egreq_gather", type: "int", doc: "Should gather rely on Egreq progress", dflt: "0", },
 		use_egreq_reduce: {mode: 'param', name: "use_egreq_reduce", type: "int", doc: "Should reduce rely on Egreq progress", dflt: "0", },
+		use_egreq_barrier: {mode: 'param', name: "use_egreq_barrier", type: "int", doc: "Should barrier rely on Egreq progress", dflt: "0", },
 	}},
 	mpi_rma : {type: 'struct', name: "mpi_rma", childs: {
 		alloc_mem_pool_enable: {mode: 'param', name: "alloc_mem_pool_enable", type: "int", doc: "Enable the MPI_Alloc_mem shared memory pool", dflt: "1", },

@@ -722,6 +722,8 @@ struct sctk_runtime_config_struct_nbc
 	int use_egreq_gather;
 	/**Should reduce rely on Egreq progress**/
 	int use_egreq_reduce;
+	/**Should barrier rely on Egreq progress**/
+	int use_egreq_barrier;
 };
 
 /******************************** STRUCTURE *********************************/

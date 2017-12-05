@@ -729,6 +729,9 @@ const struct sctk_runtime_config_entry_meta sctk_runtime_config_db[] = {
 	{"use_egreq_reduce"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_nbc,use_egreq_reduce)  , sizeof(int) , "int" , NULL , 
 				NULL
 			},
+	{"use_egreq_barrier"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_nbc,use_egreq_barrier)  , sizeof(int) , "int" , NULL , 
+				NULL
+			},
 	/* struct */
 	{"sctk_runtime_config_struct_mpi_rma" , SCTK_CONFIG_META_TYPE_STRUCT , 0  , sizeof(struct sctk_runtime_config_struct_mpi_rma) , NULL , sctk_runtime_config_struct_init_mpi_rma},
 	{"alloc_mem_pool_enable"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_mpi_rma,alloc_mem_pool_enable)  , sizeof(int) , "int" , NULL , 
