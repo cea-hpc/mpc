@@ -9,9 +9,9 @@ typedef enum
     PWU_NO_PROGRESS = 0,
     PWU_DID_PROGRESS = 1,
     PWU_WORK_DONE = 2
-}progressWorkState;
+}sctk_progress_workState;
 
-struct progressWorkUnit
+struct sctk_progress_work_unit
 {
     int (*fn)( void * param);
     void * param;
@@ -20,21 +20,18 @@ struct progressWorkUnit
     sctk_spinlock_t unit_lock;
 };
 
-int progressWorkUnit_init( struct progressWorkUnit *pwu );
-int progressWorkUnit_release( struct progressWorkUnit *pwu );
+int sctk_progress_work_unit_init( struct sctk_progress_work_unit *pwu );
+int sctk_progress_work_unit_release( struct sctk_progress_work_unit *pwu );
 
-int progressWorkUnit_acquire( struct progressWorkUnit *pwu, int (*fn)( void * param), void * param );
-int progressWorkUnit_relax( struct progressWorkUnit *pwu );
-
-int progressWorkUnit_poll( struct progressWorkUnit *pwu );
-int progressWorkUnit_complete( struct progressWorkUnit *pwu );
+int sctk_progress_work_unit_poll( struct sctk_progress_work_unit *pwu );
+int sctk_progress_work_unit_complete( struct sctk_progress_work_unit *pwu );
 
 
 #define PROGRESS_PWU_STATIC_ARRAY 16
 
-struct progressList
+struct sctk_progress_list
 {
-    struct progressWorkUnit works[PROGRESS_PWU_STATIC_ARRAY];
+    struct sctk_progress_work_unit works[PROGRESS_PWU_STATIC_ARRAY];
     volatile unsigned int work_count;
     sctk_spinlock_t list_lock;
     int is_free;
@@ -42,30 +39,30 @@ struct progressList
     int id;
 };
 
-int progressList_init( struct progressList * pl );
-int progressList_release( struct progressList * pl );
+int sctk_progress_list_init( struct sctk_progress_list * pl );
+int sctk_progress_list_release( struct sctk_progress_list * pl );
 
-struct progressWorkUnit * progressList_add( struct progressList * pl, int (*fn)( void * param), void * param );
-int progressList_poll( struct progressList * pl );
+struct sctk_progress_work_unit * sctk_progress_list_add( struct sctk_progress_list * pl, int (*fn)( void * param), void * param );
+int sctk_progress_list_poll( struct sctk_progress_list * pl );
 
 
 #define PROGRESS_POLL_ENGINE_STATIC_ARRAY 4
 
-struct progressEnginePool
+struct sctk_progress_engine_pool
 {
-    struct progressList __lists[PROGRESS_PWU_STATIC_ARRAY];
-    struct progressList *lists;
+    struct sctk_progress_list __lists[PROGRESS_PWU_STATIC_ARRAY];
+    struct sctk_progress_list *lists;
     sctk_spinlock_t pool_lock;
     unsigned int size;
     unsigned int booked;
 };
 
 
-int progressEnginePool_init( struct progressEnginePool * p, unsigned int size );
-int progressEnginePool_release( struct progressEnginePool * p);
+int sctk_progress_engine_pool_init( struct sctk_progress_engine_pool * p, unsigned int size );
+int sctk_progress_engine_pool_release( struct sctk_progress_engine_pool * p);
 
-struct progressList * progressEnginePool_join( struct progressEnginePool * p );
-int progressEnginePool_poll( struct progressEnginePool * p, int my_id );
+struct sctk_progress_list * sctk_progress_engine_pool_join( struct sctk_progress_engine_pool * p );
+int sctk_progress_engine_pool_poll( struct sctk_progress_engine_pool * p, int my_id );
 
 
 

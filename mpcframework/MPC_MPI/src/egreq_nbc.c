@@ -3,6 +3,8 @@
 #include <string.h>
 #include <mpi.h>
 
+#include "sctk_allocator.h"
+#include "sctk_inter_thread_comm.h"
 #include "egreq_nbc.h"
 
 #include "sctk_spinlock.h"
@@ -89,10 +91,11 @@ typedef struct _xMPI_Request
     MPI_Request * myself;
     sctk_spinlock_t lock;
     struct nbc_op op[0];
+    struct _xMPI_Request * next;
 } xMPI_Request;
 
 
-int nbc_op_init( struct nbc_op * op,
+static inline int nbc_op_init( struct nbc_op * op,
         nbc_op_type type,
         int remote,
         MPI_Comm comm,
@@ -115,27 +118,27 @@ int nbc_op_init( struct nbc_op * op,
     op->tag = tag;
 }
 
-int nbc_op_wait_init(struct nbc_op * op) {
+static inline int nbc_op_wait_init(struct nbc_op * op) {
     op->trig = 0;
     op->done = 0;
     op->t = TYPE_WAIT;
 }
 
-int nbc_op_free_init(struct nbc_op * op, void * buff) {
+static inline int nbc_op_free_init(struct nbc_op * op, void * buff) {
     op->trig = 0;
     op->done = 0;
     op->t = TYPE_FREE;
     op->buff = buff;
 }
 
-int nbc_op_comm_free_init(struct nbc_op * op, MPI_Comm comm) {
+static inline int nbc_op_comm_free_init(struct nbc_op * op, MPI_Comm comm) {
     op->trig = 0;
     op->done = 0;
     op->t = TYPE_COMM_FREE;
     op->comm = comm;
 }
 
-int nbc_op_mpi_op_init(struct nbc_op * op,
+static inline int nbc_op_mpi_op_init(struct nbc_op * op,
         MPI_Datatype datatype,
         int count,
         void * buff,
@@ -155,7 +158,7 @@ int nbc_op_mpi_op_init(struct nbc_op * op,
 }
 
 
-int nbc_op_trigger( struct nbc_op * op )
+static inline int nbc_op_trigger( struct nbc_op * op )
 {
 
     if( op->trig )
@@ -220,7 +223,7 @@ int nbc_op_trigger( struct nbc_op * op )
 }
 
 
-int nbc_op_test( struct nbc_op * op  )
+static inline int nbc_op_test( struct nbc_op * op  )
 {
 #ifdef EG_DEBUG
     int rank;
@@ -259,7 +262,6 @@ int nbc_op_test( struct nbc_op * op  )
     int flag=0;
     PMPI_Test( &op->request , &flag,  MPI_STATUS_IGNORE );
 
-
     if( flag )
     {
         //LOG(stderr, "%d COMPLETED (%s to %d)\n", rank, strops[op->t], op->remote );
@@ -274,12 +276,62 @@ int nbc_op_test( struct nbc_op * op  )
 }
 
 
-xMPI_Request * xMPI_Request_new(MPI_Request * parent, int size)
+static sctk_spinlock_t rpool_lock = 0;
+static int rpool_count = 0;
+static xMPI_Request * rpool = NULL;
+
+static inline xMPI_Request * xMPI_Request_from_pool()
+{
+    xMPI_Request * ret = NULL;
+    sctk_spinlock_lock( &rpool_lock );
+
+    if( rpool_count )
+    {
+        rpool_count--;
+        ret = rpool;
+        rpool = rpool->next;
+    }
+
+    sctk_spinlock_unlock( &rpool_lock );
+
+    return ret;
+}
+
+
+static inline int xMPI_Request_to_pool( xMPI_Request * req )
+{
+    int ret = 0;
+    sctk_spinlock_lock( &rpool_lock );
+
+    if( rpool_count < 100 )
+    {
+        rpool_count++;
+        req->next = rpool;
+        rpool = req;
+        ret = 1;
+    }
+
+    sctk_spinlock_unlock( &rpool_lock );
+
+    return ret;
+}
+
+
+
+
+
+
+
+
+static inline xMPI_Request * xMPI_Request_new(MPI_Request * parent, int size)
 {
     /* We had an issue when polling the last event
      * adding a null event at the end seems to solve it*/
     //size++;
-    xMPI_Request * ret = malloc( sizeof(xMPI_Request) + (sizeof(struct nbc_op) * size));
+    xMPI_Request * ret = xMPI_Request_from_pool();    
+    
+    if( !ret )
+        ret = sctk_malloc( sizeof(xMPI_Request) + (sizeof(struct nbc_op) * size));
 
     if( !ret )
     {
@@ -290,24 +342,25 @@ xMPI_Request * xMPI_Request_new(MPI_Request * parent, int size)
     ret->size = size;
     int i;
     for (i = 0; i < size; ++i) {
-
-        nbc_op_init( &ret->op[i],
-                TYPE_NULL,
-                -1,
-                MPI_COMM_NULL,
-                MPI_DATATYPE_NULL,
-                0,
-                NULL,
-                0 );
-
-
+        //ret->op[i] = TYPE_NULL;
+        //nbc_op_init( &ret->op[i],
+        //        TYPE_NULL,
+        //        -1,
+        //        MPI_COMM_NULL,
+        //        MPI_DATATYPE_NULL,
+        //        0,
+        //        NULL,
+        //        0 );
         ret->op[i].t = TYPE_NULL;
+        ret->op[i].trig = 0;
     }
 
     ret->myself = parent;
     ret->current_off = 1;
 
     ret->lock = 0;
+    ret->next = NULL;
+
 
     return ret;
 }
@@ -379,6 +432,7 @@ static inline int xMPI_Request_gen_poll( xMPI_Request *xreq )
             else if( ret == NBC_NEXT_OP )
             {
                 //LOG(stderr, "%d TRIG @ %d\n", rank, i);
+                time_to_leave=1;
                 xreq->current_off++;
             }
 
@@ -439,7 +493,7 @@ int xMPI_Request_wait_fn( int cnt, void ** array_of_states, double timeout, MPI_
     char *done_array = _done_array;
     if( 128 <= cnt )
     {
-        done_array = calloc( cnt ,  sizeof(char));
+        done_array = sctk_calloc( cnt ,  sizeof(char));
         if( !done_array )
         {
             perror("malloc");
@@ -472,7 +526,7 @@ int xMPI_Request_wait_fn( int cnt, void ** array_of_states, double timeout, MPI_
     }
 
     if( done_array != _done_array )
-        free( done_array );
+        sctk_free( done_array );
 
 
     return MPI_SUCCESS;
@@ -482,7 +536,9 @@ int xMPI_Request_free_fn( void * pxreq )
 {
     xMPI_Request * r = (xMPI_Request*)pxreq;
     ////LOG(stderr, "FREEING %p\n", r->myself);
-    free( pxreq );
+    //
+    if( xMPI_Request_to_pool( r ) == 0 )
+        sctk_free( pxreq );
     return MPI_SUCCESS;
 }
 
@@ -628,7 +684,7 @@ int MPI_Ixreduce(const void* sendbuf, void* recvbuf, int count, MPI_Datatype dat
     // TODO MPI_IN_PLACE
     xMPI_Request * xreq = xMPI_Request_new(request, 13);
 
-    size_t type_size;
+    int type_size;
     PMPI_Type_size(datatype, &type_size);
     const int buff_size = count * type_size;
 
@@ -648,14 +704,14 @@ int MPI_Ixreduce(const void* sendbuf, void* recvbuf, int count, MPI_Datatype dat
 
         if( 0 <= lc ) {
             // If I have a left child, allocate a buffer and receive into it.
-            lc_buff = malloc(buff_size);
+            lc_buff = sctk_malloc(buff_size);
             free_lc_buff = 1;
             nbc_op_init( &xreq->op[0], TYPE_RECV, lc, comm, datatype, count, lc_buff, 12345 );
         }
 
         if( 0 <= rc ) {
             // If I have a right child, allocate a buffer and receive into it.
-            rc_buff = malloc(buff_size);
+            rc_buff = sctk_malloc(buff_size);
             free_rc_buff = 1;
             nbc_op_init( &xreq->op[1], TYPE_RECV, rc, comm, datatype, count, rc_buff, 12345 );
         }
@@ -665,7 +721,7 @@ int MPI_Ixreduce(const void* sendbuf, void* recvbuf, int count, MPI_Datatype dat
 
         if( lc_buff != NULL && rc_buff != NULL ) {
             // If I have two children, I need to reduce them together.
-            work_buff = malloc(buff_size);
+            work_buff = sctk_malloc(buff_size);
             free_work_buff = 1;
             nbc_op_mpi_op_init(&xreq->op[3], datatype, count, lc_buff, rc_buff, work_buff, op);
         } else if( lc_buff != NULL ) {
@@ -679,7 +735,7 @@ int MPI_Ixreduce(const void* sendbuf, void* recvbuf, int count, MPI_Datatype dat
                 out_buff = recvbuf;
             } else {
                 // otherwise into an intermediate buffer.
-                out_buff = malloc(buff_size);
+                out_buff = sctk_malloc(buff_size);
                 free_out_buff = 1;
             }
             // If I have any children, I need to reduce my buffer with the values from my children.

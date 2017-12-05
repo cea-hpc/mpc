@@ -134,7 +134,7 @@ typedef struct sctk_task_specific_s
         struct sctk_thread_data_s * thread_data;
 
         /* Progresss List */
-        struct progressList * progress_list;
+        struct sctk_progress_list * progress_list;
 } sctk_task_specific_t;
 
 struct sctk_task_specific_s *__MPC_get_task_specific();

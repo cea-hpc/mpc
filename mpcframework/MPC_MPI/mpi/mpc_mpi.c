@@ -2421,7 +2421,7 @@ static int __INTERNAL__PMPI_Wait (MPI_Request * request, MPI_Status * status)
 	}
 	else
 	{
-		MPC_Request * mpcreq = __sctk_convert_mpc_request (request,requests);
+		MPC_Request * mpcreq = &tmp->req;
 
 		if( mpcreq->request_type == REQUEST_GENERALIZED )
 		{
@@ -2449,7 +2449,7 @@ static int __INTERNAL__PMPI_Test (MPI_Request * request, int *flag, MPI_Status *
     res = NBC_Test(&(tmp->nbc_handle), flag, status);
   } else {
     res =
-        PMPC_Test(__sctk_convert_mpc_request(request, requests), flag, status);
+        PMPC_Test(&tmp->req, flag, status);
   }
 
   if (*flag) {
@@ -2617,8 +2617,7 @@ int __INTERNAL__PMPI_Waitall (int count, MPI_Request * array_of_requests, MPI_St
             if (array_of_requests[i] == MPI_REQUEST_NULL) {
               mpc_array_of_requests[i] = &MPC_REQUEST_NULL;
             } else {
-              mpc_array_of_requests[i] =
-                  __sctk_convert_mpc_request(&(array_of_requests[i]), requests);
+              mpc_array_of_requests[i] = &tmp->req;
             }
           }
         }
@@ -2655,82 +2654,81 @@ int __INTERNAL__PMPI_Waitall (int count, MPI_Request * array_of_requests, MPI_St
 
 static int __INTERNAL__PMPI_Testall (int count, MPI_Request array_of_requests[], int *flag, MPI_Status array_of_statuses[])
 {
-	int i;
-	int done = 0;
-	int loc_flag;
-	MPI_request_struct_t *requests;
-	requests = __sctk_internal_get_MPC_requests();
-	*flag = 0;
-	if(array_of_statuses != MPC_STATUSES_IGNORE){
-	  for (i = 0; i < count; i++)
-	    {
-	      array_of_statuses[i].MPI_ERROR = MPI_SUCCESS;
-	    }
-	}
-
-	for (i = 0; i < count; i++)
-	{
-		int tmp;
-
-		if (array_of_requests[i] == MPI_REQUEST_NULL)
-		{
-			done++;
-			loc_flag = 0;
-			tmp = MPI_SUCCESS;
-		}
-		else
-		{
-			MPC_Request *req;
-			req = __sctk_convert_mpc_request (&(array_of_requests[i]),requests);
-
-                        if (req == &MPC_REQUEST_NULL) {
-                          done++;
-                          loc_flag = 0;
-                          tmp = MPI_SUCCESS;
-                        } else {
-                          MPI_internal_request_t *reqtmp;
-                          reqtmp = __sctk_convert_mpc_request_internal(
-                              &(array_of_requests[i]), requests);
-
-                          if ((reqtmp != NULL) && (reqtmp->is_nbc == 1)) {
-                            tmp = NBC_Test(
-                                &(reqtmp->nbc_handle), &loc_flag,
-                                (array_of_statuses == MPI_STATUSES_IGNORE)
-                                    ? MPI_STATUS_IGNORE
-                                    : &(array_of_statuses[i]));
-                            if (loc_flag) {
-                              array_of_requests[i] = MPI_REQUEST_NULL;
-                            }
-                          } else {
-                            tmp = PMPC_Test(
-                                req, &loc_flag,
-                                (array_of_statuses == MPC_STATUSES_IGNORE)
-                                    ? MPC_STATUS_IGNORE
-                                    : &(array_of_statuses[i]));
-                          }
-                        }
-                }
-                if (loc_flag) {
-                  done++;
-                }
-                if (tmp != MPI_SUCCESS) {
-                  return tmp;
-                }
+    int i;
+    int done = 0;
+    int loc_flag;
+    MPI_request_struct_t *requests;
+    requests = __sctk_internal_get_MPC_requests();
+    *flag = 0;
+    if(array_of_statuses != MPC_STATUSES_IGNORE){
+        for (i = 0; i < count; i++)
+        {
+            array_of_statuses[i].MPI_ERROR = MPI_SUCCESS;
         }
+    }
 
-        if (done == count) {
-          for (i = 0; i < count; i++) {
-            if (array_of_requests[i] != MPI_REQUEST_NULL) {
-              __sctk_delete_mpc_request(&(array_of_requests[i]), requests);
+    for (i = 0; i < count; i++)
+    {
+        int tmp;
+
+        if (array_of_requests[i] == MPI_REQUEST_NULL)
+        {
+            done++;
+            loc_flag = 0;
+            tmp = MPI_SUCCESS;
+        }
+        else
+        {
+            MPI_internal_request_t *reqtmp;
+            reqtmp = __sctk_convert_mpc_request_internal(
+                        &(array_of_requests[i]), requests);
+            MPC_Request *req;
+            req = &reqtmp->req;
+
+            if (req == &MPC_REQUEST_NULL) {
+                done++;
+                loc_flag = 0;
+                tmp = MPI_SUCCESS;
+            } else {
+                if ((reqtmp != NULL) && (reqtmp->is_nbc == 1)) {
+                    tmp = NBC_Test(
+                            &(reqtmp->nbc_handle), &loc_flag,
+                            (array_of_statuses == MPI_STATUSES_IGNORE)
+                            ? MPI_STATUS_IGNORE
+                            : &(array_of_statuses[i]));
+                    if (loc_flag) {
+                        array_of_requests[i] = MPI_REQUEST_NULL;
+                    }
+                } else {
+                    tmp = PMPC_Test(
+                            req, &loc_flag,
+                            (array_of_statuses == MPC_STATUSES_IGNORE)
+                            ? MPC_STATUS_IGNORE
+                            : &(array_of_statuses[i]));
+                }
             }
-          }
         }
-        sctk_nodebug("done %d tot %d", done, count);
-        *flag = (done == count);
-        if (*flag == 0) {
-          sctk_thread_yield();
+        if (loc_flag) {
+            done++;
         }
-        return MPI_SUCCESS;
+        if (tmp != MPI_SUCCESS) {
+            return tmp;
+        }
+    }
+
+    if (done == count) {
+        for (i = 0; i < count; i++) {
+            if (array_of_requests[i] != MPI_REQUEST_NULL) {
+                __sctk_delete_mpc_request(&(array_of_requests[i]), requests);
+            }
+        }
+    }
+    sctk_nodebug("done %d tot %d", done, count);
+    *flag = (done == count);
+    if (*flag == 0) {
+        sctk_thread_yield();
+    }
+    return MPI_SUCCESS;
 }
 
 static int __INTERNAL__PMPI_Waitsome (int incount, MPI_Request * array_of_requests, int *outcount, int *array_of_indices, MPI_Status * array_of_statuses)

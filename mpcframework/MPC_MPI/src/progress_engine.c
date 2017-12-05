@@ -8,7 +8,7 @@
  */
 
 
-static inline int progressWorkUnit_isfree( struct progressWorkUnit * pwu )
+static inline int sctk_progress_work_unit_isfree( struct sctk_progress_work_unit * pwu )
 {
     int ret = 0;
     if( sctk_spinlock_trylock( &pwu->unit_lock ) == 0 ){
@@ -19,61 +19,59 @@ static inline int progressWorkUnit_isfree( struct progressWorkUnit * pwu )
 }
 
 
-static inline void progressWorkUnit_setfree( struct progressWorkUnit * pwu, int is_free)
+static inline void sctk_progress_work_unit_setfree( struct sctk_progress_work_unit * pwu, int is_free)
 {
     pwu->is_free = is_free;
 }
 
 
 
-static inline void progressWorkUnit_clear( struct progressWorkUnit *pwu )
+static inline void sctk_progress_work_unit_clear( struct sctk_progress_work_unit *pwu )
 {
     pwu->fn = NULL;
     pwu->param = NULL;
-    progressWorkUnit_setfree( pwu, 1 );
+    sctk_progress_work_unit_setfree( pwu, 1 );
 }
 
 
-int progressWorkUnit_init( struct progressWorkUnit *pwu )
+int sctk_progress_work_unit_init( struct sctk_progress_work_unit *pwu )
 {
     pwu->unit_lock = 0;
-    progressWorkUnit_clear( pwu );
+    sctk_progress_work_unit_clear( pwu );
 
     return 0;
 }
 
 
-int progressWorkUnit_release( struct progressWorkUnit *pwu )
+int sctk_progress_work_unit_release( struct sctk_progress_work_unit *pwu )
 {
-    progressWorkUnit_clear( pwu );
+    sctk_progress_work_unit_clear( pwu );
     pwu->unit_lock = 0;
 
     return 0;
 }
 
-
-
-int progressWorkUnit_acquire( struct progressWorkUnit *pwu, int (*fn)(  void * param), void * param )
+static inline int sctk_progress_work_unit_acquire( struct sctk_progress_work_unit *pwu, int (*fn)(  void * param), void * param )
 {
-    if( progressWorkUnit_isfree(pwu) == 0 )
+    if( sctk_progress_work_unit_isfree(pwu) == 0 )
         return 1;
 
     pwu->fn = fn;
     pwu->param = param;
 
     pwu->done = 0;
-    progressWorkUnit_setfree( pwu, 0 );
+    sctk_progress_work_unit_setfree( pwu, 0 );
 
     return 0;
 }
 
-int progressWorkUnit_relax( struct progressWorkUnit *pwu )
+static inline int sctk_progress_work_unit_relax( struct sctk_progress_work_unit *pwu )
 {
-    progressWorkUnit_clear( pwu );
+    sctk_progress_work_unit_clear( pwu );
     return 0;
 }
 
-int progressWorkUnit_poll( struct progressWorkUnit *pwu )
+int sctk_progress_work_unit_poll( struct sctk_progress_work_unit *pwu )
 {
     int ret = PWU_NO_PROGRESS;
 
@@ -89,7 +87,7 @@ int progressWorkUnit_poll( struct progressWorkUnit *pwu )
     
             if( pwu->done )
             {
-                progressWorkUnit_relax( pwu );
+                sctk_progress_work_unit_relax( pwu );
                 ret = PWU_WORK_DONE;
             }
         }
@@ -101,14 +99,14 @@ int progressWorkUnit_poll( struct progressWorkUnit *pwu )
 }
 
 
-int progressWorkUnit_complete( struct progressWorkUnit *pwu )
+int sctk_progress_work_unit_complete( struct sctk_progress_work_unit *pwu )
 {
-    if( progressWorkUnit_isfree(pwu) )
+    if( sctk_progress_work_unit_isfree(pwu) )
         return 0;
 
     while( pwu->done == 0 )
     {
-        progressWorkUnit_poll( pwu );
+        sctk_progress_work_unit_poll( pwu );
     }
 
     return 0;
@@ -118,12 +116,12 @@ int progressWorkUnit_complete( struct progressWorkUnit *pwu )
  * The Work List
  */
 
-int progressList_init( struct progressList * pl )
+int sctk_progress_list_init( struct sctk_progress_list * pl )
 {
     /* Init works */
     int i;
     for (i = 0; i < PROGRESS_PWU_STATIC_ARRAY; ++i) {
-        progressWorkUnit_init( &pl->works[i] );
+        sctk_progress_work_unit_init( &pl->works[i] );
     }
 
     pl->work_count = 0;
@@ -137,12 +135,12 @@ int progressList_init( struct progressList * pl )
 }
 
 
-int progressList_release( struct progressList * pl )
+int sctk_progress_list_release( struct sctk_progress_list * pl )
 {
     int i;
     for (i = 0; i < PROGRESS_PWU_STATIC_ARRAY; ++i) {
-        progressWorkUnit_complete( &pl->works[i] );
-        progressWorkUnit_release( &pl->works[i] );
+        sctk_progress_work_unit_complete( &pl->works[i] );
+        sctk_progress_work_unit_release( &pl->works[i] );
     }
 
     pl->list_lock = 0;
@@ -154,10 +152,10 @@ int progressList_release( struct progressList * pl )
 }
 
 
-struct progressWorkUnit * progressList_acquire( struct progressList * pl, int (*fn)(void * param), void * param  )
+struct sctk_progress_work_unit * sctk_progress_list_acquire( struct sctk_progress_list * pl, int (*fn)(void * param), void * param  )
 {
     int acquired = 0;
-    struct progressWorkUnit * ret = NULL;
+    struct sctk_progress_work_unit * ret = NULL;
 
     do
     {
@@ -171,7 +169,7 @@ struct progressWorkUnit * progressList_acquire( struct progressList * pl, int (*
             if( PROGRESS_PWU_STATIC_ARRAY == current_w_count )
             {
                 /* Poll to try to free a slot */
-                progressList_poll( pl );
+                sctk_progress_list_poll( pl );
             }
 
         }while( PROGRESS_PWU_STATIC_ARRAY == current_w_count );
@@ -188,7 +186,7 @@ struct progressWorkUnit * progressList_acquire( struct progressList * pl, int (*
             {
                 if( pl->works[i].is_free )
                 {
-                    progressWorkUnit_acquire( &pl->works[i], fn, param );
+                    sctk_progress_work_unit_acquire( &pl->works[i], fn, param );
                     ret=  &pl->works[i];
                     pl->work_count++;
 
@@ -206,9 +204,9 @@ struct progressWorkUnit * progressList_acquire( struct progressList * pl, int (*
     return ret;
 }
 
-struct progressWorkUnit * progressList_add( struct progressList * pl, int (*fn)( void * param), void * param )
+struct sctk_progress_work_unit * sctk_progress_list_add( struct sctk_progress_list * pl, int (*fn)( void * param), void * param )
 {
-    struct progressWorkUnit * pwu = progressList_acquire( pl, fn, param );
+    struct sctk_progress_work_unit * pwu = sctk_progress_list_acquire( pl, fn, param );
     return pwu;
 }
 
@@ -216,7 +214,7 @@ struct progressWorkUnit * progressList_add( struct progressList * pl, int (*fn)(
 #define PROGRESS_THRESH 2
 
 
-int progressList_poll( struct progressList * pl )
+int sctk_progress_list_poll( struct sctk_progress_list * pl )
 {
     int did_work = PWU_NO_PROGRESS;
 
@@ -229,15 +227,14 @@ int progressList_poll( struct progressList * pl )
     int i;
     int progress_count = 0;
 
-
     for (i = 0; i < PROGRESS_PWU_STATIC_ARRAY; ++i) {
         
         int is_free = 0;
 
-        if( progressWorkUnit_isfree( &pl->works[i]) )
+        if( sctk_progress_work_unit_isfree( &pl->works[i]) )
             continue;
 
-        int ret = progressWorkUnit_poll( &pl->works[i] );
+        int ret = sctk_progress_work_unit_poll( &pl->works[i] );
 
         if( ret == PWU_DID_PROGRESS )
         {
@@ -253,7 +250,10 @@ int progressList_poll( struct progressList * pl )
         else if( ret == PWU_WORK_DONE )
         {
             did_work |= 1;
-            pl->no_work_count=0;
+            pl->no_work_count--;
+            if( pl->no_work_count < 0 )
+                pl->no_work_count = 0;
+
 
             sctk_spinlock_lock( &pl->list_lock );
             /* We need to free this slot */
@@ -272,7 +272,7 @@ int progressList_poll( struct progressList * pl )
  */
 
 
-int progressEnginePool_init( struct progressEnginePool * p, unsigned int size )
+int sctk_progress_engine_pool_init( struct sctk_progress_engine_pool * p, unsigned int size )
 {
 
     if( size <= PROGRESS_POLL_ENGINE_STATIC_ARRAY )
@@ -281,7 +281,7 @@ int progressEnginePool_init( struct progressEnginePool * p, unsigned int size )
     }
     else
     {
-        p->lists = sctk_malloc( sizeof(struct progressList) * size );
+        p->lists = sctk_malloc( sizeof(struct sctk_progress_list) * size );
 
         if( !p->lists )
         {
@@ -298,7 +298,7 @@ int progressEnginePool_init( struct progressEnginePool * p, unsigned int size )
 
     for( i = 0 ; i < p->size ; i++ )
     {
-        if( progressList_init(&p->lists[i]) )
+        if( sctk_progress_list_init(&p->lists[i]) )
         {
             return 1;
         }
@@ -310,7 +310,7 @@ int progressEnginePool_init( struct progressEnginePool * p, unsigned int size )
 }
 
 
-int progressEnginePool_release( struct progressEnginePool * p)
+int sctk_progress_engine_pool_release( struct sctk_progress_engine_pool * p)
 {
     p->size = 0;
     p->booked = 0;
@@ -319,7 +319,7 @@ int progressEnginePool_release( struct progressEnginePool * p)
 
     for( i = 0 ; i < p->size ; i++ )
     {
-        if( progressList_release(&p->lists[i]) )
+        if( sctk_progress_list_release(&p->lists[i]) )
         {
             return 1;
         }
@@ -337,10 +337,10 @@ int progressEnginePool_release( struct progressEnginePool * p)
     return 0;
 }
 
-struct progressList * progressEnginePool_join( struct progressEnginePool * p )
+struct sctk_progress_list * sctk_progress_engine_pool_join( struct sctk_progress_engine_pool * p )
 {
 
-    struct progressList * ret = NULL;
+    struct sctk_progress_list * ret = NULL;
 
     sctk_spinlock_lock( &p->pool_lock );
 
@@ -361,7 +361,7 @@ struct progressList * progressEnginePool_join( struct progressEnginePool * p )
 }
 
 
-int progressEnginePool_poll( struct progressEnginePool * p, int my_id )
+int sctk_progress_engine_pool_poll( struct sctk_progress_engine_pool * p, int my_id )
 {
     //sctk_error("POLL as %d", my_id);
 
@@ -383,12 +383,12 @@ int progressEnginePool_poll( struct progressEnginePool * p, int my_id )
         targ = my_id % p->booked;
     }
 
-    int ret = progressList_poll( &p->lists[targ] );
+    int ret = sctk_progress_list_poll( &p->lists[targ] );
 
     if( ret != PWU_NO_PROGRESS )
     {
         /* I did progress return */
-        //return ret;
+        return ret;
     }
 
     if( my_id < 0 )
@@ -399,13 +399,13 @@ int progressEnginePool_poll( struct progressEnginePool * p, int my_id )
 
     /* If I'm here I did no progress */
 
-    //if( p->lists[targ].no_work_count < 5 )
+    //if( p->lists[targ].no_work_count < 8192 )
     //    return ret;
     /* Try to steal progress neighbor */
     targ = rand() % p->booked;
+    //sctk_error("LOL");
 
-
-    ret = progressList_poll( &p->lists[targ] );
+    ret = sctk_progress_list_poll( &p->lists[targ] );
 
     if( ret != PWU_NO_PROGRESS )
     {

@@ -787,7 +787,7 @@ int MPCX_Undisguise()
 
 
 
-static struct progressEnginePool __mpc_progress_pool;
+static struct sctk_progress_engine_pool __mpc_progress_pool;
 
 
 
@@ -798,13 +798,13 @@ int __MPC_init_progress(sctk_task_specific_t * tmp )
   if( my_local_id == 0 )
   {
     int local_count = sctk_get_local_task_number();
-    progressEnginePool_init( &__mpc_progress_pool, local_count );
+    sctk_progress_engine_pool_init( &__mpc_progress_pool, local_count );
   }
 
   sctk_barrier(MPC_COMM_WORLD);
 
   /* Retrieve the ctx pointer */
-  tmp->progress_list = progressEnginePool_join( &__mpc_progress_pool );
+  tmp->progress_list = sctk_progress_engine_pool_join( &__mpc_progress_pool );
 
 
 }
@@ -824,14 +824,14 @@ int __MPC_release_progress( sctk_task_specific_t * tmp  )
     if( done )
         return MPC_SUCCESS;
 
-    progressEnginePool_release( &__mpc_progress_pool );
+    sctk_progress_engine_pool_release( &__mpc_progress_pool );
     return MPC_SUCCESS;
 }
 
 
 int __MPC_poll_progress_id(int id)
 {
-    return progressEnginePool_poll( &__mpc_progress_pool , id  );
+    return sctk_progress_engine_pool_poll( &__mpc_progress_pool , id  );
 }
 
 int __MPC_poll_progress()
@@ -1571,7 +1571,7 @@ void sctk_generic_request_poll( MPC_Request * req )
     if(req->completion_flag == SCTK_MESSAGE_DONE)
         return;
     
-    progressWorkUnit_poll( req->progress_unit );
+    sctk_progress_work_unit_poll( req->progress_unit );
 }
 
 
@@ -1623,7 +1623,7 @@ int PMPCX_Grequest_start_generic(MPC_Grequest_query_function *query_fn,
   /* We now push the request inside the progress list */
   struct sctk_task_specific_s *ctx = __MPC_get_task_specific();
   request->progress_unit = NULL;
-  request->progress_unit = (void*)progressList_add(ctx->progress_list, ___grequest_disguise_poll, (void *)request );
+  request->progress_unit = (void*)sctk_progress_list_add(ctx->progress_list, ___grequest_disguise_poll, (void *)request );
 
   MPC_ERROR_SUCESS()
 }
@@ -1739,7 +1739,7 @@ int PMPC_Grequest_complete(MPC_Request request) {
 
     MPC_Request * src_req = (MPC_Request *)request.pointer_to_source_request; 
 
-    struct progressWorkUnit * pwu = ((struct progressWorkUnit *)src_req->progress_unit);
+    struct sctk_progress_work_unit * pwu = ((struct sctk_progress_work_unit *)src_req->progress_unit);
 
     pwu->done = 1;
     
