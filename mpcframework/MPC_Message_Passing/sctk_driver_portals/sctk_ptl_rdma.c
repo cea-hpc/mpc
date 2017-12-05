@@ -279,7 +279,7 @@ void sctk_ptl_rdma_fetch_and_op(  sctk_rail_info_t *rail,
 	local_off  = fetch_addr  - local_start;
 	remote_off = remote_addr - remote_start;
 
-	add_md = sctk_ptl_md_create(srail, add, RDMA_type_size(type), SCTK_PTL_MD_PUT_FLAGS);
+	add_md = sctk_ptl_md_create(srail, add, RDMA_type_size(type), SCTK_PTL_MD_ATOMICS_FLAGS);
 	add_off = 0;
 	sctk_ptl_md_register(srail, add_md);
 
@@ -290,7 +290,7 @@ void sctk_ptl_rdma_fetch_and_op(  sctk_rail_info_t *rail,
 	copy                   = sctk_malloc(sizeof(sctk_ptl_local_data_t));
 	*copy                  = *local_key->pin.ptl.md_data;
 	copy->msg              = msg;
-	msg->tail.ptl.user_ptr = copy;
+	msg->tail.ptl.user_ptr = add_md;
 	copy->type = SCTK_PTL_TYPE_RDMA;
 
 	sctk_ptl_emit_fetch_atomic(
@@ -308,7 +308,7 @@ void sctk_ptl_rdma_fetch_and_op(  sctk_rail_info_t *rail,
 		copy
 
 	);
-	sctk_warning("PORTALS: SEND-FETCH-AND-OP (loff=%llu, roff=%llu, op=%d, add=%p)", local_off, remote_off, op, add);
+	sctk_nodebug("PORTALS: SEND-FETCH-AND-OP (loff=%llu, roff=%llu, op=%d, add=%p)", local_off, remote_off, op, add_md);
 }
 
 /** boolean to check if Portals support 'compare_and_swap', which it supports */
@@ -363,7 +363,7 @@ void sctk_ptl_rdma_cas(sctk_rail_info_t *rail,
 	local_off  = res_addr  - local_start;
 	remote_off = remote_addr - remote_start;
 
-	new_md = sctk_ptl_md_create(srail, new, RDMA_type_size(type), SCTK_PTL_MD_PUT_FLAGS);
+	new_md = sctk_ptl_md_create(srail, new, RDMA_type_size(type), SCTK_PTL_MD_ATOMICS_FLAGS);
 	new_off = 0;
 	sctk_ptl_md_register(srail, new_md);
 
@@ -374,7 +374,7 @@ void sctk_ptl_rdma_cas(sctk_rail_info_t *rail,
 	copy                   = sctk_malloc(sizeof(sctk_ptl_local_data_t));
 	*copy                  = *local_key->pin.ptl.md_data;
 	copy->msg              = msg;
-	msg->tail.ptl.user_ptr = copy;
+	msg->tail.ptl.user_ptr = new_md;
 	copy->type = SCTK_PTL_TYPE_RDMA;
 
 	sctk_ptl_emit_swap(
@@ -437,7 +437,7 @@ void sctk_ptl_rdma_write(sctk_rail_info_t *rail, sctk_thread_ptp_message_t *msg,
 	copy                   = sctk_malloc(sizeof(sctk_ptl_local_data_t));
 	*copy                  = *local_key->pin.ptl.md_data;
 	copy->msg              = msg;
-	msg->tail.ptl.user_ptr = copy;
+	msg->tail.ptl.user_ptr = NULL; /* 'no extra allocated data' */
 	copy->type = SCTK_PTL_TYPE_RDMA;
 	
 	sctk_ptl_emit_put(
@@ -494,7 +494,7 @@ void sctk_ptl_rdma_read(sctk_rail_info_t *rail, sctk_thread_ptp_message_t *msg,
 	copy                   = sctk_malloc(sizeof(sctk_ptl_local_data_t));
 	*copy                  = *local_key->pin.ptl.md_data;
 	copy->msg              = msg;
-	msg->tail.ptl.user_ptr = copy;
+	msg->tail.ptl.user_ptr = NULL; /* NULL in RDMA ctx means: 'no extra allocated data' */
 
 	sctk_ptl_emit_get(
 		local_key->pin.ptl.md_data, /* the base MD */
@@ -597,23 +597,23 @@ void sctk_ptl_rdma_event_me(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 	sctk_ptl_pte_t fake;
 	switch(ev.type)
 	{
-		case PTL_EVENT_PUT: /* a Put() reached the local process */
-		case PTL_EVENT_GET: /* a Get() reached the local process */
-		case PTL_EVENT_ATOMIC: /* an Atomic() reached the local process */
-		case PTL_EVENT_FETCH_ATOMIC: /* a FetchAtomic() reached the local process */
+		case PTL_EVENT_PUT:                   /* a Put() reached the local process */
+		case PTL_EVENT_GET:                   /* a Get() reached the local process */
+		case PTL_EVENT_ATOMIC:                /* an Atomic() reached the local process */
+		case PTL_EVENT_FETCH_ATOMIC:          /* a FetchAtomic() reached the local process */
 			break;
 
-		case PTL_EVENT_PUT_OVERFLOW: /* a previous received PUT matched a just appended ME */
-		case PTL_EVENT_GET_OVERFLOW: /* a previous received GET matched a just appended ME */
+		case PTL_EVENT_PUT_OVERFLOW:          /* a previous received PUT matched a just appended ME */
+		case PTL_EVENT_GET_OVERFLOW:          /* a previous received GET matched a just appended ME */
 		case PTL_EVENT_FETCH_ATOMIC_OVERFLOW: /* a previously received FETCH-ATOMIC matched a just appended one */
-		case PTL_EVENT_ATOMIC_OVERFLOW: /* a previously received ATOMIC matched a just appended one */
-		case PTL_EVENT_PT_DISABLED: /* ERROR: The local PTE is disabeld (FLOW_CTRL) */
-		case PTL_EVENT_SEARCH: /* a PtlMESearch completed */
-			/* probably nothing to do here */
-		case PTL_EVENT_LINK: /* MISC: A new ME has been linked, (maybe not useful) */
-		case PTL_EVENT_AUTO_UNLINK: /* an USE_ONCE ME has been automatically unlinked */
-		case PTL_EVENT_AUTO_FREE: /* an USE_ONCE ME can be now reused */
-			not_reachable(); /* have been disabled */
+		case PTL_EVENT_ATOMIC_OVERFLOW:       /* a previously received ATOMIC matched a just appended one */
+		case PTL_EVENT_PT_DISABLED:           /* ERROR: The local PTE is disabled (FLOW_CTRL) */
+		case PTL_EVENT_SEARCH:                /* a PtlMESearch completed */
+			                              /* probably nothing to do here */
+		case PTL_EVENT_LINK:                  /* MISC: A new ME has been linked, (maybe not useful) */
+		case PTL_EVENT_AUTO_UNLINK:           /* an USE_ONCE ME has been automatically unlinked */
+		case PTL_EVENT_AUTO_FREE:             /* an USE_ONCE ME can be now reused */
+			not_reachable();              /* have been disabled */
 			break;
 		default:
 			sctk_fatal("Portals ME event not recognized: %d", ev.type);
@@ -626,16 +626,20 @@ void sctk_ptl_rdma_event_md(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 {
 	sctk_ptl_local_data_t* ptr = (sctk_ptl_local_data_t*)ev.user_ptr;
 	sctk_thread_ptp_message_t* msg = (sctk_thread_ptp_message_t*)ptr->msg;
+	sctk_ptl_local_data_t* atomic_ptr = (sctk_ptl_local_data_t*)msg->tail.ptl.user_ptr;
 	switch(ev.type)
 	{
-		case PTL_EVENT_ACK: /* write  || CAS || FETCH_AND_OP */
-			/*sctk_ptl_md_release(ptr);*/
+		case PTL_EVENT_ACK:    /* write  || CAS || FETCH_AND_OP */
+			sctk_free(ptr);
 			break;
-		case PTL_EVENT_REPLY: /* READ || CAS || FETCH_AND_OP */
+		case PTL_EVENT_REPLY:  /* READ || CAS || FETCH_AND_OP */
 			sctk_complete_and_free_message(msg);
+			sctk_free(ptr);
 			break;
-		case PTL_EVENT_SEND:
-			not_reachable();
+		case PTL_EVENT_SEND:   /* special case, here will fall extra-allocated MD for atomic ops */
+			sctk_assert(atomic_ptr != NULL);
+			sctk_ptl_md_release(atomic_ptr);
+			break;
 		default:
 			sctk_fatal("Unrecognized MD event: %d", ev.type);
 			break;

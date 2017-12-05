@@ -63,6 +63,7 @@
 #define SCTK_PTL_MD_FLAGS PTL_MD_EVENT_SEND_DISABLE
 #define SCTK_PTL_MD_PUT_FLAGS SCTK_PTL_MD_FLAGS
 #define SCTK_PTL_MD_GET_FLAGS SCTK_PTL_MD_FLAGS
+#define SCTK_PTL_MD_ATOMICS_FLAGS 0 /* we need SEND to know about sent buffer to be freed */
 
 /* events */
 #define sctk_ptl_event_t ptl_event_t
