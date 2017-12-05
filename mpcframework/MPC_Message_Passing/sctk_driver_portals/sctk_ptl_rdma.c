@@ -48,14 +48,14 @@ static inline ptl_datatype_t __sctk_ptl_convert_type(RDMA_type type)
 		case RDMA_TYPE_DOUBLE             : return PTL_DOUBLE      ; break ;
 		case RDMA_TYPE_FLOAT              : return PTL_FLOAT       ; break ;
 		case RDMA_TYPE_INT                : return PTL_INT32_T     ; break ;
-		case RDMA_TYPE_LONG               : return PTL_INT64_T     ; break ;
 		case RDMA_TYPE_LONG_DOUBLE        : return PTL_LONG_DOUBLE ; break ;
+		case RDMA_TYPE_LONG               : return PTL_INT64_T     ; break ;
 		case RDMA_TYPE_LONG_LONG          : return PTL_INT64_T     ; break ;
 		case RDMA_TYPE_LONG_LONG_INT      : return PTL_INT64_T     ; break ;
 		case RDMA_TYPE_SHORT              : return PTL_INT16_T     ; break ;
 		case RDMA_TYPE_SIGNED_CHAR        : return PTL_INT8_T      ; break ;
-		case RDMA_TYPE_UNSIGNED           : return PTL_UINT32_T    ; break ;
 		case RDMA_TYPE_UNSIGNED_CHAR      : return PTL_UINT8_T     ; break ;
+		case RDMA_TYPE_UNSIGNED           : return PTL_UINT32_T    ; break ;
 		case RDMA_TYPE_UNSIGNED_LONG      : return PTL_UINT64_T    ; break ;
 		case RDMA_TYPE_UNSIGNED_LONG_LONG : return PTL_UINT64_T    ; break ;
 		case RDMA_TYPE_UNSIGNED_SHORT     : return PTL_UINT16_T    ; break ;
@@ -226,6 +226,8 @@ static inline short __sctk_ptl_is_unary_op(RDMA_op op, RDMA_type type, char* buf
 /** boolean to check if Portals support 'fetch_and_op', which it supports */
 int sctk_ptl_rdma_fetch_and_op_gate( sctk_rail_info_t *rail, size_t size, RDMA_op op, RDMA_type type )
 {
+	/* trouble with PtlFetchAtomic() & the BXI, disabling the call, fallback w/ CMs */
+	return 0;
 	/* don't support directly INC & DEC w/ Portals... */
 	return (op != RDMA_INC && op != RDMA_DEC);
 }
@@ -279,7 +281,7 @@ void sctk_ptl_rdma_fetch_and_op(  sctk_rail_info_t *rail,
 	local_off  = fetch_addr  - local_start;
 	remote_off = remote_addr - remote_start;
 
-	add_md = sctk_ptl_md_create(srail, add, RDMA_type_size(type), SCTK_PTL_MD_ATOMICS_FLAGS);
+	add_md = sctk_ptl_md_create(srail, add, size, SCTK_PTL_MD_ATOMICS_FLAGS);
 	add_off = 0;
 	sctk_ptl_md_register(srail, add_md);
 
@@ -292,7 +294,7 @@ void sctk_ptl_rdma_fetch_and_op(  sctk_rail_info_t *rail,
 	copy->msg              = msg;
 	msg->tail.ptl.user_ptr = add_md;
 	copy->type = SCTK_PTL_TYPE_RDMA;
-
+	
 	sctk_ptl_emit_fetch_atomic(
 		local_key->pin.ptl.md_data,   /* GET MD --> fetch_addr */
 		add_md,                       /* PUT MD  --> add */
@@ -308,7 +310,7 @@ void sctk_ptl_rdma_fetch_and_op(  sctk_rail_info_t *rail,
 		copy
 
 	);
-	sctk_nodebug("PORTALS: SEND-FETCH-AND-OP (loff=%llu, roff=%llu, op=%d, add=%p)", local_off, remote_off, op, add_md);
+	sctk_info("PORTALS: SEND-FETCH-AND-OP (match=%s, loff=%llu, roff=%llu, op=%d, add=%p, sz=%llu)", __sctk_ptl_match_str(sctk_malloc(32), 32, remote_key->pin.ptl.match.raw), local_off, remote_off, op, add_md, size);
 }
 
 /** boolean to check if Portals support 'compare_and_swap', which it supports */
@@ -363,7 +365,7 @@ void sctk_ptl_rdma_cas(sctk_rail_info_t *rail,
 	local_off  = res_addr  - local_start;
 	remote_off = remote_addr - remote_start;
 
-	new_md = sctk_ptl_md_create(srail, new, RDMA_type_size(type), SCTK_PTL_MD_ATOMICS_FLAGS);
+	new_md = sctk_ptl_md_create(srail, new, size, SCTK_PTL_MD_ATOMICS_FLAGS);
 	new_off = 0;
 	sctk_ptl_md_register(srail, new_md);
 
@@ -554,6 +556,7 @@ void sctk_ptl_pin_region( struct sctk_rail_info_s * rail, struct sctk_rail_pin_c
 	/* configure the ME */
 	me_flags       = SCTK_PTL_ME_PUT_FLAGS | SCTK_PTL_ME_GET_FLAGS;
 	match.data.tag = sctk_atomics_fetch_and_incr_int(&rail->network.ptl.rdma_cpt);
+	ign.data.tag   = SCTK_PTL_MATCH_TAG;
 	ign.data.rank  = SCTK_PTL_IGN_RANK;
 	ign.data.uid   = SCTK_PTL_IGN_UID;
 	pte            = rdma_pte;
@@ -572,7 +575,7 @@ void sctk_ptl_pin_region( struct sctk_rail_info_s * rail, struct sctk_rail_pin_c
 	list->pin.ptl.start   = addr;
 	list->pin.ptl.match   = match;
 
-	sctk_nodebug("REGISTER RDMA %p->%p (match=%s)", addr, addr + size,  __sctk_ptl_match_str(sctk_malloc(32), 32, match.raw));
+	sctk_nodebug("REGISTER RDMA %p->%p (match=%s) '%llu'", addr, addr + size,  __sctk_ptl_match_str(sctk_malloc(32), 32, match.raw), *(unsigned long long int*)addr);
 }
 
 /**
@@ -588,8 +591,7 @@ void sctk_ptl_unpin_region( struct sctk_rail_info_s * rail, struct sctk_rail_pin
 {
 	sctk_ptl_md_release(list->pin.ptl.md_data);
 	sctk_ptl_me_release(list->pin.ptl.me_data);
-
-	sctk_nodebug("RELEASE RDMA %p->%p", list->pin.ptl.me_data->slot.me.start, list->pin.ptl.me_data->slot.me.start + list->pin.ptl.me_data->slot.me.length);
+	sctk_nodebug("RELEASE RDMA %p->%p %s", list->pin.ptl.me_data->slot.me.start, list->pin.ptl.me_data->slot.me.start + list->pin.ptl.me_data->slot.me.length, __sctk_ptl_match_str(sctk_malloc(32), 32, list->pin.ptl.me_data->slot.me.match_bits));
 }
 
 void sctk_ptl_rdma_event_me(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
