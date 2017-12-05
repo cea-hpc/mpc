@@ -3274,9 +3274,9 @@ void sctk_runtime_config_struct_init_collectives_inter(void * struct_ptr)
 }
 
 /*******************  FUNCTION  *********************/
-void sctk_runtime_config_struct_init_progress_thread(void * struct_ptr)
+void sctk_runtime_config_struct_init_nbc(void * struct_ptr)
 {
-	struct sctk_runtime_config_struct_progress_thread * obj = struct_ptr;
+	struct sctk_runtime_config_struct_nbc * obj = struct_ptr;
 	/* Make sure this element is not initialized yet       */
 	/* It allows us to know when we are facing dynamically */
 	/* allocated objects requiring an init                 */
@@ -3286,6 +3286,10 @@ void sctk_runtime_config_struct_init_progress_thread(void * struct_ptr)
 	obj->use_progress_thread = 0;
 	obj->progress_thread_binding.name = "sctk_get_progress_thread_binding_bind";
 	*(void **) &(obj->progress_thread_binding.value) = sctk_runtime_config_get_symbol("sctk_get_progress_thread_binding_bind");
+	obj->use_egreq_bcast = 0;
+	obj->use_egreq_scatter = 0;
+	obj->use_egreq_gather = 0;
+	obj->use_egreq_reduce = 0;
 	obj->init_done = 1;
 }
 
@@ -3503,7 +3507,7 @@ void sctk_runtime_config_reset(struct sctk_runtime_config * config)
 	sctk_runtime_config_struct_init_collectives_shm(&config->modules.collectives_shm);
 	sctk_runtime_config_struct_init_collectives_intra(&config->modules.collectives_intra);
 	sctk_runtime_config_struct_init_collectives_inter(&config->modules.collectives_inter);
-	sctk_runtime_config_struct_init_progress_thread(&config->modules.progress_thread);
+	sctk_runtime_config_struct_init_nbc(&config->modules.nbc);
 	sctk_runtime_config_struct_init_mpc(&config->modules.mpc);
 	sctk_runtime_config_struct_init_mpi_rma(&config->modules.rma);
 #endif
@@ -3729,9 +3733,9 @@ void sctk_runtime_config_reset_struct_default_if_needed(const char * structname,
 		return;
 	}
 
-	if( !strcmp( structname , "sctk_runtime_config_struct_progress_thread") )
+	if( !strcmp( structname , "sctk_runtime_config_struct_nbc") )
 	{
-		sctk_runtime_config_struct_init_progress_thread( ptr );
+		sctk_runtime_config_struct_init_nbc( ptr );
 		return;
 	}
 

@@ -1520,19 +1520,24 @@ int __MPC_Barrier(MPC_Comm comm) {
 
 int ___grequest_disguise_poll( void * arg )
 {
-    int my_rank = sctk_get_task_rank();
+    int ret = 0;
+    //sctk_error("POLL %p", arg);
 
     MPC_Request * req = (MPC_Request *)arg;
-   
+
     if( !req->poll_fn )
     {
-        return 1;
+        ret = 0;
+        goto POLL_DONE_G;
     }
 
     if( req->completion_flag == SCTK_MESSAGE_DONE )
     {
-        return 1;
+        ret = 1;
+        goto POLL_DONE_G;
     }
+
+    int my_rank = sctk_get_task_rank();
     
     int disguised = 0;
     if( my_rank != req->grequest_rank )
@@ -1540,22 +1545,24 @@ int ___grequest_disguise_poll( void * arg )
         disguised = 1;
         if( MPCX_Disguise( MPC_COMM_WORLD, req->grequest_rank ) != MPC_SUCCESS )
         {
-            return 0;
+            ret = 0;
+            goto POLL_DONE_G;
         }
     }
-
 
     MPC_Status tmp_status;
     (req->poll_fn)(req->extra_state, &tmp_status);   
 
+    ret = (req->completion_flag == SCTK_MESSAGE_DONE);
 
 
+POLL_DONE_G:
     if( disguised )
     {
        MPCX_Undisguise();
     }
 
-    return (req->completion_flag == SCTK_MESSAGE_DONE);
+    return ret;
 }
 
 
@@ -1614,10 +1621,9 @@ int PMPCX_Grequest_start_generic(MPC_Grequest_query_function *query_fn,
   request->completion_flag = SCTK_MESSAGE_PENDING;
 
   /* We now push the request inside the progress list */
-  MPCX_Undisguise();
   struct sctk_task_specific_s *ctx = __MPC_get_task_specific();
-
-  request->progress_unit = progressList_add(ctx->progress_list, ___grequest_disguise_poll, (void *)request );
+  request->progress_unit = NULL;
+  request->progress_unit = (void*)progressList_add(ctx->progress_list, ___grequest_disguise_poll, (void *)request );
 
   MPC_ERROR_SUCESS()
 }
@@ -1638,6 +1644,8 @@ int PMPCX_Grequest_start(MPC_Grequest_query_function *query_fn,
                          MPC_Request *request) {
   return PMPCX_Grequest_start_generic(query_fn, free_fn, cancel_fn, poll_fn,
                                       NULL, extra_state, request);
+
+  //sctk_error("START %p", request);
 }
 /************************************************************************/
 /* Extended Generalized Requests Request Classes                        */
@@ -1728,12 +1736,22 @@ int PMPC_Grequest_start(MPC_Grequest_query_function *query_fn,
 * \param request Request we want to finish
 */
 int PMPC_Grequest_complete(MPC_Request request) {
-  /* We have to do this as request complete takes
+
+    MPC_Request * src_req = (MPC_Request *)request.pointer_to_source_request; 
+
+    struct progressWorkUnit * pwu = ((struct progressWorkUnit *)src_req->progress_unit);
+
+    pwu->done = 1;
+    
+    /* We have to do this as request complete takes
    * a copy of the request ... but we want
    * to modify the original request which is being polled ... */
-  ((MPC_Request *)request.pointer_to_source_request)->completion_flag =
+  src_req->completion_flag =
       SCTK_MESSAGE_DONE;
 
+
+
+  //sctk_error("COMP %p",  request.pointer_to_source_request);
   MPC_ERROR_SUCESS()
 }
 

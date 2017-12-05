@@ -276,9 +276,13 @@ meta.types = {
 		reduce_scatter_inter: {mode: 'param', name: "reduce_scatter_inter", type: "funcptr", doc: "MPI_Reduce_scatter intercom algorithm", dflt: "__INTERNAL__PMPI_Reduce_scatter_inter", },
 		reduce_scatter_block_inter: {mode: 'param', name: "reduce_scatter_block_inter", type: "funcptr", doc: "MPI_Reduce_scatter_block intercom algorithm", dflt: "__INTERNAL__PMPI_Reduce_scatter_block_inter", },
 	}},
-	progress_thread : {type: 'struct', name: "progress_thread", childs: {
+	nbc : {type: 'struct', name: "nbc", childs: {
 		use_progress_thread: {mode: 'param', name: "use_progress_thread", type: "int", doc: "If use progress threads for non blocking collectives", dflt: "0", },
 		progress_thread_binding: {mode: 'param', name: "progress_thread_binding", type: "funcptr", doc: "Algorithm of progress threads binding : sctk_get_progress_thread_binding_[bind,smart,numa_iter,numa]", dflt: "sctk_get_progress_thread_binding_bind", },
+		use_egreq_bcast: {mode: 'param', name: "use_egreq_bcast", type: "int", doc: "Should bcast rely on Egreq progress", dflt: "0", },
+		use_egreq_scatter: {mode: 'param', name: "use_egreq_scatter", type: "int", doc: "Should scatter rely on Egreq progress", dflt: "0", },
+		use_egreq_gather: {mode: 'param', name: "use_egreq_gather", type: "int", doc: "Should gather rely on Egreq progress", dflt: "0", },
+		use_egreq_reduce: {mode: 'param', name: "use_egreq_reduce", type: "int", doc: "Should reduce rely on Egreq progress", dflt: "0", },
 	}},
 	mpi_rma : {type: 'struct', name: "mpi_rma", childs: {
 		alloc_mem_pool_enable: {mode: 'param', name: "alloc_mem_pool_enable", type: "int", doc: "Enable the MPI_Alloc_mem shared memory pool", dflt: "1", },
@@ -357,7 +361,7 @@ meta.modules = {
 	collectives_shm: {name: "collectives_shm", type: "collectives_shm"},
 	collectives_intra: {name: "collectives_intra", type: "collectives_intra"},
 	collectives_inter: {name: "collectives_inter", type: "collectives_inter"},
-	progress_thread: {name: "progress_thread", type: "progress_thread"},
+	nbc: {name: "nbc", type: "nbc"},
 	mpc: {name: "mpc", type: "mpc"},
 	rma: {name: "rma", type: "mpi_rma"},
 	openmp: {name: "openmp", type: "openmp"},

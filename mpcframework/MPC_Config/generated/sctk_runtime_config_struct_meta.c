@@ -42,7 +42,7 @@ const struct sctk_runtime_config_entry_meta sctk_runtime_config_db[] = {
 	{"collectives_shm"     , SCTK_CONFIG_META_TYPE_PARAM , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_modules,collectives_shm)  , sizeof(struct sctk_runtime_config_struct_collectives_shm) , "sctk_runtime_config_struct_collectives_shm" , sctk_runtime_config_struct_init_collectives_shm},
 	{"collectives_intra"     , SCTK_CONFIG_META_TYPE_PARAM , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_modules,collectives_intra)  , sizeof(struct sctk_runtime_config_struct_collectives_intra) , "sctk_runtime_config_struct_collectives_intra" , sctk_runtime_config_struct_init_collectives_intra},
 	{"collectives_inter"     , SCTK_CONFIG_META_TYPE_PARAM , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_modules,collectives_inter)  , sizeof(struct sctk_runtime_config_struct_collectives_inter) , "sctk_runtime_config_struct_collectives_inter" , sctk_runtime_config_struct_init_collectives_inter},
-	{"progress_thread"     , SCTK_CONFIG_META_TYPE_PARAM , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_modules,progress_thread)  , sizeof(struct sctk_runtime_config_struct_progress_thread) , "sctk_runtime_config_struct_progress_thread" , sctk_runtime_config_struct_init_progress_thread},
+	{"nbc"     , SCTK_CONFIG_META_TYPE_PARAM , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_modules,nbc)  , sizeof(struct sctk_runtime_config_struct_nbc) , "sctk_runtime_config_struct_nbc" , sctk_runtime_config_struct_init_nbc},
 	{"mpc"     , SCTK_CONFIG_META_TYPE_PARAM , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_modules,mpc)  , sizeof(struct sctk_runtime_config_struct_mpc) , "sctk_runtime_config_struct_mpc" , sctk_runtime_config_struct_init_mpc},
 	{"rma"     , SCTK_CONFIG_META_TYPE_PARAM , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_modules,rma)  , sizeof(struct sctk_runtime_config_struct_mpi_rma) , "sctk_runtime_config_struct_mpi_rma" , sctk_runtime_config_struct_init_mpi_rma},
 	{"openmp"     , SCTK_CONFIG_META_TYPE_PARAM , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_modules,openmp)  , sizeof(struct sctk_runtime_config_struct_openmp) , "sctk_runtime_config_struct_openmp" , sctk_runtime_config_struct_init_openmp},
@@ -710,11 +710,23 @@ const struct sctk_runtime_config_entry_meta sctk_runtime_config_db[] = {
 				NULL
 			},
 	/* struct */
-	{"sctk_runtime_config_struct_progress_thread" , SCTK_CONFIG_META_TYPE_STRUCT , 0  , sizeof(struct sctk_runtime_config_struct_progress_thread) , NULL , sctk_runtime_config_struct_init_progress_thread},
-	{"use_progress_thread"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_progress_thread,use_progress_thread)  , sizeof(int) , "int" , NULL , 
+	{"sctk_runtime_config_struct_nbc" , SCTK_CONFIG_META_TYPE_STRUCT , 0  , sizeof(struct sctk_runtime_config_struct_nbc) , NULL , sctk_runtime_config_struct_init_nbc},
+	{"use_progress_thread"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_nbc,use_progress_thread)  , sizeof(int) , "int" , NULL , 
 				NULL
 			},
-	{"progress_thread_binding"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_progress_thread,progress_thread_binding)  , sizeof(struct sctk_runtime_config_funcptr) , "funcptr" , NULL , 
+	{"progress_thread_binding"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_nbc,progress_thread_binding)  , sizeof(struct sctk_runtime_config_funcptr) , "funcptr" , NULL , 
+				NULL
+			},
+	{"use_egreq_bcast"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_nbc,use_egreq_bcast)  , sizeof(int) , "int" , NULL , 
+				NULL
+			},
+	{"use_egreq_scatter"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_nbc,use_egreq_scatter)  , sizeof(int) , "int" , NULL , 
+				NULL
+			},
+	{"use_egreq_gather"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_nbc,use_egreq_gather)  , sizeof(int) , "int" , NULL , 
+				NULL
+			},
+	{"use_egreq_reduce"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_nbc,use_egreq_reduce)  , sizeof(int) , "int" , NULL , 
 				NULL
 			},
 	/* struct */

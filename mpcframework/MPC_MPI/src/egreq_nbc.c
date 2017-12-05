@@ -38,6 +38,7 @@ static const char * op_to_string(MPI_Op op) {
 typedef enum {
     TYPE_NULL,
     TYPE_SEND=3,
+    TYPE_IBCAST,
     TYPE_RECV,
     TYPE_WAIT,
     TYPE_MPI_OP,
@@ -50,6 +51,7 @@ static const char * const strops[TYPE_COUNT] = {
     "NULL",
     "SEND",
     "RECV",
+    "IBCAST",
     "WAIT",
     "MPI_OP",
     "FREE",
@@ -191,6 +193,10 @@ int nbc_op_trigger( struct nbc_op * op )
             LOG(stderr, "%d <---- RECV %d\n", rank, op->remote);
             PMPI_Irecv(op->buff, op->count, op->datatype, op->remote, op->tag, op->comm, &op->request);
             break;
+        case TYPE_IBCAST:
+            LOG(stderr, "%d <---- IBCAST %d\n", rank, op->remote);
+            MPI_Ixbcast(op->buff, op->count, op->datatype, op->remote, op->comm, &op->request);
+            break;
         case TYPE_MPI_OP:
             LOG(stderr, "%d ----- OP %s\n", rank, op_to_string(op->mpi_op));
             NBC_Operation(op->out_buff, op->buff, op->buff2, op->mpi_op, op->datatype, op->count);
@@ -216,9 +222,10 @@ int nbc_op_trigger( struct nbc_op * op )
 
 int nbc_op_test( struct nbc_op * op  )
 {
+#ifdef EG_DEBUG
     int rank;
-    MPI_Comm_rank( MPI_COMM_WORLD , &rank );
-
+    PMPI_Comm_rank( MPI_COMM_WORLD , &rank );
+#endif
     if( op->t == TYPE_WAIT )
     {
         //LOG(stderr, "IS W\n");
@@ -250,7 +257,7 @@ int nbc_op_test( struct nbc_op * op  )
     }
 
     int flag=0;
-    MPI_Test( &op->request , &flag,  MPI_STATUS_IGNORE );
+    PMPI_Test( &op->request , &flag,  MPI_STATUS_IGNORE );
 
 
     if( flag )
@@ -279,9 +286,6 @@ xMPI_Request * xMPI_Request_new(MPI_Request * parent, int size)
         perror("malloc");
         abort();
     }
-
-    int rank;
-    MPI_Comm_rank( MPI_COMM_WORLD , &rank );
 
     ret->size = size;
     int i;
@@ -327,8 +331,10 @@ static inline int xMPI_Request_gen_poll( xMPI_Request *xreq )
 {
     int i, j;
 
+#ifdef EG_DEBUG
     int rank;
-    MPI_Comm_rank( MPI_COMM_WORLD , &rank );
+    PMPI_Comm_rank( MPI_COMM_WORLD , &rank );
+#endif
 
     int failed_lock = sctk_spinlock_trylock( &xreq->lock );
 
@@ -546,8 +552,8 @@ int MPI_Ixscatter(const void *sendbuf, int sendcount, MPI_Datatype sendtype, voi
     // TODO MPI_IN_PLACE
 
     int rank, size;
-    MPI_Comm_rank( comm , &rank );
-    MPI_Comm_size( comm , &size );
+    PMPI_Comm_rank( comm , &rank );
+    PMPI_Comm_size( comm , &size );
 
     int send_size, recv_size;
     PMPI_Type_size(sendtype, &send_size);
@@ -584,8 +590,8 @@ int MPI_Ixgather(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void
     // TODO MPI_IN_PLACE
 
     int rank, size;
-    MPI_Comm_rank( comm , &rank );
-    MPI_Comm_size( comm , &size );
+    PMPI_Comm_rank( comm , &rank );
+    PMPI_Comm_size( comm , &size );
 
     int send_size, recv_size;
     PMPI_Type_size(sendtype, &send_size);
@@ -806,4 +812,5 @@ int MPI_Ixbarrier( MPI_Comm comm , MPI_Request * req )
 
     return start_request(xreq, req);
 }
+
 

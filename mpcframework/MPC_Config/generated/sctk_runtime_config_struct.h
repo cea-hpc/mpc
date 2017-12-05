@@ -707,13 +707,21 @@ struct sctk_runtime_config_struct_collectives_inter
 };
 
 /******************************** STRUCTURE *********************************/
-/**Progress thread NBC**/
-struct sctk_runtime_config_struct_progress_thread
+/**NBC**/
+struct sctk_runtime_config_struct_nbc
 {	int init_done;
 	/**If use progress threads for non blocking collectives**/
 	int use_progress_thread;
 	/**Algorithm of progress threads binding : sctk_get_progress_thread_binding_[bind,smart,numa_iter,numa]**/
 	struct sctk_runtime_config_funcptr progress_thread_binding;
+	/**Should bcast rely on Egreq progress**/
+	int use_egreq_bcast;
+	/**Should scatter rely on Egreq progress**/
+	int use_egreq_scatter;
+	/**Should gather rely on Egreq progress**/
+	int use_egreq_gather;
+	/**Should reduce rely on Egreq progress**/
+	int use_egreq_reduce;
 };
 
 /******************************** STRUCTURE *********************************/
@@ -884,7 +892,7 @@ struct sctk_runtime_config_modules
 	struct sctk_runtime_config_struct_collectives_shm collectives_shm;
 	struct sctk_runtime_config_struct_collectives_intra collectives_intra;
 	struct sctk_runtime_config_struct_collectives_inter collectives_inter;
-	struct sctk_runtime_config_struct_progress_thread progress_thread;
+	struct sctk_runtime_config_struct_nbc nbc;
 	struct sctk_runtime_config_struct_mpc mpc;
 	struct sctk_runtime_config_struct_mpi_rma rma;
 	struct sctk_runtime_config_struct_openmp openmp;

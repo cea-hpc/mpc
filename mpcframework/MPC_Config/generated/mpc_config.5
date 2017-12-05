@@ -139,10 +139,10 @@ See type collectives_intra.
 Collectives intercom MPI
 .br
 See type collectives_inter.
-.It Cm progress_thread
-Progress thread NBC
+.It Cm nbc
+NBC
 .br
-See type progress_thread.
+See type nbc.
 .It Cm mpc
 Options for MPC Message Passing
 .br
@@ -1221,8 +1221,8 @@ Type is function pointer. Default value is __INTERNAL__PMPI_Reduce_scatter_block
 .Pp reduce_scatter_block_inter
 MPI_Reduce_scatter_block intercom algorithm
 .El
-.Sh ENTRIES OF TYPE progress_thread
-Progress thread NBC
+.Sh ENTRIES OF TYPE nbc
+NBC
 .Pp
 It support parameters :
 .Pp
@@ -1235,6 +1235,22 @@ If use progress threads for non blocking collectives
 Type is function pointer. Default value is sctk_get_progress_thread_binding_bind. 
 .Pp progress_thread_binding
 Algorithm of progress threads binding : sctk_get_progress_thread_binding_[bind,smart,numa_iter,numa]
+.It Cm use_egreq_bcast
+Type is int. Default value is 0. 
+.Pp use_egreq_bcast
+Should bcast rely on Egreq progress
+.It Cm use_egreq_scatter
+Type is int. Default value is 0. 
+.Pp use_egreq_scatter
+Should scatter rely on Egreq progress
+.It Cm use_egreq_gather
+Type is int. Default value is 0. 
+.Pp use_egreq_gather
+Should gather rely on Egreq progress
+.It Cm use_egreq_reduce
+Type is int. Default value is 0. 
+.Pp use_egreq_reduce
+Should reduce rely on Egreq progress
 .El
 .Sh ENTRIES OF TYPE mpi_rma
 Options related to the MPI RMA support

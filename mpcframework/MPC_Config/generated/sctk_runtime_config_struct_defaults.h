@@ -85,7 +85,7 @@ void sctk_runtime_config_struct_init_low_level_comm(void * struct_ptr);
 void sctk_runtime_config_struct_init_collectives_shm(void * struct_ptr);
 void sctk_runtime_config_struct_init_collectives_intra(void * struct_ptr);
 void sctk_runtime_config_struct_init_collectives_inter(void * struct_ptr);
-void sctk_runtime_config_struct_init_progress_thread(void * struct_ptr);
+void sctk_runtime_config_struct_init_nbc(void * struct_ptr);
 void sctk_runtime_config_struct_init_mpi_rma(void * struct_ptr);
 void sctk_runtime_config_struct_init_mpc(void * struct_ptr);
 void sctk_runtime_config_struct_init_openmp(void * struct_ptr);

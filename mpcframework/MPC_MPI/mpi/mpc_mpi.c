@@ -14546,7 +14546,7 @@ static int __INTERNAL__PMPI_Init(int *argc, char ***argv) {
     task_specific->mpc_mpi_data->buffers = NULL;
     task_specific->mpc_mpi_data->ops = NULL;
     if (sctk_runtime_config_get()
-            ->modules.progress_thread.use_progress_thread == 1) {
+            ->modules.nbc.use_progress_thread == 1) {
       task_specific->mpc_mpi_data->NBC_Pthread_handles = NULL;
       sctk_thread_mutex_init(&(task_specific->mpc_mpi_data->list_handles_lock),
                              NULL);
@@ -15357,10 +15357,13 @@ int PMPI_Test (MPI_Request * request, int *flag, MPI_Status * status)
 	if(*request == MPI_REQUEST_NULL)
 	{
 		res = MPI_SUCCESS;
-		status->MPC_SOURCE = MPI_PROC_NULL;
-		status->MPC_TAG = MPI_ANY_TAG;
-		status->MPC_ERROR = MPI_SUCCESS;
-		status->size = 0;
+                if( status )
+                {
+		    status->MPC_SOURCE = MPI_PROC_NULL;
+		    status->MPC_TAG = MPI_ANY_TAG;
+		    status->MPC_ERROR = MPI_SUCCESS;
+		    status->size = 0;
+                }
 		*flag = 1;
 		return res;
 	}

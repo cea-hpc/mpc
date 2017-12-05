@@ -58,6 +58,10 @@ typedef int sctk_Grequest_poll_fn( void * extra_state , sctk_status_t * status )
 typedef int sctk_Grequest_wait_fn( int count, void ** array_of_states, double timeout, sctk_status_t * status );
 /** Generalized Request classes **/
 typedef int sctk_Request_class;
+
+
+struct progressWorkUnit;
+
 /** Request definition **/
 typedef struct
 {

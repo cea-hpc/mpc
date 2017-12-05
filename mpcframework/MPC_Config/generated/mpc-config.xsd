@@ -795,7 +795,7 @@
     </xs:all>
   </xs:complexType>
   <!-- ********************************************************* -->
-  <xs:complexType name="user_type_progress_thread">
+  <xs:complexType name="user_type_nbc">
     <xs:all>
       <xs:element minOccurs="0" name="use_progress_thread" type="xs:integer"/>
       <xs:element minOccurs="0" name="progress_thread_binding">
@@ -805,6 +805,10 @@
           </xs:restriction>
         </xs:simpleType>
       </xs:element>
+      <xs:element minOccurs="0" name="use_egreq_bcast" type="xs:integer"/>
+      <xs:element minOccurs="0" name="use_egreq_scatter" type="xs:integer"/>
+      <xs:element minOccurs="0" name="use_egreq_gather" type="xs:integer"/>
+      <xs:element minOccurs="0" name="use_egreq_reduce" type="xs:integer"/>
     </xs:all>
   </xs:complexType>
   <!-- ********************************************************* -->
@@ -944,7 +948,7 @@
       <xs:element minOccurs="0" name="collectives_shm" type="user_type_collectives_shm"/>
       <xs:element minOccurs="0" name="collectives_intra" type="user_type_collectives_intra"/>
       <xs:element minOccurs="0" name="collectives_inter" type="user_type_collectives_inter"/>
-      <xs:element minOccurs="0" name="progress_thread" type="user_type_progress_thread"/>
+      <xs:element minOccurs="0" name="nbc" type="user_type_nbc"/>
       <xs:element minOccurs="0" name="mpc" type="user_type_mpc"/>
       <xs:element minOccurs="0" name="rma" type="user_type_mpi_rma"/>
       <xs:element minOccurs="0" name="openmp" type="user_type_openmp"/>

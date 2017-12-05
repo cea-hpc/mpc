@@ -1319,6 +1319,7 @@ static int NBC_Ialltoallv(void* sendbuf, int *sendcounts, int *sdispls,
 /* Dissemination implementation of MPI_Ibarrier */
 
 static int NBC_Ibarrier(MPI_Comm comm, NBC_Handle* handle) {
+
   int round, rank, p, maxround, res, recvpeer, sendpeer;
   NBC_Schedule *schedule;
 
@@ -4115,7 +4116,7 @@ static inline int NBC_Sched_commit_pos(NBC_Schedule *schedule) {
  * to be called *only* from the progress thread !!! */
 static inline int NBC_Free(NBC_Handle* handle) {
   int use_progress_thread = 0;
-  use_progress_thread = sctk_runtime_config_get()->modules.progress_thread.use_progress_thread;
+  use_progress_thread = sctk_runtime_config_get()->modules.nbc.use_progress_thread;
 
   if (use_progress_thread == 1) {
 
@@ -4440,7 +4441,7 @@ error:
 }
 
 static inline int NBC_Initialize() {
-  if(sctk_runtime_config_get()->modules.progress_thread.use_progress_thread == 1)
+  if(sctk_runtime_config_get()->modules.nbc.use_progress_thread == 1)
   { 
   struct sctk_task_specific_s * task_specific;
   task_specific = __MPC_get_task_specific ();
@@ -4454,7 +4455,7 @@ static inline int NBC_Initialize() {
   int (*sctk_get_progress_thread_binding)(void);
   sctk_get_progress_thread_binding =
       (int (*)(void))sctk_runtime_config_get()
-          ->modules.progress_thread.progress_thread_binding.value;
+          ->modules.nbc.progress_thread_binding.value;
 
   int cpu_id_to_bind_progress_thread = sctk_get_progress_thread_binding();
 
@@ -4511,9 +4512,9 @@ static inline int NBC_Init_handle(NBC_Handle *handle, MPI_Comm comm, int tag) {
   int res;
 
   // fprintf(stderr,"DEBUG######################
-  // %d\n",sctk_runtime_config_get()->modules.progress_thread.use_progress_thread);
+  // %d\n",sctk_runtime_config_get()->modules.nbc.use_progress_thread);
 
-  if(sctk_runtime_config_get()->modules.progress_thread.use_progress_thread == 1)
+  if(sctk_runtime_config_get()->modules.nbc.use_progress_thread == 1)
 {
   struct sctk_task_specific_s * task_specific;
   task_specific = __MPC_get_task_specific ();
@@ -4558,7 +4559,7 @@ static inline int NBC_Start(NBC_Handle *handle, NBC_Schedule *schedule) {
 
   handle->schedule = schedule;
 
-  if(sctk_runtime_config_get()->modules.progress_thread.use_progress_thread == 1)
+  if(sctk_runtime_config_get()->modules.nbc.use_progress_thread == 1)
   {
   /* add handle to open handles - and give the control to the progress
    * thread - the handle must not be touched by the user thread from now
@@ -4633,7 +4634,7 @@ static inline int NBC_Start(NBC_Handle *handle, NBC_Schedule *schedule) {
 
 int NBC_Wait(NBC_Handle *handle, MPI_Status *status) {
 	int use_progress_thread = 0;
-	use_progress_thread = sctk_runtime_config_get()->modules.progress_thread.use_progress_thread;
+	use_progress_thread = sctk_runtime_config_get()->modules.nbc.use_progress_thread;
 
 
 	if( status != MPI_STATUS_IGNORE )
@@ -4676,7 +4677,7 @@ int NBC_Wait(NBC_Handle *handle, MPI_Status *status) {
 int NBC_Test(NBC_Handle *handle, int *flag, MPI_Status *status) {
   int use_progress_thread = 0;
   use_progress_thread =
-      sctk_runtime_config_get()->modules.progress_thread.use_progress_thread;
+      sctk_runtime_config_get()->modules.nbc.use_progress_thread;
   int ret = NBC_CONTINUE;
 
   if (use_progress_thread == 1) {
@@ -5280,7 +5281,7 @@ int NBC_Operation(void *buf3, void *buf1, void *buf2, MPI_Op op, MPI_Datatype ty
 
 int NBC_Finalize(sctk_thread_t * NBC_thread)
 {
-  if(sctk_runtime_config_get()->modules.progress_thread.use_progress_thread == 1)
+  if(sctk_runtime_config_get()->modules.nbc.use_progress_thread == 1)
   {
   int ret = 0;
 //  ret = sctk_thread_join( *NBC_thread, NULL);
@@ -5341,7 +5342,8 @@ int
 PMPI_Ibcast (void *buffer, int count, MPI_Datatype datatype, int root,
 	    MPI_Comm comm, MPI_Request *request)
 {
-  if( sctk_datatype_contig_mem( datatype ) )
+  if( sctk_datatype_contig_mem( datatype )
+  && sctk_runtime_config_get()->modules.nbc.use_egreq_bcast )
   {
     return MPI_Ixbcast( buffer, count, datatype, root, comm, request );
   }
@@ -5375,7 +5377,7 @@ PMPI_Igather (void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 	     int root, MPI_Comm comm, MPI_Request * request)
 {
 
-  if( sctk_datatype_contig_mem(sendtype) && sctk_datatype_contig_mem(recvtype ))
+  if( sctk_runtime_config_get()->modules.nbc.use_egreq_gather )
   {
     return MPI_Ixgather(sendbuf, sendcnt, sendtype, recvbuf, recvcnt, recvtype, root, comm, request);
   }
@@ -5445,7 +5447,7 @@ PMPI_Iscatter (void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 	      MPI_Comm comm, MPI_Request * request)
 {
 
-  if(  sctk_datatype_contig_mem(sendtype) && sctk_datatype_contig_mem(recvtype ))
+  if( sctk_runtime_config_get()->modules.nbc.use_egreq_scatter )
   {
     return MPI_Ixscatter(sendbuf, sendcnt, sendtype, recvbuf, recvcnt, recvtype, root, comm, request);
   }
@@ -5666,9 +5668,8 @@ PMPI_Ireduce (void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
 	     MPI_Op op, int root, MPI_Comm comm, MPI_Request *request)
 {
 
-  if( sctk_datatype_contig_mem(datatype ))
+  if( sctk_runtime_config_get()->modules.nbc.use_egreq_reduce )
   {
-  
     return MPI_Ixreduce( sendbuf, recvbuf, count, datatype, op, root, comm, request);
   }
 

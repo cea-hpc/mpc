@@ -11,18 +11,17 @@
 static inline int progressWorkUnit_isfree( struct progressWorkUnit * pwu )
 {
     int ret = 0;
-    sctk_spinlock_lock( &pwu->unit_lock );
-    ret = pwu->is_free;
-    sctk_spinlock_unlock( &pwu->unit_lock );
+    if( sctk_spinlock_trylock( &pwu->unit_lock ) == 0 ){
+        ret = pwu->is_free;
+        sctk_spinlock_unlock( &pwu->unit_lock );
+    }
     return ret;
 }
 
 
 static inline void progressWorkUnit_setfree( struct progressWorkUnit * pwu, int is_free)
 {
-    sctk_spinlock_lock( &pwu->unit_lock );
     pwu->is_free = is_free;
-    sctk_spinlock_unlock( &pwu->unit_lock );
 }
 
 
@@ -81,14 +80,16 @@ int progressWorkUnit_poll( struct progressWorkUnit *pwu )
 
     if( sctk_spinlock_trylock(&pwu->unit_lock) == 0 ) {
 
-        if( !pwu->done && !pwu->is_free)
+        if( !pwu->is_free)
         {
-            pwu->done = (pwu->fn)( pwu->param);
+            if( !pwu->done )
+                pwu->done = (pwu->fn)( pwu->param);
         
             ret = PWU_DID_PROGRESS;
     
             if( pwu->done )
             {
+                progressWorkUnit_relax( pwu );
                 ret = PWU_WORK_DONE;
             }
         }
@@ -193,6 +194,7 @@ struct progressWorkUnit * progressList_acquire( struct progressList * pl, int (*
 
                     /* All done */
                     acquired = 1;
+                    break;
                 }
             }
         }
@@ -211,7 +213,7 @@ struct progressWorkUnit * progressList_add( struct progressList * pl, int (*fn)(
 }
 
 
-#define PROGRESS_THRESH 3
+#define PROGRESS_THRESH 2
 
 
 int progressList_poll( struct progressList * pl )
@@ -255,7 +257,6 @@ int progressList_poll( struct progressList * pl )
 
             sctk_spinlock_lock( &pl->list_lock );
             /* We need to free this slot */
-            progressWorkUnit_relax( &pl->works[i] );
             pl->work_count--;
             sctk_spinlock_unlock( &pl->list_lock );
 
@@ -387,7 +388,7 @@ int progressEnginePool_poll( struct progressEnginePool * p, int my_id )
     if( ret != PWU_NO_PROGRESS )
     {
         /* I did progress return */
-        return ret;
+        //return ret;
     }
 
     if( my_id < 0 )
@@ -398,7 +399,7 @@ int progressEnginePool_poll( struct progressEnginePool * p, int my_id )
 
     /* If I'm here I did no progress */
 
-    //if( p->lists[targ].no_work_count < 1024 )
+    //if( p->lists[targ].no_work_count < 5 )
     //    return ret;
     /* Try to steal progress neighbor */
     targ = rand() % p->booked;
