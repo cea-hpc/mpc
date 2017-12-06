@@ -653,8 +653,12 @@ void sctk_ptl_rdma_event_md(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 	switch(ev.type)
 	{
 		case PTL_EVENT_ACK:    /* write  || CAS || FETCH_AND_OP */
-			sctk_free(ptr);
-			break;
+			if(atomic_ptr != NULL)
+			{
+				sctk_free(ptr); /* just for the temp MD buffer */
+				break;
+			}
+			/* else, complete_and_free_message */
 		case PTL_EVENT_REPLY:  /* READ || CAS || FETCH_AND_OP */
 			sctk_complete_and_free_message(msg);
 			sctk_free(ptr);
