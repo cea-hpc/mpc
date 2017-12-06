@@ -114,9 +114,18 @@ int mpc_MPI_allocmem_pool_init() {
     int my_rank, comm_size, node_size;
     PMPI_Comm_rank(node_comm, &my_rank);
     PMPI_Comm_size(node_comm, &comm_size);
+    
+    /* disabling shm allocator for C/R (temp) */
+    if(sctk_checkpoint_mode || sctk_restart_mode)
+    {
+	if(!cw_rank)
+		sctk_warning("Shared-Node memory RMA are not supported when C/R is enabled");
+        *((int*)&sctk_runtime_config_get()->modules.rma.alloc_mem_pool_enable) = 0;
+    }
 
     int alloc_mem_enabled =
         sctk_runtime_config_get()->modules.rma.alloc_mem_pool_enable;
+    
 
     if ((comm_size == 1) || (alloc_mem_enabled == 0)) {
       mpc_MPI_accumulate_op_lock_init_shared();
