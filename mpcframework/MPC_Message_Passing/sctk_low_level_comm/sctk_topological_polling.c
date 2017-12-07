@@ -109,7 +109,7 @@ sctk_topological_polling_set_t sctk_rail_convert_polling_set_from_config( enum r
 
 }
 
-
+int init_done = 0;
 
 void sctk_topological_polling_tree_init( struct sctk_topological_polling_tree * tree,  sctk_topological_polling_set_t trigger, sctk_topological_polling_set_t range, int root_pu )
 {
@@ -255,7 +255,6 @@ void sctk_topological_polling_tree_init( struct sctk_topological_polling_tree * 
 			tree->cells[i].cell_id = SCTK_POLL_IGNORE;
 		}
 	}
-	
 	for( i= 0 ; i < tree->cell_count ; i++ )
 	{
 		sctk_info("[%d]{%d}", i, tree->cells[i].cell_id );
@@ -266,14 +265,14 @@ void sctk_topological_polling_tree_init( struct sctk_topological_polling_tree * 
 		
 	
 	hwloc_bitmap_free( roots_cpuset );
+    init_done=1;
 }
 
 
 static inline void sctk_topological_polling_cell_poll( struct sctk_topological_polling_cell * cells, int offset,  void (*func)( void *), void * arg )
 {
-	struct sctk_topological_polling_cell * cell = &cells[offset];
-
 	assert( 0 <= offset );
+	struct sctk_topological_polling_cell * cell = &cells[offset];
 	
 	int polling_counter = sctk_atomics_fetch_and_incr_int( &cell->polling_counter );
 	
@@ -307,6 +306,7 @@ static inline void sctk_topological_polling_cell_poll( struct sctk_topological_p
 
 void sctk_topological_polling_tree_poll( struct sctk_topological_polling_tree * tree,  void (*func)( void *), void * arg )
 {
+
 	int cpu_id = sctk_get_processor_rank();
 
 	/* Nothing to do */
@@ -338,6 +338,8 @@ void sctk_topological_polling_tree_poll( struct sctk_topological_polling_tree * 
 	 * here due to previous test we only have
 	 * those which are part of the range */
 
-	sctk_topological_polling_cell_poll( tree->cells, cpu_id,  func, arg );
-	
+    if(!init_done){
+        return ;
+    }
+        sctk_topological_polling_cell_poll( tree->cells, cpu_id,  func, arg );
 }
