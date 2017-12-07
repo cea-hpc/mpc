@@ -90,8 +90,8 @@ typedef struct _xMPI_Request
     int current_off;
     MPI_Request * myself;
     sctk_spinlock_t lock;
-    struct nbc_op op[0];
     struct _xMPI_Request * next;
+    struct nbc_op op[0];
 } xMPI_Request;
 
 
@@ -280,16 +280,22 @@ static sctk_spinlock_t rpool_lock = 0;
 static int rpool_count = 0;
 static xMPI_Request * rpool = NULL;
 
-static inline xMPI_Request * xMPI_Request_from_pool()
+static inline xMPI_Request * xMPI_Request_from_pool( int  size )
 {
     xMPI_Request * ret = NULL;
     sctk_spinlock_lock( &rpool_lock );
 
     if( rpool_count )
     {
-        rpool_count--;
-        ret = rpool;
-        rpool = rpool->next;
+        if( rpool )
+        {
+            if( size <= rpool->size )
+            {
+                rpool_count--;
+                ret = rpool;
+                rpool = rpool->next;
+            }
+        }
     }
 
     sctk_spinlock_unlock( &rpool_lock );
@@ -328,7 +334,7 @@ static inline xMPI_Request * xMPI_Request_new(MPI_Request * parent, int size)
     /* We had an issue when polling the last event
      * adding a null event at the end seems to solve it*/
     //size++;
-    xMPI_Request * ret = xMPI_Request_from_pool();    
+    xMPI_Request * ret = xMPI_Request_from_pool(size);
     
     if( !ret )
         ret = sctk_malloc( sizeof(xMPI_Request) + (sizeof(struct nbc_op) * size));
