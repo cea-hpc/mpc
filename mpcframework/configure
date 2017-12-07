@@ -92,6 +92,7 @@ SCTK_OS=""
 UNAME_P=""
 SCTK_ARCH=""
 SCTK_DEBUG="0"
+SCTK_NOASSERT="0"
 SCTK_DEBUG_STRICT="0"
 SCTK_FORTRAN="1"
 SCTK_MPC_USE_ZLIB="0"
@@ -159,6 +160,7 @@ Optional features:
   --enable-shm-cma		   		   Enable CMA support for SHM (since Linux 3.2 & glibc 2.15) 
   --disable-posix-alloc            Disable MPC posix memory allocator.
   --enable-debug                   Enable MPC internal debugging features
+  --enable-debug-noassert          Enable MPC internal debugging features but preserve performance
   --enable-debug-strict            Same than --enable-debug but also enable flag -Werror.
   --enable-debug-messages          Enable MPC debug message printing in verbose level 3
   --enable-shell-colors            Enable support of colors in shell
@@ -407,8 +409,13 @@ for arg in "$@" ; do
     SCTK_DEBUG_MESSAGES_DISABLED="1"
     SCTK_DEBUG_MESSAGES="0"
     ;;
-    --enable-debug)
+    --enable-debug-noassert)
     SCTK_DEBUG="1"
+    SCTK_NOASSERT="1"
+    SCTK_DEBUG_MESSAGES="0"
+    SCTK_DEBUG_MESSAGES_DISABLED="1"
+    ;;
+    --enable-debug)
     if [ "$SCTK_DEBUG_MESSAGES_DISABLED" -eq "0" ]; then
       SCTK_DEBUG_MESSAGES="1"
     fi
@@ -420,9 +427,9 @@ for arg in "$@" ; do
     SCTK_DEBUG_STRICT="1"
     ;;
     --disable-fortran-header)
-	SCTK_FORTRAN_HEADER_DISABLED="1"
-	;;
-	--disable-fortran)
+    SCTK_FORTRAN_HEADER_DISABLED="1"
+    ;;
+    --disable-fortran)
     SCTK_FORTRAN="0"
     ;;
 
