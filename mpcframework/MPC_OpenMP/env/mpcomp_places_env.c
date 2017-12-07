@@ -321,8 +321,8 @@ mpcomp_places_build_cores_places( const int places_number, int *error )
    assert( places_string );
    
    core_found = 0; tnwrites = 0;
-   const int core_number = hwloc_get_nbobjs_by_depth( topology, HWLOC_OBJ_CORE );
-   const int pu_number = hwloc_get_nbobjs_by_depth( topology, HWLOC_OBJ_PU );
+   const int core_number = hwloc_get_nbobjs_by_type( topology,  HWLOC_OBJ_CORE );
+   const int pu_number = hwloc_get_nbobjs_by_type( topology,  HWLOC_OBJ_PU);
 
    const int __places_number = ( places_number == -1 ) ? core_number : places_number;
    while( next_core = hwloc_get_next_obj_by_type( topology, HWLOC_OBJ_CORE, prev_core ) )
