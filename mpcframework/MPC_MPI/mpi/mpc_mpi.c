@@ -5626,20 +5626,13 @@ int __INTERNAL__PMPI_Barrier_intra_shm_sig(MPI_Comm comm) {
   return MPI_SUCCESS;
 }
 
-int __INTERNAL__PMPI_Barrier_intra_shm(MPI_Comm comm) {
-  struct sctk_comm_coll *coll = sctk_communicator_get_coll(comm);
-  struct shared_mem_barrier *barrier_ctx = &coll->shm_barrier;
 
-  //	sctk_error("BARRIER CTX : %p", barrier_ctx	);
-
-  if (!coll) {
-    return MPI_ERR_COMM;
-  }
-
+static inline __INTERNAL__PMPI_Barrier_intra_shm_on_ctx(struct shared_mem_barrier *barrier_ctx, int comm_size )
+{
   int my_phase = !sctk_atomics_load_int(&barrier_ctx->phase);
 
   if (sctk_atomics_fetch_and_decr_int(&barrier_ctx->counter) == 1) {
-    sctk_atomics_store_int(&barrier_ctx->counter, coll->comm_size);
+    sctk_atomics_store_int(&barrier_ctx->counter, comm_size);
     sctk_atomics_store_int(&barrier_ctx->phase, my_phase);
   } else {
     if (__do_yield ) {
@@ -5654,6 +5647,19 @@ int __INTERNAL__PMPI_Barrier_intra_shm(MPI_Comm comm) {
   }
 
   return MPI_SUCCESS;
+
+}
+
+
+int __INTERNAL__PMPI_Barrier_intra_shm(MPI_Comm comm) {
+  struct sctk_comm_coll *coll = sctk_communicator_get_coll(comm);
+  struct shared_mem_barrier *barrier_ctx = &coll->shm_barrier;
+
+  if (!coll) {
+    return MPI_ERR_COMM;
+  }
+
+  return __INTERNAL__PMPI_Barrier_intra_shm_on_ctx( barrier_ctx, coll->comm_size );
 }
 
 #define FOR_MPI_BARRIER_STATIC_REQ 32

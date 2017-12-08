@@ -174,7 +174,7 @@ __sctk_communicator_get_coll(const sctk_communicator_t communicator);
 
 static inline struct sctk_comm_coll *
 sctk_communicator_get_coll(const sctk_communicator_t communicator) {
-  static __thread sctk_communicator_t saved_comm = -1;
+  static __thread sctk_communicator_t saved_comm = -2;
   static __thread struct sctk_comm_coll *saved_coll = NULL;
 
   if (saved_comm == communicator) {
@@ -274,6 +274,8 @@ typedef struct sctk_internal_communicator_s {
   int is_comm_self;
   /** Tells if all the ranks of the communicator are in shared-mem */
   int is_shared_mem;
+  /** Tells if all the ranks of the communicator are in shared-node */
+  int is_shared_node;
   /** peer communication (only for intercommunicator) **/
   sctk_communicator_t peer_comm;
   /** local id (only for intercommunicators)**/
@@ -313,7 +315,7 @@ int sctk_get_local_leader ( const sctk_communicator_t );
 int __sctk_is_inter_comm(const sctk_communicator_t);
 
 static inline int sctk_is_inter_comm(const sctk_communicator_t communicator) {
-  static int __thread last_comm = -1;
+  static int __thread last_comm = -2;
   static int __thread last_val = -1;
 
   if (last_comm == communicator) {
@@ -336,7 +338,7 @@ static inline int sctk_is_inter_comm(const sctk_communicator_t communicator) {
 int __sctk_is_shared_mem(const sctk_communicator_t communicator);
 
 static inline int sctk_is_shared_mem(const sctk_communicator_t communicator) {
-  static int __thread last_comm = -1;
+  static int __thread last_comm = -2;
   static int __thread last_val = -1;
 
   if (last_comm == communicator) {
@@ -349,6 +351,25 @@ static inline int sctk_is_shared_mem(const sctk_communicator_t communicator) {
   // sctk_error("%d == %d", communicator, tmp->is_shared_mem );
   return last_val;
 }
+
+
+int __sctk_is_shared_node(const sctk_communicator_t communicator);
+
+static inline int sctk_is_shared_node(const sctk_communicator_t communicator) {
+  static int __thread last_comm = -2;
+  static int __thread last_val = -1;
+
+  if (last_comm == communicator) {
+    return last_val;
+  }
+
+  last_comm = communicator;
+  last_val = __sctk_is_shared_node(communicator);
+
+  return last_val;
+}
+
+
 
 int sctk_is_in_group ( const sctk_communicator_t communicator );
 int sctk_get_rank ( const sctk_communicator_t communicator, const int comm_world_rank );

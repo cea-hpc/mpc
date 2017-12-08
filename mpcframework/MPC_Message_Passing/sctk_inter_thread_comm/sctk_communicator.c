@@ -1319,65 +1319,97 @@ int sctk_comm_coll_release(struct sctk_comm_coll *coll) {
  * @param process_array		Process involved with the communicator.
  * @param process_nb		Number of process for the communicator.
  * @param tmp				New communicator.
-**/
+ **/
 static inline void sctk_communicator_init_intern_init_only ( const int nb_task, int last_local, int first_local, int local_tasks,
-                                                             int *local_to_global, int *global_to_local, int *task_to_process, int *process_array, int process_nb, sctk_internal_communicator_t *tmp )
+        int *local_to_global, int *global_to_local, int *task_to_process, int *process_array, int process_nb, sctk_internal_communicator_t *tmp )
 {
-	sctk_spin_rwlock_t lock = SCTK_SPIN_RWLOCK_INITIALIZER;
-	sctk_spinlock_t spinlock = SCTK_SPINLOCK_INITIALIZER;
-	tmp->collectives = NULL;
-	tmp->nb_task = nb_task;
-	tmp->last_local = last_local;
-	tmp->first_local = first_local;
-	tmp->local_tasks = local_tasks;
-	tmp->process = process_array;
-	tmp->process_nb = process_nb;
+    sctk_spin_rwlock_t lock = SCTK_SPIN_RWLOCK_INITIALIZER;
+    sctk_spinlock_t spinlock = SCTK_SPINLOCK_INITIALIZER;
+    tmp->collectives = NULL;
+    tmp->nb_task = nb_task;
+    tmp->last_local = last_local;
+    tmp->first_local = first_local;
+    tmp->local_tasks = local_tasks;
+    tmp->process = process_array;
+    tmp->process_nb = process_nb;
 
-	if ( process_array != NULL )
-	{
-		qsort ( process_array, process_nb, sizeof ( int ), int_cmp );
-	}
+    if ( process_array != NULL )
+    {
+        qsort ( process_array, process_nb, sizeof ( int ), int_cmp );
+    }
 
-	tmp->local_to_global = local_to_global;
-	tmp->global_to_local = global_to_local;
-	tmp->task_to_process = task_to_process;
-	tmp->is_inter_comm = 0;
-	tmp->lock = lock;
-	tmp->creation_lock = spinlock;
-	tmp->has_zero = 0;
-	tmp->is_comm_self = 0;
-        tmp->is_shared_mem = 0;
-        OPA_store_int(&(tmp->nb_to_delete), 0);
+    tmp->local_to_global = local_to_global;
+    tmp->global_to_local = global_to_local;
+    tmp->task_to_process = task_to_process;
+    tmp->is_inter_comm = 0;
+    tmp->lock = lock;
+    tmp->creation_lock = spinlock;
+    tmp->has_zero = 0;
+    tmp->is_comm_self = 0;
+    tmp->is_shared_mem = 0;
+    OPA_store_int(&(tmp->nb_to_delete), 0);
 
-        tmp->is_shared_mem = 0;
+    tmp->is_shared_mem = 0;
 
-        /* Set the shared-memory Flag */
-        if (local_to_global) {
-          tmp->is_shared_mem = 1;
-          int i;
-          for (i = 0; i < nb_task; i++) {
+    /* Set the shared-memory Flag */
+    if (local_to_global) {
+        tmp->is_shared_mem = 1;
+        int i;
+        for (i = 0; i < nb_task; i++) {
             tmp->is_shared_mem = 1;
             int trank = local_to_global[i];
             if (sctk_is_net_message(trank)) {
-              tmp->is_shared_mem = 0;
-              break;
+                tmp->is_shared_mem = 0;
+                break;
             }
-          }
-        } else {
-          /* We are building comm_world */
-          if (sctk_process_number == 1)
+        }
+    } else {
+        /* We are building comm_world */
+        if (sctk_process_number == 1)
             tmp->is_shared_mem = 1;
+    }
+
+
+    /* Set the shared-node flag */
+    if (local_to_global) {
+        tmp->is_shared_node = 1;
+        int seen_node = -1;
+        int i;
+        for (i = 0; i < nb_task; i++) {
+            tmp->is_shared_node = 1;
+            int trank = local_to_global[i];
+            int nrank = sctk_get_node_rank_from_task_rank(trank);
+
+            if( seen_node < 0 )
+            {
+                seen_node = nrank;
+            }
+            else
+            {
+                if( seen_node != nrank )
+                {
+                    tmp->is_shared_node = 0;
+                    break;
+                }
+            }
         }
 
-        if (tmp->is_shared_mem) {
-          sctk_comm_coll_init(&tmp->coll, nb_task);
-          /* After that
-          tmp->coll.init_done == 1
-          */
-        } else {
-          /* Flag as not intialized */
-          tmp->coll.init_done = 0;
-        }
+    } else {
+        /* We are building comm_world */
+        if (sctk_node_number == 1)
+            tmp->is_shared_node = 1;
+    }
+
+
+    if (tmp->is_shared_mem) {
+        sctk_comm_coll_init(&tmp->coll, nb_task);
+        /* After that
+           tmp->coll.init_done == 1
+           */
+    } else {
+        /* Flag as not intialized */
+        tmp->coll.init_done = 0;
+    }
 }
 
 /************************* FUNCTION ************************/
@@ -1842,6 +1874,20 @@ int __sctk_is_shared_mem(const sctk_communicator_t communicator) {
 
   // sctk_error("%d == %d", communicator, tmp->is_shared_mem );
   return tmp->is_shared_mem;
+}
+
+/**
+ * This method check if the communicator is limited to a shared-memory space.
+ * @param communicator given communicator.
+ * @return 1 if it is, 0 if it is not.
+**/
+int __sctk_is_shared_node(const sctk_communicator_t communicator) {
+
+  sctk_internal_communicator_t *tmp;
+  tmp = sctk_get_internal_communicator(communicator);
+
+  // sctk_error("%d == %d", communicator, tmp->is_shared_mem );
+  return tmp->is_shared_node;
 }
 
 /************************* FUNCTION ************************/
