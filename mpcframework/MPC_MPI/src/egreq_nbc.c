@@ -3,7 +3,7 @@
 #include <string.h>
 #include <mpi.h>
 
-#include "sctk_allocator.h"
+#include "sctk_alloc.h"
 #include "sctk_inter_thread_comm.h"
 #include "egreq_nbc.h"
 

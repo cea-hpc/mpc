@@ -686,7 +686,7 @@ int sctk_mpi_halo_exchange_commit( struct sctk_mpi_halo_exchange_s * ex )
 	int outgoing_request_count = 0;
 	struct sctk_mpi_halo_exchange_request * outgoing_requests = __sctk_mpi_halo_exchange_fill_outgoing_requests( ex, &outgoing_request_count );
 
-	MPI_Request * msg_req = malloc( ( outgoing_request_count + incoming_request_count ) * sizeof( MPI_Request) );
+	MPI_Request * msg_req = sctk_malloc( ( outgoing_request_count + incoming_request_count ) * sizeof( MPI_Request) );
 	assume( msg_req );
 	
 	/* Post request Exchange messages */

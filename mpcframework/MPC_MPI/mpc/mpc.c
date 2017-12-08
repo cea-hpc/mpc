@@ -817,6 +817,7 @@ int __MPC_release_progress( sctk_task_specific_t * tmp  )
     int done = 0;
     sctk_spinlock_lock( &l );
     done = d;
+	d=1;
     sctk_spinlock_unlock( &l );
 
     if( done )

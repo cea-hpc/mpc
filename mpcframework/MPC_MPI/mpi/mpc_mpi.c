@@ -10673,15 +10673,9 @@ __INTERNAL__PMPI_Allreduce_intra_pipeline(void *sendbuf, void *recvbuf, int coun
 	if( STATIC_ALLRED_BLOB <= (dsize * per_block) )
 	{
 		tmp_buff = sctk_malloc( dsize * per_block );
-		to_free = 1;
-	}
-
-        if( STATIC_ALLRED_BLOB <= (dsize * per_block) )
-	{
 		tmp_buff1 = sctk_malloc( dsize * per_block );
 		to_free = 1;
 	}
-
 
 
 	int size;
@@ -10885,7 +10879,7 @@ __INTERNAL__PMPI_Allreduce_intra_binary_tree (void *sendbuf, void *recvbuf, int 
       res = __INTERNAL__PMPI_Type_extent (datatype, &dsize);
       if(res != MPI_SUCCESS){return res;}
 	    
-      tmp_buf = malloc(count*dsize);
+      tmp_buf = sctk_malloc(count*dsize);
       if(sendbuf == MPI_IN_PLACE){
 	is_MPI_IN_PLACE = 1;
 	sendbuf = recvbuf;
@@ -12177,7 +12171,7 @@ __INTERNAL__PMPI_Group_range_excl (MPI_Group mpi_group, int n,
 		MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_GROUP,"group must not be MPI_GROUP_NULL");
 
 	__INTERNAL__PMPI_Group_size (mpi_group, &group_size);
-	elements_int_list = (int *) malloc(sizeof(int) * (group_size+1));
+	elements_int_list = (int *) sctk_malloc(sizeof(int) * (group_size+1));
 
 	if (NULL == elements_int_list)
 		MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_INTERN,"");
@@ -12343,11 +12337,11 @@ __INTERNAL__PMPI_Group_range_excl (MPI_Group mpi_group, int n,
 
     if (NULL != ranks_included)
     {
-        free(ranks_included);
+        sctk_free(ranks_included);
     }
     if (NULL != ranks_excluded)
     {
-        free(ranks_excluded);
+        sctk_free(ranks_excluded);
     }
 
 	return result;
@@ -12381,7 +12375,7 @@ __INTERNAL__PMPI_Group_range_incl (MPI_Group mpi_group, int n,
 		MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_GROUP,"group must not be MPI_GROUP_NULL");
 
 	__INTERNAL__PMPI_Group_size (mpi_group, &group_size);
-	elements_int_list = (int *) malloc(sizeof(int) * (group_size+1));
+	elements_int_list = (int *) sctk_malloc(sizeof(int) * (group_size+1));
 
 	if (NULL == elements_int_list)
 		MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_INTERN,"");
@@ -12533,7 +12527,7 @@ __INTERNAL__PMPI_Group_range_incl (MPI_Group mpi_group, int n,
         __INTERNAL__PMPI_Group_incl(mpi_group, k, ranks_included, mpi_newgroup);
 
     if (NULL != ranks_included) {
-      free(ranks_included);
+      sctk_free(ranks_included);
     }
     return result;
 }
@@ -13846,9 +13840,9 @@ __INTERNAL__PMPI_Dims_create (int nnodes, int ndims, int *dims)
 			*dims = *p++;
     }
 
-    free((char *) primes);
-    free((char *) factors);
-    free((char *) procs);
+    sctk_free((char *) primes);
+    sctk_free((char *) factors);
+    sctk_free((char *) procs);
 
 	return MPI_SUCCESS;
 }
@@ -14916,7 +14910,7 @@ static int __INTERNAL__PMPI_Init(int *argc, char ***argv) {
     is_initialized = 1;
 
     task_specific = __MPC_get_task_specific();
-    task_specific->mpc_mpi_data = malloc(sizeof(struct mpc_mpi_data_s));
+    task_specific->mpc_mpi_data = sctk_malloc(sizeof(struct mpc_mpi_data_s));
     memset(task_specific->mpc_mpi_data, 0, sizeof(struct mpc_mpi_data_s));
     task_specific->mpc_mpi_data->lock = SCTK_SPINLOCK_INITIALIZER;
     task_specific->mpc_mpi_data->requests = NULL;
@@ -20276,7 +20270,7 @@ int PMPI_Win_set_name(MPI_Win win, const char *name) {
     return MPI_ERR_ARG;
   }
 
-  free(desc->win_name);
+  sctk_free(desc->win_name);
   desc->win_name = strdup(name);
 
   return MPI_SUCCESS;

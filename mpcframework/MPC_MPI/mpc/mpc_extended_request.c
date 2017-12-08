@@ -34,7 +34,7 @@ void GRequest_context_release( struct GRequest_context * ctx )
 	
 	HASH_ITER(hh, ctx->classes, current, tmp) {
 		HASH_DEL(ctx->classes, current);  
-		free(current);
+		sctk_free(current);
 	}
 	
 	GRequest_context_init( ctx );
@@ -49,7 +49,7 @@ int GRequest_context_add_class( struct GRequest_context *ctx,
 				     MPCX_Request_class * new_class )
 {
 	/* Allocate a new entry */
-	MPCX_GRequest_class_t * pnew_class = calloc( 1, sizeof(  MPCX_GRequest_class_t ) );
+	MPCX_GRequest_class_t * pnew_class = sctk_calloc( 1, sizeof(  MPCX_GRequest_class_t ) );
 	
 	/* Fill its content */
 	pnew_class->query_fn = query_fn;

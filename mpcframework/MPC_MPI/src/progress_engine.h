@@ -46,11 +46,8 @@ struct sctk_progress_work_unit * sctk_progress_list_add( struct sctk_progress_li
 int sctk_progress_list_poll( struct sctk_progress_list * pl );
 
 
-#define PROGRESS_POLL_ENGINE_STATIC_ARRAY 4
-
 struct sctk_progress_engine_pool
 {
-    struct sctk_progress_list __lists[PROGRESS_PWU_STATIC_ARRAY];
     struct sctk_progress_list *lists;
     sctk_spinlock_t pool_lock;
     unsigned int size;

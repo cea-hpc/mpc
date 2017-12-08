@@ -275,20 +275,13 @@ int sctk_progress_list_poll( struct sctk_progress_list * pl )
 int sctk_progress_engine_pool_init( struct sctk_progress_engine_pool * p, unsigned int size )
 {
 
-    if( size <= PROGRESS_POLL_ENGINE_STATIC_ARRAY )
-    {
-        p->lists = p->__lists;
-    }
-    else
-    {
-        p->lists = sctk_malloc( sizeof(struct sctk_progress_list) * size );
+   p->lists = sctk_malloc( sizeof(struct sctk_progress_list) * size );
 
-        if( !p->lists )
-        {
-            perror("sctk_malloc");
-            return 1;
-        }
-    }
+    if( !p->lists )
+	{
+		perror("sctk_malloc");
+		return 1;
+	}
 
 
     p->size = size;
@@ -328,11 +321,8 @@ int sctk_progress_engine_pool_release( struct sctk_progress_engine_pool * p)
 
     p->pool_lock = 0;
 
-    if( p->lists != p->__lists )
-    {
-        sctk_free( p->lists );
-        p->lists = NULL;
-    }
+    sctk_free( p->lists );
+    p->lists = NULL;
 
     return 0;
 }

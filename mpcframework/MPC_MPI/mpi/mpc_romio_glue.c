@@ -353,7 +353,7 @@ MPI_Fint MPIO_File_c2f(void * fh)
 	sctk_spinlock_lock( &mpi_file_lookup_table_lock );
 
 	struct MPI_File_Fortran_cell * new_cell = NULL;
-	new_cell = malloc( sizeof( struct MPI_File_Fortran_cell ) );
+	new_cell = sctk_malloc( sizeof( struct MPI_File_Fortran_cell ) );
 	assume( new_cell != NULL );
 	new_cell->fh = fh;
 	new_cell->id = ++MPI_File_fortran_id;
