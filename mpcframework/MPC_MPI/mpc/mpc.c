@@ -1059,11 +1059,12 @@ struct sctk_task_specific_s *__MPC_get_task_specific() {
     }
  }
 
-  static __thread int last_rank = -1;
+  static __thread int last_rank = -2;
   static __thread struct sctk_task_specific_s *last_specific = NULL;
 
    if ( last_rank == sctk_get_task_rank() ) {
-       return last_specific;
+       if( last_specific )
+        return last_specific;
    }
 
   
@@ -2547,6 +2548,7 @@ int PMPC_Derived_datatype_on_slot(int id, mpc_pack_absolute_indexes_t *begins,
                                   mpc_pack_absolute_indexes_t lb, int is_lb,
                                   mpc_pack_absolute_indexes_t ub, int is_ub) {
   SCTK_PROFIL_START(MPC_Derived_datatype);
+
   sctk_task_specific_t *task_specific = __MPC_get_task_specific();
 
   /* Here we allocate the new derived datatype */
