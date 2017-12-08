@@ -137,25 +137,21 @@ void __mpcomp_static_schedule_get_specific_chunk(long rank, long num_threads,
                                                  mpcomp_loop_long_iter_t *loop,
                                                  long chunk_num, long *from,
                                                  long *to) {
-  mpcomp_thread_t *t = mpcomp_get_thread_tls();
 
-  /* Compute the number of chunks per thread (floor value) */
-  const long thread_chunk_num =
-      __mpcomp_get_static_nb_chunks_per_rank(rank, num_threads, loop);
-  const long trip_count =
-      __mpcomp_internal_loop_get_num_iters(loop->lb, loop->b, loop->incr);
-  const long decal = chunk_num * num_threads * loop->chunk_size * loop->incr;
+  const long add = loop->chunk_size * loop->incr;
+  const long decal = chunk_num * num_threads * add;
 
-  *from = loop->lb + decal + loop->chunk_size * loop->incr * rank;
+  *from = loop->lb + decal + add * rank;
+  *to = *from + add;
+  
+  /* Do not compare if *to > b because *to can overflow if b close to LONG_MAX, we 
+  instead compare b - *from - *add to 0 */
 
-  if (rank == (trip_count / loop->chunk_size) % num_threads &&
-      trip_count % loop->chunk_size != 0 && chunk_num == thread_chunk_num - 1) {
+  if((loop->b - *from - add > 0 && loop->incr < 0) || (loop->b - *from - add < 0 && loop->incr >0))
     *to = loop->b;
-  } else {
-    *to = *from + loop->chunk_size * loop->incr;
-  }
-  sctk_nodebug("[%d - %d] %s: from: %ld  %ld - to: %ld %ld  - %ld - %ld",
-               t->rank, rank, __func__, *from, loop->lb, loop->b, *to,
+
+    sctk_nodebug(" %d %s: from: %ld  %ld - to: %ld %ld  - %ld - %ld",
+               rank, __func__, *from, loop->lb, loop->b, *to,
                loop->incr, chunk_num);
 }
 

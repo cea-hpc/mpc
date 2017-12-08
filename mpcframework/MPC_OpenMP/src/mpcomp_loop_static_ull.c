@@ -36,8 +36,10 @@ void __mpcomp_static_schedule_get_specific_chunk_ull(
     unsigned long long rank, unsigned long long num_threads,
     mpcomp_loop_ull_iter_t *loop, unsigned long long chunk_num,
     unsigned long long *from, unsigned long long *to) {
+
   const unsigned long long decal =
       chunk_num * num_threads * loop->chunk_size * loop->incr;
+  
   *from = loop->lb + decal + loop->chunk_size * loop->incr * rank;
   *to = *from + loop->chunk_size * loop->incr;
 
@@ -77,7 +79,7 @@ int __mpcomp_static_loop_begin_ull(bool up, unsigned long long lb,
   loop->b = b;
   loop->incr = incr;
   loop->chunk_size = chunk_size;
-  t->static_nb_chunks = __mpcomp_compute_static_nb_chunks_per_rank_ull(
+  t->static_nb_chunks = __mpcomp_get_static_nb_chunks_per_rank_ull(
       t->rank, t->info.num_threads, loop);
 
   /* As the loop_next function consider a chunk as already been realised

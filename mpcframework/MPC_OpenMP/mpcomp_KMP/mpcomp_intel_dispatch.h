@@ -168,9 +168,10 @@ static inline int __kmp_dispatch_next_mpcomp_long(mpcomp_thread_t *t,
   return ret;
 }
 static inline int __kmp_dispatch_next_mpcomp_ull(
-    mpcomp_thread_t *t, unsigned long long lb, unsigned long long b,
-    unsigned long long incr, unsigned long long *from, unsigned long long *to) {
+    mpcomp_thread_t *t, unsigned long long *from, unsigned long long *to) {
+
   int ret;
+
   switch (t->schedule_type) {
   /* regular scheduling */
   case kmp_sch_auto:

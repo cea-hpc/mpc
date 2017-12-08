@@ -171,9 +171,12 @@ typedef struct mpcomp_thread_s {
     sctk_atomics_int for_dyn_ull_current;
     /* Chunks array for loop dynamic schedule constructs */
     mpcomp_atomic_int_pad_t for_dyn_remain[MPCOMP_MAX_ALIVE_FOR_DYN + 1];
-    int for_dyn_total;
+    /* Total number of chunks of the thread */
+    unsigned long long for_dyn_total[MPCOMP_MAX_ALIVE_FOR_DYN +1];
     /** Coordinates of target thread to steal */
     int *for_dyn_target;
+    /* last target */
+    struct mpcomp_thread_s* dyn_last_target;
     /* Shift of target thread to steal */
     int *for_dyn_shift;  
     sctk_spinlock_t *for_dyn_lock;
@@ -219,7 +222,7 @@ typedef struct mpcomp_thread_s {
     void** args_copy;
     /* Current size of args_copy */
     int temp_argc;
-
+    
 } mpcomp_thread_t;
 
 /* Instance of OpenMP runtime */

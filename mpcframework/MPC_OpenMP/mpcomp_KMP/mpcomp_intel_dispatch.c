@@ -91,20 +91,10 @@ int __kmpc_dispatch_next_4(ident_t *loc, kmp_int32 gtid, kmp_int32 *p_last,
   sctk_assert(t != NULL);
   sctk_assert(t->info.loop_infos.type == MPCOMP_LOOP_TYPE_LONG);
   const long incr = t->info.loop_infos.loop.mpcomp_long.incr;
-  const long add = ((*p_ub - *p_lb) % *p_st == 0)
-                       ? *p_st
-                       : *p_st - ((*p_ub - *p_lb) % *p_st);
-
-  /* Fix for intel */
-  // if(t->first_iteration && t->static_chunk_size_intel > 0)
-  //  t->static_current_chunk = -1;
 
   sctk_nodebug("%s: p_lb %ld, p_ub %ld, p_st %ld", __func__, *p_lb, *p_ub,
                *p_st);
   const int ret = __kmp_dispatch_next_mpcomp_long(t, &from, &to);
-
-  // sctk_nodebug("[%d] %s: %ld -> %ld excl, %ld incl [%d]
-  // (ret=%d)",t->rank,__func__, from, to, to - incr, *p_st, ret ) ;
 
   /* sync with intel runtime (A->B excluded with gcc / A->B included with intel)
    */
@@ -129,21 +119,11 @@ int __kmpc_dispatch_next_4u(ident_t *loc, kmp_int32 gtid, kmp_int32 *p_last,
 
   sctk_assert(t->info.loop_infos.type == MPCOMP_LOOP_TYPE_ULL);
   const unsigned long long incr = t->info.loop_infos.loop.mpcomp_ull.incr;
-  const unsigned long long add = ((*p_ub - *p_lb) % *p_st == 0)
-                                     ? *p_st
-                                     : *p_st - ((*p_ub - *p_lb) % *p_st);
-
-  /* Fix for intel */
-  if (t->first_iteration && t->static_chunk_size_intel > 0)
-    t->static_current_chunk = -1;
 
   sctk_nodebug("%s: p_lb %llu, p_ub %llu, p_st %llu", __func__, *p_lb, *p_ub,
                *p_st);
-  const int ret =
-      __kmp_dispatch_next_mpcomp_ull(t, *p_lb, *p_ub + add, *p_st, &from, &to);
 
-  sctk_nodebug("[%d] %s: %llu -> %llu excl, %llu incl [%d] (ret=%d)", t->rank,
-               __func__, from, to, to - incr, *p_st, ret);
+  const int ret = __kmp_dispatch_next_mpcomp_ull(t, &from, &to);
 
   /* sync with intel runtime (A->B excluded with gcc / A->B included with intel)
    */
@@ -160,31 +140,22 @@ int __kmpc_dispatch_next_8(ident_t *loc, kmp_int32 gtid, kmp_int32 *p_last,
                            kmp_int64 *p_lb, kmp_int64 *p_ub, kmp_int64 *p_st) {
   long from, to;
   mpcomp_thread_t *t;
-
   t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
   sctk_assert(t != NULL);
 
   sctk_assert(t->info.loop_infos.type == MPCOMP_LOOP_TYPE_LONG);
   const long incr = t->info.loop_infos.loop.mpcomp_long.incr;
-  const long add = ((*p_ub - *p_lb) % *p_st == 0)
-                       ? *p_st
-                       : *p_st - ((*p_ub - *p_lb) % *p_st);
-
-  /* Fix for intel */
-  if (t->first_iteration && t->static_chunk_size_intel > 0)
-    t->static_current_chunk = -1;
 
   sctk_nodebug("%s: p_lb %ld, p_ub %ld, p_st %ld", __func__, *p_lb, *p_ub,
                *p_st);
-  const int ret = __kmp_dispatch_next_mpcomp_long(t, &from, &to);
 
-  sctk_nodebug("[%d] %s: %ld -> %ld excl, %ld incl [%d] (ret=%d)", t->rank,
-               __func__, from, to, to - incr, *p_st, ret);
+  const int ret = __kmp_dispatch_next_mpcomp_long(t, &from, &to);
 
   /* sync with intel runtime (A->B excluded with gcc / A->B included with intel)
    */
   *p_lb = (kmp_int64)from;
   *p_ub = (kmp_int64)to - (kmp_int64)incr;
+
   if (!ret) {
     __kmpc_dispatch_fini_mpcomp_gen(loc, gtid);
   }
@@ -202,21 +173,10 @@ int __kmpc_dispatch_next_8u(ident_t *loc, kmp_int32 gtid, kmp_int32 *p_last,
 
   sctk_assert(t->info.loop_infos.type == MPCOMP_LOOP_TYPE_ULL);
   const unsigned long long incr = t->info.loop_infos.loop.mpcomp_ull.incr;
-  const unsigned long long add = ((*p_ub - *p_lb) % *p_st == 0)
-                                     ? *p_st
-                                     : *p_st - ((*p_ub - *p_lb) % *p_st);
-
-  /* Fix for intel */
-  if (t->first_iteration && t->static_chunk_size_intel > 0)
-    t->static_current_chunk = -1;
 
   sctk_nodebug("%s: p_lb %llu, p_ub %llu, p_st %llu", __func__, *p_lb, *p_ub,
                *p_st);
-  const int ret =
-      __kmp_dispatch_next_mpcomp_ull(t, *p_lb, *p_ub + add, *p_st, &from, &to);
-
-  sctk_nodebug("[%d] %s: %llu -> %llu excl, %llu incl [%d] (ret=%d)", t->rank,
-               __func__, from, to, to - incr, *p_st, ret);
+  const int ret = __kmp_dispatch_next_mpcomp_ull(t, &from, &to);
 
   /* sync with intel runtime (A->B excluded with gcc / A->B included with intel)
    */

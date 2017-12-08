@@ -109,7 +109,7 @@ int __mpcomp_internal_tree_reduce_nowait(void *reduce_data, void ( *reduce_func 
 		{
 			if ( remaining_threads % 2 != 0 ) 
 			{
-remaining_threads = ( remaining_threads / 2 ) + 1;
+        remaining_threads = ( remaining_threads / 2 ) + 1;
 				if ( local_rank == remaining_threads - 1 ) 
 				{
 					c->reduce_data[local_rank * cache_size] = reduce_data;
@@ -117,8 +117,7 @@ remaining_threads = ( remaining_threads / 2 ) + 1;
 				else if ( local_rank >= remaining_threads )
 				{
 					c->reduce_data[local_rank * cache_size] = reduce_data;
-					if ( c->isArrived[local_rank * cache_size] == 0 )
-						c->isArrived[local_rank * cache_size] = 1;
+					c->isArrived[local_rank * cache_size] = 1;
 					while ( c->isArrived[local_rank * cache_size] != 0 ) 
 					{
             /* need to wait for the pair thread doing the reduction operation before exiting function because compiler will delete reduce_data after */
@@ -137,7 +136,7 @@ remaining_threads = ( remaining_threads / 2 ) + 1;
 						//sctk_thread_yield_wait_for_value( &( c->isArrived[( local_rank + remaining_threads ) * cache_size] ), 1 );
 					}
 
-					( *reduce_func )( reduce_data, c->reduce_data[( local_rank + remaining_threads ) * cache_size] );
+					( *reduce_func )( reduce_data, c->reduce_data[( local_rank + remaining_threads ) * cache_size] ); // result on reduce_data
 					c->isArrived[( local_rank + remaining_threads ) * cache_size] = 0;
 				}
 			}
@@ -167,7 +166,7 @@ remaining_threads = ( remaining_threads / 2 ) + 1;
 						sctk_thread_yield();
 						//sctk_thread_yield_wait_for_value( &( c->isArrived[( local_rank + remaining_threads ) * cache_size] ), 1 );
 					}
-					( *reduce_func )( reduce_data, c->reduce_data[( local_rank + remaining_threads ) * cache_size] );
+					( *reduce_func )( reduce_data, c->reduce_data[( local_rank + remaining_threads ) * cache_size] ); // result on reduce_data
 					c->isArrived[( local_rank + remaining_threads ) * cache_size] = 0;
 				}
 			}
@@ -242,7 +241,7 @@ int __mpcomp_internal_tree_reduce(void *reduce_data, void ( *reduce_func )( void
 						//sctk_thread_yield_wait_for_value( &( c->isArrived[( local_rank + remaining_threads ) * cache_size] ), 1 );
 					}
 
-					( *reduce_func )( reduce_data, c->reduce_data[( local_rank + remaining_threads ) * cache_size] );
+					( *reduce_func )( reduce_data, c->reduce_data[( local_rank + remaining_threads ) * cache_size] ); // result on reduce_data
 					c->isArrived[( local_rank + remaining_threads ) * cache_size] = 0;
 				}
 			}
@@ -278,7 +277,7 @@ int __mpcomp_internal_tree_reduce(void *reduce_data, void ( *reduce_func )( void
 						sctk_thread_yield();
 						//sctk_thread_yield_wait_for_value( &( c->isArrived[( local_rank + remaining_threads ) * cache_size] ), 1 );
 					}
-					( *reduce_func )( reduce_data, c->reduce_data[( local_rank + remaining_threads ) * cache_size] );
+					( *reduce_func )( reduce_data, c->reduce_data[( local_rank + remaining_threads ) * cache_size] ); // result on reduce_data
 					c->isArrived[( local_rank + remaining_threads ) * cache_size] = 0;
 				}
 			}

@@ -49,21 +49,14 @@ static int __mpcomp_dynamic_loop_get_chunk_from_rank(mpcomp_thread_t *t,
   sctk_assert(t->info.loop_infos.type == MPCOMP_LOOP_TYPE_LONG);
   mpcomp_loop_long_iter_t *loop = &(t->info.loop_infos.loop.mpcomp_long);
 
-  /* Stop if target rank has already done this specific loop */
-  if ((t != target) && (__mpcomp_loop_dyn_get_for_dyn_current(t) <=
-                        __mpcomp_loop_dyn_get_for_dyn_current(target))) {
-    return 0;
-  }
-  
-  __mpcomp_loop_dyn_init_target_chunk(t, target, num_threads);
   cur = __mpcomp_loop_dyn_get_chunk_from_target(t, target);
 
   if (cur <= 0) {
     return 0;
   }
 
-  const int for_dyn_total =
-      __mpcomp_get_static_nb_chunks_per_rank(rank, num_threads, loop);
+  const int index = __mpcomp_loop_dyn_get_for_dyn_index(target);
+  const unsigned long long for_dyn_total = target->for_dyn_total[index];
   __mpcomp_static_schedule_get_specific_chunk(rank, num_threads, loop,
                                               for_dyn_total - cur, from, to);
 
@@ -100,9 +93,9 @@ void __mpcomp_dynamic_loop_init(mpcomp_thread_t *t, long lb, long b, long incr,
   __mpcomp_loop_gen_infos_init(&(t->info.loop_infos), lb, b, incr, chunk_size);
 
   /* Try to change the number of remaining chunks */
-  const int for_dyn_total = __mpcomp_get_static_nb_chunks_per_rank(
+  t->for_dyn_total[index] = __mpcomp_get_static_nb_chunks_per_rank(
       t->rank, num_threads, &(t->info.loop_infos.loop.mpcomp_long));
-  (void) sctk_atomics_cas_int(&(t->for_dyn_remain[index].i), -1, for_dyn_total);
+  (void) sctk_atomics_cas_int(&(t->for_dyn_remain[index].i), -1, t->for_dyn_total[index]);
 }
 
 int __mpcomp_dynamic_loop_begin(long lb, long b, long incr, long chunk_size,
@@ -116,6 +109,8 @@ int __mpcomp_dynamic_loop_begin(long lb, long b, long incr, long chunk_size,
   	t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
   	sctk_assert(t != NULL);
 
+    t->dyn_last_target = t ;
+
     if( !( t->instance->root ) )
     {
         *from = lb;
@@ -128,7 +123,6 @@ int __mpcomp_dynamic_loop_begin(long lb, long b, long incr, long chunk_size,
   	/* Initialization of loop internals */
   	t->for_dyn_last_loop_iteration = 0;
   	__mpcomp_dynamic_loop_init(t, lb, b, incr, chunk_size);
-  	__mpcomp_loop_dyn_init_target_chunk(t, t, t->info.num_threads);
 
 #if OMPT_SUPPORT
 	if( mpcomp_ompt_is_enabled() )
@@ -148,8 +142,8 @@ int __mpcomp_dynamic_loop_begin(long lb, long b, long incr, long chunk_size,
 		}
 	}
 #endif /* OMPT_SUPPORT */
-    const int ret = __mpcomp_dynamic_loop_next(from, to);
-    return (!from && !to) ? -1 : ret;
+
+  return (!from && !to) ? -1 : __mpcomp_dynamic_loop_next(from, to);
 }
 
 int __mpcomp_dynamic_loop_next(long *from, long *to) 
@@ -184,46 +178,44 @@ int __mpcomp_dynamic_loop_next(long *from, long *to)
         return 0;
     }
 
-  int *tree_base = t->instance->tree_base + 1;
-  const int tree_depth = t->instance->tree_depth -1;
-  const int max_depth = t->instance->root->depth;
+    int *tree_base = t->instance->tree_base + 1;
+    const int tree_depth = t->instance->tree_depth -1;
+    const int max_depth = t->instance->root->depth;
 
     /* Compute the index of the target */
-    target_idx = __mpcomp_loop_dyn_get_victim_rank(t);
-    target_mvp = t->instance->mvps[target_idx].ptr.mvp;
-    target = ( target_mvp ) ? target_mvp->threads : NULL; 
+    target = t->dyn_last_target;
+    found = 1;
+    ret = 0;
 
-  found = 1;
+    /* While it is not possible to get a chunk */
+    while(!__mpcomp_dynamic_loop_get_chunk_from_rank( t, target, from, to)) 
+    {
 
-  /* While it is not possible to get a chunk */
-  while(!__mpcomp_dynamic_loop_get_chunk_from_rank( t, target, from, to)) 
-  {
+      do_increase:
 
-do_increase:
-        ret = __mpcomp_loop_dyn_dynamic_increase(t->for_dyn_shift, tree_base, tree_depth, max_depth, 1);
-        /* Add t->for_dyn_shift and t->mvp->tree_rank[i] w/out carry over and store it into t->for_dyn_target */
-        __mpcomp_loop_dyn_dynamic_add(t->for_dyn_target, t->for_dyn_shift, t->mvp->tree_rank, tree_base, tree_depth, max_depth, 0);
+      if( ret ) 
+      {
+          found = 0;
+          break;
+      }
 
-        if( ret ) 
-        {
-            found = 0;
-            break;
-        }
+      ret = __mpcomp_loop_dyn_dynamic_increase(t->for_dyn_shift, tree_base, tree_depth, max_depth, 1);
+      /* Add t->for_dyn_shift and t->mvp->tree_rank[i] w/out carry over and store it into t->for_dyn_target */
+      __mpcomp_loop_dyn_dynamic_add(t->for_dyn_target, t->for_dyn_shift, t->mvp->tree_rank, tree_base, tree_depth, max_depth, 0);
 
-    /* Compute the index of the target */
-    target_idx = __mpcomp_loop_dyn_get_victim_rank(t);
-    target_mvp = t->instance->mvps[target_idx].ptr.mvp;
-    target = ( target_mvp ) ? target_mvp->threads : NULL;
+      /* Compute the index of the target */
+      target_idx = __mpcomp_loop_dyn_get_victim_rank(t);
+      target_mvp = t->instance->mvps[target_idx].ptr.mvp;
+      target = ( target_mvp ) ? target_mvp->threads : NULL;
 
-    if( !( target ) ) goto do_increase;
+      if( !( target ) ) goto do_increase;
+      barrier_nthreads = target_mvp->father->barrier_num_threads;
+
+      /* Stop if the target is not a launch thread */
+      if (t->for_dyn_target[tree_depth - 1] >= barrier_nthreads)
+        goto do_increase;
+    }
     
-    barrier_nthreads = target_mvp->father->barrier_num_threads;
-
-    /* Stop if the target is not a launch thread */
-    if (t->for_dyn_target[tree_depth - 1] >= barrier_nthreads)
-      goto do_increase;
-  }
-
   /* Did we exit w/ or w/out a chunk? */
   if (found) {
     /* WORKAROUND (pr35196.c):
@@ -234,7 +226,7 @@ do_increase:
     if (*to == t->info.loop_b) {
       t->for_dyn_last_loop_iteration = 1;
     }
-
+    t->dyn_last_target = target;
     return 1;
   }
 
@@ -301,7 +293,7 @@ void __mpcomp_dynamic_loop_end_nowait(void) {
   sctk_assert(nb_threads_exited > 0 && nb_threads_exited <= num_threads);
 
   if (nb_threads_exited == num_threads ) 
-    {
+  {
     
     const int previous_index = __mpcomp_loop_dyn_get_for_dyn_prev_index(t);
     sctk_assert(previous_index >= 0 &&

@@ -69,13 +69,6 @@ int __mpcomp_get_static_nb_chunks_per_rank(int rank, int num_threads,
   return nb_chunks_per_thread;
 }
 
-void __mpcomp_get_specific_chunk_per_rank(int rank, int num_threads, long lb,
-                                          long b, long incr, long chunk_size,
-                                          long chunk_num, long *from,
-                                          long *to) {
-  not_implemented();
-}
-
 /****
  *
  * ULL CHUNK MANIPULATION
@@ -84,7 +77,7 @@ void __mpcomp_get_specific_chunk_per_rank(int rank, int num_threads, long lb,
  *****/
 /* Return the number of chunks that a static schedule will create for the thread 'rank' */
 unsigned long long
-__mpcomp_compute_static_nb_chunks_per_rank_ull(unsigned long long rank,
+__mpcomp_get_static_nb_chunks_per_rank_ull(unsigned long long rank,
                                                unsigned long long num_threads,
                                                mpcomp_loop_ull_iter_t *loop) {
   unsigned long long nb_chunks_per_thread, chunk_size;
@@ -117,11 +110,13 @@ __mpcomp_compute_static_nb_chunks_per_rank_ull(unsigned long long rank,
   return nb_chunks_per_thread;
 }
 
-unsigned long long __mpcomp_get_static_nb_chunks_per_rank_ull(
-    int rank, int nb_threads, unsigned long long lb, unsigned long long b,
-    unsigned long long incr, unsigned long long chunk_size) {
-  return 0;
+void __mpcomp_get_specific_chunk_per_rank(int rank, int num_threads, long lb,
+                                          long b, long incr, long chunk_size,
+                                          long chunk_num, long *from,
+                                          long *to) {
+  not_implemented();
 }
+
 
 #if 0
 void

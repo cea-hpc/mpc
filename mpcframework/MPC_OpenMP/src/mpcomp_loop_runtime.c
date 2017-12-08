@@ -78,8 +78,6 @@ int __mpcomp_runtime_loop_begin(long lb, long b, long incr, long *from,
 int __mpcomp_runtime_loop_next(long *from, long *to) {
   int ret;
 
-  /* Handle orphaned directive (initialize OpenMP environment) */
-  __mpcomp_init();
 
   /* Grab the thread info */
   mpcomp_thread_t *t = mpcomp_get_thread_tls();
@@ -104,8 +102,6 @@ int __mpcomp_runtime_loop_next(long *from, long *to) {
 }
 
 void __mpcomp_runtime_loop_end(void) {
-  /* Handle orphaned directive (initialize OpenMP environment) */
-  __mpcomp_init();
 
   /* Grab the thread info */
   mpcomp_thread_t *t = mpcomp_get_thread_tls();
@@ -128,8 +124,6 @@ void __mpcomp_runtime_loop_end(void) {
 }
 
 void __mpcomp_runtime_loop_end_nowait() {
-  /* Handle orphaned directive (initialize OpenMP environment) */
-  __mpcomp_init();
 
   /* Grab the thread info */
   mpcomp_thread_t *t = mpcomp_get_thread_tls();
@@ -196,9 +190,6 @@ int __mpcomp_ordered_runtime_loop_begin(long lb, long b, long incr, long *from,
 int __mpcomp_ordered_runtime_loop_next(long *from, long *to) {
   int ret;
 
-  /* Handle orphaned directive (initialize OpenMP environment) */
-  __mpcomp_init();
-
   /* Grab the thread info */
   mpcomp_thread_t *t = mpcomp_get_thread_tls();
 
@@ -259,8 +250,7 @@ int __mpcomp_loop_ull_runtime_begin(bool up, unsigned long long lb,
     ret = __mpcomp_static_loop_begin_ull(up, lb, b, incr, chunk_size, from, to);
     break;
   case omp_sched_dynamic:
-    ret =
-        __mpcomp_loop_ull_dynamic_begin(up, lb, b, incr, chunk_size, from, to);
+    ret = __mpcomp_loop_ull_dynamic_begin(up, lb, b, incr, chunk_size, from, to);
     break;
   case omp_sched_guided:
     ret = __mpcomp_loop_ull_guided_begin(up, lb, b, incr, chunk_size, from, to);
@@ -275,9 +265,6 @@ int __mpcomp_loop_ull_runtime_begin(bool up, unsigned long long lb,
 int __mpcomp_loop_ull_runtime_next(unsigned long long *from,
                                    unsigned long long *to) {
   int ret;
-
-  /* Handle orphaned directive (initialize OpenMP environment) */
-  __mpcomp_init();
 
   /* Grab the thread info */
   mpcomp_thread_t *t = mpcomp_get_thread_tls();

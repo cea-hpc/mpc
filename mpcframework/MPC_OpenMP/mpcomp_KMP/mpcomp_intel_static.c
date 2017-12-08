@@ -153,7 +153,7 @@ void __kmpc_for_static_init_4u(ident_t *loc, kmp_int32 gtid,
   __mpcomp_loop_gen_infos_init_ull(
       loop_infos, (unsigned long long)*plower,
       (unsigned long long)*pupper + (unsigned long long)incr,
-      (unsigned long long)incr, (unsigned long long)chunk, (incr > 0));
+      (unsigned long long)incr, (unsigned long long)chunk);
 
   sctk_nodebug("[%d] __kmpc_for_static_init_4u: <%s> "
       "schedtype=%d, %d? %d -> %d incl. [%d], incr=%d chunk=%d "
@@ -366,7 +366,7 @@ void __kmpc_for_static_init_8u(ident_t *loc, kmp_int32 gtid,
   __mpcomp_loop_gen_infos_init_ull(
       loop_infos, (unsigned long long)*plower,
       (unsigned long long)*pupper + (unsigned long long)incr,
-      (unsigned long long)incr, (unsigned long long)chunk, (incr > 0));
+      (unsigned long long)incr, (unsigned long long)chunk);
 
   sctk_nodebug("[%d] __kmpc_for_static_init_8u: <%s> "
       "schedtype=%d, %d? %d -> %d incl. [%d], incr=%d chunk=%d "

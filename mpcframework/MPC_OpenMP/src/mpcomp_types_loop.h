@@ -58,7 +58,7 @@ static inline void
 __mpcomp_loop_gen_infos_init_ull(mpcomp_loop_gen_info_t *loop_infos,
                                  unsigned long long lb, unsigned long long b,
                                  unsigned long long incr,
-                                 unsigned long long chunk_size, bool up) {
+                                 unsigned long long chunk_size) {
   sctk_assert(loop_infos);
 
   loop_infos->fresh = true;
