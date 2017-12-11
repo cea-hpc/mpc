@@ -31,14 +31,41 @@
 #include <dmtcp.h>
 #endif
 
+/** Used to print C/R support in MPC header */
 extern char *sctk_checkpoint_str;
+/** Number of checkpoints done since the application starts */
+static int nb_checkpoints = 0;
+/** Number of restarts done since the application starts */
+static int nb_restarts = 0;
+/** Last C/R state */
+static sctk_ft_state_t __state = MPC_STATE_ERROR;
 
-static inline void __sctk_ft_post_checkpoint();
-static inline void __sctk_ft_post_restart();
-
+/** Lock to create a critical section for C/R */
 static sctk_spin_rwlock_t checkpoint_lock = SCTK_SPIN_RWLOCK_INITIALIZER;
+/** Number of threads blocking the C/R to be started */
 __thread int sctk_ft_critical_section = 0;
 
+/**
+ * Routine called only when the application is in post-checkpoint state.
+ * There are currently nothing to do.
+ */
+static inline void __sctk_ft_post_checkpoint()
+{
+	sctk_debug("Post-Checkpoint");
+}
+
+/**
+ * Routine called only when the application restarts from a checkpoint.
+ * We only re-print the MPC banner.
+ */
+static inline void __sctk_ft_post_restart()
+{
+	sctk_print_banner(__state == MPC_STATE_RESTART);
+}
+
+/**
+ * Initialize DMTCP checkpoint directory.
+ */
 static inline void __sctk_ft_set_ckptdir()
 {
 #ifdef MPC_USE_DMTCP
@@ -54,6 +81,10 @@ static inline void __sctk_ft_set_ckptdir()
 #endif
 }
 
+/**
+ * Initialize DMTCP and C/R module.
+ * \return always 1.
+ */
 int sctk_ft_init()
 {
 #ifdef MPC_USE_DMTCP
@@ -71,6 +102,10 @@ int sctk_ft_init()
 	return 1;
 }
 
+/**
+ * Check if C/R is enabled for the running application.
+ * \return 1 if DMTCP is enabled, 0 otherwise.
+ */
 int sctk_ft_enabled()
 {
 #ifdef MPC_USE_DMTCP
@@ -78,10 +113,9 @@ int sctk_ft_enabled()
 #endif
 }
 
-static int nb_checkpoints = 0;
-static int nb_restarts = 0;
-static sctk_ft_state_t __state = MPC_STATE_ERROR;
-
+/**
+ * Initialize a new checkpoint.
+ */
 void sctk_ft_checkpoint_init()
 {
         /* IMPORTANT: After this function, the calling thread
@@ -92,19 +126,28 @@ void sctk_ft_checkpoint_init()
          */
 	sctk_spinlock_write_lock_yield(&checkpoint_lock);
 #ifdef MPC_USE_DMTCP
+	/* retrieve old value (we will wait for their increment to simulate a barrier) */
 	dmtcp_get_local_status(&nb_checkpoints, &nb_restarts);
 #endif
 }
 
+/**
+ * Prepare for a checkpoint.
+ *
+ * This is different from the initialization, because the MPI layer needs to do some
+ * stuff AFTER the init but BEFORE we close the networks.
+ */
 void sctk_ft_checkpoint_prepare()
 {
 	size_t nb = sctk_rail_count();
 	size_t i;
 
+	/* iterate over each rail */
 	for (i = 0; i < nb; ++i) {
 		sctk_rail_info_t* rail = sctk_rail_get_by_id(i);
 		if(!rail) continue;
 #ifdef MPC_USE_DMTCP
+		/* condition (that could be extended (Portals?) */
                 if(SCTK_RAIL_TYPE(rail) == SCTK_RTCFG_net_driver_infiniband)
 		{
 			sctk_rail_disable(rail);
@@ -113,13 +156,27 @@ void sctk_ft_checkpoint_prepare()
 	}
 }
 
+/**
+ * Attempt to create a critical region, blocking any later checkpoint requests.
+ *
+ * This function does not necessarily create a critical section. It tries to do it but
+ * can return 0 in case of failure. Its purpose is to be called in `sctk_notify_...` function
+ * and avoid two things:
+ * 1. Avoid these functions to be called when a checkpoint is pending
+ * 2. Avoid a checkpoint to be triggered if at least one thread is in a critical section.
+ *
+ * This is mandatory because you don't want an idle thread trying to poll queue you closed before checkpointing.
+ * \return 1 if there is a critical section, 0 otherwise.
+ */
 int sctk_ft_no_suspend_start()
 {
 
         int old = sctk_ft_critical_section++;
         
+	/* if i'm the first to request the critical section */
         if(old == 0)
         {
+		/* And I cannot take the lock --> skip to create the section */
                 if(sctk_spinlock_read_trylock(&checkpoint_lock) != 0)
                 {
                         sctk_ft_critical_section--;
@@ -129,6 +186,19 @@ int sctk_ft_no_suspend_start()
         return true;
 }
 
+/**
+ * Free the critical section.
+ *
+ * NOTE: Don't call this function if a critical section was not created first.
+ * A typical way to call these two functions is:
+ * ```{c}
+ * if(sctk_ft_no_suspend_start())
+ * {
+ *     // do things
+ *     sctk_ft_no_suspend_end();
+ * }
+ * ```
+ */
 void sctk_ft_no_suspend_end()
 {
         int nw = --sctk_ft_critical_section;
@@ -139,13 +209,24 @@ void sctk_ft_no_suspend_end()
         }
 }
 
+/**
+ * emit a DMTCP checkpoint request to the coordinator.
+ * Should be called only once for the whole application. Each call will trigger a new checkpoint.
+ * If N proceses call it, you will have N checkpoints (instead of one).
+ */
 void sctk_ft_checkpoint()
 {
 #ifdef MPC_USE_DMTCP
+	/* don't care about the return value because we have our own 'uniform' way to retrieve the state */
 	dmtcp_checkpoint();
 #endif
 }
 
+/**
+ * Finalize the checkpoint step --> restart closed networks.
+ *
+ * This function also called state-specific handlers.
+ */
 void sctk_ft_checkpoint_finalize()
 {
 #ifdef MPC_USE_DMTCP
@@ -179,6 +260,11 @@ void sctk_ft_checkpoint_finalize()
 	sctk_spinlock_write_unlock(&checkpoint_lock);
 }
 
+/**
+ * Disable the C/R system until the peer function is called.
+ * \see sctk_ft_enable.
+ * \return 1 in case of success, 0 otherwise.
+ */
 int sctk_ft_disable()
 {
 #ifdef MPC_USE_DMTCP
@@ -186,6 +272,11 @@ int sctk_ft_disable()
 #endif
 }
 
+/**
+ * Enable the C/R system, until the peer function is called.
+ * \see sctk_ft_disable
+ * \return 1 in case of success, 0 otherwise
+ */
 int sctk_ft_enable()
 {
 #ifdef MPC_USE_DMTCP
@@ -193,6 +284,10 @@ int sctk_ft_enable()
 #endif
 }
 
+/**
+ * Free C/R resources.
+ * \return always 1
+ */
 int sctk_ft_finalize()
 {
 #ifdef MPC_USE_DMTCP
@@ -200,10 +295,16 @@ int sctk_ft_finalize()
 	return 1;
 }
 
+/**
+ * Wait for checkpoint completion.
+ * Called by all involved proceses.
+ * \return the enum representing the state (CHECKPOINT,IGNORED,RESTART)
+ */
 sctk_ft_state_t sctk_ft_checkpoint_wait()
 {
 #ifdef MPC_USE_DMTCP
 	int new_nb_checkpoints, new_nb_restarts;
+	/* old values have been loaded when calling _init() */
 	do
 	{
 		dmtcp_get_local_status(&new_nb_checkpoints, &new_nb_restarts);
@@ -216,16 +317,10 @@ sctk_ft_state_t sctk_ft_checkpoint_wait()
 	return __state;
 }
 
-static inline void __sctk_ft_post_checkpoint()
-{
-	sctk_debug("Post-Checkpoint");
-}
-
-static inline void __sctk_ft_post_restart()
-{
-	sctk_print_banner(__state == MPC_STATE_RESTART);
-}
-
+/**
+ * Stringify the C/R state to human-readable format.
+ * \return the string to print
+ */
 char* sctk_ft_str_status(sctk_ft_state_t s)
 {
 	static  char * state_names[] = {
