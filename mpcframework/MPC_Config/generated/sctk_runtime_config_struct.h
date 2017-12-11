@@ -606,6 +606,8 @@ struct sctk_runtime_config_struct_collectives_shm_shared
 	struct sctk_runtime_config_funcptr barrier_intra_shared_node;
 	/**MPI_Bcast intracom algorithm on shared-node comms**/
 	struct sctk_runtime_config_funcptr bcast_intra_shared_node;
+	/**MPI_Alltoall intracom algorithm on shared-node comms**/
+	struct sctk_runtime_config_funcptr alltoall_intra_shared_node;
 };
 
 /******************************** STRUCTURE *********************************/

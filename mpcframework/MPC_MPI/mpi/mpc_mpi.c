@@ -5479,8 +5479,9 @@ int (*allgather_inter)(void *, int, MPI_Datatype, void *, int, MPI_Datatype, MPI
 int (*allgatherv_intra)(void *, int, MPI_Datatype, void *, int *, int *, MPI_Datatype, MPI_Comm);
 int (*allgatherv_inter)(void *, int, MPI_Datatype, void *, int *, int *, MPI_Datatype, MPI_Comm);
 
-int (*alltoall_intra)(void *, int, MPI_Datatype, void *, int, MPI_Datatype, MPI_Comm);
 int (*alltoall_inter)(void *, int, MPI_Datatype, void *, int, MPI_Datatype, MPI_Comm);
+int (*alltoall_intra)(void *, int, MPI_Datatype, void *, int, MPI_Datatype, MPI_Comm);
+int (*alltoall_intra_shared_node)(void *, int, MPI_Datatype, void *, int, MPI_Datatype, MPI_Comm);
 
 int (*alltoallv_intra)(void *, int *, int *, MPI_Datatype, void *, int *, int *, MPI_Datatype, MPI_Comm);
 int (*alltoallv_intra_shm)(void *, int *, int *, MPI_Datatype, void *, int *,
@@ -6313,7 +6314,7 @@ int __INTERNAL__PMPI_Bcast_intra_shared_node(void *buffer, int count, MPI_Dataty
     int root, MPI_Comm comm) {
 
     struct sctk_comm_coll *coll = sctk_communicator_get_coll(comm);
-    
+    //TODO to expose as config vars
     if( __MPC_node_comm_coll_check( coll, comm ) 
     && ( (4 <= coll->comm_size) || (1024 < count) )  )
     {
@@ -6324,9 +6325,6 @@ int __INTERNAL__PMPI_Bcast_intra_shared_node(void *buffer, int count, MPI_Dataty
         return (bcast_intra)( buffer, count, datatype, root, comm );
     }
 }
-
-
-
 
 
 int __INTERNAL__PMPI_Bcast_intra(void *buffer, int count, MPI_Datatype datatype,
@@ -8163,6 +8161,49 @@ int __INTERNAL__PMPI_Alltoall_inter(void *sendbuf, int sendcount,
   return res;
 }
 
+
+int __INTERNAL__PMPI_Alltoall_intra_shared_node(void *sendbuf, int sendcount,
+                              MPI_Datatype sendtype, void *recvbuf,
+                              int recvcount, MPI_Datatype recvtype,
+                              MPI_Comm comm) {
+        /* We handle the simple case only */
+        int bool_val = sctk_datatype_contig_mem( sendtype );
+        bool_val &=  (sendtype == recvtype);
+        bool_val &=  (sendcount == recvcount);
+
+        struct sctk_comm_coll *coll = sctk_communicator_get_coll(comm);
+
+        if( !__MPC_node_comm_coll_check( coll, comm ) )
+        {
+                return (alltoall_intra)( sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm);
+        }
+
+        int rez = 0;
+
+        __INTERNAL__PMPI_Allreduce( &bool_val, &rez, 1, MPI_INT, MPI_BAND, comm);
+
+        if( !rez )
+        {
+                return (alltoall_intra)( sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm);
+        }
+        else
+        {
+                int i;
+                int tsize, rank;
+                PMPI_Type_size( sendtype, &tsize );
+                PMPI_Comm_rank( comm, &rank );
+
+                for(i = 0 ; i < coll->comm_size ; i++)
+                {
+                        __INTERNAL__PMPI_Scatter( sendbuf, sendcount, sendtype, recvbuf + (tsize * recvcount)*i, recvcount, recvtype, i, comm);
+                }
+        }
+
+        return MPI_SUCCESS;
+} 
+
+
+
 int __INTERNAL__PMPI_Alltoall(void *sendbuf, int sendcount,
                               MPI_Datatype sendtype, void *recvbuf,
                               int recvcount, MPI_Datatype recvtype,
@@ -8198,9 +8239,21 @@ int __INTERNAL__PMPI_Alltoall(void *sendbuf, int sendcount,
               ->modules.collectives_intra.alltoall_intra.value);
     }
 
+
+    if (alltoall_intra_shared_node == NULL) {
+      alltoall_intra_shared_node = (int (*)(void *, int, MPI_Datatype, void *, int,
+                                MPI_Datatype, MPI_Comm))(
+          sctk_runtime_config_get()
+              ->modules.collectives_shm_shared.alltoall_intra_shared_node.value);
+    }
+
+
+
     if (sctk_is_shared_mem(comm)) {
       res = (alltoallv_intra_shm)(sendbuf, &sendcount, NULL, sendtype, recvbuf,
                                   &recvcount, NULL, recvtype, comm);
+    } else if(sctk_is_shared_node(comm) ) {
+      res = (alltoall_intra_shared_node)(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm );
     } else {
       res = (alltoall_intra)(sendbuf, sendcount, sendtype, recvbuf, recvcount,
                              recvtype, comm);

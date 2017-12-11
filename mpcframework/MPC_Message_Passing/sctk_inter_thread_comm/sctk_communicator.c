@@ -1318,8 +1318,7 @@ int sctk_per_node_comm_context_init(struct sctk_per_node_comm_context *ctx,
 
 int sctk_per_node_comm_context_release( struct sctk_per_node_comm_context * ctx )
 {
-
-        sctk_shared_mem_barrier_release(&ctx->shm_barrier);
+       sctk_shared_mem_barrier_release(&ctx->shm_barrier);
 }
 
 
