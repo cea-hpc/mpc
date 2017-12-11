@@ -580,6 +580,9 @@ const struct sctk_runtime_config_entry_meta sctk_runtime_config_db[] = {
 	{"alltoall_intra_shared_node"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_collectives_shm_shared,alltoall_intra_shared_node)  , sizeof(struct sctk_runtime_config_funcptr) , "funcptr" , NULL , 
 				NULL
 			},
+	{"scatter_intra_shared_node"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_collectives_shm_shared,scatter_intra_shared_node)  , sizeof(struct sctk_runtime_config_funcptr) , "funcptr" , NULL , 
+				NULL
+			},
 	/* struct */
 	{"sctk_runtime_config_struct_collectives_shm" , SCTK_CONFIG_META_TYPE_STRUCT , 0  , sizeof(struct sctk_runtime_config_struct_collectives_shm) , NULL , sctk_runtime_config_struct_init_collectives_shm},
 	{"barrier_intra_shm"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_collectives_shm,barrier_intra_shm)  , sizeof(struct sctk_runtime_config_funcptr) , "funcptr" , NULL , 

@@ -5466,6 +5466,7 @@ int (*gatherv_intra_shm)(void *, int, MPI_Datatype, void *, int *, int *,
 int (*gatherv_inter)(void *, int, MPI_Datatype, void *, int *, int *, MPI_Datatype, int, MPI_Comm);
 
 int (*scatter_intra)(void *, int, MPI_Datatype, void *, int, MPI_Datatype, int, MPI_Comm);
+int (*scatter_intra_shared_node)(void *, int, MPI_Datatype, void *, int, MPI_Datatype, int, MPI_Comm);
 int (*scatter_inter)(void *, int, MPI_Datatype, void *, int, MPI_Datatype, int, MPI_Comm);
 
 int (*scatterv_intra)(void *, int *, int *, MPI_Datatype, void *, int, MPI_Datatype, int, MPI_Comm);
@@ -7267,6 +7268,106 @@ int __INTERNAL__PMPI_Scatter_inter(void *sendbuf, int sendcnt,
   return res;
 }
 
+int __INTERNAL__PMPI_Scatter_intra_shared_node_impl(void *sendbuf, int sendcnt, MPI_Datatype sendtype,
+                             void *recvbuf, int recvcnt, MPI_Datatype recvtype,
+                             int root, MPI_Comm comm, struct sctk_comm_coll * coll ) { 
+
+        /* WARNING we can only be here with a regular scatter
+           sendtype == recvtype && recvcount == sendcount */
+        int rank;
+        PMPI_Comm_rank( comm, &rank );
+
+        int tsize;
+        PMPI_Type_size( sendtype, &tsize );
+
+        size_t to_scatter_size = tsize * sendcnt * coll->comm_size;
+
+        void * buffer_addr = NULL;
+
+        if( rank == root )
+        {
+            int is_shared = 0;
+            buffer_addr = mpc_MPI_allocmem_pool_alloc_check( to_scatter_size + sizeof(sctk_atomics_int),
+                &is_shared);
+
+            if( !is_shared )
+            {
+                /* We failed ! */
+                sctk_free( buffer_addr );
+                buffer_addr = NULL;
+            }
+            else
+            {
+                /* Fill the buffer */
+                sctk_atomics_store_int( (sctk_atomics_int*)buffer_addr, coll->comm_size );
+                memcpy( buffer_addr + sizeof(sctk_atomics_int), sendbuf, to_scatter_size );
+             }
+        }
+
+        (bcast_intra)( &buffer_addr, sizeof(void *), MPI_CHAR, root, comm );
+
+        if( buffer_addr != NULL )
+        {
+                        int token = sctk_atomics_fetch_and_decr_int( (sctk_atomics_int *)buffer_addr );
+                        memcpy( recvbuf,  buffer_addr + sizeof(sctk_atomics_int) + (rank * tsize * sendcnt), recvcnt * tsize );
+                        if( token == 1 )
+                        {
+                                mpc_MPI_allocmem_pool_free_size( buffer_addr ,  to_scatter_size + sizeof(sctk_atomics_int));
+                        }
+
+        }
+        else
+        {
+                /* Fallback to regular bcast */
+                return (scatter_intra)( sendbuf, sendcnt, sendtype, recvbuf, recvcnt, recvtype, root, comm );
+        }
+
+        return MPI_SUCCESS;
+}
+
+int __INTERNAL__PMPI_Scatter_intra_shared_node(void *sendbuf, int sendcnt, MPI_Datatype sendtype,
+                             void *recvbuf, int recvcnt, MPI_Datatype recvtype,
+                             int root, MPI_Comm comm) {
+
+    struct sctk_comm_coll *coll = sctk_communicator_get_coll(comm);
+    //TODO to expose as config vars
+    if( __MPC_node_comm_coll_check( coll, comm ) 
+    && (1024 < sendcnt) && (8 <= coll->comm_size)   )
+    {
+     
+        int bool_val = sctk_datatype_contig_mem( sendtype );
+        bool_val &=  (sendtype == recvtype);
+        bool_val &=  (sendcnt == recvcnt);
+
+        int rez = 0;
+
+        __INTERNAL__PMPI_Allreduce( &bool_val, &rez, 1, MPI_INT, MPI_BAND, comm);
+
+        if( !rez )
+        {
+            return (scatter_intra)( sendbuf, sendcnt, sendtype,
+                             recvbuf, recvcnt, recvtype,
+                             root, comm);
+        
+        }
+
+
+        /* We need to be able to amortize the agreement allreduce */
+        return __INTERNAL__PMPI_Scatter_intra_shared_node_impl( sendbuf, sendcnt, sendtype,
+                             recvbuf, recvcnt, recvtype,
+                             root, comm, coll); 
+    }
+    else
+    {
+        return (scatter_intra)( sendbuf, sendcnt, sendtype,
+                             recvbuf, recvcnt, recvtype,
+                             root, comm);
+    }
+}
+
+
+
+
 int __INTERNAL__PMPI_Scatter(void *sendbuf, int sendcnt, MPI_Datatype sendtype,
                              void *recvbuf, int recvcnt, MPI_Datatype recvtype,
                              int root, MPI_Comm comm) {
@@ -7301,12 +7402,26 @@ int __INTERNAL__PMPI_Scatter(void *sendbuf, int sendcnt, MPI_Datatype sendtype,
               ->modules.collectives_intra.scatter_intra.value);
     }
 
+
+    if (scatter_intra_shared_node == NULL) {
+      scatter_intra_shared_node = (int (*)(void *, int, MPI_Datatype, void *, int,
+                               MPI_Datatype, int, MPI_Comm))(
+          sctk_runtime_config_get()
+              ->modules.collectives_shm_shared.scatter_intra_shared_node.value);
+    }
+
+
+
     /* Note there is a bug we did not find with derived data-types
      * on the scatter(v) operation deactivated for now */
     if (sctk_is_shared_mem(comm) && sctk_datatype_contig_mem(sendtype) &&
         sctk_datatype_contig_mem(recvtype)) {
       res = (scatterv_intra_shm)(sendbuf, &sendcnt, NULL, sendtype, recvbuf,
                                  recvcnt, recvtype, root, comm);
+    } else if( sctk_is_shared_node(comm) ) {
+        res = (scatter_intra_shared_node)(sendbuf, sendcnt, sendtype, recvbuf, recvcnt,
+                            recvtype, root, comm);
+
     } else {
       res = (scatter_intra)(sendbuf, sendcnt, sendtype, recvbuf, recvcnt,
                             recvtype, root, comm);
