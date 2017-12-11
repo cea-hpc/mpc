@@ -371,9 +371,7 @@ void *mpc_MPI_allocmem_pool_alloc(size_t size) {
 }
 
 
-int mpc_MPI_allocmem_pool_free(void *ptr) {
-  if( !ptr )
-        return 0;
+int mpc_MPI_allocmem_pool_free_size(void *ptr, ssize_t known_size) {
 
   /* Are all the tasks in the same process ? */
   if (_pool_only_local ||
@@ -384,14 +382,21 @@ int mpc_MPI_allocmem_pool_free(void *ptr) {
 
   mpc_MPI_allocmem_pool_lock();
 
-  void *size_in_ptr =
-      MPCHT_get(&____mpc_sctk_mpi_alloc_mem_pool.size_ht, (sctk_uint64_t)ptr);
+  void *size_in_ptr = NULL;
 
-  if (size_in_ptr) {
+  if( known_size < 0 )
+  {
+      size_in_ptr = MPCHT_get(&____mpc_sctk_mpi_alloc_mem_pool.size_ht, (sctk_uint64_t)ptr);
+  }
+  else
+  {
+      size_in_ptr = (void *)known_size;
+  }
+
+  if (size_in_ptr != NULL) {
 
     size_t size = (size_t)size_in_ptr;
 
-    sctk_nodebug("FREE %ld", size);
 
     /* Compute bit_offset */
     size_t off = (ptr - ____mpc_sctk_mpi_alloc_mem_pool.pool) /
@@ -414,6 +419,11 @@ int mpc_MPI_allocmem_pool_free(void *ptr) {
   }
 
   return 0;
+}
+
+
+int mpc_MPI_allocmem_pool_free(void *ptr) {
+        return mpc_MPI_allocmem_pool_free_size(ptr, -1);
 }
 
 int mpc_MPI_allocmem_is_in_pool(void *ptr) {
@@ -451,7 +461,7 @@ void mpc_MPI_accumulate_op_lock_init() {
     *((sctk_spinlock_t *)p) = 0;
   }
 
-  PMPI_Bcast(&p, 1, MPI_AINT, 0, node_comm);
+  sctk_broadcast(&p, sizeof(MPI_Aint), 0, node_comm);
 
   __accululate_master_lock = (sctk_spinlock_t *)p;
 

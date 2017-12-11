@@ -49,6 +49,7 @@ int mpc_MPI_allocmem_pool_release();
 void *mpc_MPI_allocmem_pool_alloc(size_t size);
 void *mpc_MPI_allocmem_pool_alloc_check(size_t size, int * is_shared);
 int mpc_MPI_allocmem_pool_free(void *ptr);
+int mpc_MPI_allocmem_pool_free_size(void *ptr, ssize_t known_size);
 
 int mpc_MPI_allocmem_is_in_pool(void *ptr);
 

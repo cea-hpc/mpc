@@ -2939,6 +2939,8 @@ void sctk_runtime_config_struct_init_collectives_shm_shared(void * struct_ptr)
 	/* Simple params : */
 	obj->barrier_intra_shared_node.name = "__INTERNAL__PMPI_Barrier_intra_shared_node";
 	*(void **) &(obj->barrier_intra_shared_node.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Barrier_intra_shared_node");
+	obj->bcast_intra_shared_node.name = "__INTERNAL__PMPI_Bcast_intra_shared_node";
+	*(void **) &(obj->bcast_intra_shared_node.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Bcast_intra_shared_node");
 	obj->init_done = 1;
 }
 

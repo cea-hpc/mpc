@@ -604,6 +604,8 @@ struct sctk_runtime_config_struct_collectives_shm_shared
 {	int init_done;
 	/**MPI_Barrier intracom algorithm on shared-node comms**/
 	struct sctk_runtime_config_funcptr barrier_intra_shared_node;
+	/**MPI_Bcast intracom algorithm on shared-node comms**/
+	struct sctk_runtime_config_funcptr bcast_intra_shared_node;
 };
 
 /******************************** STRUCTURE *********************************/

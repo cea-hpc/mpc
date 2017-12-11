@@ -5453,6 +5453,7 @@ int (*barrier_intra_shared_node)(MPI_Comm);
 int (*barrier_inter)(MPI_Comm);
 
 int (*bcast_intra_shm)(void *, int, MPI_Datatype, int, MPI_Comm);
+int (*bcast_intra_shared_node)(void *, int, MPI_Datatype, int, MPI_Comm);
 int (*bcast_intra)(void *, int, MPI_Datatype, int, MPI_Comm);
 int (*bcast_inter)(void *, int, MPI_Datatype, int, MPI_Comm);
 
@@ -5645,19 +5646,18 @@ int __MPC_init_node_comm_ctx( struct sctk_comm_coll * coll, MPI_Comm comm )
 
         if( is_shared == 0 )
         {
-            mpc_MPI_allocmem_pool_free( coll->node_ctx );
+            sctk_free( coll->node_ctx );
             coll->node_ctx = NULL;
         }
 
         if( !coll->node_ctx )
         {
             coll->node_ctx = 0x1;
-            return MPI_ERR_INTERN;
         }
-
-
-
-        sctk_per_node_comm_context_init( coll->node_ctx, comm,  coll->comm_size );
+        else
+        {
+            sctk_per_node_comm_context_init( coll->node_ctx, comm,  coll->comm_size );
+        }
 
         sctk_broadcast(  &coll->node_ctx, sizeof( void * ), 0, comm );
 
@@ -5667,30 +5667,45 @@ int __MPC_init_node_comm_ctx( struct sctk_comm_coll * coll, MPI_Comm comm )
         sctk_broadcast(  &coll->node_ctx, sizeof( void * ), 0, comm );
     }
 
-    sctk_barrier( comm );
-
     return MPI_SUCCESS;
 }
 
 
 
-
-int __INTERNAL__PMPI_Barrier_intra_shared_node(MPI_Comm comm) {
-        struct sctk_comm_coll *coll = sctk_communicator_get_coll(comm);
+static inline __MPC_node_comm_coll_check(  struct sctk_comm_coll *coll , MPI_Comm comm )
+{
        
         if( coll->node_ctx == NULL )
         {
                 __MPC_init_node_comm_ctx( coll, comm );
         }
+        
 
         if( coll->node_ctx == 0x1 )
         {
                 /* A previous alloc failed */
-                return (barrier_intra)( comm );
+                return 0;
         }
 
-        return __INTERNAL__PMPI_Barrier_intra_shm_on_ctx(&coll->node_ctx->shm_barrier,
+
+        return 1;
+}
+
+
+int __INTERNAL__PMPI_Barrier_intra_shared_node(MPI_Comm comm) {
+
+        struct sctk_comm_coll *coll = sctk_communicator_get_coll(comm);
+
+        if( __MPC_node_comm_coll_check( coll, comm ) )
+        {
+                return __INTERNAL__PMPI_Barrier_intra_shm_on_ctx(&coll->node_ctx->shm_barrier,
                                               coll->comm_size);
+
+        }
+        else
+        {
+                return (barrier_intra)( comm );
+        }
 }
 
 
@@ -6236,6 +6251,84 @@ SHM_BCAST_RELEASE : {
 }
 }
 
+
+int __INTERNAL__PMPI_Bcast_intra_shared_node_impl(void *buffer, int count, MPI_Datatype datatype,
+        int root, MPI_Comm comm, struct sctk_comm_coll *coll ) {
+        int rank;
+        PMPI_Comm_rank( comm, &rank );
+
+        int tsize;
+        PMPI_Type_size( datatype, &tsize );
+
+        size_t to_bcast_size = tsize * count;
+
+        void * buffer_addr = NULL;
+
+        if( rank == root )
+        {
+            int is_shared = 0;
+            buffer_addr = mpc_MPI_allocmem_pool_alloc_check( to_bcast_size + sizeof(sctk_atomics_int),
+                &is_shared);
+
+            if( !is_shared )
+            {
+                /* We failed ! */
+                sctk_free( buffer_addr );
+                buffer_addr = NULL;
+            }
+            else
+            {
+                /* Fill the buffer */
+                sctk_atomics_store_int( (sctk_atomics_int*)buffer_addr, coll->comm_size );
+                memcpy( buffer_addr + sizeof(sctk_atomics_int), buffer, to_bcast_size );
+             }
+        }
+
+        (bcast_intra)( &buffer_addr, sizeof(void *), MPI_CHAR, root, comm );
+
+        if( buffer_addr != NULL )
+        {
+                if( rank != root )
+                {
+                        int token = sctk_atomics_fetch_and_decr_int( (sctk_atomics_int *)buffer_addr );
+                        memcpy( buffer,  buffer_addr + sizeof(sctk_atomics_int), to_bcast_size );
+                        if( token == 2 )
+                        {
+                                mpc_MPI_allocmem_pool_free_size( buffer_addr ,  to_bcast_size + sizeof(sctk_atomics_int));
+                        }
+
+                }
+        }
+        else
+        {
+                /* Fallback to regular bcast */
+                return (bcast_intra)( buffer, count, datatype, root, comm );
+        }
+
+        return MPI_SUCCESS;
+}
+
+
+int __INTERNAL__PMPI_Bcast_intra_shared_node(void *buffer, int count, MPI_Datatype datatype,
+    int root, MPI_Comm comm) {
+
+    struct sctk_comm_coll *coll = sctk_communicator_get_coll(comm);
+    
+    if( __MPC_node_comm_coll_check( coll, comm ) 
+    && ( (4 <= coll->comm_size) || (1024 < count) )  )
+    {
+        return __INTERNAL__PMPI_Bcast_intra_shared_node_impl( buffer, count, datatype, root, comm, coll );
+    }
+    else
+    {
+        return (bcast_intra)( buffer, count, datatype, root, comm );
+    }
+}
+
+
+
+
+
 int __INTERNAL__PMPI_Bcast_intra(void *buffer, int count, MPI_Datatype datatype,
 		int root, MPI_Comm comm) {
 
@@ -6500,6 +6593,14 @@ int __INTERNAL__PMPI_Bcast(void *buffer, int count, MPI_Datatype datatype,
               ->modules.collectives_shm.bcast_intra_shm.value);
     }
 
+
+    if (bcast_intra_shared_node == NULL) {
+      bcast_intra_shared_node = (int (*)(void *, int, MPI_Datatype, int, MPI_Comm))(
+          sctk_runtime_config_get()
+              ->modules.collectives_shm_shared.bcast_intra_shared_node.value);
+    }
+
+
     if (bcast_intra == NULL) {
       bcast_intra = (int (*)(void *, int, MPI_Datatype, int, MPI_Comm))(
           sctk_runtime_config_get()
@@ -6509,8 +6610,11 @@ int __INTERNAL__PMPI_Bcast(void *buffer, int count, MPI_Datatype datatype,
     if (sctk_is_shared_mem(comm)) {
       /* Here only work in shared-mem */
       res = (bcast_intra_shm)(buffer, count, datatype, root, comm);
+    } else if(  sctk_is_shared_node(comm) && sctk_datatype_contig_mem( datatype ) ) {
+       
+         res = (bcast_intra_shared_node)(buffer, count, datatype, root, comm );
     } else {
-      res = bcast_intra(buffer, count, datatype, root, comm);
+      res = (bcast_intra)(buffer, count, datatype, root, comm);
     }
   }
   return res;
@@ -10438,7 +10542,7 @@ __INTERNAL__PMPI_Reduce_intra (void *sendbuf, void *recvbuf, int count,
 
 		if( sctk_datatype_is_contiguous( datatype ) )
 		{
-			MPI_Aint tsize;
+			int tsize;
 			PMPI_Type_size(datatype , &tsize );
 			memcpy( recvbuf,  sendbuf , tsize * count );
 		}
@@ -16858,7 +16962,7 @@ int PMPI_Bcast (void *buffer, int count, MPI_Datatype datatype, int root, MPI_Co
           unsigned int kind_mask_save = sctk_thread_generic_getkind_mask_self();
           sctk_thread_generic_addkind_mask_self(KIND_MASK_PROGRESS_THREAD);
           res =
-              __INTERNAL__PMPI_Bcast_intra(buffer, count, datatype, root, comm);
+              __INTERNAL__PMPI_Bcast(buffer, count, datatype, root, comm);
           sched->th->attr.basic_priority -=
               sctk_runtime_config_get()
                   ->modules.scheduler.progress_basic_priority;
@@ -16868,7 +16972,7 @@ int PMPI_Bcast (void *buffer, int count, MPI_Datatype datatype, int root, MPI_Co
           sctk_thread_generic_setkind_mask_self(kind_mask_save);
         } else {
           res =
-              __INTERNAL__PMPI_Bcast_intra(buffer, count, datatype, root, comm);
+              __INTERNAL__PMPI_Bcast(buffer, count, datatype, root, comm);
         }
 
         /* Profiling */

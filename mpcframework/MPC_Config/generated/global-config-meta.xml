@@ -386,6 +386,7 @@
         <struct name="collectives_shm_shared" doc="Shared Memory Collectives for MPC">
             <!-- Function Pointers -->
             <param name="barrier_intra_shared_node" type="funcptr" default="__INTERNAL__PMPI_Barrier_intra_shared_node" doc="MPI_Barrier intracom algorithm on shared-node comms"/>
+            <param name="bcast_intra_shared_node" type="funcptr" default="__INTERNAL__PMPI_Bcast_intra_shared_node" doc="MPI_Bcast intracom algorithm on shared-node comms"/>
         </struct>
         <struct name="collectives_shm" doc="Shared Memory Collectives for MPC">
             <!-- Function Pointers -->
