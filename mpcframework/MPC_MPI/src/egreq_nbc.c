@@ -785,7 +785,7 @@ int MPI_Ixbcast(void* buffer, int count, MPI_Datatype datatype, int root, MPI_Co
     // This is more or less the same as the barrier, except that we start from the root
     // of the tree instead of the leaves, and the tree can have an arbitrary root
     // (which is accomplished by swapping 0 and the user-specified root)
-    xMPI_Request * xreq = xMPI_Request_new(request, 5);
+    xMPI_Request * xreq = xMPI_Request_new(request, 6);
 
     int rank, size, parent, lc, rc;
     setup_binary_tree(comm, root, &rank, &size, &parent, &lc, &rc);

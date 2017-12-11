@@ -7332,7 +7332,7 @@ int __INTERNAL__PMPI_Scatter_intra_shared_node(void *sendbuf, int sendcnt, MPI_D
     struct sctk_comm_coll *coll = sctk_communicator_get_coll(comm);
     //TODO to expose as config vars
     if( __MPC_node_comm_coll_check( coll, comm ) 
-    && (1024 < sendcnt) && (8 <= coll->comm_size)   )
+    && (4 < sendcnt) && (sendcnt <= 256) && (4 <= coll->comm_size)  && 0 )
     {
      
         int bool_val = sctk_datatype_contig_mem( sendtype );
