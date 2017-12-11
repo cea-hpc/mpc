@@ -383,6 +383,10 @@
 </config>
 <config name="MPC_MPI">
     <usertypes>
+        <struct name="collectives_shm_shared" doc="Shared Memory Collectives for MPC">
+            <!-- Function Pointers -->
+            <param name="barrier_intra_shared_node" type="funcptr" default="__INTERNAL__PMPI_Barrier_intra_shared_node" doc="MPI_Barrier intracom algorithm on shared-node comms"/>
+        </struct>
         <struct name="collectives_shm" doc="Shared Memory Collectives for MPC">
             <!-- Function Pointers -->
             <param name="barrier_intra_shm" type="funcptr" default="__INTERNAL__PMPI_Barrier_intra_shm" doc="MPI_Barrier intracom algorithm on shared communicators"/>
@@ -499,6 +503,7 @@
 
 
             <modules>
+                <module name="collectives_shm_shared" type="collectives_shm_shared"/>
                 <module name="collectives_shm" type="collectives_shm"/>
                 <module name="collectives_intra" type="collectives_intra"/>
                 <module name="collectives_inter" type="collectives_inter"/>

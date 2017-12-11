@@ -127,6 +127,10 @@ See type inter_thread_comm.
 
 .br
 See type low_level_comm.
+.It Cm collectives_shm_shared
+Shared Memory Collectives for MPC
+.br
+See type collectives_shm_shared.
 .It Cm collectives_shm
 Shared Memory Collectives for MPC
 .br
@@ -1019,6 +1023,17 @@ Enable usage of polling during idle.
 Type is ib_global. 
 .Pp ib_global
 Global parameters for IB
+.El
+.Sh ENTRIES OF TYPE collectives_shm_shared
+Shared Memory Collectives for MPC
+.Pp
+It support parameters :
+.Pp
+.Bl -tag -width Ds
+.It Cm barrier_intra_shared_node
+Type is function pointer. Default value is __INTERNAL__PMPI_Barrier_intra_shared_node. 
+.Pp barrier_intra_shared_node
+MPI_Barrier intracom algorithm on shared-node comms
 .El
 .Sh ENTRIES OF TYPE collectives_shm
 Shared Memory Collectives for MPC

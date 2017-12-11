@@ -39,6 +39,7 @@ const struct sctk_runtime_config_entry_meta sctk_runtime_config_db[] = {
 	{"ft_system"     , SCTK_CONFIG_META_TYPE_PARAM , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_modules,ft_system)  , sizeof(struct sctk_runtime_config_struct_ft) , "sctk_runtime_config_struct_ft" , sctk_runtime_config_struct_init_ft},
 	{"inter_thread_comm"     , SCTK_CONFIG_META_TYPE_PARAM , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_modules,inter_thread_comm)  , sizeof(struct sctk_runtime_config_struct_inter_thread_comm) , "sctk_runtime_config_struct_inter_thread_comm" , sctk_runtime_config_struct_init_inter_thread_comm},
 	{"low_level_comm"     , SCTK_CONFIG_META_TYPE_PARAM , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_modules,low_level_comm)  , sizeof(struct sctk_runtime_config_struct_low_level_comm) , "sctk_runtime_config_struct_low_level_comm" , sctk_runtime_config_struct_init_low_level_comm},
+	{"collectives_shm_shared"     , SCTK_CONFIG_META_TYPE_PARAM , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_modules,collectives_shm_shared)  , sizeof(struct sctk_runtime_config_struct_collectives_shm_shared) , "sctk_runtime_config_struct_collectives_shm_shared" , sctk_runtime_config_struct_init_collectives_shm_shared},
 	{"collectives_shm"     , SCTK_CONFIG_META_TYPE_PARAM , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_modules,collectives_shm)  , sizeof(struct sctk_runtime_config_struct_collectives_shm) , "sctk_runtime_config_struct_collectives_shm" , sctk_runtime_config_struct_init_collectives_shm},
 	{"collectives_intra"     , SCTK_CONFIG_META_TYPE_PARAM , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_modules,collectives_intra)  , sizeof(struct sctk_runtime_config_struct_collectives_intra) , "sctk_runtime_config_struct_collectives_intra" , sctk_runtime_config_struct_init_collectives_intra},
 	{"collectives_inter"     , SCTK_CONFIG_META_TYPE_PARAM , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_modules,collectives_inter)  , sizeof(struct sctk_runtime_config_struct_collectives_inter) , "sctk_runtime_config_struct_collectives_inter" , sctk_runtime_config_struct_init_collectives_inter},
@@ -566,6 +567,11 @@ const struct sctk_runtime_config_entry_meta sctk_runtime_config_db[] = {
 				NULL
 			},
 	{"ib_global"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_low_level_comm,ib_global)  , sizeof(struct sctk_runtime_config_struct_ib_global) , "sctk_runtime_config_struct_ib_global" , sctk_runtime_config_struct_init_ib_global , 
+				NULL
+			},
+	/* struct */
+	{"sctk_runtime_config_struct_collectives_shm_shared" , SCTK_CONFIG_META_TYPE_STRUCT , 0  , sizeof(struct sctk_runtime_config_struct_collectives_shm_shared) , NULL , sctk_runtime_config_struct_init_collectives_shm_shared},
+	{"barrier_intra_shared_node"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_collectives_shm_shared,barrier_intra_shared_node)  , sizeof(struct sctk_runtime_config_funcptr) , "funcptr" , NULL , 
 				NULL
 			},
 	/* struct */

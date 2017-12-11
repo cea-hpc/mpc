@@ -151,6 +151,17 @@ struct shared_mem_a2a {
 int sctk_shared_mem_a2a_init(struct shared_mem_a2a *shmaa, int nb_task);
 int sctk_shared_mem_a2a_release(struct shared_mem_a2a *shmaa);
 
+
+/**
+ *  \brief This structure describes the pool allocated context for node local coll
+ */
+
+struct sctk_per_node_comm_context
+{
+        struct shared_mem_barrier shm_barrier;
+};
+
+
 struct sctk_comm_coll {
   int init_done;
   volatile int * coll_id;
@@ -164,6 +175,7 @@ struct sctk_comm_coll {
   struct shared_mem_scatterv shm_scatterv;
   struct shared_mem_a2a shm_a2a;
   int comm_size;
+  struct sctk_per_node_comm_context *node_ctx;
 };
 
 int sctk_comm_coll_init(struct sctk_comm_coll *coll, int nb_task);
@@ -213,6 +225,19 @@ static inline struct shared_mem_bcast * sctk_comm_coll_get_bcast(struct sctk_com
   int xid = sctk_comm_coll_get_id_bcast(coll, rank);
   return &coll->shm_bcast[0];
 }
+
+
+
+int sctk_per_node_comm_context_init(struct sctk_per_node_comm_context *ctx,
+                                     sctk_communicator_t comm, int nb_task );
+
+int sctk_per_node_comm_context_release( struct sctk_per_node_comm_context * ctx );
+
+
+
+
+
+
 
 /************************** MACROS *************************/
 /** define the max number of communicators in the common table **/

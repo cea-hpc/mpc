@@ -177,7 +177,7 @@ int mpc_MPI_allocmem_pool_init() {
     PMPI_Comm_free(&process_master_comm);
   }
 
-  PMPI_Barrier(MPI_COMM_WORLD);
+  sctk_barrier(MPI_COMM_WORLD);
 
   assume(____mpc_sctk_mpi_alloc_mem_pool._pool != NULL);
 
@@ -214,13 +214,13 @@ int mpc_MPI_allocmem_pool_init() {
 
   mpc_MPI_accumulate_op_lock_init();
 
-  PMPI_Barrier(MPI_COMM_WORLD);
+  sctk_barrier(MPI_COMM_WORLD);
 
   return 0;
 }
 
 int mpc_MPI_allocmem_pool_release() {
-  PMPI_Barrier(MPI_COMM_WORLD);
+  sctk_barrier(MPI_COMM_WORLD);
 
   /* Are all the tasks in the same process ? */
   if (_pool_only_local ||
@@ -249,7 +249,7 @@ int mpc_MPI_allocmem_pool_release() {
                           ____mpc_sctk_mpi_alloc_mem_pool.mapped_size);
   }
 
-  PMPI_Barrier(MPI_COMM_WORLD);
+  sctk_barrier(MPI_COMM_WORLD);
 
   if (is_master) {
     MPCHT_release(&____mpc_sctk_mpi_alloc_mem_pool.size_ht);
@@ -273,10 +273,13 @@ static inline void mpc_MPI_allocmem_pool_unlock() {
   sctk_atomics_store_int(____mpc_sctk_mpi_alloc_mem_pool.lock, 0);
 }
 
-void *mpc_MPI_allocmem_pool_alloc(size_t size) {
+
+void *mpc_MPI_allocmem_pool_alloc_check(size_t size, int * is_shared) {
+  *is_shared = 0;
   /* Are all the tasks in the same process ? */
   if (_pool_only_local ||
       (sctk_get_task_number() == sctk_get_local_task_number())) {
+    *is_shared = 1;
     return sctk_malloc(size);
   }
 
@@ -343,6 +346,7 @@ void *mpc_MPI_allocmem_pool_alloc(size_t size) {
         sctk_nodebug("ALLOC %ld", number_of_bits);
         mpc_MPI_allocmem_pool_unlock();
 
+        *is_shared = 1;
         /* Proudly return the address */
         return addr;
       }
@@ -360,7 +364,17 @@ void *mpc_MPI_allocmem_pool_alloc(size_t size) {
   return sctk_malloc(size);
 }
 
+
+void *mpc_MPI_allocmem_pool_alloc(size_t size) {
+        int dummy_shared;
+        return mpc_MPI_allocmem_pool_alloc_check( size, &dummy_shared );
+}
+
+
 int mpc_MPI_allocmem_pool_free(void *ptr) {
+  if( !ptr )
+        return 0;
+
   /* Are all the tasks in the same process ? */
   if (_pool_only_local ||
       (sctk_get_task_number() == sctk_get_local_task_number())) {

@@ -120,7 +120,7 @@ __sctk_communicator_get_coll(const sctk_communicator_t communicator) {
     return NULL;
   }
 
-  if (!ret->is_shared_mem)
+  if (!ret->is_shared_mem && !ret->is_shared_node )
     return NULL;
 
   return &ret->coll;
@@ -1206,6 +1206,7 @@ int powerof2(int x) {
   return (x == 1);
 }
 
+
 int sctk_comm_coll_init(struct sctk_comm_coll *coll, int nb_task) {
   /* NB task for all */
   coll->comm_size = nb_task;
@@ -1259,6 +1260,8 @@ int sctk_comm_coll_init(struct sctk_comm_coll *coll, int nb_task) {
   /* The All2All structure */
   sctk_shared_mem_a2a_init(&coll->shm_a2a, nb_task);
 
+  coll->node_ctx = NULL;
+
   /* Flag init done */
   coll->init_done = 1;
 
@@ -1305,6 +1308,26 @@ int sctk_comm_coll_release(struct sctk_comm_coll *coll) {
 
   return 0;
 }
+
+
+int sctk_per_node_comm_context_init(struct sctk_per_node_comm_context *ctx,
+                                     sctk_communicator_t comm, int nb_task )
+{
+       sctk_shared_mem_barrier_init(&ctx->shm_barrier, nb_task);
+}
+
+int sctk_per_node_comm_context_release( struct sctk_per_node_comm_context * ctx )
+{
+
+        sctk_shared_mem_barrier_release(&ctx->shm_barrier);
+}
+
+
+
+
+
+
+
 
 /************************* FUNCTION ************************/
 /**
@@ -1403,12 +1426,9 @@ static inline void sctk_communicator_init_intern_init_only ( const int nb_task, 
 
     if (tmp->is_shared_mem) {
         sctk_comm_coll_init(&tmp->coll, nb_task);
-        /* After that
-           tmp->coll.init_done == 1
-           */
-    } else {
+    } else  {
         /* Flag as not intialized */
-        tmp->coll.init_done = 0;
+        memset(&tmp->coll, 0, sizeof(struct sctk_comm_coll));
     }
 }
 

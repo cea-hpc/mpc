@@ -501,6 +501,18 @@
     </xs:all>
   </xs:complexType>
   <!-- ********************************************************* -->
+  <xs:complexType name="user_type_collectives_shm_shared">
+    <xs:all>
+      <xs:element minOccurs="0" name="barrier_intra_shared_node">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+    </xs:all>
+  </xs:complexType>
+  <!-- ********************************************************* -->
   <xs:complexType name="user_type_collectives_shm">
     <xs:all>
       <xs:element minOccurs="0" name="barrier_intra_shm">
@@ -951,6 +963,7 @@
       <xs:element minOccurs="0" name="ft_system" type="user_type_ft"/>
       <xs:element minOccurs="0" name="inter_thread_comm" type="user_type_inter_thread_comm"/>
       <xs:element minOccurs="0" name="low_level_comm" type="user_type_low_level_comm"/>
+      <xs:element minOccurs="0" name="collectives_shm_shared" type="user_type_collectives_shm_shared"/>
       <xs:element minOccurs="0" name="collectives_shm" type="user_type_collectives_shm"/>
       <xs:element minOccurs="0" name="collectives_intra" type="user_type_collectives_intra"/>
       <xs:element minOccurs="0" name="collectives_inter" type="user_type_collectives_inter"/>

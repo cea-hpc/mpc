@@ -30,6 +30,7 @@
 #include "mpc_extended_request.h"
 #include "sctk_debug.h"
 #include "progress_engine.h"
+#include "sctk_communicator.h"
 
 /************************************************************************/
 /* Per communicator context                                             */
@@ -66,22 +67,6 @@ struct sctk_task_specific_atexit_s
 	struct sctk_task_specific_atexit_s * next; /**< Following function to call */
 };
 
-struct MPI_Topological_comms {
-  MPC_Comm per_node_socket_comm;
-  MPC_Comm per_node_socket_grp;
-
-  int has_numa;
-  /*{*/
-  MPC_Comm per_node_numa_comm;
-  MPC_Comm per_node_numa_grp;
-  /*}*/
-
-  MPC_Comm per_process_comm;
-  MPC_Comm per_process_grp;
-
-  MPC_Comm per_node_comm;
-  MPC_Comm per_node_grp;
-};
 
 /**
  *  \brief Describes the context of an MPI task
@@ -124,11 +109,6 @@ typedef struct sctk_task_specific_s
         struct sctk_task_specific_atexit_s
             *exit_handlers; /**< These functions are called when tasks leaves
                                                (atexit) */
-
-        struct MPI_Topological_comms
-            topo_comms; /**< These are communicators
-                                                                        taking
-                           the topology into account */
 
         /* For disguisement */
         struct sctk_thread_data_s * thread_data;

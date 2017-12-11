@@ -5443,52 +5443,13 @@ int __INTERNAL__PMPI_Unpack_external (char * datarep, void * inbuf, MPI_Aint ins
 	return MPI_SUCCESS;
 }
 
-/* Topological comm getter */
-static inline MPI_Comm sctk_get_topological_comm(int level) {
-  struct sctk_task_specific_s *task_specific = __MPC_get_task_specific();
-  struct MPI_Topological_comms *topo_comms = &task_specific->topo_comms;
-
-  switch (level) {
-  case MPI_COMM_TYPE_SHARED:
-    return topo_comms->per_node_comm;
-    break;
-  case MPI_COMM_TYPE_SHARED_TR:
-    return topo_comms->per_node_grp;
-    break;
-
-  case MPI_COMM_TYPE_SOCKET:
-    return topo_comms->per_node_socket_comm;
-    break;
-  case MPI_COMM_TYPE_SOCKET_TR:
-    return topo_comms->per_node_socket_grp;
-    break;
-
-  case MPI_COMM_TYPE_NUMA:
-    return topo_comms->per_node_numa_comm;
-    break;
-  case MPI_COMM_TYPE_NUMA_TR:
-    return topo_comms->per_node_numa_grp;
-    break;
-
-  case MPI_COMM_TYPE_MPC_PROCESS:
-    return topo_comms->per_process_comm;
-    break;
-  case MPI_COMM_TYPE_MPC_PROCESS_TR:
-    return topo_comms->per_process_grp;
-    break;
-
-  default:
-    return MPI_COMM_NULL;
-  }
-
-  return MPI_COMM_NULL;
-}
 
 #define MPI_MAX_CONCURENT 128
 
 /* Function pointer for user collectives */
 int (*barrier_intra)(MPI_Comm);
 int (*barrier_intra_shm)(MPI_Comm);
+int (*barrier_intra_shared_node)(MPI_Comm);
 int (*barrier_inter)(MPI_Comm);
 
 int (*bcast_intra_shm)(void *, int, MPI_Datatype, int, MPI_Comm);
@@ -5627,8 +5588,10 @@ int __INTERNAL__PMPI_Barrier_intra_shm_sig(MPI_Comm comm) {
 }
 
 
-static inline __INTERNAL__PMPI_Barrier_intra_shm_on_ctx(struct shared_mem_barrier *barrier_ctx, int comm_size )
-{
+
+int __INTERNAL__PMPI_Barrier_intra_shm_on_ctx(struct shared_mem_barrier *barrier_ctx,
+                                              int comm_size) {
+
   int my_phase = !sctk_atomics_load_int(&barrier_ctx->phase);
 
   if (sctk_atomics_fetch_and_decr_int(&barrier_ctx->counter) == 1) {
@@ -5647,8 +5610,10 @@ static inline __INTERNAL__PMPI_Barrier_intra_shm_on_ctx(struct shared_mem_barrie
   }
 
   return MPI_SUCCESS;
-
 }
+
+
+
 
 
 int __INTERNAL__PMPI_Barrier_intra_shm(MPI_Comm comm) {
@@ -5661,6 +5626,76 @@ int __INTERNAL__PMPI_Barrier_intra_shm(MPI_Comm comm) {
 
   return __INTERNAL__PMPI_Barrier_intra_shm_on_ctx( barrier_ctx, coll->comm_size );
 }
+
+
+int __MPC_init_node_comm_ctx( struct sctk_comm_coll * coll, MPI_Comm comm )
+{
+    int is_shared = 0;
+
+    int rank = 0;
+
+    PMPI_Comm_size( comm, &coll->comm_size );
+    PMPI_Comm_rank( comm, &rank );
+
+
+    if( !rank )
+    {
+        coll->node_ctx = mpc_MPI_allocmem_pool_alloc_check(sizeof(struct sctk_comm_coll),
+                &is_shared);
+
+        if( is_shared == 0 )
+        {
+            mpc_MPI_allocmem_pool_free( coll->node_ctx );
+            coll->node_ctx = NULL;
+        }
+
+        if( !coll->node_ctx )
+        {
+            coll->node_ctx = 0x1;
+            return MPI_ERR_INTERN;
+        }
+
+
+
+        sctk_per_node_comm_context_init( coll->node_ctx, comm,  coll->comm_size );
+
+        sctk_broadcast(  &coll->node_ctx, sizeof( void * ), 0, comm );
+
+    }
+    else
+    {
+        sctk_broadcast(  &coll->node_ctx, sizeof( void * ), 0, comm );
+    }
+
+    sctk_barrier( comm );
+
+    return MPI_SUCCESS;
+}
+
+
+
+
+int __INTERNAL__PMPI_Barrier_intra_shared_node(MPI_Comm comm) {
+        struct sctk_comm_coll *coll = sctk_communicator_get_coll(comm);
+       
+        if( coll->node_ctx == NULL )
+        {
+                __MPC_init_node_comm_ctx( coll, comm );
+        }
+
+        if( coll->node_ctx == 0x1 )
+        {
+                /* A previous alloc failed */
+                return (barrier_intra)( comm );
+        }
+
+        return __INTERNAL__PMPI_Barrier_intra_shm_on_ctx(&coll->node_ctx->shm_barrier,
+                                              coll->comm_size);
+}
+
+
+
+
 
 #define FOR_MPI_BARRIER_STATIC_REQ 32
 
@@ -5950,6 +5985,12 @@ static inline int __INTERNAL__PMPI_Barrier(MPI_Comm comm) {
               ->modules.collectives_shm.barrier_intra_shm.value);
     }
 
+    if (barrier_intra_shared_node == NULL) {
+      barrier_intra_shared_node = (int (*)(MPI_Comm))(
+          sctk_runtime_config_get()
+              ->modules.collectives_shm_shared.barrier_intra_shared_node.value);
+    }
+
     if (barrier_intra == NULL) {
       barrier_intra = (int (*)(MPI_Comm))(
           sctk_runtime_config_get()
@@ -5959,7 +6000,11 @@ static inline int __INTERNAL__PMPI_Barrier(MPI_Comm comm) {
     if (sctk_is_shared_mem(comm) ) {
       /* Here only work in shared-mem */
       res = (barrier_intra_shm)(comm);
-    } else {
+    } else if( sctk_is_shared_node( comm ) ) {
+      
+      res = (barrier_intra_shared_node)( comm );
+    }
+    else {
       /* Use a full net barrier */
       res = (barrier_intra)(comm);
     }
@@ -14703,193 +14748,8 @@ static int __INTERNAL__PMPI_Init_thread(int *argc, char ***argv, int required,
   return res;
 }
 
-union split_id {
-  int id;
-  struct field_s {
-    int topo : 10;
-    int node : 22;
-  } field;
-};
-
-static int mpi_init_topological_communicators() {
-  int ret = 0;
-  union split_id split_id = {0};
-  int rank, size;
-
-  struct sctk_task_specific_s *task_specific = __MPC_get_task_specific();
-  struct MPI_Topological_comms *topo_comms = &task_specific->topo_comms;
-
-  return MPI_SUCCESS;
-
-  PMPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  PMPI_Comm_size(MPI_COMM_WORLD, &size);
-
-  sctk_nodebug("RANK %d CORE %d SOCKET %d NUMA %d ISNUMA %d", rank,
-               sctk_get_cpu(), sctk_topology_get_socket_id(), sctk_get_node(),
-               sctk_is_numa_node());
-
-  sctk_nodebug("SPLIT PROCESS");
-
-  /* Process LEVEL */
-  split_id.field.topo = 0;
-  split_id.field.node = sctk_get_process_rank();
-  ret = PMPI_Comm_split(MPI_COMM_WORLD, split_id.id, rank,
-                        &topo_comms->per_process_comm);
-
-  /* Process GRP */
-
-  if (sctk_get_process_number() == 1) {
-    sctk_nodebug("SPLIT PROCESS (SINGLE)");
-    /* Single process */
-    topo_comms->per_process_grp = topo_comms->per_process_comm;
-  } else {
-    sctk_nodebug("SPLIT PROCESS GRP");
-    int in_process_rank;
-    PMPI_Comm_rank(topo_comms->per_process_comm, &in_process_rank);
-    split_id.field.topo = 0;
-    split_id.field.node = in_process_rank;
-    ret = PMPI_Comm_split(MPI_COMM_WORLD, split_id.id, rank,
-                          &topo_comms->per_process_grp);
-  }
-
-  /* Node LEVEL */
-  split_id.field.topo = 0;
-  split_id.field.node = sctk_get_node_rank();
-  ret = PMPI_Comm_split(MPI_COMM_WORLD, split_id.id, rank,
-                        &topo_comms->per_node_comm);
-
-  /* Node GRP */
-
-  if (sctk_get_node_number() == 1) {
-    sctk_nodebug("SPLIT NODE (SINGLE)");
-    /* Single process */
-    topo_comms->per_node_grp = topo_comms->per_node_comm;
-  } else {
-    sctk_nodebug("SPLIT NODE GRP");
-    int in_node_rank;
-    PMPI_Comm_rank(topo_comms->per_node_comm, &in_node_rank);
-    split_id.field.topo = 0;
-    split_id.field.node = in_node_rank;
-    ret = PMPI_Comm_split(MPI_COMM_WORLD, split_id.id, rank,
-                          &topo_comms->per_node_grp);
-  }
-
-  /* NUMA Level */
-  int local_is_numa = sctk_is_numa_node();
-  topo_comms->has_numa = 0;
-  ret = PMPI_Allreduce(&local_is_numa, &topo_comms->has_numa, 1, MPI_INT,
-                       MPI_SUM, MPI_COMM_WORLD);
-
-  if (topo_comms->has_numa) {
-    sctk_nodebug("SPLIT NUMA");
-
-    /* We need to take numa in account we split process comm */
-    split_id.field.topo = sctk_get_numa_node(1);
-    split_id.field.node = sctk_get_node_rank();
-    ret = PMPI_Comm_split(MPI_COMM_WORLD, split_id.id, rank,
-                          &topo_comms->per_node_numa_comm);
-
-    int numa_rank;
-    MPI_Comm_rank(topo_comms->per_node_numa_comm, &numa_rank);
-
-    sctk_nodebug("SPLIT NUMA PAIRS %d", numa_rank);
-
-    /* Split for NUMA rank grp */
-    split_id.field.topo = numa_rank;
-    split_id.field.node = sctk_get_node_rank();
-    ret = PMPI_Comm_split(MPI_COMM_WORLD, split_id.id, rank,
-                          &topo_comms->per_node_numa_grp);
-  } else {
-    topo_comms->per_node_numa_comm = topo_comms->per_process_comm;
-    topo_comms->per_node_numa_grp = topo_comms->per_process_grp;
-  }
-
-  sctk_nodebug("SPLIT PROCESS SOCKET");
-  /*  we split per socket in the Process */
-  split_id.field.topo = sctk_topology_get_socket_id(1);
-  split_id.field.node = sctk_get_node_rank();
-  ret = PMPI_Comm_split(MPI_COMM_WORLD, split_id.id, rank,
-                        &topo_comms->per_node_socket_comm);
-
-  int socket_rank;
-  MPI_Comm_rank(topo_comms->per_node_socket_comm, &socket_rank);
-  sctk_nodebug("SPLIT PROCESS SOCKET PAIRS");
-
-  /* Split for Process socket groups */
-  split_id.field.topo = socket_rank;
-  split_id.field.node = sctk_get_node_rank();
-
-  ret = PMPI_Comm_split(MPI_COMM_WORLD, split_id.id, rank,
-                        &topo_comms->per_node_socket_grp);
-
-#if 0
-	int i;
-	
-	for( i = 0 ; i < size ; i++ )
-	{
-		
-		PMPI_Barrier( MPI_COMM_WORLD );
-		if( rank == i )
-		{
-		
-			sctk_error("[%d]==========================", rank);
-			
-			int arank, asize;
-
-			PMPI_Comm_rank( topo_comms->per_node_comm, &arank );
-			PMPI_Comm_size( topo_comms->per_node_comm, &asize );
-			
-			sctk_error("Per node comm %d / %d", arank, asize);
-			
-			PMPI_Comm_rank( topo_comms->per_node_grp, &arank );
-			PMPI_Comm_size( topo_comms->per_node_grp, &asize );
-			
-			sctk_error("Per node GRP %d / %d", arank, asize);
 
 
-			PMPI_Comm_rank( topo_comms->per_process_comm, &arank );
-			PMPI_Comm_size( topo_comms->per_process_comm, &asize );
-			
-			sctk_error("Per process comm %d / %d", arank, asize);
-			
-			PMPI_Comm_rank( topo_comms->per_process_grp, &arank );
-			PMPI_Comm_size( topo_comms->per_process_grp, &asize );
-			
-			sctk_error("Per process GRP %d / %d", arank, asize);
-			
-			PMPI_Comm_rank( topo_comms->per_node_socket_comm, &arank );
-			PMPI_Comm_size( topo_comms->per_node_socket_comm, &asize );
-			
-			sctk_error("Per node SOCKET %d / %d", arank, asize);
-			
-			PMPI_Comm_rank( topo_comms->per_node_socket_grp, &arank );
-			PMPI_Comm_size( topo_comms->per_node_socket_grp, &asize );
-			
-			sctk_error("Per node SOCKET GRP %d / %d", arank, asize);
-		
-			if(  topo_comms->has_numa )
-			{
-	
-				PMPI_Comm_rank( topo_comms->per_node_numa_comm, &arank );
-				PMPI_Comm_size( topo_comms->per_node_numa_comm, &asize );
-				
-				sctk_error("Per node NUMA %d / %d", arank, asize);
-				
-				PMPI_Comm_rank( topo_comms->per_node_numa_grp, &arank );
-				PMPI_Comm_size( topo_comms->per_node_numa_grp, &asize );
-	
-				sctk_error("Per node NUMA %d / %d", arank, asize);
-				
-			}
-
-			sctk_error("===============================");
-			
-		}
-		
-	}
-
-#endif
-}
 
 static int __INTERNAL__PMPI_Init(int *argc, char ***argv) {
   int res;
@@ -14970,7 +14830,6 @@ static int __INTERNAL__PMPI_Init(int *argc, char ***argv) {
     __INTERNAL__PMPI_Comm_size(MPI_COMM_WORLD, &MPI_UNIVERSE_SIZE_VALUE);
     __INTERNAL__PMPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-    mpi_init_topological_communicators();
     __INTERNAL__PMPI_Barrier(MPI_COMM_WORLD);
   }
   return res;

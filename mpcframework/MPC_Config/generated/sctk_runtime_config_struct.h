@@ -600,6 +600,14 @@ struct sctk_runtime_config_struct_low_level_comm
 
 /******************************** STRUCTURE *********************************/
 /**Shared Memory Collectives for MPC**/
+struct sctk_runtime_config_struct_collectives_shm_shared
+{	int init_done;
+	/**MPI_Barrier intracom algorithm on shared-node comms**/
+	struct sctk_runtime_config_funcptr barrier_intra_shared_node;
+};
+
+/******************************** STRUCTURE *********************************/
+/**Shared Memory Collectives for MPC**/
 struct sctk_runtime_config_struct_collectives_shm
 {	int init_done;
 	/**MPI_Barrier intracom algorithm on shared communicators**/
@@ -901,6 +909,7 @@ struct sctk_runtime_config_modules
 	struct sctk_runtime_config_struct_ft ft_system;
 	struct sctk_runtime_config_struct_inter_thread_comm inter_thread_comm;
 	struct sctk_runtime_config_struct_low_level_comm low_level_comm;
+	struct sctk_runtime_config_struct_collectives_shm_shared collectives_shm_shared;
 	struct sctk_runtime_config_struct_collectives_shm collectives_shm;
 	struct sctk_runtime_config_struct_collectives_intra collectives_intra;
 	struct sctk_runtime_config_struct_collectives_inter collectives_inter;

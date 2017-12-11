@@ -2928,6 +2928,21 @@ void sctk_runtime_config_struct_init_low_level_comm(void * struct_ptr)
 }
 
 /*******************  FUNCTION  *********************/
+void sctk_runtime_config_struct_init_collectives_shm_shared(void * struct_ptr)
+{
+	struct sctk_runtime_config_struct_collectives_shm_shared * obj = struct_ptr;
+	/* Make sure this element is not initialized yet       */
+	/* It allows us to know when we are facing dynamically */
+	/* allocated objects requiring an init                 */
+	if( obj->init_done != 0 ) return;
+
+	/* Simple params : */
+	obj->barrier_intra_shared_node.name = "__INTERNAL__PMPI_Barrier_intra_shared_node";
+	*(void **) &(obj->barrier_intra_shared_node.value) = sctk_runtime_config_get_symbol("__INTERNAL__PMPI_Barrier_intra_shared_node");
+	obj->init_done = 1;
+}
+
+/*******************  FUNCTION  *********************/
 void sctk_runtime_config_struct_init_collectives_shm(void * struct_ptr)
 {
 	struct sctk_runtime_config_struct_collectives_shm * obj = struct_ptr;
@@ -3670,6 +3685,7 @@ void sctk_runtime_config_reset(struct sctk_runtime_config * config)
 	sctk_runtime_config_enum_init_rail_topological_polling_level();
 #endif
 #ifdef MPC_MPI
+	sctk_runtime_config_struct_init_collectives_shm_shared(&config->modules.collectives_shm_shared);
 	sctk_runtime_config_struct_init_collectives_shm(&config->modules.collectives_shm);
 	sctk_runtime_config_struct_init_collectives_intra(&config->modules.collectives_intra);
 	sctk_runtime_config_struct_init_collectives_inter(&config->modules.collectives_inter);
@@ -3878,6 +3894,12 @@ void sctk_runtime_config_reset_struct_default_if_needed(const char * structname,
 	if( !strcmp( structname , "sctk_runtime_config_struct_low_level_comm") )
 	{
 		sctk_runtime_config_struct_init_low_level_comm( ptr );
+		return;
+	}
+
+	if( !strcmp( structname , "sctk_runtime_config_struct_collectives_shm_shared") )
+	{
+		sctk_runtime_config_struct_init_collectives_shm_shared( ptr );
 		return;
 	}
 
