@@ -693,16 +693,35 @@ static void sctk_read_format_option_text_placement(FILE *f_textual, struct sctk_
     }
     fclose(f_textual);
 }
+static hwloc_obj_t hwloc_get_core_by_os_index(hwloc_topology_t topology, int os_i){
+    int depth_core = hwloc_get_type_depth(topology, HWLOC_OBJ_CORE); 
+    int i;
+    int nb_core = hwloc_get_nbobjs_by_depth(topology, depth_core);
+    for(i = 0; i <  nb_core; i++){
+        hwloc_obj_t core = hwloc_get_obj_by_depth(topology, HWLOC_OBJ_CORE, i);
+        if(core->os_index == os_i){
+            return core;
+        }
+    }
+    return NULL;
+}
+
 
 /* determine the lower logical index pu used for text placement option */
 static int determine_lower_logical(int *os_index, int lenght){
     int i;
     int lower_logical = hwloc_get_nbobjs_by_type(topology_compute_node, HWLOC_OBJ_PU);
     int current_logical = 0;
+    hwloc_obj_t pu; 
     for(i=0;i<lenght;i++){
         if(os_index[i] != -1){
-            hwloc_obj_t pu = 
-                hwloc_get_pu_obj_by_os_index(topology_compute_node, os_index[i]);
+                if(sctk_enable_smt_capabilities){
+                    pu = hwloc_get_pu_obj_by_os_index(topology_compute_node, os_index[i]);
+                }
+                else{
+                    hwloc_obj_t core = hwloc_get_core_by_os_index(topology_compute_node, os_index[i]);
+                    pu = core->children[0];
+                }
                 if(pu == NULL){
                     return lower_logical;
                 }
@@ -720,10 +739,16 @@ static int sctk_determine_higher_logical(int *os_index, int lenght){
     int i;
     int higher_logical = -1;
     int current_logical = 0;
+    hwloc_obj_t pu; 
     for(i=0;i<lenght;i++){
         if(os_index[i] != -1){
-            hwloc_obj_t pu = 
-                hwloc_get_pu_obj_by_os_index(topology_compute_node, os_index[i]);
+                if(sctk_enable_smt_capabilities){
+                    pu = hwloc_get_pu_obj_by_os_index(topology_compute_node, os_index[i]);
+                }
+                else{
+                    hwloc_obj_t core = hwloc_get_core_by_os_index(topology_compute_node, os_index[i]);
+                    pu = core->children[0];
+                }
                 if(pu == NULL){
                     return higher_logical;
                 }
@@ -733,7 +758,6 @@ static int sctk_determine_higher_logical(int *os_index, int lenght){
             higher_logical = current_logical;
         }
     }
-    int val = sctk_get_task_number();
     return higher_logical;
 }
 
@@ -775,39 +799,38 @@ static void print_children(hwloc_topology_t topology, hwloc_obj_t obj,
             if(tab_option->os_index[k] == os_index_to_compare){
                 sprintf(string_mpc, "Virtual Processor %d | rank MPI %d | Policy : compact %d, scatter %d, balanced %d | tid %d", tab_option->vp_tab[k], tab_option->rank_mpi[k], tab_option->compact_tab[k], tab_option->scatter_tab[k], tab_option->balanced_tab[k],  tab_option->pid_tab[k]);
                 if(last_arity == 1){
-                        fprintf(f," + %s#%d %s", string,obj->logical_index, string_mpc);
-                    }
-                    else{
-                        fprintf(f,"\n%*s%s#%d %s", 2*depth, "", string,obj->logical_index, string_mpc);
-                    }
-                if(obj->logical_index == higher_logical && obj->type == type){
+                    fprintf(f," + %s#%d %s", string,obj->logical_index, string_mpc);
+                }
+                else{
+                    fprintf(f,"\n%*s%s#%d %s", 2*depth, "", string,obj->logical_index, string_mpc);
+                }
+                if(obj->logical_index == higher_logical){
                     fprintf(f,"\n\n|------------------------------END RESERVATION HOST %s------------------------------|\n", HostName); 
                 }
-                goto boucle;
+                goto arity; /* pu has been find */
             }
         }
     }
     if(last_arity == 1){
         fprintf(f," + %s#%d", string,obj->logical_index);
-        if(obj->logical_index == higher_logical && obj->type == type){
-            fprintf(f,"\n\n|------------------------------END RESERVATION HOST %s------------------------------|\n", HostName); 
-        }
     }
     else{
         fprintf(f,"\n%*s%s#%d", 2*depth, "", string,obj->logical_index);
-        if(obj->logical_index == higher_logical && obj->type == type){
+    }
+    if(obj->type == type){
+        if(obj->logical_index == higher_logical){
             fprintf(f,"\n\n|------------------------------END RESERVATION HOST %s------------------------------|\n", HostName); 
         }
     }
 
-    boucle:
+    arity: /* update arity for the next object */
 
     if(obj->arity == 1){
         last_arity = 1;
     }
     else{
         last_arity = 0;
-    }
+   }
     for (i = 0; i < obj->arity; i++) {
         print_children(topology, obj->children[i], depth + 1, tab_option,  num_os, higher_logical, lower_logical, HostName, f, i, last_arity);
     }
@@ -1827,60 +1850,62 @@ void sctk_topology_destroy (void)
                 name_and_date_file_text(file_placement);
                 strcat(file_placement, ".xml");
                 hwloc_topology_export_xml(topology_compute_node,file_placement); 
-                if(1){//TODO si proc 0
+                if(1){//TODO one among each nodes
                     fprintf(stdout,"/* --graphic-placement : \n.xml dated file has been generated for each compute node to vizualise topology and thread placement with their infos.\nYou can use the command \"lstopo -i file.xml\" to vizualise graphicaly */\n");
                     fprintf(stdout, "\n/* .xml legend : one color per MPI task. White text policy means the thread is master of a MPI task in MPC */\n\n"); 
                     fflush(stdout);
+                    remove(placement_txt);
                 }
             }
         }
     }
     if(sctk_enable_text_placement){
-        hwloc_obj_t cluster = hwloc_get_obj_by_type(topology_compute_node, HWLOC_OBJ_MACHINE, 0);
-        int lenght_max;
-        int lenght_min;
-        int lenght;
-        lenght_max = hwloc_get_nbobjs_by_type(topology_compute_node, HWLOC_OBJ_PU);
-        lenght_min = hwloc_get_nbobjs_by_type(topology_compute_node, HWLOC_OBJ_CORE);
-        if(sctk_enable_smt_capabilities){
-            lenght = lenght_max;
-        }
-        else{
-            lenght = lenght_min;
-        }
-        /* read textual informations */
-        FILE *f_textual = fopen(textual_file, "r");
-        if(f_textual != NULL){
-            struct sctk_text_option_s *tab_option;
-
-            sctk_init_text_option(&tab_option);
-
-            sctk_read_format_option_text_placement(f_textual, tab_option, lenght_max);
-
-            const char * HostName  = hwloc_obj_get_info_by_name(cluster, "HostName");
-
-            name_and_date_file_text(textual_file_output);
-            strcat(textual_file_output, ".txt");
-
-            hwloc_obj_t root = hwloc_get_root_obj(topology_compute_node);
-            FILE *f = fopen(textual_file_output, "a");
-
-            if(f != NULL){
-                fprintf(f,"|------------------------------HOST                 %s------------------------------|\n", HostName); 
-                //int higher_logical = sctk_determine_higher_logical(tab_option->os_index, lenght);
-                int lower_logical = determine_lower_logical(tab_option->os_index, lenght);
-                int higher_logical = lower_logical + sctk_get_cpu_number() - 1;
-                if(1){//TODO si proc 0
-                    fprintf(stdout,"/* --text-placement : \n.txt dated file has been generated for each compute node to vizualise topology and thread placement with their infos. */\n");
-                    fflush(stdout);
-                }
-                print_children(topology_compute_node, root, 0, tab_option, lenght_max, higher_logical, lower_logical, HostName, f, 0, 0);
-                fclose(f);
+        if(sctk_get_local_process_rank() == 0){
+            printf("proc %d",sctk_get_local_process_rank());
+            hwloc_obj_t cluster = hwloc_get_obj_by_type(topology_compute_node, HWLOC_OBJ_MACHINE, 0);
+            int lenght_max;
+            int lenght_min;
+            int lenght;
+            lenght_max = hwloc_get_nbobjs_by_type(topology_compute_node, HWLOC_OBJ_PU);
+            lenght_min = hwloc_get_nbobjs_by_type(topology_compute_node, HWLOC_OBJ_CORE);
+            if(sctk_enable_smt_capabilities){
+                lenght = lenght_max;
             }
-            /* remove temp files */
-            sctk_destroy_text_option(tab_option);
-            //remove(textual_file);
-            //remove(placement_txt);
+            else{
+                lenght = lenght_min;
+            }
+            /* read textual informations */
+            FILE *f_textual = fopen(textual_file, "r");
+            if(f_textual != NULL){
+                struct sctk_text_option_s *tab_option;
+
+                sctk_init_text_option(&tab_option);
+
+                sctk_read_format_option_text_placement(f_textual, tab_option, lenght_max);
+
+                const char * HostName  = hwloc_obj_get_info_by_name(cluster, "HostName");
+
+                name_and_date_file_text(textual_file_output);
+                strcat(textual_file_output, ".txt");
+
+                hwloc_obj_t root = hwloc_get_root_obj(topology_compute_node);
+                FILE *f = fopen(textual_file_output, "a");
+
+                if(f != NULL){
+                    fprintf(f,"|------------------------------HOST                 %s------------------------------|\n", HostName); 
+                    int higher_logical = sctk_determine_higher_logical(tab_option->os_index, lenght);
+                    int lower_logical = determine_lower_logical(tab_option->os_index, lenght);
+                    if(1){//TODO one proc amongs nodes
+                        fprintf(stdout,"/* --text-placement : \n.txt dated file has been generated for each compute node to vizualise topology and thread placement with their infos. */\n");
+                        fflush(stdout);
+                    }
+                    print_children(topology_compute_node, root, 0, tab_option, lenght_max, higher_logical, lower_logical, HostName, f, 0, 0);
+                    fclose(f);
+                }
+                /* remove temp files */
+                sctk_destroy_text_option(tab_option);
+                remove(textual_file);
+            }
         }
     }
     hwloc_topology_destroy(topology);
@@ -1891,7 +1916,7 @@ void sctk_topology_destroy (void)
 */
 char * sctk_get_node_name ()
 {
-	return sctk_node_name;
+       return sctk_node_name;
 }
 
 /*! \brief Return the first child of \p obj of type \p type
