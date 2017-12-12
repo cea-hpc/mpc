@@ -44,7 +44,15 @@
 /********************************************************************/
 /* Connection Setup                                                 */
 /********************************************************************/
-
+/**
+ * Called when initializing the remote side of a connection.
+ * This function emits a connect() call to the requested process.
+ * It is generally called for creating the initial topology (above the 
+ * standard ring) and for the on-demand.
+ * \param[in] name_init combination of host:port, the remote process to connect to
+ * \param[in] rail the TCP rail
+ * \return the newly created FD, -1 otherwise.
+ */
 static int sctk_tcp_connect_to ( char *name_init, sctk_rail_info_t *rail )
 {
 	int clientsock_fd;
@@ -177,6 +185,11 @@ static int sctk_tcp_connect_to ( char *name_init, sctk_rail_info_t *rail )
 	return clientsock_fd;
 }
 
+/**
+ * Create an socket ready to persistently listen on new incoming connection.
+ * This function DOES NOT call a blocking accept().
+ * \param[in] rail the TCP rail.
+ */
 static void sctk_client_create_recv_socket ( sctk_rail_info_t *rail )
 {
 	errno = 0;
@@ -290,12 +303,18 @@ static void sctk_client_create_recv_socket ( sctk_rail_info_t *rail )
 /********************************************************************/
 /* Route Initializer                                                */
 /********************************************************************/
-
+/**
+ * Create a new TCP-specific route.
+ * \param[in] dest the remote process id
+ * \param[in] fd the associated FD
+ * \param[in] rail the TCP rail
+ * \param[in] tcp_thread the polling routine
+ * \param[in] route_type route type (DYNAMIC,STATIC)
+ */
 static void sctk_tcp_add_route ( int dest, int fd, sctk_rail_info_t *rail,
 					   void * ( *tcp_thread ) ( sctk_endpoint_t * ) , sctk_route_origin_t route_type )
 {
 	sctk_endpoint_t *new_route;
-
 
 	/* Allocate a new route */
 	new_route = sctk_malloc ( sizeof ( sctk_endpoint_t ) );
@@ -334,22 +353,31 @@ static void sctk_tcp_add_route ( int dest, int fd, sctk_rail_info_t *rail,
 /********************************************************************/
 /* Route Hooks (Dynamic routes)                                     */
 /********************************************************************/
-
+/**
+ * Map a connection context, exchanged for on-demand procedure.
+ */
 struct sctk_tcp_connection_context
 {
-	int from;
-	int to;
-	char dest_connection_infos[MAX_STRING_SIZE];
+	int from;                            /**< the process id that initiated the request */
+	int to;                              /**< the process id to be notified from the request */
+char dest_connection_infos[MAX_STRING_SIZE]; /**< the connection string( host:port) */
 };
 
-
-
+/**
+ * Map the type of route asked by a CM.
+ */
 typedef enum
 {
-	SCTK_TCP_CONTROL_MESSAGE_ON_DEMAND_STATIC,
-	SCTK_TCP_CONTROL_MESSAGE_ON_DEMAND_DYNAMIC
+	SCTK_TCP_CONTROL_MESSAGE_ON_DEMAND_STATIC, /**< route to create will be static */
+	SCTK_TCP_CONTROL_MESSAGE_ON_DEMAND_DYNAMIC /**< route to create will be dynamic */
 }sctk_tcp_control_message_t;
 
+/**
+ * routine  processing an incoming on-demand request.
+ * \param[in] rail the TCP rail
+ * \param[in] ctx the sctk_tcp_connection_context sent by the remote
+ * \param[in] route_type route type to create
+ */
 static void sctk_network_connection_to_ctx( sctk_rail_info_t *rail, struct sctk_tcp_connection_context * ctx, sctk_route_origin_t route_type )
 {
 	/*Recv id from the connected process*/
@@ -358,13 +386,22 @@ static void sctk_network_connection_to_ctx( sctk_rail_info_t *rail, struct sctk_
 	sctk_tcp_add_route ( ctx->from, dest_socket, rail, ( void * ( * ) ( sctk_endpoint_t * ) ) ( rail->network.tcp.tcp_thread ), route_type );
 }
 
+/**
+ * Not used by this network.
+ * \param[in] from not used
+ * \param[in] to not used
+ * \param[in] rail ont used.
+ */
+static void sctk_network_connection_to_tcp ( int from, int to, sctk_rail_info_t *rail ) {}
 
-static void sctk_network_connection_to_tcp ( int from, int to, sctk_rail_info_t *rail )
-{
-
-}
-
-
+/** 
+ * Initiate a connection with a peer process.
+ * This imeplementation relies on CMs.
+ * \param[in] from the current process
+ * \param[in] to the process to be connected with.
+ * \param[in] rail the TCP rail
+ * \param[in] route_type route type to create
+ */
 static void __sctk_network_connection_from_tcp( int from, int to, sctk_rail_info_t *rail, sctk_route_origin_t route_type )
 {
 	int src_socket;
@@ -396,16 +433,27 @@ static void __sctk_network_connection_from_tcp( int from, int to, sctk_rail_info
 	sctk_tcp_add_route ( to, src_socket, rail, ( void * ( * ) ( sctk_endpoint_t * ) ) ( rail->network.tcp.tcp_thread ), route_type );
 }
 
-
-
-
-
+/**
+ * Initiate a new connection wit a peer process (trampoline).
+ * \param[in] from the local process
+ * \param[in] to the process we want to be connected to
+ * \param[in] rail the TCP rail
+ */
 static void sctk_network_connection_from_tcp ( int from, int to, sctk_rail_info_t *rail )
 {
 	__sctk_network_connection_from_tcp( from, to, rail, ROUTE_ORIGIN_STATIC );
 }
 
-
+/**
+ * Handler processing control-messages targeting the current rail.
+ * \param[in] rail the TCP rail
+ * \param[in] source_process the process emiting the CM
+ * \param[in] source_rank the (potential) MPI task emiting the CM
+ * \param[in] subtype TCP-specific CM subtype
+ * \param[in] param not significant for TCP
+ * \param[in] data the TCP context, sent from the remote
+ * \param[in] size size of the message sent (should be sizeof(struct sctk_tcp_connection_context))
+ */
 void tcp_control_message_handler( struct sctk_rail_info_s * rail, int source_process, int source_rank, char subtype, char param, void * data, size_t size )
 {
 	sctk_tcp_control_message_t action = subtype;
@@ -421,7 +469,11 @@ void tcp_control_message_handler( struct sctk_rail_info_s * rail, int source_pro
 	}
 }
 
-
+/**
+ * Handler triggered when low_level_comm want to create dynamically a new route.
+ * \param[in] rail the TCP rail
+ * \param[in] dest_process the process to be connected with.
+ */
 void tcp_on_demand_connection_handler( sctk_rail_info_t *rail, int dest_process )
 {
 	__sctk_network_connection_from_tcp ( sctk_get_process_rank(), dest_process, rail, ROUTE_ORIGIN_DYNAMIC );
@@ -431,7 +483,13 @@ void tcp_on_demand_connection_handler( sctk_rail_info_t *rail, int dest_process 
 /********************************************************************/
 /* TCP Ring Init Function                                           */
 /********************************************************************/
-
+/**
+ * End of TCP rail initialization and create the first topology: the ring.
+ * \param[in,out] rail the TCP rail
+ * \param[in] sctk_use_tcp_o_ib Is a TCP_O_IB configuration ?
+ * \param[in] tcp_thread the polling routine function.
+ * \param[in] route_init the function registering a new TCP route
+ */
 void sctk_network_init_tcp_all ( sctk_rail_info_t *rail, int sctk_use_tcp_o_ib,
                                  void * ( *tcp_thread ) ( sctk_endpoint_t * ),
                                  void ( *route_init ) ( sctk_rail_info_t * ) )

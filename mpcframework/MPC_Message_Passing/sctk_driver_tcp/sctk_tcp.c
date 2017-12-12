@@ -31,7 +31,11 @@ extern volatile int sctk_online_program;
 /********************************************************************/
 /* Inter Thread Comm Hooks                                          */
 /********************************************************************/
-
+/**
+ * Function called by each started polling thread, processing message on the given route.
+ * \param[in] tmp the route to progress
+ * \return NULL
+ */
 static void *sctk_tcp_thread ( sctk_endpoint_t *tmp )
 {
 	int fd = tmp->data.tcp.fd;
@@ -118,6 +122,11 @@ static void *sctk_tcp_thread ( sctk_endpoint_t *tmp )
 	return NULL;
 }
 
+/**
+ * Entry point for sending a message with the TCP network.
+ * \param[in] msg the message to send
+ * \param[in] endpoint the route to use
+ */
 static void sctk_network_send_message_endpoint_tcp ( sctk_thread_ptp_message_t *msg, sctk_endpoint_t *endpoint )
 {
 	size_t size;
@@ -143,33 +152,51 @@ static void sctk_network_send_message_endpoint_tcp ( sctk_thread_ptp_message_t *
 	sctk_complete_and_free_message ( msg );
 }
 
-static void sctk_network_notify_recv_message_tcp ( sctk_thread_ptp_message_t *msg, sctk_rail_info_t *rail )
-{
+/**
+ * Not used for this network.
+ * \param[in] msg not used
+ * \param[in] rail not used
+ */
+static void sctk_network_notify_recv_message_tcp ( sctk_thread_ptp_message_t *msg, sctk_rail_info_t *rail ) {}
 
-}
+/**
+ * Not used for this network.
+ * \param[in] msg not used
+ * \param[in] rail not used
+ */
+static void sctk_network_notify_matching_message_tcp ( sctk_thread_ptp_message_t *msg, sctk_rail_info_t *rail ) {}
 
-static void sctk_network_notify_matching_message_tcp ( sctk_thread_ptp_message_t *msg, sctk_rail_info_t *rail )
-{
+/**
+ * Not used for this network.
+ * \param[in] remote not used
+ * \param[in] remote_task_id not used
+ * \param[in] polling_task_id not used
+ * \param[in] blocking not used
+ * \param[in] rail not used
+ */
+static void sctk_network_notify_perform_message_tcp ( int remote, int remote_task_id, int polling_task_id, int blocking, sctk_rail_info_t *rail ) {}
 
-}
+/**
+ * Not used for this network.
+ * \param[in] msg not used
+ * \param[in] rail not used
+ */
+static void sctk_network_notify_any_source_message_tcp ( int polling_task_id, int blocking, sctk_rail_info_t *rail ) {}
 
-static void sctk_network_notify_perform_message_tcp ( int remote, int remote_task_id, int polling_task_id, int blocking, sctk_rail_info_t *rail )
-{
-
-}
-
+/**
+ * Called by idle threads to progress messages.
+ * This is not the purpose of this function for TCP, as a polling thread is created for each new route.
+ * \param[in] msg
+ * \param[in] rail
+ */
 static void sctk_network_notify_idle_message_tcp() { sctk_thread_yield(); }
 
-static void sctk_network_notify_any_source_message_tcp ( int polling_task_id, int blocking, sctk_rail_info_t *rail )
-{
-
-}
-
-
-
+/**
+ * Handler triggering the send_message_from_network call, before reaching the inter_thread_comm matching process.
+ * \param[in] msg the message received from the network, to be matched w/ a local RECV.
+ */
 static int sctk_send_message_from_network_tcp ( sctk_thread_ptp_message_t *msg )
 {
-
 	if ( sctk_send_message_from_network_reorder ( msg ) == REORDER_NO_NUMBERING )
 	{
 		/* No reordering */
@@ -183,29 +210,38 @@ static int sctk_send_message_from_network_tcp ( sctk_thread_ptp_message_t *msg )
 /********************************************************************/
 /* TCP Init                                                         */
 /********************************************************************/
+/**
+ * Procedure to clear the TCP rail.
+ * \param[in,out] rail the rail to close.
+ */
 void sctk_network_finalize_tcp(sctk_rail_info_t *rail)
 {
 	sctk_tcp_rail_info_t *rail_tcp = &rail->network.tcp;
 
 	shutdown(rail_tcp->sockfd, SHUT_RDWR);
 	close(rail_tcp->sockfd);
-	rail_tcp->sockfd = -1;
-	rail_tcp->portno = -1;
-	rail_tcp->connection_infos[0] = '\0';
+	rail_tcp->sockfd                = -1;
+	rail_tcp->portno                = -1;
+	rail_tcp->connection_infos[0]   = '\0';
 	rail_tcp->connection_infos_size = 0;
 
 }
 
+/**
+ * Procedure to initialize a new TCP rail.
+ * \param[in] rail the TCP rail
+ */
 void sctk_network_init_tcp ( sctk_rail_info_t *rail )
 {
 	/* Register Hooks in rail */
-	rail->send_message_endpoint = sctk_network_send_message_endpoint_tcp;
-	rail->notify_recv_message = sctk_network_notify_recv_message_tcp;
-	rail->notify_matching_message = sctk_network_notify_matching_message_tcp;
-	rail->notify_perform_message = sctk_network_notify_perform_message_tcp;
-	rail->notify_idle_message = sctk_network_notify_idle_message_tcp;
+	rail->send_message_endpoint     = sctk_network_send_message_endpoint_tcp;
+	rail->notify_recv_message       = sctk_network_notify_recv_message_tcp;
+	rail->notify_matching_message   = sctk_network_notify_matching_message_tcp;
+	rail->notify_perform_message    = sctk_network_notify_perform_message_tcp;
+	rail->notify_idle_message       = sctk_network_notify_idle_message_tcp;
 	rail->notify_any_source_message = sctk_network_notify_any_source_message_tcp;
 	rail->send_message_from_network = sctk_send_message_from_network_tcp;
+	rail->driver_finalize           = sctk_network_finalize_tcp;
 
 	sctk_rail_init_route ( rail, rail->runtime_config_rail->topology, tcp_on_demand_connection_handler );
 
@@ -220,8 +256,6 @@ void sctk_network_init_tcp ( sctk_rail_info_t *rail )
 	{
 		rail->network_name = "TCP_O_IB";
 	}
-
-	rail->driver_finalize = sctk_network_finalize_tcp;
 
 	/* Actually initialize the network (note TCP kind specific functions) */
 	sctk_network_init_tcp_all ( rail, sctk_use_tcp_o_ib, sctk_tcp_thread, rail->route_init );

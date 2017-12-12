@@ -37,8 +37,8 @@ extern "C"
 */
 typedef struct
 {
-	sctk_spinlock_t lock;	/**< Client socket write lock */
-	int fd;			/**< Client socket */
+	sctk_spinlock_t lock; /**< Client socket write lock */
+	int fd;               /**< Client socket */
 } sctk_tcp_route_info_t;
 
 /** \brief RAIL level info data structure for TCP
@@ -48,11 +48,11 @@ typedef struct
  */
 typedef struct
 {
-	int sctk_use_tcp_o_ib; 				/**< set to 1 if the TCP connection targets TCP over IB */
-	int sockfd;					/**< Listening socket file descriptor */
-	int portno;					/**< Listening socket port number */
-	char connection_infos[MAX_STRING_SIZE];		/**< Connection info for this listening socket */
-	size_t connection_infos_size;			/**< Length of the connection_info field */
+	int sctk_use_tcp_o_ib;                               /**< set to 1 if the TCP connection targets TCP over IB */
+	int sockfd;                                          /**< Listening socket file descriptor */
+	int portno;                                          /**< Listening socket port number */
+	char connection_infos[MAX_STRING_SIZE];              /**< Connection info for this listening socket */
+	size_t connection_infos_size;                        /**< Length of the connection_info field */
 	void * ( *tcp_thread ) ( struct sctk_endpoint_s * ); /**< Function to call when registering a route (RDMA/MULTIRAIL/TCP) */
 } sctk_tcp_rail_info_t;
 

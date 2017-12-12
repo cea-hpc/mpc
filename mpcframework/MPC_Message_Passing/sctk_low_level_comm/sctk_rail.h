@@ -123,7 +123,7 @@ struct sctk_rail_info_s
 	/* Global Info */
 	int rail_number; /**< ID of this rail */
 	int subrail_id; /**< ID of this rail if it is a subrail (-1 otherwise) */
-	int priority; /** Priority of this rail */
+	int priority; /**< Priority of this rail */
 	char *network_name; /**< Name of this rail */
 	sctk_device_t * rail_device; /**< Device associated with the rail */
 	sctk_rail_state_t state; /**< is this rail usable ? */

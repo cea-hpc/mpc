@@ -24,13 +24,20 @@
 #include <sctk_net_tools.h>
 #include <sctk_tcp_toolkit.h>
 
+/**
+ * Define TCP RDMA values
+ */
 typedef enum
 {
-    SCTK_RDMA_MESSAGE_HEADER,
-    SCTK_RDMA_READ,
-    SCTK_RDMA_WRITE
+    SCTK_RDMA_MESSAGE_HEADER, /**< It is an RDMA header */
+    SCTK_RDMA_READ,           /**< RDMA read */
+    SCTK_RDMA_WRITE           /**< RDMA write */
 } sctk_tcp_rdma_type_t;
 
+/**
+ * Called when a net message matched with a local RECV.
+ * \param[in] tmp the request object (local-recv,remote-send)
+ */
 static void sctk_tcp_rdma_message_copy ( sctk_message_to_copy_t *tmp )
 {
 	sctk_endpoint_t *route;
@@ -56,6 +63,10 @@ static void sctk_tcp_rdma_message_copy ( sctk_message_to_copy_t *tmp )
 
 extern volatile int sctk_online_program;
 
+/**
+ * Polling function created for each route.
+ * \param[in] tmp the endpoint to progress.
+ */
 static void *sctk_tcp_rdma_thread ( sctk_endpoint_t *tmp )
 {
 	int fd;
@@ -155,6 +166,11 @@ static void *sctk_tcp_rdma_thread ( sctk_endpoint_t *tmp )
 	return NULL;
 }
 
+/**
+ * Send an TCP RDMA message.
+ * \param[in] msg the message to send
+ * \param[in] endpoint the route to use
+ */
 static void sctk_network_send_message_tcp_rdma_endpoint ( sctk_thread_ptp_message_t *msg, sctk_endpoint_t *endpoint )
 {
 	int fd;
@@ -175,47 +191,68 @@ static void sctk_network_send_message_tcp_rdma_endpoint ( sctk_thread_ptp_messag
 
 }
 
-static void sctk_network_notify_recv_message_tcp_rdma ( sctk_thread_ptp_message_t *msg, sctk_rail_info_t *rail )
-{
+/**
+ * Not used for this network.
+ * \param[in] msg not used
+ * \param[in] rail not used
+ */
+static void sctk_network_notify_recv_message_tcp_rdma ( sctk_thread_ptp_message_t *msg, sctk_rail_info_t *rail ) {}
 
-}
+/**
+ * Not used for this network.
+ * \param[in] msg not used
+ * \param[in] rail not used
+ */
+static void sctk_network_notify_matching_message_tcp_rdma ( sctk_thread_ptp_message_t *msg, sctk_rail_info_t *rail ) {}
 
-static void sctk_network_notify_matching_message_tcp_rdma ( sctk_thread_ptp_message_t *msg, sctk_rail_info_t *rail )
-{
+/**
+ * Not used for this network.
+ * \param[in] remote not used
+ * \param[in] remote_task_id not used
+ * \param[in] polling_task_id not used
+ * \param[in] blocking not used
+ * \param[in] rail not used
+ */
+static void sctk_network_notify_perform_message_tcp_rdma ( int remote, int remote_task_id, int polling_task_id, int blocking, sctk_rail_info_t *rail ) {}
 
-}
+/**
+ * Not used for this network.
+ * \param[in] rail not used
+ */
+static void sctk_network_notify_idle_message_tcp_rdma ( sctk_rail_info_t *rail ) {}
 
-static void sctk_network_notify_perform_message_tcp_rdma ( int remote, int remote_task_id, int polling_task_id, int blocking, sctk_rail_info_t *rail )
-{
-
-}
-
-static void sctk_network_notify_idle_message_tcp_rdma ( sctk_rail_info_t *rail )
-{
-
-}
-
-static void sctk_network_notify_any_source_message_tcp_rdma ( int polling_task_id, int blocking, sctk_rail_info_t *rail )
-{
-
-}
+/**
+ * Not used for this network.
+ * \param[in] msg not used
+ * \param[in] rail not used
+ */
+static void sctk_network_notify_any_source_message_tcp_rdma ( int polling_task_id, int blocking, sctk_rail_info_t *rail ) {}
 
 /************************************************************************/
 /* TCP RDMA Init                                                        */
 /************************************************************************/
+/**
+ * not used for this network.
+ * \param[in] rail not used
+ */
 void sctk_network_finalize_tcp_rdma(sctk_rail_info_t* rail)
 {
 }
 
+/**
+ * Procedure to init an TCP RDMA rail.
+ * \param[in,out] rail the rail to init.
+ */
 void sctk_network_init_tcp_rdma ( sctk_rail_info_t *rail )
 {
 	/* Init RDMA specific infos */
-	rail->send_message_endpoint = sctk_network_send_message_tcp_rdma_endpoint;
-	rail->notify_recv_message = sctk_network_notify_recv_message_tcp_rdma;
-	rail->notify_matching_message = sctk_network_notify_matching_message_tcp_rdma;
-	rail->notify_perform_message = sctk_network_notify_perform_message_tcp_rdma;
-	rail->notify_idle_message = sctk_network_notify_idle_message_tcp_rdma;
+	rail->send_message_endpoint     = sctk_network_send_message_tcp_rdma_endpoint;
+	rail->notify_recv_message       = sctk_network_notify_recv_message_tcp_rdma;
+	rail->notify_matching_message   = sctk_network_notify_matching_message_tcp_rdma;
+	rail->notify_perform_message    = sctk_network_notify_perform_message_tcp_rdma;
+	rail->notify_idle_message       = sctk_network_notify_idle_message_tcp_rdma;
 	rail->notify_any_source_message = sctk_network_notify_any_source_message_tcp_rdma;
+	rail->driver_finalize           = sctk_network_finalize_tcp_rdma;
 
 	int sctk_use_tcp_o_ib = rail->runtime_config_driver_config->driver.value.tcp.tcpoib;
 
@@ -228,8 +265,6 @@ void sctk_network_init_tcp_rdma ( sctk_rail_info_t *rail )
 	{
 		rail->network_name = "TCP_O_IB RDMA";
 	}
-
-	rail->driver_finalize = sctk_network_finalize_tcp_rdma;
 
 	/* Actually Init the TCP layer */
 	sctk_network_init_tcp_all ( rail, sctk_use_tcp_o_ib, sctk_tcp_rdma_thread, rail->route_init );
