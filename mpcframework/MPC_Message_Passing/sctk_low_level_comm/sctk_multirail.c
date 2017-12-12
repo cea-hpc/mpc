@@ -440,7 +440,17 @@ static inline struct sctk_multirail_destination_table * sctk_multirail_destinati
 /************************************************************************/
 /* Endpoint Election Logic                                              */
 /************************************************************************/
-
+/**
+ * Choose the endpoint to use for sending the message.
+ * This function will try to find a route to send the message. It it does not find
+ * a direct link, NULL is returned.
+ * \param[in] msg the message to send
+ * \param[in] destination_process the remote process
+ * \param[in] is_process_specific is the message targeting the process (not an MPI message) ?
+ * \param[in] is_for_on_demand is a on-demand request ?
+ * \param[in] ext_routes route array to iterate with (will be locked).
+ * \return a pointer to the matching route, NULL otherwise (the route lock will NOT be hold in case of match)
+ */
 sctk_endpoint_t * sctk_multirail_ellect_endpoint( sctk_thread_ptp_message_t *msg, int destination_process, int is_process_specific, int is_for_on_demand, sctk_multirail_destination_table_entry_t ** ext_routes )
 {
 	
@@ -612,8 +622,10 @@ void sctk_pending_on_demand_process()
 	}
 }
 
-
-
+/** 
+ * Called to create a new route for the sending the given message.
+ * \param[in] msg the message to send.
+ */
 void sctk_multirail_on_demand_connection( sctk_thread_ptp_message_t *msg )
 {
 	
@@ -621,7 +633,7 @@ void sctk_multirail_on_demand_connection( sctk_thread_ptp_message_t *msg )
 	int i;
 	
 	int tab[64];
-	assume( count < 64 ); 
+	assume( count < 64 );
 	
 	memset( tab, 0, 64 * sizeof( int ) );
 	
@@ -736,8 +748,10 @@ void sctk_multirail_on_demand_connection( sctk_thread_ptp_message_t *msg )
 /************************************************************************/
 /* sctk_multirail_hooks                                                 */
 /************************************************************************/
-
-
+/**
+ * Main entry point in low_level_comm for sending a message.
+ * \param[in] msg the message to send.
+ */
 void sctk_multirail_send_message( sctk_thread_ptp_message_t *msg )
 {
 	int retry;
@@ -810,7 +824,11 @@ void sctk_multirail_send_message( sctk_thread_ptp_message_t *msg )
 	sctk_pending_on_demand_process();
 }
 
-
+/**
+ * Main entry-point for notifying rails a new RECV has been posted.
+ * ALL RAILS WILL BE NOTIFIED (not only the one that may be the real recever).
+ * \param[in] msg the locally-posted RECV.
+ */
 void sctk_multirail_notify_receive( sctk_thread_ptp_message_t * msg )
 {
 	int count = sctk_rail_count();
@@ -1063,8 +1081,19 @@ void sctk_multirail_destination_table_pop_endpoint( sctk_endpoint_t * topop )
 	sctk_spinlock_write_unlock( &table->table_lock );	
 }
 
-
-
+/**
+ * Compute the closest neighbor to the final destination.
+ * This function is called when an on-demand route cannot be crated or a CM message
+ * is sent but no direct routes exist. It assumes that at least one rail has a connected (no singleton)
+ * and that the topology is at least based on a ring (be aware of potential deadlocks if not)
+ *
+ * The distance between the destination and the new destination is computed by substracting
+ * the final destination rank by the best intermediate one. The destination with the lowest result will
+ * be elected.
+ *
+ * \param[in] the final destination process to reach
+ * \param[out] new_destination the next process to target (can be the final destination)
+ */
 void sctk_multirail_destination_table_route_to_process( int destination, int * new_destination )
 {
 	struct sctk_multirail_destination_table * table = sctk_multirail_destination_table_get();

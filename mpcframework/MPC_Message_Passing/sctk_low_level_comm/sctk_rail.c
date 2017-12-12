@@ -684,29 +684,21 @@ void sctk_rail_init_route ( sctk_rail_info_t *rail, char *topology, void (*on_de
 		}
 		else
 		{
-			if ( strcmp ( "random", topology ) == 0 )
+			if ( strcmp ( "fully", topology ) == 0 )
 			{
-				rail->route_init = sctk_route_random_init;
-				rail->topology_name = "random";
+				rail->route_init = sctk_route_fully_init;
+				rail->topology_name = "fully connected";
 			}
 			else
 			{
-				if ( strcmp ( "fully", topology ) == 0 )
+				if ( strcmp ( "torus", topology ) == 0 )
 				{
-					rail->route_init = sctk_route_fully_init;
-					rail->topology_name = "fully connected";
+					rail->route_init = sctk_route_torus_init;
+					rail->topology_name = "torus";
 				}
 				else
 				{
-					if ( strcmp ( "torus", topology ) == 0 )
-					{
-						rail->route_init = sctk_route_torus_init;
-						rail->topology_name = "torus";
-					}
-					else
-					{
-						sctk_fatal("No such topology %s", topology);
-					}
+					sctk_fatal("No such topology %s", topology);
 				}
 			}
 		}
