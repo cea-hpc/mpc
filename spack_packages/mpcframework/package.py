@@ -87,6 +87,8 @@ class Mpcframework(Package):
 
     variant('mpc-process-mode', default=False, description='mpc-process-mode')
     variant('mpc-debug', default=False, description='debug-mode')
+    variant('mpc-ft', default=False, description="Fault-Tolerance support")
+    varian('color', default=False, description="colored output");
 
 
     def install(self, spec, prefix):
@@ -98,6 +100,9 @@ class Mpcframework(Package):
         if '+mpc-process-mode' in spec:
             options.extend(['--mpc-process-mode'])
             options.extend(['--disable-mpc-gdb'])
+
+        if '+mpc-ft' in spec:
+            options.extend(['--enable-mpc-ft'])
 
         options.extend(['--spack-build'])
         options.append('--with-hydra={0}'.format(
