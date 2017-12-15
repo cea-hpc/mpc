@@ -80,8 +80,8 @@ typedef struct sctk_task_specific_s
 {
 	/* ID */
 	int task_id; /**< MPI comm rank of the task */
-	
-        /* Status */
+
+	/* Status */
 	int init_done;  /**< =1 if the task has called MPI_Init() */
 	int finalize_done; /**< =1 if the task has already called MPI_Finalize()  */
 	int thread_level;

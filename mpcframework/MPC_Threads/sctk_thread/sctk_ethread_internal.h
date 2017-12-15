@@ -752,15 +752,13 @@ extern "C"
 
     if (cur->status != ethread_ready)
       {
-        int cnt = 1;
-	while( *data != value )
+	while (*data != value)
 	  {
 	    if (func != NULL)
 	      {
 		func (arg);
 	      }
-            if( !(cnt++ & 0xFFFF) )
-	        __sctk_ethread_sched_yield_vp (vp, cur);
+	    __sctk_ethread_sched_yield_vp (vp, cur);
 	  }
 
 	return;
@@ -768,10 +766,9 @@ extern "C"
     assume ((cur->status == ethread_ready));
 
     sctk_assert (vp->current == cur);
-    if (*data != value )
+    if (*data != value && func != NULL)
       {
-        if( func != NULL )
-	    func (arg);
+	func (arg);
       }
 
     if (*data != value)

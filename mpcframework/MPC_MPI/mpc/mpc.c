@@ -403,7 +403,9 @@ static inline void sctk_mpc_perform_messages(MPC_Request *request) {
   sctk_perform_messages(&_wait);
 }
 
-#define sctk_mpc_completion_flag( req ) (((MPC_Request*)req)->completion_flag)
+static inline int sctk_mpc_completion_flag(MPC_Request *request) {
+  return request->completion_flag;
+}
 
 static inline void sctk_mpc_init_request_null() {
   mpc_request_null.is_null = 1;
@@ -1440,8 +1442,7 @@ static inline int __MPC_Comm_remote_size(MPC_Comm comm, int *size) {
 
 static inline void __MPC_Comm_rank_size(MPC_Comm comm, int *rank, int *size,
                                         sctk_task_specific_t *task_specific) {
-  __MPC_Comm_rank( comm, rank, task_specific );
-  __MPC_Comm_size( comm, size );
+  sctk_get_rank_size_total(comm, rank, size, task_specific->task_id);
 }
 
 static void MPC_Set_buffering(int val) { mpc_disable_buffering = !(val); }

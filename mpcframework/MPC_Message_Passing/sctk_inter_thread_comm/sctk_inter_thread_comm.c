@@ -1673,7 +1673,7 @@ void sctk_init_header(sctk_thread_ptp_message_t *tmp,
                       void (*message_copy)(sctk_message_to_copy_t *)) {
 
   /*Init message struct*/
-  //memset(tmp, 0, sizeof(sctk_thread_ptp_message_t));
+  memset(tmp, 0, sizeof(sctk_thread_ptp_message_t));
 
   tmp->tail.message_type = msg_type;
   tmp->tail.internal_ptp = NULL;
@@ -1705,7 +1705,25 @@ sctk_thread_ptp_message_t *sctk_create_header(const int myself,
   return tmp;
 }
 
+static inline void
+sctk_add_adress_in_message_contiguous(sctk_thread_ptp_message_t *restrict msg,
+                                      void *restrict addr, const size_t size) {
+  msg->tail.message.contiguous.size = size;
+  msg->tail.message.contiguous.addr = addr;
+}
 
+void sctk_add_adress_in_message(sctk_thread_ptp_message_t *restrict msg,
+                                void *restrict addr, const size_t size) {
+  switch (msg->tail.message_type) {
+  case SCTK_MESSAGE_CONTIGUOUS: {
+    sctk_add_adress_in_message_contiguous(msg, addr, size);
+    break;
+  }
+
+  default:
+    not_reachable();
+  }
+}
 
 static inline void sctk_request_init_request(sctk_request_t *request,
                                              int completion,
@@ -1852,6 +1870,10 @@ void sctk_set_header_in_message(sctk_thread_ptp_message_t *msg,
 
   int match_for_tread = sctk_m_probe_matching_get();
 
+  if (match_for_tread != -1) {
+    sctk_nodebug("SET SEND MATCH TO %d", match_for_tread);
+  }
+
   SCTK_MSG_MATCH_SET(msg, match_for_tread);
 
   SCTK_MSG_SIZE_SET(msg, count);
@@ -1985,15 +2007,16 @@ void sctk_m_probe_matching_reset() {
 }
 
 int sctk_m_probe_matching_get() {
-#if 0
   int task_id;
   int thread_id;
   sctk_get_thread_info(&task_id, &thread_id);
 
   if (sctk_atomics_load_int(&m_probe_id_task) != (thread_id + 1)) {
     return -1;
+  } else {
+    sctk_nodebug("YEEPI ME got %d ", sctk_atomics_load_int(&m_probe_id_task));
   }
-#endif
+
   return sctk_atomics_load_int(&m_probe_id);
 }
 

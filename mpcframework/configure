@@ -409,12 +409,6 @@ for arg in "$@" ; do
     SCTK_DEBUG_MESSAGES_DISABLED="1"
     SCTK_DEBUG_MESSAGES="0"
     ;;
-    --enable-opt-gnu)
-    SCTK_CFLAGS="$SCTK_CFLAGS -march=native"
-    ;;
-    --enable-opt-intel)
-    SCTK_CFLAGS="$SCTK_CFLAGS -xhost"
-    ;;
     --enable-debug-noassert)
     SCTK_DEBUG="1"
     SCTK_NOASSERT="1"
