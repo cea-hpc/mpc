@@ -1,7 +1,7 @@
 MPC Docker Image Module
 =======================
 
-This module will help users and developers to build a ready-to-compile
+This module will help users and developers to build ready-to-compile
 containers for the MPC framework. By running one of the prepared images, you
 will be able to create an installation for MPC. We won't do it for you because
 it is not an easy thing for a container to be run with different commands. So, a
@@ -15,6 +15,7 @@ Preamble
 A container is always set up with a non-privileged user named 'mpcuser' and has
 its own HOME path (distinct from root). Two directories are basically created in
 the HOME:
+
 * `build`: intended to host the MPC build tree
 * `install`: intended to host the install directory.
 
@@ -27,7 +28,7 @@ MPC needs the following for building without compiling issues:
 * bash : This should not be necessary, but we observed that MPC is not strictly
 sh-compliant (yet) and we rely on a complete 'bash' program to run `installmpc`.
 
-The installation process did not need Autotools anymore and the package is not
+The installation process does not need Autotools anymore and the package is not
 included in images. You can consider adding it if necessary for you.  Please
 remind that Docker should create the smallest image and anything not required
 should be discarded. For this reason, we clear the package manager's cache each
@@ -39,14 +40,14 @@ This first version contains 3 images, ready to be deployed for MPC:
   image is labeled `centos`;
 * Debian 9 : built from the official Debian 9 image, added to the programs
 	above. The image is labeled `debian`;
-* Alpine3.5 : Not fully functional yet because of shell compliance (even run
-	with `bash`). We are working on it. The image is
+* Alpine3.5 : Not fully functional yet because of shell compliance (even when 
+        run with `bash`). We are working on it. The image is
 	labeled `alpine`;
 
 Build
 -----
 To build an image, a directory named according to the OS, contains a
-`Dockerfile`.  command file, listing instructions to build the image. The
+`Dockerfile` command file, listing instructions to build the image. The
 process is always the same :
 
 1. Inheritance rule
@@ -64,7 +65,7 @@ name to build. A complete list of supported images can be found by using the
 For example, to build the `debian` image, You can run:
 
 ```
-	$ docker> ./build_image.sh img=debian
+./build_image.sh img=debian
 ```
 
 This command can take a while, because Docker may have to download the OS base
@@ -99,19 +100,19 @@ script can take the following arguments:
 
 When running a container, we proceed in the following order:
 
-* **If** the requested container already exists __AND__ is running, the current
+* *If* the requested container already exists __AND__ is running, the current
   stdin/stderr/stdout are attached to the container. The command the prompt is
   attached to, depends on the current process inside the container;
-* **else** if the requested container exists but is not running, it is started
+* *else if* the requested container exists but is not running, it is started
   and attached to the current prompt. The mapped command depends on the `CMD`
   provided to the container when created. By default, we set up the `/bin/bash`
   command but it can be overridden by `docker run`.
-* **else**, the container is created, started and bound to the current prompt.
-  The default `bash` is executed. *The current MPC source path is mounted into
+* *else*, the container is created, started and bound to the current prompt.
+  The default `bash` is executed. **The current MPC source path is mounted into
   the container under `/opt/src/mpc/`. This will let you build MPC by running
   `/opt/src/mpc/installmpc --prefix=/home/mpcuser/install` by yourself. Be aware
   that it is a mount point and not a copy. Anything done in the container will
-  update your repository* . As MPC containers are designed to be used for
+  update your repository** . As MPC containers are designed to be used for
   validation more than for developing features, we plan to make the mount point
   __read-only__ to avoid undesired actions. If you specified `--uniq` the Docker
   `--rm` flag is forwarded to trigger the container deletion once exited.
@@ -132,7 +133,8 @@ Hub. Please note that
 Useful tricks
 -------------
 * Need root access (temporarily) for a running container ?
-```{sh}
+
+```
 docker exec -u 0 -it `docker ps -q -f "ancestor=mpc-env:<os>"` bash
 ```
 
