@@ -556,7 +556,7 @@ fillGCCBuildParameters()
 		MPC_BUILD_PARAMETERS="--with-mpfr=${MPFR_PREFIX} ${MPC_BUILD_PARAMETERS}"
 	fi
 	#Verify if users give path for mpc
-	if test "${MPC_PREFIX}" != "internal"; then
+	if test -z "${MPC_PREFIX}" -o "${MPC_PREFIX}" != "internal"; then
 		GCC_BUILD_PARAMETERS="'--with-mpc=${MPC_PREFIX}' ${GCC_BUILD_PARAMETERS}"
 	fi
 	
