@@ -27,9 +27,8 @@ CHECKSUM_TOOL="sha1sum"
 # - which : shell command lookup tool
 # - basename / dirname : used in a lot of configures
 # - gcc / g++ : Used to build GCC
-# - automake / autoconf : Some dependencies require autotools
 
-PROG_TO_CHECK="tar bzip2 gunzip basename dirname patch which gcc g++ automake autoconf"
+PROG_TO_CHECK="tar bzip2 gunzip basename dirname patch which gcc g++"
 LOOKUP_BIN_LIST=`echo $PATH | sed -e "s,:, ,g"`
 
 lookupProg()
