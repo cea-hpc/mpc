@@ -4,7 +4,6 @@ SRC="`readlink -e $0`"
 SRC="`dirname $SRC`"
 CUR=$PWD
 MPC_ENV=alpine
-MPC_HEAD=HEAD
 MPC_PATH=$SRC/..
 
 function die()
@@ -28,9 +27,6 @@ do
 			printf "Available images:\n"
 			\ls -d */
 			exit 0
-			;;
-		head=*)
-			MPC_HEAD="`read_param "$arg" "head="`"
 			;;
 		*)
 			die "Unknown arg: '$arg'"
