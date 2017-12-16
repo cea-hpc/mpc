@@ -227,7 +227,12 @@ extern MPC_Request mpc_request_null;
 #define MPC_T_ERR_PVAR_NO_WRITE 71     /* Pvar can't be written or reset */
 #define MPC_T_ERR_PVAR_NO_ATOMIC 72    /* Pvar can't be R/W atomically */
 #define MPC_T_ERR_INVALID_NAME 73      /* Requested name is invalid */
-#define MPC_ERR_LASTCODE 74
+
+#define MPC_ERR_RMA_RANGE 74
+#define MPC_ERR_RMA_ATTACH 75
+#define MPC_ERR_RMA_SHARED 76
+
+#define MPC_ERR_LASTCODE 77
 
 #define MPC_STATUS_IGNORE NULL
 #define MPC_STATUSES_IGNORE NULL
