@@ -25,7 +25,8 @@
 cat <<EOF > bin/mpc_compiler_manager
 #!/bin/sh
 
-list_languages="c cxx fortran"
+#trailing spaces are needed for matching w/ 'egrep'
+list_languages=" c cxx fortran "
 CHECKSUM_TOOL=sha1sum
 
 if test -z \${MPC_RPREFIX}; then
@@ -84,12 +85,12 @@ format_path()
 {
 	#special case: '1' means 'first'
 	test "x\$1" = "x1" && echo "\$1" && return
-	readlink -e \` which \$1\`
+	readlink -e \` which \$1\` || die "\$1 not found"
 }
 
 is_valid_language()
 {
-	test -z "\`\echo \$list_languages | egrep "\$1"\`" && die "Language \${1} not known !"
+	\echo "\$list_languages" | egrep -q " \$1 " || die "Language \${1} not known !"
 }
 
 help()
@@ -159,7 +160,7 @@ post_add_fortran()
 
 	#build unprivatized usage
 	FLAGS="-I\$MPC_prefix/include/mpcframework $SCTK_CFLAGS -L\$MPC_prefix/lib -L\${MPC_prefix}/lib64 -Wl,-rpath=\${MPC_prefix}/lib -Wl,-rpath=\${MPC_prefix}/lib64 $SCTK_LDFLAGS -B\$MPC_prefix/bin"
-	CC="\`lookup_compiler c 1 | cut -f3 -d":"\` \$FLAGS -lmpc_framework"
+	CC="\`lookup_compiler c 1 | cut -f3 -d":"\` \$FLAGS -lmpc_framework -lmpc_tdb_remote_static"
 	FC="\$1 \$FLAGS"
 	mkdir -p \$COMPILER_FILEPATH/\$3/npriv
 	MPC_MAKE_FORTRAN_INTERFACE=1 MPC_DISABLE_CONFIG=1 MPC_DISABLE_BANNER=1 sh \$COMPILER_FILEPATH/fortran_gen/fortran_build.sh "\$CC" "\$FC" "\$COMPILER_FILEPATH/fortran_gen/mpc_mpi.h" "\$COMPILER_FILEPATH/\$3/npriv"
@@ -176,8 +177,6 @@ post_add_fortran()
 
 	#shortcut to identify the compiler matching the hash folder
 	echo "\$1" >> \$COMPILER_FILEPATH/\$3/compiler
-
-
 }
 
 post_rm_fortran()
@@ -361,13 +360,32 @@ fi
 
 install_hash=\`echo \$MPC_RPREFIX | sed -e "s#//*#/#g" | hash_content \`
 user_prefix=\$HOME/.mpcompil/\$install_hash
+COMPILER_FILEPATH=
+ARGS=
 
-if test -w \$MPC_RPREFIX
+for arg in \$@
+do
+	case \$arg in
+		--local)
+			COMPILER_FILEPATH="\$user_prefix"
+			shift;
+			;;
+		--global)
+			COMPILER_FILEPATH="\$MPC_RPREFIX"
+			shift;
+			;;
+		*)
+			ARGS="\$ARGS\$arg "
+			shift;
+			;;
+
+	esac
+done
+
+if test -z "\$COMPILER_FILEPATH"
 then
-	#case when MPC is compiling: store in base installation by default
-	COMPILER_FILEPATH="\$MPC_RPREFIX"
-else
-# in any other case, everything should be stored in the HOME
+	COMPILER_FILEPATH=\$user_prefix
+# in any 'default' case, everything should be stored in the HOME
 # 1. When the user does not have write permission in the base installation
 # 2. When the home diretory for this installation already exist (later manager usage)
 	#if the HOME installation does not exist, create it
@@ -379,29 +397,35 @@ else
 		cp -r \${MPC_RPREFIX}/fortran_gen \$user_prefix/
 		for lang in \$list_languages
 		do
-			chash=\`lookup_compiler \$lang 1 | cut -f4 -d":"\`
-			test -n \$chash -a -d \$MPC_RPREFIX/\$chash/ && cp -r \${MPC_RPREFIX}/\$chash  \$user_prefix/
+			#copy any existing directory for each language
+			for line in \`cat \${COMPILER_FILEPATH}/.\${lang}_compilers.cfg | cut -f4 -d":"\`;
+			do
+				test -n "\$line" -a -d "\$MPC_RPREFIX/\$line/" && cp -r \${MPC_RPREFIX}/\$line  \$user_prefix/
+			done
 		done
 	fi
-	COMPILER_FILEPATH=\$user_prefix
 fi
 
 #default values
+command="help"
 lang="c"
 path="1"
 family="GNU"
 
 #retrieve args
-test -n "\$2" && lang="\$2"
-test -n "\$3" && path="\`format_path "\$3"\`"
-test -n "\$4" && family="\$4"
-
-test -z "\$1" && help
+arg="\`echo "\$ARGS" | cut -s -d" " -f1\`"
+test -n "\$arg" && command="\$arg"
+arg="\`echo "\$ARGS" | cut -s -d" " -f2\`"
+test -n "\$arg" && lang="\$arg"
+arg="\`echo "\$ARGS" | cut -s -d" " -f3\`"
+test -n "\$arg" && path="\`format_path "\$arg"\`"
+arg="\`echo "\$ARGS" | cut -s -d" " -f4\`"
+test -n "\$4" && family="\$arg"
 
 is_valid_language "\$lang"
 test ! -e \$COMPILER_FILEPATH/.\${lang}_compilers.cfg && touch \$COMPILER_FILEPATH/.\${lang}_compilers.cfg 
 
-case "\$1" in
+case "\$command" in
 	help|-help|--help|h|-h|--h)
 		help
 		;;
@@ -422,7 +446,7 @@ case "\$1" in
 		printf " * Removed from \$lang compilers: \$path\n"
 		;;
 	default|def|set_default)
-		set_default_compiler "\$lang" "\$path" "\$family"		
+		set_default_compiler "\$lang" "\$path" "\$family"
 		printf " * Set as \$lang default compiler: \$path\n"
 		;;
 	list|l)
@@ -442,7 +466,7 @@ case "\$1" in
 		exit 0
 		;;
 	*)
-		die "Unknown rule: \"\$1\""
+		die "Unknown rule: \"\$command\""
 		;;
 esac
 
