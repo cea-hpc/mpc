@@ -1385,56 +1385,22 @@ static inline void sctk_communicator_init_intern_init_only ( const int nb_task, 
     tmp->has_zero = 0;
     tmp->is_comm_self = 0;
     tmp->is_shared_mem = 0;
+    tmp->is_shared_node = 0;
     OPA_store_int(&(tmp->nb_to_delete), 0);
 
-    tmp->is_shared_mem = 0;
-
     /* Set the shared-memory Flag */
-    if (local_to_global) {
-        tmp->is_shared_mem = 1;
-        int i;
-        for (i = 0; i < nb_task; i++) {
+    if(process_nb == 1)
             tmp->is_shared_mem = 1;
-            int trank = local_to_global[i];
-            if (sctk_is_net_message(trank)) {
-                tmp->is_shared_mem = 0;
-                break;
-            }
-        }
-    } else {
-        /* We are building comm_world */
-        if (sctk_process_number == 1)
-            tmp->is_shared_mem = 1;
-    }
 
 
     /* Set the shared-node flag */
-    if (local_to_global) {
-        tmp->is_shared_node = 1;
-        int seen_node = -1;
-        int i;
-        for (i = 0; i < nb_task; i++) {
-            tmp->is_shared_node = 1;
-            int trank = local_to_global[i];
-            int nrank = sctk_get_node_rank_from_task_rank(trank);
-
-            if( seen_node < 0 )
-            {
-                seen_node = nrank;
-            }
-            else
-            {
-                if( seen_node != nrank )
-                {
-                    tmp->is_shared_node = 0;
-                    break;
-                }
-            }
-        }
-
-    } else {
+    if (local_to_global) 
+    {
+        tmp->is_shared_node = 0;
+    }
+    else {
         /* We are building comm_world */
-        if (sctk_node_number == 1)
+        if (sctk_get_node_number() == 1)
             tmp->is_shared_node = 1;
     }
 

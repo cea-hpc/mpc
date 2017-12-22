@@ -17,7 +17,7 @@ char *sctk_mpi_handler_gen_filename(void *option, void *option1) {
   if(filename == NULL){
 	  printf("Can't gen filename : filename allocation failedi\n");
   	  }
-          sprintf(filename, "%s_%d_%d_%d", (char *)option, getpid(), time(0),
+          sprintf(filename, "mpc-%s_%d_%d_%d", (char *)option, getpid(), time(0),
                   rand());
           return filename;
   }
@@ -35,7 +35,7 @@ char *sctk_mpi_handler_gen_filename(void *option, void *option1) {
 
     MPI_Comm comm = (MPI_Comm)option1;
 
-    PMPI_Bcast((void *)filename, 128, MPI_CHAR, 0, comm);
+    sctk_broadcast((void *)filename, 128 * sizeof(char), 0, (sctk_communicator_t)comm);
     return true;
   }
 
@@ -52,7 +52,7 @@ char *sctk_mpi_handler_gen_filename(void *option, void *option1) {
 
     MPI_Comm comm = (MPI_Comm)option1;
 
-    PMPI_Bcast((void *)filename, 128, MPI_CHAR, 0, comm);
+    sctk_broadcast((void *)filename, 128 * sizeof(char), 0, (sctk_communicator_t)comm);
 
     return filename;
   }
