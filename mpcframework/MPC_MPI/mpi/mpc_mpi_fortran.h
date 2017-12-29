@@ -1126,9 +1126,10 @@ void ffunc (pmpi_gather) (void *sendbuf, int *sendcnt,
 			  int *recvcnt, MPI_Datatype * recvtype, int *root,
 			  MPI_Comm * comm, int *res)
 {
-
+/*
   sctk_error("%s BUFFER it at %p CONTENT %d", __FUNCTION__, sendbuf,
              *(int *)sendbuf);
+*/
   if (sendbuf == *mpi_predef_inplace() ||
       (sendbuf == *mpi_predef08_inplace())) {
     sctk_error("SEND IS IN_PLACE %s", __FUNCTION__);
