@@ -530,7 +530,7 @@ if [ "$language" != "fortran" ]; then
 cat << EOF >> $1
 		if test -e "\${MPC_RPREFIX}/\${MPC_HOST_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/lib/libmpcgetopt.a"; 
 		then
-			GETOPT_FLAG="\${PRIV_FLAG} -include \${MPC_RPREFIX}/\${MPC_HOST_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/include/getopt.h"
+			GETOPT_FLAG="-include \${MPC_RPREFIX}/\${MPC_HOST_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/include/getopt.h"
 		else
 			GETOPT_FLAG=""
 		fi
