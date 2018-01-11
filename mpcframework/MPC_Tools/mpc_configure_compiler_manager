@@ -296,10 +296,8 @@ set_default_compiler()
 		exists="\`tail -n 1 \${COMPILER_FILEPATH}/.\${1}_compilers.cfg\`"
 	fi
 
-	#remove it (adding and then removing is not stupid: add() does some extra stuff)
-	remove_compiler "\${1}" "\${2}" "\$3"
-		
 	#set the compiler as the first one
+	sed -ie "\\@\${exists}@d" \${COMPILER_FILEPATH}/.\${1}_compilers.cfg
 	sed -i "1i \${exists}" \${COMPILER_FILEPATH}/.\${1}_compilers.cfg
 }
 
