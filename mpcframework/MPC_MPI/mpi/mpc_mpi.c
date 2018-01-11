@@ -5636,6 +5636,7 @@ int __MPC_init_node_comm_ctx( struct sctk_comm_coll * coll, MPI_Comm comm )
     int is_shared = 0;
 
     int rank = 0;
+    void* tmp_ctx;
 
     PMPI_Comm_size( comm, &coll->comm_size );
     PMPI_Comm_rank( comm, &rank );
@@ -5643,30 +5644,35 @@ int __MPC_init_node_comm_ctx( struct sctk_comm_coll * coll, MPI_Comm comm )
 
     if( !rank )
     {
-        coll->node_ctx = mpc_MPI_allocmem_pool_alloc_check(sizeof(struct sctk_comm_coll),
+        tmp_ctx = mpc_MPI_allocmem_pool_alloc_check(sizeof(struct sctk_comm_coll),
                 &is_shared);
 
         if( is_shared == 0 )
         {
-            sctk_free( coll->node_ctx );
-            coll->node_ctx = NULL;
+            sctk_free( tmp_ctx);
+            tmp_ctx = NULL;
         }
 
-        if( !coll->node_ctx )
+        if( !tmp_ctx )
         {
-            coll->node_ctx = 0x1;
+            tmp_ctx = 0x1;
         }
         else
         {
-            sctk_per_node_comm_context_init( coll->node_ctx, comm,  coll->comm_size );
+            sctk_per_node_comm_context_init( tmp_ctx, comm,  coll->comm_size );
         }
 
-        sctk_broadcast(  &coll->node_ctx, sizeof( void * ), 0, comm );
 
+	sctk_assert(tmp_ctx != NULL);
+        sctk_broadcast(  &tmp_ctx, sizeof( void * ), 0, comm );
+	sctk_barrier(comm);
+	coll->node_ctx = tmp_ctx;
     }
     else
     {
-        sctk_broadcast(  &coll->node_ctx, sizeof( void * ), 0, comm );
+        sctk_broadcast(  &tmp_ctx, sizeof( void * ), 0, comm );
+	sctk_barrier(comm);
+	coll->node_ctx = tmp_ctx;
     }
 
     return MPI_SUCCESS;
@@ -5676,19 +5682,16 @@ int __MPC_init_node_comm_ctx( struct sctk_comm_coll * coll, MPI_Comm comm )
 
 static inline __MPC_node_comm_coll_check(  struct sctk_comm_coll *coll , MPI_Comm comm )
 {
-       
-        if( coll->node_ctx == NULL )
-        {
-                __MPC_init_node_comm_ctx( coll, comm );
-        }
-        
-
         if( coll->node_ctx == 0x1 )
         {
                 /* A previous alloc failed */
                 return 0;
         }
 
+        if( coll->node_ctx == NULL )
+        {
+                __MPC_init_node_comm_ctx( coll, comm );
+        }
 
         return 1;
 }
