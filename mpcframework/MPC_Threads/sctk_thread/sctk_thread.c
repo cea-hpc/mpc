@@ -649,6 +649,7 @@ sctk_thread_create_tmp_start_routine (sctk_thread_data_t * __arg)
 #if defined(MPC_USE_EXTLS)
       /* TLS INTIALIZATION */
       sctk_tls_init();
+      sctk_call_dynamic_initializers();
 #endif
 
       sctk_register_thread_initial (tmp.task_id);
@@ -894,6 +895,9 @@ sctk_thread_create_tmp_start_routine_user (sctk_thread_data_t * __arg)
   sctk_alloc_posix_numa_migrate();
 
 
+#ifdef MPC_USE_EXTLS
+  sctk_call_dynamic_initializers();
+#endif
   /* Note that the profiler is not initialized in user threads */
 
   /** ** **/
