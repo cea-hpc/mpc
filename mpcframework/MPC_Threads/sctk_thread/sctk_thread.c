@@ -814,7 +814,8 @@ sctk_thread_create (sctk_thread_t * restrict __threadp,
   extls_ctx_herit(old_ctx, *cur_tx, LEVEL_TASK);
   extls_ctx_restore(*cur_tx);
 #ifndef MPC_DISABLE_HLS
-  extls_ctx_bind(*cur_tx, tmp->bind_to);
+  if(tmp->bind_to >= 0) /* if the thread is bound -> HLS */
+	  extls_ctx_bind(*cur_tx, tmp->bind_to);
 #endif
 #endif
 
@@ -1066,7 +1067,13 @@ sctk_user_thread_create (sctk_thread_t * restrict __threadp,
   extls_ctx_herit(old_ctx, *cur_tx, LEVEL_THREAD);
   extls_ctx_restore(*cur_tx);
 #ifndef MPC_DISABLE_HLS
-  extls_ctx_bind(*cur_tx, tmp->bind_to);
+  if(__attr)
+    sctk_thread_attr_getscope(__attr, &scope_init);
+  else
+    scope_init = SCTK_THREAD_SCOPE_PROCESS; /* consider not a scope_system */
+  /* if the thread is bound and its scope is not SCOPE_SYSTEM */
+  if(tmp->bind_to >= 0 && scope_init != SCTK_THREAD_SCOPE_SYSTEM)
+	  extls_ctx_bind(*cur_tx, tmp->bind_to);
 #endif
 #endif
 
