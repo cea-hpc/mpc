@@ -49,7 +49,6 @@ void __kmpc_dispatch_init_8(ident_t *loc, kmp_int32 gtid,
                             kmp_int64 ub, kmp_int64 st, kmp_int64 chunk) {
   mpcomp_thread_t *t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
   sctk_assert(t);
-
   sctk_nodebug("[%d] %s: enter %d -> %d incl, %d excl [%d] ck:%d sch:%d",
                t->rank, __func__, lb, ub, ub + st, st, chunk, schedule);
 

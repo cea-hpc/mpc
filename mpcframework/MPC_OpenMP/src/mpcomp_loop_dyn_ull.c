@@ -38,13 +38,14 @@ static int __mpcomp_dynamic_loop_get_chunk_from_rank_ull(
 
   cur = __mpcomp_loop_dyn_get_chunk_from_target(t, target);
 
-  if (cur <= 0) {
+  if (cur < 0) {
     return 0;
   }
-  const int index = __mpcomp_loop_dyn_get_for_dyn_index(target);
-  const unsigned long long for_dyn_total = target->for_dyn_total[index];
+
+  //const int index = __mpcomp_loop_dyn_get_for_dyn_index(t);
+  //const unsigned long long for_dyn_total = target->for_dyn_total[index];
   __mpcomp_static_schedule_get_specific_chunk_ull(rank, num_threads, loop,
-                                              for_dyn_total - cur, from, to);
+                                              cur, from, to);
   return 1;
 }
 
@@ -243,9 +244,6 @@ int __mpcomp_loop_ull_dynamic_next(unsigned long long *from,
 
   /* Did we exit w/ or w/out a chunk? */
   if (found) {
-    sctk_nodebug("[%d] %s: Exiting main while loop with chunk [%llu -> %llu] "
-                 "from rank %d",
-                 t->rank, __func__, *from, *to, index_target);
 
     /* WORKAROUND (pr35196.c):
      * to avoid issue w/ lastprivate and GCC code generation,
@@ -255,7 +253,7 @@ int __mpcomp_loop_ull_dynamic_next(unsigned long long *from,
     if (*to == t->info.loop_infos.loop.mpcomp_ull.b) {
       t->for_dyn_last_loop_iteration = 1;
     }
-
+    t->dyn_last_target = target ;
     return 1;
   }
 

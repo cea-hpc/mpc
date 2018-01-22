@@ -229,7 +229,7 @@ bool mpcomp_GOMP_loop_ull_ordered_guided_start(
   bool ret;
   sctk_nodebug("[Redirect GOMP]%s:\tBegin", __func__);
 #ifdef MPC_SUPPORT_ULL_LOOP
-  ret = (mpcomp_internal_GOMP_loop_ull_ordered_dynamic_start(
+  ret = (mpcomp_internal_GOMP_loop_ull_ordered_guided_start(
             up, start, end, incr, chunk_size, istart, iend))
             ? true
             : false;

@@ -98,7 +98,7 @@ bool mpcomp_internal_GOMP_loop_dynamic_start(long start, long end, long incr,
 bool mpcomp_internal_GOMP_loop_guided_start(long start, long end, long incr,
                                             long chunk_size, long *istart,
                                             long *iend) {
-  return (__mpcomp_dynamic_loop_begin(start, end, incr, chunk_size, istart,
+  return (__mpcomp_guided_loop_begin(start, end, incr, chunk_size, istart,
                                       iend))
              ? true
              : false;
@@ -125,7 +125,7 @@ bool mpcomp_internal_GOMP_loop_ordered_dynamic_start(long start, long end,
 bool mpcomp_internal_GOMP_loop_ordered_guided_start(long start, long end,
                                                     long incr, long chunk_size,
                                                     long *istart, long *iend) {
-  return (__mpcomp_ordered_dynamic_loop_begin(start, end, incr, chunk_size,
+  return (__mpcomp_ordered_guided_loop_begin(start, end, incr, chunk_size,
                                               istart, iend))
              ? true
              : false;

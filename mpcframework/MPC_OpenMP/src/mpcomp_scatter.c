@@ -347,7 +347,6 @@ __mpcomp_scatter_wakeup_intermediate_node( mpcomp_node_t* node )
       node->reduce_data[i] = NULL;
       node->isArrived[i] = 0;
     }
-
     /** Instance id : First id next step + cur_node * tree_base + i */
     if( nthreads > num_vchildren )
     {
@@ -358,7 +357,7 @@ __mpcomp_scatter_wakeup_intermediate_node( mpcomp_node_t* node )
         
         for( i = 0; i < num_vchildren; i++ )
         {
-            
+
             child_node = node->children.node[i];
             sctk_assert( child_node );
             child_node->already_init = 0;
@@ -408,6 +407,9 @@ __mpcomp_scatter_wakeup_intermediate_node( mpcomp_node_t* node )
                 mvp->threads->father_node = node;
                 mvp->threads->rank = node->mvp_first_id + i;
                 mvp->instance = node->instance;
+            int j; 
+            for (j = 0; j < MPCOMP_MAX_ALIVE_FOR_DYN + 1; j++) 
+	            sctk_atomics_store_int(&(mvp->threads->for_dyn_remain[j].i), -1);
                 __mpcomp_instance_tree_array_mvp_init( node, mvp, i );
             }
             /* WakeUp NODE */
@@ -467,6 +469,9 @@ __mpcomp_scatter_wakeup_final_mvp( mpcomp_node_t* node )
             mvp->threads->father = node->instance->thread_ancestor;
             mvp->threads->father_node = node;
             mvp->threads->rank = node->mvp_first_id + i;
+            int j; 
+            for (j = 0; j < MPCOMP_MAX_ALIVE_FOR_DYN + 1; j++) 
+	            sctk_atomics_store_int(&(mvp->threads->for_dyn_remain[j].i), -1);
             __mpcomp_instance_tree_array_mvp_init( node, mvp, i );
         }
         /* WakeUp MVP */
@@ -522,7 +527,9 @@ void __mpcomp_scatter_instance_post_init( mpcomp_thread_t* thread )
     sctk_assert( thread->mvp );
     mpcomp_instance_t* instance;
     mpcomp_mvp_t* mvp = thread->mvp;
-
+    int j; 
+    for (j = 0; j < MPCOMP_MAX_ALIVE_FOR_DYN + 1; j++) 
+	    sctk_atomics_store_int(&(mvp->threads->for_dyn_remain[j].i), -1);
     if( ! thread->mvp->instance->buffered )
         __mpcomp_internal_full_barrier( thread->mvp );
 

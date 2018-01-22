@@ -111,6 +111,12 @@ typedef struct mpcomp_team_s {
   mpcomp_atomic_int_pad_t
       for_dyn_nb_threads_exited[MPCOMP_MAX_ALIVE_FOR_DYN + 1];
 
+  /* GUIDED LOOP CONSTRUCT */
+  volatile int is_first[MPCOMP_MAX_ALIVE_FOR_DYN + 1];
+  sctk_atomics_ptr guided_from[MPCOMP_MAX_ALIVE_FOR_DYN + 1];
+  sctk_spinlock_t *lock;
+
+
   /* ORDERED CONSTRUCT */
   int next_ordered_index;
   volatile long next_ordered_offset;

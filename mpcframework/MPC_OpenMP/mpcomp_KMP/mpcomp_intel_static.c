@@ -58,7 +58,16 @@ void __kmpc_for_static_init_4(ident_t *loc, kmp_int32 gtid, kmp_int32 schedtype,
       t->rank, __func__, loc->psource, schedtype, *plastiter, *plower,
       *pupper, *pstride, incr, chunk, *plastiter, *pstride);
 
-  int trip_count = abs((*pupper - *plower) / incr) + 1;
+  int trip_count;
+  if(incr > 0) 
+  {
+    trip_count = ((*pupper - *plower) / incr) + 1;
+  }
+  else 
+  {
+    trip_count = ((*plower - *pupper) / ( -incr)) +1;
+  }
+
   switch (schedtype) {
     case kmp_sch_static: {                         
       if (trip_count <= num_threads) {
@@ -162,7 +171,16 @@ void __kmpc_for_static_init_4u(ident_t *loc, kmp_int32 gtid,
       schedtype, *plastiter, *plower, *pupper, *pstride, incr, chunk,
       *plastiter, *pstride);
 
-  int trip_count = abs((*pupper - *plower) / incr) + 1;
+  unsigned long long trip_count;
+  if(incr > 0) 
+  {
+    trip_count = ((*pupper - *plower) / incr) + 1;
+  }
+  else 
+  {
+    trip_count = ((*plower - *pupper) / ( -incr)) +1;
+  }
+
   switch (schedtype) {
     case kmp_sch_static: {                         
       if (trip_count <= num_threads) {
@@ -265,7 +283,16 @@ void __kmpc_for_static_init_8(ident_t *loc, kmp_int32 gtid, kmp_int32 schedtype,
       schedtype, *plastiter, *plower, *pupper, *pstride, incr, chunk,
       *plastiter, *pstride);
 
-  long long trip_count = abs((*pupper - *plower) / incr) + 1;
+  long long trip_count;
+  if(incr > 0) 
+  {
+    trip_count = ((*pupper - *plower) / incr) + 1;
+  }
+  else 
+  {
+    trip_count = ((*plower - *pupper) / ( -incr)) +1;
+  }
+
   switch (schedtype) {
     case kmp_sch_static: {                         
       if (trip_count <= num_threads) {
@@ -374,8 +401,23 @@ void __kmpc_for_static_init_8u(ident_t *loc, kmp_int32 gtid,
       ((mpcomp_thread_t *)sctk_openmp_thread_tls)->rank, loc->psource,
       schedtype, *plastiter, *plower, *pupper, *pstride, incr, chunk,
       *plastiter, *pstride);
+fprintf(stderr,"[%d] __kmpc_for_static_init_8u: <%s> "
+      "schedtype=%d, %d? %d -> %d incl. [%d], incr=%d chunk=%d "
+      "*plastiter=%d *pstride=%d\n",
+      ((mpcomp_thread_t *)sctk_openmp_thread_tls)->rank, loc->psource,
+      schedtype, *plastiter, *plower, *pupper, *pstride, incr, chunk,
+      *plastiter, *pstride);
 
-  unsigned long long trip_count = abs((*pupper - *plower) / incr) + 1;
+  unsigned long long trip_count;
+  if(incr > 0) 
+  {
+    trip_count = ((*pupper - *plower) / incr) + 1;
+  }
+  else 
+  {
+    trip_count = ((*plower - *pupper) / ( -incr)) +1;
+  }
+
   switch (schedtype) {
     case kmp_sch_static: {                         
       if (trip_count <= num_threads) {

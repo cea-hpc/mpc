@@ -79,6 +79,7 @@ __mpcomp_internal_begin_parallel_region( mpcomp_parallel_region_t *info, const u
     t = (mpcomp_thread_t *) sctk_openmp_thread_tls;
     sctk_assert(t != NULL);
    
+
     /* Compute new num threads value */
     if( t->root )
     {
@@ -133,6 +134,9 @@ __mpcomp_internal_begin_parallel_region( mpcomp_parallel_region_t *info, const u
     instance_info->nb_sections = info->nb_sections;
 
     instance->team->depth = t->instance->team->depth + 1;
+    int i;
+    for(i=0;i<MPCOMP_MAX_ALIVE_FOR_DYN + 1;i++)
+      instance->team->is_first[i] = 1;
 
     if( !t->children_instance->buffered ) 
         __mpcomp_instance_tree_array_root_init( t->root, t->children_instance, instance_info->num_threads );
@@ -329,8 +333,32 @@ void __mpcomp_start_parallel_static_loop(void (*func)(void *), void *shared,
 void __mpcomp_start_parallel_guided_loop(void (*func)(void *), void *shared,
                                          unsigned arg_num_threads, long lb,
                                          long b, long incr, long chunk_size) {
-  __mpcomp_start_parallel_dynamic_loop(func, shared, arg_num_threads, lb, b,
-                                       incr, chunk_size);
+  mpcomp_thread_t *t;
+ 	mpcomp_parallel_region_t info;
+
+	mpcomp_start_func_t start = ( mpcomp_start_func_t ) func;
+	sctk_assert( start );
+
+  	__mpcomp_init();
+
+  	t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
+  	sctk_assert(t != NULL);
+
+  	__mpcomp_parallel_region_infos_init(&info);
+  	__mpcomp_parallel_set_specific_infos(&info,start, shared,
+                                       t->info.icvs, MPCOMP_COMBINED_GUIDED_LOOP);
+
+    sctk_assert( info.combined_pragma == MPCOMP_COMBINED_GUIDED_LOOP );
+  	__mpcomp_loop_gen_infos_init(&(info.loop_infos), lb, b, incr, chunk_size);
+
+	if( !( t->schedule_is_forced ) )
+		 t->schedule_type = MPCOMP_COMBINED_GUIDED_LOOP;
+  	t->schedule_is_forced = 0;
+
+  	__mpcomp_internal_begin_parallel_region(&info, arg_num_threads);
+  	t->mvp->instance = t->children_instance;
+  	__mpcomp_start_openmp_thread( t->mvp );  
+  	__mpcomp_internal_end_parallel_region(t->children_instance);
 }
 
 void __mpcomp_start_parallel_runtime_loop(void (*func)(void *), void *shared,

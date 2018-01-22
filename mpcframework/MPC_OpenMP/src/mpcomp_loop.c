@@ -110,6 +110,7 @@ __mpcomp_get_static_nb_chunks_per_rank_ull(unsigned long long rank,
   return nb_chunks_per_thread;
 }
 
+
 void __mpcomp_get_specific_chunk_per_rank(int rank, int num_threads, long lb,
                                           long b, long incr, long chunk_size,
                                           long chunk_num, long *from,

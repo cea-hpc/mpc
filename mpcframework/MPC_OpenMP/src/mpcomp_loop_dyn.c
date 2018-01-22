@@ -50,15 +50,16 @@ static int __mpcomp_dynamic_loop_get_chunk_from_rank(mpcomp_thread_t *t,
   mpcomp_loop_long_iter_t *loop = &(t->info.loop_infos.loop.mpcomp_long);
 
   cur = __mpcomp_loop_dyn_get_chunk_from_target(t, target);
-
-  if (cur <= 0) {
+  //const int index = __mpcomp_loop_dyn_get_for_dyn_index(t);
+  //const unsigned long long for_dyn_total = target->for_dyn_total[index];
+  //fprintf(stderr,"cur %d th %d targ %d fordyn %d\n",cur, t->rank,target->rank,target->for_dyn_total[index]);
+  if (cur < 0) {
     return 0;
   }
 
-  const int index = __mpcomp_loop_dyn_get_for_dyn_index(target);
-  const unsigned long long for_dyn_total = target->for_dyn_total[index];
+
   __mpcomp_static_schedule_get_specific_chunk(rank, num_threads, loop,
-                                              for_dyn_total - cur, from, to);
+                                              cur, from, to);
 
   return 1;
 }
@@ -70,7 +71,6 @@ void __mpcomp_dynamic_loop_init(mpcomp_thread_t *t, long lb, long b, long incr,
   sctk_assert(t->instance != NULL);
   team_info = t->instance->team;
   sctk_assert(team_info != NULL);
-
   /* WORKAROUND (pr35196.c)
    * Reinitialize the flag for the last iteration of the loop */
   t->for_dyn_last_loop_iteration = 0;
@@ -93,6 +93,7 @@ void __mpcomp_dynamic_loop_init(mpcomp_thread_t *t, long lb, long b, long incr,
   __mpcomp_loop_gen_infos_init(&(t->info.loop_infos), lb, b, incr, chunk_size);
 
   /* Try to change the number of remaining chunks */
+  t->dyn_last_target = t ;
   t->for_dyn_total[index] = __mpcomp_get_static_nb_chunks_per_rank(
       t->rank, num_threads, &(t->info.loop_infos.loop.mpcomp_long));
   (void) sctk_atomics_cas_int(&(t->for_dyn_remain[index].i), -1, t->for_dyn_total[index]);
@@ -108,8 +109,6 @@ int __mpcomp_dynamic_loop_begin(long lb, long b, long incr, long chunk_size,
   	/* Grab the thread info */
   	t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
   	sctk_assert(t != NULL);
-
-    t->dyn_last_target = t ;
 
     if( !( t->instance->root ) )
     {
@@ -268,7 +267,6 @@ void __mpcomp_dynamic_loop_end_nowait(void) {
 		}
 	}
 #endif /* OMPT_SUPPORT */
-
   /* In case of 1 thread, re-initialize the number of remaining chunks
        * but do not increase the current index */
   if (num_threads == 1) {

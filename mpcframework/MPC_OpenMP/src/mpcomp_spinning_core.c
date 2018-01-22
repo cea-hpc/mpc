@@ -159,9 +159,7 @@ __mpcomp_wakeup_mvp( mpcomp_mvp_t *mvp )
 
     sctk_spinlock_init( &( new_thread->info.update_lock ), 0 ); 
     /* Reset pragma for dynamic internal */
-    for (i = 0; i < MPCOMP_MAX_ALIVE_FOR_DYN + 1; i++) 
-	    sctk_atomics_store_int(&(new_thread->for_dyn_remain[i].i), -1);
-
+    
 	return new_thread;	
 }
 
@@ -229,7 +227,6 @@ void mpcomp_slave_mvp_node( mpcomp_mvp_t *mvp )
 
     sctk_assert( mvp );
     spin_node = mvp->spin_node;
-    
     if( spin_node ) 
     {
         volatile int* spin_status = &( spin_node->spin_status );

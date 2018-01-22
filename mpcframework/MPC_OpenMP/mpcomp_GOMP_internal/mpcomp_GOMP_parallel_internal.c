@@ -205,7 +205,7 @@ void mpcomp_internal_GOMP_parallel_loop_runtime_start(void (*fn)(void *),
     break;
   case omp_sched_dynamic:
   case omp_sched_guided:
-    combined_pragma = (long)MPCOMP_COMBINED_DYN_LOOP;
+    combined_pragma = (long)MPCOMP_COMBINED_GUIDED_LOOP;
     break;
   default:
     not_reachable();

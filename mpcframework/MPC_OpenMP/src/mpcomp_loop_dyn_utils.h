@@ -109,7 +109,7 @@ __mpcomp_loop_dyn_init_target_chunk_ull(mpcomp_thread_t *thread,
       /* Get the current id of remaining chunk for the target */
       int cur = sctk_atomics_load_int(&(target->for_dyn_remain[index].i));
       if (cur < 0 && (__mpcomp_loop_dyn_get_for_dyn_current(thread) >
-                      __mpcomp_loop_dyn_get_for_dyn_current(target) || __mpcomp_loop_dyn_get_for_dyn_current(target) == 0)) {
+                      __mpcomp_loop_dyn_get_for_dyn_current(target) /*|| __mpcomp_loop_dyn_get_for_dyn_current(target) == 0)*/)) {
           target->for_dyn_total[index] = __mpcomp_get_static_nb_chunks_per_rank_ull(
           (unsigned long long) target->rank, (unsigned long long) num_threads, &(thread->info.loop_infos.loop.mpcomp_ull));
           int ret = sctk_atomics_cas_int(&(target->for_dyn_remain[index].i), -1,
@@ -133,8 +133,9 @@ __mpcomp_loop_dyn_init_target_chunk(mpcomp_thread_t *thread,
 	  if( !sctk_spinlock_trylock(&(target->info.update_lock))) {
       /* Get the current id of remaining chunk for the target */
       int cur = sctk_atomics_load_int(&(target->for_dyn_remain[index].i));
+  //fprintf(stderr,"cuuuurininit %d th %d targ %d current %d\n",cur, thread->rank,target->rank,__mpcomp_loop_dyn_get_for_dyn_current(target));
       if (cur < 0 && (__mpcomp_loop_dyn_get_for_dyn_current(thread) >
-                    __mpcomp_loop_dyn_get_for_dyn_current(target) || __mpcomp_loop_dyn_get_for_dyn_current(target) == 0)) {
+                    __mpcomp_loop_dyn_get_for_dyn_current(target) )) {
         target->for_dyn_total[index] = __mpcomp_get_static_nb_chunks_per_rank(
         target->rank, num_threads, &(thread->info.loop_infos.loop.mpcomp_long));
         int ret = sctk_atomics_cas_int(&(target->for_dyn_remain[index].i), -1,
@@ -152,11 +153,10 @@ __mpcomp_loop_dyn_get_chunk_from_target(mpcomp_thread_t *thread,
   int prev, cur;
 
   /* Compute the index of the dynamic for construct */
-  const int index = __mpcomp_loop_dyn_get_for_dyn_index(target);
+  const int index = __mpcomp_loop_dyn_get_for_dyn_index(thread); 
   cur = sctk_atomics_load_int(&(target->for_dyn_remain[index].i));
-
   /* Init target chunk if it is not */
-  if(cur < 0) {
+  if(cur < 0 ) {
     if(thread->info.loop_infos.type == MPCOMP_LOOP_TYPE_LONG)
     {
       __mpcomp_loop_dyn_init_target_chunk(thread,target,thread->info.num_threads);
@@ -168,24 +168,26 @@ __mpcomp_loop_dyn_get_chunk_from_target(mpcomp_thread_t *thread,
     cur = sctk_atomics_load_int(&(target->for_dyn_remain[index].i));
   }
 
+  //fprintf(stderr,"cuuuur %d th %d targ %d \n",cur, thread->rank,target->rank);
   if (cur <= 0) {
-    return 0;
+    return -1;
   }
-
   int success = 0;
+  unsigned long long for_dyn_total;
   do {
     if (thread == target) {
       prev = cur;
       cur = sctk_atomics_cas_int(&(target->for_dyn_remain[index].i), prev,
                                  prev - 1);
+      for_dyn_total = target->for_dyn_total[index];
       success = (cur == prev);
     } else {
       if (__mpcomp_loop_dyn_get_for_dyn_current(thread) >=
-          __mpcomp_loop_dyn_get_for_dyn_current(target) || __mpcomp_loop_dyn_get_for_dyn_current(target) == 0) {
+          __mpcomp_loop_dyn_get_for_dyn_current(target) ) {
         if (!sctk_spinlock_trylock(&(target->info.update_lock))) {
           cur = sctk_atomics_load_int(&(target->for_dyn_remain[index].i));
           if ((__mpcomp_loop_dyn_get_for_dyn_current(thread) >=
-               __mpcomp_loop_dyn_get_for_dyn_current(target) || __mpcomp_loop_dyn_get_for_dyn_current(target) == 0) && cur > 0) {
+               __mpcomp_loop_dyn_get_for_dyn_current(target) ) && cur > 0) {
             prev = cur;
             cur = sctk_atomics_cas_int(&(target->for_dyn_remain[index].i), prev,
                                        prev - 1);
@@ -194,6 +196,7 @@ __mpcomp_loop_dyn_get_chunk_from_target(mpcomp_thread_t *thread,
             /* NO MORE STEAL */
             cur = 0;
           }
+          for_dyn_total = target->for_dyn_total[index];
           sctk_spinlock_unlock(&(target->info.update_lock));
         } else {
           success = 0;
@@ -204,8 +207,7 @@ __mpcomp_loop_dyn_get_chunk_from_target(mpcomp_thread_t *thread,
       }
     }
   } while (cur > 0 && !success);
-
-  return (cur > 0 && success) ? cur : 0;
+  return (cur > 0 && success) ? for_dyn_total - cur : -1;
 }
 
 
