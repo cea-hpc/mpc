@@ -42,8 +42,6 @@ static int __mpcomp_dynamic_loop_get_chunk_from_rank_ull(
     return 0;
   }
 
-  //const int index = __mpcomp_loop_dyn_get_for_dyn_index(t);
-  //const unsigned long long for_dyn_total = target->for_dyn_total[index];
   __mpcomp_static_schedule_get_specific_chunk_ull(rank, num_threads, loop,
                                               cur, from, to);
   return 1;

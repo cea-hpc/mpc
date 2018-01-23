@@ -50,9 +50,7 @@ static int __mpcomp_dynamic_loop_get_chunk_from_rank(mpcomp_thread_t *t,
   mpcomp_loop_long_iter_t *loop = &(t->info.loop_infos.loop.mpcomp_long);
 
   cur = __mpcomp_loop_dyn_get_chunk_from_target(t, target);
-  //const int index = __mpcomp_loop_dyn_get_for_dyn_index(t);
-  //const unsigned long long for_dyn_total = target->for_dyn_total[index];
-  //fprintf(stderr,"cur %d th %d targ %d fordyn %d\n",cur, t->rank,target->rank,target->for_dyn_total[index]);
+
   if (cur < 0) {
     return 0;
   }
