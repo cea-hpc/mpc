@@ -84,9 +84,12 @@ __mpcomp_internal_begin_parallel_region( mpcomp_parallel_region_t *info, const u
     if( t->root )
     {
         const unsigned int max_threads = t->root->tree_cumulative[0];
-        real_num_threads = expected_num_threads;
-        real_num_threads = (!real_num_threads) ? max_threads : real_num_threads;
-        real_num_threads = ( t->info.icvs.nthreads_var < real_num_threads ) ? t->info.icvs.nthreads_var : real_num_threads;
+        if(expected_num_threads){
+            real_num_threads = (expected_num_threads < max_threads ) ? expected_num_threads : max_threads;
+        }
+        else{
+           real_num_threads = (t->info.icvs.nthreads_var < max_threads) ? t->info.icvs.nthreads_var : max_threads;
+        }
     }
     else
     {
