@@ -72,7 +72,7 @@ void __mpcomp_internal_full_barrier(mpcomp_mvp_t *mvp) {
         if (c != new_root || (c == new_root && b != c->barrier_num_threads)) {
           /* Wait for c->barrier == c->barrier_num_threads */
           while (b_done == c->barrier_done) {
-  //          sctk_thread_yield();
+              sctk_thread_yield();
 #if MPCOMP_TASK
             mpcomp_task_schedule();
 #endif /* MPCOMP_TASK */
