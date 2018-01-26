@@ -580,11 +580,13 @@ sctk_def_disable_smt (char *arg)
 	sctk_enable_smt_capabilities = 0;
 }
 
+	static void
 sctk_def_text_placement(char *arg)
 {
 	sctk_enable_text_placement = 1;
 }
 
+	static void
 sctk_def_graphic_placement(char *arg)
 {
 	sctk_enable_graphic_placement = 1;
