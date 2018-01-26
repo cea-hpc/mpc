@@ -35,6 +35,10 @@
 #include <hwloc/openfabrics-verbs.h>
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 //TODO ifdef OPTION_GRAPHIC
 char file_placement[128];
 char placement_txt[128];
@@ -49,10 +53,6 @@ typedef struct sctk_text_option_s{
                 int *balanced_tab ; 
                 int *pid_tab; 
 } sctk_text_option_t;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 /*
   Numbering rules
