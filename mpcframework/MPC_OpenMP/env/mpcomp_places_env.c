@@ -103,7 +103,7 @@ mpcomp_places_build_numas_places( const int places_number, int* error )
    assert( places_string );
    
    numa_found = 0; tnwrites = 0;
-   const int number_numas = hwloc_get_nbobjs_by_depth( topology, HWLOC_OBJ_NUMANODE );
+   const int number_numas = hwloc_get_nbobjs_by_type( topology, HWLOC_OBJ_NUMANODE );
    const int __places_number = ( places_number == -1 ) ? number_numas : places_number;
    while( next_numa = hwloc_get_next_obj_by_type( topology, HWLOC_OBJ_NUMANODE, prev_numa ) )
    {  
@@ -187,7 +187,7 @@ mpcomp_places_build_sockets_places( const int places_number, int *error )
    assert( places_string );
    
    socket_found = 0; tnwrites = 0;
-   const int number_sockets = hwloc_get_nbobjs_by_depth( topology, HWLOC_OBJ_SOCKET );
+   const int number_sockets = hwloc_get_nbobjs_by_type( topology, HWLOC_OBJ_SOCKET );
    const int __places_number = ( places_number == -1 ) ? number_sockets : places_number;
    while( next_socket = hwloc_get_next_obj_by_type( topology, HWLOC_OBJ_SOCKET, prev_socket ) )
    {  
@@ -267,7 +267,7 @@ mpcomp_places_build_threads_places( const int places_number, int* error )
    assert( places_string );
    
    pu_found = 0; tnwrites = 0;
-   const int threads_number = hwloc_get_nbobjs_by_depth( topology, HWLOC_OBJ_PU );
+   const int threads_number = hwloc_get_nbobjs_by_type( topology, HWLOC_OBJ_PU );
    const int __places_number = ( places_number == -1 ) ? threads_number : places_number;
    while( next_pu = hwloc_get_next_obj_by_type( topology, HWLOC_OBJ_PU, prev_pu ) )
    {
