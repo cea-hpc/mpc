@@ -508,7 +508,7 @@ sctk_internal_setup_libxml()
 	fi
 	#setup vars
 	SCTK_ARFLAGS="${SCTK_ARFLAGS} ${LIBXML_LIBDIR}/libxml2.so"
-	SCTK_LDFLAGS="${SCTK_LDFLAGS} -L${LIBXML2_LIBDIR}"
+	SCTK_LDFLAGS="${SCTK_LDFLAGS} -L${LIBXML_LIBDIR}"
 	SCTK_CFLAGS="${SCTK_CFLAGS} -I${SCTK_LIBXML2_PREFIX}/include/libxml2"
 }
 
