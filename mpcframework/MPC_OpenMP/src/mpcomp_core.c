@@ -932,7 +932,6 @@ void __mpcomp_in_order_scheduler( mpcomp_thread_t* thread )
     /* Handle beginning of combined parallel region */
     switch( thread->info.combined_pragma ) 
     {
-        long from,to;
         case MPCOMP_COMBINED_NONE:
             break;
         case MPCOMP_COMBINED_SECTION:
@@ -945,7 +944,7 @@ void __mpcomp_in_order_scheduler( mpcomp_thread_t* thread )
             __mpcomp_dynamic_loop_init( thread, loop->lb, loop->b, loop->incr, loop->chunk_size );
             break;
         case MPCOMP_COMBINED_GUIDED_LOOP:
-            __mpcomp_guided_loop_begin(loop->lb, loop->b, loop->incr, loop->chunk_size, from, to );
+            __mpcomp_guided_loop_begin(loop->lb, loop->b, loop->incr, loop->chunk_size, NULL, NULL );
             break;
 
         default:
