@@ -1,3 +1,25 @@
+/* ############################# MPC License ############################## */
+/* # Wed Nov 19 15:19:19 CET 2008                                         # */
+/* # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          # */
+/* #                                                                      # */
+/* # IDDN.FR.001.230040.000.S.P.2007.000.10000                            # */
+/* # This file is part of the MPC Runtime.                                # */
+/* #                                                                      # */
+/* # This software is governed by the CeCILL-C license under French law   # */
+/* # and abiding by the rules of distribution of free software.  You can  # */
+/* # use, modify and/ or redistribute the software under the terms of     # */
+/* # the CeCILL-C license as circulated by CEA, CNRS and INRIA at the     # */
+/* # following URL http://www.cecill.info.                                # */
+/* #                                                                      # */
+/* # The fact that you are presently reading this means that you have     # */
+/* # had knowledge of the CeCILL-C license and that you accept its        # */
+/* # terms.                                                               # */
+/* #                                                                      # */
+/* # Authors:                                                             # */
+/* #   - CARRIBAULT Patrick patrick.carribault@cea.fr                     # */
+/* #   - CAPRA Antoine capra@paratools.com                                # */
+/* #                                                                      # */
+/* ######################################################################## */
 #ifndef __MPCOMP_ENUM_MACROS_H__
 #define __MPCOMP_ENUM_MACROS_H__
 
@@ -9,16 +31,16 @@
 
 #define MPCOMP_OPENMP_3_0
 
+/* Activate tasking support if OMP 3.0 is on */
 #if defined( MPCOMP_OPENMP_3_0 )
-//#warning "MPC_OpenMP use MPCOMP_OPENMP_3_0 support"
 #define MPCOMP_TASK 1
 #endif /* MPCOMP_OPENMP_3_0 */
 
 
-/* Maximum number of threads for each team of a parallel region */
-#define MPCOMP_MAX_THREADS 256
-/* Number of threads per microVP */
-#define MPCOMP_MAX_THREADS_PER_MICROVP 1
+/* Enable/Disable OMPT support */
+#define OMPT_SUPPORT 0
+
+
 
 /* Maximum number of alive 'for dynamic' and 'for guided'  construct */
 #define MPCOMP_MAX_ALIVE_FOR_DYN 3

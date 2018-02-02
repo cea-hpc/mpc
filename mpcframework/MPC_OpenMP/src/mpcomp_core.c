@@ -721,6 +721,11 @@ static inline void __mpcomp_read_env_variables() {
 #if MPCOMP_MIC
     fprintf(stderr, "\tMIC optimizations on\n");
 #endif
+#if OMPT_SUPPORT
+    fprintf( stderr, "\tOMPT Support ON\n" ) ;
+#else
+    fprintf( stderr, "\tOMPT Support OFF\n" ) ;
+#endif
     TODO("Add every env vars when printing info on OpenMP")
   }
 }

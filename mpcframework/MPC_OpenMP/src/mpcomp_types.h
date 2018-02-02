@@ -1,4 +1,3 @@
-
 /* ############################# MPC License ############################## */
 /* # Wed Nov 19 15:19:19 CET 2008                                         # */
 /* # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          # */
@@ -25,8 +24,6 @@
 
 #ifndef __MPCOMP_TYPES_H__
 #define __MPCOMP_TYPES_H__
-
-#define OMPT_SUPPORT 0
 
 #include "mpcomp_task.h"
 #include "mpcomp_types_def.h"
