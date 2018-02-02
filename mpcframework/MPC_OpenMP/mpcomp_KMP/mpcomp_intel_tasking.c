@@ -136,7 +136,7 @@ kmp_int32 __kmpc_omp_taskwait(ident_t *loc_ref, kmp_int32 gtid) {
 }
 
 kmp_int32 __kmpc_omp_taskyield(ident_t *loc_ref, kmp_int32 gtid, int end_part) {
-  not_implemented();
+	mpcomp_taskyield() ;
   return (kmp_int32)0;
 }
 
