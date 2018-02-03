@@ -57,27 +57,14 @@ extern ompt_callback_t* OMPT_Callbacks;
   static sctk_atomics_int __private_perf_executed_task = SCTK_ATOMICS_INT_T_INIT(0);
 #endif /* MPC_OPENMP_PERF_TASK_COUNTERS */
 
-typedef uint32_t (*kmp_routine_entry_t)(uint32_t, void *);
-
-typedef struct kmp_task { /* GEH: Shouldn't this be aligned somehow? */
-  void *shareds;          /**< pointer to block of pointers to shared vars   */
-  kmp_routine_entry_t
-      routine;      /**< pointer to routine to call for executing task */
-  uint32_t part_id; /**< part id for the task                          */
-#if OMP_40_ENABLED
-  kmp_routine_entry_t
-      destructors; /* pointer to function to invoke deconstructors of
-                      firstprivate C++ objects */
-#endif             // OMP_40_ENABLED
-                   /*  private vars  */
-} kmp_task_t;
-
-void __mpcomp_task_intel_wrapper(void *task) {
-  kmp_task_t *kmp_task_addr = (kmp_task_t* ) ( (char*) task + sizeof(mpcomp_task_t) );
-  kmp_task_addr->routine(0, kmp_task_addr);
-}
-
-void __mpcomp_task_execute(mpcomp_task_t *task) {
+/**
+ * Execute a specific task by the current thread.
+ *
+ * \param task Target task to execute by the current thread
+ */
+static void 
+__mpcomp_task_execute(mpcomp_task_t *task) 
+{
   mpcomp_thread_t *thread;
   mpcomp_local_icv_t saved_icvs;
   mpcomp_task_t *saved_current_task;
@@ -88,7 +75,7 @@ void __mpcomp_task_execute(mpcomp_task_t *task) {
   sctk_assert(sctk_openmp_thread_tls);
   thread = (mpcomp_thread_t *)sctk_openmp_thread_tls;
 
-  /* A task can't be execute by multiple thread */
+  /* A task can't be executed by multiple threads */
   sctk_assert(task->thread == NULL);
 
   /* Update task owner */
@@ -101,18 +88,18 @@ void __mpcomp_task_execute(mpcomp_task_t *task) {
    sctk_atomics_incr_int( &__private_perf_executed_task );
 #endif /* MPC_OPENMP_PERF_TASK_COUNTERS */
 
-   #if OMPT_SUPPORT
+#if OMPT_SUPPORT
    if( mpcomp_ompt_is_enabled() )
    {
-      if( OMPT_Callbacks )
-		{
-			ompt_callback_task_schedule_t callback;
-			callback = (ompt_callback_task_schedule_t) OMPT_Callbacks[ompt_callback_task_schedule];
-			if( callback )
-				callback( &(saved_current_task->ompt_task_data), ompt_task_yield, &(task->ompt_task_data)); 
-		}
-	}
-	#endif /* OMPT_SUPPORT */
+	   if( OMPT_Callbacks )
+	   {
+		   ompt_callback_task_schedule_t callback;
+		   callback = (ompt_callback_task_schedule_t) OMPT_Callbacks[ompt_callback_task_schedule];
+		   if( callback )
+			   callback( &(saved_current_task->ompt_task_data), ompt_task_yield, &(task->ompt_task_data)); 
+	   }
+   }
+#endif /* OMPT_SUPPORT */
 
   /* Update thread current task */
   MPCOMP_TASK_THREAD_SET_CURRENT_TASK(thread, task);
@@ -129,7 +116,7 @@ void __mpcomp_task_execute(mpcomp_task_t *task) {
   /* Restore thread icv envionnement */
   thread->info.icvs = saved_icvs;
 
-  #if OMPT_SUPPORT
+#if OMPT_SUPPORT
   if( mpcomp_ompt_is_enabled() )
   {
     if( OMPT_Callbacks )
@@ -140,7 +127,7 @@ void __mpcomp_task_execute(mpcomp_task_t *task) {
 			callback( &(task->ompt_task_data), ompt_task_complete, &(saved_current_task->ompt_task_data) ); 
     }
   }
-  #endif /* OMPT_SUPPORT */
+#endif /* OMPT_SUPPORT */
 
   /* Restore current task */
   MPCOMP_TASK_THREAD_SET_CURRENT_TASK(thread, saved_current_task);
@@ -149,7 +136,9 @@ void __mpcomp_task_execute(mpcomp_task_t *task) {
   task->thread = NULL;
 }
 
-void mpcomp_task_ref_parent_task(mpcomp_task_t *task) {
+void 
+mpcomp_task_ref_parent_task(mpcomp_task_t *task) 
+{
   sctk_assert(task);
 
   if (!(task->parent))
@@ -159,7 +148,9 @@ void mpcomp_task_ref_parent_task(mpcomp_task_t *task) {
   sctk_atomics_incr_int(&(task->parent->refcount));
 }
 
-void mpcomp_task_unref_parent_task(mpcomp_task_t *task) {
+void 
+mpcomp_task_unref_parent_task(mpcomp_task_t *task) 
+{
   bool no_more_ref;
   mpcomp_task_t *mother, *swap_value;
   sctk_assert(task);
@@ -188,12 +179,29 @@ void mpcomp_task_unref_parent_task(mpcomp_task_t *task) {
   }
 }
 
-/* The new task may be delayed, so copy arguments in a buffer */
-struct mpcomp_task_s *__mpcomp_task_alloc(void (*fn)(void *), void *data,
-                                          void (*cpyfn)(void *, void *),
-                                          long arg_size, long arg_align,
-                                          bool if_clause, unsigned flags,
-                                          int deps_num) {
+/**
+ * Allocate a new task with provided information.
+ *
+ * The new task may be delayed, so copy arguments in a buffer 
+ *
+ * \param fn Function pointer containing the task body
+ * \param data Argument to pass to the previous function pointer
+ * \param cpyfn 
+ * \param arg_size
+ * \param arg_align
+ * \param if_clause
+ * \param flags 
+ * \param deps_num 
+ *
+ * \return New allocated task (or NULL if an error occured)
+ */
+mpcomp_task_t *
+__mpcomp_task_alloc(void (*fn)(void *), void *data,
+			  void (*cpyfn)(void *, void *),
+			  long arg_size, long arg_align,
+			  bool if_clause, unsigned flags,
+			  int deps_num) 
+{
   sctk_assert(sctk_openmp_thread_tls);
   mpcomp_thread_t *t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
 
@@ -215,7 +223,7 @@ struct mpcomp_task_s *__mpcomp_task_alloc(void (*fn)(void *), void *data,
                                            mpcomp_task_data_size));
   mpcomp_task_tot_size += mpcomp_task_data_size;
 
-  struct mpcomp_task_s *new_task =
+  mpcomp_task_t *new_task =
       mpcomp_alloc( mpcomp_task_tot_size );
   sctk_assert(new_task != NULL);
 
@@ -269,7 +277,16 @@ struct mpcomp_task_s *__mpcomp_task_alloc(void (*fn)(void *), void *data,
   return new_task;
 }
 
-mpcomp_task_list_t *__mpcomp_task_try_delay(bool if_clause) {
+/**
+ * Try to find a list to put the task (if needed).
+ *
+ * \param if_clause True if an if clause evaluated to 'true' 
+ * has been provided by the user
+ * \return The list where this task can be inserted or NULL ortherwise
+ */
+static mpcomp_task_list_t *
+__mpcomp_task_try_delay(bool if_clause) 
+{
   mpcomp_task_t *current_task = NULL;
   mpcomp_thread_t *omp_thread_tls = NULL;
   mpcomp_task_list_t *mvp_task_list = NULL;
