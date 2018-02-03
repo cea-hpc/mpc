@@ -640,7 +640,17 @@ static inline void __mpcomp_read_env_variables() {
             "MPC OpenMP version %d.%d (Intel and Patched GCC compatibility)\n",
             SCTK_OMP_VERSION_MAJOR, SCTK_OMP_VERSION_MINOR);
 #if MPCOMP_TASK
-    fprintf(stderr, "\tOpenMP 3 Tasking on\n");
+    fprintf(stderr, "\tOpenMP 3 Tasking on (OMP_NEW_TASKS_DEPTH=%d OMP_TASK_LARCENY_MODE=%d "
+		    "OMP_TASK_NESTING_MAX:%d OMP_TASK_MAX_DELAYED=%d)\n",
+		    sctk_runtime_config_get()->modules.openmp.omp_new_task_depth,
+		    sctk_runtime_config_get()->modules.openmp.omp_task_larceny_mode,
+		    sctk_runtime_config_get()->modules.openmp.omp_task_nesting_max,
+		    sctk_runtime_config_get()->modules.openmp.mpcomp_task_max_delayed );
+#ifdef MPCOMP_USE_TASKDEP
+    fprintf(stderr, "\t\tDependencies ON\n" ) ;
+#else
+    fprintf(stderr, "\t\tDependencies OFF\n" ) ;
+#endif /* MPCOMP_USE_TASKDEP */
 #else
     fprintf(stderr, "\tOpenMP 3 Tasking off\n");
 #endif
