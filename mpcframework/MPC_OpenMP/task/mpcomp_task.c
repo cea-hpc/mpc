@@ -198,13 +198,15 @@ struct mpcomp_task_s *__mpcomp_task_alloc(void (*fn)(void *), void *data,
   mpcomp_thread_t *t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
 
   /* default pading */
-  const long align_size = (arg_align == 0) ? 8 : align_size;
+  const long align_size = (arg_align == 0) ? 8 : arg_align ;
 
   // mpcomp_task + arg_size
   const long mpcomp_task_info_size =
-      mpcomp_task_align_single_malloc(sizeof(mpcomp_task_t), arg_align);
+      mpcomp_task_align_single_malloc(sizeof(mpcomp_task_t),
+		      align_size );
   const long mpcomp_task_data_size =
-      mpcomp_task_align_single_malloc(arg_size, arg_align);
+      mpcomp_task_align_single_malloc(arg_size,
+		      align_size );
 
   /* Compute task total size */
   long mpcomp_task_tot_size = mpcomp_task_info_size;
