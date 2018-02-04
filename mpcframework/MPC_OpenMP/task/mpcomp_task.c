@@ -280,29 +280,26 @@ __mpcomp_task_alloc(void (*fn)(void *), void *data,
 /**
  * Try to find a list to put the task (if needed).
  *
+ * \param thread OpenMP thread that will perform the actions
  * \param if_clause True if an if clause evaluated to 'true' 
  * has been provided by the user
  * \return The list where this task can be inserted or NULL ortherwise
  */
 static mpcomp_task_list_t *
-__mpcomp_task_try_delay(bool if_clause) 
+__mpcomp_task_try_delay(mpcomp_thread_t * thread, bool if_clause) 
 {
   mpcomp_task_t *current_task = NULL;
-  mpcomp_thread_t *omp_thread_tls = NULL;
   mpcomp_task_list_t *mvp_task_list = NULL;
 
-  omp_thread_tls = (mpcomp_thread_t *)sctk_openmp_thread_tls;
-  sctk_assert(omp_thread_tls);
-
   /* Is Serialized Task */
-  if (!if_clause || mpcomp_task_no_deps_is_serialized(omp_thread_tls)) {
+  if (!if_clause || mpcomp_task_no_deps_is_serialized(thread)) {
     return NULL;
   }
 
   /* Reserved place in queue */
-  assert(omp_thread_tls->mvp != NULL);
+  assert(thread->mvp != NULL);
   const int node_rank = MPCOMP_TASK_MVP_GET_TASK_LIST_NODE_RANK(
-      omp_thread_tls->mvp, MPCOMP_TASK_TYPE_NEW);
+      thread->mvp, MPCOMP_TASK_TYPE_NEW);
   assert(node_rank >= 0);
 
   // No list for a mvp should be an error ??
@@ -324,7 +321,15 @@ __mpcomp_task_try_delay(bool if_clause)
   return mvp_task_list;
 }
 
-void __mpcomp_task_process(mpcomp_task_t *new_task, bool if_clause) {
+/**
+ * Process a newly allocated initialized task.
+ *
+ * \param new_task
+ * \param if_clause
+ */
+void 
+__mpcomp_task_process(mpcomp_task_t *new_task, bool if_clause) 
+{
   mpcomp_thread_t *thread;
   mpcomp_task_list_t *mvp_task_list;
 
@@ -336,9 +341,9 @@ void __mpcomp_task_process(mpcomp_task_t *new_task, bool if_clause) {
    sctk_atomics_incr_int( &__private_perf_create_task );
 #endif /* MPC_OPENMP_PERF_TASK_COUNTERS */
 
-  mvp_task_list = __mpcomp_task_try_delay(if_clause);
+  mvp_task_list = __mpcomp_task_try_delay(thread, if_clause);
 
-  /* Push the task in the list of new tasks */
+  /* If possible, push the task in the list of new tasks */
   if (mvp_task_list) {
     sctk_atomics_cas_int(&(thread->instance->team->task_infos.status), 0, MPCOMP_TASK_INIT_STATUS_INITIALIZED);
     mpcomp_task_list_producer_lock(mvp_task_list, thread->task_infos.opaque);
@@ -347,44 +352,73 @@ void __mpcomp_task_process(mpcomp_task_t *new_task, bool if_clause) {
     return;
   }
 
-  sctk_nodebug("%s: %p -- %p -- %p", __func__, new_task, new_task->func,
-               new_task->data);
-  /* Direct task execution */
+  /* Otherwise, execute directly this task */
   mpcomp_task_set_property(&(new_task->property), MPCOMP_TASK_UNDEFERRED);
+
   __mpcomp_task_execute(new_task);
 
   mpcomp_taskgroup_del_task(new_task);
+
 #ifdef MPCOMP_USE_TASKDEP
   __mpcomp_task_finalize_deps(new_task);
 #endif /* MPCOMP_USE_TASKDEP */
+
   mpcomp_task_unref_parent_task(new_task);
 }
 
 /*
- * Creation of an OpenMP task
- * Called when encountering an 'omp task' construct
+ * Creation of an OpenMP task.
+ * 
+ * This function can be called when encountering an 'omp task' construct
+ *
+ * \param fn
+ * \param data
+ * \param cpyfn
+ * \param arg_size
+ * \param arg_align
+ * \param if_clause
+ * \param flags
  */
-void __mpcomp_task(void (*fn)(void *), void *data,
-                   void (*cpyfn)(void *, void *), long arg_size, long arg_align,
-                   bool if_clause, unsigned flags) {
+void 
+__mpcomp_task(void (*fn)(void *), void *data,
+		void (*cpyfn)(void *, void *), long arg_size, long arg_align,
+		bool if_clause, unsigned flags) 
+{
   mpcomp_task_t *new_task;
 
+  /* Intialize the OpenMP environnement (if needed) */
   __mpcomp_init();
 
-
+  /* Allocate the new task w/ provided information */
   new_task = __mpcomp_task_alloc(fn, data, cpyfn, arg_size, arg_align,
                                  if_clause, flags, 0 /* no deps */);
+
+  /* Process this new task (put inside a list or direct execution) */
   __mpcomp_task_process(new_task, if_clause);
 }
 
-/* Steal a task in the 'type' task list of node identified by 'globalRank' */
-static mpcomp_task_t *mpcomp_task_steal(mpcomp_task_list_t *list) 
+/**
+ * Try to steal a task inside a target list.
+ *
+ * \param list Target list where to look for a task
+ * \return the stolen task or NULL if failed
+ */
+static mpcomp_task_t *
+mpcomp_task_steal(mpcomp_task_list_t *list) 
 {
-    mpcomp_thread_t* thread = (mpcomp_thread_t *)sctk_openmp_thread_tls;
-    mpcomp_task_t* current_task = MPCOMP_TASK_THREAD_GET_CURRENT_TASK(thread); 
-
+    mpcomp_thread_t* thread ;
+    mpcomp_task_t* current_task ;
     struct mpcomp_task_s *task = NULL;
+
+    /* Check input argument */
     sctk_assert(list != NULL);
+
+    /* Get current OpenMP thread */
+    thread = (mpcomp_thread_t *)sctk_openmp_thread_tls;
+    sctk_assert( thread ) ;
+
+    /* Get the current task executed by OpenMP thread */
+    current_task = MPCOMP_TASK_THREAD_GET_CURRENT_TASK(thread);
 
 #ifdef MPCOMP_USE_MCS_LOCK 
      mpcomp_task_list_consummer_lock(list, thread->task_infos.opaque);
@@ -524,14 +558,20 @@ static struct mpcomp_task_s *__mpcomp_task_larceny(void) {
 }
 
 /*
- * Schedule remaining tasks in the different task lists (tied, untied, new)
+ * Schedule remaining tasks in the different task lists (tied, untied, new).
+ *
  * Called at several schedule points :
  *     - in taskyield regions
  *     - in taskwait regions
  *     - in implicit and explicit barrier regions
+ *
+ * \param thread
+ * \param mvp
+ * \param team
  */
-void __internal_mpcomp_task_schedule( mpcomp_thread_t* thread, mpcomp_mvp_t* mvp, mpcomp_team_t* team ) {
-
+static void 
+__internal_mpcomp_task_schedule( mpcomp_thread_t* thread, mpcomp_mvp_t* mvp, mpcomp_team_t* team ) 
+{
     int type;
     mpcomp_task_t *task, *current_task;
 
@@ -595,7 +635,13 @@ void __internal_mpcomp_task_schedule( mpcomp_thread_t* thread, mpcomp_mvp_t* mvp
     mpcomp_task_unref_parent_task(task);
 }
 
-void mpcomp_taskwait(void) 
+/**
+ * Perform a taskwait construct.
+ *
+ * Can be the entry point for a compiler.
+ */
+void 
+mpcomp_taskwait(void) 
 {
   mpcomp_task_t *current_task = NULL;     /* Current task execute */
   mpcomp_thread_t *omp_thread_tls = NULL; /* thread private data  */
@@ -605,6 +651,10 @@ void mpcomp_taskwait(void)
 
   sctk_assert(omp_thread_tls->info.num_threads > 0);
 
+  /* Perform this construct only with multiple threads
+   * (with one threads, tasks are schedulded directly,
+   * therefore taskwait has no effect)
+   */
   if (omp_thread_tls->info.num_threads > 1) {
     current_task = MPCOMP_TASK_THREAD_GET_CURRENT_TASK(omp_thread_tls);
     sctk_assert(
@@ -612,6 +662,7 @@ void mpcomp_taskwait(void)
 
     /* Look for a children tasks list */
     while (sctk_atomics_load_int(&(current_task->refcount)) != 1) {
+		/* Schedule any other task */
       mpcomp_task_schedule();
     }
   }
@@ -627,7 +678,14 @@ void mpcomp_taskwait(void)
 #endif /* MPC_OPENMP_PERF_TASK_COUNTERS */
 }
 
-void mpcomp_task_schedule( void )
+/**
+ * Task scheduling.
+ *
+ * Try to find a task to be scheduled and execute it.
+ * This is the main function (it calls an internal function).
+ */
+void 
+mpcomp_task_schedule( void )
 {
     mpcomp_mvp_t *mvp;
     mpcomp_team_t *team;
@@ -641,7 +699,7 @@ void mpcomp_task_schedule( void )
     /* Get mvp father from thread */
     mvp = thread->mvp;
 
-    /* Sequencial execution no delayed task */
+    /* Sequential execution => no delayed task */
     if( !mvp ) return;
 
     /* Get team from thread */
@@ -658,15 +716,22 @@ void mpcomp_task_schedule( void )
 }
 
 
-/*
+/**
+ * Taskyield construct.
+ *
  * The current may be suspended in favor of execution of
  * a different task
  * Called when encountering a taskyield construct
  */
-void mpcomp_taskyield(void) { /* Actually, do nothing */
+void 
+mpcomp_taskyield(void) 
+{ 
+	/* Actually, do nothing */
 }
 
-void __mpcomp_task_coherency_entering_parallel_region() {
+void 
+__mpcomp_task_coherency_entering_parallel_region() 
+{
 #if 0
   struct mpcomp_team_s *team;
   struct mpcomp_mvp_s **mvp;
@@ -708,7 +773,9 @@ void __mpcomp_task_coherency_entering_parallel_region() {
 #endif
 }
 
-void __mpcomp_task_coherency_ending_parallel_region() {
+void 
+__mpcomp_task_coherency_ending_parallel_region() 
+{
 #if 0
   struct mpcomp_team_s *team;
   struct mpcomp_mvp_s **mvp;
@@ -764,7 +831,9 @@ void __mpcomp_task_coherency_ending_parallel_region() {
 #endif
 }
 
-void __mpcomp_task_coherency_barrier() {
+void 
+__mpcomp_task_coherency_barrier() 
+{
 #if 0
   mpcomp_thread_t *t;
   struct mpcomp_task_list_s *list = NULL;
