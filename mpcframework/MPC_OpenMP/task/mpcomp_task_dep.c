@@ -42,7 +42,7 @@ static int __mpcomp_task_process_deps(mpcomp_task_dep_node_t *task_node,
   const size_t tot_deps_num = (uintptr_t)depend[0];
   const size_t out_deps_num = (uintptr_t)depend[1];
 
-  fprintf( stderr, "__mpcomp_task_process_deps: tot_deps_num=%d, out_deps_num=%d\n", tot_deps_num, out_deps_num ) ;
+  // fprintf( stderr, "__mpcomp_task_process_deps: tot_deps_num=%d, out_deps_num=%d\n", tot_deps_num, out_deps_num ) ;
 
   if (!tot_deps_num)
     return 0;
@@ -60,8 +60,8 @@ static int __mpcomp_task_process_deps(mpcomp_task_dep_node_t *task_node,
 
     /* FIND HASH IN HTABLE */
     const uintptr_t addr = (uintptr_t)depend[2 + i];
-    fprintf( stderr, "__mpcomp_task_process_deps: addr[%d] = %p\n",
-		    i, addr ) ;
+    // fprintf( stderr, "__mpcomp_task_process_deps: addr[%d] = %p\n",
+//		    i, addr ) ;
     const int type =
         (i < out_deps_num) ? MPCOMP_TASK_DEP_OUT : MPCOMP_TASK_DEP_IN;
     sctk_assert(task_already_process_num < tot_deps_num);
@@ -75,8 +75,8 @@ static int __mpcomp_task_process_deps(mpcomp_task_dep_node_t *task_node,
 		
     sctk_nodebug("task: %p deps: %p redundant : %d \n", task_node, addr,
                  redundant);
-    fprintf( stderr, "__mpcomp_task_process_deps: redundant: %d\n",
-		    redundant ) ;
+    //fprintf( stderr, "__mpcomp_task_process_deps: redundant: %d\n",
+//		    redundant ) ;
     /** OUT are in first position en OUT > IN deps */
     if (redundant)
       continue;
@@ -275,7 +275,7 @@ void mpcomp_task_with_deps(void (*fn)(void *), void *data,
   predecessors_num = __mpcomp_task_process_deps(
       task_node, current_task->task_dep_infos->htable, depend);
 
-  fprintf( stderr, "predecessors_num=%d\n", predecessors_num );
+  // fprintf( stderr, "predecessors_num=%d\n", predecessors_num );
 
   task_node->task = new_task;
   new_task->task_dep_infos->node = task_node;
