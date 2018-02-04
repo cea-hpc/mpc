@@ -558,11 +558,11 @@ mpcomp_task_get_list(int globalRank, mpcomp_tasklist_type_t type)
     return NULL;
 }
 
-struct mpcomp_task_s *__mpcomp_task_alloc(void (*fn)(void *), void *data,
-                                          void (*cpyfn)(void *, void *),
-                                          long arg_size, long arg_align,
-                                          bool if_clause, unsigned flags,
-                                          int deps_num);
+mpcomp_task_t *__mpcomp_task_alloc(void (*fn)(void *), void *data,
+				  void (*cpyfn)(void *, void *),
+				  long arg_size, long arg_align,
+				  bool if_clause, unsigned flags,
+				  int deps_num);
 void __mpcomp_task_process(mpcomp_task_t *new_task, bool if_clause);
 void __mpcomp_task(void (*fn)(void *), void *data,
                    void (*cpyfn)(void *, void *), long arg_size, long arg_align,
