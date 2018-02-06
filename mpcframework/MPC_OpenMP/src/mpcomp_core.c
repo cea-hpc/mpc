@@ -766,7 +766,7 @@ void __mpcomp_init(void) {
     mpcomp_instance_t *instance;
 
     /* Need to initialize the whole runtime (environment variables) This
-     * section is shared by every OpenMP instances amon MPI tasks located inside
+     * section is shared by every OpenMP instances among MPI tasks located inside
      * the same OS process */
     sctk_thread_mutex_lock(&lock);
     if (done == 0) {
@@ -828,6 +828,7 @@ void __mpcomp_init(void) {
       }
     }
 
+    /* DEBUG */
     if (sctk_get_local_task_rank() == 0) {
       sctk_debug(
           "%s: MPI rank=%d, process_rank=%d, local_task_rank=%d => %d mvp(s) "
@@ -872,7 +873,7 @@ void __mpcomp_init(void) {
 
 #if OMPT_SUPPORT
   	 mpcomp_ompt_post_init();
-#endif /* MPT_SUPPORT */
+#endif /* OMPT_SUPPORT */
 
     /* Allocate information for the sequential region */
     t = (mpcomp_thread_t *)mpcomp_alloc(sizeof(mpcomp_thread_t));
