@@ -13477,12 +13477,12 @@ static int __INTERNAL__PMPI_Attr_get (MPI_Comm comm, int keyval, void *attr_valu
 	sctk_spinlock_lock(&(tmp_per_comm->lock));
 
 	/* it doesn't have any */
-	if(tmp->number > tmp_per_comm->max_number)
+	if(tmp_per_comm->key_vals == NULL )
 	{
 		*flag = 0;
 		*attr = NULL;
 	}
-	else if(tmp_per_comm->key_vals == NULL )
+	else if(keyval >= tmp_per_comm->max_number )
 	{
 		*flag = 0;
 		*attr = NULL;
