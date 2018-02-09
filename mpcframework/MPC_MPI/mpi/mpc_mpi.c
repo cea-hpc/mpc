@@ -13558,9 +13558,13 @@ static int __INTERNAL__PMPI_Attr_delete (MPI_Comm comm, int keyval)
 		{
 			if (tmp->attrs_fn[keyval].fortran_key == 0)
 			{
+				sctk_spinlock_unlock(&(tmp_per_comm->lock));
+				sctk_spinlock_unlock(&(tmp->lock));
 				res = tmp->attrs_fn[keyval].delete_fn (comm, keyval + MPI_MAX_KEY_DEFINED, 
 								       tmp_per_comm->key_vals[keyval].attr,
 								       tmp->attrs_fn[keyval].extra_state );
+				sctk_spinlock_lock(&(tmp_per_comm->lock));
+				sctk_spinlock_lock(&(tmp->lock));
 			}
 			else
 			{
@@ -13573,7 +13577,11 @@ static int __INTERNAL__PMPI_Attr_delete (MPI_Comm comm, int keyval)
 				fort_key = keyval + MPI_MAX_KEY_DEFINED;
 				ext = (int *) (tmp->attrs_fn[keyval].extra_state);
 
+				sctk_spinlock_unlock(&(tmp_per_comm->lock));
+				sctk_spinlock_unlock(&(tmp->lock));
 				((MPI_Delete_function_fortran *) tmp->attrs_fn[keyval].delete_fn) (&comm, &fort_key, &val, ext, &res);
+				sctk_spinlock_lock(&(tmp_per_comm->lock));
+				sctk_spinlock_lock(&(tmp->lock));
 			}
 		}
 	}
