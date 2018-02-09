@@ -10,16 +10,12 @@
 #include <sctk_atomics.h>
 
 #define MPCOMP_TASK_DEP_GOMP_DEPS_FLAG 8
-#define MPCOMP_TASK_DEP_MAX_DEP_PER_TASK 32000
 
 #define MPCOMP_TASK_DEP_INTEL_HTABLE_SIZE 997
 #define MPCOMP_TASK_DEP_INTEL_HTABLE_SEED 6
 
 #define MPCOMP_TASK_DEP_MPC_HTABLE_SIZE 1001 /* 7 * 11 * 13 */
 #define MPCOMP_TASK_DEP_MPC_HTABLE_SEED 2
-
-#define MPCOMP_TASK_DEP_PREALLOC_DEPENDERS_NUM 4
-#define MPCOMP_TASK_DEP_REALLOC_DEPENDERS_RATIO 2
 
 #define MPCOMP_TASK_DEP_LOCK_NODE(node) sctk_spinlock_lock(&(node->lock))
 
@@ -73,7 +69,7 @@ typedef enum mpcomp_task_dep_task_status_e {
 
 static char *mpcomp_task_dep_task_status_to_string[MPCOMP_TASK_DEP_TASK_COUNT] =
     {"MPCOMP_TASK_DEP_TASK_PROCESS_DEP", "MPCOMP_TASK_DEP_TASK_NOT_EXECUTE",
-     "MPCOMP_TASK_DEP_TASK_FINALISED"};
+     "MPCOMP_TASK_DEP_TASK_RELEASED", "MPCOMP_TASK_DEP_TASK_FINALISED"}; 
 
 typedef struct mpcomp_task_dep_node_s {
   sctk_spinlock_t lock;
@@ -119,7 +115,7 @@ typedef struct mpcomp_task_dep_task_infos_s {
 } mpcomp_task_dep_task_infos_t;
 
 static inline int mpcomp_task_dep_is_flag_with_deps(const unsigned flags) {
-  return flags & 8;
+  return flags & MPCOMP_TASK_DEP_GOMP_DEPS_FLAG;
 }
 
 /** HASHING INTEL */

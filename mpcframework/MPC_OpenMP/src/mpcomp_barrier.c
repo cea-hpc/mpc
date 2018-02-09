@@ -74,7 +74,7 @@ void __mpcomp_internal_full_barrier(mpcomp_mvp_t *mvp) {
           while (b_done == c->barrier_done) {
               sctk_thread_yield();
 #if MPCOMP_TASK
-            mpcomp_task_schedule();
+            mpcomp_task_schedule(1);
 #endif /* MPCOMP_TASK */
 		}
 	} else {

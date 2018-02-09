@@ -317,7 +317,7 @@ __mpcomp_task_try_delay(mpcomp_thread_t * thread, bool if_clause)
     sctk_atomics_decr_int(&(mvp_task_list->nb_elements));
     return NULL;
   }
-  //fprintf(stderr, "PUSH IN QUEUE : %p  -- %p \n", sctk_openmp_thread_tls, mvp_task_list );
+
   return mvp_task_list;
 }
 
@@ -662,8 +662,9 @@ mpcomp_taskwait(void)
 
     /* Look for a children tasks list */
     while (sctk_atomics_load_int(&(current_task->refcount)) != 1) {
-		/* Schedule any other task */
-      mpcomp_task_schedule();
+	    /* Schedule any other task 
+	     * prevent recursive calls to mpcomp_taskwait with argument 0 */
+      mpcomp_task_schedule(0);
     }
   }
 
@@ -683,9 +684,12 @@ mpcomp_taskwait(void)
  *
  * Try to find a task to be scheduled and execute it.
  * This is the main function (it calls an internal function).
+ *
+ * \param[in] need_taskwait   True if it is necessary to perform a taskwait
+ *                        after scheduling some tasks.
  */
 void 
-mpcomp_task_schedule( void )
+mpcomp_task_schedule( int need_taskwait )
 {
     mpcomp_mvp_t *mvp;
     mpcomp_team_t *team;
@@ -710,7 +714,8 @@ mpcomp_task_schedule( void )
     __internal_mpcomp_task_schedule( thread, mvp, team ); 
 
     /* schedule task can produce task ... */
-    mpcomp_taskwait();
+    if ( need_taskwait )
+	    mpcomp_taskwait();
     
     return;
 }

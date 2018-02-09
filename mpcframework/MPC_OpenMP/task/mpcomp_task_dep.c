@@ -27,7 +27,7 @@ extern ompt_callback_t* OMPT_Callbacks;
 
 static int __mpcomp_task_wait_deps(mpcomp_task_dep_node_t *task_node) {
   while (sctk_atomics_load_int(&(task_node->predecessors))) {
-    mpcomp_task_schedule();
+    mpcomp_task_schedule(1);
   }
 }
 
@@ -41,8 +41,6 @@ static int __mpcomp_task_process_deps(mpcomp_task_dep_node_t *task_node,
 
   const size_t tot_deps_num = (uintptr_t)depend[0];
   const size_t out_deps_num = (uintptr_t)depend[1];
-
-  // fprintf( stderr, "__mpcomp_task_process_deps: tot_deps_num=%d, out_deps_num=%d\n", tot_deps_num, out_deps_num ) ;
 
   if (!tot_deps_num)
     return 0;
@@ -60,8 +58,6 @@ static int __mpcomp_task_process_deps(mpcomp_task_dep_node_t *task_node,
 
     /* FIND HASH IN HTABLE */
     const uintptr_t addr = (uintptr_t)depend[2 + i];
-    // fprintf( stderr, "__mpcomp_task_process_deps: addr[%d] = %p\n",
-//		    i, addr ) ;
     const int type =
         (i < out_deps_num) ? MPCOMP_TASK_DEP_OUT : MPCOMP_TASK_DEP_IN;
     sctk_assert(task_already_process_num < tot_deps_num);
@@ -75,8 +71,6 @@ static int __mpcomp_task_process_deps(mpcomp_task_dep_node_t *task_node,
 		
     sctk_nodebug("task: %p deps: %p redundant : %d \n", task_node, addr,
                  redundant);
-    //fprintf( stderr, "__mpcomp_task_process_deps: redundant: %d\n",
-//		    redundant ) ;
     /** OUT are in first position en OUT > IN deps */
     if (redundant)
       continue;
@@ -179,10 +173,10 @@ void __mpcomp_task_finalize_deps(mpcomp_task_t *task) {
 
     if( !prev )
     {
-      if( sctk_atomics_load_int( &( task_node->status ) ) != MPCOMP_TASK_DEP_TASK_FINALIZED )
-       if( sctk_atomics_cas_int( &( task_node->status ), MPCOMP_TASK_DEP_TASK_NOT_EXECUTE, MPCOMP_TASK_DEP_TASK_FINALIZED )
+      if( sctk_atomics_load_int( &( succ_node->status ) ) != MPCOMP_TASK_DEP_TASK_FINALIZED )
+       if( sctk_atomics_cas_int( &( succ_node->status ), MPCOMP_TASK_DEP_TASK_NOT_EXECUTE, MPCOMP_TASK_DEP_TASK_RELEASED )
            == MPCOMP_TASK_DEP_TASK_NOT_EXECUTE )
-         __mpcomp_task_process(succ_node->task, 0);
+         __mpcomp_task_process(succ_node->task, 1);
     }
 
     task_node->successors = list_elt->next;
@@ -203,9 +197,6 @@ void mpcomp_task_with_deps(void (*fn)(void *), void *data,
   mpcomp_task_dep_node_t *task_node;
   mpcomp_task_t *current_task, *new_task;
  
-  static sctk_atomics_int path_clause = SCTK_ATOMICS_INT_T_INIT(0); 
-  static sctk_atomics_int path_noclause = SCTK_ATOMICS_INT_T_INIT(0); 
-
   __mpcomp_init();
 
   thread = (mpcomp_thread_t *)sctk_openmp_thread_tls;
@@ -222,17 +213,19 @@ void mpcomp_task_with_deps(void (*fn)(void *), void *data,
 
   if (!(current_task->task_dep_infos->htable)) {
     current_task->task_dep_infos->htable =
-        mpcomp_task_dep_alloc_task_htable(&mpcomp_task_dep_mpc_hash_func);
+        mpcomp_task_dep_alloc_task_htable(mpcomp_task_dep_mpc_hash_func);
     sctk_assert(current_task->task_dep_infos->htable);
   }
 
   task_node = mpcomp_task_dep_new_node();
   sctk_assert(task_node);
 
+  /* TODO: pass real number of dep instead of 0 ? (for OMPT) */
   new_task = __mpcomp_task_alloc(fn, data, cpyfn, arg_size, arg_align,
                                  if_clause, flags, 0);
   sctk_assert(new_task);
 
+  /* TODO remove redundant assignement (see mpcomp_task_dep_new_node) */
   task_node->task = NULL;
 
 #if OMPT_SUPPORT
@@ -275,8 +268,6 @@ void mpcomp_task_with_deps(void (*fn)(void *), void *data,
   predecessors_num = __mpcomp_task_process_deps(
       task_node, current_task->task_dep_infos->htable, depend);
 
-  // fprintf( stderr, "predecessors_num=%d\n", predecessors_num );
-
   task_node->task = new_task;
   new_task->task_dep_infos->node = task_node;
   /* Should be remove TOTEST */
@@ -291,13 +282,14 @@ void mpcomp_task_with_deps(void (*fn)(void *), void *data,
     /* Task with if_clause can be add to list */
     if( sctk_atomics_cas_int(&(task_node->status), MPCOMP_TASK_DEP_TASK_NOT_EXECUTE, MPCOMP_TASK_DEP_TASK_FINALIZED )
       != MPCOMP_TASK_DEP_TASK_NOT_EXECUTE )
+	    /* TODO: check this return vs. wait_deps */
       return; //If clause should be prevent __mpcomp_task_process when deps are resolved -> More info in task 
     __mpcomp_task_wait_deps(task_node);
   }
 
   if (sctk_atomics_load_int(&(task_node->predecessors)) == 0) {
       if( sctk_atomics_load_int( &( task_node->status ) ) != MPCOMP_TASK_DEP_TASK_FINALIZED )
-       if( sctk_atomics_cas_int( &( task_node->status ), MPCOMP_TASK_DEP_TASK_NOT_EXECUTE, MPCOMP_TASK_DEP_TASK_FINALIZED )
+       if( sctk_atomics_cas_int( &( task_node->status ), MPCOMP_TASK_DEP_TASK_NOT_EXECUTE, MPCOMP_TASK_DEP_TASK_RELEASED )
            == MPCOMP_TASK_DEP_TASK_NOT_EXECUTE )
          __mpcomp_task_process(new_task, if_clause);
   }

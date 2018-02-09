@@ -517,7 +517,7 @@ static inline void mpcomp_task_team_infos_init(struct mpcomp_team_s *team,
 
 /* mpcomp_task.c */
 int mpcomp_task_all_task_executed(void);
-void mpcomp_task_schedule(void);
+void mpcomp_task_schedule(int);
 void __mpcomp_task_exit(void);
 int paranoiac_test_task_exit_check(void);
 int mpcomp_task_get_task_left_in_team(struct mpcomp_team_s *);
