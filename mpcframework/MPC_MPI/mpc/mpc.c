@@ -18,6 +18,7 @@
 /* # Authors:                                                             # */
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
 /* #   - BESNARD Jean-Baptiste jbbesnard@paratools.fr                     # */
+/* #   - JAEGER Julien julien.jaeger@cea.fr                               # */
 /* #                                                                      # */
 /* ######################################################################## */
 #define MPC_MAIN_FILE
@@ -5246,7 +5247,7 @@ int PMPC_Reduce(void *sendbuf, void *recvbuf, mpc_msg_count count,
 
 int PMPC_Op_create(MPC_User_function *function, int commute, MPC_Op *op) {
   MPC_Op init = MPC_OP_INIT;
-  assume(commute == 1);
+  assume(commute);
   *op = init;
   op->u_func = function;
 #ifdef MPC_LOG_DEBUG
