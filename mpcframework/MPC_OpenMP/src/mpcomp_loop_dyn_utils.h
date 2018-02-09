@@ -26,6 +26,7 @@
 
 #include "sctk_debug.h"
 #include "mpcomp_types.h"
+#include "mpcomp_loop.h"
 
 /* dest = src1+src2 in base 'base' of size 'depth' up to dimension 'max_depth'
  */

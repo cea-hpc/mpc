@@ -1,4 +1,3 @@
-
 /* ############################# MPC License ############################## */
 /* # Wed Nov 19 15:19:19 CET 2008                                         # */
 /* # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          # */

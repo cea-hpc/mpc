@@ -22,10 +22,14 @@
 /* ######################################################################## */
 #include "mpcomp.h"
 #include "mpcomp_abi.h"
+#include "mpcomp_barrier.h"
 #include "sctk_debug.h"
 #include "mpcomp_types.h"
 #include "mpcomp_loop_dyn.h"
 #include "mpcomp_loop_dyn_utils.h"
+
+#include "mpcomp_ompt_general.h"
+
 /* 
    This file includes the function related to the 'guided' schedule of a shared
    for loop.

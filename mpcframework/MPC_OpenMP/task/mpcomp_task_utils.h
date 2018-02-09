@@ -19,7 +19,10 @@ void mpcomp_task_ref_parent_task(mpcomp_task_t *task);
 void mpcomp_task_unref_parent_task(mpcomp_task_t *task);
 
 #include "ompt.h"
+#include "mpcomp_ompt_general.h"
+#if OMPT_SUPPORT
 extern ompt_callback_t* OMPT_Callbacks;
+#endif
 
 /* Missing forward declaration */
 int mpcomp_task_get_victim(int, int, mpcomp_tasklist_type_t );
