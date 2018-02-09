@@ -2405,7 +2405,7 @@ static int __INTERNAL__PMPI_Wait (MPI_Request * request, MPI_Status * status)
 	}
 	else
 	{
-		MPC_Request * mpcreq = &tmp->req;
+		MPC_Request * mpcreq = __sctk_convert_mpc_request (request,requests);
 
 		if( mpcreq->request_type == REQUEST_GENERALIZED )
 		{
@@ -2433,7 +2433,7 @@ static int __INTERNAL__PMPI_Test (MPI_Request * request, int *flag, MPI_Status *
     res = NBC_Test(&(tmp->nbc_handle), flag, status);
   } else {
     res =
-        PMPC_Test(&tmp->req, flag, status);
+        PMPC_Test(__sctk_convert_mpc_request (request,requests), flag, status);
   }
 
   if (*flag) {
@@ -2601,7 +2601,7 @@ int __INTERNAL__PMPI_Waitall (int count, MPI_Request * array_of_requests, MPI_St
             if (array_of_requests[i] == MPI_REQUEST_NULL) {
               mpc_array_of_requests[i] = &MPC_REQUEST_NULL;
             } else {
-              mpc_array_of_requests[i] = &tmp->req;
+              mpc_array_of_requests[i] = __sctk_convert_mpc_request(&(array_of_requests[i]), requests);
             }
           }
         }
