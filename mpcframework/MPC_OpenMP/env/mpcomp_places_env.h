@@ -28,13 +28,7 @@
 #include "sctk_debug.h"
 #include "sctk_alloc.h"
 
-typedef struct mpcomp_places_info_s
-{
-    unsigned int id;
-    hwloc_bitmap_t interval;
-    hwloc_bitmap_t logical_interval;
-    struct mpcomp_places_info_s *prev, *next;
-} mpcomp_places_info_t; 
+#include "mpcomp_parsing_env.h"
 
 hwloc_bitmap_t mpcomp_places_get_default_include_bitmap(const int );
 
@@ -200,26 +194,6 @@ int mpcomp_places_detect_collision( mpcomp_places_info_t* list )
         fprintf(stderr, "warning: found %d colision(s)\n", colision_count );
     }
     return colision_count;
-}
-
-int mpcomp_places_detect_heretogeneous_places(mpcomp_places_info_t* list )
-{
-    int invalid_size_count;
-    const int first_size = hwloc_bitmap_weight( list->interval );
-    mpcomp_places_info_t* place, *saveptr;
-    
-    invalid_size_count = 0;
-    DL_FOREACH_SAFE( list, place, saveptr )
-    {
-        if( first_size != hwloc_bitmap_weight( place->interval ) )
-            invalid_size_count++;
-    }
-
-    if( invalid_size_count )
-    {
-        fprintf(stderr, "warning: Can't build regular tree\n");
-    }
-    return invalid_size_count;
 }
 
 #endif /* __MPCOMP_PLACES_ENV_H__*/

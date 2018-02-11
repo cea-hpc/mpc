@@ -27,7 +27,7 @@ typedef struct mpcomp_places_info_s
 {
     unsigned int id;
     hwloc_bitmap_t interval;
-    unsigned int relative_depth;
+    hwloc_bitmap_t logical_interval;
     struct mpcomp_places_info_s *prev, *next;
 } mpcomp_places_info_t; 
 

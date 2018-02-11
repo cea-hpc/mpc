@@ -22,9 +22,11 @@
 /* ######################################################################## */
 #include "hwloc.h"
 #include "utlist.h"
+#include "sctk_runtime_config.h"
 #include "sctk_spinlock.h"
 #include "sctk_topology.h"
 #include "mpcomp_places_env.h"
+
 
 mpcomp_places_info_t*
 mpcomp_places_build_interval_infos( const char *env, char *string, char **end, const int nb_mvps )
@@ -382,6 +384,14 @@ mpcomp_places_build_cores_places( const int places_number, int *error )
    return places_string;
 }
 
+/**
+ * Parse an optional number of places with named places.
+ *
+ * Format: (unsigned non-null integer)
+ *
+ * \return The number of places (0 if there was an issue
+ * or -1 if there was no such number of places)
+ */
 static int mpcomp_places_named_extract_num( const char* env, char *string  )
 {
    char* next_char;
@@ -407,7 +417,7 @@ static int mpcomp_places_named_extract_num( const char* env, char *string  )
   
    string++;   // skip ')' 
 
-   if( 0 && string != '\0' )
+   if( 0 && *string != '\0' )
    {
       fprintf(stderr,  "error: offset %d with \'%c\' end: %s\n", string - env -1, *string, string );
       return 0;
@@ -416,6 +426,19 @@ static int mpcomp_places_named_extract_num( const char* env, char *string  )
    return num_places;
 }
 
+/**
+ * Check if a string corresponds to a named places.
+ *
+ * This function checks if the string argument corresponds
+ * to a known place name with an additional integer for the 
+ * number of places).
+ *
+ * \param[in] env String to parse corresponding to places
+ * \param[in] string ??
+ * \param[out] error Output error (if different from 0)
+ * \return The places with string format or NULL if this 
+ * was not a named places
+ */
 static char*
 mpcomp_places_is_named_places( const char* env, char *string, int* error )
 {
@@ -712,7 +735,34 @@ int mpcomp_places_get_topo_info( mpcomp_places_info_t* list, int** shape, int** 
    return __places_nb_mvps;
 }
 
+static int 
+mpcomp_places_detect_heretogeneous_places(mpcomp_places_info_t* list )
+{
+    int invalid_size_count;
+    const int first_size = hwloc_bitmap_weight( list->interval );
+    mpcomp_places_info_t* place, *saveptr;
+    
+    invalid_size_count = 0;
+    DL_FOREACH_SAFE( list, place, saveptr )
+    {
+        if( first_size != hwloc_bitmap_weight( place->interval ) )
+            invalid_size_count++;
+    }
 
+    if( invalid_size_count )
+    {
+        fprintf(stderr, "warning: Can't build regular tree\n");
+    }
+    return invalid_size_count;
+}
+
+
+/**
+ * Entry point to parse OMP_PLACES environment variable.
+ *
+ * \param[in] nb_mvps Target number of microVPs (i.e., OpenMP threads)
+ * \return List of places (or NULL if an error occured)
+ */
 mpcomp_places_info_t*
 mpcomp_places_env_variable_parsing(const int nb_mvps)
 {
@@ -720,12 +770,11 @@ mpcomp_places_env_variable_parsing(const int nb_mvps)
     char *tmp, *string, *end;
     mpcomp_places_info_t* list = NULL;
 
-    if( !( tmp = getenv("OMP_PLACES") ) )
-    {
-       tmp = (char*) malloc( 64 * sizeof( char )); 
-       snprintf( tmp, 63, "cores" );
-    }
-   
+    /* Get the value of OMP_PLACES (as a string) */
+    tmp = sctk_runtime_config_get()->modules.openmp.places ;
+
+    fprintf( stderr, "OMP_PLACES = <%s>\n", tmp ) ;
+
     const char* prev_env = strdup( tmp );
     string = ( char* ) prev_env; 
 
@@ -742,7 +791,7 @@ mpcomp_places_env_variable_parsing(const int nb_mvps)
 
     if( !env )
     {
-       fprintf(stderr, "error: Can't parse named places"); 
+	fprintf(stderr, "error: Can't parse named places\n"); 
        return NULL;
     }
 
@@ -756,13 +805,13 @@ mpcomp_places_env_variable_parsing(const int nb_mvps)
 
     if( mpcomp_places_detect_collision( list ) )
     {
-       fprintf(stderr, "MPC doesn't support collision between places");
+       fprintf(stderr, "MPC doesn't support collision between places\n");
        return NULL;
     }
 
     if( mpcomp_places_detect_heretogeneous_places( list ) )
     {
-       fprintf(stderr, "Every place must have the same number of threads");
+       fprintf(stderr, "Every place must have the same number of threads\n");
        return NULL;
     }
 
