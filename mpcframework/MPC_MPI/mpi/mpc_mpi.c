@@ -10996,7 +10996,6 @@ __INTERNAL__PMPI_Op_free (MPI_Op * op)
   return MPI_SUCCESS;
 }
 
-
 int
 __INTERNAL__PMPI_Allreduce_intra_simple(void *sendbuf, void *recvbuf, int count,
 		MPI_Datatype datatype, MPI_Op op, MPI_Comm comm)
@@ -18280,6 +18279,9 @@ PMPI_Op_free (MPI_Op * op)
   res = __INTERNAL__PMPI_Op_free (op);
   SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 }
+
+int
+PMPI_Op_commutative(MPI_Op op, int * commute) { not_implemented(); return MPI_ERR_INTERN;}
 
 int
 PMPI_Allreduce (void *sendbuf, void *recvbuf, int count,

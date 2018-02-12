@@ -720,6 +720,7 @@ int MPI_Iexscan(void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, 
 /* Operations */
 int MPI_Op_create (MPI_User_function *, int, MPI_Op *);
 int MPI_Op_free (MPI_Op *);
+int MPI_Op_commutative(MPI_Op, int*);
 
 /* Group Management */
 int MPI_Group_size (MPI_Group, int *);
@@ -1506,6 +1507,7 @@ int PMPI_Iexscan(void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
 /* Operations */
 int PMPI_Op_create (MPI_User_function *, int, MPI_Op *);
 int PMPI_Op_free (MPI_Op *);
+int PMPI_Op_commutative(MPI_Op, int *);
 
 /* Group Management */
 int PMPI_Group_size (MPI_Group, int *);

@@ -1302,6 +1302,11 @@ void ffunc (pmpi_op_free) (MPI_Op * op, int *res)
 
 }
 
+void ffunc (pmpi_op_commutative) (MPI_Op op, int * commute, int * res)
+{
+	*res = MPI_Op_commutative(op, commute);
+}
+
 void ffunc (pmpi_allreduce) (void *sendbuf, void *recvbuf, int *count,
 			     MPI_Datatype * datatype, MPI_Op * op,
 			     MPI_Comm * comm, int *res)

@@ -249,6 +249,9 @@
 #pragma weak MPI_Op_create = PMPI_Op_create
 #pragma weak mpi_op_create_ = pmpi_op_create_
 #pragma weak mpi_op_create__ = pmpi_op_create__
+#pragma weak MPI_Op_commutative = PMPI_Op_commutative
+#pragma weak mpi_op_commutative_ = pmpi_op_commutative_
+#pragma weak mpi_op_commutative__ = pmpi_op_commutative__
 #pragma weak MPI_Op_free = PMPI_Op_free
 #pragma weak mpi_op_free_ = pmpi_op_free_
 #pragma weak mpi_op_free__ = pmpi_op_free__
