@@ -9904,6 +9904,8 @@ static inline int __INTERNAL__PMPI_Reduce_derived_no_commute_ring(
 
 	tmp_buf = recvbuf;
 
+	not_implemented();
+
 	if ((rank != root) || (sendbuf == MPI_IN_PLACE)) {
 		MPI_Aint dsize;
 		res = __INTERNAL__PMPI_Type_extent(datatype, &dsize);
@@ -10061,10 +10063,13 @@ static inline int __INTERNAL__PMPI_Reduce_derived_no_commute_for(
 		}
 
 		int i;
-
-		for( i = 1 ; i  < size ; i++ )
+		int cnt = 0;
+		for( i = 0 ; i  < size ; i++ )
 		{
-			__INTERNAL__PMPI_Irecv( sumbuff + (blob * (i-1)) , count , datatype , i , MPC_REDUCE_TAG, comm , &rreqs[i-1] );
+			if(i == root)
+				continue;
+			__INTERNAL__PMPI_Irecv( sumbuff + (blob * (cnt)) , count , datatype , i , MPC_REDUCE_TAG, comm , &rreqs[cnt] );
+			cnt++;
 		}
 
 		if( sendbuf != MPI_IN_PLACE )
@@ -10073,6 +10078,11 @@ static inline int __INTERNAL__PMPI_Reduce_derived_no_commute_for(
 		}
 
 		__INTERNAL__PMPI_Waitall( size -1 , rreqs , MPI_STATUSES_IGNORE );
+
+		if(rreqs != staticrreqs)
+		{
+			sctk_free(rreqs);
+		}
 
 		int j;
 
@@ -10134,7 +10144,7 @@ static inline int __INTERNAL__PMPI_Reduce_derived_no_commute_for(
 	}
 	else
 	{
-		res = __INTERNAL__PMPI_Send( sendbuf , count , datatype , 0 , MPC_REDUCE_TAG , comm );
+		res = __INTERNAL__PMPI_Send( sendbuf , count , datatype , root , MPC_REDUCE_TAG , comm );
 
 		if (res != MPI_SUCCESS) {
 			return res;
@@ -10156,7 +10166,7 @@ static inline int __INTERNAL__PMPI_Reduce_derived_no_commute(
 
 	int res;
 
-	if( (size < sctk_runtime_config_get()->modules.collectives_intra.reduce_intra_for_trsh)
+	if( 1 || (size < sctk_runtime_config_get()->modules.collectives_intra.reduce_intra_for_trsh)
 	&&  sctk_datatype_contig_mem(datatype)
 	&&  (count <  sctk_runtime_config_get()->modules.collectives_intra.reduce_intra_for_count_trsh) )
 	{
@@ -10810,15 +10820,6 @@ __INTERNAL__PMPI_Reduce_intra (void *sendbuf, void *recvbuf, int count,
                 mpi_op, size, rank);
             if (res != MPI_SUCCESS) {
               return res;
-            }
-
-            if ((rank == root) && (root != 0)) {
-              res = __INTERNAL__PMPI_Recv(recvbuf, count, datatype, 0,
-                                          MPC_REDUCE_TAG, comm,
-                                          MPI_STATUS_IGNORE);
-              if (res != MPI_SUCCESS) {
-                return res;
-              }
             }
           } else {
             res = __INTERNAL__PMPI_Reduce_derived_commute(
@@ -15179,7 +15180,7 @@ __INTERNAL__PMPI_Finalize (void)
     NBC_Finalize(&(task_specific->mpc_mpi_data->NBC_Pthread));
   }
 
-  /*mpc_MPI_allocmem_pool_release();*/
+  mpc_MPI_allocmem_pool_release();
 
   /* Clear attributes on COMM_SELF */
   SCTK__MPI_Attr_clean_communicator (MPI_COMM_SELF);
