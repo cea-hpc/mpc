@@ -6432,7 +6432,7 @@ int __INTERNAL__PMPI_Bcast_intra(void *buffer, int count, MPI_Datatype datatype,
 				}
 			}
 		
-			if( rank == 0 )
+			if( rank == root )
 			{
 				res = __INTERNAL__PMPI_Send( buffer , count , datatype , 0 , MPC_BROADCAST_TAG , comm  );	
 			
