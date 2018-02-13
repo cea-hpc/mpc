@@ -13,22 +13,27 @@ Maintainers:
 
 Contributors:
 =============
+
 Please, do not contact people in this section directly to report
 problems in MPC. For general information about MPC, please visit:
   
   http://mpc.hpcframework.com
 
 To report a bug or a problem with MPC and its components,
-please send a email to the maintainers of the project (section above)
+please send a email to the maintainers of the project (section above).
+
+(sorted by alphabetical order)
 
 |             Name                |                 Email Address                 |
 |:-------------------------------:|:---------------------------------------------:|
 | ADAM Julien                     | <adamj@paratools.com>                         |
 | BESNARD Jean-Baptiste           | <jbbesnard@paratools.com>                     |
 | BISPO VIEIRA Ricardo            | <ricardo.bispo-viera@exascale-computing.eu>   |
+| BOUHROUR Stephane               | <stephane.bouhrour@exascale-computing.eu>     |
 | CAPRA Antoine                   | <capra@paratools.com>                         |
 | CLET-ORTEGA Jerome              | <jerome.clet-ortega@cea.fr>                   |
 | DIDELOT Sylvain                 | <sylvain.didelot@exascale-computing.eu>       |
+| DIONISI Thomas                  | <thomas.dionisi@exascale-computing.eu>        |
 | GALLET Camille                  | <camille.gallet@cea.fr>                       |
 | GONCALVES Thomas                | <thomas.goncalves@cea.fr>                     |
 | KOLIAI Souad                    | <souad.koliai@exascale-computing.eu>          |
