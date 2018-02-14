@@ -103,6 +103,10 @@ MPC always use the profile with name "default", others are only enabled with opt
 Options for MPC Accelerators module.
 .br
 See type accl.
+.It Cm arpc
+ARPC implementation for MPC
+.br
+See type arpc_type.
 .It Cm allocator
 Options for MPC memory allocator.
 .br
@@ -227,6 +231,17 @@ Define OpenACC-specific configuration
 Type is accl_opencl. 
 .Pp opencl
 Define OpenCL-specific configuration
+.El
+.Sh ENTRIES OF TYPE arpc_type
+ARPC implementation for MPC
+.Pp
+It support parameters :
+.Pp
+.Bl -tag -width Ds
+.It Cm dummy
+Type is int. Default value is 0. 
+.Pp dummy
+Dummy parameter
 .El
 .Sh ENTRIES OF TYPE allocator
 Options for MPC memory allocator.

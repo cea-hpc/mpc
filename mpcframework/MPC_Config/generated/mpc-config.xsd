@@ -51,6 +51,12 @@
     </xs:all>
   </xs:complexType>
   <!-- ********************************************************* -->
+  <xs:complexType name="user_type_arpc_type">
+    <xs:all>
+      <xs:element minOccurs="0" name="dummy" type="xs:integer"/>
+    </xs:all>
+  </xs:complexType>
+  <!-- ********************************************************* -->
   <xs:complexType name="user_type_allocator">
     <xs:all>
       <xs:element minOccurs="0" name="numa_migration" type="xs:boolean"/>
@@ -1033,6 +1039,7 @@
   <xs:complexType name="modules">
     <xs:all>
       <xs:element minOccurs="0" name="accelerator" type="user_type_accl"/>
+      <xs:element minOccurs="0" name="arpc" type="user_type_arpc_type"/>
       <xs:element minOccurs="0" name="allocator" type="user_type_allocator"/>
       <xs:element minOccurs="0" name="launcher" type="user_type_launcher"/>
       <xs:element minOccurs="0" name="debugger" type="user_type_debugger"/>

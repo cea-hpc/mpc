@@ -97,6 +97,20 @@ void sctk_runtime_config_struct_init_accl(void * struct_ptr)
 }
 
 /*******************  FUNCTION  *********************/
+void sctk_runtime_config_struct_init_arpc_type(void * struct_ptr)
+{
+	struct sctk_runtime_config_struct_arpc_type * obj = struct_ptr;
+	/* Make sure this element is not initialized yet       */
+	/* It allows us to know when we are facing dynamically */
+	/* allocated objects requiring an init                 */
+	if( obj->init_done != 0 ) return;
+
+	/* Simple params : */
+	obj->dummy = 0;
+	obj->init_done = 1;
+}
+
+/*******************  FUNCTION  *********************/
 void sctk_runtime_config_struct_init_allocator(void * struct_ptr)
 {
 	struct sctk_runtime_config_struct_allocator * obj = struct_ptr;
@@ -3697,6 +3711,7 @@ void sctk_runtime_config_reset(struct sctk_runtime_config * config)
 	memset(config, 0, sizeof(struct sctk_runtime_config));
 	sctk_handler = dlopen(0, RTLD_LAZY | RTLD_GLOBAL);
 	sctk_runtime_config_struct_init_accl(&config->modules.accelerator);
+	sctk_runtime_config_struct_init_arpc_type(&config->modules.arpc);
 	sctk_runtime_config_struct_init_allocator(&config->modules.allocator);
 	sctk_runtime_config_struct_init_launcher(&config->modules.launcher);
 	sctk_runtime_config_struct_init_debugger(&config->modules.debugger);
@@ -3763,6 +3778,12 @@ void sctk_runtime_config_reset_struct_default_if_needed(const char * structname,
 	if( !strcmp( structname , "sctk_runtime_config_struct_accl") )
 	{
 		sctk_runtime_config_struct_init_accl( ptr );
+		return;
+	}
+
+	if( !strcmp( structname , "sctk_runtime_config_struct_arpc_type") )
+	{
+		sctk_runtime_config_struct_init_arpc_type( ptr );
 		return;
 	}
 

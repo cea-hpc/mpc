@@ -75,6 +75,14 @@ struct sctk_runtime_config_struct_accl
 };
 
 /******************************** STRUCTURE *********************************/
+/**ARPC implementation for MPC**/
+struct sctk_runtime_config_struct_arpc_type
+{	int init_done;
+	/**Dummy parameter**/
+	int dummy;
+};
+
+/******************************** STRUCTURE *********************************/
 /**Options for MPC memory allocator.**/
 struct sctk_runtime_config_struct_allocator
 {	int init_done;
@@ -930,6 +938,7 @@ struct sctk_runtime_config_struct_scheduler
 struct sctk_runtime_config_modules
 {
 	struct sctk_runtime_config_struct_accl accelerator;
+	struct sctk_runtime_config_struct_arpc_type arpc;
 	struct sctk_runtime_config_struct_allocator allocator;
 	struct sctk_runtime_config_struct_launcher launcher;
 	struct sctk_runtime_config_struct_debugger debugger;

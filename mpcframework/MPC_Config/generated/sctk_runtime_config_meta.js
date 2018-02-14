@@ -15,6 +15,9 @@ meta.types = {
 		openacc: {mode: 'param', name: "openacc", type: "accl_openacc", doc: "Define OpenACC-specific configuration", dflt: null},
 		opencl: {mode: 'param', name: "opencl", type: "accl_opencl", doc: "Define OpenCL-specific configuration", dflt: null},
 	}},
+	arpc_type : {type: 'struct', name: "arpc_type", childs: {
+		dummy: {mode: 'param', name: "dummy", type: "int", doc: "Dummy parameter", dflt: "0", },
+	}},
 	allocator : {type: 'struct', name: "allocator", childs: {
 		numa_migration: {mode: 'param', name: "numa_migration", type: "bool", doc: "Enable or disable NUMA migration of allocator pages on thread migration.", dflt: "false", },
 		realloc_factor: {mode: 'param', name: "realloc_factor", type: "int", doc: "If the new segment is less than N time smaller than factor, realloc will allocate a new segment, otherwise it will keep the same one. Use 1 to force realloc every time (may be slower but consume less memory).", dflt: "2", },
@@ -373,6 +376,7 @@ meta.types = {
 
 meta.modules = {
 	accelerator: {name: "accelerator", type: "accl"},
+	arpc: {name: "arpc", type: "arpc_type"},
 	allocator: {name: "allocator", type: "allocator"},
 	launcher: {name: "launcher", type: "launcher"},
 	debugger: {name: "debugger", type: "debugger"},
