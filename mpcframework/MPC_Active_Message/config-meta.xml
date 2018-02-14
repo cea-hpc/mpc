@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<!DOCTYPE config SYSTEM "../MPC_Config/extra/config-meta.dtd">
+<config>
+	<usertypes>
+		<struct name="arpc_type" doc="ARPC implementation for MPC">
+			<param name="dummy" type="int" default="0" doc="Dummy parameter"/>
+		</struct>
+	</usertypes>
+
+	<modules>
+		<module name="arpc" type="arpc_type"/>
+	</modules>
+</config>
