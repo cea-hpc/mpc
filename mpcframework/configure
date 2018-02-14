@@ -489,6 +489,10 @@ for arg in "$@" ; do
 	--with-hwloc=*)
     HWLOC_USER_PREFIX="`echo A$arg | sed -e 's/A--with-hwloc=//g'`"
 	;;
+	--with-active-message)
+		mpc_modules_enable_modules "MPC_Active_Message"
+	;;
+
 	--with-cuda=*)
 	SCTK_CUDA="1"
     CUDA_USER_PREFIX="`echo A$arg | sed -e 's/A--with-cuda=//g'`"

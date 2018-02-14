@@ -30,7 +30,7 @@ SUBDIR=""
 # Grab the list of sub directories
 #
 for i in * ; do
-  if test -d $i ; then 
+  if test -d $i -a ! -f ${i}/.nobuild; then 
     SUBDIR="$SUBDIR $i"
   fi
 done

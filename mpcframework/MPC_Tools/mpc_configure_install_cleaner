@@ -107,7 +107,9 @@ rm_home_link()
 			printf " * Removing \$install_link_hash (\$install_location)\n"
 			
 			#sanity check
-			if test -z "\`echo \${install_link} | \\egrep "^\${HOME}/.mpcompil/[a-zA-Z0-9]+$"\`"; then
+			if test -n "\`echo \${install_link} | \\egrep "^\${HOME}/.mpcompil/[a-zA-Z0-9]+-backup$"\`"; then
+				continue;
+			elif test -z "\`echo \${install_link} | \\egrep "^\${HOME}/.mpcompil/[a-zA-Z0-9]+$"\`"; then
 				printf "Huh huh... I was going to delete \${install_link}\n"
 				printf "I am not sure about the path.. Please check the script !\n"
 				exit 1
