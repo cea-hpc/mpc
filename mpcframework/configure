@@ -304,6 +304,11 @@ for arg in "$@" ; do
     SCTK_PREFIX="`echo A$arg | sed -e 's/A--prefix=//g'`"
     MPC_SUBPREFIX="${SCTK_PREFIX#*${MPC_RPREFIX}}"
     export MPC_SUBPREFIX
+    repo="`dirname $0`/.."
+    git_copy="`git -C $repo rev-parse --is-inside-work-tree 2> /dev/null`"
+    if test "$?" = "0" -a "x$git_copy" = "xtrue"; then
+	    echo "`git -C $repo describe --tags --dirty`" > $MPC_RPREFIX/.git_build 2>/dev/null
+    fi
     ;;
     --exec-prefix=*)
     SCTK_EPREFIX="`echo A$arg | sed -e 's/A--exec-prefix=//g'`"

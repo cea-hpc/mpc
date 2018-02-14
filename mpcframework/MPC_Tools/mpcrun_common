@@ -314,6 +314,15 @@ for arg in "$@" ; do
     echo "mpcrun $MPC_VERSION"
     exit 0
     ;;
+    #could be merged with the previous (careful w/ retro-compatibiliy)
+    -V)
+    printf "mpcrun ${MPC_VERSION}.${REVISION}"
+    if test -f "${MPC_BIN_DIR}/../../../.git_build"; then
+	    printf  " (Built from Git revision: `cat ${MPC_BIN_DIR}/../../../.git_build`)"
+    fi
+    printf "\n"
+    exit 0
+    ;;
     --clean)
     MPC_CLEAN_TMP_DIR="1"
     ;;
