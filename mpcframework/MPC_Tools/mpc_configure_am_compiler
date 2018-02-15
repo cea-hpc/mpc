@@ -45,7 +45,7 @@ PROTOCC="protoc"
 PROTOFLAGS="\`pkg-config --cflags --libs protobuf\`"
 
 #reminder: Versions GCC-5 and above break libstdc++ ABI for std::string (copy-on-write impl.)
-#This trick allow us to no check wich compiler was used at Protobuf build
+#This trick allow us to no check which compiler was used at Protobuf build
 PROTOFLAGS="\$PROTOFLAGS -D_GLIBCXX_USE_CXX11_ABI=0"
 
 which \$PROTOCC > /dev/null 2>&1 || die "Unable to find 'protoc' executable in \\\$PATH"
@@ -56,104 +56,105 @@ test -f "\$ARPC_FILE" || die "No ARPC definition provided (*.arpc file)"
 OUTFILE_H=\${PROTO_FILE//.proto/.pb.h}
 OUTFILE_C=\${PROTO_FILE//.proto/.pb.cc}
 
-receiver_code=""
-emiter_code=""
-while read line
-do
-	echo "\$line" | egrep -q "^( *#.*| *)\$"
-	if test "\$?" != "0"; then
-		func="\`echo "\$line" | cut -d"@" -f1\`"
-		input="\`echo "\$line" | cut -d"@" -f2\`"
-		output="\`echo "\$line" | cut -d"@" -f3\`"
-		receiver_code="\$receiver_code
-	virtual \$output \$func(\$input receiver_input)
-	{
-		std::cerr << \"Function '\$func' not implemented !\" << std::endl;
-		std::abort();
-	}"
+LIST_OF_SERVICES="\`cat \$ARPC_FILE | egrep -v "^( *#.*| *)$" | cut -f1 -d"@" | sort -u \`"
+srv_types="enum srv_type_e {"
+for serv in \$LIST_OF_SERVICES; do srv_types="\$srv_types \${serv}_T,"; done
+srv_types="\$srv_types __ARPC_SRV_TYPES_NB };"
 
-		emiter_code="\$emiter_code
-	inline virtual \$output \$func(int dest, \$input emiter_input)
-	{
-		const char* seq = NULL;
-		std::string in;
 
-		emiter_input.SerializeToString(&in);
-		seq = in.c_str();
-		arpc_emit_call(dest, 0, seq);
-	}"
-	fi
-done < \$ARPC_FILE
-
-receiver_code="\$receiver_code
-\$end_code"
-emiter_code="\$emiter_code
-\$end_code"
-
-cat<<EOF2 >> \${OUTFILE_H}
-#ifndef __ARPC_W_H_
-#define __ARPC_W_H_
-
+#now build the ARPC C++ wrapper
+cat<<EOF2 >> \$OUTFILE_H
+#ifndef __ARPC_CXXW_H_
+#define __ARPC_CXXW_H_
 #include <list>
-
 extern "C"
 {
-#include <arpc.h>
+    #include <arpc.h>
 }
 
-namespace arpc
+namespace ARPC
 {
+\$srv_types
+typedef ::sctk_arpc_context Context;
 class Service
 {
-private:
+protected:
+	srv_type_e _type;
 public:
-	Service() {}
-	virtual ~Service() {}
+	Service(srv_type_e t) : _type(t) {}
+	srv_type_e __type() { return _type;}
 };
 
-class SrvRecver : public Service
+class ServicePool
 {
 private:
+	std::map<srv_type_e, Service*> srv_array;
 public:
-	SrvRecver() {}
-	virtual ~SrvRecver() {}
-\$receiver_code
-};
-
-class SrvSender : public Service
-{
-private:
-public:
-	SrvSender() {}
-	virtual ~SrvSender() {}
-\$emiter_code
-};
-
-class ServiceSet
-{
-private:
-	std::map<int, SrvRecver*> srv_array;
-public:
-	ServiceSet() {}
-	virtual ~ServiceSet() {srv_array.clear();}
-
-	void registerService(SrvRecver* srv, int k)
+	void add(Service* srv)
 	{
-		srv_array.insert(std::pair<int, arpc::SrvRecver*>(k, srv));
+		srv_array.insert(std::pair<srv_type_e,ARPC::Service*>(srv->__type(), srv));
 	}
 
-	SrvRecver* FindService(int k)
+	Service* find(srv_type_e k)
 	{
 		return srv_array[k];
 	}
 };
-}
-#endif
 EOF2
 
-mpc_cxx -fno-mpc-privatize \$REST_OF_ARGS \${OUTFILE_C} \${PROTOFLAGS}
 
-rm \${OUTFILE_C} \${OUTFILE_H}
+for serv in \$LIST_OF_SERVICES
+do
+	echo "namespace \${serv} {" >> \${OUTFILE_H}
+	LIST_OF_RPCS="\`cat \$ARPC_FILE | egrep -v "^( *#.*| *)$" | grep -o "^\${serv}@.*"\`"
+	send_code="
+class Send : public Service
+{
+private:
+public:
+	Send() : Service(\${serv}_T){}
+	virtual ~Send() {}
+"
+	recv_code="
+class Recv : public Service
+{
+private:
+public:
+	Recv() : Service(\${serv}_T){}
+	virtual ~Recv() {}
+"
+
+	for rpc in \$LIST_OF_RPCS
+	do
+		func="\`echo "\$rpc" | cut -d"@" -f2\`"
+		input="\`echo "\$rpc" | cut -d"@" -f3\`"
+		output="\`echo "\$rpc" | cut -d"@" -f4\`"
+
+	recv_code="\$recv_code
+	virtual bool \$func(Context* ctx, \${input}* request, \${output}* response) = 0;"
+
+	send_code="\$send_code
+	inline virtual bool \$func(Context* ctx, \${input}* request, \${output}* response)
+	{
+		const char* seq = NULL;
+		std::string in;
+	
+		request->SerializeToString(&in);
+		seq = in.c_str();
+		arpc_emit_call(ctx, seq);
+	}"
+	done
+
+	echo "\${send_code} };" >> \${OUTFILE_H}
+	echo "\${recv_code} };" >> \${OUTFILE_H}
+
+echo "}" >> \${OUTFILE_H}
+done
+echo "}
+#endif" >> \${OUTFILE_H}
+
+mpc_cxx -fno-mpc-privatize \$REST_OF_ARGS \${OUTFILE_C} \${PROTOFLAGS}
+#rm \${OUTFILE_C} \${OUTFILE_H}
 
 EOF
 }

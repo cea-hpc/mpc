@@ -1,12 +1,15 @@
 #include <arpc.h>
 #include <sctk_debug.h>
 
-void* arpc_emit_call(int dest, int code, const void* input)
+void* arpc_emit_call(sctk_arpc_context_t* ctx, const void* input)
 {
-	sctk_warning("Emit an RPC call w/ code %d", code);
+	sctk_warning("Emit an RPC call");
+
+	/* cheat for now */
+	return arpc_recv_call(ctx, input);
 }
 
-void* arpc_recv_call(int dest, int code, const void* input)
+void* arpc_recv_call(sctk_arpc_context_t* ctx, const void* input)
 {
-	sctk_warning("Ready to call remote RPC w/ code %d", code);
+	return NULL;
 }
