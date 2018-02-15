@@ -490,7 +490,7 @@ for arg in "$@" ; do
     HWLOC_USER_PREFIX="`echo A$arg | sed -e 's/A--with-hwloc=//g'`"
 	;;
 	--with-active-message)
-		mpc_modules_enable_modules "MPC_Active_Message"
+		mpc_modules_enable_module "MPC_Active_Message"
 		SCTK_ACTIVE_MESSAGE=1
 	;;
 

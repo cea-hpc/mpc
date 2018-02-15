@@ -75,7 +75,12 @@ do
 		emiter_code="\$emiter_code
 	inline virtual \$output \$func(int dest, \$input emiter_input)
 	{
-		std::cerr << \"Running RPC call: '\$func' to \" << dest << std::endl;
+		const char* seq = NULL;
+		std::string in;
+
+		emiter_input.SerializeToString(&in);
+		seq = in.c_str();
+		arpc_emit_call(dest, 0, seq);
 	}"
 	fi
 done < \$ARPC_FILE
@@ -86,10 +91,16 @@ emiter_code="\$emiter_code
 \$end_code"
 
 cat<<EOF2 >> \${OUTFILE_H}
-#ifndef __ARPC_H_
-#define __ARPC_H_
+#ifndef __ARPC_W_H_
+#define __ARPC_W_H_
 
 #include <list>
+
+extern "C"
+{
+#include <arpc.h>
+}
+
 namespace arpc
 {
 class Service
@@ -141,6 +152,8 @@ public:
 EOF2
 
 mpc_cxx -fno-mpc-privatize \$REST_OF_ARGS \${OUTFILE_C} \${PROTOFLAGS}
+
+rm \${OUTFILE_C} \${OUTFILE_H}
 
 EOF
 }
