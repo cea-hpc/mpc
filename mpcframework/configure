@@ -491,6 +491,7 @@ for arg in "$@" ; do
 	;;
 	--with-active-message)
 		mpc_modules_enable_modules "MPC_Active_Message"
+		SCTK_ACTIVE_MESSAGE=1
 	;;
 
 	--with-cuda=*)
@@ -849,6 +850,11 @@ begin_section "Generating Compilation && runtime wrappers:"
 . ${MPC_SOURCE_DIR}MPC_Tools/mpc_configure_mpc_edit_config
 . ${MPC_SOURCE_DIR}MPC_Tools/mpc_configure_compiler
 . ${MPC_SOURCE_DIR}MPC_Tools/mpc_configure_compiler_manager
+
+if test "$SCTK_ACTIVE_MESSAGE" = "1"; then
+. ${MPC_SOURCE_DIR}MPC_Tools/mpc_configure_am_compiler
+fi
+
 . ${MPC_SOURCE_DIR}MPC_Tools/mpc_configure_install_cleaner
 end_section
 

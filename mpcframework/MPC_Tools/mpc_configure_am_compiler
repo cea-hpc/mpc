@@ -1,0 +1,148 @@
+#!/bin/sh
+
+printf_compiler()
+{
+cat <<EOF > $1
+#!/bin/sh
+read_arg()
+{
+	echo "\$1" | sed -e "s@^\$2=@@"
+}
+
+die()
+{
+	for l in "\$@"
+	do
+		>&2 printf "Error: \$l\n"
+	done
+	exit 42
+}
+
+for arg in \$@
+do
+	case \$arg in
+		*.proto)
+			PROTO_FILE="\$arg"
+			;;
+		*.arpc)
+			ARPC_FILE="\$arg"
+			;;
+		-config=*)
+			FILE="\`read_arg "\$arg" "-config"\`"
+			PROTO_FILE=\$FILE.proto
+			ARPC_FILE=\$FILE.arpc
+			;;
+		-h|--h|-H|--H|-help|--help)
+			printf "Help() needs to be written soon. Stay tuned\n"
+			exit 0
+			;;
+		*)
+			REST_OF_ARGS="\$REST_OF_AGS \$arg"
+	esac
+done
+
+PROTOCC="protoc"
+PROTOFLAGS="\`pkg-config --cflags --libs protobuf\`"
+
+#reminder: Versions GCC-5 and above break libstdc++ ABI for std::string (copy-on-write impl.)
+#This trick allow us to no check wich compiler was used at Protobuf build
+PROTOFLAGS="\$PROTOFLAGS -D_GLIBCXX_USE_CXX11_ABI=0"
+
+which \$PROTOCC > /dev/null 2>&1 || die "Unable to find 'protoc' executable in \\\$PATH"
+\$PROTOCC --cpp_out=\$PWD \$PROTO_FILE
+
+
+test -f "\$ARPC_FILE" || die "No ARPC definition provided (*.arpc file)"
+OUTFILE_H=\${PROTO_FILE//.proto/.pb.h}
+OUTFILE_C=\${PROTO_FILE//.proto/.pb.cc}
+
+receiver_code=""
+emiter_code=""
+while read line
+do
+	echo "\$line" | egrep -q "^( *#.*| *)\$"
+	if test "\$?" != "0"; then
+		func="\`echo "\$line" | cut -d"@" -f1\`"
+		input="\`echo "\$line" | cut -d"@" -f2\`"
+		output="\`echo "\$line" | cut -d"@" -f3\`"
+		receiver_code="\$receiver_code
+	virtual \$output \$func(\$input receiver_input)
+	{
+		std::cerr << \"Function '\$func' not implemented !\" << std::endl;
+		std::abort();
+	}"
+
+		emiter_code="\$emiter_code
+	inline virtual \$output \$func(int dest, \$input emiter_input)
+	{
+		std::cerr << \"Running RPC call: '\$func' to \" << dest << std::endl;
+	}"
+	fi
+done < \$ARPC_FILE
+
+receiver_code="\$receiver_code
+\$end_code"
+emiter_code="\$emiter_code
+\$end_code"
+
+cat<<EOF2 >> \${OUTFILE_H}
+#ifndef __ARPC_H_
+#define __ARPC_H_
+
+#include <list>
+namespace arpc
+{
+class Service
+{
+private:
+public:
+	Service() {}
+	virtual ~Service() {}
+};
+
+class SrvRecver : public Service
+{
+private:
+public:
+	SrvRecver() {}
+	virtual ~SrvRecver() {}
+\$receiver_code
+};
+
+class SrvSender : public Service
+{
+private:
+public:
+	SrvSender() {}
+	virtual ~SrvSender() {}
+\$emiter_code
+};
+
+class ServiceSet
+{
+private:
+	std::map<int, SrvRecver*> srv_array;
+public:
+	ServiceSet() {}
+	virtual ~ServiceSet() {srv_array.clear();}
+
+	void registerService(SrvRecver* srv, int k)
+	{
+		srv_array.insert(std::pair<int, arpc::SrvRecver*>(k, srv));
+	}
+
+	SrvRecver* FindService(int k)
+	{
+		return srv_array[k];
+	}
+};
+}
+#endif
+EOF2
+
+mpc_cxx -fno-mpc-privatize \$REST_OF_ARGS \${OUTFILE_C} \${PROTOFLAGS}
+
+EOF
+}
+
+printf_compiler bin/mpc_arpcxx 
