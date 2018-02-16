@@ -129,6 +129,26 @@ public:
 		func="\`echo "\$rpc" | cut -d"@" -f2\`"
 		input="\`echo "\$rpc" | cut -d"@" -f3\`"
 		output="\`echo "\$rpc" | cut -d"@" -f4\`"
+		
+		resp_size="0"
+		req_size="0"
+
+		resp_parse=""
+		req_parse=""
+		
+		if test "\$input" != "void"; then
+			req_size="sizeof(\${input})"
+			req_parse="
+		std::string in;
+		request->SerializeToString(&in);
+		raw_req = in.c_str();
+		"
+		fi
+
+		if test "\$output" != "void"; then
+			resp_size="sizeof(\${output})"
+			resp_parse="response->ParseFromString((char*)raw_resp);"
+		fi
 
 	recv_code="\$recv_code
 	virtual bool \$func(Context* ctx, \${input}* request, \${output}* response) = 0;"
@@ -136,12 +156,19 @@ public:
 	send_code="\$send_code
 	inline virtual bool \$func(Context* ctx, \${input}* request, \${output}* response)
 	{
-		const char* seq = NULL;
-		std::string in;
+		const char* raw_req = NULL;
+		void* raw_resp = NULL;
+		int ret;
+		size_t resp_size = \$resp_size, req_size = \$req_size;
 	
-		request->SerializeToString(&in);
-		seq = in.c_str();
-		arpc_emit_call(ctx, seq);
+		\$req_parse
+
+		ret = arpc_emit_call(ctx, raw_req, req_size, &raw_resp, &resp_size);
+		if(ret != 0) return ret;
+
+		\$resp_parse
+
+		return 0;
 	}"
 	done
 
