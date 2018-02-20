@@ -37,7 +37,7 @@ do
 			exit 0
 			;;
 		*)
-			REST_OF_ARGS="\$REST_OF_AGS \$arg"
+			REST_OF_ARGS="\$REST_OF_ARGS \$arg"
 	esac
 done
 
@@ -123,7 +123,13 @@ public:
 	Recv() : Service(\${serv}_T){}
 	virtual ~Recv() {}
 "
-
+	converter_code="\${converter_code}
+		case ARPC::\${serv}_T:
+		{
+			ARPC::\${serv}::Recv* r = (ARPC::\${serv}::Recv*) srv;
+			switch(rpcode)
+			{"
+	i=0
 	for rpc in \$LIST_OF_RPCS
 	do
 		func="\`echo "\$rpc" | cut -d"@" -f2\`"
@@ -137,48 +143,147 @@ public:
 		req_parse=""
 		
 		if test "\$input" != "void"; then
-			req_size="sizeof(\${input})"
+			req_size="request->SpaceUsed();"
 			req_parse="
 		std::string in;
 		request->SerializeToString(&in);
 		raw_req = in.c_str();
+		req_size = in.size();
 		"
+		else
+			req_size="0"
+			req_parse="
+			raw_req=NULL;
+			"
 		fi
 
 		if test "\$output" != "void"; then
 			resp_size="sizeof(\${output})"
-			resp_parse="response->ParseFromString((char*)raw_resp);"
+			raw_resp="&raw_resp"
+			resp_parse="
+			if(resp_size > 0)
+				response->ParseFromString((char*)raw_resp);
+			else /* everything is zero and we didn't send anything */
+				response->Clear();
+			"
+		else
+			resp_size="0"
+			resp_parse=""
+			raw_resp="NULL"
+
 		fi
 
 	recv_code="\$recv_code
-	virtual bool \$func(Context* ctx, \${input}* request, \${output}* response) = 0;"
+	virtual int \$func(Context* ctx, \${input}* request, \${output}* response) = 0;"
 
 	send_code="\$send_code
-	inline virtual bool \$func(Context* ctx, \${input}* request, \${output}* response)
+	inline virtual int \$func(Context* ctx, \${input}* request, \${output}* response)
 	{
 		const char* raw_req = NULL;
 		void* raw_resp = NULL;
 		int ret;
-		size_t resp_size = \$resp_size, req_size = \$req_size;
+		size_t req_size = \$req_size;
+		size_t resp_size = \$resp_size;
 	
 		\$req_parse
 
-		ret = arpc_emit_call(ctx, raw_req, req_size, &raw_resp, &resp_size);
+		ctx->rpcode  = \${i};
+		ctx->srvcode = \${serv}_T;
+		ret = arpc_emit_call(ctx, raw_req, req_size, \$raw_resp, &resp_size);
 		if(ret != 0) return ret;
 
 		\$resp_parse
 
 		return 0;
 	}"
+
+
+	req_parse=""
+	resp_parse=""
+	resp_serialize=""
+	if test "\$input" != "void"; then
+		req_parse="req = new \${input};
+		if(req_size > 0)
+			req->ParseFromString((char*)request);
+		else
+			req->Clear();
+		"
+	else
+		req_parse=""
+	fi
+
+	if test "\$output" != "void"; then
+		resp_parse="resp = new \${output};
+		std::string out;"
+
+		resp_serialize="resp->SerializeToString(&out);
+		*response_addr=strdup(out.c_str());
+		*resp_size=out.size();"
+	else
+		resp_parse="
+		*resp_size=0;
+		*response_addr=NULL;
+		"
+	fi
+	converter_code="\${converter_code}
+				case \$i: /* RPC \$func */
+				{
+					\${input}* req = NULL;
+					\${output}* resp = NULL;
+
+					\$req_parse
+					\$resp_parse
+
+					ret = r->\$func(ctx, req, resp);
+					\$resp_serialize
+					break;
+				}"
+	i="\`echo "\$i+1" | bc\`"
 	done
 
 	echo "\${send_code} };" >> \${OUTFILE_H}
 	echo "\${recv_code} };" >> \${OUTFILE_H}
 
 echo "}" >> \${OUTFILE_H}
+
+converter_code="\${converter_code}
+				default:
+					std::cerr << \"Unknow RPC \" << rpcode << \"for Service \" << \"\${serv}\" << std::endl;
+					std::abort();
+					break;
+				}
+			break;
+		}"
 done
 echo "}
+
+int arpc_c_to_cxx_converter(sctk_arpc_context_t* ctx, const void * request, size_t req_size, void** response_addr, size_t* resp_size);
 #endif" >> \${OUTFILE_H}
+
+echo "
+int arpc_c_to_cxx_converter(sctk_arpc_context_t* ctx, const void * request, size_t req_size, void** response_addr, size_t* resp_size)
+{
+	ARPC::ServicePool* pool = (ARPC::ServicePool*)ctx->cxx_pool;
+	int ret = -1;
+	ARPC::srv_type_e srvcode = (ARPC::srv_type_e)ctx->srvcode;
+	int rpcode = ctx->rpcode;
+	ARPC::Service* srv;
+	
+	if(!pool) return 1;
+
+	srv = pool->find(srvcode);
+	switch(srvcode)
+	{\${converter_code}
+		default:
+			std::cerr << \"Unkown Service code \" << srvcode << std::endl;
+			std::abort();
+			break;
+	}
+
+	return ret;
+
+}
+" >> \${OUTFILE_C}
 
 mpc_cxx -fno-mpc-privatize \$REST_OF_ARGS \${OUTFILE_C} \${PROTOFLAGS}
 #rm \${OUTFILE_C} \${OUTFILE_H}
