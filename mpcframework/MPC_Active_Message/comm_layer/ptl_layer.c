@@ -35,4 +35,9 @@ int arpc_recv_call_ptl(sctk_arpc_context_t* ctx, const void* input, size_t req_s
 	not_implemented();
 }
 
+int arpc_polling_request_ptl(sctk_arpc_context_t* ctx)
+{
+	not_implemented();
+}
+
 #endif

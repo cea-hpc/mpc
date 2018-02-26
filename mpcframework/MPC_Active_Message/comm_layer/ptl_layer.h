@@ -27,9 +27,12 @@
 
 #ifdef MPC_USE_PORTALS
 #include <arpc.h>
+#include <sctk_debug.h>
 
 int arpc_emit_call_ptl(sctk_arpc_context_t* ctx, const void* input, size_t req_size, void** response, size_t*resp_size);
 int arpc_recv_call_ptl(sctk_arpc_context_t* ctx, const void* input, size_t req_size, void** response, size_t*resp_size);
+
+int arpc_polling_request_ptl(sctk_arpc_context_t* ctx);
 
 #endif
 
