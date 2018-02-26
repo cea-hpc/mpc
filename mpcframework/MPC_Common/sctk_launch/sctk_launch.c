@@ -319,6 +319,10 @@ static void sctk_perform_initialisation (void)
 	sctk_ft_init();
 #endif
 
+#ifdef MPC_Active_Message
+	arpc_init();
+#endif
+
 	/* Do not bind in LIB_MODE */
 #ifndef SCTK_LIB_MODE
 	/* Bind the main thread to the first VP */
