@@ -74,12 +74,20 @@ struct sctk_runtime_config_struct_accl
 	struct sctk_runtime_config_struct_accl_opencl opencl;
 };
 
+/********************************** ENUM ************************************/
+/**Values used to select the network layer for Active Message**/
+enum net_layer_type
+{
+	ARPC_MPI,
+	ARPC_PTL
+};
+
 /******************************** STRUCTURE *********************************/
 /**ARPC implementation for MPC**/
 struct sctk_runtime_config_struct_arpc_type
 {	int init_done;
-	/**Dummy parameter**/
-	int dummy;
+	/**Net Layer for the run**/
+	enum net_layer_type net_layer;
 };
 
 /******************************** STRUCTURE *********************************/

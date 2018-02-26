@@ -16,7 +16,7 @@ meta.types = {
 		opencl: {mode: 'param', name: "opencl", type: "accl_opencl", doc: "Define OpenCL-specific configuration", dflt: null},
 	}},
 	arpc_type : {type: 'struct', name: "arpc_type", childs: {
-		dummy: {mode: 'param', name: "dummy", type: "int", doc: "Dummy parameter", dflt: "0", },
+		net_layer: {mode: 'param', name: "net_layer", type: "net_layer_type", doc: "Net Layer for the run", dflt: "ARPC_MPI", },
 	}},
 	allocator : {type: 'struct', name: "allocator", childs: {
 		numa_migration: {mode: 'param', name: "numa_migration", type: "bool", doc: "Enable or disable NUMA migration of allocator pages on thread migration.", dflt: "false", },
@@ -401,6 +401,10 @@ meta.networks = {
 };
 
 meta.enum = {
+	net_layer_type : {type: 'enum', name: "net_layer_type", doc: "Values used to select the network layer for Active Message", values: {
+		ARPC_MPI: "ARPC_MPI",
+		ARPC_PTL: "ARPC_PTL",
+	}},
 	ibv_rdvz_protocol : {type: 'enum', name: "ibv_rdvz_protocol", doc: "", values: {
 		IBV_RDVZ_WRITE_PROTOCOL: "IBV_RDVZ_WRITE_PROTOCOL",
 		IBV_RDVZ_READ_PROTOCOL: "IBV_RDVZ_READ_PROTOCOL",

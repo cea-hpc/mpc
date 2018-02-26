@@ -97,6 +97,28 @@ void sctk_runtime_config_struct_init_accl(void * struct_ptr)
 }
 
 /*******************  FUNCTION  *********************/
+void sctk_runtime_config_enum_init_net_layer_type()
+{
+	struct enum_type * current_enum = (struct enum_type *) malloc(sizeof(struct enum_type));
+	struct enum_value * current_value, * values = NULL;
+
+	strncpy(current_enum->name, "enum net_layer_type", 50);
+
+	current_value = (struct enum_value *) malloc(sizeof(struct enum_value));
+	strncpy(current_value->name, "ARPC_MPI", 50);
+	current_value->value = ARPC_MPI;
+	HASH_ADD_STR(values, name, current_value);
+
+	current_value = (struct enum_value *) malloc(sizeof(struct enum_value));
+	strncpy(current_value->name, "ARPC_PTL", 50);
+	current_value->value = ARPC_PTL;
+	HASH_ADD_STR(values, name, current_value);
+
+	current_enum->values = values;
+	HASH_ADD_STR(enums_types, name, current_enum);
+}
+
+/*******************  FUNCTION  *********************/
 void sctk_runtime_config_struct_init_arpc_type(void * struct_ptr)
 {
 	struct sctk_runtime_config_struct_arpc_type * obj = struct_ptr;
@@ -106,7 +128,7 @@ void sctk_runtime_config_struct_init_arpc_type(void * struct_ptr)
 	if( obj->init_done != 0 ) return;
 
 	/* Simple params : */
-	obj->dummy = 0;
+	obj->net_layer = ARPC_MPI;
 	obj->init_done = 1;
 }
 
@@ -3712,6 +3734,7 @@ void sctk_runtime_config_reset(struct sctk_runtime_config * config)
 	sctk_handler = dlopen(0, RTLD_LAZY | RTLD_GLOBAL);
 	sctk_runtime_config_struct_init_accl(&config->modules.accelerator);
 	sctk_runtime_config_struct_init_arpc_type(&config->modules.arpc);
+	sctk_runtime_config_enum_init_net_layer_type();
 	sctk_runtime_config_struct_init_allocator(&config->modules.allocator);
 	sctk_runtime_config_struct_init_launcher(&config->modules.launcher);
 	sctk_runtime_config_struct_init_debugger(&config->modules.debugger);

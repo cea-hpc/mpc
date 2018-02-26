@@ -51,9 +51,16 @@
     </xs:all>
   </xs:complexType>
   <!-- ********************************************************* -->
+  <xs:simpleType name="user_type_net_layer_type">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="ARPC_MPI"/>
+      <xs:enumeration value="ARPC_PTL"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <!-- ********************************************************* -->
   <xs:complexType name="user_type_arpc_type">
     <xs:all>
-      <xs:element minOccurs="0" name="dummy" type="xs:integer"/>
+      <xs:element minOccurs="0" name="net_layer" type="user_type_net_layer_type"/>
     </xs:all>
   </xs:complexType>
   <!-- ********************************************************* -->

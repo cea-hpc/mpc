@@ -238,10 +238,12 @@ ARPC implementation for MPC
 It support parameters :
 .Pp
 .Bl -tag -width Ds
-.It Cm dummy
-Type is int. Default value is 0. 
-.Pp dummy
-Dummy parameter
+.It Cm net_layer
+Type is enum net_layer_type. Possible values are : ARPC_MPI, ARPC_PTL.
+
+Default value is ARPC_MPI. 
+.Pp net_layer
+Net Layer for the run
 .El
 .Sh ENTRIES OF TYPE allocator
 Options for MPC memory allocator.

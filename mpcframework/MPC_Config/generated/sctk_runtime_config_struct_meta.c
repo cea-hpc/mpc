@@ -51,7 +51,7 @@ const struct sctk_runtime_config_entry_meta sctk_runtime_config_db[] = {
 			, NULL},	{"opencl"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_accl,opencl)  , sizeof(struct sctk_runtime_config_struct_accl_opencl) , "sctk_runtime_config_struct_accl_opencl" , sctk_runtime_config_struct_init_accl_opencl , 
 				NULL
 			, NULL},	/* struct */
-	{"sctk_runtime_config_struct_arpc_type" , SCTK_CONFIG_META_TYPE_STRUCT , 0  , sizeof(struct sctk_runtime_config_struct_arpc_type) , NULL , sctk_runtime_config_struct_init_arpc_type, NULL },	{"dummy"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_arpc_type,dummy)  , sizeof(int) , "int" , NULL , 
+	{"sctk_runtime_config_struct_arpc_type" , SCTK_CONFIG_META_TYPE_STRUCT , 0  , sizeof(struct sctk_runtime_config_struct_arpc_type) , NULL , sctk_runtime_config_struct_init_arpc_type, NULL },	{"net_layer"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_arpc_type,net_layer)  , sizeof(enum net_layer_type) , "enum net_layer_type" , NULL , 
 				NULL
 			, NULL},	/* struct */
 	{"sctk_runtime_config_struct_allocator" , SCTK_CONFIG_META_TYPE_STRUCT , 0  , sizeof(struct sctk_runtime_config_struct_allocator) , NULL , sctk_runtime_config_struct_init_allocator, NULL },	{"numa_migration"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_allocator,numa_migration)  , sizeof(int) , "int" , NULL , 
