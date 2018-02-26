@@ -42,6 +42,9 @@ typedef struct sctk_arpc_mpi_ctx_s
 	char raw[MAX_STATIC_ARPC_SIZE];
 } sctk_arpc_mpi_ctx_t;
 
+
+int arpc_init_mpi();
+
 int arpc_emit_call_mpi(sctk_arpc_context_t* ctx, const void* input, size_t req_size, void** response, size_t*resp_size);
 int arpc_recv_call_mpi(sctk_arpc_context_t* ctx, const void* input, size_t req_size, void** response, size_t*resp_sizem );
 

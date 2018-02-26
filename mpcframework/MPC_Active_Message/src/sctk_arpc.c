@@ -30,6 +30,7 @@
 static int (*emit_fn)(sctk_arpc_context_t*, const void*, size_t, void**, size_t*) = NULL;
 static int (*recv_fn)(sctk_arpc_context_t*, const void*, size_t, void**, size_t*) = NULL;
 static int (*poll_fn)(sctk_arpc_context_t*) = NULL;
+static int (*init_fn)() = NULL;
 
 static void __arpc_init_callbacks()
 {
@@ -40,12 +41,14 @@ static void __arpc_init_callbacks()
 			emit_fn = arpc_emit_call_mpi;
 			recv_fn = arpc_recv_call_mpi;
 			poll_fn = arpc_polling_request_mpi;
+			init_fn = arpc_init_mpi;
 			break;
 		case ARPC_PTL:
 #ifdef MPC_USE_PORTALS
 			emit_fn = arpc_emit_call_ptl;
 			recv_fn = arpc_recv_call_ptl;
 			poll_fn = arpc_polling_request_ptl;
+			init_fn = arpc_init_ptl;
 #else
 			sctk_fatal("Cannot use Portals4 implementation without compiling MPC w/ Portals support");
 #endif
@@ -60,6 +63,8 @@ static void __arpc_init_callbacks()
 void arpc_init()
 {
 	__arpc_init_callbacks();
+	sctk_assert(init_fn);
+	init_fn();
 }
 
 int arpc_emit_call(sctk_arpc_context_t* ctx, const void* input, size_t req_size, void** response, size_t*resp_size)

@@ -28,7 +28,16 @@
 #include <sctk_debug.h>
 
 static sctk_atomics_int atomic_tag = OPA_INT_T_INITIALIZER(0);
-static __arpc_check_init = 0;
+
+int arpc_init_mpi()
+{
+	int f;
+	/*MPI_Initialized( &f );*/
+	/*if(!f)*/
+	/*{*/
+		/*MPI_Init_thread(0, NULL, MPI_THREAD_MULTIPLE, NULL);*/
+	/*}*/
+}
 
 /**
  * Trigger a RPC send call.
@@ -42,18 +51,6 @@ static __arpc_check_init = 0;
 int arpc_emit_call_mpi(sctk_arpc_context_t* ctx, const void* input, size_t req_size, void** response, size_t*resp_size)
 {
 	/*__arpc_print_ctx(ctx, "Send req=%p (sz:%llu) <--> resp=%p (sz: %llu)", input, req_size, response, *resp_size);*/
-
-	if(!__arpc_check_init)
-	{
-		int f;
-		MPI_Initialized( &f );
-		if(!f)
-		{
-			MPI_Init_thread(0, NULL, MPI_THREAD_MULTIPLE, NULL);
-		}
-		__arpc_check_init = 1;
-	}
-
 	sctk_arpc_mpi_ctx_t mpi_ctx;
 	int next_tag = sctk_atomics_fetch_and_incr_int(&atomic_tag);
 
@@ -115,17 +112,6 @@ int arpc_recv_call_mpi(sctk_arpc_context_t* ctx, const void* request, size_t req
 	int next_tag;
 	int ret;
 	
-	if(!__arpc_check_init)
-	{
-		int f;
-		MPI_Initialized( &f );
-		if(!f)
-		{
-			MPI_Init_thread(0, NULL, MPI_THREAD_MULTIPLE, NULL);
-		}
-		__arpc_check_init = 1;
-	}
-
 	sctk_arpc_mpi_ctx_t mpi_ctx;
 	memset(&mpi_ctx, 0 , sizeof(sctk_arpc_mpi_ctx_t));
 
