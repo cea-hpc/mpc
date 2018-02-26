@@ -22,22 +22,15 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
+#ifndef __ARPC_PTL_LAYER_H_
+#define __ARPC_PTL_LAYER_H_
+
+#ifdef MPC_USE_PORTALS
 #include <arpc.h>
-#include "../comm_layer/mpi_layer.h"
-#include "../comm_layer/ptl_layer.h"
 
+int arpc_emit_call_ptl(sctk_arpc_context_t* ctx, const void* input, size_t req_size, void** response, size_t*resp_size);
+int arpc_recv_call_ptl(sctk_arpc_context_t* ctx, const void* input, size_t req_size, void** response, size_t*resp_size);
 
-int arpc_emit_call(sctk_arpc_context_t* ctx, const void* input, size_t req_size, void** response, size_t*resp_size)
-{
-	return arpc_emit_call_mpi(ctx, input, req_size, response, resp_size);
-}
+#endif
 
-int arpc_recv_call(sctk_arpc_context_t* ctx, const void* input, size_t req_size, void** response, size_t*resp_size)
-{
-	return arpc_recv_call_mpi(ctx, input, req_size, response, resp_size);
-}
-
-int arpc_polling_request(sctk_arpc_context_t* ctx)
-{
-	return arpc_polling_request_mpi(ctx);
-}
+#endif /* ifndef __ARPC_PTL_LAYER_H_ */

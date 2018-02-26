@@ -22,22 +22,30 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
+#ifndef __ARPC_MPI_LAYER_H
+#define __ARPC_MPI_LAYER_H
+
 #include <arpc.h>
-#include "../comm_layer/mpi_layer.h"
-#include "../comm_layer/ptl_layer.h"
+#include <mpi.h>
 
-
-int arpc_emit_call(sctk_arpc_context_t* ctx, const void* input, size_t req_size, void** response, size_t*resp_size)
+#define MPI_ARPC_TAG  1000
+#define __arpc_print_ctx(ctx, format,...) do { \
+	sctk_warning("[%d,S:%d,C:%d] "format, ctx->dest,ctx->srvcode, ctx->rpcode, ##__VA_ARGS__);} while(0)
+#define MAX_STATIC_ARPC_SIZE 4096
+#define SCTK_SIZEOF_INTERNAL_CTX (4 * sizeof(int))
+typedef struct sctk_arpc_mpi_ctx_s
 {
-	return arpc_emit_call_mpi(ctx, input, req_size, response, resp_size);
-}
+	int rpcode;
+	int srvcode;
+	int next_tag;
+	int msize;
+	char raw[MAX_STATIC_ARPC_SIZE];
+} sctk_arpc_mpi_ctx_t;
 
-int arpc_recv_call(sctk_arpc_context_t* ctx, const void* input, size_t req_size, void** response, size_t*resp_size)
-{
-	return arpc_recv_call_mpi(ctx, input, req_size, response, resp_size);
-}
+int arpc_emit_call_mpi(sctk_arpc_context_t* ctx, const void* input, size_t req_size, void** response, size_t*resp_size);
+int arpc_recv_call_mpi(sctk_arpc_context_t* ctx, const void* input, size_t req_size, void** response, size_t*resp_sizem );
 
-int arpc_polling_request(sctk_arpc_context_t* ctx)
-{
-	return arpc_polling_request_mpi(ctx);
-}
+int arpc_polling_request_mpi(sctk_arpc_context_t* ctx);
+
+
+#endif /* ifndef __ARPC_MPI_LAYER_H */
