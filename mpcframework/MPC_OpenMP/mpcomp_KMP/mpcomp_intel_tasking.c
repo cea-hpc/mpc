@@ -86,6 +86,11 @@ kmp_task_t *__kmpc_omp_task_alloc(ident_t *loc_ref, kmp_int32 gtid,
       (kmp_task_t *)((char *)new_task + sizeof(struct mpcomp_task_s));
   __mpcomp_task_infos_init(new_task, __kmp_omp_task_wrapper, compiler_infos, t);
 
+ /* MPCOMP_USE_TASKDEP */
+  new_task->task_dep_infos = sctk_malloc(sizeof(mpcomp_task_dep_task_infos_t));
+  sctk_assert(new_task->task_dep_infos);
+  memset(new_task->task_dep_infos, 0, sizeof(mpcomp_task_dep_task_infos_t));
+
   compiler_infos->shareds = task_data;
   compiler_infos->routine = task_entry;
   compiler_infos->part_id = 0;
@@ -136,19 +141,19 @@ kmp_int32 __kmpc_omp_taskwait(ident_t *loc_ref, kmp_int32 gtid) {
 }
 
 kmp_int32 __kmpc_omp_taskyield(ident_t *loc_ref, kmp_int32 gtid, int end_part) {
-	mpcomp_taskyield() ;
+  //not_implemented();
   return (kmp_int32)0;
 }
 
 /* Following 2 functions should be enclosed by "if TASK_UNUSED" */
 
 void __kmpc_omp_task_begin(ident_t *loc_ref, kmp_int32 gtid, kmp_task_t *task) {
-  not_implemented();
+  //not_implemented();
 }
 
 void __kmpc_omp_task_complete(ident_t *loc_ref, kmp_int32 gtid,
                               kmp_task_t *task) {
-  not_implemented();
+  //not_implemented();
 }
 
 /* FOR OPENMP 4 */
@@ -157,18 +162,20 @@ void __kmpc_taskgroup(ident_t *loc, int gtid) { mpcomp_taskgroup_start(); }
 
 void __kmpc_end_taskgroup(ident_t *loc, int gtid) { mpcomp_taskgroup_end(); }
 
-#if 0
-static int mpcomp_intel_translate_taskdep_to_gomp(  kmp_int32 ndeps, kmp_depend_info_t *dep_list, kmp_int32 ndeps_noalias, kmp_depend_info_t *noalias_dep_list )
+static int mpcomp_intel_translate_taskdep_to_gomp(  kmp_int32 ndeps, kmp_depend_info_t *dep_list, kmp_int32 ndeps_noalias, kmp_depend_info_t *noalias_dep_list, void** gomp_list_deps)
 {
     int i, j;
 
-    void ** gomp_list_deps;
+    gomp_list_deps[0] = (uintptr_t)ndeps;
+    int num_out_dep = 0;
+    int num_in_dep = 0;
+    uintptr_t *dep_not_out = (uintptr_t *)sctk_malloc(sizeof(uintptr_t) * (int)(ndeps + ndeps_noalias));
     
-    for ( i = 0; i < ndeps ; i++ ) 
+    for ( i = 0; i < (int)ndeps ; i++ ) 
     { 
         if ( dep_list[i].base_addr != 0)
         {
-            for ( j = i+1; j < ndeps; j++ )
+            /*for ( j = i+1; j < (int)ndeps; j++ )
             {
                 if ( dep_list[i].base_addr == dep_list[j].base_addr ) 
                 {
@@ -176,28 +183,75 @@ static int mpcomp_intel_translate_taskdep_to_gomp(  kmp_int32 ndeps, kmp_depend_
                     dep_list[i].flags.out |= dep_list[j].flags.out;
                     dep_list[j].base_addr = 0; // Mark j element as void
                 }
+            }*/
+            if(dep_list[i].flags.out){
+                num_out_dep++;
+                gomp_list_deps[i+2] = (uintptr_t)dep_list[i].base_addr;
+            }
+            else{
+                dep_not_out[num_in_dep] = (uintptr_t)dep_list[i].base_addr;
+                num_in_dep++;
             }
         }
     }
+    /*for ( i = 0; i < (int)ndeps_noalias ; i++ ) 
+    { 
+        if ( noalias_dep_list[i].base_addr != 0)
+        {
+            for ( j = i+1; j < (int)ndeps_noalias; j++ )
+            {
+                //if ( dep_list[i].base_addr == dep_list[j].base_addr ) 
+                //{
+                //    dep_list[i].flags.in |= dep_list[j].flags.in;
+                //    dep_list[i].flags.out |= dep_list[j].flags.out;
+                //    dep_list[j].base_addr = 0; // Mark j element as void
+                //}
+            }
+            if(noalias_dep_list[i] + (int)ndeps.flags.out){
+                num_out_dep++;
+                gomp_list_deps[i+2+(int)ndeps] = (uintptr_t)noalias_dep_list[i].base_addr;
+            }
+            else{
+                dep_not_out[num_in_dep] = (uintptr_t)noalias_dep_list[i].base_addr;
+                num_in_dep++;
+            }
+        }
+    }*/
+    gomp_list_deps[1] = (uintptr_t)num_out_dep;
+    for ( i = 0; i < num_in_dep; i++ ){ 
+        gomp_list_deps[2 + num_out_dep] = dep_not_out[i];
+    }
 }
-#endif
 
 kmp_int32 __kmpc_omp_task_with_deps(ident_t *loc_ref, kmp_int32 gtid,
                                     kmp_task_t *new_task, kmp_int32 ndeps,
                                     kmp_depend_info_t *dep_list,
                                     kmp_int32 ndeps_noalias,
                                     kmp_depend_info_t *noalias_dep_list) {
-  not_implemented();
+
+  struct mpcomp_task_s *mpcomp_task =
+      (struct mpcomp_task_s * ) ( (char *)new_task - sizeof(struct mpcomp_task_s));
+  void *data = (void *)mpcomp_task->data;
+  long arg_size = 0; 
+  long arg_align = 0; 
+  bool if_clause = true;
+  unsigned flags = 8;
+  void ** depend = sctk_malloc(sizeof(uintptr_t) * ((int)(ndeps + ndeps_noalias)+2));
+  int dep = mpcomp_intel_translate_taskdep_to_gomp(ndeps, dep_list, ndeps_noalias, noalias_dep_list, depend);
+  sctk_nodebug("[Redirect mpcomp_GOMP]%s:\tBegin", __func__);
+  mpcomp_task_with_deps(mpcomp_task->func, data, NULL, arg_size, arg_align,
+          if_clause, flags, depend, true, mpcomp_task);
+  sctk_nodebug("[Redirect mpcomp_GOMP]%s:\tEnd", __func__);
   return (kmp_int32)0;
 }
 
 void __kmpc_omp_wait_deps(ident_t *loc_ref, kmp_int32 gtid, kmp_int32 ndeps,
                           kmp_depend_info_t *dep_list, kmp_int32 ndeps_noalias,
                           kmp_depend_info_t *noalias_dep_list) {
-  not_implemented();
+  //not_implemented();
 }
 
 void __kmp_release_deps(kmp_int32 gtid, kmp_taskdata_t *task) {
-  not_implemented();
+  //not_implemented();
 }
 #endif

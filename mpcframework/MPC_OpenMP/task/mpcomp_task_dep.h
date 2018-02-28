@@ -298,7 +298,7 @@ mpcomp_task_dep_ht_find_entry(mpcomp_task_dep_ht_table_t *htable,
 void mpcomp_task_with_deps(void (*fn)(void *), void *data,
                            void (*cpyfn)(void *, void *), long arg_size,
                            long arg_align, bool if_clause, unsigned flags,
-                           void **depend);
+                           void **depend, bool intel_alloc, mpcomp_task_t *intel_task);
 
 void __mpcomp_task_finalize_deps(mpcomp_task_t *task);
 

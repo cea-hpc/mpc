@@ -191,7 +191,7 @@ void __mpcomp_task_finalize_deps(mpcomp_task_t *task) {
 void mpcomp_task_with_deps(void (*fn)(void *), void *data,
                            void (*cpyfn)(void *, void *), long arg_size,
                            long arg_align, bool if_clause, unsigned flags,
-                           void **depend) {
+                           void **depend, bool intel_alloc, mpcomp_task_t *intel_task) {
   int predecessors_num;
   mpcomp_thread_t *thread;
   mpcomp_task_dep_node_t *task_node;
@@ -203,9 +203,14 @@ void mpcomp_task_with_deps(void (*fn)(void *), void *data,
   current_task = (mpcomp_task_t *)MPCOMP_TASK_THREAD_GET_CURRENT_TASK(thread);
 
   if ( thread->info.num_threads == 1 ||
-       !(mpcomp_task_dep_is_flag_with_deps(flags))) {
-    __mpcomp_task(fn, data, cpyfn, arg_size, arg_align, if_clause, flags);
-    return;
+              !(mpcomp_task_dep_is_flag_with_deps(flags))) {
+      if(!intel_alloc){
+          __mpcomp_task(fn, data, cpyfn, arg_size, arg_align, if_clause, flags);
+      }
+      else{
+          __mpcomp_task_process(intel_task, if_clause);
+      }
+      return;
   }
 
   /* Is it possible ?! See GOMP source code	*/
@@ -221,8 +226,13 @@ void mpcomp_task_with_deps(void (*fn)(void *), void *data,
   sctk_assert(task_node);
 
   /* TODO: pass real number of dep instead of 0 ? (for OMPT) */
-  new_task = __mpcomp_task_alloc(fn, data, cpyfn, arg_size, arg_align,
-                                 if_clause, flags, 0);
+  if(!intel_alloc){
+      new_task = __mpcomp_task_alloc(fn, data, cpyfn, arg_size, arg_align,
+              if_clause, flags, 0);
+  }
+  else{
+      new_task = intel_task;
+  }
   sctk_assert(new_task);
 
   /* TODO remove redundant assignement (see mpcomp_task_dep_new_node) */

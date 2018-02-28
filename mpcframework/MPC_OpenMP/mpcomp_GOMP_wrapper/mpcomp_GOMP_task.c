@@ -23,7 +23,7 @@ void mpcomp_GOMP_task(void (*fn)(void *), void *data,
   sctk_nodebug("[Redirect mpcomp_GOMP]%s:\tBegin", __func__);
 #if MPCOMP_USE_TASKDEP
   mpcomp_task_with_deps((void (*)(void *))fn, data, cpyfn, arg_size, arg_align,
-                        if_clause, flags, depend);
+                        if_clause, flags, depend, false, NULL);
 #else
   __mpcomp_task((void *(*)(void *))fn, data, cpyfn, arg_size, arg_align,
                 if_clause, flags);
