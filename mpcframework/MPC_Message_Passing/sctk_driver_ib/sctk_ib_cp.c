@@ -443,13 +443,21 @@ int sctk_ib_cp_poll ( struct sctk_rail_info_s *rail, struct sctk_ib_polling_s *p
         if (tls_vp == NULL) {
           vp = sctk_thread_get_vp();
 
-          if (vp < 0)
+          if (vp < 0 || vps == NULL )
             return 0;
 
           CHECK_ONLINE_PROGRAM;
 
-          if (vps == NULL || vps[vp] == NULL) {
-            return 0;
+          if (vps[vp] == NULL) {
+            sctk_nodebug( "Are we in hybrid mode? try to find dest task %d", task_id );
+            HASH_FIND( hh_all, all_tasks, &task_id, sizeof( int ), task );
+            assume(task);
+
+            vp = task->vp;
+            assume(vp >= 0);
+
+            if (vps[vp] == NULL)
+              return 0;
           }
 
           sctk_spinlock_lock(&vps_lock);

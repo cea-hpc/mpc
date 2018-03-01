@@ -2569,7 +2569,7 @@ void sctk_perform_messages(struct sctk_perform_messages_s *wait) {
   sctk_internal_ptp_t *send_ptp = wait->send_ptp;
   const int remote_process = wait->remote_process;
   const int source_task_id = wait->source_task_id;
-  const int polling_task_id = wait->dest_task_id;
+  const int polling_task_id = wait->polling_task_id;
   const int blocking = wait->blocking;
 
   if (request->completion_flag != SCTK_MESSAGE_DONE) {
