@@ -112,10 +112,12 @@ int arpc_recv_call_mpi(sctk_arpc_context_t* ctx, const void* request, size_t req
 	int next_tag;
 	int ret;
 	
+	MPI_Status st;
 	sctk_arpc_mpi_ctx_t mpi_ctx;
 	memset(&mpi_ctx, 0 , sizeof(sctk_arpc_mpi_ctx_t));
 
-	MPI_Recv( &mpi_ctx , sizeof(sctk_arpc_mpi_ctx_t) , MPI_BYTE , ctx->dest , MPI_ARPC_TAG , MPI_COMM_WORLD , MPI_STATUS_IGNORE );
+	MPI_Recv( &mpi_ctx , sizeof(sctk_arpc_mpi_ctx_t) , MPI_BYTE , MPI_ANY_SOURCE, MPI_ARPC_TAG , MPI_COMM_WORLD , &st );
+	ctx->dest = st.MPI_SOURCE;
 	ctx->rpcode = mpi_ctx.rpcode;
 	ctx->srvcode = mpi_ctx.srvcode;
 	next_tag = mpi_ctx.next_tag;
