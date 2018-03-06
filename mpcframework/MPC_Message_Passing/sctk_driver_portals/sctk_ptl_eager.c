@@ -72,8 +72,7 @@ void sctk_ptl_eager_message_copy(sctk_message_to_copy_t* msg)
 	sctk_ptl_me_free(recv_data, msg->msg_recv->tail.ptl.copy);
 
 	/* flag request as completed */
-	sctk_complete_and_free_message(msg->msg_send);
-	sctk_complete_and_free_message(msg->msg_recv);
+	sctk_message_completion_and_free(msg->msg_send, msg->msg_recv);
 }
 
 /**
