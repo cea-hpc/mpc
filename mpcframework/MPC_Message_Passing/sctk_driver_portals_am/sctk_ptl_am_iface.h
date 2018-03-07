@@ -58,40 +58,40 @@
 /**************************************************************/
 
 /* Hardware-related init */
-sctk_ptl_rail_info_t sctk_ptl_am_hardware_init();
+sctk_ptl_am_rail_info_t sctk_ptl_am_hardware_init();
 void sctk_ptl_am_hardware_fini();
 
 /* Software-related init */
-void sctk_ptl_am_software_init(sctk_ptl_rail_info_t*, int);
-void sctk_ptl_am_software_fini(sctk_ptl_rail_info_t*);
+void sctk_ptl_am_software_init(sctk_ptl_am_rail_info_t*, int);
+void sctk_ptl_am_software_fini(sctk_ptl_am_rail_info_t*);
 
 /* Portals table management */
-void sctk_ptl_am_pte_create(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte, size_t key);
+void sctk_ptl_am_pte_create(sctk_ptl_am_rail_info_t* srail, sctk_ptl_am_pte_t* pte, size_t key);
 
 /* ME management */
 sctk_ptl_am_local_data_t* sctk_ptl_am_me_create(void*, size_t, sctk_ptl_id_t, sctk_ptl_matchbits_t, sctk_ptl_matchbits_t, int);
-sctk_ptl_am_local_data_t* sctk_ptl_am_me_create_with_cnt(sctk_ptl_rail_info_t* srail, void*, size_t, sctk_ptl_id_t, sctk_ptl_matchbits_t, sctk_ptl_matchbits_t, int);
-void sctk_ptl_am_me_register(sctk_ptl_rail_info_t* srail, sctk_ptl_am_local_data_t*, sctk_ptl_pte_t*);
+sctk_ptl_am_local_data_t* sctk_ptl_am_me_create_with_cnt(sctk_ptl_am_rail_info_t* srail, void*, size_t, sctk_ptl_id_t, sctk_ptl_matchbits_t, sctk_ptl_matchbits_t, int);
+void sctk_ptl_am_me_register(sctk_ptl_am_rail_info_t* srail, sctk_ptl_am_local_data_t*, sctk_ptl_am_pte_t*);
 void sctk_ptl_am_me_release(sctk_ptl_am_local_data_t*);
 void sctk_ptl_am_me_free(sctk_ptl_am_local_data_t*, int);
-void sctk_ptl_am_me_feed(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte, size_t me_size, int nb, int list, char type, char protocol);
+void sctk_ptl_am_me_feed(sctk_ptl_am_rail_info_t* srail, sctk_ptl_am_pte_t* pte, size_t me_size, int nb, int list, char type, char protocol);
 
 /* event management */
 void sctk_ptl_ct_free(sctk_ptl_cnth_t cth);
 
 /* MD management */
-sctk_ptl_am_local_data_t* sctk_ptl_am_md_create(sctk_ptl_rail_info_t* srail, void*, size_t, int);
-void sctk_ptl_am_md_register(sctk_ptl_rail_info_t* srail, sctk_ptl_am_local_data_t*);
+sctk_ptl_am_local_data_t* sctk_ptl_am_md_create(sctk_ptl_am_rail_info_t* srail, void*, size_t, int);
+void sctk_ptl_am_md_register(sctk_ptl_am_rail_info_t* srail, sctk_ptl_am_local_data_t*);
 void sctk_ptl_am_md_release(sctk_ptl_am_local_data_t*);
 
 /* Request management */
-int sctk_ptl_am_emit_get(sctk_ptl_am_local_data_t*, size_t, sctk_ptl_id_t, sctk_ptl_pte_t*, sctk_ptl_matchbits_t, size_t, size_t, void*);
-int sctk_ptl_am_emit_put(sctk_ptl_am_local_data_t*, size_t, sctk_ptl_id_t, sctk_ptl_pte_t*, sctk_ptl_matchbits_t, size_t, size_t, size_t, void*);
+int sctk_ptl_am_emit_get(sctk_ptl_am_local_data_t*, size_t, sctk_ptl_id_t, sctk_ptl_am_pte_t*, sctk_ptl_matchbits_t, size_t, size_t, void*);
+int sctk_ptl_am_emit_put(sctk_ptl_am_local_data_t*, size_t, sctk_ptl_id_t, sctk_ptl_am_pte_t*, sctk_ptl_matchbits_t, size_t, size_t, size_t, void*);
 
 /**************************************************************/
 /*************************** HELPERS **************************/
 /**************************************************************/
-sctk_ptl_id_t sctk_ptl_am_self(sctk_ptl_rail_info_t* srail);
+sctk_ptl_id_t sctk_ptl_am_self(sctk_ptl_am_rail_info_t* srail);
 
 static inline const char const * sctk_ptl_am_rc_decode(int rc)
 {
@@ -247,7 +247,7 @@ static inline int sctk_ptl_am_data_serialize ( const void *inval, int invallen, 
  * <li><b>any other code</b> is an error</li>
  * </ul>
  */
-static inline int sctk_ptl_am_eq_poll_md(sctk_ptl_rail_info_t* srail, sctk_ptl_event_t* ev)
+static inline int sctk_ptl_am_eq_poll_md(sctk_ptl_am_rail_info_t* srail, sctk_ptl_event_t* ev)
 {
 	int ret;
 	
@@ -270,7 +270,7 @@ static inline int sctk_ptl_am_eq_poll_md(sctk_ptl_rail_info_t* srail, sctk_ptl_e
  * <li><b>any other code</b> is an error</li>
  * </ul>
  */
-static inline int sctk_ptl_am_eq_poll_me(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte, sctk_ptl_event_t* ev)
+static inline int sctk_ptl_am_eq_poll_me(sctk_ptl_am_rail_info_t* srail, sctk_ptl_am_pte_t* pte, sctk_ptl_event_t* ev)
 {
 	int ret;
 	

@@ -167,32 +167,6 @@ typedef union sctk_ptl_am_imm_data_s
 	} data;
 } sctk_ptl_imm_data_t;
 
-typedef struct sctk_ptl_am_me_chunk_s
-{
-	volatile struct sctk_ptl_am_me_chunk_s* next;
-	sctk_atomics_int refcnt;
-	size_t noff;
-	char avail;
-	char buf[SCTK_PTL_AM_CHUNK_SZ];
-} sctk_ptl_am_me_chunk_t;
-
-
-/**
- * Representing a PT entry in the driver.
- */
-typedef struct sctk_ptl_pte_s
-{
-	ptl_pt_index_t idx; /**< the effective PT index */
-	sctk_ptl_eq_t eq;   /**< the EQ for this entry */
-	sctk_spinlock_t pte_lock;
-	sctk_atomics_int next_tag;
-	
-	/**TODO: List of MEs for this PTE */
-	volatile sctk_ptl_am_me_chunk_t* req_head;
-	volatile sctk_ptl_am_me_chunk_t* rep_head;
-
-} sctk_ptl_pte_t;
-
 union sctk_ptl_slot_u
 {
 	sctk_ptl_me_t me; /**< request is a ME */
@@ -212,6 +186,32 @@ typedef struct sctk_ptl_local_data_s
 	sctk_ptl_matchbits_t match;     /**< request match bits */
 } sctk_ptl_am_local_data_t;
 
+typedef struct sctk_ptl_am_me_chunk_s
+{
+	sctk_atomics_int refcnt;
+	sctk_atomics_int noff;
+	struct sctk_ptl_am_me_chunk_s* next;
+	sctk_ptl_am_local_data_t* uptr;
+	char buf[SCTK_PTL_AM_CHUNK_SZ];
+} sctk_ptl_am_me_chunk_t;
+
+
+/**
+ * Representing a PT entry in the driver.
+ */
+typedef struct sctk_ptl_am_pte_s
+{
+	ptl_pt_index_t idx; /**< the effective PT index */
+	sctk_ptl_eq_t eq;   /**< the EQ for this entry */
+	sctk_spinlock_t pte_lock;
+	sctk_atomics_int next_tag;
+	
+	/**TODO: List of MEs for this PTE */
+	sctk_ptl_am_me_chunk_t* req_head;
+	sctk_ptl_am_me_chunk_t* rep_head;
+
+} sctk_ptl_am_pte_t;
+
 /**
  * Portals-specific information describing a route.
  * Is contained by route.h
@@ -225,7 +225,7 @@ sctk_ptl_route_info_t;
 /**
  * Portals-specific information specializing a rail.
  */
-typedef struct sctk_ptl_rail_info_s
+typedef struct sctk_ptl_am_rail_info_s
 {
 	sctk_ptl_limits_t max_limits;           /**< container for Portals threshold */
 	sctk_ptl_nih_t iface;                   /**< Interface handler for the device */
@@ -233,6 +233,7 @@ typedef struct sctk_ptl_rail_info_s
 
 	/**TODO: List of MD chunks */
 	sctk_ptl_eq_t mds_eq;
+	sctk_spinlock_t md_lock;
 	sctk_ptl_am_me_chunk_t* md_head;
 
 	struct MPCHT pt_table;                  /**< The PT hash table */
@@ -241,6 +242,6 @@ typedef struct sctk_ptl_rail_info_s
 	
 	char connection_infos[MAX_STRING_SIZE]; /**< string identifying this rail over the PMI */
 	size_t connection_infos_size;           /**< Size of the above string */
-} sctk_ptl_rail_info_t;
+} sctk_ptl_am_rail_info_t;
 #endif
 #endif
