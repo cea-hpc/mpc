@@ -36,26 +36,30 @@ extern int sctk_node_rank;
 extern volatile int sctk_multithreading_initialised;
 extern bool sctk_migration_mode;
 
+/* Migration disabled */
+#define SCTK_MIGRATION_DISABLED
+
 #ifdef MPC_Message_Passing
 #include "sctk_inter_thread_comm.h"
 /* #include "sctk_low_level_comm.h" */
 #endif
 
 #ifdef MPC_Profiler
-#include "sctk_internal_profiler.h"
+        #include "sctk_internal_profiler.h"
 #else
-#define SCTK_PROFIL_START(key)	(void)(0)
-#define SCTK_PROFIL_END(key) (void)(0)
-#define SCTK_COUNTER_INC(key,val) (void)(0);
-#define SCTK_COUNTER_DEC(key,val) (void)(0);
-#define SCTK_PROFIL_END_WITH_VALUE(key, value) (void)(0);
-#define sctk_internal_profiler_init() (void)(0)
-#define sctk_internal_profiler_render() (void)(0)
-#define sctk_internal_profiler_release() (void)(0)
+        #define SCTK_PROFIL_START(key)	(void)(0)
+        #define SCTK_PROFIL_END(key) (void)(0)
+        #define SCTK_COUNTER_INC(key,val) (void)(0);
+        #define SCTK_COUNTER_DEC(key,val) (void)(0);
+        #define SCTK_PROFIL_END_WITH_VALUE(key, value) (void)(0);
+        #define sctk_internal_profiler_init() (void)(0)
+        #define sctk_internal_profiler_render() (void)(0)
+        #define sctk_internal_profiler_release() (void)(0)
 #endif
-int sctk_user_main (int, char **);
-#if 0
 
+int sctk_user_main (int, char **);
+
+#if 0
 #undef main
 #define main sctk_user_main
 #endif

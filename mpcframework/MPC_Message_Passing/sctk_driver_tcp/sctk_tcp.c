@@ -184,14 +184,6 @@ static void sctk_network_notify_perform_message_tcp (  __UNUSED__ int remote,  _
 static void sctk_network_notify_any_source_message_tcp ( __UNUSED__  int polling_task_id, __UNUSED__ int blocking,  __UNUSED__ sctk_rail_info_t *rail ) {}
 
 /**
- * Called by idle threads to progress messages.
- * This is not the purpose of this function for TCP, as a polling thread is created for each new route.
- * \param[in] msg
- * \param[in] rail
- */
-static void sctk_network_notify_idle_message_tcp() { sctk_thread_yield(); }
-
-/**
  * Handler triggering the send_message_from_network call, before reaching the inter_thread_comm matching process.
  * \param[in] msg the message received from the network, to be matched w/ a local RECV.
  */
@@ -238,7 +230,7 @@ void sctk_network_init_tcp ( sctk_rail_info_t *rail )
 	rail->notify_recv_message       = sctk_network_notify_recv_message_tcp;
 	rail->notify_matching_message   = sctk_network_notify_matching_message_tcp;
 	rail->notify_perform_message    = sctk_network_notify_perform_message_tcp;
-	rail->notify_idle_message       = sctk_network_notify_idle_message_tcp;
+	rail->notify_idle_message       = NULL;
 	rail->notify_any_source_message = sctk_network_notify_any_source_message_tcp;
 	rail->send_message_from_network = sctk_send_message_from_network_tcp;
 	rail->driver_finalize           = sctk_network_finalize_tcp;

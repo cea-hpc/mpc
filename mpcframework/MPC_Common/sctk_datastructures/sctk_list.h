@@ -35,10 +35,10 @@
 #define __SCTK__LIST__
 
 
-struct sctk_list_elem {
+struct sctk_internal_list_elem {
   void* elem;
-  struct sctk_list_elem *p_prev;
-  struct sctk_list_elem *p_next;
+  struct sctk_internal_list_elem *p_prev;
+  struct sctk_internal_list_elem *p_next;
 };
 
 struct sctk_list {
@@ -47,8 +47,8 @@ struct sctk_list {
   sctk_uint8_t is_initialized;
   size_t size_payload;
   sctk_spinlock_t   lock;
-  struct sctk_list_elem *head;
-  struct sctk_list_elem *tail;
+  struct sctk_internal_list_elem *head;
+  struct sctk_internal_list_elem *tail;
   sctk_alloc_buffer_t alloc_buff;
 };
 
@@ -62,7 +62,7 @@ void *
 sctk_list_get_from_head(struct sctk_list* list, sctk_uint32_t n);
 
   void*
-sctk_list_remove(struct sctk_list* list, struct sctk_list_elem* elem);
+sctk_list_remove(struct sctk_list* list, struct sctk_internal_list_elem* elem);
 
 int sctk_list_is_empty(struct sctk_list* list);
 

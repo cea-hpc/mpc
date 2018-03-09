@@ -544,13 +544,13 @@ volatile int sctk_current_local_tasks_nb = 0;
 sctk_thread_mutex_t sctk_current_local_tasks_lock =
   SCTK_THREAD_MUTEX_INITIALIZER;
 
-void sctk_unregister_task (__UNUSED__ const int i){
+void sctk_unregister_task (const int i){
   sctk_thread_mutex_lock (&sctk_current_local_tasks_lock);
   sctk_current_local_tasks_nb--;
   sctk_thread_mutex_unlock (&sctk_current_local_tasks_lock);
 }
 
-void sctk_register_task (__UNUSED__ const int i){
+void sctk_register_task (const int i){
   sctk_error("REG !!!!!!!");
   sctk_thread_mutex_lock (&sctk_current_local_tasks_lock);
   sctk_current_local_tasks_nb++;
@@ -615,6 +615,7 @@ sctk_thread_create_tmp_start_routine (sctk_thread_data_t * __arg)
 
   // we do not have an MPI
   tmp.mpi_per_thread = NULL;
+
   // Set no disguise
   tmp.my_disguisement = NULL;
   tmp.ctx_disguisement = NULL;
@@ -640,9 +641,11 @@ sctk_thread_create_tmp_start_routine (sctk_thread_data_t * __arg)
 #endif
 
 #ifdef MPC_Message_Passing
+  /* We call for all threads as some
+     progress threads may need buffered headers */
+  sctk_ptp_per_task_init (tmp.task_id);
   if (tmp.task_id >= 0)
     {
-      sctk_ptp_per_task_init (tmp.task_id);
       sctk_net_init_task_level(tmp.task_id, tmp.virtual_processor);
 
 #if defined(MPC_USE_EXTLS)
@@ -650,14 +653,13 @@ sctk_thread_create_tmp_start_routine (sctk_thread_data_t * __arg)
       sctk_tls_init();
       sctk_call_dynamic_initializers();
 #endif
-
       sctk_register_thread_initial (tmp.task_id);
-      sctk_terminaison_barrier ();
+      sctk_terminaison_barrier (tmp.task_id);
       sctk_online_program = 1;
 #ifdef MPC_USE_INFINIBAND
       sctk_ib_prof_init_reference_clock();
 #endif
-      sctk_terminaison_barrier ();
+      sctk_terminaison_barrier (tmp.task_id);
     }
 #endif
 
@@ -736,9 +738,9 @@ sctk_thread_create_tmp_start_routine (sctk_thread_data_t * __arg)
   if (tmp.task_id >= 0)
     {
       sctk_nodebug ("sctk_terminaison_barrier");
-      sctk_terminaison_barrier ();
+      sctk_terminaison_barrier (tmp.task_id);
       sctk_online_program = 0;
-      sctk_terminaison_barrier ();
+      sctk_terminaison_barrier (tmp.task_id);
       sctk_nodebug ("sctk_terminaison_barrier done");
       sctk_net_finalize_task_level(tmp.task_id, tmp.virtual_processor);
       sctk_unregister_task (tmp.task_id);
@@ -773,7 +775,7 @@ sctk_thread_create (sctk_thread_t * restrict __threadp,
   struct sctk_alloc_chain *tls;
   int previous_binding;
   static unsigned int core = 0;
-  unsigned int new_binding;
+  int new_binding;
 
   /* We bind the parent thread to the vp where the child
    * will be created. We must bind before calling
@@ -813,7 +815,8 @@ sctk_thread_create (sctk_thread_t * restrict __threadp,
   extls_ctx_herit(old_ctx, *cur_tx, LEVEL_TASK);
   extls_ctx_restore(*cur_tx);
 #ifndef MPC_DISABLE_HLS
-	extls_ctx_bind(*cur_tx, tmp->bind_to);
+  if(tmp->bind_to >= 0) /* if the thread is bound -> HLS */
+	  extls_ctx_bind(*cur_tx, tmp->bind_to);
 #endif
 #endif
 
@@ -827,6 +830,7 @@ sctk_thread_create (sctk_thread_t * restrict __threadp,
         /* get os ind */
         int master = sctk_get_cpu_compute_node_topology();
         sctk_spinlock_lock(&lock_graphic);
+        int min_index[3] = {0,0,0};
         /* fill file to communicate between process of the same compute node */
         create_placement_rendering(master, master, tmp->task_id);     
         sctk_spinlock_unlock(&lock_graphic);
@@ -863,7 +867,7 @@ sctk_thread_create_tmp_start_routine_user (sctk_thread_data_t * __arg)
 {
   void *res;
   sctk_thread_data_t tmp;
-
+  memset( &tmp, 0, sizeof(sctk_thread_data_t));
   while (start_func_done == 0)
     sctk_thread_yield();
   sctk_thread_data_reset();
@@ -876,13 +880,6 @@ sctk_thread_create_tmp_start_routine_user (sctk_thread_data_t * __arg)
 
 
   sctk_set_tls (tmp.tls);
-
-  // we do not have an MPI
-  tmp.mpi_per_thread = NULL;
-  // Set no disguise
-  tmp.my_disguisement = NULL;
-  tmp.ctx_disguisement = NULL;
-
   *ptr_cleanup = NULL;
   sctk_thread_setspecific (_sctk_thread_handler_key, ptr_cleanup);
 
@@ -1030,7 +1027,7 @@ sctk_user_thread_create (sctk_thread_t * restrict __threadp,
   sctk_nodebug ("create tls %p attr %p", tls, __attr);
   tmp = (sctk_thread_data_t *)
     __sctk_malloc (sizeof (sctk_thread_data_t), tls);
-
+  memset(tmp, 0, sizeof(sctk_thread_data_t));
   tmp_father = sctk_thread_data_get ();
 
   tmp->tls = tls;
@@ -1076,7 +1073,7 @@ sctk_user_thread_create (sctk_thread_t * restrict __threadp,
   else
     scope_init = SCTK_THREAD_SCOPE_PROCESS; /* consider not a scope_system */
   /* if the thread is bound and its scope is not SCOPE_SYSTEM */
-  if(scope_init != SCTK_THREAD_SCOPE_SYSTEM)
+  if(tmp->bind_to >= 0 && scope_init != SCTK_THREAD_SCOPE_SYSTEM)
 	  extls_ctx_bind(*cur_tx, tmp->bind_to);
 #endif
 #endif
@@ -1270,7 +1267,7 @@ sctk_thread_exit_cleanup ()
       if (tmp->task_id >= 0 && tmp->user_thread == 0)
 	{
 	  sctk_nodebug ("sctk_terminaison_barrier");
-	  sctk_terminaison_barrier ();
+	  sctk_terminaison_barrier (tmp->task_id);
 	  sctk_nodebug ("sctk_terminaison_barrier done");
 	  sctk_unregister_task (tmp->task_id);
 	  sctk_net_send_task_end (tmp->task_id, sctk_process_rank);
@@ -1601,8 +1598,8 @@ sctk_thread_mutex_unlock (sctk_thread_mutex_t * __mutex)
 }
 
 int
-sctk_thread_mutex_getprioceiling (__UNUSED__ const sctk_thread_mutex_t * restrict mutex,
-				                          __UNUSED__ int *restrict prioceiling)
+sctk_thread_mutex_getprioceiling (const sctk_thread_mutex_t * restrict mutex,
+				  int *restrict prioceiling)
 {
   int res = 0;
   not_implemented ();
@@ -1610,8 +1607,8 @@ sctk_thread_mutex_getprioceiling (__UNUSED__ const sctk_thread_mutex_t * restric
 }
 
 int
-sctk_thread_mutex_setprioceiling (__UNUSED__ sctk_thread_mutex_t * restrict mutex,
-				                          __UNUSED__ int prioceiling, __UNUSED__ int *restrict old_ceiling)
+sctk_thread_mutex_setprioceiling (sctk_thread_mutex_t * restrict mutex,
+				  int prioceiling, int *restrict old_ceiling)
 {
   int res = 0;
   not_implemented ();
@@ -2184,21 +2181,17 @@ void sctk_thread_data_set(sctk_thread_data_t *task_id) {
 sctk_thread_data_t *
 __sctk_thread_data_get (int no_disguise)
 {
-  sctk_thread_data_t *tmp = NULL;
+  sctk_thread_data_t *tmp;
   if (sctk_multithreading_initialised == 0)
-  {
-	  tmp = &sctk_main_datas;
-  }
+    tmp = &sctk_main_datas;
   else
-  {
-	  tmp = (sctk_thread_data_t *) sctk_thread_getspecific( stck_task_data );
-  }
+    tmp = (sctk_thread_data_t *) sctk_thread_getspecific (stck_task_data);
 
   if( tmp )
   {
     if( (tmp->my_disguisement != NULL) && (no_disguise == 0) )
     {
-      return tmp->my_disguisement;
+        return tmp->my_disguisement;
     }
   }
 
@@ -2282,7 +2275,7 @@ int sctk_get_init_vp_and_nbvp_default(int i, int *nbVp) {
   /*   int rank_in_node; */
   int slot_size;
   int task_nb;
-  int proc = -1;
+  int proc;
   int first;
   int last;
   int cpu_nb;
@@ -2357,28 +2350,28 @@ int sctk_get_init_vp_and_nbvp_numa_packed(int i, int *nbVp) {
 
   /*   int rank_in_node; */
   // declaration
-
-
+  int slot_size;
+  int task_nb;
   int proc;
-
-
+  int first;
+  int last;
   int cpu_nb;
-
-
-
+  int total_tasks_number;
+  int cpu_per_task;
+  int j;
 
   int nb_numa_node_per_node;
-
-
+  int nb_cpu_per_numa_node;
+  int nb_task_per_numa_node;
 
   // initialization
   cpu_nb = sctk_get_cpu_number(); // number of cpu per process
-
+  total_tasks_number = sctk_get_total_tasks_number();
 
   nb_numa_node_per_node =
       sctk_get_numa_node_number(); // number of numa nodes in the node
-
-
+  nb_cpu_per_numa_node =
+      cpu_nb / nb_numa_node_per_node; // number of cores per numa nodes
 
   // config
   int T = sctk_last_local - sctk_first_local + 1; // number of task per node
@@ -2427,9 +2420,9 @@ int sctk_get_init_vp_and_nbvp_numa_packed(int i, int *nbVp) {
     tat += Tnk;
   }
 
-  //sctk_debug("sctk_get_init_vp: (After loop) Put task %d on VP %d", i, proc);
-  sctk_abort ();
-  return proc;
+  sctk_nodebug("sctk_get_init_vp: (After loop) Put task %d on VP %d", i, proc);
+  not_reachable();
+  return -1;
 }
 
 int sctk_get_init_vp_and_nbvp_numa(int i, int *nbVp) {
@@ -2621,7 +2614,7 @@ sctk_start_func (void *(*run) (void *), void *arg)
 	sctk_thread_t migration_thread;
 	sctk_thread_attr_t migration_thread_attr;
 #endif
-
+	FILE *file;
 	struct _sctk_thread_cleanup_buffer *ptr_cleanup;
         /*	char name[SCTK_MAX_FILENAME_SIZE]; */
         sctk_thread_t *threads = NULL;
@@ -2715,8 +2708,10 @@ sctk_start_func (void *(*run) (void *), void *arg)
 		   (getenv("SCTK_NB_MIC") != NULL))
 		{
 			int node_rank,process_on_node_rank,process_on_node_number;
-			int host_nb_task;
+			int host_number, mic_nb_task, host_nb_task;
 
+			host_number = (getenv("SCTK_NB_HOST") != NULL) ? atoi(getenv("SCTK_NB_HOST")) : 0;
+			mic_nb_task = (getenv("SCTK_MIC_NB_TASK") != NULL) ? atoi(getenv("SCTK_MIC_NB_TASK")) : 0;
 			host_nb_task = (getenv("SCTK_HOST_NB_TASK") != NULL) ? atoi(getenv("SCTK_HOST_NB_TASK")) : 0;
 			
 #ifdef MPC_Message_Passing
@@ -2726,9 +2721,6 @@ sctk_start_func (void *(*run) (void *), void *arg)
 #endif
 			
 			#if __MIC__
-        int host_number, mic_nb_task;
-        host_number = (getenv("SCTK_NB_HOST") != NULL) ? atoi(getenv("SCTK_NB_HOST")) : 0;
-        mic_nb_task = (getenv("SCTK_MIC_NB_TASK") != NULL) ? atoi(getenv("SCTK_MIC_NB_TASK")) : 0;
 				local_threads = mic_nb_task/process_on_node_number;
 				if ((mic_nb_task % process_on_node_number) > process_on_node_rank)
 				{
@@ -2737,6 +2729,7 @@ sctk_start_func (void *(*run) (void *), void *arg)
 				}
 				else
 				{
+					int i=0;
 					start_thread = (host_nb_task * host_number) + ((node_rank - host_number) * mic_nb_task);
 					for(i=0 ; i<process_on_node_rank ; i++)
 					{
@@ -2755,6 +2748,7 @@ sctk_start_func (void *(*run) (void *), void *arg)
 				}
 				else
 				{
+					int i=0;
 					start_thread = (node_rank * host_nb_task);
 					for(i=0 ; i<process_on_node_rank ; i++)
 					{
@@ -3104,7 +3098,7 @@ sctk_thread_atomic_add (volatile unsigned long *ptr, unsigned long val)
 }
 
 /* Used by GCC to bypass TLS destructor calls */
-int __cxa_thread_mpc_atexit(void(*dfunc)(void*), void* obj, __UNUSED__ void* dso_symbol)
+int __cxa_thread_mpc_atexit(void(*dfunc)(void*), void* obj, void* dso_symbol)
 {
 	sctk_thread_data_t *th;
 

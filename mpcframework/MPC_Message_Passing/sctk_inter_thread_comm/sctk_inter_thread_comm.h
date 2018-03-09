@@ -613,6 +613,7 @@ sctk_ptp_get_reorder_from_destination(int task,
                                       sctk_communicator_t communicator);
 void sctk_inter_thread_perform_idle ( volatile int *data, int value, void ( *func ) ( void * ), void *arg );
 
+/* Must be equal to power of 2 for masking */
 #define SCTK_PARALLEL_COMM_QUEUES_NUMBER 8
 
 /************************************************************************/

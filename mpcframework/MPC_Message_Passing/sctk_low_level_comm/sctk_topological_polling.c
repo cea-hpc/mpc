@@ -53,7 +53,7 @@ struct sctk_topological_polling_tree
 
 
 
-static inline int sctk_topological_polling_trigget_to_hwloc_type( sctk_topological_polling_set_t trigger )
+static inline hwloc_obj_type_t sctk_topological_polling_trigget_to_hwloc_type( sctk_topological_polling_set_t trigger )
 {
 	switch( trigger )
 	{
@@ -78,7 +78,7 @@ static inline int sctk_topological_polling_trigget_to_hwloc_type( sctk_topologic
 			sctk_fatal("Bad polling trigger provided");
 		break;
 	}
-	return -1;
+	return HWLOC_OBJ_MACHINE;
 }
 
 
@@ -107,7 +107,7 @@ sctk_topological_polling_set_t sctk_rail_convert_polling_set_from_config( enum r
 		default:
 			sctk_fatal("Error converting polling value from config");
 	}
-	return -1;
+	return SCTK_POLL_MACHINE;
 }
 
 int init_done = 0;
@@ -120,7 +120,7 @@ void sctk_topological_polling_tree_init( struct sctk_topological_polling_tree * 
 	
 	/* Initialize cell array and set default values */
 	
-	tree->cells = sctk_malloc( sizeof( struct sctk_topological_polling_cell ) * tree->cell_count );
+	tree->cells = (struct sctk_topological_polling_cell*)sctk_malloc( sizeof( struct sctk_topological_polling_cell ) * tree->cell_count );
 	assume( tree->cells != NULL );
 	
 	int i;
@@ -150,7 +150,7 @@ void sctk_topological_polling_tree_init( struct sctk_topological_polling_tree * 
 			range_cpuset = sctk_topology_get_numa_cpuset( root_pu );
 		break;
 		case SCTK_POLL_MACHINE:
-			range_cpuset = sctk_topology_get_machine_cpuset( root_pu );
+			range_cpuset = sctk_topology_get_machine_cpuset();
 		break;
 		
 		default:
@@ -283,7 +283,7 @@ static inline void sctk_topological_polling_cell_poll( struct sctk_topological_p
 	struct sctk_topological_polling_cell * cell = &cells[offset];
 	
 	int polling_counter = sctk_atomics_fetch_and_incr_int( &cell->polling_counter );
-	
+
 	/* Are we alone in the cell ? */
 	if(  polling_counter == 0 )
 	{
@@ -348,9 +348,9 @@ void sctk_topological_polling_tree_poll( struct sctk_topological_polling_tree * 
 	 * here due to previous test we only have
 	 * those which are part of the range */
 
-    if(!init_done){
-        return ;
-    }
+	if(!init_done){
+		return ;
+	}
 	sctk_topological_polling_cell_poll( tree->cells, cpu_id,  func, arg, tree->cell_count );
 	
 }
