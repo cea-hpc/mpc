@@ -172,7 +172,7 @@ static void sctk_ptl_am_pte_populate(sctk_ptl_am_rail_info_t* srail, sctk_ptl_am
 	sctk_ptl_matchbits_t match = (sctk_ptl_matchbits_t){
 		.data.srvcode  = srvcode,
 		.data.rpcode   = 0,
-		.data.tag      = (me_type == SCTK_PTL_AM_REQ_TYPE) ? 0 : sctk_atomics_fetch_and_incr_int(&pte->next_tag),
+		.data.tag      = 0,
 		.data.inc_data = 0,
 		.data.is_req   = me_type,
 		.data.is_large = SCTK_PTL_AM_OP_SMALL
@@ -188,15 +188,20 @@ static void sctk_ptl_am_pte_populate(sctk_ptl_am_rail_info_t* srail, sctk_ptl_am
 		.data.is_large = SCTK_PTL_AM_MATCH_LARGE /* the REQ should NEVER be large */
 	};
 
-	sctk_ptl_am_me_chunk_t* c = NULL, *first = NULL, *prev = NULL;
+	sctk_ptl_am_chunk_t* c = NULL, *first = NULL, *prev = NULL;
 
 	for (j = 0; j < nb_elts; ++j) 
 	{
 		prev = c;
 		sctk_ptl_am_local_data_t* block;
-		c = sctk_calloc(1, sizeof(sctk_ptl_am_me_chunk_t));
+		c = sctk_calloc(1, sizeof(sctk_ptl_am_chunk_t));
 		sctk_atomics_store_int(&c->refcnt, 0);
 		sctk_atomics_store_int(&c->noff, 0);
+
+		int tag = (me_type == SCTK_PTL_AM_REQ_TYPE) ? 0 : sctk_atomics_fetch_and_incr_int(&pte->next_tag);
+		match.data.tag = tag;
+		c->tag = tag;
+
 		block = sctk_ptl_am_me_create(
 				c->buf,
 				SCTK_PTL_AM_CHUNK_SZ,
@@ -224,14 +229,16 @@ static void sctk_ptl_am_pte_populate(sctk_ptl_am_rail_info_t* srail, sctk_ptl_am
 void sctk_ptl_am_md_populate(sctk_ptl_am_rail_info_t* srail, size_t nb_elts, int md_flags)
 {
 	int j = 0;
-	sctk_ptl_am_me_chunk_t* c = NULL, *prev = NULL, *first = NULL;
+	sctk_ptl_am_chunk_t* c = NULL, *prev = NULL, *first = NULL;
 
 	for (j = 0; j < nb_elts; ++j)
 	{
 		prev = c;
 		sctk_ptl_am_local_data_t* block;
-		sctk_ptl_am_me_chunk_t* c = sctk_calloc(1, sizeof(sctk_ptl_am_me_chunk_t));
+		sctk_ptl_am_chunk_t* c = sctk_calloc(1, sizeof(sctk_ptl_am_chunk_t));
 		block = sctk_ptl_am_md_create(srail, c->buf, SCTK_PTL_AM_CHUNK_SZ, md_flags);
+
+		c->tag = -1;
 		sctk_ptl_am_md_register(srail, block);
 		
 		c->uptr = block;
@@ -335,80 +342,112 @@ void sctk_ptl_am_pte_create(sctk_ptl_am_rail_info_t* srail, sctk_ptl_am_pte_t* p
 	srail->nb_entries++;
 }
 
-size_t sctk_ptl_am_prepare_new_request(sctk_ptl_am_rail_info_t* srail, int srv, int rpc, void* start, size_t sz, sctk_ptl_id_t remote)
+void sctk_ptl_am_send_request(sctk_ptl_am_rail_info_t* srail, int srv, int rpc, void* start_in, size_t sz_in, void** start_out, size_t* sz_out, sctk_ptl_id_t remote)
 {
 	/*
 	 * 1. if large, prepare a dedicated ME
 	 * 2. if no more MD space, create a new chunk
 	 * 3. Save somewhere the offset where the request has been put into the MD (to be provided when calling Put())
 	 */
-	sctk_ptl_am_me_chunk_t* c = srail->md_head;
-	size_t noff = 0;
-
-	sctk_assert(sz >= 0);
-
-	if(sz >= SCTK_PTL_AM_CHUNK_SZ)
-	{
-		/* dedicated ME */
-		sctk_ptl_am_pte_t* pte = MPCHT_get(&srail->pt_table, srv);
-		sctk_ptl_am_local_data_t* user_ptr;
-		sctk_ptl_matchbits_t match = (sctk_ptl_matchbits_t){
-			.data.srvcode  = srv,
-			.data.rpcode   = rpc,
-			.data.tag      = sctk_atomics_fetch_and_incr_int(&pte->next_tag),
-			.data.inc_data = 1,
-			.data.is_req   = SCTK_PTL_AM_REQ_TYPE,
-			.data.is_large = SCTK_PTL_AM_OP_LARGE
-		};
-
-		sctk_ptl_matchbits_t ign = (sctk_ptl_matchbits_t)
-		{
-			.data.srvcode  = SCTK_PTL_AM_MATCH_SRV,
-			.data.rpcode   = SCTK_PTL_AM_MATCH_RPC,
-			.data.tag      = SCTK_PTL_AM_MATCH_TAG,
-			.data.inc_data = SCTK_PTL_AM_MATCH_DATA,
-			.data.is_req   = SCTK_PTL_AM_MATCH_TYPE,
-			.data.is_large = SCTK_PTL_AM_MATCH_LARGE
-		};
-		user_ptr = sctk_ptl_am_me_create(start, sz, remote , match, ign, SCTK_PTL_AM_ME_GET_FLAGS);
-		sctk_ptl_am_me_register(srail, user_ptr, pte);
-	}
-	sz = 0;
-	
+	sctk_assert(sz_in >= 0);
+	sctk_ptl_am_pte_t* pte = MPCHT_get(&srail->pt_table, srv);
+	int tag = -1;
 	/* find the MD where data could be memcpy'd */
 	size_t space = 0;
-	while(c)
-	{
-		noff = sctk_atomics_fetch_and_add_int(&c->noff, sz);
-		space = SCTK_PTL_AM_CHUNK_SZ - noff;
+	size_t md_off = 0, me_off = 0;
+	sctk_ptl_am_chunk_t* c_md;
+	sctk_ptl_am_chunk_t* c_me;
+	
+	sctk_ptl_matchbits_t md_match, md_ign;
 
-		if(space >= sz)
+
+	/******************************************/
+	/******************************************/
+	/******************************************/
+	
+	if(start_out)
+	{
+		int found_space = 1;
+		do
+		{
+			c_me = pte->rep_head;
+			while(c_me)
+			{
+				me_off = sctk_atomics_fetch_and_add_int(&c_me->noff, SCTK_PTL_AM_REP_CELL_SZ);
+				if(me_off <= SCTK_PTL_AM_CHUNK_SZ) /* last cell */
+					break;
+
+				sctk_atomics_fetch_and_add_int(&c_me->noff, (-1) * (SCTK_PTL_AM_REP_CELL_SZ));
+				c_me = c_me->next;
+			}
+			if(!c_me)
+			{
+				sctk_ptl_am_pte_populate(srail, pte, SCTK_PTL_AM_REP_TYPE, 1, SCTK_PTL_AM_ME_PUT_FLAGS, srv );
+				found_space = 0;
+			}
+		} while (!found_space);
+		tag = c_me->tag;
+	}
+	
+	/******************************************/
+	/******************************************/
+	/******************************************/
+	if(sz_in >= SCTK_PTL_AM_CHUNK_SZ)
+	{
+		/* dedicated ME */
+		sctk_ptl_am_local_data_t* user_ptr;
+		sctk_ptl_matchbits_t match = SCTK_PTL_MATCH_BUILD(srv, rpc, tag, 1, SCTK_PTL_AM_REQ_TYPE, SCTK_PTL_AM_OP_LARGE);
+		sctk_ptl_matchbits_t ign = SCTK_PTL_IGN_FOR_LARGE;
+		
+		user_ptr = sctk_ptl_am_me_create(start_in, sz_in, remote , match, ign, SCTK_PTL_AM_ME_GET_FLAGS);
+		sctk_ptl_am_me_register(srail, user_ptr, pte);
+		sz_in = 0;
+	}
+	
+	c_md = srail->md_head;
+
+	while(c_md)
+	{
+		md_off = sctk_atomics_fetch_and_add_int(&c_md->noff, sz_in);
+		space = SCTK_PTL_AM_CHUNK_SZ - md_off;
+
+		if(space >= sz_in)
 			break;
 
-		sctk_atomics_fetch_and_add_int(&c->noff, (-1) * sz);
-		c = c->next;
+		sctk_atomics_fetch_and_add_int(&c_md->noff, (-1) * sz_in);
+		c_md = c_md->next;
 	}
-	if(space >= sz)  /* Found a valid MD */
+	if(c_md && space >= sz_in)  /* Found a valid MD */
 	{
-		sctk_assert(noff > 0 && SCTK_PTL_AM_CHUNK_SZ - noff == space);
-		memcpy(c->buf + noff, start, sz);
+		sctk_assert(md_off > 0 && SCTK_PTL_AM_CHUNK_SZ - md_off == space);
+		memcpy(c_md->buf + md_off, start_in, sz_in);
 	}
 	else /* no available MDs : allocate a new one and retry */
 	{
 		sctk_ptl_am_md_populate(srail, 1, SCTK_PTL_AM_MD_FLAGS);
-		sctk_ptl_am_prepare_new_request(srail, srv, rpc, start, sz, remote);
+		sctk_ptl_am_send_request(srail, srv, rpc, start_in, sz_in, start_out, sz_out, remote);
 	}
+
+	md_match = SCTK_PTL_MATCH_BUILD(srv, rpc, tag , (sz_in == 0), SCTK_PTL_AM_REQ_TYPE, SCTK_PTL_AM_OP_SMALL);
+	md_ign = SCTK_PTL_IGN_FOR_REQ;
+	sctk_ptl_am_emit_put(c_md->uptr, sz_in, remote, pte, md_match, md_off, -1, me_off, c_md->uptr);
 	
-	return noff;
 }
 
-void sctk_ptl_am_prepare_new_response(int srv, int rpc, void** ret, size_t* sz)
+void sctk_ptl_am_send_response(sctk_ptl_am_rail_info_t* srail, int srv, int rpc, void* start, size_t sz, sctk_ptl_id_t remote)
 {
 	/*
 	 * 1. if no more ME space, create a new chunk
 	 * 2. Save somewhere the offset where the response is expected (to be provided into imm_data when calling Put())
 	 * 3. 
 	 */
+	if(sz >= SCTK_PTL_AM_CHUNK_SZ)
+	{
+		sz = 0;
+	}
+
+	size_t space = 0;
+
 }
 
 

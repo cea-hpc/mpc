@@ -56,7 +56,7 @@
 	.data.tag = SCTK_PTL_AM_IGN_TAG, \
 	.data.inc_data = SCTK_PTL_AM_IGN_DATA, \
 	.data.is_req = SCTK_PTL_AM_IGN_TYPE, \
-	.data.is_large = SCTK_PTL_AM_IGN_LARGE, \
+	.data.is_large = SCTK_PTL_AM_IGN_LARGE \
 }
 
 #define SCTK_PTL_AM_MATCH_TAG  ((uint32_t)0)
@@ -66,13 +66,42 @@
 #define SCTK_PTL_AM_MATCH_TYPE (0)
 #define SCTK_PTL_AM_MATCH_DATA (0)
 
-#define SCTK_PTL_MATCH_ALL (sctk_ptl_matchbits_t){\
+#define SCTK_PTL_MATCH_BUILD(a,b,c,d,e,f) (sctk_ptl_matchbits_t){\
+	.data.srvcode = a, \
+	.data.rpcode = b, \
+	.data.tag = c, \
+	.data.inc_data = d, \
+	.data.is_req = e, \
+	.data.is_large = f \
+}
+
+
+/******* HELPERS *******/
+#define SCTK_PTL_IGN_FOR_REQ (sctk_ptl_matchbits_t) {\
+	.data.srvcode = SCTK_PTL_AM_MATCH_SRV,\
+	.data.rpcode = SCTK_PTL_AM_IGN_RPC, \
+	.data.tag = SCTK_PTL_AM_IGN_TAG, \
+	.data.inc_data = SCTK_PTL_AM_IGN_DATA, \
+	.data.is_req = SCTK_PTL_AM_MATCH_TYPE, \
+	.data.is_large = SCTK_PTL_AM_MATCH_LARGE \
+}
+
+#define SCTK_PTL_IGN_FOR_REP (sctk_ptl_matchbits_t) {\
+	.data.srvcode = SCTK_PTL_AM_MATCH_SRV,\
+	.data.rpcode = SCTK_PTL_AM_IGN_RPC, \
+	.data.tag = SCTK_PTL_AM_MATCH_TAG, \
+	.data.inc_data = SCTK_PTL_AM_IGN_DATA, \
+	.data.is_req = SCTK_PTL_AM_MATCH_TYPE, \
+	.data.is_large = SCTK_PTL_AM_MATCH_LARGE \
+}
+
+#define SCTK_PTL_IGN_FOR_LARGE (sctk_ptl_matchbits_t) {\
 	.data.srvcode = SCTK_PTL_AM_MATCH_SRV,\
 	.data.rpcode = SCTK_PTL_AM_MATCH_RPC, \
 	.data.tag = SCTK_PTL_AM_MATCH_TAG, \
 	.data.inc_data = SCTK_PTL_AM_MATCH_DATA, \
 	.data.is_req = SCTK_PTL_AM_MATCH_TYPE, \
-	.data.is_large = SCTK_PTL_AM_MATCH_LARGE, \
+	.data.is_large = SCTK_PTL_AM_MATCH_LARGE \
 }
 
 /*********************************/
@@ -133,6 +162,7 @@
 #define SCTK_PTL_AM_CHUNK_SZ (128 * 1024) /**< 128 KiB */
 #define SCTK_PTL_AM_REQ_NB_DEF 8
 #define SCTK_PTL_AM_REP_NB_DEF 1
+#define SCTK_PTL_AM_REP_CELL_SZ 128
 #define SCTK_PTL_AM_MD_NB_DEF 4
 
 #define SCTK_PTL_AM_REQ_TYPE 0
@@ -186,14 +216,15 @@ typedef struct sctk_ptl_local_data_s
 	sctk_ptl_matchbits_t match;     /**< request match bits */
 } sctk_ptl_am_local_data_t;
 
-typedef struct sctk_ptl_am_me_chunk_s
+typedef struct sctk_ptl_am_chunk_s
 {
 	sctk_atomics_int refcnt;
 	sctk_atomics_int noff;
-	struct sctk_ptl_am_me_chunk_s* next;
+	int tag;
+	struct sctk_ptl_am_chunk_s* next;
 	sctk_ptl_am_local_data_t* uptr;
 	char buf[SCTK_PTL_AM_CHUNK_SZ];
-} sctk_ptl_am_me_chunk_t;
+} sctk_ptl_am_chunk_t;
 
 
 /**
@@ -207,8 +238,8 @@ typedef struct sctk_ptl_am_pte_s
 	sctk_atomics_int next_tag;
 	
 	/**TODO: List of MEs for this PTE */
-	sctk_ptl_am_me_chunk_t* req_head;
-	sctk_ptl_am_me_chunk_t* rep_head;
+	sctk_ptl_am_chunk_t* req_head;
+	sctk_ptl_am_chunk_t* rep_head;
 
 } sctk_ptl_am_pte_t;
 
@@ -234,7 +265,7 @@ typedef struct sctk_ptl_am_rail_info_s
 	/**TODO: List of MD chunks */
 	sctk_ptl_eq_t mds_eq;
 	sctk_spinlock_t md_lock;
-	sctk_ptl_am_me_chunk_t* md_head;
+	sctk_ptl_am_chunk_t* md_head;
 
 	struct MPCHT pt_table;                  /**< The PT hash table */
 	size_t nb_entries;                      /**< current number of PT entries */
