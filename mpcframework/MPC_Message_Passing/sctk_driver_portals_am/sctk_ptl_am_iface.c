@@ -441,13 +441,6 @@ void sctk_ptl_am_send_response(sctk_ptl_am_rail_info_t* srail, int srv, int rpc,
 	 * 2. Save somewhere the offset where the response is expected (to be provided into imm_data when calling Put())
 	 * 3. 
 	 */
-	if(sz >= SCTK_PTL_AM_CHUNK_SZ)
-	{
-		sz = 0;
-	}
-
-	size_t space = 0;
-
 }
 
 

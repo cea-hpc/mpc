@@ -32,6 +32,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <stdio.h>
+#include <sctk_alloc.h>
 #include "sctk_ptl_am_types.h"
 #include "sctk_debug.h"
 

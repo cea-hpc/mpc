@@ -25,15 +25,24 @@
 #ifdef MPC_USE_PORTALS
 
 #include "ptl_layer.h"
+#include "sctk_ptl_am_iface.h"
+
+static sctk_ptl_am_rail_info_t srail;
 
 int arpc_init_ptl()
 {
+	srail = sctk_ptl_am_hardware_init();
+	sctk_ptl_am_software_init(&srail, 1);
+	return 0;
 }
+
 
 int arpc_emit_call_ptl(sctk_arpc_context_t* ctx, const void* input, size_t req_size, void** response, size_t*resp_size)
 {
-	not_implemented();
+	sctk_ptl_am_send_request(&srail, ctx->srvcode, ctx->rpcode, input, req_size, response, resp_size, sctk_ptl_am_self(&srail));
+	return 0;
 }
+
 int arpc_recv_call_ptl(sctk_arpc_context_t* ctx, const void* input, size_t req_size, void** response, size_t*resp_size)
 {
 	not_implemented();
