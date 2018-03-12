@@ -171,7 +171,7 @@ void __mpcomp_task_finalize_deps(mpcomp_task_t *task) {
     const int prev =
         sctk_atomics_fetch_and_decr_int(&(succ_node->predecessors)) - 1;
 
-    if( !prev )
+    if( !prev && task_node->if_clause)
     {
       if( sctk_atomics_load_int( &( succ_node->status ) ) != MPCOMP_TASK_DEP_TASK_FINALIZED )
        if( sctk_atomics_cas_int( &( succ_node->status ), MPCOMP_TASK_DEP_TASK_NOT_EXECUTE, MPCOMP_TASK_DEP_TASK_RELEASED )
@@ -278,6 +278,7 @@ void mpcomp_task_with_deps(void (*fn)(void *), void *data,
   predecessors_num = __mpcomp_task_process_deps(
       task_node, current_task->task_dep_infos->htable, depend);
 
+  task_node->if_clause = if_clause;
   task_node->task = new_task;
   new_task->task_dep_infos->node = task_node;
   /* Should be remove TOTEST */
@@ -289,12 +290,9 @@ void mpcomp_task_with_deps(void (*fn)(void *), void *data,
                          MPCOMP_TASK_DEP_TASK_NOT_EXECUTE);
 
   if (!if_clause) {
-    /* Task with if_clause can be add to list */
-    if( sctk_atomics_cas_int(&(task_node->status), MPCOMP_TASK_DEP_TASK_NOT_EXECUTE, MPCOMP_TASK_DEP_TASK_FINALIZED )
-      != MPCOMP_TASK_DEP_TASK_NOT_EXECUTE )
-	    /* TODO: check this return vs. wait_deps */
-      return; //If clause should be prevent __mpcomp_task_process when deps are resolved -> More info in task 
-    __mpcomp_task_wait_deps(task_node);
+        while (sctk_atomics_load_int(&(task_node->predecessors))) {
+            mpcomp_task_schedule(0);
+        }
   }
 
   if (sctk_atomics_load_int(&(task_node->predecessors)) == 0) {

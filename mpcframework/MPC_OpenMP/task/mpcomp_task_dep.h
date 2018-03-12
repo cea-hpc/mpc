@@ -78,6 +78,7 @@ typedef struct mpcomp_task_dep_node_s {
   struct mpcomp_task_s *task;
   sctk_atomics_int status;
   struct mpcomp_task_dep_node_list_s *successors;
+  bool if_clause;
 } mpcomp_task_dep_node_t;
 
 typedef struct mpcomp_task_dep_node_list_s {
