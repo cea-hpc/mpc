@@ -61,6 +61,7 @@
   <xs:complexType name="user_type_arpc_type">
     <xs:all>
       <xs:element minOccurs="0" name="net_layer" type="user_type_net_layer_type"/>
+      <xs:element minOccurs="0" name="nb_srv" type="xs:integer"/>
     </xs:all>
   </xs:complexType>
   <!-- ********************************************************* -->

@@ -129,6 +129,7 @@ void sctk_runtime_config_struct_init_arpc_type(void * struct_ptr)
 
 	/* Simple params : */
 	obj->net_layer = ARPC_MPI;
+	obj->nb_srv = 1;
 	obj->init_done = 1;
 }
 

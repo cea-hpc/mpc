@@ -17,6 +17,7 @@ meta.types = {
 	}},
 	arpc_type : {type: 'struct', name: "arpc_type", childs: {
 		net_layer: {mode: 'param', name: "net_layer", type: "net_layer_type", doc: "Net Layer for the run", dflt: "ARPC_MPI", },
+		nb_srv: {mode: 'param', name: "nb_srv", type: "int", doc: "Default number of services to start during ARPC initialization", dflt: "1", },
 	}},
 	allocator : {type: 'struct', name: "allocator", childs: {
 		numa_migration: {mode: 'param', name: "numa_migration", type: "bool", doc: "Enable or disable NUMA migration of allocator pages on thread migration.", dflt: "false", },

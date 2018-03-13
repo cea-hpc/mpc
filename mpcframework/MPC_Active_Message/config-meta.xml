@@ -9,6 +9,7 @@
 
 		<struct name="arpc_type" doc="ARPC implementation for MPC">
 			<param name="net_layer" type="net_layer_type" default="ARPC_MPI" doc="Net Layer for the run"/>
+			<param name="nb_srv" type="int" default="1" doc="Default number of services to start during ARPC initialization"/>
 		</struct>
 	</usertypes>
 

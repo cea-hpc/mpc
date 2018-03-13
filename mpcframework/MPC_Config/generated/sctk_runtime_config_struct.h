@@ -88,6 +88,8 @@ struct sctk_runtime_config_struct_arpc_type
 {	int init_done;
 	/**Net Layer for the run**/
 	enum net_layer_type net_layer;
+	/**Default number of services to start during ARPC initialization**/
+	int nb_srv;
 };
 
 /******************************** STRUCTURE *********************************/
