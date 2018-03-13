@@ -26,31 +26,43 @@
 
 #include "ptl_layer.h"
 #include "sctk_ptl_am_iface.h"
+#include "sctk_config.h"
 
 static sctk_ptl_am_rail_info_t srail;
 
-int arpc_init_ptl()
+int arpc_init_ptl(int nb_srv)
 {
 	srail = sctk_ptl_am_hardware_init();
-	sctk_ptl_am_software_init(&srail, 1);
+	sctk_ptl_am_software_init(&srail, nb_srv);
 	return 0;
 }
 
 
 int arpc_emit_call_ptl(sctk_arpc_context_t* ctx, const void* input, size_t req_size, void** response, size_t*resp_size)
 {
+	/** TODO: REMOTE */
 	sctk_ptl_am_send_request(&srail, ctx->srvcode, ctx->rpcode, input, req_size, response, resp_size, sctk_ptl_am_self(&srail));
 	return 0;
 }
 
 int arpc_recv_call_ptl(sctk_arpc_context_t* ctx, const void* input, size_t req_size, void** response, size_t*resp_size)
 {
-	not_implemented();
+	/** TODO: REMOTE */
+	sctk_ptl_am_send_response(&srail, ctx->srvcode, ctx->rpcode, *response, *resp_size, sctk_ptl_am_self(&srail));
+
+	return 0;
 }
 
 int arpc_polling_request_ptl(sctk_arpc_context_t* ctx)
 {
 	not_implemented();
+	return 1;
+}
+
+int arpc_register_service_ptl(int srvcode)
+{
+	sctk_ptl_am_pte_create(&srail, srvcode);
+	return 0;
 }
 
 #endif

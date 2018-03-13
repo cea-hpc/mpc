@@ -29,14 +29,9 @@
 
 static sctk_atomics_int atomic_tag = OPA_INT_T_INITIALIZER(0);
 
-int arpc_init_mpi()
+int arpc_init_mpi(int nb_srv)
 {
-	int f;
-	/*MPI_Initialized( &f );*/
-	/*if(!f)*/
-	/*{*/
-		/*MPI_Init_thread(0, NULL, MPI_THREAD_MULTIPLE, NULL);*/
-	/*}*/
+	return 0;
 }
 
 /**
@@ -69,7 +64,7 @@ int arpc_emit_call_mpi(sctk_arpc_context_t* ctx, const void* input, size_t req_s
 	else
 	{
 		MPI_Send(&mpi_ctx, SCTK_SIZEOF_INTERNAL_CTX, MPI_BYTE, ctx->dest, MPI_ARPC_TAG, MPI_COMM_WORLD );
-		MPI_Send(input, req_size, MPI_BYTE, ctx->dest, mpi_ctx.next_tag, MPI_COMM_WORLD );
+		MPI_Send((void*)input, req_size, MPI_BYTE, ctx->dest, mpi_ctx.next_tag, MPI_COMM_WORLD );
 	}
 
 	/* Now, wait for the request to complete.
@@ -130,7 +125,7 @@ int arpc_recv_call_mpi(sctk_arpc_context_t* ctx, const void* request, size_t req
 	else
 	{
 		request = sctk_malloc(req_size + 1);
-		MPI_Recv(request , req_size, MPI_BYTE , ctx->dest , mpi_ctx.next_tag , MPI_COMM_WORLD , MPI_STATUS_IGNORE );
+		MPI_Recv((void*)request , req_size, MPI_BYTE , ctx->dest , mpi_ctx.next_tag , MPI_COMM_WORLD , MPI_STATUS_IGNORE );
 	}
 	
 	((char*)request)[req_size] = '\0';
@@ -142,7 +137,7 @@ int arpc_recv_call_mpi(sctk_arpc_context_t* ctx, const void* request, size_t req
 	ret = arpc_c_to_cxx_converter(ctx, request, req_size, response_addr, resp_size );
 
 	if(request != mpi_ctx.raw)
-		sctk_free(request);
+		sctk_free((void*)request);
 	
 	/* now, if there is something to return */
 	if(*response_addr != NULL)
@@ -171,4 +166,10 @@ int arpc_polling_request_mpi(sctk_arpc_context_t* ctx)
 
 	return arpc_recv_call(ctx, request, req_size, &response, &resp_size);
 
+}
+
+int arpc_register_service_mpi(int srvcode)
+{
+	/* nothing to do */
+	return -1;
 }

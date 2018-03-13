@@ -22,22 +22,26 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#include <arpc.h>
+#include "arpc.h"
 #include <sctk_runtime_config.h>
-#include "../comm_layer/mpi_layer.h"
-#include "../comm_layer/ptl_layer.h"
+#include "mpi_layer.h"
+#include "ptl_layer.h"
 
+static int (*reg_fn)(int);
 static int (*emit_fn)(sctk_arpc_context_t*, const void*, size_t, void**, size_t*) = NULL;
 static int (*recv_fn)(sctk_arpc_context_t*, const void*, size_t, void**, size_t*) = NULL;
 static int (*poll_fn)(sctk_arpc_context_t*) = NULL;
-static int (*init_fn)() = NULL;
+static int (*init_fn)(int) = NULL;
+
+static struct sctk_runtime_config_struct_arpc_type arpc_config;
 
 static void __arpc_init_callbacks()
 {
 
-	switch(sctk_runtime_config_get()->modules.arpc.net_layer)
+	switch(arpc_config.net_layer)
 	{
 		case ARPC_MPI:
+			reg_fn  = arpc_register_service_mpi;
 			emit_fn = arpc_emit_call_mpi;
 			recv_fn = arpc_recv_call_mpi;
 			poll_fn = arpc_polling_request_mpi;
@@ -45,6 +49,7 @@ static void __arpc_init_callbacks()
 			break;
 		case ARPC_PTL:
 #ifdef MPC_USE_PORTALS
+			reg_fn  = arpc_register_service_ptl;
 			emit_fn = arpc_emit_call_ptl;
 			recv_fn = arpc_recv_call_ptl;
 			poll_fn = arpc_polling_request_ptl;
@@ -62,9 +67,15 @@ static void __arpc_init_callbacks()
 
 void arpc_init()
 {
+	arpc_config = sctk_runtime_config_get()->modules.arpc;
 	__arpc_init_callbacks();
 	sctk_assert(init_fn);
-	init_fn();
+	init_fn(arpc_config.nb_srv);
+}
+
+int arpc_register_service(int code)
+{
+	return reg_fn(code);
 }
 
 int arpc_emit_call(sctk_arpc_context_t* ctx, const void* input, size_t req_size, void** response, size_t*resp_size)
