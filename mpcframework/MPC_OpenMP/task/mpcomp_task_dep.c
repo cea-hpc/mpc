@@ -171,7 +171,7 @@ void __mpcomp_task_finalize_deps(mpcomp_task_t *task) {
     const int prev =
         sctk_atomics_fetch_and_decr_int(&(succ_node->predecessors)) - 1;
 
-    if( !prev && task_node->if_clause)
+    if( !prev && succ_node->if_clause)
     {
       if( sctk_atomics_load_int( &( succ_node->status ) ) != MPCOMP_TASK_DEP_TASK_FINALIZED )
        if( sctk_atomics_cas_int( &( succ_node->status ), MPCOMP_TASK_DEP_TASK_NOT_EXECUTE, MPCOMP_TASK_DEP_TASK_RELEASED )
