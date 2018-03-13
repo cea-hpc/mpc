@@ -27,14 +27,14 @@
 #define SCTK_PTL_AM_TYPES_H_
 
 #include <portals4.h>
-#include "sctk_ht.h"
+#include "sctk_spinlock.h"
 #include "sctk_io_helper.h"
 #include "sctk_atomics.h"
 
 /*********************************/
 /********** MATCH BITS ***********/
 /*********************************/
-#define SCTK_PTL_MATCH_INIT (sctk_ptl_matchbits_t) { \
+#define SCTK_PTL_MATCH_INIT (sctk_ptl_am_matchbits_t) { \
 	.data.srvcode = 0,\
 	.data.rpcode = 0, \
 	.data.tag = 0, \
@@ -50,7 +50,7 @@
 #define SCTK_PTL_AM_IGN_TYPE (1)
 #define SCTK_PTL_AM_IGN_DATA (1)
 
-#define SCTK_PTL_IGN_ALL (sctk_ptl_matchbits_t){\
+#define SCTK_PTL_IGN_ALL (sctk_ptl_am_matchbits_t){\
 	.data.srvcode = SCTK_PTL_AM_IGN_SRV,\
 	.data.rpcode = SCTK_PTL_AM_IGN_RPC, \
 	.data.tag = SCTK_PTL_AM_IGN_TAG, \
@@ -66,7 +66,7 @@
 #define SCTK_PTL_AM_MATCH_TYPE (0)
 #define SCTK_PTL_AM_MATCH_DATA (0)
 
-#define SCTK_PTL_MATCH_BUILD(a,b,c,d,e,f) (sctk_ptl_matchbits_t){\
+#define SCTK_PTL_MATCH_BUILD(a,b,c,d,e,f) (sctk_ptl_am_matchbits_t){\
 	.data.srvcode = a, \
 	.data.rpcode = b, \
 	.data.tag = c, \
@@ -77,7 +77,7 @@
 
 
 /******* HELPERS *******/
-#define SCTK_PTL_IGN_FOR_REQ (sctk_ptl_matchbits_t) {\
+#define SCTK_PTL_IGN_FOR_REQ (sctk_ptl_am_matchbits_t) {\
 	.data.srvcode = SCTK_PTL_AM_MATCH_SRV,\
 	.data.rpcode = SCTK_PTL_AM_IGN_RPC, \
 	.data.tag = SCTK_PTL_AM_IGN_TAG, \
@@ -86,7 +86,7 @@
 	.data.is_large = SCTK_PTL_AM_MATCH_LARGE \
 }
 
-#define SCTK_PTL_IGN_FOR_REP (sctk_ptl_matchbits_t) {\
+#define SCTK_PTL_IGN_FOR_REP (sctk_ptl_am_matchbits_t) {\
 	.data.srvcode = SCTK_PTL_AM_MATCH_SRV,\
 	.data.rpcode = SCTK_PTL_AM_IGN_RPC, \
 	.data.tag = SCTK_PTL_AM_MATCH_TAG, \
@@ -95,7 +95,7 @@
 	.data.is_large = SCTK_PTL_AM_MATCH_LARGE \
 }
 
-#define SCTK_PTL_IGN_FOR_LARGE (sctk_ptl_matchbits_t) {\
+#define SCTK_PTL_IGN_FOR_LARGE (sctk_ptl_am_matchbits_t) {\
 	.data.srvcode = SCTK_PTL_AM_MATCH_SRV,\
 	.data.rpcode = SCTK_PTL_AM_MATCH_RPC, \
 	.data.tag = SCTK_PTL_AM_MATCH_TAG, \
@@ -114,6 +114,7 @@
 #define SCTK_PTL_AM_ME_PUT_FLAGS SCTK_PTL_AM_ME_FLAGS | PTL_ME_OP_PUT
 #define SCTK_PTL_AM_ME_GET_FLAGS SCTK_PTL_AM_ME_FLAGS | PTL_ME_OP_GET
 #define SCTK_PTL_ONCE PTL_ME_USE_ONCE
+#define SCTK_PTL_AM_ME_NO_OFFSET (-1)
 
 
 /*********************************/
@@ -180,22 +181,22 @@ struct sctk_ptl_am_bits_content_s
 	char       not_used:1; /**< Not used (yet)                              */
 };
 
-typedef union sctk_ptl_am_matchbits_t
+typedef union sctk_ptl_am_matchbits_s
 {
 	ptl_match_bits_t raw;                /**< raw */
 	struct sctk_ptl_am_bits_content_s data; /**< driver-managed */
-} sctk_ptl_matchbits_t;
+} sctk_ptl_am_matchbits_t;
 
-
+#define SCTK_PTL_NO_IMM_DATA (sctk_ptl_am_imm_data_t) {.raw = 0}
 typedef union sctk_ptl_am_imm_data_s
 {
 	uint64_t raw;                   /**< the raw */
 	struct __imm_data_s
 	{
-		uint32_t tag;
+		uint32_t offset;
 		uint32_t not_used;
 	} data;
-} sctk_ptl_imm_data_t;
+} sctk_ptl_am_imm_data_t;
 
 union sctk_ptl_slot_u
 {
@@ -213,7 +214,7 @@ typedef struct sctk_ptl_local_data_s
 {
 	union sctk_ptl_slot_u slot;     /**< the request (MD or ME) */
 	union sctk_ptl_slot_h_u slot_h; /**< the request Handle */
-	sctk_ptl_matchbits_t match;     /**< request match bits */
+	sctk_ptl_am_matchbits_t match;     /**< request match bits */
 } sctk_ptl_am_local_data_t;
 
 typedef struct sctk_ptl_am_chunk_s
@@ -264,10 +265,9 @@ typedef struct sctk_ptl_am_rail_info_s
 
 	/**TODO: List of MD chunks */
 	sctk_ptl_eq_t mds_eq;
-	sctk_spinlock_t md_lock;
-	sctk_ptl_am_chunk_t* md_head;
+	sctk_ptl_am_local_data_t md_slot;
 
-	struct MPCHT pt_table;                  /**< The PT hash table */
+	sctk_ptl_am_pte_t** pte_table; /**< The PT hash table */
 	size_t nb_entries;                      /**< current number of PT entries */
 	size_t eager_limit;                     /**< the max size for a small payload */
 	

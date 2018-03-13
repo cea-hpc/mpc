@@ -39,7 +39,7 @@
 #if !defined(NDEBUG)
 #define sctk_ptl_chk(x) do { int __ret = 0; \
     static int ___env = -1; \
-	if(___env) { \
+	if(___env == -1) { \
 		___env = (getenv("MPC_PTL_DEBUG") != NULL);\
 	}\
 	if(___env) \
@@ -166,7 +166,7 @@ static inline const char const * sctk_ptl_rc_decode(int rc)
 		case PTL_CT_NONE_REACHED: return "PTL_CT_NONE_REACHED"; break;
 		default:
 		{
-			char* buf = sctk_malloc(sizeof(char) * 40);
+			char* buf = (char*)sctk_malloc(sizeof(char) * 40);
 			snprintf(buf, 40, "Portals return code not known: %d", rc); 
 			return buf;
 			break;

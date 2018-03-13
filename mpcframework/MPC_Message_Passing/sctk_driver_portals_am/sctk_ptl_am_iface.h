@@ -39,16 +39,16 @@
 #if !defined(NDEBUG)
 #define sctk_ptl_chk(x) do { int __ret = 0; \
     static int ___env = -1; \
-	if(___env) { \
+	if(___env == -1) { \
 		___env = (getenv("MPC_PTL_DEBUG") != NULL);\
 	}\
 	if(___env) \
-    		sctk_debug("%s -> %s (%s:%u)", #x, sctk_ptl_am_rc_decode(__ret), __FILE__, (unsigned int)__LINE__); \
+    		sctk_warning("%s (%s:%u)", #x, __FILE__, (unsigned int)__LINE__); \
     switch (__ret = x) { \
 	case PTL_EQ_EMPTY: \
 	case PTL_CT_NONE_REACHED: \
         case PTL_OK: break; \
-	default: sctk_fatal("%s -> %s (%s:%u)", #x, sctk_ptl_am_rc_decode(__ret), __FILE__, (unsigned int)__LINE__); break; \
+	default: CRASH(); sctk_fatal("%s -> %s (%s:%u)", #x, sctk_ptl_am_rc_decode(__ret), __FILE__, (unsigned int)__LINE__); break; \
     } } while (0)
 #else
 #define sctk_ptl_chk(x) x
@@ -67,12 +67,12 @@ void sctk_ptl_am_software_init(sctk_ptl_am_rail_info_t*, int);
 void sctk_ptl_am_software_fini(sctk_ptl_am_rail_info_t*);
 
 /* Portals table management */
-void sctk_ptl_am_pte_create(sctk_ptl_am_rail_info_t* srail, sctk_ptl_am_pte_t* pte, size_t key);
+void sctk_ptl_am_pte_create(sctk_ptl_am_rail_info_t* srail, size_t key);
 
 /* ME management */
-sctk_ptl_am_local_data_t* sctk_ptl_am_me_create(void*, size_t, sctk_ptl_id_t, sctk_ptl_matchbits_t, sctk_ptl_matchbits_t, int);
-sctk_ptl_am_local_data_t* sctk_ptl_am_me_create_with_cnt(sctk_ptl_am_rail_info_t* srail, void*, size_t, sctk_ptl_id_t, sctk_ptl_matchbits_t, sctk_ptl_matchbits_t, int);
-void sctk_ptl_am_me_register(sctk_ptl_am_rail_info_t* srail, sctk_ptl_am_local_data_t*, sctk_ptl_am_pte_t*);
+sctk_ptl_am_local_data_t* sctk_ptl_am_me_create(void*, size_t, sctk_ptl_id_t, sctk_ptl_am_matchbits_t, sctk_ptl_am_matchbits_t, int);
+sctk_ptl_am_local_data_t* sctk_ptl_am_me_create_with_cnt(sctk_ptl_am_rail_info_t* srail, void*, size_t, sctk_ptl_id_t, sctk_ptl_am_matchbits_t, sctk_ptl_am_matchbits_t, int);
+void sctk_ptl_am_me_register(sctk_ptl_am_rail_info_t* srail, sctk_ptl_am_local_data_t* user_ptr, sctk_ptl_am_pte_t* pte);
 void sctk_ptl_am_me_release(sctk_ptl_am_local_data_t*);
 void sctk_ptl_am_me_free(sctk_ptl_am_local_data_t*, int);
 void sctk_ptl_am_me_feed(sctk_ptl_am_rail_info_t* srail, sctk_ptl_am_pte_t* pte, size_t me_size, int nb, int list, char type, char protocol);
@@ -80,14 +80,14 @@ void sctk_ptl_am_me_feed(sctk_ptl_am_rail_info_t* srail, sctk_ptl_am_pte_t* pte,
 /* event management */
 void sctk_ptl_ct_free(sctk_ptl_cnth_t cth);
 
-/* MD management */
-sctk_ptl_am_local_data_t* sctk_ptl_am_md_create(sctk_ptl_am_rail_info_t* srail, void*, size_t, int);
-void sctk_ptl_am_md_register(sctk_ptl_am_rail_info_t* srail, sctk_ptl_am_local_data_t*);
-void sctk_ptl_am_md_release(sctk_ptl_am_local_data_t*);
-
 /* Request management */
-int sctk_ptl_am_emit_get(sctk_ptl_am_local_data_t*, size_t, sctk_ptl_id_t, sctk_ptl_am_pte_t*, sctk_ptl_matchbits_t, size_t, size_t, void*);
-int sctk_ptl_am_emit_put(sctk_ptl_am_local_data_t*, size_t, sctk_ptl_id_t, sctk_ptl_am_pte_t*, sctk_ptl_matchbits_t, size_t, size_t, size_t, void*);
+int sctk_ptl_am_emit_get(sctk_ptl_am_local_data_t*, size_t, sctk_ptl_id_t, sctk_ptl_am_pte_t*, sctk_ptl_am_matchbits_t, size_t, size_t, void*);
+int sctk_ptl_am_emit_put(sctk_ptl_am_local_data_t*, size_t, sctk_ptl_id_t, sctk_ptl_am_pte_t*, sctk_ptl_am_matchbits_t, size_t, size_t, sctk_ptl_am_imm_data_t, void*);
+
+
+void sctk_ptl_am_send_request(sctk_ptl_am_rail_info_t* srail, int srv, int rpc, const void* start_in, size_t sz_in, void** start_out, size_t* sz_out, sctk_ptl_id_t remote);
+void sctk_ptl_am_send_response(sctk_ptl_am_rail_info_t* srail, int srv, int rpc, void* start, size_t sz, sctk_ptl_id_t remote);
+
 
 /**************************************************************/
 /*************************** HELPERS **************************/
@@ -119,7 +119,7 @@ static inline const char const * sctk_ptl_am_rc_decode(int rc)
 		case PTL_CT_NONE_REACHED: return "PTL_CT_NONE_REACHED"; break;
 		default:
 		{
-			char* buf = sctk_malloc(sizeof(char) * 40);
+			char* buf = (char*)sctk_malloc(sizeof(char) * 40);
 			snprintf(buf, 40, "Portals return code not known: %d", rc); 
 			return buf;
 			break;
@@ -291,7 +291,8 @@ static inline int sctk_ptl_am_eq_poll_me(sctk_ptl_am_rail_info_t* srail, sctk_pt
  */
 static inline const char const* __sctk_ptl_am_match_str(char*buf, size_t s, ptl_match_bits_t m)
 {
-	sctk_ptl_matchbits_t m2 = (sctk_ptl_matchbits_t)m;
+	sctk_ptl_am_matchbits_t m2;
+	m2.raw = m;
 	snprintf(buf, s, "[%u/%u]{%u} -> %u%u%u", m2.data.srvcode, m2.data.rpcode, m2.data.tag, m2.data.inc_data, m2.data.is_req, m2.data.is_large);
 	return buf;
 }
