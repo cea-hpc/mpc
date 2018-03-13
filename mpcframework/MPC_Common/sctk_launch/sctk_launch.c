@@ -75,6 +75,10 @@
 #include "sctk_ft_iface.h"
 #endif
 
+#ifdef MPC_Active_Message
+#include "arpc_common.h"
+#endif
+
 #define SCTK_START_KEYWORD "--sctk-args--"
 
 #define SCTK_LOCAL_VERSION_MAJOR 0
@@ -391,7 +395,7 @@ static void sctk_perform_initialisation (void)
 	{
 #ifdef MPC_Message_Passing
 		sctk_communicator_world_init (sctk_task_nb_val);
-		sctk_communicator_self_init (sctk_task_nb_val);
+		sctk_communicator_self_init ();
 #else
 		(void) (0);
 #endif
@@ -755,7 +759,7 @@ static int sctk_env_init_intern(int *argc, char ***argv) {
     }
   }
 
-  new_argv = sctk_malloc(sctk_initial_argc * sizeof(char *));
+  new_argv = (char**)sctk_malloc(sctk_initial_argc * sizeof(char *));
   sctk_nodebug("LAUNCH allocate %p of size %lu", new_argv,
                (unsigned long)(sctk_initial_argc * sizeof(char *)));
 
