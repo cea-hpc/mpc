@@ -43,7 +43,7 @@
 		___env = (getenv("MPC_PTL_DEBUG") != NULL);\
 	}\
 	if(___env) \
-    		sctk_warning("%s (%s:%u)", #x, __FILE__, (unsigned int)__LINE__); \
+    		sctk_debug("%s (%s:%u)", #x, __FILE__, (unsigned int)__LINE__); \
     switch (__ret = x) { \
 	case PTL_EQ_EMPTY: \
 	case PTL_CT_NONE_REACHED: \
@@ -59,6 +59,7 @@
 /**************************************************************/
 
 /* Hardware-related init */
+sctk_ptl_id_t sctk_ptl_am_map_id(sctk_ptl_am_rail_info_t* srail, int dest);
 sctk_ptl_am_rail_info_t sctk_ptl_am_hardware_init();
 void sctk_ptl_am_hardware_fini();
 
@@ -84,9 +85,11 @@ void sctk_ptl_ct_free(sctk_ptl_cnth_t cth);
 int sctk_ptl_am_emit_get(sctk_ptl_am_local_data_t*, size_t, sctk_ptl_id_t, sctk_ptl_am_pte_t*, sctk_ptl_am_matchbits_t, size_t, size_t, void*);
 int sctk_ptl_am_emit_put(sctk_ptl_am_local_data_t*, size_t, sctk_ptl_id_t, sctk_ptl_am_pte_t*, sctk_ptl_am_matchbits_t, size_t, size_t, sctk_ptl_am_imm_data_t, void*);
 
+void sctk_ptl_am_incoming_lookup(sctk_ptl_am_rail_info_t* srail);
+void sctk_ptl_am_outgoing_lookup(sctk_ptl_am_rail_info_t* srail);
 
-void sctk_ptl_am_send_request(sctk_ptl_am_rail_info_t* srail, int srv, int rpc, const void* start_in, size_t sz_in, void** start_out, size_t* sz_out, sctk_ptl_id_t remote);
-void sctk_ptl_am_send_response(sctk_ptl_am_rail_info_t* srail, int srv, int rpc, void* start, size_t sz, sctk_ptl_id_t remote);
+void sctk_ptl_am_send_request(sctk_ptl_am_rail_info_t* srail, int srv, int rpc, const void* start_in, size_t sz_in, void** start_out, size_t* sz_out, int remote);
+void sctk_ptl_am_send_response(sctk_ptl_am_rail_info_t* srail, int srv, int rpc, void* start, size_t sz, int remote);
 
 
 /**************************************************************/
@@ -253,8 +256,8 @@ static inline int sctk_ptl_am_eq_poll_md(sctk_ptl_am_rail_info_t* srail, sctk_pt
 	int ret;
 	
 	assert(ev);
-	/* ret = PtlEQGet(srail->mds_eq, ev); */
-	/* sctk_ptl_chk(ret); */
+	ret = PtlEQGet(srail->mds_eq, ev);
+	sctk_ptl_chk(ret);
 	
 	return ret;
 }
@@ -293,7 +296,33 @@ static inline const char const* __sctk_ptl_am_match_str(char*buf, size_t s, ptl_
 {
 	sctk_ptl_am_matchbits_t m2;
 	m2.raw = m;
-	snprintf(buf, s, "[%u/%u]{%u} -> %u%u%u", m2.data.srvcode, m2.data.rpcode, m2.data.tag, m2.data.inc_data, m2.data.is_req, m2.data.is_large);
+	snprintf(buf, s, "[S%u/R%u]{T%u} -> D%u-R%u-L%u", m2.data.srvcode, m2.data.rpcode, m2.data.tag, m2.data.inc_data & 0x1, m2.data.is_req & 0x1, m2.data.is_large & 0x1);
+
+/* 	int i = 0;
+	for (i = 63; i >= 0; i--)
+	{
+		snprintf(buf+(63-i), s-(63-i), "%d", (m2.raw >> i) & 0x1);
+	} */
+	return buf;
+}
+
+static inline const char const* __sctk_ptl_am_ign_str(char*buf, size_t s, ptl_match_bits_t m)
+{
+	sctk_ptl_am_matchbits_t m2;
+	m2.raw = m;
+	snprintf(buf, s, "[S?%u/R?%u]{T?%u} -> D?%u-R?%u-L?%u", 
+		m2.data.srvcode == SCTK_PTL_AM_IGN_SRV,
+		m2.data.rpcode == SCTK_PTL_AM_IGN_RPC,
+		m2.data.tag == SCTK_PTL_AM_IGN_TAG,
+		m2.data.inc_data == SCTK_PTL_AM_IGN_DATA,
+		m2.data.is_req == SCTK_PTL_AM_IGN_TYPE,
+		m2.data.is_large == SCTK_PTL_AM_IGN_LARGE);
+
+/* 	int i = 0;
+	for (i = 63; i >= 0; i--)
+	{
+		snprintf(buf+(63-i), s-(63-i), "%d", (m2.raw >> i) & 0x1);
+	} */
 	return buf;
 }
 
