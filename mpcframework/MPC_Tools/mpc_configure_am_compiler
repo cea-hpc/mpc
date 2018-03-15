@@ -93,7 +93,7 @@ public:
 	void add(Service* srv)
 	{
 		srv_array.insert(std::pair<srv_type_e,ARPC::Service*>(srv->__type(), srv));
-		arpc_register_service(srv->__type());
+		arpc_register_service(this, srv->__type());
 	}
 
 	Service* find(srv_type_e k)
@@ -113,7 +113,7 @@ class Send : public Service
 {
 private:
 public:
-	Send() : Service(\${serv}_T){ arpc_register_service(\${serv}_T);}
+	Send() : Service(\${serv}_T){ arpc_register_service(NULL, \${serv}_T);}
 	virtual ~Send() {}
 "
 	recv_code="

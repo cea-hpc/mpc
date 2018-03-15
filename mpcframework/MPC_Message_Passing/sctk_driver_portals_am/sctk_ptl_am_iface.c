@@ -27,6 +27,7 @@
 #include "sctk_debug.h"
 #include "sctk_alloc.h"
 #include "sctk_io_helper.h"
+#include "ptl_layer.h"
 #include "sctk_ptl_am_iface.h"
 #include "sctk_ptl_am_types.h"
 #include "sctk_atomics.h"
@@ -38,6 +39,7 @@ static sctk_ptl_id_t* id_maps = NULL;
 
 static inline int __sctk_ptl_am_id_undefined(sctk_ptl_id_t r)
 {
+	// sctk_warning("check %d/%d", r.phys.nid, r.phys.pid);
 	return (r.phys.nid == PTL_NID_ANY && r.phys.pid == PTL_PID_ANY);
 }
 
@@ -284,7 +286,7 @@ void sctk_ptl_am_software_init(sctk_ptl_am_rail_info_t* srail, int nb_srv)
 	}
 
 	id_maps[sctk_get_process_rank()] = sctk_ptl_am_self(srail);
-
+	sctk_error("MYSELF: %d/%d", srail->id.phys.nid, srail->id.phys.pid);
 	sctk_ptl_am_print_structure(srail);
 }
 
@@ -410,17 +412,11 @@ void sctk_ptl_am_send_request(sctk_ptl_am_rail_info_t* srail, int srv, int rpc, 
 	md_ign = SCTK_PTL_IGN_FOR_REQ;
 
 	/* emit the PUT */
-	sctk_warning("PUT %d %s", pte->idx, __sctk_ptl_am_match_str((char*)sctk_malloc(70), 70, md_match.raw));
+	// sctk_warning("PUT %d %s", pte->idx, __sctk_ptl_am_match_str((char*)sctk_malloc(70), 70, md_match.raw));
 	sctk_ptl_am_emit_put(&srail->md_slot, sz_in, remote, pte, md_match, (size_t)start_in, SCTK_PTL_AM_ME_NO_OFFSET, me_off, NULL);
-
-	while(true)
-	{
-		sctk_ptl_am_outgoing_lookup(srail);
-		sctk_ptl_am_incoming_lookup(srail);
-	}
 }
 
-void sctk_ptl_am_send_response(sctk_ptl_am_rail_info_t* srail, int srv, int rpc, void* start, size_t sz, int remote_id)
+void sctk_ptl_am_send_response(sctk_ptl_am_rail_info_t* srail, int srv, int rpc, void* start, size_t sz, int remote_id, int tag, int offset)
 {
 	sctk_ptl_am_pte_t* pte = srail->pte_table[srv];
 	sctk_ptl_am_matchbits_t md_match, md_ign;
@@ -432,9 +428,6 @@ void sctk_ptl_am_send_response(sctk_ptl_am_rail_info_t* srail, int srv, int rpc,
 		remote = sctk_ptl_am_map_id(srail, remote_id);
 		sctk_assert(!__sctk_ptl_am_id_undefined(remote));
 	}
-
-	/** TODO */
-	int tag = -1, offset = -1;
 
 	/******************************************/
 	/******************************************/
@@ -458,6 +451,8 @@ void sctk_ptl_am_send_response(sctk_ptl_am_rail_info_t* srail, int srv, int rpc,
 	md_match = SCTK_PTL_MATCH_BUILD(srv, rpc, tag , (sz == 0), SCTK_PTL_AM_REP_TYPE, SCTK_PTL_AM_OP_SMALL);
 	md_ign = SCTK_PTL_IGN_FOR_REP;
 
+	// sctk_warning("PUT %d %s", pte->idx, __sctk_ptl_am_match_str((char*)sctk_malloc(70), 70, md_match.raw));
+	
 	/* emit the PUT */
 	sctk_ptl_am_emit_put(&srail->md_slot, sz, remote, pte, md_match, (size_t)start, offset, SCTK_PTL_NO_IMM_DATA, NULL);
 }
@@ -554,14 +549,13 @@ void sctk_ptl_am_incoming_lookup(sctk_ptl_am_rail_info_t* srail)
 	ret = sctk_ptl_am_eq_poll_me(srail, pte, &ev);
 	if(ret == PTL_OK)
 	{
-		sctk_error("Find an event on entry %d", pte->idx);
+		sctk_ptl_am_matchbits_t m;
+		m.raw = ev.match_bits;
+		sctk_arpc_context_t ctx = (sctk_arpc_context_t) {.dest = 1, .srvcode = ev.pt_index, .rpcode = m.data.rpcode};
+		void* resp_buf;
+		size_t sz;
+		arpc_recv_call_ptl(&ctx, ev.start, ev.mlength, &resp_buf, &sz, m.data.tag , ev.hdr_data );
 	}
-	else
-	{
-		if(ret != PTL_EQ_EMPTY)
-		sctk_error("ME Polling returned code %s", sctk_ptl_am_rc_decode(ret));
-	}
-	return;
 }
 
 
@@ -574,39 +568,8 @@ void sctk_ptl_am_outgoing_lookup(sctk_ptl_am_rail_info_t* srail)
 
 	if(ret == PTL_OK)
 	{
-		sctk_error("Find an MD event: %s", sctk_ptl_am_event_decode(ev));
 		sctk_assert(ev.ni_fail_type == PTL_NI_OK);
 	}
-	else
-	{
-		// sctk_error("MD Polling returned code %s", sctk_ptl_am_rc_decode(ret));
-	}
-}
-
-/**
- * This function will create an ME with an attached counting event.
- * This function calls sctk_ptl_me_create.
- * \param[in] srail the Portals rail
- * \param[in] start first buffer address
- * \param[in] size number of bytes to include into the ME
- * \param[in] remote the target process id
- * \param[in] match the matching bits for this slot
- * \param[in] ign the ignoring bits from the above parameter
- * \param[in] flags ME-specific flags (PUT,GET,...)
- * \return the allocated request
- */
-sctk_ptl_am_local_data_t* sctk_ptl_am_me_create_with_cnt(sctk_ptl_am_rail_info_t* srail, void * start, size_t size, sctk_ptl_id_t remote, sctk_ptl_am_matchbits_t match, sctk_ptl_am_matchbits_t ign, int flags )
-{
-	sctk_ptl_am_local_data_t* ret; 
-	
-	ret = sctk_ptl_am_me_create(start, size, remote, match, ign, flags | PTL_ME_EVENT_CT_COMM);
-
-	sctk_ptl_chk(PtlCTAlloc(
-		srail->iface,
-		&ret->slot.me.ct_handle
-	));
-
-	return ret;
 }
 
 /**
@@ -802,6 +765,8 @@ void sctk_ptl_am_create_ring ( sctk_ptl_am_rail_info_t *srail )
 			sizeof ( right_id )          /* target struct size */
 	);
 
+	id_maps[right_rank] = right_id;
+
 	//if we need an initialization to the left process (bidirectional ring)
 	if(sctk_process_number > 2)
 	{
@@ -821,6 +786,8 @@ void sctk_ptl_am_create_ring ( sctk_ptl_am_rail_info_t *srail )
 				&left_id,                   /* the target struct */
 				sizeof ( left_id )          /* target struct size */
 				);
+
+		id_maps[left_rank] = left_id;
 	}
 
 	//Wait for all processes to complete the ring topology init */
@@ -854,6 +821,9 @@ sctk_ptl_id_t sctk_ptl_am_map_id(sctk_ptl_am_rail_info_t* srail, int dest)
 			&id,               /* the target struct */
 			sizeof (id )      /* target struct size */
 	);
+
+
+	sctk_error("FOUND for %d: %d/%d", dest, id.phys.nid, id.phys.pid);
 
 	return id;
 }

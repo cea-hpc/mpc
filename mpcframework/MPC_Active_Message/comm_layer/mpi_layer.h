@@ -44,7 +44,7 @@ typedef struct sctk_arpc_mpi_ctx_s
 
 
 int arpc_init_mpi(int);
-int arpc_register_service_mpi(int srvcode);
+int arpc_register_service_mpi(void* cxx_pool, int srvcode);
 int arpc_emit_call_mpi(sctk_arpc_context_t* ctx, const void* input, size_t req_size, void** response, size_t*resp_size);
 int arpc_recv_call_mpi(sctk_arpc_context_t* ctx, const void* input, size_t req_size, void** response, size_t*resp_sizem );
 

@@ -89,8 +89,8 @@ void sctk_ptl_am_incoming_lookup(sctk_ptl_am_rail_info_t* srail);
 void sctk_ptl_am_outgoing_lookup(sctk_ptl_am_rail_info_t* srail);
 
 void sctk_ptl_am_send_request(sctk_ptl_am_rail_info_t* srail, int srv, int rpc, const void* start_in, size_t sz_in, void** start_out, size_t* sz_out, int remote);
-void sctk_ptl_am_send_response(sctk_ptl_am_rail_info_t* srail, int srv, int rpc, void* start, size_t sz, int remote);
-
+void sctk_ptl_am_send_response(sctk_ptl_am_rail_info_t* srail, int srv, int rpc, void* start, size_t sz, int remote, int, int);
+void sctk_ptl_am_create_ring ( sctk_ptl_am_rail_info_t *srail );
 
 /**************************************************************/
 /*************************** HELPERS **************************/

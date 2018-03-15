@@ -27,7 +27,7 @@
 #include "mpi_layer.h"
 #include "ptl_layer.h"
 
-static int (*reg_fn)(int);
+static int (*reg_fn)(void*,int);
 static int (*emit_fn)(sctk_arpc_context_t*, const void*, size_t, void**, size_t*) = NULL;
 static int (*recv_fn)(sctk_arpc_context_t*, const void*, size_t, void**, size_t*) = NULL;
 static int (*poll_fn)(sctk_arpc_context_t*) = NULL;
@@ -73,9 +73,9 @@ void arpc_init()
 	init_fn(arpc_config.nb_srv);
 }
 
-int arpc_register_service(int code)
+int arpc_register_service(void* pool, int code)
 {
-	return reg_fn(code);
+	return reg_fn(pool, code);
 }
 
 int arpc_emit_call(sctk_arpc_context_t* ctx, const void* input, size_t req_size, void** response, size_t*resp_size)

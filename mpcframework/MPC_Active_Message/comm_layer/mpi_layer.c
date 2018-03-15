@@ -168,7 +168,7 @@ int arpc_polling_request_mpi(sctk_arpc_context_t* ctx)
 
 }
 
-int arpc_register_service_mpi(int srvcode)
+int arpc_register_service_mpi(void* cxx_pool, int srvcode)
 {
 	/* nothing to do */
 	return -1;

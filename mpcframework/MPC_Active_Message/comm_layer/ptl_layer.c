@@ -29,6 +29,7 @@
 #include "sctk_config.h"
 
 static sctk_ptl_am_rail_info_t srail;
+volatile static void* cxx_pool;
 
 int arpc_init_ptl(int nb_srv)
 {
@@ -42,18 +43,29 @@ int arpc_init_ptl(int nb_srv)
 int arpc_emit_call_ptl(sctk_arpc_context_t* ctx, const void* input, size_t req_size, void** response, size_t*resp_size)
 {
 	sctk_ptl_am_send_request(&srail, ctx->srvcode, ctx->rpcode, input, req_size, response, resp_size, ctx->dest);
+
+	if(response != NULL)
+	{
+		while(true)
+		{
+			sctk_ptl_am_outgoing_lookup(&srail);
+			sctk_ptl_am_incoming_lookup(&srail);
+		}
+	}
 	return 0;
 }
 
-int arpc_recv_call_ptl(sctk_arpc_context_t* ctx, const void* input, size_t req_size, void** response, size_t*resp_size)
+int arpc_recv_call_ptl(sctk_arpc_context_t* ctx, const void* input, size_t req_size, void** response, size_t*resp_size, int tag, int offset)
 {
 	*response = NULL;
 	*resp_size = 0;
+
+	ctx->cxx_pool = cxx_pool;
 	arpc_c_to_cxx_converter(ctx, input, req_size, response, resp_size);	
 	
-	if(*response != NULL) /* there is something to return */
+	if(response != NULL) /* there is something to return */
 	{
-		sctk_ptl_am_send_response(&srail, ctx->srvcode, ctx->rpcode, *response, *resp_size, ctx->dest);
+		sctk_ptl_am_send_response(&srail, ctx->srvcode, ctx->rpcode, *response, *resp_size, ctx->dest, tag, offset);
 	}
 	return 0;
 }
@@ -64,8 +76,11 @@ int arpc_polling_request_ptl(sctk_arpc_context_t* ctx)
 	return 0;
 }
 
-int arpc_register_service_ptl(int srvcode)
+int arpc_register_service_ptl(void* pool, int srvcode)
 {
+	if(!cxx_pool)
+		cxx_pool = pool;
+
 	sctk_ptl_am_pte_create(&srail, srvcode);
 	return 0;
 }
