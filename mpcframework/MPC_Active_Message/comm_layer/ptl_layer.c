@@ -27,22 +27,47 @@
 #include "ptl_layer.h"
 #include "sctk_ptl_am_iface.h"
 #include "sctk_config.h"
+#include "sctk_accessor.h"
 
 static sctk_ptl_am_rail_info_t srail;
 volatile static void* cxx_pool;
 
+static size_t nb_process;
+static sctk_ptl_id_t* id_maps = NULL;
+
 int arpc_init_ptl(int nb_srv)
 {
+	int i;
 	srail = sctk_ptl_am_hardware_init();
 	sctk_ptl_am_software_init(&srail, nb_srv);
-	sctk_ptl_am_create_ring(&srail);
+
+	nb_process = sctk_get_process_number();
+	id_maps = (sctk_ptl_id_t*)sctk_malloc(sizeof(sctk_ptl_id_t) * nb_process);
+
+	for(i = 0; i < nb_process; i++)
+	{
+		id_maps[i] = SCTK_PTL_ANY_PROCESS;
+	}
+
+	id_maps[sctk_get_process_rank()] = sctk_ptl_am_self(&srail);
+
+	sctk_ptl_am_register_process(&srail);
 	return 0;
 }
 
 
 int arpc_emit_call_ptl(sctk_arpc_context_t* ctx, const void* input, size_t req_size, void** response, size_t*resp_size)
 {
-	sctk_ptl_am_send_request(&srail, ctx->srvcode, ctx->rpcode, input, req_size, response, resp_size, ctx->dest);
+	sctk_ptl_am_msg_t msg;
+
+	msg.remote = id_maps[ctx->dest];
+	if(__sctk_ptl_am_id_undefined(msg.remote))
+	{
+		msg.remote = sctk_ptl_am_map_id(&srail, ctx->dest);
+		sctk_assert(!__sctk_ptl_am_id_undefined(msg.remote));
+	}
+
+	sctk_ptl_am_send_request(&srail, ctx->srvcode, ctx->rpcode, input, req_size, response, resp_size, &msg);
 
 	if(response != NULL)
 	{
@@ -55,7 +80,7 @@ int arpc_emit_call_ptl(sctk_arpc_context_t* ctx, const void* input, size_t req_s
 	return 0;
 }
 
-int arpc_recv_call_ptl(sctk_arpc_context_t* ctx, const void* input, size_t req_size, void** response, size_t*resp_size, int tag, int offset)
+int arpc_recv_call_ptl(sctk_arpc_context_t* ctx, const void* input, size_t req_size, void** response, size_t*resp_size, sctk_ptl_am_msg_t* msg)
 {
 	*response = NULL;
 	*resp_size = 0;
@@ -65,7 +90,7 @@ int arpc_recv_call_ptl(sctk_arpc_context_t* ctx, const void* input, size_t req_s
 	
 	if(response != NULL) /* there is something to return */
 	{
-		sctk_ptl_am_send_response(&srail, ctx->srvcode, ctx->rpcode, *response, *resp_size, ctx->dest, tag, offset);
+		sctk_ptl_am_send_response(&srail, ctx->srvcode, ctx->rpcode, *response, *resp_size, ctx->dest, msg);
 	}
 	return 0;
 }

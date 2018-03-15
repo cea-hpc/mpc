@@ -242,6 +242,13 @@ typedef struct sctk_ptl_am_pte_s
 
 } sctk_ptl_am_pte_t;
 
+typedef struct sctk_ptl_am_msg_s
+{
+	sctk_ptl_id_t remote;
+	size_t offset;
+	uint32_t tag;
+} sctk_ptl_am_msg_t;
+
 /**
  * Portals-specific information specializing a rail.
  */

@@ -34,15 +34,6 @@
 #include "sctk_pmi.h"
 #include "sctk_accessor.h"
 
-static size_t nb_process;
-static sctk_ptl_id_t* id_maps = NULL;
-
-static inline int __sctk_ptl_am_id_undefined(sctk_ptl_id_t r)
-{
-	// sctk_warning("check %d/%d", r.phys.nid, r.phys.pid);
-	return (r.phys.nid == PTL_NID_ANY && r.phys.pid == PTL_PID_ANY);
-}
-
 /**
  * Will print the Portals structure.
  * \param[in] srail the Portals rail to dump
@@ -276,16 +267,7 @@ void sctk_ptl_am_software_init(sctk_ptl_am_rail_info_t* srail, int nb_srv)
 		&srail->md_slot.slot.md ,   /* the MD to bind with memory region */
 		&srail->md_slot.slot_h.mdh /* out: the MD handler */
 	));
-	
-	nb_process = sctk_get_process_number();
-	id_maps = (sctk_ptl_id_t*)sctk_malloc(sizeof(sctk_ptl_id_t) * nb_process);
 
-	for(i = 0; i < nb_process; i++)
-	{
-		id_maps[i] = SCTK_PTL_ANY_PROCESS;
-	}
-
-	id_maps[sctk_get_process_rank()] = sctk_ptl_am_self(srail);
 	sctk_error("MYSELF: %d/%d", srail->id.phys.nid, srail->id.phys.pid);
 	sctk_ptl_am_print_structure(srail);
 }
@@ -333,7 +315,7 @@ void sctk_ptl_am_pte_create(sctk_ptl_am_rail_info_t* srail, size_t key)
 	srail->nb_entries++;
 }
 
-void sctk_ptl_am_send_request(sctk_ptl_am_rail_info_t* srail, int srv, int rpc, const void* start_in, size_t sz_in, void** start_out, size_t* sz_out, int remote_id)
+void sctk_ptl_am_send_request(sctk_ptl_am_rail_info_t* srail, int srv, int rpc, const void* start_in, size_t sz_in, void** start_out, size_t* sz_out, sctk_ptl_am_msg_t* msg)
 {
 	/*
 	 * 1. if large, prepare a dedicated ME
@@ -349,15 +331,8 @@ void sctk_ptl_am_send_request(sctk_ptl_am_rail_info_t* srail, int srv, int rpc, 
 	size_t space = 0;
 	sctk_ptl_am_imm_data_t me_off;
 	sctk_ptl_am_chunk_t* c_me;
-	sctk_ptl_id_t remote;
+	sctk_ptl_id_t remote = msg->remote;
 	sctk_ptl_am_matchbits_t md_match, md_ign;
-
-	remote = id_maps[remote_id];
-	if(__sctk_ptl_am_id_undefined(remote))
-	{
-		remote = sctk_ptl_am_map_id(srail, remote_id);
-		sctk_assert(!__sctk_ptl_am_id_undefined(remote));
-	}
 
 	/******************************************/
 	/******************************************/
@@ -416,18 +391,11 @@ void sctk_ptl_am_send_request(sctk_ptl_am_rail_info_t* srail, int srv, int rpc, 
 	sctk_ptl_am_emit_put(&srail->md_slot, sz_in, remote, pte, md_match, (size_t)start_in, SCTK_PTL_AM_ME_NO_OFFSET, me_off, NULL);
 }
 
-void sctk_ptl_am_send_response(sctk_ptl_am_rail_info_t* srail, int srv, int rpc, void* start, size_t sz, int remote_id, int tag, int offset)
+void sctk_ptl_am_send_response(sctk_ptl_am_rail_info_t* srail, int srv, int rpc, void* start, size_t sz, int remote_id, sctk_ptl_am_msg_t* msg)
 {
 	sctk_ptl_am_pte_t* pte = srail->pte_table[srv];
 	sctk_ptl_am_matchbits_t md_match, md_ign;
-	sctk_ptl_id_t remote;
-
-	remote = id_maps[remote_id];
-	if(__sctk_ptl_am_id_undefined(remote))
-	{
-		remote = sctk_ptl_am_map_id(srail, remote_id);
-		sctk_assert(!__sctk_ptl_am_id_undefined(remote));
-	}
+	sctk_ptl_id_t remote = msg->remote;
 
 	/******************************************/
 	/******************************************/
@@ -436,7 +404,7 @@ void sctk_ptl_am_send_response(sctk_ptl_am_rail_info_t* srail, int srv, int rpc,
 	if(sz >= SCTK_PTL_AM_CHUNK_SZ)
 	{
 		sctk_ptl_am_local_data_t* user_ptr;
-		sctk_ptl_am_matchbits_t match = SCTK_PTL_MATCH_BUILD(srv, rpc, tag, 1, SCTK_PTL_AM_REP_TYPE, SCTK_PTL_AM_OP_LARGE);
+		sctk_ptl_am_matchbits_t match = SCTK_PTL_MATCH_BUILD(srv, rpc, msg->tag, 1, SCTK_PTL_AM_REP_TYPE, SCTK_PTL_AM_OP_LARGE);
 		sctk_ptl_am_matchbits_t ign = SCTK_PTL_IGN_FOR_LARGE;
 
 		/* register the ME */	
@@ -448,13 +416,13 @@ void sctk_ptl_am_send_response(sctk_ptl_am_rail_info_t* srail, int srv, int rpc,
 	}
 	
 	/* Set flags to match a pre-reserved response slot */
-	md_match = SCTK_PTL_MATCH_BUILD(srv, rpc, tag , (sz == 0), SCTK_PTL_AM_REP_TYPE, SCTK_PTL_AM_OP_SMALL);
+	md_match = SCTK_PTL_MATCH_BUILD(srv, rpc, msg->tag , (sz == 0), SCTK_PTL_AM_REP_TYPE, SCTK_PTL_AM_OP_SMALL);
 	md_ign = SCTK_PTL_IGN_FOR_REP;
 
 	// sctk_warning("PUT %d %s", pte->idx, __sctk_ptl_am_match_str((char*)sctk_malloc(70), 70, md_match.raw));
 	
 	/* emit the PUT */
-	sctk_ptl_am_emit_put(&srail->md_slot, sz, remote, pte, md_match, (size_t)start, offset, SCTK_PTL_NO_IMM_DATA, NULL);
+	sctk_ptl_am_emit_put(&srail->md_slot, sz, remote, pte, md_match, (size_t)start, msg->offset, SCTK_PTL_NO_IMM_DATA, NULL);
 }
 
 
@@ -551,10 +519,11 @@ void sctk_ptl_am_incoming_lookup(sctk_ptl_am_rail_info_t* srail)
 	{
 		sctk_ptl_am_matchbits_t m;
 		m.raw = ev.match_bits;
-		sctk_arpc_context_t ctx = (sctk_arpc_context_t) {.dest = 1, .srvcode = ev.pt_index, .rpcode = m.data.rpcode};
+		sctk_arpc_context_t ctx = (sctk_arpc_context_t) {.dest = -1, .srvcode = ev.pt_index, .rpcode = m.data.rpcode};
+		sctk_ptl_am_msg_t msg = (sctk_ptl_am_msg_t) { .remote = ev.initiator, .offset = ev.hdr_data, .tag = m.data.tag};
 		void* resp_buf;
 		size_t sz;
-		arpc_recv_call_ptl(&ctx, ev.start, ev.mlength, &resp_buf, &sz, m.data.tag , ev.hdr_data );
+		arpc_recv_call_ptl(&ctx, ev.start, ev.mlength, &resp_buf, &sz, &msg);
 	}
 }
 
@@ -711,12 +680,9 @@ int sctk_ptl_am_emit_put(sctk_ptl_am_local_data_t* user, size_t size, sctk_ptl_i
  * Create the initial Portals topology: the ring.
  * \param[in] rail the just-initialized Portals rail
  */
-void sctk_ptl_am_create_ring ( sctk_ptl_am_rail_info_t *srail )
+void sctk_ptl_am_register_process ( sctk_ptl_am_rail_info_t *srail )
 {
-	int right_rank, left_rank, tmp_ret;
-	sctk_ptl_id_t right_id, left_id;
-	char right_rank_connection_infos[MAX_STRING_SIZE];
-	char left_rank_connection_infos[MAX_STRING_SIZE];
+	int tmp_ret;
 
 	/** Portals initialization : Ring topology.
 	 * 1. bind to right process through PMI
@@ -740,55 +706,6 @@ void sctk_ptl_am_create_ring ( sctk_ptl_am_rail_info_t *srail )
 			SCTK_PTL_AM_PMI_TAG             /* rail ID: PMI tag */
 	);
 	assert(tmp_ret == 0);
-	id_maps[sctk_get_process_rank()] = srail->id;
-
-	/* what are my neighbour ranks ? */
-	right_rank = ( sctk_process_rank + 1 ) % sctk_process_number;
-	left_rank = ( sctk_process_rank + sctk_process_number - 1 ) % sctk_process_number;
-
-	/* wait for each process to register its own serialized ID */
-	sctk_pmi_barrier();
-
-	/* retrieve the right neighbour id struct */
-	tmp_ret = sctk_pmi_get_connection_info (
-			right_rank_connection_infos, /* the recv buffer */
-			MAX_STRING_SIZE,             /* the recv buffer max size */
-			SCTK_PTL_AM_PMI_TAG,         /* rail IB: PMI tag */
-			right_rank                   /* which process we are targeting */
-	);
-	assert(tmp_ret == 0);
-	
-	/* de-serialize the string to retrive the real ptl_id_t */
-	sctk_ptl_am_data_deserialize(
-			right_rank_connection_infos, /* the buffer containing raw data */
-			&right_id,                   /* the target struct */
-			sizeof ( right_id )          /* target struct size */
-	);
-
-	id_maps[right_rank] = right_id;
-
-	//if we need an initialization to the left process (bidirectional ring)
-	if(sctk_process_number > 2)
-	{
-
-		/* retrieve the left neighbour id struct */
-		tmp_ret = sctk_pmi_get_connection_info (
-				left_rank_connection_infos, /* the recv buffer */
-				MAX_STRING_SIZE,             /* the recv buffer max size */
-				SCTK_PTL_AM_PMI_TAG,           /* rail IB: PMI tag */
-				left_rank                   /* which process we are targeting */
-				);
-		assert(tmp_ret == 0);
-
-		/* de-serialize the string to retrive the real ptl_id_t */
-		sctk_ptl_am_data_deserialize(
-				left_rank_connection_infos, /* the buffer containing raw data */
-				&left_id,                   /* the target struct */
-				sizeof ( left_id )          /* target struct size */
-				);
-
-		id_maps[left_rank] = left_id;
-	}
 
 	//Wait for all processes to complete the ring topology init */
 	sctk_pmi_barrier();

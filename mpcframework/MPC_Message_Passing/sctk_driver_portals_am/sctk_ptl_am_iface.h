@@ -88,14 +88,20 @@ int sctk_ptl_am_emit_put(sctk_ptl_am_local_data_t*, size_t, sctk_ptl_id_t, sctk_
 void sctk_ptl_am_incoming_lookup(sctk_ptl_am_rail_info_t* srail);
 void sctk_ptl_am_outgoing_lookup(sctk_ptl_am_rail_info_t* srail);
 
-void sctk_ptl_am_send_request(sctk_ptl_am_rail_info_t* srail, int srv, int rpc, const void* start_in, size_t sz_in, void** start_out, size_t* sz_out, int remote);
-void sctk_ptl_am_send_response(sctk_ptl_am_rail_info_t* srail, int srv, int rpc, void* start, size_t sz, int remote, int, int);
+void sctk_ptl_am_send_request(sctk_ptl_am_rail_info_t* srail, int srv, int rpc, const void* start_in, size_t sz_in, void** start_out, size_t* sz_out, sctk_ptl_am_msg_t*);
+void sctk_ptl_am_send_response(sctk_ptl_am_rail_info_t* srail, int srv, int rpc, void* start, size_t sz, int remote, sctk_ptl_am_msg_t*);
 void sctk_ptl_am_create_ring ( sctk_ptl_am_rail_info_t *srail );
 
 /**************************************************************/
 /*************************** HELPERS **************************/
 /**************************************************************/
 sctk_ptl_id_t sctk_ptl_am_self(sctk_ptl_am_rail_info_t* srail);
+
+static inline int __sctk_ptl_am_id_undefined(sctk_ptl_id_t r)
+{
+	// sctk_warning("check %d/%d", r.phys.nid, r.phys.pid);
+	return (r.phys.nid == PTL_NID_ANY && r.phys.pid == PTL_PID_ANY);
+}
 
 static inline const char const * sctk_ptl_am_rc_decode(int rc)
 {
