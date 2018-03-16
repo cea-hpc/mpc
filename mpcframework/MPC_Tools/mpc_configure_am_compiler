@@ -144,12 +144,12 @@ public:
 		req_parse=""
 		
 		if test "\$input" != "void"; then
-			req_size="request->SpaceUsed();"
+			req_size="0"
 			req_parse="
 		std::string in;
 		request->SerializeToString(&in);
 		raw_req = in.c_str();
-		req_size = in.size();
+		req_size = in.size() +1;
 		"
 		else
 			req_size="0"
@@ -219,7 +219,7 @@ public:
 
 		resp_serialize="resp->SerializeToString(&out);
 		*response_addr=strdup(out.c_str());
-		*resp_size=out.size();"
+		*resp_size=out.size()+1;"
 	else
 		resp_parse="
 		*resp_size=0;

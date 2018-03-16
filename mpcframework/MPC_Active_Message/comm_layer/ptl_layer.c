@@ -23,7 +23,6 @@
 /* ######################################################################## */
 
 #ifdef MPC_USE_PORTALS
-
 #include "ptl_layer.h"
 #include "sctk_ptl_am_iface.h"
 #include "sctk_config.h"
@@ -58,24 +57,22 @@ int arpc_init_ptl(int nb_srv)
 
 int arpc_emit_call_ptl(sctk_arpc_context_t* ctx, const void* input, size_t req_size, void** response, size_t*resp_size)
 {
-	sctk_ptl_am_msg_t msg;
-
+	sctk_ptl_am_msg_t msg, *msg_ret = NULL;
 	msg.remote = id_maps[ctx->dest];
+
 	if(__sctk_ptl_am_id_undefined(msg.remote))
 	{
 		msg.remote = sctk_ptl_am_map_id(&srail, ctx->dest);
 		sctk_assert(!__sctk_ptl_am_id_undefined(msg.remote));
 	}
 
-	sctk_ptl_am_send_request(&srail, ctx->srvcode, ctx->rpcode, input, req_size, response, resp_size, &msg);
+	msg_ret = sctk_ptl_am_send_request(&srail, ctx->srvcode, ctx->rpcode, input, req_size, response, resp_size, &msg);
+
 
 	if(response != NULL)
 	{
-		while(true)
-		{
-			sctk_ptl_am_outgoing_lookup(&srail);
-			sctk_ptl_am_incoming_lookup(&srail);
-		}
+		sctk_ptl_am_wait_response(&srail, msg_ret);
+		*response = (void*)msg_ret->data;
 	}
 	return 0;
 }
@@ -86,8 +83,8 @@ int arpc_recv_call_ptl(sctk_arpc_context_t* ctx, const void* input, size_t req_s
 	*resp_size = 0;
 
 	ctx->cxx_pool = cxx_pool;
+
 	arpc_c_to_cxx_converter(ctx, input, req_size, response, resp_size);	
-	
 	if(response != NULL) /* there is something to return */
 	{
 		sctk_ptl_am_send_response(&srail, ctx->srvcode, ctx->rpcode, *response, *resp_size, ctx->dest, msg);

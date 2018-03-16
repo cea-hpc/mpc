@@ -181,7 +181,8 @@ static void sctk_ptl_am_pte_populate(sctk_ptl_am_rail_info_t* srail, int srv_idx
 		.data.is_large = SCTK_PTL_AM_OP_SMALL
 	};
 
-	sctk_ptl_am_matchbits_t ign = (me_type == SCTK_PTL_AM_REQ_TYPE) ? SCTK_PTL_IGN_FOR_REP : SCTK_PTL_IGN_FOR_REP;
+	sctk_ptl_am_matchbits_t ign = (me_type == SCTK_PTL_AM_REQ_TYPE) ? SCTK_PTL_IGN_FOR_REQ : SCTK_PTL_IGN_FOR_REP;
+	
 	sctk_ptl_am_chunk_t* last = NULL, *first = NULL, *prev = NULL;
 
 	for (j = 0; j < nb_elts; ++j) 
@@ -213,6 +214,10 @@ static void sctk_ptl_am_pte_populate(sctk_ptl_am_rail_info_t* srail, int srv_idx
 			first = last;
 		if(prev)
 			prev->next = last;
+
+		// sctk_warning("POPULATE %s %p - %p (%llu)", ((me_type == SCTK_PTL_AM_REQ_TYPE) ? "REQ" : "REP"), last->buf, last->buf + SCTK_PTL_AM_CHUNK_SZ, SCTK_PTL_AM_CHUNK_SZ);
+		// sctk_error("W/ match = %s", __sctk_ptl_am_match_str(sctk_malloc(70),70, match.raw));
+		// sctk_error("W/ ign   = %s", __sctk_ptl_am_ign_str(sctk_malloc(70),70, ign.raw));
 	}
 
 	/* store the new start */
@@ -315,7 +320,7 @@ void sctk_ptl_am_pte_create(sctk_ptl_am_rail_info_t* srail, size_t key)
 	srail->nb_entries++;
 }
 
-void sctk_ptl_am_send_request(sctk_ptl_am_rail_info_t* srail, int srv, int rpc, const void* start_in, size_t sz_in, void** start_out, size_t* sz_out, sctk_ptl_am_msg_t* msg)
+sctk_ptl_am_msg_t* sctk_ptl_am_send_request(sctk_ptl_am_rail_info_t* srail, int srv, int rpc, const void* start_in, size_t sz_in, void** start_out, size_t* sz_out, sctk_ptl_am_msg_t* msg)
 {
 	/*
 	 * 1. if large, prepare a dedicated ME
@@ -324,9 +329,10 @@ void sctk_ptl_am_send_request(sctk_ptl_am_rail_info_t* srail, int srv, int rpc, 
 	 */
 	sctk_assert(sz_in >= 0);
 	sctk_ptl_am_pte_t* pte = srail->pte_table[srv];
+	sctk_ptl_am_msg_t* msg_ret = NULL;
 
 	sctk_assert(pte);
-	int tag = -1;
+	int tag = -1, dedicated_me = 0;
 	/* find the MD where data could be memcpy'd */
 	size_t space = 0;
 	sctk_ptl_am_imm_data_t me_off;
@@ -345,14 +351,13 @@ void sctk_ptl_am_send_request(sctk_ptl_am_rail_info_t* srail, int srv, int rpc, 
 		{
 			found_space = 1;
 			c_me = pte->rep_head;
-			sctk_error("c_me = %p", c_me);
 			while(c_me)
 			{
 				me_off.data.offset = sctk_atomics_fetch_and_add_int(&c_me->noff, SCTK_PTL_AM_REP_CELL_SZ);
 				if(me_off.data.offset <= SCTK_PTL_AM_CHUNK_SZ) /* last cell */
 					break;
 
-				sctk_atomics_fetch_and_add_int(&c_me->noff, (-1) * (SCTK_PTL_AM_REP_CELL_SZ));
+				sctk_atomics_fetch_and_add_int(&c_me->noff, (-1) * (int)(SCTK_PTL_AM_REP_CELL_SZ));
 				c_me = c_me->next;
 			}
 			if(!c_me)
@@ -362,6 +367,16 @@ void sctk_ptl_am_send_request(sctk_ptl_am_rail_info_t* srail, int srv, int rpc, 
 			}
 		} while (!found_space);
 		tag = c_me->tag;
+		/* ok, here me_off.data.offset is the cell offset for the response.
+		 * This cell contains an header and we don't want Portals to erase it.
+		 * 1. Copy the msg to the cell
+		 * 2. shift the found offset to map the 'data' member into the imm_data
+		 */
+		msg_ret = (sctk_ptl_am_msg_t*)(c_me->buf + me_off.data.offset);
+		msg_ret->completed = 0;
+		msg_ret->remote = msg->remote;
+		me_off.data.offset += SCTK_PTL_AM_REP_HDR_SZ;
+
 	}
 	
 	/******************************************/
@@ -380,15 +395,16 @@ void sctk_ptl_am_send_request(sctk_ptl_am_rail_info_t* srail, int srv, int rpc, 
 
 		/* sz = 0 --> empty PUT() */
 		sz_in = 0;
+		dedicated_me = 1;
 	}
 	
 	/* Set flags to match a generic request slot */
-	md_match = SCTK_PTL_MATCH_BUILD(srv, rpc, tag , (sz_in == 0), SCTK_PTL_AM_REQ_TYPE, SCTK_PTL_AM_OP_SMALL);
+	md_match = SCTK_PTL_MATCH_BUILD(srv, rpc, tag , !dedicated_me, SCTK_PTL_AM_REQ_TYPE, SCTK_PTL_AM_OP_SMALL);
 	md_ign = SCTK_PTL_IGN_FOR_REQ;
 
-	/* emit the PUT */
-	// sctk_warning("PUT %d %s", pte->idx, __sctk_ptl_am_match_str((char*)sctk_malloc(70), 70, md_match.raw));
 	sctk_ptl_am_emit_put(&srail->md_slot, sz_in, remote, pte, md_match, (size_t)start_in, SCTK_PTL_AM_ME_NO_OFFSET, me_off, NULL);
+
+	return msg_ret;
 }
 
 void sctk_ptl_am_send_response(sctk_ptl_am_rail_info_t* srail, int srv, int rpc, void* start, size_t sz, int remote_id, sctk_ptl_am_msg_t* msg)
@@ -396,6 +412,7 @@ void sctk_ptl_am_send_response(sctk_ptl_am_rail_info_t* srail, int srv, int rpc,
 	sctk_ptl_am_pte_t* pte = srail->pte_table[srv];
 	sctk_ptl_am_matchbits_t md_match, md_ign;
 	sctk_ptl_id_t remote = msg->remote;
+	int dedicated_me = 0;
 
 	/******************************************/
 	/******************************************/
@@ -413,18 +430,27 @@ void sctk_ptl_am_send_response(sctk_ptl_am_rail_info_t* srail, int srv, int rpc,
 
 		/* sz = 0 --> empty PUT() */
 		sz = 0;
+		dedicated_me = 1;
 	}
 	
 	/* Set flags to match a pre-reserved response slot */
-	md_match = SCTK_PTL_MATCH_BUILD(srv, rpc, msg->tag , (sz == 0), SCTK_PTL_AM_REP_TYPE, SCTK_PTL_AM_OP_SMALL);
+	md_match = SCTK_PTL_MATCH_BUILD(srv, rpc, msg->tag , !dedicated_me, SCTK_PTL_AM_REP_TYPE, SCTK_PTL_AM_OP_SMALL);
 	md_ign = SCTK_PTL_IGN_FOR_REP;
 
-	// sctk_warning("PUT %d %s", pte->idx, __sctk_ptl_am_match_str((char*)sctk_malloc(70), 70, md_match.raw));
-	
+
 	/* emit the PUT */
+	//sctk_ptl_am_emit_put(&srail->md_slot, sz, remote, pte, md_match, (size_t)start, msg->offset, SCTK_PTL_NO_IMM_DATA, NULL);
 	sctk_ptl_am_emit_put(&srail->md_slot, sz, remote, pte, md_match, (size_t)start, msg->offset, SCTK_PTL_NO_IMM_DATA, NULL);
 }
 
+void sctk_ptl_am_wait_response(sctk_ptl_am_rail_info_t* srail, sctk_ptl_am_msg_t* msg)
+{
+	while(!msg->completed)
+	{
+		sctk_thread_yield();
+		sctk_ptl_am_incoming_lookup(srail);
+	}
+}
 
 /**
  * Release Portals structure from our program.
@@ -492,15 +518,15 @@ sctk_ptl_am_local_data_t* sctk_ptl_am_me_create(void * start, size_t size, sctk_
 			.match_bits = match.raw,
 			.ignore_bits = ign.raw,
 			.options = flags,
-			.min_free = 0
+			.min_free = 1
 		},
 		.slot_h.meh = PTL_INVALID_HANDLE,
 	};
 
 	return user_ptr;
 }
-
-void sctk_ptl_am_incoming_lookup(sctk_ptl_am_rail_info_t* srail)
+				
+int sctk_ptl_am_incoming_lookup(sctk_ptl_am_rail_info_t* srail)
 {
 	sctk_ptl_event_t ev;
 	sctk_ptl_am_pte_t* pte = NULL;
@@ -512,23 +538,73 @@ void sctk_ptl_am_incoming_lookup(sctk_ptl_am_rail_info_t* srail)
 	}
 	
 	if(!pte) /* No valid PTE found */
-		return;
+		return 2;
 
 	ret = sctk_ptl_am_eq_poll_me(srail, pte, &ev);
 	if(ret == PTL_OK)
 	{
-		sctk_ptl_am_matchbits_t m;
-		m.raw = ev.match_bits;
-		sctk_arpc_context_t ctx = (sctk_arpc_context_t) {.dest = -1, .srvcode = ev.pt_index, .rpcode = m.data.rpcode};
-		sctk_ptl_am_msg_t msg = (sctk_ptl_am_msg_t) { .remote = ev.initiator, .offset = ev.hdr_data, .tag = m.data.tag};
-		void* resp_buf;
-		size_t sz;
-		arpc_recv_call_ptl(&ctx, ev.start, ev.mlength, &resp_buf, &sz, &msg);
+		if(ev.ni_fail_type != PTL_NI_OK) 
+		{
+				sctk_error("ME: Failed event %s: %d", sctk_ptl_am_event_decode(ev), ev.ni_fail_type);
+				CRASH();
+		}
+
+		/* repopulate a new slot if needed */
+		sctk_ptl_am_local_data_t* chunk = (sctk_ptl_am_local_data_t*)ev.user_ptr;
+		unsigned long long start_offset = (unsigned long long)ev.start - (unsigned long long)chunk->slot.me.start;
+		if( start_offset <= SCTK_PTL_AM_TRSH_FOR_NEW_CHUNK && start_offset + ev.mlength > SCTK_PTL_AM_TRSH_FOR_NEW_CHUNK)
+		{
+			sctk_ptl_am_pte_populate(srail, ev.pt_index, SCTK_PTL_AM_REQ_TYPE, 1, SCTK_PTL_AM_ME_PUT_FLAGS | PTL_ME_MANAGE_LOCAL);
+		}
+
+		switch ( ev.type )
+		{
+			case PTL_EVENT_PUT:
+			{
+				sctk_ptl_am_matchbits_t m;
+				m.raw = ev.match_bits;
+				sctk_arpc_context_t ctx = ( sctk_arpc_context_t ){.dest = -1, .srvcode = ev.pt_index, .rpcode = m.data.rpcode};
+				sctk_ptl_am_imm_data_t hdr_data;
+				hdr_data.raw = ev.hdr_data;
+				sctk_ptl_am_msg_t msg = ( sctk_ptl_am_msg_t ){
+					.remote = ev.initiator,
+					.offset = hdr_data.data.offset,
+					.tag = m.data.tag
+				};
+				void *resp_buf = NULL;
+				size_t sz = 0;
+
+				if ( m.data.is_req == SCTK_PTL_AM_REQ_TYPE ) /* received an RPC to handle */
+				{
+					if ( m.data.is_large )
+					{
+						/* TODO: Get() data first and replace ev.start below */
+					}
+					arpc_recv_call_ptl( &ctx, ev.start, ev.mlength, &resp_buf, &sz, &msg );
+				}
+				else /* Received a response */
+				{
+					if ( m.data.is_large )
+					{
+						/* TODO: Get() data first */
+					}
+					sctk_ptl_am_msg_t *msg = container_of( ev.start, sctk_ptl_am_msg_t, data );
+
+					msg->completed = 1;
+				}
+				break;
+			}
+			default:
+				sctk_warning("Not handled ME event: %s", sctk_ptl_am_event_decode(ev));
+		}
+		return 0;
 	}
+
+	/* no event found in any valid EQ */
+	return 1;
 }
 
-
-void sctk_ptl_am_outgoing_lookup(sctk_ptl_am_rail_info_t* srail)
+int sctk_ptl_am_outgoing_lookup(sctk_ptl_am_rail_info_t* srail)
 {
 	int ret;
 	sctk_ptl_event_t ev;
@@ -539,6 +615,8 @@ void sctk_ptl_am_outgoing_lookup(sctk_ptl_am_rail_info_t* srail)
 	{
 		sctk_assert(ev.ni_fail_type == PTL_NI_OK);
 	}
+
+	return ret;
 }
 
 /**
@@ -596,17 +674,6 @@ void sctk_ptl_am_me_free(sctk_ptl_am_local_data_t* request, int free_buffer)
 }
 
 /**
- * Free the counting event allocated with sctk_ptl_me_create_with_cnt.
- * \param[in] cth the counting event handler.
- */
-void sctk_ptl_am_ct_free(sctk_ptl_cnth_t cth)
-{
-	sctk_ptl_chk(PtlCTFree(
-		cth
-	));
-}
-
-/**
  * Get the current process Portals ID.
  * \param[in] srail the Portals-specific info struct
  * \return the current sctk_ptl_id_t
@@ -660,6 +727,9 @@ int sctk_ptl_am_emit_get(sctk_ptl_am_local_data_t* user, size_t size, sctk_ptl_i
 int sctk_ptl_am_emit_put(sctk_ptl_am_local_data_t* user, size_t size, sctk_ptl_id_t remote, sctk_ptl_am_pte_t* pte, sctk_ptl_am_matchbits_t match, size_t local_off, size_t remote_off, sctk_ptl_am_imm_data_t extra, void* user_ptr)
 {
 	assert (size <= user->slot.md.length);
+
+	//sctk_warning("PUT-%d %p+%llu -> %llu MATCH=%s (EXTRA=%llu)", pte->idx, user->slot.md.start+local_off, size, remote_off, __sctk_ptl_am_match_str((char*)sctk_malloc(70), 70, match.raw), extra.raw);
+	
 	sctk_ptl_chk(PtlPut(
 		user->slot_h.mdh,
 		local_off, /* offset */
@@ -738,10 +808,6 @@ sctk_ptl_id_t sctk_ptl_am_map_id(sctk_ptl_am_rail_info_t* srail, int dest)
 			&id,               /* the target struct */
 			sizeof (id )      /* target struct size */
 	);
-
-
-	sctk_error("FOUND for %d: %d/%d", dest, id.phys.nid, id.phys.pid);
-
 	return id;
 }
 #endif

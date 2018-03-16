@@ -27,6 +27,7 @@
 #define SCTK_PTL_AM_IFACE_H_
 
 #include <portals4.h>
+#include <stddef.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -48,7 +49,7 @@
 	case PTL_EQ_EMPTY: \
 	case PTL_CT_NONE_REACHED: \
         case PTL_OK: break; \
-	default: CRASH(); sctk_fatal("%s -> %s (%s:%u)", #x, sctk_ptl_am_rc_decode(__ret), __FILE__, (unsigned int)__LINE__); break; \
+	default: sctk_error("%s -> %s (%s:%u)", #x, sctk_ptl_am_rc_decode(__ret), __FILE__, (unsigned int)__LINE__); CRASH(); break; \
     } } while (0)
 #else
 #define sctk_ptl_chk(x) x
@@ -85,13 +86,13 @@ void sctk_ptl_ct_free(sctk_ptl_cnth_t cth);
 int sctk_ptl_am_emit_get(sctk_ptl_am_local_data_t*, size_t, sctk_ptl_id_t, sctk_ptl_am_pte_t*, sctk_ptl_am_matchbits_t, size_t, size_t, void*);
 int sctk_ptl_am_emit_put(sctk_ptl_am_local_data_t*, size_t, sctk_ptl_id_t, sctk_ptl_am_pte_t*, sctk_ptl_am_matchbits_t, size_t, size_t, sctk_ptl_am_imm_data_t, void*);
 
-void sctk_ptl_am_incoming_lookup(sctk_ptl_am_rail_info_t* srail);
-void sctk_ptl_am_outgoing_lookup(sctk_ptl_am_rail_info_t* srail);
+int sctk_ptl_am_incoming_lookup(sctk_ptl_am_rail_info_t* srail);
+int sctk_ptl_am_outgoing_lookup(sctk_ptl_am_rail_info_t* srail);
 
-void sctk_ptl_am_send_request(sctk_ptl_am_rail_info_t* srail, int srv, int rpc, const void* start_in, size_t sz_in, void** start_out, size_t* sz_out, sctk_ptl_am_msg_t*);
+sctk_ptl_am_msg_t* sctk_ptl_am_send_request(sctk_ptl_am_rail_info_t* srail, int srv, int rpc, const void* start_in, size_t sz_in, void** start_out, size_t* sz_out, sctk_ptl_am_msg_t*);
 void sctk_ptl_am_send_response(sctk_ptl_am_rail_info_t* srail, int srv, int rpc, void* start, size_t sz, int remote, sctk_ptl_am_msg_t*);
-void sctk_ptl_am_create_ring ( sctk_ptl_am_rail_info_t *srail );
-
+void sctk_ptl_am_register_process( sctk_ptl_am_rail_info_t *srail );
+void sctk_ptl_am_wait_response(sctk_ptl_am_rail_info_t* srail, sctk_ptl_am_msg_t* msg);
 /**************************************************************/
 /*************************** HELPERS **************************/
 /**************************************************************/
@@ -102,6 +103,10 @@ static inline int __sctk_ptl_am_id_undefined(sctk_ptl_id_t r)
 	// sctk_warning("check %d/%d", r.phys.nid, r.phys.pid);
 	return (r.phys.nid == PTL_NID_ANY && r.phys.pid == PTL_PID_ANY);
 }
+
+#define container_of(ptr, type, member) ({ \
+                const typeof( ((type *)0)->member ) *__mptr = (ptr); \
+                (type *)( (char *)__mptr - offsetof(type,member) );})
 
 static inline const char const * sctk_ptl_am_rc_decode(int rc)
 {
@@ -320,9 +325,9 @@ static inline const char const* __sctk_ptl_am_ign_str(char*buf, size_t s, ptl_ma
 		m2.data.srvcode == SCTK_PTL_AM_IGN_SRV,
 		m2.data.rpcode == SCTK_PTL_AM_IGN_RPC,
 		m2.data.tag == SCTK_PTL_AM_IGN_TAG,
-		m2.data.inc_data == SCTK_PTL_AM_IGN_DATA,
-		m2.data.is_req == SCTK_PTL_AM_IGN_TYPE,
-		m2.data.is_large == SCTK_PTL_AM_IGN_LARGE);
+		m2.data.inc_data & SCTK_PTL_AM_IGN_DATA,
+		m2.data.is_req & SCTK_PTL_AM_IGN_TYPE,
+		m2.data.is_large & SCTK_PTL_AM_IGN_LARGE);
 
 /* 	int i = 0;
 	for (i = 63; i >= 0; i--)

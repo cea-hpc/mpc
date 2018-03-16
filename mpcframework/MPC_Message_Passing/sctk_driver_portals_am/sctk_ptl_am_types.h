@@ -110,10 +110,10 @@
 /* typedefs */
 #define sctk_ptl_meh_t ptl_handle_me_t /**< ME handler */
 #define sctk_ptl_me_t ptl_me_t         /**< ME */
-#define SCTK_PTL_AM_ME_FLAGS PTL_ME_EVENT_LINK_DISABLE | PTL_ME_EVENT_UNLINK_DISABLE | PTL_ME_NO_TRUNCATE
-#define SCTK_PTL_AM_ME_PUT_FLAGS SCTK_PTL_AM_ME_FLAGS | PTL_ME_OP_PUT
-#define SCTK_PTL_AM_ME_GET_FLAGS SCTK_PTL_AM_ME_FLAGS | PTL_ME_OP_GET
 #define SCTK_PTL_ONCE PTL_ME_USE_ONCE
+#define SCTK_PTL_AM_ME_FLAGS  PTL_ME_EVENT_LINK_DISABLE | PTL_ME_NO_TRUNCATE | PTL_ME_UNEXPECTED_HDR_DISABLE
+#define SCTK_PTL_AM_ME_PUT_FLAGS SCTK_PTL_AM_ME_FLAGS | PTL_ME_OP_PUT
+#define SCTK_PTL_AM_ME_GET_FLAGS SCTK_PTL_AM_ME_FLAGS | PTL_ME_OP_GET | SCTK_PTL_ONCE
 #define SCTK_PTL_AM_ME_NO_OFFSET (-1)
 
 
@@ -158,11 +158,10 @@
 /* typedefs */
 #define sctk_ptl_nih_t ptl_handle_ni_t    /**< NIC handler */
 #define sctk_ptl_limits_t ptl_ni_limits_t /**< Portals NIC limits */
-#define SCTK_PTL_AM_CHUNK_SZ (128 * 1024) /**< 128 KiB */
-#define SCTK_PTL_AM_REQ_NB_DEF 8
+#define SCTK_PTL_AM_CHUNK_SZ (128 * 1024 * 1024) /**< 128 KiB */
+#define SCTK_PTL_AM_TRSH_FOR_NEW_CHUNK ((int)(SCTK_PTL_AM_CHUNK_SZ / 2))
+#define SCTK_PTL_AM_REQ_NB_DEF 1
 #define SCTK_PTL_AM_REP_NB_DEF 1
-#define SCTK_PTL_AM_REP_CELL_SZ 128
-#define SCTK_PTL_AM_MD_NB_DEF 4
 
 #define SCTK_PTL_AM_REQ_TYPE 0
 #define SCTK_PTL_AM_REP_TYPE 1
@@ -191,8 +190,7 @@ typedef union sctk_ptl_am_imm_data_s
 	uint64_t raw;                   /**< the raw */
 	struct __imm_data_s
 	{
-		uint32_t offset;
-		uint32_t not_used;
+		uint64_t offset;
 	} data;
 } sctk_ptl_am_imm_data_t;
 
@@ -242,11 +240,15 @@ typedef struct sctk_ptl_am_pte_s
 
 } sctk_ptl_am_pte_t;
 
+#define SCTK_PTL_AM_REP_HDR_SZ (sizeof(sctk_ptl_id_t) + sizeof(size_t) + (2*sizeof(uint32_t)))
+#define SCTK_PTL_AM_REP_CELL_SZ ((1 * 1024) + SCTK_PTL_AM_REP_HDR_SZ) /* 1 cell = 1kio + header */
 typedef struct sctk_ptl_am_msg_s
 {
 	sctk_ptl_id_t remote;
 	size_t offset;
 	uint32_t tag;
+	uint32_t completed;
+	char data[0];
 } sctk_ptl_am_msg_t;
 
 /**
