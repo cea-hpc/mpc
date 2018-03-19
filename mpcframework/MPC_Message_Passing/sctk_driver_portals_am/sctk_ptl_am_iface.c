@@ -22,7 +22,7 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#if defined(MPC_USE_PORTALS) && defined(MPC_Active_Message)
+#if defined( MPC_USE_PORTALS ) && defined( MPC_Active_Message )
 #include <limits.h>
 #include "sctk_debug.h"
 #include "sctk_alloc.h"
@@ -34,88 +34,90 @@
 #include "sctk_pmi.h"
 #include "sctk_accessor.h"
 
+static size_t sctk_ptl_am_req_max_small_size = 0;
+static size_t sctk_ptl_am_rep_max_small_size = 0;
+static size_t sctk_ptl_am_req_trsh_new = 0;
+
 /**
  * Will print the Portals structure.
  * \param[in] srail the Portals rail to dump
  */
-void sctk_ptl_am_print_structure(sctk_ptl_am_rail_info_t* srail)
+void sctk_ptl_am_print_structure( sctk_ptl_am_rail_info_t *srail )
 {
 	sctk_ptl_limits_t l = srail->max_limits;
 	sctk_info(
-	"\n======== PORTALS AM STRUCTURE ========\n"
-	"\n"
-	" PORTALS ENTRIES       : \n"
-	"  - PTE flags          : 0x%x\n"
-	"  - Comm. nb entries   : %d\n"
-	"  - each EQ size       : %d\n"
-	"\n"
-	" ME management         : \n"
-	"  - ME PUT flags       : 0x%x\n"
-	"  - ME GET flags       : 0x%x\n"
-	"\n"
-	" MD management         : \n"
-	"  - shared EQ size     : %d\n"
-	"  - MD PUT flags       : 0x%x\n"
-	"  - MD GET flags       : 0x%x\n"
-	"\n"
-	" PORTALS LIMITS        : \n"
-	"  - MAX PT entries     : %d\n"
-	"  - MAX unexpected     : %d\n"
-	"  - MAX MDs            : %d\n"
-	"  - MAX MEs            : %d\n"
-	"  - MAX CTs            : %d\n"
-	"  - MAX EQs            : %d\n"
-	"  - MAX IOVECs         : %d\n"
-	"  - MAX MEs/PTE        : %d\n"
-	"  - MAX TriggeredOps   : %d\n"
-	"\n===================================",
-	SCTK_PTL_AM_PTE_FLAGS,
-	srail->nb_entries,
-	SCTK_PTL_AM_EQ_PTE_SIZE,
+		"\n======== PORTALS AM STRUCTURE ========\n"
+		"\n"
+		" PORTALS ENTRIES       : \n"
+		"  - PTE flags          : 0x%x\n"
+		"  - Comm. nb entries   : %d\n"
+		"  - each EQ size       : %d\n"
+		"\n"
+		" ME management         : \n"
+		"  - ME PUT flags       : 0x%x\n"
+		"  - ME GET flags       : 0x%x\n"
+		"\n"
+		" MD management         : \n"
+		"  - shared EQ size     : %d\n"
+		"  - MD PUT flags       : 0x%x\n"
+		"  - MD GET flags       : 0x%x\n"
+		"\n"
+		" PORTALS LIMITS        : \n"
+		"  - MAX PT entries     : %d\n"
+		"  - MAX unexpected     : %d\n"
+		"  - MAX MDs            : %d\n"
+		"  - MAX MEs            : %d\n"
+		"  - MAX CTs            : %d\n"
+		"  - MAX EQs            : %d\n"
+		"  - MAX IOVECs         : %d\n"
+		"  - MAX MEs/PTE        : %d\n"
+		"  - MAX TriggeredOps   : %d\n"
+		"\n===================================",
+		SCTK_PTL_AM_PTE_FLAGS,
+		srail->nb_entries,
+		SCTK_PTL_AM_EQ_PTE_SIZE,
 
-	SCTK_PTL_AM_ME_PUT_FLAGS,
-	SCTK_PTL_AM_ME_GET_FLAGS,
+		SCTK_PTL_AM_ME_PUT_FLAGS,
+		SCTK_PTL_AM_ME_GET_FLAGS,
 
-	SCTK_PTL_AM_EQ_MDS_SIZE,
-	SCTK_PTL_AM_MD_PUT_FLAGS,
-	SCTK_PTL_AM_MD_GET_FLAGS,
+		SCTK_PTL_AM_EQ_MDS_SIZE,
+		SCTK_PTL_AM_MD_PUT_FLAGS,
+		SCTK_PTL_AM_MD_GET_FLAGS,
 
-	l.max_pt_index,
-	l.max_unexpected_headers,
-	l.max_mds,
-	l.max_entries,
-	l.max_cts,
-	l.max_eqs,
-	l.max_iovecs,
-	l.max_list_size,
-	l.max_triggered_ops
-	);
-	
+		l.max_pt_index,
+		l.max_unexpected_headers,
+		l.max_mds,
+		l.max_entries,
+		l.max_cts,
+		l.max_eqs,
+		l.max_iovecs,
+		l.max_list_size,
+		l.max_triggered_ops );
 }
 
 /**
  * Init max values for driver config limits.
  * \param[in] l the limits to set
  */
-static inline void __sctk_ptl_set_limits(sctk_ptl_limits_t* l)
+static inline void __sctk_ptl_set_limits( sctk_ptl_limits_t *l )
 {
-	*l = (ptl_ni_limits_t){
-		.max_entries            = INT_MAX,      /* Max number of entries allocated at any time */
-		.max_unexpected_headers = INT_MAX,      /* max number of headers at any time */
-		.max_mds                = INT_MAX,      /* Max number of MD allocated at any time */
-		.max_cts                = INT_MAX,      /* Max number of CT allocated at any time */
-		.max_eqs                = INT_MAX,      /* Max number of EQ allocated at any time */
-		.max_pt_index           = INT_MAX,      /* Max PT index */
-		.max_iovecs             = INT_MAX,      /* max number of iovecs for a single MD */
-		.max_list_size          = INT_MAX,      /* Max number of entrie for one PT entry */
-		.max_triggered_ops      = INT_MAX,      /* Max number of triggered ops */
-		.max_msg_size           = PTL_SIZE_MAX, /* max message's size */
-		.max_atomic_size        = PTL_SIZE_MAX, /* max size writable atomically */
-		.max_fetch_atomic_size  = PTL_SIZE_MAX, /* Max size for a fetch op */
-		.max_waw_ordered_size   = PTL_SIZE_MAX, /* Max length for ordering-guarantee */
-		.max_war_ordered_size   = PTL_SIZE_MAX, /* max length for ordering guarantee */
-		.max_volatile_size      = PTL_SIZE_MAX, /* Max length for MD w/ VOLATILE flag */
-		.features               = 0             /* could be a combination or TARGET_BIND_INACCESSIBLE | TOTAL_DATA_ORDERING | COHERENT_ATOMIC */
+	*l = ( ptl_ni_limits_t ){
+		.max_entries = INT_MAX,				   /* Max number of entries allocated at any time */
+		.max_unexpected_headers = INT_MAX,	 /* max number of headers at any time */
+		.max_mds = INT_MAX,					   /* Max number of MD allocated at any time */
+		.max_cts = INT_MAX,					   /* Max number of CT allocated at any time */
+		.max_eqs = INT_MAX,					   /* Max number of EQ allocated at any time */
+		.max_pt_index = INT_MAX,			   /* Max PT index */
+		.max_iovecs = INT_MAX,				   /* max number of iovecs for a single MD */
+		.max_list_size = INT_MAX,			   /* Max number of entrie for one PT entry */
+		.max_triggered_ops = INT_MAX,		   /* Max number of triggered ops */
+		.max_msg_size = PTL_SIZE_MAX,		   /* max message's size */
+		.max_atomic_size = PTL_SIZE_MAX,	   /* max size writable atomically */
+		.max_fetch_atomic_size = PTL_SIZE_MAX, /* Max size for a fetch op */
+		.max_waw_ordered_size = PTL_SIZE_MAX,  /* Max length for ordering-guarantee */
+		.max_war_ordered_size = PTL_SIZE_MAX,  /* max length for ordering guarantee */
+		.max_volatile_size = PTL_SIZE_MAX,	 /* Max length for MD w/ VOLATILE flag */
+		.features = 0						   /* could be a combination or TARGET_BIND_INACCESSIBLE | TOTAL_DATA_ORDERING | COHERENT_ATOMIC */
 	};
 }
 
@@ -129,26 +131,32 @@ sctk_ptl_am_rail_info_t sctk_ptl_am_hardware_init()
 	sctk_ptl_limits_t l;
 
 	/* init the driver */
-	sctk_ptl_chk(PtlInit());
+	sctk_ptl_chk( PtlInit() );
 
 	/* set max values */
-	__sctk_ptl_set_limits(&l);
+	__sctk_ptl_set_limits( &l );
 
 	/* init one physical interface */
-	sctk_ptl_chk(PtlNIInit(
-		PTL_IFACE_DEFAULT,                 /* Type of interface */
+	sctk_ptl_chk( PtlNIInit(
+		PTL_IFACE_DEFAULT,				   /* Type of interface */
 		PTL_NI_MATCHING | PTL_NI_PHYSICAL, /* physical NI, w/ matching enabled */
-		PTL_PID_ANY,                       /* Let Portals decide process's PID */
-		&l,                                /* desired Portals boundaries */
-		&res.max_limits,                   /* effective Portals limits */
-		&res.iface                         /* THE handler */
-	));
+		PTL_PID_ANY,					   /* Let Portals decide process's PID */
+		&l,								   /* desired Portals boundaries */
+		&res.max_limits,				   /* effective Portals limits */
+		&res.iface						   /* THE handler */
+		) );
 
 	/* retrieve the process identifier */
-	sctk_ptl_chk(PtlGetPhysId(
+	sctk_ptl_chk( PtlGetPhysId(
 		res.iface, /* The NI handler */
-		&res.id    /* the structure to store it */
-	));
+		&res.id	/* the structure to store it */
+		) );
+
+	sctk_ptl_am_req_max_small_size = (int)(SCTK_PTL_AM_CHUNK_SZ * 0.40);
+	sctk_ptl_am_rep_max_small_size = SCTK_PTL_AM_REP_CELL_SZ;
+	sctk_ptl_am_req_trsh_new = (int)(SCTK_PTL_AM_CHUNK_SZ / 2);
+
+	sctk_assert(SCTK_PTL_AM_CHUNK_SZ > SCTK_PTL_AM_REP_CELL_SZ);
 
 	return res;
 }
@@ -157,62 +165,60 @@ sctk_ptl_am_rail_info_t sctk_ptl_am_hardware_init()
  * Shut down the link between our program and the driver.
  * \param[in] srail the Portals rail, created by sctk_ptl_hardware_init
  */
-void sctk_ptl_am_hardware_fini(sctk_ptl_am_rail_info_t* srail)
+void sctk_ptl_am_hardware_fini( sctk_ptl_am_rail_info_t *srail )
 {
 	/* tear down the interface */
-	sctk_ptl_chk(PtlNIFini(srail->iface));
+	sctk_ptl_chk( PtlNIFini( srail->iface ) );
 
 	/* tear down the driver */
 	PtlFini();
 }
 
-static void sctk_ptl_am_pte_populate(sctk_ptl_am_rail_info_t* srail, int srv_idx, int me_type, size_t nb_elts, int me_flags)
+static void sctk_ptl_am_pte_populate( sctk_ptl_am_rail_info_t *srail, int srv_idx, int me_type, size_t nb_elts, int me_flags )
 {
 	size_t j = 0;
-	sctk_ptl_am_pte_t* pte = srail->pte_table[srv_idx];
+	sctk_ptl_am_pte_t *pte = srail->pte_table[srv_idx];
 
-	sctk_assert(pte);
-	sctk_ptl_am_matchbits_t match = (sctk_ptl_am_matchbits_t){
-		.data.srvcode  = srv_idx,
-		.data.rpcode   = 0,
-		.data.tag      = 0,
+	sctk_assert( pte );
+	sctk_ptl_am_matchbits_t match = ( sctk_ptl_am_matchbits_t ){
+		.data.srvcode = srv_idx,
+		.data.rpcode = 0,
+		.data.tag = 0,
 		.data.inc_data = 0,
-		.data.is_req   = me_type,
-		.data.is_large = SCTK_PTL_AM_OP_SMALL
-	};
+		.data.is_req = me_type,
+		.data.is_large = SCTK_PTL_AM_OP_SMALL};
 
-	sctk_ptl_am_matchbits_t ign = (me_type == SCTK_PTL_AM_REQ_TYPE) ? SCTK_PTL_IGN_FOR_REQ : SCTK_PTL_IGN_FOR_REP;
-	
-	sctk_ptl_am_chunk_t* last = NULL, *first = NULL, *prev = NULL;
+	sctk_ptl_am_matchbits_t ign = ( me_type == SCTK_PTL_AM_REQ_TYPE ) ? SCTK_PTL_IGN_FOR_REQ : SCTK_PTL_IGN_FOR_REP;
 
-	for (j = 0; j < nb_elts; ++j) 
+	sctk_ptl_am_chunk_t *last = NULL, *first = NULL, *prev = NULL;
+
+	for ( j = 0; j < nb_elts; ++j )
 	{
 		prev = last;
-		sctk_ptl_am_local_data_t* block;
-		last = (sctk_ptl_am_chunk_t*) sctk_calloc(1, sizeof(sctk_ptl_am_chunk_t));
-		sctk_atomics_store_int(&last->refcnt, 0);
-		sctk_atomics_store_int(&last->noff, 0);
+		sctk_ptl_am_local_data_t *block;
+		last = (sctk_ptl_am_chunk_t *) sctk_calloc( 1, sizeof( sctk_ptl_am_chunk_t ) );
+		sctk_atomics_store_int( &last->refcnt, 0 );
+		sctk_atomics_store_int( &last->noff, 0 );
 
-		int tag = (me_type == SCTK_PTL_AM_REQ_TYPE) ? 0 : sctk_atomics_fetch_and_incr_int(&pte->next_tag);
+		int tag = ( me_type == SCTK_PTL_AM_REQ_TYPE ) ? 0 : sctk_atomics_fetch_and_incr_int( &pte->next_tag );
 		match.data.tag = tag;
 		last->tag = tag;
 
 		block = sctk_ptl_am_me_create(
-				last->buf,
-				SCTK_PTL_AM_CHUNK_SZ,
-				SCTK_PTL_ANY_PROCESS,
-				match,
-				ign,
-				me_flags
-				);
-		sctk_ptl_am_me_register(srail, block, pte);
+			last->buf,
+			SCTK_PTL_AM_CHUNK_SZ,
+			SCTK_PTL_ANY_PROCESS,
+			match,
+			ign,
+			me_flags );
+		sctk_ptl_am_me_register( srail, block, pte );
 		last->uptr = block;
 		last->next = NULL;
-		
+
 		/* remember the first block, to append into our list */
-		if(!first)
+		if ( !first )
 			first = last;
-		if(prev)
+		if ( prev )
 			prev->next = last;
 
 		// sctk_warning("POPULATE %s %p - %p (%llu)", ((me_type == SCTK_PTL_AM_REQ_TYPE) ? "REQ" : "REP"), last->buf, last->buf + SCTK_PTL_AM_CHUNK_SZ, SCTK_PTL_AM_CHUNK_SZ);
@@ -221,9 +227,9 @@ static void sctk_ptl_am_pte_populate(sctk_ptl_am_rail_info_t* srail, int srv_idx
 	}
 
 	/* store the new start */
-	if(first)
+	if ( first )
 	{
-		if(me_type == SCTK_PTL_AM_REQ_TYPE)
+		if ( me_type == SCTK_PTL_AM_REQ_TYPE )
 			pte->req_head = first;
 		else
 			pte->rep_head = first;
@@ -239,42 +245,41 @@ static void sctk_ptl_am_pte_populate(sctk_ptl_am_rail_info_t* srail, int srv_idx
  * \param[in] srail the Portals rail
  * \param[in] dims PT dimensions
  */
-void sctk_ptl_am_software_init(sctk_ptl_am_rail_info_t* srail, int nb_srv)
+void sctk_ptl_am_software_init( sctk_ptl_am_rail_info_t *srail, int nb_srv )
 {
 	size_t i, j;
 	size_t eager_size = srail->eager_limit;
 	srail->nb_entries = 0;
 
-	srail->pte_table = (sctk_ptl_am_pte_t**) sctk_calloc(nb_srv, sizeof(sctk_ptl_am_pte_t*));
+	srail->pte_table = (sctk_ptl_am_pte_t **) sctk_calloc( nb_srv, sizeof( sctk_ptl_am_pte_t * ) );
 
 	/* Not initialize each PTE */
-	for (i = 0; i < nb_srv; ++i)
+	for ( i = 0; i < nb_srv; ++i )
 	{
-		sctk_ptl_am_pte_create(srail, i);
+		sctk_ptl_am_pte_create( srail, i );
 	}
 
 	/* create the global EQ, shared by pending MDs */
-	sctk_ptl_chk(PtlEQAlloc(
-		srail->iface,        /* The NI handler */
+	sctk_ptl_chk( PtlEQAlloc(
+		srail->iface,			 /* The NI handler */
 		SCTK_PTL_AM_EQ_MDS_SIZE, /* number of slots available for events */
-		&srail->mds_eq        /* out: the EQ handler */
-	));
+		&srail->mds_eq			 /* out: the EQ handler */
+		) );
 
-	srail->md_slot.slot.md = (sctk_ptl_md_t){
+	srail->md_slot.slot.md = ( sctk_ptl_md_t ){
 		.start = NULL,
 		.length = PTL_SIZE_MAX,
 		.options = SCTK_PTL_AM_MD_FLAGS,
 		.eq_handle = srail->mds_eq,
-		.ct_handle = PTL_CT_NONE
-	};
-	sctk_ptl_chk(PtlMDBind(
-		srail->iface,     /* the NI handler */
-		&srail->md_slot.slot.md ,   /* the MD to bind with memory region */
+		.ct_handle = PTL_CT_NONE};
+	sctk_ptl_chk( PtlMDBind(
+		srail->iface,			   /* the NI handler */
+		&srail->md_slot.slot.md,   /* the MD to bind with memory region */
 		&srail->md_slot.slot_h.mdh /* out: the MD handler */
-	));
+		) );
 
-	sctk_error("MYSELF: %d/%d", srail->id.phys.nid, srail->id.phys.pid);
-	sctk_ptl_am_print_structure(srail);
+	sctk_error( "MYSELF: %d/%d", srail->id.phys.nid, srail->id.phys.pid );
+	sctk_ptl_am_print_structure( srail );
 }
 
 /**
@@ -283,60 +288,60 @@ void sctk_ptl_am_software_init(sctk_ptl_am_rail_info_t* srail, int nb_srv)
  * \param[out] pte Portals entry pointer, to init
  * \param[in] key the Portals desired ID
  */
-void sctk_ptl_am_pte_create(sctk_ptl_am_rail_info_t* srail, size_t key)
+void sctk_ptl_am_pte_create( sctk_ptl_am_rail_info_t *srail, size_t key )
 {
 	size_t eager_size = srail->eager_limit;
-	sctk_ptl_am_pte_t* pte = srail->pte_table[key];
+	sctk_ptl_am_pte_t *pte = srail->pte_table[key];
 
-	if(pte)
+	if ( pte )
 		return;
 
-	pte = (sctk_ptl_am_pte_t*)sctk_malloc(sizeof(sctk_ptl_am_pte_t));
+	pte = (sctk_ptl_am_pte_t *) sctk_malloc( sizeof( sctk_ptl_am_pte_t ) );
 	srail->pte_table[key] = pte;
 	/* create the EQ for this PT */
-	sctk_ptl_chk(PtlEQAlloc(
-		srail->iface,            /* the NI handler */
+	sctk_ptl_chk( PtlEQAlloc(
+		srail->iface,			 /* the NI handler */
 		SCTK_PTL_AM_EQ_PTE_SIZE, /* the number of slots in the EQ */
-		&pte->eq                 /* the returned handler */
-	));
+		&pte->eq				 /* the returned handler */
+		) );
 
 	/* register the PT */
-	sctk_ptl_chk(PtlPTAlloc(
-		srail->iface,          /* the NI handler */
+	sctk_ptl_chk( PtlPTAlloc(
+		srail->iface,		   /* the NI handler */
 		SCTK_PTL_AM_PTE_FLAGS, /* PT entry specific flags */
-		pte->eq,               /* the EQ for this entry */
-		key,                   /* the desired index value */
-		&pte->idx              /* the effective index value */
-	));
+		pte->eq,			   /* the EQ for this entry */
+		key,				   /* the desired index value */
+		&pte->idx			   /* the effective index value */
+		) );
 
 	pte->pte_lock = SCTK_SPINLOCK_INITIALIZER;
-	sctk_atomics_store_int(&pte->next_tag, 0);
+	sctk_atomics_store_int( &pte->next_tag, 0 );
 	pte->req_head = NULL;
 	pte->rep_head = NULL;
 
-	sctk_ptl_am_pte_populate(srail, key, SCTK_PTL_AM_REQ_TYPE, SCTK_PTL_AM_REQ_NB_DEF, SCTK_PTL_AM_ME_PUT_FLAGS | PTL_ME_MANAGE_LOCAL);
-	sctk_ptl_am_pte_populate(srail, key, SCTK_PTL_AM_REP_TYPE, SCTK_PTL_AM_REP_NB_DEF, SCTK_PTL_AM_ME_PUT_FLAGS);
+	sctk_ptl_am_pte_populate( srail, key, SCTK_PTL_AM_REQ_TYPE, SCTK_PTL_AM_REQ_NB_DEF, SCTK_PTL_AM_ME_PUT_FLAGS | PTL_ME_MANAGE_LOCAL );
+	sctk_ptl_am_pte_populate( srail, key, SCTK_PTL_AM_REP_TYPE, SCTK_PTL_AM_REP_NB_DEF, SCTK_PTL_AM_ME_PUT_FLAGS );
 
 	srail->nb_entries++;
 }
 
-sctk_ptl_am_msg_t* sctk_ptl_am_send_request(sctk_ptl_am_rail_info_t* srail, int srv, int rpc, const void* start_in, size_t sz_in, void** start_out, size_t* sz_out, sctk_ptl_am_msg_t* msg)
+sctk_ptl_am_msg_t *sctk_ptl_am_send_request( sctk_ptl_am_rail_info_t *srail, int srv, int rpc, const void *start_in, size_t sz_in, void **start_out, size_t *sz_out, sctk_ptl_am_msg_t *msg )
 {
 	/*
 	 * 1. if large, prepare a dedicated ME
 	 * 2. if no more MD space, create a new chunk
 	 * 3. Save somewhere the offset where the request has been put into the MD (to be provided when calling Put())
 	 */
-	sctk_assert(sz_in >= 0);
-	sctk_ptl_am_pte_t* pte = srail->pte_table[srv];
-	sctk_ptl_am_msg_t* msg_ret = NULL;
+	sctk_assert( sz_in >= 0 );
+	sctk_ptl_am_pte_t *pte = srail->pte_table[srv];
+	sctk_ptl_am_msg_t *msg_ret = NULL;
 
-	sctk_assert(pte);
+	sctk_assert( pte );
 	int tag = -1, dedicated_me = 0;
 	/* find the MD where data could be memcpy'd */
 	size_t space = 0;
 	sctk_ptl_am_imm_data_t me_off;
-	sctk_ptl_am_chunk_t* c_me;
+	sctk_ptl_am_chunk_t *c_me;
 	sctk_ptl_id_t remote = msg->remote;
 	sctk_ptl_am_matchbits_t md_match, md_ign;
 
@@ -344,113 +349,120 @@ sctk_ptl_am_msg_t* sctk_ptl_am_send_request(sctk_ptl_am_rail_info_t* srail, int 
 	/******************************************/
 	/******************************************/
 	/* 1. Look for a place to store the response, if needed */
-	if(start_out)
+	if ( start_out )
 	{
 		int found_space;
 		do
 		{
 			found_space = 1;
 			c_me = pte->rep_head;
-			while(c_me)
+			while ( c_me )
 			{
-				me_off.data.offset = sctk_atomics_fetch_and_add_int(&c_me->noff, SCTK_PTL_AM_REP_CELL_SZ);
-				if(me_off.data.offset <= SCTK_PTL_AM_CHUNK_SZ) /* last cell */
+				me_off.data.offset = sctk_atomics_fetch_and_add_int( &c_me->noff, SCTK_PTL_AM_REP_CELL_SZ );
+				if ( me_off.data.offset <= SCTK_PTL_AM_CHUNK_SZ ) /* last cell */
 					break;
 
-				sctk_atomics_fetch_and_add_int(&c_me->noff, (-1) * (int)(SCTK_PTL_AM_REP_CELL_SZ));
+				sctk_atomics_fetch_and_add_int( &c_me->noff, ( -1 ) * (int) ( SCTK_PTL_AM_REP_CELL_SZ ) );
 				c_me = c_me->next;
 			}
-			if(!c_me)
+			if ( !c_me )
 			{
-				sctk_ptl_am_pte_populate(srail, srv, SCTK_PTL_AM_REP_TYPE, 1, SCTK_PTL_AM_ME_PUT_FLAGS);
+				sctk_ptl_am_pte_populate( srail, srv, SCTK_PTL_AM_REP_TYPE, 1, SCTK_PTL_AM_ME_PUT_FLAGS );
 				found_space = 0;
 			}
-		} while (!found_space);
+		} while ( !found_space );
 		tag = c_me->tag;
 		/* ok, here me_off.data.offset is the cell offset for the response.
 		 * This cell contains an header and we don't want Portals to erase it.
 		 * 1. Copy the msg to the cell
 		 * 2. shift the found offset to map the 'data' member into the imm_data
 		 */
-		msg_ret = (sctk_ptl_am_msg_t*)(c_me->buf + me_off.data.offset);
+		msg_ret = (sctk_ptl_am_msg_t *) ( c_me->buf + me_off.data.offset );
 		msg_ret->completed = 0;
 		msg_ret->remote = msg->remote;
 		me_off.data.offset += SCTK_PTL_AM_REP_HDR_SZ;
-
 	}
-	
+	me_off.data.size = sz_in;
+
 	/******************************************/
 	/******************************************/
 	/******************************************/
 	/* 2. If the data to send are too large --> dedicate a GET ME */
-	if(sz_in >= SCTK_PTL_AM_CHUNK_SZ)
+	if ( sz_in >= sctk_ptl_am_req_max_small_size )
 	{
-		sctk_ptl_am_local_data_t* user_ptr;
-		sctk_ptl_am_matchbits_t match = SCTK_PTL_MATCH_BUILD(srv, rpc, tag, 1, SCTK_PTL_AM_REQ_TYPE, SCTK_PTL_AM_OP_LARGE);
+		sctk_ptl_am_local_data_t *user_ptr;
+		sctk_ptl_am_matchbits_t match = SCTK_PTL_MATCH_BUILD( srv, rpc, tag, 1, SCTK_PTL_AM_REQ_TYPE, SCTK_PTL_AM_OP_LARGE );
 		sctk_ptl_am_matchbits_t ign = SCTK_PTL_IGN_FOR_LARGE;
 
-		/* register the ME */	
-		user_ptr = sctk_ptl_am_me_create((void*)start_in, sz_in, remote , match, ign, SCTK_PTL_AM_ME_GET_FLAGS);
-		sctk_ptl_am_me_register(srail, user_ptr, pte);
+		/* register the ME */
+		user_ptr = sctk_ptl_am_me_create( (void *) start_in, sz_in, remote, match, ign, SCTK_PTL_AM_ME_GET_FLAGS );
+		sctk_ptl_am_me_register( srail, user_ptr, pte );
 
+			int _k, sum = 0;
+	for (_k = 0; _k < sz_in; _k++)
+	{
+		sum +=((char*)start_in)[_k];
+	}
+	sctk_error("LOCAL SUM = %d, sz = %d", sum, sz_in);
 		/* sz = 0 --> empty PUT() */
 		sz_in = 0;
 		dedicated_me = 1;
+
 	}
-	
+
 	/* Set flags to match a generic request slot */
-	md_match = SCTK_PTL_MATCH_BUILD(srv, rpc, tag , !dedicated_me, SCTK_PTL_AM_REQ_TYPE, SCTK_PTL_AM_OP_SMALL);
+	md_match = SCTK_PTL_MATCH_BUILD( srv, rpc, tag, !dedicated_me, SCTK_PTL_AM_REQ_TYPE, SCTK_PTL_AM_OP_SMALL );
 	md_ign = SCTK_PTL_IGN_FOR_REQ;
 
-	sctk_ptl_am_emit_put(&srail->md_slot, sz_in, remote, pte, md_match, (size_t)start_in, SCTK_PTL_AM_ME_NO_OFFSET, me_off, NULL);
+	sctk_ptl_am_emit_put( &srail->md_slot, sz_in, remote, pte, md_match, (size_t) start_in, SCTK_PTL_AM_ME_NO_OFFSET, me_off, NULL );
 
 	return msg_ret;
 }
 
-void sctk_ptl_am_send_response(sctk_ptl_am_rail_info_t* srail, int srv, int rpc, void* start, size_t sz, int remote_id, sctk_ptl_am_msg_t* msg)
+void sctk_ptl_am_send_response( sctk_ptl_am_rail_info_t *srail, int srv, int rpc, void *start, size_t sz, int remote_id, sctk_ptl_am_msg_t *msg )
 {
-	sctk_ptl_am_pte_t* pte = srail->pte_table[srv];
+	sctk_ptl_am_pte_t *pte = srail->pte_table[srv];
 	sctk_ptl_am_matchbits_t md_match, md_ign;
 	sctk_ptl_id_t remote = msg->remote;
+	sctk_ptl_am_imm_data_t hdr_data;
 	int dedicated_me = 0;
+
+	hdr_data.data.offset = -1;
+	hdr_data.data.size = sz;
 
 	/******************************************/
 	/******************************************/
 	/******************************************/
 	/* 2. If the data to send are too large --> dedicate a GET ME */
-	if(sz >= SCTK_PTL_AM_CHUNK_SZ)
+	if ( sz >= sctk_ptl_am_rep_max_small_size )
 	{
-		sctk_ptl_am_local_data_t* user_ptr;
-		sctk_ptl_am_matchbits_t match = SCTK_PTL_MATCH_BUILD(srv, rpc, msg->tag, 1, SCTK_PTL_AM_REP_TYPE, SCTK_PTL_AM_OP_LARGE);
+		sctk_ptl_am_local_data_t *user_ptr;
+		sctk_ptl_am_matchbits_t match = SCTK_PTL_MATCH_BUILD( srv, rpc, msg->tag, 1, SCTK_PTL_AM_REP_TYPE, SCTK_PTL_AM_OP_LARGE );
 		sctk_ptl_am_matchbits_t ign = SCTK_PTL_IGN_FOR_LARGE;
 
-		/* register the ME */	
-		user_ptr = sctk_ptl_am_me_create((void*)start, sz, remote , match, ign, SCTK_PTL_AM_ME_GET_FLAGS);
-		sctk_ptl_am_me_register(srail, user_ptr, pte);
+		/* register the ME */
+		user_ptr = sctk_ptl_am_me_create( (void *) start, sz, remote, match, ign, SCTK_PTL_AM_ME_GET_FLAGS );
+		sctk_ptl_am_me_register( srail, user_ptr, pte );
 
 		/* sz = 0 --> empty PUT() */
 		sz = 0;
 		dedicated_me = 1;
 	}
-	
+
 	/* Set flags to match a pre-reserved response slot */
-	md_match = SCTK_PTL_MATCH_BUILD(srv, rpc, msg->tag , !dedicated_me, SCTK_PTL_AM_REP_TYPE, SCTK_PTL_AM_OP_SMALL);
+	md_match = SCTK_PTL_MATCH_BUILD( srv, rpc, msg->tag, !dedicated_me, SCTK_PTL_AM_REP_TYPE, SCTK_PTL_AM_OP_SMALL );
 	md_ign = SCTK_PTL_IGN_FOR_REP;
-
-
-	/* emit the PUT */
-	//sctk_ptl_am_emit_put(&srail->md_slot, sz, remote, pte, md_match, (size_t)start, msg->offset, SCTK_PTL_NO_IMM_DATA, NULL);
-	sctk_ptl_am_emit_put(&srail->md_slot, sz, remote, pte, md_match, (size_t)start, msg->offset, SCTK_PTL_NO_IMM_DATA, NULL);
+	sctk_ptl_am_emit_put( &srail->md_slot, sz, remote, pte, md_match, (size_t) start, msg->offset, SCTK_PTL_NO_IMM_DATA, NULL );
 }
 
-void sctk_ptl_am_wait_response(sctk_ptl_am_rail_info_t* srail, sctk_ptl_am_msg_t* msg)
+void sctk_ptl_am_wait_response( sctk_ptl_am_rail_info_t *srail, sctk_ptl_am_msg_t *msg )
 {
-	struct timespec t = (struct timespec) {.tv_sec = 0, .tv_nsec = 2000 };
-	while(!msg->completed)
+	struct timespec t = ( struct timespec ){.tv_sec = 0, .tv_nsec = 2000};
+	while ( !msg->completed )
 	{
-		nanosleep(&t, NULL);
-		sctk_ptl_am_incoming_lookup(srail);
-		sctk_ptl_am_outgoing_lookup(srail);
+		nanosleep( &t, NULL );
+		sctk_ptl_am_incoming_lookup( srail );
+		sctk_ptl_am_outgoing_lookup( srail );
 	}
 }
 
@@ -460,38 +472,38 @@ void sctk_ptl_am_wait_response(sctk_ptl_am_rail_info_t* srail, sctk_ptl_am_msg_t
  * After here, no communication should be made on these resources
  * \param[in] srail the Portals rail
  */
-void sctk_ptl_am_software_fini(sctk_ptl_am_rail_info_t* srail)
+void sctk_ptl_am_software_fini( sctk_ptl_am_rail_info_t *srail )
 {
 	int table_dims = srail->nb_entries;
-	assert(table_dims > 0);
+	assert( table_dims > 0 );
 	int i;
-	void* base_ptr = NULL;
+	void *base_ptr = NULL;
 
 	/* don't want to hang the NIC */
 	return;
 
-	for(i = 0; i < table_dims; i++)
+	for ( i = 0; i < table_dims; i++ )
 	{
-		sctk_ptl_am_pte_t* cur = srail->pte_table[i];
-		if(i==0)
+		sctk_ptl_am_pte_t *cur = srail->pte_table[i];
+		if ( i == 0 )
 			base_ptr = cur;
 
-		sctk_ptl_chk(PtlEQFree(
-			cur->eq       /* the EQ handler */
-		));
+		sctk_ptl_chk( PtlEQFree(
+			cur->eq /* the EQ handler */
+			) );
 
-		sctk_ptl_chk(PtlPTFree(
-			srail->iface,     /* the NI handler */
-			cur->idx      /* the PTE to destroy */
-		));
+		sctk_ptl_chk( PtlPTFree(
+			srail->iface, /* the NI handler */
+			cur->idx	  /* the PTE to destroy */
+			) );
 	}
 
-	sctk_ptl_chk(PtlEQFree(
-		srail->mds_eq             /* the EQ handler */
-	));
+	sctk_ptl_chk( PtlEQFree(
+		srail->mds_eq /* the EQ handler */
+		) );
 
 	/* write 'NULL' to be sure */
-	sctk_free(base_ptr);
+	sctk_free( base_ptr );
 	srail->nb_entries = 0;
 }
 
@@ -506,12 +518,12 @@ void sctk_ptl_am_software_fini(sctk_ptl_am_rail_info_t* srail)
  * \param[in] flags ME-specific flags (PUT,GET,...)
  * \return the allocated request
  */
-sctk_ptl_am_local_data_t* sctk_ptl_am_me_create(void * start, size_t size, sctk_ptl_id_t remote, sctk_ptl_am_matchbits_t match, sctk_ptl_am_matchbits_t ign, int flags )
+sctk_ptl_am_local_data_t *sctk_ptl_am_me_create( void *start, size_t size, sctk_ptl_id_t remote, sctk_ptl_am_matchbits_t match, sctk_ptl_am_matchbits_t ign, int flags )
 {
-	sctk_ptl_am_local_data_t* user_ptr = (sctk_ptl_am_local_data_t*) sctk_malloc(sizeof(sctk_ptl_am_local_data_t));
+	sctk_ptl_am_local_data_t *user_ptr = (sctk_ptl_am_local_data_t *) sctk_malloc( sizeof( sctk_ptl_am_local_data_t ) );
 
-	*user_ptr = (sctk_ptl_am_local_data_t){
-		.slot.me = (sctk_ptl_me_t){
+	*user_ptr = ( sctk_ptl_am_local_data_t ){
+		.slot.me = ( sctk_ptl_me_t ){
 			.start = start,
 			.length = (ptl_size_t) size,
 			.ct_handle = PTL_CT_NONE,
@@ -527,42 +539,43 @@ sctk_ptl_am_local_data_t* sctk_ptl_am_me_create(void * start, size_t size, sctk_
 
 	return user_ptr;
 }
-				
-int sctk_ptl_am_incoming_lookup(sctk_ptl_am_rail_info_t* srail)
+
+int sctk_ptl_am_incoming_lookup( sctk_ptl_am_rail_info_t *srail )
 {
 	sctk_ptl_event_t ev;
-	sctk_ptl_am_pte_t* pte = NULL;
+	sctk_ptl_am_pte_t *pte = NULL;
 	int ret = -1;
 	size_t n_ptes = srail->nb_entries, i = 0;
-	while(!pte && i < n_ptes)
+	while ( !pte && i < n_ptes )
 	{
-			pte = srail->pte_table[i++];
+		pte = srail->pte_table[i++];
 	}
-	
-	if(!pte) /* No valid PTE found */
+
+	if ( !pte ) /* No valid PTE found */
 		return 2;
 
-	ret = sctk_ptl_am_eq_poll_me(srail, pte, &ev);
-	if(ret == PTL_OK)
+	ret = sctk_ptl_am_eq_poll_me( srail, pte, &ev );
+	if ( ret == PTL_OK )
 	{
-		if(ev.ni_fail_type != PTL_NI_OK) 
+		if ( ev.ni_fail_type != PTL_NI_OK )
 		{
-				sctk_error("ME: Failed event %s: %d", sctk_ptl_am_event_decode(ev), ev.ni_fail_type);
-				CRASH();
-		}
-
-		/* repopulate a new slot if needed */
-		sctk_ptl_am_local_data_t* chunk = (sctk_ptl_am_local_data_t*)ev.user_ptr;
-		unsigned long long start_offset = (unsigned long long)ev.start - (unsigned long long)chunk->slot.me.start;
-		if( start_offset <= SCTK_PTL_AM_TRSH_FOR_NEW_CHUNK && start_offset + ev.mlength > SCTK_PTL_AM_TRSH_FOR_NEW_CHUNK)
-		{
-			sctk_ptl_am_pte_populate(srail, ev.pt_index, SCTK_PTL_AM_REQ_TYPE, 1, SCTK_PTL_AM_ME_PUT_FLAGS | PTL_ME_MANAGE_LOCAL);
+			sctk_error( "ME: Failed event %s: %d", sctk_ptl_am_event_decode( ev ), ev.ni_fail_type );
+			CRASH();
 		}
 
 		switch ( ev.type )
 		{
 			case PTL_EVENT_PUT:
 			{
+
+				/* repopulate a new slot if needed */
+				sctk_ptl_am_local_data_t *chunk = (sctk_ptl_am_local_data_t *) ev.user_ptr;
+				unsigned long long start_offset = (unsigned long long) ev.start - (unsigned long long) chunk->slot.me.start;
+				if ( start_offset <= sctk_ptl_am_req_trsh_new && start_offset + ev.mlength > sctk_ptl_am_req_trsh_new )
+				{
+					sctk_ptl_am_pte_populate( srail, ev.pt_index, SCTK_PTL_AM_REQ_TYPE, 1, SCTK_PTL_AM_ME_PUT_FLAGS | PTL_ME_MANAGE_LOCAL );
+				}
+
 				sctk_ptl_am_matchbits_t m;
 				m.raw = ev.match_bits;
 				sctk_arpc_context_t ctx = ( sctk_arpc_context_t ){.dest = -1, .srvcode = ev.pt_index, .rpcode = m.data.rpcode};
@@ -571,24 +584,51 @@ int sctk_ptl_am_incoming_lookup(sctk_ptl_am_rail_info_t* srail)
 				sctk_ptl_am_msg_t msg = ( sctk_ptl_am_msg_t ){
 					.remote = ev.initiator,
 					.offset = hdr_data.data.offset,
-					.tag = m.data.tag
-				};
-				void *resp_buf = NULL;
-				size_t sz = 0;
+					.tag = m.data.tag};
+				void *req_buf = NULL, *resp_buf = NULL;
+				size_t req_sz = 0, resp_sz = 0;
+				char completed = 0;
 
 				if ( m.data.is_req == SCTK_PTL_AM_REQ_TYPE ) /* received an RPC to handle */
 				{
-					if ( m.data.is_large )
+					req_buf = ev.start;
+					req_sz = ev.mlength;
+					if ( !m.data.inc_data )
 					{
-						/* TODO: Get() data first and replace ev.start below */
+						sctk_assert(req_sz == 0);
+						req_sz = hdr_data.data.size;
+						/* data to GET() are large and embedded in the message */
+						m.data.is_large = 1;
+						m.data.inc_data = 1;
+						req_buf = sctk_malloc(req_sz);
+						sctk_ptl_am_emit_get( &srail->md_slot, req_sz, ev.initiator, pte, m, (size_t)req_buf, 0, &completed );
+
+						sctk_error("SPIN %p", &completed);
+						/* Wait upon completion (ct_event ?) */
+						while ( !completed )
+						{
+							sctk_ptl_am_outgoing_lookup( srail );
+						}
 					}
-					arpc_recv_call_ptl( &ctx, ev.start, ev.mlength, &resp_buf, &sz, &msg );
+					arpc_recv_call_ptl( &ctx, req_buf, req_sz, &resp_buf, &resp_sz, &msg );
 				}
 				else /* Received a response */
 				{
-					if ( m.data.is_large )
+					if ( !m.data.inc_data )
 					{
-						/* TODO: Get() data first */
+						sctk_assert(req_sz == 0);
+						req_sz = hdr_data.data.size;
+						m.data.is_large = 1;
+						m.data.inc_data = 1;
+						resp_buf = sctk_malloc(req_sz);
+						sctk_ptl_am_emit_get( &srail->md_slot, req_sz, ev.initiator, pte, m, (size_t)resp_buf, 0, &completed );
+
+						sctk_error("SPIN %p", &completed);
+						/* Wait upon completion (ct_event ?) */
+						while ( !completed )
+						{
+							sctk_ptl_am_outgoing_lookup( srail );
+						}
 					}
 					sctk_ptl_am_msg_t *msg = container_of( ev.start, sctk_ptl_am_msg_t, data );
 
@@ -596,36 +636,55 @@ int sctk_ptl_am_incoming_lookup(sctk_ptl_am_rail_info_t* srail)
 				}
 				break;
 			}
+			case PTL_EVENT_GET:
+			{
+				/* nothing to do, The ME is USE_ONCE */
+				break;
+			}
 			default:
-				sctk_warning("Not handled ME event: %s", sctk_ptl_am_event_decode(ev));
+				sctk_debug( "Not handled ME event: %s", sctk_ptl_am_event_decode( ev ) );
 		}
 		return 0;
 	}
 	else
 	{
-		if(ret != PTL_EQ_EMPTY)
-		sctk_fatal("NOK ME: %s", sctk_ptl_am_rc_decode(ret));
+		if ( ret != PTL_EQ_EMPTY )
+			sctk_fatal( "NOK ME: %s", sctk_ptl_am_rc_decode( ret ) );
 	}
 
 	/* no event found in any valid EQ */
 	return 1;
 }
 
-int sctk_ptl_am_outgoing_lookup(sctk_ptl_am_rail_info_t* srail)
+int sctk_ptl_am_outgoing_lookup( sctk_ptl_am_rail_info_t *srail )
 {
 	int ret;
 	sctk_ptl_event_t ev;
 
-	ret = sctk_ptl_am_eq_poll_md(srail, &ev);
+	ret = sctk_ptl_am_eq_poll_md( srail, &ev );
 
-	if(ret == PTL_OK)
+	if ( ret == PTL_OK )
 	{
-		sctk_assert(ev.ni_fail_type == PTL_NI_OK);
+		sctk_assert( ev.ni_fail_type == PTL_NI_OK );
+		switch(ev.type)
+		{
+			case PTL_EVENT_REPLY:
+			{
+				char *c = (char *) ev.user_ptr;
+				sctk_assert( c );
+				sctk_warning("A GET complete %p", c);
+				( *c ) = 1;
+				break;
+			}
+			default:
+				sctk_debug( "Not handled MD event: %s", sctk_ptl_am_event_decode( ev ) );
+
+		}
 	}
 	else
 	{
-		if(ret != PTL_EQ_EMPTY)
-		sctk_fatal("NOK MD: %s", sctk_ptl_am_rc_decode(ret));
+		if ( ret != PTL_EQ_EMPTY )
+			sctk_fatal( "NOK MD: %s", sctk_ptl_am_rc_decode( ret ) );
 	}
 
 	return ret;
@@ -638,17 +697,17 @@ int sctk_ptl_am_outgoing_lookup(sctk_ptl_am_rail_info_t* srail)
  * \param[in] pte  the PT index where the ME will be attached to
  * \param[in] list in which list this ME has to be registed ? PRIORITY || OVERFLOW
  */
-void sctk_ptl_am_me_register(sctk_ptl_am_rail_info_t* srail, sctk_ptl_am_local_data_t* user_ptr, sctk_ptl_am_pte_t* pte)
+void sctk_ptl_am_me_register( sctk_ptl_am_rail_info_t *srail, sctk_ptl_am_local_data_t *user_ptr, sctk_ptl_am_pte_t *pte )
 {
-	assert(user_ptr);
-	sctk_ptl_chk(PtlMEAppend(
-		srail->iface,         /* the NI handler */
-		pte->idx,             /* the targeted PT entry */
-		&user_ptr->slot.me,   /* the ME to register in the table */
+	assert( user_ptr );
+	sctk_ptl_chk( PtlMEAppend(
+		srail->iface,			/* the NI handler */
+		pte->idx,				/* the targeted PT entry */
+		&user_ptr->slot.me,		/* the ME to register in the table */
 		SCTK_PTL_PRIORITY_LIST, /* in which list the ME has to be appended */
-		user_ptr,             /* usr_ptr: forwarded when polling the event */
-		&user_ptr->slot_h.meh /* out: the ME handler */
-	));
+		user_ptr,				/* usr_ptr: forwarded when polling the event */
+		&user_ptr->slot_h.meh   /* out: the ME handler */
+		) );
 }
 
 /**
@@ -660,15 +719,14 @@ void sctk_ptl_am_me_register(sctk_ptl_am_rail_info_t* srail, sctk_ptl_am_local_d
  *
  *  \param[in] meh the ME handler.
  */
-void sctk_ptl_am_me_release(sctk_ptl_am_local_data_t* request)
+void sctk_ptl_am_me_release( sctk_ptl_am_local_data_t *request )
 {
 	/* WARN: This function can return
 	 * PTL_IN_USE if the targeted ME is in OVERFLOW_LIST
 	 * and at least one unexpected header exists for it
 	 */
-	sctk_ptl_chk(PtlMEUnlink(
-		request->slot_h.meh
-	));
+	sctk_ptl_chk( PtlMEUnlink(
+		request->slot_h.meh ) );
 }
 
 /**
@@ -676,13 +734,13 @@ void sctk_ptl_am_me_release(sctk_ptl_am_local_data_t* request)
  * \param[in] request the request to free
  * \param[in] free_buffer is the 'start' buffer to be freed too ?
  */
-void sctk_ptl_am_me_free(sctk_ptl_am_local_data_t* request, int free_buffer)
+void sctk_ptl_am_me_free( sctk_ptl_am_local_data_t *request, int free_buffer )
 {
-	if(free_buffer)
+	if ( free_buffer )
 	{
-		sctk_free(request->slot.me.start);
+		sctk_free( request->slot.me.start );
 	}
-	sctk_free(request);
+	sctk_free( request );
 }
 
 /**
@@ -690,7 +748,7 @@ void sctk_ptl_am_me_free(sctk_ptl_am_local_data_t* request, int free_buffer)
  * \param[in] srail the Portals-specific info struct
  * \return the current sctk_ptl_id_t
  */
-sctk_ptl_id_t sctk_ptl_am_self(sctk_ptl_am_rail_info_t* srail)
+sctk_ptl_id_t sctk_ptl_am_self( sctk_ptl_am_rail_info_t *srail )
 {
 	return srail->id;
 }
@@ -708,9 +766,9 @@ sctk_ptl_id_t sctk_ptl_am_self(sctk_ptl_am_rail_info_t* srail)
  * \param[in] user_ptr the request to attach to the Portals command.
  * \return PTL_OK, abort() otherwise.
  */
-int sctk_ptl_am_emit_get(sctk_ptl_am_local_data_t* user, size_t size, sctk_ptl_id_t remote, sctk_ptl_am_pte_t* pte, sctk_ptl_am_matchbits_t match, size_t local_off, size_t remote_off, void* user_ptr)
+int sctk_ptl_am_emit_get( sctk_ptl_am_local_data_t *user, size_t size, sctk_ptl_id_t remote, sctk_ptl_am_pte_t *pte, sctk_ptl_am_matchbits_t match, size_t local_off, size_t remote_off, void *user_ptr )
 {
-	sctk_ptl_chk(PtlGet(
+	sctk_ptl_chk( PtlGet(
 		user->slot_h.mdh,
 		local_off,
 		size,
@@ -718,8 +776,7 @@ int sctk_ptl_am_emit_get(sctk_ptl_am_local_data_t* user, size_t size, sctk_ptl_i
 		pte->idx,
 		match.raw,
 		remote_off,
-		user_ptr
-	));
+		user_ptr ) );
 
 	return PTL_OK;
 }
@@ -736,13 +793,13 @@ int sctk_ptl_am_emit_get(sctk_ptl_am_local_data_t* user, size_t size, sctk_ptl_i
  * \param[in] user_ptr the request to attach to the Portals command.
  * \return PTL_OK, abort() otherwise.
  */
-int sctk_ptl_am_emit_put(sctk_ptl_am_local_data_t* user, size_t size, sctk_ptl_id_t remote, sctk_ptl_am_pte_t* pte, sctk_ptl_am_matchbits_t match, size_t local_off, size_t remote_off, sctk_ptl_am_imm_data_t extra, void* user_ptr)
+int sctk_ptl_am_emit_put( sctk_ptl_am_local_data_t *user, size_t size, sctk_ptl_id_t remote, sctk_ptl_am_pte_t *pte, sctk_ptl_am_matchbits_t match, size_t local_off, size_t remote_off, sctk_ptl_am_imm_data_t extra, void *user_ptr )
 {
-	assert (size <= user->slot.md.length);
+	assert( size <= user->slot.md.length );
 
 	//sctk_warning("PUT-%d %p+%llu -> %llu REMOTE=%d/%d MATCH=%s (EXTRA=%llu)", pte->idx, user->slot.md.start+local_off, size, remote_off, remote.phys.nid, remote.phys.pid, __sctk_ptl_am_match_str((char*)sctk_malloc(70), 70, match.raw), extra.raw);
-	
-	sctk_ptl_chk(PtlPut(
+
+	sctk_ptl_chk( PtlPut(
 		user->slot_h.mdh,
 		local_off, /* offset */
 		size,
@@ -752,8 +809,7 @@ int sctk_ptl_am_emit_put(sctk_ptl_am_local_data_t* user, size_t size, sctk_ptl_i
 		match.raw,
 		remote_off, /* offset */
 		user_ptr,
-		extra.raw
-	));
+		extra.raw ) );
 
 	return PTL_OK;
 }
@@ -762,7 +818,7 @@ int sctk_ptl_am_emit_put(sctk_ptl_am_local_data_t* user, size_t size, sctk_ptl_i
  * Create the initial Portals topology: the ring.
  * \param[in] rail the just-initialized Portals rail
  */
-void sctk_ptl_am_register_process ( sctk_ptl_am_rail_info_t *srail )
+void sctk_ptl_am_register_process( sctk_ptl_am_rail_info_t *srail )
 {
 	int tmp_ret;
 
@@ -771,23 +827,23 @@ void sctk_ptl_am_register_process ( sctk_ptl_am_rail_info_t *srail )
 	 * 2. if process number > 2 create a route to the process to the left
 	 * => Bidirectional ring
 	 */
-	
+
 	/* serialize the id_t to a string, compliant with PMI handling */
 	srail->connection_infos_size = sctk_ptl_am_data_serialize(
-			&srail->id,              /* the process it to serialize */
-			sizeof (sctk_ptl_id_t),  /* size of the Portals ID struct */
-			srail->connection_infos, /* the string to store the serialization */
-			MAX_STRING_SIZE          /* max allowed string's size */
+		&srail->id,				 /* the process it to serialize */
+		sizeof( sctk_ptl_id_t ), /* size of the Portals ID struct */
+		srail->connection_infos, /* the string to store the serialization */
+		MAX_STRING_SIZE			 /* max allowed string's size */
 	);
-	assert(srail->connection_infos_size > 0);
+	assert( srail->connection_infos_size > 0 );
 
 	/* register the serialized id into the PMI */
-	tmp_ret = sctk_pmi_put_connection_info (
-			srail->connection_infos,      /* the string to publish */
-			srail->connection_infos_size, /* string size */
-			SCTK_PTL_AM_PMI_TAG             /* rail ID: PMI tag */
+	tmp_ret = sctk_pmi_put_connection_info(
+		srail->connection_infos,	  /* the string to publish */
+		srail->connection_infos_size, /* string size */
+		SCTK_PTL_AM_PMI_TAG			  /* rail ID: PMI tag */
 	);
-	assert(tmp_ret == 0);
+	assert( tmp_ret == 0 );
 
 	//Wait for all processes to complete the ring topology init */
 	sctk_pmi_barrier();
@@ -799,26 +855,26 @@ void sctk_ptl_am_register_process ( sctk_ptl_am_rail_info_t *srail )
  * \param[in] dest the MPC process rank
  * \return the Portals process id
  */
-sctk_ptl_id_t sctk_ptl_am_map_id(sctk_ptl_am_rail_info_t* srail, int dest)
+sctk_ptl_id_t sctk_ptl_am_map_id( sctk_ptl_am_rail_info_t *srail, int dest )
 {
 	int tmp_ret;
 	char connection_infos[MAX_STRING_SIZE];
 	sctk_ptl_id_t id = SCTK_PTL_ANY_PROCESS;
 
 	/* retrieve the right neighbour id struct */
-	tmp_ret = sctk_pmi_get_connection_info (
-			connection_infos,  /* the recv buffer */
-			MAX_STRING_SIZE,   /* the recv buffer max size */
-			SCTK_PTL_AM_PMI_TAG, /* rail IB: PMI tag */
-			dest               /* which process we are targeting */
+	tmp_ret = sctk_pmi_get_connection_info(
+		connection_infos,	/* the recv buffer */
+		MAX_STRING_SIZE,	 /* the recv buffer max size */
+		SCTK_PTL_AM_PMI_TAG, /* rail IB: PMI tag */
+		dest				 /* which process we are targeting */
 	);
 
-	assert(tmp_ret == 0);
-	
+	assert( tmp_ret == 0 );
+
 	sctk_ptl_am_data_deserialize(
-			connection_infos, /* the buffer containing raw data */
-			&id,               /* the target struct */
-			sizeof (id )      /* target struct size */
+		connection_infos, /* the buffer containing raw data */
+		&id,			  /* the target struct */
+		sizeof( id )	  /* target struct size */
 	);
 	return id;
 }

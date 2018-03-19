@@ -159,7 +159,6 @@
 #define sctk_ptl_nih_t ptl_handle_ni_t    /**< NIC handler */
 #define sctk_ptl_limits_t ptl_ni_limits_t /**< Portals NIC limits */
 #define SCTK_PTL_AM_CHUNK_SZ (1 * 1024 * 1024) /**< 128 KiB */
-#define SCTK_PTL_AM_TRSH_FOR_NEW_CHUNK ((int)(SCTK_PTL_AM_CHUNK_SZ / 2))
 #define SCTK_PTL_AM_REQ_NB_DEF 4
 #define SCTK_PTL_AM_REP_NB_DEF 4
 #define SCTK_PTL_AM_REQ_MIN_FREE (sizeof(double)) /* ME are freed when it remains less space than a double */
@@ -191,7 +190,8 @@ typedef union sctk_ptl_am_imm_data_s
 	uint64_t raw;                   /**< the raw */
 	struct __imm_data_s
 	{
-		uint64_t offset;
+		uint32_t offset;
+		uint32_t size;
 	} data;
 } sctk_ptl_am_imm_data_t;
 
