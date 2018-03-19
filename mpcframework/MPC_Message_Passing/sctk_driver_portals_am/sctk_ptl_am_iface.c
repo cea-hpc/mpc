@@ -262,7 +262,7 @@ void sctk_ptl_am_software_init(sctk_ptl_am_rail_info_t* srail, int nb_srv)
 
 	srail->md_slot.slot.md = (sctk_ptl_md_t){
 		.start = NULL,
-		.length = ~(0ULL),
+		.length = PTL_SIZE_MAX,
 		.options = SCTK_PTL_AM_MD_FLAGS,
 		.eq_handle = srail->mds_eq,
 		.ct_handle = PTL_CT_NONE
@@ -445,10 +445,12 @@ void sctk_ptl_am_send_response(sctk_ptl_am_rail_info_t* srail, int srv, int rpc,
 
 void sctk_ptl_am_wait_response(sctk_ptl_am_rail_info_t* srail, sctk_ptl_am_msg_t* msg)
 {
+	struct timespec t = (struct timespec) {.tv_sec = 0, .tv_nsec = 2000 };
 	while(!msg->completed)
 	{
-		sctk_thread_yield();
+		nanosleep(&t, NULL);
 		sctk_ptl_am_incoming_lookup(srail);
+		sctk_ptl_am_outgoing_lookup(srail);
 	}
 }
 
@@ -518,7 +520,7 @@ sctk_ptl_am_local_data_t* sctk_ptl_am_me_create(void * start, size_t size, sctk_
 			.match_bits = match.raw,
 			.ignore_bits = ign.raw,
 			.options = flags,
-			.min_free = 1
+			.min_free = SCTK_PTL_AM_REQ_MIN_FREE,
 		},
 		.slot_h.meh = PTL_INVALID_HANDLE,
 	};
@@ -599,6 +601,11 @@ int sctk_ptl_am_incoming_lookup(sctk_ptl_am_rail_info_t* srail)
 		}
 		return 0;
 	}
+	else
+	{
+		if(ret != PTL_EQ_EMPTY)
+		sctk_fatal("NOK ME: %s", sctk_ptl_am_rc_decode(ret));
+	}
 
 	/* no event found in any valid EQ */
 	return 1;
@@ -614,6 +621,11 @@ int sctk_ptl_am_outgoing_lookup(sctk_ptl_am_rail_info_t* srail)
 	if(ret == PTL_OK)
 	{
 		sctk_assert(ev.ni_fail_type == PTL_NI_OK);
+	}
+	else
+	{
+		if(ret != PTL_EQ_EMPTY)
+		sctk_fatal("NOK MD: %s", sctk_ptl_am_rc_decode(ret));
 	}
 
 	return ret;
@@ -728,7 +740,7 @@ int sctk_ptl_am_emit_put(sctk_ptl_am_local_data_t* user, size_t size, sctk_ptl_i
 {
 	assert (size <= user->slot.md.length);
 
-	//sctk_warning("PUT-%d %p+%llu -> %llu MATCH=%s (EXTRA=%llu)", pte->idx, user->slot.md.start+local_off, size, remote_off, __sctk_ptl_am_match_str((char*)sctk_malloc(70), 70, match.raw), extra.raw);
+	//sctk_warning("PUT-%d %p+%llu -> %llu REMOTE=%d/%d MATCH=%s (EXTRA=%llu)", pte->idx, user->slot.md.start+local_off, size, remote_off, remote.phys.nid, remote.phys.pid, __sctk_ptl_am_match_str((char*)sctk_malloc(70), 70, match.raw), extra.raw);
 	
 	sctk_ptl_chk(PtlPut(
 		user->slot_h.mdh,
