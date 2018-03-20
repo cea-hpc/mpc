@@ -243,13 +243,31 @@ typedef struct sctk_ptl_am_pte_s
 
 #define SCTK_PTL_AM_REP_HDR_SZ (sizeof(sctk_ptl_id_t) + sizeof(size_t) + (2*sizeof(uint32_t)))
 #define SCTK_PTL_AM_REP_CELL_SZ ((64) + SCTK_PTL_AM_REP_HDR_SZ) /* 1 cell = 1kio + header */
+
+struct sctk_ptl_am_rep_msg_s
+{
+	void * addr; /**< the exact address where the response will be stored (NULL if not) */
+};
+
+struct sctk_ptl_am_req_msg_s
+{
+	uint32_t offset; /**< the offset the response has to be posted back */
+	uint32_t tag;    /**< the tag used by the reponse ME block */
+};
+
+union sctk_ptl_am_msg_specific_s
+{
+	struct sctk_ptl_am_rep_msg_s rep;
+	struct sctk_ptl_am_req_msg_s req;
+};
+
 typedef struct sctk_ptl_am_msg_s
 {
-	sctk_ptl_id_t remote;
-	size_t offset;
-	uint32_t tag;
-	uint32_t completed;
-	char data[0];
+	sctk_ptl_id_t remote; /* the peer associated to this msg */
+	union sctk_ptl_am_msg_specific_s msg_type; /* type-specific attributes */
+	uint32_t size; /**< 32-bit because part of the hdr_data */
+	uint32_t completed; /**< is this msg completed ? */
+	char data[0]; /**< the actual payload */
 } sctk_ptl_am_msg_t;
 
 /**

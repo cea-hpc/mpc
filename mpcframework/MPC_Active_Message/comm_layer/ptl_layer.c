@@ -66,13 +66,19 @@ int arpc_emit_call_ptl(sctk_arpc_context_t* ctx, const void* input, size_t req_s
 		sctk_assert(!__sctk_ptl_am_id_undefined(msg.remote));
 	}
 
+	/* yes, it is dirty to provide a pointer to sctk_ptl_am_msg as a parameter and wait for
+	 * an another sctk_ptl_am_msg pointer as return value. We chose this way to keep the same prototype
+	 * for the send & the recv interface call.
+	 * This could (should ?) be changed lated if necessary.
+	 */
 	msg_ret = sctk_ptl_am_send_request(&srail, ctx->srvcode, ctx->rpcode, input, req_size, response, resp_size, &msg);
-
 
 	if(response != NULL)
 	{
+		sctk_assert(msg_ret);
 		sctk_ptl_am_wait_response(&srail, msg_ret);
-		*response = (void*)msg_ret->data;
+		*response = (void*)msg_ret->msg_type.rep.addr;
+		*resp_size = msg_ret->size;
 	}
 	return 0;
 }

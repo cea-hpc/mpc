@@ -152,8 +152,8 @@ sctk_ptl_am_rail_info_t sctk_ptl_am_hardware_init()
 		&res.id	/* the structure to store it */
 		) );
 
-	sctk_ptl_am_req_max_small_size = (int)(SCTK_PTL_AM_CHUNK_SZ * 0.40);
-	sctk_ptl_am_rep_max_small_size = SCTK_PTL_AM_REP_CELL_SZ;
+	// sctk_ptl_am_req_max_small_size = (int)(SCTK_PTL_AM_CHUNK_SZ * 0.40);
+	// sctk_ptl_am_rep_max_small_size = SCTK_PTL_AM_REP_CELL_SZ;
 	sctk_ptl_am_req_trsh_new = (int)(SCTK_PTL_AM_CHUNK_SZ / 2);
 
 	sctk_assert(SCTK_PTL_AM_CHUNK_SZ > SCTK_PTL_AM_REP_CELL_SZ);
@@ -221,7 +221,7 @@ static void sctk_ptl_am_pte_populate( sctk_ptl_am_rail_info_t *srail, int srv_id
 		if ( prev )
 			prev->next = last;
 
-		// sctk_warning("POPULATE %s %p - %p (%llu)", ((me_type == SCTK_PTL_AM_REQ_TYPE) ? "REQ" : "REP"), last->buf, last->buf + SCTK_PTL_AM_CHUNK_SZ, SCTK_PTL_AM_CHUNK_SZ);
+		// sctk_warning("POPULATE %s %init_msg - %init_msg (%llu)", ((me_type == SCTK_PTL_AM_REQ_TYPE) ? "REQ" : "REP"), last->buf, last->buf + SCTK_PTL_AM_CHUNK_SZ, SCTK_PTL_AM_CHUNK_SZ);
 		// sctk_error("W/ match = %s", __sctk_ptl_am_match_str(sctk_malloc(70),70, match.raw));
 		// sctk_error("W/ ign   = %s", __sctk_ptl_am_ign_str(sctk_malloc(70),70, ign.raw));
 	}
@@ -327,20 +327,15 @@ void sctk_ptl_am_pte_create( sctk_ptl_am_rail_info_t *srail, size_t key )
 
 sctk_ptl_am_msg_t *sctk_ptl_am_send_request( sctk_ptl_am_rail_info_t *srail, int srv, int rpc, const void *start_in, size_t sz_in, void **start_out, size_t *sz_out, sctk_ptl_am_msg_t *msg )
 {
-	/*
-	 * 1. if large, prepare a dedicated ME
-	 * 2. if no more MD space, create a new chunk
-	 * 3. Save somewhere the offset where the request has been put into the MD (to be provided when calling Put())
-	 */
 	sctk_assert( sz_in >= 0 );
 	sctk_ptl_am_pte_t *pte = srail->pte_table[srv];
-	sctk_ptl_am_msg_t *msg_ret = NULL;
+	sctk_ptl_am_msg_t *msg_resp = NULL;
 
 	sctk_assert( pte );
 	int tag = -1, dedicated_me = 0;
 	/* find the MD where data could be memcpy'd */
 	size_t space = 0;
-	sctk_ptl_am_imm_data_t me_off;
+	sctk_ptl_am_imm_data_t req_imm;
 	sctk_ptl_am_chunk_t *c_me;
 	sctk_ptl_id_t remote = msg->remote;
 	sctk_ptl_am_matchbits_t md_match, md_ign;
@@ -358,8 +353,8 @@ sctk_ptl_am_msg_t *sctk_ptl_am_send_request( sctk_ptl_am_rail_info_t *srail, int
 			c_me = pte->rep_head;
 			while ( c_me )
 			{
-				me_off.data.offset = sctk_atomics_fetch_and_add_int( &c_me->noff, SCTK_PTL_AM_REP_CELL_SZ );
-				if ( me_off.data.offset <= SCTK_PTL_AM_CHUNK_SZ ) /* last cell */
+				req_imm.data.offset = sctk_atomics_fetch_and_add_int( &c_me->noff, SCTK_PTL_AM_REP_CELL_SZ );
+				if ( req_imm.data.offset <= SCTK_PTL_AM_CHUNK_SZ ) /* last cell */
 					break;
 
 				sctk_atomics_fetch_and_add_int( &c_me->noff, ( -1 ) * (int) ( SCTK_PTL_AM_REP_CELL_SZ ) );
@@ -372,17 +367,24 @@ sctk_ptl_am_msg_t *sctk_ptl_am_send_request( sctk_ptl_am_rail_info_t *srail, int
 			}
 		} while ( !found_space );
 		tag = c_me->tag;
-		/* ok, here me_off.data.offset is the cell offset for the response.
+		/* ok, here req_imm.data.offset is the cell offset for the response.
 		 * This cell contains an header and we don't want Portals to erase it.
 		 * 1. Copy the msg to the cell
 		 * 2. shift the found offset to map the 'data' member into the imm_data
 		 */
-		msg_ret = (sctk_ptl_am_msg_t *) ( c_me->buf + me_off.data.offset );
-		msg_ret->completed = 0;
-		msg_ret->remote = msg->remote;
-		me_off.data.offset += SCTK_PTL_AM_REP_HDR_SZ;
+		msg_resp = (sctk_ptl_am_msg_t *) ( c_me->buf + req_imm.data.offset );
+		msg_resp->completed = 0;
+		msg_resp->remote = msg->remote;
+		msg_resp->size = 0; /* not known for now */
+		req_imm.data.offset += SCTK_PTL_AM_REP_HDR_SZ;
+		msg_resp->msg_type.rep.addr = msg_resp->data;
 	}
-	me_off.data.size = sz_in;
+	else /* no response expected */
+	{
+		msg_resp = NULL;
+	}
+	
+	req_imm.data.size = sz_in;
 
 	/******************************************/
 	/******************************************/
@@ -398,25 +400,17 @@ sctk_ptl_am_msg_t *sctk_ptl_am_send_request( sctk_ptl_am_rail_info_t *srail, int
 		user_ptr = sctk_ptl_am_me_create( (void *) start_in, sz_in, remote, match, ign, SCTK_PTL_AM_ME_GET_FLAGS );
 		sctk_ptl_am_me_register( srail, user_ptr, pte );
 
-			int _k, sum = 0;
-	for (_k = 0; _k < sz_in; _k++)
-	{
-		sum +=((char*)start_in)[_k];
-	}
-	sctk_error("LOCAL SUM = %d, sz = %d", sum, sz_in);
-		/* sz = 0 --> empty PUT() */
 		sz_in = 0;
 		dedicated_me = 1;
-
 	}
 
 	/* Set flags to match a generic request slot */
 	md_match = SCTK_PTL_MATCH_BUILD( srv, rpc, tag, !dedicated_me, SCTK_PTL_AM_REQ_TYPE, SCTK_PTL_AM_OP_SMALL );
 	md_ign = SCTK_PTL_IGN_FOR_REQ;
 
-	sctk_ptl_am_emit_put( &srail->md_slot, sz_in, remote, pte, md_match, (size_t) start_in, SCTK_PTL_AM_ME_NO_OFFSET, me_off, NULL );
+	sctk_ptl_am_emit_put( &srail->md_slot, sz_in, remote, pte, md_match, (size_t) start_in, SCTK_PTL_AM_ME_NO_OFFSET, req_imm, NULL );
 
-	return msg_ret;
+	return msg_resp;
 }
 
 void sctk_ptl_am_send_response( sctk_ptl_am_rail_info_t *srail, int srv, int rpc, void *start, size_t sz, int remote_id, sctk_ptl_am_msg_t *msg )
@@ -427,7 +421,7 @@ void sctk_ptl_am_send_response( sctk_ptl_am_rail_info_t *srail, int srv, int rpc
 	sctk_ptl_am_imm_data_t hdr_data;
 	int dedicated_me = 0;
 
-	hdr_data.data.offset = -1;
+	hdr_data.data.offset = -1; /* not used for response */
 	hdr_data.data.size = sz;
 
 	/******************************************/
@@ -437,7 +431,7 @@ void sctk_ptl_am_send_response( sctk_ptl_am_rail_info_t *srail, int srv, int rpc
 	if ( sz >= sctk_ptl_am_rep_max_small_size )
 	{
 		sctk_ptl_am_local_data_t *user_ptr;
-		sctk_ptl_am_matchbits_t match = SCTK_PTL_MATCH_BUILD( srv, rpc, msg->tag, 1, SCTK_PTL_AM_REP_TYPE, SCTK_PTL_AM_OP_LARGE );
+		sctk_ptl_am_matchbits_t match = SCTK_PTL_MATCH_BUILD( srv, rpc, msg->msg_type.req.tag, 1, SCTK_PTL_AM_REP_TYPE, SCTK_PTL_AM_OP_LARGE );
 		sctk_ptl_am_matchbits_t ign = SCTK_PTL_IGN_FOR_LARGE;
 
 		/* register the ME */
@@ -450,9 +444,9 @@ void sctk_ptl_am_send_response( sctk_ptl_am_rail_info_t *srail, int srv, int rpc
 	}
 
 	/* Set flags to match a pre-reserved response slot */
-	md_match = SCTK_PTL_MATCH_BUILD( srv, rpc, msg->tag, !dedicated_me, SCTK_PTL_AM_REP_TYPE, SCTK_PTL_AM_OP_SMALL );
+	md_match = SCTK_PTL_MATCH_BUILD( srv, rpc, msg->msg_type.req.tag, !dedicated_me, SCTK_PTL_AM_REP_TYPE, SCTK_PTL_AM_OP_SMALL );
 	md_ign = SCTK_PTL_IGN_FOR_REP;
-	sctk_ptl_am_emit_put( &srail->md_slot, sz, remote, pte, md_match, (size_t) start, msg->offset, SCTK_PTL_NO_IMM_DATA, NULL );
+	sctk_ptl_am_emit_put( &srail->md_slot, sz, remote, pte, md_match, (size_t) start, msg->msg_type.req.offset, hdr_data, NULL );
 }
 
 void sctk_ptl_am_wait_response( sctk_ptl_am_rail_info_t *srail, sctk_ptl_am_msg_t *msg )
@@ -567,32 +561,35 @@ int sctk_ptl_am_incoming_lookup( sctk_ptl_am_rail_info_t *srail )
 		{
 			case PTL_EVENT_PUT:
 			{
-
-				/* repopulate a new slot if needed */
-				sctk_ptl_am_local_data_t *chunk = (sctk_ptl_am_local_data_t *) ev.user_ptr;
-				unsigned long long start_offset = (unsigned long long) ev.start - (unsigned long long) chunk->slot.me.start;
-				if ( start_offset <= sctk_ptl_am_req_trsh_new && start_offset + ev.mlength > sctk_ptl_am_req_trsh_new )
-				{
-					sctk_ptl_am_pte_populate( srail, ev.pt_index, SCTK_PTL_AM_REQ_TYPE, 1, SCTK_PTL_AM_ME_PUT_FLAGS | PTL_ME_MANAGE_LOCAL );
-				}
-
 				sctk_ptl_am_matchbits_t m;
 				m.raw = ev.match_bits;
 				sctk_arpc_context_t ctx = ( sctk_arpc_context_t ){.dest = -1, .srvcode = ev.pt_index, .rpcode = m.data.rpcode};
 				sctk_ptl_am_imm_data_t hdr_data;
 				hdr_data.raw = ev.hdr_data;
+
 				sctk_ptl_am_msg_t msg = ( sctk_ptl_am_msg_t ){
 					.remote = ev.initiator,
-					.offset = hdr_data.data.offset,
-					.tag = m.data.tag};
+					.msg_type.req.offset = hdr_data.data.offset,
+					.msg_type.req.tag = m.data.tag,
+					.size = hdr_data.data.size,
+					.completed = 0
+					};
+
 				void *req_buf = NULL, *resp_buf = NULL;
 				size_t req_sz = 0, resp_sz = 0;
-				char completed = 0;
 
-				if ( m.data.is_req == SCTK_PTL_AM_REQ_TYPE ) /* received an RPC to handle */
+				if ( (m.data.is_req &0x1) == SCTK_PTL_AM_REQ_TYPE )
 				{
+					/* repopulate a new slot if needed */
+					sctk_ptl_am_local_data_t *chunk = (sctk_ptl_am_local_data_t *) ev.user_ptr;
+					unsigned long long start_offset = (unsigned long long) ev.start - (unsigned long long) chunk->slot.me.start;
+					if ( start_offset <= sctk_ptl_am_req_trsh_new && start_offset + ev.mlength > sctk_ptl_am_req_trsh_new )
+					{
+						sctk_ptl_am_pte_populate( srail, ev.pt_index, SCTK_PTL_AM_REQ_TYPE, 1, SCTK_PTL_AM_ME_PUT_FLAGS | PTL_ME_MANAGE_LOCAL );
+					}
 					req_buf = ev.start;
 					req_sz = ev.mlength;
+
 					if ( !m.data.inc_data )
 					{
 						sctk_assert(req_sz == 0);
@@ -600,39 +597,48 @@ int sctk_ptl_am_incoming_lookup( sctk_ptl_am_rail_info_t *srail )
 						/* data to GET() are large and embedded in the message */
 						m.data.is_large = 1;
 						m.data.inc_data = 1;
+						sctk_assert((m.data.is_req & 0x1) == SCTK_PTL_AM_REQ_TYPE);
 						req_buf = sctk_malloc(req_sz);
-						sctk_ptl_am_emit_get( &srail->md_slot, req_sz, ev.initiator, pte, m, (size_t)req_buf, 0, &completed );
+						sctk_ptl_am_emit_get( &srail->md_slot, req_sz, ev.initiator, pte, m, (size_t)req_buf, 0, &msg.completed );
 
-						sctk_error("SPIN %p", &completed);
 						/* Wait upon completion (ct_event ?) */
-						while ( !completed )
+						while ( !msg.completed )
 						{
 							sctk_ptl_am_outgoing_lookup( srail );
 						}
 					}
+					/* now process the RPC call */
 					arpc_recv_call_ptl( &ctx, req_buf, req_sz, &resp_buf, &resp_sz, &msg );
 				}
 				else /* Received a response */
 				{
+					sctk_assert((m.data.is_req & 0x1) == SCTK_PTL_AM_REP_TYPE);
+					sctk_ptl_am_msg_t *init_msg = container_of( ev.start, sctk_ptl_am_msg_t, data );
+					
+					init_msg->msg_type.rep.addr = ev.start;
+					init_msg->size = ev.mlength;
+
 					if ( !m.data.inc_data )
 					{
 						sctk_assert(req_sz == 0);
-						req_sz = hdr_data.data.size;
+						resp_sz = hdr_data.data.size;
 						m.data.is_large = 1;
 						m.data.inc_data = 1;
 						resp_buf = sctk_malloc(req_sz);
-						sctk_ptl_am_emit_get( &srail->md_slot, req_sz, ev.initiator, pte, m, (size_t)resp_buf, 0, &completed );
 
-						sctk_error("SPIN %p", &completed);
+						sctk_ptl_am_emit_get( &srail->md_slot, resp_sz, ev.initiator, pte, m, (size_t)resp_buf, 0, &msg.completed );
+
+
 						/* Wait upon completion (ct_event ?) */
-						while ( !completed )
+						while ( !msg.completed )
 						{
 							sctk_ptl_am_outgoing_lookup( srail );
 						}
+						init_msg->msg_type.rep.addr = resp_buf;
+						init_msg->size = resp_sz;
 					}
-					sctk_ptl_am_msg_t *msg = container_of( ev.start, sctk_ptl_am_msg_t, data );
-
-					msg->completed = 1;
+					
+					init_msg->completed = 1;
 				}
 				break;
 			}
@@ -672,7 +678,6 @@ int sctk_ptl_am_outgoing_lookup( sctk_ptl_am_rail_info_t *srail )
 			{
 				char *c = (char *) ev.user_ptr;
 				sctk_assert( c );
-				sctk_warning("A GET complete %p", c);
 				( *c ) = 1;
 				break;
 			}
@@ -797,7 +802,7 @@ int sctk_ptl_am_emit_put( sctk_ptl_am_local_data_t *user, size_t size, sctk_ptl_
 {
 	assert( size <= user->slot.md.length );
 
-	//sctk_warning("PUT-%d %p+%llu -> %llu REMOTE=%d/%d MATCH=%s (EXTRA=%llu)", pte->idx, user->slot.md.start+local_off, size, remote_off, remote.phys.nid, remote.phys.pid, __sctk_ptl_am_match_str((char*)sctk_malloc(70), 70, match.raw), extra.raw);
+	//sctk_warning("PUT-%d %init_msg+%llu -> %llu REMOTE=%d/%d MATCH=%s (EXTRA=%llu)", pte->idx, user->slot.md.start+local_off, size, remote_off, remote.phys.nid, remote.phys.pid, __sctk_ptl_am_match_str((char*)sctk_malloc(70), 70, match.raw), extra.raw);
 
 	sctk_ptl_chk( PtlPut(
 		user->slot_h.mdh,
