@@ -127,6 +127,7 @@
 #define SCTK_PTL_AM_MD_PUT_FLAGS SCTK_PTL_AM_MD_FLAGS /**< no effect yet */
 #define SCTK_PTL_AM_MD_GET_FLAGS SCTK_PTL_AM_MD_FLAGS /**< no effect yet */
 #define SCTK_PTL_AM_EQ_MDS_SIZE 10240
+#define SCTK_PTL_AM_EQ_TIMEOUT 10 /* in ms */
 
 /*********************************/
 /************ EVENTS *************/
@@ -152,6 +153,7 @@
 #define SCTK_PTL_AM_EQ_PTE_SIZE 10240
 #define SCTK_PTL_AM_PMI_TAG 42
 
+
 /*********************************/
 /**** OTHER USEFUL CONSTANTS  ****/
 /*********************************/
@@ -159,8 +161,8 @@
 #define sctk_ptl_nih_t ptl_handle_ni_t    /**< NIC handler */
 #define sctk_ptl_limits_t ptl_ni_limits_t /**< Portals NIC limits */
 #define SCTK_PTL_AM_CHUNK_SZ (1 * 1024 * 1024) /**< 128 KiB */
-#define SCTK_PTL_AM_REQ_NB_DEF 4
-#define SCTK_PTL_AM_REP_NB_DEF 4
+#define SCTK_PTL_AM_REQ_NB_DEF 2
+#define SCTK_PTL_AM_REP_NB_DEF 2
 #define SCTK_PTL_AM_REQ_MIN_FREE (sizeof(double)) /* ME are freed when it remains less space than a double */
 
 #define SCTK_PTL_AM_REQ_TYPE 0
@@ -231,7 +233,6 @@ typedef struct sctk_ptl_am_chunk_s
 typedef struct sctk_ptl_am_pte_s
 {
 	ptl_pt_index_t idx; /**< the effective PT index */
-	sctk_ptl_eq_t eq;   /**< the EQ for this entry */
 	sctk_spinlock_t pte_lock;
 	sctk_atomics_int next_tag;
 	
@@ -284,6 +285,8 @@ typedef struct sctk_ptl_am_rail_info_s
 	sctk_ptl_am_local_data_t md_slot;
 
 	sctk_ptl_am_pte_t** pte_table; /**< The PT hash table */
+	sctk_ptl_eq_t*      meqs_table;  /**< the EQ for this entry */
+
 	size_t nb_entries;                      /**< current number of PT entries */
 	size_t eager_limit;                     /**< the max size for a small payload */
 	

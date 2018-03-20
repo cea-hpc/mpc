@@ -152,8 +152,8 @@ sctk_ptl_am_rail_info_t sctk_ptl_am_hardware_init()
 		&res.id	/* the structure to store it */
 		) );
 
-	// sctk_ptl_am_req_max_small_size = (int)(SCTK_PTL_AM_CHUNK_SZ * 0.40);
-	// sctk_ptl_am_rep_max_small_size = SCTK_PTL_AM_REP_CELL_SZ;
+	sctk_ptl_am_req_max_small_size = (int)(SCTK_PTL_AM_CHUNK_SZ * 0.40);
+	sctk_ptl_am_rep_max_small_size = SCTK_PTL_AM_REP_CELL_SZ;
 	sctk_ptl_am_req_trsh_new = (int)(SCTK_PTL_AM_CHUNK_SZ / 2);
 
 	sctk_assert(SCTK_PTL_AM_CHUNK_SZ > SCTK_PTL_AM_REP_CELL_SZ);
@@ -252,6 +252,7 @@ void sctk_ptl_am_software_init( sctk_ptl_am_rail_info_t *srail, int nb_srv )
 	srail->nb_entries = 0;
 
 	srail->pte_table = (sctk_ptl_am_pte_t **) sctk_calloc( nb_srv, sizeof( sctk_ptl_am_pte_t * ) );
+	srail->meqs_table = (sctk_ptl_am_pte_t *) sctk_calloc( nb_srv, sizeof( sctk_ptl_eq_t ) );
 
 	/* Not initialize each PTE */
 	for ( i = 0; i < nb_srv; ++i )
@@ -298,22 +299,26 @@ void sctk_ptl_am_pte_create( sctk_ptl_am_rail_info_t *srail, size_t key )
 
 	pte = (sctk_ptl_am_pte_t *) sctk_malloc( sizeof( sctk_ptl_am_pte_t ) );
 	srail->pte_table[key] = pte;
+
 	/* create the EQ for this PT */
 	sctk_ptl_chk( PtlEQAlloc(
 		srail->iface,			 /* the NI handler */
 		SCTK_PTL_AM_EQ_PTE_SIZE, /* the number of slots in the EQ */
-		&pte->eq				 /* the returned handler */
+		srail->meqs_table + key	 /* the returned handler */
 		) );
 
 	/* register the PT */
 	sctk_ptl_chk( PtlPTAlloc(
 		srail->iface,		   /* the NI handler */
 		SCTK_PTL_AM_PTE_FLAGS, /* PT entry specific flags */
-		pte->eq,			   /* the EQ for this entry */
+		srail->meqs_table[key],/* the EQ for this entry */
 		key,				   /* the desired index value */
 		&pte->idx			   /* the effective index value */
 		) );
 
+	if(key != pte->idx)
+		sctk_warning("A Portals entry does not match the computed index !");
+	
 	pte->pte_lock = SCTK_SPINLOCK_INITIALIZER;
 	sctk_atomics_store_int( &pte->next_tag, 0 );
 	pte->req_head = NULL;
@@ -483,7 +488,7 @@ void sctk_ptl_am_software_fini( sctk_ptl_am_rail_info_t *srail )
 			base_ptr = cur;
 
 		sctk_ptl_chk( PtlEQFree(
-			cur->eq /* the EQ handler */
+			srail->meqs_table[i] /* the EQ handler */
 			) );
 
 		sctk_ptl_chk( PtlPTFree(
@@ -537,20 +542,14 @@ sctk_ptl_am_local_data_t *sctk_ptl_am_me_create( void *start, size_t size, sctk_
 int sctk_ptl_am_incoming_lookup( sctk_ptl_am_rail_info_t *srail )
 {
 	sctk_ptl_event_t ev;
-	sctk_ptl_am_pte_t *pte = NULL;
 	int ret = -1;
-	size_t n_ptes = srail->nb_entries, i = 0;
-	while ( !pte && i < n_ptes )
-	{
-		pte = srail->pte_table[i++];
-	}
-
-	if ( !pte ) /* No valid PTE found */
-		return 2;
-
-	ret = sctk_ptl_am_eq_poll_me( srail, pte, &ev );
+	unsigned int id = -1;
+	
+	ret = sctk_ptl_am_eq_poll_me( srail, &ev, &id);
+	
 	if ( ret == PTL_OK )
 	{
+		sctk_ptl_am_pte_t* pte = srail->pte_table[id];
 		if ( ev.ni_fail_type != PTL_NI_OK )
 		{
 			sctk_error( "ME: Failed event %s: %d", sctk_ptl_am_event_decode( ev ), ev.ni_fail_type );

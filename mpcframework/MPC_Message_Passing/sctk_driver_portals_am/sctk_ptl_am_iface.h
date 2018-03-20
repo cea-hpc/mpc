@@ -46,9 +46,11 @@
 	if(___env) \
     		sctk_debug("%s (%s:%u)", #x, __FILE__, (unsigned int)__LINE__); \
     switch (__ret = x) { \
+	case PTL_EQ_DROPPED: \
+		sctk_warning("At least one event has been dropped. This is a major concern !"); \
 	case PTL_EQ_EMPTY: \
 	case PTL_CT_NONE_REACHED: \
-        case PTL_OK: break; \
+    case PTL_OK: break; \
 	default: sctk_error("%s -> %s (%s:%u)", #x, sctk_ptl_am_rc_decode(__ret), __FILE__, (unsigned int)__LINE__); CRASH(); break; \
     } } while (0)
 #else
@@ -265,10 +267,13 @@ static inline int sctk_ptl_am_data_serialize ( const void *inval, int invallen, 
 static inline int sctk_ptl_am_eq_poll_md(sctk_ptl_am_rail_info_t* srail, sctk_ptl_event_t* ev)
 {
 	int ret;
+
+	unsigned int id = -1;
 	
 	assert(ev);
-	ret = PtlEQGet(srail->mds_eq, ev);
+	ret = PtlEQPoll(&srail->mds_eq, 1, SCTK_PTL_AM_EQ_TIMEOUT, ev, &id);
 	sctk_ptl_chk(ret);
+	sctk_assert(ret == PTL_EQ_EMPTY || id == 0);
 	
 	return ret;
 }
@@ -285,12 +290,12 @@ static inline int sctk_ptl_am_eq_poll_md(sctk_ptl_am_rail_info_t* srail, sctk_pt
  * <li><b>any other code</b> is an error</li>
  * </ul>
  */
-static inline int sctk_ptl_am_eq_poll_me(sctk_ptl_am_rail_info_t* srail, sctk_ptl_am_pte_t* pte, sctk_ptl_event_t* ev)
+static inline int sctk_ptl_am_eq_poll_me(sctk_ptl_am_rail_info_t* srail, sctk_ptl_event_t* ev, unsigned int* idx)
 {
 	int ret;
 	
-	assert(ev && pte && srail);
-	ret = PtlEQGet(pte->eq, ev);
+	assert(ev && srail);
+	ret = PtlEQPoll(srail->meqs_table, srail->nb_entries, SCTK_PTL_AM_EQ_TIMEOUT, ev, idx);
 	sctk_ptl_chk(ret);
 
 	return ret;
