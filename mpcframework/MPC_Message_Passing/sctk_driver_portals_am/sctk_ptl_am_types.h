@@ -214,15 +214,16 @@ typedef struct sctk_ptl_am_local_data_s
 	union sctk_ptl_am_slot_u slot;     /**< the request (MD or ME) */
 	union sctk_ptl_am_slot_h_u slot_h; /**< the request Handle */
 	sctk_ptl_am_matchbits_t match;     /**< request match bits */
+	struct sctk_ptl_am_chunk_s* block;
 } sctk_ptl_am_local_data_t;
 
 typedef struct sctk_ptl_am_chunk_s
 {
 	sctk_atomics_int refcnt;
+	sctk_atomics_int up;
 	sctk_atomics_int noff;
 	int tag;
 	struct sctk_ptl_am_chunk_s* next;
-	sctk_ptl_am_local_data_t* uptr;
 	char buf[SCTK_PTL_AM_CHUNK_SZ];
 } sctk_ptl_am_chunk_t;
 

@@ -212,7 +212,8 @@ static void sctk_ptl_am_pte_populate( sctk_ptl_am_rail_info_t *srail, int srv_id
 			ign,
 			me_flags );
 		sctk_ptl_am_me_register( srail, block, pte );
-		last->uptr = block;
+		sctk_atomics_store_int(&last->up, 1);
+		block->block = last;
 		last->next = NULL;
 
 		/* remember the first block, to append into our list */
@@ -250,9 +251,10 @@ void sctk_ptl_am_software_init( sctk_ptl_am_rail_info_t *srail, int nb_srv )
 	size_t i, j;
 	size_t eager_size = srail->eager_limit;
 	srail->nb_entries = 0;
-
+	int a;
+	
 	srail->pte_table = (sctk_ptl_am_pte_t **) sctk_calloc( nb_srv, sizeof( sctk_ptl_am_pte_t * ) );
-	srail->meqs_table = (sctk_ptl_am_pte_t *) sctk_calloc( nb_srv, sizeof( sctk_ptl_eq_t ) );
+	srail->meqs_table = (sctk_ptl_eq_t *) sctk_calloc( nb_srv, sizeof( sctk_ptl_eq_t ) );
 
 	/* Not initialize each PTE */
 	for ( i = 0; i < nb_srv; ++i )
@@ -279,7 +281,6 @@ void sctk_ptl_am_software_init( sctk_ptl_am_rail_info_t *srail, int nb_srv )
 		&srail->md_slot.slot_h.mdh /* out: the MD handler */
 		) );
 
-	sctk_error( "MYSELF: %d/%d", srail->id.phys.nid, srail->id.phys.pid );
 	sctk_ptl_am_print_structure( srail );
 }
 
@@ -358,11 +359,14 @@ sctk_ptl_am_msg_t *sctk_ptl_am_send_request( sctk_ptl_am_rail_info_t *srail, int
 			c_me = pte->rep_head;
 			while ( c_me )
 			{
-				req_imm.data.offset = sctk_atomics_fetch_and_add_int( &c_me->noff, SCTK_PTL_AM_REP_CELL_SZ );
-				if ( req_imm.data.offset <= SCTK_PTL_AM_CHUNK_SZ ) /* last cell */
-					break;
+				if(sctk_atomics_load_int(&c_me->up))
+				{
+					req_imm.data.offset = sctk_atomics_fetch_and_add_int( &c_me->noff, SCTK_PTL_AM_REP_CELL_SZ );
+					if ( req_imm.data.offset <= SCTK_PTL_AM_CHUNK_SZ ) /* last cell */
+						break;
+					sctk_atomics_fetch_and_add_int( &c_me->noff, ( -1 ) * (int) ( SCTK_PTL_AM_REP_CELL_SZ ) );
+				}
 
-				sctk_atomics_fetch_and_add_int( &c_me->noff, ( -1 ) * (int) ( SCTK_PTL_AM_REP_CELL_SZ ) );
 				c_me = c_me->next;
 			}
 			if ( !c_me )
@@ -372,6 +376,8 @@ sctk_ptl_am_msg_t *sctk_ptl_am_send_request( sctk_ptl_am_rail_info_t *srail, int
 			}
 		} while ( !found_space );
 		tag = c_me->tag;
+		sctk_atomics_incr_int(&c_me->refcnt);
+		sctk_assert(req_imm.data.offset <= SCTK_PTL_AM_REP_CELL_SZ);
 		/* ok, here req_imm.data.offset is the cell offset for the response.
 		 * This cell contains an header and we don't want Portals to erase it.
 		 * 1. Copy the msg to the cell
@@ -556,12 +562,14 @@ int sctk_ptl_am_incoming_lookup( sctk_ptl_am_rail_info_t *srail )
 			CRASH();
 		}
 
+		sctk_ptl_am_matchbits_t m;
+		m.raw = ev.match_bits;
+
 		switch ( ev.type )
 		{
 			case PTL_EVENT_PUT:
 			{
-				sctk_ptl_am_matchbits_t m;
-				m.raw = ev.match_bits;
+
 				sctk_arpc_context_t ctx = ( sctk_arpc_context_t ){.dest = -1, .srvcode = ev.pt_index, .rpcode = m.data.rpcode};
 				sctk_ptl_am_imm_data_t hdr_data;
 				hdr_data.raw = ev.hdr_data;
@@ -588,6 +596,7 @@ int sctk_ptl_am_incoming_lookup( sctk_ptl_am_rail_info_t *srail )
 					}
 					req_buf = ev.start;
 					req_sz = ev.mlength;
+					sctk_atomics_incr_int(&chunk->block->refcnt);
 
 					if ( !m.data.inc_data )
 					{
@@ -608,6 +617,23 @@ int sctk_ptl_am_incoming_lookup( sctk_ptl_am_rail_info_t *srail )
 					}
 					/* now process the RPC call */
 					arpc_recv_call_ptl( &ctx, req_buf, req_sz, &resp_buf, &resp_sz, &msg );
+
+					/* flag the memory in the ME as freeable */
+					int last_value = sctk_atomics_fetch_and_decr_int(&chunk->block->refcnt);
+					int cas_value = sctk_atomics_load_int(&chunk->block->up);
+
+					/* if this slot is the last one used in the memory block AND the ME has been unlinked -> free everything */
+					if(last_value-1 == 0 && cas_value == 0)
+					{
+						sctk_free((void*)chunk->block);
+						sctk_free((void*)chunk);
+					}
+
+					/* just free the temp buffer used to GET() locally */
+					if(req_buf != ev.start)
+					{
+						sctk_free((void*)req_buf);
+					}
 				}
 				else /* Received a response */
 				{
@@ -627,7 +653,6 @@ int sctk_ptl_am_incoming_lookup( sctk_ptl_am_rail_info_t *srail )
 
 						sctk_ptl_am_emit_get( &srail->md_slot, resp_sz, ev.initiator, pte, m, (size_t)resp_buf, 0, &msg.completed );
 
-
 						/* Wait upon completion (ct_event ?) */
 						while ( !msg.completed )
 						{
@@ -646,8 +671,45 @@ int sctk_ptl_am_incoming_lookup( sctk_ptl_am_rail_info_t *srail )
 				/* nothing to do, The ME is USE_ONCE */
 				break;
 			}
+			case PTL_EVENT_AUTO_UNLINK:
+			{
+				sctk_ptl_am_local_data_t *chunk = (sctk_ptl_am_local_data_t *) ev.user_ptr;
+				/* special case, for this event, ev.match_bits is not set */
+				m.raw = chunk->slot.me.match_bits;
+				if(m.data.is_large)
+				{
+					/* if this is a large buffer, two cases (event generated because LARGE = USE_ONCE):
+					 *  1. type REQUEST = LARGE buffer from sender side -> just free the ptl object (user buffer)
+					 *  2. type RESPONSE = LARGE buffer allocated by us -> free it
+					 */
+					if(m.data.is_req == SCTK_PTL_AM_REP_TYPE)
+						sctk_free((void*)chunk->slot.me.start);
+
+					sctk_free((void*)chunk);
+				}
+				else
+				{
+					/* if this is not a large buffer, two cases:
+					 *  1. type REQUEST: MANAGE_LOCAL flag trigers this event
+					 *  2. type RESPONSE: ME blocks are manually handled and this event should
+					 *  	not be triggered (check w/ an assert())
+					 */
+
+					sctk_assert(m.data.is_req == SCTK_PTL_AM_REQ_TYPE);
+					int cas_res = sctk_atomics_cas_int(&chunk->block->up, 1, 0); /* currenT ME is unlinked */
+					int cnt_res = sctk_atomics_load_int(&chunk->block->refcnt);
+					/* Are all slots unused at the unlinking time ? */
+					if( cnt_res == 0)
+					{
+						/* Free the local_data AND the CHUNK_T object */
+						sctk_free((void*)chunk->block);
+						sctk_free((void*)chunk);
+					}
+				}
+				break;
+			}
 			default:
-				sctk_debug( "Not handled ME event: %s", sctk_ptl_am_event_decode( ev ) );
+				sctk_error( "Not handled ME event: %s", sctk_ptl_am_event_decode( ev ) );
 		}
 		return 0;
 	}
