@@ -101,16 +101,24 @@ int sctk_ptl_am_free_response(void* addr);
 /**************************************************************/
 sctk_ptl_id_t sctk_ptl_am_self(sctk_ptl_am_rail_info_t* srail);
 
+/**
+ * @brief function to check if the given Portals id struct can match any process
+ * 
+ * @param r the struct to check
+ * @return 1 if true, 0 otherwise
+ */
 static inline int __sctk_ptl_am_id_undefined(sctk_ptl_id_t r)
 {
 	// sctk_warning("check %d/%d", r.phys.nid, r.phys.pid);
 	return (r.phys.nid == PTL_NID_ANY && r.phys.pid == PTL_PID_ANY);
 }
 
-#define container_of(ptr, type, member) ({ \
-                const typeof( ((type *)0)->member ) *__mptr = (ptr); \
-                (type *)( (char *)__mptr - offsetof(type,member) );})
-
+/**
+ * @brief Decode the return code provided by Portals code, to display them as string
+ * 
+ * @param rc the rc to decode
+ * @return const char const* the actual string
+ */
 static inline const char const * sctk_ptl_am_rc_decode(int rc)
 {
 	switch(rc)
@@ -145,6 +153,12 @@ static inline const char const * sctk_ptl_am_rc_decode(int rc)
 	return NULL;
 }
 
+/**
+ * @brief decode an event to display its type as a string.
+ * 
+ * @param ev the event to stringify
+ * @return const char const* the actual string.
+ */
 static inline const char const * sctk_ptl_am_event_decode(sctk_ptl_event_t ev)
 {
 	switch(ev.type)

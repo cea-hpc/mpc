@@ -31,6 +31,11 @@
 #include "sctk_io_helper.h"
 #include "sctk_atomics.h"
 
+/** Helper to find the struct base address, based on the address on a given member */
+#define container_of(ptr, type, member) ({ \
+                const typeof( ((type *)0)->member ) *__mptr = (ptr); \
+                (type *)( (char *)__mptr - offsetof(type,member) );})
+
 /*********************************/
 /********** MATCH BITS ***********/
 /*********************************/
@@ -226,6 +231,7 @@ typedef struct sctk_ptl_am_chunk_s
 	sctk_atomics_int noff;
 	int tag;
 	struct sctk_ptl_am_chunk_s* next;
+	struct sctk_ptl_am_chunk_s* prev;
 	struct sctk_ptl_am_local_data_s* uptr;
 	char buf[SCTK_PTL_AM_CHUNK_SZ];
 } sctk_ptl_am_chunk_t;
@@ -240,9 +246,11 @@ typedef struct sctk_ptl_am_pte_s
 	sctk_spinlock_t pte_lock;
 	sctk_atomics_int next_tag;
 	
-	/**TODO: List of MEs for this PTE */
 	sctk_ptl_am_chunk_t* req_head;
+	sctk_ptl_am_chunk_t* req_tail;
+
 	sctk_ptl_am_chunk_t* rep_head;
+	sctk_ptl_am_chunk_t* rep_tail;
 
 } sctk_ptl_am_pte_t;
 

@@ -53,7 +53,7 @@ static void __arpc_init_callbacks()
 #ifdef MPC_USE_PORTALS
 			reg_fn  = arpc_register_service_ptl;
 			emit_fn = arpc_emit_call_ptl;
-			recv_fn = arpc_recv_call_ptl;
+			recv_fn = NULL;
 			poll_fn = arpc_polling_request_ptl;
 			init_fn = arpc_init_ptl;
 			free_fn = arpc_free_response_ptl;
@@ -64,8 +64,6 @@ static void __arpc_init_callbacks()
 		default:
 			not_reachable();
 	}
-
-	sctk_assert(emit_fn && recv_fn && poll_fn);
 }
 
 void arpc_init()
