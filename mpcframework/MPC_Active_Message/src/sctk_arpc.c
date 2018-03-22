@@ -28,6 +28,7 @@
 #include "ptl_layer.h"
 
 static int (*reg_fn)(void*,int);
+static int (*free_fn)(void*);
 static int (*emit_fn)(sctk_arpc_context_t*, const void*, size_t, void**, size_t*) = NULL;
 static int (*recv_fn)(sctk_arpc_context_t*, const void*, size_t, void**, size_t*) = NULL;
 static int (*poll_fn)(sctk_arpc_context_t*) = NULL;
@@ -46,6 +47,7 @@ static void __arpc_init_callbacks()
 			recv_fn = arpc_recv_call_mpi;
 			poll_fn = arpc_polling_request_mpi;
 			init_fn = arpc_init_mpi;
+			free_fn = arpc_free_response_mpi;
 			break;
 		case ARPC_PTL:
 #ifdef MPC_USE_PORTALS
@@ -54,6 +56,7 @@ static void __arpc_init_callbacks()
 			recv_fn = arpc_recv_call_ptl;
 			poll_fn = arpc_polling_request_ptl;
 			init_fn = arpc_init_ptl;
+			free_fn = arpc_free_response_ptl;
 #else
 			sctk_fatal("Cannot use Portals4 implementation without compiling MPC w/ Portals support");
 #endif
@@ -97,4 +100,10 @@ int arpc_polling_request(sctk_arpc_context_t* ctx)
 	sctk_assert(poll_fn);
 	sctk_assert(ctx);
 	return poll_fn(ctx);
+}
+
+int arpc_free_response(void* addr)
+{
+	sctk_assert(free_fn);
+	return free_fn(addr);
 }

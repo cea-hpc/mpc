@@ -163,7 +163,10 @@ public:
 			raw_resp="&raw_resp"
 			resp_parse="
 			if(resp_size > 0)
+			{
 				response->ParseFromString((char*)raw_resp);
+				arpc_free_response(raw_resp);
+			}
 			else /* everything is zero and we didn't send anything */
 				response->Clear();
 			"

@@ -173,3 +173,8 @@ int arpc_register_service_mpi(void* cxx_pool, int srvcode)
 	/* nothing to do */
 	return -1;
 }
+
+int arpc_free_response_mpi(void* addr)
+{
+	return -1;
+}

@@ -95,6 +95,7 @@ sctk_ptl_am_msg_t* sctk_ptl_am_send_request(sctk_ptl_am_rail_info_t* srail, int 
 void sctk_ptl_am_send_response(sctk_ptl_am_rail_info_t* srail, int srv, int rpc, void* start, size_t sz, int remote, sctk_ptl_am_msg_t*);
 void sctk_ptl_am_register_process( sctk_ptl_am_rail_info_t *srail );
 void sctk_ptl_am_wait_response(sctk_ptl_am_rail_info_t* srail, sctk_ptl_am_msg_t* msg);
+int sctk_ptl_am_free_response(void* addr);
 /**************************************************************/
 /*************************** HELPERS **************************/
 /**************************************************************/

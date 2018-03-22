@@ -37,6 +37,7 @@ int arpc_emit_call_ptl(sctk_arpc_context_t* ctx, const void* input, size_t req_s
 int arpc_recv_call_ptl(sctk_arpc_context_t* ctx, const void* input, size_t req_size, void** response, size_t*resp_size, sctk_ptl_am_msg_t*);
 
 int arpc_polling_request_ptl(sctk_arpc_context_t* ctx);
+int arpc_free_response_ptl(void* resp_addr);
 
 #endif
 

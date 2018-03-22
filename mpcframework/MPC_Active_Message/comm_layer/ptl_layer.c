@@ -100,8 +100,10 @@ int arpc_recv_call_ptl(sctk_arpc_context_t* ctx, const void* input, size_t req_s
 
 int arpc_polling_request_ptl(sctk_arpc_context_t* ctx)
 {
-	sctk_ptl_am_incoming_lookup(&srail);
-	return 0;
+	int ret = sctk_ptl_am_incoming_lookup(&srail);
+	if(!ret)
+		sctk_thread_yield();
+	return ret;
 }
 
 int arpc_register_service_ptl(void* pool, int srvcode)
@@ -110,6 +112,12 @@ int arpc_register_service_ptl(void* pool, int srvcode)
 		cxx_pool = pool;
 
 	sctk_ptl_am_pte_create(&srail, srvcode);
+	return 0;
+}
+
+int arpc_free_response_ptl(void* resp_addr)
+{
+	sctk_ptl_am_free_response(resp_addr);
 	return 0;
 }
 

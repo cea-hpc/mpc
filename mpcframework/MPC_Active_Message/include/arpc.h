@@ -36,6 +36,7 @@ struct sctk_arpc_context
 typedef struct sctk_arpc_context sctk_arpc_context_t;
 
 int arpc_register_service(void* pool, int srvcode);
+int arpc_free_response(void* addr);
 int arpc_emit_call(sctk_arpc_context_t* ctx, const void* request, size_t req_size, void** response, size_t* resp_size);
 int arpc_recv_call(sctk_arpc_context_t* ctx, const void* request, size_t req_size, void** response, size_t* resp_size);
 

@@ -160,10 +160,6 @@
 /* typedefs */
 #define sctk_ptl_nih_t ptl_handle_ni_t    /**< NIC handler */
 #define sctk_ptl_limits_t ptl_ni_limits_t /**< Portals NIC limits */
-#define SCTK_PTL_AM_CHUNK_SZ (1 * 1024 * 1024) /**< 128 KiB */
-#define SCTK_PTL_AM_REQ_NB_DEF 2
-#define SCTK_PTL_AM_REP_NB_DEF 2
-#define SCTK_PTL_AM_REQ_MIN_FREE (sizeof(double)) /* ME are freed when it remains less space than a double */
 
 #define SCTK_PTL_AM_REQ_TYPE 0
 #define SCTK_PTL_AM_REP_TYPE 1
@@ -209,11 +205,17 @@ union sctk_ptl_am_slot_h_u
 	sctk_ptl_mdh_t mdh; /**< request is a MD */
 };
 
+#define SCTK_PTL_AM_REP_HDR_SZ (sizeof(sctk_ptl_id_t) + sizeof(size_t) + (2*sizeof(uint32_t)) + sizeof(void*))
+#define SCTK_PTL_AM_REP_CELL_SZ ((64) + SCTK_PTL_AM_REP_HDR_SZ) /* 1 cell = 1kio + header */
+#define SCTK_PTL_AM_CHUNK_SZ ((10000) * SCTK_PTL_AM_REP_CELL_SZ) /**< half-million cells */
+#define SCTK_PTL_AM_REQ_NB_DEF 4
+#define SCTK_PTL_AM_REP_NB_DEF 4
+#define SCTK_PTL_AM_REQ_MIN_FREE (sizeof(double)) /* ME are freed when it remains less space than a double */
+
 typedef struct sctk_ptl_am_local_data_s
 {
 	union sctk_ptl_am_slot_u slot;     /**< the request (MD or ME) */
 	union sctk_ptl_am_slot_h_u slot_h; /**< the request Handle */
-	sctk_ptl_am_matchbits_t match;     /**< request match bits */
 	struct sctk_ptl_am_chunk_s* block;
 } sctk_ptl_am_local_data_t;
 
@@ -224,6 +226,7 @@ typedef struct sctk_ptl_am_chunk_s
 	sctk_atomics_int noff;
 	int tag;
 	struct sctk_ptl_am_chunk_s* next;
+	struct sctk_ptl_am_local_data_s* uptr;
 	char buf[SCTK_PTL_AM_CHUNK_SZ];
 } sctk_ptl_am_chunk_t;
 
@@ -242,9 +245,6 @@ typedef struct sctk_ptl_am_pte_s
 	sctk_ptl_am_chunk_t* rep_head;
 
 } sctk_ptl_am_pte_t;
-
-#define SCTK_PTL_AM_REP_HDR_SZ (sizeof(sctk_ptl_id_t) + sizeof(size_t) + (2*sizeof(uint32_t)))
-#define SCTK_PTL_AM_REP_CELL_SZ ((64) + SCTK_PTL_AM_REP_HDR_SZ) /* 1 cell = 1kio + header */
 
 struct sctk_ptl_am_rep_msg_s
 {
@@ -269,6 +269,7 @@ typedef struct sctk_ptl_am_msg_s
 	union sctk_ptl_am_msg_specific_s msg_type; /* type-specific attributes */
 	uint32_t size; /**< 32-bit because part of the hdr_data */
 	uint32_t completed; /**< is this msg completed ? */
+	sctk_ptl_am_chunk_t* chunk_addr;
 	char data[0]; /**< the actual payload */
 } sctk_ptl_am_msg_t;
 

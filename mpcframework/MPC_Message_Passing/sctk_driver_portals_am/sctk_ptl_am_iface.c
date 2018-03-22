@@ -155,8 +155,10 @@ sctk_ptl_am_rail_info_t sctk_ptl_am_hardware_init()
 	sctk_ptl_am_req_max_small_size = (int)(SCTK_PTL_AM_CHUNK_SZ * 0.40);
 	sctk_ptl_am_rep_max_small_size = SCTK_PTL_AM_REP_CELL_SZ;
 	sctk_ptl_am_req_trsh_new = (int)(SCTK_PTL_AM_CHUNK_SZ / 2);
-
 	sctk_assert(SCTK_PTL_AM_CHUNK_SZ > SCTK_PTL_AM_REP_CELL_SZ);
+
+	if(SCTK_PTL_AM_CHUNK_SZ % SCTK_PTL_AM_REP_CELL_SZ != 0)
+		sctk_fatal("Please make sure the max chunk size is a multiple of the number of cells !");
 
 	return res;
 }
@@ -214,6 +216,7 @@ static void sctk_ptl_am_pte_populate( sctk_ptl_am_rail_info_t *srail, int srv_id
 		sctk_ptl_am_me_register( srail, block, pte );
 		sctk_atomics_store_int(&last->up, 1);
 		block->block = last;
+		last->uptr = block;
 		last->next = NULL;
 
 		/* remember the first block, to append into our list */
@@ -222,7 +225,7 @@ static void sctk_ptl_am_pte_populate( sctk_ptl_am_rail_info_t *srail, int srv_id
 		if ( prev )
 			prev->next = last;
 
-		// sctk_warning("POPULATE %s %init_msg - %init_msg (%llu)", ((me_type == SCTK_PTL_AM_REQ_TYPE) ? "REQ" : "REP"), last->buf, last->buf + SCTK_PTL_AM_CHUNK_SZ, SCTK_PTL_AM_CHUNK_SZ);
+		// sctk_warning("POPULATE %s %p - %p (%llu)", ((me_type == SCTK_PTL_AM_REQ_TYPE) ? "REQ" : "REP"), last->buf, last->buf + SCTK_PTL_AM_CHUNK_SZ, SCTK_PTL_AM_CHUNK_SZ);
 		// sctk_error("W/ match = %s", __sctk_ptl_am_match_str(sctk_malloc(70),70, match.raw));
 		// sctk_error("W/ ign   = %s", __sctk_ptl_am_ign_str(sctk_malloc(70),70, ign.raw));
 	}
@@ -362,8 +365,16 @@ sctk_ptl_am_msg_t *sctk_ptl_am_send_request( sctk_ptl_am_rail_info_t *srail, int
 				if(sctk_atomics_load_int(&c_me->up))
 				{
 					req_imm.data.offset = sctk_atomics_fetch_and_add_int( &c_me->noff, SCTK_PTL_AM_REP_CELL_SZ );
-					if ( req_imm.data.offset <= SCTK_PTL_AM_CHUNK_SZ ) /* last cell */
+					if ( req_imm.data.offset == (SCTK_PTL_AM_CHUNK_SZ - SCTK_PTL_AM_REP_CELL_SZ) ) /* last cell */
+					{
+						int cas_val = sctk_atomics_cas_int(&c_me->up, 1, 0);
+						sctk_assert(cas_val == 1);
 						break;
+					}
+					else if(req_imm.data.offset < SCTK_PTL_AM_CHUNK_SZ)
+					{
+						break;
+					}
 					sctk_atomics_fetch_and_add_int( &c_me->noff, ( -1 ) * (int) ( SCTK_PTL_AM_REP_CELL_SZ ) );
 				}
 
@@ -377,7 +388,8 @@ sctk_ptl_am_msg_t *sctk_ptl_am_send_request( sctk_ptl_am_rail_info_t *srail, int
 		} while ( !found_space );
 		tag = c_me->tag;
 		sctk_atomics_incr_int(&c_me->refcnt);
-		sctk_assert(req_imm.data.offset <= SCTK_PTL_AM_REP_CELL_SZ);
+		sctk_assert(req_imm.data.offset >= 0);
+		sctk_assert(req_imm.data.offset <= SCTK_PTL_AM_CHUNK_SZ - SCTK_PTL_AM_REP_CELL_SZ);
 		/* ok, here req_imm.data.offset is the cell offset for the response.
 		 * This cell contains an header and we don't want Portals to erase it.
 		 * 1. Copy the msg to the cell
@@ -387,6 +399,7 @@ sctk_ptl_am_msg_t *sctk_ptl_am_send_request( sctk_ptl_am_rail_info_t *srail, int
 		msg_resp->completed = 0;
 		msg_resp->remote = msg->remote;
 		msg_resp->size = 0; /* not known for now */
+		msg_resp->chunk_addr = c_me;
 		req_imm.data.offset += SCTK_PTL_AM_REP_HDR_SZ;
 		msg_resp->msg_type.rep.addr = msg_resp->data;
 	}
@@ -462,13 +475,41 @@ void sctk_ptl_am_send_response( sctk_ptl_am_rail_info_t *srail, int srv, int rpc
 
 void sctk_ptl_am_wait_response( sctk_ptl_am_rail_info_t *srail, sctk_ptl_am_msg_t *msg )
 {
-	struct timespec t = ( struct timespec ){.tv_sec = 0, .tv_nsec = 2000};
 	while ( !msg->completed )
 	{
-		nanosleep( &t, NULL );
 		sctk_ptl_am_incoming_lookup( srail );
 		sctk_ptl_am_outgoing_lookup( srail );
 	}
+}
+
+static inline void __sctk_ptl_am_free_chunk(sctk_ptl_am_local_data_t* c)
+{
+	sctk_assert(c);
+
+	if(c->block)
+	{
+		sctk_assert(sctk_atomics_load_int(&c->block->refcnt) <= 0);
+		sctk_assert(sctk_atomics_load_int(&c->block->up) == 0);
+		sctk_free((void*)c->block);
+	}
+
+	sctk_free((void*)c);
+}
+
+int sctk_ptl_am_free_response(void* addr)
+{
+	sctk_ptl_am_msg_t* msg = container_of(addr, sctk_ptl_am_msg_t, data);
+	int last_val = sctk_atomics_fetch_and_decr_int(&msg->chunk_addr->refcnt);
+	int cas_val = sctk_atomics_load_int(&msg->chunk_addr->up);
+
+	/*sctk_error("last = %d, cas = %d", last_val, cas_val);*/
+	if(last_val - 1 == 0 && cas_val == 0)
+	{
+		/*sctk_ptl_am_me_release(msg->chunk_addr->uptr);*/
+		/*__sctk_ptl_am_free_chunk(msg->chunk_addr->uptr);*/
+		return 0;
+	}
+	return 1;
 }
 
 /**
@@ -540,6 +581,7 @@ sctk_ptl_am_local_data_t *sctk_ptl_am_me_create( void *start, size_t size, sctk_
 			.min_free = SCTK_PTL_AM_REQ_MIN_FREE,
 		},
 		.slot_h.meh = PTL_INVALID_HANDLE,
+		.block = NULL
 	};
 
 	return user_ptr;
@@ -625,8 +667,7 @@ int sctk_ptl_am_incoming_lookup( sctk_ptl_am_rail_info_t *srail )
 					/* if this slot is the last one used in the memory block AND the ME has been unlinked -> free everything */
 					if(last_value-1 == 0 && cas_value == 0)
 					{
-						sctk_free((void*)chunk->block);
-						sctk_free((void*)chunk);
+						__sctk_ptl_am_free_chunk(chunk);
 					}
 
 					/* just free the temp buffer used to GET() locally */
@@ -702,8 +743,7 @@ int sctk_ptl_am_incoming_lookup( sctk_ptl_am_rail_info_t *srail )
 					if( cnt_res == 0)
 					{
 						/* Free the local_data AND the CHUNK_T object */
-						sctk_free((void*)chunk->block);
-						sctk_free((void*)chunk);
+						__sctk_ptl_am_free_chunk(chunk);
 					}
 				}
 				break;
