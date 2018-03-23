@@ -291,7 +291,14 @@ void mpcomp_task_with_deps(void (*fn)(void *), void *data,
 
   if (!if_clause) {
         while (sctk_atomics_load_int(&(task_node->predecessors))) {
-            mpcomp_task_schedule(0);
+            mpcomp_task_schedule(0); /* schedule thread doing if0 with dependances until deps resolution 
+                                        mpcomp_task_schedule(0) because refcount will remain >= 2 with if0 
+                                        mpcomp_task_schedule(1) would not stop looping */
+        }
+        if(intel_alloc){
+            /* Because with intel compiler task code is between begin_if0 and 
+             * complet_if0 call, so we don't call it in __mpcomp_task_process */
+            return;
         }
   }
 

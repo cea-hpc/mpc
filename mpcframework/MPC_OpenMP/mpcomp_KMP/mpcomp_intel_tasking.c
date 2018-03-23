@@ -100,6 +100,9 @@ kmp_task_t *__kmpc_omp_task_alloc(ident_t *loc_ref, kmp_int32 gtid,
   mpcomp_taskgroup_add_task(new_task);
   mpcomp_task_ref_parent_task(new_task);
 
+  /*TODO if INTEL */
+  current_task->last_task_alloc = new_task;
+
   return compiler_infos;
 }
 
@@ -111,6 +114,8 @@ void __kmpc_omp_task_begin_if0(ident_t *loc_ref, kmp_int32 gtid,
   sctk_assert(t);
   mpcomp_task->icvs = t->info.icvs;
   mpcomp_task->prev_icvs = t->info.icvs;
+  /* Because task code is between the current call and the next call 
+   * __kmpc_omp_task_complete_if0 */
   MPCOMP_TASK_THREAD_SET_CURRENT_TASK(t, mpcomp_task);
 }
 
@@ -120,6 +125,7 @@ void __kmpc_omp_task_complete_if0(ident_t *loc_ref, kmp_int32 gtid,
   struct mpcomp_task_s *mpcomp_task = (struct mpcomp_task_s *)
       ((char *)task - sizeof(struct mpcomp_task_s));
   sctk_assert(t);
+  __mpcomp_task_finalize_deps(mpcomp_task); /* if task if0 with deps */
   mpcomp_taskgroup_del_task(mpcomp_task);
   mpcomp_task_unref_parent_task(mpcomp_task);
   MPCOMP_TASK_THREAD_SET_CURRENT_TASK(t, mpcomp_task->parent);
@@ -234,8 +240,8 @@ kmp_int32 __kmpc_omp_task_with_deps(ident_t *loc_ref, kmp_int32 gtid,
   void *data = (void *)mpcomp_task->data;
   long arg_size = 0; 
   long arg_align = 0; 
-  bool if_clause = true;
-  unsigned flags = 8;
+  bool if_clause = true; /* if0 task doesn't go here */
+  unsigned flags = 8; /* dep flags */
   void ** depend = sctk_malloc(sizeof(uintptr_t) * ((int)(ndeps + ndeps_noalias)+2));
   int dep = mpcomp_intel_translate_taskdep_to_gomp(ndeps, dep_list, ndeps_noalias, noalias_dep_list, depend);
   sctk_nodebug("[Redirect mpcomp_GOMP]%s:\tBegin", __func__);
@@ -248,7 +254,20 @@ kmp_int32 __kmpc_omp_task_with_deps(ident_t *loc_ref, kmp_int32 gtid,
 void __kmpc_omp_wait_deps(ident_t *loc_ref, kmp_int32 gtid, kmp_int32 ndeps,
                           kmp_depend_info_t *dep_list, kmp_int32 ndeps_noalias,
                           kmp_depend_info_t *noalias_dep_list) {
-  //not_implemented();
+    mpcomp_thread_t *t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
+    mpcomp_task_t * current_task = MPCOMP_TASK_THREAD_GET_CURRENT_TASK(t);
+    mpcomp_task_t * task = current_task->last_task_alloc;
+    long arg_size = 0; 
+    long arg_align = 0;
+    bool if_clause = false; /* if0 task here */
+    unsigned flags = 8; /* dep flags */
+    void ** depend = sctk_malloc(sizeof(uintptr_t) * ((int)(ndeps + ndeps_noalias)+2));
+    int dep = mpcomp_intel_translate_taskdep_to_gomp(ndeps, dep_list, ndeps_noalias, noalias_dep_list, depend);
+    sctk_nodebug("[Redirect mpcomp_GOMP]%s:\tBegin", __func__);
+    mpcomp_task_with_deps(NULL, NULL, NULL, arg_size, arg_align,
+    if_clause, flags, depend, true, task); /* create the dep node and set the task to the node then return */
+    /* next call should be __kmpc_omp_task_begin_if0 to execute undeferred if0 task */
+    sctk_nodebug("[Redirect mpcomp_GOMP]%s:\tEnd", __func__);
 }
 
 void __kmp_release_deps(kmp_int32 gtid, kmp_taskdata_t *task) {
