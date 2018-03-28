@@ -100,7 +100,12 @@ kmp_task_t *__kmpc_omp_task_alloc(ident_t *loc_ref, kmp_int32 gtid,
   mpcomp_taskgroup_add_task(new_task);
   mpcomp_task_ref_parent_task(new_task);
 
-  /*TODO if INTEL */
+  /* If its parent task is final, the new task must be final too */
+  if (mpcomp_task_is_final(flags, new_task->parent)) {
+      mpcomp_task_set_property(&(new_task->property), MPCOMP_TASK_FINAL);
+  }
+
+  /* to handle if0 with deps */
   current_task->last_task_alloc = new_task;
 
   return compiler_infos;
