@@ -70,7 +70,6 @@ static inline void __mpcomp_thread_infos_init(mpcomp_thread_t *thread,
   for (i = 0; i < MPCOMP_MAX_ALIVE_FOR_DYN + 1; i++) {
     sctk_atomics_store_int(&(thread->for_dyn_remain[i].i), -1);
   }
-
 #if (defined(MPCOMP_TASK) || defined(MPCOMP_OPENMP_3_0))
   mpcomp_task_thread_infos_init(thread);
 #endif /* MPCOMP_TASK || MPCOMP_OPENMP_3_0 */

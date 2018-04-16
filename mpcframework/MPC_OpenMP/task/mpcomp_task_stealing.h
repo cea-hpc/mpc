@@ -27,6 +27,8 @@ int mpcomp_task_get_victim_producer(int globalRank, int index,
                                     mpcomp_tasklist_type_t type);
 int mpcomp_task_get_victim_producer_order(int globalRank, int i,
                                           mpcomp_tasklist_type_t type);
+int mpcomp_task_get_victim_hierarchical_random(int globalRank, int i,
+                                          mpcomp_tasklist_type_t type);
 
 void mpcomp_task_init_victim_random( mpcomp_generic_node_t* gen_node );
 

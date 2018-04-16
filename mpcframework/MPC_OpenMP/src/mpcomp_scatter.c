@@ -343,7 +343,7 @@ __mpcomp_scatter_wakeup_intermediate_node( mpcomp_node_t* node )
 
     node->reduce_data = (void**) mpcomp_alloc( node->nb_children * 64 * sizeof( void* ));
     node->isArrived = (int *) mpcomp_alloc( node->nb_children * 64 * sizeof( int ) );
-    for ( i = 0; i < node->nb_children * 64; i++ ) {
+    for ( i = 0; i < node->nb_children * 64; i+=64 ) {
       node->reduce_data[i] = NULL;
       node->isArrived[i] = 0;
     }
@@ -425,7 +425,6 @@ static mpcomp_mvp_t*
 __mpcomp_scatter_wakeup_final_mvp( mpcomp_node_t* node )
 {
     int i, cur_mvp;
-    //int node_vdepth, num_vchildren, nthreads, num_children, min_shift, ext_shift;
 
     sctk_assert( node );
     sctk_assert( node->child_type == MPCOMP_CHILDREN_LEAF ); 
@@ -446,7 +445,7 @@ __mpcomp_scatter_wakeup_final_mvp( mpcomp_node_t* node )
         cur_mvp = 0; 
         node->reduce_data = (void**) mpcomp_alloc( node->nb_children * 64 * sizeof( void* ));
         node->isArrived = (int *) mpcomp_alloc( node->nb_children * 64 * sizeof( int ) );
-        for ( i = 0; i < node->nb_children * 64; i++ ) {
+        for ( i = 0; i < node->nb_children * 64; i+=64 ) {
 		      node->reduce_data[i] = NULL;
 		      node->isArrived[i] = 0;
         }
@@ -530,6 +529,10 @@ void __mpcomp_scatter_instance_post_init( mpcomp_thread_t* thread )
     int j; 
     for (j = 0; j < MPCOMP_MAX_ALIVE_FOR_DYN + 1; j++) 
 	    sctk_atomics_store_int(&(mvp->threads->for_dyn_remain[j].i), -1);
+
+	if(!thread->task_infos.reusable_tasks)
+    thread->task_infos.reusable_tasks = (mpcomp_task_t**) mpcomp_alloc(MPCOMP_NB_REUSABLE_TASKS*sizeof(mpcomp_task_t*));
+
     if( ! thread->mvp->instance->buffered )
         __mpcomp_internal_full_barrier( thread->mvp );
 

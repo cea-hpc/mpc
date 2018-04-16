@@ -85,6 +85,7 @@ __mpcomp_instance_tree_array_mvp_init( struct mpcomp_node_s* parent, struct mpco
     const int vdepth = parent->depth - parent->instance->root->depth +1; 
 
     const int global_rank = parent->instance_global_rank + index;
+
     meta_node = &( parent->instance->tree_array[global_rank] );
     sctk_assert( meta_node );
     meta_node->ptr.mvp = mvp; 

@@ -67,7 +67,6 @@ void __mpcomp_internal_full_barrier(mpcomp_mvp_t *mvp) {
           b = sctk_atomics_fetch_and_incr_int(&(c->barrier)) + 1;
         }
 
-
         /* Step 2 - Wait for the barrier to be done */
         if (c != new_root || (c == new_root && b != c->barrier_num_threads)) {
           /* Wait for c->barrier == c->barrier_num_threads */
@@ -89,11 +88,13 @@ void __mpcomp_internal_full_barrier(mpcomp_mvp_t *mvp) {
 		c->barrier_done++ ; /* No need to lock I think... */
 	}
 
+
 	/* Step 3 - Go down */
 	while ( c->child_type != MPCOMP_CHILDREN_LEAF ) {
 		c = c->children.node[mvp->tree_rank[c->depth]];
 		c->barrier_done++; /* No need to lock I think... */
 	}
+
 
 #if MPCOMP_TASK
 #if MPCOMP_COHERENCY_CHECKING

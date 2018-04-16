@@ -70,8 +70,25 @@ static inline void mpcomp_task_list_free(mpcomp_task_list_t *list) {
 }
 
 static inline int mpcomp_task_list_isempty(mpcomp_task_list_t *list) {
-  // return ( sctk_atomics_load_int( &( list->nb_elements ) ) == 0 );
   return (list->head == NULL);
+}
+
+static inline int mpcomp_task_is_child(mpcomp_task_t *task, mpcomp_task_t *current_task)
+{
+  mpcomp_task_t *parent_task = task->parent;
+
+  while(parent_task->depth > current_task->depth + MPCOMP_TASKS_DEPTH_JUMP)
+  {
+    parent_task = parent_task->far_ancestor;
+  }
+  while(parent_task->depth > current_task->depth)
+  {
+    parent_task = parent_task->parent;
+  }
+  if(parent_task != current_task) 
+    return 0;
+  else {
+    return 1;}
 }
 
 static inline void mpcomp_task_list_pushtohead(mpcomp_task_list_t *list,
@@ -111,7 +128,7 @@ static inline void mpcomp_task_list_pushtotail(mpcomp_task_list_t *list,
 }
 
 static inline mpcomp_task_t *
-mpcomp_task_list_popfromhead(mpcomp_task_list_t *list, int depth) {
+mpcomp_task_list_popfromhead(mpcomp_task_list_t *list) {
   mpcomp_task_t *task = NULL;
 
   /* No task in list */
@@ -119,27 +136,36 @@ mpcomp_task_list_popfromhead(mpcomp_task_list_t *list, int depth) {
     return NULL;
 
   task = list->head;
-  sctk_assert(task);
-
-  /* No task with depth greater than mine in list */
-  if (task->depth <= depth && depth)
+  mpcomp_thread_t *thread = (mpcomp_thread_t*) sctk_openmp_thread_tls;
+  mpcomp_task_t *current_task = thread->task_infos.current_task;
+  /* Only child tasks can be scheduled to respect OpenMP norm */
+  if ( current_task->func && !mpcomp_task_is_child(task, current_task) && thread->task_infos.one_list_per_thread) /* If not implicit task and one list per thread*/ 
     return NULL;
 
   /* Get First task in list */
   list->head = task->next;
+  if(list->head) list->head->prev = NULL;
   if (!(task->next))
     list->tail = NULL;
   sctk_atomics_decr_int(&list->nb_elements);
 
+  task->list=NULL;
   return task;
 }
 
 static inline mpcomp_task_t *
-mpcomp_task_list_popfromtail(mpcomp_task_list_t *list, int depth) {
+mpcomp_task_list_popfromtail(mpcomp_task_list_t *list) {
   if (!mpcomp_task_list_isempty(list)) {
     mpcomp_task_t *task = list->tail;
 
+    mpcomp_thread_t *thread = (mpcomp_thread_t*) sctk_openmp_thread_tls;
+    mpcomp_task_t *current_task = thread->task_infos.current_task;
+    /* Only child tasks can be scheduled to respect OpenMP norm */
+    if ( current_task->func && !mpcomp_task_is_child(task, current_task) && thread->task_infos.one_list_per_thread) /* If not implicit task and one list per thread*/
+      return NULL;
+
     list->tail = task->prev;
+    if(list->tail) list->tail->next = NULL;
     if (!(task->prev)) {
       list->head = NULL;
     }

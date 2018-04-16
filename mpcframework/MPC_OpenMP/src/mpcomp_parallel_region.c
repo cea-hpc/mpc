@@ -105,11 +105,11 @@ __mpcomp_internal_begin_parallel_region( mpcomp_parallel_region_t *info, const u
         t->children_instance = __mpcomp_tree_array_instance_init( t, real_num_threads );
         sctk_assert( t->children_instance );
         once++; 
-        sctk_assert( once == 1 );
+        //sctk_assert( once == 1 );
     }
     else
     {
-        sctk_assert( once == 1 );
+        //sctk_assert( once == 1 );
         t->mvp->threads = t->children_instance->master;
     }
 

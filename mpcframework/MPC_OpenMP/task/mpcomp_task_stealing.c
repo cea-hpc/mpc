@@ -57,18 +57,7 @@ int mpcomp_task_get_victim_default(int globalRank, int index,
   return globalRank;
 }
 
-/** Hierachical stealing policy **/
-
-void mpcomp_task_init_victim_hierarchical(int globalRank, int index,
-                                          mpcomp_tasklist_type_t type) {
-  return;
-}
-
-static void
-mpcomp_task_prepare_victim_hierarchical(int globalRank, int index,
-                                        mpcomp_tasklist_type_t type) {
-  return;
-}
+/** Hierarchical stealing policy **/
 
 int mpcomp_task_get_victim_hierarchical(int globalRank, int index,
                                         mpcomp_tasklist_type_t type) {
@@ -102,18 +91,13 @@ void mpcomp_task_init_victim_random( mpcomp_generic_node_t* gen_node )
         sctk_assert( gen_node->type == MPCOMP_CHILDREN_NODE );
         const int __globalRank = gen_node->ptr.node->tree_array_rank;
         srand48_r( sctk_get_time_stamp() * __globalRank, randBuffer);
-        MPCOMP_TASK_NODE_SET_TASK_LIST_RANDBUFFER( gen_node->ptr.mvp, randBuffer );
+        MPCOMP_TASK_NODE_SET_TASK_LIST_RANDBUFFER( gen_node->ptr.node, randBuffer );
     }
-}
-
-static void mpcomp_task_prepare_victim_random(int globalRank, int index,
-                                              mpcomp_tasklist_type_t type) {
-  return;
 }
 
 int mpcomp_task_get_victim_random(const int globalRank, const int index, mpcomp_tasklist_type_t type) 
 {
-    int victim;
+    int victim,i;
     long int value;
     mpcomp_thread_t *thread;
     mpcomp_instance_t *instance;
@@ -130,11 +114,18 @@ int mpcomp_task_get_victim_random(const int globalRank, const int index, mpcomp_
     sctk_assert( instance->tree_nb_nodes_per_depth );
     sctk_assert( instance->tree_first_node_per_depth );
 
-    /* Only victim id and value while change */
-    const int __globalRank = globalRank;
-    const int __depth = mpcomp_task_get_depth_from_global_rank( globalRank );
-    const int __level_size = instance->tree_nb_nodes_per_depth[__depth];
-    const int __first_rank = instance->tree_first_node_per_depth[__depth];
+    int tasklistDepth = MPCOMP_TASK_TEAM_GET_TASKLIST_DEPTH(instance->team, type);
+    int nbVictims = (!tasklistDepth) ? 1 : thread->instance->tree_nb_nodes_per_depth[tasklistDepth];
+
+    while(nbVictims == 0)
+    {
+      tasklistDepth --;
+      nbVictims = (!tasklistDepth) ? 1 : thread->instance->tree_nb_nodes_per_depth[tasklistDepth];
+    }
+
+    int first_rank = 0 ; 
+    for(i=0;i<tasklistDepth;i++) 
+      first_rank += thread->instance->tree_nb_nodes_per_depth[i];
 
     sctk_assert( globalRank >= 0 && globalRank < instance->tree_array_size );
     gen_node = &( instance->tree_array[globalRank] );
@@ -145,26 +136,119 @@ int mpcomp_task_get_victim_random(const int globalRank, const int index, mpcomp_
     {
         sctk_assert( gen_node->ptr.mvp->threads );
         randBuffer = MPCOMP_TASK_MVP_GET_TASK_LIST_RANDBUFFER(thread->mvp);
-        //TODO transfert data to current thread ...
-        //randBuffer = gen_node->ptr.mvp->threads->task_infos.tasklist_randBuffer;
     }
     else
     {
         sctk_assert( gen_node->type == MPCOMP_CHILDREN_NODE );
-        randBuffer = gen_node->ptr.node->task_infos.tasklist_randBuffer;
+        randBuffer = MPCOMP_TASK_NODE_GET_TASK_LIST_RANDBUFFER(gen_node->ptr.node);
     }
 
+    
     do {
         /* Get a random value */
         lrand48_r(randBuffer, &value);
         /* Select randomly a globalRank among neighbourhood */
-        victim = (value % __level_size + __first_rank);
-    } while (victim == __globalRank); 
+        victim = (value % nbVictims + first_rank);
+    } while (victim == globalRank); 
 
   return victim;
 }
 
-/** Random order stealing policy **/
+int mpcomp_task_get_victim_hierarchical_random(const int globalRank, const int index, mpcomp_tasklist_type_t type)
+{   
+  int victim,i,j;
+  long int value;
+  int *order;
+  mpcomp_thread_t *thread;
+  mpcomp_instance_t *instance;
+  mpcomp_node_t *node;
+  struct mpcomp_mvp_s *mvp ;
+  struct drand48_data *randBuffer;
+  mpcomp_generic_node_t* gen_node;
+  mpcomp_task_list_t *list;
+
+  /* Retrieve the information (microthread structure and current region) */
+  thread = (mpcomp_thread_t *)sctk_openmp_thread_tls;
+  mvp = thread->mvp ;
+  node = mvp->father;
+  instance = thread->instance;
+
+  if( !MPCOMP_TASK_THREAD_GET_LARCENY_ORDER(thread) ) 
+    mpcomp_task_allocate_larceny_order(thread);
+
+  order = MPCOMP_TASK_THREAD_GET_LARCENY_ORDER(thread);
+  sctk_assert( order );
+  if(index==1) {
+    int local_rank = thread->rank % node->barrier_num_threads;
+    int tasklistDepth = MPCOMP_TASK_TEAM_GET_TASKLIST_DEPTH(instance->team, type);
+
+    int nbVictims = (!tasklistDepth) ? 1 : thread->instance->tree_nb_nodes_per_depth[tasklistDepth];
+    int first_rank = 0 ; 
+
+
+    while(nbVictims == 0)
+    {
+      tasklistDepth --;
+      nbVictims = (!tasklistDepth) ? 1 : thread->instance->tree_nb_nodes_per_depth[tasklistDepth];
+    }
+
+    for(i=0;i<tasklistDepth;i++) 
+      first_rank += thread->instance->tree_nb_nodes_per_depth[i];
+
+    sctk_assert( globalRank >= 0 && globalRank < instance->tree_array_size );
+    gen_node = &( instance->tree_array[globalRank] );
+
+    sctk_assert( gen_node->type != MPCOMP_CHILDREN_NULL );
+
+    if(  gen_node->type == MPCOMP_CHILDREN_LEAF )
+    {
+      sctk_assert( gen_node->ptr.mvp->threads );
+      randBuffer = MPCOMP_TASK_MVP_GET_TASK_LIST_RANDBUFFER(thread->mvp);
+    }
+    else
+    {
+      sctk_assert( gen_node->type == MPCOMP_CHILDREN_NODE );
+    }
+
+    int tmporder[nbVictims-1];
+    for (i = 0; i < nbVictims-1; i++) 
+    {
+      order[i] =  first_rank + i;
+      order[i] = (order[i] >= globalRank) ? order[i] + 1 : order[i];
+      tmporder[i]=order[i];
+    }
+
+    int parentrank=node->instance_global_rank - first_rank;
+    int startrank=parentrank;
+    int x=1,k,l,cpt=0,nb_elt;
+
+    for(i=0;i<tasklistDepth;i++)
+    {
+
+      for(j=0;j<(node->barrier_num_threads-1)*x;j++)
+      {
+        lrand48_r(randBuffer, &value);
+        k = (value % ((node->barrier_num_threads-1)*x - j) + parentrank + j) % (nbVictims-1);
+        l=(parentrank+j) % (nbVictims-1);
+        int tmp = tmporder[l];
+        tmporder[l] = tmporder[k];
+        tmporder[k]=tmp;
+        order[cpt] = tmporder[l] ;
+        cpt++;
+      }
+
+      x*=node->barrier_num_threads;
+      startrank = startrank - node->rank * x;
+      if(node->father) node = node->father;
+      parentrank = ((((parentrank/x)*x) + x) % (x*node->barrier_num_threads) + startrank) % (nbVictims -1);
+      parentrank = (parentrank >= globalRank -first_rank) ? parentrank - 1 : parentrank;
+
+    }
+  }
+  return order[index-1];
+}
+    
+
 
 static void
 mpcomp_task_prepare_victim_random_order(const int globalRank, const int index, mpcomp_tasklist_type_t type) 
@@ -189,12 +273,19 @@ mpcomp_task_prepare_victim_random_order(const int globalRank, const int index, m
     sctk_assert( instance->tree_array );
     sctk_assert( instance->tree_nb_nodes_per_depth );
     sctk_assert( instance->tree_first_node_per_depth );
-    
-    /* Only victim id and value while change */
-    const int __globalRank = globalRank;
-    const int tasklistDepth = MPCOMP_TASK_TEAM_GET_TASKLIST_DEPTH(instance->team, type);
-    const int __nbVictims = thread->instance->tree_nb_nodes_per_depth[tasklistDepth]-1;
-    const int __first_rank = instance->tree_first_node_per_depth[tasklistDepth];
+
+    int tasklistDepth = MPCOMP_TASK_TEAM_GET_TASKLIST_DEPTH(instance->team, type);
+    int nbVictims = (!tasklistDepth) ? 1 : thread->instance->tree_nb_nodes_per_depth[tasklistDepth];
+    int first_rank = 0 ; 
+
+    while(nbVictims == 0)
+    {
+      tasklistDepth --;
+      nbVictims = (!tasklistDepth) ? 1 : thread->instance->tree_nb_nodes_per_depth[tasklistDepth];
+    }
+
+    for(i=0;i<tasklistDepth;i++) 
+      first_rank += thread->instance->tree_nb_nodes_per_depth[i];
 
     sctk_assert( globalRank >= 0 && globalRank < instance->tree_array_size );
     gen_node = &( instance->tree_array[globalRank] );
@@ -217,17 +308,16 @@ mpcomp_task_prepare_victim_random_order(const int globalRank, const int index, m
     order = MPCOMP_TASK_THREAD_GET_LARCENY_ORDER(thread);
     sctk_assert( order );
 
-    for (i = 0; i < __nbVictims; i++) 
+    for (i = 0; i < nbVictims; i++) 
     {
-        order[i] = __first_rank + i;
-        order[i] = (order[i] >= __globalRank) ? order[i] + 1 : order[i];
+        order[i] = first_rank + i;
     }
 
-    for (i = 0; i < __nbVictims; i++) 
+    for (i = 0; i < nbVictims; i++) 
     {
         int tmp = order[i];
         lrand48_r(randBuffer, &value);
-        int j = value % (__nbVictims - i);
+        int j = value % (nbVictims - i);
         order[i] = order[i + j];
         order[i + j] = tmp;
     }
@@ -248,7 +338,7 @@ int mpcomp_task_get_victim_random_order(int globalRank, int index,
 
   order = MPCOMP_TASK_THREAD_GET_LARCENY_ORDER(thread);
   sctk_assert(order);
-  sctk_assert(order[index - 1] >= 0 && order[index - 1] != globalRank);
+
   return order[index - 1];
 }
 
@@ -270,12 +360,20 @@ mpcomp_task_prepare_victim_roundrobin(const int globalRank, const int index, mpc
     sctk_assert( instance->tree_nb_nodes_per_depth );
     sctk_assert( instance->tree_first_node_per_depth );
 
-    /* Only victim id and value while change */
-    const int __globalRank = globalRank;
-    const int __depth = mpcomp_task_get_depth_from_global_rank( globalRank );
-    const int __nbVictims = instance->tree_nb_nodes_per_depth[__depth] - 1;
-    const int __first_rank = instance->tree_first_node_per_depth[__depth];
-    const int __decal = (__globalRank - __first_rank + 1) % (__nbVictims + 1);
+    int tasklistDepth = MPCOMP_TASK_TEAM_GET_TASKLIST_DEPTH(instance->team, type);
+    int nbVictims = (!tasklistDepth) ? 1 : thread->instance->tree_nb_nodes_per_depth[tasklistDepth];
+    int first_rank = 0 ; 
+
+    while(nbVictims == 0)
+    {
+      tasklistDepth --;
+      nbVictims = (!tasklistDepth) ? 1 : thread->instance->tree_nb_nodes_per_depth[tasklistDepth];
+    }
+
+    for(i=0;i<tasklistDepth;i++) 
+      first_rank += thread->instance->tree_nb_nodes_per_depth[i];
+
+    int decal = (globalRank - first_rank + 1) % (nbVictims);
 
     if( !MPCOMP_TASK_THREAD_GET_LARCENY_ORDER(thread) )
         mpcomp_task_allocate_larceny_order(thread);
@@ -283,10 +381,9 @@ mpcomp_task_prepare_victim_roundrobin(const int globalRank, const int index, mpc
     order = MPCOMP_TASK_THREAD_GET_LARCENY_ORDER(thread);
     sctk_assert(order);
 
-    for (i = 0; i < __nbVictims; i++) 
+    for (i = 0; i < nbVictims; i++) 
     {
-        order[i] = __first_rank + (__decal + i) % (__nbVictims + 1);
-        order[i] = (order[i] >= __globalRank) ? order[i] + 1 : order[i];
+        order[i] = first_rank + (decal + i) % (nbVictims);
     }
 }
 
@@ -304,7 +401,6 @@ mpcomp_task_get_victim_roundrobin(const int globalRank, const int index, mpcomp_
 
   order = MPCOMP_TASK_THREAD_GET_LARCENY_ORDER(thread);
   sctk_assert(order);
-  sctk_assert(order[index - 1] >= 0 && order[index - 1] != globalRank);
   return order[index - 1];
 }
 
@@ -320,18 +416,26 @@ int mpcomp_task_get_victim_producer(int globalRank, int index, mpcomp_tasklist_t
 
     sctk_assert(thread->instance);
     instance = thread->instance; 
+    
+    int tasklistDepth = MPCOMP_TASK_TEAM_GET_TASKLIST_DEPTH(instance->team, type);
+    int nbVictims = (!tasklistDepth) ? 1 : thread->instance->tree_nb_nodes_per_depth[tasklistDepth];
+    int first_rank = 0 ; 
 
-    const int __globalRank = globalRank;
-    const int __depth = mpcomp_task_get_depth_from_global_rank( globalRank );
-    const int __first_rank = instance->tree_first_node_per_depth[__depth];
-    const int __nbVictims = instance->tree_nb_nodes_per_depth[__depth] - 1;
-
-    victim = (globalRank == __first_rank) ? __first_rank + 1 : __first_rank;
-
-    for (max_elt = 0, i = 0; i < __nbVictims; i++) 
+    while(nbVictims == 0)
     {
-        rank = i + __first_rank;
-        rank += (rank >= __globalRank) ? 1 : 0;
+      tasklistDepth --;
+      nbVictims = (!tasklistDepth) ? 1 : thread->instance->tree_nb_nodes_per_depth[tasklistDepth];
+    }
+
+    for(i=0;i<tasklistDepth;i++) 
+      first_rank += thread->instance->tree_nb_nodes_per_depth[i];
+
+    victim = (globalRank == first_rank) ? first_rank + 1 : first_rank;
+
+    for (max_elt = 0, i = 0; i < nbVictims -1; i++) 
+    {
+        rank = i + first_rank;
+        rank += (rank >= globalRank) ? 1 : 0;
         list = (mpcomp_task_list_t *) mpcomp_task_get_list(rank, type);
         nb_elt = (list) ? sctk_atomics_load_int(&(list->nb_elements)) : -1;
 
@@ -361,28 +465,35 @@ mpcomp_task_prepare_victim_producer_order( const int globalRank, const int index
     sctk_assert(thread->instance);
     instance = thread->instance;
 
-    const int __globalRank = globalRank;
-    const int __depth = mpcomp_task_get_depth_from_global_rank( globalRank );
-    const int __first_rank = instance->tree_first_node_per_depth[__depth];
-    const int __nbVictims = instance->tree_nb_nodes_per_depth[__depth] - 1;
+    int tasklistDepth = MPCOMP_TASK_TEAM_GET_TASKLIST_DEPTH(instance->team, type);
+    int nbVictims = (!tasklistDepth) ? 1 : thread->instance->tree_nb_nodes_per_depth[tasklistDepth];
+    int first_rank = 0 ; 
+
+    while(nbVictims == 0)
+    {
+      tasklistDepth --;
+      nbVictims = (!tasklistDepth) ? 1 : thread->instance->tree_nb_nodes_per_depth[tasklistDepth];
+    }
+
+    for(i=0;i<tasklistDepth;i++) 
+      first_rank += thread->instance->tree_nb_nodes_per_depth[i];
 
     if( !MPCOMP_TASK_THREAD_GET_LARCENY_ORDER( thread ) )
         mpcomp_task_allocate_larceny_order(thread);
 
     order = MPCOMP_TASK_THREAD_GET_LARCENY_ORDER(thread);
-    int nbElts[__nbVictims][2];
+    int nbElts[nbVictims][2];
 
-    for (i = 0; i < __nbVictims; i++) 
+    for (i = 0; i < nbVictims ; i++) 
     {
-        nbElts[i][1] = i + __first_rank;
-        nbElts[i][1] += (nbElts[i][1] >= __globalRank) ? 1 : 0;
+        nbElts[i][1] = i + first_rank;
         list = mpcomp_task_get_list(nbElts[i][1], type);
         nbElts[i][0] = (list) ? sctk_atomics_load_int(&list->nb_elements) : -1;
     }
 
-    qsort_r(nbElts, __nbVictims, 2 * sizeof(int), mpcomp_task_cmp_decr_func, ext_arg);
+    qsort_r(nbElts, nbVictims, 2 * sizeof(int), mpcomp_task_cmp_decr_func, ext_arg);
 
-    for (i = 0; i < __nbVictims; i++)
+    for (i = 0; i < nbVictims; i++)
         order[i] = nbElts[i][1];
 
     return 0;
@@ -401,7 +512,6 @@ int mpcomp_task_get_victim_producer_order(const int globalRank, const int index,
 
     order = MPCOMP_TASK_THREAD_GET_LARCENY_ORDER( thread );
     sctk_assert( order );
-    sctk_assert( order[index - 1] >= 0 && order[index - 1] != globalRank );
     return order[index - 1];
 }
 

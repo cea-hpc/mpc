@@ -46,6 +46,7 @@
 
 #include "ompt.h"
 #include "mpcomp_ompt_general.h"
+#include<mpi.h>
 extern ompt_callback_t* OMPT_Callbacks;
 
 //#define MPC_OPENMP_PERF_TASK_COUNTERS
@@ -154,29 +155,32 @@ mpcomp_task_unref_parent_task(mpcomp_task_t *task)
   bool no_more_ref;
   mpcomp_task_t *mother, *swap_value;
   sctk_assert(task);
+  mpcomp_thread_t *thread = (mpcomp_thread_t *)sctk_openmp_thread_tls;
 
   mother = task->parent;
   no_more_ref = (sctk_atomics_fetch_and_decr_int(&(task->refcount)) == 1);
-
-  if (mother && no_more_ref) // FREE MY TASK AND CLIMB TREE
+  while (mother && no_more_ref) // FREE MY TASK AND CLIMB TREE
   {
-    sctk_free(task);
+    /* Try to store task to reuse it after and avoid alloc overhead */
+    if(thread->task_infos.nb_reusable_tasks < MPCOMP_NB_REUSABLE_TASKS && !task->is_stealed && thread->task_infos.one_list_per_thread && task->task_size == thread->task_infos.max_task_tot_size ) 
+    {
+      thread->task_infos.reusable_tasks[thread->task_infos.nb_reusable_tasks] = task;
+      thread->task_infos.nb_reusable_tasks ++;
+    }
+
+    else
+    {
+      sctk_free(task);
+    }
     task = mother;
     mother = task->parent;
     no_more_ref = (sctk_atomics_fetch_and_decr_int(&(task->refcount)) == 1);
-
-    while (no_more_ref && mother) {
-      sctk_free(task);
-      task = mother;
-      mother = task->parent;
-      no_more_ref = (sctk_atomics_fetch_and_decr_int(&(task->refcount)) == 1);
-    }
   }
 
   if (!mother && no_more_ref) // ROOT TASK
   {
     sctk_atomics_decr_int(&(task->refcount));
-  }
+  } 
 }
 
 /**
@@ -222,9 +226,40 @@ __mpcomp_task_alloc(void (*fn)(void *), void *data,
   sctk_assert(MPCOMP_OVERFLOW_SANITY_CHECK(mpcomp_task_tot_size,
                                            mpcomp_task_data_size));
   mpcomp_task_tot_size += mpcomp_task_data_size;
+  mpcomp_task_t *new_task;
 
-  mpcomp_task_t *new_task =
-      mpcomp_alloc( mpcomp_task_tot_size );
+  /* Reuse another task if we can to avoid alloc overhead */
+	if(t->task_infos.one_list_per_thread)
+	{
+		if(mpcomp_task_tot_size > t->task_infos.max_task_tot_size)
+    /* Tasks stored too small, free them */
+		{
+			t->task_infos.max_task_tot_size = mpcomp_task_tot_size;
+			int i;
+			for(i=0;i<t->task_infos.nb_reusable_tasks;i++) 
+      {
+				sctk_free(t->task_infos.reusable_tasks[i]);
+				t->task_infos.reusable_tasks[i] = NULL;
+      }
+			t->task_infos.nb_reusable_tasks = 0;
+		}
+
+		if(t->task_infos.nb_reusable_tasks == 0) 
+		{
+			new_task = mpcomp_alloc( t->task_infos.max_task_tot_size);
+		}
+    /* Reuse last task stored */
+		else
+		{
+	  	sctk_assert(t->task_infos.reusable_tasks[t->task_infos.nb_reusable_tasks-1]);
+			new_task = (mpcomp_task_t*) t->task_infos.reusable_tasks[t->task_infos.nb_reusable_tasks -1];
+			t->task_infos.nb_reusable_tasks --;
+		}
+	}    
+	else
+	{
+		new_task = mpcomp_alloc( mpcomp_task_tot_size );
+	}
   sctk_assert(new_task != NULL);
 
   void *task_data = (arg_size > 0)
@@ -235,11 +270,14 @@ __mpcomp_task_alloc(void (*fn)(void *), void *data,
   __mpcomp_task_infos_init(new_task, fn, task_data, t);
 
 #ifdef MPCOMP_USE_TASKDEP
+if (deps_num !=0) 
+{
   new_task->task_dep_infos = sctk_malloc(sizeof(mpcomp_task_dep_task_infos_t));
   sctk_assert(new_task->task_dep_infos);
   memset(new_task->task_dep_infos, 0, sizeof(mpcomp_task_dep_task_infos_t));
+}
 #endif /* MPCOMP_USE_TASKDEP */
-
+if(new_task->parent->func==NULL)
   mpcomp_task_set_property(&(new_task->property), MPCOMP_TASK_TIED);
 
   if (arg_size > 0) {
@@ -256,9 +294,12 @@ __mpcomp_task_alloc(void (*fn)(void *), void *data,
   }
 
   /* taskgroup */
-  mpcomp_task_t *current_task = MPCOMP_TASK_THREAD_GET_CURRENT_TASK(t);
   mpcomp_taskgroup_add_task(new_task);
   mpcomp_task_ref_parent_task(new_task);
+  new_task->is_stealed=false;
+  new_task->task_size = t->task_infos.max_task_tot_size;
+  if(new_task->depth % MPCOMP_TASKS_DEPTH_JUMP == 2) new_task->far_ancestor = new_task->parent;
+  else new_task->far_ancestor = new_task->parent->far_ancestor;
 
   #if OMPT_SUPPORT
   if( mpcomp_ompt_is_enabled() )
@@ -288,14 +329,12 @@ __mpcomp_task_alloc(void (*fn)(void *), void *data,
 static mpcomp_task_list_t *
 __mpcomp_task_try_delay(mpcomp_thread_t * thread, bool if_clause) 
 {
-  mpcomp_task_t *current_task = NULL;
   mpcomp_task_list_t *mvp_task_list = NULL;
 
   /* Is Serialized Task */
   if (!if_clause || mpcomp_task_no_deps_is_serialized(thread)) {
     return NULL;
   }
-
   /* Reserved place in queue */
   assert(thread->mvp != NULL);
   const int node_rank = MPCOMP_TASK_MVP_GET_TASK_LIST_NODE_RANK(
@@ -311,7 +350,7 @@ __mpcomp_task_try_delay(mpcomp_thread_t * thread, bool if_clause)
 
   const int __max_delayed = sctk_runtime_config_get()->modules.openmp.mpcomp_task_max_delayed;
 
-  // Too much delayed tasks
+   //Too much delayed tasks
   if (sctk_atomics_fetch_and_incr_int(&(mvp_task_list->nb_elements)) >=
       __max_delayed) {
     sctk_atomics_decr_int(&(mvp_task_list->nb_elements));
@@ -327,6 +366,43 @@ __mpcomp_task_try_delay(mpcomp_thread_t * thread, bool if_clause)
  * \param new_task
  * \param if_clause
  */
+
+void mpcomp_task_list_push (mpcomp_task_list_t *mvp_task_list,mpcomp_task_t *new_task)
+{
+#if MPCOMP_USE_LOCKFREE_QUEUE
+    mpcomp_task_list_pushtotail(mvp_task_list, new_task);
+#else
+    mpcomp_task_list_pushtohead(mvp_task_list, new_task);
+#endif
+}
+
+mpcomp_task_t * mpcomp_task_list_pop (mpcomp_task_list_t *mvp_task_list, bool is_stealing, bool one_list_per_thread)
+{
+#if MPCOMP_USE_LOCKFREE_QUEUE
+  if (is_stealing)
+  {
+    return mpcomp_task_list_popfromhead(mvp_task_list);
+  }
+  else
+  {
+    /* For lockfree queue, pop from tail (same side that when pushing) when thread is not stealing and there is one list per thread to avoid big call stacks */
+   
+    if(one_list_per_thread)
+    {
+      return mpcomp_task_list_popfromtail(mvp_task_list);
+    }
+    else
+    {
+      return mpcomp_task_list_popfromhead(mvp_task_list);
+    }
+  }
+
+#else
+    return mpcomp_task_list_popfromhead(mvp_task_list);    
+#endif
+    
+}
+
 void 
 __mpcomp_task_process(mpcomp_task_t *new_task, bool if_clause) 
 {
@@ -345,9 +421,8 @@ __mpcomp_task_process(mpcomp_task_t *new_task, bool if_clause)
 
   /* If possible, push the task in the list of new tasks */
   if (mvp_task_list) {
-    sctk_atomics_cas_int(&(thread->instance->team->task_infos.status), 0, MPCOMP_TASK_INIT_STATUS_INITIALIZED);
     mpcomp_task_list_producer_lock(mvp_task_list, thread->task_infos.opaque);
-    mpcomp_task_list_pushtohead(mvp_task_list, new_task);
+    mpcomp_task_list_push(mvp_task_list, new_task);
     mpcomp_task_list_producer_unlock(mvp_task_list, thread->task_infos.opaque);
     return;
   }
@@ -364,6 +439,7 @@ __mpcomp_task_process(mpcomp_task_t *new_task, bool if_clause)
 #endif /* MPCOMP_USE_TASKDEP */
 
   mpcomp_task_unref_parent_task(new_task);
+
 }
 
 /*
@@ -404,11 +480,12 @@ __mpcomp_task(void (*fn)(void *), void *data,
  * \return the stolen task or NULL if failed
  */
 static mpcomp_task_t *
-mpcomp_task_steal(mpcomp_task_list_t *list) 
+mpcomp_task_steal(mpcomp_task_list_t *list,int rank, int victim) 
 {
     mpcomp_thread_t* thread ;
     mpcomp_task_t* current_task ;
     struct mpcomp_task_s *task = NULL;
+    mpcomp_generic_node_t* gen_node;
 
     /* Check input argument */
     sctk_assert(list != NULL);
@@ -417,6 +494,7 @@ mpcomp_task_steal(mpcomp_task_list_t *list)
     thread = (mpcomp_thread_t *)sctk_openmp_thread_tls;
     sctk_assert( thread ) ;
 
+    
     /* Get the current task executed by OpenMP thread */
     current_task = MPCOMP_TASK_THREAD_GET_CURRENT_TASK(thread);
 
@@ -427,10 +505,17 @@ mpcomp_task_steal(mpcomp_task_list_t *list)
         return NULL;
 #endif /* MPCOMP_USE_MCS_LOCK */
 
-    task = mpcomp_task_list_popfromtail(list, current_task->depth );
-    
-    if( task ) sctk_atomics_incr_int(&(list->nb_larcenies));
-
+    task = mpcomp_task_list_pop(list, true, thread->task_infos.one_list_per_thread);    
+    if(task)
+    {
+      gen_node = &(thread->instance->tree_array[victim] );
+      if( gen_node->type == MPCOMP_CHILDREN_LEAF )
+      {
+        MPCOMP_TASK_MVP_SET_LAST_STOLEN_TASK_LIST(thread->mvp, 0, list);
+        thread->mvp->task_infos.lastStolen_tasklist_rank[0] = victim;
+        gen_node->ptr.mvp->task_infos.last_thief = rank;
+      }
+    }
     mpcomp_task_list_consummer_unlock(list, thread->task_infos.opaque);
     return task;
 }
@@ -467,6 +552,7 @@ int mpcomp_task_get_victim(int globalRank, int index,
 
   case MPCOMP_TASK_LARCENY_MODE_ROUNDROBIN:
     victim = mpcomp_task_get_victim_roundrobin(globalRank, index, type);
+    break;
 
   case MPCOMP_TASK_LARCENY_MODE_PRODUCER:
     victim = mpcomp_task_get_victim_producer(globalRank, index, type);
@@ -474,6 +560,10 @@ int mpcomp_task_get_victim(int globalRank, int index,
 
   case MPCOMP_TASK_LARCENY_MODE_PRODUCER_ORDER:
     victim = mpcomp_task_get_victim_producer_order(globalRank, index, type);
+    break;
+
+  case MPCOMP_TASK_LARCENY_MODE_HIERARCHICAL_RANDOM:
+    victim = mpcomp_task_get_victim_hierarchical_random(globalRank, index, type);
     break;
 
   default:
@@ -489,7 +579,7 @@ static struct mpcomp_task_s *__mpcomp_task_larceny(void) {
   int i, type;
   mpcomp_thread_t *thread;
   struct mpcomp_task_s *task = NULL;
-  struct mpcomp_mvp_s *mvp;
+  struct mpcomp_mvp_s *mvp, *target;
   struct mpcomp_team_s *team;
   struct mpcomp_task_list_s *list;
 
@@ -507,53 +597,74 @@ static struct mpcomp_task_s *__mpcomp_task_larceny(void) {
   sctk_assert(thread->instance);
   team = thread->instance->team;
   sctk_assert(team);
+  mpcomp_generic_node_t* gen_node;
 
   const int larcenyMode = MPCOMP_TASK_TEAM_GET_TASK_LARCENY_MODE(team);
   const int isMonoVictim = (larcenyMode == MPCOMP_TASK_LARCENY_MODE_RANDOM ||
-                            larcenyMode == MPCOMP_TASK_LARCENY_MODE_PRODUCER);
+      larcenyMode == MPCOMP_TASK_LARCENY_MODE_PRODUCER);
 
   /* Check first for NEW tasklists, then for UNTIED tasklists */
-  for (type = 0; type < MPCOMP_TASK_TYPE_COUNT; type++) {
+  for (type = 0; type <= MPCOMP_TASK_TYPE_NEW; type++) {
 
     /* Retrieve informations about task lists */
-    const int tasklistDepth = MPCOMP_TASK_TEAM_GET_TASKLIST_DEPTH(team, type);
-    const int nbTasklists = (!tasklistDepth) ? 1 : thread->instance->tree_nb_nodes_per_depth[tasklistDepth-1];
+    int tasklistDepth = MPCOMP_TASK_TEAM_GET_TASKLIST_DEPTH(team, type);
+    int nbTasklists = (!tasklistDepth) ? 1 : thread->instance->tree_nb_nodes_per_depth[tasklistDepth];
 
-    // sctk_nodebug( "tasklistDepth: %d -- nbTasklists: %d", tasklistDepth,
-    // nbTasklists);
+    while(nbTasklists == 0)
+    {
+      tasklistDepth --;
+      nbTasklists = (!tasklistDepth) ? 1 : thread->instance->tree_nb_nodes_per_depth[tasklistDepth];
+    }
+
     /* If there are task lists in which we could steal tasks */
+    int rank = MPCOMP_TASK_MVP_GET_TASK_LIST_NODE_RANK(mvp, type);
+    int victim;
     if ( nbTasklists > 1) {
 
       /* Try to steal inside the last stolen list*/
       if ((list = MPCOMP_TASK_MVP_GET_LAST_STOLEN_TASK_LIST(mvp, type))) {
-        if ((task = mpcomp_task_steal(list))) {
+        victim = mvp->task_infos.lastStolen_tasklist_rank[0];
+        if (task = mpcomp_task_steal(list,rank,victim)) {
 #ifdef MPC_OPENMP_PERF_TASK_COUNTERS
-         sctk_atomics_incr_int( &__private_perf_success_steal );
+          sctk_atomics_incr_int( &__private_perf_success_steal );
 #endif /* MPC_OPENMP_PERF_TASK_COUNTERS */
           return task;
         }
       }
+
+      /* Try to steal to the last thread that steal a task to current thread */
+      if (mvp->task_infos.last_thief != -1 && (list = mpcomp_task_get_list(mvp->task_infos.last_thief,type))) {
+        victim = mvp->task_infos.last_thief;
+        if (task = mpcomp_task_steal(list,rank,victim)) {
+#ifdef MPC_OPENMP_PERF_TASK_COUNTERS
+          sctk_atomics_incr_int( &__private_perf_success_steal );
+#endif /* MPC_OPENMP_PERF_TASK_COUNTERS */
+          return task;
+        }
+        mvp->task_infos.last_thief = -1;
+      }
+
 
       /* Get the rank of the ancestor containing the task list */
-      int rank = MPCOMP_TASK_MVP_GET_TASK_LIST_NODE_RANK(mvp, type);
-      int nbVictims = (isMonoVictim) ? 1 : nbTasklists - 1;
-
+      int nbVictims = (isMonoVictim) ? 1 : nbTasklists ;
       /* Look for a task in all victims lists */
-      for (i = 1; i < nbVictims+1; i++) {
-        int victim = mpcomp_task_get_victim(rank, i, type);
-        sctk_assert(victim != rank);
-        list = mpcomp_task_get_list(victim, type);
-        task = mpcomp_task_steal(list);
-        if (task) {
-          MPCOMP_TASK_MVP_SET_LAST_STOLEN_TASK_LIST(mvp, type, list);
+      for (i = 1; i < nbVictims; i++) {
+        victim = mpcomp_task_get_victim(rank, i, type);
+        if(victim != rank) {
+          list = mpcomp_task_get_list(victim, type);
+          if(list) task = mpcomp_task_steal(list,rank, victim);
+          if(task) {
 #ifdef MPC_OPENMP_PERF_TASK_COUNTERS
-         sctk_atomics_incr_int( &__private_perf_success_steal );
+            sctk_atomics_incr_int( &__private_perf_success_steal );
 #endif /* MPC_OPENMP_PERF_TASK_COUNTERS */
-          return task;
+            return task;
+          } 
+          }
         }
-      }
+
     }
   }
+
   return NULL;
 }
 
@@ -569,20 +680,19 @@ static struct mpcomp_task_s *__mpcomp_task_larceny(void) {
  * \param mvp
  * \param team
  */
+
 static void 
 __internal_mpcomp_task_schedule( mpcomp_thread_t* thread, mpcomp_mvp_t* mvp, mpcomp_team_t* team ) 
 {
     int type;
     mpcomp_task_t *task, *current_task;
-
+    mpcomp_task_list_t* list;
     /* All argments must be non null */
     sctk_assert( thread && mvp && team);
 
     /*  If only one thread is running, tasks are not delayed. 
         No need to schedule                                    */
-    if ((thread->info.num_threads == 1) ||
-        !MPCOMP_TASK_THREAD_IS_INITIALIZED(thread) ||
-        !MPCOMP_TASK_TEAM_IS_INITIALIZED(thread->instance->team)) 
+    if (thread->info.num_threads == 1) 
     {
         sctk_nodebug("sequential or no task");
         return;
@@ -590,11 +700,11 @@ __internal_mpcomp_task_schedule( mpcomp_thread_t* thread, mpcomp_mvp_t* mvp, mpc
 
     /*    Executed once per thread    */
     current_task = thread->task_infos.current_task;
-
-    for (type = 0, task = NULL; !task && type < MPCOMP_TASK_TYPE_COUNT; type++) 
+    
+    for (type = 0, task = NULL; !task && type <= MPCOMP_TASK_TYPE_NEW; type++) 
     {
         const int node_rank = MPCOMP_TASK_MVP_GET_TASK_LIST_NODE_RANK(mvp, type);
-        mpcomp_task_list_t* list = mpcomp_task_get_list(node_rank, type);
+        list = mpcomp_task_get_list(node_rank, type);
         sctk_assert(list);
 #ifdef MPCOMP_USE_MCS_LOCK 
         mpcomp_task_list_consummer_lock(list, thread->task_infos.opaque);
@@ -602,23 +712,15 @@ __internal_mpcomp_task_schedule( mpcomp_thread_t* thread, mpcomp_mvp_t* mvp, mpc
         if( mpcomp_task_list_consummer_trylock(list, thread->task_infos.opaque))
            continue;
 #endif /* MPCOMP_USE_MCS_LOCK */
-        task = mpcomp_task_list_popfromhead(list, current_task->depth);
+        task = mpcomp_task_list_pop(list, false, thread->task_infos.one_list_per_thread);
         mpcomp_task_list_consummer_unlock(list,  thread->task_infos.opaque);
     }
 
-#if 0 /* Task get from thead != 0 in centralized queue ar count as a larceny */
-#ifdef MPC_OPENMP_PERF_TASK_COUNTERS
-     /* Retrieve informations about task lists */
-    const int tasklistDepth = MPCOMP_TASK_TEAM_GET_TASKLIST_DEPTH(team, type);
-    const int nbTasklists = (!tasklistDepth) ? 1 : thread->instance->tree_nb_nodes_per_depth[tasklistDepth];
-    if( task && thread->rank > 0 && nbTasklists == 1 )
-       sctk_atomics_incr_int( &__private_perf_success_steal );
-#endif /* MPC_OPENMP_PERF_TASK_COUNTERS */
-#endif
-      
-
     /* If no task found previously, try to thieve a task somewhere */
-    if (task == NULL) task = __mpcomp_task_larceny();
+    if (task == NULL) {
+        task = __mpcomp_task_larceny();
+        if(task) task->is_stealed=true;
+    }
 
     /* All tasks lists are empty, so exit task scheduling function */
     if (task == NULL) return;
@@ -662,6 +764,7 @@ mpcomp_taskwait(void)
 
     /* Look for a children tasks list */
     while (sctk_atomics_load_int(&(current_task->refcount)) != 1) {
+
 	    /* Schedule any other task 
 	     * prevent recursive calls to mpcomp_taskwait with argument 0 */
       mpcomp_task_schedule(0);
@@ -673,7 +776,6 @@ mpcomp_taskwait(void)
     const int b = sctk_atomics_load_int( &__private_perf_success_steal );
     const int c = sctk_atomics_load_int( &__private_perf_create_task );
     const int d = sctk_atomics_load_int( &__private_perf_executed_task );
-//    if( 0 && a &&  !(a % 10000) )
     if( 1 && !omp_thread_tls->rank )
        fprintf(stderr, "try steal : %d - success steal : %d -- total tasks : %d -- performed tasks : %d\n", a,b,c,d);
 #endif /* MPC_OPENMP_PERF_TASK_COUNTERS */

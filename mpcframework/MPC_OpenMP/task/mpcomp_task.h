@@ -35,10 +35,12 @@
 #include "ompt.h"
 
 #define MPCOMP_USE_TASKDEP 1
-
+#define MPCOMP_NB_REUSABLE_TASKS 100
+#define MPCOMP_TASKS_DEPTH_JUMP 10
 /** Declaration  mpcomp_types.h
  *  Break loop of include
  */
+
 struct mpcomp_node_s;
 struct mpcomp_thread_s;
 
@@ -72,8 +74,9 @@ typedef struct mpcomp_task_s {
       *thread; /**< The thread owning the task 				*/
   struct mpcomp_task_list_s
       *list;                  /**< The current list of the task 				*/
-#ifdef MPCOMP_USE_LOCKFREE_QUEUE
+#if MPCOMP_USE_LOCKFREE_QUEUE
   sctk_atomics_ptr next;
+  sctk_atomics_ptr prev;
 #else /* MPCOMP_USE_LOCKFREE_QUEUE */
   struct mpcomp_task_s *prev; /**< Prev task in the thread's task list */
   struct mpcomp_task_s *next; /**< Next task in the thread's task list */
@@ -93,6 +96,10 @@ typedef struct mpcomp_task_s {
 /* TODO if INTEL */
 struct mpcomp_task_s *last_task_alloc; /**< last task allocated by the thread doing if0 pragma */
 
+  bool is_stealed;
+  int task_size;
+  struct mpcomp_task_s *far_ancestor; 
+  
 } mpcomp_task_t;
 
 /**
@@ -113,6 +120,8 @@ typedef struct mpcomp_task_mvp_infos_s {
   struct mpcomp_task_list_s *lastStolen_tasklist[MPCOMP_TASK_TYPE_COUNT];
   int tasklistNodeRank[MPCOMP_TASK_TYPE_COUNT];
   struct drand48_data *tasklist_randBuffer;
+  int last_thief;
+  int lastStolen_tasklist_rank[MPCOMP_TASK_TYPE_COUNT];
 } mpcomp_task_mvp_infos_t;
 
 /**
@@ -124,6 +133,10 @@ typedef struct mpcomp_task_thread_infos_s {
   struct mpcomp_task_s *current_task;    /**< Currently running task */
   struct mpcomp_task_list_s *tied_tasks; /**< List of suspended tied tasks */
   void* opaque; /**< use mcslock buffered */
+  int nb_reusable_tasks; /**< Number of current tasks reusable */
+  struct mpcomp_task_s **reusable_tasks; /**< Reusable tasks buffer */
+  int max_task_tot_size; /**< max task size */
+  bool one_list_per_thread; /** True if there is one list for each thread */
 } mpcomp_task_thread_infos_t;
 
 /**

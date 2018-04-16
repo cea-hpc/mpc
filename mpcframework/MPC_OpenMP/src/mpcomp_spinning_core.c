@@ -176,6 +176,7 @@ __mpcomp_wakeup_node( mpcomp_node_t* node )
     return __mpcomp_scatter_wakeup( node );
 }
 
+
 void __mpcomp_start_openmp_thread( mpcomp_mvp_t *mvp )
 {
     mpcomp_thread_t* cur_thread = NULL;
@@ -191,20 +192,23 @@ void __mpcomp_start_openmp_thread( mpcomp_mvp_t *mvp )
 
     __mpcomp_instance_post_init( cur_thread );
 
+    mpcomp_thread_t *thread = mvp->threads;
     __mpcomp_in_order_scheduler( sctk_openmp_thread_tls );
-    
+
     /* Must be set before barrier for thread safety*/
     spin_status = ( mvp->spin_node ) ? &( mvp->spin_node->spin_status ) : &( mvp->spin_status );    
     *spin_status = MPCOMP_MVP_STATE_SLEEP;
-       
-    __mpcomp_internal_full_barrier( mvp ); 
+
+    __mpcomp_internal_full_barrier( mvp );
+
+    __mpcomp_task_free(thread);
 
     sctk_openmp_thread_tls = mvp->threads->next;
-    
+
     if( mvp->threads->next )
     {
-        mvp->threads = mvp->threads->next;
-        //mpcomp_free( cur_thread ); 
+      mvp->threads = mvp->threads->next;
+      //mpcomp_free( cur_thread ); 
     }
 
     __mpcomp_del_mvp_saved_context( mvp );

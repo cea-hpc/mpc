@@ -228,7 +228,7 @@ typedef struct mpcomp_thread_s {
     void** args_copy;
     /* Current size of args_copy */
     int temp_argc;
-    
+
 } mpcomp_thread_t;
 
 /* Instance of OpenMP runtime */
