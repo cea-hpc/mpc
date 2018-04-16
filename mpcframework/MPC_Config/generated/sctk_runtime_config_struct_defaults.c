@@ -3554,6 +3554,11 @@ void sctk_runtime_config_enum_init_mpcomp_task_larceny_mode_t()
 	HASH_ADD_STR(values, name, current_value);
 
 	current_value = (struct enum_value *) malloc(sizeof(struct enum_value));
+	strncpy(current_value->name, "MPCOMP_TASK_LARCENY_MODE_HIERARCHICAL_RANDOM", 50);
+	current_value->value = MPCOMP_TASK_LARCENY_MODE_HIERARCHICAL_RANDOM;
+	HASH_ADD_STR(values, name, current_value);
+
+	current_value = (struct enum_value *) malloc(sizeof(struct enum_value));
 	strncpy(current_value->name, "MPCOMP_TASK_LARCENY_MODE_COUNT", 50);
 	current_value->value = MPCOMP_TASK_LARCENY_MODE_COUNT;
 	HASH_ADD_STR(values, name, current_value);
@@ -3591,10 +3596,10 @@ void sctk_runtime_config_struct_init_openmp(void * struct_ptr)
 	obj->warn_nested = false;
 	obj->mode = "simple-mixed";
 	obj->affinity = "balanced";
-	obj->omp_new_task_depth = 0;
-	obj->omp_untied_task_depth = 0;
-	obj->omp_task_larceny_mode = MPCOMP_TASK_LARCENY_MODE_HIERARCHICAL;
-	obj->omp_task_nesting_max = 8;
+	obj->omp_new_task_depth = 10;
+	obj->omp_untied_task_depth = 10;
+	obj->omp_task_larceny_mode = MPCOMP_TASK_LARCENY_MODE_RANDOM;
+	obj->omp_task_nesting_max = 50000;
 	obj->mpcomp_task_max_delayed = 1024;
 	obj->places = "cores";
 	obj->init_done = 1;
