@@ -74,7 +74,39 @@ kmp_task_t *__kmpc_omp_task_alloc(ident_t *loc_ref, kmp_int32 gtid,
                                            mpcomp_task_data_size));
   mpcomp_task_tot_size += mpcomp_task_data_size;
 
-  struct mpcomp_task_s *new_task = mpcomp_alloc(mpcomp_task_tot_size );
+  struct mpcomp_task_s *new_task ;
+  /* Reuse another task if we can to avoid alloc overhead */
+	if(t->task_infos.one_list_per_thread)
+	{
+		if(mpcomp_task_tot_size > t->task_infos.max_task_tot_size)
+    /* Tasks stored too small, free them */
+		{
+			t->task_infos.max_task_tot_size = mpcomp_task_tot_size;
+			int i;
+			for(i=0;i<t->task_infos.nb_reusable_tasks;i++) 
+      {
+				sctk_free(t->task_infos.reusable_tasks[i]);
+				t->task_infos.reusable_tasks[i] = NULL;
+      }
+			t->task_infos.nb_reusable_tasks = 0;
+		}
+
+		if(t->task_infos.nb_reusable_tasks == 0) 
+		{
+			new_task = mpcomp_alloc( t->task_infos.max_task_tot_size);
+		}
+    /* Reuse last task stored */
+		else
+		{
+	  	sctk_assert(t->task_infos.reusable_tasks[t->task_infos.nb_reusable_tasks-1]);
+			new_task = (mpcomp_task_t*) t->task_infos.reusable_tasks[t->task_infos.nb_reusable_tasks -1];
+			t->task_infos.nb_reusable_tasks --;
+		}
+	}    
+	else
+	{
+		new_task = mpcomp_alloc( mpcomp_task_tot_size );
+	}
   sctk_assert(new_task != NULL);
 
   void *task_data = (sizeof_shareds > 0)
@@ -87,9 +119,6 @@ kmp_task_t *__kmpc_omp_task_alloc(ident_t *loc_ref, kmp_int32 gtid,
   __mpcomp_task_infos_init(new_task, __kmp_omp_task_wrapper, compiler_infos, t);
 
  /* MPCOMP_USE_TASKDEP */
-  new_task->task_dep_infos = sctk_malloc(sizeof(mpcomp_task_dep_task_infos_t));
-  sctk_assert(new_task->task_dep_infos);
-  memset(new_task->task_dep_infos, 0, sizeof(mpcomp_task_dep_task_infos_t));
 
   compiler_infos->shareds = task_data;
   compiler_infos->routine = task_entry;
@@ -99,6 +128,11 @@ kmp_task_t *__kmpc_omp_task_alloc(ident_t *loc_ref, kmp_int32 gtid,
   mpcomp_task_t *current_task = MPCOMP_TASK_THREAD_GET_CURRENT_TASK(t);
   mpcomp_taskgroup_add_task(new_task);
   mpcomp_task_ref_parent_task(new_task);
+  new_task->is_stealed = false;
+  new_task->task_size = t->task_infos.max_task_tot_size;
+  if(new_task->depth % MPCOMP_TASKS_DEPTH_JUMP == 2) new_task->far_ancestor = new_task->parent;
+  else new_task->far_ancestor = new_task->parent->far_ancestor;
+
 
   /* If its parent task is final, the new task must be final too */
   if (mpcomp_task_is_final(flags, new_task->parent)) {
@@ -239,7 +273,6 @@ kmp_int32 __kmpc_omp_task_with_deps(ident_t *loc_ref, kmp_int32 gtid,
                                     kmp_depend_info_t *dep_list,
                                     kmp_int32 ndeps_noalias,
                                     kmp_depend_info_t *noalias_dep_list) {
-
   struct mpcomp_task_s *mpcomp_task =
       (struct mpcomp_task_s * ) ( (char *)new_task - sizeof(struct mpcomp_task_s));
   void *data = (void *)mpcomp_task->data;

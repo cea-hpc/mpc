@@ -239,6 +239,9 @@ void mpcomp_task_with_deps(void (*fn)(void *), void *data,
 
   sctk_assert(new_task);
 
+  new_task->task_dep_infos = sctk_malloc(sizeof(mpcomp_task_dep_task_infos_t));
+  sctk_assert(new_task->task_dep_infos);
+  memset(new_task->task_dep_infos, 0, sizeof(mpcomp_task_dep_task_infos_t));
   /* TODO remove redundant assignement (see mpcomp_task_dep_new_node) */
   task_node->task = NULL;
 

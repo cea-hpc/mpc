@@ -658,7 +658,7 @@ static struct mpcomp_task_s *__mpcomp_task_larceny(void) {
             sctk_atomics_incr_int( &__private_perf_success_steal );
 #endif /* MPC_OPENMP_PERF_TASK_COUNTERS */
             return task;
-          } 
+            } 
           }
         }
 

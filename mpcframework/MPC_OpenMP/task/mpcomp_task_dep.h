@@ -69,7 +69,7 @@ typedef enum mpcomp_task_dep_task_status_e {
 
 static char *mpcomp_task_dep_task_status_to_string[MPCOMP_TASK_DEP_TASK_COUNT] =
     {"MPCOMP_TASK_DEP_TASK_PROCESS_DEP", "MPCOMP_TASK_DEP_TASK_NOT_EXECUTE",
-     "MPCOMP_TASK_DEP_TASK_RELEASED", "MPCOMP_TASK_DEP_TASK_FINALISED"}; 
+     "MPCOMP_TASK_DEP_TASK_RELEASED", "MPCOMP_TASK_DEP_TASK_FINALIZED"}; 
 
 typedef struct mpcomp_task_dep_node_s {
   sctk_spinlock_t lock;
