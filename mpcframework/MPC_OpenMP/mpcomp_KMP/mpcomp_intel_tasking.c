@@ -264,7 +264,7 @@ static int mpcomp_intel_translate_taskdep_to_gomp(  kmp_int32 ndeps, kmp_depend_
     }*/
     gomp_list_deps[1] = (uintptr_t)num_out_dep;
     for ( i = 0; i < num_in_dep; i++ ){ 
-        gomp_list_deps[2 + num_out_dep] = dep_not_out[i];
+        gomp_list_deps[2 + num_out_dep + i] = dep_not_out[i];
     }
 }
 
