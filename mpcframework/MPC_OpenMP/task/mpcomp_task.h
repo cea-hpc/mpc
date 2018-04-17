@@ -96,9 +96,9 @@ typedef struct mpcomp_task_s {
 /* TODO if INTEL */
 struct mpcomp_task_s *last_task_alloc; /**< last task allocated by the thread doing if0 pragma */
 
-  bool is_stealed;
-  int task_size;
-  struct mpcomp_task_s *far_ancestor; 
+  bool is_stealed; /**< is task have been stealed or not */
+  int task_size; /**< Size of allocation task */
+  struct mpcomp_task_s *far_ancestor; /**< far parent (MPCOMP_TASKS_DEPTH_JUMP) of the task */
   
 } mpcomp_task_t;
 

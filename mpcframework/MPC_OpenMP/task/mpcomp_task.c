@@ -277,7 +277,7 @@ if (deps_num !=0)
   memset(new_task->task_dep_infos, 0, sizeof(mpcomp_task_dep_task_infos_t));
 }
 #endif /* MPCOMP_USE_TASKDEP */
-if(new_task->parent->func==NULL)
+if(new_task->parent->func == NULL)
   mpcomp_task_set_property(&(new_task->property), MPCOMP_TASK_TIED);
 
   if (arg_size > 0) {
@@ -296,7 +296,7 @@ if(new_task->parent->func==NULL)
   /* taskgroup */
   mpcomp_taskgroup_add_task(new_task);
   mpcomp_task_ref_parent_task(new_task);
-  new_task->is_stealed=false;
+  new_task->is_stealed = false;
   new_task->task_size = t->task_infos.max_task_tot_size;
   if(new_task->depth % MPCOMP_TASKS_DEPTH_JUMP == 2) new_task->far_ancestor = new_task->parent;
   else new_task->far_ancestor = new_task->parent->far_ancestor;
@@ -648,7 +648,7 @@ static struct mpcomp_task_s *__mpcomp_task_larceny(void) {
       /* Get the rank of the ancestor containing the task list */
       int nbVictims = (isMonoVictim) ? 1 : nbTasklists ;
       /* Look for a task in all victims lists */
-      for (i = 1; i < nbVictims; i++) {
+      for (i = 1; i < nbVictims+1; i++) {
         victim = mpcomp_task_get_victim(rank, i, type);
         if(victim != rank) {
           list = mpcomp_task_get_list(victim, type);
