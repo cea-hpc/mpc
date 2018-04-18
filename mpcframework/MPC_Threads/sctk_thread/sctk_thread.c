@@ -2283,7 +2283,7 @@ int sctk_get_init_vp_and_nbvp_default(int i, int *nbVp) {
   /*   int rank_in_node; */
   int slot_size;
   int task_nb;
-  int proc;
+  int proc = -1;
   int first;
   int last;
   int cpu_nb;

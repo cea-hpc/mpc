@@ -314,7 +314,7 @@ __mpcomp_task_alloc(void (*fn)(void *), void *data,
 #ifdef MPCOMP_USE_TASKDEP
   if (deps_num !=0) 
   {
-    new_task->task_dep_infos = sctk_malloc(sizeof(mpcomp_task_dep_task_infos_t));
+    new_task->task_dep_infos = (mpcomp_task_dep_task_infos_t*)sctk_malloc(sizeof(mpcomp_task_dep_task_infos_t));
     sctk_assert(new_task->task_dep_infos);
     memset(new_task->task_dep_infos, 0, sizeof(mpcomp_task_dep_task_infos_t));
   }
@@ -749,7 +749,7 @@ __internal_mpcomp_task_schedule( mpcomp_thread_t* thread, mpcomp_mvp_t* mvp, mpc
     for (type = 0, task = NULL; !task && type <= MPCOMP_TASK_TYPE_NEW; type++) 
     {
         const int node_rank = MPCOMP_TASK_MVP_GET_TASK_LIST_NODE_RANK(mvp, type);
-        list = mpcomp_task_get_list(node_rank, type);
+        list = mpcomp_task_get_list(node_rank, (mpcomp_tasklist_type_t)type);
         sctk_assert(list);
 #ifdef MPCOMP_USE_MCS_LOCK 
         mpcomp_task_list_consummer_lock(list, thread->task_infos.opaque);

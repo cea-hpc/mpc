@@ -27,6 +27,7 @@
 
 #include "mpcomp_loop.h"
 #include "mpcomp_barrier.h"
+#include "mpcomp_loop_static.h"
 #include "mpcomp_loop_dyn.h"
 #include "mpcomp_loop_static.h"
 #include "mpcomp_loop_dyn_utils.h"

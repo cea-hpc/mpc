@@ -108,7 +108,7 @@ kmp_task_t *__kmpc_omp_task_alloc(ident_t *loc_ref, kmp_int32 gtid,
 
 		if(t->task_infos.nb_reusable_tasks == 0) 
 		{
-			new_task = mpcomp_alloc( t->task_infos.max_task_tot_size);
+			new_task = (struct mpcomp_task_s*) mpcomp_alloc( t->task_infos.max_task_tot_size);
 		}
     /* Reuse last task stored */
 		else
@@ -117,11 +117,12 @@ kmp_task_t *__kmpc_omp_task_alloc(ident_t *loc_ref, kmp_int32 gtid,
 			new_task = (mpcomp_task_t*) t->task_infos.reusable_tasks[t->task_infos.nb_reusable_tasks -1];
 			t->task_infos.nb_reusable_tasks --;
 		}
-	}    
+	}
 	else
 	{
-		new_task = mpcomp_alloc( mpcomp_task_tot_size );
+		new_task = (struct mpcomp_task_s*) mpcomp_alloc( mpcomp_task_tot_size );
 	}
+
   sctk_assert(new_task != NULL);
 
   void *task_data = (sizeof_shareds > 0)
@@ -251,6 +252,7 @@ static void mpcomp_intel_translate_taskdep_to_gomp(  kmp_int32 ndeps, kmp_depend
     for ( i = 0; i < num_in_dep; i++ ){
         gomp_list_deps[2 + num_out_dep + i] = (void *)dep_not_out[i];
     }
+    return 0;
 }
 
 kmp_int32 __kmpc_omp_task_with_deps(ident_t *loc_ref, kmp_int32 gtid,
@@ -266,7 +268,7 @@ kmp_int32 __kmpc_omp_task_with_deps(ident_t *loc_ref, kmp_int32 gtid,
   bool if_clause = true; /* if0 task doesn't go here */
   unsigned flags = 8; /* dep flags */
   void ** depend;
-  depend = sctk_malloc(sizeof(uintptr_t) * ((int)(ndeps + ndeps_noalias)+2));
+  depend = (void**)sctk_malloc(sizeof(uintptr_t) * ((int)(ndeps + ndeps_noalias)+2));
   mpcomp_intel_translate_taskdep_to_gomp(ndeps, dep_list, ndeps_noalias, noalias_dep_list, depend);
   sctk_nodebug("[Redirect mpcomp_GOMP]%s:\tBegin", __func__);
   mpcomp_task_with_deps(mpcomp_task->func, data, NULL, arg_size, arg_align,
@@ -285,7 +287,7 @@ void __kmpc_omp_wait_deps(ident_t *loc_ref, kmp_int32 gtid, kmp_int32 ndeps,
     long arg_align = 0;
     bool if_clause = false; /* if0 task here */
     unsigned flags = 8; /* dep flags */
-    void ** depend = sctk_malloc(sizeof(uintptr_t) * ((int)(ndeps + ndeps_noalias)+2));
+    void ** depend = (void**)sctk_malloc(sizeof(uintptr_t) * ((int)(ndeps + ndeps_noalias)+2));
     mpcomp_intel_translate_taskdep_to_gomp(ndeps, dep_list, ndeps_noalias, noalias_dep_list, depend);
     sctk_nodebug("[Redirect mpcomp_GOMP]%s:\tBegin", __func__);
     mpcomp_task_with_deps(NULL, NULL, NULL, arg_size, arg_align,

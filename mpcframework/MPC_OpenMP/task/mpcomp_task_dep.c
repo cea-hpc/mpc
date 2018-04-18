@@ -42,7 +42,7 @@ static int __mpcomp_task_process_deps(mpcomp_task_dep_node_t *task_node,
   // Filter redundant value
   int task_already_process_num = 0;
   uintptr_t *task_already_process_list =
-      sctk_malloc(sizeof(uintptr_t) * tot_deps_num);
+     (uintptr_t*) sctk_malloc(sizeof(uintptr_t) * tot_deps_num);
   sctk_assert(task_already_process_list);
 
   predecessors_num = 0;

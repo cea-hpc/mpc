@@ -45,7 +45,6 @@ static inline long __mpcomp_internal_loop_get_num_iters(long start, long end,
                                                         long step) {
   long ret = 0;
   const bool up = (step > 0);
-  const long abs_step = (up) ? step : -step;
 
   ret = (up && start < end) ? (end - start + step - (long)1) / step : ret;
   ret = (!up && start > end) ? (start - end - step - (long)1) / -step : ret;

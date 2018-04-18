@@ -32,6 +32,7 @@
 #include "mpcomp_alloc.h"
 #include "sched.h"
 #include "sctk_asm.h"
+#include "sctk_thread.h"
 
 extern ompt_callback_t* OMPT_Callbacks;
 
@@ -286,7 +287,7 @@ void __mpcomp_named_critical_begin(void **l)
     sctk_spinlock_unlock(&(__mpcomp_global_init_critical_named_lock));
   }
 
- 	named_critical_lock = *l;
+ 	named_critical_lock = (mpcomp_lock_t*)(*l);
 
 #if OMPT_SUPPORT
 	if( mpcomp_ompt_is_enabled() )
@@ -331,7 +332,7 @@ void __mpcomp_named_critical_end(void **l) {
   	sctk_assert(l);
   	sctk_assert(*l);
 	
-	mpcomp_lock_t* named_critical_lock = *l;
+	mpcomp_lock_t* named_critical_lock = (mpcomp_lock_t*)(*l);
   	sctk_thread_mutex_unlock(&(named_critical_lock->lock));
 	
 #if OMPT_SUPPORT

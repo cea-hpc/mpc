@@ -165,7 +165,7 @@ void __mpcomp_barrier(void) {
   /* Grab info on the current thread */
   mpcomp_thread_t *t = mpcomp_get_thread_tls();
 
-  sctk_nodebug(stderr, "[%d] %s: Entering w/ %d thread(s)\n", t->rank, __func__,
+  sctk_nodebug("[%d] %s: Entering w/ %d thread(s)\n", t->rank, __func__,
                t->info.num_threads);
 
 #if OMPT_SUPPORT

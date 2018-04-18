@@ -40,6 +40,7 @@ void mpcomp_GOMP_target(int device, void (*fn)(void *), const void *unused,
   sctk_nodebug("[Redirect GOMP]%s:\tEnd", __func__);
 }
 
+#include "sctk_thread.h"
 void mpcomp_GOMP_target_ext(int device, void (*fn)(void *), size_t mapnum,
                             void **hostaddrs, size_t *sizes,
                             unsigned short *kinds, unsigned int flags,

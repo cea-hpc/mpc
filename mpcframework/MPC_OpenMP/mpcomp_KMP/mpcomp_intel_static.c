@@ -395,9 +395,9 @@ void __kmpc_for_static_init_8u(ident_t *loc, kmp_int32 gtid,
       (unsigned long long)*pupper + (unsigned long long)incr,
       (unsigned long long)incr, (unsigned long long)chunk);
 
-  sctk_nodebug("[%d] __kmpc_for_static_init_8u: <%s> "
-      "schedtype=%d, %d? %d -> %d incl. [%d], incr=%d chunk=%d "
-      "*plastiter=%d *pstride=%d",
+  sctk_nodebug("[%ld] __kmpc_for_static_init_8u: <%s> "
+      "schedtype=%d, %d? %llu -> %llu incl. [%lld], incr=%lld chunk=%lld "
+      "*plastiter=%d *pstride=%lld",
       ((mpcomp_thread_t *)sctk_openmp_thread_tls)->rank, loc->psource,
       schedtype, *plastiter, *plower, *pupper, *pstride, incr, chunk,
       *plastiter, *pstride);

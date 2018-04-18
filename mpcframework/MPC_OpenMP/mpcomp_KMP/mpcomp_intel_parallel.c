@@ -1,5 +1,6 @@
 #include "sctk_debug.h"
 #include "sctk_alloc.h"
+#include "sctk_thread.h"
 #include "mpcomp_types.h"
 #include "mpcomp_intel_types.h"
 #include "mpcomp_intel_wrapper.h"

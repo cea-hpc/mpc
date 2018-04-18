@@ -334,7 +334,7 @@ int ompt_set_callback(ompt_callbacks_t callback_type, ompt_callback_t callback)
 	{
 		if( !OMPT_Callbacks )
 		{
-			OMPT_Callbacks = malloc( len* sizeof(ompt_callback_t) );
+			OMPT_Callbacks = (ompt_callback_t*)malloc( len* sizeof(ompt_callback_t) );
 			assert( OMPT_Callbacks );
 			memset( OMPT_Callbacks, 0, len* sizeof(ompt_callback_t) );
 		}
@@ -417,7 +417,7 @@ ompt_get_task_info( 	int ancestor_level,
 
 	if( !current_task )
 	{
-		*type = 0;
+		*type = ompt_task_undefined;
 		*task_data = NULL;
 		*task_frame = NULL;
 		*parallel_data = NULL;
@@ -425,7 +425,7 @@ ompt_get_task_info( 	int ancestor_level,
 	}	
 	else
 	{
-		*type = 0;
+		*type = ompt_task_undefined;
 		*task_data = &(current_task->ompt_task_data);
 		*task_frame = &(current_task->ompt_task_frame);
 		if( !ompt_get_parallel_info( 0, parallel_data, thread_num))

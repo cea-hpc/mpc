@@ -59,7 +59,7 @@ static inline int __mpcomp_task_utils_extract_victims_list( int** victims_list, 
       nbVictims = (isMonoVictim) ? 1 : nbTasklists - 1; 
       __victims_list = ( int* ) malloc( sizeof( int ) * nbVictims ); 
       for (i = 1; i < nbVictims + 1; i++)
-         __victims_list[i-1] = mpcomp_task_get_victim(rank, i, type);
+         __victims_list[i-1] = mpcomp_task_get_victim(rank, i, (mpcomp_tasklist_type_t)type);
    } 
    else
    {
@@ -70,7 +70,6 @@ static inline int __mpcomp_task_utils_extract_victims_list( int** victims_list, 
    *victims_list = __victims_list;
    return nbVictims;
 }
-
 /*** Task property primitives ***/
 
 static inline void
@@ -186,7 +185,7 @@ mpcomp_tree_array_task_thread_init( struct mpcomp_thread_s* thread )
     mpcomp_task_list_t *tied_tasks_list;
     mpcomp_task_init_func_pointers();
 
-    implicit_task = mpcomp_alloc( sizeof(mpcomp_task_t) );
+    implicit_task = (mpcomp_task_t*)mpcomp_alloc( sizeof(mpcomp_task_t) );
     sctk_assert( implicit_task );
     memset( implicit_task, 0, sizeof(mpcomp_task_t) );
 
@@ -195,12 +194,12 @@ mpcomp_tree_array_task_thread_init( struct mpcomp_thread_s* thread )
     sctk_atomics_store_int( &( implicit_task->refcount ), 1);  
 
 #ifdef MPCOMP_USE_TASKDEP
-    implicit_task->task_dep_infos = mpcomp_alloc(sizeof(mpcomp_task_dep_task_infos_t));
+    implicit_task->task_dep_infos = (mpcomp_task_dep_task_infos_t*)mpcomp_alloc(sizeof(mpcomp_task_dep_task_infos_t));
     sctk_assert(implicit_task->task_dep_infos); 
     memset(implicit_task->task_dep_infos, 0, sizeof(mpcomp_task_dep_task_infos_t ));
 #endif /* MPCOMP_USE_TASKDEP */
     
-    tied_tasks_list = mpcomp_alloc( sizeof(mpcomp_task_list_t) );
+    tied_tasks_list = (mpcomp_task_list_t*)mpcomp_alloc( sizeof(mpcomp_task_list_t) );
     sctk_assert(tied_tasks_list);
     memset( tied_tasks_list, 0, sizeof(mpcomp_task_list_t) );
   
@@ -228,14 +227,14 @@ static inline void mpcomp_task_thread_infos_init(struct mpcomp_thread_s *thread)
     const int numa_node_id = mpcomp_task_thread_get_numa_node_id(thread);
 
     /* Allocate the default current task (no func, no data, no parent) */
-    implicit_task = mpcomp_alloc( sizeof(mpcomp_task_t) );
+    implicit_task = (mpcomp_task_t*) mpcomp_alloc( sizeof(mpcomp_task_t) );
     sctk_assert(implicit_task);
     MPCOMP_TASK_THREAD_SET_CURRENT_TASK(thread, NULL);
 
     __mpcomp_task_infos_init(implicit_task, NULL, NULL, thread);
 
 #ifdef MPCOMP_USE_TASKDEP
-    implicit_task->task_dep_infos =
+    implicit_task->task_dep_infos = (mpcomp_task_dep_task_infos_t*)
         mpcomp_alloc(sizeof(mpcomp_task_dep_task_infos_t));
     sctk_assert(implicit_task->task_dep_infos);
     memset(implicit_task->task_dep_infos, 0,
@@ -263,7 +262,7 @@ static inline void mpcomp_task_thread_infos_init(struct mpcomp_thread_s *thread)
 #endif /* OMPT_SUPPORT */
 	
     /* Allocate private task data structures */
-    tied_tasks_list = mpcomp_alloc( sizeof(mpcomp_task_list_t) );
+    tied_tasks_list = (mpcomp_task_list_t*) mpcomp_alloc( sizeof(mpcomp_task_list_t) );
     sctk_assert(tied_tasks_list);
 
     MPCOMP_TASK_THREAD_SET_CURRENT_TASK(thread, implicit_task);
@@ -309,7 +308,7 @@ __mpcomp_task_node_list_init( struct mpcomp_node_s* parent, struct mpcomp_node_s
     {
         sctk_assert( child->depth == task_vdepth );
         allocation = 1;
-        list = mpcomp_alloc( sizeof(struct mpcomp_task_list_s) );
+        list = (struct mpcomp_task_list_s*) mpcomp_alloc( sizeof(struct mpcomp_task_list_s) );
         sctk_assert(list);
         mpcomp_task_list_reset(list);
         tasklistNodeRank = child->tree_array_rank; 
@@ -342,7 +341,7 @@ __mpcomp_task_mvp_list_init( struct mpcomp_node_s* parent, struct mpcomp_mvp_s* 
     else
     {
         allocation = 1;
-        list = mpcomp_alloc( sizeof(struct mpcomp_task_list_s) );
+        list = (struct mpcomp_task_list_s*) mpcomp_alloc( sizeof(struct mpcomp_task_list_s) );
         sctk_assert(list);
         mpcomp_task_list_reset(list);
         sctk_assert( child->threads );
@@ -373,7 +372,7 @@ __mpcomp_task_root_list_init( struct mpcomp_node_s* root, const mpcomp_tasklist_
     
     infos = &( root->task_infos );
 
-    list = mpcomp_alloc( sizeof(struct mpcomp_task_list_s) );
+    list = (struct mpcomp_task_list_s*) mpcomp_alloc( sizeof(struct mpcomp_task_list_s) );
     sctk_assert(list);
     mpcomp_task_list_reset(list);
     
@@ -400,7 +399,7 @@ __mpcomp_task_node_infos_init( struct mpcomp_node_s* parent, struct mpcomp_node_
     const int larcenyMode = MPCOMP_TASK_TEAM_GET_TASK_LARCENY_MODE( instance->team ); 
 
     for (type = 0, ret = 0; type < MPCOMP_TASK_TYPE_COUNT; type++) 
-        ret += __mpcomp_task_node_list_init( parent, child, type );
+        ret += __mpcomp_task_node_list_init( parent, child, (mpcomp_tasklist_type_t)type );
 
     if (ret )
     {
@@ -428,7 +427,7 @@ static inline void __mpcomp_task_mvp_infos_init( struct mpcomp_node_s* parent, s
     const int larcenyMode = MPCOMP_TASK_TEAM_GET_TASK_LARCENY_MODE( instance->team ); 
 
     for (type = 0, ret = 0; type < MPCOMP_TASK_TYPE_COUNT; type++) 
-        ret += __mpcomp_task_mvp_list_init( parent, child, type );
+        ret += __mpcomp_task_mvp_list_init( parent, child, (mpcomp_tasklist_type_t)type );
 
     if (ret )
     {
@@ -471,7 +470,7 @@ __mpcomp_task_root_infos_init( struct mpcomp_node_s* root )
     const int larcenyMode = MPCOMP_TASK_TEAM_GET_TASK_LARCENY_MODE( instance->team ); 
 
     for (type = 0, ret = 0; type < MPCOMP_TASK_TYPE_COUNT; type++) 
-        ret += __mpcomp_task_root_list_init( root, type );
+        ret += __mpcomp_task_root_list_init( root, (mpcomp_tasklist_type_t)type );
 
     if (ret )
     {

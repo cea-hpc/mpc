@@ -102,6 +102,7 @@ typedef struct mpcomp_new_parallel_region_info_s {
 typedef struct mpcomp_team_s {
   mpcomp_parallel_region_t info; /* Info for new parallel region */
   int depth; /* Depth of the current thread (0 = sequential region) */
+  int id; /* team unique id */
 
   /* -- SINGLE/SECTIONS CONSTRUCT -- */
   sctk_atomics_int single_sections_last_current;
@@ -285,7 +286,7 @@ typedef struct mpcomp_mvp_s
     /** VP on which microVP is executed                         */
     int thread_vp_idx;        
     /** MVP thread structure pointer                            */
-    sctk_thread_t* thread_self;
+    sctk_thread_t thread_self;
     /** MVP keep alive after fall asleep                        */
     volatile int enable;
     /** MVP spinning value in topology tree                     */

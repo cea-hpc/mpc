@@ -45,7 +45,7 @@ void omp_set_num_threads(int num_threads) {
 int omp_get_thread_num(void) {
   __mpcomp_init();
   mpcomp_thread_t *t = mpcomp_get_thread_tls();
-  sctk_nodebug("[%d] %s thread id: ", t->rank __func__);
+  sctk_nodebug("[%d] %s thread id: ", t->rank, __func__);
   return t->rank;
 }
 

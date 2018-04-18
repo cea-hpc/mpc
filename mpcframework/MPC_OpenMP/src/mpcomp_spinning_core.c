@@ -12,6 +12,8 @@
 #include "mpcomp_scatter.h"
 #include "mpcomp_spinning_core.h"
 
+static sctk_atomics_int nb_teams = SCTK_ATOMICS_INT_T_INIT(0);
+
 /** Reset mpcomp_team informations */
 static void __mpcomp_tree_array_team_reset( mpcomp_team_t *team )
 {
@@ -20,6 +22,8 @@ static void __mpcomp_tree_array_team_reset( mpcomp_team_t *team )
     memset( team, 0, sizeof( mpcomp_team_t ) );
     last_array_slot = &(team->for_dyn_nb_threads_exited[MPCOMP_MAX_ALIVE_FOR_DYN].i);
     sctk_atomics_store_int(last_array_slot, MPCOMP_NOWAIT_STOP_SYMBOL);
+    team->id = sctk_atomics_fetch_and_incr_int(&nb_teams);
+    sctk_spinlock_init(&team->lock, SCTK_SPINLOCK_INITIALIZER);
 }
 
 static inline void 
@@ -194,16 +198,15 @@ void __mpcomp_start_openmp_thread( mpcomp_mvp_t *mvp )
 
     __mpcomp_instance_post_init( cur_thread );
 
-    mpcomp_thread_t *thread = mvp->threads;
-    __mpcomp_in_order_scheduler( sctk_openmp_thread_tls );
+    __mpcomp_in_order_scheduler( (mpcomp_thread_t*)sctk_openmp_thread_tls );
 
     /* Must be set before barrier for thread safety*/
-    spin_status = ( mvp->spin_node ) ? &( mvp->spin_node->spin_status ) : &( mvp->spin_status );    
+    spin_status = ( mvp->spin_node ) ? &( mvp->spin_node->spin_status ) : &( mvp->spin_status );
     *spin_status = MPCOMP_MVP_STATE_SLEEP;
 
     __mpcomp_internal_full_barrier( mvp );
 
-    __mpcomp_task_free(thread);
+    __mpcomp_task_free( mvp->threads);
 
     sctk_openmp_thread_tls = mvp->threads->next;
 

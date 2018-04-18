@@ -246,6 +246,7 @@ typedef enum ompt_invoker_e
 
 typedef enum ompt_task_type_e
 {
+	ompt_task_undefined = 0,
 	ompt_task_initial = 1,
 	ompt_task_implicit = 2,
 	ompt_task_explicit = 3,

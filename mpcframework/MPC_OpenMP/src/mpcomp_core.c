@@ -56,7 +56,7 @@
   *****************/
 
 /* Schedule type */
-static omp_sched_t OMP_SCHEDULE = 1;
+static omp_sched_t OMP_SCHEDULE = omp_sched_static;
 /* Schedule modifier */
 static int OMP_MODIFIER_SCHEDULE = 0;
 /* Defaults number of threads */
@@ -391,27 +391,27 @@ static inline void __mpcomp_read_env_variables() {
 
   /******* OMP_SCHEDULE *********/
   env = sctk_runtime_config_get()->modules.openmp.schedule;
-  OMP_SCHEDULE = 1; /* DEFAULT */
+  OMP_SCHEDULE = omp_sched_static; /* DEFAULT */
   if (env != NULL) {
     int ok = 0;
     int offset = 0;
     if (strncmp(env, "static", 6) == 0) {
-      OMP_SCHEDULE = 1;
+      OMP_SCHEDULE = omp_sched_static;
       offset = 6;
       ok = 1;
     }
     if (strncmp(env, "dynamic", 7) == 0) {
-      OMP_SCHEDULE = 2;
+      OMP_SCHEDULE = omp_sched_dynamic;
       offset = 7;
       ok = 1;
     }
     if (strncmp(env, "guided", 6) == 0) {
-      OMP_SCHEDULE = 3;
+      OMP_SCHEDULE = omp_sched_guided;
       offset = 6;
       ok = 1;
     }
     if (strncmp(env, "auto", 4) == 0) {
-      OMP_SCHEDULE = 4;
+      OMP_SCHEDULE = omp_sched_auto;
       offset = 4;
       ok = 1;
     }
@@ -924,7 +924,7 @@ void __mpcomp_in_order_scheduler( mpcomp_thread_t* thread )
     loop = &( thread->info.loop_infos.loop.mpcomp_long );
 
     if( thread->info.combined_pragma < 0 || thread->info.combined_pragma > 10 )
-        fprintf(stderr, "[%d/%ld] Start %s :: %ld\n", thread->mvp->global_rank, thread->rank, __func__, thread->info.combined_pragma );
+        sctk_nodebug(stderr, "[%d/%ld] Start %s :: %ld\n", thread->mvp->global_rank, thread->rank, __func__, thread->info.combined_pragma );
 
     /* Handle beginning of combined parallel region */
     switch( thread->info.combined_pragma ) 

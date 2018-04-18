@@ -25,7 +25,27 @@
 #ifndef __MPCOMP_INTEL_OTHER__
 #define __MPCOMP_INTEL_OTHER__
 
+#include "sctk_debug.h"
+
+#if KMP_ARCH_X86
+#define KMP_SIZE_T_MAX (0xFFFFFFFF)
+#else
+#define KMP_SIZE_T_MAX (0xFFFFFFFFFFFFFFFF)
+#endif
+
 int __kmpc_invoke_task_func(int);
 void kmpc_set_blocktime(int);
+
+// Round up a size to a power of two specified by val
+// Used to insert padding between structures co-allocated using a single
+// malloc() call
+static size_t kmpc_round_up_to_val(size_t size, size_t val) {
+  if (size & (val - 1)) {
+    size &= ~(val - 1);
+    if (size <= KMP_SIZE_T_MAX - val)
+      size += val; // Round up if there is no overflow.
+  }
+  return size;
+} // __kmp_round_up_to_va
 
 #endif /* __MPCOMP_INTEL_OTHER__ */

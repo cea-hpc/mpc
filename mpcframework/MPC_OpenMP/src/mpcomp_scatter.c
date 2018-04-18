@@ -107,7 +107,8 @@ int __mpcomp_scatter_compute_global_rank_from_instance_rank( mpcomp_instance_t* 
 int __mpcomp_scatter_compute_instance_rank_from_mvp( mpcomp_instance_t* instance, mpcomp_mvp_t* mvp )
 {
     int nthreads, max, i, first;
-    int* mvp_fathers, mvp_instance_rank;
+    int mvp_instance_rank;
+    unsigned int* mvp_fathers;
     mpcomp_node_t* prev_node, *next_node;
     mpcomp_meta_tree_node_t* tree_array_node, *tree_array;
 
@@ -304,7 +305,7 @@ __mpcomp_scatter_instance_pre_init( mpcomp_thread_t* thread, const int num_mvps 
 
     //fprintf(stderr, "%s> tree_depth: %d tree_array: %d num_mvps : %d\n", __func__, instance->tree_depth, instance->tree_array_size, num_mvps);
 
-    instance->tree_array = mpcomp_alloc( sizeof( mpcomp_generic_node_t ) * instance->tree_array_size );
+    instance->tree_array = (mpcomp_generic_node_t*)mpcomp_alloc( sizeof( mpcomp_generic_node_t ) * instance->tree_array_size );
     sctk_assert( instance->tree_array );
     memset( instance->tree_array, 0, sizeof( mpcomp_generic_node_t ) * instance->tree_array_size );
  

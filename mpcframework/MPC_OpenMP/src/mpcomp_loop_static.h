@@ -33,8 +33,8 @@ void __mpcomp_static_loop_init(struct mpcomp_thread_s *, long, long, long,
 
 int __mpcomp_static_schedule_get_single_chunk(long, long, long, long *, long *);
 int __mpcomp_static_schedule_get_nb_chunks(long, long, long, long);
-void __mpcomp_static_schedule_get_specific_chunk(long, long, mpcomp_loop_long_iter_t*, long,
-                                                 long *, long *);
+void __mpcomp_static_schedule_get_specific_chunk(long, long, mpcomp_loop_long_iter_t *,
+                                                 long, long *, long *);
 
 int __mpcomp_static_loop_begin(long, long, long, long, long *, long *);
 int __mpcomp_static_loop_next(long *, long *);

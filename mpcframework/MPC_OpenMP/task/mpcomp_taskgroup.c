@@ -45,7 +45,7 @@ void mpcomp_taskgroup_start(void) {
   current_task = MPCOMP_TASK_THREAD_GET_CURRENT_TASK(omp_thread_tls);
   sctk_assert(current_task);
 
-  new_taskgroup = sctk_malloc(sizeof(mpcomp_task_taskgroup_t));
+  new_taskgroup = (mpcomp_task_taskgroup_t*)sctk_malloc(sizeof(mpcomp_task_taskgroup_t));
   sctk_assert(new_taskgroup);
 
   /* Init new task group and store it in current task */

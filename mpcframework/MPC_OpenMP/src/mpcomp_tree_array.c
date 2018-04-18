@@ -481,7 +481,7 @@ __mpcomp_openmp_node_initialisation( mpcomp_meta_tree_node_t* root, const int* t
     sctk_assert( tree_shape );
 
     me = &(root[rank]);
-	root_node = root[0].user_pointer;
+	root_node = (mpcomp_node_t*)root[0].user_pointer;
 	sctk_assert( root_node );
    
     if( !(me->user_pointer)  )
@@ -494,7 +494,7 @@ __mpcomp_openmp_node_initialisation( mpcomp_meta_tree_node_t* root, const int* t
         me->user_pointer = (void*) new_alloc_node;
     }
    
-	new_node = me->user_pointer;
+	new_node = (mpcomp_node_t*)me->user_pointer;
     new_node->tree_array = root;
 
     // Get infos from parent node
@@ -510,24 +510,24 @@ __mpcomp_openmp_node_initialisation( mpcomp_meta_tree_node_t* root, const int* t
     if( rank )
     {
         me->fathers_array_size = new_node->depth;
-    	me->fathers_array = mpcomp_alloc( sizeof(int) * new_node->depth );
+    	me->fathers_array = (unsigned int *)mpcomp_alloc( sizeof(int) * new_node->depth );
     	sctk_assert( me->fathers_array); 
 	 }
 
     /* Children initialisation */
     me->children_array_size = max_depth - new_node->depth;
-    me->first_child_array = __mpcomp_tree_array_get_first_child_array( tree_shape, max_depth, rank );
+    me->first_child_array = (unsigned int*) __mpcomp_tree_array_get_first_child_array( tree_shape, max_depth, rank );
 
     /* -- TREE BASE -- */
     if( rank )
     {
         new_node->tree_depth = max_depth - new_node->depth +1;
         sctk_assert( new_node->tree_depth > 1 );
-        new_node->tree_base = mpcomp_alloc( sizeof( int ) * new_node->tree_depth );
+        new_node->tree_base = (int*)mpcomp_alloc( sizeof( int ) * new_node->tree_depth );
         sctk_assert( new_node->tree_base );
-        new_node->tree_cumulative = mpcomp_alloc( sizeof( int ) * new_node->tree_depth );
+        new_node->tree_cumulative = (int*)mpcomp_alloc( sizeof( int ) * new_node->tree_depth );
         sctk_assert( new_node->tree_cumulative );
-        new_node->tree_nb_nodes_per_depth = mpcomp_alloc( sizeof( int ) * new_node->tree_depth );
+        new_node->tree_nb_nodes_per_depth = (int*)mpcomp_alloc( sizeof( int ) * new_node->tree_depth );
         sctk_assert( new_node->tree_nb_nodes_per_depth );
         
         const int tmp = root_node->tree_nb_nodes_per_depth[new_node->depth];
@@ -573,7 +573,7 @@ __mpcomp_openmp_node_initialisation( mpcomp_meta_tree_node_t* root, const int* t
     {
         mpcomp_node_t ** children = NULL;
         new_node->child_type = MPCOMP_CHILDREN_NODE; 
-        children = mpcomp_alloc( sizeof( mpcomp_node_t* ) * num_children); 
+        children = (mpcomp_node_t**)mpcomp_alloc( sizeof( mpcomp_node_t* ) * num_children); 
         sctk_assert(children);
         new_node->children.node = children;
     }
@@ -581,7 +581,7 @@ __mpcomp_openmp_node_initialisation( mpcomp_meta_tree_node_t* root, const int* t
     {
         mpcomp_mvp_t ** children = NULL;
         new_node->child_type = MPCOMP_CHILDREN_LEAF;
-        children = mpcomp_alloc( sizeof( mpcomp_mvp_t*) * num_children );
+        children = (mpcomp_mvp_t**)mpcomp_alloc( sizeof( mpcomp_mvp_t*) * num_children );
         assert( children );
         new_node->children.leaf = children;
     }
@@ -654,7 +654,7 @@ __mpcomp_openmp_mvp_initialisation( void* args )
     
     /* Father initialisation */
     me->fathers_array_size = ( max_depth ) ? max_depth : 1; 
-    me->fathers_array = __mpcomp_tree_array_get_father_array_by_depth( tree_shape, max_depth, rank );
+    me->fathers_array = (unsigned int*)__mpcomp_tree_array_get_father_array_by_depth( tree_shape, max_depth, rank );
 
 	new_mvp->tree_rank = __mpcomp_tree_array_get_tree_rank( tree_shape, max_depth, rank );
     new_mvp->enable = 1;
@@ -737,7 +737,7 @@ static void
     seq_instance->root = NULL;
     seq_instance->nb_mvps = 1;
 
-    seq_instance->tree_array = mpcomp_alloc( sizeof( mpcomp_generic_node_t ) );
+    seq_instance->tree_array = (mpcomp_generic_node_t*)mpcomp_alloc( sizeof( mpcomp_generic_node_t ) );
     sctk_assert( seq_instance->tree_array );
     seq_instance->tree_array[0].ptr.mvp = root->mvp;
     seq_instance->tree_array[0].type = MPCOMP_CHILDREN_LEAF;
