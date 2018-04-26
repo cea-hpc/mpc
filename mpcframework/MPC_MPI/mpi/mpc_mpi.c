@@ -11097,12 +11097,12 @@ __INTERNAL__PMPI_Allreduce_intra_pipeline(void *sendbuf, void *recvbuf, int coun
 			if( i == 0 )
 			{
 				/* Is is now time to send local buffer to the right while accumulating it locally */
-				__INTERNAL__PMPI_Isend( sbuff + dsize * sent , to_send , datatype , right , MPC_ALLREDUCE_TAG , comm , &rr );
+				__INTERNAL__PMPI_Isend( sendbuf + dsize * sent , to_send , datatype , right , MPC_ALLREDUCE_TAG , comm , &rr );
 
 				/* Copy local block in recv */
-				if( (sendbuf != MPI_IN_PLACE) )
+				if( (sbuff != MPI_IN_PLACE) )
 				{
-					memcpy( recvbuf + dsize * sent , sbuff + dsize * sent, to_send *dsize );
+					memcpy( recvbuf + dsize * sent , sendbuf + dsize * sent, to_send *dsize );
 				}
 			}
 			else
