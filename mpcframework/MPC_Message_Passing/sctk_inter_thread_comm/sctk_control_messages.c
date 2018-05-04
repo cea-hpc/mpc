@@ -484,15 +484,19 @@ void sctk_control_message_process_all()
 
         int present = 1;
         while (present) {
-          sctk_spinlock_lock_yield(&__ctrl_msg_list_lock);
 
-          if (__ctrl_msg_list) {
-            /* In UTLIST head->prev is the tail */
-            cell = __ctrl_msg_list->prev;
-            DL_DELETE(__ctrl_msg_list, cell);
-          }
 
-          sctk_spinlock_unlock(&__ctrl_msg_list_lock);
+            if (__ctrl_msg_list) {
+                sctk_spinlock_lock_yield(&__ctrl_msg_list_lock);
+
+                if (__ctrl_msg_list) {
+                    /* In UTLIST head->prev is the tail */
+                    cell = __ctrl_msg_list->prev;
+                    DL_DELETE(__ctrl_msg_list, cell);
+                }
+
+                sctk_spinlock_unlock(&__ctrl_msg_list_lock);
+            }
 
           if (cell) {
             sctk_control_messages_perform(cell->msg, 0);
@@ -532,20 +536,22 @@ int sctk_control_message_process_local(int rank) {
 void __sctk_control_message_process(void *dummy) {
   struct sctk_ctrl_msg_cell *cell = NULL;
 
-  sctk_spinlock_lock_yield(&__ctrl_msg_list_lock);
-
   if (__ctrl_msg_list != NULL) {
+      sctk_spinlock_lock_yield(&__ctrl_msg_list_lock);
 
-    /* In UTLIST head->prev is the tail */
-    cell = __ctrl_msg_list->prev;
-    DL_DELETE(__ctrl_msg_list, cell);
-  }
+      if (__ctrl_msg_list != NULL) {
 
-  sctk_spinlock_unlock(&__ctrl_msg_list_lock);
+          /* In UTLIST head->prev is the tail */
+          cell = __ctrl_msg_list->prev;
+          DL_DELETE(__ctrl_msg_list, cell);
+      }
 
-  if (cell) {
-    sctk_control_messages_perform(cell->msg, 0);
-    sctk_free(cell);
+      sctk_spinlock_unlock(&__ctrl_msg_list_lock);
+
+      if (cell) {
+          sctk_control_messages_perform(cell->msg, 0);
+          sctk_free(cell);
+      }
   }
 }
 
