@@ -33,6 +33,20 @@
 
 #include "mpcomp_core.h"
 
+#include <time.h>
+
+#define START_TIMER\
+	struct timespec rss;\
+clock_gettime(CLOCK_MONOTONIC, &rss);
+
+#define END_TIMER\
+	struct timespec rse;\
+clock_gettime(CLOCK_MONOTONIC, &rse);\
+double wtime = rse.tv_sec - rss.tv_sec + (rse.tv_nsec - rss.tv_nsec) / 1000000000.;
+int cpt_iter = 0;
+double mean_time=0;
+
+#define TIMER wtime
 
 #if MPCOMP_TASK
 kmp_int32 __kmpc_omp_task(ident_t *loc_ref, kmp_int32 gtid,
@@ -210,30 +224,32 @@ void __kmpc_end_taskgroup(ident_t *loc, int gtid) { mpcomp_taskgroup_end(); }
 
 static void mpcomp_intel_translate_taskdep_to_gomp(  kmp_int32 ndeps, kmp_depend_info_t *dep_list, kmp_int32 ndeps_noalias, kmp_depend_info_t *noalias_dep_list, void** gomp_list_deps)
 {
-    int i, j;
+    int i;
 
-    int nd = (int)(ndeps+ndeps_noalias);
-    gomp_list_deps[0] = (uintptr_t)(nd);
     int num_out_dep = 0;
+    int num_in_dep = 0;
+    int nd=(int)(ndeps + ndeps_noalias);
+    gomp_list_deps[0] = (uintptr_t)nd;
+    uintptr_t dep_not_out[nd];
     
     for ( i = 0; i < nd ; i++ ) 
     { 
         if ( dep_list[i].base_addr != 0)
         {
-                gomp_list_deps[i+2] = (uintptr_t)dep_list[i].base_addr;
-        }
-    }
-    uintptr_t temp;
-    for ( i = 0; i < nd; i++ ){ 
             if(dep_list[i].flags.out){
-                temp = gomp_list_deps[nd + 1 - i];
-                gomp_list_deps[nd + 1 - i] = gomp_list_deps[i+2];
-                gomp_list_deps[i+2] = temp;
+                gomp_list_deps[num_out_dep+2] = (uintptr_t)dep_list[i].base_addr;
                 num_out_dep++;
+            }
+            else{
+                dep_not_out[num_in_dep] = (uintptr_t)dep_list[i].base_addr;
+                num_in_dep++;
+            }
         }
-        
     }
     gomp_list_deps[1] = (uintptr_t)num_out_dep;
+    for ( i = 0; i < num_in_dep; i++ ){ 
+        gomp_list_deps[2 + num_out_dep + i] = dep_not_out[i]; 
+    }
 }
 
 kmp_int32 __kmpc_omp_task_with_deps(ident_t *loc_ref, kmp_int32 gtid,
