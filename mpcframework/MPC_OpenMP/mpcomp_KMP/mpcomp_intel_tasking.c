@@ -33,6 +33,7 @@
 
 #include "mpcomp_core.h"
 
+
 #if MPCOMP_TASK
 kmp_int32 __kmpc_omp_task(ident_t *loc_ref, kmp_int32 gtid,
                           kmp_task_t *new_task) {
@@ -207,65 +208,32 @@ void __kmpc_taskgroup(ident_t *loc, int gtid) { mpcomp_taskgroup_start(); }
 
 void __kmpc_end_taskgroup(ident_t *loc, int gtid) { mpcomp_taskgroup_end(); }
 
-static int mpcomp_intel_translate_taskdep_to_gomp(  kmp_int32 ndeps, kmp_depend_info_t *dep_list, kmp_int32 ndeps_noalias, kmp_depend_info_t *noalias_dep_list, void** gomp_list_deps)
+static void mpcomp_intel_translate_taskdep_to_gomp(  kmp_int32 ndeps, kmp_depend_info_t *dep_list, kmp_int32 ndeps_noalias, kmp_depend_info_t *noalias_dep_list, void** gomp_list_deps)
 {
     int i, j;
 
-    gomp_list_deps[0] = (uintptr_t)ndeps;
+    int nd = (int)(ndeps+ndeps_noalias);
+    gomp_list_deps[0] = (uintptr_t)(nd);
     int num_out_dep = 0;
-    int num_in_dep = 0;
-    uintptr_t *dep_not_out = (uintptr_t *)sctk_malloc(sizeof(uintptr_t) * (int)(ndeps + ndeps_noalias));
     
-    for ( i = 0; i < (int)ndeps ; i++ ) 
+    for ( i = 0; i < nd ; i++ ) 
     { 
         if ( dep_list[i].base_addr != 0)
         {
-            /*for ( j = i+1; j < (int)ndeps; j++ )
-            {
-                if ( dep_list[i].base_addr == dep_list[j].base_addr ) 
-                {
-                    dep_list[i].flags.in |= dep_list[j].flags.in;
-                    dep_list[i].flags.out |= dep_list[j].flags.out;
-                    dep_list[j].base_addr = 0; // Mark j element as void
-                }
-            }*/
-            if(dep_list[i].flags.out){
-                num_out_dep++;
                 gomp_list_deps[i+2] = (uintptr_t)dep_list[i].base_addr;
-            }
-            else{
-                dep_not_out[num_in_dep] = (uintptr_t)dep_list[i].base_addr;
-                num_in_dep++;
-            }
         }
     }
-    /*for ( i = 0; i < (int)ndeps_noalias ; i++ ) 
-    { 
-        if ( noalias_dep_list[i].base_addr != 0)
-        {
-            for ( j = i+1; j < (int)ndeps_noalias; j++ )
-            {
-                //if ( dep_list[i].base_addr == dep_list[j].base_addr ) 
-                //{
-                //    dep_list[i].flags.in |= dep_list[j].flags.in;
-                //    dep_list[i].flags.out |= dep_list[j].flags.out;
-                //    dep_list[j].base_addr = 0; // Mark j element as void
-                //}
-            }
-            if(noalias_dep_list[i] + (int)ndeps.flags.out){
+    uintptr_t temp;
+    for ( i = 0; i < nd; i++ ){ 
+            if(dep_list[i].flags.out){
+                temp = gomp_list_deps[nd + 1 - i];
+                gomp_list_deps[nd + 1 - i] = gomp_list_deps[i+2];
+                gomp_list_deps[i+2] = temp;
                 num_out_dep++;
-                gomp_list_deps[i+2+(int)ndeps] = (uintptr_t)noalias_dep_list[i].base_addr;
-            }
-            else{
-                dep_not_out[num_in_dep] = (uintptr_t)noalias_dep_list[i].base_addr;
-                num_in_dep++;
-            }
         }
-    }*/
-    gomp_list_deps[1] = (uintptr_t)num_out_dep;
-    for ( i = 0; i < num_in_dep; i++ ){ 
-        gomp_list_deps[2 + num_out_dep + i] = dep_not_out[i];
+        
     }
+    gomp_list_deps[1] = (uintptr_t)num_out_dep;
 }
 
 kmp_int32 __kmpc_omp_task_with_deps(ident_t *loc_ref, kmp_int32 gtid,
@@ -280,8 +248,9 @@ kmp_int32 __kmpc_omp_task_with_deps(ident_t *loc_ref, kmp_int32 gtid,
   long arg_align = 0; 
   bool if_clause = true; /* if0 task doesn't go here */
   unsigned flags = 8; /* dep flags */
-  void ** depend = sctk_malloc(sizeof(uintptr_t) * ((int)(ndeps + ndeps_noalias)+2));
-  int dep = mpcomp_intel_translate_taskdep_to_gomp(ndeps, dep_list, ndeps_noalias, noalias_dep_list, depend);
+  void ** depend;
+  depend = sctk_malloc(sizeof(uintptr_t) * ((int)(ndeps + ndeps_noalias)+2));
+  mpcomp_intel_translate_taskdep_to_gomp(ndeps, dep_list, ndeps_noalias, noalias_dep_list, depend);
   sctk_nodebug("[Redirect mpcomp_GOMP]%s:\tBegin", __func__);
   mpcomp_task_with_deps(mpcomp_task->func, data, NULL, arg_size, arg_align,
           if_clause, flags, depend, true, mpcomp_task);
@@ -300,7 +269,7 @@ void __kmpc_omp_wait_deps(ident_t *loc_ref, kmp_int32 gtid, kmp_int32 ndeps,
     bool if_clause = false; /* if0 task here */
     unsigned flags = 8; /* dep flags */
     void ** depend = sctk_malloc(sizeof(uintptr_t) * ((int)(ndeps + ndeps_noalias)+2));
-    int dep = mpcomp_intel_translate_taskdep_to_gomp(ndeps, dep_list, ndeps_noalias, noalias_dep_list, depend);
+    mpcomp_intel_translate_taskdep_to_gomp(ndeps, dep_list, ndeps_noalias, noalias_dep_list, depend);
     sctk_nodebug("[Redirect mpcomp_GOMP]%s:\tBegin", __func__);
     mpcomp_task_with_deps(NULL, NULL, NULL, arg_size, arg_align,
     if_clause, flags, depend, true, task); /* create the dep node and set the task to the node then return */
