@@ -306,6 +306,21 @@ void sctk_runtime_config_override_by_getenv_openmp(struct sctk_runtime_config * 
           config->modules.openmp.omp_task_nesting_max = 8;
         }
 
+        if ((tmp = getenv("OMP_TASK_STEAL_LAST_STOLEN_LIST")) != NULL) {
+           int omp_task_steal_last_stolen_list = strtol(tmp, NULL, 10);
+           config->modules.openmp.omp_task_steal_last_stolen_list = omp_task_steal_last_stolen_list;
+        }
+
+        if ((tmp = getenv("OMP_TASK_RESTEAL_TO_LAST_THIEF")) != NULL) {
+           int omp_task_resteal_to_last_thief = strtol(tmp, NULL, 10);
+           config->modules.openmp.omp_task_resteal_to_last_thief = omp_task_resteal_to_last_thief;
+        }
+
+        if ((tmp = getenv("OMP_TASK_USE_LOCKFREE_QUEUE")) != NULL) {
+          int omp_task_use_lockfree_queue = strtol(tmp, NULL, 10);
+          config->modules.openmp.omp_task_use_lockfree_queue = omp_task_use_lockfree_queue;
+        }
+
     /******* OMP_PLACES*******/
 	if ((tmp = getenv("OMP_PLACES")) != NULL)
 	{

@@ -46,11 +46,8 @@
 
 #include "ompt.h"
 #include "mpcomp_ompt_general.h"
-#include<mpi.h>
 extern ompt_callback_t* OMPT_Callbacks;
 
-//#define MPC_OPENMP_PERF_TASK_COUNTERS
- 
 #ifdef MPC_OPENMP_PERF_TASK_COUNTERS
   static sctk_atomics_int __private_perf_call_steal = SCTK_ATOMICS_INT_T_INIT(0);
   static sctk_atomics_int __private_perf_success_steal = SCTK_ATOMICS_INT_T_INIT(0);
@@ -58,11 +55,56 @@ extern ompt_callback_t* OMPT_Callbacks;
   static sctk_atomics_int __private_perf_executed_task = SCTK_ATOMICS_INT_T_INIT(0);
 #endif /* MPC_OPENMP_PERF_TASK_COUNTERS */
 
+  int (*mpcomp_task_list_isempty) (mpcomp_task_list_t *);
+  void (*mpcomp_task_list_pushtohead) (mpcomp_task_list_t *, mpcomp_task_t *);
+  void (*mpcomp_task_list_pushtotail) (mpcomp_task_list_t *, mpcomp_task_t *);
+  mpcomp_task_t* (*mpcomp_task_list_popfromhead) (mpcomp_task_list_t *);
+  mpcomp_task_t* (*mpcomp_task_list_popfromtail) (mpcomp_task_list_t *);
+  void (*mpcomp_task_list_consummer_lock) (mpcomp_task_list_t *, void*);
+  void (*mpcomp_task_list_consummer_unlock) (mpcomp_task_list_t *, void*);
+  void (*mpcomp_task_list_consummer_trylock) (mpcomp_task_list_t *, void*);
+  void (*mpcomp_task_list_producer_lock) (mpcomp_task_list_t *, void*);
+  void (*mpcomp_task_list_producer_unlock) (mpcomp_task_list_t *, void*);
+  void (*mpcomp_task_list_producer_trylock) (mpcomp_task_list_t *, void*);
+
+void mpcomp_task_init_func_pointers()
+{
+  if(sctk_runtime_config_get()->modules.openmp.omp_task_use_lockfree_queue)
+  {
+    mpcomp_task_list_isempty = mpcomp_task_lockfree_list_isempty;
+    mpcomp_task_list_pushtohead = mpcomp_task_lockfree_list_pushtohead;
+    mpcomp_task_list_pushtotail = mpcomp_task_lockfree_list_pushtotail;
+    mpcomp_task_list_popfromhead = mpcomp_task_lockfree_list_popfromhead;
+    mpcomp_task_list_popfromtail = mpcomp_task_lockfree_list_popfromtail;
+    mpcomp_task_list_consummer_lock = mpcomp_task_lockfree_list_consummer_lock;
+    mpcomp_task_list_consummer_unlock = mpcomp_task_lockfree_list_consummer_unlock;
+    mpcomp_task_list_consummer_trylock = mpcomp_task_lockfree_list_consummer_trylock;
+    mpcomp_task_list_producer_lock = mpcomp_task_lockfree_list_producer_lock;
+    mpcomp_task_list_producer_unlock = mpcomp_task_lockfree_list_producer_unlock;
+    mpcomp_task_list_producer_trylock = mpcomp_task_lockfree_list_producer_trylock;
+  }
+else
+  {
+    mpcomp_task_list_isempty = mpcomp_task_locked_list_isempty;
+    mpcomp_task_list_pushtohead = mpcomp_task_locked_list_pushtohead;
+    mpcomp_task_list_pushtotail = mpcomp_task_locked_list_pushtotail;
+    mpcomp_task_list_popfromhead = mpcomp_task_locked_list_popfromhead;
+    mpcomp_task_list_popfromtail = mpcomp_task_locked_list_popfromtail;
+    mpcomp_task_list_consummer_lock = mpcomp_task_locked_list_consummer_lock;
+    mpcomp_task_list_consummer_unlock = mpcomp_task_locked_list_consummer_unlock;
+    mpcomp_task_list_consummer_trylock = mpcomp_task_locked_list_consummer_trylock;
+    mpcomp_task_list_producer_lock = mpcomp_task_locked_list_producer_lock;
+    mpcomp_task_list_producer_unlock = mpcomp_task_locked_list_producer_unlock;
+    mpcomp_task_list_producer_trylock = mpcomp_task_locked_list_producer_trylock;
+  }
+} 
+
 /**
  * Execute a specific task by the current thread.
  *
  * \param task Target task to execute by the current thread
  */
+
 static void 
 __mpcomp_task_execute(mpcomp_task_t *task) 
 {
@@ -270,15 +312,13 @@ __mpcomp_task_alloc(void (*fn)(void *), void *data,
   __mpcomp_task_infos_init(new_task, fn, task_data, t);
 
 #ifdef MPCOMP_USE_TASKDEP
-if (deps_num !=0) 
-{
-  new_task->task_dep_infos = sctk_malloc(sizeof(mpcomp_task_dep_task_infos_t));
-  sctk_assert(new_task->task_dep_infos);
-  memset(new_task->task_dep_infos, 0, sizeof(mpcomp_task_dep_task_infos_t));
-}
+  if (deps_num !=0) 
+  {
+    new_task->task_dep_infos = sctk_malloc(sizeof(mpcomp_task_dep_task_infos_t));
+    sctk_assert(new_task->task_dep_infos);
+    memset(new_task->task_dep_infos, 0, sizeof(mpcomp_task_dep_task_infos_t));
+  }
 #endif /* MPCOMP_USE_TASKDEP */
-if(new_task->parent->func == NULL)
-  mpcomp_task_set_property(&(new_task->property), MPCOMP_TASK_TIED);
 
   if (arg_size > 0) {
     if (cpyfn) {
@@ -369,37 +409,42 @@ __mpcomp_task_try_delay(mpcomp_thread_t * thread, bool if_clause)
 
 void mpcomp_task_list_push (mpcomp_task_list_t *mvp_task_list,mpcomp_task_t *new_task)
 {
-#if MPCOMP_USE_LOCKFREE_QUEUE
+  if(sctk_runtime_config_get()->modules.openmp.omp_task_use_lockfree_queue)
+  {
     mpcomp_task_list_pushtotail(mvp_task_list, new_task);
-#else
+  }
+  else
+  {
     mpcomp_task_list_pushtohead(mvp_task_list, new_task);
-#endif
+  }
 }
 
 mpcomp_task_t * mpcomp_task_list_pop (mpcomp_task_list_t *mvp_task_list, bool is_stealing, bool one_list_per_thread)
 {
-#if MPCOMP_USE_LOCKFREE_QUEUE
-  if (is_stealing)
+  if(sctk_runtime_config_get()->modules.openmp.omp_task_use_lockfree_queue)
   {
-    return mpcomp_task_list_popfromhead(mvp_task_list);
-  }
-  else
-  {
-    /* For lockfree queue, pop from tail (same side that when pushing) when thread is not stealing and there is one list per thread to avoid big call stacks */
-   
-    if(one_list_per_thread)
-    {
-      return mpcomp_task_list_popfromtail(mvp_task_list);
-    }
-    else
+    if (is_stealing)
     {
       return mpcomp_task_list_popfromhead(mvp_task_list);
     }
+    else
+    {
+      /* For lockfree queue, pop from tail (same side that when pushing) when thread is not stealing and there is one list per thread to avoid big call stacks */
+      if(one_list_per_thread)
+      {
+        return mpcomp_task_list_popfromtail(mvp_task_list);
+      }
+      else
+      {
+        return mpcomp_task_list_popfromhead(mvp_task_list);
+      }
+    }
   }
 
-#else
-    return mpcomp_task_list_popfromhead(mvp_task_list);    
-#endif
+  else
+  {
+    return mpcomp_task_list_popfromhead(mvp_task_list); 
+  }
     
 }
 
@@ -421,6 +466,9 @@ __mpcomp_task_process(mpcomp_task_t *new_task, bool if_clause)
 
   /* If possible, push the task in the list of new tasks */
   if (mvp_task_list) {
+    if(thread->instance->task_infos.is_initialized == false) {
+      thread->instance->task_infos.is_initialized = true;
+    }
     mpcomp_task_list_producer_lock(mvp_task_list, thread->task_infos.opaque);
     mpcomp_task_list_push(mvp_task_list, new_task);
     mpcomp_task_list_producer_unlock(mvp_task_list, thread->task_infos.opaque);
@@ -483,7 +531,6 @@ static mpcomp_task_t *
 mpcomp_task_steal(mpcomp_task_list_t *list,int rank, int victim) 
 {
     mpcomp_thread_t* thread ;
-    mpcomp_task_t* current_task ;
     struct mpcomp_task_s *task = NULL;
     mpcomp_generic_node_t* gen_node;
 
@@ -494,10 +541,6 @@ mpcomp_task_steal(mpcomp_task_list_t *list,int rank, int victim)
     thread = (mpcomp_thread_t *)sctk_openmp_thread_tls;
     sctk_assert( thread ) ;
 
-    
-    /* Get the current task executed by OpenMP thread */
-    current_task = MPCOMP_TASK_THREAD_GET_CURRENT_TASK(thread);
-
 #ifdef MPCOMP_USE_MCS_LOCK 
      mpcomp_task_list_consummer_lock(list, thread->task_infos.opaque);
 #else /* MPCOMP_USE_MCS_LOCK */
@@ -506,16 +549,16 @@ mpcomp_task_steal(mpcomp_task_list_t *list,int rank, int victim)
 #endif /* MPCOMP_USE_MCS_LOCK */
 
     task = mpcomp_task_list_pop(list, true, thread->task_infos.one_list_per_thread);    
-    if(task)
-    {
-      gen_node = &(thread->instance->tree_array[victim] );
-      if( gen_node->type == MPCOMP_CHILDREN_LEAF )
-      {
-        MPCOMP_TASK_MVP_SET_LAST_STOLEN_TASK_LIST(thread->mvp, 0, list);
-        thread->mvp->task_infos.lastStolen_tasklist_rank[0] = victim;
-        gen_node->ptr.mvp->task_infos.last_thief = rank;
-      }
-    }
+    //if(task)
+    //{
+      //gen_node = &(thread->instance->tree_array[victim] );
+      //if( gen_node->type == MPCOMP_CHILDREN_LEAF )
+      //{
+        //MPCOMP_TASK_MVP_SET_LAST_STOLEN_TASK_LIST(thread->mvp, 0, list);
+        //thread->mvp->task_infos.lastStolen_tasklist_rank[0] = victim;
+        //gen_node->ptr.mvp->task_infos.last_thief = rank;
+      //}
+    //}
     mpcomp_task_list_consummer_unlock(list, thread->task_infos.opaque);
     return task;
 }
@@ -621,47 +664,49 @@ static struct mpcomp_task_s *__mpcomp_task_larceny(void) {
     int victim;
     if ( nbTasklists > 1) {
 
-      /* Try to steal inside the last stolen list*/
-      if ((list = MPCOMP_TASK_MVP_GET_LAST_STOLEN_TASK_LIST(mvp, type))) {
-        victim = mvp->task_infos.lastStolen_tasklist_rank[0];
-        if (task = mpcomp_task_steal(list,rank,victim)) {
-#ifdef MPC_OPENMP_PERF_TASK_COUNTERS
-          sctk_atomics_incr_int( &__private_perf_success_steal );
-#endif /* MPC_OPENMP_PERF_TASK_COUNTERS */
-          return task;
-        }
-      }
-
-      /* Try to steal to the last thread that steal a task to current thread */
-      if (mvp->task_infos.last_thief != -1 && (list = mpcomp_task_get_list(mvp->task_infos.last_thief,type))) {
-        victim = mvp->task_infos.last_thief;
-        if (task = mpcomp_task_steal(list,rank,victim)) {
-#ifdef MPC_OPENMP_PERF_TASK_COUNTERS
-          sctk_atomics_incr_int( &__private_perf_success_steal );
-#endif /* MPC_OPENMP_PERF_TASK_COUNTERS */
-          return task;
-        }
-        mvp->task_infos.last_thief = -1;
-      }
-
-
-      /* Get the rank of the ancestor containing the task list */
-      int nbVictims = (isMonoVictim) ? 1 : nbTasklists ;
-      /* Look for a task in all victims lists */
-      for (i = 1; i < nbVictims+1; i++) {
-        victim = mpcomp_task_get_victim(rank, i, type);
-        if(victim != rank) {
-          list = mpcomp_task_get_list(victim, type);
-          if(list) task = mpcomp_task_steal(list,rank, victim);
-          if(task) {
+      if(sctk_runtime_config_get()->modules.openmp.omp_task_steal_last_stolen_list)
+          /* Try to steal inside the last stolen list*/
+      {
+        if ((list = MPCOMP_TASK_MVP_GET_LAST_STOLEN_TASK_LIST(mvp, type))) {
+          if (task = mpcomp_task_steal(list,rank,victim)) {
 #ifdef MPC_OPENMP_PERF_TASK_COUNTERS
             sctk_atomics_incr_int( &__private_perf_success_steal );
 #endif /* MPC_OPENMP_PERF_TASK_COUNTERS */
             return task;
-            } 
           }
         }
+      }
+      if(sctk_runtime_config_get()->modules.openmp.omp_task_resteal_to_last_thief) 
+        /* Try to steal to last thread that stole us a task */
+      {
+        if (mvp->task_infos.last_thief != -1 && (list = mpcomp_task_get_list(mvp->task_infos.last_thief,type))) {
+          victim = mvp->task_infos.last_thief;
+          if (task = mpcomp_task_steal(list,rank,victim)) {
+#ifdef MPC_OPENMP_PERF_TASK_COUNTERS
+            sctk_atomics_incr_int( &__private_perf_success_steal );
+#endif /* MPC_OPENMP_PERF_TASK_COUNTERS */
+            return task;
+          }
+          mvp->task_infos.last_thief = -1;
+        }
+      }
 
+    /* Get the rank of the ancestor containing the task list */
+    int nbVictims = (isMonoVictim) ? 1 : nbTasklists ; 
+    /* Look for a task in all victims lists */
+    for (i = 1; i < nbVictims + 1; i++) {
+      victim = mpcomp_task_get_victim(rank, i, type);
+      if(victim != rank) {
+        list = mpcomp_task_get_list(victim, type);
+        if(list) task = mpcomp_task_steal(list,rank,victim);
+        if(task) {
+#ifdef MPC_OPENMP_PERF_TASK_COUNTERS
+          sctk_atomics_incr_int( &__private_perf_success_steal );
+#endif /* MPC_OPENMP_PERF_TASK_COUNTERS */
+          return task;
+          } 
+        }
+      }
     }
   }
 
@@ -687,12 +732,12 @@ __internal_mpcomp_task_schedule( mpcomp_thread_t* thread, mpcomp_mvp_t* mvp, mpc
     int type;
     mpcomp_task_t *task, *current_task;
     mpcomp_task_list_t* list;
-    /* All argments must be non null */
+    /* All arguments must be non null */
     sctk_assert( thread && mvp && team);
 
-    /*  If only one thread is running, tasks are not delayed. 
+    /*  If only one thread is running or no task has been find yet, tasks are not delayed. 
         No need to schedule                                    */
-    if (thread->info.num_threads == 1) 
+    if (thread->info.num_threads == 1 || thread->instance->task_infos.is_initialized == false)
     {
         sctk_nodebug("sequential or no task");
         return;

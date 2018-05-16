@@ -196,6 +196,7 @@ mpcomp_tree_array_task_thread_init( struct mpcomp_thread_s* thread )
 {
     mpcomp_task_t *implicit_task;
     mpcomp_task_list_t *tied_tasks_list;
+    mpcomp_task_init_func_pointers();
 
     implicit_task = mpcomp_alloc( sizeof(mpcomp_task_t) );
     sctk_assert( implicit_task );
@@ -223,6 +224,7 @@ mpcomp_tree_array_task_thread_init( struct mpcomp_thread_s* thread )
 #else /* MPCOMP_USE_MCS_LOCK  */
     thread->task_infos.opaque = (void*) NULL;   
 #endif /* MPCOMP_USE_MCS_LOCK  */
+
 
     MPCOMP_TASK_THREAD_CMPL_INIT(thread);
 }
@@ -506,6 +508,7 @@ __mpcomp_task_root_infos_init( struct mpcomp_node_s* root )
 	if(!thread->task_infos.reusable_tasks){
     thread->task_infos.reusable_tasks = (mpcomp_task_t**) mpcomp_alloc(MPCOMP_NB_REUSABLE_TASKS*sizeof(mpcomp_task_t*));
 	}
+  instance->task_infos.is_initialized = false;
 
 }
 

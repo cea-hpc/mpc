@@ -24,7 +24,6 @@
 /* Task list type and lock type */
 
 #define MPCOMP_USE_MCS_LOCK 1
-#define MPCOMP_USE_LOCKFREE_QUEUE 1
 
 /*** Tasks property bitmasks ***/
 

@@ -641,11 +641,14 @@ static inline void __mpcomp_read_env_variables() {
             SCTK_OMP_VERSION_MAJOR, SCTK_OMP_VERSION_MINOR);
 #if MPCOMP_TASK
     fprintf(stderr, "\tOpenMP 3 Tasking on (OMP_NEW_TASKS_DEPTH=%d OMP_TASK_LARCENY_MODE=%d "
-		    "OMP_TASK_NESTING_MAX:%d OMP_TASK_MAX_DELAYED=%d)\n",
+		    "OMP_TASK_NESTING_MAX=%d OMP_TASK_MAX_DELAYED=%d OMP_TASK_USE_LOCKFREE_QUEUE=%d OMP_TASK_STEAL_LAST_STOLEN_LIST=%d OMP_TASK_RESTEAL_TO_LAST_THIEF=%d)\n",
 		    sctk_runtime_config_get()->modules.openmp.omp_new_task_depth,
 		    sctk_runtime_config_get()->modules.openmp.omp_task_larceny_mode,
 		    sctk_runtime_config_get()->modules.openmp.omp_task_nesting_max,
-		    sctk_runtime_config_get()->modules.openmp.mpcomp_task_max_delayed );
+		    sctk_runtime_config_get()->modules.openmp.mpcomp_task_max_delayed,
+		    sctk_runtime_config_get()->modules.openmp.omp_task_use_lockfree_queue,
+		    sctk_runtime_config_get()->modules.openmp.omp_task_steal_last_stolen_list,
+		    sctk_runtime_config_get()->modules.openmp.omp_task_resteal_to_last_thief);
 #ifdef MPCOMP_USE_TASKDEP
     fprintf(stderr, "\t\tDependencies ON\n" ) ;
 #else

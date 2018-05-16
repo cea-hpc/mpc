@@ -401,12 +401,6 @@ void __kmpc_for_static_init_8u(ident_t *loc, kmp_int32 gtid,
       ((mpcomp_thread_t *)sctk_openmp_thread_tls)->rank, loc->psource,
       schedtype, *plastiter, *plower, *pupper, *pstride, incr, chunk,
       *plastiter, *pstride);
-fprintf(stderr,"[%d] __kmpc_for_static_init_8u: <%s> "
-      "schedtype=%d, %d? %d -> %d incl. [%d], incr=%d chunk=%d "
-      "*plastiter=%d *pstride=%d\n",
-      ((mpcomp_thread_t *)sctk_openmp_thread_tls)->rank, loc->psource,
-      schedtype, *plastiter, *plower, *pupper, *pstride, incr, chunk,
-      *plastiter, *pstride);
 
   unsigned long long trip_count;
   if(incr > 0) 

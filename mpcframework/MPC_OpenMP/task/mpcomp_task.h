@@ -74,13 +74,12 @@ typedef struct mpcomp_task_s {
       *thread; /**< The thread owning the task 				*/
   struct mpcomp_task_list_s
       *list;                  /**< The current list of the task 				*/
-#if MPCOMP_USE_LOCKFREE_QUEUE
-  sctk_atomics_ptr next;
-  sctk_atomics_ptr prev;
-#else /* MPCOMP_USE_LOCKFREE_QUEUE */
-  struct mpcomp_task_s *prev; /**< Prev task in the thread's task list */
-  struct mpcomp_task_s *next; /**< Next task in the thread's task list */
-#endif /* MPCOMP_USE_LOCKFREE_QUEUE */
+
+  sctk_atomics_ptr lockfree_next; /**< Prev task in the thread's task list if lists are lockfree */
+  sctk_atomics_ptr lockfree_prev; /**< Next task in the thread's task list if lists are lockfree */
+  struct mpcomp_task_s *prev; /**< Prev task in the thread's task list if lists are locked */
+  struct mpcomp_task_s *next; /**< Next task in the thread's task list if lists are locked */
+
   mpcomp_local_icv_t icvs;    /**< ICVs of the thread that create the task    */
   mpcomp_local_icv_t prev_icvs; /**< ICVs of the thread that create the task */
   struct mpcomp_task_taskgroup_s *taskgroup;
@@ -146,6 +145,7 @@ typedef struct mpcomp_task_instance_infos_s {
   int array_tree_total_size;
   int *array_tree_level_first;
   int *array_tree_level_size;
+  bool is_initialized;
 } mpcomp_task_instance_infos_t;
 
 /**
