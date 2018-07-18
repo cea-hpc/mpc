@@ -127,7 +127,6 @@ kmp_task_t *__kmpc_omp_task_alloc(ident_t *loc_ref, kmp_int32 gtid,
   void *task_data = (sizeof_shareds > 0)
                         ? (void *)((uintptr_t)new_task + mpcomp_task_info_size)
                         : NULL;
-
   /* Create new task */
   kmp_task_t *compiler_infos =
       (kmp_task_t *)((char *)new_task + sizeof(struct mpcomp_task_s));
@@ -147,6 +146,7 @@ kmp_task_t *__kmpc_omp_task_alloc(ident_t *loc_ref, kmp_int32 gtid,
   new_task->task_size = t->task_infos.max_task_tot_size;
   if(new_task->depth % MPCOMP_TASKS_DEPTH_JUMP == 2) new_task->far_ancestor = new_task->parent;
   else new_task->far_ancestor = new_task->parent->far_ancestor;
+  t->task_infos.sizeof_kmp_task_t = sizeof_kmp_task_t;
 
 
   /* If its parent task is final, the new task must be final too */
@@ -295,5 +295,120 @@ void __kmpc_omp_wait_deps(ident_t *loc_ref, kmp_int32 gtid, kmp_int32 ndeps,
 
 void __kmp_release_deps(kmp_int32 gtid, kmp_taskdata_t *task) {
   //not_implemented();
+}
+
+typedef void(*p_task_dup_t)(kmp_task_t *, kmp_task_t *, kmp_int32);
+void __kmpc_taskloop(ident_t *loc, int gtid, kmp_task_t *task, int if_val,
+                kmp_uint64 *lb, kmp_uint64 *ub, kmp_int64 st,
+                int nogroup, int sched, kmp_uint64 grainsize, void *task_dup )
+{
+
+  long taskstep;
+  mpcomp_thread_t *t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
+  unsigned long extra_chunk, i, trip_count, num_tasks = 0, extras = 0, lower = *lb, upper = *ub;
+  kmp_task_t * next_task;
+  int lastpriv;
+  kmp_taskdata_t *taskdata_src, *taskdata;
+  size_t lower_offset = (char*)lb - (char*)task;
+  size_t upper_offset = (char*)ub - (char*)task;
+  size_t shareds_offset,sizeof_kmp_task_t,sizeof_shareds;
+  p_task_dup_t ptask_dup = (p_task_dup_t)task_dup;
+
+if(nogroup == 0) {
+    mpcomp_taskgroup_start();
+  }
+  if ( st == 1 ) {   // most common case
+       trip_count = upper - lower + 1;
+   } else if ( st < 0 ) {
+     trip_count = (lower - upper) / (-st) + 1;
+   } else {       // st > 0
+     trip_count = (upper - lower) / st + 1;
+   }
+
+  if (!(trip_count)) {
+    return;
+  }
+
+  switch(sched) {
+    case 0:
+      grainsize = t->info.num_threads * 10;
+    case 2:
+      if(grainsize > trip_count) {
+        num_tasks = trip_count; 
+        grainsize = 1;
+        extras = 0;
+      }
+      else {
+        num_tasks = grainsize;
+        grainsize = trip_count/num_tasks;
+        extras = trip_count % num_tasks;
+      }
+      break;
+    case 1:
+      if(grainsize > trip_count) {
+        num_tasks = 1; 
+        grainsize = trip_count;
+        extras = 0;
+      }
+      else {
+        num_tasks = trip_count/grainsize;
+        grainsize = trip_count/num_tasks;
+        extras = trip_count % num_tasks;
+      }
+      break;
+    default:
+      sctk_nodebug("Unknown scheduling of taskloop");
+  }
+
+    unsigned long chunk;
+    if(extras == 0) {
+      chunk = grainsize -1;
+    }
+    else {
+      chunk = grainsize;
+      --extras;
+    }
+    sizeof_shareds = sizeof(kmp_task_t);
+    sizeof_kmp_task_t = t->task_infos.sizeof_kmp_task_t;
+    taskdata_src = ((kmp_taskdata_t *) task) -1;
+    shareds_offset = (char*)task->shareds - (char*)taskdata_src;
+    taskdata = sctk_malloc(sizeof_shareds + shareds_offset);
+    memcpy(taskdata, taskdata_src, sizeof_shareds + shareds_offset);
+  for(i=0;i<num_tasks;++i)
+  {
+    upper = lower + st * chunk;
+    if(i == num_tasks -1) {
+      lastpriv = 1;
+    }
+    next_task = __kmpc_omp_task_alloc(loc, gtid,1,
+        sizeof_kmp_task_t,
+        sizeof_shareds,task->routine);
+
+    if( task->shareds != NULL ) { // need setup shareds pointer
+      next_task->shareds = &((char*)taskdata)[shareds_offset];
+    }    
+
+    if(ptask_dup !=NULL) ptask_dup(next_task,task,lastpriv);
+
+    *(kmp_uint64*)((char*)next_task + lower_offset) = lower; // adjust task-specific bounds
+    *(kmp_uint64*)((char*)next_task + upper_offset) = upper;
+    struct mpcomp_task_s *mpcomp_task =
+      (struct mpcomp_task_s * ) ( (char *)next_task - sizeof(struct mpcomp_task_s));
+    __mpcomp_task_process(mpcomp_task, true);
+    lower = upper + st;
+  }
+  // Free pattern task without executing it
+
+
+  struct mpcomp_task_s *mpcomp_taskloop_task =
+    (struct mpcomp_task_s * ) ( (char *)task - sizeof(struct mpcomp_task_s));
+
+  mpcomp_taskgroup_del_task(mpcomp_taskloop_task);
+
+  mpcomp_task_unref_parent_task(mpcomp_taskloop_task);
+
+  if(nogroup == 0) {
+    mpcomp_taskgroup_end();
+  }
 }
 #endif

@@ -136,6 +136,7 @@ typedef struct mpcomp_task_thread_infos_s {
   struct mpcomp_task_s **reusable_tasks; /**< Reusable tasks buffer */
   int max_task_tot_size; /**< max task size */
   bool one_list_per_thread; /** True if there is one list for each thread */
+  size_t sizeof_kmp_task_t;
 } mpcomp_task_thread_infos_t;
 
 /**
