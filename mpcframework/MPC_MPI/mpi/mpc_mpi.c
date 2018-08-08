@@ -6467,10 +6467,22 @@ int __INTERNAL__PMPI_Bcast_intra(void *buffer, int count, MPI_Datatype datatype,
 
 		int min_pipeline_blk = 1024;
 
+                /* NOTE : The second algorithm has been disabled as it clearly stresses Infiniband layer with
+                 * too much messages to send when large blocks are required to be sent. The ibuf starvation leads
+                 * the application to hang with an out of memory.
+                 * Multiple solutions to fix it :
+                 *  - the first one is to limit the number of messages to send for one MPI call (what we did here)
+                 *      It is not the best solution but the fastest to deploy at this right moment.
+                 *  - A solution would be to verify if the message protocol can be related to this issue. It seems because
+                 *      messages are sent in buffered mode, the starvation occurs. We did not investiguate more on this point.
+                 *  - A solution would be to allow IB to free supplementary-allocated ibuf segments (to avoid the bottleneck) but
+                 *      such an approach is likelyt to have performance drawbacks.
+                 */
+#if 0
 		if( (count < min_pipeline_blk)
 		|| ! sctk_datatype_contig_mem( datatype ) )
 		{
-
+#endif
 
 			if( 0 <= parent )
 			{
@@ -6507,6 +6519,7 @@ int __INTERNAL__PMPI_Bcast_intra(void *buffer, int count, MPI_Datatype datatype,
 
 			res = MPI_Waitall( 2 , reqs , MPI_STATUSES_IGNORE );
 
+#if 0 /* see the comment above */
 		}
 		else
 		{
@@ -6575,12 +6588,8 @@ int __INTERNAL__PMPI_Bcast_intra(void *buffer, int count, MPI_Datatype datatype,
 				current_offset += count_this_step;
 				left_to_process -= count_this_step;
 			}
-		
-		
-		
-		
-		
 		}
+#endif
 	}
 
 	return res;
