@@ -717,6 +717,7 @@ static inline void sctk_ptp_copy_tasks_insert(sctk_msg_list_t *ptr_recv,
  */
 
 #ifdef MPC_MPI
+int mpc_MPI_use_windows();
 int mpc_MPI_notify_request_counter(sctk_request_t *req);
 #endif
 
@@ -724,10 +725,11 @@ void sctk_complete_and_free_message(sctk_thread_ptp_message_t *msg) {
   sctk_request_t *req = SCTK_MSG_REQUEST(msg);
 
   if (req) {
-// sctk_error("POLLED req %p CNT is %p", SCTK_MSG_REQUEST( msg ),
-// SCTK_MSG_POOL_COUNTER( msg ) );
 #ifdef MPC_MPI
-    mpc_MPI_notify_request_counter(req);
+    if(mpc_MPI_use_windows())
+    {
+      mpc_MPI_notify_request_counter(req);
+    }
 #endif
 
     if (req->ptr_to_pin_ctx) {

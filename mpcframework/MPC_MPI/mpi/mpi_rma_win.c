@@ -163,10 +163,20 @@ void *mpc_MPI_Win_progress_thread(void *pdesc) {
 /* MPI Window descriptor (to be stored as low-level win payload)        */
 /************************************************************************/
 
+int __mpi_used_a_window = 0;
+
+int mpc_MPI_use_windows()
+{
+  return __mpi_used_a_window;
+}
+
+
+
 struct mpc_MPI_Win *mpc_MPI_Win_init(int flavor, int model, MPI_Comm comm,
                                      int rank, size_t size, size_t disp,
                                      int is_over_network,
                                      mpc_MPI_win_storage storage) {
+  __mpi_used_a_window |= 1;
   struct mpc_MPI_Win *ret = sctk_malloc(sizeof(struct mpc_MPI_Win));
 
   if (!ret) {
