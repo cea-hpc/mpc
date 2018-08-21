@@ -51,10 +51,11 @@
 #define SCTK_DISABLE_REENTRANCE
 #endif
 
+
 /* Migration disabled */
 #define SCTK_MIGRATION_DISABLED
 /* Task engine disabled */
-#define SCTK_DISABLE_TASK_ENGINE
+//#define SCTK_DISABLE_TASK_ENGINE
 
 TODO("sctk_cancel_message: need to be implemented")
 
@@ -144,10 +145,6 @@ typedef struct {
    */
   char changed;
 
-  /* Messages in the 'sctk_ptp_task_list' have already been
-   * matched and are wainting to be copied */
-  sctk_message_to_copy_t *sctk_ptp_task_list;
-  sctk_spinlock_t sctk_ptp_tasks_lock;
 } sctk_internal_ptp_message_lists_t;
 
 typedef struct sctk_internal_ptp_s {
@@ -358,20 +355,8 @@ sctk_internal_ptp_message_list_init(sctk_internal_ptp_message_lists_t *lists) {
   lists->pending_lock = lock;
   sctk_internal_ptp_list_pending_init(&(lists->pending_send));
   sctk_internal_ptp_list_pending_init(&(lists->pending_recv));
-
-  lists->sctk_ptp_tasks_lock = lock;
-  lists->sctk_ptp_task_list = NULL;
 }
 
-/*
- * Insert a message to copy. The message to insert has already been matched.
- */
-static inline void sctk_ptp_tasks_insert(sctk_message_to_copy_t *tmp,
-                                         sctk_internal_ptp_t *pair) {
-  sctk_spinlock_lock(&(pair->lists.sctk_ptp_tasks_lock));
-  DL_APPEND(pair->lists.sctk_ptp_task_list, tmp);
-  sctk_spinlock_unlock(&(pair->lists.sctk_ptp_tasks_lock));
-}
 
 /*
  * Merge 'incoming' send and receive lists to 'pending' send and receive lists
@@ -381,19 +366,21 @@ sctk_internal_ptp_merge_pending(sctk_internal_ptp_message_lists_t *lists) {
 #ifndef SCTK_DISABLE_REENTRANCE
 
   if (lists->incomming_send.list != NULL) {
-    sctk_spinlock_lock(&(lists->incomming_send.lock));
-    DL_CONCAT(lists->pending_send.list,
-              (sctk_msg_list_t *)lists->incomming_send.list);
-    lists->incomming_send.list = NULL;
-    sctk_spinlock_unlock(&(lists->incomming_send.lock));
+    if(sctk_spinlock_trylock(&(lists->incomming_send.lock)) == 0) {
+      DL_CONCAT(lists->pending_send.list,
+                (sctk_msg_list_t *)lists->incomming_send.list);
+      lists->incomming_send.list = NULL;
+      sctk_spinlock_unlock(&(lists->incomming_send.lock));
+    }
   }
 
   if (lists->incomming_recv.list != NULL) {
-    sctk_spinlock_lock(&(lists->incomming_recv.lock));
-    DL_CONCAT(lists->pending_recv.list,
-              (sctk_msg_list_t *)lists->incomming_recv.list);
-    lists->incomming_recv.list = NULL;
-    sctk_spinlock_unlock(&(lists->incomming_recv.lock));
+    if(sctk_spinlock_lock(&(lists->incomming_recv.lock)) == 0){
+      DL_CONCAT(lists->pending_recv.list,
+                (sctk_msg_list_t *)lists->incomming_recv.list);
+      lists->incomming_recv.list = NULL;
+      sctk_spinlock_unlock(&(lists->incomming_recv.lock));
+    }
   }
 
   /* Change the flag. New messages have been inserted to the 'pending' lists */
@@ -650,28 +637,79 @@ static inline void sctk_ptp_table_insert(sctk_internal_ptp_t *tmp) {
 /********************************************************************/
 
 #ifndef SCTK_DISABLE_TASK_ENGINE
+
+/* Messages in the 'sctk_ptp_task_list' have already been
+ * matched and are wainting to be copied */
+sctk_message_to_copy_t **sctk_ptp_task_list = NULL;
+sctk_spinlock_t *sctk_ptp_tasks_lock = 0;
+int sctk_ptp_tasks_count = 0;
+
+static short sctk_ptp_tasks_init_done = 0;
+sctk_spinlock_t *sctk_ptp_tasks_init_lock = 0;
+
+#define PTP_MAX_TASK_LISTS 32
+
+void sctk_ptp_tasks_init()
+{
+  sctk_spinlock_lock(&sctk_ptp_tasks_init_lock);
+
+  if( sctk_ptp_tasks_init_done )
+  {
+     sctk_spinlock_unlock(&sctk_ptp_tasks_init_lock);
+     return;
+  }
+
+  if( sctk_get_task_number() < PTP_MAX_TASK_LISTS)
+  {
+    sctk_ptp_tasks_count = sctk_get_task_number();
+  }
+  else
+  {
+    sctk_ptp_tasks_count = PTP_MAX_TASK_LISTS;
+  }
+
+  sctk_ptp_task_list = sctk_malloc(sizeof(sctk_message_to_copy_t*) * sctk_ptp_tasks_count);
+  assume(sctk_ptp_task_list);
+
+  sctk_ptp_tasks_lock = sctk_malloc(sizeof(sctk_spinlock_t *) * sctk_ptp_tasks_count);
+  assume(sctk_ptp_tasks_lock);
+
+  int i;
+  for( i = 0 ; i < sctk_ptp_tasks_count; i++)
+  {
+    sctk_ptp_task_list[i] = NULL;
+    sctk_ptp_tasks_lock[i] = 0;
+  }
+
+  sctk_ptp_tasks_init_done = 1;
+  sctk_spinlock_unlock(&sctk_ptp_tasks_init_lock);
+}
+
 /*
  * Function which loop on t'he ptp_task_list' in order to copy
  * pending messages which have been already matched.
  * Only called if the task engine is enabled
  */
-static inline int sctk_ptp_tasks_perform(sctk_internal_ptp_t *pair) {
+static inline int _sctk_ptp_tasks_perform(int key, int depth) {
   sctk_message_to_copy_t *tmp;
   int nb_messages_copied = 0; /* Number of messages processed */
 
+  int target_list = key % sctk_ptp_tasks_count;
+
   /* Each element of this list has already been matched */
-  while (pair->lists.sctk_ptp_task_list != NULL) {
+  if (sctk_ptp_task_list[target_list] != NULL)
+  {
     tmp = NULL;
 
-    if (sctk_spinlock_trylock(&(pair->lists.sctk_ptp_tasks_lock)) == 0) {
-      tmp = pair->lists.sctk_ptp_task_list;
+    if (sctk_spinlock_trylock(&(sctk_ptp_tasks_lock[target_list])) == 0) {
+      tmp = sctk_ptp_task_list[target_list];
 
       if (tmp != NULL) {
         /* Message found, we remove it from the list */
-        DL_DELETE(pair->lists.sctk_ptp_task_list, tmp);
+        DL_DELETE(sctk_ptp_task_list[target_list], tmp);
       }
 
-      sctk_spinlock_unlock(&(pair->lists.sctk_ptp_tasks_lock));
+      sctk_spinlock_unlock(&(sctk_ptp_tasks_lock[target_list]));
     }
 
     if (tmp != NULL) {
@@ -682,9 +720,34 @@ static inline int sctk_ptp_tasks_perform(sctk_internal_ptp_t *pair) {
       nb_messages_copied++;
     }
   }
+  else
+  {
+    return 0;
+  }
+
+  if( (nb_messages_copied == 0) && (depth < 3) )
+  {
+    _sctk_ptp_tasks_perform(key + 1, depth +1);
+  }
 
   return nb_messages_copied;
 }
+
+static inline int sctk_ptp_tasks_perform(int key){
+  return _sctk_ptp_tasks_perform(key, 0);
+}
+
+/*
+ * Insert a message to copy. The message to insert has already been matched.
+ */
+static inline void sctk_ptp_tasks_insert(sctk_message_to_copy_t *tmp,
+                                         sctk_internal_ptp_t *pair) {
+  int key = pair->key.dest_src;
+  sctk_spinlock_lock(&(sctk_ptp_tasks_lock[key]));
+  DL_APPEND(sctk_ptp_task_list[key], tmp);
+  sctk_spinlock_unlock(&(sctk_ptp_tasks_lock[key]));
+}
+
 #endif
 
 /*
@@ -704,7 +767,23 @@ static inline void sctk_ptp_copy_tasks_insert(sctk_msg_list_t *ptr_recv,
   assume(tmp->msg_send->tail.message_copy);
   tmp->msg_send->tail.message_copy(tmp);
 #else
-  sctk_ptp_tasks_insert(tmp, pair);
+  /* If the message is small just copy */
+  if(tmp->msg_send->tail.message_type == SCTK_MESSAGE_CONTIGUOUS )
+  {
+    if(tmp->msg_send->tail.message.contiguous.size < 64 )
+    {
+      assume(tmp->msg_send->tail.message_copy);
+      tmp->msg_send->tail.message_copy(tmp);
+    }
+    else
+    {
+      sctk_ptp_tasks_insert(tmp, pair);
+    }
+  }
+  else
+  {
+    sctk_ptp_tasks_insert(tmp, pair);
+  }
 #endif
   SCTK_PROFIL_END(MPC_Copy_message);
 }
@@ -793,8 +872,6 @@ void sctk_message_completion_and_free(sctk_thread_ptp_message_t *send,
      * as messages are sent with their comm_world rank this is required
      * when matching ANY_SOURCE messages in order to fill accordingly
      * the MPI_Status object from the request data */
-
-    // sctk_error("BEEF TRANS %d", SCTK_MSG_SRC_TASK ( send ) );
     recv->tail.request->header.source_task =
         sctk_get_rank(SCTK_MSG_COMMUNICATOR(send), SCTK_MSG_SRC_TASK(send));
     recv->tail.request->header.source = SCTK_MSG_SRC_PROCESS(send);
@@ -1500,6 +1577,10 @@ void sctk_ptp_per_task_init(int i) {
   int j;
   int k;
 
+#ifndef SCTK_DISABLE_TASK_ENGINE
+  sctk_ptp_tasks_init();
+#endif
+
   for (k = 0; k < SCTK_PARALLEL_COMM_QUEUES_NUMBER; k++) {
     tmp = sctk_malloc(sizeof(sctk_internal_ptp_t));
     memset(tmp, 0, sizeof(sctk_internal_ptp_t));
@@ -2017,8 +2098,6 @@ int sctk_m_probe_matching_get() {
 
   if (sctk_atomics_load_int(&m_probe_id_task) != (thread_id + 1)) {
     return -1;
-  } else {
-    sctk_nodebug("YEEPI ME got %d ", sctk_atomics_load_int(&m_probe_id_task));
   }
 
   return sctk_atomics_load_int(&m_probe_id);
@@ -2040,9 +2119,9 @@ void sctk_inter_thread_comm_no_control_messages_end() {
 }
 
 static inline sctk_msg_list_t *sctk_perform_messages_search_matching(
-    sctk_internal_ptp_list_pending_t *pending_list,
-    sctk_thread_message_header_t *header,
-    sctk_thread_ptp_message_t **ctrl_msg) {
+                                  sctk_internal_ptp_list_pending_t *pending_list,
+                                  sctk_thread_message_header_t *header,
+                                  sctk_thread_ptp_message_t **ctrl_msg) {
   sctk_msg_list_t *ptr_found;
   sctk_msg_list_t *tmp;
 
@@ -2060,16 +2139,11 @@ static inline sctk_msg_list_t *sctk_perform_messages_search_matching(
     sctk_debug("CHECKING SRC %d TAG %d == EXP == SRC %d TAG %d",
                header_found->source_task, header_found->message_tag,
                header->source_task, header->message_tag);
-    sctk_debug("CHECKIN2 COMM %d TYPE %d == EXP == COMM %d TYPE %d",
-               header_found->communicator, header_found->message_type.type,
-               header->communicator, header->message_type.type);
 
-    static int cnt = 0;
-
+    /* Control Message Handling */
     if (header_found->message_type.type == SCTK_CONTROL_MESSAGE_TASK) {
       if (!already_processsing_a_control_message &&
           can_process_a_control_message) {
-        // sctk_error("DID POP");
         DL_DELETE(pending_list->list, ptr_found);
         /* Here we have a pending control message in the list,
          * we must take it out in order to avoid deadlocks */
@@ -2078,15 +2152,11 @@ static inline sctk_msg_list_t *sctk_perform_messages_search_matching(
       }
     }
 
-    /* Match the communicator, the tag, the source and the specific message tag
-     */
+    /* Match the communicator, the tag, the source and the specific message tag */
+
+
     if (/* Match Communicator */
         (header->communicator == header_found->communicator) &&
-        /* Has either no or the same matching ID */
-        ((send_message_matching_id == 0) ||
-         (send_message_matching_id ==
-          sctk_atomics_load_int(&header->matching_id))) &&
-
         /* Match message type */
         (header->message_type.type == header_found->message_type.type) &&
         /* Match source Process */
@@ -2147,6 +2217,8 @@ static inline sctk_msg_list_t *sctk_perform_messages_search_matching(
       DL_DELETE(pending_list->list, ptr_found);
     }
   }
+
+  /* No message found */
   return NULL;
 }
 
@@ -2253,6 +2325,8 @@ static inline int sctk_perform_messages_matching_from_recv_msg(
 
   /* We found a send request which corresponds to the recv request 'ptr_recv' */
   if (ptr_send != NULL) {
+
+    /* Recopy error if present */
     if (ptr_send->msg->tail.request != NULL) {
       if (ptr_send->msg->tail.request->status_error != SCTK_SUCCESS) {
         ptr_recv->msg->tail.request->status_error =
@@ -2260,6 +2334,7 @@ static inline int sctk_perform_messages_matching_from_recv_msg(
       }
     }
 
+    /* Recv has matched a send, remove from list */
     DL_DELETE(pair->lists.pending_recv.list, ptr_recv);
 
     /* If the remote source is on a another node, we call the
@@ -2269,11 +2344,9 @@ static inline int sctk_perform_messages_matching_from_recv_msg(
       sctk_network_notify_matching_message(msg);
     }
 
-    /*Insert the matching message to the list of messages that needs to be
-     * copies.
+    /*Insert the matching message to the list of messages that needs to be copied.
      * The message is copied inside the copy_tasks_insert function if the task
-     * engine
-     * is disabled */
+     * engine is disabled */
     sctk_ptp_copy_tasks_insert(ptr_recv, ptr_send, pair);
     return 1;
   }
@@ -2323,7 +2396,7 @@ static inline int sctk_perform_messages_for_pair(sctk_internal_ptp_t *pair) {
        || (pair->lists.incomming_recv.list != NULL)
 #endif
            )) {
-    if (pair->lists.changed || 1
+    if (pair->lists.changed
 #ifndef SCTK_DISABLE_REENTRANCE
         || (pair->lists.incomming_send.list != NULL) ||
         (pair->lists.incomming_recv.list != NULL)
@@ -2347,7 +2420,7 @@ static inline int sctk_perform_messages_for_pair(sctk_internal_ptp_t *pair) {
 
 #ifndef SCTK_DISABLE_TASK_ENGINE
   /* Call the task engine if it is not diabled */
-  return sctk_ptp_tasks_perform(pair);
+  return sctk_ptp_tasks_perform(pair->key.dest_src);
 #else
   return nb_messages_copied;
 #endif
@@ -2362,11 +2435,11 @@ static inline int sctk_perform_messages_for_pair(sctk_internal_ptp_t *pair) {
  *  >=0 Number of messages matched
  */
 static inline int
+
 sctk_try_perform_messages_for_pair(sctk_internal_ptp_t *pair) {
   if (!pair)
     return -1;
 
-  int res = 0;
   SCTK_PROFIL_START(MPC_Test_message_pair_try);
 
   /* If the lock has not been taken, we continue */
@@ -2377,7 +2450,7 @@ sctk_try_perform_messages_for_pair(sctk_internal_ptp_t *pair) {
   }
 
   SCTK_PROFIL_END(MPC_Test_message_pair_try);
-  return res;
+  return 0;
 }
 
 void sctk_perform_messages_wait_init(struct sctk_perform_messages_s *wait,
