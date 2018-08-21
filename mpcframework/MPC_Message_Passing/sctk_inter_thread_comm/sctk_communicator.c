@@ -1490,52 +1490,6 @@ void sctk_communicator_self_init()
 }
 
 
-/************************* sctk_get_process env variables ************************/
-
-/* This section makes sure we are loading the variables needed by
- * several function in this file only once */
-
-/* Bolean telling if the variables were loaded */
-static int sctk_get_process_rank_from_task_rank_context_init_done = 0;
-static int sctk_get_process_rank_from_task_rank_context_present = 0;
-
-
-
-/* getenv("SCTK_MIC_NB_TASK") != NULL) */
-static char *SCTK_MIC_NB_TASK = NULL;
-/* getenv("SCTK_HOST_NB_TASK") */
-static char *SCTK_HOST_NB_TASK = NULL;
-/* getenv("SCTK_NB_HOST") */
-static char *SCTK_NB_HOST = NULL;
-/* getenv("SCTK_NB_MIC") */
-static char *SCTK_NB_MIC = NULL;
-
-/** @brief This function loads the parameters needed by \ref sctk_get_process_rank_from_task_rank,
-        \ref sctk_get_node_rank_from_task_rank and \ref sctk_communicator_world_init once for all
- */
-static inline void sctk_get_process_setup_env()
-{
-	if ( sctk_get_process_rank_from_task_rank_context_init_done )
-		return;
-
-	SCTK_MIC_NB_TASK = getenv ( "SCTK_MIC_NB_TASK" );
-	SCTK_HOST_NB_TASK = getenv ( "SCTK_HOST_NB_TASK" );
-	SCTK_NB_HOST = getenv ( "SCTK_NB_HOST" );
-	SCTK_NB_MIC = getenv ( "SCTK_NB_MIC" );
-
-	if ( ( SCTK_MIC_NB_TASK != NULL ) ||
-          ( SCTK_HOST_NB_TASK != NULL ) ||
-          ( SCTK_NB_HOST != NULL ) ||
-          ( SCTK_NB_MIC != NULL ) )
-		sctk_get_process_rank_from_task_rank_context_present = 1;
-
-
-	sctk_get_process_rank_from_task_rank_context_init_done = 1;
-	
-	
-}
-
-
 
 /************************* FUNCTION ************************/
 /**
@@ -1553,84 +1507,30 @@ void sctk_communicator_world_init ( const int nb_task )
 
 	pos = sctk_process_rank;
 
-	sctk_get_process_setup_env();
+	local_tasks = nb_task / sctk_process_number;
 
-	if( sctk_get_process_rank_from_task_rank_context_present )
+	if ( nb_task % sctk_process_number > pos )
+		local_tasks++;
+
+	first_local = sctk_process_rank * local_tasks;
+
+	if ( nb_task % sctk_process_number <= pos )
 	{
-		int node_rank, process_on_node_rank, process_on_node_number;
-		int host_number, mic_nb_task, host_nb_task;
-		host_number = ( SCTK_NB_HOST != NULL ) ? atoi ( SCTK_NB_HOST ) : 0;
-		mic_nb_task = ( SCTK_MIC_NB_TASK != NULL ) ? atoi ( SCTK_MIC_NB_TASK ) : 0;
-		host_nb_task = ( SCTK_HOST_NB_TASK != NULL ) ? atoi ( SCTK_HOST_NB_TASK ) : 0;
-		sctk_pmi_get_node_rank ( &node_rank );
-		sctk_pmi_get_process_on_node_rank ( &process_on_node_rank );
-		sctk_pmi_get_process_on_node_number ( &process_on_node_number );
-
-		sctk_nodebug ( "host_number = %d, mic_nb_task = %d, host_nb_task = %d", host_number, mic_nb_task, host_nb_task );
-
-#if __MIC2__
-		local_tasks = mic_nb_task / process_on_node_number;
-
-		if ( ( mic_nb_task % process_on_node_number ) > process_on_node_rank )
-		{
-			local_tasks++;
-			first_local = ( host_nb_task * host_number ) + ( ( node_rank - host_number ) * mic_nb_task ) + ( local_tasks * process_on_node_rank );
-		}
-		else
-		{
-			int i = 0;
-			first_local = ( host_nb_task * host_number ) + ( ( node_rank - host_number ) * mic_nb_task );
-
-			for ( i = 0 ; i < process_on_node_rank ; i++ )
-			{
-				if ( ( mic_nb_task % process_on_node_number ) > i )
-					first_local += ( local_tasks + 1 );
-				else
-					first_local += local_tasks;
-			}
-		}
-
-#else
-		local_tasks = host_nb_task / process_on_node_number;
-
-		if ( ( host_nb_task % process_on_node_number ) > process_on_node_rank )
-		{
-			local_tasks++;
-			first_local = ( node_rank * host_nb_task ) + ( local_tasks * process_on_node_rank );
-		}
-		else
-		{
-			int i = 0;
-			first_local = ( node_rank * host_nb_task );
-
-			for ( i = 0 ; i < process_on_node_rank ; i++ )
-			{
-				if ( ( host_nb_task % process_on_node_number ) > i )
-					first_local += ( local_tasks + 1 );
-				else
-					first_local += local_tasks;
-			}
-		}
-
-#endif
-		last_local = first_local + local_tasks - 1;
-		sctk_nodebug ( "lt %d, Process %d %d-%d", local_tasks, sctk_process_rank, first_local, first_local + local_tasks - 1 );
+		first_local += nb_task % sctk_process_number;
 	}
-	else
+
+	last_local = first_local + local_tasks - 1;
+
+
+	int * task_to_process = NULL;
+	if(sctk_process_number < 1024 )
 	{
-		local_tasks = nb_task / sctk_process_number;
+		task_to_process = sctk_malloc(sizeof(int) * sctk_process_number);
+		assume(task_to_process);
 
-		if ( nb_task % sctk_process_number > pos )
-			local_tasks++;
-
-		first_local = sctk_process_rank * local_tasks;
-
-		if ( nb_task % sctk_process_number <= pos )
-		{
-			first_local += nb_task % sctk_process_number;
-		}
-
-		last_local = first_local + local_tasks - 1;
+		for ( i = 0; i < sctk_process_number; ++i )
+			/* We delay resolation to later on in sctk_get_process_rank_from_task_rank() */
+			task_to_process[i] = -1;
 	}
 
 	/* Construct the list of processes */
@@ -1639,7 +1539,7 @@ void sctk_communicator_world_init ( const int nb_task )
 	for ( i = 0; i < sctk_process_number; ++i )
 		process_array[i] = i;
 
-	sctk_communicator_init_intern ( nb_task, SCTK_COMM_WORLD, last_local, first_local, local_tasks, NULL, NULL, NULL, process_array, sctk_process_number );
+	sctk_communicator_init_intern ( nb_task, SCTK_COMM_WORLD, last_local, first_local, local_tasks, NULL, NULL, task_to_process, process_array, sctk_process_number );
 
 	if ( sctk_process_number > 1 )
 	{
@@ -2147,26 +2047,7 @@ void sctk_get_rank_size_total ( const sctk_communicator_t communicator, int *ran
 
 int sctk_get_node_rank_from_task_rank ( const int rank )
 {
-	sctk_get_process_setup_env();
-
-	if ( sctk_get_process_rank_from_task_rank_context_present)
-	{
-		int host_number, mic_nb_task, host_nb_task;
-
-		host_number = ( SCTK_NB_HOST != NULL ) ? atoi ( SCTK_NB_HOST ) : 0;
-		mic_nb_task = ( SCTK_MIC_NB_TASK != NULL ) ? atoi ( SCTK_MIC_NB_TASK ) : 0;
-		host_nb_task = ( SCTK_HOST_NB_TASK != NULL ) ? atoi ( SCTK_HOST_NB_TASK ) : 0;
-
-		if ( rank > ( ( host_number * host_nb_task ) - 1 ) )
-		{
-			return ( ( host_number ) + ( ( rank - ( host_number * host_nb_task ) ) / mic_nb_task ) );
-		}
-		else
-		{
-			return ( rank / host_nb_task );
-		}
-	}
-
+	not_implemented();
 	return -1;
 }
 
@@ -2177,149 +2058,51 @@ int sctk_get_node_rank_from_task_rank ( const int rank )
  * @param rank rank of the task in comm world.
  * @return the rank.
 **/
-int sctk_get_process_rank_from_task_rank ( int rank )
+int sctk_get_process_rank_from_task_rank( int rank )
 {
 	sctk_internal_communicator_t *tmp;
 	int proc_rank;
 
+	if ( sctk_process_number == 1 )
+		return 0;
+
 #ifdef SCTK_PROCESS_MODE
-        return rank;
+	return rank;
 #endif
 
-        tmp = sctk_get_internal_communicator(SCTK_COMM_WORLD);
+	tmp = sctk_get_internal_communicator( SCTK_COMM_WORLD );
 
-        if (tmp->task_to_process != NULL) {
-          sctk_communicator_intern_read_lock(tmp);
-          proc_rank = tmp->task_to_process[rank];
-          sctk_communicator_intern_read_unlock(tmp);
-        } else {
-          /* Here we rely on the variables SCTK_* which are loaded
-           * from the environment by the following function */
-          sctk_get_process_setup_env();
+	if ( tmp->task_to_process != NULL )
+	{
+		sctk_communicator_intern_read_lock( tmp );
+		proc_rank = tmp->task_to_process[rank];
+		sctk_communicator_intern_read_unlock( tmp );
 
-          if (sctk_get_process_rank_from_task_rank_context_present) {
-            int i, node_rank, sum_proc_node = 0, sum_task_node = 0, node_number,
-                              nb_processes_on_node;
-            int *process_from_node = NULL;
-            int host_number, mic_nb_task, host_nb_task;
+		if(0 <= proc_rank)
+			return proc_rank;
+	}
 
-            host_number = (SCTK_NB_HOST != NULL) ? atoi(SCTK_NB_HOST) : 0;
-            mic_nb_task =
-                (SCTK_MIC_NB_TASK != NULL) ? atoi(SCTK_MIC_NB_TASK) : 0;
-            host_nb_task =
-                (SCTK_HOST_NB_TASK != NULL) ? atoi(SCTK_HOST_NB_TASK) : 0;
+	/* Compute the task number */
 
-            node_rank = sctk_get_node_rank_from_task_rank(rank);
-            struct process_nb_from_node_rank
-                *sctk_process_number_from_node_rank;
-            struct process_nb_from_node_rank *tmp_hash;
-            sctk_pmi_get_process_number_from_node_rank(
-                &sctk_process_number_from_node_rank);
-            sctk_pmi_get_node_number(&node_number);
-            process_from_node = sctk_malloc(node_number * sizeof(int));
+	int local_tasks;
+	int remain_tasks;
+	local_tasks = tmp->nb_task / sctk_process_number;
+	remain_tasks = tmp->nb_task % sctk_process_number;
 
-            for (i = 0; i < node_number; i++) {
-              sctk_spinlock_read_lock(&sctk_process_from_rank_lock);
-              HASH_FIND_INT(sctk_process_number_from_node_rank, &i, tmp_hash);
-              sctk_assert(tmp_hash != NULL);
+	if ( rank < ( local_tasks + 1 ) * remain_tasks )
+		proc_rank = rank / ( local_tasks + 1 );
+	else
+		proc_rank =
+			remain_tasks +
+			( ( rank - ( local_tasks + 1 ) * remain_tasks ) / local_tasks );
 
-              process_from_node[i] = tmp_hash->nb_process;
+	if ( tmp->task_to_process != NULL )
+	{
+		tmp->task_to_process[rank] = proc_rank;
+	}
 
-              if (i < node_rank) {
-                sum_proc_node += process_from_node[i];
 
-                if (sum_task_node < (host_number * host_nb_task))
-                  sum_task_node += host_nb_task;
-                else
-                  sum_task_node += mic_nb_task;
-              }
-
-              sctk_spinlock_read_unlock(&sctk_process_from_rank_lock);
-            }
-
-            nb_processes_on_node = process_from_node[node_rank];
-
-            if (rank > ((host_number * host_nb_task) - 1)) {
-              if (mic_nb_task % nb_processes_on_node != 0) {
-                if (((rank - sum_task_node) /
-                         ((mic_nb_task / nb_processes_on_node) + 1) <
-                     (mic_nb_task % nb_processes_on_node)) ||
-                    (((rank - sum_task_node) %
-                      ((mic_nb_task / nb_processes_on_node) + 1)) == 0))
-                  proc_rank = sum_proc_node +
-                              (rank - sum_task_node) /
-                                  (mic_nb_task / nb_processes_on_node + 1);
-                else {
-                  if (((rank - sum_task_node) == (mic_nb_task - 1)) &&
-                      ((sum_proc_node +
-                        (rank - sum_task_node) /
-                            (mic_nb_task / nb_processes_on_node + 1) +
-                        1) == (nb_processes_on_node + sum_proc_node)))
-                    proc_rank = sum_proc_node +
-                                (rank - sum_task_node) /
-                                    (mic_nb_task / nb_processes_on_node + 1);
-                  else
-                    proc_rank = sum_proc_node +
-                                (rank - sum_task_node) /
-                                    (mic_nb_task / nb_processes_on_node + 1) +
-                                1;
-                }
-              } else
-                proc_rank = sum_proc_node +
-                            (rank - sum_task_node) /
-                                (mic_nb_task / nb_processes_on_node);
-            } else {
-              if (host_nb_task % nb_processes_on_node != 0) {
-                if (((rank - sum_task_node) /
-                         ((host_nb_task / nb_processes_on_node) + 1) <
-                     (host_nb_task % nb_processes_on_node)) ||
-                    (((rank - sum_task_node) %
-                      ((host_nb_task / nb_processes_on_node) + 1)) == 0))
-                  proc_rank = sum_proc_node +
-                              (rank - sum_task_node) /
-                                  (host_nb_task / nb_processes_on_node + 1);
-                else {
-                  if (((rank - sum_task_node) == (host_nb_task - 1)) &&
-                      ((sum_proc_node +
-                        (rank - sum_task_node) /
-                            (host_nb_task / nb_processes_on_node + 1) +
-                        1) == (nb_processes_on_node + sum_proc_node)))
-                    proc_rank = sum_proc_node +
-                                (rank - sum_task_node) /
-                                    (host_nb_task / nb_processes_on_node + 1);
-                  else
-                    proc_rank = sum_proc_node +
-                                (rank - sum_task_node) /
-                                    (host_nb_task / nb_processes_on_node + 1) +
-                                1;
-                }
-              } else
-                proc_rank = sum_proc_node +
-                            (rank - sum_task_node) /
-                                (host_nb_task / nb_processes_on_node);
-            }
-
-            sctk_free(process_from_node);
-            sctk_nodebug("task rank %d, node rank %d, sum_proc %d, sum_task "
-                         "%d, nb_processes_on_node %d -> proc_rank %d",
-                         rank, node_rank, sum_proc_node, sum_task_node,
-                         nb_processes_on_node, proc_rank);
-          } else {
-            int local_tasks;
-            int remain_tasks;
-            local_tasks = tmp->nb_task / sctk_process_number;
-            remain_tasks = tmp->nb_task % sctk_process_number;
-
-            if (rank < (local_tasks + 1) * remain_tasks)
-              proc_rank = rank / (local_tasks + 1);
-            else
-              proc_rank =
-                  remain_tasks +
-                  ((rank - (local_tasks + 1) * remain_tasks) / local_tasks);
-          }
-        }
-
-        return proc_rank;
+	return proc_rank;
 }
 
 /************************************************************************/
