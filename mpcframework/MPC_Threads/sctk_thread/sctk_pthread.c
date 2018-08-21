@@ -57,51 +57,42 @@
 extern volatile int sctk_online_program;
 
 static void
-pthread_wait_for_value_and_poll (volatile int *data, int value,
-				 void (*func) (void *), void *arg)
+pthread_wait_for_value_and_poll( volatile int *data, int value,
+								 void ( *func )( void * ), void *arg )
 {
-  int i = 0;
-  while ((*data) != value)
-    {
-      if (func != NULL)
+	int i = 0;
+	while ( ( *data ) != value )
 	{
-	  func (arg);
-	}
-/*       sctk_thread_yield(); */
-      if ((*data) != value)
-	{
-	  if (i >= 100)
-	    {
+		if ( func != NULL )
+		{
+			func( arg );
+		}
+		/*       sctk_thread_yield(); */
+		if ( ( *data ) != value )
+		{
+			if ( i >= 100 )
+			{
 #ifdef MPC_Message_Passing
-#ifndef SCTK_ENABLE_SPINNING
-	      sctk_notify_idle_message ();
-        /* We need to check if we have finished the MPC init step.
-         * If we do not that, get_nb_task_local *may* fail because the
-         * communicator SCTK_COMM_WORLD is not initialized */
-        if (sctk_online_program == 1) {
-          if(sctk_get_processor_number () == sctk_get_nb_task_local(SCTK_COMM_WORLD)){
-            sched_yield();
-          } else {
-            kthread_usleep (10);
-          }
-        }
-#endif
+  #ifndef SCTK_ENABLE_SPINNING
+          sctk_notify_idle_message();
+          kthread_usleep( 10 );
+  #endif
 #else
-	      kthread_usleep (10);
+				kthread_usleep( 10 );
 #endif
-	      i = 0;
-	    } else {
-        /* If the spinning is enable, we slow down the the progression thread */
+				i = 0;
+			}
+			else
+			{
+				/* If the spinning is enable, we slow down the the progression thread */
 #ifdef SCTK_ENABLE_SPINNING
-        sleep(1);
+				sleep( 1 );
 #endif
-		 sctk_cpu_relax ();
-	  }
-	  /* 	  else */
-/* 	    sched_yield (); */
-	  i++;
+				sctk_cpu_relax();
+			}
+			i++;
+		}
 	}
-    }
 }
 
 typedef struct sctk_cell_s
