@@ -107,16 +107,11 @@ int sctk_cancel_message(sctk_request_t *msg) {
 /*Structres                                                         */
 /********************************************************************/
 
-/* typedef struct */
-/* { */
-/* 	/\*   sctk_communicator_t comm; *\/ */
-/* 	int destination; */
-/* } sctk_comm_dest_key_t; */
-
 typedef struct {
   sctk_communicator_t comm;
   int dest_src;
 } sctk_comm_dest_key_t;
+
 #define sctk_set_comm_dest_key(key, rank, com)                                 \
   do {                                                                         \
     key.dest_src = rank;                                                       \
@@ -180,28 +175,35 @@ typedef struct sctk_internal_ptp_s {
 void sctk_init_request(sctk_request_t *request, sctk_communicator_t comm,
                        int request_type) {
 
+  static sctk_request_t the_initial_request = {
+    .header.source = SCTK_PROC_NULL,
+    .header.destination = SCTK_PROC_NULL,
+    .header.source_task = SCTK_PROC_NULL,
+    .header.destination_task = SCTK_PROC_NULL,
+    .header.message_tag = SCTK_ANY_TAG,
+    .header.communicator = SCTK_COMM_NULL,
+    .header.msg_size = 0,
+    .completion_flag = SCTK_MESSAGE_DONE,
+    .request_type = 0,
+    .is_null = 0,
+    .truncated = 0,
+    .msg = NULL,
+    .query_fn = NULL,
+    .cancel_fn = NULL,
+    .wait_fn = NULL,
+    .poll_fn = NULL,
+    .free_fn = NULL,
+    .extra_state = NULL,
+    .pointer_to_source_request = NULL,
+    .pointer_to_shadow_request = NULL,
+    .ptr_to_pin_ctx = NULL
+  };
+
+
   if (request != NULL) {
-    request->header.source = SCTK_PROC_NULL;
-    request->header.destination = SCTK_PROC_NULL;
-    request->header.source_task = SCTK_PROC_NULL;
-    request->header.destination_task = SCTK_PROC_NULL;
-    request->header.message_tag = SCTK_ANY_TAG;
-    request->header.communicator = comm;
-    request->header.msg_size = 0;
-    request->completion_flag = SCTK_MESSAGE_DONE;
+    *request = the_initial_request;
     request->request_type = request_type;
-    request->is_null = 0;
-    request->truncated = 0;
-    request->msg = NULL;
-    request->query_fn = NULL;
-    request->cancel_fn = NULL;
-    request->wait_fn = NULL;
-    request->poll_fn = NULL;
-    request->free_fn = NULL;
-    request->extra_state = NULL;
-    request->pointer_to_source_request = NULL;
-    request->pointer_to_shadow_request = NULL;
-    request->ptr_to_pin_ctx = NULL;
+    request->header.communicator = comm;
   }
 }
 
