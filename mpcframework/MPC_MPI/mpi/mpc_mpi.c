@@ -1370,66 +1370,72 @@ inline void __sctk_add_in_mpc_request (MPI_Request * req, void *t,MPI_request_st
 /** Delete a request
  *  \param req Request to delete
  */
-inline void __sctk_delete_mpc_request (MPI_Request * req,
-					      MPI_request_struct_t *requests)
+inline void __sctk_delete_mpc_request( MPI_Request *req,
+									   MPI_request_struct_t *requests )
 {
 	MPI_internal_request_t *tmp;
-	
+
 	/* Convert resquest to an integer */
 	int int_req = *req;
-	
+
 	/* If it is request null there is nothing to do */
-	if (int_req == MPI_REQUEST_NULL)
+	if ( int_req == MPI_REQUEST_NULL )
 	{
 		return;
 	}
 
-	assume (requests != NULL);
+	assume( requests != NULL );
 	/* Lock it */
-	sctk_nodebug ("Delete request %d", *req);
-	
+	sctk_nodebug( "Delete request %d", *req );
+
 	/* Retrieve the request */
-	tmp = __sctk_convert_mpc_request_internal (req,requests); 
+	tmp = __sctk_convert_mpc_request_internal( req, requests );
 
-	sctk_spinlock_lock (&(tmp->lock));
+	/* Clear the request */
+	memset( &tmp->req, 0, sizeof( sctk_request_t ) );
 
-        /* Clear the request */
-        //memset(&tmp->req, 0, sizeof(sctk_request_t));
+	sctk_spinlock_lock( &( tmp->lock ) );
 
-        /* if request is not active disable auto-free */
-        if (tmp->is_active == 0) {
-          tmp->auto_free = 0;
-        }
+	/* if request is not active disable auto-free */
+	if ( tmp->is_active == 0 )
+	{
+		tmp->auto_free = 0;
+	}
 
-        /* Deactivate the request */
-        tmp->is_active = 0;
+	/* Deactivate the request */
+	tmp->is_active = 0;
 
-        /* Can the request be freed ? */
-        if (tmp->freeable == 1) {
-          /* Make sure the rank matches the TAB offset */
-          assume(tmp->rank == *req);
+	/* Can the request be freed ? */
+	if ( tmp->freeable == 1 )
+	{
+		/* Make sure the rank matches the TAB offset */
+		assume( tmp->rank == *req );
 
-          /* Auto free ? */
-          if (tmp->auto_free == 0) {
-            /* Call delete internal request to push it in the free list */
-            if (sctk_delete_internal_request_local_put(tmp, requests) == 0) {
-              sctk_spinlock_lock(&(requests->lock));
-              sctk_delete_internal_request(tmp, requests);
-              sctk_spinlock_unlock(&(requests->lock));
-            }
-            /* Set the source request to NULL */
-            *req = MPI_REQUEST_NULL;
-          } else {
-            /* Remove it from the free list */
-            sctk_spinlock_lock(&(requests->lock));
-            tmp->next = requests->auto_free_list;
-            requests->auto_free_list = tmp;
-            sctk_spinlock_unlock(&(requests->lock));
-            /* Set the source request to NULL */
-            *req = MPI_REQUEST_NULL;
-          }
-        }
-        sctk_spinlock_unlock(&(tmp->lock));
+		/* Auto free ? */
+		if ( tmp->auto_free == 0 )
+		{
+			/* Call delete internal request to push it in the free list */
+			if ( sctk_delete_internal_request_local_put( tmp, requests ) == 0 )
+			{
+				sctk_spinlock_lock( &( requests->lock ) );
+				sctk_delete_internal_request( tmp, requests );
+				sctk_spinlock_unlock( &( requests->lock ) );
+			}
+			/* Set the source request to NULL */
+			*req = MPI_REQUEST_NULL;
+		}
+		else
+		{
+			/* Remove it from the free list */
+			sctk_spinlock_lock( &( requests->lock ) );
+			tmp->next = requests->auto_free_list;
+			requests->auto_free_list = tmp;
+			sctk_spinlock_unlock( &( requests->lock ) );
+			/* Set the source request to NULL */
+			*req = MPI_REQUEST_NULL;
+		}
+	}
+	sctk_spinlock_unlock( &( tmp->lock ) );
 }
 
 /************************************************************************/
