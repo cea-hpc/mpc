@@ -562,15 +562,6 @@ void sctk_control_message_process()
 
   __inside_sctk_control_message_process = 1;
 
-/* because this 'if' is used to relax the contention in thread mode, no need in process mode
- * We can't let this hook active, because in process-mode sctk_get_task_rank returns process id (always >= 0)*/
-#ifndef SCTK_PROCESS_MODE
-  if (0 <= sctk_get_task_rank()) {
-    __inside_sctk_control_message_process = 0;
-    return;
-  }
-#endif
-
   sctk_topological_polling_tree_poll(&___control_message_list_polling_tree,
                                      __sctk_control_message_process, NULL);
 
