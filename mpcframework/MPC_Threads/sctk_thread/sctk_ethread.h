@@ -64,6 +64,7 @@ extern "C"
 #define SCTK_ETHREAD_SCHED_OTHER 0
 #define SCTK_ETHREAD_SCHED_RR 1
 #define SCTK_ETHREAD_SCHED_FIFO 2
+#define SCTK_ETHREAD_VP_EAGERNESS 1024
 /*inheritsched*/
 #define SCTK_ETHREAD_EXPLICIT_SCHED SCTK_THREAD_EXPLICIT_SCHED
 #define SCTK_ETHREAD_INHERIT_SCHED SCTK_THREAD_INHERIT_SCHED
@@ -215,7 +216,7 @@ extern "C"
     volatile sctk_long_long idle_activity;
     volatile double usage;
     volatile int up;
-
+    volatile int eagerness;
     int bind_to;
   } sctk_ethread_virtual_processor_t;
 #define SCTK_ETHREAD_VP_INIT {						\
@@ -227,7 +228,7 @@ extern "C"
       NULL,								\
       NULL,								\
       SCTK_SPINLOCK_INITIALIZER,					\
-      0,0,0,0,1,-1}
+      0,0,0,0,1,SCTK_ETHREAD_VP_EAGERNESS,-1}
 
   extern sctk_ethread_virtual_processor_t virtual_processor;
 

@@ -742,90 +742,102 @@ extern "C"
 
   /*Thread polling */
   static inline void
-    __sctk_ethread_wait_for_value_and_poll
-    (sctk_ethread_virtual_processor_t * restrict vp,
-     sctk_ethread_per_thread_t * restrict cur,
-     volatile int *restrict data, int value, void (*func) (void *), void *arg)
+  __sctk_ethread_wait_for_value_and_poll( sctk_ethread_virtual_processor_t *restrict vp,
+										  sctk_ethread_per_thread_t *restrict cur,
+										  volatile int *restrict data, int value, void ( *func )( void * ), void *arg )
   {
-    sctk_ethread_polling_t cell;
-    sctk_ethread_status_t stat_sav;
-
-    if (cur->status != ethread_ready)
-      {
-	while (*data != value)
+	  sctk_ethread_polling_t cell;
+	  sctk_ethread_status_t stat_sav;
+    int i=0;
+	  if ( cur->status != ethread_ready )
 	  {
-	    if (func != NULL)
-	      {
-		func (arg);
-	      }
-	    __sctk_ethread_sched_yield_vp (vp, cur);
-	  }
-
-	return;
-      }
-    assume ((cur->status == ethread_ready));
-
-    sctk_assert (vp->current == cur);
-    if (*data != value && func != NULL)
-      {
-	func (arg);
-      }
-
-    if (*data != value)
-      {
-
-	cell.forced = 0;
-	cell.data = data;
-	cell.value = value;
-	cell.func = func;
-	cell.arg = arg;
-	cell.my_self = cur;
-	stat_sav = cell.my_self->status;
-	cell.my_self->status = ethread_polling;
-	cell.next = (sctk_ethread_polling_t *) vp->poll_list;
-	vp->poll_list = &cell;
-
-	sctk_nodebug ("Wait %p from polling", cell.my_self);
-	__sctk_ethread_sched_yield_vp_poll (vp, cell.my_self);
-	sctk_nodebug ("Wait %p from polling done", cell.my_self);
-
-	sctk_assert (cell.forced == 0);
-	sctk_assert_func (if (*data != value)
+		  while ( *data != value )
+		  {
+			  if ( func != NULL )
 			  {
-			  sctk_error ("%d != %d", *data, value);
-			  sctk_ethread_print_task (cur);
-			  sctk_assert (*data == value);}
-	);
+				  func( arg );
+			  }
 
-	cell.my_self->status = stat_sav;
-      }
-  }
+			  if ( 128 < i )
+			  {
+				  __sctk_ethread_sched_yield_vp( vp, cur );
+				  i = 0;
+			  }
+			  i++;
+		  }
 
-  static inline void __sctk_grab_zombie (sctk_ethread_virtual_processor_t
-					 * vp)
-  {
-    sctk_ethread_per_thread_t *tmp_pid;
-
-    tmp_pid = __sctk_ethread_dequeue_task (&(vp->zombie_queue),
-					   &(vp->zombie_queue_tail));
-    while (tmp_pid != NULL)
-      {
-	struct sctk_alloc_chain *tls;
-	if (tmp_pid->attr.stack == NULL)
-	  sctk_free (tmp_pid->stack);
-	tls = tmp_pid->tls_mem;
-	sctk_free (tmp_pid);
-
-	if (tls != sctk_thread_tls)
-	  {
-	    __sctk_delete_thread_memory_area (tls);
+		  return;
 	  }
-	tmp_pid = __sctk_ethread_dequeue_task (&(vp->zombie_queue),
-					       &(vp->zombie_queue_tail));
-      }
 
+	  assume( ( cur->status == ethread_ready ) );
+
+	  sctk_assert( vp->current == cur );
+
+    for( i = 0 ; i < vp->eagerness ; i++)
+    {
+      if ( *data != value )
+      {
+        if( func != NULL)
+          func( arg );
+      } else {
+        vp->eagerness=SCTK_ETHREAD_VP_EAGERNESS;
+        return;
+      }
+    }
+
+    if(vp->eagerness)
+      vp->eagerness--;
+    else
+      vp->eagerness = 1;
+
+    cell.forced = 0;
+    cell.data = data;
+    cell.value = value;
+    cell.func = func;
+    cell.arg = arg;
+    cell.my_self = cur;
+    stat_sav = cell.my_self->status;
+    cell.my_self->status = ethread_polling;
+    cell.next = (sctk_ethread_polling_t *) vp->poll_list;
+    vp->poll_list = &cell;
+
+    sctk_nodebug( "Wait %p from polling", cell.my_self );
+    __sctk_ethread_sched_yield_vp_poll( vp, cell.my_self );
+    sctk_nodebug( "Wait %p from polling done", cell.my_self );
+
+    sctk_assert( cell.forced == 0 );
+    sctk_assert_func( if ( *data != value ) {
+      sctk_error ("%d != %d", *data, value);
+      sctk_ethread_print_task (cur);
+      sctk_assert (*data == value); } );
+
+    cell.my_self->status = stat_sav;
+	  
   }
 
+  static inline void __sctk_grab_zombie( sctk_ethread_virtual_processor_t
+											 *vp )
+  {
+	  sctk_ethread_per_thread_t *tmp_pid;
+
+	  tmp_pid = __sctk_ethread_dequeue_task( &( vp->zombie_queue ),
+											 &( vp->zombie_queue_tail ) );
+	  while ( tmp_pid != NULL )
+	  {
+		  struct sctk_alloc_chain *tls;
+		  if ( tmp_pid->attr.stack == NULL )
+			  sctk_free( tmp_pid->stack );
+		  tls = tmp_pid->tls_mem;
+		  sctk_free( tmp_pid );
+
+		  if ( tls != sctk_thread_tls )
+		  {
+			  __sctk_delete_thread_memory_area( tls );
+		  }
+		  tmp_pid = __sctk_ethread_dequeue_task( &( vp->zombie_queue ),
+												 &( vp->zombie_queue_tail ) );
+	  }
+  }
 
   static inline
     int __sctk_ethread_join (sctk_ethread_virtual_processor_t * vp,
