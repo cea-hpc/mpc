@@ -1961,11 +1961,6 @@ void sctk_set_header_in_message(sctk_thread_ptp_message_t *msg,
   SCTK_MSG_USE_MESSAGE_NUMBERING_SET(msg, 1);
 
   int match_for_tread = sctk_m_probe_matching_get();
-
-  if (match_for_tread != -1) {
-    sctk_nodebug("SET SEND MATCH TO %d", match_for_tread);
-  }
-
   SCTK_MSG_MATCH_SET(msg, match_for_tread);
 
   SCTK_MSG_SIZE_SET(msg, count);
