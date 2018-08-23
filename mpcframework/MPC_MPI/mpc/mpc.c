@@ -4485,6 +4485,11 @@ static int __MPC_Send(void *restrict buf, mpc_msg_count count,
 
   __MPC_Comm_rank_size(comm, &src, &size, task_specific);
 
+  if(((dest < 0 ) || (size <= dest)) && !sctk_is_inter_comm(comm))
+  {
+    return MPC_ERR_RANK;
+  }
+
   mpc_check_comm(comm, comm);
   mpc_check_count(count, comm);
 

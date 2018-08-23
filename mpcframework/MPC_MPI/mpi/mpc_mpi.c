@@ -15601,14 +15601,8 @@ int PMPIX_Swap (void **sendrecv_buf , int remote_rank, MPI_Count size , MPI_Comm
 		SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 	}
 	
-	{
-		int size;
-		mpi_check_comm (comm, comm);
-		__INTERNAL__PMPI_Comm_size (comm, &size);
-		if(sctk_is_inter_comm(comm) == 0)
-			mpi_check_rank_send (remote_rank, size, comm);
-	}
-	
+	mpi_check_comm (comm, comm);
+
 	res = __INTERNAL__PMPIX_Swap(sendrecv_buf , remote_rank, size , comm);
 	
 	SCTK_MPI_CHECK_RETURN_VAL (res, comm);
@@ -15630,13 +15624,7 @@ int PMPIX_Exchange(void **send_buf , void **recvbuff, int remote_rank, MPI_Count
 		SCTK_MPI_CHECK_RETURN_VAL (res, comm);
 	}
 	
-	{
-		int size;
-		mpi_check_comm (comm, comm);
-		__INTERNAL__PMPI_Comm_size (comm, &size);
-		if(sctk_is_inter_comm(comm) == 0)
-			mpi_check_rank_send (remote_rank, size, comm);
-	}
+  mpi_check_comm (comm, comm);
 	
 	res = __INTERNAL__PMPIX_Exchange(send_buf, recvbuff , remote_rank, size , comm);
 	
@@ -15653,20 +15641,16 @@ static inline int PMPI_Send_p(void *buf, int count, MPI_Datatype datatype,
 	SCTK_MPI_CHECK_RETURN_VAL (res, comm);
   }
   {
-    int size;
     mpi_check_comm (comm, comm);
     mpi_check_type (datatype, comm);
     mpi_check_count (count, comm);
     sctk_nodebug ("tag %d", tag);
     mpi_check_tag_send (tag, comm);
-    __INTERNAL__PMPI_Comm_size (comm, &size);
-    if(sctk_is_inter_comm(comm) == 0){
-      mpi_check_rank_send (dest, size, comm);
-    }
+
     if (count != 0)
-      {
-	mpi_check_buf (buf, comm);
-      }
+    {
+	    mpi_check_buf (buf, comm);
+    }
   }
   res = __INTERNAL__PMPI_Send (buf, count, datatype, dest, tag, comm);
   SCTK_MPI_CHECK_RETURN_VAL (res, comm);
@@ -15768,16 +15752,12 @@ PMPI_Bsend (void *buf, int count, MPI_Datatype datatype, int dest, int tag,
 	SCTK_MPI_CHECK_RETURN_VAL (res, comm);
   }
   {
-    int size;
     mpi_check_comm (comm, comm);
     mpi_check_type (datatype, comm);
     mpi_check_count (count, comm);
     sctk_nodebug ("tag %d", tag);
     mpi_check_tag_send (tag, comm);
-    __INTERNAL__PMPI_Comm_size (comm, &size);
-    if(sctk_is_inter_comm(comm) == 0){
-      mpi_check_rank_send (dest, size, comm);
-    }
+    
     if (count != 0)
       {
 	mpi_check_buf (buf, comm);
@@ -15798,16 +15778,12 @@ PMPI_Ssend (void *buf, int count, MPI_Datatype datatype, int dest, int tag,
 	SCTK_MPI_CHECK_RETURN_VAL (res, comm);
   }
   {
-    int size;
     mpi_check_comm (comm, comm);
     mpi_check_type (datatype, comm);
     mpi_check_count (count, comm);
     sctk_nodebug ("tag %d", tag);
     mpi_check_tag_send (tag, comm);
-    __INTERNAL__PMPI_Comm_size (comm, &size);
-    if(sctk_is_inter_comm(comm) == 0){
-      mpi_check_rank_send (dest, size, comm);
-    }
+
     if (count != 0)
       {
 	mpi_check_buf (buf, comm);
@@ -15828,16 +15804,12 @@ PMPI_Rsend (void *buf, int count, MPI_Datatype datatype, int dest, int tag,
 	SCTK_MPI_CHECK_RETURN_VAL (res, comm);
   }
   {
-    int size;
     mpi_check_comm (comm, comm);
     mpi_check_type (datatype, comm);
     mpi_check_count (count, comm);
     sctk_nodebug ("tag %d", tag);
     mpi_check_tag_send (tag, comm);
-    __INTERNAL__PMPI_Comm_size (comm, &size);
-    if(sctk_is_inter_comm(comm) == 0){
-      mpi_check_rank_send (dest, size, comm);
-    }
+
     if (count != 0)
       {
 	mpi_check_buf (buf, comm);
@@ -15879,16 +15851,12 @@ PMPI_Isend (void *buf, int count, MPI_Datatype datatype, int dest, int tag,
   }
 
   {
-    int size;
     mpi_check_comm (comm, comm);
     mpi_check_type (datatype, comm);
     mpi_check_count (count, comm);
     sctk_nodebug ("tag %d", tag);
     mpi_check_tag_send (tag, comm);
-    __INTERNAL__PMPI_Comm_size (comm, &size);
-    if(sctk_is_inter_comm(comm) == 0){
-      mpi_check_rank_send (dest, size, comm);
-    }
+
     if (count != 0)
       {
 	mpi_check_buf (buf, comm);
@@ -15914,16 +15882,11 @@ PMPI_Ibsend (void *buf, int count, MPI_Datatype datatype, int dest, int tag,
   }
 
   {
-    int size;
     mpi_check_comm (comm, comm);
     mpi_check_type (datatype, comm);
     mpi_check_count (count, comm);
     sctk_nodebug ("tag %d", tag);
     mpi_check_tag_send (tag, comm);
-    __INTERNAL__PMPI_Comm_size (comm, &size);
-    if(sctk_is_inter_comm(comm) == 0){
-      mpi_check_rank_send (dest, size, comm);
-    }
 
     if (count != 0)
       {
@@ -15948,16 +15911,12 @@ PMPI_Issend (void *buf, int count, MPI_Datatype datatype, int dest, int tag,
   }
 
   {
-    int size;
     mpi_check_comm (comm, comm);
     mpi_check_type (datatype, comm);
     mpi_check_count (count, comm);
     sctk_nodebug ("tag %d", tag);
     mpi_check_tag_send (tag, comm);
-    __INTERNAL__PMPI_Comm_size (comm, &size);
-    if(sctk_is_inter_comm(comm) == 0){
-      mpi_check_rank_send (dest, size, comm);
-    }
+
     if (count != 0)
       {
 	mpi_check_buf (buf, comm);
@@ -15981,16 +15940,12 @@ PMPI_Irsend (void *buf, int count, MPI_Datatype datatype, int dest, int tag,
   }
 
   {
-    int size;
     mpi_check_comm (comm, comm);
     mpi_check_type (datatype, comm);
     mpi_check_count (count, comm);
     sctk_nodebug ("tag %d", tag);
     mpi_check_tag_send (tag, comm);
-    __INTERNAL__PMPI_Comm_size (comm, &size);
-    if(sctk_is_inter_comm(comm) == 0){
-      mpi_check_rank_send (dest, size, comm);
-    }
+
     if (count != 0)
       {
 	mpi_check_buf (buf, comm);
@@ -16320,16 +16275,12 @@ PMPI_Send_init (void *buf, int count, MPI_Datatype datatype, int dest,
 {
   int res = MPI_ERR_INTERN;
   {
-    int size;
     mpi_check_comm (comm, comm);
     mpi_check_type (datatype, comm);
     mpi_check_count (count, comm);
     sctk_nodebug ("tag %d", tag);
     mpi_check_tag_send (tag, comm);
-    __INTERNAL__PMPI_Comm_size (comm, &size);
-    if(sctk_is_inter_comm(comm) == 0){
-      mpi_check_rank_send (dest, size, comm);
-    }
+
     if (count != 0)
       {
 	mpi_check_buf (buf, comm);
@@ -16347,16 +16298,12 @@ PMPI_Bsend_init (void *buf, int count, MPI_Datatype datatype,
 {
   int res = MPI_ERR_INTERN;
   {
-    int size;
     mpi_check_comm (comm, comm);
     mpi_check_type (datatype, comm);
     mpi_check_count (count, comm);
     sctk_nodebug ("tag %d", tag);
     mpi_check_tag_send (tag, comm);
-    __INTERNAL__PMPI_Comm_size (comm, &size);
-    if(sctk_is_inter_comm(comm) == 0){
-      mpi_check_rank_send (dest, size, comm);
-    }
+
     if (count != 0)
       {
 	mpi_check_buf (buf, comm);
@@ -16374,16 +16321,12 @@ PMPI_Ssend_init (void *buf, int count, MPI_Datatype datatype, int dest,
 {
   int res = MPI_ERR_INTERN;
   {
-    int size;
     mpi_check_comm (comm, comm);
     mpi_check_type (datatype, comm);
     mpi_check_count (count, comm);
     sctk_nodebug ("tag %d", tag);
     mpi_check_tag_send (tag, comm);
-    __INTERNAL__PMPI_Comm_size (comm, &size);
-    if(sctk_is_inter_comm(comm) == 0){
-      mpi_check_rank_send (dest, size, comm);
-    }
+
     if (count != 0)
       {
 	mpi_check_buf (buf, comm);
@@ -16401,16 +16344,12 @@ PMPI_Rsend_init (void *buf, int count, MPI_Datatype datatype, int dest,
 {
   int res = MPI_ERR_INTERN;
   {
-    int size;
     mpi_check_comm (comm, comm);
     mpi_check_type (datatype, comm);
     mpi_check_count (count, comm);
     sctk_nodebug ("tag %d", tag);
     mpi_check_tag_send (tag, comm);
-    __INTERNAL__PMPI_Comm_size (comm, &size);
-    if(sctk_is_inter_comm(comm) == 0){
-      mpi_check_rank_send (dest, size, comm);
-    }
+
     if (count != 0)
       {
 	mpi_check_buf (buf, comm);
@@ -19308,7 +19247,8 @@ PMPI_Graph_create (MPI_Comm comm_old, int nnodes, int *index, int *edges,
   int size;
   int nb_edge = 0;
   int first_edge = 0;
-  __INTERNAL__PMPI_Comm_size (comm_old, &size);
+  __INTERNAL__PMPI_Comm_size (comm_old, &size); 
+
   if((nnodes < 0) || (nnodes > size)){
         MPI_ERROR_REPORT (comm_old, MPI_ERR_ARG, "");
   }
