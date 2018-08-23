@@ -697,7 +697,7 @@ static inline int _sctk_ptp_tasks_perform(int key, int depth) {
   int target_list = key % sctk_ptp_tasks_count;
 
   /* Each element of this list has already been matched */
-  if (sctk_ptp_task_list[target_list] != NULL)
+  while (sctk_ptp_task_list[target_list] != NULL)
   {
     tmp = NULL;
 
@@ -719,11 +719,15 @@ static inline int _sctk_ptp_tasks_perform(int key, int depth) {
       tmp->msg_send->tail.message_copy(tmp);
       nb_messages_copied++;
     }
+    else
+    {
+      if(depth)
+      {
+        return nb_messages_copied;
+      }
+    }
   }
-  else
-  {
-    return 0;
-  }
+
 
   if( (nb_messages_copied == 0) && (depth < 3) )
   {
