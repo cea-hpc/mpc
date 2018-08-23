@@ -2521,10 +2521,12 @@ static void sctk_perform_messages_done(struct sctk_perform_messages_s *wait) {
   }
 }
 
+static inline void _sctk_perform_messages(struct sctk_perform_messages_s *wait);
+
 static void sctk_perform_messages_wait_for_value_and_poll(void *a) {
   struct sctk_perform_messages_s *_wait = (struct sctk_perform_messages_s *)a;
 
-  sctk_perform_messages(_wait);
+  _sctk_perform_messages(_wait);
 
   if ((volatile int)_wait->request->completion_flag != SCTK_MESSAGE_DONE) {
     sctk_network_notify_idle_message();
@@ -2589,22 +2591,31 @@ void sctk_wait_message(sctk_request_t *request) {
       sctk_inter_thread_perform_idle((int *)&(request->completion_flag),
                                      SCTK_MESSAGE_DONE, __MPC_poll_progress, NULL);
   } else {
-    sctk_perform_messages_wait_init(&_wait, request, 1);
+    
     /* Find the PTPs lists */
+    sctk_perform_messages_wait_init(&_wait, request, 1);
+    sctk_perform_messages_wait_init_request_type(&_wait);
+
+    /* Fastpath try a few times directly before polling */
+    int trials = 0;
+    do {
+
+      _sctk_perform_messages(&_wait);
+      trials++;
+    }while( (request->completion_flag != SCTK_MESSAGE_DONE) && (trials < 3) );
+
     if (request->completion_flag != SCTK_MESSAGE_DONE) {
-      sctk_perform_messages_wait_init_request_type(&_wait);
       sctk_nodebug("Wait from %d to %d (req %p %d) (%p - %p) %d",
                    request->header.source_task,
                    request->header.destination_task, request,
                    request->request_type, _wait.send_ptp, _wait.recv_ptp,
                    request->header.message_tag);
 
-      sctk_perform_messages_wait_for_value_and_poll(&_wait);
-
       sctk_inter_thread_perform_idle(
           (int *)&(_wait.request->completion_flag), SCTK_MESSAGE_DONE,
           (void (*)(void *))sctk_perform_messages_wait_for_value_and_poll,
           &_wait);
+
     } else {
       sctk_perform_messages_done(&_wait);
     }
@@ -2641,7 +2652,7 @@ void sctk_wait_message(sctk_request_t *request) {
  *
  */
 
-void sctk_perform_messages(struct sctk_perform_messages_s *wait) {
+static inline void _sctk_perform_messages(struct sctk_perform_messages_s *wait) {
 
   const sctk_request_t *request = wait->request;
   sctk_internal_ptp_t *recv_ptp = wait->recv_ptp;
@@ -2696,6 +2707,12 @@ void sctk_perform_messages(struct sctk_perform_messages_s *wait) {
     sctk_perform_messages_done(wait);
   }
 }
+
+/* This is the exported version */
+void sctk_perform_messages(struct sctk_perform_messages_s *wait) {
+  return _sctk_perform_messages(wait);
+}
+
 
 /*
  * Wait for all message according to a communicator and a task id
