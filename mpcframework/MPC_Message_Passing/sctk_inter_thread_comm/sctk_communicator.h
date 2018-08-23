@@ -349,6 +349,10 @@ int sctk_get_local_leader ( const sctk_communicator_t );
 int __sctk_is_inter_comm(const sctk_communicator_t);
 
 static inline int sctk_is_inter_comm(const sctk_communicator_t communicator) {
+
+  if( communicator == SCTK_COMM_WORLD )
+    return 0;
+
   static int __thread last_comm = -2;
   static int __thread last_val = -1;
 
@@ -409,7 +413,22 @@ int sctk_is_in_group ( const sctk_communicator_t communicator );
 int sctk_get_rank ( const sctk_communicator_t communicator, const int comm_world_rank );
 int sctk_get_node_rank_from_task_rank ( const int rank );
 
-int sctk_get_process_rank_from_task_rank ( int rank );
+int _sctk_get_process_rank_from_task_rank ( int rank );
+extern int sctk_process_number;
+
+static inline int sctk_get_process_rank_from_task_rank( int rank )
+{
+#ifdef SCTK_PROCESS_MODE
+	return rank;
+#endif
+
+	if ( sctk_process_number == 1 )
+		return 0;
+  
+  return _sctk_get_process_rank_from_task_rank(rank);
+}
+
+
 int sctk_get_comm_number();
 
 int sctk_get_process_nb_in_array ( const sctk_communicator_t communicator );

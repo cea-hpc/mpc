@@ -2059,17 +2059,18 @@ int sctk_get_node_rank_from_task_rank ( const int rank )
  * @param rank rank of the task in comm world.
  * @return the rank.
 **/
-int sctk_get_process_rank_from_task_rank( int rank )
+/* This function is inlined in the header */
+int _sctk_get_process_rank_from_task_rank( int rank )
 {
 	sctk_internal_communicator_t *tmp;
 	int proc_rank;
 
-	if ( sctk_process_number == 1 )
-		return 0;
-
 #ifdef SCTK_PROCESS_MODE
 	return rank;
 #endif
+
+	if ( sctk_process_number == 1 )
+		return 0;
 
 	tmp = sctk_get_internal_communicator( SCTK_COMM_WORLD );
 
