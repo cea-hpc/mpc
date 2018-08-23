@@ -4655,7 +4655,7 @@ int PMPC_Recv(void *buf, mpc_msg_count count, MPC_Datatype datatype, int source,
     MPC_ERROR_SUCESS();
   }
 
-  __MPC_Comm_rank_size(comm, &src, &size, task_specific);
+  src = sctk_get_rank ( comm, task_specific->task_id );
 
   //~ if(sctk_is_inter_comm(comm))
   //~ {
