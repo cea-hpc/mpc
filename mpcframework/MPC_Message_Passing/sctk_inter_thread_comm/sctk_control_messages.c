@@ -206,8 +206,6 @@ void __sctk_control_messages_send(int dest, int dest_task,
   //~ return;
   //~ }
 
-  sctk_init_request(&request, communicator, REQUEST_SEND);
-
   sctk_init_header(&msg, SCTK_MESSAGE_CONTIGUOUS, sctk_free_control_messages,
                    sctk_message_copy);
 
@@ -222,7 +220,7 @@ void __sctk_control_messages_send(int dest, int dest_task,
   // printpayload( buffer, size );
   sctk_set_header_in_message(&msg, tag, communicator, source,
                              (0 <= dest_task) ? dest_task : dest, &request,
-                             size, message_class, SCTK_DATATYPE_IGNORE);
+                             size, message_class, SCTK_DATATYPE_IGNORE, REQUEST_SEND);
 
   sctk_send_message_try_check(&msg, 1);
 
@@ -363,7 +361,6 @@ void sctk_control_messages_perform(sctk_thread_ptp_message_t *msg, int force) {
   assume(tmp_contol_buffer != NULL);
 
   sctk_request_t request;
-  memset(&request, 0, sizeof(sctk_request_t));
 
   if ((SCTK_MSG_DEST_TASK(msg) < 0) || force) {
     /* Generate the paired recv message to fill the buffer in
@@ -376,7 +373,7 @@ void sctk_control_messages_perform(sctk_thread_ptp_message_t *msg, int force) {
     sctk_add_adress_in_message(&recvmsg, tmp_contol_buffer, msg_size);
     sctk_set_header_in_message(&recvmsg, 0, msg_comm, SCTK_ANY_SOURCE,
                                sctk_get_process_rank(), &request,
-                               SCTK_MSG_SIZE(msg), class, SCTK_DATATYPE_IGNORE);
+                               SCTK_MSG_SIZE(msg), class, SCTK_DATATYPE_IGNORE, REQUEST_RECV);
 
     /* Trigger the receive task (as if we matched) */
     sctk_message_to_copy_t copy_task;

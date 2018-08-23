@@ -225,13 +225,11 @@ void sctk_message_isend_class_src(int src, int dest, void *data, size_t size,
   struct sctk_internal_ptp_s *ptp_internal =
       sctk_get_internal_ptp(cw_src, comm);
 
-  sctk_init_request(req, comm, REQUEST_SEND);
-
   sctk_thread_ptp_message_t *msg =
       sctk_create_header(src, SCTK_MESSAGE_CONTIGUOUS);
   sctk_add_adress_in_message(msg, data, size);
   sctk_set_header_in_message(msg, tag, comm, src, dest, req, size, class,
-                             SCTK_DATATYPE_IGNORE);
+                             SCTK_DATATYPE_IGNORE, REQUEST_SEND);
   sctk_send_message(msg);
 }
 
@@ -256,13 +254,11 @@ void sctk_message_irecv_class_dest(int src, int dest, void *buffer, size_t size,
   struct sctk_internal_ptp_s *ptp_internal =
       sctk_get_internal_ptp(cw_dest, comm);
 
-  sctk_init_request(req, comm, REQUEST_RECV);
-
   sctk_thread_ptp_message_t *msg =
       sctk_create_header(src, SCTK_MESSAGE_CONTIGUOUS);
   sctk_add_adress_in_message(msg, buffer, size);
   sctk_set_header_in_message(msg, tag, comm, src, dest, req, size, class,
-                             SCTK_DATATYPE_IGNORE);
+                             SCTK_DATATYPE_IGNORE, REQUEST_RECV);
   sctk_recv_message(msg, ptp_internal, 0);
 }
 
@@ -382,7 +378,7 @@ sctk_internal_ptp_merge_pending(sctk_internal_ptp_message_lists_t *lists) {
   }
 
   if (lists->incomming_recv.list != NULL) {
-    if(sctk_spinlock_lock(&(lists->incomming_recv.lock)) == 0){
+    if(sctk_spinlock_trylock(&(lists->incomming_recv.lock)) == 0){
       DL_CONCAT(lists->pending_recv.list,
                 (sctk_msg_list_t *)lists->incomming_recv.list);
       lists->incomming_recv.list = NULL;
@@ -1853,7 +1849,8 @@ void sctk_set_header_in_message(sctk_thread_ptp_message_t *msg,
                                 const int source, const int destination,
                                 sctk_request_t *request, const size_t count,
                                 sctk_message_class_t message_class,
-                                sctk_datatype_t datatype) {
+                                sctk_datatype_t datatype,
+                                sctk_request_type_t request_type) {
   /* These variables are used for rank
    * resolution with communicators */
   int source_task = -1;
@@ -1882,22 +1879,22 @@ void sctk_set_header_in_message(sctk_thread_ptp_message_t *msg,
     if (sctk_is_inter_comm(communicator)) {
       /* If this is a RECV make sure the translation is done on the source
        * according to remote */
-      if ((request->request_type == REQUEST_RECV) ||
-          (request->request_type == REQUEST_RECV_COLL)) {
+      if ((request_type == REQUEST_RECV) ||
+          (request_type == REQUEST_RECV_COLL)) {
         source_task = sctk_get_remote_comm_world_rank(communicator, source);
         dest_task = sctk_get_comm_world_rank(communicator, destination);
       }
 
       /* If this is a SEND make sure the translation is done on the dest
        * according to remote */
-      if ((request->request_type == REQUEST_SEND) ||
-          (request->request_type == REQUEST_SEND_COLL)) {
+      if ((request_type == REQUEST_SEND) ||
+          (request_type == REQUEST_SEND_COLL)) {
         source_task = sctk_get_comm_world_rank(communicator, source);
         dest_task = sctk_get_remote_comm_world_rank(communicator, destination);
       }
 
       sctk_nodebug("ITRANS (%d => %d) to (%d => %d) T %d", source, destination,
-                   source_task, dest_task, request->request_type);
+                   source_task, dest_task, request_type);
 
     } else {
       /* If we are not using an inter-comm just translate to COMM_WORLD */
@@ -1974,8 +1971,7 @@ void sctk_set_header_in_message(sctk_thread_ptp_message_t *msg,
 
   /* A message can be sent with a NULL request (see the MPI standard) */
   if (request) {
-    sctk_request_init_request(request, SCTK_MESSAGE_PENDING, msg,
-                              request->request_type);
+    sctk_request_init_request(request, SCTK_MESSAGE_PENDING, msg, request_type);
     SCTK_MSG_COMPLETION_FLAG_SET(msg, &(request->completion_flag));
   }
 

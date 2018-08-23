@@ -530,7 +530,8 @@ void sctk_set_header_in_message ( sctk_thread_ptp_message_t *msg, const int mess
                                   sctk_request_t *request,
                                   const size_t count,
                                   sctk_message_class_t message_class,
-                                  sctk_datatype_t datatype );
+                                  sctk_datatype_t datatype,
+                                  sctk_request_type_t request_type );
 void sctk_send_message ( sctk_thread_ptp_message_t *msg );
 void sctk_send_message_try_check ( sctk_thread_ptp_message_t *msg, int perform_check );
 void sctk_recv_message ( sctk_thread_ptp_message_t *msg, struct sctk_internal_ptp_s *tmp, int need_check );

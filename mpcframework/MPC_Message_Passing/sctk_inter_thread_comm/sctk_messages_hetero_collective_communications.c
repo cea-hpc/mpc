@@ -74,13 +74,12 @@ typedef struct
 static void sctk_hetero_messages_send ( const sctk_communicator_t communicator, int myself, int dest, int tag, void *buffer, size_t size,
                                         sctk_message_class_t message_class, sctk_hetero_messages_t *msg_req, int check, int copy_in_send )
 {
-  sctk_init_request(&(msg_req->request), communicator, REQUEST_SEND_COLL);
   sctk_init_header(&(msg_req->msg), SCTK_MESSAGE_CONTIGUOUS,
                    sctk_free_hetero_messages, sctk_message_copy);
   sctk_add_adress_in_message(&(msg_req->msg), buffer, size);
   sctk_set_header_in_message(&(msg_req->msg), tag, communicator, myself, dest,
                              &(msg_req->request), size, message_class,
-                             SCTK_DATATYPE_IGNORE);
+                             SCTK_DATATYPE_IGNORE, REQUEST_SEND_COLL);
   msg_req->msg.tail.need_check_in_wait = /* copy_in_send */ 1;
   sctk_send_message_try_check(&(msg_req->msg), check);
 }
@@ -89,13 +88,12 @@ static void sctk_hetero_messages_recv ( const sctk_communicator_t communicator, 
                                         sctk_message_class_t message_class, sctk_hetero_messages_t *msg_req, struct sctk_internal_ptp_s *ptp_internal, int check,
                                         int copy_in_recv )
 {
-  sctk_init_request(&(msg_req->request), communicator, REQUEST_RECV_COLL);
   sctk_init_header(&(msg_req->msg), SCTK_MESSAGE_CONTIGUOUS,
                    sctk_free_hetero_messages, sctk_message_copy);
   sctk_add_adress_in_message(&(msg_req->msg), buffer, size);
   sctk_set_header_in_message(&(msg_req->msg), tag, communicator, src, myself,
                              &(msg_req->request), size, message_class,
-                             SCTK_DATATYPE_IGNORE);
+                             SCTK_DATATYPE_IGNORE, REQUEST_RECV_COLL);
   msg_req->msg.tail.need_check_in_wait = /* copy_in_recv */ 1;
   sctk_recv_message_try_check(&(msg_req->msg), ptp_internal, check);
 }

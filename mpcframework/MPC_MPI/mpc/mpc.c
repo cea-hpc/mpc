@@ -474,10 +474,12 @@ static inline void sctk_mpc_set_header_in_message(
     sctk_thread_ptp_message_t *msg, const int message_tag,
     const sctk_communicator_t communicator, const int source,
     const int destination, MPC_Request *request, const size_t count,
-    sctk_message_class_t specific_message_tag, MPC_Datatype datatype) {
+    sctk_message_class_t specific_message_tag, MPC_Datatype datatype,
+    sctk_request_type_t request_type) {
+
   sctk_set_header_in_message(msg, message_tag, communicator, source,
                              destination, request, count, specific_message_tag,
-                             datatype);
+                             datatype, request_type);
 }
 
 static inline void sctk_mpc_wait_message(MPC_Request *request) {
@@ -3656,6 +3658,7 @@ static inline int __MPC_Isend(void *buf, mpc_msg_count count,
   char tmp;
 
   mpc_check_comm(comm, comm);
+
   if (dest == MPC_PROC_NULL) {
     sctk_mpc_init_request(request, comm, src, REQUEST_SEND);
     MPC_ERROR_SUCESS();
@@ -3676,11 +3679,6 @@ static inline int __MPC_Isend(void *buf, mpc_msg_count count,
     mpc_check_tag(tag, comm);
   }
 
-  if (dest == MPC_PROC_NULL) {
-    sctk_mpc_init_request(request, comm, src, REQUEST_SEND);
-    MPC_ERROR_SUCESS();
-  }
-  sctk_mpc_init_request(request, comm, src, REQUEST_SEND);
   d_size = __MPC_Get_datatype_size(datatype, task_specific);
   msg_size = count * d_size;
 
@@ -3690,7 +3688,7 @@ static inline int __MPC_Isend(void *buf, mpc_msg_count count,
     msg = sctk_create_header(src, SCTK_MESSAGE_CONTIGUOUS);
     sctk_add_adress_in_message(msg, buf, msg_size);
     sctk_mpc_set_header_in_message(msg, tag, comm, src, dest, request, msg_size,
-                                   SCTK_P2P_MESSAGE, datatype);
+                                   SCTK_P2P_MESSAGE, datatype, REQUEST_SEND);
   } else {
     mpc_buffered_msg_t *tmp_buf =
         MPC_per_thread_buffer_pool_acquire_asynchronous();
@@ -3714,7 +3712,7 @@ static inline int __MPC_Isend(void *buf, mpc_msg_count count,
 
       sctk_add_adress_in_message(msg, tmp_buf->buf, msg_size);
       sctk_mpc_set_header_in_message(msg, tag, comm, src, dest, request,
-                                     msg_size, SCTK_P2P_MESSAGE, datatype);
+                                     msg_size, SCTK_P2P_MESSAGE, datatype, REQUEST_SEND);
 
       /* Register the async buffer to release the wait immediately */
       msg->tail.buffer_async = tmp_buf;
@@ -3767,14 +3765,13 @@ static inline int __MPC_Issend(void *buf, mpc_msg_count count,
   //~ {
   //~ mpc_check_msg (src, dest, tag, comm, com_size);
   //~ }
-  sctk_mpc_init_request(request, comm, src, REQUEST_SEND);
   msg = sctk_create_header(src, SCTK_MESSAGE_CONTIGUOUS);
   d_size = __MPC_Get_datatype_size(datatype, task_specific);
   msg_size = count * d_size;
 
   sctk_add_adress_in_message(msg, buf, msg_size);
   sctk_mpc_set_header_in_message(msg, tag, comm, src, dest, request, msg_size,
-                                 SCTK_P2P_MESSAGE, datatype);
+                                 SCTK_P2P_MESSAGE, datatype, REQUEST_SEND);
 
   sctk_nodebug("Message from %d to %d", src, dest);
   sctk_nodebug("issend : snd2, my rank = %d", src);
@@ -3863,7 +3860,6 @@ static inline int __MPC_Irecv(void *buf, mpc_msg_count count,
 
   __MPC_Comm_rank_size(comm, &src, &comm_size, task_specific);
 
-  sctk_mpc_init_request(request, comm, src, REQUEST_RECV);
   /*   mpc_check_msg (source, src, tag, comm, comm_size); */
   mpc_check_task_msg(src, comm, " destination", comm_size);
   if (source != MPC_ANY_SOURCE) {
@@ -3884,7 +3880,7 @@ static inline int __MPC_Irecv(void *buf, mpc_msg_count count,
   d_size = __MPC_Get_datatype_size(datatype, task_specific);
   sctk_add_adress_in_message(msg, buf, count * d_size);
   sctk_mpc_set_header_in_message(msg, tag, comm, source, src, request,
-                                 count * d_size, SCTK_P2P_MESSAGE, datatype);
+                                 count * d_size, SCTK_P2P_MESSAGE, datatype, REQUEST_RECV);
   sctk_nodebug("ircv : rcv, my rank = %d", src);
   sctk_recv_message(
       msg,
@@ -4468,10 +4464,9 @@ static int __MPC_Ssend(void *buf, mpc_msg_count count, MPC_Datatype datatype,
 
   msg = sctk_create_header(src, SCTK_MESSAGE_CONTIGUOUS);
   sctk_add_adress_in_message(msg, buf, msg_size);
-  sctk_mpc_init_request(&request, comm, src, REQUEST_SEND);
 
   sctk_mpc_set_header_in_message(msg, tag, comm, src, dest, &request, msg_size,
-                                 SCTK_P2P_MESSAGE, datatype);
+                                 SCTK_P2P_MESSAGE, datatype, REQUEST_SEND);
 
   sctk_nodebug("count = %d, datatype = %d", SCTK_MSG_SIZE(msg), datatype);
   sctk_send_message(msg);
@@ -4527,10 +4522,9 @@ static int __MPC_Send(void *restrict buf, mpc_msg_count count,
 
     sctk_init_header(msg, SCTK_MESSAGE_CONTIGUOUS, sctk_no_free_header,
                      sctk_message_copy);
-    sctk_mpc_init_request(&request, comm, src, REQUEST_SEND);
     sctk_add_adress_in_message(msg, buf, msg_size);
     sctk_mpc_set_header_in_message(msg, tag, comm, src, dest, &request,
-                                   msg_size, SCTK_P2P_MESSAGE, datatype);
+                                   msg_size, SCTK_P2P_MESSAGE, datatype, REQUEST_SEND);
 
     /* Send */
     sctk_send_message(msg);
@@ -4555,15 +4549,13 @@ static int __MPC_Send(void *restrict buf, mpc_msg_count count,
       sctk_init_header(msg, SCTK_MESSAGE_CONTIGUOUS, sctk_no_free_header,
                        sctk_message_copy);
 
-      sctk_mpc_init_request(&(tmp_buf->request), comm, src, REQUEST_SEND);
-
       sctk_nodebug("Copied message |%s| -> |%s| %d", buf, tmp_buf->buf,
                    msg_size);
 
       sctk_add_adress_in_message(msg, tmp_buf->buf, msg_size);
       sctk_mpc_set_header_in_message(msg, tag, comm, src, dest,
                                      &(tmp_buf->request), msg_size,
-                                     SCTK_P2P_MESSAGE, datatype);
+                                     SCTK_P2P_MESSAGE, datatype, REQUEST_SEND);
 
       /* Copy message in buffer */
       memcpy(tmp_buf->buf, buf, msg_size);
@@ -4684,13 +4676,12 @@ int PMPC_Recv(void *buf, mpc_msg_count count, MPC_Datatype datatype, int source,
   SCTK_PROFIL_START(MPC_Recv_init_message);
   msg_size = count * __MPC_Get_datatype_size(datatype, task_specific);
 
-  sctk_mpc_init_request(&request, comm, src, REQUEST_RECV);
   msg = sctk_create_header(src, SCTK_MESSAGE_CONTIGUOUS);
 
   sctk_add_adress_in_message(msg, buf, msg_size);
 
   sctk_mpc_set_header_in_message(msg, tag, comm, source, src, &request,
-                                 msg_size, SCTK_P2P_MESSAGE, datatype);
+                                 msg_size, SCTK_P2P_MESSAGE, datatype, REQUEST_RECV);
 
   sctk_recv_message(
       msg,
@@ -7145,10 +7136,10 @@ int PMPC_Isend_pack(int dest, int tag, MPC_Comm comm, MPC_Request *request) {
   //~ {
   //~ mpc_check_msg (src, dest, tag, comm, size);
   //~ }
-  request->request_type = REQUEST_SEND;
+
   sctk_mpc_set_header_in_message(msg, tag, comm, src, dest, request,
                                  sctk_mpc_get_message_size(request),
-                                 SCTK_P2P_MESSAGE, MPC_PACKED);
+                                 SCTK_P2P_MESSAGE, MPC_PACKED, REQUEST_SEND);
   sctk_send_message(msg);
   SCTK_PROFIL_END(MPC_Isend_pack);
   MPC_ERROR_SUCESS();
@@ -7192,10 +7183,10 @@ int PMPC_Irecv_pack(int source, int tag, MPC_Comm comm, MPC_Request *request) {
     //~ mpc_check_msg (src, source, tag, comm, size);
     //~ }
   }
-  request->request_type = REQUEST_RECV;
+
   sctk_mpc_set_header_in_message(msg, tag, comm, source, src, request,
                                  sctk_mpc_get_message_size(request),
-                                 SCTK_P2P_MESSAGE, MPC_PACKED);
+                                 SCTK_P2P_MESSAGE, MPC_PACKED, REQUEST_RECV);
 
   sctk_recv_message(
       msg,

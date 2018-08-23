@@ -561,7 +561,7 @@ static inline void sctk_window_RDMA_write_net(struct sctk_window *win,
       sctk_create_header(win->owner, SCTK_MESSAGE_CONTIGUOUS);
   sctk_set_header_in_message(
       msg, -8, win->comm, sctk_get_rank(win->comm, sctk_get_task_rank()),
-      win->comm_rank, req, size, SCTK_RDMA_MESSAGE, SCTK_DATATYPE_IGNORE);
+      win->comm_rank, req, size, SCTK_RDMA_MESSAGE, SCTK_DATATYPE_IGNORE, REQUEST_RDMA);
 
   /* Pin local segment */
   if (!src_pin) {
@@ -726,10 +726,9 @@ void sctk_window_RDMA_read_net( struct sctk_window * win, sctk_rail_pin_ctx_t * 
   sctk_thread_ptp_message_t *msg =
       sctk_create_header(win->owner, SCTK_MESSAGE_CONTIGUOUS);
 
-  sctk_init_request(req, win->comm, REQUEST_RECV);
   sctk_set_header_in_message(
       msg, -8, win->comm, sctk_get_rank(win->comm, sctk_get_task_rank()),
-      win->comm_rank, req, size, SCTK_RDMA_MESSAGE, SCTK_DATATYPE_IGNORE);
+      win->comm_rank, req, size, SCTK_RDMA_MESSAGE, SCTK_DATATYPE_IGNORE, REQUEST_RDMA);
 
   /* Pin local segment */
   if (!dest_pin) {
@@ -1241,7 +1240,7 @@ static inline void sctk_window_RDMA_fetch_and_op_net(
   sctk_set_header_in_message(msg, -8, win->comm,
                              sctk_get_rank(win->comm, sctk_get_task_rank()),
                              win->comm_rank, req, RDMA_type_size(type),
-                             SCTK_RDMA_MESSAGE, SCTK_DATATYPE_IGNORE);
+                             SCTK_RDMA_MESSAGE, SCTK_DATATYPE_IGNORE, REQUEST_RDMA);
 
   /* Pin local segment */
   if (!fetch_pin) {
@@ -1505,7 +1504,7 @@ void sctk_window_RDMA_CAS_net( sctk_window_t remote_win_id, size_t remote_offset
         sctk_set_header_in_message(msg, -8, win->comm,
                                    sctk_get_rank(win->comm, win->owner),
                                    win->comm_rank, req, RDMA_type_size(type),
-                                   SCTK_RDMA_MESSAGE, SCTK_DATATYPE_IGNORE);
+                                   SCTK_RDMA_MESSAGE, SCTK_DATATYPE_IGNORE, REQUEST_RDMA);
 
         /* Pin local segment */
         if (!res_pin) {
