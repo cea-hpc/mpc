@@ -1768,14 +1768,17 @@ void sctk_init_header(sctk_thread_ptp_message_t *tmp,
   tmp->tail.internal_ptp = NULL;
   tmp->tail.request = NULL;
 
-  sctk_reinit_header(tmp, free_memory, message_copy);
-
-  if (tmp->tail.message_type == SCTK_MESSAGE_PACK) {
-    sctk_reinit_header(tmp, sctk_free_pack, sctk_message_copy_pack);
-  }
-
-  if (tmp->tail.message_type == SCTK_MESSAGE_PACK_ABSOLUTE) {
-    sctk_reinit_header(tmp, sctk_free_pack, sctk_message_copy_pack_absolute);
+  switch(tmp->tail.message_type)
+  {
+    case SCTK_MESSAGE_PACK:
+      sctk_reinit_header(tmp, sctk_free_pack, sctk_message_copy_pack);
+    break;
+    case SCTK_MESSAGE_PACK_ABSOLUTE:
+      sctk_reinit_header(tmp, sctk_free_pack, sctk_message_copy_pack_absolute);
+    break;
+    default:
+      sctk_reinit_header(tmp, free_memory, message_copy);
+    break;
   }
 }
 
