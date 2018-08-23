@@ -645,7 +645,7 @@ sctk_spinlock_t *sctk_ptp_tasks_lock = 0;
 int sctk_ptp_tasks_count = 0;
 
 static short sctk_ptp_tasks_init_done = 0;
-sctk_spinlock_t *sctk_ptp_tasks_init_lock = 0;
+sctk_spinlock_t sctk_ptp_tasks_init_lock = 0;
 
 #define PTP_MAX_TASK_LISTS 32
 
