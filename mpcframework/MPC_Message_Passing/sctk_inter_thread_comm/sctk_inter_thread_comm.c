@@ -169,7 +169,7 @@ typedef struct sctk_internal_ptp_s {
 /*Message Interface                                                 */
 /********************************************************************/
 
-void sctk_init_request(sctk_request_t *request, sctk_communicator_t comm,
+static inline void _sctk_init_request(sctk_request_t *request, sctk_communicator_t comm,
                        int request_type) {
 
   static sctk_request_t the_initial_request = {
@@ -198,10 +198,17 @@ void sctk_init_request(sctk_request_t *request, sctk_communicator_t comm,
 
 
   if (request != NULL) {
-    *request = the_initial_request;
+    memcpy(request, &the_initial_request, sizeof(sctk_request_t));
     request->request_type = request_type;
     request->header.communicator = comm;
   }
+}
+
+/* This is the exported version */
+void sctk_init_request(sctk_request_t *request, sctk_communicator_t comm,
+                       int request_type)
+{
+  _sctk_init_request(request, comm, request_type);
 }
 
 void sctk_message_isend_class_src(int src, int dest, void *data, size_t size,
@@ -1823,7 +1830,7 @@ static inline void sctk_request_init_request(sctk_request_t *request,
                                              int request_type) {
   assume(msg != NULL);
 
-  sctk_init_request(request, SCTK_MSG_COMMUNICATOR(msg), request_type);
+  _sctk_init_request(request, SCTK_MSG_COMMUNICATOR(msg), request_type);
 
   request->msg = msg;
   request->header.source = SCTK_MSG_SRC_PROCESS(msg);
