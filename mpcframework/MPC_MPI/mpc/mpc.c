@@ -945,6 +945,9 @@ static void __MPC_setup_task_specific() {
   /* Register the task specific in the disguisemement array */
   __MPC_init_disguise(tmp);
 
+  /* Initialize commond data-types */
+  sctk_datatype_init();
+
   /* Initialize composed datatypes */
   init_composed_common_types();
 }
@@ -2052,20 +2055,11 @@ size_t __MPC_Get_datatype_size(MPC_Datatype datatype,
     /* Here we return 0 for data-type null
      * in order to pass the struct-zero-count test */
     return 0;
-  }
-
-  /* Upper bound measures 0 by definition */
-  if (datatype == MPC_UB) {
+  } else if (datatype == MPC_UB) {
     return 0;
-  }
-
-  /* Lower bound measures 0 by definition */
-  if (datatype == MPC_LB) {
+  }else if (datatype == MPC_LB) {
     return 0;
-  }
-
-  /* A pack has a size of one */
-  if (datatype == MPC_PACKED) {
+  }else if (datatype == MPC_PACKED) {
     return 1;
   }
 

@@ -308,6 +308,8 @@ struct Datatype_layout * sctk_datatype_layout( struct Datatype_context * ctx, si
  */
 void sctk_common_datatype_init();
 
+/* This is the internal array holding common type sizes*/
+extern size_t * __sctk_common_type_sizes;
 /** \brief Get common datatypes sizes
  *  
  *  \warning This function should only be called after MPC init
@@ -316,7 +318,12 @@ void sctk_common_datatype_init();
  *  \param datatype target common datatype
  *  \return datatype size
  */
-size_t sctk_common_datatype_get_size( MPC_Datatype datatype );
+static inline size_t sctk_common_datatype_get_size( MPC_Datatype datatype )
+{
+  assert(sctk_datatype_is_common(datatype));
+  return __sctk_common_type_sizes[datatype];
+}
+
 
 /** \brief Initialize Common data-types based on derived ones
  *  This is called at mpi tasc context creation

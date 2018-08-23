@@ -37,7 +37,7 @@
 /************************************************************************/
 
 /** Common datatypes sizes are initialized in \ref sctk_common_datatype_init */
-static size_t * __sctk_common_type_sizes;
+size_t * __sctk_common_type_sizes;
 
 static const char * const type_combiner_names[MPC_COMBINER_COUNT__] =
 {
@@ -78,7 +78,7 @@ const char * const sctk_datype_combiner(MPC_Type_combiner combiner)
 /************************************************************************/
 /* Datatype Init and Release                                            */
 /************************************************************************/
-static int dt_init = 0;
+static volatile int dt_init = 0;
 
 int sctk_datatype_initialized() { return dt_init; }
 
@@ -88,7 +88,7 @@ void sctk_datatype_init()
     return;
 
   __sctk_common_type_sizes =
-      sctk_malloc(sizeof(size_t) * SCTK_COMMON_DATA_TYPE_COUNT);
+  sctk_malloc(sizeof(size_t) * SCTK_COMMON_DATA_TYPE_COUNT);
   assume(__sctk_common_type_sizes != NULL);
   sctk_common_datatype_init();
   dt_init = 1;
@@ -612,19 +612,6 @@ void sctk_common_datatype_init()
 	/* Special cases */
 	__sctk_common_type_sizes[MPC_PACKED] = 0;
 	sctk_common_datatype_set_name_helper( MPC_PACKED, "MPI_PACKED");
-}
-
-
-size_t sctk_common_datatype_get_size( MPC_Datatype datatype )
-{
-  sctk_datatype_init();
-
-  if (!sctk_datatype_is_common(datatype)) {
-    sctk_error("Unknown datatype provided to %s\n", __FUNCTION__);
-    abort();
-  }
-
-  return __sctk_common_type_sizes[datatype];
 }
 
 void sctk_common_datatype_display( MPC_Datatype datatype )
