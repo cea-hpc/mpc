@@ -2568,7 +2568,7 @@ void sctk_inter_thread_perform_idle(volatile int *data, int value,
 }
 
 #ifdef MPC_MPI
-int __MPC_poll_progress();
+void __MPC_poll_progress();
 #endif
 
 

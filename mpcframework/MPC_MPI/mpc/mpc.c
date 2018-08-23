@@ -387,7 +387,7 @@ sctk_mpc_get_communicator_from_request(MPC_Request *request) {
 }
 
 
-int __MPC_poll_progress();
+void __MPC_poll_progress();
 
 static inline void sctk_mpc_perform_messages(MPC_Request *request) {
   struct sctk_perform_messages_s _wait;
@@ -831,12 +831,12 @@ int __MPC_release_progress( sctk_task_specific_t * tmp  )
 }
 
 
-int __MPC_poll_progress_id(int id)
+void __MPC_poll_progress_id(int id)
 {
     return sctk_progress_engine_pool_poll( &__mpc_progress_pool , id  );
 }
 
-int __MPC_poll_progress()
+void __MPC_poll_progress()
 {
     struct sctk_task_specific_s * spe = __MPC_get_task_specific();
     return __MPC_poll_progress_id( spe->progress_list->id );
