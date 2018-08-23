@@ -59,6 +59,8 @@
 
 TODO("sctk_cancel_message: need to be implemented")
 
+static inline int _sctk_is_net_message(int dest);
+
 int sctk_cancel_message(sctk_request_t *msg) {
   int ret = SCTK_SUCCESS;
 
@@ -85,7 +87,7 @@ int sctk_cancel_message(sctk_request_t *msg) {
     if (msg->msg == NULL)
       return ret;
 
-    if (sctk_is_net_message(SCTK_MSG_DEST_PROCESS(msg->msg))) {
+    if (_sctk_is_net_message(SCTK_MSG_DEST_PROCESS(msg->msg))) {
       sctk_error("Try to cancel a network message for %d from UNIX process %d",
                  SCTK_MSG_DEST_PROCESS(msg->msg), sctk_process_rank);
       not_implemented();
@@ -2914,7 +2916,7 @@ void sctk_send_message(sctk_thread_ptp_message_t *msg) {
 
   /* We only check if the message is an intra-node message */
   if (SCTK_MSG_DEST_TASK(msg) != -1) {
-    if (!sctk_is_net_message(SCTK_MSG_DEST_TASK(msg))) {
+    if (!_sctk_is_net_message(SCTK_MSG_DEST_TASK(msg))) {
       sctk_nodebug("Request for %d", SCTK_MSG_DEST_TASK(msg));
       msg->tail.need_check_in_wait = 0;
     }
@@ -3043,7 +3045,7 @@ struct is_net_previous_answer {
 
 static __thread struct is_net_previous_answer __sctk_is_net = {-1, 0};
 
-int sctk_is_net_message(int dest) {
+static inline int _sctk_is_net_message(int dest) {
 
 #ifdef SCTK_PROCESS_MODE
   if (dest != sctk_get_task_rank()) {
@@ -3072,6 +3074,12 @@ int sctk_is_net_message(int dest) {
 
   return (tmp == NULL);
 #endif
+}
+
+/* This is the exported version */ 
+int sctk_is_net_message(int dest)
+{
+  return _sctk_is_net_message(dest);
 }
 
 /********************************************************************/
