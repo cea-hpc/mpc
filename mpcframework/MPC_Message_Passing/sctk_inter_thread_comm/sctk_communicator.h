@@ -321,7 +321,16 @@ void sctk_communicator_delete();
 
 int sctk_get_remote_comm_world_rank ( const sctk_communicator_t communicator, const int rank );
 int sctk_get_first_task_local ( const sctk_communicator_t communicator );
-int sctk_get_comm_world_rank ( const sctk_communicator_t communicator, const int rank );
+
+int _sctk_get_comm_world_rank ( const sctk_communicator_t communicator, const int rank );
+
+static inline int sctk_get_comm_world_rank ( const sctk_communicator_t communicator, const int rank ) {
+  if( communicator == SCTK_COMM_WORLD)
+    return rank;
+  else
+    return _sctk_get_comm_world_rank(communicator, rank);
+}
+
 int sctk_get_last_task_local ( const sctk_communicator_t communicator );
 int sctk_get_nb_task_remote ( const sctk_communicator_t communicator );
 int sctk_get_nb_task_local ( const sctk_communicator_t communicator );

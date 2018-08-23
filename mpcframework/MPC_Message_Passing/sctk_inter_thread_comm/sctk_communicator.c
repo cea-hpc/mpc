@@ -1961,7 +1961,8 @@ int sctk_get_remote_comm_world_rank ( const sctk_communicator_t communicator, co
  * @param rank rank of the task in the local group.
  * @return the rank.
 **/
-int sctk_get_comm_world_rank ( const sctk_communicator_t communicator, const int rank )
+/* This is exported as a static inline function in the header */
+int _sctk_get_comm_world_rank ( const sctk_communicator_t communicator, const int rank )
 {
 	sctk_internal_communicator_t *tmp;
 	int ret;
