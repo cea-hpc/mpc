@@ -606,8 +606,8 @@ void MPC_per_thread_buffer_pool_realease(sctk_thread_buffer_pool_t *pool) {
 #endif
 }
 
-mpc_buffered_msg_t *MPC_per_thread_buffer_pool_acquire_synchronous() {
-  sctk_thread_buffer_pool_t *pool = &(sctk_get_thread_specific()->buffer_pool);
+mpc_buffered_msg_t *MPC_per_thread_buffer_pool_acquire_synchronous( sctk_thread_specific_t * thread_spec ) {
+  sctk_thread_buffer_pool_t *pool = &(thread_spec->buffer_pool);
 
   mpc_buffered_msg_t *ret = NULL;
 
@@ -617,8 +617,8 @@ mpc_buffered_msg_t *MPC_per_thread_buffer_pool_acquire_synchronous() {
   return ret;
 }
 
-void MPC_per_thread_buffer_pool_step_synchronous() {
-  sctk_thread_buffer_pool_t *pool = &(sctk_get_thread_specific()->buffer_pool);
+void MPC_per_thread_buffer_pool_step_synchronous(sctk_thread_specific_t * thread_spec) {
+  sctk_thread_buffer_pool_t *pool = &(thread_spec->buffer_pool);
 
   int buffer_rank = pool->sync.buffer_rank;
   pool->sync.buffer_rank = (buffer_rank + 1) % MAX_MPC_BUFFERED_MSG;
@@ -4534,14 +4534,15 @@ static int __MPC_Send(void *restrict buf, mpc_msg_count count,
     sctk_mpc_wait_message(&request);
   } else {
 
+    sctk_thread_specific_t * thread_spec = sctk_get_thread_specific();
     mpc_buffered_msg_t *tmp_buf =
-        MPC_per_thread_buffer_pool_acquire_synchronous();
+        MPC_per_thread_buffer_pool_acquire_synchronous(thread_spec);
 
     if (sctk_mpc_completion_flag(&(tmp_buf->request)) != SCTK_MESSAGE_DONE) {
       goto FALLBACK_TO_BLOCKING_SEND;
     } else {
       /* Move the buffer head */
-      MPC_per_thread_buffer_pool_step_synchronous();
+      MPC_per_thread_buffer_pool_step_synchronous(thread_spec);
 
       /* Use static header */
       msg = &(tmp_buf->header);
