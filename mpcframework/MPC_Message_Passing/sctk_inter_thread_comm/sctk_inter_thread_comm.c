@@ -200,7 +200,7 @@ static inline void _sctk_init_request(sctk_request_t *request, sctk_communicator
 
 
   if (request != NULL) {
-    memcpy(request, &the_initial_request, sizeof(sctk_request_t));
+    *request = the_initial_request;
     request->request_type = request_type;
     request->header.communicator = comm;
   }
