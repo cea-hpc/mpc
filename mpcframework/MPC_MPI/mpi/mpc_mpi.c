@@ -13077,22 +13077,39 @@ static int __INTERNAL__PMPI_Group_free(MPI_Group *mpi_group) {
 }
 
 static int __INTERNAL__PMPI_Comm_size(MPI_Comm comm, int *size) {
-  static __thread int last_comm = -1;
-  static __thread int last_rank = -1;
-  static __thread int last_size = -1;
 
-  if (last_comm == comm) {
-    if (last_rank == sctk_get_task_rank()) {
-      *size = last_size;
-      return MPI_SUCCESS;
+
+  static int comm_world_size = -1;
+  int ret = MPI_SUCCESS;
+
+  if( (comm == MPI_COMM_WORLD) && (0<comm_world_size) )
+  {
+    *size = comm_world_size;
+  }
+  else
+  {
+    static __thread int last_comm = -1;
+    static __thread int last_rank = -1;
+    static __thread int last_size = -1;
+
+    if (last_comm == comm) {
+      if (last_rank == sctk_get_task_rank()) {
+        *size = last_size;
+        return ret;
+      }
+    }
+
+    int ret = PMPC_Comm_size(comm, size);
+
+    last_rank = sctk_get_task_rank();
+    last_comm = comm;
+    last_size = *size;
+
+    if( comm == MPC_COMM_WORLD )
+    {
+      comm_world_size = *size;
     }
   }
-
-  int ret = PMPC_Comm_size(comm, size);
-
-  last_rank = sctk_get_task_rank();
-  last_comm = comm;
-  last_size = *size;
 
   return ret;
 }
