@@ -4471,7 +4471,6 @@ static int __MPC_Ssend(void *buf, mpc_msg_count count, MPC_Datatype datatype,
 static int __MPC_Send(void *restrict buf, mpc_msg_count count,
                       MPC_Datatype datatype, int dest, int tag, MPC_Comm comm) {
   MPC_Request request;
-  memset(&request, 0, sizeof(sctk_request_t));
 
   sctk_thread_ptp_message_t *msg;
   int src;
@@ -4507,7 +4506,6 @@ static int __MPC_Send(void *restrict buf, mpc_msg_count count,
   }
 
   msg_size = count * __MPC_Get_datatype_size(datatype, task_specific);
-  sctk_nodebug("Message size %lu", msg_size);
 
   if ((msg_size > MAX_MPC_BUFFERED_SIZE) || (sctk_is_net_message(dest)) ||
       mpc_disable_buffering) {
@@ -4613,11 +4611,9 @@ static int __MPC_Probe(int source, int tag, MPC_Comm comm, MPC_Status *status,
 int PMPC_Recv(void *buf, mpc_msg_count count, MPC_Datatype datatype, int source,
               int tag, MPC_Comm comm, MPC_Status *status) {
   MPC_Request request;
-  memset(&request, 0, sizeof(sctk_request_t));
 
   sctk_thread_ptp_message_t *msg;
   int src;
-  int size;
   size_t msg_size;
   sctk_task_specific_t *task_specific;
   char tmp;
@@ -5446,7 +5442,6 @@ static inline int __MPC_Gather(void *sendbuf, mpc_msg_count sendcnt,
   int rank;
   int size;
   MPC_Request request;
-  memset(&request, 0, sizeof(MPC_Request));
   size_t dsize;
   MPC_Request *recvrequest =
       sctk_malloc(sizeof(MPC_Request) * MPC_MAX_CONCURENT);

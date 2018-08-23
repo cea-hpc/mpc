@@ -1391,10 +1391,10 @@ inline void __sctk_delete_mpc_request( MPI_Request *req,
 	/* Retrieve the request */
 	tmp = __sctk_convert_mpc_request_internal( req, requests );
 
-	/* Clear the request */
-	sctk_spinlock_lock( &( tmp->lock ) );
 	memset( &tmp->req, 0, sizeof( sctk_request_t ) );
 
+	/* Clear the request */
+	sctk_spinlock_lock( &( tmp->lock ) );
 
 	/* if request is not active disable auto-free */
 	if ( tmp->is_active == 0 )

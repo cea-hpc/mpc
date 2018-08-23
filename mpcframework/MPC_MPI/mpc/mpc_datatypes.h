@@ -340,6 +340,7 @@ void release_composed_common_types();
  */
 void sctk_common_datatype_display( MPC_Datatype datatype );
 
+
 /************************************************************************/
 /* Contiguous Datatype                                                  */
 /************************************************************************/

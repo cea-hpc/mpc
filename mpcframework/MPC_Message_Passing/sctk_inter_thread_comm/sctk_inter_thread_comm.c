@@ -1765,8 +1765,6 @@ void sctk_init_header(sctk_thread_ptp_message_t *tmp,
                       void (*message_copy)(sctk_message_to_copy_t *)) {
 
   /*Init message struct*/
-  memset(tmp, 0, sizeof(sctk_thread_ptp_message_t));
-
   tmp->tail.message_type = msg_type;
   tmp->tail.internal_ptp = NULL;
   tmp->tail.request = NULL;
