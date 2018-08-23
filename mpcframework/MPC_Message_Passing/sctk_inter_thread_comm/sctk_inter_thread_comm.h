@@ -541,7 +541,7 @@ void sctk_complete_and_free_message ( sctk_thread_ptp_message_t *msg );
 void sctk_rebuild_header ( sctk_thread_ptp_message_t *msg );
 
 /** Buffered Messages **/
-#define MAX_MPC_BUFFERED_SIZE (128 * sizeof(long))
+#define MAX_MPC_BUFFERED_SIZE (64 * sizeof(long))
 
 typedef struct mpc_buffered_msg_s
 {

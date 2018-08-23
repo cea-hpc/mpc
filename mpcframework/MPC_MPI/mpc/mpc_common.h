@@ -164,7 +164,7 @@ int PMPC_Type_set_size(MPC_Datatype datatype, size_t size );
 /* Per thread context message buffers                                   */
 /************************************************************************/
 
-#define MAX_MPC_BUFFERED_MSG 32
+#define MAX_MPC_BUFFERED_MSG 128
 
 typedef struct 
 {
