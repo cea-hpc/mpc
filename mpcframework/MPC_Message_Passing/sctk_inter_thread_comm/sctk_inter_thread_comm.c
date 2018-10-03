@@ -2780,8 +2780,10 @@ void sctk_send_message_try_check(sctk_thread_ptp_message_t *msg,
                                  int perform_check) {
   if ((sctk_get_process_rank() < 0) ||
       (sctk_get_process_number() <= SCTK_MSG_DEST_PROCESS(msg)))
+  {
+    sctk_error("BAD RANKS Detected FROM %d SENDING to %d/%d", sctk_get_process_rank(), SCTK_MSG_DEST_PROCESS(msg), sctk_get_process_number());
     CRASH();
-
+  }
   sctk_debug(
       "!%d!  [ %d -> %d ] [ %d -> %d ] (CLASS %s(%d) SPE %d SIZE %d TAG %d)",
       sctk_process_rank, SCTK_MSG_SRC_PROCESS(msg), SCTK_MSG_DEST_PROCESS(msg),
