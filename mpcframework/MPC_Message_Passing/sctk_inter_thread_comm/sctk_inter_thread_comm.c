@@ -751,7 +751,7 @@ static inline int sctk_ptp_tasks_perform(int key){
  */
 static inline void sctk_ptp_tasks_insert(sctk_message_to_copy_t *tmp,
                                          sctk_internal_ptp_t *pair) {
-  int key = pair->key.dest_src;
+  int key = pair->key.dest_src % PTP_MAX_TASK_LISTS;
   sctk_spinlock_lock(&(sctk_ptp_tasks_lock[key]));
   DL_APPEND(sctk_ptp_task_list[key], tmp);
   sctk_spinlock_unlock(&(sctk_ptp_tasks_lock[key]));
