@@ -1525,11 +1525,11 @@ void sctk_communicator_world_init ( const int nb_task )
 	int * task_to_process = NULL;
 	if(sctk_process_number < 1024 )
 	{
-		task_to_process = sctk_malloc(sizeof(int) * sctk_process_number);
+		task_to_process = sctk_malloc(sizeof(int) * nb_task);
 		assume(task_to_process);
 
-		for ( i = 0; i < sctk_process_number; ++i )
-			/* We delay resolation to later on in sctk_get_process_rank_from_task_rank() */
+		for ( i = 0; i < nb_task; ++i )
+			/* We delay resolution to later on in sctk_get_process_rank_from_task_rank() */
 			task_to_process[i] = -1;
 	}
 
