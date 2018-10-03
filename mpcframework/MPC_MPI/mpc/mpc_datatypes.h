@@ -303,6 +303,19 @@ struct Datatype_layout * sctk_datatype_layout( struct Datatype_context * ctx, si
 /* Common Datatype                                                      */
 /************************************************************************/
 
+/** \brief Returns 1 if datatype is a common datatype
+ */
+static inline int sctk_datatype_is_common( MPC_Datatype datatype )
+{
+	if( (0 <= datatype)
+	&&  ( datatype < SCTK_COMMON_DATA_TYPE_COUNT ) )
+	{
+		return 1;
+	}
+	
+	return 0;
+}
+
 /** \brief Initilalize common datatype sizes
  * This function is called in \ref sctk_start_func
  */
@@ -569,19 +582,6 @@ typedef enum
 	MPC_DATATYPES_DERIVED, /**< These are derived datatypes of type \ref sctk_derived_datatype_t */
 	MPC_DATATYPES_UNKNOWN /**< This key is used to detect faulty datatypes IDs */
 } MPC_Datatype_kind;
-
-/** \brief Returns 1 if datatype is a common datatype
- */
-static inline int sctk_datatype_is_common( MPC_Datatype datatype )
-{
-	if( (0 <= datatype)
-	&&  ( datatype < SCTK_COMMON_DATA_TYPE_COUNT ) )
-	{
-		return 1;
-	}
-	
-	return 0;
-}
 
 /** \brief Returns 1 if datatype is a contiguous datatype
  */
