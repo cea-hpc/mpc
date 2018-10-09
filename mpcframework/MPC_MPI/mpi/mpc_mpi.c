@@ -11311,7 +11311,7 @@ __INTERNAL__PMPI_Allreduce_intra (void *sendbuf, void *recvbuf, int count,
 	int res = MPI_ERR_INTERN;
 
   sctk_op_t *mpi_op = sctk_convert_to_mpc_op (op);
-	if( !sctk_datatype_contig_mem(datatype) || ! sctk_op_can_commute( mpi_op, datatype ))
+	if( !sctk_datatype_contig_mem(datatype) || ! sctk_op_can_commute( mpi_op, datatype ) || (count < 1024))
 	{
 		res = __INTERNAL__PMPI_Allreduce_intra_simple( sendbuf, recvbuf, count, datatype, op, comm );
 	}
