@@ -6539,7 +6539,7 @@ int __INTERNAL__PMPI_Bcast_intra(void *buffer, int count, MPI_Datatype datatype,
 		
 			}
 
-			res = MPI_Waitall( 2 , reqs , MPI_STATUSES_IGNORE );
+			res = PMPI_Waitall( 2 , reqs , MPI_STATUSES_IGNORE );
 
 #if 0 /* see the comment above */
 		}
