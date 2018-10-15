@@ -408,7 +408,6 @@ void sctk_ptl_comm_register(sctk_ptl_rail_info_t* srail, int comm_idx, size_t co
 {
 	if(!SCTK_PTL_PTE_EXIST(srail->pt_table, comm_idx))
 	{
-		sctk_warning("new comm %d, sz %d\n", comm_idx, comm_size);
 		sctk_ptl_pte_t* new_entry = sctk_malloc(sizeof(sctk_ptl_pte_t));
 		sctk_ptl_pte_create(srail, new_entry, comm_idx + SCTK_PTL_PTE_HIDDEN);
 	}
