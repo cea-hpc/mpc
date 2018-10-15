@@ -408,6 +408,7 @@ void sctk_ptl_comm_register(sctk_ptl_rail_info_t* srail, int comm_idx, size_t co
 {
 	if(!SCTK_PTL_PTE_EXIST(srail->pt_table, comm_idx))
 	{
+		sctk_warning("new comm %d, sz %d\n", comm_idx, comm_size);
 		sctk_ptl_pte_t* new_entry = sctk_malloc(sizeof(sctk_ptl_pte_t));
 		sctk_ptl_pte_create(srail, new_entry, comm_idx + SCTK_PTL_PTE_HIDDEN);
 	}
@@ -435,13 +436,11 @@ void sctk_ptl_init_interface(sctk_rail_info_t* rail)
 	/* init low-level driver */
 	rail->network.ptl             = sctk_ptl_hardware_init();
 	rail->network.ptl.eager_limit = eager_limit;
+	rail->network.ptl.cutoff      = cut;
+	rail->network.ptl.max_mr      = rail->network.ptl.max_limits.max_msg_size;
 	
 	sctk_ptl_software_init( &rail->network.ptl, min_comms);
-	
 	sctk_assert(eager_limit == rail->network.ptl.eager_limit);
-	rail->network.ptl.max_mr      = rail->network.ptl.max_limits.max_msg_size;
-	rail->network.ptl.cutoff      = cut;
-	/*rail->network.ptl.max_mr = (1024 * 1024 * 8);*/
 
 	if(!ranks_ids_map)
 	{

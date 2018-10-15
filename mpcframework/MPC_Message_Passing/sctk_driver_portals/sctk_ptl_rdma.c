@@ -448,6 +448,7 @@ void sctk_ptl_rdma_write(sctk_rail_info_t *rail, sctk_thread_ptp_message_t *msg,
 	*copy                  = *local_key->pin.ptl.md_data;
 	copy->msg              = msg;
 	msg->tail.ptl.user_ptr = NULL; /* 'no extra allocated data' */
+	msg->tail.ptl.copy     = 0;
 	copy->type = SCTK_PTL_TYPE_RDMA;
 	
 	sctk_ptl_emit_put(
@@ -505,6 +506,7 @@ void sctk_ptl_rdma_read(sctk_rail_info_t *rail, sctk_thread_ptp_message_t *msg,
 	*copy                  = *local_key->pin.ptl.md_data;
 	copy->msg              = msg;
 	msg->tail.ptl.user_ptr = NULL; /* NULL in RDMA ctx means: 'no extra allocated data' */
+	msg->tail.ptl.copy     = 0;
 
 	sctk_ptl_emit_get(
 		local_key->pin.ptl.md_data, /* the base MD */

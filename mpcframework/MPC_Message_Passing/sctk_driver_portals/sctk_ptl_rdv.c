@@ -329,6 +329,8 @@ void sctk_ptl_rdv_send_message(sctk_thread_ptp_message_t* msg, sctk_endpoint_t* 
 	sctk_ptl_pte_t* pte;
 	sctk_ptl_matchbits_t match, ign;
 	sctk_ptl_imm_data_t hdr;
+	
+	memset(&msg->tail.ptl, 0, sizeof(sctk_ptl_tail_t));
 
 	md_request      = me_request = NULL;
 	md_flags        = me_flags   = 0;

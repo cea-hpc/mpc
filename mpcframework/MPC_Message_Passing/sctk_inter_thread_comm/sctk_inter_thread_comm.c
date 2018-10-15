@@ -1758,6 +1758,10 @@ void sctk_init_header(sctk_thread_ptp_message_t *tmp,
                       sctk_message_type_t msg_type, void (*free_memory)(void *),
                       void (*message_copy)(sctk_message_to_copy_t *)) {
 
+  /* this should be removed but causes deadlocks with some net drivers.
+   * Need to investigate.
+   */
+  memset(tmp, 0, sizeof(sctk_thread_ptp_message_t));
   /*Init message struct*/
   tmp->tail.message_type = msg_type;
   tmp->tail.internal_ptp = NULL;

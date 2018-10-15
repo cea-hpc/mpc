@@ -140,6 +140,7 @@ void sctk_ptl_cm_send_message(sctk_thread_ptp_message_t* msg, sctk_endpoint_t* e
 	/* double-linking */
 	request->msg           = msg;
 	msg->tail.ptl.user_ptr = request;
+	msg->tail.ptl.copy     = 0;
 	request->type = SCTK_PTL_TYPE_CM;
 
 	/* populate immediate data with CM-specific */

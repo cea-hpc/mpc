@@ -148,6 +148,9 @@ void sctk_ptl_eager_send_message(sctk_thread_ptp_message_t* msg, sctk_endpoint_t
 	sctk_ptl_id_t remote           = SCTK_PTL_ANY_PROCESS;
 	sctk_ptl_route_info_t* infos   = &endpoint->data.ptl;
 	sctk_ptl_imm_data_t hdr;
+	
+	/* clear the PTL msg tail struct */
+	memset(&msg->tail.ptl, 0, sizeof(sctk_ptl_tail_t));
 
 	/* if the message is non-contiguous, we need a copy to 'pack' it first */
 	if(msg->tail.message_type == SCTK_MESSAGE_CONTIGUOUS)
@@ -208,6 +211,9 @@ void sctk_ptl_eager_notify_recv(sctk_thread_ptp_message_t* msg, sctk_ptl_rail_in
 	sctk_ptl_pte_t* pte             = NULL;
 	sctk_ptl_local_data_t* user_ptr = NULL;
 	sctk_ptl_id_t remote            = SCTK_PTL_ANY_PROCESS;
+
+	/* clear the PTL msg tail struct */
+	memset(&msg->tail.ptl, 0, sizeof(sctk_ptl_tail_t));
 	
 	/* is the message contiguous ? */
 	if(msg->tail.message_type == SCTK_MESSAGE_CONTIGUOUS)
