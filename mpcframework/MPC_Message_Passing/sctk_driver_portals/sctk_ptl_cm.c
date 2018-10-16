@@ -78,6 +78,7 @@ static inline void sctk_ptl_cm_recv_message(sctk_rail_info_t* rail, sctk_ptl_eve
 	SCTK_MSG_COMMUNICATOR_SET    ( net_msg ,  0);
 	SCTK_MSG_TAG_SET             ( net_msg ,  match.data.tag);
 	SCTK_MSG_NUMBER_SET          ( net_msg ,  match.data.uid);
+	SCTK_MSG_SPECIFIC_CLASS_SET  ( net_msg ,  match.data.type);
 	SCTK_MSG_MATCH_SET           ( net_msg ,  0);
 	SCTK_MSG_SIZE_SET            ( net_msg ,  ev.mlength);
 	SCTK_MSG_COMPLETION_FLAG_SET ( net_msg ,  NULL);
@@ -130,6 +131,7 @@ void sctk_ptl_cm_send_message(sctk_thread_ptp_message_t* msg, sctk_endpoint_t* e
 	match.data.rank = SCTK_MSG_SRC_PROCESS(msg);
 	match.data.tag  = SCTK_MSG_TAG(msg);
 	match.data.uid  = SCTK_MSG_NUMBER(msg);
+	match.data.type = SCTK_MSG_SPECIFIC_CLASS(msg);
 	remote          = infos->dest;
 	pte             = MPCHT_get(&srail->pt_table, SCTK_PTL_PTE_CM);
 	request         = sctk_ptl_md_create(srail, start, size, flags);

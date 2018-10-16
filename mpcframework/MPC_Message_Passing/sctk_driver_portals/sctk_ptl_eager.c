@@ -100,7 +100,7 @@ static inline void sctk_ptl_eager_recv_message(sctk_rail_info_t* rail, sctk_ptl_
 	SCTK_MSG_TAG_SET             ( net_msg ,  match.data.tag);
 	SCTK_MSG_NUMBER_SET          ( net_msg ,  match.data.uid);
 	SCTK_MSG_MATCH_SET           ( net_msg ,  0);
-	SCTK_MSG_SPECIFIC_CLASS_SET  ( net_msg ,  ((sctk_ptl_imm_data_t)ev.hdr_data).std.datatype);
+	SCTK_MSG_SPECIFIC_CLASS_SET  ( net_msg ,  match.data.type);
 	SCTK_MSG_SIZE_SET            ( net_msg ,  ev.mlength);
 	SCTK_MSG_COMPLETION_FLAG_SET ( net_msg ,  NULL);
 
@@ -171,6 +171,7 @@ void sctk_ptl_eager_send_message(sctk_thread_ptp_message_t* msg, sctk_endpoint_t
 	match.data.tag         = SCTK_MSG_TAG(msg);
 	match.data.rank        = SCTK_MSG_SRC_PROCESS(msg);
 	match.data.uid         = SCTK_MSG_NUMBER(msg);
+	match.data.type        = SCTK_MSG_SPECIFIC_CLASS(msg);
 	pte                    = SCTK_PTL_PTE_ENTRY(srail->pt_table, SCTK_MSG_COMMUNICATOR(msg));
 	remote                 = infos->dest;
 	request                = sctk_ptl_md_create(srail, start, size, flags);
@@ -232,6 +233,7 @@ void sctk_ptl_eager_notify_recv(sctk_thread_ptp_message_t* msg, sctk_ptl_rail_in
 	match.data.tag  = SCTK_MSG_TAG(msg);
 	match.data.rank = SCTK_MSG_SRC_PROCESS(msg);
 	match.data.uid  = SCTK_MSG_NUMBER(msg);
+	match.data.type = SCTK_MSG_SPECIFIC_CLASS(msg);
 
 	/* apply the mask, depending on request infos
 	 * The UID is always ignored, it we only be used to make RDV requests consistent
@@ -239,6 +241,7 @@ void sctk_ptl_eager_notify_recv(sctk_thread_ptp_message_t* msg, sctk_ptl_rail_in
 	ign.data.tag  = (SCTK_MSG_TAG(msg)         == SCTK_ANY_TAG)    ? SCTK_PTL_IGN_TAG  : SCTK_PTL_MATCH_TAG;
 	ign.data.rank = (SCTK_MSG_SRC_PROCESS(msg) == SCTK_ANY_SOURCE) ? SCTK_PTL_IGN_RANK : SCTK_PTL_MATCH_RANK;
 	ign.data.uid  = SCTK_PTL_IGN_UID;
+	ign.data.type = SCTK_PTL_MATCH_TYPE;
 
 	/* complete the ME data, this ME will be appended to the PRIORITY_LIST */
 	size     = SCTK_MSG_SIZE(msg);

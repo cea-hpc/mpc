@@ -41,17 +41,22 @@
 /** Set the 'rank' member to be ignored during the matching */
 #define SCTK_PTL_IGN_RANK  (UINT16_MAX)
 /** Set the 'usage ID' member to be ignored during the matching */
-#define SCTK_PTL_IGN_UID  (UINT16_MAX)
+#define SCTK_PTL_IGN_UID  (UINT8_MAX)
+/** Set the message_type member to be ignored during the matching */
+#define SCTK_PTL_IGN_TYPE (UINT8_MAX)
+
 /** A combination of SCTK_PTL_IGN_{TAG,RANK,UID} */
-#define SCTK_PTL_IGN_ALL (sctk_ptl_matchbits_t){.data.rank = SCTK_PTL_IGN_RANK, .data.tag = SCTK_PTL_IGN_TAG, .data.uid = SCTK_PTL_IGN_UID}
+#define SCTK_PTL_IGN_ALL (sctk_ptl_matchbits_t){.data.rank = SCTK_PTL_IGN_RANK, .data.tag = SCTK_PTL_IGN_TAG, .data.uid = SCTK_PTL_IGN_UID, .data.type = SCTK_PTL_IGN_TYPE}
 /** Set the 'tag' to be used for the matching step */
 #define SCTK_PTL_MATCH_TAG  ((uint32_t)0)
 /** Set the 'rank' to be used for the matching step */
 #define SCTK_PTL_MATCH_RANK  ((uint16_t)0)
 /** Set the 'usage ID' to be used for the matching step */
-#define SCTK_PTL_MATCH_UID  ((uint16_t)0)
+#define SCTK_PTL_MATCH_UID  ((uint8_t)0)
+/** Set the 'Message type' to be used for the matching step */
+#define SCTK_PTL_MATCH_TYPE  ((uint8_t)0)
 /** A combination of SCTK_PTL_MATCH_{TAG,RANK,UID} */
-#define SCTK_PTL_MATCH_ALL  (sctk_ptl_matchbits_t) {.data.rank = SCTK_PTL_MATCH_RANK, .data.tag = SCTK_PTL_MATCH_TAG, .data.uid = SCTK_PTL_MATCH_UID}
+#define SCTK_PTL_MATCH_ALL  (sctk_ptl_matchbits_t) {.data.rank = SCTK_PTL_MATCH_RANK, .data.tag = SCTK_PTL_MATCH_TAG, .data.uid = SCTK_PTL_MATCH_UID, .data.type = SCTK_PTL_MATCH_TYPE}
 
 /*********************************/
 /******* MATCHING ENTRIES ********/
@@ -171,7 +176,8 @@
  */
 struct sctk_ptl_bits_content_s
 {
-	uint16_t uid;     /**< unique per-route ID */
+	uint8_t uid;     /**< unique per-route ID */
+	uint8_t type;    /**< message type, redundant in case of CM */
 	uint16_t rank;    /**< MPI/MPC rank */
 	uint32_t tag;     /**< MPI tag */
 };
@@ -189,7 +195,7 @@ typedef union sctk_ptl_matchbits_t
  * please look at sctk_control_messages.c before updating this struct */
 typedef struct sctk_ptl_cm_data_s
 {
-	char type;    /**< CM type */
+	char type;    /**< CM type, redudant w/ matching value */
 	char subtype; /**< CM subtype */
 	char param;   /**< CM param */
 	char rail_id; /**< referent rail ID */
@@ -202,7 +208,7 @@ typedef struct sctk_ptl_cm_data_s
 typedef struct sctk_ptl_std_data_s
 {
 	int datatype; /**< the datatype, for the matching */
-	char pad[3];  /**< padding */
+	char pad[4];  /**< padding */
 } sctk_ptl_std_data_t;
 
 /**

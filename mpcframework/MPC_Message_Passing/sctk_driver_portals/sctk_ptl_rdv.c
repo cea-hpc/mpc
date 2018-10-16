@@ -270,6 +270,7 @@ static inline void sctk_ptl_rdv_reply_message(sctk_rail_info_t* rail, sctk_ptl_e
 	SCTK_MSG_COMMUNICATOR_SET    ( net_msg ,  SCTK_MSG_COMMUNICATOR(recv_msg));
 	SCTK_MSG_TAG_SET             ( net_msg ,  ptr->match.data.tag);
 	SCTK_MSG_NUMBER_SET          ( net_msg ,  ptr->match.data.uid);
+	SCTK_MSG_SPECIFIC_CLASS_SET  ( net_msg ,  ptr->match.data.type);
 	SCTK_MSG_MATCH_SET           ( net_msg ,  0);
 	SCTK_MSG_SPECIFIC_CLASS_SET  ( net_msg ,  SCTK_MSG_SPECIFIC_CLASS(recv_msg));
 	SCTK_MSG_SIZE_SET            ( net_msg ,  ev.mlength);
@@ -339,6 +340,7 @@ void sctk_ptl_rdv_send_message(sctk_thread_ptp_message_t* msg, sctk_endpoint_t* 
 	match.data.tag  = SCTK_MSG_TAG(msg);
 	match.data.rank = SCTK_MSG_SRC_PROCESS(msg);
 	match.data.uid  = SCTK_MSG_NUMBER(msg);
+	match.data.type = SCTK_MSG_SPECIFIC_CLASS(msg);
 	ign             = SCTK_PTL_MATCH_INIT;
 	pte             = SCTK_PTL_PTE_ENTRY(srail->pt_table, SCTK_MSG_COMMUNICATOR(msg));
 
@@ -436,6 +438,7 @@ void sctk_ptl_rdv_notify_recv(sctk_thread_ptp_message_t* msg, sctk_ptl_rail_info
 	ign.data.tag    = (SCTK_MSG_TAG(msg)         == SCTK_ANY_TAG)    ? SCTK_PTL_IGN_TAG  : SCTK_PTL_MATCH_TAG;
 	ign.data.rank   = (SCTK_MSG_SRC_PROCESS(msg) == SCTK_ANY_SOURCE) ? SCTK_PTL_IGN_RANK : SCTK_PTL_MATCH_RANK;
 	ign.data.uid    = SCTK_PTL_IGN_UID;
+	ign.data.type   = SCTK_PTL_IGN_TYPE;
 
 	/* complete the ME data, this ME will be appended to the PRIORITY_LIST
 	 * Here, we want a CT event attached to this ME (for triggered Op)
