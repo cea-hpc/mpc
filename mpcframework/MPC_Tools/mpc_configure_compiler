@@ -1020,11 +1020,6 @@ for i in cc cxx f77 icc icpc ifort; do
 	printf_mpi_compiler bin/mpi$i bin/mpc_$i
 done
 
-#Generate Additionnal Fortran Wrappers pointing to 77
-printf_mpi_compiler bin/mpif90 bin/mpc_f77
-printf_mpi_compiler bin/mpif08 bin/mpc_f77
-
-
 if test "$SCTK_CUDA" = "1"; then
 	sctk_echo "Preparing NVIDIA Compiler: mpc_nvcc"
 	printf_compiler bin/mpc_nvcc cxx "nvcc --compiler-bindir "
@@ -1079,5 +1074,5 @@ genMPIcompilwrapper "mpc_cc" >  bin/mpiwrapp/mpicc
 genMPIcompilwrapper "mpc_cxx" > bin/mpiwrapp/mpicxx
 genMPIcompilwrapper "mpc_cxx" > bin/mpiwrapp/mpic++
 genMPIcompilwrapper "mpc_f77" > bin/mpiwrapp/mpif77
-genMPIcompilwrapper "mpc_f90" > bin/mpiwrapp/mpif90
-genMPIcompilwrapper "mpc_f90" > bin/mpiwrapp/mpifc
+genMPIcompilwrapper "mpc_f77" > bin/mpiwrapp/mpif90
+genMPIcompilwrapper "mpc_f77" > bin/mpiwrapp/mpifc
