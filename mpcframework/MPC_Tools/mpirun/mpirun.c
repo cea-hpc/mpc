@@ -6,8 +6,8 @@
 void display_help() {
   printf("mpirun MPC\n"
          "USAGE: mpirun [OPTION]... [PROGRAM]...\n\n"
-         "\t-n|-p\t\tNumber of processes to launch\n"
-         "\t-c\t\tNumber of cores per process\n"
+         "\t-n|-np\t\tNumber of processes to launch\n"
+         "\t-c\t\tNumber of corees per process\n"
          "\t--verbose\tEnable debug messages.\n"
          "\n");
 }
@@ -26,11 +26,7 @@ int main(int argc, char **argv) {
 
   for (i = 1; i < argc; i++) {
     if (!strcmp(argv[i], "-np")) {
-      argv[i] = "-p";
-    }
-
-    if (!strcmp(argv[i], "--")) {
-      break;
+      argv[i] = "-n";
     }
   }
 
@@ -39,7 +35,6 @@ int main(int argc, char **argv) {
         /* These options set a flag. */
         {"verbose", no_argument, &verbose_flag, 1},
         {"brief", no_argument, &verbose_flag, 0},
-        {"processes", required_argument, 0, 'p'},
         {"np", required_argument, 0, 'n'},
         {"cores", required_argument, 0, 'c'},
         {"help", no_argument, 0, 'h'},
@@ -47,14 +42,13 @@ int main(int argc, char **argv) {
     /* getopt_long stores the option index here. */
     int option_index = 0;
 
-    c = getopt_long(argc, argv, "+hp:n:c:", long_options, &option_index);
+    c = getopt_long(argc, argv, "+hn:c:", long_options, &option_index);
 
     /* Detect the end of the options. */
     if (c == -1)
       break;
 
     switch (c) {
-    case 'p':
     case 'n':
       nb_process = atoi(optarg);
       break;
