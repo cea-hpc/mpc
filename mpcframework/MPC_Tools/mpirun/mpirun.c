@@ -88,8 +88,16 @@ int main(int argc, char **argv) {
 
   strcat(command, "mpcrun ");
 
+  char* nodes = getenv("SLURM_JOB_NUM_NODES");
+
+  if(nodes)
+  {
+    snprintf(tmp, 128, " -N=%s ", nodes);
+    strcat(command, tmp);
+  }
+
   if (0 < nb_process) {
-    snprintf(tmp, 128, "-p=%d ", nb_process);
+    snprintf(tmp, 128, " -p=%d ", nb_process);
     strcat(command, tmp);
   }
 
@@ -111,6 +119,8 @@ int main(int argc, char **argv) {
     strcat(command, " ");
     strcat(command, argv[i]);
   }
+
+
 
   printf("%s\n", command);
 
