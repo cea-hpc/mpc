@@ -217,12 +217,6 @@ void sctk_ptl_software_init(sctk_ptl_rail_info_t* srail, int comm_dims)
 			i,           /* the desired index value */
 			&table[i].idx       /* the effective index value */
 		));
-
-		/* don't queue pre-allocated ME for RDMA entry */
-		if(i != SCTK_PTL_PTE_RDMA)
-		{
-			sctk_ptl_me_feed(srail, table + i, eager_size, SCTK_PTL_ME_OVERFLOW_NB, SCTK_PTL_PRIORITY_LIST, SCTK_PTL_TYPE_CM, SCTK_PTL_PROT_NONE);
-		}
 		/*table[i].taglocks = sctk_malloc(sizeof(sctk_spinlock_t) * SCTK_PTL_PTE_NB_LOCKS);*/
 		/*int j;*/
 		/*for (j = 0; j < SCTK_PTL_PTE_NB_LOCKS; ++j) */
@@ -232,6 +226,12 @@ void sctk_ptl_software_init(sctk_ptl_rail_info_t* srail, int comm_dims)
 		
 		MPCHT_set(&srail->pt_table, i, table + i);
 	}
+
+	/* fill the CM queue with preallocated buffers
+	 * This is the only situation where ME-PUT w/ IGNORE_ALL should be
+	 * pushed into the priority list !
+	 */
+	sctk_ptl_me_feed(srail, table + SCTK_PTL_PTE_CM, eager_size, SCTK_PTL_ME_OVERFLOW_NB, SCTK_PTL_PRIORITY_LIST, SCTK_PTL_TYPE_CM, SCTK_PTL_PROT_NONE);
 
 	for (i = SCTK_PTL_PTE_HIDDEN; i < comm_dims; ++i)
 	{
