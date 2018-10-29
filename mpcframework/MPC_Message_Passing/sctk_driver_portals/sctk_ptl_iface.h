@@ -173,6 +173,24 @@ static inline const char const * sctk_ptl_event_decode(sctk_ptl_event_t ev)
 	return NULL;
 }
 
+static inline const char const * sctk_ptl_ni_fail_decode(sctk_ptl_event_t ev)
+{
+	switch(ev.ni_fail_type)
+	{
+		case PTL_NI_OK: return "PTL_NI_OK"; break;
+		case PTL_NI_UNDELIVERABLE: return "PTL_NI_UNDELIVERABLE"; break;
+		case PTL_NI_PT_DISABLED: return "PTL_NI_PT_DISABLED"; break;
+		case PTL_NI_DROPPED: return "PTL_NI_DROPPED"; break;
+		case PTL_NI_PERM_VIOLATION: return "PTL_NI_PERM_VIOLATION"; break;
+		case PTL_NI_OP_VIOLATION: return "PTL_NI_OP_VIOLATION"; break;
+		case PTL_NI_SEGV: return "PTL_NI_SEGV"; break;
+		case PTL_NI_NO_MATCH: return "PTL_NI_NO_MATCH"; break;
+		default:
+			return "Portals NI code not known"; break;
+	}
+	return NULL;
+}
+
 /**
  * De-serialize an object an map it into its base struct.
  *
@@ -304,8 +322,9 @@ static inline int sctk_ptl_eq_poll_me(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_
  */
 static inline const char const* __sctk_ptl_match_str(char*buf, size_t s, ptl_match_bits_t m)
 {
-	sctk_ptl_matchbits_t m2 = (sctk_ptl_matchbits_t)m;
-	snprintf(buf, s, "%u:%d[%u]", m2.data.rank, m2.data.tag, m2.data.uid);
+	sctk_ptl_matchbits_t m2;
+	m2.raw = m;
+	snprintf(buf, s, "%u:%d[%u]:%d", m2.data.rank, m2.data.tag, m2.data.uid, m2.data.type);
 	return buf;
 }
 

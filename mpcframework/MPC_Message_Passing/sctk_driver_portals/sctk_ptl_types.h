@@ -34,19 +34,14 @@
 /*********************************/
 /********** MATCH BITS ***********/
 /*********************************/
-/** default struct to initialize a new sctk_ptl_matchbits_t */
-#define SCTK_PTL_MATCH_INIT (sctk_ptl_matchbits_t) {.data.rank = 0, .data.tag = 0, .data.uid = 0}
 /** Set the 'tag' member to be ignored during the matching */
-#define SCTK_PTL_IGN_TAG  (UINT32_MAX)
+#define SCTK_PTL_IGN_TAG  ((uint32_t)UINT32_MAX)
 /** Set the 'rank' member to be ignored during the matching */
-#define SCTK_PTL_IGN_RANK  (UINT16_MAX)
+#define SCTK_PTL_IGN_RANK  ((uint16_t)UINT16_MAX)
 /** Set the 'usage ID' member to be ignored during the matching */
-#define SCTK_PTL_IGN_UID  (UINT8_MAX)
+#define SCTK_PTL_IGN_UID  ((uint8_t)UINT8_MAX)
 /** Set the message_type member to be ignored during the matching */
-#define SCTK_PTL_IGN_TYPE (UINT8_MAX)
-
-/** A combination of SCTK_PTL_IGN_{TAG,RANK,UID} */
-#define SCTK_PTL_IGN_ALL (sctk_ptl_matchbits_t){.data.rank = SCTK_PTL_IGN_RANK, .data.tag = SCTK_PTL_IGN_TAG, .data.uid = SCTK_PTL_IGN_UID, .data.type = SCTK_PTL_IGN_TYPE}
+#define SCTK_PTL_IGN_TYPE ((uint8_t)UINT8_MAX)
 /** Set the 'tag' to be used for the matching step */
 #define SCTK_PTL_MATCH_TAG  ((uint32_t)0)
 /** Set the 'rank' to be used for the matching step */
@@ -55,8 +50,13 @@
 #define SCTK_PTL_MATCH_UID  ((uint8_t)0)
 /** Set the 'Message type' to be used for the matching step */
 #define SCTK_PTL_MATCH_TYPE  ((uint8_t)0)
+
+/** default struct to initialize a new sctk_ptl_matchbits_t */
+#define SCTK_PTL_MATCH_INIT (sctk_ptl_matchbits_t) {.data.rank = SCTK_PTL_MATCH_RANK, .data.tag = SCTK_PTL_MATCH_TAG, .data.uid = SCTK_PTL_MATCH_UID, .data.type = SCTK_PTL_MATCH_TYPE}
 /** A combination of SCTK_PTL_MATCH_{TAG,RANK,UID} */
 #define SCTK_PTL_MATCH_ALL  (sctk_ptl_matchbits_t) {.data.rank = SCTK_PTL_MATCH_RANK, .data.tag = SCTK_PTL_MATCH_TAG, .data.uid = SCTK_PTL_MATCH_UID, .data.type = SCTK_PTL_MATCH_TYPE}
+/** A combination of SCTK_PTL_IGN_{TAG,RANK,UID} */
+#define SCTK_PTL_IGN_ALL (sctk_ptl_matchbits_t){.data.rank = SCTK_PTL_IGN_RANK, .data.tag = SCTK_PTL_IGN_TAG, .data.uid = SCTK_PTL_IGN_UID, .data.type = SCTK_PTL_IGN_TYPE}
 
 /*********************************/
 /******* MATCHING ENTRIES ********/
@@ -67,14 +67,14 @@
 /** Default flags for new added ME: No EVENT_LINK/UNLINK */
 #define SCTK_PTL_ME_FLAGS PTL_ME_EVENT_LINK_DISABLE | PTL_ME_EVENT_UNLINK_DISABLE
 /** Default flags for new PUT-ME */
-#define SCTK_PTL_ME_PUT_FLAGS SCTK_PTL_ME_FLAGS | PTL_ME_OP_PUT
+#define SCTK_PTL_ME_PUT_FLAGS (SCTK_PTL_ME_FLAGS | PTL_ME_OP_PUT)
 /** Default flags for new GET-ME */
-#define SCTK_PTL_ME_GET_FLAGS SCTK_PTL_ME_FLAGS | PTL_ME_OP_GET
+#define SCTK_PTL_ME_GET_FLAGS (SCTK_PTL_ME_FLAGS | PTL_ME_OP_GET)
 /** default flags for OVERFLOW ME --> unexpected PUTs */
-#define SCTK_PTL_ME_OVERFLOW_FLAGS SCTK_PTL_ME_PUT_FLAGS
+#define SCTK_PTL_ME_OVERFLOW_FLAGS (SCTK_PTL_ME_PUT_FLAGS)
 /** Macro to automatically unlink an ME when a match occurs (not always used, ex: RDMA) */
-#define SCTK_PTL_ONCE PTL_ME_USE_ONCE
-/** Number of slots to maintain in the OVERFLOW8LIST of each PT entry */
+#define SCTK_PTL_ONCE (PTL_ME_USE_ONCE)
+/** Number of slots to maintain in the OVERFLOW_LIST of each PT entry */
 #define SCTK_PTL_ME_OVERFLOW_NB 128
 
 
@@ -85,11 +85,11 @@
 #define sctk_ptl_mdh_t ptl_handle_md_t /**< MD handler */
 #define sctk_ptl_md_t ptl_md_t         /**< MD */
 /** default flags for new adde MD --> no EVENT_SEND (not used to ATOMICS ops w/ RDMA) */
-#define SCTK_PTL_MD_FLAGS PTL_MD_EVENT_SEND_DISABLE
-#define SCTK_PTL_MD_PUT_FLAGS SCTK_PTL_MD_FLAGS /**< no effect yet */
-#define SCTK_PTL_MD_GET_FLAGS SCTK_PTL_MD_FLAGS /**< no effect yet */
+#define SCTK_PTL_MD_FLAGS (PTL_MD_EVENT_SEND_DISABLE)
+#define SCTK_PTL_MD_PUT_FLAGS (SCTK_PTL_MD_FLAGS) /**< no effect yet */
+#define SCTK_PTL_MD_GET_FLAGS (SCTK_PTL_MD_FLAGS) /**< no effect yet */
 /** default flags for RDMA requests --> here we need the EVENT_SEND flag */
-#define SCTK_PTL_MD_ATOMICS_FLAGS 0
+#define SCTK_PTL_MD_ATOMICS_FLAGS (0)
 
 /*********************************/
 /************ EVENTS *************/
