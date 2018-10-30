@@ -127,7 +127,10 @@ int mpc_MPI_allocmem_pool_init() {
         sctk_runtime_config_get()->modules.rma.alloc_mem_pool_enable;
     
 
-    if ((comm_size == 1) || (alloc_mem_enabled == 0)) {
+      int tot_size = 0;
+
+      MPI_Allreduce(&comm_size, &tot_size, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD ); /* equal to the total number of tasks if there is one task per process */
+      if ((tot_size == sctk_get_task_number()) || (alloc_mem_enabled == 0)) {
       mpc_MPI_accumulate_op_lock_init_shared();
       _pool_only_local = 1;
       PMPI_Comm_free(&node_comm);
