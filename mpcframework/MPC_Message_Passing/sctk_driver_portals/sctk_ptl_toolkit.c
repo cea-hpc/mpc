@@ -169,12 +169,12 @@ void sctk_ptl_eqs_poll(sctk_rail_info_t* rail, int threshold)
 
 		if(ret == PTL_OK)
 		{
-			sctk_info("PORTALS: EQS EVENT '%s' idx=%d, type=%x, prot=%x, match=%s from %s, sz=%llu", sctk_ptl_event_decode(ev), ev.pt_index, user_ptr->type, user_ptr->prot, __sctk_ptl_match_str(malloc(32), 32, ev.match_bits), SCTK_PTL_STR_LIST(((sctk_ptl_local_data_t*)ev.user_ptr)->list), ev.mlength);
+			sctk_info("PORTALS: EQS EVENT '%s' idx=%d, type=%x, prot=%x, match=%s from %s, sz=%llu, user=%p", sctk_ptl_event_decode(ev), ev.pt_index, user_ptr->type, user_ptr->prot, __sctk_ptl_match_str(malloc(32), 32, ev.match_bits), SCTK_PTL_STR_LIST(((sctk_ptl_local_data_t*)ev.user_ptr)->list), ev.mlength, ev.user_ptr);
 
 	
 			/* we only consider Portals-succeded events */
 			if(ev.ni_fail_type != PTL_NI_OK) 
-				sctk_fatal("ME: Failed event %s: %d", sctk_ptl_event_decode(ev), ev.ni_fail_type);
+				sctk_fatal("ME: Failed event %s: %s", sctk_ptl_event_decode(ev), sctk_ptl_ni_fail_decode(ev));
 		
 			/* if the request consumed an unexpected slot, append a new one */
 			if(user_ptr->list == SCTK_PTL_OVERFLOW_LIST)
@@ -233,10 +233,12 @@ void sctk_ptl_mds_poll(sctk_rail_info_t* rail, int threshold)
 		{
 			user_ptr = (sctk_ptl_local_data_t*)ev.user_ptr;
 			sctk_assert(user_ptr != NULL);
-			sctk_info("PORTALS: MDS EVENT '%s' from %s, type=%d, prot=%d",sctk_ptl_event_decode(ev), SCTK_PTL_STR_LIST(ev.ptl_list), user_ptr->type, user_ptr->prot);
+			sctk_info("PORTALS: MDS EVENT '%s' from %s, type=%d, prot=%d, user=%d",sctk_ptl_event_decode(ev), SCTK_PTL_STR_LIST(ev.ptl_list), user_ptr->type, user_ptr->prot, SCTK_MSG_SRC_PROCESS(((sctk_thread_ptp_message_t*) user_ptr->msg)));
 			/* we only care about Portals-sucess events */
 			if(ev.ni_fail_type != PTL_NI_OK)
-				sctk_fatal("MD: Failed event %s: %d", sctk_ptl_event_decode(ev), ev.ni_fail_type);
+			{
+				sctk_fatal("MD: Failed event %s: %s", sctk_ptl_event_decode(ev), sctk_ptl_ni_fail_decode(ev));
+			}
 
 
 			switch((int)user_ptr->type)

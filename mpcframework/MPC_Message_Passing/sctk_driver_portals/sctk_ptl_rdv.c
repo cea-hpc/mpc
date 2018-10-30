@@ -209,6 +209,8 @@ static inline void sctk_ptl_rdv_recv_message(sctk_rail_info_t* rail, sctk_ptl_ev
 		get_request->type     = SCTK_PTL_TYPE_STD;
 		get_request->prot     = SCTK_PTL_PROT_RDV;
 		get_request->match    = (sctk_ptl_matchbits_t)ev.match_bits;
+		/* The GET request only target slots with the bit to 1 */
+		SCTK_PTL_TYPE_RDV_SET(get_request->match.data.type);
 
 		/* compute next chunk address */
 		chunk_addr += cur_sz;
@@ -239,7 +241,7 @@ static inline void sctk_ptl_rdv_recv_message(sctk_rail_info_t* rail, sctk_ptl_ev
 		);
 	}
 	
-	sctk_debug("PORTALS: RECV-RDV to %d (idx=%d, match=%s, ch_nb=%llu, ch_sz=%llu)", SCTK_MSG_DEST_PROCESS(msg), ev.pt_index, __sctk_ptl_match_str(malloc(32), 32, ev.match_bits), chunk_nb, chunk_sz);
+	sctk_debug("PORTALS: RECV-RDV to %d (idx=%d, match=%s, ch_nb=%llu, ch_sz=%llu)", SCTK_MSG_SRC_PROCESS(msg), ev.pt_index, __sctk_ptl_match_str(malloc(32), 32, ev.match_bits), chunk_nb, chunk_sz);
 }
 
 /**
@@ -270,9 +272,9 @@ static inline void sctk_ptl_rdv_reply_message(sctk_rail_info_t* rail, sctk_ptl_e
 	SCTK_MSG_COMMUNICATOR_SET    ( net_msg ,  SCTK_MSG_COMMUNICATOR(recv_msg));
 	SCTK_MSG_TAG_SET             ( net_msg ,  ptr->match.data.tag);
 	SCTK_MSG_NUMBER_SET          ( net_msg ,  ptr->match.data.uid);
+	SCTK_PTL_TYPE_RDV_UNSET(ptr->match.data.type); /* this infomation should be removed before rebuilding the message */
 	SCTK_MSG_SPECIFIC_CLASS_SET  ( net_msg ,  ptr->match.data.type);
 	SCTK_MSG_MATCH_SET           ( net_msg ,  0);
-	SCTK_MSG_SPECIFIC_CLASS_SET  ( net_msg ,  SCTK_MSG_SPECIFIC_CLASS(recv_msg));
 	SCTK_MSG_SIZE_SET            ( net_msg ,  ev.mlength);
 	SCTK_MSG_COMPLETION_FLAG_SET ( net_msg ,  NULL);
 
@@ -340,7 +342,8 @@ void sctk_ptl_rdv_send_message(sctk_thread_ptp_message_t* msg, sctk_endpoint_t* 
 	match.data.tag  = SCTK_MSG_TAG(msg);
 	match.data.rank = SCTK_MSG_SRC_PROCESS(msg);
 	match.data.uid  = SCTK_MSG_NUMBER(msg);
-	match.data.type = SCTK_MSG_SPECIFIC_CLASS(msg);
+	match.data.type = SCTK_MSG_SPECIFIC_CLASS(msg) % SCTK_PTL_MAX_TYPES;
+	SCTK_PTL_TYPE_RDV_UNSET(match.data.type); /* the PUT does not carry that information */
 	ign             = SCTK_PTL_MATCH_INIT;
 	pte             = SCTK_PTL_PTE_ENTRY(srail->pt_table, SCTK_MSG_COMMUNICATOR(msg));
 
@@ -388,16 +391,20 @@ void sctk_ptl_rdv_send_message(sctk_thread_ptp_message_t* msg, sctk_endpoint_t* 
 		 * (the compute is handled by __sctk_ptl_rdv_compute_chunks()
 		 */
 		size_t cur_sz = (chunk < chunk_rest) ? chunk_sz + 1 : chunk_sz;
+		sctk_ptl_matchbits_t me_match = match;
 
+		/* Set the bit to 1 to differenciate incoming PUT and waiting-to-complete GETs */
+		SCTK_PTL_TYPE_RDV_SET(me_match.data.type);
 		/* create the MD request and configure it */
 		me_request = sctk_ptl_me_create(
 				chunk_addr,
 				cur_sz, 
 				remote, 
-				match,
+				me_match,
 				ign,
 				me_flags
 			);
+		//sctk_nodebug("SEND %d (%llu) || %d|%s|%d|%s (sz=%llu)\n", endpoint->dest, remote.phys.pid, remote.phys.pid, __sctk_ptl_match_str(malloc(32), 32, match.raw), pte->idx, __sctk_ptl_match_str(malloc(32), 32, ign.raw), cur_sz);
 		me_request->msg  = NULL; /* the only case where a msg can be NULL */
 		me_request->type = SCTK_PTL_TYPE_STD;
 		me_request->prot = SCTK_PTL_PROT_RDV;
@@ -436,6 +443,7 @@ void sctk_ptl_rdv_notify_recv(sctk_thread_ptp_message_t* msg, sctk_ptl_rail_info
 	match.data.rank = SCTK_MSG_SRC_PROCESS(msg);
 	match.data.uid  = SCTK_MSG_NUMBER(msg);
 	match.data.type = SCTK_MSG_SPECIFIC_CLASS(msg);
+	SCTK_PTL_TYPE_RDV_UNSET(match.data.type); /* the emitted PUT does not carry the information */
 	ign.data.tag    = (SCTK_MSG_TAG(msg)         == SCTK_ANY_TAG)    ? SCTK_PTL_IGN_TAG  : SCTK_PTL_MATCH_TAG;
 	ign.data.rank   = (SCTK_MSG_SRC_PROCESS(msg) == SCTK_ANY_SOURCE) ? SCTK_PTL_IGN_RANK : SCTK_PTL_MATCH_RANK;
 	ign.data.uid    = SCTK_PTL_IGN_UID;
@@ -459,7 +467,7 @@ void sctk_ptl_rdv_notify_recv(sctk_thread_ptp_message_t* msg, sctk_ptl_rail_info
 	/* this should be the last operation, to optimize the triggeredOps use */
 	sctk_ptl_me_register(srail, put_request, pte);
 
-	sctk_debug("PORTALS: NOTIFY-RECV-RDV from %d (idx=%llu, match=%s, ign=%llu)", SCTK_MSG_SRC_PROCESS(msg), pte->idx, __sctk_ptl_match_str(malloc(32), 32, match.raw), __sctk_ptl_match_str(malloc(32), 32, ign.raw));
+	sctk_debug("PORTALS: NOTIFY-RECV-RDV from %d (idx=%llu, match=%s, ign=%s, msg=%p)", SCTK_MSG_SRC_PROCESS(msg), pte->idx, __sctk_ptl_match_str(malloc(32), 32, match.raw), __sctk_ptl_match_str(malloc(32), 32, ign.raw), msg);
 }
 
 /**

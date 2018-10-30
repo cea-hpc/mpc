@@ -50,6 +50,9 @@
 #define SCTK_PTL_MATCH_UID  ((uint8_t)0)
 /** Set the 'Message type' to be used for the matching step */
 #define SCTK_PTL_MATCH_TYPE  ((uint8_t)0)
+#define SCTK_PTL_MAX_TYPES (1 << 7)
+#define SCTK_PTL_TYPE_RDV_SET(a) do { a |= (1<<7);}while(0)
+#define SCTK_PTL_TYPE_RDV_UNSET(a) do { a &= (~(1<<7));}while(0)
 
 /** default struct to initialize a new sctk_ptl_matchbits_t */
 #define SCTK_PTL_MATCH_INIT (sctk_ptl_matchbits_t) {.data.rank = SCTK_PTL_MATCH_RANK, .data.tag = SCTK_PTL_MATCH_TAG, .data.uid = SCTK_PTL_MATCH_UID, .data.type = SCTK_PTL_MATCH_TYPE}
