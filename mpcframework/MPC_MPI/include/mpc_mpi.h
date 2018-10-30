@@ -1886,6 +1886,12 @@ int MPI_File_create_errhandler(MPI_File_errhandler_function *, MPI_Errhandler *)
 int PMPI_File_create_errhandler(MPI_File_errhandler_function *file_errhandler_fn, MPI_Errhandler *errhandler);
 int MPI_File_call_errhandler(void * , int );
 
+
+/* FORTRAN TYPE */
+int PMPI_Type_create_f90_complex(int, int, MPI_Datatype *);
+int PMPI_Type_create_f90_integer(int, MPI_Datatype *);
+int PMPI_Type_create_f90_real(int, int, MPI_Datatype *);
+
 /* MPIX methods */
 int MPIX_Comm_failure_ack( MPI_Comm  );
 int MPIX_Comm_failure_get_acked( MPI_Comm , MPI_Group * );

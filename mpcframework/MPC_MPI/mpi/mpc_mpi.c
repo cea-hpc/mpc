@@ -1394,7 +1394,7 @@ inline void __sctk_delete_mpc_request (MPI_Request * req,
 	sctk_spinlock_lock (&(tmp->lock));
 
         /* Clear the request */
-        memset(&tmp->req, 0, sizeof(sctk_request_t));
+        //memset(&tmp->req, 0, sizeof(sctk_request_t));
 
         /* if request is not active disable auto-free */
         if (tmp->is_active == 0) {
@@ -9728,13 +9728,21 @@ sctk_op_t *sctk_convert_to_mpc_op(MPI_Op op) {
       ADD_FUNC_HANDLER(func, MPC_LONG_LONG, op);                               \
       ADD_FUNC_HANDLER(func, MPC_DOUBLE_COMPLEX, op);                          \
       ADD_FUNC_HANDLER(func, MPC_COMPLEX, op);                                 \
+      ADD_FUNC_HANDLER(func, MPC_COMPLEX8, op);                    \
+      ADD_FUNC_HANDLER(func, MPC_COMPLEX16, op);                         \
+      ADD_FUNC_HANDLER(func, MPC_COMPLEX32, op);                         \
       ADD_FUNC_HANDLER(func, MPC_UNSIGNED_LONG_LONG_INT, op);                  \
+      ADD_FUNC_HANDLER(func, MPC_UINT8_T, op);                                 \
       ADD_FUNC_HANDLER(func, MPC_UINT16_T, op);                                \
       ADD_FUNC_HANDLER(func, MPC_UINT32_T, op);                                \
       ADD_FUNC_HANDLER(func, MPC_UINT64_T, op);                                \
+      ADD_FUNC_HANDLER(func, MPC_INT8_T, op);                                 \
       ADD_FUNC_HANDLER(func, MPC_INT16_T, op);                                 \
       ADD_FUNC_HANDLER(func, MPC_INT32_T, op);                                 \
       ADD_FUNC_HANDLER(func, MPC_INT64_T, op);                                 \
+      ADD_FUNC_HANDLER(func, MPC_COUNT, op);                                 \
+      ADD_FUNC_HANDLER(func, MPC_AINT, op);                                 \
+      ADD_FUNC_HANDLER(func, MPC_OFFSET, op);                                \
     default:                                                                   \
       not_reachable();                                                         \
     }                                                                          \
@@ -9760,12 +9768,18 @@ sctk_op_t *sctk_convert_to_mpc_op(MPI_Op op) {
       ADD_FUNC_HANDLER(func, MPC_UNSIGNED, op);                                \
       ADD_FUNC_HANDLER(func, MPC_UNSIGNED_LONG, op);                           \
       ADD_FUNC_HANDLER(func, MPC_LOGICAL, op);                                 \
+      ADD_FUNC_HANDLER(func, MPC_UINT8_T, op);                                \
       ADD_FUNC_HANDLER(func, MPC_UINT16_T, op);                                \
       ADD_FUNC_HANDLER(func, MPC_UINT32_T, op);                                \
       ADD_FUNC_HANDLER(func, MPC_UINT64_T, op);                                \
+      ADD_FUNC_HANDLER(func, MPC_INT8_T, op);                                 \
       ADD_FUNC_HANDLER(func, MPC_INT16_T, op);                                 \
       ADD_FUNC_HANDLER(func, MPC_INT32_T, op);                                 \
       ADD_FUNC_HANDLER(func, MPC_INT64_T, op);                                 \
+      ADD_FUNC_HANDLER(func, MPC_COUNT, op);                                   \
+      ADD_FUNC_HANDLER(func, MPC_AINT, op);                                    \
+      ADD_FUNC_HANDLER(func, MPC_OFFSET, op);                                  \  
+      ADD_FUNC_HANDLER(func, MPC_C_BOOL,op);                                   \           
     default:                                                                   \
       not_reachable();                                                         \
     }                                                                          \
@@ -10018,6 +10032,11 @@ static inline int __INTERNAL__PMPI_Reduce_derived_no_commute_for(
 
 	int res;
 
+  if(sendbuf == MPI_IN_PLACE)
+  {
+    sendbuf = recvbuf;
+  }
+
 	if( rank == root )
 	{
 		void * sumbuff = NULL;
@@ -10035,10 +10054,10 @@ static inline int __INTERNAL__PMPI_Reduce_derived_no_commute_for(
 
 		size_t blob = dsize * count;
 	
-		if( MAX_FOR_RED_STATIC_BUFF <= (blob * (size-1)) )
+		if( MAX_FOR_RED_STATIC_BUFF <= (blob * size) )
 		{
 
-			sumbuff = sctk_malloc( blob * (size - 1) );
+			sumbuff = sctk_malloc( blob * size );
 
 			if( !sumbuff )
 			{
@@ -10072,13 +10091,13 @@ static inline int __INTERNAL__PMPI_Reduce_derived_no_commute_for(
 		}
 
 		int i;
-		int cnt = 0;
+    int cnt = 0;
 		for( i = 0 ; i  < size ; i++ )
 		{
 			if(i == root)
 				continue;
-			__INTERNAL__PMPI_Irecv( sumbuff + (blob * (cnt)) , count , datatype , i , MPC_REDUCE_TAG, comm , &rreqs[cnt] );
-			cnt++;
+			__INTERNAL__PMPI_Irecv( sumbuff + (blob * i) , count , datatype , i , MPC_REDUCE_TAG, comm , &rreqs[cnt] );
+      cnt++;
 		}
 
 		if( sendbuf != MPI_IN_PLACE )
@@ -10100,7 +10119,7 @@ static inline int __INTERNAL__PMPI_Reduce_derived_no_commute_for(
 		{
 			for( i = 1 ; i < size ; i ++ )
 			{
-				float * fsrc = (float *)sumbuff + (blob * (i-1));
+				float * fsrc = (float *)sumbuff + (blob * i);
 			
 				for( j = 0 ; j < count ; j++ )
 				{
@@ -10114,7 +10133,7 @@ static inline int __INTERNAL__PMPI_Reduce_derived_no_commute_for(
 		{
 			for( i = 1 ; i < size ; i ++ )
 			{
-				double * dsrc = (double *)sumbuff + (blob * (i-1));
+				double * dsrc = (double *)sumbuff + (blob * i);
 			
 				for( j = 0 ; j < count ; j++ )
 				{
@@ -10127,37 +10146,44 @@ static inline int __INTERNAL__PMPI_Reduce_derived_no_commute_for(
 		{
 			for( i = 1 ; i < size ; i ++ )
 			{
-				int * isrc = (int *)sumbuff + (blob * (i-1));
+				int * isrc = (int *)sumbuff + (blob * i);
 			
 				for( j = 0 ; j < count ; j++ )
-				{
-					((int*)recvbuf)[i] += isrc[i];
-				}
-			
-			}
-		}
-		else
-		{
-			/* This is the genreric Slow-Path */
-			for(i=1 ; i<size ; i++)
-			{
-				if (mpc_op.u_func != NULL) {
-						mpc_op.u_func( sumbuff + (blob * (i-1)), recvbuf, &count, &datatype);
-				} else {
-					MPC_Op_f func;
-					func = sctk_get_common_function(datatype, mpc_op);
-					func(sumbuff + (blob * (i-1)), recvbuf, count, datatype);
-				}
-			}
-		}
-	}
-	else
-	{
-		res = __INTERNAL__PMPI_Send( sendbuf , count , datatype , root , MPC_REDUCE_TAG , comm );
+        {
+          ((int*)recvbuf)[i] += isrc[i];
+        }
 
-		if (res != MPI_SUCCESS) {
-			return res;
-		}
+      }
+    }
+    else
+    {
+      /* This is the generic Slow-Path */
+      memcpy(sumbuff,recvbuf + (root * blob), blob);
+
+      for(i=1 ; i<size ; i++)
+      {
+        if (mpc_op.u_func != NULL) {
+          mpc_op.u_func( sumbuff + (blob * (i-1)),  sumbuff + (blob * i), &count, &datatype);
+        } else {
+          MPC_Op_f func;
+          func = sctk_get_common_function(datatype, mpc_op);
+          func(sumbuff + (blob * (i-1)), sumbuff + (blob * i), count, datatype);
+        }
+      }
+      memcpy(recvbuf, sumbuff + (blob * (size -1)), blob);
+    }
+    if( MAX_FOR_RED_STATIC_BUFF <= (blob * (size-1)) )
+    {
+      sctk_free(sumbuff);
+    }
+  }
+  else
+  {
+    res = __INTERNAL__PMPI_Send( sendbuf , count , datatype , root , MPC_REDUCE_TAG , comm );
+
+    if (res != MPI_SUCCESS) {
+      return res;
+    }
 
 	}
 
@@ -10206,16 +10232,18 @@ __INTERNAL__PMPI_Reduce_derived_commute(void *sendbuf, void *recvbuf, int count,
 	
 	char st_buff1[MPI_RED_TREE_STATIC_BUFF];
 	char st_buff2[MPI_RED_TREE_STATIC_BUFF];
+  char st_buff3[MPI_RED_TREE_STATIC_BUFF];
 
 	int allocated1 = 0;
 	int allocated2 = 0;
-
+  int allocated3 = 0;
 
 	/* By default LC writes in sendbuff */
 	void * tbuff1 = sendbuf;
 	/* For RC buff is allocated after IN_PLACE mitigation */
 	void * tbuff2 = NULL;
 
+  void* recvbuf_cpy;
 	MPI_Aint dsize;
 	
 	res = __INTERNAL__PMPI_Type_extent(datatype, &dsize);
@@ -10223,6 +10251,20 @@ __INTERNAL__PMPI_Reduce_derived_commute(void *sendbuf, void *recvbuf, int count,
 	if (res != MPI_SUCCESS) {
 		return res;
 	}
+
+  if(rank != root)
+  {
+    if( count * dsize < MPI_RED_TREE_STATIC_BUFF )
+    {
+      recvbuf_cpy = (void *)st_buff3;
+    }
+    else
+    {
+      recvbuf_cpy = sctk_malloc(count * dsize);
+      allocated3 = 1;
+    }
+    memcpy( recvbuf_cpy,recvbuf,count*dsize);
+  }
 
 	if( sendbuf != MPI_IN_PLACE )
 	{
@@ -10385,6 +10427,15 @@ __INTERNAL__PMPI_Reduce_derived_commute(void *sendbuf, void *recvbuf, int count,
 	{
 		sctk_free( tbuff2 );
 	}
+
+  if(rank !=root)
+  {
+    memcpy( recvbuf,recvbuf_cpy,count*dsize);
+    if (allocated3 )
+    {
+      sctk_free(recvbuf_cpy);
+    }
+  }
 
 	return MPI_SUCCESS;
 }
@@ -10876,17 +10927,14 @@ __INTERNAL__PMPI_Reduce_inter (void *sendbuf, void *recvbuf, int count,
 		if(res != MPI_SUCCESS){return res;}
 	}
 	else
-	{
-		if (rank == 0)
-		{
-			int type_size;
-			res = __INTERNAL__PMPI_Type_size(datatype, &type_size);
-			if(res != MPI_SUCCESS){return res;}
-			
-			size = count * type_size;
-			tmp_buf = (void *) sctk_malloc(size);
-		}
-		res = __INTERNAL__PMPI_Reduce(sendbuf, tmp_buf, count, datatype, op, 0, sctk_get_local_comm_id(comm));
+  {
+    int type_size;
+    res = __INTERNAL__PMPI_Type_size(datatype, &type_size);
+    if(res != MPI_SUCCESS){return res;}
+
+    size = count * type_size;
+    tmp_buf = (void *) sctk_malloc(size);
+    res = __INTERNAL__PMPI_Reduce(sendbuf, tmp_buf, count, datatype, op, 0, sctk_get_local_comm_id(comm));
 		if(res != MPI_SUCCESS){return res;}
 
 		if (rank == 0)
@@ -11070,12 +11118,13 @@ __INTERNAL__PMPI_Allreduce_intra_pipeline(void *sendbuf, void *recvbuf, int coun
 	int left_to_send = count;
 	int sent = 0;
 
-	void * sbuff = sendbuf;
 
 	if( sendbuf == MPI_IN_PLACE )
 	{
 		sendbuf = recvbuf;
 	}
+
+	void * sbuff = sendbuf;
 
 	int left = (rank - 1);
 	int right = (rank + 1) % size;
@@ -11182,8 +11231,8 @@ __INTERNAL__PMPI_Allreduce_intra (void *sendbuf, void *recvbuf, int count,
 {
 	int res = MPI_ERR_INTERN;
 
-	if( !sctk_datatype_contig_mem(datatype) )
-//|| ! sctk_op_can_commute( op, datatype ))
+  sctk_op_t *mpi_op = sctk_convert_to_mpc_op (op);
+	if( !sctk_datatype_contig_mem(datatype) || ! sctk_op_can_commute( mpi_op, datatype ))
 	{
 		res = __INTERNAL__PMPI_Allreduce_intra_simple( sendbuf, recvbuf, count, datatype, op, comm );
 	}
@@ -20802,6 +20851,11 @@ int PMPI_Reduce_local(const void *inbuf, void *inoutbuf, int count, MPI_Datatype
 int PMPI_File_create_errhandler(MPI_File_errhandler_function *file_errhandler_fn, MPI_Errhandler *errhandler){not_implemented();return MPI_ERR_INTERN;}
 int PMPI_File_call_errhandler(void * fh, int errorcode){not_implemented();return MPI_ERR_INTERN;}
 
+
+/* FORTRAN TYPE */
+int PMPI_Type_create_f90_complex(int precision, int range, MPI_Datatype *newtype){not_implemented();return MPI_ERR_INTERN;}
+int PMPI_Type_create_f90_integer(int range, MPI_Datatype *newtype){not_implemented();return MPI_ERR_INTERN;}
+int PMPI_Type_create_f90_real(int precision, int range, MPI_Datatype *newtype){not_implemented();return MPI_ERR_INTERN;}
 
 /* MPIX methods */
 int PMPIX_Comm_failure_ack( MPI_Comm comm ){not_implemented();return MPI_ERR_INTERN;}

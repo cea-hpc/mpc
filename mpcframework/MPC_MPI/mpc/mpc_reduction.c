@@ -90,6 +90,173 @@ mpc_redution_check_type (MPC_Datatype a, MPC_Datatype b)
     }                                                                          \
   }
 
+ void
+MPC_MAX_func_MPC_COMPLEX8 (const mpc_float_float * mpc_restrict in,
+        mpc_float_float * mpc_restrict inout, size_t size,
+        MPC_Datatype datatype)
+{
+  size_t i;
+  mpc_redution_check_type (datatype, MPC_COMPLEX8);
+  for (i = 0; i < size; i++)
+    {
+      inout[i].a = in[i].a + inout[i].a;
+      inout[i].b = in[i].b + inout[i].b;
+    }
+}
+
+void
+MPC_MIN_func_MPC_COMPLEX8 (const mpc_float_float * mpc_restrict in,
+        mpc_float_float * mpc_restrict inout, size_t size,
+        MPC_Datatype datatype)
+{
+  size_t i;
+  mpc_redution_check_type (datatype, MPC_COMPLEX8);
+  for (i = 0; i < size; i++)
+    {
+      inout[i].a = in[i].a + inout[i].a;
+      inout[i].b = in[i].b + inout[i].b;
+    }
+}
+
+void
+MPC_SUM_func_MPC_COMPLEX8 (const mpc_float_float * mpc_restrict in,
+        mpc_float_float * mpc_restrict inout, size_t size,
+        MPC_Datatype datatype)
+{
+  size_t i;
+  mpc_redution_check_type (datatype, MPC_COMPLEX8);
+  for (i = 0; i < size; i++)
+    {
+      inout[i].a = in[i].a + inout[i].a;
+      inout[i].b = in[i].b + inout[i].b;
+    }
+}
+void
+MPC_PROD_func_MPC_COMPLEX8 (const mpc_float_float * mpc_restrict in,
+        mpc_float_float * mpc_restrict inout, size_t size,
+        MPC_Datatype datatype)
+{
+  size_t i;
+  mpc_redution_check_type (datatype, MPC_COMPLEX8);
+  for (i = 0; i < size; i++)
+    {
+      inout[i].a = (in[i].a * inout[i].a) - (in[i].b * inout[i].b);
+      inout[i].b = (in[i].b * inout[i].a) + (in[i].a * inout[i].b);
+    }
+}
+
+ void
+MPC_MAX_func_MPC_COMPLEX16 (const mpc_double_double * mpc_restrict in,
+        mpc_double_double * mpc_restrict inout, size_t size,
+        MPC_Datatype datatype)
+{
+  size_t i;
+  mpc_redution_check_type (datatype, MPC_COMPLEX16);
+  for (i = 0; i < size; i++)
+    {
+      inout[i].a = in[i].a + inout[i].a;
+      inout[i].b = in[i].b + inout[i].b;
+    }
+}
+
+void
+MPC_MIN_func_MPC_COMPLEX16 (const mpc_double_double * mpc_restrict in,
+        mpc_double_double * mpc_restrict inout, size_t size,
+        MPC_Datatype datatype)
+{
+  size_t i;
+  mpc_redution_check_type (datatype, MPC_COMPLEX16);
+  for (i = 0; i < size; i++)
+    {
+      inout[i].a = in[i].a + inout[i].a;
+      inout[i].b = in[i].b + inout[i].b;
+    }
+}
+
+void
+MPC_SUM_func_MPC_COMPLEX16 (const mpc_double_double * mpc_restrict in,
+        mpc_double_double * mpc_restrict inout, size_t size,
+        MPC_Datatype datatype)
+{
+  size_t i;
+  mpc_redution_check_type (datatype, MPC_COMPLEX16);
+  for (i = 0; i < size; i++)
+    {
+      inout[i].a = in[i].a + inout[i].a;
+      inout[i].b = in[i].b + inout[i].b;
+    }
+
+}
+void
+MPC_PROD_func_MPC_COMPLEX16 (const mpc_double_double * mpc_restrict in,
+        mpc_double_double * mpc_restrict inout, size_t size,
+        MPC_Datatype datatype)
+{
+  size_t i;
+  mpc_redution_check_type (datatype, MPC_COMPLEX16);
+  for (i = 0; i < size; i++)
+    {
+      inout[i].a = (in[i].a * inout[i].a) - (in[i].b * inout[i].b);
+      inout[i].b = (in[i].b * inout[i].a) + (in[i].a * inout[i].b);
+    }
+
+}
+
+ void
+MPC_MAX_func_MPC_COMPLEX32 (const mpc_longdouble_longdouble* mpc_restrict in,
+        mpc_longdouble_longdouble * mpc_restrict inout, size_t size,
+        MPC_Datatype datatype)
+{
+  size_t i;
+  mpc_redution_check_type (datatype, MPC_COMPLEX32);
+  for (i = 0; i < size; i++)
+    {
+      inout[i].a = in[i].a + inout[i].a;
+      inout[i].b = in[i].b + inout[i].b;
+    }
+}
+
+void
+MPC_MIN_func_MPC_COMPLEX32 (const mpc_longdouble_longdouble* mpc_restrict in,
+        mpc_longdouble_longdouble * mpc_restrict inout, size_t size,
+        MPC_Datatype datatype)
+{
+  size_t i;
+  mpc_redution_check_type (datatype, MPC_COMPLEX32);
+  for (i = 0; i < size; i++)
+    {
+      inout[i].a = in[i].a + inout[i].a;
+      inout[i].b = in[i].b + inout[i].b;
+    }
+}
+
+void
+MPC_SUM_func_MPC_COMPLEX32 (const mpc_longdouble_longdouble * mpc_restrict in,
+        mpc_longdouble_longdouble* mpc_restrict inout, size_t size,
+        MPC_Datatype datatype)
+{
+  size_t i;
+  mpc_redution_check_type (datatype, MPC_COMPLEX32);
+  for (i = 0; i < size; i++)
+    {
+      inout[i].a = in[i].a + inout[i].a;
+      inout[i].b = in[i].b + inout[i].b;
+    }
+}
+void
+MPC_PROD_func_MPC_COMPLEX32 (const mpc_longdouble_longdouble * mpc_restrict in,
+        mpc_longdouble_longdouble * mpc_restrict inout, size_t size,
+        MPC_Datatype datatype)
+{
+  size_t i;
+  mpc_redution_check_type (datatype, MPC_COMPLEX32);
+  for (i = 0; i < size; i++)
+    {
+      inout[i].a = (in[i].a * inout[i].a) - (in[i].b * inout[i].b);
+      inout[i].b = (in[i].b * inout[i].a) + (in[i].a * inout[i].b);
+    }
+}
+
 void
 MPC_SUM_func_MPC_DOUBLE_COMPLEX (const mpc_double_double * mpc_restrict in,
 			  mpc_double_double * mpc_restrict inout, size_t size,
@@ -387,6 +554,11 @@ MPC_DEFINED_FUNCS_IMPL (MPC_UNSIGNED_LONG_LONG_INT, mpc_unsigned_long_long_int)
 MPC_DEFINED_FUNCS_IMPL (MPC_UNSIGNED_LONG_LONG, mpc_unsigned_long_long_int)
 MPC_DEFINED_FUNCS_IMPL (MPC_LONG_DOUBLE, long double)
 
+MPC_DEFINED_FUNCS_IMPL (MPC_COUNT, MPC_Count)
+MPC_DEFINED_FUNCS_IMPL (MPC_AINT, MPC_Aint)
+MPC_DEFINED_FUNCS_IMPL (MPC_OFFSET, MPC_Aint)
+MPC_DEFINED_FUNCS_IMPL (MPC_C_BOOL, char)
+
 MPC_DEFINED_FUNCS_IMPL (MPC_INTEGER1, sctk_int8_t)
 MPC_DEFINED_FUNCS_IMPL (MPC_INTEGER2, sctk_int16_t)
 MPC_DEFINED_FUNCS_IMPL (MPC_INTEGER4, sctk_int32_t)
@@ -396,21 +568,29 @@ MPC_DEFINED_FUNCS_IMPL (MPC_REAL4, float)
 MPC_DEFINED_FUNCS_IMPL (MPC_REAL8, double)
 MPC_DEFINED_FUNCS_IMPL (MPC_REAL16, long double)
 
+MPC_DEFINED_FUNCS_IMPL (MPC_UINT8_T, sctk_uint8_t)
 MPC_DEFINED_FUNCS_IMPL (MPC_UINT16_T, sctk_uint16_t)
 MPC_DEFINED_FUNCS_IMPL (MPC_UINT32_T, sctk_uint32_t)
 MPC_DEFINED_FUNCS_IMPL (MPC_UINT64_T, sctk_uint64_t)
+MPC_DEFINED_FUNCS_IMPL (MPC_INT8_T, sctk_int8_t)
 MPC_DEFINED_FUNCS_IMPL (MPC_INT16_T, sctk_int16_t)
 MPC_DEFINED_FUNCS_IMPL (MPC_INT32_T, sctk_int32_t)
 MPC_DEFINED_FUNCS_IMPL (MPC_INT64_T, sctk_int64_t)
 
+MPC_DEFINED_FUNCS_IMPL2 (MPC_UINT8_T, sctk_uint8_t)
 MPC_DEFINED_FUNCS_IMPL2 (MPC_UINT16_T, sctk_uint16_t)
 MPC_DEFINED_FUNCS_IMPL2 (MPC_UINT32_T, sctk_uint32_t)
 MPC_DEFINED_FUNCS_IMPL2 (MPC_UINT64_T, sctk_uint64_t)
+MPC_DEFINED_FUNCS_IMPL2 (MPC_INT8_T, sctk_int8_t)
 MPC_DEFINED_FUNCS_IMPL2 (MPC_INT16_T, sctk_int16_t)
 MPC_DEFINED_FUNCS_IMPL2 (MPC_INT32_T, sctk_int32_t)
 MPC_DEFINED_FUNCS_IMPL2 (MPC_INT64_T, sctk_int64_t)
+  
 
-
+MPC_DEFINED_FUNCS_IMPL2 (MPC_COUNT, MPC_Count)
+MPC_DEFINED_FUNCS_IMPL2 (MPC_AINT, MPC_Aint)
+MPC_DEFINED_FUNCS_IMPL2 (MPC_OFFSET, MPC_Aint)
+MPC_DEFINED_FUNCS_IMPL2 (MPC_C_BOOL, char)
 
 MPC_DEFINED_FUNCS_NOIMPL (MPC_FLOAT_INT, mpc_float_int)
 MPC_DEFINED_FUNCS_NOIMPL (MPC_LONG_INT, mpc_long_int)

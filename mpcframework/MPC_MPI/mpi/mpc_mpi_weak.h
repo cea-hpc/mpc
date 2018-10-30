@@ -846,6 +846,15 @@
 #pragma weak mpi_file_create_errhandler__ = pmpi_file_create_errhandler__
 #pragma weak mpi_file_call_errhandler__ = pmpi_file_call_errhandler__
 
+/* FORTRAN TYPE */
+#pragma weak MPI_Type_create_f90_complex = PMPI_Type_create_f90_complex
+#pragma weak MPI_Type_create_f90_integer = PMPI_Type_create_f90_integer
+#pragma weak MPI_Type_create_f90_real = PMPI_Type_create_f90_real
+
+#pragma weak mpi_type_create_f90_complex_ = PMPI_Type_create_f90_complex
+#pragma weak mpi_type_create_f90_integer_ = PMPI_Type_create_f90_integer
+#pragma weak mpi_type_create_f90_real_ = PMPI_Type_create_f90_real
+
 /* MPI_T methods */
 // PROFILER MPI_T MPI_T methods
 #pragma weak MPI_T_init_thread = PMPI_T_init_thread
