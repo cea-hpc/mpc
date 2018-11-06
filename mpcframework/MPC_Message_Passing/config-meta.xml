@@ -66,9 +66,9 @@
 			<value>IBV_RDVZ_READ_PROTOCOL</value>
 		</enum>
 
-		<struct name="hardopts_t" doc="">
+		<struct name="offload_ops_t" doc="">
 			<param name="ondemand" type="bool" doc="Enable on-demand optimization through ID hardware propagation" default="false" />
-			<param name="collectives" type="bool" doc="Enable collective optimization for Portals" default="false" />
+			<param name="collectives" type="bool" doc="Enable collective optimization for Portals" default="true" />
 		</struct>
 
 		<!-- Structure for Portals driver -->
@@ -76,7 +76,7 @@
 			<param name="eager_limit" type="size" doc="Max size of messages allowed to use the eager protocol." default="8 KB" />
 			<param name="min_comms" type="int" doc="Min number of communicators (help to avoid dynamic PT entry allocation)" default="1" />
 			<param name="block_cut" type="size" doc="Above this value, RDV messages will be split in multiple GET requests" default="2 GB" />
-			<param name="hardware_optimization" type="hardopts_t" doc="List of available optimizations taking advantage of hardware matching" />
+			<param name="offloading" type="offload_ops_t" doc="List of available optimizations taking advantage of triggered Ops" />
 		</struct>
 
 		<!-- Structure for TCP driver -->

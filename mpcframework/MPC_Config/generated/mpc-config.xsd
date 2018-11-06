@@ -248,7 +248,7 @@
     </xs:restriction>
   </xs:simpleType>
   <!-- ********************************************************* -->
-  <xs:complexType name="user_type_hardopts_t">
+  <xs:complexType name="user_type_offload_ops_t">
     <xs:all>
       <xs:element minOccurs="0" name="ondemand" type="xs:boolean"/>
       <xs:element minOccurs="0" name="collectives" type="xs:boolean"/>
@@ -272,7 +272,7 @@
           </xs:restriction>
         </xs:simpleType>
       </xs:element>
-      <xs:element minOccurs="0" name="hardware_optimization" type="user_type_hardopts_t"/>
+      <xs:element minOccurs="0" name="offloading" type="user_type_offload_ops_t"/>
     </xs:all>
   </xs:complexType>
   <!-- ********************************************************* -->

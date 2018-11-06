@@ -587,7 +587,7 @@ Type is size. Default value is 1GB.
 .Pp mmu_cache_maximum_pin_size
 Maximum size of an pinned entry.
 .El
-.Sh ENTRIES OF TYPE hardopts_t
+.Sh ENTRIES OF TYPE offload_ops_t
 
 .Pp
 It support parameters :
@@ -598,7 +598,7 @@ Type is bool. Default value is false.
 .Pp ondemand
 Enable on-demand optimization through ID hardware propagation
 .It Cm collectives
-Type is bool. Default value is false. 
+Type is bool. Default value is true. 
 .Pp collectives
 Enable collective optimization for Portals
 .El
@@ -620,10 +620,10 @@ Min number of communicators (help to avoid dynamic PT entry allocation)
 Type is size. Default value is 2 GB. 
 .Pp block_cut
 Above this value, RDV messages will be split in multiple GET requests
-.It Cm hardware_optimization
-Type is hardopts_t. 
-.Pp hardware_optimization
-List of available optimizations taking advantage of hardware matching
+.It Cm offloading
+Type is offload_ops_t. 
+.Pp offloading
+List of available optimizations taking advantage of triggered Ops
 .El
 .Sh ENTRIES OF TYPE net_driver_tcp
 TCP-based driver

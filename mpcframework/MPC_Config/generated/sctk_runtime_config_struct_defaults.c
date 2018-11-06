@@ -1824,9 +1824,9 @@ void sctk_runtime_config_enum_init_ibv_rdvz_protocol()
 }
 
 /*******************  FUNCTION  *********************/
-void sctk_runtime_config_struct_init_hardopts_t(void * struct_ptr)
+void sctk_runtime_config_struct_init_offload_ops_t(void * struct_ptr)
 {
-	struct sctk_runtime_config_struct_hardopts_t * obj = struct_ptr;
+	struct sctk_runtime_config_struct_offload_ops_t * obj = struct_ptr;
 	/* Make sure this element is not initialized yet       */
 	/* It allows us to know when we are facing dynamically */
 	/* allocated objects requiring an init                 */
@@ -1834,7 +1834,7 @@ void sctk_runtime_config_struct_init_hardopts_t(void * struct_ptr)
 
 	/* Simple params : */
 	obj->ondemand = false;
-	obj->collectives = false;
+	obj->collectives = true;
 	obj->init_done = 1;
 }
 
@@ -1851,7 +1851,7 @@ void sctk_runtime_config_struct_init_net_driver_portals(void * struct_ptr)
 	obj->eager_limit = sctk_runtime_config_map_entry_parse_size("8 KB");
 	obj->min_comms = 1;
 	obj->block_cut = sctk_runtime_config_map_entry_parse_size("2 GB");
-	sctk_runtime_config_struct_init_hardopts_t(&obj->hardware_optimization);
+	sctk_runtime_config_struct_init_offload_ops_t(&obj->offloading);
 	obj->init_done = 1;
 }
 
@@ -3826,9 +3826,9 @@ void sctk_runtime_config_reset_struct_default_if_needed(const char * structname,
 		return;
 	}
 
-	if( !strcmp( structname , "sctk_runtime_config_struct_hardopts_t") )
+	if( !strcmp( structname , "sctk_runtime_config_struct_offload_ops_t") )
 	{
-		sctk_runtime_config_struct_init_hardopts_t( ptr );
+		sctk_runtime_config_struct_init_offload_ops_t( ptr );
 		return;
 	}
 

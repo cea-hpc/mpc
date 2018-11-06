@@ -212,9 +212,9 @@ const struct sctk_runtime_config_entry_meta sctk_runtime_config_db[] = {
 			, NULL},	{"mmu_cache_maximum_pin_size"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_ib_global,mmu_cache_maximum_pin_size)  , sizeof(size_t) , "size_t" , NULL , 
 				"IB_MMU_CHACHE_MAX_PIN_SIZE"
 			, NULL},	/* struct */
-	{"sctk_runtime_config_struct_hardopts_t" , SCTK_CONFIG_META_TYPE_STRUCT , 0  , sizeof(struct sctk_runtime_config_struct_hardopts_t) , NULL , sctk_runtime_config_struct_init_hardopts_t, NULL },	{"ondemand"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_hardopts_t,ondemand)  , sizeof(int) , "int" , NULL , 
+	{"sctk_runtime_config_struct_offload_ops_t" , SCTK_CONFIG_META_TYPE_STRUCT , 0  , sizeof(struct sctk_runtime_config_struct_offload_ops_t) , NULL , sctk_runtime_config_struct_init_offload_ops_t, NULL },	{"ondemand"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_offload_ops_t,ondemand)  , sizeof(int) , "int" , NULL , 
 				NULL
-			, NULL},	{"collectives"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_hardopts_t,collectives)  , sizeof(int) , "int" , NULL , 
+			, NULL},	{"collectives"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_offload_ops_t,collectives)  , sizeof(int) , "int" , NULL , 
 				NULL
 			, NULL},	/* struct */
 	{"sctk_runtime_config_struct_net_driver_portals" , SCTK_CONFIG_META_TYPE_STRUCT , 0  , sizeof(struct sctk_runtime_config_struct_net_driver_portals) , NULL , sctk_runtime_config_struct_init_net_driver_portals, NULL },	{"eager_limit"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_driver_portals,eager_limit)  , sizeof(size_t) , "size_t" , NULL , 
@@ -223,7 +223,7 @@ const struct sctk_runtime_config_entry_meta sctk_runtime_config_db[] = {
 				NULL
 			, NULL},	{"block_cut"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_driver_portals,block_cut)  , sizeof(size_t) , "size_t" , NULL , 
 				NULL
-			, NULL},	{"hardware_optimization"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_driver_portals,hardware_optimization)  , sizeof(struct sctk_runtime_config_struct_hardopts_t) , "sctk_runtime_config_struct_hardopts_t" , sctk_runtime_config_struct_init_hardopts_t , 
+			, NULL},	{"offloading"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_driver_portals,offloading)  , sizeof(struct sctk_runtime_config_struct_offload_ops_t) , "sctk_runtime_config_struct_offload_ops_t" , sctk_runtime_config_struct_init_offload_ops_t , 
 				NULL
 			, NULL},	/* struct */
 	{"sctk_runtime_config_struct_net_driver_tcp" , SCTK_CONFIG_META_TYPE_STRUCT , 0  , sizeof(struct sctk_runtime_config_struct_net_driver_tcp) , NULL , sctk_runtime_config_struct_init_net_driver_tcp, NULL },	{"tcpoib"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_driver_tcp,tcpoib)  , sizeof(int) , "int" , NULL , 

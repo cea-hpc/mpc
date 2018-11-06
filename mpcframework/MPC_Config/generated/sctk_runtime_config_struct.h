@@ -292,7 +292,7 @@ struct sctk_runtime_config_struct_ib_global
 
 /******************************** STRUCTURE *********************************/
 /****/
-struct sctk_runtime_config_struct_hardopts_t
+struct sctk_runtime_config_struct_offload_ops_t
 {	int init_done;
 	/**Enable on-demand optimization through ID hardware propagation**/
 	int ondemand;
@@ -310,8 +310,8 @@ struct sctk_runtime_config_struct_net_driver_portals
 	int min_comms;
 	/**Above this value, RDV messages will be split in multiple GET requests**/
 	size_t block_cut;
-	/**List of available optimizations taking advantage of hardware matching**/
-	struct sctk_runtime_config_struct_hardopts_t hardware_optimization;
+	/**List of available optimizations taking advantage of triggered Ops**/
+	struct sctk_runtime_config_struct_offload_ops_t offloading;
 };
 
 /******************************** STRUCTURE *********************************/

@@ -106,15 +106,15 @@ meta.types = {
 		mmu_cache_maximum_size: {mode: 'param', name: "mmu_cache_maximum_size", type: "size", doc: "Total size of entries to keep in the cache.", dflt: "4GB", },
 		mmu_cache_maximum_pin_size: {mode: 'param', name: "mmu_cache_maximum_pin_size", type: "size", doc: "Maximum size of an pinned entry.", dflt: "1GB", },
 	}},
-	hardopts_t : {type: 'struct', name: "hardopts_t", childs: {
+	offload_ops_t : {type: 'struct', name: "offload_ops_t", childs: {
 		ondemand: {mode: 'param', name: "ondemand", type: "bool", doc: "Enable on-demand optimization through ID hardware propagation", dflt: "false", },
-		collectives: {mode: 'param', name: "collectives", type: "bool", doc: "Enable collective optimization for Portals", dflt: "false", },
+		collectives: {mode: 'param', name: "collectives", type: "bool", doc: "Enable collective optimization for Portals", dflt: "true", },
 	}},
 	net_driver_portals : {type: 'struct', name: "net_driver_portals", childs: {
 		eager_limit: {mode: 'param', name: "eager_limit", type: "size", doc: "Max size of messages allowed to use the eager protocol.", dflt: "8 KB", },
 		min_comms: {mode: 'param', name: "min_comms", type: "int", doc: "Min number of communicators (help to avoid dynamic PT entry allocation)", dflt: "1", },
 		block_cut: {mode: 'param', name: "block_cut", type: "size", doc: "Above this value, RDV messages will be split in multiple GET requests", dflt: "2 GB", },
-		hardware_optimization: {mode: 'param', name: "hardware_optimization", type: "hardopts_t", doc: "List of available optimizations taking advantage of hardware matching", dflt: null},
+		offloading: {mode: 'param', name: "offloading", type: "offload_ops_t", doc: "List of available optimizations taking advantage of triggered Ops", dflt: null},
 	}},
 	net_driver_tcp : {type: 'struct', name: "net_driver_tcp", childs: {
 		tcpoib: {mode: 'param', name: "tcpoib", type: "int", doc: "Enable TCP over Infiniband (if elligible).", dflt: "1", },
