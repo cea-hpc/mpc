@@ -30,6 +30,7 @@
 #include "sctk_ptl_iface.h"
 #include "sctk_ptl_types.h"
 #include "sctk_ht.h"
+#include "sctk_ptl_offcoll.h"
 
 static sctk_atomics_int nb_mes = SCTK_ATOMICS_INT_T_INIT(0);
 static sctk_atomics_int nb_mds = SCTK_ATOMICS_INT_T_INIT(0);
@@ -74,6 +75,10 @@ void sctk_ptl_print_structure(sctk_ptl_rail_info_t* srail)
 	"  - MAX MEs/PTE        : %d\n"
 	"  - MAX TriggeredOps   : %d\n"
 	"  - MAX Msg Size (MB)  : %d\n"
+	"\n"
+	" OFFLOADING\n"
+	"  - Collectives        : %s\n"
+	"  - On-demand          : %s\n"
 	"\n===================================",
 	SCTK_PTL_PTE_FLAGS,
 	srail->nb_entries,
@@ -100,7 +105,9 @@ void sctk_ptl_print_structure(sctk_ptl_rail_info_t* srail)
 	l.max_iovecs,
 	l.max_list_size,
 	l.max_triggered_ops,
-	((size_t)l.max_msg_size / (1024 * 1024))
+	((size_t)l.max_msg_size / (1024 * 1024)),
+	(SCTK_PTL_IS_OFFLOAD_COLL(srail->offload_support) ? "True" : "False"),
+	(SCTK_PTL_IS_OFFLOAD_OD(srail->offload_support) ? "True" : "False")
 	);
 	
 }
@@ -200,6 +207,9 @@ void sctk_ptl_software_init(sctk_ptl_rail_info_t* srail, int comm_dims)
 	table = sctk_malloc(sizeof(sctk_ptl_pte_t) * comm_dims); /* one CM, one recovery, one RDMA */
 	MPCHT_init(&srail->pt_table, (comm_dims < 64) ? 64 : comm_dims);
 
+	if(sctk_ptl_offcoll_enabled(srail))
+		sctk_ptl_offcoll_init(srail);
+
 	for (i = 0; i < SCTK_PTL_PTE_HIDDEN; i++)
 	{
 		/* create the EQ for this PT */
@@ -277,6 +287,11 @@ void sctk_ptl_pte_create(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte, size_
 		&pte->idx       /* the effective index value */
 	));
 
+	if(sctk_ptl_offcoll_enabled(srail))
+	{
+		sctk_ptl_offcoll_pte_init(srail, pte);
+	}
+
 	sctk_ptl_me_feed(srail, pte, eager_size, SCTK_PTL_ME_OVERFLOW_NB, SCTK_PTL_OVERFLOW_LIST, SCTK_PTL_TYPE_STD, SCTK_PTL_PROT_NONE);
 	
 	/*pte->taglocks = sctk_malloc(sizeof(sctk_spinlock_t) * SCTK_PTL_PTE_NB_LOCKS);*/
@@ -310,6 +325,10 @@ void sctk_ptl_software_fini(sctk_ptl_rail_info_t* srail)
 	for(i = 0; i < table_dims; i++)
 	{
 		sctk_ptl_pte_t* cur = MPCHT_get(&srail->pt_table, i);
+
+		if(sctk_ptl_offcoll_enabled(srail))
+			sctk_ptl_offcoll_pte_fini(srail, cur);
+		
 		if(i==0)
 			base_ptr = cur;
 
@@ -331,6 +350,9 @@ void sctk_ptl_software_fini(sctk_ptl_rail_info_t* srail)
 	sctk_free(base_ptr);
 	MPCHT_release(&srail->pt_table);
 	srail->nb_entries = 0;
+
+	if(sctk_ptl_offcoll_enabled(srail))
+		sctk_ptl_offcoll_fini(srail);
 }
 
 /**
@@ -482,6 +504,19 @@ sctk_ptl_local_data_t* sctk_ptl_md_create(sctk_ptl_rail_info_t* srail, void* sta
 		.list = SCTK_PTL_PRIORITY_LIST,
 		.msg = NULL /* later filled */
 	};
+
+	return user;
+}
+
+sctk_ptl_local_data_t* sctk_ptl_md_create_with_cnt(sctk_ptl_rail_info_t* srail, void* start, size_t length, int flags)
+{
+	sctk_ptl_local_data_t* user = NULL;
+	user = sctk_ptl_md_create(srail, start, length, flags);
+	
+	sctk_ptl_chk(PtlCTAlloc(
+		srail->iface,
+		&user->slot.md.ct_handle
+	));
 
 	return user;
 }

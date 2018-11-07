@@ -27,12 +27,23 @@
 #ifndef SCTK_PTL_OFFCOLL_H_
 #define SCTK_PTL_OFFCOLL_H_
 
-#include "sctk_alloc.h"
-#include "sctk_rail.h"
 #include "sctk_ptl_types.h"
-#include "sctk_ptl_iface.h"
 
-int sctk_ptl_offcoll_enabled(sctk_rail_info_t* rail);
+/** TODO: Should be defined by an header (but inclusion loop issue) */
+#define SCTK_BARRIER_MESSAGE 7
+
+#define SCTK_PTL_OFFCOLL_UP (0)
+#define SCTK_PTL_OFFCOLL_DOWN (1)
+#define SCTK_PTL_ME_PUT_NOEV_FLAGS (SCTK_PTL_ME_PUT_FLAGS | PTL_ME_EVENT_COMM_DISABLE)
+#define SCTK_PTL_MD_PUT_NOEV_FLAGS (SCTK_PTL_MD_PUT_FLAGS | PTL_MD_EVENT_SUCCESS_DISABLE)
+#define SCTK_PTL_MATCH_OFFCOLL_BARRIER_UP (sctk_ptl_matchbits_t) {.offload.type = SCTK_BARRIER_MESSAGE, .offload.pad1 = 0, .offload.pad2 = 0, .offload.dir = SCTK_PTL_OFFCOLL_UP}
+#define SCTK_PTL_MATCH_OFFCOLL_BARRIER_DOWN (sctk_ptl_matchbits_t) {.offload.type = SCTK_BARRIER_MESSAGE, .offload.pad1 = 0, .offload.pad2 = 0, .offload.dir = SCTK_PTL_OFFCOLL_DOWN}
+
+int sctk_ptl_offcoll_enabled(sctk_ptl_rail_info_t* rail);
+void sctk_ptl_offcoll_init(sctk_ptl_rail_info_t* rail);
+void sctk_ptl_offcoll_fini(sctk_ptl_rail_info_t* rail);
+void sctk_ptl_offcoll_pte_init(sctk_ptl_rail_info_t* rail, sctk_ptl_pte_t* pte);
+void sctk_ptl_offcoll_pte_fini(sctk_ptl_rail_info_t* rail, sctk_ptl_pte_t* pte);
 
 #endif /* SCTK_PTL_OFFCOLL_H_ */
 #endif /* MPC_USE_PORTALS */

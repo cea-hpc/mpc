@@ -165,6 +165,17 @@
 #define sctk_ptl_rdma_op_t ptl_op_t         /**< RDMA operation */
 
 /*********************************/
+/********** OFFLOADING ***********/
+/*********************************/
+/* the config field is an int */
+#define SCTK_PTL_OFFLOAD_NONE_FLAG (0x0)
+#define SCTK_PTL_OFFLOAD_OD_FLAG (0x1)
+#define SCTK_PTL_OFFLOAD_COLL_FLAG (0x2)
+#define SCTK_PTL_IS_OFFLOAD_OD(u) ((u & SCTK_PTL_OFFLOAD_OD_FLAG) >> 0)
+#define SCTK_PTL_IS_OFFLOAD_COLL(u) ((u & SCTK_PTL_OFFLOAD_COLL_FLAG) >> 1)
+
+
+/*********************************/
 /**** OTHER USEFUL CONSTANTS  ****/
 /*********************************/
 /* typedefs */
@@ -175,22 +186,34 @@
 
 /**
  * How the match_bits is divided to store essential information to 
- * match MPI msg
+ * match MPI msg.
+ * Valid for P2P messages and non-offloaded collectives
  */
-struct sctk_ptl_bits_content_s
+struct sctk_ptl_std_content_s
 {
+	uint32_t tag;     /**< MPI tag */
+	uint16_t rank;    /**< MPI/MPC rank */
 	uint8_t uid;     /**< unique per-route ID */
 	uint8_t type;    /**< message type, redundant in case of CM */
-	uint16_t rank;    /**< MPI/MPC rank */
-	uint32_t tag;     /**< MPI tag */
 };
 
-/** struct to make match_bits management easier
+struct sctk_ptl_offload_content_s
+{
+	uint32_t pad1;
+	uint16_t pad2;
+	uint8_t dir; /* direction, if necessary */
+	uint8_t type; /* this field should not be changed */
+};
+
+/** struct to make match_bits management easier.
+ * Used for std P2P msgs and non-offloaded collectives.
+ * Should rename the field 'data' but too much changes could be dangerous.
  */
 typedef union sctk_ptl_matchbits_t
 {
 	ptl_match_bits_t raw;                /**< raw */
-	struct sctk_ptl_bits_content_s data; /**< driver-managed */
+	struct sctk_ptl_std_content_s data; /**< driver-managed */
+	struct sctk_ptl_offload_content_s offload;
 } sctk_ptl_matchbits_t;
 
 /**
@@ -214,6 +237,11 @@ typedef struct sctk_ptl_std_data_s
 	char pad[4];  /**< padding */
 } sctk_ptl_std_data_t;
 
+typedef struct sctk_ptl_offload_data_s
+{
+	uint64_t pad;
+} sctk_ptl_offload_data_t;
+
 /**
  * Selector for the 64 bits immediate data
  * contained in every Put() request.
@@ -223,6 +251,7 @@ typedef union sctk_ptl_imm_data_s
 	uint64_t raw;                   /**< the raw */
 	struct sctk_ptl_cm_data_s cm;   /**< imm_data for CM */
 	struct sctk_ptl_std_data_s std; /**< imm-data for eager */
+	struct sctk_ptl_offload_data_s offload; /**< imm-data for offload */
 } sctk_ptl_imm_data_t;
 
 /**
@@ -314,6 +343,7 @@ typedef struct sctk_ptl_rail_info_s
 	sctk_atomics_int rdma_cpt;              /**< RDMA match_bits counter */
 	char connection_infos[MAX_STRING_SIZE]; /**< string identifying this rail over the PMI */
 	size_t connection_infos_size;           /**< Size of the above string */
+	int offload_support;
 } sctk_ptl_rail_info_t;
 #endif
 #endif

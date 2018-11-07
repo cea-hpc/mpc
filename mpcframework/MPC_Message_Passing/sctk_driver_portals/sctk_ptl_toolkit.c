@@ -421,12 +421,18 @@ void sctk_ptl_comm_register(sctk_ptl_rail_info_t* srail, int comm_idx, size_t co
  */
 void sctk_ptl_init_interface(sctk_rail_info_t* rail)
 {
-	size_t cut, eager_limit, min_comms;
+	size_t cut, eager_limit, min_comms, offloading;
 
 	/* get back the Portals config */
 	cut         = rail->runtime_config_driver_config->driver.value.portals.block_cut;
 	eager_limit = rail->runtime_config_driver_config->driver.value.portals.eager_limit;
 	min_comms   = rail->runtime_config_driver_config->driver.value.portals.min_comms;
+	offloading  = SCTK_PTL_OFFLOAD_NONE_FLAG;
+
+	if(rail->runtime_config_driver_config->driver.value.portals.offloading.ondemand)
+		offloading |= SCTK_PTL_OFFLOAD_OD_FLAG;
+	if(rail->runtime_config_driver_config->driver.value.portals.offloading.collectives)
+		offloading |= SCTK_PTL_OFFLOAD_COLL_FLAG;
 
 	if(cut < eager_limit)
 	{
@@ -435,10 +441,11 @@ void sctk_ptl_init_interface(sctk_rail_info_t* rail)
 	}
 
 	/* init low-level driver */
-	rail->network.ptl             = sctk_ptl_hardware_init();
-	rail->network.ptl.eager_limit = eager_limit;
-	rail->network.ptl.cutoff      = cut;
-	rail->network.ptl.max_mr      = rail->network.ptl.max_limits.max_msg_size;
+	rail->network.ptl                 = sctk_ptl_hardware_init();
+	rail->network.ptl.eager_limit     = eager_limit;
+	rail->network.ptl.cutoff          = cut;
+	rail->network.ptl.max_mr          = rail->network.ptl.max_limits.max_msg_size;
+	rail->network.ptl.offload_support = offloading;
 	
 	sctk_ptl_software_init( &rail->network.ptl, min_comms);
 	sctk_assert(eager_limit == rail->network.ptl.eager_limit);
