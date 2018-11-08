@@ -710,6 +710,27 @@ int sctk_ptl_emit_swap(sctk_ptl_local_data_t* get_user, sctk_ptl_local_data_t* p
 	return PTL_OK;
 }
 
+int sctk_ptl_emit_atomic(sctk_ptl_local_data_t* put_user, size_t size, sctk_ptl_id_t remote, sctk_ptl_pte_t* pte, sctk_ptl_matchbits_t match, size_t local_off, size_t remote_off, sctk_ptl_rdma_op_t op, sctk_ptl_rdma_type_t type, void* user_ptr)
+{
+	sctk_ptl_chk(PtlAtomic(
+		put_user->slot_h.mdh, /* Data to send */
+		local_off,            /* local offset */
+		size,                 /* size to be sent/received */
+		PTL_ACK_REQ,          /* want to receive _ACK event */
+		remote,               /* the target */
+		pte->idx,             /* Portals index */
+		match.raw,            /* match bits */
+		remote_off,           /* remote offset */
+		user_ptr,             /* attached user_ptr */
+		0,                    /* Not needed here */
+		op,                   /* RDMA operation */
+		type                  /* RDMA type */
+
+	));
+
+	return PTL_OK;
+}
+
 /**
  * Emit a PTL FetchAtomic() request.
  * \param[in] get_user the preset request, where data will be stored
@@ -763,7 +784,7 @@ int sctk_ptl_emit_fetch_atomic(sctk_ptl_local_data_t* get_user, sctk_ptl_local_d
  * \param[in] threshold the value triggering the Get()
  * \return PTL_OK, abort() otherwise.
  */
-int sctk_ptl_emit_triggeredGet(sctk_ptl_local_data_t* user, size_t size, sctk_ptl_id_t remote, sctk_ptl_pte_t* pte, sctk_ptl_matchbits_t match, size_t local_off, size_t remote_off, void* user_ptr, sctk_ptl_cnth_t cnt, size_t threshold)
+int sctk_ptl_emit_trig_get(sctk_ptl_local_data_t* user, size_t size, sctk_ptl_id_t remote, sctk_ptl_pte_t* pte, sctk_ptl_matchbits_t match, size_t local_off, size_t remote_off, void* user_ptr, sctk_ptl_cnth_t cnt, size_t threshold)
 {
 	/** WARNING: the API provide a prototype where user_ptr & remote_off are inverted.
 	 *
@@ -782,6 +803,134 @@ int sctk_ptl_emit_triggeredGet(sctk_ptl_local_data_t* user, size_t size, sctk_pt
 		user_ptr,
 		cnt,
 		threshold
+	));
+
+	return PTL_OK;
+}
+
+int sctk_ptl_emit_trig_put(sctk_ptl_local_data_t* user, size_t size, sctk_ptl_id_t remote, sctk_ptl_pte_t* pte, sctk_ptl_matchbits_t match, size_t local_off, size_t remote_off, size_t extra, void* user_ptr, sctk_ptl_cnth_t cnt, size_t threshold)
+{
+	/** TODO: Be sure the case w/ triggeredGet does not occur
+	 * here -> inverted parameters
+	 */
+	sctk_ptl_chk(PtlTriggeredPut(
+		user->slot_h.mdh,
+		local_off,
+		size,
+		PTL_ACK_REQ,
+		remote,
+		pte->idx,
+		match.raw,
+		remote_off,
+		user_ptr,
+		extra,
+		cnt,
+		threshold
+	));
+
+	return PTL_OK;
+}
+
+int sctk_ptl_emit_trig_atomic(sctk_ptl_local_data_t* put_user, size_t size, sctk_ptl_id_t remote, sctk_ptl_pte_t* pte, sctk_ptl_matchbits_t match, size_t local_off, size_t remote_off, sctk_ptl_rdma_op_t op, sctk_ptl_rdma_type_t type, void* user_ptr, sctk_ptl_cnth_t cnt, size_t threshold)
+{
+	/** TODO: Be sure the case w/ triggeredGet does not occur
+	 * here -> inverted parameters
+	 */
+	sctk_ptl_chk(PtlTriggeredAtomic(
+		put_user->slot_h.mdh, /* Data to send */
+		local_off,            /* local offset */
+		size,                 /* size to be sent/received */
+		PTL_ACK_REQ,          /* want to receive _ACK event */
+		remote,               /* the target */
+		pte->idx,             /* Portals index */
+		match.raw,            /* match bits */
+		remote_off,           /* remote offset */
+		user_ptr,             /* attached user_ptr */
+		0,                    /* Not needed here */
+		op,                   /* RDMA operation */
+		type,                 /* RDMA type */
+		cnt,
+		threshold
+	));
+
+	return PTL_OK;
+}
+
+int sctk_ptl_emit_trig_fetch_atomic(sctk_ptl_local_data_t* get_user, sctk_ptl_local_data_t* put_user, size_t size, sctk_ptl_id_t remote, sctk_ptl_pte_t* pte, sctk_ptl_matchbits_t match, size_t local_getoff, size_t local_putoff, size_t remote_off, sctk_ptl_rdma_op_t op, sctk_ptl_rdma_type_t type, void* user_ptr, sctk_ptl_cnth_t cnt, size_t threshold)
+{
+	/** TODO: Be sure the case w/ triggeredGet does not occur
+	 * here -> inverted parameters
+	 */
+	sctk_ptl_chk(PtlTriggeredFetchAtomic(
+		get_user->slot_h.mdh, /* Where data will be copied locally */
+		local_getoff,         /* local offset */
+		put_user->slot_h.mdh, /* Data to send */
+		local_putoff,         /* local offset */
+		size,                 /* size to be sent/received */
+		remote,               /* the target */
+		pte->idx,             /* Portals index */
+		match.raw,            /* match bits */
+		remote_off,           /* remote offset */
+		user_ptr,             /* attached user_ptr */
+		0,                    /* Not needed here */
+		op,                   /* RDMA operation */
+		type,                 /* RDMA type */
+		cnt,
+		threshold
+	));
+
+	return PTL_OK;
+}
+
+int sctk_ptl_emit_trig_swap(sctk_ptl_local_data_t* get_user, sctk_ptl_local_data_t* put_user, size_t size, sctk_ptl_id_t remote, sctk_ptl_pte_t* pte, sctk_ptl_matchbits_t match, size_t local_getoff, size_t local_putoff, size_t remote_off, const void* cmp, sctk_ptl_rdma_type_t type, void* user_ptr, sctk_ptl_cnth_t cnt, size_t threshold)
+{
+	sctk_ptl_rdma_op_t op = PTL_CSWAP;
+
+	sctk_ptl_chk(PtlTriggeredSwap(
+		get_user->slot_h.mdh, /* Where data will be copied locally */
+		local_getoff,         /* local offset */
+		put_user->slot_h.mdh, /* Data to send */
+		local_putoff,         /* local offset */
+		size,                 /* size to be sent/received */
+		remote,               /* the target */
+		pte->idx,             /* Portals index */
+		match.raw,            /* match bits */
+		remote_off,           /* remote offset */
+		user_ptr,             /* attached user_ptr */
+		0,                    /* TBD */
+		cmp,                  /* The value used to compare */
+		op,                   /* RDMA operation */
+		type,                 /* RDMA type */
+		cnt,
+		threshold
+
+	));
+
+	return PTL_OK;
+}
+
+int sctk_ptl_emit_trig_cnt_incr(sctk_ptl_cnth_t target_cnt, size_t incr, sctk_ptl_cnth_t tracked, size_t threshold)
+{
+	/* we only consider success increments here... */
+	sctk_ptl_cnt_t cnt = (sctk_ptl_cnt_t){.success = incr, .failure = 0};
+	sctk_ptl_chk(PtlTriggeredCTInc(
+		target_cnt,  /* the counter to increment */
+		cnt,         /* the increment value */
+		tracked,     /* which counter used to trigger */
+		threshold    /* threshold to reach by the cnt above */
+	));
+
+	return PTL_OK;
+}
+
+int sctk_ptl_emit_trig_cnt_set(sctk_ptl_cnth_t target_cnt, size_t val, sctk_ptl_cnth_t tracked, size_t threshold)
+{
+	sctk_ptl_cnt_t cnt = (sctk_ptl_cnt_t){.success = val, .failure = 0};
+	sctk_ptl_chk(PtlTriggeredCTSet(
+		target_cnt,  /* the counter to increment */
+		cnt,         /* the new value */
+		tracked,     /* which counter used to trigger */
+		threshold    /* threshold to reach by the cnt above */
 	));
 
 	return PTL_OK;

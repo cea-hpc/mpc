@@ -88,20 +88,47 @@ void sctk_ptl_md_release(sctk_ptl_local_data_t*);
 /* Request management */
 int sctk_ptl_emit_get(sctk_ptl_local_data_t*, size_t, sctk_ptl_id_t, sctk_ptl_pte_t*, sctk_ptl_matchbits_t, size_t, size_t, void*);
 int sctk_ptl_emit_put(sctk_ptl_local_data_t*, size_t, sctk_ptl_id_t, sctk_ptl_pte_t*, sctk_ptl_matchbits_t, size_t, size_t, size_t, void*);
-
+int sctk_ptl_emit_atomic(
+		sctk_ptl_local_data_t* put_user, size_t size, sctk_ptl_id_t remote,
+		sctk_ptl_pte_t* pte, sctk_ptl_matchbits_t match, size_t local_off, 
+		size_t remote_off, sctk_ptl_rdma_op_t op, sctk_ptl_rdma_type_t type, void* user_ptr);
 int sctk_ptl_emit_fetch_atomic(
 		sctk_ptl_local_data_t* get_user, sctk_ptl_local_data_t* put_user,
 		size_t size, sctk_ptl_id_t remote, sctk_ptl_pte_t* pte, sctk_ptl_matchbits_t match,
 		size_t local_getoff, size_t local_putoff, size_t remote_off,
 		sctk_ptl_rdma_op_t op, sctk_ptl_rdma_type_t type, void* user_ptr);
-
 int sctk_ptl_emit_swap(
 		sctk_ptl_local_data_t* get_user, sctk_ptl_local_data_t* put_user,
 		size_t size, sctk_ptl_id_t remote, sctk_ptl_pte_t* pte, sctk_ptl_matchbits_t match,
 		size_t local_getoff, size_t local_putoff, size_t remote_off,
 		const void* cmp, sctk_ptl_rdma_type_t type, void* user_ptr);
 
-int sctk_ptl_emit_triggeredGet(sctk_ptl_local_data_t* user, size_t size, sctk_ptl_id_t remote, sctk_ptl_pte_t* pte, sctk_ptl_matchbits_t match, size_t local_off, size_t remote_off, void* user_ptr, sctk_ptl_cnth_t cnt, size_t threshold);
+/* triggered request management */
+int sctk_ptl_emit_triggeredGet(
+		sctk_ptl_local_data_t* user, size_t size, sctk_ptl_id_t remote, sctk_ptl_pte_t* pte,
+		sctk_ptl_matchbits_t match, size_t local_off, size_t remote_off, void* user_ptr,
+		sctk_ptl_cnth_t cnt, size_t threshold);
+int sctk_ptl_emit_trig_put(
+		sctk_ptl_local_data_t* user, size_t size, sctk_ptl_id_t remote, sctk_ptl_pte_t* pte,
+		sctk_ptl_matchbits_t match, size_t local_off, size_t remote_off, size_t extra,
+		void* user_ptr, sctk_ptl_cnth_t cnt, size_t threshold);
+int sctk_ptl_emit_trig_atomic(
+		sctk_ptl_local_data_t* put_user, size_t size, sctk_ptl_id_t remote, sctk_ptl_pte_t* pte,
+		sctk_ptl_matchbits_t match, size_t local_off, size_t remote_off, sctk_ptl_rdma_op_t op,
+		sctk_ptl_rdma_type_t type, void* user_ptr, sctk_ptl_cnth_t cnt, size_t threshold);
+int sctk_ptl_emit_trig_fetch_atomic(
+		sctk_ptl_local_data_t* get_user, sctk_ptl_local_data_t* put_user, size_t size, 
+		sctk_ptl_id_t remote, sctk_ptl_pte_t* pte, sctk_ptl_matchbits_t match, size_t local_getoff, 
+		size_t local_putoff, size_t remote_off, sctk_ptl_rdma_op_t op, sctk_ptl_rdma_type_t type,
+		void* user_ptr, sctk_ptl_cnth_t cnt, size_t threshold);
+int sctk_ptl_emit_trig_swap(
+		sctk_ptl_local_data_t* get_user, sctk_ptl_local_data_t* put_user, size_t size, sctk_ptl_id_t remote,
+		sctk_ptl_pte_t* pte, sctk_ptl_matchbits_t match, size_t local_getoff, size_t local_putoff, size_t remote_off,
+		const void* cmp, sctk_ptl_rdma_type_t type, void* user_ptr, sctk_ptl_cnth_t cnt, size_t threshold);
+
+/* local triggered ops (counters) */
+int sctk_ptl_emit_trig_cnt_incr(sctk_ptl_cnth_t target_cnt, size_t incr, sctk_ptl_cnth_t tracked, size_t threshold);
+int sctk_ptl_emit_trig_cnt_set(sctk_ptl_cnth_t target_cnt, size_t val, sctk_ptl_cnth_t tracked, size_t threshold);
 
 /**************************************************************/
 /*************************** HELPERS **************************/
