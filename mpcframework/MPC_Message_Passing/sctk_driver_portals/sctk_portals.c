@@ -67,12 +67,19 @@ static void sctk_network_notify_recv_message_ptl ( sctk_thread_ptp_message_t *ms
 static void sctk_network_notify_matching_message_ptl ( sctk_thread_ptp_message_t *msg, sctk_rail_info_t *rail )
 {
 	/* nothing to do */
+	UNUSED(msg);
+	UNUSED(rail);
 }
 
 /** Not relevant in this implementation */
 static void sctk_network_notify_perform_message_ptl ( int remote, int remote_task_id, int polling_task_id, int blocking, sctk_rail_info_t *rail )
 {
 	/* nothing to do */
+	UNUSED(remote);
+	UNUSED(remote_task_id);
+	UNUSED(polling_task_id);
+	UNUSED(blocking);
+	UNUSED(rail);
 }
 
 /**
@@ -96,6 +103,9 @@ static void sctk_network_notify_idle_message_ptl (sctk_rail_info_t* rail)
  */
 static void sctk_network_notify_any_source_message_ptl ( int polling_task_id, int blocking, sctk_rail_info_t *rail )
 {
+	UNUSED(polling_task_id);
+	UNUSED(blocking);
+	UNUSED(rail);
 }
 
 /**
@@ -146,6 +156,9 @@ void sctk_network_finalize_ptl(sctk_rail_info_t* rail)
  */
 void sctk_network_finalize_task_ptl(sctk_rail_info_t* rail, int taskid, int vp)
 {
+	UNUSED(rail);
+	UNUSED(taskid);
+	UNUSED(vp);
 }
 
 /**
@@ -156,6 +169,9 @@ void sctk_network_finalize_task_ptl(sctk_rail_info_t* rail, int taskid, int vp)
  */
 void sctk_network_initialize_task_ptl(sctk_rail_info_t* rail, int taskid, int vp)
 {
+	UNUSED(rail);
+	UNUSED(taskid);
+	UNUSED(vp);
 }
 
 /**
@@ -182,6 +198,13 @@ static void sctk_network_connect_on_demand_ptl ( struct sctk_rail_info_s * rail 
  */
 static void sctk_network_cm_handler_ptl( struct sctk_rail_info_s * rail, int source_process, int source_rank, char subtype, char param, void * data, size_t size )
 {
+	UNUSED(rail);
+	UNUSED(source_process);
+	UNUSED(source_rank);
+	UNUSED(subtype);
+	UNUSED(param);
+	UNUSED(data);
+	UNUSED(size);
 	not_implemented();
 }
 
@@ -194,6 +217,9 @@ static void sctk_network_cm_handler_ptl( struct sctk_rail_info_s * rail, int sou
 static void sctk_network_connect_to_ptl( int from, int to, sctk_rail_info_t * rail )
 {
 	/* nothing to do */
+	UNUSED(from);
+	UNUSED(to);
+	UNUSED(rail);
 }
 
 /**
@@ -205,6 +231,7 @@ static void sctk_network_connect_to_ptl( int from, int to, sctk_rail_info_t * ra
  */
 static void sctk_network_connect_from_ptl( int from, int to, sctk_rail_info_t * rail)
 {
+	UNUSED(from);
 	sctk_network_connect_on_demand_ptl(rail, to);
 }
 

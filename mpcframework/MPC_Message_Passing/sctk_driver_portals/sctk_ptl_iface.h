@@ -62,7 +62,7 @@ sctk_ptl_rail_info_t sctk_ptl_hardware_init();
 void sctk_ptl_hardware_fini();
 
 /* Software-related init */
-void sctk_ptl_software_init(sctk_ptl_rail_info_t*, int);
+void sctk_ptl_software_init(sctk_ptl_rail_info_t*, size_t);
 void sctk_ptl_software_fini(sctk_ptl_rail_info_t*);
 
 /* Portals table management */
@@ -227,9 +227,9 @@ static inline const char const * sctk_ptl_ni_fail_decode(sctk_ptl_event_t ev)
  * \param[in] outvallen size of the final struct
  * \return Size of the string if serialization succeeded, -1 otherwise
  */
-static inline int sctk_ptl_data_deserialize ( const char *inval, void *outval, int outvallen )
+static inline int sctk_ptl_data_deserialize ( const char *inval, void *outval, unsigned int outvallen )
 {
-    int i;
+    size_t i;
     char *ret = ( char * ) outval;
 
     if ( outvallen != strlen ( inval ) / 2 )
@@ -273,14 +273,14 @@ static inline int sctk_ptl_data_deserialize ( const char *inval, void *outval, i
  * \param[in] outvallen the max string length
  * \return the effective string size if succeeded, -1 otherwise 
  */
-static inline int sctk_ptl_data_serialize ( const void *inval, int invallen, char *outval, int outvallen )
+static inline int sctk_ptl_data_serialize ( const void *inval, size_t invallen, char *outval, size_t outvallen )
 {
     static unsigned char encodings[] =
     {
         '0', '1', '2', '3', '4', '5', '6', '7', \
             '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'
     };
-    int i;
+    size_t i;
 	if ( invallen * 2 + 1 > outvallen )
     {
         return -1;

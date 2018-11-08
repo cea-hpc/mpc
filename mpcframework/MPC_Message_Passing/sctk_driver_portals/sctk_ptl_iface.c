@@ -195,7 +195,7 @@ void sctk_ptl_hardware_fini(sctk_ptl_rail_info_t* srail)
  * \param[in] srail the Portals rail
  * \param[in] dims PT dimensions
  */
-void sctk_ptl_software_init(sctk_ptl_rail_info_t* srail, int comm_dims)
+void sctk_ptl_software_init(sctk_ptl_rail_info_t* srail, size_t comm_dims)
 {
 	size_t i;
 	size_t eager_size = srail->eager_limit;
@@ -529,7 +529,7 @@ sctk_ptl_local_data_t* sctk_ptl_md_create_with_cnt(sctk_ptl_rail_info_t* srail, 
 void sctk_ptl_md_register(sctk_ptl_rail_info_t* srail, sctk_ptl_local_data_t* user)
 {
 	assert(user && srail);
-	size_t max = srail->max_limits.max_mds;
+	int max = srail->max_limits.max_mds;
 	int i = 0;
 
 	while(sctk_atomics_fetch_and_incr_int(&nb_mds) >= max)

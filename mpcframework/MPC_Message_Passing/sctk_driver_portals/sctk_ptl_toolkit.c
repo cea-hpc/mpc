@@ -138,7 +138,7 @@ void sctk_ptl_send_message(sctk_thread_ptp_message_t* msg, sctk_endpoint_t* endp
  * \param[in] rail the Portals rail
  * \param[in] threshold max number of messages to poll, if any
  */
-void sctk_ptl_eqs_poll(sctk_rail_info_t* rail, int threshold)
+void sctk_ptl_eqs_poll(sctk_rail_info_t* rail, size_t threshold)
 {
 	sctk_ptl_event_t ev;
 	sctk_ptl_rail_info_t* srail = &rail->network.ptl;
@@ -146,7 +146,8 @@ void sctk_ptl_eqs_poll(sctk_rail_info_t* rail, int threshold)
 	sctk_ptl_pte_t* cur_pte;
 
 	size_t i = 0, size = srail->nb_entries;
-	int ret, max = 0;
+	int ret;
+	size_t max = 0;
 
 	/* at least, try each entry once */
 	threshold = (size > threshold) ? size : threshold;
@@ -219,12 +220,13 @@ void sctk_ptl_eqs_poll(sctk_rail_info_t* rail, int threshold)
  * Here, only MD-specific events are processed.
  * \param[in] arg the Portals rail, to cast before use.
  */
-void sctk_ptl_mds_poll(sctk_rail_info_t* rail, int threshold)
+void sctk_ptl_mds_poll(sctk_rail_info_t* rail, size_t threshold)
 {
 	sctk_ptl_rail_info_t* srail = &rail->network.ptl;
 	sctk_ptl_event_t ev;
 	sctk_ptl_local_data_t* user_ptr;
-	int ret, max = 0;
+	int ret;
+	size_t max = 0;
 	while(max++ < threshold)
 	{
 		ret = sctk_ptl_eq_poll_md(srail, &ev);
@@ -408,6 +410,7 @@ sctk_ptl_id_t sctk_ptl_map_id(sctk_rail_info_t* rail, int dest)
  */
 void sctk_ptl_comm_register(sctk_ptl_rail_info_t* srail, int comm_idx, size_t comm_size)
 {
+	UNUSED(comm_size);
 	if(!SCTK_PTL_PTE_EXIST(srail->pt_table, comm_idx))
 	{
 		sctk_ptl_pte_t* new_entry = sctk_malloc(sizeof(sctk_ptl_pte_t));
@@ -462,6 +465,7 @@ void sctk_ptl_init_interface(sctk_rail_info_t* rail)
  */
 void sctk_ptl_fini_interface(sctk_rail_info_t* rail)
 {
+	UNUSED(rail);
 }
 
 #endif

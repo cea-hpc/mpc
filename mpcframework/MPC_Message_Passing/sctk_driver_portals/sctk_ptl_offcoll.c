@@ -42,7 +42,7 @@ int sctk_ptl_offcoll_enabled(sctk_ptl_rail_info_t* srail)
 {
 	return __sctk_ptl_offcoll_enabled(srail);
 }
-
+ 
 /** TODO: REMOVE all these global variables (should be per rail) */
 sctk_ptl_local_data_t* md_up;
 sctk_ptl_local_data_t* md_down;

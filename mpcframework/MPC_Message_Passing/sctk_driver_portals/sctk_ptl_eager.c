@@ -308,6 +308,9 @@ void sctk_ptl_eager_event_md(sctk_rail_info_t* rail, sctk_ptl_event_t ev)
 {
 	sctk_ptl_local_data_t* user_ptr = (sctk_ptl_local_data_t*)ev.user_ptr;
 	sctk_thread_ptp_message_t* msg = (sctk_thread_ptp_message_t*)user_ptr->msg;
+
+	UNUSED(rail); 
+
 	switch(ev.type)
 	{
 		case PTL_EVENT_ACK:  /* the Put() reached the remote process */

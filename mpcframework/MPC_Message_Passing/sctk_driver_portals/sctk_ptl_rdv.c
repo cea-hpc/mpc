@@ -77,7 +77,6 @@ static inline void __sctk_ptl_rdv_compute_chunks(sctk_ptl_rail_info_t* srail, sc
 		size = (size_t)(total / nb);
 	}
 
-	sctk_assert(size >= 0);
 	sctk_assert(nb > 0);
 
 	*sz_out   = size;
@@ -185,7 +184,6 @@ static inline void sctk_ptl_rdv_recv_message(sctk_rail_info_t* rail, sctk_ptl_ev
 	__sctk_ptl_rdv_compute_chunks(srail, msg, &chunk_sz, &chunk_nb, &chunk_rest);
 	
 	/* sanity checks */
-	sctk_assert(chunk_sz >= 0ull);
 	sctk_assert(chunk_nb > 0);
 	sctk_assert(chunk_rest < chunk_nb);
 	
@@ -307,6 +305,8 @@ static inline void sctk_ptl_rdv_complete_message(sctk_rail_info_t* rail, sctk_pt
 	sctk_ptl_local_data_t* ptr = (sctk_ptl_local_data_t*) ev.user_ptr;
 	sctk_thread_ptp_message_t *msg = (sctk_thread_ptp_message_t*)ptr->msg;
 
+	UNUSED(rail);
+
 	sctk_debug("PORTALS: COMPLETE-RDV to %d (idx=%d, match=%s, rsize=%llu, size=%llu) -> %p", SCTK_MSG_SRC_PROCESS(msg), ev.pt_index, __sctk_ptl_match_str(malloc(32), 32, ev.match_bits),ev.mlength , ev.mlength, ev.start);
 	if(msg->tail.ptl.copy)
 		sctk_free(ptr->slot.me.start);
@@ -379,7 +379,6 @@ void sctk_ptl_rdv_send_message(sctk_thread_ptp_message_t* msg, sctk_endpoint_t* 
 	__sctk_ptl_rdv_compute_chunks(srail, msg, &chunk_sz, &chunk_nb, &chunk_rest);
 	
 	/* sanity checks */
-	sctk_assert(chunk_sz >= 0ull); /* msg sz can be NULL */
 	sctk_assert(chunk_nb > 0ull);
 	sctk_assert(chunk_rest < chunk_nb);
 
