@@ -278,6 +278,9 @@ Show=eval
 # Do we have to link eventually?
 linking=yes
 
+# Are we using the pre-processor ? default to NO until seeing -E
+preprocessor=no
+
 # All args concerning the compiling process (w/out mpc_cc-related options)
 allargs=""
 
@@ -330,7 +333,11 @@ for arg in "\$@" ; do
     case \$arg in
         # ----------------------------------------------------------------
         # Compiler options that affect whether we are linking or not
-    -c|-S|-E|-M|-MM)
+    -E)
+    preprocessor=yes
+    linking=no
+    ;;
+    -c|-S|-M|-MM)
     # The compiler links by default
     linking=no
     ;;
@@ -372,7 +379,7 @@ USE_COMMAND="1"
 	-fmpc-privatize|-fmpcprivatize|-f-mpc-privatize)
 		PRIV_FLAG="\$arg"
     	addarg=no
-	;;  
+	;;
 	-fno-mpc-privatize|-fno-mpc-privatize|-fnompc-privatize|-fnompcprivatize)
 		PRIV_FLAG=""
 		addarg=no
@@ -392,7 +399,7 @@ USE_COMMAND="1"
 	-fmpc-include)
 		#nothing to do, if not fortran, '-include mpc_main.h' is automatically forwarded
 		#This is due to order : '-include' should be set after sources files
-		MPC_HEADER_INCLUDE="-include mpc_main.h"
+		MPC_HEADER_INCLUDE="\${MPC_HEADER_INCLUDE} -include mpc_main.h"
 		addarg=no
 	;;
 	-fno-mpc-include)
@@ -479,7 +486,13 @@ done
 if test "\$USE_COMMAND" = "1"; then 
 MPC_HEADER_INCLUDE=""
 PRIV_FLAG=""
-fi 
+fi
+
+#When using the preprocessor do not include files
+if test "\$preprocessor" = "yes"; then
+	MPC_HEADER_INCLUDE=""
+fi
+
 EOF
 if [ "$2" != "fortran" ];
 then
@@ -547,9 +560,7 @@ if [ "$language" != "fortran" ]; then
 cat << EOF >> $1
 		if test -e "\${MPC_RPREFIX}/\${MPC_HOST_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/lib/libmpcgetopt.a"; 
 		then
-			GETOPT_FLAG="-include \${MPC_RPREFIX}/\${MPC_HOST_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/include/getopt.h"
-		else
-			GETOPT_FLAG=""
+			MPC_HEADER_INCLUDE="\${MPC_HEADER_INCLUDE} -include \${MPC_RPREFIX}/\${MPC_HOST_SUBPREFIX}/\${MPC_TARGET_SUBPREFIX}/include/getopt.h"
 		fi
 EOF
 fi
@@ -642,8 +653,8 @@ fi
 
 cat << EOF >> $1
 #used to append compiler-specific flags
-CFLAGS="\$CFLAGS \${PRIV_FLAG} \${OMP_FLAG} \$MPC_COMPILER_CFLAGS \${LIBPRIV_FLAG} \${GETOPT_FLAG}"
-CFLAGS_FORTRAN_START="\${PRIV_FLAG} \$MPC_COMPILER_CFLAGS \${LIBPRIV_FLAG} \${GETOPT_FLAG}"
+CFLAGS="\$CFLAGS \${PRIV_FLAG} \${OMP_FLAG} \$MPC_COMPILER_CFLAGS \${LIBPRIV_FLAG}"
+CFLAGS_FORTRAN_START="\${PRIV_FLAG} \$MPC_COMPILER_CFLAGS \${LIBPRIV_FLAG}"
 LDFLAGS="\${LDFLAGS}"
 
 if [ "\$linking" = yes ] ; then
