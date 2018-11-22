@@ -27,9 +27,15 @@
 #define SCTK_PTL_TYPES_H_
 
 #include <portals4.h>
+#include <stddef.h>
 #include "sctk_ht.h"
 #include "sctk_io_helper.h"
 #include "sctk_atomics.h"
+
+/** Helper to find the struct base address, based on the address on a given member */
+#define container_of(ptr, type, member) ({ \
+                                const typeof( ((type *)0)->member ) *__mptr = (ptr); \
+                                (type *)( (char *)__mptr - offsetof(type,member) );})
 
 /*********************************/
 /********** MATCH BITS ***********/
@@ -114,6 +120,7 @@
 #define sctk_ptl_id_t ptl_process_t
 /** Refer to any physical process */
 #define SCTK_PTL_ANY_PROCESS (sctk_ptl_id_t) {.phys.nid = PTL_NID_ANY, .phys.pid = PTL_PID_ANY}
+#define SCTK_PTL_IS_ANY_PROCESS(a) (a.phys.nid == PTL_NID_ANY && a.phys.pid == PTL_PID_ANY)
 
 /*********************************/
 /******* PORTALS ENTRIES *********/
@@ -183,6 +190,9 @@
 #define sctk_ptl_limits_t ptl_ni_limits_t /**< Portals NIC limits */
 /** default number of chunks when RDV protocol wants to split big messages */
 #define SCTK_PTL_MAX_RDV_BLOCKS 4
+#ifndef UNUSED
+#define UNUSED(a) (void*)&a
+#endif
 
 /**
  * How the match_bits is divided to store essential information to 
@@ -254,6 +264,16 @@ typedef union sctk_ptl_imm_data_s
 	struct sctk_ptl_offload_data_s offload; /**< imm-data for offload */
 } sctk_ptl_imm_data_t;
 
+typedef struct sctk_ptl_coll_opts_s
+{
+        sctk_ptl_id_t parent;
+        sctk_ptl_id_t* children;
+        size_t nb_children;
+        char leaf;
+	sctk_ptl_cnth_t* cnt_hb_up;
+	sctk_ptl_cnth_t* cnt_hb_down;
+} sctk_ptl_coll_opts_t;
+
 /**
  * Representing a PT entry in the driver.
  */
@@ -261,7 +281,8 @@ typedef struct sctk_ptl_pte_s
 {
 	ptl_pt_index_t idx; /**< the effective PT index */
 	sctk_ptl_eq_t eq;   /**< the EQ for this entry */
-	//sctk_spinlock_t* taglocks;
+        sctk_ptl_coll_opts_t coll; /**< what is necessary to optimise collectives for this entry */
+        sctk_spinlock_t lock; /**< lock for this PTE */
 } sctk_ptl_pte_t;
 
 /** union to select MD or ME in the user_ptr without dirty casting */
@@ -345,5 +366,6 @@ typedef struct sctk_ptl_rail_info_s
 	size_t connection_infos_size;           /**< Size of the above string */
 	int offload_support;
 } sctk_ptl_rail_info_t;
+
 #endif
 #endif

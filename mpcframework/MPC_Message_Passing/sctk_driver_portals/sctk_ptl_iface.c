@@ -207,9 +207,6 @@ void sctk_ptl_software_init(sctk_ptl_rail_info_t* srail, size_t comm_dims)
 	table = sctk_malloc(sizeof(sctk_ptl_pte_t) * comm_dims); /* one CM, one recovery, one RDMA */
 	MPCHT_init(&srail->pt_table, (comm_dims < 64) ? 64 : comm_dims);
 
-	if(sctk_ptl_offcoll_enabled(srail))
-		sctk_ptl_offcoll_init(srail);
-
 	for (i = 0; i < SCTK_PTL_PTE_HIDDEN; i++)
 	{
 		/* create the EQ for this PT */
@@ -258,6 +255,10 @@ void sctk_ptl_software_init(sctk_ptl_rail_info_t* srail, size_t comm_dims)
 	sctk_atomics_store_int(&srail->rdma_cpt, 0);
 	if(srail->max_mr > srail->max_limits.max_msg_size)
 		srail->max_mr = srail->max_limits.max_msg_size;
+	
+	if(sctk_ptl_offcoll_enabled(srail))
+		sctk_ptl_offcoll_init(srail);
+
 
 	sctk_ptl_print_structure(srail);
 }
@@ -286,6 +287,8 @@ void sctk_ptl_pte_create(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte, size_
 		key,           /* the desired index value */
 		&pte->idx       /* the effective index value */
 	));
+
+        sctk_spinlock_init((&pte->lock), 0);
 
 	if(sctk_ptl_offcoll_enabled(srail))
 	{
@@ -406,7 +409,7 @@ sctk_ptl_local_data_t* sctk_ptl_me_create_with_cnt(sctk_ptl_rail_info_t* srail, 
 {
 	sctk_ptl_local_data_t* ret; 
 	
-	ret = sctk_ptl_me_create(start, size, remote, match, ign, flags | PTL_ME_EVENT_CT_COMM);
+	ret = sctk_ptl_me_create(start, size, remote, match, ign, (flags | PTL_ME_EVENT_CT_COMM));
 
 	sctk_ptl_chk(PtlCTAlloc(
 		srail->iface,
@@ -925,10 +928,9 @@ int sctk_ptl_emit_trig_cnt_incr(sctk_ptl_cnth_t target_cnt, size_t incr, sctk_pt
 
 int sctk_ptl_emit_trig_cnt_set(sctk_ptl_cnth_t target_cnt, size_t val, sctk_ptl_cnth_t tracked, size_t threshold)
 {
-	sctk_ptl_cnt_t cnt = (sctk_ptl_cnt_t){.success = val, .failure = 0};
 	sctk_ptl_chk(PtlTriggeredCTSet(
 		target_cnt,  /* the counter to increment */
-		cnt,         /* the new value */
+		(sctk_ptl_cnt_t){.success=val, .failure=0},         /* the new value */
 		tracked,     /* which counter used to trigger */
 		threshold    /* threshold to reach by the cnt above */
 	));
