@@ -6130,7 +6130,7 @@ int __INTERNAL__PMPI_Bcast_intra_shm(void *buffer, int count,
     bcast_ctx->root_in_buff = 0;
 
     /* Does root need to pack ? */
-    if (!is_contig_type && (rank == root)) {
+    if (!is_contig_type) {
       /* We have a tmp bufer where to reduce */
       data_buff = sctk_malloc(count * tsize);
 
@@ -6207,7 +6207,7 @@ int __INTERNAL__PMPI_Bcast_intra_shm(void *buffer, int count,
 
   /* Now leave the pending list and if I am the last I free */
 
-  if (is_shared_mem_buffer) {
+  if (bcast_ctx->root_in_buff) {
     if (sctk_atomics_fetch_and_decr_int(&bcast_ctx->left_to_pop) == 1) {
       goto SHM_BCAST_RELEASE;
     }
@@ -6371,8 +6371,24 @@ int __INTERNAL__PMPI_Bcast_intra(void *buffer, int count, MPI_Datatype datatype,
 		return res;
 	}
 
+  MPI_Aint tsize;
+  res = __INTERNAL__PMPI_Type_extent(datatype, &tsize);
+  if (res != MPI_SUCCESS) {
+    return res;
+  }
+  int derived_ret = 0;
+  int vec_size;
+  sctk_derived_datatype_t input_datatype;
+  if(sctk_datatype_is_derived(datatype))  {
+    MPC_Is_derived_datatype (datatype, &derived_ret, &input_datatype);
+    vec_size = input_datatype.size*count;
+  }
+  else {
+    vec_size = tsize*count;
+  }
+
 	if( (size < sctk_runtime_config_get()->modules.collectives_intra.bcast_intra_for_trsh)
-	&&  (count < sctk_runtime_config_get()->modules.collectives_intra.bcast_intra_for_count_trsh) )
+	&&  (vec_size < sctk_runtime_config_get()->modules.collectives_intra.bcast_intra_for_count_trsh*4) )
 	{
 		int i,j;
 		MPI_Request req_recv;
@@ -7914,7 +7930,7 @@ int __INTERNAL__PMPI_Allgather_intra(void *sendbuf, int sendcount,
     return res;
   }
 
-  if (sendbuf == MPI_IN_PLACE && rank != root) {
+  if (sendbuf == MPI_IN_PLACE) {
     MPI_Aint extent;
     res = __INTERNAL__PMPI_Type_extent(recvtype, &extent);
     if (res != MPI_SUCCESS) {
@@ -8242,6 +8258,14 @@ int __INTERNAL__PMPI_Alltoall_intra(void *sendbuf, int sendcount,
   if (res != MPI_SUCCESS) {
     return res;
   }
+
+  if(sendbuf == MPI_IN_PLACE)
+  {
+    size_t to_cpy = size * recvcount * d_send;
+
+    sendbuf = sctk_malloc(to_cpy);
+    memcpy(sendbuf,recvbuf,to_cpy);
+  }
   res = __INTERNAL__PMPI_Type_extent(recvtype, &d_recv);
   if (res != MPI_SUCCESS) {
     return res;
@@ -8424,7 +8448,6 @@ int __INTERNAL__PMPI_Alltoall(void *sendbuf, int sendcount,
     }
 
 
-
     if (sctk_is_shared_mem(comm)) {
       res = (alltoallv_intra_shm)(sendbuf, &sendcount, NULL, sendtype, recvbuf,
                                   &recvcount, NULL, recvtype, comm);
@@ -8451,13 +8474,30 @@ int __INTERNAL__PMPI_Alltoallv_intra_shm(void *sendbuf, int *sendcnts,
   __INTERNAL__PMPI_Comm_rank(comm, &rank);
 
   struct sctk_shared_mem_a2a_infos info;
+  int is_in_place = 0;
 
   if (sendbuf == MPI_IN_PLACE) {
     __INTERNAL__PMPI_Type_extent(recvtype, &info.stype_size);
-    info.source_buff = recvbuf;
     info.disps = rdispls;
     info.counts = recvcnts;
-    aa_ctx->has_in_place |= 1;
+    is_in_place = 1;
+    size_t to_cpy = 0;
+    if(sdispls)
+    {
+      int i;
+      for (i = 0; i < coll->comm_size; i++) {
+        to_cpy += info.stype_size * rdispls[i];
+      }
+      to_cpy +=recvcnts[coll->comm_size -1]*info.stype_size;
+
+    }
+    else
+    {
+      to_cpy = coll->comm_size * recvcnts[0]*info.stype_size;
+    }
+    info.source_buff = malloc(to_cpy);
+    memcpy(info.source_buff,recvbuf,to_cpy);
+
   } else {
     __INTERNAL__PMPI_Type_extent(sendtype, &info.stype_size);
     info.source_buff = sendbuf;
@@ -8519,7 +8559,7 @@ int __INTERNAL__PMPI_Alltoallv_intra_shm(void *sendbuf, int *sendcnts,
     i = (rank + j) % coll->comm_size;
 
     /* No need to copy if we work in place */
-    if (aa_ctx->has_in_place && (rank == i))
+    if (is_in_place && (rank == i))
       continue;
 
     /* Get data from each rank */
@@ -8570,9 +8610,8 @@ int __INTERNAL__PMPI_Alltoallv_intra_shm(void *sendbuf, int *sendcnts,
 
   __INTERNAL__PMPI_Barrier(comm);
 
-  /* Reset the in-place flag */
-  if (rank == 0) {
-    aa_ctx->has_in_place = 0;
+  if(is_in_place) {
+    sctk_free(info.source_buff);
   }
 
   if (!sctk_datatype_contig_mem(sendtype)) {
@@ -8594,7 +8633,7 @@ int __INTERNAL__PMPI_Alltoallv_intra(void *sendbuf, int *sendcnts, int *sdispls,
                                      int *recvcnts, int *rdispls,
                                      MPI_Datatype recvtype, MPI_Comm comm) {
   int res = MPI_ERR_INTERN;
-  int i, size, rank, ss, ii, dst;
+  int i, size, rank, ss, ii, dst,is_in_place = 0;
   int bblock = 4;
   MPI_Request requests[2 * bblock * sizeof(MPI_Request)];
   MPI_Aint d_send, d_recv;
@@ -8608,14 +8647,33 @@ int __INTERNAL__PMPI_Alltoallv_intra(void *sendbuf, int *sendcnts, int *sdispls,
     return res;
   }
 
-  res = __INTERNAL__PMPI_Type_extent(sendtype, &d_send);
-  if (res != MPI_SUCCESS) {
-    return res;
-  }
   res = __INTERNAL__PMPI_Type_extent(recvtype, &d_recv);
   if (res != MPI_SUCCESS) {
     return res;
   }
+
+  if (sendbuf == MPI_IN_PLACE) {
+    sendcnts = recvcnts;
+    sdispls = rdispls;
+    d_send = d_recv;
+    size_t to_cpy = 0;
+    int i;
+    for (i = 0; i < size; i++) {
+      to_cpy +=d_recv*rdispls[i];
+    }
+    to_cpy +=recvcnts[size -1]*d_recv; 
+    sendbuf = malloc(to_cpy);
+    memcpy(sendbuf,recvbuf,to_cpy);
+    is_in_place = 1;
+  }
+  else
+  {
+    res = __INTERNAL__PMPI_Type_extent(sendtype, &d_send);
+    if (res != MPI_SUCCESS) {
+      return res;
+    }
+  }
+
 
   for (ii = 0; ii < size; ii += bblock) {
     ss = size - ii < bblock ? size - ii : bblock;
@@ -8642,6 +8700,9 @@ int __INTERNAL__PMPI_Alltoallv_intra(void *sendbuf, int *sendcnts, int *sdispls,
       return res;
     }
   }
+  if(is_in_place == 1)
+    sctk_free(sendbuf);
+
   return res;
 }
 
@@ -10100,10 +10161,6 @@ static inline int __INTERNAL__PMPI_Reduce_derived_no_commute_for(
       cnt++;
 		}
 
-		if( sendbuf != MPI_IN_PLACE )
-		{
-			memcpy( recvbuf, sendbuf , blob );
-		}
 
 		__INTERNAL__PMPI_Waitall( size -1 , rreqs , MPI_STATUSES_IGNORE );
 
@@ -10114,41 +10171,56 @@ static inline int __INTERNAL__PMPI_Reduce_derived_no_commute_for(
 
 		int j;
 
-		/* These are the fastpaths */
-		if( (datatype == MPI_FLOAT) && (op = MPI_SUM) )
-		{
-			for( i = 1 ; i < size ; i ++ )
-			{
-				float * fsrc = (float *)sumbuff + (blob * i);
-			
-				for( j = 0 ; j < count ; j++ )
-				{
-					((float*)recvbuf)[i] += fsrc[i];
-				}
-			
-			}
-		
-		}
-		else if( (datatype == MPI_DOUBLE) && (op = MPI_SUM) )
-		{
-			for( i = 1 ; i < size ; i ++ )
-			{
-				double * dsrc = (double *)sumbuff + (blob * i);
-			
-				for( j = 0 ; j < count ; j++ )
-				{
-					((double*)recvbuf)[i] += dsrc[i];
-				}
-			
-			}
-		}
-		else if( (datatype == MPI_INT) && (op = MPI_SUM) )
-		{
-			for( i = 1 ; i < size ; i ++ )
-			{
-				int * isrc = (int *)sumbuff + (blob * i);
-			
-				for( j = 0 ; j < count ; j++ )
+    /* These are the fastpaths */
+    if( (datatype == MPI_FLOAT) && (op = MPI_SUM) )
+    {
+      if( sendbuf != MPI_IN_PLACE )
+      {
+        memcpy( recvbuf, sendbuf , blob );
+      }
+
+      for( i = 1 ; i < size ; i ++ )
+      {
+        float * fsrc = (float *)sumbuff + (blob * i);
+
+        for( j = 0 ; j < count ; j++ )
+        {
+          ((float*)recvbuf)[i] += fsrc[i];
+        }
+
+      }
+
+    }
+    else if( (datatype == MPI_DOUBLE) && (op = MPI_SUM) )
+    {
+      if( sendbuf != MPI_IN_PLACE )
+      {
+        memcpy( recvbuf, sendbuf , blob );
+      }
+
+      for( i = 1 ; i < size ; i ++ )
+      {
+        double * dsrc = (double *)sumbuff + (blob * i);
+
+        for( j = 0 ; j < count ; j++ )
+        {
+          ((double*)recvbuf)[i] += dsrc[i];
+        }
+
+      }
+    }
+    else if( (datatype == MPI_INT) && (op = MPI_SUM) )
+    {
+      if( sendbuf != MPI_IN_PLACE )
+      {
+        memcpy( recvbuf, sendbuf , blob );
+      }
+
+      for( i = 1 ; i < size ; i ++ )
+      {
+        int * isrc = (int *)sumbuff + (blob * i);
+
+        for( j = 0 ; j < count ; j++ )
         {
           ((int*)recvbuf)[i] += isrc[i];
         }
@@ -10158,7 +10230,7 @@ static inline int __INTERNAL__PMPI_Reduce_derived_no_commute_for(
     else
     {
       /* This is the generic Slow-Path */
-      memcpy(sumbuff,recvbuf + (root * blob), blob);
+      memcpy(sumbuff + (root * blob),sendbuf, blob);
 
       for(i=1 ; i<size ; i++)
       {
@@ -10172,7 +10244,7 @@ static inline int __INTERNAL__PMPI_Reduce_derived_no_commute_for(
       }
       memcpy(recvbuf, sumbuff + (blob * (size -1)), blob);
     }
-    if( MAX_FOR_RED_STATIC_BUFF <= (blob * (size-1)) )
+    if( MAX_FOR_RED_STATIC_BUFF <= blob * size )
     {
       sctk_free(sumbuff);
     }
@@ -11509,20 +11581,20 @@ __INTERNAL__PMPI_Reduce_scatter_intra (void *sendbuf, void *recvbuf, int *recvcn
 	res = __INTERNAL__PMPI_Type_extent (datatype, &dsize);
 	if(res != MPI_SUCCESS){return res;}
 
-	for (i = 0; i < size; i++)
-	{
-		if (sendbuf == MPI_IN_PLACE)
-		{
-			sendbuf = recvbuf;
-			res = __INTERNAL__PMPI_Reduce (sendbuf, recvbuf, recvcnts[i], datatype, op, i, comm);
-		}
-		else
-		{
-			res = __INTERNAL__PMPI_Reduce (((char *) sendbuf) + (acc * dsize), recvbuf, recvcnts[i], datatype, op, i, comm);
-		}
-		if(res != MPI_SUCCESS){return res;}
-		acc += recvcnts[i];
-	}
+  if (sendbuf == MPI_IN_PLACE)
+  {
+    int total_size = 0; 
+    for(i=0;i<size;i++)
+      total_size += recvcnts[i];
+    sendbuf = sctk_malloc(dsize * total_size);
+    memcpy(sendbuf,recvbuf,dsize*total_size);    
+  }
+  for (i = 0; i < size; i++)
+  {
+    res = __INTERNAL__PMPI_Reduce (((char *) sendbuf) + (acc * dsize), recvbuf, recvcnts[i], datatype, op, i, comm);
+  }
+  if(res != MPI_SUCCESS){return res;}
+  acc += recvcnts[i];
 
 	res = __INTERNAL__PMPI_Barrier (comm);
 	return res;
@@ -17796,7 +17868,7 @@ PMPI_Alltoall (void *sendbuf, int sendcount, MPI_Datatype sendtype,
 		sendtype = recvtype;
 	}
         
-	if (recvbuf == MPI_IN_PLACE) {
+	if (recvbuf == MPI_IN_PLACE  || sendbuf == recvbuf) {
 		MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
 	}
     /* Internal */
@@ -17850,6 +17922,14 @@ PMPI_Alltoallv (void *sendbuf, int *sendcnts, int *sdispls,
 	mpi_check_comm (comm, comm);
 	res = __INTERNAL__PMPI_Comm_size (comm, &size);
 	if(res != MPI_SUCCESS){return res;}
+
+  if (MPI_IN_PLACE == sendbuf) 
+	{
+		sendcnts = recvcnts;
+		sdispls = rdispls;
+		sendtype = recvtype;
+	}
+
 	for(i = 0; i < size; i++)
 	{
 		mpi_check_count (sendcnts[i], comm);
@@ -17858,17 +17938,11 @@ PMPI_Alltoallv (void *sendbuf, int *sendcnts, int *sdispls,
 	mpi_check_buf (sendbuf, comm);
 	mpi_check_type (sendtype, comm);
 	mpi_check_buf (recvbuf, comm);
-	mpi_check_type (recvtype, comm);
+  mpi_check_type (recvtype, comm);
 
-	if (MPI_IN_PLACE == sendbuf) 
-	{
-		sendcnts = recvcnts;
-		sdispls = rdispls;
-		sendtype = recvtype;
-	}
-    if (MPI_IN_PLACE == recvbuf)
-		MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
-	
+  if (MPI_IN_PLACE == recvbuf || recvbuf == sendbuf)
+    MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
+
 	/* Internal */
     if (sctk_new_scheduler_engine_enabled) {
       sctk_thread_generic_scheduler_t *sched;
