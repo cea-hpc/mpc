@@ -10299,23 +10299,17 @@ __INTERNAL__PMPI_Reduce_derived_commute(void *sendbuf, void *recvbuf, int count,
 		MPI_Datatype datatype, MPI_Op op,
 		int root, MPI_Comm comm, MPC_Op mpc_op,
 		sctk_op_t *mpi_op, int size, int rank) {
-
 	int res;
-	
+
+    /* Temporary buffers for LC & RC contributions */
 	char st_buff1[MPI_RED_TREE_STATIC_BUFF];
 	char st_buff2[MPI_RED_TREE_STATIC_BUFF];
-  char st_buff3[MPI_RED_TREE_STATIC_BUFF];
+	void * tBuffLC = NULL;
+	void * tBuffRC = NULL;
 
-	int allocated1 = 0;
-	int allocated2 = 0;
-  int allocated3 = 0;
+    /* Buffer of local reduction result */
+	void * tBuffRes = NULL;
 
-	/* By default LC writes in sendbuff */
-	void * tbuff1 = sendbuf;
-	/* For RC buff is allocated after IN_PLACE mitigation */
-	void * tbuff2 = NULL;
-
-  void* recvbuf_cpy;
 	MPI_Aint dsize;
 	
 	res = __INTERNAL__PMPI_Type_extent(datatype, &dsize);
@@ -10324,96 +10318,108 @@ __INTERNAL__PMPI_Reduce_derived_commute(void *sendbuf, void *recvbuf, int count,
 		return res;
 	}
 
-  if(rank != root)
-  {
-    if( count * dsize < MPI_RED_TREE_STATIC_BUFF )
+    /* Do we need to dynamically allocate memory? */
+    int allocated = count * dsize < MPI_RED_TREE_STATIC_BUFF ? 0 : 1;
+
+    /* Retrieve operation function */
+    MPC_Op_f func = NULL;
+    if (mpc_op.u_func == NULL)
+        func = sctk_get_common_function(datatype, mpc_op);
+
+    /* Are we in place at root? */
+    if( rank == root )
     {
-      recvbuf_cpy = (void *)st_buff3;
+        tBuffRes = recvbuf;
+
+        if( sendbuf != MPI_IN_PLACE )
+          memcpy(tBuffRes, sendbuf, count * dsize);
+    }
+
+    /* Calculate new rank when root != 0 */
+    if( 0 < root )
+        rank = ( rank - root + size ) % size;
+
+    /* Compute the btree */
+    int parent = ((rank + 1)/ 2) -1;
+    int lc = (rank + 1) * 2 - 1;
+    int rc = (rank + 1) * 2;
+
+    if( rank == 0 )
+        parent = -1;
+
+    if( size <= lc && size <= rc )
+    {
+        lc = -1;
+        rc = -1;
+        tBuffRes = sendbuf;
+    }
+    else if( size > lc && size > rc )
+    {
+        if( allocated )
+        {
+            tBuffLC = sctk_malloc( 2 * count * dsize );
+
+            if( !tBuffLC )
+            {
+                perror("malloc");
+                return MPI_ERR_INTERN;
+            }
+
+            tBuffRC = (char*) tBuffLC + count * dsize;
+        }
+        else
+        {
+            tBuffLC = (void *)st_buff1;
+            tBuffRC = (void *)st_buff2;
+        }
+    }
+    else if( size > lc )
+    {
+        /* No right child */
+        rc = -1;
+
+        if( allocated )
+        {
+            tBuffLC = sctk_malloc( count * dsize );
+
+            if( !tBuffLC )
+            {
+                perror("malloc");
+                return MPI_ERR_INTERN;
+            }
+        }
+        else
+            tBuffLC = (void *)st_buff1;
     }
     else
     {
-      recvbuf_cpy = sctk_malloc(count * dsize);
-      allocated3 = 1;
+        /* No left child */
+        lc = -1;
+
+        if( allocated )
+        {
+            tBuffLC = sctk_malloc( count * dsize );
+
+            if( !tBuffLC )
+            {
+                perror("malloc");
+                return MPI_ERR_INTERN;
+            }
+
+            tBuffRC = tBuffLC;
+        }
+        else
+            tBuffRC = (void *)st_buff2;
     }
-    memcpy( recvbuf_cpy,recvbuf,count*dsize);
-  }
-
-	if( sendbuf != MPI_IN_PLACE )
-	{
-		/* Move data to Recvbuff */
-		memcpy( recvbuf, sendbuf, count * dsize );
-	}
-	else
-	{
-		/* As we are in place we need a temp buff 
-		 * to receive from left child */
-
-		if( count * dsize < MPI_RED_TREE_STATIC_BUFF )
-		{
-			tbuff1 = (void *)st_buff1;
-		}
-		else
-		{
-			tbuff1 = sctk_malloc( count * dsize );
-
-			if( !tbuff1 )
-			{
-				perror("malloc");
-				return MPI_ERR_INTERN;
-			}
-	
-			allocated1 = 1;
-		}
-	}
-
-	/* Setup the second TMP buff for right child  */
-	if( count * dsize < MPI_RED_TREE_STATIC_BUFF )
-	{
-		tbuff2 = (void *)st_buff2;
-	}
-	else
-	{
-		tbuff2 = sctk_malloc( count * dsize );
-
-		if( !tbuff2 )
-		{
-			perror("malloc");
-			return MPI_ERR_INTERN;
-		}
-
-		allocated2 = 1;
-	}
-
-	/* Now compute the btree */
-	int parent = ((rank + 1)/ 2) -1;
-	int lc = (rank + 1) * 2 - 1;
-	int rc = (rank + 1) * 2;
-
-	if( rank == 0 )
-	{
-		parent = -1;
-	}
-
-	if( size <= lc )
-	{
-		lc = -1;
-	}
-
-	if( size <= rc )
-	{
-		rc = -1;
-	}
-
 
 	/* Post the RECV when needed */
-
-
 	MPI_Request rlc, rrc;
 	int rlcc = 0, rrcc = 0;
 
 	if( 0 <= lc )
 	{
-		__INTERNAL__PMPI_Irecv( tbuff1 , count , datatype , lc , MPC_REDUCE_TAG , comm , &rlc );	
+		__INTERNAL__PMPI_Irecv( tBuffLC, count, datatype,
+                                (lc + root) % size, MPC_REDUCE_TAG, comm, &rlc );	
 	}
 	else
 	{
@@ -10422,7 +10428,8 @@ __INTERNAL__PMPI_Reduce_derived_commute(void *sendbuf, void *recvbuf, int count,
 
 	if( 0 <= rc )
 	{
-		__INTERNAL__PMPI_Irecv( tbuff2 , count , datatype , rc , MPC_REDUCE_TAG , comm , &rrc );	
+		__INTERNAL__PMPI_Irecv( tBuffRC, count, datatype,
+                                (rc + root) % size, MPC_REDUCE_TAG, comm, &rrc );	
 	}
 	else
 	{
@@ -10431,85 +10438,72 @@ __INTERNAL__PMPI_Reduce_derived_commute(void *sendbuf, void *recvbuf, int count,
 
 	while( !rlcc || !rrcc )
 	{
-
 		if( !rlcc && (0 <= lc) )
 		{
 			__INTERNAL__PMPI_Test( &rlc , &rlcc , MPI_STATUS_IGNORE );
 		
+			/* We just completed LC in TMPBUFF */
 			if( rlcc )
 			{
-				/* We just completed LC in TMPBUFF1 */
-				if (mpc_op.u_func != NULL) {
-					mpc_op.u_func(tbuff1, recvbuf, &count, &datatype);
-				} else {
-					MPC_Op_f func;
-					func = sctk_get_common_function(datatype, mpc_op);
-					func(tbuff1, recvbuf, count, datatype);
-				}
+                /* Local contribution already accumulated */
+                if( tBuffRes )
+                {
+                    if( func == NULL )
+                        mpc_op.u_func(tBuffLC, tBuffRes, &count, &datatype);
+                    else
+                        func(tBuffLC, tBuffRes, count, datatype);
+                }
+                else
+                {
+                    if( func == NULL )
+                        mpc_op.u_func(sendbuf, tBuffLC, &count, &datatype);
+                    else
+                        func(sendbuf, tBuffLC, count, datatype);
+
+                    tBuffRes = tBuffLC;
+                }
 			}
-		
-	
-		
 		}
-	
-	
+
 		if( !rrcc && (0 <= rc) )
 		{
 			__INTERNAL__PMPI_Test( &rrc , &rrcc , MPI_STATUS_IGNORE );
 		
 			if( rrcc )
 			{
-				/* We just completed RC int TMBUFF2 */
-				if (mpc_op.u_func != NULL) {
-					mpc_op.u_func(tbuff2, recvbuf, &count, &datatype);
-				} else {
-					MPC_Op_f func;
-					func = sctk_get_common_function(datatype, mpc_op);
-					func(tbuff2, recvbuf, count, datatype);
-				}
+                /* Local contribution already accumulated */
+                if( tBuffRes )
+                {
+                    if( func == NULL )
+                        mpc_op.u_func(tBuffRC, tBuffRes, &count, &datatype);
+                    else
+                        func(tBuffRC, tBuffRes, count, datatype);
+                }
+                else
+                {
+                    if( func == NULL )
+                        mpc_op.u_func(sendbuf, tBuffRC, &count, &datatype);
+                    else
+                        func(sendbuf, tBuffRC, count, datatype);
+
+                    tBuffRes = tBuffRC;
+                }
 			}
-		
-		
 		}
 	}
 
-	/* Now that we accumulated the child lets move to parent */
+	/* Now that we accumulated the childs lets move to parent */
 	if( 0 <= parent )
 	{
-		__INTERNAL__PMPI_Send( recvbuf , count , datatype , parent , MPC_REDUCE_TAG , comm );
+		__INTERNAL__PMPI_Send( tBuffRes, count, datatype, 
+                               (parent + root) % size, MPC_REDUCE_TAG, comm );
 	}
 
-	/* Send result to root if needed */
-	if( (root != 0) && (rank == 0) )
-	{
-	 	res = __INTERNAL__PMPI_Send( recvbuf , count , datatype , root , MPC_REDUCE_TAG , comm );
-	
-		if( res != MPI_SUCCESS )
-		{
-			return res;
-		}
-	}
-
-	if( allocated1 )
-	{
-		sctk_free( tbuff1 );
-	}
-
-	if( allocated2 )
-	{
-		sctk_free( tbuff2 );
-	}
-
-  if(rank !=root)
-  {
-    memcpy( recvbuf,recvbuf_cpy,count*dsize);
-    if (allocated3 )
-    {
-      sctk_free(recvbuf_cpy);
-    }
-  }
+	if( allocated )
+		sctk_free( tBuffLC );
 
 	return MPI_SUCCESS;
+
 }
 
 int __INTERNAL__PMPI_Reduce_shm(void *sendbuf, void *recvbuf, int count,
@@ -10959,15 +10953,6 @@ __INTERNAL__PMPI_Reduce_intra (void *sendbuf, void *recvbuf, int count,
                 mpi_op, size, rank);
             if (res != MPI_SUCCESS) {
               return res;
-            }
-
-            if ((rank == root) && (root != 0)) {
-              res = __INTERNAL__PMPI_Recv(recvbuf, count, datatype, 0,
-                                          MPC_REDUCE_TAG, comm,
-                                          MPI_STATUS_IGNORE);
-              if (res != MPI_SUCCESS) {
-                return res;
-              }
             }
           }
         }
