@@ -14,7 +14,7 @@ mpcframework ;            ;        ; install ; libxml2 hwloc openpa libextls sct
 hydra        ; 3.1        ;        ; install ; hwloc                                                          ; all    ; extern       ; generic.autotools
 hydra_simple ;            ;        ; install ; hydra                                                          ; all    ; hydra_simple ; local.autotools
 gdb          ; 7.6.2      ;        ; install ; gcc                                                            ; target ; extern       ; generic.autotools
-tbb          ; 4.4        ;        ; install ; mpcframework                                                   ; target ; extern       ; generic.make
+tbb          ; 2019       ;        ; install ; mpcframework                                                   ; target ; extern       ; generic.make
 mpl          ; 1.0        ;        ; install ; mpcframework priv_plugin                                       ; target ; extern       ; generic.autotools.mpc
 romio        ; 2016.03.19 ;        ; install ; mpcframework priv_plugin mpl                                   ; target ; extern       ; generic.autotools.mpc.seq
 sctk_getopt  ; 1.0        ;        ; install ; mpcframework priv_plugin                                       ; target ; extern       ; generic.autotools.mpc
