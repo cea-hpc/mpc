@@ -196,7 +196,8 @@ void sctk_ptl_eqs_poll(sctk_rail_info_t* rail, size_t threshold)
 						case SCTK_PTL_PROT_RDV:
 							sctk_ptl_rdv_event_me(rail, ev); break;
 						default:
-							not_reachable();
+							/*not_reachable();*/
+							break;
 					}
 					break;
 				case SCTK_PTL_TYPE_RDMA:
@@ -206,7 +207,6 @@ void sctk_ptl_eqs_poll(sctk_rail_info_t* rail, size_t threshold)
 					sctk_ptl_cm_event_me(rail, ev);
 					break;
 				case SCTK_PTL_TYPE_RECOVERY:
-					not_implemented();
 					break;
 				default:
 					not_reachable();

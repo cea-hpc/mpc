@@ -28,6 +28,7 @@
 #include "sctk_ptl_iface.h"
 #include "sctk_ptl_toolkit.h"
 #include "sctk_ptl_offcoll.h"
+//#include "sctk_inter_thread_comm.h"
 
 #define COLL_ARITY 2
 
@@ -178,9 +179,11 @@ static inline void __sctk_ptl_offcoll_connect_peers(sctk_ptl_rail_info_t* srail,
  */
 static inline void __sctk_ptl_offcoll_barrier_run(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte, int local_rank, int size)
 {
+	static int cpt = 0; /* TODO: To remove after debug ends */
         sctk_assert(srail);
         sctk_assert(__sctk_ptl_offcoll_enabled(srail));
 
+	cpt ++;
         size_t i, nb_children;
 	sctk_ptl_cnth_t *me_cnt_up, *me_cnt_down;
         __sctk_ptl_offcoll_connect_peers(srail, pte, local_rank, size); /* done once for all (pay the price at the first call */
@@ -188,13 +191,11 @@ static inline void __sctk_ptl_offcoll_barrier_run(sctk_ptl_rail_info_t* srail, s
         nb_children = pte->coll.nb_children;
 	me_cnt_up = pte->coll.cnt_hb_up;
 	me_cnt_down = pte->coll.cnt_hb_down;
-
-#if 0
         sctk_ptl_cnt_t dummy, dummy2; 
-	sctk_ptl_chk(PtlCTGet(*me_cnt_up, &dummy));
-	sctk_ptl_chk(PtlCTGet(*me_cnt_down, &dummy2));
-	sctk_warning("Barrier Start over idx = %d UP = %d, DOWN = %d CHILD = %llu", pte->idx, dummy.success, dummy2.success, nb_children);
-#endif
+
+	//sctk_ptl_chk(PtlCTGet(*me_cnt_up, &dummy));
+	//sctk_ptl_chk(PtlCTGet(*me_cnt_down, &dummy2));
+	//sctk_warning("Barrier Start over idx = %d UP = %d, DOWN = %d CHILD = %llu, CPT=%d", pte->idx, dummy.success, dummy2.success, nb_children, cpt);
 
         /* If a leaf, just notify the parent.
          * Maybe a bit of latency here could be interesting to allow
@@ -206,25 +207,28 @@ static inline void __sctk_ptl_offcoll_barrier_run(sctk_ptl_rail_info_t* srail, s
         }
         else
         {
-                /* if the root : */
+		int extra = 0;
+		/* if the root : */
                 if(SCTK_PTL_IS_ANY_PROCESS(pte->coll.parent))
                 {
                         /* wait the completion of all its children */
-                        sctk_ptl_emit_trig_cnt_incr(*me_cnt_down, 1, *me_cnt_up, nb_children);
+			sctk_ptl_emit_trig_cnt_incr(*me_cnt_down, 1, *me_cnt_up, nb_children);
                 }
                 else /* otherwise, it is an intermediate node */
                 {
                         /* forward put() to my parent after receiving a direct put() from all my children (meaning there are ready)
                          */
-                        sctk_ptl_emit_trig_put(md_up, 0, pte->coll.parent, pte, SCTK_PTL_MATCH_OFFCOLL_BARRIER_UP, 0, 0, 0, NULL, *me_cnt_up, nb_children);
+			sctk_ptl_emit_trig_put(md_up, 0, pte->coll.parent, pte, SCTK_PTL_MATCH_OFFCOLL_BARRIER_UP, 0, 0, 0, NULL, *me_cnt_up, nb_children);
+			sctk_ptl_emit_trig_cnt_incr(*me_cnt_up, 1, md_up->slot.md.ct_handle, 1);
+			extra = 1;
                 }
                 /* whatever the case, the counter on ME_PUT should be reset (ready to start another half barrier)
                  * (1) The root will increment PUT_DOWN, triggering the put() below
                  * (2) the intermediate nodes will be trigerred by receving the put() from their unique parent
                  */
-                sctk_ptl_emit_trig_cnt_incr(*me_cnt_up, nb_children * (-1), *me_cnt_up, nb_children);
-
-                /* emitting to all the children :
+                sctk_ptl_emit_trig_cnt_incr(*me_cnt_up, nb_children * (size_t)(-1), *me_cnt_up, nb_children+extra);
+                
+		/* emitting to all the children :
                  * (1) directly straight forward for the root (just after the trig_cnt_incr)
                  * (2) only after receiving the put() from the parent
                  */
@@ -232,19 +236,20 @@ static inline void __sctk_ptl_offcoll_barrier_run(sctk_ptl_rail_info_t* srail, s
                 {
                         sctk_ptl_emit_trig_put(md_down, 0, pte->coll.children[i], pte, SCTK_PTL_MATCH_OFFCOLL_BARRIER_DOWN, 0, 0, 0, NULL, *me_cnt_down, 1);
                 }
+		sctk_ptl_emit_trig_cnt_incr(*me_cnt_down, 1, md_down->slot.md.ct_handle, nb_children);
         }
 
         /* wait for the parent to notify the current process the half-barrier returned. This is required to hold
          * the execution flow (within the software) as all calls are directly set up into the NIC
          */
         //Wait_and_relax(PUT_DOWN, 1);
-        PtlCTWait(*me_cnt_down, 1, &dummy); /* TODO: Cheat -> should relax */
+	PtlCTWait(*me_cnt_down, (1+nb_children), &dummy); // TODO: should relax
 
         /* do not forget to reset the second ME to its initial value
          */
-        sctk_ptl_emit_trig_cnt_incr(*me_cnt_down, -1, *me_cnt_down, 1);
+	sctk_ptl_emit_cnt_incr(*me_cnt_down, (size_t)(-1)); //TODO: Issue here w/ the standard if trig_op (p. 89 & 101)
 
-	sctk_warning("Barrier Done over idx = %d", pte->idx);
+	/*sctk_warning("Barrier Done over idx = %d CPT=%d", pte->idx, cpt);*/
 }
 
 /**************************************************/

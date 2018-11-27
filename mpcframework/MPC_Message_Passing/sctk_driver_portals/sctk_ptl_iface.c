@@ -514,7 +514,7 @@ sctk_ptl_local_data_t* sctk_ptl_md_create(sctk_ptl_rail_info_t* srail, void* sta
 sctk_ptl_local_data_t* sctk_ptl_md_create_with_cnt(sctk_ptl_rail_info_t* srail, void* start, size_t length, int flags)
 {
 	sctk_ptl_local_data_t* user = NULL;
-	user = sctk_ptl_md_create(srail, start, length, flags);
+	user = sctk_ptl_md_create(srail, start, length, (flags | PTL_MD_EVENT_CT_SEND));
 	
 	sctk_ptl_chk(PtlCTAlloc(
 		srail->iface,
@@ -772,6 +772,21 @@ int sctk_ptl_emit_fetch_atomic(sctk_ptl_local_data_t* get_user, sctk_ptl_local_d
 	return PTL_OK;
 }
 
+int sctk_ptl_emit_cnt_incr(sctk_ptl_cnth_t target_cnt, size_t incr)
+{
+	sctk_ptl_chk(PtlCTInc(
+		target_cnt,
+		(sctk_ptl_cnt_t){.success=incr, .failure=0}
+	));
+}
+
+int sctk_ptl_emit_cnt_set(sctk_ptl_cnth_t target_cnt, size_t val)
+{
+	sctk_ptl_chk(PtlCTSet(
+		target_cnt,
+		(sctk_ptl_cnt_t){.success=val, .failure=0}
+	));
+}
 /**
  * Same as Get(), but will be hardware-triggered when 'cnt' reaches the set threshold.
  *

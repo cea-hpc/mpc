@@ -102,6 +102,8 @@ int sctk_ptl_emit_swap(
 		size_t size, sctk_ptl_id_t remote, sctk_ptl_pte_t* pte, sctk_ptl_matchbits_t match,
 		size_t local_getoff, size_t local_putoff, size_t remote_off,
 		const void* cmp, sctk_ptl_rdma_type_t type, void* user_ptr);
+int sctk_ptl_emit_cnt_incr(sctk_ptl_cnth_t target_cnt, size_t incr);
+int sctk_ptl_emit_cnt_set(sctk_ptl_cnth_t target_cnt, size_t val);
 
 /* triggered request management */
 int sctk_ptl_emit_triggeredGet(
