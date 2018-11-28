@@ -270,6 +270,7 @@ typedef struct sctk_ptl_coll_opts_s
         sctk_ptl_id_t* children;
         size_t nb_children;
         char leaf;
+	sctk_atomics_int barrier_iter;
 	sctk_ptl_cnth_t* cnt_hb_up;
 	sctk_ptl_cnth_t* cnt_hb_down;
 } sctk_ptl_coll_opts_t;
