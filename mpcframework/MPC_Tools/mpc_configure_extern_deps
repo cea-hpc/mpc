@@ -462,17 +462,24 @@ SCTK_CHECK_LIB_OPENIB()
 sctk_internal_setup_lib_portals()
 {
 	if [ "$PORTALS_IS_SETUP" != "yes" ]; then
-		if [ -e "${PORTALS_USER_PREFIX}/include/portals4.h" ]; then
-			SCTK_CFLAGS="${SCTK_CFLAGS} -I${PORTALS_USER_PREFIX}/include/"
+		if [ -e "${PORTALS_USER_INCLUDE_PREFIX}/portals4.h" ]; then
+			SCTK_CFLAGS="${SCTK_CFLAGS} -I${PORTALS_USER_INCLUDE_PREFIX}"
 		else
-			error "Could not locate portals4.h header in directory ${PORTALS_USER_PREFIX}/include/"
+			error "Could not locate portals4.h header in directory ${PORTALS_USER_INCLUDE_PREFIX}"
 		fi
 
 		#setup rpaths and -L
-		if [ -e "${PORTALS_USER_PREFIX}/lib/libportals.so" ]; then
-			SCTK_LDFLAGS="${SCTK_LDFLAGS} -L${PORTALS_USER_PREFIX}/lib"
-			ADD_TO_LIBRARY_PATH="$PORTALS_USER_PREFIX/lib:$ADD_TO_LIBRARY_PATH"
-			SCTK_ARFLAGS="${SCTK_ARFLAGS} ${PORTALS_USER_PREFIX}/lib/libportals.so"
+		if [ -e "${PORTALS_USER_LIB_PREFIX}/libportals.so" ]; then
+			SCTK_LDFLAGS="${SCTK_LDFLAGS} -L${PORTALS_USER_LIB_PREFIX} -Wl,-rpath=${PORTALS_USER_LIB_PREFIX}"
+			ADD_TO_LIBRARY_PATH="$PORTALS_USER_LIB_PREFIX:$ADD_TO_LIBRARY_PATH"
+			SCTK_ARFLAGS="${SCTK_ARFLAGS} ${PORTALS_USER_LIB_PREFIX}/libportals.so"
+		else
+			PORTALS_USER_LIB_PREFIX="${PORTALS_USER_LIB_PREFIX}64"
+			if [ -e "${PORTALS_USER_LIB_PREFIX}/libportals.so" ]; then
+				SCTK_LDFLAGS="${SCTK_LDFLAGS} -L${PORTALS_USER_LIB_PREFIX} -Wl,-rpath=${PORTALS_USER_LIB_PREFIX}"
+				ADD_TO_LIBRARY_PATH="$PORTALS_USER_LIB_PREFIX:$ADD_TO_LIBRARY_PATH"
+				SCTK_ARFLAGS="${SCTK_ARFLAGS} ${PORTALS_USER_LIB_PREFIX}/libportals.so"
+			fi
 		fi
 	fi
 
@@ -481,7 +488,7 @@ sctk_internal_setup_lib_portals()
 }
 
 SCTK_CHECK_LIB_PORTALS(){
-	if [ "$PORTALS_USER_PREFIX" != "" ]; then
+	if [ "$PORTALS_USER_PREFIX" != "" -o "$PORTALS_USER_INCLUDE_PREFIX" != "" -o "$PORTALS_USER_LIB_PREFIX" != "" ]; then
                 sctk_internal_setup_lib_portals;
 	fi
 	begin_section "Check Portals:"

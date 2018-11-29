@@ -510,8 +510,23 @@ for arg in "$@" ; do
     --with-openib=*)
     OPENIB_USER_PREFIX="`echo A$arg | sed -e 's/A--with-openib=//g'`"
     ;;
-	--with-portals=*)
-    PORTALS_USER_PREFIX="`echo A$arg | sed -e 's/A--with-portals=//g'`"
+    --with-portals*)
+    	ptl_opt="`echo A$arg | sed -e 's/A--with-portals//g'`"
+        case $ptl_opt in
+		-include=*)
+		PORTALS_USER_INCLUDE_PREFIX="`echo A$ptl_opt | sed -e 's/A-include=//g'`"
+		;;
+		-lib=*)
+		PORTALS_USER_LIB_PREFIX="`echo A$ptl_opt | sed -e 's/A-lib=//g'`"
+		;;
+		=*)
+    		PORTALS_USER_PREFIX="`echo A$ptl_opt | sed -e 's/A=//g'`"
+		;;
+        esac
+	if test -n "${PORTALS_USER_PREFIX}"; then
+        	test -z "${PORTALS_USER_INCLUDE_PREFIX}" && PORTALS_USER_INCLUDE_PREFIX="${PORTALS_USER_PREFIX}/include"
+        	test -z "${PORTALS_USER_LIB_PREFIX}" && PORTALS_USER_LIB_PREFIX="${PORTALS_USER_PREFIX}/lib"
+	fi
     ;;
     --with-libxml2=*)
 	SCTK_LIBXML2_PREFIX="`echo A$arg | sed -e 's/A--with-libxml2=//g'`"

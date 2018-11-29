@@ -383,7 +383,6 @@ void mpc_start_(){
 }
 
 EOF
-
 echo "$SCTK_CC $SCTK_CFLAGS -c ${SCTK_CONF_C} -o ${SCTK_CONF_OBJ}">> ${SCTK_CONF_LOG} 2>&1
 eval "$SCTK_CC $SCTK_CFLAGS -c ${SCTK_CONF_C} -o ${SCTK_CONF_OBJ}">> ${SCTK_CONF_LOG} 2>&1
 echo "${SCTK_F77} ${SCTK_CONF_OBJ} ${MPC_SOURCE_DIR}MPC_Message_Passing/mpc/mpcf.f -o ${SCTK_CONF_BIN}" >> ${SCTK_CONF_LOG} 2>&1
