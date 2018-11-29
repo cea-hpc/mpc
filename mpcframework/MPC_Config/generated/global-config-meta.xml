@@ -418,6 +418,12 @@
             <!-- MPI_Bcast -->	
             <param name="bcast_interleave" type="int" default="8" doc="Number of bcast slots to allocate (required to be power of 2)" alias="MPI_COLL_BCAST_INTERLEAVE"/>
         </struct>
+	
+	<struct name="collectives_offload" doc="Offloaded Collectives for MPC">
+            <param name="barrier_intra" type="funcptr" default="ptl_offcoll_barrier" doc="MPI_Barrier"/>
+            <param name="bcast_intra" type="funcptr" default="ptl_offcoll_bcast" doc="MPI_Bcast"/>
+            <param name="reduce_intra" type="funcptr" default="ptl_offcoll_reduce" doc="MPI_Reduce"/>
+        </struct>
 
 
         <struct name="collectives_intra" doc="Collectives intracom MPI">
@@ -515,6 +521,7 @@
                 <module name="collectives_shm_shared" type="collectives_shm_shared"/>
                 <module name="collectives_shm" type="collectives_shm"/>
                 <module name="collectives_intra" type="collectives_intra"/>
+		<module name="collectives_offload" type="collectives_offload"/>
                 <module name="collectives_inter" type="collectives_inter"/>
                 <module name="nbc" type="nbc"/>
                 <module name="mpc" type="mpc"/>

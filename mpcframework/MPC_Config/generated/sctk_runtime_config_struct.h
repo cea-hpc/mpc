@@ -657,6 +657,18 @@ struct sctk_runtime_config_struct_collectives_shm
 };
 
 /******************************** STRUCTURE *********************************/
+/**Offloaded Collectives for MPC**/
+struct sctk_runtime_config_struct_collectives_offload
+{	int init_done;
+	/**MPI_Barrier**/
+	struct sctk_runtime_config_funcptr barrier_intra;
+	/**MPI_Bcast**/
+	struct sctk_runtime_config_funcptr bcast_intra;
+	/**MPI_Reduce**/
+	struct sctk_runtime_config_funcptr reduce_intra;
+};
+
+/******************************** STRUCTURE *********************************/
 /**Collectives intracom MPI**/
 struct sctk_runtime_config_struct_collectives_intra
 {	int init_done;
@@ -939,6 +951,7 @@ struct sctk_runtime_config_modules
 	struct sctk_runtime_config_struct_collectives_shm_shared collectives_shm_shared;
 	struct sctk_runtime_config_struct_collectives_shm collectives_shm;
 	struct sctk_runtime_config_struct_collectives_intra collectives_intra;
+	struct sctk_runtime_config_struct_collectives_offload collectives_offload;
 	struct sctk_runtime_config_struct_collectives_inter collectives_inter;
 	struct sctk_runtime_config_struct_nbc nbc;
 	struct sctk_runtime_config_struct_mpc mpc;

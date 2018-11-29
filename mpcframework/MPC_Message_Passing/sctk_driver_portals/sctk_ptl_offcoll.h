@@ -42,5 +42,8 @@ void sctk_ptl_offcoll_fini(sctk_ptl_rail_info_t* rail);
 void sctk_ptl_offcoll_pte_init(sctk_ptl_rail_info_t* rail, sctk_ptl_pte_t* pte);
 void sctk_ptl_offcoll_pte_fini(sctk_ptl_rail_info_t* rail, sctk_ptl_pte_t* pte);
 
+/***** INTERFACE *******/
+int ptl_offcoll_barrier(int, int, int);
+
 #endif /* SCTK_PTL_OFFCOLL_H_ */
 #endif /* MPC_USE_PORTALS */

@@ -251,6 +251,11 @@ meta.types = {
 		reduce_interleave: {mode: 'param', name: "reduce_interleave", type: "int", doc: "Number of reduce slots to allocate (required to be power of 2)", dflt: "8", },
 		bcast_interleave: {mode: 'param', name: "bcast_interleave", type: "int", doc: "Number of bcast slots to allocate (required to be power of 2)", dflt: "8", },
 	}},
+	collectives_offload : {type: 'struct', name: "collectives_offload", childs: {
+		barrier_intra: {mode: 'param', name: "barrier_intra", type: "funcptr", doc: "MPI_Barrier", dflt: "ptl_offcoll_barrier", },
+		bcast_intra: {mode: 'param', name: "bcast_intra", type: "funcptr", doc: "MPI_Bcast", dflt: "ptl_offcoll_bcast", },
+		reduce_intra: {mode: 'param', name: "reduce_intra", type: "funcptr", doc: "MPI_Reduce", dflt: "ptl_offcoll_reduce", },
+	}},
 	collectives_intra : {type: 'struct', name: "collectives_intra", childs: {
 		barrier_intra: {mode: 'param', name: "barrier_intra", type: "funcptr", doc: "MPI_Barrier intracom algorithm", dflt: "__INTERNAL__PMPI_Barrier_intra", },
 		barrier_intra_for_trsh: {mode: 'param', name: "barrier_intra_for_trsh", type: "int", doc: "Maximum number of process for using a trivial for for the Barrier", dflt: "33", },
@@ -382,6 +387,7 @@ meta.modules = {
 	collectives_shm_shared: {name: "collectives_shm_shared", type: "collectives_shm_shared"},
 	collectives_shm: {name: "collectives_shm", type: "collectives_shm"},
 	collectives_intra: {name: "collectives_intra", type: "collectives_intra"},
+	collectives_offload: {name: "collectives_offload", type: "collectives_offload"},
 	collectives_inter: {name: "collectives_inter", type: "collectives_inter"},
 	nbc: {name: "nbc", type: "nbc"},
 	mpc: {name: "mpc", type: "mpc"},

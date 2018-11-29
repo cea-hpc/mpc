@@ -262,13 +262,23 @@ static inline void __sctk_ptl_offcoll_barrier_run(sctk_ptl_rail_info_t* srail, s
 /**************************************************/
 /**************************************************/
 
-int OFFCOLL_PTL_Barrier(int comm_idx, int rank, int size)
+int ptl_offcoll_barrier(int comm_idx, int rank, int size)
 {
         sctk_ptl_pte_t* pte = SCTK_PTL_PTE_ENTRY(grail->pt_table, comm_idx);
         sctk_assert(pte);
 
         __sctk_ptl_offcoll_barrier_run(grail, pte, rank, size);
         return 0;
+}
+
+int ptl_offcoll_bcast()
+{
+	return 0;
+}
+
+int ptl_offcoll_reduce()
+{
+	return 0;
 }
 
 #endif

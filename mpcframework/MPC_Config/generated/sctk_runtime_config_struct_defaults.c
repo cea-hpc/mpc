@@ -3221,6 +3221,25 @@ void sctk_runtime_config_struct_init_collectives_shm(void * struct_ptr)
 }
 
 /*******************  FUNCTION  *********************/
+void sctk_runtime_config_struct_init_collectives_offload(void * struct_ptr)
+{
+	struct sctk_runtime_config_struct_collectives_offload * obj = struct_ptr;
+	/* Make sure this element is not initialized yet       */
+	/* It allows us to know when we are facing dynamically */
+	/* allocated objects requiring an init                 */
+	if( obj->init_done != 0 ) return;
+
+	/* Simple params : */
+	obj->barrier_intra.name = "ptl_offcoll_barrier";
+	*(void **) &(obj->barrier_intra.value) = sctk_runtime_config_get_symbol("ptl_offcoll_barrier");
+	obj->bcast_intra.name = "ptl_offcoll_bcast";
+	*(void **) &(obj->bcast_intra.value) = sctk_runtime_config_get_symbol("ptl_offcoll_bcast");
+	obj->reduce_intra.name = "ptl_offcoll_reduce";
+	*(void **) &(obj->reduce_intra.value) = sctk_runtime_config_get_symbol("ptl_offcoll_reduce");
+	obj->init_done = 1;
+}
+
+/*******************  FUNCTION  *********************/
 void sctk_runtime_config_struct_init_collectives_intra(void * struct_ptr)
 {
 	struct sctk_runtime_config_struct_collectives_intra * obj = struct_ptr;
@@ -3708,6 +3727,7 @@ void sctk_runtime_config_reset(struct sctk_runtime_config * config)
 	sctk_runtime_config_struct_init_collectives_shm_shared(&config->modules.collectives_shm_shared);
 	sctk_runtime_config_struct_init_collectives_shm(&config->modules.collectives_shm);
 	sctk_runtime_config_struct_init_collectives_intra(&config->modules.collectives_intra);
+	sctk_runtime_config_struct_init_collectives_offload(&config->modules.collectives_offload);
 	sctk_runtime_config_struct_init_collectives_inter(&config->modules.collectives_inter);
 	sctk_runtime_config_struct_init_nbc(&config->modules.nbc);
 	sctk_runtime_config_struct_init_mpc(&config->modules.mpc);
@@ -3925,6 +3945,12 @@ void sctk_runtime_config_reset_struct_default_if_needed(const char * structname,
 	if( !strcmp( structname , "sctk_runtime_config_struct_collectives_shm") )
 	{
 		sctk_runtime_config_struct_init_collectives_shm( ptr );
+		return;
+	}
+
+	if( !strcmp( structname , "sctk_runtime_config_struct_collectives_offload") )
+	{
+		sctk_runtime_config_struct_init_collectives_offload( ptr );
 		return;
 	}
 

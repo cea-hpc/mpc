@@ -5454,6 +5454,7 @@ int (*barrier_intra)(MPI_Comm);
 int (*barrier_intra_shm)(MPI_Comm);
 int (*barrier_intra_shared_node)(MPI_Comm);
 int (*barrier_inter)(MPI_Comm);
+int (*barrier_offload)(int, int, int);
 
 int (*bcast_intra_shm)(void *, int, MPI_Datatype, int, MPI_Comm);
 int (*bcast_intra_shared_node)(void *, int, MPI_Datatype, int, MPI_Comm);
@@ -5916,19 +5917,18 @@ static inline int __INTERNAL__PMPI_Barrier_btree_mpi(MPI_Comm comm, int size) {
   MPI_ERROR_SUCESS();
 }
 
-int OFFCOLL_PTL_Barrier(int comm, int rank, int sz);
 int __INTERNAL__PMPI_Barrier_intra(MPI_Comm comm) {
 
 	int size, rank, res;
 	__INTERNAL__PMPI_Comm_size( comm, &size );
         __INTERNAL__PMPI_Comm_rank( comm, &rank);
 
-       
-        /** TODO: reead the actual config (but need a rail discovery first) */
-        /*if(sctk_runtime_config_get()->networks.configs.driver.value.portals.offloading.collectives)*/
-        if(1)
+	if(!barrier_offload)
+		barrier_offload = ((int(*)(int, int, int))sctk_runtime_config_get()->modules.collectives_offload.barrier_intra.value);
+
+        if(barrier_offload)
         {
-                res = OFFCOLL_PTL_Barrier(comm, rank, size);
+                res = barrier_offload(comm, rank, size);
         }
         else if( size < sctk_runtime_config_get()->modules.collectives_intra.barrier_intra_for_trsh )
 	{

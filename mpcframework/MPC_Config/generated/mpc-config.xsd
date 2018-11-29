@@ -644,6 +644,32 @@
     </xs:all>
   </xs:complexType>
   <!-- ********************************************************* -->
+  <xs:complexType name="user_type_collectives_offload">
+    <xs:all>
+      <xs:element minOccurs="0" name="barrier_intra">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+      <xs:element minOccurs="0" name="bcast_intra">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+      <xs:element minOccurs="0" name="reduce_intra">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+    </xs:all>
+  </xs:complexType>
+  <!-- ********************************************************* -->
   <xs:complexType name="user_type_collectives_intra">
     <xs:all>
       <xs:element minOccurs="0" name="barrier_intra">
@@ -1042,6 +1068,7 @@
       <xs:element minOccurs="0" name="collectives_shm_shared" type="user_type_collectives_shm_shared"/>
       <xs:element minOccurs="0" name="collectives_shm" type="user_type_collectives_shm"/>
       <xs:element minOccurs="0" name="collectives_intra" type="user_type_collectives_intra"/>
+      <xs:element minOccurs="0" name="collectives_offload" type="user_type_collectives_offload"/>
       <xs:element minOccurs="0" name="collectives_inter" type="user_type_collectives_inter"/>
       <xs:element minOccurs="0" name="nbc" type="user_type_nbc"/>
       <xs:element minOccurs="0" name="mpc" type="user_type_mpc"/>
