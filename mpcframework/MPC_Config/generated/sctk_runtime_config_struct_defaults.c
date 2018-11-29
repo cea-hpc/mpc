@@ -3696,26 +3696,15 @@ void sctk_runtime_config_reset(struct sctk_runtime_config * config)
 {
 	memset(config, 0, sizeof(struct sctk_runtime_config));
 	sctk_handler = dlopen(0, RTLD_LAZY | RTLD_GLOBAL);
-#ifdef MPC_Accelerators
 	sctk_runtime_config_struct_init_accl(&config->modules.accelerator);
-#endif
-#ifdef MPC_Allocator
 	sctk_runtime_config_struct_init_allocator(&config->modules.allocator);
-#endif
-#ifdef MPC_Common
 	sctk_runtime_config_struct_init_launcher(&config->modules.launcher);
 	sctk_runtime_config_struct_init_debugger(&config->modules.debugger);
-#endif
-#ifdef MPC_Fault_Tolerance
 	sctk_runtime_config_struct_init_ft(&config->modules.ft_system);
-#endif
-#ifdef MPC_Message_Passing
 	sctk_runtime_config_struct_init_inter_thread_comm(&config->modules.inter_thread_comm);
 	sctk_runtime_config_struct_init_low_level_comm(&config->modules.low_level_comm);
 	sctk_runtime_config_enum_init_ibv_rdvz_protocol();
 	sctk_runtime_config_enum_init_rail_topological_polling_level();
-#endif
-#ifdef MPC_MPI
 	sctk_runtime_config_struct_init_collectives_shm_shared(&config->modules.collectives_shm_shared);
 	sctk_runtime_config_struct_init_collectives_shm(&config->modules.collectives_shm);
 	sctk_runtime_config_struct_init_collectives_intra(&config->modules.collectives_intra);
@@ -3723,18 +3712,11 @@ void sctk_runtime_config_reset(struct sctk_runtime_config * config)
 	sctk_runtime_config_struct_init_nbc(&config->modules.nbc);
 	sctk_runtime_config_struct_init_mpc(&config->modules.mpc);
 	sctk_runtime_config_struct_init_mpi_rma(&config->modules.rma);
-#endif
-#ifdef MPC_OpenMP
 	sctk_runtime_config_struct_init_openmp(&config->modules.openmp);
 	sctk_runtime_config_enum_init_mpcomp_task_larceny_mode_t();
-#endif
-#ifdef MPC_Profiler
 	sctk_runtime_config_struct_init_profiler(&config->modules.profiler);
-#endif
-#ifdef MPC_Threads
 	sctk_runtime_config_struct_init_thread(&config->modules.thread);
 	sctk_runtime_config_struct_init_scheduler(&config->modules.scheduler);
-#endif
 	sctk_runtime_config_struct_init_networks(&config->networks);
 	dlclose(sctk_handler);
 }
