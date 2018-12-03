@@ -124,7 +124,7 @@ extern "C"
     sctk_thread_t tid;
     volatile sctk_thread_status_t status;
     struct sctk_task_specific_s *father_data;
-	struct sctk_tls_dtors_s* dtors_head;
+	  struct sctk_tls_dtors_s* dtors_head;
     /* Where the thread must be bound */
     unsigned int bind_to;
     /* This is the MPI interface per th ctx */
@@ -134,8 +134,9 @@ extern "C"
     void * ctx_disguisement;
   } sctk_thread_data_t;
 
-#define SCTK_THREAD_DATA_INIT { NULL, NULL, NULL, -1, -1, -1 , -1,\
-      NULL,NULL,-1,(void*)NULL,sctk_thread_undef_status,NULL}
+#define SCTK_THREAD_DATA_INIT { NULL, NULL, NULL, -1, -1, -1, -1, NULL,\
+                                NULL, -1, (void*)NULL, sctk_thread_undef_status,\
+                                NULL, NULL, -1, NULL, NULL, NULL}
 
   void sctk_thread_data_init (void);
   void sctk_thread_data_set (sctk_thread_data_t * task_id);

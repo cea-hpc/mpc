@@ -109,11 +109,12 @@ static inline int sctk_get_local_task_rank (void)
 #ifdef SCTK_PROCESS_MODE
         return 0;
 #endif
+		sctk_thread_data_t *data = sctk_thread_data_get();
 
-        if (!sctk_thread_data_get())
-          return -1;
+		if ( !data )
+			return -1;
 
-        return (int)(sctk_thread_data_get()->local_task_id);
+		return (int) ( data->local_task_id );
 }
 
 static inline int sctk_get_local_task_number (void)
@@ -131,10 +132,12 @@ static inline int sctk_get_local_task_number (void)
 
 static inline int sctk_get_processor_rank (void)
 {
-	if( !sctk_thread_data_get() )
+	sctk_thread_data_t *data = sctk_thread_data_get();
+
+	if ( !data )
 		return -1;
 
-        return sctk_thread_data_get()->virtual_processor;
+	return data->virtual_processor;
 }
 
 static inline int sctk_get_processor_number (void)

@@ -615,7 +615,6 @@ sctk_thread_create_tmp_start_routine (sctk_thread_data_t * __arg)
 
   // we do not have an MPI
   tmp.mpi_per_thread = NULL;
-
   // Set no disguise
   tmp.my_disguisement = NULL;
   tmp.ctx_disguisement = NULL;
@@ -879,6 +878,13 @@ sctk_thread_create_tmp_start_routine_user (sctk_thread_data_t * __arg)
 
 
   sctk_set_tls (tmp.tls);
+
+  // we do not have an MPI
+  tmp.mpi_per_thread = NULL;
+  // Set no disguise
+  tmp.my_disguisement = NULL;
+  tmp.ctx_disguisement = NULL;
+
   *ptr_cleanup = NULL;
   sctk_thread_setspecific (_sctk_thread_handler_key, ptr_cleanup);
 
@@ -2180,17 +2186,21 @@ void sctk_thread_data_set(sctk_thread_data_t *task_id) {
 sctk_thread_data_t *
 __sctk_thread_data_get (int no_disguise)
 {
-  sctk_thread_data_t *tmp;
+  sctk_thread_data_t *tmp = NULL;
   if (sctk_multithreading_initialised == 0)
-    tmp = &sctk_main_datas;
+  {
+	  tmp = &sctk_main_datas;
+  }
   else
-    tmp = (sctk_thread_data_t *) sctk_thread_getspecific (stck_task_data);
+  {
+	  tmp = (sctk_thread_data_t *) sctk_thread_getspecific( stck_task_data );
+  }
 
   if( tmp )
   {
     if( (tmp->my_disguisement != NULL) && (no_disguise == 0) )
     {
-        return tmp->my_disguisement;
+      return tmp->my_disguisement;
     }
   }
 
