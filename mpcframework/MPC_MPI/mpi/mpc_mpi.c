@@ -20281,22 +20281,17 @@ int PMPI_Comm_free_keyval(int *comm_keyval)
 
 int PMPI_Comm_set_attr(MPI_Comm comm, int comm_keyval, void *attribute_val)
 {
-	return MPI_SUCCESS;
-
+	return __INTERNAL__PMPI_Attr_put( comm, comm_keyval, attribute_val );
 }
 
 int PMPI_Comm_get_attr(MPI_Comm comm, int comm_keyval, void *attribute_val, int *flag)
 {
-	return MPI_SUCCESS;
-
-
+	return __INTERNAL__PMPI_Attr_get( comm, comm_keyval, attribute_val, flag );
 }
-
 
 int PMPI_Comm_delete_attr(MPI_Comm comm, int comm_keyval)
 {
-	return MPI_SUCCESS;
-
+	return __INTERNAL__PMPI_Attr_delete( comm, comm_keyval );
 }
 
 /********************************* 
