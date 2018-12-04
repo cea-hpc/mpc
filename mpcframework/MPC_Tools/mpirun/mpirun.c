@@ -120,10 +120,6 @@ int main(int argc, char **argv) {
     strcat(command, argv[i]);
   }
 
-
-
-  printf("%s\n", command);
-
   system(command);
 
   free(command);

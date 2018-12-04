@@ -20,7 +20,6 @@
 #   - PERACHE Marc marc.perache@cea.fr                                 #
 #                                                                      #
 ########################################################################
-echo "Running MPC with $SCTK_JOB_MANAGER job manager" >&2
 
 if [ "$SCTK_JOB_MANAGER" = "SLURM" ]; then
     if test "$CPU_NB" = "0" ; then

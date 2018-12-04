@@ -434,7 +434,7 @@ static void sctk_perform_initialisation (void)
 #ifdef MPC_USE_INFINIBAND
           if (!sctk_network_driver_name && !sctk_ib_device_found()) {
             if (!sctk_process_rank)
-              sctk_warning("Could not locate an IB device, fallback to TCP");
+              sctk_info("Could not locate an IB device, fallback to TCP");
             sctk_network_driver_name = "tcp";
           }
 #endif
