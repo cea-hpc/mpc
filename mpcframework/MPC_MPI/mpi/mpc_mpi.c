@@ -10357,7 +10357,10 @@ __INTERNAL__PMPI_Reduce_derived_commute(void *sendbuf, void *recvbuf, int count,
           memcpy(tBuffRes, sendbuf, count * dsize);
     }
 
-    /* Calculate new rank when root != 0 */
+  /* We need a temp buff 
+    * to receive from left child */
+
+  if( count * dsize < MPI_RED_TREE_STATIC_BUFF )
     if( 0 < root )
         rank = ( rank - root + size ) % size;
 
@@ -10370,26 +10373,24 @@ __INTERNAL__PMPI_Reduce_derived_commute(void *sendbuf, void *recvbuf, int count,
         parent = -1;
 
     if( size <= lc && size <= rc )
-    {
-        lc = -1;
+  {
+    tbuff1 = (void *)st_buff1;
         rc = -1;
         tBuffRes = sendbuf;
-    }
-    else if( size > lc && size > rc )
-    {
-        if( allocated )
+  }
+  else
+  {
+    tbuff1 = sctk_malloc( count * dsize );
         {
             tBuffLC = sctk_malloc( 2 * count * dsize );
 
-            if( !tBuffLC )
-            {
-                perror("malloc");
-                return MPI_ERR_INTERN;
-            }
-
-            tBuffRC = (char*) tBuffLC + count * dsize;
-        }
-        else
+    if( !tbuff1 )
+    {
+      perror("malloc");
+      return MPI_ERR_INTERN;
+    }
+    allocated1 = 1;
+  }
         {
             tBuffLC = (void *)st_buff1;
             tBuffRC = (void *)st_buff2;
