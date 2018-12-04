@@ -20515,18 +20515,18 @@ int PMPI_T_category_changed(int *stamp) {
 /* Error Handling */
 
 int PMPI_Add_error_class(int *errorclass) {
-  not_implemented();
-  return MPI_ERR_INTERN;
+  //not_implemented();
+  return MPI_SUCCESS;
 }
 
 int PMPI_Add_error_code(int errorclass, int *errorcode) {
-  not_implemented();
-  return MPI_ERR_INTERN;
+  //not_implemented();
+  return MPI_SUCCESS;
 }
 
 int PMPI_Add_error_string(int errorcode, char *string) {
-  not_implemented();
-  return MPI_ERR_INTERN;
+  //not_implemented();
+  return MPI_SUCCESS;
 }
 
 int PMPI_Comm_create_errhandler(MPI_Comm_errhandler_function *function,
