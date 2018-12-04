@@ -6837,7 +6837,7 @@ int __INTERNAL__PMPI_Gatherv_intra_shm(void *sendbuf, int sendcnt,
   struct sctk_comm_coll *coll = sctk_communicator_get_coll(comm);
   struct shared_mem_gatherv *gv_ctx = &coll->shm_gatherv;
 
-  int rank, res;
+  volatile int rank, res;
   PMPI_Comm_rank(comm, &rank);
 
   /* First pay the toll gate */
