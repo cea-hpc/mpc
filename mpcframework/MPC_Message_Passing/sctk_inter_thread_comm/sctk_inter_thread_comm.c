@@ -1760,6 +1760,8 @@ void sctk_reinit_header(sctk_thread_ptp_message_t *tmp,
   tmp->tail.free_memory = free_memory;
   tmp->tail.message_copy = message_copy;
   tmp->tail.buffer_async = NULL;
+
+  memset(&tmp->tail.message.pack, 0, sizeof(tmp->tail.message.pack));
 }
 
 void sctk_init_header(sctk_thread_ptp_message_t *tmp,
