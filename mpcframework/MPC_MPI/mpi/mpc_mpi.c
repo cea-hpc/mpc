@@ -5455,6 +5455,7 @@ int (*barrier_intra_shm)(MPI_Comm);
 int (*barrier_intra_shared_node)(MPI_Comm);
 int (*barrier_inter)(MPI_Comm);
 int (*barrier_offload)(int, int, int);
+int (*bcast_offload)(int, int, int, void*, int, int);
 
 int (*bcast_intra_shm)(void *, int, MPI_Datatype, int, MPI_Comm);
 int (*bcast_intra_shared_node)(void *, int, MPI_Datatype, int, MPI_Comm);
@@ -5926,11 +5927,15 @@ int __INTERNAL__PMPI_Barrier_intra(MPI_Comm comm) {
 	if(!barrier_offload)
 		barrier_offload = ((int(*)(int, int, int))sctk_runtime_config_get()->modules.collectives_offload.barrier_intra.value);
 
+#ifdef MPC_USE_PORTALS
+
         if(barrier_offload)
         {
                 res = barrier_offload(comm, rank, size);
+		return res;
         }
-        else if( size < sctk_runtime_config_get()->modules.collectives_intra.barrier_intra_for_trsh )
+#endif
+	if( size < sctk_runtime_config_get()->modules.collectives_intra.barrier_intra_for_trsh )
 	{
 		res = __INTERNAL__PMPI_Barrier_intra_for( comm, size );
 	}
@@ -6382,6 +6387,19 @@ int __INTERNAL__PMPI_Bcast_intra(void *buffer, int count, MPI_Datatype datatype,
 		return res;
 	}
 
+#ifdef MPC_USE_PORTALS
+	if(!bcast_offload)
+		bcast_offload = ((int(*)(int, int, int, void*, size_t, int))sctk_runtime_config_get()->modules.collectives_offload.bcast_intra.value);
+        if(bcast_offload && sctk_datatype_kind(datatype) == MPC_DATATYPES_COMMON)
+        {
+		int tmp_size;
+		PMPC_Type_size (datatype, &tmp_size);
+		size_t length = ((size_t)count) * ((size_t)tmp_size);
+                res = bcast_offload(comm, rank, size, buffer, length, root);
+		return res;
+        }
+#endif
+	
   MPI_Aint tsize;
   res = __INTERNAL__PMPI_Type_extent(datatype, &tsize);
   if (res != MPI_SUCCESS) {
