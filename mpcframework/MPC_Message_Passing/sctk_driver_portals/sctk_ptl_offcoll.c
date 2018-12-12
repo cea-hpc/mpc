@@ -236,18 +236,7 @@ static inline void __sctk_ptl_offcoll_barrier_run(sctk_ptl_rail_info_t* srail, s
         /* wait for the parent to notify the current process the half-barrier returned. This is required to hold
          * the execution flow (within the software) as all calls are directly set up into the NIC
          */
-        //Wait_and_relax(PUT_DOWN, 1);
-#if 0
-	PtlCTGet(*me_cnt_down, &dummy);
-	while(dummy.success < (cnt_prev_ops + 1))
-	{
-		sctk_cpu_relax();
-		PtlCTGet(*me_cnt_down, &dummy);
-	}
-#else
-	PtlCTWait(*me_cnt_down, (size_t)(cnt_prev_ops + 1), &dummy);
-	sctk_assert(dummy.success == (size_t)(cnt_prev_ops + 1));
-#endif
+	sctk_ptl_ct_wait_thrs(*me_cnt_down, (size_t)(cnt_prev_ops + 1), &dummy);
 
         /* do not forget to reset the second ME to its initial value
          */

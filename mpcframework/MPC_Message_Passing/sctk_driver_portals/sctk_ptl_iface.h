@@ -78,6 +78,7 @@ void sctk_ptl_me_feed(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte, size_t m
 
 /* event management */
 void sctk_ptl_ct_free(sctk_ptl_cnth_t cth);
+void sctk_ptl_ct_wait_thrs(sctk_ptl_cnth_t cth, size_t thrs, sctk_ptl_cnt_t* ev);
 
 /* MD management */
 sctk_ptl_local_data_t* sctk_ptl_md_create(sctk_ptl_rail_info_t* srail, void*, size_t, int);

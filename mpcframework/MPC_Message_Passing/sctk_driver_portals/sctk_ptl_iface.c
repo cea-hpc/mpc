@@ -484,6 +484,22 @@ void sctk_ptl_ct_free(sctk_ptl_cnth_t cth)
 	));
 }
 
+void sctk_ptl_ct_wait_thrs(sctk_ptl_cnth_t cth, size_t thrs, sctk_ptl_cnt_t* ev)
+{
+	ev->success = 0;
+	ev->failure = 0;
+
+	/* choose one */
+#if 1
+	PtlCTWait(cth, thrs, ev);
+#else
+	while(ev->success < thrs && !ev->failure)
+	{
+		PtlCTGet(cth, ev);
+	}
+#endif
+}
+
 /**
  * Create a local memory region to be registered to Portals.
  * \param[in] start buffer first address
