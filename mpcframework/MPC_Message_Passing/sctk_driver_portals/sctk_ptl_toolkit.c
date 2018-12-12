@@ -380,25 +380,27 @@ sctk_ptl_id_t sctk_ptl_map_id(sctk_rail_info_t* rail, int dest)
 {
 	int tmp_ret;
 	char connection_infos[MAX_STRING_SIZE];
-	sctk_ptl_id_t id = SCTK_PTL_ANY_PROCESS;
 
-	/* retrieve the right neighbour id struct */
-	tmp_ret = sctk_pmi_get_connection_info (
-			connection_infos,  /* the recv buffer */
-			MAX_STRING_SIZE,   /* the recv buffer max size */
-			rail->rail_number, /* rail IB: PMI tag */
-			dest               /* which process we are targeting */
-	);
+	if(SCTK_PTL_IS_ANY_PROCESS(ranks_ids_map[dest]) )
+	{
+		/* retrieve the right neighbour id struct */
+		tmp_ret = sctk_pmi_get_connection_info (
+				connection_infos,  /* the recv buffer */
+				MAX_STRING_SIZE,   /* the recv buffer max size */
+				rail->rail_number, /* rail IB: PMI tag */
+				dest               /* which process we are targeting */
+				);
 
-	assert(tmp_ret == 0);
-	
-	sctk_ptl_data_deserialize(
-			connection_infos, /* the buffer containing raw data */
-			&id,               /* the target struct */
-			sizeof (id )      /* target struct size */
-	);
+		assert(tmp_ret == 0);
 
-	return id;
+		sctk_ptl_data_deserialize(
+				connection_infos, /* the buffer containing raw data */
+				ranks_ids_map + dest, /* the target struct */
+				sizeof (sctk_ptl_id_t)      /* target struct size */
+				);
+	}
+	sctk_assert(!SCTK_PTL_IS_ANY_PROCESS(ranks_ids_map[dest]));
+	return ranks_ids_map[dest];
 }
 
 /**
@@ -455,7 +457,12 @@ void sctk_ptl_init_interface(sctk_rail_info_t* rail)
 
 	if(!ranks_ids_map)
 	{
-		ranks_ids_map = sctk_calloc(sctk_get_process_number(), sizeof(sctk_ptl_id_t));
+		ranks_ids_map = sctk_malloc(sctk_get_process_number() * sizeof(sctk_ptl_id_t));
+		int i;
+		for(i = 0; i < sctk_get_process_number(); i++)
+		{
+			ranks_ids_map[i] = SCTK_PTL_ANY_PROCESS;
+		}
 	}
 }
 
