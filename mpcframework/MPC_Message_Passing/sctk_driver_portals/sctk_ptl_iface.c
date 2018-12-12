@@ -288,8 +288,6 @@ void sctk_ptl_pte_create(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte, size_
 		&pte->idx       /* the effective index value */
 	));
 
-        sctk_spinlock_init((&pte->lock), 0);
-
 	if(sctk_ptl_offcoll_enabled(srail))
 	{
 		sctk_ptl_offcoll_pte_init(srail, pte);

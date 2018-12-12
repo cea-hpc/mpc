@@ -264,17 +264,41 @@ typedef union sctk_ptl_imm_data_s
 	struct sctk_ptl_offload_data_s offload; /**< imm-data for offload */
 } sctk_ptl_imm_data_t;
 
-typedef struct sctk_ptl_coll_opts_s
+typedef struct sctk_ptl_offcoll_barrier_s
 {
-        sctk_ptl_id_t parent;
-        sctk_ptl_id_t* children;
-        size_t nb_children;
-        char leaf;
-	sctk_atomics_int barrier_iter;
 	sctk_ptl_cnth_t* cnt_hb_up;
 	sctk_ptl_cnth_t* cnt_hb_down;
-} sctk_ptl_coll_opts_t;
+} sctk_ptl_offcoll_barrier_t;
 
+typedef struct sctk_ptl_offcoll_bcast_s
+{
+} sctk_ptl_offcoll_bcast_t;
+
+typedef union sctk_ptl_offcoll_spec_u
+{
+	struct sctk_ptl_offcoll_barrier_s barrier;
+	struct sctk_ptl_offcoll_bcast_s bcast;
+} sctk_ptl_offcoll_spec_t;
+
+typedef struct sctk_ptl_offcoll_tree_node_s
+{
+        sctk_spinlock_t lock;
+	sctk_atomics_int iter;
+	sctk_ptl_id_t parent;
+	sctk_ptl_id_t* children;
+	size_t nb_children;
+	int root;
+	int leaf; 
+	union sctk_ptl_offcoll_spec_u spec;
+} sctk_ptl_offcoll_tree_node_t;
+
+typedef enum sctk_ptl_offcoll_type_e
+{
+	SCTK_PTL_OFFCOLL_BARRIER,
+	SCTK_PTL_OFFCOLL_BCAST,
+	SCTK_PTL_OFFCOLL_REDUCE,
+	SCTK_PTL_OFFCOLL_NB
+} sctk_ptl_offcoll_type_t;
 /**
  * Representing a PT entry in the driver.
  */
@@ -282,8 +306,7 @@ typedef struct sctk_ptl_pte_s
 {
 	ptl_pt_index_t idx; /**< the effective PT index */
 	sctk_ptl_eq_t eq;   /**< the EQ for this entry */
-        sctk_ptl_coll_opts_t coll; /**< what is necessary to optimise collectives for this entry */
-        sctk_spinlock_t lock; /**< lock for this PTE */
+        sctk_ptl_offcoll_tree_node_t node[SCTK_PTL_OFFCOLL_NB]; /**< what is necessary to optimise collectives for this entry */
 } sctk_ptl_pte_t;
 
 /** union to select MD or ME in the user_ptr without dirty casting */

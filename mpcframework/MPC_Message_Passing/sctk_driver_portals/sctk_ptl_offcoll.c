@@ -96,13 +96,33 @@ void sctk_ptl_offcoll_pte_init(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte)
 	sctk_ptl_me_register(srail, me_up, pte);
 	sctk_ptl_me_register(srail, me_down, pte);
 
-        pte->coll.parent = SCTK_PTL_ANY_PROCESS;
-        pte->coll.children = NULL;
-        pte->coll.nb_children = -1;
-        pte->coll.leaf = -1;
-	pte->coll.cnt_hb_up = &me_up->slot.me.ct_handle;
-	pte->coll.cnt_hb_down = &me_down->slot.me.ct_handle;
-	sctk_atomics_store_int(&pte->coll.barrier_iter, 0);
+	int i;
+	sctk_ptl_offcoll_tree_node_t* cur;
+	for (i = 0; i < SCTK_PTL_OFFCOLL_NB; ++i)
+	{
+		cur = pte->node+i;
+		cur->leaf = -1; /* condition to make a first init */
+		cur->parent = SCTK_PTL_ANY_PROCESS;
+		cur->children = NULL;
+		cur->nb_children = -1;
+		cur->root = -1;
+		sctk_atomics_store_int(&cur->iter, 0);
+        	sctk_spinlock_init((&cur->lock), 0);
+		switch(i)
+		{
+			case SCTK_PTL_OFFCOLL_BARRIER:
+				cur->spec.barrier.cnt_hb_up = &me_up->slot.me.ct_handle;
+				cur->spec.barrier.cnt_hb_down = &me_down->slot.me.ct_handle;
+				break;
+			case SCTK_PTL_OFFCOLL_BCAST:
+				break;
+			case SCTK_PTL_OFFCOLL_REDUCE:
+				break;
+			default:
+				not_reachable();
+				break;
+		}
+	}
 }
 
 void sctk_ptl_offcoll_pte_fini(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte)
@@ -110,18 +130,19 @@ void sctk_ptl_offcoll_pte_fini(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte)
 	sctk_assert(__sctk_ptl_offcoll_enabled(srail));
 }
 
-static inline void __sctk_ptl_offcoll_connect_peers(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte, int local_rank, int size)
+static inline sctk_ptl_offcoll_tree_node_t __sctk_ptl_offcoll_connect_peers(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte, int local_rank, int root, int size)
 {
-        int l_child = -1, h_child = -1, parent_rank; 
+        int l_child = -1, h_child = -1, parent_rank, child_rank; 
         size_t i, nb_children;
         sctk_assert(srail);
         sctk_rail_info_t* rail = sctk_ptl_promote_to_rail(srail);
+	sctk_ptl_offcoll_tree_node_t* node = pte->node + SCTK_PTL_OFFCOLL_BARRIER;
         sctk_assert(rail);
 
-        if(pte->coll.leaf == -1)
+        if(node->leaf == -1 || node->root != root)
         {
-                sctk_spinlock_lock(&pte->lock);
-                if(pte->coll.leaf == -1)
+                sctk_spinlock_lock(&node->lock);
+                if(node->leaf == -1 || node->root != root)
                 {
                         /* get children range for the current process 
                          * h_child is the child with the highest rank 
@@ -129,42 +150,46 @@ static inline void __sctk_ptl_offcoll_connect_peers(sctk_ptl_rail_info_t* srail,
                          */
                         h_child = (local_rank + 1) * COLL_ARITY;
                         l_child = h_child - (COLL_ARITY -1);
-                        pte->coll.leaf = (l_child >= size);
+                        node->leaf = (l_child >= size);
+			node->root = root;
 
                         /* save the infos (parent could be negative */
                         parent_rank = (int)((local_rank + (COLL_ARITY - 1)) / COLL_ARITY) - 1;
+			/* this allows us to shift the tree root accordingly */
+			parent_rank = (parent_rank + root) % size;
                         if(parent_rank >= 0) /* non-root node */
                         {
                                 /* TODO: convert local to global */
                                 parent_rank = sctk_get_comm_world_rank(pte->idx - SCTK_PTL_PTE_HIDDEN, parent_rank);
 				sctk_nodebug("parent = %d", parent_rank);
-                                pte->coll.parent = sctk_ptl_map_id(rail, parent_rank); /* TODO: dirty PMI call */
+                                node->parent = sctk_ptl_map_id(rail, parent_rank); /* TODO: dirty PMI call */
                         }
 
-                        int child_rank; 
-                        if(!pte->coll.leaf) /* if not a leaf */
+                        if(!node->leaf) /* if not a leaf */
                         {
 				/* the highest child should be bound in case of an irregular tree (no a multiple of ARITY) */
 				h_child = (h_child >= size) ? size -1 : h_child;
                         	nb_children = h_child - l_child + 1;
 				sctk_nodebug("nb = %llu", nb_children);
 				
-                                pte->coll.children = sctk_malloc(sizeof(int) * nb_children);
+                                node->children = sctk_malloc(sizeof(int) * nb_children);
                                 for (i = 0; i < nb_children; ++i) 
                                 {
                                         child_rank = sctk_get_comm_world_rank(pte->idx - SCTK_PTL_PTE_HIDDEN, l_child + i);
-                                        pte->coll.children[i] = sctk_ptl_map_id(rail, child_rank); /* TODO: awful PMI call */
+					/* this allows to shift the root tree */
+					child_rank = (child_rank + root) % size;
+                                        node->children[i] = sctk_ptl_map_id(rail, child_rank); /* TODO: awful PMI call */
 					sctk_nodebug("child[%d] = %d", i, child_rank);
                                 }
-				pte->coll.nb_children = nb_children;
+				node->nb_children = nb_children;
                         }
 			else
 			{
-				pte->coll.children = NULL;
-				pte->coll.nb_children = 0;
+				node->children = NULL;
+				node->nb_children = 0;
 			}
                 }
-                sctk_spinlock_unlock(&pte->lock);
+                sctk_spinlock_unlock(&node->lock);
         }
 }
 
@@ -178,40 +203,41 @@ static inline void __sctk_ptl_offcoll_connect_peers(sctk_ptl_rail_info_t* srail,
  * the UP one. This way, it should not be possible to overwrite the same counter (and only two ME
  * could be used per communicator to handle all the barrier collectives)
  */
-static inline void __sctk_ptl_offcoll_barrier_run(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte, int local_rank, int size)
+static inline void __sctk_ptl_offcoll_barrier_run(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte)
 {
-	static int cpt = 0; /* TODO: To remove after debug ends */
         sctk_assert(srail);
         sctk_assert(__sctk_ptl_offcoll_enabled(srail));
 
-	cpt ++;
         size_t i, nb_children; 
 	int cnt_prev_ops;
 	sctk_ptl_cnth_t *me_cnt_up, *me_cnt_down;
-        __sctk_ptl_offcoll_connect_peers(srail, pte, local_rank, size); /* done once for all (pay the price at the first call */
-
-        nb_children = pte->coll.nb_children;
-	cnt_prev_ops = sctk_atomics_fetch_and_incr_int(&pte->coll.barrier_iter);
-	me_cnt_up = pte->coll.cnt_hb_up;
-	me_cnt_down = pte->coll.cnt_hb_down;
         sctk_ptl_cnt_t dummy, dummy2; 
+	sctk_ptl_offcoll_tree_node_t* bnode; 
+
+	bnode        = pte->node + SCTK_PTL_OFFCOLL_BARRIER;
+        nb_children  = bnode->nb_children;
+	cnt_prev_ops = sctk_atomics_fetch_and_incr_int(&bnode->iter);
+	me_cnt_up    = bnode->spec.barrier.cnt_hb_up;
+	me_cnt_down  = bnode->spec.barrier.cnt_hb_down;
 
 	//sctk_ptl_chk(PtlCTGet(*me_cnt_up, &dummy));
 	//sctk_ptl_chk(PtlCTGet(*me_cnt_down, &dummy2));
+	//static int cpt = 0;
+	//cpt++;
 	//sctk_warning("Barrier Start over idx = %d UP = %d, DOWN = %d CHILD = %llu, CPT=%d", pte->idx, dummy.success, dummy2.success, nb_children, cpt);
 
         /* If a leaf, just notify the parent.
          * Maybe a bit of latency here could be interesting to allow
          * other processes to set up their environment before the barrier starts
          */
-        if(pte->coll.leaf)
+        if(bnode->leaf)
         {
-                sctk_ptl_emit_put(md_up, 0, pte->coll.parent, pte, SCTK_PTL_MATCH_OFFCOLL_BARRIER_UP, 0, 0, 0, NULL);
+                sctk_ptl_emit_put(md_up, 0, bnode->parent, pte, SCTK_PTL_MATCH_OFFCOLL_BARRIER_UP, 0, 0, 0, NULL);
         }
         else
         {
 		/* if the root : */
-                if(SCTK_PTL_IS_ANY_PROCESS(pte->coll.parent))
+                if(SCTK_PTL_IS_ANY_PROCESS(bnode->parent))
                 {
                         /* wait the completion of all its children */
 			sctk_ptl_emit_trig_cnt_incr(*me_cnt_down, 1, *me_cnt_up, (size_t)((cnt_prev_ops + 1) * nb_children));
@@ -220,7 +246,7 @@ static inline void __sctk_ptl_offcoll_barrier_run(sctk_ptl_rail_info_t* srail, s
                 {
                         /* forward put() to my parent after receiving a direct put() from all my children (meaning there are ready)
                          */
-			sctk_ptl_emit_trig_put(md_up, 0, pte->coll.parent, pte, SCTK_PTL_MATCH_OFFCOLL_BARRIER_UP, 0, 0, 0, NULL, *me_cnt_up, (size_t)((cnt_prev_ops + 1) * nb_children));
+			sctk_ptl_emit_trig_put(md_up, 0, bnode->parent, pte, SCTK_PTL_MATCH_OFFCOLL_BARRIER_UP, 0, 0, 0, NULL, *me_cnt_up, (size_t)((cnt_prev_ops + 1) * nb_children));
                 }
                 
 		/* emitting to all the children :
@@ -229,7 +255,7 @@ static inline void __sctk_ptl_offcoll_barrier_run(sctk_ptl_rail_info_t* srail, s
                  */
                 for(i = 0; i < nb_children; i++)
                 {
-                        sctk_ptl_emit_trig_put(md_down, 0, pte->coll.children[i], pte, SCTK_PTL_MATCH_OFFCOLL_BARRIER_DOWN, 0, 0, 0, NULL, *me_cnt_down, (size_t)(cnt_prev_ops + 1));
+                        sctk_ptl_emit_trig_put(md_down, 0, bnode->children[i], pte, SCTK_PTL_MATCH_OFFCOLL_BARRIER_DOWN, 0, 0, 0, NULL, *me_cnt_down, (size_t)(cnt_prev_ops + 1));
                 }
         }
 
@@ -245,6 +271,11 @@ static inline void __sctk_ptl_offcoll_barrier_run(sctk_ptl_rail_info_t* srail, s
 	/*sctk_warning("Barrier Done over idx = %d CPT=%d", pte->idx, cpt);*/
 }
 
+
+static inline void __sctk_ptl_offcoll_bcast_run(sctk_ptl_rail_info_t* srail, sctk_ptl_pte_t* pte, void* buf, size_t bytes, int root)
+{
+}
+
 /**************************************************/
 /**************************************************/
 /*********** MPI Interface                        */
@@ -255,13 +286,20 @@ int ptl_offcoll_barrier(int comm_idx, int rank, int size)
 {
         sctk_ptl_pte_t* pte = SCTK_PTL_PTE_ENTRY(grail->pt_table, comm_idx);
         sctk_assert(pte);
-
-        __sctk_ptl_offcoll_barrier_run(grail, pte, rank, size);
+	
+	__sctk_ptl_offcoll_connect_peers(grail, pte, rank, 0, size);
+        __sctk_ptl_offcoll_barrier_run(grail, pte);
         return 0;
 }
 
-int ptl_offcoll_bcast()
+/* contiguous data */
+int ptl_offcoll_bcast(int comm_idx, int rank, int size, void* buf, size_t bytes, int root)
 {
+	sctk_ptl_pte_t* pte = SCTK_PTL_PTE_ENTRY(grail->pt_table, comm_idx);
+	sctk_assert(pte);
+
+	__sctk_ptl_offcoll_connect_peers(grail, pte, rank, root, size);
+	__sctk_ptl_offcoll_bcast_run(grail, pte, buf, bytes, root);
 	return 0;
 }
 
