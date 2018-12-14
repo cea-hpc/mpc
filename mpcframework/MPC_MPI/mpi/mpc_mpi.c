@@ -6386,15 +6386,18 @@ int __INTERNAL__PMPI_Bcast_intra(void *buffer, int count, MPI_Datatype datatype,
 	if (res != MPI_SUCCESS) {
 		return res;
 	}
+	if(!bcast_offload)
+		bcast_offload = ((int(*)(int, int, int, void*, size_t, int))sctk_runtime_config_get()->modules.collectives_offload.bcast_intra.value);
 
 #ifdef MPC_USE_PORTALS
 	if(!bcast_offload)
 		bcast_offload = ((int(*)(int, int, int, void*, size_t, int))sctk_runtime_config_get()->modules.collectives_offload.bcast_intra.value);
         if(bcast_offload && sctk_datatype_kind(datatype) == MPC_DATATYPES_COMMON)
         {
-		int tmp_size;
+		size_t tmp_size;
 		PMPC_Type_size (datatype, &tmp_size);
 		size_t length = ((size_t)count) * ((size_t)tmp_size);
+
                 res = bcast_offload(comm, rank, size, buffer, length, root);
 		return res;
         }

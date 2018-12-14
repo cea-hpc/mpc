@@ -407,7 +407,7 @@ sctk_ptl_local_data_t* sctk_ptl_me_create_with_cnt(sctk_ptl_rail_info_t* srail, 
 {
 	sctk_ptl_local_data_t* ret; 
 	
-	ret = sctk_ptl_me_create(start, size, remote, match, ign, (flags | PTL_ME_EVENT_CT_COMM));
+	ret = sctk_ptl_me_create(start, size, remote, match, ign, (flags | PTL_ME_EVENT_CT_COMM | PTL_ME_EVENT_CT_OVERFLOW));
 
 	sctk_ptl_chk(PtlCTAlloc(
 		srail->iface,

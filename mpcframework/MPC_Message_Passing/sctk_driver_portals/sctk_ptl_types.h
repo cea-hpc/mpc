@@ -149,12 +149,12 @@
 #define SCTK_PTL_TYPE_STD      (3)
 /** 'INVALID' value in request type member */
 #define SCTK_PTL_TYPE_NONE     (255)
-/** 'RDV' value in request protocol member */
-#define SCTK_PTL_PROT_RDV      (0)
-/** 'EAGER' value in request protocol member */
-#define SCTK_PTL_PROT_EAGER    (1)
-/** 'INVALID' value in request protocol member */
-#define SCTK_PTL_PROT_NONE     (255)
+typedef enum {
+	SCTK_PTL_PROT_RDV,
+	SCTK_PTL_PROT_EAGER,
+	SCTK_PTL_PROT_OFFCOLL,
+	SCTK_PTL_PROT_NONE
+} sctk_ptl_protocol_t;
 /** Typedef for a Portals list type */
 #define sctk_ptl_list_t ptl_list_t
 /** Typedef for a Portals priority_list type */
