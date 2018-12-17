@@ -6901,7 +6901,7 @@ int __INTERNAL__PMPI_Gatherv_intra_shm(void *sendbuf, int sendcnt,
     res = __INTERNAL__PMPI_Type_extent(recvtype, &rtsize);
     gv_ctx->rtype_size = rtsize;
 
-    if (!sctk_datatype_contig_mem(recvtype)) {
+    if (!sctk_datatype_contig_mem(sendtype)) {
       gv_ctx->let_me_unpack = 1;
     } else {
       gv_ctx->let_me_unpack = 0;
@@ -6923,6 +6923,10 @@ int __INTERNAL__PMPI_Gatherv_intra_shm(void *sendbuf, int sendcnt,
     }
   }
 
+  /* if some other processes don't have contig mem we should also unpack */
+  if (!sctk_datatype_contig_mem(sendtype) && rank != root) {
+     gv_ctx->let_me_unpack = 1;
+  }
   /* Where to write ? */
   if (sendbuf != MPI_IN_PLACE) {
     if (gv_ctx->let_me_unpack) {
@@ -7491,8 +7495,10 @@ int __INTERNAL__PMPI_Scatter(void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 
     /* Note there is a bug we did not find with derived data-types
      * on the scatter(v) operation deactivated for now */
-    if (sctk_is_shared_mem(comm) && sctk_datatype_contig_mem(sendtype) &&
-        sctk_datatype_contig_mem(recvtype)) {
+    //if (sctk_is_shared_mem(comm) && sctk_datatype_contig_mem(sendtype) &&
+        //sctk_datatype_contig_mem(recvtype))
+    if (sctk_is_shared_mem(comm)) 
+    {
       res = (scatterv_intra_shm)(sendbuf, &sendcnt, NULL, sendtype, recvbuf,
                                  recvcnt, recvtype, root, comm);
     } else if( sctk_is_shared_node(comm) ) {
@@ -7545,11 +7551,13 @@ int __INTERNAL__PMPI_Scatterv_intra_shm(void *sendbuf, int *sendcnts,
   int did_allocate_send = 0;
 
   MPI_Aint rtype_size = 0;
-  res = __INTERNAL__PMPI_Type_extent(recvtype, &rtype_size);
-  if (res != MPI_SUCCESS) {
-    return res;
+  if(rank != root) 
+  {
+    res = __INTERNAL__PMPI_Type_extent(recvtype, &rtype_size);
+    if (res != MPI_SUCCESS) {
+      return res;
+    }
   }
-
   /* RDV with ROOT */
 
   /* Now am I the root ? */
@@ -7578,31 +7586,36 @@ int __INTERNAL__PMPI_Scatterv_intra_shm(void *sendbuf, int *sendcnts,
 
       /* Are we in the Scatter config ? */
       if (!displs) {
+        int cnt = 0;
         sctk_nodebug("PACK S t %d cnt %d extent %d", sendtype,
                      sendcnts[0] * coll->comm_size, stsize);
         /* We are a Scatter */
         size_t buff_size = sendcnts[0] * stsize * coll->comm_size;
         data_buff = sctk_malloc(buff_size);
         assume(data_buff != NULL);
-        int cnt = 0;
         PMPI_Pack(sendbuf, sendcnts[0] * coll->comm_size, sendtype, data_buff,
                   buff_size, &cnt, comm);
         /* Only store in 0 the big Pack */
         sctk_atomics_store_ptr(&sv_ctx->src_buffs[0], data_buff);
+        sv_ctx->stype_size = cnt/(coll->comm_size*sendcnts[0]);
       } else {
         /* We are a Scatterv */
         int i;
         for (i = 0; i < coll->comm_size; ++i) {
+          int cnt = 0;
           void *from = sendbuf + displs[i] * stsize;
           size_t to_cpy = sendcnts[i];
 
           data_buff = sctk_malloc(sendcnts[i] * stsize);
           assume(data_buff != NULL);
-          int cnt = 0;
           PMPI_Pack(from, sendcnts[i], sendtype, data_buff,
                     stsize * sendcnts[i], &cnt, comm);
           /* Only store in 0 the big Pack */
           sctk_atomics_store_ptr(&sv_ctx->src_buffs[i], data_buff);
+          if(sendcnts[i]) 
+          {
+            sv_ctx->stype_size = cnt/sendcnts[i];
+          }
         }
       }
 
@@ -7617,12 +7630,12 @@ int __INTERNAL__PMPI_Scatterv_intra_shm(void *sendbuf, int *sendcnts,
       sctk_atomics_store_ptr(&sv_ctx->src_buffs[0], data_buff);
       /* Notify leaves that we are on fastpath */
       sv_ctx->was_packed = 0;
+      sv_ctx->stype_size = stsize;
     }
 
     /* Set root infos */
     sv_ctx->disps = displs;
     sv_ctx->counts = sendcnts;
-    sv_ctx->stype_size = stsize;
 
     /* Now unleash the others */
     sctk_atomics_store_int(&sv_ctx->owner, rank);
@@ -7640,6 +7653,9 @@ int __INTERNAL__PMPI_Scatterv_intra_shm(void *sendbuf, int *sendcnts,
     }
   }
 
+  //if (!sctk_datatype_contig_mem(sendtype) && rank != root) {                                    
+      //sv_ctx->was_packed = 1;                                                                   
+  //}
   /* Where to write ? */
   if (recvbuf != MPI_IN_PLACE) {
     if (sv_ctx->was_packed) {
@@ -11577,9 +11593,9 @@ __INTERNAL__PMPI_Reduce_scatter_intra (void *sendbuf, void *recvbuf, int *recvcn
   for (i = 0; i < size; i++)
   {
     res = __INTERNAL__PMPI_Reduce (((char *) sendbuf) + (acc * dsize), recvbuf, recvcnts[i], datatype, op, i, comm);
+    if(res != MPI_SUCCESS){return res;}
+    acc += recvcnts[i];
   }
-  if(res != MPI_SUCCESS){return res;}
-  acc += recvcnts[i];
 
 	res = __INTERNAL__PMPI_Barrier (comm);
 	return res;
@@ -11873,6 +11889,11 @@ __INTERNAL__PMPI_Scan_intra (void *sendbuf, void *recvbuf, int count,
 	char *free_buffer = NULL;
 	int res;
 
+  if(sendbuf == MPI_IN_PLACE)
+  {
+    sendbuf = recvbuf;
+  }
+
 	mpi_op = sctk_convert_to_mpc_op (op);
 	mpc_op = mpi_op->op;
 
@@ -11954,6 +11975,11 @@ __INTERNAL__PMPI_Exscan_intra (void *sendbuf, void *recvbuf, int count,
 	MPI_Aint dsize;
 	void *tmp;
 	int res = MPI_ERR_INTERN;
+
+  if(sendbuf == MPI_IN_PLACE)
+  {
+    sendbuf = recvbuf;
+  }
 
 	mpi_op = sctk_convert_to_mpc_op (op);
 	mpc_op = mpi_op->op;
@@ -16014,11 +16040,14 @@ int PMPI_Wait (MPI_Request * request, MPI_Status * status)
 	if(*request == MPI_REQUEST_NULL)
 	{
 		res = MPI_SUCCESS;
-		status->MPC_SOURCE = MPI_PROC_NULL;
-		status->MPC_TAG = MPI_ANY_TAG;
-		status->MPC_ERROR = MPI_SUCCESS;
-		status->size = 0;
-		SCTK_MPI_CHECK_RETURN_VAL (res, comm);
+    if(status)
+    {
+      status->MPC_SOURCE = MPI_PROC_NULL;
+      status->MPC_TAG = MPI_ANY_TAG;
+      status->MPC_ERROR = MPI_SUCCESS;
+      status->size = 0;
+      SCTK_MPI_CHECK_RETURN_VAL (res, comm);
+    }
 	}
 
 	res = __INTERNAL__PMPI_Wait (request, status);
@@ -17337,6 +17366,7 @@ PMPI_Gather (void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 	}
 #endif
 	/* Profiling */
+
 	SCTK_PROFIL_START (MPI_Gather);
 	
 	mpi_check_comm (comm, comm);
@@ -17344,7 +17374,16 @@ PMPI_Gather (void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 	if(res != MPI_SUCCESS){return res;}
 	res = __INTERNAL__PMPI_Comm_rank (comm, &rank);
 	if(res != MPI_SUCCESS){return res;}
-	
+
+  if((sendcnt == 0 || recvcnt == 0) && !sctk_is_inter_comm(comm)) {
+     return MPI_SUCCESS;
+   } 
+
+  if(sendbuf == recvbuf && rank == root) {
+    MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
+  }
+
+
 	/* Error checking */
 	mpi_check_root(root,size,comm);
     if(rank != root)
@@ -17442,6 +17481,9 @@ PMPI_Gatherv (void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 	mpi_check_buf (recvbuf, comm);
 	mpi_check_type (recvtype, comm);
 
+  if(sendbuf == recvbuf && rank == root) {
+    MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
+  }
 	if ((rank != root && MPI_IN_PLACE == sendbuf) ||
 		(rank == root && MPI_IN_PLACE == recvbuf)) 
 	{
@@ -17599,7 +17641,10 @@ PMPI_Scatterv (void *sendbuf, int *sendcnts, int *displs,
 	if(res != MPI_SUCCESS){return res;}
 	res = __INTERNAL__PMPI_Comm_rank (comm, &rank);
 	if(res != MPI_SUCCESS){return res;}
-	
+	 
+  if(sendbuf == recvbuf && rank == root) {
+    MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
+  }
 	if(sctk_is_inter_comm(comm))
 	{
 		mpi_check_root(root,rsize,comm);
@@ -17701,6 +17746,9 @@ PMPI_Allgather (void *sendbuf, int sendcount, MPI_Datatype sendtype,
 		mpi_check_count (sendcount, comm);
 		mpi_check_type (sendtype, comm);
 	}
+  if(sendbuf == recvbuf) {
+    MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
+  }
 	mpi_check_buf (recvbuf, comm);
 	mpi_check_count (recvcount, comm);
 	mpi_check_type (recvtype, comm);
@@ -17779,6 +17827,9 @@ PMPI_Allgatherv (void *sendbuf, int sendcount, MPI_Datatype sendtype,
     	mpi_check_count (sendcount, comm);
     	mpi_check_type (sendtype, comm);
     }
+  if(sendbuf == recvbuf) {
+    MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
+  }
 	mpi_check_buf (recvbuf, comm);
 	mpi_check_type (recvtype, comm);
 
@@ -17979,7 +18030,9 @@ int PMPI_Alltoallw(void *sendbuf, int *sendcnts, int *sdispls, MPI_Datatype *sen
 	if(res != MPI_SUCCESS){return res;}
 	res = __INTERNAL__PMPI_Comm_rank (comm, &rank);
 	if(res != MPI_SUCCESS){return res;}
-	
+  if(sendbuf == recvbuf) {
+    MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
+  }
 	/* Error checking */
 	mpi_check_comm (comm, comm);
 	res = __INTERNAL__PMPI_Comm_size (comm, &size);
@@ -18334,8 +18387,8 @@ int PMPI_Reduce (void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
           }
         }
 
-        if ((rank == root &&
-             ((MPI_IN_PLACE == recvbuf) || (sendbuf == recvbuf)))) {
+        if (rank == root &&
+             ((MPI_IN_PLACE == recvbuf) || (sendbuf == recvbuf))) {
           MPI_ERROR_REPORT(comm, MPI_ERR_ARG, "");
         }
 
@@ -18480,7 +18533,7 @@ PMPI_Reduce_scatter (void *sendbuf, void *recvbuf, int *recvcnts,
 	
 	/* Error checking */
 	mpi_check_comm (comm, comm);
-	if (MPI_IN_PLACE == recvbuf) {
+	if (MPI_IN_PLACE == recvbuf || sendbuf == recvbuf) {
 		MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
 	}
 	mpi_check_buf (sendbuf, comm);
@@ -18549,6 +18602,10 @@ PMPI_Reduce_scatter_block (void *sendbuf, void *recvbuf, int recvcnt,
   
   __INTERNAL__PMPI_Comm_size (comm, &size);
 
+	if (MPI_IN_PLACE == recvbuf || sendbuf == recvbuf) {
+		MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
+	}
+
 	mpi_check_count (recvcnts, comm);
 	mpi_check_type (datatype, comm);
 	mpi_check_op (op,datatype, comm);
@@ -18605,6 +18662,10 @@ PMPI_Scan (void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
 	/* Profiling */
 	SCTK_PROFIL_START (MPI_Scan);
 	
+ if(sendbuf == recvbuf) {
+    MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
+  }
+
 	
 	/* Internal */
         if (sctk_new_scheduler_engine_enabled) {
@@ -18648,7 +18709,11 @@ PMPI_Exscan (void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
 	}
 	/* Profiling */
 	SCTK_PROFIL_START (MPI_Exscan);
-	
+	 
+  if(sendbuf == recvbuf) {
+    MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
+  }
+
 	/* Error checking */
 	mpi_check_comm (comm, comm);
 	mpi_check_buf (sendbuf, comm);

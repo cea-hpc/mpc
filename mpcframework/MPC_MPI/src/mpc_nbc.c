@@ -5386,8 +5386,12 @@ PMPI_Igather (void *sendbuf, int sendcnt, MPI_Datatype sendtype,
   sctk_nodebug ("Entering IGATHER %d", comm);
   SCTK__MPI_INIT_REQUEST (request);
 
-  int csize;
+  int csize,rank;
   MPI_Comm_size(comm, &csize);
+  MPI_Comm_rank (comm, &rank);
+  if(recvbuf == sendbuf && rank == root){
+    MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
+  }
   if(csize == 1)
   {
     res = __INTERNAL__PMPI_Gather (sendbuf, sendcnt, sendtype, recvbuf, recvcnt,
@@ -5419,8 +5423,12 @@ PMPI_Igatherv (void *sendbuf, int sendcnt, MPI_Datatype sendtype,
   sctk_nodebug ("Entering IGATHERV %d", comm);
   SCTK__MPI_INIT_REQUEST (request);
 
-  int csize;
+  int csize,rank;
   MPI_Comm_size(comm, &csize);
+  MPI_Comm_rank (comm, &rank);
+  if(recvbuf == sendbuf && rank == root){
+    MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
+  }
   if(csize == 1)
   {
     res = __INTERNAL__PMPI_Gatherv (sendbuf, sendcnt, sendtype, recvbuf, recvcnts,
@@ -5456,8 +5464,12 @@ PMPI_Iscatter (void *sendbuf, int sendcnt, MPI_Datatype sendtype,
   sctk_nodebug ("Entering ISCATTER %d", comm);
   SCTK__MPI_INIT_REQUEST (request);
 
-  int csize;
+  int csize,rank;
   MPI_Comm_size(comm, &csize);
+  MPI_Comm_rank (comm, &rank);
+  if(recvbuf == sendbuf && rank == root){
+    MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
+  }
   if(csize == 1)
   {
     res = __INTERNAL__PMPI_Scatter (sendbuf, sendcnt, sendtype, recvbuf, recvcnt,
@@ -5488,8 +5500,12 @@ PMPI_Iscatterv (void *sendbuf, int *sendcnts, int *displs,
   sctk_nodebug ("Entering ISCATTERV %d", comm);
   SCTK__MPI_INIT_REQUEST (request);
 
-  int csize;
+  int csize,rank;
   MPI_Comm_size(comm, &csize);
+  MPI_Comm_rank (comm, &rank);
+  if(recvbuf == sendbuf && rank == root){
+    MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
+  }
   if(csize == 1)
   {
     res = __INTERNAL__PMPI_Scatterv (sendbuf, sendcnts, displs, sendtype, recvbuf, recvcnt,
@@ -5521,6 +5537,10 @@ PMPI_Iallgather (void *sendbuf, int sendcount, MPI_Datatype sendtype,
   
   int csize;
   MPI_Comm_size(comm, &csize);
+  if(recvbuf == sendbuf){
+    MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
+  }
+
   if(csize == 1)
   {
     res = __INTERNAL__PMPI_Allgather (sendbuf, sendcount, sendtype, recvbuf,
@@ -5551,6 +5571,9 @@ PMPI_Iallgatherv (void *sendbuf, int sendcount, MPI_Datatype sendtype,
 
   int csize;
   MPI_Comm_size(comm, &csize);
+  if(recvbuf == sendbuf){
+    MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
+  }
   if(csize == 1)
   {
     res = __INTERNAL__PMPI_Allgatherv (sendbuf, sendcount, sendtype, recvbuf,
@@ -5582,6 +5605,9 @@ PMPI_Ialltoall (void *sendbuf, int sendcount, MPI_Datatype sendtype,
 
   int csize;
   MPI_Comm_size(comm, &csize);
+  if(recvbuf == sendbuf){
+    MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
+  }
   if(csize == 1)
   {
     res = __INTERNAL__PMPI_Alltoall (sendbuf, sendcount, sendtype, recvbuf,
@@ -5613,6 +5639,9 @@ PMPI_Ialltoallv (void *sendbuf, int *sendcnts, int *sdispls,
 
   int csize;
   MPI_Comm_size(comm, &csize);
+  if(recvbuf == sendbuf){
+    MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
+  }
   if(csize == 1)
   {
     res = __INTERNAL__PMPI_Alltoallv (sendbuf, sendcnts, sdispls, sendtype, recvbuf,
@@ -5642,6 +5671,9 @@ int PMPI_Ialltoallw(void *sendbuf, int *sendcnts, int *sdispls, MPI_Datatype *se
 
   int csize;
   MPI_Comm_size(comm, &csize);
+  if(recvbuf == sendbuf){
+    MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
+  }
   if(csize == 1)
   {
     res = __INTERNAL__PMPI_Alltoallw (sendbuf, sendcnts, sdispls, sendtypes, recvbuf, 
@@ -5677,8 +5709,12 @@ PMPI_Ireduce (void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
   sctk_nodebug ("Entering IREDUCE %d", comm);
   SCTK__MPI_INIT_REQUEST (request);
 
-  int csize;
+  int csize,rank;
+  MPI_Comm_rank(comm,&rank);
   MPI_Comm_size(comm, &csize);
+  if(recvbuf == sendbuf && rank == root){
+    MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
+  }
   if(csize == 1)
   {
     res = __INTERNAL__PMPI_Reduce (sendbuf, recvbuf, count, datatype, op, root,
@@ -5710,6 +5746,9 @@ PMPI_Iallreduce (void *sendbuf, void *recvbuf, int count,
 
   int csize;
   MPI_Comm_size(comm, &csize);
+  if(recvbuf == sendbuf){
+    MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
+  }
   if(csize == 1)
   {
     res = __INTERNAL__PMPI_Allreduce (sendbuf, recvbuf, count, datatype, op, comm);
@@ -5738,6 +5777,9 @@ PMPI_Ireduce_scatter (void *sendbuf, void *recvbuf, int *recvcnts,
 
   int csize;
   MPI_Comm_size(comm, &csize);
+  if(recvbuf == sendbuf){
+    MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
+  }
   if(csize == 1)
   {
     res = __INTERNAL__PMPI_Reduce_scatter (sendbuf, recvbuf, recvcnts, datatype, op,
@@ -5768,6 +5810,9 @@ PMPI_Iscan (void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
 
   int csize;
   MPI_Comm_size(comm, &csize);
+  if(recvbuf == sendbuf){
+    MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
+  }
   if(csize == 1)
   {
     res = __INTERNAL__PMPI_Scan (sendbuf, recvbuf, count, datatype, op, comm);
@@ -5795,6 +5840,9 @@ PMPI_Ireduce_scatter_block (void *sendbuf, void *recvbuf, int recvcnt,
 
   int csize;
   MPI_Comm_size(comm, &csize);
+  if(recvbuf == sendbuf){
+    MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
+  }
   if(csize == 1)
   {
     res = __INTERNAL__PMPI_Reduce_scatter_block (sendbuf, recvbuf, recvcnt, datatype, op,
@@ -5825,6 +5873,9 @@ PMPI_Iexscan (void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
 
   int csize;
   MPI_Comm_size(comm, &csize);
+  if(recvbuf == sendbuf){
+    MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
+  }
   if(csize == 1)
   {
     res = __INTERNAL__PMPI_Exscan (sendbuf, recvbuf, count, datatype, op, comm);

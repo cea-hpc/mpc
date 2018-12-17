@@ -320,7 +320,7 @@ void ffunc (mpi_reduce_scatter) (void *sendbuf, void *recvbuf, int *recvcnts,
 				 MPI_Datatype * datatype, MPI_Op * op,
 				 MPI_Comm * comm, int *res);
 
-void ffunc (mpi_reduce_scatter_block) (void *sendbuf, void *recvbuf, int recvcnt,
+void ffunc (mpi_reduce_scatter_block) (void *sendbuf, void *recvbuf, int *recvcnt,
 				 MPI_Datatype * datatype, MPI_Op * op,
 				 MPI_Comm * comm, int *res);
 
