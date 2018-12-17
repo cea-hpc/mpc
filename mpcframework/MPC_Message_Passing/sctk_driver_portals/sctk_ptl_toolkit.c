@@ -34,6 +34,7 @@
 #include "sctk_ptl_rdma.h"
 #include "sctk_ptl_cm.h"
 #include "sctk_ptl_toolkit.h"
+#include "sctk_ptl_offcoll.h"
 
 /** global shortcut, where each cell maps to the portals process object */
 sctk_ptl_id_t* ranks_ids_map = NULL;
@@ -170,7 +171,7 @@ void sctk_ptl_eqs_poll(sctk_rail_info_t* rail, size_t threshold)
 
 		if(ret == PTL_OK)
 		{
-			sctk_info("PORTALS: EQS EVENT '%s' idx=%d, type=%x, prot=%x, match=%s from %s, sz=%llu, user=%p", sctk_ptl_event_decode(ev), ev.pt_index, user_ptr->type, user_ptr->prot, __sctk_ptl_match_str(malloc(32), 32, ev.match_bits), SCTK_PTL_STR_LIST(((sctk_ptl_local_data_t*)ev.user_ptr)->list), ev.mlength, ev.user_ptr);
+			sctk_nodebug("PORTALS: EQS EVENT '%s' idx=%d, type=%x, prot=%x, match=%s from %s, sz=%llu, user=%p", sctk_ptl_event_decode(ev), ev.pt_index, user_ptr->type, user_ptr->prot, __sctk_ptl_match_str(malloc(32), 32, ev.match_bits), SCTK_PTL_STR_LIST(((sctk_ptl_local_data_t*)ev.user_ptr)->list), ev.mlength, ev.user_ptr);
 
 	
 			/* we only consider Portals-succeded events */
@@ -195,6 +196,8 @@ void sctk_ptl_eqs_poll(sctk_rail_info_t* rail, size_t threshold)
 							sctk_ptl_eager_event_me(rail, ev); break;
 						case SCTK_PTL_PROT_RDV:
 							sctk_ptl_rdv_event_me(rail, ev); break;
+						case SCTK_PTL_PROT_OFFCOLL:
+							sctk_ptl_offcoll_event_me(rail, ev); break;
 						default:
 							/*not_reachable();*/
 							break;

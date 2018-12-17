@@ -489,19 +489,20 @@ void sctk_ptl_ct_wait_thrs(sctk_ptl_cnth_t cth, size_t thrs, sctk_ptl_cnt_t* ev)
 	int i = 1;
 
 	/* choose one */
-#if 0
+#if 0 
 	PtlCTWait(cth, thrs, ev);
 #else
-	/* by benching these two methods, the Portal Wait() 
+	/* by benching these two methods, the BXI Wait() 
 	 * is longer than a while(){Get();} but is probably also
 	 * less stressful. Also the solution below let the program
 	 * works even if -c=1, as polling is required to progress those
 	 * who are calling this ct_wait_thrs() function (offloaded colls mainly)
 	 */
+	PtlCTGet(cth, ev);
 	while(ev->success < thrs && !ev->failure)
 	{
 		PtlCTGet(cth, ev);
-		if(!(i % 1000000))
+		/*if(!(i % 1000))*/
 			sctk_network_notify_idle_message();
 		i++;
 	}
