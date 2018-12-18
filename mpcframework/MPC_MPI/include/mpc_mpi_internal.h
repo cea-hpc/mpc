@@ -251,7 +251,7 @@ typedef struct {
 sctk_op_t *sctk_convert_to_mpc_op(MPI_Op op);
 
 
-static inline sctk_op_can_commute( sctk_op_t * op , MPI_Datatype type )
+static inline int sctk_op_can_commute( sctk_op_t * op , MPI_Datatype type )
 {
 	if( op->commute == 0 )
 	{

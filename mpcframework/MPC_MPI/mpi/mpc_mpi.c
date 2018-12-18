@@ -5686,7 +5686,7 @@ int __MPC_init_node_comm_ctx( struct sctk_comm_coll * coll, MPI_Comm comm )
 
 
 
-static inline __MPC_node_comm_coll_check(  struct sctk_comm_coll *coll , MPI_Comm comm )
+static inline int __MPC_node_comm_coll_check(  struct sctk_comm_coll *coll , MPI_Comm comm )
 {
         if( coll->node_ctx == 0x1 )
         {
