@@ -527,7 +527,7 @@ static void sctk_read_format_option_graphic_placement_and_complet_topo_infos(FIL
             obj = hwloc_get_obj_by_type(topology_compute_node, HWLOC_OBJ_CORE, logical_ind);
         }
         if(!obj){
-            return -1;
+            return;
         }
         hwloc_obj_add_info(obj, "lstopoStyle", infos);
         free(infosbuff);
@@ -551,7 +551,7 @@ static void transform_char(char *str){
 static void name_and_date_file_text(char *file_name){
 
     time_t timestamp = time(NULL);
-    const char *buffer= ctime(&timestamp); 
+    char *buffer= ctime(&timestamp); 
     transform_char(buffer);
     strcat(file_name, "_");
     strcat(file_name, buffer);
@@ -773,7 +773,7 @@ static void print_children(hwloc_topology_t topology, hwloc_obj_t obj,
     static hwloc_obj_type_t type;
     type = HWLOC_OBJ_PU;
 
-    hwloc_obj_snprintf(string, sizeof(string), topology, obj, "#", 0);
+    hwloc_obj_type_snprintf(string, sizeof(string), obj, 0);
     static int already_begining_done = 1;
     if(already_begining_done){
         hwloc_obj_t lower_index_obj_pu = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, lower_logical);
