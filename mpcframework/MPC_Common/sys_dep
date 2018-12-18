@@ -28,6 +28,12 @@ fi
 
 SCTK_CHECK_LDOPTION "-lm"
 
+#
+# Needed to disable warning starting from glibc 2.20
+# "#warning "_BSD_SOURCE and _SVID_SOURCE are deprecated, use _DEFAULT_SOURCE"
+#
+SCTK_CHECK_OPTION "-D_DEFAULT_SOURCE"
+
 begin_section Pthread
 check_pthread_flags_comp
 end_section
