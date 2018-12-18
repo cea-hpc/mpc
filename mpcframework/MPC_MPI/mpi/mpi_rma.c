@@ -740,7 +740,7 @@ mpc_MPI_Accumulate_RMA(struct mpc_MPI_Win *desc, void *origin_addr,
   return MPI_SUCCESS;
 }
 
-int mpc_MPI_Accumulate(void *origin_addr, int origin_count,
+int mpc_MPI_Accumulate(const void *origin_addr, int origin_count,
                        MPI_Datatype origin_datatype, int target_rank,
                        MPI_Aint target_disp, int target_count,
                        MPI_Datatype target_datatype, MPI_Op op, MPI_Win win) {
@@ -751,7 +751,7 @@ int mpc_MPI_Accumulate(void *origin_addr, int origin_count,
 
   mpc_MPI_Win_request_array_add_pending(&desc->source.requests);
 
-  ret = mpc_MPI_Accumulate_RMA(desc, origin_addr, origin_count, origin_datatype,
+  ret = mpc_MPI_Accumulate_RMA(desc, (void *)origin_addr, origin_count, origin_datatype,
                                target_rank, target_disp, target_count,
                                target_datatype, op, win, NULL);
 
@@ -760,7 +760,7 @@ int mpc_MPI_Accumulate(void *origin_addr, int origin_count,
   return ret;
 }
 
-int mpc_MPI_Raccumulate(void *origin_addr, int origin_count,
+int mpc_MPI_Raccumulate(const void *origin_addr, int origin_count,
                         MPI_Datatype origin_datatype, int target_rank,
                         MPI_Aint target_disp, int target_count,
                         MPI_Datatype target_datatype, MPI_Op op, MPI_Win win,
@@ -776,7 +776,7 @@ int mpc_MPI_Raccumulate(void *origin_addr, int origin_count,
 
   int ret = MPI_SUCCESS;
 
-  ret = mpc_MPI_Accumulate_RMA(desc, origin_addr, origin_count, origin_datatype,
+  ret = mpc_MPI_Accumulate_RMA(desc, (void *)origin_addr, origin_count, origin_datatype,
                                target_rank, target_disp, target_count,
                                target_datatype, op, win, new_request);
 

@@ -958,11 +958,11 @@ int MPI_Win_create_keyval(MPI_Win_copy_attr_function *,
 int MPI_Win_create(void *, MPI_Aint, int, MPI_Info, MPI_Comm, MPI_Win *);
 int MPI_Win_free(MPI_Win *);
 int MPI_Win_wait(MPI_Win);
-int MPI_Accumulate(void *, int, MPI_Datatype, int, MPI_Aint, int, MPI_Datatype,
+int MPI_Accumulate(const void *, int, MPI_Datatype, int, MPI_Aint, int, MPI_Datatype,
                    MPI_Op, MPI_Win);
 int MPI_Get(void *, int, MPI_Datatype, int, MPI_Aint, int, MPI_Datatype,
             MPI_Win);
-int MPI_Put(void *, int, MPI_Datatype, int, MPI_Aint, int, MPI_Datatype,
+int MPI_Put(const void *, int, MPI_Datatype, int, MPI_Aint, int, MPI_Datatype,
             MPI_Win);
 int MPI_Win_complete(MPI_Win);
 int MPI_Win_fence(int, MPI_Win);

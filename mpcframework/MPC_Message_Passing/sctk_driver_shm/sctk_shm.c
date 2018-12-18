@@ -141,7 +141,7 @@ sctk_network_send_message_from_pending_shm_list( int sctk_shm_max_message )
                       SCTK_MSG_SPECIFIC_CLASS(msg)),
                   SCTK_MSG_SIZE(msg), SCTK_MSG_TAG(msg));
 
-              sctk_free(elt);
+              sctk_free((void*)elt);
               sctk_shm_pending_ptp_msg_num--;
             }
           }

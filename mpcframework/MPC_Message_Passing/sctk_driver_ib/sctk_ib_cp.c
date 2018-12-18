@@ -199,11 +199,11 @@ void sctk_ib_cp_finalize(struct sctk_ib_rail_info_s *rail_ib)
 		{
 			if(numas[i])
 			{
-				sctk_free(numas[i]);
+				sctk_free((void*)numas[i]);
 				numas[i] = NULL;
 			}
 		}
-		sctk_free(numas);
+		sctk_free((void*)numas);
 		numas = NULL;
 	}
 	sctk_spinlock_unlock(&numas_lock);
@@ -298,7 +298,7 @@ void sctk_ib_cp_init_task ( int rank, int vp )
         if (vps[vp] == NULL) {
           vp_t *tmp_vp = sctk_malloc(sizeof(vp_t));
           memset(tmp_vp, 0, sizeof(vp_t));
-          tmp_vp->node = numas[node];
+          tmp_vp->node = (numa_t*)numas[node];
           CDL_PREPEND(numas[node]->vps, tmp_vp);
           tmp_vp->number = vp;
           vps[vp] = tmp_vp;
@@ -562,7 +562,7 @@ int sctk_ib_cp_steal ( const sctk_rail_info_t const *rail, struct sctk_ib_pollin
 
           if (numas_copy == NULL) {
             numas_copy = malloc(sizeof(numa_t) * numa_number);
-            memcpy(numas_copy, numas, sizeof(numa_t) * numa_number);
+            memcpy(numas_copy, (void *)numas, sizeof(numa_t) * numa_number);
           }
 
           sctk_spinlock_unlock(&numas_lock);
@@ -596,7 +596,7 @@ int sctk_ib_cp_steal ( const sctk_rail_info_t const *rail, struct sctk_ib_pollin
               }
             } else {
               sctk_spinlock_lock(&numas_lock);
-              memcpy(numas_copy, numas, sizeof(numa_t) * numa_number);
+              memcpy(numas_copy, (void *)numas, sizeof(numa_t) * numa_number);
               sctk_spinlock_unlock(&numas_lock);
             }
           }

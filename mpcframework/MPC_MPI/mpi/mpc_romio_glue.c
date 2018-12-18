@@ -148,8 +148,8 @@ int MPCX_Type_flatten(MPI_Datatype datatype, MPI_Aint **blocklen,
   return MPI_SUCCESS;
 }
 
-int MPIR_Type_flatten(MPI_Datatype type, MPI_Aint *off_array,
-                      MPI_Aint *size_array, MPI_Aint *array_len_p) {
+int MPIR_Type_flatten(MPI_Datatype type, MPI_Aint **off_array,
+                      MPI_Aint **size_array, MPI_Aint *array_len_p) {
   sctk_error("Hello flatten");
   return MPCX_Type_flatten(type, off_array, size_array, array_len_p);
 }

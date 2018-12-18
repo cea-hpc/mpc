@@ -5535,7 +5535,7 @@ int __INTERNAL__PMPI_Barrier_intra_shm_sig(MPI_Comm comm) {
 
   volatile int the_signal = 0;
 
-  int *volatile toll = &barrier_ctx->tollgate[rank];
+  volatile int * toll = &barrier_ctx->tollgate[rank];
 
   int cnt = 0;
 
@@ -5661,7 +5661,7 @@ int __MPC_init_node_comm_ctx( struct sctk_comm_coll * coll, MPI_Comm comm )
 
         if( !tmp_ctx )
         {
-            tmp_ctx = 0x1;
+            tmp_ctx = (void *)0x1;
         }
         else
         {
@@ -5688,7 +5688,7 @@ int __MPC_init_node_comm_ctx( struct sctk_comm_coll * coll, MPI_Comm comm )
 
 static inline int __MPC_node_comm_coll_check(  struct sctk_comm_coll *coll , MPI_Comm comm )
 {
-        if( coll->node_ctx == 0x1 )
+        if( coll->node_ctx == (void *)0x1 )
         {
                 /* A previous alloc failed */
                 return 0;
@@ -6838,7 +6838,7 @@ int __INTERNAL__PMPI_Gatherv_intra_shm(void *sendbuf, int sendcnt,
   struct shared_mem_gatherv *gv_ctx = &coll->shm_gatherv;
 
   volatile int rank, res;
-  PMPI_Comm_rank(comm, &rank);
+  PMPI_Comm_rank(comm, (int*)&rank);
 
   /* First pay the toll gate */
   if (__do_yield) {

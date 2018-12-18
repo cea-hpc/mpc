@@ -842,7 +842,7 @@ void sctk_network_finalize_mpi_ib( sctk_rail_info_t *rail)
 	/* - Reset ib config struct (sctk_ib_config_init)             */
 	config = NULL;
 
-	memset(vps_reset, 0, sizeof(char) * sctk_get_cpu_number());
+	memset((void *)vps_reset, 0, sizeof(char) * sctk_get_cpu_number());
 
 }
 
@@ -863,7 +863,7 @@ void sctk_network_init_mpi_ib ( sctk_rail_info_t *rail )
 		int nbvps = sctk_get_cpu_number();
 		vps_reset = sctk_malloc(nbvps * sizeof(char));
 		assert(vps_reset);
-		memset(vps_reset, 0, sizeof(char) * nbvps);
+		memset((void*)vps_reset, 0, sizeof(char) * nbvps);
 	}
 
 

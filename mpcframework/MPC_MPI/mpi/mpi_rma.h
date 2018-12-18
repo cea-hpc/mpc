@@ -65,12 +65,12 @@ int mpc_MPI_Rput(const void *origin_addr, int origin_count,
 /* INTERNAL MPI_Accumulate                                              */
 /************************************************************************/
 
-int mpc_MPI_Accumulate(void *origin_addr, int origin_count,
+int mpc_MPI_Accumulate(const void *origin_addr, int origin_count,
                        MPI_Datatype origin_datatype, int target_rank,
                        MPI_Aint target_disp, int target_count,
                        MPI_Datatype target_datatype, MPI_Op op, MPI_Win win);
 
-int mpc_MPI_Raccumulate(void *origin_addr, int origin_count,
+int mpc_MPI_Raccumulate(const void *origin_addr, int origin_count,
                         MPI_Datatype origin_datatype, int target_rank,
                         MPI_Aint target_disp, int target_count,
                         MPI_Datatype target_datatype, MPI_Op op, MPI_Win win,

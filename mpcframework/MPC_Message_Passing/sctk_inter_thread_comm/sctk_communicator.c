@@ -1236,7 +1236,7 @@ int sctk_comm_coll_init(struct sctk_comm_coll *coll, int nb_task) {
   /* Allocate coll id array */
   coll->coll_id = sctk_malloc(nb_task * sizeof(unsigned int));
   assume(coll->coll_id != NULL);
-  memset(coll->coll_id, 0, sizeof(int) * nb_task);
+  memset((void *)coll->coll_id, 0, sizeof(int) * nb_task);
 
   int i;
   /* The barrier structure */
@@ -1295,7 +1295,7 @@ int sctk_comm_coll_release(struct sctk_comm_coll *coll) {
   /* NB task for all */
   coll->comm_size = 0;
   /* Allocate coll id array */
-  sctk_free(coll->coll_id);
+  sctk_free((void*)coll->coll_id);
   coll->coll_id = NULL;
 
   int i;
