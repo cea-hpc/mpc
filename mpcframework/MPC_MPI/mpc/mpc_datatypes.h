@@ -711,7 +711,7 @@ struct Datatype_Array
  * 
  *  \param da A pointer to the datatype array to be initialized
  */
-void Datatype_Array_init( struct Datatype_Array * da );
+struct Datatype_Array * Datatype_Array_init();
 
 /** \brief Helper funtion to release only allocated datatypes 
  * 

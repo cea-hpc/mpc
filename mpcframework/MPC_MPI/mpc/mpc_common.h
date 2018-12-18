@@ -78,27 +78,27 @@ struct sctk_task_specific_atexit_s
  */
 typedef struct sctk_task_specific_s
 {
-	/* ID */
-	int task_id; /**< MPI comm rank of the task */
-
-	/* Status */
-	int init_done;  /**< =1 if the task has called MPI_Init() */
-	int finalize_done; /**< =1 if the task has already called MPI_Finalize()  */
-	int thread_level;
-
-	/* Data-types */
-	struct Datatype_Array datatype_array;
-
-	/* Extended Request Class handling */
-	struct GRequest_context grequest_context;
+	/* TODO */
+	struct mpc_mpi_data_s* mpc_mpi_data;
+        struct sctk_internal_ptp_s **my_ptp_internal;
 
 	/* Communicator handling */
 	mpc_per_communicator_t*per_communicator;
 	sctk_spinlock_t per_communicator_lock;
 
-	/* TODO */
-	struct mpc_mpi_data_s* mpc_mpi_data;
-        struct sctk_internal_ptp_s **my_ptp_internal;
+	/* ID */
+	int task_id; /**< MPI comm rank of the task */
+
+	/* Status */
+	int init_done;  /**< =1 if the task has called MPI_Init() 2
+			     =2 if the task has called MPI_Finalize */
+	int thread_level;
+
+	/* Data-types */
+	struct Datatype_Array *datatype_array;
+
+	/* Extended Request Class handling */
+	struct GRequest_context grequest_context;
 
         /* MPI_Info handling */
         struct MPC_Info_factory
@@ -124,7 +124,7 @@ struct sctk_task_specific_s *__MPC_get_task_specific();
 static inline void sctk_datatype_lock( sctk_task_specific_t *task_specific )
 {
 	sctk_assert( task_specific != NULL );
-	Datatype_Array_lock( &task_specific->datatype_array );
+	Datatype_Array_lock( task_specific->datatype_array );
 }
 
 /** \brief Lock the datatype array
@@ -132,7 +132,7 @@ static inline void sctk_datatype_lock( sctk_task_specific_t *task_specific )
 static inline void sctk_datatype_unlock( sctk_task_specific_t *task_specific )
 {
 	sctk_assert( task_specific != NULL );
-	Datatype_Array_unlock( &task_specific->datatype_array );
+	Datatype_Array_unlock( task_specific->datatype_array );
 }
 
 sctk_contiguous_datatype_t * sctk_task_specific_get_contiguous_datatype( sctk_task_specific_t *task_specific, MPC_Datatype datatype );

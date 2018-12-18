@@ -863,7 +863,7 @@ static inline void __MPC_init_task_specific_t(sctk_task_specific_t *tmp) {
   sctk_barrier((sctk_communicator_t) MPC_COMM_WORLD );
 
   /* Initialize Data-type array */
-  Datatype_Array_init(&tmp->datatype_array);
+  tmp->datatype_array = Datatype_Array_init();
 
   /* Set initial per communicator data */
   mpc_per_communicator_t *per_comm_tmp;
@@ -881,7 +881,6 @@ static inline void __MPC_init_task_specific_t(sctk_task_specific_t *tmp) {
 
   /* Set MPI status informations */
   tmp->init_done = 0;
-  tmp->finalize_done = 0;
   tmp->thread_level = -1;
 
   {
@@ -1025,7 +1024,7 @@ static void __MPC_delete_task_specific() {
   release_composed_common_types();
 
   /* Free the type array */
-  Datatype_Array_release(&tmp->datatype_array);
+  Datatype_Array_release(tmp->datatype_array);
 
   /* Call atexit handlers */
   __MPC_atexit_task_specific_trigger();
@@ -1096,7 +1095,7 @@ sctk_task_specific_get_contiguous_datatype(sctk_task_specific_t *task_specific,
                                            MPC_Datatype datatype) {
   sctk_assert(task_specific != NULL);
   /* Return the pointed sctk_contiguous_datatype_t */
-  return Datatype_Array_get_contiguous_datatype(&task_specific->datatype_array,
+  return Datatype_Array_get_contiguous_datatype(task_specific->datatype_array,
                                                 datatype);
 }
 
@@ -1110,7 +1109,7 @@ sctk_get_contiguous_datatype(MPC_Datatype datatype) {
   sctk_task_specific_t *task_specific = __MPC_get_task_specific();
   sctk_assert(task_specific != NULL);
   /* Return the pointed sctk_contiguous_datatype_t */
-  return Datatype_Array_get_contiguous_datatype(&task_specific->datatype_array,
+  return Datatype_Array_get_contiguous_datatype(task_specific->datatype_array,
                                                 datatype);
 }
 
@@ -1124,7 +1123,7 @@ sctk_derived_datatype_t *
 sctk_task_specific_get_derived_datatype(sctk_task_specific_t *task_specific,
                                         MPC_Datatype datatype) {
   sctk_assert(task_specific != NULL);
-  return Datatype_Array_get_derived_datatype(&task_specific->datatype_array,
+  return Datatype_Array_get_derived_datatype(task_specific->datatype_array,
                                              datatype);
 }
 
@@ -1136,7 +1135,7 @@ sctk_task_specific_get_derived_datatype(sctk_task_specific_t *task_specific,
 sctk_derived_datatype_t *sctk_get_derived_datatype(MPC_Datatype datatype) {
   sctk_task_specific_t *task_specific = __MPC_get_task_specific();
   sctk_assert(task_specific != NULL);
-  return Datatype_Array_get_derived_datatype(&task_specific->datatype_array,
+  return Datatype_Array_get_derived_datatype(task_specific->datatype_array,
                                              datatype);
 }
 /** \brief Removed a derived datatype from the datatype array
@@ -1148,7 +1147,7 @@ void sctk_task_specific_set_derived_datatype(
     sctk_task_specific_t *task_specific, MPC_Datatype datatype,
     sctk_derived_datatype_t *value) {
   sctk_assert(task_specific != NULL);
-  Datatype_Array_set_derived_datatype(&task_specific->datatype_array, datatype,
+  Datatype_Array_set_derived_datatype(task_specific->datatype_array, datatype,
                                       value);
 }
 
@@ -2912,7 +2911,7 @@ int PMPC_Type_free_keyval(int *type_keyval) {
 int PMPC_Type_get_attr(MPC_Datatype datatype, int type_keyval,
                        void *attribute_val, int *flag) {
   sctk_task_specific_t *task_specific = __MPC_get_task_specific();
-  struct Datatype_Array *da = &task_specific->datatype_array;
+  struct Datatype_Array *da = task_specific->datatype_array;
 
   if (!da) {
     return MPC_ERR_INTERN;
@@ -2924,7 +2923,7 @@ int PMPC_Type_get_attr(MPC_Datatype datatype, int type_keyval,
 int PMPC_Type_set_attr(MPC_Datatype datatype, int type_keyval,
                        void *attribute_val) {
   sctk_task_specific_t *task_specific = __MPC_get_task_specific();
-  struct Datatype_Array *da = &task_specific->datatype_array;
+  struct Datatype_Array *da = task_specific->datatype_array;
 
   if (!da) {
     return MPC_ERR_INTERN;
@@ -2935,7 +2934,7 @@ int PMPC_Type_set_attr(MPC_Datatype datatype, int type_keyval,
 
 int PMPC_Type_delete_attr(MPC_Datatype datatype, int type_keyval) {
   sctk_task_specific_t *task_specific = __MPC_get_task_specific();
-  struct Datatype_Array *da = &task_specific->datatype_array;
+  struct Datatype_Array *da = task_specific->datatype_array;
 
   if (!da) {
     return MPC_ERR_INTERN;
@@ -2956,7 +2955,7 @@ int PMPC_Init(int *argc, char ***argv) {
 #endif
   task_specific = __MPC_get_task_specific();
   /* If the task calls MPI_Init() a second time */
-  if (task_specific->finalize_done == 1) {
+  if (task_specific->init_done == 2) {
     return MPC_ERR_OTHER;
   }
 
@@ -3007,8 +3006,7 @@ int PMPC_Finalize(void) {
   __MPC_Barrier(MPC_COMM_WORLD);
 
   task_specific = __MPC_get_task_specific();
-  task_specific->init_done = 0;
-  task_specific->finalize_done = 1;
+  task_specific->init_done = 2;
 
 #ifdef MPC_LOG_DEBUG
   mpc_log_debug(MPC_COMM_WORLD, "MPC_Finalize");

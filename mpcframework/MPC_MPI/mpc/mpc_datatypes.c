@@ -1173,18 +1173,21 @@ sctk_datatype_t sctk_datatype_get_inner_type(sctk_datatype_t type) {
 /* Datatype  Array                                                      */
 /************************************************************************/
 
-void Datatype_Array_init( struct Datatype_Array * da )
+struct Datatype_Array * Datatype_Array_init()
 {
+  struct Datatype_Array * da = sctk_malloc(sizeof(struct Datatype_Array));
+
 	int i;
-	
 
 	for (i = 0; i < SCTK_USER_DATA_TYPES_MAX; i++)
 	{
 		da->derived_user_types[i] = NULL;
 		memset( &da->contiguous_user_types[i] , 0 , sizeof( sctk_contiguous_datatype_t) );
 	}
-	
-	da->datatype_lock = 0; 
+
+	da->datatype_lock = 0;
+
+  return da;
 }
 
 
@@ -1235,7 +1238,9 @@ void Datatype_Array_release( struct Datatype_Array * da )
                   PMPC_Type_free(&tmp);
                   did_free = 1;
                 }
-        }
+  }
+
+  sctk_free(da);
 }
 
 sctk_contiguous_datatype_t *  Datatype_Array_get_contiguous_datatype( struct Datatype_Array * da ,  MPC_Datatype datatype)
