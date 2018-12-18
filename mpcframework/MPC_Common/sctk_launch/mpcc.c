@@ -73,6 +73,8 @@ static void local_libgfortran_close()
     }
 }
 
+void sctk_use_pthread();
+
 static int
 intern_main (int argc, char **argv)
 {

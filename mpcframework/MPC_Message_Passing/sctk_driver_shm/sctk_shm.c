@@ -11,6 +11,7 @@
 #include "sctk_shm_raw_queues.h"
 #include "sctk_shm.h"
 #include "utlist.h"
+#include "sctk_shm_raw_queues_internals.h"
 
 static int sctk_shm_proc_local_rank_on_node = -1;
 static volatile int sctk_shm_driver_initialized = 0;

@@ -990,6 +990,8 @@ int MPI_Win_attach(MPI_Win, void *, MPI_Aint);
 int MPI_Win_detach(MPI_Win, const void *);
 int MPI_Win_flush(int, MPI_Win);
 int MPI_Win_flush_all(MPI_Win);
+int MPI_Win_flush_local(int rank, MPI_Win win);
+int MPI_Win_flush_local_all(MPI_Win win);
 int MPI_Win_set_info(MPI_Win, MPI_Info);
 int MPI_Win_get_info(MPI_Win, MPI_Info *);
 int MPI_Get_accumulate(const void *, int, MPI_Datatype, void *, int,
@@ -1777,6 +1779,8 @@ int PMPI_Win_attach(MPI_Win, void *, MPI_Aint);
 int PMPI_Win_detach(MPI_Win, const void *);
 int PMPI_Win_flush(int, MPI_Win);
 int PMPI_Win_flush_all(MPI_Win);
+int PMPI_Win_flush_local(int rank, MPI_Win win);
+int PMPI_Win_flush_local_all(MPI_Win win);
 int PMPI_Win_set_info(MPI_Win, MPI_Info);
 int PMPI_Win_get_info(MPI_Win, MPI_Info *);
 int PMPI_Get_accumulate(const void *, int, MPI_Datatype, void *, int,

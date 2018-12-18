@@ -27,7 +27,7 @@ extern ompt_callback_t* OMPT_Callbacks;
 int mpcomp_task_get_victim(int, int, mpcomp_tasklist_type_t );
 void mpcomp_taskwait( void );
 void mpcomp_taskyield( void );
-
+void mpcomp_task_init_func_pointers();
 
 /* FOR DEBUG */
 static inline int __mpcomp_task_utils_extract_victims_list( int** victims_list, int* nbList, const int type )

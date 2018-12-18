@@ -29,6 +29,11 @@
 #include <opa_primitives.h>
 #include <uthash.h>
 #include "sctk_handle.h"
+#include "sctk_low_level_comm.h"
+
+#ifdef MPC_THREAD
+#include "sctk_thread.h"
+#endif
 
 typedef struct sctk_process_ht_s
 {
@@ -63,8 +68,10 @@ static inline sctk_internal_communicator_t *sctk_check_internal_communicator_no_
 	if ( communicator >= SCTK_MAX_COMMUNICATOR_TAB )
 	{
           while (
-              sctk_spinlock_read_trylock(&sctk_communicator_local_table_lock)) {
-            mpc_thread_yield();
+            sctk_spinlock_read_trylock(&sctk_communicator_local_table_lock)) {
+            #ifdef MPC_THREAD
+	    mpc_thread_yield();
+	    #endif
           }
           //~ check in the hash table
           HASH_FIND(hh, sctk_communicator_table, &communicator,

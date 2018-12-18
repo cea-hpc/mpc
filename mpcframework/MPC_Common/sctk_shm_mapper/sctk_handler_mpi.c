@@ -1,5 +1,6 @@
 #ifndef SCTK_LIB_MODE
 #include "mpi.h"
+#include "sctk_collective_communications.h"
 #include "sctk_debug.h"
 #include "sctk_shm_mapper.h"
 #include "sctk_stdint.h"

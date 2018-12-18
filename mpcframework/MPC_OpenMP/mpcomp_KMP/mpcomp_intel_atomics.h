@@ -61,6 +61,7 @@ extern double __kmp_test_then_add_real64(kmp_real64 *, kmp_real64);
 #if __MIC__ || __MIC2__
 #define DO_PAUSE _mm_delay_32(1)
 #else
+void __kmp_x86_pause();
 #define DO_PAUSE __kmp_x86_pause()
 #endif
 

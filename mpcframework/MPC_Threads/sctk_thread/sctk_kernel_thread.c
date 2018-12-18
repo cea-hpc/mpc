@@ -30,7 +30,11 @@
 #include <string.h>
 #include <semaphore.h>
 #include "sctk_runtime_config.h"
+#include "sctk_alloc_posix.h"
+#include "sctk_tls.h"
+
 #ifndef SCTK_KERNEL_THREAD_USE_TLS
+
 int
 kthread_key_create (kthread_key_t * key, void (*destr_function) (void *))
 {
@@ -66,7 +70,8 @@ kthread_getspecific (kthread_key_t key)
   keya = *keyp;
   return pthread_getspecific (keya);
 }
-#endif
+
+#endif /* SCTK_KERNEL_THREAD_USE_TLS */
 
 TODO("Move kthread_stack_size_default to the configuration")
 #define kthread_stack_size_default (10*1024*1024)

@@ -31,6 +31,10 @@
 #include "sctk_runtime_config_struct_defaults.h"
 #include "sctk_libxml_helper.h"
 
+#ifdef MPC_MPI
+#include "mpit_internal.h"
+#endif
+
 /********************************** GLOBALS *********************************/
 /** Global variable to store mpc runtime configuration loaded from XML. **/
 struct sctk_runtime_config __sctk_global_runtime_config__;
@@ -197,11 +201,11 @@ void sctk_runtime_config_init(void)
 	const char * disable_config;
 
 
-		#ifndef SCTK_LIB_MODE
+	#ifndef SCTK_LIB_MODE
         /* Initialize CVARS indiferently from MPIT as
          * we want to map the config values into them */
         MPI_T_cvars_array_init();
-		#endif /* SCTK_LIB_MODE */
+	#endif /* SCTK_LIB_MODE */
 
         /* if already done do nothing */
         if (__sctk_global_runtime_config_init__ == false) {

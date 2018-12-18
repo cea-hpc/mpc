@@ -32,6 +32,11 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#ifdef MPC_THREAD
+#include "mpcthread.h"
+#endif
+
+
 #define assume_m(x,...) if (!(x)) { printf("ERROR: ");printf(__VA_ARGS__);printf("\n");abort(); }
 #define fatal(...) {printf("ERROR: ");printf(__VA_ARGS__);printf("\n");abort();}
 #define assume_perror(test,perror_string,...) {if (!(test)) {perror(perror_string);fatal(__VA_ARGS__);}}
@@ -333,7 +338,9 @@ SCTK_STATIC void * sctk_shm_mapper_slave(sctk_size_t size,int participants,sctk_
 
         // wait final decision of master
         while (sctk_atomics_load_ptr(&sync_header->final_address) == NULL) {
+	#ifdef MPC_THREAD
           mpc_thread_yield();
+	#endif
         }
 
         sctk_shm_mapper_barrier(sync_header, SCTK_SHM_MAPPER_ROLE_SLAVE,

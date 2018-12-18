@@ -130,6 +130,10 @@ char *sctk_get_processor_name(void);
 */
 int sctk_set_cpu_number(int n);
 
+/*! \brief Number of processing units per core
+*/
+int sctk_get_ht_per_core(void);
+
 /*! \brief Return the hostname
 */
 char *sctk_get_node_name(void);
