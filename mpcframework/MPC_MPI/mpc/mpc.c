@@ -835,13 +835,13 @@ int __MPC_release_progress( sctk_task_specific_t * tmp  )
 
 void __MPC_poll_progress_id(int id)
 {
-    return sctk_progress_engine_pool_poll( &__mpc_progress_pool , id  );
+    sctk_progress_engine_pool_poll( &__mpc_progress_pool , id  );
 }
 
 void __MPC_poll_progress()
 {
     struct sctk_task_specific_s * spe = __MPC_get_task_specific();
-    return __MPC_poll_progress_id( spe->progress_list->id );
+    __MPC_poll_progress_id( spe->progress_list->id );
 }
 
 

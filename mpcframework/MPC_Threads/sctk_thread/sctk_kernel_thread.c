@@ -272,7 +272,7 @@ int pthread_create(pthread_t *thread, const pthread_attr_t *attr,
     real_pthread_create = dlsym(RTLD_NEXT,"pthread_create");
   }
 
-  r_attr = attr;
+  r_attr = (pthread_attr_t*)attr;
 
   if(r_attr == NULL){
     r_attr = &local_attr;

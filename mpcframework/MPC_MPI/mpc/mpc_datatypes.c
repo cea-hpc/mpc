@@ -1075,7 +1075,7 @@ void *sctk_derived_datatype_serialize(sctk_datatype_t type, size_t *size,
   mpc_pack_absolute_indexes_t *ends = begins + dtype->count;
   sctk_datatype_t *types = (sctk_datatype_t *)(ends + dtype->count);
   struct inner_lbub *lb_ub = (struct inner_lbub *)(types + dtype->count);
-  char *guard = (lb_ub + 1);
+  char *guard = ((char *)lb_ub + 1);
 
   *guard = 77;
 
@@ -1109,10 +1109,10 @@ sctk_datatype_t sctk_derived_datatype_deserialize(void *buff, size_t size,
   sctk_datatype_t *types = (sctk_datatype_t *)(ends + *count);
   struct inner_lbub *lb_ub = (struct inner_lbub *)(types + *count);
 
-  assume(count < (buff + size));
-  assume(count < (begins + size));
-  assume(count < (ends + size));
-  assume(count < (types + size));
+  assume(count < (size_t*)(buff + size));
+  assume(count < (size_t*)(begins + size));
+  assume(count < (size_t*)(ends + size));
+  assume(count < (size_t*)(types + size));
 
   sctk_datatype_t ret;
 

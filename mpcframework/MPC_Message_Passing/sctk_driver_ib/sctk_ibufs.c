@@ -939,7 +939,7 @@ void sctk_ibuf_rdma_fetch_and_add_init( sctk_ibuf_t *ibuf,
 
 	ibuf->desc.wr.send.num_sge = 1;
 	
-	ibuf->desc.wr.send.wr.atomic.remote_addr = remote_address;
+	ibuf->desc.wr.send.wr.atomic.remote_addr = (uintptr_t)remote_address;
 	ibuf->desc.wr.send.wr.atomic.compare_add = add;
 	ibuf->desc.wr.send.wr.atomic.rkey = rkey;
 
@@ -972,7 +972,7 @@ void sctk_ibuf_rdma_CAS_init( sctk_ibuf_t *ibuf,
 
 	ibuf->desc.wr.send.num_sge = 1;
 	
-	ibuf->desc.wr.send.wr.atomic.remote_addr = remote_address;
+	ibuf->desc.wr.send.wr.atomic.remote_addr = (uintptr_t)remote_address;
 	ibuf->desc.wr.send.wr.atomic.compare_add = comp;
 	ibuf->desc.wr.send.wr.atomic.swap = new;
 	ibuf->desc.wr.send.wr.atomic.rkey = rkey;
@@ -981,7 +981,7 @@ void sctk_ibuf_rdma_CAS_init( sctk_ibuf_t *ibuf,
 	ibuf->desc.wr.send.imm_data = IMM_DATA_NULL;
 	ibuf->desc.sg_entry.length = sizeof( sctk_uint64_t );
 	ibuf->desc.sg_entry.lkey = local_key;
-	ibuf->desc.sg_entry.addr = res_addr;
+	ibuf->desc.sg_entry.addr = (uintptr_t)res_addr;
 
 	ibuf->flag = RDMA_CAS_IBUF_FLAG;
 }

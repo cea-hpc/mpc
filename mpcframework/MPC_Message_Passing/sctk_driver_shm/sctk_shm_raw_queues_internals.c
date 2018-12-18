@@ -98,7 +98,7 @@ sctk_shm_set_region_infos(void *shmem_base, size_t shmem_size,int cells_num, int
         sctk_shm_get_region_queue_base(shmem_base, SCTK_SHM_CELLS_QUEUE_CTRL);
     //   shmem->buff_queue =
     //   sctk_shm_get_region_queue_base(shmem_base,SCTK_SHM_CELLS_QUEUE_BUFF);
-    assume_m(shmem->free_queue < shmem->max_addr, "Too small shmem memory region");
+    assume_m((char *)shmem->free_queue < shmem->max_addr, "Too small shmem memory region");
     shmem->sctk_shm_asymm_addr = sctk_shm_get_region_items_asymm_addr(shmem_base);
     return shmem;
 }
