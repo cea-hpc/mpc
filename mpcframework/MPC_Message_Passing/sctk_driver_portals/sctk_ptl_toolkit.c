@@ -196,12 +196,13 @@ void sctk_ptl_eqs_poll(sctk_rail_info_t* rail, size_t threshold)
 							sctk_ptl_eager_event_me(rail, ev); break;
 						case SCTK_PTL_PROT_RDV:
 							sctk_ptl_rdv_event_me(rail, ev); break;
-						case SCTK_PTL_PROT_OFFCOLL:
-							sctk_ptl_offcoll_event_me(rail, ev); break;
 						default:
 							/*not_reachable();*/
 							break;
 					}
+					break;
+				case SCTK_PTL_TYPE_OFFCOLL:
+					sctk_ptl_offcoll_event_me(rail, ev);
 					break;
 				case SCTK_PTL_TYPE_RDMA:
 					sctk_ptl_rdma_event_me(rail, ev);
@@ -238,12 +239,14 @@ void sctk_ptl_mds_poll(sctk_rail_info_t* rail, size_t threshold)
 		{
 			user_ptr = (sctk_ptl_local_data_t*)ev.user_ptr;
 			sctk_assert(user_ptr != NULL);
-			sctk_info("PORTALS: MDS EVENT '%s' from %s, type=%d, prot=%d, user=%d",sctk_ptl_event_decode(ev), SCTK_PTL_STR_LIST(ev.ptl_list), user_ptr->type, user_ptr->prot, SCTK_MSG_SRC_PROCESS(((sctk_thread_ptp_message_t*) user_ptr->msg)));
+			sctk_nodebug("PORTALS: MDS EVENT '%s' from %s, type=%d, prot=%d, user=%d",sctk_ptl_event_decode(ev), SCTK_PTL_STR_LIST(ev.ptl_list), user_ptr->type, user_ptr->prot);
 			/* we only care about Portals-sucess events */
 			if(ev.ni_fail_type != PTL_NI_OK)
 			{
 				sctk_fatal("MD: Failed event %s: %s", sctk_ptl_event_decode(ev), sctk_ptl_ni_fail_decode(ev));
 			}
+
+			sctk_assert(user_ptr->type != SCTK_PTL_TYPE_NONE);
 
 
 			switch((int)user_ptr->type)
@@ -256,6 +259,7 @@ void sctk_ptl_mds_poll(sctk_rail_info_t* rail, size_t threshold)
 					 *
 					 * As we know that 
 					 */
+					sctk_assert(user_ptr->prot != SCTK_PTL_PROT_NONE);
 					switch((int)user_ptr->prot)
 					{
 						case SCTK_PTL_PROT_EAGER:
@@ -265,6 +269,10 @@ void sctk_ptl_mds_poll(sctk_rail_info_t* rail, size_t threshold)
 						default:
 							not_reachable();
 					}
+					break;
+				case SCTK_PTL_TYPE_OFFCOLL:
+					sctk_assert(user_ptr->prot != SCTK_PTL_PROT_NONE);
+					sctk_ptl_offcoll_event_md(rail, ev);
 					break;
 				case SCTK_PTL_TYPE_RDMA:
 					sctk_ptl_rdma_event_md(rail, ev);
