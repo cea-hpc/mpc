@@ -127,33 +127,32 @@
 /*********************************/
 /** default flags for allocating a new PT entry */
 #define SCTK_PTL_PTE_FLAGS PTL_PT_FLOWCTRL
-/** number of PT in addition of one per comm */
-#define SCTK_PTL_PTE_HIDDEN 3
-/** one extra PT for the recovery system */
-#define SCTK_PTL_PTE_RECOVERY (0)
-/** one extra PT for the CM management */
-#define SCTK_PTL_PTE_CM       (1)
-/** one extra PT for RDMA management */
-#define SCTK_PTL_PTE_RDMA     (2)
+typedef enum {
+	SCTK_PTL_PTE_RECOVERY,
+	SCTK_PTL_PTE_CM,
+	SCTK_PTL_PTE_RDMA,
+	SCTK_PTL_PTE_HIDDEN,
+	SCTK_PTL_PTE_HIDDEN_NB = SCTK_PTL_PTE_HIDDEN
+} sctk_ptl_pte_id_t;
 /** Translate the communicator ID to the PT entry object */
 #define SCTK_PTL_PTE_ENTRY(table, comm) (MPCHT_get(&table, (comm)+SCTK_PTL_PTE_HIDDEN))
 /** Check if a given comm already has corresponding PT entry */
 #define SCTK_PTL_PTE_EXIST(table, comm) (SCTK_PTL_PTE_ENTRY(table, comm) != NULL)
-/** 'RECOVERY' value in request type member */
-#define SCTK_PTL_TYPE_RECOVERY (0)
-/** 'CM' value in request type member */
-#define SCTK_PTL_TYPE_CM       (1)
-/** 'RDMA' value in request type member */
-#define SCTK_PTL_TYPE_RDMA     (2)
-/** 'STANDARD' value in request type member */
-#define SCTK_PTL_TYPE_STD      (3)
-/** 'INVALID' value in request type member */
-#define SCTK_PTL_TYPE_NONE     (255)
 typedef enum {
-	SCTK_PTL_PROT_RDV,
+	SCTK_PTL_TYPE_RECOVERY,
+	SCTK_PTL_TYPE_CM,
+	SCTK_PTL_TYPE_RDMA,
+	SCTK_PTL_TYPE_STD,
+	SCTK_PTL_TYPE_OFFCOLL,
+	SCTK_PTL_TYPE_NONE,
+	SCTK_PTL_TYPE_NB,
+} sctk_ptl_mtype_t;
+
+typedef enum {
 	SCTK_PTL_PROT_EAGER,
-	SCTK_PTL_PROT_OFFCOLL,
-	SCTK_PTL_PROT_NONE
+	SCTK_PTL_PROT_RDV,
+	SCTK_PTL_PROT_NONE,
+	SCTK_PTL_PROT_NB
 } sctk_ptl_protocol_t;
 /** Typedef for a Portals list type */
 #define sctk_ptl_list_t ptl_list_t
@@ -209,7 +208,7 @@ struct sctk_ptl_std_content_s
 
 struct sctk_ptl_offload_content_s
 {
-	uint32_t pad1;
+	uint32_t iter;
 	uint16_t pad2;
 	uint8_t dir; /* direction, if necessary */
 	uint8_t type; /* this field should not be changed */
@@ -264,51 +263,6 @@ typedef union sctk_ptl_imm_data_s
 	struct sctk_ptl_offload_data_s offload; /**< imm-data for offload */
 } sctk_ptl_imm_data_t;
 
-typedef struct sctk_ptl_offcoll_barrier_s
-{
-	sctk_ptl_cnth_t* cnt_hb_up;
-	sctk_ptl_cnth_t* cnt_hb_down;
-} sctk_ptl_offcoll_barrier_t;
-
-typedef struct sctk_ptl_offcoll_bcast_s
-{
-} sctk_ptl_offcoll_bcast_t;
-
-typedef union sctk_ptl_offcoll_spec_u
-{
-	struct sctk_ptl_offcoll_barrier_s barrier;
-	struct sctk_ptl_offcoll_bcast_s bcast;
-} sctk_ptl_offcoll_spec_t;
-
-typedef struct sctk_ptl_offcoll_tree_node_s
-{
-        sctk_spinlock_t lock;
-	sctk_atomics_int iter;
-	sctk_ptl_id_t parent;
-	sctk_ptl_id_t* children;
-	size_t nb_children;
-	int root;
-	int leaf; 
-	union sctk_ptl_offcoll_spec_u spec;
-} sctk_ptl_offcoll_tree_node_t;
-
-typedef enum sctk_ptl_offcoll_type_e
-{
-	SCTK_PTL_OFFCOLL_BARRIER,
-	SCTK_PTL_OFFCOLL_BCAST,
-	SCTK_PTL_OFFCOLL_REDUCE,
-	SCTK_PTL_OFFCOLL_NB
-} sctk_ptl_offcoll_type_t;
-/**
- * Representing a PT entry in the driver.
- */
-typedef struct sctk_ptl_pte_s
-{
-	ptl_pt_index_t idx; /**< the effective PT index */
-	sctk_ptl_eq_t eq;   /**< the EQ for this entry */
-        sctk_ptl_offcoll_tree_node_t node[SCTK_PTL_OFFCOLL_NB]; /**< what is necessary to optimise collectives for this entry */
-} sctk_ptl_pte_t;
-
 /** union to select MD or ME in the user_ptr without dirty casting */
 union sctk_ptl_slot_u
 {
@@ -333,8 +287,8 @@ typedef struct sctk_ptl_local_data_s
 	union sctk_ptl_slot_h_u slot_h; /**< the request Handle */
 	sctk_ptl_list_t list;           /**< the list the request issued from */
 	sctk_ptl_matchbits_t match;     /**< request match bits */
-	char type;                      /**< request type */
-	char prot;                      /**< request protocol */
+	sctk_ptl_mtype_t type;          /**< request type */
+	sctk_ptl_protocol_t prot;       /**< request protocol */
 	void* msg;                      /**< link to the msg */
 } sctk_ptl_local_data_t;
 
@@ -371,6 +325,54 @@ typedef struct sctk_ptl_route_info_s
 }
 sctk_ptl_route_info_t;
 
+typedef struct sctk_ptl_offcoll_barrier_s
+{
+	sctk_ptl_cnth_t* cnt_hb_up;
+	sctk_ptl_cnth_t* cnt_hb_down;
+} sctk_ptl_offcoll_barrier_t;
+
+typedef struct sctk_ptl_offcoll_bcast_s
+{
+	sctk_ptl_local_data_t* large_puts;
+} sctk_ptl_offcoll_bcast_t;
+
+typedef union sctk_ptl_offcoll_spec_u
+{
+	struct sctk_ptl_offcoll_barrier_s barrier;
+	struct sctk_ptl_offcoll_bcast_s bcast;
+} sctk_ptl_offcoll_spec_t;
+
+typedef struct sctk_ptl_offcoll_tree_node_s
+{
+        sctk_spinlock_t lock;
+	sctk_atomics_int iter;
+	sctk_ptl_id_t parent;
+	sctk_ptl_id_t* children;
+	size_t nb_children;
+	int root;
+	int leaf; 
+	union sctk_ptl_offcoll_spec_u spec;
+} sctk_ptl_offcoll_tree_node_t;
+
+typedef enum sctk_ptl_offcoll_type_e
+{
+	SCTK_PTL_OFFCOLL_BARRIER,
+	SCTK_PTL_OFFCOLL_BCAST,
+	SCTK_PTL_OFFCOLL_REDUCE,
+	SCTK_PTL_OFFCOLL_NB
+} sctk_ptl_offcoll_type_t;
+
+/**
+ * Representing a PT entry in the driver.
+ */
+typedef struct sctk_ptl_pte_s
+{
+	ptl_pt_index_t idx; /**< the effective PT index */
+	sctk_ptl_eq_t eq;   /**< the EQ for this entry */
+        sctk_ptl_offcoll_tree_node_t node[SCTK_PTL_OFFCOLL_NB]; /**< what is necessary to optimise collectives for this entry */
+} sctk_ptl_pte_t;
+
+
 /**
  * Portals-specific information specializing a rail.
  */
@@ -390,6 +392,7 @@ typedef struct sctk_ptl_rail_info_s
 	size_t connection_infos_size;           /**< Size of the above string */
 	int offload_support;
 } sctk_ptl_rail_info_t;
+
 
 #endif
 #endif
