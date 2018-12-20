@@ -385,6 +385,8 @@ sctk_ptl_local_data_t* sctk_ptl_me_create(void * start, size_t size, sctk_ptl_id
 		},
 		.slot_h.meh = PTL_INVALID_HANDLE,
 		.list = SCTK_PTL_PRIORITY_LIST,
+		.type = SCTK_PTL_TYPE_NONE,
+		.prot = SCTK_PTL_PROT_NONE,
 		.msg = NULL /* later filled */
 	};
 
@@ -539,7 +541,7 @@ sctk_ptl_local_data_t* sctk_ptl_md_create(sctk_ptl_rail_info_t* srail, void* sta
 sctk_ptl_local_data_t* sctk_ptl_md_create_with_cnt(sctk_ptl_rail_info_t* srail, void* start, size_t length, int flags)
 {
 	sctk_ptl_local_data_t* user = NULL;
-	user = sctk_ptl_md_create(srail, start, length, (flags | PTL_MD_EVENT_CT_SEND));
+	user = sctk_ptl_md_create(srail, start, length, flags);
 	
 	sctk_ptl_chk(PtlCTAlloc(
 		srail->iface,

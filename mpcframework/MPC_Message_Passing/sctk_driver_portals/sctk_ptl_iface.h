@@ -359,6 +359,57 @@ static inline const char const* __sctk_ptl_match_str(char*buf, size_t s, ptl_mat
 	return buf;
 }
 
+/**
+ * Static function (only for large protocols) in charge of cutting a GET request if it exceeed a given size.
+ *
+ * Especially, this allow use to handle msg larger than Portals ME capacity.
+ * This function tries to load-balance requests. For exaple, if we have a msg size = MAX_SIZE + 4,
+ * the driver should create two chunks of (MAX_SIZE/2)+2 bytes, instead of one with MAX_SIZE and one with 4 bytes.
+ *
+ * That is why we need the rest. It contains number of bytes that can't be equally distributed between
+ * the chunks. It is the responsability of the called to increment by one any chunk size when emiting GET requests.
+ * The condition (num_chunk < num_rest) ? sz+1 : sz is enought for that.
+ *
+ * \param[in] srail the Portals rail
+ * \param[in] msg the mesage (used for the size contained in it)
+ * \param[out] sz_out a chunk size, for one GET request
+ * \param[out] nb_out number of computed chunks
+ * \param[out] rest_out number of bytes not spread between chunks
+ */
+static inline void sctk_ptl_compute_chunks(sctk_ptl_rail_info_t* srail, size_t data_sz, size_t* sz_out, size_t* nb_out, size_t* rest_out)
+{
+	size_t total = data_sz;
+	size_t size = 0;
+	size_t nb = 1;
+
+	sctk_assert(srail);
+	sctk_assert(sz_out);
+	sctk_assert(nb_out);
+	sctk_assert(rest_out);
+
+	/* first, if the msg size reached the cufoff, the chunk size if a simple division */
+	size = (total > srail->cutoff) ? (size_t)(total / SCTK_PTL_MAX_RDV_BLOCKS) : total;
+	nb   = (size < total) ? SCTK_PTL_MAX_RDV_BLOCKS : 1;
+		
+	/* if sub-blocks are larger than the largest possible ME/MD
+	 * Set dimension to the system one.
+	 * NOTE: This can lead to resource exhaustion if srail->max_mr << MSG_SIZE
+	 */
+	if(size >= srail->max_mr)
+	{
+		/* compute how many chunks we need (add one if necessary if not well-balanced) */
+		nb = (size_t)(total / srail->max_mr) + ((total % srail->max_mr == 0) ? 0 : 1);
+		sctk_assert(nb > 0);
+		/* compute the effective size per chunk (load-balancing if an extra-chunk is needed */
+		size = (size_t)(total / nb);
+	}
+
+	sctk_assert(nb > 0);
+
+	*sz_out   = size;
+	*nb_out   = nb;
+	*rest_out = total % size;
+}
 
 #endif
 #endif
